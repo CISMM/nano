@@ -40,7 +40,7 @@ nms_SEM_ui::nms_SEM_ui(Tcl_Interp *interp, const char *tcl_script_dir,
     char *display_name;
 
     /* Load the Tcl script that handles main interface window */
-    sprintf(command, "source %s/%s",tcl_script_dir, SEM_TCL_FILE);
+    sprintf(command, "source %s%s",tcl_script_dir, SEM_TCL_FILE);
     printf("evaluating %s\n", command);
     TCLEVALCHECK2(tcl_interp, command);
     fprintf(stderr, "done evaluating\n");

@@ -64,7 +64,7 @@ nma_Keithley2400_ui::nma_Keithley2400_ui (Tcl_Interp	*interp,
     keithley2400 = new nma_Keithley2400(name, c);
 
     /* Load the Tcl script that handles main interface window */
-    sprintf(command, "source %s/%s",tcl_script_dir,VICURVE_TCL_FILE);
+    sprintf(command, "source %s%s",tcl_script_dir,VICURVE_TCL_FILE);
     TCLEVALCHECK2(tcl_interp, command);
 
     // set up the callbacks for all tcl variables.

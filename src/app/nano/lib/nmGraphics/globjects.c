@@ -901,7 +901,7 @@ int myscreen (int)
 {
   nmg_Funclist *head;
 #ifndef FLOW
-  int saveMatrixMode;
+  GLint saveMatrixMode;
 #endif
   head = v_screen;
 

@@ -61,7 +61,7 @@ class nmb_Image {
   public:
 	nmb_Image():is_height_field(VRPN_FALSE)
             {};
-	~nmb_Image() {};
+	virtual ~nmb_Image() {};
 	virtual int width() const = 0;
 	virtual int height() const = 0;
 	virtual float getValue(int i, int j) const = 0;

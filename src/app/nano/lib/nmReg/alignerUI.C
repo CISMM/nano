@@ -30,7 +30,7 @@ AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
     printf("creating the aligner\n");
 
     /* Load the Tcl script that handles main interface window */
-    sprintf(command, "source %s/%s",tcl_script_dir, ALIGNER_TCL_FILE);
+    sprintf(command, "source %s%s",tcl_script_dir, ALIGNER_TCL_FILE);
     printf("evaluating %s\n", command);
     TCLEVALCHECK2(tcl_interp, command);
     fprintf(stderr, "done evaluating\n");

@@ -208,7 +208,7 @@ void drawStringInFont (int fontOffset, const char * s) {
     glPopAttrib ();
 
     if (spm_graphics_verbosity >= 14) {
-      int i;
+      GLint i;  /* sizeof(GLint) is platform-dependent! */
       glGetIntegerv(GL_LIST_BASE, &i);
       fprintf(stderr, "drawStringInFont popped state "
                       "to restore list base %d.\n", i);

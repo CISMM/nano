@@ -171,6 +171,7 @@ int build_list_set
   if (subset.empty()) return 0;
 
 #if defined(sgi) || defined(__CYGWIN__)
+//#if defined(sgi)
   if (g_VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
     if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE) {
       glEnable(GL_COLOR_ARRAY_EXT);
@@ -232,6 +233,7 @@ int build_list_set
   }
 
 #endif // sgi or __CYGWIN__
+//#endif // sgi 
 
   if (spm_graphics_verbosity >= 15) {
     fprintf(stderr, "  updating %d - %d", subset.low(), subset.high());
@@ -383,6 +385,7 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
                   *base, *num);
 
 #if defined(sgi) || defined(__CYGWIN__)
+//#if defined(sgi)
 	// use vertex array extension
 	if (g_VERTEX_ARRAY) {
 	  glEnable(GL_VERTEX_ARRAY_EXT);

@@ -57,7 +57,7 @@ static	Tcl_Interp	*interpreter = NULL;	// Tcl interpreter used
 //	Update the integer variable in the handler that is pointed to
 // when the variables changes.
 
-static	char	*handle_int_value_change(ClientData clientData,
+char	*handle_int_value_change(ClientData clientData,
 	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
 {
         char    *cvalue;
@@ -103,7 +103,7 @@ static	char	*handle_int_value_change(ClientData clientData,
 //	Update the float variable in the handler that is pointed to
 // when the variables changes.
 
-static	char	*handle_float_value_change(ClientData clientData,
+char	*handle_float_value_change(ClientData clientData,
 	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
 {
         char    *cvalue;
@@ -140,7 +140,7 @@ static	char	*handle_float_value_change(ClientData clientData,
 //	Update the string variable in the handler that is pointed to
 // when the variables changes.
 
-static	char	*handle_string_value_change(ClientData clientData,
+char	*handle_string_value_change(ClientData clientData,
 	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
 {
         char    *cvalue;
