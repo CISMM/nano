@@ -489,7 +489,13 @@ static  void handle_import_rotx_change (vrpn_float64, void *)
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
 		double i = Q_DEG_TO_RAD(import_rotx);
-		World.Do(&URender::SetRotxAll, &i);
+		double j = Q_DEG_TO_RAD(import_roty);
+		double k = Q_DEG_TO_RAD(import_rotz);
+		double array[3];
+		array[0] = i;
+		array[1] = j;
+		array[2] = k;
+		World.Do(&URender::SetRotAll, (void *)array);
 	}
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
@@ -497,9 +503,10 @@ static  void handle_import_rotx_change (vrpn_float64, void *)
 		    URender &obj = node->TGetContents();
 
 			q_vec_type euler;
-			q_to_euler(euler, obj.GetLocalXform().GetRot());
 
-			euler[2] = Q_DEG_TO_RAD(import_rotx);
+			euler[0] = Q_DEG_TO_RAD(import_rotx);
+			euler[1] = Q_DEG_TO_RAD(import_roty);
+			euler[2] = Q_DEG_TO_RAD(import_rotz);
 
 			q_type rot;
 			q_from_euler(rot, euler[0], euler[1], euler[2]);
@@ -521,8 +528,14 @@ static  void handle_import_roty_change (vrpn_float64, void *)
 {
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
-		double i = Q_DEG_TO_RAD(import_roty);
-		World.Do(&URender::SetRotyAll, &i);
+		double i = Q_DEG_TO_RAD(import_rotx);
+		double j = Q_DEG_TO_RAD(import_roty);
+		double k = Q_DEG_TO_RAD(import_rotz);
+		double array[3];
+		array[0] = i;
+		array[1] = j;
+		array[2] = k;
+		World.Do(&URender::SetRotAll, array);
 	}
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
@@ -530,9 +543,10 @@ static  void handle_import_roty_change (vrpn_float64, void *)
 		    URender &obj = node->TGetContents();
 
 			q_vec_type euler;
-			q_to_euler(euler, obj.GetLocalXform().GetRot());
 
+			euler[0] = Q_DEG_TO_RAD(import_rotx);
 			euler[1] = Q_DEG_TO_RAD(import_roty);
+			euler[2] = Q_DEG_TO_RAD(import_rotz);
 
 			q_type rot;
 			q_from_euler(rot, euler[0], euler[1], euler[2]);
@@ -555,8 +569,14 @@ static  void handle_import_rotz_change (vrpn_float64, void *)
 {
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
-		double i = Q_DEG_TO_RAD(import_rotz);
-		World.Do(&URender::SetRotzAll, &i);
+		double i = Q_DEG_TO_RAD(import_rotx);
+		double j = Q_DEG_TO_RAD(import_roty);
+		double k = Q_DEG_TO_RAD(import_rotz);
+		double array[3];
+		array[0] = i;
+		array[1] = j;
+		array[2] = k;
+		World.Do(&URender::SetRotAll, array);
 	}
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
@@ -564,9 +584,10 @@ static  void handle_import_rotz_change (vrpn_float64, void *)
 		    URender &obj = node->TGetContents();
 
 			q_vec_type euler;
-			q_to_euler(euler, obj.GetLocalXform().GetRot());
 
-			euler[0] = Q_DEG_TO_RAD(import_rotz);
+			euler[0] = Q_DEG_TO_RAD(import_rotx);
+			euler[1] = Q_DEG_TO_RAD(import_roty);
+			euler[2] = Q_DEG_TO_RAD(import_rotz);
 
 			q_type rot;
 			q_from_euler(rot, euler[0], euler[1], euler[2]);
