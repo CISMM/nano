@@ -1,8 +1,10 @@
 #ifndef NMUI_HAPTIC_SURFACE_H
 #define NMUI_HAPTIC_SURFACE_H
 
-#include <vrpn_Types.h>
 #include <quat.h>
+#include <vrpn_Types.h>
+
+class vrpn_ForceDevice;  // from <vrpn_ForceDevice.h>
 
 class nmb_Dataset;  // from <nmb_Dataset.h>
 class nmb_Decoration;  // from <nmb_Decoration.h>
@@ -24,18 +26,19 @@ class nmui_HapticSurface {
     vrpn_bool isEnabled (void) const;
 
     virtual void getLocation (q_vec_type x) const;
-      /**< Returns position last sent to setLocation(), in
-       * microscope coordinates.
-       */
+      ///< Returns position last sent to setLocation(), in
+      ///< microscope coordinates.
 
-    virtual void getOutputPlane (q_vec_type n, double * d)
-                       const;
-      /**< Returns the approximating plane *in Phantom coordinates*
-       * for the position specified by
-       * the last setLocation() call.
-       */
+    virtual void getOutputPlane (q_vec_type n, double * d) const;
+      ///< Returns the approximating plane *in Phantom coordinates*
+      ///< for the position specified by the last setLocation() call.
+      ///< Undefined if the current mode doesn't create
+      ///< an approximating plane.
 
     virtual double distanceFromSurface (void) const;
+      ///< Returns the distance from the position specified in
+      ///< the last setLocation() call to the surface/approximating plane,
+      ///< or 0 if the current mode doesn't create an approximating plane.
 
 
     // MANIPULATORS
@@ -43,22 +46,27 @@ class nmui_HapticSurface {
 
     virtual void setLocation (q_vec_type);
     virtual void setLocation (double x, double y, double z);
-      /**< Specify current location of the user's hand,
-       * in microscope coordinates (?!).
-       */
+      ///< Specify current location of the user's hand,
+      ///< in microscope coordinates (?!).
 
     virtual void update (void) = 0;
-      /**< Recompute all output values based on current state.
-       * Necessary because we assume things are dynamic and volatile;
-       * we can't assume that nothing's changed since the last call
-       * to setLocation() if we've serviced any devices since then.
-       */
+      ///< Recompute all output values based on current state.
+      ///< Necessary because we assume things are dynamic and volatile;
+      ///< we can't assume that nothing's changed since the last call
+      ///< to setLocation() if we've serviced any devices since then.
+
+    virtual void sendForceUpdate (vrpn_ForceDevice * device);
+      ///< Sets up a force update for the indicated force device.
+      ///< Default implementation calls device->set_plane() with
+      ///< (d_currentPlaneNormal, d_currentPlaneParameter).  The caller
+      ///< is responsible for calling send_surface() or start_surface()
+      ///< as required.
 
     virtual void enable (void);
-      /**< Turn (this) haptics on. */
+      ///< Turn (this) haptics on.
 
     virtual void disable (void);
-      /**< Turn (this) haptics off. */
+      ///< Turn (this) haptics off.
 
   protected:
 
@@ -70,23 +78,21 @@ class nmui_HapticSurface {
     // Microscope-space coordinates
 
     q_vec_type d_handPosMS;
-      /**< Position of the user's hand in microscope coordinates. */
+      ///< Position of the user's hand in microscope coordinates.
 
     // Phantom-space coordintes
 
     q_vec_type d_planePosPH;
-      /**< Projection of d_handPosMS onto the surface being felt
-       * in the coordinates of the haptic device.
-       */
+      ///< Projection of d_handPosMS onto the surface being felt
+      ///< in the coordinates of the haptic device.
 
     q_vec_type d_currentPlaneNormal;
     double d_currentPlaneParameter;
-      /**< Plane equation for approximating plane to surface. */
+      ///< Plane equation for approximating plane to surface.
 
     double d_distanceFromPlane;
-      /**< Distance from d_handPosMS to the current approximating plane
-       * (or other surface representation).
-       */
+      ///< Distance from d_handPosMS to the current approximating plane
+      ///< (or other surface representation).
 
     vrpn_bool d_enabled;
 
@@ -227,6 +233,39 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
 #else
     nmm_Microscope_Remote * d_microscope;
 #endif
+
+};
+
+
+class nmui_HSDirectZ : public nmui_HapticSurface {
+
+  public:
+
+#ifndef USE_VRPN_MICROSCOPE
+    nmui_HSDirectZ (nmb_Dataset *, Microscope *);
+#else
+    nmui_HSDirectZ (nmb_Dataset *, nmm_Microscope_Remote *);
+#endif
+
+    virtual ~nmui_HSDirectZ (void);
+
+    // MANIPULATORS
+
+    virtual void update (void);
+    virtual void sendForceUpdate (vrpn_ForceDevice * device);
+
+  protected:
+
+    nmb_Dataset * d_dataset;
+#ifndef USE_VRPN_MICROSCOPE
+    Microscope * d_microscope;
+#else
+    nmm_Microscope_Remote * d_microscope;
+#endif
+
+    q_vec_type d_UP;
+
+    double d_force;
 
 };
 

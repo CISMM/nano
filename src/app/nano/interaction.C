@@ -54,6 +54,7 @@
 #include <nmg_Globals.h>
 
 #include <nmui_Util.h>
+#include <nmui_Haptics.h>
 #include <nmui_HapticSurface.h>
 #include <nmui_SurfaceFeatures.h>
 
@@ -138,7 +139,8 @@ actual feeling helps the students understand the surface.
 Tclvar_int_with_button	config_haptic_enable("Enable Haptic", ".sliders", 1);
 Tclvar_int_with_button	config_haptic_plane("Haptic from flat", ".sliders", 0);
 
-static nmui_SurfaceFeatures haptic_features;
+//static nmui_SurfaceFeatures haptic_features;
+static nmui_HapticsManager haptic_manager;
 
 /***************************
  * Mode of user operation
@@ -263,10 +265,7 @@ int doLight(int, int);
 int doFly(int, int);
 int doScale(int, int, double);
 int specify_directZ_force(int);
-double touch_canned_from_plane(int, q_vec_type handpos);
-double touch_flat_from_measurelines(int, q_vec_type handpos);
-double touch_live_to_plane_fit_to_line(int, q_vec_type handpos);
-int plane_norm(int);
+double touch_surface (int, q_vec_type);
 int set_aim_line_color(float);
 int meas_cross( float, float, float, float, float);
 int doMeasure(int, int);
@@ -334,15 +333,15 @@ TclNet_float tcl_wfr_scale
 
 
 static void handle_friction_linear_change(vrpn_int32 val, void *) {
-  haptic_features.useLinearFriction(val);
+  haptic_manager.surfaceFeatures().useLinearFriction(val);
 }
 
 static void handle_bumpscale_linear_change(vrpn_int32 val, void *) {
-  haptic_features.useLinearBumps(val);
+  haptic_manager.surfaceFeatures().useLinearBumps(val);
 }
 
 static void handle_buzzscale_linear_change(vrpn_int32 val, void *) {
-  haptic_features.useLinearBuzzing(val);
+  haptic_manager.surfaceFeatures().useLinearBuzzing(val);
 }
 
 static void handle_handTracker_update_rate (vrpn_float64 v, void *) {
@@ -638,6 +637,37 @@ static void handle_phantom_reset( vrpn_int32, void *) // don't use val, userdata
 
     tcl_phantom_reset_pressed = 0;
 }
+
+void setupHaptics (int mode) {
+  static nmui_HSCanned cannedHaptics (dataset);
+  static nmui_HSMeasurePlane measureHaptics (dataset, decoration);
+  static nmui_HSLivePlane liveHaptics (dataset, microscope);
+
+  static nmui_GridFeatures gridStrategy (&cannedHaptics, dataset);
+  static nmui_PointFeatures pointStrategy (microscope);
+
+
+  if (config_haptic_plane) {
+      haptic_manager.setSurface(&measureHaptics);
+      haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
+  }
+
+  switch (mode) {
+    case USER_PLANE_MODE:
+      haptic_manager.setSurface(&cannedHaptics);
+      haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(&gridStrategy);
+      break;
+    case USER_LINE_MODE:
+    case USER_PLANEL_MODE:
+      haptic_manager.setSurface(&liveHaptics);
+      haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy
+                             (&pointStrategy);
+      break;
+
+
+  }
+}
+
 
 /**
  *
@@ -1349,240 +1379,34 @@ void specify_sound(int x, int y)
 }
 
 
-
-/**
-  modified Feb 2000 by Tom Hudson
-              - Uses nmui_HapticSurface
-
-  modified 10/14/99 by Russ Taylor
-	- Check for haptic enable/disable and don't display if not
-	- Check for haptic feel from flat
-	- Return signed distance above (negative for below) plane
-
-   touch_canned_from_plane
-	      - Let the user feel on the stored data, doing "Phong haptic
-		shading" to interpolate the normal from the nearest grid
-		locations.
-	      - Handle differences in scale between user and world
-	      - Handle differences in orientation between user and world
-	      - Uses info from grid only to compute mag and direction.
-*/
-double touch_canned_from_plane (int whichUser, q_vec_type handpos) {
-
-  static nmui_HSCanned haptics (dataset);
-  static nmui_GridFeatures strategy (&haptics, dataset);
-  q_vec_type n;
-  double d;
-
-  // If the user has selected feel_from_flat, then call that routine
-  // instead.
-  if (config_haptic_plane) {
-    return touch_flat_from_measurelines(whichUser, handpos);
-  }
-
-  // Passing a temp pointer to a persistent object!
-  // But it will ONLY be referenced while this function is live.
-  haptic_features.setSurfaceFeatureStrategy(&strategy);
-
-//fprintf(stderr, "touch_canned_from_plane():  \n");
-
-  haptics.setLocation(handpos);
-  haptics.update();
-
-  if (forceDevice) {
-    haptics.getOutputPlane(n, &d);
-    forceDevice->set_plane(n[0], n[1], n[2], d);
-  }
-
-  // Set adhesion, compliance, bumps, buzzing, ...
-  // Must come after haptics.setLocation(), and
-  // probably update() too.
-  haptic_features.update();
-
-  // Return signed distance above plane (plane in world space).
-
-  return haptics.distanceFromSurface();
-}
-
-
-/**
-  modified Feb 2000 by Tom Hudson
-              - Uses nmui_HapticSurface
-
-  created 10/14/99 by Russ Taylor.
-	      -	Returns the signed distance of the user's hand position
-		above the plane.
-
-   touch_flat_from_measurelines
-	      - Let the user feel on a flat plane that is the plane
-		between the three current measure-line intersections
-		with the surface. This is useful for experiments that
-		want to determine how much force helps during modification
-		attempts or feeling on the surface (because this gives
-		only a reference plane and not the actual feel of the
-		surface).
-	      - Handle differences in scale between user and world
-	      - Handle differences in orientation between user and world
-*/
-double touch_flat_from_measurelines(int /*whichUser*/, q_vec_type handpos)
-{
-  //---------------------------------------------------------------------
-  // Get the height plane, which we'll use to find the height at the
-  // locations of the measure lines
-
-  static nmui_HSMeasurePlane haptics (dataset, decoration);
-  q_vec_type n;
-  double d;
-
-  haptics.setLocation(handpos);
-  haptics.update();
-
-  if (forceDevice) {
-    haptics.getOutputPlane(n, &d);
-    forceDevice->set_plane(n[0], n[1], n[2], d);
-  }
-
-  // Return signed distance above plane (plane in world space).
-
-  return haptics.distanceFromSurface();
-}
-
-/**
- *
-  modified Feb 2000 by Tom Hudson
-              - Uses nmui_HapticSurface
-
-  modified 10/14/99 by Russ Taylor
-	- Check for haptic enable/disable and don't display if not
-	- Check for haptic feel from flat
-	- Returns the signed distance of the user's hand position
-	  above the plane.
-
-   touch_live_to_plane_fit_to_line
-	      - Apply force to user based on difference in Z value
-		between this point result and the last one
-	      - Handle differences in scale between user and world
-	      - Handle differences in orientation between user and world
-	      - Uses vector from last point to current point for normal
-		in plane of Z and line of travel.
-	      - MUST BE IN LOCK STEP BEFORE CALLING !!!
- *
+/** @function touch_surface()
+ * Replaces touch_canned_from_plane(), touch_flat_from_measurelines(),
+ * and touch_live_to_plane_fit_to_line() by moving their state and
+ * the differences between their algorithms into libnmui:
+ * nmui_HapticSurface defines the plane, and nmui_SurfaceFeatures
+ * defines the auxiliary haptic channels (buzzing, bumping, &c).
+ * nmui_SurfaceFeatures should have been passed to the global
+ * haptic_manager.surfaceFeatures() last time the mode was changed.
  */
-double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
-{
-  static nmui_HSLivePlane haptics (dataset, microscope);
-  static nmui_PointFeatures strategy (microscope);
-  q_vec_type n;
-  double d;
 
-  // If the user has selected feel_from_flat, then call that routine
-  // instead.
-  if (config_haptic_plane) {
-	return touch_flat_from_measurelines(whichUser, handpos);
-  }
+// BUG must sendSurface sometimes?
 
-  haptic_features.setSurfaceFeatureStrategy(&strategy);
+double touch_surface (int, q_vec_type handpos) {
 
-  haptics.setLocation(handpos);
-  haptics.update();
+  // Set up the approximating plane or force field...
 
-  if (forceDevice) {
+  haptic_manager.surface()->setLocation(handpos);
+  haptic_manager.surface()->update();
+  haptic_manager.surface()->sendForceUpdate(forceDevice);
 
-    haptics.getOutputPlane(n, &d);
-    forceDevice->set_plane(n[0], n[1], n[2], d);
-      
-    // Set friction, adhesion, compliance...
-    // Must happen after haptics.setLocation(), and probably update().
+  // Set up buzzing, bumps, friction, compliance, ...
 
-    haptic_features.update();
+  haptic_manager.surfaceFeatures().update();
 
-    /* Send the plane to the haptic server */
-    forceDevice->sendSurface();
-  }
-
-  return haptics.distanceFromSurface();
+  return haptic_manager.surface()->distanceFromSurface();
 }
 
 
-/**
- *
- * OBSOLETE, or I assume so, because it's based on blunt_result, and
-no one fills that in anymore. 
-   plane_norm - Apply force to user based on difference in Z value
-	      - Handle differences in scale between user and world
-	      - Handle differences in orientation between user and world
-	      - Uses Normal from microscope.
-	      - MUST BE IN LOCK STEP BEFORE CALLING !!!
- *
- */
-int plane_norm(int whichUser)
-{
-     Blunt_result * blunt_result;
-     q_vec_type			point;
-     q_vec_type			pnorm;
-     v_xform_type            	WorldFromTracker, TrackerFromWorld;
-     double			d;
-
-     blunt_result = microscope->getBluntResult();
-
-     /* if we don't have a valid norm, do nothing.  the Z component
-     **	of the surface normal must always be positive.
-     **/
-     if( blunt_result->normal[Z] <= 0.0 ) {
-	fprintf(stderr,"Z component of normal was negative, ignoring!\n");
-	return -1;
-     }
-
-     point[X] = blunt_result->x;
-     point[Y] = blunt_result->y;
-
-     BCPlane* plane = dataset->inputGrid->getPlaneByName
-                     (dataset->heightPlaneName->string());
-     if (plane == NULL)
-     {
-	 fprintf(stderr, "Error in plane_norm: could not get plane!\n");
-	 return -1;
-     }     
-     point[Z] = blunt_result->height*plane->scale();
-
-     /* got x,y,z, and norm in microscope space, XForm into ARM space
-     **/
-
-     /* Rotate, Xlate and scale point from world space to ARM space.
-     ** The normal direction just needs rotating.
-     **/
-     v_x_compose(&WorldFromTracker,
-	     &v_world.users.xforms[whichUser],
-	     &v_users[whichUser].xforms[V_ROOM_FROM_HAND_TRACKER]);
-
-     v_x_invert(&TrackerFromWorld, &WorldFromTracker);
-
-     v_x_xform_vector( point, &TrackerFromWorld, point );
-
-     q_xform(pnorm, TrackerFromWorld.rotate, blunt_result->normal);
-
-     d = 1.0/sqrt( pnorm[X]*pnorm[X]
-		+  pnorm[Y]*pnorm[Y]
-		+  pnorm[Z]*pnorm[Z] );
-     pnorm[X] *= d;
-     pnorm[Y] *= d;
-     pnorm[Z] *= d;
-
-     d = -( pnorm[X]*point[X]
-	 +  pnorm[Y]*point[Y]
-	 +  pnorm[Z]*point[Z] );
-
-     forceDevice->set_plane(pnorm[X],pnorm[Y],pnorm[Z],d);
-
- 
-     /* Find the spring constant based on the force dial */
-     forceDevice->setSurfaceKspring(Arm_knobs[FORCE_KNOB]*(MAX_K-MIN_K)+MIN_K);
-
-     /* Send the plane to the haptic server */
-     forceDevice->sendSurface();
-
-     return 0;
-}
 
 /** When controling the position of the tip in 3D, this calculates
  * the force the user should feel based on internal sensor measurements.
@@ -1953,6 +1777,8 @@ VERBOSE(8, "      In doLine().");
 	    graphics->positionSweepLine(TopL, BottomL, TopR, BottomR);
 	}
 
+        setupHaptics(USER_LINE_MODE);
+
 VERBOSE(8, "      doLine:  starting case statement.");
 
 	switch ( userEvent ) 
@@ -1983,13 +1809,15 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	    
 	    /* Apply force to the user based on current sample points */
 	    if( microscope->state.relaxComp >= 0 ) {
-		touch_live_to_plane_fit_to_line(whichUser, clipPos);
-		if( !SurfaceGoing ) {
-		    if (forceDevice  && config_haptic_enable) {
-		    	forceDevice->startSurface();
-			SurfaceGoing = 1;
-		    }
-		}
+              touch_surface(whichUser, clipPos);
+              if (forceDevice  && config_haptic_enable) {
+                if (!SurfaceGoing) {
+                  forceDevice->startSurface();
+                  SurfaceGoing = 1;
+                } else {
+                  forceDevice->sendSurface();
+                }
+              }
 	    }
 	    
 	    break;
@@ -2178,13 +2006,26 @@ int doFeelFromGrid(int whichUser, int userEvent)
         decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
         nmui_Util::moveSphere(clipPos, graphics);
 
+    static nmui_HSCanned cannedHaptics (dataset);
+    static nmui_HSMeasurePlane measureHaptics (dataset, decoration);
+
+    static nmui_GridFeatures strategy (&cannedHaptics, dataset);
+
+    if (config_haptic_plane) {
+      haptic_manager.setSurface(&measureHaptics);
+      haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
+    } else {
+      haptic_manager.setSurface(&cannedHaptics);
+      haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(&strategy);
+    }
+
 	switch ( userEvent ) 
 	  {
 	  case PRESS_EVENT:
 	    /* stylus has just been pressed */
 	    /* if user is below the surface on the initial press, don't send
 	       the surface, because the user will get a strong upward force. */
-	    aboveSurf= touch_canned_from_plane(whichUser, clipPos);
+	    aboveSurf = touch_surface(whichUser, clipPos);
 //fprintf(stderr, "doFeelFromGrid() PRESS %.5f above surface.\n", aboveSurf);
 	    if( !SurfaceGoing && aboveSurf>0) {
 	      if (forceDevice && config_haptic_enable) {
@@ -2197,7 +2038,7 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	  case HOLD_EVENT:
 	    /* stylus continues to be pressed */
 	    /* Apply force to the user based on grid */
-	    aboveSurf = touch_canned_from_plane(whichUser, clipPos);
+	    aboveSurf = touch_surface(whichUser, clipPos);
 //fprintf(stderr, "doFeelFromGrid() HOLD %.5f above surface.\n", aboveSurf);
 	    if (SurfaceGoing || aboveSurf>0) {
 	      if (forceDevice && config_haptic_enable) {
@@ -2464,16 +2305,21 @@ int doFeelLive(int whichUser, int userEvent)
 	    }
 	   
 	} else {
+
+          setupHaptics(USER_PLANEL_MODE);
+
 	    /* Apply force to the user based on current sample points */
 	    // XXX needs new test with new nmm_relaxComp object
 	    if( microscope->state.relaxComp >= 0 ) {
-		touch_live_to_plane_fit_to_line(whichUser, clipPos);
-		if( !SurfaceGoing ) {
-		    if (forceDevice && config_haptic_enable) {
-		    	forceDevice->startSurface();
-			SurfaceGoing = 1;
-		    }
-		}
+              touch_surface(whichUser, clipPos);
+              if (forceDevice  && config_haptic_enable) {
+                if (!SurfaceGoing) {
+                  forceDevice->startSurface();
+                  SurfaceGoing = 1;
+                } else {
+                  forceDevice->sendSurface();
+                }
+              }
 	    }
 	}
 	break;
@@ -2751,19 +2597,11 @@ void initializeInteraction (void) {
 
   updateWorldFromRoom();
 
-//fprintf(stderr, "Starting world xlate is:  (%.5f %.5f %.5f)\n",
-//(vrpn_float64) tcl_wfr_xlate_X, (vrpn_float64) tcl_wfr_xlate_Y,
-//(vrpn_float64) tcl_wfr_xlate_Z);
-//fprintf(stderr, "Starting world rot is:  (%.5f %.5f %.5f %.5f)\n",
-//(vrpn_float64) tcl_wfr_rot_0, (vrpn_float64) tcl_wfr_rot_1,
-//(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
-//fprintf(stderr, "Starting world scale is %.5f\n",
-//(vrpn_float64) tcl_wfr_scale);
-
 }
 
 
-/** These two functions work together to make sure that all changes
+/**
+  These two functions work together to make sure that all changes
  of the world-room transform work properly with collaboration.
  Everything that used to write v_world.users.xforms[0] instead
  calls updateWorldFromRoom(), which triggers Tcl_Netvar updates.
@@ -2774,13 +2612,10 @@ void initializeInteraction (void) {
  handle_worldFromRoom_change(), which actually writes into
  v_world.users.xforms[0]
 */
-//static int lock_xform = 0;
 
 void updateWorldFromRoom (v_xform_type * t) {
 
   graphicsTimer.activate(graphicsTimer.getListHead());
-
-  //lock_xform = 1;
 
   if (!t) {
     t = &v_world.users.xforms[0];
@@ -2798,28 +2633,11 @@ void updateWorldFromRoom (v_xform_type * t) {
   // Only trigger vlib things once, on the last assignment.
 
   tcl_wfr_scale = t->scale;
-
-
-//fprintf(stderr, "Set TCL world xlate to:  (%.5f %.5f %.5f)\n",
-//(vrpn_float64) tcl_wfr_xlate_X, (vrpn_float64) tcl_wfr_xlate_Y,
-//(vrpn_float64) tcl_wfr_xlate_Z);
-//fprintf(stderr, "Set TCL world rot to:  (%.5f %.5f %.5f %.5f)\n",
-//(vrpn_float64) tcl_wfr_rot_0, (vrpn_float64) tcl_wfr_rot_1,
-//(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
-//fprintf(stderr, "Set TCL world scale to %.5f\n",
-//(vrpn_float64) tcl_wfr_scale);
 }
 
 
 // NANOX
 void handle_worldFromRoom_change (vrpn_float64, void *) {
-  //if (lock_xform) {
-    //return;
-  //}
-
-  //if (!value) {
-    //return;
-  //}
 
   // We'd like to only send this message once per frame,
   // but a naive implementation (i.e. this one) will send it
@@ -2850,26 +2668,6 @@ void handle_worldFromRoom_change (vrpn_float64, void *) {
   xform.scale = tcl_wfr_scale;
 
   graphics->setViewTransform(xform);
-
-  //v_world.users.xforms[0].xlate[0] = tcl_wfr_xlate_X;
-  //v_world.users.xforms[0].xlate[1] = tcl_wfr_xlate_Y;
-  //v_world.users.xforms[0].xlate[2] = tcl_wfr_xlate_Z;
-  //v_world.users.xforms[0].rotate[0] = tcl_wfr_rot_0;
-  //v_world.users.xforms[0].rotate[1] = tcl_wfr_rot_1;
-  //v_world.users.xforms[0].rotate[2] = tcl_wfr_rot_2;
-  //v_world.users.xforms[0].rotate[3] = tcl_wfr_rot_3;
-  //v_world.users.xforms[0].scale = tcl_wfr_scale;
-
-//fprintf(stderr, "Set VLIB world xlate to:  (%.5f %.5f %.5f)\n",
-//(vrpn_float64) tcl_wfr_xlate_X, (vrpn_float64) tcl_wfr_xlate_Y,
-//(vrpn_float64) tcl_wfr_xlate_Z);
-//fprintf(stderr, "Set VLIB world rot to:  (%.5f %.5f %.5f %.5f)\n",
-//(vrpn_float64) tcl_wfr_rot_0, (vrpn_float64) tcl_wfr_rot_1,
-//(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
-//fprintf(stderr, "Set VLIB world scale to %.5f\n",
-//(vrpn_float64) tcl_wfr_scale);
-
-  //tcl_wfr_changed = 0;
 }
 
 int clear_polyline( void * userdata ) {
@@ -2880,7 +2678,5 @@ int clear_polyline( void * userdata ) {
   g->emptyPolyline();
   return 0;
 }
-/*============================================================================
- end interaction.c
- ===========================================================================*/
+
 

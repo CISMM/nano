@@ -4,6 +4,8 @@
 
 #include <v.h>  // BUG - for VectorType
 
+#include <vrpn_ForceDevice.h>
+
 #include <BCPlane.h>  // needed by normal.h
 
 #include "normal.h"  // BUG - replace with quatlib!
@@ -19,7 +21,8 @@
 
 
 
-nmui_HapticSurface::nmui_HapticSurface (void) {
+nmui_HapticSurface::nmui_HapticSurface (void) :
+    d_distanceFromPlane (0.0) {
 
 }
 
@@ -70,6 +73,16 @@ void nmui_HapticSurface::setLocation (double x, double y, double z) {
 
 //fprintf(stderr, "nmui_HapticSurface::setLocation() to <%.5f, %.5f, %.5f>\n",
 //d_handPosMS[0], d_handPosMS[1], d_handPosMS[2]);
+}
+
+// virtual
+void nmui_HapticSurface::sendForceUpdate (vrpn_ForceDevice * device) {
+  if (device) {
+    device->set_plane(d_currentPlaneNormal[0],
+                      d_currentPlaneNormal[1],
+                      d_currentPlaneNormal[2],
+                      d_currentPlaneParameter);
+  }
 }
 
 // virtual
@@ -368,7 +381,7 @@ nmui_HSLivePlane::nmui_HSLivePlane (nmb_Dataset * dset,
   // Default normal is up.
   d_UP[0] = 0.0;
   d_UP[1] = 0.0;
-  d_UP[2] = 0.0;
+  d_UP[2] = 1.0;
   q_vec_copy(d_lastNormal, d_UP);
 
 }
@@ -496,6 +509,109 @@ void nmui_HSFeelAhead::newPointListReceivedCallback (void * userdata) {
   nmui_HSFeelAhead * it = (nmui_HSFeelAhead *) userdata;
 
   it->updateModel();
+
+}
+
+
+
+
+
+
+nmui_HSDirectZ::nmui_HSDirectZ (nmb_Dataset * dataset,
+#ifndef USE_VRPN_MICROSCOPE
+                                Microscope * scope) :
+#else
+                                nmm_Microscope_Remote * scope) :
+#endif
+    d_dataset (dataset),
+    d_microscope (scope),
+    d_force (0.0) {
+
+  d_UP[0] = 0.0;
+  d_UP[1] = 0.0;
+  d_UP[2] = 1.0;
+
+}
+
+// virtual
+nmui_HSDirectZ::~nmui_HSDirectZ (void) {
+
+}
+
+    // MANIPULATORS
+
+// virtual
+void nmui_HSDirectZ::update (void) {
+  BCPlane * plane;
+  Point_value * value;
+  Point_value * forcevalue;
+  double currentForce;
+
+  plane = d_dataset->inputGrid->getPlaneByName
+               (d_dataset->heightPlaneName->string());
+
+  value = d_microscope->state.data.inputPoint->getValueByPlaneName
+               (d_dataset->heightPlaneName->string());
+
+  if (!plane || !value) {
+    fprintf(stderr, "nmui_HSDirectZ::update():  NULL value.\n");
+    return;
+  }
+
+  d_planePosPH[0] = d_handPosMS[0];
+  d_planePosPH[1] = d_handPosMS[0];
+  d_planePosPH[2] = value->value() * plane->scale();
+
+  // Get the current value of the internal sensor, which tells us
+  // the force the tip is experiencing.
+
+  forcevalue = d_microscope->state.data.inputPoint->getValueByName
+                       ("Internal Sensor");
+
+  if (!forcevalue) {
+    fprintf(stderr, "nmui_HSDirectZ::update():  NULL force value.\n");
+    return;
+  }
+
+  currentForce = forcevalue->value();
+
+  // Calculate the difference from the free-space value of
+  // internal sensor recorded when we entered direct-z control
+  d_force = currentForce
+             - d_microscope->state.modify.freespace_normal_force;
+
+
+  // Got (x,y,z) and an up vector in microscope space;  XForm into ARM space.
+
+  pointToTrackerFromWorld(d_planePosPH, d_planePosPH);
+  vectorToTrackerFromWorld(d_currentPlaneNormal, d_UP);
+}
+
+// virtual
+void nmui_HSDirectZ::sendForceUpdate (vrpn_ForceDevice * device) {
+
+#if 0
+
+  double scale = directz_force_scale;
+
+  if (device) {
+
+    // This should be where the user is currently located.
+    device->setFF_Origin(point[Q_X], point[Q_Y], point[Q_Z]);
+
+    // This is the force measured by the microscope, * scale factor,
+    // * the direction (up = positive z).
+    device->setFF_Force(d_force * d_currentPlaneNormal[Q_X] * scale,
+                        d_force * d_currentPlaneNormal[Q_Y] * scale,
+                        d_force * d_currentPlaneNormal[Q_Z] * scale);
+
+    // Force field does not change as we move around.
+    device->setFF_Jacobian(0,0,0,  0,0,0,  0,0,0);
+    device->setFF_Radius(0.02); // 2cm radius of validity
+
+  }
+
+#endif
 
 }
 

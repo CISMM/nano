@@ -392,37 +392,28 @@ class WellKnownPorts {
     const int collaboratingPeerServer;
     const int roundTripTime;
     const int remote_gaEngine;
+    const int microscopeMutex;
 
  public:
-    WellKnownPorts (int base_port_number=defaultBasePort);
+    WellKnownPorts (int base_port_number = defaultBasePort);
 };
 
-const int WellKnownPorts::defaultBasePort= 4501;
+const int WellKnownPorts::defaultBasePort = 4501;
 
 WellKnownPorts::WellKnownPorts (int base_port_number)
-  : basePortNumber          (0+base_port_number),
-    interfaceLog            (1+base_port_number),
-    graphicsControl         (2+base_port_number),
-    remoteRenderingData     (3+base_port_number),
-    collaboratingPeerServer (4+base_port_number),
-    roundTripTime           (5+base_port_number),
-    remote_gaEngine         (6+base_port_number)
+  : basePortNumber          (0 + base_port_number),
+    interfaceLog            (1 + base_port_number),
+    graphicsControl         (2 + base_port_number),
+    remoteRenderingData     (3 + base_port_number),
+    collaboratingPeerServer (4 + base_port_number),
+    roundTripTime           (5 + base_port_number),
+    remote_gaEngine         (6 + base_port_number),
+    microscopeMutex         (7 + base_port_number)
 {
     // empty
 }
 
-WellKnownPorts * wellKnownPorts = 0;
-
-/* old, not used anymore.
-
-const int WellKnownPorts::interfaceLog (4501);
-
-const int WellKnownPorts::graphicsControl (nmg_Graphics::defaultPort);
-const int WellKnownPorts::remoteRenderingData (nmg_Graphics::defaultPort + 1);
-
-const int WellKnownPorts::collaboratingPeerServer (4510);
-const int WellKnownPorts::roundTripTime (4581);
-*/
+WellKnownPorts * wellKnownPorts = NULL;
 
 //-----------------------------------------------------------------------
 // TCL initialization section.
@@ -5481,6 +5472,8 @@ int main(int argc, char* argv[])
     VERBOSE(1, "Loading PPM textures");
     loadPPMTextures();
 
+    istate.afm.mutexPort = wellKnownPorts->microscopeMutex;
+
 #ifdef USE_VRPN_MICROSCOPE
 
     // Open a port (4581) that will report unfiltered observed RTT
@@ -5506,31 +5499,36 @@ int main(int argc, char* argv[])
 	sprintf(istate.afm.deviceName, "file:%s", istate.afm.inputStreamName);
 
     } 
+
     // Check for no microscope connection - i.e. we are opening Topo
     // or PPM files.
+
     if (strcmp(istate.afm.deviceName, "null")==0) {
-	microscope_connection= NULL;
+
+      microscope_connection = NULL;
+
     } else {
-    // otherwise, open the device specified. 
-    fprintf(stderr, "   The connection name is %s\n", istate.afm.deviceName);
-    microscope_connection = vrpn_get_connection_by_name
-	(istate.afm.deviceName,
-	 istate.afm.writingStreamFile ? istate.afm.outputStreamName
-                                    : (char *) NULL,
-	 logmode,
-	 istate.writingRemoteStream ? istate.remoteOutputStreamName
-                                  : (char *) NULL);
-    if (!microscope_connection) {
+
+      // otherwise, open the device specified. 
+      fprintf(stderr, "   The connection name is %s\n", istate.afm.deviceName);
+      microscope_connection = vrpn_get_connection_by_name
+	  (istate.afm.deviceName,
+	   istate.afm.writingStreamFile ? istate.afm.outputStreamName
+                                        : (char *) NULL,
+	   logmode,
+	   istate.writingRemoteStream ? istate.remoteOutputStreamName
+                                      : (char *) NULL);
+      if (!microscope_connection) {
 	fprintf(stderr, "   Couldn't open connection to %s.\n",
 		istate.afm.deviceName);
 	exit(0);
-    }
+      }
     
-    // Decide whether reading vrpn log file or doing live.
-    vrpnLogFile = microscope_connection->get_File_Connection();
-    if (!vrpnLogFile) {
+      // Decide whether reading vrpn log file or doing live.
+      vrpnLogFile = microscope_connection->get_File_Connection();
+      if (!vrpnLogFile) {
 	fprintf(stderr, "   microscape.c:: in Live mode\n");
-    } else {
+      } else {
 	// Allow the user to open a stream file with "-d file:..." 
 	// Set the read_mode. 
 	//      But we don't need to set read_mode to READ_DEVICE in
@@ -5539,97 +5537,86 @@ int main(int argc, char* argv[])
 	istate.afm.readingStreamFile = 1;
 	//decoration->rateOfTime = 3;	// use 3 for rate default
 	fprintf(stderr, "   microscape.c:: in Replay mode\n");
+      }
+      // BEFORE we call mainloop on our connection to the microscope,
+      // open up a forwarder and spin until it is connected to.
+
+      if (istate.monitorPort != -1) {
+
+        vrpn_StreamForwarder * monitor;
+        char * sname = NULL;
+
+        sname = vrpn_copy_service_name(istate.afm.deviceName);
+
+        fprintf(stderr, "Opening monitor connection on port %d;  "
+                        "service name is %s.\n",
+                istate.monitorPort,
+                sname);
+
+        monitor_forwarder_connection =
+           new vrpn_Synchronized_Connection (istate.monitorPort);
+
+        monitor = new vrpn_StreamForwarder
+                            (microscope_connection, sname,
+                             monitor_forwarder_connection, sname);
+
+        nmm_Microscope::registerMicroscopeInputMessagesForForwarding(monitor);
+
+        fprintf(stderr, "Blocking until monitor interface connects.\n");
+
+        while (!monitor_forwarder_connection->connected())
+          monitor_forwarder_connection->mainloop();
+
+        if (sname) {
+          delete [] sname;
+          sname = NULL;
+        }
+      }
+      if (istate.collabPort != -1) {
+
+        vrpn_StreamForwarder * collaborator;
+        vrpn_StreamForwarder * collaboratorReverse;
+        char * sname = NULL;
+
+        sname = vrpn_copy_service_name(istate.afm.deviceName);
+
+        fprintf(stderr, "Opening collaborator connection on port %d;  "
+                        "service name is %s.\n",
+                istate.collabPort,
+                sname);
+
+        collab_forwarder_connection =
+            new vrpn_Synchronized_Connection (istate.collabPort);
+
+        // Hook up forwarders BOTH WAYS:
+        //   collaborator sends data to a collaborator (just like monitor).
+        //   collaboratorReverse sends commands from the collaborator to
+        //   the microscope controller.
+
+        collaborator = new vrpn_StreamForwarder
+                            (microscope_connection, sname,
+                             collab_forwarder_connection, sname);
+        collaboratorReverse = new vrpn_StreamForwarder
+                            (collab_forwarder_connection, sname,
+                             microscope_connection, sname);
+
+        nmm_Microscope::registerMicroscopeInputMessagesForForwarding
+                            (collaborator);
+        nmm_Microscope::registerMicroscopeOutputMessagesForForwarding
+                            (collaboratorReverse);
+
+        fprintf(stderr, "Blocking until collaborator interface connects.\n");
+
+        while (!collab_forwarder_connection->connected()) {
+          collab_forwarder_connection->mainloop();
+        }
+
+        if (sname) {
+          delete [] sname;
+          sname = NULL;
+        }
+      }
     }
-  // BEFORE we call mainloop on our connection to the microscope,
-  // open up a forwarder and spin until it is connected to.
-
-  if (istate.monitorPort != -1) {
-
-    vrpn_StreamForwarder * monitor;
-    char * sname = NULL;
-
-    sname = vrpn_copy_service_name(istate.afm.deviceName);
-
-    fprintf(stderr, "Opening monitor connection on port %d;  "
-                    "service name is %s.\n",
-            istate.monitorPort,
-            sname);
-
-    monitor_forwarder_connection =
-       new vrpn_Synchronized_Connection (istate.monitorPort);
-
-    monitor = new vrpn_StreamForwarder
-                        (microscope_connection, sname,
-                         monitor_forwarder_connection, sname);
-
-    nmm_Microscope::registerMicroscopeInputMessagesForForwarding(monitor);
-
-    fprintf(stderr, "Blocking until monitor interface connects.\n");
-
-    while (!monitor_forwarder_connection->connected())
-      monitor_forwarder_connection->mainloop();
-
-    if (sname) {
-      delete [] sname;
-      sname = NULL;
-    }
-    
-  }
-  if (istate.collabPort != -1) {
-
-    vrpn_StreamForwarder * collaborator;
-    vrpn_StreamForwarder * collaboratorReverse;
-    char * sname = NULL;
-
-    sname = vrpn_copy_service_name(istate.afm.deviceName);
-
-    fprintf(stderr, "Opening collaborator connection on port %d;  "
-                    "service name is %s.\n",
-            istate.collabPort,
-            sname);
-
-    collab_forwarder_connection =
-        new vrpn_Synchronized_Connection (istate.collabPort);
-
-    // Hook up forwarders BOTH WAYS:
-    //   collaborator sends data to a collaborator (just like monitor).
-    //   collaboratorReverse sends commands from the collaborator to
-    //   the microscope controller.
-
-    collaborator = new vrpn_StreamForwarder
-                        (microscope_connection, sname,
-                         collab_forwarder_connection, sname);
-    collaboratorReverse = new vrpn_StreamForwarder
-                        (collab_forwarder_connection, sname,
-                         microscope_connection, sname);
-
-    nmm_Microscope::registerMicroscopeInputMessagesForForwarding(collaborator);
-    nmm_Microscope::registerMicroscopeOutputMessagesForForwarding
-                        (collaboratorReverse);
-
-    fprintf(stderr, "Blocking until collaborator interface connects.\n");
-
-    while (!collab_forwarder_connection->connected())
-      collab_forwarder_connection->mainloop();
-
-    if (sname) {
-      delete [] sname;
-      sname = NULL;
-    }
-  }
-    }
-
-    // XXX Due to BUG in cygwin gettimeofday, we need to sync the clocks
-    // between topo and microscape before we handle any microscope message.
-    // so call mainloop a few times here before creating the microscope.
-    /* Temp removed so we can be sure SGI version works. 
-    if ( read_mode != READ_STREAM) {
-	for (int i = 0; i<50; i++) {      
-	    microscope_connection->mainloop();
-	    sleep(0.001);
-	}
-    }
-    */
 
     microscope = new nmm_Microscope_Remote (istate.afm, microscope_connection);
     if (!microscope) {
