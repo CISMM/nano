@@ -176,6 +176,9 @@ int* group;
 bool first_in_group = true;
 int bcounter = 0;
 int oldShift = 0;
+float current_yaw = 0;
+float current_pitch = 0;
+float current_roll = 0;
 
 Tclvar_string cname("tclname","");
 
@@ -596,10 +599,15 @@ void displayFuncDepth( void ) {
 			length = SimMicroscopeServer.cylHead->length*scale;
 			radius = SimMicroscopeServer.cylHead->radius*scale;
 
+			cout << "altitude: " << altitude << " azimuth: " << azimuth << endl;
+
 			NANOTUBE_GROUP = numGroups;
 
 			addNtube(NTUBE, Vec3d(x*scale,y*scale,z*scale), 
-				altitude*RAD_TO_DEG, 0*RAD_TO_DEG, azimuth*RAD_TO_DEG, length, radius*2.0,&NANOTUBE_GROUP);			
+				altitude*RAD_TO_DEG, 0*RAD_TO_DEG, azimuth*RAD_TO_DEG, length, radius*2.0,&NANOTUBE_GROUP);	
+			//type,pos,yaw,roll,pitch,length,diameter,group
+			current_yaw = altitude;
+			current_pitch = azimuth;
 
 			SimMicroscopeServer.cylHolder = SimMicroscopeServer.cylHead;
 			SimMicroscopeServer.cylHead = SimMicroscopeServer.cylHead->next;
@@ -614,17 +622,27 @@ void displayFuncDepth( void ) {
 		float new_scale = _scale/current_scale;	//"un-apply" old scaling and apply new one
 		current_scale = _scale;					//record what the current scale is so can change 
 												//in the same way next time
+
+		int obj_group = NANOTUBE_GROUP;
+
 		float x, y, z;
-		x = ob[1]->pos.x + (ob[numObs - 1]->pos.x - ob[1]->pos.x) / 2;
-		y = ob[1]->pos.y + (ob[numObs - 1]->pos.y - ob[1]->pos.y) / 2;
-		z = ob[1]->pos.z + (ob[numObs - 1]->pos.z - ob[1]->pos.z) / 2;
+		x = group_of_obs[obj_group][1]->pos.x + 
+			(group_of_obs[obj_group][numObs - 1]->pos.x - group_of_obs[obj_group][1]->pos.x) / 2;
+		y = group_of_obs[obj_group][1]->pos.y + 
+			(group_of_obs[obj_group][numObs - 1]->pos.y - group_of_obs[obj_group][1]->pos.y) / 2;
+		z = group_of_obs[obj_group][1]->pos.z + 
+			(group_of_obs[obj_group][numObs - 1]->pos.z - group_of_obs[obj_group][1]->pos.z) / 2;
+
+
+		for(int i = 0; i < number_in_group[obj_group];i++){
 			
-		for(int i=0; i<numObs; i++ ) {
+			OB * this_obj = group_of_obs[obj_group][i];
+			
 			// need to reflect the fact that scaling now occurs at tube centers in nano
-			ob[i]->scale(new_scale);
-			ob[i]->setPos(Vec3d((ob[i]->pos.x - x)*new_scale + x,
-								(ob[i]->pos.y - y)*new_scale + y,
-								(ob[i]->pos.z - z)*new_scale + z));
+			this_obj->scale(new_scale);
+			this_obj->setPos(Vec3d((this_obj->pos.x - x)*new_scale + x,
+									(this_obj->pos.y - y)*new_scale + y,
+									(this_obj->pos.z - z)*new_scale + z));
 		}
 		SimMicroscopeServer.scaleRcv = false;
 
@@ -645,12 +663,65 @@ void displayFuncDepth( void ) {
 
 		double ratio = SimMicroscopeServer.Sim_to_World_x;
 
-		for(int i=0; i<numObs; i++ ) {
-			ob[i]->setPos(Vec3d(ob[i]->pos.x + new_trans_x*current_scale*ratio,
+		int obj_group = NANOTUBE_GROUP;
+		for(int i = 0; i < number_in_group[obj_group];i++){
+			
+			OB * this_obj = group_of_obs[obj_group][i];
+			this_obj->setPos(Vec3d(ob[i]->pos.x + new_trans_x*current_scale*ratio,
 								ob[i]->pos.y + new_trans_y*current_scale*ratio,
 								ob[i]->pos.z + new_trans_z*current_scale*ratio));
 		}
 		SimMicroscopeServer.transRcv = false;
+
+	}
+	if(SimMicroscopeServer.rotRcv){
+		float yaw = SimMicroscopeServer.yaw;
+		float pitch = SimMicroscopeServer.pitch;
+		float roll = SimMicroscopeServer.roll;
+
+		float new_yaw = yaw - current_yaw;
+		float new_pitch = pitch - current_pitch;
+		float new_roll = roll - current_roll;
+
+		current_yaw = yaw;
+		current_pitch = pitch;
+		current_roll = roll;
+
+		//start added code
+
+
+		//find the group center
+		Vec3d group_center;
+		int obj_group = NANOTUBE_GROUP;
+		for(int i = 0; i < number_in_group[obj_group];i++){
+			
+			OB * this_obj = group_of_obs[obj_group][i];
+			group_center += this_obj->pos;
+		}
+		group_center /= number_in_group[obj_group];
+
+		Vec3d vec, t1, t2;
+
+		//translate objects to position rel. to group_center
+		for(i = 0; i < number_in_group[obj_group];i++){
+			OB * this_obj = group_of_obs[obj_group][i];
+			Vec3d rel_pos = this_obj->pos - group_center;
+			Vec3d t1 = rel_pos.rotate3(Vec3d(0,0,1),DEG_TO_RAD*yaw);
+			t2 = Vec3d(-t1.y,t1.x,0);
+			Vec3d new_pos = t1.rotate3(t2,DEG_TO_RAD*pitch);
+
+			this_obj->setPos(new_pos);
+		}
+		
+		for(i = 0; i < number_in_group[obj_group];i++){
+			Ntube * this_obj = (Ntube *)group_of_obs[obj_group][i];
+			this_obj->setYaw(yaw);
+			this_obj->setPitch(pitch);
+		}
+    
+		//end added code
+
+		SimMicroscopeServer.rotRcv = false;
 
 	}
 	
@@ -962,14 +1033,15 @@ printf("DEPTHSIZE = %d\n", DEPTHSIZE);
       selectedOb = numObs-1;
       break;
     case 'm' ://add monomer
-      radius = (float)21.139;
+      radius = (float)14.5054;//21.139;
+	  depth = (float)-11.6069;//-20.1127;
 	  if(SimMicroscopeServer.grid_size_rcv){
 		radius = radius * SimMicroscopeServer.Sim_to_World_x;
-		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, -20.1127*SimMicroscopeServer.Sim_to_World_x), 
+		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, depth*SimMicroscopeServer.Sim_to_World_x), 
 			0., 0., 0., 0., radius*2.0);
 	  }
 	  else{
-		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, -20.1127), 0., 0., 0., 0., radius*2.0);
+		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, depth), 0., 0., 0., 0., radius*2.0);
 	  }
       selectedOb = numObs-1;
 
