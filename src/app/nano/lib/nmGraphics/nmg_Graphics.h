@@ -305,7 +305,7 @@ class nmg_Graphics {
       // Size at which true tip indicator is drawn
       // FOR DEBUGGING ONLY
 
-    virtual void setUserMode (int oldMode, int newMode, int style) = 0;
+    virtual void setUserMode (int oldMode, int oldStyle, int newMode, int style) = 0;
       // Specifies the mode of interaction currently being used.
       // Controls which widgets are displayed.
 
@@ -589,8 +589,8 @@ class nmg_Graphics {
     int decode_setTextureScale (const char * buf, float *);
     char * encode_setTrueTipScale (int * len, float);
     int decode_setTrueTipScale (const char * buf, float *);
-    char * encode_setUserMode (int * len, int oldMode, int newMode, int style);
-    int decode_setUserMode (const char * buf, int * oldMode, int * newMode,
+    char * encode_setUserMode (int * len, int oldMode, int oldStyle, int newMode, int style);
+    int decode_setUserMode (const char * buf, int * oldMode, int * oldStyle, int * newMode,
                              int * style);
     char * encode_setLightDirection (int * len, const q_vec_type &);
     int decode_setLightDirection (const char * buf, q_vec_type &);

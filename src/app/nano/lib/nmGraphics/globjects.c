@@ -172,63 +172,70 @@ static float sphere_x, sphere_y, sphere_z;
 
 /* When the user changes modes, clear the world of any 
  * icons dependent on that mode. */
-int clear_world_modechange(int mode)
+int clear_world_modechange(int mode, int style)
 {
   switch(mode) {
   case USER_LIGHT_MODE:
+    removeFunctionFromFunclist(&v_hand,hand_id);
     break;
   case USER_FLY_MODE:
-    removeFunctionFromFunclist(&vir_world,sphere_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
+    //removeFunctionFromFunclist(&vir_world,sphere_id);
     break;
   case USER_MEASURE_MODE:
+    removeFunctionFromFunclist(&v_hand,hand_id);
     break;
-  case USER_PULSE_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    //  case USER_PULSE_MODE:
+    //    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    //    removeFunctionFromFunclist(&vir_world,sphere_id);
+    //    break;
+  case USER_PLANE_MODE:
     removeFunctionFromFunclist(&vir_world,sphere_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
     break;
   case USER_LINE_MODE:
-    removeFunctionFromFunclist(&vir_world, aim_struct_id);
-    removeFunctionFromFunclist(&vir_world, sweep_struct_id);
-    removeFunctionFromFunclist(&vir_world, poly_rubber_line_id);
-    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[0]);
-    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[1]);
-    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[2]);
-    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[3]);
-    removeFunctionFromFunclist(&vir_world, trueTip_id);
-    removeFunctionFromFunclist(&vir_world,sphere_id);
-    break;
-  case USER_SWEEP_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
-    removeFunctionFromFunclist(&vir_world,sweep_struct_id);
-    break;
-  case USER_BLUNT_TIP_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
-    break;
-  case USER_COMB_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
-    removeFunctionFromFunclist(&vir_world,sweep_struct_id);
-    break;
-  case USER_PLANE_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
-    removeFunctionFromFunclist(&vir_world,sphere_id);
-    break;
   case USER_PLANEL_MODE:
-    removeFunctionFromFunclist(&vir_world, aim_struct_id);
-    removeFunctionFromFunclist(&vir_world, sweep_struct_id);
-    removeFunctionFromFunclist(&vir_world, trueTip_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
     removeFunctionFromFunclist(&vir_world,sphere_id);
+    removeFunctionFromFunclist(&vir_world, aim_struct_id);
+    if (g_config_trueTip) {
+      removeFunctionFromFunclist(&vir_world, trueTip_id);
+    }
+    if (style == SWEEP) {
+      removeFunctionFromFunclist(&vir_world,sweep_struct_id);
+    }
     break;
+    //  case USER_SWEEP_MODE:
+    //    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    //    removeFunctionFromFunclist(&vir_world,sweep_struct_id);
+    //    break;
+    //  case USER_BLUNT_TIP_MODE:
+    //    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    //    break;
+    //  case USER_COMB_MODE:
+    //    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    //    removeFunctionFromFunclist(&vir_world,sweep_struct_id);
+    //    break;
   case USER_SCALE_UP_MODE:
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
     break;
   case USER_SCALE_DOWN_MODE:
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
     break;
   case USER_SCANLINE_MODE:
+    removeFunctionFromFunclist(&v_hand,hand_id);
     break;
   case USER_SERVO_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
     removeFunctionFromFunclist(&vir_world,rubber_corner_id);
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
     break;
   case USER_GRAB_MODE:
+    removeFunctionFromFunclist(&v_hand,hand_id);
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
     break;
   case USER_MEAS_MOVE_MODE:
     break;
@@ -238,8 +245,6 @@ int clear_world_modechange(int mode)
   default:
     break;
   }
-  /* some icons get removed from every mode */
-  removeFunctionFromFunclist(&v_hand,hand_id);
 
   /* The other user's hand doesn't depend on what your hand is doing,
      but we seem to need this anyway... */
@@ -272,7 +277,7 @@ int init_world_modechange(int mode, int style)
     break;
   case USER_FLY_MODE:
     hand_id = addFunctionToFunclist(&v_hand, Tip, NULL, "Tip");
-    sphere_id = addFunctionToFunclist(&vir_world,mysphere,NULL, "mysphere"); 
+    //sphere_id = addFunctionToFunclist(&vir_world,mysphere,NULL, "mysphere"); 
     break;
   case USER_MEASURE_MODE:
     hand_id = addFunctionToFunclist(&v_hand,measure_hand, &g_hand_color,
@@ -286,26 +291,26 @@ int init_world_modechange(int mode, int style)
     break;
   case USER_LINE_MODE:
   case USER_PLANEL_MODE:
-	hand_id = addFunctionToFunclist(&v_hand, Tip, NULL, "Tip"); 
-	sphere_id = addFunctionToFunclist(&vir_world,
-                                          mysphere, NULL, "mysphere");
-	aim_struct_id = addFunctionToFunclist(&vir_world, draw_list,
-						&aim_struct,
-                                                "draw_list(aim_struct)");
-        if (g_config_trueTip) {
-          trueTip_id = addFunctionToFunclist(&vir_world, TrueTip, NULL,
-                                             "true tip");
-        }
-      if (style == SWEEP) {
-	  sweep_struct_id = addFunctionToFunclist(&vir_world, draw_list,
-						  &sweep_struct,
-                                                  "draw_list(sweep_struct)");
-      }
+    hand_id = addFunctionToFunclist(&v_hand, Tip, NULL, "Tip"); 
+    sphere_id = addFunctionToFunclist(&vir_world, mysphere, NULL, "mysphere");
+    aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
+					  "draw_list(aim_struct)");
+    if (g_config_trueTip) {
+      trueTip_id = addFunctionToFunclist(&vir_world, TrueTip, NULL, "true tip");
+    }
+    if (style == SWEEP) {
+      sweep_struct_id = addFunctionToFunclist(&vir_world, draw_list, &sweep_struct,
+					      "draw_list(sweep_struct)");
+    }
     break;
   case USER_SCALE_UP_MODE:
+    aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
+					  "draw_list(aim_struct)");
     hand_id = addFunctionToFunclist(&v_hand, vx_up_icon, NULL, "vx_up_icon");
     break;
   case USER_SCALE_DOWN_MODE:
+    aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
+					  "draw_list(aim_struct)");
     hand_id = addFunctionToFunclist(&v_hand, vx_down_icon, NULL,
                                     "vx_down_icon");
     break;
@@ -318,6 +323,8 @@ int init_world_modechange(int mode, int style)
                                           "draw_list(aim_struct)");
     break;
   case USER_GRAB_MODE:
+    aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
+					  "draw_list(aim_struct)");
     hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");   
     break;
   case USER_SCANLINE_MODE:

@@ -97,6 +97,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     }
 
     initDisplays();
+    init_world_modechange( USER_GRAB_MODE, 0 );
 
     // make sure everything is going into the right gl context
     v_gl_set_context_to_vlib_window();
@@ -2291,10 +2292,10 @@ void nmg_Graphics_Implementation::setTrueTipScale (float f) {
 }
 
 
-void nmg_Graphics_Implementation::setUserMode (int oldMode, int newMode,
-                                               int style) {
+void nmg_Graphics_Implementation::setUserMode (int oldMode, int oldStyle,
+					       int newMode, int style) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setUserMode().\n");
-  clear_world_modechange(oldMode);
+  clear_world_modechange(oldMode, oldStyle);
   init_world_modechange(newMode, style);
 }
 
@@ -3218,10 +3219,10 @@ int nmg_Graphics_Implementation::handle_setTrueTipScale
 int nmg_Graphics_Implementation::handle_setUserMode
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  int oldMode, newMode, style;
+  int oldMode, oldStyle, newMode, style;
 
-  CHECK(it->decode_setUserMode(p.buffer, &oldMode, &newMode, &style));
-  it->setUserMode(oldMode, newMode, style);
+  CHECK(it->decode_setUserMode(p.buffer, &oldMode, &oldStyle, &newMode, &style));
+  it->setUserMode(oldMode, oldStyle, newMode, style);
   return 0;
 }
 

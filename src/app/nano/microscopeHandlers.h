@@ -73,6 +73,7 @@ void handle_sound_dataset_change (const char *, void * _mptr);
 
 // Slow line tool callbacks.
 void init_slow_line (void * _mptr);
+void step_slow_line (void * _mptr, Position_list *p );
 void handle_slow_line_playing_change (vrpn_int32 new_value, void * _mptr);
 void handle_slow_line_step_change (vrpn_int32 new_value, void * _mptr);
 void handle_slow_line_direction_change (vrpn_int32 new_value, void * _mptr);

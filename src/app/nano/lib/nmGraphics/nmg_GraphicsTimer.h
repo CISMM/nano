@@ -110,7 +110,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setTextureMode (TextureMode,TextureTransformMode);
     virtual void setTextureScale (float);
     virtual void setTrueTipScale (float);
-    virtual void setUserMode (int oldMode, int newMode, int style);
+    virtual void setUserMode (int oldMode, int oldStyle, int newMode, int style);
     virtual void setLightDirection (q_vec_type &);
     virtual void resetLightDirection (void);
     virtual int addPolylinePoint (const float [2][3]);

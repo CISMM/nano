@@ -1676,14 +1676,14 @@ int nmg_Graphics::decode_setTrueTipScale
 }
 
 char * nmg_Graphics::encode_setUserMode
-                     (int * len, int oldMode, int newMode, int style) {
+                     (int * len, int oldMode, int oldStyle, int newMode, int style) {
   char * msgbuf = NULL;
   char * mptr;
   int mlen;
 
   if (!len) return NULL;
 
-  *len = 3 * sizeof(int);
+  *len = 4 * sizeof(int);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmg_Graphics::encode_setUserMode:  "
@@ -1693,6 +1693,7 @@ char * nmg_Graphics::encode_setUserMode
     mptr = msgbuf;
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, oldMode);
+    vrpn_buffer(&mptr, &mlen, oldStyle);
     vrpn_buffer(&mptr, &mlen, newMode);
     vrpn_buffer(&mptr, &mlen, style);
   }
@@ -1701,10 +1702,11 @@ char * nmg_Graphics::encode_setUserMode
 }
 
 int nmg_Graphics::decode_setUserMode
-                   (const char * buf, int * oldMode, int * newMode,
+                   (const char * buf, int * oldMode, int * oldStyle, int * newMode,
                              int * style) {
-  if (!buf || !oldMode || !newMode || !style) return -1;
+  if (!buf || !oldMode || !oldStyle || !newMode || !style) return -1;
   CHECK(vrpn_unbuffer(&buf, oldMode));
+  CHECK(vrpn_unbuffer(&buf, oldStyle));
   CHECK(vrpn_unbuffer(&buf, newMode));
   CHECK(vrpn_unbuffer(&buf, style));
   return 0;

@@ -17,7 +17,7 @@ extern int make_green_line(const float a[], const float b[]);
 //   Called in nmg_GraphicsImpl.c
 extern int replaceDefaultObjects (void);
 extern int make_aim (const float a [], const float b []);
-extern int clear_world_modechange (int mode);
+extern int clear_world_modechange (int mode, int style);
 extern int init_world_modechange (int mode, int style);
 extern int make_sweep (const float a [], const float b [],
 		const float c [], const float d [] );

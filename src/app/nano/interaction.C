@@ -156,6 +156,7 @@ static nmui_HapticsManager haptic_manager;
 // moved user_mode to globals.c
 
 int	last_mode[NUM_USERS];		/**< Previous mode of operation */
+int	last_style[NUM_USERS];		/**< Previous style of operation */
 
 char    *user_hand_icons[] = {  (char *)"v_arrow",
 				(char *)"myRoboHand",
@@ -462,8 +463,12 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 	      microscope->state.modify.slow_line_committed = VRPN_TRUE;
 	      // Call this function to initialize the slow_line tool
 	      init_slow_line(microscope);
+	      for (p.next(); p.notDone(); p.next()) {
+		step_slow_line( microscope, &p );
+	      }
 	      return;
 	    }
+
 	    p.next();
 	    // Draw the first line 
 	    currPt = p.curr();
@@ -799,6 +804,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
   static float old_mod_con_force = -1;
   static float old_img_tap_force = -1;
   static float old_img_con_force = -1;
+  static int first_mode = 1;
   
   if(startup==0){
     for (i = 0; i < BDBOX_NUMBUTTONS; i++) lastButtonsPressed[i]=0;
@@ -1059,9 +1065,12 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       VERBOSE(6, "    Calling graphics->setUserMode().");
 
       // Change icons to ones for this new mode.
-      graphics->setUserMode(last_mode[user],
-			    user_mode[user],
-			    microscope->state.modify.style);
+      graphics->setUserMode(last_mode[user], last_style[user],
+			    user_mode[user], microscope->state.modify.style);
+
+      /* Last mode next time around is the current mode this time around */
+      last_style[user] = microscope->state.modify.style;
+      last_mode[user] = user_mode[user];
 
       /* Make the associated sound */
       // Taken out for now
@@ -1069,6 +1078,11 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       /* Clear the mode change flag */
       mode_change = 0;
       microscope->state.modify.style_changed = 0;
+    }
+    else if ( first_mode == 1 ) {
+      first_mode = 0;
+      last_style[user] = microscope->state.modify.style;
+      last_mode[user] = user_mode[user];
     }
 
     // quick approximation
@@ -1092,8 +1106,6 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     lastTriggerEvent = eventList[0];
 
 
-    /* Last mode next time around is the current mode this time around */
-    last_mode[user] = user_mode[user];
   }
   // TCH - HACK but it works
   decoration->user_mode = user_mode[0];
@@ -1311,16 +1323,27 @@ return 0;
 int
 doScale(int whichUser, int userEvent, double scale_factor)
 {
+    v_xform_type    	    worldFromHand;
+    BCPlane* plane = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
+    if (plane == NULL) {
+      fprintf(stderr, "Error in doScale: could not get plane!\n");
+      return -1;
+    }     
+    
     switch ( userEvent )
-    {
+      {
       case HOLD_EVENT:
         v_xform_type temp;
         v_x_copy(&temp, &v_world.users.xforms[whichUser]);
-
+	
 	v_scale_about_hand(whichUser, &temp, scale_factor);
         updateWorldFromRoom(&temp);
+	
+	v_get_world_from_hand(whichUser, &worldFromHand);
+	decoration->aimLine.moveTo(worldFromHand.xlate[0],
+				   worldFromHand.xlate[1], plane);
 	break;
-
+	
       case PRESS_EVENT:
       case RELEASE_EVENT:
       default:
@@ -2512,7 +2535,7 @@ doWorldGrab(int whichUser, int userEvent)
 
   v_xform_type temp;
 
-switch ( userEvent )
+  switch ( userEvent )
     {
 
     case PRESS_EVENT:
