@@ -360,7 +360,7 @@ void Ntube :: afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
   if (type == SPHERE) {
     // for spheres only
     // Lower surface to match real surface height for ridges and plains.
-#if TIP_DISP_LIST
+#if 0
     double tipRadius = icsTip.r; // the radius for the tip
     double theta = icsTip.theta; // theta for the tip
     double radius=diam/2.;
@@ -881,12 +881,32 @@ void Triangle :: afm_sphere_tip(SphereTip sp) {
   ca.afm_sphere_tip(sp);
 }
 
+/* now get triangle color depending on orientation of the triangle
+ * use the color of the pt where the spherical part of the tip touches
+ * the triangle.
+ */
+static void set_tri_color(Triangle tr) {
+  float cosrho = Vec3d :: dotProd(tr.normal,Vec3d(0,0,1));
+  // avoid round off errors
+  cosrho = (cosrho > 1. ? 1. : cosrho);
+  cosrho = (cosrho < -1. ? -1. : cosrho);
+  float rho = acos(cosrho);
+  float c = get_sphere_color_rho(rho);
+  glColor3f(c,c,c);
+}
+
 void Triangle :: uncert_afm_sphere_tip(SphereTip sp) {
 
   double R = sp.r;
   Vec3d offset = normal*R;
   Triangle tr = Triangle(a+offset, b+offset, c+offset); 
-  glColor3f(1,1,1);
+
+  /* now get triangle color depending on orientation of the triangle
+   * use the color of the pt where the spherical part of the tip touches
+   * the triangle.
+   */
+  set_tri_color(tr);
+
   tr.draw();
   
   ab.uncert_afm_sphere_tip(sp);
@@ -899,6 +919,7 @@ void Triangle :: afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
   double R = icsTip.r;
   Vec3d offset = normal*R;
   Triangle tr = Triangle(a+offset, b+offset, c+offset); 
+
   tr.draw();
   
   ab.afm_inv_cone_sphere_tip(icsTip);
@@ -910,7 +931,7 @@ void Triangle :: uncert_afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
   double R = icsTip.r;
   Vec3d offset = normal*R;
   Triangle tr = Triangle(a+offset, b+offset, c+offset); 
-  glColor3f(1,1,1);
+  set_tri_color(tr);
   tr.draw();
   
   ab.uncert_afm_inv_cone_sphere_tip(icsTip);

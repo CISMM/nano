@@ -18,6 +18,7 @@
 extern int tesselation;
 
 
+#define DEBUG 1
 
 /*
  * Convert degrees to radians:
@@ -136,8 +137,8 @@ void set_frustum_color_z(GLfloat z, GLdouble height, GLfloat grad_l, GLfloat gra
   GLfloat col[4];
   int i;
 
-  
   GLfloat t = (grad_l + (grad_r-grad_l)*(z/height));
+
   col[0] = col[1] = col[2] = t;
   col[3] = 1;
 
@@ -226,7 +227,7 @@ void uncert_frustum(myGLUquadricObj * qobj,
 void set_cylinder_color_rho(GLfloat rho) {
   GLfloat col[4];
   int i;
-  
+
   if (rho >= M_PI) {
     // offset rho by M_PI/2 (because for a slice rho=0 for pt x=0. y=1
     // whereas we want to color starting at pt x=-1, y=0
@@ -334,9 +335,11 @@ void set_sphere_color_rho(GLfloat rho) {
   int i;
   GLfloat t;
 
-  
   if (rho < M_PI/2) {
+
     t = (1 - rho/(M_PI/2.));
+
+
     col[0] = col[1] = col[2] = t;
   }
   else {
@@ -352,11 +355,44 @@ GLfloat get_sphere_color_rho(GLfloat rho) {
   int i;
 
   if (rho < M_PI/2.) {
+
     GLfloat t = (1 - rho/(M_PI/2.));
+
     return t;
   }
   return 0.;
 }
+
+void set_sphere_color_z(GLfloat z) {
+  GLfloat col[4];
+  int i;
+  GLfloat t;
+
+  if (z > 0) {
+    t = 0.5+0.5*z;
+    col[0] = col[1] = col[2] = t;
+  }
+  else {
+    col[0] = col[1] = col[2] = 0.5;
+  }
+  col[3] = 1.;
+
+  glColor4fv(col);
+}
+
+
+GLfloat get_sphere_color_z(GLfloat z) {
+  GLfloat t;
+
+  if (z > 0) {
+    t = 0.5+0.5*z;
+  }
+  else {
+    t=0.5;
+  }
+  return t;
+}
+
 
 /* Uncertainty map for the sphere 
  * sphere is colored according to a gradient in the range 
@@ -415,7 +451,8 @@ void uncert_sphere(myGLUquadricObj * qobj, GLdouble radius, GLint slices, GLint 
 	if (normals)
 	  glNormal3f(x * nsign, y * nsign, z * nsign);
 
-	set_sphere_color_rho(drho);
+	//	set_sphere_color_rho(drho);
+	set_sphere_color_z(z);
 
 
 	glVertex3f(x * radius, y * radius, z * radius);
@@ -449,7 +486,8 @@ void uncert_sphere(myGLUquadricObj * qobj, GLdouble radius, GLint slices, GLint 
 	  glNormal3f(x * nsign, y * nsign, z * nsign);
 	TXTR_COORD(s, t);
 
-	set_sphere_color_rho(rho);
+	//	set_sphere_color_rho(rho);
+	set_sphere_color_z(z);
 
 	glVertex3f(x * radius, y * radius, z * radius);
 	x = -sin(theta) * sin(rho + drho);
@@ -460,6 +498,7 @@ void uncert_sphere(myGLUquadricObj * qobj, GLdouble radius, GLint slices, GLint 
 	TXTR_COORD(s, t - dt);
 	s += ds;
 
+	set_sphere_color_rho(rho+drho);
 	glVertex3f(x * radius, y * radius, z * radius);
       }
       glEnd();
@@ -483,7 +522,8 @@ void uncert_sphere(myGLUquadricObj * qobj, GLdouble radius, GLint slices, GLint 
 	  glNormal3f(x * nsign, y * nsign, z * nsign);
 	s -= ds;
 
-	set_sphere_color_rho(rho);
+	//	set_sphere_color_rho(rho);
+	set_sphere_color_z(z);
 	
 	glVertex3f(x * radius, y * radius, z * radius);
       }

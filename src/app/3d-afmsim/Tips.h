@@ -43,11 +43,11 @@ public:
 class Tip {
 public:
   int type;
-  SphereTip spTip;
-  InvConeSphereTip icsTip;
+  SphereTip *spTip;
+  InvConeSphereTip *icsTip;
   Tip() {};
-  Tip(SphereTip, InvConeSphereTip, int tesselation, int default_type);
-  void set(SphereTip, InvConeSphereTip, int tesselation, int default_type);
+  Tip(SphereTip *, InvConeSphereTip *, int tesselation, int default_type);
+  void set(SphereTip *, InvConeSphereTip *, int tesselation, int default_type);
   void change_tip_model();
   void inc_r();
   void dec_r();

@@ -9,8 +9,17 @@ Symbols
 ??? ... ??? - problem/doubt/bug etc
 
 
+May 11, 2001
+
+1. Even if I color everything > 0.5, I see black spots in the AFM. Check this out in FLAT mode.
+
+<done> 2. Changing tip radius, angle causing disp list to regenerate, causing probs -- fixed - needed to make a new display list for each context.
+
+
 April 17 2001
 -------------
+
+- Fix a bug : what happens if yyou have pitch > 90 deg
 
 Fixed bugs described below. Uncertainty mode working.
 There is some popping effect when I switch from one mode to another. Fix that.

@@ -67,16 +67,16 @@ void InvConeSphereTip :: draw() {
   glPopMatrix();
 }
 
-Tip :: Tip(SphereTip _sp, InvConeSphereTip _ics, int tesselation,
+Tip :: Tip(SphereTip *_sp, InvConeSphereTip *_ics, int tesselation,
 	int default_type) {
   set(_sp,_ics,tesselation,default_type);
 }
 
-void Tip :: set(SphereTip _sp, InvConeSphereTip _ics, int tesselation,
+void Tip :: set(SphereTip *_sp, InvConeSphereTip *_ics, int tesselation,
 	int default_type) {
   type = default_type;
-  spTip.set(_sp.r);
-  icsTip.set(_ics.r,_ics.ch,_ics.theta, tesselation);
+  spTip = _sp;
+  icsTip = _ics;
 }
 
 void Tip :: change_tip_model() {
@@ -90,35 +90,43 @@ void Tip :: change_tip_model() {
 
 void Tip :: inc_r() {
   if (type == SPHERE_TIP) {
-    spTip.set_r(spTip.r + TIP_RADIUS_UNIT);
+    spTip->set_r(spTip->r + TIP_RADIUS_UNIT);
+    cout << "r " << spTip->r << endl;
   }
   else {
-    cout << "r " << icsTip.r << endl;
-    icsTip.set_r(icsTip.r + TIP_RADIUS_UNIT);
+    icsTip->set_r(icsTip->r + TIP_RADIUS_UNIT);
+    cout << "r " << icsTip->r << endl;
   }
 }
 
 void Tip :: dec_r() {
   if (type == SPHERE_TIP) {
-    spTip.set_r(spTip.r - TIP_RADIUS_UNIT);
+    spTip->set_r(spTip->r - TIP_RADIUS_UNIT);
+    cout << "r " << spTip->r << endl;
   }
   else {
-    icsTip.set_r(icsTip.r - TIP_RADIUS_UNIT);
+    icsTip->set_r(icsTip->r - TIP_RADIUS_UNIT);
+    cout << "r " << icsTip->r << endl;
   }
 }
 
 
 void Tip :: inc_theta() {
   if (type == INV_CONE_SPHERE_TIP) {
-    cout << "theta " << RAD_TO_DEG*icsTip.theta << endl;
-    icsTip.set_theta(icsTip.theta+DEG_TO_RAD*TIP_THETA_UNIT);
+    icsTip->set_theta(icsTip->theta+DEG_TO_RAD*TIP_THETA_UNIT);
+    cout << "theta " << RAD_TO_DEG*icsTip->theta << endl;
   }
 }
 
 void Tip :: dec_theta() {
   if (type == INV_CONE_SPHERE_TIP) {
-    if (icsTip.theta > (DEG_TO_RAD*TIP_THETA_UNIT)) {
-      icsTip.set_theta(icsTip.theta-DEG_TO_RAD*TIP_THETA_UNIT);
+    if (icsTip->theta > (DEG_TO_RAD*TIP_THETA_UNIT)) {
+      icsTip->set_theta(icsTip->theta-DEG_TO_RAD*TIP_THETA_UNIT);
+      cout << "theta " << RAD_TO_DEG*icsTip->theta << endl;
     }
   }
 }
+
+
+
+

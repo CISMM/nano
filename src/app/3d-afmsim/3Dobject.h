@@ -201,7 +201,7 @@ class Dna : public OB {
 #define SEG_DIAM 1
 #define MASS 1
 #define SPRING_CONSTANT 1
-#define ROTATION_SPRING_CONSTANT 1
+#define ROTATION_SPRING_CONSTANT 0.1
 #define FORCE_THRESHOLD 0.2
 #define TIME_INTERVAL 0.2
 private :

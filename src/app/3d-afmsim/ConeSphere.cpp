@@ -113,7 +113,7 @@ void ConeSphere :: draw() {
   gluCylinder( qobj, cr, topRadius, topHeight, 30, 30);
 #else
   glPushMatrix();
-  glScalef(r/cone_sphere_list_radius, r/cone_sphere_list_radius, r/cone_sphere_list_radius);
+  glScalef(r, r, r);
   glCallList(CONE_SPHERE_LIST);
   glPopMatrix();
 #endif
@@ -128,10 +128,34 @@ void ConeSphere :: uncert_draw() {
     mygluQuadricNormals( qobj, GLU_FLAT );
     firstTime=0;
   }
+
+  glTranslatef(-30,0,0);
+
   uncert_sphere( qobj, r, 30, 30);
+
+  //  GLfloat gcol = get_sphere_color_rho(PI/2.-theta);
+  GLfloat gcol = get_sphere_color_z(sin(theta));
+
+  glPushMatrix();
+  glTranslatef(10, 0, 0);
+
   glTranslatef(0, 0, -sphereHeight);
-  GLfloat gcol = get_sphere_color_rho(PI/2.-theta);
   uncert_frustum( qobj, cr, topRadius, topHeight, 30, 30, 0, gcol);
+  glPopMatrix();
+
+
+  glTranslatef(60,0,0);
+  uncert_sphere( qobj, r, 30, 30);
+
+  //  GLfloat gcol = get_sphere_color_rho(PI/2.-theta);
+  gcol = get_sphere_color_z(sin(theta));
+
+  glPushMatrix();
+  glTranslatef(0, 0, -sphereHeight);
+  uncert_frustum( qobj, cr, topRadius, topHeight, 30, 30, 0, gcol);
+  glPopMatrix();
+
+
 }
 
 

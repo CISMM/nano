@@ -19,9 +19,9 @@
 /* Here are our AFM tips */
 // third arg is the default
 // all units in nm
-SphereTip sp(5.);
-InvConeSphereTip ics(5.,1000.,DEG_TO_RAD*20.,tesselation);
-Tip tip(sp,ics,tesselation,INV_CONE_SPHERE_TIP);
+static SphereTip sp(5.);
+static InvConeSphereTip ics(5.,1000.,DEG_TO_RAD*20.,tesselation);
+Tip tip(&sp,&ics,tesselation,INV_CONE_SPHERE_TIP);
 //Tip tip(sp,ics,tesselation,SPHERE_TIP);
 
 Vec3d vertex[MAXVERTICES];

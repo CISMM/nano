@@ -5,7 +5,7 @@
 #include "lightcol.h"
 #include "sim.h"
 
-//GLenum shadingModel = GL_FLAT;   // GL_FLAT or GL_SMOOTH
+//GLenum shadingModel = GL_FLAT;   // GL_FLAT or GL_SMOOTH/
 GLenum shadingModel = GL_SMOOTH;   // GL_FLAT or GL_SMOOTH
 Bool lightOn[8] = { 1, 1, 0, 0, 0, 0, 0, 0 };
 

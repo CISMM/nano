@@ -14,8 +14,6 @@
 #include "lightcol.h"
 #include "scan.h"
 
-double cone_sphere_list_radius;
-
 #if DISP_LIST
 // display list for a sphere
 void make_sphere() {
@@ -55,6 +53,7 @@ void drawSphere( double diameter) {
 }
 
 #if DISP_LIST
+
 // display list for a cylinder
 void make_cylinder() {
   static GLUquadricObj* qobj;
@@ -94,33 +93,36 @@ void drawCylinder( double diameter, double height) {
 void make_cone_sphere(InvConeSphereTip ics) {
   static GLUquadricObj* qobj;
 
-  printf("Building ConeSphere display list (tesselation %d)\n",
-	tesselation);
+  //  printf("Building ConeSphere display list (tesselation %d)\n",tesselation);
 
-  qobj = gluNewQuadric();
-  gluQuadricDrawStyle( qobj, GLU_FILL);
-  gluQuadricNormals( qobj, GLU_FLAT );
+  static int first_time=1;
+  if (first_time) {
+    first_time=0;
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle( qobj, GLU_FILL);
+    gluQuadricNormals( qobj, GLU_FLAT );
+  }
 
-  // here we consider the AFM of a sphere of 0 radius.
-
-  double tipRadius = ics.r; // the radius for the tip
+  // here we consider the AFM of a sphere of 0 radius with a tip of radius 1.
   double theta = ics.theta; // theta for the tip
-  double radius=0.; 
   
   double bignum = 200; // some big no for now
-
-  double cone_height = bignum + (radius+tipRadius)/sin(theta);
-  ConeSphere c = ConeSphere(radius+tipRadius, cone_height, theta);
-
-  cone_sphere_list_radius = tipRadius;  
+  
+  double cone_height = bignum + (1.)/sin(theta);
+  ConeSphere c = ConeSphere(1., cone_height, theta);
+  
   // Create a display list for a sphere
   glNewList(CONE_SPHERE_LIST, GL_COMPILE);
-  gluSphere( qobj, tipRadius, tesselation, tesselation);
+  gluSphere( qobj, 1., tesselation, tesselation);
   glPushMatrix();
   glTranslatef(0,0,-bignum);
   gluCylinder( qobj, c.cr, c.topRadius, c.topHeight, tesselation, tesselation);
   glPopMatrix();
   glEndList();
+
+  glFlush();
+  glFinish();
+
 }
 #endif
 

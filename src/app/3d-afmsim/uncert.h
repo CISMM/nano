@@ -33,4 +33,6 @@ void draw_uncert_sphere( double diameter);
 void draw_uncert_cylinder(double diameter, double height);
 void draw_uncert_frustum(double bottomdiameter, double topdiameter, double height);
 GLfloat get_sphere_color_rho(GLfloat rho);
+void set_sphere_color_z(GLfloat z);
+GLfloat get_sphere_color_z(GLfloat z);
 #endif

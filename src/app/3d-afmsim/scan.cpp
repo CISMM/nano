@@ -1,15 +1,3 @@
-/* Fix the order of zHeight[i][j]  */
-
-
-
-
-
-
-
-
-
-
-
 /*$Id$*/
 #include <stdlib.h>		//stdlib.h vs cstdlib
 #include <stdio.h>		//stdio.h vs cstdio
@@ -52,8 +40,12 @@ double scanNear =  -128.;	// near end of Z-buffer range
 
 double scanFar  =   0.;	// far  end of Z-buffer range
 
-
 void get_z_buffer_values() {
+
+  GLint PackAlignment;
+  glGetIntegerv(GL_PACK_ALIGNMENT,&PackAlignment); 
+  glPixelStorei(GL_PACK_ALIGNMENT,1); 
+
   
   // Read (normalized) Z-buffer values from the depth window.
   // Scale them back to correct Z-values and use as 
@@ -62,6 +54,8 @@ void get_z_buffer_values() {
   void* zBufferPtr = &(zBuffer[0]);
   int pixelGridSize = DEPTHSIZE;		// must match window size
   // width and height the same for now
+
+  glReadBuffer(GL_BACK);
   glReadPixels( 0, 0, pixelGridSize, pixelGridSize, GL_DEPTH_COMPONENT, GL_FLOAT, zBufferPtr );
   for(int j=0; j<scanResolution; j++ ) {
     for(int i=0; i<scanResolution; i++ ) {
@@ -77,9 +71,11 @@ void get_z_buffer_values() {
 
 void get_color_buffer_values() {
 
-  // XXX : do i need this and if yes, what mode
-  //  glReadBuffer(GL_FRONT_LEFT);
+  GLint PackAlignment;
+  glGetIntegerv(GL_PACK_ALIGNMENT,&PackAlignment); 
+  glPixelStorei(GL_PACK_ALIGNMENT,1); 
 
+  glReadBuffer(GL_BACK);
 
   // could choose red, green or blue
   int pixelGridSize = DEPTHSIZE;		// must match window size
@@ -91,6 +87,7 @@ void  doImageScanApprox()
   // Render tube images (enlarged to account for tip radius)
   // into window.  
   // (We don't really care about the image, just the depth.)
+
   imageScanDepthRender();
 
   // Read (normalized) Z-buffer values from the depth window.
@@ -99,7 +96,6 @@ void  doImageScanApprox()
   get_color_buffer_values();
 }
 
-
 /* This is the most critical part of the afmsim. This is the one which 
  * renders the afm scan
  */
@@ -107,12 +103,19 @@ void  doImageScanApprox()
 void  imageScanDepthRender()  {
   // draw into depth window
   glutSetWindow( depthWindowID );
-  
+
   // Setup OpenGL state.
-  glClearDepth(1.0);
+  glClearDepth(1.);
   glClearColor(0, 0, 0, 1);
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
   glEnable(GL_DEPTH_TEST);
+
+  glFinish();
+
+  GLint UnpackAlignment;
+  glGetIntegerv(GL_UNPACK_ALIGNMENT,&UnpackAlignment); 
+  glPixelStorei(GL_UNPACK_ALIGNMENT,1); 
+
 
   // set projection matrix to orthoscopic projection matching current window
   glMatrixMode(GL_PROJECTION);
@@ -134,34 +137,40 @@ void  imageScanDepthRender()  {
     case SPHERE_TIP :
       glPushMatrix();
       // go down by tip radius
-      glTranslatef( 0., 0., -tip.spTip.r);  
+      glTranslatef( 0., 0., -tip.spTip->r);  
       if (uncertainty_mode) {
-	ob[i]->uncert_afm_sphere_tip(tip.spTip);
+	ob[i]->uncert_afm_sphere_tip(*(tip.spTip));
       }
       else {
-	ob[i]->afm_sphere_tip(tip.spTip);
+	ob[i]->afm_sphere_tip(*(tip.spTip));
       }
 
       glPopMatrix();
+
+
       break;
     case INV_CONE_SPHERE_TIP :
       glPushMatrix();
       // go down by tip radius
-      glTranslatef( 0., 0., -tip.icsTip.r);  
+      glTranslatef( 0., 0., -tip.icsTip->r);  
 
       if (uncertainty_mode) {
-	ob[i]->uncert_afm_inv_cone_sphere_tip(tip.icsTip);
+	ob[i]->uncert_afm_inv_cone_sphere_tip(*(tip.icsTip));
       }
       else {
-	ob[i]->afm_inv_cone_sphere_tip(tip.icsTip);
+	ob[i]->afm_inv_cone_sphere_tip(*(tip.icsTip));
       }
 
       glPopMatrix();
       break;
     }
   }
-}
 
+  glFinish();
+
+  glPixelStorei(GL_UNPACK_ALIGNMENT,UnpackAlignment); 
+
+}
 
 // Display the image scan grid (a depth image).
 void showGrid( void ) {
@@ -190,9 +199,9 @@ void showGrid( void ) {
 
       // gray color values
       double gcol1 = colorBuffer[j*scanResolution + i];
-      double gcol2 = colorBuffer[j*scanResolution + i+1];
-      double gcol3 = colorBuffer[(j+1)*scanResolution + i+1];
-      double gcol4 = colorBuffer[(j+1)*scanResolution + i];
+      //      double gcol2 = colorBuffer[j*scanResolution + i+1];
+      //      double gcol3 = colorBuffer[(j+1)*scanResolution + i+1];
+      //      double gcol4 = colorBuffer[(j+1)*scanResolution + i];
 
       if (uncertainty_mode) {
 	glColor3f(gcol1, gcol1, gcol1);
@@ -234,6 +243,7 @@ void showGrid( void ) {
     }
   }
   setColor( gridColor );
+  glFlush();
 }
 
 

@@ -22,7 +22,6 @@ GLuint list_sphere;
 GLuint list_cylinder;
 
 static int dblBuf  = GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH;
-//static int singleBuf  = GLUT_SINGLE | GLUT_RGBA | GLUT_DEPTH;
 Ntube nullntube;
 
 OB *ob[MAXOBS];
@@ -100,6 +99,7 @@ void select_triangle_side();
 
 int main(int argc, char *argv[])
 {
+
   adjustOrthoProjectionParams();
 
   if (argc > 1) {// load from a file
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
 #if DISP_LIST
     make_sphere();
     make_cylinder();
-    make_cone_sphere(ics);
+    make_cone_sphere(*(tip.icsTip));
 #endif
 
   // pass pointers to callback routines for main window
@@ -156,6 +156,7 @@ int main(int argc, char *argv[])
   glutKeyboardFunc(commonKeyboardFunc);
   glutMouseFunc(mouseFuncMain);
   glutMotionFunc(   mouseMotionFuncMain );
+
 
   /* The view on Another View window is a front view from a point on the
    *  -Y axis
@@ -170,11 +171,11 @@ int main(int argc, char *argv[])
   adjustOrthoProjectionToViewWindow();
   glutMouseFunc(mouseFuncMain);
   glutMotionFunc(   mouseMotionFuncMain );
-
+  
 #if DISP_LIST
     make_sphere();
     make_cylinder();
-    make_cone_sphere(ics);
+    make_cone_sphere(*(tip.icsTip));
 #endif
 
   // pass pointers to callback routines for the other view window
@@ -192,7 +193,7 @@ int main(int argc, char *argv[])
 #if DISP_LIST
     make_sphere();
     make_cylinder();
-    make_cone_sphere(ics);
+    make_cone_sphere(*(tip.icsTip));
 #endif
 
   glutDisplayFunc( displayFuncDepth );
@@ -219,18 +220,20 @@ void write_to_unca(char *filename) {
   u.writeUnca(filename);
 }
 
-
 /**************************************************************************************/
 // This routine is called only after input events.
 void displayFuncMain( void ) {
   if (!stopAFM) {
     glutSetWindow( mainWindowID );
+
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
     // draw graphics for this frame
     drawFrame();
     // end of display frame, so flip buffers
     glutSwapBuffers();
+
   }
 }
 
@@ -254,8 +257,10 @@ void displayFuncView( void ) {
 void  displayFuncDepth( void ) {
   if (!stopAFM) {
     glutSetWindow( depthWindowID );
+
     // in Z-buffer of Depth Window using graphics hardware.
     doImageScanApprox();
+
     // end of display frame, so flip buffers
     glutSwapBuffers();
   }
@@ -270,8 +275,14 @@ void commonIdleFunc( void ) {
   if (dna) {
     dna->run();
     run_cnt++;
+
+    if ((run_cnt % PERIOD) == 0) {
+      glutSetWindow( mainWindowID );		glutPostRedisplay();
+      glutSetWindow( viewWindowID );		glutPostRedisplay();
+      glutSetWindow( depthWindowID );		glutPostRedisplay();
+    }
   }
-  if ((run_cnt % PERIOD) == 0) {
+  else {
     glutSetWindow( mainWindowID );		glutPostRedisplay();
     glutSetWindow( viewWindowID );		glutPostRedisplay();
     glutSetWindow( depthWindowID );		glutPostRedisplay();
@@ -366,6 +377,26 @@ void globalkeyboardFunc(unsigned char key, int x, int y) {
   }
 }
 
+// remake disp lists
+void remake_sphere() {
+  glutSetWindow( mainWindowID );	make_sphere();	
+  glutSetWindow( viewWindowID );	make_sphere();		
+  glutSetWindow( depthWindowID );	make_sphere();		
+}
+
+void remake_cylinder() {
+  glutSetWindow( mainWindowID );	make_cylinder();
+  glutSetWindow( viewWindowID );	make_cylinder();
+  glutSetWindow( depthWindowID );	make_cylinder();
+}
+
+void remake_cone_sphere(InvConeSphereTip ics) {
+  glutSetWindow( mainWindowID );	make_cone_sphere(ics);	
+  glutSetWindow( viewWindowID );	make_cone_sphere(ics);		
+  glutSetWindow( depthWindowID );	make_cone_sphere(ics);		
+}
+
+
 // Keyboard callback for main window.
 void commonKeyboardFunc(unsigned char key, int x, int y) {
   switch (key) {
@@ -432,24 +463,36 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       // radius of the tip
   case 'r' :
     tip.inc_r();
+#if DISP_LIST
+    remake_cone_sphere(*(tip.icsTip));
+#endif
     break;
   case 'R' :
     tip.dec_r();
+#if DISP_LIST
+    remake_cone_sphere(*(tip.icsTip));
+#endif
     break;
   case 'a' ://change angle, slant of the tip
     tip.inc_theta();
+#if DISP_LIST
+    remake_cone_sphere(*(tip.icsTip));
+#endif
     break;
   case 'A' ://change angle, slant of the tip
     tip.dec_theta();
+#if DISP_LIST
+    remake_cone_sphere(*(tip.icsTip));
+#endif
     break;
   case '*' ://increase tesselation
     tesselation += 5;
 
 #if DISP_LIST
-    make_sphere();
-    make_cylinder();
-    make_cone_sphere(ics);
-    tip.icsTip.set(tip.icsTip.r, tip.icsTip.ch, tip.icsTip.theta, tesselation);
+    remake_sphere();
+    remake_cylinder();
+    remake_cone_sphere(*(tip.icsTip));
+    tip.icsTip->set(tip.icsTip->r, tip.icsTip->ch, tip.icsTip->theta, tesselation);
 #endif
     printf("Tesselation %d\n", tesselation);
     break;
@@ -457,10 +500,11 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
     if (tesselation > 5) { tesselation -= 5; }
 
 #if DISP_LIST
-    make_sphere();
-    make_cylinder();
-    make_cone_sphere(ics);
-    tip.icsTip.set(tip.icsTip.r, tip.icsTip.ch, tip.icsTip.theta, tesselation);
+    remake_sphere();
+    remake_cylinder();
+    remake_cone_sphere(*(tip.icsTip));
+
+    tip.icsTip->set(tip.icsTip->r, tip.icsTip->ch, tip.icsTip->theta, tesselation);
 #endif
 
     printf("Tesselation %d\n", tesselation);
@@ -482,10 +526,10 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
     {
 	char filename[40];
 	if (tip.type == SPHERE_TIP) {
-	  sprintf(filename,"sptip_r_%.1lfnm.UNCA",tip.spTip.r);
+	  sprintf(filename,"sptip_r_%.1lfnm.UNCA",tip.spTip->r);
 	}
 	else {
-	  sprintf(filename,"icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCA",tip.icsTip.r,tip.icsTip.ch,RAD_TO_DEG*tip.icsTip.theta);
+	  sprintf(filename,"icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCA",tip.icsTip->r,tip.icsTip->ch,RAD_TO_DEG*tip.icsTip->theta);
 	}
 	cout << "Writing to file " << filename << endl;
 	write_to_unca(filename);
