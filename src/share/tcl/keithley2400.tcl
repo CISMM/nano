@@ -136,6 +136,12 @@ set widgets(measure_frame) [$vi_win.left.measure_frame childsite]
 
 pack $vi_win.left.source_frame $vi_win.left.measure_frame -side top -fill both
 
+# show the time we've been connected, or the time in the stream
+set vi(stream_time) 0
+label $vi_win.right.timelabel -text "Time:  "
+label $vi_win.right.time -textvariable $vi(stream_time)
+pack $vi_win.right.timelabel $vi_win.right.time -side right
+
 # Button to connect, clear, and completely initialize the Keithley
 set widgets(connect_and_init) [button $vi_win.left.connect_and_init -text "Connect and Init" \
 	-command { set vi(connect_and_init) 1 } ]
