@@ -1,3 +1,8 @@
+2001-03-02  Aron Helser  <helser@cs.unc.edu>
+
+	* mainwin.tcl: Always source shared_ptr.tcl so mutex messages are
+	handled without error. 
+
 2001-02-09  Jason Clark  <jclark@cs.unc.edu>
 
 	* setupmenu.tcl: Added new visualization menu.

@@ -481,9 +481,13 @@ source [file join ${tcl_script_dir} analysismenu.tcl]
 source [file join ${tcl_script_dir} stripchart.tcl]
 # Streamfile replay controls. Position depends on image window. 
 source [file join ${tcl_script_dir} streamfile.tcl]
-if { !$thirdtech_ui } {
+
 #Shared resource controls. Synchronize two copies of nM running
 # on different machines. Position depends on streamfile window.
+# Always sourced so mutex messages handled without error. 
+source [file join ${tcl_script_dir} shared_ptr.tcl]
+
+if { !$thirdtech_ui } {
 source [file join ${tcl_script_dir} shared_ptr.tcl]
 #Registration tool. Align two data sets with each other
 source [file join ${tcl_script_dir} registration.tcl]
