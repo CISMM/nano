@@ -691,6 +691,9 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
     // zero below.
     if (tcl_commit_pressed != 1) return;
 
+    BCPlane * plane = dataset->inputGrid->getPlaneByName
+      (dataset->heightPlaneName->string());
+	  
     // only allow commit to be activated in selected modes.
     switch (user_mode[0]) {
 
@@ -701,11 +704,41 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	// line tool, we tell the AFM to connect the dots with
 	// modificaton force. The Slow Line tool goes to the first
 	// point and waits.
+
+        // will contain world coords of max value in plane
+        // for OPTIMIZE_NOW mode
+
+        double coord_x, coord_y;
 	if ((microscope->state.modify.tool == LINE)||
 	    (microscope->state.modify.tool == SLOW_LINE)||
 	    (microscope->state.modify.tool == SLOW_LINE_3D)) {
 
           drawLine();
+	} else if (microscope->state.modify.tool == OPTIMIZE_NOW) {
+	  if (microscope->state.modify.optimize_now_param == 
+	      OPTIMIZE_NOW_LINE) {
+	    // optimize based on a line specified by the user
+	    // These are the points we have specified so far in the polyline
+
+	    Position_list & pos_list = microscope->state.modify.stored_points;
+	    pos_list.goToHead();
+	    plane->computeOptimizeMinMax(
+		   microscope->state.modify.optimize_now_param,
+		   pos_list.currX(),
+		   pos_list.currY(),
+		   (pos_list.peekNext())->x(),
+		   (pos_list.peekNext())->y(),
+		   &coord_x, &coord_y);
+	  }
+	  Point_value *value =
+	    microscope->state.data.inputPoint->getValueByPlaneName
+	    (dataset->heightPlaneName->string());
+	  if (value == NULL) {
+	    fprintf(stderr, "Error in handle_commit_change(): could not get value!\n");
+	    return;
+	  }
+	  microscope->ScanTo( coord_x, coord_y );
+	  position_sphere( coord_x, coord_y, plane->valueInWorld(coord_x, coord_y) );
 	}
 	//if we aren't using line tool, don't change commit button's value,
 	// because it's handled below in doFeelLive()
@@ -715,7 +748,42 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	break;
     case USER_SERVO_MODE: // user is in Select mode
 	// set the scan region based on the last one specified by the user. 
-	if ( microscope->state.select_region_rad > 0.01 ) {  
+        if ( (microscope->state.modify.tool == OPTIMIZE_NOW) && 
+	     (microscope->state.modify.optimize_now_param == 
+	      OPTIMIZE_NOW_AREA) ) {
+	    BCPlane * plane = dataset->inputGrid->getPlaneByName
+	      (dataset->heightPlaneName->string());
+
+	    // optimize within an area specified by the user
+
+	    printf("Optimizing based on selected area\n");
+	    Position_list & pos_list = microscope->state.modify.stored_points;
+	    pos_list.goToHead();
+	    plane->computeOptimizeMinMax(
+		 microscope->state.modify.optimize_now_param,
+		 microscope->state.select_center_x
+                    - microscope->state.select_region_rad,
+		 microscope->state.select_center_y
+                    - microscope->state.select_region_rad,
+		 microscope->state.select_center_x
+                    + microscope->state.select_region_rad,
+		 microscope->state.select_center_y
+                    + microscope->state.select_region_rad, &coord_x, &coord_y);
+
+	    Point_value *value =
+	      microscope->state.data.inputPoint->getValueByPlaneName
+	      (dataset->heightPlaneName->string());
+	    if (value == NULL) {
+	      fprintf(stderr, "Error in handle_commit_change(): could not get value!\n");
+	      return;
+	  }
+	  microscope->ScanTo( coord_x, coord_y );
+	  position_sphere( coord_x, coord_y, plane->valueInWorld(coord_x, coord_y) );
+	  printf("Moved tip location to %.2f, %.2f\n", coord_x, coord_y);
+	}
+	// if not in optimize_now mode, use the select tool as it was originally
+	// intended to be used.
+	else if ( microscope->state.select_region_rad > 0.01 ) {  
 	    // This comparison sets the smallest possible scan region 
 	    // to be 0.01 nm - 0.1 Angstrom. Ought to be safe. 
 	    // only do something if region has been specified.
@@ -823,6 +891,9 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 			   microscope->state.yMin,
 			   microscope->state.xMin,
 			   microscope->state.yMin);
+	if (microscope->state.modify.tool == OPTIMIZE_NOW) {
+	  microscope->state.modify.tool = FREEHAND;
+	}
 	break;
     default:
 	break;
@@ -940,6 +1011,9 @@ void dispatch_event(int user, int mode, int event, nmb_TimerList * /*timer*/)
 		   ret = doLine(user, event);
 		   // User is specifying the line to step along.
 	       }
+	   } else if (microscope->state.modify.tool == OPTIMIZE_NOW) {
+	     // user wants to specify region via a line
+	     ret = doLine(user,event);
 	   } else {
 	       ret = doFeelLive(user,event);
 	   }
@@ -1277,7 +1351,8 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
 
       // Change icons to ones for this new mode.
       graphics->setUserMode(last_mode[user], last_style[user],
-			    user_mode[user], microscope->state.modify.style);
+			    user_mode[user], microscope->state.modify.style,
+			    microscope->state.modify.optimize_now_param);
 
       /* Last mode next time around is the current mode this time around */
       last_style[user] = microscope->state.modify.style;
@@ -1983,7 +2058,10 @@ VERBOSE(8, "      In doLine().");
 	// re-draw the aim line and the red sphere representing the tip.
         //nmui_Util::moveAimLine(clipPos);
         decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
-        nmui_Util::moveSphere(clipPos, graphics);
+	if ( (microscope->state.modify.tool != OPTIMIZE_NOW) ||
+	     (!tcl_commit_pressed) ) {
+	  nmui_Util::moveSphere(clipPos, graphics);
+	}
 
 
 	// These are the points we have specified so far in the polyline
@@ -2148,7 +2226,8 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		// modification freehand when we hit "commit".
 		if ((microscope->state.modify.tool == LINE)||
 		    (microscope->state.modify.tool == SLOW_LINE)||
-		    (microscope->state.modify.tool == SLOW_LINE_3D)) {
+		    (microscope->state.modify.tool == SLOW_LINE_3D)||
+		    (microscope->state.modify.tool == OPTIMIZE_NOW)) {
 		   graphics->setRubberLineStart(clipPos[0], clipPos[1]);
 		   graphics->setRubberSweepLineStart(TopL, TopR);
 		   //save this point as part of the poly-line

@@ -23,7 +23,6 @@ void linkMicroscopeToInterface (nmm_Microscope_Remote *);
 
 int clear_polyline( void * userdata );
 
-
 void updateMicroscopeRTTEstimate (double time);
 
 // NANOX
@@ -51,6 +50,7 @@ extern TclNet_float tcl_wfr_scale;
 extern Tclvar_float handTracker_update_rate;
 
 extern Tclvar_int xy_lock;
+extern void position_sphere(float, float, float);
 
 /************************
  * Which knob performs which function
