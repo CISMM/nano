@@ -62,6 +62,10 @@ void handle_slow_line_step_change (vrpn_int32 new_value, void * _mptr);
 void handle_slow_line_direction_change (vrpn_int32 new_value, void * _mptr);
 int slow_line_ReceiveNewPoint (void * _mptr, const Point_results * p);
 
+
+//void handle_mutex_request (vrpn_int32, void *);
+//void handle_mutex_release (vrpn_int32, void *);
+
 #endif  // _H_MICROSCOPE_HANDLERS
 
 

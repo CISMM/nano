@@ -904,3 +904,4 @@ int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
   }
   return 0;
 }
+

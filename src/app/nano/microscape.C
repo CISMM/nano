@@ -281,6 +281,9 @@ static void handle_timed_sync (vrpn_int32, void *);
 static void handle_collab_measure_change (vrpn_float64, void *);
 static void handle_center_pressed (vrpn_int32, void *);
 
+static void handle_mutex_request (vrpn_int32, void *);
+static void handle_mutex_release (vrpn_int32, void *);
+
 /*******************
  * Global variables
  *******************/
@@ -854,6 +857,8 @@ TclNet_int copy_to_shared_state ("copy_to_shared_state", 0);
 ///position we want to track
 TclNet_string collab_machine_name ("collab_machine_name", "");
 
+TclNet_int request_mutex ("request_mutex", 0);
+TclNet_int release_mutex ("release_mutex", 0);
 
 static vrpn_bool loggingInterface = VRPN_FALSE;
 static vrpn_bool replayingInterface = VRPN_FALSE;
@@ -1328,6 +1333,93 @@ static void handle_x_value_change (vrpn_float64, void *) {
 //fprintf(stderr, "In handle_x_value_change()\n");
   x_set_scale(x_min_value, x_max_value);
 }
+
+// NANOX
+
+void handle_mutex_request (vrpn_int32 value, void * userdata) {
+  nmm_Microscope_Remote * microscope = (nmm_Microscope_Remote *) userdata;
+  if (value) {
+    microscope->requestMutex();
+    value = 0;
+  }
+}
+
+void handle_mutex_release (vrpn_int32 value, void * userdata) {
+  nmm_Microscope_Remote * microscope = (nmm_Microscope_Remote *) userdata;
+  if (value) {
+    microscope->releaseMutex();
+    value = 0;
+  }
+}
+
+// We asked for the mutex and got it.
+void handle_mutexRequestGranted (void *, nmb_SharedDevice *) {
+  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  char command [1000];
+  int retval;
+
+  sprintf(command, "mutex_gotRequest_callback");
+  retval = Tcl_Eval(tk_control_interp, command);
+  if (retval != TCL_OK) {
+    fprintf(stderr, "Tcl_Eval failed in handle_mutexRequestGranted:  %s.\n",
+            tk_control_interp->result);
+  }
+
+  //return 0;
+}
+
+// We asked for the mutex, but somebody said "no".
+void handle_mutexRequestDenied (void *, nmb_SharedDevice *) {
+  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  char command [1000];
+  int retval;
+
+  sprintf(command, "mutex_deniedRequest_callback");
+  retval = Tcl_Eval(tk_control_interp, command);
+  if (retval != TCL_OK) {
+    fprintf(stderr, "Tcl_Eval failed in handle_mutexRequestDenied:  %s.\n",
+            tk_control_interp->result);
+  }
+
+  //return 0;
+}
+
+// Somebody else (NOT US?!) got the mutex.
+void handle_mutexTaken (void *, nmb_SharedDevice *) {
+  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  char command [1000];
+  int retval;
+
+  sprintf(command, "mutex_taken_callback");
+  retval = Tcl_Eval(tk_control_interp, command);
+  if (retval != TCL_OK) {
+    fprintf(stderr, "Tcl_Eval failed in handle_mutexTaken:  %s.\n",
+            tk_control_interp->result);
+  }
+  
+  //return 0;
+}
+
+// Anybody released the mutex.
+void handle_mutexReleased (void *, nmb_SharedDevice *) {
+  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  char command [1000];
+  int retval;
+
+  sprintf(command, "mutex_release_callback");
+  retval = Tcl_Eval(tk_control_interp, command);
+  if (retval != TCL_OK) {
+    fprintf(stderr, "Tcl_Eval failed in handle_mutexReleased:  %s.\n",
+            tk_control_interp->result);
+  }
+
+  //return 0;
+}
+
+
+
+
+
 
 
 /// Handle the color change of the rulergrid
@@ -3764,28 +3856,14 @@ void setupCallbacks (Microscope * m) {
 
   if (!m) return;
 
-  // TCH 19 May 98
-  // Moved all of these here since microscope isn't defined at load time
+  // Microscope isn't defined at load time,
   // so we can't declare all these things statically.
 
-  //compliancePlaneName.bindList(&m->state.data.inputPlaneNames);
   compliancePlaneName = "none";
-
-
-
-  //frictionPlaneName.bindList(&m->state.data.inputPlaneNames);
   frictionPlaneName = "none";
-
-  //bumpPlaneName.bindList(&m->state.data.inputPlaneNames);
   bumpPlaneName = "none";
-
-  //buzzPlaneName.bindList(&m->state.data.inputPlaneNames);
   buzzPlaneName = "none";
-
-  //adhesionPlaneName.bindList(&m->state.data.inputPlaneNames);
   adhesionPlaneName = "none";
-
-  //soundPlaneName.bindList(&m->state.data.inputPlaneNames);
   soundPlaneName = "none";
   soundPlaneName.addCallback
             (handle_sound_dataset_change, m);
@@ -3800,45 +3878,33 @@ void setupCallbacks (Microscope * m) {
 
   // DONE GENETIC TEXTURES
 
-  //xPlaneName.bindList(&m->state.data.inputPlaneNames);
   xPlaneName = "none";
   xPlaneName.addCallback
             (handle_x_dataset_change, NULL);
 
-  //procPlaneName.bindList(&m->state.data.inputPlaneNames);
   procPlaneName = "none";
-  //procParams.bindList(&m->state.data.inputPlaneNames);
   procParams = "";
 
-  //newFilterPlaneName.bindList(&m->state.data.inputPlaneNames);
   newFilterPlaneName = "";
   newFilterPlaneName.addCallback
             (handle_filterPlaneName_change, NULL);
 
-  //newFlatPlaneName.bindList(&m->state.data.inputPlaneNames);
   newFlatPlaneName = "";
   newFlatPlaneName.addCallback
             (handle_flatPlaneName_change, NULL);
 
-  //newLBLFlatPlaneName.bindList(&m->state.data.inputPlaneNames);
   newLBLFlatPlaneName = "";
   newLBLFlatPlaneName.addCallback
 	    (handle_lblflatPlaneName_change, NULL); 
 
-  //sumPlane1Name.bindList(&m->state.data.inputPlaneNames);
   sumPlane1Name = "none";
-  //sumPlane2Name.bindList(&m->state.data.inputPlaneNames);
   sumPlane2Name = "none";
-  //newSumPlaneName.bindList(&m->state.data.inputPlaneNames);
   newSumPlaneName = "";
   newSumPlaneName.addCallback
             (handle_sumPlaneName_change, NULL);
 
-  //adhPlane1Name.bindList(&m->state.data.inputPlaneNames);
   adhPlane1Name  = "none";
-  //adhPlane2Name.bindList(&m->state.data.inputPlaneNames);
   adhPlane2Name  = "none";
-  //newAdhPlaneName.bindList(&m->state.data.inputPlaneNames);
   newAdhPlaneName = "";
   newAdhPlaneName.addCallback
             (handle_adhPlaneName_change, m);
@@ -3860,6 +3926,15 @@ void setupCallbacks (Microscope * m) {
 
   x_min_value.addCallback(handle_x_value_change, NULL);
   x_max_value.addCallback(handle_x_value_change, NULL);
+
+  request_mutex.addCallback(handle_mutex_request, m);
+  release_mutex.addCallback(handle_mutex_release, m);
+
+  m->registerGotMutexCallback(NULL, handle_mutexRequestGranted);
+  m->registerDeniedMutexCallback(NULL, handle_mutexRequestDenied);
+  m->registerMutexTakenCallback(NULL, handle_mutexTaken);
+  m->registerMutexReleasedCallback(NULL, handle_mutexReleased);
+
 }
 
 void setupCallbacks (nmg_Graphics * g) {
