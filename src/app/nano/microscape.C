@@ -329,6 +329,8 @@ static void handle_viz_max_change(vrpn_float64 , void *);
 static void handle_viz_min_change(vrpn_float64 , void *);
 static void handle_viz_alpha_change(vrpn_float64 , void *);
 static void handle_viztex_scale_change (vrpn_float64, void * userdata);
+static void handle_viz_tex_new(const char *, void *);
+static void handle_viz_tex(const char *, void *);
 
 static vrpn_bool g_syncPending = VRPN_FALSE;
 
@@ -753,6 +755,7 @@ Tclvar_string newScreenImageFileName("screenImage_filename", "");
 
 //-----------------------------------------------------------------
 /// These variables are for controlling visualizations
+//Probably should make all of these TclNet's
 Tclvar_int		viz_choice("viz_choice",0, handle_viz_change);
 Tclvar_float	viz_max_limit("viz_max_limit",1);
 Tclvar_float	viz_min_limit("viz_min_limit",0);
@@ -760,8 +763,14 @@ Tclvar_float	viz_max("viz_max",1, handle_viz_max_change);
 Tclvar_float	viz_min("viz_min",0, handle_viz_min_change);
 Tclvar_float	viz_alpha("viz_alpha",0.5, handle_viz_alpha_change);
 
-//Probably should make all of these TclNet's
 TclNet_float    viztex_scale ("viztex_scale", 500);
+
+//This should probably be generalized to just a method for
+//loading textures and anything that wants one can use it, but
+//this will do for now
+Tclvar_list_of_strings viz_tex_files("viz_tex_files");
+Tclvar_string viz_tex_new("viz_tex_new", "", handle_viz_tex_new);
+Tclvar_string viz_tex("viz_tex", "", handle_viz_tex);
 
 //-----------------------------------------------------------------
 /// These variables are for controlling shape analysis
@@ -4108,6 +4117,14 @@ static void handle_viz_dataset_change(const char *, void *)
   graphics->causeGridRedraw();
 }
 
+static void handle_viz_tex_new(const char *, void *) {
+    viz_tex_files.addEntry(viz_tex_new.string());
+}
+
+static void handle_viz_tex(const char *, void *) {
+    graphics->loadVizImage(viz_tex.string());
+}
+
 static void handle_viztex_scale_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setViztexScale(viztex_scale);
@@ -6762,7 +6779,10 @@ int main (int argc, char* argv[])
       graphics->loadRulergridImage(rulerPPMName);
     }
 
+    //Did the user want to load an initial texture for use with
+    //visualizations?
     if (vizPPMName) {        
+        viz_tex_files.addEntry(vizPPMName);
         graphics->loadVizImage(vizPPMName);
     }
 

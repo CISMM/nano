@@ -9,23 +9,26 @@
 //------------------------------------------------------------------------
 //Functions necessary for all imported objects
 static void handle_import_file_change (const char * , void *) {
-    static char * old_name = NULL;
+    static char * old_name = "";
     static const float convert = 1.0f/255;
     
     if (modelFile.string()) {        
-        URPolygon *obj = new URPolygon;
-        FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
-        import_type = gen->GetExtension();
-        obj->LoadGeometry(gen);
-        obj->SetVisibility(import_visibility);
-        obj->SetColor3(convert * import_r, convert * import_g, convert * import_b);
-        obj->SetAlpha(import_alpha);
-        obj->GetLocalXform().SetScale(import_scale);
-        obj->GetLocalXform().SetTranslate(import_transx, import_transy, import_transz);
-        obj->GetLocalXform().SetRotate(import_rotx, import_roty, import_rotz, 1);
-        World.TAddNode(obj, modelFile.string());
+        if (strcmp(modelFile.string(),"") != 0) {          
+            //Only try to create the object if there is a file specified.
 
-        if (old_name != NULL) {
+            URPolygon *obj = new URPolygon;
+            FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
+            import_type = gen->GetExtension();
+            obj->LoadGeometry(gen);
+            obj->SetVisibility(import_visibility);
+            obj->SetColor3(convert * import_r, convert * import_g, convert * import_b);
+            obj->SetAlpha(import_alpha);
+            obj->GetLocalXform().SetScale(import_scale);
+            obj->GetLocalXform().SetTranslate(import_transx, import_transy, import_transz);
+            obj->GetLocalXform().SetRotate(import_rotx, import_roty, import_rotz, 1);
+            World.TAddNode(obj, modelFile.string());
+        }
+        if (strcmp(old_name, "") != 0) {
             UTree *node = World.TGetNodeByName(old_name);
 
             node->TGetParent()->TRemoveTreeNode(node);
