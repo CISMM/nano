@@ -19,6 +19,18 @@
 #include <vrpn_ForceDevice.h>
 #include <nm_MouseInteractor.h>
 
+#include <nmb_Dataset.h>
+#include <nmb_Globals.h>
+#include <nmui_Util.h>
+
+// #define HAPTIC_MOUSE 
+
+#ifdef HAPTIC_MOUSE
+#include "IFC.h"
+#endif
+#include "v.h"
+#include "normal.h"
+
 #ifdef V_GLUT
 #include <GL/glut_UNC.h>
 #endif
@@ -140,8 +152,12 @@ void nm_MouseInteractor::print_report(void)
    printf("Euler    :%lf, %lf, %lf\n", angles[0],angles[1],angles[2]);
 
 }
+
 void nm_MouseInteractor::get_report(void)
 {
+#ifdef HAPTIC_MOUSE
+  static int first_haptic_mouse = 1;
+#endif
     q_type temp_quat;
     int motion_mode; // 0 = translate, 1 = rotate, 
     // 2 = absolute orbit (light), 3 = shift inversion, position (scale).
@@ -271,30 +287,113 @@ void nm_MouseInteractor::get_report(void)
             break;
         }
     }
+    float mouse_normal[3] = {0, 0, 0};
+#ifdef HAPTIC_MOUSE
+    if (1) {
+#else
     if (user_0_mode == USER_MEASURE_MODE) {
+#endif
         // Clamp the position to be on the surface
-//          q_vec_type clipPos;
-//          BCPlane* plane = dataset->inputGrid->getPlaneByName
-//                       (dataset->heightPlaneName->string());
-//          if (plane == NULL)
-//          {
-//              fprintf(stderr, "Error in doMeasure: could not get plane!\n");
-//              return -1;
-//          }
-//          // Set its height based on data at this point
-//          nmui_Util::getHandInWorld(whichUser, clipPos);
-//          nmui_Util::clipPosition(plane, clipPos);
-//          clipPos[2] = plane->valueAt(clipPos[0], clipPos[1]);
+         BCPlane* plane = dataset->inputGrid->getPlaneByName
+                      (dataset->heightPlaneName->string());
+         if (plane == NULL)
+         {
+             fprintf(stderr, "Error in doMeasure: could not get plane!\n");
+             return;
+         }
 
-//          v_xform_type worldFromHand;
-//          v_get_world_from_hand(user, &worldFromHand);
-//          q_vec_copy(position, worldFromHand.xlate);
-        
+         // Set its height based on data at this point
+	 // 1. put hand position, pos, into world coordinates
+	 v_update_user_xform(0, V_TRACKER_FROM_HAND_SENSOR, pos,
+			     d_quat);
+
+	 v_xform_type world_hand;
+	 v_get_world_from_hand( 0, &world_hand );
+	 
+	 pos[0] = world_hand.xlate[0];
+	 pos[1] = world_hand.xlate[1];
+	 pos[2] = world_hand.xlate[2];
+
+	 // 2. clip the hand to the plane
+	 nmui_Util::clipPosition(plane, pos);
+
+	 // 3. set the pos[2] height value to be on the plane
+	 plane->valueAt(&pos[2], pos[0], pos[1]);
+	 
+	 Compute_Norm((float)plane->xInGrid(pos[0]), (float)plane->yInGrid(pos[1]), mouse_normal, plane);
+
+	 // 4. put the hand position, back into mouse coordinates:
+	 world_hand.xlate[0] = pos[0];
+	 world_hand.xlate[1] = pos[1];
+	 world_hand.xlate[2] = pos[2];
+
+	 v_xform_type hand_from_sensor, world_sensor;
+	 v_x_invert( &hand_from_sensor, &v_users[0].xforms[V_SENSOR_FROM_HAND_UNIT] );
+	 v_x_compose( &world_sensor, &world_hand, &hand_from_sensor );
+
+	 v_xform_type room_from_world, room_sensor;
+	 v_x_invert( &room_from_world, &v_world.users.xforms[0] );
+	 v_x_compose( &room_sensor, &room_from_world, &world_sensor );
+
+	 v_xform_type tracker_from_room, tracker_sensor;
+	 v_x_invert( &tracker_from_room, &v_users[0].xforms[V_ROOM_FROM_HAND_TRACKER]);
+	 v_x_compose( &tracker_sensor, &tracker_from_room, &room_sensor );	 
+
+	 pos[0] = tracker_sensor.xlate[0];
+	 pos[1] = tracker_sensor.xlate[1];
+	 pos[2] = tracker_sensor.xlate[2];
+
+	 d_quat[0] = tracker_sensor.rotate[0];
+	 d_quat[1] = tracker_sensor.rotate[1];
+	 d_quat[2] = tracker_sensor.rotate[2];
+	 d_quat[3] = tracker_sensor.rotate[3];
+
     }
     // Only for incremental, not if we calc from press position. 
 //      d_last_move_x = d_move_x;
 //      d_last_move_y = d_move_y;
     
+
+#ifdef HAPTIC_MOUSE
+    static CImmConstant constant;
+    static CImmDevice *pDevice;
+    if ( first_haptic_mouse ) {
+      first_haptic_mouse = 0;
+      // ************** FORCE-FEEDBACK CODE: Start **************
+      HINSTANCE hInstance = GetModuleHandle(NULL);
+      HWND ghWnd = FindWindow(NULL, "3D View");
+      // Initialize device using abstract class, which looks for a CImmMouse 
+      // first, then a CImmDXDevice second.  
+      //
+      // Note that since CImmDevice is an abstract class, you can not
+      // allocate a CImmDevice object - you may only allocate a CImmDevice*
+      // and call CreateDevice with the full scope specifier.  Refer to the
+      // IFC documentation for more information. 
+      pDevice = CImmDevice::CreateDevice(hInstance, ghWnd);
+      if (!pDevice) {
+	printf( "!pDevice\n" );
+	return; // Failed
+      }    
+      
+      if ( !constant.Initialize( pDevice, 1, 0, INFINITE, 10000, NULL, IMM_PARAM_NODOWNLOAD) ) {
+      	printf( "Haptic Mouse: Initialize Failed %d\n", CIFCErrors::GetLastErrorCode() );
+      }
+    }
+    float magnitude = 10000*sqrt( mouse_normal[0]*mouse_normal[0] + mouse_normal[1]*mouse_normal[1] );
+    //printf( "normal %f %f %f\n", mouse_normal[0], mouse_normal[1], magnitude );
+    magnitude *= 1;
+    if ( magnitude > 10000 )
+      magnitude = 10000;
+    if ( !constant.ChangeParameters( -10 * mouse_normal[0], 10 * mouse_normal[1],
+				     IMM_EFFECT_DONT_CHANGE, magnitude ) ) {
+      
+      printf( "Haptic Mouse: Change Parameters Failed %d\n", CIFCErrors::GetLastErrorCode() );
+    }
+    if ( !constant.Start() ) {
+      printf( "Haptic Mouse: Start Failed %d\n", CIFCErrors::GetLastErrorCode() );
+    }
+#endif
+
 }
 
 

@@ -631,6 +631,8 @@ TclNet_float set_stream_time ("set_stream_time", 0);
 TclNet_int set_stream_time_now ("set_stream_time_now", 0,
                              handle_set_stream_time_change, NULL);
 
+// replay partial streamfiles: commands
+TclNet_float set_stream_clip_time ("set_stream_clip_time", 0 );
 
 //-----------------------------------------------------------------------
 // Callbacks for graphics and
@@ -746,6 +748,15 @@ TclNet_float measureBlueY ("measure_blue_y", 0.0);
 
 static void handle_center_pressed (vrpn_int32, void *);
 Tclvar_int tcl_center_pressed ("center_pressed", 0, handle_center_pressed);
+static void handle_top_view_pressed (vrpn_int32, void *);
+Tclvar_int tcl_top_view_pressed ("top_view_pressed", 0, handle_top_view_pressed);
+static void top_view (void);
+
+
+// virus streamfile active:
+Tclvar_int virus_streamfile_active ("virus_streamfile_active", 0 );
+Tclvar_string virus_dir ("virus_dir", "");
+
 
 static void handle_mutex_request (vrpn_int32, void *);
 static void handle_mutex_release (vrpn_int32, void *);
@@ -2588,6 +2599,14 @@ static void handle_center_pressed (vrpn_int32 newValue, void * /*userdata*/) {
   justCentered = 1;
   center();
   tcl_center_pressed = 0;
+}
+
+static void handle_top_view_pressed (vrpn_int32 newValue, void * /*userdata*/) {
+  if (!newValue) {
+    return;
+  }
+  top_view();
+  tcl_top_view_pressed = 0;
 }
 
 /// Handler for set_stream_time_now, NOT set_stream_time. 
@@ -6625,6 +6644,10 @@ void ParseArgs (int argc, char ** argv,
         istate->laFaN = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
         istate->laFaD = atoi(argv[i]);
+      } else if (!strcmp(argv[i], "-virus" )) {
+        if (++i >= argc) Usage(argv[0]);
+        virus_dir = argv[i];
+        virus_streamfile_active =  1;
       } else if (argv[i][0] == '-') {
           // Unknown argument starting with "-"
           Usage(argv[0]);
@@ -8994,6 +9017,11 @@ vrpn_Connection* c;
     /* One more iteration done */
     VERBOSE(4, "  Done with mainloop iteration");
     n++; 
+    timeval t;
+    if(microscope_connection) {
+        microscope_connection->time_since_connection_open(&t);
+        set_stream_clip_time = t.tv_sec;
+    }
 
   }  // end of mainloop
 
@@ -10057,6 +10085,72 @@ static void find_center_xforms (q_vec_type * lock_userpos,
 	//fprintf(stderr,"DEBUG: head tracked mode - surface will not take up entire screen by default, so that phantom and viewer's head are to the same scale.\n");
       }
 }
+
+static void find_top_view_xforms (q_vec_type * lock_userpos,
+                                  q_type * lock_userrot,
+                                  double * lock_userscale)
+{
+  // This function doesn't make sense if we aren't doing graphics.
+  if (!glenable) return;
+
+    q_vec_type screen_mid;
+
+    const BCPlane * plane = (dataset
+                             ->inputGrid
+                             ->getPlaneByName
+                             (dataset->heightPlaneName->string()));
+    if (plane == NULL) {
+        display_error_dialog( "Unable to Center: couldn't find height plane");
+        return;
+    }
+    double len_y = fabs(plane->maxY() - plane->minY());
+      // What do these numbers mean??
+      screen_mid[0] = 0.0;
+      screen_mid[1] = 0.0;
+      screen_mid[2] = -1.75;
+
+      // 45 degree rotation about a point outside the plane.
+      q_make(*lock_userrot, 1.0, 0.0, 0.0, 0);
+      *lock_userscale = 0.55 * len_y / ScreenWidthMetersY ;
+
+      float mid_x, mid_y, mid_z;
+    get_Plane_Centers(&mid_x, &mid_y, &mid_z);
+
+    (*lock_userpos)[Q_X] = -screen_mid[0];
+    (*lock_userpos)[Q_Y] = -screen_mid[1];
+    (*lock_userpos)[Q_Z] = -screen_mid[2];
+
+    q_vec_scale( *lock_userpos, *lock_userscale, *lock_userpos );
+
+    (*lock_userpos)[Q_X] += mid_x;
+    (*lock_userpos)[Q_Y] += mid_y;
+    (*lock_userpos)[Q_Z] += mid_z;
+
+    *lock_userscale *= 5.0;
+}
+
+
+
+
+void top_view (void) {
+    q_vec_type l0_position;
+
+    l0_position[0] = 0.2;
+    l0_position[1] = 0.4;
+    l0_position[2] = 1.0;
+    l0_position[3] = 0.0;
+
+  graphics->setLightDirection( l0_position );
+    
+    v_xform_type lock;
+    
+    // find the transforms to take us to the centered view
+    find_top_view_xforms(&lock.xlate, &lock.rotate, &lock.scale);
+    
+    updateWorldFromRoom(&lock);
+}
+
+
 
 
 void center (void) {

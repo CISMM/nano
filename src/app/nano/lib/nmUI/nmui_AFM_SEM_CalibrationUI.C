@@ -1164,7 +1164,7 @@ int nmui_AFM_SEM_CalibrationUI::pointDataHandler(const Point_results *pr)
   Point_value *heightData = pr->getValueByPlaneName(
 	  d_AFM->Data()->heightPlaneName->string());
   if (!heightData) {
-	display_error_dialog("Missing height data in point channels");
+	//display_error_dialog("Missing height data in point channels");
 	return -1;
   }
 

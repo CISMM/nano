@@ -15,6 +15,7 @@
 set commit_pressed 0
 set commit_cancel 0
 set center_pressed 0
+set top_view_pressed 0
 
 #
 #setup surface view buttons
@@ -76,6 +77,8 @@ foreach i $magellan_buttons {
 radiobutton $nmInfo(viewb1).grab -text "Grab/Scale"  -variable user_0_mode \
 	-value 1 -padx 0 -pady 0
 button $nmInfo(viewb5).center -text "Center" -command "set center_pressed 1" \
+        -padx 5 -pady 2 -highlightthickness 2
+button $nmInfo(viewb5).top_view -text "Top View" -command "set top_view_pressed 1" \
         -padx 5 -pady 2 -highlightthickness 2
 
 frame $nmInfo(viewb2).r1
@@ -139,6 +142,8 @@ pack $nmInfo(viewb3).live $nmInfo(viewb3).select -anchor nw
 pack $nmInfo(viewb4).commit -side left -fill x -expand yes
 }
 pack $nmInfo(viewb5).center -side left -fill x -expand yes
+pack $nmInfo(viewb5).top_view -side left
+
 pack $nmInfo(viewb6).demotouch -side left
 pack $nmInfo(viewb6).region -side left 
 if { !$viewer_only } {

@@ -1,3 +1,8 @@
+2003-01-15  Alexandra Bokinsky  <bokinsky@cs.unc.edu>
+
+	* mainwin.tcl: Added NanoEd virus menu, displayed only when requested
+	* view.tcl: added topview button. 
+
 2003-01-13 Jameson Miller <millerj@cs.unc.edu>
 	*setupmenu.tcl : added controls for displaying the grid to be sent to
 		phantom.

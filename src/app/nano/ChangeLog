@@ -1,3 +1,15 @@
+2003-01-15  Alexandra Bokinsky  <bokinsky@cs.unc.edu>
+
+	* microscape.C (find_top_view_xforms): New button and function for
+	setting view of surface to directly overhead
+	Also added "-virus" command line arg to allow loading of NanoEd virus 
+	menu and streamfiles
+
+	* nm_MouseInteractor.C: Added support for Logitech haptic mouse, 
+	turned on with #define in this file. 
+	Also makes Measure Mode hand icon stay glued to surface. Tricky world-
+	to-hand-to-tracker transforms. 
+	
 2003-01-13 Jameson Miller <millerj@cs.unc.edu>
 	*microscope.c : added TCL variables and functions to handle adding 
          graphics to show haptic grid
