@@ -334,3 +334,162 @@ void nmr_Util::addImage(nmb_Image &addend, nmb_Image &sum, float wa,
     }
   }
 }
+
+/* resample:
+  conceptually, this is supposed to reconstruct a continuous image from
+  src by linear interpolation. dest is then computed as
+  a box filtered version of this continuous image by integrating over each
+  pixel in dest (this integration mostly involves summing over pixels in
+  src except at the edges of the dest pixel where only a fractional part of
+  a pixel in dest falls in the dest pixel. 
+  Unless there are bugs in this (which is likely given the
+  complexity) this should calculate the correct result within floating point
+  error
+*/
+
+// static
+void nmr_Util::resample(const nmb_Image &src, nmb_Image &dest)
+{
+    int i,j,k,l;
+    double stride_x, stride_y;  // dimensions of subsample regions
+    double dxmin, dxmax, dymin, dymax;  // real dimensions of subsample region
+    int ixmin, ixmax, iymin, iymax; // rectangle in src that contributes to
+                                    // subsample
+    double x_low_fract, x_high_fract, y_low_fract, y_high_fract; // amount
+                                // of pixels at edges in src rectangle to
+                                // include in subsample
+    double colsum;      // for summing a column in the subsample region
+    int destx, desty, srcx, srcy;       // image dimensions
+    srcx = src.width();
+    srcy = src.height();
+    destx = dest.width();
+    desty = dest.height();
+    stride_x = (double)srcx/(double)destx;
+    stride_y = (double)srcy/(double)desty;
+    
+    dxmin = 0.0;
+    dxmax = dxmin+stride_x;
+    ixmin = (int)floor(dxmin);
+    ixmax = (int)floor(dxmax);
+    if (ixmax >= srcx){
+        ixmax = srcx-1;
+        x_high_fract = 1.0;
+    }
+    else
+        x_high_fract = dxmax - ixmax;
+    x_low_fract = ixmin+1 - dxmin;
+    for (i = 0; i < destx; i++) {
+        dymin = 0.0;
+        dymax = dymin+stride_y;
+        iymin = (int)floor(dymin);
+        iymax = (int)floor(dymax);
+        if (iymax >= srcy){
+            iymax = srcy-1;
+            y_high_fract = 1.0;
+        }
+        else
+            y_high_fract = dymax - iymax;
+        y_low_fract = iymin+1 - dymin;
+
+        // this is somewhat inefficient because special cases of
+        // edge pixels are checked inside the loop rather than dealt
+        // with separately but its simpler to read/write this way
+        for (j = 0; j < desty; j++){
+            // (i,j) give pixel we want to write to in dest
+            // (k,l) are contributing pixels in src
+            double sum = 0.0;
+            double k_interp, l_interp;
+            for (k = ixmin; k <= ixmax; k++){
+                colsum = 0.0;
+                if (ixmin == ixmax) {
+                    // expansion case: do linear interpolation
+                    k_interp = k+1-x_low_fract;
+                } else if (k == ixmin) {
+                    // subsample case: get coordinate for computing
+                    // partial volume average
+                    k_interp = k+1-0.5*x_low_fract;
+                } else if (k == ixmax) {
+                    // subsample case: get coordinate for computing
+                    // partial volume average
+                    k_interp = k+0.5*x_high_fract;
+                } else {
+                    // subsample case: including the whole pixel
+                    k_interp = k;
+                }
+                for (l = iymin; l <= iymax; l++){
+                    if (iymin == iymax) {
+                        // expansion case: do linear interpolation
+                        l_interp = l+1-y_low_fract;
+                    } else if (l == iymin) {
+                        // subsample case: get coordinate for computing
+                        // partial volume average
+                        l_interp = l+1-0.5*y_low_fract;
+                    } else if (l == iymax) {
+                        // subsample case: get coordinate for computing
+                        // partial volume average
+                        l_interp = l+0.5*y_high_fract;
+                    } else {
+                        // subsample case: including the whole pixel
+                        l_interp = l;
+                    }
+                    if (iymin == iymax) {
+                        // don't multiply by anything (expansion case)
+                        colsum += src.getValueInterpolated(k_interp, l_interp);
+                    } else if (l != l_interp || k != k_interp) {
+                        if (l == iymin) {
+                          // multiply by partial volume factor (subsample case)
+                          colsum += y_low_fract*
+                              src.getValueInterpolated(k_interp, l_interp);
+                        } else if (l == iymax) {
+                          // multiply by partial volume factor (subsample case)
+                          colsum += y_high_fract*
+                              src.getValueInterpolated(k_interp, l_interp);
+                        }
+                    } else
+                        colsum += src.getValue(k,l);
+                }
+                if (ixmin == ixmax) {
+                    // don't multiply by anything (expansion case)
+                } else if (k == ixmin) {
+                    // multiply by partial volume factor (subsample case)   
+                    colsum *= x_low_fract;
+                } else if (k == ixmax) {
+                    // multiply by partial volume factor (subsample case)
+                    colsum *= x_high_fract;
+                }
+                sum += colsum;
+            }
+            dest.setValue(i,j, sum);
+
+            dymin += stride_y;
+            dymax = dymin+stride_y;
+            iymin = (int)floor(dymin);
+            iymax = (int)floor(dymax);
+            if (iymax >= srcy){
+                iymax = srcy-1;
+                y_high_fract = 1.0;
+            }
+            else
+                y_high_fract = dymax - iymax;
+            y_low_fract = iymin+1 - dymin;
+        }
+        dxmin += stride_x;
+        dxmax = dxmin+stride_x;
+        ixmin = (int)floor(dxmin);
+        ixmax = (int)floor(dxmax);
+        if (ixmax >= srcx){
+            ixmax = srcx-1;
+            x_high_fract = 1.0;
+        }
+        else
+            x_high_fract = dxmax - ixmax;
+        x_low_fract = ixmin+1 - dxmin;
+    }
+}
+
+// select value randomly from a uniform distribution between min and max
+// call this twice to select a random point in an image
+double nmr_Util::sampleUniformDistribution(double min, double max) {
+  return min + (max-min)*drand48();
+}
+

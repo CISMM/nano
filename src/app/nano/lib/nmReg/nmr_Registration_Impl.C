@@ -1,5 +1,6 @@
 #include "nmr_Registration_Impl.h"
 #include "transformSolve.h"
+#include "nmr_AlignerMI.h"
 
 nmr_Registration_Impl::nmr_Registration_Impl(nmr_Registration_Server *server):
   d_alignerUI(NULL),
@@ -229,6 +230,67 @@ int nmr_Registration_Impl::registerImages(Correspondence &c,
             xform[i] = xform_matrix[i];
         }
     }
+// debugging: try printing out the mutual information estimate to 
+// see if it makes sense
+    nmr_AlignerMI *mi = new nmr_AlignerMI();
+    mi->setDimensionMode(REF_2D);
+    if (mi->setSampleSizes(100, 100)) {
+      printf("setSampleSizes error\n");
+    } else {
+      printf("setSampleSizes succeeded\n");
+    }
+    // compute a quick and dirty estimate of what the 
+    // Parzen window variance should be
+    double src_range = d_images[SOURCE_IMAGE_INDEX]->maxValue() -
+                       d_images[SOURCE_IMAGE_INDEX]->minValue();
+    double tgt_range = d_images[TARGET_IMAGE_INDEX]->maxValue() -
+                       d_images[TARGET_IMAGE_INDEX]->minValue();
+    double sigmaTest = 0.1*(tgt_range);
+    double sigmaRef = 0.1*(src_range);
+    mi->setTestVariance(sigmaTest);
+    mi->setRefVariance(sigmaRef);
+    mi->setCovariance(sigmaRef, sigmaTest);
+
+    double T[6];
+    T[0] = xform_matrix[0]; T[1] = xform_matrix[4]; T[2] = xform_matrix[12];
+    T[3] = xform_matrix[1]; T[4] = xform_matrix[5]; T[5] = xform_matrix[13];
+
+    // scale down from 0..src.width, 0..src.height to 0..1, 0..1
+    double src_width = d_images[SOURCE_IMAGE_INDEX]->width();
+    double src_height = d_images[SOURCE_IMAGE_INDEX]->height();
+    T[0] /= src_width;
+    T[1] /= src_height;
+    T[3] /= src_width;
+    T[4] /= src_height;
+
+    // result is 0..1, 0..1 but we want 0..tgt.width, 0..tgt.height so scale
+    // the result
+    T[0] *= d_images[TARGET_IMAGE_INDEX]->width();
+    T[1] *= d_images[TARGET_IMAGE_INDEX]->width();
+    T[2] *= d_images[TARGET_IMAGE_INDEX]->width();
+    T[3] *= d_images[TARGET_IMAGE_INDEX]->height();
+    T[4] *= d_images[TARGET_IMAGE_INDEX]->height();
+    T[5] *= d_images[TARGET_IMAGE_INDEX]->height();
+    if (mi->setTransformation2D(T)) {
+      printf("setTransformation2D error\n");
+    } else {
+      printf("setTransformation2D succeeded\n");
+    }
+    if (mi->buildSampleA(d_images[SOURCE_IMAGE_INDEX],
+                         d_images[TARGET_IMAGE_INDEX]) ||
+        mi->buildSampleB(d_images[SOURCE_IMAGE_INDEX],
+                         d_images[TARGET_IMAGE_INDEX])) {
+      printf("buildSample error\n");
+    } else {
+      printf("buildSample suceeded\n");
+    }
+    double mutual_info;
+    if (mi->computeMutualInformation(mutual_info)){
+      printf("computeMutualInformation error\n");
+    } else {
+      printf("computeMutualInformation succeeded; value = %g\n", mutual_info);
+    }
+
     if (d_server){
       d_server->sendRegistrationResult(xform_matrix);
     }

@@ -1,3 +1,15 @@
+2001-05-22  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_AlignerMI.hC: new file containing code to do alignment by
+	maximization of mutual information
+	* nmr_Gaussian.hC: new file - utility to evaluate a gaussian 
+	efficiently using a lookup table
+	* nmr_Util.hC (resample): new function to resample an image
+	              (sampleUniformDistribution): random number generator
+	* nmr_Registration_Impl.C (registerImages): added some code to
+	calculate and print out the mutual information each time the 
+	transformation is computed (this is just a test)
+
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 
 	* Makefile: added glut as an external lib

@@ -100,6 +100,12 @@ class nmr_Util {
     static void addImage(nmb_Image &addend, nmb_Image &sum, float wa,
                   float ws);
 
+    /// this will linearly interpolate source and then integrate the
+    /// result into each pixel in resampledImage
+    static void resample(const nmb_Image &source, nmb_Image &resampledImage);
+ 
+    static double sampleUniformDistribution(double min, double max);
+   
 };
 
 #endif
