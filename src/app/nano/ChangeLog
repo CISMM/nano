@@ -1,3 +1,10 @@
+2001-09-25 Jameson Miller <millerj@cs.unc.edu>
+	* interaction.c - the z positon gets updated when in xy-lock and
+	taking steps in direct_step using feedback. this is so that when 
+	you switch to taking steps in directZ, the correct position of the
+	microscope is represented by the sphere on the screen
+
+
 2001-09-25  David Marshburn  <marshbur@cs.unc.edu>
 
 	* interaction.c: (all) code clean up.  removal of commented out
