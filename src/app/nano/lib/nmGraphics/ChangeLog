@@ -1,3 +1,15 @@
+2001-09-18  Aron Helser  <helser@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C (createRealignTextures): use glPixelMap to
+	let GL handle the work of using a colormap, results in faster
+	updates. 
+	(causeGridReColor): Added call to g_surface->recolorSurface()
+
+	* nmg_Surface.Ch (recolorSurface): new function
+	* nmg_SurfaceRegion.Ch (recolorRegion): new function, sets flag
+	(rebuildRegion): Watch for recolor flag, handle during rebuild
+	(rebuildInterval): same
+
 2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C: replaced two instances of 

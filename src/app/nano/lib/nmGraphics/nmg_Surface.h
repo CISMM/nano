@@ -18,9 +18,15 @@ public:
     void changeDataset(nmb_Dataset *dataset);
 
     void renderSurface();
+    ///rebuild display lists for a single region
     int rebuildRegion(int region);
+    ///rebuild display lists for whole surface, all subregions, optional force
     int rebuildSurface(vrpn_bool force = VRPN_FALSE);
+    ///rebuild a few strips of the surface
     int rebuildInterval(int low_row, int high_row, int strips_in_x);
+
+    ///only recolor the surface, don't re-calc display lists or normals
+    int recolorSurface();
 
     //Region managing functions
     int createNewRegion();

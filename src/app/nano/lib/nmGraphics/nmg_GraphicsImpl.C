@@ -959,6 +959,7 @@ _______________________________********************/
 
 void nmg_Graphics_Implementation::causeGridReColor (void) {
   g_just_color = 1;
+    g_surface->recolorSurface();
   // Don't cause geometry to be re-calculated !!
   //causeGridRedraw();
 }
@@ -1300,18 +1301,18 @@ void nmg_Graphics_Implementation::setPatternMapName (const char * /*name*/)
 // Realign Texture Functions
 //
 
-//
-// This function takes the name of a dataset and creates a texture map
-// out of the data in the dataset. 
-// The texture map is created by mapping data values to color values
-// based on the conversion map selected (i.e. blackbody, inverse rainbow,...)
-// Or in none is selected, it just does some simple mapping.
-//
-// Texture maps must be in units of powers of 2,
-// So a texture map of 512x512 is allocated (hopefully this is big enough)
-//   -JFJ: correction, it's now a dynamically-allocated array of any
-//         power-of-2 size.
-//
+/**
+This function takes the name of a dataset and creates a texture map
+out of the data in the dataset. 
+The texture map is created by mapping data values to color values
+based on the conversion map selected (i.e. blackbody, inverse rainbow,...)
+Or in none is selected, it just does some simple mapping.
+
+Texture maps must be in units of powers of 2,
+So a texture map of 512x512 is allocated (hopefully this is big enough)
+ -JFJ: correction, it's now a dynamically-allocated array of any
+       power-of-2 size.
+*/
 void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   // inputGrid is replaced with dataImages in this function so that
   // we don't have separate functions for building textures from ppm images
@@ -1345,7 +1346,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 
   v_gl_set_context_to_vlib_window();
 
-//  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 
   glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
 
@@ -1363,56 +1364,58 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
                 im->height() + im->borderYMin() + im->borderYMax(),
                 0, GL_LUMINANCE, pixelType, im->pixelData());
 */
-  if (g_realign_textures_curColorMap == NULL) {
-    if (pixelType == GL_FLOAT) {
-        nmb_Image *im_copy = new nmb_ImageGrid(im);
-        im_copy->normalize();
-        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
+  GLint internalFormat = GL_LUMINANCE;
+  if (g_realign_textures_curColorMap != NULL) {
+      const int CMAP_SIZE_GL = 512;
+      // Create some GL compatible maps from the current color map. 
+      float dummy;
+      float rmap[CMAP_SIZE_GL], gmap[CMAP_SIZE_GL],bmap[CMAP_SIZE_GL];
+      for (int i = 0; i < CMAP_SIZE_GL; i++) {
+          g_realign_textures_curColorMap->lookup(
+              i, 
+              0, CMAP_SIZE_GL,
+              g_realign_textures_data_min,
+              g_realign_textures_data_max,
+              g_realign_textures_color_min,
+              g_realign_textures_color_max,
+              &rmap[i], 
+              &gmap[i], 
+              &bmap[i], &dummy);
+      }
+
+
+      // gl first converts the luminance pixels to RGBA, then
+      // applies the maps we specify. These are created from our
+      // color maps above. We're letting GL do the work for us. 
+      glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
+      glPixelMapfv(GL_PIXEL_MAP_R_TO_R, CMAP_SIZE_GL, &rmap[0]);
+      glPixelMapfv(GL_PIXEL_MAP_G_TO_G, CMAP_SIZE_GL, &gmap[0]);
+      glPixelMapfv(GL_PIXEL_MAP_B_TO_B, CMAP_SIZE_GL, &bmap[0]);
+      
+      internalFormat = GL_RGB;
+  }    
+  if (pixelType == GL_FLOAT) {
+      nmb_Image *im_copy = new nmb_ImageGrid(im);
+      im_copy->normalize();
+      gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
               im_copy->width() + im_copy->borderXMin()+im_copy->borderXMax(),
               im_copy->height() + im_copy->borderYMin()+im_copy->borderYMax(),
               GL_LUMINANCE, pixelType, im_copy->pixelData());
-        nmb_Image::deleteImage(im_copy);
-    } else {
-        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
+      nmb_Image::deleteImage(im_copy);
+  } else {
+      gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
                    im->width() + im->borderXMin()+im->borderXMax(),
                    im->height() + im->borderYMin()+im->borderYMax(),
                    GL_LUMINANCE, pixelType, im->pixelData());
-    }
-  } else {
-    GLubyte *colord = new GLubyte[3*im->arrayLength()];
-    for(int i =0; i < im->arrayLength(); i++) {
-        // TODO: It might be better to do this using glPixelMap
-        // as is done in ImageViewer.C
-        double value = 0;
-        if (pixelType == GL_FLOAT) {
-            value = ((float *)im->pixelData())[i]; 
-        } else if (pixelType== GL_UNSIGNED_BYTE) {
-            value = ((unsigned char *)im->pixelData())[i]; 
-        } else if (pixelType== GL_UNSIGNED_SHORT) {
-            value = ((unsigned short *)im->pixelData())[i]; 
-        }
-        int r,g,b,dummy;
-        g_realign_textures_curColorMap->lookup(value,
-                                               im->minValue(), im->maxValue(),
-                                               g_realign_textures_data_min,
-                                               g_realign_textures_data_max,
-                                               g_realign_textures_color_min,
-                                               g_realign_textures_color_max,
-                                               &r,&g,&b,&dummy);
-        colord[3*i] = r;
-        colord[3*i+1] = g;
-        colord[3*i+2] = b;
-    }       
-    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB,
-              im->width() + im->borderXMin()+im->borderXMax(),
-              im->height() + im->borderYMin()+im->borderYMax(),
-              GL_RGB, GL_UNSIGNED_BYTE, colord);
-    delete [] colord;
-  }    
-    GLenum err = glGetError();
-    if (err!=GL_NO_ERROR) {
+  }
+
+  if (g_realign_textures_curColorMap != NULL) {
+      glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
+  }
+  GLenum err = glGetError();
+  if (err!=GL_NO_ERROR) {
       printf(" Error making realign texture: %s.\n", gluErrorString(err));
-    }
+  }
   g_tex_image_width[COLORMAP_TEX_ID] = im->width();
   g_tex_image_height[COLORMAP_TEX_ID] = im->height();
   g_tex_installed_width[COLORMAP_TEX_ID] = im->width()+
@@ -1424,195 +1427,6 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 
   return;
 
-  /* values used by registration code - since non-graphics code assumes
-	that the texture coordinates go from 0..1 in the texture image and not
-	0..<some value smaller than one> as a result of our need to use a
-	power of 2 - the different sizes need to be stored so that we can
-	compute the right scaling factor to compensate when loading the texture
-	transformation
-  */
-/*
-  int stride_x = 1, stride_y = 1;
-  if (image_width > g_tex_installed_width[COLORMAP_TEX_ID]){
-	stride_x = (int)floor((double)image_width/
-			     (double)g_tex_installed_width[COLORMAP_TEX_ID]);
-  }
-  if (image_height > g_tex_installed_height[COLORMAP_TEX_ID]) {
-	stride_y = (int)floor((double)image_height/
-			     (double)g_tex_installed_height[COLORMAP_TEX_ID]);
-  }
-
-  g_tex_image_width[COLORMAP_TEX_ID] = image_width/stride_x;
-  g_tex_image_height[COLORMAP_TEX_ID] = image_height/stride_y;
-  g_tex_image_offsetx[COLORMAP_TEX_ID] = 0;
-  g_tex_image_offsety[COLORMAP_TEX_ID] = 0;
-
-  if (image_width > g_tex_installed_width[COLORMAP_TEX_ID] ||
-		image_height > g_tex_installed_height[COLORMAP_TEX_ID]) {
-	fprintf(stderr, "nmg::createRealignTextures, Warning: large texture"
-	 ", stride reduction: (%d,%d)/(%d,%d)->(%d,%d)\n",
-	image_width, image_height, stride_x, stride_y, 
-        g_tex_image_width[COLORMAP_TEX_ID],
-        g_tex_image_height[COLORMAP_TEX_ID]);
-  }
-
-  float min = im->minNonZeroValue();
-  float max = im->maxValue();
-  int red_index, grn_index, blu_index, alph_index;
-  // we leave a 1 pixel border at the edge so that texture color where there
-  // is no texture gets the border color
-  int border = 1;
-  int nc = 4;// num channels
-  for ( int j = border,j_im= border*stride_y; 
-        j < g_tex_installed_height[COLORMAP_TEX_ID]-border; 
-        j++,j_im+=stride_y ) {
-    red_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 0 + border*nc;
-    grn_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 1 + border*nc;
-    blu_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 2 + border*nc;
-    alph_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 3 + border*nc;
-    for (int k = border,k_im= border*stride_x;
-         k < g_tex_installed_width[COLORMAP_TEX_ID]-border; 
-         k++, k_im+=stride_x, 
-         red_index+=nc, grn_index+=nc, blu_index+=nc, alph_index+=nc ) {
-      // this condition actually chops off a pixel on each side of the 
-      // texture so that the clamped texture coordinates map to 
-      // completely transparent pixels
-      // really, we'd like to just shift the image by 1 pixel so we don't
-      // lose anything but that would introduce a translation which
-      // we'd need to compensate for when using the registration result
-      // and I don't feel like figuring that out at the moment
-      if ((j < g_tex_image_height[COLORMAP_TEX_ID]) && 
-          (k < g_tex_image_width[COLORMAP_TEX_ID])) {
-        // if we're inside the image region
-
-         if (g_realign_textures_curColorMap) {
-           // Map data to color based on conversion map:
-           double scale = (im->getValue(k_im,j_im) -
-                        g_realign_textures_slider_min) /
-              (g_realign_textures_slider_max - g_realign_textures_slider_min);
-           scale = min(1.0, scale);
-           scale = max(0.0, scale);
-
-           float r, g, b, a;
-           g_realign_textures_curColorMap->lookup(scale, &r, &g, &b, &a);
-	   realign_data[red_index] = r;
-           realign_data[grn_index] = g;
-           realign_data[blu_index] = b;
-         } 
-         else { // Otherwise simple data to greyscale color mapping 
-           float val = ( im->getValue( k_im, j_im ) - min )/( max - min );
-           if (val < 0.0) val = 0.0;
-           realign_data[red_index] = val;
-           realign_data[grn_index] = val;
-           realign_data[blu_index] = val;
-         }
-
-         // Here we adjust intensity of the texture:
-         // XXX should use its own variable rather than g_ruler_opacity
-         if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_MODULATE) {
-             realign_data[red_index] += 
-		(1.0- realign_data[red_index])*
-		(255.0 - (float)g_ruler_opacity)/255.0;
-             realign_data[grn_index] += 
-		(1.0- realign_data[grn_index])*
-		(255.0 - (float)g_ruler_opacity)/255.0;
-             realign_data[blu_index] += 
-		(1.0- realign_data[blu_index])*
-		(255.0 - (float)g_ruler_opacity)/255.0;
-             realign_data[alph_index] = 1.0;
-         } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_BLEND) {
-             realign_data[red_index] *= (float)g_ruler_opacity/255.0;
-             realign_data[grn_index] *= (float)g_ruler_opacity/255.0;
-             realign_data[blu_index] *= (float)g_ruler_opacity/255.0;
-             realign_data[alph_index] = 1.0;
-         } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_DECAL) {
-             realign_data[alph_index]  = (float)g_ruler_opacity/255.0;
-         }
-
-      }
-      else { // handles parts of texture that extend beyond image
-        if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_MODULATE) {
-            realign_data[red_index] = 1.0;
-            realign_data[grn_index] = 1.0;
-            realign_data[blu_index] = 1.0;
-            realign_data[alph_index] = 1.0;
-        } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_BLEND) {
-	    realign_data[red_index] = 0.0;
-	    realign_data[grn_index] = 0.0;
-	    realign_data[blu_index] = 0.0;
-            realign_data[alph_index] = 1.0;
-        } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_DECAL) {
-            realign_data[alph_index] = 0.0;
-        }
-      }
-    }
-  }
-
-  //
-  // Create/Setup the Texture in GL:
-  //
-  // make sure gl calls are directed to the right context
-  v_gl_set_context_to_vlib_window();
-
-  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-  
-  glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
- 
-  float bord_col[4] = {0.0, 0.0, 0.0, 1.0};
-  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
-
-#if defined(sgi)
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
-                   g_tex_installed_width[COLORMAP_TEX_ID],
-                   g_tex_installed_height[COLORMAP_TEX_ID],
-                   GL_RGBA, GL_FLOAT, realign_data) != 0) {
-    printf(" Error making mipmaps, using texture instead.\n");
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                   g_tex_installed_width[COLORMAP_TEX_ID],
-                   g_tex_installed_height[COLORMAP_TEX_ID],
-                0, GL_RGBA, GL_FLOAT, realign_data);
-    if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error making realign texture.\n");
-    }
-
-  }
-#else
-
-#if defined(_WIN32)
-
-
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 
-                   g_tex_installed_width[COLORMAP_TEX_ID], 
-                   g_tex_installed_height[COLORMAP_TEX_ID],
-                   GL_RGBA, GL_FLOAT, realign_data) != 0) { 
-    printf(" Error making mipmaps, using texture instead.\n");
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
-                   g_tex_installed_width[COLORMAP_TEX_ID], 
-                   g_tex_installed_height[COLORMAP_TEX_ID],
-		   0, GL_RGBA, GL_FLOAT, realign_data);
-    if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error making realign texture.\n");
-    }
-
-  }
-
-#else
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
-                   g_tex_installed_width[COLORMAP_TEX_ID], 
-                   g_tex_installed_height[COLORMAP_TEX_ID],
-	       0, GL_RGBA, GL_FLOAT, realign_data);
-  if (glGetError()!=GL_NO_ERROR) {
-    printf(" Error making realign texture.\n");
-  }
-#endif
-#endif
-*/
 }
 
 //

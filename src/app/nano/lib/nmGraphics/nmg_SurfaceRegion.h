@@ -44,14 +44,14 @@ public:
     nmg_SurfaceRegion(nmg_Surface *parent, int region_id);
     ~nmg_SurfaceRegion();
     
-    //This function is to ensure that things start off in 
-    //the right state, by being able to copy a default region's
-    //settings
+    ///This function is to ensure that things start off in 
+    ///the right state, by being able to copy a default region's
+    ///settings
     void copy(nmg_SurfaceRegion *other);
 
     void forceRebuildCondition();
 
-    /*For the moment, to prevent needing to reallocate memory
+    /**For the moment, to prevent needing to reallocate memory
       dynamically as a person is changing the region, make sure
       to pass in the full width and height of the entire surface.
       Later, may want to make this an automatically handled process
@@ -108,6 +108,8 @@ public:
     int rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x);	
     void renderRegion();
 
+    int recolorRegion();
+
     Vertex_Struct ** getRegionData();
     
 private:
@@ -116,24 +118,29 @@ private:
     vrpn_bool d_needsFullRebuild;
     nmg_SurfaceMask *d_regionalMask;
     
-    //Display list variables
+    ///Display list variables
     unsigned int d_list_base;
+    ///Display list variables
     int d_num_lists;
-    //The surface region
+    ///The surface region
     Vertex_Struct ** d_vertexPtr;
+    ///The surface region
     unsigned int d_VertexArrayDim;
     
-    //Variables to control partial surface rebuilding
+    ///Variables to control partial surface rebuilding
     nmb_Interval last_marked;
+    ///Variables to control partial surface rebuilding
     nmb_Interval update;
+    ///Variables to control partial surface rebuilding
     nmb_Interval todo;	
     
-    //Region's Graphics State
+    ///Region's Graphics State
     GraphicsState d_currentState;
+    ///Region's Graphics State
     BehaviorLocks d_currentAssociations;
 
-    //Need to be able to save all that graphics state due to
-    //the persnickety globals
+    ///Need to be able to save all that graphics state due to
+    ///the persnickety globals
     GraphicsState d_savedState;
     
     //Miscellaneous internal functions

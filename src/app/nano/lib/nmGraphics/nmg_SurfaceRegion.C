@@ -654,6 +654,7 @@ getRegionData()
 void nmg_SurfaceRegion::
 SaveBuildState()
 {
+    // Taken care of in recolorRegion and rebuildRegion
   // d_savedState.justColor = g_just_color;  //This one gets
                                      //automatically changed
     d_savedState.stride = g_stride;
@@ -668,6 +669,7 @@ SaveBuildState()
 void nmg_SurfaceRegion::
 RestoreBuildState()
 {
+    // Taken care of in recolorRegion and rebuildRegion
   // g_just_color = d_savedState.justColor;
     g_stride = d_savedState.stride;
     g_surface_alpha = d_savedState.alpha;
@@ -723,6 +725,7 @@ rebuildRegion(nmb_Dataset *dataset, vrpn_bool force)
 
     SaveBuildState();
 
+    g_just_color = d_currentState.justColor;
     g_stride = d_currentState.stride;
     g_surface_alpha = d_currentState.alpha;
         
@@ -731,11 +734,22 @@ rebuildRegion(nmb_Dataset *dataset, vrpn_bool force)
 				 g_minColor, g_maxColor, d_vertexPtr)) {
         return 0;
     }
-
     RestoreBuildState();
 
+    d_currentState.justColor = VRPN_FALSE;
     d_needsFullRebuild = VRPN_FALSE;
     
+    return 1;
+}
+
+/**
+ * Sets a flag that the next rebuild should only color the surface. 
+ * Access: Public
+ */
+int nmg_SurfaceRegion::
+recolorRegion()
+{  
+    d_currentState.justColor = VRPN_TRUE;
     return 1;
 }
 
@@ -753,6 +767,7 @@ rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x
     
     SaveBuildState();
 
+    g_just_color = d_currentState.justColor;
     g_stride = d_currentState.stride;
     g_surface_alpha = d_currentState.alpha;
 
@@ -772,6 +787,7 @@ rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x
     }
     
     RestoreBuildState();
+    d_currentState.justColor = VRPN_FALSE;
 
     return 1;
 }

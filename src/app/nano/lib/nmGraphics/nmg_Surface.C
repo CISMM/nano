@@ -340,6 +340,29 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
     return 1;
 }
 
+
+/**
+ Recolor the entire surface, without redoing the display lists or normals.
+    Access: Public
+*/
+int nmg_Surface::
+recolorSurface()
+{
+    if (d_dataset != (nmb_Dataset*)NULL) {
+        for(int i = 0; i < d_numSubRegions; i++) {
+            if (!d_subRegions[i]->recolorRegion()) {
+                return 0;
+            }
+        }
+
+        if (!d_defaultRegion->recolorRegion()) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 /**
  Render the entire surface
     Access: Public
