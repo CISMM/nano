@@ -3740,25 +3740,23 @@ spm_report_window_line_data(int currentline){
   long y = currentline;     // make counter that keeps track of what line
   long dx = 1; 
   long dy = 0; 
-  long lineCount = num_y;   // possibly from variable in head statement
-  long fieldCount= 1; 	    // Number of layers of data.
+  long lineCount = num_x;   // possibly from variable in head statement
+  long fieldCount = 1; 	    // Number of layers of data.
   static float ** data = NULL;
   float z;
+  int i, j;
 
-  if (data == NULL)
-  {
-    data = new float *[fieldCount];
-    for(int i=0; i<fieldCount; i++)
-    {
-      data[i]=new float[lineCount];
+  if (data == NULL) {
+    data = new float * [fieldCount];
+    for (i = 0; i < fieldCount; i++) {
+      data[i] = new float [lineCount];
     }
   }
 
-  for(long i = 0; i < lineCount; i++)	
-  {
-    for(int j=0; j < fieldCount; j++)
-    {
-       getImageHeightAtXYLoc( (i-(num_x/2)), (currentline-(num_y/2)), &z);
+  for (i = 0; i < lineCount; i++)	{
+    for (j = 0; j < fieldCount; j++) {
+       //getImageHeightAtXYLoc( (i-(num_x/2)), (currentline-(num_y/2)), &z);
+       getImageHeightAtXYLoc(i, currentline, &z);
        data[j][i] = z;
     }
   }
@@ -3785,6 +3783,8 @@ spm_report_window_line_data(int currentline){
       ServerOutputAdd( 3, "nmm_Microscope_Simulator::spm_report_window_line_data:  Couldn't pack message to send to client." );
       return -1;
     }
+
+fprintf(stderr, "Sent scan data for line %d.\n", y);
   }
   return 0;
 }

@@ -1,0 +1,31 @@
+2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
+
+        * nmm_Microscope_Simulator (spm_report_window_line_data) :
+        change parameters to upcall of getImageHeightAtXYLoc() so that
+        both afmsim and (this version of) afmcntsim work.
+
+2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmm_Microscope_Simulator.C : remove compiler warnings, clean
+        up old code & comments
+        (RcvFeelTo) : new function
+        (afmFeelToPoint) : same
+        (sendBeginFeelTo) : same
+        (sendEndFeelTo) : same
+
+        * simulator_server.C : remove compiler warnings, clean up old code
+
+2000-09-20  Tom Hudson  <hudson@cs.unc.edu>
+
+	* Makefile : fixes to get glut and not fail because of tcl -
+        merely complain loudly about tcl
+
+        * surface.C : add static TopoFile GTF at file scope
+        (main) : fix BCGrid constructor.  Pass port number to initJake(),
+	check return value.
+	* warrencntsim.C (main) : check retval from initJake()
+	* simulator_server.C (initJake) : fail if gridsize is 0.
+	Accept port argument (with default value 4500).
+
+        * surface.h : fix & reorder includes
+
