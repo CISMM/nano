@@ -5,6 +5,7 @@ Variables you may want set in your shell:
    MY_NANO_SRC_DIR -- the directory containing your checked-out copy of
                       the nano source tree (if not the default:
                       /afs/cs.unc.edu/project/stm/src/<login>).
+                      That's _one above_ the nano directory.
                       A must for pc_cygwin!
                       On pc_*, a good way to do this is to cd to the
                       parent (where nano is checked-out) and set this
@@ -13,3 +14,43 @@ Variables you may want set in your shell:
    MY_NANO_OBJ_DIR -- where to put object files (if not the detault:
                       /afs/cs.unc.edu/project/stm/src/not_backed_up).
                       A must for pc_cygwin!
+
+
+How to compile nano (most archs):
+   gmake in ./src/lib
+   gmake in ./src/app/nano/lib
+   gmake in ./src/app/nano
+
+   The executable is ./obj/$(HW_OS)/app/nano/nano
+
+
+How to compile nano on pc_cygwin:
+   1) Get sdi, quat, vogl (was vlib-openGL), and vrpn as per usual.
+   2) Get nano.
+   3) In the directory that's the parent of the nano src tree (the
+      one where the ./nano directory exists) type (assuming bash):
+      export MY_NANO_SRC_DIR=`pwd -P`
+   4) Assuming you want the objects in /tmp:
+      export MY_NANO_OBJ_DIR=/tmp
+   5) make in ./src/lib
+      make in ./src/app/nano/lib
+      make in ./src/app/nano
+
+      The executable is /tmp/obj/pc_cygwin/app/nano/nano
+
+
+Some things that have moved:
+   1) imgformat, base, multip, and Tcl_*Var.* have moved to
+      ./src/lib/ImgFormat, ./src/lib/nmBase, ./src/lib/nmMP,
+      ./src/lib/tclLinkVar respectively
+   2) colormap.c is now part of the graphics library (to make
+      ./src/app/nano/lib/nmGraphics more self contained).
+   3) pieces of the ohmmeter and vicurve are now in
+      ./src/app/nano/lib/nmAux
+   4) active_set.*, stm_cmd.h, stm_file.* are now in
+      ./src/app/nano/lib/nmMScope
+   5) probably some more, I'll update this as I remember them/am asked
+
+
+How to link to a particular library (as opposed to a default):
+   -- to be documented --
