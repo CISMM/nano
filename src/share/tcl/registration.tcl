@@ -73,7 +73,9 @@ trace variable reg_window_open w reg_close_cmap_windows
 ###########################################
 # controls to align automatically using mutual information starting from the
 # currently set correspondence
-set auto_align_resolution_list {0, 1, 2, 3, 4, 5, 6}
+set auto_align_resolution_list {none}
+set auto_align_mode_list {none}
+
 button $nmInfo(registration).auto_align -text "Auto Align" -command \
     { set auto_align_requested 1 }
 pack $nmInfo(registration).auto_align -anchor nw
@@ -91,11 +93,65 @@ generic_optionmenu $nmInfo(registration).resolution_selector \
         "resolution level" auto_align_resolution_list
 pack $nmInfo(registration).resolution_selector -anchor nw
 
+generic_optionmenu $nmInfo(registration).mode_selector \
+        auto_align_mode \
+        "mode" auto_align_mode_list
+pack $nmInfo(registration).mode_selector -anchor nw
+
 ################ end of controls for automatic alignment
 
-checkbutton $nmInfo(registration).display_texture \
-       -text "Display in Surface View" -variable reg_display_texture -anchor nw
-pack $nmInfo(registration).display_texture -anchor nw
+################ some manually-adjustable transformation parameters #####
+
+frame $nmInfo(registration).transformParameters -bd 3 -relief groove
+pack $nmInfo(registration).transformParameters -anchor nw
+
+generic_entry $nmInfo(registration).transformParameters.scaleX \
+        reg_scaleX "scale X" real
+pack $nmInfo(registration).transformParameters.scaleX -anchor nw
+
+generic_entry $nmInfo(registration).transformParameters.scaleY \
+        reg_scaleY "scale Y" real
+pack $nmInfo(registration).transformParameters.scaleY -anchor nw
+
+generic_entry $nmInfo(registration).transformParameters.translateX \
+        reg_translateX "translate X" real
+pack $nmInfo(registration).transformParameters.translateX -anchor nw
+
+generic_entry $nmInfo(registration).transformParameters.translateY \
+        reg_translateY "translate Y" real
+pack $nmInfo(registration).transformParameters.translateY -anchor nw
+
+generic_entry $nmInfo(registration).transformParameters.rotateX \
+        reg_rotateX "rotate X" real
+pack $nmInfo(registration).transformParameters.rotateX -anchor nw
+
+generic_entry $nmInfo(registration).transformParameters.rotateY \
+        reg_rotateY "rotate Y" real
+pack $nmInfo(registration).transformParameters.rotateY -anchor nw
+
+generic_entry $nmInfo(registration).transformParameters.rotateZ \
+        reg_rotateZ "rotate Z" real
+pack $nmInfo(registration).transformParameters.rotateZ -anchor nw
+
+generic_entry $nmInfo(registration).transformParameters.shearZ \
+        reg_shearZ "shear Z" real
+pack $nmInfo(registration).transformParameters.shearZ -anchor nw
+
+#################################################################
+set reg_transformation_source_list {none}
+
+frame $nmInfo(registration).texture -bd 3 -relief groove
+pack $nmInfo(registration).texture -anchor nw
+
+generic_optionmenu $nmInfo(registration).texture.source_selector \
+        reg_transformation_source \
+        "source" reg_transformation_source_list
+pack $nmInfo(registration).texture.source_selector -anchor nw
+
+checkbutton $nmInfo(registration).texture.display_texture \
+    -text "Display in Surface View" -variable reg_display_texture -anchor nw
+
+pack $nmInfo(registration).texture.display_texture -anchor nw
 
 iwidgets::Labeledframe $nmInfo(registration).rsplane \
 	-labeltext "Create Plane (match Topog image region)" \

@@ -760,6 +760,77 @@ proc disable_widgets_for_commands_suspended { name el op } {
     }
 }
 
+
+set texture_mode_change_in_progress 0
+
+# this procedure enforces mutual exclusion between the various texture modes 
+# in nano
+proc handle_texture_mode_change {mode name element op} {
+# disable all the other modes:
+  global alpha_comes_from contour_comes_from rulergrid_enabled \
+         sem_display_texture reg_display_texture 
+  global texture_mode_change_in_progress
+
+  if {$texture_mode_change_in_progress == 1} {return;}
+
+  set texture_mode_change_in_progress 1
+
+  # remove traces to avoid recursion
+  # for some reason this didn't work so I used the 
+  # texture_mode_change_in_progress variable to avoid infinite recursion:
+#  trace vdelete alpha_comes_from w \
+#                "handle_texture_mode_change ALPHA"
+#  trace vdelete contour_comes_from w \
+#                "handle_texture_mode_change CONTOUR"
+#  trace vdelete rulergrid_enabled w \
+#                "handle_texture_mode_change RULERGRID"
+#  trace vdelete sem_display_texture w \ 
+#                "handle_texture_mode_change SEM"
+#  trace vdelete reg_display_texture w \
+#                "handle_texture_mode_change REGISTRATION"
+
+  puts "setting the texture mode"
+  if {$mode != "ALPHA"} {
+    set alpha_comes_from "none"
+  }
+  if {$mode != "CONTOUR"} {
+    set contour_comes_from "none"
+  }
+  if {$mode != "RULERGRID"} {
+    set rulergrid_enabled 0
+  }
+  if {$mode != "SEM"} {
+    set sem_display_texture 0
+  }
+  if {$mode != "REGISTRATION"} {
+    set reg_display_texture 0
+  }
+
+  set texture_mode_change_in_progress 0
+  # add traces back
+#  trace variable alpha_comes_from w \
+#                 "handle_texture_mode_change ALPHA"
+#  trace variable contour_comes_from w \
+#                 "handle_texture_mode_change CONTOUR"
+#  trace variable rulergrid_enabled w \
+#                 "handle_texture_mode_change RULERGRID"
+#  trace variable sem_display_texture w \
+#                 "handle_texture_mode_change SEM"
+#  trace variable reg_display_texture w \
+#                 "handle_texture_mode_change REGISTRATION"
+}
+
+trace variable alpha_comes_from w \
+               "handle_texture_mode_change ALPHA"
+trace variable contour_comes_from w \
+               "handle_texture_mode_change CONTOUR"
+trace variable rulergrid_enabled w \
+               "handle_texture_mode_change RULERGRID"
+trace variable sem_display_texture w \
+               "handle_texture_mode_change SEM"
+trace variable reg_display_texture w \
+               "handle_texture_mode_change REGISTRATION"
+
 #----------------
 # Setup window positions and geometries to be convenient and pleasant!
 # We do this at the end so we can find out the requested size of 

@@ -1,3 +1,10 @@
+2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* mainwin.tcl: added procedure handle_texture_mode_change which
+	implements mutual exclusion between the 5 texture modes (alpha,
+	contour, rulergrid, sem, and registration)
+	* registration.tcl: added a bunch of controls for testing 
+
 2001-11-25  Aron Helser  <helser@cs.unc.edu>
 
 	* mainwin.tcl: Font size reduction. Window placement tweaks, set a

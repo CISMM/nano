@@ -552,6 +552,45 @@ generic_optionmenu $align_win.resolution_selector \
         "resolution level" auto_align_resolution_list
 pack $align_win.resolution_selector -anchor nw
 
+################ some manually-adjustable transformation parameters #####
+
+frame $align_win.transformParameters -bd 3 -relief groove
+pack $align_win.transformParameters -anchor nw
+
+generic_entry $align_win.transformParameters.scaleX \
+        reg_scaleX "scale X" real
+pack $align_win.transformParameters.scaleX -anchor nw
+
+generic_entry $align_win.transformParameters.scaleY \
+        reg_scaleY "scale Y" real
+pack $align_win.transformParameters.scaleY -anchor nw
+
+generic_entry $align_win.transformParameters.translateX \
+        reg_translateX "translate X" real
+pack $align_win.transformParameters.translateX -anchor nw
+
+generic_entry $align_win.transformParameters.translateY \
+        reg_translateY "translate Y" real
+pack $align_win.transformParameters.translateY -anchor nw
+
+generic_entry $align_win.transformParameters.rotateX \
+        reg_rotateX "rotate X" real
+pack $align_win.transformParameters.rotateX -anchor nw
+
+generic_entry $align_win.transformParameters.rotateY \
+        reg_rotateY "rotate Y" real
+pack $align_win.transformParameters.rotateY -anchor nw
+
+generic_entry $align_win.transformParameters.rotateZ \
+        reg_rotateZ "rotate Z" real
+pack $align_win.transformParameters.rotateZ -anchor nw
+
+generic_entry $align_win.transformParameters.shearZ \
+        reg_shearZ "shear Z" real
+pack $align_win.transformParameters.shearZ -anchor nw
+
+#################################################################
+
 ######### End Alignment ##############################################
 
 ######### SEM Image Acquisition ######################################
