@@ -38,6 +38,9 @@ class CollaborationManager {
     vrpn_bool isReplayingInterface (void) const;
       ///< True if all UI I/O is being replayed from a logfile.
 
+    vrpn_bool isCollaborationOn (void) const;
+      ///< True if collaborative session is going on.
+
 
     // MANIPULATORS
 
