@@ -551,8 +551,8 @@ void displayFuncDepth( void ) {
 			v2_3 = SimMicroscopeServer.head->v2_3;
 			v3_1 = SimMicroscopeServer.head->v3_1;
 			v3_2 = SimMicroscopeServer.head->v3_2;
-			v3_3 = SimMicroscopeServer.head->v3_3;
 			
+			v3_3 = SimMicroscopeServer.head->v3_3;
 			addTriangle(//draw triangle with vertices v1_*,v2_*, and v3_*, where * is {x,y,z} 
 				        //coords of v*			
 			Vec3d(v1_1*total_scaling //+ x_offset,
@@ -582,8 +582,6 @@ void displayFuncDepth( void ) {
 */
 	if(SimMicroscopeServer.cylRcv){
 		double ratio = SimMicroscopeServer.Sim_to_World_x;
-		double x_offset = SimMicroscopeServer.get_x_offset();
-		double y_offset = SimMicroscopeServer.get_y_offset();
 		current_scale = SimMicroscopeServer._scale;
 		float scale = current_scale * ratio;
 
@@ -599,7 +597,8 @@ void displayFuncDepth( void ) {
 			radius = SimMicroscopeServer.cylHead->radius*scale;
 
 			NANOTUBE_GROUP = numGroups;
-			addNtube(NTUBE, Vec3d(x*scale + x_offset,y*scale + y_offset,z*scale), 
+
+			addNtube(NTUBE, Vec3d(x*scale,y*scale,z*scale), 
 				altitude*RAD_TO_DEG, 0*RAD_TO_DEG, azimuth*RAD_TO_DEG, length, radius*2.0,&NANOTUBE_GROUP);			
 
 			SimMicroscopeServer.cylHolder = SimMicroscopeServer.cylHead;
@@ -948,6 +947,8 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 	  if(SimMicroscopeServer.grid_size_rcv){
 		radius = radius * SimMicroscopeServer.Sim_to_World_x;
 		length = length * SimMicroscopeServer.Sim_to_World_x;
+printf("DEPTHSIZE = %f\n", DEPTHSIZE);
+printf("DEPTHSIZE = %d\n", DEPTHSIZE);
 		addNtube( NTUBE, Vec3d( DEPTHSIZE/2, DEPTHSIZE/2, radius), 0., 0., 0., length, radius*2.0);
 	  }
       else{
