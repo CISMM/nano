@@ -1,3 +1,10 @@
+2002-07-02  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nmm_SimulatedMicroscope.Cdef : added check in receiver
+	function for grid size so that x and y scan resolution data
+	members updated to match nano's grid size only if the server
+	name is the eroder's
+
 2002-07-01  David Borland <borland@cs.unc.edu>
 
         * nmm_SimulatedMicroscope_Remote.[Cdef/hdef] : changed data 

@@ -260,7 +260,7 @@ RECEIVE_MSG ReportGridSize {
 	xsize = x;
 	ysize = y;
 
-	if(d_name=="Eroder"){
+	if(strcmp(d_name,"Eroder")==0){
 		if(x != d_xscanResolution){
 			d_xscanResolution = x;
 		}
