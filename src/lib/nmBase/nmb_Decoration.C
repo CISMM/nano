@@ -33,7 +33,10 @@ nmb_Decoration::nmb_Decoration (void) :
   scan_line (NULL),
   scanLineCount (0),
   drawScanLine (1),
-  num_slow_line_3d_markers (0)
+  num_slow_line_3d_markers (0),
+  scrapeHeightScale(1),
+  scrapeHeightOffset(0),
+  scrapeMaxDepth(0)
   //  max_num_slow_line_3d_markers (2)
   //  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
 {
@@ -68,7 +71,10 @@ nmb_Decoration::nmb_Decoration (int markerHeight, int numMarkers) :
   pulseCallbacks (NULL),
   scan_line (NULL),
   scanLineCount (0),
-  drawScanLine (1)
+  drawScanLine (1),
+  scrapeHeightScale(1),
+  scrapeHeightOffset(0),
+  scrapeMaxDepth(0)
   //  max_num_slow_line_3d_markers (2)
   //  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
 {
@@ -143,7 +149,7 @@ void nmb_Decoration::addScrapeMark (PointType Top, PointType Bottom,
   callbackEntry * nce;
 
   // The top does not take into account the height of the scrapeHeight
-  Top[2] += marker_height + surface_z;
+  // Top[2] += marker_height + surface_z;
 
   // Grow virtual memory if needed
   if (num_scrapes >= max_num_scrapes) {
@@ -156,6 +162,12 @@ void nmb_Decoration::addScrapeMark (PointType Top, PointType Bottom,
     delete [] scrapes;
     scrapes = temp;
     max_num_scrapes *= 2;
+  }
+
+  // we will use this later to shift all scrape marks up by the same
+  // height needed to make them all visible
+  if (surface_z - Bottom[2] > scrapeMaxDepth) {
+     scrapeMaxDepth = surface_z - Bottom[2];
   }
 
   // Add a scrapes indicator to the list
@@ -205,6 +217,9 @@ void nmb_Decoration::addPulseMark (PointType Top, PointType Bottom) {
 
 void nmb_Decoration::clearScrapes (void) {
   num_scrapes = 0;
+  // set offset to 0 so we can compute the max surface height for the
+  // the next batch of scrape points (we're assuming they're positive)
+  scrapeMaxDepth = 0;
 }
 
 void nmb_Decoration::clearPulses (void) {
@@ -251,6 +266,7 @@ void nmb_Decoration::traverseVisibleScrapes
           (int (* f) (const nmb_LocationInfo &, void *), void * userdata) {
   int i;
   int numToShow;
+  float top_save, bottom_save;
 
   numToShow = num_markers_shown;
   numToShow = min(numToShow, num_scrapes);
@@ -258,8 +274,18 @@ void nmb_Decoration::traverseVisibleScrapes
 
 //fprintf(stderr, "Traversing %d scrapes\n", numToShow);
 
-  for (i = num_scrapes - numToShow; i < num_scrapes; i++)
-    if (f(scrapes[i], userdata)) return;
+  int result;
+  for (i = num_scrapes - numToShow; i < num_scrapes; i++){
+    top_save = scrapes[i].top;
+    bottom_save = scrapes[i].bottom;
+    scrapes[i].top = scrapeHeightScale*(scrapes[i].top + 
+                                        marker_height + scrapeMaxDepth);
+    scrapes[i].bottom = scrapeHeightScale*(scrapes[i].bottom);
+    result = f(scrapes[i], userdata);
+    scrapes[i].top = top_save;
+    scrapes[i].bottom = bottom_save;
+    if (result) return;
+  }
 
 }
 
@@ -278,4 +304,23 @@ void nmb_Decoration::traverseVisiblePulses
 
 }
 
+void nmb_Decoration::setScrapeHeightScale(float scale)
+{
+  scrapeHeightScale = scale;
+}
+
+float nmb_Decoration::getScrapeHeightScale()
+{
+  return scrapeHeightScale;
+}
+
+void nmb_Decoration::setScrapeHeightOffset(float offset)
+{
+  scrapeHeightOffset = offset;
+}
+
+float nmb_Decoration::getScrapeHeightOffset()
+{
+  return scrapeHeightOffset; 
+}
 

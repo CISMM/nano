@@ -1,3 +1,18 @@
+2000-09-07  Adam Seeger  <seeger@cs.unc.edu>
+
+        * nmb_Decoration.C,h (setScrapeHeightScale) : new function
+                             (getScrapeHeightScale) : new function
+                             (setScrapeHeightOffset) : new function
+                             (getScrapeHeightOffset) : new function
+                             (traverseVisibleScrapes): made this so it uses
+        scaling and size to affect stored scrape marks instead of using
+        values from the past that have already been applied to the marker
+        parameters (this affects where marker_height gets applied)
+                             (addScrapeMark) : this now uses the surface_z
+        to compute the maximum depth into the surface (image z values) for
+        modification z values to be used later in determining how high to 
+        make the markers
+
 2000-08-31  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
         * all : merged merge-2000-summer-thirdtech code with trunk.

@@ -74,7 +74,8 @@ class nmb_Decoration {
     int user_mode;  ///< user_mode[0] from interaction.c
 
 
-    /// surface modification markers
+    /// surface modification markers: marker_height determines the minimum
+    /// scaled height that a marker will appear above the surface 
     int num_markers_shown;
     int marker_height;
 
@@ -120,6 +121,22 @@ class nmb_Decoration {
       ///< The order in which markers are traversed is undefined.
       ///< If <f> returns nonzero, the traversal will terminate.
 
+    void setScrapeHeightScale(float scale);
+      ///< Sets the height scale factor for scrape markers
+      ///< Should be set to match scaling of the currently displayed data
+
+    float getScrapeHeightScale();
+      ///< Gets the height scale factor for scrape markers
+
+    void setScrapeHeightOffset(float offset);
+      ///< Sets the offset in height for display of scrape markers
+      ///< Offset is done before scale factor is applied
+      ///< A reasonable value is the maximum height value in the currently
+      ///< displayed data
+
+    float getScrapeHeightOffset();
+      ///< Gets the offset in height for display of scrape markers
+
   private:
 
     int num_pulses;
@@ -129,6 +146,9 @@ class nmb_Decoration {
     int max_num_scrapes;
     nmb_LocationInfo * scrapes;
     int max_num_slow_line_3d_markers;
+    float scrapeHeightScale;
+    float scrapeHeightOffset;
+    float scrapeMaxDepth;
 
     struct callbackEntry {
       nmb_SURFACE_MARKER_CALLBACK f;
