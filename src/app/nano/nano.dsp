@@ -107,6 +107,10 @@ SOURCE=.\globals.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\imagerPlugin.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\import.C
 # End Source File
 # Begin Source File
@@ -180,6 +184,10 @@ SOURCE=.\CollaborationManager.h
 # Begin Source File
 
 SOURCE=.\globals.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\imagerPlugin.h
 # End Source File
 # Begin Source File
 

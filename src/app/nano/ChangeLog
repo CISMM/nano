@@ -1,3 +1,13 @@
+2004-06-11  Russ Taylor  <taylorr@cs.unc.edu>
+
+	* microscape.c : Comment changes.  Added code to handle the imager
+		plug-in module, which enables image analysis programs to
+		connect to nano and read the current heightfield, then
+		modify it and send it back.  ^M removal.
+	* nano.dsp : Same.
+	* nano.bat : Tweaked to work in my environment.
+	* nanorelease.bat : Looks like ^M remover modified it.
+
 2004-05-10  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nano.dsp:  remove NO_PHANTOM_SERVER and NO_JOYSTICK_SERVER from

@@ -48,6 +48,12 @@
 #endif
 
 
+// this can be used to create specific installations of nano.
+// if this symbol is defined, nano will expect to find its
+// tcl scripts in the directory "tcl<APP_SUFFIX>"
+// #define APP_SUFFIX "11.1"
+
+
 // ############ getpid hack
 #if defined (__CYGWIN__) 
 
@@ -59,13 +65,6 @@
 extern "C" {
 pid_t getpid();
 }
-
-
-// this can be used to create specific installations of nano.
-// if this symbol is defined, nano will expect to find its
-// tcl scripts in the directory "tcl<APP_SUFFIX>"
-// #define APP_SUFFIX "11.1"
-
 
 // there is also a different getpid defined in Process.h in the VC-6.0 include
 // directory.  I think it has a different return type.
@@ -230,6 +229,11 @@ static imported_obj_list* object_list = NULL;
 //---------------------------------------------------------------------
 // Video capture stuff
 #include <vfw.h>
+
+//---------------------------------------------------------------------
+// Image analysis plug-in stuff
+#include "imagerPlugin.h"
+static imagerPlugin *g_imager_plugin = NULL;
 
 
 //-------------------------------------------------------------------------
@@ -3038,7 +3042,7 @@ static void handle_openStaticFilename_change (const char *, void *)
             // to display it, if we are displaying nothing...
             if ( strcmp(dataset->heightPlaneName->string(), EMPTY_PLANE_NAME) == 0) {
                 *(dataset->heightPlaneName) = p->name()->c_str();
-                // Remove the name from the UI - it's not useful to our users
+                // Remove the empty name from the UI - it's not useful to our users
                 dataset->inputPlaneNames->deleteEntry(EMPTY_PLANE_NAME);
             }
             // Measure lines sometimes collapse to one corner. Move to separate corners.
@@ -3063,7 +3067,7 @@ static void handle_openStaticFilename_change (const char *, void *)
 	    World.Do(&URender::ChangeStaticFile, &csf);
     }
 //}
-    
+
     openStaticFilename = "";
 }
 
@@ -3429,9 +3433,10 @@ static void handle_exportFileName_change (const char *, void *)
 	  display_error_dialog( "Couldn't write to this file: %s\n"
                                 "Please try another name or directory",
                                 newExportFileName.string());
+	fclose(file_ptr);
 	return;
       }
-
+      fclose(file_ptr);
     }
     newExportFileName = "";
 }
@@ -7336,7 +7341,7 @@ void update_rtt (void) {
 
 
 
-/** Somewhat misnamed, currently. Only creates a microscope if we
+/** Creates a microscope if we
  * are reading a stream or connecting live - for a static file, just
  * creates a data set. 
  */
@@ -7359,9 +7364,6 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
   if (alignerUI) {
     alignerUI->teardownCallbacks();
   }
-
- 
-
   if (tipDisplayUI) {
     tipDisplayUI->setSPM(NULL);
   }
@@ -7381,9 +7383,10 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
       microscope->unregisterImageModeHandler( nma_Keithley2400_ui::EnterImageMode, 
                                             keithley2400_ui );
   }
+  if (g_imager_plugin) { delete g_imager_plugin; g_imager_plugin = NULL; }
 
-    // Must get hostname before initializing nmb_Dataset, but
-    // should do it after VRPN starts, I think.
+  // Must get hostname before initializing nmb_Dataset, but
+  // should do it after VRPN starts, I think.
   if (my_hostname == "localhost") {
       char * hnbuf = new char[256];
       if (!gethostname(hnbuf, 256)) {
@@ -7564,6 +7567,9 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
     // Start using the new structures!
     microscope = new_microscope;
     dataset = new_dataset;
+
+    // Re-create an imager pluging, using the new data set.
+    g_imager_plugin = new imagerPlugin(dataset);
 
     // Connection switch cleanup!
     // All methods for switching stream/live/default call this
@@ -9046,6 +9052,12 @@ if (microscope) microscope->ResetClock();
             Index_mode::snapshot();
 	    break;
         }
+    }
+
+    // Let the Imager plug-in do its thing if it has been initialized.
+    if (g_imager_plugin) {
+      // Perform the heartbeat method on the imager.
+      g_imager_plugin->heartbeat();
     }
 
     /* One more iteration done */
