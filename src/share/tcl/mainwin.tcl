@@ -44,7 +44,8 @@ namespace import -force blt::tile::*
 #set up some options for all the widgets in microscape
 option add *background LemonChiffon1 startupFile
 option add *highlightBackground LemonChiffon1 startupFile
-option add *menu*background SystemMenu startupFile
+option add *menu*background grey75 startupFile
+option add *menu*disabledForeground grey55 startupFile
 
 # This needs to be made dependent on how big the font is on the screen.
 catch { option add *font {helvetica -15 } startupFile}

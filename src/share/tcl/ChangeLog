@@ -1,3 +1,10 @@
+2001-08-06  Nathan Conrad  <conrad@cs.unc.edu>
+
+	* mainwin.tcl: *menu*background had been changed to SystemMenu,
+	which is not a colour. I changed it back to grey75.
+	*menu*disabledForeground is now set to grey40 so that disabled
+	menu options are shown on the SGI.
+
 2001-08-02  David Marshburn  <marshbur@cs.unc.edu>
 
 	* filemenu.tcl: removed export scene dialog

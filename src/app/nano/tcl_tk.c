@@ -89,7 +89,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	VERBOSE(4, "  Starting Tcl interpreter");
 	if (Tcl_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Tcl_Init failed: %s\n",my_tk_control_interp->result);
+			"Tcl_Init failed: %s\n",Tcl_GetStringResult(my_tk_control_interp));
 		return(-1);
 	}
 
@@ -97,7 +97,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	VERBOSE(4, "  Initializing Tk");
 	if (Tk_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Tk_Init failed: %s\n",my_tk_control_interp->result);
+			"Tk_Init failed: %s\n",Tcl_GetStringResult(my_tk_control_interp));
 		return(-1);
 	}
 	Tcl_StaticPackage(my_tk_control_interp, "Tk", Tk_Init, Tk_SafeInit);
@@ -105,7 +105,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	/* Initialize Tcl packages */
 	if (Blt_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Package_Init failed: %s\n",my_tk_control_interp->result);
+			"Package_Init failed: %s\n",Tcl_GetStringResult(my_tk_control_interp));
 		return(-1);
 	}
 	Tcl_StaticPackage(my_tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
@@ -113,12 +113,12 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 #ifndef NO_ITCL
 	if (Itcl_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Package_Init failed: %s\n",my_tk_control_interp->result);
+			"Package_Init failed: %s\n",Tcl_GetStringResult(my_tk_control_interp));
 		return(-1);
 	}
 	if (Itk_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Package_Init failed: %s\n",my_tk_control_interp->result);
+			"Package_Init failed: %s\n",Tcl_GetStringResult(my_tk_control_interp));
 		return(-1);
 	}
 	Tcl_StaticPackage(my_tk_control_interp, "Itcl", Itcl_Init, Itcl_SafeInit);
@@ -129,7 +129,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	tk_control_window = Tk_MainWindow(my_tk_control_interp);
 	if (tk_control_window == NULL) {
 		fprintf(stderr,"Tk can't get main window: %s\n",
-			my_tk_control_interp->result);
+			Tcl_GetStringResult(my_tk_control_interp));
 		return(-1);
 	}
 
@@ -161,7 +161,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
         }
 	if (Tcl_EvalFile(my_tk_control_interp, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-			my_tk_control_interp->result);
+			Tcl_GetStringResult(my_tk_control_interp));
 		return(-1);
 	}
 
