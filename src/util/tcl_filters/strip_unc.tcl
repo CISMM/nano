@@ -1,6 +1,6 @@
 #!/bin/bash
 # the next line restarts using wishx (see man wish) \
-	exec wish82 "$0" "$@"
+	exec wish83 "$0" "$@"
 
 #  ===3rdtech===
 #  Copyright (c) 2000 by 3rdTech, Inc.

@@ -1,3 +1,7 @@
+2002-06-14  Aron Helser  <helser@cs.unc.edu>
+
+	* strip_unc.tcl: fix executable name wish83
+
 2002-01-10  Aron Helser  <helser@cs.unc.edu>
 
 	* strip_unc.tcl: Tweak to ignore spaces at beginning of line. 
