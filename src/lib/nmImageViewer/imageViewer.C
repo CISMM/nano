@@ -623,7 +623,7 @@ void ImageViewer::mainloop() {
 	    glXWaitX();
 	    glXMakeCurrent(dpy[window[i].display_index].x_dpy,
                 *(window[i].win), dpy[window[i].display_index].cx);
-	    glDrawBuffer(GL_BACK_LEFT); // for double buffering
+	    glDrawBuffer(GL_BACK); // for double buffering
 	    glClearColor(0.0, 0.0, 0.0,0.0);
 
 	    ImageViewerDisplayData ivdd;
@@ -658,7 +658,7 @@ void ImageViewer::displayCallbackForGLUT() {
 	fprintf(stderr, "Error, ImageViewer::displayCallback, window not found\n");
 	return;
     }
-    glDrawBuffer(GL_BACK_LEFT);
+    glDrawBuffer(GL_BACK);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     ImageViewerDisplayData ivdd;
     ivdd.winID = v->get_winID_from_window_index(i);
