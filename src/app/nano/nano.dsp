@@ -50,7 +50,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 /nologo /subsystem:console /debug /machine:I386 /nodefaultlib:"libcmtd" /nodefaultlib /pdbtype:sept
+# ADD LINK32 WSOCK32.LIB SHELL32.LIB USER32.LIB /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
+# SUBTRACT LINK32 /nodefaultlib
 
 !ELSEIF  "$(CFG)" == "nano - Win32 Release"
 
@@ -76,7 +77,8 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 oldnames.lib wsock32.lib gdi32.lib comdlg32.lib kernel32.lib kernel32.lib libcpmtd.lib libcimtd.lib libcmtd.lib nmAux.lib nmUGraphics.lib nmSEM.lib nmUI.lib nmGraphics.lib nmMScope.lib nmReg.lib nmImageViewer.lib nmMP.lib tclLinkVar.lib nmBase.lib nmAnalyze.lib vrpn.lib vogl.lib quat.lib vrpn_phantom.lib ghost31.lib BLT24.lib tk83.lib tcl83.lib glut32_UNC.lib user32.lib glu32.lib opengl32.lib CORE_RL_lcms_.lib CORE_RL_magick_.lib CORE_RL_ttf_.lib CORE_RL_xlib_.lib CORE_RL_libxml_.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib /pdbtype:sept /libpath:"..\..\..\..\external\pc_win32\lib" /libpath:"..\..\..\..\vrpn\pc_win32_MTd" /libpath:"..\..\..\..\quat\pc_win32_MTd" /libpath:"..\..\..\..\vogl\pc_win32_MTd\\" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmAnalyze" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmAux" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmGraphics" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmMScope" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmReg" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmSEM" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmUGraphics" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmUI" /libpath:"..\..\..\obj\pc_win32\lib\nmImageViewer" /libpath:"..\..\..\obj\pc_win32\lib\nmMP" /libpath:"..\..\..\obj\pc_win32\lib\nmBase" /libpath:"..\..\..\obj\pc_win32\lib\tcllinkvar" /libpath:"../../../../vrpn/server_src/pc_win32_MTd"
 # SUBTRACT BASE LINK32 /verbose /pdb:none
-# ADD LINK32 /nologo /subsystem:console /pdb:none /machine:I386 /nodefaultlib:"msvcrtd" /nodefaultlib /out:"../../../obj/pc_win32/release/app/nano/nanoRelease.exe"
+# ADD LINK32 WSOCK32.LIB SHELL32.LIB USER32.LIB /nologo /subsystem:console /pdb:none /machine:I386 /out:"../../../obj/pc_win32/release/app/nano/nanoRelease.exe"
+# SUBTRACT LINK32 /nodefaultlib
 
 !ENDIF 
 
@@ -419,49 +421,6 @@ SOURCE=..\..\..\obj\pc_win32\release\lib\tclLinkVar\tclLinkVar.lib
 
 # End Source File
 # End Group
-# Begin Group "System-release"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\MSVCRT.LIB"
-
-!IF  "$(CFG)" == "nano - Win32 Debug"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "nano - Win32 Release"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\MSVCIRT.LIB"
-
-!IF  "$(CFG)" == "nano - Win32 Debug"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "nano - Win32 Release"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\MSVCPRT.LIB"
-
-!IF  "$(CFG)" == "nano - Win32 Debug"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "nano - Win32 Release"
-
-!ENDIF 
-
-# End Source File
-# End Group
 # Begin Source File
 
 SOURCE=..\..\..\..\vrpn\pc_win32\Release\vrpn.lib
@@ -682,22 +641,6 @@ SOURCE=..\..\..\obj\pc_win32\debug\lib\tclLinkVar\tclLinkVar.lib
 
 # End Source File
 # End Group
-# Begin Group "system-debug"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\MSVCRTD.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\MSVCIRTD.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\MSVCPRTD.LIB"
-# End Source File
-# End Group
 # Begin Source File
 
 SOURCE=..\..\..\..\vrpn\pc_win32\Debug\vrpn.lib
@@ -792,74 +735,6 @@ SOURCE=..\..\..\..\external\pc_win32\lib\tk83.lib
 # Begin Source File
 
 SOURCE=..\..\..\..\external\pc_win32\lib\tcl83.lib
-# End Source File
-# End Group
-# Begin Group "System"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\KERNEL32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\USER32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\GDI32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\WINSPOOL.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\COMDLG32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\ADVAPI32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\SHELL32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\OLE32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\OLEAUT32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\UUID.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\ODBC32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\ODBCCP32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\GLU32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\OPENGL32.LIB"
-# End Source File
-# Begin Source File
-
-SOURCE="C:\Program Files\Microsoft Visual Studio\VC98\Lib\OLDNAMES.LIB"
 # End Source File
 # End Group
 # Begin Source File
