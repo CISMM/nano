@@ -385,22 +385,22 @@ void nmg_RCIS_Texture::mainloop (void) {
              d_imp->dataset()->inputGrid->minX();
   float dy = d_imp->dataset()->inputGrid->maxY() -
              d_imp->dataset()->inputGrid->minY();
-  d_imp->getState()->texture_transform[0] = 1.0 / dx;
-  d_imp->getState()->texture_transform[1] = 0.0;
-  d_imp->getState()->texture_transform[2] = 0.0;
-  d_imp->getState()->texture_transform[3] = 0.0;
-  d_imp->getState()->texture_transform[4] = 0.0;
-  d_imp->getState()->texture_transform[5] = 1.0 / dy;
-  d_imp->getState()->texture_transform[6] = 0.0;
-  d_imp->getState()->texture_transform[7] = 0.0;
-  d_imp->getState()->texture_transform[8] = 0.0;
-  d_imp->getState()->texture_transform[9] = 0.0;
-  d_imp->getState()->texture_transform[10] = 1.0;
-  d_imp->getState()->texture_transform[11] = 0.0;
-  d_imp->getState()->texture_transform[12] = -d_imp->dataset()->inputGrid->minX() / dx;
-  d_imp->getState()->texture_transform[13] = -d_imp->dataset()->inputGrid->minY() / dy;
-  d_imp->getState()->texture_transform[14] = 0.0;
-  d_imp->getState()->texture_transform[15] = 1.0;
+  d_imp->getState()->surfaceModeTextureTransform[0] = 1.0 / dx;
+  d_imp->getState()->surfaceModeTextureTransform[1] = 0.0;
+  d_imp->getState()->surfaceModeTextureTransform[2] = 0.0;
+  d_imp->getState()->surfaceModeTextureTransform[3] = 0.0;
+  d_imp->getState()->surfaceModeTextureTransform[4] = 0.0;
+  d_imp->getState()->surfaceModeTextureTransform[5] = 1.0 / dy;
+  d_imp->getState()->surfaceModeTextureTransform[6] = 0.0;
+  d_imp->getState()->surfaceModeTextureTransform[7] = 0.0;
+  d_imp->getState()->surfaceModeTextureTransform[8] = 0.0;
+  d_imp->getState()->surfaceModeTextureTransform[9] = 0.0;
+  d_imp->getState()->surfaceModeTextureTransform[10] = 1.0;
+  d_imp->getState()->surfaceModeTextureTransform[11] = 0.0;
+  d_imp->getState()->surfaceModeTextureTransform[12] = -d_imp->dataset()->inputGrid->minX() / dx;
+  d_imp->getState()->surfaceModeTextureTransform[13] = -d_imp->dataset()->inputGrid->minY() / dy;
+  d_imp->getState()->surfaceModeTextureTransform[14] = 0.0;
+  d_imp->getState()->surfaceModeTextureTransform[15] = 1.0;
 
   // Can't call setTextureMode() every frame because that calls
   // causeGridRedraw(), which regenerates the grid.

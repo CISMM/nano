@@ -288,58 +288,23 @@ void nmg_Graphics_Timer::setSurfaceColor (const int c [4]) {
   d_imp->setSurfaceColor(c);
 }
 
-void nmg_Graphics_Timer::createRealignTextures( const char *name ) {
+void nmg_Graphics_Timer::createColormapTexture( const char *name ) {
   activateTimer();
-  d_imp->createRealignTextures(name);
+  d_imp->createColormapTexture(name);
 }
 
 void nmg_Graphics_Timer::
-setRealignTexturesConversionMap( const char *map, const char *mapdir ) {
+setColormapTextureConversionMap( const char *map, const char *mapdir ) {
   activateTimer();
-  d_imp->setRealignTexturesConversionMap(map, mapdir);
+  d_imp->setColormapTextureConversionMap(map, mapdir);
 }
 
-void nmg_Graphics_Timer::setRealignTextureSliderRange ( float data_min,
+void nmg_Graphics_Timer::setColormapTextureSliderRange ( float data_min,
     float data_max,
     float color_min,
     float color_max) {
   activateTimer();
-  d_imp->setRealignTextureSliderRange(data_min,data_max,color_min, color_max);
-}
-
-
-void nmg_Graphics_Timer::computeRealignPlane( const char *name,
-						       const char *newname ) {
-  activateTimer();
-  d_imp->computeRealignPlane(name, newname);
-}
-
-void nmg_Graphics_Timer::translateTextures ( int on,
-						      float dx, float dy ) {
-  activateTimer();
-  d_imp->translateTextures(on, dx, dy);
-}
-
-void nmg_Graphics_Timer::scaleTextures ( int on,
-						  float dx, float dy ) {
-  activateTimer();
-  d_imp->scaleTextures(on, dx, dy);
-}
-
-void nmg_Graphics_Timer::shearTextures ( int on,
-						  float dx, float dy ) {
-  activateTimer();
-  d_imp->shearTextures(on, dx, dy);
-}
-
-void nmg_Graphics_Timer::rotateTextures ( int on, float theta ) {
-  activateTimer();
-  d_imp->rotateTextures(on, theta);
-}
-
-void nmg_Graphics_Timer::setTextureCenter( float dx, float dy ) {
-  activateTimer();
-  d_imp->setTextureCenter(dx, dy);
+  d_imp->setColormapTextureSliderRange(data_min,data_max,color_min, color_max);
 }
 
 void nmg_Graphics_Timer::loadRawDataTexture(const int which,

@@ -223,10 +223,6 @@ void specify_vertexArray(nmg_State * state,Vertex_Struct * vertexArray, int *ver
     else if (state->texture_mode == GL_TEXTURE_2D)
         glTexCoordPointer(2,GL_FLOAT,sizeof(Vertex_Struct),
         &(vertexArray[0].Texcoord[1]));
-    
-    else if ( state->realign_textures_enabled )
-        glTexCoordPointer( 2, GL_FLOAT, sizeof(Vertex_Struct), 
-        &(vertexArray[0].Texcoord[1]));
 #endif  // PROJECTIVE_TEXTURE
     
     int start = 0;
@@ -370,81 +366,6 @@ describe_gl_vertex(nmg_State * state, const nmb_PlaneSelection & planes,
     // Phase 2: Find the texture coordinates for the vertex. 
     vertexArray.Texcoord[0] = vertexArray.Texcoord[1] = 
         vertexArray.Texcoord[2] = 0;
-#ifndef PROJECTIVE_TEXTURE
-    // Realigning Textures, no need to recalculate  
-    const int num_x = height_plane.numX();
-    const int num_y = height_plane.numY();
-    
-    if ( state->realign_textures_enabled ) {
-        if ( state->translate_textures ) {
-            if ( (x == (num_x -1)) && (y == (num_y -1))) {
-                state->translate_textures = 0;
-                state->tex_coord_center_x += state->translate_tex_dx;
-                state->tex_coord_center_y += state->translate_tex_dy;
-            }
-            vertexArray.Texcoord[1] += state->translate_tex_dx;
-            vertexArray.Texcoord[2] += state->translate_tex_dy;
-            return 0;
-        }
-        
-        else if ( state->scale_textures ) {
-            if ( (x == (num_x -1)) && (y == (num_y -1))) {
-                state->scale_textures = 0;
-            }
-            GLfloat scale_coord[2];
-            scale_coord[0]=
-                state->tex_coord_center_x +
-                (( vertexArray.Texcoord[1] - state->tex_coord_center_x ) *
-                state->scale_tex_dx );
-            scale_coord[1]=
-                state->tex_coord_center_y +
-                (( vertexArray.Texcoord[2] - state->tex_coord_center_y ) *
-                state->scale_tex_dy);
-            vertexArray.Texcoord[1]=  scale_coord[0];
-            vertexArray.Texcoord[2]=  scale_coord[1];
-            return 0;
-        }
-        
-        else if ( state->shear_textures ) {
-            if ( (x == (num_x -1)) && (y == (num_y -1))) {
-                state->shear_textures = 0;
-            }
-            GLfloat shear_coord[2];
-            shear_coord[0] = state->tex_coord_center_x +
-                ( ( vertexArray.Texcoord[1] - state->tex_coord_center_x) +
-                ( state->shear_tex_dx *
-                ( vertexArray.Texcoord[2] - state->tex_coord_center_y ) ) );
-            shear_coord[1] = state->tex_coord_center_y +
-                ( ( vertexArray.Texcoord[2] - state->tex_coord_center_y ) +
-                ( state->shear_tex_dy *
-                ( vertexArray.Texcoord[1] - state->tex_coord_center_x ) ) );
-            vertexArray.Texcoord[1]=  shear_coord[0];
-            vertexArray.Texcoord[2]=  shear_coord[1];
-            return 0;
-        }
-        
-        else if ( state->rotate_textures ) {
-            if ( (x == (num_x -1)) && (y == (num_y -1))) {
-                state->rotate_textures = 0;
-            }
-            GLfloat rotate_coord[2];
-            rotate_coord[0] = state->tex_coord_center_x +
-                ( ( vertexArray.Texcoord[1] - state->tex_coord_center_x ) *
-                cos( state->rotate_tex_theta ) + 
-                ( vertexArray.Texcoord[2] - state->tex_coord_center_y ) *
-                sin( state->rotate_tex_theta ) );
-            rotate_coord[1] = state->tex_coord_center_y +
-                ( ( vertexArray.Texcoord[1] - state->tex_coord_center_x ) *
-                -sin( state->rotate_tex_theta ) +
-                ( vertexArray.Texcoord[2] - state->tex_coord_center_y ) *
-                cos( state->rotate_tex_theta ) );
-            vertexArray.Texcoord[1]=  rotate_coord[0];
-            vertexArray.Texcoord[2]=  rotate_coord[1];
-            
-            return 0;
-        }
-    }
-#endif
     
     // Texture scale is multipled by 10 because there are 10 steps of red
     // between each step of white (10 gradiations drawn in the texture
@@ -522,24 +443,6 @@ describe_gl_vertex(nmg_State * state, const nmb_PlaneSelection & planes,
             glTexCoord2fv(rulercoord);
         }
     } 
-    else if (state->texture_transform_mode == MANUAL_REALIGN_COORD) {
-        GLfloat man_realign_coord[2];
-        
-        if ( (x == (num_x -1)) && (y == (num_y -1))) {
-            state->tex_coord_center_x = (num_x / 512.0) / 2.0;
-            state->tex_coord_center_y = (num_y / 512.0) / 2.0;
-            state->tex_range_x = 1000.0;
-            state->tex_range_y = 1000.0;
-            state->tex_theta_cumulative = 0.0;
-        }
-        man_realign_coord[0]= (float) (x/512.0);
-        man_realign_coord[1]= (float) (y/512.0);         
-        vertexArray.Texcoord[1]=  man_realign_coord[0];
-        vertexArray.Texcoord[2]=  man_realign_coord[1];
-        if(!state->VERTEX_ARRAY) {
-            glTexCoord2fv(man_realign_coord);
-        }		
-    }
     else if (state->texture_transform_mode == PER_QUAD_COORD) {
         if(state->VERTEX_ARRAY) {
             vertexArrayPtr->Texcoord[1] =  x;

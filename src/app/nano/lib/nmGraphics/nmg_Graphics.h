@@ -93,12 +93,11 @@ class nmg_Graphics {
 
     /// indicates which texture is displayed:
     enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA,
-			           COLORMAP, SEM_DATA,  BUMPMAP, HATCHMAP, 
-                       PATTERNMAP, REMOTE_DATA, VISUALIZATION };
+			           COLORMAP, VIDEO, REMOTE_DATA, VISUALIZATION };
 
     /// how texture coordinates are computed:
     enum TextureTransformMode {RULERGRID_COORD, VIZTEX_COORD, SURFACE_REGISTRATION_COORD, MODEL_REGISTRATION_COORD,
-		MANUAL_REALIGN_COORD, REMOTE_COORD, PER_QUAD_COORD};
+		REMOTE_COORD, PER_QUAD_COORD};
 
     /// enums for Remote Rendering
     enum RemoteColorMode { NO_COLORS, VERTEX_COLORS, 
@@ -216,21 +215,11 @@ class nmg_Graphics {
     // arguments in range [0..255]
     virtual void setSurfaceColor (const int [3]) {};
 
-    // Realigning Textures:
-    virtual void createRealignTextures( const char * ) {};
-    virtual void setRealignTextureSliderRange (float, float, float, float) {};
-    virtual void setRealignTexturesConversionMap
+    // Colormap Texture:
+    virtual void createColormapTexture( const char * ) {};
+    virtual void setColormapTextureSliderRange (float, float, float, float) {};
+    virtual void setColormapTextureConversionMap
                     (const char *, const char *) {};
-    virtual void computeRealignPlane( const char *, const char * ) {};
-
-// functionality moved to setTextureMode()
-//    virtual void enableRealignTextures (int on) {};
-
-    virtual void translateTextures ( int on, float dx, float dy ) {};
-    virtual void scaleTextures ( int on, float dx, float dy ) {};
-    virtual void shearTextures ( int on, float dx, float dy ) {};
-    virtual void rotateTextures ( int on, float theta ) {};
-    virtual void setTextureCenter( float dx, float dy ) {};
 
     virtual void loadRawDataTexture(const int which, const char *image_name,
         const int start_x, const int start_y) {};
@@ -457,17 +446,10 @@ class nmg_Graphics {
     vrpn_int32 d_setCollabHandPos_type;
     vrpn_int32 d_setCollabMode_type;
 
-    /// Realign Textures Network Types:
-    vrpn_int32 d_createRealignTextures_type;
-    vrpn_int32 d_setRealignTexturesConversionMap_type;
-    vrpn_int32 d_setRealignTextureSliderRange_type;
-    vrpn_int32 d_computeRealignPlane_type;
-    vrpn_int32 d_enableRealignTextures_type;
-    vrpn_int32 d_translateTextures_type;
-    vrpn_int32 d_scaleTextures_type;
-    vrpn_int32 d_shearTextures_type;
-    vrpn_int32 d_rotateTextures_type;
-    vrpn_int32 d_setTextureCenter_type;
+    /// Colormap Texture Network Types:
+    vrpn_int32 d_createColormapTexture_type;
+    vrpn_int32 d_setColormapTextureConversionMap_type;
+    vrpn_int32 d_setColormapTextureSliderRange_type;
 
     vrpn_int32 d_updateTexture_type;
     vrpn_int32 d_enableRegistration_type;
@@ -651,29 +633,17 @@ class nmg_Graphics {
     char * encode_setCollabMode (int * len, int);
     int decode_setCollabMode (const char *buf, int *);
 
-    // Realign Textures Network Transmission Functions:
-    char *encode_setRealignTextureSliderRange ( int *len, float, float, float, float );
-    int decode_setRealignTextureSliderRange( const char *buf,float *, float *,float *, float *);
+    // Colormap Texture Network Transmission Functions:
+    char *encode_setColormapTextureSliderRange ( int *len, float, float, float, float );
+    int decode_setColormapTextureSliderRange( const char *buf,float *, float *,float *, float *);
     
     char *encode_two_char_arrays ( int *len, const char *, const char * );
     int decode_two_char_arrays ( const char *buf, char **, char **);
     
-    char *encode_enableRealignTextures ( int *len, int );
-    int decode_enableRealignTextures ( const char *buf, int *);
-    
-    char *encode_dx_dy ( int *len, float, float );
-    int decode_dx_dy ( const char *buf, float *, float *);
-    
-    char *encode_rotateTextures ( int *len, float theta );
-    int decode_rotateTextures ( const char *buf, float *theta );
-
     char *encode_updateTexture(int *len, int, const char *, int, int,
          int, int);
     int decode_updateTexture(const char *buf,int *,
 	char **,int *,int *,int *,int *);
-
-    char * encode_enableRegistration (int * len, int);
-    int decode_enableRegistration (const char * buf, int *);
 
     char *encode_textureTransform(int *len, double *);
     int decode_textureTransform(const char *buf, double *);

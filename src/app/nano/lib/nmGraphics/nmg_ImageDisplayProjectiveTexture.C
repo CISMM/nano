@@ -44,7 +44,7 @@ void nmg_ImageDisplayProjectiveTexture::
 setDisplayColorMap( nmb_Image * /*image*/, const char *map, const char *mapdir )
 {
   if (!d_graphicsDisplay) return;
-  d_graphicsDisplay->setRealignTexturesConversionMap(map, mapdir);
+  d_graphicsDisplay->setColormapTextureConversionMap(map, mapdir);
 }
 
 void nmg_ImageDisplayProjectiveTexture::
@@ -53,11 +53,11 @@ setDisplayColorMapRange( nmb_Image * /*image*/,
 			 float color_min, float color_max)
 {
   if (!d_graphicsDisplay) return;
-  d_graphicsDisplay->setRealignTextureSliderRange(data_min, data_max,
+  d_graphicsDisplay->setColormapTextureSliderRange(data_min, data_max,
                                                     color_min, color_max);
 }
 
 void nmg_ImageDisplayProjectiveTexture::updateImage(nmb_Image *image) 
 {
-  d_graphicsDisplay->createRealignTextures(image->name()->c_str());
+  d_graphicsDisplay->createColormapTexture(image->name()->c_str());
 }

@@ -732,11 +732,11 @@ void nmg_Graphics_Remote::setSurfaceColor (const int c [3]) {
 }
 
 //
-// Realign Textures Remote Code:
+// Colormap Texture Remote Code:
 //
 
 // 
-void nmg_Graphics_Remote::createRealignTextures( const char *name ) {
+void nmg_Graphics_Remote::createColormapTexture( const char *name ) {
   struct timeval now;
   int len;
   int retval;
@@ -744,17 +744,17 @@ void nmg_Graphics_Remote::createRealignTextures( const char *name ) {
   len = strlen( name );
   gettimeofday(&now, NULL);
   if ( d_connection ) {
-    retval = d_connection->pack_message(len, now, d_createRealignTextures_type,
+    retval = d_connection->pack_message(len, now, d_createColormapTexture_type,
 					d_myId, name,
 					vrpn_CONNECTION_RELIABLE);
     if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::createRealignTextures:  "
+      fprintf(stderr, "nmg_Graphics_Remote::createColormapTexture:  "
 	      "Couldn't pack message to send to server.\n");
     }
   }
 }
 
-void nmg_Graphics_Remote::setRealignTextureSliderRange (
+void nmg_Graphics_Remote::setColormapTextureSliderRange (
     float data_min,
     float data_max,
     float color_min,
@@ -764,15 +764,15 @@ void nmg_Graphics_Remote::setRealignTextureSliderRange (
   int len;
   int retval;
 
-  msgbuf = encode_setRealignTextureSliderRange(&len, data_min,data_max,color_min, color_max);
+  msgbuf = encode_setColormapTextureSliderRange(&len, data_min,data_max,color_min, color_max);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now,
-					d_setRealignTextureSliderRange_type,
+					d_setColormapTextureSliderRange_type,
 					d_myId, msgbuf,
 					vrpn_CONNECTION_RELIABLE);
     if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setRealignTextureSliderRange:  "
+      fprintf(stderr, "nmg_Graphics_Remote::setColormapTextureSliderRange:  "
                       "Couldn't pack message to send to server.\n");
     }
   }
@@ -780,7 +780,7 @@ void nmg_Graphics_Remote::setRealignTextureSliderRange (
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setRealignTexturesConversionMap( const char *map,
+void nmg_Graphics_Remote::setColormapTextureConversionMap( const char *map,
 							   const char *mapdir ) {
 
   struct timeval now;
@@ -792,11 +792,11 @@ void nmg_Graphics_Remote::setRealignTexturesConversionMap( const char *map,
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now,
-					d_setRealignTexturesConversionMap_type,
+					d_setColormapTextureConversionMap_type,
 					d_myId, msgbuf,
 					vrpn_CONNECTION_RELIABLE);
     if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setRealignTexturesConversionMap:  "
+      fprintf(stderr, "nmg_Graphics_Remote::setColormapTextureConversionMap:  "
                       "Couldn't pack message to send to server.\n");
     }
   }
@@ -804,164 +804,8 @@ void nmg_Graphics_Remote::setRealignTexturesConversionMap( const char *map,
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::computeRealignPlane( const char *name,
-                                               const char *newname ) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_two_char_arrays(&len, name, newname);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-					d_computeRealignPlane_type,
-					d_myId, msgbuf,
-					vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::computeRealignPlane:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
-/*
-void nmg_Graphics_Remote::enableRealignTextures (int on) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_enableRealignTextures(&len, on);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-					d_enableRealignTextures_type,
-					d_myId, msgbuf,
-					vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::enableRealignTextures:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-*/
-
-void nmg_Graphics_Remote::translateTextures ( int , float dx, float dy ) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_dx_dy(&len, dx, dy);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-					d_translateTextures_type,
-					d_myId, msgbuf,
-					vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::translateTextures:  "
-	      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::scaleTextures ( int , float dx, float dy ) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_dx_dy(&len, dx, dy);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-					d_scaleTextures_type,
-					d_myId, msgbuf,
-					vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::scaleTextures:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::shearTextures ( int , float dx, float dy ) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_dx_dy(&len, dx, dy);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-					d_shearTextures_type,
-					d_myId, msgbuf,
-					vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::shearTextures:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::rotateTextures ( int , float theta ) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_rotateTextures(&len, theta);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-					d_rotateTextures_type,
-					d_myId, msgbuf,
-					vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::rotateTextures:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::setTextureCenter( float dx, float dy ) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_dx_dy(&len, dx, dy);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-					d_setTextureCenter_type,
-					d_myId, msgbuf,
-					vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setTextureCenter:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
 //
-// End Realign Textures Remote Code:
+// End Colormap Texture Remote Code:
 //
 
 void nmg_Graphics_Remote::loadRawDataTexture

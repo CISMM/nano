@@ -34,6 +34,11 @@
 
 #include "Timer.h"
 
+// UGRAPHICS GLOBAL DEFINED IN MICROSCAPE.C
+#include <UTree.h>
+#include <URender.h>
+extern UTree World;
+
 // M_PI not defined for VC++, for some reason. 
 #ifndef M_PI
 #define M_PI		3.14159265358979323846
@@ -421,47 +426,21 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 			       handle_setCollabMode,
 			       this, vrpn_ANY_SENDER);
 
-  // Realign Textures Handlers:
-  connection->register_handler( d_createRealignTextures_type,
-				handle_createRealignTextures,
+  // Colormap Texture Handlers:
+  connection->register_handler( d_createColormapTexture_type,
+				handle_createColormapTexture,
 				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_setRealignTextureSliderRange_type,
-				handle_setRealignTextureSliderRange,
+  connection->register_handler( d_setColormapTextureSliderRange_type,
+				handle_setColormapTextureSliderRange,
 				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_setRealignTexturesConversionMap_type,
-				handle_setRealignTexturesConversionMap,
+  connection->register_handler( d_setColormapTextureConversionMap_type,
+				handle_setColormapTextureConversionMap,
 				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_computeRealignPlane_type,
-				handle_computeRealignPlane,
-				this, vrpn_ANY_SENDER);
-/*
-  connection->register_handler( d_enableRealignTextures_type,
-				handle_enableRealignTextures,
-				this, vrpn_ANY_SENDER);
-*/
-  connection->register_handler( d_translateTextures_type,
-				handle_translateTextures,
-				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_scaleTextures_type,
-				handle_scaleTextures,
-				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_shearTextures_type,
-				handle_shearTextures,
-				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_rotateTextures_type,
-				handle_rotateTextures,
-				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_setTextureCenter_type,
-				handle_setTextureCenter,
-				this, vrpn_ANY_SENDER);
+
   connection->register_handler( d_updateTexture_type,
 				handle_updateTexture,
 				this, vrpn_ANY_SENDER);
-/*
-  connection->register_handler( d_enableRegistration_type,
-				handle_enableRegistration,
-				this, vrpn_ANY_SENDER);
-*/
+
   connection->register_handler( d_setTextureTransform_type,
 				handle_setTextureTransform,
 				this, vrpn_ANY_SENDER);
@@ -597,6 +576,12 @@ void nmg_Graphics_Implementation::changeDataset( nmb_Dataset * data)
   strcpy(state->maskPlaneName, data->maskPlaneName->string());
 
   state->surface->changeDataset(data);
+  state->colormapTexture.changeDataset(data);
+  state->rulergridTexture.changeDataset(data);
+  state->videoTexture.changeDataset(data);
+  state->remoteDataTexture.changeDataset(data);
+  state->visualizationTexture.changeDataset(data);
+
   // If there is an existing region, it won't be applicable to new 
   // data set. 
   if (d_last_region != -1) {
@@ -677,40 +662,46 @@ void nmg_Graphics_Implementation::getDisplayPosition (q_vec_type &ll,
 
 void nmg_Graphics_Implementation::loadRulergridImage (const char * name) {
 //fprintf(stderr, "nmg_Graphics_Implementation::loadRulergridImage().\n");
-  if (!name) {
-    return;
-  }
-  FILE *infile = fopen(name, "rb");
-  if (!infile) {
-    fprintf(stderr, "nmg_Graphics_Implementation: can't find file: %s\n",
-	name);
-  }
-  state->rulerPPM = new PPM (infile);
-  if (!state->rulerPPM->valid) {
-    fprintf(stderr, "Cannot read rulergrid PPM %s.\n", name);
-  } else {
-    makeAndInstallRulerImage(state->rulerPPM);
-  }
+	if (!name) {
+		return;
+	}
+	FILE *infile = fopen(name, "rb");
+	if (infile) {
+		state->rulerPPM = new PPM (infile);
+		if (!state->rulerPPM->valid) {
+			fprintf(stderr, "Cannot read rulergrid PPM %s.\n", name);
+		} else {
+			state->rulergridTexture.setImage(state->rulerPPM);
+		}
+		fclose(infile);
+	} else {
+		fprintf(stderr, "nmg_Graphics_Implementation: can't find file: %s\n",
+		name);
+	}
 }
 
 void nmg_Graphics_Implementation::loadVizImage (const char * name) {
 //fprintf(stderr, "nmg_Graphics_Implementation::loadRulergridImage().\n");
-  if (!name) {
-    return;
-  }
-  FILE *infile = fopen(name, "rb");
-  if (!infile) {
-    fprintf(stderr, "nmg_Graphics_Implementation: can't find file: %s\n",
-	name);
-  }
-  state->vizPPM = new PPM (infile);
-  if (!state->vizPPM->valid) {
-    fprintf(stderr, "Cannot read visualization PPM %s.\n", name);
-  } else {
-    makeAndInstallVizImage(state->vizPPM);
-  }
+	if (!name) {
+		return;
+	}
+	FILE *infile = fopen(name, "rb");
+	if (infile) {
+		state->vizPPM = new PPM (infile);
+		if (!state->vizPPM->valid) {
+			fprintf(stderr, "Cannot read visualization PPM %s.\n", name);
+		} else {
+			state->visualizationTexture.setImage(state->vizPPM);
+		}
+		fclose(infile);
+	} else {
+		fprintf(stderr, 
+			"nmg_Graphics_Implementation: can't find file: %s\n", 
+			name);
+	}
 }
 
+/*
 // Tell how to index a given element.  Parameters are y,x,color
 #define texel(j,i,c) ( (c) + 4 * ( (i) + (j) * texture_size))
 
@@ -933,15 +924,13 @@ void nmg_Graphics_Implementation::makeAndInstallVizImage(PPM *myPPM)
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 
 #ifdef  FLOW
-/**********************-_________________________
-    glTexImage2D(GL_TEXTURE_2D, 0, 4,
-                 texture_size, texture_size,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                 (const GLvoid*)texture);
-    if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error making ruler texture.\n");
-    }
-_______________________________********************/
+//    glTexImage2D(GL_TEXTURE_2D, 0, 4,
+//                 texture_size, texture_size,
+//                 0, GL_RGBA, GL_UNSIGNED_BYTE,
+//                 (const GLvoid*)texture);
+//    if (glGetError()!=GL_NO_ERROR) {
+//     printf(" Error making ruler texture.\n");
+//    }
 #endif
 
 #if defined(sgi) || defined(_WIN32)
@@ -967,6 +956,7 @@ _______________________________********************/
 
   delete [] texture;
 }
+*/
 
 /**
  * Next display loop, regenerate vertex colors for the surface. 
@@ -1275,7 +1265,7 @@ void nmg_Graphics_Implementation::setSurfaceColor (const int c [4]) {
 }
 
 //
-// Realign Texture Functions
+// Colormap Texture Functions
 //
 
 /**
@@ -1285,654 +1275,101 @@ The texture map is created by mapping data values to color values
 based on the conversion map selected (i.e. blackbody, inverse rainbow,...)
 Or in none is selected, it just does some simple mapping.
 
-Texture maps must be in units of powers of 2,
-So a texture map of 512x512 is allocated (hopefully this is big enough)
- -JFJ: correction, it's now a dynamically-allocated array of any
-       power-of-2 size.
 */
-void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
+void nmg_Graphics_Implementation::createColormapTexture( const char *name ) {
   // inputGrid is replaced with dataImages in this function so that
   // we don't have separate functions for building textures from ppm images
   // and AFM data (these changes allow this function to do what 
   // makeAndInstallRulerImage() was used for previously)
-  strcpy(state->realign_texture_name, name);
+  strcpy(state->colormap_texture_name, name);
   nmb_Image *im = d_dataset->dataImages->getImageByName(name);
   if (!im) {
     fprintf(stderr, 
-	"nmg_Graphics_Impl::createRealignTextures: image %s not found\n", name);
+	"nmg_Graphics_Impl::createColormapTexture: image %s not found\n", name);
     return;
   }
-  
-  int pixelType;
-  if (im->pixelType() == NMB_UINT8){
-      pixelType = GL_UNSIGNED_BYTE;
-  } else if (im->pixelType() == NMB_UINT16){
-      pixelType = GL_UNSIGNED_SHORT;
-  } else if (im->pixelType() == NMB_FLOAT32){
-      pixelType = GL_FLOAT;
-  } else {
-      fprintf(stderr, "nmb_GraphicsImp::createRealignTextures:"
-           "can't handle pixel type\n");
-      return;
-  }
-//  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
-//                   im->width() + im->borderXMin + im->borderXMax(),
-//                   im->height() + im->borderYMin() + im->borderYMax(),
-//                   GL_LUMINANCE, pixelType, im->pixelData()) != 0) {
-//    printf(" Error making mipmaps, using texture instead.\n");
 
   v_gl_set_context_to_vlib_window();
-
-  glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-
-  glBindTexture(GL_TEXTURE_2D, state->tex_ids[COLORMAP_TEX_ID]);
-
-
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-
-  float bord_col[4] = {0.0, 0.0, 0.0, 1.0};
-  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
-/*
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,
-                im->width() + im->borderXMin() + im->borderXMax(),
-                im->height() + im->borderYMin() + im->borderYMax(),
-                0, GL_LUMINANCE, pixelType, im->pixelData());
-*/
-  GLint internalFormat = GL_LUMINANCE;
-  if (state->realign_textures_curColorMap != NULL) {
-      const int CMAP_SIZE_GL = 512;
-      // Create some GL compatible maps from the current color map. 
-      float dummy;
-      float rmap[CMAP_SIZE_GL], gmap[CMAP_SIZE_GL],bmap[CMAP_SIZE_GL];
-      for (int i = 0; i < CMAP_SIZE_GL; i++) {
-          state->realign_textures_curColorMap->lookup(
-              i, 
-              0, CMAP_SIZE_GL,
-              state->realign_textures_data_min,
-              state->realign_textures_data_max,
-              state->realign_textures_color_min,
-              state->realign_textures_color_max,
-              &rmap[i], 
-              &gmap[i], 
-              &bmap[i], &dummy);
-      }
-
-
-      // gl first converts the luminance pixels to RGBA, then
-      // applies the maps we specify. These are created from our
-      // color maps above. We're letting GL do the work for us. 
-      glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
-      glPixelMapfv(GL_PIXEL_MAP_R_TO_R, CMAP_SIZE_GL, &rmap[0]);
-      glPixelMapfv(GL_PIXEL_MAP_G_TO_G, CMAP_SIZE_GL, &gmap[0]);
-      glPixelMapfv(GL_PIXEL_MAP_B_TO_B, CMAP_SIZE_GL, &bmap[0]);
-      
-      internalFormat = GL_RGB;
-  }    
-  if (pixelType == GL_FLOAT) {
-      nmb_Image *im_copy = new nmb_ImageGrid(im);
-      im_copy->normalize();
-      gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
-              im_copy->width() + im_copy->borderXMin()+im_copy->borderXMax(),
-              im_copy->height() + im_copy->borderYMin()+im_copy->borderYMax(),
-              GL_LUMINANCE, pixelType, im_copy->pixelData());
-      nmb_Image::deleteImage(im_copy);
-  } else {
-      gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
-                   im->width() + im->borderXMin()+im->borderXMax(),
-                   im->height() + im->borderYMin()+im->borderYMax(),
-                   GL_LUMINANCE, pixelType, im->pixelData());
-  }
-
-  if (state->realign_textures_curColorMap != NULL) {
-      glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
-  }
-  GLenum err = glGetError();
-  if (err!=GL_NO_ERROR) {
-      printf(" Error making realign texture: %s.\n", gluErrorString(err));
-  }
-  state->tex_image_width[COLORMAP_TEX_ID] = im->width();
-  state->tex_image_height[COLORMAP_TEX_ID] = im->height();
-  state->tex_installed_width[COLORMAP_TEX_ID] = im->width()+
-                                     im->borderXMin()+im->borderXMax();
-  state->tex_installed_height[COLORMAP_TEX_ID] = im->height()+
-                                     im->borderYMin()+im->borderYMax();
-  state->tex_image_offsetx[COLORMAP_TEX_ID] = im->borderXMin();
-  state->tex_image_offsety[COLORMAP_TEX_ID] = im->borderYMin();
-
+  state->colormapTexture.setImage(im);
+  state->colormapTexture.createTexture(false, 
+	  state->colormap_texture_curColorMap,
+	  state->colormap_texture_data_min, 
+	  state->colormap_texture_data_max,
+	  state->colormap_texture_color_min, 
+	  state->colormap_texture_color_max);
   return;
-
 }
 
 //
 // Sets the conversion map used to convert data values to 
-// color values when realigning textures.
+// color values when making the colormap textures.
 //
 void nmg_Graphics_Implementation::
-setRealignTexturesConversionMap( const char *map, const char* /*mapdir*/ ) {
+setColormapTextureConversionMap( const char *map, const char* /*mapdir*/ ) {
   if ( !strcmp( map, "none" ) ) {
-    if (state->realign_textures_curColorMap) {
-      delete state->realign_textures_curColorMap;
+    if (state->colormap_texture_curColorMap) {
+      delete state->colormap_texture_curColorMap;
     }
-    state->realign_textures_curColorMap = NULL;
+    state->colormap_texture_curColorMap = NULL;
   }
   else {
-    if ( !state->realign_textures_curColorMap ) {
-      state->realign_textures_curColorMap = new nmb_ColorMap;
+    if ( !state->colormap_texture_curColorMap ) {
+      state->colormap_texture_curColorMap = new nmb_ColorMap;
     }
-    state->realign_textures_curColorMap->load_from_file( map, state->colorMapDir );
+    state->colormap_texture_curColorMap->load_from_file( map, state->colorMapDir );
   }
 }
 
 //
-// Sets the realign texture colormap slider range:
+// Sets the colormap texture colormap slider range:
 //
-void nmg_Graphics_Implementation::setRealignTextureSliderRange (
+void nmg_Graphics_Implementation::setColormapTextureSliderRange (
     float data_min,
     float data_max,
     float color_min,
     float color_max) {
-  state->realign_textures_data_min = data_min;
-  state->realign_textures_data_max = data_max;
-  state->realign_textures_color_min = color_min;
-  state->realign_textures_color_max = color_max;
+  state->colormap_texture_data_min = data_min;
+  state->colormap_texture_data_min = data_max;
+  state->colormap_texture_data_min = color_min;
+  state->colormap_texture_data_min = color_max;
 }
 
 
-//
-// Resamples the original data set based on the transformed
-// texture coordinates, creating a new data array.
-// Uses bi-linear interpolation for points that don't fall
-// exactly on the grid.
-//
-void nmg_Graphics_Implementation::computeRealignPlane( const char *name,
-						       const char *newname ) {
-  
-  // New data Array 
-  BCPlane *plane = state->inputGrid->getPlaneByName(name);
-  if ( !plane )
-    return;
-  
-  char newunits [1000];
-  sprintf(newunits, "%s_realign", plane->units()->c_str());
-
-  BCPlane *newplane = state->inputGrid->getPlaneByName(newname);
-  if (!newplane) {
-     state->inputGrid->addNewPlane( newname, newunits, NOT_TIMED );
-     if ( newplane == NULL ) {
-        fprintf( stderr, "compute realign plane: Can't make plane %s\n", 
-		newname );
-    	return;
-     }
-     d_dataset->dataImages->addImage(new nmb_ImageGrid(newplane));
-  }
-
-  // Resample the old dataset based on the realigned texture coordinates
-  // Uses bi-linear interpolation for points that don't fall
-  // exactly on the grid.
-
-  Vertex_Struct ** surface = state->surface->getRegion(0)->getRegionData();
-  int numx = plane->numX();
-  int numy = plane->numY();
-  for ( int i = 0; i < numy; i++ )
-    for ( int j = 0; j < numx; j++ ) {
-
-      // Transformed Texture Coordinate
-      float u = surface[i][j * 2].Texcoord[1];
-      float v = surface[i][j * 2].Texcoord[2];
-
-      // X, Y coordinate in original dataset
-      float x = u * 512; // Maximum texture size
-      float y = v * 512; // Maximum texture size
-
-      // interpolation values
-      float s = x - floor( x );
-      float t = y - floor( y );
-
-      // indices of the four data values to interpolate:
-      int x1 = (int)floor( x );
-      int y1 = (int)floor( y );
-      int x2 = (int)ceil( x );
-      int y2 = (int)ceil( y );
-
-      // lookup data values to interpolate:
-      float a, b, c, d;
-      if ( (x1 >= 0) && (x1 < numx) && (y1 >= 0) && (y1 < numy) )
-	a = plane->value( x1, y1 );
-      else
-	a = 0;
-      if ( (x2 >= 0) && (x2 < numx) && (y1 >= 0) && (y1 < numy) )
-	b = plane->value( x2, y1 );
-      else
-	b = 0;
-      if ( (x1 >= 0) && (x1 < numx) && (y2 >= 0) && (y2 < numy) )
-	c = plane->value( x1, y2 );
-      else
-	c = 0;
-      if ( (x2 >= 0) && (x2 < numx) && (y2 >= 0) && (y2 < numy) )
-	d = plane->value( x2, y2 );
-      else d = 0;
-
-      // interpolate first along x:
-      float e = (1.0 - s) * a + s * b;
-      float f = (1.0 - s) * c + s * d;
-
-      // interpolate interpolated values along y:
-      float value = (1.0 - t) * e + t * f;
-      
-      // assign the value to the new dataset
-      newplane->setValue( j, i, value );
-    }
-}
-
-//
-// Translates the texture based on the mouse movements:
-//
-void nmg_Graphics_Implementation::translateTextures ( int on,
-						      float dx, float dy ) {
-  state->translate_textures = on;
-  state->scale_textures = 0;
-  state->shear_textures = 0;
-  state->rotate_textures = 0;
-
-  //
-  // First the direction (dx, dy) is rotated to match the
-  // rotated texture coordinates. (So after rotating the texture,
-  // translating up and down still matches the mouse)...
-  //
-  float u = ( dx / state->tex_range_x ) * cos( state->tex_theta_cumulative ) + 
-    ( dy / state->tex_range_y ) * sin( state->tex_theta_cumulative );
-  float v = ( dx / state->tex_range_x ) * -sin( state->tex_theta_cumulative ) +
-    ( dy / state->tex_range_y ) * cos( state->tex_theta_cumulative );
-
-  state->translate_tex_dx = u;
-  state->translate_tex_dy = v;
-
-#ifdef PROJECTIVE_TEXTURE
-  state->translate_tex_x -= dx;
-  state->translate_tex_y -= dy;
-#endif
-
-  // Rebuilds the texture coordinate array:
-  causeGridRedraw();
-}
-
-//
-// Scales the texture based on the mouse movements:
-//
-void nmg_Graphics_Implementation::scaleTextures ( int on,
-						  float dx, float dy ) {
-  state->translate_textures = 0;
-  state->scale_textures = on;
-  state->shear_textures = 0;
-  state->rotate_textures = 0;
-
-  //
-  // First the direction (dx, dy) is rotated to match the
-  // rotated texture coordinates. (So after rotating the texture,
-  // scaling left and right still matches the mouse)...
-  //
-  float u = ( dx / 100.0 ) * cos( state->tex_theta_cumulative ) + 
-    ( dy / 100.0 ) * sin( state->tex_theta_cumulative );
-  float v = ( dx / 100.0 ) * -sin( state->tex_theta_cumulative ) +
-    ( dy / 100.0 ) * cos( state->tex_theta_cumulative );
-
-  state->scale_tex_dx = 1.0 + u;
-  state->scale_tex_dy = 1.0 + v;
-
-  state->tex_range_x /= state->scale_tex_dx;
-  state->tex_range_y /= state->scale_tex_dy;
-
-#ifdef PROJECTIVE_TEXTURE
-  if (state->scale_tex_dx > 0.5 && state->scale_tex_dx < 2.0)
-      state->scale_tex_x *= state->scale_tex_dx;
-  if (state->scale_tex_dy > 0.5 && state->scale_tex_dy < 2.0)
-      state->scale_tex_y *= state->scale_tex_dy;
-#endif
-
-  // Rebuilds the texture coordinate array:
-  causeGridRedraw();
-}
-
-//
-// Shear the texture based on the mouse movements:
-//
-void nmg_Graphics_Implementation::shearTextures ( int on,
-						  float dx, float dy ) {
-  state->translate_textures = 0;
-  state->scale_textures = 0;
-  state->shear_textures = on;
-  state->rotate_textures = 0;
-
-  //
-  // First the direction (dx, dy) is rotated to match the
-  // rotated texture coordinates. (So after rotating the texture,
-  // shearing left and right still matches the mouse)...
-  //
-  float u = ( dx/(state->tex_range_x ) ) * cos( state->tex_theta_cumulative ) + 
-    ( dy/( state->tex_range_y ) ) * sin( state->tex_theta_cumulative );
-  float v = ( dx/(state->tex_range_x ) ) * -sin( state->tex_theta_cumulative ) +
-    ( dy/( state->tex_range_y ) ) * cos( state->tex_theta_cumulative );
-
-  state->shear_tex_dx = u;
-  state->shear_tex_dy = v;
-
-#ifdef PROJECTIVE_TEXTURE
-  // not sure why this is more sensitive but it is so we scale down the
-  // change a bit
-  state->shear_tex_x += state->shear_tex_dx/100.0;
-  state->shear_tex_y += state->shear_tex_dy/100.0;
-#endif
-
-  // Rebuilds the texture coordinate array:
-  causeGridRedraw();
-}
-
-//
-// Shear the texture based on the mouse movements:
-//
-void nmg_Graphics_Implementation::rotateTextures ( int on, float theta ) {
-  state->translate_textures = 0;
-  state->scale_textures = 0;
-  state->shear_textures = 0;
-  state->rotate_textures = on;
-
-  state->rotate_tex_theta = theta / 10.0;
-  state->tex_theta_cumulative += state->rotate_tex_theta;
-
-  // Rebuilds the texture coordinate array:
-  causeGridRedraw();
-}
-
-//
-// Set the center of texture realign transformations:
-// A red "center sphere" follows the mouse:
-//
-void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
-
-  int numx = state->inputGrid->numX();
-  int numy = state->inputGrid->numY();
-
-#ifdef PROJECTIVE_TEXTURE
-
-  // (state->translate_tex = state->translate_tex_x,state->translate_tex_y)
-  // state->translate_tex represents the translation of the grid to the
-  // point about which the texture is rotated, scaled, and sheared
-  // so to move this point we must adjust state->translate_tex but then
-  // we need to compute the corresponding new location in texture coordinates
-  // so that this can be subtracted out properly by compute_texture_matrix() 
-  // so that the texture itself doesn't move
-
-  BCPlane *plane = state->inputGrid->getPlaneByName(state->heightPlaneName);
-  if (plane == NULL){
-      fprintf(stderr, "Error in setTextureCenter: could not get plane!\n");
-      return; 
-  }
-
-  // we use current texture matrix to compute how the change in position of
-  // the center on the grid (state->tex_grid_center) gets mapped to a change in 
-  // the position of the center in the texture (state->tex_coord_center)
-  double tex_mat[16];
-
-  // note: it is important that we call this here before we
-  // change state->translate_tex because otherwise state->translate_tex and
-  // state->tex_coord_center would be inconsistent and the texture would move
-  compute_texture_matrix(state->translate_tex_x, state->translate_tex_y,
-                state->tex_theta_cumulative, state->scale_tex_x,
-                state->scale_tex_y, state->shear_tex_x, state->shear_tex_y,
-                state->tex_coord_center_x, state->tex_coord_center_y,
-                tex_mat); 
-
-  double pl_len_x = plane->maxX()-plane->minX();
-  double pl_len_y = plane->maxY()-plane->minY();
-
-  // this just scales the mouse movements by a reasonable value to map them
-  // to nm:
-  state->translate_tex_x += dx*pl_len_x/(double)numx;
-  state->translate_tex_y += dy*pl_len_y/(double)numy;
-
-  if (state->translate_tex_x > pl_len_x)
-     state->translate_tex_x = pl_len_x;
-  else if (state->translate_tex_x < 0)
-     state->translate_tex_x = 0;
-  if (state->translate_tex_y > pl_len_y)
-     state->translate_tex_y = pl_len_y;
-  else if (state->translate_tex_y < 0)
-     state->translate_tex_y = 0;
-
-  float x = 0, y = 0, z = 0;
-  // x,y are in nm
-  x = state->translate_tex_x;
-  y = state->translate_tex_y;
- 
-  // rx,ry are in grid lattice units 
-  double rx = x*(double)numx/pl_len_x;
-  double ry = y*(double)numy/pl_len_y;
-  z = plane->interpolatedValue(rx, ry)*(plane->scale());
-
-  position_sphere(state, x,y,z);
-
-  // now that we have the new position of the center in grid coordinates, we
-  // compute the new position of the center in texture coordinates using the
-  // _old_ texture matrix 
-  double grid_pnt[4] = {x, y, z, 1.0};
-  double texture_pnt[2];
-  int i,j;
-  for (i = 0; i < 2; i++){
-      texture_pnt[i] = 0.0;
-      for (j = 0; j < 4; j++)
-          texture_pnt[i] += tex_mat[i + j*4]*grid_pnt[j];
-  }
-  state->tex_coord_center_x = texture_pnt[0];
-  state->tex_coord_center_y = texture_pnt[1];
-
-#else	// NOT PROJECTIVE_TEXTURE
-
-  // rotate:
-  float u = ( dx/(2.0 * state->tex_range_x ) ) * cos( state->tex_theta_cumulative ) + 
-    ( dy/( 2.0 * state->tex_range_y ) ) * sin( state->tex_theta_cumulative );
-  float v = ( dx/(2.0 * state->tex_range_x ) ) * -sin( state->tex_theta_cumulative ) +
-    ( dy/( 2.0 * state->tex_range_y ) ) * cos( state->tex_theta_cumulative );
-
-  u = state->tex_coord_center_x + u;
-  v = state->tex_coord_center_y + v;
-  
-  float x = 0, y = 0, z = 0;
-  float min = 3;
-  float x_dis, y_dis;
-
-  Vertex_Struct ** surface = state->surface->getRegion(0)->getRegionData();
-  for ( int i = 0; i < numy; i++ )
-    for ( int j = 0; j < numx; j++ ) {
-      x_dis = (surface[i][j * 2].Texcoord[1] - u)*
-	(surface[i][j * 2].Texcoord[1] - u);
-      y_dis = (surface[i][j * 2].Texcoord[2] - v)*
-	(surface[i][j * 2].Texcoord[2] - v);
-      if ( sqrt( x_dis + y_dis ) < min ) {
-	min = sqrt( x_dis + y_dis );
-	x = surface[i][j * 2].Vertex[0];
-	y = surface[i][j * 2].Vertex[1];
-	z = surface[i][j * 2].Vertex[2];
-	state->tex_coord_center_x = surface[i][j * 2].Texcoord[1];
-	state->tex_coord_center_y = surface[i][j * 2].Texcoord[2];
-	position_sphere(state, x, y, z);
-      }
-    }
-#endif
-}
-
-//
-// End of Realign Texture Functions.
-//
 
 void nmg_Graphics_Implementation::initializeTextures(void)
 {
-  int i;
   //fprintf(stderr, "initializing textures\n");
-
-  for (i = 0; i < N_TEX; i++) {
-     state->tex_image_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
-     state->tex_image_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
-     state->tex_installed_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
-     state->tex_installed_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
-     state->tex_image_offsetx[i] = 0;
-     state->tex_image_offsety[i] = 0;
-#ifdef _WIN32
-     state->tex_blend_func[i] = CYGWIN_TEXTURE_FUNCTION;
-#else
-     state->tex_blend_func[i] = GL_DECAL;
-#endif
-  }
-  state->tex_blend_func[VISUALIZATION_TEX_ID] = GL_MODULATE;
-
-#if defined(sgi)
-  state->tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
-  state->tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
-  state->tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
-  state->tex_env_color[SEM_DATA_TEX_ID][2] = 1.0;
-  state->tex_env_color[SEM_DATA_TEX_ID][3] = 1.0;
-#else
-  state->tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
-  state->tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
-  state->tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
-  state->tex_env_color[SEM_DATA_TEX_ID][2] = 1.0;
-  state->tex_env_color[SEM_DATA_TEX_ID][3] = 1.0;
-#endif
-
-  state->tex_blend_func[COLORMAP_TEX_ID] = GL_BLEND;
-  state->tex_env_color[COLORMAP_TEX_ID][0] = 1.0;
-  state->tex_env_color[COLORMAP_TEX_ID][1] = 1.0;
-  state->tex_env_color[COLORMAP_TEX_ID][2] = 1.0;
-  state->tex_env_color[COLORMAP_TEX_ID][3] = 1.0;
 
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  glGenTextures(N_TEX, state->tex_ids);
-
-
+  glGenTextures(1, &(state->contourTextureID));
   buildContourTexture(state);
 
-#if defined(sgi) || defined(_WIN32)
   //fprintf(stderr, "Initializing checkerboard texture.\n");
+  glGenTextures(1, &(state->alphaTextureID));
   makeCheckImage(state);
   buildAlphaTexture(state);
 
   //fprintf(stderr, "Initializing ruler texture.");
   if (state->rulerPPM) {
-    makeAndInstallRulerImage(state->rulerPPM);
+	  state->rulergridTexture.setImage(state->rulerPPM);
   } else {
     makeRulerImage(state);
     buildRulergridTexture(state);
     //fprintf(stderr, " Using default grid.\n");
   }
-  if (glGetError()!=GL_NO_ERROR) {
+  if (report_gl_errors()) {
       printf(" Error making ruler texture.\n");
   }
 
   if (state->vizPPM) {
-      makeAndInstallVizImage(state->vizPPM);
+	  state->visualizationTexture.setImage(state->vizPPM);
   }
-
-  state->tex_installed_width[SEM_DATA_TEX_ID] = 1024;
-  state->tex_installed_height[SEM_DATA_TEX_ID] = 1024;
-  state->tex_image_offsetx[SEM_DATA_TEX_ID] = 0;
-  state->tex_image_offsety[SEM_DATA_TEX_ID] = 0;
-
-  clearSEMDataTexture();
 
   if (report_gl_errors()) {
-     fprintf(stderr, "Error initializing sem texture\n");
+      printf(" Error making viz texture.\n");
   }
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-
-  int realign_tex_size = 4*state->tex_installed_width[COLORMAP_TEX_ID] *
-                             state->tex_installed_height[COLORMAP_TEX_ID];
-  float *realign_data = new float [realign_tex_size];
-  glBindTexture(GL_TEXTURE_2D, state->tex_ids[COLORMAP_TEX_ID]);
-
-  int ri,gi,bi,ai;
-  if (state->tex_blend_func[COLORMAP_TEX_ID] == GL_BLEND) {
-    for (ri=0,gi=1,bi=2,ai=3; ai < realign_tex_size; ri+=4,gi+=4,bi+=4,ai+=4){
-      realign_data[ri] = 0.0;
-      realign_data[gi] = 0.0;
-      realign_data[bi] = 0.0;
-      realign_data[ai] = 1.0;
-    }
-    float bord_col[4] = {0.0, 0.0, 0.0, 1.0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
-  } else if (state->tex_blend_func[COLORMAP_TEX_ID] == GL_MODULATE) {
-    for (ri=0,gi=1,bi=2,ai=3; ai < realign_tex_size; ri+=4,gi+=4,bi+=4,ai+=4){
-      realign_data[ri] = 1.0;
-      realign_data[gi] = 1.0;
-      realign_data[bi] = 1.0;
-      realign_data[ai] = 1.0;
-    }
-    float bord_col[4] = {1.0, 1.0, 1.0, 1.0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
-  } else {
-    for (ri=0,gi=1,bi=2,ai=3; ai < realign_tex_size; ri+=4,gi+=4,bi+=4,ai+=4){
-      realign_data[ri] = 0.0;
-      realign_data[gi] = 0.0;
-      realign_data[bi] = 0.0;
-      realign_data[ai] = 0.0;
-    }
-    float bord_col[4] = {0.0, 0.0, 0.0, 0.0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
-  }
-  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-/*
-#ifdef _WIN32
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB,
-                   state->tex_installed_width[COLORMAP_TEX_ID],
-                   state->tex_installed_height[COLORMAP_TEX_ID],
-                   GL_RGBA, GL_FLOAT, realign_data) != 0) {
-    printf(" Error making mipmaps, using texture instead.\n");
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                   state->tex_installed_width[COLORMAP_TEX_ID],
-                   state->tex_installed_height[COLORMAP_TEX_ID],
-                0, GL_RGBA, GL_FLOAT, realign_data);
-    if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error making realign texture.\n");
-    }
-
-  }
-#else
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
-                   state->tex_installed_width[COLORMAP_TEX_ID],
-                   state->tex_installed_height[COLORMAP_TEX_ID],
-                   GL_RGBA, GL_FLOAT, realign_data) != 0) {
-    printf(" Error making mipmaps, using texture instead.\n");
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                   state->tex_installed_width[COLORMAP_TEX_ID],
-                   state->tex_installed_height[COLORMAP_TEX_ID],
-                0, GL_RGBA, GL_FLOAT, realign_data);
-    if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error making realign texture.\n");
-    }
-
-  }
-#endif
-*/
-  delete [] realign_data;
-
-  if (report_gl_errors()) {
-     fprintf(stderr, "Error initializing realign texture\n");
-  }
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-
-#endif
-
 }
 
 /*
@@ -1964,112 +1401,8 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
 
     // make sure gl calls are directed to the right context
     v_gl_set_context_to_vlib_window();
-
-    if (im->width() + im->borderXMin()+im->borderXMax() <= 
-            state->tex_installed_width[SEM_DATA_TEX_ID] && 
-	im->height() + im->borderYMin()+im->borderYMax() <= 
-            state->tex_installed_height[SEM_DATA_TEX_ID]) {
-        int pixelType;
-        if (im->pixelType() == NMB_UINT8){
-            pixelType = GL_UNSIGNED_BYTE;
-        } else if (im->pixelType() == NMB_UINT16){
-            pixelType = GL_UNSIGNED_SHORT;
-        } else if (im->pixelType() == NMB_FLOAT32){
-            pixelType = GL_FLOAT;
-        } else {
-            fprintf(stderr, "nmb_GraphicsImp::loadRawDataTexture:"
-                 "can't handle pixel type\n"); 
-            return;      
-        }
-        glBindTexture(GL_TEXTURE_2D, state->tex_ids[SEM_DATA_TEX_ID]);
-        if (state->tex_image_width[SEM_DATA_TEX_ID] > im->width() ||
-            state->tex_image_height[SEM_DATA_TEX_ID] > im->height()) {
-          // clear the texture array
-          clearSEMDataTexture();
-        }
-//        glPixelTransferf(GL_RED_SCALE, (float)0.5);
-//	glPixelTransferf(GL_BLUE_SCALE, (float)0.6);
-//	glPixelTransferf(GL_GREEN_SCALE, (float)0.6);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, start_x, start_y,
-               im->width()+im->borderXMin()+im->borderXMax(), 
-               im->height()+im->borderYMin()+im->borderYMax(), 
-               GL_LUMINANCE, pixelType, 
-	       data);
-        glPixelTransferf(GL_RED_SCALE, (float)1.0);
-	glPixelTransferf(GL_BLUE_SCALE, (float)1.0);
-	glPixelTransferf(GL_GREEN_SCALE, (float)1.0);
-        state->tex_image_width[SEM_DATA_TEX_ID] = im->width();
-        state->tex_image_height[SEM_DATA_TEX_ID] = im->height();
-        state->tex_image_offsetx[SEM_DATA_TEX_ID] = im->borderXMin();
-        state->tex_image_offsety[SEM_DATA_TEX_ID] = im->borderYMin();
-	if (report_gl_errors()) {
-	  printf(" Error loading sem texture.\n");
-	}
-    } else {
-      fprintf(stderr, "Error, sem image size exceeds limit\n");
-    }
-}
-
-void nmg_Graphics_Implementation::clearSEMDataTexture()
-{
-  // XXX if you know a way to do this without allocating 4 MB of memory 
-  // please replace this with that method
-  int sem_tex_size = 4*state->tex_installed_width[SEM_DATA_TEX_ID] *
-                       state->tex_installed_height[SEM_DATA_TEX_ID];
-  GLubyte *sem_data = new GLubyte [sem_tex_size];
-  int i,j,k=0;
-  GLubyte value, alpha;
-  for (i = 0; i < state->tex_installed_width[SEM_DATA_TEX_ID]; i++){
-    for (j = 0; j < state->tex_installed_height[SEM_DATA_TEX_ID]; j++){
-      if (state->tex_blend_func[SEM_DATA_TEX_ID] == GL_BLEND) {
-         value = 0;//20*((i/30+j/30)%2);
-         alpha = 255;
-      } else if (state->tex_blend_func[SEM_DATA_TEX_ID] == GL_MODULATE) {
-         value = 255;//200 + 55*((i/30+j/30)%2);
-         alpha = 255;//200 + 55*((i/60+j/60)%2);
-      } else if (state->tex_blend_func[SEM_DATA_TEX_ID] == GL_DECAL) {
-         value = 0;
-         alpha = 0;
-      }
-      sem_data[4*k] = value;
-      sem_data[4*k+1] = value;
-      sem_data[4*k+2] = value;
-      sem_data[4*k+3] = alpha;
-      k++;
-    }
-  }
-
-  glBindTexture(GL_TEXTURE_2D, state->tex_ids[SEM_DATA_TEX_ID]);
-
-#ifdef sgi
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-        state->tex_installed_width[SEM_DATA_TEX_ID],
-        state->tex_installed_height[SEM_DATA_TEX_ID],
-        0, GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
-#else
-  // WIN_32 openGL does funky stuff at the texture border if you try to use
-  // an RGBA texture
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-        state->tex_installed_width[SEM_DATA_TEX_ID],
-        state->tex_installed_height[SEM_DATA_TEX_ID],
-        0, GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
-#endif
-  delete [] sem_data;
-
-  if (state->tex_blend_func[SEM_DATA_TEX_ID] == GL_BLEND) {
-    float bord_col[4] = {0.0, 0.0, 0.0, 1.0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
-  } else if (state->tex_blend_func[SEM_DATA_TEX_ID] == GL_MODULATE) {
-    float bord_col[4] = {1.0, 1.0, 1.0, 1.0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
-  } else {
-    float bord_col[4] = {0.0, 0.0, 0.0, 0.0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
-  }
-
-  if (report_gl_errors()) {
-    fprintf(stderr, "Error clearing sem texture\n");
-  }
+	state->videoTexture.setImage(im);
+	state->videoTexture.doFastUpdates(true);
 }
 
 void nmg_Graphics_Implementation::updateTexture(int which_texture,
@@ -2077,11 +1410,14 @@ void nmg_Graphics_Implementation::updateTexture(int which_texture,
        int start_x, int start_y,
        int /*end_x*/, int /*end_y*/)
 {
-    if (which_texture == SEM_DATA){
+    switch(which_texture) {
+	case VIDEO:
        loadRawDataTexture(which_texture, image_name, start_x, start_y);
-    } else {
+	   break;
+    default:
        printf("nmg_Graphics_Implementation::updateTexture - don't know this"
 		" texture id: %d", which_texture);
+	   break;
     }
 }
 
@@ -2091,16 +1427,16 @@ void nmg_Graphics_Implementation::setTextureTransform(double *xform){
     printf("got TextureTransform\n");
     printf("was: ");
     for (i = 0; i < 16; i++)
-        printf("%g ", state->texture_transform[i]);
+        printf("%g ", state->surfaceModeTextureTransform[i]);
     printf("\n");
 */
 
     for (i = 0; i < 16; i++)
-	state->texture_transform[i] = xform[i];
+	state->surfaceModeTextureTransform[i] = xform[i];
 /*
     printf("new: ");
     for (i = 0; i < 16; i++)
-        printf("%g ", state->texture_transform[i]);
+        printf("%g ", state->surfaceModeTextureTransform[i]);
     printf("\n");
 */
 }
@@ -2122,7 +1458,7 @@ void nmg_Graphics_Implementation::setRulergridColor (int r, int g, int b) {
   // if they've specified a ruler image, keep that instead of replacing
   // it with the default set of orthogonal lines
   if (state->rulerPPM)
-    makeAndInstallRulerImage(state->rulerPPM);
+    state->rulergridTexture.setImage(state->rulerPPM);
   else {
     makeRulerImage(state);
     buildRulergridTexture(state);
@@ -2148,13 +1484,13 @@ void nmg_Graphics_Implementation::setRulergridOpacity (float alpha) {
   // if they've specified a ruler image, keep that instead of replacing
   // it with the default set of orthogonal lines
   if (state->rulerPPM)
-    makeAndInstallRulerImage(state->rulerPPM);
+    state->rulergridTexture.setImage(state->rulerPPM);
   else {
     makeRulerImage(state);
     buildRulergridTexture(state);
   }
-  if (state->realign_texture_name[0]) {
-    createRealignTextures(state->realign_texture_name);
+  if (state->colormap_texture_name[0]) {
+    createColormapTexture(state->colormap_texture_name);
   }
 }
 
@@ -2172,7 +1508,7 @@ void nmg_Graphics_Implementation::setRulergridWidths (float x, float y) {
   // if they've specified a ruler image, keep that instead of replacing
   // it with the default set of orthogonal lines
   if (state->rulerPPM)
-    makeAndInstallRulerImage(state->rulerPPM);
+    state->rulergridTexture.setImage(state->rulerPPM);
   else {
     makeRulerImage(state);
     buildRulergridTexture(state);
@@ -2230,69 +1566,56 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
     case NO_TEXTURES:
 //      fprintf(stderr, "nmg_Graphics_Implementation:  no textures.\n");
       state->texture_mode = GL_FALSE;
+	  World.Do(&URender::SetProjTextureAll, NULL);
+	  state->currentProjectiveTexture = NULL;
       break;
     case CONTOUR:
-// This mode is possible if we can reimplement contour texture stuff
-// not using glXXXPointerEXT() and glDrawArraysEXT()
-//#ifndef _WIN32
-        //fprintf(stderr, "nmg_Graphics_Implementation:  entering CONTOUR mode.\n");
       state->texture_mode = GL_TEXTURE_1D;
-/*#else
-      fprintf(stderr, "nmg_Graphics_Implementation: " 
-		"CONTOUR mode not available in win32\n");
-      state->texture_mode = GL_FALSE;
-#endif
-*/
-      break;
-    case BUMPMAP:
-//        fprintf(stderr,
-//          "nmg_Graphics_Implementation: entering BUMPMAP mode.\n");
-      state->texture_mode = GL_TEXTURE_2D;
-      break;
-    case HATCHMAP:
-//        fprintf(stderr,
-//          "nmg_Graphics_Implementation: entering HATCHMAP mode.\n");
-      state->texture_mode = GL_TEXTURE_2D;
-      break;
-    case PATTERNMAP:
-//        fprintf(stderr,
-//  	"nmg_Graphics_Implementation: entering PATTERNMAP mode.\n");
-      state->texture_mode = GL_TEXTURE_2D;
       break;
     case RULERGRID:
 //        fprintf(stderr,"nmg_Graphics_Implementation: entering RULERGRID mode.\n");
-      state->texture_mode = GL_TEXTURE_2D;
-      break;
+		state->texture_mode = GL_TEXTURE_2D;
+		World.Do(&URender::SetProjTextureAll, &(state->rulergridTexture));
+		state->currentProjectiveTexture = &(state->rulergridTexture);
+		break;
     case ALPHA:
 #ifndef _WIN32
 //        fprintf(stderr, "nmg_Graphics_Implementation:  entering ALPHA mode.\n");
-      state->texture_mode = GL_TEXTURE_3D_EXT;
+		state->texture_mode = GL_TEXTURE_3D_EXT;
 #else
-      fprintf(stderr, "nmg_Graphics_Implementation:"
-		" ALPHA mode not available under WIN32\n");
-      state->texture_mode = GL_FALSE;
+		fprintf(stderr, "nmg_Graphics_Implementation:"
+			" ALPHA mode not available under WIN32\n");
+		state->texture_mode = GL_FALSE;
 #endif
       break;
     case COLORMAP:
 //    fprintf(stderr, "nmg_Graphics_Implementation: entering COLORMAP mode.\n");
-      state->texture_mode = GL_TEXTURE_2D;
-      break;
-    case SEM_DATA:
+		state->texture_mode = GL_TEXTURE_2D;
+		World.Do(&URender::SetProjTextureAll, &(state->colormapTexture));
+		state->currentProjectiveTexture = &(state->colormapTexture);
+		break;
+    case VIDEO:
 //    fprintf(stderr, "nmg_Graphics_Implementation: entering SEM_DATA mode.\n");
-      state->texture_mode = GL_TEXTURE_2D;
-      break;
+		state->texture_mode = GL_TEXTURE_2D;
+		World.Do(&URender::SetProjTextureAll, &(state->videoTexture));
+		state->currentProjectiveTexture = &(state->videoTexture);
+		break;
     case REMOTE_DATA:
 //fprintf(stderr, "nmg_Graphics_Implementation:  entering REMOTE_DATA mode.\n");
-      state->texture_mode = GL_TEXTURE_2D;
-      break;
+		state->texture_mode = GL_TEXTURE_2D;
+		World.Do(&URender::SetProjTextureAll, &(state->remoteDataTexture));
+		state->currentProjectiveTexture = &(state->remoteDataTexture);
+		break;
     case VISUALIZATION:
         state->texture_mode = GL_TEXTURE_2D;
+		World.Do(&URender::SetProjTextureAll, &(state->visualizationTexture));
+		state->currentProjectiveTexture = &(state->visualizationTexture);
         break;
     default:
-      fprintf(stderr, "nmg_Graphics_Implementation::setTextureMode:  "
-                      "Unknown texture mode %d.\n", m);
-      state->texture_mode = GL_FALSE;
-      break;
+		fprintf(stderr, "nmg_Graphics_Implementation::setTextureMode:  "
+					  "Unknown texture mode %d.\n", m);
+		state->texture_mode = GL_FALSE;
+		break;
   }
   switch (xm) {
     case RULERGRID_COORD:
@@ -2305,26 +1628,6 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
       break;
 	case MODEL_REGISTRATION_COORD:
 //    fprintf(stderr, "nmg_Graphics_Implementation: MODEL_REGISTRATION_COORD mode\n");
-      break;
-    case MANUAL_REALIGN_COORD:
-      //fprintf(stderr, 
-	//"nmg_Graphics_Implementation: MANUAL_REALIGN_COORD mode\n");
-      if (d_textureTransformMode != MANUAL_REALIGN_COORD) {
-	state->translate_textures  = 0;
-        state->scale_textures      = 0;
-        state->shear_textures      = 0;
-        state->rotate_textures     = 0;
-
-        state->shear_tex_x = 0.0;
-        state->shear_tex_y = 0.0;
-        state->tex_coord_center_x = 0.0;
-        state->tex_coord_center_y = 0.0;
-        state->scale_tex_x = 2500.0;
-        state->scale_tex_y = 2500.0;
-        state->tex_theta_cumulative = 0.0;
-        state->translate_tex_x = 0.0;
-        state->translate_tex_y = 0.0;
-      }
       break;
     default:
       fprintf(stderr, "nmg_Graphics_Implementation::setTextureMode:  "
@@ -3607,37 +2910,38 @@ int nmg_Graphics_Implementation::handle_positionSphere
 
 
 //
-// Realign Textures Handlers
+// Colormap Texture Handlers
 //
 
 // static
-int nmg_Graphics_Implementation::handle_createRealignTextures (void *userdata,
+int nmg_Graphics_Implementation::handle_createColormapTexture (void *userdata,
 						       vrpn_HANDLERPARAM p) {
 
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  it->createRealignTextures( p.buffer );
+  it->createColormapTexture( p.buffer );
   return 0;
 }
 
 // static
-int nmg_Graphics_Implementation::handle_setRealignTextureSliderRange
+int nmg_Graphics_Implementation::handle_setColormapTextureSliderRange
 ( void *userdata, vrpn_HANDLERPARAM p) {
   float data_min,data_max,color_min, color_max;
   
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  CHECKF(it->decode_setRealignTextureSliderRange(p.buffer, &data_min,&data_max,&color_min, &color_max), "handle_setRealignTextureSliderRange");
-  it->setRealignTextureSliderRange( data_min,data_max,color_min, color_max );
+  CHECKF(it->decode_setColormapTextureSliderRange(p.buffer, &data_min,&data_max,&color_min, &color_max), 
+	  "handle_setColormapTextureSliderRange");
+  it->setColormapTextureSliderRange( data_min,data_max,color_min, color_max );
   return 0;
 }
 
 // static
-int nmg_Graphics_Implementation::handle_setRealignTexturesConversionMap
+int nmg_Graphics_Implementation::handle_setColormapTextureConversionMap
 ( void *userdata, vrpn_HANDLERPARAM p) {
   
   char *map = new char[100], *mapdir = new char[100];
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  CHECKF(it->decode_two_char_arrays(p.buffer, &map, &mapdir), "handle_setRealignTexturesConversionMap");
-  it->setRealignTexturesConversionMap( map, mapdir );
+  CHECKF(it->decode_two_char_arrays(p.buffer, &map, &mapdir), "handle_setColormapTextureConversionMap");
+  it->setColormapTextureConversionMap( map, mapdir );
 
   if (map) {
     delete [] map;
@@ -3645,87 +2949,6 @@ int nmg_Graphics_Implementation::handle_setRealignTexturesConversionMap
   if (mapdir) {
     delete [] mapdir;
   }
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_computeRealignPlane (void *userdata,
-						     vrpn_HANDLERPARAM p) {
-
-  char *name = new char[100], *newname = new char[100];
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  CHECKF(it->decode_two_char_arrays(p.buffer, &name, &newname), "handle_computeRealignPlane");
-  it->computeRealignPlane( name, newname );
-
-  if (name) {
-    delete [] name;
-  }
-  if (newname) {
-    delete [] newname;
-  }
-  return 0;
-}
-
-/*
-// static
-int nmg_Graphics_Implementation::handle_enableRealignTextures (void *userdata,
-						       vrpn_HANDLERPARAM p) {
-  int on;
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  CHECKF(it->decode_enableRealignTextures(p.buffer, &on), "handle_enableRealignTextures");
-  it->enableRealignTextures( on );
-  return 0;
-}
-*/
-
-// static
-int nmg_Graphics_Implementation::handle_translateTextures (void *userdata,
-						   vrpn_HANDLERPARAM p) {
-  
-  float dx, dy;
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  it->decode_dx_dy( p.buffer, &dx, &dy );
-  it->translateTextures( 1, dx, dy );
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_scaleTextures (void *userdata,
-					       vrpn_HANDLERPARAM p) {
-  float dx, dy;
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  it->decode_dx_dy( p.buffer, &dx, &dy );
-  it->scaleTextures( 1, dx, dy );
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_shearTextures (void *userdata,
-					       vrpn_HANDLERPARAM p) {
-  float dx, dy;
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  it->decode_dx_dy( p.buffer, &dx, &dy );
-  it->shearTextures( 1, dx, dy );
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_rotateTextures (void *userdata,
-						vrpn_HANDLERPARAM p) {
-  float theta;
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  it->decode_rotateTextures( p.buffer, &theta );
-  it->rotateTextures( 1, theta );
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_setTextureCenter (void *userdata,
-						  vrpn_HANDLERPARAM p) {
-  float dx, dy;
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  it->decode_dx_dy( p.buffer, &dx, &dy );
-  it->setTextureCenter( dx, dy );
   return 0;
 }
 

@@ -30,5 +30,6 @@ void getViewportSize (nmg_State * state, int * width, int * height);
 
 void setFilled(nmg_State * state);
 
+void computeModelRegistrationTextureTransform(nmg_State * state, double *matrix);
 
 #endif	/* OPENGL_H */

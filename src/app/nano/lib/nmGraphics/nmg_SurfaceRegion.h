@@ -188,8 +188,10 @@ private:
     void RestoreBuildState(nmg_State * state);
     void SaveRenderState(nmg_State * state);
     void RestoreRenderState(nmg_State * state);
+	void setTextureTransform(nmg_State * state, nmb_Dataset *data);
     void setTexture(nmg_State * state, nmb_Dataset *data);
-    void cleanUp();
+	void setTextureOld(nmg_State * state, nmb_Dataset *data);
+    void cleanUp(nmg_State * state);
 
     /// Build display lists!
     int build_list_set (nmb_Dataset *data,

@@ -83,25 +83,16 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     // arguments in range [0..255]
     virtual void setSurfaceColor (const int [3]);
 
-    // Realigning Textures:
-    virtual void createRealignTextures( const char * );
-    virtual void setRealignTextureSliderRange (float, float, float, float);
-    virtual void setRealignTexturesConversionMap( const char *, const char * );
-    virtual void computeRealignPlane( const char *, const char * );
-
-//    virtual void enableRealignTextures (int on);
-    virtual void translateTextures ( int on, float dx, float dy );
-    virtual void scaleTextures ( int on, float dx, float dy );
-    virtual void shearTextures ( int on, float dx, float dy );
-    virtual void rotateTextures ( int on, float theta );
-    virtual void setTextureCenter( float dx, float dy );
+    // Colormap Texture:
+    virtual void createColormapTexture( const char * );
+    virtual void setColormapTextureSliderRange (float, float, float, float);
+    virtual void setColormapTextureConversionMap( const char *, const char * );
 
     virtual void updateTexture(int which, const char *image_name,
        int start_x, int start_y,
        int end_x, int end_y);
  
     // helper for updateTexture
-    virtual void clearSEMDataTexture();
     virtual void loadRawDataTexture(const int which, const char *image_name,
 	const int start_x, const int start_y);
 
@@ -207,8 +198,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
       // variable?
 
     virtual void initializeTextures (void);
-    virtual void makeAndInstallRulerImage(PPM *myPPM);
-	void makeAndInstallVizImage(PPM *myPPM);
+//    virtual void makeAndInstallRulerImage(PPM *myPPM);
+//	void makeAndInstallVizImage(PPM *myPPM);
 
     // initializes all texture objects
 
@@ -305,17 +296,10 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setCollabHandPos (void *, vrpn_HANDLERPARAM);
     static int handle_setCollabMode (void *, vrpn_HANDLERPARAM);
 
-  // realign texture handlers:
-  static int handle_createRealignTextures (void *, vrpn_HANDLERPARAM);
-  static int handle_setRealignTextureSliderRange (void *, vrpn_HANDLERPARAM);
-  static int handle_computeRealignPlane (void *, vrpn_HANDLERPARAM);
-//  static int handle_enableRealignTextures (void *, vrpn_HANDLERPARAM);
-  static int handle_translateTextures (void *, vrpn_HANDLERPARAM);
-  static int handle_scaleTextures (void *, vrpn_HANDLERPARAM);
-  static int handle_shearTextures (void *, vrpn_HANDLERPARAM);
-  static int handle_rotateTextures (void *, vrpn_HANDLERPARAM);
-  static int handle_setTextureCenter (void *, vrpn_HANDLERPARAM);
-  static int handle_setRealignTexturesConversionMap(void *,vrpn_HANDLERPARAM);
+  // colormap texture handlers:
+  static int handle_createColormapTexture (void *, vrpn_HANDLERPARAM);
+  static int handle_setColormapTextureSliderRange (void *, vrpn_HANDLERPARAM);
+  static int handle_setColormapTextureConversionMap(void *,vrpn_HANDLERPARAM);
 
   static int handle_updateTexture(void *, vrpn_HANDLERPARAM);
 //  static int handle_enableRegistration(void *, vrpn_HANDLERPARAM);

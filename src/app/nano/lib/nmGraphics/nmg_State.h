@@ -19,6 +19,7 @@
 
 #include <nmb_ColorMap.h>
 #include "nmg_Funclist.h"
+#include "URProjectiveTexture.h"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 // bogus double to float conversion warning.
@@ -46,19 +47,9 @@ extern  int     spm_graphics_verbosity;
 #define POP_ATTRIB() glPopAttrib()
 
 // Texture handling defines
-#define N_TEX 8
+#define N_TEX 2
 #define CONTOUR_1D_TEX_ID       0
 #define ALPHA_3D_TEX_ID         1
-#define RULERGRID_TEX_ID        2
-#define GENETIC_TEX_ID          3
-#define COLORMAP_TEX_ID         4  // used for realign
-#define SEM_DATA_TEX_ID         5
-#define REMOTE_DATA_TEX_ID      6
-#define VISUALIZATION_TEX_ID	7
-
-#define NMG_DEFAULT_IMAGE_WIDTH (512)
-#define NMG_DEFAULT_IMAGE_HEIGHT (512)
-
 
 // Visualization defines
 #define DISABLE_MASK 0
@@ -85,6 +76,8 @@ class nmg_State {
 public:
     nmg_State();
     ~nmg_State() {};
+	GLuint alphaTextureID;
+	int alphaTextureBlendFunc;
     float alpha_r;  ///< texture blend color
     float alpha_g;  ///< texture blend color
     float alpha_b;  ///< texture blend color
@@ -118,6 +111,8 @@ public:
     int config_trueTip;
     int config_enableUber;
 
+	GLuint contourTextureID;
+	int contourTextureBlendFunc;
     int contour_r;
     int contour_g;
     int contour_b;
@@ -149,13 +144,25 @@ public:
     int draw_collab_hand;
     vrpn_int32 collabMode;
 
-// Realigning Textures:
-    nmb_ColorMap * realign_textures_curColorMap;
-    float realign_textures_data_min;
-    float realign_textures_data_max;
-    float realign_textures_color_min;
-    float realign_textures_color_max;
-    char realign_texture_name[128];
+// Colormap Textures:
+    nmb_ColorMap * colormap_texture_curColorMap;
+    float colormap_texture_data_min;
+    float colormap_texture_data_max;
+    float colormap_texture_color_min;
+    float colormap_texture_color_max;
+    char colormap_texture_name[128];
+	URProjectiveTexture *currentProjectiveTexture;
+	URProjectiveTexture colormapTexture;
+	URProjectiveTexture rulergridTexture;
+	URProjectiveTexture videoTexture;
+	URProjectiveTexture remoteDataTexture;	
+	URProjectiveTexture visualizationTexture;
+/* replaced:
+	RULERGRID_TEX_ID
+	SEM_DATA_TEX_ID
+	REMOTE_DATA_TEX_ID
+	VISUALIZATION_TEX_ID
+	*/
 
     int translate_textures;
     int scale_textures;
@@ -183,7 +190,8 @@ public:
     float rotate_tex_theta;
 
 // Registration:
-    double texture_transform[16];
+    double surfaceModeTextureTransform[16];
+	double modelModeTextureTransform[16];
   ///< object space along x or y from 0 to 1000 (units are nM) 
   ///< goes from 0 to 1 in u or v texture coordinate
 
@@ -242,30 +250,6 @@ public:
     Position_list * positionList;
     Position_list * positionListL;  ///< for the left side of the sweep marker
     Position_list * positionListR;  ///< for the right side of the sweep marker
-
-    GLuint tex_ids [N_TEX];
-//    GLubyte * sem_data;
-//    float * realign_data;
-
-// These values are only used for
-// the 2D textures but we use the ID values above to index them
-// (RULERGRID_TEX_ID, GENETIC_TEX_ID, COLORMAP_TEX_ID, SEM_DATA_TEX_ID, 
-//  REMOTE_DATA_TEX_ID)
-    /// image size refers to a sub region of the texture passed to openGL that
-    /// actually contains image data
-    int tex_image_width[N_TEX];
-    int tex_image_height[N_TEX];
-    /// installed size refers to size of texture passed to openGL
-    int tex_installed_width[N_TEX];
-    int tex_installed_height[N_TEX];
-    /// position in installed texture array of first pixel from image array
-    int tex_image_offsetx[N_TEX];
-    int tex_image_offsety[N_TEX];
-
-    /// e.g. GL_MODULATE, GL_DECAL...
-    int tex_blend_func[N_TEX];
-
-    float tex_env_color[N_TEX][4];
 
     char alphaPlaneName [128];
     char colorPlaneName [128];

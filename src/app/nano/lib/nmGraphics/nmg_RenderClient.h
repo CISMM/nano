@@ -73,10 +73,6 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     virtual void setOpacitySliderRange (float, float);
     virtual void setContourColor (int, int, int);
     virtual void setContourWidth (float);
-    virtual void translateTextures (int, float, float);
-    virtual void scaleTextures (int, float, float);
-    virtual void shearTextures (int, float, float);
-    virtual void rotateTextures (int, float);
     virtual void setTextureTransform (double *);
     virtual void setRulergridAngle (float);
     virtual void setRulergridOffset (float, float);

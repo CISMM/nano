@@ -147,17 +147,10 @@ void nmg_Graphics_Null::setPatternMapName (const char * ) {}
 void nmg_Graphics_Null::enableGeneticTextures (int) {}
 void nmg_Graphics_Null::sendGeneticTexturesData (int, char **) {}
 
-// Realigning Textures:
-void nmg_Graphics_Null::createRealignTextures( const char * ) {}
-void nmg_Graphics_Null::setRealignTextureSliderRange (float, float) {}
-void nmg_Graphics_Null::setRealignTexturesConversionMap( char *, char * ) {}
-void nmg_Graphics_Null::computeRealignPlane( char *, char * ) {}
-void nmg_Graphics_Null::enableRealignTextures (int on) {}
-void nmg_Graphics_Null::translateTextures ( int on, float dx, float dy ) {}
-void nmg_Graphics_Null::scaleTextures ( int on, float dx, float dy ) {}
-void nmg_Graphics_Null::shearTextures ( int on, float dx, float dy ) {}
-void nmg_Graphics_Null::rotateTextures ( int on, float theta ) {}
-void nmg_Graphics_Null::setTextureCenter( float dx, float dy ) {}
+// Colormap Textures:
+void nmg_Graphics_Null::createColormapTexture( const char * ) {}
+void nmg_Graphics_Null::setColormapTextureSliderRange (float, float) {}
+void nmg_Graphics_Null::setColormapTextureConversionMap( char *, char * ) {}
 
 void nmg_Graphics_Null::setTextureTransform(double *xform) {}
 

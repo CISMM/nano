@@ -156,13 +156,29 @@ int draw_world (int, void * data)
     
     v_gl_set_context_to_vlib_window(); 
     // Draw Ubergraphics
+	if (state->texture_transform_mode == nmg_Graphics::MODEL_REGISTRATION_COORD) {
+		// we need to compute this transform for every rendering loop because
+		// there is no callback for the action that modifies the state on which
+		// it depends (the position of a special texture-positioning 
+		// Ubergraphics object)
+		computeModelRegistrationTextureTransform(state, 
+			state->modelModeTextureTransform);
+		World.Do(&URender::SetTextureTransformAll, 
+			(void *)state->modelModeTextureTransform);
+	} else {
+		// otherwise we use the transformation set by the registration
+		// code
+		World.Do(&URender::SetTextureTransformAll, 
+			(void *)state->surfaceModeTextureTransform);
+	}
+	// we need to set this each rendering loop because otherwise when a
+	// new ubergraphics object is added then it won't get the current
+	// texture state until that state changes
+	World.Do(&URender::SetProjTextureAll, state->currentProjectiveTexture);
 
-    // This is now called in renderSurface so that projective textures can be
-    // displayed on the imported objects
-
-//    if (state->config_enableUber) {
-//        World.Do(&URender::Render);
-//    }
+    if (state->config_enableUber) {
+        World.Do(&URender::Render);
+    }
 
     TIMERVERBOSE(3, mytimer, "begin draw_world");
     
@@ -330,7 +346,7 @@ int draw_world (int, void * data)
     VERBOSECHECK(4);
     VERBOSE(4,"    Setting measurement materials");
     set_gl_measure_materials(state);
-    
+
     /* Draw the pulse indicators */
     glColor3f(1.0f, 0.3f, 0.3f);
     decoration->traverseVisiblePulses(spm_render_mark, NULL);
@@ -650,3 +666,48 @@ void setFilled(nmg_State * state)
     }
 }
 
+void computeModelRegistrationTextureTransform(nmg_State * state, double *matrix)
+{
+	UTree *node;
+	node = World.TGetNodeByName("projtextobj.ptx");
+	if (node != NULL) {
+
+		nmb_TransformMatrix44 transform;
+
+		URender &obj = node->TGetContents();
+
+		// here, we use the associated object's transform.  However, we must invert everything
+		// for the texture's transform...
+
+		q_vec_type v;
+		q_type q;
+		qogl_matrix_type mat;
+
+		q_vec_copy(v, obj.GetLocalXform().GetTrans());
+		q_vec_scale(v, -1.0, v);
+
+		q_copy(q, obj.GetLocalXform().GetRot());
+		q_invert(q, q);
+
+		if (state->texture_displayed == nmg_Graphics::VIDEO) {
+			// center of textue in texture coordinates
+			transform.translate(0.5, 0.5, 0.0);
+
+			// should be 1 / the size of the scan range...hard coded to assume a 5000 nm range for now
+			// should change this to a variable
+			transform.scale(0.0002, 0.0002, 1.0);
+		} 
+		else {
+			transform.translate(state->tex_coord_center_x, state->tex_coord_center_y, 0.0);
+			double scale = state->surfaceModeTextureTransform[0];
+			transform.scale(scale, scale, scale);
+		}
+
+		q_to_ogl_matrix(mat, q);
+		transform.compose(mat);
+
+		transform.translate(v[0], v[1], v[2]);
+		
+		transform.getMatrix(matrix);
+	}
+}

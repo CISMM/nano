@@ -1,4 +1,52 @@
-2003-08-05 Woojin Seok <seok@cs.unc.edu>
+2002-09-04  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_Graphics.C : removed obsolete realign textures code
+	and pixelflow textures
+
+	* nmg_GraphicsImpl.C : removed obsolete realign textures and
+	pixelflow textures; added URProjectiveTexture objects for
+	colormap, rulergrid, sem/tem, remote data, and visualization textures;
+	(initializeTextures): simplified
+	(createColormapTexture): "
+	removed a bunch of texture code in general
+
+	* nmg_GraphicsNull.C : removed obsolete texture code
+	* nmg_GraphicsRemote.C : "
+	* nmg_GraphicsTimer.C : "
+	* nmg_RenderClient.C : "
+	* nmg_ImageDisplayProjectiveTexture.C : rename "Realign"->"Colormap"
+
+	* nmg_State.Ch : texture_transform--> surfaceModeTextureTransform
+	Added URProjectiveTexture members for the various 2D textures
+	added modelModeTextureTransform computed using David Borland's manual
+	alignment feature
+	Removed a bunch of obsolete state replaced by URProjectiveTexture
+
+	* nmg_SurfaceRegion.C (setTextureTransform): new function
+	(setTexture): made much simpler - removed a lot of ugly code
+	(cleanUp): "
+	(renderRegion): took out call to render the ubergraphics world
+	from this function and moved it back to its original location 
+	in openGL.c
+
+	* openGL.c (draw_world): restored call to draw UGraphics world
+	added code to set texture transform for UGraphics objects that
+	want to know what transform is being used for the surface
+	- the calculation of the transform from the projective texture object
+	in UGraphics is also done here using the function:
+	(computeModelRegistrationTextureTransform): new function
+
+	* surface_strip_create.c : removed obsolete realign textures code
+	for setting texture coordinates per vertex
+	
+	* surface_util.c (buildRemoteRenderedTexture): replaced code with 
+		URProjectiveTexture function
+	(buildVisualizationTexture): "
+	(buildRulergridTexture): "
+
+	* nmGraphics.dsp : added surface_util.h
+
+2002-08-05 Woojin Seok <seok@cs.unc.edu>
         * globjects.c : added "cross section" into MODE_NAMES array.
 
 2002-07-25 David Borland <borland@cs.unc.edu>

@@ -165,6 +165,58 @@ forceRebuildCondition()
     if (d_regionalMask) d_regionalMask->forceUpdate();
 }
 
+void nmg_SurfaceRegion::
+setTextureTransform(nmg_State * state, nmb_Dataset *data) {
+
+	glPushAttrib(GL_TRANSFORM_BIT);
+	glMatrixMode(GL_TEXTURE);
+    double surface_z_scale = 1.0;
+    if (data) {
+        BCPlane *heightPlane =
+            data->inputGrid->getPlaneByName(state->heightPlaneName);
+        if (heightPlane) surface_z_scale = heightPlane->scale();
+    }
+        
+    double theta = 0.0;
+
+	switch (d_currentState.textureTransformMode) {
+    case nmg_Graphics::RULERGRID_COORD:
+        // use values from the older rulergrid adjustment interface
+        glScalef(1.0/state->rulergrid_scale,1.0/state->rulergrid_scale,1.0);
+        // 1.0/SCALE
+        theta = asin(state->rulergrid_sin);
+        if (state->rulergrid_cos < 0)
+            theta = M_PI - theta;
+        glRotated(theta*180.0/M_PI, 0.0, 0.0, 1.0);
+          // -ROTATION
+        glTranslatef(-state->rulergrid_xoffset, -state->rulergrid_yoffset, 0.0);
+        // -TRANS.
+        break;
+    case nmg_Graphics::VIZTEX_COORD:
+        glScalef(1.0/state->viztex_scale,1.0/state->viztex_scale,1.0);
+        // 1.0/SCALE
+        break;
+    case nmg_Graphics::PER_QUAD_COORD:
+        break;
+    case nmg_Graphics::SURFACE_REGISTRATION_COORD:
+		glMultMatrixd(state->surfaceModeTextureTransform);
+		if (surface_z_scale != 0) {
+			glScaled(1.0, 1.0, 1.0/surface_z_scale);
+		}
+        break;
+    case nmg_Graphics::MODEL_REGISTRATION_COORD:
+		glMultMatrixd(state->modelModeTextureTransform);
+		if (surface_z_scale != 0) {
+			glScaled(1.0, 1.0, 1.0/surface_z_scale);
+		}
+		break;
+    default:
+        fprintf(stderr, "Error, unknown texture coordinate mode\n");
+        break;
+    }
+	glPopAttrib();
+	report_gl_errors();
+}
 
 /**
  * Access: Protected, Virtual
@@ -173,355 +225,43 @@ forceRebuildCondition()
 void nmg_SurfaceRegion::
 setTexture(nmg_State * state, nmb_Dataset *data)
 {
-    double surface_z_scale = 1.0;
-    if (data) {
-        BCPlane *heightPlane =
-            data->inputGrid->getPlaneByName(state->heightPlaneName);
-        if (heightPlane) surface_z_scale = heightPlane->scale();
-    }
-    
-    switch (d_currentState.textureDisplayed) {
-    case nmg_Graphics::NO_TEXTURES:
-        // nothing to do here
+	switch(d_currentState.textureDisplayed) {
+
+	case nmg_Graphics::COLORMAP:
+    case nmg_Graphics::RULERGRID:
+    case nmg_Graphics::VIDEO:
+    case nmg_Graphics::REMOTE_DATA:
+    case nmg_Graphics::VISUALIZATION:
+		state->currentProjectiveTexture->enable();
         break;
-    case nmg_Graphics::CONTOUR:
-        glBindTexture(GL_TEXTURE_1D, state->tex_ids[CONTOUR_1D_TEX_ID]);
+	case nmg_Graphics::CONTOUR:
+		glEnable(GL_TEXTURE_1D);
+		glDisable(GL_TEXTURE_2D);
+#ifndef _WIN32
+		glDisable(GL_TEXTURE_3D_EXT);
+#endif
+        glBindTexture(GL_TEXTURE_1D, state->contourTextureID);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  state->tex_blend_func[CONTOUR_1D_TEX_ID]);
+                  state->contourTextureBlendFunc);
         break;
     case nmg_Graphics::ALPHA:
-#if !(defined(__CYGWIN__) || defined(hpux) || defined(_WIN32))
-        glBindTexture(GL_TEXTURE_3D, state->tex_ids[ALPHA_3D_TEX_ID]);
+#ifndef _WIN32
+		glDisable(GL_TEXTURE_1D);
+		glDisable(GL_TEXTURE_2D);
+		glEnable(GL_TEXTURE_3D_EXT);
+        glBindTexture(GL_TEXTURE_3D, state->alphaTextureID);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  state->tex_blend_func[ALPHA_3D_TEX_ID]);
+                  state->alphaTextureBlendFunc);
 #endif
-    case nmg_Graphics::BUMPMAP:
-#ifdef FLOW
-        glBindTexture(GL_TEXTURE_2D, shader_tex_ids[BUMP_DATA_TEX_ID]);
-#endif
-        break;
-    case nmg_Graphics::HATCHMAP:
-#ifdef FLOW
-        glBindTexture(GL_TEXTURE_2D, shader_tex_ids[HATCH_DATA_TEX_ID]);
-#endif
-        break;
-    case nmg_Graphics::PATTERNMAP:
-#ifdef FLOW
-        glBindTexture(GL_TEXTURE_2D, shader_tex_ids[PATTERN_DATA_TEX_ID]);
-#endif
-        break;
-    case nmg_Graphics::RULERGRID:
-        glBindTexture(GL_TEXTURE_2D, state->tex_ids[RULERGRID_TEX_ID]);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  state->tex_blend_func[RULERGRID_TEX_ID]);
-        break;
-    case nmg_Graphics::COLORMAP:
-        glBindTexture(GL_TEXTURE_2D, state->tex_ids[COLORMAP_TEX_ID]);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  state->tex_blend_func[COLORMAP_TEX_ID]);
-        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR,
-                   state->tex_env_color[COLORMAP_TEX_ID]);
-        break;
-    case nmg_Graphics::SEM_DATA:
-        glBindTexture(GL_TEXTURE_2D, state->tex_ids[SEM_DATA_TEX_ID]);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  state->tex_blend_func[SEM_DATA_TEX_ID]);
-        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR,
-                   state->tex_env_color[SEM_DATA_TEX_ID]);
-        break;
-    case nmg_Graphics::REMOTE_DATA:
-        glBindTexture(GL_TEXTURE_2D, state->tex_ids[REMOTE_DATA_TEX_ID]);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  state->tex_blend_func[REMOTE_DATA_TEX_ID]);
-        break;
-    case nmg_Graphics::VISUALIZATION:
-        glBindTexture(GL_TEXTURE_2D, state->tex_ids[VISUALIZATION_TEX_ID]);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  state->tex_blend_func[VISUALIZATION_TEX_ID]);
-        break;
-    default:
-        fprintf(stderr, "Error, unknown texture set for display\n");
-        break;
-    }
-    
-#if !(defined(__CYGWIN__) || defined(_WIN32))
-	//#ifndef __CYGWIN__
-    if ((state->texture_mode == GL_TEXTURE_1D) ||
-        (state->texture_mode == GL_TEXTURE_3D_EXT)) {
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-    }
-#endif
-    
-    
-#ifdef PROJECTIVE_TEXTURE
-    
-    if (d_currentState.textureMode == GL_TEXTURE_2D) {
-        glPushAttrib(GL_TRANSFORM_BIT | GL_TEXTURE_BIT | GL_ENABLE_BIT);
-        glEnable(GL_TEXTURE_2D);
-        glEnable(GL_TEXTURE_GEN_S);
-        glEnable(GL_TEXTURE_GEN_T);
-        glEnable(GL_TEXTURE_GEN_R);
-        glEnable(GL_TEXTURE_GEN_Q);
-        
-        glMatrixMode(GL_TEXTURE);
-        glPushMatrix();
-//        glLoadIdentity();
-        
-        double theta = 0.0;
-        GLdouble texture_matrix[16];
-        double x_scale_factor = 1.0, y_scale_factor = 1.0;
-        double x_translate = 0.0, y_translate = 0.0;
-
-        switch (d_currentState.textureTransformMode) {
-        case nmg_Graphics::RULERGRID_COORD:
-            // use values from the older rulergrid adjustment interface
-            glScalef(1.0/state->rulergrid_scale,1.0/state->rulergrid_scale,1.0);
-            // 1.0/SCALE
-            theta = asin(state->rulergrid_sin);
-            if (state->rulergrid_cos < 0)
-                theta = M_PI - theta;
-            glRotated(theta*180.0/M_PI, 0.0, 0.0, 1.0);
-              // -ROTATION
-            glTranslatef(-state->rulergrid_xoffset, -state->rulergrid_yoffset, 0.0);
-            // -TRANS.
-            break;
-        case nmg_Graphics::VIZTEX_COORD:
-            glScalef(1.0/state->viztex_scale,1.0/state->viztex_scale,1.0);
-            // 1.0/SCALE
-            break;
-        case nmg_Graphics::MANUAL_REALIGN_COORD:
-            compute_texture_matrix(state->translate_tex_x, state->translate_tex_y,
-                                   state->tex_theta_cumulative, state->scale_tex_x,
-                                   state->scale_tex_y, state->shear_tex_x, state->shear_tex_y,
-                                   state->tex_coord_center_x, state->tex_coord_center_y,
-                                   texture_matrix);
-            glLoadMatrixd(texture_matrix);
-            break;
-        case nmg_Graphics::PER_QUAD_COORD:
-            break;
-        case nmg_Graphics::SURFACE_REGISTRATION_COORD:		// split REGISTRATION_COORD into SURFACE_ and MODEL_
-            glLoadIdentity();
-            // scale by actual texture image given divided by texture image
-            // used (i.e. the one actually in texture memory is a power of 2
-            // but the one we were given had some smaller size)
-            switch (state->texture_displayed) {
-            case nmg_Graphics::NO_TEXTURES:
-            case nmg_Graphics::BUMPMAP:
-            case nmg_Graphics::HATCHMAP:
-            case nmg_Graphics::PATTERNMAP:
-				// nothing to do here
-                break;
-            case nmg_Graphics::RULERGRID:
-                x_scale_factor = (double)state->tex_image_width[RULERGRID_TEX_ID]/
-                    (double)state->tex_installed_width[RULERGRID_TEX_ID];
-                y_scale_factor = (double)state->tex_image_height[RULERGRID_TEX_ID]/
-                    (double)state->tex_installed_height[RULERGRID_TEX_ID];
-                x_translate = (double)state->tex_image_offsetx[RULERGRID_TEX_ID]/
-                    (double)state->tex_installed_width[RULERGRID_TEX_ID];
-                y_translate = (double)state->tex_image_offsety[RULERGRID_TEX_ID]/
-                    (double)state->tex_installed_height[RULERGRID_TEX_ID];
-                break;
-            case nmg_Graphics::COLORMAP:
-                x_scale_factor = (double)state->tex_image_width[COLORMAP_TEX_ID]/
-                    (double)state->tex_installed_width[COLORMAP_TEX_ID];
-                y_scale_factor = (double)state->tex_image_height[COLORMAP_TEX_ID]/
-                    (double)state->tex_installed_height[COLORMAP_TEX_ID];
-                x_translate = (double)state->tex_image_offsetx[COLORMAP_TEX_ID]/
-                    (double)state->tex_installed_width[COLORMAP_TEX_ID];
-                y_translate = (double)state->tex_image_offsety[COLORMAP_TEX_ID]/
-                    (double)state->tex_installed_height[COLORMAP_TEX_ID];
-                break;
-            case nmg_Graphics::SEM_DATA:
-                x_scale_factor = (double)state->tex_image_width[SEM_DATA_TEX_ID]/
-                    (double)state->tex_installed_width[SEM_DATA_TEX_ID];
-                y_scale_factor = (double)state->tex_image_height[SEM_DATA_TEX_ID]/
-                    (double)state->tex_installed_height[SEM_DATA_TEX_ID];
-                x_translate = (double)state->tex_image_offsetx[SEM_DATA_TEX_ID]/
-                    (double)state->tex_installed_width[SEM_DATA_TEX_ID];
-                y_translate = (double)state->tex_image_offsety[SEM_DATA_TEX_ID]/
-                    (double)state->tex_installed_height[SEM_DATA_TEX_ID];
-                break;
-            case nmg_Graphics::REMOTE_DATA:
-                x_scale_factor = (double)state->tex_image_width[REMOTE_DATA_TEX_ID]/
-                    (double)state->tex_installed_width[REMOTE_DATA_TEX_ID];
-                y_scale_factor = (double)state->tex_image_height[REMOTE_DATA_TEX_ID]/
-                    (double)state->tex_installed_height[REMOTE_DATA_TEX_ID];
-                x_translate = (double)state->tex_image_offsetx[REMOTE_DATA_TEX_ID]/
-                    (double)state->tex_installed_width[REMOTE_DATA_TEX_ID];
-                y_translate = (double)state->tex_image_offsety[REMOTE_DATA_TEX_ID]/
-                    (double)state->tex_installed_height[REMOTE_DATA_TEX_ID];
-                break;
-            case nmg_Graphics::VISUALIZATION:
-                x_scale_factor = (double)state->tex_image_width[VISUALIZATION_TEX_ID]/
-                    (double)state->tex_installed_width[VISUALIZATION_TEX_ID];
-                y_scale_factor = (double)state->tex_image_height[VISUALIZATION_TEX_ID]/
-                    (double)state->tex_installed_height[VISUALIZATION_TEX_ID];
-                x_translate = (double)state->tex_image_offsetx[VISUALIZATION_TEX_ID]/
-                    (double)state->tex_installed_width[VISUALIZATION_TEX_ID];
-                y_translate = (double)state->tex_image_offsety[VISUALIZATION_TEX_ID]/
-                    (double)state->tex_installed_height[VISUALIZATION_TEX_ID];
-                break;
-            default:
-                fprintf(stderr, "Error, unknown texture set for display\n");
-                break;
-            }
-            // XXX the following two lines to compensate for the texture border
-            // does nearly the same thing as the code in 
-            // nmb_Image::getImageToTextureTransform() so we could
-            // replace all the above related calculations and 
-            // image-related state with an nmb_Image object per texture
-            // See code in ImageViewer::drawImageAsTexture() for example.
-            // (AAS, 8-10-01)
-
-			
-			glTranslated(x_translate, y_translate, 0.0);
-			glScaled(x_scale_factor, y_scale_factor, 1.0);
-
-			glMultMatrixd(state->texture_transform);
-			glScaled(1.0, 1.0, 1.0/surface_z_scale);
-
-            break;
-
-
-
-            //case nmg_Graphics::REMOTE_COORD;
-            //glLoadIdentity();
-        case nmg_Graphics::MODEL_REGISTRATION_COORD:
-            glLoadIdentity();
-			switch (state->texture_displayed) {
-            case nmg_Graphics::NO_TEXTURES:
-            case nmg_Graphics::BUMPMAP:
-            case nmg_Graphics::HATCHMAP:
-            case nmg_Graphics::PATTERNMAP:
-				// nothing to do here
-                break;
-            case nmg_Graphics::RULERGRID:
-                x_scale_factor = (double)state->tex_image_width[RULERGRID_TEX_ID]/
-                    (double)state->tex_installed_width[RULERGRID_TEX_ID];
-                y_scale_factor = (double)state->tex_image_height[RULERGRID_TEX_ID]/
-                    (double)state->tex_installed_height[RULERGRID_TEX_ID];
-                x_translate = (double)state->tex_image_offsetx[RULERGRID_TEX_ID]/
-                    (double)state->tex_installed_width[RULERGRID_TEX_ID];
-                y_translate = (double)state->tex_image_offsety[RULERGRID_TEX_ID]/
-                    (double)state->tex_installed_height[RULERGRID_TEX_ID];
-                break;
-            case nmg_Graphics::COLORMAP:
-                x_scale_factor = (double)state->tex_image_width[COLORMAP_TEX_ID]/
-                    (double)state->tex_installed_width[COLORMAP_TEX_ID];
-                y_scale_factor = (double)state->tex_image_height[COLORMAP_TEX_ID]/
-                    (double)state->tex_installed_height[COLORMAP_TEX_ID];
-                x_translate = (double)state->tex_image_offsetx[COLORMAP_TEX_ID]/
-                    (double)state->tex_installed_width[COLORMAP_TEX_ID];
-                y_translate = (double)state->tex_image_offsety[COLORMAP_TEX_ID]/
-                    (double)state->tex_installed_height[COLORMAP_TEX_ID];
-                break;
-            case nmg_Graphics::SEM_DATA:
-                x_scale_factor = (double)state->tex_image_width[SEM_DATA_TEX_ID]/
-                    (double)state->tex_installed_width[SEM_DATA_TEX_ID];
-                y_scale_factor = (double)state->tex_image_height[SEM_DATA_TEX_ID]/
-                    (double)state->tex_installed_height[SEM_DATA_TEX_ID];
-                x_translate = (double)state->tex_image_offsetx[SEM_DATA_TEX_ID]/
-                    (double)state->tex_installed_width[SEM_DATA_TEX_ID];
-                y_translate = (double)state->tex_image_offsety[SEM_DATA_TEX_ID]/
-                    (double)state->tex_installed_height[SEM_DATA_TEX_ID];
-                break;
-            case nmg_Graphics::REMOTE_DATA:
-                x_scale_factor = (double)state->tex_image_width[REMOTE_DATA_TEX_ID]/
-                    (double)state->tex_installed_width[REMOTE_DATA_TEX_ID];
-                y_scale_factor = (double)state->tex_image_height[REMOTE_DATA_TEX_ID]/
-                    (double)state->tex_installed_height[REMOTE_DATA_TEX_ID];
-                x_translate = (double)state->tex_image_offsetx[REMOTE_DATA_TEX_ID]/
-                    (double)state->tex_installed_width[REMOTE_DATA_TEX_ID];
-                y_translate = (double)state->tex_image_offsety[REMOTE_DATA_TEX_ID]/
-                    (double)state->tex_installed_height[REMOTE_DATA_TEX_ID];
-                break;
-            case nmg_Graphics::VISUALIZATION:
-                x_scale_factor = (double)state->tex_image_width[VISUALIZATION_TEX_ID]/
-                    (double)state->tex_installed_width[VISUALIZATION_TEX_ID];
-                y_scale_factor = (double)state->tex_image_height[VISUALIZATION_TEX_ID]/
-                    (double)state->tex_installed_height[VISUALIZATION_TEX_ID];
-                x_translate = (double)state->tex_image_offsetx[VISUALIZATION_TEX_ID]/
-                    (double)state->tex_installed_width[VISUALIZATION_TEX_ID];
-                y_translate = (double)state->tex_image_offsety[VISUALIZATION_TEX_ID]/
-                    (double)state->tex_installed_height[VISUALIZATION_TEX_ID];
-                break;
-            default:
-                fprintf(stderr, "Error, unknown texture set for display\n");
-                break;
-            }
-
-			UTree *node;
-			node = World.TGetNodeByName("projtextobj.ptx");
-			if (node != NULL) {
-				URender &obj = node->TGetContents();
-
-				// here, we use the associated object's transform.  However, we must invert everything
-				// for the texture's transform...
-				
-				q_vec_type v;
-				q_type q;
-				qogl_matrix_type mat;
-
-                q_vec_copy(v, obj.GetLocalXform().GetTrans());
-				q_vec_scale(v, -1.0, v);
-
-				q_copy(q, obj.GetLocalXform().GetRot());
-				q_invert(q, q);
-
-                if (state->texture_displayed == nmg_Graphics::SEM_DATA) {
-                    // undo the scaling that fits to the surface
-                    if (x_scale_factor < y_scale_factor) {
-    			        x_scale_factor = y_scale_factor;
-                    }
-                    else {
-                        y_scale_factor = x_scale_factor;
-                    }
-
-                    glTranslated(x_translate, y_translate, 0.0);
-	    		    glScaled(x_scale_factor, y_scale_factor, 1.0);
-
-                    // center of textue in texture coordinates
-                    glTranslated(0.5, 0.5, 0.0);
-
-                    // should be 1 / the size of the scan range...hard coded to assume a 5000 nm range for now
-                    // should change this to a variable
-                    glScaled(0.0002, 0.0002, 1.0);
-                }
-                else {
-                    // undo the scaling that fits to the surface
-                    if (x_scale_factor > y_scale_factor) {
-                        x_scale_factor *= x_scale_factor / y_scale_factor;
-                    }
-                    else {
-                        y_scale_factor *= y_scale_factor / x_scale_factor;
-                    }
-
-                    glTranslated(state->tex_coord_center_x, state->tex_coord_center_y, 0.0);
-
-				    glScaled(state->texture_transform[0], state->texture_transform[0], state->texture_transform[0]);
-				    glScaled(x_scale_factor, y_scale_factor, 1.0);
-                }
-
-                q_to_ogl_matrix(mat, q);
-                glMultMatrixd(mat);
-
-                glTranslated(v[0], v[1], v[2]);
-			}
-
-			break;
-
-        default:
-            fprintf(stderr, "Error, unknown texture coordinate mode\n");
-            break;
-        }
-
-    }
-#endif
-    
-    if (d_currentState.textureMode == GL_TEXTURE_1D) {
-        glEnable(GL_TEXTURE_1D);
-    }
-
+	default:
+		break;
+	}
+	
+	if (d_currentState.textureMode == GL_TEXTURE_2D) {
+		setTextureTransform(state, data);
+	}
+	
+	return;
 }
 
 /**
@@ -530,27 +270,22 @@ setTexture(nmg_State * state, nmb_Dataset *data)
  * Access: Protected
  */
 void nmg_SurfaceRegion::
-cleanUp()
+cleanUp(nmg_State * state)
 {
     if (d_currentState.textureMode == GL_TEXTURE_1D) {
         glDisable(GL_TEXTURE_1D);
     }
-    
+#ifndef _WIN32
+	else if (d_currentState.textureMode == GL_TEXTURE_3D_EXT) {
+		glDisable(GL_TEXTURE_3D_EXT);
+	}
+#endif
     
 #ifdef PROJECTIVE_TEXTURE
-    
-    if (d_currentState.textureMode == GL_TEXTURE_2D){
-        glMatrixMode(GL_TEXTURE);
-        glPopMatrix();
-        
-        glDisable(GL_TEXTURE_2D);
-        glDisable(GL_TEXTURE_GEN_S);
-        glDisable(GL_TEXTURE_GEN_T);
-        glDisable(GL_TEXTURE_GEN_R);
-        glDisable(GL_TEXTURE_GEN_Q);
-        glPopAttrib();
-    }
-    
+	   
+	if (d_currentState.textureMode == GL_TEXTURE_2D){
+		state->currentProjectiveTexture->disable();
+	}    
 #endif
 
 }
@@ -1151,42 +886,12 @@ renderRegion(nmg_State * state, nmb_Dataset *dataset)
     setFilled(state);
 
 
-//	qogl_matrix_type mat;
-//	glGetDoublev(GL_TEXTURE_MATRIX, mat);
-//	printf("current texture matrix\n");
-//	qogl_print_matrix(mat);
-//	printf("\n");
-/*
-	qogl_matrix_type rot45 = { .000245, 0, 0, 0,
-								0, .000245, 0, 0,
-								0, 0, 1, 0,
-								.207031, .207031, 0, 1 };
-
-
-
-	glMatrixMode(GL_TEXTURE);
-	glLoadMatrixd(rot45);
-
-	glGetDoublev(GL_TEXTURE_MATRIX, mat);
-	printf("new texture matrix\n");
-	qogl_print_matrix(mat);
-	printf("\n");
-*/
-
-
-
-
     for (i = 0; i < d_num_lists; i++) {
         glCallList(d_list_base + i);
     }
-
-    // Drawing Objects...
-    int proj_text = (d_currentState.textureMode == GL_TEXTURE_2D) ? 1 : 0;
-    World.Do(&URender::Render, &proj_text);
-
     VERBOSECHECK(6);
  
-    cleanUp();
+    cleanUp(state);
     RestoreRenderState(state);
 }
 

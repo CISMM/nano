@@ -328,58 +328,11 @@ void makeRulerImage (nmg_State * state) {
 
 void buildRemoteRenderedTexture (nmg_State * state, 
                                  int width, int height, void * tex) {
-  GLenum errval;
 //fprintf(stderr, "Building remotely rendered texture.\n");
-
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
-
-  //glBindTexture(GL_TEXTURE_2D, state->tex_ids[RULERGRID_TEX_ID]);
-  glBindTexture(GL_TEXTURE_2D, state->tex_ids[REMOTE_DATA_TEX_ID]);
-
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-#ifdef _WIN32
-  float tex_color[4] = {1.0, 1.0, 1.0, 1.0};
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
-  glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, tex_color);
-#else
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-#endif
-
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-#if defined(sgi) || defined(_WIN32)
-  //retval = gluBuild2DMipmaps(GL_TEXTURE_2D, 4, width,
-                             //height, GL_RGBA,
-                             //GL_UNSIGNED_BYTE, tex);
-  //if (retval) {
-    //fprintf(stderr, " Didn't make mipmaps, using texture instead.\n");
-    while ((errval = glGetError()) != GL_NO_ERROR) {
-      fprintf(stderr, " Error before making remote texture: %s.\n", gluErrorString(errval));
-    }
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                 width, height,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                 tex);
-    while ((errval = glGetError()) != GL_NO_ERROR) {
-      fprintf(stderr, " Error making remote texture: %s.\n", gluErrorString(errval));
-    }
-  //}
-#endif 
-
-  //state->tex_image_width[RULERGRID_TEX_ID] = 
-  //       state->tex_installed_width[RULERGRID_TEX_ID] = width;
-  //state->tex_image_height[RULERGRID_TEX_ID] = 
-  //       state->tex_installed_height[RULERGRID_TEX_ID] = height;
-  state->tex_image_width[REMOTE_DATA_TEX_ID] = 
-           state->tex_installed_width[REMOTE_DATA_TEX_ID] = width;
-  state->tex_image_height[REMOTE_DATA_TEX_ID] = 
-           state->tex_installed_height[REMOTE_DATA_TEX_ID] = height;
-  state->tex_image_offsetx[REMOTE_DATA_TEX_ID] = 0;
-  state->tex_image_offsety[REMOTE_DATA_TEX_ID] = 0;
+  state->remoteDataTexture.installTexture(width, height, tex, GL_RGBA, GL_RGBA,
+	  GL_UNSIGNED_BYTE, GL_CLAMP);
 }
 
 
@@ -392,12 +345,9 @@ void buildContourTexture (nmg_State * state) {
   makeTexture(state);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-#ifdef _WIN32
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
-#else
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL); 
-#endif
-  glBindTexture(GL_TEXTURE_1D, state->tex_ids[CONTOUR_1D_TEX_ID]);
+
+  glBindTexture(GL_TEXTURE_1D, state->contourTextureID);
 
   glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -420,73 +370,16 @@ void buildVisualizationTexture(nmg_State * state, int width, int height, unsigne
 // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  //printf("building rulergrid texture\n");
-  glBindTexture(GL_TEXTURE_2D, state->tex_ids[VISUALIZATION_TEX_ID]);
-
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-#ifdef _WIN32
-  float tex_color[4] = {1.0, 1.0, 1.0, 1.0};
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
-  glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, tex_color);
-#else
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-#endif
-
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-#if defined(sgi) || defined(_WIN32)
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D, 4, width,
-                       height, GL_RGB,
-                       GL_UNSIGNED_BYTE, texture)!=0) { 
-      //fprintf(stderr, " Didn't make mipmaps, using texture instead.\n");
-    glTexImage2D(GL_TEXTURE_2D, 0, 4,
-                 width, height,
-                 0, GL_RGB, GL_UNSIGNED_BYTE,
-                 texture);
-    if (glGetError() != GL_NO_ERROR)
-      fprintf(stderr, " Error making ruler texture.\n");
-  }
-#endif 
+  state->visualizationTexture.installTexture(width, height, texture, 4, GL_RGB, 
+	  GL_UNSIGNED_BYTE, GL_REPEAT);
 }
 
 void buildRulergridTexture (nmg_State * state) {
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  //printf("building rulergrid texture\n");
-  glBindTexture(GL_TEXTURE_2D, state->tex_ids[RULERGRID_TEX_ID]);
-
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-#ifdef _WIN32
-  float tex_color[4] = {1.0, 1.0, 1.0, 1.0};
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
-  glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, tex_color);
-#else
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-#endif
-
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-#if defined(sgi) || defined(_WIN32)
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D, 4, rulerImageWidth,
-                       rulerImageHeight, GL_RGBA,
-                       GL_UNSIGNED_BYTE, rulerImage)!=0) { 
-      //fprintf(stderr, " Didn't make mipmaps, using texture instead.\n");
-    glTexImage2D(GL_TEXTURE_2D, 0, 4,
-                 rulerImageWidth, rulerImageHeight,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                 rulerImage);
-    if (glGetError() != GL_NO_ERROR)
-      fprintf(stderr, " Error making ruler texture.\n");
-  }
-#endif 
-
+  state->rulergridTexture.installTexture(rulerImageWidth, rulerImageHeight, rulerImage,
+	  4, GL_RGBA, GL_UNSIGNED_BYTE, GL_REPEAT);
 }
 
 void buildAlphaTexture (nmg_State * state) {
@@ -495,11 +388,8 @@ void buildAlphaTexture (nmg_State * state) {
   v_gl_set_context_to_vlib_window();
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-#ifdef _WIN32
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
-#else
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-#endif 
+
   /* GL_TEXTURE_3D_EXT is not available on other platforms... i.e. WIN32 */
 #if defined(sgi)
   glBindTexture(GL_TEXTURE_3D, state->tex_ids[ALPHA_3D_TEX_ID]);

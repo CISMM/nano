@@ -18,6 +18,7 @@ class nmb_Subgrid;  // from nmb_Subgrid.h
 
 nmg_State::nmg_State ()
 {
+	alphaTextureBlendFunc = GL_DECAL;
     alpha_r = 0.0f;
     alpha_g = 1.0f;
     alpha_b = 0.0f;
@@ -52,6 +53,7 @@ nmg_State::nmg_State ()
     config_trueTip = 0;
     config_enableUber = 1;
 
+	contourTextureBlendFunc = GL_DECAL;
     contour_r = 255;
     contour_g = 55;
     contour_b = 55;
@@ -70,60 +72,34 @@ nmg_State::nmg_State ()
     surfaceColor[2] = 0.04f;
     surfaceColor[3] = 1.0f;
 
-    // Realigning Textures:
-    realign_textures_curColorMap = NULL;
-    realign_textures_data_min = 0;
-    realign_textures_data_max = 1.0;
-    realign_textures_color_min = 0;
-    realign_textures_color_max = 1.0;
-    realign_texture_name[0] = '\0';
+    // Colormap Textures:
+    colormap_texture_curColorMap = NULL;
+    colormap_texture_data_min = 0;
+    colormap_texture_data_max = 1.0;
+    colormap_texture_color_min = 0;
+    colormap_texture_color_max = 1.0;
+    colormap_texture_name[0] = '\0';
 
     prerendered_grid = NULL;
     prerenderedChange = NULL;
 
-    translate_textures = 0;
-    scale_textures = 0;
-    shear_textures = 0;
-    rotate_textures = 0;
-
-    tex_coord_center_x = 0.5;
-    tex_coord_center_y = 0.5;
-    tex_range_x = 1.0;
-    tex_range_y = 1.0;
-    tex_theta_cumulative = 0.0;
-    translate_tex_x = 0.0;
-    translate_tex_y = 0.0;
-    scale_tex_x = 1000.0;
-    scale_tex_y = 1000.0;
-    shear_tex_x = 0.0;
-    shear_tex_y = 0.0;
-
-
-    translate_tex_dx = 0;
-    translate_tex_dy = 0;
-    scale_tex_dx = 0;
-    scale_tex_dy = 0;
-    shear_tex_dx = 0;
-    shear_tex_dy = 0;
-    rotate_tex_theta = 0;
-
     // Registration
-    texture_transform[0] = 0.001;
-    texture_transform[1] = 0;
-    texture_transform[2] = 0;
-    texture_transform[3] = 0;
-    texture_transform[4] = 0;
-    texture_transform[5] = 0.001;
-    texture_transform[6] = 0;
-    texture_transform[7] = 0;
-    texture_transform[8] = 0;
-    texture_transform[9] = 0;
-    texture_transform[10] = 1;
-    texture_transform[11] = 0;
-    texture_transform[12] = 0;
-    texture_transform[13] = 0;
-    texture_transform[14] = 0;
-    texture_transform[15] = 1;
+    surfaceModeTextureTransform[0] = 0.001;
+    surfaceModeTextureTransform[1] = 0;
+    surfaceModeTextureTransform[2] = 0;
+    surfaceModeTextureTransform[3] = 0;
+    surfaceModeTextureTransform[4] = 0;
+    surfaceModeTextureTransform[5] = 0.001;
+    surfaceModeTextureTransform[6] = 0;
+    surfaceModeTextureTransform[7] = 0;
+    surfaceModeTextureTransform[8] = 0;
+    surfaceModeTextureTransform[9] = 0;
+    surfaceModeTextureTransform[10] = 1;
+    surfaceModeTextureTransform[11] = 0;
+    surfaceModeTextureTransform[12] = 0;
+    surfaceModeTextureTransform[13] = 0;
+    surfaceModeTextureTransform[14] = 0;
+    surfaceModeTextureTransform[15] = 1;
 
     scanlinePt [0] = 0.0;
     scanlinePt [1] = 0.0;
@@ -164,6 +140,7 @@ nmg_State::nmg_State ()
 
     texture_displayed = nmg_Graphics::NO_TEXTURES;
     texture_transform_mode = nmg_Graphics::RULERGRID_COORD;
+	currentProjectiveTexture = NULL;
 
     texture_mode = GL_FALSE;
 

@@ -152,30 +152,6 @@ void nmg_Graphics_RenderClient::setContourWidth (float a) {
 }
 
 // virtual
-void nmg_Graphics_RenderClient::translateTextures (int a, float b, float c) {
-  blockTimer();
-  nmg_Graphics_Remote::translateTextures (a, b, c);
-}
-
-// virtual
-void nmg_Graphics_RenderClient::scaleTextures (int a, float b, float c) {
-  blockTimer();
-  nmg_Graphics_Remote::scaleTextures (a, b, c);
-}
-
-// virtual
-void nmg_Graphics_RenderClient::shearTextures (int a, float b, float c) {
-  blockTimer();
-  nmg_Graphics_Remote::shearTextures (a, b, c);
-}
-
-// virtual
-void nmg_Graphics_RenderClient::rotateTextures (int a, float b) {
-  blockTimer();
-  nmg_Graphics_Remote::rotateTextures (a, b);
-}
-
-// virtual
 void nmg_Graphics_RenderClient::setTextureTransform (double * a) {
   blockTimer();
   nmg_Graphics_Remote::setTextureTransform (a);

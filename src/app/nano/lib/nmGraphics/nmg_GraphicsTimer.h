@@ -74,16 +74,10 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setCollabMode(int);
     virtual void setSurfaceColor (const double [3]);
     virtual void setSurfaceColor (const int [3]);
-    virtual void createRealignTextures( const char * );
-    virtual void setRealignTextureSliderRange (float, float, float, float);
-    virtual void setRealignTexturesConversionMap
+    virtual void createColormapTexture( const char * );
+    virtual void setColormapTextureSliderRange (float, float, float, float);
+    virtual void setColormapTextureConversionMap
                     (const char *, const char *);
-    virtual void computeRealignPlane( const char *, const char * );
-    virtual void translateTextures ( int on, float dx, float dy );
-    virtual void scaleTextures ( int on, float dx, float dy );
-    virtual void shearTextures ( int on, float dx, float dy );
-    virtual void rotateTextures ( int on, float theta );
-    virtual void setTextureCenter( float dx, float dy );
     virtual void loadRawDataTexture(const int which, const char *image_name,
         const int start_x, const int start_y);
     virtual void updateTexture(int which, const char *image_name,

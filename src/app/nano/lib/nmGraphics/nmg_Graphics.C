@@ -169,27 +169,12 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
   d_positionSphere_type =
     c->register_message_type("nmg Graphics positionSphere");
 
-  // Realign Textures Network Types:
-  d_createRealignTextures_type = 
-    c->register_message_type("nmg Graphics createRealignTextures");
-  d_setRealignTexturesConversionMap_type = 
-    c->register_message_type("nmg Graphics setRealignTexturesConversionMap");
-  d_setRealignTextureSliderRange_type = 
-    c->register_message_type("nmg Graphics setRealignTextureSliderRange");
-  d_computeRealignPlane_type = 
-    c->register_message_type("nmg Graphics computeRealignPlane");
-  d_enableRealignTextures_type = 
-    c->register_message_type("nmg Graphics enableRealignTextures");
-  d_translateTextures_type = 
-    c->register_message_type("nmg Graphics translateTextures");
-  d_scaleTextures_type = 
-    c->register_message_type("nmg Graphics scaleTextures");
-  d_shearTextures_type = 
-    c->register_message_type("nmg Graphics shearTextures");
-  d_rotateTextures_type = 
-    c->register_message_type("nmg Graphics rotateTextures");
-  d_setTextureCenter_type = 
-    c->register_message_type("nmg Graphics setTextureCenter");
+  d_createColormapTexture_type = 
+    c->register_message_type("nmg Graphics createColormapTexture");
+  d_setColormapTextureConversionMap_type = 
+    c->register_message_type("nmg Graphics setColormapTextureConversionMap");
+  d_setColormapTextureSliderRange_type = 
+    c->register_message_type("nmg Graphics setColormapTextureSliderRange");
 
   d_setTextureTransform_type =
     c->register_message_type("nmg Graphics setTextureTransform");
@@ -1424,14 +1409,8 @@ char * nmg_Graphics::encode_setTextureMode
         vrpn_buffer(&mptr, &mlen, 3); break;
       case COLORMAP:
 	vrpn_buffer(&mptr, &mlen, 4); break;
-      case SEM_DATA:
+      case VIDEO:
 	vrpn_buffer(&mptr, &mlen, 5); break;
-      case BUMPMAP:
-	vrpn_buffer(&mptr, &mlen, 6); break;
-      case HATCHMAP:
-	vrpn_buffer(&mptr, &mlen, 7); break;
-      case PATTERNMAP:
-	vrpn_buffer(&mptr, &mlen, 8); break;
       default:
         fprintf(stderr, "nmg_Graphics::encode_setTextureMode:  "
                         "Got illegal texture mode %d.  "
@@ -1447,8 +1426,6 @@ char * nmg_Graphics::encode_setTextureMode
 	vrpn_buffer(&mptr, &mlen, 0); break;
       case SURFACE_REGISTRATION_COORD:
 	vrpn_buffer(&mptr, &mlen, 1); break;
-      case MANUAL_REALIGN_COORD:
-	vrpn_buffer(&mptr, &mlen, 2); break;
       default:
 	fprintf(stderr, "nmg_Graphics::encode_setTextureMode:  "
 			"Got illegal texture transform mode %d.  "
@@ -1475,11 +1452,7 @@ int nmg_Graphics::decode_setTextureMode
     case 2:  *m = RULERGRID; break;
     case 3:  *m = ALPHA; break;
     case 4:  *m = COLORMAP; break;
-    case 5:  *m = SEM_DATA; break;
-    case 6:  *m = BUMPMAP; break;
-    case 7:  *m = HATCHMAP; break;
-    case 8:  *m = PATTERNMAP; break;
-
+    case 5:  *m = VIDEO; break;
     default:
       fprintf(stderr, "nmg_Graphics::decode_setTextureMode:  "
                       "Got illegal texture mode %d.  "
@@ -1495,7 +1468,6 @@ int nmg_Graphics::decode_setTextureMode
   switch (i) {
     case 0:  *xm = RULERGRID_COORD; break;
     case 1:  *xm = SURFACE_REGISTRATION_COORD; break;
-    case 2:  *xm = MANUAL_REALIGN_COORD; break;
     default:
       fprintf(stderr, "nmg_Graphics::decode_setTextureMode:  "
                       "Got illegal texture transform mode %d.  "
@@ -2142,16 +2114,11 @@ int nmg_Graphics::decode_positionSphere
 }
 
 //
-// Realign Texture Network Transmission Code:
+// Colormap Texture Network Transmission Code:
 //
-// The following encode routines are used by the Realign Textures
-// procedures. They should all be replaced with functions like
-// encode_float, encode_char_char, encode_int, ...
-// as none do anything unexpected.
-
 
 // Encodes four floats for network transmission
-char *nmg_Graphics::encode_setRealignTextureSliderRange ( int *len,
+char *nmg_Graphics::encode_setColormapTextureSliderRange ( int *len,
     float data_min,
     float data_max,
     float color_min,
@@ -2165,7 +2132,7 @@ char *nmg_Graphics::encode_setRealignTextureSliderRange ( int *len,
   *len = 4 * sizeof(float);
   msgbuf = new char [*len];
   if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setRealignTextureSliderRange:  "
+    fprintf(stderr, "nmg_Graphics::encode_setColormapTextureSliderRange:  "
                     "Out of memory.\n");
     *len = 0;
   } else {
@@ -2181,7 +2148,7 @@ char *nmg_Graphics::encode_setRealignTextureSliderRange ( int *len,
 }
 
 // Decodes four floats after network transmission
-int nmg_Graphics::decode_setRealignTextureSliderRange ( const char *buf,
+int nmg_Graphics::decode_setColormapTextureSliderRange ( const char *buf,
     float *data_min,
     float *data_max,
     float *color_min,
@@ -2214,99 +2181,7 @@ int nmg_Graphics::decode_two_char_arrays ( const char *buf,
 
 }
 
-// Encodes one int for network transmission
-char *nmg_Graphics::encode_enableRealignTextures ( int *len, int on) {
-
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-
-  if (!len) return NULL;
-
-  *len = sizeof(int);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_enableRealignTextures_type_type:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, on);
-  }
-
-  return msgbuf;
-}
-
-// Decodes one int after network transmission
-int nmg_Graphics::decode_enableRealignTextures ( const char *buf, int *on) {
-  if (!buf || !on) return -1;
-  CHECK(vrpn_unbuffer(&buf, on));
-  return 0;
-}
-
-
-// Encodes two floats for network transmission
-char *nmg_Graphics::encode_dx_dy ( int *len, float dx, float dy ) {
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-
-  if (!len) return NULL;
-
-  *len = 2 * sizeof(float);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_dx_dy: Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, dx);
-    vrpn_buffer(&mptr, &mlen, dy);
-  }
-
-  return msgbuf;
-}
-
-// Decodes two floats after network transmission
-int nmg_Graphics::decode_dx_dy ( const char *buf, float *dx, float *dy ) {
-  if (!buf || !dx || !dy) return -1;
-  CHECK(vrpn_unbuffer(&buf, dx));
-  CHECK(vrpn_unbuffer(&buf, dy));
-  return 0;
-}
-
-// Encodes one float for network transmission
-char *nmg_Graphics::encode_rotateTextures ( int *len, float theta ) { 
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-  
-  if (!len) return NULL;
-  
-  *len = sizeof(float);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_dx_dy: Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, theta);
-  }
-  
-  return msgbuf;
-}
-
-// Decodes one float after network transmission
-int nmg_Graphics::decode_rotateTextures ( const char *buf, float * theta) {
-  if (!buf || !theta) return -1;
-  CHECK(vrpn_unbuffer(&buf, theta));
-  return 0;
-}
-
-// End Realign Texture Network Transmission Code.
+// End Colormap Texture Network Transmission Code.
 
 char *nmg_Graphics::encode_updateTexture ( int *len, int whichTexture,
   const char *name, int start_x, int start_y, int end_x, int end_y) {
@@ -2353,37 +2228,6 @@ int nmg_Graphics::decode_updateTexture ( const char *buf, int *whichTexture,
   CHECK(vrpn_unbuffer(&buf, start_y));
   CHECK(vrpn_unbuffer(&buf, end_x));
   CHECK(vrpn_unbuffer(&buf, end_y));
-  return 0;
-}
-
-// Encodes one int for network transmission
-char *nmg_Graphics::encode_enableRegistration ( int *len, int on) {
-
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-
-  if (!len) return NULL;
-
-  *len = sizeof(int);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_enableRegistration_type:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, on);
-  }
-
-  return msgbuf;
-}
-
-// Decodes one int after network transmission
-int nmg_Graphics::decode_enableRegistration ( const char *buf, int *on) {
-  if (!buf || !on) return -1;
-  CHECK(vrpn_unbuffer(&buf, on));
   return 0;
 }
 

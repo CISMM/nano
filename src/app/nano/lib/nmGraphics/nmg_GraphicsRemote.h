@@ -75,17 +75,10 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     // arguments in range [0..255]
     virtual void setSurfaceColor (const int [3]);
 
-    // Realigning Textures:
-    virtual void createRealignTextures( const char * );
-    virtual void setRealignTextureSliderRange (float, float, float, float);
-    virtual void setRealignTexturesConversionMap( const char *, const char * );
-    virtual void computeRealignPlane( const char *, const char * );
-//    virtual void enableRealignTextures (int on);
-    virtual void translateTextures ( int on, float dx, float dy );
-    virtual void scaleTextures ( int on, float dx, float dy );
-    virtual void shearTextures ( int on, float dx, float dy );
-    virtual void rotateTextures ( int on, float theta );
-    virtual void setTextureCenter( float dx, float dy );
+    // Colormap Texture:
+    virtual void createColormapTexture( const char * );
+    virtual void setColormapTextureSliderRange (float, float, float, float);
+    virtual void setColormapTextureConversionMap( const char *, const char * );
 
     virtual void loadRawDataTexture(const int which, const char *image_name,
         const int start_x, const int start_y);

@@ -271,6 +271,10 @@ SOURCE=.\openGL.h
 
 SOURCE=.\surface_strip_create.h
 # End Source File
+# Begin Source File
+
+SOURCE=.\surface_util.h
+# End Source File
 # End Group
 # End Target
 # End Project
