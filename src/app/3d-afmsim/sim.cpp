@@ -12,6 +12,7 @@
 #include <vector>
 #include <math.h>		//math.h vs cmath
 #include <GL/glut.h>
+//#include <string.h>
 #include "Vec3d.h"
 #include "3Dobject.h"
 #include "ConeSphere.h"
@@ -82,6 +83,7 @@ int done_drawing_objects=0;
 double thetax=0.,thetay=0.;
 int tesselation = 30;
 char units[100];
+char* SphereFilename;
 
 
 void write_to_unca(char *filename);
@@ -109,16 +111,25 @@ void select_triangle_side();
 //<protein unit ratio to nm>
 int main(int argc, char *argv[])
 {
-  strcpy(units,argv[1]);
+	if(argc > 1){
+		strcpy(units,argv[1]);
+	}
+	else{
+		strcpy(units, "nm");
+		cout << "You did not enter what units you would like to work in."  << endl
+			 << "The default units of nanometers has been chosen for you." << endl
+			 << "Press 'q' to quit if you want to try again with different units." << endl;
+	}
   adjustOrthoProjectionParams();
   bool radius = true;//for protein/spheres files--false means use default
                      //true means the file contains radii
+  bool centering = true;
   //double volume;
   //bool find_volume = false;
 
   if (argc > 2) {// load from a file
     if (0==strcmp(argv[2],"-p")) {//ntube file
-      addSpheresFromFile(argv[3],atof(argv[4]),!radius);
+      addSpheresFromFile(argv[3],atof(argv[4]),!radius, centering);
     }
     else if (0==strcmp(argv[2],"-t")) {//triangles file
       addTrianglesFromFile(argv[3],atof(argv[4]));
@@ -127,15 +138,15 @@ int main(int argc, char *argv[])
       init_dna(argv[3]);
     }
     else if(0==strcmp(argv[2],"-dp")){//dna and protein file
-      addSpheresFromFile(argv[4],atof(argv[5]), !radius);
+      addSpheresFromFile(argv[4],atof(argv[5]), !radius, centering);
       //dna first then protein in argv[]
       init_dna(argv[3]);
     }
     else if(0==strcmp(argv[2],"-s")){//add spheres with radii from file, find volume, and quit
       fout.open("sphere_output.txt", fstream::out | fstream::app);//append to end each time
 
-      addSpheresFromFile(argv[3],atof(argv[4]),radius);
-      fout << argv[3] << ":  ";
+      addSpheresFromFile(argv[3],atof(argv[4]),radius, !centering);
+	  SphereFilename = argv[3];
       //find_volume = true;//take care of volume finding below
     }
     else {
@@ -533,8 +544,11 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       break;
     case 'f' ://find volume
       volume = find_volume();
+	  fout2 << SphereFilename << ":  ";
       fout2 << "Volume of all objects on plane is " << volume << " " 
-	 << units << "^3.\n" << flush;
+			<< units << "^3.\n" << flush;
+	  cout	<< "Volume of all objects on plane is " << volume << " " 
+			<< units << "^3.\n" << flush;
       fout2.close();
       break;
     case 't' :
@@ -719,8 +733,9 @@ void mouseMotionFuncMain( int x, int y ) {
     
     // Move the grabbed object, if any, to match mouse movement.
     //    moveGrabbedOb();
-    ob[selectedOb]->moveGrabbedOb(vMouseWorld);
-
+	if(ob[selectedOb] != NULL){
+		ob[selectedOb]->moveGrabbedOb(vMouseWorld);
+	}
     
     //	glutPostRedisplay();
   }

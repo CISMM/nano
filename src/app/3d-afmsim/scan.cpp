@@ -46,7 +46,7 @@ double scanNear =  -128.;	// near end of Z-buffer range
 double scanFar  =   0.;	// far  end of Z-buffer range
 
 double Volume;
-int numberUnits_onedim = 100;
+int numberUnits_onedim = 128;
 int numberPixels_onedim = 128;
 
 void get_z_buffer_values() {
@@ -89,6 +89,9 @@ double find_volume(){
   for(int j= 0; j<scanResolution; j++){
     for(int i=0; i<scanResolution; i++){
       Volume += (zDistance[j][i] * onePixelArea);
+	  //= sum(zDistance[j][i])/(128*128) * onePixelArea * (128*128)
+	  //= avg. pixel height * pixel area * number of pixels
+	  //= avg. volume/pixel * number pixels = total volume
     }
   }
   

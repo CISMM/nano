@@ -8,6 +8,6 @@ extern Tip tip;
 
 void initObs( int numtoDraw );
 void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit, 
-bool rad_exists);
+bool rad_exists, bool centering);
 void addTrianglesFromFile(char *filename, double scale);
 #endif

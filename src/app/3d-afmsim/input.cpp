@@ -8,6 +8,7 @@
 #include <stdlib.h>		//stdlib.h vs cstdlib
 #include <stdio.h>		//stdio.h vs cstdio
 #include <iostream.h>
+#include <fstream.h>
 #include <vector>
 #include <math.h>		//math.h vs cmath
 #include <GL/glut.h>
@@ -49,62 +50,69 @@ void initObs( int numtoDraw )
  * Angstrom, give me 0.1 (since 1 A = 0.1 nm)
  */
 void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit, 
-			 bool rad_exists) {
-  double x,y,z;
-  int stop;
-  double minx=0.,miny=0.,minz=0., maxx=0., maxy=0., maxz=0.;
+			 bool rad_exists, bool centering) {
+	double x,y,z;
+	bool stop;
+	double minx=0.,miny=0.,minz=0., maxx=0., maxy=0., maxz=0.;
+	double rad;
 
-  FILE *file = fopen(filename,"r"); 
+	ifstream infile;
+	infile.open(filename); 
+	if(!infile.fail()){
 
-  cout << "Loading file " << filename << endl;
+		cout << "Loading file " << filename << endl;
 
-  stop=0;
-  while (!stop) {
-    fscanf(file,"%lf",&x);
-    if (!feof(file)) {
-      fscanf(file,"%lf",&y);
-      fscanf(file,"%lf",&z);
-      // unit conversion - everything will be in nm from now on.
-      x *= no_of_nm_in_one_unit;
-      y *= no_of_nm_in_one_unit;
-      z *= no_of_nm_in_one_unit;
-      double rad;
-      if(rad_exists){
-	fscanf(file, "%lf", &rad);
-      }
-      else{
-	// assume a radius of 1.5 A
-	rad = 5*1.5*no_of_nm_in_one_unit;//I just made bigger
-                                               //by mult. by a number (5)
-      }
-      // need to do some profiling for later.
-      minx = ((!minx) || (x < minx)) ? x : minx;
-      miny = ((!miny) || (z < miny)) ? y : miny;
-      minz = ((!minz) || (z < minz)) ? z : minz;
-      maxx = ((!maxx) || (x > maxx)) ? x : maxx;
-      maxy = ((!maxy) || (y > maxy)) ? y : maxy;
-      maxz = ((!maxz) || (z > maxz)) ? z : maxz;
-      addNtube( SPHERE,  Vec3d( x, y, z), 0., 0., 0., 0., rad*2);
-    }
-    else
-      stop=1;
-  }
+		stop=false;
+		while (!stop) {
+			infile >> x;
 
-  //cout << "Done no of spheres = " << (numObs-1) << endl;
+			if (!infile.eof()) {
+				infile >> y;
+				infile >> z;
+				// unit conversion - everything will be in nm from now on.
+				x *= no_of_nm_in_one_unit;
+				y *= no_of_nm_in_one_unit;
+				z *= no_of_nm_in_one_unit;
+      
+				if(rad_exists){
+					infile >> rad;
+				}
+				else{
+					// assume a radius of 1.5 A
+					rad = 5*1.5*no_of_nm_in_one_unit;//I just made bigger
+                                         //by mult. by a number (5)
+				}
+				// need to do some profiling for later.
+				minx = ((!minx) || (x < minx)) ? x : minx;
+				miny = ((!miny) || (z < miny)) ? y : miny;
+				minz = ((!minz) || (z < minz)) ? z : minz;
+				maxx = ((!maxx) || (x > maxx)) ? x : maxx;
+				maxy = ((!maxy) || (y > maxy)) ? y : maxy;
+				maxz = ((!maxz) || (z > maxz)) ? z : maxz;
+				addNtube( SPHERE,  Vec3d( x, y, z), 0., 0., 0., 0., rad*2);
+				}
+			else{
+				stop = true;
+			}
+		}
 
-
-  /* now use the profiled data to translate and scale the values to lie in
-   * our orthogonal volume
-   */
-  /*Place the "XY centroid" of the body at the centre. Also let the lowest
-   * pt lie just on the surface.
-   */
-  Vec3d translate = Vec3d(-(minx+maxx)/2.,-(miny+maxy)/2.,-minz) +
-    Vec3d(orthoFrustumLeftEdge+orthoFrustumWidth/2.,orthoFrustumBottomEdge+orthoFrustumHeight/2.,0.);
-  for (int i=0;i<numObs;i++) {
-    ob[i]->translate(translate);
-  }
-  Vec3d centroid = Vec3d((minx+maxx)/2.,(miny+maxy)/2.,(minz+maxz)/2.)+translate;
+		//cout << "Done no of spheres = " << (numObs-1) << endl;
+	
+		if(centering){
+			/* now use the profiled data to translate and scale the values to lie in
+			* our orthogonal volume
+			*/
+			/*Place the "XY centroid" of the body at the centre. Also let the lowest
+			* pt lie just on the surface.
+			*/
+			Vec3d translate = Vec3d(-(minx+maxx)/2.,-(miny+maxy)/2.,-minz) +
+				Vec3d(orthoFrustumLeftEdge+orthoFrustumWidth/2.,orthoFrustumBottomEdge+orthoFrustumHeight/2.,0.);
+			for (int i=0;i<numObs;i++) {
+				ob[i]->translate(translate);
+			}
+			Vec3d centroid = Vec3d((minx+maxx)/2.,(miny+maxy)/2.,(minz+maxz)/2.)+translate;
+		}
+	}
     
 }
 

@@ -5,6 +5,7 @@
 #include <stdlib.h>		//stdlib.h vs cstdlib
 #include <stdio.h>		//stdio.h vs cstdio
 #include <iostream.h>
+#include <fstream.h>
 #include "3Dobject.h"
 #include <math.h>		//math.h vs cmath
 #include <GL/glut.h>
@@ -30,7 +31,8 @@ Dna :: Dna(Vec3d _P1, Vec3d _P2, Vec3d _dP1, Vec3d _dP2, double _length, int num
 void Dna :: init_state() {
   segs = (Ntube **) malloc (numSegments*sizeof(Ntube *));  
   F = (Vec3d *) malloc ((numSegments+1)*sizeof(Vec3d));
-  pos = (Vec3d *) malloc ((numSegments+1)*sizeof(Vec3d));
+  //pos = (Vec3d *) malloc ((numSegments+1)*sizeof(Vec3d));
+  pos = new Vec3d[numSegments+1];
   rest_lengths = (double *) malloc (numSegments*sizeof(double));
   constraint_list = (bool *) malloc ((numSegments+1)*sizeof(bool));  
 }
@@ -568,7 +570,7 @@ void Dna :: moveGrabbedOb(Vec3d vMouseWorld) {
 }
   
 
-Dna *addDna(Vec3d P1, Vec3d P2, Vec3d dP1, Vec3d dP2, double length, int numSegs) {
+Dna* addDna(Vec3d P1, Vec3d P2, Vec3d dP1, Vec3d dP2, double length, int numSegs) {
   Dna *d = new Dna(P1, P2, dP1, dP2, length, numSegs);
   ob[numObs] = d;
   ob[numObs]->type = DNA;
@@ -583,29 +585,16 @@ void init_dna(char *filename) {
   int numSegments;
   Vec3d P1, P2, dP1, dP2;
 
-  FILE *f = fopen(filename,"r");
-
-  fscanf(f,"%d",&numSegments);
-
-  fscanf(f,"%lf",&dna_length);
-
-  fscanf(f,"%lf",&P1.x);
-  fscanf(f,"%lf",&P1.y);
-  fscanf(f,"%lf",&P1.z);
-
-  fscanf(f,"%lf",&P2.x);
-  fscanf(f,"%lf",&P2.y);
-  fscanf(f,"%lf",&P2.z);
-
-  fscanf(f,"%lf",&dP1.x);
-  fscanf(f,"%lf",&dP1.y);
-  fscanf(f,"%lf",&dP1.z);
-
-  fscanf(f,"%lf",&dP2.x);
-  fscanf(f,"%lf",&dP2.y);
-  fscanf(f,"%lf",&dP2.z);
-
-  dna = addDna(P1, P2, dP1, dP2, dna_length, numSegments);
+  ifstream fin;
+  fin.open(filename);
+  if(!fin.fail()){
+	fin >> numSegments >> dna_length >> P1.x >> P1.y >> P1.z >> P2.x >> P2.y >> P2.z
+		>> dP1.x >> dP1.y >> dP1.z >> dP2.x >> dP2.y >> dP2.z;
+	dna = addDna(P1, P2, dP1, dP2, dna_length, numSegments);
+  }
+  else{
+	  cout << "Could not open " << filename << "." << endl;
+  }
 }
 
 

@@ -13,7 +13,6 @@ GL_LIBS = -lGLU -lGL
 CXX = CC -g -o32
 
 
-
 GLUT_LIBS = -lglut
 CXXFLAGS = -I/afs/unc/proj/walk/include -lang:std
 LDFLAGS = -L/afs/unc/proj/walk/lib/sgi_irix
