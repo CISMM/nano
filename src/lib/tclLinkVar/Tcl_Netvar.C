@@ -1,21 +1,47 @@
 #include "Tcl_Netvar.h"
 
 #include <stdio.h>
-#include <string.h>
 
 #include <vrpn_Connection.h>
 #include <vrpn_SharedObject.h>  // for vrpn_Shared_int32 and the like
 
+//Uncomment this to use a distributed serialization protocol
+//#define USE_OPTIMISTIC_CONNECTIONS
 
-#define STARTING_NUM_REPLICAS 10
-  // change this value to control memory usage
+// If we're using centralized serialization,
+//  * start up all vrpn_SharedObjects as VRPN_SO_DEFER_UPDATES
+//  * always write into d_replica[d_writeReplica],
+// which is the same as d_activeReplica, which is whatever end-user
+// we are synchronizing this Tclvar with.
+//  * accept updates from any replica.
+
+// If we're using distributed serialization, we rely on the clocks of
+// all processors involved being acceptably serialized to reduce the latency
+// hit of a round-trip to the central serializer.
+//  * start up all vrpn_SharedObjects as VRPN_SO_IGNORE_OLD
+//  * always write into d_replica[0] (achieved by keeping d_writeReplica
+//    always equal to 0)
+//  * only accept updates from replicas other than 0.
+
+
+// We always need to call set on d_replica[d_writeReplica],
+// and then call setLocally(d_replica[d_writeReplica]->value()),
+// to allow the vrpn_SharedObject to decide the semantics of the set().
+
+
+#define STARTING_NUM_REPLICAS 2
+  // Change this value to control memory usage vs. initialization
+  // speed tradeoffs.  Shouldn't be an issue until we hit serious
+  // multiuser or start caching states.
 
 
 TclNet_int::TclNet_int (const char * tcl_varname, vrpn_int32 default_value,
                 Linkvar_Intcall c, void * userdata) :
   Tclvar_int (tcl_varname, default_value, c, userdata),
+  d_isLocked (VRPN_FALSE),
   d_replica (NULL),
   d_replicaSource (NULL),
+  d_writeReplica (0),
   d_activeReplica (0),
   d_numReplicas (0),
   d_numReplicasAllocated (0)
@@ -30,8 +56,13 @@ TclNet_int::TclNet_int (const char * tcl_varname, vrpn_int32 default_value,
 
   d_numReplicasAllocated = STARTING_NUM_REPLICAS;
 
+#ifdef USE_OPTIMISTIC_CONNECTIONS
   d_replica[0] = new vrpn_Shared_int32_Server (tcl_varname, default_value,
                                                VRPN_SO_IGNORE_OLD);
+#else
+  d_replica[0] = new vrpn_Shared_int32_Server (tcl_varname, default_value,
+                                               VRPN_SO_DEFER_UPDATES);
+#endif
 
   if (!d_replica[0]) {
     fprintf(stderr, "TclNet_int::TclNet_int:  Out of memory.\n");
@@ -64,46 +95,37 @@ TclNet_int::~TclNet_int (void) {
 
 
 
+// ACCESSORS
+
+vrpn_bool TclNet_int::isLocked (void) const {
+  return d_isLocked;
+}
+
+
+
 // MANIPULATORS
 
 // virtual
 vrpn_int32 TclNet_int::operator = (vrpn_int32 newValue) {
+  timeval now;
 
-  setLocally(newValue);
+  if (!d_isLocked) {
 
-//fprintf(stderr, "TclNet_int (%s)::operator = (%d) at %ld:%ld.\n",
-//my_tcl_varname, newValue, d_lastUpdate.tv_sec, d_lastUpdate.tv_usec);
+    gettimeofday(&now, NULL);
 
-//fprintf(stderr, "Setting d_replica[0] to %d.\n", d_myint);
-  d_replica[0]->set(d_myint, d_lastUpdate);
+//fprintf(stderr, "TclNet_int (%s)::operator = (%d) "
+//"into d_replica[%d] at %ld:%ld.\n",
+//my_tcl_varname, newValue, d_writeReplica,
+//now.tv_sec, now.tv_usec);
+
+    d_replica[d_writeReplica]->set(newValue, now);
+  }
+
   return d_myint;
 }
 
 
-// virtual
-vrpn_int32 TclNet_int::operator ++ (void) {
-  int retval;
 
-  retval = Tclvar_int::operator ++ ();
-  gettimeofday(&d_lastUpdate, NULL);
-
-//fprintf(stderr, "Setting d_replica[0] to %d.\n", d_myint);
-  *d_replica[0] = d_myint;
-  return retval;
-}
-
-
-// virtual
-vrpn_int32 TclNet_int::operator ++ (int newValue) {
-  int retval;
-
-  retval = Tclvar_int::operator ++ (newValue);
-  gettimeofday(&d_lastUpdate, NULL);
-
-//fprintf(stderr, "Setting d_replica[0] to %d.\n", d_myint);
-  *d_replica[0] = d_myint;
-  return retval;
-}
 
 // Don't insist that the vrpn_Connection be available in
 // the constructor, or we can't have globals.
@@ -120,15 +142,22 @@ void TclNet_int::bindConnection (vrpn_Connection * c) {
   }
 
   d_replicaSource[0] = c;
-  d_replica[0]->bindConnection(c);
+  // Christmas sync
+  // replica[0] is local, private state
+  //d_replica[0]->bindConnection(c);
 
-//fprintf(stderr, "TclNet_int::bindConnection\n");
+#ifndef USE_OPTIMISTIC_CONNECTIONS
+  d_replica[0]->register_handler
+                 (propagateReceivedUpdate, this);
+#endif
+
+//fprintf(stderr, "## TclNet_int::bindConnection\n");
 }
 
 
 // Add a new peer connection, add a replica, and start
 // tracking changes.
-void TclNet_int::addPeer (vrpn_Connection * c) {
+void TclNet_int::addPeer (vrpn_Connection * c, vrpn_bool serialize) {
   vrpn_Shared_int32 ** newReplica;
   vrpn_Connection ** newReplicaSource;
   int newNumReplicas;
@@ -164,18 +193,31 @@ void TclNet_int::addPeer (vrpn_Connection * c) {
 
   // Do the actual work.
 
-  d_replicaSource[d_numReplicas] = c;
+//fprintf(stderr, "## TclNet_int::addPeer - replica %d named %s -",
+//d_numReplicas - 1, d_replica[0]->name());
 
-  d_replica[d_numReplicas] = new vrpn_Shared_int32_Remote
-       (d_replica[0]->name(), d_replica[0]->value(),
-                                               VRPN_SO_IGNORE_OLD);
-        //(vrpn_int32) VRPN_SO_IGNORE_IDEMPOTENT);
-
-  d_replica[d_numReplicas]->bindConnection(c);
+  switch (serialize) {
+    case vrpn_TRUE:
+//fprintf(stderr, "Serializer.\n");
+      d_replica[d_numReplicas] = new vrpn_Shared_int32_Server
+           (d_replica[0]->name(), d_replica[0]->value(),
+                                               VRPN_SO_DEFER_UPDATES);
+      d_replicaSource[d_numReplicas] = d_replicaSource[0];
+        // HACK:  d_replicaSource[0] is the connection that was passed
+        // in to bindConnection();  it's the SERVER connection
+      break;
+    case vrpn_FALSE:
+//fprintf(stderr, "Remote.\n");
+      d_replica[d_numReplicas] = new vrpn_Shared_int32_Remote
+           (d_replica[0]->name(), d_replica[0]->value(),
+                                               VRPN_SO_DEFER_UPDATES);
+      d_replicaSource[d_numReplicas] = c;
+      break;
+  }
+  d_replica[d_numReplicas]->bindConnection(d_replicaSource[d_numReplicas]);
 
   d_numReplicas++;
 
-//fprintf(stderr, "TclNet_int::addPeer\n");
 }
 
 
@@ -200,10 +242,10 @@ void TclNet_int::copyReplica (int whichReplica) {
 
 // Copy the state of the which-th replica, and any changes to it.
 // 0 is the default, local, built-in replica;  syncing to it stops
-// receiving any network updates.
+// receiving any network updates (under OPTIMISTIC_CONNECTIONS).
 void TclNet_int::syncReplica (int whichReplica) {
 
-//fprintf(stderr, "TclNet_int::syncReplica:  Synchronizing with %d.\n",
+//fprintf(stderr, "++ TclNet_int::syncReplica:  Synchronizing with %d.\n",
 //whichReplica);
 
   if ((whichReplica < 0) || (whichReplica >= d_numReplicas)) {
@@ -216,57 +258,73 @@ void TclNet_int::syncReplica (int whichReplica) {
     return;  // noop
   }
 
-  if (d_activeReplica > 0) {
+#ifdef USE_OPTIMISTIC_CONNECTIONS
+  if (d_activeReplica > 0)
+#endif
+  {
     d_replica[d_activeReplica]->unregister_handler
              (propagateReceivedUpdate, this);
   }
 
-  copyReplica(whichReplica);
   d_activeReplica = whichReplica;
 
-  if (whichReplica) {
+#ifndef USE_OPTIMISTIC_CONNECTIONS
+  d_writeReplica = whichReplica;
+#endif
+
+#ifdef USE_OPTIMISTIC_CONNECTIONS
+  if (whichReplica > 0)
+#endif
+  {
     d_replica[whichReplica]->register_handler
                  (propagateReceivedUpdate, this);
   }
+
+  copyReplica(whichReplica);
+}
+
+
+
+
+
+void TclNet_int::lock (void) {
+  d_isLocked = VRPN_TRUE;
+}
+void TclNet_int::unlock (void) {
+  d_isLocked = VRPN_FALSE;
 }
 
 
 
 // virtual
-vrpn_int32 TclNet_int::conditionalEquals (vrpn_int32 newValue, timeval when) {
+vrpn_int32 TclNet_int::conditionalEquals (vrpn_int32 newValue, timeval when,
+                                          vrpn_bool isLocal) {
 
-  if (vrpn_TimevalGreater(when, d_lastUpdate)) {
 //fprintf(stderr, "TclNet_int::conditionalEquals (%d:%d) OK vs (%d:%d)\n",
 //when.tv_sec, when.tv_usec, d_lastUpdate.tv_sec, d_lastUpdate.tv_usec);
 
+  if (!isLocal) {
     if ((newValue != mylastint) ||
         (d_permitIdempotentChanges)) {
       d_ignoreChange = VRPN_TRUE;
 //fprintf(stderr, "TclNet_int::conditionalEquals set d_ignoreChange.\n");
     }
-
-    setLocally(newValue);
-    d_lastUpdate = when;
-      // overrides behavior in setLocally()
-
-    d_replica[0]->set(d_myint, when);
-  } else {
-//fprintf(stderr, "TclNet_int::conditionalEquals "
-//"(%d:%d) too old (was vs %d:%d)\n",
-//when.tv_sec, when.tv_usec, d_lastUpdate.tv_sec, d_lastUpdate.tv_usec);
   }
+
+  setLocally(newValue, when);
+  doCallbacks();
 
   return d_myint;
 }
 
 // virtual
-vrpn_int32 TclNet_int::setLocally (vrpn_int32 newValue) { 
+vrpn_int32 TclNet_int::setLocally (vrpn_int32 newValue, timeval when) { 
 
   Tclvar_int::operator = (newValue);
-  gettimeofday(&d_lastUpdate, NULL);
+  d_lastUpdate = when;
 
 //fprintf(stderr, "TclNet_int::setLocally (%d) at %ld:%ld.\n",
-//newValue, d_lastUpdate.tv_sec, d_lastUpdate.tv_usec);
+//newValue, when.tv_sec, when.tv_usec);
 
   return d_myint;
 }
@@ -277,7 +335,7 @@ vrpn_int32 TclNet_int::setLocally (vrpn_int32 newValue) {
 // Callback registered on the active Remote replica.
 // Executes (*(NetTcl_int *)userdata = newValue).
 int TclNet_int::propagateReceivedUpdate (void * userdata, vrpn_int32 newValue,
-                                         timeval when) {
+                                         timeval when, vrpn_bool isLocal) {
   TclNet_int * nti;
 
   if (!userdata) {
@@ -288,14 +346,12 @@ int TclNet_int::propagateReceivedUpdate (void * userdata, vrpn_int32 newValue,
 
   nti = (TclNet_int *) userdata;
 
-//fprintf(stderr, "TclNet_int (%s)::propagateReceivedUpdate (%d) at %ld:%ld.\n",
-//nti->my_tcl_varname, newValue, when.tv_sec, when.tv_usec);
+//fprintf(stderr, "TclNet_int (%s)::propagateReceivedUpdate (%d) - %s - "
+//"at %ld:%ld.\n",
+//nti->my_tcl_varname, newValue, isLocal ? "local" : "remote",
+//when.tv_sec, when.tv_usec);
 
-  nti->conditionalEquals(newValue, when);
-
-//fprintf(stderr, "In TclNet_int::propagateReceivedUpdate:  "
-//"set %s #%d to %d.\n", nti->my_tcl_varname, nti->d_activeReplica,
-//nti->d_myint);
+  nti->conditionalEquals(newValue, when, isLocal);
 
   return 0;
 }
@@ -311,8 +367,10 @@ TclNet_float::TclNet_float
                 vrpn_float64 default_value,
                 Linkvar_Floatcall c, void * userdata) :
   Tclvar_float (tcl_varname, default_value, c, userdata),
+  d_isLocked (VRPN_FALSE),
   d_replica (NULL),
   d_replicaSource (NULL),
+  d_writeReplica (0),
   d_activeReplica (0),
   d_numReplicas (0),
   d_numReplicasAllocated (0)
@@ -327,8 +385,13 @@ TclNet_float::TclNet_float
 
   d_numReplicasAllocated = STARTING_NUM_REPLICAS;
 
+#ifdef USE_OPTIMISTIC_CONNECTIONS
   d_replica[0] = new vrpn_Shared_float64_Server (tcl_varname, default_value,
                                                  VRPN_SO_IGNORE_OLD);
+#else
+  d_replica[0] = new vrpn_Shared_float64_Server (tcl_varname, default_value,
+                                                 VRPN_SO_DEFER_UPDATES);
+#endif
 
   if (!d_replica[0]) {
     fprintf(stderr, "TclNet_float::TclNet_float:  Out of memory.\n");
@@ -360,16 +423,30 @@ TclNet_float::~TclNet_float (void) {
 }
 
 
+// ACCESSORS
+
+vrpn_bool TclNet_float::isLocked (void) const {
+  return d_isLocked;
+}
+
+
+
 
 // MANIPULATORS
 
 // virtual
 vrpn_float64 TclNet_float::operator = (vrpn_float64 newValue) {
+  timeval now;
 
-  setLocally(newValue);
+  if (!d_isLocked) {
 
-//fprintf(stderr, "Setting d_replica[0] to %d.\n", d_myfloat);
-  d_replica[0]->set(d_myfloat, d_lastUpdate);
+    gettimeofday(&now, NULL);
+//fprintf(stderr, "TclNet_float (%s)::operator = (%.5f) "
+//"into d_replica[%d] at %ld:%ld.\n",
+//my_tcl_varname, newValue, d_writeReplica, now.tv_sec, now.tv_usec);
+    d_replica[d_writeReplica]->set(newValue, now);
+  }
+
   return d_myfloat;
 }
 
@@ -391,15 +468,20 @@ void TclNet_float::bindConnection (vrpn_Connection * c) {
 
 
   d_replicaSource[0] = c;
-  d_replica[0]->bindConnection(c);
+  //d_replica[0]->bindConnection(c);
 
-//fprintf(stderr, "TclNet_float::bindConnection\n");
+#ifndef USE_OPTIMISTIC_CONNECTIONS
+  d_replica[0]->register_handler
+                 (propagateReceivedUpdate, this);
+#endif
+
+//fprintf(stderr, "## TclNet_float::bindConnection\n");
 }
 
 
 // Add a new peer connection, add a replica, and start
 // tracking changes.
-void TclNet_float::addPeer (vrpn_Connection * c) {
+void TclNet_float::addPeer (vrpn_Connection * c, vrpn_bool serialize) {
   vrpn_Shared_float64 ** newReplica;
   vrpn_Connection ** newReplicaSource;
   int newNumReplicas;
@@ -434,20 +516,31 @@ void TclNet_float::addPeer (vrpn_Connection * c) {
 
 
   // Do the actual work.
+//fprintf(stderr, "## TclNet_float::addPeer - ");
 
-  d_replicaSource[d_numReplicas] = c;
-
-  d_replica[d_numReplicas] = new vrpn_Shared_float64_Remote
-       (d_replica[0]->name(), d_replica[0]->value(),
-                                               VRPN_SO_IGNORE_OLD);
-        //(vrpn_int32) VRPN_SO_IGNORE_IDEMPOTENT);
-
-  d_replica[d_numReplicas]->bindConnection(c);
+  switch (serialize) {
+    case vrpn_TRUE:
+//fprintf(stderr, "Serializer.\n");
+      d_replica[d_numReplicas] = new vrpn_Shared_float64_Server
+           (d_replica[0]->name(), d_replica[0]->value(),
+                                               VRPN_SO_DEFER_UPDATES);
+      d_replicaSource[d_numReplicas] = d_replicaSource[0];
+        // HACK:  d_replicaSource[0] is the connection that was passed
+        // in to bindConnection();  it's the SERVER connection
+      break;
+    case vrpn_FALSE:
+//fprintf(stderr, "Remote.\n");
+      d_replica[d_numReplicas] = new vrpn_Shared_float64_Remote
+           (d_replica[0]->name(), d_replica[0]->value(),
+                                               VRPN_SO_DEFER_UPDATES);
+      d_replicaSource[d_numReplicas] = c;
+      break;
+  }
+  d_replica[d_numReplicas]->bindConnection(d_replicaSource[d_numReplicas]);
 
   d_numReplicas++;
-
-//fprintf(stderr, "TclNet_float::addPeer\n");
 }
+
 
 
 
@@ -464,10 +557,6 @@ void TclNet_float::copyReplica (int whichReplica) {
     return;  // error
   }
 
-  if (whichReplica == d_activeReplica) {
-    return;  // noop
-  }
-
   *this = d_replica[whichReplica]->value();
 
 }
@@ -478,7 +567,7 @@ void TclNet_float::copyReplica (int whichReplica) {
 // receiving any network updates.
 void TclNet_float::syncReplica (int whichReplica) {
 
-//fprintf(stderr, "TclNet_float::syncReplica:  Synchronizing with %d.\n",
+//fprintf(stderr, "++ TclNet_float::syncReplica:  Synchronizing with %d.\n",
 //whichReplica);
 
   if ((whichReplica < 0) || (whichReplica >= d_numReplicas)) {
@@ -491,56 +580,70 @@ void TclNet_float::syncReplica (int whichReplica) {
     return;  // noop
   }
 
-  if (d_activeReplica) {
+#ifdef USE_OPTIMISTIC_CONNECTIONS
+  if (d_activeReplica)
+#endif
+  {
     d_replica[d_activeReplica]->unregister_handler
              (propagateReceivedUpdate, this);
   }
 
-  copyReplica(whichReplica);
   d_activeReplica = whichReplica;
 
-  if (whichReplica) {
+#ifndef USE_OPTIMISTIC_CONNECTIONS
+  d_writeReplica = whichReplica;
+#endif
+
+#ifdef USE_OPTIMISTIC_CONNECTIONS
+  if (whichReplica)
+#endif
+  {
     d_replica[whichReplica]->register_handler
                  (propagateReceivedUpdate, this);
   }
+
+  copyReplica(whichReplica);
 }
+
+void TclNet_float::lock (void) {
+  d_isLocked = VRPN_TRUE;
+}
+void TclNet_float::unlock (void) {
+  d_isLocked = VRPN_FALSE;
+}
+
 
 
 
 // virtual
 vrpn_float64 TclNet_float::conditionalEquals (vrpn_float64 newValue,
-                                              timeval when) {
+                                              timeval when,
+                                              vrpn_bool isLocal) {
 
-  if (vrpn_TimevalGreater(when, d_lastUpdate)) {
-//fprintf(stderr, "TclNet_float::conditionalEquals (%d:%d) OK\n",
-//when.tv_sec, when.tv_usec);
+//fprintf(stderr, "TclNet_float::conditionalEquals (%s, %.5f).\n",
+//my_tcl_varname, newValue);
 
-    // We want to set d_ignoreChange IFF this change will be sent to
-    // Tcl by Tclvar_float::updateTcl().
+  // We want to set d_ignoreChange IFF this change will be sent to
+  // Tcl by Tclvar_float::updateTcl().
 
+  if (!isLocal) {
     if ((newValue != mylastfloat) ||
         (d_permitIdempotentChanges)) {
       d_ignoreChange = VRPN_TRUE;
+//fprintf(stderr, "TclNet_float::conditionalEquals set d_ignoreChange.\n");
     }
-
-    setLocally(newValue);
-    d_lastUpdate = when;
-      // overrides behavior in setLocally()
-
-    d_replica[0]->set(d_myfloat, when);
-  } else {
-//fprintf(stderr, "TclNet_float::conditionalEquals (%d:%d) too old\n",
-//when.tv_sec, when.tv_usec);
   }
+
+    setLocally(newValue, when);
 
   return d_myfloat;
 }
 
 // virtual
-vrpn_float64 TclNet_float::setLocally (vrpn_float64 newValue) { 
+vrpn_float64 TclNet_float::setLocally (vrpn_float64 newValue, timeval when) { 
 
   Tclvar_float::operator = (newValue);
-  gettimeofday(&d_lastUpdate, NULL);
+  d_lastUpdate = when;
 
   return d_myfloat;
 }
@@ -552,7 +655,8 @@ vrpn_float64 TclNet_float::setLocally (vrpn_float64 newValue) {
 // Executes (*(NetTcl_float *)userdata = newValue).
 int TclNet_float::propagateReceivedUpdate (void * userdata,
                                            vrpn_float64 newValue,
-                                           timeval when) {
+                                           timeval when,
+                                           vrpn_bool isLocal) {
   TclNet_float * ntf;
 
   if (!userdata) {
@@ -566,11 +670,7 @@ int TclNet_float::propagateReceivedUpdate (void * userdata,
 //fprintf(stderr, "TclNet_float (%s)::propagateReceivedUpdate (%.5f) "
 //"at %ld:%ld.\n", ntf->my_tcl_varname, newValue, when.tv_sec, when.tv_usec);
 
-  ntf->conditionalEquals(newValue, when);
-
-//fprintf(stderr, "In TclNet_float::propagateReceivedUpdate:  "
-//"set %s #%d to %d.\n", nti->my_tcl_varname, nti->d_activeReplica,
-//nti->d_myfloat);
+  ntf->conditionalEquals(newValue, when, isLocal);
 
   return 0;
 }
@@ -587,8 +687,10 @@ int TclNet_float::propagateReceivedUpdate (void * userdata,
 TclNet_selector::TclNet_selector
                (const char * default_value) :
   Tclvar_selector (default_value),
+  d_isLocked (VRPN_FALSE),
   d_replica (NULL),
   d_replicaSource (NULL),
+  d_writeReplica (0),
   d_activeReplica (0),
   d_numReplicas (0),
   d_numReplicasAllocated (0)
@@ -614,6 +716,7 @@ TclNet_selector::TclNet_selector
   Tclvar_selector (tcl_varname, parent_name, NULL, default_value, c, userdata),
   d_replica (NULL),
   d_replicaSource (NULL),
+  d_writeReplica (0),
   d_activeReplica (0),
   d_numReplicas (0),
   d_numReplicasAllocated (0)
@@ -651,32 +754,49 @@ TclNet_selector::~TclNet_selector (void) {
 }
 
 
+// ACCESSORS
+
+vrpn_bool TclNet_selector::isLocked (void) const {
+  return d_isLocked;
+}
+
+
+
 
 // MANIPULATORS
 
 // virtual
 const char * TclNet_selector::operator = (const char * newValue) {
+  timeval now;
 
-  setLocally(newValue);
-
-  if (d_replica[0]) {
-//fprintf(stderr, "Setting d_replica[0] to %s.\n", string());
-    d_replica[0]->set(string(), d_lastUpdate);
+  gettimeofday(&now, NULL);
+  if (d_replica[d_writeReplica]) {
+    d_replica[d_writeReplica]->set(newValue, now);
   }
   return string();
 }
 
 // virtual
 const char * TclNet_selector::operator = (char * newValue) {
+  timeval now;
 
-  setLocally(newValue);
-
-  if (d_replica[0]) {
-//fprintf(stderr, "Setting d_replica[0] to %s.\n", string());
-    d_replica[0]->set(string(), d_lastUpdate);
+  gettimeofday(&now, NULL);
+  if (d_replica[d_writeReplica]) {
+    d_replica[d_writeReplica]->set(newValue, now);
   }
   return string();
 }
+
+// virtual
+void TclNet_selector::Set (const char * newValue) {
+  timeval now;
+
+  gettimeofday(&now, NULL);
+  if (d_replica[d_writeReplica]) {
+    d_replica[d_writeReplica]->set(newValue, now);
+  }
+}
+
 
 
 // virtual
@@ -684,8 +804,13 @@ void TclNet_selector::initializeTcl (const char * tcl_varname,
                                      const char * parent_name) {
   Tclvar_selector::initializeTcl(tcl_varname, parent_name);
 
+#ifdef USE_OPTIMISTIC_CONNECTIONS
   d_replica[0] = new vrpn_Shared_String_Server (tcl_varname, string(),
                                                 VRPN_SO_IGNORE_OLD);
+#else
+  d_replica[0] = new vrpn_Shared_String_Server (tcl_varname, string(),
+                                                VRPN_SO_DEFER_UPDATES);
+#endif
 
   if (!d_replica[0]) {
     fprintf(stderr, "TclNet_selector::TclNet_selector:  Out of memory.\n");
@@ -719,15 +844,20 @@ void TclNet_selector::bindConnection (vrpn_Connection * c) {
   }
 
   d_replicaSource[0] = c;
-  d_replica[0]->bindConnection(c);
+  //d_replica[0]->bindConnection(c);
 
-//fprintf(stderr, "TclNet_selector::bindConnection\n");
+#ifndef USE_OPTIMISTIC_CONNECTIONS
+  d_replica[0]->register_handler
+                 (propagateReceivedUpdate, this);
+#endif
+
+//fprintf(stderr, "## TclNet_selector::bindConnection\n");
 }
 
 
 // Add a new peer connection, add a replica, and start
 // tracking changes.
-void TclNet_selector::addPeer (vrpn_Connection * c) {
+void TclNet_selector::addPeer (vrpn_Connection * c, vrpn_bool serialize) {
   vrpn_Shared_String ** newReplica;
   vrpn_Connection ** newReplicaSource;
   int newNumReplicas;
@@ -763,18 +893,30 @@ void TclNet_selector::addPeer (vrpn_Connection * c) {
 
   // Do the actual work.
 
-  d_replicaSource[d_numReplicas] = c;
+//fprintf(stderr, "## TclNet_selector::addPeer -");
 
-  d_replica[d_numReplicas] = new vrpn_Shared_String_Remote
-       (d_replica[0]->name(), d_replica[0]->value(),
-                                               VRPN_SO_IGNORE_OLD);
-        //(vrpn_int32) VRPN_SO_IGNORE_IDEMPOTENT);
-
-  d_replica[d_numReplicas]->bindConnection(c);
+  switch (serialize) {
+    case vrpn_TRUE:
+//fprintf(stderr, "Serializer.\n");
+      d_replica[d_numReplicas] = new vrpn_Shared_String_Server
+           (d_replica[0]->name(), d_replica[0]->value(),
+                                               VRPN_SO_DEFER_UPDATES);
+      d_replicaSource[d_numReplicas] = d_replicaSource[0];
+        // HACK:  d_replicaSource[0] is the connection that was passed
+        // in to bindConnection();  it's the SERVER connection
+      break;
+    case vrpn_FALSE:
+//fprintf(stderr, "Remote.\n");
+      d_replica[d_numReplicas] = new vrpn_Shared_String_Remote
+           (d_replica[0]->name(), d_replica[0]->value(),
+                                               VRPN_SO_DEFER_UPDATES);
+      d_replicaSource[d_numReplicas] = c;
+      break;
+  }
+  d_replica[d_numReplicas]->bindConnection(d_replicaSource[d_numReplicas]);
 
   d_numReplicas++;
 
-//fprintf(stderr, "TclNet_selector::addPeer\n");
 }
 
 
@@ -792,10 +934,6 @@ void TclNet_selector::copyReplica (int whichReplica) {
     return;  // error
   }
 
-  if (whichReplica == d_activeReplica) {
-    return;  // noop
-  }
-
   *this = d_replica[whichReplica]->value();
 
 }
@@ -806,7 +944,7 @@ void TclNet_selector::copyReplica (int whichReplica) {
 // receiving any network updates.
 void TclNet_selector::syncReplica (int whichReplica) {
 
-//fprintf(stderr, "TclNet_selector::syncReplica:  Synchronizing with %d.\n",
+//fprintf(stderr, "++ TclNet_selector::syncReplica:  Synchronizing with %d.\n",
 //whichReplica);
 
   if ((whichReplica < 0) || (whichReplica >= d_numReplicas)) {
@@ -819,58 +957,68 @@ void TclNet_selector::syncReplica (int whichReplica) {
     return;  // noop
   }
 
-  if (d_activeReplica) {
+#ifdef USE_OPTIMISTIC_CONNECTIONS
+  if (d_activeReplica)
+#endif
+  {
     d_replica[d_activeReplica]->unregister_handler
              (propagateReceivedUpdate, this);
   }
 
-  copyReplica(whichReplica);
   d_activeReplica = whichReplica;
 
-  if (whichReplica) {
+#ifndef USE_OPTIMISTIC_CONNECTIONS
+  d_writeReplica = whichReplica;
+#endif
+
+#ifdef USE_OPTIMISTIC_CONNECTIONS
+  if (whichReplica)
+#endif
+  {
     d_replica[whichReplica]->register_handler
                  (propagateReceivedUpdate, this);
   }
+
+  copyReplica(whichReplica);
 }
+
+void TclNet_selector::lock (void) {
+  d_isLocked = VRPN_TRUE;
+}
+void TclNet_selector::unlock (void) {
+  d_isLocked = VRPN_FALSE;
+}
+
 
 
 
 // virtual
 const char * TclNet_selector::conditionalEquals (const char * newValue,
-                                                 timeval when) {
+                                                 timeval when,
+                                                 vrpn_bool isLocal) {
 
-  if (vrpn_TimevalGreater(when, d_lastUpdate)) {
-//fprintf(stderr, "TclNet_selector::conditionalEquals (%d:%d) OK\n",
-//when.tv_sec, when.tv_usec);
+  // We want to set d_ignoreChange IFF this change will be sent to
+  // Tcl by Tclvar_float::updateTcl().
 
-    // We want to set d_ignoreChange IFF this change will be sent to
-    // Tcl by Tclvar_float::updateTcl().
-
+  if (!isLocal) {
     if ((strcmp(newValue, d_myLastString)) ||
         (d_permitIdempotentChanges)) {
       d_ignoreChange = VRPN_TRUE;
+//fprintf(stderr, "TclNet_selector::conditionalEquals set d_ignoreChange.\n");
     }
-
-    setLocally(newValue);
-    d_lastUpdate = when;
-      // overrides behavior in setLocally()
-
-    if (d_replica[0]) {
-      d_replica[0]->set(string(), when);
-    }
-  } else {
-//fprintf(stderr, "TclNet_selector::conditionalEquals (%d:%d) too old\n",
-//when.tv_sec, when.tv_usec);
   }
+
+  setLocally(newValue, when);
 
   return string();
 }
 
 // virtual
-const char * TclNet_selector::setLocally (const char * newValue) { 
+const char * TclNet_selector::setLocally (const char * newValue,
+                                          timeval when) { 
 
   Tclvar_selector::operator = (newValue);
-  gettimeofday(&d_lastUpdate, NULL);
+  d_lastUpdate = when;
 
   return string();
 }
@@ -882,7 +1030,8 @@ const char * TclNet_selector::setLocally (const char * newValue) {
 // Executes (*(NetTcl_float *)userdata = newValue).
 int TclNet_selector::propagateReceivedUpdate (void * userdata,
                                               const char * newValue,
-                                              timeval when) {
+                                              timeval when,
+                                              vrpn_bool isLocal) {
   TclNet_selector * ntf;
 
   if (!userdata) {
@@ -896,7 +1045,7 @@ int TclNet_selector::propagateReceivedUpdate (void * userdata,
 //fprintf(stderr, "TclNet_selector (%s)::propagateReceivedUpdate (%s) "
 //"at %ld:%ld.\n", ntf->d_myTclVarname, newValue, when.tv_sec, when.tv_usec);
 
-  ntf->conditionalEquals(newValue, when);
+  ntf->conditionalEquals(newValue, when, isLocal);
 
 //fprintf(stderr, "In TclNet_selector::propagateReceivedUpdate:  "
 //"set %s #%d to %d.\n", nti->my_tcl_varname, nti->d_activeReplica,

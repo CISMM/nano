@@ -38,124 +38,24 @@ pack $sharedptr(sp).collab_machine_name -side top
 
 
 
-# Streamfile synchronization
 # NANOX
 
-frame $sharedptr(sp).stream_frame
-pack $sharedptr(sp).stream_frame -fill x -side top
+# Christmas 99 scheme -
+#   each machine has a private state copy
+#   all machines have a shared state copy
+# "copy" button copies inactive state to active state
+# "share" checkbox selects between private and shared states
 
-checkbutton $sharedptr(sp).stream_frame.synchronize_stream \
-    -text "Synchronize stream files"
+set copy_inactive_state 0
+set share_sync_state 0
 
-set get_stream_sync 0
+button $sharedptr(sp).copy_button \
+  -text "Copy" -command {set copy_inactive_state 1}
 
-button $sharedptr(sp).stream_frame.get_stream_sync_button \
-    -text "Copy" -command {set get_stream_sync 1}
+checkbutton $sharedptr(sp).share_button \
+  -text "Share" -variable share_sync_state
 
-pack $sharedptr(sp).stream_frame.synchronize_stream -side left
-pack $sharedptr(sp).stream_frame.get_stream_sync_button -side right
-
-# View synchronization
-# NANOX
-
-frame $sharedptr(sp).view_frame
-pack $sharedptr(sp).view_frame -fill x -side top
-
-checkbutton $sharedptr(sp).view_frame.synchronize_view \
-    -text "Synchronize view"
-
-set get_view_sync 0
-
-button $sharedptr(sp).view_frame.get_view_sync_button \
-    -text "Copy" -command {set get_view_sync 1}
-
-# View synchronization hierarchy
-
-frame $sharedptr(sp).view_frame.sf
-pack $sharedptr(sp).view_frame.sf -side bottom
-
-# .5 cm left padding
-frame $sharedptr(sp).view_frame.sf.pad -width .5c
-pack $sharedptr(sp).view_frame.sf.pad -side left
-
-frame $sharedptr(sp).view_frame.sf.plane_frame
-pack $sharedptr(sp).view_frame.sf.plane_frame -fill x -side top
-
-checkbutton \
-  $sharedptr(sp).view_frame.sf.plane_frame.synch_view_plane \
-  -text "Plane"
-set get_view_plane_sync 0
-button \
-  $sharedptr(sp).view_frame.sf.plane_frame.get_view_plane_sync \
-  -text "Copy" -command {set get_view_plane_sync 1}
-pack $sharedptr(sp).view_frame.sf.plane_frame.synch_view_plane \
-  -side left
-pack $sharedptr(sp).view_frame.sf.plane_frame.get_view_plane_sync \
-  -side right
-
-frame $sharedptr(sp).view_frame.sf.color_frame
-pack $sharedptr(sp).view_frame.sf.color_frame -fill x -side top
-
-checkbutton $sharedptr(sp).view_frame.sf.color_frame.synch_view_color \
-  -text "Color"
-set get_view_color_sync 0
-button $sharedptr(sp).view_frame.sf.color_frame.get_view_color_sync \
-  -text "Copy" -command {set get_view_color_sync 1}
-pack $sharedptr(sp).view_frame.sf.color_frame.synch_view_color -side left
-pack $sharedptr(sp).view_frame.sf.color_frame.get_view_color_sync -side right
-
-frame $sharedptr(sp).view_frame.sf.measure_frame
-pack $sharedptr(sp).view_frame.sf.measure_frame -fill x -side top
-
-checkbutton $sharedptr(sp).view_frame.sf.measure_frame.synch_view_measure \
-  -text "Measure Lines"
-set get_view_measure_sync 0
-button $sharedptr(sp).view_frame.sf.measure_frame.get_view_measure_sync \
-  -text "Copy" -command {set get_view_measure_sync 1}
-pack $sharedptr(sp).view_frame.sf.measure_frame.synch_view_measure -side left
-pack $sharedptr(sp).view_frame.sf.measure_frame.get_view_measure_sync \
-  -side right
-
-frame $sharedptr(sp).view_frame.sf.lighting_frame
-pack $sharedptr(sp).view_frame.sf.lighting_frame -fill x -side top
-
-checkbutton $sharedptr(sp).view_frame.sf.lighting_frame.synch_view_lighting \
-  -text "Lighting"
-set get_view_lighting_sync 0
-button $sharedptr(sp).view_frame.sf.lighting_frame.get_view_lighting_sync \
-  -text "Copy" -command {set get_view_lighting_sync 1}
-pack $sharedptr(sp).view_frame.sf.lighting_frame.synch_view_lighting -side left
-pack $sharedptr(sp).view_frame.sf.lighting_frame.get_view_lighting_sync \
-  -side right
-
-pack $sharedptr(sp).view_frame.synchronize_view -side left
-pack $sharedptr(sp).view_frame.get_view_sync_button -side right
-
-
-frame $sharedptr(sp).view_frame.sf.contour_frame
-pack $sharedptr(sp).view_frame.sf.contour_frame -fill x -side top
-
-checkbutton $sharedptr(sp).view_frame.sf.contour_frame.synch_view_contour \
-  -text "Contour Lines"
-set get_view_contour_sync 0
-button $sharedptr(sp).view_frame.sf.contour_frame.get_view_contour_sync \
-  -text "Copy" -command {set get_view_contour_sync 1}
-pack $sharedptr(sp).view_frame.sf.contour_frame.synch_view_contour -side left
-pack $sharedptr(sp).view_frame.sf.contour_frame.get_view_contour_sync \
-  -side right
-
-
-frame $sharedptr(sp).view_frame.sf.grid_frame
-pack $sharedptr(sp).view_frame.sf.grid_frame -fill x -side top
-
-checkbutton $sharedptr(sp).view_frame.sf.grid_frame.synch_view_grid \
-  -text "Rulergrid"
-set get_view_grid_sync 0
-button $sharedptr(sp).view_frame.sf.grid_frame.get_view_grid_sync \
-  -text "Copy" -command {set get_view_grid_sync 1}
-pack $sharedptr(sp).view_frame.sf.grid_frame.synch_view_grid -side left
-pack $sharedptr(sp).view_frame.sf.grid_frame.get_view_grid_sync \
-  -side right
-
+pack $sharedptr(sp).share_button -side top
+pack $sharedptr(sp).copy_button -side top
 
 

@@ -126,7 +126,7 @@ class nmg_Graphics {
       //for setting position and rotation of icon for collaborator's hand
       //icon
 
-    virtual void setCollabMode(vrpn_int32) = 0;
+    virtual void setCollabMode(int) = 0;
       //for setting position and rotation of icon for collaborator's hand
       //icon
 
@@ -483,8 +483,8 @@ class nmg_Graphics {
     // for shared hand pointers
     char * encode_setCollabHandPos (int * len, double [3], double [4]);
     int decode_setCollabHandPos (const char *buf, double [3], double [4]);
-    char * encode_setCollabMode (int * len, vrpn_int32);
-    int decode_setCollabMode (const char *buf, vrpn_int32 *);
+    char * encode_setCollabMode (int * len, int);
+    int decode_setCollabMode (const char *buf, int *);
 
     // Genetic Textures Network Transmission Functions:
     char * encode_enableGeneticTextures (int * len, int);

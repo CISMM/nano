@@ -40,7 +40,7 @@
 #define max(a,b) ((a)<(b)?(b):(a))
 #endif
 
-Vertex_Struct ** vertexptr;
+Vertex_Struct ** vertexptr = NULL;
 
 
 
@@ -225,6 +225,11 @@ int init_vertexArray(int x, int y)
      dim=x;
   }       
 
+  // with RenderClient may be called more than once;  why waste memory?
+  if (vertexptr) {
+    free(vertexptr);
+  }
+
    vertexptr= (Vertex_Struct **)malloc(
                                sizeof(Vertex_Struct *) * dim);
 
@@ -302,29 +307,39 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
   }
   
   /* Find the normal for the vertex */
+  // Using prerendered colors (and no lighting), we don't need normals
+  if (!g_PRERENDERED_COLORS) {
+    if (stm_compute_plane_normal(planes.height, x,y,
+         (float) ((max_x - min_x) / planes.height->numX()),
+         (float) ((max_y - min_y) / planes.height->numY()),
+			         1.0f,
+			         Normal)) {
+      fprintf(stderr,"describe_gl_vertex(): Can't find normal!\n");
+      return -1;
+    }
   
-  if (stm_compute_plane_normal(planes.height, x,y,
-       (float) ((max_x - min_x) / planes.height->numX()),
-       (float) ((max_y - min_y) / planes.height->numY()),
-			       1.0f,
-			       Normal)) {
-    fprintf(stderr,"describe_gl_vertex(): Can't find normal!\n");
-    return -1;
+    if (g_VERTEX_ARRAY) {
+      vertexArrayPtr->Normal[0] = (GLshort) (Normal[0] * 32767);
+      vertexArrayPtr->Normal[1] = (GLshort) (Normal[1] * 32767);
+      vertexArrayPtr->Normal[2] = (GLshort) (Normal[2] * 32767);
+    }
+    else {
+      glNormal3fv(Normal);
+    }
   }
-  
-  if (g_VERTEX_ARRAY) {
-    vertexArrayPtr->Normal[0] = (GLshort) (Normal[0] * 32767);
-    vertexArrayPtr->Normal[1] = (GLshort) (Normal[1] * 32767);
-    vertexArrayPtr->Normal[2] = (GLshort) (Normal[2] * 32767);
-  }
-  else {
-    glNormal3fv(Normal);
-  }
+
   /* Color the vertex according to its color parameter, if we have
    * a color plane.  Clip the value mapped to color from 0 to 1.  */
   // XXX At some point, we may want to set alpha.
-  if (planes.color) {
-    GLfloat Color [4];
+  GLfloat Color [4];
+  if (g_PRERENDERED_COLORS) {
+    Color[0] = planes.red->value(x, y);
+    Color[1] = planes.green->value(x, y);
+    Color[2] = planes.blue->value(x, y);
+    Color[3] = g_surface_alpha * 255;
+      // XXX why do the other implementations cast this to a GLubyte
+      // before writing it into a float?
+  } else if (planes.color) {
     double scale = (planes.color->value(x, y) - g_color_slider_min) /
       (g_color_slider_max - g_color_slider_min);
     scale = min(1.0, scale);
@@ -341,12 +356,13 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
       
       }
     }
+  }
+  if (g_PRERENDERED_COLORS || planes.color) {
     if (g_VERTEX_ARRAY) {
       vertexArrayPtr->Color[0] = (GLubyte) (Color[0] * 255);
       vertexArrayPtr->Color[1] = (GLubyte) (Color[1] * 255); 
       vertexArrayPtr->Color[2] = (GLubyte) (Color[2] * 255); 
       vertexArrayPtr->Color[3] = (GLubyte) (g_surface_alpha * 255);
-      
     }
     else {
       glColor4fv(Color);

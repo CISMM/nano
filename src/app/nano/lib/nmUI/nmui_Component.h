@@ -28,6 +28,7 @@ class vrpn_Connection;  // from <vrpn_Connection.h>
 
 typedef int (* nmui_SyncRequestHandler) (void * userdata);
 typedef int (* nmui_SyncCompleteHandler) (void * userdata);
+typedef int (* nmui_LockHandler) (void * userdata);
 
 class nmui_Component {
 
@@ -44,9 +45,14 @@ class nmui_Component {
 
     // ACCESSORS
 
-    const char * name (void) const { return d_name; }
+    const char * name (void) const;
 
-    int numPeers (void) const { return d_numPeers; }
+    int numPeers (void) const;
+
+    int synchronizedTo (void) const;
+
+    vrpn_bool isLockedRemotely (void) const;
+    vrpn_bool holdsRemoteLocks (void) const;
 
     // MANIPULATORS
 
@@ -56,7 +62,7 @@ class nmui_Component {
     void add (nmui_Component *);
 
     void bindConnection (vrpn_Connection *);
-    void addPeer (vrpn_Connection *);
+    void addPeer (vrpn_Connection *, vrpn_bool serialize);
 
     void copyReplica (int whichReplica);
     void syncReplica (int whichReplica);
@@ -92,9 +98,11 @@ class nmui_Component {
       // HACK:  assumes there's only been one peer added that
       // could be outstanding.
 
-  protected:
-
     void initializeConnection (vrpn_Connection *);
+      // to be called on a connection on which we should recieve
+      // and respond to synchronization requests
+
+  protected:
 
   private:
 
@@ -111,12 +119,18 @@ class nmui_Component {
 
     //static vrpn_bool s_dataFromSync;
 
+    int d_synchronizedTo;
+
     int d_numPeers;
+    vrpn_bool d_isLockedRemotely;
+    vrpn_bool d_holdsRemoteLocks;
 
     vrpn_Connection * d_connection;
     vrpn_int32 d_myId;
     vrpn_int32 d_syncRequest_type;
     vrpn_int32 d_syncComplete_type;
+    vrpn_int32 d_lock_type;
+    vrpn_int32 d_unlock_type;
 
     struct reqHandlerEntry {
       nmui_SyncRequestHandler handler;
@@ -130,8 +144,18 @@ class nmui_Component {
       completeHandlerEntry * next;
     };
     completeHandlerEntry * d_completeHandlers;
+    struct lockHandlerEntry {
+      nmui_LockHandler handler;
+      void * userdata;
+      lockHandlerEntry * next;
+    };
+    lockHandlerEntry * d_lockHandlers;
+    lockHandlerEntry * d_unlockHandlers;
+
+    void do_handle_syncRequest (void);
     static int handle_syncRequest (void *, vrpn_HANDLERPARAM);
     static int handle_syncComplete (void *, vrpn_HANDLERPARAM);
+
 
     // HACK
     vrpn_Connection * d_peer;

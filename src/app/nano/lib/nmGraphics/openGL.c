@@ -154,7 +154,7 @@ int build_list_set
      GLdouble * maxColor,
      int (* stripfn)
        (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *))
-  {
+{
 
   v_gl_set_context_to_vlib_window(); 
   // globals:
@@ -223,8 +223,8 @@ int build_list_set
      if (glGetError()!=GL_NO_ERROR) {
       printf(" Error setting GL_TEXTURE_COORD_ARRAY_EXT.\n");
      } 
-  }
 #endif // PROJECTIVE_TEXTURE
+  }
 
 #endif // sgi or __CYGWIN__
 
@@ -378,8 +378,8 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
 }
 
 //UGRAPHICS GLOBAL DEFINED IN MICROSCAPE.C
-#include <UTree.h>
-#include <URender.h>
+#include "UTree.h"
+#include "URender.h"
 extern UTree World;
 int draw_world (int whichUser) {
 
@@ -408,7 +408,12 @@ int draw_world (int whichUser) {
   VERBOSE(4,"    Looking up planes in openGL.c");
   TIMERVERBOSE(5, mytimer, "draw_world:Looking up planes");
 
-  nmb_PlaneSelection planes; planes.lookup(dataset);
+  nmb_PlaneSelection planes;
+  if (g_PRERENDERED_COLORS) {
+    planes.lookupPrerendered(g_prerendered_grid);
+  } else {
+    planes.lookup(dataset);
+  }
   if (planes.height == NULL) {	
       return -1;
   }

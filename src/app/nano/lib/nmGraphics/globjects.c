@@ -674,7 +674,7 @@ int make_collab_hand_icon(double pos[], double rotate[], vrpn_int32 mode) {
     glMultMatrixd(rot_mat);
     glColor3f(1.0, 0.2, 0.2);
     make_cone();
-    printf("XXX Making the collaborative hand icon for %s\n",MODE_NAMES[mode]);
+    //printf("XXX Making the collaborative hand icon for %s\n",MODE_NAMES[mode]);
   glEndList();
   return (collab_hand_struct); 
 }

@@ -14,6 +14,7 @@
 // (in place of the Tclvar_selectors there).
 
 class BCPlane;  // from BCPlane.h
+class BCGrid;  // from BCGrid.h
 class nmb_Dataset;  // from nmb_Dataset.h
 
 class nmb_PlaneSelection {
@@ -25,11 +26,17 @@ class nmb_PlaneSelection {
 
     void lookup (nmb_Dataset *);
       // Fills in the data members with current data from nmb_Datset
+    void lookupPrerendered (BCGrid *);
 
     BCPlane * height;
     BCPlane * color;
     BCPlane * contour;
     BCPlane * alpha;
+
+    // Support for prerendered surfaces
+    BCPlane * red;
+    BCPlane * green;
+    BCPlane * blue;
 };
 
 #endif  // NMB_PLANE_SELECTION_H

@@ -159,10 +159,10 @@ protected:
 
 // The user should create and manage the semaphores.
 
-typedef struct _ThreadData {
+struct ThreadData {
   void *pvUD;
   Semaphore *ps;
-} ThreadData;
+};
 
 typedef void (*THREAD_FUNC) ( void *pvThreadData );
 
@@ -214,6 +214,9 @@ protected:
 
 /*****************************************************************************\
   $Log$
+  Revision 1.7  1999/12/15 15:26:11  juliano
+  get rid of the typedef around struct ThreadData.  Now, compiler errors have the real name, not the phony struct tag.
+
   Revision 1.6  1999/05/28 21:44:22  lovelace
   One small change that was left out of the previous NT commit.  These
   files had been changed in the include directory, but not in the

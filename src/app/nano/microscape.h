@@ -58,7 +58,7 @@ class Microscope;
 class Xform;		//added from ugraphics
 
 #define	MICROSCAPE_MAJOR_VERSION	(8)
-#define	MICROSCAPE_MINOR_VERSION	(0)
+#define	MICROSCAPE_MINOR_VERSION	(1)
 
 
 #define HEAD	0
@@ -118,6 +118,7 @@ extern	ColorMap	*curColorMap;	// microscape.c
  ************************/
 
 extern int      stride;                 // vrml.C
+extern	int	using_phantom_button;	// microscape.c
 
 #define	NUM_KNOBS	(5)
 extern	float		MIN_K;  /* make these variable, different */

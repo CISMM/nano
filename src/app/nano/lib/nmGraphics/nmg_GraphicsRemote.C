@@ -550,7 +550,7 @@ void nmg_Graphics_Remote::setCollabHandPos (double pos[], double quat[])
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setCollabMode (vrpn_int32 mode)
+void nmg_Graphics_Remote::setCollabMode (int mode)
 {
   struct timeval now;
   char *msgbuf;

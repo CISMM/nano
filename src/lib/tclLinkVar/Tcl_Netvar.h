@@ -1,11 +1,11 @@
 #ifndef TCL_NET_VAR_H
 #define TCL_NET_VAR_H
 
-//#include <sys/time.h>  // for struct timeval - get from vrpn_Shared
-#include <stdio.h>
-
 #include <vrpn_Shared.h>  // for architecture-independent sizes
 #include <vrpn_Types.h>
+
+//#include <sys/time.h>  // for struct timeval - get from vrpn_Shared
+#include <stdio.h>
 
 #include <Tcl_Linkvar.h>
 
@@ -22,11 +22,13 @@ class TclNet_int : public Tclvar_int {
                 Linkvar_Intcall c = NULL, void * userdata = NULL);
     virtual ~TclNet_int (void);
 
+    // ACCESSORS
+
+    vrpn_bool isLocked (void) const;
+
     // MANIPULATORS
 
     virtual vrpn_int32 operator = (vrpn_int32);
-    virtual vrpn_int32 operator ++ (void);
-    virtual vrpn_int32 operator ++ (int);
       // Require changing base class;  should also check the
       // return type of these against reference books.
       // All of these set the value of d_replica[0],
@@ -36,7 +38,7 @@ class TclNet_int : public Tclvar_int {
     void bindConnection (vrpn_Connection *);
       // Don't insist that the vrpn_Connection be available in
       // the constructor, or we can't have globals.
-    void addPeer (vrpn_Connection *);
+    void addPeer (vrpn_Connection *, vrpn_bool serialize);
       // Add a new peer connection, add a replica, and start
       // tracking changes.
 
@@ -48,7 +50,14 @@ class TclNet_int : public Tclvar_int {
       // Copy the state of the which-th replica, and any changes to it.
       // To "unsync", issue syncReplica(0)
 
+    void lock (void);
+    void unlock (void);
+      // While locked, a Tcl_Netvar will ignore all calls to operator =
+      // or operator ++.
+
   protected:
+
+    vrpn_bool d_isLocked;
 
     timeval d_lastUpdate;
       // Time at which the last update was made, or the timestamp
@@ -57,11 +66,13 @@ class TclNet_int : public Tclvar_int {
     vrpn_Shared_int32 ** d_replica;
     vrpn_Connection ** d_replicaSource;
 
-    int d_activeReplica;
+    int d_writeReplica;
+    int d_activeReplica;  // for reads
     int d_numReplicas;
     int d_numReplicasAllocated;
 
-    virtual vrpn_int32 conditionalEquals (vrpn_int32 value, timeval when);
+    virtual vrpn_int32 conditionalEquals (vrpn_int32 value, timeval when,
+                                          vrpn_bool isLocal);
       // Operator = overwrites myint and sets d_lastUpdate.
       // conditionalEquals() overwrites myint IFF when > d_lastUpdate;
       // otherwise it is ignored.  The timestamp is written into
@@ -69,10 +80,10 @@ class TclNet_int : public Tclvar_int {
       // Should ONLY be used as a helper function for propagateReceivedUpdate
       // because it plays with d_ignoreChange.
 
-    virtual vrpn_int32 setLocally (vrpn_int32 value);
+    virtual vrpn_int32 setLocally (vrpn_int32 value, timeval when);
 
     static int propagateReceivedUpdate (void * userdata, vrpn_int32 newValue,
-                                        timeval when);
+                                        timeval when, vrpn_bool isLocal);
       // Callback registered on the active Remote replica.  
       // Used to execute (*(NetTcl_int *)userdata = newValue).
       // Now executes (((NetTcl_int *) userdata)->conditionalEquals
@@ -88,6 +99,10 @@ class TclNet_float : public Tclvar_float {
                 Linkvar_Floatcall c = NULL, void * userdata = NULL);
     virtual ~TclNet_float (void);
 
+    // ACCESSORS
+
+    vrpn_bool isLocked (void) const;
+
     // MANIPULATORS
 
     virtual vrpn_float64 operator = (vrpn_float64);
@@ -100,7 +115,7 @@ class TclNet_float : public Tclvar_float {
     void bindConnection (vrpn_Connection *);
       // Don't insist that the vrpn_Connection be available in
       // the constructor, or we can't have globals.
-    void addPeer (vrpn_Connection *);
+    void addPeer (vrpn_Connection *, vrpn_bool serialize);
       // Add a new peer connection, add a replica, and start
       // tracking changes.
 
@@ -112,7 +127,14 @@ class TclNet_float : public Tclvar_float {
       // Copy the state of the which-th replica, and any changes to it.
       // To "unsync", issue syncReplica(0)
 
+    void lock (void);
+    void unlock (void);
+      // While locked, a Tcl_Netvar will ignore all calls to operator =
+      // or operator ++.
+
   protected:
+
+    vrpn_bool d_isLocked;
 
     timeval d_lastUpdate;
       // Time at which the last update was made, or the timestamp
@@ -121,11 +143,13 @@ class TclNet_float : public Tclvar_float {
     vrpn_Shared_float64 ** d_replica;
     vrpn_Connection ** d_replicaSource;
 
+    int d_writeReplica;
     int d_activeReplica;
     int d_numReplicas;
     int d_numReplicasAllocated;
 
-    virtual vrpn_float64 conditionalEquals (vrpn_float64 value, timeval when);
+    virtual vrpn_float64 conditionalEquals (vrpn_float64 value, timeval when,
+                                          vrpn_bool isLocal);
       // Operator = overwrites myint and sets d_lastUpdate.
       // conditionalEquals() overwrites myint IFF when > d_lastUpdate;
       // otherwise it is ignored.  The timestamp is written into
@@ -133,10 +157,10 @@ class TclNet_float : public Tclvar_float {
       // Should ONLY be used as a helper function for propagateReceivedUpdate
       // because it plays with d_ignoreChange.
 
-    virtual vrpn_float64 setLocally (vrpn_float64 value);
+    virtual vrpn_float64 setLocally (vrpn_float64 value, timeval when);
 
     static int propagateReceivedUpdate (void * userdata, vrpn_float64 newValue,
-                                        timeval when);
+                                        timeval when, vrpn_bool isLocal);
       // Callback registered on the active Remote replica.  
       // Used to execute (*(NetTcl_float *)userdata = newValue).
       // Now executes (((NetTcl_float *) userdata)->conditionalEquals
@@ -155,12 +179,17 @@ class TclNet_selector : public Tclvar_selector {
                      Linkvar_Selectcall c = NULL, void * userdata = NULL);
     virtual ~TclNet_selector (void);
 
+    // ACCESSORS
+
+    vrpn_bool isLocked (void) const;
+
     // MANIPULATORS
 
     virtual const char * operator = (const char *);
     virtual const char * operator = (char *);
       // For some unknown reason the const char * arg'd version
       // sometimes doesn't resolve correctly?
+    virtual void Set (const char *);
 
     virtual void initializeTcl (const char * tcl_varname,
                                 const char * parent_name);
@@ -169,7 +198,7 @@ class TclNet_selector : public Tclvar_selector {
     void bindConnection (vrpn_Connection *);
       // Don't insist that the vrpn_Connection be available in
       // the constructor, or we can't have globals.
-    void addPeer (vrpn_Connection *);
+    void addPeer (vrpn_Connection *, vrpn_bool serialize);
       // Add a new peer connection, add a replica, and start
       // tracking changes.
 
@@ -181,7 +210,14 @@ class TclNet_selector : public Tclvar_selector {
       // Copy the state of the which-th replica, and any changes to it.
       // To "unsync", issue syncReplica(0)
 
+    void lock (void);
+    void unlock (void);
+      // While locked, a Tcl_Netvar will ignore all calls to operator =
+      // or operator ++.
+
   protected:
+
+    vrpn_bool d_isLocked;
 
     timeval d_lastUpdate;
       // Time at which the last update was made, or the timestamp
@@ -190,11 +226,13 @@ class TclNet_selector : public Tclvar_selector {
     vrpn_Shared_String ** d_replica;
     vrpn_Connection ** d_replicaSource;
 
+    int d_writeReplica;
     int d_activeReplica;
     int d_numReplicas;
     int d_numReplicasAllocated;
 
-    virtual const char * conditionalEquals (const char * value, timeval when);
+    virtual const char * conditionalEquals (const char * value, timeval when,
+                                          vrpn_bool isLocal);
       // Operator = overwrites myint and sets d_lastUpdate.
       // conditionalEquals() overwrites myint IFF when > d_lastUpdate;
       // otherwise it is ignored.  The timestamp is written into
@@ -202,10 +240,10 @@ class TclNet_selector : public Tclvar_selector {
       // Should ONLY be used as a helper function for propagateReceivedUpdate
       // because it plays with d_ignoreChange.
 
-    virtual const char * setLocally (const char * value);
+    virtual const char * setLocally (const char * value, timeval when);
 
     static int propagateReceivedUpdate (void * userdata, const char * newValue,
-                                        timeval when);
+                                        timeval when, vrpn_bool isLocal);
       // Callback registered on the active Remote replica.
       // Used to execute (*(NetTcl_float *)userdata = newValue).
       // Now executes (((NetTcl_float *) userdata)->conditionalEquals

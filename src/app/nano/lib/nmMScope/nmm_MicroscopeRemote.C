@@ -1415,6 +1415,10 @@ long nmm_Microscope_Remote::DisableVoltsource (long _which) {
   return dispatchMessage(len, msgbuf, d_DisableVoltsource_type);
 }
 
+// HACK to get ohmmeter data into point results
+static float lastResistanceReceived = 0;
+// END HACK
+
 long nmm_Microscope_Remote::RecordResistance
         (long meter, struct timeval t, float res,
          float v, float r, float f) {
@@ -1424,6 +1428,9 @@ long nmm_Microscope_Remote::RecordResistance
   msgbuf = encode_RecordResistance(&len, meter, t, res, v, r, f);
   if (!msgbuf)
     return -1;
+
+  // HACK - this is a temporary fix to get resistance values into the modfile
+  lastResistanceReceived = res;
 
   return dispatchMessage(len, msgbuf, d_RecordResistance_type);
 }
@@ -3516,14 +3523,26 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
                      state.data.inputPoint->y(),
                      0.0f, z_value, VRPN_TRUE);
 
-  if (state.modify.style != FORCECURVE)	// XXX HACK - we need point results
+  if (state.modify.style != FORCECURVE)	{// XXX HACK - we need point results
+     // HACK - to get ohmmeter data in point results
+     static int channel_added = 0;
+     char *res_channel_name = "Resistance";
+     char *res_channel_unit = "Ohms";
+     if (!channel_added) {
+        state.data.inputPoint->addNewValue(res_channel_name, res_channel_unit);
+        channel_added = 1;
+     }
+     Point_value *pv = state.data.inputPoint->getValueByName(res_channel_name);
+     pv->setValue(lastResistanceReceived);
+     // END HACK
+
      doPointDataCallbacks(state.data.inputPoint); // to feel what we are
 							// doing but we don't
 							// want to store them
 							// in a modfile because
 							// its being used to
 							// store the force curve
-
+  }
   // latency compensation
   d_decoration->trueTipLocation[0] = _x;
   d_decoration->trueTipLocation[1] = _y;

@@ -84,7 +84,7 @@ static	char	*handle_int_value_change(ClientData clientData,
 //fprintf(stderr, "handle_int_value_change (%s, %d):  ignoring the change.\n",
 //intvar->my_tcl_varname, value);
 
-          intvar->doCallbacks();
+          //intvar->doCallbacks();
         } else { //no errors: update the variable
           // Need to invoke operator = since it might be redefined
           // by derived class.  (?)
@@ -94,7 +94,7 @@ static	char	*handle_int_value_change(ClientData clientData,
 
           *intvar = value;
           intvar->mylastint = value;
-          intvar->doCallbacks();
+          //intvar->doCallbacks();
 	} 
 
 	return NULL;
@@ -124,7 +124,7 @@ static	char	*handle_float_value_change(ClientData clientData,
 		floatvar->d_dirty = VRPN_TRUE;
         } else if (floatvar->d_ignoreChange) {
           floatvar->d_ignoreChange = VRPN_FALSE;
-          floatvar->doCallbacks();
+          //floatvar->doCallbacks();
 	} else { // no errors: update the variable
 //  fprintf(stderr, "handle_float_value_change: %s %s old %f new %f\n", 
 //         floatvar->my_tcl_varname, cvalue, floatvar->mylastfloat, value);
@@ -132,7 +132,7 @@ static	char	*handle_float_value_change(ClientData clientData,
            // by derived class.  (?)
 	   *floatvar = value;
 	   floatvar->mylastfloat = value;
-           floatvar->doCallbacks();
+           //floatvar->doCallbacks();
 	}
 	return NULL;
 };
@@ -154,15 +154,15 @@ static	char	*handle_string_value_change(ClientData clientData,
 			selvar->d_myTclVarname);
 		selvar->d_dirty = VRPN_TRUE;
 	} else if (selvar->d_ignoreChange) {
-fprintf(stderr, "handle_string_value_change:  ignoring.\n");
+//fprintf(stderr, "handle_string_value_change:  ignoring.\n");
           selvar->d_ignoreChange = VRPN_FALSE;
-          selvar->doCallbacks();
+          //selvar->doCallbacks();
         } else { // no errors: update the variable
-fprintf(stderr, "handle_string_value_change:  changing %s to %s.\n",
-selvar->d_myTclVarname, cvalue);
+//fprintf(stderr, "handle_string_value_change:  changing %s to %s.\n",
+//selvar->d_myTclVarname, cvalue);
            // BUG BUG BUG - doesn't use operator =?
            selvar->Set(cvalue);
-           selvar->doCallbacks();
+           //selvar->doCallbacks();
 	}
 	return NULL;
 };
@@ -299,6 +299,7 @@ int	Tclvar_mainloop (void)
 		return -1;
 	}
 
+#if 0
 	// Check for changes in the C selectors and update the Tcl variables
 	// when they occur.
 	for (i = 0; i < num_sels; i++) {
@@ -310,6 +311,7 @@ int	Tclvar_mainloop (void)
                             (char *) sel_list[i]->string(), TCL_GLOBAL_ONLY);
 		}
 	}
+#endif
 
 	return 0;
 }
@@ -438,6 +440,7 @@ vrpn_int32 Tclvar_int::operator = (vrpn_int32 v) {
   vrpn_int32 retval;
   retval = (d_myint = v);
   updateTcl();
+  doCallbacks();
   return retval;
 }
 
@@ -446,6 +449,7 @@ vrpn_int32 Tclvar_int::operator ++ (void) {
   vrpn_int32 retval;
   retval = ++d_myint;
   updateTcl();
+  doCallbacks();
   return retval;
 }
 
@@ -454,6 +458,7 @@ vrpn_int32 Tclvar_int::operator ++ (int) {
   vrpn_int32 retval;
   retval = d_myint++;
   updateTcl();
+  doCallbacks();
   return retval;
 }
 
@@ -471,8 +476,8 @@ void Tclvar_int::updateTcl (void) {
     d_dirty = VRPN_FALSE;
     sprintf(cvalue, "%d", d_myint);
     Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
-fprintf(stderr, "Tclvar_int::updateTcl(%d) - was %d.\n",
-d_myint, mylastint);
+//fprintf(stderr, "Tclvar_int::updateTcl(%d) - was %d.\n",
+//d_myint, mylastint);
   }
 }
 
@@ -586,6 +591,8 @@ void Tclvar_float::addCallback (Linkvar_Floatcall cb, void * userdata) {
 void Tclvar_float::doCallbacks (void) {
   tclFloatCallbackEntry * e;
 
+//fprintf(stderr, "Tclvar_float::doCallbacks (%s).\n", my_tcl_varname);
+
   for (e = d_callbacks; e; e = e->next) {
     (*e->handler)(d_myfloat, e->userdata);
   }
@@ -593,9 +600,10 @@ void Tclvar_float::doCallbacks (void) {
 
 // virtual
 vrpn_float64 Tclvar_float::operator = (vrpn_float64 v) {
-//  printf("Tclvar_float: %s = %f\n", my_tcl_varname, v);
   vrpn_float64 retval;
   char cvalue [100];
+
+//fprintf(stderr, "Tclvar_float: %s = %.5f\n", my_tcl_varname, v);
 
   retval = (d_myfloat = v);
 
@@ -609,6 +617,7 @@ vrpn_float64 Tclvar_float::operator = (vrpn_float64 v) {
     sprintf(cvalue, "%f", d_myfloat);
     Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
   }
+  doCallbacks();
 
   return retval;
 }
@@ -1386,13 +1395,43 @@ void Tclvar_selector::doCallbacks (void) {
 // virtual
 const char * Tclvar_selector::operator = (const char * v) {
   nmb_Selector::operator = (v);
+  updateTcl();
+  doCallbacks();
   return string();
 }
 
 // virtual
 const char * Tclvar_selector::operator = (char * v) {
   nmb_Selector::operator = (v);
+  updateTcl();
+  doCallbacks();
   return string();
+}
+
+//virtual
+void Tclvar_selector::Set (const char * v) {
+  nmb_Selector::Set(v);
+  // nmb_Selector::Set() will call Tclvar_selector::operator =(),
+  // which will trigger updateTcl() and doCallbacks().
+  //updateTcl();
+  //doCallbacks();
+}
+
+//
+void Tclvar_selector::updateTcl (void) {
+  if (!interpreter) {
+    return;
+  }
+
+  // Idempotent check.
+  if (compareStrings() ||
+      d_permitIdempotentChanges) {
+    resetString();
+    d_dirty = VRPN_FALSE;
+    Tcl_SetVar(interpreter, d_myTclVarname, (char *) string(), TCL_GLOBAL_ONLY);
+//fprintf(stderr, "Tclvar_int::updateTcl(%s) - was %s.\n",
+//string(), d_myLastString);
+  }
 }
 
 void Tclvar_selector::initializeTcl (const char * tcl_varname,

@@ -2,7 +2,6 @@
 #define NMB_SELECTOR_H
 
 #include <stdlib.h>  // for NULL
-#include <stdio.h>  // for NULL
 
 // Originally from Tcl_Linkvar
 //
@@ -66,6 +65,8 @@ class nmb_Selector {
 
     operator const char * (void) const;
     const char * string (void) const;
+
+    const char * lastString (void) const;
 
     // MANIPULATORS
 

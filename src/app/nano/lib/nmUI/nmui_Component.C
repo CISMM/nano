@@ -9,6 +9,10 @@
 #include <Tcl_Netvar.h>
 
 
+// sync:  all sync traffic is SENT over d_connection
+// (collaboratingPeerServerConnection in microscape.c) and received over
+// d_peer (collaboratingPeerRemoteConnection in microscape.c).
+
 
 nmui_Component::nmui_Component
                    (char name [30],
@@ -20,10 +24,20 @@ nmui_Component::nmui_Component
     d_numFloats (numF),
     d_numSelectors (numSel),
     d_numComponents (0),
+    d_synchronizedTo (0),
     d_numPeers (0),
+    d_isLockedRemotely (VRPN_FALSE),
+    d_holdsRemoteLocks (VRPN_FALSE),
     d_connection (NULL),
     d_myId (-1),
-    d_syncRequest_type (-1)
+    d_syncRequest_type (-1),
+    d_syncComplete_type (-1),
+    d_lock_type (-1),
+    d_unlock_type (-1),
+    d_reqHandlers (NULL),
+    d_completeHandlers (NULL),
+    d_lockHandlers (NULL),
+    d_peer (NULL)
 {
   int i;
 
@@ -43,13 +57,35 @@ nmui_Component::nmui_Component
 
 nmui_Component::~nmui_Component (void) {
 
-  if (d_connection) {
-    d_connection->unregister_handler(d_syncRequest_type, handle_syncRequest,
+  if (d_peer) {
+    d_peer->unregister_handler(d_syncRequest_type, handle_syncRequest,
                                      this, d_myId);
-    d_connection->unregister_handler(d_syncComplete_type, handle_syncComplete,
+    d_peer->unregister_handler(d_syncComplete_type, handle_syncComplete,
                                      this, d_myId);
   }
 }
+
+const char * nmui_Component::name (void) const {
+  return d_name;
+}
+
+int nmui_Component::numPeers (void) const {
+  return d_numPeers;
+ }
+
+int nmui_Component::synchronizedTo (void) const {
+  return d_synchronizedTo;
+}
+
+vrpn_bool nmui_Component::isLockedRemotely (void) const {
+  return d_isLockedRemotely;
+}
+
+vrpn_bool nmui_Component::holdsRemoteLocks (void) const {
+  return d_holdsRemoteLocks;
+}
+
+
 
 void nmui_Component::add (TclNet_int * newLinkvar) {
   if (d_numInts >= NMUI_COMPONENT_MAX_SIZE) {
@@ -124,33 +160,31 @@ void nmui_Component::bindConnection (vrpn_Connection * c) {
   d_syncComplete_type =
       d_connection->register_message_type("nmui Component sync complete");
 
+//fprintf(stderr, "## Bound connection %ld for nmuiComponent %s.\n",
+//c, d_name);
 }
 
-  // messages are SENT on d_connection and RECEIVED on the connections
-  // bound in addPeer()
-
-void nmui_Component::addPeer (vrpn_Connection * c) {
+void nmui_Component::addPeer (vrpn_Connection * c, vrpn_bool serialize) {
   int i;
 
   for (i = 0; i < d_numInts; i++) {
-    d_ints[i]->addPeer(c);
+    d_ints[i]->addPeer(c, serialize);
   }
   for (i = 0; i < d_numFloats; i++) {
-    d_floats[i]->addPeer(c);
+    d_floats[i]->addPeer(c, serialize);
   }
   for (i = 0; i < d_numSelectors; i++) {
-    d_selectors[i]->addPeer(c);
+    d_selectors[i]->addPeer(c, serialize);
   }
   for (i = 0; i < d_numComponents; i++) {
-    d_components[i]->addPeer(c);
+    d_components[i]->addPeer(c, serialize);
   }
-
-  initializeConnection(c);
 
   d_peer = c;
   d_numPeers++;
 
-fprintf(stderr, "Finished with addPeer() for nmui Component %s.\n", d_name);
+//fprintf(stderr, "## Finished with addPeer() for nmui Component %s, \n"
+//"peer connection %ld.\n", d_name, d_peer);
 }
 
 void nmui_Component::copyReplica (int whichReplica) {
@@ -185,32 +219,25 @@ void nmui_Component::syncReplica (int whichReplica) {
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->syncReplica(whichReplica);
   }
+
+  d_synchronizedTo = whichReplica;
 }
 
 
 void nmui_Component::requestSync (void) {
   timeval now;
 
-  if (!d_connection) {
-    fprintf(stderr, "nmui_Component::requestSync has no connection.\n");
-    return;
-  }
-
   gettimeofday(&now, NULL);
   d_connection->pack_message(0, now, d_syncRequest_type, d_myId, NULL,
                              vrpn_CONNECTION_RELIABLE);
 
-fprintf(stderr, "nmui_Component::requestSync sent.\n");
+//fprintf(stderr, "++ nmui_Component::requestSync sent.\n");
 }
 
 void nmui_Component::registerSyncRequestHandler
                                 (nmui_SyncRequestHandler h,
                                  void * userdata) {
   reqHandlerEntry * he;
-
-  if (!d_connection) {
-    return;
-  }
 
   he = new reqHandlerEntry;
   if (!he) {
@@ -230,10 +257,6 @@ void nmui_Component::registerSyncCompleteHandler
                                  void * userdata) {
   completeHandlerEntry * he;
 
-  if (!d_connection) {
-    return;
-  }
-
   he = new completeHandlerEntry;
   if (!he) {
     fprintf(stderr, "nmui_Component::registerSyncCompleteHandler:  "
@@ -247,12 +270,13 @@ void nmui_Component::registerSyncCompleteHandler
   d_completeHandlers = he;
 }
 
+
 // static
 int nmui_Component::handle_reconnect (void * userdata, vrpn_HANDLERPARAM) {
   nmui_Component * c;
   c = (nmui_Component *) userdata;
   // XXX  Which connection is that, again?  HACK
-  c->initializeConnection(c->d_peer);
+  //c->initializeConnection(c->d_peer);
   return 0;
 }
 
@@ -261,6 +285,15 @@ void nmui_Component::initializeConnection (vrpn_Connection * c) {
   vrpn_int32 myId;
   vrpn_int32 syncRequest_type;
   vrpn_int32 syncComplete_type;
+  vrpn_int32 lock_type;
+  vrpn_int32 unlock_type;
+
+  if (!c) {
+    fprintf(stderr, "nmui_Component::initializeConnection:  is NULL!\n");
+    return;
+  }
+
+//fprintf(stderr, "## In nmui_Component::initializeConnection (%ld).\n", c);
 
   sprintf(namebuf, "nmui Component %s", d_name);
   myId = c->register_sender(namebuf);
@@ -275,20 +308,33 @@ void nmui_Component::initializeConnection (vrpn_Connection * c) {
 }
 
 
+// need to break this off of handle_syncRequest so that only one syncComplete
+// message is sent
 
-// static
-int nmui_Component::handle_syncRequest (void * userdata, vrpn_HANDLERPARAM) {
+void nmui_Component::do_handle_syncRequest (void) {
   nmui_Component * c;
   reqHandlerEntry * he;
+  int i;
+
+  for (he = d_reqHandlers; he; he = he->next) {
+    (*he->handler)(he->userdata);
+  }
+
+  for (i = 0; i < d_numComponents; i++) {
+    d_components[i]->do_handle_syncRequest();
+  }
+}
+
+// static
+int nmui_Component::handle_syncRequest (void * userdata, vrpn_HANDLERPARAM p) {
+  nmui_Component * c;
   timeval now;
 
   c = (nmui_Component *) userdata;
 
-fprintf(stderr, "In component %s handle_syncRequest\n", c->name());
+//fprintf(stderr, "++ In component %s handle_syncRequest\n", c->name());
 
-  for (he = c->d_reqHandlers; he; he = he->next) {
-    (*he->handler)(he->userdata);
-  }
+  c->do_handle_syncRequest();
 
   gettimeofday(&now, NULL);
   c->d_connection->pack_message(0, now, c->d_syncComplete_type,
@@ -299,16 +345,23 @@ fprintf(stderr, "In component %s handle_syncRequest\n", c->name());
 
 
 // static
-int nmui_Component::handle_syncComplete (void * userdata, vrpn_HANDLERPARAM) {
+int nmui_Component::handle_syncComplete (void * userdata, vrpn_HANDLERPARAM p) {
   nmui_Component * c;
+  nmui_Component * cc;
   completeHandlerEntry * he;
+  int i;
 
   c = (nmui_Component *) userdata;
 
-fprintf(stderr, "In component %s handle_syncComplete\n", c->name());
+//fprintf(stderr, "++ In component %s handle_syncComplete\n", c->name());
 
   for (he = c->d_completeHandlers; he; he = he->next) {
     (*he->handler)(he->userdata);
+  }
+
+  // traverse children
+  for (i = 0; i < c->d_numComponents; i++) {
+    handle_syncComplete(c->d_components[i], p);
   }
 
   return 0;

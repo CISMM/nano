@@ -190,8 +190,8 @@ long Microscope::InitializeDataset (nmb_Dataset * ds) {
   d_dataset = ds;
 
   state.data.Initialize(ds);
-  state.SetDefaultScanlineForRegion(ds);
   plane = ds->ensureHeightPlane();
+  state.SetDefaultScanlineForRegion(ds);
   plane->setScale(state.stm_z_scale);
 
   return 0;

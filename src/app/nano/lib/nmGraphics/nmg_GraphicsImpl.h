@@ -3,7 +3,7 @@
 
 #include "nmg_Graphics.h"
 
-#include <gaEngine_Remote.h>
+#include "gaEngine_Remote.h"
 
 #include <vrpn_Connection.h>  // for vrpn_HANDLERPARAM
 
@@ -58,7 +58,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setIconScale (float);
 
     virtual void setCollabHandPos (double [3], double [4]);
-    virtual void setCollabMode (vrpn_int32);
+    virtual void setCollabMode (int);
 
     // arguments in range [0..1]
     virtual void setMinColor (const double [3]);
@@ -147,6 +147,25 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
      // genetic textures
     gaEngine_Remote *gaRemote;
+
+  protected:
+
+    virtual void initDisplays (void);
+      // Making constructor more flexible:  calls v_open_display()
+      // for all users (in [0, NUM_USERS)).  Default behavior is to
+      // open V_ENV_DISPLAY, but this can be overridden by derived
+      // classes.
+      // Wouldn't it have been simpler just to make sure other types
+      // of graphics implementations redefine the relevant environment
+      // variable?
+
+    void screenCapture (int * w, int * h, unsigned char ** pixels);
+    void depthCapture (int * w, int * h, float ** depths);
+      // If (*pxiels) or (*depths) is non-NULL, assumes it is a
+      // properly-sized array and writes into it;  otherwise news
+      // a w*h*3 or w*h array respectively.
+
+    nmb_Dataset * d_dataset;
 
   private:
 

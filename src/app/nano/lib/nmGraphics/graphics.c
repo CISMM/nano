@@ -908,7 +908,12 @@ int setup_lighting(int nothing)
 
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
     glEnable(GL_LIGHT0);
+
+  if (g_PRERENDERED_COLORS) {
+    glDisable(GL_LIGHTING);
+  } else {
     glEnable(GL_LIGHTING);
+  }
 
     return 0;
 }

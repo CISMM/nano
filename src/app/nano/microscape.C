@@ -1,44 +1,4 @@
 
-/*
-----------------------------------------------------------------------------
- Revision History:
-----------------------------------------------------------------------------
-2/2/98
-This version works on both the desktop and with the workbench. There a are 
-couple differences when running with workbench:
-
-1) in workbench mode, lock_userscale not scaled up by 5.0, as it is in the
- desktop mode.
-On the desktop, the scaling makes the user/viewer smaller, and this allows
- the phantom to reach the entire surface, when the surface takes up the 
-whole screen. On the workbench, we can't do this, since the phantom and
- the user's head are in the same physical space. When the user hits the
- 'center' button, the surface will be scaled so that the phantom can reach
- all of it. 
-
-2) in workbench mode, the local vrpn_Tracker.cfg file is used for the head and
- hand tracking, instead of
- the config file comming from the VRPN servers for each device. This makes
- calibration easier. After the calibration is stable, I'll removed this and
- update all the VRPN server config files.
-
-3) Finally, the scale up and scale down commands don't work right now. The
- user should not use them. It messes up the head tracking transforms.
- Hopefully I'll figure out how to fix this soon...
-
-Whether we are in workbench mode or desktop mode is determined by reading the
-the variable 'head_tracked' 0=no 1=yes. I'm assuming head tracking is only 
-used in the workbench - but I should check this...
-
-To find all the places where we care if we are in workbench or not, do a grep 
-on 'head_tracked' in the file (and only this file)
-
-Sharif
-----------------------------------------------------------------------------
-*/
-
-
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,6 +49,8 @@ Sharif
 #include <nmg_GraphicsRemote.h>
 //#include <nmg_GraphicsNull.h>  // for timing tests
 //#include <graphics/globjects.h>
+#include <nmg_RenderServer.h>
+#include <nmg_RenderClient.h>
 
 // ui
 #include <ModFile.h>
@@ -96,8 +58,10 @@ Sharif
 #include <nmui_Component.h>
 //#include <nmui_ComponentSync.h>
 
+#ifdef	PROJECTIVE_TEXTURE
 // Registration
 #include "alignerUI.h"
+#endif
 
 #include "x_util.h" /* qliu */
 #include "x_aux.h"
@@ -133,6 +97,15 @@ Sharif
 
 // UGraphics made us depend explicitly on vlib again in this file (?)
 #include <v.h>
+
+// shared memory threading libraries
+//  [juliano 12/99] this *must* be included after v.h, or gcc craps out
+//#include <thread.h>
+//
+// [Chris Weigle 1/4/00]
+// I found I had to put it back where it was or I couldn't compile under
+// CYGWIN. Is Jeff using the new version of CYGWIN that no one else (well,
+// maybe Tanner) has yet?
 
 UTree World;
 UTree Textures;
@@ -266,6 +239,7 @@ static void handle_load_button_press_change (vrpn_int32, void *);
 // generic synchronization
 static void handle_synchronize_change (vrpn_int32, void *);
 static void handle_get_sync (vrpn_int32, void *);
+static void handle_lock_sync (vrpn_int32, void *);
 // since streamfiles are time-based, we need to send a syncRequest()
 static void handle_synchronize_timed_change (vrpn_int32, void *);
 static void handle_timed_sync (vrpn_int32, void *);
@@ -800,22 +774,9 @@ Tclvar_float_with_scale	directz_force_scale("directz_force_scale",".sliders", 0,
 
 
 // NANOX
-Tclvar_int synchronize_stream ("synchronize_stream", 0);
-Tclvar_int get_stream_sync ("get_stream_sync", 0);
-Tclvar_int synchronize_view ("synchronize_view", 0);
-Tclvar_int get_view_sync ("get_view_sync", 0);
-Tclvar_int synch_view_plane ("synch_view_plane", 0);
-Tclvar_int get_view_plane_sync ("get_view_plane_sync", 0);
-Tclvar_int synch_view_color ("synch_view_color", 0);
-Tclvar_int get_view_color_sync ("get_view_color_sync", 0);
-Tclvar_int synch_view_measure ("synch_view_measure", 0);
-Tclvar_int get_view_measure_sync ("get_view_sync_measure", 0);
-Tclvar_int synch_view_lighting ("synch_view_lighting", 0);
-Tclvar_int get_view_lighting_sync ("get_view_lighting_sync", 0);
-Tclvar_int synch_view_contour ("synch_view_contour", 0);
-Tclvar_int get_view_contour_sync ("get_view_contour_sync", 0);
-Tclvar_int synch_view_grid ("synch_view_grid", 0);
-Tclvar_int get_view_grid_sync ("get_view_grid_sync", 0);
+Tclvar_int share_sync_state ("share_sync_state", 0);
+Tclvar_int copy_inactive_state ("copy_inactive_state", 0);
+
 
 Tclvar_int tcl_center_pressed ("center_pressed", 0, handle_center_pressed);
 
@@ -891,7 +852,7 @@ static int do_keybd = 1;                   /* Keyboard on by default */
 static int do_ad_device = 1;               /* A/D devices on by default */
 static int show_cpanels = 0;		/* Control panels hidden by default */
 static int show_grid = 0;		/* Measuring grid hidden by default */
-static int using_phantom_button = 0;
+int using_phantom_button = 0;
 static int ubergraphics_enabled = 0;
 
 static vrpn_bool set_region = VRPN_FALSE; // Should we set the region at start?
@@ -947,7 +908,8 @@ Tclvar_int changed_modify_params ("accepted_modify_params", 0);
 Tclvar_int changed_scanline_params ("accepted_scanline_params", 0);
 
 enum { NO_GRAPHICS, LOCAL_GRAPHICS, SHMEM_GRAPHICS,
-       DISTRIBUTED_GRAPHICS, TEST_GRAPHICS_MARSHALLING };
+       DISTRIBUTED_GRAPHICS, TEST_GRAPHICS_MARSHALLING,
+       RENDER_SERVER, RENDER_CLIENT };
 
 // A thread structure for multiprocessing.
 // Global so it can be shut down by signal handlers et al.
@@ -958,6 +920,12 @@ static Thread * graphicsServerThread = NULL;
 // TCH 15 May 98
 static vrpn_Connection * shmem_connection = NULL;
 static vrpn_Connection * microscope_connection = NULL;
+
+// remote rendering things
+// TCH 29 December 99
+static vrpn_Connection * renderServerOutputConnection = NULL;
+static vrpn_Connection * renderServerControlConnection = NULL;
+static vrpn_Connection * renderClientInputConnection = NULL;
 
 // File Connection	for replay vrpn log file
 static vrpn_File_Connection * vrpnLogFile;
@@ -1217,7 +1185,7 @@ static void handle_rulergrid_scale_change (vrpn_float64, void * userdata) {
 }
 
 static void handle_x_value_change (vrpn_float64, void *) {
-fprintf(stderr, "In handle_x_value_change()\n");
+//fprintf(stderr, "In handle_x_value_change()\n");
   x_set_scale(x_min_value, x_max_value);
 }
 
@@ -1229,8 +1197,8 @@ static void handle_rulergrid_color_change (vrpn_int32, void * userdata) {
   // MOVED to nmg_Graphics
   g->setRulergridColor((int)ruler_r, (int)ruler_g, (int)ruler_b);
   
-fprintf(stderr, "Ruler color %d %d %d\n",
-(int) ruler_r,(int) ruler_g, (int) ruler_b);
+//fprintf(stderr, "Ruler color %d %d %d\n",
+//(int) ruler_r,(int) ruler_g, (int) ruler_b);
 }
 
 // Handle the color change of the rulergrid
@@ -1383,27 +1351,53 @@ static void handle_collab_machine_name_change2
                     void * userdata)
 {
   nmui_Component * uic = (nmui_Component *) userdata;
+  char hnbuff [256];
   char buff [256];
   vrpn_int32 newConnection_type;
-
+  vrpn_bool should_synchronize;
 
   sprintf(buff, "%s:4510", new_value);
   collaboratingPeerRemoteConnection = vrpn_get_connection_by_name (buff);
-  // Testing doing_okay() doesn't work due to details of vrpn reconnection
-  // implementation - semantics of doing_okay() changed.
-  if (collaboratingPeerRemoteConnection /*&&
-      collaboratingPeerRemoteConnection->doing_okay()*/) {
-    uic->addPeer(collaboratingPeerRemoteConnection);
-fprintf(stderr, "Called addPeer() on component for %s.\n", buff);
-  }
+  if (collaboratingPeerRemoteConnection &&
+      collaboratingPeerRemoteConnection->doing_okay()) {
 
-  // register callbacks if need be - HACK assume necessary
-  // IF this connection isn't valid, or is dropped and reconnected later,
-  // this callback renegotiates the sender and type IDs.
-  newConnection_type = collaboratingPeerRemoteConnection->register_message_type
-    (vrpn_got_connection);
-  collaboratingPeerRemoteConnection->register_handler
-    (newConnection_type, nmui_Component::handle_reconnect, uic);
+    // XXX Only handles two-way case right now:  figures out who comes
+    // first alphabetically, us or the peer.  To handle n-way either need
+    // complete list of participating hosts at the beginning or need to
+    // finish implementing serializer migration protocol.
+
+    gethostname(hnbuff, 256);
+fprintf(stderr, "## My name is %s, new peer is %s:  ", hnbuff, buff);
+    if (strcmp(hnbuff, buff) < 0) {
+fprintf(stderr, "serializer.\n");
+      should_synchronize = VRPN_TRUE;
+    } else {
+fprintf(stderr, "client.\n");
+      should_synchronize = VRPN_FALSE;
+    }
+
+    switch (should_synchronize) {
+      case VRPN_TRUE:
+        uic->addPeer(collaboratingPeerServerConnection, should_synchronize);
+        break;
+      case VRPN_FALSE:
+        uic->addPeer(collaboratingPeerRemoteConnection, should_synchronize);
+        break;
+    }
+//fprintf(stderr, "Called addPeer() on component for %s.\n", buff);
+    uic->initializeConnection(collaboratingPeerRemoteConnection);
+//fprintf(stderr, "Called initializeConnection(%ld) on component for %s.\n",
+//collaboratingPeerRemoteConnection, buff);
+
+
+    // register callbacks if need be - HACK assume necessary
+    // IF this connection isn't valid, or is dropped and reconnected later,
+    // this callback renegotiates the sender and type IDs.
+    newConnection_type = collaboratingPeerRemoteConnection->
+               register_message_type (vrpn_got_connection);
+    collaboratingPeerRemoteConnection->register_handler
+      (newConnection_type, nmui_Component::handle_reconnect, uic);
+  }
 }
 
 
@@ -1471,14 +1465,21 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
 //   "valid";  others are a (small?) memory/network leak.
 static void handle_synchronize_change (vrpn_int32 value, void * userdata) {
   nmui_Component * sync = (nmui_Component *) userdata;
+  int s;
 
-  if (value) {
-    // synchronize
-    sync->syncReplica(sync->numPeers());
-  } else if (!value) {
-    // stop synchronizing
-    sync->syncReplica(0);
+  switch (value) {
+    case 0:
+      // stop synchronizing;  use local state (#0)
+      s = 0;
+      break;
+    default:
+      // use shared state (#1)
+      s = 1;
+      break;
   }
+
+  sync->syncReplica(s);
+//fprintf(stderr, "++ Synchronized to replica #%d.\n", sync->synchronizedTo());
 
 }
 
@@ -1488,29 +1489,46 @@ static void handle_synchronize_change (vrpn_int32 value, void * userdata) {
 //   "valid";  others are a (small?) memory/network leak.
 static void handle_get_sync (vrpn_int32, void * userdata) {
   nmui_Component * sync = (nmui_Component *) userdata;
+  int c;
 
-  sync->copyReplica(sync->numPeers());
+  // Christmas sync
+  // handles 2-way;  may handle n-way sync
+
+  switch (sync->synchronizedTo()) {
+    case 0:
+      // copy shared state (#1) into local state (#0)
+      c = 1;
+      break;
+    default:
+      // copy local state (#0) into shared state (#1)
+      c = 0;
+      break;
+  }
+
+  sync->copyReplica(c);
+//fprintf(stderr, "++ Copied inactive replica (#%d).\n", c);
 }
 
 static void handle_synchronize_timed_change (vrpn_int32 value,
                                              void * userdata) {
   nmui_Component * sync = (nmui_Component *) userdata;
 
-  if (value) {
-    // synchronize
-    sync->requestSync();
-    sync->d_maintain = VRPN_TRUE;
-    // BUG BUG BUG
-    // We should defer the syncReplica until after the requestSync()
-    // completes;  this requires complexifying handle_timed_sync_complete
-    // or dynamically registering/deregistering the appropriate
-    // handlers...
-  } else if (!value) {
-    // stop synchronizing
-    sync->syncReplica(0);
-  }
+//fprintf(stderr, "++ In handle_synchronized_timed_change()\n");
 
-fprintf(stderr, "In handle_synchronized_timed_change()\n");
+  switch (value) {
+    case 0:
+      // stop synchronizing;  use local state (#0)
+//fprintf(stderr, "++   ... stopped synchronizing.\n");
+      sync->syncReplica(0);
+      break;
+    default:
+      // use shared state (#1)
+//fprintf(stderr, "++   ... sent synch request to peer.\n");
+      sync->requestSync();
+      sync->d_maintain = VRPN_TRUE;
+      // We defer the syncReplica until after the requestSync() completes.
+      break;
+  } 
 
 }
 
@@ -1531,7 +1549,7 @@ static void handle_timed_sync (vrpn_int32, void * userdata) {
   // for VRPN), so when that arrives we know the sync is complete and
   // we can issue a copyReplica()
 
-fprintf(stderr, "In handle_timed_sync().\n");
+//fprintf(stderr, "++ In handle_timed_sync() sent synch request to peer.\n");
 
 }
 
@@ -1542,8 +1560,8 @@ static int handle_timed_sync_request (void *) {
 
   set_stream_time = decoration->elapsedTime;
 
-fprintf(stderr, "In handle_timed_sync_request at %d seconds.\n",
-decoration->elapsedTime);
+//fprintf(stderr, "In handle_timed_sync_request() at %d seconds.\n",
+//decoration->elapsedTime);
 
   return 0;
 }
@@ -1551,16 +1569,18 @@ decoration->elapsedTime);
 static int handle_timed_sync_complete (void * userdata) {
   nmui_Component * sync = (nmui_Component *) userdata;
   
+//fprintf(stderr, "++ In handle_timed_sync_complete().\n");
+
   // Once we have the *latest* state of time-depenedent values,
   // update with that.
 
   if (sync->d_maintain) {
-    sync->syncReplica(sync->numPeers());
+    sync->syncReplica(1);
+//fprintf(stderr, "++   ... synched.\n");
   } else {
-    sync->copyReplica(sync->numPeers());
+    sync->copyReplica(1);
+//fprintf(stderr, "++   ... copied.\n");
   }
-
-fprintf(stderr, "In handle_timed_sync_complete.\n");
 
   return 0;
 }
@@ -1896,8 +1916,8 @@ static void handle_contour_color_change (vrpn_int32, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setContourColor(contour_r, contour_g, contour_b);
 
-fprintf(stderr, "Contour color now %d, %d, %d.\n",
-(int) contour_r, (int) contour_g, (int) contour_b);
+//fprintf(stderr, "Contour color now %d, %d, %d.\n",
+//(int) contour_r, (int) contour_g, (int) contour_b);
   cause_grid_redraw(0.0, NULL);
 }
 
@@ -1923,8 +1943,8 @@ static	void	handle_alpha_dataset_change (const char *, void * userdata)
                                               alpha_slider_max);
 	}
 	g->setTextureMode(nmg_Graphics::ALPHA);
-fprintf(stderr, "Setting pattern map name to %s\n",
-dataset->alphaPlaneName->string());
+//fprintf(stderr, "Setting pattern map name to %s\n",
+//dataset->alphaPlaneName->string());
 	g->setPatternMapName(dataset->alphaPlaneName->string());
 
 	cause_grid_redraw(0.0, NULL);
@@ -3255,13 +3275,8 @@ void setupSynchronization (vrpn_Connection * c,
   streamfileControls->add(&rewind_stream);
   streamfileControls->add(&set_stream_time);
 
-  streamfileControls->bindConnection(c);
-  streamfileControls->registerSyncRequestHandler
-          (handle_timed_sync_request, streamfileControls);
-  streamfileControls->registerSyncCompleteHandler
-          (handle_timed_sync_complete, streamfileControls);
 
-  set_stream_time.d_permitIdempotentChanges = VRPN_TRUE;
+  //set_stream_time.d_permitIdempotentChanges = VRPN_TRUE;
 
 
   // View control
@@ -3304,12 +3319,6 @@ void setupSynchronization (vrpn_Connection * c,
   viewMeasureControls->add(&measureGreenY);
   viewMeasureControls->add(&measureBlueX);
   viewMeasureControls->add(&measureBlueY);
-  //viewMeasureControls->add(&decoration.red.d_x);
-  //viewMeasureControls->add(&decoration.red.d_y);
-  //viewMeasureControls->add(&decoration.green.d_x);
-  //viewMeasureControls->add(&decoration.green.d_y);
-  //viewMeasureControls->add(&decoration.blue.d_x);
-  //viewMeasureControls->add(&decoration.blue.d_y);
 
   nmui_Component * viewLightingControls;
   viewLightingControls = new nmui_Component ("View Lighting");
@@ -3358,50 +3367,33 @@ void setupSynchronization (vrpn_Connection * c,
   viewControls->add(viewContourControls);
   viewControls->add(viewGridControls);
 
-  viewControls->bindConnection(c);
+  // Christmas sync
 
-  // User Interface to streamfile synchronization
-  // Needs to send a syncRequest(), since the values we want to sync
-  // to aren't really those in either Tcl or user-space but instead
-  // are derived from those and the current time.
+  nmui_Component * rootUIControl;
+  rootUIControl = new nmui_Component ("ROOT");
 
-  synchronize_stream.addCallback
-       (handle_synchronize_timed_change, streamfileControls);
-  get_stream_sync.addCallback
-       (handle_timed_sync, streamfileControls);
+  rootUIControl->add(viewControls);
+  rootUIControl->add(streamfileControls);
 
-  // User Interface to view synchronization
+  rootUIControl->bindConnection(c);
 
-  synchronize_view.addCallback
-       (handle_synchronize_change, viewControls);
-  get_view_sync.addCallback
-       (handle_get_sync, viewControls);
+  // User Interface to synchronization
+  // Since streamfileControls are timed, the toplevel MUST use
+  // the timed callbacks.  Oops.  Took an hour or more to find,
+  // that one.
 
-  synch_view_plane.addCallback
-       (handle_synchronize_change, viewPlaneControls);
-  get_view_plane_sync.addCallback
-       (handle_get_sync, viewPlaneControls);
-  synch_view_color.addCallback
-       (handle_synchronize_change, viewColorControls);
-  get_view_color_sync.addCallback
-       (handle_get_sync, viewColorControls);
-  synch_view_measure.addCallback
-       (handle_synchronize_change, viewMeasureControls);
-  get_view_measure_sync.addCallback
-       (handle_get_sync, viewMeasureControls);
-  synch_view_lighting.addCallback
-       (handle_synchronize_change, viewLightingControls);
-  get_view_lighting_sync.addCallback
-       (handle_get_sync, viewLightingControls);
-  synch_view_contour.addCallback
-       (handle_synchronize_change, viewContourControls);
-  get_view_contour_sync.addCallback
-       (handle_get_sync, viewContourControls);
-  synch_view_grid.addCallback
-       (handle_synchronize_change, viewGridControls);
-  get_view_grid_sync.addCallback
-       (handle_get_sync, viewGridControls);
+  share_sync_state.addCallback
+      (handle_synchronize_timed_change, rootUIControl);
+  copy_inactive_state.addCallback
+      (handle_timed_sync, rootUIControl);
 
+  // need to pass rootUIControl to handle_timed_sync_complete
+  // so that it sees d_maintain as TRUE!
+ 
+  streamfileControls->registerSyncRequestHandler
+          (handle_timed_sync_request, streamfileControls);
+  streamfileControls->registerSyncCompleteHandler
+          (handle_timed_sync_complete, rootUIControl);
 
 
 
@@ -3410,11 +3402,8 @@ void setupSynchronization (vrpn_Connection * c,
   collab_machine_name.addCallback
 	(handle_collab_machine_name_change, NULL);
 
-  //
   collab_machine_name.addCallback
-	(handle_collab_machine_name_change2, streamfileControls);
-  collab_machine_name.addCallback
-	(handle_collab_machine_name_change2, viewControls);
+	(handle_collab_machine_name_change2, rootUIControl);
 
 }
 
@@ -3430,6 +3419,7 @@ struct MicroscapeInitializationState {
   int num_x;
   int num_y;
   int graphics_mode;
+  char graphicsHost [256];
 
   int num_stm_files;
   char * stm_file_names [MAXFILES];
@@ -3609,6 +3599,12 @@ void ParseArgs (int argc, char ** argv,
         LOOP_NUM = atoi(argv[++i]);
       } else if (!strcmp(argv[i], "-marshalltest")) {
         istate->graphics_mode = TEST_GRAPHICS_MARSHALLING;
+      } else if (!strcmp(argv[i], "-renderserver")) {
+        istate->graphics_mode = RENDER_SERVER;
+      } else if (!strcmp(argv[i], "-renderclient")) {
+	if (++i >= argc) Usage(argv[0]);
+        istate->graphics_mode = RENDER_CLIENT;
+        strncpy(istate->graphicsHost, argv[i], 256);
       } else if (strcmp(argv[i], "-minsep") == 0) {
         if (++i >= argc) Usage(argv[0]);
         istate->afm.stmRxTmin = atoi(argv[i]);
@@ -3855,10 +3851,8 @@ void ParseArgs (int argc, char ** argv,
         fprintf(stderr, "parsing args: pxfl Args %s\n",pxflArgs);
 #endif
 
-      } else if (argv[i][0] == '-')
-      {
-        Usage(argv[0]);
-      } else {
+      } else if (argv[i][0] == '-') Usage(argv[0]);
+      else {
         switch (real_params) {
         default: Usage(argv[0]);
         }
@@ -3895,6 +3889,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-MIXport port] [-recv] [-alphacolor r g b]\n");
   fprintf(stderr, "       [-marshalltest] [-multithread] [-ugraphics]\n");
   fprintf(stderr, "       [-monitor port] [-collaborate port] [-peer name]\n");
+  fprintf(stderr, "       [-renderserver] [-renderclient host]\n");
   fprintf(stderr, "       \n");
   //fprintf(stderr, "       -poly: Display poligonal surface (default)\n");
   //fprintf(stderr, "       -sphere: Display as spheres\n");
@@ -3979,6 +3974,11 @@ void Usage(char* s)
   fprintf(stderr, "       -collaborator:  open VRPN Forwarders both to and "
                          "from the microscope on this port. OBSOLETE.\n");
   fprintf(stderr, "       -peer:  connect to named collaborative peer.\n");
+  fprintf(stderr, "       -renderserver:  start up as a server for "
+                          "remote rendering.\n");
+  fprintf(stderr, "       -renderclient:  start up as a client for "
+                          "remote rendering,\n");
+  fprintf(stderr, "       connected to the named host.\n");
 
   exit(-1);
 }
@@ -4060,22 +4060,22 @@ void sharedGraphicsServer (void * data) {
   Semaphore * ps = ((ThreadData *) data)->ps;
   int retval;
 
-fprintf(stderr, "g>In graphics thread.\n");
+//fprintf(stderr, "g>In graphics thread.\n");
 
   // INITIALIZE
 
   // start a server connection
-fprintf(stderr, "g>Graphics thread starting vrpn server\n");
+//fprintf(stderr, "g>Graphics thread starting vrpn server\n");
   c = new vrpn_Synchronized_Connection (nmg_Graphics::defaultPort);
 
   // start a graphics implementation
-fprintf(stderr, "g>Graphics thread starting graphics implementation\n");
+//fprintf(stderr, "g>Graphics thread starting graphics implementation\n");
   g = new nmg_Graphics_Implementation
     (dataset, minC, maxC, rulerPPMName, c);
 
   // release the main process to run
 
-fprintf(stderr, "g>Graphics thread relesing main process\n");
+//fprintf(stderr, "g>Graphics thread relesing main process\n");
   retval = ps->v();
   if (retval) {
     fprintf(stderr, "Coprocess couldn't release main process to run!\n");
@@ -4084,7 +4084,7 @@ fprintf(stderr, "g>Graphics thread relesing main process\n");
 
   // STEADY STATE
 
-fprintf(stderr, "g>Graphics thread entering mainloop\n");
+//fprintf(stderr, "g>Graphics thread entering mainloop\n");
   while (1) {
 
     TIMERVERBOSE(1, frametimer, "------------------ Frame timer ---------------");
@@ -4107,18 +4107,18 @@ void spawnSharedGraphics (void) {
   // allocate semaphore in td.ps
   // Initialize to zero;  we don't leave this function until
   // the coprocess has finished initializing.
-fprintf(stderr, "Allocating semaphore\n");
+//fprintf(stderr, "Allocating semaphore\n");
   td.ps = new Semaphore (0);
 
   // Spawn the coprocess
-fprintf(stderr, "Spawning new thread\n");
+//fprintf(stderr, "Spawning new thread\n");
   graphicsServerThread = new Thread (sharedGraphicsServer, td);
 
-fprintf(stderr, "Spawned;  now starting the new thread\n");
+//fprintf(stderr, "Spawned;  now starting the new thread\n");
   graphicsServerThread->go();
 
   // Block until it's initialized
-fprintf(stderr, "Blocking for new thread\n");
+//fprintf(stderr, "Blocking for new thread\n");
   retval = td.ps->p();
   if (retval != 1) {
     fprintf(stderr, "Main process wasn't successfully "
@@ -4186,9 +4186,11 @@ int main(int argc, char* argv[])
     struct          timezone zone1,zone2;
     long            start,stop;
     long            interval;
-    int             timing;
+    float             timing;
+    float looplen;
     long            n = 0L;
     long	    n_displays = 0L;
+    
 
     int		i;
     int retval;
@@ -4534,6 +4536,7 @@ int main(int argc, char* argv[])
     // when using the Slow Line tool. 
     microscope->registerPointDataHandler(slow_line_ReceiveNewPoint, microscope);
 
+    char name [50], qualifiedName [50];
     switch (istate.graphics_mode) {
 
       case NO_GRAPHICS:
@@ -4559,7 +4562,6 @@ int main(int argc, char* argv[])
 
           spawnSharedGraphics();  // blocks until coprocess sets up
 
-          char name [50], qualifiedName [50];
           retval = gethostname(name, 45);
           if (retval) {
             fprintf(stderr, "gethostname() failed;  "
@@ -4577,13 +4579,53 @@ int main(int argc, char* argv[])
 
       case TEST_GRAPHICS_MARSHALLING:
         fprintf(stderr, "Running local GL graphics implementation PLUS "
-        "nmg_Graphics_Remote\n    and VRPN as a message handler.\n");
+                "nmg_Graphics_Remote\n    and VRPN as a message handler.\n"
+                "    THIS MODE IS FOR TESTING ONLY.\n");
         shmem_connection = new vrpn_Synchronized_Connection
                               (nmg_Graphics::defaultPort);
         gi = new nmg_Graphics_Implementation
                  (dataset,
                   minC, maxC, rulerPPMName, shmem_connection);
         graphics = new nmg_Graphics_Remote (shmem_connection);
+        break;
+
+      case RENDER_SERVER:
+        fprintf(stderr, "Starting up as a rendering server "
+                "(orthographic projection).\n"
+                "    THIS MODE IS FOR TESTING ONLY.\n");
+
+        renderServerOutputConnection =
+                new vrpn_Synchronized_Connection (nmg_Graphics::defaultPort);
+        renderServerControlConnection = renderServerOutputConnection;
+        graphics = new nmg_Graphics_RenderServer
+                   (dataset, minC, maxC, renderServerOutputConnection,
+                    300, 300, rulerPPMName, renderServerControlConnection);
+
+        break;
+
+      case RENDER_CLIENT:
+        fprintf(stderr, "Starting up as a rendering client "
+                "(expecting peer rendering server %d to supply images).\n",
+                istate.graphicsHost);
+
+        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+                istate.graphicsHost,
+                nmg_Graphics::defaultPort);
+
+        renderClientInputConnection = vrpn_get_connection_by_name
+                             (qualifiedName);
+        renderServerControlConnection = renderClientInputConnection;
+
+        // By having graphics send on renderServerControlConnection
+        // and gi listen on it, graphics effectively sends commands
+        // to BOTH the RenderClient and the RenderServer;
+        // each will execute those it needs to.
+
+        graphics = new nmg_Graphics_Remote (renderServerControlConnection);
+        gi = new nmg_Graphics_RenderClient
+             (dataset, minC, maxC, renderClientInputConnection,
+              300, 300, rulerPPMName, renderServerControlConnection);
+
         break;
 
       default:
@@ -4652,9 +4694,11 @@ int main(int argc, char* argv[])
 	
     } // end if (glenable)
 
+#ifdef	PROJECTIVE_TEXTURE
     // Registration - displays images with glX or GLUT depending on V_GLUT
     // flag
     AlignerUI *aligner = new AlignerUI(graphics, dataset->dataImages);
+#endif
 
   //draw measure lines
     VERBOSE(1, "Initializing measure lines");
@@ -4894,13 +4938,6 @@ printf("nM_coord_change_server initialized\n");
   if (do_keybd == 1) {
     KeyboardUsage();
   }
-
-/* Start timing */
-VERBOSE(1, "Starting timing");
-gettimeofday(&time1,&zone1);
-gettimeofday(&d_time,&zone1);
-microscope->ResetClock();
-//gettimeofday(&nowtime, &nowzone);
 
 VERBOSE(1, "Creating Ugraphics");
   World.TSetName("World");
@@ -5183,7 +5220,9 @@ VERBOSE(1, "Entering main loop");
     /* Check for mouse events in the X window display */
     handleMouseEvents();
 
+#ifdef	PROJECTIVE_TEXTURE
     aligner->mainloop();
+#endif
 
     /* Run the Tk control panel checker if we are using them */
     if (tkenable) {
@@ -5255,12 +5294,14 @@ VERBOSE(1, "Entering main loop");
   printf("Time for %ld display iterations: %ld seconds\n",n_displays,
         time2.tv_sec-time1.tv_sec);
   if (interval != 0) {
-	timing = (int)((float)(n) / (float)(interval) * 1.0e+3);
-	printf("    (%d loop iterations per second)\n", timing);
-	printf("    (%g seconds per loop iteration)\n", 1.0/timing);
-	timing = (int)((float)(n_displays) / (float)(interval) * 1.0e+3);
-	printf("    (%d display iterations per second)\n", timing);
-	printf("    (%g seconds per display iteration)\n", 1.0/timing);
+	timing = ((float)(n) / (float)(interval) * 1.0e+3);
+	printf("    (%.5f loop iterations per second)\n", timing);
+        looplen = ((interval / 1.0e+3) / (float) (n));
+	printf("    (%.5f seconds per loop iteration)\n", looplen);
+	timing = ((float)(n_displays) / (float)(interval) * 1.0e+3);
+	printf("    (%.5f display iterations per second)\n", timing);
+        looplen = ((interval / 1.0e+3) / (float) (n_displays));
+	printf("    (%.5f seconds per display iteration)\n", looplen);
   }
 
   if(glenable){

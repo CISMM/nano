@@ -1,6 +1,7 @@
 #include "nmb_Selector.h"
 
 #include <string.h>  // strcmp(), strncmp(), strncpy()
+#include <stdio.h>  // fprintf()
 
 nmb_ListOfStrings::nmb_ListOfStrings (void) :
     d_numSelectors (0),
@@ -134,6 +135,10 @@ nmb_Selector::operator const char * (void) const {
 
 const char * nmb_Selector::string (void) const {
   return d_myString;
+}
+
+const char * nmb_Selector::lastString (void) const {
+  return d_myLastString;
 }
 
 //void nmb_Selector::setCallback

@@ -19,6 +19,8 @@
 #include <colormap.h>
 #include "nmg_Funclist.h"
 
+class BCGrid;  // from BCGrid.h
+
 extern  int     spm_graphics_verbosity;
 #define VERBOSE(level,msg) if (spm_graphics_verbosity >= level) fprintf(stderr,"%s\n",msg);
 
@@ -158,6 +160,8 @@ extern float g_specular_color;
 extern float g_surface_alpha;
 extern float g_diffuse;
 
+extern BCGrid * g_prerendered_grid;
+
 extern float g_sphere_scale;
 extern int g_stride;
 extern GLenum g_texture_mode;
@@ -167,6 +171,8 @@ extern float g_trueTipScale;
 
 extern int g_user_mode [NUM_USERS];
 extern int g_VERTEX_ARRAY;
+
+extern int g_PRERENDERED_COLORS;
 
 extern Position_list * g_positionList;
 

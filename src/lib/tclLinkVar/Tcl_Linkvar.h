@@ -159,6 +159,8 @@ class	Tclvar_selector : public nmb_Selector {
     virtual const char * operator = (const char *);
     virtual const char * operator = (char *);
 
+    virtual void Set (const char *);
+
     void addCallback (Linkvar_Selectcall callback, void * userdata);
     void doCallbacks (void);
 
@@ -196,6 +198,8 @@ class	Tclvar_selector : public nmb_Selector {
       // copies myString over myLastString
 
     tclSelectCallbackEntry * d_callbacks;
+
+    void updateTcl (void);
 
   private:
     vrpn_bool d_initialized;

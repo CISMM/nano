@@ -784,15 +784,15 @@ int nmg_Graphics::decode_setCollabHandPos(const char * buf, double pos[3],
 }
 
 //set the mode of the icon following the collaborator's hand
-char * nmg_Graphics::encode_setCollabMode(int * len, vrpn_int32 mode)
+char * nmg_Graphics::encode_setCollabMode(int * len, int mode)
 {
   char * msgbuf = NULL;
   char * mptr;
-  vrpn_int32 mlen;
+  int mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(vrpn_int32);
+  *len = sizeof(int);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmg_Graphics::encode_setCollabMode:  Out of memory.\n");
@@ -801,12 +801,12 @@ char * nmg_Graphics::encode_setCollabMode(int * len, vrpn_int32 mode)
   else {
     mptr = msgbuf;
     mlen = *len;
-    vrpn_buffer(&mptr, &mlen, mode);
+    nmb_Util::Buffer(&mptr, &mlen, mode);
   }
   return msgbuf;
 }
 
-int nmg_Graphics::decode_setCollabMode(const char * buf, vrpn_int32 *mode)
+int nmg_Graphics::decode_setCollabMode(const char * buf, int *mode)
 {
   if (!buf || !mode) return -1;
   CHECK(nmb_Util::Unbuffer(&buf, mode));
@@ -2247,7 +2247,7 @@ int nmg_Graphics::decode_createScreenImage
 {
    fprintf(stderr,"decode_createScreenImage\n");
    const char *bptr = buf;
-   vrpn_int32 temp;
+   int temp;
    if (!buf || !(*filename) || !type) return -1;
    CHECK(nmb_Util::Unbuffer(&bptr, *filename, 512));
    fprintf(stderr, "Filename: %s\n", *filename);

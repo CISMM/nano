@@ -71,7 +71,7 @@ nmb_Dataset::nmb_Dataset
   colorPlaneName (allocator("none")),
   colorMapName (allocator("CUSTOM")),
   contourPlaneName (allocator("none")),
-  heightPlaneName (allocator("Topography_Forward")),
+  heightPlaneName (allocator("Topography-Forward")),
 
   done (0)
 

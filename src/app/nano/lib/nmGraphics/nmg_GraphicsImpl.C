@@ -36,6 +36,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation
                                  const char * rulergridName,
                                  vrpn_Connection * connection) :
     nmg_Graphics (connection, "nmg Graphics Implementation GL"),
+    d_dataset (data),
     d_displayIndexList (new v_index [NUM_USERS]) {
 
 fprintf(stderr,
@@ -60,17 +61,7 @@ fprintf(stderr,
 
   fprintf(stderr, "Done.\n");
 
-  /*
-   * initialize display for each user
-   */
-  for ( i = 0; i < NUM_USERS; i++ ) {
-    /* open display */
-    if ( (d_displayIndexList[i] = v_open_display(V_ENV_DISPLAY, i)) ==
-	 V_NULL_DISPLAY ) {
-      exit(V_ERROR);
-    }
-    printf("display = '%s'\n", v_display_name(d_displayIndexList[i]));
-  }
+  initDisplays();
 
   /* Set up the viewing info */
   
@@ -689,7 +680,7 @@ void nmg_Graphics_Implementation::setCollabHandPos(double pos[], double quat[])
   g_draw_collab_hand = 1;
 }
 
-void nmg_Graphics_Implementation::setCollabMode(vrpn_int32 mode)
+void nmg_Graphics_Implementation::setCollabMode(int mode)
 {
   g_collabMode = mode;
 }
@@ -1727,47 +1718,27 @@ void nmg_Graphics_Implementation::createScreenImage
 )
 {
    fprintf(stderr, "DEBUG nmg_Graphics_Impl::createScreenImage '%s' '%s'\n", filename, ImageType_names[type]);
-   v_display_type *displayPtr;
-   v_viewport_type *windowPtr;
 
-   displayPtr=&v_display_table[d_displayIndexList[0]];
-   windowPtr=&(displayPtr->viewports[0]);
+  int w, h;
+  unsigned char * pixels = NULL;
 
+  screenCapture(&w, &h, &pixels);
 
-   int w = windowPtr->fbExtents[0],
-       h = windowPtr->fbExtents[1];
+  if (!pixels) {
+    return;
+  }
 
-   unsigned char *pixels = new unsigned char[w*h*3];
+  AbstractImage *ai = ImageMaker(type, h, w, 3, pixels, true);
 
-   if (!pixels)
-      fprintf(stderr, "Insufficient memory to grab screen!\n");
-   else
-   {
-      glReadBuffer(GL_BACK); // read the back buffer, no interference from WM
-      glPixelStorei(GL_PACK_ALIGNMENT, 1); // byte alignment, slower
-      glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-      // Do we ever do anything really nonstandard?  do we always clean
-      // up and return to defaults between frames?  will the following
-      // screw-up some other fancy thing somewhere?  If graphics go wonky
-      // these should be queried prior to reading, then restored to what
-      // they were after reading the buffer instead of some "defaults".
-      glPixelStorei(GL_PACK_ALIGNMENT, 4); // word alignment, GL's default
-      glReadBuffer(GL_FRONT); // go back to the front buffer
+  delete [] pixels;
 
+  if (ai)
+  {
+     if (!ai->Write(filename))
+        fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
 
-      AbstractImage *ai = ImageMaker(type, h, w, 3, pixels, true);
-
-
-      delete [] pixels;
-
-      if (ai)
-      {
-         if (!ai->Write(filename))
-            fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
-
-         delete ai;
-      }
-   }
+     delete ai;
+  }
 }
 
 void nmg_Graphics_Implementation::getLightDirection (q_vec_type * v) const {
@@ -1795,6 +1766,107 @@ const double * nmg_Graphics_Implementation::getMinColor (void) const {
 const double * nmg_Graphics_Implementation::getMaxColor (void) const {
   return g_maxColor;
 }
+
+
+
+
+// PROTECTED
+
+void nmg_Graphics_Implementation::initDisplays (void) {
+  int i;
+
+  /*
+   * initialize display for each user
+   */
+
+  for ( i = 0; i < NUM_USERS; i++ ) {
+    /* open display */
+    d_displayIndexList[i] = v_open_display(V_ENV_DISPLAY, i);
+    if (d_displayIndexList[i] == V_NULL_DISPLAY) {
+      exit(V_ERROR);
+    }
+    printf("display = '%s'\n", v_display_name(d_displayIndexList[i]));
+  }
+}
+
+
+void nmg_Graphics_Implementation::screenCapture (int * w, int * h,
+                                                 unsigned char ** pixels) {
+
+  v_display_type *displayPtr;
+  v_viewport_type *windowPtr;
+
+  displayPtr=&v_display_table[d_displayIndexList[0]];
+  windowPtr=&(displayPtr->viewports[0]);
+
+  *w = windowPtr->fbExtents[0];
+  *h = windowPtr->fbExtents[1];
+
+  if (!*pixels) {
+    *pixels = new unsigned char [*w * *h * 3];
+  }
+
+  if (!*pixels) {
+     fprintf(stderr, "nmg_Graphics_Implementation::screenCapture:  "
+                     "Insufficient memory to grab screen!\n");
+     return;
+  }
+
+  glReadBuffer(GL_BACK); // read the back buffer, no interference from WM
+  glPixelStorei(GL_PACK_ALIGNMENT, 1); // byte alignment, slower
+  glReadPixels(0, 0, *w, *h, GL_RGB, GL_UNSIGNED_BYTE, *pixels);
+  // Do we ever do anything really nonstandard?  do we always clean
+  // up and return to defaults between frames?  will the following
+  // screw-up some other fancy thing somewhere?  If graphics go wonky
+  // these should be queried prior to reading, then restored to what
+  // they were after reading the buffer instead of some "defaults".
+  glPixelStorei(GL_PACK_ALIGNMENT, 4); // word alignment, GL's default
+  glReadBuffer(GL_FRONT); // go back to the front buffer
+
+}
+
+void nmg_Graphics_Implementation::depthCapture (int * w, int * h,
+                                                 float ** depths) {
+  v_display_type *displayPtr;
+  v_viewport_type *windowPtr;
+
+  displayPtr=&v_display_table[d_displayIndexList[0]];
+  windowPtr=&(displayPtr->viewports[0]);
+
+  *w = windowPtr->fbExtents[0];
+  *h = windowPtr->fbExtents[1];
+
+  if (!*depths) {
+    *depths = new float [*w * *h];
+  }
+
+  if (!*depths) {
+     fprintf(stderr, "nmg_Graphics_Implementation::screenCapture:  "
+                     "Insufficient memory to grab screen!\n");
+     return;
+  }
+
+  glReadBuffer(GL_BACK); // read the back buffer, no interference from WM
+  //glPixelStorei(GL_PACK_ALIGNMENT, 1); // byte alignment, slower
+  glReadPixels(0, 0, *w, *h, GL_DEPTH_COMPONENT, GL_FLOAT, *depths);
+  // Do we ever do anything really nonstandard?  do we always clean
+  // up and return to defaults between frames?  will the following
+  // screw-up some other fancy thing somewhere?  If graphics go wonky
+  // these should be queried prior to reading, then restored to what
+  // they were after reading the buffer instead of some "defaults".
+  //glPixelStorei(GL_PACK_ALIGNMENT, 4); // word alignment, GL's default
+  glReadBuffer(GL_FRONT); // go back to the front buffer
+
+}
+
+
+
+
+// PRIVATE
+
+
+
+
 
 // static
 int nmg_Graphics_Implementation::handle_resizeViewport
@@ -2036,7 +2108,7 @@ int nmg_Graphics_Implementation::handle_setCollabMode
                                  (void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
-  vrpn_int32 mode;
+  int mode;
 
   CHECK(it->decode_setCollabMode(p.buffer, &mode));
   it->setCollabMode(mode);

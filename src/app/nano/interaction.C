@@ -742,9 +742,13 @@ for ( user = 0; user < NUM_USERS; user++ ) {
 	// get value for trigger button event
 	// first check phantom button, then mouse button, then button box 
 	// trigger, tcl_trigger
-	if (phantButton) triggerButtonPressed = phantButtonPressed;
-	else if (using_mouse3button) triggerButtonPressed = mouse3button;
-	else if (buttonBox) triggerButtonPressed = bdbox_buttons[TRIGGER_BT];
+	if (phantButton && using_phantom_button) {
+		triggerButtonPressed = phantButtonPressed;
+	} else if (using_mouse3button) {
+		triggerButtonPressed = mouse3button;
+	} else if (buttonBox) {
+		triggerButtonPressed = bdbox_buttons[TRIGGER_BT];
+	}
 	if (tcl_trigger_just_forced_on) {
 	    triggerButtonPressed = 1;
 	    tcl_trigger_just_forced_on = 0;

@@ -52,7 +52,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setIconScale (float);
 
     virtual void setCollabHandPos (double [3], double [4]);
-    virtual void setCollabMode (vrpn_int32);
+    virtual void setCollabMode (int);
 
     // arguments in range [0..1]
     virtual void setMinColor (const double [3]);

@@ -1,5 +1,7 @@
 #include "graphics_globals.h"
 
+class BCGrid;  // from BCGrid.h
+
 float g_adhesion_slider_min = 0.0f;
 float g_adhesion_slider_max = 1.0f;
 
@@ -61,6 +63,8 @@ int g_genetic_textures_enabled = 0;
 ColorMap *g_realign_textures_curColorMap = NULL;
 float g_realign_textures_slider_min = 0;
 float g_realign_textures_slider_max = 1.0;
+
+BCGrid * g_prerendered_grid = NULL;
 
 int g_realign_textures_enabled = 0;
 int g_translate_textures = 0;
@@ -137,6 +141,8 @@ float g_trueTipScale = 1.0f;
 
 int g_user_mode [NUM_USERS];
 int g_VERTEX_ARRAY = 0;
+
+int g_PRERENDERED_COLORS = 0;  // only used by remote rendering clients
 
 Position_list * g_positionList;
 
