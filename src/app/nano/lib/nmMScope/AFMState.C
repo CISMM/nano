@@ -98,6 +98,7 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     mode ("modifyp_mode", i.mode ),
     control ("modifyp_control", FEEDBACK ),
     constr_xyz_param ("modifyp_constr_xyz_mode", CONSTR_XYZ_LINE ),
+    optimize_now_param ("modifyp_optimize_now", OPTIMIZE_NOW_LINE ),
     style ("modifyp_style", i.style ),
     tool ("modifyp_tool", FREEHAND),
 

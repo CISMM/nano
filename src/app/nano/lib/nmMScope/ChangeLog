@@ -1,7 +1,8 @@
-2000-11-20  Tom Hudson  <hudson@cs.unc.edu>
+2000-12-05  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
-	* nmm_Microscope_Remote.C (RcvResultData) : add curly braces,
-	add safety check of z_value
+	* AFMState.h (AFMModifyState::AFMModifyState) : new initializer for
+	optimize now.
+	* nmm_Types.h (Tool) : new enum member.
 
 2000-11-5  Tom Hudson  <hudson@cs.unc.edu>
 
