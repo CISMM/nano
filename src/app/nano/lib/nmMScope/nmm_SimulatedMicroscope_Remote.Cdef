@@ -1,0 +1,182 @@
+OUTPUT_FILENAME nmm_SimulatedMicroscope_Remote.C
+//
+
+
+#include "nmm_SimulatedMicroscope_Remote.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#if !defined(_WIN32)
+	#include <sys/time.h> 
+	#include <unistd.h>  // for sleep()
+#endif
+#include <BCPlane.h>
+#include <BCGrid.h>
+#include <nmb_Dataset.h>
+#include <vrpn_Connection.h>
+
+//
+
+
+
+USE_MSG_GROUP nmm_AFMSIM_Report
+
+CLASSNAME nmm_SimulatedMicroscope_Remote
+
+//
+
+
+
+//constructor
+//name is the name of the remote device (I think), connection should be
+//initialized already by vrpn_get_connection_by_name
+
+nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
+  (const char * name, vrpn_Connection * connection, const char * planename, 
+  nmb_Dataset * dataset) : nmm_AFMSIM_Report(connection), nmb_SharedDevice_Remote(name,
+  connection), d_dataset(dataset), RealAFMPlaneName(d_dataset->heightPlaneName->string()),
+  RealAFMPlane(d_dataset->inputGrid->getPlaneByName(RealAFMPlaneName))
+{
+	
+	cout << "got here nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote" 
+		 << endl;
+
+
+	REGISTER nmm_AFMSIM_Report;
+//
+	long simulator_id = connection->register_sender("AFMSimulator");
+//
+	Xdim = d_dataset->inputGrid->numX();
+	Ydim = d_dataset->inputGrid->numY();
+	DATA_ARRAY_SIZE = (d_dataset->inputGrid->numX())*(d_dataset->inputGrid->numY());
+	DataArray = new double[DATA_ARRAY_SIZE]; 
+	//
+	//cout << "Got to line before nma_ShapeIdentifiedPlane created" << endl;
+	//
+	SimScanPlane = new nma_ShapeIdentifiedPlane(RealAFMPlane, d_dataset, planename);
+	//
+	//if(SimScanPlane != NULL)	//cout << "nma_ShapeIdentifiedPlane not NULL" << endl;
+	//else	//cout << "nma_ShapeIdentifiedPlane NULL" << endl;
+	//
+	UnitsOK = true;
+}
+
+//
+
+
+nmm_SimulatedMicroscope_Remote::~nmm_SimulatedMicroscope_Remote() {
+	//delete SimScanPlane;
+}
+
+//
+
+
+int nmm_SimulatedMicroscope_Remote::mainloop() {
+//
+  return 0;
+}
+
+
+HANDLERS nmm_AFMSIM_Report ; 
+
+
+RECEIVE_MSG WindowLineData {
+//    int32 x
+//    int32 y
+//    int32 dx
+//    int32 dy
+//    int32 reports
+//    int32 fields
+//    int32 sec
+//    int32 usec
+//    float32 data [reports][fields]
+	cout << "Receiving window line data" << endl;
+	if(UnitsOK){//check that units match before allowing in data
+//
+		//check to see that the data the "microscope" wants to send is not greater than the
+		//number of samples the input grid contains/can hold
+		//check is whether initial (x), which is counted as zero, + (reports - 1), the number
+		//of data points following the Oth data point sent, is greater than the number of 
+		//points per row; analogous situation for y
+  		if ((x < 0 || y < 0 || 
+     			(x+(reports-1)*dx) > (d_dataset->inputGrid->numX()-1) ||
+     			(y+(reports-1)*dy) > (d_dataset->inputGrid->numY()-1))) {
+     			cerr << "Internal: grid size doesn't match reported data size."
+		     	<< "Exiting to avoid loss of data." << endl; 
+    			return;
+  		}
+//	
+  		if (RealAFMPlane == NULL) return;
+//
+		for (int i = 0; i < reports; i++) {
+			int new_x = x + i*dx;
+			int new_y = y + i*dy;
+			int new_pos = new_x + new_y*reports;
+			//
+
+			if(new_pos <= DATA_ARRAY_SIZE){//good index, fill in
+				DataArray[new_pos] = (double)(data[new_x][0]);//fill in first
+
+				//then check and see if we have filled in the last element in the array 
+				//and should update
+				if(new_pos == DATA_ARRAY_SIZE){
+					SimScanPlane->UpdateDataArray(DataArray, DATA_ARRAY_SIZE);
+					cout << "Update should have occurred" << endl;
+				}
+			}
+			else{
+				cerr << "Data received exceeds dimensions of acceptable array" << endl;
+			}
+			//
+			
+		}
+		//
+
+  		return;
+	}
+}
+//
+
+
+
+//message tells what order the fields are in
+//in case of simulator, there is only one field, so datasets will only have one element (height)
+RECEIVE_MSG_BODY ScanDataset {
+//  int32 count
+//  struct ScanDataset {
+//    char name [64] //name of field
+//    char units [64] //units in
+//    float32 offset 
+//    float32 scale
+//  } datasets [count]
+
+//
+	//only deal with datasets[0]
+	if(strcmp(units, RealAFMPlane->units()->Characters()) != 0){
+//
+		cerr << "Units do not match:  sim scan and real scan must be in same units" << endl;
+		UnitsOK = false;
+//
+	}
+//		
+}
+
+
+//message tells what order the fields are in
+//in case of simulator, there is only one field, so datasets will only have one element (height)
+RECEIVE_MSG_HEADER ScanDataset {
+//  int32 count
+//  struct ScanDataset {
+//    char name [64] //name of field
+//    char units [64] //units in
+//    float32 offset 
+//    float32 scale
+//  } datasets [count]
+
+//
+	//only deal with datasets[0]
+	
+//		
+}
+
+
