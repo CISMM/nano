@@ -73,7 +73,7 @@ nmm_RelaxComp::nmm_RelaxComp(nmm_Microscope_Remote* m):
 void nmm_RelaxComp::updateMicroscope()
 {
     if (microscope) {
-        if (current_state == DISABLED)
+        if (current_state == DISABLED) {
 	    microscope->SetRelax((long)0, (long)0);
 	} else {
 	    microscope->SetRelax((long)TIgnore, (long)TSep);
