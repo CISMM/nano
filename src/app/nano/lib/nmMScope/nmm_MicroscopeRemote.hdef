@@ -370,6 +370,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
       ///< If true, in addition to exposing point results on
       ///< state.data.inputPoint we put them on state.data.pointList.
 
+    /// HACK to get ohmmeter data into point results
+    float lastResistanceReceived;
+    // END HACK
+
 
 
   private: // OBSOLETE

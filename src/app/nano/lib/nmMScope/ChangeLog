@@ -1,3 +1,12 @@
+2001-10-22  Aron Helser  <helser@cs.unc.edu>
+
+	* nmm_MicroscopeRemote.C: new - all functions which aren't
+	automatically generated
+	* nmm_MicroscopeRemoteGen.Cdef: new - all functions which are
+	generated. Speeds up generation x2 or more!
+	* Makefile: changed to accomodate new files
+	* nmm_MicroscopeRemote.Cdef: removed
+	
 2001-09-30 Jameson Miller <millerj@cs.unc.edu>
 	* nmm_MicroscopeRemote.Cdef: when a new scan region is recieved,
 	changed order of when the dataset variables are updated and when

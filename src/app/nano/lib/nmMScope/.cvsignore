@@ -6,5 +6,5 @@ nmm_SPM_Control.C
 nmm_SPM_Control.h
 nmm_SPM_Report.C
 nmm_SPM_Report.h
-nmm_MicroscopeRemote.C
+nmm_MicroscopeRemoteGen.C
 nmm_MicroscopeRemote.h
