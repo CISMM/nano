@@ -1,3 +1,15 @@
+2001-12-14  Tom Hudson <hudsont@uncwil.edu>
+
+   * Makefile : hardwire newer Tcl libs.
+
+   * nmm_Microscope_Simulator.C (afmFeelTo) : temporary diagnostic output.
+
+   * surface.C (imageHeightXY) : clamp to bounds of surface to avoid "-1"
+   return value.
+
+   * warrencntsim.h : tweak some #includes to compile (not that I want it
+   to, but the makefile here is a little screwy).
+
 2001-07-27  Tom Hudson <hudson@cs.unc.edu>
 
         * nmm_Microscope_Simulator.C (ConnectServer) : Add safety check.

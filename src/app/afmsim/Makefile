@@ -16,7 +16,7 @@ LATE_LOAD_PATH := -L/afs/unc/proj/stm/src/external/glut/glut-3.5/lib/glut.n32
 #ifeq ($(HW_OS),sgi_irix)
 USES_EXTERNAL_LIBS := tcl
 #else
-USES_EXTERNAL_LIBS := tcl82
+USES_EXTERNAL_LIBS := tcl83
 #endif
 
 

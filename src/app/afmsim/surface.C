@@ -137,6 +137,14 @@ int parse (int argc, char ** argv) {
 
 int getImageHeightAtXYLoc (float x, float y, float * z) {
   double zz;
+
+  // TCH Dec 2001
+  // Clamp to bounds
+  if (x > g_myZPlane->maxX()) x = g_myZPlane->maxX();
+  if (x < g_myZPlane->minY()) x = g_myZPlane->minX();
+  if (y > g_myZPlane->maxX()) y = g_myZPlane->maxY();
+  if (y < g_myZPlane->minY()) y = g_myZPlane->minY();
+
   g_myZPlane->valueAt(&zz, x, y);
   *z = zz;
   //if (!fmod(x, 40) && !fmod(y, 40)) {

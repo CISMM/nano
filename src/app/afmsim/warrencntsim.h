@@ -26,6 +26,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -33,7 +34,7 @@
 
 #include <math.h>
 //#ifdef GLUT
-#include <GL/glut.h>
+#include <GL/glut_UNC.h>
 //#endif
 
 #include "vec2d.h"

@@ -1993,6 +1993,7 @@ int nmm_Microscope_Simulator::afmFeelToPoint (const char * bufptr) {
   for (i = 0, tx = startx; i < nx; i++, tx += dx) {
     spm_goto_xynm(tx, starty);
     for (j = 0, ty = starty; j < ny; j++, ty += dy) {
+      ServerOutputAdd(2, " goto and report %.4f, %.4f", tx, ty);
       retval = goto_point_and_report_it(tx, ty);
       if (retval) {
         ServerOutputAdd(1, "***ERROR***:  afmFeelToPoint");
