@@ -1,0 +1,18 @@
+// MESSAGE_GROUP must come first, before any VRPN_MESSAGE directives. 
+MESSAGE_GROUP nmm_AFMSIMSERVER_Report
+
+MESSAGE_PREFIX "nmm SimulatedMicroscope "
+
+VRPN_MESSAGE ReportGridSize {
+  int32 x
+  int32 y
+}
+
+VRPN_MESSAGE ScanRange {
+  float32 xmin
+  float32 ymin
+  float32 zmin
+  float32 xmax
+  float32 ymax
+  float32 zmax
+}
