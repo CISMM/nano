@@ -96,6 +96,12 @@ class nmm_Microscope_SEM_EDAX :
     vrpn_int32 reportExposureStatus(
             vrpn_int32 numPointsTotal, vrpn_int32 numPointsDone,
             vrpn_float32 timeTotal_sec, vrpn_float32 timeDone_sec);
+	vrpn_int32 reportTimingStatus(
+            vrpn_int32 numPointsTotal, vrpn_int32 numPointsDone,
+            vrpn_float32 timeTotal_sec, vrpn_float32 timeDone_sec);
+    vrpn_int32 reportPointReportEnable(vrpn_int32 enable);
+    vrpn_int32 reportDotSpacing(vrpn_float32 spacing_nm);
+    vrpn_int32 reportLineSpacing(vrpn_float32 spacing_nm);
 
   private:
     // subroutines used for timing test
