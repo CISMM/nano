@@ -1,5 +1,8 @@
 2002-03-22  David Marshburn  <marshbur@evans.cs.unc.edu>
 
+	* index_mode.C:  changed a couple of places where the string
+	class is used so this will build on the SGI.
+
 	* microscape.C (loadProcProgNames, loadPPMTextures):  changed 
 	vc_[open,read]dir to [open,read]dir
 

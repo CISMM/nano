@@ -101,8 +101,8 @@ Index_mode::newPlane( BCPlane* plane )
   if( dataset == NULL || graphics == NULL ) return; 
   
   // Set colorplane to match new heightplane
-  dataset->colorPlaneName->Set( *plane->name() );
-  graphics->setColorPlaneName( *plane->name() );  
+  dataset->colorPlaneName->Set( plane->name()->c_str() );
+  graphics->setColorPlaneName( plane->name()->c_str() );  
 
 #else // _WIN32
   cout << "No index mode on the PC" << endl;
@@ -159,7 +159,7 @@ Index_mode::snapshot( )
   #endif
 
   graphics->setColorMapName( dataset->colorMapName->string() );
-  graphics->setColorPlaneName( *plane->name() );
+  graphics->setColorPlaneName( plane->name()->c_str() );
   graphics->enableChartjunk( false );
   center( ); // from microscape.h
   graphics->mainloop();
