@@ -23,7 +23,6 @@
 #include "nM_coord_change.h"
 #include "error_display.h"
 #include "tcl.h"
-#include "tk.h"
 #include "Tcl_Interpreter.h"
    // HACK - evil coupling to UI; ought to trigger a callback here
    // and have it handled by some routine in the UI space.

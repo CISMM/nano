@@ -1,3 +1,7 @@
+2002-09-28    <marshbur@cs.unc.edu>
+
+	* CollaborationManager.C:  removed #include <tk.h> -- extraneous
+
 2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* minit.c: commented out #include x_util.h - not needed
