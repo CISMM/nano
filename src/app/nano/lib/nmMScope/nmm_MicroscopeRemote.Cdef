@@ -2421,6 +2421,7 @@ RECEIVE_MSG WindowLineData {
 RECEIVE_MSG PointResultData nmm_Monitor {
 //    float32 x
 //    float32 y
+//    float32 z
 //    int32 sec
 //    int32 usec
 //    int32 reports
@@ -2459,7 +2460,7 @@ RECEIVE_MSG PointResultData nmm_Monitor {
   // the inputPoint values and, if d_accumulatePointResults,
   // the incomingPointList.
   // HACK HACK HACK
-  if (state.data.point_channels->Handle_report(x, y, sec, usec,
+  if (state.data.point_channels->Handle_report(x, y, z, sec, usec,
                                           (float *) data, reports,
                                           d_accumulatePointResults)) {
     fprintf(stderr, "Error handling SPM point result data\n");
