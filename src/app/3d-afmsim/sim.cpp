@@ -160,6 +160,7 @@ double Sim_x_ratio;
 double Sim_y_ratio;
 bool undone = true;
 double x_to_y = 1.0;
+int TriangleCounter = 0;
 
 Tclvar_string cname("tclname","");
 
@@ -509,18 +510,22 @@ void displayFuncDepth( void ) {
         }
     }
 	if(SimMicroscopeServer.triangleRcv){
+		double ratio = SimMicroscopeServer.Sim_to_World_x;
+		double x_offset = SimMicroscopeServer.get_x_offset();
+		double y_offset = SimMicroscopeServer.get_y_offset();
 		while(SimMicroscopeServer.head != NULL){//add a bunch of triangles
+			cout << TriangleCounter++ << flush << " ";
 			addTriangle(//draw triangle with vertices v1_*,v2_*, and v3_*, where * is {x,y,z} 
 				        //coords of v*
-			Vec3d(SimMicroscopeServer.head->v1_1*SimMicroscopeServer.Sim_to_World_x,
-				SimMicroscopeServer.head->v1_2*SimMicroscopeServer.Sim_to_World_x,
-				SimMicroscopeServer.head->v1_3*SimMicroscopeServer.Sim_to_World_x),
-			Vec3d(SimMicroscopeServer.head->v3_1*SimMicroscopeServer.Sim_to_World_x,
-				SimMicroscopeServer.head->v3_2*SimMicroscopeServer.Sim_to_World_x,
-				SimMicroscopeServer.head->v3_3*SimMicroscopeServer.Sim_to_World_x),
-			Vec3d(SimMicroscopeServer.head->v2_1*SimMicroscopeServer.Sim_to_World_x,
-				SimMicroscopeServer.head->v1_2*SimMicroscopeServer.Sim_to_World_x,
-				SimMicroscopeServer.head->v2_3*SimMicroscopeServer.Sim_to_World_x));
+			Vec3d(SimMicroscopeServer.head->v1_1*ratio + x_offset,
+				  SimMicroscopeServer.head->v1_2*ratio + y_offset,
+				  SimMicroscopeServer.head->v1_3*ratio),
+			Vec3d(SimMicroscopeServer.head->v2_1*ratio + x_offset,
+				  SimMicroscopeServer.head->v2_2*ratio + y_offset,
+				  SimMicroscopeServer.head->v2_3*ratio),
+			Vec3d(SimMicroscopeServer.head->v3_1*ratio + x_offset,
+				  SimMicroscopeServer.head->v3_2*ratio + y_offset,
+				  SimMicroscopeServer.head->v3_3*ratio));
 
 			SimMicroscopeServer.holder = SimMicroscopeServer.head;
 			SimMicroscopeServer.head = SimMicroscopeServer.head->next;

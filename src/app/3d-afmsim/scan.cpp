@@ -113,7 +113,7 @@ void get_z_buffer_values(double xworldratio) {
       // Open GL convention
       zHeight[rownumber][i] = zDepth;
       zDistance[j][i] = (1-zNormalized)*(-scanNear + scanFar);
-	  zDistanceScaled[j][i] = zDistance[j][i]/xworldratio;
+	  zDistanceScaled[j][i] = zDistance[j][i]/xworldratio;//ANDREA:  check on this division
     }
   }
 
