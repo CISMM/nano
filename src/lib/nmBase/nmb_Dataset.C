@@ -56,8 +56,7 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
   maskPlaneName (string_allocator("none")),
   vizPlaneName (string_allocator("none")),
 
-  done (0),
-  calculatedPlane_head( NULL )
+  done (0)
 {
     //variables to save the command line args for heightplane and colorplane
     initHeight[0] = '\0';
@@ -432,19 +431,7 @@ addNewCalculatedPlane( nmb_CalculatedPlane* plane )
       return;
     }
 
-  nmb_CalculatedPlaneNode* node = new nmb_CalculatedPlaneNode;
-  if( !node ) 
-    {
-      fprintf(stderr, "nmb_Dataset::addNewCalculatedPlane:  "
-	      "Out of memory.\n");
-      return;
-    }
-  node->data = plane;
-  node->next = calculatedPlane_head;
-  calculatedPlane_head = node;
-
   inputPlaneNames->addEntry( plane->getName()->Characters() );
-
 } // end addNewCalculatedPlane( ... )
 
 

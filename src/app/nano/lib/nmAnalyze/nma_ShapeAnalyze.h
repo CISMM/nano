@@ -1,6 +1,14 @@
 #ifndef NM_ANALYZE
 #define NM_ANALYZE
 
+
+#ifdef _WIN32
+// turns off warning C4290: C++ Exception Specification ignored
+#pragma warning( push )
+#pragma warning( disable : 4290 )
+#endif
+
+
 class nmb_PlaneSelection;
 class CNT_IA;
 
@@ -115,5 +123,12 @@ private:
 	                               //and what is not (255 is a nanotube)
 	int array_size;
 };
+
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif
+
+
 
 #endif

@@ -142,11 +142,8 @@ class nmb_Dataset {
    ///< any callbacks registered to listen for new (calc'd) plane creation.
 
 private:
-
     int mapInputToInputNormalized (const char * inputName,
                                    const char * ouputName);
-
-    nmb_CalculatedPlaneNode* calculatedPlane_head;
 
 };
 

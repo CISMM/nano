@@ -1,5 +1,10 @@
 2002-01-04  David Marshburn  <marshbur@cs.unc.edu>
 
+	* nmb_Dataset.[h,C]:  this was keeping a list of all the calculated
+	planes, but wasn't using it and didn't need it, so I removed it.
+
+2002-01-04  David Marshburn  <marshbur@cs.unc.edu>
+
 	* nmb_Dataset.h:  removed a spurious comment
 	* nmb_SummedPlane.[h,C]:  added destructor and dependsOnPlane functions
 	* nmb_LBLFlattenedPlane.[h,C]:  same
