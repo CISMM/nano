@@ -157,10 +157,6 @@ SOURCE=.\updt_display.c
 
 SOURCE=.\vrml.C
 # End Source File
-# Begin Source File
-
-SOURCE=.\vrpn_MousePhantom.C
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -236,10 +232,6 @@ SOURCE=.\updt_display.h
 # Begin Source File
 
 SOURCE=.\vrml.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\vrpn_MousePhantom.h
 # End Source File
 # Begin Source File
 

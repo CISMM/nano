@@ -1,3 +1,7 @@
+2002-06-17  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nano.dsp:  remove vrpn_MousePhantom.[h,C]
+
 2002-06-14  Aron Helser  <helser@cs.unc.edu>
 
 	* nm_MouseInteractor.Ch: new, replaces
