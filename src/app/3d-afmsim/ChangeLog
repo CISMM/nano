@@ -1,5 +1,24 @@
 2002-06-07  Andrea Hilchey <hilchey@cs.unc.edu>
 
+	* sim.cpp : changed structure of keyboard commands to add a 
+	monomer ('m') and add a dimer ('2') so that there are now a 
+	preset list of monomers/dimers which you can select from
+	(their spatial parameters are stored), or you can add your
+	own, using the input prompts, also changed dimer code so that
+	the two proteins that are part of the dimer are grouped 
+	together (dragging one to a new position drags the other also)
+
+	* 3dobject.cpp : fixed retrieveAllGroups() to correctly
+	handle grouping of objects added in from a file, so that they
+	are grouped in separate groups from objects already in the
+	simulator
+
+	* 3dobject.h : changed return types to int on addNtube and
+	addTriangle functions, so that they return the group number
+	of the object added
+
+2002-06-07  Andrea Hilchey <hilchey@cs.unc.edu>
+
 	* 3dobject.h,.cpp : added functions saveAllGroups() and
 	retrieveAllGroups().  saveAllGroups() saves object type,
 	position, orientation, etc. information for all objects in

@@ -41,23 +41,12 @@
 #include <tk.h>
 #include <Tcl_Interpreter.h>
 #include "../nano/tcl_tk.h"
-//#include "patternEditor.h"
-/*#include "nmb_TransformMatrix44.h"
-#include "transformFile.h"
-#include "nmr_Util.h"
-
-#include "nmr_RegistrationUI.h"
-#include "nmr_Registration_Proxy.h"
-#include "nmm_Microscope_SEM_Remote.h"
-#include "nmm_Microscope_SEM_EDAX.h"
-#include "controlPanels.h"
-*/
 #if !defined(_WIN32) || defined(__CYGWIN__)
 #include <sys/time.h>
 #else
 #include <vrpn_Shared.h> // get timeval some other way
 #endif
-//ANDREA
+
 
 GLuint list_sphere;
 GLuint list_cylinder;
@@ -478,8 +467,7 @@ void write_to_uncertw(char *filename) {
 }
 
 
-/***********************************************************************
-***************/
+/***********************************************************************/
 // This routine is called only after input events.
 void displayFuncMain( void ) {
   if (!stopAFM) {
@@ -1050,19 +1038,24 @@ make_uncert_cone_sphere(ics);
 void commonKeyboardFunc(unsigned char key, int x, int y) {
     ofstream fout2;
     fout2.open("protein_vols_backwards.txt", fstream::out | fstream::app);
-    char c;
+    char c,d;
     float radius = 0.0;
 	float depth = 0.0;
+	float radius1,radius2,depth1,depth2;
 	float spacing = 0.0;
+	float spacing2;
 	float length = 0.0;
     float decimal = 0.0;
+	int * dimergroup;
     bool done;
+	bool add = true;
     double volume;
 	float _x,_y,_z;
 	//float altitude,azimuth;
 	int counter = 0;
 	//float val[5];
 	int i = 0;
+	bool negative = false;
 
     switch (key) {
     case 'u' : /* want to see uncertainty map : 
@@ -1107,7 +1100,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       }
       break;
 	case 'n' :
-	  //deal with length
+	  //deal with radius
 	  cout << "Enter a radius: " << flush;
       done = false;
       c = getchar();
@@ -1131,7 +1124,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       }
       radius = radius + decimal;
 
-	  //deal with radius
+	  //deal with length
 	  cout << "Enter a length: " << flush;
       done = false;
       c = getchar();
@@ -1167,45 +1160,235 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       selectedOb = numObs-1;
       break;
     case 'm' ://add monomer
-      radius = (float)55.4987;//35.1499;//64.6241;//11.5845;//4.6438;//12.2399;//9.3075;//26.7917;//8.2026;//12.2399;//11.8293;//108.516;//61.1055;//72.1046;//42.4765;//39.82;//47.7542;//76.2544;//22.004;//33.7743;//32.8943;//31.3545;//25.8267;//23.0505;//24.139;//23.3347;//16.6805;//24.4904;//23.0505;//13.17;//23.9439;//108.516;//91.016;//26.0767;//9.6375;//17.5054;//93.922;
-	  depth = (float)-54.5411;//-34.3325;//-62.5739;//-8.30443;//-2.35942;//-10.8306;//-8.0049;//-25.3118;//-6.80265;//-11.1376;//-8.54796;//-107.786;//-60.109813;//-71.2628;//-41.6459;//-38.9328;//-47.0169;//-74.3044;//-19.06597;//-32.4615;//-31.5449;//-29.9358;//-24.7353;//-22.0889;//-23.1127;//-22.3853;//-15.2443;//-23.5876;//-22.0889;//-9.95;;//-22.2507;//-107.786;//-89.2299;//-24.9439;//-7.7385;//-14.6009;//-93.3322;
-	  if(SimMicroscopeServer.grid_size_rcv){
-		radius = radius * SimMicroscopeServer.Sim_to_World_x;
-		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, depth*SimMicroscopeServer.Sim_to_World_x), 
-			0., 0., 0., 0., radius*2.0);
+	  cout << endl << "Protein List" << endl;
+	  cout << "1		MLH1" << endl;
+	  cout << "2		PMS1" << endl;
+	  cout << "3		BAM" << endl;
+	  cout << "4		APFE" << endl;
+	  cout << "5		throg" << endl;
+	  cout << "6		helicase" << endl;
+	  cout << "7		any other protein (you enter the dimensions)" << endl;
+      cout << endl <<"Enter a number for the protein you want: " << flush;
+      c = getchar();
+	  d = getchar();//gets carriage return
+
+	  switch(c){
+	  case '1':
+		  radius = 9.3075;
+		  depth = -8.0049;
+		  break;
+	  case '2':
+		  radius = 12.2399;
+		  depth = -10.8306;
+		  break;
+	  case '3':
+		  radius = 4.6438;
+		  depth = -2.35942;
+		  break;
+	  case '4':
+		  radius = 11.5845;
+		  depth = -8.30443;
+		  break;
+	  case '5':
+		  radius = 64.6241;
+		  depth = -62.5739;
+		  break;
+	  case '6':
+		  radius = 35.1499;
+		  depth = -34.3325;
+		  break;
+	  case '7':
+		  cout << "Enter a radius: " << flush;
+		  done = false;
+		  c = getchar();
+		  while(int(c) != 10){//carriage return ascii value is 10
+				if(c != '.'){//handle numbers to the left first
+					radius = radius*10 + int(c - '0');
+				}
+				else{//numbers to the right of the dec. pt.
+					c = getchar();
+					while(int(c) != 10){
+						decimal = decimal/10 + int(c - '0')/10;
+						c = getchar();
+					} 
+					done = true;
+				}
+				if (done) break;
+				c = getchar();
+		  }
+          radius = radius + decimal;
+		  
+		  cout << "Enter a depth (place to put origin of protein sphere in z): " << flush;
+		  done = false;
+		  c = getchar();
+		  while(int(c) != 10){//carriage return ascii value is 10
+			    if(c == '-'){
+					negative = true;
+				}
+				else if(c != '.'){//handle numbers to the left first
+					depth = depth*10 + int(c - '0');
+				}
+				else{//numbers to the right of the dec. pt.
+					c = getchar();
+					while(int(c) != 10){
+						decimal = decimal/10 + int(c - '0')/10;
+						c = getchar();
+					} 
+					done = true;
+				}
+				if (done) break;
+				c = getchar();
+		  }
+          depth = depth + decimal; 
+		  if(negative){
+			  depth = -depth;
+		  }
+		  negative = false;
+		  break;
+	  default:
+		  cout << "Please try again with a valid option number." << endl
+			   << "Try 7 if your protein is not in the list given." << endl;
+		  add = false;
+		  break;
 	  }
-	  else{
-		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, depth), 0., 0., 0., 0., radius*2.0);
+	
+	  if(add){//add if a protein has been selected
+		  if(SimMicroscopeServer.grid_size_rcv){
+			radius = radius * SimMicroscopeServer.Sim_to_World_x;
+			addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, depth*SimMicroscopeServer.Sim_to_World_x), 
+				0., 0., 0., 0., radius*2.0);
+		  }
+		  else{
+			addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, depth), 0., 0., 0., 0., radius*2.0);
+		  }
+		  selectedOb = numObs-1;
 	  }
-      selectedOb = numObs-1;
 
       break;
 	case '2' ://add dimer
-		radius = (float)35.1499;//9.3075;//51.58;
-	    depth = (float)-34.3325;//-8.0049;//-50.3914;
+		cout << endl << "Protein List" << endl;
+		cout << "1		MLH1-PMS1" << endl;
+		cout << "2		helicase dimer" << endl;
+		cout << "3		any other protein dimer (you enter the dimensions)" << endl;
+		cout << endl << "Enter a number for the protein you want: " << flush;
+		c = getchar();
+		d = getchar();//gets carriage return
 
-		if(SimMicroscopeServer.grid_size_rcv){
-			for(i = 0;i<2;++i){
-				radius = radius * SimMicroscopeServer.Sim_to_World_x;
-				addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2 + spacing*SimMicroscopeServer.Sim_to_World_x, depth*SimMicroscopeServer.Sim_to_World_x), 
-					0., 0., 0., 0., radius*2.0);
-				spacing = radius;
-				//radius = (float)12.2399;
-				//depth = (float)-10.8306;
-				spacing = 2*7.53622;//10.77;
-			}
+		switch(c){
+		case '1':
+		  radius1 = radius2 = 35.1499;
+		  depth1 = depth2 = -34.3325;
+		  spacing2 = 2*7.53622;//2 times the base radius (at the surface) for one protein
+		  break;
+		case '2':
+		  radius1 = 9.3075;
+		  depth1 = -8.0049; 
+		  radius2 = 12.2399;
+		  depth2 = -10.8306;
+		  spacing2 = 10.77;
+		  break;
+		case '3':
+		  cout << "Enter the radius and depth for the first protein then the second." << endl;
+		  for(i = 0;i<2;++i){
+			  cout << "Enter a radius: " << flush;
+			  done = false;
+			  c = getchar();
+			  while(int(c) != 10){//carriage return ascii value is 10
+					if(c != '.'){//handle numbers to the left first
+						radius = radius*10 + int(c - '0');
+					}
+					else{//numbers to the right of the dec. pt.
+						c = getchar();
+						while(int(c) != 10){
+							decimal = decimal/10 + int(c - '0')/10;
+							c = getchar();
+						} 
+						done = true;
+					}
+					if (done) break;
+					c = getchar();
+			  }
+			  radius = radius + decimal;
+			  
+			  
+			  cout << "Enter a depth (place to put origin of protein sphere in z): " << flush;
+			  done = false;
+			  c = getchar();
+			  while(int(c) != 10){//carriage return ascii value is 10
+				    if(c == '-'){
+						negative = true;
+					}
+					if(c != '.'){//handle numbers to the left first
+						depth = depth*10 + int(c - '0');
+					}
+					else{//numbers to the right of the dec. pt.
+						c = getchar();
+						while(int(c) != 10){
+							decimal = decimal/10 + int(c - '0')/10;
+							c = getchar();
+						} 
+						done = true;
+					}
+					if (done) break;
+					c = getchar();
+			  }
+			  depth = depth + decimal; 
+			  if(negative){
+					depth = -depth;
+			  }
+			  negative = false;
+
+			  if(i==1){
+				  radius1 = radius;
+				  depth1 = depth;
+			  }
+			  else{
+				  radius2 = radius;
+				  depth2 = depth;
+			  }
+		  }
+		  break;
+		default:
+		  cout << "Please try again with a valid option number." << endl
+			   << "Try 7 if your protein is not in the list given." << endl;
+		  add = false;
+		  break;
 		}
-	    else{
-			for(i = 0;i<2;++i){
-				addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2 + spacing, depth), 0., 0., 0., 0., radius*2.0);
-				//radius = (float)12.2399;
-				//depth = (float)-10.8306;
-				spacing = 2*7.53622;//10.77;
+
+		if(add){//add if a dimer has been selected
+			radius = radius1;
+			depth = depth1;
+
+			dimergroup = NULL;
+
+			if(SimMicroscopeServer.grid_size_rcv){
+				for(i = 0;i<2;++i){
+					radius = radius * SimMicroscopeServer.Sim_to_World_x;
+					
+					addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2 + spacing*SimMicroscopeServer.Sim_to_World_x, 
+						depth*SimMicroscopeServer.Sim_to_World_x), 0., 0., 0., 0., radius*2.0,dimergroup);
+					dimergroup = new int();
+					*dimergroup = numGroups-1;
+					spacing = spacing2;
+					radius = radius2;
+					depth = depth2;
+				}	
+			}	
+			else{
+				for(i = 0;i<2;++i){
+					addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2 + spacing, depth), 0., 0., 0., 0., radius*2.0,
+						dimergroup);
+					dimergroup = new int();
+					*dimergroup = numGroups-1;
+					spacing = spacing2;
+					radius = radius2;
+					depth = depth2;
+				}
 			}
+
+		  selectedOb = numObs-1;
+
 		}
-
-      selectedOb = numObs-1;
-
       break;
 	case 'c' ://add cylinder
 /*

@@ -119,7 +119,7 @@ public:
   void moveGrabbedOb(Vec3d vMouseWorld);
 };
 
-void addNtube(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam,
+int addNtube(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam,
 			  int *group_number = NULL);
 
 
@@ -157,7 +157,7 @@ public:
   void moveGrabbedOb(Vec3d vMouseWorld);
 };
 
-void addTriangle(Vec3d a, Vec3d b, Vec3d c,int *group_number = NULL);
+int addTriangle(Vec3d a, Vec3d b, Vec3d c,int *group_number = NULL);
 
 
 /* DNA :
