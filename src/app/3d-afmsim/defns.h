@@ -70,5 +70,5 @@
 
 #define DEPTHSIZE MAX_GRID
 
-		
+
 #endif

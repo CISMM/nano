@@ -20,7 +20,6 @@
 #include "sim.h"
 #include "input.h"
 
-const double dimension = DEPTHSIZE;//128*******changed this
 
 // raw values (normalized) from Z-buffer
 float zBuffer[ DEPTHSIZE*DEPTHSIZE ];			

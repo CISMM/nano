@@ -41,6 +41,7 @@ int numObs;
 
 int selectedOb = NULLOB;
 int buttonpress=-1;
+
 int selected_triangle_side;
 double unca_minx = -1, unca_miny = -1, unca_maxx = -1, unca_maxy = -1;
 
@@ -182,7 +183,6 @@ int main(int argc, char *argv[])
 			ics.set_r(TipSize);//let the user specify the tip radius desired
 		}
 		else if (!strcmp(argv[i], "-unca_nano")) {
-			if (++i > argc) { Usage(argv[0]); }
 			unca_minx = 0;
 			unca_miny = 0;
 			unca_maxx = 1000;
@@ -303,8 +303,7 @@ int main(int argc, char *argv[])
 
 
 void write_to_unca(char *filename) {
-  
-  // Everything here is in Angstroms. Unca takes care of this.
+    // Everything here is in Angstroms. Unca takes care of this.
 	Unca u;
 	if(unca_minx != -1 ||  unca_maxx != -1){
 		u.set(DEPTHSIZE, DEPTHSIZE, unca_minx, unca_maxx, unca_miny, unca_maxy, 
