@@ -40,6 +40,52 @@ nmb_TimerList::~nmb_TimerList (void) {
 }
 
 
+vrpn_int32 nmb_TimerList::getListHead (void) {
+
+  if (d_list) {
+    return d_list->serialNumber;
+  } else {
+    return -1;
+  }
+
+}
+
+timeval nmb_TimerList::getListHeadTime (void) {
+
+  if (d_list) {
+    return d_list->timestamp;
+  } else {
+    timeval errret;
+    errret.tv_sec = 0;
+    errret.tv_usec = 0;
+    return errret;
+  }
+
+}
+
+vrpn_bool nmb_TimerList::isBlocked (vrpn_int32 sn) {
+  nmb_Timestamp * ts;
+
+  for (ts = d_list; ts; ts = ts->next) {
+    if (ts->serialNumber == sn) {
+      if (ts->pending) {
+        return VRPN_TRUE;
+      }
+      return VRPN_FALSE;
+    }
+  }
+
+  return VRPN_FALSE;
+}
+
+
+
+void nmb_TimerList::start (void) {
+
+  gettimeofday(&d_startTime, NULL);
+
+}
+
 vrpn_int32 nmb_TimerList::newTimestep (void) {
 
   nmb_Timestamp * ts;
@@ -65,6 +111,12 @@ vrpn_int32 nmb_TimerList::newTimestep (void) {
                                                     deltaT);
         d_totalActiveTimestampsComplete++;
       }
+      if (v->wasPending) {
+        deltaT = vrpn_TimevalDiff(ts->timestamp, v->timestamp);
+        d_totalBlockedTimeComplete = vrpn_TimevalSum(d_totalBlockedTimeComplete,
+                                                     deltaT);
+        d_totalBlockedTimestampsComplete++;
+      }
       *ps = v->next;
       v->next = d_freePool;
       d_freePool = v;
@@ -82,29 +134,6 @@ vrpn_int32 nmb_TimerList::newTimestep (void) {
   return ts->serialNumber;
 }
 
-
-vrpn_int32 nmb_TimerList::getListHead (void) {
-
-  if (d_list) {
-    return d_list->serialNumber;
-  } else {
-    return -1;
-  }
-
-}
-
-timeval nmb_TimerList::getListHeadTime (void) {
-
-  if (d_list) {
-    return d_list->timestamp;
-  } else {
-    timeval errret;
-    errret.tv_sec = 0;
-    errret.tv_usec = 0;
-    return errret;
-  }
-
-}
 
 void nmb_TimerList::block (vrpn_int32 sN) {
   nmb_Timestamp * ts;
@@ -127,6 +156,7 @@ void nmb_TimerList::unblock (vrpn_int32 sN) {
   for (ts = d_list; ts; ts = ts->next) {
     if (ts->serialNumber == sN) {
       ts->pending = VRPN_FALSE;
+      ts->wasPending = VRPN_TRUE;
       return;
     }
   }
@@ -175,7 +205,17 @@ void nmb_TimerList::remove (void) {
 
 void nmb_TimerList::report (void) {
 
+  nmb_Timestamp * ts;
   timeval meantime;
+  timeval now;
+  timeval elapsedWallclock;
+  vrpn_int32 bcount;
+
+  gettimeofday(&now, NULL);
+  elapsedWallclock = vrpn_TimevalDiff(now, d_startTime);
+
+  printf("Elapsed wallclock time:  %ld sec %ld usec.\n",
+          elapsedWallclock.tv_sec, elapsedWallclock.tv_usec);
 
   printf("Total elapsed time:  %ld sec %ld usec.\n",
           d_totalTimeComplete.tv_sec, d_totalTimeComplete.tv_usec);
@@ -211,6 +251,17 @@ void nmb_TimerList::report (void) {
     printf("Mean elapsed time per blocked timestamp:  %ld sec %ld usec.\n",
            meantime.tv_sec, meantime.tv_usec);
   }
+
+
+  bcount = 0;
+  for (ts = d_list; ts; ts = ts->next) {
+    if (ts->pending) {
+      bcount++;
+    }
+  }
+  if (bcount) {
+    printf("Blocked timestamps never finished:  %d.\n", bcount);
+  }
 }
 
 
@@ -233,6 +284,7 @@ nmb_Timestamp * nmb_TimerList::newTS (void) {
   ts->serialNumber = d_nextSN++;
   gettimeofday(&ts->timestamp, NULL);
   ts->pending = VRPN_FALSE;
+  ts->wasPending = VRPN_FALSE;
   ts->active = VRPN_FALSE;
   ts->next = NULL;
 

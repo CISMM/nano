@@ -1,3 +1,14 @@
+2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmb_TimerList.h : new data members nmb_TimerList::d_startTime,
+        nmb_Timestamp::wasPending
+	* nmb_TimerList.C (isBlocked) : new function
+        (start) : same
+        (newTimestep) : fix accounting for blocked timers
+        (unblock) : set wasPending
+        (report) : use data from start(), wasPending
+        (newTS) : clear wasPending
+
 2000-09-14  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_Dataset.C (constructor) : initializes colorMapName to 

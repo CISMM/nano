@@ -8,6 +8,7 @@ struct nmb_Timestamp {
   vrpn_int32 serialNumber;
   timeval timestamp;
   vrpn_bool pending;  // True if blocked
+  vrpn_bool wasPending;
   vrpn_bool active;
   nmb_Timestamp * next;
 };
@@ -50,23 +51,35 @@ class nmb_TimerList {
     nmb_TimerList (void);
     ~nmb_TimerList (void);
 
-    vrpn_int32 newTimestep (void);
-        ///< Returns SN of timestamp added.
-        ///< Marks all unblocked timestamps as complete,
-        ///< adds their delta time to d_totalTimeComplete,
-        ///< and throws them away.
+
+    // ACCESSORS
+
 
     vrpn_int32 getListHead (void);
         ///< Returns SN of timestamp most recently added.
     timeval getListHeadTime (void);
         ///< Returns timestamp most recently added.
 
+    vrpn_bool isBlocked (vrpn_int32 sn);
+        ///< Returns true iff timestamp with given SN is blocked.
+
+    // MANIPULATORS
+
+
+    void start (void);
+
+    vrpn_int32 newTimestep (void);
+        ///< Returns SN of timestamp added.
+        ///< Marks all unblocked timestamps as complete,
+        ///< adds their delta time to d_totalTimeComplete,
+        ///< and throws them away.
+
     void block (vrpn_int32 sN);
         ///< Blocks timestamp with serial number SN, preventing it from being
         ///< completed during newTimestep().
     void unblock (vrpn_int32 sN);
-        ///< Unblocks timestamp with serial number SN so that it can be processed
-        ///< during newTimestamp().
+        ///< Unblocks timestamp with serial number SN so that it can be
+        ///< processed newTimestamp().
 
     void activate (vrpn_int32 sN);
         ///< Marks timestamp with serial number SN as active, so that it gets
@@ -103,6 +116,7 @@ class nmb_TimerList {
     nmb_Timestamp * d_list;
     nmb_Timestamp * d_freePool;
 
+    timeval d_startTime;
 };
 
 
