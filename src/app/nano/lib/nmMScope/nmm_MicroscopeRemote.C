@@ -5096,12 +5096,12 @@ void nmm_Microscope_Remote::swapPointList (void) {
 
   // Awkward, but it's the interface that's there today.
 
-  state.data.receivedPointList->clear();
-  for (i = 0; i < state.data.incomingPointList->numEntries(); i++) {
-    state.data.receivedPointList->addEntry
-           (*state.data.incomingPointList->entry(i));
+  state.data.receivedPointList.clear();
+  for (i = 0; i < state.data.incomingPointList.numEntries(); i++) {
+    state.data.receivedPointList.addEntry
+           (*state.data.incomingPointList.entry(i));
   }
-  state.data.incomingPointList->clear();
+  state.data.incomingPointList.clear();
 
 }
 

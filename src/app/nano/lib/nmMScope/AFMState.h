@@ -343,9 +343,9 @@ class AFMDataset {
     Point_results * fc_inputPoint;
     Scanline_results currentScanlineData;
 
-    Point_list * receivedPointList;
+    Point_list receivedPointList;
       ///< Last complete results from a feel-ahead call.
-    Point_list * incomingPointList;
+    Point_list incomingPointList;
       ///< Current, incomplete results from a feel-ahead call.
 
     Tclvar_list_of_strings inputPlaneNames;

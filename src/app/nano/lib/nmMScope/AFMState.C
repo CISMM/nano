@@ -565,7 +565,8 @@ int AFMDataset::Initialize (nmb_Dataset * dataset) {
                                              dataset);
   point_channels = new Point_channel_selector (inputPoint,
                                                &inputPointNames,
-						dataset);
+						dataset,
+                                               &incomingPointList);
   forcecurve_channels = new ForceCurve_channel_selector (fc_inputPoint,
 						&fc_inputPointNames, dataset);
 

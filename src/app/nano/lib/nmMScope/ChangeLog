@@ -1,5 +1,13 @@
 2000-10-03  Tom Hudson  <hudson@cs.unc.edu>
 
+	* AFMState.h : chang Point_lists members of AFMDataset from
+        pointers to instances
+	* AFMState.C : pass receivedPointList to point_channels constructor
+        * nmm_MicroscopeRemote.C (swapPointLists) : change pointers to
+        instances from AFMDataset
+
+2000-10-03  Tom Hudson  <hudson@cs.unc.edu>
+
 	* nmm_Microscope.C (encode_FeelTo) : add parameters
         (decode_FeelTo) : same
 
