@@ -51,6 +51,7 @@ nmr_RegistrationUI::nmr_RegistrationUI
 
    d_registrationImageName3D("reg_surface_cm(color_comes_from)", "none"),
    d_registrationImageName2D("reg_projection_cm(color_comes_from)", "none"),
+   d_flipProjectionImageInX("reg_proj_flipX", 0),
    d_newResampleImageName("resample_image_name", ""),
    d_newResamplePlaneName("resample_plane_name", ""),
    d_registrationEnabled("reg_window_open", 0),
@@ -95,8 +96,9 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_2DImageCMap(NULL),
    d_last2DImage(NULL),
    d_last3DImage(NULL),
-   d_flipX(vrpn_FALSE), 
-   d_flipY(vrpn_FALSE)
+   d_flipXreference(vrpn_FALSE), 
+   d_flipYreference(vrpn_FALSE),
+   d_flipYadjustable(vrpn_FALSE)
 {
     d_scaledProjImFromScaledTopoIm = 
         new nmb_TransformMatrix44[s_numTransformationSources];
@@ -168,6 +170,9 @@ void nmr_RegistrationUI::setupCallbacks()
        (handle_registrationImage3D_change, (void *)this);
     d_registrationImageName2D.addCallback
        (handle_registrationImage2D_change, (void *)this);
+
+	d_flipProjectionImageInX.addCallback
+       (handle_flipProjectionImageInX_change, (void *)this);
 
     d_registrationColorMap3D.addCallback
        (handle_registrationColorMap3D_change, (void *)this);
@@ -401,7 +406,8 @@ void nmr_RegistrationUI::handle_registrationImage3D_change(const char *name,
     if ( me->d_last3DImage != im) {
 
         // send image off to the proxy
-        me->d_aligner->setImage(NMR_SOURCE, im, me->d_flipX, me->d_flipY);
+        me->d_aligner->setImage(NMR_SOURCE, im, me->d_flipXreference, 
+			me->d_flipYreference);
         // We have a choice, and I'm not sure which is right. Either
         // Set the new image to use the existing colormap params:
         double dmin,dmax,cmin,cmax;
@@ -434,7 +440,8 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
     // If different, send changes. 
     if ( me->d_last2DImage != im) {
         // send image off to the proxy
-        me->d_aligner->setImage(NMR_TARGET, im, me->d_flipX, me->d_flipY);
+        me->d_aligner->setImage(NMR_TARGET, im, me->d_flipProjectionImageInX, 
+			me->d_flipYadjustable);
         
         // We have a choice, and I'm not sure which is right. Either
         // Set the new image to use the existing colormap params:
@@ -463,6 +470,15 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
           }
         }
     }
+}
+
+void nmr_RegistrationUI::handle_flipProjectionImageInX_change(vrpn_int32 value, void *ud)
+{
+	nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+	if (me->d_last2DImage) {
+		me->d_aligner->setImage(NMR_TARGET, me->d_last2DImage, me->d_flipProjectionImageInX, 
+			me->d_flipYadjustable);
+	}
 }
 
 // static

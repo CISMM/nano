@@ -73,6 +73,7 @@ class nmr_RegistrationUI {
     static void handle_resamplePlaneName_change(const char *name, void *ud);
     static void handle_registrationImage3D_change(const char *name, void *ud);
     static void handle_registrationImage2D_change(const char *name, void *ud);
+    static void handle_flipProjectionImageInX_change(vrpn_int32 value, void *ud);
     static void handle_registrationColorMap3D_change(const char *name, void *ud);
     static void handle_registrationColorMap2D_change(const char *name, void *ud);
     static void handle_registrationMinMax3D_change(vrpn_float64, void *ud);
@@ -113,6 +114,7 @@ class nmr_RegistrationUI {
     Tclvar_string d_registrationImageName2D;
     Tclvar_string d_newResampleImageName;
     Tclvar_string d_newResamplePlaneName;
+
     Tclvar_int d_registrationEnabled;
     Tclvar_int d_constrainToTopography;
     Tclvar_int d_invertWarp;
@@ -166,7 +168,9 @@ class nmr_RegistrationUI {
     nmb_Image * d_last3DImage;
 
     // determines whether images appear flipped or not in the two image windows
-    vrpn_bool d_flipX, d_flipY;
+    vrpn_bool d_flipXreference, d_flipYreference;
+	Tclvar_int d_flipProjectionImageInX;
+	vrpn_bool d_flipYadjustable;
 
     // transformations created by various means - manual, entry widgets, auto
     // the order of elements corresponds to that for s_transformationSources

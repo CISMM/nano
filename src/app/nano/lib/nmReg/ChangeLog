@@ -1,5 +1,10 @@
 2002-06-30  Adam Seeger  <seeger@cs.unc.edu>
 
+        * nmr_RegistrationUI.[Ch]: made separate variables for flipping
+	registration image windows in x and y 
+	(the 2 images shared this property before), converted the flip in X 
+	for the projection image to a Tclvar_int and hooked this up to the 
+	tcl window
 	* nmr_Registration_Impl.C (adjustTransformFromRotatedCorrespondence):
 	set center of rotation to match center for final transform to fix
 	the bug in alignment for rotated projection directions (one-line fix!)
