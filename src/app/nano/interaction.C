@@ -2798,7 +2798,8 @@ int doFeelLive (int whichUser, int userEvent)
 	clipPos[0] = microscope->state.data.inputPoint->x();
 	clipPos[1] = microscope->state.data.inputPoint->y();
 	
-	//height on BCPlane
+	//height from BCPlane
+	//so that the sphere knows where to be positioned when in feedback
 	double height;
 	plane -> valueAt(&height,clipPos[0],clipPos[1]);
 	clipPos[2] = height;
@@ -2811,9 +2812,9 @@ int doFeelLive (int whichUser, int userEvent)
 	clipPos[2] = z_pos;
       }
     }
-    curr_x = clipPos[0] - plane->xInWorld(0);
-    curr_y = clipPos[1] - plane->yInWorld(0);
-    curr_z = clipPos[2];
+    curr_x = microscope->state.data.inputPoint->x() - plane->xInWorld(0);
+    curr_y = microscope->state.data.inputPoint->y() - plane->yInWorld(0);
+    curr_z = z_pos;
   } // end if direct step mode
   
   // constrained freehand only allows motion along a line.
