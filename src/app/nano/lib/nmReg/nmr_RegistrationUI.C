@@ -95,12 +95,10 @@ nmr_RegistrationUI::nmr_RegistrationUI
     d_aligner->registerChangeHandler((void *)this, handle_registrationChange);
     d_3DImageCMap = new nmui_ColorMap("reg_surface_cm", 
               &d_registrationImageName3D,
-              (Tclvar_list_of_strings *)(d_dataset->dataImages)->imageNameList(),
               &d_registrationColorMap3D);
     d_3DImageCMap->setSurfaceColor(255,255,255);
     d_2DImageCMap = new nmui_ColorMap("reg_projection_cm", 
               &d_registrationImageName2D,
-              (Tclvar_list_of_strings *)(d_dataset->dataImages)->imageNameList(),
               &d_registrationColorMap2D);
     d_2DImageCMap->setSurfaceColor(255,255,255);
 

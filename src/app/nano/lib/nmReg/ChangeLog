@@ -1,3 +1,8 @@
+2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_RegistrationUI.C (constructor): took out parameter in call to
+	nmui_ColorMap constructor
+
 2001-11-26  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_AlignerMI.C (takeGradientSteps): added some debugging printouts
