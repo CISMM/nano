@@ -1,3 +1,9 @@
+2001-12-14  Tom Hudson  <hudsont@uncwil.edu>
+
+   * nmg_GraphicsImpl.C (nmg_Graphics_Implementation constructor) :
+   V_ERROR wouldn't link, so hacked in 0.
+   (nmg_Graphics_Implementation::initDisplays) : same.
+
 2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* graphics_globals.h : reorder #includes, fix brackets.
