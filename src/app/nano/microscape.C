@@ -1550,7 +1550,6 @@ static void handle_collab_machine_name_change
     // transitory excitement during startup
     return;
   }
-
   CollaborationManager * cm;
   cm = (CollaborationManager *) userdata;
 

@@ -200,7 +200,9 @@ Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
     nmb_ListOfStrings * namelist, nmb_Dataset * dataset) :
 		Channel_selector (namelist, dataset)
 {
-	change_from_tcl = 1;	// Report to the microscope what we want
+	change_from_tcl = 0;		
+	change_from_microscope = 1;   // Get current datasets from MScope
+
 	numchannels = 0;	// No channels mapped yet
 	mygrid = grid_to_track;
 
