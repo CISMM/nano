@@ -3,6 +3,8 @@
 
 // These small objects parameterize class nmg_Graphics_RenderServer.
 
+#include <v.h>  // for v_xform_type
+
 #include <vrpn_Types.h>
 
 class nmg_Graphics_RenderServer;
@@ -21,7 +23,10 @@ class nmg_RenderServer_ViewStrategy {
     virtual ~nmg_RenderServer_ViewStrategy (void) = 0;
 
     virtual vrpn_bool alwaysSendEntireScreen (void) const = 0;
+    virtual void setViewTransform (v_xform_type) = 0;
+      ///< Intercept/override nmg_Graphics_Implementation::setViewTransform().
     virtual void setViewingTransform (void) = 0;
+      ///< Called immediately before nmg_RenderServer_Strategy::render().
 
     virtual void setGraphicsModes (void) = 0;
 
@@ -44,7 +49,10 @@ class nmg_RSViewS_Ortho : public nmg_RenderServer_ViewStrategy {
     virtual ~nmg_RSViewS_Ortho (void);
 
     virtual vrpn_bool alwaysSendEntireScreen (void) const;
+    virtual void setViewTransform (v_xform_type);
+      ///< Do nothing.
     virtual void setViewingTransform (void);
+      ///< Do something.
 
     virtual void setGraphicsModes (void);
       /**< Turns off chartjunk, measure lines;  sets "planeonly".
@@ -66,7 +74,10 @@ class nmg_RSViewS_Slave : public nmg_RenderServer_ViewStrategy {
     virtual ~nmg_RSViewS_Slave (void);
 
     virtual vrpn_bool alwaysSendEntireScreen (void) const;
+    virtual void setViewTransform (v_xform_type);
+      ///< Do something.
     virtual void setViewingTransform (void);
+      ///< Do nothing.
 
     virtual void setGraphicsModes (void);
       /**< Turns on chartjunk, measure lines;  not "planeonly".

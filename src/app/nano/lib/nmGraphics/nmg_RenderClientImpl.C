@@ -39,7 +39,7 @@ class nmg_RCIStrategy {
     virtual void handleDepthData (vrpn_int32 x, vrpn_int32 y,
                                   vrpn_int32 dx, vrpn_int32 dy,
                                   vrpn_int32 pixelCount,
-                                  const vrpn_float64 * buffer);
+                                  const vrpn_float32 * buffer);
       /**< Default implementation does nothing. */
 
   protected:
@@ -77,7 +77,7 @@ class nmg_RCIS_Mesh : public nmg_RCIStrategy {
     virtual void handleDepthData (vrpn_int32 x, vrpn_int32 y,
                                   vrpn_int32 dx, vrpn_int32 dy,
                                   vrpn_int32 pixelCount,
-                                  const vrpn_float64 * buffer);
+                                  const vrpn_float32 * buffer);
 
 
 };
@@ -203,7 +203,7 @@ void nmg_RCIStrategy::handleDepthData (
     vrpn_int32 /*x*/, vrpn_int32 /*y*/,
     vrpn_int32 /*dx*/, vrpn_int32 /*dy*/,
     vrpn_int32 /*pixelCount*/,
-    const vrpn_float64 * /*buffer*/)
+    const vrpn_float32 * /*buffer*/)
 {
       // Default implementation does nothing.
 }
@@ -258,20 +258,34 @@ void nmg_RCIS_Mesh::handlePixelData (vrpn_int32 nx, vrpn_int32 ny,
 void nmg_RCIS_Mesh::handleDepthData (vrpn_int32 nx, vrpn_int32 ny,
                                      vrpn_int32 dx, vrpn_int32 dy,
                                      vrpn_int32 pixelCount,
-                                     const vrpn_float64 * buffer) {
+                                     const vrpn_float32 * buffer) {
   BCPlane * height;
+  vrpn_float32 z;
   vrpn_int32 i;
 
   height = d_imp->renderingGrid()->getPlaneByName("captured depth");
 
+//if (!(ny%20)) {
+//fprintf(stderr, " y %d: ", ny);
+//}
+
   for (i = 0; i < pixelCount; i++) {
-    height->setValue(nx, ny, buffer[i]);
+    z = 1.0 / buffer[i];
+    height->setValue(nx, ny, z);
+
+//if (!(ny%20) && !(nx%10)) {
+//fprintf(stderr, "  %.5f", z);
+//}
 
     d_imp->rangeOfChange.AddPoint(nx, ny);
 
     nx += dx;
     ny += dy;
   }
+
+//if (!(ny%20)) {
+//fprintf(stderr, "\n");
+//}
 }
 
 
@@ -688,7 +702,7 @@ int nmg_Graphics_RenderClient_Implementation::handle_depthData
 
   vrpn_int32 i;
 
-  vrpn_float64 z [1024];  // HACK - can't handle lines over 1024 pixels long
+  vrpn_float32 z [1024];  // HACK - can't handle lines over 1024 pixels long
 
   vrpn_unbuffer(&bp, &x);
   vrpn_unbuffer(&bp, &y);

@@ -1,3 +1,26 @@
+2001-06-22  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmg_RenderClientImpl.C
+	(nmg_RCIStrategy::handleDepthData) : buffer is of vrpn_float32,
+	not vrpn_float64
+	(nmg_RCIS_Mesh::handleDepthData) : same
+
+	* nmg_RenderServer.C (setViewTransform) : override default
+	nmg_Graphics_Implementation to allow d_viewStrategy to decide
+	what to do with the new transform sent by the client.
+	(fixes server-quat-jitter bug, which was some sort of unholy
+	race condition I never figured out the mechanism for.
+        unfortunately adds dependancy on v.h)
+	* nmg_RenderServerStrategies
+	(nmg_RenderServer_ViewStrategy::setViewTransform) : new function.
+	Add comments to avoid confusion with setViewingTransform (what
+	bad naming).
+	(nmg_RSViewS_Ortho::setViewTransform) : same
+	(nmg_RSViewS_Slave::setViewTransform) : same.  Put in hacks for
+	alternate size screens, but I still think vlib does this
+	entirely wrong.
+	
+
 2001-06-20  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C (constructor) : register handler for

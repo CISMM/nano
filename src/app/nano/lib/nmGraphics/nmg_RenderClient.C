@@ -322,7 +322,7 @@ void nmg_Graphics_RenderClient::setTextureScale (float a) {
 
 // virtual
 void nmg_Graphics_RenderClient::setViewTransform (v_xform_type x) {
-fprintf(stderr, "nmg_Grahpics_RenderClient::setViewTransform()\n");
+//fprintf(stderr, "nmg_Grahpics_RenderClient::setViewTransform()\n");
   if (d_transformBlocks) {
     blockTimer();
   }

@@ -29,6 +29,8 @@ nmg_RenderServer_ViewStrategy::~nmg_RenderServer_ViewStrategy (void) {
 nmg_RSViewS_Ortho::nmg_RSViewS_Ortho (nmg_Graphics_RenderServer * g) :
   nmg_RenderServer_ViewStrategy (g) {
 
+fprintf(stderr, "Setting up Render Server View Strategy:  Orthographic.\n");
+
 }
 
 nmg_RSViewS_Ortho::~nmg_RSViewS_Ortho (void) {
@@ -41,6 +43,13 @@ vrpn_bool nmg_RSViewS_Ortho::alwaysSendEntireScreen (void) const {
 }
 
 // virtual
+void nmg_RSViewS_Ortho::setViewTransform (v_xform_type t) {
+  // Do nothing
+  // Ignore transforms sent by the client;  set our own before
+  // rendering.
+}
+
+// virtual
 void nmg_RSViewS_Ortho::setViewingTransform (void) {
 
   BCPlane * plane;
@@ -49,8 +58,14 @@ void nmg_RSViewS_Ortho::setViewingTransform (void) {
   double lenY;
   double gridMidpointX, gridMidpointY;
 
- // Attempt to guarantee a full-screen view from directly overhead.
+vrpn_bool changed = VRPN_FALSE;
+
+  // Attempt to guarantee a full-screen view from directly overhead.
   // Requires a screen with square pixels to work properly?
+  // For some screwy race condition reason this doesn't always
+  // override nmg_Graphics_Implementation::setViewTransform
+  // so we have to intercept it on nmg_Graphics_RenderServer
+  // and pass it down to strategies.
 
   // Taken from find_center_xforms() in microscape.c
   plane = g_inputGrid->getPlaneByName (g_heightPlaneName);
@@ -83,12 +98,22 @@ void nmg_RSViewS_Ortho::setViewingTransform (void) {
   // Almost the right scale, but it comes out off-center???  Or is that
   // just the non-square pixels?
   
-  scaleTo *= 4.0;
+  // 512 x 512
+  //scaleTo *= 4.0;
+
+  // 100 x 100?
+  scaleTo *= 0.78125;
 
   gridMidpointX = (g_inputGrid->minX() +
                    g_inputGrid->maxX()) * 0.5;
   gridMidpointY = (g_inputGrid->minY() +
                    g_inputGrid->maxY()) * 0.5;
+
+if ((gridMidpointX != v_world.users.xforms[0].xlate[0]) ||
+    (gridMidpointY != v_world.users.xforms[0].xlate[1])) {
+changed = VRPN_TRUE;
+}
+
   v_world.users.xforms[0].xlate[0] = gridMidpointX;
   v_world.users.xforms[0].xlate[1] = gridMidpointY;
   v_world.users.xforms[0].xlate[2] = scaleTo ;
@@ -98,8 +123,10 @@ void nmg_RSViewS_Ortho::setViewingTransform (void) {
   v_world.users.xforms[0].rotate[3] = 1.0;
   v_world.users.xforms[0].scale = scaleTo;
 
+if (changed) {
 fprintf(stderr, "Translation is %.5f, %.5f, %.5f;  scale is %.5f.\n",
 gridMidpointX, -scaleTo + gridMidpointY, scaleTo , v_world.users.xforms[0].scale);
+}
 
 }
 
@@ -120,6 +147,8 @@ void nmg_RSViewS_Ortho::setGraphicsModes (void) {
 nmg_RSViewS_Slave::nmg_RSViewS_Slave (nmg_Graphics_RenderServer * g) :
   nmg_RenderServer_ViewStrategy (g) {
 
+fprintf(stderr, "Setting up Render Server View Strategy:  Perspective.\n");
+
 }
 
 nmg_RSViewS_Slave::~nmg_RSViewS_Slave (void) {
@@ -129,6 +158,23 @@ nmg_RSViewS_Slave::~nmg_RSViewS_Slave (void) {
 // virtual
 vrpn_bool nmg_RSViewS_Slave::alwaysSendEntireScreen (void) const {
   return VRPN_TRUE;
+}
+
+// virtual
+void nmg_RSViewS_Slave::setViewTransform (v_xform_type xform) {
+  // HACK
+  // Just duplicate the code here rather than trying to set up a way
+  // to propagate a message to the nmg_Graphics_Implementation.
+
+  v_world.users.xforms[0].xlate[0] = xform.xlate[0];
+  v_world.users.xforms[0].xlate[1] = xform.xlate[1];
+  v_world.users.xforms[0].xlate[2] = xform.xlate[2];
+  v_world.users.xforms[0].rotate[0] = xform.rotate[0];
+  v_world.users.xforms[0].rotate[1] = xform.rotate[1];
+  v_world.users.xforms[0].rotate[2] = xform.rotate[2];
+  v_world.users.xforms[0].rotate[3] = xform.rotate[3];
+  v_world.users.xforms[0].scale = xform.scale;
+
 }
 
 // virtual
@@ -176,17 +222,20 @@ void nmg_RenderServer_Strategy::render (void) {
 
 void nmg_RenderServer_Strategy::
 updatePixelBuffer (int minx, int maxx, int miny, int maxy, 
-                   vrpn_uint8 *new_buf) 
+                   vrpn_uint8 * new_buf) 
 {
-    if (d_server->d_pixelBuffer == (vrpn_uint8*)NULL) {
-        d_server->d_pixelBuffer = new vrpn_uint8[d_server->d_screenSizeX * d_server->d_screenSizeY * 3];
+  int i, j, index;
+
+    if (!d_server->d_pixelBuffer) {
+        d_server->d_pixelBuffer = new vrpn_uint8
+             [d_server->d_screenSizeX * d_server->d_screenSizeY * 3];
     }
     
     //Copy the contents of new_buf into d_pixelBuffer, as we don't want
     //someone deleting d_pixelBuffer if we set it to new_buf
-    int index = 3 * (miny * d_server->d_screenSizeX + minx);
-    for(int i = miny; i < maxy; i++) {
-        for(int j = minx; j < maxx; j++) {
+    index = 3 * (miny * d_server->d_screenSizeX + minx);
+    for (i = miny; i < maxy; i++) {
+        for (j = minx; j < maxx; j++) {
             d_server->d_pixelBuffer[index] = new_buf[index++];
             d_server->d_pixelBuffer[index] = new_buf[index++];
             d_server->d_pixelBuffer[index] = new_buf[index++];
@@ -198,6 +247,8 @@ updatePixelBuffer (int minx, int maxx, int miny, int maxy,
 nmg_RSStrategy_Texture::nmg_RSStrategy_Texture
                      (nmg_Graphics_RenderServer * g) :
     nmg_RenderServer_Strategy (g) {
+
+fprintf(stderr, "Setting up Render Server Strategy:  Texture.\n");
 
 }
 
@@ -219,6 +270,8 @@ void nmg_RSStrategy_Texture::sendData (int minx, int maxx,
 nmg_RSStrategy_Vertex::nmg_RSStrategy_Vertex
                      (nmg_Graphics_RenderServer * g) :
     nmg_RenderServer_Strategy (g) {
+
+fprintf(stderr, "Setting up Render Server Strategy:  Vertex.\n");
 
 }
 
@@ -245,6 +298,9 @@ nmg_RSStrategy_CloudTexture(nmg_Graphics_RenderServer *g)
   :  nmg_RenderServer_Strategy (g)
 {
     d_cloud_render = new nmg_CloudTexturer(d_server->screenSizeX(), d_server->screenSizeY());
+
+fprintf(stderr, "Setting up Render Server Strategy:  Clouds.\n");
+
 }
 
 nmg_RSStrategy_CloudTexture::

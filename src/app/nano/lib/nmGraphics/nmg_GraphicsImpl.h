@@ -184,13 +184,13 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
   protected:
 
     virtual void initDisplays (void);
-      // Making constructor more flexible:  calls v_open_display()
-      // for all users (in [0, NUM_USERS)).  Default behavior is to
-      // open V_ENV_DISPLAY, but this can be overridden by derived
-      // classes.
-      // Wouldn't it have been simpler just to make sure other types
-      // of graphics implementations redefine the relevant environment
-      // variable?
+      ///< Making constructor more flexible:  calls v_open_display()
+      ///< for all users (in [0, NUM_USERS)).  Default behavior is to
+      ///< open V_ENV_DISPLAY, but this can be overridden by derived
+      ///< classes.
+      ///< Wouldn't it have been simpler just to make sure other types
+      ///< of graphics implementations redefine the relevant environment
+      ///< variable?
 
     virtual void initializeTextures (void);
     virtual void makeAndInstallRulerImage(PPM *myPPM);
@@ -199,13 +199,19 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     void screenCapture (int * w, int * h, unsigned char ** pixels,
                         vrpn_bool captureBack = VRPN_TRUE);
+      ///< If (*pxiels) or (*depths) is non-NULL, assumes it is a
+      ///< properly-sized array and writes into it;  otherwise news
+      ///< a w*h*3 or w*h array respectively.
+      ///< By default captures from the back buffer, but can be set to
+      ///< capture from the front buffer instead.
     void depthCapture (int * w, int * h, float ** depths,
                         vrpn_bool captureBack = VRPN_TRUE);
-      // If (*pxiels) or (*depths) is non-NULL, assumes it is a
-      // properly-sized array and writes into it;  otherwise news
-      // a w*h*3 or w*h array respectively.
-      // By default captures from the back buffer, but can be set to
-      // capture from the front buffer instead.
+      ///< If (*pxiels) or (*depths) is non-NULL, assumes it is a
+      ///< properly-sized array and writes into it;  otherwise news
+      ///< a w*h*3 or w*h array respectively.
+      ///< By default captures from the back buffer, but can be set to
+      ///< capture from the front buffer instead.
+      ///< OpenGL returns depth in the range [0, 1] = [near, far]
 
     nmb_Dataset * d_dataset;
 

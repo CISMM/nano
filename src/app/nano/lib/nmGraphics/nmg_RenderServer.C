@@ -141,6 +141,11 @@ void nmg_Graphics_RenderServer::mainloop (void) {
   g_config_chartjunk = 0;
 
   // Set up viewing transform.
+  // For some screwy race condition reason this doesn't always
+  // override nmg_Graphics_Implementation::setViewTransform
+  // so we have to intercept it on nmg_Graphics_RenderServer
+  // and pass it down to strategies.
+
   if (d_viewStrategy) {
     d_viewStrategy->setViewingTransform();
   }
@@ -160,11 +165,13 @@ void nmg_Graphics_RenderServer::mainloop (void) {
   }
 
   // Output
-fprintf(stderr, "Sending data for X [%d - %d] by Y [%d - %d].\n",
-minx, maxx, miny, maxy);
+if (minx <= maxx) {
+//fprintf(stderr, "Sending data for X [%d - %d] by Y [%d - %d].\n",
+//minx, maxx, miny, maxy);
   if (d_strategy) {
     d_strategy->sendData(minx, maxx, miny, maxy);
   }
+}
 
   clearWaitingTimestamps();
 
@@ -295,6 +302,14 @@ void nmg_Graphics_RenderServer::sendPartialDepthData (int minx, int maxx,
                                      d_depthData_type, d_myId,
                                      d_depthOutputBuffer,
                                      vrpn_CONNECTION_RELIABLE);
+//if (!(y % 50)) {
+//vrpn_int32 x;
+//fprintf(stderr, "Sending depth data from %d, %d:\n", minx, y);
+//for (x = minx; x < maxx; x += 10) {
+//fprintf(stderr, " %.5f", d_depthBuffer[d_screenSizeX * y + x]);
+//}
+//fprintf(stderr, "\n");
+//}
   }
 }
 
@@ -302,6 +317,13 @@ void nmg_Graphics_RenderServer::defaultRender (void) {
 
   nmg_Graphics_Implementation::mainloop();
 
+}
+
+// virtual 
+void nmg_Graphics_RenderServer::setViewTransform (v_xform_type t) {
+  if (d_viewStrategy) {
+    d_viewStrategy->setViewTransform(t);
+  }
 }
 
 

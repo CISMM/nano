@@ -78,6 +78,11 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
 
     void defaultRender (void);
 
+    virtual void setViewTransform (v_xform_type);
+      ///< Override default behavior to allow our strategies to
+      ///< decide whether or not to accept a view transform from
+      ///< the remote.
+
   protected:
 
     void computeScreenChange (int * minx, int * maxx, int * miny, int * maxy);
@@ -131,7 +136,7 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
     friend class nmg_RenderServer_Strategy;
 };
 
-#endif  // NMG_GRAPHICS_IMPL_H
+#endif  // NMG_GRAPHICS_RENDER_SERVER_H
 
 
 
