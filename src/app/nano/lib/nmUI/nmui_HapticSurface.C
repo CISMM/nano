@@ -56,6 +56,9 @@ void nmui_HapticSurface::setLocation (q_vec_type x) {
   d_handPosMS[1] = x[1];
   d_handPosMS[2] = x[2];
 
+//fprintf(stderr, "nmui_HapticSurface::setLocation() to <%.5f, %.5f, %.5f>\n",
+//x[0], x[1], x[2]);
+
 }
 
 // virtual
@@ -65,6 +68,8 @@ void nmui_HapticSurface::setLocation (double x, double y, double z) {
   d_handPosMS[1] = y;
   d_handPosMS[2] = z;
 
+//fprintf(stderr, "nmui_HapticSurface::setLocation() to <%.5f, %.5f, %.5f>\n",
+//d_handPosMS[0], d_handPosMS[1], d_handPosMS[2]);
 }
 
 // virtual
@@ -121,11 +126,19 @@ void nmui_HapticSurface::computeDistanceFromPlane (void) {
   q_vec_type handInTracker;
   q_vec_type planeToHandVector;
 
-  vectorToTrackerFromWorld(handInTracker, d_handPosMS);
+  pointToTrackerFromWorld(handInTracker, d_handPosMS);
   q_vec_subtract( planeToHandVector, handInTracker, d_planePosPH );
+
+//fprintf(stderr, "planeToHandVector <%.2f, %.2f, %.2f>\n",
+//planeToHandVector[0], planeToHandVector[1], planeToHandVector[2]);
+//fprintf(stderr, "d_currentPlaneNormal <%.2f, %.2f, %.2f>\n",
+//d_currentPlaneNormal[0], d_currentPlaneNormal[1], d_currentPlaneNormal[2]);
+
   d_distanceFromPlane = q_vec_dot_product(planeToHandVector,
                                            d_currentPlaneNormal);
 
+//fprintf(stderr, "nmui_HapticSurface::computeDistanceFromPlane() "
+//"set to %.5lf\n", d_distanceFromPlane);
 
 };
 
@@ -220,6 +233,8 @@ void nmui_HSCanned::update (void) {
     + plane->scaledValue(d_gridX,   d_gridY+1) * (1-a) * (  b)
     + plane->scaledValue(d_gridX+1, d_gridY+1) * (  a) * (  b);
 
+//fprintf(stderr, "d_planePosPH is <%.5f, %.5f, %.5f>\n",
+//d_planePosPH[0], d_planePosPH[1], d_planePosPH[2]);
 
   // BUG - uses normal.h but we ought to be using quatlib normals.
   // Comptue the normals at the four nearest grid points.
@@ -231,13 +246,13 @@ void nmui_HSCanned::update (void) {
 
   // Average the four normals together with appropriate weighting.
 
-  VectorScale(Norm00, (1-a)*(1-b));
+  VectorScale(Norm00, (1-a) * (1-b));
   VectorCopy(d_currentPlaneNormal, Norm00);
-  VectorScale(Norm10, (  a)*(1-b));
+  VectorScale(Norm10, (  a) * (1-b));
   VectorAdd(d_currentPlaneNormal, Norm10, d_currentPlaneNormal);
-  VectorScale(Norm01, (1-a)*(  b));
+  VectorScale(Norm01, (1-a) * (  b));
   VectorAdd(d_currentPlaneNormal, Norm01, d_currentPlaneNormal);
-  VectorScale(Norm11, (  a)*(  b));
+  VectorScale(Norm11, (  a) * (  b));
   VectorAdd(d_currentPlaneNormal, Norm11, d_currentPlaneNormal);
 
   if (zero_xnorm) d_currentPlaneNormal[0] = 0.0;

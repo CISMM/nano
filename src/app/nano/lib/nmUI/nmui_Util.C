@@ -39,7 +39,11 @@ int nmui_Util::clipPosition (BCPlane * plane, q_vec_type & position) {
   //We want the position we return to be in real-world units (nanometers),
   // not the world coords of vlib. So we must take into account
   // the arbitrary scale applied to the Z coord by the plane.
-  position[2] = position[2]/plane->scale();
+  if (plane->scale() > 1e-10) {
+    position[2] = position[2] / plane->scale();
+  } else {
+    // do nothing?
+  }
 
   return 0;
 }
