@@ -72,7 +72,9 @@ class nmr_RegistrationUI {
     static void handle_resampleImageName_change(const char *name, void *ud);
     static void handle_resamplePlaneName_change(const char *name, void *ud);
     static void handle_registrationImage3D_change(const char *name, void *ud);
+	static void handle_refresh3D_change(vrpn_int32 value, void *ud);
     static void handle_registrationImage2D_change(const char *name, void *ud);
+	static void handle_refresh2D_change(vrpn_int32 value, void *ud);
     static void handle_flipProjectionImageInX_change(vrpn_int32 value, void *ud);
     static void handle_registrationColorMap3D_change(const char *name, void *ud);
     static void handle_registrationColorMap2D_change(const char *name, void *ud);
@@ -108,7 +110,9 @@ class nmr_RegistrationUI {
     void setAutoAlignMode(nmr_AutoAlignMode mode);
 
     TclNet_string d_registrationImageName3D;
+	TclNet_int d_refresh3D;
     TclNet_string d_registrationImageName2D;
+	TclNet_int d_refresh2D;
     TclNet_string d_newResampleImageName;
     TclNet_string d_newResamplePlaneName;
 
@@ -173,7 +177,6 @@ class nmr_RegistrationUI {
     nmb_TransformMatrix44 *d_scaledProjImFromScaledTopoIm;
 
 	nmr_RegistrationType d_lastTransformTypeSent;
-
 };
 
 #endif

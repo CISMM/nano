@@ -47,7 +47,9 @@ nmr_RegistrationUI::nmr_RegistrationUI
     nmb_ImageDisplay *display):
 
    d_registrationImageName3D("reg_surface_cm(color_comes_from)", "none"),
+   d_refresh3D("reg_refresh_3D", 0),
    d_registrationImageName2D("reg_projection_cm(color_comes_from)", "none"),
+   d_refresh2D("reg_refresh_2D", 0),
    d_flipProjectionImageInX("reg_proj_flipX", 0),
    d_newResampleImageName("resample_image_name", ""),
    d_newResamplePlaneName("resample_plane_name", ""),
@@ -163,8 +165,12 @@ void nmr_RegistrationUI::setupCallbacks()
 
     d_registrationImageName3D.addCallback
        (handle_registrationImage3D_change, (void *)this);
+	d_refresh3D.addCallback
+		(handle_refresh3D_change, (void *)this);
     d_registrationImageName2D.addCallback
        (handle_registrationImage2D_change, (void *)this);
+	d_refresh2D.addCallback
+		(handle_refresh2D_change, (void *)this);
 
 	d_flipProjectionImageInX.addCallback
        (handle_flipProjectionImageInX_change, (void *)this);
@@ -206,8 +212,12 @@ void nmr_RegistrationUI::teardownCallbacks()
 
     d_registrationImageName3D.removeCallback
        (handle_registrationImage3D_change, (void *)this);
+	d_refresh3D.removeCallback
+		(handle_refresh3D_change, (void *)this);
     d_registrationImageName2D.removeCallback
        (handle_registrationImage2D_change, (void *)this);
+	d_refresh2D.removeCallback
+		(handle_refresh2D_change, (void *)this);
 
     d_registrationColorMap3D.removeCallback
        (handle_registrationColorMap3D_change, (void *)this);
@@ -328,8 +338,12 @@ void nmr_RegistrationUI::updateTextureTransform()
   double projImFromTopoWorld_matrix[16];
   // send the transformation to the graphics code
   projImFromTopoWorld.getMatrix(projImFromTopoWorld_matrix);
+
+  bool transformIsSelfReferential =
+		(strcmp(d_registrationImageName2D, d_registrationImageName3D) == 0);
   d_imageDisplay->updateDisplayTransform(projectionImage, 
-                                         projImFromTopoWorld_matrix);
+                                         projImFromTopoWorld_matrix,
+										 transformIsSelfReferential);
 }
 
 int nmr_RegistrationUI::getDisplayedTransformIndex()
@@ -390,6 +404,7 @@ void nmr_RegistrationUI::handle_registrationImage3D_change(const char *name,
 {
     //printf("nmr_RegistrationUI::handle_registrationImage3D_change\n");
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+
     // Don't do anything if reg window is not open - instead we will
     // be called explicitly in handle_registrationEnabled_change below. 
     if (!me->d_dataset || !me->d_registrationEnabled) return;
@@ -419,12 +434,26 @@ void nmr_RegistrationUI::handle_registrationImage3D_change(const char *name,
     }
 }
 
+//static 
+void nmr_RegistrationUI::handle_refresh3D_change(vrpn_int32 value, void *ud)
+{
+	nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    if (value && me->d_last3DImage ) {
+
+        // send image off to the proxy
+        me->d_aligner->setImage(NMR_SOURCE, me->d_last3DImage, 
+			me->d_flipXreference, 
+			me->d_flipYreference);
+	}
+}
+
 // static
 void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
                                                            void *ud)
 {
     //printf("nmr_RegistrationUI::handle_registrationImage2D_change\n");
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+
     // Don't do anything if reg window is not open - instead we will
     // be called explicitly in handle_registrationEnabled_change below. 
     if (!me->d_dataset || !me->d_registrationEnabled) return;
@@ -433,6 +462,7 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
         fprintf(stderr, "nmr_RegistrationUI::image not found: %s\n", name);
         return;
     }
+
     // If different, send changes. 
     if ( me->d_last2DImage != im) {
         // send image off to the proxy
@@ -466,6 +496,18 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
           }
         }
     }
+}
+
+//static 
+void nmr_RegistrationUI::handle_refresh2D_change(vrpn_int32 value, void *ud)
+{
+	nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+	if (value && me->d_last2DImage ) {
+        // send image off to the proxy
+        me->d_aligner->setImage(NMR_TARGET, me->d_last2DImage, 
+			me->d_flipProjectionImageInX, 
+			me->d_flipYadjustable);
+	}
 }
 
 void nmr_RegistrationUI::handle_flipProjectionImageInX_change(vrpn_int32 value, void *ud)

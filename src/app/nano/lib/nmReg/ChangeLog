@@ -1,6 +1,15 @@
+2002-09-30  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_RegistrationUI.C : changed default sizes for registration windows
+	from 100x100 to 400x400
+	(handle_refresh3D_change, handle_refresh2D_change): new functions to
+	handle button press to refresh the images
+	This is intended as a quick-fix to the problem of image windows not 
+	updating when the corresponding data changes
+
 2002-09-07  Adam Seeger  <seeger@cs.unc.edu>
 
-	nmr_RegistrationUI.C (handle_registrationImage3D_change,
+	* nmr_RegistrationUI.C (handle_registrationImage3D_change,
                           handle_registrationImage2D_change): no longer
 	calls updateTextureTransform if the last transform sent was of type
 	NMR_DEFAULT

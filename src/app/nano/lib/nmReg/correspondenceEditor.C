@@ -70,7 +70,7 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
 		}
         winParam[i].winID = 
              viewer->createWindow(display_name,i*110 + 200,200,
-                                  100,100,win_name);
+                                  400,400,win_name);
         viewer->setWindowEventHandler(winParam[i].winID,
                 CorrespondenceEditor::eventHandler, (void *)this);
         viewer->setWindowDisplayHandler(winParam[i].winID,
