@@ -245,12 +245,15 @@ dependsOnPlane( const char* planeName )
     return false;
 }
 
-
 //updates d_dataArray when new information is received and fills in d_outputPlane with new values
 void nma_ShapeIdentifiedPlane::
 UpdateDataArray(double * dataline, int y, int datain_rowlen){
 	if(firstblur && (y != 0) ) return;
 	if(!firstblur){
+		if(planepts_per_datapt*y!=stored_y){
+			cout << "Mismatch in rows sent" << endl;
+			return;
+		}
 		y = stored_y;
 	}
 
@@ -356,6 +359,14 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 	//now fill in the intervening rows by interpolating between previous row and this new row
 	new_index = 0;
 	float val;
+
+	//ANDREA:  this is new
+	int datain_numrows = datain_rowlen;
+	if(d_rowlength != d_columnheight){
+		planepts_per_datapt = d_columnheight/datain_numrows;
+	}//if number of rows does not equal number of columns in the source plane,
+	 //change planepts_per_datapt so that the appropriate number of rows
+	 //correspond to each row of data coming in
 	
 	for(i = 0; i < datain_rowlen; ++i){
 		if(firstblur) firstblur = false;

@@ -1,3 +1,11 @@
+2002-01-15  Andrea Hilchey <hilchey@cs.unc.edu>
+	
+	* nma_ShapeAnalyze.C : updated Update_Data_Array function so now calls
+	blur function if necessary. created blur_data_up function which expands
+	the data line passed into it if the dimensions of the data coming in is
+	less than the dimensions of the source plane. interpolates both between
+	data points in the row and between rows.
+
 2002-01-04  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nma_ShapeAnalyze.h:  added a compiler pragma to prevent a 
