@@ -969,8 +969,10 @@ long nmm_Microscope_Remote::rotateScanCoords (double _x, double _y,
   // Rotate about the center of the scan region -- same as
   // the Thermo software rotates it's scan when we send it a 
   // particular scan angle. 
-    double sin_angle = sinf( -_scanAngle );
-    double cos_angle = cosf( -_scanAngle );
+    double sin_angle = sinf(Q_DEG_TO_RAD(-_scanAngle));
+    double cos_angle = cosf(Q_DEG_TO_RAD(-_scanAngle));
+    printf("rotateScanCoords: angle = %g degrees, sin=%g, cos=%g\n",
+         -(_scanAngle), sin_angle, cos_angle);
 
     double centerx = d_dataset->inputGrid->minX() +
     (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())/2.0 ;
@@ -998,13 +1000,13 @@ long nmm_Microscope_Remote::DrawLine (double _startx, double _starty,
   long retval;
 
   double startx, starty;
-  rotateScanCoords(_startx, _starty, state.image.scan_angle, &startx, &starty);
+  rotateScanCoords(_startx, _starty, (double)(state.image.scan_angle), &startx, &starty);
   double endx, endy;
-  rotateScanCoords(_endx, _endy, state.image.scan_angle, &endx, &endy);
-  double yaw = state.modify.yaw - state.image.scan_angle;
+  rotateScanCoords(_endx, _endy, (double)(state.image.scan_angle), &endx, &endy);
+  double yaw = state.modify.yaw - (double)(state.image.scan_angle);
 
-  printf( "DrawLine ::  angle = %f xMin = %f xMax = %f yMin = %f yMax = %f\n",
-	  state.image.scan_angle, 
+  printf( "DrawLine ::  angle = %g xMin = %f xMax = %f yMin = %f yMax = %f\n",
+	  (double)(state.image.scan_angle), 
 	  d_dataset->inputGrid->minX(), d_dataset->inputGrid->maxX(),
 	  d_dataset->inputGrid->minY(), d_dataset->inputGrid->maxY() );
   printf( "             startx = %f starty = %f rotated x = %f rotated y = %f\n",
@@ -1077,10 +1079,10 @@ long nmm_Microscope_Remote::DrawArc (double _x, double _y,
   long retval;
 
   double x,y;
-  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
+  rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
   // XXX Need to rotate start and end angle as well???
-  double startAngle = _startAngle - state.image.scan_angle;
-  double endAngle = _endAngle - state.image.scan_angle;
+  double startAngle = _startAngle - (double)(state.image.scan_angle);
+  double endAngle = _endAngle - (double)(state.image.scan_angle);
 
   switch (state.modify.style) {
     case SHARP:
@@ -1139,7 +1141,7 @@ long nmm_Microscope_Remote::ScanTo (float _x, float _y) {
   long len;
 
   double x,y;
-  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
+  rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
 
   msgbuf = encode_ScanTo(&len, x, y);
   if (!msgbuf)
@@ -1153,7 +1155,7 @@ long nmm_Microscope_Remote::ScanTo (float _x, float _y, float _z) {
   long len;
 
   double x,y;
-  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
+  rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
 
   msgbuf = encode_ScanTo(&len, x, y, _z);
   if (!msgbuf)
@@ -1186,7 +1188,7 @@ int nmm_Microscope_Remote::TakeSampleSet (float _x, float _y) {
     ori = d_sampleAlgorithm->orientation;
   }
 
-  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
+  rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
 
   msgbuf = encode_FeelTo(&len, x, y, nx, ny, dx, dy, ori);
   if (!msgbuf) {
@@ -1519,10 +1521,10 @@ long nmm_Microscope_Remote::ZagTo
   long len;
 
   double x,y;
-  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
+  rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
 
   // Need to rotate yaw as well! Subtract the scan angle.
-  msgbuf = encode_ZagTo(&len, x, y, yaw-state.image.scan_angle, sweepWidth, regionDiag);
+  msgbuf = encode_ZagTo(&len, x, y, yaw-(double)(state.image.scan_angle), sweepWidth, regionDiag);
   if (!msgbuf)
     return -1;
 
@@ -2425,7 +2427,7 @@ void nmm_Microscope_Remote::DisplayModResult (float _x, float _y,
   BCPlane * heightPlane;
 
   double xr,yr;
-  rotateScanCoords(_x, _y, -state.image.scan_angle, &xr, &yr);
+  rotateScanCoords(_x, _y, -(double)(state.image.scan_angle), &xr, &yr);
 
   heightPlane = d_dataset->inputGrid->getPlaneByName
             (d_dataset->heightPlaneName->string());
@@ -4408,9 +4410,9 @@ void nmm_Microscope_Remote::RcvReportScanAngle (float angle ) {
 
   // HACK to break loops
   newangle = Q_RAD_TO_DEG(angle);
-  if (newangle != state.image.scan_angle) {
+  if (newangle != (float)(state.image.scan_angle)) {
     state.image.scan_angle = newangle;
-    printf( "New scan angle = %g\n", (float)state.image.scan_angle );
+    printf( "New scan angle = %g\n", (float)(state.image.scan_angle) );
   }
 
     //state.image.scan_angle = Q_RAD_TO_DEG(angle);

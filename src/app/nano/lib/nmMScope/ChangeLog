@@ -1,3 +1,8 @@
+2000-10-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_MicroscopeRemote.C (rotateScanCoords) : made this convert
+	the argument from degrees to radians before using sinf and cosf on it
+
 2000-10-12  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.C (handle_WindowLineData) : put in error
