@@ -1972,6 +1972,7 @@ int nmm_Microscope_Remote::RcvGotConnection2 (void) {
   CHECK(SetScanStyle());
 */
 
+  EnableUpdatableQueue(VRPN_TRUE);
   // Ask it for the scan range in x, y, and z.
   // When this is read back, Z will be used to set min_z and max_z.
   CHECK(QueryScanRange());
