@@ -50,6 +50,7 @@ static	void handle_spider_thick_change(vrpn_float64, void*);
 static	void handle_spider_tess_change(vrpn_int32, void*);
 static	void handle_spider_curve_change(vrpn_float64, void*);
 static	void handle_spider_legs_change(vrpn_int32, void*);
+static	void handle_spider_filename_change(const char*, void*);
 
 ///Import object handlers specifically for MSI files
 static  void handle_msi_bond_mode (vrpn_int32, void *);
@@ -102,6 +103,7 @@ Tclvar_float    spider_thick("spider_thick", 0.1, handle_spider_thick_change);
 Tclvar_int		spider_tess("spider_tess", 10, handle_spider_tess_change);
 Tclvar_float    spider_curve("spider_curve", 0, handle_spider_curve_change);
 Tclvar_int		spider_legs("spider_legs", 8, handle_spider_legs_change);
+Tclvar_string	spider_filename("spider_filename", "", handle_spider_filename_change);
 
 int				current_leg = -1;		// integer value of the current leg
 										// set when the tcl string value is changed
@@ -227,7 +229,6 @@ static void handle_current_object(const char*, void*) {
 	}
 }
 
-
 static void handle_import_file_change (const char *, void *) {
     static const float convert = 1.0f/255;
 	char* name;
@@ -248,9 +249,14 @@ static void handle_import_file_change (const char *, void *) {
 				obj->SetSpiderCurve(i, Q_DEG_TO_RAD(spider_curve));
 			}
 			obj->SetSpiderLegs(spider_legs);
-            FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
+			FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
             import_type = gen->GetExtension();
-            obj->LoadGeometry(gen);
+			obj->LoadGeometry(gen);
+			if (strstr(modelFile.string(), ".spi") != 0 && strcmp(modelFile.string(), "/spider.spi") != 0) {
+				// this is a spider loaded from a file.  change the name and set the number of spider legs
+				modelFile = "/spider.spi";
+				spider_legs = current_leg + 1;
+			}
             obj->SetVisibility(import_visibility);
 			obj->SetProjText(import_proj_text);
 			obj->SetLockObject(import_lock_object);
@@ -955,6 +961,24 @@ static  void handle_spider_legs_change (vrpn_int32, void *)
 		obj.SetSpiderLegs(spider_legs);
 
 		obj.ReloadGeometry();
+	}
+}
+
+static void handle_spider_filename_change (const char*, void*) 
+{
+	if (strcmp(*World.current_object, "spider.spi") == 0) {
+		UTree *node = World.TGetNodeByName("spider.spi");
+
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+
+			if (strstr(spider_filename, "spider.spi") != 0) {
+				printf("Can't use filename \"spider.spi\".  Save under a different name\n");
+			}
+			else {
+				obj.SaveSpider(spider_filename);
+			}
+		}
 	}
 }
 

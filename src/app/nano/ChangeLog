@@ -1,3 +1,7 @@
+2002--6-26  David Borland <borland@cs.unc.edu>
+
+        * import.C : added callback for saving spider data
+
 2002-06-24  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.C (initialize_environment):  restores NANO_ROOT.
