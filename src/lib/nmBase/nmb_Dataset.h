@@ -53,6 +53,11 @@ class nmb_Dataset {
     // Destructor.
     ~nmb_Dataset (void);
 
+	//height-plane and colorplane to try and initialize to
+	static char initHeight[256];
+	static char initColorPlane[256];
+	static bool initHeightColor;
+
     BCGrid * inputGrid;
         ///< incoming data from microscope (data may be changed 
 	///< during acquisition)

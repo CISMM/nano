@@ -24,6 +24,11 @@
 #endif
 
 
+	//initialize static variables for height and color plane command line
+        //args
+bool nmb_Dataset::initHeightColor = false;
+char nmb_Dataset::initHeight[256];
+char nmb_Dataset::initColorPlane[256];
 
 nmb_Dataset::nmb_Dataset
               (vrpn_bool useFileResolution, int xSize, int ySize,
@@ -59,9 +64,13 @@ nmb_Dataset::nmb_Dataset
   done (0),
   calculatedPlane_head( NULL ),
   d_hostname(hostname)
-
 {
-  int i;
+	//variables to save the command line args for heightplane and colorplane
+	initHeight[0] = '\0';
+	initColorPlane[0] = '\0';
+
+	int i;
+
   // files not loaded as grid files should not be height fields by default
   for (i = 0; i < dataImages->numImages(); i++) {
       dataImages->getImage(i)->setHeightField(vrpn_FALSE);
