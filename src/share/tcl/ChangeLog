@@ -1,3 +1,7 @@
+2002-04-26  David Borland  <borland@cs.unc.edu>
+        * import.tcl : changed from typing input to sliders.  added reset
+        objects button
+
 2002-04-23  David Marshburn  <marshbur@cs.unc.edu>
 
 	* keithley2400.tcl (vi_save_data):  finished fixing up this function 

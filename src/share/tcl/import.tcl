@@ -55,20 +55,40 @@ frame $nmInfo(basic_options).f2
 frame $nmInfo(basic_options).f3
 generic_entry $nmInfo(basic_options).f1.import_scale import_scale \
      "Scale" real 
-generic_entry $nmInfo(basic_options).f1.import_transx import_transx \
-     "X Translation" real
-generic_entry $nmInfo(basic_options).f1.import_transy import_transy \
-     "Y Translation" real
-generic_entry $nmInfo(basic_options).f1.import_transz import_transz \
-     "Z Translation" real
+floatscale $nmInfo(basic_options).f1.import_scale_slide 0.1 1000.0 100 1 1 \
+	import_scale "Scale"
+
+#generic_entry $nmInfo(basic_options).f1.import_transx import_transx \
+#     "X Translation" real
+floatscale $nmInfo(basic_options).f1.import_transx_slide -1000.0 6000.0 100 1 1 \
+	import_transx "X Translation"
+#generic_entry $nmInfo(basic_options).f1.import_transy import_transy \
+#     "Y Translation" real
+floatscale $nmInfo(basic_options).f1.import_transy_slide -1000.0 6000.0 100 1 1 \
+	import_transy "Y Translation"
+#generic_entry $nmInfo(basic_options).f1.import_transz import_transz \
+#     "Z Translation" real
+floatscale $nmInfo(basic_options).f1.import_transz_slide -1000.0 6000.0 100 1 1 \
+	import_transz "Z Translation"
+
 checkbutton $nmInfo(basic_options).f1.import_update_AFM \
      -text "Update AFM" -variable import_update_AFM
-generic_entry $nmInfo(basic_options).f2.import_rotx import_rotx \
-     "X Rotation" real
-generic_entry $nmInfo(basic_options).f2.import_roty import_roty \
-     "Y Rotation" real
-generic_entry $nmInfo(basic_options).f2.import_rotz import_rotz \
-     "Z Rotation" real
+
+#generic_entry $nmInfo(basic_options).f2.import_rotx import_rotx \
+#     "X Rotation" real
+floatscale $nmInfo(basic_options).f2.import_rotx_slide -6.28 6.28 1000 1 1 \
+	import_rotx "X Rotation"
+#generic_entry $nmInfo(basic_options).f2.import_roty import_roty \
+#     "Y Rotation" real
+floatscale $nmInfo(basic_options).f2.import_roty_slide -6.28 6.28 1000 1 1 \
+	import_roty "Y Rotation"
+#generic_entry $nmInfo(basic_options).f2.import_rotz import_rotz \
+#     "Z Rotation" real
+floatscale $nmInfo(basic_options).f2.import_rotz_slide -6.28 6.28 1000 1 1 \
+	import_rotz "Z Rotation"
+
+button $nmInfo(basic_options).f2.import_reset_object -text "Reset Object" -command reset_object
+
 generic_entry $nmInfo(basic_options).f3.import_tess import_tess \
      "Tube Loading Tesselation" integer
 generic_entry $nmInfo(basic_options).f3.import_axis_step import_axis_step \
@@ -107,18 +127,26 @@ pack $nmInfo(basic_options).file.buttons.cw -anchor nw
 
 
 pack $nmInfo(basic_options).f1 -anchor nw -side left -pady 7m -fill x
-pack $nmInfo(basic_options).f2 -anchor nw -side left -pady 15m -fill x
+pack $nmInfo(basic_options).f2 -anchor nw -side left -pady 22m -fill x
 pack $nmInfo(basic_options).f3 -anchor nw -side left -pady 5m  -fill x
 
-pack $nmInfo(basic_options).f1.import_scale -anchor nw -padx 1m -pady 1m
-pack $nmInfo(basic_options).f1.import_transx -anchor nw -padx 1m -pady 1m
-pack $nmInfo(basic_options).f1.import_transy -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f1.import_transz -padx 1m -pady 1m -fill x
+#pack $nmInfo(basic_options).f1.import_scale -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f1.import_scale_slide -anchor nw -padx 1m -pady 1m
+#pack $nmInfo(basic_options).f1.import_transx -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f1.import_transx_slide -anchor nw -padx 1m -pady 1m
+#pack $nmInfo(basic_options).f1.import_transy -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f1.import_transy_slide -anchor nw -padx 1m -pady 1m
+#pack $nmInfo(basic_options).f1.import_transz -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f1.import_transz_slide -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f1.import_update_AFM -anchor sw -padx 1m -pady 1m -fill x
 
-pack $nmInfo(basic_options).f2.import_rotx -anchor nw -padx 1m -pady 1m
-pack $nmInfo(basic_options).f2.import_roty -padx 1m -pady 1m
-pack $nmInfo(basic_options).f2.import_rotz -padx 1m -pady 1m
+#pack $nmInfo(basic_options).f2.import_rotx -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f2.import_rotx_slide -anchor nw -padx 1m -pady 1m
+#pack $nmInfo(basic_options).f2.import_roty -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f2.import_roty_slide -anchor nw -padx 1m -pady 1m
+#pack $nmInfo(basic_options).f2.import_rotz -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f2.import_rotz_slide -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f2.import_reset_object -anchor sw -padx 1m -pady 1m -fill x
 
 pack $nmInfo(basic_options).f3.import_tess -padx 1m -pady 1m -anchor nw
 pack $nmInfo(basic_options).f3.import_axis_step -padx 1m -pady 1m -anchor nw
@@ -175,6 +203,25 @@ proc close_import_file {} {
 #	"Current Imported file: $import_file_label"
 
 #    destroy $nmInfo(import_objects).options
+}
+
+proc reset_object {} {
+	global nmInfo
+	global import_scale
+	global import_transx
+	global import_transy
+	global import_transz
+	global import_rotx
+	global import_roty
+	global import_rotz
+
+	set import_scale 1
+	set import_transx 0
+	set import_transy 0
+	set import_transz 0
+	set import_rotx 0
+	set import_roty 0
+	set import_rotz 0
 }
 
 proc set_import_color {} {
