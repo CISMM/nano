@@ -1,0 +1,6 @@
+2002-05-09  David Marshburn  <marshbur@cs.unc.edu>
+
+	* regserver.[dsw,dsp]:  redid them so that visual studio can open
+	them, and changed them so the project would build.
+	
+
