@@ -96,10 +96,6 @@ SOURCE=..\draw.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\erode.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\input.cpp
 # End Source File
 # Begin Source File
@@ -108,11 +104,11 @@ SOURCE=..\lightcol.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\main.cpp
+SOURCE=..\..\nano\lib\nmMScope\nmm_SimulatedMicroscope.C
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\nano\lib\nmMScope\nmm_SimulatedMicroscope.C
+SOURCE=..\sim.cpp
 # End Source File
 # Begin Source File
 
@@ -152,10 +148,6 @@ SOURCE=..\draw.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\erode.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\input.h
 # End Source File
 # Begin Source File
@@ -164,11 +156,11 @@ SOURCE=..\lightcol.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\main.h
+SOURCE=..\..\nano\lib\nmMScope\nmm_SimulatedMicroscope.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\nano\lib\nmMScope\nmm_SimulatedMicroscope.h
+SOURCE=..\sim.h
 # End Source File
 # Begin Source File
 
