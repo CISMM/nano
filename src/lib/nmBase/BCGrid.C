@@ -59,7 +59,7 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
 
     if (infile == NULL) {
 	fprintf(stderr,
-		"Error! BCGrid::BCGrid: Could not open input file %s!\n",
+		"Error! BCGrid::BCGrid: Could not open input file \"%s\"!\n",
 		file_names[0]);
 	return;
     }
@@ -70,8 +70,9 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
 	// if not, read in the first file.
 	if (readFile(infile,file_names[0], topoFile) == -1) {
 	    fprintf(stderr,
-		    "Error! BCGrid::BCGrid: Could not read grid from %s!\n",
-		    file_names[0]);
+		    "Error! BCGrid::BCGrid: Could not read grid"
+                    " from \"%s\"!\n",
+                    file_names[0]);
 	    return;
 	}
 	// start comparison of data with second file
@@ -103,7 +104,7 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
 	    if ( (grid._num_x != _num_x) ||
 		 (grid._num_y != _num_y) ) {
 		fprintf(stderr,"Error! BCGrid::BCGrid: Grid size mismatch"
-			" in file %s, ignoring the file\n",
+			" in file \"%s\", ignoring the file\n",
 			file_names[i]);
 	    } else {
 		BCPlane *nextplane, *newplane;
