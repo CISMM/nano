@@ -915,16 +915,15 @@ vrpn_Connection* tem_connection = NULL;
 // tem handler definitions
 static  void handle_tem_acquire_image(vrpn_int32, void *);
 
-vrpn_int32 GotPixels(void*, vrpn_HANDLERPARAM);
+vrpn_int32 GotFrontImage(void*, vrpn_HANDLERPARAM);
 
 // tcl variables
 Tclvar_int      tem_acquire_image("tem_acquire_image", 0, handle_tem_acquire_image);
 
 // vrpn variables
-vrpn_int32 GetPixels_type;
-vrpn_int32 GotPixels_type;
+vrpn_int32 GetFrontImage_type;
+vrpn_int32 GotFrontImage_type;
 vrpn_int32 DM_Client_id;
-
 
 // handler bodies
 static void handle_tem_acquire_image(vrpn_int32, void *) {
@@ -934,98 +933,194 @@ static void handle_tem_acquire_image(vrpn_int32, void *) {
         tem_connection = vrpn_get_connection_by_name("DM_Image_Server@magnesium-cs");
 
         // register message types
-        GetPixels_type = tem_connection->register_message_type("GetPixels");
-        GotPixels_type = tem_connection->register_message_type("GotPixels");
+        GetFrontImage_type = tem_connection->register_message_type("GetFrontImage");
+        GotFrontImage_type = tem_connection->register_message_type("GotFrontImage");
 
         // register sender
         DM_Client_id = tem_connection->register_sender("DM_Client");
 
         // register handlers
-        tem_connection->register_handler(GotPixels_type, GotPixels, NULL);
+        tem_connection->register_handler(GotFrontImage_type, GotFrontImage, NULL);
     }
 
     gettimeofday(&now, NULL);
-    tem_connection->pack_message(0, now, GetPixels_type, DM_Client_id, NULL, vrpn_CONNECTION_RELIABLE);
+    tem_connection->pack_message(0, now, GetFrontImage_type, DM_Client_id, NULL, vrpn_CONNECTION_RELIABLE);
 }
 
-vrpn_int32 GotPixels(void *_userdata, vrpn_HANDLERPARAM _p) {
+vrpn_int32 GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) {       // changed to handle lines of data, not the whole image
     const char* bufptr = (char*)_p.buffer;
+    static char* image = NULL;
+    char* image2 = NULL;
+    char* line;
 
     static nmb_ImageArray* image_uint8 = NULL;
     static nmb_ImageArray* image_uint16 = NULL;
     static nmb_ImageArray* image_float32 = NULL;
 
-    vrpn_int32 x, y, pixel_size;
-    int image_size = _p.payload_len - 3 * sizeof(vrpn_int32);
+    vrpn_int32 x, y, pixel_size, line_number;
+    int image_size;
+    int line_size;
 
     vrpn_unbuffer(&bufptr, &x);
     vrpn_unbuffer(&bufptr, &y);
     vrpn_unbuffer(&bufptr, &pixel_size);
+    vrpn_unbuffer(&bufptr, &line_number);
 
-    char* image = new char[image_size];
-
-    vrpn_unbuffer(&bufptr, image, image_size);
+    image_size = x * y * pixel_size;
+    line_size = x * pixel_size;
 
 /*
     printf("x = %d\n", x);
     printf("y = %d\n", y);
     printf("pixel_size = %d\n", pixel_size);
+    printf("line_number = %d\n", line_number);
 
-    printf("current texture mode : %d\n", graphics->getTextureMode());
+    printf("_p.payload_len = %d\n", _p.payload_len);
+    printf("%d should equal %d\n", _p.payload_len - 4 * sizeof(vrpn_int32), line_size);
+    printf("image_size = %d\n", image_size);
+    printf("line_size = %d\n", line_size);
 */
-    // only checks size now
-    // should have a typedef for different types of the same size--Imager class should have this when it's done
+    if (!image) {
+        image = new char[image_size];
+    }
+
+    line = new char[line_size];
+    vrpn_unbuffer(&bufptr, line, line_size);
+
+    // this code is for correcting the flipping of images that occurs...this could probably just
+    // be done by setting the appropriate transform for the texture, but there doesn't seem to be any appreciable
+    // drop in performance doing it this way...
+    if (pixel_size == sizeof(vrpn_uint8)) {
+        for (int i = 0; i < x; i++) {
+            ((vrpn_uint8*)image)[(line_number + 1) * x - i - 1] = ((vrpn_uint8*)line)[i];
+        }
+    }
+    else if (pixel_size == sizeof(vrpn_uint16)) {
+        for (int i = 0; i < x; i++) {
+            ((vrpn_uint16*)image)[(line_number + 1) * x - i - 1] = ((vrpn_uint16*)line)[i];
+        }
+    }
+    else if (pixel_size == sizeof(vrpn_float32)) {
+        for (int i = 0; i < x; i++) {
+ //           printf("%d\n", (line_number + 1) * line_size - i - 1);
+            ((vrpn_float32*)image)[(line_number + 1) * x - i - 1] = ((vrpn_float32*)line)[i];
+        }
+    }
+
+    delete [] line;
+
+
 /*
-    for (int i = 0; i < x*y; i++) {
-        if (pixel_size == sizeof(bool)) {
-            printf("%d ", ((bool*)image)[i]);
-        }
-        else if (pixel_size == sizeof(vrpn_uint8)) {
-            printf("%d ", ((vrpn_int8*)image)[i]);
-        }
-        else if (pixel_size == sizeof(vrpn_uint16)) {
-            printf("%d ", ((vrpn_int16*)image)[i]);
-        }
-        else if (pixel_size == sizeof(vrpn_float32)) {
-            printf("%f ", ((vrpn_float32*)image)[i]);
-        }
-        else if (pixel_size == sizeof(vrpn_float64)) {
-            printf("%f ", ((vrpn_float64*)image)[i]);
-        }
-        if ((i + 1) % x == 0) printf("\n");
+    for (int i = 0; i < x; i++) {
+        printf("%d ", line[i]);
     }
     printf("\n");
 */
-    if (pixel_size == sizeof(vrpn_uint8)) {
-        if (!image_uint8) {
-            printf("Creating new uint8 image\n");
-            image_uint8 = new nmb_ImageArray("TEM image", "ADC", x, y, NMB_UINT8);
-            dataset->dataImages->addImage(image_uint8);
-        }
-        image_uint8->setImage((vrpn_uint8*)image);
-    }
-    else if (pixel_size == sizeof(vrpn_uint16)) {
-        if (!image_uint16) {
-            printf("Creating new uint16 image\n");
-            image_uint16 = new nmb_ImageArray("TEM image", "ADC", x, y, NMB_UINT16);
-            dataset->dataImages->addImage(image_uint16);
-        }
-        image_uint16->setImage((vrpn_uint16*)image);
-    }
-    else if (pixel_size == sizeof(vrpn_float32)) {
-        if (!image_float32) {
-            printf("Creating new float32 image\n");
-            image_float32 = new nmb_ImageArray("TEM image", "ADC", x, y, NMB_FLOAT32);
-            dataset->dataImages->addImage(image_float32);
-        }
-        image_float32->setImage((vrpn_float32*)image);
-    }
-    else {
-        printf("Can't display this type of data\n");
-    }
+//    vrpn_unbuffer(&bufptr, image + line_number * line_size, line_size);
 
-    graphics->updateTexture(nmg_Graphics::SEM_DATA, "TEM image", 0, 0, x, y);
-    graphics->setTextureMode(nmg_Graphics::SEM_DATA, nmg_Graphics::SURFACE_REGISTRATION_COORD);
+/*
+    for (int i = line_number * x; i < line_number * x + x; i++) {
+        printf("%f ", image[i]);
+    }
+    printf("\n");
+*/
+    if (line_number == y - 1) {
+
+    
+//        printf("Got New Image\n");
+//        printf("current texture mode : %d\n", graphics->getTextureMode());
+
+        // only checks size now
+        // should have a typedef for different types of the same size--Imager class should have this when it's done
+/*
+        for (int i = 0; i < x*y; i++) {
+            if (pixel_size == sizeof(bool)) {
+                printf("%d ", ((bool*)image)[i]);
+            }
+            else if (pixel_size == sizeof(vrpn_uint8)) {
+                printf("%d ", ((vrpn_int8*)image)[i]);
+            }
+            else if (pixel_size == sizeof(vrpn_uint16)) {
+                printf("%d ", ((vrpn_int16*)image)[i]);
+            }
+            else if (pixel_size == sizeof(vrpn_float32)) {
+                printf("%f ", ((vrpn_float32*)image)[i]);
+            }
+            else if (pixel_size == sizeof(vrpn_float64)) {
+                printf("%f ", ((vrpn_float64*)image)[i]);
+            }
+            if ((i + 1) % x == 0) printf("\n");
+        }
+        printf("\n");
+*/   
+
+        image2 = new char[image_size];
+
+        if (pixel_size == sizeof(vrpn_uint8)) {
+            if (!image_uint8) {
+                printf("Creating new uint8 image\n");
+                image_uint8 = new nmb_ImageArray("TEM uint8 image", "ADC", x, y, NMB_UINT8);
+                dataset->dataImages->addImage(image_uint8);
+            }
+//            image_uint8->setImage((vrpn_uint8*)image);
+            
+            // correct flipped data
+            for (long i = 0; i < x * y; i++) {
+                ((vrpn_uint8*)image2)[x * y - i - 1] = ((vrpn_uint8*)image)[i];
+            }
+            image_uint8->setImage((vrpn_uint8*)image2);
+            graphics->updateTexture(nmg_Graphics::SEM_DATA, "TEM uint8 image", 0, 0, x, y);
+        }
+        else if (pixel_size == sizeof(vrpn_uint16)) {
+            if (!image_uint16) {
+                printf("Creating new uint16 image\n");
+                image_uint16 = new nmb_ImageArray("SEM_DATA16_128x128", "ADC", x, y, NMB_UINT16);
+                dataset->dataImages->addImage(image_uint16);
+            }
+//            image_uint16->setImage((vrpn_uint16*)image);
+
+            // correct flipped data
+            for (long i = 0; i < x * y; i++) {
+                ((vrpn_uint16*)image2)[x * y - i - 1] = ((vrpn_uint16*)image)[i];
+            }
+            image_uint16->setImage((vrpn_uint16*)image2);
+            graphics->updateTexture(nmg_Graphics::SEM_DATA, "SEM_DATA16_128x128", 0, 0, x, y);
+        }
+        else if (pixel_size == sizeof(vrpn_float32)) {
+            if (!image_float32) {
+                printf("Creating new float32 image\n");
+                image_float32 = new nmb_ImageArray("TEM float32 image", "ADC", x, y, NMB_FLOAT32);
+                dataset->dataImages->addImage(image_float32);
+            }
+//            image_float32->setImage((vrpn_float32*)image);
+
+            // correct flipped data
+            for (long i = 0; i < x * y; i++) {
+                ((vrpn_uint32*)image2)[x * y - i - 1] = ((vrpn_uint32*)image)[i];
+            }
+            image_float32->setImage((vrpn_float32*)image2);
+            graphics->updateTexture(nmg_Graphics::SEM_DATA, "TEM float32 image", 0, 0, x, y);
+        }
+        else {
+            printf("Can't display this type of data\n");
+        }
+
+        // set tcl callbacks to create an object for the texture
+	    if (World.TGetNodeByName("projtextobj.ptx") == NULL) {
+            extern Tclvar_string modelFile;
+            extern Tclvar_string current_object_new;
+
+	        modelFile = "/projtextobj.ptx";
+            current_object_new = "projtextobj.ptx";
+	    }
+        
+        //graphics->setTextureMode(nmg_Graphics::SEM_DATA, nmg_Graphics::SURFACE_REGISTRATION_COORD);
+        graphics->setTextureMode(nmg_Graphics::SEM_DATA, nmg_Graphics::MODEL_REGISTRATION_COORD);
+
+        delete [] image;
+        image = NULL;
+        delete [] image2;
+    }
 
     return 0;
 }
@@ -1040,7 +1135,7 @@ void tem_mainloop() {
 //    else printf("wtf?\n");
 
 //    gettimeofday(&now, NULL);
-//    tem_connection->pack_message(0, now, GetPixels_type, DM_Client_id, NULL, vrpn_CONNECTION_RELIABLE);
+//    tem_connection->pack_message(0, now, GetFrontImage_type, DM_Client_id, NULL, vrpn_CONNECTION_RELIABLE);
 
     tem_connection->mainloop();
 

@@ -1,3 +1,11 @@
+2002-07-30 David Borland <borland@cs.unc.edu>
+        
+        * microscape.c : changed some vrpn callback function names to match
+        some changes in the Digital Micrograph server
+
+        * import.C : fixed a small error in deleting a newly allocated object
+        name
+
 2002-07-25 Woojin Seok <seok@cs.unc.edu>
 
         * microscape.C <setupSynchronization> : added variables of 

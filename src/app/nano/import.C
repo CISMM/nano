@@ -372,7 +372,7 @@ when loading
 				import_update_AFM = tube->GetUpdateAFM();
 			}
 
-			delete name;
+			delete [] name;
         }
 		else {	// close the current object
 			if (strcmp(*World.current_object, "") != 0) {
