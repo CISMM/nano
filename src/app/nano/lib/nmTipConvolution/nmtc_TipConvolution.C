@@ -24,6 +24,12 @@ nmtc_TipConvolution::~nmtc_TipConvolution()
 {
 }
 
+void nmtc_TipConvolution::changeDataset(nmb_ImageList *im)
+{
+  d_imageList = im;
+  return;
+}
+
 void nmtc_TipConvolution::handle_convolutionImageData_change(const char *name, void *ud)
 {
   nmtc_TipConvolution *me = (nmtc_TipConvolution *)ud;

@@ -11,6 +11,7 @@ class nmtc_TipConvolution {
  public:
   nmtc_TipConvolution(nmg_Graphics *g, nmb_ImageList *im);
   ~nmtc_TipConvolution();
+  void changeDataset(nmb_ImageList *im);
   static void handle_resultImageName_change(const char *name, void *ud);
   static void handle_convolutionImageData_change(const char *name, void *ud);
   static void handle_convolutionTipName_change(const char *name, void *ud); 
