@@ -33,9 +33,9 @@ nmb_Decoration::nmb_Decoration (void) :
   scan_line (NULL),
   scanLineCount (0),
   drawScanLine (1),
-  num_slow_line_3d_markers (0),
-  max_num_slow_line_3d_markers (2),  
-  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
+  num_slow_line_3d_markers (0)
+  //  max_num_slow_line_3d_markers (2)
+  //  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
 {
   if (!pulses)
     max_num_pulses = 0;
@@ -68,9 +68,9 @@ nmb_Decoration::nmb_Decoration (int markerHeight, int numMarkers) :
   pulseCallbacks (NULL),
   scan_line (NULL),
   scanLineCount (0),
-  drawScanLine (1),
-  max_num_slow_line_3d_markers (2), 
-  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
+  drawScanLine (1)
+  //  max_num_slow_line_3d_markers (2)
+  //  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
 {
   marker_height = markerHeight;
   num_markers_shown = numMarkers;
@@ -112,12 +112,14 @@ nmb_Decoration::~nmb_Decoration (void) {
   // and dandy.  In other words, something is killing this besides me and I have
   // no idea what it is.  Maybe the PointType class?
   
+  /*
   if (slowLine3dMarkers) {
     // printf("Deleting memory.\n"); // This fixes the seg. fault problem :)
     delete [] slowLine3dMarkers;
     printf("Cleared memory.\n");
     slowLine3dMarkers = NULL;
   }
+  */
   
 }
 

@@ -57,7 +57,10 @@ class nmb_Decoration {
     int drawScanLine;
 
     // slowline 3d markers
-    PointType *slowLine3dMarkers;
+    // PointType *slowline3dmarkers;
+    // until I can figure out why a delete [] on this causes a segfault when the
+    // program shuts down...
+    PointType slowLine3dMarkers[2];
     int num_slow_line_3d_markers;
     void addSlowLine3dMarker(float, float, float);
 

@@ -3,8 +3,9 @@
 
 // MOVED from microscape.h
 
-// typedef float PointType [3];
+typedef float PointType [3];
 
+/*
 class PointType {
   float data[3];
  public:
@@ -14,13 +15,9 @@ class PointType {
   operator const float * () const {
     float a[3] = {data[0], data[1], data[2]};
     return a;
-  }/*
-  operator const float * () {
-    float a[3] = {data[0], data[1], data[2]};
-    return a;
-    }*/
+  }
 };
-
+*/
 
 enum UserMode {
   USER_FLY_MODE = (0),

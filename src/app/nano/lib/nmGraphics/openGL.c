@@ -943,7 +943,7 @@ int draw_world (int) {
   /*******************************************************/
 
   // draw the microscope's current scanline as a visual indicator to the user
-  
+
   if (decoration->drawScanLine) {
     float oldColor[4];
     float oldLineWidth[1];
