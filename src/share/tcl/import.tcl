@@ -1,7 +1,9 @@
 set nmInfo(import_objects) [create_closing_toplevel import_objects "Import Objects" ]
 
 set import_dir ""
-set import_file_label "NONE"
+set import_file_label "none"
+set imported_objects {none }
+
 set import_transx 0
 set import_transy 0
 set import_transz 0
@@ -29,8 +31,12 @@ pack $nmInfo(import_objects).basics -side top -fill x
 
 frame $nmInfo(basic_options).file
 frame $nmInfo(basic_options).file.buttons
-label $nmInfo(basic_options).file.import_file_label -justify left -text \
-	"Current Imported file: $import_file_label"
+
+generic_optionmenu $nmInfo(basic_options).file.buttons.imported_files current_object\
+	"Current Object" imported_objects
+
+#label $nmInfo(basic_options).file.import_file_label -justify left -text \
+#	"Current Imported file: $import_file_label"
 
 button $nmInfo(basic_options).file.buttons.import_button -text "Import File" -command open_import_file
 radiobutton $nmInfo(basic_options).file.buttons.ccw -text "CCW" -variable import_CCW -value 1
@@ -75,8 +81,9 @@ button $nmInfo(basic_options).f3.colorsample \
 
 #pack $nmInfo(basic_options).modelFile -side top -anchor w -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).file -anchor w -fill x
-pack $nmInfo(basic_options).file.import_file_label -anchor w -side left
+#pack $nmInfo(basic_options).file.import_file_label -anchor w -side left
 pack $nmInfo(basic_options).file.buttons -anchor w -fill x
+pack $nmInfo(basic_options).file.buttons.imported_files -anchor nw -side left -padx 1m -pady 1m
 pack $nmInfo(basic_options).file.buttons.import_button -anchor nw -side left -padx 1m -pady 1m
 pack $nmInfo(basic_options).file.buttons.close_button -anchor nw -side left -padx 1m -pady 1m
 pack $nmInfo(basic_options).file.buttons.ccw -anchor nw 
@@ -104,9 +111,10 @@ trace variable import_type w SetupOptions
 ################################
 # Open an import file. 
 proc open_import_file {} {
-    global modelFile nmInfo import_dir import_file_label
+    global modelFile nmInfo import_dir import_file_label current_object current_object_new
     set types { {"Wave Front files" ".obj" } 
                 {"MSI files" ".msi" } 
+		    {"Text files" ".txt" }
                 {"All files" *} }
     set filename [tk_getOpenFile -filetypes $types \
             -initialdir $import_dir \
@@ -127,8 +135,10 @@ proc open_import_file {} {
         set modelFile ""
         set import_file_label "NONE"
     }
-    $nmInfo(basic_options).file.import_file_label configure -text \
-	"Current Imported file: $import_file_label"
+#    $nmInfo(basic_options).file.import_file_label configure -text \
+#	"Current Imported file: $import_file_label"
+
+ 	set current_object_new $import_file_label
 }
 
 proc close_import_file {} {
