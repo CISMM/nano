@@ -1,3 +1,7 @@
+2000-08-17  Adam Seeger <seeger@cs.unc.edu>
+        * microscape.c (handle_texture_dataset_change): sets slider limits
+		a little differently (using minNonZeroValue instead of minValue)
+
 2000-08-16  Tom Hudson  <hudson@cs.unc.edu>
 
         * microscape.c (main):  added call to

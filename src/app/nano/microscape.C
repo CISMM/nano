@@ -2412,17 +2412,17 @@ static void handle_texture_dataset_change (const char *, void * userdata)
                             (texturePlaneName.string());
 
   if (im != NULL) {
-    float range = im->maxValue() - im->minValue();
-    if ( im->minAttainableValue() > ( im->minValue() -range)) 
+    float range = im->maxValue() - im->minNonZeroValue();
+    if ( im->minAttainableValue() > ( im->minNonZeroValue() -range)) 
       realign_textures_slider_min_limit = im->minAttainableValue();
     else 
-      realign_textures_slider_min_limit = (im->minValue() -range);
+      realign_textures_slider_min_limit = (im->minNonZeroValue() -range);
     if ( im->maxAttainableValue() < ( im->maxValue() +range)) 
       realign_textures_slider_max_limit = im->maxAttainableValue();
     else 
       realign_textures_slider_max_limit = (im->maxValue() +range);
     
-    realign_textures_slider_min = im->minValue();
+    realign_textures_slider_min = im->minNonZeroValue();
     realign_textures_slider_max = im->maxValue();
   }
 
