@@ -74,18 +74,21 @@ void nmm_RelaxComp::enable(RelaxType relax_type)
 {
     current_state = IDLE;
     type_of_compensation = relax_type;
+/*
     if(microscope) {
 	microscope->SetRelax((long)TIgnore, (long)TSep);
     }
+*/
 }    
 
 void nmm_RelaxComp::disable()
 {
     current_state = DISABLED;
+/*
     if(microscope) {
 	microscope->SetRelax((long)0, (long)0);
     }
-
+*/
 }    
 
 vrpn_bool nmm_RelaxComp::is_enabled()
@@ -108,10 +111,10 @@ int nmm_RelaxComp::set_ignore_time_ms (int tignore)
     // Only accept new ignore time if we are enabled.
     // If we are disabled, AFM will send us 0, we want
     // to ignore that update.
-    if (is_enabled()) {
+//    if (is_enabled()) {
       //printf("Relax ignore time set at %d\n", tignore);
 	TIgnore = tignore;
-    }
+ //   }
 
    return 0;
 }
@@ -125,13 +128,13 @@ int nmm_RelaxComp::set_separation_time_ms (int tsep)
     // Only accept new ignore time if we are enabled.
     // If we are disabled, AFM will send us 0, we want
     // to ignore that update.
-    if (is_enabled()) {
+//    if (is_enabled()) {
       //printf("Relax separation time set at %d\n", tsep);
 	TSep = tsep;
 
 	// I have no idea why we add one ms to TAvg. Make sure it's not zero?
 	TAvg = TSep/20+1;
-    }
+//    }
    return 0;
 }
 

@@ -3782,12 +3782,20 @@ void nmm_Microscope_Remote::RcvImgSet (const long _modifyEnable, const float _ma
 }
 
 void nmm_Microscope_Remote::RcvRelaxSet (const long _min, const long _sep) {
+  
   state.stmRxTmin = _min;
-  d_relax_comp.set_ignore_time_ms(_min);
-  //printf("Relax ignore time set at %ld\n", _min);
-  state.stmRxTsep = _min;
-  d_relax_comp.set_separation_time_ms(_sep);
-  //printf("Relax separation time set at %ld\n", _sep);
+  state.stmRxTsep = _sep;
+
+  if (_min == 0 && _sep == 0) {
+      d_relax_comp.disable();
+  } else {
+      d_relax_comp.set_ignore_time_ms(_min);
+      d_relax_comp.set_separation_time_ms(_sep);
+      d_relax_comp.enable(nmm_RelaxComp::DECAY);
+  }
+
+  printf("Relax ignore time set at %ld\n", _min);
+  printf("Relax separation time set at %ld\n", _sep);
 }
 
 void nmm_Microscope_Remote::RcvForceSet (const float _force) {
@@ -4771,7 +4779,7 @@ void nmm_Microscope_Remote::handle_GotMicroscopeControl(void *ud,
   
   //printf("nmm_Microscope_Remote::Got control, sending initialization\n");
   // Send off the relaxation parameters (if any)
-  if (me->d_relax_comp.is_enabled()) {
+  if (state.doRelaxComp) {
       me->SetRelax(me->state.stmRxTmin, me->state.stmRxTsep);
   } else {
       me->SetRelax(0, 0);

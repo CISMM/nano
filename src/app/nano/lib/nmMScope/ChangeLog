@@ -1,3 +1,19 @@
+2000-09-04  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_RelaxComp.C (enable, disable) : These no longer send messages
+	to the microscope but do set the state of nmm_RelaxComp
+	* nmm_RelaxComp.C (set_ignore_time_ms, set_separation_time_ms) :
+	These no longer check to see if relaxation comp. is enabled before
+	letting you set the values (they set the values no matter what now)
+	* nmm_MicroscopeRemote.C (handle_GotMicroscopeControl) : 
+	changed this so in deciding whether or not
+  	to enable relaxation compensation, it looks at state.doRelaxComp instead
+  	d_relax_comp.is_enabled()
+	* nmm_MicroscopeRemote.C (RcvRelaxSet) :
+	This now checks to see if setting was (0,0) to decide if relaxation
+	has been turned on or off (this was the assumption before but 
+	relaxation set messages were not being used for confirmation)
+
 2000-08-31  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
         * all : merged merge-2000-summer-thirdtech code with trunk.
