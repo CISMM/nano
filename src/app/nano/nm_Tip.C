@@ -1,5 +1,10 @@
 #include "nm_Tip.h"
 #include <GL/glut_UNC.h>
+#include <math.h>
+
+#ifndef M_PI
+#define M_PI (3.14159265358979323846)
+#endif
 
 char *nm_TipDisplayControls::s_renderName = "AFM Tip";
 
@@ -68,7 +73,11 @@ void nm_TipDisplayControls::setDisplayEnable(int enable)
 
 void nm_TipDisplayControls::setTextureEnable(int enable)
 {
-  d_tipRenderer.setTextureEnable(enable);
+  if (enable != 0){
+    d_tipRenderer.setTextureEnable(true); 
+  } else {
+    d_tipRenderer.setTextureEnable(false);
+  }
 }
 
 nm_TipModel::nm_TipModel()

@@ -143,6 +143,10 @@ SOURCE=.\nm_MouseInteractor.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\nm_Tip.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\normal.c
 # End Source File
 # Begin Source File
@@ -208,6 +212,10 @@ SOURCE=.\nM_coord_change.h
 # Begin Source File
 
 SOURCE=.\nm_MouseInteractor.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nm_Tip.h
 # End Source File
 # Begin Source File
 
