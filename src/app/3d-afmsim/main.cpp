@@ -113,6 +113,7 @@ int done_afm_scan=0;
 int done_drawing_objects=0;
 double thetax=0.,thetay=0.;
 double cone_sphere_list_radius;
+int tesselation = 30;
 
 /* Here are our AFM tips */
 // third arg is the default
@@ -120,8 +121,8 @@ double cone_sphere_list_radius;
 // all units in nm
 // XXX Edit the following lines to adjust the radius and tilt of the tip
 SphereTip sp(5.);
-InvConeSphereTip ics(5.,1000.,DEG_TO_RAD*30.);
-Tip tip(sp,ics,INV_CONE_SPHERE_TIP);
+InvConeSphereTip ics(5.,1000.,DEG_TO_RAD*30.,tesselation);
+Tip tip(sp,ics,tesselation,INV_CONE_SPHERE_TIP);
 //Tip tip(sp,ics,SPHERE_TIP);
 
 
@@ -277,7 +278,7 @@ void make_sphere() {
   // Create a display list for a sphere
   glNewList(SPHERE_LIST, GL_COMPILE);
   // draw a sphere of radius 1
-  gluSphere( qobj, 1, 30, 30);
+  gluSphere( qobj, 1, tesselation, tesselation);
   // End definition of circle
   glEndList();
 }
@@ -293,12 +294,15 @@ void make_cylinder() {
   // Create a display list for a sphere
   glNewList(CYLINDER_LIST, GL_COMPILE);
   // draw a cylinder of top and base radius of 1 and height 1
-  gluCylinder( qobj, 1, 1, 1, 30, 30);
+  gluCylinder( qobj, 1, 1, 1, tesselation, tesselation);
   glEndList();
 }
 
 void make_cone_sphere() {
   static GLUquadricObj* qobj;
+
+  printf("Building ConeSphere display list (tesselation %d)\n",
+	tesselation);
 
   qobj = gluNewQuadric();
   gluQuadricDrawStyle( qobj, GLU_FILL);
@@ -320,14 +324,12 @@ void make_cone_sphere() {
   cone_sphere_list_radius = tipRadius;  
   // Create a display list for a sphere
   glNewList(CONE_SPHERE_LIST, GL_COMPILE);
-  gluSphere( qobj, tipRadius, 30, 30);
+  gluSphere( qobj, tipRadius, tesselation, tesselation);
   glPushMatrix();
   glTranslatef(0,0,-bignum);
-  gluCylinder( qobj, c.cr, c.topRadius, c.topHeight, 30, 30);
+  gluCylinder( qobj, c.cr, c.topRadius, c.topHeight, tesselation, tesselation);
   glPopMatrix();
   glEndList();
-  
-
 }
 
 #endif
@@ -345,7 +347,7 @@ drawSphere( double diameter)
     gluQuadricNormals( qobj, GLU_FLAT );
     firstTime=0;
   }
-  gluSphere( qobj, diameter/2., 30, 30);
+  gluSphere( qobj, diameter/2., tesselation, tesselation);
 #else
   glPushMatrix();
   glScalef(diameter/2., diameter/2., diameter/2);
@@ -366,7 +368,7 @@ drawCylinder( double diameter, double height)
     gluQuadricNormals( qobj, GLU_FLAT );
     firstTime=0;
   }
-  gluCylinder( qobj, diameter/2., diameter/2., height, 30, 30);
+  gluCylinder( qobj, diameter/2., diameter/2., height, tesselation, tesselation);
 #else
   glPushMatrix();
   glScalef(diameter/2.,diameter/2.,height);
@@ -1127,7 +1129,8 @@ void globalkeyboardFunc(unsigned char key, int x, int y) {
 
 // Keyboard callback for main window.
 void
-commonKeyboardFunc(unsigned char key, int x, int y) {
+commonKeyboardFunc(unsigned char key, int x, int y)
+{
   switch (key) {
   case KEY_DELETE :
     if (selectedOb != NULLOB) {
@@ -1173,6 +1176,26 @@ commonKeyboardFunc(unsigned char key, int x, int y) {
     break;
   case 'A' ://change angle, slant of the tip
     tip.dec_theta();
+    break;
+  case '*' ://increase tesselation
+    tesselation += 5;
+#if DISP_LIST
+    make_sphere();
+    make_cylinder();
+    make_cone_sphere();
+    tip.icsTip.set(tip.icsTip.r, tip.icsTip.ch, tip.icsTip.theta, tesselation);
+#endif
+    printf("Tesselation %d\n", tesselation);
+    break;
+  case '/' ://decrease tesselation
+    if (tesselation > 5) { tesselation -= 5; }
+#if DISP_LIST
+    make_sphere();
+    make_cylinder();
+    make_cone_sphere();
+    tip.icsTip.set(tip.icsTip.r, tip.icsTip.ch, tip.icsTip.theta, tesselation);
+#endif
+    printf("Tesselation %d\n", tesselation);
     break;
   case 'i':
     if (afm_scan == NO_AFM) {

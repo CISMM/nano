@@ -5,6 +5,7 @@
  * Oct 2000
  */
 
+#include <stdio.h>
 #include <iostream.h>
 #include <math.h>		//math.h vs cmath
 #include <GL/glut.h>

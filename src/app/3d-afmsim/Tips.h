@@ -32,9 +32,12 @@ class InvConeSphereTip : public ConeSphere{
 public:
   // angle is half cone angle. it should be in radians
   InvConeSphereTip() {}
-  InvConeSphereTip(double _r, double _ch, double _angle);
-  void set(double _r, double _ch, double _angle);
+  InvConeSphereTip(double _r, double _ch, double _angle, int _tesselation);
+  void set(double _r, double _ch, double _angle, int _tesselation);
   void draw();
+
+  int tesselation;
+  int epoch;
 };
 
 class Tip {
@@ -43,8 +46,8 @@ public:
   SphereTip spTip;
   InvConeSphereTip icsTip;
   Tip() {};
-  Tip(SphereTip, InvConeSphereTip, int default_type);
-  void set(SphereTip, InvConeSphereTip, int default_type);
+  Tip(SphereTip, InvConeSphereTip, int tesselation, int default_type);
+  void set(SphereTip, InvConeSphereTip, int tesselation, int default_type);
   void change_tip_model();
   void inc_r();
   void dec_r();

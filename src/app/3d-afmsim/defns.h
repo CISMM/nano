@@ -36,9 +36,11 @@
 
 // display list
 #define DISP_LIST 1
+#define	TIP_DISP_LIST 1
 #define SPHERE_LIST 1
 #define CYLINDER_LIST 2
 #define CONE_SPHERE_LIST 3
+#define	TIP_CONE_SPHERE_LIST 4
 
 
 // rotating protein

@@ -5,6 +5,7 @@
  * Oct 2000
  */
 
+#include <stdio.h>
 #include <iostream.h>
 #include <math.h>               //math.h vs cmath
 #include <GL/glut.h>
@@ -32,12 +33,17 @@ void SphereTip :: print() {
 }
 
 // angle is half cone angle. it should be in radians
-InvConeSphereTip :: InvConeSphereTip(double _r, double _ch, double _angle) {
-  set(_r,_ch,_angle);
+InvConeSphereTip :: InvConeSphereTip(double _r, double _ch, double _angle,
+	int _tesselation) {
+  set(_r,_ch,_angle,_tesselation);
+  epoch = 0;
 }
 
-void InvConeSphereTip :: set(double _r, double _ch, double _angle) {
+void InvConeSphereTip :: set(double _r, double _ch, double _angle,
+	int _tesselation) {
   ConeSphere::set(_r,_ch,_angle);
+  tesselation = _tesselation;
+  epoch++;
 }
 
 void InvConeSphereTip :: draw() {
@@ -61,14 +67,16 @@ void InvConeSphereTip :: draw() {
   glPopMatrix();
 }
 
-Tip :: Tip(SphereTip _sp, InvConeSphereTip _ics, int default_type) {
-  set(_sp,_ics,default_type);
+Tip :: Tip(SphereTip _sp, InvConeSphereTip _ics, int tesselation,
+	int default_type) {
+  set(_sp,_ics,tesselation,default_type);
 }
 
-void Tip :: set(SphereTip _sp, InvConeSphereTip _ics, int default_type) {
+void Tip :: set(SphereTip _sp, InvConeSphereTip _ics, int tesselation,
+	int default_type) {
   type = default_type;
   spTip.set(_sp.r);
-  icsTip.set(_ics.r,_ics.ch,_ics.theta);
+  icsTip.set(_ics.r,_ics.ch,_ics.theta, tesselation);
 }
 
 void Tip :: change_tip_model() {

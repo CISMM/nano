@@ -12,8 +12,6 @@
 #include "Tips.h"
 
 GLenum drawStyle = GL_FILL;       
-static int firstTime = 1;
-static GLUquadricObj* qobj;
 
 extern void drawSphere(double diamter);
 extern void drawCylinder(double diamter, double height);
@@ -275,6 +273,47 @@ void Ntube :: afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
   if (type == SPHERE) {
     // for spheres only
     // Lower surface to match real surface height for ridges and plains.
+#if TIP_DISP_LIST
+    double tipRadius = icsTip.r; // the radius for the tip
+    double theta = icsTip.theta; // theta for the tip
+    double radius=diam/2.;
+    double fullradius = radius + tipRadius;
+    static int created_list = 0;
+    static GLUquadricObj* qobj;
+    static int epoch = -1;
+    int tesselation = icsTip.tesselation;
+    ConeSphere c = ConeSphere(tipRadius, 200 + tipRadius/theta, theta);
+    if ((created_list == 0) || (icsTip.epoch != epoch)) {
+	created_list = 1;
+	epoch = icsTip.epoch;
+
+	// Create a ConeSphere display list that has a unit-radius sphere
+	// and cone of specified angle.  This will be scaled and translated
+	// later to make the appropriate shape.
+	printf("Creating ConeSphere list for sphere object (tess %d)\n",
+		tesselation);
+	printf("  Radius %g, angle %g\n", tipRadius, RAD_TO_DEG*theta);
+	qobj = gluNewQuadric();
+	gluQuadricDrawStyle( qobj, GLU_FILL);
+	gluQuadricNormals( qobj, GLU_FLAT );
+
+	glNewList(TIP_CONE_SPHERE_LIST, GL_COMPILE);
+	gluSphere( qobj, tipRadius, tesselation, tesselation );
+	glPushMatrix();
+	glTranslatef(0,0,-200);
+	gluCylinder( qobj, c.cr, c.topRadius, c.topHeight, tesselation,
+		tesselation );
+	glPopMatrix();
+	glEndList();
+    }
+
+    // Scale and translate the created display list, then call it.
+    glPushMatrix();
+    glTranslatef(pos.x,pos.y, pos.z);
+    glScalef( fullradius/tipRadius, fullradius/tipRadius, fullradius/tipRadius);
+    glCallList(TIP_CONE_SPHERE_LIST);
+    glPopMatrix();
+#else
     double tipRadius = icsTip.r; // the radius for the tip
     double theta = icsTip.theta; // theta for the tip
     double radius=diam/2.;
@@ -282,6 +321,7 @@ void Ntube :: afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
     ConeSphere c = ConeSphere(radius+tipRadius, cone_height, theta);
     glTranslatef(pos.x,pos.y,pos.z);
     c.draw();
+#endif
   }
   else {// for a general ntube
 #if 1
