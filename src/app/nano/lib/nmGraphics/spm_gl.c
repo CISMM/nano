@@ -337,206 +337,185 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
   GLfloat Vertex [3];
   GLfloat Color [4];
   
-  Vertex[0]= (float) height_plane.xInWorld(x);
-  Vertex[1]= (float) height_plane.yInWorld(y);
-  Vertex[2]= (float) height_plane.valueInWorld(x, y);
-
   /* Make sure it is a legal vertex */
   if ( (x < 0) || (x > height_plane.numX() - 1) ||
        (y < 0) || (y > height_plane.numY() - 1) ) {
     fprintf(stderr, "describe_gl_vertex:  %d, %d outside grid.\n", x, y);
     return -1;
   }
-  
-  if ( g_just_color ) {
-    Normal[0] = float( vertexArrayPtr->Normal[0] )/32767;
-    Normal[1] = float( vertexArrayPtr->Normal[1] )/32767;
-    Normal[2] = float( vertexArrayPtr->Normal[2] )/32767;
-    glNormal3fv(Normal);
 
-    if (planes.color) {
+  Vertex[0]= (float) height_plane.xInWorld(x);
+  Vertex[1]= (float) height_plane.yInWorld(y);
+  Vertex[2]= (float) height_plane.valueInWorld(x, y);
+
+  vertexArrayPtr->Vertex[0] = Vertex[0];
+  vertexArrayPtr->Vertex[1] = Vertex[1];
+  vertexArrayPtr->Vertex[2] = Vertex[2];
+
+
+  /* Color the vertex according to its color parameter, if we have
+   * a color plane.  Clip the value mapped to color from 0 to 1.  */
+    if (g_PRERENDERED_TEXTURE) {
+      // Do we need a flat white background to modulate the texture?
+      Color[0] = 1.0f;
+      Color[1] = 1.0f;
+      Color[2] = 1.0f;
+
+      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+          Color[3] = 0.0f;
+      }
+      else {
+          Color[3] = g_surface_alpha * 255;
+      }
+    }
+    else if (g_PRERENDERED_COLORS) {
+      Color[0] = planes.red->value(x, y);
+      Color[1] = planes.green->value(x, y);
+      Color[2] = planes.blue->value(x, y);
+
+      if ( (g_null_data_alpha_toggle) && Vertex[2] == 0.0 ) {
+        Color[3] = 0.0f;
+      }
+      else {
+        Color[3] = g_surface_alpha * 255;
+      }
+        // XXX why do the other implementations cast this to a GLubyte
+        // before writing it into a float?
+    }
+    else if (planes.color) {
       // stretch/shrink data based on data_min/max colors:
       float data_value = planes.color->value(x, y);
       data_value = (data_value - planes.color->minNonZeroValue())/
-	(planes.color->maxNonZeroValue() - planes.color->minNonZeroValue());
-      
+        (planes.color->maxNonZeroValue() - planes.color->minNonZeroValue());
+
       data_value = data_value * (g_data_max - g_data_min) + g_data_min;
-      
+
       // clamp data based on the stretched/shrunk colormap:
       if ( data_value <  g_color_min ) data_value = 0;
       else if ( data_value > g_color_max ) data_value = 1.0;
       else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
-      
+
       if (g_curColorMap) {    // Use the color map loaded from file
-	float r, g, b, a;
-	g_curColorMap->lookup(data_value, &r, &g, &b, &a);
-	Color[0] = r;
-	Color[1] = g;
-	Color[2] = b;
-	Color[3] = (GLubyte) (g_surface_alpha * 255);
+        float r, g, b, a;
+        g_curColorMap->lookup(data_value, &r, &g, &b, &a);
+        Color[0] = r;
+        Color[1] = g;
+        Color[2] = b;
+        if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+          Color[3] = (GLubyte) 0;
+        }
+        else {
+          Color[3] = (GLubyte) (g_surface_alpha * 255);
+        }
       }
-      
       else {      // Use the CUSTOM color mapping tool
-	for (i = 0; i < 3; i++) {
-	  Color[i] = minColor[i] * data_value;
-	}
-	Color[3] = (GLubyte) (g_surface_alpha * 255);
+        for (i = 0; i < 3; i++) {
+          double  color_diff = (maxColor[i] - minColor[i]);
+          Color[i] = minColor[i] + (color_diff);
+        }
+        if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+            Color[3] = (GLubyte) 0;
+        }
+        else {
+             Color[3] = (GLubyte) (g_surface_alpha * 255);
+        }
       }
     }
-    else {      // Use the CUSTOM color mapping tool
-      for (i = 0; i < 3; i++) {
-	Color[i] = minColor[i];
-      }
-      Color[3] = (GLubyte) (g_surface_alpha * 255);
+    else if (g_null_data_alpha_toggle) {
+        // No color plane, but need to set the alpha for the color.
+        // So, set the color to the default that was set in the
+        // set_surface_materials() call, and adjust alpha per-vertex
+        // to 0 if it is a zero (not filled in) height value.
+
+        Color[0] = g_minColor[0];
+        Color[1] = g_minColor[1];
+        Color[2] = g_minColor[2];
+        if (Vertex[2] == 0.0)  {
+            Color[3] =  0;
+        }
+        else {
+            Color[3] = g_surface_alpha * 255;
+        }
     }
-    glColor4fv(Color);
+    if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color ||
+        g_null_data_alpha_toggle) {
+      if (g_VERTEX_ARRAY) {
+        vertexArray.Color[0] = (GLubyte) (Color[0] * 255);
+        vertexArray.Color[1] = (GLubyte) (Color[1] * 255);
+        vertexArray.Color[2] = (GLubyte) (Color[2] * 255);
+        if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+          vertexArray.Color[3] = 0;
+        } else {
+          vertexArray.Color[3] = (GLubyte) (g_surface_alpha * 255);
+        }
+      }
+      else {
+        if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0 ) ){
+          Color[3] = 0.0;
+        } else {
+          Color[3] = g_surface_alpha;
+        }
+        vertexArrayPtr->Color[0] = (GLubyte) (Color[0] * 255);
+        vertexArrayPtr->Color[1] = (GLubyte) (Color[1] * 255);
+        vertexArrayPtr->Color[2] = (GLubyte) (Color[2] * 255);
+        vertexArrayPtr->Color[3] = (GLubyte) (Color[3] * 255);
+        glColor4fv(Color);
+      }
 
-    Vertex[0] = vertexArrayPtr->Vertex[0];
-    Vertex[1] = vertexArrayPtr->Vertex[1];
-    Vertex[2] = vertexArrayPtr->Vertex[2];
-    glVertex3fv(Vertex);
-    return 0;
-  }
+    }
 
-  /* Find the normal for the vertex */
-  // Using prerendered colors (and no lighting), we don't need normals
-  if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
-    if (stm_compute_plane_normal(planes.height, x,y,
+    if (planes.opacity) {
+      float opacity_value = (planes.opacity->value(x, y) - g_opacity_slider_min) /
+        (g_opacity_slider_max - g_opacity_slider_min);
+      if (g_VERTEX_ARRAY) {
+        vertexArray.Color[3] = (GLubyte) min(255.0, opacity_value);
+      } else {
+        Color[3] = min(1.0, (opacity_value / 255.0));
+        glColor4fv(Color);
+      }
+    }
+
+    if (g_just_color) {
+      Normal[0] = float( vertexArrayPtr->Normal[0] )/32767;
+      Normal[1] = float( vertexArrayPtr->Normal[1] )/32767;
+      Normal[2] = float( vertexArrayPtr->Normal[2] )/32767;
+
+      Vertex[0] = vertexArrayPtr->Vertex[0];
+      Vertex[1] = vertexArrayPtr->Vertex[1];
+      Vertex[2] = vertexArrayPtr->Vertex[2];
+
+      if (!g_VERTEX_ARRAY) {
+        glNormal3fv(Normal);
+        glVertex3fv(Vertex);
+      }
+
+      return 0;
+    }
+
+    /* Find the normal for the vertex */
+    // Using prerendered colors (and no lighting), we don't need normals
+    if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
+      if (stm_compute_plane_normal(planes.height, x,y,
          (float) ((max_x - min_x) / height_plane.numX()),
          (float) ((max_y - min_y) / height_plane.numY()),
 			         1.0f,
 			         Normal)) {
-      fprintf(stderr,"describe_gl_vertex(): Can't find normal!\n");
-      return -1;
-    }
-  
-    if (g_VERTEX_ARRAY) {
-      vertexArray.Normal[0] = (GLshort) (Normal[0] * 32767);
-      vertexArray.Normal[1] = (GLshort) (Normal[1] * 32767);
-      vertexArray.Normal[2] = (GLshort) (Normal[2] * 32767);
-    }
-    else {
-      vertexArrayPtr->Normal[0] = (GLshort) (Normal[0] * 32767);
-      vertexArrayPtr->Normal[1] = (GLshort) (Normal[1] * 32767);
-      vertexArrayPtr->Normal[2] = (GLshort) (Normal[2] * 32767);
-      glNormal3fv(Normal);
-    }
-  }
+        fprintf(stderr,"describe_gl_vertex(): Can't find normal!\n");
+        return -1;
+      }
 
-  /* Color the vertex according to its color parameter, if we have
-   * a color plane.  Clip the value mapped to color from 0 to 1.  */
-  // XXX At some point, we may want to set alpha.
-  if (g_PRERENDERED_TEXTURE) {
-    // Do we need a flat white background to modulate the texture?
-    Color[0] = 1.0f;
-    Color[1] = 1.0f;
-    Color[2] = 1.0f;
-    
-    if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
-        Color[3] = 0.0f;
-    }
-    else {
-        Color[3] = g_surface_alpha * 255;
-    }
-  } 
-  else if (g_PRERENDERED_COLORS) {
-    Color[0] = planes.red->value(x, y);
-    Color[1] = planes.green->value(x, y);
-    Color[2] = planes.blue->value(x, y);
-    
-    if ( (g_null_data_alpha_toggle) && Vertex[2] == 0.0 ) {
-      Color[3] = 0.0f;
-    }
-    else {
-      Color[3] = g_surface_alpha * 255;
-    }
-      // XXX why do the other implementations cast this to a GLubyte
-      // before writing it into a float?
-  }
-  else if (planes.color) {
-    // stretch/shrink data based on data_min/max colors:
-    float data_value = planes.color->value(x, y);
-    data_value = (data_value - planes.color->minNonZeroValue())/
-      (planes.color->maxNonZeroValue() - planes.color->minNonZeroValue());
-    
-    data_value = data_value * (g_data_max - g_data_min) + g_data_min;
-    
-    // clamp data based on the stretched/shrunk colormap:
-    if ( data_value <  g_color_min ) data_value = 0;
-    else if ( data_value > g_color_max ) data_value = 1.0;
-    else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
-    
-    if (g_curColorMap) {    // Use the color map loaded from file
-      float r, g, b, a;
-      g_curColorMap->lookup(data_value, &r, &g, &b, &a);
-      Color[0] = r;
-      Color[1] = g;
-      Color[2] = b;
-      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
-        Color[3] = (GLubyte) 0;
+      if (g_VERTEX_ARRAY) {
+        vertexArray.Normal[0] = (GLshort) (Normal[0] * 32767);
+        vertexArray.Normal[1] = (GLshort) (Normal[1] * 32767);
+        vertexArray.Normal[2] = (GLshort) (Normal[2] * 32767);
       }
       else {
-        Color[3] = (GLubyte) (g_surface_alpha * 255);
+        vertexArrayPtr->Normal[0] = (GLshort) (Normal[0] * 32767);
+        vertexArrayPtr->Normal[1] = (GLshort) (Normal[1] * 32767);
+        vertexArrayPtr->Normal[2] = (GLshort) (Normal[2] * 32767);
+        glNormal3fv(Normal);
       }
     }
-    else {      // Use the CUSTOM color mapping tool
-      for (i = 0; i < 3; i++) {
-	double  color_diff = (maxColor[i] - minColor[i]);
-	Color[i] = minColor[i] + (color_diff);
-      }
-      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
-	  Color[3] = (GLubyte) 0;
-      }
-      else {
-	   Color[3] = (GLubyte) (g_surface_alpha * 255);
-      }
-    }
-  }
-  else if (g_null_data_alpha_toggle) {
-	// No color plane, but need to set the alpha for the color.
-	// So, set the color to the default that was set in the
-	// set_surface_materials() call, and adjust alpha per-vertex
-    	// to 0 if it is a zero (not filled in) height value.
-       
-        Color[0] = g_minColor[0];
-	Color[1] = g_minColor[1];
-	Color[2] = g_minColor[2];
-	if (Vertex[2] == 0.0)  {
-	    Color[3] =  0;
-	}
-	else {
-	    Color[3] = g_surface_alpha * 255;
-	}
-	
-  }
-
-  if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color ||
-	g_null_data_alpha_toggle) {
-    if (g_VERTEX_ARRAY) {
-      vertexArray.Color[0] = (GLubyte) (Color[0] * 255);
-      vertexArray.Color[1] = (GLubyte) (Color[1] * 255); 
-      vertexArray.Color[2] = (GLubyte) (Color[2] * 255); 
-      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
-	vertexArray.Color[3] = 0;
-      } else {
-        vertexArray.Color[3] = (GLubyte) (g_surface_alpha * 255);
-      }
-    }
-    else {
-      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0 ) ){
-        Color[3] = 0.0;
-      } else {
-        Color[3] = g_surface_alpha;
-      }
-      vertexArrayPtr->Color[0] = (GLubyte) (Color[0] * 255);
-      vertexArrayPtr->Color[1] = (GLubyte) (Color[1] * 255); 
-      vertexArrayPtr->Color[2] = (GLubyte) (Color[2] * 255); 
-      vertexArrayPtr->Color[3] = (GLubyte) (Color[3] * 255);
-      glColor4fv(Color);
-    }
-
-  }
-
 
 #ifndef PROJECTIVE_TEXTURE
   // Realigning Textures, no need to recalculate  
@@ -635,17 +614,6 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     }
     else {
       glTexCoord1f(Scoord);
-    }
-  }
-
-  if (planes.opacity) {
-    float opacity_value = (planes.opacity->value(x, y) - g_opacity_slider_min) /
-	(g_opacity_slider_max - g_opacity_slider_min);      
-    if (g_VERTEX_ARRAY) {
-      vertexArray.Color[3] = (GLubyte) min(255.0, opacity_value);
-    } else {
-      Color[3] = min(1.0, (opacity_value / 255.0));
-      glColor4fv(Color);
     }
   }
 

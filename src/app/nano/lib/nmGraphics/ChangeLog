@@ -1,3 +1,12 @@
+2000-09-13  Adam Seeger  <seeger@cs.unc.edu>
+
+	* spm_gl.c (describe_gl_vertex) : there was some remaining confusion
+	from the merge that I attempted to fix. I believe it mostly had to
+	to do with the use of the g_just_color variable and the
+	related CauseGridReColor() function. This fixes a bug in which changing
+	the colormap plane made the surface partially disappear and look
+	nasty where it didn't disappear
+
 2000-09-11  Adam Seeger  <seeger@cs.unc.edu>
 
 	* spm_gl.c (spm_render_mark) : In addition to drawing a line from
