@@ -603,6 +603,9 @@ int draw_world (int) {
   int low_strip;
   int high_strip;
 
+  // Get the data (low and high X, Y vales changed) atomically
+  // so we have bulletproof synchronization.
+
   dataset->range_of_change.GetBoundsAndClear
     (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
   if (g_PRERENDERED_COLORS || g_PRERENDERED_DEPTH) {
@@ -613,10 +616,6 @@ int draw_world (int) {
 
   if (display_lists_in_x) {
 
-    // Get the data (low and high Y vales changed) atomically
-    // so we have bulletproof synchronization.
-    //dataset->range_of_change.GetBoundsAndClear
-      //(NULL, NULL, &low_row, &high_row);
     low_row = g_minChangedY;
     high_row = g_maxChangedY;
     stripfn = spm_x_strip;
@@ -625,10 +624,6 @@ int draw_world (int) {
 
   } else {
 
-    // Get the data (low and high X vales changed) atomically
-    // so we have bulletproof synchronization.
-    //dataset->range_of_change.GetBoundsAndClear
-      //(&low_row, &high_row, NULL, NULL);
     low_row = g_minChangedX;
     high_row = g_maxChangedX;
     stripfn = spm_y_strip;

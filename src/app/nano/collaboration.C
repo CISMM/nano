@@ -4,8 +4,6 @@ extern CollaborationManager * collaborationManager;
 
 /// synchronization UI handlers
 // generic synchronization
-//static void handle_synchronize_change (vrpn_int32, void *);
-//static void handle_get_sync (vrpn_int32, void *);
 //static void handle_lock_sync (vrpn_int32, void *);
 // since streamfiles are time-based, we need to send a syncRequest()
 static void handle_synchronize_timed_change (vrpn_int32, void *);
@@ -259,61 +257,8 @@ static void handle_collab_measure_move (float x, float y,
   }
 }
 
-// NANOX
-// synchronization UI handlers
-/* UNUSED
-// Checkbox - if checked, request that the peer keep us synced;
-//   if unchecked, stop keeping synced.
-// Currently assumes that only the most recently added peer is
-//   "valid";  others are a (small?) memory/network leak.
-static void handle_synchronize_change (vrpn_int32 value, void * userdata) {
-  nmui_Component * sync = (nmui_Component *) userdata;
-  int s;
-
-  switch (value) {
-    case 0:
-      // stop synchronizing;  use local state (#0)
-      s = 0;
-      break;
-    default:
-      // use shared state (#1)
-      //s = 1;  // SYNC-ROBUSTNESS
-      s = sync->numPeers();
-fprintf(stderr, "Synchronizing with peer #%d.\n", s);
-      break;
-  }
-
-  sync->syncReplica(s);
-//fprintf(stderr, "++ Synchronized to replica #%d.\n", sync->synchronizedTo());
-
-}
-
-// Button - if pressed, request immediate sync.
-// (If synchronize_stream is checked, this is meaningless.)
-// Currently assumes that only the most recently added peer is
-//   "valid";  others are a (small?) memory/network leak.
-static void handle_get_sync (vrpn_int32, void * userdata) {
-  nmui_Component * sync = (nmui_Component *) userdata;
-  int c;
-  // Christmas sync
-  // handles 2-way;  may handle n-way sync
-  switch (sync->synchronizedTo()) {
-    case 0:
-      // copy shared state (#1) into local state (#0)
-      //c = 1;  // SYNC-ROBUSTNESS
-      c = sync->numPeers();
-fprintf(stderr, "Copying peer #%d.\n", c);
-      break;
-    default:
-      // copy local state (#0) into shared state (#1)
-      c = 0;
-      break;
-  }
-  sync->copyReplica(c);
-//fprintf(stderr, "++ Copied inactive replica (#%d).\n", c);
-}
-*/
 static int handle_timed_sync_request (void *);
+static int local_time_sync (void *);
 
 struct sync_plane_struct {
     nmui_Component * component;
@@ -343,10 +288,14 @@ fprintf(stderr, "++ In handle_synchronized_timed_change() to %d\n", value);
   // ALL of the sync code was written for optimism, and requires some
   // tougher semantics to use centralized serialization and
   // single-shared-state.
-  handle_timed_sync_request(NULL);
+
+  //handle_timed_sync_request(NULL);
 
   switch (value) {
     case 0:
+
+      handle_timed_sync_request();
+
       // stop synchronizing;  use local state (#0)
 fprintf(stderr, "++   ... stopped synchronizing.\n");
       sync->syncReplica(0);
@@ -356,6 +305,9 @@ fprintf(stderr, "++   ... stopped synchronizing.\n");
       isSynchronized = VRPN_FALSE;
       break;
     default:
+
+      local_time_sync();
+
       // use shared state (#1)
 fprintf(stderr, "++   ... sent synch request to peer.\n");
 
@@ -416,16 +368,22 @@ static void handle_copy_to_private (vrpn_int32 /*value*/, void * userdata) {
     sync->d_maintain = VRPN_FALSE;
 fprintf(stderr, "++ In handle_copy_to_private()sent synch request\n");
   } else {
-      // get up to date stream time.
-      handle_timed_sync_request(NULL);
+    // Can't use handle_timed_sync_request() because it *does* send
+    // the new time to our peer;  that can (and usually does) cause
+    // an unwanted rewind by the peer.
+    // handle_timed_sync_request(NULL);
 
-      // we are shared, copy to local state immediately.
-      // shared state is in the replica from the most recent peer.
-      sync->copyFromToReplica(sync->numPeers(), 0);
+    // we are shared, copy to local state immediately.
+    // shared state is in the replica from the most recent peer.
+    sync->copyFromToReplica(sync->numPeers(), 0);
+
 fprintf(stderr, "++ In handle_copy_to_private() copied immediately.\n");
+
     plane_sync->acceptUpdates();
     plane_sync->queueUpdates();
 
+    // get up-to-date stream time.
+    local_time_sync (NULL);
   }
 
 }
@@ -520,6 +478,16 @@ fprintf(stderr, "++ In handle_timed_sync_request() at %ld seconds;  "
 
   return 0;
 }
+
+static int local_time_sync (void *) {
+  // Set our private replica without transmitting anything over the network.
+
+  set_stream_time.setReplica(0, decoration->elapsedTime);
+
+fprintf(stderr, "++ In local_time_sync() at %ld seconds;  "
+"wrote data into replica.\n", decoration->elapsedTime);
+}
+
 
 static int handle_timed_sync_complete (void * userdata) {
   CollaborationManager * cm = (CollaborationManager *) userdata;

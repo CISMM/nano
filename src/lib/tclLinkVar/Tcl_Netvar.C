@@ -397,6 +397,22 @@ void TclNet_int::syncReplica (int whichReplica) {
   copyReplica(whichReplica);
 }
 
+void TclNet_int::setReplica (int whichReplica, vrpn_int32 value) {
+
+  timeval now;
+
+  if ((whichReplica < 0) || (whichReplica >= d_numReplicas)) {
+    fprintf(stderr, "TclNet_int::setReplica:  illegal id %d.\n",
+            whichReplica);
+    return;  // error
+  }
+
+  gettimeofday(&now, NULL);
+
+  ((vrpn_Shared_int32 *) d_replica[whichReplica])->set(value, now);
+}
+
+
 
 
 
@@ -637,6 +653,21 @@ void TclNet_float::syncReplica (int whichReplica) {
                  (propagateReceivedUpdate, this);
 
   copyReplica(whichReplica);
+}
+
+void TclNet_float::setReplica (int whichReplica, vrpn_float64 value) {
+
+  timeval now;
+
+  if ((whichReplica < 0) || (whichReplica >= d_numReplicas)) {
+    fprintf(stderr, "TclNet_float::setReplica:  illegal id %d.\n",
+            whichReplica);
+    return;  // error
+  }
+
+  gettimeofday(&now, NULL);
+
+  ((vrpn_Shared_float64 *) d_replica[whichReplica])->set(value, now);
 }
 
 
@@ -914,6 +945,21 @@ void TclNet_string::syncReplica (int whichReplica) {
                  (propagateReceivedUpdate, this);
 
   copyReplica(whichReplica);
+}
+
+void TclNet_string::setReplica (int whichReplica, const char * value) {
+
+  timeval now;
+
+  if ((whichReplica < 0) || (whichReplica >= d_numReplicas)) {
+    fprintf(stderr, "TclNet_string::setReplica:  illegal id %d.\n",
+            whichReplica);
+    return;  // error
+  }
+
+  gettimeofday(&now, NULL);
+
+  ((vrpn_Shared_String *) d_replica[whichReplica])->set(value, now);
 }
 
 

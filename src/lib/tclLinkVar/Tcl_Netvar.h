@@ -169,6 +169,11 @@ class TclNet_int : public Tclvar_int, public Tcl_Netvar {
       // Copy the state of the which-th replica, and any changes to it.
       // To "unsync", issue syncReplica(0)
 
+    void setReplica (int whichReplica, vrpn_int32 value);
+      // Used only for particularly hackish work - sets the given
+      // replica to the given value, ignoring which replica we're
+      // "supposed" to be writing into now.
+
     // These two functions are NOT defined;  they should
     // generate compile-time errors.
     TclNet_int (const TclNet_int &);
@@ -211,6 +216,11 @@ class TclNet_float : public Tclvar_float, public Tcl_Netvar {
     void syncReplica (int whichReplica);
       // Copy the state of the which-th replica, and any changes to it.
       // To "unsync", issue syncReplica(0)
+
+    void setReplica (int whichReplica, vrpn_float64 value);
+      // Used only for particularly hackish work - sets the given
+      // replica to the given value, ignoring which replica we're
+      // "supposed" to be writing into now.
 
     // These two functions are NOT defined;  they should
     // generate compile-time errors.
@@ -263,6 +273,11 @@ class TclNet_string : public Tclvar_string, public Tcl_Netvar {
     void syncReplica (int whichReplica);
       // Copy the state of the which-th replica, and any changes to it.
       // To "unsync", issue syncReplica(0)
+
+    void setReplica (int whichReplica, const char * value);
+      // Used only for particularly hackish work - sets the given
+      // replica to the given value, ignoring which replica we're
+      // "supposed" to be writing into now.
 
     // These two functions are NOT defined;  they should
     // generate compile-time errors.
