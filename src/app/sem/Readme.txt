@@ -1,6 +1,23 @@
 This directory contains code that deals directly with the EDAX system for
 controlling the SEM. 
 
+=== some notes:
+vertical retrace has a small effect but its hard to tell exactly what its doing 
+  seems to add a positive offset to the y-scan as it is increased
+horizontal retrace does change the x-scan: but doesn't change much below 10 usec
+probably because 10usec is pretty short relative to the length of the scan
+
+interpixel delay can be set to 0 but doesn't differ from when it is set to
+1000 nsec (1usec), larger values do have the expected effect
+pixel integration also has the expected effect (min is 100nsec)
+
+point scanning seems to have some kind of overhead that forces dwell time to
+be at least 1 msec - a dwell time of 0 gives about 1 msec, a dwell time of
+.5 msec gives about 1.5 msec 
+
+in between points, scan seems to switch to center of scan region for 100 usec
+
+==================
 Here are the responses I've gotten to my questions to
 EDAX about their SDK.
 

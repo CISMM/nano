@@ -1080,16 +1080,15 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::goToPoint(vrpn_int32 xDAC, vrpn_int32 yDAC)
          xDAC, yDAC);
   } 
 
+  point_count++;
+
+  gettimeofday(&t0, NULL);
+#ifndef VIRTUAL_SEM
   LONG result;
   LONG x = xDAC;
   LONG y = yDAC;
 //  LONG obsolete_parameter = 0;
 
-  
-  point_count++;
-
-  gettimeofday(&t0, NULL);
-#ifndef VIRTUAL_SEM
 #ifdef USE_SCAN_TABLE
   unsigned int np = 1;
   int ix = x, iy = y;
@@ -1132,8 +1131,8 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::goToPoint(vrpn_int32 xDAC, vrpn_int32 yDAC)
     point_count = 0;
   }
 
-  d_beam_location_x = x;
-  d_beam_location_y = y;
+  d_beam_location_x = xDAC;
+  d_beam_location_y = yDAC;
   return reportBeamLocation();
 }
 
@@ -1154,10 +1153,10 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::reportBeamLocation()
 }
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::setRetraceDelays(
-                    vrpn_int32 htime_usec, vrpn_int32 vtime_usec)
+                    vrpn_int32 htime_nsec, vrpn_int32 vtime_nsec)
 {
-  d_horzRetrace_usec = htime_usec;
-  d_vertRetrace_usec = vtime_usec;
+  d_horzRetrace_usec = htime_nsec/1000;
+  d_vertRetrace_usec = vtime_nsec/1000;
   d_shared_settings_changed = vrpn_TRUE;
   return reportRetraceDelays();
 }
