@@ -70,6 +70,23 @@ checkbutton $nmInfo(sem_display).display_texture \
       -text "Display Texture" -variable sem_display_texture
 pack $nmInfo(sem_display).display_texture -anchor w
 
+# Colormap control
+button $nmInfo(sem_display).colormap -text "Colormap..." \
+    -command "show.sem_colormap"
+
+pack $nmInfo(sem_display).colormap -anchor w
+
+set nmInfo(sem_colormap) [create_closing_toplevel sem_colormap "SEM Color Map" ]
+
+colormap_controls $nmInfo(sem_colormap) sem_cm \
+        sem_cm(color_comes_from) "SEM image" imageNames
+
+# Controls the alpha value of the texture
+floatscale $nmInfo(sem_display).texture_alpha 0 1 1000 1 1 \
+    video_texture_alpha "Texture Alpha Value"
+pack $nmInfo(sem_display).texture_alpha -anchor w
+
+
 # Controls whether to update image data and displays
 checkbutton $nmInfo(sem_display).no_update \
         -text "Do not update images" -variable sem_no_graphics_update
