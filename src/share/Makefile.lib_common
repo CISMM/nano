@@ -84,13 +84,13 @@ $(OBJECT_DIR):
 	-mkdir -p $(OBJECT_DIR)
 
 $(OBJECT_DIR)/%.o: %.c
-	$(CC) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(OBJECT_DIR)/%.o: %.C
-	$(CC) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(OBJECT_DIR)/%.o: %.cc
-	$(CC) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(EXTRA_FLAGS) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(LIBRARY_ARCHIVE): $(LIBRARY_OBJ)
 	$(AR) ruv $(LIBRARY_ARCHIVE) $(OBJECT_DIR)/*.o

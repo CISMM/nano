@@ -373,7 +373,11 @@ endif
 
 DEFINES += -DPROJECTIVE_TEXTURE
 
-CFLAGS += $(INCLUDE_FLAGS) $(DEFINES) -g
+CFLAGS += -g
+
+ifeq ($(HW_OS),pc_cygwin)
+  CFLAGS += -fhuge-objects
+endif
 
 ###########################
 #

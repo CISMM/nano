@@ -96,13 +96,13 @@ $(OBJECT_DIR):
 	-mkdir -p $(OBJECT_DIR)
 
 $(OBJECT_DIR)/%.o: %.c
-	$(CC) $(USES_LIBS_INC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(OBJECT_DIR)/%.o: %.cc
-	$(CC) $(USES_LIBS_INC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(OBJECT_DIR)/%.o: %.C
-	$(CC) $(USES_LIBS_INC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(APP_EXEC): $(APP_OBJ)
-	$(CC) -o $@ $^ $(USES_LIBS_LD) $(LOAD_FLAGS) $(LIBS)
+	$(CC) $(CFLAGS) $(DEFINES) -o $@ $^ $(USES_LIBS_LD) $(LOAD_FLAGS) $(LIBS)
