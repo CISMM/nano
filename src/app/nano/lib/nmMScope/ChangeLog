@@ -1,3 +1,12 @@
+2000-12-05  Russ Taylor  <taylorr@cs.unc.edu>
+
+	nmm_MicroscopeRemote.Cdef : See if the "autoscan" feature is on
+		before asking the microscope to resume full scan at
+		program start.  This is to protect the devices in the
+		SEM/AFM system from being destroyed when the user connects
+		to the AFM.  This didn't keep it from starting to scan,
+		but it is a necessary part, so I'm leaving it in.
+
 2001-08-10 Jameson Miller <millerj@cs.unc.edu>
 	* optimize_now.C: fixed so that optimize now won't crash. 
 	Data points are now no longer taken from the data set.

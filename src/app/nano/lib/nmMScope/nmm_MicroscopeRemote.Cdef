@@ -2075,7 +2075,7 @@ int nmm_Microscope_Remote::RcvGotConnection2 (void) {
 
   Can't do this until we have the mutex
   // Start scanning the surface
-  CHECK(ResumeFullScan());
+  if (state.autoscan) {CHECK(ResumeFullScan())}
 
   Can't do this until we have the mutex
   // Tell AFM to scan forward and backward, or just forward.

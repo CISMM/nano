@@ -525,6 +525,7 @@ struct AFMState {
   int acquisitionMode;///< replaces inModifyMode which replaced doing_modify_mode
 
   Tclvar_int scanning;  ///< is the SPM scanning right now?
+  Tclvar_int autoscan;	///< Should the SPM start scanning after touch?
   Tclvar_int withdraw_tip; ///< Causes AFM tip to withdraw
 
   Tclvar_int slowScanEnabled;
