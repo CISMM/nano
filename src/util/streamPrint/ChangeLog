@@ -1,3 +1,7 @@
+2002-03-12  Aron Helser  <helser@cs.unc.edu>
+
+	* vrpn_streamTimeFix.C (main): Updated connection creation to vrpn 6
+
 2001-07-27  Aron Helser  <helser@cs.unc.edu>
 
 	* nmsPrint.Cdef: VRPN streamfiles should always begin "file://" so

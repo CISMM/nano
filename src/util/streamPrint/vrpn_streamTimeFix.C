@@ -120,9 +120,8 @@ int	main(unsigned argc, char *argv[])
     if (device_name == NULL) {
 	return -1;
     } 
-    if( (connection = vrpn_get_connection_by_name(device_name,
-		  (isWritingStreamFile ? outputStreamName: (char *)NULL), 
-		   (isWritingStreamFile ? vrpn_LOG_OUTGOING: vrpn_LOG_NONE))) == NULL) {
+    if( (connection = vrpn_get_connection_by_name(device_name, NULL,
+		  (isWritingStreamFile ? outputStreamName: (char *)NULL))) == NULL) {
        // connection failed. VRPN prints error message.
       return -1;
     }
