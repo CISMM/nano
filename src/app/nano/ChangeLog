@@ -1,5 +1,8 @@
 2002-05-13  David Marshburn  <marshbur@evans.cs.unc.edu>
 
+	* microscape.c (handle_openStreamFilename_change):  for collaboration,
+	if we're re-opening the same streamfile, don't generate an error.
+	(handle_openSPMDeviceName_change):  same, for microscopes
 	* interaction.c:  include URender.h instead of Urender.h (Note
 	that, unlike the PC, the SGIs are case-sensitive).
 	

@@ -2765,20 +2765,18 @@ static int doneWorkingMsg()
  back to "". If there are any errors, report them and leave name alone.  */
 static void handle_openStaticFilename_change (const char *, void *)
 {
-    //fprintf(stderr,"HANDLE_OPENSTATIC_FILE\n");
-    //fprintf(stderr,"FILE: %s\n", (const char*)openStaticFilename);
-    //if in a collaborative session, don't allow
-    // changing staticfiles/streamfiles/SPM devices
+    // if we're in a collaborative session, don't allow changing 
+    // staticfiles/streamfiles/SPM devices
     if( (collaborationManager) && (collaborationManager->isCollaborationOn()) ) 
-	{
-		display_error_dialog("Error: Cannot change static file in collaborative session");
-		return;
+    {
+      display_error_dialog("Error: Cannot change static file in collaborative session");
+      return;
     }
-
-	// assume same scale in x and y
-	change_static_file csf;
-	csf.scale = dataset->inputGrid->maxX() - dataset->inputGrid->minX();
-
+    
+    // assume same scale in x and y
+    change_static_file csf;
+    csf.scale = dataset->inputGrid->maxX() - dataset->inputGrid->minX();
+    
     if (strlen(openStaticFilename) <= 0) return;
 
     int ret = dataset->loadFile((const char *)openStaticFilename);
@@ -2838,21 +2836,23 @@ static void handle_openStaticFilename_change (const char *, void *)
 */
 static void handle_openStreamFilename_change (const char *, void * userdata)
 {
-    //fprintf(stderr,"HANDLE_OPENSTREAMFILE CHANGE\n");
-    //fprintf(stderr,"Filename length: %d\n",strlen(openStreamFilename));
-    //if in collaborative session,  don't allow
-    // changing staticfiles/streamfiles/SPM devices
+    MicroscapeInitializationState * istate = (MicroscapeInitializationState *)userdata;
+
+    // if we're in a collaborative session, don't allow changing 
+    // staticfiles/streamfiles/SPM devices
     if( (collaborationManager) && (collaborationManager->isCollaborationOn()) ) 
-	{
-		display_error_dialog("Error: Cannot change stream file in collaborative session");
-		return;
+    {
+      // only worry if we're not opening the same one
+      if( strcmp(openStreamFilename.string(), istate->afm.inputStreamName) != 0 ) 
+      {
+        display_error_dialog( "Error: Cannot change stream file in collaborative session" );
+        return;
+      }
     }
 
-    // Give the use a little feedback that we're doing something that
+    // Give the user a little feedback that we're doing something that
     // might take a while. 
     workingMsg();
-
-    MicroscapeInitializationState * istate = (MicroscapeInitializationState *)userdata;
 
     if (strlen(openStreamFilename) <= 0) return;
 
@@ -2961,21 +2961,28 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     return;
 #endif
 
-    // if we're in a collaborative session, don't allow changing 
-    // staticfiles/streamfiles/SPM devices
-    if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
-	display_error_dialog("Error: Cannot change SPM Device in collaborative session");
-	return;
-    }
-
     istate = (MicroscapeInitializationState *)userdata;
     logmode = vrpn_LOG_NONE;
 
+    // if we're in a collaborative session, don't allow changing 
+    // staticfiles/streamfiles/SPM devices
+    if((collaborationManager) && (collaborationManager->isCollaborationOn())) 
+    {
+      // only worry if we're not opening the same one
+      if (strcmp(openSPMDeviceName.string(), istate->afm.deviceName) != 0) 
+      {
+        display_error_dialog("Error: Cannot change SPM Device in collaborative session");
+        return;
+      }
+    }
+    
     if (strlen(openSPMDeviceName) <= 0) return;
+    
     // If we are re-opening the same device, close the old connection first.
     if (strcmp(openSPMDeviceName.string(), istate->afm.deviceName) == 0) {
         openDefaultMicroscope();
     }
+    
     if ((openSPMLogName.string() == NULL) || 
         (strcmp(openSPMLogName.string(),"") == 0) || 
         (strcmp(openSPMLogName.string(),"none") == 0)) {
