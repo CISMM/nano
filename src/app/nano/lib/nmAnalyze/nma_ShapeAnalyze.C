@@ -135,12 +135,12 @@ setOrderFile(const char *file)
 
 
 void nma_ShapeAnalyze::
-imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
+imageAnalyze(nmb_PlaneSelection planeSelection)
 {
 	BCPlane *imagePlane;
 	imagePlane = planeSelection.height;
 
-	d_cntRec->cnt_image_read(imagePlane);			// read image from BCPlane //*
+	d_cntRec->cnt_image_read(imagePlane);			// read image from BCPlane
 	
 	d_cntRec->cnt_image_flat();
 	d_cntRec->cnt_image_filter();
@@ -149,18 +149,17 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 	d_cntRec->cnt_image_label();
 //	d_cntRec->cnt_image_order(d_txtFile);
 
-	BCGrid * currentGrid = dataset->inputGrid;//for right now just keep as 
+//	BCGrid * currentGrid = dataset->inputGrid;//for right now just keep as 
         //dataset->inputGrid, but can change it later to get planes in other 
         //related BCGrids as well
-
-	d_cntRec->cnt_image_select(d_txtFile, imagePlane->name()->Characters(), currentGrid, imagePlane);
+	d_cntRec->cnt_image_select(d_txtFile, imagePlane->name()->Characters());
 	
 	//		d_cntRec.cnt_image_write("blur.ppm", d_cntRec.cnt_image_Blr);
 	//		d_cntRec.cnt_image_write("medial.ppm", d_cntRec.cnt_image_Med);
 	if (d_maskWrite) {
-	  //d_cntRec->cnt_image_write(d_imgMaskFile/*image file (name)*/, d_cntRec->cnt_image_Msk/*data array*/);
+	  d_cntRec->cnt_image_write(d_imgMaskFile, d_cntRec->cnt_image_Msk);
 
-          nma_ShapeIdentifiedPlane shapePlane(imagePlane, dataset, d_desiredFilename, d_cntRec->cnt_image_Msk);
+          //nma_ShapeIdentifiedPlane shapePlane(imagePlane, dataset, d_desiredFilename, d_cntRec->cnt_image_Msk);
 	}
 	if (d_ordWrite) {
 		d_cntRec->cnt_image_write(d_imgOrdFile, d_cntRec->cnt_image_Ord);
@@ -172,7 +171,7 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 
 
 
-
+/*
 nma_ShapeIdentifiedPlane::
 	  nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, char* outputPlaneName, 
 				   double * cntMask)
@@ -276,3 +275,4 @@ create_ShapeIdentifiedPlane()
  
 }
 
+*/

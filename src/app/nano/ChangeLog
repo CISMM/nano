@@ -1,3 +1,8 @@
+2001-10-31  Yoni Fridman  <fridman@cs.unc.edu>
+
+	* microscape.c (handle_analyze_shape): Removed the second calling
+	parameter to shape_analysis.imageAnalyze
+
 2001-10-19  Aron Helser  <helser@cs.unc.edu>
 
 	* interaction.c (handle_commit_change): Changed direct call to

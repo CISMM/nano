@@ -1,3 +1,10 @@
+2001-10-31  Yoni Fridman  <fridman@cs.unc.edu>
+
+	* cnt_ia.C, cnt_ia.h, nma_ShapeAnalyze.C, nma_ShapeAnalyze.h:
+	Undid changes of 2001-06-14 that show identified nanotubes in a
+	separate plane.  Reverted to writing out identified tubes to a
+	ppm image.
+
 2001-10-16  Adam Seeger  <seeger@cs.unc.edu>
 
         * ppm.hC - renamed to nma_ppm.hC to avoid link conflicts with a file

@@ -90,7 +90,7 @@ public : // following are Image Analysis functions
 	void cnt_image_fit(void);	// picking tube from medial axes info
 	void cnt_image_label(void);	// labelling CNT id
 	void cnt_image_order(char *txtFile);	// order medial axis points
-	void cnt_image_select(char *txtFile, const char *fileName, BCGrid * grid, BCPlane * thisObjectPlane);	
+	void cnt_image_select(char *txtFile, const char *fileName);	
 	// applying thresholds to pick out CNTs
 
 protected:	// filter related variables

@@ -33,9 +33,7 @@ public:
 	void setMaskFile(const char *);
 	void setOrderFile(const char *);
 
-	void imageAnalyze(nmb_PlaneSelection planeSelection, 
-			  nmb_Dataset * dataset);
-	//pass in dataset so that it is current when image analysis is done
+	void imageAnalyze(nmb_PlaneSelection planeSelection);
 
         static int nma_ShapeAnalyzeCounter;
 private:
@@ -54,7 +52,7 @@ private:
 
 
 
-
+/*
 //class added by andrea hilchey 6/14/01
 //adds a new height plane when you select "ShapeAnalysis" from the Analysis heading
 //the new plane shows where nanotubes have been identified
@@ -77,23 +75,23 @@ public:
 	// Packs up and sends across the connection all the data
 	// necessary for the other end to recreate this calculated 
 	// plane.
-	void sendCalculatedPlane( vrpn_Connection* /* conn */, 
-				  vrpn_int32 /* senderID */,
-				  vrpn_int32 /*synchCalcdPlaneMessageType */ )
+	void sendCalculatedPlane( vrpn_Connection* conn, 
+				  vrpn_int32 senderID,
+				  vrpn_int32 synchCalcdPlaneMessageType )
 	  const {}
 
 protected:
 	// create a new plane according to the data from vrpn
 	static nmb_CalculatedPlane*
-	  _handle_PlaneSynch( vrpn_HANDLERPARAM /* p */, 
-			      nmb_Dataset* /* dataset */ )
+	  _handle_PlaneSynch( vrpn_HANDLERPARAM p, 
+			      nmb_Dataset* dataset )
 	  throw( nmb_CalculatedPlaneCreationException )
 	  {return NULL;}
 
 	// Update the calculated plane for changes in the source plane
-	static void sourcePlaneChangeCallback( BCPlane* /* plane */, 
-					       int /* x */, int /* y */,
-					       void* /* userdata */ )
+	static void sourcePlaneChangeCallback( BCPlane* plane, 
+					       int x, int y,
+					       void* userdata )
 	  { }
 private:
 	void create_ShapeIdentifiedPlane();  //creates new plane
@@ -105,5 +103,6 @@ private:
 	double * d_cntMask;            //the array of values (0 or 255) determining what is a nanotube (object)
 	                               //and what is not (255 is a nanotube)
 };
+*/
 
 #endif
