@@ -199,7 +199,43 @@ SOURCE=..\vec3d.h
 # End Group
 # Begin Source File
 
+SOURCE=.\11nm_dimerWithDNA_try1.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\11nm_dimerWithDNA_try2.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\11nmtip_dimerNewest.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\11nmtip_protein1.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\11nmtip_protein2.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\11nmtip_protein2_try2.dat
+# End Source File
+# Begin Source File
+
 SOURCE=.\4.4.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\5nmtip_protein2.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\actualMonomer.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\dimerOneSphere.dat
 # End Source File
 # Begin Source File
 
@@ -247,11 +283,51 @@ SOURCE=.\dna2.dat
 # End Source File
 # Begin Source File
 
+SOURCE=.\Hong.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\Hong2.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\Hong3.dat
+# End Source File
+# Begin Source File
+
 SOURCE="U:\.cs.unc.edu\proj\stm\src\hilchey\nano\src\app\3d-afmsim\lac-small.dat"
 # End Source File
 # Begin Source File
 
 SOURCE="U:\.cs.unc.edu\proj\stm\src\hilchey\nano\src\app\3d-afmsim\lac-smaller.dat"
+# End Source File
+# Begin Source File
+
+SOURCE=.\linear1.txt
+# End Source File
+# Begin Source File
+
+SOURCE=.\linear2x.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\linear3x.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\linear4x.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\linear5x.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\linear6x.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\linear88.5.dat
 # End Source File
 # Begin Source File
 
@@ -280,6 +356,30 @@ SOURCE=.\planechange8.dat
 # Begin Source File
 
 SOURCE="U:\.cs.unc.edu\proj\stm\src\hilchey\nano\src\app\3d-afmsim\script.sh"
+# End Source File
+# Begin Source File
+
+SOURCE=.\sphere1.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\sphere2.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\sphere3.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\sphere4.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\sphere5.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\sphere6.dat
 # End Source File
 # Begin Source File
 
