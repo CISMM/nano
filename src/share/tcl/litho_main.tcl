@@ -375,7 +375,8 @@ set drawing_parameters_win .main.controls.drawing_parameters
 label $drawing_parameters_win.main_label -text "Drawing Parameters"
 pack $drawing_parameters_win.main_label -side top
 
-set line_width_nm 100
+set line_width1_nm 1000
+set line_width2_nm 400
 set area_exposure_uCoulombs_per_square_cm 300
 set line_exposure_pCoulombs_per_cm 150
 set drawing_tool 1
@@ -415,10 +416,28 @@ pack $drawing_parameters_win.tool.area_tools.thickpolyline -side right
 radiobutton $drawing_parameters_win.tool.area_tools.thickpolyline.button \
       -variable drawing_tool \
       -value 2 -text "thick polyline" -justify left
-generic_entry $drawing_parameters_win.tool.area_tools.thickpolyline.line_width \
-    line_width_nm "line width (nm)" real
-pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width \
-    -anchor ne -padx 3 -pady 3
+
+frame $drawing_parameters_win.tool.area_tools.thickpolyline.line_width1
+radiobutton $drawing_parameters_win.tool.area_tools.thickpolyline.line_width1.button \
+	-variable width_value -value 1
+generic_entry $drawing_parameters_win.tool.area_tools.thickpolyline.line_width1.entry \
+    line_width1_nm "line width 1 (nm)" real
+frame $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2
+radiobutton $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2.button \
+	-variable width_value -value 2
+generic_entry $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2.entry \
+    line_width2_nm "line width 2 (nm)" real
+
+pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width1 
+pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width1.button \
+	-side left
+pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width1.entry \
+	-side right
+pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2
+pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2.button \
+	-side left
+pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2.entry \
+	-side right
 
 radiobutton $drawing_parameters_win.tool.area_tools.polygon \
       -variable drawing_tool -value 3 -text "polygon" -justify left
@@ -441,13 +460,15 @@ generic_optionmenu $drawing_parameters_win.canvas_image canvas_image \
 pack $drawing_parameters_win.canvas_image -anchor nw \
        -padx 3 -pady 3 -side top
 
-checkbutton $drawing_parameters_win.clear_pattern_confirm \
-   -text "Sure?" -variable clear_pattern_confirm
-pack $drawing_parameters_win.clear_pattern_confirm -anchor n -side right
 
-button $drawing_parameters_win.clear_pattern -text "Clear Pattern" -command \
-    { set clear_pattern 1 }
+frame $drawing_parameters_win.clear_pattern
 pack $drawing_parameters_win.clear_pattern -anchor nw -side top 
+button $drawing_parameters_win.clear_pattern.button -text "Clear Pattern" -command \
+    { set clear_pattern 1 }
+pack $drawing_parameters_win.clear_pattern.button -side left
+checkbutton $drawing_parameters_win.clear_pattern.confirm \
+   -text "Sure?" -variable clear_pattern_confirm
+pack $drawing_parameters_win.clear_pattern.confirm -anchor w
 
 button $drawing_parameters_win.undo_shape -text "Undo Shape" -command \
     { set undo_shape 1 }
