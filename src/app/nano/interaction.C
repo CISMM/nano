@@ -141,6 +141,8 @@ Tclvar_int_with_button	config_haptic_plane("Haptic from flat", ".sliders", 0);
 
 //static nmui_SurfaceFeatures haptic_features;
 static nmui_HapticsManager haptic_manager;
+static q_vec_type xy_pos;  // used for constrained freehand xyz
+
 
 /***************************
  * Mode of user operation
