@@ -170,6 +170,7 @@ float current_trans_z = 0;
 float current_rot_x = 0;
 float current_rot_y = 0;
 float current_rot_z = 0;
+float connection_speed = 1.0f;
 
 Tclvar_string cname("tclname","");
 
@@ -276,8 +277,10 @@ int main(int argc, char *argv[])
             proteinName = argv[i];
 		}
         else if (!strcmp(argv[i], "-connection")) {
+			if (++i > argc) { Usage(argv[0]); }
+			connection_speed = atof(argv[i]);
             connection_to_nano = true;
-            char * newName = "AFMSimulator"/*argv[i]*/;
+            char * newName = "AFMSimulator";
             SimMicroscopeServer.change_machineName(newName);
 			Sim_x_ratio = SimMicroscopeServer.return_Simpixels_to_realworld_ratio_x();
 			Sim_y_ratio = SimMicroscopeServer.return_Simpixels_to_realworld_ratio_y();
@@ -403,7 +406,7 @@ int main(int argc, char *argv[])
   //depth window
   glutInitWindowSize( (int)DEPTHSIZE, (int)DEPTHSIZE );
 
-  glutInitWindowPosition( 50, 750 );
+  glutInitWindowPosition( 50, 550 );
   depthWindowID = glutCreateWindow( "Depth window" );
 
 #if DISP_LIST
@@ -533,9 +536,9 @@ void displayFuncDepth( void ) {
 	
     if(connection_to_nano){
         gettimeofday(&currenttime,NULL);//current time
-        int x = 1;
+        int x = connection_speed;
         if((vrpn_TimevalDiff(currenttime,oldtime)).tv_sec >= x)
-		{//send every x sec. for now
+		{//send every x sec.
             SimMicroscopeServer.encode_and_sendData(HeightData,length);
             gettimeofday(&oldtime,NULL);//give oldtime a new value to reflect that data 
             //just sent

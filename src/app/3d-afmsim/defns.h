@@ -60,11 +60,11 @@
 
 //*** changed this from 128
 #if UNCA
-	#define MAX_GRID 100//512//128 // changed this to 128 from 64
+	#define MAX_GRID 300//512//128 // changed this to 128 from 64
 #endif
 
 #if !UNCA
-	#define MAX_GRID 100//128
+	#define MAX_GRID 300//128
 #endif
 
 
