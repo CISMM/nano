@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "." /I "..\nano" /I "..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\..\vrpn" /I "..\..\nano\lib\nmMScope" /I "..\..\..\lib\nmBase" /I "..\..\..\lib\nmMP" /I "..\..\..\lib\tcllinkvar" /I "..\..\..\..\..\quat" /I "..\..\..\..\..\vogl" /I "..\..\nano\lib\nmUI" /I "..\..\nano\lib\nmGraphics" /I "..\..\..\lib\ImgFormat" /I "..\..\nano\lib\nmUGraphics" /I "..\..\..\..\..\vrpn\server_src" /I "..\..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\..\external\pc_win32\include\ghost-stl" /I "..\..\nano\lib\nmReg" /I "..\..\..\lib\nmImageViewer" /I "..\..\nano\lib\nmAux" /I "..\..\nano\lib\nmSEM" /I "..\..\nano\lib\nmAnalyze" /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "..\nano\lib\nmUI" /I "..\nano\lib\nmGraphics" /I "..\..\lib\ImgFormat" /I "..\nano\lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\external\pc_win32\include\ghost-stl" /I "..\nano\lib\nmMScope" /I "..\..\lib\nmMP" /I "..\nano\lib/nmReg" /I "..\..\lib\nmImageViewer" /I "..\nano\lib\nmAux" /I "..\nano\lib\nmSEM" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /FR /YX /FD /GZ /c /Tp
+# ADD CPP /nologo /MDd /W3 /Gm /Gi /GX /ZI /Od /I "." /I "..\..\..\lib\nmMP" /I "..\..\..\lib\nmBase" /I "..\nano" /I "..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\..\vrpn" /I "..\..\nano\lib\nmMScope" /I "..\..\..\lib\tcllinkvar" /I "..\..\..\..\..\quat" /I "..\..\..\..\..\vogl" /I "..\..\nano\lib\nmUGraphics" /I "..\..\..\..\..\vrpn\server_src" /I "..\..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\..\external\pc_win32\include\ghost-stl" /I "..\..\nano\lib\nmAnalyze" /I "..\..\..\..\vrpn" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "..\nano\lib\nmUI" /I "..\nano\lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\external\pc_win32\include\ghost-stl" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /FR /YX /FD /GZ /c /Tp
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -74,8 +74,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /stack:0x1000 /subsystem:console /debug /debugtype:coff /machine:I386 /nodefaultlib:"libcmtd" /pdbtype:sept
-# SUBTRACT LINK32 /nodefaultlib
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /stack:0x1000 /subsystem:console /debug /debugtype:cv /machine:I386 /nodefaultlib:"libcmtd" /pdbtype:sept
+# SUBTRACT LINK32 /incremental:no /map /nodefaultlib
 
 !ENDIF 
 
@@ -202,30 +202,6 @@ SOURCE=..\vec3d.h
 # Begin Group "Libraries-External"
 
 # PROP Default_Filter ""
-# Begin Group "ImageMagick"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=..\..\..\..\..\external\pc_win32\lib\CORE_RL_xlib_.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\..\external\pc_win32\lib\CORE_RL_libxml_.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\..\external\pc_win32\lib\CORE_RL_magick_.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\..\external\pc_win32\lib\CORE_RL_ttf_.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\..\external\pc_win32\lib\CORE_RL_lcms_.lib
-# End Source File
-# End Group
 # Begin Group "TCL"
 
 # PROP Default_Filter ""
@@ -245,18 +221,6 @@ SOURCE=..\..\..\..\..\external\pc_win32\lib\tcl83.lib
 # Begin Source File
 
 SOURCE=..\..\..\..\..\external\pc_win32\lib\glut32_UNC.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\..\external\pc_win32\lib\GHOST31.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\..\quat\pc_win32_MTd\quat.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\..\vogl\pc_win32_MTd\vogl.lib
 # End Source File
 # Begin Source File
 
@@ -284,59 +248,7 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmAnalyze\nmAnalyze.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmAux\nmAux.lib
-
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmGraphics\nmGraphics.lib
-
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmMScope\nmMScope.lib
-
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmReg\nmReg.lib
-
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmSEM\nmSEM.lib
 
 !IF  "$(CFG)" == "3d_afm - Win32 Release"
 
@@ -380,19 +292,6 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmUI\nmUI.lib
 # Begin Source File
 
 SOURCE=..\..\..\..\obj\pc_win32\debug\lib\nmBase\nmBase.lib
-
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\obj\pc_win32\debug\lib\nmImageViewer\nmImageViewer.lib
 
 !IF  "$(CFG)" == "3d_afm - Win32 Release"
 

@@ -1,3 +1,9 @@
+2002-03-13 David Marshburn <marshbur@cs.unc.edu>
+	
+	* 3d-afmsim.[dsp,dsw]:  makes this the workspace for 3d-afmsim,
+	adds the correct projects from the rest of nano, removed
+	extraneous projects/libraries, fixed some linking parameters.
+
 2002-01-25 Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* sim.cpp : added offset to vertices for triangle display
