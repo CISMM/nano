@@ -1,3 +1,8 @@
+2002-05-07  David Marshburn  <marshbur@cs.unc.edu>
+
+	* mainwin.tcl (handle_texture_mode_change):  if the change turns
+	off some texture mode, do not change any other modes.
+
 2002-05-07  David Borland <borland@cs.unc.edu>
         * import.tcl:  made the spider control stuff a new window--the import
         objects window was getting pretty cluttered

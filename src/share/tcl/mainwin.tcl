@@ -804,61 +804,68 @@ proc handle_texture_mode_change {mode name element op} {
 
   set texture_mode_change_in_progress 1
 
-  # remove traces to avoid recursion
-  # for some reason this didn't work so I used the 
-  # texture_mode_change_in_progress variable to avoid infinite recursion:
-#  trace vdelete alpha_comes_from w \
-#                "handle_texture_mode_change ALPHA"
-#  trace vdelete contour_comes_from w \
-#                "handle_texture_mode_change CONTOUR"
-#  trace vdelete rulergrid_enabled w \
-#                "handle_texture_mode_change RULERGRID"
-#  trace vdelete sem_display_texture w \ 
-#                "handle_texture_mode_change SEM"
-#  trace vdelete reg_display_texture w \
-#                "handle_texture_mode_change REGISTRATION"
+  # check to see if this is a null change
+  if { [string compare $mode "CONTOUR"] == 0 } {
+	if { [string compare $contour_comes_from "none" ] == 0 } {
+		set texture_mode_change_in_progress 0
+		return
+	}
+  } elseif { [string compare $mode "RULERGRID"] == 0 } {
+	if { $rulergrid_enabled == 0 } {
+		set texture_mode_change_in_progress 0
+		return
+	}
+  } elseif { [string compare $mode "REGISTRATION"] == 0 } {
+	if { $reg_display_texture == 0 } {
+		set texture_mode_change_in_progress 0
+		return
+	}
+  } elseif { [string compare $mode "ALPHA"] == 0 } {
+	if { [string compare $alpha_comes_from "none" ] == 0 } {
+		set texture_mode_change_in_progress 0
+		return
+	}
+  } elseif { [string compare $mode "SEM"] == 0 } {
+	if { $sem_display_texture == 0 } {
+		set texture_mode_change_in_progress 0
+		return
+	}
+  }
 
-  #puts "setting the texture to $mode"
+  # turn all other modes off
   if {[string compare $mode "CONTOUR"] != 0 } {
 	if {[string compare $contour_comes_from "none"] != 0 } {
 	    set contour_comes_from "none"
 	}
-  }
+  } else { }
+
   if {[string compare $mode "RULERGRID"] != 0 } {
 	if {$rulergrid_enabled != 0 } {
 	    set rulergrid_enabled 0
 	}
-  }
-if { !$thirdtech_ui } {
-  if {[string compare $mode "ALPHA"] != 0 } {
-	if {[string compare $alpha_comes_from "none"] != 0 } {
-	    set alpha_comes_from "none"
-	}
-  }
-  if {[string compare $mode "SEM"] != 0 } {
-	if {$sem_display_texture != 0 } {
-	    set sem_display_texture 0
-	}
-  }
-}
+  } else { }
+
   if {[string compare $mode "REGISTRATION"] != 0 } {
 	if {$reg_display_texture != 0 } {
 	    set reg_display_texture 0
 	}
+  } else { }
+
+  if { !$thirdtech_ui } {
+    if {[string compare $mode "ALPHA"] != 0 } {
+	  if {[string compare $alpha_comes_from "none"] != 0 } {
+	      set alpha_comes_from "none"
+  	  }
+    } else { }
+
+    if {[string compare $mode "SEM"] != 0 } {
+	  if {$sem_display_texture != 0 } {
+	      set sem_display_texture 0
+	  }
+    } else { }
   }
 
   set texture_mode_change_in_progress 0
-  # add traces back
-#  trace variable alpha_comes_from w \
-#                 "handle_texture_mode_change ALPHA"
-#  trace variable contour_comes_from w \
-#                 "handle_texture_mode_change CONTOUR"
-#  trace variable rulergrid_enabled w \
-#                 "handle_texture_mode_change RULERGRID"
-#  trace variable sem_display_texture w \
-#                 "handle_texture_mode_change SEM"
-#  trace variable reg_display_texture w \
-#                 "handle_texture_mode_change REGISTRATION"
 }
 
 trace variable contour_comes_from w \
