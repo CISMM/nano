@@ -1,3 +1,9 @@
+2001-12-06 Jameson Miller <millerj@cs.unc.edu>
+	*interaction.c : backed out of previous changes. setGridSize is 
+	no longer called after setting the region size.
+
+
+
 2001-12-05  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (main): moved init_Tk_control_panels() so its called 

@@ -993,13 +993,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 		microscope->state.select_center_x
                    + microscope->state.select_region_rad,
 		microscope->state.select_center_y
-                   + microscope->state.select_region_rad);
-
-	    //JM, added so that direct step takes correct step size after
-	    //resetting the scan region
-		microscope->SetGridSize(dataset->inputGrid->numX() - 1,
-			                    dataset->inputGrid->numY() - 1);
-                
+                   + microscope->state.select_region_rad);         
 	}
 	
 	// All done - turn off commit button
