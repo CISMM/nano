@@ -55,7 +55,7 @@ int numberPixels_onedim = DEPTHSIZE;
 
 
 
-void get_z_buffer_values() {
+void get_z_buffer_values(double xworldratio) {
 
   GLint PackAlignment;
   glGetIntegerv(GL_PACK_ALIGNMENT,&PackAlignment); 
@@ -113,7 +113,7 @@ void get_z_buffer_values() {
       // Open GL convention
       zHeight[rownumber][i] = zDepth;
       zDistance[j][i] = (1-zNormalized)*(-scanNear + scanFar);
-	  zDistanceScaled[j][i] = 10*zDistance[j][i];
+	  zDistanceScaled[j][i] = zDistance[j][i]/xworldratio;
     }
   }
 
@@ -167,7 +167,7 @@ void get_color_buffer_values() {
   glReadPixels(0,0,pixelGridSize,pixelGridSize,GL_GREEN,GL_FLOAT,colorBuffer);
 }
 
-double ** doImageScanApprox(int& row_col_length) 
+double ** doImageScanApprox(int& row_col_length,double xworldratio) 
 {
   // Render tube images (enlarged to account for tip radius)
   // into window.  
@@ -176,7 +176,7 @@ double ** doImageScanApprox(int& row_col_length)
   imageScanDepthRender();
 
   // Read (normalized) Z-buffer values from the depth window.
-  get_z_buffer_values();
+  get_z_buffer_values(xworldratio);
 
   get_color_buffer_values();
 

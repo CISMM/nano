@@ -99,8 +99,8 @@ double view_angle = -90.;
 int mainWindowID, viewWindowID, depthWindowID;
 double windowWidth = 600.;
 double windowHeight = 600.;
-double orthoFrustumCenterX = 64.; // area of XY plane always visible for all window aspect ratios
-double orthoFrustumCenterY = 64.;
+double orthoFrustumCenterX = DEPTHSIZE/2; // area of XY plane always visible for all window aspect ratios
+double orthoFrustumCenterY = DEPTHSIZE/2;
 double orthoFrustumWidthNominal = DEPTHSIZE;//***
 double orthoFrustumHeightNominal = DEPTHSIZE;//***
 
@@ -149,7 +149,7 @@ void select_triangle_side();
 void Usage(char *progname);
 void glutInitializeStuff();
 
-//has to be put out here so variable that can be accessed later...
+//has to be put out here so variables that can be accessed later...
 char * machineName = "dummy_name";
 vrpn_Synchronized_Connection *connection = new vrpn_Synchronized_Connection();
 nmm_SimulatedMicroscope SimMicroscopeServer(machineName, connection,scanResolution);
@@ -159,6 +159,7 @@ bool first = true;
 double Sim_x_ratio;
 double Sim_y_ratio;
 bool undone = true;
+double x_to_y = 1.0;
 
 Tclvar_string cname("tclname","");
 
@@ -280,8 +281,8 @@ int main(int argc, char *argv[])
                     else{//breakOut == true
                         unca_minx = 0;
                         unca_miny = 0;
-                        unca_maxx = 5000;
-                        unca_maxy = 5000;
+                        unca_maxx = 1000;
+                        unca_maxy = 1000;
                     }
                 }
             }
@@ -484,12 +485,6 @@ void displayFuncDepth( void ) {
   }
 
   if (!stopAFM) {
-	/*while (Tk_DoOneEvent(TK_DONT_WAIT)) {};
-    if (Tclvar_mainloop()) {
-        fprintf(stderr, "main: Tclvar_mainloop error\n");
-        return -1;
-    }*/
-
     glutSetWindow( depthWindowID );
     //in Z-buffer of Depth Window using graphics hardware.
     //HeightData is a double array 
@@ -497,7 +492,12 @@ void displayFuncDepth( void ) {
     //will be filled in by doImageScanApprox
     //length is the size of both rows and columns in the height array 
     //(double array)
-    HeightData = doImageScanApprox(length);
+	if(SimMicroscopeServer.grid_size_rcv){
+		HeightData = doImageScanApprox(length,SimMicroscopeServer.Sim_to_World_x);
+	}
+	else{
+		HeightData = doImageScanApprox(length,1.0);
+	}
     if(connection_to_nano){
         gettimeofday(&currenttime,NULL);//current time
         int x = 1;
@@ -519,26 +519,41 @@ void displayFuncDepth( void ) {
 void commonIdleFunc( void ) {
 #define PERIOD 30
 
-	int x_to_y = 1;
+	x_to_y = 1.0;
 	if(SimMicroscopeServer.grid_size_rcv){
-		x_to_y = SimMicroscopeServer.Sim_to_World_y/SimMicroscopeServer.Sim_to_World_x;
+		x_to_y = SimMicroscopeServer.Sim_to_World_y/SimMicroscopeServer.Sim_to_World_x;//=world x to world y
 	}
   //ANDREA:  changes here
   if(connection_to_nano){
-	if(x_to_y > 1){//alter if ratio is not 1 on nano side so that ratio is the same on this side
-		glutReshapeWindow( (int)windowWidth, (int)(windowHeight/x_to_y) );
+	if(x_to_y != 1){//alter if ratio is not 1 on nano side so that ratio is the same on this side
+		if (undone){
+			glutSetWindow(mainWindowID);
+			glutReshapeWindow((int)(windowWidth*x_to_y), (int)(windowHeight));
+			glutSetWindow( viewWindowID );
+			glutReshapeWindow((int)(windowWidth*x_to_y), (int)(windowHeight));
+			glutSetWindow( depthWindowID );
+			glutReshapeWindow((int)(DEPTHSIZE*x_to_y), (int)(DEPTHSIZE));
+			undone = false;
+		}
 	}
-	else if(x_to_y < 1){
-		glutReshapeWindow( (int)windowWidth/x_to_y, (int)(windowHeight) );
-	}
-	//ANDREA:  take out this else later...
+	//ANDREA:  take out this else later...  test
 	/*else{
 		if (undone){
-			glutReshapeWindow( (int)windowWidth/x_to_y*1.5, (int)(windowHeight) );
+			glutSetWindow(mainWindowID);
+			glutReshapeWindow((int)(windowWidth*x_to_y*1.5), (int)(windowHeight));
+			glutSetWindow( viewWindowID );
+			glutReshapeWindow((int)(windowWidth*x_to_y*1.5), (int)(windowHeight));
+			glutSetWindow( depthWindowID );
+			glutReshapeWindow((int)(DEPTHSIZE*x_to_y*1.5), (int)(DEPTHSIZE));
 			undone = false;
 		}
 		else{
-			glutReshapeWindow( (int)windowWidth/x_to_y*2.0/3.0, (int)(windowHeight) );
+			glutSetWindow( mainWindowID);
+			glutReshapeWindow((int)(windowWidth*x_to_y*2.0/3.0), (int)(windowHeight));
+			glutSetWindow(viewWindowID);
+			glutReshapeWindow((int)(windowWidth*x_to_y*2.0/3.0), (int)(windowHeight));
+			glutSetWindow(depthWindowID);
+			glutReshapeWindow((int)(DEPTHSIZE*x_to_y*2.0/3.0), (int)(DEPTHSIZE));			
 			undone = true;
 		}
 	}*/
@@ -686,8 +701,9 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
     ofstream fout2;
     fout2.open("sphere_output.txt", fstream::out | fstream::app);
     char c;
-    float radius = 0;
-    float decimal = 0;
+    float radius = 0.0;
+	float length = 0.0;
+    float decimal = 0.0;
     bool done;
     double volume;
 
@@ -734,12 +750,74 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       }
       break;
     case 'n' :
-      addNtube( NTUBE, Vec3d( 0., 0., (DEFAULT_DIAM/2.)), 0., 0., 0., DEFAULT_LENGTH, DEFAULT_DIAM);
+	  //deal with length
+	  cout << "Enter a radius: " << flush;
+      done = false;
+      c = getchar();
+      while(int(c) != 10){//carriage return ascii value is 10
+        if(c != '.'){//handle numbers to the left first
+            radius = radius*10 + int(c - '0');
+            //cout << int(c) << flush;
+        }
+        else{//numbers to the right of the dec. pt.
+            //cout << c << flush;
+            c = getchar();
+            while(int(c) != 10){
+                  //cout << int(c) << flush;
+                decimal = decimal/10 + int(c - '0')/10;
+                c = getchar();
+            } 
+            done = true;
+        }
+        if (done) break;
+        c = getchar();
+      }
+      radius = radius + decimal;
+
+	  //deal with radius
+	  cout << "Enter a length: " << flush;
+      done = false;
+      c = getchar();
+      while(int(c) != 10){//carriage return ascii value is 10
+        if(c != '.'){//handle numbers to the left first
+            length = length*10 + int(c - '0');
+            //cout << int(c) << flush;
+        }
+        else{//numbers to the right of the dec. pt.
+            //cout << c << flush;
+            c = getchar();
+            while(int(c) != 10){
+                  //cout << int(c) << flush;
+                decimal = decimal/10 + int(c - '0')/10;
+                c = getchar();
+            } 
+            done = true;
+        }
+        if (done) break;
+        c = getchar();
+      }
+      length = length + decimal;
+
+	  if(SimMicroscopeServer.grid_size_rcv){
+		radius = radius * SimMicroscopeServer.Sim_to_World_x;
+		length = length * SimMicroscopeServer.Sim_to_World_x;
+		addNtube( NTUBE, Vec3d( DEPTHSIZE/2, DEPTHSIZE/2, radius), 0., 0., 0., length, radius*2.0);
+	  }
+      else{
+		addNtube( NTUBE, Vec3d( DEPTHSIZE/2, DEPTHSIZE/2, radius), 0., 0., 0., length, radius*2.0);
+	  }
       selectedOb = numObs-1;
       break;
     case 'm' :
       radius = (float)21.139;
-      addNtube( SPHERE, Vec3d(64.0, 64.0, -20.1127), 0., 0., 0., 0., radius*2.0);
+	  if(SimMicroscopeServer.grid_size_rcv){
+		radius = radius * SimMicroscopeServer.Sim_to_World_x;
+		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, -20.1127*SimMicroscopeServer.Sim_to_World_x), 
+			0., 0., 0., 0., radius*2.0);
+	  }
+	  else{
+		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, -20.1127), 0., 0., 0., 0., radius*2.0);
+	  }
       selectedOb = numObs-1;
 
       break;
@@ -766,7 +844,10 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
         c = getchar();
       }
       radius = radius + decimal;
-      addNtube( SPHERE, Vec3d( 0., 0., radius), 0., 0., 0., 0., radius*2.0);
+	  if(SimMicroscopeServer.grid_size_rcv){
+		radius = radius * SimMicroscopeServer.Sim_to_World_x;
+	  }
+      addNtube( SPHERE, Vec3d( DEPTHSIZE/2, DEPTHSIZE/2, radius), 0., 0., 0., 0., radius*2.0);
       selectedOb = numObs-1;
 
       break;
@@ -782,8 +863,19 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       fout2.close();
       break;
     case 't' :
-      addTriangle(Vec3d(0.,0.,DEFAULT_TRIANGLE_SIDE/3.),Vec3d(DEFAULT_TRIANGLE_SIDE,0.,DEFAULT_TRIANGLE_SIDE/2.),
-          Vec3d(DEFAULT_TRIANGLE_SIDE/2.,DEFAULT_TRIANGLE_SIDE/2.,DEFAULT_TRIANGLE_SIDE/2.));
+		if(SimMicroscopeServer.grid_size_rcv){
+			addTriangle(Vec3d(0.,0.,DEFAULT_TRIANGLE_SIDE/3.0*SimMicroscopeServer.Sim_to_World_x),
+				Vec3d(DEFAULT_TRIANGLE_SIDE*SimMicroscopeServer.Sim_to_World_x,0.0,DEFAULT_TRIANGLE_SIDE/2.0
+				*SimMicroscopeServer.Sim_to_World_x),Vec3d(DEFAULT_TRIANGLE_SIDE/2.0*SimMicroscopeServer.Sim_to_World_x,
+				DEFAULT_TRIANGLE_SIDE/2.0*SimMicroscopeServer.Sim_to_World_x,
+				DEFAULT_TRIANGLE_SIDE/2.0*SimMicroscopeServer.Sim_to_World_x));
+		}
+		else{
+			addTriangle(Vec3d(0.,0.,DEFAULT_TRIANGLE_SIDE/3.0),
+				Vec3d(DEFAULT_TRIANGLE_SIDE,0.0,DEFAULT_TRIANGLE_SIDE/2.0),
+				Vec3d(DEFAULT_TRIANGLE_SIDE/2.0,DEFAULT_TRIANGLE_SIDE/2.0,
+				DEFAULT_TRIANGLE_SIDE/2.0));
+		}
       selectedOb = numObs-1;
       break;
       // dealing with tips
@@ -871,12 +963,13 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
         }
         else {// write output to a file.
             char filename[40];
+			struct timeval now;
+			gettimeofday(&now,NULL);
             if (tip.type == SPHERE_TIP) {
-                sprintf(filename,"sptip_r_%.1lfnm.UNCA",tip.spTip->r);
+                sprintf(filename,"time%d.%d.UNCA",(int)now.tv_sec,(int)now.tv_usec);
             }
             else {
-                sprintf(filename,"icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCA",tip.icsTip->r,tip.icsTip->ch,
-                RAD_TO_DEG*tip.icsTip->theta);
+                sprintf(filename,"time%d.%d.UNCA",(int)now.tv_sec,(int)now.tv_usec);
             }
             cout << "Writing to file " << filename << endl;
             write_to_unca(filename);
