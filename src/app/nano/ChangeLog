@@ -1,3 +1,12 @@
+2004-05-10  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nano.dsp:  remove NO_PHANTOM_SERVER and NO_JOYSTICK_SERVER from
+	list of pre-processor definitions. (yes, you need to have ghost
+	and directx installed to build nano)
+	* nm_Tip.C (nm_TipDisplayControls::pointDataHandler):  return, taking
+	no action, if d_enableDisplay is false.  also, this again displays
+	an error dialog if no height data was found for the point result.
+
 2004-04-13  David Marshburn  <marshbur@cs.unc.edu>
 
 	* minit.c:  guard joystick code with NO_JOYSTICK_SERVER

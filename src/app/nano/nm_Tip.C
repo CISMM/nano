@@ -117,12 +117,13 @@ void nm_TipDisplayControls::handleSendFiducialRequested (vrpn_int32 newval,
 // non-static
 int nm_TipDisplayControls::pointDataHandler(const Point_results *pr)
 {
+  if( d_enableDisplay == 0 ) return 0;
   Point_value *heightData = pr->getValueByPlaneName(
 	  d_AFM->Data()->heightPlaneName->string());
-  if (!heightData) {
-	//display_error_dialog("Missing height data in point channels");
-	fprintf( stderr, "Tip display:  missing height data in point channels\n" );
-	return -1;
+  if (!heightData) 
+  {
+	  display_error_dialog("Tip display:  Missing height data in point channels");
+	  return -1;
   }
   double z = heightData->value();
   d_tipModel.setPosition(pr->x(), pr->y(), z);
