@@ -108,7 +108,10 @@ wm withdraw .
 wm geometry . +0+0
 
 # Give it a title
+wm title . "NMViewer"
+if { !$viewer_only } {
 wm title . "NanoManipulator"
+}
 # contains definition of useful widgets for the 
 # Tcl_Linkvar library.
 source [file join ${tcl_script_dir} Tcl_Linkvar_widgets.tcl]
@@ -311,7 +314,9 @@ $toolmenu add checkbutton -label "Show Mode Buttons" -underline 10 \
 }
 
 #Only use the Mouse Phantom if the hand-tracker is null
-if {([string compare -nocase [lindex $env(TRACKER) 1] "null"] == 0) || ($viewer_only)} {
+if {(![info exist env(TRACKER)]) \
+        || ([string compare -nocase [lindex $env(TRACKER) 1] "null"] == 0) \
+        || ($viewer_only)} {
     $toolmenu add command -label "Mouse Phantom" -underline 6 \
             -command "show.mouse_phantom_win"
 } else {

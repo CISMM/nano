@@ -45,7 +45,7 @@ proc show_colormap_images {nm el op} {
         incr i
     }
     # Handle a really long list of colormaps. 
-    set j [expr $i/15]
+    set j [expr $i/12]
     if { $j > 0 } {
         for {set k 0} {$k < $i} { incr k} {
             if {[expr $k % $j]} {
