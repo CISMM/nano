@@ -70,11 +70,28 @@ proc reg_close_cmap_windows {name el op} {
 }
 trace variable reg_window_open w reg_close_cmap_windows
 
+###########################################
+# controls to align automatically using mutual information starting from the
+# currently set correspondence
+set auto_align_resolution_list {0, 1, 2, 3, 4, 5, 6}
+button $nmInfo(registration).auto_align -text "Auto Align" -command \
+    { set auto_align_requested 1 }
+pack $nmInfo(registration).auto_align -anchor nw
 
-# Mostly obsolete, since we now auto-register when points are added or moved. 
-button $nmInfo(registration).register -text "Register" -command \
-    { set registration_needed 1 }
-pack $nmInfo(registration).register -anchor nw
+generic_entry $nmInfo(registration).num_iteration_entry \
+        auto_align_num_iterations "# iterations" numeric
+pack $nmInfo(registration).num_iteration_entry -anchor nw
+
+generic_entry $nmInfo(registration).step_size_entry auto_align_step_size \
+        "step size (0,1)" real
+pack $nmInfo(registration).step_size_entry -anchor nw
+
+generic_optionmenu $nmInfo(registration).resolution_selector \
+        auto_align_resolution \
+        "resolution level" auto_align_resolution_list
+pack $nmInfo(registration).resolution_selector -anchor nw
+
+################ end of controls for automatic alignment
 
 checkbutton $nmInfo(registration).display_texture \
        -text "Display in Surface View" -variable reg_display_texture -anchor nw

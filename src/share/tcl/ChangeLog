@@ -1,3 +1,8 @@
+2001-10-23  Adam Seeger  <seeger@cs.unc.edu>
+
+	* litho_main.tcl - added auto-alignment test controls to seegerizer
+	* registration.tcl - added the same controls to nano
+
 2001-10-14  David Marshburn  <marshbur@cs.unc.edu>
 
 	* filemenu.tcl: added a text entry for SPM connections, and

@@ -509,15 +509,14 @@ pack $display_parameters_win.enable_display_check -anchor nw -padx 3 -pady 3
 ######### End of Drawing Parameters Control Panel ####################
 
 ######### Alignment ##################################################
-#set clear_align_points 0
-set alignment_needed 0
 set source_image_name "none"
 set target_image_name "none"
 set resample_resolution_x 640
 set resample_resolution_y 480
 set resample_image_name ""
 set align_window_open 0
-set enable_auto_align_update 0
+
+set auto_align_requested 0
 
 set align_win \
         [create_closing_toplevel_with_notify alignment_parameters \
@@ -531,20 +530,27 @@ generic_optionmenu $align_win.target_select target_image_name \
         "Static" imageNames
 pack $align_win.target_select -anchor nw -padx 3 -pady 3
 
-button $align_win.align_now -text "Align Now" -command \
-    { set alignment_needed 1 }
-pack $align_win.align_now
+###########################################
+# controls to align automatically using mutual information starting from the
+# currently set correspondence
 
-checkbutton $align_win.auto_align_check \
-   -text "Auto update" -variable enable_auto_align_update
-pack $align_win.auto_align_check -anchor nw -padx 3 -pady 3
+set auto_align_resolution_list {0, 1, 2, 3, 4, 5, 6}
+button $align_win.auto_align_button -text "Auto Align" -command \
+    { set auto_align_requested 1 }
+pack $align_win.auto_align_button
 
-#button $align_win.clear_points -text "Clear Points" -command \
-#    { set clear_align_points 1 }
-#pack $align_win.clear_points
+generic_entry $align_win.num_iteration_entry \
+        auto_align_num_iterations "# iterations" numeric
+pack $align_win.num_iteration_entry -anchor nw
 
-#frame $align_win.resampling
-#pack $align_win.resampling
+generic_entry $align_win.step_size_entry auto_align_step_size \
+        "step size (0,1)" real
+pack $align_win.step_size_entry -anchor nw
+
+generic_optionmenu $align_win.resolution_selector \
+        auto_align_resolution \
+        "resolution level" auto_align_resolution_list
+pack $align_win.resolution_selector -anchor nw
 
 ######### End Alignment ##############################################
 
