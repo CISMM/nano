@@ -1,3 +1,14 @@
+2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* microscape.C (main): removed a print statement that was
+	causing problems.
+	* CollaborationManager.C:  loop variable change
+	* vrml.C:  compiler pragma warnings in std. library include
+	files.  warnings reset after include statements.
+	* microscape.h:  same
+	* index_mode.C:  same
+	* imported_obj.h:  same
+
 2002-03-15  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c (setupSynchronization):  comment changes

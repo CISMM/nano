@@ -8,8 +8,18 @@
 #ifndef	MICROSCAPE_H
 #define	MICROSCAPE_H
 
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
 #include <iostream>
 using namespace std;
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
 
 // iostream must come before this, in order to compile with Flow!
 #ifdef	hpux

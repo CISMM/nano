@@ -492,7 +492,7 @@ void CollaborationManager::setPeerName
     // make sure both hostnames are lowercase
     for( unsigned int i = 0; i <= strlen(buf) - 1; i++ )
       buf[i] = tolower( buf[i] );
-    for( i = 0; i <= strlen(hnbuf) - 1; i++ )
+    for( int i = 0; i <= strlen(hnbuf) - 1; i++ )
       hnbuf[i] = tolower( hnbuf[i] );
 
     if (strcmp(hnbuf, buf) == 0) {
