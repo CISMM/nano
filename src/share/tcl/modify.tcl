@@ -8,7 +8,7 @@
 #
 # for widgets that change behavior of modify mode
 #
-set nmInfo(modify) [create_closing_toplevel modify "Modify parameters"]
+set nmInfo(modify) [create_closing_toplevel modify "Modify Parameters"]
 set nmInfo(modifyquick) [frame $nmInfo(modify).quick]
 set nmInfo(modifyfull) [frame $nmInfo(modify).full]
 
@@ -64,6 +64,12 @@ iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
 	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
 	$nmInfo(modifypage).rate 
+
+lappend device_only_controls \
+	$nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
+	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
+	$nmInfo(modifypage).rate 
+
 
 label $nmInfo(modifystate).mod_mode -text "Contact"
 label $nmInfo(modifystate).mod_style -text "Sharp"
@@ -148,6 +154,35 @@ pack $nmInfo(modifystate).mod_control -side bottom -anchor nw
 pack $nmInfo(modifystate).mod_mode $nmInfo(modifystate).mod_style \
 	$nmInfo(modifystate).mod_tool \
 	-side left -anchor nw
+
+## Modify display controls
+# Display and clear the "tic" markers that show where a mod occured
+set nmInfo(modifydisplay) [frame $nmInfo(modify).display]
+pack $nmInfo(modifydisplay) -side bottom -fill x
+pack [frame $nmInfo(modifydisplay).divider -relief raised -height 4 -borderwidth 2] \
+        -fill x -side top -pady 4
+label $nmInfo(modifydisplay).mod_mode -text "Modify Marker Display"
+pack $nmInfo(modifydisplay).mod_mode -side top -anchor nw 
+
+set number_of_markers_shown 500
+set marker_height 100
+generic_entry $nmInfo(modifydisplay).num_mod_markers number_of_markers_shown \
+	"Num. Markers" real
+generic_entry $nmInfo(modifydisplay).mod_marker_height marker_height \
+	"Marker Hgt. (nm)" real
+
+iwidgets::Labeledwidget::alignlabels \
+	$nmInfo(modifydisplay).num_mod_markers \
+	$nmInfo(modifydisplay).mod_marker_height
+	
+
+button $nmInfo(modifydisplay).modmarkclr -text "Clear Markers" \
+	-command "set term_input C"
+
+pack $nmInfo(modifydisplay).num_mod_markers \
+	$nmInfo(modifydisplay).mod_marker_height \
+	$nmInfo(modifydisplay).modmarkclr \
+	-side top -anchor nw
 
 #DEBUG
 #proc printvar {fooa element op} {
@@ -310,6 +345,11 @@ pack $nmInfo(modifyfull).mode.cancel $nmInfo(modifyfull).mode.accept -side botto
 # entry widgets are finalized - happens when they loose focus.
 bind $nmInfo(modifyfull).mode.accept <Enter> "focus $nmInfo(modifyfull).mode.accept"
 
+lappend device_only_controls \
+        $nmInfo(modifyfull).mode.oscillating $nmInfo(modifyfull).mode.contact \
+        $nmInfo(modifyfull).mode.relaxcomp \
+        $nmInfo(modifyfull).mode.cancel $nmInfo(modifyfull).mode.accept
+
 #setup Modify modeparam box
 label $nmInfo(modifyfull).modeparam.label -text "Mode parameters" 
 pack $nmInfo(modifyfull).modeparam.label -side top -anchor nw
@@ -373,6 +413,19 @@ set mod_oscillating_list [list $nmInfo(modifyfull).modeparam.amplitude \
     $nmInfo(modifyfull).modeparam.ampl_or_phase \
     $nmInfo(modifyfull).modeparam.phase ]
 
+lappend device_only_controls \
+    $nmInfo(modifyfull).modeparam.setpoint \
+    $nmInfo(modifyfull).modeparam.p-gain \
+    $nmInfo(modifyfull).modeparam.i-gain \
+    $nmInfo(modifyfull).modeparam.d-gain \
+    $nmInfo(modifyfull).modeparam.rate \
+    $nmInfo(modifyfull).modeparam.amplitude \
+    $nmInfo(modifyfull).modeparam.frequency \
+    $nmInfo(modifyfull).modeparam.input_gain \
+    $nmInfo(modifyfull).modeparam.drive_attenuation \
+    [list $nmInfo(modifyfull).modeparam.ampl_or_phase buttonconfigure 0 ] \
+    [list $nmInfo(modifyfull).modeparam.ampl_or_phase buttonconfigure 1 ] \
+    $nmInfo(modifyfull).modeparam.phase
 
 #setup Modify style box
 label $nmInfo(modifyfull).style.label -text "Style" 
@@ -390,6 +443,11 @@ radiobutton $nmInfo(modifyfull).style.forcecurve -text "ForceCurve" \
 	-variable newmodifyp_style -value 4  -anchor nw
 pack $nmInfo(modifyfull).style.sharp $nmInfo(modifyfull).style.sweep $nmInfo(modifyfull).style.sewing \
 	$nmInfo(modifyfull).style.forcecurve -side top -fill x
+
+lappend device_only_controls \
+        $nmInfo(modifyfull).style.sharp $nmInfo(modifyfull).style.sweep \
+        $nmInfo(modifyfull).style.sewing \
+	$nmInfo(modifyfull).style.forcecurve 
 
 #setup Modify styleparam box
 label $nmInfo(modifyfull).styleparam.label -text "Style parameters" 
@@ -445,7 +503,7 @@ set mod_sewing_list "$nmInfo(modifyfull).styleparam.bot-delay \
 	$nmInfo(modifyfull).styleparam.top-delay $nmInfo(modifyfull).styleparam.z-pull \
         $nmInfo(modifyfull).styleparam.punchdist $nmInfo(modifyfull).styleparam.speed \
 	$nmInfo(modifyfull).styleparam.watchdog"
-eval [concat iwidgets::Labeledwidget::alignlabels $mod_sewing_list]
+eval iwidgets::Labeledwidget::alignlabels $mod_sewing_list
 set mod_forcecurve_list " \
 	$nmInfo(modifyfull).styleparam.z-start $nmInfo(modifyfull).styleparam.z-end \
 	$nmInfo(modifyfull).styleparam.z-pullback $nmInfo(modifyfull).styleparam.force-limit \
@@ -457,7 +515,12 @@ set mod_forcecurve_list " \
 #	$nmInfo(modifyfull).styleparam.start-delay \
 #	$nmInfo(modifyfull).styleparam.sample-delay \
 #	$nmInfo(modifyfull).styleparam.pullback-delay $nmInfo(modifyfull).styleparam.feedback-delay"
-eval [concat iwidgets::Labeledwidget::alignlabels $mod_forcecurve_list]
+eval iwidgets::Labeledwidget::alignlabels $mod_forcecurve_list
+
+# eval command expands the lists so we get one list of single elements. 
+eval lappend device_only_controls \
+        $device_only_controls $mod_sweep_list $mod_sewing_list \
+        $mod_forcecurve_list
 
 #setup Modify tool box
 label $nmInfo(modifyfull).tool.label -text "Tool" 
@@ -470,8 +533,14 @@ radiobutton $nmInfo(modifyfull).tool.constrfree -text "Constr. Free" -variable n
 	-value 2   -anchor nw
 radiobutton $nmInfo(modifyfull).tool.slow_line -text "Slow Line" -variable newmodifyp_tool\
 	-value 3   -anchor nw
-pack $nmInfo(modifyfull).tool.freehand $nmInfo(modifyfull).tool.line $nmInfo(modifyfull).tool.constrfree \
+pack $nmInfo(modifyfull).tool.freehand $nmInfo(modifyfull).tool.line \
+        $nmInfo(modifyfull).tool.constrfree \
 	$nmInfo(modifyfull).tool.slow_line -side top -fill x 
+
+lappend device_only_controls \
+        $nmInfo(modifyfull).tool.freehand $nmInfo(modifyfull).tool.line \
+        $nmInfo(modifyfull).tool.constrfree \
+	$nmInfo(modifyfull).tool.slow_line 
 
 #setup Modify toolparam box
 label $nmInfo(modifyfull).toolparam.label -text "Tool parameters" 
@@ -482,6 +551,9 @@ generic_entry $nmInfo(modifyfull).toolparam.step-size newmodifyp_step_size \
 set mod_line_list  "$nmInfo(modifyfull).toolparam.step-size"
 set mod_slow_line_list "$nmInfo(modifyfull).toolparam.step-size"
 
+# eval command expands the lists so we get one list of single elements. 
+eval lappend device_only_controls $mod_line_list
+
 if { !$thirdtech_ui } {
 #setup Modify control box
 label $nmInfo(modifyfull).control.label -text "Control" 
@@ -491,6 +563,9 @@ radiobutton $nmInfo(modifyfull).control.feedback -text "Feedback" \
 radiobutton $nmInfo(modifyfull).control.directz -text "Direct Z" \
     -variable newmodifyp_control -value 1   -anchor nw
 pack $nmInfo(modifyfull).control.feedback $nmInfo(modifyfull).control.directz -side top -fill x 
+
+lappend device_only_controls \
+        $nmInfo(modifyfull).control.feedback $nmInfo(modifyfull).control.directz 
 
 #setup Modify controlparam box
 label $nmInfo(modifyfull).controlparam.label -text "Control parameters" 
@@ -508,7 +583,10 @@ generic_entry $nmInfo(modifyfull).controlparam.max_lat_setpoint newmodifyp_max_l
 	"max_lat_setpoint (0,70 nA)" real 
 
 set mod_directz_list  "$nmInfo(modifyfull).controlparam.max_z_step $nmInfo(modifyfull).controlparam.max_xy_step $nmInfo(modifyfull).controlparam.min_z_setpoint $nmInfo(modifyfull).controlparam.max_z_setpoint $nmInfo(modifyfull).controlparam.max_lat_setpoint"
-eval [concat iwidgets::Labeledwidget::alignlabels $mod_directz_list]
+eval iwidgets::Labeledwidget::alignlabels $mod_directz_list
+
+eval lappend device_only_controls $mod_directz_list
+
 }
 
 #
@@ -579,6 +657,7 @@ proc flip_mod_style {mod_style element op} {
 }
 
 # flips $nmInfo(modifyfull).toolparam widgets
+# Also displays or hides special control window for slow line controls!
 proc flip_mod_tool {mod_tool element op} {
     global nmInfo
     global mod_line_list mod_slow_line_list
@@ -590,20 +669,28 @@ proc flip_mod_tool {mod_tool element op} {
         # selected freehand
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg} 
+        # Hide the controls for slow_line tool
+        hide.modify_live
     } elseif {$k==1} {
 	# selected line
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_line_list {pack $widg -side top -fill x -pady $fspady}
+        # Hide the controls for slow_line tool
+        hide.modify_live
     } elseif {$k==2} {
 	# selected constrained freehand
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
+        # Hide the controls for slow_line tool
+        hide.modify_live
     } elseif {$k==3} {
 	# selected slow line
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_slow_line_list {pack $widg -side top -fill x -pady $fspady}
+        # Show the controls for slow_line tool
+        show.modify_live
     }
 }
 
@@ -620,10 +707,12 @@ proc flip_mod_control {mod_control element op} {
 	set plist [lrange [pack slaves $nmInfo(modifyfull).controlparam] 1 end] 
 	foreach widg $plist {pack forget $widg} 
     } elseif {$k==1} {
-	# selected contact
+	# selected direct z control
 	set plist [lrange [pack slaves $nmInfo(modifyfull).controlparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_directz_list {pack $widg -side top -fill x -pady $fspady}
+        # Show the controls for direct z control
+        show.modify_live
     }
 }
 
@@ -692,31 +781,7 @@ proc cancelModifyVars {varlist} {
 # Controls you need access to _during_ a modification.
 # The most important - slow line controls
 #
-set nmInfo(modify_live) [create_closing_toplevel modify_live "Live modify controls"]
-set nmInfo(modifydisplay) [frame $nmInfo(modify_live).top]
-pack $nmInfo(modifydisplay) -side top -fill x
-label $nmInfo(modifydisplay).mod_mode -text "Modify Display"
-pack $nmInfo(modifydisplay).mod_mode -side top -anchor nw -pady 4
-
-set number_of_markers_shown 500
-set marker_height 100
-generic_entry $nmInfo(modifydisplay).num_mod_markers number_of_markers_shown \
-	"Num. Markers" real
-generic_entry $nmInfo(modifydisplay).mod_marker_height marker_height \
-	"Marker Hgt. (nm)" real
-
-iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(modifydisplay).num_mod_markers \
-	$nmInfo(modifydisplay).mod_marker_height
-	
-
-button $nmInfo(modifydisplay).modmarkclr -text "Clear Markers" \
-	-command "set term_input C"
-
-pack $nmInfo(modifydisplay).num_mod_markers \
-	$nmInfo(modifydisplay).mod_marker_height \
-	$nmInfo(modifydisplay).modmarkclr \
-	-side top -anchor nw
+set nmInfo(modify_live) [create_closing_toplevel modify_live "Live Modify Controls"]
 
 iwidgets::Labeledframe $nmInfo(modify_live).slow_line -labeltext "Slow Line" \
 	-labelpos nw
@@ -756,7 +821,7 @@ radiobutton $nmInfo(ml_slow_line).slow_line_reverse -text "Reverse" \
 	-variable slow_line_direction -value 1 
 
 generic_entry $nmInfo(ml_slow_line).step-size modifyp_step_size \
-	"Step Size (0,5 nm)" real 
+	"Step Size (nm)" real 
 
 pack $nmInfo(ml_slow_line).slow_line_play \
 	$nmInfo(ml_slow_line).slow_line_step \
@@ -765,16 +830,26 @@ pack $nmInfo(ml_slow_line).slow_line_play \
 	$nmInfo(ml_slow_line).step-size \
 	-side top -pady 2 -anchor nw
 
+lappend device_only_controls \
+        $nmInfo(ml_slow_line).slow_line_play \
+	$nmInfo(ml_slow_line).slow_line_step \
+	$nmInfo(ml_slow_line).slow_line_forward \
+	$nmInfo(ml_slow_line).slow_line_reverse \
+	$nmInfo(ml_slow_line).step-size 
+
+if { !$thirdtech_ui } {
 iwidgets::Labeledframe $nmInfo(modify_live).directz -labeltext "Direct Z" \
 	-labelpos nw
 set nmInfo(ml_directz) [$nmInfo(modify_live).directz childsite]
 pack $nmInfo(modify_live).directz -fill both -expand yes
 
 generic_entry $nmInfo(ml_directz).directz_force_scale directz_force_scale\
-	"Force scale (0,3)" real
+	"Force scale (1,3)" real
 
 pack $nmInfo(ml_directz).directz_force_scale -side top -pady 2 -anchor nw
 
-
+lappend device_only_controls \
+        $nmInfo(ml_directz).directz_force_scale
+}
 
 

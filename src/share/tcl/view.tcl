@@ -57,3 +57,9 @@ grid $view.center $view.measure $view.scaledown $view.select $view.cancel \
     -padx $pad_x -pady 2 -sticky nsw
 grid x  $view.demotouch x $view.xy_lock \
     -padx $pad_x -pady 2 -sticky nsw
+
+
+# Some of these controls are only relevant to live devices
+# They are enabled or disabled in mainwin.tcl based on this list. 
+lappend device_only_controls $view.live $view.select $view.xy_lock \
+        $view.commit $view.cancel 

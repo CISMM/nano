@@ -17,12 +17,15 @@ set fileinfo(save_dir) ""
 proc open_static_file {} {
     global open_static_filename fileinfo
     set types { {"All files" *} }
-    set file [tk_getOpenFile -filetypes $types -initialdir $fileinfo(open_dir)]
-    if {$file != ""} {
+    set filename [tk_getOpenFile -filetypes $types \
+            -initialdir $fileinfo(open_dir) \
+            -title "Open a static file"]
+    if {$filename != ""} {
 	# setting this variable triggers a callback in C code
 	# which saves the file. 
-	set open_static_filename $file
-	set fileinfo(open_dir) [file dirname $file]
+        # dialog check whether file exists.
+        set open_static_filename $filename
+        set fileinfo(open_dir) [file dirname $filename]
     } 
     # otherwise do nothing.
 }
@@ -33,13 +36,17 @@ proc open_static_file {} {
 # Open a stream file (vrpn log file). 
 proc open_stream_file {} {
     global open_stream_filename fileinfo
-    set types { {"All files" *} }
-    set file [tk_getOpenFile -filetypes $types -initialdir $fileinfo(open_dir)]
-    if {$file != ""} {
+    set types { {"Lab Notebook files" ".nms" } 
+                {"Lab Notebook files" ".nm" } 
+                {"All files" *} }
+    set filename [tk_getOpenFile -filetypes $types \
+            -initialdir $fileinfo(open_dir)\
+            -title "Open a stream file"]
+    if {$filename != ""} {
 	# setting this variable triggers a callback in C code
 	# which saves the file. 
-	set open_stream_filename $file
-	set fileinfo(open_dir) [file dirname $file]
+        set open_stream_filename $filename
+        set fileinfo(open_dir) [file dirname $filename]
     } 
     # otherwise do nothing.
 }
@@ -49,8 +56,9 @@ proc open_stream_file {} {
 #
 # Open a device - SPM.
 
-set deviceNames       { "Local SPM" }
-set deviceConnections { "nmm_Microscope@127.0.0.1:4580" }
+set deviceNames       { "Local SPM" "Nano Demo"}
+set deviceConnections { "nmm_Microscope@127.0.0.1:4580" \
+        "nmm_Microscope@172.18.2.241"  }
 
 # Dialog which allows user to choose which device
 # and which log file. 
@@ -70,15 +78,18 @@ pack $win.device_name -anchor nw -side top
 
 proc choose_logfile { } {
     global fileinfo open_spm_log_name
-    set types { {"Lab Notebook files" ".nms" } 
+    set types { {"Lab Notebook files" ".nms" } \
                 {"All files" *} }
-	set file [tk_getSaveFile -filetypes $types \
-		-initialfile "log.nms" -initialdir $fileinfo(save_dir)]    
-	if {$file != ""} {
-	    set open_spm_log_name $file
-	    set fileinfo(save_dir) [file dirname $file]
-	} 
-        # otherwise do nothing - user pressed cancel or didn't enter file name
+    set filename [tk_getSaveFile -filetypes $types \
+            -initialfile "log.nms" -initialdir $fileinfo(save_dir)\
+            -title "Choose a lab notebook file"]
+    if {$filename != ""} {
+        # No error checking here - do that below 
+        # in open_spm_connection
+        set open_spm_log_name $filename
+        set fileinfo(save_dir) [file dirname $filename]
+    }
+    # otherwise do nothing - user pressed cancel or didn't enter file name
 }
 
 generic_entry $win.open_logfile open_spm_log_name \
@@ -91,14 +102,31 @@ pack $win.open_logfile $win.get_logfile_name  -side left
 # Allow the user to save 
 proc open_spm_connection {} {
     global deviceNames deviceConnections 
-    global chosen_device_index open_spm_device_name
+    global chosen_device_index open_spm_device_name open_spm_log_name
 
     if { [.open_device_dialog activate] } {
+        # Make sure the logfile is OK - MUST be able to write log before 
+        # connection opens!
+
+        # directory must exist, must be writable. File must not exist.
+        if {![file exists [file dirname $open_spm_log_name]]} {
+            nano_error "Cannot save streamfile $open_spm_log_name\nDirectory doesn't exist!"
+            return;
+        }
+        if {![file writable [file dirname $open_spm_log_name]]} {
+            nano_error "Cannot save streamfile $open_spm_log_name\nCan't create a file in this directory!"
+            return;
+        }
+        if {[file exists $open_spm_log_name]} {
+            nano_error "Cannot save streamfile $open_spm_log_name\nFile already exists!"
+            return;
+        }
+                
         # User chose a device, translate it into a vrpn device name for Nano
         set open_spm_device_name [lindex $deviceConnections $chosen_device_index]
-        puts "$open_spm_device_name"
+        #puts "$open_spm_device_name"
     } else {
-	# user pressed "cancel" so do nothing
+        # user pressed "cancel" so do nothing
     }
 }
 
@@ -138,15 +166,20 @@ proc save_plane_data {} {
     set export_plane [lindex $imageNames 0]
     if { [.save_plane_dialog activate] } {
 	set types { {"All files" *} }
-	set file [tk_getSaveFile -filetypes $types \
-		-initialfile "$export_plane.tfr" -initialdir $fileinfo(save_dir)]    
-	if {$file != ""} {
-	    puts "Save plane data: $file $export_plane $export_filetype"
+	set filename [tk_getSaveFile -filetypes $types \
+		-initialfile "$export_plane.tfr" \
+                -initialdir $fileinfo(save_dir)\
+                -title "Save plane data"]
+	if {$filename != ""} {
+	    #puts "Save plane data: $filename $export_plane $export_filetype"
 	    # setting this variable triggers a callback in C code
 	    # which saves the file. 
-	    set export_filename $file
-	    set fileinfo(save_dir) [file dirname $file]
-	} 
+
+            # Dialog checks for writeable directory, and asks about
+            # replacing existing files. 
+	    set export_filename $filename
+	    set fileinfo(save_dir) [file dirname $filename]
+	}
 	# otherwise do nothing - user pressed cancel or didn't enter file name
     } else {
 	# user pressed "cancel" so do nothing
@@ -164,18 +197,21 @@ iwidgets::dialog .save_screen_dialog -title "Save screen image"
     global fileinfo
     .save_screen_dialog deactivate 1
     set types { {"All files" *} }
-    set file [tk_getSaveFile -filetypes $types \
-		-initialfile screenimage.tif -initialdir $fileinfo(save_dir)] 
-    if {$file != ""} {
-	puts "Save screenshot: $file $screenImage_format"
+    set filename [tk_getSaveFile -filetypes $types \
+		-initialfile screenimage.tif -initialdir $fileinfo(save_dir)\
+                -title "Save screen image"] 
+    if {$filename != ""} {
+	puts "Save screenshot: $filename $screenImage_format"
 	update idletasks
 	after idle {
 	# Setting this variable triggers a callback which saves the file.
-	set screenImage_filename $file
+            # Dialog checks for writeable directory, and asks about
+            # replacing existing files. 
+	set screenImage_filename $filename
 	# Turn the screen information back on whatever happens
 	set chart_junk 1
 	}
-	set fileinfo(save_dir) [file dirname $file]
+	set fileinfo(save_dir) [file dirname $filename]
     } else {
 	# otherwise do nothing - user pressed cancel or didn't enter file name
 	# Turn the screen information back on whatever happens
@@ -210,7 +246,7 @@ proc save_screenImage {} {
 
 #Initial dialog which allows user to choose which plane
 #of data to save.
-iwidgets::dialog .save_mod_dialog -title "Save modify data" -modality application
+iwidgets::dialog .save_mod_dialog -title "Save modification data" -modality application
 
 .save_mod_dialog hide Help
 .save_mod_dialog buttonconfigure OK -text "Save" -command {
@@ -252,17 +288,21 @@ proc save_mod_dialog {} {
 
     if { [.save_mod_dialog activate] } {
 	set types { {"All files" *} }
-	set file [tk_getSaveFile -filetypes $types \
-		-initialfile $which_mod_to_save.mod -initialdir $fileinfo(save_dir)]
-	if {$file != ""} {
-	    puts $file
-	    set modfile [open $file w]
+	set filename [tk_getSaveFile -filetypes $types \
+		-initialfile $which_mod_to_save.mod \
+                -initialdir $fileinfo(save_dir)\
+                -title "Save modification data"]
+	if {$filename != ""} {
+	    #puts $filename
+            # Dialog checks for writeable directory, and asks about
+            # replacing existing files. 
+	    set modfile [open $filename w]
 	    puts -nonewline $modfile $mod_data($which_mod_to_save)
 	    flush $modfile
 	    close $modfile
-	    set fileinfo(save_dir) [file dirname $file]
+	    set fileinfo(save_dir) [file dirname $filename]
 	    if {$tcl_platform(platform) == "unix"} {
-		exec unix_to_dos $file
+		exec unix_to_dos $filename
 	    }
 
 	} 

@@ -338,6 +338,7 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
 nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
   // Shut the server down nicely
   // Check to make sure we are talking to live microscope.
+    /* Handled by vrpn_drop_connection message, automatic from vrpn.
   if (d_dataset && (d_dataset->inputGrid->readMode() == READ_DEVICE)) {
     if (d_connection && d_connection->doing_okay()) {
       if (Shutdown() == -1) {
@@ -346,12 +347,12 @@ nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
       }
       // Wait to give the server a chance to receive the message before it
       // gets a connection-closed exception
-      sleep(3);
+      //sleep(3);
       // TODO:  verify that destructors of members get called after
       //   this destructor;  otherwise we've got a mess to handle
     }
   }
-
+    */
   if (d_tcl_script_dir) {
     delete [] d_tcl_script_dir;
   }
@@ -388,7 +389,7 @@ int nmm_Microscope_Remote::mainloop (void) {
   if (d_connection && !d_connection->doing_okay()) {
     fprintf(stderr, "nmm_Microscope_Remote::mainloop():  "
                     "lost connection.\n");
-    d_dataset->done = VRPN_TRUE;
+    //d_dataset->done = VRPN_TRUE;
     return -1;
   }
 
@@ -524,7 +525,7 @@ long nmm_Microscope_Remote::InitializeTcl (const char * dir) {
 
 long nmm_Microscope_Remote::Initialize ( ) {
 
-  if (d_dataset->inputGrid->readMode() == READ_DEVICE) {
+  if (ReadMode() == READ_DEVICE) {
     // XXX Bug in VRPN. If we're already connected before we register the
     // handle_GotConnection handlers, they never get executed. So we'll call
     // them explicitly, if needed.
@@ -539,7 +540,7 @@ long nmm_Microscope_Remote::Initialize ( ) {
     d_connection->register_handler(d_GotConnection_type,
 				   handle_GotConnection2,
 				   this);
-  } else if (d_dataset->inputGrid->readMode() == READ_STREAM) {
+  } else if (ReadMode() == READ_STREAM) {
     if (!d_connection->get_File_Connection()) {
       fprintf(stderr,"nmm_Microscope_Remote::InitStream():  "
 	      "could not open input log file %c\n", 0x08);
@@ -1303,11 +1304,11 @@ long nmm_Microscope_Remote::ZagTo
 
   return dispatchMessage(len, msgbuf, d_ZagToCenter_type);
 }
-
+/*
 long nmm_Microscope_Remote::Shutdown (void) {
   return dispatchMessage(0, NULL, d_Shutdown_type);
 }
-
+*/
 long nmm_Microscope_Remote::SetMaxMove (float distance) {
   char * msgbuf;
   long len;
@@ -1636,7 +1637,7 @@ int nmm_Microscope_Remote::getTimeSinceConnected(void) {
 
   struct timeval elapsedTime;
 
-  switch (d_dataset->inputGrid->readMode()) {
+  switch (ReadMode()) {
     case READ_DEVICE:
       d_connection->time_since_connection_open(&elapsedTime);
       d_decoration->elapsedTime = elapsedTime.tv_sec;
@@ -1792,6 +1793,20 @@ long nmm_Microscope_Remote::QueryPulseParams (void) {
 
 
 
+int nmm_Microscope_Remote::ReadMode()
+{
+    return state.read_mode;
+}
+
+void nmm_Microscope_Remote::ReadMode(int rm)
+{
+    if ((rm == READ_FILE) ||(rm == READ_DEVICE) ||(rm == READ_STREAM) ) {
+        state.read_mode = rm;
+        fprintf(stderr, "nmm_Microscope_Remote Read Mode %d.\n", rm);
+    } else {
+        fprintf(stderr, "nmm_Microscope_Remote Invalid Read Mode.\n");
+    }
+}
 
 
 

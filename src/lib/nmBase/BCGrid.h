@@ -66,7 +66,7 @@ class BCGrid
     BCPlane* addNewPlane(BCString dataset, BCString units, int timed);
     BCPlane* addPlaneCopy(BCPlane* grid);
 
-    void loadFiles(const char** file_names, int num_files, TopoFile &topoFile);
+    int loadFiles(const char** file_names, int num_files, TopoFile &topoFile);
       ///< Load files with the same grid size into this grid.
       ///< Load files with any grid size if no meaningful data has 
       ///< yet been loaded.

@@ -301,7 +301,7 @@ int BCPlane::valueAt (double * result, double x, double y) {
 
   if ((ix < 0) || (iy < 0) ||
       (ix >= _num_x) || (iy >= _num_y)) {
-    fprintf(stderr, "BCPlane::valueAt %d %d:  Out of bounds!.\n", ix, iy);
+      //fprintf(stderr, "BCPlane::valueAt %d %d:  Out of bounds!.\n", ix, iy);
     return -1;
   }
   *result = _value [ix * _num_y + iy];

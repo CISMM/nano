@@ -46,11 +46,12 @@ class ColorMap;
 class PPM;
 class nmb_Dataset;
 class nmb_Decoration;
-class Microscope;
+//class Microscope;
 class Xform;		//added from ugraphics
 #ifndef NO_MAGELLAN
 class vrpn_Magellan;
 #endif
+class vrpn_Phantom;
 
 #define	MICROSCAPE_MAJOR_VERSION	(9)
 #define	MICROSCAPE_MINOR_VERSION	(0)
@@ -127,6 +128,7 @@ extern	float		MAX_K;  /* for each device		  */
 #define RELEASE_EVENT	2	///< button just released
 #define HOLD_EVENT	3	///< button pressed at least twice in a row
 
+extern  vrpn_Phantom * phantServer;
 extern  vrpn_ForceDevice_Remote *forceDevice;
 extern  vrpn_Tracker_Remote *vrpnHeadTracker[NUM_USERS];
 extern  vrpn_Tracker_Remote *vrpnHandTracker[NUM_USERS];
@@ -162,7 +164,7 @@ extern int do_cpanels;
 
 // Only list things here if they need to be shared with other files!
 
-extern	Tclvar_int using_phantom_button;	// microscape.c
+extern	Tclvar_int phantom_button_mode;	// microscape.c
 
 //---------------------------------------------------------------------------
 /// These select the plane to map color from and the scale of the mapping. 

@@ -124,8 +124,9 @@ nmm_Microscope::nmm_Microscope (
 	("nmm Microscope MarkModify");
     d_MarkImage_type = connection->register_message_type
         ("nmm Microscope MarkImage");
-    d_Shutdown_type = connection->register_message_type
-         ("nmm Microscope Shutdown");
+    // Used for the vrpn_dropped_connection type. 
+//      d_Shutdown_type = connection->register_message_type
+//           ("nmm Microscope Shutdown");
     d_QueryScanRange_type = connection->register_message_type
          ("nmm Microscope QueryScanRange");
     /* OBSOLETE */

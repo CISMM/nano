@@ -162,10 +162,10 @@ generic_entry $nmInfo(rulergrid).left.rulergrid_yoffset rulergrid_y \
 	"Grid Y offset" real
 
 generic_entry $nmInfo(rulergrid).left.rulergrid_scale rulergrid_scale \
-	"Grid spacing" real
+	"Grid spacing (nm)" real
 
 checkbutton $nmInfo(rulergrid).left.rulergrid_orient_line \
-	-text "Set angle to green line" -variable rulergrid_orient_line \
+	-text "Set angle to yellow line" -variable rulergrid_orient_line \
 	-command set_orient_choice -anchor nw
 
 generic_entry $nmInfo(rulergrid).left.rulergrid_angle rulergrid_angle \

@@ -43,10 +43,11 @@ int BCGrid::_times_invoked = 0;
    Loads a list of files. If the only plane in the grid is EMPTY_PLANE_NAME,
    fill the grid. If there is data already in the grid, add planes of data 
    only if the grid size matches.
+   @returns -1 on error, 0 on success
    @author Aron Helser
    @date modified 3-18-00 Aron Helser
 */
-void
+int
 BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
 {
     int i;
@@ -55,9 +56,9 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
     //
     // Read the first file from the list into a grid structure
     // if there is at least one file to open
-    //
+    // This is a success if no files are specified. 
     if ((num_files <= 0)||(file_names == NULL) || (file_names[0] == NULL)) {
-	return;
+	return 0;
     }
     // "rb" is nessesary on _WIN32 and doesn't hurt elsewhere. 
     infile = fopen(file_names[0],"rb");
@@ -66,7 +67,7 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
 	fprintf(stderr,
 		"Error! BCGrid::BCGrid: Could not open input file \"%s\"!\n",
 		file_names[0]);
-	return;
+	return -1;
     }
 
 
@@ -79,7 +80,7 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
 		    "Error! BCGrid::BCGrid: Could not read grid"
                     " from \"%s\"!\n",
                     file_names[0]);
-	    return;
+	    return -1;
 	}
 	// start comparison of data with second file
 	i=1;

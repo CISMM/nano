@@ -151,7 +151,7 @@ proc set_contour_color {} {
 #
 
 set nmInfo(contour_lines) [create_closing_toplevel contour_lines \
-        "Adjust Contour Lines" ]
+        "Contour Lines Setup" ]
 
 generic_optionmenu $nmInfo(contour_lines).contour_dataset contour_comes_from \
 	"Contour dataset" inputPlaneNames
@@ -176,11 +176,13 @@ generic_entry $nmInfo(contour_lines).lineslider.linewidth \
 #generic_entry $nmInfo(contour_lines).lineslider.opacity contour_opacity "opacity" integer
 # this triggers the callback to actually set the c variables
 
-pack $nmInfo(contour_lines).set_color $nmInfo(contour_lines).colorsample -side top -anchor e -pady 1m -padx 3m -fill x
-pack $nmInfo(contour_lines).lineslider -side top -anchor w -fill x -pady 1m -padx 3m
+pack $nmInfo(contour_lines).set_color $nmInfo(contour_lines).colorsample \
+        -side top -anchor e -pady 1m -padx 3m -fill x
+pack $nmInfo(contour_lines).lineslider \
+        -side top -anchor w -fill x -pady 1m -padx 3m
 pack $nmInfo(contour_lines).lineslider.linewidth \
 	$nmInfo(contour_lines).lineslider.linespacing \
-	-side top -fill x -pady $fspady
+	-side top -anchor nw -pady $fspady
 #pack $nmInfo(contour_lines).lineslider.opacity -side top -fill x -pady $fspady
 
 iwidgets::Labeledwidget::alignlabels \

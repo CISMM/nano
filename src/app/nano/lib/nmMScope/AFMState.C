@@ -448,6 +448,8 @@ AFMState::AFMState (const AFMInitializationState & i) :
     doSplat        (i.doSplat),
     snapPlaneFit   (VRPN_TRUE),
 
+    read_mode("spm_read_mode", READ_FILE),
+
     writingStreamFile    (i.writingStreamFile),
     writingNetworkStream (VRPN_FALSE),
     readingStreamFile    (i.readingStreamFile),
@@ -473,11 +475,18 @@ AFMState::AFMState (const AFMInitializationState & i) :
     numLinesToJumpBack("num_lines_to_jump_back", 1000)
 
 {
+    // We should be able to tell where we are getting data
+    // Default is READ_FILE, so check flags and such for STREAM or DEVICE
   strcpy(deviceName, i.deviceName);
-  if (writingStreamFile)
+  if (writingStreamFile) {
     strcpy(outputStreamName, i.outputStreamName);
-  if (readingStreamFile)
+  }
+  if (readingStreamFile) {
     strcpy(inputStreamName, i.inputStreamName);
+    read_mode = READ_STREAM;
+  } else if ( strcmp(deviceName, "null") != 0) {
+    read_mode = READ_DEVICE;
+  }
 }
 
 AFMState::~AFMState (void) {

@@ -250,6 +250,12 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 
 	printf("init_Tk_control_panels(): just created the tcl/tk interpreter\n");
 
+#if defined (_WIN32) && !defined (__CYGWIN__)
+        if (Tcl_InitStubs(tk_control_interp, TCL_VERSION, 1) == NULL) {
+            fprintf(stderr, "Non matching version of tcl and tk\n");
+            return -1;
+        }
+#endif
 	/* Start a Tcl interpreter */
 	VERBOSE(4, "  Starting Tcl interpreter");
 	if (Tcl_Init(tk_control_interp) == TCL_ERROR) {
@@ -267,6 +273,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	}
 	Tcl_StaticPackage(tk_control_interp, "Tk", Tk_Init, Tk_SafeInit);
 
+#ifndef NO_ITCL
 	/* Initialize Tcl packages */
 	if (Blt_Init(tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
@@ -275,7 +282,6 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	}
 	Tcl_StaticPackage(tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
 
-#ifndef NO_ITCL
 	if (Itcl_Init(tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
 			"Package_Init failed: %s\n",tk_control_interp->result);
@@ -289,11 +295,11 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	Tcl_StaticPackage(tk_control_interp, "Itcl", Itcl_Init, Itcl_SafeInit);
 	Tcl_StaticPackage(tk_control_interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
 #endif	
-	/* Start a Tk mainwindow to hold the widgets */
-	VERBOSE(4, "  Starting Tk mainwindow");
+        // Check to see if we have a Tk main window.
+	VERBOSE(4, "  Checking Tk mainwindow");
 	tk_control_window = Tk_MainWindow(tk_control_interp);
 	if (tk_control_window == NULL) {
-		fprintf(stderr,"Tk can't make window: %s\n",
+		fprintf(stderr,"Tk can't get main window: %s\n",
 			tk_control_interp->result);
 		return(-1);
 	}

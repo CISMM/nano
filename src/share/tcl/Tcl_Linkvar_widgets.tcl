@@ -675,6 +675,9 @@ proc create_closing_toplevel { win_name {title "" } } {
 	wm deiconify .$win_name
 	raise .$win_name
     "
+    proc hide.${win_name} {} "
+        .$win_name.close invoke
+    "
     return .$win_name
 }
 
@@ -719,6 +722,10 @@ proc create_closing_toplevel_with_notify { win_name signal_var_name {title "" } 
         raise .$win_name
         upvar #0 $signal_var_name signal_var
         set signal_var 1
+    "
+
+    proc hide.${win_name} {} "
+        .$win_name.close invoke
     "
 
     return .$win_name

@@ -199,7 +199,7 @@ void CollaborationManager::mainloop (void) {
       last = now.tv_sec;
       d_modeServer->report();
     }
-    d_modeServer->mainloop(&zero);
+    d_modeServer->mainloop();
   }
 
   // Find out what their mode is.

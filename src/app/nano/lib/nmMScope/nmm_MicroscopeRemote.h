@@ -274,9 +274,12 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
     void SetStreamToTime (struct timeval time);
 
-
-    Blunt_result * getBluntResult (void)
-      { return &d_bluntResult; }
+    // Query and set the read mode, READ_DEVICE, READ_FILE or READ_STREAM
+    int ReadMode();
+    void ReadMode(int);
+    
+//      Blunt_result * getBluntResult (void)
+//        { return &d_bluntResult; }
 
 
     // Register callbacks from the user interface so we can decouple some

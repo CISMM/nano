@@ -24,11 +24,13 @@ package require Iwidgets
 catch { option add *font {helvetica -15 } startupFile}
 catch { option add *Font {helvetica -15 } startupFile}
 
-if {[catch {set tcl_script_dir $env(NM_TCL_DIR) }] } {
-    set tcl_script_dir .
+if {![info exists tcl_script_dir]} {
+    if {[catch {set tcl_script_dir $env(NM_TCL_DIR) }] } {
+        set tcl_script_dir .
+    }
+    
+    source [file join ${tcl_script_dir} Tcl_Linkvar_widgets.tcl]
 }
-
-source [file join ${tcl_script_dir} Tcl_Linkvar_widgets.tcl]
 
 #
 # basic layout:

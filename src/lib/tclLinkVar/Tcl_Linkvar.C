@@ -86,7 +86,7 @@ char	*handle_int_value_change(ClientData clientData,
 		intvar->d_dirty = VRPN_TRUE;
 	} else if (intvar->d_ignoreChange) {
           intvar->d_ignoreChange = VRPN_FALSE;
-
+//if (strcmp(intvar->d_myTclVarname, "commit_pressed") == 0) 
 //fprintf(stderr, "handle_int_value_change (%s, %d):  ignoring the change.\n",
 //intvar->d_myTclVarname, value);
 
@@ -94,6 +94,7 @@ char	*handle_int_value_change(ClientData clientData,
           // Need to invoke operator = since it might be redefined
           // by derived class.  (?)
 
+//if (strcmp(intvar->d_myTclVarname, "commit_pressed") == 0) 
 //fprintf(stderr, "handle_int_value_change (%s, %d).\n",
 //intvar->d_myTclVarname, value);
 
@@ -167,10 +168,11 @@ char	*handle_string_value_change(ClientData clientData,
 			stringvar->d_myTclVarname);
 		stringvar->d_dirty = VRPN_TRUE;
 	} else if (stringvar->d_ignoreChange) {
-//fprintf(stderr, "handle_string_value_change:  ignoring.\n");
+//fprintf(stderr, "handle_string_value_change:  (%s to %s) Ignoring change.\n",
+//stringvar->d_myTclVarname, cvalue);
           stringvar->d_ignoreChange = VRPN_FALSE;
         } else { // no errors: update the variable
-//fprintf(stderr, "handle_string_value_change:  changing %s to %s.\n",
+//fprintf(stderr, "handle_string_value_change:  (%s to %s).\n",
 //stringvar->d_myTclVarname, cvalue);
 	    stringvar->d_updateFromTcl = VRPN_TRUE;
 	    stringvar->SetFromTcl(cvalue);
@@ -635,13 +637,13 @@ void Tclvar_int::updateTcl (void) {
 //      d_ignoreChange = VRPN_FALSE;
 //      return;
 //    }
-
   mylastint = d_myint;
   d_dirty = VRPN_FALSE;
   if (d_myTclVarname) {
     sprintf(cvalue, "%d", d_myint);
     Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
   }
+  d_ignoreChange = VRPN_FALSE;
 
 }
 
@@ -875,6 +877,7 @@ void Tclvar_float::updateTcl (void) {
     sprintf(cvalue, "%g", d_myfloat);
     Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
   }
+  d_ignoreChange = VRPN_FALSE;
 
 }
 
@@ -1788,6 +1791,7 @@ void Tclvar_string::updateTcl (void) {
   if (d_myTclVarname) {
     Tcl_SetVar(interpreter, d_myTclVarname, (char *) string(), TCL_GLOBAL_ONLY);
   }
+  d_ignoreChange = VRPN_FALSE;
 }
 
 int Tclvar_string::compareStrings (void) {

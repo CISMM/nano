@@ -484,7 +484,7 @@ int measure_display (void *) {
    glPushMatrix();
  
 
-   glTranslatef(0.575f, TOP_EDGE - MARGIN - LINE_SPACE, Z_SLIVER);
+   glTranslatef(0.575f, TOP_EDGE - (MARGIN + 0.5*LINE_SPACE), Z_SLIVER);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
 
    glLineWidth(3.0);
@@ -516,7 +516,8 @@ int measure_display (void *) {
    glRasterPos3f(0.0f, 0.0f, 0.0f);
    glBegin(GL_LINES);
    VERBOSE(20, "          glBegin(GL_LINES)");
-     glColor3f(0.0f, 1.0f, 0.0f);
+   // It's yellow, not green, to avoid red-green colorblind problems.
+     glColor3f(0.7f, 0.7f, 0.0f);
      glVertex3f(0.0f, 0.0f, 0.0f);
      glVertex3f(0.0f, -0.037f, 0.0f);
    VERBOSE(20, "          glEnd()");
@@ -579,12 +580,12 @@ int measure_display (void *) {
    glColor3f(1.0f,1.0f,1.0f);
    glTranslatef(-0.321f,-0.059f,0.0f);
    glRasterPos3f(0.0f,0.0f,0.0f);
-   sprintf(message,"Angle: %.4g",measure_data.rgbAngle);
+   sprintf(message,"Angle:  %.4g",measure_data.rgbAngle);
 #ifndef FLOW
    drawStringInFont(myfont,message);
 #endif
 
-   glTranslatef(0.190f,0.0f,0.0f);
+   glTranslatef(0.192f,0.0f,0.0f);
    glRasterPos3f(0.0f,0.0f,0.0f);
    sprintf(message,"%.4g",measure_data.gbrAngle);
 #ifndef FLOW

@@ -16,9 +16,14 @@ basicjoys_create $nav_win.joy "Translate" "Rotate"
 set phantom_win [create_closing_toplevel phantom_win "Phantom Settings"]
 button $phantom_win.phantom_reset -text "Reset Phantom" -command "set reset_phantom 1"
 
-generic_radiobox $phantom_win.using_phantom_button \
-	using_phantom_button \
-	"Phantom Button" { "ButtonBox" "Phantom Trigger" }
+if { $thirdtech_ui } {
+    set rb_list { "Press and Hold" "Toggle" }
+} else {
+    set rb_list { "Press and Hold" "Toggle" "ButtonBox" }
+}
+generic_radiobox $phantom_win.phantom_button_mode \
+	phantom_button_mode \
+	"Phantom Button" $rb_list
 
-pack $phantom_win.phantom_reset $phantom_win.using_phantom_button \
+pack $phantom_win.phantom_reset $phantom_win.phantom_button_mode \
 	-side top -fill x

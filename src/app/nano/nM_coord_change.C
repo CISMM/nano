@@ -46,10 +46,10 @@ vrpn_bool nM_coord_change::peerIsSynchronized (void) const {
   return d_peerIsSynced;
 }
 
-void nM_coord_change::mainloop(const struct timeval *curr_time)
+void nM_coord_change::mainloop()
 {
-  if (connection)
-    connection->mainloop(curr_time);
+  if (d_connection)
+    d_connection->mainloop();
 }
 
 void nM_coord_change::bindConnection (vrpn_Connection * remoteC) {
@@ -141,10 +141,10 @@ void nM_coord_change::handle_tracker_pos_change(void *userdata,
 
   gettimeofday(&me->timestamp, NULL);
 
-  if (me->connection) {
+  if (me->d_connection) {
     len = me->encode_to(msgbuf);
-    if (me->connection->pack_message(len, me->timestamp, me->position_m_id,
-				     me->my_id, msgbuf, 
+    if (me->d_connection->pack_message(len, me->timestamp, me->position_m_id,
+				     me->d_sender_id, msgbuf, 
 				     vrpn_CONNECTION_LOW_LATENCY)) {
       fprintf(stderr, "nM_coord_change: cannot write message: tossing\n");
     }

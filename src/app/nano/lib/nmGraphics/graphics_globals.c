@@ -134,8 +134,8 @@ int g_ruler_r = 255;
 int g_ruler_g = 255;
 int g_ruler_b = 55;
 
-//set default rulergrid opacity to 128 (50%) instead of 255 (100%)
-float g_ruler_opacity = 128.0f;
+//set default rulergrid opacity to 178 (70%) instead of 255 (100%)
+float g_ruler_opacity = 178.0f;
 //float g_ruler_opacity = 255.0f;
 float g_ruler_width_x = 1.0f;
 float g_ruler_width_y = 1.0f;

@@ -59,9 +59,10 @@ double nmb_Line::getIntercept (BCPlane * plane) {
  @overload double nmb_Line::getIntercept (BCPlane * plane)
  */
 void nmb_Line::getIntercept (q_vec_type p, BCPlane * plane) {
+    // z first, because call to getIntercept(plane) clips to plane boundaries.
+  p[2] = getIntercept(plane);
   p[0] = d_top[0];
   p[1] = d_top[1];
-  p[2] = getIntercept(plane);
 }
 
 

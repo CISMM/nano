@@ -34,6 +34,11 @@
 #ifndef NO_MAGELLAN
 #include <vrpn_Magellan.h>
 #endif
+
+#ifndef NO_PHANTOM_SERVER
+#include <vrpn_Phantom.h>
+#endif
+
 // ############ getpid hack
 #if defined (__CYGWIN__) && defined (VRPN_USE_WINSOCK_SOCKETS)
 
@@ -124,6 +129,7 @@ pid_t getpid();
 #include "CollaborationManager.h"
 #include "microscape.h"
 
+#include "error_display.h"
 /*********** Import Objects **************/
 #include "imported_obj.h"
 
@@ -298,6 +304,9 @@ static void handle_center_pressed (vrpn_int32, void *);
 static void handle_mutex_request (vrpn_int32, void *);
 static void handle_mutex_release (vrpn_int32, void *);
 
+// Error recovery
+static void openDefaultMicroscope();
+
 /*******************
  * Global variables
  *******************/
@@ -447,7 +456,7 @@ static Tclvar_list_of_strings	colorMapNames("colorMapNames");
 //-----------------------------------------------------------------------
 /// This is a string that lets the user choose a color map to use.
 
-static	char	defaultColormapDirectory[] = "g:/nsrc/nano/src/util/colorMaps/maps/";
+static	char	defaultColormapDirectory[] = "/afs/unc/proj/stm/etc/colormaps";
 static	char	*colorMapDir = NULL;
 
 static ColorMap	colorMap;		///< Color map currently loaded
@@ -630,8 +639,8 @@ TclNet_float rulergrid_angle ("rulergrid_angle", 0);
 TclNet_float ruler_width_x ("ruler_width_x", 1);
 TclNet_float ruler_width_y ("ruler_width_y", 1);
 
-///set default Rulergrid opacity to 50% instead of 100%
-TclNet_float ruler_opacity ("ruler_opacity", 50);
+///set default Rulergrid opacity to 70% instead of 100%
+TclNet_float ruler_opacity ("ruler_opacity", 70);
 
 
 //The quoted parameters are the variable names in tcl-space
@@ -893,9 +902,10 @@ Tclvar_int tcl_center_pressed ("center_pressed", 0, handle_center_pressed);
 
 TclNet_int tclstride ("tesselation_stride", 1);
 
-/// If 1, we are using the phantom's trigger button, otherwise we are
-/// using the trigger button on the button box.
-Tclvar_int using_phantom_button("using_phantom_button", 1);
+/// If 0, we are using the phantom's trigger button by press and hold.
+/// If 1, we are using the phantom's trigger button as a toggle.
+/// If 2, we are using the trigger button on the button box.
+Tclvar_int phantom_button_mode("phantom_button_mode", 0);
 
 // END tcl declarations
 //----------------------------------------------------------------------
@@ -914,16 +924,13 @@ char * bdboxName;
 char * headTrackerName;
 char * handTrackerName;	// = phantom server name
 
-/************
- * Variables to turn on/off optional parts of the system
- ************/
-
 //----------------------------------------------------------------------
 // file-scoped globals
 
 static long displayPeriod = 0L; ///< minimum interval between displays 
 
-static int read_mode = READ_FILE;	///< Where get info from? 
+// replaced by microscope->ReadMode()
+//static int read_mode = READ_FILE;	///< Where get info from? 
 
 
 // HACK TCH 18 May 98 - program doesn't run with glenable 0
@@ -978,6 +985,12 @@ static char local_ModeName [256];
     spring coefficient, and damping coefficient through  it.
  ********/
 
+// local Phantom Server - only used if TRACKER env var doesn't
+// contain a machine name for the Phantom.
+#ifndef NO_PHANTOM_SERVER
+vrpn_Phantom * phantServer = NULL;
+#endif
+
 // used in interaction.c, minit.c
 vrpn_ForceDevice_Remote *forceDevice = NULL;
 
@@ -997,9 +1010,11 @@ vrpn_Analog_Remote *dialBox = NULL;
 int bdboxButtonState[BDBOX_NUMBUTTONS];
 double bdboxDialValues[BDBOX_NUMDIALS];
 
-/********
- * Magellan button and puck
- *******/
+/// connection for any internal devices - i.e. server and client both inside
+/// nano.
+vrpn_Connection * internal_device_connection = NULL;
+
+//  Magellan button and puck
 #ifndef NO_MAGELLAN
 vrpn_Magellan *magellanButtonBoxServer = NULL;
 vrpn_Button_Remote *magellanButtonBox = NULL;
@@ -1120,6 +1135,8 @@ struct MicroscapeInitializationState {
   int tesselation;
 
   int packetlimit;
+
+  vrpn_bool do_magellan;
 };
 
 MicroscapeInitializationState::MicroscapeInitializationState (void) :
@@ -1148,7 +1165,8 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   useOptimism (VRPN_FALSE),
   phantomRate (60.0),  // standard default
   tesselation (1),
-  packetlimit (0)
+  packetlimit (0),
+  do_magellan(1)
 {
     graphicsHost[0] = '\0';
     SPMhost[0] = '\0';
@@ -1446,7 +1464,7 @@ static void handle_x_value_change (vrpn_float64, void *) {
 
 void handle_finegrained_changed (vrpn_int32 value, void *) {
   Tcl_Interp * tk_control_interp = get_the_interpreter();
-  char command [1000];
+  char command [100];
   int retval;
 
 //fprintf(stderr, "handle_finegrained_changed\n");
@@ -1459,7 +1477,7 @@ void handle_finegrained_changed (vrpn_int32 value, void *) {
 
   retval = Tcl_Eval(tk_control_interp, command);
   if (retval != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval failed in handle_mutexTaken:  %s.\n",
+    display_error_dialog( "Internal: Tcl_Eval failed in handle_mutexTaken:  %s.\n",
             tk_control_interp->result);
   }
 }
@@ -1503,7 +1521,7 @@ void handle_mutexRequestGranted (void *, nmb_SharedDevice_Remote *) {
   sprintf(command, "mutex_gotRequest_callback");
   retval = Tcl_Eval(tk_control_interp, command);
   if (retval != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval failed in handle_mutexRequestGranted:  %s.\n",
+    display_error_dialog( "Internal: Tcl_Eval failed in handle_mutexRequestGranted:  %s.\n",
             tk_control_interp->result);
   }
 }
@@ -1519,7 +1537,7 @@ void handle_mutexRequestDenied (void *, nmb_SharedDevice_Remote *) {
   sprintf(command, "mutex_deniedRequest_callback");
   retval = Tcl_Eval(tk_control_interp, command);
   if (retval != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval failed in handle_mutexRequestDenied:  %s.\n",
+    display_error_dialog( "Internal: Tcl_Eval failed in handle_mutexRequestDenied:  %s.\n",
             tk_control_interp->result);
   }
 }
@@ -1535,7 +1553,7 @@ void handle_mutexTaken (void *, nmb_SharedDevice_Remote *) {
   sprintf(command, "mutex_taken_callback");
   retval = Tcl_Eval(tk_control_interp, command);
   if (retval != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval failed in handle_mutexTaken:  %s.\n",
+    display_error_dialog( "Internal: Tcl_Eval failed in handle_mutexTaken:  %s.\n",
             tk_control_interp->result);
   }
 }
@@ -1551,7 +1569,7 @@ void handle_mutexReleased (void *, nmb_SharedDevice_Remote *) {
   sprintf(command, "mutex_release_callback");
   retval = Tcl_Eval(tk_control_interp, command);
   if (retval != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval failed in handle_mutexReleased:  %s.\n",
+    display_error_dialog( "Internal: Tcl_Eval failed in handle_mutexReleased:  %s.\n",
             tk_control_interp->result);
   }
 }
@@ -1689,7 +1707,7 @@ static void handle_load_button_press_change (vrpn_int32 /*new_value*/, void * /*
 
   sprintf(command, "set tab_label %s", import_filename_string);
   if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval failed in handle_load_button_press_change\n");
+    display_error_dialog( "Internal: Tcl_Eval failed in handle_load_button_press_change\n");
   }
 }
 
@@ -1777,8 +1795,9 @@ static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
   BCPlane * heightPlane = dataset->inputGrid->getPlaneByName
                  (dataset->heightPlaneName->string());
   if (!heightPlane) {
-    fprintf(stderr, "Couldn't find height plane named %s.\n",
+    display_error_dialog( "Internal: Couldn't find height plane named %s.\n",
             dataset->heightPlaneName->string());
+    return;
   }
   int whichLine = (int) userdata;   // hack to get the data here
 
@@ -2502,9 +2521,9 @@ static	void	handle_alpha_dataset_change (const char *, void * userdata)
                 g->setAlphaPlaneName(dataset->alphaPlaneName->string());
 
         } else {
-	  fprintf(stderr, "Warning, couldn't find alpha plane: %s\n",
+	  display_warning_dialog( "Couldn't find alpha plane: %s\n"
+                                "  turning alpha texture off",
 		dataset->alphaPlaneName->string());
-	  fprintf(stderr, "  turning alpha texture off\n");
           if (g->getTextureMode() == nmg_Graphics::ALPHA) {
             g->setTextureMode(nmg_Graphics::NO_TEXTURES,
                               nmg_Graphics::RULERGRID_COORD);
@@ -2538,7 +2557,7 @@ static void handle_x_dataset_change (const char *, void *) {
 	}
         else {
 #ifdef _WIN32
-	fprintf(stderr, "This feature is not implemented in windows NT port\n");
+	display_error_dialog( "This feature is not implemented.\n");
 #else
 	  xenable = 1;
           x_init(/*myargv*/ NULL);
@@ -2563,7 +2582,7 @@ static void handle_x_dataset_change (const char *, void *) {
 	
 	  retval = plane->add_callback(update_xdisp_on_plane_change, NULL);
 	  if (retval) {
-            fprintf(stderr, "handle_x_dataset_change:  "
+            display_error_dialog( "Internal: handle_x_dataset_change:  "
                             "Couldn't register callback for X plane\n");
           }
 else fprintf(stderr, "Added X plane update callback\n");
@@ -2613,12 +2632,16 @@ static	void	handle_openStaticFilename_change (const char *, void *)
     const char	*files[1];
     files[0] = (const char *)openStaticFilename;
     
-    dataset->loadFiles(files, 1,microscope->d_topoFile);
+    if (dataset->loadFiles(files, 1,microscope->d_topoFile)) {
+	display_error_dialog( "Couldn't open %s as a data file.",
+		files[0]);
+        return;
+    }
     for (BCPlane *p = dataset->inputGrid->head(); p != NULL; p = p->next()) {
-        printf("Found plane %s\n", (p->name())->Characters());
+        //printf("Found plane %s\n", (p->name())->Characters());
         // Add it to the list if it's not there already.
         if (microscope->state.data.inputPlaneNames.getIndex(*(p->name())) == -1) {
-            printf("Add entry\n");
+            //printf("Add entry\n");
             microscope->state.data.inputPlaneNames.addEntry(*(p->name()));
         }
     }
@@ -2642,7 +2665,6 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     // The user has specified a stream file: try
     // to open it as a VRPN stream file. 
     istate->afm.readingStreamFile = VRPN_TRUE;
-    read_mode = READ_STREAM;
     
     //AFMState.c limits length of stream filenames to 255
     strncpy(istate->afm.inputStreamName, openStreamFilename, 255);
@@ -2653,24 +2675,29 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
 	   logmode,
 	   (char *) NULL);
     if (!new_microscope_connection) {
-	fprintf(stderr, "ERROR couldn't find %s.\n",
-		istate->afm.deviceName);
+	display_error_dialog( "Couldn't find file %s",
+		istate->afm.inputStreamName);
+        openDefaultMicroscope();
         return ;
     }
     
     // Decide whether reading vrpn log file or doing live.
     vrpn_File_Connection * new_vrpnLogFile = new_microscope_connection->get_File_Connection();
     if (!new_vrpnLogFile) {
-	fprintf(stderr, "ERROR failed to open stream file: %s\n", 
-                istate->afm.inputStreamName);
+	display_error_dialog( "Connection succeeded, but \nCouldn't open %s "
+                           "as a stream file.",
+                           istate->afm.inputStreamName);
+        openDefaultMicroscope();
         return ;
     }
 
     if (createNewMicroscope(*istate, new_microscope_connection)) {
-	fprintf(stderr, "ERROR failed to create microscope with stream file: %s\n", 
+	display_error_dialog("Failed to create microscope with stream file: %s\n",
                 istate->afm.inputStreamName);
+        openDefaultMicroscope();
         return ;
     }
+
     // new and old microscope_connection can be equal if we open
     // the same stream file twice!!
     if (microscope_connection && (microscope_connection!=new_microscope_connection)) {
@@ -2682,7 +2709,15 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     // Change a few things for consistency with old interface
     vrpnLogFile->set_replay_rate(decoration->rateOfTime);
 
-
+    // Run mainloop of the microscope once to make sure this is a valid vrpn
+    // log file- it will check the cookie and fail if it is not. 
+    if (microscope->mainloop()) {
+	display_error_dialog( "File: %s \n"
+                           "is not a valid NanoManipulator stream file.",
+                           istate->afm.inputStreamName);
+        openDefaultMicroscope();
+    }
+    
     openStreamFilename = "";
 }
 
@@ -2707,10 +2742,7 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
         //AFMState.c limits length of stream filenames to 255
         strncpy(istate->afm.outputStreamName, openSPMLogName, 255);
     }
-    // The user has specified a stream file: try
-    // to open it as a VRPN stream file. 
     istate->afm.readingStreamFile = VRPN_FALSE;
-    read_mode = READ_DEVICE;
     
     //AFMState.c limits length of device names to 260
     strncpy(istate->afm.deviceName, openSPMDeviceName, 260);
@@ -2721,12 +2753,11 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
 	  logmode,
           (char *) NULL);
     if (!new_microscope_connection) {
-	fprintf(stderr, "ERROR couldn't find %s.\n",
+	display_error_dialog( "Couldn't find SPM device: %s.",
 		istate->afm.deviceName);
+        openDefaultMicroscope();
         return ;
     }
-    // XXX Display error if we can't open the log file.
-
     
     // We are trying to read a device - should we make sure it's not a logfile?
     /*
@@ -2737,10 +2768,12 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     }
     */
     if (createNewMicroscope(*istate, new_microscope_connection)) {
-	fprintf(stderr, "ERROR failed to connect to microscope device: %s\n", 
+	display_error_dialog( "Failed to connect to microscope device: %s", 
                 istate->afm.deviceName);
+        openDefaultMicroscope();
         return ;
     }
+
     // new and old microscope_connection can be equal if we open
     // the same stream file twice!!
     if (microscope_connection && (microscope_connection!=new_microscope_connection)) {
@@ -2751,6 +2784,30 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
 
     openSPMDeviceName = "";
     openSPMLogName = "";
+}
+
+/** Error recovery mechanism. Open a microscope like the program 
+ *  had been supplied no arguments. Use to recover if we can't open
+ * a file or open a live microscope. 
+ */
+static void openDefaultMicroscope() 
+{
+    
+    MicroscapeInitializationState * istate = new MicroscapeInitializationState;
+
+    // Default microscope has NULL vrpn_connection
+    if (createNewMicroscope(*istate, NULL)) {
+	display_fatal_error_dialog("Failed to create default microscope");
+        return ;
+    }
+
+    // Get rid of any old microscope connection
+    if (microscope_connection) {
+      delete microscope_connection;
+    }
+    microscope_connection = NULL;
+    vrpnLogFile = NULL;
+
 }
 
 /** See if the user has given a name to the export plane other
@@ -2765,7 +2822,7 @@ static	void	handle_exportFileName_change (const char *, void *)
       nmb_Image *im = dataset->dataImages->getImageByName
                                       (exportPlaneName.string());
       if (im == NULL) {
-	fprintf(stderr,"handle_exportFileName_change:: Couldn't get image %s\n",
+	display_error_dialog("Couldn't find this data to save: %s\n",
 		exportPlaneName.string());
 	return;
       }
@@ -2776,15 +2833,16 @@ static	void	handle_exportFileName_change (const char *, void *)
       // "wb" stands for write binary - so it should work on PC platforms, too.
       file_ptr=fopen(newExportFileName.string(),"wb");
       if(file_ptr==NULL){
-	  fprintf(stderr, "handle_exportFileName_change::"
-                " Error in opening file %s\n",newExportFileName.string());
-		return;
+	  display_error_dialog( "Couldn't open this file: %s\n"
+                                "Please try another name or directory",
+                                newExportFileName.string());
+          return;
       }
 
       if (im->exportToFile(file_ptr, exportFileType.string())) {
-	fprintf(stderr, 
-		"handle_exportFileName_change:: Error in writing file %s\n",
-		newExportFileName.string());
+	  display_error_dialog( "Couldn't write to this file: %s\n"
+                                "Please try another name or directory",
+                                newExportFileName.string());
 	return;
       }
 
@@ -2805,8 +2863,8 @@ static  void    handle_exportPlaneName_change (const char *, void *ud)
     nmb_Image *im = d->dataImages->getImageByName(
 					(const char *)exportPlaneName);
     if (!im) {
-	fprintf(stderr, "handle_exportPlaneName_change:"
-		" Error, couldn't find image: %s\n", 
+	display_error_dialog( "Couldn't find image: %s\n"
+                              "to display export formats for.", 
 		(const char *)exportPlaneName);
 	return;
     } 
@@ -2876,7 +2934,8 @@ static	void	handle_flatPlaneName_change(const char *, void *)
  decoration->red.x(), decoration->green.x(), decoration->blue.x(),
  decoration->red.y(), decoration->green.y(), decoration->blue.y());
 	if (new_flat_plane == NULL) {
-            fprintf(stderr, "Can not create flatten plane %s\n", 
+            display_error_dialog("Couldn't create flatten plane %s\n"
+                            "Please try different measure line positions.",
                              newFlatPlaneName.string());
 
 	// Add the plane into the list of available ones.
@@ -3061,9 +3120,6 @@ void handle_contour_dataset_change (const char *, void * userdata)
         BCPlane * plane = dataset->inputGrid->getPlaneByName
                                (dataset->contourPlaneName->string());
 
- fprintf(stderr, "In handle_contour_dataset_change with name %s\n",
- dataset->contourPlaneName->string());
-
         if (plane != NULL) {
                 texture_scale = (plane->maxValue() -
                                  plane->minValue()) / 10;
@@ -3071,8 +3127,8 @@ void handle_contour_dataset_change (const char *, void * userdata)
                 g->setTextureMode(nmg_Graphics::CONTOUR,
 				  nmg_Graphics::RULERGRID_COORD);
         } else {        // No plane
-fprintf(stderr, "Couldn't find plane for contour mode;  "
-"turning contours off.\n");
+            display_error_dialog( "Couldn't find plane for contours; \n"
+                                  "turning contours off.");
           if (g->getTextureMode() == nmg_Graphics::CONTOUR) {
             g->setTextureMode(nmg_Graphics::NO_TEXTURES,
 		  nmg_Graphics::RULERGRID_COORD);
@@ -3396,8 +3452,7 @@ static void handle_joymove(vrpn_float64 , void *userdata)
 	    }
 	    break;
 	default:
-	    fprintf(stderr, "handle_joymove::You shouldn't be here\n");
-	    exit(-1);
+	    display_error_dialog("Internal: handle_joymove::invalid args\n");
 	}
 	
 //     printf("done handle_joymove\n");
@@ -3432,7 +3487,7 @@ void    handle_tracker2room_change(void *userdata,
 			    UGLYCAST info.tracker2room_quat);
 
     } else {
-	fprintf(stderr,"Error: unexpected xform index\n");
+	display_error_dialog("Internal: unexpected xform index\n");
     }
     return;
 }
@@ -3454,7 +3509,7 @@ void    handle_sensor2tracker_change(void *userdata, const vrpn_TRACKERCB info)
 	v_update_user_xform(0, xformIndex, UGLYCAST info.pos,
                             UGLYCAST info.quat);
     } else {
-	fprintf(stderr, "Error: unexpected xform index\n");
+	display_error_dialog( "Internal: unexpected xform index\n");
     }
     return;
 }
@@ -3521,7 +3576,7 @@ void    handle_unit2sensor_change(void *userdata,
         v_update_user_xform(0, xformIndex, UGLYCAST info.unit2sensor,
                         UGLYCAST info.unit2sensor_quat);
     } else {
-        fprintf(stderr, "Error: unexpected xform index\n");
+        display_error_dialog( "Internal: unexpected xform index\n");
     }
     return;
 }
@@ -3595,18 +3650,17 @@ static	void	handle_screenImageFileName_change (const char *, void *userdata)
 
       int i;
 
-      fprintf(stderr, "handle_screenFileName_change:: "
-                      "Saving screen to %s image '%s'\n",
-                      screenImageFileType.string(),
-                      newScreenImageFileName.string());
+//        fprintf(stderr, "handle_screenFileName_change:: "
+//                        "Saving screen to %s image '%s'\n",
+//                        screenImageFileType.string(),
+//                        newScreenImageFileName.string());
 
       for (i = 0; i < ImageType_count; i++)
          if (!strcmp(screenImageFileType.string(), ImageType_names[i]))
             break;
 
       if (ImageType_count == i) {
-         fprintf(stderr, "handle_screenFileName_change:: "
-                         "Error: unknown image type '%s'\n",
+         display_error_dialog( "Internal: Unknown image type '%s' chosen",
                          screenImageFileType.string());
       } else {
 	  // Pop the window to the front.
@@ -3680,7 +3734,7 @@ loadColorMaps
  to load.  It also sets up the directory path to the color map files so that
  the routines that load them can know where to look.
 */
-int	loadColorMapNames(void)
+int	loadColorMapNames(char * colorMapDir)
 {
 	DIR	*directory;
 	struct	dirent *entry;
@@ -3688,16 +3742,11 @@ int	loadColorMapNames(void)
 	// Set the default entry to use the custom color controls
 	colorMapNames.addEntry("none");
 
-	// Find the directory we are supposed to use
-	//	if ( (colorMapDir=getenv("NM_COLORMAP_DIR")) == NULL) {
-		colorMapDir = defaultColormapDirectory;
-		//	}
-
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
 	if ( (directory = opendir(colorMapDir)) == NULL) {
-		perror("loadColorMapNames(): Cannot open directory");
-		fprintf(stderr,"  (directory name %s)\n",colorMapDir);
+		display_error_dialog("Couldn't load colormaps from\n"
+                                     "directory named: %s",colorMapDir);
 		return -1;
 	}
 	while ( (entry = readdir(directory)) != NULL) {
@@ -3732,8 +3781,8 @@ int	loadProcProgNames(void)
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
 	if ( (directory = opendir(procImageDir)) == NULL) {
-		perror("loadProcProgNames(): Cannot open directory");
-		fprintf(stderr,"  (directory name %s)\n",procImageDir);
+		display_error_dialog("Couldn't load external filter programs\n"
+                                "from directory named: %s)\n",procImageDir);
 		return -1;
 	}
 	while ( (entry = readdir(directory)) != NULL) {
@@ -3775,8 +3824,8 @@ int	loadPPMTextures(void)
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
 	if ( (directory = opendir(textureDir)) == NULL) {
-		perror("loadPPMTextures(): Cannot open directory");
-		fprintf(stderr,"  (directory name %s)\n",procImageDir);
+		display_error_dialog("Could load static textures from\n"
+                                     "directory named %s)\n",procImageDir);
 		return -1;
 	}
 	while ( (entry = readdir(directory)) != NULL) {
@@ -4445,17 +4494,20 @@ void ParseArgs (int argc, char ** argv,
   int time_frame;
   int i;
 
+  // Be nice to Tcl - it expects this:
+  Tcl_FindExecutable(argv[0]);
+
 
 #ifdef FLOW
     // vlib needs special arguments for pxfl. pass them as 
     // env. var. PXFL_ARGS
     char pxflArgs [256] = "PXFL_ARGS=";
-    fprintf(stderr,"ParseArgs:  pxfl_Args %s\n", pxflArgs);
+    //fprintf(stderr,"ParseArgs:  pxfl_Args %s\n", pxflArgs);
 #endif 
 
     i = 1;
     while (i < argc) {
-      fprintf(stderr,"ParseArgs:  arg %i %s\n", i, argv[i]);
+        //fprintf(stderr,"ParseArgs:  arg %i %s\n", i, argv[i]);
 
       if (strcmp(argv[i], "-allowdup") == 0) {
         istate->afm.allowdup = 1;
@@ -4470,8 +4522,9 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         alphaPPM = new PPM(argv[i]);
         if (!alphaPPM->valid) {
-          fprintf(stderr, "Cannot read ppm file %s\n",argv[i]);
-          exit(-1);
+          display_error_dialog( "Couldn't read ppm file %s for alpha",argv[i]);
+          delete alphaPPM;
+          alphaPPM = NULL;
         }
       } else if (strcmp(argv[i], "-b") == 0) {
         fprintf(stderr, "Warning: -b obsolete.\n");
@@ -4507,7 +4560,6 @@ void ParseArgs (int argc, char ** argv,
         fprintf(stderr, "Warning: -con obsolete.\n");
       } else if (strcmp(argv[i], "-d") == 0) {
         if (++i >= argc) Usage(argv[0]);
-        read_mode = READ_DEVICE; 
         strcpy(istate->afm.deviceName, argv[i]);
       } else if (strcmp(argv[i], "-dir") == 0) {
         if (++i >= argc) Usage(argv[0]);
@@ -4532,9 +4584,8 @@ void ParseArgs (int argc, char ** argv,
         istate->afm.doDriftComp = 1;
       } else if (strcmp(argv[i], "-f") == 0) {
         if (++i >= argc) Usage(argv[0]);
-        read_mode = READ_FILE; 
         if (istate->num_stm_files >= MAXFILES) {
-          fprintf(stderr, "Only %d files allowed, ignoring %s\n",
+          display_error_dialog( "Only %d files allowed, ignoring file: %s\n",
                   MAXFILES,argv[i]);
         }
         istate->stm_file_names[istate->num_stm_files] = argv[i];
@@ -4544,19 +4595,18 @@ void ParseArgs (int argc, char ** argv,
         istate->afm.image.grid_resolution = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
         if(atoi(argv[i]) != istate->afm.image.grid_resolution) {
-            fprintf(stderr, "Warning: non-square grid specified, ignoring 2nd size\n");
+            display_error_dialog( "Warning: non-square grid specified, ignoring 2nd size\n");
         }
         istate->use_file_resolution = vrpn_FALSE;
       } else if (strcmp(argv[i], "-fi") == 0) {
 	if (++i >= argc) Usage(argv[0]);
 	if (istate->num_image_files >= MAXFILES) {
-	  fprintf(stderr, "Only %d IMAGE files allowed, ignoring %s\n",
+	  display_error_dialog( "Only %d IMAGE files allowed, ignoring file: %s",
 			MAXFILES,argv[i]);
 	}
 	istate->image_file_names[istate->num_image_files] = argv[i];
 	istate->num_image_files++;
       } else if (strcmp(argv[i], "-i") == 0) {
-        read_mode = READ_STREAM;
         istate->afm.readingStreamFile = 1;
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->afm.inputStreamName, argv[i]);
@@ -4631,6 +4681,8 @@ void ParseArgs (int argc, char ** argv,
       } else if (strcmp(argv[i], "-nomenus") == 0) {
         //do_menus = 0;
         fprintf(stderr, "Warning: -nomenus obsolete.\n");
+      } else if (strcmp(argv[i], "-nomagellan") == 0) {
+          istate->do_magellan = 0;
       } else if (strcmp(argv[i], "-o") == 0) {
         istate->afm.writingStreamFile = 1;
         if (++i >= argc) Usage(argv[0]);
@@ -4796,8 +4848,9 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         bumpPPM = new PPM(argv[i]);
         if (!bumpPPM->valid) {
-          fprintf(stderr, "Cannot read ppm file %s\n",argv[i]);
-          exit(-1);
+          display_error_dialog( "Cannot read ppm file %s",argv[i]);
+          delete bumpPPM;
+          bumpPPM = NULL;
         }
       } else if (strcmp(argv[i], "-gverbosity") == 0) {
         if (++i >= argc) Usage(argv[0]);
@@ -4812,8 +4865,9 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         noisePPM = new PPM(argv[i]);
         if (!noisePPM->valid) {
-          fprintf(stderr, "Cannot read ppm file %s\n", argv[i]);
-          exit(-1);
+          display_error_dialog( "Cannot read ppm file %s", argv[i]);
+          delete noisePPM;
+          noisePPM = NULL;
         }
       } else if (strcmp(argv[i], "-rulercolor") == 0) {
         if (++i >= argc) Usage(argv[0]);
@@ -5127,7 +5181,7 @@ void sharedGraphicsServer (void * data) {
 //fprintf(stderr, "g>Graphics thread relesing main process\n");
   retval = ps->v();
   if (retval) {
-    fprintf(stderr, "Coprocess couldn't release main process to run!\n");
+    display_fatal_error_dialog( "Coprocess couldn't release main process to run!");
     exit(0);
   }
 
@@ -5171,8 +5225,8 @@ void spawnSharedGraphics (void) {
 //fprintf(stderr, "Blocking for new thread\n");
   retval = td.ps->p();
   if (retval != 1) {
-    fprintf(stderr, "Main process wasn't successfully "
-            "released to run by coprocess.\n");
+    display_error_dialog( "Main process wasn't successfully "
+            "released to run by coprocess.");
     graphicsServerThread->kill();
     exit(0);
   }
@@ -5218,7 +5272,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
         retval = gethostname(name, 45);
         if (retval) {
-          fprintf(stderr, "gethostname() failed;  "
+          display_error_dialog( "Internal: gethostname() failed;  "
                           "can't start up shared memory!\n");
           exit(0);
         }
@@ -5417,7 +5471,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
       break;
 
     default:
-      fprintf(stderr, "Unimplemented graphics mode!\n");
+      display_error_dialog( "Internal: Unimplemented graphics mode!");
       exit(0);
   }// end switch (istate.graphics_mode)
 
@@ -5519,7 +5573,7 @@ void update_rtt (void) {
   struct timeval now;
   struct timeval rtt;
   struct timezone tz;
-  if ((!microscope_connection)||(read_mode == READ_STREAM)) return;
+  if ((!microscope_connection)||(microscope->ReadMode() == READ_STREAM)) return;
 
   /* gettimeofday takes two arguments */
   gettimeofday(&now,&tz);
@@ -5570,7 +5624,7 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
   nmm_Microscope_Remote *
     new_microscope = new nmm_Microscope_Remote (istate.afm, c);
     if (!new_microscope) {
-      fprintf(stderr, "Couldn't create Microscope Remote.\n");
+        //display_error_dialog( "Couldn't create Microscope Remote.\n");
       return -1;
     }
 
@@ -5579,7 +5633,7 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
                                istate.afm.image.grid_resolution, 
                                istate.afm.image.grid_resolution,
                                istate.x_min, istate.x_max,
-                               istate.y_min, istate.y_max, read_mode,
+                               istate.y_min, istate.y_max, new_microscope->ReadMode(),
                                (const char **) istate.stm_file_names,
                                istate.num_stm_files, 
                                (const char **) istate.image_file_names,
@@ -5590,7 +5644,7 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
                                new_microscope->d_topoFile);
 
     if (!new_dataset) {
-      fprintf(stderr, "Cannot initialize dataset.\n");
+        //display_error_dialog( "Cannot initialize dataset.\n");
       return -1;
     }
 
@@ -5599,7 +5653,7 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
       graphics->changeDataset(new_dataset);
     }
 
-    if (read_mode == READ_FILE)
+    if (new_microscope->ReadMode() == READ_FILE)
       guessAdhesionNames(new_dataset);
 
     VERBOSE(2, "Guessed adhesion names.");
@@ -5625,10 +5679,13 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
       // First time through graphics will be NULL. 
       // In that case these callbacks are setup in main() 
       // after graphics is constructed
+      new_microscope->registerImageModeHandler(clear_polyline, graphics);
       setupCallbacks(new_dataset, graphics);
     }
 
+    // XXX ATH memory leak
     ModFile * modfile = new ModFile;
+
     new_microscope->registerPointDataHandler(ModFile::ReceiveNewPoint, modfile);
     new_microscope->registerModifyModeHandler(ModFile::EnterModifyMode, modfile);
     new_microscope->registerImageModeHandler(ModFile::EnterImageMode, modfile);
@@ -5636,6 +5693,7 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
 
     // display modifications on a strip chart
 
+    // XXX ATH memory leak
     GraphMod * graphmod = new GraphMod;
 
     new_microscope->registerPointDataHandler(GraphMod::ReceiveNewPoint, graphmod);
@@ -5671,7 +5729,7 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
 
     VERBOSE(1, "Before SPM initialization");
     if (new_microscope->Initialize()) {
-	fprintf(stderr, "Cannot initialize the spm\n");
+	//display_error_dialog( "Cannot initialize the spm\n");
 	return(-1);
     }
 
@@ -5702,6 +5760,109 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
     return 0;
 }
 
+// Get stuff from the environment, and set essential variables
+// if they haven't been already.
+int initialize_environment() {
+    char	*envir;
+
+    envir = getenv("TRACKER");
+    if (envir == NULL) {
+//      fprintf(stderr, "Warning:  No tracker environment variable set.\n"
+//      "No head or hand tracking will be done.\n");
+        /* Use the default null trackers */
+        headTrackerName = (char *) "null";
+        handTrackerName = (char *) "null";
+    } else {
+        /* Parse the env string to pull out the name of the arm *
+         * and the name of the tracker we're using, if any.     */
+        headTrackerName = strtok(envir, " ");
+        handTrackerName = strtok(NULL, " ");
+        
+        //printf("Head tracker is %s\n", headTrackerName);
+        //printf("Hand tracker is %s\n", handTrackerName);
+	
+        /* We know at least the head tracker was specified, so check for a
+         * null hand tracker.
+         */
+        if (handTrackerName == NULL) {
+            handTrackerName = (char *) "null";
+        }
+    }
+    /* Check to see if a tracker is being used for head tracking */
+    if (strcmp("null", headTrackerName) != 0) {
+        head_tracked = VRPN_TRUE;
+    }
+
+    envir = getenv("BDBOX");
+    if (envir == NULL) {
+        bdboxName = (char *)"null";
+    } else {
+        bdboxName = strtok(envir, " ");
+        //printf("sgibdbox is %s\n", bdboxName);
+        if (bdboxName == NULL) {
+	    bdboxName = (char *)"null";
+        }
+    }
+
+    envir = getenv("HOST");
+    //fprintf(stderr, "HOST: %s\n", envir);
+    sprintf(nM_coord_change_server_name, "ccs0@%s", envir);
+    //  	fprintf(stderr, "nM_coord_change_server_name: %s\n",
+    //  		nM_coord_change_server_name);
+    sprintf(local_ModeName, "Cmode0@%s", envir);
+    //  	fprintf(stderr, "local_ModeName: %s\n",
+    //  		local_ModeName);
+
+#if defined (_WIN32) && !defined (__CYGWIN__)
+    // ------------Required env vars for VOGL --------
+    if (getenv("V_DISPLAY") == NULL) {
+        // default for Nano is crt display
+        _putenv("V_DISPLAY=crt");
+    }
+    if (getenv("V_SCREEN_DIM_PXFL") == NULL) {
+        // default for Nano for 1280x1024 screen
+        _putenv("V_SCREEN_DIM_PXFL=1068 760");
+    }
+    if (getenv("V_SCREEN_OFFSET") == NULL) {
+        // default for Nano for 1280x1024 screen
+        _putenv("V_SCREEN_OFFSET=208 232");
+    }
+#endif
+
+    // Check for NANO_ROOT env var. If other things aren't set, 
+    // they can be set relative to NANO_ROOT by default. 
+    char * nano_root = getenv("NANO_ROOT");
+    if (nano_root) {
+        char *env_string = new char [strlen(nano_root) + 50];
+#if defined (_WIN32) && !defined (__CYGWIN__)
+        if (getenv("TCL_LIBRARY") == NULL) {
+            sprintf(env_string, "%s/lib/tcl8.2", nano_root);
+            _putenv(env_string);
+        }
+#endif
+        if ( (tcl_script_dir=getenv("NM_TCL_DIR")) == NULL) {
+            sprintf(env_string, "%s/share/tcl/", nano_root);
+            tcl_script_dir = new char [strlen(env_string) + 1];
+            strcpy(tcl_script_dir, env_string);
+        }
+	if ( (colorMapDir=getenv("NM_COLORMAP_DIR")) == NULL) {
+            sprintf(env_string, "%s/share/colormaps", nano_root);
+            colorMapDir = new char [strlen(env_string) + 1];
+            strcpy(colorMapDir, env_string);
+	}
+    }
+
+    // If these didn't get set up, use defaults. 
+    if ( tcl_script_dir == NULL) {
+	tcl_script_dir = tcl_default_dir;
+    }
+    if ( colorMapDir == NULL) {
+        colorMapDir = defaultColormapDirectory;
+    }
+    return 0;
+    
+}
+
 int main(int argc, char* argv[])
 {
     /* Things needed for the timing information */
@@ -5724,9 +5885,12 @@ int main(int argc, char* argv[])
 //      printf("NanoManipulator version %d.%d\n",MICROSCAPE_MAJOR_VERSION,
 //  	MICROSCAPE_MINOR_VERSION);
 
+    // DEBUG pause program to attach debugger. 
+    //cin.get();
+
     decoration = new nmb_Decoration( markerHeight, numMarkersShown );
     if (!decoration) {
-	fprintf(stderr, "Cannot initialize decorations.\n");
+	display_fatal_error_dialog( "Cannot initialize decorations.\n");
 	return -1;
     }	
 
@@ -5741,66 +5905,13 @@ int main(int argc, char* argv[])
 
     /* set up list of well-known ports based on optional command-line args */
     wellKnownPorts = new WellKnownPorts (istate.basePort);
+
+    // get stuff and set stuff from environment
+    initialize_environment();
     
-  char	*envir;
-  envir = getenv("TRACKER");
-
-  if (envir == NULL) {
-    fprintf(stderr, "Microscape warning:  No tracker environment variable set.  ");
-    fprintf(stderr, "Using default values of null for head and hand tracking.\n");
-
-    /* Use the default null trackers */
-    headTrackerName = (char *) "null";
-    handTrackerName = (char *) "null";
-  } else {
-    /* Parse the env string to pull out the name of the arm *
-    * and the name of the tracker we're using, if any.     */
-    headTrackerName = strtok(envir, " ");
-    handTrackerName = strtok(NULL, " ");
-
-    //printf("Head tracker is %s\n", headTrackerName);
-    //printf("Hand tracker is %s\n", handTrackerName);
-	
-    /* We know at least the head tracker was specified, so check for a
-    * null hand tracker.
-    */
-    if (handTrackerName == NULL) {
-      handTrackerName = (char *) "null";
-    }
-  }
-
-	/* Check to see if a tracker is being used for head tracking */
-	if (strcmp("null", headTrackerName) != 0)
-	  head_tracked = VRPN_TRUE;
-	envir = getenv("BDBOX");
-	if (envir == NULL)
-	{
-            //fprintf(stderr, "Microscape warning:  No sgi button/dial box set.\n");
-	  bdboxName = (char *)"null";
-	}
-	else
-	{
-	  bdboxName = strtok(envir, " ");
-	  //printf("sgibdbox is %s\n", bdboxName);
-	  if (bdboxName == NULL)
-	    bdboxName = (char *)"null";
-	}
-	envir = getenv("HOST");
-	//fprintf(stderr, "HOST: %s\n", envir);
-	sprintf(nM_coord_change_server_name, "ccs0@%s", envir);
-//  	fprintf(stderr, "nM_coord_change_server_name: %s\n",
-//  		nM_coord_change_server_name);
-	sprintf(local_ModeName, "Cmode0@%s", envir);
-//  	fprintf(stderr, "local_ModeName: %s\n",
-//  		local_ModeName);
-
-    if ( (tcl_script_dir=getenv("NM_TCL_DIR")) == NULL) {
-	tcl_script_dir=tcl_default_dir;
-    }
-
     // Load the names of usable color maps
     VERBOSE(1, "Loading color maps");
-    loadColorMapNames();
+    loadColorMapNames(colorMapDir);
 
 #ifndef NO_FILTERS
     // Load the names of the image processing programs available.
@@ -5836,7 +5947,8 @@ int main(int argc, char* argv[])
     // to open it as a VRPN stream file. 
     if (istate.afm.readingStreamFile) {
 	if (strcmp(istate.afm.deviceName, "null")) {
-	    fprintf(stderr, "Both input stream and microscope device specified, using input stream\n");
+	    display_warning_dialog( "Both input stream and microscope "
+                                    "device specified, using input stream");
 	}
 	sprintf(istate.afm.deviceName, "file:%s", istate.afm.inputStreamName);
 
@@ -5857,7 +5969,7 @@ int main(int argc, char* argv[])
 	   istate.writingRemoteStream ? istate.remoteOutputStreamName
                                       : (char *) NULL);
       if (!microscope_connection) {
-	fprintf(stderr, "   Couldn't open connection to %s.\n",
+	display_fatal_error_dialog( "   Couldn't open connection to %s.\n",
 		istate.afm.deviceName);
 	exit(0);
       }
@@ -5869,9 +5981,6 @@ int main(int argc, char* argv[])
       } else {
 	// Allow the user to open a stream file with "-d file:..." 
 	// Set the read_mode. 
-	//      But we don't need to set read_mode to READ_DEVICE in
-	//      above if case, since that's default.
-	read_mode = READ_STREAM;
 	istate.afm.readingStreamFile = 1;
 	//decoration->rateOfTime = 3;	// use 3 for rate default
 	//fprintf(stderr, "   microscape.c:: in Replay mode\n");
@@ -5883,7 +5992,7 @@ int main(int argc, char* argv[])
 
     }
     if(createNewMicroscope(istate, microscope_connection)) {
-      fprintf(stderr, "Couldn't create Microscope Remote.\n");
+      display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
       exit(0);
     }
     // When openStreamFilename changes, we try to open a stream,
@@ -5943,12 +6052,11 @@ int main(int argc, char* argv[])
     if (rulerPPMName)
       graphics->loadRulergridImage(rulerPPMName);
 
-    // delete polyline markers (after graphics pointer initialized):
-    microscope->registerImageModeHandler(clear_polyline, graphics);
 
-    // This call is duplicated in createNewMicroscope, 
-    // but we do it here because createNewMicroscope is called above
+    // These call is duplicated in createNewMicroscope, 
+    // but we do it here too because createNewMicroscope is called above
     // when graphics is NULL.
+    microscope->registerImageModeHandler(clear_polyline, graphics);
     setupCallbacks(dataset, graphics);
 
     // initialize graphics
@@ -6008,14 +6116,17 @@ int main(int argc, char* argv[])
     // (this space is allocated in v_create_world())
     // Initialize force, tracker, a/d device, sound
     VERBOSE(1,"Before tracker enable");
-    vrpn_Connection * devcon = new vrpn_Synchronized_Connection (wellKnownPorts->localDevice);
-
-    if (peripheral_init(devcon)){
-        fprintf(stderr,"Cannot initialize peripheral devices\n");
+    if (istate.do_magellan) {
+        internal_device_connection = new vrpn_Synchronized_Connection (wellKnownPorts->localDevice);
+    } else {
+        internal_device_connection = NULL;
+    }
+    if (peripheral_init(internal_device_connection)){
+        display_fatal_error_dialog("Cannot initialize peripheral devices\n");
         return(-1);
     }
     else if (register_vrpn_callbacks()){
-        fprintf(stderr,"Cannot setup tracker callbacks\n");
+        display_fatal_error_dialog("Cannot setup tracker callbacks\n");
         return(-1);
     }
 
@@ -6050,7 +6161,6 @@ int main(int argc, char* argv[])
   }
 
     VERBOSE(1, "Before french ohmmeter initialization");
-    //if ( tkenable && (dataset->inputGrid->readMode() == READ_DEVICE) ) {
     if ( tkenable ) {
       // create the ohmmeter control panel
       // Specification of ohmmeter device: first look at command line arg
@@ -6070,7 +6180,7 @@ int main(int argc, char* argv[])
 	   : (char *) NULL,
 	   vrpn_LOG_INCOMING);
         if (!ohmmeter_connection) {
-	  fprintf(stderr, "Couldn't open connection to %s.\n",
+	  display_error_dialog( "Couldn't open connection to %s.\n",
 		  istate.ohm.deviceName);
 	  //exit(0);
         } else {
@@ -6109,7 +6219,6 @@ int main(int argc, char* argv[])
     }
 
     VERBOSE(1, "Before Keithley 2400/VI Curve initialization");
-//     if ( tkenable && (dataset->inputGrid->readMode() == READ_DEVICE) ) {
     if ( tkenable ) {
 	// Specification of vi_curve device: first look at command line arg
 	// and then check environment variable
@@ -6128,7 +6237,7 @@ int main(int argc, char* argv[])
 		 : (char *) NULL,
 		 vrpn_LOG_INCOMING);
 	    if (!vicurve_connection) {
-		fprintf(stderr, "Couldn't open connection to %s.\n",
+		display_error_dialog( "Couldn't open connection to %s.\n",
 			istate.vicurve.deviceName);
 		//exit(0);
 	    } else {
@@ -6170,7 +6279,6 @@ int main(int argc, char* argv[])
 
 
     VERBOSE(1, "Before SEM initialization");
-//     if ( tkenable && (dataset->inputGrid->readMode() == READ_DEVICE) ) {
     if ( tkenable ) {
         // Specification of sem device: first look at command line arg
         // and then check environment variable
@@ -6189,7 +6297,7 @@ int main(int argc, char* argv[])
                  : (char *) NULL,
                  vrpn_LOG_INCOMING);
             if (!sem_connection) {
-                fprintf(stderr, "Couldn't open connection to %s.\n",
+                display_error_dialog( "Couldn't open connection to %s.\n",
                         istate.sem.deviceName);
                 //exit(0);
             } else {
@@ -6226,7 +6334,7 @@ int main(int argc, char* argv[])
   if (do_keybd == 1){
     VERBOSE(1,"Opening raw terminal");
     if ((ttyFD = open_raw_term(1)) < 0)
-      fprintf(stderr, "open_raw_term(): error opening terminal.\n");
+      display_error_dialog( "open_raw_term(): error opening terminal.\n");
   }
 #endif
 
@@ -6367,9 +6475,9 @@ VERBOSE(1, "Entering main loop");
       static int num_magellan_reset = 0;
       if (magellanButtonBoxServer) {
 	magellanButtonBoxServer->mainloop();
-        if (magellanButtonBoxServer->doing_reset()) num_magellan_reset++;
+        // XXX ATH if (magellanButtonBoxServer->doing_reset()) num_magellan_reset++;
         // If magellan resets too many times, stop trying to talk to it. 
-        if (num_magellan_reset > 3) {
+        if (num_magellan_reset > 2) {
             delete magellanButtonBoxServer;
             magellanButtonBoxServer = NULL;
             delete magellanButtonBox;
@@ -6378,6 +6486,12 @@ VERBOSE(1, "Entering main loop");
       }
       if (magellanButtonBox) {
 	magellanButtonBox->mainloop();
+      }
+#endif
+
+#ifndef NO_PHANTOM_SERVER
+      if (phantServer) {
+	phantServer->mainloop();
       }
 #endif
       if (phantButton) {
@@ -6391,6 +6505,10 @@ VERBOSE(1, "Entering main loop");
 	vrpnHandTracker[0]->mainloop();
       }
 
+      if(internal_device_connection) {
+          internal_device_connection->mainloop();
+      }
+
 //nM_coord_change_server sends hand coordinates in world space from one copy
 //of microscape to another; vrpnHandTracker_collab[0] takes these messages
 //and uses the coordinates/orientation it is sent to draw the icon for the
@@ -6400,7 +6518,6 @@ VERBOSE(1, "Entering main loop");
       if (nM_coord_change_server) nM_coord_change_server->mainloop();
       if (vrpnHandTracker_collab[0]) vrpnHandTracker_collab[0]->mainloop();
       if (vrpnMode_Local) {
-	struct	timeval	zerotime;
 	// Set the mode to the current one and send if changed
 	vrpnMode_Local->channels()[0] = user_mode[0];
 	vrpnMode_Local->report_changes(vrpn_CONNECTION_RELIABLE);
@@ -6418,8 +6535,7 @@ VERBOSE(1, "Entering main loop");
 			vrpnMode_Local->report();
 		}
 	}
-	zerotime.tv_sec = zerotime.tv_usec = 0;
-	vrpnMode_Local->mainloop(&zerotime);
+	vrpnMode_Local->mainloop();
       }
       if (vrpnMode_collab[0]) {
         vrpnMode_collab[0]->mainloop();
@@ -6515,7 +6631,7 @@ VERBOSE(1, "Entering main loop");
         old_value_of_rate_knob = new_value_of_rate_knob;
       }
 
-      if ( (read_mode == READ_DEVICE) || (read_mode == READ_STREAM) ) {
+      if ( (microscope->ReadMode() == READ_DEVICE) || (microscope->ReadMode() == READ_STREAM) ) {
 #ifndef NO_XWINDOWS
 	if (xenable)
 	  synchronize_xwin(False);
@@ -6573,7 +6689,7 @@ VERBOSE(1, "Entering main loop");
       }
 
     /* Check for exposure event of the window */
-    //if((read_mode==READ_FILE) && (xenable)) { }
+    //if((microscope->ReadMode()==READ_FILE) && (xenable)) { }
     // Changed TCH 6 May 98 to allow redraws regardless of
     // input type.  We don't know why it was originally limited
     // only to static images.
@@ -6690,6 +6806,7 @@ VERBOSE(1, "Entering main loop");
         magellanButtonBoxServer= NULL;
     }
 #endif
+
     if (phantButton) {
 	delete phantButton;
 	phantButton = NULL;
@@ -6698,6 +6815,17 @@ VERBOSE(1, "Entering main loop");
 	delete forceDevice;
 	forceDevice = NULL;
     }
+#ifndef NO_PHANTOM_SERVER
+    if (phantServer) {
+	delete phantServer;
+	phantServer = NULL;
+    }
+#endif
+    if (internal_device_connection) {
+        delete internal_device_connection;
+        internal_device_connection = NULL;
+    }
+
     if (buttonBox) {
 	delete buttonBox;
 	buttonBox = NULL;
@@ -6945,7 +7073,7 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 		break;
 
 	    case 'T': 		/* T Touch Live mode */
-		if( READ_DEVICE == read_mode ) {
+		if( READ_DEVICE == microscope->ReadMode() ) {
 		   printf("Touch sample mode (Live)\n");
 		   mode_change = 1;	/* Will make icon change */
 		   user_mode[0] = USER_PLANEL_MODE;
@@ -7664,7 +7792,7 @@ static float testarray [1000];
 	    // xmode is set/cleared by pressing w/W
 	    
 	    if(xmode==0) {
-	      if(read_mode!=READ_DEVICE){
+	      if(microscope->ReadMode()!=READ_DEVICE){
 		printf("Button two can only be used in read device mode\n");
 		return(-1);
 	      }
@@ -7721,7 +7849,7 @@ static float testarray [1000];
 	    
 	  case 3:	/* Request point scan and print it for button 3 */
 	    
-	    if(read_mode!=READ_DEVICE){
+	    if(microscope->ReadMode()!=READ_DEVICE){
 	      printf("Button three can only be used in read device mode\n");
 	      return(-1);
 	    }
@@ -7750,7 +7878,7 @@ static float testarray [1000];
 	** press event, now just beef up the force and go there.
 	*/
 	
-	if(read_mode!=READ_DEVICE){
+	if(microscope->ReadMode()!=READ_DEVICE){
 	  printf("Button two can only be used in read device mode\n");
 	  return(-1);
 	}
@@ -7768,7 +7896,7 @@ static float testarray [1000];
 	  switch (button_released_in_window(&x,&y)) {
 	    
 	  case 2:
-	    if(read_mode!=READ_DEVICE){
+	    if(microscope->ReadMode()!=READ_DEVICE){
 	      printf("Button two can only be used in read device mode\n");
 	      return(-1);
 	    }
@@ -7779,7 +7907,7 @@ static float testarray [1000];
 	    break;
 	    
 	  case 3:	   
-	    if(read_mode!=READ_DEVICE){
+	    if(microscope->ReadMode()!=READ_DEVICE){
 	      printf("Button three can only be used in read device mode\n");
 	      return(-1);}
 	    
@@ -7828,7 +7956,7 @@ void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
     BCPlane * plane = dataset->inputGrid->getPlaneByName
                           (dataset->heightPlaneName->string());
     if (plane == NULL) {
-        fprintf(stderr, "Error in center: could not get plane!\n");
+        display_error_dialog( "Unable to Center: couldn't find height plane");
         return;
     }
 

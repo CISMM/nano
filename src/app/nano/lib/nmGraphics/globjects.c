@@ -845,7 +845,9 @@ int make_green_line (const float a[], const float b[])
    glDeleteLists(green_line_struct,1);
    green_line_struct = glGenLists(1);
    glNewList(green_line_struct,GL_COMPILE);
-   glColor3f(0.2,1.0,0.2);
+   // No it's not green - it's yellow!
+   // To avoid red-green colorblindness conflicts. 
+   glColor3f(0.9,0.9,0.2);
    glLineWidth(2.0);
    make_line(a,b);
    glLineWidth(1.0);
@@ -1558,13 +1560,15 @@ int measure_hand(void *data)
   glPushAttrib(GL_CURRENT_BIT);
 #endif
  
-  if( *color==RED)
+  if( *color==RED) {
     glColor3f(1.0,0.2,0.2);   //red
-  else if(*color==GREEN)
-    glColor3f(0.2,1.0,0.2);   //green
-  else
+  } else if(*color==GREEN) {
+   // No it's not green - it's yellow!
+   // To avoid red-green colorblindness conflicts. 
+   glColor3f(0.9,0.9,0.2);
+  } else {
      glColor3f(0.2,0.2,1.0);   //blue
-
+  }
   glScalef(handlescale * g_icon_scale,
            handlescale * g_icon_scale,
            handlescale * g_icon_scale);

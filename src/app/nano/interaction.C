@@ -97,13 +97,9 @@
 #define PITCH	Y
 #define ROLL	Z
 
-#define MAX_MV_KNOB 	(3)
-#define MIN_MV_KNOB	(4)
-#define MAX_MAX_MV	(200.0)
-
-/// a scale to slow down the change in sweep width when
-/// phantom pen is rotated.
-#define SWEEP_WIDTH_SCALE (0.05)
+//  #define MAX_MV_KNOB 	(3)
+//  #define MIN_MV_KNOB	(4)
+//  #define MAX_MAX_MV	(200.0)
 
 /** IS_AIM_MODE is true for modification modes (show aiming structure) */
 #define	IS_AIM_MODE(m)	( 			\
@@ -220,12 +216,12 @@ Tclvar_int	tcl_trigger_pressed("trigger_pressed",0, handle_trigger_change);
 /**
  * callback function for Commit button in tcl interface.
  **********/
-static void handle_commit_change( vrpn_int32 val, void *userdata);
+//void handle_commit_change( vrpn_int32 val, void *userdata);
 
 /**
  * callback function for Cancel commit button in tcl interface.
  **********/
-static void handle_commit_cancel( vrpn_int32 val, void *userdata);
+//void handle_commit_cancel( vrpn_int32 val, void *userdata);
 
 /**
  * callback function for PHANToM reset button in tcl interface.
@@ -383,7 +379,7 @@ static void handle_trigger_change( vrpn_int32 val, void * )
  * but that is taken care of in doFeelLive().
  */
 
-static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
+void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 {
 
       printf("handle_commit_change called, commit: %d\n", (int)tcl_commit_pressed);
@@ -586,7 +582,7 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
  * In polyline mode - it clears any saved points. 
  * In select mode - it sets the region invalid, and clears its icon.
  */
-static void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
+void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 {
     printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
     // This handles double callbacks, when we set tcl_commit_canceled to
@@ -810,6 +806,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
   
   // NULL_EVENT=0, PRESS_EVENT=1, RELEASE_EVENT=2, HOLD_EVENT=3 in microscape.h
   // compute events for button box buttons
+  // XXX doesn't fit vrpn model, should be rewritten to match Magellan in minit.c
   if (buttonBox){
     for (i = 0; i < BDBOX_NUMBUTTONS; i++){
       if (!lastButtonsPressed[i]){
@@ -839,7 +836,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     // get value for trigger button event
     // first check phantom button, then mouse button, then button box 
     // trigger, tcl_trigger
-    if (phantButton && using_phantom_button) {
+    if (phantButton && (phantom_button_mode!=2)) {
       triggerButtonPressed = phantButtonPressed;
     } else if (using_mouse3button) {
       triggerButtonPressed = mouse3button;
@@ -993,6 +990,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     **
     ** Center command is a special case
     **/
+  // XXX doesn't fit vrpn model, should be rewritten to match Magellan in minit.c
     if( PRESS_EVENT == eventList[CENTER_BT] ) {
       if (timer) { timer->activate(timer->getListHead()); }
       center();
@@ -1011,18 +1009,22 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
 	 * the real button box by causing a callback to
 	 * the tcl routines */
     if( PRESS_EVENT == eventList[COMMIT_BT] ) {
-      // causes "handle_commit_change" to be called
       tcl_commit_pressed  = !tcl_commit_pressed; 
       if (tcl_commit_pressed) {
          printf("Commit from button box, now ON\n");
       } else {
          printf("Commit from button box, now OFF\n");
       }
+      // we must call "handle_commit_change" explicitly, 
+      // because tclvars are set to ignore changes from C.
+      handle_commit_change(tcl_commit_pressed, NULL);
     }
     if( PRESS_EVENT == eventList[CANCEL_BT] ) {
       //printf("Cancel from button box.\n");
-      // causes "handle_commit_cancel" to be called
       tcl_commit_canceled = !tcl_commit_canceled; 
+      // we must call "handle_commit_cancel" explicitly, 
+      // because tclvars are set to ignore changes from C.
+      handle_commit_cancel(tcl_commit_canceled, NULL);
     }
 
     // see if the user changed modes using a button
@@ -1316,11 +1318,18 @@ return 0;
  *
    doScale - scale the world when button is pressed
  *
+ * Scale around the intersection of the aim line with the height plane.
+ * Hopefully this will keep the surface from moving out of reach.
  */
 int
 doScale(int whichUser, int userEvent, double scale_factor)
 {
-    v_xform_type    	    worldFromHand;
+    v_xform_type            scaleXform = V_ID_XFORM; 
+    v_xform_type    	    handFromObject;
+    v_xform_type    	    scaledWorldFromHand;
+    v_xform_type    	    handFromWorld;
+    v_xform_type    	    worldFromHand = V_ID_XFORM;
+
     BCPlane* plane = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
     if (plane == NULL) {
       fprintf(stderr, "Error in doScale: could not get plane!\n");
@@ -1336,7 +1345,29 @@ doScale(int whichUser, int userEvent, double scale_factor)
         v_xform_type temp;
         v_x_copy(&temp, &v_world.users.xforms[whichUser]);
 	
-	v_scale_about_hand(whichUser, &temp, scale_factor);
+
+        // Very similar operatin to v_scale_about_hand, 
+        // but we scale around the intersection of the aim line with
+        // the height plane. 
+
+        // get spot to scale from in world space. 
+        decoration->aimLine.getIntercept(worldFromHand.xlate, plane);
+     
+        // now scale by scale amount	
+        scaleXform.scale = scale_factor;
+    
+        // scaled_w_f_ha = w_f_h * scale   
+        v_x_compose(&scaledWorldFromHand, &worldFromHand, &scaleXform);
+    
+        //scaling's done, so get back into object space 
+        v_x_invert(&handFromWorld, &worldFromHand);
+    
+        // ha_f_o = ha_f_w * w_f_o  
+        v_x_compose(&handFromObject, &handFromWorld, &temp);
+    
+        // scaled_w_f_o = scaled_w_f_h * h_f_o	
+        v_x_compose(&temp, &scaledWorldFromHand, &handFromObject);
+
         updateWorldFromRoom(&temp);
 	break;
 	

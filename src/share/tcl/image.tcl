@@ -76,7 +76,10 @@ iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(imagepage).i-gain $nmInfo(imagepage).d-gain \
 	$nmInfo(imagepage).rate 
 
-
+lappend device_only_controls \
+	$nmInfo(imagepage).setpoint $nmInfo(imagepage).p-gain \
+	$nmInfo(imagepage).i-gain $nmInfo(imagepage).d-gain \
+	$nmInfo(imagepage).rate 
 
 #------------------
 # Full image controls, allow switch between any mode using 
@@ -193,6 +196,11 @@ bind $nmInfo(imagefull).mode.accept <Enter> "focus $nmInfo(imagefull).mode.accep
 # save the background color we use for "accept" and "revert" buttons
 set save_bg [$nmInfo(imagefull).mode.accept cget -background]
 
+lappend device_only_controls \
+        $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact \
+        $nmInfo(imagefull).mode.accept $nmInfo(imagefull).mode.cancel \
+        $nmInfo(imagefull).mode.grid_resolution 
+
 #setup Image modeparam box
 label $nmInfo(imagefull).modeparam.label -text "Mode parameters" 
 pack $nmInfo(imagefull).modeparam.label -side top -anchor nw 
@@ -268,6 +276,22 @@ set im_oscillating_list [list $nmInfo(imagefull).modeparam.amplitude \
     $nmInfo(imagefull).modeparam.ampl_or_phase \
     $nmInfo(imagefull).modeparam.phase ]
 
+lappend device_only_controls \
+    $nmInfo(imagefull).modeparam.setpoint \
+    $nmInfo(imagefull).modeparam.p-gain \
+    $nmInfo(imagefull).modeparam.i-gain \
+    $nmInfo(imagefull).modeparam.d-gain \
+    $nmInfo(imagefull).modeparam.rate \
+    $nmInfo(imagefull).modeparam.amplitude \
+    $nmInfo(imagefull).modeparam.frequency \
+    $nmInfo(imagefull).modeparam.input_gain \
+    $nmInfo(imagefull).modeparam.drive_attenuation \
+    [list $nmInfo(imagefull).modeparam.ampl_or_phase buttonconfigure 0 ] \
+    [list $nmInfo(imagefull).modeparam.ampl_or_phase buttonconfigure 1 ] \
+    $nmInfo(imagefull).modeparam.phase
+
+
+if { !$thirdtech_ui } {
 #setup Image style box
 label $nmInfo(imagefull).style.label -text "Style" 
 pack $nmInfo(imagefull).style.label -side top -anchor nw
@@ -292,7 +316,7 @@ pack $nmInfo(imagefull).tool.freehand  -side top -fill x
 label $nmInfo(imagefull).toolparam.label -text "Tool parameters" 
 pack $nmInfo(imagefull).toolparam.label -side top -anchor nw
 
-
+}
 #
 #
 ######################
