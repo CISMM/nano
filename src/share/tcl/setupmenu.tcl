@@ -155,7 +155,7 @@ proc color_scale_newscale {name element op} {
     
     # Change titles to reflect new range
     # format statements keep the labels from getting really long. 
-    set newtext [format "%.3f %.3f" $color_slider_min_limit $color_slider_max_limit]
+    set newtext [format "%.0f %.0f" $color_slider_min_limit $color_slider_max_limit]
     $nmInfo(colorscale).scales.center config -labeltext \
 	"Center ($newtext)"
     set newtext [format "%.3f" [expr $color_slider_max_limit -$color_slider_min_limit ]]
