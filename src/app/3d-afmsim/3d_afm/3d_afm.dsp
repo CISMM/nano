@@ -197,5 +197,81 @@ SOURCE=..\vec3d.h
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # End Group
+# Begin Source File
+
+SOURCE=.\dimers1.1.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\dimers1.2.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\dimers1.3.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\dimers1.4.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\dimers1.5.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\dimers1.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\dimers2.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\dimers3.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\dimers4.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\dimers5.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\dna2.dat
+# End Source File
+# Begin Source File
+
+SOURCE="U:\.cs.unc.edu\proj\stm\src\hilchey\nano\src\app\3d-afmsim\lac-small.dat"
+# End Source File
+# Begin Source File
+
+SOURCE="U:\.cs.unc.edu\proj\stm\src\hilchey\nano\src\app\3d-afmsim\lac-smaller.dat"
+# End Source File
+# Begin Source File
+
+SOURCE=.\monomer4nm.txt
+# End Source File
+# Begin Source File
+
+SOURCE="U:\.cs.unc.edu\proj\stm\src\hilchey\nano\src\app\3d-afmsim\script.sh"
+# End Source File
+# Begin Source File
+
+SOURCE=.\sphere_output.txt
+# End Source File
+# Begin Source File
+
+SOURCE=.\test.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\test2.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\test3.dat
+# End Source File
 # End Target
 # End Project
