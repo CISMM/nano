@@ -699,8 +699,8 @@ TclNet_float ruler_opacity ("ruler_opacity", 70);
 TclNet_int ruler_r ("ruler_r", 255);
 TclNet_int ruler_g ("ruler_g", 255);
 TclNet_int ruler_b ("ruler_b", 55);
-TclNet_int   rulergrid_changed ("rulergrid_changed", 0);
-TclNet_int	rulergrid_enabled ("rulergrid_enabled",0);
+TclNet_int rulergrid_changed ("rulergrid_changed", 0);
+TclNet_int rulergrid_enabled ("rulergrid_enabled",0);
 
 //-----------------------------------------------------------------
 /// Enables the realigning textues... (toggle button on main tcl window)
@@ -1617,7 +1617,7 @@ Tclvar_int load_button_press ("load_button_press", 0);
 static void handle_alpha_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setAlphaSliderRange(alpha_slider_min, alpha_slider_max);
-  //cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 static void handle_color_change (vrpn_float64, void * userdata) {
@@ -1635,7 +1635,7 @@ static void handle_opacity_slider_change (vrpn_float64, void * userdata) {
 static void handle_texture_scale_change (vrpn_float64 value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setTextureScale(value);
-  //cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 static void handle_rulergrid_offset_change (vrpn_float64, void * userdata) {
@@ -1806,21 +1806,21 @@ static void handle_friction_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setFrictionSliderRange(friction_slider_min, friction_slider_max);
-  //cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 static void handle_bump_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setBumpSliderRange(bump_slider_min, bump_slider_max);
-  //cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 static void handle_buzz_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setBuzzSliderRange(buzz_slider_min, buzz_slider_max);
-  //cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 
@@ -1829,7 +1829,7 @@ static void handle_compliance_slider_change (vrpn_float64, void * userdata) {
 
   g->setComplianceSliderRange(compliance_slider_min,
                                      compliance_slider_max);
-  //cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 static void handle_recovery_time_change (vrpn_float64 value, void * userdata)
@@ -1856,7 +1856,7 @@ static void handle_ruler_widthx_change (vrpn_float64, void * userdata) {
 
   // MOVED to nmg_Graphics
   g->setRulergridWidths(ruler_width_x, ruler_width_y);
-  //cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 static void handle_ruler_widthy_change (vrpn_float64, void * userdata) {
@@ -1864,7 +1864,7 @@ static void handle_ruler_widthy_change (vrpn_float64, void * userdata) {
 
   // MOVED to nmg_Graphics
   g->setRulergridWidths(ruler_width_x, ruler_width_y);
-  //cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 
@@ -2547,7 +2547,7 @@ static void handle_display_textures_selected_change(vrpn_int32 value, void *user
 		        nmg_Graphics::MANUAL_REALIGN_COORD);
     }
   }
-  //cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
   realign_textures_enabled = 0;
   set_realign_center = 0;
 }
@@ -2668,7 +2668,7 @@ static	void	handle_rulergrid_selected_change(vrpn_int32 value, void *userdata)
 		        nmg_Graphics::RULERGRID_COORD);
     }
   }
-//  cause_grid_redraw(0.0, NULL);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 /// Handle rulergrid angle change -- recompute sin() and cos() of angle
