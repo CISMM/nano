@@ -1,3 +1,8 @@
+2002-05-30  David Borland <borland@cs.unc.edu>
+
+        * nmui_SEM.C : made changes for the new SURFACE_REGISTRATION_COORD
+	and MODEL_REGISTRATION_COORD graphics modes
+
 2002-05-10  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmui_SEM.C (handle_device_change):  changed unknown-messge-type

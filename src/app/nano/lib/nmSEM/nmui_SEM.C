@@ -160,7 +160,7 @@ void nms_SEM_ui::handle_texture_display_change(vrpn_int32 _newval,
     if (_newval) {
         //disableOtherTextures(SEM);
         graphics->setTextureMode(nmg_Graphics::SEM_DATA,
-                                 nmg_Graphics::REGISTRATION_COORD);
+                                 nmg_Graphics::SURFACE_REGISTRATION_COORD);
     }
 
     else {
