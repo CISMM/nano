@@ -2734,6 +2734,8 @@ static void handle_openStaticFilename_change (const char *, void *)
 	//return;
     //}
 
+	// assume same scale in x and y
+	double scale = dataset->inputGrid->maxX();
 
     if (strlen(openStaticFilename) <= 0) return;
 
@@ -2773,6 +2775,14 @@ static void handle_openStaticFilename_change (const char *, void *)
     decoration->selectedRegionMinY = dataset->inputGrid->minY();
     decoration->selectedRegionMaxX = dataset->inputGrid->maxX();
     decoration->selectedRegionMaxY = dataset->inputGrid->maxY();
+
+	// If an object is loaded, scale it appropriately
+	// Doesn't register in the TCL window yet...
+//	if (state->config_enableUber) {
+    scale /= dataset->inputGrid->maxX();
+	scale = 1.0 / scale;
+	World.Do(&URender::Scale, &scale);
+//}
     
     openStaticFilename = "";
 }
