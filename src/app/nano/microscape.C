@@ -302,6 +302,10 @@ static void handle_center_pressed (vrpn_int32, void *);
 static void handle_mutex_request (vrpn_int32, void *);
 static void handle_mutex_release (vrpn_int32, void *);
 
+// TCH network adaptations Nov 2000
+static void handle_recordAdaptations_change (int, void *);
+static void handle_msTimestampsName_change (const char *, void *);
+
 static vrpn_bool g_syncPending = VRPN_FALSE;
 
 // Error recovery
@@ -436,6 +440,13 @@ WellKnownPorts::WellKnownPorts (int base_port_number)
 }
 
 WellKnownPorts * wellKnownPorts = NULL;
+
+// TCH network adaptations Nov 2000
+static Tclvar_int recordNetworkAdaptations
+    ("record_adaptation", 0, handle_recordAdaptations_change, NULL);
+static Tclvar_string msTimestampsName
+    ("ms_timestamps_name", "", handle_msTimestampsName_change, NULL);
+
 
 //-----------------------------------------------------------------------
 // TCL initialization section.
@@ -978,8 +989,6 @@ static int do_keybd = 0;                   ///< Keyboard off by default
 
 //static int ubergraphics_enabled = 0;
 
-static vrpn_bool set_region = VRPN_FALSE; ///< Should we set the region at start?
-static vrpn_bool set_mode = VRPN_FALSE; ///< Should we set tap/con at startup?
 
 /********
  * Variables to control the scanning
@@ -2807,8 +2816,8 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     vrpnLogFile = NULL;
 
     if (!microscopeRedundancyController) {
-      //microscopeRedundancyController =
-       // new vrpn_RedundantRemote (microscope_connection);
+      microscopeRedundancyController =
+        new vrpn_RedundantRemote (microscope_connection);
     }
 
     openSPMDeviceName = "";
@@ -3962,6 +3971,7 @@ void setupCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
   //d->heightPlaneName->bindList(&m->state.data.inputPlaneNames);
   ((Tclvar_string *) d->heightPlaneName)->addCallback
             (handle_z_dataset_change, m);
+
 }
 
 void teardownCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
@@ -4363,6 +4373,53 @@ void setupCallbacks (nmb_Decoration * d) {
     d->green.registerMoveCallback(handle_collab_measure_move, (void *)1);
     d->blue.registerMoveCallback(handle_collab_measure_move, (void *)2);
 }
+
+// TCH network adaptation Nov 2000
+
+void handle_recordAdaptations_change (int val, void *) {
+
+fprintf(stderr, "Turning recording of network statistics %s.\n",
+val ? "on" : "off");
+
+  // nmm_TimestampList and vrpn_RedundantReceiver both build (large)
+  // memory structures to track statistics, so we may want to turn
+  // them off.  nmm_QueueMonitor just keeps a few counters, so there's
+  // no gain to disabling its record-keeping.
+
+  microscope->d_tsList->record(val);
+  microscope->d_redReceiver->record(val);
+
+}
+
+void handle_msTimestampsName_change (const char * name, void *) {
+  char nbuf [512];
+
+  if (!name || !strlen(name)) {
+    return;
+  }
+
+  sprintf(nbuf, "%s.time", name);
+fprintf(stderr, "Saving list of timestamps to %s.\n", nbuf);
+
+  microscope->d_tsList->write(nbuf);
+  microscope->d_tsList->clear();
+
+  sprintf(nbuf, "%s.loss", name);
+fprintf(stderr, "Saving report of loss to %s.\n", nbuf);
+
+  microscope->d_redReceiver->writeMemory(nbuf);
+  microscope->d_redReceiver->clearMemory();
+
+  sprintf(nbuf, "%s.queue", name);
+fprintf(stderr, "Saving report of queue to %s.\n", nbuf);
+
+  microscope->d_monitor->write(nbuf);
+  microscope->d_monitor->clear();
+
+  msTimestampsName = "";
+}
+
+
 
 void teardownSynchronization(CollaborationManager *cm, 
 			     nmb_Dataset *dset,
@@ -4936,7 +4993,7 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         istate->afm.image.setpoint = atof(argv[i]);
         istate->afm.image.amplitude = istate->afm.image.amplitude_min;
-        set_mode = VRPN_TRUE;      // Send these at startup
+        //set_mode = VRPN_TRUE;      // Send these at startup
       } else if (strcmp(argv[i], "-move") == 0) {
         if (++i >= argc) Usage(argv[0]);
         //istate->afm.MaxSafeMove = atof(argv[i]);
@@ -4987,7 +5044,7 @@ void ParseArgs (int argc, char ** argv,
         istate->x_max = atof(argv[i]);
         if (++i >= argc) Usage(argv[0]);
         istate->y_max = atof(argv[i]);
-        set_region = VRPN_TRUE;    // Set the region
+        //set_region = VRPN_TRUE;    // Set the region
         printf("Will set scan region (%g,%g) to (%g,%g)\n",
                istate->x_min, istate->y_min,
                istate->x_max, istate->y_max);
@@ -6259,8 +6316,8 @@ int main (int argc, char* argv[])
 	//fprintf(stderr, "   microscape.c:: in Replay mode\n");
       }
 
-      //microscopeRedundancyController = new vrpn_RedundantRemote
-       // (microscope_connection);
+      microscopeRedundancyController = new vrpn_RedundantRemote
+        (microscope_connection);
 
       // BEFORE we call mainloop on our connection to the microscope,
       // open up a forwarder and spin until it is connected to.

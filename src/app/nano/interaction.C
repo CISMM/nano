@@ -208,6 +208,30 @@ static void handle_phantom_reset( vrpn_int32 val, void *userdata);
 
 static void handle_handTracker_update_rate (vrpn_float64, void *);
 
+
+
+// TCH network adaptations Nov 2000
+static void handle_useRedundant_change (vrpn_int32, void *);
+static void handle_numRedundant_change (vrpn_int32, void *);
+static void handle_redundantInterval_change (vrpn_float64, void *);
+static void handle_useMonitor_change (vrpn_int32, void *);
+static void handle_monitorThreshold_change (vrpn_int32, void *);
+static void handle_monitorDecay_change (vrpn_float64, void *);
+
+Tclvar_int feel_useRedundant ("feel_use_redundant", 0,
+                              handle_useRedundant_change, NULL);
+Tclvar_int feel_numRedundant ("feel_num_redundant", 0,
+                              handle_numRedundant_change, NULL);
+Tclvar_float feel_redundantInterval ("feel_redundant_interval", 0.015,
+                                     handle_redundantInterval_change, NULL);
+
+Tclvar_int feel_useMonitor ("feel_use_monitor", 0,
+                            handle_useMonitor_change, NULL);
+Tclvar_int feel_monitorThreshold ("feel_monitor_threshold", 150,
+                                  handle_monitorThreshold_change, NULL);
+Tclvar_float feel_monitorDecay ("feel_monitor_decay", 2.0,
+                                handle_monitorDecay_change, NULL);
+
 /*********
  * Variables that are linked to buttons in the
  * tcl version of the button box.  They are tracked here to allow us to
@@ -416,7 +440,6 @@ Adaptor::~Adaptor (void) {
 }
 
 void Adaptor::updateSampleAlgorithm (nmm_Microscope_Remote * m) {
-  static nmm_Sample sampleAlgorithm;
   BCGrid * grid;
   double targetsize;
 
@@ -503,6 +526,100 @@ static void handle_handTracker_update_rate (vrpn_float64 v, void *) {
   }
 
 }
+
+// TCH network adaptations Nov 2000
+
+// static
+void handle_useRedundant_change (vrpn_int32 on, void *) {
+
+fprintf(stderr, "Turning FEC %s.\n", on ? "on" : "off");
+
+  if (microscopeRedundancyController) {
+    microscopeRedundancyController->enable(on);
+  } else {
+    fprintf(stderr, "No microscopeRedundancyController.\n");
+  }
+  if (microscope->d_redundancy) {
+    microscope->d_redundancy->enable(on);
+  } else {
+    fprintf(stderr, "No microscope->Redundancy.\n");
+  }
+}
+
+// static
+void handle_numRedundant_change (vrpn_int32 val, void *) {
+
+fprintf(stderr, "Sending %d redundant copies at %.5f sec intervals.\n",
+val, (float) feel_redundantInterval);
+
+  if (microscopeRedundancyController) {
+    microscopeRedundancyController->set
+              (val, vrpn_MsecsTimeval(1000.0 * feel_redundantInterval));
+  }
+  if (microscope->d_redundancy) {
+    microscope->d_redundancy->setDefaults
+              (val, vrpn_MsecsTimeval(1000.0 * feel_redundantInterval));
+  }
+}
+
+// static
+void handle_redundantInterval_change (vrpn_float64 val, void *) {
+
+// Input value is always 0???
+
+//fprintf(stderr, "Sending %d redundant copies at %.5f sec intervals.\n",
+//feel_numRedundant, (float) feel_redundantInterval);
+//fprintf(stderr, "RI is %.5f\n", (float) feel_redundantInterval);
+
+  if (microscopeRedundancyController) {
+    microscopeRedundancyController->set
+              (feel_numRedundant,
+               vrpn_MsecsTimeval(1000.0 * (float) feel_redundantInterval));
+  }
+  if (microscope->d_redundancy) {
+    microscope->d_redundancy->setDefaults
+              (feel_numRedundant,
+               vrpn_MsecsTimeval(1000.0 * (float) feel_redundantInterval));
+  }
+}
+
+// static
+void handle_useMonitor_change (vrpn_int32 on, void *) {
+
+fprintf(stderr, "Turning QM %s.\n", on ? "on" : "off");
+
+  if (microscope->d_monitor) {
+    microscope->d_monitor->enable(on);
+  } else {
+    fprintf(stderr, "No microscope->d_monitor.\n");
+  }
+
+}
+
+// static
+void handle_monitorThreshold_change (vrpn_int32 n, void *) {
+
+fprintf(stderr, "New length-2 threshold is %d.\n", n);
+
+  if (microscope->d_monitor) {
+    microscope->d_monitor->setThreshold(n, feel_monitorDecay);
+  } else {
+    fprintf(stderr, "No microscope->d_monitor.\n");
+  }
+}
+
+// static
+void handle_monitorDecay_change (vrpn_float64 n, void *) {
+
+fprintf(stderr, "New threshold decay is %.5f.\n", n);
+
+  if (microscope->d_monitor) {
+    microscope->d_monitor->setThreshold(feel_monitorThreshold, n);
+  } else {
+    fprintf(stderr, "No microscope->d_monitor.\n");
+  }
+}
+
 
 static void handle_trigger_change( vrpn_int32 val, void * )
 {
@@ -2651,7 +2768,7 @@ int doFeelLive (int whichUser, int userEvent)  {
         // Feelahead mode IGNORES the commit button;  it never
         // leaves image mode.
 
-fprintf(stderr, "Feeling to %.2f, %.2f.\n", clipPos[0], clipPos[1]);
+//fprintf(stderr, "Feeling to %.2f, %.2f.\n", clipPos[0], clipPos[1]);
 
         adaptor.updateSampleAlgorithm(microscope);
 

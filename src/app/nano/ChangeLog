@@ -1,3 +1,16 @@
+2000-12-05  Tom Hudson  <hudson@cs.unc.edu>
+
+	* interaction.c : add new Tclvars for network adaptation
+	(handle_useRedundant_change) : new function
+	(handle_numRedundant_change) : same
+	(handle_redundantInterval_change) : same
+	(handle_useMonitor_change) : same
+	(handle_monitorThreshold_change) : same
+	(handle_monitorDecay_change) : same
+	* microscape.c : add new Tclvars for network statistics
+	(handle_recordAdaptations_change) : new function
+	(handle_msTimestampsName_change) : same
+
 2000-12-05  Kwan Torrich Skinner <skinner@cs.unc.edu>
 
 	* interaction.c (handle_commit_change) : new code to handle optimize now mode.
@@ -21,8 +34,8 @@
 
 2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
-	* microscape.c (Usage) : added documentation of -daligner argument
-        (main) : added printouts of what colorplane, colormap and heightplane
+	* microscape.c (Usage) : add documentation of -daligner argument
+        (main) : add printouts of what colorplane, colormap and heightplane
 	were getting set to because there seems to be some problem with
 	them getting set to what the user says they should be
 
@@ -53,13 +66,14 @@
 2000-11-5  Tom Hudson  <hudson@cs.unc.edu>
 
 	* mf.h : move file to attic
+	* renderer.C : same
 	* butt_mode.c : remove #include of mf.h
 	* interaction.c : same
 	* normal.c : same, remove call of #defines (DOCUMENT) from mf.h
 
 2000-11-1  Tom Hudson  <hudson@cs.unc.edu>
 
-	* microscape.c : removed includes of stm_file.h, stm_cmd.h,
+	* microscape.c : remove includes of stm_file.h, stm_cmd.h,
         references to USE_VRPN_MICROSCOPE
         * microscopeHandlers.h : same
         * minit.c : same
@@ -75,7 +89,7 @@
 
 2000-10-24  Adam Seeger  <seeger@cs.unc.edu>
 
-	* error_display.C : merged with changes in thirdtech_branch
+	* error_display.C : merge with changes in thirdtech_branch
 
 2000-10-23  Adam Seeger  <seeger@cs.unc.edu>
 
