@@ -16,6 +16,7 @@
 #include "scan.h"
 #include "draw.h"
 #include "lightcol.h"
+#include "uncert.h"
 #include "sim.h"
 
 GLuint list_sphere;
@@ -44,9 +45,6 @@ double view_angle = -90.;
 
 //int solid_afm_scan=0;
 //int enable_afm=1;
-
-int rotate_and_write_to_file=0;
-int done_monster_process_x=0, done_monster_process_y=0;
 
 // window stuff
 int mainWindowID, viewWindowID, depthWindowID;
@@ -105,10 +103,6 @@ int main(int argc, char *argv[])
   if (argc > 1) {// load from a file
     if (0==strcmp(argv[1],"-p")) {//ntube file
       addSpheresFromFile(argv[2],atof(argv[3]));
-      //      addSpheresFromFile(argv[2],atof(argv[3]));
-      if (0==strcmp(argv[4],"-w")) {
-	rotate_and_write_to_file=1;
-      }
     }
     else if (0==strcmp(argv[1],"-t")) {//triangles file
       addTrianglesFromFile(argv[2],atof(argv[3]));
@@ -117,7 +111,7 @@ int main(int argc, char *argv[])
       init_dna(argv[2]);
     }
     else {
-      cout << "\nUsage : ./sim [-p filename unit [-w]] for proteins\n";
+      cout << "\nUsage : ./sim [-p filename unit for proteins\n";
       cout << "        ./sim [-t filename scale] for triangulated models\n";
       cout << "        ./sim [-d dna-filename]\n\nSee README\n\n";
       exit(0);
@@ -147,6 +141,9 @@ int main(int argc, char *argv[])
     make_sphere();
     make_cylinder();
     make_cone_sphere(*(tip.icsTip));
+    make_uncert_sphere();
+    make_uncert_cylinder();
+    make_uncert_cone_sphere(*(tip.icsTip));
 #endif
 
   // pass pointers to callback routines for main window
@@ -176,6 +173,9 @@ int main(int argc, char *argv[])
     make_sphere();
     make_cylinder();
     make_cone_sphere(*(tip.icsTip));
+    make_uncert_sphere();
+    make_uncert_cylinder();
+    make_uncert_cone_sphere(*(tip.icsTip));
 #endif
 
   // pass pointers to callback routines for the other view window
@@ -194,6 +194,9 @@ int main(int argc, char *argv[])
     make_sphere();
     make_cylinder();
     make_cone_sphere(*(tip.icsTip));
+    make_uncert_sphere();
+    make_uncert_cylinder();
+    make_uncert_cone_sphere(*(tip.icsTip));
 #endif
 
   glutDisplayFunc( displayFuncDepth );
@@ -202,6 +205,10 @@ int main(int argc, char *argv[])
   glutKeyboardFunc(commonKeyboardFunc);
   adjustOrthoProjectionToWindow();
 
+  GLenum e = glGetError();
+  if (e != GL_NO_ERROR) {
+    printf("Found error %d\n",e);
+  }
 
   // app's main loop, from which callbacks to above routines occur
   glutMainLoop();
@@ -247,6 +254,7 @@ void displayFuncView( void ) {
     glRotatef(view_angle, 1.0, 0.0, 0.0 ); 
     drawFrame();
     glPopMatrix();
+
     // end of display frame, so flip buffers
     glutSwapBuffers();
   }
@@ -377,25 +385,26 @@ void globalkeyboardFunc(unsigned char key, int x, int y) {
   }
 }
 
+#if DISP_LIST
 // remake disp lists
 void remake_sphere() {
-  glutSetWindow( mainWindowID );	make_sphere();	
-  glutSetWindow( viewWindowID );	make_sphere();		
-  glutSetWindow( depthWindowID );	make_sphere();		
+  glutSetWindow( mainWindowID );	make_sphere();	make_uncert_sphere();	
+  glutSetWindow( viewWindowID );	make_sphere();	make_uncert_sphere();	
+  glutSetWindow( depthWindowID );	make_sphere();	make_uncert_sphere();	
 }
 
 void remake_cylinder() {
-  glutSetWindow( mainWindowID );	make_cylinder();
-  glutSetWindow( viewWindowID );	make_cylinder();
-  glutSetWindow( depthWindowID );	make_cylinder();
+  glutSetWindow( mainWindowID );	make_cylinder(); make_uncert_cylinder();
+  glutSetWindow( viewWindowID );	make_cylinder(); make_uncert_cylinder();
+  glutSetWindow( depthWindowID );       make_cylinder(); make_uncert_cylinder();	
 }
 
 void remake_cone_sphere(InvConeSphereTip ics) {
-  glutSetWindow( mainWindowID );	make_cone_sphere(ics);	
-  glutSetWindow( viewWindowID );	make_cone_sphere(ics);		
-  glutSetWindow( depthWindowID );	make_cone_sphere(ics);		
+  glutSetWindow( mainWindowID );	make_cone_sphere(ics);	 make_uncert_cone_sphere(ics);	
+  glutSetWindow( viewWindowID );	make_cone_sphere(ics);	 make_uncert_cone_sphere(ics);	
+  glutSetWindow( depthWindowID );	make_cone_sphere(ics);	 make_uncert_cone_sphere(ics);	
 }
-
+#endif
 
 // Keyboard callback for main window.
 void commonKeyboardFunc(unsigned char key, int x, int y) {
@@ -450,7 +459,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
     selectedOb = numObs-1;
     break;
   case 't' :
-    addTriangle(Vec3d(0.,0.,0.),Vec3d(DEFAULT_TRIANGLE_SIDE,0.,0.),Vec3d(DEFAULT_TRIANGLE_SIDE/2.,DEFAULT_TRIANGLE_SIDE/2.,DEFAULT_TRIANGLE_SIDE/2.));
+    addTriangle(Vec3d(0.,0.,DEFAULT_TRIANGLE_SIDE/3.),Vec3d(DEFAULT_TRIANGLE_SIDE,0.,DEFAULT_TRIANGLE_SIDE/2.),Vec3d(DEFAULT_TRIANGLE_SIDE/2.,DEFAULT_TRIANGLE_SIDE/2.,DEFAULT_TRIANGLE_SIDE/2.));
     selectedOb = numObs-1;
     break;
     // dealing with tips

@@ -45,9 +45,9 @@
 #define CYLINDER_LIST 2
 #define CONE_SPHERE_LIST 3
 #define	TIP_CONE_SPHERE_LIST 4
-#define MY_SPHERE_LIST 5
-#define MY_CYLINDER_LIST 6
-#define MY_CONE_SPHERE_LIST 7
+#define UNCERT_SPHERE_LIST 5
+#define UNCERT_CYLINDER_LIST 6
+#define UNCERT_CONE_SPHERE_LIST 7
 
 
 // rotating protein

@@ -1,28 +1,35 @@
-Dec 2000
-
 Gokul Varadhan
+May 2001
 
 This is the 3D AFM simulator code.
 
-To run the simulator run
+Compiling
+
+	- Weird step ! Create a file called depend (could be empty)	
+	- make clean
+	- make dep
+	- make
+
+Running the program
+
+	./sim [-p filename unit [-w]] for proteins
+        ./sim [-t filename scale] for triangulated models
+        ./sim [-d dna-filename]
+
+
+1. To simply run the simulator run
 
 ./sim
 
-to get the AFM of a protein
+2. To get the AFM of a protein
 
-./sim -p filename unit [-w]
+./sim -p filename unit
 
 unit is a number  = (Unit assumed in the file)/(1 nm) e.g 0.1 for Angstrom\n
--w orients the protein at different XY rotations and outputs the AFMS to files.
-
-Note : 
-
-We first rotate along X and then Y. The rotation along Y is on the already X-rotated protein molecule.
-
 
 Example : ./run -p lac.data 0.1
 
-to get AFM of a triangular model run
+3. To get AFM of a triangular model run
 
 ./sim -t filename scale
 
@@ -32,13 +39,32 @@ Example :
 
 scale scales the values in the given input file
 
-to run DNA simulator
+4. To run DNA simulator
 
 ./sim -d dna-filename
 
 Example :
 
-./sim -d 1.dat
+./sim -d dna.dat
+
+Format for the dna file
+-----------------------
+
+	Number of segments in the DNA
+	Length of DNA
+	Position of site 1
+	Position of site 2
+	Tangent at site 1
+	Tangent at site 2
+
+Example (see file dna.dat)
+
+	30
+	160
+	20 10 10
+	110 40 50
+	-100 100 0
+	-50 -100 0
 
 
 Information

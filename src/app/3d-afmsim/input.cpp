@@ -36,7 +36,7 @@ void initObs( void )
   numObs = 0;
 
   // a nano tube
-  //  addNtube( NTUBE,  Vec3d( 50., 60., 50.), 0., 0., 0., 20, 10.);
+  //addNtube( NTUBE,  Vec3d( 50., 60., 50.), 0., 0., 0., 20, 10.);
   addNtube( SPHERE,  Vec3d( 50., 60., 50.), 0., 0., 0., 0., 10.);
   //  addTriangle(Vec3d(60,20,20), Vec3d(80,50,35), Vec3d (40,50,35));
 }

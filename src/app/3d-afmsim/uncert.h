@@ -3,7 +3,8 @@
 
 #include <stdio.h>
 #include <GL/glut.h>
-
+#include "Tips.h"
+#include "defns.h"
 
 struct myGLUquadric
 {
@@ -28,6 +29,12 @@ void uncert_frustum(myGLUquadricObj * qobj,
 		   GLdouble baseRadius, GLdouble topRadius,
 		   GLdouble height, GLint slices, GLint stacks,
 		    GLfloat grad_l, GLfloat grad_r);
+
+#if DISP_LIST
+void make_uncert_sphere();
+void make_uncert_cylinder();
+void make_uncert_cone_sphere(InvConeSphereTip ics);
+#endif
 
 void draw_uncert_sphere( double diameter);
 void draw_uncert_cylinder(double diameter, double height);

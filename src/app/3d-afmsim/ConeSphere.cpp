@@ -120,6 +120,7 @@ void ConeSphere :: draw() {
 }
 
 void ConeSphere :: uncert_draw() {
+#if (DISP_LIST == 0)
   static int firstTime = 1;
   static myGLUquadricObj* qobj;
   if( firstTime ) { 
@@ -129,33 +130,21 @@ void ConeSphere :: uncert_draw() {
     firstTime=0;
   }
 
-  glTranslatef(-30,0,0);
-
   uncert_sphere( qobj, r, 30, 30);
 
-  //  GLfloat gcol = get_sphere_color_rho(PI/2.-theta);
-  GLfloat gcol = get_sphere_color_z(sin(theta));
-
-  glPushMatrix();
-  glTranslatef(10, 0, 0);
-
-  glTranslatef(0, 0, -sphereHeight);
-  uncert_frustum( qobj, cr, topRadius, topHeight, 30, 30, 0, gcol);
-  glPopMatrix();
-
-
-  glTranslatef(60,0,0);
-  uncert_sphere( qobj, r, 30, 30);
-
-  //  GLfloat gcol = get_sphere_color_rho(PI/2.-theta);
-  gcol = get_sphere_color_z(sin(theta));
+  GLfloat gcol = get_sphere_color_rho(PI/2.-theta);
+  //  GLfloat gcol = get_sphere_color_z(sin(theta));
 
   glPushMatrix();
   glTranslatef(0, 0, -sphereHeight);
   uncert_frustum( qobj, cr, topRadius, topHeight, 30, 30, 0, gcol);
   glPopMatrix();
-
-
+#else
+  glPushMatrix();
+  glScalef(r, r, r);
+  glCallList(UNCERT_CONE_SPHERE_LIST);
+  glPopMatrix();
+#endif
 }
 
 

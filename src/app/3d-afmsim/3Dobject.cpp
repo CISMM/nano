@@ -303,7 +303,7 @@ void Ntube :: uncert_draw() {
     draw_uncert_cylinder( diam, leng );      // tube axis starts parallel to Z
     glTranslatef( -leng/2., 0., 0 );  
     glPopMatrix();
-    
+
     // draw spherical endcap on tube
     glPushMatrix();
     glTranslatef( leng/2., 0., 0. );
@@ -594,6 +594,7 @@ void Ntube :: uncert_afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
 #if 1
     // get color for the quad
     GLfloat gcol = get_sphere_color_rho(PI/2.-theta);
+    //    GLfloat gcol = get_sphere_color_z(sin(theta));
 
     Vec3d xyz = Vec3d :: crossProd(A-B,A-D);
     xyz.normalize();

@@ -1,10 +1,10 @@
-/* Broken right now */
 #include <stdlib.h>
 #include <stdio.h>	
 #include <math.h>	
 #include <GL/glut.h>
 #include <string.h>
 #include "ConeSphere.h"
+#include "defns.h"
 #include "uncert.h"
 
 #define SPHERE_LIST 1
@@ -136,7 +136,6 @@ normal3f(GLfloat x, GLfloat y, GLfloat z)
  */
 void set_frustum_color_z(GLfloat z, GLdouble height, GLfloat grad_l, GLfloat grad_r) {
   GLfloat col[4];
-  int i;
 
   GLfloat t = (grad_l + (grad_r-grad_l)*(z/height));
 
@@ -179,11 +178,10 @@ void uncert_frustum(myGLUquadricObj * qobj,
     GLfloat t = 0.0;
     z = 0.0;
     r = baseRadius;
+
     for (j = 0; j < stacks; j++) {
       GLfloat s = 0.0;
       glBegin(GL_QUAD_STRIP);
-
-      set_frustum_color_z(z,height,grad_l, grad_r);
 
       for (i = 0; i <= slices; i++) {
 	GLfloat x, y;
@@ -195,6 +193,9 @@ void uncert_frustum(myGLUquadricObj * qobj,
 	  x = sin(i * da);
 	  y = cos(i * da);
 	}
+
+	set_frustum_color_z(z,height,grad_l, grad_r);
+
 
 	if (nsign == 1.0) {
 	  normal3f(x * nsign, y * nsign, nz * nsign);
@@ -227,12 +228,15 @@ void uncert_frustum(myGLUquadricObj * qobj,
  */
 void set_cylinder_color_rho(GLfloat rho) {
   GLfloat col[4];
-  int i;
 
   if (rho >= M_PI) {
     // offset rho by M_PI/2 (because for a slice rho=0 for pt x=0. y=1
     // whereas we want to color starting at pt x=-1, y=0
-    GLfloat t = (1 - fabs(rho-1.5*M_PI)/(M_PI/2.));
+
+    //    GLfloat t = (1 - fabs(rho-1.5*M_PI)/(M_PI/2.));
+    GLfloat newrho = fabs(rho-1.5*M_PI);
+    GLfloat t = get_sphere_color_rho(newrho);
+
     col[0] = col[1] = col[2] = t;
   }
   else {
@@ -241,6 +245,8 @@ void set_cylinder_color_rho(GLfloat rho) {
 
   col[3] = 1.;
   glColor4fv(col);
+
+  //  glColor3f(0,1,0);
 }
 
 
@@ -333,13 +339,11 @@ void uncert_cylinder(myGLUquadricObj * qobj,
  */
 void set_sphere_color_rho(GLfloat rho) {
   GLfloat col[4];
-  int i;
   GLfloat t;
 
   if (rho < M_PI/2) {
 
     t = (1 - rho/(M_PI/2.));
-
 
     col[0] = col[1] = col[2] = t;
   }
@@ -353,7 +357,6 @@ void set_sphere_color_rho(GLfloat rho) {
 
 // gray color
 GLfloat get_sphere_color_rho(GLfloat rho) {
-  int i;
 
   if (rho < M_PI/2.) {
 
@@ -363,37 +366,6 @@ GLfloat get_sphere_color_rho(GLfloat rho) {
   }
   return 0.;
 }
-
-void set_sphere_color_z(GLfloat z) {
-  GLfloat col[4];
-  int i;
-  GLfloat t;
-
-  if (z > 0) {
-    t = 0.5+0.5*z;
-    col[0] = col[1] = col[2] = t;
-  }
-  else {
-    col[0] = col[1] = col[2] = 0.5;
-  }
-  col[3] = 1.;
-
-  glColor4fv(col);
-}
-
-
-GLfloat get_sphere_color_z(GLfloat z) {
-  GLfloat t;
-
-  if (z > 0) {
-    t = 0.5+0.5*z;
-  }
-  else {
-    t=0.5;
-  }
-  return t;
-}
-
 
 /* Uncertainty map for the sphere 
  * sphere is colored according to a gradient in the range 
@@ -452,8 +424,7 @@ void uncert_sphere(myGLUquadricObj * qobj, GLdouble radius, GLint slices, GLint 
 	if (normals)
 	  glNormal3f(x * nsign, y * nsign, z * nsign);
 
-	//	set_sphere_color_rho(drho);
-	set_sphere_color_z(z);
+	set_sphere_color_rho(drho);
 
 
 	glVertex3f(x * radius, y * radius, z * radius);
@@ -487,8 +458,7 @@ void uncert_sphere(myGLUquadricObj * qobj, GLdouble radius, GLint slices, GLint 
 	  glNormal3f(x * nsign, y * nsign, z * nsign);
 	TXTR_COORD(s, t);
 
-	//	set_sphere_color_rho(rho);
-	set_sphere_color_z(z);
+	set_sphere_color_rho(rho);
 
 	glVertex3f(x * radius, y * radius, z * radius);
 	x = -sin(theta) * sin(rho + drho);
@@ -523,8 +493,7 @@ void uncert_sphere(myGLUquadricObj * qobj, GLdouble radius, GLint slices, GLint 
 	  glNormal3f(x * nsign, y * nsign, z * nsign);
 	s -= ds;
 
-	//	set_sphere_color_rho(rho);
-	set_sphere_color_z(z);
+	set_sphere_color_rho(rho);
 	
 	glVertex3f(x * radius, y * radius, z * radius);
       }
@@ -536,8 +505,80 @@ void uncert_sphere(myGLUquadricObj * qobj, GLdouble radius, GLint slices, GLint 
   glColor4fv(color);
 }
 
+#if DISP_LIST
+void make_uncert_sphere() {
+  static int firstTime = 1;
+  static myGLUquadricObj* qobj;
+  if( firstTime ) { 
+    qobj = mygluNewQuadric();
+    mygluQuadricDrawStyle( qobj, GLU_FILL);
+    mygluQuadricNormals( qobj, GLU_FLAT );
+    firstTime=0;
+  }
+  glNewList(UNCERT_SPHERE_LIST, GL_COMPILE);
+  uncert_sphere( qobj, 1., tesselation, tesselation);
+  glEndList();
+}
+
+void make_uncert_cylinder() {
+  static int firstTime = 1;
+  static myGLUquadricObj* qobj;
+  if( firstTime ) { 
+    qobj = mygluNewQuadric();
+    mygluQuadricDrawStyle( qobj, GLU_FILL);
+    mygluQuadricNormals( qobj, GLU_FLAT );
+    firstTime=0;
+  }
+
+  glNewList(UNCERT_CYLINDER_LIST, GL_COMPILE);
+  uncert_cylinder( qobj, 1., 1., 1., tesselation, tesselation);
+  glEndList();
+}
+
+void make_uncert_cone_sphere(InvConeSphereTip ics) {
+  static myGLUquadricObj* qobj;
+
+  //  printf("Building ConeSphere display list (tesselation %d)\n",tesselation);
+
+  static int first_time=1;
+  if (first_time) {
+    first_time=0;
+    qobj = mygluNewQuadric();
+    mygluQuadricDrawStyle( qobj, GLU_FILL);
+    mygluQuadricNormals( qobj, GLU_FLAT );
+  }
+
+  // here we consider the AFM of a sphere of 0 radius with a tip of radius 1.
+  double theta = ics.theta; // theta for the tip
+  
+  double bignum = 200; // some big no for now
+  
+  double cone_height = bignum + (1.)/sin(theta);
+  ConeSphere c = ConeSphere(1., cone_height, theta);
+  
+  // Create a display list for a sphere
+  glNewList(UNCERT_CONE_SPHERE_LIST, GL_COMPILE);
+  uncert_sphere( qobj, 1., tesselation, tesselation);
+
+  GLfloat gcol = get_sphere_color_rho(PI/2.-theta);
+  
+  glPushMatrix();
+  glTranslatef(0,0,-bignum);
+  uncert_frustum( qobj, c.cr, c.topRadius, c.topHeight, tesselation, tesselation,0,gcol);
+  glPopMatrix();
+  glEndList();
+
+  glFlush();
+  glFinish();
+
+}
+
+#endif
+
+
 void draw_uncert_sphere( double diameter)
 {
+#if (DISP_LIST == 0)
   static int firstTime = 1;
   static myGLUquadricObj* qobj;
   if( firstTime ) { 
@@ -547,9 +588,16 @@ void draw_uncert_sphere( double diameter)
     firstTime=0;
   }
   uncert_sphere( qobj, diameter/2., tesselation, tesselation);
+#else
+  glPushMatrix();
+  glScalef(diameter/2., diameter/2., diameter/2);
+  glCallList(UNCERT_SPHERE_LIST);
+  glPopMatrix();
+#endif
 }
 
 void draw_uncert_cylinder(double diameter, double height) {
+#if (DISP_LIST == 0)
   static int firstTime = 1;
   static myGLUquadricObj* qobj;
   if( firstTime ) { 
@@ -559,6 +607,12 @@ void draw_uncert_cylinder(double diameter, double height) {
     firstTime=0;
   }
   uncert_cylinder( qobj, diameter/2., diameter/2., height, tesselation, tesselation);
+#else
+  glPushMatrix();
+  glScalef(diameter/2.,diameter/2.,height);
+  glCallList(UNCERT_CYLINDER_LIST);
+  glPopMatrix();
+#endif
 }
 
 void draw_uncert_frustum(double bottomdiameter, double topdiameter, double height) {
@@ -574,108 +628,3 @@ void draw_uncert_frustum(double bottomdiameter, double topdiameter, double heigh
 }
 
 
-#if 0
-void draw_uncert_afm_sphere_sp_tip() {
-  draw_uncert_sphere(5.);
-}
-
-void draw_uncert_afm_ntube_sp_tip() {
-  glPushMatrix();
-  glRotatef(90,0,1,0);
-  draw_uncert_cylinder(5,6);
-  glPopMatrix();
-}
-
-void draw_uncert_afm_sphere_ics_tip() {
-  draw_uncert_sphere(5);
-  glPushMatrix();
-  glTranslatef(0,0,-10);
-  draw_uncert_frustum(7,5,10);
-}
-
-void draw_uncert_afm_ntube_ics_tip() {
-  glPushMatrix();
-
-  glRotatef(90,0,1,0);
-  draw_uncert_cylinder(5,6);
-  glPopMatrix();
-  draw_uncert_sphere(5.);
-}
-
-void myDisplay()
-{
-  myGLUquadricObj *qobj;
-
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  double yaw = 30;
-  double pitch = 20;
-  
-  glTranslatef(2,2,2);
-  
-  // set tube yaw angle (in-plane rotation angle)
-  glRotatef(yaw, 0.0, 0.0, 1.0 ); 
-  
-  // set roll angle around tube axis
-  glRotatef(pitch,  0.0, 1.0, 0.0 );
-  
-
-  //  glRotatef(-90,1,0,0);
-  //  draw_uncert_afm_sphere_sp_tip();
-
-  //  glRotatef(-90,1,0,0);
-  //  draw_uncert_afm_sphere_ics_tip();
-
-  //  glRotatef(-90,1,0,0);
-  //  draw_uncert_afm_ntube_sp_tip();
-
-  glRotatef(-90,1,0,0);
-  draw_uncert_afm_ntube_ics_tip();
-
-  glFlush();
-  glutSwapBuffers();
-}
-
-void myReshape(int w, int h)
-{
-  glViewport(0,0,w,h);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  //  gluPerspective(30,(float)w/h,0.1,10);
-  glOrtho(-8,8,-8,8,-8,8);
-}
-
-void myIdle()
-{
-  glutPostRedisplay();
-}
-
-void KeyboardFunc(unsigned char Key, int x, int y)
-{
-  if (Key=='q') exit(0);
-}
-
-int main(void)
-{
-  glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-  glutInitWindowSize(512,512);
-  glutInitWindowPosition(180,100);
-  glutCreateWindow("The Robot Arm");
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_NORMALIZE);
-  glEnable(GL_CULL_FACE);
-
-  glutDisplayFunc(myDisplay);
-  glutReshapeFunc(myReshape);
-  glutIdleFunc(myIdle);
-
-  glutKeyboardFunc(KeyboardFunc);
-  glutMainLoop();
-  return 0;
-}
-#endif
