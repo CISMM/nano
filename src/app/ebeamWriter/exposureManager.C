@@ -6,6 +6,8 @@
 
 #define MAX_DWELL_TIME_SEC (2.14) // since we encode it in vrpn_int32/nsec
 
+//#define USE_POINT_MESSAGES
+
 ExposureManager::ExposureManager():
   d_exposure_uCoul_per_cm2(0),
   d_area_dwell_time_sec(0.000005),
@@ -29,24 +31,57 @@ void ExposureManager::convert_nm_to_DAC(
      const double x_nm, const double y_nm, int &xDAC, int &yDAC)
 {
   xDAC = (int)floor(x_nm*(double)d_xSpan_DACunits/d_xSpan_nm);
-  //yDAC = d_ySpan_DACunits - 
-  yDAC = (int)floor(y_nm*(double)d_ySpan_DACunits/d_ySpan_nm);
+  yDAC = d_ySpan_DACunits - 
+         (int)floor(y_nm*(double)d_ySpan_DACunits/d_ySpan_nm)-1;
   return;
+}
+
+void ExposureManager::getDwellTimes(double &line_sec, double &area_sec)
+{
+	line_sec = d_line_dwell_time_sec;
+	area_sec = d_area_dwell_time_sec;
+	return;
 }
 
 void ExposureManager::exposePattern(list<PatternShape> shapes,
                      list<PatternPoint> dump_points,
                      nmm_Microscope_SEM_Remote *sem, int mag)
 {
+#ifdef USE_POINT_MESSAGES
+
   list<PatternShape>::iterator shape;
   PatternPoint pnt_nm;
   double dwell_time_sec;
   vrpn_int32 dwell_time_nsec;
   int x_DAC, y_DAC;
+  int pointCount = 0;
 
   sem->getScanRegion_nm(d_xSpan_nm, d_ySpan_nm);
   sem->getMaxScan(d_xSpan_DACunits, d_ySpan_DACunits);
 
+  printf("starting test\n");
+  struct timeval start_time, end_time;
+  gettimeofday(&start_time, NULL);
+  for (shape = shapes.begin();
+       shape != shapes.end(); shape++) {
+    initShape(*shape);
+    while (getNextPoint(pnt_nm, dwell_time_sec)) {
+      dwell_time_nsec = (vrpn_int32)floor(d_line_dwell_time_sec*1e9);
+      convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
+      pointCount++;
+    }
+  }
+  gettimeofday(&end_time, NULL);
+  struct timeval elapsed_time = vrpn_TimevalDiff(end_time, start_time);
+  double elapsed_time_msec = vrpn_TimevalMsecs(elapsed_time);
+  double elapsed_time_sec = elapsed_time_msec*0.001;
+  double time_per_point_msec = elapsed_time_msec/(double)pointCount;
+  printf("ending test\n");
+  printf("%d points generated at %g msec per point\n",
+      pointCount, time_per_point_msec);
+
+
+  pointCount = 0;
   for (shape = shapes.begin();
        shape != shapes.end(); shape++) {
     printf("Starting shape\n");
@@ -56,6 +91,113 @@ void ExposureManager::exposePattern(list<PatternShape> shapes,
       sem->setPointDwellTime(dwell_time_nsec);
       convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
       sem->goToPoint(x_DAC, y_DAC);
+      pointCount++;
+      if (pointCount % 200 == 0) {
+         sem->mainloop();
+      }
+    }
+    printf("Finished with shape\n");
+  }
+#else 
+
+  list<PatternShape>::iterator shape;
+  list<PatternPoint>::iterator point;
+  vrpn_int32 numPoints;
+  vrpn_float32 exposure_uCoul_per_cm2;
+  vrpn_float32 lineWidth_nm;
+  vrpn_float32 *x_nm, *y_nm;
+  int i;
+
+  sem->setBeamCurrent(d_beam_current_picoAmps);
+  sem->setBeamWidth(d_beam_width_nm);
+  sem->clearExposePattern();
+
+  for (shape = shapes.begin();
+       shape != shapes.end(); shape++) {
+    numPoints = 0;
+    for (point = (*shape).pointListBegin();
+         point != (*shape).pointListEnd(); point++) {
+      numPoints++;
+    }
+    x_nm = new vrpn_float32[numPoints];
+    y_nm = new vrpn_float32[numPoints];
+    exposure_uCoul_per_cm2 = (*shape).d_exposure_uCoulombs_per_square_cm;
+    lineWidth_nm = (*shape).d_lineWidth_nm;
+    i = 0;
+    for (point = (*shape).pointListBegin();
+         point != (*shape).pointListEnd(); point++) {
+      x_nm[i] = (*point).d_x;
+      y_nm[i] = (*point).d_y;
+      i++;
+    }
+    if ((*shape).d_type == PS_POLYLINE) {
+      sem->addPolyline(exposure_uCoul_per_cm2, lineWidth_nm, numPoints, 
+                       x_nm, y_nm);
+    } else if ((*shape).d_type == PS_POLYGON){
+      sem->addPolygon(exposure_uCoul_per_cm2, numPoints, x_nm, y_nm);
+    }
+    delete [] x_nm;
+    delete [] y_nm;
+  }
+  sem->addDumpPoint(0.0, 0.0);
+  sem->exposePattern();
+
+#endif
+
+}
+
+void ExposureManager::exposePattern(list<PatternShape> shapes,
+                     list<PatternPoint> dump_points,
+                     nmm_Microscope_SEM_EDAX *sem, int mag)
+{
+  list<PatternShape>::iterator shape;
+  PatternPoint pnt_nm;
+  double dwell_time_sec;
+  vrpn_int32 dwell_time_nsec;
+  int x_DAC, y_DAC;
+  int pointCount = 0;
+
+  sem->getScanRegion_nm(d_xSpan_nm, d_ySpan_nm);
+  sem->getMaxScan(d_xSpan_DACunits, d_ySpan_DACunits);
+
+  printf("starting test\n");
+  struct timeval start_time, end_time;
+  gettimeofday(&start_time, NULL);
+  for (shape = shapes.begin();
+       shape != shapes.end(); shape++) {
+    initShape(*shape);
+    while (getNextPoint(pnt_nm, dwell_time_sec)) {
+      dwell_time_nsec = (vrpn_int32)floor(d_line_dwell_time_sec*1e9);
+      convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
+      pointCount++;
+    }
+  }
+  gettimeofday(&end_time, NULL);
+  struct timeval elapsed_time = vrpn_TimevalDiff(end_time, start_time);
+  double elapsed_time_msec = vrpn_TimevalMsecs(elapsed_time);
+  double elapsed_time_sec = elapsed_time_msec*0.001;
+  double time_per_point_msec = elapsed_time_msec/(double)pointCount;
+  printf("ending test\n");
+  printf("%d points generated at %g msec per point\n",
+      pointCount, time_per_point_msec);
+
+
+  pointCount = 0;
+  for (shape = shapes.begin();
+       shape != shapes.end(); shape++) {
+    printf("Starting shape\n");
+    initShape(*shape);
+	if ((*shape).d_type == PS_POLYLINE) {
+		dwell_time_nsec = (vrpn_int32)floor(d_line_dwell_time_sec*1e9);
+	} else {
+		dwell_time_nsec = (vrpn_int32)floor(d_area_dwell_time_sec*1e9);	
+	}
+	sem->setPointDwellTime(dwell_time_nsec, vrpn_FALSE);
+	
+    while (getNextPoint(pnt_nm, dwell_time_sec)) {
+      convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
+      sem->goToPoint(x_DAC, y_DAC, vrpn_FALSE);
+      pointCount++;
     }
     printf("Finished with shape\n");
   }
@@ -166,10 +308,10 @@ void ExposureManager::setExposure(double uCoul_per_cm2)
   }
  
   // now we know the dwell time and the dot spacing 
-  printf("line dwell time=%g sec\nline interdot dist=%g nm\n",
-         d_line_dwell_time_sec, d_line_inter_dot_dist_nm); 
-  printf("area dwell time=%g sec\narea interdot dist=%g nm\n",
-         d_area_dwell_time_sec, d_area_inter_dot_dist_nm);
+  printf("line dwell: %g usec; line dist: %g nm\n",
+         d_line_dwell_time_sec*1e6, d_line_inter_dot_dist_nm); 
+  printf("area dwell: %g usec; area dist: %g nm\n",
+         d_area_dwell_time_sec*1e6, d_area_inter_dot_dist_nm);
 
 }
 
@@ -496,13 +638,14 @@ vrpn_bool ExposureManager::getNextPoint(PatternPoint &point, double &time)
         d_activeEdgeEnd = d_activeEdgeBegin;
         d_activeEdgeEnd++;
 
+/*
         printf("%d: active edges:", d_currPolygonScanline);
         for (list<EdgeTableEntry>::iterator edge = d_activeEdgeTable.begin();
              edge != d_activeEdgeTable.end(); edge++) {
            printf("%g, ", (*edge).d_xMin);
         }
         printf("\n");
-
+*/
       } 
       // init d_nextExposePoint to ((d_activeEdgeBegin).d_xMin, 
       // d_currPolygonScanline*d_area_inter_dot_dist_nm + d_polygonMinYScan)

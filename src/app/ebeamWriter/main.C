@@ -21,6 +21,7 @@
 
 #include "nmr_Registration_Proxy.h"
 #include "nmm_Microscope_SEM_Remote.h"
+#include "nmm_Microscope_SEM_EDAX.h"
 #include "controlPanels.h"
 
 /* arguments:
@@ -66,7 +67,7 @@ static char transformFileName[256];
 static vrpn_bool semDeviceSet = VRPN_FALSE, alignerDeviceSet = VRPN_FALSE;
 static char semDeviceName[256];
 static char alignerDeviceName[256];
-
+static vrpn_bool virtualAcquisition = vrpn_FALSE;
 
 static TransformFile transformFile;
 
@@ -77,6 +78,9 @@ PatternEditor *patternEditor = NULL;
 nmr_Registration_Proxy *aligner = NULL;
 nmm_Microscope_SEM_Remote *sem = NULL;
 ControlPanels *controls = NULL;
+
+nmm_Microscope_SEM_EDAX *sem_server = NULL;
+vrpn_Connection *internal_device_connection = NULL;
 
 static Tcl_Interp *tk_control_interp;
 
@@ -155,7 +159,12 @@ int main(int argc, char **argv)
       printf("Opening SEM: %s\n", semDeviceName);
       sem = new nmm_Microscope_SEM_Remote(semDeviceName);
     } else {
-      sem = NULL;
+      internal_device_connection = new vrpn_Synchronized_Connection(4512);
+      sem_server = new nmm_Microscope_SEM_EDAX("localSEM",
+                                          internal_device_connection, 
+                                          virtualAcquisition);
+      sem = new nmm_Microscope_SEM_Remote("localSEM", 
+                                          internal_device_connection);
     }
 
 
@@ -199,6 +208,19 @@ int main(int argc, char **argv)
 
     ImageViewer *image_viewer = ImageViewer::getImageViewer();
 
+    if (sem_server) {
+      sem_server->reportResolution();
+      sem_server->reportPixelIntegrationTime();
+      sem_server->reportInterPixelDelayTime();
+      sem_server->reportMaxScanSpan();
+      sem_server->reportBeamBlankEnable();
+      sem_server->reportPointDwellTime();
+      sem_server->reportRetraceDelays();
+      sem_server->reportDACParams();
+      sem_server->reportExternalScanControlEnable();
+      sem_server->reportMagnification();
+    }
+
     while(!timeToQuit){
       glutProcessEvents_UNC();
       while (Tk_DoOneEvent(TK_DONT_WAIT)) {};
@@ -209,6 +231,12 @@ int main(int argc, char **argv)
 
       if (sem) {
           sem->mainloop();
+      }
+      if (internal_device_connection){
+          internal_device_connection->mainloop();
+      }
+      if (sem_server) {
+          sem_server->mainloop();
       }
       if (aligner) {
           aligner->mainloop();
@@ -256,6 +284,8 @@ static int parseArgs(int argc, char **argv)
        if (++i == argc) usage(argv[0]);
        sprintf(alignerDeviceName, "%s", argv[i]);
        alignerDeviceSet = vrpn_TRUE;
+    } else if (strcmp(argv[i], "-virtualacq") == 0) {
+       virtualAcquisition = vrpn_TRUE;
     } else {
        usage(argv[0]);
     }

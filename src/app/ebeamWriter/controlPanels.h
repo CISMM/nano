@@ -21,6 +21,7 @@ class ControlPanels {
    void setImageList(nmb_ImageList *data);
    nmb_ListOfStrings *imageNameList();
 
+   void displayDwellTimes();
  protected:
    // callback stuff
    void setupCallbacks();
@@ -28,6 +29,9 @@ class ControlPanels {
    static void handle_openImageFileName_change(const char *new_value, void *ud);
    static void handle_bufferImageFileName_change(const char *new_value, 
                                                  void *ud);
+   static void handle_saveImageFileName_change(const char *new_value,
+                                                 void *ud);
+   static void handle_saveImageName_change(const char *new_value, void *ud);
 
    static void handle_lineWidth_nm_change(double new_value, void *ud);
    static void handle_exposure_change(double new_value, void *ud);
@@ -86,9 +90,13 @@ class ControlPanels {
 
    // file menu
    Tclvar_list_of_strings *d_bufferImageFormatList;
+   Tclvar_list_of_strings *d_saveImageFormatList;
    Tclvar_string d_openImageFileName;
    Tclvar_string d_bufferImageFileName;
    Tclvar_string d_bufferImageFormat;
+   Tclvar_string d_saveImageFileName;
+   Tclvar_string d_saveImageFileType;
+   Tclvar_string d_saveImageName;
    Tclvar_string d_openTransformFileName;
    Tclvar_string d_transformFileName;
    Tclvar_string d_openPatternFileName;

@@ -3,6 +3,7 @@
 
 #include "patternEditor.h"
 #include "nmm_Microscope_SEM_Remote.h"
+#include "nmm_Microscope_SEM_EDAX.h"
 
 class EdgeTableEntry {
  public:
@@ -35,6 +36,10 @@ class ExposureManager {
   void exposePattern(list<PatternShape> shapes, 
                      list<PatternPoint> dump_points,
                      nmm_Microscope_SEM_Remote *sem, int mag);
+  void exposePattern(list<PatternShape> shapes,
+                     list<PatternPoint> dump_points,
+                     nmm_Microscope_SEM_EDAX *sem, int mag);
+
   void setExposure(double uCoul_per_cm);
   void setColumnParameters(double minDwellTime_sec,
                            double beamWidth_nm,
@@ -43,6 +48,7 @@ class ExposureManager {
   vrpn_bool getNextPoint(PatternPoint &point, double &time);
   void convert_nm_to_DAC(const double x_nm, const double y_nm, 
                          int &xDAC, int &yDAC);
+  void getDwellTimes(double &line_sec, double &area_sec);
 
  private:
   // helper function for initShape and getNextPoint

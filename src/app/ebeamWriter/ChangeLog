@@ -1,3 +1,29 @@
+2001-05-14  Adam Seeger  <seeger@cs.unc.edu>
+
+	* controlPanels.C : added code to let you save data images
+		started adding stuff for saving resampled data (not just
+		screen buffer because this doesn't give enough control over
+		resolution or blending algorithms)
+                commented out several printfs for messages and added one
+		to let you see how dwell times are affected by changing
+		various exposure-related parameters
+	* exposureManager.C : added code to use shape messages instead of
+		decomposing the pattern into point messages
+		and moves this file's point calculations into the server (this
+		file is now compiled into the server)
+		(exposePattern): new version of this that operates inside the
+		server code instead of the client code so that point 
+		calculations can be done inside the server
+                (getDwellTimes): returns the dwell times for point and area
+		exposures as determined by previous calls to set exposure
+		parameters
+		(getNextPoint): commented out debugging printout for 
+		polygon scan conversion
+	* main.C : added stuff for running SEM server in the same process
+	* patternEditor.Ch : moved PatternShape and PatternPoint classes into
+		a separate file called exposurePattern.Ch
+	* exposurePattern.Ch : new file - see previous note
+
 2001-03-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* patternEditor.C : changes to load textures without using mipmapping

@@ -1,24 +1,24 @@
-# Microsoft Developer Studio Project File - Name="seegerizer" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="fakeSEM" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Console Application" 0x0103
 
-CFG=seegerizer - Win32 Debug
+CFG=fakeSEM - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
-!MESSAGE NMAKE /f "seegerizer.mak".
+!MESSAGE NMAKE /f "fakeSEM.mak".
 !MESSAGE 
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "seegerizer.mak" CFG="seegerizer - Win32 Debug"
+!MESSAGE NMAKE /f "fakeSEM.mak" CFG="fakeSEM - Win32 Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "seegerizer - Win32 Release" (based on "Win32 (x86) Console Application")
-!MESSAGE "seegerizer - Win32 Debug" (based on "Win32 (x86) Console Application")
+!MESSAGE "fakeSEM - Win32 Release" (based on "Win32 (x86) Console Application")
+!MESSAGE "fakeSEM - Win32 Debug" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 
 # Begin Project
@@ -28,7 +28,7 @@ CFG=seegerizer - Win32 Debug
 CPP=cl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "seegerizer - Win32 Release"
+!IF  "$(CFG)" == "fakeSEM - Win32 Release"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
@@ -51,17 +51,17 @@ LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
 
-!ELSEIF  "$(CFG)" == "seegerizer - Win32 Debug"
+!ELSEIF  "$(CFG)" == "fakeSEM - Win32 Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "Debug"
-# PROP BASE Intermediate_Dir "Debug"
+# PROP BASE Output_Dir "fakeSEM___Win32_Debug"
+# PROP BASE Intermediate_Dir "fakeSEM___Win32_Debug"
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "Debug"
-# PROP Intermediate_Dir "Debug"
+# PROP Output_Dir "fakeSEM___Win32_Debug"
+# PROP Intermediate_Dir "fakeSEM___Win32_Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
@@ -79,8 +79,8 @@ LINK32=link.exe
 
 # Begin Target
 
-# Name "seegerizer - Win32 Release"
-# Name "seegerizer - Win32 Debug"
+# Name "fakeSEM - Win32 Release"
+# Name "fakeSEM - Win32 Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -183,6 +183,19 @@ SOURCE=..\nano\lib\nmSEM\nmm_EDAX.C
 # Begin Source File
 
 SOURCE=..\nano\lib\nmSEM\nmm_Microscope_SEM.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\sem\nmm_Microscope_SEM_EDAX.C
+
+!IF  "$(CFG)" == "fakeSEM - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "fakeSEM - Win32 Debug"
+
+# ADD CPP /D "VIRTUAL_SEM"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
@@ -294,10 +307,6 @@ SOURCE=.\exposurePattern.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\nano\lib\nmReg\f2c.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\lib\ImgFormat\ImageMaker.h
 # End Source File
 # Begin Source File
@@ -307,10 +316,6 @@ SOURCE=..\..\lib\nmImageViewer\imageViewer.h
 # Begin Source File
 
 SOURCE=..\nano\lib\nmReg\linLeastSqr.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\lib\nmBase\nmb_Debug.h
 # End Source File
 # Begin Source File
 
@@ -334,15 +339,15 @@ SOURCE=..\..\lib\nmBase\nmb_TimerList.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\lib\nmBase\nmb_Types.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\nano\lib\nmSEM\nmm_EDAX.h
 # End Source File
 # Begin Source File
 
 SOURCE=..\nano\lib\nmSEM\nmm_Microscope_SEM.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\sem\nmm_Microscope_SEM_EDAX.h
 # End Source File
 # Begin Source File
 
@@ -358,14 +363,6 @@ SOURCE=..\nano\lib\nmReg\nmr_Registration_Impl.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\nano\lib\nmReg\nmr_Registration_ImplUI.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\nano\lib\nmReg\nmr_Registration_Interface.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\nano\lib\nmReg\nmr_Registration_Proxy.h
 # End Source File
 # Begin Source File
@@ -374,19 +371,11 @@ SOURCE=..\nano\lib\nmReg\nmr_Registration_Server.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\nano\lib\nmReg\nmr_RegistrationUI.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\nano\lib\nmReg\nmr_Util.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\patternEditor.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\lib\ImgFormat\PixelBuffer.h
 # End Source File
 # Begin Source File
 
@@ -424,63 +413,6 @@ SOURCE=..\nano\lib\nmReg\transformSolve.h
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
-# End Group
-# Begin Group "EDAX"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=..\sem\clmctrl.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\sem\imgboard.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\sem\nmm_Microscope_SEM_EDAX.C
-
-!IF  "$(CFG)" == "seegerizer - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "seegerizer - Win32 Debug"
-
-# ADD CPP /D "VIRTUAL_SEM"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\sem\nmm_Microscope_SEM_EDAX.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\sem\semmsgid.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\sem\srchfld.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\sem\stgctrl.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\sem\Pwedam32.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\sem\pwimg32.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\sem\stgctl32.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\sem\edaxfi32.lib
-# End Source File
 # End Group
 # End Target
 # End Project

@@ -3,12 +3,18 @@
 #include "nmm_EDAX.h"
 #include "nmb_ImageTransform.h"
 
+static int expose_point_count = 0;
+
 ControlPanels::ControlPanels(PatternEditor *pe,
                              nmr_Registration_Proxy *rp,
                              nmm_Microscope_SEM_Remote *sem):
    d_imageNames(new Tclvar_list_of_strings()),
    d_bufferImageFormatList(new Tclvar_list_of_strings()),
    d_openImageFileName("open_image_filename", ""),
+   d_saveImageFileName("save_image_filename", ""),
+   d_saveImageFileType("save_image_filetype", ""),
+   d_saveImageName("export_plane", ""),
+   d_saveImageFormatList(new Tclvar_list_of_strings()),
    d_bufferImageFileName("bufferImage_filename", ""),
    d_bufferImageFormat("bufferImage_format", ""),
    d_lineWidth_nm("line_width_nm", 0),
@@ -73,6 +79,8 @@ ControlPanels::ControlPanels(PatternEditor *pe,
   for (i = 0; i < ImageType_count; i++)
     d_bufferImageFormatList->addEntry(ImageType_names[i]);
 
+  d_saveImageFormatList->initializeTcl("save_image_format_list");
+
   setupCallbacks();
   ImageViewer *image_viewer = ImageViewer::getImageViewer();
   d_semWinID = image_viewer->createWindow(NULL, 10, 10, 
@@ -128,11 +136,29 @@ nmb_ListOfStrings *ControlPanels::imageNameList()
    return (nmb_ListOfStrings*)d_imageNames;
 }
 
+void ControlPanels::displayDwellTimes()
+{
+  double beam_width_nm = (double)(d_semBeamWidth_nm);
+  double beamCurrent = (double)(d_semBeamCurrent_picoAmps);
+  double exposure = (double)(d_exposure_uCoulombs_per_square_cm);
+
+  d_exposureManager->setColumnParameters(100e-6,
+										beam_width_nm,
+										beamCurrent);
+  d_exposureManager->setExposure(exposure);
+  double line_dwell_sec, area_dwell_sec;
+  d_exposureManager->getDwellTimes(line_dwell_sec, area_dwell_sec);
+  printf("line: %g usec, area: %g usec\n", line_dwell_sec*1e6, area_dwell_sec*1e6);
+
+}
+
 void ControlPanels::setupCallbacks()
 {
   // control panel variable callbacks
   d_bufferImageFileName.addCallback(handle_bufferImageFileName_change, this);
   d_openImageFileName.addCallback(handle_openImageFileName_change, this);
+  d_saveImageFileName.addCallback(handle_saveImageFileName_change, this);
+  d_saveImageName.addCallback(handle_saveImageName_change, this);
 
   d_lineWidth_nm.addCallback(handle_lineWidth_nm_change, this);
   d_exposure_uCoulombs_per_square_cm.addCallback(handle_exposure_change, this);
@@ -246,6 +272,69 @@ void ControlPanels::handle_bufferImageFileName_change(
                              filetype);
 }
 
+//static
+void ControlPanels::handle_saveImageName_change(const char * /*new_value*/,
+                                                void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  // figure out what the valid file types are for this image and set 
+  // the type list accordingly
+  nmb_Image *im = me->d_imageList->getImageByName(
+                          (const char *)me->d_saveImageName);
+  if (!im) {
+    fprintf(stderr, "error, couldn't find image: %s\n",
+                          (const char *)me->d_saveImageName);
+    return;
+  }
+  
+  me->d_saveImageFormatList->copyList(im->exportFormatNames());
+}
+
+//static
+void ControlPanels::handle_saveImageFileName_change(const char * /*new_value*/,
+                                                    void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  printf("save plane %s to file %s with format %s\n",
+                    (const char *)me->d_saveImageName,
+                    (const char *)me->d_saveImageFileName,
+                    (const char *)me->d_saveImageFileType);
+
+  if (strlen(me->d_saveImageFileName) > 0) {
+      // Find which plane we are going to export.
+      nmb_Image *im = me->d_imageList->getImageByName
+                                      (me->d_saveImageName.string());
+      if (im == NULL) {
+        fprintf(stderr, "Couldn't find this data to save: %s\n",
+                me->d_saveImageName.string());
+        return;
+      }
+
+      // find out which type of file we are writing, and write it.
+
+      FILE *file_ptr;
+      // "wb" stands for write binary - so it should work on PC platforms, too.
+      file_ptr=fopen(me->d_saveImageFileName.string(),"wb");
+      if(file_ptr==NULL){
+          fprintf(stderr, "Couldn't open this file: %s\n"
+                                "Please try another name or directory",
+                                me->d_saveImageFileName.string());
+          return;
+      }
+
+      if (im->exportToFile(file_ptr, me->d_saveImageFileType.string())) {
+          fprintf(stderr, "Couldn't write to this file: %s\n"
+                                "Please try another name or directory",
+                                me->d_saveImageFileName.string());
+        fclose(file_ptr);
+        return;
+      }
+      fclose(file_ptr);
+
+  }
+  me->d_saveImageFileName = "";
+}
+
 // static
 void ControlPanels::handle_lineWidth_nm_change(double /*new_value*/, void *ud)
 {
@@ -259,9 +348,10 @@ void ControlPanels::handle_lineWidth_nm_change(double /*new_value*/, void *ud)
 void ControlPanels::handle_exposure_change(double /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("exposure: %g\n", (double)(me->d_exposure_uCoulombs_per_square_cm));
+//  printf("exposure: %g\n", (double)(me->d_exposure_uCoulombs_per_square_cm));
   me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth_nm),
                     (double)(me->d_exposure_uCoulombs_per_square_cm));
+  me->displayDwellTimes();
 }
 
 // static
@@ -518,7 +608,7 @@ void ControlPanels::handleSEMChange(
                         const nmm_Microscope_SEM_ChangeHandlerData &info)
 {
   static vrpn_int32 last_dwell_time = 0;
-  static int point_count = 0;
+  static struct timeval first_expose_time;
   vrpn_int32 res_x, res_y;
   vrpn_int32 time_nsec = 0;
   vrpn_int32 enabled;
@@ -707,11 +797,20 @@ void ControlPanels::handleSEMChange(
       break;
     case nmm_Microscope_SEM::BEAM_LOCATION:
       info.sem->getBeamLocation(x, y);
-      point_count++;
-      if (point_count % 1000 == 0) {
-         printf("%d points exposed\n", point_count);
+      if (expose_point_count == 0) {
+         first_expose_time = info.msg_time;
       }
-      printf("BEAM_LOCATION: %d, %d\n", x, y);
+      expose_point_count++;
+      if (expose_point_count % 10000 == 0) {
+         printf("%d points exposed\n", expose_point_count);
+         struct timeval total_time = vrpn_TimevalDiff(info.msg_time, 
+                                                      first_expose_time);
+         double total_time_msec = vrpn_TimevalMsecs(total_time);
+         double avg_dwell_time_msec = total_time_msec/
+                                      (double)expose_point_count;
+         printf("avg dwell time= %g msec\n", avg_dwell_time_msec);
+      }
+//      printf("BEAM_LOCATION: %d, %d\n", x, y);
       break;
     case nmm_Microscope_SEM::RETRACE_DELAYS:
       info.sem->getRetraceDelays(h_time_nsec, v_time_nsec);
@@ -784,6 +883,11 @@ void ControlPanels::handle_resampleImageName_change(
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("new resampled image: %s\n",(const char *)me->d_resampleImageName);
+  printf("resampling %s onto %s at resolution %dx%d\n",
+          (const char *)me->d_sourceImageName, 
+          (const char *)me->d_targetImageName,
+          me->d_resampleResolutionX, me->d_resampleResolutionY);
+
   printf("this feature is disabled\n");
 /*
   if (me->d_imageList == NULL){
@@ -1028,7 +1132,8 @@ void ControlPanels::handle_semExposureMagnification_change(
 void ControlPanels::handle_semBeamWidth_change(double /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("sem beam width: %g\n",(double)me->d_semBeamWidth_nm);
+//  printf("sem beam width: %g\n",(double)me->d_semBeamWidth_nm);
+  me->displayDwellTimes();
 }
 
 
@@ -1036,7 +1141,8 @@ void ControlPanels::handle_semBeamWidth_change(double /*new_value*/, void *ud)
 void ControlPanels::handle_semBeamCurrent_change(double /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("sem beam current: %g\n",(double)me->d_semBeamCurrent_picoAmps);
+//  printf("sem beam current: %g\n",(double)me->d_semBeamCurrent_picoAmps);
+  me->displayDwellTimes();
 }
 
 // static
@@ -1059,6 +1165,7 @@ void ControlPanels::handle_semBeamExposePushed_change(int /*new_value*/,
   }
   me->d_exposureManager->setColumnParameters(dwell_time_sec,
               beam_width_nm, beamCurrent);
+  expose_point_count = 0;
   me->d_exposureManager->exposePattern(me->d_patternEditor->shapeList(),
                                        me->d_patternEditor->dumpPointList(),
                                      me->d_SEM, me->d_semExposureMagnification);
