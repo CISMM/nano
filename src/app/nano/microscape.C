@@ -7337,12 +7337,12 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
     // Check for NANO_ROOT env var. If other things aren't set, 
     // they can be set relative to NANO_ROOT by default. 
     char * nano_root = NULL;
-/*    if (getenv("NANO_ROOT")) {
+    if (getenv("NANO_ROOT")) {
         // Do it this way so we know we can delete [] below, 
         // and avoid memory leaks. 
         nano_root = new char [strlen(getenv("NANO_ROOT")) + 1];
         strcpy(nano_root, getenv("NANO_ROOT"));
-    }*/
+    }
     tcl_script_dir=getenv("NM_TCL_DIR");
     colorMapDir=getenv("NM_COLORMAP_DIR");
     char *env_string = NULL; 

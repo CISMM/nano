@@ -1,3 +1,7 @@
+2002-06-24  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.C (initialize_environment):  restores NANO_ROOT.
+
 2002-06-21 Charles Mason <mason@cs.unc.edu>
 	
 	* minit.c (handle_magellan_puck_change): fixed bug when
