@@ -11,6 +11,7 @@
 #include "nmb_FlattenedPlane.h"
 #include "nmb_LBLFlattenedPlane.h"
 #include "nmb_SummedPlane.h"
+#include "nmb_Debug.h"
 
 #ifdef _WIN32
 // turns off warning C4290: C++ Exception Specification ignored
@@ -77,6 +78,8 @@ nmb_CalculatedPlane( const char* planeName, nmb_Dataset* dataset )
 #endif
   // calculatedPlaneName is now set
   
+  VERBOSE( 1, "Creating new calcuated plane named:  " );
+  VERBOSE( 1, calculatedPlaneName );
   BCPlane* calculatedPlane 
     = dataset->inputGrid->getPlaneByName( calculatedPlaneName );
   
@@ -172,6 +175,7 @@ BCPlane* nmb_CalculatedPlane::
 getCalculatedPlane( )
 { return calculatedPlane; }
 
+
 const BCString* nmb_CalculatedPlane:: 
 getName( )
 {
@@ -180,7 +184,6 @@ getName( )
    else
       return NULL;
 }
-
 
 
 void nmb_CalculatedPlane:: 
@@ -321,6 +324,26 @@ removeNewCalculatedPlaneCallback( void* userdata,
   
 } // end removeNewCalculatedPlaneCallback( ... )
 
+
+/* static */
+nmb_CalculatedPlane* nmb_CalculatedPlane::
+getCalculatedPlane( char* calculatedPlaneName )
+{
+  if( calculatedPlaneName == NULL )
+    return NULL;
+
+  nmb_CalculatedPlaneNode* node = calculatedPlaneList_head;
+  while( node != NULL && 
+         strcmp( node->data->getName()->Characters(), calculatedPlaneName ) != 0 )
+  {
+    node = node->next;
+  }
+  if( node == NULL )
+    return NULL;
+  else
+    return node->data;
+
+} // end getCalculatedPlane(...)
 
 
 nmb_CalculatedPlaneCreationException::

@@ -299,6 +299,27 @@ _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
   outputPlaneName[outputPlaneNameLen] = '\0';
   sourcePlaneName[sourcePlaneNameLen] = '\0';
 
+  // test for idempotency
+  nmb_FlattenedPlane* samePlane 
+    = dynamic_cast<nmb_FlattenedPlane*>( nmb_CalculatedPlane::getCalculatedPlane( outputPlaneName ) );
+  // samePlane will be NULL EITHER if there is currently no plane of the given name,
+  // OR if the run-time identified type of the plane with the given name is not 
+  // nmb_FlattenedPlane
+  if( samePlane != NULL )
+  { // see if we got a message to recreate the same plane
+    if( dx == samePlane->dx
+        && dy == samePlane->dy
+        && offset == samePlane->offset
+        && strcmp( sourcePlaneName, samePlane->sourcePlane->name()->Characters() ) == 0 )
+    {
+      // the requested plane is exactly the same as one that already exists,
+      // so don't change anything
+      delete outputPlaneName;
+      delete sourcePlaneName;
+      return samePlane;
+    }
+  }
+
   nmb_FlattenedPlane* newFlatPlane 
      = new nmb_FlattenedPlane( sourcePlaneName, outputPlaneName, dataset );
   newFlatPlane->dx = dx;

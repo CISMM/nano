@@ -232,6 +232,28 @@ _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
   sourcePlaneName2[sourcePlaneNameLen2] = '\0';
   outputPlaneName[outputPlaneNameLen] = '\0';
 
+  // test for idempotency
+  nmb_SummedPlane* samePlane 
+    = dynamic_cast<nmb_SummedPlane*>( nmb_CalculatedPlane::getCalculatedPlane( outputPlaneName ) );
+  // samePlane will be NULL EITHER if there is currently no plane of the given name,
+  // OR if the run-time identified type of the plane with the given name is not 
+  // nmb_SummedPlane
+  if( samePlane != NULL )
+  { // see if we got a message to recreate the same plane
+    if( scale == samePlane->scale
+        && strcmp( sourcePlaneName1, samePlane->sourcePlane1->name()->Characters() ) == 0 
+        && strcmp( sourcePlaneName2, samePlane->sourcePlane2->name()->Characters() ) == 0 )
+    {
+      // the requested plane is exactly the same as one that already exists,
+      // so don't change anything
+      delete outputPlaneName;
+      delete sourcePlaneName1;
+      delete sourcePlaneName2;
+      return samePlane;
+    }
+  }
+
+
   nmb_SummedPlane* newSummedPlane 
     = new nmb_SummedPlane( sourcePlaneName1, sourcePlaneName2, scale, 
                            outputPlaneName, dataset );

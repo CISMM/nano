@@ -69,7 +69,7 @@ class nmb_CalculatedPlane
 {
 public:
 
-  // Accessor.  Returns that calculated plane.
+  // Accessor.  Returns the plane calculated.
   BCPlane* getCalculatedPlane( );
 
   // Accessor.  Returns the name of the calculated plane.
@@ -105,6 +105,11 @@ public:
   static void
   removeNewCalculatedPlaneCallback( void* userdata,
 				    NewCalculatedPlaneCallback* callback );
+  
+  // Returns a pointer to the calculated plane of the specified
+  // name, or NULL if no such plane exists.
+  static nmb_CalculatedPlane* 
+  getCalculatedPlane( char* calculatedPlaneName );
 
   // removes this plane and all planes that depend on it.
   virtual ~nmb_CalculatedPlane( );

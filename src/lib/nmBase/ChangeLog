@@ -1,3 +1,12 @@
+2002-03-04  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmb_CalculatedPlane.Ch (getCalculatedPlane):  new function; returns
+	the calculated plane of a given name, if one exists.
+	* nmb_FlattenedPlane.C (_handle_PlaneSynch):  test for and ignore
+	idempotent plane creation messages.
+	* nmb_LBLFlattenedPlane.C (_handle_PlaneSynch):  same
+	* nmb_SummedPlane.C (_handle_PlaneSynch):  same
+
 2002-02-15  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_Dataset.Ch (nmb_Dataset): Added d_topoFile data member,
