@@ -107,6 +107,7 @@ pid_t getpid();
 #include <Topo.h>
 #include "Timer.h"
 #include "microscopeHandlers.h"
+#include "collaboration.h"
 #include "microscape.h"
 
 /*********** Import Objects **************/
@@ -349,17 +350,15 @@ int headSensor [NUM_USERS];
 int handSensor [NUM_USERS];
 
 // NANOX
-/** collaboratingPeerServerConnection carries shared data for
+
+/** collaborationManager carries shared data for
  hand tracking, streamfile synchronization, and
- view sharing. */
-static vrpn_Connection *
-                collaboratingPeerServerConnection = NULL;
-static vrpn_Connection *
-                collaboratingPeerRemoteConnection = NULL;
-static vrpn_Connection *
-                interfaceLogConnection = NULL;
-// This should eventually be generalized to a set of collaborating
-// remote peers.
+ view sharing.
+ This should eventually be generalized to a set of collaborating
+ remote peers. 
+ Needs to be global so we can clean up after it. */
+
+CollaborationManager * collaborationManager = NULL;
 
 
 ///These are used in tracking a remote user's hand position.
@@ -860,11 +859,6 @@ TclNet_string collab_machine_name ("collab_machine_name", "");
 TclNet_int request_mutex ("request_mutex", 0);
 TclNet_int release_mutex ("release_mutex", 0);
 
-static vrpn_bool loggingInterface = VRPN_FALSE;
-static vrpn_bool replayingInterface = VRPN_FALSE;
-static char loggingPath [256];
-static timeval loggingTimestamp;
-
 
 Tclvar_int tcl_center_pressed ("center_pressed", 0, handle_center_pressed);
 
@@ -956,9 +950,7 @@ static vrpn_bool set_mode = VRPN_FALSE; ///< Should we set tap/con at startup?
  ********/
 
 ///Names of tracker and server for following a remote user's hand position
-static char collab_handTrackerName [256];
 static char nM_coord_change_server_name [256];
-static char collab_ModeName [256];
 static char local_ModeName [256];
 
 /*********
@@ -1169,13 +1161,11 @@ void shutdown_connections (void) {
 
   //display_realign_textures.bindConnection(NULL);
 
-  if (interfaceLogConnection) {
     share_sync_state.bindConnection(NULL);
     copy_inactive_state.bindConnection(NULL);
       copy_to_private_state.bindConnection(NULL);
       copy_to_shared_state.bindConnection(NULL);
     collab_machine_name.bindConnection(NULL);
-  }
 
   // output stream should be closed by microscope destructor,
   // WHICH WE MUST EXPLICITLY DELETE!
@@ -1230,19 +1220,10 @@ void shutdown_connections (void) {
     vicurve_connection = NULL;
   }
 
-  if (collaboratingPeerServerConnection) {
-    delete collaboratingPeerServerConnection;
-    collaboratingPeerServerConnection = NULL;
+  if (collaborationManager) {
+    delete collaborationManager;
+    collaborationManager = NULL;
   }
-  if (collaboratingPeerRemoteConnection) {
-    delete collaboratingPeerRemoteConnection;
-    collaboratingPeerRemoteConnection = NULL;
-  }
-  if (interfaceLogConnection) {
-    delete interfaceLogConnection;
-    interfaceLogConnection = NULL;
-  }
-
 }
 
 /*********
@@ -1558,168 +1539,34 @@ static void handle_load_button_press_change (vrpn_int32 /*new_value*/, void * /*
   }
 }
 
-// NANOX
-static void getPeerRemote (const char * hostname) {
-  char buf [256];
-  char sfbuf [1024];
-
-  sprintf(buf, "%s:%d", hostname, wellKnownPorts->collaboratingPeerServer);
-  if (replayingInterface) {
-    sprintf(sfbuf, "file:%s/SharedIFRemLog-%ld.stream", loggingPath,
-            loggingTimestamp.tv_sec);
-    collaboratingPeerRemoteConnection =
-      vrpn_get_connection_by_name (sfbuf);
-  } else {
-    sprintf(sfbuf, "%s/SharedIFRemLog-%ld.stream", loggingPath,
-            loggingTimestamp.tv_sec);
-    collaboratingPeerRemoteConnection = vrpn_get_connection_by_name (buf,
-             loggingInterface ? sfbuf : NULL,
-             loggingInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
-                        vrpn_LOG_NONE);
-  }
-}
 
 static void handle_collab_machine_name_change
                    (const char * new_value,
-                    void * /*userdata*/ )
-{
-    //char buf [256];
-  char sfbuf [1024];
-
-  if (!new_value || !strlen(new_value)) {
-    // transitory excitement during startup
-    return;
-  }
-
-  // Open the remote tracker object to follow the collaborator's hand
-  sprintf(sfbuf, "%s/SharedIFRemLog-%ld.stream", loggingPath,
-          loggingTimestamp.tv_sec);
-  if (replayingInterface) {
-    sprintf(collab_handTrackerName, "ccs0@file:%s", sfbuf);
-    sprintf(collab_ModeName, "Cmode0@file:%s", sfbuf);
-  } else {
-    sprintf(collab_handTrackerName, "ccs0@%s:%d", new_value,
-            wellKnownPorts->collaboratingPeerServer);
-    sprintf(collab_ModeName, "Cmode0@%s:%d", new_value,
-            wellKnownPorts->collaboratingPeerServer);
-
-    //if (loggingInterface) {
-      //sprintf(buf, "%s:%d", new_value,
-              //wellKnownPorts->collaboratingPeerServer);
-      //vrpn_get_connection_by_name (buf, sfbuf,
-                                   //vrpn_LOG_INCOMING);
-    //}
-    getPeerRemote(new_value);  // make sure logging happens
-  }
-
-fprintf(stderr, "peer machine name: %s\n", new_value);
-fprintf(stderr, "collab_ModeName: %s\n", collab_ModeName);
-
-  vrpnHandTracker_collab[0] = new vrpn_Tracker_Remote(collab_handTrackerName);
-  if (vrpnHandTracker_collab[0] != NULL) {
-    vrpnHandTracker_collab[0]->register_change_handler
-      ((void *)&V_TRACKER_FROM_HAND_SENSOR,
-       handle_collab_sensor2tracker_change);
-  }
-
-  // Open the remote analog object to track the collaborator's mode
-  vrpnMode_collab[0] = new vrpn_Analog_Remote(collab_ModeName);
-  if (vrpnMode_collab[0] != NULL) {
-    vrpnMode_collab[0]->register_change_handler
-      (NULL, handle_collab_mode_change);
-  }
-}
-
-static void handle_collab_machine_name_change2
-                   (const char * new_value,
                     void * userdata)
 {
-  nmui_Component * uic = (nmui_Component *) userdata;
   char hnbuf [256];
-  char buf [256];
-  vrpn_int32 newConnection_type;
-  vrpn_bool should_synchronize;
 
   if (!new_value || !strlen(new_value)) {
     // transitory excitement during startup
     return;
   }
 
-  getPeerRemote(new_value);
+  CollaborationManager * cm;
+  cm = (CollaborationManager *) userdata;
 
-  sprintf(buf, "%s:%d", new_value, wellKnownPorts->collaboratingPeerServer);
-  if (collaboratingPeerRemoteConnection &&
-      collaboratingPeerRemoteConnection->doing_okay()) {
-
-    // XXX Only handles two-way case right now:  figures out who comes
-    // first alphabetically, us or the peer.  To handle n-way either need
-    // complete list of participating hosts at the beginning or need to
-    // finish implementing serializer migration protocol.
-
-    gethostname(hnbuf, 256);
-fprintf(stderr, "## My name is %s, new peer is %s:  ", hnbuf, buf);
-    if (strcmp(hnbuf, buf) < 0) {
-fprintf(stderr, "serializer.\n");
-      should_synchronize = VRPN_TRUE;
-    } else {
-fprintf(stderr, "client.\n");
-      should_synchronize = VRPN_FALSE;
-    }
-
-    switch (should_synchronize) {
-      case VRPN_TRUE:
-        uic->addPeer(collaboratingPeerServerConnection, should_synchronize);
-        break;
-      case VRPN_FALSE:
-        uic->addPeer(collaboratingPeerRemoteConnection, should_synchronize);
-        break;
-    }
-//fprintf(stderr, "Called addPeer() on component for %s.\n", buf);
-    uic->initializeConnection(collaboratingPeerRemoteConnection);
-//fprintf(stderr, "## Called initializeConnection(%ld) on component for %s.\n",
-//collaboratingPeerRemoteConnection, buf);
-
-
-    // register callbacks if need be - HACK assume necessary
-    // IF this connection isn't valid, or is dropped and reconnected later,
-    // this callback renegotiates the sender and type IDs.
-    newConnection_type = collaboratingPeerRemoteConnection->
-               register_message_type (vrpn_got_connection);
-    collaboratingPeerRemoteConnection->register_handler
-      (newConnection_type, nmui_Component::handle_reconnect, uic);
+  if (cm) {
+    cm->setPeerName
+           (new_value,
+            (void *) &V_TRACKER_FROM_HAND_SENSOR,
+            handle_collab_sensor2tracker_change,
+            NULL, handle_collab_mode_change);
   }
-
 
   sprintf(hnbuf, "%s:%d", new_value, wellKnownPorts->microscopeMutex);
   fprintf(stderr, "Adding a peer named %s to the mutex.\n", hnbuf);
   microscope->addPeer(hnbuf);
 }
 
-static void handle_collab_machine_name_change3
-                   (const char * new_value,
-                    void * userdata)
-{
-  nmui_PlaneSync * ps;
-
-  ps = (nmui_PlaneSync *) userdata;
-
-//fprintf(stderr, "In handle_collab_machine_name_change3 to %s.\n", new_value);
-
-  if (!new_value || !strlen(new_value)) {
-    // transitory excitement during startup
-    return;
-  }
-
-  getPeerRemote(new_value);
-
-  // plane sync object also needs to know the name of collaborator
-  // to uniquely identify planes created.
-  ps->addPeer(collaboratingPeerRemoteConnection, new_value);
-
-  if (nM_coord_change_server) {
-    nM_coord_change_server->bindConnection(collaboratingPeerRemoteConnection);
-  }
-}
 
 void updateRulergridOffset (void) {
  if (rulergrid_position_line && rulergrid_enabled) {
@@ -1956,9 +1803,10 @@ Currently assumes that only the most recently added peer is
 */
 static void handle_synchronize_timed_change (vrpn_int32 value,
                                              void * userdata) {
-  sync_plane_struct * stuff = (sync_plane_struct *)userdata;
-  nmui_Component * sync = stuff->component;
-  nmui_PlaneSync * plane_sync = stuff->planesync;
+  CollaborationManager * cm = (CollaborationManager *) userdata;
+  nmui_Component * sync = cm->uiRoot();
+  nmui_PlaneSync * plane_sync = cm->planeSync();
+  nM_coord_change * handServer = cm->handServer();
 
 fprintf(stderr, "++ In handle_synchronized_timed_change() to %d\n", value);
 
@@ -1980,7 +1828,7 @@ fprintf(stderr, "++   ... stopped synchronizing.\n");
       sync->syncReplica(0);
       plane_sync->queueUpdates();
       graphics->enableCollabHand(VRPN_FALSE);
-      nM_coord_change_server->stopSync();
+      handServer->stopSync();
       isSynchronized = VRPN_FALSE;
       break;
     default:
@@ -1995,10 +1843,10 @@ fprintf(stderr, "++   ... sent synch request to peer.\n");
 
       sync->requestSync();
       sync->d_maintain = VRPN_TRUE;
-      if (nM_coord_change_server->peerIsSynchronized()) {
+      if (handServer->peerIsSynchronized()) {
         graphics->enableCollabHand(VRPN_TRUE);
       }
-      nM_coord_change_server->startSync();
+      handServer->startSync();
       isSynchronized = VRPN_TRUE;
       // We defer the syncReplica until after the requestSync() completes.
       break;
@@ -2020,9 +1868,9 @@ fprintf(stderr, "handle_peer_sync_change called, value %d\n",value);
 /// Linked to button in tcl UI. If pressed, copy the shared state to
 /// the private state.
 static void handle_copy_to_private (vrpn_int32 /*value*/, void * userdata) {
-  sync_plane_struct * stuff = (sync_plane_struct *)userdata;
-  nmui_Component * sync = stuff->component;
-  nmui_PlaneSync * plane_sync = stuff->planesync;
+  CollaborationManager * cm = (CollaborationManager *) userdata;
+  nmui_Component * sync = cm->uiRoot();
+  nmui_PlaneSync * plane_sync = cm->planeSync();
 
   if (!sync->synchronizedTo()) {
       // we are local. We need to get current data for shared state.
@@ -2061,9 +1909,9 @@ fprintf(stderr, "++ In handle_copy_to_private() copied immediately.\n");
 /// Linked to button in tcl UI. If pressed, copy the private state to
 /// the shared state.
 static void handle_copy_to_shared (vrpn_int32 /*value*/, void * userdata) {
-  sync_plane_struct * stuff = (sync_plane_struct *)userdata;
-  nmui_Component * sync = stuff->component;
-  nmui_PlaneSync * plane_sync = stuff->planesync;
+  CollaborationManager * cm = (CollaborationManager *) userdata;
+  nmui_Component * sync = cm->uiRoot();
+  nmui_PlaneSync * plane_sync = cm->planeSync();
 
   if (!sync->synchronizedTo()) {
       // we are local. We can copy to shared state immediately
@@ -2095,9 +1943,9 @@ Currently assumes that only the most recently added peer is
   "valid";  others are a (small?) memory/network leak.
 */
 static void handle_timed_sync (vrpn_int32 /*value*/, void * userdata) {
-  sync_plane_struct * stuff = (sync_plane_struct *)userdata;
-  nmui_Component * sync = stuff->component;
-  nmui_PlaneSync * plane_sync = stuff->planesync;
+  CollaborationManager * cm = (CollaborationManager *) userdata;
+  nmui_Component * sync = cm->uiRoot();
+  nmui_PlaneSync * plane_sync = cm->planeSync();
   int copyFrom = !sync->synchronizedTo();
 
   //// only run once
@@ -2150,9 +1998,9 @@ fprintf(stderr, "++ In handle_timed_sync_request() at %ld seconds;  "
 }
 
 static int handle_timed_sync_complete (void * userdata) {
-  sync_plane_struct * stuff = (sync_plane_struct *)userdata;
-  nmui_Component * sync = stuff->component;
-  nmui_PlaneSync * plane_sync = stuff->planesync;
+  CollaborationManager * cm = (CollaborationManager *) userdata;
+  nmui_Component * sync = cm->uiRoot();
+  nmui_PlaneSync * plane_sync = cm->planeSync();
 
   //int useReplica = !sync->synchronizedTo();
   // requestSync() is only called, and so this will only be generated,
@@ -4123,8 +3971,7 @@ void setupCallbacks (nmb_Decoration * d) {
 // Sets up synchronization callbacks and nmui_Component/ComponentSync
 //#define MIN_SYNC
 
-void setupSynchronization (vrpn_Connection * serverConnection,
-                           vrpn_Connection * logConnection,
+void setupSynchronization (CollaborationManager * cm,
                            nmb_Dataset * dset,
 #ifdef USE_VRPN_MICROSCOPE
                            nmm_Microscope_Remote * m) {
@@ -4135,6 +3982,9 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   // NOTE
   // If you add() any Netvar in this function, make sure you
   // call bindConnection(NULL) on it in shutdown_connections().
+
+  vrpn_Connection * serverConnection = cm->peerServerConnection();
+  vrpn_Connection * logConnection = cm->interfaceLogConnection();
 
   // These really don't need to be visible globally - they don't
   // need their mainloops called, just their connection's
@@ -4286,22 +4136,19 @@ void setupSynchronization (vrpn_Connection * serverConnection,
 
   ps = new nmui_PlaneSync (dset, &(m->state.data), serverConnection);
 
-  sync_plane_struct * sync_userdata = new sync_plane_struct;
-  sync_userdata->component = rootUIControl;
-  sync_userdata->planesync = ps;
-
   // Since streamfileControls are timed, the toplevel MUST use
   // the timed callbacks.  Oops.  Took an hour or more to find,
   // that one.
+
   share_sync_state.addCallback
-      (handle_synchronize_timed_change, sync_userdata);
+      (handle_synchronize_timed_change, cm);
   copy_inactive_state.addCallback
-      (handle_timed_sync, sync_userdata);
+      (handle_timed_sync, cm);
 
     copy_to_private_state.addCallback
-        (handle_copy_to_private, sync_userdata);
+        (handle_copy_to_private, cm);
     copy_to_shared_state.addCallback
-        (handle_copy_to_shared, sync_userdata);
+        (handle_copy_to_shared, cm);
 
   // need to pass rootUIControl to handle_timed_sync_complete
   // so that it sees d_maintain as TRUE!
@@ -4309,23 +4156,16 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   streamfileControls->registerSyncRequestHandler
           (handle_timed_sync_request, streamfileControls);
   streamfileControls->registerSyncCompleteHandler
-          (handle_timed_sync_complete, sync_userdata);
+          (handle_timed_sync_complete, cm);
 
 
 
 
-  // which machine collaborator is using (so we can track hand position)
+  // which machine collaborator is using
+  cm->setUI(rootUIControl);
+  cm->setPlaneSync(ps);
   collab_machine_name.addCallback
-	(handle_collab_machine_name_change, NULL);
-
-  collab_machine_name.addCallback
-	(handle_collab_machine_name_change2, rootUIControl);
-
-
-  // NANOX FLAT
-  // make sure flat plane utility class knows if collaborator changes.
-  collab_machine_name.addCallback
-        (handle_collab_machine_name_change3, ps);
+	(handle_collab_machine_name_change, cm);
 
 }
 
@@ -5485,34 +5325,32 @@ int main(int argc, char* argv[])
     /* set up list of well-known ports based on optional command-line args */
     wellKnownPorts = new WellKnownPorts (istate.basePort);
     
-    if(glenable){
-    	char	*envir;
-	envir = getenv("TRACKER");
+  char	*envir;
+  envir = getenv("TRACKER");
 
-	if (envir == NULL)
-	{
-	  fprintf(stderr, "Microscape warning:  No tracker environment variable set.  ");
-	  fprintf(stderr, "Using default values of null for head and hand tracking.\n");
+  if (envir == NULL) {
+    fprintf(stderr, "Microscape warning:  No tracker environment variable set.  ");
+    fprintf(stderr, "Using default values of null for head and hand tracking.\n");
 
-	  /* Use the default null trackers */
-	  headTrackerName = (char *)"null";
-	  handTrackerName = (char *)"null";
-	}
-	else {
-	  /* Parse the env string to pull out the name of the arm *
-	   * and the name of the tracker we're using, if any.     */
-	  headTrackerName = strtok(envir, " ");
-	  handTrackerName = strtok(NULL, " ");
+    /* Use the default null trackers */
+    headTrackerName = (char *) "null";
+    handTrackerName = (char *) "null";
+  } else {
+    /* Parse the env string to pull out the name of the arm *
+    * and the name of the tracker we're using, if any.     */
+    headTrackerName = strtok(envir, " ");
+    handTrackerName = strtok(NULL, " ");
 
-	  printf("Head tracker is %s\n", headTrackerName);
-	  printf("Hand tracker is %s\n", handTrackerName);
+    printf("Head tracker is %s\n", headTrackerName);
+    printf("Hand tracker is %s\n", handTrackerName);
 	
-	  /* We know at least the head tracker was specified, so check for a
-	   * null hand tracker.
-	   */
-	  if (handTrackerName == NULL)
-	    handTrackerName = (char *)"null";
-	}
+    /* We know at least the head tracker was specified, so check for a
+    * null hand tracker.
+    */
+    if (handTrackerName == NULL) {
+      handTrackerName = (char *) "null";
+    }
+  }
 
 	/* Check to see if a tracker is being used for head tracking */
 	if (strcmp("null", headTrackerName) != 0)
@@ -5538,7 +5376,6 @@ int main(int argc, char* argv[])
 	sprintf(local_ModeName, "Cmode0@%s", envir);
 	fprintf(stderr, "local_ModeName: %s\n",
 		local_ModeName);
-    } /* if (glenable) */
 
     if ( (tcl_script_dir=getenv("NM_TCL_DIR")) == NULL) {
 	tcl_script_dir=tcl_default_dir;
@@ -5932,106 +5769,31 @@ int main(int argc, char* argv[])
 
   // NANOX
 
-  char sfbuf [1024];
+  collaborationManager = new CollaborationManager (istate.replayInterface);
 
-  if (istate.replayInterface) {
-    sprintf(sfbuf, "file:%s/SharedIFSvrLog-%ld.stream", istate.logPath,
-            istate.logTimestamp.tv_sec);
-    collaboratingPeerServerConnection = 
-      vrpn_get_connection_by_name (sfbuf);
-  } else {
+  //collaborationManager->setNIC(istate.NIC_IP);
 
-    // All interface log files opened by this session have the same
-    // timestamp, taken right here.
-    gettimeofday(&loggingTimestamp, NULL);
+  collaborationManager->setHandServerName(nM_coord_change_server_name);
+  collaborationManager->setModeServerName(local_ModeName);
+  collaborationManager->setLogging(istate.logPath, istate.logTimestamp.tv_sec);
+  collaborationManager->enableLogging(istate.logInterface);
+  collaborationManager->setPeerPort(wellKnownPorts->collaboratingPeerServer);
+  collaborationManager->setServerPort(wellKnownPorts->collaboratingPeerServer);
+  collaborationManager->initialize(vrpnHandTracker[0], NULL,
+                                   handle_peer_sync_change);
 
-    sprintf(sfbuf, "%s/SharedIFSvrLog-%ld.stream", istate.logPath,
-            loggingTimestamp.tv_sec);
-    collaboratingPeerServerConnection = 
-  	new vrpn_Synchronized_Connection
-          (wellKnownPorts->collaboratingPeerServer,
-           istate.logInterface ? sfbuf : NULL,
-           istate.logInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
-                              vrpn_LOG_NONE);
+  setupSynchronization(collaborationManager, dataset, microscope);
 
-    if (!collaboratingPeerServerConnection->doing_okay()) {
-      fprintf(stderr, "ERROR:  "
-                      "Couldn't open collaboration server connection.\n");
-      //shutdown_connections();
-      //exit(0);
-    }
-  }
+  setupCallbacks(forceDevice);
+  handTracker_update_rate = istate.phantomRate;
 
-  replayingInterface = istate.replayInterface;
-  loggingInterface = istate.logInterface;
-  if (loggingInterface) {
-    strcpy(loggingPath, istate.logPath);
-  }
-  if (replayingInterface) {
-    strcpy(loggingPath, istate.logPath);
-    loggingTimestamp = istate.logTimestamp;
-  }
-
-  if (replayingInterface) {
-    sprintf(sfbuf, "file:%s/PrivateIFLog-%ld.stream", loggingPath,
-            loggingTimestamp.tv_sec);
-    interfaceLogConnection = vrpn_get_connection_by_name (sfbuf);
-  } else if (loggingInterface) {
-    sprintf(sfbuf, "%s/PrivateIFLog-%ld.stream", loggingPath,
-            loggingTimestamp.tv_sec);
-    interfaceLogConnection = new vrpn_Synchronized_Connection
-            (wellKnownPorts->interfaceLog, sfbuf, vrpn_LOG_OUTGOING);
-    if (!interfaceLogConnection->doing_okay()) {
-      fprintf(stderr, "ERROR:  Couldn't open log file.\n");
-      //shutdown_connections();
-      //exit(0);
-    }
-  }
-
-  if (collaboratingPeerServerConnection) {
-printf("got collaboratingPeerServerConnection\n");
-      nM_coord_change_server = 
-    	  new nM_coord_change (nM_coord_change_server_name,
-                               vrpnHandTracker[0],
-      	                       (vrpn_Synchronized_Connection *)
-                                   collaboratingPeerServerConnection);
-printf("nM_coord_change_server initialized\n");
-
-    nM_coord_change_server->registerPeerSyncChangeHandler
-         (handle_peer_sync_change, NULL);
-    // Set up the server to share the mode
-    vrpnMode_Local = new vrpn_Analog_Server( local_ModeName,
-		collaboratingPeerServerConnection );
-    if (vrpnMode_Local == NULL) {
-	fprintf(stderr,"ERROR: Cannot open server for Mode sharing\n");
-    } else {
-	vrpnMode_Local->setNumChannels(1);
-    }
-
-    // NANOX
-    setupSynchronization(collaboratingPeerServerConnection,
-                         interfaceLogConnection, dataset, microscope);
-  }
-
-    setupCallbacks(forceDevice);
-    handTracker_update_rate = istate.phantomRate;
-
-    VERBOSE(1,"Before Tk initialization");
-    if(tkenable) {
-      // init_Tk_control_panels creates the interpreter and adds most of
-      // the Tk widgits
-      init_Tk_control_panels(tcl_script_dir, istate.useOptimism);
-      set_Tk_command_handler(handleCharacterCommand);
-      VERBOSE(1, "done initialising the control panels\n");
-    }
-
-  // NANOX - TCH 14 Oct 99
-  // Allow command-line specification of machine to synchronize with.
-  // Must come after Tcl init.
-  // nmui_Component::initializeConnection() must be called *after* the
-  // connection is truly established.
-  if (istate.openPeer) {
-    collab_machine_name = istate.peerName;
+  VERBOSE(1,"Before Tk initialization");
+  if (tkenable) {
+    // init_Tk_control_panels creates the interpreter and adds most of
+    // the Tk widgits
+    init_Tk_control_panels(tcl_script_dir, istate.useOptimism);
+    set_Tk_command_handler(handleCharacterCommand);
+    VERBOSE(1, "done initialising the control panels\n");
   }
 
     VERBOSE(1, "Before SPM initialization");
@@ -6270,6 +6032,17 @@ center();
 
   Tcl_Interp * interp = get_the_interpreter();
 
+  // NANOX - TCH 14 Oct 99
+  // Allow command-line specification of machine to synchronize with.
+  // Must come after Tcl init.
+  // nmui_Component::initializeConnection() must be called *after* the
+  // connection is truly established.
+  // 11 April 2000 moved as late as possible to try to fix problem
+  // initializing replicas to invalid values.
+  if (istate.openPeer) {
+    collab_machine_name = istate.peerName;
+  }
+
 
 /* Start timing */
 VERBOSE(1, "Starting timing");
@@ -6382,25 +6155,18 @@ VERBOSE(1, "Entering main loop");
 	zerotime.tv_sec = zerotime.tv_usec = 0;
 	vrpnMode_Local->mainloop(&zerotime);
       }
-      if (vrpnMode_collab[0]) { vrpnMode_collab[0]->mainloop(); }
-      if (buttonBox) buttonBox->mainloop();
-      if (dialBox) dialBox->mainloop();
-
-      if (collaboratingPeerServerConnection) {
-        collaboratingPeerServerConnection->mainloop();
+      if (vrpnMode_collab[0]) {
+        vrpnMode_collab[0]->mainloop();
+      }
+      if (buttonBox) {
+        buttonBox->mainloop();
+      }
+      if (dialBox) {
+        dialBox->mainloop();
       }
 
-      // Not necessary for recording, but necessary for playback.
-      // TCH 19 Jan 00
-      if (interfaceLogConnection) {
-        interfaceLogConnection->mainloop();
-      }
-
-      // NANOX
-      // This should eventually be generalized to a set of collaborating
-      // remote peers.
-      if (collaboratingPeerRemoteConnection) {
-        collaboratingPeerRemoteConnection->mainloop();
+      if (collaborationManager) {
+        collaborationManager->mainloop();
       }
 
       if (forceDevice && constraint_mode) {
