@@ -174,9 +174,14 @@ int draw_world (int, void * data)
       
     //UGRAPHICS CALL TO DRAW THE WORLD  -- ASSUMING THAT VLIB HAS IT IN WORLD SPACE
     //WHEN I HIT THIS POINT
-    if (state->config_enableUber) {
-        World.Do(&URender::Render);
-    }
+
+	// This is now called in renderSurface so that projective textures can be displayed
+	// on the imported objects
+
+//    if (state->config_enableUber) {
+//        World.Do(&URender::Render);
+//    }
+
     
     /********************************************************************/
     // End Ubergraphics
@@ -267,8 +272,8 @@ int draw_world (int, void * data)
     setup_lighting(0, state);
 
     state->surface->renderSurface(state);
-    
-    setFilled(state);
+
+	setFilled(state);
     /*******************************************************/
     // Draw the parts of the scene other than the surface.
     /*******************************************************/

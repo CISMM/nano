@@ -31,6 +31,11 @@
 
 #define VERBOSECHECK(level)	if (spm_graphics_verbosity >= level) report_gl_errors();
 
+#include "UTree.h"
+#include "URPolygon.h"
+
+extern UTree World;
+
 /**
  * Access: Public
  */
@@ -91,7 +96,7 @@ int nmg_SurfaceRegion::
 init(int width, int height)
 {
     unsigned int dim;
-    
+ 
     if(width<=height) {
         dim=height;
     }
@@ -487,6 +492,7 @@ cleanUp()
     }
     
 #endif
+
     
 #ifdef RENDERMAN
     // Save the viewing/modeling matrix to be used in RenderMan.c
@@ -832,7 +838,8 @@ renderRegion(nmg_State * state)
     
     SaveRenderState(state);
 
-    setTexture(state);    
+    setTexture(state); 
+
 
     state->config_filled_polygons = d_currentState.filledPolygonsEnabled;
     state->texture_mode = d_currentState.textureMode;
@@ -845,7 +852,13 @@ renderRegion(nmg_State * state)
     for (i = 0; i < d_num_lists; i++) {
         glCallList(d_list_base + i);
     }
-    
+
+	// Drawing Objects...
+//	if (state->config_enableUber) {
+		int proj_text = (d_currentState.textureMode == GL_TEXTURE_2D) ? 1 : 0;
+		World.Do(&URender::Render, &proj_text);
+//	}
+ 
     cleanUp();
     RestoreRenderState(state);
 }
@@ -929,6 +942,9 @@ int nmg_SurfaceRegion::build_list_set(
         printf(" Error calling glTexGen.\n");
     } 
     
+
+
+
 #endif
     
     if (state->VERTEX_ARRAY) { // same extension is for TEXTURE_COORD_ARRAY
@@ -969,6 +985,7 @@ int nmg_SurfaceRegion::build_list_set(
     if ( (subset.low() == 0) && (subset.high() == num_lists -1) ) {
         just_color_was_on = 0;
     }
+
     
     // turn state->just_color off so only geometry gets re-generated
     state->just_color = 0;
@@ -979,6 +996,7 @@ int nmg_SurfaceRegion::build_list_set(
         }
         
         glNewList(base + i, GL_COMPILE);
+
         
         VERBOSECHECK(10);
         
@@ -1013,7 +1031,7 @@ int nmg_SurfaceRegion::build_list_set(
             }
             
             glNewList(base + i, GL_COMPILE);
-            
+
             VERBOSECHECK(10);
             
             if ((*stripfn)(state, planes, mask, surfaceColor, i*state->stride, surface[i])) {
@@ -1036,6 +1054,7 @@ int nmg_SurfaceRegion::build_list_set(
             glEndList();
         }
     }
+
     state->just_color = 0;
     return 0;
 }
