@@ -815,7 +815,8 @@ int nmb_Dataset::computeLBLFlattenedPlane (const char * outputPlane,
 	while (lblflat_ptr) {
 		if (lblflat_ptr->data->lblflat_plane == outplane) {
 			lblflat_ptr->data->from_plane->remove_callback
-			  (updateLBLFlattenOnPlaneChange, (void *)lblflat_ptr);
+                        (updateLBLFlattenOnPlaneChange, 
+                         (void *)(lblflat_ptr->data));
 			pre->next = lblflat_ptr->next;
 			free(lblflat_ptr->data);
 			free(lblflat_ptr);
