@@ -122,8 +122,6 @@ PatternEditor::PatternEditor(int startX, int startY):
    d_pointInProgress = vrpn_FALSE;
    d_currShape = NULL;
 
-   d_shapeSelected = vrpn_FALSE;
-
    d_objectCenterX = 0.0;
    d_objectCenterY = 0.0;
 
@@ -874,7 +872,12 @@ int PatternEditor::handleMainWinEvent(
              else {
                mainWinPositionToWorld(x, y, x_world_nm, y_world_nm);
                if (selectPoint(x_world_nm, y_world_nm)) {
-                  setUserMode(PE_GRABMODE);
+                 setUserMode(PE_GRABMODE);
+               } else {
+                 if(d_selectedShape) {
+                     d_selectedShape->d_selected = vrpn_FALSE;
+                     d_selectedShape = NULL;
+                 }
                }
              }
 
@@ -927,24 +930,33 @@ int PatternEditor::handleMainWinEvent(
              d_viewer->dirtyWindow(d_navWinID);
              d_viewer->dirtyWindow(event.winID);
              break;
-           case ' ':
+           case '1':
              if(d_controlPanels) {
-                d_controlPanels->toggleWidthValue();
+                d_controlPanels->setWidthValue(1);
              }
             break;
-		   case 127:	// 127 for delete key. Delete key needs glut 3.7 or greater.
-		   case 8:		// 8 is for backspace, ^H. 
-			   if (d_shapeInProgress){
-				 undoPoint();
-			   } else {
-				 undoSelectedShape();
-			   }
-			 break;
-           default:
-			 //printf("got key %d\n", event.keycode); 
+           case '2':
+             if(d_controlPanels) {
+                d_controlPanels->setWidthValue(2);
+             }
+            break;
+           case '3':
+             if(d_controlPanels) {
+                d_controlPanels->setWidthValue(3);
+             }
              break;
-         }
-  
+		       case 127:	// 127 for delete key. Delete key needs glut 3.7 or greater.
+		       case 8:		// 8 is for backspace, ^H. 
+			       if (d_shapeInProgress){
+				       undoPoint();
+			       } else {
+				       undoSelectedShape();
+			       }
+			       break;
+           default:
+			       //printf("got key %d\n", event.keycode); 
+             break;
+           }
          break;
       default:
          break;
@@ -1592,7 +1604,7 @@ void PatternEditor::mainWinNMToPixels(const double x_nm, const double y_nm,
   //d_viewer->toPixels(d_mainWinID, &x_pixels, &y_pixels);
   x_pixels = x_nm; y_pixels = y_nm;
   d_viewer->toPixelsPnt(d_mainWinID, d_mainWinMinX_nm, d_mainWinMaxX_nm,
-                     d_mainWinMinY_nm, d_mainWinMaxY_nm, &x_pixels, &y_pixels);
+                    d_mainWinMinY_nm, d_mainWinMaxY_nm, &x_pixels, &y_pixels);
 }
 
 void PatternEditor::mainWinNMToPixels(const double dist_nm,
@@ -1600,8 +1612,8 @@ void PatternEditor::mainWinNMToPixels(const double dist_nm,
 {
   double d0 = 0, d1 = 0;
   mainWinNMToPixels(dist_nm, d0, dist_pixels, d1);
-//  worldToMainWinPosition(dist_nm, d0, dist_pixels, d1);
-//  d_viewer->toPixels(d_mainWinID, &dist_pixels, &d1);
+  //worldToMainWinPosition(dist_nm, d0, dist_pixels, d1);
+  //d_viewer->toPixels(d_mainWinID, &dist_pixels, &d1);
 }
 
 
@@ -1704,6 +1716,10 @@ int PatternEditor::startShape(ShapeType type)
   }
   d_currShape = newShape;
   updatePatternTransform();
+  if(d_selectedShape) {
+      d_selectedShape->d_selected = vrpn_FALSE;
+      d_selectedShape = NULL;
+  }
   return 0;
 }
 
@@ -1814,7 +1830,6 @@ vrpn_bool PatternEditor::selectPoint(const double x_nm, const double y_nm)
       d_objectCenterY = y_obj;
       d_objectRotateCos = 1.0;
       d_objectRotateSin = 0.0;
-      d_shapeSelected = vrpn_TRUE;
       selectedSomething = vrpn_TRUE;
   }
 
@@ -1837,20 +1852,22 @@ int PatternEditor::findNearestShapePoint(const double x_nm, const double y_nm,
   
   currShape = d_pattern.getSubShapes().begin();
   nearestShape = (*currShape).d_shape;
-  double transform[16];
+  double transform[16], transform_inv[16];
   double x_obj, y_obj;
   nmb_TransformMatrix44 objectFromWorld;
 
   while (currShape != d_pattern.getSubShapes().end()) {
     (*currShape).getPoints(currPoints);
     (*currShape).getWorldFromObject(transform);  
-    objectFromWorld.setMatrix(transform);
+    (*currShape).getWorldFromObject(transform_inv);  
+    objectFromWorld.setMatrix(transform_inv);
     objectFromWorld.invert();
-    objectFromWorld.getMatrix(transform);
-    x_obj = transform[0]*x_nm + transform[4]*y_nm + transform[12];
-    y_obj = transform[1]*x_nm + transform[5]*y_nm + transform[13];
+    objectFromWorld.getMatrix(transform_inv);
+    x_obj = transform_inv[0]*x_nm + transform_inv[4]*y_nm + transform_inv[12];
+    y_obj = transform_inv[1]*x_nm + transform_inv[5]*y_nm + transform_inv[13];
 
     findNearestPoint(currPoints, x_obj, y_obj, currShapeNearestPoint, currDist);
+    currDist = transform[0]*currDist + transform[12];
     if (currDist < minDist) {
       minDist = currDist;
       nearestShape = (*currShape).d_shape;
@@ -1858,6 +1875,7 @@ int PatternEditor::findNearestShapePoint(const double x_nm, const double y_nm,
     }
     currShape++;
   }
+
   return 0;
 }
 
@@ -1987,9 +2005,12 @@ int PatternEditor::endShape()
   //printf("ending shape\n");
   // put the shape into the pattern and clear drawing state
 	double identity[16]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+  d_currShape->d_selected = vrpn_FALSE;
   PatternShape *shapeCopy = d_currShape->duplicate();
   shapeCopy->setParentFromObject(identity);
   addShape(shapeCopy);
   clearDrawingState();
+  d_selectedShape = shapeCopy;
+  d_selectedShape->d_selected = vrpn_TRUE;
   return 0;
 }

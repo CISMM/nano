@@ -22,7 +22,7 @@ class ControlPanels {
    nmb_ListOfStrings *imageNameList();
 
    void updateMinimumDoses();
-   void toggleWidthValue();
+   void setWidthValue(int value);
  protected:
    // callback stuff
    void setupCallbacks();
@@ -38,8 +38,7 @@ class ControlPanels {
    static void handle_savePatternFileName_change(const char *new_value,
                                                  void *ud);
 
-   static void handle_lineWidth1_nm_change(double new_value, void *ud);
-   static void handle_lineWidth2_nm_change(double new_value, void *ud);
+   static void handle_lineWidth_nm_change(double new_value, void *ud);
    static void handle_widthValue_change(int new_value, void *ud);
    static void handle_line_exposure_change(double new_value, void *ud);
    static void handle_area_exposure_change(double new_value, void *ud);
@@ -91,6 +90,7 @@ class ControlPanels {
    void handleSEMChange(const nmm_Microscope_SEM_ChangeHandlerData &info);
 
    bool patternInsideScanRange();
+   void setLineWidth();
 
    // list of all images available for display
    Tclvar_list_of_strings *d_imageNames;
@@ -111,6 +111,7 @@ class ControlPanels {
    // drawing parameters:
    Tclvar_float d_lineWidth1_nm;
    Tclvar_float d_lineWidth2_nm;
+   Tclvar_float d_lineWidth3_nm;
    Tclvar_int d_widthValue;
    Tclvar_float d_line_exposure_pCoulombs_per_cm;
    Tclvar_float d_area_exposure_uCoulombs_per_square_cm;

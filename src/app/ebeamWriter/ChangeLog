@@ -1,4 +1,17 @@
-2004-04-08  Adam Seeger  <seeger@cs.unc.edu>
+2003-04-08  David Jack  <jackd@cs.unc.edu>
+	* controlPanels.[Ch] - added handler for third line width box
+	* patternEditor.C (handleMainWinEvent): spacebar for switching
+	line widths proved confusing in practice and wouldn't work for
+	three width values anyway; mapped 1,2,3 to the respective line
+	widths.  Also, if the user tries to select a shape and there isn't
+	one close enough, deselects currently selected shape
+	(startShape): now deselects currently selected shape when starting
+	a new shape
+	(endShape): last shape drawn is now automatically selected
+	(findNearestShapePoint): function wasn't returning the distance to the
+	nearest point in nm; fixed.
+	
+2003-04-08  Adam Seeger  <seeger@cs.unc.edu>
 
    * patternEditor.C (handleMainWinEvent): for delete key, deletes points
       in current shape and then shapes when the current shape has been

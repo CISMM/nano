@@ -249,8 +249,6 @@ class PatternEditor : public nmb_ImageDisplay {
    vrpn_bool d_pointInProgress;
    PatternShape *d_currShape;
 
-   vrpn_bool d_shapeSelected;
-
    // for grabs: represents the grab offset
    // for rotations: defines the center of rotation
    double d_objectCenterX;

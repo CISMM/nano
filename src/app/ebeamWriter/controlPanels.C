@@ -29,6 +29,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_bufferImageFormat("bufferImage_format", ""),
    d_lineWidth1_nm("line_width1_nm", 1000),
    d_lineWidth2_nm("line_width2_nm", 400),
+   d_lineWidth3_nm("line_width3_nm", 300),
    d_widthValue("width_value", 1),
    d_line_exposure_pCoulombs_per_cm(
                  "line_exposure_pCoulombs_per_cm", 1400),
@@ -118,20 +119,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
   }
   handle_semAcquisitionMagnification_change(
           (int)d_semAcquisitionMagnification, (void *)this);
-  switch((int)d_widthValue) {
-  case 1 :
-    d_patternEditor->setDrawingParameters((double)(d_lineWidth1_nm),
-                      (double)(d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(d_line_exposure_pCoulombs_per_cm));
-    break;
-  case 2 :
-    d_patternEditor->setDrawingParameters((double)(d_lineWidth2_nm),
-                      (double)(d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(d_line_exposure_pCoulombs_per_cm));
-    break;
-  default :
-    break;
-  }
+  setLineWidth();
 
   // for some reason the callbacks don't get called for these at the start
   if (d_SEM) {
@@ -201,13 +189,9 @@ void ControlPanels::updateMinimumDoses()
 */
 }
 
-void ControlPanels::toggleWidthValue()
+void ControlPanels::setWidthValue(int value)
 {
-  if(1 == (int)d_widthValue) {
-    d_widthValue = 2;
-  } else {
-    d_widthValue = 1;
-  }
+  d_widthValue = value;
 }
 
 void ControlPanels::setupCallbacks()
@@ -220,8 +204,9 @@ void ControlPanels::setupCallbacks()
   d_openPatternFileName.addCallback(handle_openPatternFileName_change, this);
   d_savePatternFileName.addCallback(handle_savePatternFileName_change, this);
 
-  d_lineWidth1_nm.addCallback(handle_lineWidth1_nm_change, this);
-  d_lineWidth2_nm.addCallback(handle_lineWidth2_nm_change, this);
+  d_lineWidth1_nm.addCallback(handle_lineWidth_nm_change, this);
+  d_lineWidth2_nm.addCallback(handle_lineWidth_nm_change, this);
+  d_lineWidth3_nm.addCallback(handle_lineWidth_nm_change, this);
   d_widthValue.addCallback(handle_widthValue_change, this);
   d_line_exposure_pCoulombs_per_cm.addCallback(
         handle_line_exposure_change, this);
@@ -446,65 +431,19 @@ void ControlPanels::handle_savePatternFileName_change(
 }
 
 // static
-void ControlPanels::handle_lineWidth1_nm_change(double /*new_value*/, void *ud)
+void ControlPanels::handle_lineWidth_nm_change(double /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-//  printf("lineWidth: %g\n", (double)(me->d_lineWidth_nm));
-  switch((int)me->d_widthValue) {
-  case 1 :
-    me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth1_nm),
-                      (double)(me->d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(me->d_line_exposure_pCoulombs_per_cm));
-    break;
-  case 2 :
-    me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth2_nm),
-                      (double)(me->d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(me->d_line_exposure_pCoulombs_per_cm));
-    break;
-  default :
-    break;
-  }
+  me->setLineWidth();
 }
-// static
-void ControlPanels::handle_lineWidth2_nm_change(double /*new_value*/, void *ud)
-{
-  ControlPanels *me = (ControlPanels *)ud;
-//  printf("lineWidth: %g\n", (double)(me->d_lineWidth_nm));
-  switch((int)me->d_widthValue) {
-  case 1 :
-    me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth1_nm),
-                      (double)(me->d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(me->d_line_exposure_pCoulombs_per_cm));
-    break;
-  case 2 :
-    me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth2_nm),
-                      (double)(me->d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(me->d_line_exposure_pCoulombs_per_cm));
-    break;
-  default :
-    break;
-  }
-}
+
+
 
 // static
 void ControlPanels::handle_widthValue_change(int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  switch((int)me->d_widthValue) {
-  case 1 :
-    me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth1_nm),
-                      (double)(me->d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(me->d_line_exposure_pCoulombs_per_cm));
-    break;
-  case 2 :
-    me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth2_nm),
-                      (double)(me->d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(me->d_line_exposure_pCoulombs_per_cm));
-    break;
-  default :
-    break;
-  }
-
+  me->setLineWidth();
 }
 
 // static
@@ -513,20 +452,7 @@ void ControlPanels::handle_line_exposure_change(double /*new_value*/, void *ud)
   ControlPanels *me = (ControlPanels *)ud;
 //  printf("exposure: %g\n",
 //        (double)(me->d_line_exposure_pCoulombs_per_cm));
-  switch((int)me->d_widthValue) {
-  case 1 :
-    me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth1_nm),
-                      (double)(me->d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(me->d_line_exposure_pCoulombs_per_cm));
-    break;
-  case 2 :
-    me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth2_nm),
-                      (double)(me->d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(me->d_line_exposure_pCoulombs_per_cm));
-    break;
-  default :
-    break;
-  }
+  me->setLineWidth();
   if ((double)(me->d_line_exposure_pCoulombs_per_cm) <
       (double)(me->d_semMinLinExposure_pCoul_per_cm))  {
     display_warning_dialog("Warning, dot spacing or beam current\n"
@@ -540,21 +466,7 @@ void ControlPanels::handle_area_exposure_change(double /*new_value*/, void *ud)
   ControlPanels *me = (ControlPanels *)ud;
 //  printf("exposure: %g\n", 
 //        (double)(me->d_area_exposure_uCoulombs_per_square_cm));
-  switch((int)me->d_widthValue) {
-  case 1 :
-    me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth1_nm),
-                      (double)(me->d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(me->d_line_exposure_pCoulombs_per_cm));
-    break;
-  case 2 :
-    me->d_patternEditor->setDrawingParameters((double)(me->d_lineWidth2_nm),
-                      (double)(me->d_area_exposure_uCoulombs_per_square_cm),
-                      (double)(me->d_line_exposure_pCoulombs_per_cm));
-    break;
-  default :
-    break;
-  }
-
+  me->setLineWidth();
   if ((double)(me->d_area_exposure_uCoulombs_per_square_cm) <
       (double)(me->d_semMinAreaExposure_uCoul_per_sq_cm)) {
     display_warning_dialog("Warning, dot spacing, line spacing or\n"
@@ -1529,6 +1441,28 @@ void ControlPanels::handle_semPointReportEnable_change(int /*new_value*/,
   }
   me->d_patternEditor->setExposurePointDisplayEnable(
                                      (vrpn_int32)me->d_semPointReportEnable);
+}
+
+void ControlPanels::setLineWidth() {
+  switch((int)d_widthValue) {
+  case 1 :
+    d_patternEditor->setDrawingParameters((double)(d_lineWidth1_nm),
+                      (double)(d_area_exposure_uCoulombs_per_square_cm),
+                      (double)(d_line_exposure_pCoulombs_per_cm));
+    break;
+  case 2 :
+    d_patternEditor->setDrawingParameters((double)(d_lineWidth2_nm),
+                      (double)(d_area_exposure_uCoulombs_per_square_cm),
+                      (double)(d_line_exposure_pCoulombs_per_cm));
+    break;
+  case 3 :
+    d_patternEditor->setDrawingParameters((double)(d_lineWidth3_nm),
+                      (double)(d_area_exposure_uCoulombs_per_square_cm),
+                      (double)(d_line_exposure_pCoulombs_per_cm));
+    break;
+  default :
+    break;
+  }
 }
 
 /*
