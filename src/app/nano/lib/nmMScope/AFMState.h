@@ -370,7 +370,8 @@ struct AFMInitializationState {
 
   AFMInitializationState (void);
 
-  char deviceName [100];
+    // device should be at least "file:" + inputstreamname
+  char deviceName [261];
   char inputStreamName [256];
   char outputStreamName [256];
 

@@ -48,7 +48,9 @@ class nmb_Dataset;
 class nmb_Decoration;
 class Microscope;
 class Xform;		//added from ugraphics
+#ifndef NO_MAGELLAN
 class vrpn_Magellan;
+#endif
 
 #define	MICROSCAPE_MAJOR_VERSION	(9)
 #define	MICROSCAPE_MINOR_VERSION	(0)
@@ -115,7 +117,9 @@ extern	float		MAX_K;  /* for each device		  */
 #define BDBOX_NUMBUTTONS 32
 #define BDBOX_NUMDIALS 8
 
+#ifndef NO_MAGELLAN
 #define MAGELLAN_NUMBUTTONS 9
+#endif
 
 // button events - set by interaction
 #define NULL_EVENT	0	///< button not pressed at least twice in a row
@@ -134,9 +138,11 @@ extern  vrpn_Button_Remote *buttonBox;
 extern  vrpn_Analog_Remote *dialBox;
 extern  int bdboxButtonState[BDBOX_NUMBUTTONS];
 extern  double bdboxDialValues[BDBOX_NUMDIALS];
+#ifndef NO_MAGELLAN
 extern  vrpn_Button_Remote *magellanButtonBox;
 extern  vrpn_Magellan *magellanButtonBoxServer;
 extern  int magellanButtonState[MAGELLAN_NUMBUTTONS];
+#endif
 /* end vrpn stuff */
 
 extern  char                    *headTrackerName;

@@ -31,8 +31,9 @@
 #include <vrpn_Forwarder.h>
 #include <vrpn_Analog.h>
 #include <vrpn_Clock.h>  // for round-trip-time routines (foo_rtt())
+#ifndef NO_MAGELLAN
 #include <vrpn_Magellan.h>
-
+#endif
 // ############ getpid hack
 #if defined (__CYGWIN__) && defined (VRPN_USE_WINSOCK_SOCKETS)
 
@@ -462,6 +463,12 @@ Tclvar_string openStaticFilename("open_static_filename", "");
 /// Stream Filename. Setting this variable in tcl triggers
 /// the open stream process.
 Tclvar_string openStreamFilename("open_stream_filename", "");
+
+/// SPM Device name. Setting this variable triggers open device process
+Tclvar_string openSPMDeviceName("open_spm_device_name", "");
+/// Log file name. If it's something other than "none" when the device
+/// is opened, try to log to the filename specified. 
+Tclvar_string openSPMLogName("open_spm_log_name", "");
 
 /// When you choose a plane of data to save, this list is set
 /// to the possible formats.
@@ -993,10 +1000,11 @@ double bdboxDialValues[BDBOX_NUMDIALS];
 /********
  * Magellan button and puck
  *******/
+#ifndef NO_MAGELLAN
 vrpn_Magellan *magellanButtonBoxServer = NULL;
 vrpn_Button_Remote *magellanButtonBox = NULL;
 int magellanButtonState[MAGELLAN_NUMBUTTONS];
-
+#endif
 /************
  * Ohmmeter
  ***********/
@@ -2680,6 +2688,73 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
 
 
     openStreamFilename = "";
+}
+
+/** See if the user has given a name to the open device name other
+ than "".  If so, we should open a connection to an SPM and set the value
+ back to "". If there are any errors, report them and leave name alone. 
+*/
+static void handle_openSPMDeviceName_change (const char *, void * userdata)
+{
+    MicroscapeInitializationState * istate = (MicroscapeInitializationState *)userdata;
+    long logmode = vrpn_LOG_NONE;
+
+    if (strlen(openSPMDeviceName) <= 0) return;
+    if ((openSPMLogName.string() == NULL) || 
+        (strcmp(openSPMLogName.string(),"") == 0) || 
+        (strcmp(openSPMLogName.string(),"none") == 0)) {
+
+        istate->afm.writingStreamFile = VRPN_FALSE;
+    } else {
+        istate->afm.writingStreamFile = VRPN_TRUE;
+        logmode |= vrpn_LOG_INCOMING;
+        //AFMState.c limits length of stream filenames to 255
+        strncpy(istate->afm.outputStreamName, openSPMLogName, 255);
+    }
+    // The user has specified a stream file: try
+    // to open it as a VRPN stream file. 
+    istate->afm.readingStreamFile = VRPN_FALSE;
+    read_mode = READ_DEVICE;
+    
+    //AFMState.c limits length of device names to 260
+    strncpy(istate->afm.deviceName, openSPMDeviceName, 260);
+
+    vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name        (istate->afm.deviceName,
+          istate->afm.writingStreamFile ? istate->afm.outputStreamName
+                                        : (char *) NULL,
+	  logmode,
+          (char *) NULL);
+    if (!new_microscope_connection) {
+	fprintf(stderr, "ERROR couldn't find %s.\n",
+		istate->afm.deviceName);
+        return ;
+    }
+    // XXX Display error if we can't open the log file.
+
+    
+    // We are trying to read a device - should we make sure it's not a logfile?
+    /*
+    vrpn_File_Connection * new_vrpnLogFile = new_microscope_connection->get_File_Connection();
+    if (new_vrpnLogFile) {
+	fprintf(stderr, "ERROR failed to open stream file: %s\n", 
+                istate->afm.inputStreamName);
+    }
+    */
+    if (createNewMicroscope(*istate, new_microscope_connection)) {
+	fprintf(stderr, "ERROR failed to connect to microscope device: %s\n", 
+                istate->afm.deviceName);
+        return ;
+    }
+    // new and old microscope_connection can be equal if we open
+    // the same stream file twice!!
+    if (microscope_connection && (microscope_connection!=new_microscope_connection)) {
+      delete microscope_connection;
+    }
+    microscope_connection = new_microscope_connection;
+    vrpnLogFile = NULL;
+
+    openSPMDeviceName = "";
+    openSPMLogName = "";
 }
 
 /** See if the user has given a name to the export plane other
@@ -5756,7 +5831,7 @@ int main(int argc, char* argv[])
 
     if (istate.afm.writingStreamFile)
       logmode |= vrpn_LOG_INCOMING;
-    if (istate.afm.writingStreamFile)
+    if (istate.writingRemoteStream)
       remote_logmode |= vrpn_LOG_INCOMING;
 
     //fprintf(stderr, "About to init microscope\n");
@@ -5819,6 +5894,10 @@ int main(int argc, char* argv[])
     // which will call createNewMicroscope
     openStreamFilename.addCallback
 	(handle_openStreamFilename_change, &istate);
+    // When openSPMDevicName changes, we try to open an SPM connection,
+    // which will call createNewMicroscope
+    openSPMDeviceName.addCallback
+	(handle_openSPMDeviceName_change, &istate);
 
     //fprintf(stderr, "Microscope initialized\n");
 
@@ -6287,6 +6366,7 @@ VERBOSE(1, "Entering main loop");
       if (sem_ui) {
         sem_ui->mainloop();
       }
+#ifndef NO_MAGELLAN
         // Count the number of times the magellan box resets. 
       static int num_magellan_reset = 0;
       if (magellanButtonBoxServer) {
@@ -6303,6 +6383,7 @@ VERBOSE(1, "Entering main loop");
       if (magellanButtonBox) {
 	magellanButtonBox->mainloop();
       }
+#endif
       if (phantButton) {
 	phantButton->mainloop();
       }
@@ -6603,10 +6684,16 @@ VERBOSE(1, "Entering main loop");
 	  vrpnHeadTracker[i] = NULL;
       }
     }
+#ifndef NO_MAGELLAN
     if (magellanButtonBox) {
 	delete magellanButtonBox;
 	magellanButtonBox = NULL;
     }
+    if (magellanButtonBoxServer) {
+        delete magellanButtonBoxServer;
+        magellanButtonBoxServer= NULL;
+    }
+#endif
     if (phantButton) {
 	delete phantButton;
 	phantButton = NULL;

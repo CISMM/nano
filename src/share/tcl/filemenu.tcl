@@ -47,6 +47,64 @@ proc open_stream_file {} {
 #
 ################################
 #
+# Open a device - SPM.
+
+set deviceNames       { "Local SPM" }
+set deviceConnections { "nmm_Microscope@127.0.0.1:4580" }
+
+# Dialog which allows user to choose which device
+# and which log file. 
+iwidgets::dialog .open_device_dialog -title "Open SPM Connection" -modality application
+
+.open_device_dialog hide Help
+.open_device_dialog buttonconfigure OK -text "Open" -command {
+    .open_device_dialog deactivate 1
+}
+.open_device_dialog hide Apply
+# "Cancel" button is already set up correctly
+
+set win [.open_device_dialog childsite]
+generic_optionmenu_with_index $win.device_name chosen_device_index \
+	"SPM to open:" deviceNames
+pack $win.device_name -anchor nw -side top
+
+proc choose_logfile { } {
+    global fileinfo open_spm_log_name
+    set types { {"Lab Notebook files" ".nms" } 
+                {"All files" *} }
+	set file [tk_getSaveFile -filetypes $types \
+		-initialfile "log.nms" -initialdir $fileinfo(save_dir)]    
+	if {$file != ""} {
+	    set open_spm_log_name $file
+	    set fileinfo(save_dir) [file dirname $file]
+	} 
+        # otherwise do nothing - user pressed cancel or didn't enter file name
+}
+
+generic_entry $win.open_logfile open_spm_log_name \
+	"Auto lab notebook:" ""
+$win.open_logfile configure -width 20
+button $win.get_logfile_name -text "Choose..." -command choose_logfile
+
+pack $win.open_logfile $win.get_logfile_name  -side left
+
+# Allow the user to save 
+proc open_spm_connection {} {
+    global deviceNames deviceConnections 
+    global chosen_device_index open_spm_device_name
+
+    if { [.open_device_dialog activate] } {
+        # User chose a device, translate it into a vrpn device name for Nano
+        set open_spm_device_name [lindex $deviceConnections $chosen_device_index]
+        puts "$open_spm_device_name"
+    } else {
+	# user pressed "cancel" so do nothing
+    }
+}
+
+#
+################################
+#
 # This allows the user to export a file that
 # holds the values for a given plane, in any of several formats
 #

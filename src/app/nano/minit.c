@@ -32,7 +32,9 @@
 
 #include <vrpn_Types.h>
 #include <vrpn_Tracker.h>
+#ifndef NO_MAGELLAN
 #include <vrpn_Magellan.h>
+#endif
 
 #include "stm_file.h"
 #include "stm_cmd.h"
@@ -161,6 +163,7 @@ void handle_bdbox_dial_change(void *userdata, const vrpn_ANALOGCB info){
    }
 }
 
+#ifndef NO_MAGELLAN
 /** callbacks for vrpn_Button_Remote for magellan button box (registered below)
  */
 void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
@@ -207,6 +210,7 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
 
 
 }
+#endif
 
 // XXX - add a separate function to reconnect to phantom after a dropped
 // connection
@@ -296,22 +300,21 @@ peripheral_init(vrpn_Connection * local_device_connection)
 	forceDevice = NULL;
     }
 
-    if (strcmp(headTrackerName, "null") != 0)
-    {
+    if (strcmp(headTrackerName, "null") != 0) {
 	vrpnHeadTracker[0] = new vrpn_Tracker_Remote(headTrackerName);
 	headSensor[0] = 0;
-    }
-    else
+    } else {
 	vrpnHeadTracker[0] = NULL;
+    }
+//      printf("Head Tracker = '%s', Hand Tracker = '%s'\n",headTrackerName,
+//  	handTrackerName);
 
-    printf("Head Tracker = '%s', Hand Tracker = '%s'\n",headTrackerName,
-	handTrackerName);
-
-    for (i = 0; i < BDBOX_NUMBUTTONS; i++)
+    for (i = 0; i < BDBOX_NUMBUTTONS; i++) {
 	bdboxButtonState[i] = 0;
-    for (i = 0; i < BDBOX_NUMDIALS; i++)
+    }
+    for (i = 0; i < BDBOX_NUMDIALS; i++) {
 	bdboxDialValues[i] = 0.0;
-
+    }
 
     // Open the SGI button and dials box.  Set the buttons we want to
     // act as toggles to toggle.
@@ -335,18 +338,20 @@ peripheral_init(vrpn_Connection * local_device_connection)
 	dialBox = NULL;
     }
 
+#ifndef NO_MAGELLAN
     // Open the Magellan puck and button box.
     if (local_device_connection) {
-        magellanButtonBoxServer = new vrpn_Magellan("Button0@ibmwildt2", 
+        magellanButtonBoxServer = new vrpn_Magellan("Magellan0@bogus", 
                                                     local_device_connection, 
                                                     "COM1", 9600);
-        magellanButtonBox = new vrpn_Button_Remote("Button0@ibmwildt2",
+        magellanButtonBox = new vrpn_Button_Remote("Magellan0@bogus",
                                                    local_device_connection);
         if ( magellanButtonBox->register_change_handler(magellanButtonState,
                                 handle_magellan_button_change)) {
             fprintf(stderr, "Error: can't register magellan vrpn_Button handler\n");
         }
     }
+#endif
     return 0;
 }
 

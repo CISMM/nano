@@ -160,7 +160,7 @@ $filemenu add command -label "Open Static File..." -underline 0 \
 $filemenu add command -label "Open Stream File..." \
 	-command "open_stream_file"
 $filemenu add command -label "Open SPM Connection..." \
-	-command {nano_error "Not implemented yet"}
+	-command "open_spm_connection"
 #        $filemenu add command -label "Close..." -underline 0 -command \
 #		{.message_dialog activate}
 #        $filemenu add separator
