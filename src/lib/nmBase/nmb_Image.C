@@ -602,16 +602,23 @@ void nmb_ImageGrid::getBounds(nmb_ImageBounds &ib)  const
 
 void nmb_ImageGrid::setBounds(const nmb_ImageBounds &ib)
 {
+/*
     // WARNING: this might not do what you think because
     // BCGrid has a less general notion of the image extents
     if (grid == NULL) {
         fprintf(stderr,
                 "Warning: nmb_ImageGrid::setBounds failed\n");
+        return;
     }
     grid->setMinX(ib.getX(nmb_ImageBounds::MIN_X_MIN_Y));
     grid->setMinY(ib.getY(nmb_ImageBounds::MIN_X_MIN_Y));
     grid->setMaxX(ib.getX(nmb_ImageBounds::MAX_X_MAX_Y));
     grid->setMaxY(ib.getY(nmb_ImageBounds::MAX_X_MAX_Y));
+*/
+    plane->_grid->setMinX(ib.getX(nmb_ImageBounds::MIN_X_MIN_Y));
+    plane->_grid->setMinY(ib.getY(nmb_ImageBounds::MIN_X_MIN_Y));
+    plane->_grid->setMaxX(ib.getX(nmb_ImageBounds::MAX_X_MAX_Y));
+    plane->_grid->setMaxY(ib.getY(nmb_ImageBounds::MAX_X_MAX_Y));
 }
 
 BCString *nmb_ImageGrid::name() {return plane->name();}

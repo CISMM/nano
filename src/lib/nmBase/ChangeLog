@@ -1,3 +1,9 @@
+2000-10-17  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Image.C (nmb_ImageGrid::setBounds) : now modifies plane->_grid
+	instead of seg-faulting when dealing with a grid that may contain
+	multiple planes (works like setBoundX and setBoundY now)
+
 2000-10-11  Adam Seeger  <seeger@cs.unc.edu>
 
 	* BCPlane.C (minNonZeroValue, maxNonZeroValue) : In the rare case
