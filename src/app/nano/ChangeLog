@@ -1,3 +1,7 @@
+2004-07-23  Russ Taylor  <taylorr@cs.unc.edu>
+
+	* nano.dsp : Added include path for HDAPI library.
+
 2004-07-08  Russ Taylor  <taylorr@cs.unc.edu>
 
 	* imagerPlugin.h : Added code to display text in 3D.
