@@ -29,7 +29,8 @@ class nmb_PlaneSelection {
     void lookup (BCGrid *,
                  const char * heightName, const char * colorName,
                  const char * contourName, const char * alphaName);
-    void lookupPrerendered (BCGrid *);
+    void lookupPrerenderedColors (BCGrid *);
+    void lookupPrerenderedDepth (BCGrid *);
 
     BCPlane * height;
     BCPlane * color;

@@ -161,14 +161,10 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual const double * getMinColor (void) const;
     virtual const double * getMaxColor (void) const;
 
-
-
      // genetic textures
     gaEngine_Remote *gaRemote;
 
   protected:
-
-    TextureMode getTextureMode (void) const;
 
     virtual void initDisplays (void);
       // Making constructor more flexible:  calls v_open_display()
@@ -202,7 +198,6 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     v_index * d_displayIndexList;
 
-    TextureMode d_textureMode;
     TextureTransformMode d_textureTransformMode;
 
     static int handle_resizeViewport (void *, vrpn_HANDLERPARAM);

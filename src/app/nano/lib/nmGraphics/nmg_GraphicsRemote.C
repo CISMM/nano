@@ -1419,6 +1419,8 @@ void nmg_Graphics_Remote::setTextureMode (TextureMode m,
   int len;
   int retval;
 
+  d_textureMode = m;
+
   msgbuf = encode_setTextureMode(&len, m, xm);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {

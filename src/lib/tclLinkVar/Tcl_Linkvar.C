@@ -92,6 +92,7 @@ static	char	*handle_int_value_change(ClientData clientData,
 //intvar->my_tcl_varname, value);
 
           //*intvar = value;
+          intvar->d_updateFromTcl = VRPN_TRUE;
           intvar->SetFromTcl(value);
           intvar->mylastint = value;
 	} 
@@ -129,6 +130,7 @@ static	char	*handle_float_value_change(ClientData clientData,
            // Need to invoke operator = since it might be redefined
            // by derived class.  (?)
 	   //*floatvar = value;
+          floatvar->d_updateFromTcl = VRPN_TRUE;
            floatvar->SetFromTcl(value);
 	   floatvar->mylastfloat = value;
 	}
@@ -158,6 +160,7 @@ static	char	*handle_string_value_change(ClientData clientData,
 //fprintf(stderr, "handle_string_value_change:  changing %s to %s.\n",
 //selvar->d_myTclVarname, cvalue);
            // BUG BUG BUG - doesn't use operator =?
+          selvar->d_updateFromTcl = VRPN_TRUE;
            selvar->SetFromTcl(cvalue);
 	}
 	return NULL;
@@ -324,7 +327,9 @@ Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
   d_dirty (VRPN_FALSE),
   d_ignoreChange (VRPN_FALSE),
   d_permitIdempotentChanges (VRPN_FALSE),
-  d_callbacks (NULL)
+  d_callbacks (NULL),
+  d_inCallback (VRPN_FALSE),
+  d_updateFromTcl (VRPN_FALSE)
 {
 //fprintf(stderr, "Tclvar_int constructor\n");
 
@@ -426,9 +431,14 @@ void Tclvar_int::addCallback (Linkvar_Intcall cb, void * userdata) {
 void Tclvar_int::doCallbacks (void) {
   tclIntCallbackEntry * e;
 
+  if (d_inCallback) {
+    return;
+  }
+  d_inCallback = VRPN_TRUE;
   for (e = d_callbacks; e; e = e->next) {
     (*e->handler)(d_myint, e->userdata);
   }
+  d_inCallback = VRPN_FALSE;
 }
 
 // virtual 
@@ -465,20 +475,25 @@ void Tclvar_int::SetFromTcl (vrpn_int32 v) {
 void Tclvar_int::updateTcl (void) {
   char cvalue [100];
 
+  if (d_updateFromTcl) {
+    d_updateFromTcl = VRPN_FALSE;
+    return;
+  }
   // Idempotent check. Only notify tcl if the new value is
   // different from the old value. 
   if (!interpreter) {
     return;
   }
-  if ((d_myint != mylastint) ||
-      (d_permitIdempotentChanges)) {
+  //if ((d_myint != mylastint) ||
+      //(d_permitIdempotentChanges)) {
+  d_ignoreChange = VRPN_TRUE;
     mylastint = d_myint;
     d_dirty = VRPN_FALSE;
     sprintf(cvalue, "%d", d_myint);
     Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
 //fprintf(stderr, "Tclvar_int::updateTcl(%d) - was %d.\n",
 //d_myint, mylastint);
-  }
+  //}
 }
 
 
@@ -495,7 +510,9 @@ Tclvar_float::Tclvar_float(const char * tcl_varname, vrpn_float64 default_value,
   d_ignoreChange (VRPN_FALSE),
   d_permitIdempotentChanges (VRPN_FALSE),
   d_myfloat (default_value),
-  d_callbacks (NULL)
+  d_callbacks (NULL),
+  d_inCallback (VRPN_FALSE),
+  d_updateFromTcl (VRPN_FALSE)
 {
 //fprintf(stderr, "Tclvar_float constructor\n");
 
@@ -593,9 +610,14 @@ void Tclvar_float::doCallbacks (void) {
 
 //fprintf(stderr, "Tclvar_float::doCallbacks (%s).\n", my_tcl_varname);
 
+  if (d_inCallback) {
+    return;
+  }
+  d_inCallback = VRPN_TRUE;
   for (e = d_callbacks; e; e = e->next) {
     (*e->handler)(d_myfloat, e->userdata);
   }
+  d_inCallback = VRPN_FALSE;
 }
 
 // virtual
@@ -607,16 +629,21 @@ vrpn_float64 Tclvar_float::operator = (vrpn_float64 v) {
 
   retval = (d_myfloat = v);
 
+  if (d_updateFromTcl) {
+    d_updateFromTcl = VRPN_FALSE;
+    return retval;
+  }
   if (!interpreter) {
     return retval;
   }
-  if ((d_myfloat != mylastfloat) ||
-      (d_permitIdempotentChanges)) {
+  //if ((d_myfloat != mylastfloat) ||
+      //(d_permitIdempotentChanges)) {
+    d_ignoreChange = VRPN_TRUE;
     mylastfloat = d_myfloat;
     d_dirty = VRPN_FALSE;
     sprintf(cvalue, "%f", d_myfloat);
     Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
-  }
+  //}
 
   return retval;
 }
@@ -1270,7 +1297,9 @@ Tclvar_selector::Tclvar_selector (const char * initial_value) :
   d_ignoreChange (VRPN_FALSE),
   d_permitIdempotentChanges (VRPN_FALSE),
   d_callbacks (NULL),
-  d_initialized (VRPN_FALSE)
+  d_initialized (VRPN_FALSE),
+  d_inCallback (VRPN_FALSE),
+  d_updateFromTcl (VRPN_FALSE)
 {
   if (num_sels >= (MAX_SELS - 1)) {
     fprintf(stderr, "Tclvar_selector:  "
@@ -1393,9 +1422,14 @@ void Tclvar_selector::addCallback (Linkvar_Selectcall cb, void * userdata) {
 void Tclvar_selector::doCallbacks (void) {
   tclSelectCallbackEntry * e;
 
+  if (d_inCallback) {
+    return;
+  }
+  d_inCallback = VRPN_TRUE;
   for (e = d_callbacks; e; e = e->next) {
     (*e->handler)(string(), e->userdata);
   }
+  d_inCallback = VRPN_FALSE;
 }
 
 
@@ -1431,19 +1465,26 @@ void Tclvar_selector::SetFromTcl (const char * v) {
 
 //
 void Tclvar_selector::updateTcl (void) {
+
+  if (d_updateFromTcl) {
+    d_updateFromTcl = VRPN_FALSE;
+    return;
+  }
+
   if (!interpreter) {
     return;
   }
 
   // Idempotent check.
-  if (compareStrings() ||
-      d_permitIdempotentChanges) {
+  //if (compareStrings() ||
+      //d_permitIdempotentChanges) {
+    d_ignoreChange = VRPN_TRUE;
     resetString();
     d_dirty = VRPN_FALSE;
     Tcl_SetVar(interpreter, d_myTclVarname, (char *) string(), TCL_GLOBAL_ONLY);
 //fprintf(stderr, "Tclvar_int::updateTcl(%s) - was %s.\n",
 //string(), d_myLastString);
-  }
+  //}
 }
 
 void Tclvar_selector::initializeTcl (const char * tcl_varname,
@@ -1700,7 +1741,8 @@ void Tclvar_checklist::checklist_callback(vrpn_int32 /*value*/, void *userdata)
 Tclvar_checklist::Tclvar_checklist (const char * parent_name) :
   tcl_parent_name (NULL),
   num_checkboxes (0),
-  d_callbacks (NULL)
+  d_callbacks (NULL),
+  d_inCallback (VRPN_FALSE)
 {
 
 //fprintf(stderr, "Tclvar_checklist constructor\n");
@@ -1763,9 +1805,14 @@ void Tclvar_checklist::addCallback (Linkvar_Checkcall cb, void * userdata) {
 void Tclvar_checklist::doCallbacks (const char * name, int value) {
   tclCheckCallbackEntry * e;
 
+  if (d_inCallback) {
+    return;
+  }
+  d_inCallback = VRPN_TRUE;
   for (e = d_callbacks; e; e = e->next) {
     (*e->handler)(name, value, e->userdata);
   }
+  d_inCallback = VRPN_FALSE;
 }
 
 

@@ -6,6 +6,9 @@
 #ifdef sgi
 #include <strings.h>  // bcopy(), bzero() ON SGI
 #endif
+#ifdef hpux
+#include <strings.h>  // bcopy(), bzero() ON hpux
+#endif
 #include <stdlib.h>  // bcopy(), bzero() ON SOLARIS - unsupported
 
 #if !defined(_WIN32) || defined(__CYGWIN__)

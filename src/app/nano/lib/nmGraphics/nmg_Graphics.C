@@ -14,6 +14,7 @@
 const unsigned int nmg_Graphics::defaultPort = 4507;
 
 nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
+   d_textureMode (NO_TEXTURES),
    d_connection (c),
    d_myId (-1)  // TODO
 {
@@ -211,6 +212,10 @@ void nmg_Graphics::mainloop (void) {
   if (d_connection)
     d_connection->mainloop();
 
+}
+
+nmg_Graphics::TextureMode nmg_Graphics::getTextureMode (void) const {
+  return d_textureMode;
 }
 
 char * nmg_Graphics::encode_resizeViewport (int * len, 

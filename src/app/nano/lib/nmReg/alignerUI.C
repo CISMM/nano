@@ -335,7 +335,9 @@ void    AlignerUI::handle_texture_display_change(vrpn_int32 val, void *ud)
                                           nmg_Graphics::REGISTRATION_COORD);
     }
     else {
-      aui->graphics_display->setTextureMode(nmg_Graphics::NO_TEXTURES,
-                                          nmg_Graphics::RULERGRID_COORD);
+      if (aui->graphics_display->getTextureMode() == nmg_Graphics::COLORMAP) {
+        aui->graphics_display->setTextureMode(nmg_Graphics::NO_TEXTURES,
+                                            nmg_Graphics::RULERGRID_COORD);
+      }
     }
 }

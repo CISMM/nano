@@ -12,6 +12,7 @@ void setupMaterials (void);  // for initialization
 void buildAllTextures (void);
 
 void buildContourTexture (void);  // for update
+void buildRemoteRenderedTexture (int width, int height, void *);
 void makeCheckImage (void);
 void buildAlphaTexture (void);
 void makeRulerImage (void);

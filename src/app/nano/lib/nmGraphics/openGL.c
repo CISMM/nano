@@ -172,7 +172,7 @@ int build_list_set
 
 #if defined(sgi) || defined(__CYGWIN__)
   if (g_VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
-    if (planes.color || g_PRERENDERED_COLORS) {
+    if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE) {
       glEnable(GL_COLOR_ARRAY_EXT);
     } else {
       glDisable(GL_COLOR_ARRAY_EXT);
@@ -211,33 +211,37 @@ int build_list_set
 
   if (g_VERTEX_ARRAY){// same extension is for TEXTURE_COORD_ARRAY
 #ifndef PROJECTIVE_TEXTURE
-    if ( g_texture_displayed != nmg_Graphics::NO_TEXTURES) 
-     glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
-    else
-     glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
-     if (glGetError()!=GL_NO_ERROR) {
+    if (g_texture_displayed != nmg_Graphics::NO_TEXTURES) {
+      glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
+    } else {
+      glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
+    }
+    if (glGetError() != GL_NO_ERROR) {
       printf(" Error setting GL_TEXTURE_COORD_ARRAY_EXT.\n");
     } 
 #else
-    if ( planes.contour || planes.alpha)
-     glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
-    else
-     glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
-     if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error setting GL_TEXTURE_COORD_ARRAY_EXT.\n");
-     } 
+    if ( planes.contour || planes.alpha) {
+      glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
+    } else {
+      glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
+    }
+    if (glGetError() != GL_NO_ERROR) {
+       printf(" Error setting GL_TEXTURE_COORD_ARRAY_EXT.\n");
+    } 
 #endif // PROJECTIVE_TEXTURE
   }
 
 #endif // sgi or __CYGWIN__
 
-  if (spm_graphics_verbosity >= 15)
+  if (spm_graphics_verbosity >= 15) {
     fprintf(stderr, "  updating %d - %d", subset.low(), subset.high());
+  }
 
   for (i = subset.low(); i <= subset.high(); i++) {
 
-    if (spm_graphics_verbosity >= 10)
+    if (spm_graphics_verbosity >= 10) {
       fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
+    }
 
     glNewList(base + i, GL_COMPILE);
 
@@ -261,8 +265,9 @@ int build_list_set
       }
     }
 
-    if (spm_graphics_verbosity >= 10)
+    if (spm_graphics_verbosity >= 10) {
       fprintf(stderr, "    updated %d.\n", i);
+    }
     VERBOSECHECK(10);
 
     glEndList();
@@ -369,8 +374,7 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
           // Color arrays are enabled/disabled dynamically depending
           // on whether or not planes.color or g_PRERENDERED_COLORS are
           // valid.
-	  //glEnable(GL_COLOR_ARRAY_EXT);  // TCH 8 Jan 00
-          if (!g_PRERENDERED_COLORS) {
+          if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
 	    glEnable(GL_NORMAL_ARRAY_EXT);
           }
 	}
@@ -419,12 +423,15 @@ int draw_world (int) {
   TIMERVERBOSE(5, mytimer, "draw_world:Looking up planes");
 
   nmb_PlaneSelection planes;
+  planes.lookup(g_inputGrid, g_heightPlaneName,
+                g_colorPlaneName, g_contourPlaneName, g_alphaPlaneName);
   if (g_PRERENDERED_COLORS) {
-    planes.lookupPrerendered(g_prerendered_grid);
-  } else {
-    planes.lookup(g_inputGrid, g_heightPlaneName,
-                  g_colorPlaneName, g_contourPlaneName, g_alphaPlaneName);
+    planes.lookupPrerenderedColors(g_prerendered_grid);
   }
+  if (g_PRERENDERED_DEPTH) {
+    planes.lookupPrerenderedDepth(g_prerendered_grid);
+  }
+
   if (planes.height == NULL) {	
       return -1;
   }
@@ -573,11 +580,10 @@ int draw_world (int) {
   int low_strip;
   int high_strip;
 
-  if (g_PRERENDERED_COLORS) {
+  dataset->range_of_change.GetBoundsAndClear
+    (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
+  if (g_PRERENDERED_COLORS || g_PRERENDERED_DEPTH) {
     g_prerenderedChange->GetBoundsAndClear
-      (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
-  } else {
-    dataset->range_of_change.GetBoundsAndClear
       (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
   }
 
@@ -709,14 +715,17 @@ int draw_world (int) {
 #ifdef __CYGWIN__
       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
 #else
-      if (g_texture_displayed == nmg_Graphics::RULERGRID)
+      if ((g_texture_displayed == nmg_Graphics::RULERGRID) ||
+          (g_texture_displayed == nmg_Graphics::REMOTE_DATA)) {
           glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-      else
+      } else {
 	  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      }
 #endif
   }
 #ifndef __CYGWIN__
-  if (g_texture_mode == GL_TEXTURE_1D || g_texture_mode == GL_TEXTURE_3D_EXT){
+  if ((g_texture_mode == GL_TEXTURE_1D) ||
+      (g_texture_mode == GL_TEXTURE_3D_EXT)) {
       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
   }
 #endif
@@ -759,6 +768,9 @@ int draw_world (int) {
       break;
     case nmg_Graphics::SEM_DATA:
       glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
+      break;
+    case nmg_Graphics::REMOTE_DATA:
+      glBindTexture(GL_TEXTURE_2D, tex_ids[REMOTE_DATA_TEX_ID]);
       break;
     default:
       fprintf(stderr, "Error, unknown texture set for display\n");
@@ -809,6 +821,8 @@ int draw_world (int) {
                 1.0);
         glMultMatrixd(g_texture_transform);
 	break;
+      //case nmg_Graphics::REMOTE_COORD;
+        //glLoadIdentity();
       default:
         fprintf(stderr, "Error, unknown texture coordinate mode\n");
         break;

@@ -141,7 +141,11 @@ struct topoRECT {
 };
 
 // This is defined as a DWORD in the topo code, in topo/wtvsuprt/wintv.h
+#ifdef _WIN32
+typedef long unsigned int COLORREF;
+#else
 typedef vrpn_uint32 COLORREF;
+#endif
 
 // Should be 336 bytes total size, version 5.00
 typedef struct  _tScanParamsLayered {

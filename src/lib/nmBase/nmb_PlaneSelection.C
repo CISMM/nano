@@ -42,9 +42,12 @@ void nmb_PlaneSelection::lookup (BCGrid * inputGrid,
   alpha = inputGrid->getPlaneByName (alphaName);
 }
 
-void nmb_PlaneSelection::lookupPrerendered (BCGrid * grid) {
-  height = grid->getPlaneByName("captured depth");
+void nmb_PlaneSelection::lookupPrerenderedColors (BCGrid * grid) {
   red = grid->getPlaneByName("prerendered red");
   green = grid->getPlaneByName("prerendered green");
   blue = grid->getPlaneByName("prerendered blue");
+}
+
+void nmb_PlaneSelection::lookupPrerenderedDepth (BCGrid * grid) {
+  height = grid->getPlaneByName("captured depth");
 }

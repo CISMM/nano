@@ -240,7 +240,7 @@ ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
 endif
 
 ifeq ($(HW_OS),hp700_hpux10)
-   INCLUDE_FLAGS += +a1
+   INCLUDE_FLAGS += +a1 -Dhpux
 endif
 
 ##########################

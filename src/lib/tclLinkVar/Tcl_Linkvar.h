@@ -110,6 +110,9 @@ class	Tclvar_int {
 
         tclIntCallbackEntry * d_callbacks;
 
+        vrpn_bool d_inCallback;
+        vrpn_bool d_updateFromTcl;
+
         void updateTcl (void);
 };
 
@@ -147,6 +150,9 @@ class	Tclvar_float {
 	vrpn_float64	d_myfloat;
 
         tclFloatCallbackEntry * d_callbacks;
+        vrpn_bool d_inCallback;
+        vrpn_bool d_updateFromTcl;
+
 };
 
 
@@ -217,6 +223,9 @@ class	Tclvar_selector : public nmb_Selector {
 
     void updateTcl (void);
 
+        vrpn_bool d_inCallback;
+        vrpn_bool d_updateFromTcl;
+
   private:
     vrpn_bool d_initialized;
           // 0 until initialize() has been called;  1 thereafter
@@ -262,6 +271,8 @@ class	Tclvar_checklist {
 	int	Lookup_checkbox (const char * name) const;
 
         tclCheckCallbackEntry * d_callbacks;
+
+        vrpn_bool d_inCallback;
 
         void doCallbacks (const char * buttonName, int buttonValue);
           // Trigger callbacks because the button on this checklist

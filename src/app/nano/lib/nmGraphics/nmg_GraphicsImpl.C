@@ -38,7 +38,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation
     nmg_Graphics (connection, "nmg Graphics Implementation GL"),
     d_dataset (data),
     d_displayIndexList (new v_index [NUM_USERS]),
-    d_textureMode (NO_TEXTURES),d_textureTransformMode(RULERGRID_COORD) {
+    d_textureTransformMode(RULERGRID_COORD) {
 
 fprintf(stderr,
         "In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
@@ -644,8 +644,8 @@ _______________________________********************/
            }
   }
 #endif
-  g_tex_installed_width = texture_size;
-  g_tex_installed_height = texture_size;
+  //g_tex_installed_width = texture_size;
+  //g_tex_installed_height = texture_size;
   g_tex_image_width = myPPM->nx;
   g_tex_image_height = myPPM->ny;
 }
@@ -1067,24 +1067,6 @@ fprintf(stderr, "nmg_Graphics_Implementation::setPatternMapName().\n");
   causeGridRedraw();
 }
 
-/* moved code to setTextureMode
-// Genetic Textures
-void nmg_Graphics_Implementation::enableGeneticTextures (int on) {
-fprintf(stderr, "nmg_Graphics_Implementation::enableGeneticTextures().\n");
-  g_genetic_textures_enabled = on;
-
-  if (on)  { // Just turned on
-    setTextureMode(GENETIC);
-  }
-  else { // Just turned off
-    if (getTextureMode() == GENETIC) {
-fprintf(stderr, "Turning off textures (genetic textures off).\n");
-      setTextureMode(NO_TEXTURES);
-    }
-  }
-}
-*/
-
 //
 // Realign Texture Functions
 //
@@ -1305,29 +1287,6 @@ void nmg_Graphics_Implementation::setRealignTextureSliderRange (float low,
   g_realign_textures_slider_max = high;
 }
 
-//
-// Enables realigning textures
-//
-/* moved code to setTextureMode
-void nmg_Graphics_Implementation::enableRealignTextures (int on) {
-  g_realign_textures_enabled = on;
-  g_translate_textures  = 0;
-  g_scale_textures      = 0;
-  g_shear_textures      = 0;
-  g_rotate_textures     = 0;
-
-  if (on)  { // Just turned on
-    setTextureMode(nmg_Graphics::REALIGN);
-  }
-  else {     // Just turned off
-    if (getTextureMode() == REALIGN) {
-fprintf(stderr, "Turning off textures (realign textures off).\n");
-      setTextureMode(nmg_Graphics::NO_TEXTURES);
-    }
-  }
-  causeGridRedraw();
-}
-*/
 
 //
 // Resamples the original data set based on the transformed
@@ -1809,59 +1768,12 @@ void nmg_Graphics_Implementation::updateTexture(int which_texture,
     }
 }
 
-/* moved code to setTextureMode
-void nmg_Graphics_Implementation::enableRegistration(int on) {
-  //printf("registration enabled = %d\n", on);
-  g_registration_enabled = on;
-  if (on) { // Just turned on
-    setTextureMode(nmg_Graphics::REGISTRATION);
-#ifdef __CYGWIN__
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
-#else
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-#endif 
-  } else {// just turned off
-    if (getTextureMode() == REGISTRATION) {
-fprintf(stderr, "Turning off textures (registration off).\n");
-      setTextureMode(nmg_Graphics::NO_TEXTURES);
-    }
-  }
-}
-*/
-
 void nmg_Graphics_Implementation::setTextureTransform(double *xform){
     int i;
     for (i = 0; i < 16; i++)
 	g_texture_transform[i] = xform[i];
 }
 
-/* code moved to setTextureMode
-void nmg_Graphics_Implementation::enableRulergrid (int on) {
-fprintf(stderr, "nmg_Graphics_Implementation::enableRulergrid().\n");
-  g_rulergrid_enabled = on;
-  if (on) { // Just turned on
-
-    setTextureMode(nmg_Graphics::RULERGRID);
-    if (g_rulerPPM)
-      makeAndInstallRulerImage(g_rulerPPM);
-    else {
-      makeRulerImage();
-      buildRulergridTexture();
-    }
-#ifdef __CYGWIN__
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
-#else
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-#endif 
-  } else { // Just turned off
-    if (getTextureMode() == RULERGRID) {
-fprintf(stderr, "Turning off textures (rulergrid off).\n");
-      setTextureMode(nmg_Graphics::NO_TEXTURES);
-    }
-  }
-  causeGridRedraw();
-}
-*/
 
 void nmg_Graphics_Implementation::setRulergridAngle (float v) {
 fprintf(stderr, "nmg_Graphics_Implementation::setRulergridAngle().\n");
@@ -2043,6 +1955,10 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
       break;
     case SEM_DATA:
 //    fprintf(stderr, "nmg_Graphics_Implementation: entering SEM_DATA mode.\n");
+      g_texture_mode = GL_TEXTURE_2D;
+      break;
+    case REMOTE_DATA:
+//fprintf(stderr, "nmg_Graphics_Implementation:  entering REMOTE_DATA mode.\n");
       g_texture_mode = GL_TEXTURE_2D;
       break;
     default:
@@ -2265,10 +2181,12 @@ fprintf(stderr, "nmg_Graphics_Implementation::getMaxColor().\n");
 
 // PROTECTED
 
+#if 0
 nmg_Graphics_Implementation::TextureMode
    nmg_Graphics_Implementation::getTextureMode (void) const {
   return d_textureMode;
 }
+#endif
 
 void nmg_Graphics_Implementation::initDisplays (void) {
 fprintf(stderr, "nmg_Graphics_Implementation::initDisplays().\n");
@@ -2314,8 +2232,10 @@ void nmg_Graphics_Implementation::screenCapture (int * w, int * h,
 
   if (captureBack) {
     glReadBuffer(GL_BACK); // read the back buffer, no interference from WM
+fprintf(stderr, "nmg_Graphics_Implementation::screenCapture:  BACK BUFFER.\n");
   } else {
     glReadBuffer(GL_FRONT);
+fprintf(stderr, "nmg_Graphics_Implementation::screenCapture:  FRONT BUFFER.\n");
   }
 
   glPixelStorei(GL_PACK_ALIGNMENT, 1); // byte alignment, slower

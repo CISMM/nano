@@ -247,7 +247,7 @@ int init_vertexArray(int x, int y)
 void specify_vertexArray(nmb_PlaneSelection planes, int i, int count)
 {
 #if defined(sgi)  // These functions aren't available in CYGWIN:
-  if (!g_PRERENDERED_COLORS) {
+  if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
     glNormalPointerEXT(GL_SHORT, sizeof(Vertex_Struct),
 	                        count, vertexptr[i][0].Normal );
   }
@@ -285,7 +285,7 @@ void specify_vertexArray(nmb_PlaneSelection planes, int i, int count)
     int vert;
     glBegin(GL_TRIANGLE_STRIP);
     for (vert = 0; vert < count; vert++) {
-        if (!g_PRERENDERED_COLORS) {
+        if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
 	    glNormal3s(	vertexptr[i][vert].Normal[0],
 			vertexptr[i][vert].Normal[1],
                         vertexptr[i][vert].Normal[2]);
@@ -334,7 +334,7 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
   
   /* Find the normal for the vertex */
   // Using prerendered colors (and no lighting), we don't need normals
-  if (!g_PRERENDERED_COLORS) {
+  if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
     if (stm_compute_plane_normal(planes.height, x,y,
          (float) ((max_x - min_x) / planes.height->numX()),
          (float) ((max_y - min_y) / planes.height->numY()),
@@ -358,7 +358,13 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
    * a color plane.  Clip the value mapped to color from 0 to 1.  */
   // XXX At some point, we may want to set alpha.
   GLfloat Color [4];
-  if (g_PRERENDERED_COLORS) {
+  if (g_PRERENDERED_TEXTURE) {
+    // Do we need a flat white background to modulate the texture?
+    Color[0] = 1.0f;
+    Color[1] = 1.0f;
+    Color[2] = 1.0f;
+    Color[3] = g_surface_alpha * 255;
+  } else if (g_PRERENDERED_COLORS) {
     Color[0] = planes.red->value(x, y);
     Color[1] = planes.green->value(x, y);
     Color[2] = planes.blue->value(x, y);
@@ -383,7 +389,7 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
       }
     }
   }
-  if (g_PRERENDERED_COLORS || planes.color) {
+  if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color) {
     if (g_VERTEX_ARRAY) {
       vertexArrayPtr->Color[0] = (GLubyte) (Color[0] * 255);
       vertexArrayPtr->Color[1] = (GLubyte) (Color[1] * 255); 
@@ -601,6 +607,25 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
   }
 #endif
 
+
+#if defined(sgi) || defined(__CYGWIN__) || defined(FLOW)
+
+  if (g_PRERENDERED_TEXTURE) {
+    GLfloat tc [2];
+
+    tc[0] = x / 512.0f;
+    tc[1] = y / 512.0f;
+
+    if (g_VERTEX_ARRAY) {
+      vertexArrayPtr->Texcoord[0] = tc[0];
+      vertexArrayPtr->Texcoord[1] = tc[1];
+    } else {
+      glTexCoord2fv(tc);
+    }
+  }
+
+#endif
+  
   /* Put the vertex at the correct location */
   
   Vertex[0]= (float) planes.height->xInWorld(x);

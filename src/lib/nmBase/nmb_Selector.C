@@ -195,7 +195,11 @@ void nmb_Selector::Set (const char * value) {
   // Need to invoke operator = in case it's been redefined
   // by derived class.
   operator = (value);
-  strncpy(d_myLastString, value, nmb_STRING_LENGTH);
+  if (value) {
+    strncpy(d_myLastString, value, nmb_STRING_LENGTH);
+  } else {
+    d_myLastString[0] = 0;
+  }
 }
 
 

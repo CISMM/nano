@@ -320,6 +320,7 @@ void nmui_Component::initializeConnection (vrpn_Connection * c) {
       c->register_message_type("nmui Component request sync");
   syncComplete_type =
       c->register_message_type("nmui Component sync complete");
+
   // MAKE SURE THERE'S ONLY ONE COPY OF THE HANDLER - HACK
   c->unregister_handler(syncRequest_type, handle_syncRequest,
                       this, myId);

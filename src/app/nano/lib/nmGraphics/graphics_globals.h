@@ -183,18 +183,23 @@ extern int g_user_mode [NUM_USERS];
 extern int g_VERTEX_ARRAY;
 
 extern int g_PRERENDERED_COLORS;
+extern int g_PRERENDERED_TEXTURE;
+extern int g_PRERENDERED_DEPTH;
 
 extern Position_list * g_positionList;
 
-#define N_TEX 6
+#define N_TEX 7
 #define CONTOUR_1D_TEX_ID       0
 #define ALPHA_3D_TEX_ID         1
 #define RULERGRID_TEX_ID        2
 #define GENETIC_TEX_ID          3
 #define COLORMAP_TEX_ID         4
 #define SEM_DATA_TEX_ID         5
-extern GLuint tex_ids[N_TEX];
-extern GLubyte *sem_data;
+#define REMOTE_DATA_TEX_ID      6
+
+extern GLuint tex_ids [N_TEX];
+extern GLubyte * sem_data;
+extern GLubyte * remote_data;
 // note: shader textures managed separately below
 
 extern char g_alphaPlaneName [128];

@@ -32,6 +32,7 @@
 #include <nmb_Debug.h>
 #include <Tcl_Netvar.h>
 #include <nmb_Line.h>
+#include <nmb_TimerList.h>
 
 #include <nmm_Globals.h>	
 #ifndef USE_VRPN_MICROSCOPE	
@@ -351,20 +352,35 @@ ColorMap	*curColorMap = NULL;	// Pointer to the current color map
   // used in vrml.C
 
 
+
+
 // static can't be decalred for this struct?
-struct WellKnownPorts {
+class WellKnownPorts {
 
-  // server ports on this machine
+  public:
 
-  const int interfaceLog = 4501;
-  const int graphicsControl = 4507;      // nmg_Graphics::defaultPort;
-  const int remoteRenderingData = 4508;  // nmg_Graphics::defaultPort + 1;
-  const int collaboratingPeerServer = 4510;
-  const int roundTripTime = 4581;
+    // server ports on this machine
 
+    static const int interfaceLog;
+    static const int graphicsControl;
+    static const int remoteRenderingData;
+    static const int collaboratingPeerServer;
+    static const int roundTripTime;
 
 };
 
+
+const int WellKnownPorts::interfaceLog (4501);
+
+//const int WellKnownPorts::graphicsControl (4507);
+const int WellKnownPorts::graphicsControl (nmg_Graphics::defaultPort);
+      // graphicsControl = nmg_Graphics::defaultPort;
+//const int WellKnownPorts::remoteRenderingData (4508);
+const int WellKnownPorts::remoteRenderingData (nmg_Graphics::defaultPort + 1);
+  // remoteRenderingData = nmg_Graphics::defaultPort + 1;
+
+const int WellKnownPorts::collaboratingPeerServer (4510);
+const int WellKnownPorts::roundTripTime (4581);
 
 
 
@@ -701,7 +717,8 @@ static	char	*textureDir;
 // newFlatPlaneName has NULL parent so that no selector is mapped for it.
 // newLBLFlatPlaneName has NULL parent so that no selector is mapped for it.
 
-Tclvar_selector	newFlatPlaneName("flatplane_name",NULL);
+// NANOX 24 Jan 00
+TclNet_selector	newFlatPlaneName("flatplane_name",NULL);
 
 //added 1-9-99 by Amy Henderson
 Tclvar_selector newLBLFlatPlaneName("lblflatplane_name",NULL);
@@ -762,16 +779,16 @@ Tclvar_float global_icon_scale ("global_icon_scale", 0.25);
 // Controls for the french Ohmmeter - creates many tcl widgets
 Ohmmeter *the_french_ohmmeter_ui = NULL;
 
-//Controls for the VI curve generator -
+// Controls for the VI curve generator -
 // uses keithley2400.tcl for most widgets.
 nma_Keithley2400_ui * keithley2400_ui = NULL;
 
 
-//Controls for the SEM
-nms_SEM_ui *sem_ui = NULL;
+// Controls for the SEM
+nms_SEM_ui * sem_ui = NULL;
 
-//controls for registration
-AlignerUI *aligner_ui = NULL;
+// Controls for registration
+AlignerUI * aligner_ui = NULL;
 
 // Scales how much normal force is felt when using Direct Z Control
 Tclvar_float_with_scale	directz_force_scale("directz_force_scale",".sliders", 0,1, 0.1);
@@ -927,7 +944,8 @@ Tclvar_int changed_scanline_params ("accepted_scanline_params", 0);
 
 enum { NO_GRAPHICS, LOCAL_GRAPHICS, SHMEM_GRAPHICS,
        DISTRIBUTED_GRAPHICS, TEST_GRAPHICS_MARSHALLING,
-       RENDER_SERVER, RENDER_CLIENT };
+       RENDER_SERVER, RENDER_TEXTURE_SERVER,
+       RENDER_CLIENT, RENDER_TEXTURE_CLIENT };
 
 // A thread structure for multiprocessing.
 // Global so it can be shut down by signal handlers et al.
@@ -945,8 +963,10 @@ static vrpn_Connection * renderServerOutputConnection = NULL;
 static vrpn_Connection * renderServerControlConnection = NULL;
 static vrpn_Connection * renderClientInputConnection = NULL;
 
+#ifdef USE_VRPN_MICROSCOPE
 // File Connection	for replay vrpn log file
 static vrpn_File_Connection * vrpnLogFile;
+#endif
 
 static vrpn_Connection *ohmmeter_connection = NULL;
 static vrpn_File_Connection * ohmmeterLogFile;
@@ -1020,69 +1040,78 @@ void guessAdhesionNames (void);
 
 void shutdown_connections (void) {
 
-    // NANOX
-    // XXX Bug. Tcl_Netvars are globals, and get deleted after connections.
-    // But, they need a live connection to unregister their handlers.
-    // We skip unregistration by binding with a null connection.
-    replay_rate.bindConnection(NULL);
-    rewind_stream.bindConnection(NULL);
-    set_stream_time.bindConnection(NULL);
+  // NANOX
+  // XXX Bug. Tcl_Netvars are globals, and get deleted after connections.
+  // But, they need a live connection to unregister their handlers.
+  // We skip unregistration by binding with a null connection.
+  replay_rate.bindConnection(NULL);
+  rewind_stream.bindConnection(NULL);
+  set_stream_time.bindConnection(NULL);
 
-    microscope->state.stm_z_scale.bindConnection(NULL);
-    ((TclNet_selector *) dataset->heightPlaneName)->bindConnection(NULL);
-    tcl_wfr_xlate_X.bindConnection(NULL);
-    tcl_wfr_xlate_Y.bindConnection(NULL);
-    tcl_wfr_xlate_Z.bindConnection(NULL);
-    tcl_wfr_rot_0.bindConnection(NULL);
-    tcl_wfr_rot_1.bindConnection(NULL);
-    tcl_wfr_rot_2.bindConnection(NULL);
-    tcl_wfr_rot_3.bindConnection(NULL);
-    tcl_wfr_scale.bindConnection(NULL);
+  microscope->state.stm_z_scale.bindConnection(NULL);
+  ((TclNet_selector *) dataset->heightPlaneName)->bindConnection(NULL);
+  tcl_wfr_xlate_X.bindConnection(NULL);
+  tcl_wfr_xlate_Y.bindConnection(NULL);
+  tcl_wfr_xlate_Z.bindConnection(NULL);
+  tcl_wfr_rot_0.bindConnection(NULL);
+  tcl_wfr_rot_1.bindConnection(NULL);
+  tcl_wfr_rot_2.bindConnection(NULL);
+  tcl_wfr_rot_3.bindConnection(NULL);
+  tcl_wfr_scale.bindConnection(NULL);
 
-    ((TclNet_selector *) dataset->colorPlaneName)->bindConnection(NULL);
-    ((TclNet_selector *) dataset->colorMapName)->bindConnection(NULL);
-    color_slider_min.bindConnection(NULL);
-    color_slider_max.bindConnection(NULL);
+  ((TclNet_selector *) dataset->colorPlaneName)->bindConnection(NULL);
+  ((TclNet_selector *) dataset->colorMapName)->bindConnection(NULL);
+  color_slider_min.bindConnection(NULL);
+  color_slider_max.bindConnection(NULL);
 
-    measureRedX.bindConnection(NULL);
-    measureRedY.bindConnection(NULL);
-    measureGreenX.bindConnection(NULL);
-    measureGreenY.bindConnection(NULL);
-    measureBlueX.bindConnection(NULL);
-    measureBlueY.bindConnection(NULL);
+  measureRedX.bindConnection(NULL);
+  measureRedY.bindConnection(NULL);
+  measureGreenX.bindConnection(NULL);
+  measureGreenY.bindConnection(NULL);
+  measureBlueX.bindConnection(NULL);
+  measureBlueY.bindConnection(NULL);
 
-    tcl_lightDirX.bindConnection(NULL);
-    tcl_lightDirY.bindConnection(NULL);
-    tcl_lightDirZ.bindConnection(NULL);
-    shiny.bindConnection(NULL);
-    diffuse.bindConnection(NULL);
-    surface_alpha.bindConnection(NULL);
-    specular_color.bindConnection(NULL);
+  tcl_lightDirX.bindConnection(NULL);
+  tcl_lightDirY.bindConnection(NULL);
+  tcl_lightDirZ.bindConnection(NULL);
+  shiny.bindConnection(NULL);
+  diffuse.bindConnection(NULL);
+  surface_alpha.bindConnection(NULL);
+  specular_color.bindConnection(NULL);
 
-    texture_scale.bindConnection(NULL);
-    contour_width.bindConnection(NULL);
-    contour_r.bindConnection(NULL);
-    contour_g.bindConnection(NULL);
-    contour_b.bindConnection(NULL);
-    contour_changed.bindConnection(NULL);
-    ((TclNet_selector *) dataset->contourPlaneName)->bindConnection(NULL);
+  texture_scale.bindConnection(NULL);
+  contour_width.bindConnection(NULL);
+  contour_r.bindConnection(NULL);
+  contour_g.bindConnection(NULL);
+  contour_b.bindConnection(NULL);
+  contour_changed.bindConnection(NULL);
+  ((TclNet_selector *) dataset->contourPlaneName)->bindConnection(NULL);
 
-    rulergrid_position_line.bindConnection(NULL);
-    rulergrid_orient_line.bindConnection(NULL);
-    rulergrid_xoffset.bindConnection(NULL);
-    rulergrid_yoffset.bindConnection(NULL);
-    rulergrid_scale.bindConnection(NULL);
-    rulergrid_angle.bindConnection(NULL);
-    ruler_width_x.bindConnection(NULL);
-    ruler_width_y.bindConnection(NULL);
-    ruler_opacity.bindConnection(NULL);
-    ruler_r.bindConnection(NULL);
-    ruler_g.bindConnection(NULL);
-    ruler_b.bindConnection(NULL);
-    rulergrid_changed.bindConnection(NULL);
-    rulergrid_enabled.bindConnection(NULL);
+  rulergrid_position_line.bindConnection(NULL);
+  rulergrid_orient_line.bindConnection(NULL);
+  rulergrid_xoffset.bindConnection(NULL);
+  rulergrid_yoffset.bindConnection(NULL);
+  rulergrid_scale.bindConnection(NULL);
+  rulergrid_angle.bindConnection(NULL);
+  ruler_width_x.bindConnection(NULL);
+  ruler_width_y.bindConnection(NULL);
+  ruler_opacity.bindConnection(NULL);
+  ruler_r.bindConnection(NULL);
+  ruler_g.bindConnection(NULL);
+  ruler_b.bindConnection(NULL);
+  rulergrid_changed.bindConnection(NULL);
+  rulergrid_enabled.bindConnection(NULL);
 
-    display_realign_textures.bindConnection(NULL);
+  display_realign_textures.bindConnection(NULL);
+
+  newFlatPlaneName.bindConnection(NULL);
+
+  if (interfaceLogConnection) {
+    share_sync_state.bindConnection(NULL);
+    copy_inactive_state.bindConnection(NULL);
+    collab_machine_name.bindConnection(NULL);
+  }
+
 
 
   // output stream should be closed by microscope destructor,
@@ -1162,9 +1191,15 @@ void    handle_stride_change (vrpn_int32 newval, void * userdata) {
 
         // Make sure that the value is an integer and in range.  Then
         // assign it to the stride.
-        stride = MAX(1, newval);
-	tclstride = stride;
-	g->setTesselationStride(stride);
+  // avoid infinite loops
+  if (newval < 1) {
+    stride = 1;
+    tclstride = 1;  // this causes a loop
+  } else {
+    stride = newval;
+    // tclstride = newval would be infinite loop
+    g->setTesselationStride(stride);
+  }
 }
 
 
@@ -1354,6 +1389,11 @@ static void handle_collab_machine_name_change
   char buf [256];
   char sfbuf [1024];
 
+  if (!new_value || !strlen(new_value)) {
+    // transitory excitement during startup
+    return;
+  }
+
   // Open the remote tracker object to follow the collaborator's hand
   sprintf(sfbuf, "%s/SharedIFRemLog-%d.stream", loggingPath,
           loggingTimestamp.tv_sec);
@@ -1402,6 +1442,11 @@ static void handle_collab_machine_name_change2
   char buf [256];
   vrpn_int32 newConnection_type;
   vrpn_bool should_synchronize;
+
+  if (!new_value || !strlen(new_value)) {
+    // transitory excitement during startup
+    return;
+  }
 
   sprintf(buf, "%s:%d", new_value, WellKnownPorts::collaboratingPeerServer);
   if (replayingInterface) {
@@ -1769,8 +1814,10 @@ static void handle_genetic_textures_selected_change(vrpn_int32 value, void *user
     g->setTextureMode(nmg_Graphics::GENETIC, 
 		      nmg_Graphics::MANUAL_REALIGN_COORD);
   } else {
-    g->setTextureMode(nmg_Graphics::NO_TEXTURES,
-                      nmg_Graphics::MANUAL_REALIGN_COORD);
+    if (g->getTextureMode() == nmg_Graphics::GENETIC) {
+      g->setTextureMode(nmg_Graphics::NO_TEXTURES,
+                        nmg_Graphics::MANUAL_REALIGN_COORD);
+    }
   }
   cause_grid_redraw(0.0, NULL);
 }
@@ -1895,8 +1942,10 @@ static void handle_display_textures_selected_change(vrpn_int32 value, void *user
     g->setTextureMode(nmg_Graphics::COLORMAP,
 		      nmg_Graphics::MANUAL_REALIGN_COORD);
   } else {
-    g->setTextureMode(nmg_Graphics::NO_TEXTURES,
-		      nmg_Graphics::MANUAL_REALIGN_COORD);
+    if (g->getTextureMode() == nmg_Graphics::COLORMAP) {
+      g->setTextureMode(nmg_Graphics::NO_TEXTURES,
+		        nmg_Graphics::MANUAL_REALIGN_COORD);
+    }
   }
   //cause_grid_redraw(0.0, NULL);
   realign_textures_enabled = 0;
@@ -2016,8 +2065,10 @@ static	void	handle_rulergrid_selected_change(vrpn_int32 value, void *userdata)
     g->setTextureMode(nmg_Graphics::RULERGRID,
 		      nmg_Graphics::RULERGRID_COORD);
   } else {
-    g->setTextureMode(nmg_Graphics::NO_TEXTURES,
-		      nmg_Graphics::RULERGRID_COORD);
+    if (g->getTextureMode() == nmg_Graphics::RULERGRID) {
+      g->setTextureMode(nmg_Graphics::NO_TEXTURES,
+		        nmg_Graphics::RULERGRID_COORD);
+    }
   }
 //  g->enableRulergrid(value);
 //  cause_grid_redraw(0.0, NULL);
@@ -2048,7 +2099,9 @@ static void handle_replay_rate_change (vrpn_int32 value, void *) {
 
 #else
 
-  microscope->SetStreamReplayRate(decoration->rateOfTime);
+  if (microscope) {
+    microscope->SetStreamReplayRate(decoration->rateOfTime);
+  }
 
 #endif
 
@@ -2104,11 +2157,13 @@ static	void	handle_alpha_dataset_change (const char *, void * userdata)
 
 //		cause_grid_redraw(0.0, NULL);
         } else {
-	    fprintf(stderr, "Warning, couldn't find alpha plane: %s\n",
+	  fprintf(stderr, "Warning, couldn't find alpha plane: %s\n",
 		dataset->alphaPlaneName->string());
-	    fprintf(stderr, "  turning alpha texture off\n");
+	  fprintf(stderr, "  turning alpha texture off\n");
+          if (g->getTextureMode() == nmg_Graphics::ALPHA) {
             g->setTextureMode(nmg_Graphics::NO_TEXTURES,
-                                  nmg_Graphics::RULERGRID_COORD);
+                              nmg_Graphics::RULERGRID_COORD);
+          }
         }
 }
 
@@ -2494,8 +2549,10 @@ void handle_contour_dataset_change (const char *, void * userdata)
         } else {        // No plane
 fprintf(stderr, "Couldn't find plane for contour mode;  "
 "turning contours off.\n");
-                g->setTextureMode(nmg_Graphics::NO_TEXTURES,
-				  nmg_Graphics::RULERGRID_COORD);
+          if (g->getTextureMode() == nmg_Graphics::CONTOUR) {
+            g->setTextureMode(nmg_Graphics::NO_TEXTURES,
+		  nmg_Graphics::RULERGRID_COORD);
+          }
         }
 
   g->setContourPlaneName(dataset->contourPlaneName->string());
@@ -3428,6 +3485,10 @@ void setupSynchronization (vrpn_Connection * serverConnection,
                            Microscope * m) {
 #endif
 
+  // NOTE
+  // If you add() any Netvar in this function, make sure you
+  // call bindConnection(NULL) on it in shutdown_connections().
+
   // These really don't need to be visible globally - they don't
   // need their mainloops called, just their connection's
   // (presumably that's collaboratingPeerServerConnection)
@@ -3457,7 +3518,6 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewControls = new nmui_Component ("View");
   
   // Hierarchical decomposition of view control
-  // TODO
 
   nmui_Component * viewPlaneControls;
   viewPlaneControls = new nmui_Component ("View Plane");
@@ -3552,14 +3612,6 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewGridControls->add(&ruler_b);
   viewGridControls->add(&rulergrid_changed);
   viewGridControls->add(&rulergrid_enabled);
-
-  // AAS - these controls won't work unless inserted here:
-  viewGridControls->add(&display_realign_textures);
-  viewGridControls->add(&realign_textures_enabled);
-  viewGridControls->add(&set_realign_center);
-  viewGridControls->add(&genetic_textures_enabled);
-  
-  viewGridControls->add((TclNet_selector *) dset->alphaPlaneName);
 #endif
 
   viewControls->add(viewPlaneControls);
@@ -3569,11 +3621,17 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewControls->add(viewContourControls);
   viewControls->add(viewGridControls);
 
+  nmui_Component * derivedPlaneControls;
+  derivedPlaneControls = new nmui_Component ("DerivedPlanes");
+
+  derivedPlaneControls->add(&newFlatPlaneName);
+
   // Christmas sync
 
   nmui_Component * rootUIControl;
   rootUIControl = new nmui_Component ("ROOT");
 
+  rootUIControl->add(derivedPlaneControls);
   rootUIControl->add(viewControls);
   rootUIControl->add(streamfileControls);
 
@@ -3826,7 +3884,11 @@ void ParseArgs (int argc, char ** argv,
         istate->graphics_mode = RENDER_SERVER;
       } else if (!strcmp(argv[i], "-renderclient")) {
 	if (++i >= argc) Usage(argv[0]);
-        istate->graphics_mode = RENDER_CLIENT;
+      } else if (!strcmp(argv[i], "-trenderserver")) {
+        istate->graphics_mode = RENDER_TEXTURE_SERVER;
+      } else if (!strcmp(argv[i], "-trenderclient")) {
+	if (++i >= argc) Usage(argv[0]);
+        istate->graphics_mode = RENDER_TEXTURE_CLIENT;
         strncpy(istate->graphicsHost, argv[i], 256);
       } else if (strcmp(argv[i], "-minsep") == 0) {
         if (++i >= argc) Usage(argv[0]);
@@ -4434,6 +4496,8 @@ int main(int argc, char* argv[])
     long            n = 0L;
     long	    n_displays = 0L;
     
+    // REMOTERENDERING
+    nmb_TimerList microscapeTimer;
 
     int		i;
     int retval;
@@ -4849,7 +4913,31 @@ int main(int argc, char* argv[])
 
         graphics = new nmg_Graphics_RenderServer
                    (dataset, minC, maxC, renderServerOutputConnection,
+                    nmg_Graphics::VERTEX_COLORS,
+                    nmg_Graphics::VERTEX_DEPTH,
                     100, 100, rulerPPMName, renderServerControlConnection);
+
+        break;
+
+      case RENDER_TEXTURE_SERVER:
+        fprintf(stderr, "Starting up as a texture rendering server "
+                "(orthographic projection).\n"
+                "    THIS MODE IS FOR TESTING ONLY.\n");
+
+        renderServerOutputConnection =
+                new vrpn_Synchronized_Connection
+                          (WellKnownPorts::remoteRenderingData);
+
+        //renderServerControlConnection = renderServerOutputConnection;
+        renderServerControlConnection = 
+                new vrpn_Synchronized_Connection
+                            (WellKnownPorts::graphicsControl);
+
+        graphics = new nmg_Graphics_RenderServer
+                   (dataset, minC, maxC, renderServerOutputConnection,
+                    nmg_Graphics::SUPERSAMPLED_COLORS,
+                    nmg_Graphics::NO_DEPTH,
+                    512, 512, rulerPPMName, renderServerControlConnection);
 
         break;
 
@@ -4875,10 +4963,42 @@ int main(int argc, char* argv[])
         // to BOTH the RenderClient and the RenderServer;
         // each will execute those it needs to.
 
-        graphics = new nmg_Graphics_Remote (renderServerControlConnection);
-        gi = new nmg_Graphics_RenderClient
+        //graphics = new nmg_Graphics_Remote (renderServerControlConnection);
+        graphics = new nmg_Graphics_RenderClient
              (dataset, minC, maxC, renderClientInputConnection,
-              100, 100, renderServerControlConnection);
+              nmg_Graphics::VERTEX_COLORS, nmg_Graphics::VERTEX_DEPTH,
+              100, 100,
+              renderServerControlConnection, &microscapeTimer);
+
+        break;
+
+      case RENDER_TEXTURE_CLIENT:
+        fprintf(stderr, "Starting up as a texture rendering client "
+                "(expecting peer rendering server %d to supply images).\n",
+                istate.graphicsHost);
+
+        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+                istate.graphicsHost,
+                WellKnownPorts::remoteRenderingData);
+        renderClientInputConnection = vrpn_get_connection_by_name
+                             (qualifiedName);
+
+        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+                istate.graphicsHost,
+                WellKnownPorts::graphicsControl);
+        renderServerControlConnection = vrpn_get_connection_by_name
+                             (qualifiedName);
+
+        // By having graphics send on renderServerControlConnection
+        // and gi listen on it, graphics effectively sends commands
+        // to BOTH the RenderClient and the RenderServer;
+        // each will execute those it needs to.
+
+        //graphics = new nmg_Graphics_Remote (renderServerControlConnection);
+        graphics = new nmg_Graphics_RenderClient
+             (dataset, minC, maxC, renderClientInputConnection,
+              nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
+              512, 512, renderServerControlConnection, &microscapeTimer);
 
         break;
 
@@ -4956,20 +5076,6 @@ int main(int argc, char* argv[])
        height_plane = dataset->ensureHeightPlane(); 
     }
 
-    //decoration->red_top[X] = decoration->red_bot[X] = height_plane->minX();
-    //decoration->red_top[Y] = decoration->red_bot[Y] = height_plane->minY();
-    //decoration->red_top[Z] = decoration->green_top[Z] = decoration->blue_top[Z]=
-                      //height_plane->maxAttainableValue()*height_plane->scale();
-    //decoration->red_bot[Z] = decoration->green_bot[Z] = decoration->blue_bot[Z]=
-                      //height_plane->minAttainableValue()*height_plane->scale();
-    //decoration->green_top[X] = decoration->green_bot[X] = height_plane->maxX();
-    //decoration->green_top[Y] = decoration->green_bot[Y] = height_plane->minY();
-    //decoration->blue_top[X] = decoration->blue_bot[X] = height_plane->maxX();
-    //decoration->blue_top[Y] = decoration->blue_bot[Y] = height_plane->maxY();
-    //decoration->red_changed = 1;
-    //decoration->green_changed = 1;
-    //decoration->blue_changed = 1;
-
   decoration->red.moveTo(height_plane->minX(), height_plane->minY(),
                           height_plane);
   decoration->green.moveTo(height_plane->maxX(), height_plane->minY(),
@@ -5012,13 +5118,20 @@ int main(int argc, char* argv[])
     gettimeofday(&loggingTimestamp, NULL);
 
     sprintf(sfbuf, "%s/SharedIFSvrLog-%d.stream", istate.logPath,
-            istate.logTimestamp.tv_sec);
+            loggingTimestamp.tv_sec);
     collaboratingPeerServerConnection = 
   	new vrpn_Synchronized_Connection
           (WellKnownPorts::collaboratingPeerServer,
            istate.logInterface ? sfbuf : NULL,
            istate.logInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
                               vrpn_LOG_NONE);
+
+    if (!collaboratingPeerServerConnection->doing_okay()) {
+      fprintf(stderr, "ERROR:  "
+                      "Couldn't open collaboration server connection.\n");
+      //shutdown_connections();
+      //exit(0);
+    }
   }
 
   replayingInterface = istate.replayInterface;
@@ -5040,6 +5153,11 @@ int main(int argc, char* argv[])
             loggingTimestamp.tv_sec);
     interfaceLogConnection = new vrpn_Synchronized_Connection
             (4501, sfbuf, vrpn_LOG_OUTGOING);
+    if (!interfaceLogConnection->doing_okay()) {
+      fprintf(stderr, "ERROR:  Couldn't open log file.\n");
+      //shutdown_connections();
+      //exit(0);
+    }
   }
 
   if (collaboratingPeerServerConnection) {
@@ -5471,6 +5589,11 @@ VERBOSE(1, "Entering main loop");
         ttest0(t_avg_d, "display");
       } /* end if updt */
 
+    // REMOTERENDER
+    // user interface timestamp happens here
+
+    microscapeTimer.newTimestep();
+
       /* routine for handling all user interaction, including:
        * sdi button box, knob box, phantom button, 
        * Tcl button box simulator, Tcl knob box simulator. */
@@ -5654,6 +5777,8 @@ VERBOSE(1, "Entering main loop");
         looplen = ((interval / 1.0e+3) / (float) (n_displays));
 	printf("    (%.5f seconds per display iteration)\n", looplen);
   }
+
+  microscapeTimer.report();
 
   if(glenable){
     /* shut down trackers and a/d devices    */
@@ -7104,14 +7229,24 @@ void guessAdhesionNames (void) {
 // alternative would be to use a radio button group but since these are
 // in separate parts of the gui we can't do this
 int disableOtherTextures (TextureMode m) {
+
+  // Not compatible with collaboration.
+  // #if'd out by TCH 22 Jan 00 because collaboration experiment is
+  // critical path;  hope to rewrite properly soon.
+
+//#if 0
   if (m != RULERGRID){
     rulergrid_enabled = 0;
   }
   if (m != SEM){
-    sem_ui->displayTexture(0);
+    if (sem_ui) {
+      sem_ui->displayTexture(0);
+    }
   }
   if (m != REGISTRATION){
-    aligner_ui->displayTexture(0);
+    if (aligner_ui) {
+      aligner_ui->displayTexture(0);
+    }
   }
   if (m != MANUAL_REALIGN){
     display_realign_textures = 0;
@@ -7119,6 +7254,8 @@ int disableOtherTextures (TextureMode m) {
   if (m != GENETIC){
     genetic_textures_enabled = 0;
   }
+//#endif
+
   return 0;
 }
 

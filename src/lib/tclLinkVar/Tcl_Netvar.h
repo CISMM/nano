@@ -14,6 +14,10 @@ class vrpn_Shared_int32;  // from vrpn_SharedObject.h
 class vrpn_Shared_float64;
 class vrpn_Shared_String;
 
+class Tcl_Interp;  // from tcl.h
+
+void Tclnet_init (Tcl_Interp *);
+
 class TclNet_int : public Tclvar_int {
 
   public:
@@ -25,6 +29,7 @@ class TclNet_int : public Tclvar_int {
     // ACCESSORS
 
     vrpn_bool isLocked (void) const;
+    vrpn_bool isSerializer (void) const;
 
     // MANIPULATORS
 
@@ -74,23 +79,9 @@ class TclNet_int : public Tclvar_int {
     int d_numReplicas;
     int d_numReplicasAllocated;
 
-    virtual vrpn_int32 conditionalEquals (vrpn_int32 value, timeval when,
-                                          vrpn_bool isLocal);
-      // Operator = overwrites myint and sets d_lastUpdate.
-      // conditionalEquals() overwrites myint IFF when > d_lastUpdate;
-      // otherwise it is ignored.  The timestamp is written into
-      // d_lastUpdate if myint is overwritten.
-      // Should ONLY be used as a helper function for propagateReceivedUpdate
-      // because it plays with d_ignoreChange.
-
-    virtual vrpn_int32 setLocally (vrpn_int32 value, timeval when);
-
     static int propagateReceivedUpdate (void * userdata, vrpn_int32 newValue,
                                         timeval when, vrpn_bool isLocal);
       // Callback registered on the active Remote replica.  
-      // Used to execute (*(NetTcl_int *)userdata = newValue).
-      // Now executes (((NetTcl_int *) userdata)->conditionalEquals
-      //   (newValue, when).
 
 };
 
@@ -105,6 +96,7 @@ class TclNet_float : public Tclvar_float {
     // ACCESSORS
 
     vrpn_bool isLocked (void) const;
+    vrpn_bool isSerializer (void) const;
 
     // MANIPULATORS
 
@@ -154,23 +146,9 @@ class TclNet_float : public Tclvar_float {
     int d_numReplicas;
     int d_numReplicasAllocated;
 
-    virtual vrpn_float64 conditionalEquals (vrpn_float64 value, timeval when,
-                                          vrpn_bool isLocal);
-      // Operator = overwrites myint and sets d_lastUpdate.
-      // conditionalEquals() overwrites myint IFF when > d_lastUpdate;
-      // otherwise it is ignored.  The timestamp is written into
-      // d_lastUpdate if myint is overwritten.
-      // Should ONLY be used as a helper function for propagateReceivedUpdate
-      // because it plays with d_ignoreChange.
-
-    virtual vrpn_float64 setLocally (vrpn_float64 value, timeval when);
-
     static int propagateReceivedUpdate (void * userdata, vrpn_float64 newValue,
                                         timeval when, vrpn_bool isLocal);
       // Callback registered on the active Remote replica.  
-      // Used to execute (*(NetTcl_float *)userdata = newValue).
-      // Now executes (((NetTcl_float *) userdata)->conditionalEquals
-      //   (newValue, when).
 
 };
 
@@ -188,6 +166,7 @@ class TclNet_selector : public Tclvar_selector {
     // ACCESSORS
 
     vrpn_bool isLocked (void) const;
+    vrpn_bool isSerializer (void) const;
 
     // MANIPULATORS
 
@@ -240,23 +219,9 @@ class TclNet_selector : public Tclvar_selector {
     int d_numReplicas;
     int d_numReplicasAllocated;
 
-    virtual const char * conditionalEquals (const char * value, timeval when,
-                                          vrpn_bool isLocal);
-      // Operator = overwrites myint and sets d_lastUpdate.
-      // conditionalEquals() overwrites myint IFF when > d_lastUpdate;
-      // otherwise it is ignored.  The timestamp is written into
-      // d_lastUpdate if myint is overwritten.
-      // Should ONLY be used as a helper function for propagateReceivedUpdate
-      // because it plays with d_ignoreChange.
-
-    virtual const char * setLocally (const char * value, timeval when);
-
     static int propagateReceivedUpdate (void * userdata, const char * newValue,
                                         timeval when, vrpn_bool isLocal);
       // Callback registered on the active Remote replica.
-      // Used to execute (*(NetTcl_float *)userdata = newValue).
-      // Now executes (((NetTcl_float *) userdata)->conditionalEquals
-      //   (newValue, when).
 
 };
 

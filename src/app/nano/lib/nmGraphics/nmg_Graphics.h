@@ -27,11 +27,19 @@ class nmg_Graphics {
     enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA,
 			GENETIC, COLORMAP,
 			SEM_DATA, 
-			BUMPMAP, HATCHMAP, PATTERNMAP};
+			BUMPMAP, HATCHMAP, PATTERNMAP,
+                        REMOTE_DATA };
 
     // how texture coordinates are computed:
     enum TextureTransformMode {RULERGRID_COORD, REGISTRATION_COORD, 
-		MANUAL_REALIGN_COORD};
+		MANUAL_REALIGN_COORD, REMOTE_COORD};
+
+    // enums for Remote Rendering
+    enum RemoteColorMode { NO_COLORS, VERTEX_COLORS, SUPERSAMPLED_COLORS };
+
+    enum RemoteDepthMode { NO_DEPTH, VERTEX_DEPTH };
+
+
 
     nmg_Graphics (vrpn_Connection *, const char * name);
 
@@ -285,10 +293,16 @@ class nmg_Graphics {
     virtual const double * getMinColor (void) const = 0;
     virtual const double * getMaxColor (void) const = 0;
 
+    TextureMode getTextureMode (void) const;
+
+
     static const unsigned int defaultPort;
       // port on which to connect to a graphics server
 
   protected:
+
+    TextureMode d_textureMode;
+
 
     vrpn_Connection * d_connection;
     vrpn_int32 d_myId;

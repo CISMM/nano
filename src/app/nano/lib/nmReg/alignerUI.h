@@ -16,7 +16,7 @@ class AlignerUI {
 					const char *tcl_script_dir);
 	int addImage(nmb_Image *im);
         void displayTexture(int enable) {textureDisplayEnabled = enable;};
-	void mainloop() {ce->mainloop();};
+	void mainloop (void) { if (ce) ce->mainloop(); }
 
 	// user interface callback routines:
 	static void handle_registration_enabled_change(vrpn_int32, void *);

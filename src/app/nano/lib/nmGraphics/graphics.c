@@ -318,6 +318,51 @@ void makeRulerImage (void) {
 
 }
 
+void buildRemoteRenderedTexture (int width, int height, void * tex) {
+  GLenum errval;
+  int retval;
+//fprintf(stderr, "Building remotely rendered texture.\n");
+
+  glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
+
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+#ifdef __CYGWIN__
+  float tex_color[4] = {1.0, 1.0, 1.0, 1.0};
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
+  glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, tex_color);
+#else
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+#endif
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+#if defined(sgi) || defined(__CYGWIN__)
+  //retval = gluBuild2DMipmaps(GL_TEXTURE_2D, 4, width,
+                             //height, GL_RGBA,
+                             //GL_UNSIGNED_BYTE, tex);
+  //if (retval) {
+    //fprintf(stderr, " Didn't make mipmaps, using texture instead.\n");
+    while ((errval = glGetError()) != GL_NO_ERROR) {
+      fprintf(stderr, " Error before making ruler texture: %s.\n", gluErrorString(errval));
+    }
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                 width, height,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                 tex);
+    while ((errval = glGetError()) != GL_NO_ERROR) {
+      fprintf(stderr, " Error making ruler texture: %s.\n", gluErrorString(errval));
+    }
+  //}
+#endif 
+
+  g_tex_image_width = g_tex_installed_width = width;
+  g_tex_image_height = g_tex_installed_height = height;
+}
+
+
 
 void buildContourTexture (void) {
 
@@ -709,7 +754,7 @@ int setup_lighting (int)
     }
 #endif
 
-  if (!g_PRERENDERED_COLORS) {
+  if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
     // With prerendered colors we don't have any normals;  this REALLY
     // slows us down, since GL_NORMALIZE special-cases that.
     glEnable(GL_NORMALIZE);                 /* Re-Normalize normals */
@@ -726,7 +771,7 @@ int setup_lighting (int)
   glEnable(GL_LIGHT0);
 
   // Is this reasonable?  TCH 10 Jan 99
-  if (g_PRERENDERED_COLORS) {
+  if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE) {
     glDisable(GL_LIGHTING);
   } else {
     glEnable(GL_LIGHTING);

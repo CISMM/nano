@@ -102,6 +102,7 @@ float g_rotate_tex_theta = 0;
 
 // Registration
 double g_texture_transform[16] = {0.001,0,0,0,0,0.001,0,0,0,0,1,0,0,0,0,1};
+  // 1000 nM texture goes from 0-1
 int g_tex_image_width = 512;
 int g_tex_image_height = 512;
 int g_tex_installed_width = 512;
@@ -147,9 +148,11 @@ int g_stride = 1;
 int g_texture_displayed = nmg_Graphics::NO_TEXTURES;
 int g_texture_transform_mode = nmg_Graphics::RULERGRID_COORD;
 
-GLenum g_texture_mode = GL_TEXTURE_2D;
-GLuint tex_ids[N_TEX];
-GLubyte *sem_data = NULL;
+//GLenum g_texture_mode = GL_TEXTURE_2D;
+GLenum g_texture_mode = GL_FALSE;
+GLuint tex_ids [N_TEX];
+GLubyte * sem_data = NULL;
+GLubyte * remote_data = NULL;
 
 float g_texture_scale = 10.0f;
 float g_trueTipLocation [3];
@@ -159,6 +162,8 @@ int g_user_mode [NUM_USERS];
 int g_VERTEX_ARRAY = 0;
 
 int g_PRERENDERED_COLORS = 0;  // only used by remote rendering clients
+int g_PRERENDERED_TEXTURE = 0;  // only used by remote rendering clients
+int g_PRERENDERED_DEPTH = 0;  // only used by remote rendering clients
 
 Position_list * g_positionList;
 
