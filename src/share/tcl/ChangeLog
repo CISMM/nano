@@ -1,3 +1,10 @@
+2001-09-06  Shayne O'Neill   <oneill@mindspring.com>
+	
+	* modify.tcl: Complete rewrite of file for better readability.
+		      Mode/style/tool/control parameter panes now only
+		      appear when needed.  Scrollbars added for user
+		      controlled window sizing.
+
 2001-09-01  Adam Seeger  <seeger@cs.unc.edu>
 
 	* litho_main.tcl: added a bunch of new controls and changed layout
