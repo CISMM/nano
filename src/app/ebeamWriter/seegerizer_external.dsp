@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../../../../external/pc_win32/include" /I "." /I "../../../../external/pc_win32/include" /I "../../../../vrpn" /I "../../../../quat" /I "../../lib/nmBase" /I "../../lib/nmImageViewer" /I "../../lib/ImgFormat" /I "../../lib/tclLinkVar" /I "../../lib/nmMP" /I "../nano/lib/nmReg" /I "../nano/lib/nmSEM" /I "../nano/lib/nmUI" /I "../nano" /I "../sem" /D "VRPN_NO_STREAMS" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "V_GLUT" /D "NO_ITCL" /YX /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
