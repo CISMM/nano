@@ -389,7 +389,7 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
 
      int stm_sweep_point_nm( const char *bufptr );
 
-     int afmFeelToPoint (vrpn_float32 x, vrpn_float32 y);
+     int afmFeelToPoint ( const char * bufptr );
 
      int spm_query_scan_range( void );
 
@@ -492,7 +492,10 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
      int spm_report_tapping_mode(void);
 
      void sendBeginFeelTo (vrpn_float32 x, vrpn_float32 y);
-     void sendEndFeelTo (vrpn_float32 x, vrpn_float32 y);
+     void sendEndFeelTo (vrpn_float32 x, vrpn_float32 y, 
+			 vrpn_int32 nx, vrpn_int32 ny,
+			 vrpn_float32 dx, vrpn_float32 dy,
+			 vrpn_float32 orientation);
 
 
 	 void get_startup_params(float *pv, float *iv, float *dv,

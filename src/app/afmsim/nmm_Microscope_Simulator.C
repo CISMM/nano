@@ -1127,15 +1127,18 @@ int nmm_Microscope_Simulator::RcvFeelTo (void * userdata,
   nmm_Microscope_Simulator * tmn = (nmm_Microscope_Simulator *) userdata;
   const char * bufptr = p.buffer;
   vrpn_float32 x, y;
+  vrpn_int32 a, b;
+  vrpn_float32 c, d, e;
   int retval;
 
   retval = tmn->decode_BeginFeelTo(&bufptr, &x, &y);
+
   if (retval) {
     ServerError("decode_BeginFeelTo failed");
     return -1;
   }
 
-  retval = tmn->afmFeelToPoint(x, y);
+  retval = tmn->afmFeelToPoint(bufptr);
   if (retval) {
     ServerError("afmFeelToPoint failed");
     return -1;
@@ -1901,14 +1904,22 @@ stm_scan_point_nm( const char *bufptr )
   return 0;
 }
 
-int nmm_Microscope_Simulator::afmFeelToPoint (vrpn_float32 x, vrpn_float32 y) {
+int nmm_Microscope_Simulator::afmFeelToPoint (const char * bufptr) {
 
+  vrpn_float32 x, y;
+  vrpn_int32 nx, ny;
+  vrpn_float32 dx, dy;
+  vrpn_float32 orientation;
   int retval;
   int i, j;
-  double nx, ny;
+  double incx = 5, incy = 5;
 
-  double incx = 5;
-  double incy = 5;
+  retval = decode_FeelTo(&bufptr, &x, &y, &nx, &ny, &dx, &dy,
+                              &orientation);
+  if (retval) {
+    ServerError("decode_FeelTo failed");
+    return -1;
+  }
 
   ServerOutputAdd(1, "afmFeelToPoint %.2f %.2f", x, y);
 
@@ -1923,7 +1934,7 @@ int nmm_Microscope_Simulator::afmFeelToPoint (vrpn_float32 x, vrpn_float32 y) {
     // Hackish "backscan"
     spm_goto_xynm(nx, y - 2 * incy);
   }
-  sendEndFeelTo(x, y);
+  sendEndFeelTo(x, y, nx, ny, dx, dy, orientation);
 
   return 0;
 }
@@ -3605,11 +3616,14 @@ void nmm_Microscope_Simulator::sendBeginFeelTo (vrpn_float32 x,
 }
 
 void nmm_Microscope_Simulator::sendEndFeelTo (vrpn_float32 x,
-                                              vrpn_float32 y) {
+                                              vrpn_float32 y, 
+					      vrpn_int32 nx, vrpn_int32 ny,
+					      vrpn_float32 dx, vrpn_float32 dy,
+					      vrpn_float32 orientation) {
   long len;
   char * msgbuf;
 
-  msgbuf = encode_EndFeelTo(&len, x, y);
+  msgbuf = encode_EndFeelTo(&len, x, y, nx, ny, dx, dy, orientation);
   Send(len, d_EndFeelTo_type, msgbuf);
 
 }
