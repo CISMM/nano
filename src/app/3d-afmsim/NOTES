@@ -1,0 +1,375 @@
+Gokul Varadhan
+
+Symbols
+-------
+
+### ... ### - start of a new session
+--- ... --- - start of a new issue
+??? ... ??? - problem/doubt/bug etc
+
+
+27 Nov 2000 - 
+####################################################################
+
+Sun : 
+
+Working since 3:30 PM
+checked few things - 1hr about the viewing protein along difft orientations. 
+
+Sat :
+
+Hours :
+Started at 11:00 worked till 2 in the night. lunch 30 mins, went out evening for 30 mins, dinner for 1 hr.
+
+Hours : 13 hrs 
+
+
+Generated triangles using teddy and viewed them.
+
+Next : first have a unified interface - proteins, triangles, two tips. Also think about outputting files.
+
+
+TODO :
+
+. Global transformations - rotate, translate etc the whole world
+. Keyboard : allow adding new triangles, changing tip using keyboard, -- done
+
+
+Fri :
+
+Hours : 9:30
+
+. viewed using nano 
+
+spent 2:30 hrs writing write and viewing etc.
+
+. triangle operns -- done
+. instead of having two objects - ntube and triangle, have just one object.
+
+--- done
+
+Made the code totally obj oriented. 
+
+Time now is 6:30 PM. Working since 11 AM. -- 7 hrs excluding lunch.
+
+
+TODO :
+
+get rotation of triangles
+think about structure of the whole code.
+sort out display lists
+code writeUNCA format
+
+
+spoke to Russ - 45 mins
+
+. emphasis on use of graph hardware
+. cite Ming's coldet and Kenny's work
+. think about Minkowski sum with arbitrary tip and for arbitrary objects
+. Two types of approxns - approx due to depth buffer and one due to approx objects themselves. Think of quantizing this. 
+. Rotate protein molecules and output this to a file.
+
+
+
+Thu :
+
+Trying to fix the off by one bug. Looks like main and depth windows are not identical. Make them identical - othogonal volumes etc.
+
+Load CD.unca 
+
+nano -f CD.unca
+
+/afs/unc/proj/archive/stm/best_of
+
+
+2 hrs  - talking to Russ, Dorothy
+4:30 - fixing the bug in the afm of triangle, trying to figure out why ntube afm looks unsymmetric.
+
+
+Wed :
+
+7:30 hrs - structured the code, adding features. Added translation along XY unign mouse.
+
+TODO for Wed :
+
+. have two classes, Ntube and Triangle. Triangle will contain three Ntubes. Again we do this to avoid runtime computation.
+
+. allow operations such as translation, rotn etc on triangles.
+
+. For afm of ntube with ConeSphere Tip, compute A, B, C, D computation when the object is born and store it instead of computing these when you draw the actual AFM. 
+
+	So there are two choices here :
+
+		1. do computn within the afm drawing code.
+		2. store them.
+
+	2 uses up storage, but i still favour it because if the display funcn is invoked many times, we do not make any new computations. Otherwise there is no efficiency gained because everytime an opern such as rotation is performed, we have to the computation in both cases. 
+
+. read objects from a spec file. 
+. clean the code, comment it. 
+. write some docs.
+. figure out display lists.
+
+
+Tues :
+
+4 hrs
+
+Spent lot of time trying to see why I was getting discontinuities. The problem is due to rounding errrors. The depth buffer values are badly rounded. So the triangle that you draw on the top is badly shape and therefore the transition from the edges of the triangle to the nanotube is not smooth. And so I am getting edge effects. 
+
+????????????????????? Need to deal with this problem. 
+
+One surprising thing : When I draw the top triangle on the main window, I see part of the object triangle. This means the lower object triangle isn't drawn the same way as the upper triangle which is drawn using these points from the depth buffer. On second thoughts, this is actually to be expected because of filtering that must be taking place (remember Bresenham's line algorithm).
+
+
+Mon : 
+2 hrs - demo with Russ, thinking etc
+
+2:30 hrs - got AFM of triangles.
+
+Problem - there is discontinuity at boundaries.
+
+
+
+
+23 Nov - 26 Nov 2000
+####################################################################
+
+Thu - 5 hrs  obtained AFM of nanotube with new tip model
+clean the code tomorrow.
+
+1/2 hr - thinking about AFM of triangle. Treat tri as three lines (each as
+a nanotube) and another triangle top
+
+4 hrs writing docs
+
+13 Nov - 19 Nov 2000
+####################################################################
+
+15 Nov
+
+4:15 hrs - testing nano
+
+14 Nov
+
+4 hrs thinking about getting an AFM of nanotube with the new tip model.
+
+
+6 Nov 2000 - 12 Nov 2000
+####################################################################
+
+12 Nov
+
+6 hrs
+
+. still trying to figure out why display list hasn't helped.
+. have not put the cone sphere draws in a display list.
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+AFM of a simple sphere has a hold on top of the sphere. though i can't see any hole in the depth buffer. getting this prob with both tips.
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+11 Nov 
+
+. fixing the surface feature. want only positive heights. also we want the protein to just sit on the surface.
+
+Hours -  5 hrs figuring out GL and the surface feature.
+
+10 Nov 
+
+5 hrs
+
+. added the surface feature. i.e on the view window the bottom of the windows is the surface.
+
+.thought about getting an AFM of a nano tube and a triangle with the conical tip. discussed with Russ.
+
+. Russ suggested one optimization 
+
+*****************************************************************************
+TODO
+*****************************************************************************
+
+use display list for an AFM. draw once and then scale-translate for each sphere. Infact why not use the same idea to draw the proteins as well.
+
+
+6 Nov
+fixed two bugs today
+
+. spike bug - was using the drawStyle = GLU_LINE while drawing into the depth buffer. Changed it to GLU_FILL and things work just fine !!!!
+
+. there was the bug earlier wherein the afm of the nano tube used to move when I would roll the nanotube. Fixed that. I needed to change the location of
+
+	glTranslatef(0,0,-tipRadius)
+
+. gave Russ the demo
+
+Hours - 4 hrs
+
+*****************************************************************************
+TODO
+*****************************************************************************
+
+. set params to be more realistic
+  	spTip - radius = 20
+	icsTip - cone slant angle = 30 deg
+		 height = infinite
+	 	 radius = 20
+. put the protein to sit on the surface	
+. to be able to rotate the protein
+. color the protein atoms. Get a pdb reader (talk to Russ about this)
+. talk to Kwan about afmsim. Start integrating sim with nano
+. Work on the paper. 
+	. Do some background preparation
+		Speak to Kenny. He used graphics hardware to speed up computation in his SIGGRAPH paper
+		Get hold of Marc Olano's SIGGRAPH course notes on Programmable Shading. It is with Alexandra Bokinsky
+
+	. Start thinking about getting AFM of cylinders and triangles.
+
+	. Characterize AFM simulation as an operation e.g Minkowski's sum
+
+. For later - Might want to do coloring according to certainty. Uncertainty increases as we move away from the contip surface center (the pt on the surface of the conetip which is on the center). As we move away from it, uncertainty increases. Capture this using a color gradient.
+*****************************************************************************
+
+30 Oct 2000 - 5 Nov 2000
+#############################################################################
+
+5 Nov 2 hrs spent on afm depth buffer
+
+1 Nov - 2 hrs meetings. 1 1/2 hr with Adam-Aron and Jason
+31 Oct (Mon) - 4 hrs on amfsim
+
+. this approach works better though you still find some spikes
+. first approach - increase size of depth buffer from 64 x 64 to 128 x 128
+. figuring out the spikes problem
+
+
+Hours - 4 hrs
+
+
+27 Oct 2000
+#############################################################################
+
+. debug file 3DObject.c++-debug
+
+. problem - too many spikes in the afm. ???????????????????????????
+
+  investigated the problem with Matlab. found out that the Z buffer values
+  returned are screwed up (in one case found that one Z value was much greater
+  than the other vals). That is why we get spikes.
+
+. Got a AFM of a pdb.
+
+Hours : 7 hrs
+
+
+
+26 Oct 2000
+#############################################################################
+
+. test if objects are above the surface ???????????????????????????
+
+22 Oct 2000
+#############################################################################
+
+. in showgrid, should draw polygon only if z1 && z2 && z3 ?????????????????. This a problem if we want to draw the InvConeSphereTip
+
+
+4 Oct 2000
+#############################################################################
+
+. make some restictions. objects should not be allowed to go below the surface. We need something stronger than z > 0. Consider the case of a sphere sitting on a surface. then z = r. 
+. do a code cleanup.
+
+3 Oct 2000
+#############################################################################
+
+. Assumptions
+	. height of the tip is larger than the Z value of any object
+
+. getting AFM of spheres only by using dilation.
+. got afm working with the tip modelled as a cone + sphere
+
+29 Sept 2000
+#############################################################################
+
+. Issues 
+
+1. When we say AFM scan, we mean we are measuring the height of the surface at each (x,y). In case of the tip modelled as a sphere, we considered the trajectory of 
+
+. first figured out how the tip is specified. We are given just the cone radius, height and the sphere radius. (see the white board)
+. thinking about considering a new shape for the tip. Now the tip will be modelled as a sphere inside a cone. 
+
+
+
+28 Sept 2000
+#############################################################################
+. added few more commands for the approx scan - 1hr
+. next - need to make the code neat, add comments.
+
+27 Sept 2000
+#############################################################################
+
+. got basic interface for approx scan - 4hrs
+
+
+21 Sept 2000
+#############################################################################
+
+. got approx AFM scan -----------------------------done
+. started coding approx AFM scan
+
+19 Sept 2000
+#############################################################################
+
+. designing 3D approx AFM scan
+
+
+18 Sept 2000
+#############################################################################
+
+----------------------------------------------------------------------------
+
+. thinking about getting AFM scan
+    plenty of visualization problems especially with Exact AFM. Therefore for now thinking about Approx AFM. 
+
+    Wouldn't AFM of a 3D nanotube be a bigger 3D nanoTube. 
+
+Problem : ?????????????????????????????????????????
+---------
+An AFM should give only the top of the nanoTube. How to get rid of the bottom part ? In case of 2D this wasn't a problem since the nanotubes were lying on the surface and this unwanted bottom part used to be below the surface. Not anymore.   
+
+----------------------------------------------------------------------------
+
+. want to see from a difft viewpoint. -----------------------------done
+    now we have a top view
+----------------------------------------------------------------------------
+
+
+17 Sept 2000
+#############################################################################
+
+----------------------------------------------------------------------------
+
+. added 3D object, was able to render them -----------------------------done
+
+----------------------------------------------------------------------------
+. creating 3Dobject.c++ 
+
+My immediate objective is to create a 3D object and render it.
+  o added a procedure for adding an object
+  o now will have to render it
+
+----------------------------------------------------------------------------
+
+. now adding a 3d object - created 3Dobject.h  ----------------------- done
+. added Vec3d, tested it (see main in vec3d.c++)  ----------------------- done
+----------------------------------------------------------------------------
+
+15 Sept 2000
+#############################################################################
+
+. changing vec3d.c++ ----------------------- done
+. changing vec3d.h ----------------------- done
+
+. first we need to add Vec3D
+. Started making the 3D simulator
+

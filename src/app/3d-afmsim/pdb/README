@@ -1,0 +1,12 @@
+Create a pdb data file
+
+Simply type
+
+make
+
+Run
+
+./pdb <input >output
+
+Example
+./pdb <lac.pdb > lac.data

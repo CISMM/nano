@@ -1,0 +1,27 @@
+Dec 2000
+
+Gokul Varadhan
+
+This is the 3D AFM simulator code.
+
+To run the simulator run
+
+./sim
+
+to get the AFM of a protein
+
+./run -p filename
+
+Example : ./run -p lac.data
+
+to get AFM of a triangular model run
+
+./run -t filename scale
+
+Example :
+
+./run -t teddy.obj 20
+
+scale scales the values in the given input file
+
+

@@ -1,0 +1,32 @@
+TODO
+
+
+Nov 10 2000
+###############################################################################
+
+use display list for an AFM. draw once and then scale-translate for each sphere. Infact why not use the same idea to draw the proteins as well.
+
+
+Nov 6 2000
+###############################################################################
+
+. set params to be more realistic
+  	spTip - radius = 20
+	icsTip - cone slant angle = 30 deg
+		 height = infinite
+	 	 radius = 20
+. put the protein to sit on the surface	
+. to be able to rotate the protein
+. color the protein atoms. Get a pdb reader (talk to Russ about this)
+. talk to Kwan about afmsim. Start integrating sim with nano
+. Work on the paper. 
+	. Do some background preparation
+		Speak to Kenny. He used graphics hardware to speed up computation in his SIGGRAPH paper
+		Get hold of Marc Olano's SIGGRAPH course notes on Programmable Shading. It is with Alexandra Bokinsky
+
+	. Start thinking about getting AFM of cylinders and triangles.
+
+	. Characterize AFM simulation as an operation e.g Minkowski's sum
+
+. For later - Might want to do coloring according to certainty. Uncertainty increases as we move away from the contip surface center (the pt on the surface of the conetip which is on the center). As we move away from it, uncertainty increases. Capture this using a color gradient.
+###############################################################################
