@@ -1,3 +1,9 @@
+2000-11-30  Russ Taylor  <taylorr@cs.unc.edu>
+
+	* microscape.c (find_center_xforms) : Modified the center code for
+	the workbench case, so that it fills the whole screen and is tilted
+	45 degrees away -- since we are now using horizontal flat-screen CRT.
+
 2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (Usage) : added documentation of -daligner argument

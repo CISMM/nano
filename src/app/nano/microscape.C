@@ -8322,10 +8322,13 @@ static void find_center_xforms (q_vec_type * lock_userpos,
        screen_mid[1] = (screenLL[1] + screenUR[1]) / 2.0;
        screen_mid[2] = (screenLL[2] + screenUR[2]) / 2.0;
 
+/*	XXX Put this back in in order to allow the image to take up
+	only the lower-left corner of the screen (for the nanoWorkbench,
+	as opposed to the flat-screen CRT that we are now using.
        screen_mid[0] = (screenLL[0] + screen_mid[0]) / 2.0;
        screen_mid[1] = (screenLL[1] + screen_mid[1]) / 2.0;
        screen_mid[2] = (screenLL[2] + screen_mid[2]) / 2.0;
-
+*/
        // Now find the rotation of the screen.  First find the outward
        // pointing normal.  (Used to find the INWARD pointing normal,
        // if cross-product is right-handed.  TCH Jul 00)
@@ -8344,15 +8347,17 @@ static void find_center_xforms (q_vec_type * lock_userpos,
        q_vec_normalize(outward_normal, outward_normal);
        q_vec_normalize(left_side_vec, left_side_vec);
 
-       // Now rotate the outward screen normal to the positive z-axis
+       // We used to rotate the outward screen normal to the positive z-axis
        // of world space.  (Used to find NEGATIVE Z, since we had an
        // inward-pointing normal.  TCH Jul 00)
        //q_set_vec(pos_z, 0.0, 0.0, -1.0);
        q_set_vec(pos_z, 0.0, 0.0, +1.0);
        q_from_two_vecs(screenz_to_worldz, outward_normal, pos_z);
 
-       /* Now line up the sides of the screens with the y-axis. */
-       q_set_vec(pos_y, 0.0, 1.0, 0.0);
+       /* Now line up the sides of the screens with the line that is
+	* halfway between the y-axis and the z-axis (to tilt the surface
+	* away from the user). */
+       q_set_vec(pos_y, 0.0, 1.0, 1.0);
        q_xform(left_side_vec, screenz_to_worldz, left_side_vec);
        q_from_two_vecs(screeny_to_worldy, left_side_vec, pos_y);
        q_mult(*lock_userrot, screeny_to_worldy, screenz_to_worldz);
