@@ -51,8 +51,7 @@ class ControlPanels {
    static void handle_currentImage_change(const char *new_value, void *ud);
    void updateCurrentImageControls();
 
-//   static void handle_clearAlignPoints_change(int new_value, void *ud);
-   static void handle_alignmentNeeded_change(int new_value, void *ud);
+   static void handle_autoAlignRequested_change(int new_value, void *ud);
    static void handle_sourceImageName_change(const char *new_value, void *ud);
    static void handle_targetImageName_change(const char *new_value, void *ud);
    static void handle_resampleImageName_change(const char *new_value,
@@ -91,6 +90,8 @@ class ControlPanels {
                         const nmm_Microscope_SEM_ChangeHandlerData &info);
    void handleSEMChange(const nmm_Microscope_SEM_ChangeHandlerData &info);
 
+   void autoAlignImages();
+
    // list of all images available for display
    Tclvar_list_of_strings *d_imageNames;
 
@@ -126,14 +127,24 @@ class ControlPanels {
    Tclvar_string d_currentImage;
 
    // alignment
-//   Tclvar_int d_clearAlignPoints;
-   Tclvar_int d_alignmentNeeded;
    Tclvar_string d_sourceImageName;
    Tclvar_string d_targetImageName;
    Tclvar_int d_resampleResolutionX;
    Tclvar_int d_resampleResolutionY;
    Tclvar_string d_resampleImageName;
    Tclvar_int d_alignWindowOpen;
+   // auto-align
+   Tclvar_int d_autoAlignRequested;
+   Tclvar_int d_numIterations;
+   Tclvar_float d_stepSize;
+   Tclvar_string d_resolutionLevel;
+   // this array is set by the C-code and is then copied into
+   //  d_resolutionLevelList in a string representation
+   vrpn_int32 d_numResolutionLevels;
+   vrpn_float32 d_stddev[NMR_MAX_RESOLUTION_LEVELS];
+   static vrpn_int32 s_defaultNumResolutionLevels;
+   static vrpn_float32 s_defaultStdDev[];
+   Tclvar_list_of_strings d_resolutionLevelList;
 
    // SEM
    Tclvar_int d_semWindowOpen;

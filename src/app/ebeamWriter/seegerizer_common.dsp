@@ -209,11 +209,15 @@ SOURCE=..\nano\lib\nmReg\nmr_AlignerMI.C
 # End Source File
 # Begin Source File
 
-SOURCE=..\nano\lib\nmReg\nmr_CoarseToFineSearch.C
+SOURCE=..\nano\lib\nmReg\nmr_Gaussian.C
 # End Source File
 # Begin Source File
 
-SOURCE=..\nano\lib\nmReg\nmr_Gaussian.C
+SOURCE=..\nano\lib\nmReg\nmr_MultiResObjectiveMI.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmReg\nmr_ObjectiveMI.C
 # End Source File
 # Begin Source File
 
@@ -409,11 +413,15 @@ SOURCE=..\nano\lib\nmReg\nmr_AlignerMI.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\nano\lib\nmReg\nmr_CoarseToFineSearch.h
+SOURCE=..\nano\lib\nmReg\nmr_Gaussian.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\nano\lib\nmReg\nmr_Gaussian.h
+SOURCE=..\nano\lib\nmReg\nmr_MultiResObjectiveMI.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmReg\nmr_ObjectiveMI.h
 # End Source File
 # Begin Source File
 

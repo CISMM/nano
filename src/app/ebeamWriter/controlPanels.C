@@ -6,6 +6,12 @@
 
 static int expose_point_count = 0;
 
+vrpn_int32 ControlPanels::s_defaultNumResolutionLevels = 15;
+vrpn_float32 ControlPanels::s_defaultStdDev[] =
+               {0.0, 0.6, 1.0, 1.2, 1.4,
+                1.7, 2.0, 2.4, 3,  3.6,
+                4.5,   6,  9, 13, 18};
+
 ControlPanels::ControlPanels(PatternEditor *pe,
                              nmr_Registration_Proxy *rp,
                              nmm_Microscope_SEM_Remote *sem):
@@ -39,14 +45,19 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_enableImageDisplay("enable_image_display", 0),
    d_currentImage("current_image", "none"),
 
-//   d_clearAlignPoints("clear_align_points", 0),
-   d_alignmentNeeded("alignment_needed", 0),
    d_sourceImageName("source_image_name", "none"),
    d_targetImageName("target_image_name", "none"),
    d_resampleResolutionX("resample_resolution_x", 640),
    d_resampleResolutionY("resample_resolution_y", 480),
    d_resampleImageName("resample_image_name", "none"),
    d_alignWindowOpen("align_window_open", 0),
+
+   d_autoAlignRequested("auto_align_requested", 0),
+   d_numIterations("auto_align_num_iterations", 100),
+   d_stepSize("auto_align_step_size", 0.0001),
+   d_resolutionLevel("auto_align_resolution", "0"),
+   d_numResolutionLevels(0),
+   d_resolutionLevelList("auto_align_resolution_list"),
 
    d_semWindowOpen("sem_window_open", 0),
    d_semAcquireImagePushed("sem_acquire_image", 0),
@@ -114,6 +125,17 @@ ControlPanels::ControlPanels(PatternEditor *pe,
     d_SEM->setBeamCurrent((vrpn_float32)d_semBeamCurrent_picoAmps);
   }
   updateMinimumDoses();
+
+  // set up resolutions for auto-alignment
+  d_numResolutionLevels = s_defaultNumResolutionLevels;
+  d_resolutionLevelList.clearList();
+  char listEntry[128];
+  for (i = 0; i < s_defaultNumResolutionLevels; i++) {
+    d_stddev[i] = s_defaultStdDev[i];
+    sprintf(listEntry, "%g", d_stddev[i]);
+    d_resolutionLevelList.addEntry(listEntry);
+  }
+  d_aligner->setResolutions(d_numResolutionLevels, d_stddev);
 }
 
 ControlPanels::~ControlPanels()
@@ -220,12 +242,12 @@ void ControlPanels::setupCallbacks()
   d_enableImageDisplay.addCallback(handle_enableImageDisplay_change, this);
   d_currentImage.addCallback(handle_currentImage_change, this);
 
-//  d_clearAlignPoints.addCallback(handle_clearAlignPoints_change, this);
-  d_alignmentNeeded.addCallback(handle_alignmentNeeded_change, this);
   d_sourceImageName.addCallback(handle_sourceImageName_change, this);
   d_targetImageName.addCallback(handle_targetImageName_change, this);
   d_resampleImageName.addCallback(handle_resampleImageName_change, this);
   d_alignWindowOpen.addCallback(handle_alignWindowOpen_change, this);
+  d_autoAlignRequested.addCallback
+         (handle_autoAlignRequested_change, (void *)this);
 
   d_semWindowOpen.addCallback(handle_semWindowOpen_change, this);
   d_semAcquireImagePushed.addCallback(handle_semAcquireImagePushed_change, 
@@ -665,17 +687,6 @@ void ControlPanels::handle_clearAlignPoints_change(int new_value, void *ud)
 */
 
 // static
-void ControlPanels::handle_alignmentNeeded_change(int new_value, void *ud)
-{
-  ControlPanels *me = (ControlPanels *)ud;
-  printf("alignment request: %d\n",(int)me->d_alignmentNeeded);
-  if (new_value) {
-    me->d_aligner->registerImages();
-  }
-  me->d_alignmentNeeded = 0;
-}
-
-// static
 void ControlPanels::handle_registration_change(void *ud, 
                         const nmr_ProxyChangeHandlerData &info)
 {
@@ -1101,6 +1112,46 @@ void ControlPanels::handle_alignWindowOpen_change(int new_value, void *ud)
   }
 
 }
+
+void ControlPanels::autoAlignImages()
+{
+  vrpn_float32 stddev = atof(d_resolutionLevel.string());
+  vrpn_int32 levelIndex;
+  for (levelIndex = 0; levelIndex < d_numResolutionLevels; levelIndex++) {
+    if (stddev == d_stddev[levelIndex]) break;
+  }
+  if (levelIndex == d_numResolutionLevels) {
+    fprintf(stderr, "Error: autoAlignImages: can't find resolution\n");
+    return;
+  }
+
+  d_aligner->setIterationLimit((vrpn_int32)d_numIterations);
+  d_aligner->setStepSize((vrpn_float32)d_stepSize);
+  d_aligner->setCurrentResolution(levelIndex);
+  d_aligner->autoAlignImages();
+}
+
+// static
+void ControlPanels::handle_autoAlignRequested_change(
+      vrpn_int32 value, void *ud)
+{
+    ControlPanels *me = (ControlPanels *)ud;
+    if (value) {
+      me->autoAlignImages();
+
+/*
+      // some debugging code that inserts the blurred images used for
+      // alignment into the image list so you can easily view them:
+      nmb_Image *im_3D = me->d_imageList->getImageByName
+                            (me->d_registrationImageName3D.string());
+      nmb_Image *im_2D = me->d_imageList->getImageByName
+                            (me->d_registrationImageName2D.string());
+      nmr_AlignerMI aligner;
+      aligner.initImages(im_3D, im_2D, NULL, me->d_imageList);
+*/
+    }
+}
+
 
 // static
 void ControlPanels::handle_semWindowOpen_change(int /*new_value */, void *ud)

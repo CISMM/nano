@@ -226,9 +226,15 @@ int main(int argc, char **argv)
 
     // load the images specified on the command line
     TopoFile defaultTopoFileSettings;
-    imageData = new nmb_ImageList(
-                          controls->imageNameList(),
-                          (const char **)planningImageNames, numPlanningImages,
+    imageData = new nmb_ImageList(controls->imageNameList());
+
+    controls->setImageList(imageData);
+    // this needs to come after the controls get the pointer to the imageData
+    // list so that as the list of image names in tcl is updated and tcl
+    // selectors that index into this list generate callbacks, the C-code has
+    // the corresponding list in C where it needs to search for the images
+    imageData->addFileImages((const char **)planningImageNames,
+                          numPlanningImages,
                           defaultTopoFileSettings);
 
     double matrix[16];
@@ -263,8 +269,6 @@ int main(int argc, char **argv)
     }
 
     patternEditor->show();
-
-    controls->setImageList(imageData);
 
     ImageViewer *image_viewer = ImageViewer::getImageViewer();
 
