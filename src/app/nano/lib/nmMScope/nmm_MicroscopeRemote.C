@@ -345,6 +345,9 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
 				 handle_ScanlineData,
 				 this);
 
+  d_connection->register_handler(d_DroppedConnection_type,
+                                 handle_DroppedConnection2,
+                                   this);
   registerSynchHandler(handle_barrierSynch, this);
   registerGotMutexCallback(this, handle_GotMicroscopeControl);
 }
@@ -570,6 +573,12 @@ nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
   }
 
   // TODO:  clean up callback lists on d_connection
+  if (!d_connection) {
+    return;
+  }
+  d_connection->unregister_handler(d_DroppedConnection_type,
+                                 handle_DroppedConnection2,
+                                   this);
 }
 
 
@@ -858,9 +867,9 @@ long nmm_Microscope_Remote::ModifyMode (void) {
       fprintf(stderr, "DirectZ during forcecurve is an impossible setting.\n");
       return 0;
     } else {
-       long numpnts = (long)(state.modify.fc_num_points);
-       long numcycles = (long)(state.modify.fc_num_halfcycles);
-       long avgnum = (long)(state.modify.fc_avg_num);
+       long numpnts = (long)(double)(state.modify.fc_num_points);
+       long numcycles = (long)(double)(state.modify.fc_num_halfcycles);
+       long avgnum = (long)(double)(state.modify.fc_avg_num);
        return EnterForceCurveStyle(state.modify.setpoint,
                                 state.modify.fc_start_delay,
                                 state.modify.fc_z_start,
@@ -971,8 +980,6 @@ long nmm_Microscope_Remote::rotateScanCoords (double _x, double _y,
   // particular scan angle. 
     double sin_angle = sinf(Q_DEG_TO_RAD(-_scanAngle));
     double cos_angle = cosf(Q_DEG_TO_RAD(-_scanAngle));
-    printf("rotateScanCoords: angle = %g degrees, sin=%g, cos=%g\n",
-         -(_scanAngle), sin_angle, cos_angle);
 
     double centerx = d_dataset->inputGrid->minX() +
     (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())/2.0 ;
@@ -1002,18 +1009,18 @@ long nmm_Microscope_Remote::DrawLine (double _startx, double _starty,
   double startx, starty;
   rotateScanCoords(_startx, _starty, (double)(state.image.scan_angle), &startx, &starty);
   double endx, endy;
-  rotateScanCoords(_endx, _endy, (double)(state.image.scan_angle), &endx, &endy);
-  double yaw = state.modify.yaw - (double)(state.image.scan_angle);
-
-  printf( "DrawLine ::  angle = %g xMin = %f xMax = %f yMin = %f yMax = %f\n",
-	  (double)(state.image.scan_angle), 
+  rotateScanCoords(_endx, _endy, state.image.scan_angle, &endx, &endy);
+  double yaw = state.modify.yaw - Q_DEG_TO_RAD(state.image.scan_angle);
+  /*
+  printf( "DrawLine ::  angle = %f xMin = %f xMax = %f yMin = %f yMax = %f\n",
+	  state.image.scan_angle, 
 	  d_dataset->inputGrid->minX(), d_dataset->inputGrid->maxX(),
 	  d_dataset->inputGrid->minY(), d_dataset->inputGrid->maxY() );
   printf( "             startx = %f starty = %f rotated x = %f rotated y = %f\n",
 	  _startx, _starty, startx, starty);
   printf( "             endx = %f endy = %f rotated x = %f rotated y = %f\n",
 	  _endx, _endy, endx, endy);
-
+  */
   switch (state.modify.style) {
     case SHARP:
     case SEWING:
@@ -1079,10 +1086,10 @@ long nmm_Microscope_Remote::DrawArc (double _x, double _y,
   long retval;
 
   double x,y;
-  rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
-  // XXX Need to rotate start and end angle as well???
-  double startAngle = _startAngle - (double)(state.image.scan_angle);
-  double endAngle = _endAngle - (double)(state.image.scan_angle);
+  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
+  // Need to rotate start and end angle as well!
+  double startAngle = _startAngle - Q_DEG_TO_RAD(state.image.scan_angle);
+  double endAngle = _endAngle - Q_DEG_TO_RAD(state.image.scan_angle);
 
   switch (state.modify.style) {
     case SHARP:
@@ -1524,7 +1531,7 @@ long nmm_Microscope_Remote::ZagTo
   rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
 
   // Need to rotate yaw as well! Subtract the scan angle.
-  msgbuf = encode_ZagTo(&len, x, y, yaw-(double)(state.image.scan_angle), sweepWidth, regionDiag);
+  msgbuf = encode_ZagTo(&len, x, y, yaw-Q_DEG_TO_RAD(state.image.scan_angle), sweepWidth, regionDiag);
   if (!msgbuf)
     return -1;
 
@@ -1616,7 +1623,7 @@ long nmm_Microscope_Remote::SetScanAngle (float _angle) {
   
   float ang_radians = Q_DEG_TO_RAD(angle);
 
-  printf("Setting scan angle %g\n", ang_radians);
+  printf("Setting scan angle %g\n", angle);
 
   msgbuf = encode_SetScanAngle(&len, ang_radians);
   if (!msgbuf)
@@ -1718,9 +1725,9 @@ long nmm_Microscope_Remote::SetModForce () {
                            " (not contact or tapping)\n");
         return 0;
     }
-    long numpnts = (long)(state.modify.fc_num_points);
-    long numcycles = (long)(state.modify.fc_num_halfcycles);
-    long avgnum = (long)(state.modify.fc_avg_num);
+    long numpnts = (long)(double)(state.modify.fc_num_points);
+    long numcycles = (long)(double)(state.modify.fc_num_halfcycles);
+    long avgnum = (long)(double)(state.modify.fc_avg_num);
     return EnterForceCurveStyle(state.modify.setpoint,
                                 state.modify.fc_start_delay,
                                 state.modify.fc_z_start,
@@ -2495,6 +2502,20 @@ int nmm_Microscope_Remote::handle_GotConnection2 (void * userdata,
                                       vrpn_HANDLERPARAM ) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   return (ms->RcvGotConnection2());
+}
+
+//static
+int nmm_Microscope_Remote::handle_DroppedConnection2 (void * userdata,
+                                      vrpn_HANDLERPARAM ) {
+    nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+    // Only display warning if we aren't quitting the program, and
+    // if we are connected to a live AFM - no streamfiles!
+    if ((!ms->d_dataset->done) && (ms->ReadMode() == READ_DEVICE)) {
+      display_warning_dialog("Communication with ThermoMicroscopes AFM has stopped.\n"
+                             "No more data will be collected until ThermoMicroscopes\n"
+                             "software is re-started and communication is re-established.");
+    }
+    return 0;
 }
 
 //static

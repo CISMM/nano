@@ -1,5 +1,10 @@
 2000-10-24  Adam Seeger  <seeger@cs.unc.edu>
 
+	* nmm_MicroscopeRemote.C : changes having to do with degree/radian
+	confusion - these fixes come from the thirdtech_branch
+
+2000-10-24  Adam Seeger  <seeger@cs.unc.edu>
+
 	* nmm_MicroscopeRemote.C (rotateScanCoords) : made this convert
 	the argument from degrees to radians before using sinf and cosf on it
 
