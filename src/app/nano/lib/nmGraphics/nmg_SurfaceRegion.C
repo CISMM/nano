@@ -41,7 +41,6 @@ nmg_SurfaceRegion(nmg_Surface *parent, int region_id)
     d_regionalMask = new nmg_SurfaceMask;
     d_vertexPtr = (Vertex_Struct **)NULL;
     d_VertexArrayDim = 0;
-    d_num_lists = 0;
 
     d_currentState.stride = 1;
     d_currentState.justColor = VRPN_FALSE;
@@ -68,16 +67,11 @@ nmg_SurfaceRegion(nmg_Surface *parent, int region_id)
 nmg_SurfaceRegion::
 ~nmg_SurfaceRegion()
 {
-    if (d_vertexPtr) {
-        for(unsigned int i=0;i < d_VertexArrayDim; i++) {
-            if (d_vertexPtr[i]) {
-                delete [] d_vertexPtr[i];
-            }
-        }
-        delete [] d_vertexPtr;
-        d_vertexPtr = NULL;
+    for(unsigned int i=0;i < d_VertexArrayDim; i++) {
+        delete [] d_vertexPtr[i];
     }
-    
+    delete [] d_vertexPtr;
+
     if (d_regionalMask) {
         delete d_regionalMask;
     }
@@ -111,11 +105,11 @@ init(int width, int height)
     d_regionalMask->init(width, height);
     
     if (d_vertexPtr) {
-        delete [] d_vertexPtr;
+        free(d_vertexPtr);
     }
     
-//    d_vertexPtr = (Vertex_Struct **)malloc(d_VertexArrayDim * sizeof(Vertex_Struct **));
-    d_vertexPtr = (Vertex_Struct **)new Vertex_Struct *[d_VertexArrayDim];
+    //d_vertexPtr = (Vertex_Struct **)malloc(d_VertexArrayDim * sizeof(Vertex_Struct **));
+    d_vertexPtr = (Vertex_Struct **)new Vertex_Struct[d_VertexArrayDim];
     
     if (d_vertexPtr == NULL) {
         return 0;
@@ -515,6 +509,20 @@ void nmg_SurfaceRegion::
 deriveMaskPlane(float min_height, float max_height)
 {
     d_regionalMask->deriveMask(min_height, max_height);
+    d_needsFullRebuild = VRPN_TRUE;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceRegion::deriveMaskPlane
+//      Access: Public
+// Description: Create a masking plane, using a range of
+//              height values
+////////////////////////////////////////////////////////////
+void nmg_SurfaceRegion::
+deriveMaskPlane(float center_x, float center_y, float width,float height, 
+                float angle, nmb_Dataset *dataset)
+{
+    d_regionalMask->deriveMask(center_x, center_y, width, height, angle, dataset);
     d_needsFullRebuild = VRPN_TRUE;
 }
 

@@ -30,6 +30,8 @@ public:
     void setRegionControl(BCPlane *control, int region);
     void setMaskPlane(nmg_SurfaceMask* mask, int region);
     void deriveMaskPlane(float min_height, float max_height, int region);
+    void deriveMaskPlane(float center_x, float center_y, float width,float height, 
+                         float angle, int region);
     void rederive(int region);
 
     //Appearance mutator functions

@@ -64,6 +64,8 @@ public:
     void setRegionControl(BCPlane *control);
     void setMaskPlane(nmg_SurfaceMask* mask);    
     void deriveMaskPlane(float min_height, float max_height);
+    void deriveMaskPlane(float center_x, float center_y, float width,float height, 
+                         float angle, nmb_Dataset *dataset);
     
     nmg_SurfaceMask* getMaskPlane() {return d_regionalMask;}
 

@@ -1,3 +1,26 @@
+2001-05-18  Jason Clark  <jclark@cs.unc.edu>
+
+	* nmg_SurfaceRegion.Ch (deriveMaskPlane): New function to derive based on
+	a specified "region" box
+
+	* nmg_SurfaceMask.C (deriveMask): New version of this function to
+	perform the derivation based on a region box.
+
+	* nmg_SurfaceMask.Ch: Have each nmg_SurfaceMask contain another
+	nmg_SurfaceMask that represents only the mask created from the
+	last automatic derivation.  This is to ensure that we can
+	acurrately undo ONLY that mask portion when we re-derive.
+
+	
+
+	* nmg_Surface.Ch (deriveMaskPlane): New function to derive based on
+	a specified "region" box
+
+	* nmg_GraphicsImpl.C (positionRegionBox): Tied this function into
+	the Surface class.  Everything outside the region is rendered at
+	lowest stride, and everything inside is rendered at the user
+	selected stride. 
+
 2001-05-17  Jason Clark  <jclark@cs.unc.edu>
 
 	* spm_gl.c: Same as below.  Sticky tags forced it not to take.

@@ -18,7 +18,7 @@ nmg_Surface()
     d_subRegions = (nmg_SurfaceRegion**)malloc(d_maxNumRegions * sizeof(nmg_SurfaceRegion**));
     d_defaultRegion = new nmg_SurfaceRegion(this, 0);
     d_dataset = (nmb_Dataset*)NULL;
-    
+
     d_defaultRegion->getMaskPlane()->setDrawPartialMask(VRPN_TRUE);
 }
 
@@ -50,7 +50,7 @@ init(unsigned int width, unsigned int height)
     if (!d_defaultRegion->init(d_initWidth, d_initHeight)) {
         return 0;
     }
-    
+
     for(int i = 0; i < d_numSubRegions; i++) {
         if (!d_subRegions[i]->init(d_initWidth, d_initHeight)) {
             return 0;
@@ -124,7 +124,7 @@ destroyRegion(int region)
         region--;
         nmg_SurfaceRegion *victim = d_subRegions[region];
         
-        d_defaultRegion->getMaskPlane()->add(victim->getMaskPlane());
+        d_defaultRegion->getMaskPlane()->invertSubtract(victim->getMaskPlane());
         for(int i = region; i < d_numSubRegions-1; i++) {
             d_subRegions[i] = d_subRegions[i+1];
         }
@@ -170,14 +170,14 @@ setRegionControl(BCPlane *control, int region)
             
             mask = d_subRegions[region]->getMaskPlane();
             if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->add(mask);
+                d_defaultRegion->getMaskPlane()->invertSubtract(mask);
             }
             
             d_subRegions[region]->setRegionControl(control);
             
             mask = d_subRegions[region]->getMaskPlane();
             if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->remove(mask);
+                d_defaultRegion->getMaskPlane()->invertAdd(mask);
                 d_defaultRegion->forceRebuildCondition();
             }
         }
@@ -202,14 +202,14 @@ setMaskPlane(nmg_SurfaceMask *mask, int region)
             
             mask = d_subRegions[region]->getMaskPlane();
             if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->add(mask);
+                d_defaultRegion->getMaskPlane()->invertSubtract(mask);
             }
             
             d_subRegions[region]->setMaskPlane(mask);
             
             mask = d_subRegions[region]->getMaskPlane();
             if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->remove(mask);
+                d_defaultRegion->getMaskPlane()->invertAdd(mask);
                 d_defaultRegion->forceRebuildCondition();
             }
         }
@@ -235,19 +235,54 @@ deriveMaskPlane(float min_height, float max_height, int region)
             
             mask = d_subRegions[region]->getMaskPlane();
             if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->add(mask);
+                d_defaultRegion->getMaskPlane()->invertSubtract(mask);
             }
             
             d_subRegions[region]->deriveMaskPlane(min_height, max_height);
             
             mask = d_subRegions[region]->getMaskPlane();
             if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->remove(mask);
+                d_defaultRegion->getMaskPlane()->invertAdd(mask);
                 d_defaultRegion->forceRebuildCondition();
             }
         }
         else {
             d_defaultRegion->deriveMaskPlane(min_height, max_height);
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_Surface::deriveMaskPlane
+//      Access: Public
+// Description: Create a masking plane, using a box method
+////////////////////////////////////////////////////////////
+void nmg_Surface::
+deriveMaskPlane(float center_x, float center_y, float width,float height, 
+                float angle, int region)
+{
+    if (region >= 0 && region <= d_numSubRegions) {
+        if (region != 0) {
+            region--;
+            nmg_SurfaceMask *mask;
+            
+            mask = d_subRegions[region]->getMaskPlane();
+            if (mask->valid()) {
+                d_defaultRegion->getMaskPlane()->invertSubtract(mask);
+            }
+            
+            d_subRegions[region]->deriveMaskPlane(center_x, center_y, width, 
+                                                  height, angle, d_dataset);
+            
+            mask = d_subRegions[region]->getMaskPlane();
+            if (mask->valid()) {
+                d_defaultRegion->getMaskPlane()->invertAdd(mask);
+                d_defaultRegion->forceRebuildCondition();
+            }
+        }
+        else {
+            d_defaultRegion->deriveMaskPlane(center_x, center_y, width, 
+                                             height, angle, d_dataset);
         }
     }
 }
@@ -264,17 +299,17 @@ rederive(int region)
         if (region != 0) {
             region--;
             nmg_SurfaceMask *mask;
-            
+
             mask = d_subRegions[region]->getMaskPlane();
             if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->add(mask);
+                d_defaultRegion->getMaskPlane()->invertSubtract(mask);
             }
             
             d_subRegions[region]->getMaskPlane()->rederive();
             
             mask = d_subRegions[region]->getMaskPlane();
             if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->remove(mask);
+                d_defaultRegion->getMaskPlane()->invertAdd(mask);
                 d_defaultRegion->forceRebuildCondition();
             }
         }

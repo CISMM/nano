@@ -1,6 +1,8 @@
 #include "nmg_SurfaceMask.h"
 #include <BCPlane.h>
+#include <nmb_Dataset.h>
 #include <stdio.h>
+#include <math.h>
 
 ////////////////////////////////////////////////////////////
 //    Function: nmg_SurfaceMask::Constructor
@@ -16,6 +18,7 @@ nmg_SurfaceMask()
     d_control = (BCPlane*)NULL;
     d_derivationMode = NONE;
     d_drawPartialMask = false;
+    d_oldDerivation = (nmg_SurfaceMask*)NULL;
 }
 
 ////////////////////////////////////////////////////////////
@@ -54,7 +57,26 @@ init(int width, int height)
 
         d_width = width;
         d_height = height;
-    }
+
+        if (!d_oldDerivation) {
+            d_oldDerivation = new nmg_SurfaceMask;
+        }
+        //Can't manually call the init function for d_oldDerivation
+        //or we will get infinite recursion
+        if (d_oldDerivation->d_maskData) {
+            delete [] d_oldDerivation->d_maskData;
+        }
+
+        d_oldDerivation->d_width = width;
+        d_oldDerivation->d_height = height;
+        d_oldDerivation->d_maskData = new int[width * height];
+
+        for(y = 0; y < height; y++) {
+            for(x = 0; x < width; x++) {
+                d_oldDerivation->d_maskData[x+y*width] = 0;
+            }
+        }
+    }    
 }
 
 ////////////////////////////////////////////////////////////
@@ -81,16 +103,16 @@ setControlPlane(BCPlane *control)
 }
 
 ////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::remove
+//    Function: nmg_SurfaceMask::invertAdd
 //      Access: Public
 // Description: This sets as masked in this mask, the unmasked
 //              portions of the other mask
 ////////////////////////////////////////////////////////////
 void nmg_SurfaceMask::
-remove(nmg_SurfaceMask *other)
+invertAdd(nmg_SurfaceMask *other)
 {
     if (d_height != other->d_height || d_width != other->d_width) {
-        printf("nmg_SurfaceMask::remove\tSize mismatch!\n");
+        printf("nmg_SurfaceMask::invertAdd\tSize mismatch!\n");
     }
 
     for(int y = 0; y < d_height; y++) {
@@ -103,16 +125,16 @@ remove(nmg_SurfaceMask *other)
 }
 
 ////////////////////////////////////////////////////////////
-//    Function: nmg_SurfaceMask::add
+//    Function: nmg_SurfaceMask::invertSubtract
 //      Access: Public
 // Description: This sets as unmasked in this mask, the unmasked
 //              portions of the other mask
 ////////////////////////////////////////////////////////////
 void nmg_SurfaceMask::
-add(nmg_SurfaceMask *other)
+invertSubtract(nmg_SurfaceMask *other)
 {
     if (d_height != other->d_height || d_width != other->d_width) {
-        printf("nmg_SurfaceMask::add\tSize mismatch!\n");
+        printf("nmg_SurfaceMask::invertSubtract\tSize mismatch!\n");
     }
 
     for(int y = 0; y < d_height; y++) {
@@ -127,6 +149,67 @@ add(nmg_SurfaceMask *other)
 }
 
 ////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::subtract
+//      Access: Public
+// Description: This sets as unmasked in this mask, the masked
+//              portions of the other mask
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+subtract(nmg_SurfaceMask *other)
+{
+    if (d_height != other->d_height || d_width != other->d_width) {
+        printf("nmg_SurfaceMask::subtract\tSize mismatch!\n");
+    }
+
+    for(int y = 0; y < d_height; y++) {
+        for(int x = 0; x < d_width; x++) {
+            if (other->value(x,y)) {
+                if (value(x,y) > 0) {
+                    addValue(x,y,-1);
+                }                
+            }
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::add
+//      Access: Public
+// Description: This sets as masked in this mask, the masked
+//              portions of the other mask
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+add(nmg_SurfaceMask *other)
+{
+    if (d_height != other->d_height || d_width != other->d_width) {
+        printf("nmg_SurfaceMask::add\tSize mismatch!\n");
+    }
+
+    for(int y = 0; y < d_height; y++) {
+        for(int x = 0; x < d_width; x++) {
+            if (other->value(x,y)) {
+                addValue(x,y,1);
+            }
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::clear
+//      Access: Public
+// Description: Resets to an empty mask
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+clear()
+{
+    for(int y = 0; y < d_height; y++) {
+        for(int x = 0; x < d_width; x++) {
+            addValue(x,y,-value(x,y));
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////
 //    Function: nmg_SurfaceMask::deriveMask
 //      Access: Public
 // Description: Create a masking plane, using a range of
@@ -134,30 +217,103 @@ add(nmg_SurfaceMask *other)
 ////////////////////////////////////////////////////////////
 void nmg_SurfaceMask::
 deriveMask(float min_height, float max_height)
-{
-    d_minHeight = min_height;
-    d_maxHeight = max_height;
-    d_derivationMode = HEIGHT;
-
+{   
     if (d_control == (BCPlane*)NULL) {
 		//If there is no control plane, then bail		
 		return;
 	}
 
+    d_minHeight = min_height;
+    d_maxHeight = max_height;
+    d_derivationMode = HEIGHT;
+
+    subtract(d_oldDerivation);
+    d_oldDerivation->clear();
+
     float z;
     int maskVal;
 	for(int y = 0; y < d_control->numY(); y++) {
         for(int x = 0; x < d_control->numX(); x++) {
-            if (value(x,y) > 0) {
-                addValue(x, y, -1);
-            }
             z = d_control->value(x,y);
             maskVal = ((z < min_height) || (z > max_height));
-            addValue(x, y, maskVal);
+            d_oldDerivation->addValue(x, y, maskVal);
         }
     }
+
+    
+    add(d_oldDerivation);
 }
 
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::deriveMask
+//      Access: Public
+// Description: Create a masking plane, using a rotated box based
+//              method
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+deriveMask(float center_x, float center_y, float width,float height, 
+           float angle, nmb_Dataset *dataset)
+{
+    d_derivationMode = BOX;
+
+    subtract(d_oldDerivation);
+    d_oldDerivation->clear();
+
+    double gCenter_x, gCenter_y;
+    dataset->inputGrid->worldToGrid(center_x, center_y, gCenter_x, gCenter_y);
+
+    float left = -width*0.25;
+    float right = width*0.25;
+    float top = height*0.25;
+    float bottom = -height*0.25;
+
+    float cosx = cosf(angle);
+    float sinx = sinf(angle);
+
+    float P1[2], P2[2], P3[2], P4[2];
+
+    P1[0] = left*cosx-bottom*sinx + gCenter_x;
+    P1[1] = left*sinx+bottom*cosx + gCenter_y;
+
+    P2[0] = left*cosx-top*sinx + gCenter_x;
+    P2[1] = left*sinx+top*cosx + gCenter_y;
+
+    P3[0] = right*cosx-bottom*sinx + gCenter_x;
+    P3[1] = right*sinx+bottom*cosx + gCenter_y;
+
+    P4[0] = right*cosx-top*sinx + gCenter_x;
+    P4[1] = right*sinx+top*cosx + gCenter_y  ;
+
+    int left_bottom_x = P1[0]; int left_bottom_y = P1[1];
+    int left_top_x = P2[0]; int left_top_y = P2[1];
+    int right_bottom_x = P3[0]; int right_bottom_y = P3[1];
+    int right_top_x = P4[0]; int right_top_y = P4[1];
+    
+    if (left_bottom_x < 0) left_bottom_x = 0;
+    if (left_bottom_y < 0) left_bottom_y = 0;
+    if (left_top_x < 0) left_top_x = 0;
+    if (left_top_y >= d_height) left_top_y = d_height-1;
+    if (right_bottom_x >= d_width) right_bottom_x = d_width - 1;
+    if (right_bottom_y < 0) right_bottom_y = 0;
+    if (right_top_x >= d_width) right_top_x =  d_width - 1;
+    if (right_top_y >= d_height) right_top_y = d_height-1;
+
+	for(int y = 0; y < dataset->inputGrid->numY(); y++) {
+        if (y >= left_bottom_y || y >= right_bottom_y) {
+            if (y <= left_top_y || y <= right_top_y) {
+                for(int x = 0; x < dataset->inputGrid->numX(); x++) {            
+                    if (x >= left_bottom_x || x >= left_top_y) {
+                        if (x <= right_bottom_x || x <= right_top_y) {
+                            d_oldDerivation->addValue(x,y,1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    add(d_oldDerivation);
+}
 
 ////////////////////////////////////////////////////////////
 //    Function: nmg_SurfaceMask::rederive
@@ -173,6 +329,7 @@ rederive(vrpn_bool force)
         deriveMask(d_minHeight, d_maxHeight);
         break;
     default:
+        //BOX method does not require rederivation
         break;
     }
 }

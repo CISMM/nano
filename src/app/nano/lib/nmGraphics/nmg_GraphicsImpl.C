@@ -2678,7 +2678,17 @@ void nmg_Graphics_Implementation::positionRegionBox
   (float center_x,float center_y, float width,float height, float angle, 
    int highlight_mask) {
 //fprintf(stderr, "nmg_Graphics_Implementation::positionRegionBox().\n");
+    static int region = -1;
+
     make_region_box(center_x, center_y, width, height, angle, highlight_mask);
+
+    if (region == -1) {
+        region = g_surface->createNewRegion();
+        g_surface->lockStride(VRPN_TRUE, region);
+        setTesselationStride(5, 1);
+    }
+
+    g_surface->deriveMaskPlane(center_x, center_y, width, height, angle, region);    
 }
 
 void nmg_Graphics_Implementation::positionSweepLine (const PointType topL,
