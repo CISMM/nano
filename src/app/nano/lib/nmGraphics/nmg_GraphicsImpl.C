@@ -1379,15 +1379,16 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
            realign_data[grn_index] = g;
            realign_data[blu_index] = b;
          } 
-         else { // Otherwise simple data to color mapping
-           realign_data[red_index] = 
-               ( im->getValue( k_im, j_im ) - min )/( max - min );
-           if (realign_data[red_index] < 0.0) realign_data[red_index] = 0.0;
-           realign_data[grn_index] = 0.5;
-           realign_data[blu_index] = 0.5;
+         else { // Otherwise simple data to greyscale color mapping 
+           float val = ( im->getValue( k_im, j_im ) - min )/( max - min );
+           if (val < 0.0) val = 0.0;
+           realign_data[red_index] = val;
+           realign_data[grn_index] = val;
+           realign_data[blu_index] = val;
          }
 
          // Here we adjust intensity of the texture:
+         // XXX should use its own variable rather than g_ruler_opacity
          if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_MODULATE) {
              realign_data[red_index] += 
 		(1.0- realign_data[red_index])*
@@ -1501,7 +1502,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 //
 void nmg_Graphics_Implementation::
 setRealignTexturesConversionMap( const char *map, const char *mapdir ) {
-  if ( !strcmp( map, "CUSTOM" ) ) {
+  if ( !strcmp( map, "none" ) ) {
     if (g_realign_textures_curColorMap) {
       delete g_realign_textures_curColorMap;
     }

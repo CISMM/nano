@@ -1,3 +1,14 @@
+2000-09-14  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C (createRealignTextures) : replaced "CUSTOM"
+	colormap conversion code to use a simple greyscale map
+        * nmg_GraphicsImpl.C (setRealignTexturesConversionMap) : replaced
+        "CUSTOM" with "none"
+        * nmg_GraphicsRemote.C (setColorMapName) : replaced "CUSTOM" with
+	"none"
+	( there's no reason CUSTOM can't be a normal colormap just
+	  just like the others so this makes things cleaner)
+
 2000-09-13  Kwan Torrich Skinner <skinner@cs.unc.edu>
 
 	* globjects.c (make_collab_hand_icon) : commented out glScalef().

@@ -353,7 +353,7 @@ void nmg_Graphics_Remote::setColorMapName (const char * name) {
   int retval;
 
   // implementation
-  if (strcmp(name, "CUSTOM") == 0) {
+  if (strcmp(name, "none") == 0) {
           d_curColorMap = NULL;
   } else {
           d_colorMap.load_from_file(name, d_colorMapDir);
