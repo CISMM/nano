@@ -120,11 +120,12 @@ void get_z_buffer_values(double xworldratio) {
 }
 
 //returns the volume total for all the objects in the plane, in the units of the objects entered
-double find_volume(){
+double find_volume(double & avgHeight, double & maxHeight,double & area){
 
-  double avgHeight = 0.0;
+  avgHeight = 0.0;
   double sumHeight = 0.0;
-  double maxHeight = 0.0;
+  maxHeight = 0.0;
+  area = 0.0;
 
   Volume = 0;
   double onePixelArea = pow(((double)numberUnits_onedim/(double)numberPixels_onedim),2);
@@ -146,8 +147,11 @@ double find_volume(){
   }
 
   avgHeight = sumHeight/double(numberPixelsInSample);
+  area = numberPixelsInSample*onePixelArea;
+
   cout << "Average Height = " << avgHeight << endl;
   cout << "Max Height = " << maxHeight << endl;
+  cout << "Area = " << area << endl;
 
 
   return Volume;

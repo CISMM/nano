@@ -179,6 +179,8 @@ int oldShift = 0;
 float current_rot_x = 0;
 float current_rot_y = 0;
 float current_rot_z = 0;
+double water = 0.0;
+char* proteinName;
 
 Tclvar_string cname("tclname","");
 
@@ -257,7 +259,7 @@ int main(int argc, char *argv[])
                 VolumeFilename = argv[i];
                 addTrianglesFromFile(VolumeFilename,atof(argv[++i]));
             }
-            else if(!strcmp(argv[i], "-s")){
+            else if(!strcmp(argv[i], "-s")){//spheres
                 if ((++i + 1) >= argc) { Usage(argv[0]); }
                 VolumeFilename = argv[i];
                 fout.open("sphere_output.txt", fstream::out | fstream::app);
@@ -275,6 +277,14 @@ int main(int argc, char *argv[])
             sp.set_r(TipSize);
             ics.set_r(TipSize);//let the user specify the tip radius desired
         }
+		else if (!strcmp(argv[i], "-water")) {
+            if (++i > argc) { Usage(argv[0]); }
+            water = atof(argv[i]);
+        }
+		else if (!strcmp(argv[i], "-protein")) {
+            if (++i > argc) { Usage(argv[0]); }
+            proteinName = argv[i];
+		}
         else if (!strcmp(argv[i], "-connection")) {
             connection_to_nano = true;
             char * newName = "AFMSimulator"/*argv[i]*/;
@@ -1039,10 +1049,11 @@ make_uncert_cone_sphere(ics);
 // Keyboard callback for main window.
 void commonKeyboardFunc(unsigned char key, int x, int y) {
     ofstream fout2;
-    fout2.open("sphere_output.txt", fstream::out | fstream::app);
+    fout2.open("protein_vols_backwards.txt", fstream::out | fstream::app);
     char c;
     float radius = 0.0;
 	float depth = 0.0;
+	float spacing = 0.0;
 	float length = 0.0;
     float decimal = 0.0;
     bool done;
@@ -1051,6 +1062,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 	//float altitude,azimuth;
 	int counter = 0;
 	//float val[5];
+	int i = 0;
 
     switch (key) {
     case 'u' : /* want to see uncertainty map : 
@@ -1146,8 +1158,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 	  if(SimMicroscopeServer.grid_size_rcv){
 		radius = radius * SimMicroscopeServer.Sim_to_World_x;
 		length = length * SimMicroscopeServer.Sim_to_World_x;
-printf("DEPTHSIZE = %f\n", DEPTHSIZE);
-printf("DEPTHSIZE = %d\n", DEPTHSIZE);
+
 		addNtube( NTUBE, Vec3d( DEPTHSIZE/2, DEPTHSIZE/2, radius), 0., 0., 0., length, radius*2.0);
 	  }
       else{
@@ -1156,8 +1167,8 @@ printf("DEPTHSIZE = %d\n", DEPTHSIZE);
       selectedOb = numObs-1;
       break;
     case 'm' ://add monomer
-      radius = (float)14.5054;//21.139;
-	  depth = (float)-11.6069;//-20.1127;
+      radius = (float)55.4987;//35.1499;//64.6241;//11.5845;//4.6438;//12.2399;//9.3075;//26.7917;//8.2026;//12.2399;//11.8293;//108.516;//61.1055;//72.1046;//42.4765;//39.82;//47.7542;//76.2544;//22.004;//33.7743;//32.8943;//31.3545;//25.8267;//23.0505;//24.139;//23.3347;//16.6805;//24.4904;//23.0505;//13.17;//23.9439;//108.516;//91.016;//26.0767;//9.6375;//17.5054;//93.922;
+	  depth = (float)-54.5411;//-34.3325;//-62.5739;//-8.30443;//-2.35942;//-10.8306;//-8.0049;//-25.3118;//-6.80265;//-11.1376;//-8.54796;//-107.786;//-60.109813;//-71.2628;//-41.6459;//-38.9328;//-47.0169;//-74.3044;//-19.06597;//-32.4615;//-31.5449;//-29.9358;//-24.7353;//-22.0889;//-23.1127;//-22.3853;//-15.2443;//-23.5876;//-22.0889;//-9.95;;//-22.2507;//-107.786;//-89.2299;//-24.9439;//-7.7385;//-14.6009;//-93.3322;
 	  if(SimMicroscopeServer.grid_size_rcv){
 		radius = radius * SimMicroscopeServer.Sim_to_World_x;
 		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, depth*SimMicroscopeServer.Sim_to_World_x), 
@@ -1170,16 +1181,29 @@ printf("DEPTHSIZE = %d\n", DEPTHSIZE);
 
       break;
 	case '2' ://add dimer
-      radius = (float)51.58;
-	  depth = (float)-50.3914;
-	  if(SimMicroscopeServer.grid_size_rcv){
-		radius = radius * SimMicroscopeServer.Sim_to_World_x;
-		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, depth*SimMicroscopeServer.Sim_to_World_x), 
-			0., 0., 0., 0., radius*2.0);
-	  }
-	  else{
-		addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2, depth), 0., 0., 0., 0., radius*2.0);
-	  }
+		radius = (float)35.1499;//9.3075;//51.58;
+	    depth = (float)-34.3325;//-8.0049;//-50.3914;
+
+		if(SimMicroscopeServer.grid_size_rcv){
+			for(i = 0;i<2;++i){
+				radius = radius * SimMicroscopeServer.Sim_to_World_x;
+				addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2 + spacing*SimMicroscopeServer.Sim_to_World_x, depth*SimMicroscopeServer.Sim_to_World_x), 
+					0., 0., 0., 0., radius*2.0);
+				spacing = radius;
+				//radius = (float)12.2399;
+				//depth = (float)-10.8306;
+				spacing = 2*7.53622;//10.77;
+			}
+		}
+	    else{
+			for(i = 0;i<2;++i){
+				addNtube( SPHERE, Vec3d(DEPTHSIZE/2, DEPTHSIZE/2 + spacing, depth), 0., 0., 0., 0., radius*2.0);
+				//radius = (float)12.2399;
+				//depth = (float)-10.8306;
+				spacing = 2*7.53622;//10.77;
+			}
+		}
+
       selectedOb = numObs-1;
 
       break;
@@ -1296,6 +1320,12 @@ printf("DEPTHSIZE = %d\n", DEPTHSIZE);
       selectedOb = numObs-1;
 
       break;
+	case 'S' :
+		saveAllGroups();
+		break;
+	case 'L':
+		retrieveAllGroups();
+		break;
     case 's' ://add sphere
       cout << "Enter a radius: " << flush;
       done = false;
@@ -1326,13 +1356,44 @@ printf("DEPTHSIZE = %d\n", DEPTHSIZE);
       selectedOb = numObs-1;
 
       break;
+	case 'h' ://add 1/2 sphere
+      cout << "Enter a radius: " << flush;
+      done = false;
+      c = getchar();
+      while(int(c) != 10){//carriage return ascii value is 10
+        if(c != '.'){//handle numbers to the left first
+            radius = radius*10 + int(c - '0');
+            //cout << int(c) << flush;
+        }
+        else{//numbers to the right of the dec. pt.
+            //cout << c << flush;
+            c = getchar();
+            while(int(c) != 10){
+                  //cout << int(c) << flush;
+                decimal = decimal/10 + int(c - '0')/10;
+                c = getchar();
+            } 
+            done = true;
+        }
+        if (done) break;
+        c = getchar();
+      }
+      radius = radius + decimal;
+	  if(SimMicroscopeServer.grid_size_rcv){
+		radius = radius * SimMicroscopeServer.Sim_to_World_x;
+	  }
+      addNtube( SPHERE, Vec3d( DEPTHSIZE/2, DEPTHSIZE/2, 0), 0., 0., 0., 0., radius*2.0);
+      selectedOb = numObs-1;
+
+      break;
     case 'f' ://find volume
-      volume = find_volume();
+	  double avgHeight, maxHeight,area;
+      volume = find_volume(avgHeight,maxHeight,area);
       if(VolumeFilename != NULL){
         fout2 << VolumeFilename << ": ";
       }
-      fout2 << "Volume of all objects on plane is " << volume << " " 
-            << units << "^3.\n" << flush;
+      fout2 << endl << endl << proteinName << "\nWater: " << water << "\nVol: " << volume <<"\nAvg Height: " 
+		    << avgHeight << "\nMax Height: " << maxHeight << "\nArea: " << area << flush;
       cout << "Volume of all objects on plane is " << volume << " " 
             << units << "^3.\n\n" << flush;
       fout2.close();

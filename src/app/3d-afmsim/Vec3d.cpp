@@ -62,6 +62,12 @@ ostream & operator<<(ostream & out, Vec3d a){
   return out;
 }
 
+istream & operator>>(istream & in, Vec3d a){
+  char c,d,e,f;
+  in >> c >> a.x >> d >> a.y >> e >> a.z >> f;
+  return in;
+}
+
 Vec3d Vec3d::normalize() {
   Vec3d x;
   double t;

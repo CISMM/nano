@@ -11,6 +11,8 @@
 #include "3Dobject.h"
 #include <math.h>		//math.h vs cmath
 #include <GL/glut_UNC.h>
+#include <string.h>
+#include <fstream>
 #include "defns.h"
 #include "Tips.h"
 #include "uncert.h"
@@ -20,7 +22,6 @@ GLenum drawStyle = GL_FILL;
 
 extern void drawSphere(double diamter);
 extern void drawCylinder(double diamter, double height);
-
 
 
 /* Class : OB */
@@ -1333,6 +1334,117 @@ bool inGroup(OB* obj,int* group_number){
 	}
 	return false;
 }
+
+//saves object type, position, orientation, etc. information for all objects in simulator,
+//also saves grouping information
+//user provides filename to save to
+void saveAllGroups(){
+	ofstream outfile;
+	char filename[100];
+	char c;
+	int i = 0;
+
+	cout << "Enter filename to save to: ";
+	
+	c = getchar();
+	while(int(c) != 10){ 
+		filename[i] = c;
+		i++;
+		c = getchar();
+	}
+	filename[i] = '\0';
+	cout << "The filename you entered is: " << filename << endl;
+
+	outfile.open(filename, fstream::out | fstream::app);
+	
+	outfile << numObs << " " << numGroups << endl;
+
+	OB* obj;
+	Ntube* n;
+	Triangle* t;
+
+	for (i = 0;i< numGroups; ++i){
+		outfile << number_in_group[i] << endl;
+		for(int j = 0;j < number_in_group[i];j++){
+			obj = group_of_obs[i][j];
+			outfile << obj->type << " ";
+			
+			switch(obj->type){
+			case NTUBE :
+				n = (Ntube*)obj;
+				outfile << n->yaw << " " << n->pitch << " " <<  n->roll << " " <<  n->leng << " " 
+					    << n->diam << " " << n->pos.x << " " << n->pos.y << " " << n->pos.z << endl;
+				break;
+			case SPHERE :
+				n = (Ntube*)obj;
+				outfile << n->diam << " " << n->pos << endl;
+				break;
+			case TRIANGLE :
+				t = (Triangle*)obj;
+				outfile << t->a << " " << t->b << " " << t->c << " " << t->pos << endl;
+				break;
+			default:
+				break;
+			}
+				
+		}
+	}
+
+}
+
+//loads all objects saved in file with position, orientation, etc. from when they were saved
+//also reinstates grouping at time of saving
+//user provides filename to load from
+void retrieveAllGroups(){
+	ifstream infile;
+	char filename[100];
+	char f;
+	int i = 0;
+	int ObjectsPresent,GroupsPresent,NoInGroup,type,yaw,roll,pitch,leng,diam;
+	Vec3d pos,a,b,c;
+
+	cout << "Enter filename to get data from: ";
+	
+	f = getchar();
+	while(int(f) != 10){ 
+		filename[i] = f;
+		i++;
+		f = getchar();
+	}
+	filename[i] = '\0';
+	cout << "The filename you entered is: " << filename << endl;
+
+	infile.open(filename, fstream::out | fstream::app);
+	
+	infile >> ObjectsPresent >> GroupsPresent;
+
+	for (i = 0;i < GroupsPresent; ++i){
+		infile >> NoInGroup;
+		for(int j =0;j < NoInGroup;++j){
+			infile >> type;	
+				
+			switch(type){
+			case NTUBE :
+				infile >> yaw >> pitch >> roll >> leng >> diam >> pos.x >> pos.y >> pos.z;
+				addNtube(type,pos,yaw,roll,pitch,leng,diam,&i);
+				break;
+			case SPHERE :		
+				infile >> diam >> pos;
+				addNtube(type,pos,0,0,0,0,diam,&i);
+				break;
+			case TRIANGLE :
+				infile >> a >> b >> c;
+				addTriangle(a,b,c,&i);
+				break;
+			default:
+				break;
+			}
+				
+		}
+	}
+
+}
+
 
 void removeFromGroup(OB* obj,int* group_number){
 	int i = *group_number;

@@ -77,5 +77,6 @@ bool	operator==( Vec3d a, Vec3d b);
 bool	operator!=( Vec3d a, Vec3d b);
 bool	operator<(  Vec3d a, Vec3d b);
 ostream & operator<<(ostream & out, Vec3d a);
+istream & operator>>(istream & in, Vec3d a);
 
 #endif
