@@ -492,7 +492,7 @@ int measure_display (void *data) {
    VERBOSE(20, "          glBegin(GL_LINES)");
      glColor3f(1.0f, 0.0f, 0.0f);
        glVertex3f(0.0f, 0.0f, 0.0f);
-       glVertex3f(0.0f, -0.037f, 0.0f);
+       glVertex3f(0.0f, -0.095f, 0.0f);
    VERBOSE(20, "          glEnd()");
    glEnd();
 
@@ -514,7 +514,7 @@ int measure_display (void *data) {
    // It's yellow, not green, to avoid red-green colorblind problems.
      glColor3f(0.7f, 0.7f, 0.0f);
      glVertex3f(0.0f, 0.0f, 0.0f);
-     glVertex3f(0.0f, -0.037f, 0.0f);
+     glVertex3f(0.0f, -0.095f, 0.0f);
    VERBOSE(20, "          glEnd()");
    glEnd();
  
@@ -535,7 +535,7 @@ int measure_display (void *data) {
    VERBOSE(20, "          glBegin(GL_LINES)");
      glColor3f(0.0f, 0.0f, 1.0f);
      glVertex3f(0.0f, 0.0f, 0.0f);
-     glVertex3f(0.0f, -0.037f, 0.0f);
+     glVertex3f(0.0f, -0.095f, 0.0f);
    VERBOSE(20, "          glEnd()");
    glEnd();
  
@@ -558,7 +558,7 @@ int measure_display (void *data) {
    VERBOSE(20, "          glBegin(GL_LINES)");
      glColor3f(1.0f,0.0f,0.0f);
      glVertex3f(0.0f,0.0f,0.0f);
-     glVertex3f(0.0f,-0.037f,0.0f);
+     glVertex3f(0.0f,-0.095f,0.0f);
    VERBOSE(20, "          glEnd()");
    glEnd();
 

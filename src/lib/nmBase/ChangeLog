@@ -1,3 +1,12 @@
+2002-02-12  Aron Helser  <helser@cs.unc.edu>
+
+	* BCPlane.C (writeSPIPFile): Quick tweak reads data in correct
+	orientation. Set intelmode correctly for byte-swapped data. Remove
+	write of unused/unnecessary params. 
+	(readSPIPFile): Same tweak. 
+
+	* nmb_Image.C (num_export_formats): Should be 7, not 5. Missed SPIP!
+
 2002-02-08  Aron Helser  <helser@cs.unc.edu>
 
 	* readNanoscopeFile.Ch: More tweaks to reading

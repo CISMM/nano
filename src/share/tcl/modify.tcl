@@ -1,5 +1,5 @@
 #/*===3rdtech===
-#  Copyright (c) 2000 by 3rdTech, Inc.
+#  Copyright (c) 2000-2002 by 3rdTech, Inc.
 #  All Rights Reserved.
 #
 #  This file may not be distributed without the permission of 
@@ -23,8 +23,8 @@
 #                                  effect the display of .modify is changed
 #   show_modify_live:              opens/closes modifylive window
 #   set_enabling:                  changes enabling based on selected mode/style/tool/control
-#   init_display:                  initializes the bottom part of .modify
-#   pack_display:                  packs the bottom part of .modify
+#   init_display:                  initializes the bottom part of .modify, 
+#                                  and packs it
 #   modBackgChReal:                changes the color of accept/revert button
 #   acceptModifyVars:              bound to "Accept" button
 #   cancelModifyVars:              bound to "Revert" button
@@ -85,7 +85,6 @@ proc set_view {} {
 
     if {$modify_quick_or_full == "full"} {
 	pack_full
-	pack_display
 	pack $nmInfo(modifyfull) -side left -expand no 
 	
 	# reset height in case it has changed 
@@ -98,7 +97,6 @@ proc set_view {} {
 	wm geometry .modify =[set full_width]x[set full_height]
     } else {
 	pack_quick
-	pack_display
         pack $nmInfo(modifyquick) -side top -expand yes -fill both
     }
 }
@@ -1072,15 +1070,16 @@ proc show_modify_live {nm el op} {
     if { $newmodifyp_control == 1 || $newmodifyp_tool == 4 } {
 	show.modify_live } else { hide.modify_live }
 
-    # HACK ALERT?
+    # Even though we show modify_live window, we don't want it
+    # in front, so we force focus back to .modify
     focus -force .modify
 }
+
 #################################
 # show/hide direct_step window  #
 #Called when tool or control is #
-#changed.				  #
+#changed.			#
 #################################
-
 proc show_directStep {nm el op} {
 	#show if tool is direct_step
 	global newmodifyp_tool direct_step newmodifyp_control newmodifyp_direct_step
@@ -1100,12 +1099,13 @@ if {$newmodifyp_control == 0 } {
 # Simply sets enabling and repacks.     #
 #########################################
 proc change_made {nm el op} {
-    global modify_quick_or_full nmInfo
+    global modify_quick_or_full nmInfo full_width 
 
     #Don't do anything if Full Params window isn't open
     if { $modify_quick_or_full == "quick" || [winfo ismapped $nmInfo(modify)] == 0 } {
 	return
     } else {
+        set full_width [winfo width .modify]
 	set_enabling
 	set_view
     }
@@ -1143,20 +1143,22 @@ proc change_made {nm el op} {
 #   ($mode == 1) , or if the style is sharp  #
 #   ($style == 0).  You should then add the  #
 #   following code:                          #
-#                                            ##############################################
-#   # disable your_widget                                                                 #
-#   if { $mode == 1  ||                                                                   #
-#        $style == 0 }{                                                                   #
-#                                                                                         #
-#        $nmInfo(modifyfull).tool.your_widget configure -state disabled                   #
-#   }                                                                                     #
-#                                                                                         #
-#   ...and you should add the following statement to the #disable contact if statement:   #
-#     $tool == 12  ||                                                                     #
-#                                                                                         #
-#   ...and you should add the following statement to the #disable sharp if statement:     #
-#     $tool == 12  ||                                                                     #
-###########################################################################################
+#                                            #############################
+#   # disable your_widget                                                #
+#   if { $mode == 1  ||                                                  #
+#        $style == 0 }{                                                  #
+#                                                                        #
+#        $nmInfo(modifyfull).tool.your_widget configure -state disabled  #
+#   }                                                                    #
+#                                                                        #
+#   ...and you should add the following statement                        #
+#      to the #disable contact if statement:                             #
+#     $tool == 12  ||                                                    #
+#                                                                        #
+#   ...and you should add the following statement                        #
+#      to the #disable sharp if statement:                               #
+#     $tool == 12  ||                                                    #
+##########################################################################
 proc set_enabling {} {
     global nmInfo changing_widgets thirdtech_ui
 
@@ -1313,14 +1315,8 @@ proc init_display {} {
 	$nmInfo(modifydisplay).mod_marker_height \
 	$nmInfo(modifydisplay).modmarkclr \
 	-side top -anchor nw
-}
 
-##############################
-# Pack the bottom of .modify #
-##############################
-proc pack_display {} {
-    global nmInfo
-
+    # This window can always stay packed. 
     pack $nmInfo(modifydisplay) -side bottom -fill x
 }
 

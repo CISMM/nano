@@ -1317,14 +1317,17 @@ int BCPlane::writeSPIPFile(FILE *file)
 
     int x, y;
 
+    // skip over 2 kbyte header
     if( fseek(file, 2048, 0) ) {
        fprintf(stderr," fseek in writeSPIPFile failed.\n");
        return -1;
     }
-    fprintf(stderr,"current position is %ld\n",ftell(file));   
-    for(x = 0; x < numX(); x++ ) {
+    //fprintf(stderr,"current position is %ld\n",ftell(file));   
+   // X is reversed, and we must mirror XY
+   // Makes image appear in same orientation as SPIP/Thermo
+    for (x = numX()-1; x >= 0; x--) {
       for(y = 0; y < numY(); y++ ) {
-           value=(short) ( (( (this->value(x, y) - minValue())*scale)-1 ) * 32767);
+           value=(short) ( (( (this->value(y, x) - minValue())*scale)-1 ) * 32767);
 	   if( fwrite(&value, 2, 1,file)!=1) {
               fprintf(stderr,"writeSPIPFile failed\n");
            }
@@ -1340,6 +1343,7 @@ int BCPlane::readSPIPFile(FILE *file, double max_value)
    double real_value, scale; 
    int x, y;
     
+    // skip over 2 kbyte header
    if( fseek(file,2048,0) ) {
      fprintf(stderr," fseek in readSPIPFile failed.\n");
      return -1;
@@ -1348,15 +1352,18 @@ int BCPlane::readSPIPFile(FILE *file, double max_value)
 //fprintf(stderr," numx= %d, numy= %d\n", numX(),numY()); 
 //fprintf(stderr," max_value= %e,scale = %e\n",max_value,scale ); 
 
-   for (x = 0; x < numX(); x++) {
-        for (y = 0; y < numY(); y++) {
+   // X is reversed, and we must mirror XY
+   // Makes image appear in same orientation as SPIP/Thermo
+     for (x = numX()-1; x >= 0; x--) {
+       for (y = 0; y <numY(); y++) {
             if (fread(&value, sizeof(value), 1, file) != 1) { 
                 perror("BCPlane::readSPIPFile: Could not read value!");
                 fprintf(stderr,"   x: %d  y: %d\n",x,y);
                 return -1;
             }
             real_value= (value/32767.0 + 1 ) * scale; 
-            setValue(x,y, real_value);
+            // mirror xy
+            setValue(y,x, real_value);
         }
    }
    setMinAttainableValue(0);

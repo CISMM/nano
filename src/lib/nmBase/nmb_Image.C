@@ -657,7 +657,7 @@ vrpn_bool nmb_Image::dimensionUnknown()
   return d_dimensionUnknown;
 }
 
-const int nmb_ImageGrid::num_export_formats = 5;
+const int nmb_ImageGrid::num_export_formats = 7;
 const char *nmb_ImageGrid::export_formats_list[] = {	"ThermoMicroscopes",
                                  		"TIFF Image",
                                  		"PPM Image",

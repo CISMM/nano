@@ -846,10 +846,14 @@ int BCGrid::readSPIPFile(FILE* file, const char *name)
 
 int BCGrid::writeSPIPFile(FILE* file, BCPlane* plane)
 {
-  float current,bias,scanspeed;
+  //float current=0.0,bias=0.0;
+  float scanspeed = 0.0;
+#ifdef _WIN32
+  int intelmode=1;
+#else
   int intelmode=0;
-  char starttime[]="10 18 96 16:23:22:22";
-  current=bias=scanspeed=0.0;
+#endif
+  //char starttime[]="10 18 96 16:23:22:22";
 
   if(fprintf(file,"fileformat = bcrstm\n")==EOF) {
     perror("BCGrid::writeSPIPFile: Could not write first line\n");
@@ -860,12 +864,16 @@ int BCGrid::writeSPIPFile(FILE* file, BCPlane* plane)
     perror("BCGrid::writeSPIPFile: Could not write xpixels,ypixels\n");
     return -1;
   }
-  if(fprintf(file,"current = %f\nbias = %f\n",current,bias)==EOF) {
-    perror("BCGrid::writeSPIPFile: Could not write current and bias\n");
-    return -1;
-  }
-  if(fprintf(file,"starttime = %s\nscanspeed = %f\n",starttime,scanspeed)==EOF) {
-    perror("BCGrid::writeSPIPFile: Could not write start time\n");
+//    if(fprintf(file,"current = %f\nbias = %f\n",current,bias)==EOF) {
+//      perror("BCGrid::writeSPIPFile: Could not write current and bias\n");
+//      return -1;
+//    }
+//    if(fprintf(file,"starttime = %s\nscanspeed = %f\n",starttime,scanspeed)==EOF) {
+//      perror("BCGrid::writeSPIPFile: Could not write start time\n");
+//      return -1;
+//    }	 
+  if(fprintf(file,"scanspeed = %f\n",scanspeed)==EOF) {
+    perror("BCGrid::writeSPIPFile: Could not write scan speed\n");
     return -1;
   }	 
   if(fprintf(file,"intelmode = %d\n",intelmode)==EOF){ 
@@ -1279,7 +1287,7 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
 	    perror("BCGrid::readFile: Could not get 2nd magic number!");
 	    return -1;
 	}
-	if (strncmp(magic, "form", 4) == 0)  // "fileformat..."
+	if (strncmp(more_magic, "form", 4) == 0)  // "fileformat..."
 	    return readSPIPFile(file, name);
 	else // "file ..."
 	    return readAsciiRHKFile(topoFile, file, name);

@@ -292,7 +292,7 @@ $analysismenu add command -label  "Rulergrid..." -underline 0  \
     -command "show.rulergrid"
 $analysismenu add radiobutton -label "Measure Lines" -underline 0 \
     -variable user_0_mode -value 9 
-$analysismenu add radiobutton -label "Cross Section" -underline 6 \
+$analysismenu add radiobutton -label "Cross Section..." -underline 6 \
     -variable user_0_mode -value 18 -command "show.cross_section; show.cross_section_data" 
 $analysismenu add command -label "Data Registration..." -underline 0 \
     -command "show.registration"
