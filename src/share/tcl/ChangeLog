@@ -1,3 +1,7 @@
+2001-07-17  Tom Hudson  <hudson@cs.unc.edu>
+
+	* modify.tcl:  Add options for Warped Plane, Feelahead parameters
+
 2001-07-05  David Marshburn  <marshbur@tungsten-cs.cs.unc.edu>
 
 	* mainwin.tcl:  removed tip convolution from the analysis menu
