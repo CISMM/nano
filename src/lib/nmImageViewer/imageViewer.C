@@ -264,6 +264,19 @@ int ImageViewer::createWindow(char *display_name,
     return num_windows;
 }
 
+int ImageViewer::setGraphicsContext(int winID) {
+	if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
+#ifdef V_GLUT
+    glutSetWindow(window[win_index].win_id);
+#else
+    glXMakeCurrent(dpy[window[win_index].display_index].x_dpy,
+          *(window[win_index].win), dpy[window[win_index].display_index].cx);
+#endif
+	return 0;
+}
+
 int ImageViewer::destroyWindow(int winID)
 {
     if (!validWinID(winID)) return -1;
@@ -439,7 +452,7 @@ int ImageViewer::hideWindow(int winID){
     int win_index = get_window_index_from_winID(winID);
 
     if (!(window[win_index].visible)) {
-	fprintf(stderr, "Warning: window wasn't visible\n");
+	//fprintf(stderr, "Warning: window wasn't visible\n");
 	return 0;
     }
 #ifdef V_GLUT
@@ -624,7 +637,7 @@ void ImageViewer::mainloop() {
 	    glXMakeCurrent(dpy[window[i].display_index].x_dpy,
                 *(window[i].win), dpy[window[i].display_index].cx);
 	    glDrawBuffer(GL_BACK); // for double buffering
-	    glClearColor(0.0, 0.0, 0.0,0.0);
+	    glClearColor(0.0, 0.0, 0.9,0.0);
 
 	    ImageViewerDisplayData ivdd;
 	    ivdd.winID = get_winID_from_window_index(i);
@@ -659,7 +672,7 @@ void ImageViewer::displayCallbackForGLUT() {
 	return;
     }
     glDrawBuffer(GL_BACK);
-    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClearColor(0.0, 0.0, 0.9, 0.0);
     ImageViewerDisplayData ivdd;
     ivdd.winID = v->get_winID_from_window_index(i);
     ivdd.winWidth = v->window[i].win_width;
@@ -705,6 +718,7 @@ void ImageViewer::reshapeCallbackForGLUT(int w, int h) {
 		"Error, ImageViewer::reshapeCallback, window not found\n");
 	return;
     }
+	glViewport(0,0,w, h);
     v->window[i].win_width = w;
     v->window[i].win_height = h;
     v->window[i].im_x_per_pixel = (float)v->window[i].im_width /
@@ -1086,7 +1100,9 @@ int ImageViewer::drawImage(int winID, nmb_Image *image,
         drawImageAsPixels(winID, image, red, green, blue, alpha, 
                l, r, b, t, tx, ty, scx, scy);
       }
-    }
+    } else {
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
 
 #ifdef V_GLUT
     glutSetWindow(curr_win_save);

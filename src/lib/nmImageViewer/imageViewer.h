@@ -158,6 +158,8 @@ class ImageViewer {
     int createWindow(char *display_name,
 		int x, int y, int w, int h, char *name, 
                 int pixelType = GL_FLOAT);
+	/// set graphics context to that for a window
+	int setGraphicsContext(int winID);
     /// destroy a window
     int destroyWindow(int winID);
     /// resize a window
