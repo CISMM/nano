@@ -360,24 +360,24 @@ rebuildInterval(nmg_State * state)
     
     // If the scan direction is inefficiently using the display 
     // lists, switch to using display lists in the other direction.
-    if (d_dataset->range_of_change.Changed()) {
-        float	ratio;
+    //if (d_dataset->range_of_change.Changed()) {
+    //    float	ratio;
         
         /* See which way more changes occurred */
-        ratio = d_dataset->range_of_change.RatioOfChange();
+    //    ratio = d_dataset->range_of_change.RatioOfChange();
         
         /* If the ratio is very skewed, make sure we are
 	 * scanning in the correct direction. */
-        if (ratio > 4) {		/* 4x as much in y */
-            if (d_display_lists_in_x) {	/* Going wrong way */
-                d_display_lists_in_x = 0;
-            }
-        } else if (ratio < 0.25) {	/* 4x as much in x */
-            if (!d_display_lists_in_x) {	/* Going wrong way */
+    //    if (ratio > 4) {		/* 4x as much in y */
+    //        if (d_display_lists_in_x) {	/* Going wrong way */
+     //           d_display_lists_in_x = 0;
+     //       }
+     //   } else if (ratio < 0.25) {	/* 4x as much in x */
+     //       if (!d_display_lists_in_x) {	/* Going wrong way */
                 d_display_lists_in_x = 1;
-            }
-        }
-    }
+     //       }
+      //  }
+    //}
 
     int low_row;
     int high_row;

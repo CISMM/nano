@@ -1,3 +1,8 @@
+2002-04-05 Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nmg_Surface.C : removed code so that not switching between
+	column and row display (change made by Aron Helser)
+
 2002-04-04  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_SurfaceRegion.C (determineInterval): Changed behavior when
