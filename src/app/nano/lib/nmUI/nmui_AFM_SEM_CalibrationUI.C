@@ -26,8 +26,11 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
 	d_modelSEMPointsNeeded("afm_sem_model_sem_points_needed", 1),
 	d_contactPointsNeeded("afm_sem_contact_points_needed", 1),
     d_freePointsNeeded("afm_sem_free_points_needed", 1),
-	d_generateTestData("afm_sem_generate_test_data", 0),
 	d_updateSolution("afm_sem_update_solution", 0),
+	d_drawSurface("afm_sem_draw_surface", 0),
+	d_drawSurfaceTexture("afm_sem_draw_surface_texture", 0),
+	d_liveSEMTexture("afm_sem_live_sem_texture", 0),
+	d_generateTestData("afm_sem_generate_test_data", 0),
 	d_AFM(NULL),
 	d_SEM(NULL),
 	d_dataset(NULL),
@@ -39,7 +42,8 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
 	d_textureDisplay(textureDisplay),
 	d_surfaceStride(3),
 	d_heightField(NULL),
-	d_heightFieldNeedsUpdate(vrpn_TRUE)
+	d_heightFieldNeedsUpdate(vrpn_TRUE),
+    d_tipRenderer(NULL)
 {
   d_tipPosition[0] = 0;
   d_tipPosition[1] = 0;
@@ -77,14 +81,20 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
   d_addFreePoint.addCallback(handle_AddFreePoint, this);
   d_deleteFreePoint.addCallback(handle_DeleteFreePoint, this);
   d_currentFreePoint.addCallback(handle_currentFreePoint_change, this);
-  d_generateTestData.addCallback(handle_generateTestData_change, this);
   d_updateSolution.addCallback(handle_updateSolution_change, this);
+
+  d_drawSurface.addCallback(handle_drawSurface_change, this);
+  d_drawSurfaceTexture.addCallback(handle_drawSurfaceTexture_change, this);
+  d_liveSEMTexture.addCallback(handle_liveSEMTexture_change, this);
+
+  d_generateTestData.addCallback(handle_generateTestData_change, this);
 
   d_aligner->registerChangeHandler(this, correspondenceEditorChangeHandler);
 
   if (d_world) {
 	d_world->TAddNode(&d_surfaceModelRenderer, "AFM-SEM Surface Model");
   }
+  d_surfaceModelRenderer.SetProjTexture(&d_SEMTexture);
 }
 
 void nmui_AFM_SEM_CalibrationUI::setSPM(nmm_Microscope_Remote *scope) 
@@ -107,6 +117,12 @@ void nmui_AFM_SEM_CalibrationUI::setSEM(nmm_Microscope_SEM_Remote *sem)
   if (d_SEM) {
     d_SEM->registerChangeHandler(this, semDataHandler);
   }
+}
+
+void nmui_AFM_SEM_CalibrationUI::setTipRenderer(URender *renderer)
+{
+  d_tipRenderer = renderer;
+  d_tipRenderer->SetProjTexture(&d_SEMTexture);
 }
 
 void nmui_AFM_SEM_CalibrationUI::changeDataset(nmb_ImageManager *dataset)
@@ -132,13 +148,14 @@ void nmui_AFM_SEM_CalibrationUI::changeDataset(nmb_ImageManager *dataset)
 
 void nmui_AFM_SEM_CalibrationUI::createTestImages(double *SEM_from_AFM_matrix, double *AFM_from_model_matrix)
 {
-	/* plan:
-	base all images on the model
-	synthesize SEM image of surface
-	pick a reasonable set of contact/free points
-	synthesize SEM images showing a representation of the tip
-	
-	let the user pick the model<-->sem points
+	clearFreePoints();
+	clearContactPoints();
+	/* 
+	Creates a separate graphics context be creating a new window
+	and draws everything into that so we don't need to worry about
+	GL state in windows being used for other stuff. 
+	The window is destroyed at the end after the pixels have been 
+	transferred to main memory.
 	*/
 	ImageViewer *imageViewer = ImageViewer::getImageViewer();
     char *display_name;
@@ -188,7 +205,9 @@ void nmui_AFM_SEM_CalibrationUI::createTestImages(double *SEM_from_AFM_matrix, d
 
 	glReadBuffer(GL_BACK);
 	nmb_Image *image = NULL;
-	image = new nmb_ImageArray("SEM_from_ModelTest", "units", 500, 500,
+	char imageName[128];
+	sprintf(imageName, "simulated_SEM_for_%s", d_modelToSEM_modelImage->name()->c_str());
+	image = new nmb_ImageArray(imageName, "units", 500, 500,
 			NMB_FLOAT32);
 	glPixelStorei(GL_PACK_SKIP_PIXELS, image->borderXMin());
 	glPixelStorei(GL_PACK_SKIP_ROWS, image->borderYMin());
@@ -268,7 +287,9 @@ void nmui_AFM_SEM_CalibrationUI::createTestImages(double *SEM_from_AFM_matrix, d
 		glVertex3d(sem_cont_pnt[pntIndex][0]-0.3, sem_cont_pnt[pntIndex][1]+1.0, sem_cont_pnt[pntIndex][2]);
 		glVertex3d(sem_cont_pnt[pntIndex][0]+0.3, sem_cont_pnt[pntIndex][1]+1.0, sem_cont_pnt[pntIndex][2]);
 		glEnd();
-		image = new nmb_ImageArray("SEM_from_AFMtest", "units", 500, 500,
+		char imageName[128];
+		sprintf(imageName, "simulated_SEM_for_contactPoint%d", pntIndex);
+		image = new nmb_ImageArray(imageName, "units", 500, 500,
 				NMB_FLOAT32);
 		glReadPixels(0, 0, image->width(), image->height(), 
 			GL_RED, GL_FLOAT, image->pixelData());
@@ -292,7 +313,9 @@ void nmui_AFM_SEM_CalibrationUI::createTestImages(double *SEM_from_AFM_matrix, d
 		glVertex3d(sem_free_pnt[pntIndex][0]-0.3, sem_free_pnt[pntIndex][1]+1.0, sem_free_pnt[pntIndex][2]);
 		glVertex3d(sem_free_pnt[pntIndex][0]+0.3, sem_free_pnt[pntIndex][1]+1.0, sem_free_pnt[pntIndex][2]);
 		glEnd();
-		image = new nmb_ImageArray("SEM_from_AFMtest", "units", 500, 500,
+		char imageName[128];
+		sprintf(imageName, "simulated_SEM_for_freePoint%d", pntIndex);
+		image = new nmb_ImageArray(imageName, "units", 500, 500,
 				NMB_FLOAT32);
 		glReadPixels(0, 0, image->width(), image->height(), 
 			GL_RED, GL_FLOAT, image->pixelData());
@@ -356,6 +379,28 @@ void nmui_AFM_SEM_CalibrationUI::addFreePoint(
 	}
 	d_freePointList.addEntry(selectorEntry);
 	updateInputStatus();
+}
+
+void nmui_AFM_SEM_CalibrationUI::clearContactPoints()
+{
+	int i;
+	for (i = 0; i < d_numContactPoints; i++) {
+		nmb_Image::deleteImage(d_contactImages[i]);
+		d_contactImages[i] = 0;
+	}
+	d_numContactPoints = 0;
+	d_contactPointList.clearList();
+}
+
+void nmui_AFM_SEM_CalibrationUI::clearFreePoints()
+{
+	int i;
+	for (i = 0; i < d_numFreePoints; i++) {
+		nmb_Image::deleteImage(d_freeImages[i]);
+		d_freeImages[i] = 0;
+	}
+	d_numFreePoints = 0;
+	d_freePointList.clearList();
 }
 
 //static 
@@ -436,7 +481,6 @@ void nmui_AFM_SEM_CalibrationUI::handle_windowOpen_change(
 		// selected by the user and sent back to us from the server
 		me->d_aligner->enableAutoUpdate(vrpn_FALSE);
 		handle_registrationMode_change((vrpn_int32)(me->d_registrationMode),ud);
-		me->d_surfaceModelRenderer.SetVisibility(1);
 	} else {
 		me->d_aligner->setGUIEnable(vrpn_FALSE, NMR_ALLWINDOWS);
 		me->d_aligner->setEditEnable(vrpn_TRUE, vrpn_TRUE);
@@ -444,7 +488,6 @@ void nmui_AFM_SEM_CalibrationUI::handle_windowOpen_change(
 		// default behavior because its expected by the normal 
         // registration code
 		me->d_aligner->enableAutoUpdate(vrpn_TRUE);
-		me->d_surfaceModelRenderer.SetVisibility(0);
 	}
 }
 
@@ -564,9 +607,9 @@ void nmui_AFM_SEM_CalibrationUI::setFiducial()
 			x_src[i] = d_modelToSEM_modelPoints[i][0]/widthWorld;
 			y_src[i] = d_modelToSEM_modelPoints[i][1]/heightWorld;
 			z_src[i] = d_modelToSEM_modelPoints[i][2];
-			x_src[i] = d_modelToSEM_SEMPoints[i][0];
-			y_src[i] = d_modelToSEM_SEMPoints[i][1];
-			z_src[i] = d_modelToSEM_SEMPoints[i][2];
+			x_tgt[i] = d_modelToSEM_SEMPoints[i][0];
+			y_tgt[i] = d_modelToSEM_SEMPoints[i][1];
+			z_tgt[i] = d_modelToSEM_SEMPoints[i][2];
 		}
 		d_aligner->setFiducial(vrpn_TRUE, num, 
 			x_src, y_src, z_src,
@@ -617,6 +660,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_SEMImage_change(
 		me->d_aligner->setImage(NMR_TARGET, me->d_modelToSEM_SEMImage, 
 					vrpn_FALSE, vrpn_FALSE);
 	}
+	me->d_SEMTexture.setImage(me->d_modelToSEM_SEMImage);
 	me->updateInputStatus();
 }
 
@@ -796,6 +840,60 @@ void nmui_AFM_SEM_CalibrationUI::handle_currentFreePoint_change(
 	}
 }
 
+void nmui_AFM_SEM_CalibrationUI::handle_updateSolution_change(
+		vrpn_int32 value, void *ud)
+{
+	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
+	if (value) {
+		me->updateSolution();
+	}
+}
+
+void nmui_AFM_SEM_CalibrationUI::handle_drawSurface_change(
+		vrpn_int32 value, void *ud)
+{
+	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
+	bool enable = (value != 0);
+	me->d_surfaceModelRenderer.SetVisibility(enable);
+}
+
+void nmui_AFM_SEM_CalibrationUI::handle_drawSurfaceTexture_change(
+		vrpn_int32 value, void *ud)
+{
+	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
+	bool enable = (value != 0);
+	me->d_surfaceModelRenderer.setTextureEnable(enable);
+	if ((int)(me->d_liveSEMTexture)) {
+		me->d_SEMTexture.doFastUpdates(true);
+		nmb_ImageArray *image;
+		me->d_SEM->getImageData(&image);
+		if (image) {
+			me->d_SEMTexture.setImage(image);
+		}
+	} else {
+		me->d_SEMTexture.doFastUpdates(false);
+		me->d_SEMTexture.setImage(me->d_modelToSEM_SEMImage);
+	}
+}
+
+void nmui_AFM_SEM_CalibrationUI::handle_liveSEMTexture_change(
+		vrpn_int32 value, void *ud)
+{
+	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
+	bool enable = (value != 0);
+	if (enable) {
+		me->d_SEMTexture.doFastUpdates(true);
+		nmb_ImageArray *image;
+		me->d_SEM->getImageData(&image);
+		if (image) {
+			me->d_SEMTexture.setImage(image);
+		}
+	} else {
+		me->d_SEMTexture.doFastUpdates(false);
+		me->d_SEMTexture.setImage(me->d_modelToSEM_SEMImage);
+	}
+}
+
 void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 		vrpn_int32 value, void *ud)
 {
@@ -814,7 +912,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 
 			nmb_Transform_TScShR AFM_from_model;
 			AFM_from_model.setTranslation(NMB_Z, widthWorld*0.2);
-			AFM_from_model.setTranslation(NMB_X, widthWorld*0.1);
+			AFM_from_model.setTranslation(NMB_X, -widthWorld*0.2);
 			double afm_model_matrix[16];
 			AFM_from_model.getMatrix(afm_model_matrix);
 
@@ -828,20 +926,10 @@ void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 			SEM_from_AFM44.compose(AFM_from_model44);
 			printf("SEM_from_model:\n");
 			SEM_from_AFM44.print();
-
 			me->createTestImages(sem_afm_matrix, afm_model_matrix);
 		} else {
 			printf("Error, can't make test data before selecting a model image\n");
 		}
-	}
-}
-
-void nmui_AFM_SEM_CalibrationUI::handle_updateSolution_change(
-		vrpn_int32 value, void *ud)
-{
-	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
-	if (value) {
-		me->updateSolution();
 	}
 }
 
@@ -871,7 +959,12 @@ void nmui_AFM_SEM_CalibrationUI::semDataHandler(void *userdata,
 	if (info.msg_type == nmm_Microscope_SEM::SCANLINE_DATA &&
 		info.sem->lastScanMessageCompletesImage())
 	{
-		me->d_semImageAcquiredSinceLastAdd = vrpn_TRUE;	
+		me->d_semImageAcquiredSinceLastAdd = vrpn_TRUE;
+		if (me->d_liveSEMTexture) {
+			nmb_ImageArray *image;
+			me->d_SEM->getImageData(&image);
+			me->d_SEMTexture.setImage(image);
+		}
 	}
 }
 
@@ -993,5 +1086,7 @@ void nmui_AFM_SEM_CalibrationUI::updateSolutionDisplay()
 	//   appropriate texture projection matrix - either from the 
 	//   afm<-->sem or model<-->sem coordinate transformation
 	d_surfaceModelRenderer.setWorldFromObjectTransform(d_AFMfromModel);
+	d_surfaceModelRenderer.SetTextureTransform(d_SEMfromModel);
+	d_surfaceModelRenderer.SetTextureCoordinatesInWorld(false);
+	d_tipRenderer->SetTextureTransform(d_SEMfromAFM);
 }
-

@@ -22,6 +22,7 @@ class nmui_AFM_SEM_CalibrationUI {
 
 	void setSPM(nmm_Microscope_Remote *scope);
 	void setSEM(nmm_Microscope_SEM_Remote *sem);
+    void setTipRenderer(URender *tipRenderer);
 
 	void changeDataset(nmb_ImageManager *dataset);
 
@@ -30,6 +31,8 @@ class nmui_AFM_SEM_CalibrationUI {
 	void addContactPoint(double *afm_pnt, double *sem_pnt, nmb_Image *semImage);
 	void addFreePoint(double *afm_pnt, double *sem_pnt, nmb_Image *semImage);
 
+	void clearContactPoints();
+	void clearFreePoints();
   private:
 	static void correspondenceEditorChangeHandler(void *ud,
                   const nmr_ProxyChangeHandlerData &info);
@@ -59,9 +62,13 @@ class nmui_AFM_SEM_CalibrationUI {
     // point selector
     static void handle_currentFreePoint_change(const char *name, void *ud);
 
+	static void handle_updateSolution_change(vrpn_int32 value, void *ud);
+	static void handle_drawSurface_change(vrpn_int32 value, void *ud);
+	static void handle_drawSurfaceTexture_change(vrpn_int32 value, void *ud);
+	static void handle_liveSEMTexture_change(vrpn_int32 value, void *ud);
+	
 	static void handle_generateTestData_change(
 		vrpn_int32 value, void *ud);
-	static void handle_updateSolution_change(vrpn_int32 value, void *ud);
 
 	void updateInputStatus();
 	void updateSolution();
@@ -95,8 +102,13 @@ class nmui_AFM_SEM_CalibrationUI {
 	Tclvar_int d_contactPointsNeeded;
 	Tclvar_int d_freePointsNeeded;
 
-	Tclvar_int d_generateTestData;
 	Tclvar_int d_updateSolution;
+
+	Tclvar_int d_drawSurface;
+	Tclvar_int d_drawSurfaceTexture;
+	Tclvar_int d_liveSEMTexture;
+
+	Tclvar_int d_generateTestData;
  
     // AFM
     nmm_Microscope_Remote *d_AFM;
@@ -140,11 +152,13 @@ class nmui_AFM_SEM_CalibrationUI {
 
 	// data needed for display of solution
 	URHeightField d_surfaceModelRenderer;
+	URProjectiveTexture d_SEMTexture;
 	int d_surfaceStride;
 	UTree *d_world;
 	nmg_ImageDisplayProjectiveTexture *d_textureDisplay;
 	nmr_SurfaceModelHeightField *d_heightField;
 	vrpn_bool d_heightFieldNeedsUpdate;
+    URender *d_tipRenderer;
 
 	double d_SEMfromAFM[16];
 	double d_SEMfromModel[16];
