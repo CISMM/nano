@@ -1,3 +1,11 @@
+2001-06-18  Tom Hudson  <hudson@cs.unc.edu>
+
+	* CollaborationManager.C : port forward hackishly to deal with
+	current VRPN.
+	microscape.C : same.  reenable -perf.  bring -peerbaseport across
+	from the main branch and also apply to remote graphics servers
+	so I can coexist happily with others (or myself?) on evans.
+	
 2000-10-09  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (main) : added copy of file name out of the

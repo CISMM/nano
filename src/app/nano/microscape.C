@@ -974,7 +974,7 @@ static char tcl_default_dir [] = "/afs/cs.unc.edu/project/stm/bin/";
  * Variables to turn on/off optional parts of the system
  ************/
 
-//static int perf_mode = 0;			/* No perfmeter by default */
+static int perf_mode = 0;			/* No perfmeter by default */
 //static int do_menus = 1;			/* Menus on by default */
 static int do_keybd = 0;                   ///< Keyboard off by default
 //static int do_ad_device = 1;               /* A/D devices on by default */
@@ -1128,6 +1128,7 @@ struct MicroscapeInitializationState {
   int monitorPort;
   int collabPort;
   int basePort;
+  int peerBasePort;
 
   float x_min;
   float x_max;
@@ -1173,6 +1174,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   monitorPort (-1),
   collabPort (-1),
   basePort (WellKnownPorts::defaultBasePort),
+  peerBasePort (WellKnownPorts::defaultBasePort),
   x_min (afm.xMin),
   x_max (afm.xMax),
   y_min (afm.yMin),
@@ -2699,7 +2701,7 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
 
     vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name        (istate->afm.deviceName,
 	   (char *) NULL,
-	   logmode,
+	   //logmode,  // HACK
 	   (char *) NULL);
     if (!new_microscope_connection) {
 	display_error_dialog( "Couldn't find file %s",
@@ -2781,7 +2783,7 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name        (istate->afm.deviceName,
           istate->afm.writingStreamFile ? istate->afm.outputStreamName
                                         : (char *) NULL,
-	  logmode,
+	  //logmode,  // HACK
           (char *) NULL);
     if (!new_microscope_connection) {
 	display_error_dialog( "Couldn't find SPM device: %s.",
@@ -4700,6 +4702,11 @@ void ParseArgs (int argc, char ** argv,
         istate->basePort = atoi(argv[i]);
         printf("Will open ports starting with %d as the default port number\n",
                istate->basePort);
+      } else if (strcmp(argv[i], "-peerbaseport") == 0) {
+        if (++i >= argc) Usage (argv[0]);
+        istate->peerBasePort = atoi(argv[i]);
+        printf("Expecting peer to open ports starting with %d.\n",
+               istate->peerBasePort);
       } else if (strcmp(argv[i], "-call") == 0) {
         //DO_CALLBACKS = 1;
         fprintf(stderr, "Warning: -call obsolete.\n");
@@ -4892,8 +4899,8 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         istate->logTimestamp.tv_sec = atoi(argv[i]);
       } else if (strcmp(argv[i], "-perf") == 0) {
-        fprintf(stderr, "Warning: -perf obsolete.\n");
-        //perf_mode = 1;
+        //fprintf(stderr, "Warning: -perf obsolete.\n");
+        perf_mode = 1;
       } else if (strcmp (argv[i], "-recv") == 0) {
         // clark -- use NANO_RECV_TIMESTAMPs for playback times
         istate->afm.useRecvTime = VRPN_TRUE;
@@ -5439,6 +5446,8 @@ void createGraphics (MicroscapeInitializationState & istate) {
   char name [50], qualifiedName [50];
   int retval;
 
+  WellKnownPorts peerPorts (istate.peerBasePort);
+
   switch (istate.graphics_mode) {
 
     case NO_GRAPHICS:
@@ -5598,13 +5607,13 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              wellKnownPorts->remoteRenderingData);
+              peerPorts.remoteRenderingData);
       renderClientInputConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              wellKnownPorts->graphicsControl);
+              peerPorts.graphicsControl);
       renderServerControlConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
@@ -5637,13 +5646,13 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              wellKnownPorts->remoteRenderingData);
+              peerPorts.remoteRenderingData);
       renderClientInputConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              wellKnownPorts->graphicsControl);
+              peerPorts.graphicsControl);
       renderServerControlConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
@@ -5675,13 +5684,13 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              wellKnownPorts->remoteRenderingData);
+              peerPorts.remoteRenderingData);
       renderClientInputConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
               istate.graphicsHost,
-              wellKnownPorts->graphicsControl);
+              peerPorts.graphicsControl);
       renderServerControlConnection = vrpn_get_connection_by_name
                            (qualifiedName);
 
@@ -6221,7 +6230,7 @@ int main(int argc, char* argv[])
 	  (istate.afm.deviceName,
 	   istate.afm.writingStreamFile ? istate.afm.outputStreamName
                                         : (char *) NULL,
-	   logmode,
+	   //logmode,  // HACK
 	   istate.writingRemoteStream ? istate.remoteOutputStreamName
                                       : (char *) NULL);
       if (!microscope_connection || !(microscope_connection->doing_okay())) {
@@ -6408,7 +6417,10 @@ int main(int argc, char* argv[])
   collaborationManager->setModeServerName(local_ModeName);
   collaborationManager->setLogging(istate.logPath, istate.logTimestamp.tv_sec);
   collaborationManager->enableLogging(istate.logInterface);
-  collaborationManager->setPeerPort(wellKnownPorts->collaboratingPeerServer);
+
+  WellKnownPorts peerPorts (istate.peerBasePort);
+  collaborationManager->setPeerPort(peerPorts.collaboratingPeerServer);
+
   collaborationManager->setServerPort(wellKnownPorts->collaboratingPeerServer);
   collaborationManager->setTimer(&collaborationTimer);
   collaborationManager->initialize(vrpnHandTracker[0], NULL,
@@ -6441,8 +6453,7 @@ int main(int argc, char* argv[])
         ohmmeter_connection = vrpn_get_connection_by_name
 	  (istate.ohm.deviceName,
 	   istate.ohm.writingLogFile ? istate.ohm.outputLogName
-	   : (char *) NULL,
-	   vrpn_LOG_INCOMING);
+	   : (char *) NULL);
         if (!ohmmeter_connection) {
 	  display_error_dialog( "Couldn't open connection to %s.\n",
 		  istate.ohm.deviceName);
@@ -6498,8 +6509,7 @@ int main(int argc, char* argv[])
 	    vicurve_connection = vrpn_get_connection_by_name
 		(istate.vicurve.deviceName,
 		 istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
-		 : (char *) NULL,
-		 vrpn_LOG_INCOMING);
+		 : (char *) NULL);
 	    if (!vicurve_connection) {
 		display_error_dialog( "Couldn't open connection to %s.\n",
 			istate.vicurve.deviceName);
@@ -6558,8 +6568,7 @@ int main(int argc, char* argv[])
             sem_connection = vrpn_get_connection_by_name
                 (istate.sem.deviceName,
                  istate.sem.writingLogFile ? istate.sem.outputLogName
-                 : (char *) NULL,
-                 vrpn_LOG_INCOMING);
+                 : (char *) NULL);
             if (!sem_connection) {
                 display_error_dialog( "Couldn't open connection to %s.\n",
                         istate.sem.deviceName);
@@ -7040,35 +7049,38 @@ VERBOSE(1, "Entering main loop");
 
   if (framelog != 0) frametimer.print();
 
-  /* Print timing info */
-  start = time1.tv_sec * 1000 + time1.tv_usec/1000;
-  stop = time2.tv_sec * 1000 + time2.tv_usec/1000;
-  interval = stop-start;          /* In milliseconds */
+  if (perf_mode) {
 
-  float looplen;
-  float timing;
-  printf("Time for %ld loop iterations: %ld seconds\n",n,
-        time2.tv_sec-time1.tv_sec);
-  printf("Time for %ld display iterations: %ld seconds\n",n_displays,
-        time2.tv_sec-time1.tv_sec);
-  if (interval != 0) {
-	timing = ((float)(n) / (float)(interval) * 1.0e+3);
-	printf("    (%.5f loop iterations per second)\n", timing);
-        looplen = ((interval / 1.0e+3) / (float) (n));
-	printf("    (%.5f seconds per loop iteration)\n", looplen);
-	timing = ((float)(n_displays) / (float)(interval) * 1.0e+3);
-	printf("    (%.5f display iterations per second)\n", timing);
-        looplen = ((interval / 1.0e+3) / (float) (n_displays));
-	printf("    (%.5f seconds per display iteration)\n", looplen);
+    /* Print timing info */
+    start = time1.tv_sec * 1000 + time1.tv_usec/1000;
+    stop = time2.tv_sec * 1000 + time2.tv_usec/1000;
+    interval = stop-start;          /* In milliseconds */
+
+    float looplen;
+    float timing;
+    printf("Time for %ld loop iterations: %ld seconds\n",n,
+          time2.tv_sec-time1.tv_sec);
+    printf("Time for %ld display iterations: %ld seconds\n",n_displays,
+          time2.tv_sec-time1.tv_sec);
+    if (interval != 0) {
+	  timing = ((float)(n) / (float)(interval) * 1.0e+3);
+	  printf("    (%.5f loop iterations per second)\n", timing);
+          looplen = ((interval / 1.0e+3) / (float) (n));
+	  printf("    (%.5f seconds per loop iteration)\n", looplen);
+	  timing = ((float)(n_displays) / (float)(interval) * 1.0e+3);
+	  printf("    (%.5f display iterations per second)\n", timing);
+          looplen = ((interval / 1.0e+3) / (float) (n_displays));
+	  printf("    (%.5f seconds per display iteration)\n", looplen);
+    }
+
+    printf("---------------\n");
+    printf("Graphics Timer:\n");
+    graphicsTimer.report();
+
+    printf("---------------\n");
+    printf("Collaboration Timer:\n");
+    collaborationTimer.report();
   }
-
-  printf("---------------\n");
-  printf("Graphics Timer:\n");
-  graphicsTimer.report();
-
-  printf("---------------\n");
-  printf("Collaboration Timer:\n");
-  collaborationTimer.report();
 
   if(glenable){
     /* shut down trackers and a/d devices    */

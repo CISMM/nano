@@ -44,9 +44,7 @@ vrpn_Connection * getPeer (const char * hostname, int port,
 
   return vrpn_get_connection_by_name (buf,
              loggingInterface ? sfbuf : NULL,
-             loggingInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
-                                vrpn_LOG_NONE,
-             NULL, vrpn_LOG_NONE, 1.0, 3, NIC_IP);
+             NULL, NULL, NULL, 1.0, 3, NIC_IP);
 }
 
 static
@@ -78,8 +76,6 @@ vrpn_Connection * getServer (int port,
   return new vrpn_Synchronized_Connection
         (port,
          loggingInterface ? sfbuf : NULL,
-         loggingInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
-                            vrpn_LOG_NONE,
          NIC_IP);
 }
 
