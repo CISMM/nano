@@ -1,3 +1,8 @@
+2002-07-03 Jameson Miller <millerj@cs.unc.edu>
+	*import.c : in function handle_import_rot_changed, now 
+	sends the rotation of the axis object to direct step to set stepping axis.
+	if we are setting the direct step axis.
+
 2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.C : now passes aligner to the tipDisplayUI for alignment

@@ -9,6 +9,7 @@
 #include <URWaveFront.h>
 #include <FileGenerator.h>
 #include <MSIFileGenerator.h>
+#include <directstep.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -53,6 +54,10 @@ static	void handle_spider_tess_change(vrpn_int32, void*);
 static	void handle_spider_curve_change(vrpn_float64, void*);
 static	void handle_spider_legs_change(vrpn_int32, void*);
 static	void handle_spider_filename_change(const char*, void*);
+
+//-----------------------------------------------------
+//set direct step axis
+static  void handle_set_ds_axis(vrpn_int32,void*);
 
 ///Import object handlers specifically for MSI files
 static  void handle_msi_bond_mode (vrpn_int32, void *);
@@ -118,6 +123,11 @@ extern nmm_SimulatedMicroscope_Remote* SimulatedMicroscope;
 ///MSI File specific variables
 Tclvar_int      msi_bond_mode("msi_bond_mode", 0, handle_msi_bond_mode);
 Tclvar_float    msi_atom_radius("msi_atom_radius", 1, handle_msi_atom_radius);
+
+//------------------------------------------------------------------------
+//variables for direct step axis
+Tclvar_int   set_ds_axis("setting_direct_step_axis", 0, handle_set_ds_axis);
+extern int setting_axis;
 
 //------------------------------------------------------------------------
 //Functions necessary for all imported objects
@@ -679,6 +689,14 @@ static  void handle_import_rot_change (vrpn_float64, void *)
 			q_from_euler(rot, euler[0], euler[1], euler[2]);
 
 			obj.GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
+
+			if (set_ds_axis == 1) {
+				//current object the direct step axis?
+				if (strstr(*World.current_object, ".dsa") != 0) {
+					//send the rotation to direct step
+					set_axis(rot);
+				}	
+			}
 						
 			// if a tube file and update_AFM selected, send rot
 			if (obj.GetType() == URTUBEFILE && 
@@ -1068,4 +1086,10 @@ static  void handle_msi_atom_radius(vrpn_float64, void *)
         ((MSIFileGenerator*)obj.GetGenerator())->SetSphereRadius(msi_atom_radius);
         obj.ReloadGeometry();
     }
+}
+//-------------------------------------------------------
+//direct step axis specific function
+// for setting an axis with direct step.
+static void handle_set_ds_axis(vrpn_int32 i, void*) {
+setting_axis = i;
 }
