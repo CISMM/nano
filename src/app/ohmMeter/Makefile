@@ -1,6 +1,6 @@
 USES_LIBS := tclLinkVar nmAux nmMScope nmBase nmMP vrpn quat
 
-include ../Makefile.share
+USES_EXTERNAL_LIBS := tcl tk
 
 ifeq ($(MAKELEVEL),0)
 .PHONY: client
@@ -19,3 +19,5 @@ $(OBJECT_DIR)/server:
             MAKECMDGOALS="" \
             EXCLUDE_SRC="client.C"
 endif
+
+include ../Makefile.share
