@@ -25,7 +25,7 @@ set magellan_buttons { 1 2 3 4 5 6 7 8 }
 foreach i $magellan_buttons {
     # Read the button image from a file
     image create photo view_b$i \
-	-file [file join ${tcl_script_dir} images b0.gif] \
+	-file [file join ${tcl_script_dir} images b$i.gif] \
 	-format GIF 
 # The labeled frame puts a big border all the way around, too much padding
 #    iwidgets::Labeledframe $view.b$i \
