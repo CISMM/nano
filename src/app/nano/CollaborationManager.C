@@ -484,6 +484,13 @@ void CollaborationManager::setPeerName
     sprintf(buf, "%s", newName);
 
     gethostname(hnbuf, 256);
+
+    // make sure both hostnames are lowercase
+    for( int i = 0; i <= strlen(buf) - 1; i++ )
+      buf[i] = tolower( buf[i] );
+    for( i = 0; i <= strlen(hnbuf) - 1; i++ )
+      hnbuf[i] = tolower( hnbuf[i] );
+
     if (strcmp(hnbuf, buf) == 0) {
       // a special case: testing two collaborators running on the same machine
       // here we perpetuate this hack by using the port number to 
@@ -500,6 +507,11 @@ void CollaborationManager::setPeerName
       shouldSynchronize = VRPN_FALSE;
     }
 
+    collabVerbose( 1, "CollaborationManager::setPeerName:  "
+		   "%s synchronize? %s.  %s synchronize? %s.\n",
+		   hnbuf, shouldSynchronize ? "true" : "false",
+		   buf, shouldSynchronize ? "false" : "true" );
+    
     if (shouldSynchronize) {
       d_uiController->addPeer(d_peerServer, shouldSynchronize);
     } else {
