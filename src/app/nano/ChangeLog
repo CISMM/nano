@@ -1,5 +1,11 @@
 2002-08-15  Russ Taylor  <taylorr@cs.unc.edu>
 
+	* nano.dsp : Defined NO_JOYSTICK_SERVER, which cuts out the code for
+		the joystick.  This needs to be removed in order to compile
+		in joystick support.
+
+2002-08-15  Russ Taylor  <taylorr@cs.unc.edu>
+
 	* microscape.c : Turned itself into microscape.C while I wasn't watching,
 		so had to insert these patches by hand.  Added code to let the
 		user interact using a DirecInput force-feedback joystick rather
