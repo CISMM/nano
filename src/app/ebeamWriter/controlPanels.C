@@ -1,11 +1,16 @@
 #include "controlPanels.h"
 #include "imageViewer.h"
 #include "nmm_EDAX.h"
+#include "nmb_ImageTransform.h"
 
 ControlPanels::ControlPanels(PatternEditor *pe,
                              nmr_Registration_Proxy *rp,
                              nmm_Microscope_SEM_Remote *sem):
    d_imageNames(new Tclvar_list_of_strings()),
+   d_bufferImageFormatList(new Tclvar_list_of_strings()),
+   d_openImageFileName("open_image_filename", ""),
+   d_bufferImageFileName("bufferImage_filename", ""),
+   d_bufferImageFormat("bufferImage_format", ""),
    d_lineWidth_nm("line_width_nm", 0),
    d_exposure_uCoulombs_per_square_cm("exposure_uCoulombs_per_square_cm", 0),
    d_drawingTool("drawing_tool", 1),
@@ -32,17 +37,39 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_semPixelIntegrationTime_nsec("sem_pixel_integration_time_nsec", 0),
    d_semInterPixelDelayTime_nsec("sem_inter_pixel_delay_time_nsec", 0),
    d_semResolution("sem_resolution", 1),
+   d_semAcquisitionMagnification("sem_acquisition_magnification", 10000),
+   d_semOverwriteOldData("sem_overwrite_old_data", 1),
+   d_semBeamBlankEnable("sem_beam_blank_enable", 0),
+   d_semHorizRetraceDelay_nsec("sem_horiz_retrace_delay_nsec", 0),
+   d_semVertRetraceDelay_nsec("sem_vert_retrace_delay_nsec", 0),
+   d_semXDACGain("sem_x_dac_gain", 16384), 
+   d_semXDACOffset("sem_x_dac_offset", 0),
+   d_semYDACGain("sem_y_dac_gain", 16384),
+   d_semYDACOffset("sem_y_dac_offset", 0),
+   d_semZADCGain("sem_z_adc_gain", 16384),
+   d_semZADCOffset("sem_z_adc_offset", 0),
+   d_semExternalScanControlEnable("sem_external_scan_control_enable", 0),
+   d_semDataBuffer("sem_data_buffer", "none"),
+   d_semBufferImageNames(new Tclvar_list_of_strings()),
 
+   d_semExposureMagnification("sem_exposure_magnification", 10000),
    d_semBeamWidth_nm("sem_beam_width_nm", 200),
-   d_semBeamCurrent_uA("sem_beam_current_uAmps", 1),
+   d_semBeamCurrent_picoAmps("sem_beam_current_picoAmps", 1),
    d_semBeamExposePushed("sem_beam_expose_now", 0),
 
    d_patternEditor(pe),
    d_aligner(rp),
    d_SEM(sem),
+   d_exposureManager(new ExposureManager()),
    d_imageList(NULL)
 {
+  int i;
   d_imageNames->initializeTcl("imageNames");
+  d_bufferImageFormatList->initializeTcl("bufferImage_format_list");
+  d_semBufferImageNames->initializeTcl("sem_bufferImageNames");
+  for (i = 0; i < ImageType_count; i++)
+    d_bufferImageFormatList->addEntry(ImageType_names[i]);
+
   setupCallbacks();
   ImageViewer *image_viewer = ImageViewer::getImageViewer();
   d_semWinID = image_viewer->createWindow(NULL, 10, 10, 
@@ -52,6 +79,11 @@ ControlPanels::ControlPanels(PatternEditor *pe,
   }
   image_viewer->setWindowDisplayHandler(d_semWinID,
          handle_semWindowRedraw, this);
+  for (i = 0; i < EDAX_NUM_SCAN_MATRICES; i++){
+    imageCount[i] = 0;
+  }
+  handle_semAcquisitionMagnification_change(
+          (int)d_semAcquisitionMagnification, (void *)this);
 }
 
 ControlPanels::~ControlPanels()
@@ -94,6 +126,9 @@ nmb_ListOfStrings *ControlPanels::imageNameList()
 void ControlPanels::setupCallbacks()
 {
   // control panel variable callbacks
+  d_bufferImageFileName.addCallback(handle_bufferImageFileName_change, this);
+  d_openImageFileName.addCallback(handle_openImageFileName_change, this);
+
   d_lineWidth_nm.addCallback(handle_lineWidth_nm_change, this);
   d_exposure_uCoulombs_per_square_cm.addCallback(handle_exposure_change, this);
   d_drawingTool.addCallback(handle_drawingTool_change, this);
@@ -121,9 +156,28 @@ void ControlPanels::setupCallbacks()
   d_semInterPixelDelayTime_nsec.addCallback(
          handle_semInterPixelDelayTime_change, this);
   d_semResolution.addCallback(handle_semResolution_change, this);
+  d_semAcquisitionMagnification.addCallback(
+                          handle_semAcquisitionMagnification_change, this);
+  d_semBeamBlankEnable.addCallback(
+                          handle_semBeamBlankEnable_change, this);
+  d_semHorizRetraceDelay_nsec.addCallback(
+                          handle_semHorizRetraceDelay_change, this);
+  d_semVertRetraceDelay_nsec.addCallback(
+                          handle_semVertRetraceDelay_change, this);
 
+  d_semXDACGain.addCallback(handle_semDACParams_change, this);
+  d_semXDACOffset.addCallback(handle_semDACParams_change, this);
+  d_semYDACGain.addCallback(handle_semDACParams_change, this);
+  d_semYDACOffset.addCallback(handle_semDACParams_change, this);
+  d_semZADCGain.addCallback(handle_semDACParams_change, this);
+  d_semZADCOffset.addCallback(handle_semDACParams_change, this);
+  d_semExternalScanControlEnable.addCallback(
+                          handle_semExternalScanControlEnable_change, this);
+
+  d_semExposureMagnification.addCallback(
+                          handle_semExposureMagnification_change, this);
   d_semBeamWidth_nm.addCallback(handle_semBeamWidth_change, this);
-  d_semBeamCurrent_uA.addCallback(handle_semBeamCurrent_change, this);
+  d_semBeamCurrent_picoAmps.addCallback(handle_semBeamCurrent_change, this);
   d_semBeamExposePushed.addCallback(
          handle_semBeamExposePushed_change, this);
 
@@ -133,6 +187,36 @@ void ControlPanels::setupCallbacks()
   if (d_SEM) {
     d_SEM->registerChangeHandler((void *)this, handle_sem_change);
   }
+}
+
+//static
+void ControlPanels::handle_openImageFileName_change(const char *new_value,
+                                              void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  printf("open file %s\n", (const char *)me->d_openImageFileName);
+}
+
+//static 
+void ControlPanels::handle_bufferImageFileName_change(const char *new_value,
+                                              void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  printf("save to file %s with format %s\n", 
+                              (const char *)me->d_bufferImageFileName,
+                              (const char *)me->d_bufferImageFormat);
+  ImageType filetype = TIFFImageType;
+
+  if (strcmp(ImageType_names[TIFFImageType], 
+      (const char *)me->d_bufferImageFormat) == 0) {
+     filetype = TIFFImageType;
+  } else if (strcmp(ImageType_names[PNMImageType],
+      (const char *)me->d_bufferImageFormat) == 0) {
+     filetype = PNMImageType;
+  }
+  me->d_patternEditor->saveImageBuffer(
+                             (const char *)me->d_bufferImageFileName,
+                             filetype);
 }
 
 // static
@@ -326,20 +410,33 @@ void ControlPanels::handleRegistrationChange
          Store the raw result from the registration code and compute inverse
        * *******************************************************************/
       double targetImFromSourceIm_matrix[16];
+      nmb_ImageTransformAffine targetImFromSource(4,4);
       d_aligner->getRegistrationResult(targetImFromSourceIm_matrix);
+      targetImFromSource.setMatrix(targetImFromSourceIm_matrix);
 
       if (d_imageList == NULL) {
          fprintf(stderr, "handleRegistrationChange: Error, image list null\n");
          return;
       }
+      nmb_Image *sourceImage = d_imageList->getImageByName
+                          (d_sourceImageName.string());
       nmb_Image *targetImage = d_imageList->getImageByName
                           (d_targetImageName.string());
-      if (!targetImage) {
+
+      if (!sourceImage || !targetImage) {
            fprintf(stderr, "handleRegistrationChange: can't find image\n");
            return;
       }
 
-      targetImage->setWorldToImageTransform(targetImFromSourceIm_matrix);
+      double sourceImFromWorld_matrix[16];
+      sourceImage->getWorldToImageTransform(sourceImFromWorld_matrix);
+      nmb_ImageTransformAffine targetImFromWorld(4,4);
+      targetImFromWorld.setMatrix(sourceImFromWorld_matrix);
+      targetImFromWorld.compose(targetImFromSource);
+
+      double targetImFromWorld_matrix[16];
+      targetImFromWorld.getMatrix(targetImFromWorld_matrix);
+      targetImage->setWorldToImageTransform(targetImFromWorld_matrix);
       // now tell pattern editor that the transform for this image changed
       d_patternEditor->newPosition(targetImage);
       break;
@@ -368,7 +465,11 @@ void ControlPanels::handleSEMChange(
                         const nmm_Microscope_SEM_ChangeHandlerData &info)
 {
   vrpn_int32 res_x, res_y;
-  vrpn_int32 time_nsec;
+  vrpn_int32 time_nsec = 0;
+  vrpn_int32 enabled;
+  vrpn_int32 x = 0, y = 0;
+  vrpn_int32 h_time_nsec, v_time_nsec;
+  vrpn_int32 xg, xo, yg, yo, zg, zo;
   void *scanlineData;
   vrpn_int32 start_x, start_y, dx,dy, line_length, num_fields, num_lines;
   nmb_PixelType pix_type;
@@ -379,13 +480,21 @@ void ControlPanels::handleSEMChange(
   vrpn_float32 *float32_data = NULL;
   nmb_Image *currentImage;
   char currentImageName[256];
+  int index = 0;
 
   ImageViewer *image_viewer = ImageViewer::getImageViewer();
+
+  double transformMatrix[16] = {1.0, 0.0, 0.0, 0.0,
+                                0.0, 1.0, 0.0, 0.0,
+                                0.0, 0.0, 1.0, 0.0,
+                                0.0, 0.0, 0.0, 1.0};
+  double imageRegionWidth = 1000;
+  double imageRegionHeight = 1000;
 
   switch(info.msg_type) {
     case nmm_Microscope_SEM::REPORT_RESOLUTION:
         info.sem->getResolution(res_x, res_y);
-        fprintf(stderr, "SEM Resolution change: %d, %d\n", res_x, res_y);
+        fprintf(stderr, "REPORT_RESOLUTION: %d, %d\n", res_x, res_y);
         image_viewer->setWindowImageSize(d_semWinID, res_x, res_y);
         i = nmm_EDAX::resolutionToIndex(res_x, res_y);
         if (i < 0) {
@@ -410,14 +519,41 @@ void ControlPanels::handleSEMChange(
                                   pix_type, &scanlineData);
 
         info.sem->getResolution(res_x, res_y);
-        sprintf(currentImageName, "SEM_DATA%dx%d", res_x, res_y);
+       
+        if (d_semOverwriteOldData) {
+           sprintf(currentImageName, "SEM_DATA%dx%d", res_x, res_y);
+        } else {
+           index = imageCount[(int)(d_semResolution)];
+           sprintf(currentImageName, "SEM_DATA%dx%d_%.2d",
+                                         res_x, res_y, index%100);
+           if (start_y+num_lines*dy == res_y) {
+             imageCount[(int)(d_semResolution)]++;
+             if (imageCount[(int)(d_semResolution)] == 100) {
+                 printf("Warning, exceeded 100 image limit, overwriting "
+                    "old data starting with the oldest\n");
+             }
+           }
+        }
         currentImage = d_imageList->getImageByName(currentImageName);
         if (!currentImage) {
-            currentImage = new nmb_ImageArray(currentImageName, "ADC",
+            currentImage = new nmb_ImageArray(currentImageName, "SEM",
                   (short)res_x, (short)res_y, pix_type);
             d_imageList->addImage(currentImage);
             d_patternEditor->addImage(currentImage);
+            d_semBufferImageNames->addEntry(currentImageName);
         }
+        // assuming square pixels and a display size of 12.8 cm, 
+        // come up with a reasonable estimate of
+        // the scaling factors in x and y based on the magnification
+        imageRegionWidth = 12.8e7/
+                                  (double)(d_semAcquisitionMagnification);
+        imageRegionHeight = imageRegionWidth*(double)res_y/
+                                                    (double)res_x;
+        transformMatrix[0] = 1.0/imageRegionWidth;
+        transformMatrix[5] = 1.0/imageRegionHeight;
+
+        currentImage->setWorldToImageTransform(transformMatrix);
+        d_semDataBuffer.Set(currentImageName);
         if (start_y + num_lines*dy > res_y || line_length*dx != res_x) {
            fprintf(stderr, "SCANLINE_DATA, dimensions unexpected\n");
            fprintf(stderr, "  got (%d,[%d-%d]), expected (%d,%d)\n",
@@ -499,8 +635,44 @@ void ControlPanels::handleSEMChange(
             }
         }
       break;
+    case nmm_Microscope_SEM::POINT_DWELL_TIME:
+      info.sem->getPointDwellTime(time_nsec);
+      printf("POINT_DWELL_TIME: %d nsec\n", time_nsec);
+      break;
+    case nmm_Microscope_SEM::BEAM_BLANK_ENABLE:
+      info.sem->getBeamBlankEnabled(enabled);
+      printf("BEAM_BLANK_ENABLE: %d\n", enabled);
+      d_semBeamBlankEnable = enabled;
+      break;
+    case nmm_Microscope_SEM::MAX_SCAN_SPAN:
+      info.sem->getMaxScan(x, y);
+      printf("MAX_SCAN_SPAN: %d, %d\n", x, y);
+      break;
+    case nmm_Microscope_SEM::BEAM_LOCATION:
+      info.sem->getBeamLocation(x, y);
+      printf("BEAM_LOCATION: %d, %d\n", x, y);
+      break;
+    case nmm_Microscope_SEM::RETRACE_DELAYS:
+      info.sem->getRetraceDelays(h_time_nsec, v_time_nsec);
+      printf("RETRACE_DELAYS: horiz = %d, vert = %d\n", 
+             h_time_nsec, v_time_nsec);
+      d_semHorizRetraceDelay_nsec = h_time_nsec;
+      d_semVertRetraceDelay_nsec = v_time_nsec;
+      break;
+    case nmm_Microscope_SEM::DAC_PARAMS:
+      info.sem->getDACParams(xg, xo, yg, yo, zg, zo);
+      printf("DAC_PARAMS: (gain, offset)\n");
+      printf("          x (%d, %d)\n", xg, xo);
+      printf("          y (%d, %d)\n", yg, yo);
+      printf("          z (%d, %d)\n", zg, zo);
+      break;
+    case nmm_Microscope_SEM::EXTERNAL_SCAN_CONTROL_ENABLE:
+      info.sem->getExternalScanControlEnable(enabled);
+      printf("EXTERNAL_SCAN_CONTROL_ENABLE: %d\n", enabled);
+      d_semExternalScanControlEnable = enabled;
+      break;
     default:
-        printf("unknown message type: %d\n", info.msg_type);
+      printf("unknown message type: %d\n", info.msg_type);
       break;
   }
 }
@@ -639,6 +811,111 @@ void ControlPanels::handle_semResolution_change(int new_value, void *ud)
 }
 
 // static
+void ControlPanels::handle_semAcquisitionMagnification_change(
+             int new_value, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  // set exposure mag as a convenience since it will generally be the same
+  me->d_semExposureMagnification = (int)me->d_semAcquisitionMagnification;
+  // scale the display so that images at this magnification fill the window
+  double maxX = 12.8e7/(double)new_value;
+  double maxY = maxX/1.28;
+//  printf("acq. mag.-> %d; viewport->(%g, %g)\n", new_value, maxX, maxY);
+  me->d_patternEditor->setViewport(0, 0, maxX, maxY);
+}
+
+// static
+void ControlPanels::handle_semBeamBlankEnable_change(
+             int new_value, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  if (me->d_SEM) {
+    int curr_value;
+    me->d_SEM->getBeamBlankEnabled(curr_value);
+    if (curr_value != new_value) {
+      me->d_SEM->setBeamBlankEnable(new_value);
+    }
+  }
+}
+
+// static
+void ControlPanels::handle_semHorizRetraceDelay_change(
+             int new_value, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  if (me->d_SEM) {
+    int hdelay, vdelay;
+    me->d_SEM->getRetraceDelays(hdelay, vdelay);
+    if (hdelay != new_value) {
+      me->d_SEM->setRetraceDelays((vrpn_int32)(me->d_semHorizRetraceDelay_nsec),
+                                (vrpn_int32)(me->d_semVertRetraceDelay_nsec));
+    }
+  }
+}
+
+// static
+void ControlPanels::handle_semVertRetraceDelay_change(
+             int new_value, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  if (me->d_SEM) {
+    int hdelay, vdelay;
+    me->d_SEM->getRetraceDelays(hdelay, vdelay);
+    if (vdelay != new_value) {
+      me->d_SEM->setRetraceDelays((vrpn_int32)(me->d_semHorizRetraceDelay_nsec),
+                                (vrpn_int32)(me->d_semVertRetraceDelay_nsec));
+    }
+  }
+}
+
+
+// static
+void ControlPanels::handle_semDACParams_change(int new_value, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  if (me->d_SEM) {
+    int xg, xo, yg, yo, zg, zo;
+    me->d_SEM->getDACParams(xg, xo, yg, yo, zg, zo);
+    if ((xg != (int)(me->d_semXDACGain)) || 
+        (xo != (int)(me->d_semXDACOffset)) ||
+        (yg != (int)(me->d_semYDACGain)) ||
+        (yo != (int)(me->d_semYDACOffset)) ||
+        (zg != (int)(me->d_semZADCGain)) ||
+        (zo != (int)(me->d_semZADCOffset))) {
+      me->d_SEM->setDACParams((vrpn_int32)(me->d_semXDACGain),
+                              (vrpn_int32)(me->d_semXDACOffset),
+                              (vrpn_int32)(me->d_semYDACGain),
+                              (vrpn_int32)(me->d_semYDACOffset),
+                              (vrpn_int32)(me->d_semZADCGain),
+                              (vrpn_int32)(me->d_semZADCOffset));
+    }
+  }
+}
+
+// static
+void ControlPanels::handle_semExternalScanControlEnable_change(
+             int new_value, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  if (me->d_SEM) {
+    int curr_value;
+    me->d_SEM->getExternalScanControlEnable(curr_value);
+    if (curr_value != new_value) {
+      me->d_SEM->setExternalScanControlEnable(new_value);
+    }
+  }
+}
+
+// EXPOSURE settings:
+// static
+void ControlPanels::handle_semExposureMagnification_change(
+             int new_value, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  printf("sem exposure mag: %d\n",(int)me->d_semExposureMagnification);
+}
+
+// static
 void ControlPanels::handle_semBeamWidth_change(double new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
@@ -650,7 +927,7 @@ void ControlPanels::handle_semBeamWidth_change(double new_value, void *ud)
 void ControlPanels::handle_semBeamCurrent_change(double new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
-  printf("sem beam current: %g\n",(double)me->d_semBeamCurrent_uA);
+  printf("sem beam current: %g\n",(double)me->d_semBeamCurrent_picoAmps);
 }
 
 // static
@@ -658,6 +935,8 @@ void ControlPanels::handle_semBeamExposePushed_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem beam expose: %d\n",(int)me->d_semBeamExposePushed);
+  me->d_exposureManager->exposePattern(me->d_patternEditor->shapeList(),
+                                     me->d_SEM, me->d_semExposureMagnification);
 }
 
 /*

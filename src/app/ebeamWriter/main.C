@@ -152,8 +152,8 @@ int main(int argc, char **argv)
                           defaultTopoFileSettings);
 
     double matrix[16];
-    double default_matrix[16] = {1.0, 0.0, 0.0, 0.0,
-                                 0.0, 1.0, 0.0, 0.0,
+    double default_matrix[16] = {0.001, 0.0, 0.0, 0.0,
+                                 0.0, 0.001, 0.0, 0.0,
                                  0.0, 0.0, 1.0, 0.0,
                                  0.0, 0.0, 0.0, 1.0};
     nmb_Image *currImage;

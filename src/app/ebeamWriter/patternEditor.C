@@ -164,9 +164,10 @@ void PatternShape::drawThickPolyline()
 
       // draw the segment from (x0,y0) to (x1,y1) with offsets os_x0,os_y0,
       // and os_x1, os_y1
+/*
       printf("line: (%g,%g):(%g,%g) to (%g,%g):(%g,%g)\n",
               x0, y0, os_x0, os_y0, x1, y1, os_x1, os_y1);
-
+*/
       glBegin(GL_LINE_LOOP);
       glVertex3f(x0+os_x0, y0+os_y0, 0.0);
       glVertex3f(x1+os_x1, y1+os_y1, 0.0);
@@ -222,6 +223,16 @@ void PatternShape::draw() {
   }
 }
 
+list<PatternPoint>::iterator PatternShape::pointListBegin()
+{
+  return d_points.begin();
+}
+
+list<PatternPoint>::iterator PatternShape::pointListEnd()
+{
+  return d_points.end();
+}
+
 PatternEditor::PatternEditor()
 {
    d_viewer = ImageViewer::getImageViewer();
@@ -244,20 +255,22 @@ PatternEditor::PatternEditor()
    d_viewer->setWindowDisplayHandler(d_navWinID,
          PatternEditor::navWinDisplayHandler, this);
 
-   d_worldMinX_nm = -1;
-   d_worldMinY_nm = -1;
-   d_worldMaxX_nm = 2;
-   d_worldMaxY_nm = 2;
+   // 20 microns should be a reasonable size - maybe should make this adjustable
+   // since it affects the ease of use of the navigator window
+   d_worldMinX_nm = 0;
+   d_worldMinY_nm = 0;
+   d_worldMaxX_nm = 0;
+   d_worldMaxY_nm = 0;
 
    d_mainWinMinX_nm = 0;
    d_mainWinMinY_nm = 0;
-   d_mainWinMaxX_nm = 1;
-   d_mainWinMaxY_nm = 1;
+   d_mainWinMaxX_nm = 0;
+   d_mainWinMaxY_nm = 0;
  
-   d_mainWinMinXadjust_nm = 0;
-   d_mainWinMinYadjust_nm = 0;
-   d_mainWinMaxXadjust_nm = 1;
-   d_mainWinMaxYadjust_nm = 1;
+   d_mainWinMinXadjust_nm = d_mainWinMinX_nm;
+   d_mainWinMinYadjust_nm = d_mainWinMinY_nm;
+   d_mainWinMaxXadjust_nm = d_mainWinMaxX_nm;
+   d_mainWinMaxYadjust_nm = d_mainWinMaxY_nm;
   
    d_mainWinWidth = 0;
    d_mainWinHeight = 0;
@@ -323,10 +336,12 @@ void PatternEditor::addImage(nmb_Image *im, double opacity,
        d_worldMinY_nm = min(d_worldMinY_nm, ib.getY(points[i]));
        d_worldMaxY_nm = max(d_worldMaxY_nm, ib.getY(points[i]));
    }
+/*
    d_mainWinMinX_nm = d_worldMinX_nm;
    d_mainWinMinY_nm = d_worldMinY_nm;
    d_mainWinMaxX_nm = d_worldMaxX_nm;
    d_mainWinMaxY_nm = d_worldMaxY_nm;
+*/
 }
 
 void PatternEditor::removeImage(nmb_Image *im)
@@ -451,6 +466,48 @@ void PatternEditor::clearShape()
   return;
 }
 
+void PatternEditor::saveImageBuffer(const char *filename, 
+                                    const ImageType filetype)
+{
+  glutProcessEvents_UNC();
+  d_viewer->dirtyWindow(d_mainWinID);
+  glutProcessEvents_UNC();
+  int w = d_mainWinWidth;
+  int h = d_mainWinHeight;
+  unsigned char *pixels = new unsigned char [w*h*3];
+
+  glReadBuffer(GL_FRONT);
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+  glPixelStorei(GL_PACK_ALIGNMENT, 4);
+  glReadBuffer(GL_FRONT);
+
+  AbstractImage *ai = ImageMaker(filetype, h, w, 3, pixels, true);
+  delete [] pixels;
+  if (ai)
+  {
+    if (!ai->Write(filename))
+       fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
+    delete ai;
+  }
+}
+
+void PatternEditor::setViewport(double minX_nm, double minY_nm, 
+                                double maxX_nm, double maxY_nm)
+{
+  d_mainWinMinX_nm = minX_nm;
+  d_mainWinMinY_nm = minY_nm;
+  d_mainWinMaxX_nm = maxX_nm;
+  d_mainWinMaxY_nm = maxY_nm;
+  d_viewer->dirtyWindow(d_mainWinID);
+  d_viewer->dirtyWindow(d_navWinID);
+}
+
+list<PatternShape> PatternEditor::shapeList()
+{
+  return d_pattern;
+}
+
 int PatternEditor::mainWinEventHandler(
                    const ImageViewerWindowEvent &event, void *ud)
 {
@@ -472,7 +529,7 @@ int PatternEditor::handleMainWinEvent(
          d_mainWinHeight = event.height;
          break;
       case MOTION_EVENT:
-         if (event.state & IV_LEFT_BUTTON_MASK) {
+         //if (event.state & IV_LEFT_BUTTON_MASK) {
              // adjust current line being drawn
              if (getUserMode() == PE_DRAWMODE) {
                d_viewer->toImage(event.winID, &x, &y);
@@ -480,14 +537,14 @@ int PatternEditor::handleMainWinEvent(
                updatePoint(x_world_nm, y_world_nm);
                d_viewer->dirtyWindow(event.winID);
              }
-         } else if (event.state & IV_RIGHT_BUTTON_MASK) {
+         //} else if (event.state & IV_RIGHT_BUTTON_MASK) {
              // move the currently grabbed object if there is one
-             if (getUserMode() == PE_GRABMODE) {
+             else if (getUserMode() == PE_GRABMODE) {
                  d_viewer->toImage(event.winID, &x, &y);
                  mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
                  updateGrab(x_world_nm, y_world_nm);
              }
-         }
+         //}
          break;
       case BUTTON_PRESS_EVENT:
          switch(event.button) {
@@ -533,8 +590,10 @@ int PatternEditor::handleMainWinEvent(
              d_viewer->toImage(event.winID, &x, &y);
              mainWinPositionToWorld(x, y,
                      x_world_nm, y_world_nm);
-             // set the point
-             finishPoint(x_world_nm, y_world_nm);
+             if (getUserMode() == PE_DRAWMODE) {
+               // set the point
+               finishPoint(x_world_nm, y_world_nm);
+             }
              d_viewer->dirtyWindow(event.winID);
              break;
            case IV_RIGHT_BUTTON:
@@ -708,6 +767,8 @@ int PatternEditor::mainWinDisplayHandler(
   glDisable(GL_TEXTURE_2D);
   me->drawPattern();
 
+  me->drawScale();
+
   glPopAttrib();
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
@@ -832,6 +893,51 @@ void PatternEditor::drawPattern()
      numShapes++;
   }
 //  printf("drawing %d shapes\n", numShapes);
+}
+
+void PatternEditor::drawScale()
+{
+  float xSpan = d_mainWinMaxX_nm - d_mainWinMinX_nm;
+  float ySpan = d_mainWinMaxY_nm - d_mainWinMinY_nm;
+  char str[64];
+  double t = 1.0;
+  double scale_length;
+  // set t to the first power of 10 greater than xSpan
+  while (t >= xSpan) {
+    t = 0.1*t;
+  }
+  while (t < xSpan) {
+    t = 10.0*t;
+  }
+  if (xSpan < 0.3*t) {
+    scale_length = 0.03*t;
+  } else {
+    scale_length = 0.1*t;
+  }
+
+  // draw a line from d_mainWinMaxX_nm to d_mainWin
+  float x_end = 0.9*d_mainWinMaxX_nm + 0.1*d_mainWinMinX_nm;
+  float x_start = x_end - scale_length;
+  float y_start = 0.9*d_mainWinMaxY_nm + 0.1*d_mainWinMinY_nm;
+  float y_end = y_start;
+  glColor4f(1.0, 1.0, 1.0, 1.0);
+  glBegin(GL_LINES);
+  glVertex3f(x_start, y_start, 0.0);
+  glVertex3f(x_end, y_end, 0.0);
+  glEnd();
+  
+  int length = (int)scale_length;
+  if (length < 1000) {
+     sprintf(str, "%d nm", length);
+  } else {
+     length = length/1000;
+     sprintf(str, "%d um", length);
+  }
+  glRasterPos2d(0.8*x_start + 0.2*x_end, y_start - 0.05*ySpan);
+  int i;
+  for (i = 0; i < strlen(str); i++) {
+    glutBitmapCharacter(GLUT_BITMAP_8_BY_13, str[i]);
+  }
 }
 
 int PatternEditor::navWinEventHandler(
@@ -1158,14 +1264,14 @@ int PatternEditor::updatePoint(const double x_nm, const double y_nm)
 int PatternEditor::finishPoint(const double x_nm, const double y_nm)
 {
   int result = updatePoint(x_nm, y_nm);
-  printf("finishPoint\n");
+//  printf("finishPoint\n");
   d_pointInProgress = vrpn_FALSE;
   return result;
 }
 
 int PatternEditor::endShape()
 {
-  printf("ending shape\n");
+  //printf("ending shape\n");
   // put the shape into the pattern and clear drawing state
   d_pattern.push_back(*d_currShape);
   clearDrawingState();

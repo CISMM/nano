@@ -5,6 +5,7 @@
 #include "nmb_Image.h"
 #include "list.h"
 #include "Tcl_Linkvar.h"
+#include "ImageMaker.h"
 
 class PatternPoint {
   public:
@@ -32,6 +33,8 @@ class PatternShape {
     void drawThinPolyline();
     void drawThickPolyline();
     void drawPolygon();
+    list<PatternPoint>::iterator pointListBegin();
+    list<PatternPoint>::iterator pointListEnd();
 
     int d_ID;
     static int s_nextID;
@@ -84,7 +87,11 @@ class PatternEditor {
                              double exposure);
    void setDrawingTool(PE_DrawTool tool);
    void clearShape();
-
+   void saveImageBuffer(const char *filename,
+                const ImageType filetype);
+   void setViewport(double minX_nm, double minY_nm, 
+                    double maxX_nm, double maxY_nm);
+   list<PatternShape> shapeList();
   protected:
    static int mainWinEventHandler(const ImageViewerWindowEvent &event, 
                                   void *ud);
@@ -94,6 +101,7 @@ class PatternEditor {
    // helper for mainWinDisplayHandler:
    void drawImage(const ImageElement &ie);
    void drawPattern();
+   void drawScale();
 
    static int navWinEventHandler(const ImageViewerWindowEvent &event,
                                  void *ud);

@@ -1,0 +1,13 @@
+2001-02-05  Adam Seeger  <seeger@cs.unc.edu>
+
+	* this is the first version of the seegerizer program that contains
+          all advertised main features in some form
+          1) alignment of old data with live data
+          2) control over SEM including image acquisition and pattern
+             drawing (for 0-width polylines only)
+          3) pattern design/editing (polylines with width, polygons)
+
+         to do:
+          exposure calculations for filled shapes
+          use of the exposure settings in actual pattern writing
+          crosshair cursor for drawing window
