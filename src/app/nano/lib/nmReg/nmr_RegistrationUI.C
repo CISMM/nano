@@ -247,8 +247,7 @@ void nmr_RegistrationUI::handleRegistrationChange
      
       printf(", type=%d\n", whichTransform);
       d_scaledProjImFromScaledTopoIm[sentTransformIndex].print(); 
-      if (d_textureDisplayEnabled &&
-          displayedTransformIndex == sentTransformIndex) {
+      if (displayedTransformIndex == sentTransformIndex) {
         // compose the new transformation with some others and send the
         // result off to the graphics code
         updateTextureTransform();

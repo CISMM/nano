@@ -1,3 +1,9 @@
+2002-05-10  David Marshburn & Adam Seeger  <marshbur@cs.unc.edu>
+
+	* nmr_RegistrationUI.C (handleRegistrationChange):  update the 
+	texture transform even if the registration texture isn't currently 
+	displayed (so that the SEM texture will be updated).
+
 2002-03-21  Aron Helser  <helser@cs.unc.edu>
 
 	* nmr_ObjectiveMI_EMMA.C (setTestValueImage): Handle replacement
