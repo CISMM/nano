@@ -1,3 +1,16 @@
+2001-09-01  Adam Seeger  <seeger@cs.unc.edu>
+
+        * nmm_Microscope_SEM_EDAX.hC (convert_DAC_to_nm): new function
+        (convert_nm_to_DAC): new function
+	a bunch of new code to handle point reporting, setting of
+	dot spacing, line spacing, magnification, timing test
+	exposure status gets reported automatically once every second of
+        dwell time (should match very closely actual time if things are 
+        running correctly)
+	(exposureTimingTest), (exposePattern): changed these functions 
+	to use ExposurePattern class and they now run in realtime priority
+	mode to ensure precise timing based on code execution time
+
 2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_Microscope_SEM_EDAX.C(goToPoint): added a more precise 

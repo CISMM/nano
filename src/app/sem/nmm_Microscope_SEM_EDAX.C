@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "exposureManager.h"
 #include "exposurePattern.h"
 
 //#define USE_COLUMN_AND_STAGE
@@ -42,11 +41,23 @@ nmm_Microscope_SEM_EDAX::nmm_Microscope_SEM_EDAX
 #else
     d_virtualAcquisition(virtualAcq),
 #endif
-    d_exposureManager(new ExposureManager()),
-    d_magCalibration(1e8), // (10 cm)*(nm/cm)
     d_beamCurrent_picoAmps(0.0),
-    d_beamWidth_nm(0.0)
+    d_beamWidth_nm(0.0),
+    d_pointReportEnable(0),
+    d_dotSpacing_nm(0.0),
+    d_lineSpacing_nm(0.0),
+    d_linearExposure_pCoul_per_cm(0.0),
+    d_areaExposure_uCoul_per_sq_cm(0.0)
 {
+  int i;
+  for (i = 0; i < PS_NUMSHAPETYPES; i++) {
+    d_pointCounter[i] = 0;
+    d_pointCommandOverheadTotal_msec[i] = 0.0;
+    d_pointCommandOverheadPerPoint_msec[i] = 0.0;
+  }
+  d_timingTestFirstPoint = vrpn_FALSE;
+  d_timingTestActive = vrpn_FALSE;
+
   if (!d_connection) {
     fprintf(stderr, "nmm_Microscope_SEM_EDAX: Fatal Error: NULL connection\n");
     return;
@@ -79,12 +90,26 @@ nmm_Microscope_SEM_EDAX::nmm_Microscope_SEM_EDAX
                 RcvAddPolyline, this);
   d_connection->register_handler(d_AddDumpPoint_type,
                 RcvAddDumpPoint, this);
+  d_connection->register_handler(d_ExposureTimingTest_type,
+                RcvExposureTimingTest, this);
   d_connection->register_handler(d_ExposePattern_type,
                 RcvExposePattern, this);
   d_connection->register_handler(d_SetBeamCurrent_type,
                 RcvSetBeamCurrent, this);
   d_connection->register_handler(d_SetBeamWidth_type,
                 RcvSetBeamWidth, this);
+  d_connection->register_handler(d_SetPointReportEnable_type,
+                RcvSetPointReportEnable, this);
+  d_connection->register_handler(d_SetDotSpacing_type,
+                RcvSetDotSpacing, this);
+  d_connection->register_handler(d_SetLineSpacing_type,
+                RcvSetLineSpacing, this);
+  d_connection->register_handler(d_SetLinearExposure_type,
+                RcvSetLinearExposure, this);
+  d_connection->register_handler(d_SetAreaExposure_type,
+                RcvSetAreaExposure, this);
+  d_connection->register_handler(d_SetMagnification_type,
+                RcvSetMagnification, this);
 
   int connect_id = d_connection->register_message_type(vrpn_got_connection);
   int disconnect_id = 
@@ -257,7 +282,6 @@ nmm_Microscope_SEM_EDAX::~nmm_Microscope_SEM_EDAX (void)
 {
   closeEDAXHardware();
   closeScanControlInterface();
-  delete d_exposureManager;
 }
 
 void nmm_Microscope_SEM_EDAX::checkForParameterChanges()
@@ -899,6 +923,40 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::getMagnification(vrpn_float32 &mag)
   return 0;
 }
 
+vrpn_int32 nmm_Microscope_SEM_EDAX::getScanRegion_nm(double &x_span_nm, 
+                                                     double &y_span_nm)
+{
+  x_span_nm = SEM_STANDARD_DISPLAY_WIDTH_NM/(double)d_magnification;
+  y_span_nm = x_span_nm*(double)d_resolution_y/(double)d_resolution_x;
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::getMaxScan(int &x_span_DAC, int &y_span_DAC)
+{
+  x_span_DAC = d_xScanSpan;
+  y_span_DAC = d_yScanSpan;
+  return 0;
+}
+
+void nmm_Microscope_SEM_EDAX::convert_nm_to_DAC(const double x_nm, 
+                           const double y_nm, 
+                           int &xDAC, int &yDAC)
+{
+  nmm_Microscope_SEM::convert_nm_to_DAC((double)d_magnification,
+                   d_resolution_x, d_resolution_y,
+                   d_xScanSpan, d_yScanSpan,
+                   x_nm, y_nm, xDAC, yDAC);
+}
+
+void nmm_Microscope_SEM_EDAX::convert_DAC_to_nm(const int xDAC, const int yDAC,
+                           double &x_nm, double &y_nm)
+{
+  nmm_Microscope_SEM::convert_DAC_to_nm((double)d_magnification,
+                   d_resolution_x, d_resolution_y,
+                   d_xScanSpan, d_yScanSpan,
+                   xDAC, yDAC, x_nm, y_nm);
+}
+
 vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
 {
   int i;
@@ -1147,11 +1205,18 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::reportMaxScanSpan()
 
 #pragma optimize("",off)
 vrpn_int32 nmm_Microscope_SEM_EDAX::goToPoint(vrpn_int32 xDAC, vrpn_int32 yDAC,
-               vrpn_bool report, double delay_overhead_msec)
+               ShapeType shapeType)
 {
-  static int point_count = 0;
-  static double cumulative_dwell_msec = 0;
-  struct timeval t0, t_end;
+  if (d_timingTestActive) {
+    if (d_timingTestFirstPoint) {
+      d_currShapeType = shapeType;
+      gettimeofday(&d_shapeTypeStartTime, NULL);
+      d_timingTestFirstPoint = vrpn_FALSE;
+    } else if (d_currShapeType != shapeType) {
+      switchToShapeType(shapeType);
+    }
+    d_pointCounter[shapeType]++;
+  }
   if (d_shared_settings_changed) {
     configureSharedSettings();
   }
@@ -1164,9 +1229,6 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::goToPoint(vrpn_int32 xDAC, vrpn_int32 yDAC,
          xDAC, yDAC);
   } 
 
-  point_count++;
-
-  gettimeofday(&t0, NULL);
 #ifndef VIRTUAL_SEM
 if (!d_virtualAcquisition) {
   LONG result;
@@ -1200,46 +1262,39 @@ if (!d_virtualAcquisition) {
 #ifdef USE_BUSYWAIT_DELAY
 
   double dwell_time_msec = (1e-6)*(double)d_point_dwell_time_nsec;
-/*
-  int numIterations = 0;
-  while (delta_t < dwell_time_msec) {
-    gettimeofday(&t_end, NULL);
-    delta_t = vrpn_TimevalMsecs(t_end) - vrpn_TimevalMsecs(t0);
-    numIterations++;
-  }
-*/
-  double delay_time_msec = dwell_time_msec - delay_overhead_msec;
-#ifndef VIRTUAL_SEM
-  delay_time_msec -= 0.1; // subtract out time to execute SpMoveEx()
-#endif
-  if (delay_time_msec > 0) {
-    Delay::busyWaitSleep(delay_time_msec);
+  double delay_time_msec = dwell_time_msec - 
+                           d_pointCommandOverheadPerPoint_msec[shapeType];
+  if (!d_timingTestActive) {
+    if (delay_time_msec > 0) {
+      Delay::busyWaitSleep(delay_time_msec);
+    }
   }
   // XXX otherwise we fall straight through to go as fast as we can
   // although we should probably consider this an error that should have been
   // caught earlier
 
 #endif
-  gettimeofday(&t_end, NULL);
-  double delta_t = vrpn_TimevalMsecs(t_end) - vrpn_TimevalMsecs(t0);
-  cumulative_dwell_msec += delta_t;
 
-/*
-  if ((point_count % 1000) == 0) {
-    double avg = cumulative_dwell_msec / (double)point_count;
-    printf("estimated average dwell time: %g msec\n", avg);
-    cumulative_dwell_msec = 0;
-    point_count = 0;
-  }
-*/
+    double preIncrementTime = d_completedPatternDwellTime_sec;
+    d_completedPatternNumPoints++;
+    d_completedPatternDwellTime_sec += dwell_time_msec*1e-3;
 
-  d_beam_location_x = xDAC;
-  d_beam_location_y = yDAC;
-  if (report) {
-    return reportBeamLocation();
-  } else {
-    return 0;
-  }
+    vrpn_bool timeToReportExposureStatus = ((d_completedPatternDwellTime_sec >=
+                                          ceil(preIncrementTime)) ||
+                (d_totalPatternNumPoints == d_completedPatternNumPoints));
+
+    if (timeToReportExposureStatus) {
+      reportExposureStatus(d_totalPatternNumPoints, d_completedPatternNumPoints,
+                  d_totalPatternDwellTime_sec, d_completedPatternDwellTime_sec);
+    }
+
+    d_beam_location_x = xDAC;
+    d_beam_location_y = yDAC;
+    if (d_pointReportEnable) {
+      return reportBeamLocation();
+    } else {
+      return 0;
+    }
 }
 #pragma optimize("",on)
 
@@ -1374,7 +1429,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::reportExposureStatus(
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::clearExposePattern()
 {
-  d_patternShapes.clear();
+  d_pattern.clear();
   return 0;
 }
 
@@ -1383,53 +1438,132 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::addPolygon(
                    vrpn_int32 numPoints,
                    vrpn_float32 *x_nm, vrpn_float32 *y_nm)
 {
-  PatternShape shape(0, exposure_uCoul_per_cm2, PS_POLYGON);
+  PolygonPatternShape *polygon = new PolygonPatternShape();
+  polygon->setExposure(d_linearExposure_pCoul_per_cm,
+                       exposure_uCoul_per_cm2);
   int i;
   for (i = 0; i < numPoints; i++) {
-    shape.addPoint(x_nm[i], y_nm[i]);
+    polygon->addPoint(x_nm[i], y_nm[i]);
   }
 
-  d_patternShapes.push_back(shape);
+  d_pattern.addSubShape(polygon);
   return 0;
 }
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::addPolyline(
+                    vrpn_float32 exposure_pCoul_per_cm,
                     vrpn_float32 exposure_uCoul_per_cm2,
                     vrpn_float32 lineWidth_nm, vrpn_int32 numPoints,
                     vrpn_float32 *x_nm, vrpn_float32 *y_nm)
 {
-  PatternShape shape(lineWidth_nm, exposure_uCoul_per_cm2, PS_POLYLINE);
+  PolylinePatternShape *polyline = new PolylinePatternShape();
+  polyline->setLineWidth(lineWidth_nm);
+  polyline->setExposure(exposure_pCoul_per_cm, exposure_uCoul_per_cm2);
   int i;
   for (i = 0; i < numPoints; i++) {
-    shape.addPoint((double)(x_nm[i]), (double)(y_nm[i]));
+    polyline->addPoint((double)(x_nm[i]), (double)(y_nm[i]));
   }
 
-  d_patternShapes.push_back(shape);
+  d_pattern.addSubShape(polyline);
   return 0;
 }
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::addDumpPoint(
                     vrpn_float32 x_nm, vrpn_float32 y_nm)
 {
-  PatternPoint point((double)x_nm, (double)y_nm);
-  PatternShape shape(0, 0, PS_DUMP);
-  shape.addPoint(x_nm, y_nm);
-  d_patternShapes.push_back(shape);
+  DumpPointPatternShape *point = new DumpPointPatternShape(x_nm, y_nm);
+  d_pattern.addSubShape(point);
   return 0;
 }
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::exposePattern()
 {
-  vrpn_float32 mag;
-  getMagnification(mag);
+  int numPoints;    // dummy variable
+  double dwellTime; // dummy variable
+  d_pattern.computeExposureStatistics(d_totalPatternNumPoints, 
+                                       d_totalPatternDwellTime_sec,
+                    d_beamCurrent_picoAmps, d_dotSpacing_nm, d_lineSpacing_nm);
 
-  d_exposureManager->setColumnParameters(1e-6,
-                d_beamWidth_nm, d_beamCurrent_picoAmps);
-  int numPointsGenerated;
-  double totalExposureTimeSec;
-  d_exposureManager->exposePattern(d_patternShapes, this, mag,
-                                   numPointsGenerated, totalExposureTimeSec);
+  d_completedPatternNumPoints = 0;
+  d_completedPatternDwellTime_sec = 0.0;
+
+  Delay::beginRealTimeSection();
+
+  d_pattern.drawToSEM(this,
+          d_beamCurrent_picoAmps, d_dotSpacing_nm, d_lineSpacing_nm,
+          numPoints, dwellTime);
+
+  Delay::endRealTimeSection();
   return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::exposureTimingTest()
+{
+
+  int numPoints;
+  double expTime;
+
+  d_pattern.computeExposureStatistics(d_totalPatternNumPoints,
+                                       d_totalPatternDwellTime_sec,
+                    d_beamCurrent_picoAmps, d_dotSpacing_nm, d_lineSpacing_nm);
+
+  d_completedPatternNumPoints = 0;
+  d_completedPatternDwellTime_sec = 0.0;
+
+  startTimingTest();
+  Delay::beginRealTimeSection();
+  startTimingTest();
+  d_pattern.drawToSEM(this,
+          d_beamCurrent_picoAmps, d_dotSpacing_nm, d_lineSpacing_nm,
+          numPoints, expTime);
+  endTimingTest();
+  Delay::endRealTimeSection();
+  return 0;
+}
+
+void nmm_Microscope_SEM_EDAX::startTimingTest()
+{
+  int i;
+  for (i = 0; i < PS_NUMSHAPETYPES; i++) {
+    d_pointCounter[i] = 0.0;
+    d_pointCommandOverheadTotal_msec[i] = 0.0;
+  }
+  d_timingTestFirstPoint = vrpn_TRUE;
+  d_timingTestActive = vrpn_TRUE;
+}
+
+void nmm_Microscope_SEM_EDAX::endTimingTest()
+{
+  // finish up with the last shape type to be exposed
+  struct timeval endTime, elapsedTime;
+  gettimeofday(&endTime, NULL);
+  elapsedTime = vrpn_TimevalDiff(endTime, d_shapeTypeStartTime);
+  double elapsed_time_msec = vrpn_TimevalMsecs(elapsedTime);
+  d_pointCommandOverheadTotal_msec[d_currShapeType] += elapsed_time_msec;
+
+  // now convert to per point values
+  int i;
+  for (i = 0; i < PS_NUMSHAPETYPES; i++) {
+    if (d_pointCounter[i] != 0) {
+      d_pointCommandOverheadPerPoint_msec[i] = 
+          d_pointCommandOverheadTotal_msec[i]/(double)(d_pointCounter[i]);
+    }
+  }
+
+  d_timingTestActive = vrpn_FALSE;
+}
+
+void nmm_Microscope_SEM_EDAX::switchToShapeType(ShapeType type)
+{
+  // finish up with the last shape type to be exposed
+  struct timeval endTime, elapsedTime;
+  gettimeofday(&endTime, NULL);
+  elapsedTime = vrpn_TimevalDiff(endTime, d_shapeTypeStartTime);
+  double elapsed_time_msec = vrpn_TimevalMsecs(elapsedTime);
+  d_pointCommandOverheadTotal_msec[d_currShapeType] += elapsed_time_msec;
+
+  gettimeofday(&d_shapeTypeStartTime, NULL);
+  d_currShapeType = type;
 }
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::setBeamCurrent(
@@ -1444,6 +1578,42 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::setBeamWidth(
 {
   d_beamWidth_nm = beamWidth_nm;
   return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::setPointReportEnable(vrpn_int32 enable)
+{
+  d_pointReportEnable = enable;
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::setDotSpacing(vrpn_float32 spacing)
+{
+  d_dotSpacing_nm = spacing;
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::setLineSpacing(vrpn_float32 spacing)
+{
+  d_lineSpacing_nm = spacing;
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::setLinearExposure(vrpn_float32 exposure)
+{
+  d_linearExposure_pCoul_per_cm = exposure;
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::setAreaExposure(vrpn_float32 exposure)
+{
+  d_areaExposure_uCoul_per_sq_cm = exposure;
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::setMagnification(vrpn_float32 mag)
+{
+  d_magnification = mag;
+  return reportMagnification();
 }
 
 //static 
@@ -1713,12 +1883,14 @@ int nmm_Microscope_SEM_EDAX::RcvAddPolyline
 {
   nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
   const char * bufptr = _p.buffer;
+  vrpn_float32 exposure_pCoul_per_cm;
   vrpn_float32 exposure_uCoul_per_cm2;
   vrpn_float32 lineWidth_nm;
   vrpn_int32 numPoints;
   vrpn_float32 *x_nm, *y_nm;
 
-  if (decode_AddPolylineHeader(&bufptr, &exposure_uCoul_per_cm2, &lineWidth_nm,
+  if (decode_AddPolylineHeader(&bufptr, &exposure_pCoul_per_cm,
+                              &exposure_uCoul_per_cm2, &lineWidth_nm,
                               &numPoints) == -1) {
     fprintf(stderr,
         "nmm_Microscope_SEM_EDAX::RcvAddPolyline"
@@ -1735,7 +1907,8 @@ int nmm_Microscope_SEM_EDAX::RcvAddPolyline
     return -1;
   }
 
-  if (me->addPolyline(exposure_uCoul_per_cm2, lineWidth_nm, numPoints, 
+  if (me->addPolyline(exposure_pCoul_per_cm,
+                      exposure_uCoul_per_cm2, lineWidth_nm, numPoints, 
                       x_nm, y_nm) == -1) {
     fprintf(stderr,
          "nmm_Microscope_SEM_EDAX::RcvAddPolyline"
@@ -1786,6 +1959,18 @@ int nmm_Microscope_SEM_EDAX::RcvExposePattern
   return 0;
 }
 
+//static
+int nmm_Microscope_SEM_EDAX::RcvExposureTimingTest
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+
+  if (me->exposureTimingTest() == -1) {
+    fprintf(stderr, "nmm_Microscope_SEM_EDAX::RcvExposureTimingTest failed\n");
+    return -1;
+  }
+  return 0;
+}
 
 //static
 int nmm_Microscope_SEM_EDAX::RcvSetBeamCurrent
@@ -1826,6 +2011,144 @@ int nmm_Microscope_SEM_EDAX::RcvSetBeamWidth
 
   if (me->setBeamWidth(beamWidth_nm) == -1) {
     fprintf(stderr, "nmm_Microscope_SEM_EDAX::RcvSetBeamWidth: set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
+//static 
+int nmm_Microscope_SEM_EDAX::RcvSetPointReportEnable
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 enable;
+
+  if (decode_SetPointReportEnable(&bufptr, &enable) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvSetPointReportEnable"
+        " decode failed\n");
+    return -1;
+  }
+
+  if (me->setPointReportEnable(enable) == -1) {
+    fprintf(stderr, "nmm_Microscope_SEM_EDAX::RcvSetPointReportEnable:"
+                    " set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
+//static
+int nmm_Microscope_SEM_EDAX::RcvSetDotSpacing
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_float32 spacing_nm;
+
+  if (decode_SetDotSpacing(&bufptr, &spacing_nm) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvSetDotSpacing"
+        " decode failed\n");
+    return -1;
+  }
+
+  if (me->setDotSpacing(spacing_nm) == -1) {
+    fprintf(stderr, "nmm_Microscope_SEM_EDAX::RcvSetDotSpacing:"
+                    " set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
+//static
+int nmm_Microscope_SEM_EDAX::RcvSetLineSpacing
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_float32 spacing_nm;
+
+  if (decode_SetLineSpacing(&bufptr, &spacing_nm) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvSetLineSpacing"
+        " decode failed\n");
+    return -1;
+  }
+
+  if (me->setLineSpacing(spacing_nm) == -1) {
+    fprintf(stderr, "nmm_Microscope_SEM_EDAX::RcvSetDotSpacing:"
+                    " set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
+//static
+int nmm_Microscope_SEM_EDAX::RcvSetLinearExposure
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_float32 exposure;
+
+  if (decode_SetLinearExposure(&bufptr, &exposure) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvSetLinearExposure"
+        " decode failed\n");
+    return -1;
+  }
+
+  if (me->setLinearExposure(exposure) == -1) {
+    fprintf(stderr, "nmm_Microscope_SEM_EDAX::RcvLinearExposure:"
+                    " set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
+//static
+int nmm_Microscope_SEM_EDAX::RcvSetAreaExposure
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_float32 exposure;
+
+  if (decode_SetAreaExposure(&bufptr, &exposure) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvSetAreaExposure"
+        " decode failed\n");
+    return -1;
+  }
+
+  if (me->setAreaExposure(exposure) == -1) {
+    fprintf(stderr, "nmm_Microscope_SEM_EDAX::RcvAreaExposure:"
+                    " set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
+//static
+int nmm_Microscope_SEM_EDAX::RcvSetMagnification
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_float32 mag;
+
+  if (decode_SetMagnification(&bufptr, &mag) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvSetMagnification"
+        " decode failed\n");
+    return -1;
+  }
+
+  if (me->setMagnification(mag) == -1) {
+    fprintf(stderr, "nmm_Microscope_SEM_EDAX::RcvMagnification:"
+                    " set failed\n");
     return -1;
   }
   return 0;
