@@ -63,19 +63,22 @@ int handle_any_print (void * userdata, vrpn_HANDLERPARAM p)
 		gotInitialTime = true;
 	}
 	
-	/*
+	
 	printf("Msg \"%s\" from \"%s\" time %ld.%ld timestamp %ld.%ld\n",
 	        c->message_type_name(p.type), c->sender_name(p.sender),
 	 	    el.tv_sec, el.tv_usec, p.msg_time.tv_sec, p.msg_time.tv_usec);
-	*/
+	
 	// clip any messages past the desired end time
 	if( el.tv_sec - initialTime.tv_sec > endTimeSec )
 		return 0;
 
 	// Use our new sender ID so we don't get callback loops, and
-	// converted stream files are identified. 
-	connection->pack_message(p.payload_len, p.msg_time, p.type, default_sender_id, 
-		p.buffer, vrpn_CONNECTION_RELIABLE);
+	// converted stream files are identified.
+	if( p.type >= 0 )
+	{
+		connection->pack_message(p.payload_len, p.msg_time, p.type, default_sender_id, 
+			p.buffer, vrpn_CONNECTION_RELIABLE);
+	}
 	return 0;
 }
 
@@ -152,10 +155,9 @@ int	main(unsigned argc, char *argv[])
 	
 	default_sender_id = connection->register_sender("streamClip");
 	
-	// DEBUG print all messages, incoming and outgoing, 
+	// print all messages, incoming and outgoing, 
 	// sent over our VRPN connection.
-	connection->register_handler(vrpn_ANY_TYPE, handle_any_print,
-		connection);
+	connection->register_handler(vrpn_ANY_TYPE, handle_any_print, connection);
 	
 	bool done = false;
 	while (!done) 
@@ -164,9 +166,10 @@ int	main(unsigned argc, char *argv[])
 		// Send/receive message from our vrpn connections.
 		connection->mainloop();
 		//fprintf(stderr, "After mainloop, fcon is doing %d.\n", fcon->doing_okay());
-		if (fcon) 
+		if (fcon->eof()) 
 		{
-			if (fcon->eof()) done = true;
+			done = true;
+			connection->unregister_handler(vrpn_ANY_TYPE, handle_any_print, connection);
 		}
 		vrpn_SleepMsecs( 10 );      
 	}
