@@ -643,8 +643,20 @@ void nmui_HSFeelAhead::updateModel (void) {
     return;
   }
   for (i = 0; i < l->numEntries(); i++) {
+    q_vec_type qm, qph;
     p = l->entry(i);
-    d_device->setVertex(i, p->x(), p->y(), p->z());
+
+    // T. Hudson Dec 2001
+    // Convert to Phantom coordinates
+    //d_device->setVertex(i, p->x(), p->y(), p->z());
+
+    qm[0] = p->x();
+    qm[1] = p->y();
+    qm[2] = p->z();
+    vectorToTrackerFromWorld(qph, qm);
+//fprintf(stderr, " mx %.2f %.2f %.2f, px %.2f %.2f %.2f\n",
+//qm[0], qm[1], qm[2], qph[0], qph[1], qph[2]);
+    d_device->setVertex(i, qm[0], qm[1], qm[2]);
   }
 
   // Find out the dimensions of the grid sent.  Note that x and y are

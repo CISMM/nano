@@ -1,3 +1,9 @@
+2001-12-14  Tom Hudson  <hudsont@uncwil.edu>
+
+	* nmui_HapticSurface.C (nmui_HSFeelAhead::updateModel) :
+	Convert points from world space/microscope coordinates
+	into Phantom coordinates before sending to ForceDevice.
+
 2001-07-29  Tom Hudson  <hudson@cs.unc.edu>
 
         * nmui_HapticSurface.C (nmui_HSFeelAhead::updateModel) :
