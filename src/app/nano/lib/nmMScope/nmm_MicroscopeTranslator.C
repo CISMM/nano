@@ -12,7 +12,6 @@
 #endif
 
 #include "stm_cmd.h"
-#include "stm_file.h"
 
 typedef char* BUFPTR;
 

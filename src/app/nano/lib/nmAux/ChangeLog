@@ -1,3 +1,8 @@
+2000-11-1  Tom Hudson  <hudson@cs.unc.edu>
+
+	* ohmmeter.C : removed references to USE_VRPN_MICROSCOPE
+	* ohmmeter.h : same
+
 2000-08-11  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* all: Merge thirdtech_branch code to trunk.

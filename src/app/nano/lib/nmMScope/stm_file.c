@@ -6,6 +6,12 @@
  *
  ************************************************************************/
 
+/*
+  As of October 2000, this file is ONLY used by the translator
+  (nmm_MicroscopeTranslator.h).
+*/
+
+
 #include 	"mf.h"
 #include	<stdio.h>
 #include	<unistd.h>

@@ -1,6 +1,11 @@
 #ifndef	STM_FILE_H
 #define STM_FILE_H
 
+/*
+  As of October 2000, this file is ONLY used by the translator
+  (nmm_MicroscopeTranslator.h).
+*/
+
 /*******
  * Datastream information.
  *******/

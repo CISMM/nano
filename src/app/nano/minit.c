@@ -38,8 +38,6 @@
 #include <vrpn_Tracker_AnalogFly.h>
 #endif
 
-#include "stm_file.h"
-#include "stm_cmd.h"
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
 

@@ -52,11 +52,7 @@
 #include <nmb_TimerList.h>
 
 #include <nmm_Globals.h>
-#ifndef USE_VRPN_MICROSCOPE
-#include <Microscope.h>
-#else
 #include <nmm_MicroscopeRemote.h>
-#endif
 #include <nmm_Types.h>  // for point_result, enums
 #include <nmm_Sample.h>
 

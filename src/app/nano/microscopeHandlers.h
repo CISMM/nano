@@ -14,21 +14,10 @@
 // Thus, they need not access the global 'microscope'.
 // This helps us prepare for multiple simultaneous Microscopes.
 
-#ifdef USE_VRPN_MICROSCOPE
-
 class nmm_Microscope_Remote;
 void setupStateCallbacks (nmm_Microscope_Remote *);
 class nmm_Microscope_Remote;
 void teardownStateCallbacks (nmm_Microscope_Remote *);
-
-#else
-
-class Microscope;
-void setupStateCallbacks (Microscope *);
-class Microscope;
-void teardownStateCallbacks (Microscope *);
-
-#endif
 
 void handle_doRelaxComp_change (vrpn_int32 val, void * _mptr);
 void handle_grid_resolution_change (vrpn_int32, void * _mptr);

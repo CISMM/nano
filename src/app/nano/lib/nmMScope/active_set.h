@@ -17,8 +17,6 @@ class Point_value;
 class Point_list;
 class nmb_Dataset;  // from nmb_Dataset.h
 
-//#include <nmm_Globals.h>  // was for USE_VRPN_MICROSCOPE
-
 //---------------------------------------------------------------------------
 // Class to keep track of which data sets are currently being sent by the
 // microscope when it is in scan mode.

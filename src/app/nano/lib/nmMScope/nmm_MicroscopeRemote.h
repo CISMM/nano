@@ -31,8 +31,6 @@ class BCPlane;  // from <BCPlane.h>
 
 class nmm_Sample;  // from nmm_Sample.h
 
-struct stm_stream;  // from <stm_file.h> - OBSOLETE?
-
 
 // nmm_Microscope
 //
@@ -245,7 +243,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
     long InitStream (const char * /* _inputStreamName */);
 
-    long Init (int (* /* f */) (stm_stream *));
+    long Init (void);
 
     long RecordResistance(long channel, timeval t, float r,
 			float voltage, float range, float filter); 

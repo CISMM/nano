@@ -75,11 +75,7 @@ pid_t getpid();
 #include <nmb_TimerList.h>
 
 #include <nmm_Globals.h>	
-#ifndef USE_VRPN_MICROSCOPE	
-#include <Microscope.h>
-#else
 #include <nmm_MicroscopeRemote.h>
-#endif
 #include <nmm_Types.h>
 
 // graphics
@@ -111,12 +107,10 @@ pid_t getpid();
 #include "x_aux.h"
 #endif
 
-#include "stm_file.h"
 #include "vrml.h"
 #include "interaction.h"
 #include "globals.h"
 #include "active_set.h"
-#include "stm_cmd.h"
 #include "relax.h"
 #ifndef NO_RAW_TERM
 #include "termio.h"
@@ -231,9 +225,7 @@ static  void    handle_ruler_widthx_change(vrpn_float64 new_value, void *userdat
 static  void    handle_ruler_widthy_change(vrpn_float64 new_value, void *userdata);
 static	void	handle_rulergrid_angle_change(vrpn_float64 new_value, void *userdata);
 static	void	handle_replay_rate_change(vrpn_int32 new_value, void *userdata);
-//#ifndef USE_VRPN_MICROSCOPE
 static  void    handle_set_stream_time_change(vrpn_int32 new_value, void *);
-//#endif
 static  void    handle_joymove (vrpn_float64, void *);
 static  void    handle_recovery_time_change (vrpn_float64, void *);
 static	void	handle_texture_scale_change (vrpn_float64, void *);
@@ -331,15 +323,7 @@ static vrpn_bool    head_tracked = VRPN_FALSE;
 nmb_Dataset * dataset = NULL;
 nmb_Decoration * decoration = NULL;
 
-#ifdef USE_VRPN_MICROSCOPE
-
 nmm_Microscope_Remote * microscope = NULL;
-
-#else
-
-Microscope * microscope = NULL;
-
-#endif
 
 nmg_Graphics * graphics = NULL;
 
@@ -1075,10 +1059,8 @@ static vrpn_Connection * renderServerOutputConnection = NULL;
 static vrpn_Connection * renderServerControlConnection = NULL;
 static vrpn_Connection * renderClientInputConnection = NULL;
 
-#ifdef USE_VRPN_MICROSCOPE
 /// File Connection	for replay vrpn log file
 static vrpn_File_Connection * vrpnLogFile;
-#endif
 
 static vrpn_Connection *ohmmeter_connection = NULL;
 static vrpn_File_Connection * ohmmeterLogFile;
@@ -1947,14 +1929,9 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
     printf("Restarting stream from the beginning\n");
 
 ///*
-#ifdef USE_VRPN_MICROSCOPE
     if (vrpnLogFile)
 	vrpnLogFile->reset();
 
-#else
-    microscope->RestartStream();
-
-#endif
 //*/
   //set_stream_time = 0;
     if (ohmmeterLogFile)
@@ -2265,20 +2242,9 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
   // whole stream file?
   newStreamTime.tv_sec = set_stream_time;
   newStreamTime.tv_usec = 999999L;
-#ifdef USE_VRPN_MICROSCOPE
   if (vrpnLogFile) {
     vrpnLogFile->play_to_time(newStreamTime);
   }
-#else
-  microscope->SetStreamToTime(newStreamTime);
-  // TCH 9 Feb 2000
-  // updt_display() will set stm_new_frame IFF time has elapsed (given
-  // the current rate of playback), but not clear it.
-  // By setting it here we force the next call into the microscope
-  // to read from the stream file, even if playback is paused -
-  // this lets us change time settings while paused.
-  stm_new_frame = VRPN_TRUE;
-#endif
 //fprintf(stderr, "Set stream time to %d.\n", time);
   set_stream_time_now = 0; 
 }
@@ -2492,19 +2458,9 @@ static void handle_replay_rate_change (vrpn_int32 value, void *) {
   decoration->rateOfTime = (int) value;
   //printf("Read rate: %d times original\n", decoration->rateOfTime);
 
-#ifdef USE_VRPN_MICROSCOPE
-
   if (vrpnLogFile) {
      vrpnLogFile->set_replay_rate(decoration->rateOfTime);
   }
-
-#else
-
-  if (microscope) {
-    microscope->SetStreamReplayRate(decoration->rateOfTime);
-  }
-
-#endif
 
   if (ohmmeterLogFile) {
      ohmmeterLogFile->set_replay_rate(decoration->rateOfTime);
@@ -3963,15 +3919,7 @@ int	loadPPMTextures(void)
 
 
 
-#ifdef USE_VRPN_MICROSCOPE
-
 void setupCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
-
-#else
-
-void setupCallbacks (nmb_Dataset * d, Microscope * m) {
-
-#endif
 
   if (!d || !m) return;
 
@@ -4006,15 +3954,7 @@ void setupCallbacks (nmb_Dataset * d, Microscope * m) {
             (handle_z_dataset_change, m);
 }
 
-#ifdef USE_VRPN_MICROSCOPE
-
 void teardownCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
-
-#else
-
-void teardownCallbacks (nmb_Dataset * d, Microscope * m) {
-
-#endif
 
   if (!d || !m) return;
 
@@ -4113,15 +4053,7 @@ void teardownCallbacks (nmb_Dataset *d) {
 
 }
 
-#ifdef USE_VRPN_MICROSCOPE
-
 void setupCallbacks (nmm_Microscope_Remote * m) {
-
-#else
-
-void setupCallbacks (Microscope * m) {
-
-#endif
 
   if (!m) return;
 
@@ -4198,15 +4130,7 @@ void setupCallbacks (Microscope * m) {
 
 }
 
-#ifdef USE_VRPN_MICROSCOPE
-
 void teardownCallbacks (nmm_Microscope_Remote * m) {
-
-#else
-
-void teardownCallbacks (Microscope * m) {
-
-#endif
 
   if (!m) return;
 
@@ -4437,11 +4361,7 @@ void setupCallbacks (nmb_Decoration * d) {
 
 void setupSynchronization (CollaborationManager * cm,
                            nmb_Dataset * dset,
-#ifdef USE_VRPN_MICROSCOPE
                            nmm_Microscope_Remote * m) {
-#else
-                           Microscope * m) {
-#endif
 
   // NOTE
   // If you add() any Netvar in this function, make sure you
@@ -6234,8 +6154,6 @@ int main (int argc, char* argv[])
 
     istate.afm.mutexPort = wellKnownPorts->microscopeMutex;
 
-#ifdef USE_VRPN_MICROSCOPE
-
     // Open a port (4581) that will report unfiltered observed RTT
     // to the microscope.
     initialize_rtt();
@@ -6352,16 +6270,6 @@ int main (int argc, char* argv[])
     }
 
     microscope->EnableUpdatableQueue(VRPN_TRUE);
-
-#else
-
-    fprintf(stderr, "About to init microscope\n");
-    microscope = new Microscope (istate.afm, decoration->rateOfTime);
-    fprintf(stderr, "Microscope initialized\n");
-
-    microscope->setPlaybackLimit(istate.packetlimit);  // HACK TCH 15 Feb 2000
-
-#endif
 
     createGraphics(istate);
 
@@ -6959,13 +6867,9 @@ VERBOSE(1, "Entering main loop");
       else if (new_value_of_rate_knob != old_value_of_rate_knob){
         decoration->rateOfTime = new_value_of_rate_knob;
 
-#ifdef USE_VRPN_MICROSCOPE
 	if (vrpnLogFile) {
 	   vrpnLogFile->set_replay_rate(decoration->rateOfTime);
 	}
-#else
-	microscope->SetStreamReplayRate(decoration->rateOfTime);
-#endif
 	if (ohmmeterLogFile) {
 	   ohmmeterLogFile->set_replay_rate(decoration->rateOfTime);
 	}
@@ -6984,8 +6888,6 @@ VERBOSE(1, "Entering main loop");
 	  synchronize_xwin(False);
 #endif
 
-#ifdef USE_VRPN_MICROSCOPE
-
         if (microscopeRedundancyController) {
           microscopeRedundancyController->mainloop();
         }
@@ -7001,13 +6903,6 @@ VERBOSE(1, "Entering main loop");
           VERBOSE(4, "  Calling collab_forwarder_connection->mainloop()");
           collab_forwarder_connection->mainloop();
         }
-
-#else
-
-        VERBOSE(4, "  Calling microscope->HandleReports()");
-	microscope->HandleReports();
-
-#endif
 
 #ifndef NO_XWINDOWS
 	if (xenable) {
@@ -7066,14 +6961,12 @@ VERBOSE(1, "Entering main loop");
 	poll_Tk_control_panels();
     }
 
-#ifdef USE_VRPN_MICROSCOPE
 
     // If we've rolled over a second, update the RTT measurements
     // and send out on our RTT server.
 
     update_rtt();
 
-#endif
 
     // Have the active sets update the microscape data sets
     VERBOSE(4, "  Updating scan and point sets");
@@ -7500,13 +7393,9 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 	    case '8':
 	    case '9':
 		decoration->rateOfTime = *character - '0';
-#ifdef USE_VRPN_MICROSCOPE
 	  	if (vrpnLogFile) {
 		   vrpnLogFile->set_replay_rate(decoration->rateOfTime);
 		}
-#else
-		microscope->SetStreamReplayRate(decoration->rateOfTime);
-#endif
 	  	if (ohmmeterLogFile) {
 		   ohmmeterLogFile->set_replay_rate(decoration->rateOfTime);
 		}
@@ -7593,20 +7482,14 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 	    case '=':		/* Calibrate piezo relaxation */
 		microscope->state.doRelaxComp = (!microscope->state.doRelaxComp);
 		if( !microscope->state.doRelaxComp ) {
-#ifdef USE_VRPN_MICROSCOPE
 			microscope->d_relax_comp.disable();
-#else
-			microscope->state.relaxComp = 0;
-#endif
 			}
 		else if( !(microscope->state.stmRxTmin +
                            microscope->state.stmRxTsep ) ) {
 			printf( "RELAX: " );
 			printf( "Must set min (^Mnnn^M) and sep (^Nnnn^N)\n" );
 			microscope->state.doRelaxComp = VRPN_FALSE;
-#ifdef USE_VRPN_MICROSCOPE
 			microscope->d_relax_comp.disable();
-#endif
 			}
 		printf("Relaxation compensation %s\n", 
 			(microscope->state.doRelaxComp ? "on" : "off" ) );
@@ -8182,24 +8065,10 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 	      
 	      microscope->state.data.inputPoint->setPosition(-1,-1);
 
-#ifdef USE_VRPN_MICROSCOPE
-
 	      do {
 		microscope->mainloop();
 	      } while (!(NM_NEAR(-1.0, microscope->state.data.inputPoint->x()) &&
 			 NM_NEAR(-1.0, microscope->state.data.inputPoint->y())));
-
-#else
-
-	      do {
-		if (microscope->HandlePacket() == -1) {
-		  fprintf(stderr,"Can't read from SPM, bailing\n");
-		  return -1;
-		}
-	      } while (!(NM_NEAR(-1.0, microscope->state.data.inputPoint->x()) &&
-			 NM_NEAR(-1.0, microscope->state.data.inputPoint->y())));
-
-#endif
 
 	      microscope->ModifyMode();
 	      

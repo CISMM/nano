@@ -1,3 +1,8 @@
+2000-11-01  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmui_HapticSurface.C : removed refernces to USE_VRPN_MICROSCOPE
+	* nmui_HapticSurface.h : same
+
 2000-10-05  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmui_HapticSurface.C (nmui_HSFeelAhead) : add new data member

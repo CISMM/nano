@@ -13,11 +13,7 @@
 #include <nmb_Dataset.h>
 #include <nmb_Decoration.h>
 
-#ifndef USE_VRPN_MICROSCOPE
-#include <Microscope.h>
-#else
 #include <nmm_MicroscopeRemote.h>
-#endif
 #include <nmm_Sample.h>
 
 #include "microscape.h"  // for directz_force_scale
@@ -604,11 +600,7 @@ int nmui_HSFeelAhead::newPointListReceivedCallback (void * userdata) {
 
 
 nmui_HSDirectZ::nmui_HSDirectZ (nmb_Dataset * dataset,
-#ifndef USE_VRPN_MICROSCOPE
-                                Microscope * scope) :
-#else
                                 nmm_Microscope_Remote * scope) :
-#endif
     d_dataset (dataset),
     d_microscope (scope),
     d_force (0.0),

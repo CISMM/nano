@@ -5,11 +5,7 @@
 #include "orpx.h"	// for parameter values
 #include "math.h"
 
-#ifndef USE_VRPN_MICROSCOPE // #ifndef #else #endif Added by Tiger
-#include <Microscope.h>
-#else
 #include <nmm_MicroscopeRemote.h>
-#endif
 
 
 OhmmeterInitializationState::OhmmeterInitializationState (void) :
@@ -162,19 +158,11 @@ void Ohmmeter::handle_measurement (void *userdata,
     }
 
     if (controlPanel->microscope_ptr) {
-#ifdef USE_VRPN_MICROSCOPE
         controlPanel->microscope_ptr->RecordResistance(
             channel_index, info.msg_time, fResist,
             orpx_voltages[*(chan->voltage)],
             orpx_ranges[*(chan->range)],
             orpx_filters[*(chan->filter)]);
-#else
-        controlPanel->microscope_ptr->RecordResistance(
-            channel_index, info.msg_time, fResist,
-            orpx_voltages[*(chan->voltage)],
-            orpx_ranges[*(chan->range)],
-            orpx_filters[*(chan->filter)], info.status);
-#endif
     }
 
     int range_index = *(chan->range);
@@ -365,11 +353,7 @@ Ohmmeter::~Ohmmeter(void){
     }
 }
 
-#ifdef USE_VRPN_MICROSCOPE
 void Ohmmeter::setMicroscope(nmm_Microscope_Remote *m){
-#else
-void Ohmmeter::setMicroscope(Microscope *m){
-#endif
     microscope_ptr = m;
 }
 

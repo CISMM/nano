@@ -15,6 +15,8 @@
 #include <unistd.h>  // for sleep()
 #endif
 
+#include "vrpn_FileConnection.h"	// for vrpn_File_Connection class
+
 #include <Topo.h>
 #include <Point.h>
 #include <BCPlane.h>
@@ -22,18 +24,16 @@
 #include <nmb_Dataset.h>
 #include <nmb_Decoration.h>  // for addScrapeMark()
 #include <Tcl_Linkvar.h>
-#include <stm_file.h>	// not sure if we need it.
 #include <nmb_Time.h>
 #include <nmb_Debug.h>
 #include <nmb_Types.h>
 #include <nmb_Line.h>
 
+#include "stm_cmd.h"  // for SPM_POINT_RESULT_DATA and other types
 #include "drift.h"
 #include "splat.h"
 #include "nmm_RelaxComp.h"
 #include "nmm_Sample.h"
-
-#include "vrpn_FileConnection.h"	// for vrpn_File_Connection class
 
 #include "error_display.h"
 
@@ -2403,7 +2403,7 @@ long nmm_Microscope_Remote::InitStream (const char * /* _inputStreamName */) {
 
 // Initialization code common to both live and canned data
 
-long nmm_Microscope_Remote::Init (int (* /* f */) (stm_stream *)) {
+long nmm_Microscope_Remote::Init (void) {
 
   // used for sweep mode
   state.modify.region_diag =

@@ -16,11 +16,7 @@
 #include <nmb_Globals.h>
 
 #include <nmm_Globals.h>
-#ifndef USE_VRPN_MICROSCOPE	// #ifndef #else #endif Added by Tiger
-#include <Microscope.h>
-#else
 #include <nmm_MicroscopeRemote.h>
-#endif
 
 #include "nmg_GraphicsImpl.h"
 #include "nmg_Globals.h" // for graphics pointer.

@@ -1,3 +1,7 @@
+2000-11-1  Tom Hudson  <hudson@cs.unc.edu>
+
+	* chartjunk.c : removed refernces to USE_VRPN_MICROSCOPE
+
 2000-10-04  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmg_RenderClient.C (blockTimer): remove invalid error message

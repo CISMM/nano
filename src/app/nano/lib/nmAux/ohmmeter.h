@@ -7,11 +7,7 @@
 #include "vrpn_Ohmmeter.h"
 #include "nmb_Types.h"	// for vrpn_bool
 
-#ifndef USE_VRPN_MICROSCOPE
-#include <Microscope.h>
-#else
 #include <nmm_MicroscopeRemote.h>
-#endif
 
 #define NUM_SELECTION_VALUES (6)
 #define AUTORANGE_WAIT (2)
@@ -99,11 +95,7 @@ class Ohmmeter {
     vrpn_bool windowOpen();
     void openWindow();
 
-#ifdef USE_VRPN_MICROSCOPE
     void setMicroscope(nmm_Microscope_Remote *m);
-#else
-    void setMicroscope(Microscope *m);
-#endif
 
     void updateDisplay(int chnum, float resistance, int status,
         float voltage, float range, float filter);
@@ -118,11 +110,7 @@ class Ohmmeter {
 
     vrpn_Ohmmeter_Remote *ohmmeterDevice;
 
-    #ifdef USE_VRPN_MICROSCOPE
     nmm_Microscope_Remote * microscope_ptr;
-    #else
-    Microscope * microscope_ptr;
-    #endif
 
     nmui_ORPXChannelParameters 
                         *d_channelParams[NUM_OHMMETER_CHANNELS];

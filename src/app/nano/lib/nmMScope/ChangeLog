@@ -1,3 +1,19 @@
+2000-11-1  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmm_Globals.h : removed USE_VRPN_MICROSCOPE define
+        * active_set.h : removed reference to USE_VRPN_MICROSCOPE
+	* nmm_MicroscopeRemote.C : removed include of stm_file.h,
+        added include of stm_cmd.h
+	(Init) : removed argument
+        * nmm_MicroscopeTranslator.h : removed include of stm_file.h
+	* Microscope.C : removed file
+	* Microscope.h : removed file
+	* MicroscopeIO.C : removed file
+	* MicroscopeIO.h : removed file
+	* MicroscopeRcv.C : removed file
+	* NetworkedMicroscopeChannel.C : removed file
+	* NetworkedMicroscopeChannel.C : removed file
+
 2000-10-24  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.C : changes having to do with degree/radian

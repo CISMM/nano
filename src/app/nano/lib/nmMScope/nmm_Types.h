@@ -57,8 +57,5 @@ enum {
   SOCKET_MIX = 3
 };
 
-
-
 #endif  // NMM_TYPES_H
 
-  

@@ -10,14 +10,7 @@
 #include <nmb_Decoration.h>
 #include <nmb_Globals.h>
 
-//#include <nmm_Globals.h>  // for USE_VRPN_MICROSCOPE, now controlled
-                            // by Makefile
-
-#ifndef USE_VRPN_MICROSCOPE
-#include <Microscope.h>
-#else
 #include <nmm_MicroscopeRemote.h>
-#endif
 
 #include "x_util.h"
 #include "microscape.h"  // for xPlaneName
