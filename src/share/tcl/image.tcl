@@ -17,6 +17,9 @@ set nmInfo(image) [create_closing_toplevel image "Image Parameters"]
 set nmInfo(imagequick) [frame $nmInfo(image).quick]
 set nmInfo(imagefull) [frame $nmInfo(image).full]
 
+# Prevent changes in size of the window by user.
+wm resizable $nmInfo(image) 0 0
+
 # Button swaps between quick and full param frames.  
 set image_quick_or_full "quick"
 button $nmInfo(image).quick_or_full -text "Full params" -command {

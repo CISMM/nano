@@ -12,6 +12,9 @@ set nmInfo(modify) [create_closing_toplevel modify "Modify Parameters"]
 set nmInfo(modifyquick) [frame $nmInfo(modify).quick]
 set nmInfo(modifyfull) [frame $nmInfo(modify).full]
 
+# Prevent changes in size of the window by user.
+wm resizable $nmInfo(modify) 0 0
+
 # Button swaps between quick and full param frames.  
 set modify_quick_or_full "quick"
 button $nmInfo(modify).quick_or_full -text "Full params" -command {
