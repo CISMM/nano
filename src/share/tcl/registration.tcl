@@ -20,15 +20,22 @@ set reg_projection_comes_from "none"
 set nmInfo(registration) [create_closing_toplevel_with_notify \
                                       registration reg_window_open]
 
+########################
 generic_optionmenu $nmInfo(registration).selection3D \
         reg_surface_cm(color_comes_from) \
         "Topography image" imageNames
-button $nmInfo(registration).colormap3D -text "Colormap..."  \
+
+frame $nmInfo(registration).controls3D
+
+button $nmInfo(registration).controls3D.colormap3D -text "Colormap..."  \
     -command "show.reg_surf_colorscale"
-#generic_optionmenu $nmInfo(registration).colormap3D \
-#	reg_surface_colormap_from \
-#	"Colormap" colorMapNames
-pack $nmInfo(registration).selection3D $nmInfo(registration).colormap3D -anchor nw -pady 3
+
+button $nmInfo(registration).controls3D.refresh -text "Refresh" \
+    -command "set reg_refresh_3D 1"
+
+pack $nmInfo(registration).selection3D $nmInfo(registration).controls3D -anchor nw -pady 3
+
+pack $nmInfo(registration).controls3D.colormap3D $nmInfo(registration).controls3D.refresh -anchor nw -side left -pady 3
 
 # Colormap controls, using routines from colormap.tcl
 set nmInfo(reg_surf_colorscale) [create_closing_toplevel reg_surf_colorscale "Registration Topography Color Map" ]
@@ -37,24 +44,25 @@ set nmInfo(reg_surf_colorscale) [create_closing_toplevel reg_surf_colorscale "Re
 colormap_controls $nmInfo(reg_surf_colorscale) reg_surface_cm \
         reg_surface_cm(color_comes_from) "Topography image" imageNames
 
+########################
 generic_optionmenu $nmInfo(registration).selection2D \
         reg_projection_cm(color_comes_from) \
         "Projection image" imageNames
-button $nmInfo(registration).colormap2D -text "Colormap..."  \
+
+frame $nmInfo(registration).controls2D
+
+button $nmInfo(registration).controls2D.colormap2D -text "Colormap..."  \
     -command "show.reg_proj_colorscale"
-checkbutton $nmInfo(registration).flip_projection_image_checkbutton \
+
+button $nmInfo(registration).controls2D.refresh -text "Refresh" \
+    -command "set reg_refresh_2D 1"
+
+checkbutton $nmInfo(registration).controls2D.flip_projection_image_checkbutton \
     -text "Flip image in X" -variable reg_proj_flipX -anchor nw
 
-#generic_optionmenu $nmInfo(registration).colormap2D \
-#	reg_projection_colormap_from \
-#	"Colormap" colorMapNames
-pack $nmInfo(registration).selection2D $nmInfo(registration).colormap2D $nmInfo(registration).flip_projection_image_checkbutton -anchor nw -pady 3
+pack $nmInfo(registration).selection2D $nmInfo(registration).controls2D -anchor nw -pady 3
 
-#proc printvar {fooa element op} {
-#    global reg_projection_cm
-#    puts "XXXX new  $reg_projection_cm(color_comes_from)"
-#}
-#trace variable reg_projection_cm(color_comes_from) w printvar
+pack $nmInfo(registration).controls2D.colormap2D $nmInfo(registration).controls2D.refresh $nmInfo(registration).controls2D.flip_projection_image_checkbutton -anchor nw -side left -pady 3
 
 # Colormap controls, using routines from colormap.tcl
 set nmInfo(reg_proj_colorscale) [create_closing_toplevel reg_proj_colorscale "Registration Projection Color Map" ]
@@ -63,6 +71,7 @@ set nmInfo(reg_proj_colorscale) [create_closing_toplevel reg_proj_colorscale "Re
 colormap_controls $nmInfo(reg_proj_colorscale) reg_projection_cm \
         reg_projection_cm(color_comes_from) "Projection image" imageNames
 
+########################
 #make sure colormap windows close along with the rest of the interface. 
 proc reg_close_cmap_windows {name el op} {
     global reg_window_open

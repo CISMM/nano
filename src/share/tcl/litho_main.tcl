@@ -436,15 +436,23 @@ generic_optionmenu $drawing_parameters_win.canvas_image canvas_image \
 pack $drawing_parameters_win.canvas_image -anchor nw \
        -padx 3 -pady 3 -side top
 
-button $drawing_parameters_win.clear_drawing -text "Delete Last" -command \
-    { set clear_drawing 1 }
-pack $drawing_parameters_win.clear_drawing -anchor sw -side left
+button $drawing_parameters_win.clear_pattern -text "Clear Pattern" -command \
+    { set clear_pattern 1 }
+pack $drawing_parameters_win.clear_pattern -anchor nw -side top 
+
+button $drawing_parameters_win.undo_shape -text "Undo Shape" -command \
+    { set undo_shape 1 }
+pack $drawing_parameters_win.undo_shape -anchor nw -side top
+
+button $drawing_parameters_win.undo_point -text "Undo Point" -command \
+    { set undo_point 1 }
+pack $drawing_parameters_win.undo_point -anchor nw -side top
 
 frame $drawing_parameters_win.segment_length -relief solid \
       -borderwidth 2
 label $drawing_parameters_win.segment_length.title -text "length:"
 label $drawing_parameters_win.segment_length.value \
-      -textvariable segment_length -width 10 -anchor w -justify left
+      -textvariable segment_length -width 10 -anchor e -justify left
 
 pack $drawing_parameters_win.segment_length 
 pack $drawing_parameters_win.segment_length.title -side left
@@ -780,7 +788,7 @@ set sem_exposure_status "N/A"
 
 frame $sem_beam_win.expose_progress -relief solid -borderwidth 2
 pack $sem_beam_win.expose_progress -padx 3 -pady 3
-label $sem_beam_win.expose_progress.label -text "exposure status:"
+label $sem_beam_win.expose_progress.label -text "status:"
 label $sem_beam_win.expose_progress.value \
       -textvariable sem_exposure_status
 
@@ -828,6 +836,45 @@ proc handle_sem_controls_enable { nm el op } {
 }
 
 trace variable sem_controls_enabled w handle_sem_controls_enable
+
+
+################ Error Handling #############################
+### Message dialog for warnings and errors.
+# Designed to be called from C code, as well.
+
+# The iwidgets message box had a problem when reporting Phantom errors,
+# for some reason - Tcl_Eval failed in that situation.
+# Switched to tk_messageBox procedure, and things work fine.
+
+#iwidgets::messagedialog .error_dialog -title "Program Error" \
+#    -bitmap error -text "Error" -modality application
+
+#.error_dialog hide Help
+#.message_dialog buttonconfigure OK -text "Yes"
+#.error_dialog hide Cancel
+proc display_fatal_error_dialog {msg } {
+    global quit_program_now
+    tk_messageBox -message "$msg" -title "Seegerizer Fatal Error" \
+            -type ok -icon error
+    set quit_program_now 1
+}
+proc display_error_dialog {msg } {
+    tk_messageBox -message "$msg" -title "Seegerizer Error" \
+            -type ok -icon error
+}
+proc display_warning_dialog {msg } {
+    toplevel .warning
+    label .warning.label -text "$msg"
+    button .warning.button -text "OK" -command {destroy .warning}
+    pack .warning.label .warning.button
+}
+# bgerror is a special name, provided by tcl/tk, called if there
+# is a background error in the script. Don't necessarily want
+# these to be fatal.
+proc bgerror {msg} {
+    display_error_dialog "Internal tcl error: $msg"
+}
+######################
 
 #----------------
 # Setup window positions and geometries to be convenient and pleasant!

@@ -1,3 +1,11 @@
+2002-09-30  Adam Seeger  <seeger@cs.unc.edu>
+
+	* litho_main.tcl: Replaced "Delete Last" button with "Clear Pattern",
+	"Undo Shape" and "Undo Point" buttons
+	added code to put up error and warning dialog boxes
+	* registration.tcl: added buttons so the user can refresh the images
+	with the latest data
+
 2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* litho_main.tcl: added segment length indicator and an entry box to
