@@ -406,6 +406,9 @@ $toolmenu add command -label "Latency Adaptation" -underline 0 \
 $toolmenu add command -label "SEM" -underline 1 \
     -command "show.sem_win"
 
+$toolmenu add command -label "TEM" -underline 2 \
+    -command "show.tem_win"
+
 $toolmenu add command -label  "Import Objects..." -underline 0 \
     -command "show.import_objects"
 
@@ -598,6 +601,8 @@ source [file join ${tcl_script_dir} toplevels.tcl]
 if { !$thirdtech_ui } {
 # SEM control panel
 source [file join ${tcl_script_dir} sem.tcl]
+# TEM control panel
+source [file join ${tcl_script_dir} tem.tcl]
 # French Ohmmeter control panel
 source [file join ${tcl_script_dir} french_ohmmeter.tcl]
 # AFM Tip display control panel
