@@ -6137,7 +6137,6 @@ VERBOSE(1, "Creating Ugraphics");
  
   initializeInteraction();
 
-
   // Registration - displays images with glX or GLUT depending on V_GLUT
   // flag
   if (istate.alignerName == NULL){

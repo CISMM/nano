@@ -377,7 +377,7 @@ static void handle_trigger_change( vrpn_int32 val, void * )
 static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 {
 
-  //    printf("handle_commit_change called, commit: %d\n", (int)tcl_commit_pressed);
+    printf("handle_commit_change called, commit: %d\n", (int)tcl_commit_pressed);
     // This handles double callbacks, when we set tcl_commit_pressed to
     // zero below.
     if (tcl_commit_pressed != 1) return;
@@ -589,7 +589,7 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
  */
 static void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 {
-    //printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
+    printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
     // This handles double callbacks, when we set tcl_commit_canceled to
     // zero below.
     if (tcl_commit_canceled != 1) return;
@@ -661,12 +661,15 @@ static void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata
 
 static void handle_phantom_reset( vrpn_int32, void *) // don't use val, userdata.
 {
+  printf("handle phantom reset invoked\n");
     if (tcl_phantom_reset_pressed != 1) return;
 
     if (reset_phantom())
 	fprintf(stderr, "Error: could not reinitialize phantom\n");
 
     tcl_phantom_reset_pressed = 0;
+    handle_phantom_reset( (vrpn_int32)-1, NULL);
+
 }
 
 void setupHaptics (int mode) {
@@ -1024,11 +1027,19 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       } else {
          printf("Commit from button box, now OFF\n");
       }
+      printf("tcl_commit_pressed now set to %d\n", (int)tcl_commit_pressed);
+      /* Above it's noted that the center command is a special case
+      ** Cancel, Commit, and Reset also seem to be special cases...
+      ** the callback isn't triggered if you set the c variable to a value,
+      ** but it's triggered if you set the tcl variable.(!)
+      */
+      handle_commit_change( (vrpn_int32)-1, NULL);
     }
     if( PRESS_EVENT == eventList[CANCEL_BT] ) {
       //printf("Cancel from button box.\n");
       // causes "handle_commit_cancel" to be called
       tcl_commit_canceled = !tcl_commit_canceled; 
+      handle_commit_cancel( (vrpn_int32)-1, NULL );
     }
 
     // see if the user changed modes using a button
@@ -2682,7 +2693,6 @@ void initializeInteraction (void) {
   updateWorldFromRoom();
 
 }
-
 
 /**
   These two functions work together to make sure that all changes

@@ -556,7 +556,6 @@ void Tclvar_int::updateTcl (void) {
   if (!interpreter) {
     return;
   }
-
 //fprintf(stderr, "Tclvar_int::updateTcl(%s, %d) - was %d.\n",
 //d_myTclVarname, d_myint, mylastint);
 
