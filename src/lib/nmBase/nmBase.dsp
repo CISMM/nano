@@ -209,6 +209,10 @@ SOURCE=.\PPM.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\readNanoscopeFile.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\Scanline.C
 # End Source File
 # Begin Source File
@@ -362,6 +366,10 @@ SOURCE=.\Position.h
 # Begin Source File
 
 SOURCE=.\PPM.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\readNanoscopeFile.h
 # End Source File
 # Begin Source File
 
