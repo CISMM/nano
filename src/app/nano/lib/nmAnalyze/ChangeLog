@@ -1,3 +1,8 @@
+2002-02-11 Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nma_ShapeAnalyze.hC : rewrote interpolation algorithm to correctly
+	deal with uneven division of nano dimension/sim. dimension
+
 2002-01-31 David Marshburn   <marshbur@cs.unc.edu>
 
 	* nmAnalyze.dsp:  builds with non-static run-time libraries.

@@ -12,7 +12,6 @@
 class nmb_PlaneSelection;
 class CNT_IA;
 
-#include <fstream.h>
 #include "nmb_CalculatedPlane.h"
 #include <vrpn_Connection.h>
 
@@ -121,24 +120,45 @@ protected:
 	//used by UpdateDataArray; blurs current dataline up or down to fit required rowlength 
 	//(filling in points in between if d_rowlength is larger, and blur between current row 
 	//of data and previous row
-	void nonblur(double ** dataline, int& y, int& datain_rowlen);
+	//void nonblur(double ** dataline, int& y, int& datain_rowlen);
 	void blur_data_up(double ** dataline, int& y, int& datain_rowlen);
 	void blur_plane_up(double ** dataline, int& y, int& datain_rowlen);
 
 private:
 	int create_ShapeIdentifiedPlane();  //creates new plane
 
-	BCPlane * d_sourcePlane;       //source plane the new plane came from
-	BCPlane * d_outputPlane;       //new plane
-	nmb_Dataset * d_dataset;       //the dataset we belong to
-	const char * d_outputPlaneName;//what to call the plane
-	double * d_dataArray;            //the array of values 
-	int d_array_size;
-	short d_rowlength;
-    short d_columnheight;
-	int planepts_per_datapt, num_leftovers;//for blurring
-	bool firstblur;
-	int stored_y;
+	BCPlane * d_sourcePlane;		//source plane the new plane came from
+	BCPlane * d_outputPlane;		//new plane
+	nmb_Dataset * d_dataset;		//the dataset we belong to
+	const char * d_outputPlaneName;	//what to call the plane
+	double * d_dataArray;			//the array of values 
+	double * storeddataline;		//the last row of data we have received in (interpolated)
+									//used for interpolation of rows between last row and the current row
+	int d_array_size;				//size of the source plane
+	short d_rowlength;				//length of row in source plane
+    short d_columnheight;			//height of column in source plane
+	double stepsize;				//keeps track of the increment in one direction in the simulator
+									//x or y space one has to go to get to the next place in that space
+									//to pull a value from--sim x-space divided up into (d_rowlength - 1) 
+									//chunks of size stepsize and sim y-space divided up into 
+									//(d_columnheight - 1) chunks of size stepsize
+	bool firstblur;					//set to true initially, changed to false once source plane filled in
+									//with updated values for the first time, ensures that interpolation
+									//code always starts with the y=0 row sent over from the simulator by
+									//keeping firstblur = true until a y=0 row is sent->triggers interpolation
+									//code
+	double placeholder_x;			//incremented by stepsize, holds the place in sim x-space that the current
+									//value needs to be pulled from
+	double placeholder_y;			//incremented by stepsize, holds the place that the current row should fall at
+									//in sim y-space
+	int l_sim_x;					//lower point of two points in sim x-space to interpolate between to get value
+									//at placeholder_x
+	int h_sim_x;					//upper (higher) point in sim x-space to interpolate between
+	int l_sim_y;					//lower rownumber of two rownumbers in sim y-space to interpolate between to get
+									//values for rownumber placeholder_y
+	int h_sim_y;					//upper rownumber in sim y-space to interpolate between
+	int nano_y;						//y value in the source plane array at which the new point is being inserted
+
 };
 
 

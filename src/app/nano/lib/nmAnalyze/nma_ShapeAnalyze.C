@@ -5,7 +5,6 @@
 
 #include <BCPlane.h>
 #include <BCString.h>
-#include <fstream.h>
 #include <nmb_PlaneSelection.h>
 #include "nma_ShapeAnalyze.h"
 #include "cnt_ia.h"
@@ -200,10 +199,25 @@ nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const cha
   : nmb_CalculatedPlane(outputPlaneName, dataset), d_sourcePlane(sourcePlane), 
   d_dataset(dataset), d_outputPlaneName(outputPlaneName), d_dataArray(dataArray)
 {
-	d_rowlength = d_sourcePlane->GetGrid()->numX();
-    d_columnheight = d_sourcePlane->GetGrid()->numY();
-    d_array_size = create_ShapeIdentifiedPlane();
-	firstblur = true;
+  d_rowlength = d_sourcePlane->GetGrid()->numX();
+  d_columnheight = d_sourcePlane->GetGrid()->numY();
+  firstblur = true;
+  storeddataline = new double[d_rowlength];
+
+  l_sim_x = 0;
+  h_sim_x = 1;
+  placeholder_x = 0;
+  //because starting at beginning of row
+
+  l_sim_y = -1;
+  h_sim_y = 0;
+  placeholder_y = 0;
+  //init. l_sim_y and h_sim_y to -1 and 0 because will be incremented at beginning of interpolation code
+  //and want to have 0 and 1 for first row processed (y=0 from simulator)
+
+  nano_y = 0;
+
+  d_array_size = create_ShapeIdentifiedPlane();
 }
 
 //'default' constructor for when no data sent across initially
@@ -216,6 +230,20 @@ nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const cha
   d_rowlength = d_sourcePlane->GetGrid()->numX();
   d_columnheight = d_sourcePlane->GetGrid()->numY();
   firstblur = true;
+  storeddataline = new double[d_rowlength];
+  
+  l_sim_x = 0;
+  h_sim_x = 1;
+  placeholder_x = 0;
+  //because starting at beginning of row
+
+  l_sim_y = -1;
+  h_sim_y = 0;
+  placeholder_y = 0;
+  //init. l_sim_y and h_sim_y to -1 and 0 because will be incremented at beginning of interpolation code
+  //and want to have 0 and 1 for first row processed (y=0 from simulator)
+
+  nano_y = 0;
 }
 
 nma_ShapeIdentifiedPlane::
@@ -248,14 +276,12 @@ dependsOnPlane( const char* planeName )
 //updates d_dataArray when new information is received and fills in d_outputPlane with new values
 void nma_ShapeIdentifiedPlane::
 UpdateDataArray(double * dataline, int y, int datain_rowlen){
-	if(firstblur && (y != 0) ) return;
-	if(!firstblur){
-		if(planepts_per_datapt*y!=stored_y){
-			cout << "Mismatch in rows sent" << endl;
-			return;
-		}
-		y = stored_y;
-	}
+  if(firstblur && (y != 0) ) return;
+  if(!firstblur){
+	  l_sim_x = 0;
+	  h_sim_x = 1;
+	  placeholder_x = 0;
+  }//always reset these back to values they should be for the start of a row of data
 
   if(d_dataArray == NULL){//make it not NULL by filling in with dummy values
         d_array_size = create_ShapeIdentifiedPlane();//need to initialize array_size if first time
@@ -263,26 +289,14 @@ UpdateDataArray(double * dataline, int y, int datain_rowlen){
 
   int sourceplane_size = d_rowlength*d_columnheight;
   if(d_array_size == sourceplane_size){//already filled once, array_size starts out at zero
-	  
-	  if(y < d_columnheight){//okay to proceed
-			//blur necessary?
-			if(d_rowlength > datain_rowlen){
-				planepts_per_datapt = d_rowlength/datain_rowlen;
-				num_leftovers = d_rowlength%datain_rowlen;
-				blur_data_up(&dataline,y,datain_rowlen);
-			}
-			else if (datain_rowlen > d_rowlength){
-				planepts_per_datapt = datain_rowlen/d_rowlength;
-				num_leftovers = datain_rowlen%d_rowlength;
-				blur_plane_up(&dataline,y,datain_rowlen);
-			}//blur current dataline up or down to fit required rowlength (filling in points in between if
-			 //d_rowlength is larger, and blur between current row of data and previous row
-			else{
-				nonblur(&dataline,y,datain_rowlen);
-			}
+	  if(d_rowlength >= datain_rowlen){
+		  stepsize = ((double)((double)datain_rowlen - 1))/((double)((double)d_rowlength - 1));
+		  blur_data_up(&dataline,y,datain_rowlen);
 	  }
-
-	  stored_y = (y+planepts_per_datapt)%d_columnheight;
+	  else if (datain_rowlen > d_rowlength){
+		  blur_plane_up(&dataline,y,datain_rowlen);
+	  }//blur current dataline up or down to fit required rowlength (filling in points in between if
+	   //d_rowlength is larger, and blur between current row of data and previous row
   }
   else{//array_size != preexisting_size
     cerr << "Sizes do not match" << endl << "Cannot update with current scan" << endl;
@@ -293,24 +307,6 @@ UpdateDataArray(double * dataline, int y, int datain_rowlen){
 }
 
 
-//when d_rowlength and datain_rowlen are the same, no need to blur
-void nma_ShapeIdentifiedPlane::
-nonblur(double** dataline, int& y, int& datain_rowlen){
-	int new_index = 0;
-	float val;
-	
-	for(int i = 0; i < datain_rowlen; ++i){
-		if(firstblur) firstblur = false;
-		if(new_index < d_rowlength){
-			d_dataArray[datain_rowlen*y+i] = (*dataline)[i];
-			val = d_dataArray[datain_rowlen*y+i];
-			calculatedPlane->setValue(i,y,val);
-			d_dataset->range_of_change.AddPoint(i,y);
-		}
-
-	}
-}
-
 //used by UpdateDataArray; blurs current dataline up to fit required rowlength 
 //(filling in points in between since d_rowlength is larger, and blur between current row 
 //of data and previous row)
@@ -318,116 +314,112 @@ void nma_ShapeIdentifiedPlane::
 blur_data_up(double** dataline, int& y, int& datain_rowlen){
 
 	double * newdataline = new double[d_rowlength];
-	double intermediate = 0.0;
-	int new_index = 0;
-	int inter_y;
+	//holds "new" line of data consisting of old data with interpolated values inbetween
+	//now we have an incoming data line of the appropriate length
+	double placeholder_val;//value at (placeholder_x,y) in incoming line of data (from simulator)
+	double percent_between;
 
-	//create the row of new data, interpolating between x values
-	for(int i = 0; i < datain_rowlen; ++i){
-		if(new_index < d_rowlength){//new_index tracks index s.t. length of d_rowlength
-									//is not exceeded
-			newdataline[new_index++] = (*dataline)[i];
+	newdataline[0] = (*dataline)[0];
+	placeholder_x += stepsize;
+	int nano_x = 0;//tracks where we are in nano's x-space, range of [0,d_rowlength]
+	do{
+		if((placeholder_x >= l_sim_x) && (placeholder_x <= h_sim_x)){
+			percent_between = placeholder_x - l_sim_x;
+			placeholder_val = percent_between * ((*dataline)[h_sim_x] - (*dataline)[l_sim_x]) + (*dataline)[l_sim_x];
+			//linear interpolation scheme based on percentage between l_sim_x and h_sim_x that placeholder_x falls
+			newdataline[nano_x] = placeholder_val;
+			
+			++nano_x;//increment to indicate another value in the nano-length row filled in
+			placeholder_x += stepsize;
+
 		}
+		else if(placeholder_x > h_sim_x){
+			l_sim_x++;
+			h_sim_x++;
+		}//placeholder_x has passed out of the current range [l_sim_x,h_sim_x], and thus
+		 //to find the value at placeholder_x, we need to interpolate between [h_sim_x,h_sim_x + 1], so increment
+		else{
+			return;
+		}//should never do this else, but just in case...		
+	}while(nano_x <= (d_rowlength - 1));
 
-		if(i+1 < datain_rowlen){
-			intermediate = ((*dataline)[i+1] - (*dataline)[i])*(1.0/(double)planepts_per_datapt);
-			for(int k = 1; k <= planepts_per_datapt-1; k++){
-				if(new_index < d_rowlength){
-					newdataline[new_index++] = intermediate*k + (*dataline)[i];
-				}
-			}	
-		}
-		else{//take care of leftover slots
-			int to_do = num_leftovers + 3;
-			for(;to_do >= 0;to_do--){
-				intermediate = ((*dataline)[i] - (*dataline)[i-1])*(1.0/(double)planepts_per_datapt);
-				for(int k = 1; k <= planepts_per_datapt-1; k++){
-					if(new_index < d_rowlength){
-						newdataline[new_index++] = intermediate*k + (*dataline)[i];
-					}
-				}
-			}
-		}
-    }//fill in newdataline with values from dataline and values interpolated inbetween (blurring)
-
-
-	//clean up--change datain_rowlen to reflect current for row and change dataline to point to newdataline
-	datain_rowlen = d_rowlength;//(returned by reference)
-	delete [] (*dataline);
-	(*dataline) = newdataline;//now points to the new array we just made...
-
-
-	//now fill in the intervening rows by interpolating between previous row and this new row
-	new_index = 0;
-	float val;
-
+	
+	//clean up--change datain_rowlen to reflect current for row and set datain_numrows to equal datain_rowlen
+	//since grid is square from simulator
 	int datain_numrows = datain_rowlen;
-	if(d_rowlength != d_columnheight){
-		planepts_per_datapt = d_columnheight/datain_numrows;
-	}//if number of rows does not equal number of columns in the source plane,
-	 //change planepts_per_datapt so that the appropriate number of rows
-	 //correspond to each row of data coming in
+	datain_rowlen = d_rowlength;//(returned by reference)
 
 
-	int y_to_use, y_flipped;
-	//use these to "flip" y:  array is filled in such that the top of the grid corresponds to 
+	//fill in rows (step through y)
+	l_sim_y = (++l_sim_y)%datain_numrows;//always want l_sim_y to be within the range [0,datain_numrows-1]
+	h_sim_y = l_sim_y +1;
+	//can increment these two at beginning of function because initialized to -1 and 0
+
+	int y_flipped;//flip y for display:  array is filled in such that the top of the grid corresponds to 
 	//lower numbered rows and the bottom of the grid is higher numbered rows--however, the plane fills 
 	//in with lowered numbered rows corresponding to the bottom of the grid.  so, we store top down
 	//but must "flip" y to display the plane
 	int index;//current index we are on now
-	int last_y;//the last real y value we were using
-	int last_index;//the last index (separated by planepts_per_datapt) we were using
-	int inter_index;//tracks intermediate indices (between last_index and index)
 
-	for(i = 0; i < datain_rowlen; ++i){
-		y_to_use = y;//use real y when dealing with d_dataArray
-		index = datain_rowlen*y_to_use+i;
+	//nano_y starts at 0
+	while(nano_y <= (d_columnheight-1)){
+		//handle first row
+		if(placeholder_y == 0){//just insert row--no interpolation between this row and previous row
+			double val;
 
-		if(firstblur) firstblur = false;
-
-		if(new_index < d_columnheight){//new_index tracks index s.t. length of d_columnheight
-									   //is not exceeded
-			d_dataArray[index] = (*dataline)[i];
-			val = d_dataArray[index];
-
-			y_flipped = d_columnheight-y-1;
-			//flip y because small indices in d_dataArray correspond to
-			//large indices in calculatedPlane
-			y_to_use = y_flipped;
-			//use flipped y when setting value in calculatedPlane and updating display
-
-			calculatedPlane->setValue(i,y_to_use,val);
-			d_dataset->range_of_change.AddPoint(i,y_to_use);
+			int y = d_columnheight - placeholder_y - 1;
+			for(int i = 0; i < d_rowlength; ++i){
+				d_dataArray[i] = newdataline[i];
+				val = d_dataArray[i];
+				calculatedPlane->setValue(i,y,val);
+				d_dataset->range_of_change.AddPoint(i,y);
+			}
+			for(i = 0; i < d_rowlength; i++){
+				storeddataline[i] = newdataline[i];
+			}//now this is our old row			
+			--l_sim_y;
+			--h_sim_y;//so that can cover placeholder_y values between 0 and 1 next time around
+			placeholder_y = (placeholder_y + stepsize);
+			++nano_y;
+			if(firstblur) firstblur = false;//we have entered a row for the first time (necessary that y = 0)
+			return;//wait until we get another row of data in to do anything else
 		}
-
-		y_to_use = y;//set back for dealing with d_dataArray, and for if check (following this line)
-		last_y = y_to_use-planepts_per_datapt;
-		last_index = datain_rowlen*last_y+i;
-
-		if(last_y >=0){
-			intermediate = (d_dataArray[index] - d_dataArray[last_index])
-				*(1.0/(double)planepts_per_datapt);
-
-			for(int k = 1; k <= planepts_per_datapt-1; k++){
-				y_to_use = y;//set back for dealing with d_dataArray in for loop...
-				inter_y = last_y + k;//dealing with d_dataArray
-				inter_index = datain_rowlen*inter_y+i;
-
-				if(new_index++ < d_columnheight){
-					d_dataArray[inter_index] = intermediate*k + d_dataArray[last_index];
-					val = d_dataArray[inter_index];
-
-					y_flipped = d_columnheight-inter_y-1;//flip
-					y_to_use = y_flipped;//use flipped for plane and display...
-
-					calculatedPlane->setValue(i,y_to_use,val);
-					d_dataset->range_of_change.AddPoint(i,y_to_use);
-				}
-			}	
+		//handle all rows between (and including) 1 and d_columnheight - 1 (in nano y-space)
+		else if((placeholder_y >= l_sim_y) && (placeholder_y <= h_sim_y)){//interpolate between l_sim_y and h_sim_y
+			percent_between = placeholder_y - l_sim_y;//= incremental distance past l_sim_y
+			for(int i = 0;i < d_rowlength; ++i){
+				placeholder_val = percent_between*(newdataline[i] - storeddataline[i]) + storeddataline[i];	
+				//linear interpolation scheme based on percentage between l_sim_y and h_sim_y that placeholder_y falls
+				index = nano_y*datain_rowlen + i;
+				d_dataArray[index] = placeholder_val;
+				y_flipped = d_columnheight - nano_y - 1;
+				calculatedPlane->setValue(i,y_flipped,placeholder_val);
+				d_dataset->range_of_change.AddPoint(i,y_flipped);				
+			}
+			placeholder_y = (placeholder_y + stepsize);
+			++nano_y;
+			//increment placeholder_y and nano_y for next insertion (whether on this function call or next)
+			if(nano_y == d_columnheight){
+				placeholder_y = 0;
+				nano_y = 0;
+				l_sim_y = -1;
+				h_sim_y = 0;
+			}//zero placeholder_y and nano_y and re-initialize l_sim_y and h_sim_y so that, on next run-through,
+			 //they are incremented to 0 and 1 (which occurs at the beginning of the function)
 		}
+		//prepare to handle next line of data if have handled all the points we can with current line
+		else if(placeholder_y > h_sim_y){//we need to wait for a new line of data to be fed in
+			for(int i = 0; i < d_rowlength; i++){
+				storeddataline[i] = newdataline[i];
+			}//store the current data line so can interpolate between it and new data line next time around
 
-		new_index = 0;
-    }
+			//keep placeholder_y and thus nano_y as they are
+			return;//wait for next dataline
+		}
+		else if(placeholder_y < l_sim_y){
+			return;
+		}//shouldn't ever run through this else if statement but, just in case...
+	}
 
 }
 
@@ -435,7 +427,7 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 void nma_ShapeIdentifiedPlane::
 blur_plane_up(double ** dataline, int& y, int& datain_rowlen){
 
-	
+//not implemented yet...	
 
 }
 
@@ -464,7 +456,7 @@ create_ShapeIdentifiedPlane()
 
   //adding new plane  
   char newunits[1000];
-  sprintf(newunits, "");//fill in with correct units ANDREA
+  sprintf(newunits, "nm");//assume always nanometers
   calculatedPlane  
     = d_sourcePlane->GetGrid()->addNewPlane(uniqueOutputPlaneName, newunits, NOT_TIMED);
   if( calculatedPlane == NULL ) 
