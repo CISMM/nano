@@ -825,7 +825,7 @@ checkbutton $nmInfo(viz_hap_settings).feel_grid -text "Feel Grid Enable" -variab
 	show_feel_grid
 checkbutton $nmInfo(viz_hap_settings).feel_plane -text "Feel Plane Enable" -variable \
 	show_feel_plane
-checkbutton $nmInfo(viz_hap_settings).grid_mesh - text "Use haptic Mesh" - variable \
+checkbutton $nmInfo(viz_hap_settings).grid_mesh -text "Use haptic Mesh" -variable \
        use_mesh_grid
 
 
