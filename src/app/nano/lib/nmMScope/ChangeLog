@@ -1,6 +1,21 @@
+2000-09-28  Tom Hudson  <hudson@cs.unc.edu>
+
+	* active_set.C (Channel_selector constructor) :  Uncomment
+        reference to change_from_microscope.
+        (Channel_selector::Clear_channels) :  same
+        (Scan_channel_selector constructor) :  same
+        (Scan_channel_selector::Update_microscope) :  same
+        (Point_channel_selector::Update_microscope) :  same
+        (ForceCurve_channel_selector::Update_microscope) :  same
+        (Channel_selector::Clear_channels) :  same
+	* nmm_MicroscopeRemote.C (RcvReportScanAngle) :  Add
+        idempotency check.
+        (RcvScanning) :  same
+
+
 2000-09-26  Tom Hudson  <hudson@cs.unc.edu>
 
-	* nmm_Microscope_Remote.C (handle_EndFeelTo) : added fprintf()
+	* nmm_MicroscopeRemote.C (handle_EndFeelTo) : Add fprintf()
 
 2000-09-22  Adam Seeger  <seeger@cs.unc.edu>
 

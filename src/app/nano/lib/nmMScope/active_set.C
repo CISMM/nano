@@ -118,7 +118,7 @@ int	Channel_selector::Clear_channels(void)
 	int	i;
 
 	// Mark this a being a change from the microscope.
-	//change_from_microscope = 1;
+	change_from_microscope = 1;
 
 	// Clear all of the channels that are currently getting data
 	numchannels = 0;
@@ -226,7 +226,7 @@ Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
 		Channel_selector (namelist, dataset)
 {
 	change_from_tcl = 0;		
-	//change_from_microscope = 1;   // Get current datasets from MScope
+	change_from_microscope = 1;   // Get current datasets from MScope
 
 	numchannels = 0;	// No channels mapped yet
 	mygrid = grid_to_track;
@@ -289,14 +289,14 @@ int     Scan_channel_selector::Update_microscope (nmm_Microscope_Remote * micros
 	// channels.
     if (change_from_tcl) {
 	change_from_tcl = 0;
-//  	if (change_from_microscope) {
-//  	    change_from_microscope = 0;
-//  	    fprintf(stderr, "Update_microscope Scan: ignoring update req.\n");
-//  	    return 0;
-//  	} else {
+  	if (change_from_microscope) {
+  	    change_from_microscope = 0;
+  	    fprintf(stderr, "Update_microscope Scan: ignoring update req.\n");
+  	    return 0;
+  	} else {
 	  if (microscope->GetNewScanDatasets(&channel_list, active_list) == -1)
             return -1;
-//  	}
+  	}
     }
     return 0;
 }
@@ -446,14 +446,14 @@ int     Point_channel_selector::Update_microscope (nmm_Microscope_Remote * micro
 	// channels.
     if (change_from_tcl) {
 	change_from_tcl = 0;
-//  	if (change_from_microscope) {
-//  	    change_from_microscope = 0;
-//  	    fprintf(stderr, "Update_microscope Point: ignoring update req.\n");
-//  	    return 0;
-//  	} else {
+  	if (change_from_microscope) {
+  	    change_from_microscope = 0;
+  	    fprintf(stderr, "Update_microscope Point: ignoring update req.\n");
+  	    return 0;
+  	} else {
   	  if (microscope->GetNewPointDatasets(&channel_list, active_list, numsamples_list) == -1)
 		return -1;
-//  	}
+  	}
     }
     return 0;
 }
@@ -569,14 +569,14 @@ int     ForceCurve_channel_selector::Update_microscope (nmm_Microscope_Remote * 
         // channels.
     if (change_from_tcl) {
 	change_from_tcl = 0;
-//  	if (change_from_microscope) {
-//  	    change_from_microscope = 0;
-//  	    //fprintf(stderr, "Update_microscope FC: ignoring update req.\n");
-//  	    return 0;
-//  	} else {
+  	if (change_from_microscope) {
+  	    change_from_microscope = 0;
+  	    //fprintf(stderr, "Update_microscope FC: ignoring update req.\n");
+  	    return 0;
+  	} else {
   	  if (microscope->GetNewPointDatasets(&channel_list, active_list, numsamples_list) == -1)
 		return -1;
-//  	}
+  	}
     }
  
     return 0;

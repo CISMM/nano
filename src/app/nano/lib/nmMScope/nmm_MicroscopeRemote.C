@@ -4449,7 +4449,10 @@ void nmm_Microscope_Remote::RcvPulseFailureNM (const float, const float) {
 // Is the microscope scanning (1), or is the scan paused (0)? 
 void nmm_Microscope_Remote::RcvScanning(vrpn_int32 on_off) {
     //printf("Scanning is %s\n", (on_off ? "on": "off"));
+  // hack to avoid infinite loops
+  if (state.scanning != on_off) {
     state.scanning = on_off;
+  }
 }
 
 // XXX
@@ -4481,8 +4484,16 @@ void nmm_Microscope_Remote::RcvScanRange (const float _minX, const float _maxX,
 }
 
 void nmm_Microscope_Remote::RcvReportScanAngle (const float angle ) {
-    state.image.scan_angle = Q_RAD_TO_DEG(angle);
+  float newangle;
+
+  // HACK to break loops
+  newangle = Q_RAD_TO_DEG(angle);
+  if (newangle != state.image.scan_angle) {
+    state.image.scan_angle = newangle;
     printf( "New scan angle = %g\n", (float)state.image.scan_angle );
+  }
+
+    //state.image.scan_angle = Q_RAD_TO_DEG(angle);
 }
 
 
