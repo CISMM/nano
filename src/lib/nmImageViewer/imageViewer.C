@@ -891,7 +891,7 @@ int ImageViewer::setValue(int winID, int x, int y, double value) {
         im[x + y*window[win_index].im_width] = scaled_value;
     } else if (window[win_index].d_pixelMode == GL_UNSIGNED_BYTE) {
         vrpn_uint8 *im = (vrpn_uint8 *)(window[win_index].image);
-        im[x + y*window[win_index].im_width] = (vrpn_uint8)scaled_value;
+        im[x + y*window[win_index].im_width] = (vrpn_uint8)(255.0*scaled_value);
     } else {
         fprintf(stderr, "setValue: unknown pixel type\n");
         return -1;
