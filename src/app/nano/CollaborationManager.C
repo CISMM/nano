@@ -189,6 +189,9 @@ vrpn_bool CollaborationManager::isReplayingInterface (void) const {
 }
 
 
+vrpn_bool CollaborationManager::isCollaborationOn (void) const {
+  return (d_peerRemote != NULL);
+}
 
 
 void CollaborationManager::mainloop (void) {
