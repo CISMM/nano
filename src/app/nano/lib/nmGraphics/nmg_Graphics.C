@@ -788,7 +788,7 @@ char * nmg_Graphics::encode_setCollabMode(int * len, vrpn_int32 mode)
 {
   char * msgbuf = NULL;
   char * mptr;
-  int mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
@@ -801,7 +801,7 @@ char * nmg_Graphics::encode_setCollabMode(int * len, vrpn_int32 mode)
   else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, mode);
+    vrpn_buffer(&mptr, &mlen, mode);
   }
   return msgbuf;
 }
