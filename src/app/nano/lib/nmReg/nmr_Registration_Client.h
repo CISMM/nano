@@ -42,8 +42,16 @@ class nmr_Registration_Client : public nmb_Device_Client,
     ///  AFM image)
     int sendFiducial(vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
                   vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt);
-    int setRegistrationEnable(vrpn_bool enable);
+
+    // make the windows visible on the remote display
     int setGUIEnable(vrpn_bool enable);
+
+    // for auto-alignment
+    int setResolutions(vrpn_int32 numLevels, vrpn_float32 *stddev);
+    int setIterationLimit(vrpn_int32 maxIterations);
+    int setStepSize(vrpn_float32 stepSize);
+    int setCurrentResolution(vrpn_int32 resolutionIndex);
+    int setAutoAlignEnable(vrpn_bool enable);
 
     // message callback registration
     int registerChangeHandler (void *userdata,

@@ -7,8 +7,6 @@
   ===3rdtech===*/
 #include "nmr_Registration_Impl.h"
 #include "transformSolve.h"
-#include "nmr_AlignerMI.h"
-#include "nmr_CoarseToFineSearch.h"
 #include "nmb_Transform_TScShR.h"
 #include "nmb_TransformMatrix44.h"
 
@@ -90,13 +88,26 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
       info.aligner->getFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
       me->setFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
       break;
-    case NMR_ENABLE_REGISTRATION:
-      info.aligner->getRegistrationEnable(enabled);
-      me->setRegistrationEnable(enabled);
+    case NMR_ENABLE_AUTOALIGN:
+      info.aligner->getAutoAlignEnable(enabled);
+      me->setAutoAlignEnable(enabled);
       break;
     case NMR_ENABLE_GUI:
       info.aligner->getGUIEnable(enabled);
       me->setGUIEnable(enabled);
+      break;
+    case NMR_SET_RESOLUTIONS:
+      info.aligner->getResolutions(me->d_numLevels, me->d_stddev);
+      break;
+    case NMR_SET_ITERATION_LIMIT:
+      info.aligner->getIterationLimit(me->d_maxIterations);
+      break;
+    case NMR_SET_STEPSIZE:
+      info.aligner->getStepSize(me->d_stepSize);
+      break;
+    case NMR_SET_CURRENT_RESOLUTION:
+      info.aligner->getCurrentResolution(me->d_resolutionIndex);
+      break;
     default:
       return;
   }
@@ -114,13 +125,17 @@ nmb_Image *nmr_Registration_Impl::getImage(nmr_ImageType type)
     }
 }
 
-int nmr_Registration_Impl::setRegistrationEnable(vrpn_bool enable)
+int nmr_Registration_Impl::setAutoAlignEnable(vrpn_bool enable)
 {
+    double xform_matrix[16];
+    nmb_Transform_TScShR xform;
+
     if (enable) {
         static Correspondence last_c;
         Correspondence c(2, 3);
         int corrSourceIndex, corrTargetIndex;
         d_alignerUI->getCorrespondence(c, corrSourceIndex, corrTargetIndex);
+        last_c = c;
         double srcSizeX, srcSizeY, tgtSizeX, tgtSizeY;
         d_images[SOURCE_IMAGE_INDEX]->
                        getAcquisitionDimensions(srcSizeX, srcSizeY);
@@ -128,18 +143,21 @@ int nmr_Registration_Impl::setRegistrationEnable(vrpn_bool enable)
                        getAcquisitionDimensions(tgtSizeX, tgtSizeY);
         c.scalePoints(corrSourceIndex, srcSizeX, srcSizeY, 1.0);
         c.scalePoints(corrTargetIndex, tgtSizeX, tgtSizeY, 1.0);
-        static double xform_matrix[16];
-        static nmb_Transform_TScShR xform;
         double center[4] = {0.0, 0.0, 0.0, 1.0};
         center[0] = 0.5*srcSizeX;
         center[1] = 0.5*srcSizeY;
         center[2] = d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(
-                           0.5*d_images[SOURCE_IMAGE_INDEX]->width(),
-                           0.5*d_images[SOURCE_IMAGE_INDEX]->height());
+                         0.5*d_images[SOURCE_IMAGE_INDEX]->width(),
+                         0.5*d_images[SOURCE_IMAGE_INDEX]->height());
         xform.setCenter(center[0], center[1], center[2]);
 
+        /* can insert a guess about Rx and Ry here (put into xform)*/
+
         adjustTransformFromRotatedCorrespondence(c, corrSourceIndex,
-                                    corrTargetIndex, xform);
+                                  corrTargetIndex, xform);
+
+        /* now we are ready to adjust xform using an automatic algorithm */
+        registerImagesUsingMutualInformation(xform);
         xform.getMatrix(xform_matrix);
         sendResult(xform_matrix);
     }
@@ -298,119 +316,34 @@ int nmr_Registration_Impl::registerImagesFromPointCorrespondence(
         }
     }
     
-/*
-// debugging: try printing out the mutual information estimate to 
-// see if it makes sense
-    nmr_AlignerMI *mi = new nmr_AlignerMI();
-    mi->setDimensionMode(REF_2D);
-    if (mi->setSampleSizes(100, 100)) {
-      printf("setSampleSizes error\n");
-    } else {
-        //printf("setSampleSizes succeeded\n");
-    }
-    // compute a quick and dirty estimate of what the 
-    // Parzen window variance should be
-    double src_range = d_images[SOURCE_IMAGE_INDEX]->maxValue() -
-                       d_images[SOURCE_IMAGE_INDEX]->minValue();
-    double tgt_range = d_images[TARGET_IMAGE_INDEX]->maxValue() -
-                       d_images[TARGET_IMAGE_INDEX]->minValue();
-    double sigmaTest = 0.1*(tgt_range);
-    double sigmaRef = 0.1*(src_range);
-    mi->setTestVariance(sigmaTest);
-    mi->setRefVariance(sigmaRef);
-    mi->setCovariance(sigmaRef, sigmaTest);
-
-    double T[6];
-    T[0] = xform_matrix[0]; T[1] = xform_matrix[4]; T[2] = xform_matrix[12];
-    T[3] = xform_matrix[1]; T[4] = xform_matrix[5]; T[5] = xform_matrix[13];
-
-    // scale down from 0..src.width, 0..src.height to 0..1, 0..1
-    double src_width = d_images[SOURCE_IMAGE_INDEX]->width();
-    double src_height = d_images[SOURCE_IMAGE_INDEX]->height();
-    T[0] /= src_width;
-    T[1] /= src_height;
-    T[3] /= src_width;
-    T[4] /= src_height;
-
-    // result is 0..1, 0..1 but we want 0..tgt.width, 0..tgt.height so scale
-    // the result
-    T[0] *= d_images[TARGET_IMAGE_INDEX]->width();
-    T[1] *= d_images[TARGET_IMAGE_INDEX]->width();
-    T[2] *= d_images[TARGET_IMAGE_INDEX]->width();
-    T[3] *= d_images[TARGET_IMAGE_INDEX]->height();
-    T[4] *= d_images[TARGET_IMAGE_INDEX]->height();
-    T[5] *= d_images[TARGET_IMAGE_INDEX]->height();
-    if (mi->setTransformation2D(T)) {
-      printf("setTransformation2D error\n");
-    } else {
-        //printf("setTransformation2D succeeded\n");
-    }
-    if (mi->buildSampleA(d_images[SOURCE_IMAGE_INDEX],
-                         d_images[TARGET_IMAGE_INDEX]) ||
-        mi->buildSampleB(d_images[SOURCE_IMAGE_INDEX],
-                         d_images[TARGET_IMAGE_INDEX])) {
-      printf("buildSample error\n");
-    } else {
-        //printf("buildSample suceeded\n");
-    }
-    double mutual_info;
-    if (mi->computeMutualInformation(mutual_info)){
-      printf("computeMutualInformation error\n");
-    } else {
-        //printf("computeMutualInformation succeeded; value = %g\n", mutual_info);
-    }
-*/
     return 0;
 }
 
 int nmr_Registration_Impl::registerImagesUsingMutualInformation(
-                                           nmb_Transform_TScShR &xform,
-                                           vrpn_bool initialize)
+                                           nmb_Transform_TScShR &xform)
 {
-    double xform_matrix[16];
-    nmb_Transform_TScShR test_xform = xform;
-    // xform is 4x4 in column-major order but T is 2x3 in row-major order
-    // copy our initial search point from xform
-    if (initialize) {
-      double T[6];
-      xform.getMatrix(xform_matrix);
-      T[0] = xform_matrix[0]; T[1] = xform_matrix[4]; T[2] = xform_matrix[12];
-      T[3] = xform_matrix[1]; T[4] = xform_matrix[5]; T[5] = xform_matrix[13];
-      d_mutInfoAligner.setTransformation(T);
-    }
-
-
     if (d_imageChangeSinceLastRegistration) {
+        double centerX, centerY, centerZ;
+        xform.getCenter(centerX, centerY, centerZ);
+        nmb_Transform_TScShR identity;
+        identity.setCenter(centerX, centerY, centerZ);
         d_mutInfoAligner.initImages(d_images[SOURCE_IMAGE_INDEX],
-                           d_images[TARGET_IMAGE_INDEX]);
+                           d_images[TARGET_IMAGE_INDEX],
+                           d_numLevels, d_stddev);
+        d_mutInfoAligner.setTransform(identity);
+//        d_mutInfoAligner.optimizeVarianceParameters();
+        // some useful output if you want to visualize whats going on 
+//        FILE *outputFile = fopen("objectivePlot.txt", "w");
+//        d_mutInfoAligner.plotObjective(outputFile);
+//        fclose(outputFile);
         d_imageChangeSinceLastRegistration = vrpn_FALSE;
     }
 
-/*
-    double change;
-    int numDirectionSearches = 0;
-    const int numDirections = 6;
-    int directionOrder[6] = {
-      NMR_ROTATE_Z,
-      NMR_SHEAR,
-      NMR_TRANSLATE_X, 
-      NMR_TRANSLATE_Y,
-      NMR_SCALE_X,
-      NMR_SCALE_Y
-      };
-*/
-
-/*
-    FILE *outfile = fopen("regdata.txt", "w");
-    for (i = 0; i < numDirections; i++) {
-      d_mutInfoAligner.plotObjective(directionOrder[i], 21, outfile);
-    }
-    fclose(outfile);
-
-    d_mutInfoAligner.getTransformation(T);
-*/
-
-    xform = test_xform;
+    d_mutInfoAligner.setTransform(xform);
+    // here we go:
+    d_mutInfoAligner.takeGradientSteps(d_resolutionIndex,
+                                       d_maxIterations, d_stepSize);
+    d_mutInfoAligner.getTransform(xform);
 
     return 0;
 }

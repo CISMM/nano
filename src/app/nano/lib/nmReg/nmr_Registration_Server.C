@@ -14,7 +14,12 @@ nmr_Registration_Server::nmr_Registration_Server(const char *name,
     d_imageScanlineLastReceived(NMR_SOURCE),
     d_row(0), d_length(0), d_lengthAllocated(0), d_scanlineData(NULL),
     d_transformType(NMR_2D2D_AFFINE),
-    d_registrationEnabled(vrpn_FALSE),
+    d_GUIEnabled(vrpn_FALSE),
+    d_numLevels(0),
+    d_resolutionIndex(0),
+    d_maxIterations(0),
+    d_stepSize(1),
+    d_autoAlignEnabled(vrpn_FALSE),   
     d_x_src(0), d_y_src(0), d_z_src(0), 
     d_x_tgt(0), d_y_tgt(0), d_z_tgt(0), d_messageHandlerList(NULL)
 {
@@ -39,11 +44,6 @@ nmr_Registration_Server::nmr_Registration_Server(const char *name,
     fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
     return;
   }
-  if (d_connection->register_handler(d_EnableRegistration_type,
-       RcvEnableRegistration, this)) {
-    fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
-    return;
-  }
   if (d_connection->register_handler(d_EnableGUI_type,
        RcvEnableGUI, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
@@ -54,6 +54,32 @@ nmr_Registration_Server::nmr_Registration_Server(const char *name,
     fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
     return;
   }
+  if (d_connection->register_handler(d_SetResolutions_type,
+       RcvSetResolutions, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_SetIterationLimit_type,
+       RcvSetIterationLimit, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_SetStepSize_type,
+       RcvSetStepSize, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_SetCurrentResolution_type,
+       RcvSetCurrentResolution, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_SetAutoAlignEnable_type,
+       RcvSetAutoAlignEnable, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
+    return;
+  }
+
 
 }
 
@@ -74,17 +100,32 @@ nmr_Registration_Server::~nmr_Registration_Server()
        RcvSetTransformationOptions, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
   }
-  if (d_connection->unregister_handler(d_EnableRegistration_type,
-       RcvEnableRegistration, this)) {
-    fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
-  }
   if (d_connection->unregister_handler(d_EnableGUI_type,
        RcvEnableGUI, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
-    return;
   }
   if (d_connection->unregister_handler(d_Fiducial_type,
        RcvFiducial, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
+  }
+  if (d_connection->unregister_handler(d_SetResolutions_type,
+       RcvSetResolutions, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
+  }
+  if (d_connection->unregister_handler(d_SetIterationLimit_type,
+       RcvSetIterationLimit, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
+  }
+  if (d_connection->unregister_handler(d_SetStepSize_type,
+       RcvSetStepSize, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
+  }
+  if (d_connection->unregister_handler(d_SetCurrentResolution_type,
+       RcvSetCurrentResolution, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
+  }
+  if (d_connection->unregister_handler(d_SetAutoAlignEnable_type,
+       RcvSetAutoAlignEnable, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
   }
 }
@@ -147,12 +188,6 @@ int nmr_Registration_Server::setTransformationOptions(
     return 0;
 }
 
-int nmr_Registration_Server::setRegistrationEnable(vrpn_bool enable) 
-{
-    d_registrationEnabled = enable;
-    return 0;
-}
-
 int nmr_Registration_Server::setGUIEnable(vrpn_bool enable)
 {
     d_GUIEnabled = enable;
@@ -165,6 +200,41 @@ int nmr_Registration_Server::setFiducial(
 {
     d_x_src = x_src; d_y_src = y_src; d_z_src = z_src;
     d_x_tgt = x_tgt; d_y_tgt = y_tgt; d_z_tgt = z_tgt;
+    return 0;
+}
+
+int nmr_Registration_Server::setResolutions(vrpn_int32 numLevels, 
+                                            vrpn_float32 *stddev)
+{
+  d_numLevels = numLevels;
+  int i;
+  for (i = 0; i < numLevels; i++) {
+    d_stddev[i] = stddev[i];
+  }
+  return 0;
+}
+
+int nmr_Registration_Server::setIterationLimit(vrpn_int32 maxIterations)
+{
+  d_maxIterations = maxIterations;
+  return 0;
+}
+
+int nmr_Registration_Server::setStepSize(vrpn_float32 stepSize)
+{
+  d_stepSize = stepSize;
+  return 0;
+}
+
+int nmr_Registration_Server::setCurrentResolution(vrpn_int32 resolutionIndex)
+{
+  d_resolutionIndex = resolutionIndex;
+  return 0;
+}
+
+int nmr_Registration_Server::setAutoAlignEnable(vrpn_bool enable)   
+{
+    d_autoAlignEnabled = enable;
     return 0;
 }
 
@@ -297,26 +367,6 @@ int nmr_Registration_Server::RcvSetTransformationOptions(void *_userdata,
 }
 
 //static
-int nmr_Registration_Server::RcvEnableRegistration (void *_userdata,
-                                          vrpn_HANDLERPARAM _p)
-{
-  nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
-  const char * bufptr = _p.buffer;
-  vrpn_int32 enable;
-
-  if (decode_EnableRegistration(&bufptr, &enable) == -1) {
-    fprintf(stderr,
-        "nmr_Registration_Server::RcvEnableRegistration:"
-        " decode failed\n");
-    return -1;
-  }
-
-  me->setRegistrationEnable(enable);
-
-  return me->notifyMessageHandlers(NMR_ENABLE_REGISTRATION, _p.msg_time);
-}
-
-//static
 int nmr_Registration_Server::RcvEnableGUI (void *_userdata,
                                           vrpn_HANDLERPARAM _p)
 {
@@ -354,6 +404,109 @@ int nmr_Registration_Server::RcvFiducial (void *_userdata,
   me->setFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
 
   return me->notifyMessageHandlers(NMR_FIDUCIAL, _p.msg_time);
+}
+
+//static 
+int nmr_Registration_Server::RcvSetResolutions(void *_userdata, 
+                                               vrpn_HANDLERPARAM _p)
+{
+  nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 numLevels;
+  vrpn_float32 stddev[NMR_MAX_RESOLUTION_LEVELS];
+  
+
+  if (decode_SetResolutions(&bufptr, &numLevels, stddev) == -1) {
+    fprintf(stderr,
+        "nmr_Registration_Server::RcvSetResolutions:"
+        " decode failed\n");
+    return -1;
+  }
+
+  me->setResolutions(numLevels, stddev);
+
+  return me->notifyMessageHandlers(NMR_SET_RESOLUTIONS, _p.msg_time);
+}
+
+//static 
+int nmr_Registration_Server::RcvSetIterationLimit(void *_userdata, 
+                                                  vrpn_HANDLERPARAM _p)
+{
+  nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 maxIterations;
+
+  if (decode_SetIterationLimit(&bufptr, &maxIterations) == -1) {
+    fprintf(stderr,
+        "nmr_Registration_Server::RcvSetIterationLimit:"
+        " decode failed\n");
+    return -1;
+  }
+
+  me->setIterationLimit(maxIterations);
+
+  return me->notifyMessageHandlers(NMR_SET_ITERATION_LIMIT, _p.msg_time);
+}
+
+//static 
+int nmr_Registration_Server::RcvSetStepSize(void *_userdata, 
+                                            vrpn_HANDLERPARAM _p)
+{
+  nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_float32 stepSize;
+
+  if (decode_SetStepSize(&bufptr, &stepSize) == -1) {
+    fprintf(stderr,
+        "nmr_Registration_Server::RcvSetStepSize:"
+        " decode failed\n");
+    return -1;
+  }
+
+  me->setStepSize(stepSize);
+
+  return me->notifyMessageHandlers(NMR_SET_STEPSIZE, _p.msg_time);
+}
+
+//static 
+int nmr_Registration_Server::RcvSetCurrentResolution(void *_userdata, 
+                                                     vrpn_HANDLERPARAM _p)
+{
+  nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 resolutionIndex;
+
+  if (decode_SetCurrentResolution(&bufptr, &resolutionIndex) == -1) {
+    fprintf(stderr,
+        "nmr_Registration_Server::RcvSetCurrentResolution:"
+        " decode failed\n");
+    return -1;
+  }
+
+  me->setCurrentResolution(resolutionIndex);
+
+  return me->notifyMessageHandlers(NMR_SET_CURRENT_RESOLUTION, _p.msg_time);
+}
+
+
+//static
+int nmr_Registration_Server::RcvSetAutoAlignEnable (void *_userdata,
+                                          vrpn_HANDLERPARAM _p)
+{
+  nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 enable;
+
+  if (decode_SetAutoAlignEnable(&bufptr, &enable) == -1) {
+    fprintf(stderr,
+        "nmr_Registration_Server::RcvSetAutoAlignEnable:"
+        " decode failed\n");
+    return -1;
+  }
+
+  me->setAutoAlignEnable(enable);
+
+  return me->notifyMessageHandlers(NMR_ENABLE_AUTOALIGN, _p.msg_time);
 }
 
 int nmr_Registration_Server::registerChangeHandler (void *userdata,
@@ -447,9 +600,9 @@ void nmr_Registration_Server::getImageParameters(nmr_ImageType &whichImage,
     }
 }
 
-void nmr_Registration_Server::getRegistrationEnable(vrpn_bool &enabled)
+void nmr_Registration_Server::getAutoAlignEnable(vrpn_bool &enabled)
 {
-    enabled = d_registrationEnabled;
+    enabled = d_autoAlignEnabled;
 }
 
 void nmr_Registration_Server::getGUIEnable(vrpn_bool &enabled)
@@ -479,6 +632,31 @@ void nmr_Registration_Server::getFiducial(
 {
     x_src = d_x_src; y_src = d_y_src; z_src = d_z_src;
     x_tgt = d_x_tgt; y_tgt = d_y_tgt; z_tgt = d_z_tgt;
+}
+
+void nmr_Registration_Server::getResolutions(vrpn_int32 &numLevels, 
+   vrpn_float32 *stddev)
+{
+  numLevels = d_numLevels;
+  int i;
+  for (i = 0; i < numLevels; i++) {
+    stddev[i] = d_stddev[i];
+  }
+}
+
+void nmr_Registration_Server::getIterationLimit(vrpn_int32 &maxIterations)
+{
+  maxIterations = d_maxIterations;
+}
+
+void nmr_Registration_Server::getStepSize(vrpn_float32 &stepSize)
+{
+  stepSize = d_stepSize;
+}
+
+void nmr_Registration_Server::getCurrentResolution(vrpn_int32 &resolutionIndex)
+{
+  resolutionIndex = d_resolutionIndex;
 }
 
 int nmr_Registration_Server::sendRegistrationResult(double xform[16])

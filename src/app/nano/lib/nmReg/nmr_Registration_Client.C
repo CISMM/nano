@@ -128,20 +128,6 @@ int nmr_Registration_Client::sendFiducial(
   return dispatchMessage(len, msgbuf, d_Fiducial_type);
 }
 
-int nmr_Registration_Client::setRegistrationEnable(vrpn_bool enable)
-{
-  char *msgbuf;
-  vrpn_int32 len;
-
-  msgbuf = encode_EnableRegistration(&len, (vrpn_int32)enable);
-
-  if (!msgbuf) {
-    return -1;
-  }
-
-  return dispatchMessage(len, msgbuf, d_EnableRegistration_type);
-}
-
 int nmr_Registration_Client::setGUIEnable(vrpn_bool enable)
 {
   char *msgbuf;
@@ -154,6 +140,77 @@ int nmr_Registration_Client::setGUIEnable(vrpn_bool enable)
   }
 
   return dispatchMessage(len, msgbuf, d_EnableGUI_type);
+}
+
+int nmr_Registration_Client::setResolutions(vrpn_int32 numLevels, 
+                                           vrpn_float32 *stddev)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetResolutions(&len, numLevels, stddev);
+
+  if (!msgbuf) {
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetResolutions_type);
+}
+
+int nmr_Registration_Client::setIterationLimit(vrpn_int32 maxIterations)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetIterationLimit(&len, maxIterations);
+
+  if (!msgbuf) {
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetIterationLimit_type);
+}
+
+int nmr_Registration_Client::setStepSize(vrpn_float32 stepSize)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetStepSize(&len, stepSize);
+
+  if (!msgbuf) {
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetStepSize_type);
+}
+
+int nmr_Registration_Client::setCurrentResolution(vrpn_int32 resolutionIndex)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetCurrentResolution(&len, resolutionIndex);
+
+  if (!msgbuf) {
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetCurrentResolution_type);
+}
+
+int nmr_Registration_Client::setAutoAlignEnable(vrpn_bool enable)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetAutoAlignEnable(&len, (vrpn_int32)enable);
+
+  if (!msgbuf) {
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetAutoAlignEnable_type);
 }
 
 //static 

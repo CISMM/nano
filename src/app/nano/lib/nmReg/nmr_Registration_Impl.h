@@ -5,8 +5,8 @@
 #include "nmr_Registration_ImplUI.h"
 #include "nmb_Image.h"
 #include "correspondence.h"
-#include "nmr_CoarseToFineSearch.h"
 #include "nmb_Transform_TScShR.h"
+#include "nmr_AlignerMI.h"
 
 enum {SOURCE_IMAGE_INDEX = 0, TARGET_IMAGE_INDEX = 1};
 
@@ -30,7 +30,7 @@ class nmr_Registration_Impl {
             vrpn_int32 res_x, vrpn_int32 res_y,
             vrpn_float32 xSizeWorld, vrpn_float32 ySizeWorld,
             vrpn_bool flipX, vrpn_bool flipY);
-    int setRegistrationEnable(vrpn_bool enable);
+    int setAutoAlignEnable(vrpn_bool enable);
     int setGUIEnable(vrpn_bool enable);
     int setColorMap(nmr_ImageType whichImage, nmb_ColorMap * cmap);
     int setColorMinMax(nmr_ImageType whichImage, 
@@ -42,8 +42,7 @@ class nmr_Registration_Impl {
          vrpn_int32 row, vrpn_int32 length, vrpn_float32 *data);
     int setTransformationOptions(nmr_TransformationType type);
     int registerImagesFromPointCorrespondence(double *xform);
-    int registerImagesUsingMutualInformation(nmb_Transform_TScShR &xform,
-                              vrpn_bool initialize = vrpn_FALSE);
+    int registerImagesUsingMutualInformation(nmb_Transform_TScShR &xform);
     void sendResult(double *xform);
 
   protected:
@@ -67,8 +66,14 @@ class nmr_Registration_Impl {
     nmr_Registration_Server *d_server;
     nmr_TransformationType d_transformType;
 
-    nmr_CoarseToFineSearch d_mutInfoAligner;
     vrpn_bool d_imageChangeSinceLastRegistration;
+    nmr_AlignerMI d_mutInfoAligner;
+    // for auto-alignment
+    vrpn_int32 d_numLevels;
+    vrpn_float32 d_stddev[NMR_MAX_RESOLUTION_LEVELS];
+    vrpn_int32 d_resolutionIndex;
+    vrpn_int32 d_maxIterations;
+    vrpn_float32 d_stepSize;
 };
 
 #endif

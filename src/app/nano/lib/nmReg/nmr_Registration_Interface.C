@@ -10,8 +10,17 @@ nmr_Registration_Interface::nmr_Registration_Interface (const char * /*name*/,
                        ("nmr_Registration SetImageScanlineData");
     d_SetTransformationOptions_type = c->register_message_type
                        ("nmr_Registration SetTransformationOptions");
-    d_EnableRegistration_type = c->register_message_type
-                       ("nmr_Registration EnableRegistration");
+    d_SetResolutions_type = c->register_message_type
+                       ("nmr_Registration SetResolutions");
+    d_SetIterationLimit_type= c->register_message_type
+                       ("nmr_Registration SetIterationLimit");
+    d_SetStepSize_type= c->register_message_type
+                       ("nmr_Registration SetStepSize");
+    d_SetCurrentResolution_type= c->register_message_type
+                       ("nmr_Registration SetCurrentResolution");
+
+    d_SetAutoAlignEnable_type = c->register_message_type
+                       ("nmr_Registration SetAutoAlignEnable");
     d_EnableGUI_type = c->register_message_type
                        ("nmr_Registration EnableGUI");
     d_Fiducial_type = c->register_message_type
@@ -193,8 +202,160 @@ vrpn_int32 nmr_Registration_Interface::decode_SetTransformationOptions (
   return 0;
 }
 
+//static 
+char * nmr_Registration_Interface::encode_SetResolutions (vrpn_int32 *len,
+           vrpn_int32 numLevels, vrpn_float32 *std_dev)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 1 * sizeof(vrpn_int32) + numLevels * sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_SetResolutions: "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, numLevels);
+    int i;
+    for (i = 0; i < numLevels; i++){
+        vrpn_buffer(&mptr, &mlen, std_dev[i]);
+    }
+  }
+
+  return msgbuf;
+}
+
+//static 
+vrpn_int32 nmr_Registration_Interface::decode_SetResolutions (const char **buf,
+           vrpn_int32 *numLevels, vrpn_float32 *std_dev)
+{
+  if (vrpn_unbuffer(buf, numLevels)) {
+    return -1;
+  }
+  int i;
+  for (i = 0; i < *numLevels; i++) {
+      if (vrpn_unbuffer(buf, &(std_dev[i]))) {
+          return -1;
+      }
+  }
+  return 0;
+
+}
+//static 
+char * nmr_Registration_Interface::encode_SetIterationLimit (vrpn_int32 *len,
+           vrpn_int32 maxIterations)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 1 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_SetIterationLimit:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, maxIterations);
+  }
+
+  return msgbuf;
+}
+
+//static 
+vrpn_int32 nmr_Registration_Interface::decode_SetIterationLimit (
+           const char **buf,
+           vrpn_int32 *maxIterations)
+{
+  if (vrpn_unbuffer(buf, maxIterations)) {
+    return -1;
+  }
+  return 0;
+}
+
+//static 
+char * nmr_Registration_Interface::encode_SetStepSize (vrpn_int32 *len,
+           vrpn_float32 stepSize)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 1 * sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_SetStepSize:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, stepSize);
+  }
+
+  return msgbuf;
+}
+
+//static 
+vrpn_int32 nmr_Registration_Interface::decode_SetStepSize (const char **buf,
+           vrpn_float32 *stepSize)
+{
+  if (vrpn_unbuffer(buf, stepSize)) {
+    return -1;
+  }
+  return 0;
+}
+
+//static 
+char * nmr_Registration_Interface::encode_SetCurrentResolution (vrpn_int32 *len,
+           vrpn_int32 resolutionLevel)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 1 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_SetCurrentResolution:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, resolutionLevel);
+  }
+
+  return msgbuf;
+}
+
+//static 
+vrpn_int32 nmr_Registration_Interface::decode_SetCurrentResolution (
+           const char **buf,
+           vrpn_int32 *resolutionLevel)
+{
+  if (vrpn_unbuffer(buf, resolutionLevel)) {
+    return -1;
+  }
+  return 0;
+}
+
 //static
-char * nmr_Registration_Interface::encode_EnableRegistration (vrpn_int32 *len,
+char * nmr_Registration_Interface::encode_SetAutoAlignEnable (vrpn_int32 *len,
            vrpn_int32 enable)
 {
   char * msgbuf = NULL;
@@ -206,7 +367,7 @@ char * nmr_Registration_Interface::encode_EnableRegistration (vrpn_int32 *len,
   *len = 1 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
-    fprintf(stderr, "nmr_Registration_Interface::encode_EnableRegistration:  "
+    fprintf(stderr, "nmr_Registration_Interface::encode_SetAutoAlignEnable:  "
                     "Out of memory.\n");
     *len = 0;
   } else {
@@ -219,7 +380,7 @@ char * nmr_Registration_Interface::encode_EnableRegistration (vrpn_int32 *len,
 }
 
 //static
-vrpn_int32 nmr_Registration_Interface::decode_EnableRegistration
+vrpn_int32 nmr_Registration_Interface::decode_SetAutoAlignEnable
           (const char **buf,
            vrpn_int32 *enable)
 {

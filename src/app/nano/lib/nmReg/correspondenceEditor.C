@@ -168,7 +168,7 @@ int CorrespondenceEditor::eventHandler(
             } else {
                 me->viewer->toImagePnt(event.winID, &x_im, &y_im);
                 corr_point_t p(x_im, y_im);
-                printf("added point %g,%g\n", x_im, y_im);
+                //printf("added point %g,%g\n", x_im, y_im);
                 me->correspondence->setPoint(spaceIndex, 
                                     me->grabbedPointIndex, p);
                 // moved point only affects active window. 

@@ -64,9 +64,31 @@ vrpn_int32 nmr_Registration_Proxy::mainloop(void)
     return 0;
 }
 
-vrpn_int32 nmr_Registration_Proxy::registerImages()
+vrpn_int32 nmr_Registration_Proxy::setResolutions(vrpn_int32 numLevels, 
+                                                  vrpn_float32 *stddev)
 {
-    d_remote_impl->setRegistrationEnable(vrpn_TRUE);
+  return d_remote_impl->setResolutions(numLevels, stddev);
+}
+
+vrpn_int32 nmr_Registration_Proxy::setIterationLimit(vrpn_int32 maxIterations)
+{
+  return d_remote_impl->setIterationLimit(maxIterations);
+}
+
+vrpn_int32 nmr_Registration_Proxy::setStepSize(vrpn_float32 stepSize)
+{
+  return d_remote_impl->setStepSize(stepSize);
+}
+
+vrpn_int32 nmr_Registration_Proxy::setCurrentResolution(
+                                   vrpn_int32 resolutionIndex)
+{
+  return d_remote_impl->setCurrentResolution(resolutionIndex);
+}
+
+vrpn_int32 nmr_Registration_Proxy::autoAlignImages()
+{
+    d_remote_impl->setAutoAlignEnable(vrpn_TRUE);
 /*
     if (d_local){
         struct timeval now;

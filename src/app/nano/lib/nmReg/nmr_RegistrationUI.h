@@ -29,10 +29,12 @@ class nmui_ColorMap;
      there are 4 coordinate systems we need to worry about 
 
         We have two images: 
-           1) Topography/3D/Source 
-                (unless using a 2D->2D transform this is the source)
-           2) Projection/2D/Target 
-                (unless using a 2D->2D transform this is the target)
+           1) Topography/3D/Source/Reference 
+                (unless using a 2D->2D transform this is the source for
+                 points that get transformed)
+           2) Projection/2D/Target/Test 
+                (unless using a 2D->2D transform this is the target space into
+                 which points get transformed)
 
         For each image there is a world space (x,y,z) and an image space (u,v)
         The world space is unique for each device since different devices
@@ -74,7 +76,7 @@ class nmr_RegistrationUI {
     static void handle_registrationMinMax3D_change(vrpn_float64, void *ud);
     static void handle_registrationMinMax2D_change(vrpn_float64, void *ud);
     static void handle_textureDisplayEnabled_change(vrpn_int32 value, void *ud);
-    static void handle_registrationRequest_change(vrpn_int32 value, void *ud);
+    static void handle_autoAlignRequested_change(vrpn_int32 value, void *ud);
     static void handle_registrationEnabled_change(vrpn_int32 value, void *ud);
     void createResampleImage(const char *imageName);
     void createResamplePlane(const char *imageName);
@@ -83,6 +85,7 @@ class nmr_RegistrationUI {
        handle_registrationImage2D_change(imageName, (void *)this);
     }
     void displayTexture(int enable) {d_textureDisplayEnabled = enable;};
+    void autoAlignImages();
 
   protected:
  
@@ -91,7 +94,6 @@ class nmr_RegistrationUI {
     TclNet_string d_newResampleImageName;
     TclNet_string d_newResamplePlaneName;
     TclNet_int d_registrationEnabled;
-    TclNet_int d_registrationRequested;
     TclNet_int d_constrainToTopography;
     TclNet_int d_invertWarp;
     TclNet_int d_textureDisplayEnabled;
@@ -100,6 +102,19 @@ class nmr_RegistrationUI {
     TclNet_float d_resampleRatio;
     TclNet_string d_registrationColorMap3D;
     TclNet_string d_registrationColorMap2D;
+
+    // for automatic alignment
+    TclNet_int d_autoAlignRequested;
+    TclNet_int d_numIterations;
+    TclNet_float d_stepSize;
+    TclNet_string d_resolutionLevel;
+    // this array is set by the C-code and is then copied into
+    //  d_resolutionLevelList in a string representation
+    vrpn_int32 d_numResolutionLevels;
+    vrpn_float32 d_stddev[NMR_MAX_RESOLUTION_LEVELS];
+    static vrpn_int32 s_defaultNumResolutionLevels;
+    static vrpn_float32 s_defaultStdDev[];
+    Tclvar_list_of_strings d_resolutionLevelList;
 
     vrpn_bool d_registrationValid;
     nmg_Graphics *d_graphicsDisplay;

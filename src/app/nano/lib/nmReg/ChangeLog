@@ -1,3 +1,18 @@
+2001-10-23  Adam Seeger  <seeger@cs.unc.edu>
+
+	* all - added separate command for making the automatic alignment
+	code go and for setting associated parameters including 
+	what resolution to use, how many steps to take and the step size
+	* nmr_Util.hC : added some code to blur an image
+	* nmr_AlignerMI.hC : moved most of this code into nmr_ObjectiveMI.hC,
+        This class consists mostly of new code now that combines an 
+        optimization strategy with the objective function defined in 
+        nmr_MultiResObjectiveMI.hC
+	* nmr_CoarseToFineSearch.hC : moved most of this code into 
+        nmr_MultiResObjectiveMI.hC, removed this file
+        * nmr_ObjectiveMI.hC : new files (see above comment)
+	* nmr_MultiResObjectiveMI.hC : new files (see above comment)
+
 2001-08-21  Aron Helser  <helser@cs.unc.edu>
 
 	* nmr_RegistrationUI.Ch (handle_registrationImage3D_change): Add

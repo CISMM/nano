@@ -1,5 +1,17 @@
 Author: Adam Seeger
 
+some synonyms:
+
+reference = source
+test = target
+
+source/target: this terminology comes from the fact that points are 
+normally transformed from the source image to the target image
+(only when the transformation is restricted to be 2D can we assume that
+ the inverse transformation is well defined)
+reference/test: this terminology comes from the fact that the reference image 
+is considered to stand still while the test image is moved around
+
 =========================
 class/file relationships:
 =========================

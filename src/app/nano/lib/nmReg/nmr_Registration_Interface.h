@@ -4,6 +4,8 @@
 #include <vrpn_Connection.h>
 #include <vrpn_Types.h>
 
+#define NMR_MAX_RESOLUTION_LEVELS (32)
+
 /**
    design:
      2 images (distinguished as source and target)
@@ -40,7 +42,11 @@ class nmr_Registration_Interface {
     vrpn_int32 d_SetImageParameters_type;
     vrpn_int32 d_SetImageScanlineData_type;
     vrpn_int32 d_SetTransformationOptions_type;
-    vrpn_int32 d_EnableRegistration_type;
+    vrpn_int32 d_SetResolutions_type;
+    vrpn_int32 d_SetIterationLimit_type;
+    vrpn_int32 d_SetStepSize_type;
+    vrpn_int32 d_SetCurrentResolution_type;
+    vrpn_int32 d_SetAutoAlignEnable_type;
     vrpn_int32 d_EnableGUI_type;
     vrpn_int32 d_Fiducial_type;
 
@@ -73,9 +79,25 @@ class nmr_Registration_Interface {
            vrpn_int32 transformType);
     static vrpn_int32 decode_SetTransformationOptions (const char **buf,
            vrpn_int32 *transformType);
-    static char * encode_EnableRegistration (vrpn_int32 *len,
+    static char * encode_SetResolutions (vrpn_int32 *len,
+           vrpn_int32 numLevels, vrpn_float32 *std_dev);
+    static vrpn_int32 decode_SetResolutions (const char **buf,
+           vrpn_int32 *numLevels, vrpn_float32 *std_dev);
+    static char * encode_SetIterationLimit (vrpn_int32 *len,
+           vrpn_int32 maxIterations);
+    static vrpn_int32 decode_SetIterationLimit (const char **buf,
+           vrpn_int32 *maxIterations);
+    static char * encode_SetStepSize (vrpn_int32 *len,
+           vrpn_float32 stepSize);
+    static vrpn_int32 decode_SetStepSize (const char **buf,
+           vrpn_float32 *stepSize);
+    static char * encode_SetCurrentResolution (vrpn_int32 *len,
+           vrpn_int32 resolutionLevel);
+    static vrpn_int32 decode_SetCurrentResolution (const char **buf,
+           vrpn_int32 *resolutionLevel); 
+    static char * encode_SetAutoAlignEnable (vrpn_int32 *len,
            vrpn_int32 enable);
-    static vrpn_int32 decode_EnableRegistration (const char **buf,
+    static vrpn_int32 decode_SetAutoAlignEnable (const char **buf,
            vrpn_int32 *enable);
     static char * encode_EnableGUI (vrpn_int32 *len,
            vrpn_int32 enable);
@@ -111,7 +133,7 @@ class nmr_Registration_Interface {
 
 /// represents source or target images (registration results in a
 /// transformation that transforms source image into target image)
-enum nmr_ImageType {NMR_SOURCE, NMR_TARGET};
+enum nmr_ImageType {NMR_SOURCE, NMR_TARGET, NMR_SOURCE_HEIGHTFIELD};
 
 /// these options will likely change in the future but NMR_2D2D_AFFINE
 /// is a safe choice
@@ -132,7 +154,11 @@ enum nmr_MessageType {
      // for server only:
      NMR_SCANLINE,
      NMR_FIDUCIAL,
-     NMR_ENABLE_REGISTRATION,
+     NMR_SET_RESOLUTIONS,
+     NMR_SET_ITERATION_LIMIT,
+     NMR_SET_STEPSIZE,
+     NMR_SET_CURRENT_RESOLUTION,
+     NMR_ENABLE_AUTOALIGN,
      NMR_ENABLE_GUI
 };
 

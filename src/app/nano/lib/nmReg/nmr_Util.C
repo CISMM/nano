@@ -1,5 +1,6 @@
 #include "nmr_Util.h"
 #include "stdlib.h"
+#include "nmr_Gaussian.h"
 
 /**
  computeResampleExtents:
@@ -358,6 +359,7 @@ void nmr_Util::resample(nmb_Image &src, nmb_Image &dest)
   srcy = src.height();
   destx = dest.width();
   desty = dest.height();
+
   double stride_x = (double)(srcx)/(double)(destx);
   double stride_y = (double)(srcy)/(double)(desty);
   double dxmin, dxmax, dymin, dymax;
@@ -406,6 +408,115 @@ void nmr_Util::resample(nmb_Image &src, nmb_Image &dest)
   }
 }
 
+void nmr_Util::buildGaussianPyramid(nmb_Image &src, 
+                 int numLevels, float *stddevs, nmb_Image **pyramid)
+{
+  int i;
+  char new_name[256];
+  double stddev;
+  for (i = 0; i < numLevels; i++) {
+    stddev = stddevs[i];
+    sprintf(new_name, "%s_%d", src.name()->Characters(), i);
+    pyramid[i] = new nmb_ImageGrid(&src);
+    *(((nmb_ImageGrid *)pyramid[i])->name()) = BCString(new_name);
+    if (stddev > 0.0) {
+      blur(*(pyramid[i]), stddev, stddev);
+    }
+  }
+}
+
+void nmr_Util::blur(nmb_Image &im, double std_dev_x, double std_dev_y)
+{
+  double numStdDev = 3.0;
+  int im_width = im.width(), im_height = im.height();
+  int rowFilterLength = 2*(int)ceil(numStdDev*std_dev_x);
+  int colFilterLength = 2*(int)ceil(numStdDev*std_dev_y);
+  if (rowFilterLength%2==0) rowFilterLength += 1;
+  if (colFilterLength%2==0) colFilterLength += 1;
+
+  double *rowFilter = new double[rowFilterLength];
+  double *colFilter = new double[colFilterLength];
+  float *lineCopy = NULL;
+  if (im_width > im_height) {
+    lineCopy = new float[im_width];
+  } else {
+    lineCopy = new float[im_height];
+  }
+  nmr_Gaussian::makeFilter(rowFilterLength, rowFilter, 1.0/std_dev_x);
+  nmr_Gaussian::makeFilter(colFilterLength, colFilter, 1.0/std_dev_y);
+
+  int i,j,k;
+  double blurredVal = 0.0;
+  double total_weight;
+  // blur rows
+  for (j = 0; j < im_height; j++) {
+    // make a temporary copy of the row
+    for (i = 0; i < im_width; i++) {
+      lineCopy[i] = im.getValue(i,j);
+    }
+    // convolve the row with a gaussian filter
+    for (i = 0; i < im_width; i++) {
+      int i_conv;
+      int i_conv_min;
+      i_conv_min = i - rowFilterLength/2;
+      total_weight = 1.0;
+      blurredVal = 0.0;
+      vrpn_bool renormalize = vrpn_FALSE;
+      for (k = 0, i_conv = i_conv_min; k < rowFilterLength; k++, i_conv++) {
+        if (i_conv >= 0 && i_conv < im_width) {
+          blurredVal += rowFilter[k]*lineCopy[i_conv];
+        } else {
+          renormalize = vrpn_TRUE;
+          total_weight -= rowFilter[k];
+        }
+      }
+      if (renormalize) {
+        if (total_weight == 0) {
+          printf("nmr_Util::blur: row blur: this shouldn't happen\n");
+        } else {
+          blurredVal /= total_weight;
+        }
+      }
+      im.setValue(i, j, blurredVal);
+    }
+  }
+
+  // now blur columns
+  for (i = 0; i < im_width; i++) {
+    // make temporary copy of the column
+    for (j = 0; j < im_height; j++) {
+      lineCopy[j] = im.getValue(i,j);
+    }
+    // convolve the row with a gaussian filter with std. dev. equal to
+    // d_sigmaTestTest/deltaTestVal with filter extent of testFilterExtent
+    for (j = 0; j < im_height; j++) {
+      int j_conv;
+      int j_conv_min;
+      j_conv_min = j - colFilterLength/2;
+      total_weight = 1.0;
+      blurredVal = 0.0;
+      vrpn_bool renormalize = vrpn_FALSE;
+      for (k = 0, j_conv = j_conv_min; k < colFilterLength; k++, j_conv++) {
+        if (j_conv >= 0 && j_conv < im_height) {
+          blurredVal += colFilter[k]*lineCopy[j_conv];
+        } else {
+          total_weight -= colFilter[k];
+          renormalize = vrpn_TRUE;
+        }
+      }
+      if (renormalize) {
+        if (total_weight == 0) {
+          printf("nmr_Util::blur: column blur: this shouldn't happen\n");
+        }
+        blurredVal /= total_weight;
+      }
+      im.setValue(i, j, blurredVal);
+    }
+  }
+  delete [] lineCopy;
+  delete [] rowFilter;
+  delete [] colFilter;
+}
 
 // select value randomly from a uniform distribution between min and max
 // call this twice to select a random point in an image
@@ -430,4 +541,34 @@ void nmr_Util::createGradientImages(nmb_Image &source,
       grad_yIm.setValue(i,j, grad_y); 
     }
   }
+}
+
+double nmr_Util::computeMean(nmb_Image &im)
+{
+  double mean = 0;
+  double num_samples_inv = 1.0/(im.width()*im.height());
+  int i,j;
+  for (i = 0; i < im.width(); i++) {
+    for (j = 0; j < im.height(); j++) {
+      mean += im.getValue(i,j);
+    }
+  }
+  mean *= num_samples_inv;
+  return mean;
+}
+
+double nmr_Util::computeVariance(nmb_Image &im, double mean)
+{
+  double num_samples_inv = 1.0/(im.width()*im.height());
+  double var = 0;
+  double diff;
+  int i,j;
+  for (i = 0; i < im.width(); i++) {
+    for (j = 0; j < im.height(); j++) {
+      diff = im.getValue(i,j) - mean;
+      var += diff*diff;
+    }
+  }
+  var *= num_samples_inv;
+  return var;
 }

@@ -104,11 +104,23 @@ class nmr_Util {
     /// result into each pixel in resampledImage
     static void resample(nmb_Image &source, nmb_Image &resampledImage);
  
+    /// allocate numLevels images and put blurred versions of the argument
+    /// into them
+    static void buildGaussianPyramid(nmb_Image &src, int numLevels, 
+                              float *stddev,
+                              nmb_Image **pyramid);
+
+    /// blur image with a gaussian
+    static void blur(nmb_Image &im, double std_dev_x, double std_dev_y);
+
     static double sampleUniformDistribution(double min, double max);
  
     static void createGradientImages(nmb_Image &source,
               nmb_Image &grad_x, nmb_Image &grad_y);
-  
+ 
+    static double computeMean(nmb_Image &im);
+    static double computeVariance(nmb_Image &im, double mean);
+ 
 };
 
 #endif

@@ -345,11 +345,11 @@ int transformSolver(double *xform_matrix, double *error,
         // we find the solution in two stages and these are the settings
         // for one of them
         int numVars = 3;
-        int numEq = c.numPoints(); // number of equations (rows in A)
+        int numEq = numPts; // number of equations (rows in A)
         double *A = new double[numEq*numVars];
         double *B = new double[numEq];
 
-        for (i = 0; i < c.numPoints(); i++){
+        for (i = 0; i < numPts; i++){
           c.getPoint(im0, i, &p0);
           c.getPoint(im1, i, &p1);
         
@@ -372,7 +372,7 @@ int transformSolver(double *xform_matrix, double *error,
         for (i = 3; i < numEq; i++)
           *error += B[i]*B[i];
 
-        for (i = 0; i < c.numPoints(); i++){
+        for (i = 0; i < numPts; i++){
           c.getPoint(im0, i, &p0);
           c.getPoint(im1, i, &p1);
 
@@ -404,7 +404,6 @@ int transformSolver(double *xform_matrix, double *error,
     default:
         fprintf(stderr, "transformSolve: This shouldn't happen\n");
         return -1;
-        break;
   }
   return 0;
 }

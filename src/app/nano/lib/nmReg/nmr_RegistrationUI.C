@@ -10,7 +10,13 @@
 #include <nmb_Dataset.h>
 #include <microscape.h> // for disableOtherTextures
 #include <nmui_ColorMap.h>
-#include "nmr_CoarseToFineSearch.h"
+#include <nmr_AlignerMI.h>
+
+vrpn_int32 nmr_RegistrationUI::s_defaultNumResolutionLevels = 15;
+vrpn_float32 nmr_RegistrationUI::s_defaultStdDev[] = 
+               {0.0, 0.6, 1.0, 1.2, 1.4, 
+                1.7, 2.0, 2.4, 3,  3.6,
+                4.5,   6,  9, 13, 18};
 
 nmr_RegistrationUI::nmr_RegistrationUI
   (nmg_Graphics *g, nmb_Dataset *d,
@@ -21,7 +27,6 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_newResampleImageName("resample_image_name", ""),
    d_newResamplePlaneName("resample_plane_name", ""),
    d_registrationEnabled("reg_window_open", 0),
-   d_registrationRequested("registration_needed", 0),
    d_constrainToTopography("reg_constrain_to_topography", 0),
    d_invertWarp("reg_invert_warp", 0),
    d_textureDisplayEnabled("reg_display_texture", 0),
@@ -30,6 +35,14 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_resampleRatio("reg_resample_ratio", 0),
    d_registrationColorMap3D("reg_surface_cm(color_map)", "none"),
    d_registrationColorMap2D("reg_projection_cm(color_map)", "none"),
+
+   d_autoAlignRequested("auto_align_requested", 0),
+   d_numIterations("auto_align_num_iterations", 100),
+   d_stepSize("auto_align_step_size", 0.0001),
+   d_resolutionLevel("auto_align_resolution", "0"),
+   d_numResolutionLevels(0),
+   d_resolutionLevelList("auto_align_resolution_list"),
+
    d_registrationValid(vrpn_FALSE),
    d_graphicsDisplay(g),
    d_imageList(d->dataImages),
@@ -86,6 +99,17 @@ nmr_RegistrationUI::nmr_RegistrationUI
                                       (Tclvar_list_of_strings *)d_imageList->imageNameList(),
                                       &d_registrationColorMap2D);
     d_2DImageCMap->setSurfaceColor(255,255,255);
+
+    d_numResolutionLevels = s_defaultNumResolutionLevels;
+    int i;
+    d_resolutionLevelList.clearList();
+    char listEntry[128];
+    for (i = 0; i < s_defaultNumResolutionLevels; i++) {
+      d_stddev[i] = s_defaultStdDev[i];
+      sprintf(listEntry, "%g", d_stddev[i]);
+      d_resolutionLevelList.addEntry(listEntry);
+    }
+    d_aligner->setResolutions(d_numResolutionLevels, d_stddev);
 }
 
 nmr_RegistrationUI::~nmr_RegistrationUI()
@@ -94,8 +118,8 @@ nmr_RegistrationUI::~nmr_RegistrationUI()
 
 void nmr_RegistrationUI::setupCallbacks() 
 {
-    d_registrationRequested.addCallback
-         (handle_registrationRequest_change, (void *)this);
+    d_autoAlignRequested.addCallback
+         (handle_autoAlignRequested_change, (void *)this);
     d_registrationEnabled.addCallback
          (handle_registrationEnabled_change, (void *)this);
     d_textureDisplayEnabled.addCallback
@@ -122,8 +146,8 @@ void nmr_RegistrationUI::setupCallbacks()
 
 void nmr_RegistrationUI::teardownCallbacks() 
 {
-    d_registrationRequested.removeCallback
-         (handle_registrationRequest_change, (void *)this);
+    d_autoAlignRequested.removeCallback
+         (handle_autoAlignRequested_change, (void *)this);
     d_registrationEnabled.removeCallback
          (handle_registrationEnabled_change, (void *)this);
     d_textureDisplayEnabled.removeCallback
@@ -432,14 +456,43 @@ void nmr_RegistrationUI::handle_textureDisplayEnabled_change(
     }
 }
 
+void nmr_RegistrationUI::autoAlignImages()
+{
+  vrpn_float32 stddev = atof(d_resolutionLevel.string());
+  vrpn_int32 levelIndex;
+  for (levelIndex = 0; levelIndex < d_numResolutionLevels; levelIndex++) {
+    if (stddev == d_stddev[levelIndex]) break;
+  }
+  if (levelIndex == d_numResolutionLevels) {
+    fprintf(stderr, "Error: autoAlignImages: can't find resolution\n");
+    return; 
+  }
+
+  d_aligner->setIterationLimit((vrpn_int32)d_numIterations);
+  d_aligner->setStepSize((vrpn_float32)d_stepSize);
+  d_aligner->setCurrentResolution(levelIndex);
+  d_aligner->autoAlignImages();
+}
+
 // static
-void nmr_RegistrationUI::handle_registrationRequest_change(
+void nmr_RegistrationUI::handle_autoAlignRequested_change(
       vrpn_int32 value, void *ud)
 {
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
     if (value) {
+      me->autoAlignImages();
       me->d_registrationValid = vrpn_FALSE;
-      me->d_aligner->registerImages();
+    
+/*
+      // some debugging code that inserts the blurred images used for
+      // alignment into the image list so you can easily view them:
+      nmb_Image *im_3D = me->d_imageList->getImageByName
+                            (me->d_registrationImageName3D.string());
+      nmb_Image *im_2D = me->d_imageList->getImageByName
+                            (me->d_registrationImageName2D.string());
+      nmr_AlignerMI aligner;
+      aligner.initImages(im_3D, im_2D, NULL, me->d_imageList);
+*/
     }
 }
 
