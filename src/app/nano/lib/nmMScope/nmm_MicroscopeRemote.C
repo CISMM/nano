@@ -1874,16 +1874,18 @@ void nmm_Microscope_Remote::DisplayModResult (float _x, float _y,
   long x, y;
   BCPlane * heightPlane;
 
-  double xr,yr;
-  rotateScanCoords(_x, _y, -(double)(state.image.scan_angle), &xr, &yr);
+  // Moved! data is rotated as it is received from AFM. Already rotated
+  // when we get it. 
+//    double xr,yr;
+//    rotateScanCoords(_x, _y, -(double)(state.image.scan_angle), &xr, &yr);
 
   heightPlane = d_dataset->inputGrid->getPlaneByName
             (d_dataset->heightPlaneName->string());
 
-  top[0] = bottom[0] = xr;
-  top[1] = bottom[1] = yr;
+  top[0] = bottom[0] = _x;
+  top[1] = bottom[1] = _y;
 
-  d_dataset->inputGrid->worldToGrid((double)xr, (double)yr, fx, fy);
+  d_dataset->inputGrid->worldToGrid((double)_x, (double)_y, fx, fy);
   x = (long)fx;
   y = (long)fy;
 

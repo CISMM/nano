@@ -530,6 +530,9 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     vrpn_bool d_incr_save;
     ///< Incrementally save the stream file, instead of saving on exit?
 
+    int d_first_PID_message_received;
+    ///< Has first PID message been received?
+
   public:
 
     // TCH network adaptations Nov 2000

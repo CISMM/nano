@@ -113,6 +113,7 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
     d_sampleAlgorithm (NULL),
     d_accumulatePointResults (vrpn_FALSE),
     d_incr_save(i.incr_save),
+    d_first_PID_message_received(0),
     d_redundancy (new vrpn_RedundantTransmission (connection)),
     d_redReceiver (new vrpn_RedundantReceiver (connection)),
     d_monitor (NULL),
@@ -706,6 +707,8 @@ RECEIVE_MSG WindowLineData {
           return;
       }
   }
+  // Debug
+  //printf("Handled window line data @row %d\n", y);
 
   // Change the background, since we are not touching or modifying
   d_decoration->mode = nmb_Decoration::IMAGE;
@@ -729,18 +732,13 @@ RECEIVE_MSG WindowLineData {
   // last received line to an array into the nmb_Decoration class so
   // that we can grab it later and draw the microscope's "scanline"
 
-  if (d_decoration->scan_line) {
-    // if the decoration's lineCount isn't the same as the current linecount
-    // the microscope's surface size changed, so update the decoration's
-    // linecount field
-    if (d_decoration->scanLineCount != reports) {
-      delete [] d_decoration->scan_line;
+  // if the decoration's lineCount isn't the same as the current linecount
+  // the microscope's surface size changed, so update the decoration's
+  // linecount field
+  if (d_decoration->scanLineCount != reports) {
       d_decoration->initScanline(reports);
-    }
   }
-  else {
-    d_decoration->initScanline(reports);
-  }
+
   BCPlane *plane = d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string() );
   if (plane == NULL) return;
   for (i = 0; i < reports; i++) {
@@ -799,11 +797,16 @@ RECEIVE_MSG PointResultData nmm_Monitor {
     d_tsList->add(now, diff);
   }
 
+  // If scan is rotated, these points were taken at a different
+  // spot than reported by Thermo software. Rotate to correct pos. 
+  double xr,yr;
+  rotateScanCoords(x, y, -(double)(state.image.scan_angle), &xr, &yr);
+
   // Make the report.  This has the side effect of updating
   // the inputPoint values and, if d_accumulatePointResults,
   // the incomingPointList.
   // HACK HACK HACK
-  if (state.data.point_channels->Handle_report(x, y, sec, usec,
+  if (state.data.point_channels->Handle_report(xr, yr, sec, usec,
                                           (float *) data, reports,
                                           d_accumulatePointResults)) {
     fprintf(stderr, "Error handling SPM point result data\n");
@@ -918,15 +921,15 @@ RECEIVE_MSG PointResultData nmm_Monitor {
     // Latency compensation
     // !z_value iff we're replaying a stream file and using a derived
     // plane for height.
-    d_decoration->trueTipLocation[0] = x;
-    d_decoration->trueTipLocation[1] = y;
+    d_decoration->trueTipLocation[0] = xr;
+    d_decoration->trueTipLocation[1] = yr;
     d_decoration->trueTipLocation[2] = z_value->value();
     d_decoration->trueTipLocation_changed = 1;
   }
 
   if (state.acquisitionMode == MODIFY) {
      double grid_x, grid_y;
-     d_dataset->inputGrid->worldToGrid((double)x, (double)y, grid_x, grid_y);
+     d_dataset->inputGrid->worldToGrid((double)xr, (double)yr, grid_x, grid_y);
      if (!d_mod_window_initialized) {
         d_mod_window_min_x = (vrpn_int32)grid_x;
         d_mod_window_min_y = (vrpn_int32)grid_y;
@@ -1028,8 +1031,6 @@ RECEIVE_MSG SetRegionClipped {
 //    float32 ymax
 
   BCPlane * heightPlane;
-  BCPlane * p;
-  long x, y;
 
   heightPlane = d_dataset->inputGrid->getPlaneByName
                    (d_dataset->heightPlaneName->string());
@@ -1040,6 +1041,9 @@ RECEIVE_MSG SetRegionClipped {
   d_dataset->inputGrid->setMinY(ymin);
   d_dataset->inputGrid->setMaxX(xmax);
   d_dataset->inputGrid->setMaxY(ymax);
+
+  // fill in the grid with flat values
+  d_dataset->inputGrid->clear();
 
 //this seems obsolete..comment out test for now
  // if (state.regionFlag) {
@@ -1075,12 +1079,6 @@ RECEIVE_MSG SetRegionClipped {
     driftZDirty();
 
   state.current_epoch++;
-
-  // fill in the grid with flat values
-  for (p = d_dataset->inputGrid->head(); p; p = p->next())
-    for (x = 0; x < p->numX(); x++)
-      for (y = 0; y < p->numY(); y++)
-        p->setValue(x, y, 0);
 
   d_decoration->selectedRegion_changed = 1;
 
@@ -1241,18 +1239,17 @@ RECEIVE_MSG PidParameters {
   // This is the initialization message sent by the AFM to tell us
   // what the PID are. So if this is the first time we get this
   // message, we will set the modify PID as well.
-  static int first_message_received = 1;
   if (state.acquisitionMode == MODIFY) {
     state.modify.p_gain = P;
     state.modify.i_gain = I;
     state.modify.d_gain = D;
-    first_message_received = 0;
+    d_first_PID_message_received = 1;
   } else {
     state.image.p_gain = P;
     state.image.i_gain = I;
     state.image.d_gain = D;
-    if (first_message_received ){
-	first_message_received = 0;
+    if (!d_first_PID_message_received ){
+	d_first_PID_message_received = 1;
 	// Set defaults for modify mode...
 	state.modify.p_gain = P;
 	state.modify.i_gain = I;
@@ -1329,13 +1326,19 @@ RECEIVE_MSG_HEADER ForceCurveData {
 //    int32 usec
 
   Point_results pnt;
+
+  // If scan is rotated, these points were taken at a different
+  // spot than reported by Thermo software. Rotate to correct pos. 
+  double xr,yr;
+  rotateScanCoords(x, y, -(double)(state.image.scan_angle), &xr, &yr);
+
   if (spm_verbosity >= 1) {
-    printf("Force Curve result, at (%g, %g), time %ld:%ld\n", x, y, sec, usec);
+    printf("Force Curve result, at (%g, %g), time %ld:%ld\n", xr, yr, sec, usec);
     //printf("  values:");
   }
 
-  state.fc_x = x;
-  state.fc_y = y;
+  state.fc_x = xr;
+  state.fc_y = yr;
   state.fc_numSamples = numSamples ;
   state.fc_numHalfcycles = numHalfcycles;
   state.fc_sec = sec;
@@ -1425,6 +1428,8 @@ RECEIVE_MSG ScanlineData {
 //    int32 num_channels
 //    float32 data[resolution][num_channels]
 
+
+ //XXX Rotate x,y with scan angle if this ever gets used.  
     if (state.scanline.continuous_rescan)
         AcquireScanline();
     else
@@ -1502,6 +1507,7 @@ RECEIVE_MSG EndFeelTo {
 //    float32 dy
 //    float32 orientation
 fprintf(stderr, "Completed feel to %.2f, %.2f.\n", x, y);
+//XXX Rotate x,y with scan angle if they get used.  
 
   state.data.receivedAlgorithm.numx = numx;
   state.data.receivedAlgorithm.numy = numy;

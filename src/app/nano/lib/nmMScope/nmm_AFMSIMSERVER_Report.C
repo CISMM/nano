@@ -1,5 +1,5 @@
 //Warning: this file automatically generated using the command line
-// ../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl -c .\nmm_AFMSIMSERVER_Report.vrpndef
+// ../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl -c nmm_AFMSIMSERVER_Report.vrpndef
 //DO NOT EDIT! Edit the source file instead.
 
 /*===3rdtech===

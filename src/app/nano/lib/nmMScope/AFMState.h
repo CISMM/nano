@@ -13,7 +13,6 @@
 #include <Scanline.h>
 #include <Position.h>
 
-#include <nmb_Subgrid.h>
 #include <nmb_Dataset.h>
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
@@ -24,7 +23,7 @@
 // Forces normally range from -64 to 64 nanoAmps  
 #define BOGUS_FORCE -100
 
-/** \file AFMState.h
+/** @file AFMState.h
 
 Tom Hudson, September, 1997
 Taken from global variables declared in microscape.c, animate.c,

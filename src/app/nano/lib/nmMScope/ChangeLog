@@ -1,17 +1,30 @@
+2002-03-11  Aron Helser  <helser@cs.unc.edu>
+
+	* nmm_MicroscopeRemoteGen.Cdef (PidParameters): replaced static
+	int variable with member variable. 
+	(PointResultData): rotate point data to match scan angle. Might
+	fix problem with very noisy touch when scan is rotated. 
+	(ForceCurveData): same rotation here. 
+	(SetRegionClipped): call d_dataset->inputGrid->clear(), so plane's
+	valid region is reset correctly. 
+	
+	* nmm_MicroscopeRemote.C (DisplayModResult): Don't rotate point
+	data here anymore. 
+
 2002-02-27 David Borland <borland@cs.unc.edu>
         * Makefile : added nmUGraphics to the libraries
 
-2002 -02-26 Andrea Hilchey <hilchey@cs.unc.edu>
+2002-02-26 Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* nmm_SimulatedMicroscope_Remote.* : changed number of triangles
 	sent from arbitrary value to real number in extracted model,
-      also added URender * myURenderObject to access triangle info
-      (temp)
+	also added URender * myURenderObject to access triangle info
+	(temp)
 
-      * nmm_SimulatedMicroscope.hdef : added functions get_y_offset()
-      and get_x_offset() to offset triangles sent in the simulator
+	* nmm_SimulatedMicroscope.hdef : added functions get_y_offset()
+	and get_x_offset() to offset triangles sent in the simulator
 
-2002 -02-25 Andrea Hilchey <hilchey@cs.unc.edu>
+2002-02-25 Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* nmm_AFMSIMSERVER_Report.vrpndef : add 'Triangle' message type
 	which sends 3 vertices given in x,y, and z
