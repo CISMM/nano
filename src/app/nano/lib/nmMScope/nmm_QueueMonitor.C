@@ -236,10 +236,10 @@ void nmm_QueueMonitor::deleteQueueHead (void) {
     d_queueTail = NULL;
   }
 
-  delete qm;
   if (qm->data.buffer) {
-    delete [] qm->data.buffer;
+    delete [] (char *)qm->data.buffer;
   }
+  delete qm;
 }
 
 void nmm_QueueMonitor::deleteQueue (void) {
@@ -248,7 +248,7 @@ void nmm_QueueMonitor::deleteQueue (void) {
   for (qm = d_queueHead; d_queueHead; qm = d_queueHead) {
     d_queueHead = qm->next;
     if (qm->data.buffer) {
-      delete [] qm->data.buffer;
+      delete [] (char *)qm->data.buffer;
     }
     delete qm;
   }

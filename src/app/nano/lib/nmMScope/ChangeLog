@@ -1,3 +1,8 @@
+2000-12-11  Aron Helser  <helser@cs.unc.edu>
+
+	* nmm_QueueMonitor.C (deleteQueueHead): Cast to allow PC
+	compile. Delete qm _after_ qm->data.buffer
+
 2000-12-8  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmm_QueueMonitor.C (enqueue) : copy buffer from VRPN
