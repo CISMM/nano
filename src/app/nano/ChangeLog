@@ -1,10 +1,22 @@
+2002-07-01  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.C (handle_openStreamFilename_change): Set total
+	length of stream in decoration object.
+	Communicate name of stream file to tcl, so it can display in title
+	bar. 
+	(handle_openSPMDeviceName_change): clear name
+	(openDefaultMicroscope): same
+
+	* interaction.C (doLine): Set start and end of rubber line when
+	initialized, to prevent weirdly placed lines. 
+
 2002-07-01  David Borland <borland@cs.unc.edu>
 
-        * import.C : minor changes to most of the functions to account
-        for the reorganization of the UberGraphics class structure.
-
-        * microscape.C : changed the URender object to a URTubeFile object
-        for sending tubes to the AFM simulator.
+	* import.C : minor changes to most of the functions to account
+	for the reorganization of the UberGraphics class structure.
+	
+	* microscape.C : changed the URender object to a URTubeFile object
+	for sending tubes to the AFM simulator.
 
 2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
 
@@ -21,7 +33,7 @@
 
 2002--6-26  David Borland <borland@cs.unc.edu>
 
-        * import.C : added callback for saving spider data
+	* import.C : added callback for saving spider data
 
 2002-06-24  David Marshburn  <marshbur@cs.unc.edu>
 

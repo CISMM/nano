@@ -2918,8 +2918,10 @@ int doLine(int whichUser, int userEvent)
 	    (microscope->state.modify.tool == SLOW_LINE)||
 	    (microscope->state.modify.tool == SLOW_LINE_3D)||
 	    (microscope->state.modify.tool == OPTIMIZE_NOW)) {
-	  graphics->setRubberLineStart(clipPos[0], clipPos[1]);
-	  graphics->setRubberSweepLineStart(TopL, TopR);
+          graphics->setRubberLineStart(clipPos[0], clipPos[1]);
+          graphics->setRubberSweepLineStart(TopL, TopR);
+          graphics->setRubberLineEnd(clipPos[0], clipPos[1]);
+          graphics->setRubberSweepLineEnd(TopL, TopR);
 	  //save this point as part of the poly-line
 	  if (microscope->state.modify.tool == SLOW_LINE_3D) {
 	    // Insert points in reverse order so we start
@@ -2967,8 +2969,10 @@ int doLine(int whichUser, int userEvent)
 	    // also leave rubber line stretched between two
 	    // endpoints.
 	  } else {
-	    graphics->setRubberLineStart(clipPos[0], clipPos[1]);
-	    graphics->setRubberSweepLineStart(TopL, TopR);
+              graphics->setRubberLineStart(clipPos[0], clipPos[1]);
+              graphics->setRubberSweepLineStart(TopL, TopR);
+              graphics->setRubberLineEnd(clipPos[0], clipPos[1]);
+              graphics->setRubberSweepLineEnd(TopL, TopR);
 	  }
 	  //save this point as part of the poly-line
 	  if (microscope->state.modify.tool == CONSTR_FREEHAND) {

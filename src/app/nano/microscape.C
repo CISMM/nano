@@ -387,6 +387,10 @@ TclNet_string openStaticFilename("open_static_filename", "",
 /// the open stream process.
 TclNet_string openStreamFilename("open_stream_filename", "");
 
+/// Displayed stream filename - Tcl uses to display stream name 
+/// in title bar. 
+Tclvar_string displayStreamFilename("display_stream_filename", "");
+
 /// SPM Device name. Setting this variable triggers open device process
 TclNet_string openSPMDeviceName("open_spm_device_name", "");
 
@@ -2957,6 +2961,8 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
 
     vrpnLogFile->limit_messages_played_back(istate->packetlimit);
 
+    decoration->totalStreamTime = vrpnLogFile->get_length_secs();
+
     // Run mainloop of the microscope once to make sure this is a valid vrpn
     // log file- it will check the cookie and fail if it is not. 
     if (microscope->mainloop()) {
@@ -2964,7 +2970,26 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
                            "is not a valid NanoManipulator stream file.",
                            istate->afm.inputStreamName);
         openDefaultMicroscope();
+        return;
     }
+
+    // Display the stream file name to the user, in the title bar:
+    //Strip the directory name from the filename
+    // Allow for Win or Unix path name, / or \ dividers. 
+    const char * name = NULL;
+    if (((name = strrchr(istate->afm.inputStreamName, '/')) == NULL) &&
+        ((name = strrchr(istate->afm.inputStreamName, '\\')) == NULL)) {
+        // We didn't find any path dividers - use the filename as passed in.
+        name = istate->afm.inputStreamName;
+    } else {
+        // We found a divider, advance past it. 
+        name +=1;
+        // Make sure we still have a string
+        if (strlen(name) <1) {
+            name = istate->afm.inputStreamName;
+        }           
+    }
+    displayStreamFilename = name;
 
     openStreamFilename = "";
 
@@ -2989,6 +3014,8 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
 
     istate = (MicroscapeInitializationState *)userdata;
     logmode = vrpn_LOG_NONE;
+    // Reset title bar.
+    displayStreamFilename = "";
 
     // if we're in a collaborative session, don't allow changing 
     // staticfiles/streamfiles/SPM devices
@@ -3139,19 +3166,21 @@ static void openDefaultMicroscope()
     microscope_connection = NULL;
     vrpnLogFile = NULL;
 
-	// reset objects  --  doesn't work correctly yet, but better than nothing.
-//	if (state->config_enableUber) {
-
-	if (&World.TGetContents() != NULL) {
-		change_static_file csf;
-		csf.scale = 1.0;
-		csf.xoffset = 0.0;
-		csf.yoffset = 0.0;
-		csf.zoffset = 0.0;
-		World.Do(&URender::ChangeStaticFile, &csf);
-	}
-//}
-
+    // reset objects  --  doesn't work correctly yet, but better than nothing.
+    //	if (state->config_enableUber) {
+    
+    if (&World.TGetContents() != NULL) {
+        change_static_file csf;
+        csf.scale = 1.0;
+        csf.xoffset = 0.0;
+        csf.yoffset = 0.0;
+        csf.zoffset = 0.0;
+        World.Do(&URender::ChangeStaticFile, &csf);
+    }
+    //}
+    
+    // Reset title bar.
+    displayStreamFilename = "";
     // Make sure "working" dialog is gone. 
     doneWorkingMsg();
 }
