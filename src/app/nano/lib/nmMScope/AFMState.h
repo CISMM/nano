@@ -477,7 +477,8 @@ struct AFMState {
   int rasterX,                     // used to be x, y in animate.c
       rasterY;
 
-  vrpn_bool dlistchange;
+    //OBSOLETE
+    //vrpn_bool dlistchange;
     // if true triggers update of X display
     //   in MicroscopeIO.C (was in animate.c)
 

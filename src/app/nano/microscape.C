@@ -970,7 +970,7 @@ static char tcl_default_dir [] = "/afs/cs.unc.edu/project/stm/bin/";
  * Variables to turn on/off optional parts of the system
  ************/
 
-//static int perf_mode = 0;			/* No perfmeter by default */
+static int print_performance = 0;	/* No prints by default */
 //static int do_menus = 1;			/* Menus on by default */
 static int do_keybd = 0;                   ///< Keyboard off by default
 //static int do_ad_device = 1;               /* A/D devices on by default */
@@ -1387,6 +1387,13 @@ BOOL WINAPI handleConsoleSignalsWin( DWORD signaltype)
     switch (signaltype) {
     case CTRL_C_EVENT:
     case CTRL_BREAK_EVENT:
+	shutdown_connections();
+        //printf("Signal done\n"); DOESN'T PRINT pipes are already closed.
+        //For reasons I don't understand, if I don't call _exit (instead of
+        //exit(), the program will return to the main interactive loop and
+        //segfault when it tries to draw or set tcl variables.
+        _exit (0); 
+        return TRUE;
     case CTRL_CLOSE_EVENT:
     case CTRL_SHUTDOWN_EVENT:
 	if (do_keybd == 1)
@@ -4864,8 +4871,7 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         istate->logTimestamp.tv_sec = atoi(argv[i]);
       } else if (strcmp(argv[i], "-perf") == 0) {
-        fprintf(stderr, "Warning: -perf obsolete.\n");
-        //perf_mode = 1;
+        print_performance = 1;
       } else if (strcmp (argv[i], "-recv") == 0) {
         // clark -- use NANO_RECV_TIMESTAMPs for playback times
         istate->afm.useRecvTime = VRPN_TRUE;
@@ -5211,6 +5217,7 @@ void Usage(char* s)
                           "play no more than n packets\n"
                   "       before refreshing graphics (0 to disable).\n");
   fprintf(stderr, "       -optimistic:  use optimistic concurrency control.\n");
+  fprintf(stderr, "       -perf: Print performance statistics\n");
   /*
   fprintf(stderr, "   OBSOLETE (ignored)\n");
   fprintf(stderr, "       -call: Use callbacks (default)\n");
@@ -5222,7 +5229,6 @@ void Usage(char* s)
                          "(default 10)\n");
   fprintf(stderr, "       -move: max tip move of dist nm per ms (def 100)\n");
   fprintf(stderr, "       -dir: direction user facing (deg from north) \n");
-  fprintf(stderr, "       -perf: Turn on the perfmeter\n");
   fprintf(stderr, "       -std: Take num samples at rate per point\n");
   fprintf(stderr, "             Multiply std_dev by scale to get [0,1]\n");
   fprintf(stderr, "       -sub: Scan a square numXnum around mods (def 24)\n");
@@ -6946,26 +6952,27 @@ VERBOSE(1, "Entering main loop");
   start = time1.tv_sec * 1000 + time1.tv_usec/1000;
   stop = time2.tv_sec * 1000 + time2.tv_usec/1000;
   interval = stop-start;          /* In milliseconds */
-  /*
-  printf("Time for %ld loop iterations: %ld seconds\n",n,
-        time2.tv_sec-time1.tv_sec);
-  printf("Time for %ld display iterations: %ld seconds\n",n_displays,
-        time2.tv_sec-time1.tv_sec);
-  if (interval != 0) {
-	timing = ((float)(n) / (float)(interval) * 1.0e+3);
-	printf("    (%.5f loop iterations per second)\n", timing);
-        looplen = ((interval / 1.0e+3) / (float) (n));
-	printf("    (%.5f seconds per loop iteration)\n", looplen);
-	timing = ((float)(n_displays) / (float)(interval) * 1.0e+3);
-	printf("    (%.5f display iterations per second)\n", timing);
-        looplen = ((interval / 1.0e+3) / (float) (n_displays));
-	printf("    (%.5f seconds per display iteration)\n", looplen);
-  }
+  if(print_performance) {
+      printf("Time for %ld loop iterations: %ld seconds\n",n,
+             time2.tv_sec-time1.tv_sec);
+      printf("Time for %ld display iterations: %ld seconds\n",n_displays,
+             time2.tv_sec-time1.tv_sec);
+      if (interval != 0) {
+          float timing, looplen;
+          timing = ((float)(n) / (float)(interval) * 1.0e+3);
+          printf("    (%.5f loop iterations per second)\n", timing);
+          looplen = ((interval / 1.0e+3) / (float) (n));
+          printf("    (%.5f seconds per loop iteration)\n", looplen);
+          timing = ((float)(n_displays) / (float)(interval) * 1.0e+3);
+          printf("    (%.5f display iterations per second)\n", timing);
+          looplen = ((interval / 1.0e+3) / (float) (n_displays));
+          printf("    (%.5f seconds per display iteration)\n", looplen);
+      }
 
-  printf("---------------\n");
-  printf("Graphics Timer:\n");
-  graphicsTimer.report();
-  */
+      printf("---------------\n");
+      printf("Graphics Timer:\n");
+      graphicsTimer.report();
+  }
 
   if(glenable){
     /* shut down trackers and a/d devices    */
@@ -7140,7 +7147,6 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 	} else { */
 	    *donePtr = VRPN_TRUE;
 	    fprintf(stderr, "\nShutting down...\n");
-            exit(0);
 	//}
 	break;
 

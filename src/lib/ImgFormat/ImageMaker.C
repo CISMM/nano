@@ -13,7 +13,7 @@
 
 extern const int ImageType_count = 2;
 
-extern const char *ImageType_names[] = { "TIFF", "PNM" };
+extern const char *ImageType_names[] = { "TIFF", "PPM/PGM" };
 
 
 AbstractImage *ImageMaker(const ImageType type)

@@ -3815,7 +3815,11 @@ long nmm_Microscope_Remote::RcvWindowLineData (void) {
   // blue, since we are not touching or modifying
   d_decoration->mode = nmb_Decoration::IMAGE;
 
-  state.dlistchange = VRPN_TRUE;        //XXX Need more here
+  // XXX Experimental. Incremental save of stream file when
+  // user is not touching or modifying the sample. 
+  d_connection->save_log_so_far();
+
+//    state.dlistchange = VRPN_TRUE;  OBSOLETE
   return 0;
 }
 

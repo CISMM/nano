@@ -462,7 +462,7 @@ AFMState::AFMState (const AFMInitializationState & i) :
     rasterX (0),
     rasterY (0),
 
-    dlistchange (VRPN_FALSE),
+    //dlistchange (VRPN_FALSE),
     select_center_x (0.0f),
     select_center_y (0.0f),
     select_region_rad (0.0f),

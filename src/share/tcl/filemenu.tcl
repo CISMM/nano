@@ -231,7 +231,8 @@ iwidgets::dialog .save_screen_dialog -title "Save screen image"
     .save_screen_dialog deactivate 1
     set types { {"All files" *} 
     {"TIFF" ".tif" }
-    {"PNM" ".pnm" } }
+    {"PPM/PGM" ".pgm" } 
+    {"PPM/PGM" ".ppm" } }
 
         # Set the file extension correctly
         set def_file_exten ".tif"
