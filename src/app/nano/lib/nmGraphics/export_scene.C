@@ -408,7 +408,8 @@ ostream& operator << (ostream& out, const QuadCorners& qc)
 }
 
 
-/** REturns a char string representing a rhino exception
+/** Return a char string representing a rhino exception
+ *
  * DO NOT MODIFY the return value from this function.
  */
 static
@@ -449,6 +450,9 @@ const char * rhinoException_to_string (CRhinoException e)
 }
 
 
+/** If P is one of the points we care about (based on it's name), then store
+ * it in QC.
+*/
 static
 bool set_quad_corner (QuadCorners &qc, const CRhinoPointSet & p)
 {
@@ -475,93 +479,234 @@ bool set_quad_corner (QuadCorners &qc, const CRhinoPointSet & p)
     if (! vec) {
         return false;
     }
-
     if (p.PointCount()==0) {
         cerr << "No points in point dataset.  Ignoring this PointSet" << endl;
         return false;
     }
-
     if (p.PointCount() > 1) {
         cerr << "Warning: PointSet \"" << label
              << "\" has more than one point.  Using first point." << endl;
     }
-    
+
+    // store the point's coords into *vec
     p.GetPoint (0, (*vec)[0], (*vec)[1], (*vec)[2]);
+
     return true;
 }
 
 
-
-/** Figures out view xform Reads from FILENAME and finds points that define
- *  where the plane is to go into world space.  Then, computes an xform that
- *  takes grid points to that place.
+/** Read from rhino file pRF, and set the out variable based on point data
+ *  found in the file.
  */
-static void get_view_xform (const char * filename)
+static
+bool get_corners_from_file (
+    QuadCorners &       out_corners_of_model_in_rhino_frame,
+    CRhinoFile *  const pRF)
 {
-    cout << "getting view xform from \"" << filename << "\"..." << endl;
+    // set by pRF->Read()
+    CRhinoFile::eStatus status = CRhinoFile::good;
+        
+    for ( ;; ) {
+        CRhinoObject* pObj = pRF->Read (status);
+        if (status != CRhinoFile::good)
+            break;
+            
+        // Check if this object is on a layer we care about
+        bool we_care = false;
+        if (pObj->Layer() && pObj->Layer()->Name()) {
+            we_care =
+                (0 == strcmp("screen points",
+                             pObj->Layer()->Name()));
+        }
 
-    QuadCorners model_in_rhino_frame;
+        // Check if it's a point object
+        we_care = we_care && (pObj->TypeCode() == TCODE_RH_POINT);
+        
+        if (! we_care) {
+            delete pObj;
+            pObj = 0;
+            continue;
+        }
+
+        // We care!  Now, extract the points defining the corners
+        
+        cout << "\t\"" << pObj->Label() << "\""
+             << " from layer \"" << pObj->Layer()->Name() << "\""
+             << " (" << pObj->ClassName() << ")"
+             << endl;
+        
+        CRhinoPointSet *pPoint = dynamic_cast<CRhinoPointSet*>(pObj);
+        if (! pPoint) {
+            cerr << "\tError casting point object to point class" << endl;
+        }
+        else {
+            set_quad_corner (out_corners_of_model_in_rhino_frame, *pPoint);
+        }
+
+        delete pObj;
+        pObj = 0;
+        
+    } // for( ;; )
+    
+    return status == CRhinoFile::eof;
+}
+
+
+
+/** Construct the view xform
+ *  
+ *  The grid is embedded in the world X-Y plane.  It's origin is the world
+ *  origin.  It's X and Y axes coincide with the world's X and Y axes.
+ *  Each nanometer on the grid is one unit.
+ *
+ *  We want to xform the grid to it's place in the model.  The points in
+ *  model_in_rhino_frame define the corners of where we want the grid to
+ *  end up.
+ *
+ *  First, xform from the grid's local coordinates to lie in the unit
+ *  square at the origin of the world X-Y plane.  By definition, there is
+ *  no rotation involved.  So, we just have to scale.
+ *  
+ *  We will scale by 1/grid_size, where grid_size is the size in X and Y.
+ *  This makes a uniform scaling assumption.  The topometrix software
+ *  always gives us square datasets, but that may not be the case in the
+ *  future, or with a different microscope.  Also, it may not be true when
+ *  using a ppm file as a dataset.
+ *
+ *  To eliminate the square assumption, we need to do some padding.
+ *  Perhaps use the max of length(X) and length(Y) as the scaling factor?
+ *  
+ *  Second, xform to the destination.  We can easily build the xform matrix
+ *  for this as follows:
+ *
+ *    (all these are in the rhino model world coord sys)
+ *  
+ *    Orig is the origin of the destination
+ *    TL   is the top left corner of the destination
+ *    BR   is the bottom right corner of the destination
+ *
+ *         | Ax Bx Cx Tx |          A = BR - Orig
+ *    xf = | Ay By Cy Ty |, where   B = TL - Orig
+ *         | Az Bz Cz Tz |          T = Orig
+ *
+ *    C is a little more difficult:
+ *      C is in the direction A cross B.
+ *      The length of C defines the "z-scale".
+ *
+ *    We will assume that length(A) == length(B).  In that case,
+ *       
+ *        C = normalize (cross (A,B)) * length(A)  
+ *    or (roughly)
+ *        C = cross (A, B) * (1 / length(A))
+ *
+ *  Then, we use this xform to xform points in the grid to their
+ *  locations in the model like this:
+ *
+ *     point_in_model = xf.apply (point_in_grid)
+ */
+static void compute_view_xform (
+    q_type         out_quat,
+    q_vec_type     out_xlate,
+    const BCGrid & grid,
+    QuadCorners &  model_in_rhino_frame)
+{
+    const int numX = grid.numX();
+    const int numY = grid.numY();
+    const int * which_num = 0;
+    
+    if (numX != numY) {
+        cout << "grid has different size in X and Y directions.  Using num";
+        if (numX >= numY) {
+            which_num = & numX;
+            cout << "X";
+        }
+        else {
+            which_num = & numY;
+            cout << "Y";
+        }
+        cout << endl;
+    }
+    const int scale_factor = *which_num;
+    
+    q_matrix_type scale_model_from_dataset;
+    for (int i=0; i<3; ++i) {
+        for (int j=0; j<3; ++j) {
+            scale_model_from_dataset [i] [j] = 0;
+        }
+        scale_model_from_dataset [i] [i] = scale_factor;
+    }
+
+    q_vec_type model_X;
+    q_vec_subtract (model_X,
+                    model_in_rhino_frame.bottom_right,
+                    model_in_rhino_frame.bottom_left);
+
+    q_vec_type model_Y;
+    q_vec_subtract (model_Y,
+                    model_in_rhino_frame.top_left,
+                    model_in_rhino_frame.bottom_left);
+
+    q_vec_type model_Z;
+    q_vec_cross_product (model_Z, model_X, model_Y);
+    q_vec_normalize     (model_Z, model_Z);
+    q_vec_scale         (model_Z,
+                         q_vec_magnitude (model_X),
+                         model_Z);
+    //< NB: this does strange thing if X and Y are different sizes.
+    
+    q_matrix_type changeBasisMatrix_model_from_dataset;
+    for (int row=0; row < 3; ++row) {
+        changeBasisMatrix_model_from_dataset [row] [0] = model_X [row];
+        changeBasisMatrix_model_from_dataset [row] [1] = model_Y [row];
+        changeBasisMatrix_model_from_dataset [row] [2] = model_Z [row];
+
+        // clear both the last column and the last row
+        changeBasisMatrix_model_from_dataset [row] [3] = 0.;
+        changeBasisMatrix_model_from_dataset [3] [row] = 0.;
+    }
+    // one more cell to clear
+    changeBasisMatrix_model_from_dataset [3] [3] = 0.;
+    
+    out_xlate [0] = model_in_rhino_frame.bottom_left [0];
+    out_xlate [1] = model_in_rhino_frame.bottom_left [1];
+    out_xlate [2] = model_in_rhino_frame.bottom_left [2];
+    q_from_row_matrix (out_quat,
+                       changeBasisMatrix_model_from_dataset);
+}
+
+
+/** Compute view xfrom based on point data in FILENAME
+ *
+ *  Read from FILENAME and find points that define where the plane is to go
+ *  into world space.  Then, compute an xform that takes grid points to that
+ *  place.  The xform is returned in OUT_QUAT and OUT_XLATE.  To xform a point
+ *  from grid space to the model space, first apply the quat, then add the
+ *  xlate.
+ *
+ *  GRID is needed to do proper scaling.  The xform that is returned has a
+ *  scale component that is dependant on the grid size.
+ */
+static
+void get_view_xform (
+    q_type         out_quat,
+    q_vec_type     out_xlate,
+    const char *   filename,
+    const BCGrid & grid)
+{
+    cout << "getting reference points from \"" << filename << "\"..." << endl;
+
+    QuadCorners model_in_rhino_frame;  // store the corners here
+    bool bOK = true;
 
     FILE * pfile = fopen (filename, "rb");
     if ( !pfile ) {
         cerr << "Unable to open file \"" << filename << "\"." << endl;
         return;
     }
-    bool bOK = true;
+
     try {
         CRhinoFile* pRF = new CRhinoFile( pfile, CRhinoFile::read );
-        
-        CRhinoFile::eStatus status = CRhinoFile::good;
-        
-        for ( ;; ) {
-            CRhinoObject* pObj = pRF->Read( status );
-            if ( status != CRhinoFile::good )
-                break;
-            
-            // check if this object is on a layer we care about
-            bool we_care = false;
-            if (pObj->Layer() && pObj->Layer()->Name()) {
-                we_care =
-                    (0 == strcmp("screen points",
-                                 pObj->Layer()->Name()));
-            }
-            if (! we_care) {
-                // wrong layer
-                delete pObj;
-                pObj = 0;
-                continue;
-            }
-
-            // if it's a point object, extract the points we care about
-            switch (pObj->TypeCode())
-            {
-            default:              // throw away stuff we don't want
-                delete pObj;
-                pObj = 0;
-
-            case TCODE_RH_POINT:  // CRhinoPointSet ( 3d point list )
-
-                cout << "\t\"" << pObj->Label() << "\""
-                     << " from layer \"" << pObj->Layer()->Name() << "\""
-                     << " (" << pObj->ClassName() << ")"
-                     << endl;
-                
-                CRhinoPointSet *pPoint = dynamic_cast<CRhinoPointSet*>(pObj);
-                if (! pPoint) {
-                    cerr << "\tError casting point object to point class"
-                         << endl;
-                }
-                else {
-                    set_quad_corner (model_in_rhino_frame, *pPoint);
-                }
-                delete pObj;
-                pObj = 0;
-
-            } // switch (pObj->TypeCode())
-
-        } // for( ;; )
-
-        bOK = ( status == CRhinoFile::eof );
+        bOK = get_corners_from_file (model_in_rhino_frame, pRF);
         delete pRF;
     }
     catch( CRhinoException e ) {
@@ -574,13 +719,17 @@ static void get_view_xform (const char * filename)
         cerr << "Never reached end of file \"" << filename << "\"" << endl;
     }
     
-    fclose (pfile);
-    // XXX error checking
-    
-    cout << "...done reading view xform" << endl;
+    if (fclose (pfile)) {
+        cerr << "An error occured closing \"" << filename << "\"" << endl;
 
+    }
+    
+    cout << "...done reading reference points\n";
     cout << "This is what I read:\n" << model_in_rhino_frame << endl;
+
+    compute_view_xform (out_quat, out_xlate, grid, model_in_rhino_frame);
 }
+
 
 
 /** Writes a .3dm file to `filename'.  It seems kind of messy passing both the
@@ -616,8 +765,10 @@ void export_scene_to_openNURBS (
         build_viewport (my_viewports[vn], v, vn);
     }
     
-
-    get_view_xform ("nanodesk-2.3dm");
+    q_type     quat;
+    q_vec_type vec;
+    
+    get_view_xform (quat, vec, "nanodesk-2.3dm", *grid);
 
     /////////
     // Now, finally, open the file and write to it

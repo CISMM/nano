@@ -1,3 +1,11 @@
+2000-08-11  Jeffrey Juliano  <juliano@cs.unc.edu>
+
+	* export_scene.C (get_corners_from_file, compute_view_xform):
+	New functions.
+	(get_view_xform): Change parameter list. Move a lot of stuff to
+	the new functions.
+	(export_scene_to_openNURBS): Adjust arguments to get_view_xform.
+
 2000-08-10  Jeffrey Juliano  <juliano@cs.unc.edu>
 
 	* ChangeLog: New file.
@@ -8,8 +16,7 @@
 	(rhinoException_to_string): Same.
 	(set_quad_corner): Same.
 	(get_view_xform): Same.
-	(export_scene_to_openNURBS): Add error checking.
-	Call get_view_xform. 
+	(export_scene_to_openNURBS): Add error checking. Call get_view_xform.
 
 2000-08-07  Jeffrey Juliano  <juliano@cs.unc.edu>
 
