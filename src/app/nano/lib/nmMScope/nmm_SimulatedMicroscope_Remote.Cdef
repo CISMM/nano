@@ -1,0 +1,162 @@
+OUTPUT_FILENAME nmm_SimulatedMicroscopeRemote.C
+
+#include "nmm_SimulatedMicroscopeRemote.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#if !defined(_WIN32)
+	#include <sys/time.h> 
+	#include <unistd.h>  // for sleep()
+#endif
+#include <BCPlane.h>
+#include <BCGrid.h>
+#include <nmb_Dataset.h>
+#include <vrpn_Connection.h>
+
+
+USE_MSG_GROUP nmm_AFMSIM_Report
+
+CLASSNAME nmm_SimulatedMicroscope_Remote
+
+//constructor
+nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
+  ( vrpn_Connection * connection, char * planename, 
+  nmb_Dataset * dataset) : nmm_AFMSIM_Report(connection),
+  nmb_Device_Client("nmm_SimulatedMicroscope_Remote", connection),
+  d_dataset(dataset)
+{
+	REGISTER nmm_AFMSIM_Report;
+
+  	BCPlane * SimScanPlane = new BCPlane(  planename,"nm", 
+		  d_dataset->inputGrid->(getPlaneByName(d_dataset->heightPlaneName->string()))->numX(),
+		  d_dataset->inputGrid->(getPlaneByName(d_dataset->heightPlaneName->string()))->numY());
+		  
+}
+
+
+nmm_SimulatedMicroscope_Remote::~nmm_Microscope_Remote() {
+	delete SimScanPlane;
+}
+
+// virtual
+int nmm_SimulatedMicroscope_Remote::mainloop() {
+
+  return 0;
+}
+
+HANDLERS nmm_AFMSIM_Report;
+
+RECEIVE_MSG WindowLineData {
+//    int32 x
+//    int32 y
+//    int32 dx
+//    int32 dy
+//    int32 reports
+//    int32 fields
+//    int32 sec
+//    int32 usec
+//    float32 data [reports][fields]
+
+//do stuff with this data, all these parameters are vrpn_int32 or vrpn_float32
+
+}
+	
+/*
+RECEIVE_MSG WindowLineData {
+//    int32 x
+//    int32 y
+//    int32 dx
+//    int32 dy
+//    int32 reports
+//    int32 fields
+//    int32 sec
+//    int32 usec
+//    float32 data [reports][fields]
+
+  // Handle guarded scan differently...
+  if(state.image.mode == GUARDED_SCAN) {
+     BCPlane* pPlane = d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string());
+  
+     // Set the value...
+     pPlane->setValue(x, y, data[0][0]);
+     d_dataset->range_of_change.AddPoint(x, y);
+
+     return;
+  }
+
+  if ((x < 0 || y < 0 || 
+     (x+(reports-1)*dx) > (d_dataset->inputGrid->numX()-1) ||
+     (y+(reports-1)*dy) > (d_dataset->inputGrid->numY()-1))) {
+     display_fatal_error_dialog( "Internal: grid size (%d,%d) doesn't match"
+           " reported data size (%dx%d). Exiting to avoid loss of data.", 
+           d_dataset->inputGrid->numX(),
+           d_dataset->inputGrid->numY(),
+           reports, reports);
+     return;
+  }
+  int i;
+  // Store the data in the BCGrid/BCPlanes structure using
+  // the scan_channel selector to put it in the right place. 
+  for (i = 0; i < reports; i++) {
+      if (state.data.scan_channels->Handle_report(x+ i*dx, y+ i*dy, sec, usec,
+                                         data[i], fields)) {
+          fprintf(stderr, "Error handling window line data\n");
+          d_dataset->done = VRPN_TRUE;
+          return;
+      }
+  }
+
+  // Change the background, since we are not touching or modifying
+  d_decoration->mode = nmb_Decoration::IMAGE;
+
+  // Incremental save of stream file
+  // when user is not touching or modifying the sample.
+  // XXX May cause slowdown on network drives. 
+  if (d_incr_save) {
+      d_connection->save_log_so_far();
+  }
+
+  double curr_x, curr_y, xf, yf;
+  nmb_Image *image;
+  
+  // need to convert from a nmb_string to a BCString
+  BCString o = BCString( (d_dataset->heightPlaneName->string()) );
+  image = d_dataset->dataImages->getImageByName( o );
+
+  // Draw the green "Scanline"
+  // we want to stick the x,y and z values of every pixel along the
+  // last received line to an array into the nmb_Decoration class so
+  // that we can grab it later and draw the microscope's "scanline"
+
+  if (d_decoration->scan_line) {
+    // if the decoration's lineCount isn't the same as the current linecount
+    // the microscope's surface size changed, so update the decoration's
+    // linecount field
+    if (d_decoration->scanLineCount != reports) {
+      delete [] d_decoration->scan_line;
+      d_decoration->initScanline(reports);
+    }
+  }
+  else {
+    d_decoration->initScanline(reports);
+  }
+  BCPlane *plane = d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string() );
+  if (plane == NULL) return;
+  for (i = 0; i < reports; i++) {
+    curr_x = x + i * dx;
+    curr_y = y + i * dy;
+    image->pixelToWorld( (double)curr_x, (double)curr_y, xf, yf);
+    d_decoration->scan_line[i][0] = xf;
+    d_decoration->scan_line[i][1] = yf;
+    d_decoration->scan_line[i][2] = plane->scaledValue( curr_x, curr_y );
+  }
+
+  BCPlane *cp = d_dataset->inputGrid->getPlaneByName(d_dataset->colorPlaneName->string() );
+  // Color map drift compensation. Keep track of the average data value of the
+  // first scan line
+  if (cp && (x == 0) && (y == cp->numY() -1)) {
+      d_decoration->first_line_avg = d_dataset->getFirstLineAvg(cp);
+  }
+  return;
+}
+*/

@@ -1,0 +1,36 @@
+// MESSAGE_GROUP must come first, before any VRPN_MESSAGE directives. 
+MESSAGE_GROUP nmm_SPM_Report
+
+MESSAGE_PREFIX "nmm Microscope "
+
+DEFINE SPM_NAME_LENGTH 64
+
+//message is a line of data from the simulator
+VRPN_MESSAGE WindowLineData {
+  int32 x // should be 0
+  int32 y //should be some value
+  int32 dx //should be 1, increment by 1 (pixel, step) across row
+  int32 dy //should be 0, do not increment in y
+  int32 reports
+  int32 fields
+  int32 sec //for current time
+  int32 usec //for current time
+  float32 data [reports][fields]
+}
+//reports is the number of opints in the row/column
+//a field a layer of data, e.g. height or force
+//each point can have several values (fields), depending on what information is taken in a scan
+//in the case of the simulator, however, the only data is height
+//therefore, all data will be in the first dimention:  data [i][0], increment over i
+
+//message tells what order the fields are in
+VRPN_MESSAGE ScanDataset {
+  int32 count
+  struct ScanDataset {
+    char name [64] //name of field
+    char units [64] //units in
+    float32 offset 
+    float32 scale
+  } datasets [count]
+}
+//in case of simulator, there is only one field, so datasets will only have one element (height)
