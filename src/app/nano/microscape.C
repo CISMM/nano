@@ -6687,19 +6687,21 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     // XXX ATH memory leak
     ModFile * modfile = new ModFile;
 
-    new_microscope->registerPointDataHandler(ModFile::ReceiveNewPoint, modfile);
-    new_microscope->registerModifyModeHandler(ModFile::EnterModifyMode, modfile);
+    new_microscope->registerPointDataHandler(ModFile::ReceiveNewPoint, 
+					     modfile);
+    new_microscope->registerModifyModeHandler(ModFile::EnterModifyMode, 
+					      modfile);
     new_microscope->registerImageModeHandler(ModFile::EnterImageMode, modfile);
     VERBOSE(1, "Created new mod file");
 
     // display modifications on a strip chart
 
-    // XXX ATH memory leak
-    GraphMod * graphmod = new GraphMod;
-
-    new_microscope->registerPointDataHandler(GraphMod::ReceiveNewPoint, new_microscope->graphmod);
-    new_microscope->registerModifyModeHandler(GraphMod::EnterModifyMode, new_microscope->graphmod);
-    new_microscope->registerImageModeHandler(GraphMod::EnterImageMode, new_microscope->graphmod);
+    new_microscope->registerPointDataHandler(GraphMod::ReceiveNewPoint, 
+					     new_microscope->graphmod);
+    new_microscope->registerModifyModeHandler(GraphMod::EnterModifyMode, 
+					      new_microscope->graphmod);
+    new_microscope->registerImageModeHandler(GraphMod::EnterImageMode, 
+					     new_microscope->graphmod);
     new_microscope->registerScanlineModeHandler(GraphMod::EnterScanlineMode,
 						new_microscope->graphmod);
     new_microscope->registerScanlineDataHandler(GraphMod::ReceiveNewScanline,
@@ -6707,11 +6709,14 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
 
     VERBOSE(1, "Created new GraphMod");
 
-    new_microscope->registerImageModeHandler(invalidate_directz_forces, new_microscope);
+    new_microscope->registerImageModeHandler(invalidate_directz_forces, 
+					     new_microscope);
     // Allow another result to be requested when the last is received
     // when using the Slow Line tool. 
-    new_microscope->registerPointDataHandler(slow_line_ReceiveNewPoint, new_microscope);
-    new_microscope->registerPointDataHandler(optimize_now_ReceiveNewPoint, new_microscope);
+    new_microscope->registerPointDataHandler(slow_line_ReceiveNewPoint, 
+					     new_microscope);
+    new_microscope->registerPointDataHandler(optimize_now_ReceiveNewPoint, 
+					     new_microscope);
 
     //draw measure lines
     VERBOSE(1, "Initializing measure lines");
@@ -8200,7 +8205,8 @@ static void handleTermInput(int ttyFD, vrpn_bool* donePtr)
  *
  *****************************************************************************/
 
-void handleCharacterCommand (char * character, vrpn_bool * donePtr,
+
+void handleCharacterCommand (char* character, vrpn_bool* /* donePtr */,
                              int /* nchars */)
 {
     /* handle the given command. */
@@ -8335,7 +8341,7 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 #define M_SHEAR 7
 #define M_PICK 8
 
-static int handleMouseEvents (nmb_TimerList * timer)
+static int handleMouseEvents (nmb_TimerList* /* timer */)
 {
 #ifndef NO_XWINDOWS
 static int gwi = 400;	///< Width of the graphical window

@@ -33,7 +33,8 @@ public:
 	void setMaskFile(const char *);
 	void setOrderFile(const char *);
 
-	void imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset);
+	void imageAnalyze(nmb_PlaneSelection planeSelection, 
+			  nmb_Dataset * dataset);
 	//pass in dataset so that it is current when image analysis is done
 
         static int nma_ShapeAnalyzeCounter;
@@ -76,18 +77,24 @@ public:
 	// Packs up and sends across the connection all the data
 	// necessary for the other end to recreate this calculated 
 	// plane.
-	void sendCalculatedPlane( vrpn_Connection* conn, vrpn_int32 senderID,
-			    vrpn_int32 synchCalculatedPlaneMessageType ) const {}
+	void sendCalculatedPlane( vrpn_Connection* /* conn */, 
+				  vrpn_int32 /* senderID */,
+				  vrpn_int32 /*synchCalcdPlaneMessageType */ )
+	  const {}
 
 protected:
 	// create a new plane according to the data from vrpn
 	static nmb_CalculatedPlane*
-	 _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
-	  throw( nmb_CalculatedPlaneCreationException ){return NULL;}
+	  _handle_PlaneSynch( vrpn_HANDLERPARAM /* p */, 
+			      nmb_Dataset* /* dataset */ )
+	  throw( nmb_CalculatedPlaneCreationException )
+	  {return NULL;}
 
 	// Update the calculated plane for changes in the source plane
-	static void sourcePlaneChangeCallback( BCPlane* plane, int x, int y,
-						void* userdata ){}
+	static void sourcePlaneChangeCallback( BCPlane* /* plane */, 
+					       int /* x */, int /* y */,
+					       void* /* userdata */ )
+	  { }
 private:
 	void create_ShapeIdentifiedPlane();  //creates new plane
 
