@@ -1,3 +1,9 @@
+2002-06-26  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* microscape.C : added variables and functions used in creating
+	nmm_SimulatedMicroscope_Remote object, Eroder, used for erosion.
+	also call to Eroder's mainloop in microscape's mainloop
+
 2002--6-26  David Borland <borland@cs.unc.edu>
 
         * import.C : added callback for saving spider data
@@ -40,6 +46,7 @@
 	* microscope.c: "working" message is now turned off
 			when we load the same streamfile twice.
 
+>>>>>>> 1.228
 2002-06-06 Jameson Miller <millerj@cs.unc.edu>
 	* interaction.c: added code to go into modify mode when in
 		direct step (and commit button is pressed).

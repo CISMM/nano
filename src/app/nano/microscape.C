@@ -446,10 +446,14 @@ static void handle_sumPlaneName_change(const char *new_value, void *userdata);
 static void handle_adhPlaneName_change(const char *new_value, void *userdata);
 static void handle_SimScanPlaneName_change(const char *new_value, void *userdata);
 static void handle_SimScanComputerName_change(const char *new_value, void *userdata);
+static void handle_EroderPlaneName_change(const char *new_value, void *userdata);
+static void handle_EroderComputerName_change(const char *new_value, void *userdata);
 static void handle_flatPlaneName_change(const char *new_value, void *userdata);
 static void handle_lblflatPlaneName_change(const char *new_value, void *userdata);
 Tclvar_string	newSimScanPlaneName("simscanplane_name","");
 Tclvar_string	SimScanComputerName("simscanIPaddress","");
+Tclvar_string	newEroderPlaneName("eroderplane_name","");
+Tclvar_string	EroderComputerName("eroderIPaddress","");
 Tclvar_string	newFlatPlaneName("flatplane_name","");
 
 //added 1-9-99 by Amy Henderson
@@ -1255,7 +1259,7 @@ static vrpn_Connection * rtt_server_connection = NULL;
 static vrpn_Analog_Server * rtt_server = NULL;
 
 
-//Sim Scan stuff
+//start Sim Scan stuff
 BCPlane * BasePlane; //added by Andrea for unit check for SimScanPlane
 bool SimScanComputerNameGiven = false;
 bool SimScanPlaneNameGiven = false;
@@ -1264,8 +1268,17 @@ char*SimScanStoredPlaneName;
 nmm_SimulatedMicroscope_Remote * SimulatedMicroscope = NULL;
 vrpn_Connection * connection;
 static void startSimulatedMicroscope();
-
 //end Sim Scan stuff
+
+//start Eroder stuff
+bool EroderComputerNameGiven = false;
+bool EroderPlaneNameGiven = false;
+char* EroderIPAddress;
+char*EroderStoredPlaneName;
+nmm_SimulatedMicroscope_Remote * Eroder = NULL;
+vrpn_Connection * eroder_connection;
+static void startEroder();
+//end Eroder stuff
 
 /// Are we reading device, stream, or files?
 static Tclvar_int read_mode("spm_read_mode", READ_FILE);
@@ -2800,7 +2813,7 @@ static void handle_openStaticFilename_change (const char *, void *)
         //printf("Found plane %s\n", (p->name())->c_str());
         // Add it to the list if it's not there already.
         if (dataset->inputPlaneNames->getIndex(p->name()->c_str()) == -1) {
-	    BasePlane = p;
+			BasePlane = p;
             //printf("Add entry\n");
             dataset->inputPlaneNames->addEntry(p->name()->c_str());
             // This is the new plane we just added, so switch the heightplane
@@ -3356,6 +3369,73 @@ static void handle_SimScanComputerName_change(const char *, void *)
 	SimScanComputerName = (const char *) "";  
 } 
 
+/** See if the user has given a name to the eroder plane other
+ than "".  If so, we should create a new plane and set the value
+ back to "". */
+static void handle_EroderPlaneName_change(const char *, void *)
+{
+	if( strlen(newEroderPlaneName.string() ) <= 0 )
+		return;
+  
+	try{
+		EroderStoredPlaneName = new char[100];
+		strcpy(EroderStoredPlaneName,newEroderPlaneName.string()); // XXX Make operator =
+		//stored one is EroderStoredPlaneName
+		EroderPlaneNameGiven = true;
+		if(EroderComputerNameGiven){
+			startEroder();
+		}
+		//only start up simulated microscope connection if both plane name and
+		//IP address for the simulator have been filled in by the user
+	}
+	catch( nmb_CalculatedPlaneCreationException e ){
+		display_error_dialog( e.getMsgString() );
+		newEroderPlaneName = (const char *) "";
+		return;
+	}
+
+	newEroderPlaneName = (const char *) "";
+} 
+
+
+static void startEroder(){
+	//form cname from hostname:port (I think)
+	eroder_connection = vrpn_get_connection_by_name(EroderIPAddress);
+	if(eroder_connection != NULL){
+		if(Eroder != NULL)	delete Eroder;		
+		Eroder = new nmm_SimulatedMicroscope_Remote(EroderIPAddress, 
+			eroder_connection, EroderStoredPlaneName, dataset);		
+	}
+	else{
+		cout << "\nConnection is NULL\nTry setting up remote device (eroder) again.\n";
+	}
+}
+
+
+static void handle_EroderComputerName_change(const char *, void *)
+{
+	if( strlen(EroderComputerName.string() ) <= 0 )
+		return;
+  
+	try{
+		EroderIPAddress = new char[100];
+		strcpy(EroderIPAddress,EroderComputerName.string());
+		//stored one is EroderIPAddress
+		EroderComputerNameGiven = true;
+		if(EroderPlaneNameGiven){
+			startEroder();		
+		}
+		//only start up simulated microscope connection if both plane name and
+		//IP address for the simulator have been filled in by the user
+	}
+	catch( nmb_CalculatedPlaneCreationException e ){
+		display_error_dialog( e.getMsgString() );
+		EroderComputerName = (const char *) "";
+		return;
+	}
+
+	EroderComputerName = (const char *) "";  
+} 
 
 /** See if the user has given a name to the flattened plane other
  than "".  If so, we should create a new plane and set the value
@@ -4703,6 +4783,14 @@ void setupCallbacks (nmb_Dataset *d) {
   SimScanComputerName = "";
   SimScanComputerName.addCallback
             (handle_SimScanComputerName_change, NULL);
+
+  newEroderPlaneName = "";
+  newEroderPlaneName.addCallback
+            (handle_EroderPlaneName_change, NULL);
+
+  EroderComputerName = "";
+  EroderComputerName.addCallback
+            (handle_EroderComputerName_change, NULL);
 
   newFlatPlaneName = "";
   newFlatPlaneName.addCallback
@@ -8224,6 +8312,9 @@ vrpn_Connection* c;
 			first = false;
 		}
 		if(SimulatedMicroscope->mainloop() == -1) cout << "connection mainloop not working properly" << endl;
+	}
+	if(Eroder){
+		if(Eroder->mainloop() == -1) cout << "connection mainloop not working properly" << endl;
 	}
 
 #ifdef TIMING_TEST
