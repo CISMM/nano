@@ -159,6 +159,7 @@ void nmg_RSViewS_Ortho::setViewingTransform (void) {
 
   BCPlane * plane;
   double scaleTo;
+  double xlateTo;
   double lenY;
   double gridMidpointX, gridMidpointY;
 
@@ -173,6 +174,11 @@ void nmg_RSViewS_Ortho::setViewingTransform (void) {
 //fprintf(stderr, "lenY is %.5lf;  computed scaleTo is %.5lf\n",
 //lenY, scaleTo);
 
+  xlateTo = 10000.0;
+  if (plane->maxValue() * 1.5 > xlateTo) {
+    xlateTo = 1.5 * plane->maxValue();
+  }
+
   // AD HOC - correction factor probably due to error in ScreenWidthMetersY,
   // since that's an assumption that varies from display to display.
   // 100x100 render buffer on an O2 thinks it's 5cm on a side but looking at
@@ -185,7 +191,7 @@ void nmg_RSViewS_Ortho::setViewingTransform (void) {
   // we need to distort to account for this?  Use non-square rendering
   // grids at the client that depend on physical characteristics of the
   // server?  AARGH!
-  scaleTo *= d_server->screenSizeY() * 0.0085;
+  //scaleTo *= d_server->screenSizeY() * 0.0085;
 
   gridMidpointX = (g_inputGrid->minX() +
                    g_inputGrid->maxX()) * 0.5;
@@ -193,12 +199,15 @@ void nmg_RSViewS_Ortho::setViewingTransform (void) {
                    g_inputGrid->maxY()) * 0.5;
   v_world.users.xforms[0].xlate[0] = gridMidpointX;
   v_world.users.xforms[0].xlate[1] = gridMidpointY;
-  v_world.users.xforms[0].xlate[2] = 10000.0;
+  v_world.users.xforms[0].xlate[2] = scaleTo ;
   v_world.users.xforms[0].rotate[0] = 0.0;
   v_world.users.xforms[0].rotate[1] = 0.0;
   v_world.users.xforms[0].rotate[2] = 0.0;
   v_world.users.xforms[0].rotate[3] = 1.0;
   v_world.users.xforms[0].scale = scaleTo;
+
+fprintf(stderr, "Translation is %.5f, %.5f, %.5f;  scale is %.5f.\n",
+gridMidpointX, -scaleTo + gridMidpointY, scaleTo , v_world.users.xforms[0].scale);
 
 }
 

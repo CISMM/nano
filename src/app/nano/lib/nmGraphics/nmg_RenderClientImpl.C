@@ -365,6 +365,12 @@ void nmg_RCIS_Texture::mainloop (void) {
 
 //fprintf(stderr, "Texture mainloop.\n");
 
+// BUG BUG BUG
+// Extra frame of latency -
+//   inputConnection->mainloop() is only called in RCIStrategy::mainloop,
+// AFTER we've updated the texture!
+
+
   if (d_textureChanged) {
     buildRemoteRenderedTexture(d_screenSizeX, d_screenSizeY, remote_data);
     d_textureChanged = VRPN_FALSE;
@@ -397,6 +403,11 @@ void nmg_RCIS_Texture::mainloop (void) {
   g_texture_mode = GL_TEXTURE_2D;
   g_texture_displayed = nmg_Graphics::REMOTE_DATA;
   g_texture_transform_mode = nmg_Graphics::REGISTRATION_COORD;
+
+  // in the right window
+  v_gl_set_context_to_vlib_window();
+
+  glShadeModel(GL_FLAT);
 
   nmg_RCIStrategy::mainloop();
 

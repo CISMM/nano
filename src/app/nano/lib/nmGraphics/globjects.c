@@ -732,7 +732,9 @@ static char     *MODE_NAMES[] = {
                         "line scan" };
 
 int make_collab_hand_icon (double pos[], double rotate[], vrpn_int32 mode) {
+  v_xform_type headxform;
   double rot_mat[16];
+  float invscale;
 
   q_to_ogl_matrix(rot_mat, rotate);
 
@@ -746,6 +748,12 @@ int make_collab_hand_icon (double pos[], double rotate[], vrpn_int32 mode) {
     glTranslated(pos[0], pos[1], pos[2]);
     glMultMatrixd(rot_mat);
     glColor3f(1.0, 0.2, 0.2);
+
+// insert scale here?
+    v_get_world_from_head(0, &headxform);
+    invscale = 1.0f / headxform.scale;
+    glScalef(invscale, invscale, invscale);
+
     make_cone();
     //printf("XXX Making the collaborative hand icon for %s\n",MODE_NAMES[mode]);
   glEndList();
