@@ -823,6 +823,8 @@ int draw_world (int) {
 
     double theta = 0.0;
     GLdouble texture_matrix[16];
+    double x_scale_factor = 1.0, y_scale_factor = 1.0;
+
     switch (g_texture_transform_mode) {
       case nmg_Graphics::RULERGRID_COORD:
         // use values from the older rulergrid adjustment interface
@@ -846,9 +848,48 @@ int draw_world (int) {
         // scale by actual texture image given divided by texture image used
         // (i.e. the one actually in texture memory is a power of 2 but the
         // one we were given had some smaller size)
-        glScaled((double)g_tex_image_width/(double)g_tex_installed_width,
-                (double)g_tex_image_height/(double)g_tex_installed_height,
-                1.0);
+        switch (g_texture_displayed) {
+          case nmg_Graphics::NO_TEXTURES:
+          case nmg_Graphics::BUMPMAP:
+          case nmg_Graphics::HATCHMAP:
+          case nmg_Graphics::PATTERNMAP:
+          // nothing to do here
+            break;
+          case nmg_Graphics::RULERGRID:
+            x_scale_factor = (double)g_tex_image_width[RULERGRID_TEX_ID]/
+                             (double)g_tex_installed_width[RULERGRID_TEX_ID];
+            y_scale_factor = (double)g_tex_image_height[RULERGRID_TEX_ID]/
+                             (double)g_tex_installed_height[RULERGRID_TEX_ID];
+            break;
+          case nmg_Graphics::GENETIC:
+            x_scale_factor = (double)g_tex_image_width[GENETIC_TEX_ID]/
+                             (double)g_tex_installed_width[GENETIC_TEX_ID];
+            y_scale_factor = (double)g_tex_image_height[GENETIC_TEX_ID]/
+                             (double)g_tex_installed_height[GENETIC_TEX_ID];
+            break;
+          case nmg_Graphics::COLORMAP:
+            x_scale_factor = (double)g_tex_image_width[COLORMAP_TEX_ID]/
+                             (double)g_tex_installed_width[COLORMAP_TEX_ID];
+            y_scale_factor = (double)g_tex_image_height[COLORMAP_TEX_ID]/
+                             (double)g_tex_installed_height[COLORMAP_TEX_ID];
+            break;
+          case nmg_Graphics::SEM_DATA:
+            x_scale_factor = (double)g_tex_image_width[SEM_DATA_TEX_ID]/
+                             (double)g_tex_installed_width[SEM_DATA_TEX_ID];
+            y_scale_factor = (double)g_tex_image_height[SEM_DATA_TEX_ID]/
+                             (double)g_tex_installed_height[SEM_DATA_TEX_ID];
+            break;
+          case nmg_Graphics::REMOTE_DATA:
+            x_scale_factor = (double)g_tex_image_width[REMOTE_DATA_TEX_ID]/
+                             (double)g_tex_installed_width[REMOTE_DATA_TEX_ID];
+            y_scale_factor = (double)g_tex_image_height[REMOTE_DATA_TEX_ID]/
+                             (double)g_tex_installed_height[REMOTE_DATA_TEX_ID];
+            break;
+          default:
+            fprintf(stderr, "Error, unknown texture set for display\n");
+            break;
+        }
+        glScaled(x_scale_factor, y_scale_factor, 1.0);
         glMultMatrixd(g_texture_transform);
 	break;
       //case nmg_Graphics::REMOTE_COORD;

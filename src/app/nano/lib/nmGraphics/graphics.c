@@ -381,8 +381,10 @@ void buildRemoteRenderedTexture (int width, int height, void * tex) {
   //}
 #endif 
 
-  g_tex_image_width = g_tex_installed_width = width;
-  g_tex_image_height = g_tex_installed_height = height;
+  g_tex_image_width[RULERGRID_TEX_ID] = 
+           g_tex_installed_width[RULERGRID_TEX_ID] = width;
+  g_tex_image_height[RULERGRID_TEX_ID] = 
+           g_tex_installed_height[RULERGRID_TEX_ID] = height;
 }
 
 

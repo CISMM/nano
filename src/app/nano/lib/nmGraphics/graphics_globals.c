@@ -106,13 +106,8 @@ float g_rotate_tex_theta = 0;
 
 // Registration
 double g_texture_transform[16] = {0.001,0,0,0,0,0.001,0,0,0,0,1,0,0,0,0,1};
-  // 1000 nM texture goes from 0-1
-int g_tex_image_width = 512;
-int g_tex_image_height = 512;
-int g_tex_installed_width = 512;
-int g_tex_installed_height = 512;
-int g_tex_sem_installed_width = 512;
-int g_tex_sem_installed_height = 512;
+  // object space along x or y from 0 to 1000 (units are nM) 
+  // goes from 0 to 1 in u or v texture coordinate
 
 float g_rubberPt [4];
 float g_rubberSweepPts[2][4];
@@ -158,7 +153,17 @@ int g_texture_transform_mode = nmg_Graphics::RULERGRID_COORD;
 GLenum g_texture_mode = GL_FALSE;
 GLuint tex_ids [N_TEX];
 GLubyte * sem_data = NULL;
+float *realign_data = NULL;
 GLubyte * remote_data = NULL;
+
+// image size refers to a sub region of the texture passed to openGL that
+// actually contains image data
+int g_tex_image_width[N_TEX];
+int g_tex_image_height[N_TEX];
+
+// installed size refers to size of texture passed to openGL
+int g_tex_installed_width[N_TEX];
+int g_tex_installed_height[N_TEX];
 
 float g_texture_scale = 10.0f;
 float g_trueTipLocation [3];

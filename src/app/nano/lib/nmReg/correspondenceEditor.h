@@ -18,7 +18,8 @@ class CorrespondenceEditor {
                               Correspondence *corr, int *winIDs);
     void show();
     void hide();
-	int setImage(int image_index, nmb_Image *im);
+    void addFiducial(int spaceIndex, float x, float y, float z);
+    int setImage(int image_index, nmb_Image *im);
     int setImageFromPlane(int image_index, BCPlane *p);
     int setImageFromPNM(int image_index, PNMImage &im);
     int setImageFromPNM(int image_index, PPM *im);

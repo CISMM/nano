@@ -290,6 +290,18 @@ void CorrespondenceEditor::hide() {
     }
 }
 
+/** 
+   x, y are in the range 0..1 and z is in nanometers
+
+*/
+
+void CorrespondenceEditor::addFiducial(int spaceIndex, 
+                                       float x, float y, float z)
+{
+    corr_point_t p(x, y, z);
+    correspondence->addPoint(p);
+}
+
 int CorrespondenceEditor::setImage(int spaceIndex, nmb_Image *im) {
     int im_w, im_h;
     int i,j;

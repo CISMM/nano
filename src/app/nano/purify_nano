@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# Find the right ./XXX executable to run.
+# Depends on environment ($MY_NANO_???_DIR) and system ($HW_OS).
+
+APP_EXE=nano;
+APP_DIR=app/$APP_EXE;
+
+FULL_EXE=`../app_exec $APP_DIR $APP_EXE`;
+
+echo $FULL_EXE $*
+exec purify $FULL_EXE $*

@@ -1,4 +1,4 @@
-USES_LIBS := nmReg nmMScope nmBase tclLinkVar nmGraphics \
+USES_LIBS := nmImageViewer nmMScope nmBase tclLinkVar nmGraphics \
              ImgFormat \
              vrpn vogl quat
 

@@ -1,4 +1,4 @@
-USES_LIBS := nmReg nmGraphics nmUI nmBase tclLinkVar ImgFormat vogl vrpn quat
+USES_LIBS := nmImageViewer nmGraphics nmUI nmBase tclLinkVar ImgFormat vogl vrpn quat
 
 NAUGHTY := 1
 

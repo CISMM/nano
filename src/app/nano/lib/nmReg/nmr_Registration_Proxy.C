@@ -1,0 +1,217 @@
+#include "nmr_Registration_Proxy.h"
+
+nmr_Registration_Proxy::nmr_Registration_Proxy(const char *name):
+  d_remote_impl(NULL),d_local_impl(NULL), d_local(vrpn_TRUE),
+
+  d_imageParamsLastReceived(NMR_SOURCE),
+  d_res_x(0), d_res_y(0),
+  d_heightField(vrpn_FALSE),
+  d_messageHandlerList(NULL)
+{
+    if (name) {
+        d_remote_impl = new nmr_Registration_Client(name);
+        d_remote_impl->registerChangeHandler((void *) this, 
+ 		handle_registration_change);
+        d_local = vrpn_FALSE;
+    } else {
+        d_local_impl = new nmr_Registration_Impl();
+        d_local = vrpn_TRUE;
+    }
+}
+
+nmr_Registration_Proxy::~nmr_Registration_Proxy()
+{
+    if (d_local_impl){
+        delete d_local_impl;
+    }
+    if (d_remote_impl){
+        delete d_remote_impl;
+    }
+}
+
+vrpn_int32 nmr_Registration_Proxy::mainloop(void)
+{
+    if (d_local){
+        d_local_impl->mainloop();
+    } else {
+        d_remote_impl->mainloop();
+    }
+    return 0;
+}
+
+vrpn_int32 nmr_Registration_Proxy::registerImages()
+{
+    if (d_local){
+        struct timeval now;
+        d_local_impl->registerImages(d_matrix44);
+        gettimeofday(&now, NULL);
+        notifyMessageHandlers(NMR_REG_RESULT, now);
+    } else {
+        d_remote_impl->setRegistrationEnable(vrpn_TRUE);
+    }
+    return 0;
+}
+
+vrpn_int32 nmr_Registration_Proxy::setGUIEnable(vrpn_bool enable)
+{
+    if (d_local){
+        d_local_impl->setGUIEnable(enable);
+    } else {
+        d_remote_impl->setGUIEnable(enable);
+    }
+    return 0;
+}
+
+vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
+          nmb_Image *im, vrpn_bool treatAsHeightField)
+{
+  int i,j;
+  vrpn_float32 *data;
+  if (d_local){
+    d_local_impl->setImageParameters(whichImage, im->width(), im->height(),
+                        treatAsHeightField);
+    data = new vrpn_float32[im->width()];
+    for (i = 0; i < im->height(); i++) {
+        for (j = 0; j < im->width(); j++) {
+            data[j] = im->getValue(j, i);
+        }
+        d_local_impl->setScanline(whichImage, i, im->width(), data);
+    }
+    delete [] data;
+  } else {
+    printf("nmr_Registration_Proxy::setImage: "
+           "sending image parameters to remote\n");
+    d_remote_impl->setImageParameters(whichImage, im->width(), im->height(),
+                         treatAsHeightField);
+    d_remote_impl->mainloop();
+    printf("nmr_Registration_Proxy::setImage: "
+           "sending image data to remote\n");
+    data = new vrpn_float32[im->width()];
+    for (i = 0; i < im->height(); i++) {
+        for (j = 0; j < im->width(); j++) {
+            data[j] = im->getValue(j, i);
+        }
+        d_remote_impl->setScanline(whichImage, i, im->width(), data);
+        d_remote_impl->mainloop();
+    }
+    printf("nmr_Registration_Proxy::setImage: "
+           "finished sending image data to remote\n");
+    delete [] data;
+  }
+  return 0;
+}
+
+// static
+void nmr_Registration_Proxy::handle_registration_change(void *ud,
+                          const nmr_ClientChangeHandlerData &info)
+{
+  nmr_Registration_Proxy *me = (nmr_Registration_Proxy *)ud;
+
+  // set our data
+  switch(info.msg_type) {
+    case NMR_IMAGE_PARAM:
+      info.aligner->getImageParameters(me->d_imageParamsLastReceived, 
+               me->d_res_x, me->d_res_y, me->d_heightField);
+      break;
+    case NMR_TRANSFORM_OPTION:
+      printf("nmr_Registration_Proxy::got transform\n");
+      info.aligner->getTransformationOptions(me->d_transformType);
+      break;
+    case NMR_REG_RESULT:
+      info.aligner->getRegistrationResult(me->d_matrix44);
+      break;
+  }
+
+  // notify our user callbacks
+  me->notifyMessageHandlers(info.msg_type, info.msg_time);
+}
+
+int nmr_Registration_Proxy::registerChangeHandler (void *userdata,
+        void (*handler)(void *ud, const nmr_ProxyChangeHandlerData &info))
+{
+  msg_handler_list_t *new_entry;
+  if (handler == NULL) {
+    fprintf(stderr,
+       "nmr_Registration_Proxy::registerChangeHandler: NULL handler\n");
+    return -1;
+  }
+  if ( (new_entry = new msg_handler_list_t) == NULL) {
+    fprintf(stderr,
+       "nmr_Registration_Proxy::registerChangeHandler: out of memory\n");
+    return -1;
+  }
+  new_entry->handler = handler;
+  new_entry->userdata = userdata;
+  new_entry->next = d_messageHandlerList;
+  d_messageHandlerList = new_entry;
+
+  return 0;
+}
+
+int nmr_Registration_Proxy::unregisterChangeHandler (void *userdata,
+        void (*handler)(void *ud, const nmr_ProxyChangeHandlerData &info))
+{
+  msg_handler_list_t *victim, **snitch;
+
+  // Find a handler with this registry in the list
+  snitch = &d_messageHandlerList;
+  victim = *snitch;
+  while ( (victim != NULL) &&
+          ( (victim->handler != handler) ||
+            (victim->userdata != userdata) )) {
+    snitch = &( (*snitch)->next );
+    victim = victim->next;
+  }
+
+  // make sure we found one
+  if (victim == NULL) {
+    fprintf(stderr,
+           "nmr_Registration_Proxy::unregisterChangeHandler:"
+           " no such handler\n");
+    return -1;
+  }
+
+  // remove the entry from the list
+  *snitch = victim->next;
+  delete victim;
+
+  return 0;
+}
+
+int nmr_Registration_Proxy::notifyMessageHandlers(nmr_MessageType type,
+        const struct timeval &msg_time)
+{
+  nmr_ProxyChangeHandlerData handler_info;
+  handler_info.msg_time = msg_time;
+  handler_info.msg_type = type;
+  handler_info.aligner = this;
+
+  msg_handler_list_t *handler = d_messageHandlerList;
+  while (handler != NULL) {
+    handler->handler(handler->userdata, handler_info);
+    handler = handler->next;
+  }
+  return 0;
+}
+
+void nmr_Registration_Proxy::getImageParameters(nmr_ImageType &whichImage,
+                           vrpn_int32 &res_x, vrpn_int32 &res_y,
+                           vrpn_bool &treat_as_height_field)
+{
+    whichImage = d_imageParamsLastReceived;
+    res_x = d_res_x; res_y = d_res_y;
+    treat_as_height_field = d_heightField;
+}
+
+void nmr_Registration_Proxy::getTransformationOptions(
+                              nmr_TransformationType &type)
+{
+    type = d_transformType;
+}
+
+void nmr_Registration_Proxy::getRegistrationResult(vrpn_float64 *matrix44)
+{
+    for (int i = 0; i < 16; i++){
+        matrix44[i] = d_matrix44[i];
+    }
+}

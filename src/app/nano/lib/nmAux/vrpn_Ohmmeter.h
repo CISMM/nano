@@ -159,6 +159,7 @@ typedef void (*vrpn_OHMMEASUREMENTHANDLER)(void *userdata,
 class vrpn_Ohmmeter_Remote : public nmb_Device_Client, public vrpn_Ohmmeter {
   public:
     vrpn_Ohmmeter_Remote(char *name, vrpn_Connection *c = NULL);
+    virtual ~vrpn_Ohmmeter_Remote(void);
     int set_channel_parameters(vrpn_int32 chan, vrpn_int32 enable,
 		vrpn_float64 voltage, vrpn_float64 range_min, vrpn_float64 filter);
 	int register_measurement_handler(void *userdata,

@@ -1,0 +1,424 @@
+#include "nmr_Registration_Interface.h"
+
+nmr_Registration_Interface::nmr_Registration_Interface (const char * /*name*/,
+                                                 vrpn_Connection * c)
+{
+  if (c) {
+    d_SetImageParameters_type = c->register_message_type
+                       ("nmr_Registration SetImageParameters");
+    d_SetImageScanlineData_type = c->register_message_type
+                       ("nmr_Registration SetImageScanlineData");
+    d_SetTransformationOptions_type = c->register_message_type
+                       ("nmr_Registration SetTransformationOptions");
+    d_EnableRegistration_type = c->register_message_type
+                       ("nmr_Registration EnableRegistration");
+    d_EnableGUI_type = c->register_message_type
+                       ("nmr_Registration EnableGUI");
+    d_Fiducial_type = c->register_message_type
+                       ("nmr_Registration Fiducial");
+
+    d_ImageParameters_type = c->register_message_type
+                       ("nmr_Registration ImageParameters");
+    d_TransformationOptions_type = c->register_message_type
+                       ("nmr_Registration TransformationOptions");
+    d_RegistrationResult_type = c->register_message_type
+                       ("nmr_Registration RegistrationResult");
+  }
+}
+
+nmr_Registration_Interface::~nmr_Registration_Interface()
+{
+}
+
+//static
+char * nmr_Registration_Interface::encode_SetImageParameters
+          (vrpn_int32 *len,
+           vrpn_int32 which_image,
+           vrpn_int32 res_x, vrpn_int32 res_y,
+           vrpn_int32 treat_as_height_field)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 4 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_SetImageParameters:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, which_image);
+    vrpn_buffer(&mptr, &mlen, res_x);
+    vrpn_buffer(&mptr, &mlen, res_y);
+    vrpn_buffer(&mptr, &mlen, treat_as_height_field);
+  }
+
+  return msgbuf;
+}
+
+//static
+vrpn_int32 nmr_Registration_Interface::decode_SetImageParameters
+          (const char **buf,
+           vrpn_int32 *which_image,
+           vrpn_int32 *res_x, vrpn_int32 *res_y,
+           vrpn_int32 *treat_as_height_field)
+{
+  if (vrpn_unbuffer(buf, which_image) ||
+      vrpn_unbuffer(buf, res_x) ||
+      vrpn_unbuffer(buf, res_y) ||
+      vrpn_unbuffer(buf, treat_as_height_field)) {
+    return -1;
+  }
+  return 0;
+}
+
+//static
+char * nmr_Registration_Interface::encode_SetImageScanlineData
+          (vrpn_int32 *len,
+           vrpn_int32 which_image,
+           vrpn_int32 row, vrpn_int32 line_length,
+           vrpn_float32 *data)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 3 * sizeof(vrpn_int32) + line_length * sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_SetImageScanlineData: "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, which_image);
+    vrpn_buffer(&mptr, &mlen, row);
+    vrpn_buffer(&mptr, &mlen, line_length);
+    int i;
+    for (i = 0; i < line_length; i++){
+        vrpn_buffer(&mptr, &mlen, data[i]);
+    }
+  }
+
+  return msgbuf;
+}
+
+//static
+vrpn_int32 nmr_Registration_Interface::decode_SetImageScanlineData
+          (const char **buf,
+           vrpn_int32 *which_image,
+           vrpn_int32 *row, vrpn_int32 *line_length,
+           vrpn_float32 *data, vrpn_int32 max_expected_line_length)
+{
+  if (vrpn_unbuffer(buf, which_image) ||
+      vrpn_unbuffer(buf, row) ||
+      vrpn_unbuffer(buf, line_length)) {
+    return -1;
+  }
+  int i;
+  if (*line_length > max_expected_line_length) {
+      fprintf(stderr, "nmr_Registration_Interface::decode_SetImageScanlineData"
+          ": Error, expected length <= %d, actual length: %d\n",
+          max_expected_line_length, line_length);
+      // unbuffer the remainder of our message anyway
+      // (i'm not sure if this is necessary but it shouldn't hurt)
+      vrpn_float32 temp;
+      for (i = 0; i < *line_length; i++){
+          if (vrpn_unbuffer(buf, &temp)){
+              return -1;
+          }
+      }
+      return -1;
+  }
+  for (i = 0; i < *line_length; i++) {
+      if (vrpn_unbuffer(buf, &(data[i]))) {
+          return -1;
+      }
+  }
+  return 0;
+}
+
+//static
+char * nmr_Registration_Interface::encode_SetTransformationOptions (
+           vrpn_int32 *len,
+           vrpn_int32 transformType)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 1 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr,
+           "nmr_Registration_Interface::encode_SetTransformationOptions:  "
+           "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, transformType);
+  }
+
+  return msgbuf;
+}
+
+//static
+vrpn_int32 nmr_Registration_Interface::decode_SetTransformationOptions (
+           const char **buf,
+           vrpn_int32 *transformType)
+{
+  if (vrpn_unbuffer(buf, transformType)) {
+    return -1;
+  }
+  return 0;
+}
+
+//static
+char * nmr_Registration_Interface::encode_EnableRegistration (vrpn_int32 *len,
+           vrpn_int32 enable)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 1 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_EnableRegistration:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, enable);
+  }
+
+  return msgbuf;
+}
+
+//static
+vrpn_int32 nmr_Registration_Interface::decode_EnableRegistration
+          (const char **buf,
+           vrpn_int32 *enable)
+{
+  if (vrpn_unbuffer(buf, enable)) {
+    return -1;
+  }
+  return 0;
+}
+
+//static
+char * nmr_Registration_Interface::encode_EnableGUI (vrpn_int32 *len,
+           vrpn_int32 enable)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 1 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_EnableGUI:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, enable);
+  }
+
+  return msgbuf;
+}
+
+//static
+vrpn_int32 nmr_Registration_Interface::decode_EnableGUI
+          (const char **buf,
+           vrpn_int32 *enable)
+{
+  if (vrpn_unbuffer(buf, enable)) {
+    return -1;
+  }
+  return 0;
+}
+
+//static
+char * nmr_Registration_Interface::encode_Fiducial (vrpn_int32 *len,
+           vrpn_int32 which_image,
+           vrpn_float32 x, vrpn_float32 y, vrpn_float32 z)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 4 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_Fiducial:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, which_image);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, z);
+  }
+
+  return msgbuf;
+}
+
+//static
+vrpn_int32 nmr_Registration_Interface::decode_Fiducial (const char **buf,
+           vrpn_int32 *which_image,
+           vrpn_float32 *x, vrpn_float32 *y, vrpn_float32 *z)
+{
+  if (vrpn_unbuffer(buf, which_image) ||
+      vrpn_unbuffer(buf, x) ||
+      vrpn_unbuffer(buf, y) ||
+      vrpn_unbuffer(buf, z)) {
+    return -1;
+  }
+  return 0;
+}
+
+// server-->client
+//static
+char * nmr_Registration_Interface::encode_ImageParameters (vrpn_int32 *len,
+           vrpn_int32 which_image,
+           vrpn_int32 res_x, vrpn_int32 res_y,
+           vrpn_int32 treat_as_height_field)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 4 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_ImageParameters:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, which_image);
+    vrpn_buffer(&mptr, &mlen, res_x);
+    vrpn_buffer(&mptr, &mlen, res_y);
+    vrpn_buffer(&mptr, &mlen, treat_as_height_field);
+  }
+
+  return msgbuf;
+}
+
+//static
+vrpn_int32 nmr_Registration_Interface::decode_ImageParameters (const char **buf,
+           vrpn_int32 *which_image,
+           vrpn_int32 *res_x, vrpn_int32 *res_y,
+           vrpn_int32 *treat_as_height_field)
+{
+  if (vrpn_unbuffer(buf, which_image) ||
+      vrpn_unbuffer(buf, res_x) ||
+      vrpn_unbuffer(buf, res_y) ||
+      vrpn_unbuffer(buf, treat_as_height_field)) {
+    return -1;
+  }
+  return 0;
+}
+
+//static
+char * nmr_Registration_Interface::encode_TransformationOptions (
+           vrpn_int32 *len,
+           vrpn_int32 transformType)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 1 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_TransformationOptions: "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, transformType);
+  }
+
+  return msgbuf;
+}
+
+//static
+vrpn_int32 nmr_Registration_Interface::decode_TransformationOptions (
+           const char **buf,
+           vrpn_int32 *transformType)
+{
+  if (vrpn_unbuffer(buf, transformType)) {
+    return -1;
+  }
+  return 0;
+}
+
+//static
+char * nmr_Registration_Interface::encode_RegistrationResult (vrpn_int32 *len,
+                                    vrpn_float64 *matrix44)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 16 * sizeof(vrpn_float64);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_RegistrationResult:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    for (int i = 0; i < 16; i++){
+        vrpn_buffer(&mptr, &mlen, matrix44[i]);
+    }
+  }
+
+  return msgbuf;
+}
+
+//static
+vrpn_int32 nmr_Registration_Interface::decode_RegistrationResult (
+                                    const char **buf,
+                                    vrpn_float64 *matrix44)
+{
+  int i;
+  for (i = 0; i < 16; i++) {
+      if (vrpn_unbuffer(buf, &(matrix44[i]))) {
+          return -1;
+      }
+  }
+  return 0;
+}

@@ -1,7 +1,7 @@
-#include "imageTransform.h"
+#include "nmr_ImageTransform.h"
 
-ImageTransformAffine::ImageTransformAffine(int d_src, int d_dest):
-	ImageTransform(d_src, d_dest)
+nmr_ImageTransformAffine::nmr_ImageTransformAffine(int d_src, int d_dest):
+	nmr_ImageTransform(d_src, d_dest)
 {
     int i,j;
     for (i = 0; i < 4; i++)
@@ -15,7 +15,7 @@ ImageTransformAffine::ImageTransformAffine(int d_src, int d_dest):
     inverse_valid = (d_src == d_dest);
 }
 
-void ImageTransformAffine::print()
+void nmr_ImageTransformAffine::print()
 {
     int i,j;
     printf("xform:\n");
@@ -33,16 +33,66 @@ void ImageTransformAffine::print()
     }
 }
 
-void ImageTransformAffine::set(int i_dest, int i_src, double value) {
+void nmr_ImageTransformAffine::set(int i_dest, int i_src, double value) {
     assert(i_dest >= 0 && i_dest < 4 && i_src >= 0 && i_src < 4);
     xform[i_dest][i_src] = value;
     if (!inverse_needs_to_be_computed){
-        printf("ImageTransformAffine::set: inverse dirty\n");
+        printf("nmr_ImageTransformAffine::set: inverse dirty\n");
         inverse_needs_to_be_computed = vrpn_TRUE;
     }
 }
 
-void ImageTransformAffine::transform(double *p_src, double *p_dest) const {
+void nmr_ImageTransformAffine::setMatrix(vrpn_float64 *matrix)
+{
+    int i,j,k = 0;
+    for (j = 0; j < 4; j++) {
+        for (i = 0; i < 4; i++) {
+            xform[i][j] = matrix[k];
+            k++;
+        }
+    }
+    inverse_needs_to_be_computed = vrpn_TRUE;
+}
+
+void nmr_ImageTransformAffine::getMatrix(vrpn_float64 *matrix)
+{
+/*
+    matrix[0,1,2,3] = whatever we transform (1,0,0,0) into which is
+    xform[0][0], xform[1][0], xform[2][0], xform[3][0]
+    matrix[4,5,6,7] = whatever we transform (0,1,0,0) into which is
+    xform[0][1], xform[1][1], xform[2][1], xform[3][1]
+    ...
+*/
+    int i,j,k = 0;
+    for (j = 0; j < 4; j++) {
+        for (i = 0; i < 4; i++) {
+            matrix[k] = xform[i][j];
+            k++;
+        }
+    }
+}
+
+void nmr_ImageTransformAffine::compose(nmr_ImageTransformAffine &m)
+{
+    int i,j,k;
+    double p[4][4];
+    for (i = 0; i < 4; i++){
+        for (j = 0; j < 4; j++){
+            p[i][j] = 0.0;
+            for (k = 0; k < 4; k++){
+                 p[i][j] += xform[k][j]*m.xform[i][k];
+            }
+        }
+    }
+    for (i = 0; i < 4; i++){
+        for (j = 0; j < 4; j++){
+            xform[i][j] = p[i][j];
+        }
+    }
+    inverse_needs_to_be_computed = vrpn_TRUE;
+}
+
+void nmr_ImageTransformAffine::transform(double *p_src, double *p_dest) const {
     assert(dim_src > 0 && dim_src < 5 && dim_dest > 0 && dim_dest < 5);
 
     for (int i = 0; i < dim_dest; i++){
@@ -53,10 +103,10 @@ void ImageTransformAffine::transform(double *p_src, double *p_dest) const {
     }
 }
 
-void ImageTransformAffine::invTransform(double *p_src, double *p_dest) {
+void nmr_ImageTransformAffine::invTransform(double *p_src, double *p_dest) {
     assert(dim_src > 0 && dim_src < 5 && dim_dest > 0 && dim_dest < 5);
     if (!hasInverse()) {
-        fprintf(stderr, "ImageTransformAffine::invTransform: Warning,"
+        fprintf(stderr, "nmr_ImageTransformAffine::invTransform: Warning,"
                " failed use of inverse (non-invertible transform)\n");
         return;
     }
@@ -75,17 +125,17 @@ void ImageTransformAffine::invTransform(double *p_src, double *p_dest) {
     }
 }
 
-ImageTransform *ImageTransformAffine::duplicate() const {
-    ImageTransformAffine *ita = new ImageTransformAffine(dim_src, dim_dest);
+nmr_ImageTransform *nmr_ImageTransformAffine::duplicate() const {
+    nmr_ImageTransformAffine *ita = new nmr_ImageTransformAffine(dim_src, dim_dest);
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
             ita->xform[i][j] = xform[i][j];
         }
     }
-    return (ImageTransform *)ita;
+    return (nmr_ImageTransform *)ita;
 }
 
-void ImageTransformAffine::buildIdentity(double m[4][4])
+void nmr_ImageTransformAffine::buildIdentity(double m[4][4])
 {
     int i,j;
     for (i = 0; i < 4; i++)
@@ -95,7 +145,7 @@ void ImageTransformAffine::buildIdentity(double m[4][4])
 
 
 /* computeInverse() - adapted from code in Matrix44.cpp by Dave McAllister */
-vrpn_bool ImageTransformAffine::computeInverse() {
+vrpn_bool nmr_ImageTransformAffine::computeInverse() {
     printf("before computeInverse\n");
     print();
     inverse_needs_to_be_computed = vrpn_FALSE;
@@ -188,7 +238,7 @@ vrpn_bool ImageTransformAffine::computeInverse() {
     return vrpn_TRUE;
 }
 
-vrpn_bool ImageTransformAffine::hasInverse() {
+vrpn_bool nmr_ImageTransformAffine::hasInverse() {
     if (inverse_needs_to_be_computed) {
         printf("computing inverse\n");
         inverse_valid = computeInverse();

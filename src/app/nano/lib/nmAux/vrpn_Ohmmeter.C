@@ -593,6 +593,12 @@ vrpn_Ohmmeter_Remote::vrpn_Ohmmeter_Remote(char *name, vrpn_Connection *c):
     gettimeofday(&timestamp, NULL);
 }
 
+// virtual
+vrpn_Ohmmeter_Remote::~vrpn_Ohmmeter_Remote (void) {
+   // This function must exist, and must exist out-of-line!
+   // (So that there's something to point to in the vtable.)
+}
+
 void vrpn_Ohmmeter_Remote::mainloop(void)
 {
 	if (d_connection) d_connection->mainloop();

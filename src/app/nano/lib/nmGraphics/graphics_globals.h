@@ -135,12 +135,6 @@ extern float g_rotate_tex_theta;
 
 // Registration:
 extern double g_texture_transform[16];
-extern int g_tex_image_width;
-extern int g_tex_image_height;
-extern int g_tex_installed_width;
-extern int g_tex_installed_height;
-extern int g_tex_sem_installed_width;
-extern int g_tex_sem_installed_height;
 
 extern float g_rubberPt [4];
 extern float g_rubberSweepPts[2][4];
@@ -198,13 +192,27 @@ extern Position_list * g_positionListR;  // for the right side of the sweep mark
 #define ALPHA_3D_TEX_ID         1
 #define RULERGRID_TEX_ID        2
 #define GENETIC_TEX_ID          3
-#define COLORMAP_TEX_ID         4
+#define COLORMAP_TEX_ID         4  // used for realign
 #define SEM_DATA_TEX_ID         5
 #define REMOTE_DATA_TEX_ID      6
+
+#define NMG_DEFAULT_IMAGE_WIDTH (512)
+#define NMG_DEFAULT_IMAGE_HEIGHT (512)
 
 extern GLuint tex_ids [N_TEX];
 extern GLubyte * sem_data;
 extern GLubyte * remote_data;
+extern float * realign_data;
+
+// These values are only used for
+// the 2D textures but we use the ID values above to index them
+// (RULERGRID_TEX_ID, GENETIC_TEX_ID, COLORMAP_TEX_ID, SEM_DATA_TEX_ID, 
+//  REMOTE_DATA_TEX_ID)
+extern int g_tex_image_width[N_TEX];
+extern int g_tex_image_height[N_TEX];
+extern int g_tex_installed_width[N_TEX];
+extern int g_tex_installed_height[N_TEX];
+
 // note: shader textures managed separately below
 
 extern char g_alphaPlaneName [128];

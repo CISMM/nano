@@ -1,5 +1,5 @@
-#ifndef IMAGETRANSFORM_H
-#define IMAGETRANSFORM_H
+#ifndef NMR_IMAGETRANSFORM_H
+#define NMR_IMAGETRANSFORM_H
 
 #include "nmb_Image.h"
 #include "vrpn_Types.h"
@@ -12,12 +12,12 @@ we may need something more general than a 4x4 transformation matrix.
 
 */
 
-class ImageTransform {
+class nmr_ImageTransform {
   public:
-    ImageTransform(int d_src, int d_dest):dim_src(d_src), dim_dest(d_dest){}
+    nmr_ImageTransform(int d_src, int d_dest):dim_src(d_src), dim_dest(d_dest){}
     virtual void transform(double *p_src, double *p_dest) const = 0;
     virtual void invTransform(double *p_src, double *p_dest) = 0;
-    virtual ImageTransform *duplicate() const = 0;
+    virtual nmr_ImageTransform *duplicate() const = 0;
     virtual int dimSrc() const {return dim_src;}
     virtual int dimDest() const {return dim_dest;}
     virtual vrpn_bool hasInverse() = 0;
@@ -26,17 +26,20 @@ class ImageTransform {
     int dim_src, dim_dest;	// image dimensions
 };
 
-typedef ImageTransform *ImageTransformPtr;
+typedef nmr_ImageTransform *nmr_ImageTransformPtr;
 
 // this transformation represents as much as a 4x4 transformation matrix
-class ImageTransformAffine : public ImageTransform {
+class nmr_ImageTransformAffine : public nmr_ImageTransform {
   public:
     // initialize to identity transform
-    ImageTransformAffine(int d_src, int d_dest);
+    nmr_ImageTransformAffine(int d_src, int d_dest);
     void set(int i_dest, int i_src, double value);
+    void setMatrix(vrpn_float64 *matrix);
+    void getMatrix(vrpn_float64 *matrix);
+    void compose(nmr_ImageTransformAffine &m);
     virtual void transform(double *p_src, double *p_dest) const;
     virtual void invTransform(double *p_src, double *p_dest);
-    virtual ImageTransform *duplicate() const;
+    virtual nmr_ImageTransform *duplicate() const;
     virtual vrpn_bool hasInverse();
     virtual void print();
 
@@ -69,7 +72,7 @@ class ImageTransformAffine : public ImageTransform {
 // this transformation represents a mapping from each pixel in the source
 // image to a point in the destination image
 /*
-class ImageTransformPerPixel : public ImageTransform {
+class nmr_ImageTransformPerPixel : public nmr_ImageTransform {
 };
 */
 

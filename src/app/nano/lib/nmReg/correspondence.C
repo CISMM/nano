@@ -55,6 +55,18 @@ Correspondence &Correspondence::operator = (const Correspondence &c) {
 	return (*this);
 }
 
+void Correspondence::print()
+{
+   int i, j;
+   printf("%d points, %d spaces\n", num_points, num_spaces);
+   for (i = 0; i < num_points; i++) {
+       for (j = 0; j < num_spaces; j++){
+           printf("(%g,%g,%g) ", pnts[j][i].x, pnts[j][i].y, pnts[j][i].z);
+       }
+       printf("\n");
+   }
+}
+
 int Correspondence::addPoint(corr_point_t &p)
 {
     if (num_points == max_points) return -1;
@@ -133,10 +145,9 @@ int Correspondence::setValuesFromImage(int spaceIdx, nmb_Image *im)
     for (i = 0; i < num_points; i++) {
     	x_normalized = pnts[spaceIdx][i].x;	// x is 0..1
     	y_normalized = pnts[spaceIdx][i].y;	// y is 0..1
-		x_pixels = x_normalized*(im->width());
-		y_pixels = y_normalized*(im->height());
-
-		im->pixelToWorld(x_pixels, y_pixels, x_world, y_world);
+	x_pixels = x_normalized*(im->width());
+	y_pixels = y_normalized*(im->height());
+	im->pixelToWorld(x_pixels, y_pixels, x_world, y_world);
     	pnts[spaceIdx][i].x = x_world;
     	pnts[spaceIdx][i].y = y_world;
     	pnts[spaceIdx][i].z = im->getValueInterpolated(x_pixels, y_pixels);

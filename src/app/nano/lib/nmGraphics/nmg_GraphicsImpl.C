@@ -684,10 +684,10 @@ _______________________________********************/
            }
   }
 #endif
-  //g_tex_installed_width = texture_size;
-  //g_tex_installed_height = texture_size;
-  g_tex_image_width = myPPM->nx;
-  g_tex_image_height = myPPM->ny;
+  g_tex_installed_width[RULERGRID_TEX_ID] = texture_size;
+  g_tex_installed_height[RULERGRID_TEX_ID] = texture_size;
+  g_tex_image_width[RULERGRID_TEX_ID] = myPPM->nx;
+  g_tex_image_height[RULERGRID_TEX_ID] = myPPM->ny;
 }
 
 
@@ -1144,9 +1144,6 @@ void nmg_Graphics_Implementation::setPatternMapName (const char * /*name*/)
 // So a texture map of 512x512 is allocated (hopefully this is big enough)
 // 
 //
-// The new texture map overwrites any existing 2D texture map...
-// This is a known bug and will be fixed in the future.
-//
 void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   // inputGrid is replaced with dataImages in this function so that
   // we don't have separate functions for building textures from ppm images
@@ -1160,9 +1157,6 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   }
 //  printf("nmg_Graphics_Implementation: creating realign texture %s\n", name);
 
-  int texture_width = 512, texture_height = 512;
-
-  float *realign_texture = new float[ texture_width*texture_height * 3 ];
   
   int image_width = im->width();
   int image_height = im->height();
@@ -1175,31 +1169,40 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 	transformation
   */
   int stride_x = 1, stride_y = 1;
-  if (image_width > g_tex_installed_width){
+  if (image_width > g_tex_installed_width[COLORMAP_TEX_ID]){
 	stride_x = (int)floor((double)image_width/
-			     (double)texture_width);
+			     (double)g_tex_installed_width[COLORMAP_TEX_ID]);
   }
-  if (image_height > g_tex_installed_height) {
+  if (image_height > g_tex_installed_height[COLORMAP_TEX_ID]) {
 	stride_y = (int)floor((double)image_height/
-			     (double)texture_height);
+			     (double)g_tex_installed_height[COLORMAP_TEX_ID]);
   }
 
-  g_tex_image_width = image_width/stride_x;
-  g_tex_image_height = image_height/stride_y;
+  g_tex_image_width[COLORMAP_TEX_ID] = image_width/stride_x;
+  g_tex_image_height[COLORMAP_TEX_ID] = image_height/stride_y;
 
-  if (image_width > texture_width ||
-		image_height > texture_height) {
+  if (image_width > g_tex_installed_width[COLORMAP_TEX_ID] ||
+		image_height > g_tex_installed_height[COLORMAP_TEX_ID]) {
 	fprintf(stderr, "nmg::createRealignTextures, Warning: large texture"
 	 ", stride reduction: (%d,%d)/(%d,%d)->(%d,%d)\n",
-	image_width, image_height, stride_x, stride_y, g_tex_image_width,
-	g_tex_image_height);
+	image_width, image_height, stride_x, stride_y, 
+        g_tex_image_width[COLORMAP_TEX_ID],
+        g_tex_image_height[COLORMAP_TEX_ID]);
   }
 
   float min = im->minValue();
   float max = im->maxValue();
-  
-  for ( int j = 0,j_im= 0; j < texture_height; j++,j_im+=stride_y ) {
-    for ( int k = 0,k_im= 0; k < texture_width; k++,k_im+=stride_x ) {
+  int red_index, grn_index, blu_index;
+  for ( int j = 0,j_im= 0; j < g_tex_installed_height[COLORMAP_TEX_ID]; 
+                                               j++,j_im+=stride_y ) {
+    red_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*3 + 0;
+    grn_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*3 + 1;
+    blu_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*3 + 2;
+    for ( int k = 0,k_im= 0; k < g_tex_installed_width[COLORMAP_TEX_ID]; 
+                                                   k++,k_im+=stride_x,
+                                                   red_index += 3,
+                                                   grn_index += 3,
+                                                   blu_index += 3 ) {
       // this condition actually chops off a pixel on each side of the 
       // texture so that the clamped texture coordinates map to 
       // completely transparent pixels
@@ -1207,12 +1210,13 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
       // lose anything but that would introduce a translation which
       // we'd need to compensate for when using the registration result
       // and I don't feel like figuring that out at the moment
-      if ((j < g_tex_image_height-1) && (k < g_tex_image_width-1) && 
-		(j > 0) && (k > 0)) {
-        // Map data to color based on conversion map:
+      if ((j < g_tex_image_height[COLORMAP_TEX_ID]-1) && 
+          (k < g_tex_image_width[COLORMAP_TEX_ID]-1) && 
+	  (j > 0) && (k > 0)) {
+        // if we're inside the image region
 
-       if (g_realign_textures_curColorMap) {
-
+         if (g_realign_textures_curColorMap) {
+           // Map data to color based on conversion map:
            double scale = (im->getValue(k_im,j_im) -
                         g_realign_textures_slider_min) /
               (g_realign_textures_slider_max - g_realign_textures_slider_min);
@@ -1221,63 +1225,32 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 
            float r, g, b, a;
            g_realign_textures_curColorMap->lookup(scale, &r, &g, &b, &a);
-	   realign_texture[ j * texture_width * 3 + k * 3 + 0] = r;
-           realign_texture[ j * texture_width * 3 + k * 3 + 1] = g;
-           realign_texture[ j * texture_width * 3 + k * 3 + 2] = b;
-       } 
-       // Otherwise simple data to color mapping
-       else {
-           realign_texture[ j * texture_width * 3 + k * 3 + 0] =
+	   realign_data[red_index] = r;
+           realign_data[grn_index] = g;
+           realign_data[blu_index] = b;
+         } 
+         else { // Otherwise simple data to color mapping
+           realign_data[red_index] = 
                ( im->getValue( k_im, j_im ) - min )/( max - min );
 		   
-           realign_texture[ j * texture_width * 3 + k * 3 + 1] = 0.5;
-           realign_texture[ j * texture_width * 3 + k * 3 + 2] = 0.5;
-       }
-       realign_texture[ j * texture_width * 3 + k * 3 + 0] += 
-		(1.0- realign_texture[ j * texture_width * 3 + k * 3 + 0])*
+           realign_data[grn_index] = 0.5;
+           realign_data[blu_index] = 0.5;
+         }
+         realign_data[red_index] += 
+		(1.0- realign_data[red_index])*
 		(255.0 - (float)g_ruler_opacity)/255.0;
-       realign_texture[ j * texture_width * 3 + k * 3 + 1] += 
-		(1.0- realign_texture[ j * texture_width * 3 + k * 3 + 1])*
+         realign_data[grn_index] += 
+		(1.0- realign_data[grn_index])*
 		(255.0 - (float)g_ruler_opacity)/255.0;
-       realign_texture[ j * texture_width * 3 + k * 3 + 2] += 
-		(1.0- realign_texture[ j * texture_width * 3 + k * 3 + 2])*
+         realign_data[blu_index] += 
+		(1.0- realign_data[blu_index])*
 		(255.0 - (float)g_ruler_opacity)/255.0;
-#if 0
-       double val = (im->getValue(k_im, j_im))/256.0;
-             
-       realign_texture[ j * texture_width * 3 + k * 3 + 0] = val;
-       realign_texture[ j * texture_width * 3 + k * 3 + 1] = val;
-       realign_texture[ j * texture_width * 3 + k * 3 + 2] = val;
-
-
-#endif
-#if 0
-	#ifdef __CYGWIN__
-        float r = realign_texture[ j * texture_width * 3 + k * 3 + 0];
-        float g = realign_texture[ j * texture_width * 3 + k * 3 + 1];
-        float b = realign_texture[ j * texture_width * 3 + k * 3 + 2];
-        realign_texture[ j * texture_width * 3 + k * 3 + 0] = r/255.0;
-        realign_texture[ j * texture_width * 3 + k * 3 + 1] = g/255.0;
-        realign_texture[ j * texture_width * 3 + k * 3 + 2] = b/255.0;
-	#endif
-#endif
-      } // endif ( (j < height) && (k < width) )
-      else {	// handles parts of texture that extend beyond image
-#if 0
-#ifdef __CYGWIN__
-	// for GL_BLEND
-        realign_texture[ j * texture_width * 3 + k * 3 + 0] = 0.0;
-        realign_texture[ j * texture_width * 3 + k * 3 + 1] = 0.0;
-        realign_texture[ j * texture_width * 3 + k * 3 + 2] = 0.0; 
-#else
-#endif
-#endif
+      }
+      else { // handles parts of texture that extend beyond image
 	// for GL_MODULATE
-	realign_texture[ j * texture_width * 3 + k * 3 + 0] = 1.0;
-	realign_texture[ j * texture_width * 3 + k * 3 + 1] = 1.0;
-	realign_texture[ j * texture_width * 3 + k * 3 + 2] = 1.0;
-	
-//#endif
+	realign_data[red_index] = 0.0;
+	realign_data[grn_index] = 0.0;
+	realign_data[blu_index] = 0.0;
       }
     }
   }
@@ -1295,12 +1268,16 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   
 #if defined(sgi) || defined(__CYGWIN__)
 
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, texture_width, texture_height,
-                        GL_RGB, GL_FLOAT, realign_texture) != 0) { 
+  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 
+                   g_tex_installed_width[COLORMAP_TEX_ID], 
+                   g_tex_installed_height[COLORMAP_TEX_ID],
+                   GL_RGB, GL_FLOAT, realign_data) != 0) { 
     printf(" Error making mipmaps, using texture instead.\n");
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_width, texture_height,
-		0, GL_RGB, GL_FLOAT, realign_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+                   g_tex_installed_width[COLORMAP_TEX_ID], 
+                   g_tex_installed_height[COLORMAP_TEX_ID],
+		0, GL_RGB, GL_FLOAT, realign_data);
     if (glGetError()!=GL_NO_ERROR) {
       printf(" Error making realign texture.\n");
     }
@@ -1308,16 +1285,16 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   }
 
 #else
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_width, texture_height,
-	       0, GL_RGB, GL_FLOAT, realign_texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+                   g_tex_installed_width[COLORMAP_TEX_ID], 
+                   g_tex_installed_height[COLORMAP_TEX_ID],
+	       0, GL_RGB, GL_FLOAT, realign_data);
  #ifndef FLOW
   if (glGetError()!=GL_NO_ERROR) {
     printf(" Error making realign texture.\n");
   }
  #endif
 #endif
-
-  delete [] realign_texture;
 
 }
 
@@ -1679,6 +1656,13 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   int l;
   fprintf(stderr, "initializing textures\n");
 
+  for (l = 0; l < N_TEX; l++) {
+     g_tex_image_width[l] = NMG_DEFAULT_IMAGE_WIDTH;
+     g_tex_image_height[l] = NMG_DEFAULT_IMAGE_HEIGHT;
+     g_tex_installed_width[l] = NMG_DEFAULT_IMAGE_WIDTH;
+     g_tex_installed_height[l] = NMG_DEFAULT_IMAGE_HEIGHT;
+  }
+
   glGenTextures(N_TEX, tex_ids);
 
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
@@ -1759,20 +1743,40 @@ void nmg_Graphics_Implementation::initializeTextures(void)
       printf(" Error making ruler texture.\n");
   }
 
-  sem_data = new GLubyte [g_tex_sem_installed_width * 
-			  g_tex_sem_installed_height];
-  for (l = 0; l < g_tex_sem_installed_width * g_tex_sem_installed_height; l++){
-      // This was sem_data[l] = 1.0, but that caused a warning.
+  int sem_tex_size = g_tex_installed_width[SEM_DATA_TEX_ID] *
+                          g_tex_installed_height[SEM_DATA_TEX_ID];
+  sem_data = new GLubyte [sem_tex_size]; 
+  for (l = 0; l < sem_tex_size; l++){
     sem_data[l] = 255;
   }
   glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, g_tex_sem_installed_width,
-		g_tex_sem_installed_height, 0, GL_LUMINANCE, 
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 
+                g_tex_installed_width[SEM_DATA_TEX_ID],
+		g_tex_installed_height[SEM_DATA_TEX_ID], 0, GL_LUMINANCE, 
 	GL_BYTE, (const GLvoid *)sem_data);
 
   if (report_gl_errors()) {
      fprintf(stderr, "Error initializing sem texture\n");
   }
+
+  int realign_tex_size = 3*g_tex_installed_width[COLORMAP_TEX_ID] *
+                             g_tex_installed_height[COLORMAP_TEX_ID];
+  realign_data = new float [realign_tex_size];
+  for (l = 0; l < realign_tex_size; l++){
+    realign_data[l] = 1.0;
+  }
+  glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
+  
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+       g_tex_installed_width[COLORMAP_TEX_ID],
+       g_tex_installed_height[COLORMAP_TEX_ID],
+       0, GL_RGB, GL_FLOAT, realign_data);
+
+  if (report_gl_errors()) {
+     fprintf(stderr, "Error initializing realign texture\n");
+  }
+
+
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -1806,8 +1810,8 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
            start_x, start_y, im->width(), im->height());
 */
     glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
-    if (im->width() <= g_tex_sem_installed_width && 
-	im->height() <= g_tex_sem_installed_height) {
+    if (im->width() <= g_tex_installed_width[SEM_DATA_TEX_ID] && 
+	im->height() <= g_tex_installed_height[SEM_DATA_TEX_ID]) {
         glTexSubImage2D(GL_TEXTURE_2D, 0, start_x, start_y,
                im->width(), im->height(), GL_LUMINANCE, GL_UNSIGNED_BYTE, 
 	       (void *)data);
@@ -1834,8 +1838,19 @@ void nmg_Graphics_Implementation::updateTexture(int which_texture,
 
 void nmg_Graphics_Implementation::setTextureTransform(double *xform){
     int i;
+    printf("got TextureTransform\n");
+    printf("was: ");
+    for (i = 0; i < 16; i++)
+        printf("%g ", g_texture_transform[i]);
+    printf("\n");
+
     for (i = 0; i < 16; i++)
 	g_texture_transform[i] = xform[i];
+
+    printf("new: ");
+    for (i = 0; i < 16; i++)
+        printf("%g ", g_texture_transform[i]);
+    printf("\n");
 }
 
 
@@ -1953,14 +1968,6 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
 #ifdef FLOW
   m = RULERGRID;
 #endif
-
-  if (m == SEM_DATA) {
-    g_tex_installed_width = g_tex_sem_installed_width;
-    g_tex_installed_height = g_tex_sem_installed_height;
-  } else {
-    g_tex_installed_width = 512;
-    g_tex_installed_height = 512;
-  }
 
   switch (m) {
 
