@@ -1,3 +1,8 @@
+2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
+
+        * mainwin.tcl: added tool menu item for AFM tip visualization controls
+        * tip.tcl: new file for AFM tip visualization
+
 2002-06-26  Andrea Hilchey <hilchey@cs.unc.edu>
 
         * analysismenu.tcl : added new tcl boxes dealing with eroder to
