@@ -1,3 +1,8 @@
+2001-10-29  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* export_scene.C (export_scene_to_openNURBS): changed call to
+	build_mesh to include nmg_State param.
+
 2001-10-23  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C (constructor): changed some error print statements

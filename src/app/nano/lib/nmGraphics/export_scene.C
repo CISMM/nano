@@ -859,7 +859,9 @@ void export_scene_to_openNURBS (
 
     // We use a CRhinoMesh object to store the height field
     CRhinoMesh my_mesh;
-    build_mesh (my_mesh, grid, plane_selection, xf_quat, xf_xlate, xf_scale);
+    build_mesh ( my_mesh, grid, plane_selection, 
+		 NULL /* XXX should be nmg_State*/, 
+		 xf_quat, xf_xlate, xf_scale);
 
     // We store the viewports into CRhinoViewport objects
     // Let's find out how many viewports there are, among all users
