@@ -8,12 +8,104 @@ set sharedptr(sp) [create_closing_toplevel sharedptr "Collaboration Tools"]
 # Changed TCH 31 Oct 99 to a generic_entry so that if the name
 # is set with command-line parameters it shows up in the tcl interface
 
+# TCH 5 March 01 changed to a pull-down list with optional entry box
+# to reduce typing errors.  Based on Aron's dialog box in filemenu.tcl.
+
+set collaborationNames { \
+  "Phillips 100" "Phillips 101" \
+  "Chemistry" "Gene Therapy" \
+  "Chemistry (nanoNet)" "Gene Therapy (nanoNet)" \
+}
+set collaborationConnections { \
+  "nano.cs.unc.edu" "histidine.cs.unc.edu" \
+  "chem-gfx.cs.unc.edu" "gt-gfx.cs.unc.edu" \
+  "chem-gfx-nn.nanonet.unc.edu" "gt-gfx-nn.nanonet.unc.edu" \
+}
+
+iwidgets::dialog .choose_collaborator_dialog -title "Choose Collaborator" \
+  -modality application
+.choose_collaborator_dialog hide Help
+.choose_collaborator_dialog buttonconfigure OK -text "Connect" -command {
+  .choose_collaborator_dialog deactivate 1
+}
+.choose_collaborator_dialog hide Apply
+
+set win [.choose_collaborator_dialog childsite]
+generic_optionmenu_with_index $win.site_name chosen_site_index \
+  "Collaborator site:" collaborationNames
+pack $win.site_name -anchor nw -side top
+
+set newSite ""
+generic_entry $win.newSite newSite "New Site:" ""
+set newSiteConnection ""
+generic_entry $win.newSiteConnection newSiteConnection "Hostname:" ""
+
+pack $win.newSite $win.newSiteConnection -side left
+
+set collab_machine_name ""
+
+proc open_collaboration_connection {} {
+  global collab_machine_name
+  global sharedptr
+
+  global collaborationNames collaborationConnections
+  global chosen_site_index
+  global newSite newSiteConnection
+
+  if { [.choose_collaborator_dialog activate] } {
+
+    # OK
+
+    if { ($newSite != "") && ($newSiteConnection != "") } {
+
+      # Add this site to the list
+      # Doesn't mean anything yet, since we can't reopen the
+      # dialog.  We'd really like to save this list so that it's
+      # persistent across sessions.
+
+      set collaborationNames [ lappend collaborationNames $newSite ]
+      set collaborationConnections \
+          [ lappend collaborationConnections $newSiteConnection ]
+
+      # specify new site
+      set collab_machine_name $newSiteConnection
+
+    } else {
+
+      # use known site
+      set collab_machine_name \
+            [lindex $collaborationConnections $chosen_site_index]
+
+    }
+
+    # Not safe to change collaborator again, so disable it
+
+    $sharedptr(sp).choose_collaborator configure -state disabled
+
+  } else {
+
+    # cancel
+
+  }
+
+  # These don't work, but will be important once we stop disabling
+  # this dialog.
+  # set newSite ""
+  # set newSiteConnection ""
+
+}
+
+button $sharedptr(sp).choose_collaborator \
+  -text "Choose Collaborator" -command open_collaboration_connection
+
+pack $sharedptr(sp).choose_collaborator -side top -fill x
+
 #set collab_machine_name ""
-generic_entry $sharedptr(sp).collab_machine_name \
+#generic_entry $sharedptr(sp).collab_machine_name \
               collab_machine_name \
               "Connect to machine:" \
               ""
-pack $sharedptr(sp).collab_machine_name -side top -fill x
+#pack $sharedptr(sp).collab_machine_name -side top -fill x
 
 
 
@@ -45,16 +137,19 @@ frame $sharedptr(sp).state.copy
 # NOTE text option is ignored if the image option is used. 
 button $sharedptr(sp).state.copy.copy_to_shared_button \
 	-image sharedptr_down_arrow \
+        -state disabled \
   -text "Copy p to s" -command {set copy_to_shared_state 1}
 label $sharedptr(sp).state.copy.copy_label -text "Copy"
 button $sharedptr(sp).state.copy.copy_to_private_button \
 	-image sharedptr_up_arrow \
+        -state disabled \
   -text "Copy s to p" -command {set copy_to_private_state 1}
 
 radiobutton $sharedptr(sp).state.share_private_button \
   -text "View private state" -variable share_sync_state -value 0
 radiobutton $sharedptr(sp).state.share_public_button \
-  -text "View shared state" -variable share_sync_state -value 1
+  -text "View shared state" -variable share_sync_state -value 1 \
+        -state disabled \
 
 pack $sharedptr(sp).state.share_private_button -side top
 pack $sharedptr(sp).state.share_public_button -side bottom

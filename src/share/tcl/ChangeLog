@@ -1,3 +1,11 @@
+2001-03-06  Tom Hudson  <hudson@cs.unc.edu>
+
+	* shared_ptr.tcl:  added a less-error-prone interface to choose
+	collaborator by selecting from a list, + option to type in a name.
+	After first selection of a collaborator, option to choose again
+	is disabled (until we figure out how to change collaborators
+	safely).
+
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 
         * mainwin.tcl: removed an extra call to 
