@@ -15,6 +15,7 @@ class nmr_Registration_Impl;
 class nmr_Registration_ImplUI {
   public:
     nmr_Registration_ImplUI(nmr_Registration_Impl *impl);
+
     ~nmr_Registration_ImplUI();
     void enable(vrpn_bool enable);
     void registerImages();
@@ -26,6 +27,8 @@ class nmr_Registration_ImplUI {
     void setFiducial(nmr_ImageType whichImage,
           vrpn_float32 x_n, vrpn_float32 y_n, vrpn_float32 z);
     void getCorrespondence(Correspondence &c, int &srcIndex, int &tgtIndex);
+
+    static void handle_CorrespondenceChange(Correspondence &c, void *ud);
 
   protected:
     static int s_numImages;

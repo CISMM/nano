@@ -25,6 +25,7 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im,
     grab_offset_x = 0;
     grab_offset_y = 0;
     point_marker_dlist = 0;
+    change_handler = NULL;
 }
 
 CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
@@ -62,6 +63,7 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
     grab_offset_x = 0;
     grab_offset_y = 0;
     point_marker_dlist = 0;
+    change_handler = NULL;
 }
 
 // here is where user interaction is defined:
@@ -107,7 +109,7 @@ int CorrespondenceEditor::eventHandler(
         }
         break;
       case BUTTON_RELEASE_EVENT:
-        if (event.button == IV_MIDDLE_BUTTON){
+        if (event.button == IV_RIGHT_BUTTON){
             double x_im = event.mouse_x, y_im = event.mouse_y;
             me->viewer->toImage(event.winID, &x_im, &y_im);
 	    corr_point_t p(x_im, y_im);
@@ -116,6 +118,7 @@ int CorrespondenceEditor::eventHandler(
             int i;
             for (i = 0; i < me->num_images; i++)
                 me->viewer->dirtyWindow((me->win_ids)[i]);
+            me->notifyCallbacks();
         }
         else if (event.button == IV_LEFT_BUTTON && me->draggingPoint) {
             double x_im = event.mouse_x + me->grab_offset_x;
@@ -126,6 +129,7 @@ int CorrespondenceEditor::eventHandler(
             me->correspondence->setPoint(spaceIndex, me->grabbedPointIndex, p);
             me->draggingPoint = VRPN_FALSE;
             me->viewer->dirtyWindow(event.winID);
+            me->notifyCallbacks();
         }
         break;
       case MOTION_EVENT:
@@ -136,6 +140,7 @@ int CorrespondenceEditor::eventHandler(
 	    corr_point_t p(x_im, y_im);
             me->correspondence->setPoint(spaceIndex, me->grabbedPointIndex, p);
             me->viewer->dirtyWindow(event.winID);
+            me->notifyCallbacks();
         }
         break;
       case KEY_PRESS_EVENT:
@@ -209,6 +214,15 @@ int CorrespondenceEditor::displayHandler(
             me->drawSelectionBox(image_pnt.x, image_pnt.y);
     }
     return 0;
+}
+
+void CorrespondenceEditor::notifyCallbacks()
+{
+    Correspondence copy;
+    getCorrespondence(copy);
+    if (change_handler) {
+      change_handler(copy, userdata);
+    }
 }
 
 void CorrespondenceEditor::drawCrosshair(float x, float y) {
@@ -426,6 +440,12 @@ void CorrespondenceEditor::getCorrespondence(Correspondence &corr){
     }
 }
 
+void CorrespondenceEditor::registerCallback(CorrespondenceCallback handler,
+                                            void *ud)
+{
+    change_handler = handler;
+    userdata = ud;
+}
 
 // This is some driver code I used to test this stuff:
 /*main ()

@@ -6,6 +6,9 @@
 #include "PNMImage.h"
 #include "PPM.h"
 
+
+typedef void (*CorrespondenceCallback)(Correspondence &c, void *ud);
+
 #define POINT_SIZE (4)
 /* this class is responsible for displaying and allowing the manipulation of
    a Correspondence through user interaction with windows in an
@@ -26,6 +29,7 @@ class CorrespondenceEditor {
     void mainloop();
     void getCorrespondence(Correspondence &corr);
 	int numImages() {return num_images;}
+    void registerCallback(CorrespondenceCallback handler, void *ud);
 
   private:
     // eventHandler is responsible for handling user interaction with image
@@ -34,6 +38,7 @@ class CorrespondenceEditor {
 
     static int displayHandler(const ImageViewerDisplayData &data, void *ud);
 
+    void notifyCallbacks();
     void drawCrosshair(float x, float y);
     void drawSelectionBox(int xp, int yp);
     int getSpaceIndex(int winID);
@@ -47,6 +52,8 @@ class CorrespondenceEditor {
     vrpn_bool draggingPoint;
     int grab_offset_x, grab_offset_y;
     GLuint point_marker_dlist;
+    CorrespondenceCallback change_handler;
+    void *userdata;
 };
 
 #endif

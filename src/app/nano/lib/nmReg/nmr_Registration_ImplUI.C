@@ -13,6 +13,7 @@ nmr_Registration_ImplUI::nmr_Registration_ImplUI(
 {
 
   d_ce = new CorrespondenceEditor(s_numImages, s_imageWinNames);
+  d_ce->registerCallback(handle_CorrespondenceChange, (void *)this);
 
   return;
 }
@@ -34,6 +35,14 @@ void nmr_Registration_ImplUI::enable(vrpn_bool enable)
 void nmr_Registration_ImplUI::mainloop()
 {
   d_ce->mainloop();
+}
+
+//static
+void nmr_Registration_ImplUI::handle_CorrespondenceChange(Correspondence &c,
+                                                          void *ud)
+{
+  nmr_Registration_ImplUI *me = (nmr_Registration_ImplUI *)ud;
+  me->d_impl->registerImages(c, s_sourceImageIndex, s_targetImageIndex);
 }
 
 void nmr_Registration_ImplUI::registerImages()

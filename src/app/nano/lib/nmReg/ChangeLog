@@ -1,3 +1,17 @@
+2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* Makefile: added glut as an external lib
+	* correspondenceEditor.hC (added a callback thing so 
+	that changes in the correspondence can be tracked externally)
+	* nmr_Registration_ImplUI.hC (handle_CorrespondenceChange): new function
+	* nmr_Registration_Proxy.hC (constructor): for local implementation,
+	now creates a server using the connection passed in as a parameter and
+	connects to it with a client as would happen if the registration code
+	were running remotely (this made it simpler to propagate transformation
+	updates since everything goes through the vrpn callback whether its
+	coming from the local or remote registration implementation - like the
+	phantom server)
+	
 2000-10-02  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_RegistrationUI.Ch (handleRegistrationChange) : fixed problem

@@ -1,20 +1,31 @@
 #include "nmr_Registration_Proxy.h"
 
-nmr_Registration_Proxy::nmr_Registration_Proxy(const char *name):
-  d_remote_impl(NULL),d_local_impl(NULL), d_local(vrpn_TRUE),
+nmr_Registration_Proxy::nmr_Registration_Proxy(const char *name,
+                                               vrpn_Connection *c):
+  d_server(NULL),d_local_impl(NULL),d_remote_impl(NULL),d_local(vrpn_TRUE),
 
   d_imageParamsLastReceived(NMR_SOURCE),
   d_res_x(0), d_res_y(0),
   d_heightField(vrpn_FALSE),
   d_messageHandlerList(NULL)
 {
-    if (name) {
+    if (!name && !c) {
+      fprintf(stderr, "nmr_Registration_Proxy::nmr_Registration_Proxy:"
+           " programmer error: needs either a name or connection\n");
+      return;
+    }
+    
+    if (!c) {
         d_remote_impl = new nmr_Registration_Client(name);
         d_remote_impl->registerChangeHandler((void *) this, 
  		handle_registration_change);
         d_local = vrpn_FALSE;
     } else {
-        d_local_impl = new nmr_Registration_Impl();
+        d_server = new nmr_Registration_Server("reg_server", c);
+        d_local_impl = new nmr_Registration_Impl(d_server);
+        d_remote_impl = new nmr_Registration_Client("reg_server", c);
+        d_remote_impl->registerChangeHandler((void *) this,
+                handle_registration_change);
         d_local = vrpn_TRUE;
     }
 }
@@ -23,6 +34,8 @@ nmr_Registration_Proxy::~nmr_Registration_Proxy()
 {
     if (d_local_impl){
         delete d_local_impl;
+        delete d_server;
+        delete d_remote_impl;
     }
     if (d_remote_impl){
         delete d_remote_impl;
@@ -32,6 +45,10 @@ nmr_Registration_Proxy::~nmr_Registration_Proxy()
 vrpn_int32 nmr_Registration_Proxy::mainloop(void)
 {
     if (d_local){
+        // call mainloops multiple times to make sure everything gets 
+        // propagated
+        d_local_impl->mainloop();
+        d_remote_impl->mainloop();
         d_local_impl->mainloop();
     } else {
         d_remote_impl->mainloop();
@@ -41,6 +58,8 @@ vrpn_int32 nmr_Registration_Proxy::mainloop(void)
 
 vrpn_int32 nmr_Registration_Proxy::registerImages()
 {
+    d_remote_impl->setRegistrationEnable(vrpn_TRUE);
+/*
     if (d_local){
         struct timeval now;
         d_local_impl->registerImages(d_matrix44);
@@ -49,16 +68,20 @@ vrpn_int32 nmr_Registration_Proxy::registerImages()
     } else {
         d_remote_impl->setRegistrationEnable(vrpn_TRUE);
     }
+*/
     return 0;
 }
 
 vrpn_int32 nmr_Registration_Proxy::setGUIEnable(vrpn_bool enable)
 {
+    d_remote_impl->setGUIEnable(enable);
+/*
     if (d_local){
         d_local_impl->setGUIEnable(enable);
     } else {
         d_remote_impl->setGUIEnable(enable);
     }
+*/
     return 0;
 }
 
@@ -67,6 +90,7 @@ vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
 {
   int i,j;
   vrpn_float32 *data;
+/*
   if (d_local){
     d_local_impl->setImageParameters(whichImage, im->width(), im->height(),
                         treatAsHeightField);
@@ -79,6 +103,7 @@ vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
     }
     delete [] data;
   } else {
+*/
     printf("nmr_Registration_Proxy::setImage: "
            "sending image parameters to remote: (%dx%d)\n",
            im->width(), im->height());
@@ -98,7 +123,7 @@ vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
     printf("nmr_Registration_Proxy::setImage: "
            "finished sending image data to remote\n");
     delete [] data;
-  }
+//  }
   return 0;
 }
 

@@ -23,7 +23,7 @@ typedef struct {
 
 class nmr_Registration_Proxy {
   public:
-    nmr_Registration_Proxy(const char *name = NULL);
+    nmr_Registration_Proxy(const char *name = NULL, vrpn_Connection *c=NULL);
     ~nmr_Registration_Proxy();
 
     vrpn_int32 mainloop(void);
@@ -52,9 +52,9 @@ class nmr_Registration_Proxy {
     void getRegistrationResult(vrpn_float64 *matrix44);
 
   protected:
-    // one of the following two should be NULL
-    nmr_Registration_Client *d_remote_impl;
-    nmr_Registration_Impl *d_local_impl;
+    nmr_Registration_Server *d_server; // non-NULL if local implementation
+    nmr_Registration_Impl *d_local_impl; // non-NULL if local implementation
+    nmr_Registration_Client *d_remote_impl; // never NULL
 
     vrpn_bool d_local; // are we using local implementation?
 
