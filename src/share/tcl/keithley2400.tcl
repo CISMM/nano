@@ -157,7 +157,6 @@ pack $widgets(connect_and_init) -anchor w
 set widgets(display_enable) [checkbutton $vi_win.left.display_enable -text "Keithley Display" \
 	-variable vi(display_enable) ]
 pack $widgets(display_enable) -anchor w
-#set vi(display_enable) 1
 
 # Bother. Radiobox seems to execute it's command when it gets created.
 # So we'll define the change_source procedure here, then re-define it later
@@ -173,11 +172,7 @@ set widgets(source) [iwidgets::radiobox $widgets(source_frame).source \
 
 $widgets(source) add 0 -text "Voltage"
 $widgets(source) add 1 -text "Current"
-
 $widgets(source) select $vi(source)
-
-# We can't handle sourcing current yet, so disable it
-##$widgets(source) buttonconfigure 1 -state disabled
 pack $widgets(source) -padx $def_pad -pady $def_pad -fill both 
 
 
@@ -189,9 +184,7 @@ pack $widgets(compliance) -padx $def_pad -pady $def_pad -fill both
 
 $widgets(compliance) add 0 -text "Voltage"
 $widgets(compliance) add 1 -text "Current"
-
 $widgets(compliance) select 1
-##$widgets(compliance) buttonconfigure 0 -state disabled
 
 set widgets(four_wire) [iwidgets::radiobox $widgets(measure_frame).four_wire \
      -labeltext "Two/Four Wire:" -labelpos nw -command \
@@ -200,7 +193,6 @@ pack $widgets(four_wire) -padx $def_pad -pady $def_pad -fill both
 
 $widgets(four_wire) add 2 -text "Two Probe"
 $widgets(four_wire) add 4 -text "Four Probe"
-
 $widgets(four_wire) select 0
 
 if { 0==[info exists vi(compliance_val)] } { set vi(compliance_val) 0 }
@@ -213,7 +205,7 @@ set widgets(num_power_line_cycles) [my_entry $widgets(measure_frame).num_power_l
 				 "Number Power line cycles" real ]
 pack $widgets(num_power_line_cycles) -padx $def_pad -pady $def_pad
 
-#What type of sweep will we do, and what are it's limits?
+#What type of sweep will we do, and what are its limits?
 set widgets(sweep) [iwidgets::radiobox $widgets(source_frame).sweep \
 	-labeltext "Sweep:" -labelpos nw -command \
 	{ if {[$widgets(sweep) get]!= ""} {set vi(sweep) [$widgets(sweep) get]} }]
@@ -221,7 +213,6 @@ pack $widgets(sweep) -padx $def_pad -pady $def_pad -fill both
 
 $widgets(sweep) add 0 -text "Linear"
 $widgets(sweep) add 1 -text "Log"
-
 $widgets(sweep) select 0
 
 # Set some default values for the current sweep, which are much
@@ -240,8 +231,6 @@ set widgets(sweep_stop) [my_entry $widgets(source_frame).sweep_stop vi(sweep_sto
 pack $widgets(sweep_stop) -padx $def_pad -pady $def_pad
 
 if { 0==[info exists vi(sweep_stepsize)] } { set vi(sweep_stepsize) 0 }
-#set widgets(sweep_stepsize) [my_entry $widgets(source_frame).sweep_stepsize vi(sweep_stepsize) \
-				 "Step Size" real ]
 set widgets(sweep_stepsize) [iwidgets::labeledwidget $widgets(source_frame).ss_label -labeltext "Step Size"]
 pack $widgets(sweep_stepsize) -padx $def_pad -pady $def_pad -anchor w
 set cs [$widgets(sweep_stepsize) childsite]
@@ -263,11 +252,24 @@ set widgets(num_sweeps) [my_entry $widgets(source_frame).num_sweeps vi(num_sweep
 			     "Number of Sweeps"  integer ]
 pack $widgets(num_sweeps) -padx $def_pad -pady $def_pad
 
+if { 0==[info exists vi(initial_delay)] } { set vi(initial_delay) 0 }
+set widgets(initial_delay) [my_entry $widgets(source_frame).initial_delay vi(initial_delay) \
+    "Initial Delay" real ]
+pack $widgets(initial_delay) -padx $def_pad -pady $def_pad
+
+if { 0==[info exists vi(zero_after_meas)] } { set vi(zero_after_meas) 0 }
+set widgets(zero_after_meas) [checkbutton $widgets(source_frame).zero_after_meas \
+				  -text "Zero Output After Measurement" \
+				  -variable vi(zero_after_meas) ]
+pack $widgets(zero_after_meas) -anchor w
+
+
 
 # align all the labels so it looks nice
 iwidgets::Labeledwidget::alignlabels $widgets(sweep_start) $widgets(sweep_stop) \
     $widgets(sweep_stepsize) $widgets(sweep_numpoints) $widgets(sweep_delay) \
-    $widgets(num_sweeps) $widgets(compliance_val) $widgets(num_power_line_cycles)
+    $widgets(num_sweeps) $widgets(compliance_val) $widgets(num_power_line_cycles) \
+    $widgets(initial_delay)
 	
 # Command the Keithley to take and IV curve right now!
 set widgets(take_iv_curves) [button $vi_win.left.take_iv_curves -text "Take VI Curve" \
@@ -330,7 +332,12 @@ set widgets(clear_curves) [button $widgets(bottom).clear_curves -text "Clear Cur
 pack $widgets(clear_curves) -side top -anchor nw
 
 # keep track of which vectors we have saved so far
-set vi(first_curve_not_saved) 0
+set vi(first_curve_not_saved) -1
+
+
+# these are the number of each curve paired with the time the curve was taken
+set array name_time_pairs
+
 
 # Save the data we have collected.
 # We expect that the data will be saved inside the vectors
@@ -338,25 +345,39 @@ set vi(first_curve_not_saved) 0
 # So, we step through these vectors and build up a text variable 
 # for each line of the data, then save to a file. 
 proc vi_save_data { filename } {
-    global vi
-    # Find out the names of all the data vectors
-    set vec_end $vi(first_curve_not_saved)
-    set vec_start $vi(first_curve_not_saved)
-    global vi_volt_vec$vec_end
-    global vi_curr_vec$vec_end
-    while { [info exists vi_curr_vec$vec_end] } {
-	if { ![info exists vi_volt_vec$vec_end] } {
-	    tk_messageBox -icon error -message "Current vector $vec_end has no corresponding voltage vector" -type ok
-	    # so we can save the next vectors, if any.
-	    set vi(first_curve_not_saved) [expr $vec_end +1]
-	    return 
-	}
-	incr vec_end
-	global vi_curr_vec$vec_end vi_volt_vec$vec_end
+    global vi 
+    global name_time_pairs
+    parray name_time_pairs
+    if { [expr $vi(first_curve_not_saved) < 0 ] } {
+	tk_messageBox -icon error -message "No unsaved data" -type ok
+	return
     }
-    if {$vec_start == $vec_end} { 
-	tk_messageBox -icon error -message  "No new data to save" -type ok
-	return }
+
+    # Make global the names of all the data vectors
+    set vec_start_name $vi(first_curve_not_saved)
+    set vec_end_name $vi(first_curve_not_saved)
+
+    foreach i [array names name_time_pairs] {
+	set v vi_volt_vec$name_time_pairs($i)
+	set c vi_curr_vec$name_time_pairs($i)
+	puts "v:  $v\nc:  $c"
+	global $v $c
+	# puts "[${v} range 0 [expr [${v} length]-1]]"
+	if { ![info exists ${c}] } {
+	    tk_messageBox -icon error -message "While exporting data, the current for vi curve taken at time $name_time_pairs($i) was not found.  The curve at this time will not be exported." -type ok
+	    unset name_time_pairs($i)
+	} elseif { ![info exists ${v}] } {
+	    tk_messageBox -icon error -message "While exporting data, the voltage for vi curve taken at time $name_time_pairs($i) was not found.  The curve at this time will not be exported." -type ok
+	    unset name_time_pairs($i)
+	} else {
+	    # global $v $c
+	    set vec_end_name $i
+	    set vec_end_time name_time_pairs($i)
+	}
+    }
+    
+    
+
 
     set volt_len [vi_volt_vec$vec_start length]
     set old_volt_len $volt_len
@@ -489,9 +510,6 @@ set vi(save_curves_now) 0
 trace variable vi(save_curves_now) w "vi_save_curve"
 
 
-set array name_time_pairs
-
-
 # make sure there are only 9 elements in the graph.
 proc vi_trim_chart_elements { curr_id curr_time } {
     global vi
@@ -523,15 +541,20 @@ proc vi_trim_chart_elements { curr_id curr_time } {
 
 
 # Graphs the data in vectors name_x and name_y
+# x is voltage, y is current
 proc vi_add_chart_element { name_x name_y id time } {
     global vi
     global name_time_pairs
+
     if { [$vi(chart) element exists $time] } { 
 	puts "vi curve:  ignoring chart element named $time; it already exists."
     } else {
 	$vi(chart) element create $time \
 	    -xdata $name_x -ydata $name_y -color [vi_unique_color $id]
 	array set name_time_pairs "$id $time"
+	if { [ expr $vi(first_curve_not_saved) < 0 ] } {
+	    set vi(first_curve_not_saved) $id
+	}
     }
     # Limit the number of chart elements displayed to 9 
     vi_trim_chart_elements $id $time
@@ -540,10 +563,15 @@ proc vi_add_chart_element { name_x name_y id time } {
 
 proc clear_curves_now  {} {
     global vi
+    global name_time_pairs
     set elem_list [$vi(chart) element names]
     foreach id $elem_list {
 	$vi(chart) element delete $id
     }
+    foreach i [array names name_time_pairs] {
+	unset name_time_pairs($i)
+    }
+    set vi(first_curve_not_saved) -1
 }
 
 proc change_source {} {
