@@ -1,3 +1,7 @@
+2002-04-15  David Borland  <borland@cs.unc.edu>
+        * import.C:  Fixed a couple of bugs introduced by my previous
+        commit
+
 2002-04-11  David Borland  <borland@cs.unc.edu>
         * import.C:  Changed default axis step value for loaded tubes.  
         Modified handling of opening and closing objects in the list of

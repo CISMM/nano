@@ -58,7 +58,7 @@ Tclvar_int      import_visibility("import_visibility", 1, handle_import_visibili
 Tclvar_int      import_proj_text("import_proj_text", 1, handle_import_proj_text);
 Tclvar_int		import_clamp("import_clamp", 0, handle_import_clamp);
 Tclvar_int		import_CCW("import_CCW", 1, handle_import_CCW);
-Tclvar_int		import_update_AFM("import_update_AFM", 1, handle_import_update_AFM);
+Tclvar_int		import_update_AFM("import_update_AFM", 0, handle_import_update_AFM);
 Tclvar_int		import_tess("import_tess", 10, handle_import_tess_change);
 Tclvar_int		import_axis_step("import_axis_step", 10, handle_import_axis_step_change);
 Tclvar_int      import_color_changed("import_color_changed", 0, handle_import_color_change);
@@ -83,37 +83,36 @@ static void handle_current_object_new(const char*, void*) {
 	nmb_ListOfStrings temp;
 	int i;
 
-	temp.addEntry(current_object_new.string());
+	// return NONE if user cancels open
+	if (strcmp(current_object_new.string(), "NONE") != 0) {
+		temp.addEntry(current_object_new.string());
 
-	for (i = 0; i < imported_objects.numEntries(); i++) {
-		temp.addEntry(imported_objects.entry(i));
+		for (i = 0; i < imported_objects.numEntries(); i++) {
+			temp.addEntry(imported_objects.entry(i));
+		}
+
+		imported_objects.clearList();
+
+		for (i = 0; i < temp.numEntries(); i++) {
+			imported_objects.addEntry(temp.entry(i));
+		}
+
+
+		if (imported_objects.getIndex("all") == -1) {
+			// add "all" entry
+			imported_objects.addEntry("all");
+		}
+
+		// remove none
+		imported_objects.deleteEntry("none");
 	}
-
-	imported_objects.clearList();
-
-	for (i = 0; i < temp.numEntries(); i++) {
-		imported_objects.addEntry(temp.entry(i));
-	}
-
-
-	if (imported_objects.getIndex("all") == -1) {
-		// add "all" entry
-		imported_objects.addEntry("all");
-	}
-
-	// seems to add NONE for some reason...get rid of this
-	imported_objects.deleteEntry("NONE");
-
-	// remove none
-	imported_objects.deleteEntry("none");
-
-	*World.current_object = current_object_new.string();
 }
 
 static void handle_current_object(const char*, void*) {
 	*World.current_object = current_object.string();
 
-	if (strcmp(*(World.current_object), "all") != 0) {
+	if (strcmp(*World.current_object, "all") != 0 &&
+		strcmp(*World.current_object, "none") != 0) {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 			URender &obj = node->TGetContents();
@@ -133,21 +132,23 @@ static void handle_current_object(const char*, void*) {
 			import_visibility = obj.GetVisibility();
 
 			import_proj_text = obj.ShowProjText();
+			import_clamp = obj.GetClamp();
 
 			import_CCW = obj.GetCCW();
 
 			import_update_AFM = obj.GetUpdateAFM();
 		}
 	}
+	else {
+		import_update_AFM = 0;
+	}
 }
 
 
 static void handle_import_file_change (const char *, void *) {
-    static char * old_name = "";
     static const float convert = 1.0f/255;
 	char* name;
 	char* c;
-
 
     if (modelFile.string()) {  
         if (strcmp(modelFile.string(),"") != 0) {	// open the file
@@ -163,11 +164,13 @@ static void handle_import_file_change (const char *, void *) {
 			obj->SetProjText(import_proj_text);
 			obj->SetClamp(import_clamp);
 			// only allow update_AFM for .txt files
-			if (strstr(modelFile.string(), ".txt") == 0) {
-				import_update_AFM = 0;
+			if (strstr(modelFile.string(), ".txt") != 0) {
+
+				obj->SetUpdateAFM(1);
 			}
-			obj->SetUpdateAFM(import_update_AFM);
-					
+			else {
+				obj->SetUpdateAFM(0);
+			}
 	        obj->SetColor3(convert * import_r, convert * import_g, convert * import_b);
             obj->SetAlpha(import_alpha);
             obj->GetLocalXform().SetScale(import_scale);
@@ -185,16 +188,20 @@ static void handle_import_file_change (const char *, void *) {
 			if ((strstr(name, ".txt") != 0) && (SimulatedMicroscope != NULL)) {
 				SimulatedMicroscope->sendCylinders(obj);
 			}
+			
+			*World.current_object = name;
+
+			// had to put this here so that the correct current_object is used
+			import_update_AFM = obj->GetUpdateAFM();
 
 			delete name;
         }
 		else {	// close the current object
 			if (strcmp(*World.current_object, "") != 0) {
-				if (strcmp(*World.current_object, "all") == 0) {
-					printf ("Can't close object.\n");
+				if (strcmp(*World.current_object, "all") == 0 ||
+					strcmp(*World.current_object, "none") == 0) {
 					return;
 				}
-
 				UTree *node = World.TGetNodeByName(*World.current_object);
 
 			    node->TGetParent()->TRemoveTreeNode(node);
@@ -210,8 +217,6 @@ static void handle_import_file_change (const char *, void *) {
 					imported_objects.deleteEntry("all");
 					imported_objects.addEntry("none");
 				}
-
-	//			*World.current_object = "all";
             
 				delete node;
 			}
@@ -281,7 +286,8 @@ static  void handle_import_update_AFM (vrpn_int32, void *)
 			obj.SetUpdateAFM(import_update_AFM);
 
 			// do update
-			if (SimulatedMicroscope != NULL) {
+			if (SimulatedMicroscope != NULL &&
+				obj.GetUpdateAFM()) {
 				SimulatedMicroscope->encode_and_sendScale(obj.GetLocalXform().GetScale());
 				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
 															obj.GetLocalXform().GetTrans()[1],
@@ -295,7 +301,6 @@ static  void handle_import_update_AFM (vrpn_int32, void *)
 	}
 	else {
 		import_update_AFM = 0;
-		printf("Can only set for one .txt object at a time.\n");
 	}
 }
 
