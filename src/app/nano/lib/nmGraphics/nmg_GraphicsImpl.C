@@ -767,8 +767,7 @@ _______________________________********************/
 
 
 void nmg_Graphics_Implementation::causeGridRedraw (void) {
-//fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
-
+  //fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
   BCPlane * plane = g_inputGrid->getPlaneByName(g_heightPlaneName);
 
   d_dataset->range_of_change.ChangeAll();

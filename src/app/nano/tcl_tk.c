@@ -462,23 +462,33 @@ int	poll_Tk_control_panels(void)
 
 
 void tcl_colormapRedraw() {
-  if (!curColorMap) return;
     
   delete [] colormap_pixels;
   colormap_pixels = new unsigned char[colormap_height * colormap_width * 3];
-  float ci, r, g, b, a;
-  for ( int i= 0; i < colormap_height; i++) {
-    for ( int j = 0; j < colormap_width; j++ ) {
-      ci = 1.0 - float(i)/colormap_height;
-      if ( ci <  color_min ) ci = 0;
-      else if ( ci > color_max ) ci = 1.0;
-      else ci = (ci - color_min)/(color_max - color_min);
-      
-      curColorMap->lookup( ci, &r, &g, &b, &a);
-      
-      colormap_pixels[ i*colormap_width*3 + j*3 + 0] = (unsigned char)( r * 255 );
-      colormap_pixels[ i*colormap_width*3 + j*3 + 1] = (unsigned char)( g * 255 );
-      colormap_pixels[ i*colormap_width*3 + j*3 + 2] = (unsigned char)( b * 255 );
+  if (curColorMap) {
+    float ci, r, g, b, a;
+    for ( int i= 0; i < colormap_height; i++) {
+      for ( int j = 0; j < colormap_width; j++ ) {
+	ci = 1.0 - float(i)/colormap_height;
+	if ( ci <  color_min ) ci = 0;
+	else if ( ci > color_max ) ci = 1.0;
+	else ci = (ci - color_min)/(color_max - color_min);
+	
+	curColorMap->lookup( ci, &r, &g, &b, &a);
+	
+	colormap_pixels[ i*colormap_width*3 + j*3 + 0] = (unsigned char)( r * 255 );
+	colormap_pixels[ i*colormap_width*3 + j*3 + 1] = (unsigned char)( g * 255 );
+	colormap_pixels[ i*colormap_width*3 + j*3 + 2] = (unsigned char)( b * 255 );
+      }
+    }
+  }
+  else {
+    for ( int i= 0; i < colormap_height; i++) {
+      for ( int j = 0; j < colormap_width; j++ ) {
+	colormap_pixels[ i*colormap_width*3 + j*3 + 0] = (unsigned char)( surface_r );
+	colormap_pixels[ i*colormap_width*3 + j*3 + 1] = (unsigned char)( surface_g );
+	colormap_pixels[ i*colormap_width*3 + j*3 + 2] = (unsigned char)( surface_b );
+      }
     }
   }
   colormap.pixelPtr = colormap_pixels;

@@ -383,14 +383,14 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
     float data_value = planes.color->value(x, y);
     data_value = (data_value - planes.color->minNonZeroValue())/
       (planes.color->maxNonZeroValue() - planes.color->minNonZeroValue());
-
+    
     data_value = data_value * (g_data_max - g_data_min) + g_data_min;
     
     // clamp data based on the stretched/shrunk colormap:
     if ( data_value <  g_color_min ) data_value = 0;
     else if ( data_value > g_color_max ) data_value = 1.0;
     else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
-
+    
     if (g_curColorMap) {    // Use the color map loaded from file
       float r, g, b, a;
       g_curColorMap->lookup(data_value, &r, &g, &b, &a);
@@ -399,14 +399,13 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
       Color[2] = b;
       Color[3] = (GLubyte) (g_surface_alpha * 255);
     }
-
+    
     else {      // Use the CUSTOM color mapping tool
       for (i = 0; i < 3; i++) {
 	double  color_diff = (maxColor[i] - minColor[i]);
 	Color[i] = minColor[i] + (color_diff * data_value);
-        Color[3] = (GLubyte) (g_surface_alpha * 255);
-      
       }
+      Color[3] = (GLubyte) (g_surface_alpha * 255);
     }
   }
   if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color) {

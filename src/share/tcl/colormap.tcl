@@ -34,7 +34,7 @@ generic_optionmenu $nmInfo(colorscale).pickframe.colormap_plane \
 	color_comes_from \
 	"Colormap plane" inputPlaneNames
 
-set colorMapNames {custom }
+set colorMapNames {none }
 generic_optionmenu $nmInfo(colorscale).pickframe.colormap \
 	color_map \
 	"Colormap" colorMapNames
@@ -57,6 +57,29 @@ button $nmInfo(colorscale).pickframe.autoscale -text "AutoScale"  \
     -command "adjust_color_min_max autoscale autoscale autoscale"
 pack $nmInfo(colorscale).pickframe.autoscale -side left -anchor nw
 
+set surface_r 192
+set surface_g 192
+set surface_b 192
+set surface_color_changed 0
+
+button $nmInfo(colorscale).set_color -text "Set surface color" -command {
+    choose_color surface_color "Choose surface color"
+    set_surface_color
+}
+
+# this sets the color of the sample frame to the color of the scales
+set surface_color [format #%02x%02x%02x $surface_r $surface_g $surface_b]
+pack $nmInfo(colorscale).set_color -side left -anchor nw
+
+proc set_surface_color {} {
+    global surface_r surface_g surface_b surface_color_changed surface_color
+    global nmInfo
+
+    # Extract three component colors of contour_color 
+    # and save into surface_r g b
+    scan $surface_color #%02x%02x%02x surface_r surface_g surface_b
+    set surface_color_changed 1
+}
 
 #set these so we can see do " wishx <mainwin.tcl" and test interface
 set color_min 0

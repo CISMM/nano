@@ -197,6 +197,7 @@ static void handle_collab_machine_name_change(const char *new_value, void *userd
 
 static  void    handle_x_dataset_change(const char *new_value, void *userdata);
 
+static  void    handle_surface_color_change(vrpn_int32 new_value, void *userdata);
 static	void    handle_colormap_change(const char *new_value, void *userdata);
 static	void	handle_exportFileName_change(const char *new_value, void *userdata);
 static  void    handle_exportPlaneName_change(const char *new_value, void *userdata);
@@ -437,7 +438,7 @@ static Tclvar_string my_hostname("my_hostname", "localhost");
 
 //-----------------------------------------------------------------------
 /// This is the list of color map files from which mappings can be made.  It
-/// should be loaded with the files in the colormap directory, and "CUSTOM".
+/// should be loaded with the files in the colormap directory, and "custom".
 
 static Tclvar_list_of_strings	colorMapNames("colorMapNames");
 
@@ -485,6 +486,10 @@ static int	maxC[3] = {250,50,50};
 /// The limits on the Tk slider where min and max value are selected
 Tclvar_float	color_min_limit("color_min_limit",0);
 Tclvar_float	color_max_limit("color_max_limit",1);
+TclNet_int surface_r ("surface_r", 192);
+TclNet_int surface_g ("surface_g", 192);
+TclNet_int surface_b ("surface_b", 192);
+TclNet_int surface_color_changed ("surface_color_changed", 1);
 
 
 // NANOX
@@ -2668,6 +2673,21 @@ else fprintf(stderr, "Added X plane update callback\n");
 	}
 }
 
+static void handle_surface_color_change (vrpn_int32, void * userdata) {
+  if ( surface_color_changed == 1 ) {
+    surface_color_changed = 0;
+    nmg_Graphics * g = (nmg_Graphics *) userdata;
+    int color[3];
+    color[0] = int(surface_r);
+    color[1] = int(surface_g);
+    color[2] = int(surface_b);
+    g->setMinColor( color );
+    g->setMaxColor( color );
+    g->causeGridRedraw();
+    tcl_colormapRedraw();
+  }
+}
+
 static	void	handle_colormap_change (const char *, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -2678,7 +2698,7 @@ static	void	handle_colormap_change (const char *, void * userdata) {
   // method of computing color.  XXX Integrate this better,
   // so that we always use a color map but that it is set to
   // the min/max colors when we are using CUSTOM.
-  if (strcmp(dataset->colorMapName->string(), "CUSTOM") == 0) {
+  if (strcmp(dataset->colorMapName->string(), "none") == 0) {
           curColorMap = NULL;
   } else {
           colorMap.load_from_file(dataset->colorMapName->string(), colorMapDir);
@@ -3699,7 +3719,7 @@ int	loadColorMapNames(void)
 	struct	dirent *entry;
 
 	// Set the default entry to use the custom color controls
-	colorMapNames.addEntry("CUSTOM");
+	colorMapNames.addEntry("none");
 
 	// Find the directory we are supposed to use
 	if ( (colorMapDir=getenv("NM_COLORMAP_DIR")) == NULL) {
@@ -4124,6 +4144,7 @@ void setupCallbacks (nmg_Graphics * g) {
   color_min.addCallback(handle_color_change, g);
   color_max.addCallback(handle_color_change, g);
   data_min.addCallback(handle_color_change, g);
+  surface_color_changed.addCallback(handle_surface_color_change, g);
   data_max.addCallback(handle_color_change, g);
   texture_scale.addCallback
             (handle_texture_scale_change, g);
@@ -5763,9 +5784,12 @@ int main(int argc, char* argv[])
 	return -1;
     }	
 
+    // Match Color w/default in TCL
+    minC[0] = maxC[0] = surface_r;
+    minC[1] = maxC[1] = surface_g;
+    minC[2] = maxC[2] = surface_b;
 
     /* Parse the command line */
-
     ParseArgs(argc, argv, &istate);
 
 
@@ -6140,7 +6164,7 @@ int main(int argc, char* argv[])
 	// Specification of vi_curve device: first look at command line arg
 	// and then check environment variable
 	if (strcmp(istate.vicurve.deviceName, "null") == 0){
-	    char *vicurve_device = getenv("NM_VICURVE");
+	    char *vicurve_device = getenv("NM_VICRVE");
 	    if (vicurve_device != NULL) 
 		strcpy(istate.vicurve.deviceName, vicurve_device);
 	}

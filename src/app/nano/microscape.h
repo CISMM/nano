@@ -158,6 +158,9 @@ extern  Tclvar_float            color_min_limit;
 extern  Tclvar_float            color_max_limit;
 extern  TclNet_float            color_min, color_max;
 extern  TclNet_float            data_min, data_max;
+extern TclNet_int surface_r;
+extern TclNet_int surface_g;
+extern TclNet_int surface_b;
 
 //--------------------------------------------------------------------------
 ///These select the plane to map compliance from and teh scale of the mapping.
