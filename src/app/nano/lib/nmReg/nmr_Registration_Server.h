@@ -92,23 +92,23 @@ class nmr_Registration_Server : public nmb_Device_Server,
 					vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
 
   protected:
-    static int RcvSetImageParameters (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvSetScanline (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvSetTransformationOptions
+    static int VRPN_CALLBACK RcvSetImageParameters (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvSetScanline (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvSetTransformationOptions
                                      (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvSetTransformationParameters
+    static int VRPN_CALLBACK RcvSetTransformationParameters
                                      (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvEnableRegistration(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvEnableGUI(void *_userdata, vrpn_HANDLERPARAM _p);
-	static int RcvEnableEdit(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvFiducial (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvEnableAutoUpdate (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvEnableRegistration(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvEnableGUI(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvEnableEdit(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvFiducial (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvEnableAutoUpdate (void *_userdata, vrpn_HANDLERPARAM _p);
 
-    static int RcvSetResolutions(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvSetIterationLimit(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvSetStepSize(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvSetCurrentResolution(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvAutoAlign(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvSetResolutions(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvSetIterationLimit(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvSetStepSize(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvSetCurrentResolution(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvAutoAlign(void *_userdata, vrpn_HANDLERPARAM _p);
 
     int notifyMessageHandlers(nmr_MessageType type,
         const struct timeval &msg_time);

@@ -1,3 +1,8 @@
+2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmr_Registration_Client.h : Uses new VRPN_CALLBACK definition.
+	* nmr_Registration_Server.h : Uses new VRPN_CALLBACK definition.
+
 2003-05-19  David Jack <jackd@cs.unc.edu>
 
 	* nmr_AFM_SEM_Calibration.C (updateSEMfromModel_3D): was fitting to

@@ -81,10 +81,10 @@ class nmr_Registration_Client : public nmb_Device_Client,
               vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
 
   protected:
-    static int RcvImageParameters (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvTransformationOptions (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvRegistrationResult (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvFiducial (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvImageParameters (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvTransformationOptions (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvRegistrationResult (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvFiducial (void *_userdata, vrpn_HANDLERPARAM _p);
 
     int notifyMessageHandlers(nmr_MessageType type,
         const struct timeval &msg_time);
