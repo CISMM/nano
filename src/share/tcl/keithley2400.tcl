@@ -354,125 +354,66 @@ proc vi_save_data { filename } {
     }
 
     # Make global the names of all the data vectors
-    set vec_start_name $vi(first_curve_not_saved)
-    set vec_end_name $vi(first_curve_not_saved)
-
+    set max_length -1
     foreach i [array names name_time_pairs] {
+	if { $i < $vi(first_curve_not_saved) } { continue }
+
 	set v vi_volt_vec$name_time_pairs($i)
 	set c vi_curr_vec$name_time_pairs($i)
 	puts "v:  $v\nc:  $c"
-	global $v $c
-	# puts "[${v} range 0 [expr [${v} length]-1]]"
-	if { ![info exists ${c}] } {
-	    tk_messageBox -icon error -message "While exporting data, the current for vi curve taken at time $name_time_pairs($i) was not found.  The curve at this time will not be exported." -type ok
-	    unset name_time_pairs($i)
-	} elseif { ![info exists ${v}] } {
-	    tk_messageBox -icon error -message "While exporting data, the voltage for vi curve taken at time $name_time_pairs($i) was not found.  The curve at this time will not be exported." -type ok
-	    unset name_time_pairs($i)
-	} else {
-	    # global $v $c
-	    set vec_end_name $i
-	    set vec_end_time name_time_pairs($i)
-	}
+
+	global ${v} ${c}
+	if { [expr [${v} length] > $max_length] } { set max_length [${v} length] }
+	# if { ![info exists ${c}] } {
+	#    tk_messageBox -icon error -message "While exporting data, the current for vi curve taken at time $name_time_pairs($i) was not found.  The curve at this time will not be exported." -type ok
+	#    unset name_time_pairs($i)
+	# } elseif { ![info exists ${v}] } {
+	#    tk_messageBox -icon error -message "While exporting data, the voltage for vi curve taken at time $name_time_pairs($i) was not found.  The curve at this time will not be exported." -type ok
+	#    unset name_time_pairs($i)
+	#} else {
+	#}
     }
     
-    
-
-
-    set volt_len [vi_volt_vec$vec_start length]
-    set old_volt_len $volt_len
-
-    # Include a heading for each column
-    set line(-1) "V$vec_start\tI$vec_start"
-
-    set volt_vec      vi_volt_vec$vec_start
-    set curr_vec      vi_curr_vec$vec_start
-    # Make the first column contain the voltage readings,
-    # and the second column contain the first current readings.
-    for { set i 0} { $i < $volt_len } { incr i } {
-	set line($i) "[set ${volt_vec}($i)]\t[set ${curr_vec}($i)]"
+    # now, write all the data (with headers) into an array called "line"
+    set line(-1) ""
+    for { set j 0 } { $j < [expr $max_length] } { incr j } {
+	set line($j) ""
     }
-
-    # Loop through the data vectors. We expect the voltage vector to
-    # stay the same for several current vectors. While it's the same,
-    # just append the values in the current vectors to the line($i)
-    # variables. When it changes, print a warning and stop saving.
-    # i is an index into a vector
-    # j is the index of the voltage and current vector pair we are dealing with
-    set j [expr $vec_start +1]
-    while {$j < $vec_end} {
-	set volt_vec      vi_volt_vec$j
-	set old_volt_vec  vi_volt_vec[expr $j -1]
-	set curr_vec      vi_curr_vec$j
+    set last_curve_saved -1
+    set first_curve_saved 1000000000
+    foreach i [array names name_time_pairs] {
+	if { $i < $vi(first_curve_not_saved) } { continue }
 	
-	# Check to see if the voltage vectors are the same
-	set diff 0
-	# First, check their lengths
-	if { $volt_len != [$volt_vec length] } {
-	    # if they are different, notify the user and stop saving.
-
-	    puts "Saving to $filename"
-	    set myfile [open $filename w]
-	    # start at -1 to include the header line, too. 
-	    for { set i -1} { $i < $volt_len } { incr i } {
-		puts $myfile $line($i)
-	    }
-	    flush $myfile
-	    close $myfile
-	    exec unix_to_dos $filename
-	    
-	    # remember which vectors we haven't saved yet
-	    set vi(first_curve_not_saved) $j
-
-	    # Notify the user.
-	    tk_messageBox -icon info -message "Saved curves $vec_start - [expr $j -1] to file $filename, but curve $j has a different number of points. You might want to hit Save again." -type ok
-
-
-	    return
-	# Check their, start, stop, and middle values. Middle distinguishes
-	# a switch in linear/log sweep. 
-	} elseif { ([set ${volt_vec}(0)] != [set ${old_volt_vec}(0)]) || \
-		   ([set ${volt_vec}(end)] != [set ${old_volt_vec}(end)]) ||
-		   ([set ${volt_vec}([expr int($volt_len/2)])] != [set ${old_volt_vec}([expr int($volt_len/2)])]) } {
-	    
-	    # This voltage vector might be different, so include it in
-	    # the file. It might also be the same, and look different
-	    # because of roundoff error.
-
-	    # Append the header for this voltage vector
-	    append line(-1) "\tV$j"
-
-	    # Now set up the line vars for the next file
-	    # Make the first column contain the voltage readings
-	    for { set i 0} { $i < $volt_len } { incr i } {
-		append line($i) "\t[set ${volt_vec}($i)]"
-	    }
-	    
+	append line(-1) "V$name_time_pairs($i)\tI$name_time_pairs($i)\t"
+	set v vi_volt_vec$name_time_pairs($i)
+	set c vi_curr_vec$name_time_pairs($i)
+	set length [${v} length]
+	puts ${v}(:)
+	for { set j 0 } { $j <= [expr $length - 1] } { incr j } {
+	    append line($j) "[${v} range $j $j]\t[${c} range $j $j]\t"
+	    # the notation ${v}($j) seems not to work in this context...
 	}
-	# Append the header for this current vector
-	append line(-1) "\tI$j"
-
-	# Append the current vector's elements
-	for { set i 0} { $i < $volt_len } { incr i } {
-	    # append element of vector onto text variables
-	    append line($i) "\t[set ${curr_vec}($i)]"
-	}
-	incr j
+	if { $i > $last_curve_saved } { set last_curve_saved $i }
+	if { $i < $first_curve_saved } { set first_curve_saved $i }
     }
-    #Save the last file.
+    
+    # save to the file
     puts "Saving to $filename"
     set myfile [open $filename w]
     # start at -1 to include the header line, too. 
-    for { set i -1} { $i < $volt_len } { incr i } {
+    for { set i -1} { $i < $max_length } { incr i } {
 	puts $myfile $line($i)
     }
     flush $myfile
     close $myfile
-    exec unix_to_dos $filename
-
-    set vi(first_curve_not_saved) $j
-    tk_messageBox -icon info -message "Saved curves $vec_start - [expr $j -1] to file $filename." -type ok
-
+    
+    # Notify the user.
+    tk_messageBox -icon info -message "Saved curves from time $name_time_pairs($first_curve_saved) through time $name_time_pairs($last_curve_saved) to file $filename." -type ok
+    
+    # remember which vectors we haven't saved yet
+    set vi(first_curve_not_saved) [expr $last_curve_saved + 1]
+    
+    return
 }
 
 # This widget has a problem - if you type in a file name, it doesn't

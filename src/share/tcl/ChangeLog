@@ -1,3 +1,8 @@
+2002-04-23  David Marshburn  <marshbur@cs.unc.edu>
+
+	* keithley2400.tcl (vi_save_data):  finished fixing up this function 
+	so that it correctly exports text data.
+
 2002-04-21  David Marshburn  <marshbur@cs.unc.edu>
 
 	* keithley2400.tcl:  added UI elements for initial delay and for
