@@ -32,6 +32,7 @@ static  void handle_import_alpha (vrpn_float64, void *);
 static  void handle_import_proj_text (vrpn_int32, void *);
 static	void handle_import_clamp (vrpn_int32, void *);
 static	void handle_import_CCW (vrpn_int32, void *);
+static	void handle_import_update_AFM (vrpn_int32, void *);
 
 ///Import object handlers specifically for MSI files
 static  void handle_msi_bond_mode (vrpn_int32, void *);
@@ -57,8 +58,9 @@ Tclvar_int      import_visibility("import_visibility", 1, handle_import_visibili
 Tclvar_int      import_proj_text("import_proj_text", 1, handle_import_proj_text);
 Tclvar_int		import_clamp("import_clamp", 0, handle_import_clamp);
 Tclvar_int		import_CCW("import_CCW", 1, handle_import_CCW);
+Tclvar_int		import_update_AFM("import_update_AFM", 1, handle_import_update_AFM);
 Tclvar_int		import_tess("import_tess", 10, handle_import_tess_change);
-Tclvar_int		import_axis_step("import_axis_step", 1, handle_import_axis_step_change);
+Tclvar_int		import_axis_step("import_axis_step", 10, handle_import_axis_step_change);
 Tclvar_int      import_color_changed("import_color_changed", 0, handle_import_color_change);
 Tclvar_int      import_r("import_r", 192);
 Tclvar_int      import_g("import_g", 192);
@@ -78,12 +80,34 @@ Tclvar_float    msi_atom_radius("msi_atom_radius", 1, handle_msi_atom_radius);
 //Functions necessary for all imported objects
 
 static void handle_current_object_new(const char*, void*) {
-	if (imported_objects.numEntries() == 0) {
+	nmb_ListOfStrings temp;
+	int i;
+
+	temp.addEntry(current_object_new.string());
+
+	for (i = 0; i < imported_objects.numEntries(); i++) {
+		temp.addEntry(imported_objects.entry(i));
+	}
+
+	imported_objects.clearList();
+
+	for (i = 0; i < temp.numEntries(); i++) {
+		imported_objects.addEntry(temp.entry(i));
+	}
+
+
+	if (imported_objects.getIndex("all") == -1) {
 		// add "all" entry
 		imported_objects.addEntry("all");
 	}
 
-	imported_objects.addEntry(current_object_new.string());
+	// seems to add NONE for some reason...get rid of this
+	imported_objects.deleteEntry("NONE");
+
+	// remove none
+	imported_objects.deleteEntry("none");
+
+	*World.current_object = current_object_new.string();
 }
 
 static void handle_current_object(const char*, void*) {
@@ -111,6 +135,8 @@ static void handle_current_object(const char*, void*) {
 			import_proj_text = obj.ShowProjText();
 
 			import_CCW = obj.GetCCW();
+
+			import_update_AFM = obj.GetUpdateAFM();
 		}
 	}
 }
@@ -136,6 +162,12 @@ static void handle_import_file_change (const char *, void *) {
             obj->SetVisibility(import_visibility);
 			obj->SetProjText(import_proj_text);
 			obj->SetClamp(import_clamp);
+			// only allow update_AFM for .txt files
+			if (strstr(modelFile.string(), ".txt") == 0) {
+				import_update_AFM = 0;
+			}
+			obj->SetUpdateAFM(import_update_AFM);
+					
 	        obj->SetColor3(convert * import_r, convert * import_g, convert * import_b);
             obj->SetAlpha(import_alpha);
             obj->GetLocalXform().SetScale(import_scale);
@@ -149,12 +181,12 @@ static void handle_import_file_change (const char *, void *) {
 			while (*(--c) != '/');
             World.TAddNode(obj, c + 1);
 
-			delete name;
-
 			// if a tube file, send to simulator
 			if ((strstr(name, ".txt") != 0) && (SimulatedMicroscope != NULL)) {
 				SimulatedMicroscope->sendCylinders(obj);
 			}
+
+			delete name;
         }
 		else {	// close the current object
 			if (strcmp(*World.current_object, "") != 0) {
@@ -167,9 +199,19 @@ static void handle_import_file_change (const char *, void *) {
 
 			    node->TGetParent()->TRemoveTreeNode(node);
 	
-				imported_objects.deleteEntry(*World.current_object);
 
-				*World.current_object = "all";
+				imported_objects.deleteEntry(*World.current_object);
+				// put "all" back at the end
+				imported_objects.deleteEntry("all");
+				imported_objects.addEntry("all");
+
+
+				if (imported_objects.numEntries() == 1) {
+					imported_objects.deleteEntry("all");
+					imported_objects.addEntry("none");
+				}
+
+	//			*World.current_object = "all";
             
 				delete node;
 			}
@@ -225,6 +267,38 @@ static  void handle_import_clamp (vrpn_int32, void *)
 	}
 }
 
+static  void handle_import_update_AFM (vrpn_int32, void *)
+{
+	// only do on a per object basis...only allow for .txt files
+
+	// if all selected, do nothing
+	if (strcmp(*World.current_object, "all") != 0 &&
+		strstr(*World.current_object, ".txt") != 0) {
+
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetUpdateAFM(import_update_AFM);
+
+			// do update
+			if (SimulatedMicroscope != NULL) {
+				SimulatedMicroscope->encode_and_sendScale(obj.GetLocalXform().GetScale());
+				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+															obj.GetLocalXform().GetTrans()[1],
+															obj.GetLocalXform().GetTrans()[2]);
+				SimulatedMicroscope->encode_and_sendRot(obj.GetLocalXform().GetRot()[0],
+														obj.GetLocalXform().GetRot()[1],
+														obj.GetLocalXform().GetRot()[2],
+														obj.GetLocalXform().GetRot()[3]);
+			}
+		}
+	}
+	else {
+		import_update_AFM = 0;
+		printf("Can only set for one .txt object at a time.\n");
+	}
+}
+
 static  void handle_import_CCW (vrpn_int32, void *)
 {
     UTree *node = World.TGetNodeByName(*World.current_object);
@@ -265,9 +339,10 @@ static  void handle_import_scale_change (vrpn_float64, void *)
 			URender &obj = node->TGetContents();
 			obj.GetLocalXform().SetScale(import_scale);
 
-			// if a tube file, send scale
+			// if a tube file and update_AFM selected, send scale
 			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL)) {
+				(SimulatedMicroscope != NULL) &&
+				obj.GetUpdateAFM()) {
 				SimulatedMicroscope->encode_and_sendScale(import_scale);
 			}
 		}
@@ -288,9 +363,10 @@ static  void handle_import_transx_change (vrpn_float64, void *)
 			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
 			obj.GetLocalXform().SetTranslate(import_transx, trans[1], trans[2]);
 			
-			// if a tube file, send trans
+			// if a tube file and update_AFM selected, send trans
 			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL)) {
+				(SimulatedMicroscope != NULL) &&
+				obj.GetUpdateAFM()) {
 				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
 															obj.GetLocalXform().GetTrans()[1],
 															obj.GetLocalXform().GetTrans()[2]);
@@ -313,9 +389,10 @@ static  void handle_import_transy_change (vrpn_float64, void *)
 			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
 			obj.GetLocalXform().SetTranslate(trans[0], import_transy, trans[2]);
 			
-			// if a tube file, send trans
+			// if a tube file and update_AFM selected, send trans
 			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL)) {
+				(SimulatedMicroscope != NULL) &&
+				obj.GetUpdateAFM()) {
 				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
 															obj.GetLocalXform().GetTrans()[1],
 															obj.GetLocalXform().GetTrans()[2]);
@@ -338,9 +415,10 @@ static  void handle_import_transz_change (vrpn_float64, void *)
 			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
 			obj.GetLocalXform().SetTranslate(trans[0], trans[1], import_transz);
 						
-			// if a tube file, send trans
+			// if a tube file and update_AFM selected, send trans
 			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL)) {
+				(SimulatedMicroscope != NULL) &&
+				obj.GetUpdateAFM()) {
 				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
 															obj.GetLocalXform().GetTrans()[1],
 															obj.GetLocalXform().GetTrans()[2]);
@@ -363,9 +441,10 @@ static  void handle_import_rotx_change (vrpn_float64, void *)
 		    const q_type &rot = obj.GetLocalXform().GetRot();
 		    obj.GetLocalXform().SetRotate(import_rotx, rot[1], rot[2], rot[3]);
 						
-			// if a tube file, send rot
+			// if a tube file and update_AFM selected, send rot
 			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL)) {
+				(SimulatedMicroscope != NULL) &&
+				obj.GetUpdateAFM()) {
 				SimulatedMicroscope->encode_and_sendRot(obj.GetLocalXform().GetRot()[0],
 														obj.GetLocalXform().GetRot()[1],
 														obj.GetLocalXform().GetRot()[2],
@@ -389,9 +468,10 @@ static  void handle_import_roty_change (vrpn_float64, void *)
 	        const q_type &rot = obj.GetLocalXform().GetRot();
 	        obj.GetLocalXform().SetRotate(rot[0], import_roty, rot[2], rot[3]);
 									
-			// if a tube file, send rot
+			// if a tube file and update_AFM selected, send rot
 			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL)) {
+				(SimulatedMicroscope != NULL) &&
+				obj.GetUpdateAFM()) {
 				SimulatedMicroscope->encode_and_sendRot(obj.GetLocalXform().GetRot()[0],
 														obj.GetLocalXform().GetRot()[1],
 														obj.GetLocalXform().GetRot()[2],
@@ -415,9 +495,10 @@ static  void handle_import_rotz_change (vrpn_float64, void *)
 	        const q_type &rot = obj.GetLocalXform().GetRot();
 	        obj.GetLocalXform().SetRotate(rot[0], rot[1], import_rotz, rot[3]);
 									
-			// if a tube file, send rot
+			// if a tube file and update_AFM selected, send rot
 			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL)) {
+				(SimulatedMicroscope != NULL) &&
+				obj.GetUpdateAFM()) {
 				SimulatedMicroscope->encode_and_sendRot(obj.GetLocalXform().GetRot()[0],
 														obj.GetLocalXform().GetRot()[1],
 														obj.GetLocalXform().GetRot()[2],

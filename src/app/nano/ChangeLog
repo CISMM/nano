@@ -1,3 +1,10 @@
+2002-04-11  David Borland  <borland@cs.unc.edu>
+        * import.C:  Changed default axis step value for loaded tubes.  
+        Modified handling of opening and closing objects in the list of
+        objects so that it is more intuitive.  Added functionality for 
+        user control of sending orientation and scale updates to the AFM
+        simulator
+
 2002-04-04  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.C (handle_set_stream_time_change): Display the
