@@ -409,18 +409,13 @@ int mode_display (void *) {
   case USER_LIGHT_MODE:       message = (char *)"Position Light Mode"; break;
   case USER_FLY_MODE:         message = (char *)"Fly Mode";            break;
   case USER_MEASURE_MODE:     message = (char *)"Measure Mode";        break;
-     //case USER_PULSE_MODE:       message = (char *)"Pulse Mode";          break;
-     //case USER_LINE_MODE:        message = (char *)"Line Mode";           break;
-     //case USER_SWEEP_MODE:       message = (char *)"Sweep Mode";          break;
-     //case USER_BLUNT_TIP_MODE:   message = (char *)"Blunt Tip Mode";      break;
-     //case USER_COMB_MODE:        message = (char *)"Comb Mode";           break;
   case USER_PLANE_MODE:       message = (char *)"Touch Stored Mode"; break;
-  case USER_PLANEL_MODE:      message = (char *)"Touch & Prepare to Modify Mode"; break;
+  case USER_PLANEL_MODE:      
+    message = (char *)"Touch & Prepare to Modify Mode"; break;
   case USER_SCALE_UP_MODE:    message = (char *)"Scale Mode";       break;
   case USER_SCALE_DOWN_MODE:  message = (char *)"Scale Mode";     break;
   case USER_SERVO_MODE:       message = (char *)"Select Mode";         break;
   case USER_GRAB_MODE:        message = (char *)"Grab Mode";     break;
-  case USER_MEAS_MOVE_MODE:   message = (char *)"Measure Line Mode"; break;
   case USER_CENTER_TEXTURE_MODE:
 			      message = (char *)"Center Texture Mode"; break;
   case USER_SCANLINE_MODE:    message = (char *)"LineScan Mode"; break;

@@ -249,8 +249,6 @@ int clear_world_modechange(int mode, int style, int tool_param)
     removeFunctionFromFunclist(&v_hand,hand_id);
     removeFunctionFromFunclist(&vir_world,aim_struct_id);
     break;
-  case USER_MEAS_MOVE_MODE:
-    break;
   case USER_CENTER_TEXTURE_MODE:
     removeFunctionFromFunclist(&vir_world,sphere_id);
     break;
@@ -351,8 +349,6 @@ int init_world_modechange(int mode, int style, int tool_param)
     break;
   case USER_SCANLINE_MODE:
     hand_id = addFunctionToFunclist(&v_hand, selecthand, NULL, "selecthand");
-    break;
-  case USER_MEAS_MOVE_MODE:
     break;
   case USER_CENTER_TEXTURE_MODE:
     sphere_id = addFunctionToFunclist(&vir_world,mysphere,NULL,"mysphere"); 

@@ -1,5 +1,12 @@
 2001-09-25  David Marshburn  <marshbur@cs.unc.edu>
 
+	* interaction.c: (all) code clean up.  removal of commented out
+	code, old print statements, some formatting
+	(doMeasureGridGrab) removed.  unused and unimplemented.  Associated
+	with unused USER_MEAS_MOVE_MODE.
+	(doLine): major reformatting.
+	(doFeelLive): make xy lock not lock z when in directz control.
+
 	* microscape.c: build clean-up
 
 2001-09-17  David Marshburn  <marshbur@cs.unc.edu>
@@ -7,7 +14,7 @@
 	* interaction.c: removed ^M's and commented-out print functions.  
 
 2001-09-14 <millerj@cs.unc.edu>
-	*interaction.c, .h : added direct step capability. Display will get 
+	* interaction.c, .h : added direct step capability. Display will get 
 	updated when steps are taken in xy__lock, when selecting xy_lock, 
 	the z_position of the microscope gets set so direct stepping in xyz 
 	works. added in an variable so that the z position of microscope
