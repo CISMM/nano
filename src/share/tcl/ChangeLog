@@ -1,3 +1,10 @@
+2002--6-03 David Borland <borland@cs.unc.edu>
+
+        * registration.tcl : user control for grabbing the projective 
+	texture with the phantom.
+
+	* import.tcl : same
+
 2002-05-30 David Borland <borland@cs.unc.edu>
 
         * registration.tcl : added control of the new MODEL and SURFACE

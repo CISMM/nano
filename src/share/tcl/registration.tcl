@@ -121,6 +121,10 @@ generic_entry $nmInfo(registration).transformParameters.translateY \
         reg_translateY "translate Y" real
 pack $nmInfo(registration).transformParameters.translateY -anchor nw
 
+generic_entry $nmInfo(registration).transformParameters.translateZ \
+        reg_translateZ "translate Z" real
+pack $nmInfo(registration).transformParameters.translateZ -anchor nw
+
 generic_entry $nmInfo(registration).transformParameters.rotateX \
         reg_rotateX "rotate X" real
 pack $nmInfo(registration).transformParameters.rotateX -anchor nw
@@ -162,6 +166,17 @@ radiobutton $nmInfo(registration).texture.image_mode_model \
     -text "Model Mode" -variable reg_image_mode -value 0
 
 pack $nmInfo(registration).texture.image_mode_model -anchor nw
+
+checkbutton $nmInfo(registration).texture.grab_texture \
+    -text "Grab Texture" -variable reg_grab_texture -command grab_texture_proc
+
+pack $nmInfo(registration).texture.grab_texture -anchor nw
+
+proc grab_texture_proc {} {
+    global import_grab_object
+ 
+    set import_grab_object 0
+}
 
 iwidgets::Labeledframe $nmInfo(registration).rsplane \
 	-labeltext "Create Plane (match Topog image region)" \
