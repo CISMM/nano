@@ -75,9 +75,9 @@ stm_stream	*stm_open_datastream_for_write (const char * filename)
 #endif
 
 		free((char*)s);
-		perror("stm_open_datastream_for_write(): can't open");
+		perror("stm_open_datastream_for_write(): can't open\n");
 		fprintf(stderr,"  (file %s)\n",filename);
-		return(NULL);
+		exit(-1);
 	}
 
 	/* Attempt to malloc() the buffer area for the stream. */
@@ -424,7 +424,7 @@ int	stm_read_block_from_stream(stm_stream* s, /* Stream to read from */
 	/* Advance the pointer */
 	s->cur += len;
 
-	return(len);
+	return( (int)len);  // to shut-up the compiler warning
 }
 
 
