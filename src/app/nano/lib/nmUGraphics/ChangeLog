@@ -1,3 +1,15 @@
+2002-05-13  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* URPolygon.C : eliminated SetRotxAll, SetRotyAll, and
+	SetRotzAll functions for general SetRotAll function which
+	takes in all rotation values from tcl menu boxes instead of
+	just x, y, or z and resets all internal rotations from these
+	values each time any one of them changes--elimintes problems
+	with euler angle values returned from quaternions not matching 
+	up with what is currently in tcl boxes, which was causing 
+	objects to jitter
+
+
 2002-05-09  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* TubeFileGenerator.C : changed method of finding centerpoint of

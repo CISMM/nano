@@ -207,38 +207,18 @@ int URPolygon::SetTranszAll(void* userdata) {
 	else return ITER_STOP;
 }
 
-int URPolygon::SetRotxAll(void* userdata) {	
-	double rotx = *(double*) userdata;
+int URPolygon::SetRotAll(void* userdata) {
+	double* array = (double*)userdata;
+	double rotx = array[0];
+	double roty = array[1];
+	double rotz = array[2];
+	printf("x: %lf,y: %lf, z: %lf\n",rotx,roty,rotz);
 
 	q_vec_type euler;
-	q_to_euler(euler, this->GetLocalXform().GetRot());
 
-	euler[2] = rotx;
-
-	q_type rot;
-	q_from_euler(rot, euler[0], euler[1], euler[2]);
-
-    this->GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
-
-	// if a tube file, send rot
-	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL) &&
-		this->GetUpdateAFM()) {
-		SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
-		cout << "rot Sent: " << "x: " << euler[2] << "\ty: " << euler[1] << "\tz: " << euler[0] << endl;
-	}
-
-	if(recursion) return ITER_CONTINUE;	
-	else return ITER_STOP;
-}
-
-int URPolygon::SetRotyAll(void* userdata) {	
-	double roty = *(double*) userdata;
-
-	q_vec_type euler;
-	q_to_euler(euler, this->GetLocalXform().GetRot());
-
+	euler[0] = rotx;
 	euler[1] = roty;
+	euler[2] = rotz;
 
 	q_type rot;
 	q_from_euler(rot, euler[0], euler[1], euler[2]);
@@ -257,31 +237,6 @@ int URPolygon::SetRotyAll(void* userdata) {
 	else return ITER_STOP;
 }
 
-int URPolygon::SetRotzAll(void* userdata) {	
-	double rotz = *(double*) userdata;
-	
-	q_vec_type euler;
-	q_to_euler(euler, this->GetLocalXform().GetRot());
-
-	euler[0] = rotz;
-
-	q_type rot;
-	q_from_euler(rot, euler[0], euler[1], euler[2]);
-
-    this->GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
-
-
-	// if a tube file, send rot
-	if ((strstr(this->name, ".txt") != 0) && 
-		(SimulatedMicroscope != NULL) &&
-		this->GetUpdateAFM()) {
-		SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
-		cout << "rot Sent: " << "x: " << euler[2] << "\ty: " << euler[1] << "\tz: " << euler[0] << endl;
-	}
-
-	if(recursion) return ITER_CONTINUE;	
-	else return ITER_STOP;
-}
 
 int URPolygon::SetColorAll(void* userdata) {
 	RGB* color = (RGB*) userdata;
