@@ -1,3 +1,11 @@
+2002-11-06  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_RegistrationUI.C : fixed tcl var. name for d_textureAlpha
+	Added a variable for temporarily disabling 
+	handle_registrationMinMax2D_change because
+	it gets called too many times when all the values in the colormap 
+	control panel change at the same time
+
 2002-11-04  David Borland <borland@cs.unc.edu>
 
         * nmr_RegistrationUI.C : minor changes to the names of some 

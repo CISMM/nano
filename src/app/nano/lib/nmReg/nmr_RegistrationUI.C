@@ -57,7 +57,7 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_constrainToTopography("reg_constrain_to_topography", 0),
    d_invertWarp("reg_invert_warp", 0),
    d_textureDisplayEnabled("reg_display_texture", 0),
-   d_textureAlpha("colormap_texture_alpha", 1),
+   d_textureAlpha("reg_texture_alpha", 1),
    d_resampleResolutionX("resample_resolution_x", 100),
    d_resampleResolutionY("resample_resolution_y", 100),
    d_resampleRatio("reg_resample_ratio", 0),
@@ -98,7 +98,9 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_flipXreference(vrpn_FALSE), 
    d_flipYreference(vrpn_FALSE),
    d_flipYadjustable(vrpn_FALSE),
-   d_lastTransformTypeSent(NMR_DEFAULT)
+   d_lastTransformTypeSent(NMR_DEFAULT),
+
+   d_colormap2DCallbackDisabled(false)
 {
     d_scaledProjImFromScaledTopoIm = 
         new nmb_TransformMatrix44[s_numTransformationSources];
@@ -478,7 +480,12 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
         // Set the new image to use the existing colormap params:
         double dmin,dmax,cmin,cmax;
         me->d_2DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
+
+		me->d_colormap2DCallbackDisabled = true;
         me->d_2DImageCMap->setColorMinMaxLimit(0,1);
+		me->d_colormap2DCallbackDisabled = false;
+		me->handle_registrationMinMax2D_change(0, me);
+
         me->d_aligner->setColorMinMax(NMR_TARGET, dmin, dmax, cmin, cmax);
         // Or reset the colormap params to their default:
         //me->d_2DImageCMap->setColorMinMaxLimit(0,1);
@@ -577,6 +584,9 @@ void nmr_RegistrationUI::handle_registrationMinMax3D_change(vrpn_float64, void *
 //static 
 void nmr_RegistrationUI::handle_registrationMinMax2D_change(vrpn_float64, void *ud) {
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+	if (me->d_colormap2DCallbackDisabled) {
+		return;
+	}
     double dmin,dmax,cmin,cmax;
      me->d_2DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
     // send changes off to the proxy

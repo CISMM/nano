@@ -179,6 +179,8 @@ class nmr_RegistrationUI {
     nmb_TransformMatrix44 *d_scaledProjImFromScaledTopoIm;
 
 	nmr_RegistrationType d_lastTransformTypeSent;
+
+	bool d_colormap2DCallbackDisabled;
 };
 
 #endif
