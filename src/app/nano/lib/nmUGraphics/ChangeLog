@@ -1,3 +1,7 @@
+2001-12-18  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* TubeGenerator.C: remove compiler warning
+
 2001-03-13  Jason Clark  <jclark@cs.unc.edu>
 
 	* URender.h: New color setting function

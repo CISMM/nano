@@ -59,15 +59,6 @@ void TubeGenerator::drawTube(q_vec_type center, double diameter, double length)
     glPushMatrix();
     glTranslatef((float)center[0], (float)center[0], (float)center[0]);
     
-    // set tube yaw angle (in-plane rotation angle)
-    //glRotatef(d_yaw, 0.0, 0.0, 1.0 ); 
-    
-    // set roll angle around tube axis
-    //glRotatef(d_pitch,  0.0, 1.0, 0.0 );
-    
-    // set roll angle around tube axis
-    //glRotatef(d_roll,  1.0, 0.0, 0.0 );
-    
     // draw cylinder with its axis parallel to X-axis
     glPushMatrix();
     /* we now have to align the cylinder with the Z-axis
@@ -106,8 +97,6 @@ int TubeGenerator::Load(URender *, GLuint *&Dlist_array)
 {
     q_vec_type center;
     double x,y,z, length;
-    double D1;
-    float pitch, yaw, roll;
     int num_objects = (d_num_points / d_stride) + (d_num_points % d_stride != 0);
     Dlist_array = new GLuint[num_objects];
     int base = glGenLists(num_objects);
@@ -123,9 +112,6 @@ int TubeGenerator::Load(URender *, GLuint *&Dlist_array)
         y = d_tube_points[i+d_stride][1] - d_tube_points[i][1];
         z = d_tube_points[i+d_stride][2] - d_tube_points[i][2];
         length = sqrt(x*x + y*y + z*z);
-        D1 = sqrt(x*x + z*z);
-        pitch = (float)asin(z / D1);
-
 
         Dlist_array[count++] = base;
         glNewList(base++, GL_COMPILE);
