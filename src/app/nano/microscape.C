@@ -6434,12 +6434,14 @@ VERBOSE(1, "Entering main loop");
     VERBOSE(4, "  Done with mainloop iteration");
     n++; 
 
-  }
+  }  // end of mainloop
 
   dataset->done = VRPN_TRUE; //XXXX
 
   /* Stop timing */
   gettimeofday(&time2,&zone2);
+
+  VERBOSE(1, "Finished main loop");
 
   if (framelog != 0) frametimer.print();
 
