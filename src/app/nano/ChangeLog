@@ -1,3 +1,8 @@
+2001-12-05  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c (main): moved init_Tk_control_panels() so its called 
+	before openDefaultMicroscope()
+
 2001-12-04  Andrea Hilchey  <hilchey@evans.cs.unc.edu>
 
 	* microscape.c : additional paramter to call to 

@@ -7023,6 +7023,16 @@ int main (int argc, char* argv[])
     loadPPMTextures();
 #endif
 
+  VERBOSE(1,"Before Tk initialization");
+  if (tkenable) {
+    // init_Tk_control_panels creates the interpreter and adds most of
+    // the Tk widgits
+    init_Tk_control_panels(tcl_script_dir, istate.collabMode,
+                           &collaborationTimer);
+    VERBOSE(1, "done initialising the control panels\n");
+    init_Tk_variables ();
+  }
+
 
     VERBOSE(1,"Default microscope initialization");
     openDefaultMicroscope();
@@ -7148,16 +7158,6 @@ int main (int argc, char* argv[])
   setupCallbacks(forceDevice);
   handTracker_update_rate = istate.phantomRate;
 
-  VERBOSE(1,"Before Tk initialization");
-  if (tkenable) {
-    // init_Tk_control_panels creates the interpreter and adds most of
-    // the Tk widgits
-    init_Tk_control_panels(tcl_script_dir, istate.collabMode,
-                           &collaborationTimer);
-    VERBOSE(1, "done initialising the control panels\n");
-    init_Tk_variables ();
-  }
-  
   // Load the names of usable color maps
   VERBOSE(1, "Loading color maps");
   colorMapUI = new nmui_ColorMap("cm_heightfield", 
