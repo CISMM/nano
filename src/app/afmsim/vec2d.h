@@ -16,7 +16,7 @@
 #define VEC2D_INCLUDED
 
 
-#if 0 // don't need this under C++
+#if 1 // don't need this under C++
 typedef int bool;
 #define true 1
 #define false 0

@@ -12,8 +12,8 @@ surface: $(OBJECT_DIR)/surface
 
 $(OBJECT_DIR)/surface:
 	$(MAKE) APP_NAME=surface \
-                EXCLUDE_SRC="warrencntsim.C vec2d.C" \
-                MAKECMDGOALS=""
+            MAKECMDGOALS="" \
+            EXCLUDE_SRC="warrencntsim.C vec2d.C"
 
 .PHONY: afmcntsim
 afmcntsim: $(OBJECT_DIR)/afmcntsim
