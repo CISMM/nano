@@ -59,7 +59,7 @@ pack $nmInfo(imagestate).image_mode -side top -fill x
 generic_entry $nmInfo(imagepage).setpoint_pcnt imagep_setpoint \
 	"Setpoint (0,100 %)" real \
         { set accepted_image_params 1 }
-# Second setpoint widget with correct label for contact. 
+# Second setpoint widget with correct label for contact or guardedscan. 
 generic_entry $nmInfo(imagepage).setpoint_nA imagep_setpoint \
 	"Setpoint (-64,64 nA)" real \
         { set accepted_image_params 1 }
@@ -130,11 +130,12 @@ set imagep_drive_attenuation 1
 # this is the actual phase angle to use for feedback. 
 set imagep_phase 0.0
 set imagep_rate 1.0
+set imagep_guarddepth 0.0
 
 # list of all the variables above, imagep_*
 set imageplist [list mode style tool grid_resolution scan_angle setpoint \
         p_gain i_gain d_gain amplitude \
-        frequency input_gain ampl_or_phase drive_attenuation phase rate]
+        frequency input_gain ampl_or_phase drive_attenuation phase rate guarddepth]
 
 # These variables only exist in tcl - the user changes
 # them, and then the "accept" button copies them into the vars
@@ -186,7 +187,8 @@ pack $nmInfo(imagefull).mode $nmInfo(imagefull).modeparam $nmInfo(imagefull).sty
 label $nmInfo(imagefull).mode.label -text "Image Mode" 
 pack $nmInfo(imagefull).mode.label -side top -anchor nw
 radiobutton $nmInfo(imagefull).mode.oscillating -text "Oscillating" -variable newimagep_mode -value 0 
-radiobutton $nmInfo(imagefull).mode.contact -text "Contact" -variable newimagep_mode -value 1 
+radiobutton $nmInfo(imagefull).mode.contact -text "Contact" -variable newimagep_mode -value 1
+radiobutton $nmInfo(imagefull).mode.guardedscan -text "Guarded Scan" -variable newimagep_mode -value 2 
 button $nmInfo(imagefull).mode.accept -text "Accept" -command "acceptImageVars imageplist" -highlightthickness 0
 button $nmInfo(imagefull).mode.cancel -text "Revert" -command "cancelImageVars imageplist" -highlightthickness 0
 
@@ -199,7 +201,7 @@ generic_entry $nmInfo(imagefull).mode.scan_angle \
         newimagep_scan_angle \
 	"Scan Angle (deg)" real
 
-pack $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact -side top -anchor nw -fill x
+pack $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact $nmInfo(imagefull).mode.guardedscan -side top -anchor nw -fill x
 
 pack $nmInfo(imagefull).mode.grid_resolution \
         $nmInfo(imagefull).mode.scan_angle -side top -fill x -pady 20
@@ -215,7 +217,7 @@ bind $nmInfo(imagefull).mode.accept <Enter> "focus $nmInfo(imagefull).mode.accep
 set save_bg [$nmInfo(imagefull).mode.accept cget -background]
 
 lappend device_only_controls \
-        $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact \
+        $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact $nmInfo(imagefull).mode.guardedscan \
         $nmInfo(imagefull).mode.accept $nmInfo(imagefull).mode.cancel \
         $nmInfo(imagefull).mode.grid_resolution \
         $nmInfo(imagefull).mode.scan_angle 
@@ -239,7 +241,12 @@ generic_entry $nmInfo(imagefull).modeparam.rate newimagep_rate \
 generic_entry $nmInfo(imagefull).modeparam.amplitude newimagep_amplitude \
 	"Amplitude (0,2)" real 
 generic_entry $nmInfo(imagefull).modeparam.frequency newimagep_frequency \
-	"Frequency (10,200 kHz)" real 
+	"Frequency (10,200 kHz)" real
+generic_entry $nmInfo(imagefull).modeparam.guarddepth newimagep_guarddepth \
+	"Guard Depth (0,1000 nm)" real
+button $nmInfo(imagefull).modeparam.acquireplane -text "Acquire Guard Plane" -command {
+	set guardedscan_plane_acquire 1;
+}
 
 # This gain list is taken from the thermo code, noncont.c
 set input_gain_list ""
@@ -281,7 +288,8 @@ proc align_if_labels {} {
     $nmInfo(imagefull).modeparam.frequency \
     $nmInfo(imagefull).modeparam.input_gain \
     $nmInfo(imagefull).modeparam.drive_attenuation \
-    $nmInfo(imagefull).modeparam.phase
+    $nmInfo(imagefull).modeparam.phase \
+	$nmInfo(imagefull).modeparam.guarddepth	
 }
 align_if_labels
 
@@ -301,6 +309,9 @@ set im_oscillating_list [list $nmInfo(imagefull).modeparam.amplitude \
     $nmInfo(imagefull).modeparam.drive_attenuation \
     $nmInfo(imagefull).modeparam.ampl_or_phase \
     $nmInfo(imagefull).modeparam.phase ]
+
+set im_guardedscan_list [list $nmInfo(imagefull).modeparam.guarddepth \
+        $nmInfo(imagefull).modeparam.acquireplane ]
 
 lappend device_only_controls \
     $nmInfo(imagefull).modeparam.setpoint_nA \
@@ -356,6 +367,7 @@ pack $nmInfo(imagefull).toolparam.label -side top -anchor nw
 proc flip_im_mode {im_mode element op} {
     global nmInfo
     global im_oscillating_list
+    global im_guardedscan_list
     global fspady newimagep_ampl_or_phase
 
     upvar $im_mode k
@@ -371,7 +383,13 @@ proc flip_im_mode {im_mode element op} {
 	# magic number 6 again
 	set plist [lrange [pack slaves $nmInfo(imagefull).modeparam] 6 end] 
 	foreach widg $plist {pack forget $widg}
-    }
+    } elseif {$k == 2} {
+		# Selected GuardedScan
+		# ???magic number 6 again????
+		set plist [lrange [pack slaves $nmInfo(imagefull).modeparam] 6 end]
+		foreach widg $plist {pack forget $widg}
+		foreach widg $im_guardedscan_list {pack $widg -side top -fill x -pady $fspady}
+	}
 }
 
 # This procedure causes the dreaded WIDGET CREEP (oh no!)
@@ -429,7 +447,7 @@ proc change_setpoint_label {osc_con phase_ampl nA_widg pcnt_widg before_widg fsp
             pack $pcnt_widg -side top -fill x -pady $fspady -before $before_widg
         }
     } else {
-        #contact
+        #contact or guardedscan
         pack forget $pcnt_widg
         pack $nA_widg -side top -fill x -pady $fspady -before $before_widg
     }

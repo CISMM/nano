@@ -36,6 +36,8 @@ class BCPlane;  // from <BCPlane.h>
 #include "nmm_QueueMonitor.h"
 #include "nmm_TimestampList.h"
 
+#include "nmm_GuardedscanClient.h"
+
 struct nmm_Sample;  // from nmm_Sample.h
 
 USE_MSG_GROUP nmm_Monitor
@@ -335,6 +337,12 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
       ///< used with nmb_DeviceSequencer/nmm_Sample and with
       ///< nmm_QueueMonitor.
 
+    ///< Polls the vrpn connection until the point result
+    ///< returns an (X,Y) or (X,Y,Z) tuple close to the
+    ///< supplied arguments.
+    void WaitForResult(float a_fX, float a_fY, Point_value* a_pPoint);
+    void WaitForResult(float a_fX, float a_fY, float a_fZ, Point_value* a_pPoint);
+
   protected:
 
     nmb_Dataset * d_dataset;
@@ -406,6 +414,9 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
          vrpn_bool ampl_or_phase, vrpn_int32 drive_attenuation,
          vrpn_float32 phase);
     long EnterContactMode (float p, float i, float d, float set);
+	long EnterGuardedScanMode (float a_fP, float a_fI, float a_fD, float a_fSetpoint, 
+						  float a_fNormalX, float a_fNormalY, float a_fNormalZ,
+						  float a_fPlaneD, float a_fGuardDepth);
     long EnterDirectZControl (float _max_z_step, float _max_xy_step, 
 			      float _min_setpoint, float _max_setpoint, 
 			      float _max_lateral_force);
@@ -531,6 +542,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     vrpn_RedundantReceiver * d_redReceiver;
     nmm_QueueMonitor * d_monitor;
     nmm_TimestampList * d_tsList;
+
+  public:
+    // Guardedscan interface
+    CGuardedScanClient	m_oGuardedScan;
 };
 
 #endif  // NMM_MICROSCOPE_REMOTE_H

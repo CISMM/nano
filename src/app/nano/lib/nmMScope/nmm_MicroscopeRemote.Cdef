@@ -464,6 +464,16 @@ long nmm_Microscope_Remote::ModifyMode (void) {
                                        state.modify.ampl_or_phase,
                                        state.modify.drive_attenuation,
                                        state.modify.phase);
+	case GUARDED_SCAN:
+		  return EnterGuardedScanMode(state.image.p_gain,
+                              state.modify.i_gain,
+                              state.modify.d_gain,
+                              state.modify.setpoint,
+							  state.guardedscan.fNormalX,
+							  state.guardedscan.fNormalY,
+							  state.guardedscan.fNormalZ,
+							  state.guardedscan.fPlaneD,
+							  state.guardedscan.fGuardDepth);
 	case CONTACT:
 	   return EnterContactMode(state.modify.p_gain, state.modify.i_gain,
                                 state.modify.d_gain, state.modify.setpoint);
@@ -549,6 +559,17 @@ long nmm_Microscope_Remote::ImageMode (void) {
                               state.image.i_gain,
                               state.image.d_gain,
                               state.image.setpoint);
+
+	case GUARDED_SCAN:
+	  return EnterGuardedScanMode(state.image.p_gain,
+                              state.image.i_gain,
+                              state.image.d_gain,
+                              state.image.setpoint,
+							  state.guardedscan.fNormalX,
+							  state.guardedscan.fNormalY,
+							  state.guardedscan.fNormalZ,
+							  state.guardedscan.fPlaneD,
+							  state.guardedscan.fGuardDepth);
   }
   return 0;
 }
@@ -1101,6 +1122,23 @@ long nmm_Microscope_Remote::EnterContactMode (float p,
   return dispatchMessage(len, msgbuf, d_EnterContactMode_type);
 }
 
+long nmm_Microscope_Remote::EnterGuardedScanMode (float a_fP, 
+					      float a_fI, float a_fD, float a_fSetpoint, 
+						  float a_fNormalX, float a_fNormalY, float a_fNormalZ,
+						  float a_fPlaneD, float a_fGuardDepth) {
+  char * msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_EnterGuardedScanMode(&len, a_fP, a_fI, a_fD, a_fSetpoint,
+											a_fNormalX, a_fNormalY, a_fNormalZ,
+											a_fPlaneD, a_fGuardDepth);
+  if (!msgbuf)
+    return -1;
+
+	printf("Entering guardedscan mode.\n");
+  return dispatchMessage(len, msgbuf, d_EnterGuardedScanMode_type);
+}
+
 long nmm_Microscope_Remote::EnterDirectZControl (float _max_z_step, 
 				       float _max_xy_step, 
 				       float _min_setpoint, 
@@ -1287,7 +1325,17 @@ long nmm_Microscope_Remote::SetModForce () {
                                        state.modify.drive_attenuation,
                                        state.modify.phase);
 
-      case CONTACT:
+      case GUARDED_SCAN:
+        return EnterGuardedScanMode(state.modify.p_gain,
+                                   state.modify.i_gain,
+                                   state.modify.d_gain,
+                                   state.modify.setpoint,
+                                   state.guardedscan.fNormalX,
+                                   state.guardedscan.fNormalY,
+                                   state.guardedscan.fNormalZ,
+                                   state.guardedscan.fPlaneD,
+                                   state.guardedscan.fGuardDepth);
+	  case CONTACT:
         return EnterContactMode(state.modify.p_gain, state.modify.i_gain,
                                    state.modify.d_gain, state.modify.setpoint);
       default:
@@ -1323,7 +1371,22 @@ long nmm_Microscope_Remote::SetModForce () {
 	}
          
         break;
-      case CONTACT:
+      case GUARDED_SCAN:
+	    if(EnterGuardedScanMode(state.modify.p_gain,
+                              state.modify.i_gain,
+                              state.modify.d_gain,
+                              state.modify.setpoint,
+							  state.guardedscan.fNormalX,
+							  state.guardedscan.fNormalY,
+							  state.guardedscan.fNormalZ,
+							  state.guardedscan.fPlaneD,
+							  state.guardedscan.fGuardDepth)) {
+			fprintf(stderr, "Error, can't enter guarded scan mode\n");
+			return -1;
+		}
+		break;
+                              
+	  case CONTACT:
         if (EnterContactMode(state.modify.p_gain, state.modify.i_gain,
                                    state.modify.d_gain, state.modify.setpoint)){
 	    fprintf(stderr, "Error, can't enter contact mode\n");
@@ -1332,7 +1395,7 @@ long nmm_Microscope_Remote::SetModForce () {
         break;
       default:
         fprintf(stderr, "Error, unknown modify mode"
-                           " (not contact or tapping)\n");
+                           " (not contact, guarded scan, or tapping)\n");
         return 0;
     }
     long numpnts = (long)(double)(state.modify.fc_num_points);
@@ -1479,6 +1542,13 @@ long nmm_Microscope_Remote::SetScanlineModeParameters(){
     case CONTACT:
 	return EnterContactMode(state.scanline.p_gain, state.scanline.i_gain,
 			state.scanline.d_gain, state.scanline.setpoint);
+
+	case GUARDED_SCAN:
+	return EnterGuardedScanMode(state.scanline.p_gain, state.scanline.i_gain,
+			state.scanline.d_gain, state.scanline.setpoint,
+			state.guardedscan.fNormalX, state.guardedscan.fNormalY, state.guardedscan.fNormalZ,
+			state.guardedscan.fPlaneD, state.guardedscan.fGuardDepth);
+
     default:
 	return 0;
   }
@@ -1838,6 +1908,45 @@ void nmm_Microscope_Remote::accumulatePointResults (vrpn_bool on) {
   d_accumulatePointResults = on;
 }
 
+/// Poll the vrpn connection until a point result returns that is close to the supplied arguments.
+void nmm_Microscope_Remote::WaitForResult(float a_fX, float a_fY, Point_value* a_pPoint)
+{
+ do {
+      d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
+      if ( ! d_connection->doing_okay()) {
+        fprintf(stderr, "nmm_Microscope_Remote::WaitForResult(x,y):  "
+                        "can't read from microscope.\n");
+        return;
+      }
+      getTimeSinceConnected();
+      VERBOSE(3, "  Waiting for result in WaitForResult(x,y)");
+    } while (!NMB_NEAR(a_fX, a_pPoint->results()->x()) ||
+             !NMB_NEAR(a_fY, a_pPoint->results()->y()));
+}
+
+/// Poll the vrpn connection until a point result returns that is close to the supplied arguments.
+void nmm_Microscope_Remote::WaitForResult(float a_fX, float a_fY, float a_fZ, Point_value* a_pPoint)
+{
+   do {
+      d_connection->mainloop();
+      if (d_monitor) {
+        d_monitor->mainloop();
+      }
+      if ( ! d_connection->doing_okay()) {
+        fprintf(stderr, "nmm_Microscope_Remote::WaitForResult(x,y,z):  "
+                        "can't read from microscope.\n");
+        return;
+      }
+      getTimeSinceConnected();
+      VERBOSE(3, "  Waiting for result in WaitForResult(x,y,z)");
+    } while (!NMB_NEAR(a_fX, a_pPoint->results()->x()) ||
+             !NMB_NEAR(a_fY, a_pPoint->results()->y()) ||
+             !NMB_NEAR(a_fZ, a_pPoint->results()->z()));
+}
+
 
 
 // Common code from by RcvPointResultNM and RcvResultNM, and,
@@ -2096,6 +2205,70 @@ RECEIVE_MSG InContactMode {
   }
   else {
     fprintf(stderr, "RcvInContactMode: Error, in unknown mode\n");
+  }
+}
+
+RECEIVE_MSG InGuardedScanMode {
+//    float32 P
+//    float32 I
+//    float32 D
+//    float32 setpoint
+//    float32 fNormalX
+//    float32 fNormalY
+//    float32 fNormalZ
+//    float32 fPlaneD
+//    float32 fGuardDepth
+
+  // Update the guardedscan parameters (common to all modes)...
+  state.guardedscan.fNormalX = fNormalX;
+  state.guardedscan.fNormalY = fNormalY;
+  state.guardedscan.fNormalZ = fNormalZ;
+  state.guardedscan.fPlaneD = fPlaneD;
+  state.guardedscan.fGuardDepth = fGuardDepth;
+
+  if(state.acquisitionMode == MODIFY) {
+    printf("Matching modify parameters (GuardedScan).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g\n", setpoint, P, I, D);
+    
+	if(state.modify.mode != GUARDED_SCAN) {
+      state.modify.mode = GUARDED_SCAN;
+	}
+
+    state.modify.p_gain = P;
+    state.modify.i_gain = I;
+    state.modify.d_gain = D;
+    state.modify.setpoint = setpoint;
+    d_decoration->modSetpoint = setpoint;
+
+  } else if(state.acquisitionMode == IMAGE) {
+    printf("Matching image parameters (GuardedScan).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g\n", setpoint, P, I, D);
+
+    if(state.image.mode != GUARDED_SCAN)
+      state.image.mode = GUARDED_SCAN;
+
+    state.image.p_gain = P;
+    state.image.i_gain = I;
+    state.image.d_gain = D;
+    state.image.setpoint = setpoint;
+    d_decoration->imageSetpoint = setpoint;
+
+  } else if (state.acquisitionMode == SCANLINE){
+    printf("Matching scanline parameters (GuardedScan).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g\n", setpoint, P, I, D);
+    
+	if(state.scanline.mode != GUARDED_SCAN)
+      state.scanline.mode = GUARDED_SCAN;
+
+    state.scanline.p_gain = P;
+    state.scanline.i_gain = I;
+    state.scanline.d_gain = D;
+    state.scanline.setpoint = setpoint;
+
+    d_decoration->scanlineSetpoint = setpoint;
+  }
+  else {
+    fprintf(stderr, "RcvInGuardedScanMode: Error, in unknown mode\n");
   }
 }
 
@@ -3359,3 +3532,5 @@ void nmm_Microscope_Remote::handle_GotMicroscopeControl(void *ud,
 
   return;
 }
+
+

@@ -15,7 +15,8 @@ enum AcquisitionMode {
 
 enum AFMMode {
   TAPPING,
-  CONTACT
+  CONTACT,
+  GUARDED_SCAN
 };  // mode
 
 enum Tool {

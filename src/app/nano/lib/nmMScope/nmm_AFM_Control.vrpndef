@@ -33,6 +33,17 @@ VRPN_MESSAGE EnterContactMode {
   float32 d
   float32 setpoint
 }
+VRPN_MESSAGE EnterGuardedScanMode {
+  float32 P
+  float32 I
+  float32 D
+  float32 setpoint
+  float32 fNormalX
+  float32 fNormalY
+  float32 fNormalZ
+  float32 fPlaneD
+  float32 fGuardDepth
+}
 VRPN_MESSAGE EnterDirectZControl {
   float32 max_z_step
   float32 max_xy_step

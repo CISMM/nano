@@ -284,11 +284,6 @@ $tipcontrolmenu add command -label "Modify Live Controls..." -underline 7 \
 	-command "show.modify_live"
 }
 
-$tipcontrolmenu add command -label "Guarded Scan..." -underline 0 -command {
-    show.guarded_win
-}
-
-
 #### ANALYSIS menu #############################
 set analysismenu .menu.analysis
 menu $analysismenu -tearoff 0
@@ -508,7 +503,6 @@ source [file join ${tcl_script_dir} colormap.tcl]
 # tipcontrol menu commands
 source [file join ${tcl_script_dir} image.tcl]
 source [file join ${tcl_script_dir} modify.tcl]
-source [file join ${tcl_script_dir} guard.tcl]
 
 # Analysis menu commands.
 source [file join ${tcl_script_dir} analysismenu.tcl]

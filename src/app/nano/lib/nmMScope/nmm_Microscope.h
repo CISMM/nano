@@ -196,6 +196,8 @@ class nmm_Microscope {
     long d_EnterTappingMode_type;  // Obsolete, doesn't include phase
     long d_EnterOscillatingMode_type;  // from client
     long d_EnterContactMode_type;
+    long d_EnterGuardedScanMode_type;
+    long d_InGuardedScanMode_type;
     long d_EnterDirectZControl_type;
     long d_EnterSewingStyle_type;
     long d_SetContactForce_type;
@@ -572,16 +574,41 @@ class nmm_Microscope {
                                           float);
     long decode_EnterContactMode (const char ** buf, float *, float *,
                                   float *, float *);
+    char * encode_EnterGuardedScanMode (
+					int * len,
+					vrpn_float32 P,
+					vrpn_float32 I,
+					vrpn_float32 D,
+					vrpn_float32 setpoint,
+					vrpn_float32 fNormalX,
+					vrpn_float32 fNormalY,
+					vrpn_float32 fNormalZ,
+					vrpn_float32 fPlaneD,
+					vrpn_float32 fGuardDepth
+					);
+    int decode_EnterGuardedScanMode (
+				     const char ** buffer,
+				     vrpn_float32 (*P),
+				     vrpn_float32 (*I),
+				     vrpn_float32 (*D),
+				     vrpn_float32 (*setpoint),
+				     vrpn_float32 (*fNormalX),
+				     vrpn_float32 (*fNormalY),
+				     vrpn_float32 (*fNormalZ),
+				     vrpn_float32 (*fPlaneD),
+				     vrpn_float32 (*fGuardDepth)
+				     );
+    
     char * encode_EnterDirectZControl (long * len, float, float, float,
-                                          float, float);
+				       float, float);
     long decode_EnterDirectZControl (const char ** buf, float *, float *,
-                                  float *, float *, float *);
+				     float *, float *, float *);
     char * encode_EnterSewingStyle (long * len, float, float, float,
-                                          float, float, float, float);
+				    float, float, float, float);
     long decode_EnterSewingStyle (const char ** buf, float *,float *,float *,
                                   float *, float *, float *,
 				  float *);
-
+    
     char * encode_EnterSpectroscopyMode (long * len, float, float, float, float,
 	float, float, float, vrpn_int32, vrpn_int32,float,float,float,float,
 	vrpn_int32, float, float, float);
@@ -617,8 +644,35 @@ class nmm_Microscope {
 		float);
     long decode_InContactMode (const char ** buf, float *, float *, float *,
                 float *);
+
+    char * encode_InGuardedScanMode (
+				     long * len,
+				     vrpn_float32 P,
+				     vrpn_float32 I,
+				     vrpn_float32 D,
+				     vrpn_float32 setpoint,
+				     vrpn_float32 fNormalX,
+				     vrpn_float32 fNormalY,
+				     vrpn_float32 fNormalZ,
+				     vrpn_float32 fPlaneD,
+				     vrpn_float32 fGuardDepth
+				     );
+    
+    int decode_InGuardedScanMode (
+				  const char ** buffer,
+				  vrpn_float32 (*P),
+				  vrpn_float32 (*I),
+				  vrpn_float32 (*D),
+				  vrpn_float32 (*setpoint),
+				  vrpn_float32 (*fNormalX),
+				  vrpn_float32 (*fNormalY),
+				  vrpn_float32 (*fNormalZ),
+				  vrpn_float32 (*fPlaneD),
+				  vrpn_float32 (*fGuardDepth)
+				  );
+    
     char * encode_InDirectZControl (long * len, float, float, float,
-				float, float, float, float);
+				    float, float, float, float);
     long decode_InDirectZControl (const char ** buf, float *, float *, float *,
                                float *, float *, float *, float *);
     char * encode_InSewingStyle (long * len, float, float, float,

@@ -129,7 +129,6 @@ pid_t getpid();
 #include "nma_Keithley2400_ui.h"  // VI Curve generator - Keithley 2400
 #include "ohmmeter.h"   /* French ohmmeter */
 #include "nmui_SEM.h" // EDAX SEM
-#include "guardedscan.h"
 #include "Timer.h"
 #include "microscopeHandlers.h"
 #include "CollaborationManager.h"
@@ -339,6 +338,10 @@ static void handle_viz_alpha_change(vrpn_float64 , void *);
 static void handle_viztex_scale_change (vrpn_float64, void * userdata);
 static void handle_viz_tex_new(const char *, void *);
 static void handle_viz_tex(const char *, void *);
+
+// Guardedscan interface
+static void handle_guardedscan_planeacquire(vrpn_int32, void* a_pObject);
+static void handle_guardedscan_guarddepth(vrpn_float64, void* a_pObject);
 
 static vrpn_bool g_syncPending = VRPN_FALSE;
 
@@ -1015,6 +1018,10 @@ Tclvar_int phantom_button_mode("phantom_button_mode", 0);
 /// Allow interface to display frame rate, if desired. 
 Tclvar_float frame_rate("frame_rate", 0);
 
+/// Guardedscan interface
+Tclvar_float guarded_plane_depth("imagep_guarddepth", 0.0f);
+Tclvar_int guarded_plane_acquire("guardedscan_plane_acquire", 0);
+
 // END tcl declarations
 //----------------------------------------------------------------------
 
@@ -1100,9 +1107,6 @@ vrpn_MousePhantom * mousePhantomServer = NULL;
 
 /// Phantom force device, used in interaction.c, minit.c
 vrpn_ForceDevice_Remote *forceDevice = NULL;
-
-/// Guarded scan object
-CGuardedScan* guardedScan = NULL;
 
 /// remote button for PHANToM
 vrpn_Button_Remote *phantButton = NULL;
@@ -4384,6 +4388,45 @@ static void handle_viztex_scale_change (vrpn_float64, void * userdata) {
   //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
+void handle_guardedscan_guarddepth(vrpn_float64 a_fDepth, void* a_pObject)
+{
+  nmm_Microscope_Remote* pMe = (nmm_Microscope_Remote*)a_pObject;
+  
+  if(pMe == NULL) {
+    // No object pointer... bail...
+    printf("microscape.c::handle_guardedscan_guarddepth bailed: no object pointer.\n");
+    return;
+  }
+
+  CGuardedScanClient& aGS = pMe->m_oGuardedScan;
+
+  printf("Guard depth = %f\n", a_fDepth);
+  aGS.SetDepth(a_fDepth);
+  pMe->state.guardedscan.fGuardDepth = a_fDepth;
+}
+
+void handle_guardedscan_planeacquire(vrpn_int32 a_nVal, void* a_pObject)
+{
+  a_nVal;
+  nmm_Microscope_Remote* pMe = (nmm_Microscope_Remote*)a_pObject;
+  
+  if(pMe == NULL) {
+    // No object pointer... bail...
+    printf("microscape.c::handle_guardedscan_planeacquire bailed: no object pointer.\n");
+    return;
+  }
+
+  CGuardedScanClient& aGS = pMe->m_oGuardedScan;
+  aGS.AcquirePlane();
+
+  printf("Plane acquired.\n");
+  aGS.GetNormal(pMe->state.guardedscan.fNormalX, pMe->state.guardedscan.fNormalY, pMe->state.guardedscan.fNormalZ);
+  pMe->state.guardedscan.fPlaneD = aGS.GetPlaneDistance();
+
+  printf(" guard depth is now=%lf\n", pMe->state.guardedscan.fGuardDepth);
+}
+
+
 // This is an ImageMode handler. Makes sure the next time we enter
 // directZ mode we don't get surprised by wierd forces.
 int invalidate_directz_forces(void * userdata) {
@@ -4778,6 +4821,10 @@ void setupCallbacks (nmm_Microscope_Remote * m) {
   m->registerMutexTakenCallback(NULL, handle_mutexTaken);
   m->registerMutexReleasedCallback(NULL, handle_mutexReleased);
 
+  // Setup guardedscan Tcl/vars...
+  guarded_plane_acquire.addCallback(handle_guardedscan_planeacquire, m);
+  guarded_plane_depth.addCallback(handle_guardedscan_guarddepth, m);
+
 }
 
 void teardownCallbacks (nmm_Microscope_Remote * m) {
@@ -4828,6 +4875,9 @@ void teardownCallbacks (nmm_Microscope_Remote * m) {
 //    m->registerMutexTakenCallback(NULL, handle_mutexTaken);
 //    m->registerMutexReleasedCallback(NULL, handle_mutexReleased);
 
+  // Remove guardedscan Tcl/vars...
+  guarded_plane_acquire.removeCallback(handle_guardedscan_planeacquire, NULL);
+  guarded_plane_depth.removeCallback(handle_guardedscan_guarddepth, NULL);
 }
 
 void setupCallbacks (nmg_Graphics * g) {
@@ -7115,9 +7165,6 @@ int main (int argc, char* argv[])
 //        display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
 //        exit(0);
 //      }
-    VERBOSE(1,"Before guarded scan initialization");
-    guardedScan = new CGuardedScan;
-
     //fprintf(stderr, "Microscope initialized\n");
 
     createGraphics(istate);
@@ -7825,15 +7872,6 @@ VERBOSE(1, "Entering main loop");
                      //(decoration->trueTipLocation);
       }
 
-      if(guardedScan) {
-	if(guardedScan->IsModeActive()) {
-	  // Performs a series of DirectZSteps, splatting the data to the current BCGrid.
-	  // (It will return after 30 steps)
-	  guardedScan->mainloop();
-	}
-      }
-
-
       /* good place to update displays, minimize latency from trackers */
 
       VERBOSE(4,"  Updating displays");
@@ -8099,10 +8137,6 @@ VERBOSE(1, "Entering main loop");
 	forceDevice = NULL;
     }
     
-    if(guardedScan) {
-      delete guardedScan;
-      guardedScan = NULL;
-    }
 #ifndef NO_PHANTOM_SERVER
     if (phantServer) {
 	delete phantServer;

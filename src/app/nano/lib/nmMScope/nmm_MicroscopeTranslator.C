@@ -740,6 +740,17 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
 
       break;
 
+    case AFM_IN_GUARDED_SCAN_MODE:
+      stm_unbuffer_float (&bufptr, &P);
+      stm_unbuffer_float (&bufptr, &I);
+      stm_unbuffer_float (&bufptr, &D);
+      stm_unbuffer_float (&bufptr, &fscrap);
+      vrpnbuffer = encode_InContactMode(&vbuflen, P, I, D, fscrap);
+      vrpn_type = d_InContactMode_type;
+      needToSend = VRPN_TRUE;
+
+      break;
+
     case AFM_IN_TAPPING_MODE:
       stm_unbuffer_float (&bufptr, &P);
       stm_unbuffer_float (&bufptr, &I);

@@ -420,7 +420,17 @@ class AFMDataset {
 
 };
 
+struct AFMGuardedScanState {
 
+  AFMGuardedScanState (void);
+  ~AFMGuardedScanState (void);
+
+  float fNormalX;
+  float fNormalY;
+  float fNormalZ;
+  float fPlaneD;
+  float fGuardDepth;
+};
 
 struct AFMInitializationState {
 
@@ -496,6 +506,7 @@ struct AFMState {
   AFMImageState    image;
   AFMScanlineState scanline;
   AFMDataset       data;
+  AFMGuardedScanState guardedscan;
 
   int acquisitionMode;///< replaces inModifyMode which replaced doing_modify_mode
 

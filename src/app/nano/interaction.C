@@ -1393,7 +1393,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     }
     
     force = Arm_knobs[IMG_FORCE_KNOB];
-    if( microscope->state.image.mode == CONTACT ) {
+    if( (microscope->state.image.mode == CONTACT) || (microscope->state.image.mode == GUARDED_SCAN) ) {
       if( force != old_img_con_force ) {
 	//printf("Changing setpoint based on image force knob\n");
 	microscope->state.image.setpoint =

@@ -15,6 +15,18 @@ VRPN_MESSAGE InContactMode {
   float32 setpoint
 }
 
+VRPN_MESSAGE InGuardedScanMode {
+  float32 P
+  float32 I
+  float32 D
+  float32 setpoint
+  float32 fNormalX
+  float32 fNormalY
+  float32 fNormalZ
+  float32 fPlaneD
+  float32 fGuardDepth
+}
+
 VRPN_MESSAGE InTappingMode {
   float32 P
   float32 I

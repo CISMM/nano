@@ -417,7 +417,15 @@ AFMDataset::~AFMDataset (void) {
     //if (forcecurve_channels) delete forcecurve_channels;
 }
 
+AFMGuardedScanState::AFMGuardedScanState(void) :
+	fNormalX(0.0f), fNormalY(0.0f), fNormalZ(0.0f),
+	fPlaneD(0.0f), fGuardDepth(0.0f)
+{
+}
 
+AFMGuardedScanState::~AFMGuardedScanState()
+{
+}
 
 AFMInitializationState::AFMInitializationState (void) :
 

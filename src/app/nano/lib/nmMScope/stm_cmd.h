@@ -136,6 +136,8 @@
 	// float Move rate, Max approach
 #define AFM_CONTACT_MODE	(54)
 	// float P, I, D, SetPoint
+#define AFM_GUARDED_SCAN_MODE (71)
+	// float p, i, d, setpoint, fNormalX, fNormalY, fNormalZ, fPlaneD, fGuardDepth
 #define AFM_TAPPING_MODE	(55)
 	// float P, I, D, SetPoint, Driving Amplitude 
 #define SPM_ENABLE_VOLTSOURCE    (56)
@@ -307,6 +309,8 @@
 	// float Move rate, Max dist to approach to find SetPoint
 #define AFM_IN_CONTACT_MODE	(55)
 	// float P, I, D, SetPoint
+#define AFM_IN_GUARDED_SCAN_MODE (76)
+	// float P, I, D, SetPoint, fNormalX, fNormalY, fNormalZ, fPlaneD, fGuardDepth
 #define AFM_IN_TAPPING_MODE	(56)
 	// float P, I, D, SetPoint, Driving Amplitude 
 #define SPM_BOTTOM_PUNCH_RESULT_DATA (57)
