@@ -62,4 +62,11 @@ Some things that have moved:
 
 
 How to link to a particular library (as opposed to a default):
-   -- to be documented --
+   MY_ALT_LIB_DIR can contain any number of compiler search paths for
+   libraries. Both the -I and -L must appear (though not in any particular
+   order).
+   For instance, to force use of stm/src/vrpn instead of your own copy
+   (which would normally be found first):
+
+      export MY_ALT_LIB_DIR=
+             "-I/afs/unc/proj/stm/src/vrpn -L/afs/unc/proj/stm/src/vrpn/$HW_OS"
