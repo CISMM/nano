@@ -1,5 +1,7 @@
-/* Object definitions */
-
+/* Gokul Varadhan
+ * varadhan@cs.unc.edu
+ * May 2001
+ */
 #include <stdlib.h>		//stdlib.h vs cstdlib
 #include <stdio.h>		//stdio.h vs cstdio
 #include <iostream.h>
@@ -230,14 +232,14 @@ void Dna :: bending_spring_force(int i) {
   // force on the left segment
   Vec3d dir1 = Vec3d :: crossProd(a,temp);
   dir1 = dir1.normalize();
-  Vec3d f1 = dir1 * Fmagni/2.;
+  Vec3d f1 = dir1 * Fmagni;
 
   // force on the right segment
   Vec3d dir2 = Vec3d :: crossProd(temp,b);
   dir2 = dir2.normalize();
-  Vec3d f2 = dir2 * Fmagni/2.;
+  Vec3d f2 = dir2 * Fmagni;
 
-  // case analysis (this assume no three consec pts are 
+  // case analysis (this assume no three consec pts are constrained)
 
   if (constraint_list[i-1]) {// i-1 is constr
     F[i-1] = Vec3d(0.,0.,0.);
@@ -250,7 +252,7 @@ void Dna :: bending_spring_force(int i) {
     }
     else {// case 2 : i-1 and i are constr
       F[i] = Vec3d(0.,0.,0.);
-      F[i+1] += f2*2;       
+      F[i+1] += f2;       
     }
   }
   else if (constraint_list[i+1]) {// i-1 is unconstr, i+1 is constrained
@@ -263,37 +265,19 @@ void Dna :: bending_spring_force(int i) {
       F[i] += calc_reaction_force(a,b,c,f1);
     }
     else {// case 4: i, i+1 constr
-      F[i-1] += f1*2;       
+      F[i-1] += f1;       
       F[i] = Vec3d(0.,0.,0.);
     }
   }
-  else {// i, i+1 are unconstrained
+  else {// i-1, i+1 are unconstrained
     F[i-1] += f1;
     F[i+1] += f2;
   }
 
-  if (constraint_list[i+1]) {// this might be necessary for some weird inputs
-    F[i+1] = Vec3d(0.,0.,0.);
-  }
-
-
-  // check on the constraint list
-  if (!constraint_list[i-1]) {
-    F[i-1] += f1;
-  }
-  else {// reaction force
-    F[i] -= f1;
-  }
-  if (!constraint_list[i+1]) {
-    F[i+1] += f2;
-  }
-  else {// reaction force
-    F[i] -= f2;
-  }
-
-  if (constraint_list[i]) {// undo
+  if (constraint_list[i]) {
     F[i] = Vec3d(0.,0.,0.);
   }
+
 }
 
 /* This calculates/increments the stretched forces for pts i and i+1 of 
@@ -323,8 +307,8 @@ void Dna :: set_segment_stretched_forces(int i) {
     F[i+1] = f;
   }
   else {//if (!constraint_list[i] && !constraint_list[i+1])
-    F[i] += f*(-1/2.);
-    F[i+1] = f*(1/2.);
+    F[i] += -f;
+    F[i+1] = f;
   }
 }
 

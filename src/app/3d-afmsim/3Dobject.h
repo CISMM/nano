@@ -2,6 +2,7 @@
 
 /* Gokul Varadhan
  * Sept 2000
+ * varadhan@cs.unc.edu
  *
  * 3D objects
  *

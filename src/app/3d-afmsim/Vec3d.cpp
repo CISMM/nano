@@ -1,7 +1,7 @@
 /*$Id$*/
 
 /* Gokul Varadhan
- * vec3d.h
+ * varadhan@cs.unc.edu
  * Sept 2000
  */
 

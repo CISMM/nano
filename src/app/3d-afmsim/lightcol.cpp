@@ -1,3 +1,7 @@
+/* Gokul Varadhan
+ * varadhan@cs.unc.edu
+ * May 2001
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/glut.h>

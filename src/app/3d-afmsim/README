@@ -1,7 +1,8 @@
 Gokul Varadhan
+varadhan@cs.unc.edu
 May 2001
 
-This is the 3D AFM simulator code.
+This is a 3D AFM simulator based on Warren Robinett's CNT simulator (robinett@cs.unc.edu)
 
 Compiling
 
@@ -27,7 +28,7 @@ Running the program
 
 unit is a number  = (Unit assumed in the file)/(1 nm) e.g 0.1 for Angstrom\n
 
-Example : ./run -p lac.data 0.1
+Example : ./run -p lac.data 1
 
 3. To get AFM of a triangular model run
 

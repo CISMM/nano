@@ -1,3 +1,9 @@
+/* Gokul Varadhan
+ * varadhan@cs.unc.edu
+ * May 2001
+ *
+ * 3D AFM simulator.
+ */
 /*$Id$*/
 #include <stdlib.h>		//stdlib.h vs cstdlib
 #include <stdio.h>		//stdio.h vs cstdio

@@ -1,3 +1,7 @@
+/* Gokul Varadhan
+ * varadhan@cs.unc.edu
+ * May 2001
+ */
 #include <stdlib.h>
 #include <stdio.h>	
 #include <math.h>	

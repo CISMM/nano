@@ -1,3 +1,8 @@
+/* Gokul Varadhan
+ * varadhan@cs.unc.edu
+ * May 2001
+ */
+
 /* Input to the simulator */
 
 #include <stdlib.h>		//stdlib.h vs cstdlib

@@ -1,3 +1,7 @@
+/* Gokul Varadhan
+ * varadhan@cs.unc.edu
+ * Dec 2000
+ */
 #include <iostream.h>
 #include <stdio.h>
 #include <stdlib.h>

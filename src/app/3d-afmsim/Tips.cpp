@@ -1,7 +1,7 @@
 /*$Id$*/
 
 /* Gokul Varadhan
- * coneSphere.h
+ * varadhan@cs.unc.edu
  * Oct 2000
  */
 
