@@ -12,8 +12,6 @@
 #endif
 
 
-#define AFMSIM
-
 // Tom Hudson 10 June 99
 // Things that were declared in the header file by the 145 team
 // that should have been declared here.

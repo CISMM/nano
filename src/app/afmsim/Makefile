@@ -1,5 +1,9 @@
 USES_LIBS := nmMScope nmBase vrpn
 
+ifeq ($(MAKECMDGOALS),afmcntsim)
+   EXTRA_CFLAGS+=-DAFMSIM
+endif
+
 include ../Makefile.share
 
 surface:
