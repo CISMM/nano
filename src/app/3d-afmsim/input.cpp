@@ -57,9 +57,16 @@ void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit,
 	double rad;
 
 	ifstream infile;
-	infile.open(filename); 
-	if(!infile.fail()){
 
+/*this doesn't seem to work yet but keeping it in as a bookmark of intended change
+//so can open files created in unix on the pc
+#ifdef _WIN32
+	infile.open(filename, fstream::binary);
+#else
+	infile.open(filename); 
+#endif
+*/
+	if(!infile.fail()){
 		cout << "Loading file " << filename << endl;
 
 		stop=false;
