@@ -1,3 +1,8 @@
+2001-12-19  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* correspondenceEditor.h: removed referenced to unused
+	#include <PNMImage.h>
+	
 2001-12-18  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_Util.C (createResample*): fixed these functions so they don't

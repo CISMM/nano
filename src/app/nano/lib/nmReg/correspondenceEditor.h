@@ -9,8 +9,6 @@
   ===3rdtech===*/
 
 #include <imageViewer.h>
-#include <PNMImage.h>
-//#include <PPM.h>
 
 #include "correspondence.h"
 
