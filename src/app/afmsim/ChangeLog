@@ -1,3 +1,15 @@
+2001-07-17  Tom Hudson <hudson@cs.unc.edu>
+
+   * nmm_Microscope_Simulator.C (nmm_Microscope_Simulator::RcvFeelTo) :
+   Remove erroneous call to decode_BeginFeelTo().
+   (nmm_Microscope_Simulator::afmFeelToPoint) : Fix logic.
+
+   * surface.C (usage) : Add new parameters.
+   (g_ipString, g_ipAddress) : Add new globals (not yet implemented).
+   (parse) : Add new parameters.
+   (initializePlane) : Change floats to doubles.  Add new surface modes.
+   Fix some previous surface modes.
+
 2001-05-22  Tom Hudson <hudson@cs.unc.edu>
 
 	* afmcntsim:  restore - somebody accidentally overwrote

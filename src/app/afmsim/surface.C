@@ -40,21 +40,30 @@ static int g_planeShape;
 #define PSHAPE_RAMP 2
 #define PSHAPE_HEMISPHERES 3
 #define PSHAPE_WAVES 4
+#define PSHAPE_CIRCULAR_WAVES 5
+#define PSHAPE_STEPPED_RAMP 6
 
 static vrpn_bool g_isWaiting = vrpn_FALSE;
 static float g_waitTime = 0.0f;
 
+static char * g_ipString = NULL;
+static vrpn_int32 g_ipAddress = 0;
 
 void usage (const char * argv0) {
   fprintf(stderr,
     "Usage:  %s [-image <picture>] [-grid <x> <y>] [-port <port>]\n"
-    "        [-surface <n>]\n", argv0);
+    "        [-surface <n>] [-if <ip>]\n", argv0);
   fprintf(stderr,
     "    -image:  Use picture specified (otherwise use function).\n"
     "    -grid:  Take x by y samples for the grid (default 300 x 300).\n"
-    "    -port:  Port number for VRPN server to use (default 4500).\n"
+    "    -port:  Port number for VRPN server to use (default 4500).\n");
+  fprintf(stderr,
     "    -surface:  Use given surface function:  0 = sinusoidal (default),\n"
-	  "      1 = step functions, 2 = ramp, 3 = hemispheres, 4 = waves.\n");
+    "      1 = step functions, 2 = ramp, 3 = hemispheres, 4 = waves,\n"
+    "      5 = circular waves, 6 = stepped ramp.\n");
+  fprintf(stderr,
+    "    -if:  IP address of network interface to use.\n");
+  
 
   exit(0);
 }
@@ -63,7 +72,7 @@ void usage (const char * argv0) {
 
 // Parse argv and write the values into s.
 // Return nonzero on failure.
-// TODO:  add more command-line options from microscape.
+// TODO:  add more command-line options from topo.
       
 int parse (int argc, char ** argv) {
   int ret = 0;
@@ -86,6 +95,9 @@ int parse (int argc, char ** argv) {
     } else if (!strcmp(argv[i], "-surface")) {
       if (++i >= argc) usage(argv[0]);
       g_planeShape = atoi(argv[i]);
+    } else if (!strcmp(argv[i], "-if")) {
+       if (++i >= argc)  usage(argv[0]);
+       g_ipString = argv[i];
 #if 0
     } else if (!strcmp(argv[i], "-latency")) {
       if (++i >= argc) usage(argv[0]);
@@ -237,10 +249,12 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
 
 void initializePlane (BCPlane * zPlane, int planeShape) {
   int x, y;
-  float point;
-  float rx, ry;
-  float radius;
-  float targetradius;
+  double point;
+  double rx, ry;
+  double radius;
+  double targetradius, tr2;
+  double interval, in2;
+  double sx, sy;
 
   switch (planeShape) {
 
@@ -275,16 +289,19 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
       }
       break;
     case PSHAPE_HEMISPHERES :
-      // flat surface with hemispheres of radius 40 nm every 100 nm
-      fprintf(stderr, "sortof Setting up regular-hemisphere surface.\n");
+      // flat surface with hemispheres of radius <targetradius> nm every <interval> nm
+      fprintf(stderr, "Setting up regular-hemisphere surface.\n");
       targetradius = 20.0f;
+      tr2 = targetradius * targetradius;
+      interval = 75.0f;
+      in2 = interval / 2;
       for (x = 0; x < g_numX; x++) {
-        rx = ((x + 50) % 50);
+        rx = (fmod(x, interval)) - in2;
         for (y = 0; y < g_numY; y++) {
-          ry = ((y + 50) % 50);
+          ry = (fmod(y, interval)) - in2;
           radius = sqrt(rx * rx + ry * ry);
           if (radius < targetradius) {
-            point = targetradius - radius;
+            point = sqrt((tr2 - radius * radius) / tr2) * targetradius;
           } else {
             point = 0.0f;
           }
@@ -301,7 +318,44 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
 	zPlane-> setValue(x,y,point);
       }
     }
+    break;
+
+    case PSHAPE_CIRCULAR_WAVES :
+
+      fprintf(stderr, "Setting up circular waves.\n");
+      targetradius = 20.0;
+      interval = 150.0;
+      in2 = interval / 2.0;
+      tr2 = in2 * in2 * 0.1;
+      for (x = 0; x < g_numX; x++) {
+         rx = fmod(x, interval) - in2;
+         for (y = 0; y < g_numY; y++) {
+            ry = fmod(y, interval) - in2;
+            point = targetradius * cos((rx * rx + ry * ry) / tr2);
+            zPlane->setValue(x, y, point);
+         }
+      }
+
     break;		 
+
+    case PSHAPE_STEPPED_RAMP :
+
+    fprintf(stderr, "Setting up stepped ramp.\n");
+    interval = 50.0;
+    for (x = 0; x < g_numX; x++) {
+       for (y = 0; y < g_numY; y++) {
+          step = (x + y) / interval;
+          if (step % 2) {
+             point = step * interval;
+          } else {
+             point = (step - 1) * interval + fmod(x + y, interval);
+          }
+          zPlane->setValue(x, y, point);
+       }
+    }
+    break;
+
+
     default:
       fprintf(stderr, "Unimplemented plane shape %d\n", planeShape);
       exit(0);
