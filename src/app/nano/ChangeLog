@@ -1,3 +1,10 @@
+2002-06-03 David Borland <borland@cs.unc.edu>
+
+        * interaction.C (doWorldGrab) : code for controlling projective 
+	textures with the phantom.  There are still some problems (they 
+	can only be transformed in object space), but it works okay for 
+	the time being.
+
 2002-06-02 Jameson Mller <millerj@cs.unc.edu>
 	*interaction.C (.H) : new code for setting up plane force
 	when feeling in directZ mode. new approach from previous commit.

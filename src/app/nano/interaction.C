@@ -134,6 +134,11 @@
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
+
+v_xform_type    	    textureXform;
+
+
+
 //------------------------------------------------------------------------
 /** Configure the force-display method. This is to allow us to turn off
 forces or else make the user feel from a flat plane rather than from the
@@ -3900,6 +3905,7 @@ doWorldGrab(int whichUser, int userEvent)
     v_xform_type            roomFromHand, roomFromSensor, handFromRoom;
     static v_xform_type     oldWorldFromHand;
 	static v_xform_type		oldObject;
+	static v_xform_type		oldTexture;
 	static qogl_matrix_type	oldTextureMatrix;
 
 	// for updating the object's tcl variables when rotating and translating
@@ -3909,6 +3915,15 @@ doWorldGrab(int whichUser, int userEvent)
 	extern Tclvar_float import_rotx;
 	extern Tclvar_float import_roty;
 	extern Tclvar_float import_rotz;
+
+	static Tclvar_float texture_transx("reg_translateX", 0);
+	static Tclvar_float texture_transy("reg_translateY", 0);
+	static Tclvar_float texture_transz("reg_translateZ", 0);
+	static Tclvar_float texture_rotx("reg_rotateX", 0);
+	static Tclvar_float texture_roty("reg_rotateY", 0);
+	static Tclvar_float texture_rotz("reg_rotateZ", 0);
+
+	static Tclvar_int	reg_grab_texture("reg_grab_texture", 0);
 
     BCPlane* plane = dataset->inputGrid->getPlaneByName
                      (dataset->heightPlaneName->string());
@@ -3938,7 +3953,9 @@ doWorldGrab(int whichUser, int userEvent)
 			q_copy(oldObject.rotate, obj.GetLocalXform().GetRot());
 			q_vec_copy(oldObject.xlate, obj.GetLocalXform().GetTrans());
 		}
-	glGetDoublev(GL_TEXTURE_MATRIX, oldTextureMatrix);
+
+		q_vec_set(oldTexture.xlate, texture_transx, texture_transy, texture_transz);
+		q_from_euler(oldTexture.rotate, texture_rotz, texture_roty, texture_rotx);
 	}
 
 	break;
@@ -3963,8 +3980,7 @@ doWorldGrab(int whichUser, int userEvent)
 	node = World.TGetNodeByName(*World.current_object);
 	if (node != NULL) {
 		URender &obj = node->TGetContents();
-//		if (obj.GetGrabObject() == 1) {
-		if (0) {
+		if (obj.GetGrabObject() == 1) {
 			q_type q;
 			q_vec_type v;
 
@@ -4034,49 +4050,73 @@ doWorldGrab(int whichUser, int userEvent)
 			import_roty = Q_RAD_TO_DEG(v[1]);
 			import_rotz = Q_RAD_TO_DEG(v[0]);
 		}
-		else if (obj.GetGrabObject() == 1) {
+		else if (reg_grab_texture == 1) {
+			// Transform Projective Texture
+			// for now, locks and fine tuning are taken from the values for the current object.  should probably move this
+			// to the registration ui, but it'll do for now...
+
 			q_type q;
 			q_vec_type v;
-			qogl_matrix_type mat;
-			// Transform Projective Texture
 
-/*
-glGetDoublev(GL_TEXTURE_MATRIX, mat);
-printf("current texture matrix\n");
-qogl_print_matrix(mat);
-printf("\n");
-*/
-			glMatrixMode(GL_TEXTURE);
+			// Get rotation to apply
+			q_invert(q, worldFromHand.rotate);
+			q_mult(q, q, oldWorldFromHand.rotate);
 
-			// get translation
-			q_vec_subtract(v, worldFromHand.xlate, oldWorldFromHand.xlate);
-			q_vec_scale(v, -0.001, v);	// this is just a hack for now...
+			// Check to see if fine tuning.  If so, scale by 0.1
+			if (obj.GetTuneRot()) {
+				q_to_euler(v, q);
+				q_vec_scale(v, 0.1, v);
+				q_from_euler(q, v[0], v[1], v[2]);
+			}
 
-			// get rotation
-			q_invert(q, oldWorldFromHand.rotate);
-			q_mult(q, worldFromHand.rotate, q);
-			q_to_ogl_matrix(mat, q);
-
+			// Check to see if any axes are locked.  
+			if (obj.GetLockRotx() || obj.GetLockRoty() || obj.GetLockRotz()) {
+				if (obj.GetLockRotx()) {
+					q[0] = 0;
+				}
+				if (obj.GetLockRoty()) {
+					q[1] = 0;
+				}
+				if (obj.GetLockRotz()) {
+					q[2] = 0;
+				}
+				q_mult(q, oldTexture.rotate, q);
+			}
+			else {
+				q_mult(q, oldTexture.rotate, q);
+			}
 			
+			// Translate
+			q_vec_subtract(v, oldWorldFromHand.xlate, worldFromHand.xlate);
 
-/*
-printf("v[0] = %f\n", v[0]);
-printf("v[1] = %f\n", v[1]);
-*/
+			// Check to see if any axes are locked.
+			if (obj.GetLockTransx()) {
+				v[0] = 0;
+			}
+			if (obj.GetLockTransy()) {
+				v[1] = 0;
+			}
+			if (obj.GetLockTransz()) {
+				v[2] = 0;
+			}
 
-			// load old texture matrix, rotate, and translate
-			glLoadMatrixd(oldTextureMatrix);
-			glTranslated(v[0], v[1], 0);
-			glMultMatrixd(mat);
+			// Check to see if fine tuning.  If so, scale by 0.1
+			if (obj.GetTuneTrans()) {
+				q_vec_scale(v, 0.1, v);
+			}
+			q_vec_add(v, v, oldTexture.xlate);
+	
 
+			// update tcl variables
+			texture_transx = v[0];
+			texture_transy = v[1];
+			texture_transz = v[2];
 
+			q_to_euler(v, q);
 
-/*
-glGetDoublev(GL_TEXTURE_MATRIX, mat);
-printf("new texture matrix\n");
-qogl_print_matrix(mat);
-printf("\n");
-*/
+			texture_rotx = v[2];
+			texture_roty = v[1];
+			texture_rotz = v[0];
 		}
 		else {
 			updateWorldFromRoom(&temp);
