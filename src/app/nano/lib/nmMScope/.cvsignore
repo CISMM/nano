@@ -8,3 +8,11 @@ nmm_SPM_Report.C
 nmm_SPM_Report.h
 nmm_MicroscopeRemoteGen.C
 nmm_MicroscopeRemote.h
+nmm_AFMSIM_Report.h
+nmm_AFMSIM_Report.C
+nmm_Monitor.C
+nmm_Monitor.h
+nmm_SimulatedMicroscope.C
+nmm_SimulatedMicroscope.h
+nmm_SimulatedMicroscope_Remote.C
+nmm_SimulatedMicroscope_Remote.h
