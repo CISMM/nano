@@ -2074,7 +2074,9 @@ void handle_z_dataset_change(const char *, void * ds)
 
   // update loaded objects z offset
   double z = plane->minNonZeroValue();
-  World.Do(&URender::ChangeHeightPlane, &z);
+  if (&World.TGetContents() != NULL) {
+    World.Do(&URender::ChangeHeightPlane, &z);
+  }
 }
 
 /// Update the grid scale and rebuild the display lists
@@ -2961,13 +2963,15 @@ static void handle_openStaticFilename_change (const char *, void *)
 
 	// scale and translate objects appear in the same place in the new height plane
 //	if (state->config_enableUber) {
-    csf.scale /= dataset->inputGrid->maxX() - dataset->inputGrid->minX();
-	csf.scale = 1.0 / csf.scale;
-	csf.xoffset = dataset->inputGrid->minX();
-	csf.yoffset = dataset->inputGrid->minY();
-	csf.zoffset = dataset->inputGrid->getPlaneByName
-					(dataset->heightPlaneName->string())->minNonZeroValue();
-	World.Do(&URender::ChangeStaticFile, &csf);
+    if (&World.TGetContents() != NULL) {
+        csf.scale /= dataset->inputGrid->maxX() - dataset->inputGrid->minX();
+	    csf.scale = 1.0 / csf.scale;
+	    csf.xoffset = dataset->inputGrid->minX();
+	    csf.yoffset = dataset->inputGrid->minY();
+	    csf.zoffset = dataset->inputGrid->getPlaneByName
+					    (dataset->heightPlaneName->string())->minNonZeroValue();
+	    World.Do(&URender::ChangeStaticFile, &csf);
+    }
 //}
     
     openStaticFilename = "";
@@ -7343,7 +7347,9 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
         // First time through graphics will be NULL. 
         graphics->changeDataset(new_dataset);
     }
-	World.Do(&(URender::ChangeDataset), new_dataset);
+    if (&World.TGetContents() != NULL) {
+	    World.Do(&(URender::ChangeDataset), new_dataset);
+    }
 
     if (read_mode == READ_FILE)
       guessAdhesionNames(new_dataset);
@@ -9406,7 +9412,9 @@ static float testarray [1000];
 
 		//this doesn't work and I think its because the coordinates of the line
 		//are not transformed into object space and are only so far as world at this point
-		World.Do(&URender::IntersectLine, (void *) s);
+        if (&World.TGetContents() != NULL) {
+		    World.Do(&URender::IntersectLine, (void *) s);
+        }
 
 		cerr << "Selection Set: " << s->numselected << "\n";
 		

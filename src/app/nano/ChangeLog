@@ -1,5 +1,10 @@
 2002-10-02 David Borland <borland@cs.unc.edu>
 
+        * microscape.c : added check around calls to World.Do to make
+        sure we have a valid object.
+
+2002-10-02 David Borland <borland@cs.unc.edu>
+
         * microscape.c : removed a couple of other references to the 
         URTexture Textures objects that is now obsolete.
 
