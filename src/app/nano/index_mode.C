@@ -45,15 +45,16 @@ Index_mode::init( BCPlane* plane, const char* streamfileName )
   Index_mode::newPlane( plane );
 #else // _WIN32
   cout << "No index mode on the PC" << endl;
-  exit( -1 );
 #endif
 }
+
 
 bool
 Index_mode::isInitialized()
 {
   return initialized;
 }
+
 
 void
 Index_mode::newPlane( BCPlane* plane )
@@ -85,7 +86,6 @@ Index_mode::newPlane( BCPlane* plane )
 		     (void*) callback_username );
 #else // _WIN32
   cout << "No index mode on the PC" << endl;
-  exit( -1 );
 #endif
 }
 
@@ -104,6 +104,8 @@ Index_mode::shutdown( )
   outputDir = 0;
 
   initialized = false;
+#else // _WIN32
+  cout << "No index mode on the PC" << endl;
 #endif
 }
 
@@ -127,6 +129,8 @@ Index_mode::snapshot( )
   graphics->enableChartjunk( true );
   
   snapshots_taken++;
+#else // _WIN32
+  cout << "No index mode on the PC" << endl;
 #endif
 }
 
@@ -139,7 +143,6 @@ Index_mode::handle_new_datapoint( BCPlane *plane, int x, int y, void *userdata )
 
   if( x == 0 && y == 0 )
     Index_mode::snapshot( );
-
 #endif
 }
 
