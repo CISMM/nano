@@ -656,6 +656,17 @@ proc create_closing_toplevel { win_name {title "" } } {
     return .$win_name
 }
 
+# called when the C code sets the global value variable
+proc showWindow {win_name var_name name1 name2 op} {
+    upvar #0 $var_name make_visible
+#    puts "showWindow $var_name $name1 $name2 $op"
+    if {$make_visible == 1} {
+       wm deiconify .$win_name
+       raise .$win_name
+    } else {
+       wm withdraw .$win_name
+    }
+}
 
 # Create a window with a "close" button at the top,
 # and a procedure to open it again. The global variable passed in is
@@ -677,12 +688,17 @@ proc create_closing_toplevel_with_notify { win_name signal_var_name {title "" } 
     wm protocol .$win_name WM_DELETE_WINDOW ".$win_name.close invoke"
     #pack .$win_name.close -anchor nw
 
+    upvar #0 $signal_var_name signal_var
+    trace variable signal_var w \
+          "showWindow $win_name $signal_var_name"
+
     proc show.${win_name} {} "
         wm deiconify .$win_name
         raise .$win_name
         upvar #0 $signal_var_name signal_var
         set signal_var 1
     "
+
     return .$win_name
 }
 

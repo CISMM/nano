@@ -2,6 +2,7 @@
 #include "nmm_Microscope_SEM_EDAX.h"
 #include "nmm_EDAX.h"
 #include <stdlib.h>
+#include <string.h>
 
 //#define VIRTUAL_SEM
 

@@ -30,17 +30,17 @@ void SequenceEntry::print()
 }
 
 nmb_DeviceSequencer::nmb_DeviceSequencer(int verbosity):
+   d_iterationHandlers(NULL),
    d_numDevices(0),
    d_numSenders(0),
    d_numMessageTypes(0),
    d_sequenceHead(NULL),
    d_sequenceTail(NULL),
-   d_running(vrpn_FALSE),
-   d_specified(vrpn_FALSE),
-   d_currentSequenceEntry(NULL),
    d_verbosity(verbosity),
    d_needNewSequenceEntry(vrpn_FALSE),
-   d_iterationHandlers(NULL)
+   d_running(vrpn_FALSE),
+   d_specified(vrpn_FALSE),
+   d_currentSequenceEntry(NULL)
 {
 
 }

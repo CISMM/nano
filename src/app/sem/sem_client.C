@@ -14,6 +14,7 @@ void handle_sem_message(void *userdata,
 	const nmm_Microscope_SEM_ChangeHandlerData &info);
 
 static int use_viewer = vrpn_TRUE;
+static int time_to_quit = vrpn_FALSE;
 
 int main(int argc, char **argv)
 {
@@ -35,7 +36,7 @@ int main(int argc, char **argv)
     glutIdleFunc(idlefunc);
 #endif
   }
-  sem = new nmm_Microscope_SEM_Remote("SEM@lead-cs.cs.unc.edu");
+  sem = new nmm_Microscope_SEM_Remote("SEM@cobalt-cs.cs.unc.edu");
 
   if (!(sem->connected())) {
     fprintf(stderr, "Error, can't connect to microscope, exiting\n");
@@ -92,7 +93,8 @@ int handleMainWinEvent(const ImageViewerWindowEvent &ivwe, void *ud)
                   
                         break;
                 case 'q':
-                        exit(0);
+                        time_to_quit = vrpn_TRUE;
+                        //exit(0);
                         break;
                 default:
                         break;

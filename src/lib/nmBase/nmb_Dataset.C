@@ -77,7 +77,11 @@ nmb_Dataset::nmb_Dataset
 {
   //BCPlane * std_dev_plane;
 
-
+  int i;
+  // files not loaded as grid files should not be height fields by default
+  for (i = 0; i < dataImages->numImages(); i++) {
+      dataImages->getImage(i)->setHeightField(vrpn_FALSE);
+  }
   if (inputGrid->empty())
     fprintf(stderr, "nmb_Dataset:  Cannot scan grid.\n");
 

@@ -1,5 +1,10 @@
 global reg_window_open registration_needed reg_constrain_to_topography
 global resample_resolution_x resample_resolution_y reg_resample_ratio
+global reg_surface_comes_from reg_projection_comes_from
+global resample_image_name
+
+set reg_surface_comes_from "none"
+set reg_projection_comes_from "none"
 
 set nmInfo(registration) [create_closing_toplevel_with_notify \
                                       registration reg_window_open]
@@ -39,18 +44,18 @@ checkbutton $nmInfo(registration).display_texture \
 pack $nmInfo(registration).display_texture
 
 # stuff for creating resampled data:
-set resample_plane_name ""
+set resample_image_name ""
 #set resample_from ""
-frame $nmInfo(registration).resample_plane -relief raised -bd 4
-frame $nmInfo(registration).resample_plane.choice
-frame $nmInfo(registration).resample_plane.name
-pack $nmInfo(registration).resample_plane.choice -side left
-pack $nmInfo(registration).resample_plane.name
-label $nmInfo(registration).resample_plane.name.label \
-      -text "Resample plane name"
-pack $nmInfo(registration).resample_plane.name.label
-newlabel_dialogue resample_plane_name $nmInfo(registration).resample_plane.name
-pack $nmInfo(registration).resample_plane -fill both
+frame $nmInfo(registration).resample_image -relief raised -bd 4
+frame $nmInfo(registration).resample_image.choice
+frame $nmInfo(registration).resample_image.name
+pack $nmInfo(registration).resample_image.choice -side left
+pack $nmInfo(registration).resample_image.name
+label $nmInfo(registration).resample_image.name.label \
+      -text "Resample image name"
+pack $nmInfo(registration).resample_image.name.label
+newlabel_dialogue resample_image_name $nmInfo(registration).resample_image.name
+pack $nmInfo(registration).resample_image -fill both
 
 intscale $nmInfo(registration).resolution_x 10 10000 9991 1 1 \
 		resample_resolution_x "x resolution"

@@ -123,6 +123,74 @@ void nmb_Image::worldToPixel(const double x, const double y,
         j = y_frac*(double)height();
 }
 
+/**
+ returns transformation matrix that takes points in world to points in
+ normalized image coordinates with x and y in range 0..1
+
+*/
+
+void nmb_Image::getWorldToImageTransform(double *matrix44)
+{
+    double i10, i01, j10, j01, i00, j00;
+    double x_diff, y_diff, temp;
+
+    x_diff = boundX(nmb_ImageBounds::MAX_X_MIN_Y) -
+             boundX(nmb_ImageBounds::MIN_X_MIN_Y);
+    y_diff = boundY(nmb_ImageBounds::MAX_X_MIN_Y) -
+             boundY(nmb_ImageBounds::MIN_X_MIN_Y);
+    temp = (1.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
+           (0.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
+
+    i10 = temp/(x_diff*x_diff + y_diff*y_diff);
+
+    temp = (0.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
+           (1.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
+
+    i01 = temp/(x_diff*x_diff + y_diff*y_diff);
+
+    temp = (0.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
+           (0.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
+
+    i00 = temp/(x_diff*x_diff + y_diff*y_diff);
+
+    x_diff = boundX(nmb_ImageBounds::MIN_X_MAX_Y) -
+             boundX(nmb_ImageBounds::MIN_X_MIN_Y);
+    y_diff = boundY(nmb_ImageBounds::MIN_X_MAX_Y) -
+             boundY(nmb_ImageBounds::MIN_X_MIN_Y);
+    temp = (1.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
+           (0.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
+    j10 = temp/(x_diff*x_diff + y_diff*y_diff);
+
+    temp = (0.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
+           (1.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
+    j01 = temp/(x_diff*x_diff + y_diff*y_diff);
+
+    temp = (0.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
+           (0.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
+    j00 = temp/(x_diff*x_diff + y_diff*y_diff);
+
+    // first row:
+    matrix44[0] = i10; 
+    matrix44[1] = i01;
+    matrix44[2] = 0.0;
+    matrix44[3] = i00;
+    // second row:
+    matrix44[4] = j10;
+    matrix44[5] = j01;
+    matrix44[6] = 0.0;
+    matrix44[7] = j00;
+
+    matrix44[8] = 0.0;
+    matrix44[9] = 0.0;
+    matrix44[10] = 1.0;
+    matrix44[11] = 0.0;
+
+    matrix44[12] = 0.0;
+    matrix44[13] = 0.0;
+    matrix44[14] = 0.0;
+    matrix44[15] = 1.0;
+}
+
 const int nmb_ImageGrid::num_export_formats = 5;
 const char *nmb_ImageGrid::export_formats_list[] = {	"Topometrix",
                                  		"Text(MathCAD)",
@@ -152,6 +220,11 @@ nmb_ImageGrid::nmb_ImageGrid(const char *name, const char *units,
         BCString name = exportFormatType(i);
         formatNames.addEntry(name);
     }
+    if (strcmp(units, "nm") == 0) {
+        is_height_field = vrpn_TRUE;
+    } else {
+        is_height_field = vrpn_FALSE;
+    }
 }
 
 nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image()
@@ -175,6 +248,11 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image()
     for (i = 0; i < numExportFormats(); i++){
         BCString name = exportFormatType(i);
         formatNames.addEntry(name);
+    }
+    if (strcmp(unitsValue()->Characters(), "nm") == 0) {
+        is_height_field = vrpn_TRUE;
+    } else {
+        is_height_field = vrpn_FALSE;
     }
 }
 
@@ -562,22 +640,26 @@ nmb_ImageList::nmb_ImageList(nmb_ListOfStrings *namelist,
 nmb_ImageList::~nmb_ImageList()
 {
     for (int i = 0; i < num_images; i++) {
-	delete images[i];
+        images[i]->num_referencing_lists--;
+        if (images[i]->num_referencing_lists == 0) {
+	    delete images[i];
+        }
     }
 }
 
 int nmb_ImageList::addImage(nmb_Image *im)
 {
-	// don't add this if name is not unique
-	if (getImageByName(*(im->name())))
-		return -2;
-	// don't add if list is full
-	BCString name = (*(im->name()));
+    // don't add this if name is not unique
+    if (getImageByName(*(im->name())))
+	return -2;
+    // don't add if list is full
+    BCString name = (*(im->name()));
     if (num_images == NMB_MAX_IMAGELIST_LENGTH ||
 		(imageNames->addEntry(name))) return -1;
-	images[num_images] = im;
-	num_images++;
-	return 0;
+    images[num_images] = im;
+    num_images++;
+    im->num_referencing_lists++;
+    return 0;
 }
 
 nmb_Image *nmb_ImageList::removeImageByName(BCString name) {
@@ -588,6 +670,7 @@ nmb_Image *nmb_ImageList::removeImageByName(BCString name) {
     images[i] = images[num_images-1];
     imageNames->deleteEntry((const char *)(*(im->name())));
     num_images--;
+    im->num_referencing_lists--;
     return im;
 }
 

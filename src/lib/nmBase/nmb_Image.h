@@ -49,6 +49,7 @@ class nmb_ImageBounds {
     double x[4], y[4];
 };
 
+class nmb_ImageList;
 /**
 	nmb_ImageList provides a way to unite images from different BCGrids
 	into a single list. An nmb_Image base class and container class for
@@ -56,8 +57,9 @@ class nmb_ImageBounds {
 	than BCPlane more easily
 */
 class nmb_Image {
+        friend class nmb_ImageList;
   public:
-	nmb_Image():is_height_field(VRPN_FALSE)
+	nmb_Image():is_height_field(VRPN_FALSE), num_referencing_lists(0)
             {};
 	virtual ~nmb_Image (void);
 	virtual int width() const = 0;
@@ -101,6 +103,8 @@ class nmb_Image {
 	void worldToPixel(const double x, const double y,
 			double &i, double &j) const;
 
+        void getWorldToImageTransform(double *matrix44);
+
 	virtual BCString *name() = 0;
 	virtual BCString *unitsX() = 0;
 	virtual BCString *unitsY() = 0;
@@ -118,6 +122,7 @@ class nmb_Image {
 
   protected:
 	vrpn_bool is_height_field;
+        int num_referencing_lists;
 };
 
 /// container class for BCGrid/BCPlane-based images
@@ -237,6 +242,12 @@ class nmb_ImageList {
 		return getImageByName(name, i);
 	}
 	nmb_Image *removeImageByName(BCString name);
+        int numImages() {
+            return num_images;
+        }
+        nmb_Image *getImage(int index) {
+            return images[index];
+        }
 
   private:
 	nmb_Image *getImageByName(BCString name, int &index);

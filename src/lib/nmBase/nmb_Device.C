@@ -1,4 +1,7 @@
 #include <assert.h>
+#include <string.h>
+#include <strings.h>
+
 #include "nmb_Device.h"
 
 char * nmb_Device::encode_RequestSynchronization (long *len,
@@ -15,7 +18,7 @@ char * nmb_Device::encode_RequestSynchronization (long *len,
   if (comment) {
     comment_length = strlen(comment) + 1;
   }
-  *len = 3*sizeof(vrpn_int32) + comment_length;
+  *len = 3l*(long)sizeof(vrpn_int32) + comment_length;
 
   msgbuf = new char [*len];
   if (!msgbuf) {

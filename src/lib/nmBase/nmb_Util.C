@@ -18,7 +18,7 @@
 		in NT version.
 */
 
-#define CHECK(a) if ((a) == -1) return -1
+//#define CHECK(a) if ((a) == -1) return -1
 
 //static
 int nmb_Util::Buffer (char ** insertPt, int * buflen,
@@ -29,7 +29,7 @@ int nmb_Util::Buffer (char ** insertPt, int * buflen,
   int netValue = htonl(value);
   int length = sizeof(netValue);
 
-  CHECK(length < *buflen);  // XXX bug
+  if (!(length < *buflen)) return -1;
 
   memcpy(*insertPt, &netValue, length);
   *insertPt += length;
@@ -49,7 +49,7 @@ int nmb_Util::Buffer (char ** insertPt, long * buflen,
   fprintf(stderr, "\t\tbuflen = %ld\n", *buflen);
 */
 
-  CHECK(length < *buflen); // XXX bug
+  if (!(length < *buflen)) return -1;
 
   memcpy(*insertPt, &netValue, length);
   *insertPt += length;
@@ -71,7 +71,7 @@ int nmb_Util::Buffer (char ** insertPt, long * buflen,
 
   long length = sizeof(netValue);
 
-  CHECK(length < *buflen); // XXX bug
+  if (!(length < *buflen)) return -1;
 
   memcpy(*insertPt, &netValue, length);
   *insertPt += length;
@@ -93,7 +93,7 @@ int nmb_Util::Buffer (char ** insertPt, int * buflen,
 
   int length = sizeof(netValue);
 
-  CHECK(length < *buflen);  // XXX bug
+  if (!(length < *buflen)) return -1;
 
   memcpy(*insertPt, &netValue, length);
   *insertPt += length;
@@ -118,7 +118,7 @@ int nmb_Util::Buffer (char ** insertPt, long * buflen,
 
   long length = sizeof(netValue);
 
-  CHECK(length < *buflen);  // XXX bug
+  if (!(length < *buflen)) return -1;
 
   memcpy(*insertPt, &netValue, length);
   *insertPt += length;
@@ -142,7 +142,7 @@ int nmb_Util::Buffer (char ** insertPt, int * buflen,
 
   int length = sizeof(netValue);
 
-  CHECK(length < *buflen);  // XXX bug
+  if (!(length < *buflen)) return -1;
 
   memcpy(*insertPt, &netValue, length);
   *insertPt += length;
@@ -154,7 +154,7 @@ int nmb_Util::Buffer (char ** insertPt, int * buflen,
 //static
 int nmb_Util::Buffer (char ** insertPt, long * buflen,
                       const char * string, unsigned long length) {
-  CHECK(length < (unsigned)*buflen);  // XXX bug
+  if (!(length < *buflen)) return -1;
   memcpy(*insertPt, string, length);
   *insertPt += length;
   *buflen -= length;
@@ -165,7 +165,7 @@ int nmb_Util::Buffer (char ** insertPt, long * buflen,
 //static
 int nmb_Util::Buffer (char ** insertPt, int * buflen,
                       const char * string, unsigned int length) {
-  CHECK(length < (unsigned)*buflen);  // XXX bug
+  if (!(length < *buflen)) return -1;
 
   memcpy(*insertPt, string, length);
   *insertPt += length;
@@ -180,7 +180,7 @@ int nmb_Util::Buffer (char ** insertPt, long * buflen,
   struct timeval netValue;
   long length = sizeof(struct timeval);
 
-  CHECK(length < *buflen);  // XXX bug
+  if (!(length < *buflen)) return -1;
 
   netValue.tv_sec = htonl(time.tv_sec);
   netValue.tv_usec = htonl(time.tv_usec);
@@ -198,7 +198,7 @@ int nmb_Util::Buffer (char ** insertPt, int * buflen,
   struct timeval netValue;
   int length = sizeof(struct timeval);
 
-  CHECK(length < *buflen);  // XXX bug
+  if (!(length < *buflen)) return -1;
 
   netValue.tv_sec = htonl(time.tv_sec);
   netValue.tv_usec = htonl(time.tv_usec);
@@ -216,7 +216,7 @@ int nmb_Util::Buffer (char ** insertPt, long * buflen,
   vrpn_int32 netValue;
   long length = sizeof(vrpn_int32);
 
-  CHECK(length < *buflen);  // XXX bug
+  if (!(length < *buflen)) return -1;
 
   netValue = htonl(value);
 
@@ -233,7 +233,7 @@ int nmb_Util::Buffer (char ** insertPt, int * buflen,
   vrpn_int32 netValue;
   int length = sizeof(vrpn_int32);
 
-  CHECK(length < *buflen);  // XXX bug
+  if (!(length < *buflen)) return -1;
 
   netValue = htonl(value);
 
