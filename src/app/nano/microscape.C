@@ -120,6 +120,9 @@ pid_t getpid();
 #include "nmg_ImageDisplayProjectiveTexture.h"
 #endif // PROJECTIVE_TEXTURE
 
+
+#include "nmui_CrossSection.h"
+
 // AFM tip display ui
 #include "nm_Tip.h"
 
@@ -1316,6 +1319,9 @@ nms_SEM_ui * sem_ui = NULL;
 nmr_RegistrationUI *alignerUI = NULL;
 nmg_ImageDisplayProjectiveTexture *alignmentTextureDisplay = NULL;
 nmr_Registration_Proxy *aligner = NULL;
+
+
+nmui_CrossSection *cross = NULL;
 
 /// User controls for the colormap applied to the heightfield/surface
 nmui_ColorMap * colorMapUI = NULL;
@@ -6033,7 +6039,7 @@ void setupSynchronization( CollaborationManager * cm,
   viewRegister->add(&(alignerUI->d_resampleResolutionY));
   viewRegister->add(&(alignerUI->d_resampleRatio));
   viewRegister->add(&(alignerUI->d_registrationColorMap3D));
-  //viewRegister->add(&(alignerUI->d_registrationColorMap2D));
+  //viewRegister->add(&(alignerUI->d_registrationColorMap2D));//
   viewRegister->add(&(alignerUI->d_autoAlignRequested));
   viewRegister->add(&(alignerUI->d_numIterations));
   viewRegister->add(&(alignerUI->d_stepSize));
@@ -6053,6 +6059,17 @@ void setupSynchronization( CollaborationManager * cm,
 
   rootUIControl->add(viewRegister);
   
+  // Analysis -> Cross Section
+  nmui_Component * viewCross;
+  viewCross = new nmui_Component("Cross");
+  viewCross->add(&(cross->d_snap_to_45));
+  viewCross->add(&(cross->d_vary_width));
+  viewCross->add(&(cross->d_max_points));
+  viewCross->add(&(cross->d_clear_zero));
+  viewCross->add(&(cross->d_clear_one));
+  viewCross->add(&(cross->d_data_update));
+
+  rootUIControl->add(viewCross);
 
   /* */
   if(the_french_ohmmeter_ui) {
@@ -7408,6 +7425,9 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
   if (alignerUI) {
     alignerUI->teardownCallbacks();
   }
+
+ 
+
   if (tipDisplayUI) {
     tipDisplayUI->setSPM(NULL);
   }
@@ -8203,6 +8223,8 @@ int main (int argc, char* argv[])
     alignerUI->setupCallbacks();
   }
 
+  
+  cross = new nmui_CrossSection();
 
   //--------------------------------------
   // Initialize microscope from command line
