@@ -3889,17 +3889,20 @@ doWorldGrab(int whichUser, int userEvent)
 	if (node != NULL) {
 		URender &obj = node->TGetContents();
 		if (obj.GetGrabObject() == 1) {
-			q_type q;
+			q_type q, q1, qchange;
+
 			q_invert(q, oldWorldFromHand.rotate);
-			q_mult(q, q, worldFromHand.rotate);
-			q_mult(q, oldObject.rotate, q);
+			q_mult(q, worldFromHand.rotate, q);
+			q_mult(q, q, oldObject.rotate);
 
 			q_vec_type v;
 			q_vec_subtract(v, worldFromHand.xlate, oldWorldFromHand.xlate);
-			q_vec_add(v, oldObject.xlate, v);
-
-			node->TGetContents().GetLocalXform().SetRotate(q);
-			node->TGetContents().GetLocalXform().SetTranslate(v);
+			q_vec_add(v, v, oldObject.xlate);
+	
+			// don't need to do this, as we shall do it in the tcl callbacks
+//			node->TGetContents().GetLocalXform().SetRotate(q);
+//			node->TGetContents().GetLocalXform().SetRotate(o.rotate);
+//			node->TGetContents().GetLocalXform().SetTranslate(v);
 
 			// update tcl variables
 			import_transx = v[0];
