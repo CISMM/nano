@@ -1,3 +1,9 @@
+2004-06-11  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* filenenu.tcl : Modified the default save format for
+		UNCA files to unca from ima.  Added a comment that
+		the names have to match the C code.
+
 2004-03-17  David Borland  <borland@cs.unc.edu>
 
         * analysismenu.tcl: added UI for new mathematical morphology code.

@@ -296,6 +296,8 @@ proc save_plane_data {} {
     # the default selected export_plane.
     #set export_plane [lindex $imageNames 0]
     set export_plane $z_comes_from
+    # WARNING -- You have to edit this list both here and in the nmb_Image.C
+    # file.  The Entries in both places must match!
     if { [.save_plane_dialog activate] } {
 	set types { {"All files" *} 
         { "ThermoMicroscopes" ".tfr" }
@@ -304,7 +306,7 @@ proc save_plane_data {} {
         { "Other Image" ".jpg" }
         { "Text(MathCAD)" ".txt" }
         { "SPIP" ".bcr" }
-        { "UNCA Image" ".ima" } }
+        { "UNCA Image" ".unca" } }
 
         # Set the file extension correctly
         set def_file_exten ".tfr"
