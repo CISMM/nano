@@ -120,7 +120,7 @@ Installation of nano source tree on C: drive for compiling with VC++ compiler
   change MSVSDIR and MY_NANO_OBJ_DIR exports
   for example:
   export MY_NANO_OBJ_DIR=/nsrc/obj
-  export MSVSDir=/c/PROGRAM FILES/MICROSOFT VISUAL STUDIO
+  export MSVSDir=/c/PROGRA~1/MICROS~1
 
 ================================================================
 for compiling:
