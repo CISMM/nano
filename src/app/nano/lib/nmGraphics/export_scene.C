@@ -30,14 +30,12 @@ void my_v_gl_calculate_inverse_view_xform(
     v_xform_type & out_worldFromRightEye);
 
 
-/** Computes the smallest power of 2 greater than ARG, then returns ARG
-    divided by it.  Note that ARG is of an integral type, but the return value
-    is of floating point type.
-*/
+/** Computes the smallest power of 2 greater than ARG. */
 inline static
-double divide_by_next_higher_power_of_2 (double arg)
+double next_power_of_2 (double arg)
 {
-    return arg / exp(ceil(log(arg)));
+    // XXX this is WRONG!!!!!
+    return exp(ceil(log(arg)));
 }
 
 
@@ -50,7 +48,8 @@ void build_mesh (
     const nmb_PlaneSelection & plane_selection)
 {
     // Number of gridpoints and faces in each axial direction
-    const int num_X = grid->numX();  const int num_Y = grid->numY();
+    const int num_X = grid->numX();
+    const int num_Y = grid->numY();
     const int num_faces_X = num_X - 1;
     const int num_faces_Y = num_Y - 1;
 
@@ -78,20 +77,9 @@ void build_mesh (
     // 3dm files don't support per-vertex color, so we'll ignore this one.
     // Perhaps we should put the color into a texture that gets mapped onto
     // the surface?
+    // 
     //const BCPlane * const color_scalar_field = plane_selection.color;
     
-    // Valid texture coordinates are
-    //     (u,v), st. (0 <= u < 1)  AND  0 <= v < 1)
-    // The grid only uses tex coords in the interval
-    //     (u,v), st.
-    //            0 <= u <= (num_X-1) / nearest_greater_power_of_2
-    //            0 <= v <= (num_Y-1) / nearest_greater_power_of_2
-    // XXX I may have this backwards... (wrt x->u, y->v)
-    //
-    // Not used yet
-    //const double max_U = divide_by_next_higher_power_of_2 (num_X - 1);
-    //const double max_V = divide_by_next_higher_power_of_2 (num_Y - 1);
-
     // Anything else?
 
     // Create some colors
@@ -122,18 +110,40 @@ void build_mesh (
     
     mesh.SetFaceCount (num_faces_X * num_faces_Y);
     mesh.SetNormalsExist (true);
-    mesh.SetTCoordsExist (false);  // XXX change later
+    mesh.SetTCoordsExist (true);
     
-    // The default is the unit square; no need to specify.
-    //mesh.SetTextureDomain (...);
+    // Valid texture coordinates are
+    //     (u,v), st. (0 <= u < 1)  AND  0 <= v < 1)
+    // The grid only uses tex coords in the interval
+    //     (u,v), st.
+    //            0 <= u <= (num_X-1) / nearest_greater_power_of_2
+    //            0 <= v <= (num_Y-1) / nearest_greater_power_of_2
+    // XXX I may have this backwards... (wrt x->u, y->v)
+    // 
+    // Texture Domain is a rectangular bounding box containing all the
+    // texture coordinates.  The low left and high right corners are given
+    // by these functions The default texture domain is the unit square.
+    // 
+    // void SetTextureDomain(CRhino2DPoint low, CRhino2DPoint high);
+    // 
+    {
+        CRhino2DPoint low_left = { 0.0, 0.0 };
+        CRhino2DPoint high_right = { next_power_of_2 (num_X - 1),
+                                     next_power_of_2 (num_Y - 1) };
+
+        // oops, next_power_of_2 is buggy.  For now, skip it.
+        high_right[0] = num_X - 1;
+        high_right[1] = num_Y - 1;
+        
+        mesh.SetTextureDomain (low_left, high_right);
+    }
+    
 
     // Set the vertices
-    for (int vy=0, vertex_number=0;
-         vy < num_Y;
-         ++vy)
+    for (int vy=0, vertex_number=0;  (vy < num_Y);  ++vy)
     {
-        for (int vx=0;  (vx < num_X);  ++vx) {
-            
+        for (int vx=0;  (vx < num_X);  ++vx)
+        {
             bool result =
                 mesh.SetVertex (vertex_number,
                                 min_X + (vx * width_X),
@@ -152,11 +162,15 @@ void build_mesh (
                                      normal[0], normal[1], normal[2]);
             
             if (false == result) {
-                cout << "error setting normal for vertex #" << vertex_number << endl;
+                cout << "error setting normal for vertex #"
+                     << vertex_number << endl;
             }
 
-            //mesh.SetTCoord (vertex_number,
-            //                u,v);
+            result = mesh.SetTCoord (vertex_number, vx, vy);
+            if (false == result) {
+                cout << "error setting texture coordinate for vertex #"
+                     << vertex_number << endl;
+            }
             
             ++vertex_number;
         }
@@ -274,7 +288,7 @@ void build_viewport (CRhinoViewport & out_v,
                           viewport.clipDistances [0],
                           viewport.clipDistances [1]);
 
-        cout << "vogl says viewport is ("
+        cout << "  vogl says viewport is ("
              << viewport.windowOrigin  [0] << ", "
              << viewport.windowExtents [0] << ", "
              << viewport.windowOrigin  [1] << ", "
@@ -288,7 +302,7 @@ void build_viewport (CRhinoViewport & out_v,
                                               &frus_near,&frus_far);
         
         if (bValidFrustum) {
-            cout << "frustum got set to ("
+            cout << "  frustum got set to ("
                  << frus_left   << ", " << frus_right << ", "
                  << frus_bottom << ", " << frus_top   << ", "
                  << frus_near   << ", " << frus_far   << ")"  << endl;
