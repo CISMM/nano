@@ -1,13 +1,16 @@
 
+// Horrible hack: Code that uses this function must #include Tcl_Linkvar.h
+// BEFORE windows.h and before this file is included.  If it doesn't then
+// there is a fight between Tk and STL, and Tk loses.
+
 #include <windows.h>
 #include <vrpn_Types.h>
-#include <glui.h>
 #include "nmm_Microscope_SEM_diaginc.h"
 
 #ifndef OPTICALSERVERINTERFACE_H
 #define OPTICALSERVERINTERFACE_H
 
-// an OpenGL + GLUI window
+// an OpenGL + Tcl/Tk windows
 class OpticalServerInterface
 {
 public:
@@ -16,31 +19,32 @@ public:
 	void setImage( vrpn_uint8* buffer, int width, int height );
 	void setMicroscope( nmm_Microscope_SEM_diaginc* m );
 
-	int getBinning( );
-	int getResolutionIndex( );
-	void setBinning( int bin );
-	void setResolutionIndex( int idx );
+	int getBinning( ) { return binning; };
+	int getResolutionIndex( ) { return resolutionIndex; };
+	void setBinning( int bin ) { binning = bin; };
+	void setResolutionIndex( int idx ) { resolutionIndex = idx; };
 
 protected:
 
 	int image_window;
-	GLUI* glui_window;
-	GLUI_Listbox* binningListbox;
-	GLUI_RadioGroup* resRadioGroup;
 	HANDLE ifaceThread;
 	vrpn_uint8* lastImage;
 	int lastImageWidth, lastImageHeight;
-	 nmm_Microscope_SEM_diaginc* microscope;
+	nmm_Microscope_SEM_diaginc* microscope;
 
 	static OpticalServerInterface* instance;
 	static bool interfaceShutdown;
 
+	Tclvar_list_of_strings  *d_binningList;
+	Tclvar_list_of_strings  *d_resolutionList;
+	Tclvar_selector	*d_binningSelector;
+	Tclvar_selector *d_resolutionSelector;
+	int binning;
+	int resolutionIndex;
+
 private:
 	OpticalServerInterface( );
 	~OpticalServerInterface( );
-
-	friend void OpticalServerInterface_gluiChangedResolution( int id );
-	friend void OpticalServerInterface_gluiChangedBinning( int id );
 
 	friend void OpticalServerInterface_myGlutRedisplay( );
 	friend void OpticalServerInterface_myGlutKeyboard( unsigned char key, int x, int y );
@@ -50,6 +54,9 @@ private:
 	friend void OpticalServerInterface_myGlutReshape( int w, int h );
 	friend void OpticalServerInterface_myGlutIdle( );
 	friend DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter );
+
+	static void handle_binning_changed(char *new_value, void *userdata);
+	static void handle_resolution_changed(char *new_value, void *userdata);
 
 	bool threadReady;
 };

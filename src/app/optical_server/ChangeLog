@@ -1,3 +1,13 @@
+2003-11-22  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* OpticalServerInterface.cpp : Added version number.  Modified to
+		use Tcl rather than GLUI for GUI.
+	* OpticalServerInterface.h : Same.
+	* nmm_Microscope_SEM_diaginc.cpp : Same.
+	* opticalServer.cpp : Same.
+	* opticalServerInterface.cpp
+	* opticalServer.dsp : Same.
+	
 2003-11-22  David Marshburn  <marshbur@cs.unc.edu>
 	
 	* nmm_Microscope_SEM_diaginc.cpp:  only sends an image when one has

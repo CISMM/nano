@@ -1,4 +1,5 @@
 
+#include "Tcl_Linkvar.h"
 #include <windows.h>
 #include <SpotCam.h>
 #include <stdlib.h>
