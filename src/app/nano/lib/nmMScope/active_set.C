@@ -92,6 +92,23 @@ int	Channel_selector::Unset(const char *channel)
     return 0;
 }
 
+#ifndef USE_VRPN_MICROSCOPE
+
+// virtual
+int Channel_selector::Update_microscope (Microscope *) {
+  return 0;
+}
+
+#else
+
+// virtual
+int Channel_selector::Update_microscope (nmm_Microscope_Remote *) {
+  return 0;
+}
+
+#endif
+
+
 int	Channel_selector::Clear_channels(void)
 {
 	int	ret = 0;

@@ -47,9 +47,9 @@ class	Channel_selector
 	// Changed to allow instantiation of this as a generic
         // channel selector that doesn't contain references to data; 
 #ifndef USE_VRPN_MICROSCOPE
-	virtual int Update_microscope (Microscope *) {return 0;};
+	virtual int Update_microscope (Microscope *);
 #else
-	virtual int Update_microscope (nmm_Microscope_Remote *) {return 0;};
+	virtual int Update_microscope (nmm_Microscope_Remote *);
 #endif
 	void	Changed(int c) { change_from_tcl = c; }
 	int	Changed (void) const { return change_from_tcl; }
