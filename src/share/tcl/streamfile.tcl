@@ -16,10 +16,10 @@ set streamplay(sf) [create_closing_toplevel streamfile "Replay Controls"]
 
 #-------------------------------------------------------------------
 label $streamplay(sf).label -text "Stream Replay Controls"
-pack $streamplay(sf).label -side top -anchor nw -padx 5 -pady 5
+pack $streamplay(sf).label -side top -anchor nw -padx 5 -pady 2
 
 set streamplay(buttons) [frame $streamplay(sf).buttons]
-pack $streamplay(buttons) -side top -fill x -pady 5
+pack $streamplay(buttons) -side top -fill x -pady 2
 
 button $streamplay(buttons).rewind_stream -text "Rewind" \
     -command {set rewind_stream 1} -padx 8
@@ -69,7 +69,7 @@ iwidgets::Labeledwidget::alignlabels \
 
 pack $streamplay(sf).set_stream_time \
 	$streamplay(sf).replay_rate \
-	-side top -anchor nw -padx 5 -pady 5
+	-side top -anchor nw -padx 5 -pady 2
 
 
 # One button must be disabled to begin with....
@@ -168,3 +168,4 @@ proc streamplay_update_replay_widget {name element op} {
 
 trace variable stream_replay_rate w streamplay_update_replay_widget
 #------- end pause/resume button ----------
+wm resizable .streamfile 0 0

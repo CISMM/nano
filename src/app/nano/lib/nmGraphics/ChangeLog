@@ -1,3 +1,9 @@
+2001-11-25  Aron Helser  <helser@cs.unc.edu>
+
+	* nmg_GraphicsImpl.Ch (positionWindow): new, positions the Glut
+	window. 
+	* nmg_Graphics.h (positionWindow): new
+
 2001-10-29  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* export_scene.C (export_scene_to_openNURBS): changed call to

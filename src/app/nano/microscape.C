@@ -641,10 +641,16 @@ static void handle_config_ss_change (vrpn_int32, void *);
 TclNet_int config_smooth_shading ("smooth_shading",  1, 
                                   handle_config_ss_change, NULL);
 
-static void    handle_stride_change (vrpn_int32 newval, void * userdata);
+static void handle_stride_change (vrpn_int32 newval, void * userdata);
 /// Deal with the stride between rows on the grid for tesselation.  This is
 /// the step size between one row/column of the display list and the next.
 TclNet_int tclstride ("tesselation_stride", 1);
+
+
+static void handle_tclwin_resize_change (vrpn_int32 newval, void * userdata);
+/// Window size params for pretty window layout
+Tclvar_int main_height( "main_height", 180);
+Tclvar_int left_strip_width( "left_full_strip_width", 180);
 
 //-----------------------------------------------------------------------
 /// Tom Hudson's latency compensation techniques
@@ -1697,6 +1703,25 @@ void    handle_stride_change (vrpn_int32 newval, void * userdata) {
     // tclstride = newval would be infinite loop
     g->setTesselationStride(stride);
   }
+}
+
+static void handle_tclwin_resize_change (vrpn_int32 newval, void * userdata)
+{
+  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  //printf("Win position %d %d\n", (int)left_strip_width, (int)main_height);
+  g->positionWindow(left_strip_width, main_height);
+        // default for Nano for 1280x1024 screen
+    int s_width = 1280, s_height = 1024;
+#ifdef V_GLUT
+    if (glutGet( GLUT_SCREEN_WIDTH )) {
+        s_width = glutGet( GLUT_SCREEN_WIDTH );
+    } 
+    if (glutGet( GLUT_SCREEN_HEIGHT)) {
+        s_height = glutGet( GLUT_SCREEN_HEIGHT);
+    }
+#endif
+    // subtract width of borders, title bar, and task bar for win2k
+  g->resizeViewport(s_width-left_strip_width -6, s_height-main_height-55);
 }
 
 static void handle_alpha_slider_change (vrpn_float64, void * userdata) {
@@ -4483,6 +4508,8 @@ void setupCallbacks (nmg_Graphics * g) {
 
   tclstride.addCallback
             (handle_stride_change, g);
+  left_strip_width.addCallback 
+      (handle_tclwin_resize_change, g);
 
   //for importing from tube_foundry
   /*
@@ -6860,16 +6887,19 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
         s_height = glutGet( GLUT_SCREEN_HEIGHT);
     }
 #endif
+    char env_str[200];
     if (getenv("V_SCREEN_DIM_PXFL") == NULL) {
-        char env_str[200];
         // Magic numbers make all the borders come out right in Windows.
         sprintf(env_str, "V_SCREEN_DIM_PXFL=%d %d", 
-                s_width - 224, s_height - 252);
+                s_width - 222, s_height - 253);
         _putenv(env_str);
     }
     if (getenv("V_SCREEN_OFFSET") == NULL) {
         // default for Nano for 1280x1024 screen
-        _putenv("V_SCREEN_OFFSET=220 220");
+        sprintf(env_str, "V_SCREEN_OFFSET=%d %d", 
+                (int)left_strip_width, (int)main_height);
+        _putenv(env_str);
+        //        _putenv("V_SCREEN_OFFSET=218 221");
     }
 #endif
 

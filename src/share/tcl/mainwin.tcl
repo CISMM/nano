@@ -51,8 +51,8 @@ if {$tcl_platform(platform) == "windows" } {
     option add *menu*disabledForeground grey55 startupFile
 }
 # This needs to be made dependent on how big the font is on the screen.
-catch { option add *font {helvetica -15 } startupFile}
-catch { option add *Font {helvetica -15 } startupFile}
+catch { option add *font {helvetica -12 } startupFile}
+catch { option add *Font {helvetica -12 } startupFile}
 
 #
 # 3rdTech modifications:
@@ -779,6 +779,7 @@ after idle {
     # wm rootx seems to tell us how big the border of the window is.
     set winborder [expr [winfo rootx .] - $main_xpos]
     set main_width [expr $width + 2* $winborder ]
+    # used by C code to determine position of Surface View window
     set main_height [expr $height + ([winfo rooty .] - $main_ypos) + \
 	   $winborder ]
 
@@ -793,6 +794,8 @@ after idle {
     
     # Make the left strip all the same width - same as the image windows.
     set left_strip_width  [winfo reqwidth .image] 
+    # used by C code to determine position of Surface View window
+    set left_full_strip_width [expr $left_strip_width + 2*$winborder]
 
     # Keep track of where the next window should appear
     set next_left_pos [expr $main_ypos +$main_height]
@@ -824,7 +827,9 @@ after idle {
     update idletasks
 
     # check to make sure we aren't off the bottom of the screen. 
-    set next_left_pos [expr $next_left_pos  +[winfo reqheight .modify] \
+    # XXX use height instead of reqheight, for LabeledFrame to give 
+    # correct height of modify window.
+    set next_left_pos [expr $next_left_pos  +[winfo height .modify] \
             + $winborder + $titleborder]
     # wm maxsize . gives us the size of the available space. 
     # Make sure the window doesn't appear off the bottom of the screen.
@@ -832,7 +837,6 @@ after idle {
     if { $next_left_pos > [lindex [wm maxsize .] 1] } {
 	set next_left_pos [expr $main_ypos +$main_height]
     }
-
     wm geometry .streamfile ${left_strip_width}x${req_height}+${main_xpos}+$next_left_pos
 
 if { !$thirdtech_ui } {

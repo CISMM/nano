@@ -1,15 +1,25 @@
-2001-18-09 Jameson Miller <millerj@cs.unc.edu>
-	*interaction.c - when setting the region,SetGridSize is called so that
-	Topo sets teh grid size correctly. This is so direct step takes the
-	correct step size after changing the scan region.
+2001-11-25  Aron Helser  <helser@cs.unc.edu>
 
-2001-11-09    <marshbur@TUNGSTEN-CS>
+	* microscape.c (handle_tclwin_resize_change): new. Changes size
+	and position of Surface View window based on size of tcl windows. 
+
+2001-18-09 Jameson Miller <millerj@cs.unc.edu>
+	* interaction.c: when setting the region, SetGridSize is called so
+	that Topo sets the grid size correctly. This is so direct step
+	takes the correct step size after changing the scan region.
+
+2001-11-09  David Marshburn  <marshbur@cs.unc.edu>
+
+	* interaction.c (doFeelLive): ResumeScan change to
+	ResumeWindowScan avoids sending image mode params twice. 
+
+2001-11-09  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c: some formatting around vi curve code
 	(handle_rewind_stream_change): reset the keithley interface
 	when the stream is rewound.
 
-2001-11-03 Jameson Miller<millerj@cs.unc.edu>
+2001-11-03  Jameson Miller  <millerj@cs.unc.edu>
 	* interaction.c - changed the position repoerted to the direct 
 	step window to be the acutal position reported of the 
 	microscope, instead of the position of the graphic on screen.

@@ -1,4 +1,10 @@
-2001-11-12    <marshbur@TUNGSTEN-CS>
+2001-11-25  Aron Helser  <helser@cs.unc.edu>
+
+	* mainwin.tcl: Font size reduction. Window placement tweaks, set a
+	few size variable for use in microscape.c
+	* streamfile.tcl: Packing tweaks. 
+	
+2001-11-12  David Marshburn  <marshbur@cs.unc.edu>
 
 	* keithley2400.tcl: added display of time connected to device or file.
 

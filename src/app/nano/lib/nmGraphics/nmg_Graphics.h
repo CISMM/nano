@@ -130,6 +130,8 @@ class nmg_Graphics {
       ///< handles changing the way the world is drawn into the display
       ///< window and the actual resizing may be done by the window system)
     virtual void getViewportSize(int *width, int * height) {};
+    virtual void positionWindow(int x, int y) {};
+    ///< position the main window
 
     virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
                                                         q_vec_type &ur) {};

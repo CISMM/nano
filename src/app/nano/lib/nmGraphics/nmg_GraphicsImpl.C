@@ -619,7 +619,9 @@ void nmg_Graphics_Implementation::resizeViewport(int width, int height) {
   windowPtr=&(displayPtr->viewports[0]);
   windowPtr->fbExtents[0] = width;
   windowPtr->fbExtents[1] = height;
-
+#ifdef V_GLUT
+  glutReshapeWindow(width, height);
+#endif
 }
 
 void nmg_Graphics_Implementation::getViewportSize(int *width, int *height) {
@@ -627,6 +629,16 @@ void nmg_Graphics_Implementation::getViewportSize(int *width, int *height) {
    *width  = v_display_table[d_displayIndexList[0]].viewports[0].fbExtents[0];
    *height = v_display_table[d_displayIndexList[0]].viewports[0].fbExtents[1];
 //fprintf(stderr, "ngi get viewport size done (%d, %d)\n", *width, *height);
+}
+
+void nmg_Graphics_Implementation::positionWindow(int x, int y) {
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+#ifdef V_GLUT
+  // Doesn't take into account window title bar and borders. Add
+  // the right numbers for win2k
+    glutPositionWindow(x+3,y+23);
+#endif
 }
 
 void nmg_Graphics_Implementation::getDisplayPosition (q_vec_type &ll,

@@ -558,11 +558,11 @@ int TclNet_int::propagateReceivedUpdate (
                 nti->d_ignoreChange, nti->d_updateFromTcl);
 
 
-  if (!nti->d_updateFromTcl) {
+  if (!nti->d_updateFromTcl && interpreter) {
 
-    // Since we're not inside a Tcl callback, we're about to generate one,
-    // which we want to ignore to avoid endless loops or hitting the callback
-    // twice.
+    // Since we're not inside a Tcl callback, we're about to generate one (if
+    // an interpreter exists), which we want to ignore to avoid endless loops
+    // or hitting the callback twice.
 
     collabVerbose(8, "TclNet_int::updateTcl(%s):  setting d_ignoreChange.\n",
                   nti->d_myTclVarname);
@@ -838,11 +838,11 @@ int TclNet_float::propagateReceivedUpdate (
   // (updateTcl() does not send idempotent changes.  Tcl ignores
   // changes generated in the middle of a Trace.)
 
-  if (!ntf->d_updateFromTcl) {
+  if (!ntf->d_updateFromTcl && interpreter) {
 
-    // Since we're not inside a Tcl callback, we're about to generate one,
-    // which we want to ignore to avoid endless loops or hitting the callback
-    // twice.
+    // Since we're not inside a Tcl callback, we're about to generate one (if
+    // an interpreter exists), which we want to ignore to avoid endless loops
+    // or hitting the callback twice.
 
     collabVerbose(8,
                   "TclNet_float::updateTcl(%s):  setting d_ignoreChange.\n",
@@ -1178,11 +1178,11 @@ int TclNet_string::propagateReceivedUpdate (
   // (updateTcl() does not send idempotent changes.  Tcl ignores
   // changes generated in the middle of a Trace.)
 
-  if (!nts->d_updateFromTcl) {
+  if (!nts->d_updateFromTcl && interpreter) {
 
-    // Since we're not inside a Tcl callback, we're about to generate one,
-    // which we want to ignore to avoid endless loops or hitting the callback
-    // twice.
+    // Since we're not inside a Tcl callback, we're about to generate one (if
+    // an interpreter exists), which we want to ignore to avoid endless loops
+    // or hitting the callback twice.
 
     collabVerbose(8, "TclNet_string::updateTcl(%s):  setting d_ignoreChange.\n",
                   nts->d_myTclVarname);

@@ -2951,7 +2951,7 @@ int doFeelLive (int whichUser, int userEvent)
        * of points) and resume previous scan pattern. */
       microscope->ImageMode();
       if (microscope->state.autoscan) {
-	      microscope->ResumeScan();
+	      microscope->ResumeWindowScan();
       }
       break;
 

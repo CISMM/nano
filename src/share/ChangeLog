@@ -1,10 +1,15 @@
+2001-11-25  Aron Helser  <helser@cs.unc.edu>
+
+	* Makefile.app_common (LINK_FLAGS): Added a few NODEFAULTLIB args
+	to help compiling other apps. 
+
 2001-10-12  Nathan Conrad  <conrad@cs.unc.edu>
 
 	* Makefile.app_common (THIRDTECH): Added a RCFLAGS variable so that
 	THIRDTECH can be defined in the nano resource file. This is usefull
 	to determine which icon to decorate the binary with.
 
-	* Makefile.common (THIRDTECH):  added a "THIRDTECH variable, which
+	* Makefile.common (THIRDTECH):  added a "THIRDTECH" variable, which
 	is set to 0 for UNC builds, and 1 for 3rd Tech builds. If the
 	variable is set to 1, THIRDTECH is added to the list of C defines.
 
