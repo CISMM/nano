@@ -43,7 +43,8 @@ class ColorMap;
 class PPM;
 class nmb_Dataset;
 class nmb_Decoration;
-//class Microscope;
+class nmm_Microscope_Remote;
+class nmg_Graphics;
 class Xform;		//added from ugraphics
 #ifndef NO_MAGELLAN
 class vrpn_Magellan;
@@ -109,8 +110,8 @@ extern  vrpn_MousePhantom * mousePhantomServer;
 extern  vrpn_ForceDevice_Remote *forceDevice;
 extern  vrpn_Tracker_Remote *vrpnHeadTracker;
 extern  vrpn_Tracker_Remote *vrpnHandTracker;
-extern  int             headSensor;
-extern  int             handSensor;
+extern  int headSensor;
+extern  int handSensor;
 extern  vrpn_Button_Remote *phantButton;
 extern  int phantButtonState;
 extern  vrpn_Button_Remote *buttonBox;
@@ -143,85 +144,122 @@ extern int do_cpanels;
 
 // Only list things here if they need to be shared with other files!
 
-extern	Tclvar_int phantom_button_mode;	// microscape.c
+//-------------------------------------------------------------------------
+/// These are the most common global variables used in microscape
+extern nmb_Dataset* dataset;
+extern nmb_Decoration* decoration;
+extern nmm_Microscope_Remote* microscope;
+extern nmg_Graphics* graphics;
+
+
+extern	Tclvar_int  phantom_button_mode;	// microscape.c
+
+//--------------------------------------------------------------------------
+/// These control the stream time during playback
+extern TclNet_int   set_stream_time_now;
+extern TclNet_float set_stream_time;
+
+/// This controls the state of synchronization, private or shared
+extern TclNet_int   share_sync_state;
+
+
+//--------------------------------------------------------------------------
+/// These allow access to the positions of the measure lines
+extern TclNet_float measureRedX;
+extern TclNet_float measureRedY;
+extern TclNet_float measureGreenX;
+extern TclNet_float measureGreenY;
+extern TclNet_float measureBlueX;
+extern TclNet_float measureBlueY;
+
 
 //---------------------------------------------------------------------------
 /// These select the plane to map color from and the scale of the mapping. 
-extern  Tclvar_float            color_min_limit;
-extern  Tclvar_float            color_max_limit;
-extern  TclNet_float            color_min, color_max;
-extern  TclNet_float            data_min, data_max;
-extern TclNet_int surface_r;
-extern TclNet_int surface_g;
-extern TclNet_int surface_b;
+extern Tclvar_float color_min_limit;
+extern Tclvar_float color_max_limit;
+extern TclNet_float color_min, color_max;
+extern TclNet_float data_min, data_max;
+extern TclNet_int   surface_r;
+extern TclNet_int   surface_g;
+extern TclNet_int   surface_b;
+
 
 //--------------------------------------------------------------------------
 ///These select the plane to map compliance from and teh scale of the mapping.
-extern  Tclvar_float            compliance_slider_min_limit;
-extern  Tclvar_float            compliance_slider_max_limit;
-extern  TclNet_float            compliance_slider_min,compliance_slider_max;
-extern  TclNet_string         compliancePlaneName;
-
+extern  Tclvar_float  compliance_slider_min_limit;
+extern  Tclvar_float  compliance_slider_max_limit;
+extern  TclNet_float  compliance_slider_min,compliance_slider_max;
+extern  TclNet_string compliancePlaneName;
 
 
 //--------------------------------------------------------------------------
 ///These select the plane to map friction from and teh scale of the mapping.
-extern  Tclvar_float            friction_slider_min_limit;
-extern  Tclvar_float            friction_slider_max_limit;
-extern  TclNet_float            friction_slider_min, friction_slider_max;
-extern  TclNet_string         frictionPlaneName;
+extern  Tclvar_float  friction_slider_min_limit;
+extern  Tclvar_float  friction_slider_max_limit;
+extern  TclNet_float  friction_slider_min, friction_slider_max;
+extern  TclNet_string frictionPlaneName;
+
 
 //--------------------------------------------------------------------------
 ///These select the plane to map bump size from and the scale of the mapping.
-extern  Tclvar_float            bump_slider_min_limit;
-extern  Tclvar_float            bump_slider_max_limit;
-extern  TclNet_float            bump_slider_min, bump_slider_max;
-extern  TclNet_string         bumpPlaneName;
+extern  Tclvar_float  bump_slider_min_limit;
+extern  Tclvar_float  bump_slider_max_limit;
+extern  TclNet_float  bump_slider_min, bump_slider_max;
+extern  TclNet_string bumpPlaneName;
+
 
 //--------------------------------------------------------------------------
 ///This selects the plane to map opacity to.
-extern  TclNet_string           bumpPlaneName;
+extern  TclNet_string bumpPlaneName;
+
 
 //--------------------------------------------------------------------------
 ///These select the plane to map buzz amplitude from and the scale of the mapping
-extern  Tclvar_float            buzz_slider_min_limit;
-extern  Tclvar_float            buzz_slider_max_limit;
-extern  TclNet_float            buzz_slider_min, buzz_slider_max;
-extern  TclNet_string         buzzPlaneName;
+extern  Tclvar_float  buzz_slider_min_limit;
+extern  Tclvar_float  buzz_slider_max_limit;
+extern  TclNet_float  buzz_slider_min, buzz_slider_max;
+extern  TclNet_string buzzPlaneName;
+
 
 //--------------------------------------------------------------------------
 ///These select the plane to map friction from and the scale of the mapping.
-extern  Tclvar_float            adhesion_slider_min_limit;
-extern  Tclvar_float            adhesion_slider_max_limit;
-extern  Tclvar_float            adhesion_slider_min, adhesion_slider_max;
-extern  Tclvar_string         adhesionPlaneName;
+extern  Tclvar_float  adhesion_slider_min_limit;
+extern  Tclvar_float  adhesion_slider_max_limit;
+extern  Tclvar_float  adhesion_slider_min, adhesion_slider_max;
+extern  Tclvar_string adhesionPlaneName;
 
 //-------------------------------------------------------------------------
 ///This value is used when no plane is assigned
-extern TclNet_float             default_spring_k;
+extern TclNet_float  default_spring_k;
+
 
 //--------------------------------------------------------------------------
 ///For mapping sound to dataset
-extern Tclvar_float              sound_slider_min_limit;
-extern Tclvar_float              sound_slider_max_limit;
-extern Tclvar_float              sound_slider_min, sound_slider_max;
-extern Tclvar_string           soundPlaneName;
+extern Tclvar_float  sound_slider_min_limit;
+extern Tclvar_float  sound_slider_max_limit;
+extern Tclvar_float  sound_slider_min, sound_slider_max;
+extern Tclvar_string soundPlaneName;
+
 
 //---------------------------------------------------------------------------
 /// This selects the plane to map x from. 
-extern  Tclvar_string         xPlaneName;
+extern  Tclvar_string xPlaneName;
+
 
 //---------------------------------------------------------------------------
 /// The scale factor for force applied in Direct Z Control
-extern  Tclvar_float           directz_force_scale;
+extern  Tclvar_float directz_force_scale;
+
 
 /// Guardedscan TCL/TK interface variables
 extern  Tclvar_int   guarded_plane_acquire;
 extern	Tclvar_float guarded_plane_depth;
 
+
 //-----------------------------------------------------------------------------
 // Setup -> Display Settings "fine-grained coupling"
 extern TclNet_int finegrained_coupling;
+
 
 /*********
  * Functions defined in one file and used in another (added by KPJ to satisfy
@@ -235,16 +273,19 @@ extern void get_Plane_Centers(float*,float*,float*);
 extern void set_channel_for_ohmeter(char* channel_name);
 extern void cause_grid_redraw(float new_value, void *userdata);
 extern int register_vrpn_phantom_callbacks(void);
+extern void updateRulergridOffset(void);
+extern void updateRulergridAngle(void);
+
 
 // XXX - this has to do with the user interface but there isn't
 // a global user interface object so I put it here temporarily (AAS)
 enum TextureMode {RULERGRID, CONTOUR, ALPHA, SEM, REGISTRATION, MANUAL_REALIGN};
 extern int disableOtherTextures (TextureMode m);
 
+
 // things defined in global.h:  spm_graphics_verbosity, timer_verbosity,
 // mytimer, frametimer, stm_new_frame, mode_change, tcl_offsets, user_mode,
 // justCentered, ohmmeter_enabled, xenable, xg_start
-
 extern nmb_TimerList graphicsTimer;
 extern nmb_TimerList collaborationTimer;
 

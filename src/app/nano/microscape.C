@@ -132,6 +132,7 @@ pid_t getpid();
 #include "Timer.h"
 #include "microscopeHandlers.h"
 #include "CollaborationManager.h"
+#include "collaboration.h"
 #include "minit.h"
 #include "microscape.h"
 #include "index_mode.h"
@@ -692,37 +693,11 @@ static void handle_forcedevice_scp_change(void *userdata,
 					const vrpn_FORCESCPCB info);
 */
 
-//-----------------------------------------------------------------------
-/// NANOX Collaboration. so we can track hand position of collaborator(s)
-static void handle_collab_machine_name_change(const char *new_value, void *userdata);
-
-/** handle_collab_sensor2tracker_change is the callback for the position
-    and orientation messages sent from the nM_coord_change_server (to
-    track a collaborator's hand position) */
-static void handle_collab_sensor2tracker_change(void *userdata,
-					const vrpn_TRACKERCB info);
-
-/** handle_collab_mode_change is the callback for the mode
-    that track a collaborator's mode */
-static void handle_collab_mode_change(void *userdata,
-					const vrpn_ANALOGCB info);
 
 static void handle_unit2sensor_change(void *userdata,
 					const vrpn_TRACKERUNIT2SENSORCB info);
 
-// NANOX
-/// synchronization UI handlers
-// since streamfiles are time-based, we need to send a syncRequest()
-static void handle_synchronize_timed_change (vrpn_int32, void *);
 
-static void handle_collab_red_measure_change (vrpn_float64 /*newValue*/,
-                                              void * userdata);
-static void handle_collab_green_measure_change (vrpn_float64 /*newValue*/,
-                                                void * userdata);
-static void handle_collab_blue_measure_change (vrpn_float64 /*newValue*/,
-                                               void * userdata);
-static void handle_collab_measure_change (nmb_Dataset * data,
-                                          int which_line);
 // NANOX - XXX
 /// Quick method of sharing measure line locations
 TclNet_float measureRedX ("measure_red_x", 0.0);
@@ -948,9 +923,6 @@ nM_coord_change *nM_coord_change_server = NULL;
 /// These are used to track a remote user's mode.
 vrpn_Analog_Remote *vrpnMode_collab;
 vrpn_Analog_Server *vrpnMode_Local = NULL;
-
-/// These are used for synchronizing with a remote user's streamfile playback.
-static vrpn_bool isSynchronized;
 
 /// Set of port numbers to use.
 class WellKnownPorts {
@@ -2079,31 +2051,6 @@ static void handle_load_button_press_change (vrpn_int32 /*new_value*/, void * /*
 }
 
 
-static void handle_collab_machine_name_change
-                   (const char * new_value,
-                    void * userdata)
-{
-  if (!new_value || !strlen(new_value)) {
-    // transitory excitement during startup
-    return;
-  }
-  CollaborationManager * cm;
-  cm = (CollaborationManager *) userdata;
-
-  if (cm) {
-    cm->setPeerName
-           (new_value,
-            (void *) &V_TRACKER_FROM_HAND_SENSOR,
-            handle_collab_sensor2tracker_change,
-            NULL, handle_collab_mode_change);
-  }
-
-  //char hnbuf [256];
-  //sprintf(hnbuf, "%s:%d", new_value, wellKnownPorts->microscopeMutex);
-  //fprintf(stderr, "Adding a peer named %s to the mutex.\n", hnbuf);
-  //microscope->addPeer(hnbuf);
-}
-
 
 void updateRulergridOffset (void) {
  if (rulergrid_position_line && rulergrid_enabled) {
@@ -2144,118 +2091,6 @@ static void handle_rulergridOrientLine_change (vrpn_int32, void *) {
 }
 
 
-/// Updating both X and Y position of the line at the same time
-/// doesn't work - it locks down one coord. This semaphor prevents that. 
-static vrpn_bool ignoreCollabMeasureChange = 0;
-
-// NANOX
-static void handle_collab_red_measure_change (vrpn_float64 /*newValue*/,
-                                          void * userdata) {
-    handle_collab_measure_change( (nmb_Dataset *) userdata, 0);
-}
-static void handle_collab_green_measure_change (vrpn_float64 /*newValue*/,
-                                          void * userdata) {
-    handle_collab_measure_change( (nmb_Dataset *) userdata, 1);
-}
-static void handle_collab_blue_measure_change (vrpn_float64 /*newValue*/,
-                                          void * userdata) {
-    handle_collab_measure_change( (nmb_Dataset *) userdata, 2);
-}
-
-/// Line position has changed in tcl (probably due to update from
-/// collaborator) so change the position onscreen.
-static void handle_collab_measure_change (nmb_Dataset * data,
-                                          int whichLine) {
-
-//fprintf(stderr,"HANDLE_COLLAB_MEASURE_CHANGE\n");
-
-    // Ignore some changes caused by tcl variables. 
-    if (ignoreCollabMeasureChange) return;
-
-  BCPlane * heightPlane = data->inputGrid->getPlaneByName
-                 (data->heightPlaneName->string());
-  if (!heightPlane) {
-    display_error_dialog( "Internal: Couldn't find height plane named %s.\n",
-            data->heightPlaneName->string());
-    return;
-  }
-  collabVerbose(5, "handle_collab_measure_change for line %d.\n", whichLine);
-  switch (whichLine) {
-
-    case 0:
-     collabVerbose(5, "Moving RED line to %.3f, %.3f due to Tcl change.\n",
-                   measureRedX, measureRedY);
-     decoration->red.moveTo(measureRedX, measureRedY, heightPlane);
-     // DO NOT doCallbacks()
-     updateRulergridOffset();
-     updateRulergridAngle();  // Do this so angle stays right, if toggle is on. 
-     break;
-
-    case 1:
-     collabVerbose(5, "Moving GREEN line to %.3f, %.3f due to Tcl change.\n",
-                   measureRedX, measureRedY);
-     decoration->green.moveTo(measureGreenX, measureGreenY, heightPlane);
-     // DO NOT doCallbacks()
-     updateRulergridAngle();
-     break;
-
-    case 2:
-     collabVerbose(5, "Moving BLUE line to %.3f, %.3f due to Tcl change.\n",
-                   measureRedX, measureRedY);
-     decoration->blue.moveTo(measureBlueX, measureBlueY, heightPlane);
-     // DO NOT doCallbacks()
-     break;
-  }
-}
-
-// NANOX
-/** If the user changes the measure line positon, update Tcl variables.
-If we are collaborating, this will update our collaborator.
-Because we want to set both the X and Y position of the line at 
-the same time, we explicitly tell the other handler to ignore
-the change we make to X, and pay attention to the change to Y. 
-
-doMeasure() in interaction.c triggers handle_collab_measure_move.
-Through the magic of Tcl_Linkvar/Tcl_Netvar, this will take care of
-any necessary network synchronization or collaboration, and at the end
-will call handle_collab_measure_change(), above, which executes the
-final moveTo() on each nmb_Line and updates rulergrid parameters if
-necessary.
-*/
-static void handle_collab_measure_move (float x, float y,
-                                          void * userdata) {
-  int whichLine = (int) userdata;   // hack to get the data here
-
-  //collaborationTimer.block(collaborationTimer.getListHead());
-
-  collabVerbose(5, "handle_collab_measure_move for line %d.\n", whichLine);
-
-  switch (whichLine) {
-    case 0:
-//  fprintf(stderr, "Moving RED line , change Tcl .\n");
-	ignoreCollabMeasureChange = VRPN_TRUE;
-	measureRedX = x;
-	ignoreCollabMeasureChange = VRPN_FALSE;
-	measureRedY = y;
-     break;
-    case 1:
-//fprintf(stderr, "Moving GREEN line , change Tcl .\n");
-	ignoreCollabMeasureChange = VRPN_TRUE;
-	measureGreenX = x;
-	ignoreCollabMeasureChange = VRPN_FALSE;
-	measureGreenY = y;
-     // DO NOT doCallbacks()
-     break;
-    case 2:
-//fprintf(stderr, "Moving BLUE line , change Tcl .\n");
-	ignoreCollabMeasureChange = VRPN_TRUE;
-	measureBlueX = x;
-	ignoreCollabMeasureChange = VRPN_FALSE;
-	measureBlueY = y;
-     // DO NOT doCallbacks()
-     break;
-  }
-}
 
 /// Resets the measure lines to their default positions in the three
 /// corners. 
@@ -2263,7 +2098,8 @@ static void resetMeasureLines(nmb_Dataset * data, nmb_Decoration * decor)
 {
     if ((data == NULL) || (decor == NULL)) return;
 
-    BCPlane *height_plane = data->inputGrid->getPlaneByName(data->heightPlaneName->string());
+    BCPlane *height_plane 
+      = data->inputGrid->getPlaneByName(data->heightPlaneName->string());
     if (height_plane == NULL) { 
         return;
     }
@@ -2299,258 +2135,16 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
     decoration->clearPulses();
     decoration->clearScrapes();
 
-///*
-    if (vrpnLogFile)
-	vrpnLogFile->reset();
-
-//*/
-  //set_stream_time = 0;
     if (ohmmeterLogFile)
 	ohmmeterLogFile->reset();
     if (vicurveLogFile)
 	vicurveLogFile->reset();
     if (semLogFile)
         semLogFile->reset();
-
-//fprintf(stderr, "Handle_rewind_stream_change setting to 0.\n");
     rewind_stream = 0;  // necessary
-
 }
 
 
-// NANOX
-// synchronization UI handlers
-static int handle_timed_sync_request (void *);
-static int local_time_sync (void *);
-
-
-/**
- * Radio button controlling whether we're publically or privately synched.
- * Currently assumes that only the most recently added peer is
- *  "valid";  others are a (small?) memory/network leak.
- */
-static void handle_synchronize_timed_change (vrpn_int32 value,
-                                             void * userdata) {
-  CollaborationManager * cm = (CollaborationManager *) userdata;
-  nmui_Component * sync = cm->uiRoot();
-  nmui_PlaneSync * plane_sync = cm->planeSync();
-  nM_coord_change * handServer = cm->handServer();
-
-//fprintf(stderr, "++ In handle_synchronized_timed_change() to %d\n", value);
-
-  // First write out the current values of any volatile variables.
-  // There is some risk of this doing the wrong thing, since we're
-  // likely to be slightly out of sync with our replica and they may
-  // get this as an update message, causing their stream to jump
-  // backwards - HACK XXX.  Correct behavior may need to be implemented
-  // at a lower level that knows whether or not we're the synchronizer.
-  // ALL of the sync code was written for optimism, and requires some
-  // tougher semantics to use centralized serialization and
-  // single-shared-state.
-
-  switch (value) {
-
-    case 0:
-
-      handle_timed_sync_request(NULL);
-
-      // stop synchronizing;  use local state (#0)
-
-//fprintf(stderr, "++   ... stopped synchronizing.\n");
-      sync->syncReplica(0);
-      plane_sync->queueUpdates();
-      graphics->enableCollabHand(VRPN_FALSE);
-      handServer->stopSync();
-      isSynchronized = VRPN_FALSE;
-      break;
-
-    default:
-
-      // Set our private replica without transmitting anything
-      // over the network.
-      local_time_sync(NULL);
-
-      // use shared state (#1)
-//fprintf(stderr, "++   ... sent synch request to peer.\n");
-
-      //collaborationTimer.block(collaborationTimer.getListHead());
-
-      sync->requestSync();
-      sync->d_maintain = VRPN_TRUE;
-      if (handServer->peerIsSynchronized()) {
-        graphics->enableCollabHand(VRPN_TRUE);
-      }
-      handServer->startSync();
-      isSynchronized = VRPN_TRUE;
-      // We defer the syncReplica until after the requestSync() completes.
-      break;
-  } 
-
-} // end handle_synchronize_timed_change
-
-
-static void handle_peer_sync_change (void * /*userdata*/, vrpn_bool value) {
-//fprintf(stderr, "handle_peer_sync_change called, value %d\n",value);
-  if (isSynchronized && value) {  // both synchronized
-    graphics->enableCollabHand(VRPN_TRUE);
-  } else {
-    graphics->enableCollabHand(VRPN_FALSE);
-  }
-
-} // end handle_peer_sync_change
-
-
-/**
- * Linked to button in tcl UI. If pressed, copy the shared state to
- * the private state.
- */
-static void handle_copy_to_private (vrpn_int32 /*value*/, void * userdata) {
-  CollaborationManager * cm = (CollaborationManager *) userdata;
-  nmui_Component * sync = cm->uiRoot();
-  nmui_PlaneSync * plane_sync = cm->planeSync();
-
-  if (!sync->synchronizedTo()) {
-      // we are local. We need to get current data for shared state.
-
-    // a copyReplica needs to be deferred until the new data arrives
-    // The right way to do this is probably to have a Component's
-    // sync handler pack a "syncComplete" message AFTER all the
-    // callbacks have been triggered (=> the sync messages are marshalled
-    // for VRPN), so when that arrives we know the sync is complete and
-    // we can issue a copyReplica()
-
-    //collaborationTimer.block(collaborationTimer.getListHead());
-
-    sync->requestSync();
-    sync->d_maintain = VRPN_FALSE;
-//fprintf(stderr, "++ In handle_copy_to_private()sent synch request\n");
-  } else {
-      // get up to date stream time. 
-      handle_timed_sync_request(NULL);
-
-      // we are shared, copy to local state immediately.
-      // shared state is in the replica from the most recent peer.
-      sync->copyFromToReplica(sync->numPeers(), 0);
-//fprintf(stderr, "++ In handle_copy_to_private() copied immediately.\n");
-    plane_sync->acceptUpdates();
-    plane_sync->queueUpdates();
-
-    // get up-to-date stream time.
-    local_time_sync(NULL);
-  }
-
-} // end handle_copy_to_private
-
-
-/**
- * Linked to button in tcl UI. If pressed, copy the private state to
- * the shared state.
- */
-static void handle_copy_to_shared (vrpn_int32 /*value*/, void * userdata) {
-  CollaborationManager * cm = (CollaborationManager *) userdata;
-  nmui_Component * sync = cm->uiRoot();
-  nmui_PlaneSync * plane_sync = cm->planeSync();
-
-  if (!sync->synchronizedTo()) {
-      // we are local. We can copy to shared state immediately
-      // shared state is in the replica from the most recent peer.
-      sync->copyFromToReplica(0, sync->numPeers());
-//fprintf(stderr, "++ In handle_copy_to_shared() request sync.\n");
-
-      // we also want to get any planes which might be from the shared state 
-      plane_sync->acceptUpdates();
-      plane_sync->queueUpdates();
- 
-  } else {
-      // we are shared, want to copy from local
-      // We know the current shared state, because we are shared,
-      // so copy immediately.
-      // shared state is in the replica from the most recent peer.
-      sync->copyFromToReplica(0, sync->numPeers());
-//fprintf(stderr, "++ In handle_copy_to_shared() copy immediately.\n");
-      // Any planes created in local state will already have been copied to
-      // shared state, so no need to sync planes.
-
-  }
-
-}
-
-/**
- * Currently assumes that only the most recently added peer is
- *  "valid";  others are a (small?) memory/network leak.
- */
-static void handle_timed_sync (vrpn_int32 /*value*/, void * userdata) {
-
-} // end handle_copy_to_shared
-
-static int handle_timed_sync_request (void *) {
-  // Write the current elapsed time of the stream
-  // into set_stream_time / replica[0] without messing up
-  // our playback.
-
-  set_stream_time = decoration->elapsedTime;
-
-  //  fprintf(stderr, "++ In handle_timed_sync_request() at %ld seconds;  "
-  //	  "wrote data into replica.\n", decoration->elapsedTime);
-
-  return 0;
-} // end handle_timed_sync_request
-
-
-static int local_time_sync (void *) {
-  // Set our private replica without transmitting anything over the network.
-
-  set_stream_time.setReplica(0, decoration->elapsedTime);
-
-  //  fprintf(stderr, "++ In local_time_sync() at %ld seconds;  "
-  //	  "wrote data into replica.\n", decoration->elapsedTime);
-
-  return 0;
-} // end local_time_sync
-
-
-static int handle_timed_sync_complete (void * userdata) {
-  CollaborationManager * cm = (CollaborationManager *) userdata;
-  nmui_Component * sync = cm->uiRoot();
-  nmui_PlaneSync * plane_sync = cm->planeSync();
-
-  //int useReplica = !sync->synchronizedTo();
-  // requestSync() is only called, and so this will only be generated,
-  // when we are going to the shared replica.
-  //int useReplica = 1;  // SYNC-ROBUSTNESS
-  int useReplica = sync->numPeers();
-
-//fprintf(stderr, "++ In handle_timed_sync_complete();  "
-//"getting data from replica %d.\n", useReplica);
-
-  // Once we have the *latest* state of time-depenedent values,
-  // update with that.
-
-  if (sync->d_maintain) { // completion of a syncReplica call
-
-    // Make sure we save the state of any volatile variables -
-    // if latency is high the previous save will be off by a few
-    // seconds (which we could forget).
-    handle_timed_sync_request(NULL);
-
-    // Start synchronizing planes and create any planes from 
-    // the new state.
-    plane_sync->acceptUpdates();
-    sync->syncReplica(useReplica);
-//fprintf(stderr, "++   ... synched.\n");
-  } else { // completion of a copyReplica call
-    sync->copyReplica(useReplica);
-
-    // Create any planes from copied state, but go back to 
-    // queueing new plane creations.
-    plane_sync->acceptUpdates();
-    plane_sync->queueUpdates();
-    
-//fprintf(stderr, "++   ... copied.\n");
-  }
-
-  return 0;
-} // end handle_timed_sync_complete
 
 
 // NANOX
@@ -2565,8 +2159,6 @@ static void handle_center_pressed (vrpn_int32 newValue, void * /*userdata*/) {
 
 /// Handler for set_stream_time_now, NOT set_stream_time. 
 static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
-//fprintf(stderr, "handle_set_stream_time_change to %d (flag %d).\n",
-//(vrpn_int32) set_stream_time, (vrpn_int32) set_stream_time_now);
 
   if (set_stream_time_now == 0) return;
 
@@ -2588,7 +2180,6 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
   if (semLogFile) {
     semLogFile->play_to_time(newStreamTime);
   }
-//fprintf(stderr, "Set stream time to %d.\n", time);
   set_stream_time_now = 0; 
 }
 
@@ -4114,14 +3705,6 @@ void    handle_sensor2tracker_change(void *userdata, const vrpn_TRACKERCB info)
     return;
 }
 
-void handle_collab_sensor2tracker_change(void *, 
-					const vrpn_TRACKERCB info) {
-    graphics->setCollabHandPos(UGLYCAST info.pos, UGLYCAST info.quat);
-}
-
-void handle_collab_mode_change(void *, const vrpn_ANALOGCB info) {
-    graphics->setCollabMode(info.channel[0]);
-}
 
 /**** Not currently used
 void    handle_sensor2tracker_quat_change(void *userdata,

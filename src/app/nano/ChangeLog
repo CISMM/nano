@@ -1,3 +1,19 @@
+2001-06-27  David Marshburn  <marshbur@tungsten-cs.cs.unc.edu>
+
+	* Makefile:  removed collaboration.C from the list of ignored files
+	* collaboration.C:  moved all of the collaboration functions
+	from microscape.c to here.  Changes also fix a collaborative timing
+	bug that copied streamfile time between private and shared state.
+	Removed some print statement, tidied comments, etc.
+	* collaboration.h:  declarations of functions in collaboration.C
+	* microscape.h:  added a few new global variables that 
+	collaboration.C needs. (set_stream_time, set_stream_time_now,
+	share_sync_state, measure[Red,Green,Blue][X,Y]).  Added two 
+	functions needed by collaboration.C (updateRulergird[Offset,Angle]).
+	Reformatted some TclVar declarations.
+	* microscape.c:  removed collaborative functions and variables
+	over to collaboration.C
+
 2001-06-25  Shayne O'Neill  <oneill@tbone.cs.unc.edu>
 
 	* microscape.c:  Changed a bunch of Tclvars to TclNets.
