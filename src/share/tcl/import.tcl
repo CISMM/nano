@@ -26,11 +26,13 @@ set import_axis_step 10
 set import_clamp 0
 set import_update_AFM 0
 set import_grab_object 0
+
 set spider_length 5
 set spider_width 2
 set spider_thick 0.1
 set spider_tess 10
 set spider_curve 0
+set spider_legs 8
 
 set import_color gray
 set import_r 192
@@ -144,6 +146,10 @@ intscale $nmInfo(spider_control).spider_tess_slide 1 50 1000 1 1 \
 
 floatscale $nmInfo(spider_control).spider_curve_slide 0 90 1000 1 1 \
 	spider_curve "Spider Curvature"
+
+intscale $nmInfo(spider_control).spider_legs_slide 1 8 1000 1 1 \
+	spider_legs "Spider Legs"
+
 #
 
 button $nmInfo(basic_options).f3.visibility_button -text "Hide" -command change_visibility
@@ -218,6 +224,7 @@ pack $nmInfo(spider_control).spider_width_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_thick_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_tess_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_curve_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_legs_slide -padx 1m -pady 1m -anchor nw
 #
 
 pack $nmInfo(basic_options).f3.visibility_button -anchor nw -padx 1m -pady 1m -fill x
