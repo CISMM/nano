@@ -199,6 +199,13 @@ static imported_obj_list* object_list = NULL;
 #define MAX(a,b) ((a)<(b)?(b):(a))
 #endif
 
+#include <vrpn_Shared.h>
+#include <vrpn_Tracker.h>
+#include <vrpn_Button.h>
+#include <vrpn_Analog.h>
+#include <vrpn_Dial.h>
+
+
 //-------------------------------------------------------------------------
 // Callback functions used by the Tcl variables.
 
@@ -1232,9 +1239,10 @@ static vrpn_Analog_Server * rtt_server = NULL;
 BCPlane * BasePlane; //added by Andrea for unit check for SimScanPlane
 bool SimScanComputerNameGiven = false;
 bool SimScanPlaneNameGiven = false;
-Tclvar_string SimScanIPAddress("","");
-Tclvar_string SimScanStoredPlaneName("","");
+char* SimScanIPAddress;
+char*SimScanStoredPlaneName;
 nmm_SimulatedMicroscope_Remote * SimulatedMicroscope = NULL;
+vrpn_Connection * connection;
 static void startSimulatedMicroscope();
 
 //end Sim Scan stuff
@@ -3087,7 +3095,8 @@ static void handle_SimScanPlaneName_change(const char *, void *)
 		return;
   
 	try{
-		SimScanStoredPlaneName = newSimScanPlaneName.string(); // XXX Make operator =
+		SimScanStoredPlaneName = new char[100];
+		strcpy(SimScanStoredPlaneName,newSimScanPlaneName.string()); // XXX Make operator =
 		//stored one is SimScanStoredPlaneName
 		SimScanPlaneNameGiven = true;
 		if(SimScanComputerNameGiven){
@@ -3107,22 +3116,17 @@ static void handle_SimScanPlaneName_change(const char *, void *)
 
 
 static void startSimulatedMicroscope(){
-	cout << "got into startSimulatedMicroscope()" << endl;
 	//form cname from hostname:port (I think)
-	vrpn_Connection * connection = 
-		vrpn_get_connection_by_name(SimScanIPAddress.string());
-	if(connection != NULL)	cout << "Connection not NULL" << endl;
-
-	if(SimulatedMicroscope != NULL)	delete SimulatedMicroscope;
-	
-	cout << "Line before Simulated Microscope to be created" << endl;
-
-	SimulatedMicroscope = new 
-		nmm_SimulatedMicroscope_Remote(SimScanIPAddress.string(), connection, 
-		SimScanStoredPlaneName.string(), dataset);
-
-	if(SimulatedMicroscope != NULL)	cout << "SimulatedMicroscope created" << endl;
-	else	cout << "Got past SimulatedMicroscope creation but object is NULL" << endl;
+	connection = vrpn_get_connection_by_name(SimScanIPAddress);
+	if(connection != NULL){
+		if(SimulatedMicroscope != NULL)	delete SimulatedMicroscope;
+		
+		SimulatedMicroscope = new nmm_SimulatedMicroscope_Remote(SimScanIPAddress, 
+			connection, SimScanStoredPlaneName, dataset);
+	}
+	else{
+		cout << "\nConnection is NULL\nTry setting up remote simulated microscope again.\n";
+	}
 }
 
 
@@ -3132,7 +3136,8 @@ static void handle_SimScanComputerName_change(const char *, void *)
 		return;
   
 	try{
-		SimScanIPAddress = SimScanComputerName.string();
+		SimScanIPAddress = new char[100];
+		strcpy(SimScanIPAddress,SimScanComputerName.string());
 		//stored one is SimScanIPAddress
 		SimScanComputerNameGiven = true;
 		if(SimScanPlaneNameGiven){
@@ -7744,14 +7749,26 @@ microscope->ResetClock();
   if(istate.initTime !=0){
     set_stream_time=istate.initTime;
   }
+  
 
 /* 
  * main interactive loop
  */
 VERBOSE(1, "Entering main loop");
 
+bool first = true;
+vrpn_Connection* c;
   while( n<LOOP_NUM || !dataset->done ) 
     {
+	if(SimulatedMicroscope){
+		if(first){			
+			c = vrpn_get_connection_by_name(SimScanIPAddress);
+			vrpn_int32 temp = c->register_message_type("nmm SimulatedMicroscope WindowLineData");
+			first = false;
+		}
+		if(SimulatedMicroscope->mainloop() == -1) cout << "connection mainloop not working properly" << endl;
+	}
+
 #ifdef TIMING_TEST
 #define	TIM_LN	(7)
     /* draw new image for each eye  */
@@ -8001,7 +8018,6 @@ VERBOSE(1, "Entering main loop");
 
         VERBOSE(4, "  Calling microscope->mainloop()");
 	microscope->mainloop();
-
 
         if (monitor_forwarder_connection) {
           VERBOSE(4, "  Calling monitor_forwarder_connection->mainloop()");
@@ -8264,6 +8280,9 @@ VERBOSE(1, "Entering main loop");
     reset_raw_term(ttyFD);
 #endif
   }
+
+
+
   return(0);
     
 }   /* main */
