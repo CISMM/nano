@@ -138,8 +138,10 @@ class nmb_Dataset {
 
 
    void addNewCalculatedPlane( nmb_CalculatedPlane* plane );
-   ///< adds a new plane to the list of calculated planes and calls
+   ///< adds a new calculated plane to the list of planes, and calls
    ///< any callbacks registered to listen for new (calc'd) plane creation.
+
+   void removeCalculatedPlane( nmb_CalculatedPlane* plane );
 
 private:
     int mapInputToInputNormalized (const char * inputName,

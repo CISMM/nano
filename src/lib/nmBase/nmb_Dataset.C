@@ -420,21 +420,25 @@ int nmb_Dataset::computeAdhesionFromDeflection
 
 
 
-// adds a new plane to the list of calculated planes
+// adds a new calculated plane to the list of planes
 void nmb_Dataset::
 addNewCalculatedPlane( nmb_CalculatedPlane* plane )
 {
   if( plane == NULL )
-    {
-      fprintf( stderr, "nmb_Dataset::addNewCalculatedPlane:  "
-	       "null plane.  Sorry.\n" );
       return;
-    }
 
   inputPlaneNames->addEntry( plane->getName()->Characters() );
 } // end addNewCalculatedPlane( ... )
 
 
+void nmb_Dataset::
+removeCalculatedPlane( nmb_CalculatedPlane* plane )
+{
+  if( plane == NULL )
+    return;
+
+  inputPlaneNames->deleteEntry( plane->getName()->Characters() );
+}
 
 
 /** Map a plane in the input grid into a plane in the output grid, normalizing

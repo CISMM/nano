@@ -143,13 +143,17 @@ protected:
   // This is reasonably a virtual function. (but things can't be
   // both virtual and static).
   static nmb_CalculatedPlane*
-  _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
+    _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
     throw( nmb_CalculatedPlaneCreationException );
-
- private:
+  
+private:
+  // dataset.  keep this around to use in the destructor.
+  // set this every time we are passed in a dataset argument.
+  nmb_Dataset* dataset;
+  
   // default constructor
   nmb_CalculatedPlane( );
-
+  
   // copy constructor
   nmb_CalculatedPlane( nmb_CalculatedPlane& );
 

@@ -338,6 +338,50 @@ BCGrid::addPlaneCopy(BCPlane* plane)
 
 } // addPlaneCopy
 
+
+
+/**
+removePlane
+Removes the plane of the given name from the Grid.
+  @author David Marshburn
+  @date 1-7-02
+  */
+void BCGrid::
+removePlane( BCString name )
+{
+  BCPlane* plane = getPlaneByName( name );
+  if( plane == NULL )
+    return;
+
+  // splice the plane out of the list
+  if( *(_head->name()) == name )
+  {
+    _head = _head->_next;
+    plane->_next = NULL;
+  }
+  else
+  {
+    BCPlane* last = _head;
+    BCPlane* current = _head->_next;
+    while( current != NULL && *(current->name()) != name )
+    {
+      last = current;
+      current = current->_next;
+    }
+    if( current != NULL )
+    {
+      last->_next = current->_next;
+      current->_next = NULL;
+    }
+  }
+
+  // delete the plane
+  delete plane;
+
+} // end removePlane
+
+
+
 /**
    Changes the grid resolution, including those of all it's planes,
 and erases the data in those planes.

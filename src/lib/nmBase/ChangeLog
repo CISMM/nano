@@ -1,3 +1,12 @@
+2002-01-09  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmb_Datset.[h,C]:  (removeCalculatedPlane): new.  removes a 
+	calculated plane from the list of planes.
+	* BCGrid.[h,C]:  (removePlane):  new.  removes a plane from the
+	grid and deletes it (since BCGrid allocated it).
+	* nmb_Calculatedplane.[h,C]:  (~nmb_CalculatedPlane):  now removes
+	the deleted plane from dataset, grid, image.
+
 2002-01-04  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmb_Dataset.[h,C]:  this was keeping a list of all the calculated

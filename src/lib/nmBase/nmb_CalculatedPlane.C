@@ -45,7 +45,8 @@ nmb_CalculatedPlane::
 nmb_CalculatedPlane( const char* planeName, nmb_Dataset* dataset )
   throw( nmb_CalculatedPlaneCreationException )
   : calculatedPlaneName( NULL ),
-    calculatedPlane( NULL )
+    calculatedPlane( NULL ),
+    dataset( dataset )
 {
   ///////
   // set calculatedPlaneName
@@ -77,16 +78,17 @@ nmb_CalculatedPlane( const char* planeName, nmb_Dataset* dataset )
   // calculatedPlaneName is now set
   
   BCPlane* calculatedPlane 
-     = dataset->inputGrid->getPlaneByName( calculatedPlaneName );
+    = dataset->inputGrid->getPlaneByName( calculatedPlaneName );
   
   if( calculatedPlane != NULL )
   {
-     // a plane already exists by this name, and we disallow that.
-     char s[] = "Cannot create flattened plane.  "
-        "A plane already exists of the name:  ";
-     char msg[1024];
-     sprintf( msg, "%s%s.", s, calculatedPlaneName );
-     throw nmb_CalculatedPlaneCreationException( (char *)msg );
+    // a plane already exists by this name
+    // delete the old plane
+    nmb_CalculatedPlaneNode* node = calculatedPlaneList_head;
+    while( node != NULL && *(calculatedPlane->name()) != *(node->data->calculatedPlane->name()) )
+      node = node->next;
+    if( node != NULL )
+      delete node->data;
   }
 } // end nmb_CalculatedPlane( const char* )
 
@@ -94,9 +96,6 @@ nmb_CalculatedPlane( const char* planeName, nmb_Dataset* dataset )
 nmb_CalculatedPlane::
 ~nmb_CalculatedPlane( )
 {
-  if( calculatedPlaneName != NULL )
-    delete calculatedPlaneName;
-
   // remove ourselves from the list of planes
   nmb_CalculatedPlaneNode* node = calculatedPlaneList_head;
   nmb_CalculatedPlaneNode* last = NULL;
@@ -137,6 +136,35 @@ nmb_CalculatedPlane::
       delete dependentPlane; // note that this changes the list
   }
 
+  // remove our plane from the list
+  dataset->removeCalculatedPlane( this );
+
+  // keep a copy of the name of the plane we're removing
+  BCString planeName( *(calculatedPlane->name()) );
+  
+  // remove this plane from the list of images in dataset
+  if( dataset != NULL )
+    dataset->dataImages->removeImageByName( planeName );
+
+  // remove the plane from the grid
+  // (note that this deletes the plane!)
+  BCGrid* grid = calculatedPlane->GetGrid();
+  if( grid != NULL )
+  {
+    grid->removePlane( *(calculatedPlane->name()) );
+    calculatedPlane = NULL;
+  }
+  
+  // make sure dataset has a valid height plane
+  if( dataset != NULL )
+  {
+    if( grid->getPlaneByName( dataset->heightPlaneName->string() ) == NULL )
+      dataset->ensureHeightPlane();
+  }
+
+  if( calculatedPlaneName != NULL )
+    delete calculatedPlaneName;
+
 } // end ~nmb_CalculatedPlane
 
 
@@ -160,6 +188,8 @@ createCalculatedPlane( char* units, BCPlane* sourcePlane,
 		       nmb_Dataset* dataset )
   throw( nmb_CalculatedPlaneCreationException )
 {
+  this->dataset = dataset;
+
   calculatedPlane 
     = dataset->inputGrid->addNewPlane( calculatedPlaneName, units, NOT_TIMED);
   if( calculatedPlane == NULL ) 
@@ -174,17 +204,17 @@ createCalculatedPlane( char* units, BCPlane* sourcePlane,
   nmb_Image* im = dataset->dataImages->getImageByPlane( sourcePlane );
   nmb_Image* output_im = new nmb_ImageGrid( calculatedPlane );
   if( im != NULL ) 
-    {
-      im->getTopoFileInfo(tf);
-      output_im->setTopoFileInfo(tf);
-    } 
-  else 
-    {
-      fprintf(stderr, "nmb_FlattenedPlane: Warning, "
-	      "input image not in list\n");
-    }
+  {
+    im->getTopoFileInfo(tf);
+    output_im->setTopoFileInfo(tf);
+  } 
+  else
+  {
+    fprintf(stderr, "nmb_FlattenedPlane: Warning, "
+      "input image not in list\n");
+  }
   dataset->dataImages->addImage(output_im);
-
+  
   // add new calculated plane to the dataset
   dataset->addNewCalculatedPlane( this );
   

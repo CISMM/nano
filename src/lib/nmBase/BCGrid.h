@@ -59,6 +59,10 @@ class BCGrid
     BCPlane* addNewPlane(BCString name, BCString units, int timed);
     BCPlane* addPlaneCopy(BCPlane*);
 
+    /// Removes a plane from the grid.  
+    /// ***Note that this deletes the plane specified (since BCGrid allocated it)
+    void removePlane( BCString name );
+
     BCGrid* loadFile(const char* file_name, TopoFile &topoFile);
       ///< Load file with the same grid size/region into this grid,
       ///< Load file with any grid size/region if no meaningful data has 
