@@ -64,9 +64,14 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
 
 
     // For timing, we need to override any function that issues
-    // a causeGridRedraw() so that it also suspends d_timer and
+    // a causeGridRefoo() AT THE IMPLEMENTATION
+    // so that it here (at the client) also suspends d_timer and
     // sends a timer SN to the server.  Our implementation will
     // get that timer SN back and unblock the corresponding timer.
+
+    virtual void causeGridReColor (void);
+    virtual void causeGridRedraw (void);
+    virtual void causeGridRebuild (void);
 
     virtual void setAlphaSliderRange (float, float);
     virtual void setColorMapName (const char *);
@@ -98,7 +103,18 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     virtual void setTextureMode (TextureMode, TextureTransformMode);
     virtual void setTextureScale (float);
 
+
+    // These things pass through to d_implementation
+    // as well as being sent to the remote
+
     virtual void setViewTransform (v_xform_type);
+
+    virtual void setAlphaPlaneName (const char *);
+    virtual void setColorPlaneName (const char *);
+    virtual void setContourPlaneName (const char *);
+    virtual void setOpacityPlaneName (const char *);
+    virtual void setHeightPlaneName (const char *);
+
 
 
   protected:
@@ -109,6 +125,12 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     nmb_TimerList * d_timer;
 
     vrpn_bool d_timeGraphics;
+
+    vrpn_bool d_transformBlocks;
+      ///< If true, this mode should cause timestamps to *block*
+      ///< because the results of the transform can't be seen until
+      ///< we get data back from graphics.  If false, transforms
+      ///< are active but not blocking.
 
     vrpn_int32 d_timerSN_type;
 };

@@ -246,7 +246,8 @@ void nmg_Graphics_RenderServer::sendPartialPixelData (int minx, int maxx,
                                      d_pixelOutputBuffer,
                                      vrpn_CONNECTION_RELIABLE);
 
-//if (!(y % 10)) {
+//if (!(y % 50)) {
+//vrpn_int32 x;
 //fprintf(stderr, "Sending pixel data from %d, %d:\n", minx, y);
 //for (x = minx; x < maxx; x += 10) {
 //fprintf(stderr, " (%d %d %d)",

@@ -26,7 +26,8 @@ nmg_Graphics_RenderClient::nmg_Graphics_RenderClient
     d_implementation (data, minColor, maxColor, inputConnection,
                       cMode, dMode, pMode, timer, xsize, ysize),
     d_timer (timer),
-    d_timeGraphics (VRPN_FALSE) {
+    d_timeGraphics (VRPN_FALSE),
+    d_transformBlocks (VRPN_FALSE) {
 
   // HACK
   // Need to call *some* of the initiaization functions -
@@ -41,6 +42,15 @@ nmg_Graphics_RenderClient::nmg_Graphics_RenderClient
   d_implementation.setTextureMode(NO_TEXTURES);
   d_implementation.resetLightDirection();
 
+  // HACK
+  // Setting d_transformBlocks require evil dependence on the Modes,
+  // which we shouldn't care about - but then again, we shouldn't
+  // see them, either.  The modes are evil.  Probably the right
+  // way to do them is to pass through the strategy and to have
+  // each strategy return whether or not it blocks.
+  if (pMode == PERSPECTIVE_PROJECTION) {
+    d_transformBlocks = VRPN_TRUE;
+  }
 
   d_timerSN_type = controlConnection->register_message_type
         ("nmg Graphics RemoteRender Timer SN");  // 34 char
@@ -89,6 +99,7 @@ void nmg_Graphics_RenderClient::blockTimer (void) {
     return;
   }
 
+
   // Block the current timer
   sn = d_timer->getListHead();
   if (sn < 0) {
@@ -97,6 +108,8 @@ void nmg_Graphics_RenderClient::blockTimer (void) {
     return;
   }
   d_timer->block(sn);
+
+fprintf(stderr, "nmg_Graphics_RenderClient::blockTimer (%d)\n", sn);
 
   // Pack the message
   msglen = 24;
@@ -111,6 +124,25 @@ void nmg_Graphics_RenderClient::blockTimer (void) {
 
   fprintf(stderr, "Blocked timer %d.\n", sn);
 }
+
+// virtual
+void nmg_Graphics_RenderClient::causeGridReColor (void) {
+  blockTimer();
+  nmg_Graphics_Remote::causeGridReColor();
+}
+
+// virtual
+void nmg_Graphics_RenderClient::causeGridRedraw (void) {
+  blockTimer();
+  nmg_Graphics_Remote::causeGridRedraw();
+}
+
+// virtual
+void nmg_Graphics_RenderClient::causeGridRebuild (void) {
+  blockTimer();
+  nmg_Graphics_Remote::causeGridRebuild();
+}
+
 
 // virtual
 void nmg_Graphics_RenderClient::setAlphaSliderRange (float a, float b) {
@@ -287,12 +319,55 @@ void nmg_Graphics_RenderClient::setTextureScale (float a) {
   nmg_Graphics_Remote::setTextureScale (a);
 }
 
+
 // virtual
 void nmg_Graphics_RenderClient::setViewTransform (v_xform_type x) {
-  blockTimer();
+fprintf(stderr, "nmg_Grahpics_RenderClient::setViewTransform()\n");
+  if (d_transformBlocks) {
+    blockTimer();
+  }
   nmg_Graphics_Remote::setViewTransform (x);
   d_implementation.setViewTransform(x);
 }
+
+// virtual
+void nmg_Graphics_RenderClient::setAlphaPlaneName (const char * n) {
+  //blockTimer();
+  nmg_Graphics_Remote::setAlphaPlaneName(n);
+  d_implementation.setAlphaPlaneName(n);
+}
+
+// virtual
+void nmg_Graphics_RenderClient::setColorPlaneName (const char * n) {
+  //blockTimer();
+  nmg_Graphics_Remote::setColorPlaneName(n);
+  d_implementation.setColorPlaneName(n);
+}
+
+// virtual
+void nmg_Graphics_RenderClient::setContourPlaneName (const char * n) {
+  //blockTimer();
+  nmg_Graphics_Remote::setContourPlaneName(n);
+  d_implementation.setContourPlaneName(n);
+}
+
+// virtual
+void nmg_Graphics_RenderClient::setOpacityPlaneName (const char * n) {
+  //blockTimer();
+  nmg_Graphics_Remote::setOpacityPlaneName(n);
+  d_implementation.setOpacityPlaneName(n);
+}
+
+// virtual
+void nmg_Graphics_RenderClient::setHeightPlaneName (const char * n) {
+  //blockTimer();
+  nmg_Graphics_Remote::setHeightPlaneName(n);
+  d_implementation.setHeightPlaneName(n);
+}
+
+
+
+
 
 
 // virtual

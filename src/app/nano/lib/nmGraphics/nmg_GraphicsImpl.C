@@ -222,6 +222,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_loadRulergridImage_type,
                                handle_loadRulergridImage,
                                this, vrpn_ANY_SENDER);
+  connection->register_handler(d_causeGridReColor_type,
+                               handle_causeGridReColor,
+                               this, vrpn_ANY_SENDER);
   connection->register_handler(d_causeGridRedraw_type,
                                handle_causeGridRedraw,
                                this, vrpn_ANY_SENDER);
@@ -2772,6 +2775,15 @@ int nmg_Graphics_Implementation::handle_loadRulergridImage
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
 
   it->loadRulergridImage(p.buffer);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_causeGridReColor
+                                 (void * userdata, vrpn_HANDLERPARAM /*p*/) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->causeGridReColor();
   return 0;
 }
 

@@ -398,6 +398,7 @@ class nmg_Graphics {
 
     vrpn_int32 d_resizeViewport_type;
     vrpn_int32 d_loadRulergridImage_type;
+    vrpn_int32 d_causeGridReColor_type;
     vrpn_int32 d_causeGridRedraw_type;
     vrpn_int32 d_causeGridRebuild_type;
     vrpn_int32 d_enableChartjunk_type;

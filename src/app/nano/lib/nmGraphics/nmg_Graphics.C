@@ -38,6 +38,8 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics resizeViewport");
   d_loadRulergridImage_type =
     c->register_message_type("nmg Graphics loadRulergridImage");
+  d_causeGridReColor_type =
+    c->register_message_type("nmg Graphics causeGridReColor");
   d_causeGridRedraw_type =
     c->register_message_type("nmg Graphics causeGridRedraw");
   d_causeGridRebuild_type =

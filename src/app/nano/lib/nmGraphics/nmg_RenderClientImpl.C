@@ -664,6 +664,9 @@ int nmg_Graphics_RenderClient_Implementation::handle_pixelData
 
   //vrpn_unbuffer(&bp, lb, (vrpn_uint32) lineCount * 3);
 
+//fprintf(stderr, "nmg_RCI::handle_pixelData (%d, %d;  %d lines).\n",
+//x, y, lineCount);
+
   if (gp->d_strategy) {
     gp->d_strategy->handlePixelData(x, y, dx, dy, lineCount, bp);
   }

@@ -99,6 +99,18 @@ void nmg_Graphics_Remote::loadRulergridImage (const char * name) {
 }
 
 void nmg_Graphics_Remote::causeGridReColor (void) {
+  struct timeval now;
+  int retval;
+
+  gettimeofday(&now, NULL);
+  if (d_connection) {
+    retval = d_connection->pack_message(0, now, d_causeGridReColor_type,
+                           d_myId, NULL, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::causeGridReColor:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
 }
 
 void nmg_Graphics_Remote::causeGridRedraw (void) {

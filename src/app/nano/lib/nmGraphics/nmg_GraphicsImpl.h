@@ -221,6 +221,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     static int handle_resizeViewport (void *, vrpn_HANDLERPARAM);
     static int handle_loadRulergridImage (void *, vrpn_HANDLERPARAM);
+    static int handle_causeGridReColor (void *, vrpn_HANDLERPARAM);
     static int handle_causeGridRedraw (void *, vrpn_HANDLERPARAM);
     static int handle_causeGridRebuild (void *, vrpn_HANDLERPARAM);
     static int handle_enableChartjunk (void *, vrpn_HANDLERPARAM);

@@ -79,6 +79,12 @@ void nmg_RSViewS_Ortho::setViewingTransform (void) {
   // server?  AARGH!
   //scaleTo *= d_server->screenSizeY() * 0.0085;
 
+  // HACK displaying on evans:4.0 Jun 2001
+  // Almost the right scale, but it comes out off-center???  Or is that
+  // just the non-square pixels?
+  
+  scaleTo *= 4.0;
+
   gridMidpointX = (g_inputGrid->minX() +
                    g_inputGrid->maxX()) * 0.5;
   gridMidpointY = (g_inputGrid->minY() +
