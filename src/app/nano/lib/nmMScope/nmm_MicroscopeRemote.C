@@ -2870,20 +2870,37 @@ int nmm_Microscope_Remote::handle_WindowLineData (void * userdata,
   float fields [MAX_CHANNELS];
   vrpn_int32 x, y, dx, dy, sec, usec, lineCount, fieldCount;
   long i;
+  vrpn_bool ignoringData = VRPN_FALSE;
 
 //fprintf(stderr, "Got data for line %d.\n", y);
   ms->decode_WindowLineDataHeader(&param.buffer, &x, &y, &dx, &dy,
                                   &lineCount, &fieldCount, &sec, &usec);
 
+  if (x < 0 || y < 0 || 
+     (x+(lineCount-1)*dx) > (ms->d_dataset->inputGrid->numX()-1) ||
+     (y+(lineCount-1)*dy) > (ms->d_dataset->inputGrid->numY()-1)) {
+     display_error_dialog( "Internal: grid size (%d,%d) doesn't match"
+           "data size (%dx%d). Time to die.", 
+           ms->d_dataset->inputGrid->numX(),
+           ms->d_dataset->inputGrid->numY(),
+           lineCount, lineCount);
+     ignoringData = VRPN_TRUE;
+     ms->d_dataset->done = VRPN_TRUE;
+  }
 
   for (i = 0; i < lineCount; i++) {
     ms->decode_WindowLineDataField(&param.buffer, fieldCount, fields);
-    ms->RcvWindowLineData(x + i * dx, y + i * dy, sec, usec,
+    if (!ignoringData) {
+       ms->RcvWindowLineData(x + i * dx, y + i * dy, sec, usec,
                           fieldCount, fields);
+    }
   }
-  ms->RcvWindowLineData();
-  ms->RcvWindowLineData(x, y, dx, dy, lineCount);
-
+  
+  if (!ignoringData) {
+    ms->RcvWindowLineData();
+    ms->RcvWindowLineData(x, y, dx, dy, lineCount);
+  }
+ 
   return 0;
 }
 
