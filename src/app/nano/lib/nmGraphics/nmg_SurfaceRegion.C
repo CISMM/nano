@@ -36,6 +36,8 @@ nmg_SurfaceRegion()
     d_needsFullRebuild = VRPN_FALSE;
     d_regionalMask = new nmg_SurfaceMask;
     d_vertexPtr = (Vertex_Struct **)NULL;
+    d_VertexArrayDim = 0;
+    d_num_lists = 0;
 
     d_currentState.stride = 1;
     d_currentState.justColor = VRPN_FALSE;
@@ -62,10 +64,15 @@ nmg_SurfaceRegion()
 nmg_SurfaceRegion::
 ~nmg_SurfaceRegion()
 {
-    for(unsigned int i=0;i < d_VertexArrayDim; i++) {
-        delete [] d_vertexPtr[i];
+    if (d_vertexPtr) {
+      for(unsigned int i=0;i < d_VertexArrayDim; i++) {
+        if (d_vertexPtr[i]) {
+          delete [] d_vertexPtr[i];
+        }
+      }
+      delete [] d_vertexPtr;
+      d_vertexPtr = NULL;
     }
-    free(d_vertexPtr);
 
     if (d_regionalMask) {
         delete d_regionalMask;
@@ -100,11 +107,11 @@ init(int width, int height)
     d_regionalMask->init(width, height);
     
     if (d_vertexPtr) {
-        free(d_vertexPtr);
+        delete [] d_vertexPtr;
     }
     
-    d_vertexPtr = (Vertex_Struct **)malloc(d_VertexArrayDim * sizeof(Vertex_Struct **));
-    //d_vertexPtr = (Vertex_Struct **)new Vertex_Struct[d_VertexArrayDim];
+//    d_vertexPtr = (Vertex_Struct **)malloc(d_VertexArrayDim * sizeof(Vertex_Struct **));
+    d_vertexPtr = (Vertex_Struct **)new Vertex_Struct *[d_VertexArrayDim];
     
     if (d_vertexPtr == NULL) {
         return 0;

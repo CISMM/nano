@@ -12,6 +12,12 @@ nmg_StateGuardian()
 	d_lightModelAmbient[0] = 0.2f; d_lightModelAmbient[1] = 0.2f;
 	d_lightModelAmbient[2] = 0.2f; d_lightModelAmbient[3] = 1;
 
+	d_1dTextureEnabled = VRPN_FALSE;
+        d_2dTextureEnabled = VRPN_FALSE;
+#ifdef  sgi
+        d_3dTextureEnabled = VRPN_FALSE;
+#endif
+
 	d_blendingEnabled = VRPN_FALSE;
 	d_colorMaterialEnabled = VRPN_FALSE;
 	blending_source = GL_ZERO;

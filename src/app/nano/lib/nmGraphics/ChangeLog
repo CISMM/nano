@@ -1,3 +1,13 @@
+2001-05-15  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_StateGuardian.C (nmg_StateGuardian::nmg_StateGuardian):
+	added initialization of d_1dTextureEnabled, d_2dTextureEnabled and
+	d_3dTextureEnabled
+	* nmg_SurfaceRegion.C (nmg_SurfaceRegion::nmg_SurfaceRegion):
+	added initialization of d_VertexArrayDim, d_num_lists
+        (~nmg_SurfaceRegion and init): changed d_vertexPtr to be allocated with
+	new only instead of a mixture of new and malloc
+
 2001-05-13  Jason Clark  <jclark@cs.unc.edu>
 
 	* spm_gl.c: Use const references to the nmb_PlaneSelection and
