@@ -255,6 +255,26 @@ SOURCE=.\monomer4nm.txt
 # End Source File
 # Begin Source File
 
+SOURCE=.\planechange1.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\planechange2.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\planechange4.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\planechange6.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\planechange8.dat
+# End Source File
+# Begin Source File
+
 SOURCE="U:\.cs.unc.edu\proj\stm\src\hilchey\nano\src\app\3d-afmsim\script.sh"
 # End Source File
 # Begin Source File
@@ -272,6 +292,10 @@ SOURCE=.\test2.dat
 # Begin Source File
 
 SOURCE=.\test3.dat
+# End Source File
+# Begin Source File
+
+SOURCE=.\testfile.dat
 # End Source File
 # End Target
 # End Project

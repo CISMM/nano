@@ -14,11 +14,11 @@
 
 # Change these to match your setup
 
-export MY_NANO_OBJ_DIR=/nsrc/obj
-export TCL_LIBRARY=/nsrc/export/external/lib/tcl8.2/
-export NM_COLORMAP_DIR=/nsrc/colormaps
+export MY_NANO_OBJ_DIR=/hilchey/obj
+export TCL_LIBRARY=/hilchey/export/external/lib/tcl8.2/
+export NM_COLORMAP_DIR=/hilchey/colormaps
 # New tcl files
-export NM_TCL_DIR=`cygtclpath /nsrc/nano/src/share/tcl/`
+export NM_TCL_DIR=`cygtclpath /hilchey/nano/src/share/tcl/`
 
 # Root of MS Visual Studio. 
 # Use ls with paths of this form to determine which numbers to use. 
