@@ -64,6 +64,9 @@ void handle_slow_line_playing_change (vrpn_int32 new_value, void * _mptr);
 void handle_slow_line_step_change (vrpn_int32 new_value, void * _mptr);
 void handle_slow_line_direction_change (vrpn_int32 new_value, void * _mptr);
 int slow_line_ReceiveNewPoint (void * _mptr, const Point_results * p);
+void handle_slow_line_collect_data (vrpn_int32 new_value, void * _mptr);
+//takes a step when in slow line mode
+void take_slow_line_step(void * _mptr);
 
 
 //void handle_mutex_request (vrpn_int32, void *);

@@ -5334,6 +5334,7 @@ void teardownMicroscopeSynchronization( CollaborationManager *cm,
 	paramControls->remove(&(m->state.modify.slow_line_playing));
     paramControls->remove(&(m->state.modify.slow_line_step));
     paramControls->remove(&(m->state.modify.slow_line_direction));
+	paramControls->remove(&(m->state.modify.slow_line_collect_data));
     
 	paramControls->remove(&(m->state.modify.new_blunt_size));
     paramControls->remove(&(m->state.modify.new_blunt_speed));
@@ -5736,6 +5737,7 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
   paramControls->add(&(m->state.modify.slow_line_playing));
   paramControls->add(&(m->state.modify.slow_line_step));
   paramControls->add(&(m->state.modify.slow_line_direction));
+  paramControls->add(&(m->state.modify.slow_line_collect_data));
   
   paramControls->add(&(m->state.modify.new_blunt_size));
   paramControls->add(&(m->state.modify.new_blunt_speed));

@@ -105,6 +105,8 @@ void setupStateCallbacks (nmm_Microscope_Remote * ms) {
     (handle_slow_line_step_change, ms);
   ms->state.modify.slow_line_direction.addCallback
     (handle_slow_line_direction_change, ms);
+  ms->state.modify.slow_line_collect_data.addCallback
+	  (handle_slow_line_collect_data,ms);
 
   ms->state.modify.blunt_size.addCallback
     (handle_Mstyle_p_change, ms);
@@ -305,6 +307,8 @@ void teardownStateCallbacks (nmm_Microscope_Remote * ms) {
     (handle_slow_line_step_change, ms);
   ms->state.modify.slow_line_direction.removeCallback
     (handle_slow_line_direction_change, ms);
+  ms->state.modify.slow_line_collect_data.removeCallback
+	  (handle_slow_line_collect_data,ms);
 
   ms->state.modify.blunt_size.removeCallback
     (handle_Mstyle_p_change, ms);
@@ -935,6 +939,12 @@ void	handle_slow_line_playing_change (vrpn_int32, void * _mptr)
   //printf("Slow line play\n");
   //handle_slow_line_step_change(1, _mptr);
 
+    //if we are not taking data at every point, we must take step
+  //to get playing process started again
+  if(! (microscope->state.modify.slow_line_collect_data) ) {
+	  handle_slow_line_step_change(1, _mptr);
+  }
+
 }
 
 /** If the line has been specified, and commit has been pressed, take
@@ -1013,6 +1023,12 @@ void	handle_slow_line_step_change (vrpn_int32, void * _mptr)
     microscope->state.modify.slow_line_position_param = 0.0;
   } 
   // Take a normal step. 
+  
+  //if we are not taking data at every step, we have to explicitly send request for new datapoint.
+  if(!(microscope->state.modify.slow_line_collect_data)) {
+	take_slow_line_step(_mptr);
+  }
+
 
 // Following is commented out because we already should have a request sent
 // which will trigger the next request with this new point - this gets
@@ -1044,6 +1060,7 @@ void	handle_slow_line_direction_change (vrpn_int32, void * _mptr)
   if (microscope->state.modify.slow_line_playing == VRPN_TRUE)
     microscope->state.modify.slow_line_playing = VRPN_FALSE;
   //printf("Slow line direction\n");
+
 
   return;
   
@@ -1083,6 +1100,15 @@ int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
     // points.
     // Re-calcs the point we want to go to. 
 
+  //if slow line is collecting data at every point, take a step everytime
+  if(microscope->state.modify.slow_line_collect_data) {
+	  take_slow_line_step(_mptr);
+  }
+  //else do nothing
+
+
+//this code is now in take_slow_line_step
+  /*
     float x1 =  microscope->state.modify.slow_line_prevPt->x();
     float y1 =  microscope->state.modify.slow_line_prevPt->y();
     float x2 =  microscope->state.modify.slow_line_currPt->x();
@@ -1111,7 +1137,70 @@ int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
     else if (microscope->state.modify.tool == SLOW_LINE_3D) {
       microscope->TakeDirectZStep(x,y,z);
     }
+	*/
  // }
   return 0;
+}
+
+/*
+This function will take the step. gets called from slow_line_RcvNewPoint when taking data at every point,
+or from handle_slow_line_step_change when not taking data at every point
+*/
+void take_slow_line_step(void * _mptr) {
+
+	float x1 =  microscope->state.modify.slow_line_prevPt->x();
+    float y1 =  microscope->state.modify.slow_line_prevPt->y();
+    float x2 =  microscope->state.modify.slow_line_currPt->x();
+    float y2 =  microscope->state.modify.slow_line_currPt->y();
+    float z1, z2;
+    
+    // Set yaw so if we sweep it will be perpendicular to the slow-line path. 
+    microscope->state.modify.yaw = atan2((y2 - y1), (x2 - x1)) - M_PI_2;
+
+    float x = x2*(microscope->state.modify.slow_line_position_param) +
+              x1*(1.0-microscope->state.modify.slow_line_position_param);
+    float y = y2*(microscope->state.modify.slow_line_position_param) +
+              y1*(1.0-microscope->state.modify.slow_line_position_param);
+    float z;
+
+    if (microscope->state.modify.tool == SLOW_LINE_3D) {
+      z1 =  microscope->state.modify.slow_line_prevPt->z();
+      z2 =  microscope->state.modify.slow_line_currPt->z();
+      z = z2*(microscope->state.modify.slow_line_position_param) +
+              z1*(1.0-microscope->state.modify.slow_line_position_param);
+    }
+    
+    if (microscope->state.modify.tool == SLOW_LINE) {
+      microscope->TakeModStep(x,y);
+    }
+    else if (microscope->state.modify.tool == SLOW_LINE_3D) {
+      microscope->TakeDirectZStep(x,y,z);
+    }
+
+}
+
+//if we are not collecting data when paused, then to start collecting data 
+//we need to request a datapoint
+void handle_slow_line_collect_data (vrpn_int32, void * _mptr)
+{
+
+	//make sure we are in the right mode. If we have not put down a line, don't start
+	//taking points. (not ready to start taking data)
+	if ( (microscope->state.modify.tool != SLOW_LINE)&&
+		(microscope->state.modify.tool != SLOW_LINE_3D)){
+		return;
+	}
+	if (microscope->state.modify.slow_line_committed != VRPN_TRUE){
+		return;
+	}
+	if (microscope->state.modify.slow_line_relax_done != VRPN_TRUE){
+		return;
+	}
+
+	//if we are now want to continuosly collect points, request a data point 
+	//to start process of recieving new points.
+	if(microscope->state.modify.slow_line_collect_data) {
+	take_slow_line_step(_mptr);
+	}
 }
 

@@ -1,3 +1,10 @@
+2002-05-16 Jameson Miller <millerj@cs.unc.edu>
+	* MicroscopeHandlers.c (.h) - Slow line mode can now collect data
+	even when paused or can not collect data. This can be set by a toggle
+	in the slow line live controls.
+	*Microscape.c - added new tclNet var into setup for collaboration.
+
+
 2002-05-13  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* microscape.c (handle_openStreamFilename_change):  for collaboration,
