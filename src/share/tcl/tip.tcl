@@ -42,3 +42,7 @@ checkbutton $nmInfo(tip_display).display_geometry_checkbutton \
         -text "Display Geometry" -variable tip_display_enable
 pack $nmInfo(tip_display).display_geometry_checkbutton
 
+# sends current tip location as a fiducial to the alignment function
+button $nmInfo(tip_display).send_fiducial_button \
+        -text "Send Fiducial" -command { set send_fiducial_requested 1 }
+pack $nmInfo(tip_display).send_fiducial_button

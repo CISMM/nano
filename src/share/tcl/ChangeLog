@@ -1,3 +1,7 @@
+2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
+
+	* tip.tcl: added button for sending the tip location as a fiducial
+
 2002-07-02  Adam Seeger  <seeger@cs.unc.edu>
 
         * registration.tcl: commented out entry boxes for transformation
