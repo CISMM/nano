@@ -33,7 +33,7 @@
 
 #include "Timer.h"
 #include "nmg_Globals.h"  // for RegMode enum
-#include "nmg_StateGuardian.h"
+
 
 #include "nmm_Types.h"  // for OPTIMIZE_NOW
 
@@ -1610,8 +1610,8 @@ int mycube(void)
 {  
   GLfloat matspec[4] = { 0.5, 0.5, 0.5, 0.0 };
   glPushMatrix();
-  g_guardian->setMaterial(GL_FRONT, GL_SPECULAR, matspec);
-  g_guardian->setMaterialShininess(GL_FRONT, 64.0);
+  glMaterialfv(GL_FRONT, GL_SPECULAR, matspec);
+  glMaterialf(GL_FRONT, GL_SHININESS, 64.0);
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glColor3f(0.0,0.0,1.0);
@@ -1954,8 +1954,8 @@ int measure_hand(void *data)
            handlescale * g_icon_scale,
            handlescale * g_icon_scale);
 
-  g_guardian->setMaterial(GL_FRONT, GL_SPECULAR, matspec);
-  g_guardian->setMaterialShininess(GL_FRONT, 64.0);
+  glMaterialfv(GL_FRONT, GL_SPECULAR, matspec);
+  glMaterialf(GL_FRONT, GL_SHININESS, 64.0);
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(0.0,0.0,-1.0);

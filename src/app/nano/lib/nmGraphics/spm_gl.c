@@ -32,7 +32,6 @@ All Rights Reserved.
 #include <nmb_Decoration.h>
 #include <nmb_Globals.h>
 #include "nmg_SurfaceMask.h"
-#include "nmg_StateGuardian.h"
 
 #include "spm_gl.h"
 // #include "Tcl_Linkvar.h"
@@ -52,11 +51,6 @@ All Rights Reserved.
 #ifndef max
 #define max(a,b) ((a)<(b)?(b):(a))
 #endif
-
-
-//VARIABLES TO MINIMIZE STATE CHANGES
-GLfloat	light_model_ambient[4] = { 1.0, 1.0, 1.0, 1.0 };
-
 
 //---------------------------------------------------------------------------
 // Vector utility routines.
@@ -1166,39 +1160,46 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     return 0;
 }
 
+
+
+
 /*	This routine will set up the material properties so that the
 * surface will appear to be made of shiny plastic. */
 
 void spm_set_surface_materials(void)
 {	
-	GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
     GLfloat	specular[4] = { (float)g_specular_color,
         (float)g_specular_color,
         (float)g_specular_color, 1.0 };
+    GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
+    
     
     //fprintf(stderr, "In spm_set_surface_materials with texture mode %d.\n",
     //g_texture_mode);
-    TIMERVERBOSE(5, mytimer, "begin spm_set_surface_materials");   
-   
+    TIMERVERBOSE(5, mytimer, "begin spm_set_surface_materials");
     
-	g_guardian->setBlendingEnabled(VRPN_TRUE);
-	g_guardian->setBlendingFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	g_guardian->setColorMaterialEnabled(VRPN_TRUE);
-	g_guardian->setColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
+    /* Use local vertex color for ambient and diffuse */
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    
     // Set up the specular characteristics.
     // Note that the ambient and diffuse colors are from the vertices.
     // NOTE: It is important that back is set first because front/back
     //       is ignored in an early implementation of FLOW, and it always
     //       set both.
-	g_guardian->setMaterial(GL_BACK, GL_SPECULAR, dark);
-	g_guardian->setMaterial(GL_FRONT, GL_SPECULAR, specular);
-    g_guardian->setMaterialShininess(GL_FRONT, g_shiny);
-	
-    g_guardian->setLightModelAmbient(dark);
-
+    glMaterialfv(GL_BACK, GL_SPECULAR, dark);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+    glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
+    
+    // Set the light model to have completely ambient-off.  There is
+    // ambient specified in light 0.
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, dark);
+    
     /* Set a color, in case the color is not being adjusted per vertex. */
-    /* Use the min color for this. */    
+    /* Use the min color for this. */
+    
     g_minColor[3] = g_surface_alpha; //make sure alpha value is updated
     
     glColor4dv(g_minColor);
@@ -1208,28 +1209,34 @@ void spm_set_surface_materials(void)
     // Disable calls.
     switch (g_texture_mode) {
     case GL_FALSE:
-		g_guardian->set1DTextureEnabled(VRPN_FALSE);
-		g_guardian->set2DTextureEnabled(VRPN_FALSE);
-		g_guardian->set3DTextureEnabled(VRPN_FALSE);
+        glDisable(GL_TEXTURE_1D);
+        glDisable(GL_TEXTURE_2D);
+#ifdef	sgi
+        glDisable(GL_TEXTURE_3D_EXT);
+#endif
         break;
         
-    case GL_TEXTURE_1D:		
-		g_guardian->set2DTextureEnabled(VRPN_FALSE);
-		g_guardian->set3DTextureEnabled(VRPN_FALSE);
-		g_guardian->set1DTextureEnabled(VRPN_TRUE);        
+    case GL_TEXTURE_1D:
+        glDisable(GL_TEXTURE_2D);
+#ifdef	sgi
+        glDisable(GL_TEXTURE_3D_EXT);
+#endif
+        glEnable(GL_TEXTURE_1D);
         break;
         
     case GL_TEXTURE_2D:
-        g_guardian->set1DTextureEnabled(VRPN_FALSE);
-		g_guardian->set3DTextureEnabled(VRPN_FALSE);
-		g_guardian->set2DTextureEnabled(VRPN_TRUE);
+        glDisable(GL_TEXTURE_1D);
+#ifdef	sgi
+        glDisable(GL_TEXTURE_3D_EXT);
+#endif
+        glEnable(GL_TEXTURE_2D);
         break;
         
 #ifdef	sgi
     case GL_TEXTURE_3D_EXT:
-        g_guardian->set1DTextureEnabled(VRPN_FALSE);
-		g_guardian->set2DTextureEnabled(VRPN_FALSE);
-		g_guardian->set3DTextureEnabled(VRPN_TRUE);
+        glDisable(GL_TEXTURE_1D);
+        glDisable(GL_TEXTURE_2D);
+        glEnable(GL_TEXTURE_3D_EXT);
         break;
 #endif
         
@@ -1252,36 +1259,41 @@ void spm_set_surface_materials(void)
 
 void    spm_set_icon_materials(void)
 {	
-	GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
     GLfloat	specular[4] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
     
     VERBOSE(5, "    Entering spm_set_icon_materials()");
     TIMERVERBOSE(5, mytimer, "begin spm_set_icon_materials");
     
     /* Use local vertex color for ambient and diffuse */
-    g_guardian->setColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    g_guardian->setColorMaterialEnabled(VRPN_TRUE);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    glEnable(GL_COLOR_MATERIAL);
     
     // Set up the specular characteristics.
     // Note that the ambient and diffuse colors are from the vertices.
-    // NOTE: It is important that back is set first beca use front/back
+    // NOTE: It is important that back is set first because front/back
     //       is ignored in an early implementation of FLOW, and it always
     //       set both.
-	g_guardian->setMaterial(GL_BACK, GL_SPECULAR, dark);
-    g_guardian->setMaterial(GL_FRONT, GL_SPECULAR, specular);
-    g_guardian->setMaterialShininess(GL_FRONT, g_shiny);
-	g_guardian->setBlendingEnabled(VRPN_TRUE);
-       
-	g_guardian->setLightModelAmbient(dark);
+    glMaterialfv(GL_BACK, GL_SPECULAR, dark);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+    glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
+    glEnable(GL_BLEND);
+    
+    // Set the light model to have completely ambient-off.  There is
+    // ambient specified in light 0.
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, dark);
+    
     /* Set a color, in case the color is not being adjusted per vertex. */
     /* Use the min color for this. */
     g_minColor[3] = g_surface_alpha; //make sure alpha value is updated
     glColor4dv(g_minColor);
     
     // Disable texture-mapping.
-    g_guardian->set1DTextureEnabled(VRPN_FALSE);
-	g_guardian->set2DTextureEnabled(VRPN_FALSE);
-	g_guardian->set3DTextureEnabled(VRPN_FALSE);
+    glDisable(GL_TEXTURE_1D);
+    glDisable(GL_TEXTURE_2D);
+#ifdef	sgi
+    glDisable(GL_TEXTURE_3D_EXT);
+#endif
     
     TIMERVERBOSE(5, mytimer, "end spm_set_icon_materials");
 }
@@ -1293,20 +1305,28 @@ void    spm_set_icon_materials(void)
 
 void    spm_set_measure_materials(void)
 {	
-	GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
     GLfloat	bright[4] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
     
     VERBOSE(5, "    Entering spm_set_measure_materials()");
     TIMERVERBOSE(5, mytimer, "begin spm_set_measure_materials");
-            
-	g_guardian->setColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-	g_guardian->setColorMaterialEnabled(VRPN_TRUE);
-	g_guardian->setBlendingEnabled(VRPN_FALSE);
     
-	g_guardian->setMaterial(GL_FRONT_AND_BACK, GL_SPECULAR, dark);
-
-	// Set the light model to have completely ambient-on.
-    g_guardian->setLightModelAmbient(bright);
+    /* Use local vertex color for ambient and diffuse */
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    
+    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials:end glColorMaterial");
+    glEnable(GL_COLOR_MATERIAL);
+    glDisable(GL_BLEND);
+    
+    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials:end glEnable(GL_COLOR_MATERIAL)");
+    
+    // Set up the specular characteristics.
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, dark);
+    
+    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glMaterialfv");
+    
+    // Set the light model to have completely ambient-on.
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, bright);
     
     TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glLightModelfv");
     
@@ -1318,9 +1338,11 @@ void    spm_set_measure_materials(void)
     TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glColor3dv");
     
     // Disable texture-mapping.
-    g_guardian->set1DTextureEnabled(VRPN_FALSE);
-	g_guardian->set2DTextureEnabled(VRPN_FALSE);
-	g_guardian->set3DTextureEnabled(VRPN_FALSE);
+    glDisable(GL_TEXTURE_1D);
+    glDisable(GL_TEXTURE_2D);
+#ifdef	sgi
+    glDisable(GL_TEXTURE_3D_EXT);
+#endif
     
     TIMERVERBOSE(5, mytimer, "end spm_set_measure_materials");
 }
