@@ -1,23 +1,10 @@
-USES_LIBS := nmMScope nmBase vrpn ImgFormat
+USES_LIBS := nmMScope nmBase vrpn ImgFormat nmMP
+
+USES_EXTERNAL_LIBS := RhinoIO
 
 ifeq ($(MAKECMDGOALS),afmcntsim)
    EXTRA_CFLAGS+=-DAFMSIM
 endif
-
-#ifeq ($(HW_OS),sgi_irix)
-LATE_INCLUDE_PATH := -I/afs/unc/proj/stm/src/external/glut/glut-3.5/include 
-LATE_LOAD_PATH := -L/afs/unc/proj/stm/src/external/glut/glut-3.5/lib/glut.n32 
-#endif
-
-
-#ifeq ($(HW_OS),sgi_irix)
-USES_EXTERNAL_LIBS := tcl
-#else
-#USES_EXTERNAL_LIBS := tcl82
-#endif
-
-
-
 
 include ../Makefile.share
 

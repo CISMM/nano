@@ -33,7 +33,7 @@
 
 #include <math.h>
 //#ifdef GLUT
-#include <GL/glut.h>
+#include <GL/glut_UNC.h>
 //#endif
 
 #include "vec2d.h"

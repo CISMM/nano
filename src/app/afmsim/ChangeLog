@@ -1,3 +1,10 @@
+2001-11-06  Russell M. Taylor II <taylorr@cs.unc.edu>
+
+	* Makefile : Bringing it up to date so that it will compile the
+	afmcnt simulator, which lets nano connect and modify tubes.
+
+	* warrencntsim.h : Using glut_UNC.h rather than glut.h.
+
 2001-05-22  Tom Hudson <hudson@cs.unc.edu>
 
 	* afmcntsim:  restore - somebody accidentally overwrote
