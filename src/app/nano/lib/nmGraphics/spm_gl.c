@@ -30,7 +30,7 @@
 #include <nmb_PlaneSelection.h>
 
 #include "spm_gl.h"
-#include "Tcl_Linkvar.h"
+// #include "Tcl_Linkvar.h"
 #include "graphics_globals.h"
 #include "BCPlane.h"
 #include "Timer.h"
@@ -337,6 +337,10 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
   GLfloat Vertex [3];
   GLfloat Color [4];
   
+  Vertex[0]= (float) height_plane.xInWorld(x);
+  Vertex[1]= (float) height_plane.yInWorld(y);
+  Vertex[2]= (float) height_plane.valueInWorld(x, y);
+
   /* Make sure it is a legal vertex */
   if ( (x < 0) || (x > height_plane.numX() - 1) ||
        (y < 0) || (y > height_plane.numY() - 1) ) {
@@ -429,10 +433,10 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     Color[2] = 1.0f;
     
     if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
-      Color[3] = 0.0f;
+        Color[3] = 0.0f;
     }
     else {
-          Color[3] = g_surface_alpha * 255;
+        Color[3] = g_surface_alpha * 255;
     }
   } 
   else if (g_PRERENDERED_COLORS) {
@@ -468,16 +472,17 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
       Color[0] = r;
       Color[1] = g;
       Color[2] = b;
-      Color[3] = (GLubyte) (g_surface_alpha * 255);
+      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+        Color[3] = (GLubyte) 0;
+      }
+      else {
+        Color[3] = (GLubyte) (g_surface_alpha * 255);
+      }
     }
-    else if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
-	Color[3] = (GLubyte) 0;
-    }
-    
     else {      // Use the CUSTOM color mapping tool
       for (i = 0; i < 3; i++) {
 	double  color_diff = (maxColor[i] - minColor[i]);
-	Color[i] = minColor[i] * data_value;
+	Color[i] = minColor[i] + (color_diff);
       }
       if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
 	  Color[3] = (GLubyte) 0;
@@ -500,10 +505,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 	    Color[3] =  0;
 	}
 	else {
-            for (i = 0; i < 3; i++) {
-              Color[i] = minColor[i];
-            }
-            Color[3] = (GLubyte) (g_surface_alpha * 255);
+	    Color[3] = g_surface_alpha * 255;
 	}
 	
   }
@@ -522,29 +524,15 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     }
     else {
       if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0 ) ){
-	Color[3] = 0.0;
-	glColor4fv(Color);
-	}
-      else {
+        Color[3] = 0.0;
+      } else {
+        Color[3] = g_surface_alpha;
+      }
       vertexArrayPtr->Color[0] = (GLubyte) (Color[0] * 255);
       vertexArrayPtr->Color[1] = (GLubyte) (Color[1] * 255); 
       vertexArrayPtr->Color[2] = (GLubyte) (Color[2] * 255); 
-      vertexArrayPtr->Color[3] = (GLubyte) (g_surface_alpha * 255);
+      vertexArrayPtr->Color[3] = (GLubyte) (Color[3] * 255);
       glColor4fv(Color);
-      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0 ) ){
-	Color[3] = 0.0;
-	glColor4fv(Color);
-	}
-      else {
-	glColor4fv(Color);
-      }
-        vertexArrayPtr->Color[0] = (GLubyte) (Color[0] * 255);
-        vertexArrayPtr->Color[1] = (GLubyte) (Color[1] * 255); 
-        vertexArrayPtr->Color[2] = (GLubyte) (Color[2] * 255); 
-        vertexArrayPtr->Color[3] = (GLubyte) (g_surface_alpha * 255);
-        glColor4fv(Color);
-	glColor4fv(Color);
-      }
     }
 
   }
@@ -651,17 +639,8 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
   }
 
   if (planes.opacity) {
-
     float opacity_value = (planes.opacity->value(x, y) - g_opacity_slider_min) /
 	(g_opacity_slider_max - g_opacity_slider_min);      
-    /*
-    float data_value = planes.opacity->value(x,y);
-    data_value = (data_value - planes.opacity->minNonZeroValue()) / 
-      (planes.opacity->maxNonZeroValue() - planes.opacity->minNonZeroValue());
-    data_value = data_value * (g_opacity_slider_max - g_opacity_slider_min) + 
-      g_opacity_slider_min;
-    float opacity_value = data_value;
-    */
     if (g_VERTEX_ARRAY) {
       vertexArray.Color[3] = (GLubyte) min(255.0, opacity_value);
     } else {
@@ -787,7 +766,13 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
   }
 
 #endif
-  
+
+  /* Put the vertex at the correct location */
+
+  Vertex[0]= (float) height_plane.xInWorld(x);
+  Vertex[1]= (float) height_plane.yInWorld(y);
+  Vertex[2]= (float) height_plane.valueInWorld(x, y);
+
   if(g_VERTEX_ARRAY) {
     vertexArray.Vertex[0] = Vertex[0];
     vertexArray.Vertex[1] = Vertex[1];
@@ -1175,5 +1160,3 @@ int spm_render_mark (const nmb_LocationInfo & p, void *) {
 
   return 0;
 }
-
-

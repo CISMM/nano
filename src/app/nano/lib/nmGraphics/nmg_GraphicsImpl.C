@@ -181,13 +181,13 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 //    } else {
 //       fprintf(stderr,"Vertex Array extension not supported.\n");
 //    }
-  //  if (g_VERTEX_ARRAY) {
+  if (g_VERTEX_ARRAY) {
     if (!init_vertexArray(grid_size_x,
 			  grid_size_y) ) {
       fprintf(stderr," init_vertexArray: out of memory.\n");
       exit(0);
     }
-    //  }
+  }
 
   /* Build display lists for surface scanning in X fastest, since
    * that is the way the SPM will start scanning.
@@ -806,13 +806,13 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
   // Rebuilds the texture coordinate array:
   nmb_PlaneSelection planes;  planes.lookup(d_dataset);
 
-  //  if (g_VERTEX_ARRAY) {
+  if (g_VERTEX_ARRAY) {
     if (!init_vertexArray(d_dataset->inputGrid->numX(),
                           d_dataset->inputGrid->numY()) ) {
           fprintf(stderr," init_vertexArray: out of memory.\n");
           exit(0);
      }
-    //  }
+  }
 
   grid_size_x = d_dataset->inputGrid->numX();
   grid_size_y = d_dataset->inputGrid->numX();

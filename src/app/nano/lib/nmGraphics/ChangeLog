@@ -1,3 +1,15 @@
+2000-08-31  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C (nmg_Graphics_Implementation) : put back in
+	some checks of the g_VERTEX_ARRAY
+	* nmg_GraphicsImpl.C (causeGridRebuild) : put back in some checks
+	of the g_VERTEX_ARRAY
+	* spm_gl.c (describe_gl_vertex) : fixed some stuff that got broken
+	in the merge - in particular where the local variable Vertex was
+	getting set (it wasn't getting set at all perhaps); now it is set
+	both at the beginnning (so all the opacity mapping stuff works) and
+	at the end where it gets copied into the vertex array
+
 2000-08-31  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
         * all : merged merge-2000-summer-thirdtech code with trunk.
