@@ -14,6 +14,8 @@ proc imBackgChReal {fooa element op} {
 }
 
 set nmInfo(image) [create_closing_toplevel image "Image Parameters"]
+# Prevent changes in size of the window by user.
+wm resizable $nmInfo(image) 0 0 
 set nmInfo(imagequick) [frame $nmInfo(image).quick]
 set nmInfo(imagefull) [frame $nmInfo(image).full]
 

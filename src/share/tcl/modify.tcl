@@ -9,6 +9,8 @@
 # for widgets that change behavior of modify mode
 #
 set nmInfo(modify) [create_closing_toplevel modify "Modify Parameters"]
+# Prevent changes in size of the window by user.
+wm resizable $nmInfo(modify) 0 0 
 set nmInfo(modifyquick) [frame $nmInfo(modify).quick]
 set nmInfo(modifyfull) [frame $nmInfo(modify).full]
 
