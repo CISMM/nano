@@ -788,14 +788,12 @@ Tclvar_string viz_tex("viz_tex", "", handle_viz_tex);
 Tclvar_int	analyze_shape("analyze_shape",0, handle_analyze_shape);
 Tclvar_int	shape_mask("shape_mask",1);
 Tclvar_int	shape_order("shape_order",0);
+Tclvar_int	pre_flatten("pre_flatten",1);
 Tclvar_int	auto_adapt("auto_adapt",1);
-Tclvar_float	shape_xscale("shape_xscale",0);
-Tclvar_float	shape_yscale("shape_yscale",0);
-Tclvar_float	shape_zscale("shape_zscale",0);
 Tclvar_float	blurring("blurring",4);
 Tclvar_float	aspect_ratio("aspect_ratio",2);
 Tclvar_float	correlation("correlation",0.6);
-Tclvar_float	intensity_thresh("intensity_thresh",160);
+Tclvar_float	intensity_thresh("intensity_thresh",0.6);
 Tclvar_string	shape_mask_file("shape_mask_file", "mask");
 Tclvar_string	shape_order_file("shape_order_file", "order");
 
@@ -4190,11 +4188,11 @@ static void handle_analyze_shape(vrpn_int32, void *)
     nmb_PlaneSelection planes;
     planes.lookup(dataset);
     
-    shape_analysis.setScale(shape_xscale, shape_yscale, shape_zscale);
     shape_analysis.setBlur(blurring);
     shape_analysis.setCorrelation(correlation);
     shape_analysis.setAspectRatio(aspect_ratio);
     shape_analysis.setThresholdInten(intensity_thresh);
+    shape_analysis.setPreFlatten(pre_flatten);
     shape_analysis.setAutoAdapt(auto_adapt);
     
     shape_analysis.setMaskWrite(shape_mask);
