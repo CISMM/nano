@@ -186,12 +186,12 @@ pack $nmInfo(reg_image).constrain_to_topography -fill x -anchor nw
 
 generic_radiobox $nmInfo(reg_image).invert_warp \
 	reg_invert_warp  \
-	"Registered image gets..." { "Reprojected" "Resampled" }
+	"When Resampling..." { "Warp Projection" "Warp Topography" }
 
 pack $nmInfo(reg_image).invert_warp -fill x -anchor nw
 
 floatscale $nmInfo(reg_image).resample_ratio 0 1 101 1 1 \
-       reg_resample_ratio "Portion Topog intensity mixed"
+       reg_resample_ratio "Portion unwarped image intensity mixed"
 pack $nmInfo(reg_image).resample_ratio -anchor nw
 
 
