@@ -102,28 +102,36 @@ init(int width, int height)
     if (dim == d_VertexArrayDim) {
         return 1;
     }
-    else {
-        d_VertexArrayDim = dim;
-    }
 
     d_regionalMask->init(width, height);
     
+    unsigned int i;
     if (d_vertexPtr) {
-        free(d_vertexPtr);
+        for (i = 0; i < d_VertexArrayDim; i++) {
+          delete [] (d_vertexPtr[i]);
+        }
+        delete [] d_vertexPtr;
     }
     
+    d_VertexArrayDim = dim;
+
     //d_vertexPtr = (Vertex_Struct **)malloc(d_VertexArrayDim * sizeof(Vertex_Struct **));
     d_vertexPtr = (Vertex_Struct **)new Vertex_Struct[d_VertexArrayDim];
     
     if (d_vertexPtr == NULL) {
+        fprintf(stderr, 
+               "nmg_SurfaceRegion::init: Error, out of memory [0]\n");
         return 0;
     }
     
-    for(unsigned int i=0;i < d_VertexArrayDim; i++) {
+    for (i=0; i < d_VertexArrayDim; i++) {
         d_vertexPtr[i] = new Vertex_Struct[d_VertexArrayDim * 2];
         
-        if(d_vertexPtr[i] == NULL )
+        if (d_vertexPtr[i] == NULL ) {
+            fprintf(stderr, 
+                 "nmg_SurfaceRegion::init: Error, out of memory [1]\n");
             return 0;
+        }
     }
     
     return 1;

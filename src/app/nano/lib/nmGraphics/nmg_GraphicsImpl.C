@@ -206,7 +206,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     // Even though we may not be using the vertex array extension, we still
     // use the vertex array to cache calculated normals
   if (!state->surface->init(grid_size_x, grid_size_y) ) {
-      fprintf(stderr," initialization of surface: out of memory.\n");
+      fprintf(stderr," initialization of surface: out of memory [call 0].\n");
       exit(0);
   }
 
@@ -968,7 +968,7 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
   if (!state->surface->init(d_dataset->inputGrid->numX(),
                        d_dataset->inputGrid->numY()) )
   {
-      fprintf(stderr," initialization of surface: out of memory.\n");
+      fprintf(stderr," initialization of surface: out of memory [call 1].\n");
       exit(0);
   }
 
