@@ -1,4 +1,5 @@
 global reg_window_open registration_needed reg_constrain_to_topography
+global reg_invert_warp
 global resample_resolution_x resample_resolution_y reg_resample_ratio
 global reg_surface_comes_from reg_projection_comes_from
 global resample_image_name
@@ -30,6 +31,12 @@ checkbutton $nmInfo(registration).constrain_to_topography \
        -text "Topography Region Only" -variable reg_constrain_to_topography \
        -anchor nw
 pack $nmInfo(registration).constrain_to_topography
+
+checkbutton $nmInfo(registration).invert_warp \
+       -text "Resample Warped Topography (instead of Projection)" \
+       -variable reg_invert_warp \
+       -anchor nw
+pack $nmInfo(registration).invert_warp
 
 floatscale $nmInfo(registration).resample_ratio 0 1 101 1 1 \
        reg_resample_ratio "Resample Mixing Ratio"

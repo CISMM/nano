@@ -1,3 +1,10 @@
+2000-09-23  Adam Seeger <seeger@cs.unc.edu>
+
+	* registration.tcl: added a checkbox and variable for letting you 
+	resample the "Topography" data (actually this could be from 
+	anything image) by warping it into the "Projection" image coordinate
+	system (which could also be AFM data or any other image)
+
 2000-09-07  Adam Seeger <seeger@cs.unc.edu>
 
         * modify.tcl: uncommented code that was probably added 8-18 for fixing
