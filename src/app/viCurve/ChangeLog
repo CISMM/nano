@@ -1,3 +1,8 @@
+2002-04-30  David Marshburn  <marshbur@cs.unc.edu>
+
+	* GPIBKeithley2400.C:  cleaned up the initialization from
+	command-line argumetns.
+
 2002-04-21  David Marshburn  <marshbur@cs.unc.edu>
 
 	* GPIBKeithley2400.C:  cleaned up the initialization from

@@ -39,7 +39,7 @@ static Tcl_Interp* tcl_interp;
 static Tclvar_int* tcl_quit_button_pressed;
 static char tcl_default_dir [] = "./";
 
-static char outputStreamName[128];
+static char outputStreamName[256];
 static int isWritingStreamFile = 0;
 static int isReadingStreamFile = 0;
 static int isReadingDevice = 0;
@@ -191,23 +191,26 @@ void usage(char *program_name)
 void parseArguments(int argc, char **argv)
 {
   int i;
-  for (i = 1; i < argc; i++){
+  for( i = 1; i < argc; i++ ) {
     if (!strcmp(argv[i], "-o")){
       if (++i >= argc) usage(argv[0]);
       isWritingStreamFile = 1;
       strcpy(outputStreamName, argv[i]);
     }
-    else if (!strcmp(argv[i], "-d")){
+    else if( !strcmp(argv[i], "-d") ) {
       if (++i >= argc) usage(argv[0]);
       isReadingDevice = 1;
       if( vi_device_name != NULL ) 
         delete vi_device_name;
-      vi_device_name = strdup(argv[i]);
+      vi_device_name = new char[strlen( argv[i] + 1 )];
+      strcpy( vi_device_name, argv[i] );
     }
-    else if (!strcmp(argv[i], "-i")){
+    else if( !strcmp(argv[i], "-i") ) {
       if (++i >= argc) usage(argv[0]);
       isReadingStreamFile = 1;
-      vi_device_name = new char[14 + strlen(argv[i])+1];
+      if( vi_device_name != NULL )
+        delete vi_device_name;
+      vi_device_name = new char[16 + strlen(argv[i])+1];
       sprintf(vi_device_name,"vi_curve@file://%s", argv[i]);
     }
     else
