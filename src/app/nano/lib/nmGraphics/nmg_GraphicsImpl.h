@@ -13,6 +13,7 @@
 #include <vrpn_Connection.h>  // for vrpn_HANDLERPARAM
 
 class PPM;
+class nmg_State;
 
 class nmg_Graphics_Implementation : public nmg_Graphics {
 
@@ -189,6 +190,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 //  virtual float getDiffusePercent (void) const;
     virtual const double * getSurfaceColor (void) const;
 
+    nmg_State * getState();
   protected:
 
     virtual void initDisplays (void);
@@ -217,6 +219,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
       // capture from the front buffer instead.
 
     nmb_Dataset * d_dataset;
+
+    nmg_State * state;
 
     void getLatestGridChange (int * minX, int * maxX, int * minY, int * maxY);
 

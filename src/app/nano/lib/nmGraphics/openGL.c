@@ -11,10 +11,10 @@ All Rights Reserved.
 *	This program is part of microscape. It primarily deals with openGL
 * related stuff. This code was based on nanoGL.c written by Russell Taylor.
 *	The marker XXX indicates an area of code that needs more attention.
+*
+* 10/2001 Reorganized to include utility functions related to openGL state.
 ****************************************************************************/
 
-/*XXX In raster scan mode, we end up refreshing the whole surface on line wrap*/
-/*XXX Add an option that does not use Z buffering? */
 
 #include	<math.h>	/* System includes */
 #include	<stdio.h>
@@ -43,15 +43,16 @@ extern UTree World;
 #include    "nmg_Surface.h"
 #include	"openGL.h"
 #include	"globjects.h"  // for myworld()
-#include	"graphics_globals.h"
-#include	"graphics.h" // for compute_texture_matrix()
+#include	"nmg_State.h"
 
 #include	"Timer.h"
 
 /*Globals*/
 extern int	do_y_fastest;		/* Tells which direction to scan in */
 extern int	do_raster;	      /* Raster (vs. Boustrophedonic) scan? */
-extern int setup_lighting(int);
+
+// default position of the light:  overhead, at infinity
+static GLfloat l0_position [4] = { 0.0, 1.0, 0.1, 0.0 };
 
 #ifdef MIN
 #undef MIN
@@ -130,7 +131,7 @@ int check_extension (const char *exten) {
     return 0;
 }
 
-void determine_GL_capabilities() {
+void determine_GL_capabilities(nmg_State * state) {
     
     int gl_1_1 = 0;
     
@@ -142,10 +143,10 @@ void determine_GL_capabilities() {
     // RMT The accelerated X server seems to be telling us that we have
     // vertex arrays, but then they are not drawn; ditto for MesaGL on
     // HPUX
-    g_VERTEX_ARRAY = 0;
+    state->VERTEX_ARRAY = 0;
 #else
-    g_VERTEX_ARRAY = gl_1_1; //Vertex arrays are standard as of GL 1.1
-    //g_VERTEX_ARRAY = 0;
+    state->VERTEX_ARRAY = gl_1_1; //Vertex arrays are standard as of GL 1.1
+    //state->VERTEX_ARRAY = 0;
 #endif
 }
 
@@ -162,7 +163,9 @@ GLfloat cur_modelview_matrix[16];
 #endif
 
 
-int draw_world (int) {
+int draw_world (int, void * data)
+{
+  nmg_State * state = (nmg_State *) data;
     
     v_gl_set_context_to_vlib_window(); 
     /********************************************************************/
@@ -171,7 +174,7 @@ int draw_world (int) {
       
     //UGRAPHICS CALL TO DRAW THE WORLD  -- ASSUMING THAT VLIB HAS IT IN WORLD SPACE
     //WHEN I HIT THIS POINT
-    if (g_config_enableUber) {
+    if (state->config_enableUber) {
         World.Do(&URender::Render);
     }
     
@@ -190,16 +193,16 @@ int draw_world (int) {
     nmb_PlaneSelection planes;
 
     
-    planes.lookup(g_inputGrid, g_heightPlaneName, g_colorPlaneName,
-        g_contourPlaneName, g_opacityPlaneName,
-        g_alphaPlaneName, g_maskPlaneName, g_transparentPlaneName,
-        g_vizPlaneName);
+    planes.lookup(state->inputGrid, state->heightPlaneName, state->colorPlaneName,
+        state->contourPlaneName, state->opacityPlaneName,
+        state->alphaPlaneName, state->maskPlaneName, state->transparentPlaneName,
+        state->vizPlaneName);
     
-    if (g_PRERENDERED_COLORS) {
-        planes.lookupPrerenderedColors(g_prerendered_grid);
+    if (state->PRERENDERED_COLORS) {
+        planes.lookupPrerenderedColors(state->prerendered_grid);
     }
-    if (g_PRERENDERED_DEPTH) {
-        planes.lookupPrerenderedDepth(g_prerendered_grid);
+    if (state->PRERENDERED_DEPTH) {
+        planes.lookupPrerenderedDepth(state->prerendered_grid);
     }
     
     if (planes.height == NULL) {	
@@ -219,13 +222,13 @@ int draw_world (int) {
     * lists for the surface.
     ************************************************************/
     
-    // TODO  - add special cases for g_PRERENDERED_COLORS
+    // TODO  - add special cases for state->PRERENDERED_COLORS
     
     if (decoration->selectedRegion_changed) {
         
         VERBOSECHECK(4);
         VERBOSE(4,"    Rebuilding display lists (for new selected region)");
-        if (!g_surface->rebuildSurface(VRPN_TRUE)) {
+        if (!state->surface->rebuildSurface(state, VRPN_TRUE)) {
             fprintf(stderr,
                 "ERROR: Could not build grid display lists\n");
             dataset->done = V_TRUE;
@@ -236,7 +239,7 @@ int draw_world (int) {
     
     //See if there are any regions that need full rebuilding for
     //some reason
-    if (!g_surface->rebuildSurface()) {
+    if (!state->surface->rebuildSurface(state)) {
         fprintf(stderr,
             "ERROR: Could not build grid display lists\n");
         dataset->done = V_TRUE;
@@ -247,7 +250,7 @@ int draw_world (int) {
     TIMERVERBOSE(5, mytimer, "draw_world:Replacing changed display lists");
     
     // Convert from rows to strips:  divide through by the tesselation stride 
-    if (!g_surface->rebuildInterval()) {
+    if (!state->surface->rebuildInterval(state)) {
         return -1;
     }
 
@@ -261,18 +264,18 @@ int draw_world (int) {
     TIMERVERBOSE(5, mytimer, "draw_world:Drawing the grid");
     
     /* Draw the light */       
-    setup_lighting(0);
+    setup_lighting(0, state);
 
-    g_surface->renderSurface();
+    state->surface->renderSurface(state);
     
-    setFilled();
+    setFilled(state);
     /*******************************************************/
     // Draw the parts of the scene other than the surface.
     /*******************************************************/
     
     // draw the microscope's current scanline as a visual indicator to the user
     // Not related to "scanline" mode, which controls the AFM tip. 
-    if (decoration->drawScanLine && g_config_chartjunk) {
+    if (decoration->drawScanLine && state->config_chartjunk) {
         float oldColor[4];
         float oldLineWidth[1];
         glGetFloatv(GL_CURRENT_COLOR, oldColor);
@@ -289,9 +292,9 @@ int draw_world (int) {
         glColor4fv(oldColor);
     }
     
-    if ((decoration->num_slow_line_3d_markers > 0) && g_config_chartjunk) {
+    if ((decoration->num_slow_line_3d_markers > 0) && state->config_chartjunk) {
         for (int i=0; i < decoration->num_slow_line_3d_markers; i++) {
-            position_sphere( decoration->slowLine3dMarkers[i][0],
+            position_sphere( state, decoration->slowLine3dMarkers[i][0],
                 decoration->slowLine3dMarkers[i][1],
                 decoration->slowLine3dMarkers[i][2] );
             mysphere(NULL);
@@ -300,15 +303,15 @@ int draw_world (int) {
     
     // TCH 8 April 98 don't know where these go best
     if (decoration->red.changed()) {
-        make_red_line(decoration->red.top(), decoration->red.bottom());
+        make_red_line(state,decoration->red.top(), decoration->red.bottom());
         decoration->red.clearChanged();
     }
     if (decoration->green.changed()) {
-        make_green_line(decoration->green.top(), decoration->green.bottom());
+        make_green_line(state,decoration->green.top(), decoration->green.bottom());
         decoration->green.clearChanged();
     }
     if (decoration->blue.changed()) {
-        make_blue_line(decoration->blue.top(), decoration->blue.bottom());
+        make_blue_line(state,decoration->blue.top(), decoration->blue.bottom());
         decoration->blue.clearChanged();
     }
 
@@ -318,26 +321,26 @@ int draw_world (int) {
     }
     
     if (decoration->trueTipLocation_changed) {
-        g_trueTipLocation[0] = decoration->trueTipLocation[0];
-        g_trueTipLocation[1] = decoration->trueTipLocation[1];
-        g_trueTipLocation[2] = decoration->trueTipLocation[2];
+        state->trueTipLocation[0] = decoration->trueTipLocation[0];
+        state->trueTipLocation[1] = decoration->trueTipLocation[1];
+        state->trueTipLocation[2] = decoration->trueTipLocation[2];
         if (spm_graphics_verbosity >= 12)
             fprintf(stderr, "Setting true tip location to (%.2f %.2f %.2f).\n",
-            g_trueTipLocation[0], g_trueTipLocation[1],
-            g_trueTipLocation[2]);
+            state->trueTipLocation[0], state->trueTipLocation[1],
+            state->trueTipLocation[2]);
         decoration->trueTipLocation_changed = 0;
     }
     
-    if (g_position_collab_hand) {
-        make_collab_hand_icon(g_collabHandPos, g_collabHandQuat,
-            g_collabMode);
-        g_position_collab_hand = 0;
+    if (state->position_collab_hand) {
+        make_collab_hand_icon(state->collabHandPos, state->collabHandQuat,
+            state->collabMode);
+        state->position_collab_hand = 0;
     }    
     
     // Set the lighting model for the measurement things
     VERBOSECHECK(4);
     VERBOSE(4,"    Setting measurement materials");
-    set_gl_measure_materials();
+    set_gl_measure_materials(state);
     
     /* Draw the pulse indicators */
     glColor3f(1.0f, 0.3f, 0.3f);
@@ -345,15 +348,10 @@ int draw_world (int) {
     /* Draw the scrape indicators */
     decoration->traverseVisibleScrapes(spm_render_mark, NULL);
     
-    // Set the lighting model for the icons in the world, then draw it
-    VERBOSECHECK(4);
-    VERBOSE(4,"    Setting icon materials");
-    set_gl_icon_materials();
-    VERBOSECHECK(4);
     VERBOSE(4,"    Drawing the world");
     TIMERVERBOSE(5, mytimer, "draw_world:Drawing the world");
     
-    myworld();
+    myworld(state);
     
     /***************************/
     /* Check for any GL errors */
@@ -387,16 +385,16 @@ void setupMaterials (void) {
 /**	This routine will set up the material properties so that the
 * surface will appear to be made of shiny plastic. */
 
-void set_gl_surface_materials(void)
+void set_gl_surface_materials(nmg_State * state)
 {	
-    GLfloat	specular[4] = { (float)g_specular_color,
-        (float)g_specular_color,
-        (float)g_specular_color, 1.0 };
+    GLfloat	specular[4] = { (float)state->specular_color,
+        (float)state->specular_color,
+        (float)state->specular_color, 1.0 };
     GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
     
     
     //fprintf(stderr, "In set_gl_surface_materials with texture mode %d.\n",
-    //g_texture_mode);
+    //state->texture_mode);
     TIMERVERBOSE(5, mytimer, "begin set_gl_surface_materials");
     
     // Set up the specular characteristics.
@@ -406,7 +404,7 @@ void set_gl_surface_materials(void)
     //       set both.
     glMaterialfv(GL_BACK, GL_SPECULAR, dark);
     glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
-    glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
+    glMaterialf(GL_FRONT, GL_SHININESS, state->shiny);
     
     // Set the light model to have completely ambient-off.  There is
     // ambient specified in light 0.
@@ -415,14 +413,14 @@ void set_gl_surface_materials(void)
     /* Set a color, in case the color is not being adjusted per vertex. */
     /* Use the surface color for this. */
     
-    g_surfaceColor[3] = g_surface_alpha; //make sure alpha value is updated
+    state->surfaceColor[3] = state->surface_alpha; //make sure alpha value is updated
     
-    glColor4dv(g_surfaceColor);
+    glColor4dv(state->surfaceColor);
     
     // Turn texture mapping to the appropriate state
     // Note that the Enable has to be the last one, after all the
     // Disable calls.
-    switch (g_texture_mode) {
+    switch (state->texture_mode) {
     case GL_FALSE:
         glDisable(GL_TEXTURE_1D);
         glDisable(GL_TEXTURE_2D);
@@ -458,12 +456,12 @@ void set_gl_surface_materials(void)
     default:
         if (spm_graphics_verbosity > 3)
             fprintf(stderr, "set_gl_surface_materials:  "
-            "texture_mode %i\n", g_texture_mode);
+            "texture_mode %i\n", state->texture_mode);
         break;
     }
     if (spm_graphics_verbosity > 3)
         fprintf(stderr, "set_gl_surface_materials:  "
-        "texture_mode %i\n", g_texture_mode);
+        "texture_mode %i\n", state->texture_mode);
     
     TIMERVERBOSE(5, mytimer, "end set_gl_surface_materials");
 }
@@ -472,7 +470,7 @@ void set_gl_surface_materials(void)
 * icons and such will appear to be made of shiny plastic, and will react
 * to specular and diffuse lighting, but will never be textured. */
 
-void    set_gl_icon_materials(void)
+void    set_gl_icon_materials(nmg_State * state)
 {	
     GLfloat	specular[4] = { 1.0, 1.0, 1.0, 1.0 };
     GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
@@ -487,7 +485,7 @@ void    set_gl_icon_materials(void)
     //       set both.
     glMaterialfv(GL_BACK, GL_SPECULAR, dark);
     glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
-    glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
+    glMaterialf(GL_FRONT, GL_SHININESS, state->shiny);
     
     // Set the light model to have completely ambient-off.  There is
     // ambient specified in light 0.
@@ -495,8 +493,8 @@ void    set_gl_icon_materials(void)
     
     /* Set a color, in case the color is not being adjusted per vertex. */
     /* Use the surface color for this. */
-    g_surfaceColor[3] = g_surface_alpha; //make sure alpha value is updated
-    glColor4dv(g_surfaceColor);
+    state->surfaceColor[3] = state->surface_alpha; //make sure alpha value is updated
+    glColor4dv(state->surfaceColor);
     
     // Disable texture-mapping.
     glDisable(GL_TEXTURE_1D);
@@ -513,7 +511,7 @@ void    set_gl_icon_materials(void)
 * model or be texture-mapped.  This is done by setting the ambient
 * coefficients to 1 and the diffuse/specular ones to 0.  */
 
-void    set_gl_measure_materials(void)
+void    set_gl_measure_materials(nmg_State * state)
 {	
     GLfloat	bright[4] = { 1.0, 1.0, 1.0, 1.0 };
     GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
@@ -533,8 +531,8 @@ void    set_gl_measure_materials(void)
     
     /* Set a color, in case the color is not being adjusted per vertex. */
     /* Use the surface color for this. */
-    g_surfaceColor[3] = g_surface_alpha; //Make sure alpha value is updated
-    glColor4dv(g_surfaceColor);
+    state->surfaceColor[3] = state->surface_alpha; //Make sure alpha value is updated
+    glColor4dv(state->surfaceColor);
     
     TIMERVERBOSE(7, mytimer, "set_gl_measure_materials: end glColor3dv");
     
@@ -547,3 +545,119 @@ void    set_gl_measure_materials(void)
     
     TIMERVERBOSE(5, mytimer, "end set_gl_measure_materials");
 }
+
+//---------------------------------------------------------------------------
+// This routine sets up the lighting and some of the surface material
+// properties.  It should be the one used in both openGL and PixelFlow.
+// Some effort should be made to bring all of the material parameters
+// together here.
+
+int setup_lighting (int, void * data)
+{
+    static	int	was_smooth_shading = -1;
+  nmg_State * state = (nmg_State *) data;
+
+    GLfloat l0_ambient[4] = { 0.2, 0.2, 0.2, 1.0 };
+//    GLfloat l0_diffuse[4] = { 0.4, 0.4, 0.4, 1.0 };
+    GLfloat l0_diffuse[4] = { state->diffuse, state->diffuse, state->diffuse, 1.0 };
+/*     GLfloat l0_specular[4] = { 0.4, 0.4, 0.4, 1.0 }; */
+    GLfloat l0_specular[4] = { 0.2, 0.2, 0.2, 1.0 };
+    // l0_position defined at the top of this file as a global variable
+
+    // make sure gl calls are directed to the right context
+    v_gl_set_context_to_vlib_window();
+
+    glLightfv(GL_LIGHT0, GL_AMBIENT, l0_ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, l0_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, l0_specular);
+    glPushMatrix();
+    glLoadIdentity();
+    glLightfv(GL_LIGHT0, GL_POSITION, l0_position);
+    glPopMatrix();
+    glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 0.0);
+    glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 180.0);
+    glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1.0);
+    glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.0);
+    glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.0);
+
+    if (state->config_smooth_shading != was_smooth_shading) {
+	was_smooth_shading = state->config_smooth_shading;
+	if (state->config_smooth_shading) {
+	    glShadeModel(GL_SMOOTH);	/* Gouraud shading */
+	} else {
+	    glShadeModel(GL_FLAT);	/* Flat shading */
+	}
+    }
+
+  if (!state->PRERENDERED_COLORS && !state->PRERENDERED_TEXTURE) {
+    // With prerendered colors we don't have any normals;  this REALLY
+    // slows us down, since GL_NORMALIZE special-cases that.
+    glEnable(GL_NORMALIZE);                 /* Re-Normalize normals */
+  }
+
+  // No default ambient lighting other than specified in the light
+  {       
+	GLfloat global_ambient[4] = { 0.0, 0.0, 0.0, 1.0 };
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
+  }
+
+  // Local viewer is slower, and creates a highlight It's more realistic, but
+  // can hide features outside the highlight and possibly cause
+  // mis-interpretation of bumps.
+  if (state->local_viewer) {
+      glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+  } else {
+      glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
+  }
+
+  // 2 sided lighting causes black lines to show through the surface on Nvidia
+  // Quadro2Pro, and it's probably slower, anyway.
+  //glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  glEnable(GL_LIGHT0);
+
+  // Is this reasonable?  TCH 10 Jan 99
+  if (state->PRERENDERED_COLORS || state->PRERENDERED_TEXTURE) {
+    glDisable(GL_LIGHTING);
+  } else {
+    glEnable(GL_LIGHTING);
+  }
+
+    return 0;
+}
+
+void setLightDirection (const q_vec_type & newValue) {
+  l0_position[0] = newValue[0];
+  l0_position[1] = newValue[1];
+  l0_position[2] = newValue[2];
+}
+
+void getLightDirection (q_vec_type * v) {
+  (*v)[0] = l0_position[0];
+  (*v)[1] = l0_position[1];
+  (*v)[2] = l0_position[2];
+}
+
+// Put the light back where it was when the program started.
+
+void resetLightDirection (void) {
+  l0_position[0] = 0.0;
+  l0_position[1] = 1.0;
+  l0_position[2] = 0.1;
+  l0_position[3] = 0.0;
+}
+
+void getViewportSize (nmg_State * state, int * width, int * height) {
+  *width  = v_display_table[state->displayIndexList[0]].viewports[0].fbExtents[0];
+  *height = v_display_table[state->displayIndexList[0]].viewports[0].fbExtents[1];
+}
+
+
+void setFilled(nmg_State * state)
+{
+    if (state->config_filled_polygons) {
+	    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    } else {
+	    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+}
+

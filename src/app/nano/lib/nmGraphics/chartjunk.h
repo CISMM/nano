@@ -14,6 +14,8 @@ extern int	myfont;	// Font to use
 
 struct nmg_Funclist;  // from nmg_Funclist.h
 
+class nmg_State;
+
 //int scale_display (void *);
 //int x_y_width_display (void *);
 //int height_at_hand_display (void *);
@@ -24,7 +26,7 @@ struct nmg_Funclist;  // from nmg_Funclist.h
 //int mode_display (void *);
 //int measure_display (void *);
 
-int addChartjunk (nmg_Funclist ** v_screen, float * screen_scale);
+int addChartjunk (nmg_Funclist ** v_screen, nmg_State * state);
   // adds the above display routines to the specified funclist
   // (should be v_screen)
 

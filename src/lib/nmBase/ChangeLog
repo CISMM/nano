@@ -1,3 +1,7 @@
+2001-10-19  Aron Helser  <helser@cs.unc.edu>
+
+	* BCPlane.Ch (valueAt): overloaded to take float * arg. 
+
 2001-10-17  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_Transform_TScShR.hC (setParameter, getParameter): new functions

@@ -1,3 +1,9 @@
+2001-10-19  Aron Helser  <helser@cs.unc.edu>
+
+	* interaction.c (handle_commit_change): Changed direct call to
+	position_sphere in graphics library (which shouldn't have linked!)
+	to graphics->positionSphere
+
 2001-10-15  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.c (handle_friction_slider_change): remove call to

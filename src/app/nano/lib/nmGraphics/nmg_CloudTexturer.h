@@ -7,20 +7,24 @@
 #include <quat.h>  //For q_vec_type
 #include <v.h>      //For VectorType
 #include <normal.h> //For Compute_Norm
+
+class nmg_State;
+
 //Maybe, should create a compute norm using
 //q_vec_type in some other place, because the
 //code in this file, is based on the old(?) VectorType.
 //It can be used however, because they are basically
 //the same thing under the hood
 
-
 class nmg_CloudTexturer 
 {
 public:
     nmg_CloudTexturer(int width, int height);
     
-    vrpn_uint8* render_detail(vrpn_bool shadows = vrpn_false);
-    vrpn_uint8* render_composite(vrpn_bool shadows = vrpn_false);
+    vrpn_uint8* render_detail(nmg_State * state, 
+                              vrpn_bool shadows = vrpn_false);
+    vrpn_uint8* render_composite(nmg_State * state, 
+                                 vrpn_bool shadows = vrpn_false);
     void set_light(q_vec_type lightdir, float intensity);
 private:
     q_vec_type d_light;

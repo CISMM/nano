@@ -340,6 +340,34 @@ int BCPlane::valueAt (double * result, double x, double y) {
   return 0;
 }
 
+/**
+   Gives the data value stored in the plane at a location specified
+   in nanometers. If the location is not inside the min/max bounds
+   of the plane, the function returns -1 and does not modify the \a result
+   pointer.
+   @param result Set to the value at the \a x \a y location specified
+   @param x desired x location, in nm.
+   @param y desired y location, in nm.
+   @return 0 on success, -1 on failure (value out of bounds)
+*/
+int BCPlane::valueAt (float * result, double x, double y) {
+//int BCPlane::valueAt (double x, double y) {
+  int ix;
+  int iy;
+
+  ix = (int) (derangeX() * (x - minX()));
+  iy = (int) (derangeY() * (y - minY()));
+
+  if ((ix < 0) || (iy < 0) ||
+      (ix >= _num_x) || (iy >= _num_y)) {
+      //fprintf(stderr, "BCPlane::valueAt %d %d:  Out of bounds!.\n", ix, iy);
+    return -1;
+  }
+  *result = _value[ix + _borderXMin + (iy + _borderYMin)* 
+                                      (_borderXMin+_num_x+_borderXMax)];
+  return 0;
+}
+
 
 float BCPlane::interpolatedValue(double x, double y) {
     int ix = (int)x;

@@ -20,10 +20,10 @@
 
 //#include "nmg_GraphicsImpl.h"
 //#include "nmg_Globals.h" // for graphics pointer.
-#include "graphics_globals.h"  // for VERBOSE
+#include "nmg_State.h"  // for nmg_State
 #include "font.h"  // drawStringInFont()
 #include "nmg_Funclist.h"
-#include "graphics.h"  // for getViewportSize
+#include "openGL.h"  // for getViewportSize
 
 
 
@@ -117,23 +117,23 @@ static Measure_Data calculate (const PointType red_pos,
 
 int scale_display (void * data) {
 
-  float * size;
-  size = (float *) data;
+  nmg_State * state = (nmg_State *) data;
+  float size = 1.0;
 
   char *message = NULL;
   glPushAttrib(GL_CURRENT_BIT);
   glPushMatrix();
 
   glColor3f(1.0f, 1.0f, 1.0f);
-  glScalef(*size, *size, *size);
+  glScalef(size, size, size);
   glTranslatef(MARGIN, 2*LINE_SPACE + MARGIN, Z_SLIVER);
 
   double scale = 1.0;
 
-//fprintf(stderr, "scale_display:  height plane %s.\n", g_heightPlaneName);
+//fprintf(stderr, "scale_display:  height plane %s.\n", state->heightPlaneName);
 
-  BCPlane * plane = g_inputGrid->getPlaneByName
-              (g_heightPlaneName);
+  BCPlane * plane = state->inputGrid->getPlaneByName
+              (state->heightPlaneName);
   if (plane == NULL) {
       fprintf(stderr, "Error in scale_display: could not get plane!\n");
   } else {
@@ -141,11 +141,11 @@ int scale_display (void * data) {
       // get a reasonable estimate of the maximum size string we'll need
       // and allocate the buffer
       int mess_len = strlen(plane->units()->Characters()) + 
-		strlen(g_heightPlaneName) + 100;
+		strlen(state->heightPlaneName) + 100;
       message = new char[mess_len];
       if (message != NULL) {
           sprintf(message,"Displaying %s (%s), scale x%g",
-                  g_heightPlaneName,
+                  state->heightPlaneName,
                   plane->units()->Characters(), scale);
       } else {
           fprintf(stderr, "Error: scale_display: out of memory\n");
@@ -163,12 +163,13 @@ int scale_display (void * data) {
 }
 
 
-int x_y_width_display (void *) {
+int x_y_width_display (void *data) {
 
+  nmg_State * state = (nmg_State *) data;
   char message[100];
 
   sprintf(message,"%dx%d grid, %g by %g nm",
-          g_inputGrid->numX(), g_inputGrid->numY(), 
+          state->inputGrid->numX(), state->inputGrid->numY(), 
           decoration->selectedRegionMaxX - decoration->selectedRegionMinX,
           decoration->selectedRegionMaxY - decoration->selectedRegionMinY);
 
@@ -186,14 +187,15 @@ int x_y_width_display (void *) {
 }
 
 
-int height_at_hand_display (void *) {
+int height_at_hand_display (void * data) {
 
   static	int	 whichUser = 0;
   double	x_loc, y_loc;
   v_xform_type	worldFromHand;
   char message[1000], msgpart[500];
 
-  if (g_user_mode == USER_PLANEL_MODE) {	// sharp tip mode
+  nmg_State * state = (nmg_State *) data;
+  if (state->user_mode == USER_PLANEL_MODE) {	// sharp tip mode
 	// Print all of the values in the intputPoint list of values
 	Point_value *value = microscope->state.data.inputPoint->head();
 
@@ -214,8 +216,8 @@ int height_at_hand_display (void *) {
 	}
   } else {
 	// Find out where the hand is in x and y right now
-	BCPlane* plane = g_inputGrid->getPlaneByName
-                      (g_heightPlaneName);
+	BCPlane* plane = state->inputGrid->getPlaneByName
+                      (state->heightPlaneName);
 	v_get_world_from_hand(whichUser, &worldFromHand);
 	x_loc = worldFromHand.xlate[X];
 	y_loc = worldFromHand.xlate[Y];
@@ -252,14 +254,15 @@ int height_at_hand_display (void *) {
 }
 
 
-int rate_display (void *) {
+int rate_display (void *data) {
 
   char message[100];
+  nmg_State * state = (nmg_State *) data;
 
   glPushAttrib(GL_CURRENT_BIT);
   glPushMatrix();
 
-  switch (g_inputGrid->readMode()) {
+  switch (state->inputGrid->readMode()) {
     case READ_DEVICE:
       sprintf(message, "Live (%5ld sec)", decoration->elapsedTime);
       break;
@@ -329,8 +332,9 @@ int screenaxis_display (void *) {
   return 0;
 }
 
-int control_display (void *) {
+int control_display (void *data) {
 
+  nmg_State * state = (nmg_State *) data;
 //fprintf(stderr, " <cd> in;  graphics is %d\n", graphics);
 
   char message[100];
@@ -347,7 +351,7 @@ int control_display (void *) {
 */
 
   // TCH 18 Feb 2001
-  getViewportSize(&w, &h);
+  getViewportSize(state, &w, &h);
 
 //fprintf(stderr, " <cd> got size\n");
 
@@ -393,15 +397,17 @@ int control_display (void *) {
   return(0);
 }
 
-int mode_display (void *) {
+int mode_display (void *data) {
 
   char *message;
+
+  nmg_State * state = (nmg_State *) data;
 
   glPushAttrib(GL_CURRENT_BIT);
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
 
-  switch(g_user_mode) {
+  switch(state->user_mode) {
      /* Don't comment any of these out unless the modes are totally 
       * removed from the code. When I commented out "comb mode", 
       * I got a seg-fault, even though the code was supposed to safely 
@@ -438,12 +444,14 @@ int mode_display (void *) {
 
 
 
-int measure_display (void *) {
+int measure_display (void *data) {
 
    char message[100];
 
-   BCPlane* plane = g_inputGrid->getPlaneByName
-                      (g_heightPlaneName);
+  nmg_State * state = (nmg_State *) data;
+
+   BCPlane* plane = state->inputGrid->getPlaneByName
+                      (state->heightPlaneName);
    if (plane == NULL)
    {
        fprintf(stderr, "Error in doMeasure: could not get plane!\n");
@@ -572,25 +580,25 @@ int measure_display (void *) {
 }
 
 
-int addChartjunk (nmg_Funclist ** v_screen, float * screen_scale) {
+int addChartjunk (nmg_Funclist ** v_screen, nmg_State * state) {
 
     //fprintf(stderr, "Adding chartjunk to screen\n");
 
 //    addFunctionToFunclist(v_screen, screenaxis_display, NULL,
 //                          "screenaxis_display");
   // rate_id =
-  addFunctionToFunclist(v_screen, rate_display, NULL, "rate_display");
+  addFunctionToFunclist(v_screen, rate_display, state, "rate_display");
   // mode_id =
-  addFunctionToFunclist(v_screen, mode_display, NULL, "mode_display");
+  addFunctionToFunclist(v_screen, mode_display, state, "mode_display");
   // measure_id =
-  addFunctionToFunclist(v_screen, measure_display, NULL, "measure_display");
-  addFunctionToFunclist(v_screen, scale_display, screen_scale, "scale_display");
-  addFunctionToFunclist(v_screen, x_y_width_display, NULL, "x_y_width_display");
+  addFunctionToFunclist(v_screen, measure_display, state, "measure_display");
+  addFunctionToFunclist(v_screen, scale_display, state, "scale_display");
+  addFunctionToFunclist(v_screen, x_y_width_display, state, "x_y_width_display");
   // scale_id =
-  addFunctionToFunclist(v_screen, height_at_hand_display, NULL,
+  addFunctionToFunclist(v_screen, height_at_hand_display, state,
                         "height_at_hand_display");
   // control_id =
-  addFunctionToFunclist(v_screen, control_display, NULL, "control_display");
+  addFunctionToFunclist(v_screen, control_display, state, "control_display");
 
   return 0;
 }

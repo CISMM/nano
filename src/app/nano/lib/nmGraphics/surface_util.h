@@ -1,34 +1,28 @@
-#ifndef GRAPHICS_H
-#define GRAPHICS_H
+#ifndef SURFACE_UTIL_H
+#define SURFACE_UTIL_H
 
 #ifndef Q_INCLUDED
 #include <quat.h>
 #endif
 
 class PPM;  // from PPM.h
+class nmg_State;
 
-void buildVisualizationTexture(int width, int height, unsigned char *texture);
-void buildContourTexture (void);  // for update
-void buildRemoteRenderedTexture (int width, int height, void *);
-void makeCheckImage (void);
-void buildAlphaTexture (void);
-void makeRulerImage (void);
-void buildRulergridTexture (void);
+void buildVisualizationTexture(nmg_State * state, 
+                               int width, int height, unsigned char *texture);
+void buildContourTexture (nmg_State * state);  // for update
+void buildRemoteRenderedTexture (nmg_State * state, 
+                                 int width, int height, void *);
+void makeCheckImage (nmg_State * state);
+void buildAlphaTexture (nmg_State * state);
+void makeRulerImage (nmg_State * state);
+void buildRulergridTexture (nmg_State * state);
 
 void compute_texture_matrix(double translate_x, double translate_y,
                 double rotation, double scale_x, double scale_y,
                 double shear_x, double shear_y,
                 double xform_center_tex_x, double xform_center_tex_y,
                 double *mat);
-
-int setup_lighting (int nothing);
-void setFilled();
-
-void setLightDirection (const q_vec_type &);
-void getLightDirection (q_vec_type *);
-void resetLightDirection (void);
-
-void getViewportSize (int * width, int * height);
 
 #define CYGWIN_TEXTURE_FUNCTION GL_DECAL
 // This seems to be a reasonable choice on a pc that doesn't handle alpha
@@ -39,4 +33,4 @@ void getViewportSize (int * width, int * height);
 // makeRulerImage()
 // buildAndInstallRulerImage()
 
-#endif  // GRAPHICS_H
+#endif  // SURFACE_UTIL_H

@@ -10,22 +10,23 @@
 
 class BCGrid;  // from BCGrid.h
 class nmg_SurfaceMask;
+class nmg_State;
 
 // structure for vertex array
 struct Vertex_Struct;
 
 
-extern int spm_x_strip (const nmb_PlaneSelection &planes,
+extern int spm_x_strip (nmg_State * state, const nmb_PlaneSelection &planes,
                         GLdouble surfaceColor [3], int which,
                         Vertex_Struct * vertexArray);
-extern int spm_x_strip_masked (const nmb_PlaneSelection &planes, 
+extern int spm_x_strip_masked (nmg_State * state, const nmb_PlaneSelection &planes, 
                                nmg_SurfaceMask *mask,
                                GLdouble surfaceColor [3], int which,
                                Vertex_Struct * vertexArray);
-extern int spm_y_strip (const nmb_PlaneSelection &planes,
+extern int spm_y_strip (nmg_State * state, const nmb_PlaneSelection &planes,
                         GLdouble surfaceColor [3], int which,
                         Vertex_Struct * vertexArray);
-extern int spm_y_strip_masked (const nmb_PlaneSelection &planes, 
+extern int spm_y_strip_masked (nmg_State * state, const nmb_PlaneSelection &planes, 
                                nmg_SurfaceMask *mask,
                                GLdouble surfaceColor [3], int which,
                                Vertex_Struct * vertexArray);

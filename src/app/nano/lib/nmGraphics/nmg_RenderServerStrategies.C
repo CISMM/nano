@@ -6,7 +6,7 @@
 
 #include "nmg_RenderServer.h"
 
-#include "graphics_globals.h"
+#include "nmg_State.h"
 #include <nmb_Globals.h>
 #include "nmg_CloudTexturer.h"
 
@@ -41,7 +41,7 @@ vrpn_bool nmg_RSViewS_Ortho::alwaysSendEntireScreen (void) const {
 }
 
 // virtual
-void nmg_RSViewS_Ortho::setViewingTransform (void) {
+void nmg_RSViewS_Ortho::setViewingTransform (nmg_State * state) {
 
   BCPlane * plane;
   double scaleTo;
@@ -53,7 +53,7 @@ void nmg_RSViewS_Ortho::setViewingTransform (void) {
   // Requires a screen with square pixels to work properly?
 
   // Taken from find_center_xforms() in microscape.c
-  plane = g_inputGrid->getPlaneByName (g_heightPlaneName);
+  plane = state->inputGrid->getPlaneByName (state->heightPlaneName);
   lenY = fabs(plane->maxY() - plane->minY());
   scaleTo = lenY / ScreenWidthMetersY;
 
@@ -79,10 +79,10 @@ void nmg_RSViewS_Ortho::setViewingTransform (void) {
   // server?  AARGH!
   //scaleTo *= d_server->screenSizeY() * 0.0085;
 
-  gridMidpointX = (g_inputGrid->minX() +
-                   g_inputGrid->maxX()) * 0.5;
-  gridMidpointY = (g_inputGrid->minY() +
-                   g_inputGrid->maxY()) * 0.5;
+  gridMidpointX = (state->inputGrid->minX() +
+                   state->inputGrid->maxX()) * 0.5;
+  gridMidpointY = (state->inputGrid->minY() +
+                   state->inputGrid->maxY()) * 0.5;
   v_world.users.xforms[0].xlate[0] = gridMidpointX;
   v_world.users.xforms[0].xlate[1] = gridMidpointY;
   v_world.users.xforms[0].xlate[2] = scaleTo ;
@@ -98,11 +98,11 @@ gridMidpointX, -scaleTo + gridMidpointY, scaleTo , v_world.users.xforms[0].scale
 }
 
 // virtual
-void nmg_RSViewS_Ortho::setGraphicsModes (void) {
+void nmg_RSViewS_Ortho::setGraphicsModes (nmg_State * state) {
 
-  g_config_chartjunk = 0;
-  g_config_measurelines = 0;
-  g_config_planeonly = 1;  // should make chartjunk and measurelines redundant
+  state->config_chartjunk = 0;
+  state->config_measurelines = 0;
+  state->config_planeonly = 1;  // should make chartjunk and measurelines redundant
 
 }
 
@@ -126,7 +126,7 @@ vrpn_bool nmg_RSViewS_Slave::alwaysSendEntireScreen (void) const {
 }
 
 // virtual
-void nmg_RSViewS_Slave::setViewingTransform (void) {
+void nmg_RSViewS_Slave::setViewingTransform (nmg_State * ) {
 
   // DO NOTHING
   // Default behavior of graphics remote should make this Server
@@ -135,11 +135,11 @@ void nmg_RSViewS_Slave::setViewingTransform (void) {
 }
 
 // virtual
-void nmg_RSViewS_Slave::setGraphicsModes (void) {
+void nmg_RSViewS_Slave::setGraphicsModes (nmg_State * state) {
 
-  g_config_chartjunk = 1;
-  g_config_measurelines = 1;
-  g_config_planeonly = 0;
+  state->config_chartjunk = 1;
+  state->config_measurelines = 1;
+  state->config_planeonly = 0;
 
 }
 
@@ -163,7 +163,7 @@ nmg_RenderServer_Strategy::~nmg_RenderServer_Strategy (void) {
 }
 
 // virtual
-void nmg_RenderServer_Strategy::render (void) {
+void nmg_RenderServer_Strategy::render (nmg_State * ) {
   d_server->defaultRender();
 }
 
@@ -200,7 +200,7 @@ nmg_RSStrategy_Texture::~nmg_RSStrategy_Texture (void) {
 }
 
 // virtual
-void nmg_RSStrategy_Texture::captureData (void) {
+void nmg_RSStrategy_Texture::captureData (nmg_State *) {
   d_server->screenCapture();
 }
 
@@ -222,7 +222,7 @@ nmg_RSStrategy_Vertex::~nmg_RSStrategy_Vertex (void) {
 
 
 // virtual
-void nmg_RSStrategy_Vertex::captureData (void) {
+void nmg_RSStrategy_Vertex::captureData (nmg_State *) {
   d_server->screenCapture();
   d_server->depthCapture();
 }
@@ -247,9 +247,9 @@ nmg_RSStrategy_CloudTexture::
 
 // virtual
 void nmg_RSStrategy_CloudTexture::
-render (void)
+render (nmg_State * state)
 {
-    nmg_RenderServer_Strategy::render();
+    nmg_RenderServer_Strategy::render(state);
     q_vec_type lightdir;
     d_server->getLightDirection(&lightdir);
     //Don't know how to get ahold of an "intensity" value.  So use 1 for now
@@ -259,7 +259,7 @@ render (void)
         delete [] d_frame;
     }
     
-    d_frame = d_cloud_render->render_detail();
+    d_frame = d_cloud_render->render_detail(state);
 }
 
 // virtual
@@ -271,9 +271,10 @@ sendData(int minx, int maxx, int miny, int maxy)
 
 // virtual
 void nmg_RSStrategy_CloudTexture::
-captureData(void) 
+captureData(nmg_State * state) 
 {
-    nmg_RenderServer_Strategy::updatePixelBuffer(g_minChangedX, g_maxChangedX,
-                                             g_minChangedY, g_maxChangedY, d_frame);    
+    nmg_RenderServer_Strategy::updatePixelBuffer(
+        state->minChangedX, state->maxChangedX,
+        state->minChangedY, state->maxChangedY, d_frame);    
 }
 

@@ -98,6 +98,7 @@ class BCPlane
        { return _value[x + _borderXMin + (y + _borderYMin)*
                                          (_borderXMin+_num_x+_borderXMax)]; }
     int valueAt (double * result, double x, double y);
+    int valueAt (float * result, double x, double y);
     
     float interpolatedValue(double x, double y);
     float interpolatedValueAt(double x, double y);

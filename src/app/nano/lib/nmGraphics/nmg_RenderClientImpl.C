@@ -10,9 +10,9 @@
 #include <GL/glu.h>  // for gluErrorString
 //#include <GL/glut.h>
 
-#include "graphics_globals.h"  // for g_PRERENDERED_COLORS
+#include "nmg_State.h"  // for g_PRERENDERED_COLORS
 
-#include "graphics.h"  // for buildRemoteRenderedTexture
+#include "surface_util.h"  // for buildRemoteRenderedTexture
 
 class nmg_RCIStrategy {
 
@@ -42,6 +42,7 @@ class nmg_RCIStrategy {
                                   const vrpn_float64 * buffer);
       /**< Default implementation does nothing. */
 
+    GLubyte * remote_data;
   protected:
 
     nmg_Graphics_RenderClient_Implementation * d_imp;
@@ -87,7 +88,7 @@ class nmg_RCIS_Mesh : public nmg_RCIStrategy {
 /** \class nmg_RCIS_TextureBase
  * Base class for strategies that represent the pixel data received over the
  * network as a flat array of characters in remote_data (global declared
- * in graphics_globals.h).
+ * in nmg_State.h(?)).
  */
 
 class nmg_RCIS_TextureBase : public nmg_RCIStrategy {
@@ -373,7 +374,8 @@ void nmg_RCIS_Texture::mainloop (void) {
 
 
   if (d_textureChanged) {
-    buildRemoteRenderedTexture(d_screenSizeX, d_screenSizeY, remote_data);
+    buildRemoteRenderedTexture(d_imp->getState(), 
+                               d_screenSizeX, d_screenSizeY, remote_data);
     d_textureChanged = VRPN_FALSE;
   }
   // hack - overloading genetic texture coordinate handling
@@ -383,28 +385,28 @@ void nmg_RCIS_Texture::mainloop (void) {
              d_imp->dataset()->inputGrid->minX();
   float dy = d_imp->dataset()->inputGrid->maxY() -
              d_imp->dataset()->inputGrid->minY();
-  g_texture_transform[0] = 1.0 / dx;
-  g_texture_transform[1] = 0.0;
-  g_texture_transform[2] = 0.0;
-  g_texture_transform[3] = 0.0;
-  g_texture_transform[4] = 0.0;
-  g_texture_transform[5] = 1.0 / dy;
-  g_texture_transform[6] = 0.0;
-  g_texture_transform[7] = 0.0;
-  g_texture_transform[8] = 0.0;
-  g_texture_transform[9] = 0.0;
-  g_texture_transform[10] = 1.0;
-  g_texture_transform[11] = 0.0;
-  g_texture_transform[12] = -d_imp->dataset()->inputGrid->minX() / dx;
-  g_texture_transform[13] = -d_imp->dataset()->inputGrid->minY() / dy;
-  g_texture_transform[14] = 0.0;
-  g_texture_transform[15] = 1.0;
+  d_imp->getState()->texture_transform[0] = 1.0 / dx;
+  d_imp->getState()->texture_transform[1] = 0.0;
+  d_imp->getState()->texture_transform[2] = 0.0;
+  d_imp->getState()->texture_transform[3] = 0.0;
+  d_imp->getState()->texture_transform[4] = 0.0;
+  d_imp->getState()->texture_transform[5] = 1.0 / dy;
+  d_imp->getState()->texture_transform[6] = 0.0;
+  d_imp->getState()->texture_transform[7] = 0.0;
+  d_imp->getState()->texture_transform[8] = 0.0;
+  d_imp->getState()->texture_transform[9] = 0.0;
+  d_imp->getState()->texture_transform[10] = 1.0;
+  d_imp->getState()->texture_transform[11] = 0.0;
+  d_imp->getState()->texture_transform[12] = -d_imp->dataset()->inputGrid->minX() / dx;
+  d_imp->getState()->texture_transform[13] = -d_imp->dataset()->inputGrid->minY() / dy;
+  d_imp->getState()->texture_transform[14] = 0.0;
+  d_imp->getState()->texture_transform[15] = 1.0;
 
   // Can't call setTextureMode() every frame because that calls
   // causeGridRedraw(), which regenerates the grid.
-  g_texture_mode = GL_TEXTURE_2D;
-  g_texture_displayed = nmg_Graphics::REMOTE_DATA;
-  g_texture_transform_mode = nmg_Graphics::REGISTRATION_COORD;
+  d_imp->getState()->texture_mode = GL_TEXTURE_2D;
+  d_imp->getState()->texture_displayed = nmg_Graphics::REMOTE_DATA;
+  d_imp->getState()->texture_transform_mode = nmg_Graphics::REGISTRATION_COORD;
 
   // in the right window
   v_gl_set_context_to_vlib_window();
@@ -421,7 +423,7 @@ void nmg_RCIS_Texture::initializeTextures (void) {
 
   nmg_RCIS_TextureBase::initializeTextures();
 
-  buildRemoteRenderedTexture(d_screenSizeX, d_screenSizeY,
+  buildRemoteRenderedTexture(d_imp->getState(), d_screenSizeX, d_screenSizeY,
                              remote_data);
 
 }
@@ -559,26 +561,26 @@ nmg_Graphics_RenderClient_Implementation
   d_renderingGrid->addNewPlane("prerendered blue", "", 0);
 
   if (cMode == VERTEX_COLORS) {
-    g_PRERENDERED_COLORS = 1;
+    state->PRERENDERED_COLORS = 1;
   }
   if (cMode == SUPERSAMPLED_COLORS) {
-    g_PRERENDERED_TEXTURE = 1;
+    state->PRERENDERED_TEXTURE = 1;
   }
   // This used to be cMode, but it caused a warning, and I think
   // it should be dMode
   if (dMode == VERTEX_DEPTH) {
-    g_PRERENDERED_DEPTH = 1;
+    state->PRERENDERED_DEPTH = 1;
   }
-  g_prerendered_grid = d_renderingGrid;
-  g_prerenderedChange = &rangeOfChange;
+  state->prerendered_grid = d_renderingGrid;
+  state->prerenderedChange = &rangeOfChange;
 
   // vertex array is initialized by nmg_Graphics_Implementation, but
   // it gets the wrong size
-  // Remove the conditional on g_VERTEX_ARRAY on 12/8/00 by Jason
+  // Remove the conditional on state->VERTEX_ARRAY on 12/8/00 by Jason
   // Removed because the vertex arrays are used to store normals so
   // they are always needed, and this conforms with nmg_Graphics_Implementation
 
-  if (!g_surface->init(xsize, ysize)) {
+  if (!state->surface->init(xsize, ysize)) {
 	  fprintf(stderr," initVertexArrays: out of memory.\n");
       exit(0);
   }

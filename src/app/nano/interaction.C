@@ -923,7 +923,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	  microscope->ScanTo( coord_x, coord_y );
 	  double grid_x,grid_y;
 	  dataset->inputGrid->worldToGrid(coord_x,coord_y,grid_x, grid_y);
-	  position_sphere( coord_x, coord_y, 
+	  graphics->positionSphere( coord_x, coord_y, 
 			   plane->valueInWorld(grid_x, grid_y) );
 
 	}
@@ -969,7 +969,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	double height;
 	plane -> valueAt(&height,coord_x,coord_y);
 
-	  position_sphere( coord_x, coord_y,height );
+	  graphics->positionSphere( coord_x, coord_y,height );
 	  printf("Moved tip location to %.2f, %.2f\n", coord_x, coord_y);
 	}
 	// if not in optimize_now mode, use the select tool as it was 

@@ -36,7 +36,7 @@ All Rights Reserved.
 
 #include "surface_strip_create.h"
 // #include "Tcl_Linkvar.h"
-#include "graphics_globals.h"
+#include "nmg_State.h"
 #include "BCPlane.h"
 #include "Timer.h"
 
@@ -197,9 +197,9 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
     return(0);
 }
 
-void specify_vertexArray(Vertex_Struct * vertexArray, int *vert_counts, int num_strips)
+void specify_vertexArray(nmg_State * state,Vertex_Struct * vertexArray, int *vert_counts, int num_strips)
 {
-    if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
+    if (!state->PRERENDERED_COLORS && !state->PRERENDERED_TEXTURE) {
         glNormalPointer(GL_SHORT, sizeof(Vertex_Struct),
             vertexArray[0].Normal );
     }
@@ -208,11 +208,11 @@ void specify_vertexArray(Vertex_Struct * vertexArray, int *vert_counts, int num_
     glVertexPointer(3,GL_FLOAT,sizeof(Vertex_Struct),
         vertexArray[0].Vertex);
     
-    if (g_texture_mode == GL_TEXTURE_1D) // (planes.contour)
+    if (state->texture_mode == GL_TEXTURE_1D) // (planes.contour)
         glTexCoordPointer(1,GL_FLOAT,sizeof(Vertex_Struct),
         &(vertexArray[0].Texcoord[2]));
 #if defined(sgi)
-    else if (g_texture_mode == GL_TEXTURE_3D) // (planes.alpha)
+    else if (state->texture_mode == GL_TEXTURE_3D) // (planes.alpha)
         glTexCoordPointer(3,GL_FLOAT,sizeof(Vertex_Struct),
         vertexArray[0].Texcoord);
 #endif
@@ -220,11 +220,11 @@ void specify_vertexArray(Vertex_Struct * vertexArray, int *vert_counts, int num_
     // if using projective texture then we still do 1D and 3D textures as above
     // but 2D texture coordinates should not be specified here
 #ifndef PROJECTIVE_TEXTURE
-    else if (g_texture_mode == GL_TEXTURE_2D)
+    else if (state->texture_mode == GL_TEXTURE_2D)
         glTexCoordPointer(2,GL_FLOAT,sizeof(Vertex_Struct),
         &(vertexArray[0].Texcoord[1]));
     
-    else if ( g_realign_textures_enabled )
+    else if ( state->realign_textures_enabled )
         glTexCoordPointer( 2, GL_FLOAT, sizeof(Vertex_Struct), 
         &(vertexArray[0].Texcoord[1]));
 #endif  // PROJECTIVE_TEXTURE
@@ -242,7 +242,7 @@ void specify_vertexArray(Vertex_Struct * vertexArray, int *vert_counts, int num_
 *      This routine returns 0 on success and -1 on failure. 
 * WARNING depends on many, many global variables. */
 static int
-describe_gl_vertex(const nmb_PlaneSelection & planes,
+describe_gl_vertex(nmg_State * state, const nmb_PlaneSelection & planes,
                    GLdouble surfaceColor[3],
                    int x, int y, 
                    Vertex_Struct *vertexArrayPtr)
@@ -280,13 +280,13 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     
     
     // Phase 1: Color the vertex 
-    if (g_PRERENDERED_TEXTURE) {
+    if (state->PRERENDERED_TEXTURE) {
         // Do we need a flat white background to modulate the texture?
         Color[0] = 1.0f;
         Color[1] = 1.0f;
         Color[2] = 1.0f;
     }
-    else if (g_PRERENDERED_COLORS) {
+    else if (state->PRERENDERED_COLORS) {
         Color[0] = planes.red->value(x, y);
         Color[1] = planes.green->value(x, y);
         Color[2] = planes.blue->value(x, y);
@@ -304,21 +304,21 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
         // stretch/shrink data based on data_min/max colors:
         // normalize the data to a zero to one scale - but data doesn't
         // have to fall in this range.
-        data_value = (data_value - g_data_min)/(g_data_max - g_data_min);
+        data_value = (data_value - state->data_min)/(state->data_max - state->data_min);
         
         // Scale data again based on color map widget controls
-        data_value = data_value * (g_data_max_norm - g_data_min_norm) 
-            + g_data_min_norm;
+        data_value = data_value * (state->data_max_norm - state->data_min_norm) 
+            + state->data_min_norm;
         
         // clamp data based on the stretched/shrunk colormap:
-        if ( data_value <  g_color_min ) data_value = 0;
-        else if ( data_value > g_color_max ) data_value = 1.0;
-        else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
+        if ( data_value <  state->color_min ) data_value = 0;
+        else if ( data_value > state->color_max ) data_value = 1.0;
+        else data_value = (data_value - state->color_min)/(state->color_max - state->color_min);
         
-        if (g_curColorMap) {    // Use the color map loaded from file
+        if (state->curColorMap) {    // Use the color map loaded from file
             // a = alpha is ignored. 
             float r, g, b, a;
-            g_curColorMap->lookup(data_value, &r, &g, &b, &a);
+            state->curColorMap->lookup(data_value, &r, &g, &b, &a);
             Color[0] = r;
             Color[1] = g;
             Color[2] = b;
@@ -330,40 +330,40 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     }
     else {
         // No special color cases exists, so set the surface to a solid color.
-        Color[0] = g_surfaceColor[0];
-        Color[1] = g_surfaceColor[1];
-        Color[2] = g_surfaceColor[2];
+        Color[0] = state->surfaceColor[0];
+        Color[1] = state->surfaceColor[1];
+        Color[2] = state->surfaceColor[2];
     }
-    Color[3] = g_surface_alpha;
+    Color[3] = state->surface_alpha;
     
     // Set the alpha value for this vertex. 
     if (planes.opacity) {
         // A data plane determines the opacity value.
         float opacity_value = (planes.opacity->value(x, y) 
-            - g_opacity_slider_min) /
-            (g_opacity_slider_max - g_opacity_slider_min);
+            - state->opacity_slider_min) /
+            (state->opacity_slider_max - state->opacity_slider_min);
         Color[3] = (GLubyte) min(255.0, opacity_value);
     }
     
-    if (g_transparent) {
+    if (state->transparent) {
         Color[3] = transparent_plane->value(x, y);
     }
     
     // Always specify a vertex color (right?!?)
-    //    if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color ||
-    //        g_null_data_alpha_toggle || g_transparent) {
+    //    if (state->PRERENDERED_COLORS || state->PRERENDERED_TEXTURE || planes.color ||
+    //        state->null_data_alpha_toggle || state->transparent) {
     vertexArray.Color[0] = (GLubyte) (Color[0] * 255);
     vertexArray.Color[1] = (GLubyte) (Color[1] * 255);
     vertexArray.Color[2] = (GLubyte) (Color[2] * 255);
     
-    if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+    if ( (state->null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
         vertexArray.Color[3] = 0;
     } 
     else {
         vertexArray.Color[3] = (GLubyte) (Color[3] * 255);
     }
     
-    if (!g_VERTEX_ARRAY) {
+    if (!state->VERTEX_ARRAY) {
         glColor4fv(Color);
     }
     
@@ -374,69 +374,69 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     const int num_x = height_plane.numX();
     const int num_y = height_plane.numY();
     
-    if ( g_realign_textures_enabled ) {
-        if ( g_translate_textures ) {
+    if ( state->realign_textures_enabled ) {
+        if ( state->translate_textures ) {
             if ( (x == (num_x -1)) && (y == (num_y -1))) {
-                g_translate_textures = 0;
-                g_tex_coord_center_x += g_translate_tex_dx;
-                g_tex_coord_center_y += g_translate_tex_dy;
+                state->translate_textures = 0;
+                state->tex_coord_center_x += state->translate_tex_dx;
+                state->tex_coord_center_y += state->translate_tex_dy;
             }
-            vertexArray.Texcoord[1] += g_translate_tex_dx;
-            vertexArray.Texcoord[2] += g_translate_tex_dy;
+            vertexArray.Texcoord[1] += state->translate_tex_dx;
+            vertexArray.Texcoord[2] += state->translate_tex_dy;
             return 0;
         }
         
-        else if ( g_scale_textures ) {
+        else if ( state->scale_textures ) {
             if ( (x == (num_x -1)) && (y == (num_y -1))) {
-                g_scale_textures = 0;
+                state->scale_textures = 0;
             }
             GLfloat scale_coord[2];
             scale_coord[0]=
-                g_tex_coord_center_x +
-                (( vertexArray.Texcoord[1] - g_tex_coord_center_x ) *
-                g_scale_tex_dx );
+                state->tex_coord_center_x +
+                (( vertexArray.Texcoord[1] - state->tex_coord_center_x ) *
+                state->scale_tex_dx );
             scale_coord[1]=
-                g_tex_coord_center_y +
-                (( vertexArray.Texcoord[2] - g_tex_coord_center_y ) *
-                g_scale_tex_dy);
+                state->tex_coord_center_y +
+                (( vertexArray.Texcoord[2] - state->tex_coord_center_y ) *
+                state->scale_tex_dy);
             vertexArray.Texcoord[1]=  scale_coord[0];
             vertexArray.Texcoord[2]=  scale_coord[1];
             return 0;
         }
         
-        else if ( g_shear_textures ) {
+        else if ( state->shear_textures ) {
             if ( (x == (num_x -1)) && (y == (num_y -1))) {
-                g_shear_textures = 0;
+                state->shear_textures = 0;
             }
             GLfloat shear_coord[2];
-            shear_coord[0] = g_tex_coord_center_x +
-                ( ( vertexArray.Texcoord[1] - g_tex_coord_center_x) +
-                ( g_shear_tex_dx *
-                ( vertexArray.Texcoord[2] - g_tex_coord_center_y ) ) );
-            shear_coord[1] = g_tex_coord_center_y +
-                ( ( vertexArray.Texcoord[2] - g_tex_coord_center_y ) +
-                ( g_shear_tex_dy *
-                ( vertexArray.Texcoord[1] - g_tex_coord_center_x ) ) );
+            shear_coord[0] = state->tex_coord_center_x +
+                ( ( vertexArray.Texcoord[1] - state->tex_coord_center_x) +
+                ( state->shear_tex_dx *
+                ( vertexArray.Texcoord[2] - state->tex_coord_center_y ) ) );
+            shear_coord[1] = state->tex_coord_center_y +
+                ( ( vertexArray.Texcoord[2] - state->tex_coord_center_y ) +
+                ( state->shear_tex_dy *
+                ( vertexArray.Texcoord[1] - state->tex_coord_center_x ) ) );
             vertexArray.Texcoord[1]=  shear_coord[0];
             vertexArray.Texcoord[2]=  shear_coord[1];
             return 0;
         }
         
-        else if ( g_rotate_textures ) {
+        else if ( state->rotate_textures ) {
             if ( (x == (num_x -1)) && (y == (num_y -1))) {
-                g_rotate_textures = 0;
+                state->rotate_textures = 0;
             }
             GLfloat rotate_coord[2];
-            rotate_coord[0] = g_tex_coord_center_x +
-                ( ( vertexArray.Texcoord[1] - g_tex_coord_center_x ) *
-                cos( g_rotate_tex_theta ) + 
-                ( vertexArray.Texcoord[2] - g_tex_coord_center_y ) *
-                sin( g_rotate_tex_theta ) );
-            rotate_coord[1] = g_tex_coord_center_y +
-                ( ( vertexArray.Texcoord[1] - g_tex_coord_center_x ) *
-                -sin( g_rotate_tex_theta ) +
-                ( vertexArray.Texcoord[2] - g_tex_coord_center_y ) *
-                cos( g_rotate_tex_theta ) );
+            rotate_coord[0] = state->tex_coord_center_x +
+                ( ( vertexArray.Texcoord[1] - state->tex_coord_center_x ) *
+                cos( state->rotate_tex_theta ) + 
+                ( vertexArray.Texcoord[2] - state->tex_coord_center_y ) *
+                sin( state->rotate_tex_theta ) );
+            rotate_coord[1] = state->tex_coord_center_y +
+                ( ( vertexArray.Texcoord[1] - state->tex_coord_center_x ) *
+                -sin( state->rotate_tex_theta ) +
+                ( vertexArray.Texcoord[2] - state->tex_coord_center_y ) *
+                cos( state->rotate_tex_theta ) );
             vertexArray.Texcoord[1]=  rotate_coord[0];
             vertexArray.Texcoord[2]=  rotate_coord[1];
             
@@ -452,9 +452,9 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     if (planes.contour) {
         GLfloat Scoord =
             (float) (planes.contour->value(x, y) /
-            (g_texture_scale * 10.0f));
+            (state->texture_scale * 10.0f));
         vertexArray.Texcoord[2] = Scoord;
-        if(!g_VERTEX_ARRAY) {
+        if(!state->VERTEX_ARRAY) {
             glTexCoord1f(Scoord);
         }
     }
@@ -464,8 +464,8 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
         double value;
         GLfloat checktexcoord[3];
         
-        value = (planes.alpha->value(x, y) - g_alpha_slider_min) /
-            (g_alpha_slider_max - g_alpha_slider_min);
+        value = (planes.alpha->value(x, y) - state->alpha_slider_min) /
+            (state->alpha_slider_max - state->alpha_slider_min);
         value = min(1.0, value);
         value = max(0.0, value);
         
@@ -478,14 +478,14 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
         vertexArray.Texcoord[0] = checktexcoord[0];
         vertexArray.Texcoord[1] = checktexcoord[1];
         vertexArray.Texcoord[2] = checktexcoord[2]; 
-        if(!g_VERTEX_ARRAY) {
+        if(!state->VERTEX_ARRAY) {
             glTexCoord3fv(checktexcoord);
         }	
     }
 #endif
     
 #ifndef PROJECTIVE_TEXTURE
-    if (g_texture_transform_mode == RULERGRID_COORD) {
+    if (state->texture_transform_mode == RULERGRID_COORD) {
         GLfloat rulercoord [2];
         
         /*
@@ -493,54 +493,54 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
         plane_coord has components (x,y,w)
         texture_coord has components(s,t)
         
-          where T*g_rulergrid_scale = 
+          where T*state->rulergrid_scale = 
           /								    \
-          | (g_rulergrid_cos) (-g_rulergrid_sin) (-g_rulergrid_xoffset*rulergrid_cos +
-          g_rulergrid_yoffset*rulergrid_sin) 
-          | (g_rulergrid_sin) (g_rulergrid_cos)  (-g_rulergrid_yoffset*rulergrid_cos -
-          g_rulergrid_xoffset*rulergrid_sin
+          | (state->rulergrid_cos) (-state->rulergrid_sin) (-state->rulergrid_xoffset*rulergrid_cos +
+          state->rulergrid_yoffset*rulergrid_sin) 
+          | (state->rulergrid_sin) (state->rulergrid_cos)  (-state->rulergrid_yoffset*rulergrid_cos -
+          state->rulergrid_xoffset*rulergrid_sin
           \								    /
         */
         
         rulercoord[0] = (float) (
             ((height_plane.xInWorld(x) -
-            g_rulergrid_xoffset) * g_rulergrid_cos -
+            state->rulergrid_xoffset) * state->rulergrid_cos -
             (height_plane.yInWorld(y) -
-            g_rulergrid_yoffset) * g_rulergrid_sin) /
-            g_rulergrid_scale);
+            state->rulergrid_yoffset) * state->rulergrid_sin) /
+            state->rulergrid_scale);
         rulercoord[1] = (float) (
             ((height_plane.yInWorld(y) -
-            g_rulergrid_yoffset) * g_rulergrid_cos +
+            state->rulergrid_yoffset) * state->rulergrid_cos +
             (height_plane.xInWorld(x) -
-            g_rulergrid_xoffset) * g_rulergrid_sin) /
-            g_rulergrid_scale);
+            state->rulergrid_xoffset) * state->rulergrid_sin) /
+            state->rulergrid_scale);
         
         vertexArray.Texcoord[1] = rulercoord[0];
         vertexArray.Texcoord[2] = rulercoord[1];
-        if(!g_VERTEX_ARRAY) {
+        if(!state->VERTEX_ARRAY) {
             glTexCoord2fv(rulercoord);
         }
     } 
-    else if (g_texture_transform_mode == MANUAL_REALIGN_COORD) {
+    else if (state->texture_transform_mode == MANUAL_REALIGN_COORD) {
         GLfloat man_realign_coord[2];
         
         if ( (x == (num_x -1)) && (y == (num_y -1))) {
-            g_tex_coord_center_x = (num_x / 512.0) / 2.0;
-            g_tex_coord_center_y = (num_y / 512.0) / 2.0;
-            g_tex_range_x = 1000.0;
-            g_tex_range_y = 1000.0;
-            g_tex_theta_cumulative = 0.0;
+            state->tex_coord_center_x = (num_x / 512.0) / 2.0;
+            state->tex_coord_center_y = (num_y / 512.0) / 2.0;
+            state->tex_range_x = 1000.0;
+            state->tex_range_y = 1000.0;
+            state->tex_theta_cumulative = 0.0;
         }
         man_realign_coord[0]= (float) (x/512.0);
         man_realign_coord[1]= (float) (y/512.0);         
         vertexArray.Texcoord[1]=  man_realign_coord[0];
         vertexArray.Texcoord[2]=  man_realign_coord[1];
-        if(!g_VERTEX_ARRAY) {
+        if(!state->VERTEX_ARRAY) {
             glTexCoord2fv(man_realign_coord);
         }		
     }
-    else if (g_texture_transform_mode == PER_QUAD_COORD) {
-        if(g_VERTEX_ARRAY) {
+    else if (state->texture_transform_mode == PER_QUAD_COORD) {
+        if(state->VERTEX_ARRAY) {
             vertexArrayPtr->Texcoord[1] =  x;
             vertexArrayPtr->Texcoord[2] =  y;
         }
@@ -556,7 +556,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     
 #if defined(sgi) || defined(_WIN32)
     
-    if (g_PRERENDERED_TEXTURE) {
+    if (state->PRERENDERED_TEXTURE) {
         GLfloat tc [2];
         
         tc[0] = x / 512.0f;
@@ -564,7 +564,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
         
         vertexArray.Texcoord[0] = tc[0];
         vertexArray.Texcoord[1] = tc[1];
-        if(!g_VERTEX_ARRAY) {
+        if(!state->VERTEX_ARRAY) {
             glTexCoord2fv(tc);
         }
     }
@@ -573,12 +573,12 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     
     // "Just" color the surface - means specify color and textures, but
     // use the normals cached in the vertex array, and return.
-    if (g_just_color) {
+    if (state->just_color) {
         Normal[0] = float( vertexArray.Normal[0] )/32767;
         Normal[1] = float( vertexArray.Normal[1] )/32767;
         Normal[2] = float( vertexArray.Normal[2] )/32767;
         
-        if (!g_VERTEX_ARRAY) {
+        if (!state->VERTEX_ARRAY) {
             glNormal3fv(Normal);
             // Use already-computed vertex.
             glVertex3fv(Vertex);
@@ -589,11 +589,11 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     
     // Phase 3: Find the normal for the vertex 
     // Using prerendered colors (and no lighting), we don't need normals
-    if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
+    if (!state->PRERENDERED_COLORS && !state->PRERENDERED_TEXTURE) {
         if (stm_compute_plane_normal(planes.height, x,y,
             (float) ((max_x - min_x) / height_plane.numX()),
             (float) ((max_y - min_y) / height_plane.numY()),
-                     1.0f, g_stride,
+                     1.0f, state->stride,
                      Normal)) {
             fprintf(stderr,"describe_gl_vertex(): Can't find normal!\n");
             return -1;
@@ -602,13 +602,13 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
         vertexArray.Normal[0] = (GLshort) (Normal[0] * 32767);
         vertexArray.Normal[1] = (GLshort) (Normal[1] * 32767);
         vertexArray.Normal[2] = (GLshort) (Normal[2] * 32767);
-        if (!g_VERTEX_ARRAY) {
+        if (!state->VERTEX_ARRAY) {
             glNormal3fv(Normal);
         }
     }
     
     /* Specify the already-computed vertex */
-    if(!g_VERTEX_ARRAY) {
+    if(!state->VERTEX_ARRAY) {
         glVertex3fv(Vertex);
     }
     
@@ -652,7 +652,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 *     X-------->                                                              
 *	This routine returns 0 on success and -1 on failure. */
 
-int spm_y_strip(const  nmb_PlaneSelection &planes,
+int spm_y_strip(nmg_State * state, const  nmb_PlaneSelection &planes,
                 GLdouble surfaceColor[3], int which,
                 Vertex_Struct * vertexArray)
 {
@@ -670,19 +670,20 @@ int spm_y_strip(const  nmb_PlaneSelection &planes,
         fprintf(stderr, "Strip %d is outside the plane.\n", which);
         return(-1);
     }
-    if (which % g_stride) {
+    if (which % state->stride) {
         fprintf(stderr, "Strip %d is off stride.\n", which);
         return -1;
     }
     
-    if (!g_VERTEX_ARRAY) {
+    if (!state->VERTEX_ARRAY) {
         glBegin(GL_TRIANGLE_STRIP);
         VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
     }
     
-    for (y = 0; y < planes.height->numY(); y += g_stride) {   
-        for (x = which+g_stride; x >= which; x -= g_stride) { 
-            if (describe_gl_vertex(planes, surfaceColor,x,y,&(vertexArray[i]))) {
+    for (y = 0; y < planes.height->numY(); y += state->stride) {   
+        for (x = which+state->stride; x >= which; x -= state->stride) { 
+            if (describe_gl_vertex(state, planes, 
+                                   surfaceColor,x,y,&(vertexArray[i]))) {
                 fprintf(stderr, "spm_y_strip:  describe_gl_vertex() failed.\n");
                 return(-1);
             }
@@ -690,8 +691,8 @@ int spm_y_strip(const  nmb_PlaneSelection &planes,
         }
     }
     
-    if (g_VERTEX_ARRAY) {
-        specify_vertexArray(vertexArray, &i, 1);
+    if (state->VERTEX_ARRAY) {
+        specify_vertexArray(state, vertexArray, &i, 1);
     }
     else {
         glEnd();
@@ -718,7 +719,8 @@ int spm_y_strip(const  nmb_PlaneSelection &planes,
  instead of 1 tripstrip like in the above procedure.
  */
 
-int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
+int spm_y_strip_masked(nmg_State * state, 
+                       const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                        GLdouble surfaceColor[3], int which,
                        Vertex_Struct * vertexArray)
 {
@@ -737,7 +739,7 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
         return(-1);
     }
     
-    if (which % g_stride) {
+    if (which % state->stride) {
         fprintf(stderr, "Strip %d is off stride.\n", which);
         return(-1);
     }
@@ -748,13 +750,13 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     int *y_array = new int[planes.height->numY() * 3];
     i = 0;
     
-    x = which + g_stride;
+    x = which + state->stride;
     y = 0;
     
     //Check the first quad to see if it is partially masked or not and
     //set up the state variables so that the following loop will run
     //correctly.
-    if (mask->quadMasked(x,y,g_stride))
+    if (mask->quadMasked(x,y,state->stride))
     {
         //If the first quad shouldn't be drawn, telling the loop
         //that it should be currently skipping quads.
@@ -763,7 +765,7 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     else {
         //If the first quad should be draw, then drop the first
         //2 points of the quad into the x and y point arrays.
-        x_array[i] = x; x_array[i+1] = x - g_stride;
+        x_array[i] = x; x_array[i+1] = x - state->stride;
         y_array[i] = y; y_array[i+1] = y;
         i+=2;
     }
@@ -772,15 +774,15 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     //are really wanting to output a tristrip.  A tristrip can equivalently
     //be thought of as a quad strip, so we know that the "second" set of 
     //points will be the first set of the next quad on the next pass.
-    for (y = g_stride; y < planes.height->numX() - g_stride; y += g_stride) {   // Left->right
-        bool quad_masked = mask->quadMasked(x,y,g_stride);
+    for (y = state->stride; y < planes.height->numX() - state->stride; y += state->stride) {   // Left->right
+        bool quad_masked = mask->quadMasked(x,y,state->stride);
         if (!skipping) {
             //If we get in here, then we know that on the previous run
             //of the loop we decided that the entire quad should be 
             //displayed, so it will always be safe to drop the first
             //two points of the current quad, since they were the second
             //points of the last quad, which we know to be good.
-            x_array[i] = x; x_array[i+1] = x - g_stride;
+            x_array[i] = x; x_array[i+1] = x - state->stride;
             y_array[i] = y; y_array[i+1] = y;
             i+=2;
             if (quad_masked)
@@ -806,7 +808,7 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                 //So set the skipping variable to true and store the
                 //first two points.
                 skipping = false;
-                x_array[i] = x; x_array[i+1] = x - g_stride;
+                x_array[i] = x; x_array[i+1] = x - state->stride;
                 y_array[i] = y; y_array[i+1] = y;
                 i+=2;
             }
@@ -836,7 +838,7 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     //Now draw the valid strips that we have determined should be
     //formed from the information in the masking plane.
 
-    if (!g_VERTEX_ARRAY) {
+    if (!state->VERTEX_ARRAY) {
         glBegin(GL_TRIANGLE_STRIP);
         VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
     }
@@ -849,7 +851,7 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
             x = x_array[i];
             y = y_array[i];
             if (x == -1 && y == -1) {
-                if (g_VERTEX_ARRAY) {
+                if (state->VERTEX_ARRAY) {
                     vert_counts[strip_i] = count;
                     count = 0;
                     strip_i++;
@@ -860,7 +862,7 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                 }
             }
             else {
-                if (describe_gl_vertex(planes, surfaceColor,x,y,
+                if (describe_gl_vertex(state, planes, surfaceColor,x,y,
                                        &(vertexArray[vert]))) {
                     fprintf(stderr, "spm_x_strip_masked:  describe_gl_vertex() failed.\n");
                     return(-1);
@@ -870,9 +872,10 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
             }
         }
         
-        if (g_VERTEX_ARRAY) {
+        if (state->VERTEX_ARRAY) {
             vert_counts[strip_i] = count;
-            specify_vertexArray(vertexArray, vert_counts, number_of_strips);
+            specify_vertexArray(state, vertexArray, 
+                                vert_counts, number_of_strips);
         }
         else {
             glEnd();
@@ -914,7 +917,7 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
  *                                                                         
  *	This routine returns 0 on success and -1 on failure. */
 
-int spm_x_strip(const  nmb_PlaneSelection &planes,
+int spm_x_strip(nmg_State * state, const  nmb_PlaneSelection &planes,
                 GLdouble surfaceColor[3], int which,
                 Vertex_Struct * vertexArray)
 {
@@ -932,19 +935,19 @@ int spm_x_strip(const  nmb_PlaneSelection &planes,
         fprintf(stderr, "Strip %d is outside the plane.\n", which);
         return(-1);
     }
-    if (which % g_stride) {
+    if (which % state->stride) {
         fprintf(stderr, "Strip %d is off stride.\n", which);
         return -1;
     }
     
-    if (!g_VERTEX_ARRAY) {
+    if (!state->VERTEX_ARRAY) {
         glBegin(GL_TRIANGLE_STRIP);
         VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
     }
     
-    for (x = 0; x < planes.height->numX(); x += g_stride) {   
-        for (y = which+g_stride; y >= which; y -= g_stride) { 
-            if (describe_gl_vertex(planes, surfaceColor,x,y,
+    for (x = 0; x < planes.height->numX(); x += state->stride) {   
+        for (y = which+state->stride; y >= which; y -= state->stride) { 
+            if (describe_gl_vertex(state, planes, surfaceColor,x,y,
                                    &(vertexArray[i]))) {
                 fprintf(stderr, "spm_x_strip:  describe_gl_vertex() failed.\n");
                 return(-1);
@@ -953,8 +956,8 @@ int spm_x_strip(const  nmb_PlaneSelection &planes,
         }
     }
     
-    if (g_VERTEX_ARRAY) {
-        specify_vertexArray(vertexArray, &i, 1);
+    if (state->VERTEX_ARRAY) {
+        specify_vertexArray(state, vertexArray, &i, 1);
     }
     else {
         glEnd();
@@ -981,7 +984,8 @@ int spm_x_strip(const  nmb_PlaneSelection &planes,
  instead of 1 tripstrip like in the above procedure.
  */
 
-int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
+int spm_x_strip_masked(nmg_State * state,
+                       const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                        GLdouble surfaceColor[3], int which,
                        Vertex_Struct * vertexArray)
 {      
@@ -1000,7 +1004,7 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
         return(-1);
     }
     
-    if (which % g_stride) {
+    if (which % state->stride) {
         fprintf(stderr, "Strip %d is off stride.\n", which);
         return(-1);
     }
@@ -1009,15 +1013,15 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     bool skipping = false;
     int *x_array = new int[planes.height->numX() * 3];  //Multiplying by 3 is more space than needed
     int *y_array = new int[planes.height->numX() * 3];  //but it's simple and we can need some
-    i = 0;                                              //unknown amount more than 2 if g_stride is 1
+    i = 0;                                              //unknown amount more than 2 if state->stride is 1
     
     x = 0;
-    y = which + g_stride;
+    y = which + state->stride;
 
     //Check the first quad to see if it is partially masked or not and
     //set up the state variables so that the following loop will run
     //correctly.
-    if (mask->quadMasked(x,y,g_stride))
+    if (mask->quadMasked(x,y,state->stride))
     {
         //If the first quad shouldn't be drawn, tell the loop
         //that it should be currently skipping quads.
@@ -1027,7 +1031,7 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
         //If the first quad should be draw, then drop the first
         //2 points of the quad into the x and y point arrays.
         x_array[i] = x; x_array[i+1] = x;
-        y_array[i] = y; y_array[i+1] = y - g_stride;
+        y_array[i] = y; y_array[i+1] = y - state->stride;
         i+=2;
     }
     //We make the decision whether to draw points on a quad basis, but we 
@@ -1035,8 +1039,8 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     //are really wanting to output a tristrip.  A tristrip can equivalently
     //be thought of as a quad strip, so we know that the "second" set of 
     //points will be the first set of the next quad on the next pass.
-    for (x = g_stride; x < planes.height->numX() - g_stride; x += g_stride) {   // Left->right
-        bool quad_masked = mask->quadMasked(x,y,g_stride);
+    for (x = state->stride; x < planes.height->numX() - state->stride; x += state->stride) {   // Left->right
+        bool quad_masked = mask->quadMasked(x,y,state->stride);
         if (!skipping) {
             //If we get in here, then we know that on the previous run
             //of the loop we decided that the entire quad should be 
@@ -1044,7 +1048,7 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
             //two points of the current quad, since they were the second
             //points of the last quad, which we know to be good.
             x_array[i] = x; x_array[i+1] = x;
-            y_array[i] = y; y_array[i+1] = y - g_stride;
+            y_array[i] = y; y_array[i+1] = y - state->stride;
             i+=2;
             if (quad_masked)
             {
@@ -1070,7 +1074,7 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                 //first two points.
                 skipping = false;
                 x_array[i] = x; x_array[i+1] = x;
-                y_array[i] = y; y_array[i+1] = y - g_stride;
+                y_array[i] = y; y_array[i+1] = y - state->stride;
                 i+=2;
             }
         }
@@ -1082,7 +1086,7 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     //last quad
     if (!skipping) {
         x_array[i] = x; x_array[i+1] = x;
-        y_array[i] = y; y_array[i+1] = y - g_stride;
+        y_array[i] = y; y_array[i+1] = y - state->stride;
         i+=2;
         number_of_strips++;
     }
@@ -1101,7 +1105,7 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
 
     //Now draw the valid strips that we have determined should be
     //formed from the information in the masking plane.
-    if (!g_VERTEX_ARRAY) {
+    if (!state->VERTEX_ARRAY) {
         glBegin(GL_TRIANGLE_STRIP);
         VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
     }
@@ -1113,7 +1117,7 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
             x = x_array[i];
             y = y_array[i];
             if (x == -1 && y == -1) {
-                if (g_VERTEX_ARRAY) {
+                if (state->VERTEX_ARRAY) {
                     vert_counts[strip_i] = count;
                     count = 0;
                     strip_i++;
@@ -1124,8 +1128,10 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                 }
             }
             else {
-                if (describe_gl_vertex(planes, surfaceColor,x,y,&(vertexArray[vert]))) {
-                    fprintf(stderr, "spm_x_strip_masked:  describe_gl_vertex() failed.\n");
+                if (describe_gl_vertex(state, planes, 
+                                       surfaceColor,x,y,&(vertexArray[vert]))) {
+                    fprintf(stderr, "spm_x_strip_masked: "
+                            " describe_gl_vertex() failed.\n");
                     return(-1);
                 }
                 vert++;
@@ -1133,9 +1139,10 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
             }
         }
         
-        if (g_VERTEX_ARRAY) {
+        if (state->VERTEX_ARRAY) {
             vert_counts[strip_i] = count;
-            specify_vertexArray(vertexArray, vert_counts, number_of_strips);
+            specify_vertexArray(state, vertexArray, 
+                                vert_counts, number_of_strips);
         }
         else {
             glEnd();

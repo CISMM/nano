@@ -26,10 +26,10 @@
 #include "nmg_Surface.h"
 #include "nmg_SurfaceRegion.h"
 
-#include "graphics.h"
+#include "surface_util.h"
 #include "openGL.h"  // for check_extension(), display_lists_in_x
 #include "globjects.h"  // for replaceDefaultObjects()
-#include "graphics_globals.h"
+#include "nmg_State.h"
 #include "nmg_Globals.h"
 
 #include "Timer.h"
@@ -58,6 +58,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 
   : nmg_Graphics (connection, "nmg Graphics Implementation GL"),
     d_dataset (data),
+    state (new nmg_State), 
     d_displayIndexList (new v_index [NUM_USERS]),
     d_textureTransformMode(RULERGRID_COORD),
     d_last_region(-1)
@@ -70,36 +71,41 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
         grid_size_y = d_dataset->inputGrid->numY();
     }
 
+    if (state == NULL) {
+        fprintf(stderr, "ERROR: nmg_Graphics_Implementation: no memory available, abort.\n");
+        exit (-1);
+    }
+
     //fprintf(stderr,
     //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
 
     int i = 0;
 
-    g_inputGrid = data->inputGrid;
+    state->inputGrid = data->inputGrid;
 
     // This is risky...
-    g_displayIndexList = d_displayIndexList;
+    state->displayIndexList = d_displayIndexList;
 
     if (d_dataset == NULL) {
-        g_inputGrid = NULL;
-        strcpy(g_alphaPlaneName, "none");
-        strcpy(g_colorPlaneName, "none");
-        strcpy(g_contourPlaneName, "none");
-        strcpy(g_heightPlaneName, "none");
-        strcpy(g_opacityPlaneName, "none");
-        strcpy(g_maskPlaneName, "none");
+        state->inputGrid = NULL;
+        strcpy(state->alphaPlaneName, "none");
+        strcpy(state->colorPlaneName, "none");
+        strcpy(state->contourPlaneName, "none");
+        strcpy(state->heightPlaneName, "none");
+        strcpy(state->opacityPlaneName, "none");
+        strcpy(state->maskPlaneName, "none");
     } else {
-        g_inputGrid = data->inputGrid;
-        strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
-        strcpy(g_colorPlaneName, data->colorPlaneName->string());
-        strcpy(g_contourPlaneName, data->contourPlaneName->string());
-        strcpy(g_heightPlaneName, data->heightPlaneName->string());
-        strcpy(g_opacityPlaneName, data->opacityPlaneName->string());
-        strcpy(g_maskPlaneName, data->maskPlaneName->string());
+        state->inputGrid = data->inputGrid;
+        strcpy(state->alphaPlaneName, data->alphaPlaneName->string());
+        strcpy(state->colorPlaneName, data->colorPlaneName->string());
+        strcpy(state->contourPlaneName, data->contourPlaneName->string());
+        strcpy(state->heightPlaneName, data->heightPlaneName->string());
+        strcpy(state->opacityPlaneName, data->opacityPlaneName->string());
+        strcpy(state->maskPlaneName, data->maskPlaneName->string());
     }
     
     //Figure out what capabilities we have.
-    determine_GL_capabilities();
+    determine_GL_capabilities(state);
     
     /* initialize graphics  */
     //printf("Initializing graphics...\n");
@@ -116,7 +122,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     /* Set up the viewing info */
   
     /* Set initial user mode */
-    g_user_mode = USER_GRAB_MODE;
+    state->user_mode = USER_GRAB_MODE;
 
     /* set up user and object trees     */
     //printf("Creating the world...\n");
@@ -127,17 +133,17 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     
     setSurfaceColor(surfaceColor);
     
-    initialize_globjects(NULL);  // load default font
+    initialize_globjects(state, NULL);  // load default font
     
     /* user routine to define user objects and override default objects */
-    replaceDefaultObjects();
+    replaceDefaultObjects(state);
     
-    v_replace_drawfunc(i, V_WORLD, draw_world);
-    v_replace_lightingfunc(i, setup_lighting);    
+    v_replace_drawfunc(i, V_WORLD, draw_world, state);
+    v_replace_lightingfunc(i, setup_lighting, state);    
     
 
-    g_surface = new nmg_Surface;
-    g_surface->changeDataset(data);
+    state->surface = new nmg_Surface;
+    state->surface->changeDataset(data);
     
     //////////////////////////////////////////////////////////////////////
     // Build the display lists we'll need to draw the data, etc		    //
@@ -159,16 +165,16 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 		rulergridName);
       return;
     }
-    g_rulerPPM = new PPM (infile);
-    if (!g_rulerPPM) {
+    state->rulerPPM = new PPM (infile);
+    if (!state->rulerPPM) {
       fprintf(stderr, "nmg_GraphicsImplementation:  Out of memory.\n");
       return;
     }
-    if (!g_rulerPPM->valid) {
+    if (!state->rulerPPM->valid) {
       fprintf(stderr, "Cannot read rulergrid PPM %s.\n", rulergridName);
 
-      delete g_rulerPPM;  // plug memory leak?
-      g_rulerPPM = NULL;  // show default ruler image instead
+      delete state->rulerPPM;  // plug memory leak?
+      state->rulerPPM = NULL;  // show default ruler image instead
     }
   }
 
@@ -179,16 +185,16 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 		rulergridName);
       return;
     }
-    g_vizPPM = new PPM (infile);
-    if (!g_vizPPM) {
+    state->vizPPM = new PPM (infile);
+    if (!state->vizPPM) {
       fprintf(stderr, "nmg_GraphicsImplementation:  Out of memory.\n");
       return;
     }
-    if (!g_vizPPM->valid) {
+    if (!state->vizPPM->valid) {
       fprintf(stderr, "Cannot read visualization PPM %s.\n", vizName);
 
-      delete g_vizPPM;  // plug memory leak?
-      g_vizPPM = NULL;
+      delete state->vizPPM;  // plug memory leak?
+      state->vizPPM = NULL;
     }
   }
 
@@ -199,21 +205,21 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 
     // Even though we may not be using the vertex array extension, we still
     // use the vertex array to cache calculated normals
-  if (!g_surface->init(grid_size_x, grid_size_y) ) {
+  if (!state->surface->init(grid_size_x, grid_size_y) ) {
       fprintf(stderr," initialization of surface: out of memory.\n");
       exit(0);
   }
 
-  g_positionList = new Position_list;
-  g_positionListL = new Position_list;
-  g_positionListR = new Position_list;
+  state->positionList = new Position_list;
+  state->positionListL = new Position_list;
+  state->positionListR = new Position_list;
 
   // This section initializes the user mode to GRAB and sets an initial
   // position for the aimLine...
   BCPlane* plane = dataset->inputGrid->getPlaneByName
     (dataset->heightPlaneName->string());
   decoration->aimLine.moveTo(plane->minX(), plane->maxY(), plane);
-  init_world_modechange( g_user_mode, 0, 0 );
+  init_world_modechange( state, state->user_mode, 0, 0 );
 
   if (!connection) return;
 
@@ -509,7 +515,7 @@ nmg_Graphics_Implementation::~nmg_Graphics_Implementation (void) {
     v_close_display(d_displayIndexList[i]);
   }
 
-  delete g_surface;
+  delete state->surface;
 /*
   if (sem_data) {
     delete [] sem_data;
@@ -568,6 +574,12 @@ void nmg_Graphics_Implementation::mainloop (void) {
 
 }
 
+/** Get the total graphics state from this object */
+nmg_State * nmg_Graphics_Implementation::getState()
+{
+    return state;
+}
+
 /** If we load a different stream file or connect to a new AFM,
  * graphics needs to start watching a new dataset.
  */
@@ -577,18 +589,18 @@ void nmg_Graphics_Implementation::changeDataset( nmb_Dataset * data)
   grid_size_x = d_dataset->inputGrid->numX();
   grid_size_y = d_dataset->inputGrid->numY();
 
-  g_inputGrid = data->inputGrid;
-  strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
-  strcpy(g_colorPlaneName, data->colorPlaneName->string());
-  strcpy(g_contourPlaneName, data->contourPlaneName->string());
-  strcpy(g_heightPlaneName, data->heightPlaneName->string());
-  strcpy(g_maskPlaneName, data->maskPlaneName->string());
+  state->inputGrid = data->inputGrid;
+  strcpy(state->alphaPlaneName, data->alphaPlaneName->string());
+  strcpy(state->colorPlaneName, data->colorPlaneName->string());
+  strcpy(state->contourPlaneName, data->contourPlaneName->string());
+  strcpy(state->heightPlaneName, data->heightPlaneName->string());
+  strcpy(state->maskPlaneName, data->maskPlaneName->string());
 
-  g_surface->changeDataset(data);
+  state->surface->changeDataset(data);
   // If there is an existing region, it won't be applicable to new 
   // data set. 
   if (d_last_region != -1) {
-      g_surface->destroyRegion(d_last_region);
+      state->surface->destroyRegion(d_last_region);
       d_last_region = -1;
   }
   causeGridRebuild(); 
@@ -646,11 +658,11 @@ void nmg_Graphics_Implementation::loadRulergridImage (const char * name) {
     fprintf(stderr, "nmg_Graphics_Implementation: can't find file: %s\n",
 	name);
   }
-  g_rulerPPM = new PPM (infile);
-  if (!g_rulerPPM->valid) {
+  state->rulerPPM = new PPM (infile);
+  if (!state->rulerPPM->valid) {
     fprintf(stderr, "Cannot read rulergrid PPM %s.\n", name);
   } else {
-    makeAndInstallRulerImage(g_rulerPPM);
+    makeAndInstallRulerImage(state->rulerPPM);
   }
 }
 
@@ -664,11 +676,11 @@ void nmg_Graphics_Implementation::loadVizImage (const char * name) {
     fprintf(stderr, "nmg_Graphics_Implementation: can't find file: %s\n",
 	name);
   }
-  g_vizPPM = new PPM (infile);
-  if (!g_vizPPM->valid) {
+  state->vizPPM = new PPM (infile);
+  if (!state->vizPPM->valid) {
     fprintf(stderr, "Cannot read visualization PPM %s.\n", name);
   } else {
-    makeAndInstallVizImage(g_vizPPM);
+    makeAndInstallVizImage(state->vizPPM);
   }
 }
 
@@ -713,17 +725,17 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
   // any area not filled by the PPM file.
   for (x = 0; x < texture_size; x++) {
     for (y = 0; y < texture_size; y++) {
-        if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_MODULATE) {
+        if (state->tex_blend_func[RULERGRID_TEX_ID] == GL_MODULATE) {
           texture[ texel( y, x, 0) ] = 255;
           texture[ texel( y, x, 1) ] = 255;
           texture[ texel( y, x, 2) ] = 255;
           texture[ texel( y, x, 3) ] = 255;
-        } else if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_BLEND) {
+        } else if (state->tex_blend_func[RULERGRID_TEX_ID] == GL_BLEND) {
           texture[ texel( y, x, 0) ] = 0;
           texture[ texel( y, x, 1) ] = 0;
           texture[ texel( y, x, 2) ] = 0;
           texture[ texel( y, x, 3) ] = 255;
-        } else if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_DECAL){
+        } else if (state->tex_blend_func[RULERGRID_TEX_ID] == GL_DECAL){
           texture[ texel( y, x, 3) ] = 0;
         } else {
           texture[ texel( y, x, 0) ] = 255;
@@ -743,24 +755,24 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
 //printf("XXX Filling %3d,%3d (%ld)\n", x, (myPPM->ny-1)-y,
 //              (long)texel((myPPM->ny-1)-y,x,0));
         myPPM->Tellppm(x,y, &r, &g, &b);
-        if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_BLEND) {
+        if (state->tex_blend_func[RULERGRID_TEX_ID] == GL_BLEND) {
           texture[ texel( (myPPM->ny-1)-y, x, 0) ] = 
-		(GLubyte)((float)r*g_ruler_opacity/255.0);
+		(GLubyte)((float)r*state->ruler_opacity/255.0);
           texture[ texel( (myPPM->ny-1)-y, x, 1) ] = 
-		(GLubyte)((float)g*g_ruler_opacity/255.0);
+		(GLubyte)((float)g*state->ruler_opacity/255.0);
           texture[ texel( (myPPM->ny-1)-y, x, 2) ] = 
-		(GLubyte)((float)b*g_ruler_opacity/255.0);
+		(GLubyte)((float)b*state->ruler_opacity/255.0);
           texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte) 255;
-        } else if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_MODULATE) {
+        } else if (state->tex_blend_func[RULERGRID_TEX_ID] == GL_MODULATE) {
           texture[ texel( (myPPM->ny-1)-y, x, 0) ] =
-                (GLubyte)((float)r*g_ruler_opacity/255.0);
+                (GLubyte)((float)r*state->ruler_opacity/255.0);
           texture[ texel( (myPPM->ny-1)-y, x, 1) ] =
-                (GLubyte)((float)g*g_ruler_opacity/255.0);
+                (GLubyte)((float)g*state->ruler_opacity/255.0);
           texture[ texel( (myPPM->ny-1)-y, x, 2) ] =
-                (GLubyte)((float)b*g_ruler_opacity/255.0);
+                (GLubyte)((float)b*state->ruler_opacity/255.0);
           texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte) 255;
-        } else { //if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_DECAL){
-          texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte)g_ruler_opacity;
+        } else { //if (state->tex_blend_func[RULERGRID_TEX_ID] == GL_DECAL){
+          texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte)state->ruler_opacity;
           texture[ texel( (myPPM->ny-1)-y, x, 0) ] = r;
           texture[ texel( (myPPM->ny-1)-y, x, 1) ] = g;
           texture[ texel( (myPPM->ny-1)-y, x, 2) ] = b;
@@ -770,7 +782,7 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
+  glBindTexture(GL_TEXTURE_2D, state->tex_ids[RULERGRID_TEX_ID]);
 
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
@@ -791,12 +803,12 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
            }
   }
 #endif
-  g_tex_installed_width[RULERGRID_TEX_ID] = texture_size;
-  g_tex_installed_height[RULERGRID_TEX_ID] = texture_size;
-  g_tex_image_width[RULERGRID_TEX_ID] = myPPM->nx;
-  g_tex_image_height[RULERGRID_TEX_ID] = myPPM->ny;
-  g_tex_image_offsetx[RULERGRID_TEX_ID] = 0;
-  g_tex_image_offsety[RULERGRID_TEX_ID] = 0;
+  state->tex_installed_width[RULERGRID_TEX_ID] = texture_size;
+  state->tex_installed_height[RULERGRID_TEX_ID] = texture_size;
+  state->tex_image_width[RULERGRID_TEX_ID] = myPPM->nx;
+  state->tex_image_height[RULERGRID_TEX_ID] = myPPM->ny;
+  state->tex_image_offsetx[RULERGRID_TEX_ID] = 0;
+  state->tex_image_offsety[RULERGRID_TEX_ID] = 0;
 
   delete [] texture;
 }
@@ -839,17 +851,17 @@ void nmg_Graphics_Implementation::makeAndInstallVizImage(PPM *myPPM)
   // any area not filled by the PPM file.
   for (x = 0; x < texture_size; x++) {
       for (y = 0; y < texture_size; y++) {
-          if (g_tex_blend_func[VISUALIZATION_TEX_ID] == GL_MODULATE) {
+          if (state->tex_blend_func[VISUALIZATION_TEX_ID] == GL_MODULATE) {
               texture[ texel( y, x, 0) ] = 255;
               texture[ texel( y, x, 1) ] = 255;
               texture[ texel( y, x, 2) ] = 255;
               texture[ texel( y, x, 3) ] = 0;
-          } else if (g_tex_blend_func[VISUALIZATION_TEX_ID] == GL_BLEND) {
+          } else if (state->tex_blend_func[VISUALIZATION_TEX_ID] == GL_BLEND) {
               texture[ texel( y, x, 0) ] = 0;
               texture[ texel( y, x, 1) ] = 0;
               texture[ texel( y, x, 2) ] = 0;
               texture[ texel( y, x, 3) ] = 0;
-          } else if (g_tex_blend_func[VISUALIZATION_TEX_ID] == GL_DECAL){
+          } else if (state->tex_blend_func[VISUALIZATION_TEX_ID] == GL_DECAL){
               texture[ texel( y, x, 3) ] = 0;
           } else {
               texture[ texel( y, x, 0) ] = 255;
@@ -884,7 +896,7 @@ void nmg_Graphics_Implementation::makeAndInstallVizImage(PPM *myPPM)
   
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   
-  glBindTexture(GL_TEXTURE_2D, tex_ids[VISUALIZATION_TEX_ID]);
+  glBindTexture(GL_TEXTURE_2D, state->tex_ids[VISUALIZATION_TEX_ID]);
   
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
@@ -917,19 +929,19 @@ _______________________________********************/
       }
   }
 #endif
-  g_tex_installed_width[VISUALIZATION_TEX_ID] = texture_size;
-  g_tex_installed_height[VISUALIZATION_TEX_ID] = texture_size;
-  g_tex_image_width[VISUALIZATION_TEX_ID] = myPPM->nx;
-  g_tex_image_height[VISUALIZATION_TEX_ID] = myPPM->ny;
-  g_tex_image_offsetx[VISUALIZATION_TEX_ID] = 0;
-  g_tex_image_offsety[VISUALIZATION_TEX_ID] = 0;
+  state->tex_installed_width[VISUALIZATION_TEX_ID] = texture_size;
+  state->tex_installed_height[VISUALIZATION_TEX_ID] = texture_size;
+  state->tex_image_width[VISUALIZATION_TEX_ID] = myPPM->nx;
+  state->tex_image_height[VISUALIZATION_TEX_ID] = myPPM->ny;
+  state->tex_image_offsetx[VISUALIZATION_TEX_ID] = 0;
+  state->tex_image_offsety[VISUALIZATION_TEX_ID] = 0;
 
   delete [] texture;
 }
 
 void nmg_Graphics_Implementation::causeGridReColor (void) {
-  g_just_color = 1;
-    g_surface->recolorSurface();
+  state->just_color = 1;
+    state->surface->recolorSurface();
   // Don't cause geometry to be re-calculated !!
   //causeGridRedraw();
 }
@@ -937,7 +949,7 @@ void nmg_Graphics_Implementation::causeGridReColor (void) {
 
 void nmg_Graphics_Implementation::causeGridRedraw (void) {
   //fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
-  BCPlane * plane = g_inputGrid->getPlaneByName(g_heightPlaneName);
+  BCPlane * plane = state->inputGrid->getPlaneByName(state->heightPlaneName);
 
   d_dataset->range_of_change.ChangeAll();
   if (plane) {
@@ -949,11 +961,11 @@ void nmg_Graphics_Implementation::causeGridRedraw (void) {
 }
 
 void nmg_Graphics_Implementation::causeGridRebuild (void) {
-  g_just_color = 0;
+  state->just_color = 0;
 
   // Even though we may not be using the vertex array extension, we still
   // use the vertex array to cache calculated normals
-  if (!g_surface->init(d_dataset->inputGrid->numX(),
+  if (!state->surface->init(d_dataset->inputGrid->numX(),
                        d_dataset->inputGrid->numY()) )
   {
       fprintf(stderr," initialization of surface: out of memory.\n");
@@ -963,7 +975,7 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
   grid_size_x = d_dataset->inputGrid->numX();
   grid_size_y = d_dataset->inputGrid->numY();
 
-  if (!g_surface->rebuildSurface(VRPN_TRUE)) {
+  if (!state->surface->rebuildSurface(state, VRPN_TRUE)) {
     fprintf(stderr,
             "nmg_Graphics_Implementation::causeGridRebuild():  "
             "Couldn't build grid display lists\n");
@@ -973,30 +985,30 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
 
 void nmg_Graphics_Implementation::enableChartjunk (int on) {
 //fprintf(stderr, "nmg_Graphics_Implementation::enableChartjunk().\n");
-  if ( g_config_chartjunk == on )
+  if ( state->config_chartjunk == on )
     return;
-  g_config_chartjunk = on;
+  state->config_chartjunk = on;
 }
 
 void nmg_Graphics_Implementation::enableFilledPolygons (int on, int region) {
 //fprintf(stderr, "nmg_Graphics_Implementation::enableFilledPolygons().\n");
-  g_surface->enableFilledPolygons(on, region);
+  state->surface->enableFilledPolygons(on, region);
 }
 
 void nmg_Graphics_Implementation::enableSmoothShading (int on) {
 //fprintf(stderr, "nmg_Graphics_Implementation::enableSmoothShading().\n");
-  g_config_smooth_shading = on;
+  state->config_smooth_shading = on;
 }
 
 void nmg_Graphics_Implementation::enableUber (int on) {
 //fprintf(stderr, "nmg_Graphics_Implementation::enableUber(%d).\n", on);
-  g_config_enableUber = on;
+  state->config_enableUber = on;
 }
 
 void nmg_Graphics_Implementation::enableTrueTip (int on) {
 //fprintf(stderr, "nmg_Graphics_Implementation::enableTrueTip().\n");
-  g_config_trueTip = on;
-  fprintf(stderr, "Set g_config_trueTip to %d.\n", on);
+  state->config_trueTip = on;
+  fprintf(stderr, "Set state->config_trueTip to %d.\n", on);
 }
 
 
@@ -1004,105 +1016,112 @@ void nmg_Graphics_Implementation::enableTrueTip (int on) {
 
 void nmg_Graphics_Implementation::setAlphaColor (float r, float g, float b) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setAlphaColor().\n");
-  g_alpha_r = r;
-  g_alpha_g = g;
-  g_alpha_b = b;
-  makeCheckImage();
-  buildAlphaTexture();
+  state->alpha_r = r;
+  state->alpha_g = g;
+  state->alpha_b = b;
+  makeCheckImage(state);
+  buildAlphaTexture(state);
 }
 
 void nmg_Graphics_Implementation::setAlphaSliderRange (float low, float high) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setAlphaSliderRange().\n");
-  g_alpha_slider_min = low;
-  g_alpha_slider_max = high;
+  state->alpha_slider_min = low;
+  state->alpha_slider_max = high;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setColorMapDirectory (const char * dir) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setColorMapDirectory().\n");
-  if (g_colorMapDir) {
-    delete [] g_colorMapDir;
+  if (state->colorMapDir) {
+    delete [] state->colorMapDir;
   }
   if (!dir) {
-    g_colorMapDir = NULL;
+    state->colorMapDir = NULL;
     return;
   }
-  g_colorMapDir = new char [1 + strlen(dir)];
+  state->colorMapDir = new char [1 + strlen(dir)];
 
-  strcpy(g_colorMapDir, dir);
+  strcpy(state->colorMapDir, dir);
 }
 
 void nmg_Graphics_Implementation::setTextureDirectory (const char * dir) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setTextureDirectory().\n");
-  if (g_textureDir) {
-    delete [] g_textureDir;
+  if (state->textureDir) {
+    delete [] state->textureDir;
   }
   if (!dir) {
-    g_textureDir = NULL;
+    state->textureDir = NULL;
     return;
   }
-  g_textureDir = new char [1 + strlen(dir)];
-  strcpy(g_textureDir, dir);
+  state->textureDir = new char [1 + strlen(dir)];
+  strcpy(state->textureDir, dir);
 }
 
 void nmg_Graphics_Implementation::setColorMapName (const char * name) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setColorMapName().\n");
 
   if (strcmp(name, "none") == 0) {
-    g_curColorMap = NULL;
+    state->curColorMap = NULL;
   } else {
-    g_colorMap.load_from_file(name, g_colorMapDir);
-    g_curColorMap = &g_colorMap;
+    state->colorMap.load_from_file(name, state->colorMapDir);
+    state->curColorMap = &state->colorMap;
   }
   causeGridReColor();
 }
 
 void nmg_Graphics_Implementation::setColorMinMax (float low, float high) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setColorMinMax().\n");
-  if ( (g_color_min != low) || (g_color_max != high) ) {
-    g_color_min = low;
-    g_color_max = high;
+  if ( (state->color_min != low) || (state->color_max != high) ) {
+    state->color_min = low;
+    state->color_max = high;
     causeGridReColor();
   }
 }
 
 void nmg_Graphics_Implementation::setDataColorMinMax (float low, float high) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setDataColorMinMax().\n");
-  if ( (g_data_min_norm != low) || (g_data_max_norm != high) ) {
-    g_data_min_norm = low;
-    g_data_max_norm = high;
+  if ( (state->data_min_norm != low) || (state->data_max_norm != high) ) {
+    state->data_min_norm = low;
+    state->data_max_norm = high;
     causeGridReColor();
   }
 }
 
 void nmg_Graphics_Implementation::setOpacitySliderRange (float low, float high) {
-  g_opacity_slider_min = low;
-  g_opacity_slider_max = high;
+  state->opacity_slider_min = low;
+  state->opacity_slider_max = high;
   causeGridReColor();
 }
 
 void nmg_Graphics_Implementation::setContourColor (int r, int g, int b) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setContourColor().\n");
-  g_contour_r = r;
-  g_contour_g = g;
-  g_contour_b = b;
-  buildContourTexture();
+  state->contour_r = r;
+  state->contour_g = g;
+  state->contour_b = b;
+  buildContourTexture(state);
+  causeGridRedraw();
+}
+
+void nmg_Graphics_Implementation::setContourWidth (float x) {
+//fprintf(stderr, "nmg_Graphics_Implementation::setContourWidth().\n");
+  state->contour_width = x;
+  buildContourTexture(state);
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setHandColor (int c) {
     //fprintf(stderr, "nmg_Graphics_Implementation::setHandColor().\n");
-  g_hand_color = c;
+  state->hand_color = c;
 }
 
 void nmg_Graphics_Implementation::setIconScale (float scale) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setIconScale().\n");
-  g_icon_scale = scale;
+  state->icon_scale = scale;
 }
 
 void nmg_Graphics_Implementation::enableCollabHand (vrpn_bool on) {
-  ::enableCollabHand(on);  // from globjects.c
-  g_draw_collab_hand = on;
+  ::enableCollabHand(state, on);  // from globjects.c
+  state->draw_collab_hand = on;
 }
 
 void nmg_Graphics_Implementation::setCollabHandPos(double pos[], double quat[])
@@ -1110,40 +1129,40 @@ void nmg_Graphics_Implementation::setCollabHandPos(double pos[], double quat[])
     //fprintf(stderr, "nmg_Graphics_Implementation::setCollabHandPos().\n");
   int i;
   for (i = 0; i < 3; i++) {
-    g_collabHandPos[i] = pos[i];
-    g_collabHandQuat[i] = quat[i];
+    state->collabHandPos[i] = pos[i];
+    state->collabHandQuat[i] = quat[i];
   }
-  g_collabHandQuat[3] = quat[3];
+  state->collabHandQuat[3] = quat[3];
 
-  g_position_collab_hand = 1;
+  state->position_collab_hand = 1;
 }
 
 void nmg_Graphics_Implementation::setCollabMode(int mode)
 {
     //fprintf(stderr, "nmg_Graphics_Implementation::setCollabMode().\n");
-  g_collabMode = mode;
+  state->collabMode = mode;
 }
 
 
 // virtual
 void nmg_Graphics_Implementation::setAlphaPlaneName (const char * n) {
-  strcpy(g_alphaPlaneName, n);
+  strcpy(state->alphaPlaneName, n);
 }
 
 // virtual
 void nmg_Graphics_Implementation::setColorPlaneName (const char * n) {
-  strcpy(g_colorPlaneName, n);
+  strcpy(state->colorPlaneName, n);
 
   // This function is called when the user chooses a new colormap plane,
   // or when the use hits the button "Autoscale". These are the
   // only times we want to change what "0" and "1" mean for
-  // the g_data_min_norm and g_data_max_norm variables. So we set
-  // g_data_m* here. 
+  // the state->data_min_norm and state->data_max_norm variables. So we set
+  // state->data_m* here. 
   nmb_PlaneSelection planes;  planes.lookup(d_dataset);
 
   if (planes.color != NULL) {
-      g_data_min = planes.color->minNonZeroValue();
-      g_data_max = planes.color->maxNonZeroValue();
+      state->data_min = planes.color->minNonZeroValue();
+      state->data_max = planes.color->maxNonZeroValue();
 
       // Colormap drift compensation. Reset the first line average numbers so
       // the next time we start a scan, we can drift-compensate the color map.
@@ -1154,47 +1173,40 @@ void nmg_Graphics_Implementation::setColorPlaneName (const char * n) {
 
 // virtual
 void nmg_Graphics_Implementation::setContourPlaneName (const char * n) {
-  strcpy(g_contourPlaneName, n);
+  strcpy(state->contourPlaneName, n);
 }
 
 // virtual
 void nmg_Graphics_Implementation::setHeightPlaneName (const char * n) {
-  strcpy(g_heightPlaneName, n);
+  strcpy(state->heightPlaneName, n);
 }
 
 // virtual
 void nmg_Graphics_Implementation::setOpacityPlaneName (const char * n) {
-  strcpy(g_opacityPlaneName, n);
+  strcpy(state->opacityPlaneName, n);
 }
 
 void nmg_Graphics_Implementation::setMaskPlaneName (const char * n) {
-  strcpy(g_maskPlaneName, n);
+  strcpy(state->maskPlaneName, n);
 }
 
 void nmg_Graphics_Implementation::setRegionControlPlaneName (const char * n, int region) {
   BCPlane * plane = dataset->inputGrid->getPlaneByName(n);
-  g_surface->setRegionControl(plane, region);
-}
-
-void nmg_Graphics_Implementation::setContourWidth (float x) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setContourWidth().\n");
-  g_contour_width = x;
-  buildContourTexture();
-  causeGridRedraw();
+  state->surface->setRegionControl(plane, region);
 }
 
 void nmg_Graphics_Implementation::setSurfaceColor (const double c [4]) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setSurfaceColor().\n");
-  memcpy(g_surfaceColor, c, 3 * sizeof(double));
+  memcpy(state->surfaceColor, c, 3 * sizeof(double));
 }
 
 void nmg_Graphics_Implementation::setSurfaceColor (const int c [4]) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setSurfaceColor().\n");
-  g_surfaceColor[0] = c[0] / 255.0;
-  g_surfaceColor[1] = c[1] / 255.0;
-  g_surfaceColor[2] = c[2] / 255.0;
+  state->surfaceColor[0] = c[0] / 255.0;
+  state->surfaceColor[1] = c[1] / 255.0;
+  state->surfaceColor[2] = c[2] / 255.0;
   //use alpha value from Opacity scrollbar
-  g_surfaceColor[3] = g_surface_alpha;
+  state->surfaceColor[3] = state->surface_alpha;
 }
 
 //
@@ -1218,7 +1230,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   // we don't have separate functions for building textures from ppm images
   // and AFM data (these changes allow this function to do what 
   // makeAndInstallRulerImage() was used for previously)
-  strcpy(g_realign_texture_name, name);
+  strcpy(state->realign_texture_name, name);
   nmb_Image *im = d_dataset->dataImages->getImageByName(name);
   if (!im) {
     fprintf(stderr, 
@@ -1248,7 +1260,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 
-  glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
+  glBindTexture(GL_TEXTURE_2D, state->tex_ids[COLORMAP_TEX_ID]);
 
 
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
@@ -1265,19 +1277,19 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
                 0, GL_LUMINANCE, pixelType, im->pixelData());
 */
   GLint internalFormat = GL_LUMINANCE;
-  if (g_realign_textures_curColorMap != NULL) {
+  if (state->realign_textures_curColorMap != NULL) {
       const int CMAP_SIZE_GL = 512;
       // Create some GL compatible maps from the current color map. 
       float dummy;
       float rmap[CMAP_SIZE_GL], gmap[CMAP_SIZE_GL],bmap[CMAP_SIZE_GL];
       for (int i = 0; i < CMAP_SIZE_GL; i++) {
-          g_realign_textures_curColorMap->lookup(
+          state->realign_textures_curColorMap->lookup(
               i, 
               0, CMAP_SIZE_GL,
-              g_realign_textures_data_min,
-              g_realign_textures_data_max,
-              g_realign_textures_color_min,
-              g_realign_textures_color_max,
+              state->realign_textures_data_min,
+              state->realign_textures_data_max,
+              state->realign_textures_color_min,
+              state->realign_textures_color_max,
               &rmap[i], 
               &gmap[i], 
               &bmap[i], &dummy);
@@ -1309,21 +1321,21 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
                    GL_LUMINANCE, pixelType, im->pixelData());
   }
 
-  if (g_realign_textures_curColorMap != NULL) {
+  if (state->realign_textures_curColorMap != NULL) {
       glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
   }
   GLenum err = glGetError();
   if (err!=GL_NO_ERROR) {
       printf(" Error making realign texture: %s.\n", gluErrorString(err));
   }
-  g_tex_image_width[COLORMAP_TEX_ID] = im->width();
-  g_tex_image_height[COLORMAP_TEX_ID] = im->height();
-  g_tex_installed_width[COLORMAP_TEX_ID] = im->width()+
+  state->tex_image_width[COLORMAP_TEX_ID] = im->width();
+  state->tex_image_height[COLORMAP_TEX_ID] = im->height();
+  state->tex_installed_width[COLORMAP_TEX_ID] = im->width()+
                                      im->borderXMin()+im->borderXMax();
-  g_tex_installed_height[COLORMAP_TEX_ID] = im->height()+
+  state->tex_installed_height[COLORMAP_TEX_ID] = im->height()+
                                      im->borderYMin()+im->borderYMax();
-  g_tex_image_offsetx[COLORMAP_TEX_ID] = im->borderXMin();
-  g_tex_image_offsety[COLORMAP_TEX_ID] = im->borderYMin();
+  state->tex_image_offsetx[COLORMAP_TEX_ID] = im->borderXMin();
+  state->tex_image_offsety[COLORMAP_TEX_ID] = im->borderYMin();
 
   return;
 
@@ -1336,16 +1348,16 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 void nmg_Graphics_Implementation::
 setRealignTexturesConversionMap( const char *map, const char *mapdir ) {
   if ( !strcmp( map, "none" ) ) {
-    if (g_realign_textures_curColorMap) {
-      delete g_realign_textures_curColorMap;
+    if (state->realign_textures_curColorMap) {
+      delete state->realign_textures_curColorMap;
     }
-    g_realign_textures_curColorMap = NULL;
+    state->realign_textures_curColorMap = NULL;
   }
   else {
-    if ( !g_realign_textures_curColorMap ) {
-      g_realign_textures_curColorMap = new nmb_ColorMap;
+    if ( !state->realign_textures_curColorMap ) {
+      state->realign_textures_curColorMap = new nmb_ColorMap;
     }
-    g_realign_textures_curColorMap->load_from_file( map, g_colorMapDir );
+    state->realign_textures_curColorMap->load_from_file( map, state->colorMapDir );
   }
 }
 
@@ -1357,10 +1369,10 @@ void nmg_Graphics_Implementation::setRealignTextureSliderRange (
     float data_max,
     float color_min,
     float color_max) {
-  g_realign_textures_data_min = data_min;
-  g_realign_textures_data_max = data_max;
-  g_realign_textures_color_min = color_min;
-  g_realign_textures_color_max = color_max;
+  state->realign_textures_data_min = data_min;
+  state->realign_textures_data_max = data_max;
+  state->realign_textures_color_min = color_min;
+  state->realign_textures_color_max = color_max;
 }
 
 
@@ -1374,16 +1386,16 @@ void nmg_Graphics_Implementation::computeRealignPlane( const char *name,
 						       const char *newname ) {
   
   // New data Array 
-  BCPlane *plane = g_inputGrid->getPlaneByName(name);
+  BCPlane *plane = state->inputGrid->getPlaneByName(name);
   if ( !plane )
     return;
   
   char newunits [1000];
   sprintf(newunits, "%s_realign", plane->units()->Characters());
 
-  BCPlane *newplane = g_inputGrid->getPlaneByName(newname);
+  BCPlane *newplane = state->inputGrid->getPlaneByName(newname);
   if (!newplane) {
-     g_inputGrid->addNewPlane( newname, newunits, NOT_TIMED );
+     state->inputGrid->addNewPlane( newname, newunits, NOT_TIMED );
      if ( newplane == NULL ) {
         fprintf( stderr, "compute realign plane: Can't make plane %s\n", 
 		newname );
@@ -1396,7 +1408,7 @@ void nmg_Graphics_Implementation::computeRealignPlane( const char *name,
   // Uses bi-linear interpolation for points that don't fall
   // exactly on the grid.
 
-  Vertex_Struct ** surface = g_surface->getRegion(0)->getRegionData();
+  Vertex_Struct ** surface = state->surface->getRegion(0)->getRegionData();
   int numx = plane->numX();
   int numy = plane->numY();
   for ( int i = 0; i < numy; i++ )
@@ -1455,27 +1467,27 @@ void nmg_Graphics_Implementation::computeRealignPlane( const char *name,
 //
 void nmg_Graphics_Implementation::translateTextures ( int on,
 						      float dx, float dy ) {
-  g_translate_textures = on;
-  g_scale_textures = 0;
-  g_shear_textures = 0;
-  g_rotate_textures = 0;
+  state->translate_textures = on;
+  state->scale_textures = 0;
+  state->shear_textures = 0;
+  state->rotate_textures = 0;
 
   //
   // First the direction (dx, dy) is rotated to match the
   // rotated texture coordinates. (So after rotating the texture,
   // translating up and down still matches the mouse)...
   //
-  float u = ( dx / g_tex_range_x ) * cos( g_tex_theta_cumulative ) + 
-    ( dy / g_tex_range_y ) * sin( g_tex_theta_cumulative );
-  float v = ( dx / g_tex_range_x ) * -sin( g_tex_theta_cumulative ) +
-    ( dy / g_tex_range_y ) * cos( g_tex_theta_cumulative );
+  float u = ( dx / state->tex_range_x ) * cos( state->tex_theta_cumulative ) + 
+    ( dy / state->tex_range_y ) * sin( state->tex_theta_cumulative );
+  float v = ( dx / state->tex_range_x ) * -sin( state->tex_theta_cumulative ) +
+    ( dy / state->tex_range_y ) * cos( state->tex_theta_cumulative );
 
-  g_translate_tex_dx = u;
-  g_translate_tex_dy = v;
+  state->translate_tex_dx = u;
+  state->translate_tex_dy = v;
 
 #ifdef PROJECTIVE_TEXTURE
-  g_translate_tex_x -= dx;
-  g_translate_tex_y -= dy;
+  state->translate_tex_x -= dx;
+  state->translate_tex_y -= dy;
 #endif
 
   // Rebuilds the texture coordinate array:
@@ -1487,32 +1499,32 @@ void nmg_Graphics_Implementation::translateTextures ( int on,
 //
 void nmg_Graphics_Implementation::scaleTextures ( int on,
 						  float dx, float dy ) {
-  g_translate_textures = 0;
-  g_scale_textures = on;
-  g_shear_textures = 0;
-  g_rotate_textures = 0;
+  state->translate_textures = 0;
+  state->scale_textures = on;
+  state->shear_textures = 0;
+  state->rotate_textures = 0;
 
   //
   // First the direction (dx, dy) is rotated to match the
   // rotated texture coordinates. (So after rotating the texture,
   // scaling left and right still matches the mouse)...
   //
-  float u = ( dx / 100.0 ) * cos( g_tex_theta_cumulative ) + 
-    ( dy / 100.0 ) * sin( g_tex_theta_cumulative );
-  float v = ( dx / 100.0 ) * -sin( g_tex_theta_cumulative ) +
-    ( dy / 100.0 ) * cos( g_tex_theta_cumulative );
+  float u = ( dx / 100.0 ) * cos( state->tex_theta_cumulative ) + 
+    ( dy / 100.0 ) * sin( state->tex_theta_cumulative );
+  float v = ( dx / 100.0 ) * -sin( state->tex_theta_cumulative ) +
+    ( dy / 100.0 ) * cos( state->tex_theta_cumulative );
 
-  g_scale_tex_dx = 1.0 + u;
-  g_scale_tex_dy = 1.0 + v;
+  state->scale_tex_dx = 1.0 + u;
+  state->scale_tex_dy = 1.0 + v;
 
-  g_tex_range_x /= g_scale_tex_dx;
-  g_tex_range_y /= g_scale_tex_dy;
+  state->tex_range_x /= state->scale_tex_dx;
+  state->tex_range_y /= state->scale_tex_dy;
 
 #ifdef PROJECTIVE_TEXTURE
-  if (g_scale_tex_dx > 0.5 && g_scale_tex_dx < 2.0)
-      g_scale_tex_x *= g_scale_tex_dx;
-  if (g_scale_tex_dy > 0.5 && g_scale_tex_dy < 2.0)
-      g_scale_tex_y *= g_scale_tex_dy;
+  if (state->scale_tex_dx > 0.5 && state->scale_tex_dx < 2.0)
+      state->scale_tex_x *= state->scale_tex_dx;
+  if (state->scale_tex_dy > 0.5 && state->scale_tex_dy < 2.0)
+      state->scale_tex_y *= state->scale_tex_dy;
 #endif
 
   // Rebuilds the texture coordinate array:
@@ -1524,29 +1536,29 @@ void nmg_Graphics_Implementation::scaleTextures ( int on,
 //
 void nmg_Graphics_Implementation::shearTextures ( int on,
 						  float dx, float dy ) {
-  g_translate_textures = 0;
-  g_scale_textures = 0;
-  g_shear_textures = on;
-  g_rotate_textures = 0;
+  state->translate_textures = 0;
+  state->scale_textures = 0;
+  state->shear_textures = on;
+  state->rotate_textures = 0;
 
   //
   // First the direction (dx, dy) is rotated to match the
   // rotated texture coordinates. (So after rotating the texture,
   // shearing left and right still matches the mouse)...
   //
-  float u = ( dx/(g_tex_range_x ) ) * cos( g_tex_theta_cumulative ) + 
-    ( dy/( g_tex_range_y ) ) * sin( g_tex_theta_cumulative );
-  float v = ( dx/(g_tex_range_x ) ) * -sin( g_tex_theta_cumulative ) +
-    ( dy/( g_tex_range_y ) ) * cos( g_tex_theta_cumulative );
+  float u = ( dx/(state->tex_range_x ) ) * cos( state->tex_theta_cumulative ) + 
+    ( dy/( state->tex_range_y ) ) * sin( state->tex_theta_cumulative );
+  float v = ( dx/(state->tex_range_x ) ) * -sin( state->tex_theta_cumulative ) +
+    ( dy/( state->tex_range_y ) ) * cos( state->tex_theta_cumulative );
 
-  g_shear_tex_dx = u;
-  g_shear_tex_dy = v;
+  state->shear_tex_dx = u;
+  state->shear_tex_dy = v;
 
 #ifdef PROJECTIVE_TEXTURE
   // not sure why this is more sensitive but it is so we scale down the
   // change a bit
-  g_shear_tex_x += g_shear_tex_dx/100.0;
-  g_shear_tex_y += g_shear_tex_dy/100.0;
+  state->shear_tex_x += state->shear_tex_dx/100.0;
+  state->shear_tex_y += state->shear_tex_dy/100.0;
 #endif
 
   // Rebuilds the texture coordinate array:
@@ -1557,13 +1569,13 @@ void nmg_Graphics_Implementation::shearTextures ( int on,
 // Shear the texture based on the mouse movements:
 //
 void nmg_Graphics_Implementation::rotateTextures ( int on, float theta ) {
-  g_translate_textures = 0;
-  g_scale_textures = 0;
-  g_shear_textures = 0;
-  g_rotate_textures = on;
+  state->translate_textures = 0;
+  state->scale_textures = 0;
+  state->shear_textures = 0;
+  state->rotate_textures = on;
 
-  g_rotate_tex_theta = theta / 10.0;
-  g_tex_theta_cumulative += g_rotate_tex_theta;
+  state->rotate_tex_theta = theta / 10.0;
+  state->tex_theta_cumulative += state->rotate_tex_theta;
 
   // Rebuilds the texture coordinate array:
   causeGridRebuild();
@@ -1575,37 +1587,37 @@ void nmg_Graphics_Implementation::rotateTextures ( int on, float theta ) {
 //
 void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
 
-  int numx = g_inputGrid->numX();
-  int numy = g_inputGrid->numY();
+  int numx = state->inputGrid->numX();
+  int numy = state->inputGrid->numY();
 
 #ifdef PROJECTIVE_TEXTURE
 
-  // (g_translate_tex = g_translate_tex_x,g_translate_tex_y)
-  // g_translate_tex represents the translation of the grid to the
+  // (state->translate_tex = state->translate_tex_x,state->translate_tex_y)
+  // state->translate_tex represents the translation of the grid to the
   // point about which the texture is rotated, scaled, and sheared
-  // so to move this point we must adjust g_translate_tex but then
+  // so to move this point we must adjust state->translate_tex but then
   // we need to compute the corresponding new location in texture coordinates
   // so that this can be subtracted out properly by compute_texture_matrix() 
   // so that the texture itself doesn't move
 
-  BCPlane *plane = g_inputGrid->getPlaneByName(g_heightPlaneName);
+  BCPlane *plane = state->inputGrid->getPlaneByName(state->heightPlaneName);
   if (plane == NULL){
       fprintf(stderr, "Error in setTextureCenter: could not get plane!\n");
       return; 
   }
 
   // we use current texture matrix to compute how the change in position of
-  // the center on the grid (g_tex_grid_center) gets mapped to a change in 
-  // the position of the center in the texture (g_tex_coord_center)
+  // the center on the grid (state->tex_grid_center) gets mapped to a change in 
+  // the position of the center in the texture (state->tex_coord_center)
   double tex_mat[16];
 
   // note: it is important that we call this here before we
-  // change g_translate_tex because otherwise g_translate_tex and
-  // g_tex_coord_center would be inconsistent and the texture would move
-  compute_texture_matrix(g_translate_tex_x, g_translate_tex_y,
-                g_tex_theta_cumulative, g_scale_tex_x,
-                g_scale_tex_y, g_shear_tex_x, g_shear_tex_y,
-                g_tex_coord_center_x, g_tex_coord_center_y,
+  // change state->translate_tex because otherwise state->translate_tex and
+  // state->tex_coord_center would be inconsistent and the texture would move
+  compute_texture_matrix(state->translate_tex_x, state->translate_tex_y,
+                state->tex_theta_cumulative, state->scale_tex_x,
+                state->scale_tex_y, state->shear_tex_x, state->shear_tex_y,
+                state->tex_coord_center_x, state->tex_coord_center_y,
                 tex_mat); 
 
   double pl_len_x = plane->maxX()-plane->minX();
@@ -1613,29 +1625,29 @@ void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
 
   // this just scales the mouse movements by a reasonable value to map them
   // to nm:
-  g_translate_tex_x += dx*pl_len_x/(double)numx;
-  g_translate_tex_y += dy*pl_len_y/(double)numy;
+  state->translate_tex_x += dx*pl_len_x/(double)numx;
+  state->translate_tex_y += dy*pl_len_y/(double)numy;
 
-  if (g_translate_tex_x > pl_len_x)
-     g_translate_tex_x = pl_len_x;
-  else if (g_translate_tex_x < 0)
-     g_translate_tex_x = 0;
-  if (g_translate_tex_y > pl_len_y)
-     g_translate_tex_y = pl_len_y;
-  else if (g_translate_tex_y < 0)
-     g_translate_tex_y = 0;
+  if (state->translate_tex_x > pl_len_x)
+     state->translate_tex_x = pl_len_x;
+  else if (state->translate_tex_x < 0)
+     state->translate_tex_x = 0;
+  if (state->translate_tex_y > pl_len_y)
+     state->translate_tex_y = pl_len_y;
+  else if (state->translate_tex_y < 0)
+     state->translate_tex_y = 0;
 
   float x = 0, y = 0, z = 0;
   // x,y are in nm
-  x = g_translate_tex_x;
-  y = g_translate_tex_y;
+  x = state->translate_tex_x;
+  y = state->translate_tex_y;
  
   // rx,ry are in grid lattice units 
   double rx = x*(double)numx/pl_len_x;
   double ry = y*(double)numy/pl_len_y;
   z = plane->interpolatedValue(rx, ry)*(plane->scale());
 
-  position_sphere(x,y,z);
+  position_sphere(state, x,y,z);
 
   // now that we have the new position of the center in grid coordinates, we
   // compute the new position of the center in texture coordinates using the
@@ -1648,25 +1660,25 @@ void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
       for (j = 0; j < 4; j++)
           texture_pnt[i] += tex_mat[i + j*4]*grid_pnt[j];
   }
-  g_tex_coord_center_x = texture_pnt[0];
-  g_tex_coord_center_y = texture_pnt[1];
+  state->tex_coord_center_x = texture_pnt[0];
+  state->tex_coord_center_y = texture_pnt[1];
 
 #else	// NOT PROJECTIVE_TEXTURE
 
   // rotate:
-  float u = ( dx/(2.0 * g_tex_range_x ) ) * cos( g_tex_theta_cumulative ) + 
-    ( dy/( 2.0 * g_tex_range_y ) ) * sin( g_tex_theta_cumulative );
-  float v = ( dx/(2.0 * g_tex_range_x ) ) * -sin( g_tex_theta_cumulative ) +
-    ( dy/( 2.0 * g_tex_range_y ) ) * cos( g_tex_theta_cumulative );
+  float u = ( dx/(2.0 * state->tex_range_x ) ) * cos( state->tex_theta_cumulative ) + 
+    ( dy/( 2.0 * state->tex_range_y ) ) * sin( state->tex_theta_cumulative );
+  float v = ( dx/(2.0 * state->tex_range_x ) ) * -sin( state->tex_theta_cumulative ) +
+    ( dy/( 2.0 * state->tex_range_y ) ) * cos( state->tex_theta_cumulative );
 
-  u = g_tex_coord_center_x + u;
-  v = g_tex_coord_center_y + v;
+  u = state->tex_coord_center_x + u;
+  v = state->tex_coord_center_y + v;
   
   float x = 0, y = 0, z = 0;
   float min = 3;
   float x_dis, y_dis;
 
-  Vertex_Struct ** surface = g_surface->getRegion(0)->getRegionData();
+  Vertex_Struct ** surface = state->surface->getRegion(0)->getRegionData();
   for ( int i = 0; i < numy; i++ )
     for ( int j = 0; j < numx; j++ ) {
       x_dis = (surface[i][j * 2].Texcoord[1] - u)*
@@ -1678,9 +1690,9 @@ void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
 	x = surface[i][j * 2].Vertex[0];
 	y = surface[i][j * 2].Vertex[1];
 	z = surface[i][j * 2].Vertex[2];
-	g_tex_coord_center_x = surface[i][j * 2].Texcoord[1];
-	g_tex_coord_center_y = surface[i][j * 2].Texcoord[2];
-	position_sphere(x, y, z);
+	state->tex_coord_center_x = surface[i][j * 2].Texcoord[1];
+	state->tex_coord_center_y = surface[i][j * 2].Texcoord[2];
+	position_sphere(state, x, y, z);
       }
     }
 #endif
@@ -1696,73 +1708,73 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   //fprintf(stderr, "initializing textures\n");
 
   for (i = 0; i < N_TEX; i++) {
-     g_tex_image_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
-     g_tex_image_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
-     g_tex_installed_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
-     g_tex_installed_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
-     g_tex_image_offsetx[i] = 0;
-     g_tex_image_offsety[i] = 0;
+     state->tex_image_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
+     state->tex_image_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
+     state->tex_installed_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
+     state->tex_installed_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
+     state->tex_image_offsetx[i] = 0;
+     state->tex_image_offsety[i] = 0;
 #ifdef _WIN32
-     g_tex_blend_func[i] = CYGWIN_TEXTURE_FUNCTION;
+     state->tex_blend_func[i] = CYGWIN_TEXTURE_FUNCTION;
 #else
-     g_tex_blend_func[i] = GL_DECAL;
+     state->tex_blend_func[i] = GL_DECAL;
 #endif
   }
-  g_tex_blend_func[VISUALIZATION_TEX_ID] = GL_MODULATE;
+  state->tex_blend_func[VISUALIZATION_TEX_ID] = GL_MODULATE;
 
 #if defined(sgi)
-  g_tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
-  g_tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
-  g_tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
-  g_tex_env_color[SEM_DATA_TEX_ID][2] = 1.0;
-  g_tex_env_color[SEM_DATA_TEX_ID][3] = 1.0;
+  state->tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
+  state->tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
+  state->tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
+  state->tex_env_color[SEM_DATA_TEX_ID][2] = 1.0;
+  state->tex_env_color[SEM_DATA_TEX_ID][3] = 1.0;
 #else
-  g_tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
-  g_tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
-  g_tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
-  g_tex_env_color[SEM_DATA_TEX_ID][2] = 1.0;
-  g_tex_env_color[SEM_DATA_TEX_ID][3] = 1.0;
+  state->tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
+  state->tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
+  state->tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
+  state->tex_env_color[SEM_DATA_TEX_ID][2] = 1.0;
+  state->tex_env_color[SEM_DATA_TEX_ID][3] = 1.0;
 #endif
 
-  g_tex_blend_func[COLORMAP_TEX_ID] = GL_BLEND;
-  g_tex_env_color[COLORMAP_TEX_ID][0] = 1.0;
-  g_tex_env_color[COLORMAP_TEX_ID][1] = 1.0;
-  g_tex_env_color[COLORMAP_TEX_ID][2] = 1.0;
-  g_tex_env_color[COLORMAP_TEX_ID][3] = 1.0;
+  state->tex_blend_func[COLORMAP_TEX_ID] = GL_BLEND;
+  state->tex_env_color[COLORMAP_TEX_ID][0] = 1.0;
+  state->tex_env_color[COLORMAP_TEX_ID][1] = 1.0;
+  state->tex_env_color[COLORMAP_TEX_ID][2] = 1.0;
+  state->tex_env_color[COLORMAP_TEX_ID][3] = 1.0;
 
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  glGenTextures(N_TEX, tex_ids);
+  glGenTextures(N_TEX, state->tex_ids);
 
 
-  buildContourTexture();
+  buildContourTexture(state);
 
 #if defined(sgi) || defined(_WIN32)
   //fprintf(stderr, "Initializing checkerboard texture.\n");
-  makeCheckImage();
-  buildAlphaTexture();
+  makeCheckImage(state);
+  buildAlphaTexture(state);
 
   //fprintf(stderr, "Initializing ruler texture.");
-  if (g_rulerPPM) {
-    makeAndInstallRulerImage(g_rulerPPM);
+  if (state->rulerPPM) {
+    makeAndInstallRulerImage(state->rulerPPM);
   } else {
-    makeRulerImage();
-    buildRulergridTexture();
+    makeRulerImage(state);
+    buildRulergridTexture(state);
     //fprintf(stderr, " Using default grid.\n");
   }
   if (glGetError()!=GL_NO_ERROR) {
       printf(" Error making ruler texture.\n");
   }
 
-  if (g_vizPPM) {
-      makeAndInstallVizImage(g_vizPPM);
+  if (state->vizPPM) {
+      makeAndInstallVizImage(state->vizPPM);
   }
 
-  g_tex_installed_width[SEM_DATA_TEX_ID] = 1024;
-  g_tex_installed_height[SEM_DATA_TEX_ID] = 1024;
-  g_tex_image_offsetx[SEM_DATA_TEX_ID] = 0;
-  g_tex_image_offsety[SEM_DATA_TEX_ID] = 0;
+  state->tex_installed_width[SEM_DATA_TEX_ID] = 1024;
+  state->tex_installed_height[SEM_DATA_TEX_ID] = 1024;
+  state->tex_image_offsetx[SEM_DATA_TEX_ID] = 0;
+  state->tex_image_offsety[SEM_DATA_TEX_ID] = 0;
 
   clearSEMDataTexture();
 
@@ -1774,13 +1786,13 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
-  int realign_tex_size = 4*g_tex_installed_width[COLORMAP_TEX_ID] *
-                             g_tex_installed_height[COLORMAP_TEX_ID];
+  int realign_tex_size = 4*state->tex_installed_width[COLORMAP_TEX_ID] *
+                             state->tex_installed_height[COLORMAP_TEX_ID];
   float *realign_data = new float [realign_tex_size];
-  glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
+  glBindTexture(GL_TEXTURE_2D, state->tex_ids[COLORMAP_TEX_ID]);
 
   int ri,gi,bi,ai;
-  if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_BLEND) {
+  if (state->tex_blend_func[COLORMAP_TEX_ID] == GL_BLEND) {
     for (ri=0,gi=1,bi=2,ai=3; ai < realign_tex_size; ri+=4,gi+=4,bi+=4,ai+=4){
       realign_data[ri] = 0.0;
       realign_data[gi] = 0.0;
@@ -1789,7 +1801,7 @@ void nmg_Graphics_Implementation::initializeTextures(void)
     }
     float bord_col[4] = {0.0, 0.0, 0.0, 1.0};
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
-  } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_MODULATE) {
+  } else if (state->tex_blend_func[COLORMAP_TEX_ID] == GL_MODULATE) {
     for (ri=0,gi=1,bi=2,ai=3; ai < realign_tex_size; ri+=4,gi+=4,bi+=4,ai+=4){
       realign_data[ri] = 1.0;
       realign_data[gi] = 1.0;
@@ -1812,14 +1824,14 @@ void nmg_Graphics_Implementation::initializeTextures(void)
 /*
 #ifdef _WIN32
   if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB,
-                   g_tex_installed_width[COLORMAP_TEX_ID],
-                   g_tex_installed_height[COLORMAP_TEX_ID],
+                   state->tex_installed_width[COLORMAP_TEX_ID],
+                   state->tex_installed_height[COLORMAP_TEX_ID],
                    GL_RGBA, GL_FLOAT, realign_data) != 0) {
     printf(" Error making mipmaps, using texture instead.\n");
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                   g_tex_installed_width[COLORMAP_TEX_ID],
-                   g_tex_installed_height[COLORMAP_TEX_ID],
+                   state->tex_installed_width[COLORMAP_TEX_ID],
+                   state->tex_installed_height[COLORMAP_TEX_ID],
                 0, GL_RGBA, GL_FLOAT, realign_data);
     if (glGetError()!=GL_NO_ERROR) {
       printf(" Error making realign texture.\n");
@@ -1828,14 +1840,14 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   }
 #else
   if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
-                   g_tex_installed_width[COLORMAP_TEX_ID],
-                   g_tex_installed_height[COLORMAP_TEX_ID],
+                   state->tex_installed_width[COLORMAP_TEX_ID],
+                   state->tex_installed_height[COLORMAP_TEX_ID],
                    GL_RGBA, GL_FLOAT, realign_data) != 0) {
     printf(" Error making mipmaps, using texture instead.\n");
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                   g_tex_installed_width[COLORMAP_TEX_ID],
-                   g_tex_installed_height[COLORMAP_TEX_ID],
+                   state->tex_installed_width[COLORMAP_TEX_ID],
+                   state->tex_installed_height[COLORMAP_TEX_ID],
                 0, GL_RGBA, GL_FLOAT, realign_data);
     if (glGetError()!=GL_NO_ERROR) {
       printf(" Error making realign texture.\n");
@@ -1889,9 +1901,9 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
     v_gl_set_context_to_vlib_window();
 
     if (im->width() + im->borderXMin()+im->borderXMax() <= 
-            g_tex_installed_width[SEM_DATA_TEX_ID] && 
+            state->tex_installed_width[SEM_DATA_TEX_ID] && 
 	im->height() + im->borderYMin()+im->borderYMax() <= 
-            g_tex_installed_height[SEM_DATA_TEX_ID]) {
+            state->tex_installed_height[SEM_DATA_TEX_ID]) {
         int pixelType;
         if (im->pixelType() == NMB_UINT8){
             pixelType = GL_UNSIGNED_BYTE;
@@ -1904,9 +1916,9 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
                  "can't handle pixel type\n"); 
             return;      
         }
-        glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
-        if (g_tex_image_width[SEM_DATA_TEX_ID] > im->width() ||
-            g_tex_image_height[SEM_DATA_TEX_ID] > im->height()) {
+        glBindTexture(GL_TEXTURE_2D, state->tex_ids[SEM_DATA_TEX_ID]);
+        if (state->tex_image_width[SEM_DATA_TEX_ID] > im->width() ||
+            state->tex_image_height[SEM_DATA_TEX_ID] > im->height()) {
           // clear the texture array
           clearSEMDataTexture();
         }
@@ -1921,10 +1933,10 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
         glPixelTransferf(GL_RED_SCALE, (float)1.0);
 	glPixelTransferf(GL_BLUE_SCALE, (float)1.0);
 	glPixelTransferf(GL_GREEN_SCALE, (float)1.0);
-        g_tex_image_width[SEM_DATA_TEX_ID] = im->width();
-        g_tex_image_height[SEM_DATA_TEX_ID] = im->height();
-        g_tex_image_offsetx[SEM_DATA_TEX_ID] = im->borderXMin();
-        g_tex_image_offsety[SEM_DATA_TEX_ID] = im->borderYMin();
+        state->tex_image_width[SEM_DATA_TEX_ID] = im->width();
+        state->tex_image_height[SEM_DATA_TEX_ID] = im->height();
+        state->tex_image_offsetx[SEM_DATA_TEX_ID] = im->borderXMin();
+        state->tex_image_offsety[SEM_DATA_TEX_ID] = im->borderYMin();
 	if (report_gl_errors()) {
 	  printf(" Error loading sem texture.\n");
 	}
@@ -1937,20 +1949,20 @@ void nmg_Graphics_Implementation::clearSEMDataTexture()
 {
   // XXX if you know a way to do this without allocating 4 MB of memory 
   // please replace this with that method
-  int sem_tex_size = 4*g_tex_installed_width[SEM_DATA_TEX_ID] *
-                       g_tex_installed_height[SEM_DATA_TEX_ID];
+  int sem_tex_size = 4*state->tex_installed_width[SEM_DATA_TEX_ID] *
+                       state->tex_installed_height[SEM_DATA_TEX_ID];
   GLubyte *sem_data = new GLubyte [sem_tex_size];
   int i,j,k=0;
   GLubyte value, alpha;
-  for (i = 0; i < g_tex_installed_width[SEM_DATA_TEX_ID]; i++){
-    for (j = 0; j < g_tex_installed_height[SEM_DATA_TEX_ID]; j++){
-      if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_BLEND) {
+  for (i = 0; i < state->tex_installed_width[SEM_DATA_TEX_ID]; i++){
+    for (j = 0; j < state->tex_installed_height[SEM_DATA_TEX_ID]; j++){
+      if (state->tex_blend_func[SEM_DATA_TEX_ID] == GL_BLEND) {
          value = 0;//20*((i/30+j/30)%2);
          alpha = 255;
-      } else if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_MODULATE) {
+      } else if (state->tex_blend_func[SEM_DATA_TEX_ID] == GL_MODULATE) {
          value = 255;//200 + 55*((i/30+j/30)%2);
          alpha = 255;//200 + 55*((i/60+j/60)%2);
-      } else if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_DECAL) {
+      } else if (state->tex_blend_func[SEM_DATA_TEX_ID] == GL_DECAL) {
          value = 0;
          alpha = 0;
       }
@@ -1962,27 +1974,27 @@ void nmg_Graphics_Implementation::clearSEMDataTexture()
     }
   }
 
-  glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
+  glBindTexture(GL_TEXTURE_2D, state->tex_ids[SEM_DATA_TEX_ID]);
 
 #ifdef sgi
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-        g_tex_installed_width[SEM_DATA_TEX_ID],
-        g_tex_installed_height[SEM_DATA_TEX_ID],
+        state->tex_installed_width[SEM_DATA_TEX_ID],
+        state->tex_installed_height[SEM_DATA_TEX_ID],
         0, GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
 #else
   // WIN_32 openGL does funky stuff at the texture border if you try to use
   // an RGBA texture
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-        g_tex_installed_width[SEM_DATA_TEX_ID],
-        g_tex_installed_height[SEM_DATA_TEX_ID],
+        state->tex_installed_width[SEM_DATA_TEX_ID],
+        state->tex_installed_height[SEM_DATA_TEX_ID],
         0, GL_RGBA, GL_UNSIGNED_BYTE, sem_data);
 #endif
   delete [] sem_data;
 
-  if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_BLEND) {
+  if (state->tex_blend_func[SEM_DATA_TEX_ID] == GL_BLEND) {
     float bord_col[4] = {0.0, 0.0, 0.0, 1.0};
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
-  } else if (g_tex_blend_func[SEM_DATA_TEX_ID] == GL_MODULATE) {
+  } else if (state->tex_blend_func[SEM_DATA_TEX_ID] == GL_MODULATE) {
     float bord_col[4] = {1.0, 1.0, 1.0, 1.0};
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
   } else {
@@ -2014,16 +2026,16 @@ void nmg_Graphics_Implementation::setTextureTransform(double *xform){
     printf("got TextureTransform\n");
     printf("was: ");
     for (i = 0; i < 16; i++)
-        printf("%g ", g_texture_transform[i]);
+        printf("%g ", state->texture_transform[i]);
     printf("\n");
 */
 
     for (i = 0; i < 16; i++)
-	g_texture_transform[i] = xform[i];
+	state->texture_transform[i] = xform[i];
 /*
     printf("new: ");
     for (i = 0; i < 16; i++)
-        printf("%g ", g_texture_transform[i]);
+        printf("%g ", state->texture_transform[i]);
     printf("\n");
 */
 }
@@ -2031,117 +2043,117 @@ void nmg_Graphics_Implementation::setTextureTransform(double *xform){
 
 void nmg_Graphics_Implementation::setRulergridAngle (float v) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridAngle().\n");
-  g_rulergrid_sin = sin(-v / 180.0 * M_PI);
-  g_rulergrid_cos = cos(-v / 180.0 * M_PI);
+  state->rulergrid_sin = sin(-v / 180.0 * M_PI);
+  state->rulergrid_cos = cos(-v / 180.0 * M_PI);
   //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setRulergridColor (int r, int g, int b) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridColor().\n");
-  g_ruler_r = r;
-  g_ruler_g = g;
-  g_ruler_b = b;
+  state->ruler_r = r;
+  state->ruler_g = g;
+  state->ruler_b = b;
 
   // if they've specified a ruler image, keep that instead of replacing
   // it with the default set of orthogonal lines
-  if (g_rulerPPM)
-    makeAndInstallRulerImage(g_rulerPPM);
+  if (state->rulerPPM)
+    makeAndInstallRulerImage(state->rulerPPM);
   else {
-    makeRulerImage();
-    buildRulergridTexture();
+    makeRulerImage(state);
+    buildRulergridTexture(state);
   }
 }
 
 void nmg_Graphics_Implementation::setRulergridOffset (float x, float y) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridOffset().\n");
-  g_rulergrid_xoffset = x;
-  g_rulergrid_yoffset = y;
+  state->rulergrid_xoffset = x;
+  state->rulergrid_yoffset = y;
   //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setNullDataAlphaToggle( int v ) {
-  g_null_data_alpha_toggle = v;
+  state->null_data_alpha_toggle = v;
   causeGridReColor();
 }
 
 void nmg_Graphics_Implementation::setRulergridOpacity (float alpha) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridOpacity().\n");
-  g_ruler_opacity = alpha;
+  state->ruler_opacity = alpha;
 
   // if they've specified a ruler image, keep that instead of replacing
   // it with the default set of orthogonal lines
-  if (g_rulerPPM)
-    makeAndInstallRulerImage(g_rulerPPM);
+  if (state->rulerPPM)
+    makeAndInstallRulerImage(state->rulerPPM);
   else {
-    makeRulerImage();
-    buildRulergridTexture();
+    makeRulerImage(state);
+    buildRulergridTexture(state);
   }
-  if (g_realign_texture_name[0]) {
-    createRealignTextures(g_realign_texture_name);
+  if (state->realign_texture_name[0]) {
+    createRealignTextures(state->realign_texture_name);
   }
 }
 
 void nmg_Graphics_Implementation::setRulergridScale (float s) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridScale().\n");
-  g_rulergrid_scale = s;
+  state->rulergrid_scale = s;
   //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setRulergridWidths (float x, float y) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridWidths().\n");
-  g_ruler_width_x = x;
-  g_ruler_width_y = y;
+  state->ruler_width_x = x;
+  state->ruler_width_y = y;
 
   // if they've specified a ruler image, keep that instead of replacing
   // it with the default set of orthogonal lines
-  if (g_rulerPPM)
-    makeAndInstallRulerImage(g_rulerPPM);
+  if (state->rulerPPM)
+    makeAndInstallRulerImage(state->rulerPPM);
   else {
-    makeRulerImage();
-    buildRulergridTexture();
+    makeRulerImage(state);
+    buildRulergridTexture(state);
   }
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setSpecularity (int s) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setSpecularity().\n");
-  g_shiny = s;
+  state->shiny = s;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setLocalViewer (vrpn_bool lv) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setLocalViewer().\n");
-  g_local_viewer = lv;
+  state->local_viewer = lv;
   causeGridRedraw();
 }
 
 
 void nmg_Graphics_Implementation::setDiffusePercent (float d) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setDiffusePercent().\n");
-  g_diffuse = d;
+  state->diffuse = d;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setSurfaceAlpha (float a, int region) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setSurfaceAlpha().\n");
-  g_surface->setAlpha(a, region);
+  state->surface->setAlpha(a, region);
 }
 
 void nmg_Graphics_Implementation::setSpecularColor (float s) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setSpecularColor().\n");
-  g_specular_color = s;
+  state->specular_color = s;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setSphereScale (float s) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setSphereScale().\n");
-  g_sphere_scale = s;
+  state->sphere_scale = s;
 }
 
 void nmg_Graphics_Implementation::setTesselationStride (int s, int region) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setTesselationStride(%d).\n", s);
 
-  g_surface->setStride(s, region);
+  state->surface->setStride(s, region);
 }
 
 void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
@@ -2152,69 +2164,69 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
 
     case NO_TEXTURES:
 //      fprintf(stderr, "nmg_Graphics_Implementation:  no textures.\n");
-      g_texture_mode = GL_FALSE;
+      state->texture_mode = GL_FALSE;
       break;
     case CONTOUR:
 // This mode is possible if we can reimplement contour texture stuff
 // not using glXXXPointerEXT() and glDrawArraysEXT()
 //#ifndef _WIN32
         //fprintf(stderr, "nmg_Graphics_Implementation:  entering CONTOUR mode.\n");
-      g_texture_mode = GL_TEXTURE_1D;
+      state->texture_mode = GL_TEXTURE_1D;
 /*#else
       fprintf(stderr, "nmg_Graphics_Implementation: " 
 		"CONTOUR mode not available in win32\n");
-      g_texture_mode = GL_FALSE;
+      state->texture_mode = GL_FALSE;
 #endif
 */
       break;
     case BUMPMAP:
 //        fprintf(stderr,
 //          "nmg_Graphics_Implementation: entering BUMPMAP mode.\n");
-      g_texture_mode = GL_TEXTURE_2D;
+      state->texture_mode = GL_TEXTURE_2D;
       break;
     case HATCHMAP:
 //        fprintf(stderr,
 //          "nmg_Graphics_Implementation: entering HATCHMAP mode.\n");
-      g_texture_mode = GL_TEXTURE_2D;
+      state->texture_mode = GL_TEXTURE_2D;
       break;
     case PATTERNMAP:
 //        fprintf(stderr,
 //  	"nmg_Graphics_Implementation: entering PATTERNMAP mode.\n");
-      g_texture_mode = GL_TEXTURE_2D;
+      state->texture_mode = GL_TEXTURE_2D;
       break;
     case RULERGRID:
 //        fprintf(stderr,"nmg_Graphics_Implementation: entering RULERGRID mode.\n");
-      g_texture_mode = GL_TEXTURE_2D;
+      state->texture_mode = GL_TEXTURE_2D;
       break;
     case ALPHA:
 #ifndef _WIN32
 //        fprintf(stderr, "nmg_Graphics_Implementation:  entering ALPHA mode.\n");
-      g_texture_mode = GL_TEXTURE_3D_EXT;
+      state->texture_mode = GL_TEXTURE_3D_EXT;
 #else
       fprintf(stderr, "nmg_Graphics_Implementation:"
 		" ALPHA mode not available under WIN32\n");
-      g_texture_mode = GL_FALSE;
+      state->texture_mode = GL_FALSE;
 #endif
       break;
     case COLORMAP:
 //    fprintf(stderr, "nmg_Graphics_Implementation: entering COLORMAP mode.\n");
-      g_texture_mode = GL_TEXTURE_2D;
+      state->texture_mode = GL_TEXTURE_2D;
       break;
     case SEM_DATA:
 //    fprintf(stderr, "nmg_Graphics_Implementation: entering SEM_DATA mode.\n");
-      g_texture_mode = GL_TEXTURE_2D;
+      state->texture_mode = GL_TEXTURE_2D;
       break;
     case REMOTE_DATA:
 //fprintf(stderr, "nmg_Graphics_Implementation:  entering REMOTE_DATA mode.\n");
-      g_texture_mode = GL_TEXTURE_2D;
+      state->texture_mode = GL_TEXTURE_2D;
       break;
     case VISUALIZATION:
-        g_texture_mode = GL_TEXTURE_2D;
+        state->texture_mode = GL_TEXTURE_2D;
         break;
     default:
       fprintf(stderr, "nmg_Graphics_Implementation::setTextureMode:  "
                       "Unknown texture mode %d.\n", m);
-      g_texture_mode = GL_FALSE;
+      state->texture_mode = GL_FALSE;
       break;
   }
   switch (xm) {
@@ -2230,20 +2242,20 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
       //fprintf(stderr, 
 	//"nmg_Graphics_Implementation: MANUAL_REALIGN_COORD mode\n");
       if (d_textureTransformMode != MANUAL_REALIGN_COORD) {
-	g_translate_textures  = 0;
-        g_scale_textures      = 0;
-        g_shear_textures      = 0;
-        g_rotate_textures     = 0;
+	state->translate_textures  = 0;
+        state->scale_textures      = 0;
+        state->shear_textures      = 0;
+        state->rotate_textures     = 0;
 
-        g_shear_tex_x = 0.0;
-        g_shear_tex_y = 0.0;
-        g_tex_coord_center_x = 0.0;
-        g_tex_coord_center_y = 0.0;
-        g_scale_tex_x = 2500.0;
-        g_scale_tex_y = 2500.0;
-        g_tex_theta_cumulative = 0.0;
-        g_translate_tex_x = 0.0;
-        g_translate_tex_y = 0.0;
+        state->shear_tex_x = 0.0;
+        state->shear_tex_y = 0.0;
+        state->tex_coord_center_x = 0.0;
+        state->tex_coord_center_y = 0.0;
+        state->scale_tex_x = 2500.0;
+        state->scale_tex_y = 2500.0;
+        state->tex_theta_cumulative = 0.0;
+        state->translate_tex_x = 0.0;
+        state->translate_tex_y = 0.0;
       }
       break;
     default:
@@ -2254,23 +2266,23 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
   d_textureMode = m;
   d_textureTransformMode = xm;
   // communicate to non nmg_Graphics code:
-  g_texture_displayed = m;
-  g_texture_transform_mode = xm;
+  state->texture_displayed = m;
+  state->texture_transform_mode = xm;
 
-  g_surface->setTextureDisplayed(m, region);
-  g_surface->setTextureMode(g_texture_mode, region);
-  g_surface->setTextureTransformMode(xm, region);
+  state->surface->setTextureDisplayed(m, region);
+  state->surface->setTextureMode(state->texture_mode, region);
+  state->surface->setTextureTransformMode(xm, region);
 }
 
 void nmg_Graphics_Implementation::setTextureScale (float f) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setTextureScale().\n");
-  g_texture_scale = f;
+  state->texture_scale = f;
   causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setTrueTipScale (float f) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setTrueTipScale().\n");
-  g_trueTipScale = f;
+  state->trueTipScale = f;
 }
 
 
@@ -2278,9 +2290,9 @@ void nmg_Graphics_Implementation::setUserMode (int oldMode, int oldStyle,
 					       int newMode, int style,
 					       int tool) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setUserMode() old %d %d new %d %d.\n", oldMode, oldStyle, newMode, style);
-  clear_world_modechange(oldMode, oldStyle, tool);
-  init_world_modechange(newMode, style, tool);
-  g_user_mode = newMode;
+  clear_world_modechange(state, oldMode, oldStyle, tool);
+  init_world_modechange(state, newMode, style, tool);
+  state->user_mode = newMode;
 }
 
 
@@ -2299,49 +2311,98 @@ int nmg_Graphics_Implementation::addPolylinePoint( const PointType point[2] ) {
 //int nmg_Graphics_Implementation::addPolylinePoint (const float point [2][3]) {
 //fprintf(stderr, "nmg_Graphics_Implementation::addPolylinePoint().\n");
 
-  return make_rubber_line_point(point, g_positionList);
+  return make_rubber_line_point(state, point, state->positionList);
 }
 
 void nmg_Graphics_Implementation::emptyPolyline (void) {
 //fprintf(stderr, "nmg_Graphics_Implementation::emptyPolyline().\n");
 
-    empty_rubber_line(g_positionList);
-    empty_rubber_line(g_positionListL, 0);
-    empty_rubber_line(g_positionListR, 1);
+    empty_rubber_line(state->positionList);
+    empty_rubber_line(state->positionListL, 0);
+    empty_rubber_line(state->positionListR, 1);
 }
 
 void nmg_Graphics_Implementation::setRubberLineStart (float p0, float p1) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineStart().\n");
-  g_rubberPt[0] = p0;
-  g_rubberPt[1] = p1;
+  state->rubberPt[0] = p0;
+  state->rubberPt[1] = p1;
+  // Now we find the corresponding z value.
+  BCPlane* plane = state->inputGrid->getPlaneByName
+                    (state->heightPlaneName);
+  if (plane == NULL) {
+      fprintf(stderr, "Error in setRubberLineStart: could not get plane!\n");
+      return ;
+  }
+  plane->valueAt(&state->rubberPt[3], p0, p1);
+  state->rubberPt[3] *= plane->scale();
 }
 
 void nmg_Graphics_Implementation::setRubberLineEnd (float p2, float p3 ) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
-  g_rubberPt[2] = p2;
-  g_rubberPt[3] = p3;
+  state->rubberPt[4] = p2;
+  state->rubberPt[5] = p3;
+  // Now we find the corresponding z value.
+  BCPlane* plane = state->inputGrid->getPlaneByName
+                    (state->heightPlaneName);
+  if (plane == NULL) {
+      fprintf(stderr, "Error in setRubberLineEnd: could not get plane!\n");
+      return ;
+  }
+  plane->valueAt(&state->rubberPt[6], p2, p3);
+  state->rubberPt[6] *= plane->scale();
 }
 
 void nmg_Graphics_Implementation::setRubberLineStart (const float p [2]) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineStart().\n");
-  g_rubberPt[0] = p[0];
-  g_rubberPt[1] = p[1];
+  state->rubberPt[0] = p[0];
+  state->rubberPt[1] = p[1];
+  // Now we find the corresponding z value.
+  BCPlane* plane = state->inputGrid->getPlaneByName
+                    (state->heightPlaneName);
+  if (plane == NULL) {
+      fprintf(stderr, "Error in setRubberLineStart: could not get plane!\n");
+      return ;
+  }
+  plane->valueAt(&state->rubberPt[3], p[0], p[1]);
+  state->rubberPt[3] *= plane->scale();
 }
 
 void nmg_Graphics_Implementation::setRubberLineEnd (const float p [2]) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
-  g_rubberPt[2] = p[0];
-  g_rubberPt[3] = p[1];
+  state->rubberPt[4] = p[0];
+  state->rubberPt[5] = p[1];
+  // Now we find the corresponding z value.
+  BCPlane* plane = state->inputGrid->getPlaneByName
+                    (state->heightPlaneName);
+  if (plane == NULL) {
+      fprintf(stderr, "Error in setRubberLineEnd: could not get plane!\n");
+      return ;
+  }
+  plane->valueAt(&state->rubberPt[6], p[0], p[1]);
+  state->rubberPt[6] *= plane->scale();
 }
 
 void nmg_Graphics_Implementation::setRubberSweepLineStart (const PointType Left,
 							   const PointType Right) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineStart().\n");
-  g_rubberSweepPts[0][0] = Left[0];
-  g_rubberSweepPts[0][1] = Left[1];
-
-  g_rubberSweepPts[1][0] = Right[0];
-  g_rubberSweepPts[1][1] = Right[1];
+  state->rubberSweepPts[0][0] = Left[0];
+  state->rubberSweepPts[0][1] = Left[1];
+  // Now we find the corresponding z value.
+  BCPlane* plane = state->inputGrid->getPlaneByName
+                    (state->heightPlaneName);
+  if (plane == NULL) {
+      fprintf(stderr, "Error in setRubberSweepLineStart: could not get plane!\n");
+  } else {
+      plane->valueAt(&state->rubberSweepPts[0][2], Left[0], Left[1]);
+      state->rubberSweepPts[0][2] *= plane->scale();
+  }
+  state->rubberSweepPts[1][0] = Right[0];
+  state->rubberSweepPts[1][1] = Right[1];
+  // Now we find the corresponding z value.
+  if (plane) {
+      plane->valueAt(&state->rubberSweepPts[1][2], Right[0], Right[1]);
+      state->rubberSweepPts[1][2] *= plane->scale();
+  }
 }
 
 void nmg_Graphics_Implementation::setRubberSweepLineEnd (const PointType Left,
@@ -2349,8 +2410,13 @@ void nmg_Graphics_Implementation::setRubberSweepLineEnd (const PointType Left,
 //fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
     PointType avg_old, avg_new, dif;
 
-    avg_old[0] = (g_rubberSweepPts[0][0] + g_rubberSweepPts[1][0])/2;
-    avg_old[1] = (g_rubberSweepPts[0][1] + g_rubberSweepPts[1][1])/2;
+    BCPlane* plane = state->inputGrid->getPlaneByName
+                    (state->heightPlaneName);
+    if (plane == NULL) {
+        fprintf(stderr, "Error in setRubberSweepLineEnd: could not get plane!\n");
+    }
+    avg_old[0] = (state->rubberSweepPts[0][0] + state->rubberSweepPts[1][0])/2;
+    avg_old[1] = (state->rubberSweepPts[0][1] + state->rubberSweepPts[1][1])/2;
 
     avg_new[0] = (Left[0] + Right[0])/2;
     avg_new[1] = (Left[1] + Right[1])/2;
@@ -2359,59 +2425,101 @@ void nmg_Graphics_Implementation::setRubberSweepLineEnd (const PointType Left,
     dif[1] = avg_new[1] - Left[1];
 
     // adjust old points:
-    g_rubberSweepPts[0][0] = avg_old[0] + dif[0]; //Left
-    g_rubberSweepPts[0][1] = avg_old[1] + dif[1];
+    state->rubberSweepPts[0][0] = avg_old[0] + dif[0]; //Left
+    state->rubberSweepPts[0][1] = avg_old[1] + dif[1];
 
-    g_rubberSweepPts[1][0] = avg_old[0] - dif[0]; //Right
-    g_rubberSweepPts[1][1] = avg_old[1] - dif[1];
-
-
+    state->rubberSweepPts[1][0] = avg_old[0] - dif[0]; //Right
+    state->rubberSweepPts[1][1] = avg_old[1] - dif[1];
+    if (plane) {
+        // Set the Z values
+      plane->valueAt(&state->rubberSweepPts[0][2], 
+                     state->rubberSweepPts[0][0],
+                     state->rubberSweepPts[0][1]);
+      state->rubberSweepPts[0][2] *= plane->scale();
+      plane->valueAt(&state->rubberSweepPts[1][2], 
+                     state->rubberSweepPts[1][0],
+                     state->rubberSweepPts[1][1]);
+      state->rubberSweepPts[1][2] *= plane->scale();
+    }
     PointType vr, vl;
     float d1, d2;
-    vr[0] = Right[0] - g_rubberSweepPts[1][0];
-    vr[1] = Right[1] - g_rubberSweepPts[1][1];
+    vr[0] = Right[0] - state->rubberSweepPts[1][0];
+    vr[1] = Right[1] - state->rubberSweepPts[1][1];
     vr[2] = 0;
     d1 = sqrt( vr[0]*vr[0] + vr[1]*vr[1]);
 
-    vl[0] = Left[0] - g_rubberSweepPts[1][0];
-    vl[1] = Left[1] - g_rubberSweepPts[1][1];
+    vl[0] = Left[0] - state->rubberSweepPts[1][0];
+    vl[1] = Left[1] - state->rubberSweepPts[1][1];
     vl[2] = 0;
     d2 = sqrt( vl[0]*vl[0] + vl[1]*vl[1]);
 
     if ( d1 < d2 ) {
-	g_rubberSweepPts[0][2] = Left[0];
-	g_rubberSweepPts[0][3] = Left[1];
+	state->rubberSweepPts[0][3] = Left[0];
+	state->rubberSweepPts[0][4] = Left[1];
 	
-	g_rubberSweepPts[1][2] = Right[0];
-	g_rubberSweepPts[1][3] = Right[1];
+	state->rubberSweepPts[1][3] = Right[0];
+	state->rubberSweepPts[1][4] = Right[1];
     }
     else {
-	g_rubberSweepPts[0][2] = Right[0];
-	g_rubberSweepPts[0][3] = Right[1];
+	state->rubberSweepPts[0][3] = Right[0];
+	state->rubberSweepPts[0][4] = Right[1];
 	
-	g_rubberSweepPts[1][2] = Left[0];
-	g_rubberSweepPts[1][3] = Left[1];
+	state->rubberSweepPts[1][3] = Left[0];
+	state->rubberSweepPts[1][4] = Left[1];
+    }
+    if (plane) {
+        // Set the Z values
+      plane->valueAt(&state->rubberSweepPts[0][5], 
+                     state->rubberSweepPts[0][3],
+                     state->rubberSweepPts[0][4]);
+      state->rubberSweepPts[0][5] *= plane->scale();
+      plane->valueAt(&state->rubberSweepPts[1][5], 
+                     state->rubberSweepPts[1][3],
+                     state->rubberSweepPts[1][4]);
+      state->rubberSweepPts[1][5] *= plane->scale();
     }
 
-    g_rubberSweepPtsSave[0][2] = g_rubberSweepPts[0][0];
-    g_rubberSweepPtsSave[0][3] = g_rubberSweepPts[0][1];
+    state->rubberSweepPtsSave[0][3] = state->rubberSweepPts[0][0];
+    state->rubberSweepPtsSave[0][4] = state->rubberSweepPts[0][1];
+    state->rubberSweepPtsSave[0][5] = state->rubberSweepPts[0][2];
 
-    g_rubberSweepPtsSave[1][2] = g_rubberSweepPts[1][0];
-    g_rubberSweepPtsSave[1][3] = g_rubberSweepPts[1][1];
+    state->rubberSweepPtsSave[1][3] = state->rubberSweepPts[1][0];
+    state->rubberSweepPtsSave[1][4] = state->rubberSweepPts[1][1];
+    state->rubberSweepPtsSave[1][5] = state->rubberSweepPts[1][2];
 }
 
+
+void nmg_Graphics_Implementation::positionSweepLine (const PointType topL,
+                                                     const PointType bottomL,
+                                                     const PointType topR,
+                                                     const PointType bottomR) {
+//fprintf(stderr, "nmg_Graphics_Implementation::positionSweepLine().\n");
+  make_sweep(state, topL, bottomL, topR, bottomR);
+}
+
+int nmg_Graphics_Implementation::addPolySweepPoints (const PointType /*topL*/,
+                                                     const PointType /*bottomL*/,
+                                                     const PointType /*topR*/,
+                                                     const PointType /*bottomR*/) {
+//fprintf(stderr, "nmg_Graphics_Implementation::addPolySweepPoints().\n");
+    // Values passed in are ignored - rubber line drawn from
+    // points in state->rubberSweepPts instead. 
+    make_rubber_line_point(state, state->positionListL, 0);
+    make_rubber_line_point(state, state->positionListR, 1);
+    return 0;
+}
 
 void nmg_Graphics_Implementation::setScanlineEndpoints(const float p0[3],
 		const float p1[3]){
 //fprintf(stderr, "nmg_Graphics_Implementation::setScanlineEndpoints().\n");
-  g_scanlinePt[0] = p0[0]; g_scanlinePt[1] = p0[1]; g_scanlinePt[2] = p0[2];
-  g_scanlinePt[3] = p1[0]; g_scanlinePt[4] = p1[1]; g_scanlinePt[5] = p1[2];
+  state->scanlinePt[0] = p0[0]; state->scanlinePt[1] = p0[1]; state->scanlinePt[2] = p0[2];
+  state->scanlinePt[3] = p1[0]; state->scanlinePt[4] = p1[1]; state->scanlinePt[5] = p1[2];
 }
 
 void nmg_Graphics_Implementation::displayScanlinePosition(const int enable)
 {
 //fprintf(stderr, "nmg_Graphics_Implementation::displayScanlinePosition().\n");
-    enableScanlinePositionDisplay(enable);
+    enableScanlinePositionDisplay(state, enable);
 }
 
 void nmg_Graphics_Implementation::positionAimLine (const PointType top,
@@ -2423,7 +2531,7 @@ void nmg_Graphics_Implementation::positionAimLine (const PointType top,
 void nmg_Graphics_Implementation::positionRubberCorner
     (float minx, float miny, float maxx, float maxy, int highlight_mask) {
 //fprintf(stderr, "nmg_Graphics_Implementation::positionRubberCorner().\n");
-  make_rubber_corner(minx, miny, maxx, maxy, highlight_mask);
+  make_rubber_corner(state, minx, miny, maxx, maxy, highlight_mask);
 }
 
 void nmg_Graphics_Implementation::positionRegionBox
@@ -2432,22 +2540,23 @@ void nmg_Graphics_Implementation::positionRegionBox
 //fprintf(stderr, "nmg_Graphics_Implementation::positionRegionBox().\n");
 
     // Always draw the icon representing the current region. 
-    make_region_box(center_x, center_y, width, height, angle, highlight_mask);
+    make_region_box(state, center_x, center_y, width, height, 
+                    angle, highlight_mask);
 
     // If we don't have a region yet, make one. 
     if ((d_last_region == -1) && (highlight_mask != REG_DEL)) {
-        d_last_region = g_surface->createNewRegion();
-        g_surface->associateStride(VRPN_FALSE, d_last_region);
+        d_last_region = state->surface->createNewRegion();
+        state->surface->associateStride(VRPN_FALSE, d_last_region);
         // Make this new region, outside of the box, blurry by setting
         // stride to 5. 
         setTesselationStride(5, d_last_region);
         // Always derive the mask plane the first time. 
-        g_surface->deriveMaskPlane(center_x, center_y, width, 
+        state->surface->deriveMaskPlane(center_x, center_y, width, 
                                    height, angle, d_last_region);    
     } else {
         // Don't derive a mask plane while dimensions are changing.
         // Only derive it if user has released widget. 
-        // And g_surface knows not to re-derive the same surface. 
+        // And state->surface knows not to re-derive the same surface. 
         // Note: highlight_mask is supposed to be a bitmask,
         // but is being interpreted here as a single value. 
         if (highlight_mask == REG_NULL || 
@@ -2457,37 +2566,19 @@ void nmg_Graphics_Implementation::positionRegionBox
             highlight_mask == REG_PREP_SIZE) {
             // Create new mask plane for this region. Region is "on"
             // outside the box. Default region is on inside. 
-            g_surface->deriveMaskPlane(center_x, center_y, width, 
+            state->surface->deriveMaskPlane(center_x, center_y, width, 
                                        height, angle, d_last_region);    
         } else if (highlight_mask == REG_DEL) {
-            g_surface->destroyRegion(d_last_region);
+            state->surface->destroyRegion(d_last_region);
             d_last_region = -1;
         }
     }
 }
 
-void nmg_Graphics_Implementation::positionSweepLine (const PointType topL,
-                                                     const PointType bottomL,
-                                                     const PointType topR,
-                                                     const PointType bottomR) {
-//fprintf(stderr, "nmg_Graphics_Implementation::positionSweepLine().\n");
-  make_sweep(topL, bottomL, topR, bottomR);
-}
-
-int nmg_Graphics_Implementation::addPolySweepPoints (const PointType topL,
-                                                     const PointType bottomL,
-                                                     const PointType topR,
-                                                     const PointType bottomR) {
-//fprintf(stderr, "nmg_Graphics_Implementation::addPolySweepPoints().\n");
-    make_rubber_line_point(topL, bottomL, g_positionListL, 0);
-    make_rubber_line_point(topR, bottomR, g_positionListR, 1);
-    return 0;
-}
-
 
 void nmg_Graphics_Implementation::positionSphere (float x, float y, float z) {
 //fprintf(stderr, "nmg_Graphics_Implementation::positionSphere().\n");
-  position_sphere(x, y, z);
+  position_sphere(state, x, y, z);
 }
 
 
@@ -2539,7 +2630,7 @@ void nmg_Graphics_Implementation::createScreenImage
 
 void nmg_Graphics_Implementation::setViztexScale (float s) {
   //fprintf(stderr, "nmg_Graphics_Implementation::setViztexScale().\n");
-  g_viztex_scale = s;
+  state->viztex_scale = s;
   //causeGridRedraw();
 }
 
@@ -2547,47 +2638,47 @@ void nmg_Graphics_Implementation::setRegionMaskHeight (float min_height,
                                                        float max_height,
                                                        int region) 
 {
-    g_surface->deriveMaskPlane(min_height, max_height, region);
+    state->surface->deriveMaskPlane(min_height, max_height, region);
 }
 
 int nmg_Graphics_Implementation::createRegion()
 {
-    return g_surface->createNewRegion();
+    return state->surface->createNewRegion();
 }
 
 void nmg_Graphics_Implementation::destroyRegion(int region)
 {
-    g_surface->destroyRegion(region);
+    state->surface->destroyRegion(region);
 }
 
 void nmg_Graphics_Implementation::associateAlpha(vrpn_bool associate, int region)
 {
-    g_surface->associateAlpha(associate, region);
+    state->surface->associateAlpha(associate, region);
 }
 
 void nmg_Graphics_Implementation::associateFilledPolygons(vrpn_bool associate, int region)
 {
-    g_surface->associateFilledPolygons(associate, region);
+    state->surface->associateFilledPolygons(associate, region);
 }
 
 void nmg_Graphics_Implementation::associateTextureDisplayed(vrpn_bool associate, int region)
 {
-    g_surface->associateTextureDisplayed(associate, region);
+    state->surface->associateTextureDisplayed(associate, region);
 }
 
 void nmg_Graphics_Implementation::associateTextureMode(vrpn_bool associate, int region)
 {
-    g_surface->associateTextureMode(associate, region);
+    state->surface->associateTextureMode(associate, region);
 }
 
 void nmg_Graphics_Implementation::associateTextureTransformMode(vrpn_bool associate, int region)
 {
-    g_surface->associateTextureTransformMode(associate, region);
+    state->surface->associateTextureTransformMode(associate, region);
 }
 
 void nmg_Graphics_Implementation::associateStride(vrpn_bool associate, int region)
 {
-    g_surface->associateStride(associate, region);
+    state->surface->associateStride(associate, region);
 }
 
 
@@ -2598,23 +2689,23 @@ void nmg_Graphics_Implementation::getLightDirection (q_vec_type * v) const {
 
 int nmg_Graphics_Implementation::getHandColor (void) const {
 //fprintf(stderr, "nmg_Graphics_Implementation::getHandColor().\n");
-  return g_hand_color;
+  return state->hand_color;
 }
 
 int nmg_Graphics_Implementation::getSpecularity (void) const {
 //fprintf(stderr, "nmg_Graphics_Implementation::getSpecularity().\n");
-  return g_shiny;
+  return state->shiny;
 }
 
 /*
 float nmg_Graphics_Implementation::getDiffusePercent (void) const {
-  return g_diffuse;
+  return state->diffuse;
 }
 */
 
 const double * nmg_Graphics_Implementation::getSurfaceColor (void) const {
 //fprintf(stderr, "nmg_Graphics_Implementation::getSurfaceColor().\n");
-  return g_surfaceColor;
+  return state->surfaceColor;
 }
 
 
@@ -2733,10 +2824,10 @@ void nmg_Graphics_Implementation::depthCapture (int * w, int * h,
 
 void nmg_Graphics_Implementation::getLatestGridChange (int * minX, int * maxX,
                                                    int * minY, int * maxY) {
-  *minX = g_minChangedX;
-  *maxX = g_maxChangedX;
-  *minY = g_minChangedY;
-  *maxY = g_maxChangedY;
+  *minX = state->minChangedX;
+  *maxX = state->maxChangedX;
+  *minY = state->minChangedY;
+  *maxY = state->maxChangedY;
 
 }
 
@@ -3446,182 +3537,6 @@ int nmg_Graphics_Implementation::handle_positionSphere
   return 0;
 }
 
-/*
-// genetic textures:
-// Call back function called when the gaEngine_Remote gets an
-// evaluation_complete message. This occurs when the selected texture
-// sent by the gaEngine_Implementation had been completely transferred
-// accross the network and is ready to be mapped onto the surface.
-//static
-int nmg_Graphics_Implementation::genetic_textures_ready( void *p ) {
-  nmg_Graphics_Implementation * it = (  nmg_Graphics_Implementation * )p;
-  
-  // make sure gl calls are directed to the right context
-  v_gl_set_context_to_vlib_window();
-
-  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-
-  glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-               g_tex_blend_func[GENETIC_TEX_ID]);
-
-  glBindTexture(GL_TEXTURE_2D, tex_ids[GENETIC]);
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-
-#if defined(sgi) || defined(__CYGWIN__)
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 512, 512,
-                        GL_RGB, GL_FLOAT, it->gaRemote->data[0]) != 0) { 
-    printf(" Error making mipmaps, using texture instead.\n");
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-		 512, 512, 0, GL_RGB, GL_FLOAT, it->gaRemote->data[0]);
-    if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error making genetic texture.\n");
-    }
-  }
-#else
-  // Should use glBindTexture so it doesn't conflict w/Rulergrid...
-  //   glBindTexture( GL_TEXTURE_2D, &texName );
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-	       512, 512, 0, GL_RGB, GL_FLOAT, it->gaRemote->data[0]);
-  if (glGetError()!=GL_NO_ERROR) {
-    printf(" Error making genetic texture.\n");
-  }
-#endif
-
-  return 0;
-}
-
-// Sends the data to the genetic algorithm.
-// The variable list is either the entire list of plane names,
-// or the selected list from the "Set Genetic Textures Parameter"
-// pop-up window. 
-// Only the selected datasets are sent to the genetic alg.
-void nmg_Graphics_Implementation::sendGeneticTexturesData (
-			   int number_of_variables, 
-			   char **variable_list ) {
-  BCGrid *grid = g_inputGrid;
-
-  gaRemote->number_of_variables( number_of_variables );
-  gaRemote->mainloop();
-  gaRemote->variableList( number_of_variables, variable_list );
-  gaRemote->mainloop();
-
-  int width  = grid->numX();
-  int height = grid->numY();
-  gaRemote->dimensions( number_of_variables, width, height );
-  gaRemote->mainloop();
-
-  float **input = new float*[height];
-  if (!input) {
-    fprintf(stderr, "nmg_Graphics_Implementation::sendGeneticTexturesData:  "
-                    "Out of memory.\n");
-    return;
-  }
-  for ( int i = 0; i < number_of_variables; i++ ) {
-    for ( BCPlane *head = grid->head(); head; head = head ->next() ) {
-      if ( !strcmp( variable_list[ i ], head->name()->Characters() ) ) {
-	float min = head->minValue();
-	float max = head->maxValue();
-	for ( int j = 0; j < height; j++ ) {
-	  input[ j ] = new float[ width ];
-          if (!input[j]) {
-            fprintf(stderr, "nmg_Graphics_Implementation::"
-                            "sendGeneticTexturesData:  "
-                            "Out of memory.\n");
-            return;
-          }
-	  for ( int k = 0; k < width; k++ )
-	    input[ j ][ k ] = ( head->value( k, j ) - min )/( max - min );
-	  gaRemote->dataSet( i, j, input );
-	  gaRemote->mainloop();
-	  delete [] input[ j ];
-	}
-      }
-    }
-  }
-
-  delete [] input;
-  causeGridRedraw();
-}
-
-
-// This is a callback function called when the gaEngine_Remote 
-// gets a connection. It calls sendGeneticTextureData which sends 
-// the number of variables, names of the planes to be used in the genetic alg.
-// and all the data sets. 
-//
-int nmg_Graphics_Implementation::send_genetic_texture_data( void *userdata ) {
-  nmg_Graphics_Implementation * it = ( nmg_Graphics_Implementation * )userdata;
-
-  BCGrid *grid = g_inputGrid;
-
-  int number_of_variables  = grid->numPlanes();
-  char **variable_list     = new char*[ number_of_variables ];
-
-  BCPlane *head = grid->head();
-
-  if (!variable_list) {
-    fprintf(stderr, "nmg_Graphics_Implementation::send_genetic_texture_data:  "
-                    "Out of memory.\n");
-    return -1;
-  }
-
-  int i;
-  for ( i = 0; ( i < number_of_variables ) && head; i++ ) {
-    variable_list[ i ] = new char[ head->name()->Length() ];
-    if (!variable_list[i]) {
-      fprintf(stderr, "nmg_Graphics_Implementation::"
-                      "send_genetic_texture_data:  "
-                      "Out of memory.\n");
-      return -1;
-    }
-    strcpy( variable_list[ i ], head->name()->Characters() );
-    head = head->next();
-  }
-
-  it->sendGeneticTexturesData ( number_of_variables, variable_list );
-
-  for ( i = 0; i < number_of_variables; i++ )
-    delete [] variable_list[ i ];
-  delete [] variable_list;
-
-  return 0;
-}
-*/
-// static
-/*
-int nmg_Graphics_Implementation::handle_enableGeneticTextures (void *userdata,
-						       vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = ( nmg_Graphics_Implementation * )userdata;
-  int value;
-  CHECKF(it->decode_enableGeneticTextures(p.buffer, &value), "handle_enableGeneticTextures");
-  it->enableGeneticTextures( value );
-  return 0;
-}
-*/
-/*
-// static
-int nmg_Graphics_Implementation::handle_sendGeneticTexturesData(void *userdata,
-						      vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  int number_of_variables;
-  char **variable_list;
-  CHECKF(it->decode_sendGeneticTexturesData
-          (p.buffer, &number_of_variables, &variable_list), "handle_sendGeneticTexturesData");
-  it->sendGeneticTexturesData( number_of_variables, variable_list );
-  for ( int i = 0; i < number_of_variables; i++ ) {
-    if (variable_list && variable_list[i]) {
-      delete [] variable_list[i];
-    }
-  }
-  if (variable_list) {
-    delete [] variable_list;
-  }
-  return 0;
-}
-*/
 
 //
 // Realign Textures Handlers

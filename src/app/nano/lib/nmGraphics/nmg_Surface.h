@@ -7,6 +7,7 @@ class nmg_SurfaceRegion;
 class nmg_SurfaceMask;
 class nmb_Dataset;
 class BCPlane;
+class nmg_State;
 
 class nmg_Surface
 {
@@ -17,13 +18,13 @@ public:
     int init(unsigned int width, unsigned int height);
     void changeDataset(nmb_Dataset *dataset);
 
-    void renderSurface();
+    void renderSurface(nmg_State * state);
     ///rebuild display lists for a single region
-    int rebuildRegion(int region);
+    int rebuildRegion(nmg_State * state, int region);
     ///rebuild display lists for whole surface, all subregions, optional force
-    int rebuildSurface(vrpn_bool force = VRPN_FALSE);
+    int rebuildSurface(nmg_State * state, vrpn_bool force = VRPN_FALSE);
     ///rebuild a few strips of the surface, based on d_dataset->range_of_change
-    int rebuildInterval();
+    int rebuildInterval(nmg_State * state);
 
     ///only recolor the surface, don't re-calc display lists or normals
     int recolorSurface();

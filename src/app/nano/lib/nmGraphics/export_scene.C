@@ -7,7 +7,7 @@
 
 #include <rhinoio.h>
 #include "nmg_Graphics.h"
-#include "graphics_globals.h"
+#include "nmg_State.h"
 #include <BCGrid.h>
 #include <BCPlane.h>
 #include <nmb_PlaneSelection.h>
@@ -57,6 +57,7 @@ void build_mesh (
     CRhinoMesh &               out_mesh,
     const BCGrid * const       grid,
     const nmb_PlaneSelection & plane_selection,
+    nmg_State *                state,
     q_type                     xf_rot,
     q_vec_type                 xf_xlate,
     const double               xf_scale)
@@ -98,8 +99,8 @@ void build_mesh (
     // Anything else?
 
     // Create some colors
-    CRhinoColor specular (g_specular_color, g_specular_color, g_specular_color);
-    CRhinoColor shiny (g_shiny, g_shiny, g_shiny);
+    CRhinoColor specular (state->specular_color, state->specular_color, state->specular_color);
+    CRhinoColor shiny (state->shiny, state->shiny, state->shiny);
     CRhinoColor dark (0,0,0);
     CRhinoColor white (255, 255, 255);
 

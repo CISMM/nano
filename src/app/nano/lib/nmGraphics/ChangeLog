@@ -1,3 +1,18 @@
+2001-10-19  Aron Helser  <helser@cs.unc.edu>
+
+	* surface_util.ch: new, utility functions relating to rendering
+	the surface
+
+	* nmg_State.Ch: new, state object encapsulates all formerly global
+	variables. Passed as argument to any function that needs to change
+	state
+
+	* all: many, many functions changed to take state object as
+	argument. 
+
+	* graphics_globals.ch: removed, contents in nmg_State.Ch
+	* graphics.ch: removed, contents in surface_util, openGL
+
 2001-10-15  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_Graphics.h: Remove obsolete Pxfl related messages, adhesion

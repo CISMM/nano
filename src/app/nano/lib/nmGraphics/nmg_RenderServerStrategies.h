@@ -7,6 +7,7 @@
 
 class nmg_Graphics_RenderServer;
 class nmg_CloudTexturer;
+class nmg_State;
 
 /** \class nmg_RenderServer_ViewStrategy
  * Specifies to a render server how to manage the viewing transform
@@ -21,9 +22,9 @@ class nmg_RenderServer_ViewStrategy {
     virtual ~nmg_RenderServer_ViewStrategy (void) = 0;
 
     virtual vrpn_bool alwaysSendEntireScreen (void) const = 0;
-    virtual void setViewingTransform (void) = 0;
+    virtual void setViewingTransform (nmg_State *) = 0;
 
-    virtual void setGraphicsModes (void) = 0;
+    virtual void setGraphicsModes (nmg_State *) = 0;
 
   protected:
 
@@ -44,9 +45,9 @@ class nmg_RSViewS_Ortho : public nmg_RenderServer_ViewStrategy {
     virtual ~nmg_RSViewS_Ortho (void);
 
     virtual vrpn_bool alwaysSendEntireScreen (void) const;
-    virtual void setViewingTransform (void);
+    virtual void setViewingTransform (nmg_State *);
 
-    virtual void setGraphicsModes (void);
+    virtual void setGraphicsModes (nmg_State *);
       /**< Turns off chartjunk, measure lines;  sets "planeonly".
        * Ortho wants to capture only the image of the plane.
        */
@@ -66,9 +67,9 @@ class nmg_RSViewS_Slave : public nmg_RenderServer_ViewStrategy {
     virtual ~nmg_RSViewS_Slave (void);
 
     virtual vrpn_bool alwaysSendEntireScreen (void) const;
-    virtual void setViewingTransform (void);
+    virtual void setViewingTransform (nmg_State *);
 
-    virtual void setGraphicsModes (void);
+    virtual void setGraphicsModes (nmg_State *);
       /**< Turns on chartjunk, measure lines;  not "planeonly".
        * Slave wants to capture the entire scene, plane and decorations.
        */
@@ -81,9 +82,9 @@ class nmg_RenderServer_Strategy {
     nmg_RenderServer_Strategy (nmg_Graphics_RenderServer *);
     virtual ~nmg_RenderServer_Strategy (void) = 0;
 
-    virtual void render (void);
+    virtual void render (nmg_State *);
       ///< Standard implementation calls nmg_RenderServer::defaultRender().
-    virtual void captureData (void) = 0;
+    virtual void captureData (nmg_State *) = 0;
     virtual void sendData (int minx, int maxx, int miny, int maxy) = 0;
     void updatePixelBuffer(int minx, int maxx, int miny, int maxy, vrpn_uint8 *new_buf);
     
@@ -108,7 +109,7 @@ class nmg_RSStrategy_Texture : public nmg_RenderServer_Strategy {
     nmg_RSStrategy_Texture (nmg_Graphics_RenderServer *);
     virtual ~nmg_RSStrategy_Texture (void);
 
-    virtual void captureData (void);
+    virtual void captureData (nmg_State *);
     virtual void sendData (int minx, int maxx, int miny, int maxy);
 };
 
@@ -126,7 +127,7 @@ class nmg_RSStrategy_Vertex : public nmg_RenderServer_Strategy {
     nmg_RSStrategy_Vertex (nmg_Graphics_RenderServer *);
     virtual ~nmg_RSStrategy_Vertex (void);
 
-    virtual void captureData (void);
+    virtual void captureData (nmg_State * );
     virtual void sendData (int minx, int maxx, int miny, int maxy);
 
 };
@@ -144,8 +145,8 @@ class nmg_RSStrategy_CloudTexture : public nmg_RenderServer_Strategy {
     nmg_RSStrategy_CloudTexture (nmg_Graphics_RenderServer *);
     virtual ~nmg_RSStrategy_CloudTexture (void);
 
-    virtual void render (void);
-    virtual void captureData (void);
+    virtual void render (nmg_State *);
+    virtual void captureData (nmg_State *);
     virtual void sendData (int minx, int maxx, int miny, int maxy);
 
   private:

@@ -14,7 +14,7 @@
 #include "nmg_SurfaceRegion.h"
 #include "nmg_SurfaceMask.h"
 
-#include "graphics_globals.h"
+#include "nmg_State.h"
 /**
  
     Access: Public
@@ -280,14 +280,15 @@ rederive(int region)
     Access: Public
 */
 int nmg_Surface::
-rebuildRegion(int region)
+rebuildRegion(nmg_State * state, int region)
 {
     if (region == 0) {
-        rebuildSurface();
+        rebuildSurface(state);
     }
     if (region > 0 && region <= d_numSubRegions) {        
         region--;
-        return d_subRegions[region]->rebuildRegion(d_dataset, d_display_lists_in_x );
+        return d_subRegions[region]->rebuildRegion(d_dataset, state, 
+                                                   d_display_lists_in_x );
     }
     return 0;
 }
@@ -301,7 +302,7 @@ rebuildRegion(int region)
     Access: Public
 */
 int nmg_Surface::
-rebuildSurface(vrpn_bool force)
+rebuildSurface(nmg_State * state, vrpn_bool force)
 {
   if (d_dataset != (nmb_Dataset*)NULL) {
 
@@ -329,12 +330,14 @@ rebuildSurface(vrpn_bool force)
     }
 
     for(int i = 0; i < d_numSubRegions; i++) {
-        if (!d_subRegions[i]->rebuildRegion(d_dataset, d_display_lists_in_x , force)) {
+        if (!d_subRegions[i]->rebuildRegion(d_dataset, state, 
+                                            d_display_lists_in_x , force)) {
             return 0;
         }
     }
     
-    if (!d_defaultRegion->rebuildRegion(d_dataset, d_display_lists_in_x , force)) {
+    if (!d_defaultRegion->rebuildRegion(d_dataset, state, 
+                                        d_display_lists_in_x , force)) {
         return 0;
     }
 
@@ -354,7 +357,7 @@ rebuildSurface(vrpn_bool force)
 WARNING: uses some global variables!
 */
 int nmg_Surface::
-rebuildInterval()
+rebuildInterval(nmg_State * state)
 {
     // Semi-optimized, thread-safe version of display list redrawing code.
     // TCH 17 June 98
@@ -378,29 +381,29 @@ rebuildInterval()
     // so we have bulletproof synchronization.
     
     d_dataset->range_of_change.GetBoundsAndClear
-        (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
-    if (g_PRERENDERED_COLORS || g_PRERENDERED_DEPTH) {
-        g_prerenderedChange->GetBoundsAndClear
-            (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
+        (&state->minChangedX, &state->maxChangedX, &state->minChangedY, &state->maxChangedY);
+    if (state->PRERENDERED_COLORS || state->PRERENDERED_DEPTH) {
+        state->prerenderedChange->GetBoundsAndClear
+            (&state->minChangedX, &state->maxChangedX, &state->minChangedY, &state->maxChangedY);
     }
     
     if (d_display_lists_in_x) {
-        low_row = g_minChangedY;
-        high_row = g_maxChangedY;
+        low_row = state->minChangedY;
+        high_row = state->maxChangedY;
     } else {
-        low_row = g_minChangedX;
-        high_row = g_maxChangedX;
+        low_row = state->minChangedX;
+        high_row = state->maxChangedX;
     }
     
     if (d_dataset != (nmb_Dataset*)NULL) {
         for(int i = 0; i < d_numSubRegions; i++) {
-            if (!d_subRegions[i]->rebuildInterval(d_dataset, low_row, 
+            if (!d_subRegions[i]->rebuildInterval(d_dataset, state, low_row, 
                                       high_row, d_display_lists_in_x)) {
                 return 0;
             }
         }
 
-        if (!d_defaultRegion->rebuildInterval(d_dataset, low_row, 
+        if (!d_defaultRegion->rebuildInterval(d_dataset, state, low_row, 
                                       high_row, d_display_lists_in_x)) {
             return 0;
         }
@@ -436,12 +439,12 @@ recolorSurface()
     Access: Public
 */
 void nmg_Surface::
-renderSurface()
+renderSurface(nmg_State * state)
 {
     if (d_dataset != (nmb_Dataset*)NULL) {
-        d_defaultRegion->renderRegion();
+        d_defaultRegion->renderRegion(state);
         for(int i = 0; i < d_numSubRegions; i++) {
-            d_subRegions[i]->renderRegion();
+            d_subRegions[i]->renderRegion(state);
         }
     }
 }

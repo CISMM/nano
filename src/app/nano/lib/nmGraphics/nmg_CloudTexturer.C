@@ -3,7 +3,7 @@
 #include <nmb_Dataset.h>
 #include <BCGrid.h>
 #include <nmb_Subgrid.h>
-#include "graphics_globals.h"
+#include "nmg_State.h"
 
 ////////////////////////////////////////////////////
 // Name: nmg_CloudTexturer::constructor
@@ -48,7 +48,7 @@ set_light(q_vec_type lightdir, float intensity)
 //              execution time.
 //////////////////////////////////////////////////////////////////
 vrpn_uint8* nmg_CloudTexturer::
-render_detail(vrpn_bool shadows)
+render_detail(nmg_State * state, vrpn_bool shadows)
 {
     BCPlane *height_field = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
     int minx, miny, maxx, maxy;
@@ -112,10 +112,10 @@ render_detail(vrpn_bool shadows)
     
     //For the moment, until the world is made a happier place just set this to
     //the entire size of the image
-    g_minChangedX = 0;
-    g_minChangedY = 0;
-    g_maxChangedX = d_screenWidth - 1;
-    g_maxChangedY = d_screenHeight - 1;
+   state->minChangedX = 0;
+   state->minChangedY = 0;
+   state->maxChangedX = d_screenWidth - 1;
+   state->maxChangedY = d_screenHeight - 1;
 
     return new_frame;
 }
@@ -127,11 +127,11 @@ render_detail(vrpn_bool shadows)
 //              (if there is uncertainty information)
 //////////////////////////////////////////////////////////////////
 vrpn_uint8* nmg_CloudTexturer::
-render_composite(vrpn_bool shadows)
+render_composite(nmg_State * state, vrpn_bool shadows)
 {
     //Until we have uncertainty data, this is no better than calling
     //render_detail.
-    return render_detail(shadows);
+    return render_detail(state, shadows);
 }
 
 //////////////////////////////////////////////////////////////////

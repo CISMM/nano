@@ -19,32 +19,35 @@ for extending nmg_Graphics is at the end of this file.
 
 nmg_Graphics_Implementation:
   The standard implementation of nmg_Graphics.
-It uses Open GL and has all of the PixelFlow code included.
-It is built on top of the old graphics modules from microscape.
+It uses Open GL. It is built on top of the old graphics modules 
+from microscape.
 
 nmg_Graphics_Null:
   A "null" implementation of nmg_Graphics that calls very few
-graphics routines.  Meant for timing tests.
+graphics routines.  Meant for timing tests. No longer maintained.
 
 nmg_Graphics_Remote:
   A local stub implementation of nmg_Graphics that uses VRPN to
-communicate with a remote nmg_Graphics_Implementation.
+communicate with a remote nmg_Graphics_Implementation. No longer
+maintained. 
+
+nmg_State:
+  declares and defines all the state variables used by graphics. State
+object passed in to many functions. 
 
 openGL:
   Implements the draw_objects() routine passed to vlib.
 It updates stale display lists by calling routines in spm_gl.
 It sets up material parameters and calls routines to render
 the decorations on the surface.
-On PixelFlow it also sets up the lighting.
 
-graphics:
   Contains all the random routines culled from other parts of the
 code when GL calls were isolated in this one directory.
 It controls lighting and texturing.
 
-spm_gl:
+surface_strip_create
   Contains routines to build triangle stripped display lists for
-the surface and to do other low-level rendering tasks.
+the surface.
 
 globjects:
   Describes Open GL objects that are drawn in the world
@@ -58,15 +61,6 @@ For conceptual clarity it probably should also include the other
 features that are toggled by the "chartjunk" button.
 It is the only module in the nmg Graphics package that relies on the
 nmm Microscope package.
-
-pxflShader:
-  declares constants and variables used to control the shaders
-on PixelFlow.
-
-graphics_globals:
-  declares and defines all the global variables used by graphics.
-It defines everything declared in pxflShader.
-This is inconsistent.
 
 font:
   standard library for writing on the screen.
@@ -92,13 +86,15 @@ add your new function):
 
 nmg_Graphics.h
   public:
-    virtual void nmg_Graphics::foo (bar) = 0;
+    virtual void nmg_Graphics::foo (bar) {};
   protected:
+  // optional:
     int d_foo_type;
     char * nmg_Graphics::encode_foo (int *, bar)
     int nmg_Graphics::decode_foo (const char *, bar *)
 
 nmg_GraphicsRemote.h
+        // optional:
   public:
     virtual void nmg_Graphics_Remote::foo (bar);
 
@@ -106,10 +102,12 @@ nmg_GraphicsImpl.h
   public:
     virtual void nmg_Graphics_Implementation::foo (bar);
   protected:
+  // optional:
     static int handle_foo (void *, vrpn_HANDLERPARAM);
 
 You will also need to modify the following:
 
+    // optional:
     nmg_Graphics::nmg_Graphics (vrpn_Connection *, const char *)
       d_foo_type = c->register_message_type("nmg Graphics foo");
 

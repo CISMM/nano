@@ -21,7 +21,7 @@
 #include <nmb_Dataset.h>
 #include <nmb_Globals.h>
 
-#include "graphics_globals.h"  // for NUM_USERS, NUM_foo
+#include "nmg_State.h"  // for NUM_USERS, NUM_foo
 
 #define min(a,b) ((a)<(b)?(a):(b))
 #define max(a,b) ((a)<(b)?(b):(a))

@@ -13,10 +13,10 @@
 #include <BCGrid.h>
 #include <BCPlane.h>
 
-#include "graphics_globals.h"
+#include "nmg_State.h"
 #include "globjects.h"
-#include "graphics.h"
 #include "surface_strip_create.h"  
+#include "surface_util.h"  
 #include "openGL.h"  // for check_extension(), display_lists_in_x
 #include "nmg_Graphics.h"
 
@@ -232,13 +232,13 @@ setUpdateAndTodo(int low_row, int high_row)
  * 
  */
 void nmg_SurfaceRegion::
-setTexture()
+setTexture(nmg_State * state)
 {
     double surface_z_scale = 1.0;
     nmb_Dataset *data = d_parent->getDataset();
     if (data) {
       BCPlane *heightPlane =
-           data->inputGrid->getPlaneByName(g_heightPlaneName);
+           data->inputGrid->getPlaneByName(state->heightPlaneName);
       surface_z_scale = heightPlane->scale();
     }
 
@@ -247,15 +247,15 @@ setTexture()
         // nothing to do here
         break;
     case nmg_Graphics::CONTOUR:
-        glBindTexture(GL_TEXTURE_1D, tex_ids[CONTOUR_1D_TEX_ID]);
+        glBindTexture(GL_TEXTURE_1D, state->tex_ids[CONTOUR_1D_TEX_ID]);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  g_tex_blend_func[CONTOUR_1D_TEX_ID]);
+                  state->tex_blend_func[CONTOUR_1D_TEX_ID]);
         break;
     case nmg_Graphics::ALPHA:
 #if !(defined(__CYGWIN__) || defined(hpux) || defined(_WIN32))
-        glBindTexture(GL_TEXTURE_3D, tex_ids[ALPHA_3D_TEX_ID]);
+        glBindTexture(GL_TEXTURE_3D, state->tex_ids[ALPHA_3D_TEX_ID]);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  g_tex_blend_func[ALPHA_3D_TEX_ID]);
+                  state->tex_blend_func[ALPHA_3D_TEX_ID]);
 #endif
     case nmg_Graphics::BUMPMAP:
 #ifdef FLOW
@@ -273,33 +273,33 @@ setTexture()
 #endif
         break;
     case nmg_Graphics::RULERGRID:
-        glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
+        glBindTexture(GL_TEXTURE_2D, state->tex_ids[RULERGRID_TEX_ID]);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  g_tex_blend_func[RULERGRID_TEX_ID]);
+                  state->tex_blend_func[RULERGRID_TEX_ID]);
         break;
     case nmg_Graphics::COLORMAP:
-        glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
+        glBindTexture(GL_TEXTURE_2D, state->tex_ids[COLORMAP_TEX_ID]);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  g_tex_blend_func[COLORMAP_TEX_ID]);
+                  state->tex_blend_func[COLORMAP_TEX_ID]);
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR,
-                   g_tex_env_color[COLORMAP_TEX_ID]);
+                   state->tex_env_color[COLORMAP_TEX_ID]);
         break;
     case nmg_Graphics::SEM_DATA:
-        glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
+        glBindTexture(GL_TEXTURE_2D, state->tex_ids[SEM_DATA_TEX_ID]);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  g_tex_blend_func[SEM_DATA_TEX_ID]);
+                  state->tex_blend_func[SEM_DATA_TEX_ID]);
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR,
-                   g_tex_env_color[SEM_DATA_TEX_ID]);
+                   state->tex_env_color[SEM_DATA_TEX_ID]);
         break;
     case nmg_Graphics::REMOTE_DATA:
-        glBindTexture(GL_TEXTURE_2D, tex_ids[REMOTE_DATA_TEX_ID]);
+        glBindTexture(GL_TEXTURE_2D, state->tex_ids[REMOTE_DATA_TEX_ID]);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  g_tex_blend_func[REMOTE_DATA_TEX_ID]);
+                  state->tex_blend_func[REMOTE_DATA_TEX_ID]);
         break;
     case nmg_Graphics::VISUALIZATION:
-        glBindTexture(GL_TEXTURE_2D, tex_ids[VISUALIZATION_TEX_ID]);
+        glBindTexture(GL_TEXTURE_2D, state->tex_ids[VISUALIZATION_TEX_ID]);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                  g_tex_blend_func[VISUALIZATION_TEX_ID]);
+                  state->tex_blend_func[VISUALIZATION_TEX_ID]);
         break;
     default:
         fprintf(stderr, "Error, unknown texture set for display\n");
@@ -308,8 +308,8 @@ setTexture()
     
 #if !(defined(__CYGWIN__) || defined(_WIN32))
 	//#ifndef __CYGWIN__
-    if ((g_texture_mode == GL_TEXTURE_1D) ||
-        (g_texture_mode == GL_TEXTURE_3D_EXT)) {
+    if ((state->texture_mode == GL_TEXTURE_1D) ||
+        (state->texture_mode == GL_TEXTURE_3D_EXT)) {
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
     }
 #endif
@@ -337,21 +337,21 @@ setTexture()
         switch (d_currentState.textureTransformMode) {
         case nmg_Graphics::RULERGRID_COORD:
             // use values from the older rulergrid adjustment interface
-            glScalef(1.0/g_rulergrid_scale,1.0/g_rulergrid_scale,1.0); // 1.0/SCALE
-            theta = asin(g_rulergrid_sin);
-            if (g_rulergrid_cos < 0)
+            glScalef(1.0/state->rulergrid_scale,1.0/state->rulergrid_scale,1.0); // 1.0/SCALE
+            theta = asin(state->rulergrid_sin);
+            if (state->rulergrid_cos < 0)
                 theta = M_PI - theta;
             glRotated(theta*180.0/M_PI, 0.0, 0.0, 1.0);              // -ROTATION
-            glTranslatef(-g_rulergrid_xoffset, -g_rulergrid_yoffset, 0.0);// -TRANS.
+            glTranslatef(-state->rulergrid_xoffset, -state->rulergrid_yoffset, 0.0);// -TRANS.
             break;
         case nmg_Graphics::VIZTEX_COORD:
-            glScalef(1.0/g_viztex_scale,1.0/g_viztex_scale,1.0); // 1.0/SCALE
+            glScalef(1.0/state->viztex_scale,1.0/state->viztex_scale,1.0); // 1.0/SCALE
             break;
         case nmg_Graphics::MANUAL_REALIGN_COORD:
-            compute_texture_matrix(g_translate_tex_x, g_translate_tex_y,
-                                   g_tex_theta_cumulative, g_scale_tex_x,
-                                   g_scale_tex_y, g_shear_tex_x, g_shear_tex_y,
-                                   g_tex_coord_center_x, g_tex_coord_center_y,
+            compute_texture_matrix(state->translate_tex_x, state->translate_tex_y,
+                                   state->tex_theta_cumulative, state->scale_tex_x,
+                                   state->scale_tex_y, state->shear_tex_x, state->shear_tex_y,
+                                   state->tex_coord_center_x, state->tex_coord_center_y,
                                    texture_matrix);
             glLoadMatrixd(texture_matrix);
             break;
@@ -362,7 +362,7 @@ setTexture()
             // scale by actual texture image given divided by texture image used
             // (i.e. the one actually in texture memory is a power of 2 but the
             // one we were given had some smaller size)
-            switch (g_texture_displayed) {
+            switch (state->texture_displayed) {
             case nmg_Graphics::NO_TEXTURES:
             case nmg_Graphics::BUMPMAP:
             case nmg_Graphics::HATCHMAP:
@@ -370,54 +370,54 @@ setTexture()
 				// nothing to do here
                 break;
             case nmg_Graphics::RULERGRID:
-                x_scale_factor = (double)g_tex_image_width[RULERGRID_TEX_ID]/
-                    (double)g_tex_installed_width[RULERGRID_TEX_ID];
-                y_scale_factor = (double)g_tex_image_height[RULERGRID_TEX_ID]/
-                    (double)g_tex_installed_height[RULERGRID_TEX_ID];
-                x_translate = (double)g_tex_image_offsetx[RULERGRID_TEX_ID]/
-                    (double)g_tex_installed_width[RULERGRID_TEX_ID];
-                y_translate = (double)g_tex_image_offsety[RULERGRID_TEX_ID]/
-                    (double)g_tex_installed_height[RULERGRID_TEX_ID];
+                x_scale_factor = (double)state->tex_image_width[RULERGRID_TEX_ID]/
+                    (double)state->tex_installed_width[RULERGRID_TEX_ID];
+                y_scale_factor = (double)state->tex_image_height[RULERGRID_TEX_ID]/
+                    (double)state->tex_installed_height[RULERGRID_TEX_ID];
+                x_translate = (double)state->tex_image_offsetx[RULERGRID_TEX_ID]/
+                    (double)state->tex_installed_width[RULERGRID_TEX_ID];
+                y_translate = (double)state->tex_image_offsety[RULERGRID_TEX_ID]/
+                    (double)state->tex_installed_height[RULERGRID_TEX_ID];
                 break;
             case nmg_Graphics::COLORMAP:
-                x_scale_factor = (double)g_tex_image_width[COLORMAP_TEX_ID]/
-                    (double)g_tex_installed_width[COLORMAP_TEX_ID];
-                y_scale_factor = (double)g_tex_image_height[COLORMAP_TEX_ID]/
-                    (double)g_tex_installed_height[COLORMAP_TEX_ID];
-                x_translate = (double)g_tex_image_offsetx[COLORMAP_TEX_ID]/
-                    (double)g_tex_installed_width[COLORMAP_TEX_ID];
-                y_translate = (double)g_tex_image_offsety[COLORMAP_TEX_ID]/
-                    (double)g_tex_installed_height[COLORMAP_TEX_ID];
+                x_scale_factor = (double)state->tex_image_width[COLORMAP_TEX_ID]/
+                    (double)state->tex_installed_width[COLORMAP_TEX_ID];
+                y_scale_factor = (double)state->tex_image_height[COLORMAP_TEX_ID]/
+                    (double)state->tex_installed_height[COLORMAP_TEX_ID];
+                x_translate = (double)state->tex_image_offsetx[COLORMAP_TEX_ID]/
+                    (double)state->tex_installed_width[COLORMAP_TEX_ID];
+                y_translate = (double)state->tex_image_offsety[COLORMAP_TEX_ID]/
+                    (double)state->tex_installed_height[COLORMAP_TEX_ID];
                 break;
             case nmg_Graphics::SEM_DATA:
-                x_scale_factor = (double)g_tex_image_width[SEM_DATA_TEX_ID]/
-                    (double)g_tex_installed_width[SEM_DATA_TEX_ID];
-                y_scale_factor = (double)g_tex_image_height[SEM_DATA_TEX_ID]/
-                    (double)g_tex_installed_height[SEM_DATA_TEX_ID];
-                x_translate = (double)g_tex_image_offsetx[SEM_DATA_TEX_ID]/
-                    (double)g_tex_installed_width[SEM_DATA_TEX_ID];
-                y_translate = (double)g_tex_image_offsety[SEM_DATA_TEX_ID]/
-                    (double)g_tex_installed_height[SEM_DATA_TEX_ID];
+                x_scale_factor = (double)state->tex_image_width[SEM_DATA_TEX_ID]/
+                    (double)state->tex_installed_width[SEM_DATA_TEX_ID];
+                y_scale_factor = (double)state->tex_image_height[SEM_DATA_TEX_ID]/
+                    (double)state->tex_installed_height[SEM_DATA_TEX_ID];
+                x_translate = (double)state->tex_image_offsetx[SEM_DATA_TEX_ID]/
+                    (double)state->tex_installed_width[SEM_DATA_TEX_ID];
+                y_translate = (double)state->tex_image_offsety[SEM_DATA_TEX_ID]/
+                    (double)state->tex_installed_height[SEM_DATA_TEX_ID];
                 break;
             case nmg_Graphics::REMOTE_DATA:
-                x_scale_factor = (double)g_tex_image_width[REMOTE_DATA_TEX_ID]/
-                    (double)g_tex_installed_width[REMOTE_DATA_TEX_ID];
-                y_scale_factor = (double)g_tex_image_height[REMOTE_DATA_TEX_ID]/
-                    (double)g_tex_installed_height[REMOTE_DATA_TEX_ID];
-                x_translate = (double)g_tex_image_offsetx[REMOTE_DATA_TEX_ID]/
-                    (double)g_tex_installed_width[REMOTE_DATA_TEX_ID];
-                y_translate = (double)g_tex_image_offsety[REMOTE_DATA_TEX_ID]/
-                    (double)g_tex_installed_height[REMOTE_DATA_TEX_ID];
+                x_scale_factor = (double)state->tex_image_width[REMOTE_DATA_TEX_ID]/
+                    (double)state->tex_installed_width[REMOTE_DATA_TEX_ID];
+                y_scale_factor = (double)state->tex_image_height[REMOTE_DATA_TEX_ID]/
+                    (double)state->tex_installed_height[REMOTE_DATA_TEX_ID];
+                x_translate = (double)state->tex_image_offsetx[REMOTE_DATA_TEX_ID]/
+                    (double)state->tex_installed_width[REMOTE_DATA_TEX_ID];
+                y_translate = (double)state->tex_image_offsety[REMOTE_DATA_TEX_ID]/
+                    (double)state->tex_installed_height[REMOTE_DATA_TEX_ID];
                 break;
             case nmg_Graphics::VISUALIZATION:
-                x_scale_factor = (double)g_tex_image_width[VISUALIZATION_TEX_ID]/
-                    (double)g_tex_installed_width[VISUALIZATION_TEX_ID];
-                y_scale_factor = (double)g_tex_image_height[VISUALIZATION_TEX_ID]/
-                    (double)g_tex_installed_height[VISUALIZATION_TEX_ID];
-                x_translate = (double)g_tex_image_offsetx[VISUALIZATION_TEX_ID]/
-                    (double)g_tex_installed_width[VISUALIZATION_TEX_ID];
-                y_translate = (double)g_tex_image_offsety[VISUALIZATION_TEX_ID]/
-                    (double)g_tex_installed_height[VISUALIZATION_TEX_ID];
+                x_scale_factor = (double)state->tex_image_width[VISUALIZATION_TEX_ID]/
+                    (double)state->tex_installed_width[VISUALIZATION_TEX_ID];
+                y_scale_factor = (double)state->tex_image_height[VISUALIZATION_TEX_ID]/
+                    (double)state->tex_installed_height[VISUALIZATION_TEX_ID];
+                x_translate = (double)state->tex_image_offsetx[VISUALIZATION_TEX_ID]/
+                    (double)state->tex_installed_width[VISUALIZATION_TEX_ID];
+                y_translate = (double)state->tex_image_offsety[VISUALIZATION_TEX_ID]/
+                    (double)state->tex_installed_height[VISUALIZATION_TEX_ID];
                 break;
             default:
                 fprintf(stderr, "Error, unknown texture set for display\n");
@@ -434,7 +434,7 @@ setTexture()
             glTranslated(x_translate, y_translate, 0.0);
             glScaled(x_scale_factor, y_scale_factor, 1.0);
 
-            glMultMatrixd(g_texture_transform);
+            glMultMatrixd(state->texture_transform);
             glScaled(1.0, 1.0, 1.0/surface_z_scale);
             break;
             //case nmg_Graphics::REMOTE_COORD;
@@ -654,13 +654,13 @@ getRegionData()
  *            rid of all the Global variables!
  */
 void nmg_SurfaceRegion::
-SaveBuildState()
+SaveBuildState(nmg_State * state)
 {
     // Taken care of in recolorRegion and rebuildRegion
-  // d_savedState.justColor = g_just_color;  //This one gets
+  // d_savedState.justColor = state->just_color;  //This one gets
                                      //automatically changed
-    d_savedState.stride = g_stride;
-    d_savedState.alpha = g_surface_alpha;
+    d_savedState.stride = state->stride;
+    d_savedState.alpha = state->surface_alpha;
 }
 
 /**
@@ -669,12 +669,12 @@ SaveBuildState()
  *              rid of all the Global variables!
  */
 void nmg_SurfaceRegion::
-RestoreBuildState()
+RestoreBuildState(nmg_State * state)
 {
     // Taken care of in recolorRegion and rebuildRegion
-  // g_just_color = d_savedState.justColor;
-    g_stride = d_savedState.stride;
-    g_surface_alpha = d_savedState.alpha;
+  // state->just_color = d_savedState.justColor;
+    state->stride = d_savedState.stride;
+    state->surface_alpha = d_savedState.alpha;
 }
 
 /**
@@ -684,12 +684,12 @@ RestoreBuildState()
  *              rid of all the Global variables!
  */
 void nmg_SurfaceRegion::
-SaveRenderState()
+SaveRenderState(nmg_State * state)
 {
-    d_savedState.filledPolygonsEnabled = g_config_filled_polygons;
-    d_savedState.textureDisplayed = g_texture_displayed;
-    d_savedState.textureMode = g_texture_mode;
-    d_savedState.textureTransformMode = g_texture_transform_mode;
+    d_savedState.filledPolygonsEnabled = state->config_filled_polygons;
+    d_savedState.textureDisplayed = state->texture_displayed;
+    d_savedState.textureMode = state->texture_mode;
+    d_savedState.textureTransformMode = state->texture_transform_mode;
 }
 
 /**
@@ -698,12 +698,12 @@ SaveRenderState()
  *              rid of all the Global variables!
  */
 void nmg_SurfaceRegion::
-RestoreRenderState()
+RestoreRenderState(nmg_State * state)
 {
-    g_config_filled_polygons = d_savedState.filledPolygonsEnabled;
-    g_texture_displayed = d_savedState.textureDisplayed;
-    g_texture_mode = d_savedState.textureMode;
-    g_texture_transform_mode = d_savedState.textureTransformMode;
+    state->config_filled_polygons = d_savedState.filledPolygonsEnabled;
+    state->texture_displayed = d_savedState.textureDisplayed;
+    state->texture_mode = d_savedState.textureMode;
+    state->texture_transform_mode = d_savedState.textureTransformMode;
 }
 
 /**
@@ -712,7 +712,8 @@ RestoreRenderState()
  * Access: Public
  */
 int nmg_SurfaceRegion::
-rebuildRegion(nmb_Dataset *dataset, int display_lists_in_x, vrpn_bool force)
+rebuildRegion(nmb_Dataset *dataset, nmg_State * state, 
+              int display_lists_in_x, vrpn_bool force)
 {  
     //Make sure we have a valid mask before we rebuild the display lists
     d_parent->rederive(d_regionID);
@@ -725,18 +726,19 @@ rebuildRegion(nmb_Dataset *dataset, int display_lists_in_x, vrpn_bool force)
     
     VERBOSE(6, "nmg_SurfaceRegion::rebuildRegion()");
 
-    SaveBuildState();
+    SaveBuildState(state);
 
-    g_just_color = d_currentState.justColor;
-    g_stride = d_currentState.stride;
-    g_surface_alpha = d_currentState.alpha;
+    state->just_color = d_currentState.justColor;
+    state->stride = d_currentState.stride;
+    state->surface_alpha = d_currentState.alpha;
         
-    if (build_grid_display_lists(planes, d_regionalMask, display_lists_in_x, 
+    if (build_grid_display_lists(planes, d_regionalMask, state,
+                                 display_lists_in_x, 
 				 &d_list_base, &d_num_lists, d_num_lists, 
-				 g_surfaceColor, d_vertexPtr)) {
+				 state->surfaceColor, d_vertexPtr)) {
         return 0;
     }
-    RestoreBuildState();
+    RestoreBuildState(state);
 
     d_currentState.justColor = VRPN_FALSE;
     d_needsFullRebuild = VRPN_FALSE;
@@ -775,35 +777,36 @@ recolorRegion()
  * Access: Public
  */
 int nmg_SurfaceRegion::
-rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x)
+rebuildInterval(nmb_Dataset *dataset, nmg_State * state, int low_row, int high_row, int strips_in_x)
 {
     setUpdateAndTodo(low_row, high_row);
     
     nmb_PlaneSelection planes;
     planes.lookup(dataset);
     
-    SaveBuildState();
+    SaveBuildState(state);
 
-    g_just_color = d_currentState.justColor;
-    g_stride = d_currentState.stride;
-    g_surface_alpha = d_currentState.alpha;
+    state->just_color = d_currentState.justColor;
+    state->stride = d_currentState.stride;
+    state->surface_alpha = d_currentState.alpha;
 
     if (!update.empty() || !todo.empty()) {
         //Make sure we have a valid mask before we rebuild the display lists
         d_parent->rederive(d_regionID);
     }
     if (update.overlaps(todo) || update.adjacent(todo)) {
-        if (build_list_set(update + todo, planes, d_regionalMask, d_list_base, 
+        if (build_list_set(update + todo, planes, d_regionalMask, state,
+                           d_list_base, 
                            d_num_lists, strips_in_x, d_vertexPtr)) return 0;
     } 
     else {
-        if (build_list_set(update, planes, d_regionalMask, d_list_base, 
+        if (build_list_set(update, planes, d_regionalMask, state, d_list_base, 
                            d_num_lists, strips_in_x, d_vertexPtr)) return 0;
-        if (build_list_set(todo, planes, d_regionalMask, d_list_base, 
+        if (build_list_set(todo, planes, d_regionalMask, state, d_list_base, 
                            d_num_lists, strips_in_x, d_vertexPtr)) return 0;
     }
     
-    RestoreBuildState();
+    RestoreBuildState(state);
     d_currentState.justColor = VRPN_FALSE;
 
     return 1;
@@ -814,29 +817,29 @@ rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x
  * Access: Public
  */
 void nmg_SurfaceRegion::
-renderRegion()
+renderRegion(nmg_State * state)
 {
     //	static bool set = false;
     int i;
     
-    SaveRenderState();
+    SaveRenderState(state);
 
-    setTexture();    
+    setTexture(state);    
 
-    g_config_filled_polygons = d_currentState.filledPolygonsEnabled;
-    g_texture_mode = d_currentState.textureMode;
-    g_texture_displayed = d_currentState.textureDisplayed;
-    g_texture_transform_mode = d_currentState.textureTransformMode;
+    state->config_filled_polygons = d_currentState.filledPolygonsEnabled;
+    state->texture_mode = d_currentState.textureMode;
+    state->texture_displayed = d_currentState.textureDisplayed;
+    state->texture_transform_mode = d_currentState.textureTransformMode;
 
-    set_gl_surface_materials();
-    setFilled();
+    set_gl_surface_materials(state);
+    setFilled(state);
 
     for (i = 0; i < d_num_lists; i++) {
         glCallList(d_list_base + i);
     }
     
     cleanUp();
-    RestoreRenderState();
+    RestoreRenderState(state);
 }
 
 /**
@@ -850,11 +853,12 @@ renderRegion()
 int nmg_SurfaceRegion::build_list_set(
     const nmb_Interval &subset,
     const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
+    nmg_State * state,
     GLuint base,
     GLsizei num_lists,
     GLdouble * surfaceColor,
     int (* stripfn)
-    (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], int, Vertex_Struct *),
+    (nmg_State * state, const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], int, Vertex_Struct *),
     Vertex_Struct **surface)
 {
     
@@ -865,11 +869,11 @@ int nmg_SurfaceRegion::build_list_set(
     
     int i;
     
-    if (!g_just_color && subset.empty()) return 0;
+    if (!state->just_color && subset.empty()) return 0;
     
 #if defined(sgi) || defined(_WIN32)
     //#if defined(sgi)
-    if (g_VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
+    if (state->VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
         
         //The checks for whether to use GL_COLOR_ARRAY or not have been
         //removed because of the surface alpha being a global AND not
@@ -881,8 +885,8 @@ int nmg_SurfaceRegion::build_list_set(
         //leaving the globals alone and just pushing and poping state appropriately.
         //That fails though in this case, however, when we get rid of globals
         //and refactor all of this appropriately, this problem will disappear.
-        //if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE ||
-        //    g_null_data_alpha_toggle || g_transparent) {
+        //if (planes.color || state->PRERENDERED_COLORS || state->PRERENDERED_TEXTURE ||
+        //    state->null_data_alpha_toggle || state->transparent) {
             glEnableClientState(GL_COLOR_ARRAY);
         //} else {
         //    glDisableClientState(GL_COLOR_ARRAY);
@@ -919,9 +923,9 @@ int nmg_SurfaceRegion::build_list_set(
     
 #endif
     
-    if (g_VERTEX_ARRAY) { // same extension is for TEXTURE_COORD_ARRAY
+    if (state->VERTEX_ARRAY) { // same extension is for TEXTURE_COORD_ARRAY
 #ifndef PROJECTIVE_TEXTURE
-        if (g_texture_displayed != nmg_Graphics::NO_TEXTURES) {
+        if (state->texture_displayed != nmg_Graphics::NO_TEXTURES) {
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         } else {
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -950,16 +954,16 @@ int nmg_SurfaceRegion::build_list_set(
     if (spm_graphics_verbosity >= 15) { 
         fprintf(stderr, "  updating %d - %d", subset.low(), subset.high());
     } 
-    // Store g_just_color
-    vrpn_bool g_just_color_was_on = g_just_color;
+    // Store state->just_color
+    vrpn_bool just_color_was_on = state->just_color;
     // If we are re-doing the whole surface, we don't need to then
     // re-do the color, so turn flag off.
     if ( (subset.low() == 0) && (subset.high() == num_lists -1) ) {
-        g_just_color_was_on = 0;
+        just_color_was_on = 0;
     }
     
-    // turn g_just_color off so only geometry gets re-generated
-    g_just_color = 0;
+    // turn state->just_color off so only geometry gets re-generated
+    state->just_color = 0;
     for (i = subset.low(); i <= subset.high(); i++) {
         
         if (spm_graphics_verbosity >= 10) {
@@ -970,8 +974,8 @@ int nmg_SurfaceRegion::build_list_set(
         
         VERBOSECHECK(10);
         
-        if ((*stripfn)(planes, mask, surfaceColor, i*g_stride, surface[i])) {
-            if (g_VERTEX_ARRAY) {
+        if ((*stripfn)(state, planes, mask, surfaceColor, i*state->stride, surface[i])) {
+            if (state->VERTEX_ARRAY) {
                 fprintf(stderr, "build_list_set():  "
                     "Internal error - bad strip(vertex array)\n");
             }
@@ -989,10 +993,10 @@ int nmg_SurfaceRegion::build_list_set(
         
         glEndList();
     }
-    if ( g_just_color_was_on ) {
+    if ( just_color_was_on ) {
         // Flag tells stripfn to only regenerate color, and use cached normals 
         // and vertices. 
-        g_just_color = 1;
+        state->just_color = 1;
         // re-color the whole surface
         for (i = 0; i < num_lists; i++) {
             
@@ -1004,8 +1008,8 @@ int nmg_SurfaceRegion::build_list_set(
             
             VERBOSECHECK(10);
             
-            if ((*stripfn)(planes, mask, surfaceColor, i*g_stride, surface[i])) {
-                if (g_VERTEX_ARRAY) {
+            if ((*stripfn)(state, planes, mask, surfaceColor, i*state->stride, surface[i])) {
+                if (state->VERTEX_ARRAY) {
                     fprintf(stderr, "build_list_set():  "
                         "Internal error - bad strip(vertex array)\n");
                 }
@@ -1024,7 +1028,7 @@ int nmg_SurfaceRegion::build_list_set(
             glEndList();
         }
     }
-    g_just_color = 0;
+    state->just_color = 0;
     return 0;
 }
 
@@ -1038,6 +1042,7 @@ int nmg_SurfaceRegion::build_list_set(
 int nmg_SurfaceRegion::build_list_set (
     const nmb_Interval &insubset,
     const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
+    nmg_State * state,
     GLuint base, GLsizei num,
     int strips_in_x, Vertex_Struct **surface)
 {
@@ -1045,7 +1050,7 @@ int nmg_SurfaceRegion::build_list_set (
     v_gl_set_context_to_vlib_window(); 
     
     int (* stripfn)
-      (const nmb_PlaneSelection&, nmg_SurfaceMask *, 
+      (nmg_State * state, const nmb_PlaneSelection&, nmg_SurfaceMask *, 
 	 GLdouble [3], int, Vertex_Struct *);
     
     if (strips_in_x) {
@@ -1054,10 +1059,10 @@ int nmg_SurfaceRegion::build_list_set (
         stripfn = spm_y_strip_masked;
     }
     
-    // If we have a very small grid size, make sure g_stride doesn't tell us
+    // If we have a very small grid size, make sure state->stride doesn't tell us
     // to skip any.
     if ((planes.height->numY() <= 10) || (planes.height->numX() <= 10)) {
-        g_stride = 1;
+        state->stride = 1;
     }
 
     nmb_Interval subset (MAX(0, insubset.low()),
@@ -1072,8 +1077,8 @@ int nmg_SurfaceRegion::build_list_set (
       VERBOSECHECK(8);
     } 
     
-    return build_list_set(subset, planes, mask, base, num,
-        g_surfaceColor, stripfn, surface);
+    return build_list_set(subset, planes, mask, state, base, num,
+        state->surfaceColor, stripfn, surface);
 }
 
 
@@ -1094,13 +1099,14 @@ int nmg_SurfaceRegion::build_list_set (
 
 int nmg_SurfaceRegion::build_grid_display_lists(
     const nmb_PlaneSelection &planes,  nmg_SurfaceMask *mask, 
+    nmg_State * state,
     int strips_in_x, GLuint *base, GLsizei *num, 
     GLsizei old_num, GLdouble *surfaceColor, 
     Vertex_Struct **surface)
 {
     
     int (* stripfn)
-        (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], 
+        (nmg_State * state, const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], 
 	 int, Vertex_Struct *);
     
     VERBOSE(4,"     build_grid_display_lists in openGL.c");
@@ -1125,18 +1131,18 @@ int nmg_SurfaceRegion::build_grid_display_lists(
     //    printf("set_gl_surface_materials: generated gl error\n");
     //}
     
-    // If we have a very small grid size, make sure g_stride doesn't tell us
+    // If we have a very small grid size, make sure state->stride doesn't tell us
     // to skip any.
     if ((planes.height->numY() <= 10) || (planes.height->numX() <= 10)) {
-        g_stride = 1;
+        state->stride = 1;
     }
     // Figure out how many strips we will need.  Recall that we are
     // skipping along by stride gridpoints each time.
     if (strips_in_x) {
-        *num = (planes.height->numY() - 1) / g_stride;
+        *num = (planes.height->numY() - 1) / state->stride;
         stripfn = spm_x_strip_masked;
     } else {
-        *num = (planes.height->numX() - 1) / g_stride;
+        *num = (planes.height->numX() - 1) / state->stride;
         stripfn = spm_y_strip_masked;
     }
     
@@ -1152,19 +1158,20 @@ int nmg_SurfaceRegion::build_grid_display_lists(
     
 #if defined(sgi) || defined(_WIN32)
     // use vertex array extension
-    if (g_VERTEX_ARRAY) {
+    if (state->VERTEX_ARRAY) {
         glEnableClientState(GL_VERTEX_ARRAY);
         // Color arrays are enabled/disabled dynamically depending
-        // on whether or not planes.color or g_PRERENDERED_COLORS are
+        // on whether or not planes.color or state->PRERENDERED_COLORS are
         // valid.
-        if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
+        if (!state->PRERENDERED_COLORS && !state->PRERENDERED_TEXTURE) {
             glEnableClientState(GL_NORMAL_ARRAY);
         }
     }
 #endif
     
-    build_list_set(nmb_Interval (0, *num - 1), planes, mask, *base, *num,
-        surfaceColor, stripfn, surface);
+    build_list_set(nmb_Interval (0, *num - 1), planes, mask, state, 
+                   *base, *num,
+                   surfaceColor, stripfn, surface);
     
     VERBOSE(4,"     done build_grid_display_lists in openGL.c");
     VERBOSECHECK(4);

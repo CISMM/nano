@@ -26,7 +26,7 @@
 
 #include "nmg_Funclist.h"
 #include "globjects.h"
-#include "graphics_globals.h" // actually, this is all we need for VERBOSE
+#include "nmg_State.h" // actually, this is all we need for VERBOSE
 #include "openGL.h"
 #include "font.h"
 #include "chartjunk.h"
@@ -126,10 +126,6 @@ static int collabHand_id;
 // screen space
 static int g_CRT_correction = 0;
 
-static float hand_scale[1];
-static float room_scale[1];
-static float screen_scale[1];
-
 /*functions prototypes*/
 /* remember that v_dlist_ptr_type is a int func_name(int) */
 
@@ -141,7 +137,7 @@ static int myscreen (int);
 // used in openGL.c
 int myworld (void);
 
-static void myobjects (void);
+static void myobjects (nmg_State * state);
 static int draw_list (void *);
 static int grabhand (void *);
 static int lighthand (void * data);
@@ -163,10 +159,9 @@ int my_rubber_line (void *);
 int my_scanline_indicator (void *);
 
 
-int replaceDefaultObjects (void);
-int clear_world_modechange (int);
+int replaceDefaultObjects (nmg_State * state);
 int make_aim (const float a [], const float b []);
-int make_sweep (const float a [], const float b [],
+int make_sweep (nmg_State * state, const float a [], const float b [],
 		const float c [], const float d [] );
 int make_rubber_corner (float, float, float, float, int);
 int make_region_box (float, float, float, float, float, int);
@@ -177,14 +172,15 @@ static int big_flat_arrow (void); /* dim */
 //static int mysphere (void *);
 static void init_sphere (void); /* dim */
 
-void position_sphere (float, float, float);
+void position_sphere (nmg_State * state,float, float, float);
 
 static float sphere_x, sphere_y, sphere_z;
 
 
 /* When the user changes modes, clear the world of any 
  * icons dependent on that mode. */
-int clear_world_modechange(int mode, int style, int tool_param)
+int clear_world_modechange(nmg_State * state, 
+                           int mode, int style, int tool_param)
 {
   switch(mode) {
   case USER_LIGHT_MODE:
@@ -211,7 +207,7 @@ int clear_world_modechange(int mode, int style, int tool_param)
     removeFunctionFromFunclist(&v_hand,hand_id);
     removeFunctionFromFunclist(&vir_world,sphere_id);
     removeFunctionFromFunclist(&vir_world, aim_struct_id);
-    if (g_config_trueTip) {
+    if (state->config_trueTip) {
       removeFunctionFromFunclist(&vir_world, trueTip_id);
     }
     if (style == SWEEP) {
@@ -265,12 +261,12 @@ int clear_world_modechange(int mode, int style, int tool_param)
   }
 
   // We added them in init_world_modechange, so we should remove them here.
-  //if (g_config_measurelines) {
+  //if (state->config_measurelines) {
   removeFunctionFromFunclist(&vir_world, red_line_struct_id);
   removeFunctionFromFunclist(&vir_world, green_line_struct_id );
   removeFunctionFromFunclist(&vir_world, blue_line_struct_id );
   //}
-  //if (g_scanline_display_enabled) {
+  //if (state->scanline_display_enabled) {
   scanline_id = removeFunctionFromFunclist(&vir_world, scanline_id );
   //}
 
@@ -285,38 +281,38 @@ int clear_world_modechange(int mode, int style, int tool_param)
  * stationary with respect to the surface. It can be moved 
  * explicitly, though, see make_aim() and make_sweep()
  */
-int init_world_modechange(int mode, int style, int tool_param)
+int init_world_modechange(nmg_State * state, 
+                          int mode, int style, int tool_param)
 {
-  if (g_config_planeonly) {
+  if (state->config_planeonly) {
     // display NOTHING but the plane - used by nmg_RenderServer
     return 0;
   }
   switch(mode) {
   case USER_LIGHT_MODE:
-    hand_id = addFunctionToFunclist(&vir_world,lighthand,hand_scale, "hand_scale");
+    hand_id = addFunctionToFunclist(&vir_world,lighthand,state, "hand_scale");
     break;
   case USER_FLY_MODE:
-    hand_id = addFunctionToFunclist(&v_hand, Tip, NULL, "Tip");
-    //sphere_id = addFunctionToFunclist(&vir_world,mysphere,NULL, "mysphere"); 
+    hand_id = addFunctionToFunclist(&v_hand, Tip, state, "Tip");
     break;
   case USER_MEASURE_MODE:
-    hand_id = addFunctionToFunclist(&v_hand,measure_hand, &g_hand_color,
+    hand_id = addFunctionToFunclist(&v_hand,measure_hand, state,
                                                 "measure_hand"); 
     break;
   case USER_PLANE_MODE:
-    sphere_id = addFunctionToFunclist(&vir_world,mysphere,NULL, "mysphere");
-    hand_id = addFunctionToFunclist(&v_hand, Tip, NULL, "Tip"); 
+    sphere_id = addFunctionToFunclist(&vir_world,mysphere,state, "mysphere");
+    hand_id = addFunctionToFunclist(&v_hand, Tip, state, "Tip"); 
     aim_struct_id = addFunctionToFunclist(&vir_world,draw_list,&aim_struct,
                                                 "draw_list(aim_struct)");
     break;
   case USER_LINE_MODE:
   case USER_PLANEL_MODE:
-    hand_id = addFunctionToFunclist(&v_hand, Tip, NULL, "Tip"); 
-    sphere_id = addFunctionToFunclist(&vir_world, mysphere, NULL, "mysphere");
+    hand_id = addFunctionToFunclist(&v_hand, Tip, state, "Tip"); 
+    sphere_id = addFunctionToFunclist(&vir_world, mysphere, state, "mysphere");
     aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
 					  "draw_list(aim_struct)");
-    if (g_config_trueTip) {
-      trueTip_id = addFunctionToFunclist(&vir_world, TrueTip, NULL, "true tip");
+    if (state->config_trueTip) {
+      trueTip_id = addFunctionToFunclist(&vir_world, TrueTip, state, "true tip");
     }
     if (style == SWEEP) {
       sweep_struct_id = addFunctionToFunclist(&vir_world, draw_list, &sweep_struct,
@@ -342,19 +338,19 @@ int init_world_modechange(int mode, int style, int tool_param)
     aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
                                           "draw_list(aim_struct)");
     if (tool_param == OPTIMIZE_NOW_AREA) {
-      sphere_id = addFunctionToFunclist(&vir_world, mysphere, NULL, "mysphere");
+      sphere_id = addFunctionToFunclist(&vir_world, mysphere, state, "mysphere");
     }
     break;
   case USER_GRAB_MODE:
     aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
 					  "draw_list(aim_struct)");
-    hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");   
+    hand_id = addFunctionToFunclist(&v_hand,grabhand,state, "grabhand");   
     break;
   case USER_SCANLINE_MODE:
     hand_id = addFunctionToFunclist(&v_hand, selecthand, NULL, "selecthand");
     break;
   case USER_CENTER_TEXTURE_MODE:
-    sphere_id = addFunctionToFunclist(&vir_world,mysphere,NULL,"mysphere"); 
+    sphere_id = addFunctionToFunclist(&vir_world,mysphere,state,"mysphere"); 
     fprintf( stderr, "Sphere added to functionlist\n" );
     break;
   case USER_REGION_MODE:
@@ -371,9 +367,9 @@ int init_world_modechange(int mode, int style, int tool_param)
 
   /* a few icons get added every time, no matter what mode we are
    * entering */
-  addFunctionToFunclist(&vir_world,draw_north_pointing_arrow, NULL,
+  addFunctionToFunclist(&vir_world,draw_north_pointing_arrow, state,
                         "draw_north_pointing_arrow");  /* dim */
-  if (g_config_measurelines) {
+  if (state->config_measurelines) {
     red_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
 					       "draw_list(red_line_struct)"); 
     green_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
@@ -381,16 +377,16 @@ int init_world_modechange(int mode, int style, int tool_param)
     blue_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
 					       "draw_list(blue_line_struct)"); 
   }
-  if (g_scanline_display_enabled) {
+  if (state->scanline_display_enabled) {
 	scanline_id = addFunctionToFunclist(&vir_world, my_scanline_indicator,
-		(void *)g_scanlinePt, "scanline_indicator");
+		(void *)state, "scanline_indicator");
   }
 
   return 0;
 }
 
-void enableCollabHand (int enable) {
-  g_draw_collab_hand = enable;
+void enableCollabHand (nmg_State * state, int enable) {
+  state->draw_collab_hand = enable;
   if (enable) {
     collabHand_id =
         addFunctionToFunclist(&vir_world, draw_list, &collab_hand_struct,
@@ -408,19 +404,19 @@ void enableCollabHand (int enable) {
 //   remove in enableCollabHand(VRPN_FALSE)
 
 // function to toggle display of the scanline position icon:
-void enableScanlinePositionDisplay(const int enable) {
+void enableScanlinePositionDisplay(nmg_State * state, const int enable) {
 
-    g_scanline_display_enabled = enable;
+    state->scanline_display_enabled = enable;
     if (enable){
 	scanline_id = addFunctionToFunclist(&vir_world,my_scanline_indicator,
-                                (void *)g_scanlinePt, "scanline_indicator");
+                                (void *)state, "scanline_indicator");
     } else {
 	removeFunctionFromFunclist(&vir_world, scanline_id);
     }
 }
 
 /* objects in the world space*/
-void myobjects(void)
+void myobjects(nmg_State * state)
 {
   int i;
   static VertexType downshaft[4] =   {{ 20,  3,    0 },
@@ -483,9 +479,9 @@ void myobjects(void)
   /* vx_quarter_up structure */
   glNewList(vx_quarter_up,GL_COMPILE);
     glPushMatrix();
-    glScalef(ARROW_SCALE * g_icon_scale,
-	     ARROW_SCALE * g_icon_scale,
-	     ARROW_SCALE * g_icon_scale);
+    glScalef(ARROW_SCALE * state->icon_scale,
+	     ARROW_SCALE * state->icon_scale,
+	     ARROW_SCALE * state->icon_scale);
     glRotatef(180.0, 0.0,0.0,1.0);
 
     glBegin(GL_POLYGON);  
@@ -516,9 +512,9 @@ void myobjects(void)
   /* vx_quarter down structure */
   glNewList(vx_quarter_down,GL_COMPILE);
     glPushMatrix();
-    glScalef(ARROW_SCALE * g_icon_scale,
-	     ARROW_SCALE * g_icon_scale,
-	     ARROW_SCALE * g_icon_scale);
+    glScalef(ARROW_SCALE * state->icon_scale,
+	     ARROW_SCALE * state->icon_scale,
+	     ARROW_SCALE * state->icon_scale);
     glRotatef(180.0, 0.0,0.0,1.0);
 
     glBegin(GL_POLYGON);  
@@ -548,7 +544,8 @@ void myobjects(void)
 
 }
 
-int make_rubber_corner(float x_min,float y_min, float x_max,float y_max, 
+int make_rubber_corner(nmg_State * state, 
+                       float x_min,float y_min, float x_max,float y_max, 
                        int highlight_mask)
 {
         VertexType Points[4];
@@ -558,8 +555,8 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max,
         float x_offset, y_offset;
 	int i;
 
-	BCPlane* plane = g_inputGrid->getPlaneByName
-                    (g_heightPlaneName);
+	BCPlane* plane = state->inputGrid->getPlaneByName
+                    (state->heightPlaneName);
 	if (plane == NULL)
 	{
 	    fprintf(stderr, "Error in make_rubber_corner: could not get plane!\n");
@@ -799,7 +796,8 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max,
 	return(0);
 }
 
-int make_region_box(float center_x,float center_y, float width,float height, 
+int make_region_box(nmg_State * state, 
+                    float center_x,float center_y, float width,float height, 
                     float angle, int highlight_mask)
 {
         VertexType Points[4];
@@ -809,8 +807,8 @@ int make_region_box(float center_x,float center_y, float width,float height,
         float x_offset, y_offset;
 	int i;
 
-	BCPlane* plane = g_inputGrid->getPlaneByName
-                    (g_heightPlaneName);
+	BCPlane* plane = state->inputGrid->getPlaneByName
+                    (state->heightPlaneName);
 	if (plane == NULL)
 	{
 	    fprintf(stderr, "Error in make_region_box: could not get plane!\n");
@@ -1134,7 +1132,7 @@ static char     *MODE_NAMES[] = {
                         "line scan",
 			"region select" };
 
-int make_collab_hand_icon (double pos[], double rotate[], vrpn_int32 mode) {
+int make_collab_hand_icon (double pos[], double rotate[], int mode) {
   v_xform_type headxform;
   double rot_mat[16];
   float invscale;
@@ -1163,9 +1161,9 @@ int make_collab_hand_icon (double pos[], double rotate[], vrpn_int32 mode) {
   return (collab_hand_struct); 
 }
 
-int make_red_line (const float a[], const float b[])
+int make_red_line (nmg_State * state, const float a[], const float b[])
 {  
-  if ( !g_config_chartjunk ) 
+  if ( !state->config_chartjunk ) 
     return 0;
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(red_line_struct,1);
@@ -1179,9 +1177,9 @@ int make_red_line (const float a[], const float b[])
    return(red_line_struct);
 } 
 
-int make_green_line (const float a[], const float b[])
+int make_green_line (nmg_State * state, const float a[], const float b[])
 {  
-  if ( !g_config_chartjunk ) 
+  if ( !state->config_chartjunk ) 
     return 0;
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(green_line_struct,1);
@@ -1197,9 +1195,9 @@ int make_green_line (const float a[], const float b[])
    return(green_line_struct);
 } 
 
-int make_blue_line (const float a[], const float b[])
+int make_blue_line (nmg_State * state, const float a[], const float b[])
 {  
-  if ( !g_config_chartjunk ) 
+  if ( !state->config_chartjunk ) 
     return 0;
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(blue_line_struct,1);
@@ -1214,7 +1212,7 @@ int make_blue_line (const float a[], const float b[])
 } 
 
 
-int make_sweep (const float a [], const float b [],
+int make_sweep (nmg_State * state, const float a [], const float b [],
 		const float c [], const float d [] )
 {
   v_gl_set_context_to_vlib_window(); 
@@ -1242,13 +1240,14 @@ int draw_list (void * data)
   return(0);
 }
 
-int myroom (int)
+int myroom (int, void * data)
 {
+  nmg_State * state = (nmg_State *) data;
   nmg_Funclist *head;
   head = v_room;
 
   // Don't draw anything if chart junk is off
-  if (!g_config_chartjunk) {
+  if (!state->config_chartjunk) {
 	return 0;
   }
 
@@ -1257,7 +1256,7 @@ int myroom (int)
 
   TIMERVERBOSE(5, mytimer, "globjects.c:myroom:set_gl_measure_materials");
 
-  set_gl_measure_materials();
+  set_gl_measure_materials(state);
 
   TIMERVERBOSE(5, mytimer, "globjects.c:myroom:end set_gl_measure_materials");
 
@@ -1270,19 +1269,20 @@ int myroom (int)
   return(0);
 }
 
-int myhead (int)
+int myhead (int, void * data)
 {
+  nmg_State * state = (nmg_State *) data;
   nmg_Funclist *head;
   head = v_head;
 
   // Don't draw anything if chart junk is off
-  if (!g_config_chartjunk) {
+  if (!state->config_chartjunk) {
 	return 0;
   }
 
   // Set material parameters for the space, then draw things in head space.
   // Since all in head space is text or lines, set measure materials.
-  set_gl_measure_materials();
+  set_gl_measure_materials(state);
   while(head != NULL) {
       if (spm_graphics_verbosity >= 12)
         fprintf(stderr,"            Drawing %s\n", head->name);
@@ -1292,18 +1292,19 @@ int myhead (int)
   return(0);
 }
 
-int myhand (int)
+int myhand (int, void * data)
 {
+  nmg_State * state = (nmg_State *) data;
   nmg_Funclist *head;
   head = v_hand;
 
   // Don't draw anything if chart junk is off
-  if (!g_config_chartjunk) {
+  if (!state->config_chartjunk) {
 	return 0;
   }
 
   // Set material parameters for the space, which holds the icon 
-  set_gl_icon_materials(); 
+  set_gl_icon_materials(state); 
   while(head != NULL) {
       if (spm_graphics_verbosity >= 12)
         fprintf(stderr,"            Drawing %s\n", head->name);
@@ -1313,14 +1314,15 @@ int myhand (int)
   return(0);
 }
 
-int myscreen (int)
+int myscreen (int, void * data)
 {
+  nmg_State * state = (nmg_State *) data;
   nmg_Funclist *head;
   GLint saveMatrixMode;
   head = v_screen;
 
   // Don't draw anything if chart junk is off
-  if (!g_config_chartjunk) {
+  if (!state->config_chartjunk) {
 	return 0;
   }
   
@@ -1329,7 +1331,7 @@ int myscreen (int)
 
   TIMERVERBOSE(5, mytimer, "myscreen;set_gl_measure_materials");
 
-  set_gl_measure_materials();
+  set_gl_measure_materials(state);
 
   TIMERVERBOSE(5, mytimer, "myscreen; end set_gl_measure_materials");
 
@@ -1375,15 +1377,19 @@ int myscreen (int)
   return(0);
 }
 
-int myworld (void)
+int myworld (nmg_State * state)
 {
   nmg_Funclist *head;
   head=vir_world;
   
   // Don't draw anything if chart junk is off
-  if (!g_config_chartjunk) {
+  if (!state->config_chartjunk) {
 	return 0;
   }
+    // Set the lighting model for the icons in the world, then draw it
+    VERBOSE(4,"    Setting icon materials");
+    set_gl_icon_materials(state);
+
   while(head != NULL)
     {
       if (spm_graphics_verbosity >= 12)
@@ -1398,14 +1404,14 @@ int myworld (void)
 /*various gl functions to create objects*/
 int grabhand(void *data)
 {
-  float *size;
-  size = (float *)data;
+  nmg_State * state = (nmg_State *) data;
+  float size = 0.02;
 
   glPushMatrix();
   glPushAttrib(GL_CURRENT_BIT);
 
   glColor3f(0.0,1.0,0.0); 
-  glScalef(*size * g_icon_scale, *size * g_icon_scale, *size * g_icon_scale);
+  glScalef(size * state->icon_scale, size * state->icon_scale, size * state->icon_scale);
   mycube();
 
   glPopAttrib();
@@ -1416,8 +1422,9 @@ int grabhand(void *data)
 
 int lighthand(void *data)
 {
-    float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
-    float y_wide = g_inputGrid->maxY() - g_inputGrid->minY();
+  nmg_State * state = (nmg_State *) data;
+    float x_wide = state->inputGrid->maxX() - state->inputGrid->minX();
+    float y_wide = state->inputGrid->maxY() - state->inputGrid->minY();
     float z_value;
 
     float size = 0.15*x_wide;
@@ -1429,21 +1436,21 @@ int lighthand(void *data)
 
     glPushMatrix();
 
-    BCPlane *height = g_inputGrid->getPlaneByName
-        (g_heightPlaneName);
+    BCPlane *height = state->inputGrid->getPlaneByName
+        (state->heightPlaneName);
   
     if (height) {
         z_value = height->scale() * 0.5 * (height->maxNonZeroValue() + 
                                            height->minNonZeroValue());
-//            z_value = height->scaledValue(g_inputGrid->numX() / 2,
-//                                          g_inputGrid->numY() -1);
+//            z_value = height->scaledValue(state->inputGrid->numX() / 2,
+//                                          state->inputGrid->numY() -1);
     } else {
         z_value = 0.0f;
     }
     
     // Approximate center of the surface. 
-    glTranslatef( g_inputGrid->minX() + x_wide/2.0,
-                  g_inputGrid->minY() + y_wide/2.0,
+    glTranslatef( state->inputGrid->minX() + x_wide/2.0,
+                  state->inputGrid->minY() + y_wide/2.0,
                   z_value);  
 
   // Make it correspond to hand rotation
@@ -1460,7 +1467,7 @@ int lighthand(void *data)
   // rotate so light ray sticks out in -y direction in hand space
   glRotatef(-90, 1.0, 0.0, 0.0);
 
-  glScalef(size * g_icon_scale, size * g_icon_scale, size * g_icon_scale);
+  glScalef(size * state->icon_scale, size * state->icon_scale, size * state->icon_scale);
 
   glPushAttrib(GL_CURRENT_BIT);
 
@@ -1588,15 +1595,12 @@ int lighthand(void *data)
 
 int selecthand(void *)
 {
-  static float size=0.02;
-
   glPushMatrix();
 
   glPushAttrib(GL_CURRENT_BIT);
   glRotated(90.0, 0.0, 1.0, 0.0);	//Yes, this is necessary.
 
   glColor3f(0.0,0.0,1.0); 
-  //glScalef(size * g_icon_scale, size * g_icon_scale, size * g_icon_scale);
   glCallList(vx_half_down);
 
   glPopAttrib();
@@ -1674,11 +1678,11 @@ int mycube(void)
   return(0);
 }
 
-int big_flat_arrow(void)
+int big_flat_arrow(nmg_State * state)
 {
 
   // Don't draw anything if chart junk is off
-  if (!g_config_chartjunk) {
+  if (!state->config_chartjunk) {
 	return 0;
   }
 
@@ -1788,24 +1792,25 @@ void init_sphere(void)
 }
 
 
-void position_sphere(float x,float y, float z)
+void position_sphere(nmg_State * state, float x,float y, float z)
 {
   sphere_x=x;
   sphere_y=y;
-  // position is at bottom of sphere, r=g_sphere_scale, maybe
-  sphere_z=z+g_sphere_scale;	
+  // position is at bottom of sphere, r=state->sphere_scale, maybe
+  sphere_z=z+state->sphere_scale;	
 }
 
-int mysphere(void * /*data*/ )
+int mysphere(void * data )
 {
-  //float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
+  nmg_State * state = (nmg_State *) data;
+  //float x_wide = state->inputGrid->maxX() - state->inputGrid->minX();
 
        	glPushMatrix();
 	glPushAttrib(GL_CURRENT_BIT);
 	glColor3f(1.0,0.0,0.0);
         glTranslatef(sphere_x,sphere_y,sphere_z);
 	//the scaling is obtained from a tcl slider
-	glScalef(g_sphere_scale, g_sphere_scale, g_sphere_scale);
+	glScalef(state->sphere_scale, state->sphere_scale, state->sphere_scale);
         glCallList(sphere);
 	glPopAttrib();
 	glPopMatrix();
@@ -1815,8 +1820,9 @@ int mysphere(void * /*data*/ )
 
 // Position of user's hand
 
-int Tip(void *)
+int Tip(void * data)
 {
+  nmg_State * state = (nmg_State *) data;
         int i;
         static float handlescale = 0.1f;
 
@@ -1829,9 +1835,9 @@ int Tip(void *)
 	glPushAttrib(GL_CURRENT_BIT);
 
 	glColor3f(0.0,0.0,1.0);
-	glScalef(handlescale * g_icon_scale,
-                 handlescale * g_icon_scale,
-                 handlescale * g_icon_scale);
+	glScalef(handlescale * state->icon_scale,
+                 handlescale * state->icon_scale,
+                 handlescale * state->icon_scale);
 
 	/* top */
 	glBegin(GL_TRIANGLE_FAN);
@@ -1862,8 +1868,9 @@ int Tip(void *)
 // Needs to be differentiated from Tip() for latency compensation
 
 // static
-int TrueTip (void *)
+int TrueTip (void *data)
 {
+  nmg_State * state = (nmg_State *) data;
         int i;
 
         static const float handlescale = 125.0f;
@@ -1876,24 +1883,24 @@ int TrueTip (void *)
 	glPushMatrix();
 
         // Translate to the right point
-        glTranslatef(g_trueTipLocation[0],
-                     g_trueTipLocation[1],
-                     g_trueTipLocation[2]);
+        glTranslatef(state->trueTipLocation[0],
+                     state->trueTipLocation[1],
+                     state->trueTipLocation[2]);
 
         if (spm_graphics_verbosity >= 4)
           fprintf(stderr, "Drawing true tip at (%.2f %.2f %.2f) "
                           "with scale %.2f (net scale %.2f).\n",
-             g_trueTipLocation[0], g_trueTipLocation[1], g_trueTipLocation[2],
-             g_trueTipScale, g_trueTipScale * handlescale * g_icon_scale);
+             state->trueTipLocation[0], state->trueTipLocation[1], state->trueTipLocation[2],
+             state->trueTipScale, state->trueTipScale * handlescale * state->icon_scale);
 
 	glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
 
 	glPushAttrib(GL_CURRENT_BIT);
 
 	glColor3f(0.8f, 0.0f, 0.4f);
-	glScalef(g_trueTipScale * handlescale * g_icon_scale,
-                 g_trueTipScale * handlescale * g_icon_scale,
-                 g_trueTipScale * handlescale * g_icon_scale);
+	glScalef(state->trueTipScale * handlescale * state->icon_scale,
+                 state->trueTipScale * handlescale * state->icon_scale,
+                 state->trueTipScale * handlescale * state->icon_scale);
 
 	// top
 	glBegin(GL_TRIANGLE_FAN);
@@ -1929,26 +1936,27 @@ int TrueTip (void *)
 #define BLUE  3
 int measure_hand(void *data)
 {
-  static float handlescale = 0.012f;
-  int *color;
+  nmg_State * state = (nmg_State *) data;
+  float handlescale = 0.012f;
+  int color;
   GLfloat matspec[4] = { 0.5, 0.5, 0.5, 0.0 };
-  color = (int *)data;
+  color = state->hand_color;
 
   glPushMatrix();
   glPushAttrib(GL_CURRENT_BIT);
  
-  if( *color==RED) {
+  if( color==RED) {
     glColor3f(1.0,0.2,0.2);   //red
-  } else if(*color==GREEN) {
+  } else if(color==GREEN) {
    // No it's not green - it's yellow!
    // To avoid red-green colorblindness conflicts. 
    glColor3f(0.9,0.9,0.2);
   } else {
      glColor3f(0.2,0.2,1.0);   //blue
   }
-  glScalef(handlescale * g_icon_scale,
-           handlescale * g_icon_scale,
-           handlescale * g_icon_scale);
+  glScalef(handlescale * state->icon_scale,
+           handlescale * state->icon_scale,
+           handlescale * state->icon_scale);
 
   glMaterialfv(GL_FRONT, GL_SPECULAR, matspec);
   glMaterialf(GL_FRONT, GL_SHININESS, 64.0);
@@ -2019,10 +2027,8 @@ int measure_hand(void *data)
 
 
 
-int vx_down_icon(void *data)
-{  
-	data = data;	// Keep the compiler happy
-
+int vx_down_icon(void *)
+{
   glPushAttrib(GL_CURRENT_BIT);
   glPushMatrix();
   glColor3f(1.0,0.0,0.0);
@@ -2037,10 +2043,8 @@ int vx_down_icon(void *data)
 
 
 
-int vx_up_icon(void *data)
+int vx_up_icon(void *)
 {
-	data = data;	// Keep the compiler happy
-
   glPushAttrib(GL_CURRENT_BIT);
   glPushMatrix();
   glColor3f(0.0,1.0,0.0);
@@ -2054,20 +2058,21 @@ int vx_up_icon(void *data)
 }	/* vx_up_icon */
 
 /* dim */
-int draw_north_pointing_arrow (void *)
+int draw_north_pointing_arrow (void * data)
 {
-	float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
-	float y_wide = g_inputGrid->maxY() - g_inputGrid->minY();
+  nmg_State * state = (nmg_State *) data;
+	float x_wide = state->inputGrid->maxX() - state->inputGrid->minX();
+	float y_wide = state->inputGrid->maxY() - state->inputGrid->minY();
 	float z_value;
 
 	float scale  = 0.25f * x_wide;
 
-	BCPlane *height = g_inputGrid->getPlaneByName
-                    (g_heightPlaneName);
+	BCPlane *height = state->inputGrid->getPlaneByName
+                    (state->heightPlaneName);
 
 	if (height) {
-		z_value = height->scaledValue(g_inputGrid->numX() / 2,
-                                              g_inputGrid->numY() - 1);
+		z_value = height->scaledValue(state->inputGrid->numX() / 2,
+                                              state->inputGrid->numY() - 1);
 	} else {
 		z_value = 0.0f;
 	}
@@ -2075,11 +2080,11 @@ int draw_north_pointing_arrow (void *)
 	glPushAttrib(GL_CURRENT_BIT);
 	glPushMatrix();
 	glColor3f(1.0,0.0,0.0);
-	glTranslatef( g_inputGrid->minX() + x_wide/2.0,
-		      g_inputGrid->minY() + 1.02 * y_wide,
+	glTranslatef( state->inputGrid->minX() + x_wide/2.0,
+		      state->inputGrid->minY() + 1.02 * y_wide,
 		      z_value);  
 	glScalef(scale, scale, scale);
-	big_flat_arrow(); 
+	big_flat_arrow(state); 
 	glPopMatrix();
 	glPopAttrib();
 	return(0);
@@ -2101,100 +2106,29 @@ int my_line_mark(void *data)
     return(0);
 }
 
+/*
 int my_3d_point_marker(void *data) {
+  nmg_State * state = (nmg_State *) data;
 
-  data = data;
   glPushMatrix();
   glPushAttrib(GL_CURRENT_BIT);
   glColor3f(0.0,1.0,0.0);
   glTranslatef(sphere_x,sphere_y,sphere_z);
   //the scaling is obtained from a tcl slider
-  glScalef(g_sphere_scale, g_sphere_scale, g_sphere_scale);
+  glScalef(state->sphere_scale, state->sphere_scale, state->sphere_scale);
   glCallList(sphere);
   glPopAttrib();
   glPopMatrix();
   return(0);
 }
-
-/* draws 7 lines, parallel to the surface, from the most
- * recent point in a polyline to the user's hand. 
- */
-int my_rubber_line(void * data)
-{
-    // data contains coords of two points to draw
-    // the lines between: x1, y1, x2, y2
-    float * temp = (float *)data;
-    VertexType a,b;
-    a[0] = temp[0];
-    a[1] = temp[1];
-    b[0] = temp[2];
-    b[1] = temp[3];
-
-    // Now we find the range of z values.
-    BCPlane* plane = g_inputGrid->getPlaneByName
-                    (g_heightPlaneName);
-    if (plane == NULL) {
-	fprintf(stderr, "Error in my_rubber_line: could not get plane!\n");
-	return -1;
-    }
-    
-    double z_min,z_max, b_val;
-    double p_scale = plane->scale();
-    plane->valueAt(&z_max, a[0], a[1]);
-    z_max *=p_scale;
-    plane->valueAt(&b_val, b[0], b[1]);
-    b_val *=p_scale;
-    
-    z_min = z_max;
-
-    if(z_min> b_val) {
-        z_min=b_val;
-    }
-    if(z_max< b_val) 
-	z_max=b_val;
-
-    // Make limits 10% bigger (+ const) so lines are visible above min and max. 
-    double z_range = z_max - z_min;
-    z_min = (z_min-(z_range * 0.1 + 500));
-    z_max = (z_max+(z_range * 0.1 + 500));
-    z_range = z_max - z_min;
-
-    // Now we draw some lines - 7 horizontal lines.
-    glPushAttrib(GL_CURRENT_BIT);
-    glColor3f(0.0,0.9,0.9);
-
-    a[2]=z_min;
-    b[2]=z_min;
-    make_line(a,b);
-    a[2]=z_min + 0.1667*z_range;
-    b[2]=z_min + 0.1667*z_range;
-    make_line(a,b);
-    a[2]=z_min + 0.3333*z_range;
-    b[2]=z_min + 0.3333*z_range;
-    make_line(a,b);
-    a[2]=z_min + 0.5*z_range;
-    b[2]=z_min + 0.5*z_range;
-    make_line(a,b);
-    a[2]=z_min + 0.6667*z_range;
-    b[2]=z_min + 0.6667*z_range;
-    make_line(a,b);
-    a[2]=z_min + 0.8333*z_range;
-    b[2]=z_min + 0.8333*z_range;
-    make_line(a,b);
-    a[2]=z_max;
-    b[2]=z_max;
-    make_line(a,b);
-
-    glPopAttrib();
-    return(0);
-
-}
+*/
 
 #define NUM_SCANLINE_INDICATOR_POINTS 50
 int my_scanline_indicator(void *data) {
+    nmg_State * state = (nmg_State *) data;
     // data contains coords of two points to draw
     // the lines between: x1, y1,z1, x2, y2, z2
-    float * temp = (float *)data;
+    float * temp = (float *)state->scanlinePt;
     VertexType a[NUM_SCANLINE_INDICATOR_POINTS];
     VertexType b[NUM_SCANLINE_INDICATOR_POINTS];
     VertexType p0, p1;
@@ -2206,7 +2140,7 @@ int my_scanline_indicator(void *data) {
     p1[1] = temp[4];
     p1[2] = temp[5];
     int i;
-    BCPlane* plane = g_inputGrid->getPlaneByName(g_heightPlaneName);
+    BCPlane* plane = state->inputGrid->getPlaneByName(state->heightPlaneName);
     if (plane == NULL) {
         fprintf(stderr, "Error in my_scanline_indicator:can't get plane!\n");
         return -1;
@@ -2258,8 +2192,65 @@ int my_scanline_indicator(void *data) {
     return(0);
 }
 
+/* draws 7 lines, parallel to the surface, from the most
+ * recent point in a polyline to the user's hand. 
+ */
+int my_rubber_line(void * data)
+{
+    // data contains coords of two points to draw
+    // the lines between: x1, y1, x2, y2
+    float * temp = (float *)data;
+    VertexType a,b;
+    a[0] = temp[0];
+    a[1] = temp[1];
+    a[2] = temp[2];
+    b[0] = temp[3];
+    b[1] = temp[4];
+    b[2] = temp[5];
 
-int make_rubber_line_point (const PointType point[2], Position_list * p) {
+    double z_min,z_max;
+    z_max = max (a[2], b[2]);
+    z_min = min (a[2], b[2]);
+
+    // Make limits 10% bigger (+ const) so lines are visible above min and max. 
+    double z_range = z_max - z_min;
+    z_min = (z_min-(z_range * 0.1 + 500));
+    z_max = (z_max+(z_range * 0.1 + 500));
+    z_range = z_max - z_min;
+
+    // Now we draw some lines - 7 horizontal lines.
+    glPushAttrib(GL_CURRENT_BIT);
+    glColor3f(0.0,0.9,0.9);
+
+    a[2]=z_min;
+    b[2]=z_min;
+    make_line(a,b);
+    a[2]=z_min + 0.1667*z_range;
+    b[2]=z_min + 0.1667*z_range;
+    make_line(a,b);
+    a[2]=z_min + 0.3333*z_range;
+    b[2]=z_min + 0.3333*z_range;
+    make_line(a,b);
+    a[2]=z_min + 0.5*z_range;
+    b[2]=z_min + 0.5*z_range;
+    make_line(a,b);
+    a[2]=z_min + 0.6667*z_range;
+    b[2]=z_min + 0.6667*z_range;
+    make_line(a,b);
+    a[2]=z_min + 0.8333*z_range;
+    b[2]=z_min + 0.8333*z_range;
+    make_line(a,b);
+    a[2]=z_max;
+    b[2]=z_max;
+    make_line(a,b);
+
+    glPopAttrib();
+    return(0);
+
+}
+
+
+int make_rubber_line_point ( nmg_State * state, const PointType point[2], Position_list * p) {
 //int make_rubber_line_point (const float point [2][3], Position_list * p) {
   //static float rep [4];
   int list_id;
@@ -2274,7 +2265,7 @@ int make_rubber_line_point (const PointType point[2], Position_list * p) {
     poly_rubber_line_id =
             addFunctionToFunclist(&vir_world,
                                   my_rubber_line,
-                                  (void *) g_rubberPt,
+                                  (void *) state->rubberPt,
                                   "my_rubber_line");
   }
   // TODO:
@@ -2290,19 +2281,21 @@ int make_rubber_line_point (const PointType point[2], Position_list * p) {
 
 static int draw_rubber_line[2] = {0,0};
 static int draw_rubber_corner_line[2] = {0,0};
-int make_rubber_line_point (
-    const PointType /*top*/, const PointType /*bot*/,
+int make_rubber_line_point ( nmg_State * state, 
     Position_list * p, int index)
 {
     //static float rep [4];
     int list_id;
 
     if ( draw_rubber_line[index] ) { 
-	float *rubber_point = new float[4];
-	rubber_point[0] = g_rubberSweepPts[index][0];
-	rubber_point[1] = g_rubberSweepPts[index][1];
-	rubber_point[2] = g_rubberSweepPts[index][2];
-	rubber_point[3] = g_rubberSweepPts[index][3];
+        // XXX memory leak
+	float *rubber_point = new float[6];
+	rubber_point[0] = state->rubberSweepPts[index][0];
+	rubber_point[1] = state->rubberSweepPts[index][1];
+	rubber_point[2] = state->rubberSweepPts[index][2];
+	rubber_point[3] = state->rubberSweepPts[index][3];
+	rubber_point[4] = state->rubberSweepPts[index][4];
+	rubber_point[5] = state->rubberSweepPts[index][5];
 	
 	list_id = addFunctionToFunclist(&vir_world, my_rubber_line,
 					(void *) rubber_point,
@@ -2310,37 +2303,40 @@ int make_rubber_line_point (
 	p->insert( rubber_point[0], rubber_point[1], list_id);
 
 	if ( draw_rubber_corner_line[index] ) {
-	    float *rubber_corner_point = new float[4];
-	    rubber_corner_point[0] = g_rubberSweepPtsSave[index][0];
-	    rubber_corner_point[1] = g_rubberSweepPtsSave[index][1];
-	    rubber_corner_point[2] = g_rubberSweepPtsSave[index][2];
-	    rubber_corner_point[3] = g_rubberSweepPtsSave[index][3];
+            // XXX memory leak
+	    float *rubber_corner_point = new float[6];
+	    rubber_corner_point[0] = state->rubberSweepPtsSave[index][0];
+	    rubber_corner_point[1] = state->rubberSweepPtsSave[index][1];
+	    rubber_corner_point[2] = state->rubberSweepPtsSave[index][2];
+	    rubber_corner_point[3] = state->rubberSweepPtsSave[index][3];
+	    rubber_corner_point[4] = state->rubberSweepPtsSave[index][4];
+	    rubber_corner_point[5] = state->rubberSweepPtsSave[index][5];
 	    
 	    list_id = addFunctionToFunclist(&vir_world, my_rubber_line,
 					    (void *) rubber_corner_point,
 					    "my_rubber_line");
 	    p->insert( rubber_point[0], rubber_point[1], list_id);
 
-	    g_rubberSweepPtsSave[index][0] = g_rubberSweepPts[index][2];
-	    g_rubberSweepPtsSave[index][1] = g_rubberSweepPts[index][3];
+	    state->rubberSweepPtsSave[index][0] = state->rubberSweepPts[index][3];
+	    state->rubberSweepPtsSave[index][1] = state->rubberSweepPts[index][4];
+	    state->rubberSweepPtsSave[index][2] = state->rubberSweepPts[index][5];
 	}
 	else {
-	    g_rubberSweepPtsSave[index][0] = g_rubberSweepPts[index][2];
-	    g_rubberSweepPtsSave[index][1] = g_rubberSweepPts[index][3];
+	    state->rubberSweepPtsSave[index][0] = state->rubberSweepPts[index][3];
+	    state->rubberSweepPtsSave[index][1] = state->rubberSweepPts[index][4];
+	    state->rubberSweepPtsSave[index][2] = state->rubberSweepPts[index][5];
 
 	    poly_sweep_rubber_line_id[index + 2] =
-		addFunctionToFunclist(&vir_world,
-				      my_rubber_line,
-				      (void *) g_rubberSweepPtsSave[index],
+		addFunctionToFunclist(&vir_world, my_rubber_line,
+				      (void *) state->rubberSweepPtsSave[index],
 				      "my_rubber_line");
 	    draw_rubber_corner_line[index] = 1;
 	}
      }
     else if ( p->empty() ) { 
 	poly_sweep_rubber_line_id[index] =
-	    addFunctionToFunclist(&vir_world,
-				  my_rubber_line,
-				  (void *) g_rubberSweepPts[index],
+	    addFunctionToFunclist(&vir_world, my_rubber_line,
+				  (void *) state->rubberSweepPts[index],
 				  "my_rubber_line");
 	draw_rubber_line[index] = 1;
     }
@@ -2417,7 +2413,7 @@ int spm_render_mark (const nmb_LocationInfo & p, void *) {
     return 0;
 }
 
-int replaceDefaultObjects(void)
+int replaceDefaultObjects(nmg_State * state)
 {
   /*init various data struct set list pointer to NULL or empty*/
   v_room = NULL;
@@ -2449,32 +2445,23 @@ int replaceDefaultObjects(void)
   sphere = glGenLists(1);
 
   /* init world objects */
-  myobjects();
+  myobjects(state);
   /* create subdivided sphere display list */
   init_sphere();
 
-  *hand_scale = 0.02;
-  //hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");
-
-  /* Moving text feedback displays from head space to screen space to make them
-   * stationary in head tracked mode.
-   */
-  *room_scale = 1.0;
-  *screen_scale = 1.0;
-
   // MOVED to chartjunk.c
-  addChartjunk(&v_screen, screen_scale);
+  addChartjunk(&v_screen, state);
 
   /* End changes */
 
   // binding display functions to positions in the vlib tree
 
-  addFunctionToFunclist(&vir_world, draw_north_pointing_arrow, NULL,
+  addFunctionToFunclist(&vir_world, draw_north_pointing_arrow, state,
 	"draw_north_pointing_arrow");
 
   // THis is commented out as we now call init_world_modechange on graphics startup, so
   // it should be unnessary
-  //  if (g_config_measurelines) {
+  //  if (state->config_measurelines) {
   //    red_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
   //                          "draw_list(red_line_struct)"); 
   //    green_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
@@ -2490,15 +2477,15 @@ int replaceDefaultObjects(void)
     marker_node= marker_node->next;
   }
 
-  v_replace_drawfunc(0, V_HAND, myhand);
-  v_replace_drawfunc(0, V_ROOM, myroom);
-  v_replace_drawfunc(0, V_HEAD, myhead);
-  v_replace_drawfunc(0, V_SCREEN, myscreen);
+  v_replace_drawfunc(0, V_HAND, myhand, state);
+  v_replace_drawfunc(0, V_ROOM, myroom, state);
+  v_replace_drawfunc(0, V_HEAD, myhead, state);
+  v_replace_drawfunc(0, V_SCREEN, myscreen, state);
 
   return 0;
 }
 
-int initialize_globjects (const char * fontName) {
+int initialize_globjects ( nmg_State * state, const char * fontName) {
   char * ev;
 
   initializeChartjunk(fontName);

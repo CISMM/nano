@@ -7,7 +7,7 @@
 #include <nmb_Dataset.h>
 
 #include "nmg_RenderServerStrategies.h"
-#include "graphics_globals.h"
+#include "nmg_State.h"
 
 
 
@@ -116,7 +116,7 @@ fprintf(stderr, "  screen is %d x %d.\n", xsize, ysize);
   }
 
   if (d_viewStrategy) {
-    d_viewStrategy->setGraphicsModes();
+    d_viewStrategy->setGraphicsModes(state);
   }
 }
 
@@ -138,16 +138,16 @@ void nmg_Graphics_RenderServer::mainloop (void) {
   // HACK
   // Make sure it looks right
   // Can't just enableChartjunk(0) because it does too much else.
-  g_config_chartjunk = 0;
+  state->config_chartjunk = 0;
 
   // Set up viewing transform.
   if (d_viewStrategy) {
-    d_viewStrategy->setViewingTransform();
+    d_viewStrategy->setViewingTransform(state);
   }
 
   // Render
   if (d_strategy) {
-    d_strategy->render();
+    d_strategy->render(state);
   }
 
 
@@ -156,7 +156,7 @@ void nmg_Graphics_RenderServer::mainloop (void) {
 
   // Capture the screen
   if (d_strategy) {
-    d_strategy->captureData();
+    d_strategy->captureData(state);
   }
 
   // Output
@@ -340,8 +340,8 @@ void nmg_Graphics_RenderServer::computeScreenChange
   // BUG:  sometimes after the entire screen is redrawn
   // getLatestGridChange() doesn't report it.
 
-  gridToScreenX = ((double) d_screenSizeX) / g_inputGrid->numX();
-  gridToScreenY = ((double) d_screenSizeY) / g_inputGrid->numY();
+  gridToScreenX = ((double) d_screenSizeX) / state->inputGrid->numX();
+  gridToScreenY = ((double) d_screenSizeY) / state->inputGrid->numY();
 //fprintf(stderr, "Input conversion factors are %.5f and %.5f.\n",
 //gridToScreenX, gridToScreenY);
 //fprintf(stderr, "Original range of change is X [%d - %d] by Y [%d - %d].\n",

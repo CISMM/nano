@@ -16,6 +16,8 @@ class nmb_Dataset;
 class nmb_PlaneSelection;
 class nmg_SurfaceMask;
 class nmg_Surface;
+class nmg_State;
+
 // structure for vertex array
 struct Vertex_Struct {
         GLfloat Texcoord [3];
@@ -117,9 +119,11 @@ public:
             {d_currentAssociations.stride = associate;}
     
     //Rendering functions
-    int rebuildRegion(nmb_Dataset *dataset, int display_lists_in_x, vrpn_bool force = VRPN_FALSE);
-    int rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x);	
-    void renderRegion();
+    int rebuildRegion(nmb_Dataset *dataset, nmg_State * state, 
+                      int display_lists_in_x, vrpn_bool force = VRPN_FALSE);
+    int rebuildInterval(nmb_Dataset *dataset, nmg_State * state,
+                        int low_row, int high_row, int strips_in_x);	
+    void renderRegion(nmg_State * state);
 
     int recolorRegion();
 
@@ -161,16 +165,17 @@ private:
     //Since we are doing multi-pass, and some variables
     //are automatically turned off after being used, we need
     //to be able to save them beforehand
-    void SaveBuildState();
-    void RestoreBuildState();
-    void SaveRenderState();
-    void RestoreRenderState();
-    void setTexture();
+    void SaveBuildState(nmg_State * state);
+    void RestoreBuildState(nmg_State * state);
+    void SaveRenderState(nmg_State * state);
+    void RestoreRenderState(nmg_State * state);
+    void setTexture(nmg_State * state);
     void cleanUp();
 
     /// Render the surface!
     int build_grid_display_lists (const nmb_PlaneSelection &planes, 
                                   nmg_SurfaceMask *mask,
+                                  nmg_State * state, 
                                   int strips_in_x,
                                   GLuint * base, GLsizei * num, 
                                   GLsizei old_num,
@@ -180,15 +185,17 @@ private:
     int build_list_set(
         const nmb_Interval &subset,
         const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
+        nmg_State * state,
         GLuint base,
         GLsizei num_lists,
         GLdouble * surfaceColor,
         int (* stripfn)
-        (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], int, Vertex_Struct *),
+        (nmg_State * state, const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], int, Vertex_Struct *),
         Vertex_Struct **surface);
     int build_list_set (const nmb_Interval &insubset,
                         const nmb_PlaneSelection &planes, 
                         nmg_SurfaceMask *mask,
+                        nmg_State * state,
                         GLuint base, GLsizei num,
                         int strips_in_x,
                         Vertex_Struct **surface);

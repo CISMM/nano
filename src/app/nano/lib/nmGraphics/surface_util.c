@@ -5,7 +5,7 @@
   This file may not be distributed without the permission of 
   3rdTech, Inc. 
   ===3rdtech===*/
-#include "graphics.h"
+#include "surface_util.h"
 
 #include <math.h>  // fabs()
 #ifdef _WIN32
@@ -26,7 +26,7 @@
 
 #include <nmb_Dataset.h>
 
-#include "graphics_globals.h"
+#include "nmg_State.h"
 
 #ifndef NMG_MIN
 #define NMG_MIN(a,b) ((a)<(b)?(a):(b))
@@ -48,9 +48,6 @@
 
 #define rulerImageHeight 64
 #define rulerImageWidth  64
-
-// default position of the light:  overhead, at infinity
-static GLfloat l0_position [4] = { 0.0, 1.0, 0.1, 0.0 };
 
 static GLubyte contourImage [contourImageWidth][4];
 static GLubyte checkImage [checkImageDepth][checkImageWidth]
@@ -122,11 +119,11 @@ static void createPyramid (float center, float width, int white_flag)
 #else
       contourImage[(int) translation][3] = 255;
       contourImage[(int)(translation)][0] = (int)
-	(g_contour_r*(float)opacity/255.0);
+	(state->contour_r*(float)opacity/255.0);
       contourImage[(int)(translation)][1] = (int)
-	(g_contour_g*(float)opacity/255.0);
+	(state->contour_g*(float)opacity/255.0);
       contourImage[(int)(translation)][2] = (int)
-	(g_contour_b*(float)opacity/255.0);
+	(state->contour_b*(float)opacity/255.0);
 //        contourImage[(int)(translation)][0] = (int)
 //  	((float)contourImage[(int)(translation)][0]*(float)opacity/255.0);
 //        contourImage[(int)(translation)][1] = (int)
@@ -150,10 +147,10 @@ static void createPyramid (float center, float width, int white_flag)
 // is 1 texture_scape unit and from red to red is 0.1 units.
 
 // globals:
-//  float g_contour_width
-//  int g_contour_[rgb]
+//  float state->contour_width
+//  int state->contour_[rgb]
 
-static void makeTexture (void) {
+static void makeTexture (nmg_State * state) {
 
   // num holds the (non-integer) number of texels between red lines
   double num = contourImageWidth / 10.0;
@@ -162,7 +159,7 @@ static void makeTexture (void) {
   int i, j;
 
   int count = 1;		// Which red line we are on
-  float width = g_contour_width;// Width of the lines in percentage
+  float width = state->contour_width;// Width of the lines in percentage
   //convert percentage to actual pixel values
   width = (width / 100) * (contourImageWidth / 10);
 
@@ -176,9 +173,9 @@ static void makeTexture (void) {
   for(i = 0; i < contourImageWidth; i++) {
 //#ifndef _WIN32
 #if 1
-     contourImage[i][0] = g_contour_r;
-     contourImage[i][1] = g_contour_g;
-     contourImage[i][2] = g_contour_b;
+     contourImage[i][0] = state->contour_r;
+     contourImage[i][1] = state->contour_g;
+     contourImage[i][2] = state->contour_b;
      contourImage[i][3] = 0;
 #else
      contourImage[i][0] = 0;
@@ -208,9 +205,9 @@ static void makeTexture (void) {
 
 
 // globals:
-//  g_alpha_[rgb]
+//  state->alpha_[rgb]
 
-void makeCheckImage (void)
+void makeCheckImage (nmg_State * state)
 {
     int i, j, c;
      
@@ -230,29 +227,29 @@ void makeCheckImage (void)
             // since this change is untested, I'll leave it alone for now.
             c = ((i & 0x4) == 0) ^ ((j & 0x4) == 0);
 
-            checkImage[0][i][j][0] = (GLubyte) (c * g_alpha_r * 255);
-            checkImage[0][i][j][1] = (GLubyte) (c * g_alpha_g * 255);
-            checkImage[0][i][j][2] = (GLubyte) (c * g_alpha_b * 255);
+            checkImage[0][i][j][0] = (GLubyte) (c * state->alpha_r * 255);
+            checkImage[0][i][j][1] = (GLubyte) (c * state->alpha_g * 255);
+            checkImage[0][i][j][2] = (GLubyte) (c * state->alpha_b * 255);
             checkImage[0][i][j][3] = 0;
 
-            checkImage[1][i][j][0] = (GLubyte) (c * g_alpha_r * 255);
-            checkImage[1][i][j][1] = (GLubyte) (c * g_alpha_g * 255);
-            checkImage[1][i][j][2] = (GLubyte) (c * g_alpha_b * 255);
+            checkImage[1][i][j][0] = (GLubyte) (c * state->alpha_r * 255);
+            checkImage[1][i][j][1] = (GLubyte) (c * state->alpha_g * 255);
+            checkImage[1][i][j][2] = (GLubyte) (c * state->alpha_b * 255);
             checkImage[1][i][j][3] = (GLubyte) c * 255;
         }
     }
 }
 
 // globals:
-//  g_ruler_[rgb]
-//  g_ruler_width_[xy]
-//  g_ruler_opacity
+//  state->ruler_[rgb]
+//  state->ruler_width_[xy]
+//  state->ruler_opacity
 
 // HACK
 //   make sure ruler_[rgb] is initially set to ruler_color_rgb
 
 
-void makeRulerImage (void) {
+void makeRulerImage (nmg_State * state) {
 
   int rwidth_x, rwidth_y;
   int i, j;
@@ -260,12 +257,12 @@ void makeRulerImage (void) {
 //#ifndef _WIN32
 #if 1
   // Colors are OK at this point
-  //printf("mkRulerImage %d %d %d\n", g_ruler_r, g_ruler_g, g_ruler_b);
+  //printf("mkRulerImage %d %d %d\n", state->ruler_r, state->ruler_g, state->ruler_b);
   for (i = 0;i < rulerImageHeight; i++) {
     for (j = 0;j < rulerImageWidth; j++) {
-      rulerImage[i][j][0] = g_ruler_r;
-      rulerImage[i][j][1] = g_ruler_g;
-      rulerImage[i][j][2] = g_ruler_b;
+      rulerImage[i][j][0] = state->ruler_r;
+      rulerImage[i][j][1] = state->ruler_g;
+      rulerImage[i][j][2] = state->ruler_b;
       //rulerImage[i][j][3] = 0;
     }
   }
@@ -273,15 +270,15 @@ void makeRulerImage (void) {
   //   convert percentages to actual texel values
   // use 200 because width is adjusted from both ends
   // use ceil so scaling less than 1 gets rounded up
-  rwidth_x = (int)(ceil((g_ruler_width_x / 200) * rulerImageWidth));
-  rwidth_y = (int)(ceil((g_ruler_width_y / 200) * rulerImageHeight));
+  rwidth_x = (int)(ceil((state->ruler_width_x / 200) * rulerImageWidth));
+  rwidth_y = (int)(ceil((state->ruler_width_y / 200) * rulerImageHeight));
 
   // draw vertical lines
   for (i = 0; i < rulerImageHeight; i++)
     for (j = 0; j < rulerImageWidth; j++)
       if ((j < rwidth_x) ||
           (rwidth_x > (rulerImageWidth - 1 - j)))
-        rulerImage[i][j][3] = (GLubyte)g_ruler_opacity;
+        rulerImage[i][j][3] = (GLubyte)state->ruler_opacity;
       else 
         rulerImage[i][j][3] = 0;
  
@@ -289,8 +286,8 @@ void makeRulerImage (void) {
   for (j = 0; j < rulerImageWidth; j++)
     for (i = 0; i < rulerImageHeight; i++)
       if (i < rwidth_y) {
-        rulerImage[i][j][3] = (GLubyte)g_ruler_opacity;
-        rulerImage[rulerImageHeight - 1 - i][j][3] = (GLubyte)g_ruler_opacity;
+        rulerImage[i][j][3] = (GLubyte)state->ruler_opacity;
+        rulerImage[rulerImageHeight - 1 - i][j][3] = (GLubyte)state->ruler_opacity;
       }
 
 #else	// CYGWIN
@@ -306,8 +303,8 @@ void makeRulerImage (void) {
   //   convert percentages to actual texel values
   // use 200 because width is adjusted from both ends
   // use ceil so scaling less than 1 gets rounded up
-  rwidth_x = (int)(ceil((g_ruler_width_x / 200) * rulerImageWidth));
-  rwidth_y = (int)(ceil((g_ruler_width_y / 200) * rulerImageHeight));
+  rwidth_x = (int)(ceil((state->ruler_width_x / 200) * rulerImageWidth));
+  rwidth_y = (int)(ceil((state->ruler_width_y / 200) * rulerImageHeight));
 
   // draw vertical and horizontal lines
   for (i = 0; i < rulerImageHeight; i++)
@@ -315,9 +312,9 @@ void makeRulerImage (void) {
       if ((j < rwidth_x) ||
           (rwidth_x > (rulerImageWidth - 1 - j)) || (i < rwidth_y)||
           (rwidth_y > (rulerImageHeight - 1 - i)) ){
-	rulerImage[i][j][0] = (GLubyte)((float)g_ruler_r*g_ruler_opacity/255.0);
-	rulerImage[i][j][1] = (GLubyte)((float)g_ruler_g*g_ruler_opacity/255.0);
-	rulerImage[i][j][2] = (GLubyte)((float)g_ruler_b*g_ruler_opacity/255.0);
+	rulerImage[i][j][0] = (GLubyte)((float)state->ruler_r*state->ruler_opacity/255.0);
+	rulerImage[i][j][1] = (GLubyte)((float)state->ruler_g*state->ruler_opacity/255.0);
+	rulerImage[i][j][2] = (GLubyte)((float)state->ruler_b*state->ruler_opacity/255.0);
       }
       else {
 	rulerImage[i][j][0] = 0;
@@ -329,15 +326,16 @@ void makeRulerImage (void) {
 
 }
 
-void buildRemoteRenderedTexture (int width, int height, void * tex) {
+void buildRemoteRenderedTexture (nmg_State * state, 
+                                 int width, int height, void * tex) {
   GLenum errval;
 //fprintf(stderr, "Building remotely rendered texture.\n");
 
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  //glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
-  glBindTexture(GL_TEXTURE_2D, tex_ids[REMOTE_DATA_TEX_ID]);
+  //glBindTexture(GL_TEXTURE_2D, state->tex_ids[RULERGRID_TEX_ID]);
+  glBindTexture(GL_TEXTURE_2D, state->tex_ids[REMOTE_DATA_TEX_ID]);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 #ifdef _WIN32
@@ -372,26 +370,26 @@ void buildRemoteRenderedTexture (int width, int height, void * tex) {
   //}
 #endif 
 
-  //g_tex_image_width[RULERGRID_TEX_ID] = 
-  //       g_tex_installed_width[RULERGRID_TEX_ID] = width;
-  //g_tex_image_height[RULERGRID_TEX_ID] = 
-  //       g_tex_installed_height[RULERGRID_TEX_ID] = height;
-  g_tex_image_width[REMOTE_DATA_TEX_ID] = 
-           g_tex_installed_width[REMOTE_DATA_TEX_ID] = width;
-  g_tex_image_height[REMOTE_DATA_TEX_ID] = 
-           g_tex_installed_height[REMOTE_DATA_TEX_ID] = height;
-  g_tex_image_offsetx[REMOTE_DATA_TEX_ID] = 0;
-  g_tex_image_offsety[REMOTE_DATA_TEX_ID] = 0;
+  //state->tex_image_width[RULERGRID_TEX_ID] = 
+  //       state->tex_installed_width[RULERGRID_TEX_ID] = width;
+  //state->tex_image_height[RULERGRID_TEX_ID] = 
+  //       state->tex_installed_height[RULERGRID_TEX_ID] = height;
+  state->tex_image_width[REMOTE_DATA_TEX_ID] = 
+           state->tex_installed_width[REMOTE_DATA_TEX_ID] = width;
+  state->tex_image_height[REMOTE_DATA_TEX_ID] = 
+           state->tex_installed_height[REMOTE_DATA_TEX_ID] = height;
+  state->tex_image_offsetx[REMOTE_DATA_TEX_ID] = 0;
+  state->tex_image_offsety[REMOTE_DATA_TEX_ID] = 0;
 }
 
 
 
-void buildContourTexture (void) {
+void buildContourTexture (nmg_State * state) {
 
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  makeTexture();
+  makeTexture(state);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 #ifdef _WIN32
@@ -399,7 +397,7 @@ void buildContourTexture (void) {
 #else
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL); 
 #endif
-  glBindTexture(GL_TEXTURE_1D, tex_ids[CONTOUR_1D_TEX_ID]);
+  glBindTexture(GL_TEXTURE_1D, state->tex_ids[CONTOUR_1D_TEX_ID]);
 
   glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -418,12 +416,12 @@ void buildContourTexture (void) {
 #endif
 }
 
-void buildVisualizationTexture(int width, int height, unsigned char *texture) {
+void buildVisualizationTexture(nmg_State * state, int width, int height, unsigned char *texture) {
 // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
   //printf("building rulergrid texture\n");
-  glBindTexture(GL_TEXTURE_2D, tex_ids[VISUALIZATION_TEX_ID]);
+  glBindTexture(GL_TEXTURE_2D, state->tex_ids[VISUALIZATION_TEX_ID]);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 #ifdef _WIN32
@@ -454,12 +452,12 @@ void buildVisualizationTexture(int width, int height, unsigned char *texture) {
 #endif 
 }
 
-void buildRulergridTexture (void) {
+void buildRulergridTexture (nmg_State * state) {
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
   //printf("building rulergrid texture\n");
-  glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
+  glBindTexture(GL_TEXTURE_2D, state->tex_ids[RULERGRID_TEX_ID]);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 #ifdef _WIN32
@@ -491,7 +489,7 @@ void buildRulergridTexture (void) {
 
 }
 
-void buildAlphaTexture (void) {
+void buildAlphaTexture (nmg_State * state) {
 
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
@@ -504,7 +502,7 @@ void buildAlphaTexture (void) {
 #endif 
   /* GL_TEXTURE_3D_EXT is not available on other platforms... i.e. WIN32 */
 #if defined(sgi)
-  glBindTexture(GL_TEXTURE_3D, tex_ids[ALPHA_3D_TEX_ID]);
+  glBindTexture(GL_TEXTURE_3D, state->tex_ids[ALPHA_3D_TEX_ID]);
 
   glTexParameterf(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -592,120 +590,6 @@ void compute_texture_matrix(double translate_x, double translate_y,
     return;
 }
 
-
-
-void setFilled()
-{
-    if (g_config_filled_polygons) {
-	    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    } else {
-	    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-}
-
-//---------------------------------------------------------------------------
-// This routine sets up the lighting and some of the surface material
-// properties.  It should be the one used in both openGL and PixelFlow.
-// Some effort should be made to bring all of the material parameters
-// together here.
-
-int setup_lighting (int)
-{
-    static	int	was_smooth_shading = -1;
-
-    GLfloat l0_ambient[4] = { 0.2, 0.2, 0.2, 1.0 };
-//    GLfloat l0_diffuse[4] = { 0.4, 0.4, 0.4, 1.0 };
-    GLfloat l0_diffuse[4] = { g_diffuse, g_diffuse, g_diffuse, 1.0 };
-/*     GLfloat l0_specular[4] = { 0.4, 0.4, 0.4, 1.0 }; */
-    GLfloat l0_specular[4] = { 0.2, 0.2, 0.2, 1.0 };
-    // l0_position defined at the top of this file as a global variable
-
-    // make sure gl calls are directed to the right context
-    v_gl_set_context_to_vlib_window();
-
-    glLightfv(GL_LIGHT0, GL_AMBIENT, l0_ambient);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, l0_diffuse);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, l0_specular);
-    glPushMatrix();
-    glLoadIdentity();
-    glLightfv(GL_LIGHT0, GL_POSITION, l0_position);
-    glPopMatrix();
-    glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 0.0);
-    glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 180.0);
-    glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1.0);
-    glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.0);
-    glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.0);
-
-    if (g_config_smooth_shading != was_smooth_shading) {
-	was_smooth_shading = g_config_smooth_shading;
-	if (g_config_smooth_shading) {
-	    glShadeModel(GL_SMOOTH);	/* Gouraud shading */
-	} else {
-	    glShadeModel(GL_FLAT);	/* Flat shading */
-	}
-    }
-
-  if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
-    // With prerendered colors we don't have any normals;  this REALLY
-    // slows us down, since GL_NORMALIZE special-cases that.
-    glEnable(GL_NORMALIZE);                 /* Re-Normalize normals */
-  }
-
-  // No default ambient lighting other than specified in the light
-  {       
-	GLfloat global_ambient[4] = { 0.0, 0.0, 0.0, 1.0 };
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
-  }
-
-  // Local viewer is slower, and creates a highlight It's more realistic, but
-  // can hide features outside the highlight and possibly cause
-  // mis-interpretation of bumps.
-  if (g_local_viewer) {
-      glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-  } else {
-      glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
-  }
-
-  // 2 sided lighting causes black lines to show through the surface on Nvidia
-  // Quadro2Pro, and it's probably slower, anyway.
-  //glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-  glEnable(GL_LIGHT0);
-
-  // Is this reasonable?  TCH 10 Jan 99
-  if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE) {
-    glDisable(GL_LIGHTING);
-  } else {
-    glEnable(GL_LIGHTING);
-  }
-
-    return 0;
-}
-
-void setLightDirection (const q_vec_type & newValue) {
-  l0_position[0] = newValue[0];
-  l0_position[1] = newValue[1];
-  l0_position[2] = newValue[2];
-}
-
-void getLightDirection (q_vec_type * v) {
-  (*v)[0] = l0_position[0];
-  (*v)[1] = l0_position[1];
-  (*v)[2] = l0_position[2];
-}
-
-// Put the light back where it was when the program started.
-
-void resetLightDirection (void) {
-  l0_position[0] = 0.0;
-  l0_position[1] = 1.0;
-  l0_position[2] = 0.1;
-  l0_position[3] = 0.0;
-}
-
-void getViewportSize (int * width, int * height) {
-  *width  = v_display_table[g_displayIndexList[0]].viewports[0].fbExtents[0];
-  *height = v_display_table[g_displayIndexList[0]].viewports[0].fbExtents[1];
-}
 
 // Local Variables:
 // mode:c++
