@@ -194,7 +194,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	}
 
 	int count = 0;
-	for (i = 0; i < numtubes; i++){
+	for (int i = 0; i < numtubes; i++){  // dtm
 		//BuildList actually builds the geometry from
 		//the data structures previously built
         BuildList(Pobject, dl + i, t[i], count);
@@ -226,6 +226,7 @@ printf("tess = %d\n", tess);
 
 	for (int i = 0; i < vs.size() - tess; i++) {
 		glBegin(GL_TRIANGLES);
+		int last_k = 0; // dtm
 		for (int k = 0; k < 3; k++) {
 			// special case for last two triangles per segment
 			if ((i + 1) >= tess && (i + 1) % tess == 0) {
@@ -240,8 +241,10 @@ printf("tess = %d\n", tess);
 				v3[k] = vs[i + tess + 1][k];
 				v4[k] = vs[i + 1][k];
 			}
+			last_k = k; // dtm
 		}
-		v1[k] = v2[k] = v3[k] = v4[k] = 1.0;
+		last_k++; // dtm
+		v1[last_k] = v2[last_k] = v3[last_k] = v4[last_k] = 1.0; // dtm
 
 
 		// Compute the normal...only flat shading for now...should be good enough???

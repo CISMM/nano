@@ -1,9 +1,21 @@
 #ifndef XFORM_H 
 #define XFORM_H
 
-#include <quat.h>
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
 #include <iostream>
 using namespace std;
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
+
+#include <quat.h>
+
 #include "Xform4x4.h"		//adds additional xform functionality for a generalized 4x4 matrix
 
 #define XP_4BY4 0		// CONSTANTS FOR PRINT

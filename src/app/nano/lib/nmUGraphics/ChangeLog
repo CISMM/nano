@@ -1,3 +1,16 @@
+2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* Xform4x4.h: compiler pragmas to ignore warnings in std. library
+	include files.  warning reset after include statements.
+	* Xform.h:  same
+	* UTree.C:  same
+	* URender.h:  same
+	* URTexture.h:  same
+	* URPolygon.h:  same
+	* TubeFileGenerator.C (BuildList): loop variable structure
+		(Load):  same
+	* URPolygon.C: removed semicolons from function ends (removes warning)
+
 2002-03-13  Aron Helser  <helser@cs.unc.edu>
 
 	* URPolygon.h: Change to standard iostream/STL headers. 

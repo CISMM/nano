@@ -1,13 +1,26 @@
 #ifndef XFORM4x4_H
 #define XFORM4x4_H
 
-//these are utility functions for a generalized 4x4 transformation which should probably be
-//treated better than it is here... running out of time for my coding.  I needed a x4 minimal
-//class in order to do the mouse based picking operation
+//these are utility functions for a generalized 4x4 transformation which 
+// should probably be treated better than it is here... running out of 
+// time for my coding.  I needed a x4 minimal
+// class in order to do the mouse based picking operation
 
-#include <quat.h>
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
 #include <iostream>
 using namespace std;
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
+
+#include <quat.h>
+
 #include "Xform.h"
 
 class Xform;

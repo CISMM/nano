@@ -12,18 +12,23 @@
 
 
 #include <assert.h>
-#include <iostream>
-#include <fstream>
-using namespace std;
 
-#include <quat.h>
-
-#include <vector>
-
+// make the SGI compile without tons of warnings
 #ifdef sgi
-using std::vector;
+#pragma set woff 1110,1424,3201
 #endif
 
+#include <iostream>
+#include <fstream>
+#include <vector>
+using namespace std;
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
+
+#include <quat.h>
 
 
 class UTree;

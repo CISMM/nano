@@ -31,7 +31,7 @@ int URPolygon::SetVisibilityAll(void* userdata) {
 
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
-};
+}
 
 int URPolygon::SetProjTextAll(void* userdata) {
 	int setprojtext = *(int*) userdata;
@@ -40,7 +40,7 @@ int URPolygon::SetProjTextAll(void* userdata) {
 
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
-};
+}
 
 int URPolygon::ChangeStaticFile(void* userdata) {
 	// modifies the scale and translation so appears in same place...
