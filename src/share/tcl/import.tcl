@@ -10,6 +10,12 @@ set import_rotz 0
 set import_type ""
 set import_visibility 1
 
+set import_color gray
+set import_r 192
+set import_g 192
+set import_b 192
+set import_color_changed 0
+
 iwidgets::Labeledframe $nmInfo(import_objects).basics \
 	-labeltext "Import Models" \
 	-labelpos nw
@@ -38,6 +44,18 @@ generic_entry $nmInfo(basic_options).f3.import_scale import_scale \
      "Scale" real 
 button $nmInfo(basic_options).f3.visibility_button -text "Hide" -command change_visibility
 
+button $nmInfo(basic_options).f3.set_color \
+        -text "Set color" -command {
+            if {[choose_color import_color "Choose color" $nmInfo(basic_options)] } {
+                $nmInfo(basic_options).f3.colorsample configure -bg $import_color 
+                set_import_color
+            }
+        }  
+
+button $nmInfo(basic_options).f3.colorsample \
+        -relief groove -bd 2 -bg $import_color \
+        -command { $nmInfo(basic_options).f3.set_color invoke}
+
 
 pack $nmInfo(basic_options).modelFile -side top -anchor w -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f1 -side left -fill x
@@ -51,8 +69,20 @@ pack $nmInfo(basic_options).f2.import_roty -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_rotz -padx 1m -pady 1m
 pack $nmInfo(basic_options).f3.import_scale -padx 1m -pady 1m -anchor nw
 pack $nmInfo(basic_options).f3.visibility_button -anchor nw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f3.set_color -side left -padx 1m
+pack $nmInfo(basic_options).f3.colorsample -side left -padx 1m -fill x -expand yes
 
 trace variable import_type w SetupOptions
+
+proc set_import_color {} {
+    global import_r import_g import_b import_color_changed import_color
+    global nmInfo
+
+    # Extract three component colors of contour_color 
+    # and save into import_r g b
+    scan $import_color #%02x%02x%02x import_r import_g import_b
+    set import_color_changed 1
+}
 
 ##This procedure changes the visibility_mode from hide to show (set it up
 # so that the object will be drawn)
@@ -97,11 +127,6 @@ proc StandardFileOptions {} {
 # MSI Specific variables
 
 set msi_bond_mode 0
-set msi_color blue
-set msi_r 0
-set msi_g 0
-set msi_b 255
-set msi_color_changed 0
 set msi_atom_radius 1
 
 proc MSIFileOptions {} {
@@ -111,33 +136,15 @@ proc MSIFileOptions {} {
     global msi_bond_mode
     
     #Reset some variables
-    set msi_color blue
-    set msi_r 0
-    set msi_g 0
-    set msi_b 255
     #set msi_atom_radius 1
     set msi_bond_mode 0
         
     frame $nmInfo(adv_options).f
         
     button $nmInfo(adv_options).f.bond_mode -text "Atoms" -command change_bond_mode
-    
-    button $nmInfo(adv_options).f.set_color \
-        -text "Set color" -command {
-            if {[choose_color msi_color "Choose color" $nmInfo(adv_options)] } {
-                $nmInfo(adv_options).f.colorsample configure -bg $msi_color 
-                set_msi_color
-            }
-        }  
-
-    button $nmInfo(adv_options).f.colorsample \
-        -relief groove -bd 2 -bg $msi_color \
-        -command { $nmInfo(adv_options).f.set_color invoke}
 
     pack $nmInfo(adv_options).f -side top -anchor nw
     pack $nmInfo(adv_options).f.bond_mode -side left -padx 1m
-    pack $nmInfo(adv_options).f.set_color -side left -padx 1m
-    pack $nmInfo(adv_options).f.colorsample -side left -padx 1m -fill x -expand yes
 }
 
 ##This procedure changes the import_mode from spheres to bonds (set it up
@@ -164,14 +171,4 @@ proc change_bond_mode {} {
 
     destroy $nmInfo(adv_options).f.atom_radius
   }
-}
-
-proc set_msi_color {} {
-    global msi_r msi_g msi_b msi_color_changed msi_color
-    global nmInfo
-
-    # Extract three component colors of contour_color 
-    # and save into msi_r g b
-    scan $msi_color #%02x%02x%02x msi_r msi_g msi_b
-    set msi_color_changed 1
 }

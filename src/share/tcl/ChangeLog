@@ -1,5 +1,7 @@
 2001-03-13  Jason Clark  <jclark@cs.unc.edu>
 
+	* import.tcl: Made the color selecting a standard option
+
 	* setupmenu.tcl: New interface option to support visualization
 	texture scaling.
 
