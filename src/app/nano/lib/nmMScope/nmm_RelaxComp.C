@@ -165,9 +165,6 @@ int nmm_RelaxComp::start_fix (long sec, long usec, double zflat )
    z2 = 0.0;
    n_avg = 0;
 
-   //DEBUG0_0( "Enter relax_init()\n" );
-   //DEBUG0_2( "%d sec, %d usec\n", relax_sec0, relax_usec0 );
-   //DEBUG0_1( "Asymptotic z = %g\n", def_z );
    if (current_state == DISABLED) return 0;
    else current_state = CALC_MODEL_POINT1;
    return 0;
@@ -184,8 +181,6 @@ float nmm_RelaxComp::fix_height (long sec, long usec, float z)
 
     double t;  // time in msec since we started relaxing.
     
-    //DEBUG1_0( "RC" );
-
    /* Subtract off initial time from this time, and convert to ms
    **/
    sec -= relax_sec0;
@@ -216,10 +211,7 @@ float nmm_RelaxComp::fix_height (long sec, long usec, float z)
 	       t1 /= n_avg;
 	       z1 /= n_avg;
 	       current_state = CONST_COMP;
-	       //DEBUG0_1( "t1 average over %d\n", n_avg );
-	       //DEBUG0_2( "t1 = %g, z1 = %g\n", t1, z1 );
 	       z_offset = def_z - z1;
-	       //DEBUG0_1( "z_offset = %g\n", z_offset );
 	       n_avg = 0;
 	   }  // Ready to do constant compensation.
 	   return ( z + z_offset);
@@ -232,8 +224,6 @@ float nmm_RelaxComp::fix_height (long sec, long usec, float z)
 	       t1 /= n_avg;
 	       z1 /= n_avg;
 	       current_state = CALC_MODEL_POINT2;
-	       //DEBUG0_1( "t1 average over %d\n", n_avg );
-	       //DEBUG0_3( "Waiting from %g past %g zavg %g\n", t1, t1+TSep, z1 );
 	       n_avg = 0;
 	   }  /* end averaged long enough, gone WAIT for 2nd */
        }  /* end microscope stable */
@@ -260,23 +250,17 @@ float nmm_RelaxComp::fix_height (long sec, long usec, float z)
 	   t2 /= n_avg;
 	   z2 /= n_avg;
 	   current_state = DECAY_COMP;
-	   //DEBUG0_1( "t2 average over %d\n", n_avg );
 
 	   /* okay, we have two points as a function of time, so
 	   ** we can calculate coefficients to z_offset - k/t eqn.
 	   **/
 	   decay_const = ( z1 - z2 )/( 1.0/t1 - 1.0/t2 );
-	   //DEBUG0_2( "t1 = %g, z1 = %g\n", t1, z1 );
-	   //DEBUG0_2( "t2 = %g, z2 = %g\n", t2, z2 );
 
 	   // Calc how long before we switch to a constant offset. 
 	   TMax = fabs(decay_const/REAL_SMALL);
 	   
 	   z_offset = def_z - (z1 - decay_const/t1);
 	   
-	   //DEBUG0_3( "decay_const = %g, z_offset = %g, TMax = %g\n", decay_const, z_offset, TMax );
-	   //DEBUG0_2( "t1 = %g, z1 = %g (corr)\n", t1, z1 + (z_offset - decay_const/t1) );
-
 	   /* go ahead an compensate this one */
 	   return (z + z_offset - decay_const/t);
        }  /* end averaged enough, gone READY */
@@ -295,7 +279,6 @@ float nmm_RelaxComp::fix_height (long sec, long usec, float z)
        if( (t > TMax)||(t < 0.0) ) {
 	   // Why would t ever be less than 0?
 	   current_state = CONST_COMP;
-	   //DEBUG2_1( "Ending k/t compensation @ t= %g\n", t );
 	   decay_const = 0.0;
        }
        return( z + z_offset - decay_const/t);
@@ -305,7 +288,6 @@ float nmm_RelaxComp::fix_height (long sec, long usec, float z)
        **/
    default:
        current_state = DISABLED;
-       //DEBUG0_1( "Unknown state in relax_comp() [%d], continue...", relax_state );
        return z;
        
    } /* end switch */

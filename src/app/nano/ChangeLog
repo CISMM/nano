@@ -1,3 +1,10 @@
+2000-11-5  Tom Hudson  <hudson@cs.unc.edu>
+
+	* mf.h : moved file to attic
+	* butt_mode.c : remove #include of mf.h
+	* interaction.c : same
+	* normal.c : same, remove call of #defines (DOCUMENT) from mf.h
+
 2000-11-1  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c : removed includes of stm_file.h, stm_cmd.h,

@@ -1,5 +1,3 @@
-#include "mf.h"
-
 #include "microscape.h"  // for #defines
 
 /** \file butt_mode.c

@@ -67,7 +67,6 @@
 #include "normal.h"
 #include "relax.h"
 #include "butt_mode.h"
-#include "mf.h"
 
 #include "microscopeHandlers.h"
 #include "globals.h"

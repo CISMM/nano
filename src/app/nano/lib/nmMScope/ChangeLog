@@ -1,3 +1,8 @@
+2000-11-5  Tom Hudson  <hudson@cs.unc.edu>
+
+	* stm_file.c : remove #include of mf.h
+	* nmm_RelaxComp.C : same, remove call of #defines (DEBUG)
+
 2000-11-1  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmm_Globals.h : removed USE_VRPN_MICROSCOPE define

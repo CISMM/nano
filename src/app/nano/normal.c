@@ -6,7 +6,6 @@
 
 #include	<v.h>  // for VectorType
 
-#include	"mf.h"
 #include	"BCPlane.h"
 
 #include	"normal.h"
@@ -36,7 +35,6 @@ int Compute_Norm(int x, int y,VectorType Normal, BCPlane* plane)
                 Normal[i] = 0.0;
         }
 
-DOCUMENT2( "Enter Compute_Normal(%d,%d)\n", x, y );
         /* Find the normal with 1 more in x */
 
         if ( (x < plane->numX()-1)&&(y < plane->numY()-1) ) {
@@ -51,8 +49,6 @@ DOCUMENT2( "Enter Compute_Normal(%d,%d)\n", x, y );
 
                 VectorCross(xdiff_vec,ydiff_vec, local_norm);
                 VectorAdd(local_norm,Normal, Normal);
-
-DOCUMENT3( "NE (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
         }
 
         if ( (x > 0)&&(y < plane->numY()-1) ) {
@@ -67,8 +63,6 @@ DOCUMENT3( "NE (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
 
                 VectorCross(xdiff_vec,ydiff_vec, local_norm);
                 VectorAdd(local_norm,Normal, Normal);
-
-DOCUMENT3( "NW (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
         }
 
         if ( (x < plane->numX()-1)&&(y > 0) ) {
@@ -83,8 +77,6 @@ DOCUMENT3( "NW (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
 
                 VectorCross(xdiff_vec,ydiff_vec, local_norm);
                 VectorAdd(local_norm,Normal, Normal);
-
-DOCUMENT3( "SE (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
         }
 
         if ( (x > 0)&&(y > 0) ) {
@@ -99,8 +91,6 @@ DOCUMENT3( "SE (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
 
                 VectorCross(xdiff_vec,ydiff_vec, local_norm);
                 VectorAdd(local_norm,Normal, Normal);
-
-DOCUMENT3( "SW (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
         }
 
         /* Normalize the normal */
@@ -108,8 +98,6 @@ DOCUMENT3( "SW (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
 	VectorNormalize(Normal);
 
 	/* Copy the normal to the answer */
-
-DOCUMENT3( "Final (%g,%g,%g)\n", Normal[0], Normal[1], Normal[2] );
 
         return(0);
 
@@ -134,7 +122,6 @@ int Compute_Norm(float x, float y,VectorType Normal, BCPlane* plane)
                 Normal[i] = 0.0;
         }
 
-DOCUMENT2( "Enter Compute_Normal(%d,%d)\n", x, y );
         /* Find the normal with 1 more in x */
 
         if ( (x < plane->numX()-1)&&(y < plane->numY()-1) ) {
@@ -149,8 +136,6 @@ DOCUMENT2( "Enter Compute_Normal(%d,%d)\n", x, y );
 
                 VectorCross(xdiff_vec,ydiff_vec, local_norm);
                 VectorAdd(local_norm,Normal, Normal);
-
-DOCUMENT3( "NE (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
         }
 
         if ( (x > 0)&&(y < plane->numY()-1) ) {
@@ -165,8 +150,6 @@ DOCUMENT3( "NE (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
 
                 VectorCross(xdiff_vec,ydiff_vec, local_norm);
                 VectorAdd(local_norm,Normal, Normal);
-
-DOCUMENT3( "NW (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
         }
 
         if ( (x < plane->numX()-1)&&(y > 0) ) {
@@ -181,8 +164,6 @@ DOCUMENT3( "NW (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
 
                 VectorCross(xdiff_vec,ydiff_vec, local_norm);
                 VectorAdd(local_norm,Normal, Normal);
-
-DOCUMENT3( "SE (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
         }
 
         if ( (x > 0)&&(y > 0) ) {
@@ -197,8 +178,6 @@ DOCUMENT3( "SE (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
 
                 VectorCross(xdiff_vec,ydiff_vec, local_norm);
                 VectorAdd(local_norm,Normal, Normal);
-
-DOCUMENT3( "SW (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
         }
 
         /* Normalize the normal */
@@ -206,8 +185,6 @@ DOCUMENT3( "SW (%g,%g,%g)\n", local_norm[0], local_norm[1], local_norm[2] );
 	VectorNormalize(Normal);
 
 	/* Copy the normal to the answer */
-
-DOCUMENT3( "Final (%g,%g,%g)\n", Normal[0], Normal[1], Normal[2] );
 
         return(0);
 
