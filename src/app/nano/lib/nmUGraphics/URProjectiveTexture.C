@@ -195,6 +195,7 @@ int URProjectiveTexture::enable(double *textureTransform,
         } else if (d_update_colormap || d_update_opacity) {
 			createTexture(d_doingFastUpdates);
             d_update_opacity = false;
+			d_update_colormap = false;
 		}
 		if (d_greyscaleImage) {
 			d_greyscaleImage->getImageToTextureTransform(imageToTexture,
