@@ -1,3 +1,8 @@
+2002-04-25  David Marshburn  <marshbur@cs.unc.edu>
+
+	* ModFile.C (ModFile::RememberPointList):  if the input string pointer
+	is null, return immediately.
+
 2002-04-01  Aron Helser  <helser@cs.unc.edu>
 
 	* ModFile.Ch (EnterImageMode): Use new PointList method to save a

@@ -82,6 +82,7 @@ int ModFile::ReceiveNewPoint (void * userdata, const Point_results * _p) {
  interpreter it is there so the use can save it later.
   */
 void ModFile::RememberPointList (string * text) {
+    if( text == NULL ) return;
     d_interp = Tcl_Interpreter::getInterpreter();
     char * c_text = new char[strlen(text->c_str()) +1];
     strcpy(c_text, text->c_str());
