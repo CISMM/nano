@@ -33,5 +33,18 @@ generic_radiobox $phantom_win.phantom_button_mode \
 	phantom_button_mode \
 	"Phantom Button" $rb_list
 
-pack $phantom_win.phantom_reset $phantom_win.phantom_button_mode \
+#################################
+#
+# This part of the script brings up a min/max slider to control the
+# mapping of values into the spring constant, assuming the compliance
+# plane button is set to 'none'
+#
+set spring_slider_min_limit 0.01
+set spring_slider_max_limit 1
+set spring_k_slider 0
+
+floatscale $phantom_win.spring_k $spring_slider_min_limit $spring_slider_max_limit \
+	    100 1 1 spring_k_slider "Spring Constant"
+
+pack $phantom_win.phantom_reset $phantom_win.phantom_button_mode $phantom_win.spring_k \
 	-side top -fill x

@@ -59,13 +59,23 @@ button $nmInfo(colorscale).pickframe.buttons.autoscale -text "Auto-Scale"  \
 }
 pack $nmInfo(colorscale).pickframe.buttons.autoscale -side top -anchor nw -fill x
 
+set surface_color gray
+frame $nmInfo(colorscale).pickframe.buttons.c
 # Set the basic surface color:
-button $nmInfo(colorscale).pickframe.buttons.set_color \
+button $nmInfo(colorscale).pickframe.buttons.c.set_color \
         -text "Set surface color" -command {
-    choose_color surface_color "Choose surface color"
-    set_surface_color
+    if {[choose_color surface_color "Choose surface color"] } {
+        $nmInfo(colorscale).pickframe.buttons.c.colorsample configure -bg $surface_color 
+        set_surface_color
+        set color_comes_from "none"
+    }
 }
-pack $nmInfo(colorscale).pickframe.buttons.set_color -side top -anchor nw -fill x
+button $nmInfo(colorscale).pickframe.buttons.c.colorsample \
+        -relief groove -bd 2 -bg $surface_color \
+        -command { $nmInfo(colorscale).pickframe.buttons.c.set_color invoke}
+pack $nmInfo(colorscale).pickframe.buttons.c -side top -anchor nw -fill x
+pack $nmInfo(colorscale).pickframe.buttons.c.set_color -side left 
+pack $nmInfo(colorscale).pickframe.buttons.c.colorsample -side left -fill x -expand yes
 
 # Make it easy to create a flat plane to use for a color map.
 button $nmInfo(colorscale).pickframe.buttons.calc_planes -text "Calculate Data Planes..."  \

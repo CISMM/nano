@@ -156,16 +156,20 @@ set nmInfo(contour_lines) [create_closing_toplevel contour_lines \
 generic_optionmenu $nmInfo(contour_lines).contour_dataset contour_comes_from \
 	"Contour plane" inputPlaneNames
 pack $nmInfo(contour_lines).contour_dataset -anchor nw
+
+# Group the set color button and sample
+frame $nmInfo(contour_lines).c
     
-button $nmInfo(contour_lines).set_color -text "Set contour color" -command {
+button $nmInfo(contour_lines).c.set_color -text "Set contour color" -command {
     choose_color contour_color "Choose contour color"
-    $nmInfo(contour_lines).colorsample configure -bg $contour_color
+    $nmInfo(contour_lines).c.colorsample configure -bg $contour_color
     set_contour_color
 }
-
 # this sets the color of the sample frame to the color of the scales
 set contour_color [format #%02x%02x%02x $contour_r $contour_g $contour_b]
-frame $nmInfo(contour_lines).colorsample -height 32 -width 32 -relief groove -bd 2 -bg $contour_color
+button $nmInfo(contour_lines).c.colorsample \
+        -relief groove -bd 2 -bg $contour_color \
+        -command { $nmInfo(contour_lines).c.set_color invoke}
 
 #Choose the width of the lines that make up the contour display
 frame $nmInfo(contour_lines).lineslider
@@ -175,9 +179,10 @@ generic_entry $nmInfo(contour_lines).lineslider.linewidth \
         contour_width "Line width" real
 #generic_entry $nmInfo(contour_lines).lineslider.opacity contour_opacity "opacity" integer
 # this triggers the callback to actually set the c variables
+pack $nmInfo(contour_lines).c -side top -fill x
+pack $nmInfo(contour_lines).c.set_color -side left -fill x
+pack $nmInfo(contour_lines).c.colorsample -side left -fill x -expand yes
 
-pack $nmInfo(contour_lines).set_color $nmInfo(contour_lines).colorsample \
-        -side top -anchor e -pady 1m -padx 3m -fill x
 pack $nmInfo(contour_lines).lineslider \
         -side top -anchor w -fill x -pady 1m -padx 3m
 pack $nmInfo(contour_lines).lineslider.linewidth \
@@ -275,10 +280,6 @@ set buzz_slider_max_limit 1
 set compliance_slider_min_limit 0 
 set compliance_slider_max_limit 1
 
-set spring_slider_min_limit 0.01
-set spring_slider_max_limit 1
-set spring_k_slider 0
-
 #proc adjust_adhesion {} {
 #    global bc
 #    global fspady
@@ -311,31 +312,6 @@ set spring_k_slider 0
 
 #    pack .a.sliders.adh_const .a.sliders.adhesion_decrease_per .a.sliders.adh_min_peak -side top -fill x -pady $fspady
 #}
-
-proc adjust_friction {} {
-    global bc
-    global fspady
-
-    toplevel .f
-
-    frame .f.menubar -relief raised -bd 4
-    pack .f.menubar -side top -fill both
-    
-    button .f.menubar.exitwin -bg red -text "Close Friction Panel" -command "destroy .f"
-    pack .f.menubar.exitwin -side top -anchor e -ipadx 3m
-
-    frame .f.label
-    label .f.label.a -text "Friction Model Parameters"
-    pack .f.label.a -side left
-    pack .f.label -side top -anchor n
-    frame .f.sliders
-    pack .f.sliders -side top -anchor w -fill x -pady 1m -padx 3m
-
-    floatscale .f.sliders.lateral_spring_K 5000 30000 25001 1 1 lateral_spring_K "Lateral_Spring_Constant"
-
-    pack .f.sliders.lateral_spring_K -side top -fill x -pady $fspady
-}
-
 
 #
 #################################    
@@ -378,9 +354,6 @@ pack $nmInfo(frictionscale).scale -fill x -side top
 pack $nmInfo(frictionscale).linear
 trace variable friction_slider_min_limit w friction_scale_newscale
 trace variable friction_slider_max_limit w friction_scale_newscale
-
-button $nmInfo(frictionscale).pickframe.setfriction -text "Set Friction Parameters" -command adjust_friction
-pack $nmInfo(frictionscale).pickframe.setfriction
 
 #
 # Helper routine for the friction scale that destroys and then recreates the
@@ -628,21 +601,6 @@ proc compliance_scale_newscale {name element op} {
 	pack $nmInfo(compliancescale).scale -fill x -side top
 }
 
-
-#################################
-#
-# This part of the script brings up a min/max slider to control the
-# mapping of values into the spring constant, assuming the compliance
-# plane button is set to 'none'
-#
-set nmInfo(springkscale) [frame $nmInfo(haptic).springkscale -relief raised -bd 4]
-pack $nmInfo(springkscale) -fill both
-
-if {$spring_slider_min_limit != $spring_slider_max_limit} {
-    floatscale $nmInfo(springkscale).scale $spring_slider_min_limit $spring_slider_max_limit \
-	    100 1 1 spring_k_slider "Spring Constant"
-    pack $nmInfo(springkscale).scale
-}
 
 
 ############################
