@@ -611,10 +611,14 @@ RECEIVE_MSG InImgMode {
     // XXX - this should depend on the direction of the scanning
     // (whether its up or down in the Y direction)
     // this is hard-coded for what works with typical Thermomicroscope setup
-    int lineNumber = d_dataset->inputGrid->numY()-1 - d_mod_window_max_y;
-    //printf("jumping to line %d after modify\n", lineNumber);
-    JumpToScanLine(lineNumber);
 
+    // only jump if we want to resume scanning after modifications
+    if( state.autoscan )
+    {
+      int lineNumber = d_dataset->inputGrid->numY()-1 - d_mod_window_max_y;
+      //printf("jumping to line %d after modify\n", lineNumber);
+      JumpToScanLine(lineNumber);
+    }
   }
 }
 

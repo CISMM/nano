@@ -1,3 +1,9 @@
+2002-04-02  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmm_MicroscopeRemote.Cdef (RcvInImgMode):  only jump to scan line
+	zero if we're supposed to return to scanning automatically after
+	a modification.
+
 2002-04-02 David Borland <borland@cs.unc.edu>
         * nmm_SimulatedMicroscope_Remote.Cdef : added 
         encode_and_sendRot and encode_and_sendTrans stubs
