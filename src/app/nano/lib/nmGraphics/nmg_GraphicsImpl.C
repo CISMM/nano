@@ -67,6 +67,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   strcpy(g_colorPlaneName, data->colorPlaneName->string());
   strcpy(g_contourPlaneName, data->contourPlaneName->string());
   strcpy(g_heightPlaneName, data->heightPlaneName->string());
+  strcpy(g_opacityPlaneName, data->opacityPlaneName->string());
 
   // do pgl_init() stuff
 
@@ -247,6 +248,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_setColorSliderRange_type,
                                handle_setColorSliderRange,
                                this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setOpacitySliderRange_type,
+			       handle_setOpacitySliderRange,
+			       this, vrpn_ANY_SENDER);
   connection->register_handler(d_setComplianceSliderRange_type,
                                handle_setComplianceSliderRange,
                                this, vrpn_ANY_SENDER);
@@ -280,6 +284,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_setContourPlaneName_type,
                                handle_setContourPlaneName,
                                this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setOpacityPlaneName_type,
+			       handle_setOpacityPlaneName,
+			       this, vrpn_ANY_SENDER);
   connection->register_handler(d_setHeightPlaneName_type,
                                handle_setHeightPlaneName,
                                this, vrpn_ANY_SENDER);
@@ -948,6 +955,12 @@ void nmg_Graphics_Implementation::setColorSliderRange (float low, float high) {
   causeGridRedraw();
 }
 
+void nmg_Graphics_Implementation::setOpacitySliderRange (float low, float high) {
+  g_opacity_slider_min = low;
+  g_opacity_slider_max = high;
+  causeGridRedraw();
+}
+
 void nmg_Graphics_Implementation::setComplianceSliderRange (float low, float high) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setComplianceSliderRange().\n");
   g_compliance_slider_min = low;
@@ -1104,6 +1117,11 @@ void nmg_Graphics_Implementation::setContourPlaneName (const char * n) {
 // virtual
 void nmg_Graphics_Implementation::setHeightPlaneName (const char * n) {
   strcpy(g_heightPlaneName, n);
+}
+
+// virtual
+void nmg_Graphics_Implementation::setOpacityPlaneName (const char * n) {
+  strcpy(g_opacityPlaneName, n);
 }
 
 
@@ -2843,6 +2861,17 @@ int nmg_Graphics_Implementation::handle_setColorSliderRange
 }
 
 // static
+int nmg_Graphics_Implementation::handle_setOpacitySliderRange
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float low, hi;
+  CHECKF(it->decode_setOpacitySliderRange(p.buffer, &low, &hi), 
+	 "handle_setOpacitySliderRange");
+  it->setOpacitySliderRange(low, hi);
+  return 0;
+}
+
+// static
 int nmg_Graphics_Implementation::handle_setComplianceSliderRange
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
@@ -2988,6 +3017,14 @@ int nmg_Graphics_Implementation::handle_setContourPlaneName (void * userdata,
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
 
   it->setContourPlaneName(p.buffer);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setOpacityPlaneName (void * userdata,
+							     vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  it->setOpacityPlaneName(p.buffer);
   return 0;
 }
 

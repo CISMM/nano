@@ -57,6 +57,8 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setColorMapName");
   d_setColorSliderRange_type =
     c->register_message_type("nmg Graphics setColorSliderRange");
+  d_setOpacitySliderRange_type =
+    c->register_message_type("nmg Graphics setOpacitySliderRange");
   d_setTextureDirectory_type =
     c->register_message_type("nmg Graphics setTextureDirectory");
   d_setComplianceSliderRange_type =
@@ -89,6 +91,8 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setColorPlaneName");
   d_setContourPlaneName_type =
     c->register_message_type("nmg Graphics setContourPlaneName");
+  d_setOpacityPlaneName_type =
+    c->register_message_type("nmg Graphics setOpacityPlaneName");
   d_setHeightPlaneName_type =
     c->register_message_type("nmg Graphics setHeightPlaneName");
   d_setMinColor_type =
@@ -513,6 +517,37 @@ int nmg_Graphics::decode_setColorSliderRange
   return 0;
 }
 
+char * nmg_Graphics::encode_setOpacitySliderRange( int * len, float low, float hi) {
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = 2 * sizeof(float);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_setOpacitySliderRange:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, hi);
+  }
+
+  return msgbuf;  
+}
+
+int nmg_Graphics::decode_setOpacitySliderRange
+                         (const char * buf, float * low, float * hi) {
+  if (!buf || !low || !hi) return -1;
+  CHECK(vrpn_unbuffer(&buf, low));
+  CHECK(vrpn_unbuffer(&buf, hi));
+  return 0;
+}
+
 char * nmg_Graphics::encode_setComplianceSliderRange
                      (int * len, float low, float hi) {
   char * msgbuf = NULL;
@@ -762,6 +797,14 @@ int nmg_Graphics::decode_setContourPlaneName (const char * buf,
   CHECK(vrpn_unbuffer(&buf, n, 128));
   return 0;
 
+}
+
+char * nmg_Graphics::encode_setOpacityPlaneName (int * len, const char * n) {
+
+}
+
+int nmg_Graphics::decode_setOpacityPlaneName (const char *buf,
+					      const char *n) {
 }
 
 char * nmg_Graphics::encode_setHeightPlaneName (int * len, const char * n) {

@@ -47,6 +47,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setColorMapName (const char *);
     virtual void setColorSliderRange (float low, float hi);
 
+    virtual void setOpacitySliderRange (float low, float hi);
+
     virtual void setTextureDirectory (const char *);
 
     virtual void setComplianceSliderRange (float low, float hi);
@@ -64,6 +66,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setAlphaPlaneName (const char *);
     virtual void setColorPlaneName (const char *);
     virtual void setContourPlaneName (const char *);
+    virtual void setOpacityPlaneName (const char *);
     virtual void setHeightPlaneName (const char *);
 
     virtual void setIconScale (float);
@@ -230,6 +233,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setColorMapDirectory (void *, vrpn_HANDLERPARAM);
     static int handle_setColorMapName (void *, vrpn_HANDLERPARAM);
     static int handle_setColorSliderRange (void *, vrpn_HANDLERPARAM);
+    static int handle_setOpacitySliderRange (void *, vrpn_HANDLERPARAM);
     static int handle_setTextureDirectory (void *, vrpn_HANDLERPARAM);
     static int handle_setComplianceSliderRange (void *, vrpn_HANDLERPARAM);
     static int handle_setContourColor (void *, vrpn_HANDLERPARAM);
@@ -242,6 +246,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setAlphaPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setColorPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setContourPlaneName (void *, vrpn_HANDLERPARAM);
+    static int handle_setOpacityPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setHeightPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setMinColor (void *, vrpn_HANDLERPARAM);
     static int handle_setMaxColor (void *, vrpn_HANDLERPARAM);

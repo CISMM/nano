@@ -12,6 +12,7 @@ nmb_PlaneSelection::nmb_PlaneSelection (void) :
   height (NULL),
   color (NULL),
   contour (NULL),
+  opacity (NULL),
   alpha (NULL),
   red (NULL),
   green (NULL),
@@ -28,6 +29,7 @@ void nmb_PlaneSelection::lookup (nmb_Dataset * data) {
          data->heightPlaneName->string(),
          data->colorPlaneName->string(),
          data->contourPlaneName->string(),
+	 data->opacityPlaneName->string(),
          data->alphaPlaneName->string());
 }
 
@@ -35,10 +37,12 @@ void nmb_PlaneSelection::lookup (BCGrid * inputGrid,
                                  const char * heightName,
                                  const char * colorName,
                                  const char * contourName,
+				 const char * opacityName,
                                  const char * alphaName) {
   height = inputGrid->getPlaneByName (heightName);
   color = inputGrid->getPlaneByName (colorName);
   contour = inputGrid->getPlaneByName (contourName);
+  opacity = inputGrid->getPlaneByName (opacityName);
   alpha = inputGrid->getPlaneByName (alphaName);
 }
 

@@ -38,6 +38,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setColorMapName (const char *);
     virtual void setColorSliderRange (float low, float hi);
 
+    virtual void setOpacitySliderRange (float low, float hi);
+
     virtual void setTextureDirectory (const char *);
 
     virtual void setComplianceSliderRange (float low, float hi);
@@ -55,6 +57,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setAlphaPlaneName (const char *);
     virtual void setColorPlaneName (const char *);
     virtual void setContourPlaneName (const char *);
+    virtual void setOpacityPlaneName (const char *);
     virtual void setHeightPlaneName (const char *);
 
 
@@ -188,6 +191,9 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     double d_maxAlpha;
     double d_color_slider_min;
     double d_color_slider_max;
+
+    double d_opacity_slider_min;
+    double d_opacity_slider_max;
 };
 
 #endif  // NMG_GRAPHICS_REMOTE

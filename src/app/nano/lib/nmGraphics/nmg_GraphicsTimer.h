@@ -47,6 +47,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setColorMapDirectory (const char *);
     virtual void setColorMapName (const char *);
     virtual void setColorSliderRange (float low, float hi);
+    virtual void setOpacitySliderRange (float low, float hi);
     virtual void setTextureDirectory (const char *);
     virtual void setComplianceSliderRange (float low, float hi);
     virtual void setContourColor (int r, int g, int b);
@@ -59,6 +60,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setAlphaPlaneName (const char *);
     virtual void setColorPlaneName (const char *);
     virtual void setContourPlaneName (const char *);
+    virtual void setOpacityPlaneName (const char *);
     virtual void setHeightPlaneName (const char *);
     virtual void setIconScale (float);
     virtual void enableCollabHand (vrpn_bool);

@@ -141,8 +141,10 @@ Tclvar_int_with_button	config_haptic_plane("Haptic from flat", ".sliders", 0);
 
 //static nmui_SurfaceFeatures haptic_features;
 static nmui_HapticsManager haptic_manager;
+
 static q_vec_type xy_pos;  // used for constrained freehand xyz
 
+extern Tcl_Interp * get_the_interpreter (void);
 
 /***************************
  * Mode of user operation
@@ -415,6 +417,7 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 		tcl_commit_canceled =1;
 		return;
 	    }
+
 	    /* Do a poly-line modification!!! */
 	    // Wait for tip to get to starting position
             if ( (microscope->state.modify.tool == LINE) ||

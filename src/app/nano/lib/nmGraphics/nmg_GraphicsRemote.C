@@ -376,6 +376,29 @@ void nmg_Graphics_Remote::setColorSliderRange (float low, float hi) {
     delete [] msgbuf;
 }
 
+void nmg_Graphics_Remote::setOpacitySliderRange (float low, float hi) {
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  d_opacity_slider_min = low;
+  d_opacity_slider_max = hi;
+
+  msgbuf = encode_setOpacitySliderRange(&len, low, hi);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_setOpacitySliderRange_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setOpacitySliderRange:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
 void nmg_Graphics_Remote::setComplianceSliderRange (float low, float hi) {
   struct timeval now;
   char * msgbuf;
@@ -590,6 +613,25 @@ void nmg_Graphics_Remote::setContourPlaneName (const char * name) {
                            d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
     if (retval) {
       fprintf(stderr, "nmg_Graphics_Remote::setContourPlaneName:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+}
+
+// virtual
+void nmg_Graphics_Remote::setOpacityPlaneName (const char * name) {
+  int len = 0;
+  struct timeval now;
+  int retval;
+
+  if (name)
+    len = 1 + strlen(name);
+  gettimeofday(&now, NULL);
+  if (d_connection) {
+    retval = d_connection->pack_message(len, now, d_setOpacityPlaneName_type,
+                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setOpacityPlaneName:  "
                       "Couldn't pack message to send to server.\n");
     }
   }

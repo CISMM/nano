@@ -40,6 +40,8 @@ class nmg_Graphics_Null : public nmg_Graphics {
     virtual void setColorMapName (const char *);
     virtual void setColorSliderRange (float low, float hi);
 
+    virtual void setOpacitySliderRange (float low, float hi);
+
     virtual void setTextureDirectory (const char *);
 
     virtual void setComplianceSliderRange (float low, float hi);

@@ -118,6 +118,7 @@ void nmg_Graphics_Null::setBumpMapName (const char * ) {}
 void nmg_Graphics_Null::setColorMapDirectory (const char * ) {}
 void nmg_Graphics_Null::setColorMapName (const char * ) {}
 void nmg_Graphics_Null::setColorSliderRange (float , float ) {}
+void nmg_Graphics_Null::setOpacitySliderRange (float, float ) {}
 void nmg_Graphics_Null::setTextureDirectory (const char * ) {}
 void nmg_Graphics_Null::setComplianceSliderRange (float , float ) {}
 void nmg_Graphics_Null::setContourColor (int , int , int ) {}

@@ -115,6 +115,12 @@ void nmg_Graphics_RenderClient::setColorSliderRange (float a, float b) {
 }
 
 // virtual
+void nmg_Graphics_RenderClient::setOpacitySliderRange (float a, float b) {
+  blockTimer();
+  nmg_Graphics_Remote::setOpacitySliderRange (a, b);
+}
+
+// virtual
 void nmg_Graphics_RenderClient::setComplianceSliderRange (float a, float b) {
   blockTimer();
   nmg_Graphics_Remote::setComplianceSliderRange (a, b);

@@ -27,15 +27,19 @@ class nmb_PlaneSelection {
 
     void lookup (nmb_Dataset *);
       ///< Fills in the data members with current data from nmb_Dataset
+
     void lookup (BCGrid *,
                  const char * heightName, const char * colorName,
-                 const char * contourName, const char * alphaName);
+                 const char * contourName, const char * opacityName,
+		 const char * alphaName);
+
     void lookupPrerenderedColors (BCGrid *);
     void lookupPrerenderedDepth (BCGrid *);
 
     BCPlane * height;
     BCPlane * color;
     BCPlane * contour;
+    BCPlane * opacity;
     BCPlane * alpha;
 
     /// Support for prerendered surfaces

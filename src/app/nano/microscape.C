@@ -179,6 +179,7 @@ static void handle_contour_width_change(vrpn_float64 new_value, void *userdata);
 static void handle_alpha_dataset_change(const char *new_value, void *userdata);
 static void handle_alpha_slider_change (vrpn_float64, void *);
 static void handle_color_slider_change (vrpn_float64, void *);
+static void handle_opacity_slider_change (vrpn_float64, void *);
 static void handle_rulergrid_offset_change (vrpn_float64, void *);
 static void handle_rulergrid_scale_change (vrpn_float64, void *);
 static void handle_null_data_alpha_change( vrpn_int32 val, void *userdata );
@@ -472,11 +473,18 @@ static int	maxC[3] = {250,50,50};
 Tclvar_float	color_slider_min_limit("color_slider_min_limit",0);
 Tclvar_float	color_slider_max_limit("color_slider_max_limit",1);
 
-
 // NANOX
 /// The positions of the min and max values within the Tk slider
 TclNet_float	color_slider_min("color_slider_min",0);
 TclNet_float	color_slider_max("color_slider_max",1);
+
+/// The limits on the Tk slider where min and max value are selected
+Tclvar_float    opacity_slider_min_limit("opacity_slider_min_limit",0);
+Tclvar_float    opacity_slider_max_limit("opacity_slider_max_limit",1);
+
+/// The positions of the min and max values withing the Tk slider
+TclNet_float    opacity_slider_min("opacity_slider_min",0);
+TclNet_float    opacity_slider_max("opacity_slider_max",1);
 
 
 // NANOX
@@ -542,8 +550,7 @@ Tclvar_float    bump_slider_max("bump_slider_max",1);
 Tclvar_float    bump_slider_min_limit("bump_slider_min_limit",0);
 Tclvar_float    bump_slider_max_limit("bump_slider_max_limit",1);
 //This section deals with the bump plane
-Tclvar_string bumpPlaneName
-               ("bumpsize_comes_from", "");
+Tclvar_string bumpPlaneName ("bumpsize_comes_from", "");
 
 Tclvar_float    buzz_slider_min("buzz_slider_min",0);
 Tclvar_float    buzz_slider_max("buzz_slider_max",1);
@@ -1152,6 +1159,8 @@ void shutdown_connections (void) {
   contour_changed.bindConnection(NULL);
   ((TclNet_string *) dataset->contourPlaneName)->bindConnection(NULL);
 
+  ((TclNet_string *) dataset->opacityPlaneName)->bindConnection(NULL);
+
   rulergrid_position_line.bindConnection(NULL);
   rulergrid_orient_line.bindConnection(NULL);
   rulergrid_xoffset.bindConnection(NULL);
@@ -1300,6 +1309,11 @@ static void handle_color_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setColorSliderRange(color_slider_min, color_slider_max);
   //cause_grid_redraw(0.0, NULL);
+}
+
+static void handle_opacity_slider_change (vrpn_float64, void * userdata) {
+  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  g->setOpacitySliderRange(opacity_slider_min, opacity_slider_max);
 }
 
 static void handle_texture_scale_change (vrpn_float64 value, void * userdata) {
@@ -2485,16 +2499,16 @@ static void handle_contour_color_change (vrpn_int32, void * userdata) {
 static void     handle_contour_width_change (vrpn_float64, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-  g->setContourWidth(contour_width);
-}
+  g->setContourWidth(contour_width);}
 
+// this should probably be moved to microscape_handlers.c
 static	void	handle_alpha_dataset_change (const char *, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 	BCPlane	* plane = dataset->inputGrid->getPlaneByName
                              (dataset->alphaPlaneName->string());
 
-        printf("handle_alpha_dataset_change\n");
+	//        printf("handle_alpha_dataset_change\n");
 	if (plane != NULL) {
 		alpha_slider_min_limit = plane->minAttainableValue();
 		alpha_slider_min = plane->minValue();
@@ -2521,7 +2535,6 @@ static	void	handle_alpha_dataset_change (const char *, void * userdata)
           }
         }
 }
-
 
 static void handle_x_dataset_change (const char *, void *) {    
         BCPlane	*plane = dataset->inputGrid->getPlaneByName
@@ -2986,6 +2999,16 @@ fprintf(stderr, "Couldn't find plane for contour mode;  "
         }
 
   g->setContourPlaneName(dataset->contourPlaneName->string());
+  g->causeGridRedraw();
+}
+
+//callback for opacity dataset change
+void handle_opacitymap_dataset_change (const char*, void * userdata) {
+  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  fprintf(stderr, "In handle_opacity_dataset_change with name %s\n",
+	  dataset->opacityPlaneName->string());
+
+  g->setOpacityPlaneName(dataset->opacityPlaneName->string());
   g->causeGridRedraw();
 }
 
@@ -3721,7 +3744,7 @@ void setupCallbacks (nmb_Dataset * d, Microscope * m) {
   ((Tclvar_string *) d->alphaPlaneName)->
         initializeTcl("alpha_comes_from");
   //d->alphaPlaneName->bindList(&m->state.data.inputPlaneNames);
-
+  
   ((Tclvar_string *) d->colorMapName)->
         initializeTcl("color_map");
   //d->colorMapName->bindList(&colorMapNames);
@@ -3735,6 +3758,9 @@ void setupCallbacks (nmb_Dataset * d, Microscope * m) {
   ((Tclvar_string *) d->contourPlaneName)->
         initializeTcl("contour_comes_from");
   //d->contourPlaneName->bindList(&m->state.data.inputPlaneNames);
+
+  ((Tclvar_string *) d->opacityPlaneName)->
+        initializeTcl("opacity_comes_from");
 
   ((Tclvar_string *) d->heightPlaneName)->
         initializeTcl("z_comes_from");
@@ -3753,6 +3779,8 @@ void setupCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
             (handle_colormap_change, g);
   ((Tclvar_string *) d->contourPlaneName)->addCallback
             (handle_contour_dataset_change, g);
+  ((Tclvar_string *) d->opacityPlaneName)->addCallback
+            (handle_opacitymap_dataset_change, g);
 }
 
 void setupCallbacks (nmb_Dataset *d) {
@@ -3923,6 +3951,10 @@ void setupCallbacks (nmg_Graphics * g) {
             (handle_color_slider_change, g);
   color_slider_max.addCallback
             (handle_color_slider_change, g);
+  opacity_slider_min.addCallback
+            (handle_opacity_slider_change, g);
+  opacity_slider_max.addCallback
+            (handle_opacity_slider_change, g);
   texture_scale.addCallback
             (handle_texture_scale_change, g);
   rulergrid_xoffset.addCallback

@@ -51,35 +51,102 @@ pack $nmInfo(z_mapping).scale -anchor nw -padx 3 -pady 3
 # First, we create a toplevel widget to serve as a control panel.
 # Then, we pack center and range sliders into the control panel
 #
+
 set nmInfo(colorscale) [create_closing_toplevel colorscale "Color Map Setup" ]
 
+# Make a frame to hold and group the color map widgets
+iwidgets::Labeledframe $nmInfo(colorscale).colormap \
+	-labeltext "Color map parameters" \
+	-labelpos nw
+set nmInfo(colormap) [$nmInfo(colorscale).colormap childsite]
+pack $nmInfo(colorscale).colormap -side top -fill x
+
+
+set opacity_slider_min_limit 0
+set opacity_slider_max_limit 1
+
+set opacity_slider_min 0
+set opacity_slider_max 1
+
+# Make a frame to hold and group the opactiy map widgets
+iwidgets::Labeledframe $nmInfo(colorscale).opacitymap \
+	-labeltext "Opacity map parameters" \
+	-labelpos nw
+set nmInfo(opacitymap) [$nmInfo(colorscale).opacitymap childsite]
+pack $nmInfo(colorscale).opacitymap -fill x
+
 # Make a frame to hold the pull-down menu that selects from the list
-frame $nmInfo(colorscale).scales
-frame $nmInfo(colorscale).pickframe
+frame $nmInfo(colormap).scales
+frame $nmInfo(colormap).pickframe
 iwidgets::Labeledframe $nmInfo(colorscale).flat \
 	-labeltext "Create a flattened plane" \
 	-labelpos nw
 set nmInfo(flatplane) [$nmInfo(colorscale).flat childsite]
 
+#
+# A button to bring up the control panel for min/max color
+# and other parameters of the CUSTOM color map. 
+#
+button $nmInfo(colormap).pickframe.setcolor -text "Adjust Custom Colormap" -command adjust_color
+
+pack  $nmInfo(colormap).pickframe $nmInfo(colormap).scales -side left -fill both
+pack  $nmInfo(colormap).pickframe.setcolor -side bottom
 pack  $nmInfo(colorscale).flat -side bottom -fill x
-pack $nmInfo(colorscale).pickframe $nmInfo(colorscale).scales -side left -fill both
 
 # Pop-up menu to choose which plane is displayed as a color map.
-generic_optionmenu $nmInfo(colorscale).pickframe.colormap_plane \
+generic_optionmenu $nmInfo(colormap).pickframe.colormap_plane \
 	color_comes_from \
 	"Colormap plane" inputPlaneNames
 
-set colorMapNames {custom }
-generic_optionmenu $nmInfo(colorscale).pickframe.colormap \
+set colorMapNames {custom}
+generic_optionmenu $nmInfo(colormap).pickframe.colormap \
 	color_map \
 	"Colormap" colorMapNames
 
-iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(colorscale).pickframe.colormap_plane \
-	$nmInfo(colorscale).pickframe.colormap
 
-pack $nmInfo(colorscale).pickframe.colormap_plane \
-	$nmInfo(colorscale).pickframe.colormap -anchor nw -fill x
+# Pop-up menu to choose which plane is displayed as an opacity map.
+generic_optionmenu $nmInfo(opacitymap).opacityplane \
+	opacity_comes_from \
+	"Opacitymap dataset" inputPlaneNames
+pack $nmInfo(opacitymap).opacityplane -side left -anchor w
+
+iwidgets::Labeledwidget::alignlabels \
+	$nmInfo(colormap).pickframe.colormap_plane \
+	$nmInfo(colormap).pickframe.colormap
+
+pack $nmInfo(colormap).pickframe.colormap_plane \
+	$nmInfo(colormap).pickframe.colormap  -anchor nw -fill x
+
+
+# Corresponding min-max sliders that go along with the opacity map stuff
+if {$opacity_slider_min_limit != $opacity_slider_max_limit} {
+    minmaxscale $nmInfo(opacitymap).scale $opacity_slider_min_limit \
+        $opacity_slider_max_limit 50 opacity_slider_min opacity_slider_max
+    pack $nmInfo(opacitymap).scale -fill x -side top
+    trace variable opacity_slider_min_limit w opacity_scale_newscale
+    trace variable opacity_slider_max_limit w opacity_scale_newscale
+}
+
+#
+# Helper routine for the opacity scale that destroys and then recreates the
+# slider with new values if the endpoints change.
+#
+
+proc opacity_scale_newscale {name element op} {
+    global  opacity_slider_min_limit opacity_slider_max_limit
+    global nmInfo
+    destroy $nmInfo(opacity).scale
+    minmaxscale $nmInfo(opacity).scale $opacity_slider_min_limit \
+	    $opacity_slider_max_limit 50 \
+	    opacity_slider_min opacity_slider_max
+    pack $nmInfo(opacity).scale -fill x -side top
+}
+
+
+
+
+
+
 
 #
 # It requires the the russ_widgets scripts have been executed to define
@@ -100,26 +167,26 @@ set color_slider_max_limit 1
 set color_slider_center [expr ($color_slider_min_limit+$color_slider_max_limit)/2.0]
 set color_slider_range [expr $color_slider_max-$color_slider_min]
 
-generic_entry $nmInfo(colorscale).scales.center color_slider_center \
+generic_entry $nmInfo(colormap).scales.center color_slider_center \
 	"Center ($color_slider_min_limit $color_slider_max_limit)" real
-generic_entry $nmInfo(colorscale).scales.range color_slider_range \
+generic_entry $nmInfo(colormap).scales.range color_slider_range \
 	"Width (0 [expr $color_slider_max_limit -$color_slider_min_limit ])" \
 	real
 
 iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(colorscale).scales.center \
-	$nmInfo(colorscale).scales.range
+	$nmInfo(colormap).scales.center \
+	$nmInfo(colormap).scales.range
 
-pack  $nmInfo(colorscale).scales.center \
-	$nmInfo(colorscale).scales.range -side top -anchor nw
+pack  $nmInfo(colormap).scales.center \
+	$nmInfo(colormap).scales.range -side top -anchor nw
 
 # Autoscales the color map, by setting color_comes_from to it's
 # current value, which prompts the C code to do it.
-button $nmInfo(colorscale).scales.autoscale -text "Autoscale now" \
+button $nmInfo(colormap).scales.autoscale -text "Autoscale now" \
 	-command {
-    set color_comes_from [$nmInfo(colorscale).pickframe.colormap_plane get]
+    set color_comes_from [$nmInfo(colormap).pickframe.colormap_plane get]
 }
-pack $nmInfo(colorscale).scales.autoscale -side top -anchor nw
+pack $nmInfo(colormap).scales.autoscale -side top -anchor nw
 
 # Allow the user to create a flattened plane from the height plane:
 label $nmInfo(flatplane).flatlabel -justify left -text \
@@ -156,15 +223,15 @@ proc color_scale_newscale {name element op} {
     # Change titles to reflect new range
     # format statements keep the labels from getting really long. 
     set newtext [format "%.0f %.0f" $color_slider_min_limit $color_slider_max_limit]
-    $nmInfo(colorscale).scales.center config -labeltext \
+    $nmInfo(colormap).scales.center config -labeltext \
 	"Center ($newtext)"
     set newtext [format "%.0f" [expr $color_slider_max_limit -$color_slider_min_limit ]]
-    $nmInfo(colorscale).scales.range config -labeltext \
+    $nmInfo(colormap).scales.range config -labeltext \
 	"Width (0 $newtext)"
 
     iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(colorscale).scales.center \
-	$nmInfo(colorscale).scales.range
+	$nmInfo(colormap).scales.center \
+	$nmInfo(colormap).scales.range
 
     # new scale, so reset params to the default values 
     set setting_cr 1
@@ -231,13 +298,6 @@ trace variable color_slider_range w color_scale_change
 trace variable color_slider_min w color_scale_change_from_c
 trace variable color_slider_max w color_scale_change_from_c
 
-
-#
-# A button to bring up the control panel for min/max color
-# and other parameters of the CUSTOM color map. 
-#
-button $nmInfo(colorscale).pickframe.setcolor -text "Adjust Custom Colormap" -command adjust_color
-pack $nmInfo(colorscale).pickframe.setcolor
 
 #set these so we can see do " wishx <mainwin.tcl" and test interface
 set minR 0
@@ -484,6 +544,7 @@ set compliance_slider_max_limit 1
 set spring_slider_min_limit 0.01
 set spring_slider_max_limit 1
 set spring_k_slider 0
+
 
 #proc adjust_adhesion {} {
 #    global bc

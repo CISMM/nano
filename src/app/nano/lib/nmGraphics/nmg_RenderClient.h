@@ -40,6 +40,7 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     virtual void setAlphaSliderRange (float, float);
     virtual void setColorMapName (const char *);
     virtual void setColorSliderRange (float, float);
+    virtual void setOpacitySliderRange (float, float);
     virtual void setComplianceSliderRange (float, float);
     virtual void setContourColor (int, int, int);
     virtual void setFrictionSliderRange (float, float);

@@ -565,6 +565,8 @@ proc flip_mod_tool {mod_tool element op} {
 	set plist [lrange [pack slaves $modify.control] 1 1]
 	foreach widg $plist {pack forget $widg}
 	set newmodifyp_control 1
+	# show the modify live controls
+	show.modify_live
     }
 }
 

@@ -72,6 +72,8 @@ class nmb_Dataset {
       ///< name of the color map to use
     nmb_String * contourPlaneName;
       ///< name of the plane to render contours for
+    nmb_String * opacityPlaneName;
+      ///< name of the plane to render opacity for
     nmb_String * heightPlaneName;
       ///< name of the plane to render as height (Z)
 

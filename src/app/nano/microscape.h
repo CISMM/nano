@@ -185,6 +185,10 @@ extern  Tclvar_float            bump_slider_min, bump_slider_max;
 extern  Tclvar_string         bumpPlaneName;
 
 //--------------------------------------------------------------------------
+///This selects the plane to map opacity to.
+extern  Tclvar_string           bumpPlaneName;
+
+//--------------------------------------------------------------------------
 ///These select the plane to map buzz amplitude from and the scale of the mapping
 extern  Tclvar_float            buzz_slider_min_limit;
 extern  Tclvar_float            buzz_slider_max_limit;

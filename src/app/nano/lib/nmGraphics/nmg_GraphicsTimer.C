@@ -128,6 +128,11 @@ void nmg_Graphics_Timer::setColorSliderRange (float low, float high) {
   d_imp->setColorSliderRange(low, high);
 }
 
+void nmg_Graphics_Timer::setOpacitySliderRange (float low, float high) {
+  activateTimer();
+  d_imp->setOpacitySliderRange(low, high);
+}
+
 void nmg_Graphics_Timer::setComplianceSliderRange (float low, float high) {
   activateTimer();
   d_imp->setComplianceSliderRange(low, high);
@@ -199,6 +204,11 @@ void nmg_Graphics_Timer::setColorPlaneName (const char * n) {
 void nmg_Graphics_Timer::setContourPlaneName (const char * n) {
   activateTimer();
   d_imp->setContourPlaneName(n);
+}
+
+void nmg_Graphics_Timer::setOpacityPlaneName (const char * n) {
+  activateTimer();
+  d_imp->setOpacityPlaneName(n);
 }
 
 void nmg_Graphics_Timer::setHeightPlaneName (const char * n) {

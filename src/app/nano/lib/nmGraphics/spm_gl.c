@@ -384,6 +384,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     Color[0] = planes.red->value(x, y);
     Color[1] = planes.green->value(x, y);
     Color[2] = planes.blue->value(x, y);
+    
     if ( (g_null_data_alpha_toggle) && Vertex[2] == 0.0 ) {
       Color[3] = 0.0f;
     }
@@ -402,6 +403,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
       float r, g, b, a;
       g_curColorMap->lookup(scale, &r, &g, &b, &a);
       Color[0] = r; Color[1] = g; Color[2] = b; 
+      
       if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
 	Color[3] = (GLubyte) 0;
       }
@@ -433,10 +435,10 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 	Color[2] = g_minColor[2];
 	if (Vertex[2] == 0.0)  {
 	    Color[3] =  0;
-	   }
+	}
 	else {
 	    Color[3] = g_surface_alpha * 255;
-	   }
+	}
 	
   }
 
@@ -448,8 +450,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
       vertexArray.Color[2] = (GLubyte) (Color[2] * 255); 
       if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
 	vertexArray.Color[3] = 0;
-      }
-      else {
+      } else {
         vertexArray.Color[3] = (GLubyte) (g_surface_alpha * 255);
       }
     }
@@ -462,7 +463,9 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 	glColor4fv(Color);
       }
     }
+
   }
+
 
 #ifndef PROJECTIVE_TEXTURE
   // Realigning Textures, no need to recalculate  
@@ -564,7 +567,17 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     }
   }
 
-  
+  if (planes.opacity) {
+    float opacity_value = (planes.opacity->value(x, y) - g_opacity_slider_min) /
+	(g_opacity_slider_max - g_opacity_slider_min);      
+    if (g_VERTEX_ARRAY) {
+      vertexArray.Color[3] = (GLubyte) min(255.0, opacity_value);
+    } else {
+      Color[3] = min(1.0, (opacity_value / 255.0));
+      glColor4fv(Color);
+    }
+  }
+
 #ifdef  FLOW
   // Define the texture coordinate for pxfl
   {

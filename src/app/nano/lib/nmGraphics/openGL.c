@@ -446,8 +446,14 @@ int draw_world (int) {
   TIMERVERBOSE(5, mytimer, "draw_world:Looking up planes");
 
   nmb_PlaneSelection planes;
+  /*
   planes.lookup(g_inputGrid, g_heightPlaneName,
                 g_colorPlaneName, g_contourPlaneName, g_alphaPlaneName);
+  */
+  
+  planes.lookup(g_inputGrid, g_heightPlaneName, g_colorPlaneName,
+                g_contourPlaneName, g_opacityPlaneName, g_alphaPlaneName);
+
   if (g_PRERENDERED_COLORS) {
     planes.lookupPrerenderedColors(g_prerendered_grid);
   }

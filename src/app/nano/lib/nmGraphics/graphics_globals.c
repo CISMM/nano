@@ -19,6 +19,9 @@ ColorMap * g_curColorMap = NULL;
 float g_color_slider_min = 0.0f;
 float g_color_slider_max = 1.0f;
 
+float g_opacity_slider_min = 0.0f;
+float g_opacity_slider_max = 1.0f;
+
 char * g_textureDir = NULL;
 
 int g_config_chartjunk = 1;
@@ -193,6 +196,7 @@ char g_alphaPlaneName [128];
 char g_colorPlaneName [128];
 char g_contourPlaneName [128];
 char g_heightPlaneName [128];
+char g_opacityPlaneName [128];
 
 #ifdef FLOW
 

@@ -162,6 +162,9 @@ class nmg_Graphics {
     virtual void setColorSliderRange (float low, float hi) = 0;
       // Specifies the range of values over which to interpolate
       // the color map.
+    virtual void setOpacitySliderRange (float low, float hi) = 0;
+      // Specifies the range of values over which to interpolate
+      // the opacity map.
 
     virtual void setTextureDirectory (const char *) = 0;
       // Specifies the path in which to search for textures.
@@ -201,6 +204,7 @@ class nmg_Graphics {
     virtual void setAlphaPlaneName (const char *) = 0;
     virtual void setColorPlaneName (const char *) = 0;
     virtual void setContourPlaneName (const char *) = 0;
+    virtual void setOpacityPlaneName (const char *) = 0;
     virtual void setHeightPlaneName (const char *) = 0;
 
     virtual void setIconScale (float) = 0;
@@ -296,7 +300,7 @@ class nmg_Graphics {
 
     virtual void setTextureMode (TextureMode,TextureTransformMode) = 0;
       // Determines which texture to display currently.
-      // q.v. enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA };
+      // q.v. enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA, OPACITYMAP };
 
     virtual void setTextureScale (float) = 0;
       // Interval between contour lines.
@@ -402,6 +406,7 @@ class nmg_Graphics {
     vrpn_int32 d_setColorMapDirectory_type;
     vrpn_int32 d_setColorMapName_type;
     vrpn_int32 d_setColorSliderRange_type;
+    vrpn_int32 d_setOpacitySliderRange_type;
     vrpn_int32 d_setTextureDirectory_type;
     vrpn_int32 d_setComplianceSliderRange_type;
     vrpn_int32 d_setContourColor_type;
@@ -414,6 +419,7 @@ class nmg_Graphics {
     vrpn_int32 d_setAlphaPlaneName_type;
     vrpn_int32 d_setColorPlaneName_type;
     vrpn_int32 d_setContourPlaneName_type;
+    vrpn_int32 d_setOpacityPlaneName_type;
     vrpn_int32 d_setHeightPlaneName_type;
     vrpn_int32 d_setIconScale_type;
     vrpn_int32 d_setMinColor_type;
@@ -525,6 +531,9 @@ class nmg_Graphics {
     char * encode_setColorSliderRange (int * len, float low, float hi);
     int decode_setColorSliderRange (const char * buf,
                                      float * low, float * hi);
+    char * encode_setOpacitySliderRange (int * len, float low, float hi);
+    int decode_setOpacitySliderRange (const char * buf,
+				      float * low, float * hi);
     char * encode_setComplianceSliderRange (int * len, float low, float hi);
     int decode_setComplianceSliderRange (const char * buf,
                                      float * low, float * hi);

@@ -57,6 +57,9 @@ extern ColorMap * g_curColorMap;
 extern float g_color_slider_min;
 extern float g_color_slider_max;
 
+extern float g_opacity_slider_min;
+extern float g_opacity_slider_max;
+
 extern char * g_textureDir;
 
 extern float g_compliance_slider_min;
@@ -199,6 +202,7 @@ extern Position_list * g_positionListR;  // for the right side of the sweep mark
 #define SEM_DATA_TEX_ID         5
 #define REMOTE_DATA_TEX_ID      6
 
+
 #define NMG_DEFAULT_IMAGE_WIDTH (512)
 #define NMG_DEFAULT_IMAGE_HEIGHT (512)
 
@@ -227,6 +231,7 @@ extern char g_alphaPlaneName [128];
 extern char g_colorPlaneName [128];
 extern char g_contourPlaneName [128];
 extern char g_heightPlaneName [128];
+extern char g_opacityPlaneName [128];
 
 extern BCGrid * g_inputGrid;
 
