@@ -4,9 +4,10 @@ ifeq ($(MAKECMDGOALS),afmcntsim)
    EXTRA_CFLAGS+=-DAFMSIM
 endif
 
-# EXTRA_CFLAGS+=-I/afs/unc/proj/walk/include
+ifeq ($(HW_OS),sgi_irix)
 LATE_INCLUDE_PATH := -I/afs/unc/proj/walk/include
 LATE_LOAD_PATH := -L/afs/unc/proj/walk/lib/$(HW_OS).$(SGI_ABI)
+endif
 #LATE_LIBRARIES := -lglut
 
 include ../Makefile.share
