@@ -1,3 +1,10 @@
+2001-12-13  Nathan Conrad  <conrad@cs.unc.edu>
+
+	* Makefile: Rewrote most of the targets such that they directories
+	they use are in variables at the top of the makefile. Also, I
+	added a 'generate' target for the app/nano/lib/nmMScope directory.
+	The default target and depend depend upon 'generate'.
+
 2001-07-16  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* vc-setup:  removed this file to the module

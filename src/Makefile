@@ -6,38 +6,63 @@ TAGS_CMD=etags
 TAGS_FILENAME=TAGS
 TAGS_FLAGS=-C -I -a
 TAGS_CMD_LINE=xargs -0 -e ${TAGS_CMD} ${TAGS_FLAGS}
-.PHONY: nano-all lib app/nano/lib app/nano install clean clean_view
 
-nano-all: lib app/nano/lib app/nano
-nano-app: app/nano/lib app/nano
+########################################################
+# We need to generate in the following directories:
+# this should probably be moved into app/nano/Makefile
+#
 
-lib:
-	$(MAKE) -C lib
+GENERATE_DIRS := app/nano/lib/nmMScope/
+NANO-ALL-DIRS := lib/ app/nano/lib/ app/nano/
+NANO-APP-DIRS := app/nano/lib/ app/nano/
+INSTALL-DIRS  := app/nano/
 
-app/nano: app/nano/lib
-	$(MAKE) -C app/nano
+.PHONY: nano-all nano-app
 
+#
+# Set the default target, and define building the app only
+#
 
-### this should probably be moved into app/nano/Makefile
-app/nano/lib:
-	$(MAKE) -C app/nano/lib
+nano-all: generate $(addsuffix .make,$(NANO-ALL-DIRS))
 
-install:
-	$(MAKE) -C app/nano install
+nano-app: generate $(addsuffix .make,$(NANO-APP-DIRS))
 
-clean:
-	$(MAKE) -C lib clean
-	$(MAKE) -C app/nano/lib clean
-	$(MAKE) -C app/nano clean
+#
+# Default clean, depend, and generate for app/nano
+#
+
+.PHONY: install clean clean_view generate depend
+
+install:  $(addsuffix .install,$(INSTALL_DIRS))
+
+clean:    $(addsuffix .clean,$(NANO-ALL-DIRS))
+
+depend: generate $(addsuffix .depend,$(NANO-ALL-DIRS))
+
+generate: $(addsuffix .generate,$(GENERATE_DIRS))
 
 clean_view:
 	$(MAKE) -C app/nano clean_view
 
-.PHONY: depend
-depend:
-	$(MAKE) -C lib depend
-	$(MAKE) -C app/nano/lib depend
-	$(MAKE) -C app/nano depend
+#
+# Implicit rules for generating and cleaning
+#
+
+.PHONY: %.generate %.make %.depend %.clean
+
+%.make: %
+	$(MAKE) -wC $< 
+
+%.generate: %
+	$(MAKE) -wC $< generate
+
+%.clean: %
+	$(MAKE) -wC $< clean
+
+%.install: %
+	$(MAKE) -wC $< install
+
+
 
 ### buid an emacs tags table.  The files will be in the table in the
 ### order they are given to etags.  We want .h files to come first.
