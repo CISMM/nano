@@ -1,8 +1,9 @@
 #include "URProjectiveTexture.h"
 #include "GL/glu.h"
+#include "error_display.h"
 
 URProjectiveTexture::URProjectiveTexture():
-  d_textureCreated(false),
+  d_textureObjectCreated(false),
   d_imageChangedSinceTextureInstalled(false),
   d_enabled(false),
   d_doingFastUpdates(false),
@@ -12,13 +13,15 @@ URProjectiveTexture::URProjectiveTexture():
   d_textureMatrixNumX(0),
   d_textureMatrixNumY(0),
   d_textureBlendFunction(GL_DECAL),
-  d_opacity(1),
+  d_opacity(1.0),
   d_colormap_data_min(0),
   d_colormap_data_max(1),
   d_colormap_color_min(0),
   d_colormap_color_max(1),
   d_colormap(NULL),
-  d_update_colormap(false)
+  d_update_colormap(false),
+  d_greyscaleImageTooBig(false),
+  d_colorImageTooBig(false)
 {
 
 }
@@ -33,9 +36,9 @@ int URProjectiveTexture::setOpacity(double opacity)
 {
 	// clamp to [0..1]
 	if (opacity > 1) {
-		d_opacity = 1;
+		d_opacity = 1.0;
 	} else if (opacity < 0) {
-		d_opacity = 0;
+		d_opacity = 0.0;
 	} else {
 		d_opacity = opacity;
 	}
@@ -47,8 +50,8 @@ int URProjectiveTexture::setImage(nmb_Image *image)
 	d_colorImage = NULL;
     if (d_greyscaleImage) {
         if (d_greyscaleImage->width() != image->width() || 
-            d_greyscaleImage->height() != image->height()/* ||
-            d_greyscaleImage != image*/) {
+            d_greyscaleImage->height() != image->height() ||
+            d_greyscaleImage != image) {
             d_imageChangedSinceTextureInstalled = true;
         }
     }
@@ -84,10 +87,12 @@ int URProjectiveTexture::installTexture(int width, int height, void *data,
 					GLuint internalFormat, GLuint dataFormat, GLuint dataType,
 					GLuint wrapMode)
 {
-	if (!d_textureCreated) {
+	
+	if (!d_textureObjectCreated) {
 		glGenTextures(1, &d_textureID);
-		d_textureCreated = true;
+		d_textureObjectCreated = true;
 	}
+
 	glBindTexture(GL_TEXTURE_2D, d_textureID);
 	d_textureMatrixNumX = width;
 	d_textureMatrixNumY = height;
@@ -122,13 +127,13 @@ int URProjectiveTexture::installTexture(int width, int height, void *data,
 
 int URProjectiveTexture::createTexture(bool doFastUpdates)
 {
+	glPushAttrib(GL_TEXTURE_BIT);
 	if (d_greyscaleImage) {
-		if (!d_textureCreated){
+		if (!d_textureObjectCreated){
 			glGenTextures(1, &d_textureID);
-			d_textureCreated = true;
+			d_textureObjectCreated = true;
 		}
 		glBindTexture(GL_TEXTURE_2D, d_textureID);
-
 		d_textureMatrixNumX = d_greyscaleImage->width() + 
 			d_greyscaleImage->borderXMin() + d_greyscaleImage->borderXMax();
 		d_textureMatrixNumY = d_greyscaleImage->height() + 
@@ -139,6 +144,7 @@ int URProjectiveTexture::createTexture(bool doFastUpdates)
 		log_base2 = log((double)d_textureMatrixNumY)/log(2.0);
 		d_textureMatrixNumY = (int)pow(2.0, ceil(log_base2));
 
+		
 		if (doFastUpdates) {
 			initTextureMatrixNoMipmap();
 			updateTextureNoMipmap();
@@ -148,9 +154,9 @@ int URProjectiveTexture::createTexture(bool doFastUpdates)
 		d_doingFastUpdates = doFastUpdates;
 		d_imageChangedSinceTextureInstalled = false;
 	} else if (d_colorImage) {
-		if (!d_textureCreated){
+		if (!d_textureObjectCreated){
 			glGenTextures(1, &d_textureID);
-			d_textureCreated = true;
+			d_textureObjectCreated = true;
 		}
 		d_textureMatrixNumX = d_colorImage->nx;
 		d_textureMatrixNumY = d_colorImage->ny;
@@ -161,6 +167,7 @@ int URProjectiveTexture::createTexture(bool doFastUpdates)
 		loadColorImageMipmap();
 	}
 
+	glPopAttrib();
 	return 0;
 }
 
@@ -172,7 +179,7 @@ int URProjectiveTexture::enable(double *textureTransform,
 		fprintf(stderr, "URProjectiveTexture::enable: Error, already enabled\n");
 		return -1;
 	}
-	if (!d_textureCreated && !d_greyscaleImage && !d_colorImage) return 0;
+	if (!d_textureObjectCreated && !d_greyscaleImage && !d_colorImage) return 0;
 
 	double imageToTexture[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
 
@@ -202,7 +209,10 @@ int URProjectiveTexture::enable(double *textureTransform,
 	glEnable(GL_TEXTURE_GEN_T);
 	glEnable(GL_TEXTURE_GEN_R);
 	glEnable(GL_TEXTURE_GEN_Q);
-	glBindTexture(GL_TEXTURE_2D, d_textureID);
+	if (d_textureObjectCreated) {
+		glBindTexture(GL_TEXTURE_2D, d_textureID);
+	}
+	
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, d_textureBlendFunction);
 	GLfloat textureEnvColor[4] = {1.0, 1.0, 1.0, 1.0};
 	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR,textureEnvColor);
@@ -280,6 +290,7 @@ int URProjectiveTexture::disable()
 	glMatrixMode(GL_TEXTURE);
 	glPopMatrix();
 
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_TEXTURE_GEN_S);
 	glDisable(GL_TEXTURE_GEN_T);
@@ -319,7 +330,12 @@ int URProjectiveTexture::height() {
 }
 
 void URProjectiveTexture::setColorMap(nmb_ColorMap* colormap) {
-    d_colormap = colormap;
+	if (d_colormap) delete d_colormap;
+	if (colormap) {
+		d_colormap = new nmb_ColorMap(*colormap);
+	} else {
+		d_colormap = NULL;
+	}
 }
 
 void URProjectiveTexture::setColorMapMinMax(float data_min, float data_max, float color_min, float color_max) {
@@ -335,6 +351,9 @@ void URProjectiveTexture::setUpdateColorMap(bool value) {
 
 int URProjectiveTexture::updateTextureNoMipmap()
 {
+	if (d_greyscaleImageTooBig) {
+		return -1;
+	}
 	if (!d_greyscaleImage) {
 		return -1;
 	}
@@ -349,21 +368,31 @@ int URProjectiveTexture::updateTextureNoMipmap()
 	int imageBufferNumY = height + YMin + YMax;
 	void *imageData = d_greyscaleImage->pixelData();
 
+
+
     int pixelType;
+	int pixelSize;
     if (d_greyscaleImage->pixelType() == NMB_UINT8){
         pixelType = GL_UNSIGNED_BYTE;
+		pixelSize = sizeof(GLubyte);
     } 
     else if (d_greyscaleImage->pixelType() == NMB_UINT16){
         pixelType = GL_UNSIGNED_SHORT;
+		pixelSize = sizeof(GLushort);
     } 
     else if (d_greyscaleImage->pixelType() == NMB_FLOAT32){
         pixelType = GL_FLOAT;
+		pixelSize = sizeof(GLfloat);
     } 
     else {
         fprintf(stderr, "URProjectiveTexture::updateTexture:"
              "can't handle pixel type\n"); 
         return -1;      
     }
+
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+	glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
 
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, d_textureID);
@@ -399,19 +428,32 @@ int URProjectiveTexture::updateTextureNoMipmap()
         glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
     }
 
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
 
+    glPixelTransferf(GL_ALPHA_SCALE, d_opacity);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+/*
+	XXX - for some strange reason, the value given for GL_UNPACK_SKIP_PIXELS 
+	isn't having the desired effect - the whole row of the texture is getting
+	transferred instead of just the part of the row specified
     glPixelStorei(GL_UNPACK_SKIP_ROWS, YMin);
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, XMin);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, imageBufferNumX);
-
-    glPixelTransferf(GL_ALPHA_SCALE, d_opacity);
-
-    glTexSubImage2D(GL_TEXTURE_2D, 0, XMin, YMin,
+	glTexSubImage2D(GL_TEXTURE_2D, 0, XMin, YMin,
                     width, height,
                     GL_LUMINANCE, pixelType, imageData);
+*/
+	// A workaround that has the desired result (AAS):
+	void *offsetImageData = ((GLubyte *)imageData + (XMin + YMin*imageBufferNumX)*pixelSize);
+	int i;
+	for (i = 0; i < height; i++) {
+		glTexSubImage2D(GL_TEXTURE_2D, 0, XMin, YMin+i,
+						width, 1,
+						GL_LUMINANCE, pixelType, offsetImageData);
+		offsetImageData = ((GLubyte *)offsetImageData + imageBufferNumX*pixelSize);
+	}
 
+
+	glPopClientAttrib();
     glPopAttrib();
 
     return 0;
@@ -441,8 +483,39 @@ int URProjectiveTexture::initTextureMatrixNoMipmap()
   }
 
   int array_size = 2*d_textureMatrixNumX*d_textureMatrixNumY;
-  void* clearData; 
-  
+  void* clearData = NULL; 
+
+  // Check to see if there is enough texture memory
+  // XXX - The X and Y dimensions are doubled as a hack to get this to warn
+  // us before its too late. The problem may be that some other part of the
+  // program could be using texture resources and we wouldn't know about it
+  // and this way of checking only tells us if we have enough texture memory
+  // assuming all texture resources are available to us (see the opengl red book)
+  // Checking this is better than doing no check at all but I can't guarantee
+  // that this is a failsafe. (AAS)
+  glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA,
+                    d_textureMatrixNumX*2, d_textureMatrixNumY*2, 0, 
+                    GL_LUMINANCE_ALPHA, pixelType, NULL);
+  GLint installedWidth;
+  GLint installedHeight;
+  glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0,
+			GL_TEXTURE_WIDTH, &installedWidth);
+  glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0,
+			GL_TEXTURE_HEIGHT, &installedHeight);
+  bool outOfTextureMemory = (installedWidth == 0 || installedHeight == 0);
+
+  if (outOfTextureMemory) {
+    display_warning_dialog("Warning, the image, %s,\nis too big to display as a texture",
+		d_greyscaleImage->name()->c_str());
+    d_greyscaleImageTooBig = true;
+  } else {
+    d_greyscaleImageTooBig = false;
+  }
+
+  if (d_greyscaleImageTooBig) {
+	  return -1;
+  }
+
   if (pixelType == GL_UNSIGNED_BYTE) {
       clearData = new GLubyte [array_size];
 
@@ -479,13 +552,18 @@ int URProjectiveTexture::initTextureMatrixNoMipmap()
       }
       
       glPushAttrib(GL_TEXTURE_BIT);
+	  glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
       glBindTexture(GL_TEXTURE_2D, d_textureID);
 
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-            d_textureMatrixNumX, d_textureMatrixNumY, 0, 
-            GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, clearData);
+	  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+	  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+				d_textureMatrixNumX, d_textureMatrixNumY, 0, 
+				GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, clearData);
+
+	  glPopClientAttrib();
       glPopAttrib();
+
   }
   else if (pixelType == GL_UNSIGNED_SHORT) {
       clearData = new GLushort [array_size];
@@ -497,17 +575,17 @@ int URProjectiveTexture::initTextureMatrixNoMipmap()
       }
 
       int i , j , k = 0;
-      GLubyte value, alpha;
+      GLushort value, alpha;
       for (i = 0; i < d_textureMatrixNumX; i++){
         for (j = 0; j < d_textureMatrixNumY; j++){
           switch(d_textureBlendFunction) {
           case GL_BLEND:
-             value = 20*((i/30+j/30)%2);
-             alpha = 255;
+             value = 5000*((i/30+j/30)%2);
+             alpha = 65535;
              break;
           case GL_MODULATE:
-             value = 200 + 55*((i/30+j/30)%2);
-             alpha = 255;//200 + 55*((i/60+j/60)%2);
+             value = 55535 + 10000*((i/30+j/30)%2);
+             alpha = 65535;
              break;
           case GL_DECAL:
              value = 0;
@@ -525,7 +603,7 @@ int URProjectiveTexture::initTextureMatrixNoMipmap()
       glPushAttrib(GL_TEXTURE_BIT);
       glBindTexture(GL_TEXTURE_2D, d_textureID);
 
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+	  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
             d_textureMatrixNumX, d_textureMatrixNumY, 0, 
             GL_LUMINANCE_ALPHA, GL_UNSIGNED_SHORT, clearData);
 
@@ -546,12 +624,12 @@ int URProjectiveTexture::initTextureMatrixNoMipmap()
         for (j = 0; j < d_textureMatrixNumY; j++){
           switch(d_textureBlendFunction) {
           case GL_BLEND:
-             value = 20*((i/30+j/30)%2);
-             alpha = 255;
+             value = ((i/30+j/30)%2);
+             alpha = 1.0;
              break;
           case GL_MODULATE:
-             value = 200 + 55*((i/30+j/30)%2);
-             alpha = 255;//200 + 55*((i/60+j/60)%2);
+             value = 0.8 + 0.2*((i/30+j/30)%2);
+             alpha = 1.0;
              break;
           case GL_DECAL:
              value = 0;
@@ -570,14 +648,16 @@ int URProjectiveTexture::initTextureMatrixNoMipmap()
  //     glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, d_textureID);
 
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+	  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
             d_textureMatrixNumX, d_textureMatrixNumY, 0, 
             GL_LUMINANCE_ALPHA, GL_FLOAT, clearData);
 
       glPopAttrib();
   }
 
-  delete [] clearData;
+  if (clearData) {
+	delete [] clearData;
+  }
   return 0;
 }
 
@@ -611,7 +691,8 @@ int URProjectiveTexture::updateTextureMipmap()
     }
 
 	//glPushAttrib(GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
-	glPushAttrib(GL_ALL_ATTRIB_BITS); // ALL needed for glPixelStore
+	glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, d_textureID);
 
@@ -657,7 +738,7 @@ int URProjectiveTexture::updateTextureMipmap()
                     ((GLubyte*)imageDataAlpha)[2 * k + 1] = 0;    // zero alpha for border
                 }
                 else {
-                    ((GLubyte*)imageDataAlpha)[2 * k + 1] = d_opacity;
+                    ((GLubyte*)imageDataAlpha)[2 * k + 1] = d_opacity*255;
                 }
                 k++;
             }
@@ -672,7 +753,7 @@ int URProjectiveTexture::updateTextureMipmap()
                     ((GLushort*)imageDataAlpha)[2 * k + 1] = 0;    // zero alpha for border
                 }
                 else {
-                    ((GLushort*)imageDataAlpha)[2 * k + 1] = d_opacity;
+                    ((GLushort*)imageDataAlpha)[2 * k + 1] = d_opacity*65535;
                 }
                 k++;
             }
@@ -712,6 +793,7 @@ int URProjectiveTexture::updateTextureMipmap()
 	d_textureMatrixNumY = imageBufferNumY;
 
 	glPopAttrib();
+	glPopClientAttrib();
 	return 0;
 }
 
@@ -762,7 +844,7 @@ void URProjectiveTexture::loadColorImageMipmap()
 	// in the upper left corner, and our coordinate system in the lower
 	// left.
 	if (d_textureBlendFunction == GL_DECAL) {
-		a = d_opacity;
+		a = d_opacity*255;
 	} else {
 		a = 255;
 	}
@@ -773,9 +855,9 @@ void URProjectiveTexture::loadColorImageMipmap()
 		for (x = 0; x < imageNumX; x++) {
 			d_colorImage->Tellppm(x,y, &r, &g, &b);
 			if (d_textureBlendFunction != GL_DECAL) {
-				r = (GLubyte)((float)r*d_opacity/255.0);
-				g = (GLubyte)((float)g*d_opacity/255.0);
-				b = (GLubyte)((float)b*d_opacity/255.0);
+				r = (GLubyte)((float)r*d_opacity);
+				g = (GLubyte)((float)g*d_opacity);
+				b = (GLubyte)((float)b*d_opacity);
 			}
 			texture[texelIndex*4] = r;
 			texture[texelIndex*4+1] = g;
@@ -785,11 +867,13 @@ void URProjectiveTexture::loadColorImageMipmap()
 		}
 	}
 
+	glPushAttrib(GL_TEXTURE_BIT);
+	glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 	glBindTexture(GL_TEXTURE_2D, d_textureID);
-	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
 
 	glTexParameteri( GL_TEXTURE_2D, 
 		GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -808,6 +892,8 @@ void URProjectiveTexture::loadColorImageMipmap()
 			printf(" Error making texture.\n");
 		}
 	}
+	glPopClientAttrib();
+	glPopAttrib();
 
 	delete [] texture;
 }

@@ -62,7 +62,7 @@ class URProjectiveTexture {
   int initTextureMatrixNoMipmap();
   int updateTextureMipmap();
   void loadColorImageMipmap();
-  bool d_textureCreated;
+  bool d_textureObjectCreated;
   bool d_imageChangedSinceTextureInstalled;
   bool d_enabled;
   bool d_doingFastUpdates;
@@ -70,7 +70,9 @@ class URProjectiveTexture {
   GLuint d_textureID;
 
   nmb_Image *d_greyscaleImage;
+  bool d_greyscaleImageTooBig;
   PPM *d_colorImage;
+  bool d_colorImageTooBig;
 
   // texture matrix size - typically a power of two because thats what
   // openGL requires

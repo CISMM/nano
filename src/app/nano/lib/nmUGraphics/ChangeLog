@@ -1,3 +1,25 @@
+2002-11-06  Adam Seeger  <seeger@cs.unc.edu>
+
+	* URProjectiveTexture.[Ch] (setImage): uncommented check of image pointer
+	(createTexture): added glPushAttrib()/glPopAttrib() to fix a bug
+	(setColorMap): now we allocate our own copy of the colormap instead of
+	storing a pointer
+
+	(updateTextureNoMipmap): returns without doing anything if the image is
+	too big for texture memory; added calls to glPushAttrib(),glPopAttrib() and 
+	glPushClientAttrib(), glPopClientAttrib(); fixed this so it doesn't
+	read the whole line of the image - just the subimage part - for some
+	reason this wasn't working as expected according to the opengl docs
+
+	(initTextureMatrixNoMipmap): added check using the texture proxy to
+	help avoid loading a texture that is too big for memory - this was causing
+	the program to crash later when glTexSubImage was called
+	Fixed bug with use of d_opacity - there was some confusion over whether
+	it went from 0 to 255 or 0 to 1 - used the latter assumption
+	Added calls to glPushAttrib/glPopAttrib, 
+	glPushClientAttrib/glPopClientAttrib
+
+
 2002-11-04  David Borland <borland@cs.unc.edu>
 
         * URProjectiveTexture.[Ch] : changes so that the video texture
