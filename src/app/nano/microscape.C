@@ -534,6 +534,19 @@ TclNet_string openSPMDeviceName("open_spm_device_name", "");
 /// is opened, try to log to the filename specified. 
 Tclvar_string openSPMLogName("open_spm_log_name", "");
 
+// The following two variables are used for error checking when the program
+// starts from the command line.  If the user specifies a device (-d) without
+// specifying an outputStream (-o), check_streamfile_save gets sets right before
+// microscope initialization, causing a dialog box to prompt the user for a
+// fileName (see filemenu.tcl [popup_check_streamfile_dialog]).  
+Tclvar_int check_streamfile_save("check_streamfile_save",0);
+
+// check_file_exists will always get set before microscope initialization,
+// causing the program to ensure that the file specified with -o does not
+// already exist.  If it does exist, the user is prompted for a new fileName
+// (see filemenu.tcl [popup_check_file_exists])
+Tclvar_int check_file_exists("check_file_exists",0);
+
 /// When you choose a plane of data to save, this list is set
 /// to the possible formats.
 static Tclvar_list_of_strings export_formats("export_formats");
@@ -7343,8 +7356,7 @@ int main (int argc, char* argv[])
     // to the microscope.
     initialize_rtt();
 
-
-    //fprintf(stderr, "About to init microscope\n");
+    VERBOSE(1, "About to init microscope\n");
 
     // If user has specified a stream file with -i option, try
     // to open it as a VRPN stream file. 
@@ -7364,6 +7376,7 @@ int main (int argc, char* argv[])
                                    " NanoManipulator Viewer. Exiting...");
         return -1;
 #endif
+
         // Open a device connection, specified with -d option, probably. 
         if (strncmp(istate.afm.deviceName, "file:", 5) == 0) {
             // someone specified a streamfile using device arg. 
@@ -7372,7 +7385,18 @@ int main (int argc, char* argv[])
             handle_openStreamFilename_change(NULL, (void *)&istate);
         } else {
             openSPMDeviceName = istate.afm.deviceName;
-            openSPMLogName = istate.afm.outputStreamName;
+			if(istate.afm.writingStreamFile)
+			{
+				openSPMLogName = istate.afm.outputStreamName;
+			}
+			else
+			{
+				openSPMLogName = "";
+				// popup fileName chooser dialog (filemenu.tcl)
+				check_streamfile_save = 1;
+			}
+			// if file already exists, popup new fileName dialog (filemenu.tcl)
+			check_file_exists = 1;
             handle_openSPMDeviceName_change(NULL, (void *)&istate);
         }
     } else {
@@ -7380,6 +7404,7 @@ int main (int argc, char* argv[])
         // been passed to the microscope, like -f or -fi
         createNewMicroscope(istate, NULL);
     }
+
 
 //      if (createNewMicroscope(istate, microscope_connection)) {
 //        display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
