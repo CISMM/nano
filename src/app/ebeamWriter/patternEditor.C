@@ -544,43 +544,10 @@ void PatternEditor::saveImageBuffer(const char *filename,
   glPixelStorei(GL_PACK_ALIGNMENT, 4);
   glReadBuffer(GL_FRONT);
 
-
-  char filename_with_type[128];
-  const char *psuffix = filename+strlen(filename)-strlen(filetype);
-  char compSuffix[16];
-  if (strcmp(filetype, "TIFF")==0 ||
-	  strcmp(filetype, "TIF")==0) {
-	sprintf(compSuffix, ".tif");
-  } else if (strcmp(filetype, "JPG")==0 ||
-	         strcmp(filetype, "JPEG") == 0) {
-	sprintf(compSuffix, ".jpg");
-  } else if (strcmp(filetype, "BMP") == 0) {
-	sprintf(compSuffix, ".bmp");
-  } else if (strcmp(filetype, "PGM") == 0) {
-	sprintf(compSuffix, ".pgm");
-  } else {
-	sprintf(compSuffix, ".%s", filetype);
-  }
-  if (strlen(filename) < strlen(filetype) ||
-	  strcmp(psuffix, compSuffix) != 0) {
-	sprintf(filename_with_type, "%s.%s", filename, filetype);
-  } else {
-	sprintf(filename_with_type, "%s", filename);
-  }
-  
-  //AbstractImage *ai = ImageMaker(filetype, h, w, 3, pixels, true);
-  if(nmb_ImgMagick::writeFileMagick(filename_with_type, NULL, w, h, 3, pixels)) {
-      fprintf(stderr, "Failed to write screen to '%s'!\n", filename_with_type);
+  if(nmb_ImgMagick::writeFileMagick(filename, filetype, w, h, 3, pixels)) {
+      fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
   }
   delete [] pixels;
-  /*
-  if (ai)
-  {
-    if (!ai->Write(filename))
-       fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
-    delete ai;
-  }
-  */
 }
 
 void PatternEditor::setViewport(double minX_nm, double minY_nm, 
