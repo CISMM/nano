@@ -16,11 +16,13 @@
 #include <fstream.h>
 #include <quat.h>
 
+#include <vector>
+
 #ifdef sgi
-using std::vector
+using std::vector;
 #endif
 
-#include <vector>
+
 
 class UTree;
 extern UTree World;
