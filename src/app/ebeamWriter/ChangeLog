@@ -1,3 +1,10 @@
+2001-01-08  Adam Seeger  <seeger@cs.unc.edu>
+
+	* patternEditor.C (updateDisplayTransform): fixed bug here so it
+	won't try to set the transform for the image when NULL is passed in
+	for the transformation (indicating that we just want the image to
+	be redrawn)
+	
 2001-12-18  Adam Seeger  <seeger@cs.unc.edu>
 
 	* patternEditor.C (setImageOpacity): added a call to sort the images

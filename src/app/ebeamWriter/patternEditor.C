@@ -539,7 +539,9 @@ void PatternEditor::updateDisplayTransform(nmb_Image *image, double *transform)
   for (imIter = d_images.begin();
        imIter != d_images.end(); imIter++) {
     if ((*imIter).d_image == image) {
-      image->setWorldToImageTransform(transform);
+      if (transform) {
+        image->setWorldToImageTransform(transform);
+      }
       if ((*imIter).d_enabled) {
         d_images.sort();
         d_viewer->dirtyWindow(d_mainWinID);
