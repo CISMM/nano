@@ -135,7 +135,10 @@ proc show_tool {name path nm element op} {
 	# Slow line 3d tool
 	$path configure -text "Slow Line 3d"
     } elseif { $tool == 6 } {
+	# Feelahead tool
         $path configure -text "Feelahead"
+    } elseif { $tool == 7 } {
+	$path configure -text "Optimize Now"
     }
 }
 
@@ -231,6 +234,9 @@ set modifyp_control 0
 set modifyp_style 0
 set modifyp_tool 0
 set modifyp_constr_xyz_mode 0
+set modifyp_optimize_now 3
+
+trace variable modifyp_optimize_now w flip_optimize_selection_mode
 
 set modifyp_setpoint 1.0
 set modifyp_p_gain 1.0
@@ -666,11 +672,13 @@ radiobutton $nmInfo(modifyfull).tool.slow_line_3d -text "Slow Line 3D"\
 	-variable newmodifyp_tool -value 5 -anchor nw
 radiobutton $nmInfo(modifyfull).tool.feelahead -text "FeelAhead" \
          -variable newmodifyp_tool -value 6 -anchor nw
+radiobutton $nmInfo(modifyfull).tool.optimize_now -text "Optimize Now" \
+	-variable newmodifyp_tool -value 7 -anchor nw
 
 pack $nmInfo(modifyfull).tool.freehand $nmInfo(modifyfull).tool.line \
         $nmInfo(modifyfull).tool.constrfree $nmInfo(modifyfull).tool.constrfree_xyz \
         $nmInfo(modifyfull).tool.slow_line $nmInfo(modifyfull).tool.slow_line_3d \
-        $nmInfo(modifyfull).tool.feelahead \
+        $nmInfo(modifyfull).tool.feelahead $nmInfo(modifyfull).tool.optimize_now \
         -side top -fill x 
 
 lappend device_only_controls \
@@ -679,7 +687,8 @@ lappend device_only_controls \
 	$nmInfo(modifyfull).tool.constrfree_xyz \
 	$nmInfo(modifyfull).tool.slow_line \
 	$nmInfo(modifyfull).tool.slow_line_3d \
-	$nmInfo(modifyfull).tool.feelahead
+	$nmInfo(modifyfull).tool.feelahead \
+	$nmInfo(modifyfull).tool.optimize_now
 
 #setup Modify toolparam box
 label $nmInfo(modifyfull).toolparam.label -text "Tool parameters" 
@@ -697,6 +706,28 @@ radiobutton $nmInfo(modifyfull).toolparam.plane -text "Plane Mode" \
 	-variable modifyp_constr_xyz_mode -value 1 -anchor nw
 set constr_xyz_param_list "$nmInfo(modifyfull).toolparam.line \
 	$nmInfo(modifyfull).toolparam.plane"
+
+#setup Optimize Now params box
+radiobutton $nmInfo(modifyfull).toolparam.optimize_line -text "Optimize Line" \
+	-variable modifyp_optimize_now -value 0 -anchor nw
+radiobutton $nmInfo(modifyfull).toolparam.optimize_area -text "Optimize Area" \
+	-variable modifyp_optimize_now -value 1 -anchor nw
+set optimize_now_param_list "$nmInfo(modifyfull).toolparam.optimize_line \
+	$nmInfo(modifyfull).toolparam.optimize_area"
+
+proc flip_optimize_selection_mode {optimize_mode_param element op} {
+
+    upvar $optimize_mode_param k
+    global user_0_mode
+
+    if { $k==0 } {
+	# use the touch tool for line selection
+	set user_0_mode 12
+    } elseif { $k==1 } {
+	# use the select tool for area selection
+	set user_0_mode 4
+    }
+}
 
 # eval command expands the lists so we get one list of single elements. 
 eval lappend device_only_controls $mod_line_list
@@ -835,7 +866,7 @@ proc flip_mod_style {mod_style element op} {
 proc flip_mod_tool {mod_tool element op} {
     global nmInfo
     global mod_line_list mod_slow_line_list mod_control_list \
-	    constr_xyz_param_list
+	    constr_xyz_param_list optimize_now_param_list
     global fspady newmodifyp_style
 
     upvar $mod_tool k
@@ -846,6 +877,7 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $plist {pack forget $widg} 
         foreach widg $mod_control_list {pack forget $widg}
         foreach widg $mod_control_list {pack $widg -side top -fill x}
+	foreach widg $constr_xyz_param_list {pack forget $widg}
         # Hide the controls for slow_line tool
         hide.modify_live
         # enable styles that might have been disabled. 
@@ -858,17 +890,19 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $mod_line_list {pack $widg -side top -fill x -pady $fspady}
 	foreach widg $mod_control_list {pack forget $widg}
 	foreach widg $mod_control_list {pack $widg -side top -fill x}
+	foreach widg $constr_xyz_param_list {pack forget $widg}
         # Hide the controls for slow_line tool
         hide.modify_live
         # enable styles that might have been disabled. 
         $nmInfo(modifyfull).style.sewing configure -state normal
         $nmInfo(modifyfull).style.forcecurve configure -state normal
     } elseif {$k==2} {
-	# selected constrained freehand
+ 	# selected constrained freehand
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_control_list {pack forget $widg}
 	foreach widg $mod_control_list {pack $widg -side top -fill x}
+	foreach widg $constr_xyz_param_list {pack forget $widg}
         # Hide the controls for slow_line tool
         hide.modify_live
          # enable styles that might have been disabled. 
@@ -892,6 +926,7 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $mod_slow_line_list {pack $widg -side top -fill x -pady $fspady}
 	foreach widg $mod_control_list {pack forget $widg}
 	foreach widg $mod_control_list {pack $widg -side top -fill x}
+	foreach widg $constr_xyz_param_list {pack forget $widg}
         show.modify_live
         # Don't allow selection of styles that don't work with slow_line
         if { ($newmodifyp_style == 3) || ($newmodifyp_style == 4) } {
@@ -902,13 +937,13 @@ proc flip_mod_tool {mod_tool element op} {
         $nmInfo(modifyfull).style.forcecurve configure -state disabled
     } elseif {$k==5} {
 	# selected slow line 3d
-	# anyone want to make this more elegant?
+	set plist [lrange [pack slaves $nmInfo(modifyfull).control] 1 end]
+	foreach widg $plist {pack forget $widg}
+	foreach widg $mod_slow_line_list {pack $widg -side top -fill x -pady $fspady}
 	foreach widg $mod_control_list {pack forget $widg}
 	foreach widg $mod_control_list {pack $widg -side top -fill x}
 	foreach widg $constr_xyz_param_list {pack forget $widg}
-	set plist [lrange [pack slaves $nmInfo(modifyfull).control] 1 1]
-	foreach widg $plist {pack forget $widg}
-	set newmodifyp_control 1
+	foreach widg $optimize_now_param_list {pack forget $widg}
 	# show the modify live controls
 	show.modify_live
         # Don't allow selection of styles that don't work with slow_line
@@ -927,6 +962,7 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $plist {pack forget $widg} 
         foreach widg $mod_control_list {pack forget $widg}
         foreach widg $mod_control_list {pack $widg -side top -fill x}
+	foreach widg $constr_xyz_param_list {pack forget $widg}
 
         # hide slow line tool
         hide.modify_live
@@ -939,6 +975,20 @@ proc flip_mod_tool {mod_tool element op} {
         $nmInfo(modifyfull).style.sweep configure -state disabled
         $nmInfo(modifyfull).style.sewing configure -state disabled
         $nmInfo(modifyfull).style.forcecurve configure -state disabled
+    } elseif {$k==7} {
+ 	# selected optimize_now
+	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
+	foreach widg $plist {pack forget $widg}
+	foreach widg $mod_control_list {pack forget $widg}
+	foreach widg $optimize_now_param_list {pack $widg -side top -fill x}
+	foreach widg $mod_control_list {pack $widg -side top -fill x}
+	foreach widg $constr_xyz_param_list {pack forget $widg}
+
+        # Hide the controls for slow_line tool
+        hide.modify_live
+         # enable styles that might have been disabled. 
+        $nmInfo(modifyfull).style.sewing configure -state normal
+        $nmInfo(modifyfull).style.forcecurve configure -state normal
     }
 }
 

@@ -1,3 +1,7 @@
+2000-12-05  Kwan Torrich Skinner  <skinner@cs.unc.edu>
+
+	* modify.tcl : new code for optimize now.
+
 2000-11-29  Tom Hudson  <hudson@cs.unc.edu>
 
 	* mainwin.tcl (diable_widgets_for_readmode) : get rid of race
