@@ -18,7 +18,12 @@
 
 /** Initialize ImageMagick library. Pass in argv[0] */
 void nmb_ImgMagick::initMagick(char * argv) {
+#ifdef MagickIncarnate
     MagickIncarnate(argv);
+#endif
+#ifdef InitializeMagick
+    InitializeMagick(argv);
+#endif
 }
 
 /**
