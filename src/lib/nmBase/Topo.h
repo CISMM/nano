@@ -2,7 +2,7 @@
 #define _TOPO_
 
 #include "BCPlane.h"
-#include "nmb_Image.h"
+class nmb_Image;
 #include "afmstm.h"  // for another 15 #defines
 
 #include <stdlib.h>  // free()

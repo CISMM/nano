@@ -17,6 +17,7 @@ int write( int fildes, const void *buf, size_t nbyte );
 #include <unistd.h>
 #endif
 #include "Topo.h"
+#include "nmb_Image.h"
 
 /**
 * Assumes the .release is filled in.  Looks for #Rn.n# OFFSET

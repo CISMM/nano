@@ -7,6 +7,7 @@
 #include <vrpn_Types.h>
 #include "nmb_String.h"
 #include <math.h>
+#include "Topo.h"
 
 #if !((defined __CYGWIN__) || (_WIN32))
 #include <values.h>	// for MAXSHORT - probably different on windows
@@ -105,6 +106,8 @@ class nmb_Image {
 
         void getWorldToImageTransform(double *matrix44);
 
+        virtual void setTopoFileInfo(TopoFile &tf) = 0;
+
 	virtual BCString *name() = 0;
 	virtual BCString *unitsX() = 0;
 	virtual BCString *unitsY() = 0;
@@ -151,7 +154,7 @@ class nmb_ImageGrid : public nmb_Image{
 	virtual BCString *unitsValue();
 	virtual BCString *unitsX();
 	virtual BCString *unitsY();
-
+        virtual void setTopoFileInfo(TopoFile &tf);
 	virtual vrpn_uint8 *rawDataUnsignedByte();
 
         virtual int numExportFormats();
@@ -177,7 +180,7 @@ class nmb_ImageGrid : public nmb_Image{
 	BCString units_x;
 	BCString units_y;
         short min_x_set, min_y_set, max_x_set, max_y_set;
-
+        TopoFile d_topoFileDefaults;
 };
 
 class nmb_Image8bit : public nmb_Image {
@@ -207,7 +210,9 @@ class nmb_Image8bit : public nmb_Image {
     virtual BCString *unitsValue();
     virtual BCString *unitsX();
     virtual BCString *unitsY();
-     
+ 
+    virtual void setTopoFileInfo(TopoFile &) {};
+
     virtual int numExportFormats();
     virtual nmb_ListOfStrings *exportFormatNames();
     virtual const char *exportFormatType(int type);

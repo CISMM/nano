@@ -3964,6 +3964,8 @@ void nmm_Microscope_Remote::RcvScanDataset (const char * _name,
           fprintf(stderr, "Can't add scan dataset\n");
           d_dataset->done = VRPN_TRUE;
       }
+      nmb_Image *new_image = d_dataset->dataImages->getImageByName(_name);
+      new_image->setTopoFileInfo(d_topoFile);
   }
 }
 
@@ -4059,11 +4061,19 @@ void nmm_Microscope_Remote::RcvTopoFileHeader (const long _length, const char *h
   }else{
 	d_topoFile.parseHeader(header,_length);
   	printf("********** Got Topometrix file header, length %ld\n", _length);
+
+        nmb_ImageList *images = d_dataset->dataImages;
+        int i;
+        for (i = 0; i < images->numImages(); i++) {
+             images->getImage(i)->setTopoFileInfo(d_topoFile);
+        }
+
 /*	handle=fopen("temp.tfr","w");
 	if(handle == NULL){printf("ERROR WRITING TEMP.TFR");}
 	fHdl=fileno(handle);
 	write(fHdl,header,_length*sizeof(char));	
-	fclose(handle);*/
+	fclose(handle);
+*/
   }
 }
 

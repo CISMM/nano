@@ -379,6 +379,11 @@ BCString *nmb_ImageGrid::unitsValue() {return plane->units();}
 BCString *nmb_ImageGrid::unitsX() {return &units_x;}
 BCString *nmb_ImageGrid::unitsY() {return &units_y;}
 
+void nmb_ImageGrid::setTopoFileInfo(TopoFile &tf)
+{
+    d_topoFileDefaults = tf;
+}
+
 vrpn_uint8 *nmb_ImageGrid::rawDataUnsignedByte() { return NULL;}
 
 int nmb_ImageGrid::numExportFormats() {return num_export_formats;}
@@ -416,7 +421,8 @@ int nmb_ImageGrid::exportToFile(FILE *f, const char *export_type){
 //static 
 int nmb_ImageGrid::writeTopoFile(FILE *file, nmb_ImageGrid *im)
 {
-    TopoFile tf;
+ //what about microscope->d_topoFile? - should somehow be using this info here
+    TopoFile tf = im->d_topoFileDefaults;
     tf.imageToTopoData((nmb_Image *)im);
     if (tf.writeTopoFile(file) < 0) {
 	//error occured
