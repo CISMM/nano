@@ -1,3 +1,7 @@
+2001-07-23  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c (main) : Handle -fa, -wp command line arguments.
+
 2001-07-20  Tom Hudson  <hudson@cs.unc.edu>
 
         * interaction.c (doFeelLive) : Fail over to PLANE (touch stored)

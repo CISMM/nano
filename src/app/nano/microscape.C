@@ -7537,10 +7537,16 @@ fprintf(stderr, "Using Queue Monitoring for tip control.\n");
   }
   if (istate.laUseWPA) {
     // TODO
+    microscope->state.modify.tool = WARPED_PLANE;
   }
   if (istate.laUseFA) {
     // TODO
-    // microscope->state.modify.tool = FEELAHEAD;
+    microscope->state.modify.tool = FEELAHEAD;
+    feelahead_num_x = istate.laFaN;
+    feelahead_num_y = istate.laFaN;
+    feelahead_dist_x = istate.laFaD;
+    feelahead_dist_y = istate.laFaD;
+
   }
 
 /* Start timing */
