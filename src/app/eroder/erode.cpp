@@ -234,11 +234,11 @@ void get_z_buffer_values(double xworldratio) {
   
   glReadPixels( 0, 0, xResolution, yResolution, GL_DEPTH_COMPONENT, GL_FLOAT, zBufferPtr );
 
-  ofstream outstream;
+  /*ofstream outstream;
   char filename[100];
   strcpy(filename,"zHeightInit.er");	
   outstream.open(filename);
-  outstream << xResolution << " " << yResolution << endl;;
+  outstream << xResolution << " " << yResolution << endl;*/
 
   int rownumber;
   for(int j=0; j<yResolution; j++ ) {
@@ -256,12 +256,12 @@ void get_z_buffer_values(double xworldratio) {
       double zDepth = -Far + (1-(double)zNormalized)*(-Near + Far);
       // Open GL convention
       zHeight[rownumber][i] = zDepth;
-	  print_to_file(outstream,zHeight[rownumber][i]," ");
+	  //print_to_file(outstream,zHeight[rownumber][i]," ");
       zDistance[j][i] = (1-zNormalized)*(-Near + Far);
 	  zDistanceScaled[j][i] = zDistance[j][i]/xworldratio;
     }
   }
-  outstream.close();
+  //outstream.close();
 
 }
 
@@ -453,10 +453,11 @@ void invert_zHeight_values(double xworldratio){
 	glReadPixels( 0, 0, xResolution, yResolution, GL_DEPTH_COMPONENT, GL_FLOAT, zBufferPtr );
 
 	//save heights to file 
+	cout << "zDistance start" << endl;
 	ofstream outstream;
 	char filename[100];
-	if(matlab)	strcpy(filename,"zHeightmatlab.er");
-	else		strcpy(filename,"zHeight.er");	
+	if(matlab)	strcpy(filename,"zDistanceScaledmatlab.er");
+	else		strcpy(filename,"zDistanceScaled.er");	
 	outstream.open(filename);
 	if(matlab)	outstream << "[";
 	else		outstream << xResolution << " " << yResolution << endl;;
@@ -474,15 +475,16 @@ void invert_zHeight_values(double xworldratio){
 			zDistance[j][i] = zNormalized*(-Near + Far);
 			zDistanceScaled[j][i] = zDistance[j][i]/xworldratio;
 
-			if(matlab && (i != (xResolution-1)))		print_to_file(outstream,zHeight[rownumber][i],",");
-			else if(matlab && (i == (xResolution-1)))	print_to_file(outstream,zHeight[rownumber][i],"");	
-			else										print_to_file(outstream,zHeight[rownumber][i]," ");			
+			if(matlab && (i != (xResolution-1)))		print_to_file(outstream,zDistanceScaled[rownumber][i],",");
+			else if(matlab && (i == (xResolution-1)))	print_to_file(outstream,zDistanceScaled[rownumber][i],"");	
+			//else										print_to_file(outstream,zDistanceScaled[rownumber][i]," ");			
 		}
 		if(matlab && (j != (yResolution-1)))			outstream << ";" << endl;
 		else if(matlab && (j == (yResolution-1)))		outstream << "]" << endl;
-		else											outstream << endl;
+		//else											outstream << endl;
 	}
 	outstream.close();
+	cout << "zDistance done" << endl;
 }
 
 
