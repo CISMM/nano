@@ -543,6 +543,14 @@ int     Point_channel_selector::Handle_report( float x, float y,
               //(d_dataset->heightPlaneName->string()))->value());
 //fprintf(stderr, "Added point %.5f %.5f %.5f\n",
 //x, y, values[0]->value());
+
+// TCH DISSN Feb 2002
+          timeval now, then;
+          gettimeofday(&now, NULL);
+          then.tv_sec = sec;  then.tv_usec = usec;
+          myresult->setTimeRequested(then);
+          myresult->setTimeReceived(now);
+
 	}
 
         // Are we stashing a copy of this data in a point list?

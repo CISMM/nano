@@ -1,3 +1,8 @@
+2002-2-16  Tom Hudson  <hudsont@uncwil.edu>
+
+   * active_set.C (Point_channel_selector::Handle_report) : Actually
+   call Point_results::setTimeRequested() and setTimeReceived().
+
 2001-12-14  Tom Hudson  <hudsont@uncwil.edu>
 
    * nmm_MicroscopeRemote.Cdef (PointResultData) : tweak diagnostic output.
