@@ -1,5 +1,12 @@
 2001-12-14  Tom Hudson  <hudsont@uncwil.edu>
 
+   * nmui_HapticSurface.C (nmui_HSLivePlane::update) : Temporary
+   diagnostic output.
+
+   * (nmui_HSFeelAhead::updateModel) : Fix bug in previous commit.
+
+2001-12-14  Tom Hudson  <hudsont@uncwil.edu>
+
 	* nmui_HapticSurface.C (nmui_HSFeelAhead::updateModel) :
 	Convert points from world space/microscope coordinates
 	into Phantom coordinates before sending to ForceDevice.

@@ -464,6 +464,17 @@ void nmui_HSLivePlane::computeUpdate (void) {
   d_currentPlaneParameter = - q_vec_dot_product(d_currentPlaneNormal,
                                                 d_samplePosPH);
 
+/*
+fprintf(stderr, "Plane is %.3f %.3f %.3f, %.3f\n",
+      d_currentPlaneNormal[0],
+      d_currentPlaneNormal[1],
+      d_currentPlaneNormal[2],
+      d_currentPlaneParameter);
+fprintf(stderr, "SamplePosPH is %.3f %.3f %.3f\n",
+      d_samplePosPH[0],
+      d_samplePosPH[1],
+      d_samplePosPH[2]);
+*/
   computeDistanceFromPlane();
 }
 
@@ -640,6 +651,8 @@ void nmui_HSFeelAhead::updateModel (void) {
     fprintf(stderr, "nmui_HSFeelAhead::updateModel():  "
                     "Didn't get enough data from microscope\n"
                     "to reconstruct surface.\n");
+    fprintf(stderr, "  Got %d entries for %d x %d.\n", l->numEntries(),
+            xside, yside);
     return;
   }
   for (i = 0; i < l->numEntries(); i++) {
@@ -653,8 +666,8 @@ void nmui_HSFeelAhead::updateModel (void) {
     qm[0] = p->x();
     qm[1] = p->y();
     qm[2] = p->z();
-    vectorToTrackerFromWorld(qph, qm);
-//fprintf(stderr, " mx %.2f %.2f %.2f, px %.2f %.2f %.2f\n",
+    pointToTrackerFromWorld(qph, qm);
+//fprintf(stderr, " mx %.2f %.2f %.2f, px %.5f %.5f %.5f\n",
 //qm[0], qm[1], qm[2], qph[0], qph[1], qph[2]);
     d_device->setVertex(i, qm[0], qm[1], qm[2]);
   }
