@@ -277,8 +277,7 @@ void specify_vertexArray(nmb_PlaneSelection /*planes*/, int i, int count)
 
     glDrawArraysEXT( GL_TRIANGLE_STRIP,0,count);
 #else
-    planes = planes;	// Keep the compiler happy
-    i = i;
+    i = i;           // Keep the compiler happy
     count = count;
 
 

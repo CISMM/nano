@@ -638,7 +638,7 @@ static void handle_phantom_reset( vrpn_int32, void *) // don't use val, userdata
  * dispatch_event - dispatch the given event based on the current mode and user
  *
  */
-void	dispatch_event(int user, int mode, int event, nmb_TimerList * timer)
+void dispatch_event(int user, int mode, int event, nmb_TimerList * /*timer*/)
 {
     int ret = 0;
 
