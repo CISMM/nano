@@ -255,7 +255,7 @@ void URHeightField::renderWithoutDisplayList(nmb_Image *heightValues,
 		strip_y_max += y_incr*strideY;
 		if (j_max > numY-1) {
 			j_max = numY-1;
-			strip_y_max = lengthYinWorld;
+			strip_y_max = d_maxY;
 		}
 		double x_value = d_minX;
 		int i = 0;
@@ -283,7 +283,7 @@ void URHeightField::renderWithoutDisplayList(nmb_Image *heightValues,
 			i += strideX;
 			if (i > numX-1) {
 				i = numX-1;
-				x_value = lengthXinWorld;
+				x_value = d_maxX;
 			}
 		}
 
