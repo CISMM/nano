@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string>
+#include <assert.h>
 using namespace std;
 
 // and reset the warnings
@@ -99,7 +100,7 @@ class	Point_results
 
     inline double x (void) const { return _x; }
     inline double y (void) const { return _y; }
-    inline double z (void) const { return _z; }
+    inline double z (void) const { assert(_is3D); return _z; }
     inline int is3D (void) const { return _is3D; }
     inline long sec (void) const { return _sec; }
     inline long usec (void) const { return _usec; }

@@ -165,21 +165,30 @@ void nmb_Image::getGradient(double i, double j, double &grad_x, double &grad_y)
   }
 }
 
+vrpn_bool nmb_Image::getWorldRectangle(double &minX, double &minY,
+									   double &maxX, double &maxY) const {
+  nmb_ImageBounds ib;
+  getBounds(ib);
+  vrpn_bool result = ib.isRectangle();
+  ib.getBoundingBox(minX, minY, maxX, maxY);
+  return result;
+}
+
 double nmb_Image::widthWorld() const {
     double dx,dy;
-    dx = boundX(nmb_ImageBounds::MAX_X_MIN_Y) -
-                boundX(nmb_ImageBounds::MIN_X_MIN_Y);
-    dy = boundY(nmb_ImageBounds::MAX_X_MIN_Y) -
-                boundY(nmb_ImageBounds::MIN_X_MIN_Y);
+    dx = boundX(MAX_X_MIN_Y) -
+                boundX(MIN_X_MIN_Y);
+    dy = boundY(MAX_X_MIN_Y) -
+                boundY(MIN_X_MIN_Y);
     return sqrt(dx*dx + dy*dy);
 }
 
 double nmb_Image::heightWorld() const {
     double dx,dy;
-    dx = boundX(nmb_ImageBounds::MIN_X_MAX_Y) -
-                boundX(nmb_ImageBounds::MIN_X_MIN_Y);
-    dy = boundY(nmb_ImageBounds::MIN_X_MAX_Y) -
-                boundY(nmb_ImageBounds::MIN_X_MIN_Y);
+    dx = boundX(MIN_X_MAX_Y) -
+                boundX(MIN_X_MIN_Y);
+    dy = boundY(MIN_X_MAX_Y) -
+                boundY(MIN_X_MIN_Y);
     return sqrt(dx*dx + dy*dy);
 }
 
@@ -189,66 +198,66 @@ void nmb_Image::setWidthWorld(double newWidth, double centerX)
 {
     d_dimensionUnknown = vrpn_FALSE;
     double dx, dy;
-    dx = boundX(nmb_ImageBounds::MAX_X_MIN_Y) -
-                boundX(nmb_ImageBounds::MIN_X_MIN_Y);
-    dy = boundY(nmb_ImageBounds::MAX_X_MIN_Y) -
-                boundY(nmb_ImageBounds::MIN_X_MIN_Y);
+    dx = boundX(MAX_X_MIN_Y) -
+                boundX(MIN_X_MIN_Y);
+    dy = boundY(MAX_X_MIN_Y) -
+                boundY(MIN_X_MIN_Y);
     double currWidth = sqrt(dx*dx + dy*dy);
     dx /= currWidth;
     dy /= currWidth;
     double a = centerX, b = 1.0-centerX;
     double centerWorldXMinY, centerWorldYMinY;
     double centerWorldXMaxY, centerWorldYMaxY;
-    centerWorldXMinY = a*boundX(nmb_ImageBounds::MAX_X_MIN_Y) +
-                       b*boundX(nmb_ImageBounds::MIN_X_MIN_Y);
-    centerWorldYMinY = a*boundY(nmb_ImageBounds::MAX_X_MIN_Y) +
-                       b*boundY(nmb_ImageBounds::MIN_X_MIN_Y);
-    centerWorldXMaxY = a*boundX(nmb_ImageBounds::MAX_X_MAX_Y) +
-                       b*boundX(nmb_ImageBounds::MIN_X_MAX_Y);
-    centerWorldYMaxY = a*boundY(nmb_ImageBounds::MAX_X_MAX_Y) +
-                       b*boundY(nmb_ImageBounds::MIN_X_MAX_Y);
+    centerWorldXMinY = a*boundX(MAX_X_MIN_Y) +
+                       b*boundX(MIN_X_MIN_Y);
+    centerWorldYMinY = a*boundY(MAX_X_MIN_Y) +
+                       b*boundY(MIN_X_MIN_Y);
+    centerWorldXMaxY = a*boundX(MAX_X_MAX_Y) +
+                       b*boundX(MIN_X_MAX_Y);
+    centerWorldYMaxY = a*boundY(MAX_X_MAX_Y) +
+                       b*boundY(MIN_X_MAX_Y);
 
-    setBoundX(nmb_ImageBounds::MIN_X_MIN_Y, centerWorldXMinY - a*dx*newWidth);
-    setBoundY(nmb_ImageBounds::MIN_X_MIN_Y, centerWorldYMinY - a*dy*newWidth);
-    setBoundX(nmb_ImageBounds::MAX_X_MIN_Y, centerWorldXMinY + b*dx*newWidth);
-    setBoundY(nmb_ImageBounds::MAX_X_MIN_Y, centerWorldYMinY + b*dy*newWidth);
-    setBoundX(nmb_ImageBounds::MIN_X_MAX_Y, centerWorldXMaxY - a*dx*newWidth);
-    setBoundY(nmb_ImageBounds::MIN_X_MAX_Y, centerWorldYMaxY - a*dy*newWidth);
-    setBoundX(nmb_ImageBounds::MAX_X_MAX_Y, centerWorldXMaxY + b*dx*newWidth);
-    setBoundY(nmb_ImageBounds::MAX_X_MAX_Y, centerWorldYMaxY + b*dy*newWidth);
+    setBoundX(MIN_X_MIN_Y, centerWorldXMinY - a*dx*newWidth);
+    setBoundY(MIN_X_MIN_Y, centerWorldYMinY - a*dy*newWidth);
+    setBoundX(MAX_X_MIN_Y, centerWorldXMinY + b*dx*newWidth);
+    setBoundY(MAX_X_MIN_Y, centerWorldYMinY + b*dy*newWidth);
+    setBoundX(MIN_X_MAX_Y, centerWorldXMaxY - a*dx*newWidth);
+    setBoundY(MIN_X_MAX_Y, centerWorldYMaxY - a*dy*newWidth);
+    setBoundX(MAX_X_MAX_Y, centerWorldXMaxY + b*dx*newWidth);
+    setBoundY(MAX_X_MAX_Y, centerWorldYMaxY + b*dy*newWidth);
 }
 
 void nmb_Image::setHeightWorld(double newHeight, double centerY)
 {
     d_dimensionUnknown = vrpn_FALSE;
     double dx, dy;
-    dx = boundX(nmb_ImageBounds::MIN_X_MAX_Y) -
-                boundX(nmb_ImageBounds::MIN_X_MIN_Y);
-    dy = boundY(nmb_ImageBounds::MIN_X_MAX_Y) -
-                boundY(nmb_ImageBounds::MIN_X_MIN_Y);
+    dx = boundX(MIN_X_MAX_Y) -
+                boundX(MIN_X_MIN_Y);
+    dy = boundY(MIN_X_MAX_Y) -
+                boundY(MIN_X_MIN_Y);
     double currHeight = sqrt(dx*dx + dy*dy);
     dx /= currHeight;
     dy /= currHeight;
     double a = centerY, b = 1.0-centerY;
     double centerWorldXMinX, centerWorldYMinX;
     double centerWorldXMaxX, centerWorldYMaxX;
-    centerWorldXMinX = a*boundX(nmb_ImageBounds::MIN_X_MAX_Y) +
-                       b*boundX(nmb_ImageBounds::MIN_X_MIN_Y);
-    centerWorldYMinX = a*boundY(nmb_ImageBounds::MIN_X_MAX_Y) +
-                       b*boundY(nmb_ImageBounds::MIN_X_MIN_Y);
-    centerWorldXMaxX = a*boundX(nmb_ImageBounds::MAX_X_MAX_Y) +
-                       b*boundX(nmb_ImageBounds::MAX_X_MIN_Y);
-    centerWorldYMaxX = a*boundY(nmb_ImageBounds::MAX_X_MAX_Y) +
-                       b*boundY(nmb_ImageBounds::MAX_X_MIN_Y);
+    centerWorldXMinX = a*boundX(MIN_X_MAX_Y) +
+                       b*boundX(MIN_X_MIN_Y);
+    centerWorldYMinX = a*boundY(MIN_X_MAX_Y) +
+                       b*boundY(MIN_X_MIN_Y);
+    centerWorldXMaxX = a*boundX(MAX_X_MAX_Y) +
+                       b*boundX(MAX_X_MIN_Y);
+    centerWorldYMaxX = a*boundY(MAX_X_MAX_Y) +
+                       b*boundY(MAX_X_MIN_Y);
 
-    setBoundX(nmb_ImageBounds::MIN_X_MIN_Y, centerWorldXMinX - a*dx*newHeight);
-    setBoundY(nmb_ImageBounds::MIN_X_MIN_Y, centerWorldYMinX - a*dy*newHeight);
-    setBoundX(nmb_ImageBounds::MIN_X_MAX_Y, centerWorldXMinX + b*dx*newHeight);
-    setBoundY(nmb_ImageBounds::MIN_X_MAX_Y, centerWorldYMinX + b*dy*newHeight);
-    setBoundX(nmb_ImageBounds::MAX_X_MIN_Y, centerWorldXMaxX - a*dx*newHeight);
-    setBoundY(nmb_ImageBounds::MAX_X_MIN_Y, centerWorldYMaxX - a*dy*newHeight);
-    setBoundX(nmb_ImageBounds::MAX_X_MAX_Y, centerWorldXMaxX + b*dx*newHeight);
-    setBoundY(nmb_ImageBounds::MAX_X_MAX_Y, centerWorldYMaxX + b*dy*newHeight);
+    setBoundX(MIN_X_MIN_Y, centerWorldXMinX - a*dx*newHeight);
+    setBoundY(MIN_X_MIN_Y, centerWorldYMinX - a*dy*newHeight);
+    setBoundX(MIN_X_MAX_Y, centerWorldXMinX + b*dx*newHeight);
+    setBoundY(MIN_X_MAX_Y, centerWorldYMinX + b*dy*newHeight);
+    setBoundX(MAX_X_MIN_Y, centerWorldXMaxX - a*dx*newHeight);
+    setBoundY(MAX_X_MIN_Y, centerWorldYMaxX - a*dy*newHeight);
+    setBoundX(MAX_X_MAX_Y, centerWorldXMaxX + b*dx*newHeight);
+    setBoundY(MAX_X_MAX_Y, centerWorldYMaxX + b*dy*newHeight);
 }
 */
 
@@ -291,15 +300,15 @@ void nmb_Image::pixelToWorld(const double i, const double j,
         // just bilinear interpolation:
         double y_frac = j/((double)height());
         double x_frac = i/((double)width());
-        double x_min = boundX(nmb_ImageBounds::MIN_X_MIN_Y)*(1.0-y_frac) +
-             boundX(nmb_ImageBounds::MIN_X_MAX_Y)*(y_frac);
-        double x_max = boundX(nmb_ImageBounds::MAX_X_MIN_Y)*(1.0-y_frac) +
-             boundX(nmb_ImageBounds::MAX_X_MAX_Y)*(y_frac);
+        double x_min = boundX(MIN_X_MIN_Y)*(1.0-y_frac) +
+             boundX(MIN_X_MAX_Y)*(y_frac);
+        double x_max = boundX(MAX_X_MIN_Y)*(1.0-y_frac) +
+             boundX(MAX_X_MAX_Y)*(y_frac);
         x = x_min*(1.0-x_frac) + x_max*(x_frac);
-        double y_min = boundY(nmb_ImageBounds::MIN_X_MIN_Y)*(1.0-y_frac) +
-             boundY(nmb_ImageBounds::MIN_X_MAX_Y)*(y_frac);
-        double y_max = boundY(nmb_ImageBounds::MAX_X_MIN_Y)*(1.0-y_frac) +
-             boundY(nmb_ImageBounds::MAX_X_MAX_Y)*(y_frac);
+        double y_min = boundY(MIN_X_MIN_Y)*(1.0-y_frac) +
+             boundY(MIN_X_MAX_Y)*(y_frac);
+        double y_max = boundY(MAX_X_MIN_Y)*(1.0-y_frac) +
+             boundY(MAX_X_MAX_Y)*(y_frac);
         y = y_min*(1.0-x_frac) + y_max*(x_frac);
 */
 }
@@ -326,22 +335,22 @@ void nmb_Image::worldToPixel(const double x, const double y,
   inconsistent with each other
  
         // project x,y onto i,j coordinate axes
-        double x_diff = boundX(nmb_ImageBounds::MAX_X_MIN_Y) -
-                        boundX(nmb_ImageBounds::MIN_X_MIN_Y);
-        double y_diff = boundY(nmb_ImageBounds::MAX_X_MIN_Y) -
-                        boundY(nmb_ImageBounds::MIN_X_MIN_Y);
-        double temp = (x - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
-                      (y - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
+        double x_diff = boundX(MAX_X_MIN_Y) -
+                        boundX(MIN_X_MIN_Y);
+        double y_diff = boundY(MAX_X_MIN_Y) -
+                        boundY(MIN_X_MIN_Y);
+        double temp = (x - boundX(MIN_X_MIN_Y))*x_diff +
+                      (y - boundY(MIN_X_MIN_Y))*y_diff;
 
         double x_frac = temp/(x_diff*x_diff + y_diff*y_diff);
         i = x_frac*(double)width();
 
-        x_diff = boundX(nmb_ImageBounds::MIN_X_MAX_Y) -
-                 boundX(nmb_ImageBounds::MIN_X_MIN_Y);
-        y_diff = boundY(nmb_ImageBounds::MIN_X_MAX_Y) -
-                 boundY(nmb_ImageBounds::MIN_X_MIN_Y);
-        temp = (x - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
-               (y - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
+        x_diff = boundX(MIN_X_MAX_Y) -
+                 boundX(MIN_X_MIN_Y);
+        y_diff = boundY(MIN_X_MAX_Y) -
+                 boundY(MIN_X_MIN_Y);
+        temp = (x - boundX(MIN_X_MIN_Y))*x_diff +
+               (y - boundY(MIN_X_MIN_Y))*y_diff;
         double y_frac = temp/(x_diff*x_diff + y_diff*y_diff);
         j = y_frac*(double)height();
 */
@@ -389,12 +398,12 @@ void nmb_Image::getWorldToImageTransform(double *matrix44) const
 
     double a, b, c, d, e, f;
     double x00, y00, x10, y10, x01, y01;
-    x00 = boundX(nmb_ImageBounds::MIN_X_MIN_Y);
-    y00 = boundY(nmb_ImageBounds::MIN_X_MIN_Y);
-    x10 = boundX(nmb_ImageBounds::MAX_X_MIN_Y);
-    y10 = boundY(nmb_ImageBounds::MAX_X_MIN_Y);
-    x01 = boundX(nmb_ImageBounds::MIN_X_MAX_Y);
-    y01 = boundY(nmb_ImageBounds::MIN_X_MAX_Y);
+    x00 = boundX(MIN_X_MIN_Y);
+    y00 = boundY(MIN_X_MIN_Y);
+    x10 = boundX(MAX_X_MIN_Y);
+    y10 = boundY(MAX_X_MIN_Y);
+    x01 = boundX(MIN_X_MAX_Y);
+    y01 = boundY(MIN_X_MAX_Y);
     
     double det_inv;
     det_inv = 1.0/((x10-x00)*(y01-y00) - (y10-y00)*(x01-x00));
@@ -521,24 +530,24 @@ void nmb_Image::setWorldToImageTransform(double *matrix44)
       double imagePnt[4] = {0.0, 0.0, 0.0, 1.0}, worldPnt[4];
       // (0,0) -> ?
       worldToImage.invTransform(imagePnt, worldPnt);
-      setBoundX(nmb_ImageBounds::MIN_X_MIN_Y, worldPnt[0]);
-      setBoundY(nmb_ImageBounds::MIN_X_MIN_Y, worldPnt[1]);
+      setBoundX(MIN_X_MIN_Y, worldPnt[0]);
+      setBoundY(MIN_X_MIN_Y, worldPnt[1]);
       imagePnt[0] = width;
       // (width,0) -> ?
       worldToImage.invTransform(imagePnt, worldPnt);
-      setBoundX(nmb_ImageBounds::MAX_X_MIN_Y, worldPnt[0]);
-      setBoundY(nmb_ImageBounds::MAX_X_MIN_Y, worldPnt[1]);
+      setBoundX(MAX_X_MIN_Y, worldPnt[0]);
+      setBoundY(MAX_X_MIN_Y, worldPnt[1]);
       imagePnt[0] = 0.0;
       imagePnt[1] = height;
       // (0,height) -> ?
       worldToImage.invTransform(imagePnt, worldPnt);
-      setBoundX(nmb_ImageBounds::MIN_X_MAX_Y, worldPnt[0]);
-      setBoundY(nmb_ImageBounds::MIN_X_MAX_Y, worldPnt[1]);
+      setBoundX(MIN_X_MAX_Y, worldPnt[0]);
+      setBoundY(MIN_X_MAX_Y, worldPnt[1]);
       imagePnt[0] = width;
       // (width,height) -> ?
       worldToImage.invTransform(imagePnt, worldPnt);
-      setBoundX(nmb_ImageBounds::MAX_X_MAX_Y, worldPnt[0]);
-      setBoundY(nmb_ImageBounds::MAX_X_MAX_Y, worldPnt[1]);
+      setBoundX(MAX_X_MAX_Y, worldPnt[0]);
+      setBoundY(MAX_X_MAX_Y, worldPnt[1]);
     } else {
       fprintf(stderr, "nmb_Image::setWorldToImageTransform:"
             " Error: non-invertible transformation\n");
@@ -814,14 +823,14 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
         formatNames.addEntry(name.c_str());
     }
 
-    d_imagePosition.setX(nmb_ImageBounds::MIN_X_MIN_Y, plane->minX());
-    d_imagePosition.setX(nmb_ImageBounds::MIN_X_MAX_Y, plane->minX());
-    d_imagePosition.setX(nmb_ImageBounds::MAX_X_MIN_Y, plane->maxX());
-    d_imagePosition.setX(nmb_ImageBounds::MAX_X_MAX_Y, plane->maxX());
-    d_imagePosition.setY(nmb_ImageBounds::MIN_X_MIN_Y, plane->minY());
-    d_imagePosition.setY(nmb_ImageBounds::MIN_X_MAX_Y, plane->maxY());
-    d_imagePosition.setY(nmb_ImageBounds::MAX_X_MIN_Y, plane->minY());
-    d_imagePosition.setY(nmb_ImageBounds::MAX_X_MAX_Y, plane->maxY());
+    d_imagePosition.setX(MIN_X_MIN_Y, plane->minX());
+    d_imagePosition.setX(MIN_X_MAX_Y, plane->minX());
+    d_imagePosition.setX(MAX_X_MIN_Y, plane->maxX());
+    d_imagePosition.setX(MAX_X_MAX_Y, plane->maxX());
+    d_imagePosition.setY(MIN_X_MIN_Y, plane->minY());
+    d_imagePosition.setY(MIN_X_MAX_Y, plane->maxY());
+    d_imagePosition.setY(MAX_X_MIN_Y, plane->minY());
+    d_imagePosition.setY(MAX_X_MAX_Y, plane->maxY());
     d_dimensionUnknown = vrpn_FALSE;
     d_DAC_scale = p->tm_scale;
     d_DAC_offset = p->tm_offset;
@@ -857,14 +866,14 @@ nmb_ImageGrid::nmb_ImageGrid(BCGrid *g):nmb_Image(),
         formatNames.addEntry(name.c_str());
     }
 
-    d_imagePosition.setX(nmb_ImageBounds::MIN_X_MIN_Y, plane->minX());
-    d_imagePosition.setX(nmb_ImageBounds::MIN_X_MAX_Y, plane->minX());
-    d_imagePosition.setX(nmb_ImageBounds::MAX_X_MIN_Y, plane->maxX());
-    d_imagePosition.setX(nmb_ImageBounds::MAX_X_MAX_Y, plane->maxX());
-    d_imagePosition.setY(nmb_ImageBounds::MIN_X_MIN_Y, plane->minY());
-    d_imagePosition.setY(nmb_ImageBounds::MIN_X_MAX_Y, plane->maxY());
-    d_imagePosition.setY(nmb_ImageBounds::MAX_X_MIN_Y, plane->minY());
-    d_imagePosition.setY(nmb_ImageBounds::MAX_X_MAX_Y, plane->maxY());
+    d_imagePosition.setX(MIN_X_MIN_Y, plane->minX());
+    d_imagePosition.setX(MIN_X_MAX_Y, plane->minX());
+    d_imagePosition.setX(MAX_X_MIN_Y, plane->maxX());
+    d_imagePosition.setX(MAX_X_MAX_Y, plane->maxX());
+    d_imagePosition.setY(MIN_X_MIN_Y, plane->minY());
+    d_imagePosition.setY(MIN_X_MAX_Y, plane->maxY());
+    d_imagePosition.setY(MAX_X_MIN_Y, plane->minY());
+    d_imagePosition.setY(MAX_X_MAX_Y, plane->maxY());
     d_dimensionUnknown = vrpn_FALSE;
     d_DAC_scale = plane->tm_scale;
     d_DAC_offset = plane->tm_offset;
@@ -1058,33 +1067,33 @@ float nmb_ImageGrid::minAttainableValue() const {
 float nmb_ImageGrid::maxAttainableValue() const {
            return plane->maxAttainableValue();}
 
-double nmb_ImageGrid::boundX(nmb_ImageBounds::ImageBoundPoint ibp) const
+double nmb_ImageGrid::boundX(nmb_ImageBoundPoint ibp) const
 {
     if (d_imagePositionSet) {
       return d_imagePosition.getX(ibp);
     } else {
-      if (ibp == nmb_ImageBounds::MIN_X_MIN_Y || 
-          ibp == nmb_ImageBounds::MIN_X_MAX_Y)
+      if (ibp == MIN_X_MIN_Y || 
+          ibp == MIN_X_MAX_Y)
         return plane->minX();
       else
         return plane->maxX();
     }
 }
 
-double nmb_ImageGrid::boundY(nmb_ImageBounds::ImageBoundPoint ibp) const
+double nmb_ImageGrid::boundY(nmb_ImageBoundPoint ibp) const
 {
     if (d_imagePositionSet) {
       return d_imagePosition.getY(ibp);
     } else {
-      if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
-          ibp == nmb_ImageBounds::MAX_X_MIN_Y) 
+      if (ibp == MIN_X_MIN_Y ||
+          ibp == MAX_X_MIN_Y) 
         return plane->minY();
       else 
         return plane->maxY();
     }
 }
 
-void nmb_ImageGrid::setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x)
+void nmb_ImageGrid::setBoundX(nmb_ImageBoundPoint ibp, double x)
 {
     if (!d_imagePositionSet) {
       getBounds(d_imagePosition);
@@ -1097,7 +1106,7 @@ void nmb_ImageGrid::setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x)
     d_dimensionUnknown = vrpn_FALSE;
 }
 
-void nmb_ImageGrid::setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y)
+void nmb_ImageGrid::setBoundY(nmb_ImageBoundPoint ibp, double y)
 {
     if (!d_imagePositionSet) {
       getBounds(d_imagePosition);
@@ -1120,14 +1129,14 @@ void nmb_ImageGrid::getBounds(nmb_ImageBounds &ib)  const
       xmax = plane->maxX();
       ymin = plane->minY();
       ymax = plane->maxY();
-      ib.setX(nmb_ImageBounds::MIN_X_MIN_Y, xmin);
-      ib.setY(nmb_ImageBounds::MIN_X_MIN_Y, ymin);
-      ib.setX(nmb_ImageBounds::MIN_X_MAX_Y, xmin);
-      ib.setY(nmb_ImageBounds::MIN_X_MAX_Y, ymax);
-      ib.setX(nmb_ImageBounds::MAX_X_MIN_Y, xmax);
-      ib.setY(nmb_ImageBounds::MAX_X_MIN_Y, ymin);
-      ib.setX(nmb_ImageBounds::MAX_X_MAX_Y, xmax);
-      ib.setY(nmb_ImageBounds::MAX_X_MAX_Y, ymax);
+      ib.setX(MIN_X_MIN_Y, xmin);
+      ib.setY(MIN_X_MIN_Y, ymin);
+      ib.setX(MIN_X_MAX_Y, xmin);
+      ib.setY(MIN_X_MAX_Y, ymax);
+      ib.setX(MAX_X_MIN_Y, xmax);
+      ib.setY(MAX_X_MIN_Y, ymin);
+      ib.setX(MAX_X_MAX_Y, xmax);
+      ib.setY(MAX_X_MAX_Y, ymax);
     }
 }
 
@@ -1773,26 +1782,26 @@ float nmb_ImageArray::minNonZeroValue() {
 }
 
 double nmb_ImageArray::boundX(
-                    nmb_ImageBounds::ImageBoundPoint ibp) const
+                    nmb_ImageBoundPoint ibp) const
 {
     return d_imagePosition.getX(ibp);
 }
 
 double nmb_ImageArray::boundY(
-                   nmb_ImageBounds::ImageBoundPoint ibp) const
+                   nmb_ImageBoundPoint ibp) const
 {
     return d_imagePosition.getY(ibp);
 }
 
 void nmb_ImageArray::setBoundX(
-    nmb_ImageBounds::ImageBoundPoint ibp,
+    nmb_ImageBoundPoint ibp,
     double x)
 {
     d_imagePosition.setX(ibp, x);
 }
 
 void nmb_ImageArray::setBoundY(
-    nmb_ImageBounds::ImageBoundPoint ibp,
+    nmb_ImageBoundPoint ibp,
     double y)
 {
     d_imagePosition.setY(ibp, y);

@@ -58,6 +58,9 @@ typedef enum {NMB_FLOAT32, NMB_UINT8, NMB_UINT16}  nmb_PixelType;
 
 #define NMB_HEIGHT_UNITS_STR "nm"
 
+enum nmb_ImageBoundPoint {MIN_X_MIN_Y = 0, MIN_X_MAX_Y = 1, 
+				MAX_X_MIN_Y = 2, MAX_X_MAX_Y = 3};
+
 class nmb_ImageBounds {
   public:
 	nmb_ImageBounds();
@@ -66,18 +69,25 @@ class nmb_ImageBounds {
     /// are indexed (e.g.,the corner at the pixel with index (0,0) is
     /// referenced by MIN_X_MIN_Y; particular values are assigned so that
     /// the enum values can be used as indexes for the x,y arrays
-	enum ImageBoundPoint {MIN_X_MIN_Y = 0, MIN_X_MAX_Y = 1, 
-				MAX_X_MIN_Y = 2, MAX_X_MAX_Y = 3};
 
-	void setX(ImageBoundPoint ibp, double xb) {x[ibp] = xb;}
-	void setY(ImageBoundPoint ibp, double yb) {y[ibp] = yb;}
-	double getX(ImageBoundPoint ibp) const { return x[ibp]; }
-	double getY(ImageBoundPoint ibp) const { return y[ibp]; }
-        double minX() const {return min(min(x[0], x[1]), min(x[2], x[3]));}
-        double minY() const {return min(min(y[0], y[1]), min(y[2], y[3]));}
-        double maxX() const {return max(max(x[0], x[1]), max(x[2], x[3]));}
-        double maxY() const {return max(max(y[0], y[1]), max(y[2], y[3]));}
-        double area() const {
+	void setX(nmb_ImageBoundPoint ibp, double xb) {x[ibp] = xb;}
+	void setY(nmb_ImageBoundPoint ibp, double yb) {y[ibp] = yb;}
+	double getX(nmb_ImageBoundPoint ibp) const { return x[ibp]; }
+	double getY(nmb_ImageBoundPoint ibp) const { return y[ibp]; }
+	vrpn_bool isRectangle() {
+		return (x[0] == x[1] && x[2] == x[3] && 
+			y[0] == y[2] && y[1] == y[3]);
+	}
+	void getBoundingBox(double &minx, double &miny,
+		double &maxx, double &maxy) {
+		minx = minX(); miny = minY(); maxx = maxX(); maxy = maxY();
+	}
+
+    double minX() const {return min(min(x[0], x[1]), min(x[2], x[3]));}
+    double minY() const {return min(min(y[0], y[1]), min(y[2], y[3]));}
+    double maxX() const {return max(max(x[0], x[1]), max(x[2], x[3]));}
+    double maxY() const {return max(max(y[0], y[1]), max(y[2], y[3]));}
+    double area() const {
            double a1 = (x[MAX_X_MIN_Y] - x[MIN_X_MIN_Y])*
                        (y[MIN_X_MAX_Y] - y[MIN_X_MIN_Y]) -
                        (x[MIN_X_MAX_Y] - x[MIN_X_MIN_Y])*
@@ -88,7 +98,7 @@ class nmb_ImageBounds {
                        (y[MAX_X_MIN_Y] - y[MAX_X_MAX_Y]);
            return 0.5*(fabs(a1) + fabs(a2));
 
-        }
+    }
 
   private:
     double x[4], y[4];
@@ -157,14 +167,17 @@ class nmb_Image {
 	///  it allows for rotation of the image coordinate system (in which we
 	///  have image positions in terms of pixel (i,j) coordinates) relative
 	///  to the world coordinate system)
-	virtual double boundX(nmb_ImageBounds::ImageBoundPoint ibp) const = 0;
-	virtual double boundY(nmb_ImageBounds::ImageBoundPoint ibp) const = 0;
-	virtual void setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x) 
+	virtual double boundX(nmb_ImageBoundPoint ibp) const = 0;
+	virtual double boundY(nmb_ImageBoundPoint ibp) const = 0;
+	virtual void setBoundX(nmb_ImageBoundPoint ibp, double x) 
              = 0;
-	virtual void setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y) 
+	virtual void setBoundY(nmb_ImageBoundPoint ibp, double y) 
              = 0;
 	virtual void getBounds(nmb_ImageBounds &ib) const = 0;
 	virtual void setBounds(const nmb_ImageBounds &ib) = 0;
+
+	virtual vrpn_bool getWorldRectangle(double &minX, double &minY,
+		double &maxX, double &maxY) const;
 
 	double widthWorld() const;
 	double heightWorld() const;
@@ -346,10 +359,10 @@ class nmb_ImageGrid : public nmb_Image{
         virtual float minNonZeroValue();
         virtual float minAttainableValue() const;
         virtual float maxAttainableValue() const;
-	virtual double boundX(nmb_ImageBounds::ImageBoundPoint ibp) const;
-	virtual double boundY(nmb_ImageBounds::ImageBoundPoint ibp) const;
-	virtual void setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x);
-	virtual void setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y);
+	virtual double boundX(nmb_ImageBoundPoint ibp) const;
+	virtual double boundY(nmb_ImageBoundPoint ibp) const;
+	virtual void setBoundX(nmb_ImageBoundPoint ibp, double x);
+	virtual void setBoundY(nmb_ImageBoundPoint ibp, double y);
 	virtual void getBounds(nmb_ImageBounds &ib)  const;
 	virtual void setBounds(const nmb_ImageBounds &ib);
 	virtual string *name();
@@ -450,10 +463,10 @@ class nmb_ImageArray : public nmb_Image {
     virtual int validDataRange(short* o_minX, short* o_maxX, 
                            short* o_minY, short* o_maxY);
 
-    virtual double boundX(nmb_ImageBounds::ImageBoundPoint ibp) const;
-    virtual double boundY(nmb_ImageBounds::ImageBoundPoint ibp) const;
-    virtual void setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x);
-    virtual void setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y);
+    virtual double boundX(nmb_ImageBoundPoint ibp) const;
+    virtual double boundY(nmb_ImageBoundPoint ibp) const;
+    virtual void setBoundX(nmb_ImageBoundPoint ibp, double x);
+    virtual void setBoundY(nmb_ImageBoundPoint ibp, double y);
     virtual void getBounds(nmb_ImageBounds &ib) const;
     virtual void setBounds(const nmb_ImageBounds &ib);
 

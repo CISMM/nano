@@ -1357,10 +1357,10 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
         /*XXX Find out the proper orientation (depends on iDataDir?) */
         iCols = I->width();
         iRows = I->height();
-        fXmin = I->boundX(nmb_ImageBounds::MIN_X_MIN_Y)/ XYunits2nm;
-        fXmax = I->boundX(nmb_ImageBounds::MAX_X_MAX_Y)/ XYunits2nm;
-        fYmin = I->boundY(nmb_ImageBounds::MIN_X_MIN_Y)/ XYunits2nm;
-        fYmax = I->boundY(nmb_ImageBounds::MAX_X_MAX_Y)/ XYunits2nm;
+        fXmin = I->boundX(MIN_X_MIN_Y)/ XYunits2nm;
+        fXmax = I->boundX(MAX_X_MAX_Y)/ XYunits2nm;
+        fYmin = I->boundY(MIN_X_MIN_Y)/ XYunits2nm;
+        fYmax = I->boundY(MAX_X_MAX_Y)/ XYunits2nm;
 
         // Thermo always moves bounds so fXmin and fYmin to zero, so we'll do
         // the same.

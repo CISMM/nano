@@ -1,3 +1,13 @@
+2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
+
+	* Point.h : added an assertion to make sure that the z value is not
+	used from Point_results that aren't part of a force curve
+	* Topo.C (imageToTopoData): change to match change in nmb_ImageBound type
+	* nmb_Image.h: Moved the ImageBoundPoint type outside of the 
+	nmb_ImageBound class
+	(getWorldRectangle): new function
+	
+
 2002-10-01 Jameson Miller <millerj@cs.unc.edu>
 	* nmb_decoration.c (.h) - added variables to keep track of the
         step size for the graphics of direct step (ds_AXIS_COLOR_ss)
