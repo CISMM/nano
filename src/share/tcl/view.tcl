@@ -21,6 +21,9 @@ set center_pressed 0
 #
 set bdwdth 0
 set magellan_buttons { 1 2 3 4 5 6 7 8 }
+if { $viewer_only } {
+    set magellan_buttons { 1 2 5 6 }
+}
 # Leave out * because it doesn't do anything except to Magellan.
 foreach i $magellan_buttons {
     # Read the button image from a file
@@ -88,6 +91,7 @@ radiobutton $nmInfo(viewb2).r2.scaleup -text "Scale Up"   -variable user_0_mode 
 radiobutton $nmInfo(viewb2).r2.scaledown -text "Scale Down" -variable user_0_mode \
 	-value 3  -padx 0 -pady 0
 
+if { !$viewer_only } {
 radiobutton $nmInfo(viewb3).live -text "Touch" \
 	-variable user_0_mode -value 12  -padx 0 -pady 0
 
@@ -105,24 +109,35 @@ button $nmInfo(viewb4).commit -text "Commit!" \
 # this is for cancelling an operation, instead of committing. (Line tool)
 button $nmInfo(viewb8).cancel -text "Cancel" \
 	-command "set cancel_commit 1"
-
-grid $view.b1 $view.b2 $view.b3 $view.b4 \
+}
+grid $view.b1 $view.b2 \
     -sticky nsew -padx 1 -pady 1
-grid $view.b5 $view.b6 $view.b7 $view.b8 \
+grid $view.b5 $view.b6 \
     -sticky nsew -padx 1 -pady 1
+if { !$viewer_only } {
+grid $view.b3 -sticky nsew -padx 1 -pady 1 -row 0 -column 2
+grid $view.b4 -sticky nsew -padx 1 -pady 1 -row 0 -column 3
+grid $view.b7 -sticky nsew -padx 1 -pady 1 -row 1 -column 2
+grid $view.b8 -sticky nsew -padx 1 -pady 1 -row 1 -column 3
 
+}
 pack $nmInfo(viewb1).grab -side left
 pack $nmInfo(viewb2).r1 $nmInfo(viewb2).r2 -side left -fill x
 pack $nmInfo(viewb2).r1.changelight $nmInfo(viewb2).r1.measure -anchor nw
 pack $nmInfo(viewb2).r2.scaleup $nmInfo(viewb2).r2.scaledown -anchor nw
+if { !$viewer_only } {
 pack $nmInfo(viewb3).live $nmInfo(viewb3).select -anchor nw
 pack $nmInfo(viewb4).commit -side left
+}
 pack $nmInfo(viewb5).center -side left
 pack $nmInfo(viewb6).demotouch -side left
+if { !$viewer_only } {
 pack $nmInfo(viewb7).xy_lock -side left
 pack $nmInfo(viewb8).cancel -side left
-
+}
 # Some of these controls are only relevant to live devices
 # They are enabled or disabled in mainwin.tcl based on this list. 
+if { !$viewer_only } {
 lappend device_only_controls $nmInfo(viewb3).live $nmInfo(viewb3).select \
         $nmInfo(viewb7).xy_lock $nmInfo(viewb4).commit $nmInfo(viewb8).cancel 
+}

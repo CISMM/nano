@@ -41,6 +41,8 @@
 #include <vrpn_Phantom.h>
 #endif
 
+#include "vrpn_MousePhantom.h"
+
 // ############ getpid hack
 #if defined (__CYGWIN__) 
 
@@ -1001,6 +1003,7 @@ static char local_ModeName [256];
 /// contain a machine name or IP address for the Phantom.
 vrpn_Phantom * phantServer = NULL;
 #endif
+vrpn_MousePhantom * mousePhantomServer = NULL;
 
 /// Phantom force device, used in interaction.c, minit.c
 vrpn_ForceDevice_Remote *forceDevice = NULL;
@@ -2851,6 +2854,10 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
 */
 static void handle_openSPMDeviceName_change (const char *, void * userdata)
 {
+#ifdef VIEWER
+    display_fatal_error_dialog("Unable to open SPM connection in NanoManipulator Viewer. Exiting...");
+    return;
+#endif
     MicroscapeInitializationState * istate = (MicroscapeInitializationState *)userdata;
     long logmode = vrpn_LOG_NONE;
 
@@ -5948,6 +5955,12 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
             handTrackerName = (char *) "null";
         }
     }
+#ifdef VIEWER
+    // Viewer doesn't allow use of Phantom
+    headTrackerName = (char *) "null";
+    handTrackerName = (char *) "null";
+#endif
+
     /* Check to see if a tracker is being used for head tracking */
     if (strcmp("null", headTrackerName) != 0) {
         head_tracked = VRPN_TRUE;
@@ -6017,7 +6030,11 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
 //          }
 //  #endif
         if ( tcl_script_dir == NULL) {
+#ifdef VIEWER
+            sprintf(env_string, "%s/share/tcl_view/", nano_root);
+#else
             sprintf(env_string, "%s/share/tcl/", nano_root);
+#endif
             tcl_script_dir = new char [strlen(env_string) + 1];
             strcpy(tcl_script_dir, env_string);
         }
@@ -6126,7 +6143,15 @@ int main(int argc, char* argv[])
 	}
 	sprintf(istate.afm.deviceName, "file:%s", istate.afm.inputStreamName);
 
-    } 
+    } else {
+#ifdef VIEWER
+        if (strcmp(istate.afm.deviceName, "null")) {
+            display_fatal_error_dialog("Unable to open SPM connection in"
+                                       " NanoManipulator Viewer. Exiting...");
+            return -1;
+        }
+#endif
+    }
 
     // Check for no microscope connection - i.e. we are opening Topo
     // or PPM files.
@@ -6299,7 +6324,6 @@ int main(int argc, char* argv[])
         display_fatal_error_dialog("Cannot setup tracker callbacks\n");
         return(-1);
     }
-
   // NANOX
 
   collaborationManager = new CollaborationManager (istate.replayInterface);
@@ -6683,6 +6707,9 @@ VERBOSE(1, "Entering main loop");
 	phantServer->mainloop();
       }
 #endif
+      if (mousePhantomServer) {
+          mousePhantomServer->mainloop();
+      }
       if (phantButton) {
 	phantButton->mainloop();
       }
@@ -7006,6 +7033,10 @@ VERBOSE(1, "Entering main loop");
 	phantServer = NULL;
     }
 #endif
+    if (mousePhantomServer) {
+        delete mousePhantomServer;
+        mousePhantomServer = NULL;
+    }
     if (internal_device_connection) {
         delete internal_device_connection;
         internal_device_connection = NULL;

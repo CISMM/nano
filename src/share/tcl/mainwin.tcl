@@ -80,6 +80,10 @@ if {[string match -nocase "*wish*" [info nameofexecutable]] } {
 #
 set thirdtech_ui 1
 
+# We will also watch for "viewer_only" to be set, indicating this
+# version can't connect to live SPMs.
+if {![info exists viewer_only] } { set viewer_only 0 }
+ 
 #appearance variables
     # vertical padding between floatscales - image and modify windows
 set fspady 3
@@ -198,8 +202,10 @@ $filemenu add command -label "Open Static File..." -underline 12 \
 	-command "open_static_file"
 $filemenu add command -label "Open Stream File..." -underline 0 \
 	-command "open_stream_file"
+if { !$viewer_only } {
 $filemenu add command -label "Open SPM Connection..." -underline 9 \
 	-command "open_spm_connection"
+}
 $filemenu add command -label "Close..." -underline 0 -command \
         "set close_microscope 1"
 $filemenu add separator
@@ -228,8 +234,10 @@ set setupmenu .menu.setup
 menu $setupmenu -tearoff 0
 .menu add cascade -label "Setup" -menu $setupmenu -underline 0
 
+if { !$viewer_only } {
 $setupmenu add command -label "Data Sets..." -underline 0 \
 	-command "show.data_sets"
+}
 $setupmenu add command -label "Height Plane..." -underline 0 -command \
 	"show.z_mapping"
 $setupmenu add command -label "Color Map..." -underline 0 -command \
@@ -245,9 +253,10 @@ $setupmenu add command -label "Haptic..." -underline 2 -command \
 $setupmenu add command -label "Display Settings..." -underline 8 -command \
 		"show.display_settings"
 
+if { !$viewer_only } {
 lappend device_only_controls \
         [list $setupmenu entryconfigure "Data Sets..."]
-
+}
 #### TIPCONTROL menu #############################
 set tipcontrolmenu .menu.tipcontrol
 menu $tipcontrolmenu -tearoff 0
@@ -257,9 +266,10 @@ $tipcontrolmenu add command -label "Image Params..." -underline 0 \
 	-command "show.image"
 $tipcontrolmenu add command -label "Modify Params..." -underline 0 \
 	-command "show.modify"
+if { !$viewer_only } {
 $tipcontrolmenu add command -label "Modify Live Controls..." -underline 7 \
 	-command "show.modify_live"
-
+}
 
 #### ANALYSIS menu #############################
 set analysismenu .menu.analysis
@@ -296,9 +306,18 @@ $toolmenu add checkbutton -label "Show Mode Buttons" -underline 5 \
     }
 }
 
-$toolmenu add command -label "Phantom" -underline 0 \
-    -command "show.phantom_win"
-
+#Only use the Mouse Phantom if the hand-tracker is null
+if {[string compare -nocase [lindex $env(TRACKER) 1] "null"] == 0} {
+    $toolmenu add command -label "Mouse Phantom" -underline 0 \
+            -command "show.mouse_phantom_win"
+} else {
+    # Use a real phantom.
+    # must be left-justified so strip_unc program can remove it.
+if { !$viewer_only } {
+    $toolmenu add command -label "Phantom" -underline 0 \
+            -command "show.phantom_win"
+}
+}
 $toolmenu add command -label "Magellan" -underline 0 \
     -command "show.magellan_win"
 
@@ -380,13 +399,13 @@ radiobutton $w2.toolbar.speed_detail4 -variable tesselation_stride \
 radiobutton $w2.toolbar.speed_detail5 -variable tesselation_stride \
 	-value 5
 
-# Anchor south to make the labels sit on the bottom with the slider.
 pack $w2.toolbar.detail $w2.toolbar.speed_detail1 $w2.toolbar.speed_detail2 \
 	$w2.toolbar.speed_detail3 $w2.toolbar.speed_detail4 \
 	$w2.toolbar.speed_detail5 $w2.toolbar.speed \
 	-side left 
 
 
+if { !$viewer_only } {
 set spm_scanning 1
 # toggle scanning flag. 
 button $w2.toolbar.pause_scan -text "Stop\nScan" \
@@ -410,7 +429,7 @@ pack $w2.toolbar.pause_scan $w2.toolbar.withdraw_tip -side left -padx 5
 
 # These two button should only be available when reading a DEVICE
 lappend device_only_controls $w2.toolbar.pause_scan $w2.toolbar.withdraw_tip
-
+}
 #File menu commands
 source [file join ${tcl_script_dir} filemenu.tcl]
 

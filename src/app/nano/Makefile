@@ -19,9 +19,38 @@ ifdef NANO_WITH_ROBOT
    EXTRA_CFLAGS += -DNANO_WITH_ROBOT
 endif
 
+# new name for a viewer-only app.
+ifdef VIEWER
+ifdef VC
+   APP_NAME := nano_view.exe
+else
+   APP_NAME := nano_view
+endif
+endif
+
 include ../Makefile.share
 
 .PHONY: install
 install:
 	cp $(APP_EXEC) $(NANO_ROOT)/bin
-	cp -R -u -f $(TOP_LEVEL_SRC_DIR)/share/tcl $(NANO_ROOT)/share
+#	cp -R -u -f $(TOP_LEVEL_SRC_DIR)/share/tcl $(NANO_ROOT)/share
+ifdef VIEWER
+	cp -R -u -f $(TOP_LEVEL_SRC_DIR)/share/tcl/images $(NANO_ROOT)/share/tcl_view
+	$(TOP_LEVEL_SRC_DIR)/util/tcl_filters/strip_unc.tcl \
+	$(TOP_LEVEL_SRC_DIR)/share/tcl $(NANO_ROOT)/share/tcl_view \
+	thirdtech_ui viewer_only
+else
+	cp -R -u -f $(TOP_LEVEL_SRC_DIR)/share/tcl/images $(NANO_ROOT)/share/tcl
+	$(TOP_LEVEL_SRC_DIR)/util/tcl_filters/strip_unc.tcl \
+	$(TOP_LEVEL_SRC_DIR)/share/tcl $(NANO_ROOT)/share/tcl \
+	thirdtech_ui
+endif
+
+#Which obj files differentiate the full version from the viewer-only version?
+.PHONY: clean_view
+clean_view:
+ifdef VC
+	rm $(OBJECT_DIR)/microscape.obj $(OBJECT_DIR)/tcl_tk.obj
+else 
+	rm $(OBJECT_DIR)/microscape.o $(OBJECT_DIR)/tcl_tk.o
+endif

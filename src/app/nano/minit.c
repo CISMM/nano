@@ -68,6 +68,9 @@
 #include <vrpn_Phantom.h>
 #endif
 
+// Make the mouse behave like the Phantom. 
+#include "vrpn_MousePhantom.h"
+
 // MOVED #ifdef FLOW includes and declarations to graphics.C
 
 int x_init(char* argv[]);
@@ -317,9 +320,10 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
    switch (user_mode[0]) {
    case USER_GRAB_MODE:
    case USER_LIGHT_MODE:
-   case USER_PLANE_MODE:
+   case USER_MEASURE_MODE:
    case USER_SCALE_UP_MODE:
    case USER_SCALE_DOWN_MODE:
+   case USER_PLANE_MODE:
        if (puck_active) {
            if (!old_puck_active) {
               // This "activates" the puck, sets up later interaction.  Save
@@ -657,15 +661,13 @@ phantom_init(vrpn_Connection * local_device_connection)
     if (strcmp(handTrackerName, "null") != 0){
         // Are we going to set up a server, too? Check the name.
         // If it includes an @, we look on another machine. Otherwise, local. 
-        vrpn_bool local_Phantom = VRPN_FALSE;
 #ifndef NO_PHANTOM_SERVER
         char * bp= NULL;
         bp = strchr(handTrackerName, '@');
         if (bp == NULL) {
             // If there is no local connection, we can't do anything.
             if (local_device_connection == NULL) return 0;
-            // Set up a local server
-            local_Phantom = VRPN_TRUE;
+            
             // Sleep to get phantom in reset positon
             // Should notify user...
             //vrpn_SleepMsecs(2000);
@@ -673,14 +675,26 @@ phantom_init(vrpn_Connection * local_device_connection)
             phantServer = new vrpn_Phantom(handTrackerName, 
                                            local_device_connection, 60);
             if (phantServer==NULL) return -1;
-        }
+        } else 
 #endif
-        if (local_Phantom) {
-            forceDevice = new vrpn_ForceDevice_Remote(handTrackerName, 
-                                                      local_device_connection);
-        } else {
-            forceDevice = new vrpn_ForceDevice_Remote(handTrackerName);
+        {
+            // If it's not a local phantom, get the remote connection.
+            local_device_connection = vrpn_get_connection_by_name(handTrackerName);
+            if (local_device_connection == NULL) return -1;
         }
+    } else {
+    
+        // Make a mouse phantom server - the mouse acts like a phantom
+        // Only if there is no real phantom - they conflict. 
+        mousePhantomServer = vrpn_MousePhantom::createMousePhantom(
+                                              handTrackerName, 
+                                              local_device_connection, 60);
+        if (mousePhantomServer==NULL) return -1;
+    }
+
+    // If we get here, some phantom server has been created or contacted.
+    forceDevice = new vrpn_ForceDevice_Remote(handTrackerName, 
+                                              local_device_connection);
         // Already set to [0.2, 1.0] by default
         //MAX_K = 1.0f;
         //MIN_K = 0.2f;
@@ -698,12 +712,8 @@ phantom_init(vrpn_Connection * local_device_connection)
 			"Error: can't register vrpn_ForceDevice handler\n");
 		return -1;
 	}
-        if (local_Phantom) {
-            phantButton = new vrpn_Button_Remote(handTrackerName, 
-                                                 local_device_connection);
-        } else {
-            phantButton = new vrpn_Button_Remote(handTrackerName);
-        }
+        phantButton = new vrpn_Button_Remote(handTrackerName, 
+                                             local_device_connection);
         if (phantButton->register_change_handler(&phantButtonState,
                 handle_phant_button_change)){
                 fprintf(stderr, "Error: can't register vrpn_Button handler\n");
@@ -715,12 +725,8 @@ phantom_init(vrpn_Connection * local_device_connection)
         // Get the right initial setting.
         handle_phantom_button_mode_change(phantom_button_mode, 
                                           &phantButtonState);
-        if (local_Phantom) {
-            vrpnHandTracker[0] = new vrpn_Tracker_Remote(handTrackerName, 
-                                                 local_device_connection);
-        } else {
-            vrpnHandTracker[0] = new vrpn_Tracker_Remote(handTrackerName);
-        }
+        vrpnHandTracker[0] = new vrpn_Tracker_Remote(handTrackerName, 
+                                                     local_device_connection);
         handSensor[0] = 0;
 
         vrpn_Connection * c = NULL;
@@ -736,13 +742,7 @@ phantom_init(vrpn_Connection * local_device_connection)
         vrpn_int32 new_conn_id =
             c->register_message_type(vrpn_got_connection);
         c->register_handler(new_conn_id, handle_phantom_reconnect, NULL);
-    }
-    else {
-        vrpnHandTracker[0] = NULL;
-        phantButton = NULL;
-        forceDevice = NULL;
-    }
-    return 0;
+        return 0;
 }
 
 /**

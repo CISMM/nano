@@ -298,6 +298,12 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 		return(-1);
 	}
 
+#ifdef VIEWER
+        // Set variable to indicate that this is a Viewer only
+        // interface. 
+	sprintf(cvalue, "1");
+	Tcl_SetVar(my_tk_control_interp,"viewer_only",(char *) cvalue,TCL_GLOBAL_ONLY);
+#endif
 	/* The Tcl script that holds widget definitions is sourced from
 	 * inside the main window script*/
 	/* Load the Tcl script that handles main interface window

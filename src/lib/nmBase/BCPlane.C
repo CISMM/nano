@@ -1070,7 +1070,8 @@ BCPlane::writePPMFile(int file_descriptor)
     int x, y;
 
     //printf("%f %f %f\n", minValue(), maxValue(), scale);
-    for(y = 0; y < numY(); y++ ) 
+    // Reverse Y traversal so image is not flipped vertically.
+    for(y = numY() -1; y >=0; y-- ) 
     {
 	for(x = 0; x < numX(); x++ ) 
 	{

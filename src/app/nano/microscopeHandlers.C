@@ -722,10 +722,13 @@ void handle_modify_accept (vrpn_int32, void * _mptr) {
       
       microscope->state.modify.mode_changed = VRPN_FALSE;
    }
-   // If the modify mode force changes, we want it sent to
-   // the microscope RIGHT NOW, but ONLY if we are already in modify mode.
+   // If the modify mode force changes, we want it sent to the microscope
+   // RIGHT NOW, but ONLY if we are already in modify mode, But NOT if we are
+   // using line tool - the "start scanning" message has already been sent,
+   // and this message will set the image setpoint (BAD)!
    if (microscope->state.modify.mode_p_changed){
-      if (microscope->state.acquisitionMode == MODIFY) {
+      if ((microscope->state.acquisitionMode == MODIFY) && 
+          (microscope->state.modify.tool != LINE)) {
 	 microscope->SetModForce();
       }
       // update screen decorations

@@ -51,3 +51,34 @@ pack $phantom_win.phantom_reset $phantom_win.phantom_button_mode $phantom_win.sp
 set magellan_win [create_closing_toplevel magellan_win "Magellan Settings"]
 button $magellan_win.magellan_reset -text "Reconnect to Magellan" -command "set reconnect_magellan 1"
 pack $magellan_win.magellan_reset -side top -fill x
+
+# -------
+# Mouse Phantom controls - let the mouse emulate a phantom tracker and button
+# (but not forces, of course...)
+set mouse_phantom_win [create_closing_toplevel mouse_phantom_win "Mouse Phantom Settings"]
+#checkbutton $mouse_phantom_win.mp_enable \
+#	-text "Enabled" -variable mp_enabled -anchor nw
+
+button $mouse_phantom_win.phantom_reset -text "Reset Mouse Phantom" -command "set reset_phantom 1"
+
+# Rotational and translational motion scale for mouse control. 
+set mp_rot_scale 1.0
+floatscale $mouse_phantom_win.mp_rot_scale 0.3 3.0 \
+	    100 1 1 mp_rot_scale "Rotational Motion Scale"
+set mp_trans_scale 1.0
+floatscale $mouse_phantom_win.mp_trans_scale 0.3 3.0 \
+	    100 1 1 mp_trans_scale "Translational Motion Scale"
+
+pack $mouse_phantom_win.phantom_reset \
+        $mouse_phantom_win.mp_rot_scale \
+        $mouse_phantom_win.mp_trans_scale \
+	-side top -fill x -expand yes
+
+pack [label $mouse_phantom_win.instr -justify left -text \
+"Left button-down translates 
+the hand in the X-Y plane.
+Hold the Control key for rotation.
+Hold the Shift key for Z motion.
+Right button-down translates 
+the hand and pushes the 
+Phantom button. "] 
