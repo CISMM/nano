@@ -324,7 +324,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-   SYS_INCLUDE := $(MY_NANO_SRC_DIR)/external/pc_win32/include $(MY_NANO_SRC_DIR)/external/pc_win32/include/ghost3.0 $(MY_NANO_SRC_DIR)/external/pc_win32/include/stl $(MY_NANO_SRC_DIR)/vrpn/server_src
+   SYS_INCLUDE := $(MY_NANO_SRC_DIR)/external/pc_win32/include $(MY_NANO_SRC_DIR)/external/pc_win32/include/ghost3.1 $(MY_NANO_SRC_DIR)/external/pc_win32/include/ghost-stl $(MY_NANO_SRC_DIR)/vrpn/server_src
 endif
 
 ifeq ($(HW_OS),pc_linux)
@@ -464,7 +464,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-   TCL_LIBS := $(addprefix -l,BLT24 tk82 tcl82)
+   TCL_LIBS := $(addprefix -l,BLT24 tk83 tcl83)
 endif
 
 ifeq ($(HW_OS),sgi_irix)            # Tcl must load statically on Irix

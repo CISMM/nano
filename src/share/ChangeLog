@@ -1,3 +1,8 @@
+2001-12-14  Tom Hudson  <hudsont@uncwil.edu>
+
+   * Makefile.common : Update ghost and stl paths.  Update tcl library
+   version.
+
 2001-05-12  Aron Helser  <helser@cs.unc.edu>
 
 	* Makefile.common : VIEWER changed to NO_MSCOPE_CONNECTION or
