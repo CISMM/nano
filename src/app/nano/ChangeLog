@@ -1,5 +1,10 @@
 2002-05-28 David Borland <borland@cs.unc.edu>
 
+        * import.C : a couple of the new tcl widgets weren't getting updated
+        when switching between objects.  Fixed this.
+
+2002-05-28 David Borland <borland@cs.unc.edu>
+
         * import.C : took out code for locking translations from here, and
         moved to interaction.C.  Locks for translations now only apply when
         "grabbing" an object.

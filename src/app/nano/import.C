@@ -163,11 +163,19 @@ static void handle_current_object(const char*, void*) {
 			import_transy = v[1];
 			import_transz = v[2];
 
+			import_lock_transx = obj.GetLockTransx();
+			import_lock_transy = obj.GetLockTransy();
+			import_lock_transz = obj.GetLockTransz();
+
 			q_vec_type euler;
 			q_to_euler(euler, obj.GetLocalXform().GetRot());
 			import_rotx = Q_RAD_TO_DEG(euler[2]);
 			import_roty = Q_RAD_TO_DEG(euler[1]);
 			import_rotz = Q_RAD_TO_DEG(euler[0]);
+
+			import_lock_rotx = obj.GetLockRotx();
+			import_lock_roty = obj.GetLockRoty();
+			import_lock_rotz = obj.GetLockRotz();
 
 			import_visibility = obj.GetVisibility();
 
@@ -180,6 +188,9 @@ static void handle_current_object(const char*, void*) {
 			import_update_AFM = obj.GetUpdateAFM();
 
 			import_grab_object = obj.GetGrabObject();
+
+			import_tune_trans = obj.GetTuneTrans();
+			import_tune_rot = obj.GetTuneRot();
 
 			// if spider...
 			if (strcmp(*World.current_object, "spider.spi") == 0) {
