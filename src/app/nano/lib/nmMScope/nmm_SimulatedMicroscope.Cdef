@@ -136,9 +136,10 @@ RECEIVE_MSG ReportGridSize {
 	if(y != d_scanResolution){
 		Remote_toSim_y = double(y)/double(d_scanResolution);
 	}
+	cout << endl << "Ratio remote to simulator grid sizes:\t" << Remote_toSim_x << ", " << Remote_toSim_y << endl;
 	Sim_to_World_x = return_Simpixels_to_realworld_ratio_x();
 	Sim_to_World_y = return_Simpixels_to_realworld_ratio_y();
-	cout << Sim_to_World_x << ", " << Sim_to_World_y << flush;
+	cout << "Ratio simulator pixels to real world distance:\t" << Sim_to_World_x << ", " << Sim_to_World_y << endl;
 	grid_size_rcv = true;
 
 }
@@ -158,7 +159,7 @@ RECEIVE_MSG ScanRange {
 	d_ymax = ymax;
 	d_zmin = zmin;
 	d_zmax = zmax;
-	cout << "ScanRange: " << xmin << "," << xmax << "\t" << ymin << "," << ymax << "\n";
+	cout << endl << "ScanRange:\t" << xmin << "," << xmax << "\t" << ymin << "," << ymax << endl;
 }
 
 

@@ -42,6 +42,7 @@ private:
 	RECEIVERS_DECL nmm_AFMSIMSERVER_Report;
     HANDLERS_DECL nmm_AFMSIM_Report;
 	HANDLERS_DECL nmm_AFMSIMSERVER_Report;
+	static int handle_gotConnection(void * userdata, vrpn_HANDLERPARAM grpc_p);
 
 	nmb_Dataset * d_dataset;	//dataset that real di data is in
 	BCString RealAFMPlaneName;	//name of plane with real di data
@@ -57,6 +58,7 @@ private:
 					            //match real afm scan plane
 	vrpn_Connection * d_connection;
 	long simulator_id;
+	vrpn_int32 d_gotConnection_type;
 	
 
 };

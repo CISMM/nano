@@ -42,6 +42,11 @@ nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
 {
 	REGISTER nmm_AFMSIM_Report;
 	REGISTER nmm_AFMSIMSERVER_Report;
+	d_gotConnection_type =
+        d_connection->register_message_type(vrpn_got_connection);
+	connection->register_handler(d_gotConnection_type,
+                    handle_gotConnection,
+                    this);
 //
 	simulator_id = d_connection->register_sender("AFMSimulator");
 	Xdim = d_dataset->inputGrid->numX();
@@ -64,7 +69,17 @@ int nmm_SimulatedMicroscope_Remote::mainloop() {
 //
 
 HANDLERS nmm_AFMSIM_Report ; 
-
+//
+int nmm_SimulatedMicroscope_Remote::handle_gotConnection (void * userdata, vrpn_HANDLERPARAM grpc_p) {
+  const char * buffer = grpc_p.buffer;
+  nmm_SimulatedMicroscope_Remote* grpc_me = (nmm_SimulatedMicroscope_Remote *) userdata;
+  
+  grpc_me->encode_and_sendGridandScanInfo(grpc_me->d_dataset->inputGrid->numX(), grpc_me->d_dataset->inputGrid->numY(),
+			grpc_me->d_dataset->inputGrid->minX(),grpc_me->d_dataset->inputGrid->minY(),0,
+			grpc_me->d_dataset->inputGrid->maxX(),grpc_me->d_dataset->inputGrid->maxY(),128);
+  
+  return 0;
+}
 //
 RECEIVE_MSG WindowLineData {
 
@@ -77,14 +92,14 @@ RECEIVE_MSG WindowLineData {
 		//of data points following the Oth data point sent, is greater than the number of 
 		//points per row; analogous situation for y
 		//
-		int datain_xmax = x+(reports-1)*dx;
+		/*int datain_xmax = x+(reports-1)*dx;
 		int datain_ymax = y+(reports-1)*dy;
-
 		if (x < 0 || y < 0 || datain_xmax > Xdim || datain_ymax > Ydim) {
 			cerr << "Internal: grid size doesn't match reported data size."
 				 << "Exiting to avoid loss of data." << endl; 
 			return;
-		}
+		}*///ANDREA:  taking this out for right now because we can interpolate between data points up or down to
+		   //fit required size...
 //	
   		if (RealAFMPlane == NULL) return;
 //
@@ -156,9 +171,9 @@ encode_and_sendGridandScanInfo(vrpn_int32 x, vrpn_int32 y,
   int retval = -1;
   retval = Send((long)len, d_ScanRange_type, msgbuf);//send stuff
   //ANDREA:  note took this out because above not working--just for now...
-  /*char * msgbuf2 = encode_ReportGridSize(&len,x,y);//encode msgbuf
+  char * msgbuf2 = encode_ReportGridSize(&len,x,y);//encode msgbuf
   retval = -1;
-  retval = Send((long)len, d_ReportGridSize_type, msgbuf2);//send stuff*/
+  retval = Send((long)len, d_ReportGridSize_type, msgbuf2);//send stuff
   
 }
 //
