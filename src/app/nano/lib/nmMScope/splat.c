@@ -100,20 +100,8 @@ float ** mkSplat (BCGrid * grid)
 /* just multiply the oversampled kernel we've already made with the
 ** grid.
 **/
-int ptSplat (int * lost_changes, BCGrid * grid, Point_results * inputPoint)
+int ptSplat (int * , BCGrid * grid, Point_results * inputPoint)
 {
-//XXX This should do all of the planes in the grid, not just height and color
-	BCPlane* heightPlane = grid->getPlaneByName("height");
-	if (heightPlane == NULL) {
-	    fprintf(stderr, "Error in ptSplat: could not get height grid!\n");
-	    return -1;
-	}     
-
-	BCPlane* colorPlane = grid->getPlaneByName("color");
-	if (colorPlane == NULL) {
-	    fprintf(stderr, "Error in ptSplat: could not get color grid!\n");
-	    return -1;
-	}       
 
 	Point_value * value = inputPoint->getValueByName("Topography");
 	if (value == NULL) {
@@ -121,37 +109,50 @@ int ptSplat (int * lost_changes, BCGrid * grid, Point_results * inputPoint)
 		return -1;
 	}
 
-	float 		x = (value->results()->x() - heightPlane->minX()) *
+	return ptSplat(grid, value);
+
+}
+
+// For those who want to use some value other than the phantasmagorical
+// "Topography"
+
+int ptSplat (BCGrid * grid, Point_value * value) {
+
+//XXX This should do all of the planes in the grid, not just height
+  BCPlane* heightPlane = grid->getPlaneByName("height");
+  if (!heightPlane) {
+      fprintf(stderr, "Error in ptSplat: could not get height grid!\n");
+      return -1;
+  }     
+
+  float x = (value->results()->x() - heightPlane->minX()) *
 			    heightPlane->derangeX();
-	float 		y = (value->results()->y() - heightPlane->minY()) *
+  float y = (value->results()->y() - heightPlane->minY()) *
 			    heightPlane->derangeY();
-	int		ix = (int)x+1;
-	int		iy = (int)y+1;
-	int		xoffset = (int)((ix-x) * OVER);
-	int		yoffset = (int)((iy-y) * OVER);
-	int		mx, my;
-	unsigned	gx, gy;
+  int ix = (int) x + 1;
+  int iy = (int) y + 1;
+  int xoffset = (int)((ix - x) * OVER);
+  int yoffset = (int)((iy - y) * OVER);
+  int mx, my;
+  unsigned gx, gy;
 
-	lost_changes = lost_changes;
-
-	for( mx = (int)(-X_Ext+xoffset); mx <= X_Ext; mx+=(int)OVER ) {
-	  for( my = (int)(-Y_Ext+yoffset); my <= Y_Ext; my+=(int)OVER ) {
+  for (mx = (int)(-X_Ext + xoffset); mx <= X_Ext; mx += (int) OVER) {
+    for (my = (int)(-Y_Ext + yoffset); my <= Y_Ext; my += (int) OVER) {
 	    
-	    gx = (int)(ix +( mx - xoffset )/OVER);
-	    gy = (int)(iy +( my - yoffset )/OVER);
+      gx = (int)(ix +( mx - xoffset )/OVER);
+      gy = (int)(iy +( my - yoffset )/OVER);
 
-	    //XXX Needs to be changed up update all current planes that
-	    //XXX match incoming point values.
-	    if( ( gx < (unsigned)grid->numX())
-		&&
-		( gy < (unsigned)grid->numY()) ) {
-	       heightPlane->setValue(gx, gy, heightPlane->value(gx, gy) * ( 1 - SplatFilter[mx][my] ));
-	       heightPlane->setValue(gx, gy, heightPlane->value(gx, gy) +
+      //XXX Needs to be changed up update all current planes that
+      //XXX match incoming point values.
+      // These are unsigned, so we don't need to check that they're positive.
+      if ((gx < (unsigned)grid->numX()) &&
+  	  (gy < (unsigned)grid->numY())) {
+         heightPlane->setValue(gx, gy, heightPlane->value(gx, gy) * ( 1 - SplatFilter[mx][my] ));
+         heightPlane->setValue(gx, gy, heightPlane->value(gx, gy) +
 			SplatFilter[mx][my] * value->value());
-	       } /* end if inside the grid */
-	    } /* end for y */
-	  } /* end for x */
-
-      return 0;
+      } /* end if inside the grid */
+    } /* end for y */
+  } /* end for x */
+  return 0;
 }
 	

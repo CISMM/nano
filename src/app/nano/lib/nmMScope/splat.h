@@ -3,8 +3,14 @@
 
 class BCGrid;
 class Point_results;
+class Point_value;
 
 float ** mkSplat (BCGrid *);
-int ptSplat (int *, BCGrid *, Point_results *);
+  ///< Initializes static storage for splat kernel.
+int ptSplat (int *, BCGrid * grid, Point_results * result);
+  ///< Assumes we want to splat "Topography" from result into grid;
+  ///< ignores first argument.
+int ptSplat (BCGrid * grid, Point_value * value);
+  ///< Splats an arbitrary dataset into the grid.
 
 #endif  // SPLAT_H
