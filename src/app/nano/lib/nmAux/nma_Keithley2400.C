@@ -647,7 +647,8 @@ int nma_Keithley2400::handle_Error( void *_userdata, vrpn_HANDLERPARAM _p )
 }
 
 //static 
-int nma_Keithley2400::handle_Shutdown( void *_userdata, vrpn_HANDLERPARAM _p)
+int nma_Keithley2400::handle_Shutdown( void *_userdata,
+                                       vrpn_HANDLERPARAM /*_p*/ )
 {
 	nma_Keithley2400 * me = (nma_Keithley2400 *)_userdata;
 
