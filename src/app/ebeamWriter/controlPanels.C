@@ -40,6 +40,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_undoShape("undo_shape", 0),
    d_undoPoint("undo_point", 0),
    d_addTestGrid("add_test_grid", 0),
+   d_addFocusTest("add_focus_test", 0),
    d_canvasImage("canvas_image", "none"),
 
    d_patternColorChanged("pattern_color_changed", 0),
@@ -232,6 +233,7 @@ void ControlPanels::setupCallbacks()
   d_clearPattern.addCallback(handle_clearPattern_change, this);
   d_clearPatternConfirm.addCallback(handle_clearPatternConfirm_change, this);
   d_addTestGrid.addCallback(handle_addTestGrid_change, this);
+  d_addFocusTest.addCallback(handle_addFocusTest_change, this);
   d_canvasImage.addCallback(handle_canvasImage_change, this);
   d_patternColorChanged.addCallback(handle_patternColorChanged_change, this);
 
@@ -657,6 +659,25 @@ void ControlPanels::handle_addTestGrid_change(int /*new_value*/, void *ud)
 
   me->d_patternEditor->addTestGrid(minX_nm, minY_nm, maxX_nm, maxY_nm,
              numHorizontal, numVertical);
+
+}
+
+// static
+void ControlPanels::handle_addFocusTest_change(int /*new_value*/, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+
+  double xSpan_nm, ySpan_nm;
+
+//  me->d_patternEditor->getViewport(minX_nm, minY_nm, maxX_nm, maxY_nm);
+  me->d_SEM->getScanRegion_nm(xSpan_nm, ySpan_nm);
+
+  double centerX_nm, centerY_nm, diameter_nm;
+  centerX_nm = 0.5*xSpan_nm;
+  centerY_nm = 0.5*ySpan_nm;
+  diameter_nm = 500;
+
+  me->d_patternEditor->addFocusTest(centerX_nm, centerY_nm, diameter_nm);
 
 }
 

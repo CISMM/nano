@@ -199,6 +199,26 @@ void PatternEditor::updateWorldExtents()
 	  }
   }
 
+  // now do whats necessary to make the world extents have the same aspect ratio as
+  // the scan region
+  double scanAspect = (d_scanMaxX_nm - d_scanMinX_nm)/(d_scanMaxY_nm - d_scanMinY_nm);
+  double currAspect = (d_worldMaxX_nm - d_worldMinX_nm)/(d_worldMaxY_nm - d_worldMinY_nm);
+  double expansionFactor;
+  double center;
+  if (currAspect < scanAspect) {
+	// expand in X
+	expansionFactor = scanAspect/currAspect;
+	center = 0.5*(d_worldMaxX_nm + d_worldMinX_nm);
+	d_worldMaxX_nm = center + (d_worldMaxX_nm-center)*expansionFactor;
+	d_worldMinX_nm = center + (d_worldMinX_nm-center)*expansionFactor;
+  } else if (currAspect > scanAspect) {
+	// expand in Y
+	expansionFactor = currAspect/scanAspect;
+	center = 0.5*(d_worldMaxY_nm + d_worldMinY_nm);
+	d_worldMaxY_nm = center + (d_worldMaxY_nm-center)*expansionFactor;
+	d_worldMinY_nm = center + (d_worldMinY_nm-center)*expansionFactor;
+  }
+
   if (!d_viewportSet) {
 	setViewport(d_worldMinX_nm, d_worldMinY_nm, 
 		d_worldMaxX_nm, d_worldMaxY_nm);
@@ -478,6 +498,63 @@ void PatternEditor::addTestGrid(double minX_nm, double minY_nm,
   addShape(grid);
 }
 
+void PatternEditor::addFocusTest(double centerX_nm, double centerY_nm,
+                                double diameter_nm)
+{
+	if (d_shapeInProgress) {
+		endShape();
+	}
+	CompositePatternShape *star = new CompositePatternShape();
+
+	PolylinePatternShape line;
+	line.setExposure(d_line_exposure_pCoulombs_per_cm,
+					   d_area_exposure_uCoulombs_per_square_cm);
+
+	double x_begin, y_begin, x_end, y_end;
+	int i; 
+
+	double canvasFromWorld[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+	if (d_canvasImage) {
+		d_canvasImage->getWorldToImageTransform(canvasFromWorld);
+	}
+
+	double x_nm[8];
+	double y_nm[8];
+
+	x_nm[0] = centerX_nm-0.5*diameter_nm;
+	y_nm[0] = centerY_nm;
+	x_nm[1] = centerX_nm+0.5*diameter_nm;
+	y_nm[1] = centerY_nm;
+
+	x_nm[2] = centerX_nm;
+	y_nm[2] = centerY_nm-0.5*diameter_nm;
+	x_nm[3] = centerX_nm;
+	y_nm[3] = centerY_nm+0.5*diameter_nm;
+
+	x_nm[4] = centerX_nm-0.5*diameter_nm/sqrt(2.0);
+	y_nm[4] = centerY_nm-0.5*diameter_nm/sqrt(2.0);
+	x_nm[5] = centerX_nm+0.5*diameter_nm/sqrt(2.0);
+	y_nm[5] = centerY_nm+0.5*diameter_nm/sqrt(2.0);
+
+	x_nm[6] = centerX_nm-0.5*diameter_nm/sqrt(2.0);
+	y_nm[6] = centerY_nm+0.5*diameter_nm/sqrt(2.0);
+	x_nm[7] = centerX_nm+0.5*diameter_nm/sqrt(2.0);
+	y_nm[7] = centerY_nm-0.5*diameter_nm/sqrt(2.0);
+
+	for (i = 0; i < 4; i++) {
+		PatternShape::transform(canvasFromWorld, x_nm[2*i], y_nm[2*i], 
+			x_begin, y_begin);
+		PatternShape::transform(canvasFromWorld, x_nm[2*i+1], y_nm[2*i+1], 
+			x_end, y_end);
+		line.addPoint(x_begin, y_begin);
+		line.addPoint(x_end, y_end);
+		star->addSubShape(new PolylinePatternShape(line));
+		line.clearPoints();
+	}
+
+	addShape(star);
+}
+
 void PatternEditor::saveImageBuffer(const char *filename, 
                                     const char *filetype)
 {
@@ -515,11 +592,13 @@ void PatternEditor::setViewport(double minX_nm, double minY_nm,
   d_worldMaxY_nm = max(d_worldMaxY_nm, maxY_nm);
 
   int newWinWidth = d_mainWinWidth, newWinHeight = d_mainWinHeight;
+/*
   double viewAspect = (maxX_nm - minX_nm)/(maxY_nm - minY_nm);
   newWinWidth = d_mainWinHeight*viewAspect;
   if (newWinWidth != 0 && newWinHeight != 0) {
 	d_viewer->setWindowSize(d_mainWinID, newWinWidth, newWinHeight);
   }
+  */
   d_viewer->dirtyWindow(d_mainWinID);
   d_viewer->dirtyWindow(d_navWinID);
   d_viewportSet = vrpn_TRUE;
@@ -723,6 +802,7 @@ int PatternEditor::handleMainWinEvent(
       case RESIZE_EVENT:
          d_mainWinWidth = event.width;
          d_mainWinHeight = event.height;
+		 /*
 		 if (d_viewportSet) {
 			 desired_width = d_mainWinHeight*
 							 (d_mainWinMaxX_nm - d_mainWinMinX_nm)/
@@ -734,6 +814,7 @@ int PatternEditor::handleMainWinEvent(
 				 }
 			 }
 		 }
+		 */
          break;
       case MOTION_EVENT:
          x = event.mouse_x; y = event.mouse_y;
@@ -892,12 +973,12 @@ void PatternEditor::clampMainWinRectangle(double &xmin, double &ymin,
   xmin = max(xmin, d_worldMinX_nm);
   ymin = max(ymin, d_worldMinY_nm);
   xmax = min(xmax, d_worldMaxX_nm);
-  ymax = ymin + (xmax - xmin)*(d_mainWinHeight)/
-                (double)(d_mainWinWidth);
-  if (ymax > d_worldMaxY_nm) {
-    ymin -= (ymax - d_worldMaxY_nm);
-    ymax = d_worldMaxY_nm;
-  }
+  ymax = min(ymax, d_worldMaxY_nm);
+         //ymin + (xmax - xmin)*(d_mainWinHeight)/(double)(d_mainWinWidth);
+  //if (ymax > d_worldMaxY_nm) {
+  //  ymin -= (ymax - d_worldMaxY_nm);
+  //  ymax = d_worldMaxY_nm;
+  //}
 }
 
 int PatternEditor::mainWinDisplayHandler(

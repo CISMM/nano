@@ -192,25 +192,24 @@ class PatternShape {
 
 	virtual void handleWorldFromObjectChange() {}
 
-
-
+	inline static void transform(double *transform, double x_src, double y_src, 
+		double &x_dest, double &y_dest);
+	inline static void transform(double *transform, float x_src, float y_src, 
+		float &x_dest, float &y_dest);
+	inline static void transformVect(double *transform, double x_src, double y_src, 
+		double &x_dest, double &y_dest);
+	inline static void transformVect(double *transform, float x_src, float y_src, 
+		float &x_dest, float &y_dest);
   protected:
-	inline void transform(double *transform, double x_src, double y_src, 
-		double &x_dest, double &y_dest);
-	inline void transform(double *transform, float x_src, float y_src, 
-		float &x_dest, float &y_dest);
-	inline void transformVect(double *transform, double x_src, double y_src, 
-		double &x_dest, double &y_dest);
-	inline void transformVect(double *transform, float x_src, float y_src, 
-		float &x_dest, float &y_dest);
 	PatternShape *d_parent;
 	double d_parentFromObject[16];
     int d_ID;
     ShapeType d_shapeType;
     static int s_nextID;
     int d_numReferences;
-  // is this shape selected?
-  vrpn_bool d_selected;
+    
+	// is this shape selected?
+    vrpn_bool d_selected;
 
 };
 
@@ -568,7 +567,6 @@ class CompositePatternShape : public PatternShape {
     void generateExposurePoints(nmm_Microscope_SEM_EDAX *sem,
            double current, double dotSpacing, double lineSpacing,
            int &numPoints, double &expTime);
-
 
     list<PatternShapeListElement> d_subShapes;
 };

@@ -80,6 +80,7 @@ class PatternEditor : public nmb_ImageDisplay {
    void addTestGrid(double startX_nm, double startY_nm,
                     double endX_nm, double endY_nm,
                     int numHorizontal, int numVertical);
+   void addFocusTest(double centerX_nm, double centerY_nm, double diameter);
    void saveImageBuffer(const char *filename,
                 const char *filetype);
    void setViewport(double minX_nm, double minY_nm, 

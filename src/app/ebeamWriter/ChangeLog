@@ -1,3 +1,15 @@
+2003-04-07  Adam Seeger  <seeger@cs.unc.edu>
+
+	* controlPanels.[Ch]: added addFocusTest button and handler
+	* patternEditor.[Ch] (updateWorldExtents): changed this so it keeps
+	the aspect ratio of the world the same as the aspect ratio of the current
+	scan region
+	(addFocusTest): new function
+	(handleMainWinEvent), (setViewport): commented out code that set
+	the window size automatically - now the window is only set by the user
+	* patternShape.h (transform): made these functions public and static so
+	they could be used by addFocusTest()
+
 2003-04-03  David Jack  <jackd@cs.unc.edu>
 	* controlPanels.[Ch] - it's now possible to specify two widths for the
 	thick polyline and toggle between them
