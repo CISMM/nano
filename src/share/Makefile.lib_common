@@ -72,6 +72,11 @@ ifndef LIBRARY_ARCHIVE
    LIBRARY_ARCHIVE := $(OBJECT_DIR)/$(LIBRARY_NAME)
 endif
 
+ifdef VC
+   LIB_LINK_CMD := $(AR) ruv
+else 
+   LIB_LINK_CMD := $(CC) -ar -WR,-u,-v -o
+endif
 ###############################################################################
 #
 # Special targets
@@ -181,10 +186,10 @@ endif
 
 $(LIBRARY_ARCHIVE): $(LIBRARY_OBJ)
 ifdef NM_VERBOSE_MAKEFILE
-	$(CC) -ar -WR,-u,-v -o $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
+	$(LIB_LINK_CMD )$(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
 else
-	@echo $(CC) -ar -WR,-u,-v -o $(@F) ...
-	@$(CC) -ar -WR,-u,-v -o $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
+	@echo $(LIB_LINK_CMD) $(@F) ...
+	@$(LIB_LINK_CMD) $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
 #	@$(AR) ruv $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
 endif
 

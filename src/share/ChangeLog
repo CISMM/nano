@@ -1,3 +1,8 @@
+2002-01-29  Aron Helser  <helser@cs.unc.edu>
+
+	* Makefile.lib_common: Special case for VC, CC -ar doesn't work
+	there. 
+
 2002-01-27  David Marshburn  <marshbur@cs.unc.edu>
 
 	* Makefile.lib_common ($(LIBRARY_ARCHIVE)): use "CC -ar" instead of
