@@ -1,3 +1,23 @@
+2002-03-29  Aron Helser  <helser@cs.unc.edu>
+
+	* nmg_Surface.C (redrawSurface): new, just sets flag to redo
+	display lists at next loop iteration. 
+	(rebuildSurface): set internal flag rather than
+	dataset->range_of_change.ChangeAll. 
+
+	* nmg_GraphicsImpl.C (causeGridRedraw): Call new
+	surface->redrawSurface instead of
+	dataset->range_of_change.ChangeAll. Allows surface to consistently
+	handle full redraws. 
+
+	* nmg_SurfaceRegion.C (determineInterval): Fix infinite loop when
+	small surface has large stride. Do incremental rebuild when large
+	chunks of data come in at once, like when jumping in stream file,
+	or we just can't keep up with replay rate of 50. 
+
+	* surface_strip_create.c: Comment changes, give Texcoord default
+	value. 
+
 2002-03-28  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_SurfaceRegion.Ch (forceRebuildCondition): Removed class

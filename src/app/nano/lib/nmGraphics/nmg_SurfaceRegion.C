@@ -752,6 +752,7 @@ determineInterval(nmb_Dataset *dataset,
         // new data, rather than just one strip, to avoid leaving gaps in the
         // surface.
         // See comment for rebuildInterval for explanation of range of strips!
+      if ((high_strip-low_strip)*max_strip < 3000) {
         if (d_scanDirection > 0) {
             // Avoid d_last_marked from sucking up the whole surface
             // when the scan restarts. 
@@ -771,12 +772,26 @@ determineInterval(nmb_Dataset *dataset,
                 d_update = nmb_Interval (low_strip, min(max_strip, high_strip + 1));
                 mark.clear();
             } else {
-                d_update = nmb_Interval (min(max_strip, low_strip +1), 
+                d_update = nmb_Interval (min(max_strip, low_strip + 1), 
                                          min(max_strip, high_strip + 1));
                 mark = nmb_Interval (max(0, low_strip - 2), d_update.low()-1);
             }
         }
-
+      } else {
+        // We have a large number of strips to render, >10 strips at 300x300
+        // resolution, let's not do them all at once, possibly leaving some
+        // gaps in the surface until we get enough idle time to catch up.
+        if (d_scanDirection > 0) {
+            d_update = nmb_Interval (max(0, low_strip - 2), 
+                                     max(0, low_strip - 2));
+            mark = nmb_Interval (d_update.low()+1, 
+                                 min(max_strip, high_strip + 1));
+        } else {
+            d_update = nmb_Interval (min(max_strip, high_strip + 1), 
+                                     min(max_strip, high_strip + 1));
+            mark = nmb_Interval (max(0, low_strip - 2), d_update.low()-1);
+        }
+      }
         //Debug
         if (spm_graphics_verbosity >= 9 && !d_last_marked.empty() && d_regionID==0) 
             fprintf(stderr, "LM %d - %d, ",
@@ -784,7 +799,7 @@ determineInterval(nmb_Dataset *dataset,
         if (d_last_marked.empty()) {
             d_last_marked = mark;
         } else {
-            if (!mark.empty()) d_last_marked += mark;
+            d_last_marked += mark;
             // If update is handling something from last time, remove it. 
             if (d_last_marked.low() == d_update.low() ||
                 d_last_marked.high() == d_update.high()) {
@@ -871,8 +886,14 @@ determineInterval(nmb_Dataset *dataset,
     // to reflect this change.  If we're in the middle of the
     // scan many of these may have to be recomputed after the
     // next set of data is received.
-    d_update = nmb_Interval ( max(0,low_strip-2), 
+    if (do_update_mask) {
+        d_update = nmb_Interval ( max(0,low_strip-2), 
                               min(max_strip, high_strip+1));
+    } else {
+        // Fixes a bug: infinite loop caused by call from build_list_set
+        // when stride is 5 on a 12x12 surface. 
+        d_update.clear();
+    }
     // Clamp now.
 
     // leave mark empty!
@@ -913,6 +934,8 @@ int nmg_SurfaceRegion::
 rebuildInterval(nmb_Dataset *dataset, nmg_State * state, 
                 int low_row, int high_row, int strips_in_x)
 {
+//      timeval start, end;
+//      gettimeofday(&start, NULL);
     // First determine if we need rebuild anything. 
     if (!determineInterval(dataset, low_row, high_row, strips_in_x) ) {
         // Nothing to do. 
@@ -939,7 +962,10 @@ rebuildInterval(nmb_Dataset *dataset, nmg_State * state,
     VERBOSECHECK(6);
     
     RestoreBuildState(state);
-
+//      gettimeofday(&end, NULL);
+//      end = vrpn_TimevalDiff(end, start);
+//      printf("Range %d, time %ld.%ld\n", 
+//             d_update.high() - d_update.low(), end.tv_sec, end.tv_usec);
     return 0;
 }
 
@@ -1249,7 +1275,7 @@ int nmg_SurfaceRegion::build_list_set (
           // an empty interval. Pass in a "false" to indicate
           // we don't need to rebuild the region's masks, since we did
           // that above. 
-          if (!determineInterval(dataset, d_num_lists, 0, strips_in_x, false) ) {
+          if (!determineInterval(dataset, 100, 0, strips_in_x, false) ) {
               // Really, there's nothing to do. 
               return 0;
           }

@@ -295,58 +295,24 @@ deriveMaskPlane(int region)
 }
 
 /**
-   Call before generating display lists for a region.
+ Signal surface to reconstruct its display lists next time it can.  
+  Triggered by causeGridRedraw in nmg_GraphicsImpl.C
+  Don't call every frame - much too slow!
     Access: Public
-    @return 1 if entire region must be rebuilt, 0 if only the
-    strips between \a low_row and \a high_row need to be rebuilt
-    (and will be taken care of later by rebuildInterval)
-
-    @note Update default region first, because it has dependencies on other
-    masks. 
+    @return -1 on error, 0 on success. 
 */
-/*
 int nmg_Surface::
-updateMask(int low_row = -1, int high_row = -1, int region)
+redrawSurface(nmg_State * state)
 {
-//      struct timeval then, now;
-//      gettimeofday(&then, NULL);
-
-
-    if (region >= 0 && region <= d_numSubRegions) {
-        if (region != 0) {
-            region--;
-        if (d_subRegions[region]->needsUpdate()) {                
-            d_subRegions[region]->updateMaskPlane(d_dataset, low_row, high_row);
-        } else {
-            d_defaultRegion->updateMaskPlane(d_dataset, low_row, high_row);
-
-        }
+    for(int i = 0; i < d_numSubRegions; i++) {
+        d_subRegions[i]->forceRebuildCondition();
     }
-//      gettimeofday(&now, NULL);
-//      now = vrpn_TimevalDiff(now, then);
-//      printf("updateMask took %ld %ld\n", now.tv_sec, now.tv_usec);
-    return 0;
+    
+    d_defaultRegion->forceRebuildCondition();
+
+  return 0;
 }
-*/
-/**
-   Too slow - shouldn't be triggered outside rebuildSurface and 
-   rebuildInterval below
-*/
-/*
-int nmg_Surface::
-rebuildRegion(nmg_State * state, int region)
-{
-    if (region == 0) {
-        rebuildSurface(state);
-    }
-    if (region > 0 && region <= d_numSubRegions) {        
-        region--;
-        return d_subRegions[region]->rebuildRegion(d_dataset, state, 
-                                                   d_display_lists_in_x );
-    }
-    return 0;
-}
-*/
+
 
 /**
  Force the entire surface to reconstruct its display lists. 
@@ -358,15 +324,14 @@ rebuildRegion(nmg_State * state, int region)
 int nmg_Surface::
 rebuildSurface(nmg_State * state)
 {
-  if (d_dataset != NULL) {
-
-    d_dataset->range_of_change.ChangeAll();
+    for(int i = 0; i < d_numSubRegions; i++) {
+        d_subRegions[i]->forceRebuildCondition();
+    }
+    
+    d_defaultRegion->forceRebuildCondition();
 
     // Now that we've marked the whole surface changed...
     return (rebuildInterval(state));
-  }
-
-  return 0;
 }
 
 /**
@@ -462,16 +427,14 @@ rebuildInterval(nmg_State * state)
 int nmg_Surface::
 recolorSurface()
 {
-    if (d_dataset != (nmb_Dataset*)NULL) {
-        for(int i = 0; i < d_numSubRegions; i++) {
-            if (d_subRegions[i]->recolorRegion()) {
-                return -1;
-            }
-        }
-
-        if (d_defaultRegion->recolorRegion()) {
+    for(int i = 0; i < d_numSubRegions; i++) {
+        if (d_subRegions[i]->recolorRegion()) {
             return -1;
         }
+    }
+    
+    if (d_defaultRegion->recolorRegion()) {
+        return -1;
     }
 
     return 0;

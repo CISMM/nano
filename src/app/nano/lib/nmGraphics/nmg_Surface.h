@@ -26,6 +26,9 @@ public:
     ///rebuild display lists for a single region
     //int rebuildRegion(nmg_State * state, int region);
 
+    /// Redraw surface next time rebuildInterval is called. 
+    int redrawSurface(nmg_State * state);
+
     ///rebuild display lists for whole surface, all subregions 
     /// (calls rebuildInterval)
     int rebuildSurface(nmg_State * state);

@@ -6,7 +6,7 @@ All Rights Reserved.
   3rdTech, Inc. 
 ===3rdtech===*/
 /*
-*				spm_gl.c
+* @file surface_strip_create.c
 *
 *	This file contains routines to make openGL structures out of
 * information obtained from the Scanning Probe Microscope.
@@ -368,7 +368,8 @@ describe_gl_vertex(nmg_State * state, const nmb_PlaneSelection & planes,
     }
     
     // Phase 2: Find the texture coordinates for the vertex. 
-    
+    vertexArray.Texcoord[0] = vertexArray.Texcoord[1] = 
+        vertexArray.Texcoord[2] = 0;
 #ifndef PROJECTIVE_TEXTURE
     // Realigning Textures, no need to recalculate  
     const int num_x = height_plane.numX();

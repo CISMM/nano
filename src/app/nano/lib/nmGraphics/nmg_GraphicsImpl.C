@@ -634,6 +634,7 @@ void nmg_Graphics_Implementation::resizeViewport(int width, int height) {
   windowPtr->fbExtents[0] = width;
   windowPtr->fbExtents[1] = height;
 #ifdef V_GLUT
+  v_gl_set_context_to_vlib_window();
   glutReshapeWindow(width, height);
 #endif
 }
@@ -987,7 +988,12 @@ void nmg_Graphics_Implementation::causeGridRedraw (void) {
   //fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
   BCPlane * plane = state->inputGrid->getPlaneByName(state->heightPlaneName);
 
-  d_dataset->range_of_change.ChangeAll();
+  if (state->surface->redrawSurface(state)) {
+    fprintf(stderr,
+            "nmg_Graphics_Implementation::causeGridRebuild():  "
+            "Couldn't build grid display lists\n");
+    dataset->done = V_TRUE;
+  }
   if (plane) {
     decoration->red.normalize(plane);
     decoration->green.normalize(plane);
