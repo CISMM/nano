@@ -1,3 +1,14 @@
+2003-01-13 Jameson Miller <millerj@cs.unc.edu>
+	* haptic_surface.c - new functions to start to enable the option of
+		sending a grid to the phantom. grid being sent to the phantom
+		can also be displayed on screen.
+
+		new function: nmui_HSCanned::updateModel
+					this is where the grid will be sent to the phantom.
+
+			nmui_HSCanned::sendForceUpdate
+				decides what data to send to phantom (a grid, or a plane)
+
 2002-12-01 Jameson Miller <millerj@cs.unc.edu>
 	* haptic_surface.c - sends data of haptic plane to the graphics so it
 		knows what to draw when drawing haptic plane

@@ -79,21 +79,71 @@ void nmui_HapticSurface::setLocation (double x, double y, double z) {
 // virtual
 void nmui_HapticSurface::sendForceUpdate (vrpn_ForceDevice_Remote * device) {
 
-
-    //JM
     q_vec_type currentPlaneNormalMS;
     vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
-        
+    
     haptic_graphics->setFeelPlane(d_handPosMS, currentPlaneNormalMS);
+    
+    //TODO: find absolute number
+    static q_vec_type vertices [50];
+    
+    vrpn_int32 xside, yside;
+    vrpn_int32 i, j, k;
+    
+    BCPlane * plane = dataset->inputGrid->getPlaneByName
+        (dataset->heightPlaneName->string());
+	
+	xside = 2;
+	yside = 2;
+    int xsize = 6;
+    int ysize = 6;
+
+	int numEntries = (xsize) * (ysize);
+
+    d_planePosPH[0] = d_handPosMS[0];
+    d_planePosPH[1] = d_handPosMS[1];
+    
+    // Translate microscope-space coordinates to (integer and fractional)
+    // grid position.
+    
+    double rangeX = plane->maxX() - plane->minX();
+    double rangeY = plane->maxY() - plane->minY();
+    
+    double rx = ((d_handPosMS[0] - plane->minX()) / rangeX * (plane->numX() - 1));
+    double ry = ((d_handPosMS[1] - plane->minY()) / rangeY * (plane->numY() - 1));
     
 
 
-  if (device) {
-    device->set_plane(d_currentPlaneNormal[0],
-                      d_currentPlaneNormal[1],
-                      d_currentPlaneNormal[2],
-                      d_currentPlaneParameter);
-  }
+	int current_x = plane->xInGrid(d_handPosMS[0]);
+	int current_y = plane->yInGrid(d_handPosMS[1]);
+	int current_z_value = plane->valueInWorld(current_x,current_y);
+	
+	double i_temp, j_temp, value_temp;
+	q_vec_type qm;
+    int s =0;
+    for (i = -xside; i <= (xside + 1); i++) {
+        i_temp = plane->xInWorld(current_x + i);
+        for (j = -yside; j <= (yside + 1); j++) {
+            j_temp = plane->xInWorld(current_y + j);
+            plane->valueAt(&value_temp,i_temp,j_temp);
+            
+            qm[0] = i_temp;
+            qm[1] = j_temp;
+            qm[2] = value_temp;
+            
+            q_vec_copy(vertices[s], qm);
+            s++;
+        }
+    }
+    haptic_graphics->setFeelGrid(xsize,ysize,vertices);    
+    
+    
+    if (device) {
+        device->set_plane(d_currentPlaneNormal[0],
+            d_currentPlaneNormal[1],
+            d_currentPlaneNormal[2],
+            d_currentPlaneParameter);
+    }
 }
 
 // virtual
@@ -227,6 +277,10 @@ int nmui_HSCanned::getGridY (void) const {
 
 // virtual
 void nmui_HSCanned::update (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
+	if(use_grid_mesh == 1) {
+		updateModel(dataset);
+		return;
+	} 
 
   BCPlane * plane = dataset->inputGrid->getPlaneByName
                      (dataset->heightPlaneName->string());
@@ -814,4 +868,163 @@ void nmui_HSDirectZPlane::set_direct_z_plane(double x, double y, double z) {
 
 	offset = 50;
 	
+}
+
+//for feeling from a grid. send points to the phantom, and
+//to graphics to let it know what to draw.
+void nmui_HSCanned::updateModel(nmb_Dataset * dataset) {
+	
+    vrpn_int32 xside, yside, start;
+    vrpn_int32 i, j, k;
+    
+    BCPlane * plane = dataset->inputGrid->getPlaneByName
+        (dataset->heightPlaneName->string());
+    
+
+    static q_vec_type vertices [50];
+    xside = 2;
+	yside = 2;
+    int xsize = 6;
+    int ysize = 6;
+
+	int numEntries = (xsize) * (ysize);
+
+    d_planePosPH[0] = d_handPosMS[0];
+    d_planePosPH[1] = d_handPosMS[1];
+    
+    // Translate microscope-space coordinates to (integer and fractional)
+    // grid position.
+    
+    double rangeX = plane->maxX() - plane->minX();
+    double rangeY = plane->maxY() - plane->minY();
+    
+    double rx = ((d_handPosMS[0] - plane->minX()) / rangeX * (plane->numX() - 1));
+    double ry = ((d_handPosMS[1] - plane->minY()) / rangeY * (plane->numY() - 1));
+    
+
+
+	int current_x = plane->xInGrid(d_handPosMS[0]);
+	int current_y = plane->yInGrid(d_handPosMS[1]);
+	int current_z_value = plane->valueInWorld(current_x,current_y);
+
+	if (!d_device) {
+		// TODO
+		// Mark this update as pending and submit it in update()/sendForceUpdate()
+		// once we have all the data we need.
+		//fprintf(stderr, "Feelahead has ms %d, dev %d so deferring.\n",
+		//d_microscope, d_device);
+		return;
+	}
+	
+	//fprintf(stderr, "FA updateModel\n");
+	
+	// Send a trimesh up to the Phantom
+	// For now hackishly assumes we've got a sample grid.
+	// Probably the nmm_Sample subclass should be responsible for
+	// converting the Point_list into some sort of mesh, but we
+	// probably don't want to use a BCGrid to hold it...
+	
+	// Send the vertices
+	
+	
+	d_device->clearTrimesh();
+	
+	double i_temp, j_temp, value_temp;
+	q_vec_type qm,qph;
+    int s =0;
+    for (i = -xside; i <= (xside + 1); i++) {
+        i_temp = plane->xInWorld(current_x + i);
+        for (j = -yside; j <= (yside + 1); j++) {
+            j_temp = plane->xInWorld(current_y + j);
+            plane->valueAt(&value_temp,i_temp,j_temp);
+            
+            qm[0] = i_temp;
+            qm[1] = j_temp;
+            qm[2] = value_temp;
+            
+            q_vec_copy(vertices[s], qm);
+            s++;
+
+			pointToTrackerFromWorld(qph, qm);
+			fprintf(stderr, " mx %.2f %.2f %.2f, px %.5f %.5f %.5f\n",
+				qm[0], qm[1], qm[2], qph[0], qph[1], qph[2]);
+			d_device->setVertex(i, qph[0], qph[1], qph[2]);
+		}
+		
+		// Find out the dimensions of the grid sent.  Note that x and y are
+		// arbitrary axes, not necessarily aligned with x and y in world space
+		// or any other space.
+		
+		//side = sqrt(l->numEntries());
+		
+		// Triangulate.
+		// 0 - 1 - 2 - 3 - 4
+		// | / | / | / | / |  triangles 0 / 1 | 2 / 3 | 4 / 5 | 6 / 7
+		// 5 - 6 - 7 - 8 - 9
+		// ...
+		// Don't really consistently know handedness of all this...
+		
+		// border conditions
+		if ((xside <= 1) || (yside <= 1)) {
+			fprintf(stderr, "nmui_HSFeelAhead::updateModel:  grid too small.\n");
+			return;
+		}
+		
+		k = 0;
+		for (i = 0; i < xsize; i++) {
+			start = i * xsize;
+			for (j = 0; j < ysize; j++) {
+				d_device->setTriangle(k++, start + j, start + j + 1, start + j + xside);
+				d_device->setTriangle(k++, start + j + 1, start + j + xside + 1,
+					start + j + xside);
+				// swapped order 15 Dec 2001, to no apparent effect...
+				// below is (believed) right-handed, above left-handed
+				d_device->setTriangle(k++, start + j, start + j + xside, start + j + 1);
+				d_device->setTriangle(k++, start + j + 1, start + j + xside,
+					start + j + xside + 1);
+				//p0 = l->entry(start + j);
+				//p1 = l->entry(start + j + xside);
+				//p2 = l->entry(start + j + 1);
+				//fprintf(stderr, "    <%.2f %.2f %.2f> <%.2f %.2f %.2f> <%.2f %.2f %.2f>\n",
+				//p0->x(), p0->y(), p0->z(), p1->x(), p1->y(), p1->z(),
+				//p2->x(), p2->y(), p2->z());
+			}
+		}
+		
+		// Make the Phantom pay attention to what we've just done.
+		
+		// HACK
+		// TCH Dissn Jan 2002
+		d_device->updateTrimeshChanges();
+		
+		// Dec 2001
+		// Draw a grid on-screen so we can see if this is where it ought
+		// to be.  (This uses microscope coordinates, not phantom coords,
+		// but it's one more point in the process that we can verify.)
+		// Hacked, of course.
+		
+		/*
+		for (i = 0; (i < numEntries) && (i < 100); i++) {
+		vertices[i][0] = l->entry(i)->x();
+		vertices[i][1] = l->entry(i)->y();
+		vertices[i][2] = l->entry(i)->z();
+		}
+		/*
+		  if (d_graphics) {
+		  d_graphics->setFeelGrid(xside, yside, vertices);
+		  }
+          */
+        haptic_graphics->setFeelGrid(xsize,ysize,vertices);
+          
+	}
+}
+
+void nmui_HSCanned::sendForceUpdate(vrpn_ForceDevice_Remote * device) {
+
+	if(use_grid_mesh == 1) {
+		d_device = device;
+	} else {
+		nmui_HapticSurface::sendForceUpdate(device);
+	}
+
 }

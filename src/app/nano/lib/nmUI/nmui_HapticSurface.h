@@ -119,15 +119,24 @@ class nmui_HSCanned : public nmui_HapticSurface {
 
     int getGridX (void) const;
     int getGridY (void) const;
+	int use_grid_mesh;
 
     // MANIPULATORS
 
     virtual void update (nmb_Dataset *, nmm_Microscope_Remote *);
+	void updateModel(nmb_Dataset *);
+	void update_line(nmb_Dataset *, nmm_Microscope_Remote *);
+
+	virtual void sendForceUpdate (vrpn_ForceDevice_Remote *);
+      ///< if feeling from a grid, do nothing, else, send force update
 
   protected:
 
     int d_gridX;
     int d_gridY;
+
+	vrpn_ForceDevice_Remote * d_device;
+
 
 };
 /** \class nmui_HSDirectZPlane
