@@ -131,63 +131,63 @@ void nmb_Image::worldToPixel(const double x, const double y,
 
 void nmb_Image::getWorldToImageTransform(double *matrix44)
 {
-    double i10, i01, j10, j01, i00, j00;
-    double x_diff, y_diff, temp;
+    /* What this function is doing:
+      Start with the system:
+        (0,0) = M*(x00, y00, 1)
+        (1,0) = M*(x10, y10, 1)
+        (0,1) = M*(x01, y01, 1)
 
-    x_diff = boundX(nmb_ImageBounds::MAX_X_MIN_Y) -
-             boundX(nmb_ImageBounds::MIN_X_MIN_Y);
-    y_diff = boundY(nmb_ImageBounds::MAX_X_MIN_Y) -
-             boundY(nmb_ImageBounds::MIN_X_MIN_Y);
-    temp = (1.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
-           (0.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
+        where M is a matrix | a b c |
+                            | d e f |
+        In each equation:
+        the left side represents the position in normalized image coordinates
+        and the vector to the right of M represents the corresponding points
+        in world coordinates.
 
-    i10 = temp/(x_diff*x_diff + y_diff*y_diff);
+        Given x00, y00, x10, y10, x01, y01, 
+        solve for a,b,c,d,e,f and stuff these into a 4x4 matrix in the 
+        order col0row0-3, col1row0-3, col2row0-3, col3row0-3
+    */
 
-    temp = (0.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
-           (1.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
+    double a, b, c, d, e, f;
+    double x00, y00, x10, y10, x01, y01;
+    x00 = boundX(nmb_ImageBounds::MIN_X_MIN_Y);
+    y00 = boundY(nmb_ImageBounds::MIN_X_MIN_Y);
+    x10 = boundX(nmb_ImageBounds::MAX_X_MIN_Y);
+    y10 = boundY(nmb_ImageBounds::MAX_X_MIN_Y);
+    x01 = boundX(nmb_ImageBounds::MIN_X_MAX_Y);
+    y01 = boundY(nmb_ImageBounds::MIN_X_MAX_Y);
 
-    i01 = temp/(x_diff*x_diff + y_diff*y_diff);
+    double det;
+    det = (x10-x00)*(y01-y00) - (y10-y00)*(x01-x00);
 
-    temp = (0.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
-           (0.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
+    a = (y01-y00)/det;
+    b = (x00-x01)/det;
+    c = -a*x00 - b*y00;
 
-    i00 = temp/(x_diff*x_diff + y_diff*y_diff);
-
-    x_diff = boundX(nmb_ImageBounds::MIN_X_MAX_Y) -
-             boundX(nmb_ImageBounds::MIN_X_MIN_Y);
-    y_diff = boundY(nmb_ImageBounds::MIN_X_MAX_Y) -
-             boundY(nmb_ImageBounds::MIN_X_MIN_Y);
-    temp = (1.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
-           (0.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
-    j10 = temp/(x_diff*x_diff + y_diff*y_diff);
-
-    temp = (0.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
-           (1.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
-    j01 = temp/(x_diff*x_diff + y_diff*y_diff);
-
-    temp = (0.0 - boundX(nmb_ImageBounds::MIN_X_MIN_Y))*x_diff +
-           (0.0 - boundY(nmb_ImageBounds::MIN_X_MIN_Y))*y_diff;
-    j00 = temp/(x_diff*x_diff + y_diff*y_diff);
+    d = (y00 - y10)/det;
+    e = (x10 - x00)/det;   
+    f = -d*x00 - e*y00;
 
     // first row:
-    matrix44[0] = i10; 
-    matrix44[1] = i01;
-    matrix44[2] = 0.0;
-    matrix44[3] = i00;
-    // second row:
-    matrix44[4] = j10;
-    matrix44[5] = j01;
-    matrix44[6] = 0.0;
-    matrix44[7] = j00;
-
+    matrix44[0] = a;
+    matrix44[4] = b;
     matrix44[8] = 0.0;
+    matrix44[12] = c;
+    // second row:
+    matrix44[1] = d;
+    matrix44[5] = e;
     matrix44[9] = 0.0;
-    matrix44[10] = 1.0;
-    matrix44[11] = 0.0;
+    matrix44[13] = f;
 
-    matrix44[12] = 0.0;
-    matrix44[13] = 0.0;
+    matrix44[2] = 0.0;
+    matrix44[6] = 0.0;
+    matrix44[10] = 1.0;
     matrix44[14] = 0.0;
+
+    matrix44[3] = 0.0;
+    matrix44[7] = 0.0;
+    matrix44[11] = 0.0;
     matrix44[15] = 1.0;
 }
 
