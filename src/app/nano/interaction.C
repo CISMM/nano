@@ -70,7 +70,7 @@
 #include "minit.h"  // for reset_phantom()
 
 #include "UTree.h"	// for Ubergraphics
-#include "Urender.h"
+#include "URender.h"
 
 /***************************
  * Local Defines
