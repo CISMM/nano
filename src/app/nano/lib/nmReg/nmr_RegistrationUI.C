@@ -72,6 +72,7 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_scaleY("reg_scaleY", 1.0),
    d_translateX("reg_translateX", 0.0),
    d_translateY("reg_translateY", 0.0),
+   d_translateZ("reg_translateZ", 0.0),
    d_rotateX("reg_rotateX", 0.0), 
    d_rotateY("reg_rotateY", 0.0), 
    d_rotateZ("reg_rotateZ", 0.0),
@@ -143,6 +144,7 @@ void nmr_RegistrationUI::setupCallbacks()
     d_scaleY.addCallback(handle_transformationParameter_change, this);
     d_translateX.addCallback(handle_transformationParameter_change, this);
     d_translateY.addCallback(handle_transformationParameter_change, this);
+	d_translateZ.addCallback(handle_transformationParameter_change, this);
     d_rotateX.addCallback(handle_transformationParameter_change, this);
     d_rotateY.addCallback(handle_transformationParameter_change, this);
     d_rotateZ.addCallback(handle_transformationParameter_change, this);
@@ -184,6 +186,7 @@ void nmr_RegistrationUI::teardownCallbacks()
     d_scaleY.removeCallback(handle_transformationParameter_change, this);
     d_translateX.removeCallback(handle_transformationParameter_change, this);
     d_translateY.removeCallback(handle_transformationParameter_change, this);
+	d_translateZ.removeCallback(handle_transformationParameter_change, this);
     d_rotateX.removeCallback(handle_transformationParameter_change, this);
     d_rotateY.removeCallback(handle_transformationParameter_change, this);
     d_rotateZ.removeCallback(handle_transformationParameter_change, this);
@@ -678,9 +681,11 @@ void nmr_RegistrationUI::sendTransformationParameters()
   transform.setParameter(NMB_ROTATE_Z, (double)d_rotateZ);
   transform.setParameter(NMB_TRANSLATE_X, (double)d_translateX);
   transform.setParameter(NMB_TRANSLATE_Y, (double)d_translateY);
+  transform.setParameter(NMB_TRANSLATE_Z, (double)d_translateZ);
   transform.setParameter(NMB_SCALE_X, (double)d_scaleX);
   transform.setParameter(NMB_SCALE_Y, (double)d_scaleY);
   transform.setParameter(NMB_SHEAR_Z, (double)d_shearZ);
+  transform.setCenter(d_translateX, d_translateY, d_translateZ);
   int i;
   for (i = 0; i < nmb_numTransformParameters; i++) {
     parameters[i] = (vrpn_float32)transform.getParameter(

@@ -1,3 +1,10 @@
+2002-06-03  David Borland <borland@cs.unc.edu>
+
+        * nmr_RegistrationUI.C : code for phantom control of the projective
+	texture.
+
+	* nmr_RegistrationUI.h : same
+
 2002-05-30  David Borland <borland@cs.unc.edu>
 
         * nmr_RegistrationUI.C : code for the user interface for the new

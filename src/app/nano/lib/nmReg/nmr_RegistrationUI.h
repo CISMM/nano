@@ -138,7 +138,7 @@ class nmr_RegistrationUI {
     Tclvar_list_of_strings d_resolutionLevelList;
 
     Tclvar_float d_scaleX, d_scaleY;
-    Tclvar_float d_translateX, d_translateY;
+    Tclvar_float d_translateX, d_translateY, d_translateZ;
     Tclvar_float d_rotateX, d_rotateY, d_rotateZ;
     Tclvar_float d_shearZ;
 
