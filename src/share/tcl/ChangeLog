@@ -1,3 +1,8 @@
+2001-11-30  Adam Seeger  <seeger@cs.unc.edu>
+
+	* litho_main.tcl: sources registration.tcl in place of reimplementing
+	controls for alignment
+
 2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* mainwin.tcl: added procedure handle_texture_mode_change which

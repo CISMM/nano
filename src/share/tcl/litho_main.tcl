@@ -58,6 +58,8 @@ wm iconbitmap . error
 # contains definition of useful widgets for the 
 # Tcl_Linkvar library.
 source [file join ${tcl_script_dir} Tcl_Linkvar_widgets.tcl]
+source [file join ${tcl_script_dir} colormap.tcl]
+source [file join ${tcl_script_dir} registration.tcl]
 
 # frames - overall layout of the screen
 frame .menubar -relief raised -bd 4
@@ -325,7 +327,7 @@ menu $setupmenu -tearoff 0
 #        -command "show.display_parameters"
 
 $setupmenu add command -label "Alignment" -underline 0 \
-        -command "show.alignment_parameters"
+        -command "show.registration"
 
 #### SEM menu ###############################
 set SEM_menu .menu.sem
@@ -507,91 +509,6 @@ checkbutton $display_parameters_win.enable_display_check \
 
 pack $display_parameters_win.enable_display_check -anchor nw -padx 3 -pady 3
 ######### End of Drawing Parameters Control Panel ####################
-
-######### Alignment ##################################################
-set source_image_name "none"
-set target_image_name "none"
-set resample_resolution_x 640
-set resample_resolution_y 480
-set resample_image_name ""
-set align_window_open 0
-
-set auto_align_requested 0
-
-set align_win \
-        [create_closing_toplevel_with_notify alignment_parameters \
-         align_window_open "Alignment"]
-
-generic_optionmenu $align_win.source_select source_image_name \
-        "Live" imageNames
-pack $align_win.source_select -anchor nw -padx 3 -pady 3
-
-generic_optionmenu $align_win.target_select target_image_name \
-        "Static" imageNames
-pack $align_win.target_select -anchor nw -padx 3 -pady 3
-
-###########################################
-# controls to align automatically using mutual information starting from the
-# currently set correspondence
-
-set auto_align_resolution_list {0, 1, 2, 3, 4, 5, 6}
-button $align_win.auto_align_button -text "Auto Align" -command \
-    { set auto_align_requested 1 }
-pack $align_win.auto_align_button
-
-generic_entry $align_win.num_iteration_entry \
-        auto_align_num_iterations "# iterations" numeric
-pack $align_win.num_iteration_entry -anchor nw
-
-generic_entry $align_win.step_size_entry auto_align_step_size \
-        "step size (0,1)" real
-pack $align_win.step_size_entry -anchor nw
-
-generic_optionmenu $align_win.resolution_selector \
-        auto_align_resolution \
-        "resolution level" auto_align_resolution_list
-pack $align_win.resolution_selector -anchor nw
-
-################ some manually-adjustable transformation parameters #####
-
-frame $align_win.transformParameters -bd 3 -relief groove
-pack $align_win.transformParameters -anchor nw
-
-generic_entry $align_win.transformParameters.scaleX \
-        reg_scaleX "scale X" real
-pack $align_win.transformParameters.scaleX -anchor nw
-
-generic_entry $align_win.transformParameters.scaleY \
-        reg_scaleY "scale Y" real
-pack $align_win.transformParameters.scaleY -anchor nw
-
-generic_entry $align_win.transformParameters.translateX \
-        reg_translateX "translate X" real
-pack $align_win.transformParameters.translateX -anchor nw
-
-generic_entry $align_win.transformParameters.translateY \
-        reg_translateY "translate Y" real
-pack $align_win.transformParameters.translateY -anchor nw
-
-generic_entry $align_win.transformParameters.rotateX \
-        reg_rotateX "rotate X" real
-pack $align_win.transformParameters.rotateX -anchor nw
-
-generic_entry $align_win.transformParameters.rotateY \
-        reg_rotateY "rotate Y" real
-pack $align_win.transformParameters.rotateY -anchor nw
-
-generic_entry $align_win.transformParameters.rotateZ \
-        reg_rotateZ "rotate Z" real
-pack $align_win.transformParameters.rotateZ -anchor nw
-
-generic_entry $align_win.transformParameters.shearZ \
-        reg_shearZ "shear Z" real
-pack $align_win.transformParameters.shearZ -anchor nw
-
-#################################################################
-
-######### End Alignment ##############################################
 
 ######### SEM Image Acquisition ######################################
 global sem_window_open sem_acquire_image sem_acquire_continuous \
