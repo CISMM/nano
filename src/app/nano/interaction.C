@@ -509,10 +509,13 @@ void Adaptor::updateSampleAlgorithm (nmm_Microscope_Remote * m) {
                   d_sampleAlgorithm.dx, d_sampleAlgorithm.dy);
   } else {
     d_sampleAlgorithm.numx = microscope->state.modify.feelahead_numX;
-    d_sampleAlgorithm.numx = microscope->state.modify.feelahead_distY;
-    d_sampleAlgorithm.dx = microscope->state.modify.feelahead_numX;
+    d_sampleAlgorithm.numy = microscope->state.modify.feelahead_numY;
+    d_sampleAlgorithm.dx = microscope->state.modify.feelahead_distX;
     d_sampleAlgorithm.dy = microscope->state.modify.feelahead_distY;
     d_sampleAlgorithm.orientation = 0.0;
+//fprintf(stderr, "Sample algorithm %d x %d at %.2f x %.2f nm.\n",
+//d_sampleAlgorithm.numx, d_sampleAlgorithm.numy,
+//d_sampleAlgorithm.dx, d_sampleAlgorithm.dy);
   }
 
   m->SetSampleMode(&d_sampleAlgorithm);
@@ -577,7 +580,7 @@ static void handle_handTracker_update_rate (vrpn_float64 v, void *) {
 // static
 void handle_useRedundant_change (vrpn_int32 on, void *) {
 
-fprintf(stderr, "Turning FEC %s.\n", on ? "on" : "off");
+  fprintf(stderr, "Turning FEC %s.\n", on ? "on" : "off");
 
   if (microscopeRedundancyController) {
     microscopeRedundancyController->enable(on);
@@ -594,7 +597,7 @@ fprintf(stderr, "Turning FEC %s.\n", on ? "on" : "off");
 // static
 void handle_numRedundant_change (vrpn_int32 val, void *) {
 
-fprintf(stderr, "Sending %d redundant copies at %.5f sec intervals.\n",
+  fprintf(stderr, "Sending %d redundant copies at %.5f sec intervals.\n",
 val, (float) feel_redundantInterval);
 
   if (microscopeRedundancyController) {
@@ -631,7 +634,7 @@ void handle_redundantInterval_change (vrpn_float64, void *) {
 // static
 void handle_useMonitor_change (vrpn_int32 on, void *) {
 
-fprintf(stderr, "Turning QM %s.\n", on ? "on" : "off");
+  fprintf(stderr, "Turning QM %s.\n", on ? "on" : "off");
 
   if (microscope->d_monitor) {
     microscope->d_monitor->enable(on);
@@ -644,7 +647,7 @@ fprintf(stderr, "Turning QM %s.\n", on ? "on" : "off");
 // static
 void handle_monitorThreshold_change (vrpn_int32 n, void *) {
 
-fprintf(stderr, "New length-2 threshold is %d.\n", n);
+  fprintf(stderr, "New length-2 threshold is %d.\n", n);
 
   if (microscope->d_monitor) {
     microscope->d_monitor->setThreshold(n, feel_monitorDecay);
@@ -656,7 +659,7 @@ fprintf(stderr, "New length-2 threshold is %d.\n", n);
 // static
 void handle_monitorDecay_change (vrpn_float64 n, void *) {
 
-fprintf(stderr, "New threshold decay is %.5f.\n", n);
+  fprintf(stderr, "New threshold decay is %.5f.\n", n);
 
   if (microscope->d_monitor) {
     microscope->d_monitor->setThreshold(feel_monitorThreshold, n);
@@ -1111,7 +1114,7 @@ void setupHaptics (int mode) {
 
     case USER_PLANEL_MODE:
 
-      if (microscope->state.image.tool == FEELAHEAD) {
+      if (microscope->state.modify.tool == FEELAHEAD) {
         haptic_manager.setSurface(haptic_manager.d_feelAhead);
         haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
         // TODO:  invent a surface feature strategy!
@@ -1122,7 +1125,7 @@ void setupHaptics (int mode) {
 
     case USER_LINE_MODE:
 
-      if (microscope->state.image.tool == WARPED_PLANE) {
+      if (microscope->state.modify.tool == WARPED_PLANE) {
         haptic_manager.setSurface(haptic_manager.d_warpedPlane);
       } else {
         haptic_manager.setSurface(haptic_manager.d_livePlane);
@@ -1923,6 +1926,8 @@ void specify_sound(int x, int y)
 // BUG must sendSurface sometimes?
 
 double touch_surface (int, q_vec_type handpos) {
+
+//fprintf(stderr, "Touch surface\n");
 
   // Set up the approximating plane or force field...
 
@@ -2762,6 +2767,9 @@ int doFeelLive (int whichUser, int userEvent)  {
   if (!microscope->haveMutex()) {
     user_0_mode = USER_GRAB_MODE;
     printf("Can't touch when we don't have access to the microscope.\n");
+    // TCH Dissertation July 2001
+    // This is a deadly failure - abort here so I know where it failed!
+    exit(0);
     return 0;
   }
 
@@ -2971,6 +2979,8 @@ int doFeelLive (int whichUser, int userEvent)  {
         if (!microscope->d_relax_comp.is_ignoring_points() ) {
           touch_surface(whichUser, clipPos);
           monitor.startSurface();
+        } else {
+fprintf(stderr, "relax comp ignoring points?\n");
         }
       }
 

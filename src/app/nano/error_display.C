@@ -8,7 +8,8 @@
 #include "tcl_tk.h"
 #include "error_display.h"
 
-int disable_dialogs = 0;
+// TCH Dissertation July 2001 HACK HACK HACK
+int disable_dialogs = 1;
 
 /* Bug note. I started with const char *__format as the argument, 
  and it caused a segfault when used near a printf!!!! Don't use

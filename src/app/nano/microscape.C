@@ -667,7 +667,8 @@ TclNet_int config_smooth_shading ("smooth_shading",  1,
 static void    handle_stride_change (vrpn_int32 newval, void * userdata);
 /// Deal with the stride between rows on the grid for tesselation.  This is
 /// the step size between one row/column of the display list and the next.
-TclNet_int tclstride ("tesselation_stride", 1);
+// TCH Dissertation July 2001 HACK HACK HACK
+TclNet_int tclstride ("tesselation_stride", 5);
 
 //-----------------------------------------------------------------------
 /// Tom Hudson's latency compensation techniques
@@ -1119,7 +1120,9 @@ static char tcl_default_dir [] = "/afs/cs.unc.edu/project/stm/bin/";
  * Variables to turn on/off optional parts of the system
  ************/
 
-static int print_performance = 0;	/* No prints by default */
+// TCH Dissertation July 2001 HACK HACK HACK set to 1 instead of 0
+static int print_performance = 1;	/* No prints by default */
+
 //static int do_menus = 1;			/* Menus on by default */
 static int do_keybd = 0;                   ///< Keyboard off by default
 //static int do_ad_device = 1;               /* A/D devices on by default */
@@ -1298,6 +1301,8 @@ struct MicroscapeInitializationState {
   int runtimeLimit;
   vrpn_bool logRTT;
   char rttLog [256];
+  vrpn_bool logAdaptations;
+  char netLog [256];
   timeval logTimestamp;
   vrpn_bool replayInterface;
 
@@ -1323,6 +1328,7 @@ struct MicroscapeInitializationState {
   // TCH Dissertation May 2001
   // Turn on latency adaptations from the command line
   vrpn_bool laUseUDP;
+  int laNumUDP;
   vrpn_bool laUseQM;
   int laQMT;
   int laQMD;
@@ -1360,14 +1366,16 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   logSurface (VRPN_FALSE),
   runtimeLimit (0),
   logRTT (VRPN_FALSE),
+  logAdaptations (VRPN_FALSE),
   replayInterface (VRPN_FALSE),
   collabMode (2),
   phantomRate (60.0),  // standard default
-  tesselation (1),
+  tesselation (5),
   packetlimit (0),
   timeGraphics (vrpn_FALSE),
   index_mode (VRPN_FALSE),
   laUseUDP (vrpn_FALSE),
+  laNumUDP (1),
   laUseQM (vrpn_FALSE),
   laQMT (0),
   laQMD (0),
@@ -1385,6 +1393,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   phantomLog[0] = '\0';
   surfaceLog[0] = '\0';
   rttLog[0] = '\0';
+  netLog[0] = '\0';
   logTimestamp.tv_sec = 0;
   logTimestamp.tv_usec = 0;
   colorplane[0] = '\0';
@@ -1439,9 +1448,24 @@ nmb_TimerList collaborationTimer;
 
 #endif
 
+// TCH Dissertation July 2001
+// Made istate global so that it's accessible from shutdown_connections
+// so we can be sure to write out that log too.
+static MicroscapeInitializationState istate;
+
 /// Handle exiting cleanly
 
 void shutdown_connections (void) {
+
+  static int msLogged = 0;
+
+  // Can't set msTimestampsName, that space may have already been
+  // deallocated - so we call its callback manually
+
+  if (istate.logAdaptations && !msLogged) {
+          msLogged = 1;
+    handle_msTimestampsName_change(istate.netLog, NULL);
+  }
 
   // NANOX
   // XXX Bug. Tcl_Netvars are globals, and get deleted after connections.
@@ -2870,12 +2894,14 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
           istate->afm.writingStreamFile ? istate->afm.outputStreamName
                                         : (char *) NULL,
           istate->afm.writingStreamFile ? vrpn_LOG_INCOMING
-                                        : vrpn_LOG_NONE);
+                                        : vrpn_LOG_NONE,
+          NULL, NULL, 1.0, 3, istate->NIC_IP);
 #else
     vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name(
           istate->afm.deviceName,
           istate->afm.writingStreamFile ? istate->afm.outputStreamName
-                                        : (char *) NULL);
+                                        : (char *) NULL,
+          NULL, NULL, NULL, 1.0, 3, istate->NIC_IP);
 #endif
     if (!new_microscope_connection) {
 	display_error_dialog( "Couldn't find SPM device: %s.",
@@ -2919,6 +2945,8 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
       microscopeRedundancyController =
         new vrpn_RedundantRemote (microscope_connection);
 
+      fprintf(stderr, "Created vrpn_RedundantRemote.\n");
+
       // This object may be created with a server that doesn't support
       // it, in which case VRPN spews error messages which scare people.
       // Since that's only an error when we're trying to do latency
@@ -2927,7 +2955,8 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
       // doesn't yet give us a good way to handle that (?) - maybe we
       // could explicitly call add_object() when we start using the
       // latency compensation control panel?  HACK HACK HACK
-      vrpn_System_TextPrinter.remove_object(microscopeRedundancyController);
+      //
+      //vrpn_System_TextPrinter.remove_object(microscopeRedundancyController);
     }
 
     microscope->EnableUpdatableQueue(VRPN_TRUE);
@@ -4776,27 +4805,33 @@ val ? "on" : "off");
 void handle_msTimestampsName_change (const char * name, void *) {
   char nbuf [512];
 
-  if (!name || !strlen(name)) {
+  if (!name || !strlen(name) || !microscope) {
     return;
   }
 
   sprintf(nbuf, "%s.time", name);
 fprintf(stderr, "Saving list of timestamps to %s.\n", nbuf);
 
-  microscope->d_tsList->write(nbuf);
-  microscope->d_tsList->clear();
+  if (microscope->d_tsList) {
+    microscope->d_tsList->write(nbuf);
+    microscope->d_tsList->clear();
+  }
 
   sprintf(nbuf, "%s.loss", name);
 fprintf(stderr, "Saving report of loss to %s.\n", nbuf);
 
-  microscope->d_redReceiver->writeMemory(nbuf);
-  microscope->d_redReceiver->clearMemory();
+  if (microscope->d_redReceiver) {
+    microscope->d_redReceiver->writeMemory(nbuf);
+    microscope->d_redReceiver->clearMemory();
+  }
 
   sprintf(nbuf, "%s.queue", name);
 fprintf(stderr, "Saving report of queue to %s.\n", nbuf);
 
-  microscope->d_monitor->write(nbuf);
-  microscope->d_monitor->clear();
+  if (microscope->d_monitor) {
+    microscope->d_monitor->write(nbuf);
+    microscope->d_monitor->clear();
+  }
 
   msTimestampsName = "";
 }
@@ -5576,6 +5611,7 @@ void ParseArgs (int argc, char ** argv,
         istate->logInterface = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->logPath, argv[i]);
+      // TCH Dissertation July 2001
       } else if (!strcmp(argv[i], "-logphantom")) {
         istate->logPhantom = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
@@ -5606,6 +5642,10 @@ void ParseArgs (int argc, char ** argv,
         istate->logRTT = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->rttLog, argv[i]);
+      } else if (!strcmp(argv[i], "-recordAdaptations")) {
+        istate->logAdaptations = VRPN_TRUE;
+        if (++i >= argc) Usage(argv[0]);
+        strcpy(istate->netLog, argv[i]);
       } else if (!strcmp(argv[i], "-packetlimit")) {
         if (++i >= argc) Usage(argv[0]);
         istate->packetlimit = atoi(argv[i]);
@@ -5835,6 +5875,10 @@ void ParseArgs (int argc, char ** argv,
         istate->socketType = SOCKET_UDP;
       } else if (!strcmp(argv[i], "-udp")) {
         istate->laUseUDP = VRPN_TRUE;
+        if ((i + 1 < argc) && (argv[i+1][0] != '-')) {
+          istate->laNumUDP = atoi(argv[++i]);
+        }
+        fprintf(stderr, "Sending %d redundant copies using FEC.\n");
       } else if (!strcmp(argv[i], "-qm")) {
         istate->laUseQM = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
@@ -6512,6 +6556,7 @@ void update_rtt (void) {
       rtt_server->channels()[0] = val;
       rtt_server->report_changes();
       rtt_server_connection->mainloop();
+//fprintf(stderr, "Reported %.5lf s RTT\n", val);
     }
 
     updateMicroscopeRTTEstimate(val);
@@ -6880,7 +6925,6 @@ int main (int argc, char* argv[])
     ios::sync_with_stdio();
 
     /* Things needed for the timing information */
-    MicroscapeInitializationState istate;
     struct          timeval d_time, d_last_time;
     struct          timeval time1,time2;
     struct          timezone zone1,zone2;
@@ -7052,13 +7096,18 @@ int main (int argc, char* argv[])
     fprintf(stderr, "Opening connection to replay phantom from path %s.\n",
            istate.phantomLog);
 
+    // Hmm...  Nonorthogonality?  When we're replaying, phantom messages
+    // are incoming;  when we're connected live, phantom messages are
+    // outgoing.  (They're also incoming, since we're using the same
+    // connection for both sides.)
+
     // TCH Dissertation July 2001
     // To get properly synched timestamps, even though we're replaying
     // one log the straightforward thing to do would seem to be to re-log,
     // guaranteeing the same time basis.
 
     internal_device_connection =
-      new vrpn_File_Connection (istate.phantomLog, // NULL, // NULL);
+      new vrpn_File_Connection (istate.phantomLog, //NULL, //NULL);
                       istate.logPhantom ? istate.phantomLogPath : NULL,
                       NULL);
                       //istate.logSurface ? istate.surfaceLog : NULL);
@@ -7550,6 +7599,7 @@ int main (int argc, char* argv[])
 fprintf(stderr, "Using UDP for tip control.\n");
     // Turn on UDP by turning on FEC with 0 replicas
     feel_useRedundant = 1;
+    feel_numRedundant = istate.laNumUDP - 1;
   }
   if (istate.laUseQM) {
 fprintf(stderr, "Using Queue Monitoring for tip control.\n");
@@ -7569,6 +7619,10 @@ fprintf(stderr, "Using Queue Monitoring for tip control.\n");
     microscope->state.modify.feelahead_distX = istate.laFaD;
     microscope->state.modify.feelahead_distY = istate.laFaD;
 
+  }
+
+  if (istate.logAdaptations) {
+    recordNetworkAdaptations = 1;
   }
 
 /* Start timing */

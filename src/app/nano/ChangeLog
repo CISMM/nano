@@ -1,3 +1,29 @@
+2001-07-28  Tom Hudson  <hudson@cs.unc.edu>
+
+        * error_display.C (disable_dialogs) : Change default value.
+
+        * interaction.c (updateSampleAlgorithm) : Fix assignment error.
+        (setupHaptics) : Fix error (checking state.image.tool instead of
+        state.modify.tool).
+
+        * microscape.c (tclstride) : Change default value.
+        (print_performance) : Same.
+        (MicroscapeInitializationState::logAdaptations) : New data member.
+        (MicroscapeInitializationState::netLog) : Same.
+        (MicroscapeInitializationState::laNumUDP) : Same.
+        (MicroscapeInitializationState constructor) : Tweak default values.
+        (main) : Made istate global so other functions could read it.
+        Pass optional argument of -udp to adaptation code.  Handle
+        -recordAdaptations command.
+        (shutdown_connections) : Handle istate.netLog if necessary.
+        (ParseArgs) : Handle -recordAdaptations command, optional argument
+        for -udp.
+
+        * microscape.c (handle_openSPMDeviceName_change) : Pass NIC_IP
+        to connection constructor.
+
+        * microscape.c (handle_msTimestampsName_change) : Add safety checks.
+
 2001-07-26  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c (MicroscapeInitializationState::logRTT) : New
