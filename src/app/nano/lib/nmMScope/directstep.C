@@ -11,9 +11,9 @@
 #include <nmb_Dataset.h>
 #include <nmm_MicroscopeRemote.h>
 
+#include "AFMState.h"
 #include "microscape.h"
 #include "directstep.h"
-
 #include <interaction.h>
 
 //for Tcl variables
@@ -31,14 +31,10 @@ double z_pos;
 extern void handle_take_x_step(vrpn_float64, void * /*_mptr*/);
 extern void handle_take_y_step(vrpn_float64, void * /*_mptr*/);
 extern void handle_take_z_step(vrpn_float64, void * /*_mptr*/);
-Tclvar_float step_x("take_x_step",1.0,handle_take_x_step,NULL);
-Tclvar_float step_y("take_y_step",1.0,handle_take_y_step,NULL);
-Tclvar_float step_z("take_z_step",1.0,handle_take_z_step,NULL);
 
-
-Tclvar_float step_x_pos("step_x_pos",1.0);
-Tclvar_float step_y_pos("step_y_pos",1.0);
-Tclvar_float step_z_pos("step_z_pos",-1.0);
+TclNet_float step_x("take_x_step",1.0,handle_take_x_step,NULL);
+TclNet_float step_y("take_y_step",1.0,handle_take_y_step,NULL);
+TclNet_float step_z("take_z_step",1.0,handle_take_z_step,NULL);
 
 extern void handle_step_go_to_pos(vrpn_int32, void * /*_mptr*/);
 Tclvar_int go_to_pos("step_go_to_pos",1,handle_step_go_to_pos,NULL);
@@ -202,8 +198,13 @@ void handle_step_go_to_pos(vrpn_int32, void * /*_mptr*/)
 	max_y = dataset->inputGrid->maxY();
 
 	//put into microscope coordinates
+	/*
 	x_pos = step_x_pos + plane->xInWorld(0);
 	y_pos = step_y_pos + plane->yInWorld(0);
+    */
+
+	x_pos = plane->xInWorld(microscope->state.modify.step_x_pos);
+	y_pos = plane->xInWorld(microscope->state.modify.step_y_pos);
 
 	//bounds check:
 	if (min_x > x_pos || max_x < x_pos || min_y > y_pos || max_y < y_pos) {
@@ -214,8 +215,8 @@ void handle_step_go_to_pos(vrpn_int32, void * /*_mptr*/)
 	if(microscope->state.modify.direct_step_param == DIRECT_STEP_PLANE){
 		microscope->TakeModStep(x_pos,y_pos);
 	}else if(microscope->state.modify.direct_step_param == DIRECT_STEP_3D){
-		z_pos = step_z_pos;
-		microscope->TakeDirectZStep(x_pos,y_pos,step_z_pos);
+		z_pos = microscope->state.modify.step_z_pos;
+		microscope->TakeDirectZStep(x_pos,y_pos,z_pos);
 	} else {
 		printf("\nBad param, didn't go to pos\n");
 	}

@@ -205,7 +205,17 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     blunt_size ("modifyp_tri_size", 1.0),
     new_blunt_size ("newmodifyp_tri_size", 1.0),
     blunt_speed ("modifyp_tri_speed", 5000.0),
-    new_blunt_speed ("newmodifyp_tri_speed", 5000.0)
+    new_blunt_speed ("newmodifyp_tri_speed", 5000.0),
+	
+	
+	step_x_pos ("step_x_pos",1.0),
+	step_y_pos ("step_y_pos",1.0),
+	step_z_pos ("step_z_pos",-1.0),
+
+	step_x_size ("step_x_size", 1.0),
+	step_y_size ("step_y_size",1.0),
+	step_z_size ("step_z_size",1.0)
+
 
 {
 

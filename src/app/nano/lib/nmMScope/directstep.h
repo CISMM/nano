@@ -16,12 +16,10 @@ extern void handle_step_go_to_pos(vrpn_int32, void *mptr);
 
 
 //direct step variables
-extern Tclvar_float step_x;
-extern Tclvar_float step_y;
-extern Tclvar_float step_z;
-extern Tclvar_float step_x_pos;
-extern Tclvar_float step_y_pos;
-extern Tclvar_float step_z_pos;
+extern TclNet_float step_x;
+extern TclNet_float step_y;
+extern TclNet_float step_z;
+
 // extern position_sphere(float, float, float);
 extern double z_pos;
 extern TclNet_int xy_lock;

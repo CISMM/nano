@@ -255,6 +255,16 @@ struct AFMModifyState {
   TclNet_float new_blunt_size;
   Tclvar_float blunt_speed;
   TclNet_float new_blunt_speed;
+
+  //direct step controls, where to step to?
+  TclNet_float step_x_pos;
+  TclNet_float step_y_pos;
+  TclNet_float step_z_pos;
+  //direct step controls, how big of a step to take?
+  TclNet_float step_x_size;
+  TclNet_float step_y_size;
+  TclNet_float step_z_size;
+
 };
 
 struct AFMImageInitializationState {
@@ -618,7 +628,6 @@ struct AFMState {
   TclNet_int numLinesToJumpBack;
 
 };
-
 
 #endif  // AFM_STATE_H
 

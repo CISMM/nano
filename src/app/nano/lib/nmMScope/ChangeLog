@@ -1,3 +1,10 @@
+2002-06-04 Jameson Miller <millerj@cs.unc.edu>
+	*AFMState.c (.h) : moved variables for direct step from
+	directstep to AFMState.c (.h). TCL vars now set up as modify
+	params.
+
+	*directStep.c(.h) : some TCL variables now declared in AFMState.
+
 2002-05-22 Jameson Miller <millerj@cs.unc.edu>
 	*AFMState.h - both modifyp_step_size and newmodifyp_step_size
 		are TclNEt variables so collaborators can see changes
