@@ -117,9 +117,9 @@ endif
 # This works on cygwin as long as MY_NANO_OBJ_DIR is a local drive.
 # You do compile that way don't you?
 ifeq ($(HW_OS),pc_cygwin)
-   LINK = ln -f -n -s
+   LINK = ln -n -s
 else
-   LINK = ln -f -s
+   LINK = ln -s
 endif
 
 ##########################

@@ -1,3 +1,11 @@
+2000-09-15  Chris Weigle  <weigle@cs.unc.edu>
+        * Makefile.common: removed '-f' from ln options, stops recursion
+        * Makefile.app_common: Removed $(OBECT_DIR) target; Split test
+        and creation of dirs & symlinks into 3 stages. This did the
+        right thing, the one time I tried it, in Russ's environment
+        (which didn't do the right thing before).
+        * Makefile.lib_common: Same
+
 2000-08-30  Adam Seeger  <seeger@cs.unc.edu>
 
         * Makefile.depend: if VC is defined then the library search paths for

@@ -9,11 +9,17 @@ THIS_DIR := $(subst $(TOP_LEVEL_SRC_DIR),,$(CWD))
 
 OBJECT_DIR := $(join $(FULL_OBJECT_DIR),$(THIS_DIR))
 
-DIR := $(shell test -d $(OBJECT_DIR) && echo "true")
+DIR := $(shell test -d $(REAL_OBJECT_DIR) && echo "true")
 ifneq ($(DIR),true)
    DUMMY := $(shell mkdir -p $(REAL_OBJECT_DIR))
-   DUMMY += $(shell $(LINK) $(REAL_OBJECT_DIR)/ $(FULL_OBJECT_DIR))
-   DUMMY += $(shell mkdir -p $(OBJECT_DIR))
+endif
+DIR := $(shell test -l $(FULL_OBJECT_DIR) && echo "true")
+ifneq ($(DIR),true)
+   DUMMY := $(shell $(LINK) $(REAL_OBJECT_DIR)/ $(FULL_OBJECT_DIR))
+endif
+DIR := $(shell test -d $(OBJECT_DIR) && echo "true")
+ifneq ($(DIR),true)
+   DUMMY := $(shell mkdir -p $(OBJECT_DIR))
 endif
 
 ###############################################################################
@@ -122,11 +128,6 @@ clobber: thisclean
 #
 
 .SUFFIXES: .c .C .cc .o .a .obj
-
-$(OBJECT_DIR):
-	-mkdir -p $(REAL_OBJECT_DIR)
-	$(LINK) $(REAL_OBJECT_DIR) $(FULL_OBJECT_DIR)
-	-mkdir -p $(OBJECT_DIR)
 
 $(OBJECT_DIR)/%.o: %.c
 ifdef NM_VERBOSE_MAKEFILE
