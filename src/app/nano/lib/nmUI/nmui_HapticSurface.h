@@ -216,7 +216,11 @@ class nmui_HSDirectZ : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSDirectZ ();
+#ifndef USE_VRPN_MICROSCOPE
+    nmui_HSDirectZ (nmb_Dataset *, Microscope *);
+#else
+    nmui_HSDirectZ (nmb_Dataset *, nmm_Microscope_Remote *);
+#endif
 
     virtual ~nmui_HSDirectZ (void);
 
@@ -226,6 +230,13 @@ class nmui_HSDirectZ : public nmui_HapticSurface {
     virtual void sendForceUpdate (vrpn_ForceDevice * device);
 
   protected:
+
+    nmb_Dataset * d_dataset;
+#ifndef USE_VRPN_MICROSCOPE
+    Microscope * d_microscope;
+#else
+    nmm_Microscope_Remote * d_microscope;
+#endif
 
     q_vec_type d_UP;
 
