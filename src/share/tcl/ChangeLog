@@ -1,3 +1,8 @@
+2002-10-24  David Borland <borland@cs.unc.edu>
+
+        * registration.tcl : added slider for controlling the alpha value 
+        of the texture.
+
 2002-10-10  Adam Seeger  <seeger@cs.unc.edu>
 
 	* tip.tcl: added switch to make the tip appear at the hand position to

@@ -169,6 +169,11 @@ checkbutton $nmInfo(registration).texture.display_texture \
 
 pack $nmInfo(registration).texture.display_texture -anchor nw
 
+floatscale $nmInfo(registration).texture.texture_alpha 0 1 1000 1 1 \
+    reg_texture_alpha "Texture Alpha Value"
+
+pack $nmInfo(registration).texture.texture_alpha -anchor nw
+
 iwidgets::Labeledframe $nmInfo(registration).rsplane \
 	-labeltext "Create Plane (match Topog image region)" \
 	-labelpos nw
