@@ -1,12 +1,12 @@
 #include "RobotControl.h"
 
+#include <vrpn_Types.h>
+
+#include <nmb_Image.h>
+#include <Point.h>
+
+// HACK!  This is a gross violation of layering.
 #include "microscape.h"
-
-#include "nmb_Image.h"
-
-#include "vrpn_Types.h"
-
-#include "Point.h"
 
 ImageViewer *g_iViewer = NULL;
 
