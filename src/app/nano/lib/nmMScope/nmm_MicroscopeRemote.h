@@ -74,7 +74,17 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
     nmm_RelaxComp d_relax_comp;
 
+
+    // ACCESSORS
+
+
+    nmm_Sample * SampleMode (void) const
+      { return d_sampleAlgorithm; }
+
+
+
     // MANIPULATORS
+
 
     long InitializeDataset (nmb_Dataset *);
     long InitializeDecoration (nmb_Decoration *);
@@ -94,7 +104,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
                                      const Tclvar_list_of_strings *, 
                                      Tclvar_int*[]);
 
-   long Initialize () ;
+   long Initialize (void) ;
       ///< Set up to read from a stream file or a live scope, 
       ///< depending on d_dataset->inputgrid->readMode()
 
@@ -237,7 +247,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
     long Init (int (* /* f */) (stm_stream *));
 
-    long RecordResistance(long channel, struct timeval t, float r,
+    long RecordResistance(long channel, timeval t, float r,
 			float voltage, float range, float filter); 
 	///< XXX - this function was used for the French Ohmmeter
 	///< because we wanted to put data into the microscope
@@ -269,7 +279,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
     void ResetClock (void);
 
-    void SetStreamToTime (struct timeval time);
+    void SetStreamToTime (timeval time);
 
     // Query and set the read mode, READ_DEVICE, READ_FILE or READ_STREAM
     int ReadMode();
@@ -352,9 +362,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
   private: // OBSOLETE
 
-    enum SampleMode { Visual, Haptic };
-    long SetSamples (const SampleMode);
-
     // STM control and query
     long SetBias (const float bias);
       //   Sets the voltage difference to maintain between the tip and
@@ -375,15 +382,15 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
   private:
     // Utility fcn to rotate scan coords.
-    long rotateScanCoords (const double _x, const double _y,
-			   const double _scanAngle, 
+    long rotateScanCoords (double _x, double _y,
+			   double _scanAngle, 
 			   double * out_x, double * out_y);
 
     // Commands only sent by member functions
     long QueryScanRange (void);
 
-    long SetScanWindow (const long _minx, const long _miny,
-                       const long _maxx, const long _maxy);
+    long SetScanWindow (long _minx, long _miny,
+                       long _maxx, long _maxy);
       //   Choose a subset of the entire grid to scan.  Specifies the
       // corners of a rectangular region inside the originally-specified
       // grid to limit the scan to.
@@ -408,7 +415,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 	float fdbackdel);
     long ZagTo (float x, float y, float yaw,
                float sweepWidth, float regionDiag);
-    long Shutdown (void);
     long GotConnection(void);
     long SetMaxMove (float distance);
     long SetStdDelay (long delay);
@@ -420,115 +426,113 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
 
     // Receive callbacks 
-    int RcvGotConnection2 ();
-    void RcvInTappingMode (const float, const float, const float,
-                           const float, const float);
-    void RcvInOscillatingMode (const float _p, 
-                               const float _i,
-                               const float _d, const float _setpoint,
-                               const float _amp,
-                               const float _frequency,
-                               const vrpn_int32 _input_gain, 
-                               const vrpn_bool _ampl_or_phase,
-                               const vrpn_int32 _drive_attenuation, 
-                               const float _phase);
-    void RcvInContactMode (const float, const float, const float,
-                           const float);
-    void RcvInDirectZControl (const float, const float, const float,
-                           const float, const float, 
-                           const float, const float);
-    void RcvInSewingStyle (const float, const float, const float, const float,
-                          const float, const float, const float);
-    void RcvInSpectroscopyMode (const float,const float,const float,
-        const float,const float,const float,const float,const int,const int,
-        const float,const float,const float,const float,
-        const int, const float,const float,const float);
+    int RcvGotConnection2 (void);
+    void RcvInTappingMode (float, float, float, float, float);
+    void RcvInOscillatingMode (float _p, 
+                               float _i,
+                               float _d, float _setpoint,
+                               float _amp,
+                               float _frequency,
+                               vrpn_int32 _input_gain, 
+                               vrpn_bool _ampl_or_phase,
+                               vrpn_int32 _drive_attenuation, 
+                               float _phase);
+    void RcvInContactMode (float, float, float, float);
+    void RcvInDirectZControl (float, float, float,
+                           float, float, 
+                           float, float);
+    void RcvInSewingStyle (float, float, float, float,
+                          float, float, float);
+    void RcvInSpectroscopyMode (float,float,float,
+        float,float,float,float,int,int,
+        float,float,float,float,
+        int, float,float,float);
 
-    void RcvForceParameters (const long, const float);
-    void RcvBaseModParameters (const float, const float);
-    void RcvForceSettings (const float, const float, const float);
-    void RcvVoltsourceEnabled (const long, const float);
-    void RcvVoltsourceDisabled (const long);
-    void RcvAmpEnabled (const long, const float, const float, const long);
-    void RcvAmpDisabled (const long);
+    void RcvForceParameters (long, float);
+    void RcvBaseModParameters (float, float);
+    void RcvForceSettings (float, float, float);
+    void RcvVoltsourceEnabled (long, float);
+    void RcvVoltsourceDisabled (long);
+    void RcvAmpEnabled (long, float, float, long);
+    void RcvAmpDisabled (long);
     void RcvSuspendCommands();
     void RcvResumeCommands();
-    void RcvStartingToRelax (const long, const long);
-    void RcvInModModeT (const long, const long);
+    void RcvStartingToRelax (long, long);
+    void RcvInModModeT (long, long);
     void RcvInModMode (void);
-    void RcvInImgModeT (const long, const long);
+    void RcvInImgModeT (long, long);
     void RcvInImgMode (void);
-    void RcvModForceSet (const float);
-    void RcvImgForceSet (const float);
-    void RcvModSet (const long, const float, const float, const float);
-    void RcvImgSet (const long, const float, const float, const float);
-    void RcvRelaxSet (const long, const long);
-    void RcvForceSet (const float);
-    void RcvForceSetFailure (const float);
-    void RcvPulseParameters (const long, const float, const float, const float);
-    long RcvWindowLineData (const long, const long, const long, const long,
-                            const long, const float *);
-    long RcvWindowLineData (const long, const long, const long, const long,
-			    const long);
+    void RcvModForceSet (float);
+    void RcvImgForceSet (float);
+    void RcvModSet (long, float, float, float);
+    void RcvImgSet (long, float, float, float);
+    void RcvRelaxSet (long, long);
+    void RcvForceSet (float);
+    void RcvForceSetFailure (float);
+    void RcvPulseParameters (long, float, float, float);
+    long RcvWindowLineData (long, long, long, long,
+                            long, const float *);
+    long RcvWindowLineData (long, long, long, long,
+			    long);
     long RcvWindowLineData (void);
     void RcvForceCurveData (float, float, long, long,
                             long, long, const float *, const float **);
-    void RcvWindowScanNM (const long, const long, const long, const long,
-                          const float, const float);
-    void RcvWindowBackscanNM (const long, const long, const long, const long,
-                              const float, const float);
-    void RcvPointResultNM (const float, const float, const long, const long,
-                           const float, const float);
-    void RcvResultData (const long, const float, const float,
-                        const long, const long, const long, const float *);
-    void RcvResultNM (const float, const float, const long, const long,
-                      const float, const float, const float, const float);
-    void RcvPulseCompletedNM (const float, const float);
-    void RcvPulseFailureNM (const float, const float);
-    void RcvScanning (const vrpn_int32);
-    void RcvScanRange (const float, const float, const float, const float,
-                       const float, const float);
-    void RcvReportScanAngle (const float);
-    void RcvSetRegionC (const long,
-                        const float, const float, const float, const float);
-    void RcvResistanceFailure (const long);
-    void RcvResistance (const long, const long, const long, const float);
-    void RcvResistance2(const long, const long, const long, const float,
-			const float, const float, const float);
-    void RcvReportSlowScan (const long);
+    void RcvWindowScanNM (long, long, long, long,
+                          float, float);
+    void RcvWindowBackscanNM (long, long, long, long,
+                              float, float);
+    void RcvPointResultNM (float, float, long, long,
+                           float, float);
+    void RcvResultData (long, float, float,
+                        long, long, long, const float *);
+    void RcvResultNM (float, float, long, long,
+                      float, float, float, float);
+    void RcvPulseCompletedNM (float, float);
+    void RcvPulseFailureNM (float, float);
+    void RcvScanning (vrpn_int32);
+    void RcvScanRange (float, float, float, float,
+                       float, float);
+    void RcvReportScanAngle (float);
+    void RcvSetRegionC (long,
+                        float, float, float, float);
+    void RcvResistanceFailure (long);
+    void RcvResistance (long, long, long, float);
+    void RcvResistance2(long, long, long, float,
+			float, float, float);
+    void RcvReportSlowScan (long);
     void RcvScanParameters (const char **);
-    void RcvHelloMessage (const char *, const char *, const long, const long);
-    void RcvClientHello (const char *, const char *, const long, const long);
+    void RcvHelloMessage (const char *, const char *, long, long);
+    void RcvClientHello (const char *, const char *, long, long);
     void RcvClearScanChannels (void);
-    void RcvScanDataset (const char *, const char *, const float, const float);
+    void RcvScanDataset (const char *, const char *, float, float);
     void RcvClearPointChannels (void);
-    void RcvPointDataset (const char *, const char *, const long,
-                         const float, const float);
-    void RcvPidParameters (const float, const float, const float);
-    void RcvScanrateParameter (const float);
-    int RcvReportGridSize (const long, const long);
+    void RcvPointDataset (const char *, const char *, long,
+                         float, float);
+    void RcvPidParameters (float, float, float);
+    void RcvScanrateParameter (float);
+    int RcvReportGridSize (long, long);
 
     void RcvMaxSetpointExceeded(void);
-    void RcvServerPacketTimestamp (const long, const long);
-    void RcvTopoFileHeader (const long, const char *);
+    void RcvServerPacketTimestamp (long, long);
+    void RcvTopoFileHeader (long, const char *);
 
-    void RcvInScanlineMode(const long);
-    void RcvFeedbackSetForScanline(const long, const long,
-			const float, const float, const float);
+    void RcvInScanlineMode(long);
+    void RcvFeedbackSetForScanline(long, long,
+			float, float, float);
     void RcvClearScanlineChannels(void);
-    void RcvScanlineDataset(const char *, const char *, const float, 
-	const float);
-    void RcvScanlineDataHeader(const float, const float, const float,
-	const float, const float, const float, const long, const long, const long, 
-	const float, const float, const float, const long, const long,
-	const long);
-    void RcvScanlineData(const long, const long, const float *);
+    void RcvScanlineDataset(const char *, const char *, float, 
+	float);
+    void RcvScanlineDataHeader(float, float, float,
+	float, float, float, long, long, long, 
+	float, float, float, long, long,
+	long);
+    void RcvScanlineData(long, long, const float *);
 
     // messages for Michele Clark's experiments
     // Code is in MicroscopeRcv.C
-    void RcvRecvTimestamp (const struct timeval);
-    void RcvFakeSendTimestamp (const struct timeval);
-    void RcvUdpSeqNum (const long);
+    void RcvRecvTimestamp (timeval);
+    void RcvFakeSendTimestamp (timeval);
+    void RcvUdpSeqNum (long);
 
 
 
@@ -612,21 +616,21 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
 // TODO:  Document and explain these better!
 
-    void GetRasterPosition (const long, const long);
+    void GetRasterPosition (long, long);
       // sets state.rasterX and state.rasterY
 
-    void DisplayModResult (const float, const float, const float,
+    void DisplayModResult (float, float, float,
                            const Point_value * = NULL,
-                           const vrpn_bool = VRPN_FALSE);
+                           vrpn_bool = VRPN_FALSE);
       // sets state.rasterX and state.rasterY
 
     // Has resistance channel been added to point results?
     vrpn_bool d_res_channel_added;
 
     // replacing things in microscape
-    struct timeval d_nowtime;
+    timeval d_nowtime;
     struct timezone d_nowzone;
-    struct timeval d_next_time;
+    timeval d_next_time;
 
     int readMode;	// differentiate between Live and Replay
 

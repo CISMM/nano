@@ -632,8 +632,12 @@ class nmm_Microscope {
 
     char * encode_BeginFeelTo (long * len, vrpn_float32, vrpn_float32);
     long decode_BeginFeelTo (const char ** buf, vrpn_float32 *, vrpn_float32 *);
-    char * encode_EndFeelTo (long * len, vrpn_float32, vrpn_float32);
-    long decode_EndFeelTo (const char ** buf, vrpn_float32 *, vrpn_float32 *);
+    char * encode_EndFeelTo (long * len, vrpn_float32, vrpn_float32,
+                vrpn_int32, vrpn_int32, vrpn_float32, vrpn_float32,
+                vrpn_float32);
+    long decode_EndFeelTo (const char ** buf, vrpn_float32 *, vrpn_float32 *,
+                vrpn_int32 *, vrpn_int32 *, vrpn_float32 *, vrpn_float32 *,
+                vrpn_float32 *);
 
 
     char * encode_ForceParameters (long * len, vrpn_int32, float);

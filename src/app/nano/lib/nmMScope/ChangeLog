@@ -1,3 +1,20 @@
+2000-10-05  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmm_Microscope.C (encode_EndFeelTo) : add parameters
+        for entire (current) definition of nmm_Sample
+	(decode_EndFeelTo) : same
+	* AFMState.h : add data member receivedAlgorithm to AFMDataset
+	* nmm_MicroscopeRemote.C (Shutdown) : remove function
+        (RcvStdDevParameters) : same
+        (handle_StdDevParameters) : same
+	(SetSamples) : same
+	(destructor) : remove dead code
+	(Initialize) : same
+        (RcvInSpectroscopyMode) : same
+	(handle_EndFeelTo) : use new parameters & copy into
+        AFMDataset::receivedAlgorithm
+	(SampleMode) : new function
+
 2000-10-03  Tom Hudson  <hudson@cs.unc.edu>
 
 	* AFMState.h : chang Point_lists members of AFMDataset from

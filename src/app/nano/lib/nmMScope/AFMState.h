@@ -15,10 +15,11 @@
 
 #include <nmb_Subgrid.h>
 #include <nmb_Dataset.h>
-
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
+
 #include <active_set.h>  // Scan_channel_selector
+#include <nmm_Sample.h>
 
 // Forces normally range from -64 to 64 nanoAmps  
 #define BOGUS_FORCE -100
@@ -345,6 +346,8 @@ class AFMDataset {
 
     Point_list receivedPointList;
       ///< Last complete results from a feel-ahead call.
+    nmm_Sample receivedAlgorithm;
+      ///< Sampling strategy used for the last complete feel-ahead call.
     Point_list incomingPointList;
       ///< Current, incomplete results from a feel-ahead call.
 
