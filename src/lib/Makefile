@@ -11,7 +11,7 @@ THIS_DIR := $(subst $(TOP_LEVEL_SRC_DIR),,$(CWD))
 
 OBJECT_DIR := $(join $(TOP_LEVEL_OBJ_DIR)/$(HW_OS),$(THIS_DIR))
 
-CHILD_DIRS := $(subst /,,$(wildcard */))
+CHILD_DIRS := $(filter-out CVS,$(subst /,,$(wildcard */)))
 
 CHILD_LIBS := $(CHILD_DIRS)
 
