@@ -2894,18 +2894,26 @@ RECEIVE_MSG SetRegionClipped {
   heightPlane = d_dataset->inputGrid->getPlaneByName
                    (d_dataset->heightPlaneName->string());
 
-  if (state.regionFlag) {
-    d_decoration->selectedRegionMinX = d_dataset->inputGrid->minX();
-    d_decoration->selectedRegionMinY = d_dataset->inputGrid->minY();
-    d_decoration->selectedRegionMaxX = d_dataset->inputGrid->maxX();
-    d_decoration->selectedRegionMaxY = d_dataset->inputGrid->maxY();
-  } else {
-    state.regionFlag = VRPN_TRUE;
-  }
+
+
   d_dataset->inputGrid->setMinX(xmin);
   d_dataset->inputGrid->setMinY(ymin);
   d_dataset->inputGrid->setMaxX(xmax);
   d_dataset->inputGrid->setMaxY(ymax);
+
+//this seems obsolete..comment out test for now
+ // if (state.regionFlag) {
+
+    d_decoration->selectedRegionMinX = d_dataset->inputGrid->minX();
+    d_decoration->selectedRegionMinY = d_dataset->inputGrid->minY();
+    d_decoration->selectedRegionMaxX = d_dataset->inputGrid->maxX();
+    d_decoration->selectedRegionMaxY = d_dataset->inputGrid->maxY();
+
+//same here
+//  } else { 
+    state.regionFlag = VRPN_TRUE;
+//  }
+
 //    printf( "            nmm_Microscope_Remote::RcvSetRegionC minX %g minY %g maxX %g maxY %g\n", 
 //            minX, minY, maxX, maxY );
 

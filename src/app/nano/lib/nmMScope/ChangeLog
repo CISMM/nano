@@ -1,3 +1,9 @@
+2001-09-30 Jameson Miller <millerj@cs.unc.edu>
+	* nmm_MicroscopeRemote.Cdef: when a new scan region is recieved,
+	changed order of when the dataset variables are updated and when
+	the decoration variables are updated. also commented out test that
+	seems to be obsolete. The correct region size should now be displayed
+
 2001-09-21  Aron Helser  <helser@cs.unc.edu>
 
 	* AFMState.C (autoscan): on by default. 
