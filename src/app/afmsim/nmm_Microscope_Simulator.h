@@ -52,6 +52,7 @@
 #define TAP_CON_MODE   3
 #define SEWING_MODE    4
 #define FORCECURVE_MODE 5
+#define GUARDEDSCAN_MODE 6
 
 #define N_ADC 3
 
