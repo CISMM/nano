@@ -850,8 +850,9 @@ static void openDefaultMicroscope();
 //-----------------------------------------------------------------------
 /// colaboration initialization
 void setupSynchronization (CollaborationManager * cm,
-                           nmb_Dataset * dset,
-                           nmm_Microscope_Remote * m);
+                           nmb_Dataset * dset);
+void setupMicroscopeSynchronization( CollaborationManager * cm,
+                                     nmm_Microscope_Remote * m);
 
 //-----------------------------------------------------------------------
 ///Ubergraphics centering
@@ -1575,6 +1576,7 @@ void shutdown_connections (void) {
   /* */ // tclUIControls
   // Buttons on the main window
   xy_lock.bindConnection(NULL);
+  z_lock.bindConnection(NULL);
 
   // Setup -> External Filters
   procProgName.bindConnection(NULL);
@@ -5060,16 +5062,14 @@ void doTeardownPhantomConnection (void) {
 #endif
 
 
-void teardownSynchronization(CollaborationManager *cm, 
-			     nmb_Dataset *dset,
-			     nmm_Microscope_Remote *m) {  
+void teardownSynchronization( CollaborationManager *cm, 
+			      nmb_Dataset *dset ) {  
   nmui_Component * ui_Root = cm->uiRoot();
   nmui_Component * streamfileControls = ui_Root->find("Stream");
   if (streamfileControls) {
     streamfileControls->remove(&replay_rate);
     streamfileControls->remove(&rewind_stream);
     streamfileControls->remove(&set_stream_time);
-    //open[Static,Stream]Filename are now TclNet_string
     streamfileControls->remove(&openStaticFilename);
     streamfileControls->remove(&openStreamFilename);
     streamfileControls->remove(&openSPMDeviceName);
@@ -5121,15 +5121,41 @@ void teardownSynchronization(CollaborationManager *cm,
       viewHapticControls->remove(&default_spring_k);
     }
 
-    if (m->graphmod != NULL) {
-      nmui_Component * viewStripchartControls = viewControls->find("Stripchart");
-      if(viewStripchartControls) {
-	VERBOSE(1,"Tearing down GraphMod sync");
-	(m->graphmod)->gm_TeardownSynchronization(viewStripchartControls);
-      }
-    }
+  }
+
+  /* */
+  nmui_Component * tclUIControls = ui_Root->find("TclUI");
+  if(tclUIControls) {
+    // Buttons on main window
+    tclUIControls->remove(&xy_lock);
+    tclUIControls->remove(&z_lock);
+
+    // Setup -> External Filters
+    tclUIControls->remove(&procProgName);
+    tclUIControls->remove(&procPlaneName);
+    tclUIControls->remove(&procParams);
+    tclUIControls->remove(&newFilterPlaneName);
 
   }
+
+  /* */
+  nmui_Component * frenchOhmmeterControls = ui_Root->find("Ohmmeter");
+  if(frenchOhmmeterControls) {
+    the_french_ohmmeter_ui->ohm_TeardownSync(frenchOhmmeterControls);
+  }
+
+  nmui_PlaneSync * ps = cm->planeSync();
+  if (ps) {
+    delete ps;
+    cm->setPlaneSync(NULL);
+  }
+} // end teardownSynchronization(...)
+
+
+void teardownMicroscopeSynchronization( CollaborationManager *cm, 
+      			                nmm_Microscope_Remote *m )
+{  
+  nmui_Component * ui_Root = cm->uiRoot();
 
   nmui_Component * paramControls = ui_Root->find("Params");
   if(paramControls) {
@@ -5208,44 +5234,22 @@ void teardownSynchronization(CollaborationManager *cm,
       imageParamControls->remove( &m->state.image.new_scan_rate_microns );
     } // end image controls
   
+    if (m->graphmod != NULL) {
+      nmui_Component * viewStripchartControls = ui_Root->find("Stripchart");
+      if(viewStripchartControls) {
+	VERBOSE(1,"Tearing down GraphMod sync");
+	(m->graphmod)->gm_TeardownSynchronization(viewStripchartControls);
+      }
+    }
 
-  /* */
-  nmui_Component * tclUIControls = ui_Root->find("TclUI");
-  if(tclUIControls) {
-    // Buttons on main window
-    tclUIControls->remove(&xy_lock);
+} // end teardownMicroscopeSynchronization(...)
 
-    // Setup -> External Filters
-    tclUIControls->remove(&procProgName);
-    tclUIControls->remove(&procPlaneName);
-    tclUIControls->remove(&procParams);
-    tclUIControls->remove(&newFilterPlaneName);
-
-  }
-  /* */
-
-  /* */
-  nmui_Component * frenchOhmmeterControls = ui_Root->find("Ohmmeter");
-  if(frenchOhmmeterControls) {
-    the_french_ohmmeter_ui->ohm_TeardownSync(frenchOhmmeterControls);
-  }
-  /* */
-
-  nmui_PlaneSync * ps = cm->planeSync();
-  if (ps) {
-    delete ps;
-    cm->setPlaneSync(NULL);
-  }
-}
 
 // NANOX
 // Tom Hudson, September 1999
 // Sets up synchronization callbacks and nmui_Component/ComponentSync
-//#define MIN_SYNC
-
-void setupSynchronization (CollaborationManager * cm,
-                           nmb_Dataset * dset,
-                           nmm_Microscope_Remote * m) {
+void setupSynchronization( CollaborationManager * cm,
+                           nmb_Dataset * dset ) {
 
   // NOTE
   // If you add() any Netvar in this function, make sure you
@@ -5258,13 +5262,10 @@ void setupSynchronization (CollaborationManager * cm,
   // need their mainloops called, just their connection's
   // (presumably that's collaboratingPeerServerConnection)
 
-  // Christmas sync
-
   nmui_Component * rootUIControl;
   rootUIControl = new nmui_Component ("ROOT");
 
   // Streamfile control
-
   nmui_Component * streamfileControls;
   streamfileControls = new nmui_Component ("Stream");
 
@@ -5453,14 +5454,6 @@ void setupSynchronization (CollaborationManager * cm,
   viewHapticControls->add(&default_spring_k);
 
 /* */
-  nmui_Component * viewStripchartControls;
-  viewStripchartControls = new nmui_Component("Stripchart");
-
-  /* */
-  if(m->graphmod != NULL)
-      (m->graphmod)->gm_SetupSynchronization(viewStripchartControls);
-
-/* */
   viewControls->add(viewPlaneControls);
   viewControls->add(viewColorControls);
   viewControls->add(viewMeasureControls);
@@ -5468,12 +5461,92 @@ void setupSynchronization (CollaborationManager * cm,
   viewControls->add(viewContourControls);
   viewControls->add(viewGridControls);
   viewControls->add(viewHapticControls);
-  viewControls->add(viewStripchartControls);
 
   //adding viewControls to rootUIControl
   rootUIControl->add(viewControls);
   //nmui_Component * derivedPlaneControls;
   //derivedPlaneControls = new nmui_Component ("DerivedPlanes");
+
+  /* */
+  // Tcl UI Controls - All other TCL UI controls
+  nmui_Component * tclUIControls;
+  tclUIControls = new nmui_Component ("TclUI");
+
+  // Buttons on main window
+  tclUIControls->add(&xy_lock);
+  tclUIControls->add( &z_lock );
+
+  // Setup -> External Filters
+  tclUIControls->add(&procProgName);
+  tclUIControls->add(&procPlaneName);
+  tclUIControls->add(&procParams);
+  tclUIControls->add(&newFilterPlaneName);
+
+  rootUIControl->add(tclUIControls);
+  /* */
+
+  /* */
+  if(the_french_ohmmeter_ui) {
+
+    nmui_Component * frenchOhmmeterControls;
+    frenchOhmmeterControls = new nmui_Component("Ohmmeter");
+
+    the_french_ohmmeter_ui->ohm_SetupSync(frenchOhmmeterControls);
+
+    rootUIControl->add(frenchOhmmeterControls);
+  }
+  /* */
+  rootUIControl->bindConnection(serverConnection);
+
+  if (logConnection) {
+    rootUIControl->bindLogConnection(logConnection);
+
+    // these should be logged but not shared;  we declare them as
+    // TclNet objects but don't make them part of the UI Components.
+
+    share_sync_state.bindLogConnection(logConnection);
+    copy_to_private_state.bindLogConnection(logConnection);
+    copy_to_shared_state.bindLogConnection(logConnection);
+    collab_machine_name.bindLogConnection(logConnection);
+  }
+
+  // User Interface to synchronization
+
+  // NANOX FLAT
+  // Set up a utility class to make sure derived planes are synchronized
+  // between all replicas.
+
+  nmui_PlaneSync * ps;
+
+  ps = new nmui_PlaneSync( serverConnection );
+
+  // Since streamfileControls are timed, the toplevel MUST use
+  // the timed callbacks.  Oops.  Took an hour or more to find,
+  // that one.
+
+  share_sync_state.addCallback(handle_synchronize_timed_change, cm);
+
+  copy_to_private_state.addCallback(handle_copy_to_private, cm);
+  copy_to_shared_state.addCallback(handle_copy_to_shared, cm);
+
+  streamfileControls->registerSyncRequestHandler
+          (handle_timed_sync_request, streamfileControls);
+  streamfileControls->registerSyncCompleteHandler
+          (handle_timed_sync_complete, cm);
+
+  // which machine collaborator is using
+  cm->setUI(rootUIControl);
+  cm->setPlaneSync(ps);
+  collab_machine_name.addCallback(handle_collab_machine_name_change, cm);
+
+} // end setupSynchronization(...)
+
+
+// sets up the shared variables for microscope-related UI elements
+void setupMicroscopeSynchronization( CollaborationManager * cm,
+                                     nmm_Microscope_Remote * m )
+{
+  nmui_Component * rootUIControl = cm->uiRoot( );
 
   //new nmui_Component for synchronizing image,modify and scanline parameters
   //between collaborators
@@ -5555,87 +5628,22 @@ void setupSynchronization (CollaborationManager * cm,
   imageParamControls->add( &m->state.image.new_drive_attenuation );
   imageParamControls->add( &m->state.image.new_phase );
   imageParamControls->add( &m->state.image.new_scan_rate_microns );
-  
-  
+
+  // stripchart
+  nmui_Component * viewStripchartControls;
+  viewStripchartControls = new nmui_Component("Stripchart");
+
+  if(m->graphmod != NULL)
+      (m->graphmod)->gm_SetupSynchronization(viewStripchartControls);
 
   rootUIControl->add(paramControls);
   rootUIControl->add(imageParamControls);
-  /* */
-  // Tcl UI Controls - All other TCL UI controls
-  nmui_Component * tclUIControls;
-  tclUIControls = new nmui_Component ("TclUI");
+  rootUIControl->add(viewStripchartControls); 
+  // XXX technically a view control, but the stripchart
+  // (graphmod) object is embedded in the microscope.
 
-  // Buttons on main window
-  tclUIControls->add(&xy_lock);
 
-  // Setup -> External Filters
-  tclUIControls->add(&procProgName);
-  tclUIControls->add(&procPlaneName);
-  tclUIControls->add(&procParams);
-  tclUIControls->add(&newFilterPlaneName);
-
-  rootUIControl->add(tclUIControls);
-  /* */
-
-  /* */
-  if(the_french_ohmmeter_ui) {
-
-    nmui_Component * frenchOhmmeterControls;
-    frenchOhmmeterControls = new nmui_Component("Ohmmeter");
-
-    the_french_ohmmeter_ui->ohm_SetupSync(frenchOhmmeterControls);
-
-    rootUIControl->add(frenchOhmmeterControls);
-  }
-  /* */
-  rootUIControl->bindConnection(serverConnection);
-
-  if (logConnection) {
-    rootUIControl->bindLogConnection(logConnection);
-
-    // these should be logged but not shared;  we declare them as
-    // TclNet objects but don't make them part of the UI Components.
-
-    share_sync_state.bindLogConnection(logConnection);
-    copy_to_private_state.bindLogConnection(logConnection);
-    copy_to_shared_state.bindLogConnection(logConnection);
-    collab_machine_name.bindLogConnection(logConnection);
-  }
-
-  // User Interface to synchronization
-
-  // NANOX FLAT
-  // Set up a utility class to make sure derived planes are synchronized
-  // between all replicas.
-
-  nmui_PlaneSync * ps;
-
-  ps = new nmui_PlaneSync( serverConnection );
-
-  // Since streamfileControls are timed, the toplevel MUST use
-  // the timed callbacks.  Oops.  Took an hour or more to find,
-  // that one.
-
-  share_sync_state.addCallback
-    (handle_synchronize_timed_change, cm);
-
-  copy_to_private_state.addCallback
-    (handle_copy_to_private, cm);
-  copy_to_shared_state.addCallback
-    (handle_copy_to_shared, cm);
-
-  streamfileControls->registerSyncRequestHandler
-          (handle_timed_sync_request, streamfileControls);
-  streamfileControls->registerSyncCompleteHandler
-          (handle_timed_sync_complete, cm);
-
-  // which machine collaborator is using
-  cm->setUI(rootUIControl);
-  cm->setPlaneSync(ps);
-  collab_machine_name.addCallback
-	(handle_collab_machine_name_change, cm);
-
-}
+} // end setupMicroscopeSynchronization(...)
 
 
 void ParseArgs (int argc, char ** argv,
@@ -5647,8 +5655,6 @@ void ParseArgs (int argc, char ** argv,
 
     i = 1;
     while (i < argc) {
-        //fprintf(stderr,"ParseArgs:  arg %i %s\n", i, argv[i]);
-		
       if (strcmp(argv[i], "-allowdup") == 0) {
         istate->afm.allowdup = 1;
       } else if (strcmp(argv[i], "-alphacolor") == 0) {
@@ -6786,6 +6792,8 @@ void update_rtt (void) {
   lasttime = now;
 }
 
+
+
 /** Somewhat misnamed, currently. Only creates a microscope if we
  * are reading a stream or connecting live - for a static file, just
  * creates a data set. 
@@ -6808,9 +6816,10 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
   if (alignerUI) {
     alignerUI->teardownCallbacks();
   }
-  if (collaborationManager && microscope && dataset) {
-    teardownSynchronization(collaborationManager, dataset, 
-			    microscope);
+  if (collaborationManager && dataset) {
+    teardownSynchronization(collaborationManager, dataset);
+    if( microscope ) 
+      teardownMicroscopeSynchronization(collaborationManager, microscope);
   }
 
     // Must get hostname before initializing nmb_Dataset, but
@@ -6890,7 +6899,8 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
     }
 
     if (collaborationManager) {
-      if (new_microscope) setupSynchronization(collaborationManager, new_dataset, new_microscope);
+      setupSynchronization(collaborationManager, new_dataset);
+      if (new_microscope) setupMicroscopeSynchronization(collaborationManager, new_microscope);
     }
 
     if (new_microscope) {
@@ -7661,7 +7671,8 @@ int main (int argc, char* argv[])
   collaborationManager->initialize(vrpnHandTracker, NULL,
                                    handle_peer_sync_change);
 
-  if (microscope) setupSynchronization(collaborationManager, dataset, microscope);
+  setupSynchronization(collaborationManager, dataset);
+  if (microscope) setupMicroscopeSynchronization(collaborationManager, microscope);
 
   // ----------------------
   // Auxiliary device initialization. 
