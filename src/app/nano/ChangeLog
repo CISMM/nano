@@ -1,3 +1,14 @@
+2000-10-12  Adam Seeger  <seeger@cs.unc.edu>
+
+        * microscape.c (handle_openStreamFilename_change) : The log file was
+	not getting reset if you reopened the same one. I thought this
+	problem had been fixed before by making vrpn_get_connection_by_name 
+        reset the log file if we tell it that we want to open a log file
+	which is already open but perhaps this got changed back. Now we
+	explicitly call reset() on the log file - this was discovered 
+	because we weren't getting the grid size message and then we got
+	a message with data in it that didn't match the grid size
+
 2000-10-09  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (main) : added copy of file name out of the

@@ -2736,6 +2736,10 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     // Change a few things for consistency with old interface
     vrpnLogFile->set_replay_rate(decoration->rateOfTime);
 
+    // This is very important for when you open the same stream file twice
+    // because otherwise you start playing wherever you were playing it before
+    vrpnLogFile->reset();
+
     // Run mainloop of the microscope once to make sure this is a valid vrpn
     // log file- it will check the cookie and fail if it is not. 
     if (microscope->mainloop()) {
@@ -2939,7 +2943,7 @@ static void handle_exportScene_Filename_change (
     void * userdata)
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    fprintf(stderr, "Not implemented on PC");
+    fprintf(stderr, "handle_exportScene_Filename_change: Not implemented on PC\n");
 #else
 
     if (strlen(filename) > 0) {
