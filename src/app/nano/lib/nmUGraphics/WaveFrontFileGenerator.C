@@ -2,12 +2,13 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <vector>
 
 #ifdef sgi
 using std::vector
 #endif
 
-#include <vector>
+
 
 
 #include "URender.h"
