@@ -67,10 +67,10 @@ UNAME := $(shell uname -s)
 ifeq ($(UNAME),FreeBSD)             # hw_os does not exist on FreeBSD at UNC
    HW_OS := pc_FreeBSD
 else
-   ifeq ($(UNAME),CYGWIN_NT-4.0)    # Cygwin may not have HW_OS
+   ifeq ($(findstring CYGWIN,$(UNAME)),CYGWIN)    # Cygwin may not have HW_OS
       HW_OS := pc_cygwin
    else
-      ifeq ($(UNAME),Linux)         # Cygwin may not have HW_OS
+      ifeq ($(UNAME),Linux)         # Linux may not have HW_OS
          HW_OS := pc_linux
       else                          # everybody else has hw_os
          HW_OS := $(shell hw_os)
