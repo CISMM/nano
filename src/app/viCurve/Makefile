@@ -1,4 +1,4 @@
-USES_LIBS := nmAux tclLinkVar nmBase vrpn quat
+USES_LIBS := nmAux tclLinkVar nmBase nmMP vrpn quat
 
 EXCLUDE_SRC := GPIBServer.C vrpn_GPIBDeviceServer.C
 

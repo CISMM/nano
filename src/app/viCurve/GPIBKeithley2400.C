@@ -37,7 +37,7 @@ static 	vrpn_Connection * connection;
 
 static Tcl_Interp	*tcl_interp;
 static Tclvar_int *tcl_quit_button_pressed;
-static char tcl_default_dir [] = "/afs/cs.unc.edu/project/stm/bin/";
+static char tcl_default_dir [] = "./";
 
 //------------------------------------------------------------
 // Duplicate functionality from microscape.
@@ -185,104 +185,122 @@ void parseArguments(int argc, char **argv){
 	}
 }
 
+
+
 int	main(unsigned argc, char *argv[])
 {
-    unsigned short def_port_no = 4545;
-    char *tcl_script_dir;
-    
-    parseArguments(argc, argv);
-    
-    if ( (tcl_script_dir=getenv("NM_TCL_DIR")) == NULL) {
-	tcl_script_dir=tcl_default_dir;
+  unsigned short def_port_no = 4545;
+  char *tcl_script_dir;
+  
+  parseArguments(argc, argv);
+  
+  // --------------------------------------------------------------
+  // set tcl_script_dir
+  char* nano_root = getenv( "NANO_ROOT" );
+  if( nano_root != NULL )
+    {
+      // NM_TCL_DIR overrides NANO_ROOT
+      tcl_script_dir = getenv( "NM_TCL_DIR" );
+      if(  tcl_script_dir == NULL )
+	{
+	  tcl_script_dir = new char[ strlen( nano_root ) + 100 ];
+	  sprintf( tcl_script_dir, "%s/share/tcl/", nano_root );
+	}
+      // else use NM_TCL_DIR
     }
-
-    //------------------------------------------------------------------
-    // Generic Tcl startup.  Getting an interpreter and mainwindow.
-    init_Tk();
-    init_Tk_controls();
+  else // no NANO_ROOT
+    {
+      // try NM_TCL_DIR
+      tcl_script_dir = getenv( "NM_TCL_DIR" );
+      if( tcl_script_dir == NULL )
+	tcl_script_dir = tcl_default_dir;
+    }
+  
+  
+  //------------------------------------------------------------------
+  // Generic Tcl startup.  Getting an interpreter and mainwindow.
+  init_Tk();
+  init_Tk_controls();
+  
+  // Initialize our connections to the things we are going to control.
+  // defaults to port 4545
+  char con_name [256];
+  if (vi_device_name == NULL)
+    {
+      fprintf( stderr, "Error:  no device or streamfile specified.\n" );
+      usage( argv[0] );
+    }
+  else if(isReadingStreamFile)
+    // No port number while reading a stream.
+    sprintf(con_name, "%s",vi_device_name);
+  else 
+    sprintf(con_name, "%s:%d",vi_device_name, def_port_no);
+  
+  connection 
+    = vrpn_get_connection_by_name( con_name,
+				   (isWritingStreamFile ? outputStreamName 
+				    : (char*) NULL ) );
+  if( connection == NULL) {
+    // connection failed. VRPN prints error message.
+    return -1;
+  }
+  
+  keithley2400_ui = new nma_Keithley2400_ui(tcl_interp, 
+					    tcl_script_dir,
+					    "vi_curve@dummyname.com", 
+					    connection);
+  vrpn_File_Connection *fcon;
+  if (isReadingStreamFile){
+    fcon = connection->get_File_Connection();
+    if (!fcon) {
+      fprintf(stderr, "Error: expected but didn't get file connection\n");
+      exit(-1);
+    }
+    fcon->set_replay_rate(1.0);
+  }
+  
+  signal(SIGINT, handle_cntl_c);
+  
+  while (1) {
+    //------------------------------------------------------------
+    // This must be done in any Tcl app, to allow Tcl/Tk to handle
+    // events
     
-    // Initialize our connections to the things we are going to control.
-    // defaults to port 4545
-    char con_name [256];
-    if (vi_device_name == NULL)
-	sprintf(con_name, "vi_curve@argon.cs.unc.edu:%d", def_port_no);
-    else if(isReadingStreamFile)
-	// No port number while reading a stream.
-	sprintf(con_name, "%s",vi_device_name);
-    else 
-	sprintf(con_name, "%s:%d",vi_device_name, def_port_no);
+    while (Tk_DoOneEvent(TK_DONT_WAIT)) {};
     
-    if( (connection = vrpn_get_connection_by_name(con_name,
-			  (isWritingStreamFile ? outputStreamName
-			   : (char *)NULL))) == NULL) {
-       // connection failed. VRPN prints error message.
+    //------------------------------------------------------------
+    // This is called once every time through the main loop.  It
+    // pushes changes in the C variables over to Tcl.    
+    if (Tclvar_mainloop()) {
+      fprintf(stderr,"Mainloop failed\n");
       return -1;
     }
     
-   keithley2400_ui = new nma_Keithley2400_ui(tcl_interp, 
-					     tcl_script_dir,
-					     "vi_curve@dummyname.com", 
-					     connection);
-   vrpn_File_Connection *fcon;
-   if (isReadingStreamFile){
-       fcon = connection->get_File_Connection();
-       if (!fcon) {
-	   fprintf(stderr, "Error: expected but didn't get file connection\n");
-	   exit(-1);
-       }
-       fcon->set_replay_rate(1.0);
-   }
-
-   signal(SIGINT, handle_cntl_c);
-
-
-	// DEBUG print all messages, incoming and outgoing, 
-	// sent over our VRPN connection
-// 	connection->register_handler(vrpn_ANY_TYPE, handle_any_print,
-// 				    connection);
-         // defaults to vrpn_SENDER_ANY
-
-	while (1) {
-		//------------------------------------------------------------
-		// This must be done in any Tcl app, to allow Tcl/Tk to handle
-		// events
-      
-		while (Tk_DoOneEvent(TK_DONT_WAIT)) {};
-      
-		//------------------------------------------------------------
-		// This is called once every time through the main loop.  It
-		// pushes changes in the C variables over to Tcl.
-      
-		if (Tclvar_mainloop()) {
-			fprintf(stderr,"Mainloop failed\n");
-			return -1;
-		}
-
-		// Put in a sleep to free up CPU cycles.
-		vrpn_SleepMsecs(1);
-		//------------------------------------------------------------
-		// Send/receive message from our vrpn connections.
-		keithley2400_ui->mainloop();
-      
-	}
-	//return 0;
-}
+    // Put in a sleep to free up CPU cycles.
+    vrpn_SleepMsecs(1);
+    //------------------------------------------------------------
+    // Send/receive message from our vrpn connections.
+    keithley2400_ui->mainloop();
+    
+  }
+  
+} // end main
 
 void handle_quit_button(vrpn_int32, void *){
-	if ((*tcl_quit_button_pressed) != 1) return;
-	fprintf(stderr, "Shutting down and saving log file\n");
-	if (keithley2400_ui)
-		delete keithley2400_ui;
-	if (connection)
-		delete connection; // needed to make stream file write out
-	exit(0);
+  if ((*tcl_quit_button_pressed) != 1) return;
+  fprintf(stderr, "Shutting down and saving log file\n");
+  if (keithley2400_ui)
+    delete keithley2400_ui;
+  if (connection)
+    delete connection; // needed to make stream file write out
+  exit(0);
 }
 
 void handle_cntl_c(int ){
-	fprintf(stderr, "Received ^C signal, shutting down and saving log file\n");
-    if (connection) 
-        delete connection; // needed to make stream file write out
-    if (keithley2400_ui) 
-        delete keithley2400_ui;
-	exit(-1);
+  fprintf(stderr, "Received ^C signal, shutting down and saving log file\n");
+  if (connection) 
+    delete connection; // needed to make stream file write out
+  if (keithley2400_ui) 
+    delete keithley2400_ui;
+  exit(-1);
 }

@@ -1,0 +1,12 @@
+2001-09-20  David Marshburn  <marshbur@cs.unc.edu>
+
+	* Makefile (USES_LIBS): uses nmMP
+
+	* GPIBKeithley2400.C: formatting clean-up.
+	(tcl_default_dir) changed value to "./"
+	(main) uses NM_TCL_DIR then NANO_ROOT/share/tcl then 
+	tcl_default_dir to find keithley2400.tcl.
+	(main) exits if no device or file specified, rather than 
+	defaulting to argon-cs.
+
+	
