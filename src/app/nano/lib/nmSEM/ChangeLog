@@ -1,3 +1,8 @@
+2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmui_SEM.C (handle_texture_display_change) : 
+	removed call to disableOtherTextures()
+
 2001-09-01  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_EDAX.h : added constant EDAX_MIN_POINT_DWELL_SEC

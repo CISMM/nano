@@ -158,16 +158,21 @@ void nms_SEM_ui::handle_texture_display_change(vrpn_int32 _newval,
 {   
     //nms_SEM_ui *me = (nms_SEM_ui *)_ud;
     if (_newval) {
-        disableOtherTextures(SEM);
+        //disableOtherTextures(SEM);
         graphics->setTextureMode(nmg_Graphics::SEM_DATA,
                                  nmg_Graphics::REGISTRATION_COORD);
     }
+
     else {
+      // this check is important to make sure we don't disable some other
+      // mode which the graphics have switched to before this function
+      // got called
       if (graphics->getTextureMode() == nmg_Graphics::SEM_DATA) {
         graphics->setTextureMode(nmg_Graphics::NO_TEXTURES,
 				 nmg_Graphics::RULERGRID_COORD);
       }
     }
+
 }
 
 // static 
