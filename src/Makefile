@@ -25,9 +25,14 @@ app/nano/lib:
 .PHONY:	clean
 clean:
 	$(MAKE) -C lib clean
-	$(MAKE) -C app/nano clean
 	$(MAKE) -C app/nano/lib clean
+	$(MAKE) -C app/nano clean
 
+.PHONY: depend
+depend:
+	$(MAKE) -C lib depend
+	$(MAKE) -C app/nano/lib depend
+	$(MAKE) -C app/nano depend
 
 ### buid an emacs tags table.  The files will be in the table in the
 ### order they are given to etags.  We want .h files to come first.
