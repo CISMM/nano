@@ -1,5 +1,8 @@
 2002-04-01  Aron Helser  <helser@cs.unc.edu>
 
+	* nmb_Dataset.C (nmb_Dataset): Removed ChangeAll call,
+	unnecessary. 
+
 	* Point.Ch (outputToText): New, replaces writeToTclWindow, uses a
 	string instead of tcl commands. Allocates all memory up front,
 	maybe significant speed improvement. 

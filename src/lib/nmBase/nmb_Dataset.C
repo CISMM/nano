@@ -131,8 +131,8 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
   // to a useful name. 
   ensureHeightPlane();
 
-  // Make sure surface is redrawn by default. 
-  range_of_change.ChangeAll();
+  // Make sure surface is redrawn by default. Taken care of by Surface class.
+  //range_of_change.ChangeAll();
 
   // add static images to dataImages list
   dataImages->addFileImages(imageFileNames, numImageFiles, *d_topoFile);

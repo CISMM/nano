@@ -158,15 +158,18 @@ forceUpdate()
 void nmg_SurfaceMask::
 setControlPlane(BCPlane *control)
 {
-    d_control = control;
-    if (d_control == (BCPlane*)NULL) {
-        d_derivationMode = NONE;
-        for(int y = 0; y < d_height; y++) {
-            for(int x = 0; x < d_width; x++) {
-                if (value(x,y) > 0) {
-                    setValue(x,y,0);
-                }                
-            }            
+    if (d_control != control){
+        d_control = control;
+        d_needsUpdate = true;
+        if (d_control == (BCPlane*)NULL) {
+            d_derivationMode = NONE;
+            for(int y = 0; y < d_height; y++) {
+                for(int x = 0; x < d_width; x++) {
+                    if (value(x,y) > 0) {
+                        setValue(x,y,0);
+                    }                
+                }            
+            }
         }
     }
 }

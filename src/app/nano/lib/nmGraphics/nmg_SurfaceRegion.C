@@ -505,82 +505,99 @@ needsUpdate()
 }
 
 /**
- * Set the alpha value to use
- * Access: Public
- */
+ * Set the alpha value to use, if we're associated with the default region, or
+ * we are forced.
+ * Access: Public */
 void nmg_SurfaceRegion::
-setAlpha(float alpha, vrpn_bool respect_unassociate)
+setAlpha(float alpha, vrpn_bool force_set)
 {
-    if (d_currentAssociations.alpha || !respect_unassociate) {
-        d_currentState.alpha = alpha;
-        forceRebuildCondition();
+    if (d_currentAssociations.alpha || force_set) {
+        if (d_currentState.alpha != alpha) {
+            d_currentState.alpha = alpha;
+            forceRebuildCondition();
+        }
     }
 }
 
 /**
- * Determine whether wire frame is enabled for
- *				this region
- * Access: Public
- */
+ * Turn on/off wire frame for this region, if we're associated with the
+ * default region, or we are forced.
+ * Access: Public */
 void nmg_SurfaceRegion::
-enableFilledPolygons(int enable, vrpn_bool respect_unassociate)
+setFilledPolygons(int enable, vrpn_bool force_set)
 {
-    if (d_currentAssociations.filledPolygonsEnabled || !respect_unassociate) {
-        d_currentState.filledPolygonsEnabled = enable;
+    if (d_currentAssociations.filledPolygonsEnabled || force_set) {
+        if (d_currentState.filledPolygonsEnabled != enable) {
+            d_currentState.filledPolygonsEnabled = enable;
+            forceRebuildCondition();
+        }
     }
 }
 
 /**
  * Set the tesselation stride to use for this
- * region
+ * region, if we're associated with the default region, or
+ * we are forced.
  * Access: Public
  */
 void nmg_SurfaceRegion::
-setStride(int stride, vrpn_bool respect_unassociate)
+setStride(int stride, vrpn_bool force_set)
 {
-    if (d_currentAssociations.stride || !respect_unassociate) {
-        d_currentState.stride = stride;
-        forceRebuildCondition();
+    if (d_currentAssociations.stride || force_set) {
+        if (d_currentState.stride != stride) {
+            d_currentState.stride = stride;
+            forceRebuildCondition();
+        }
     }
 }
 
 /**
  * Set which texture is to be displayed in this
- * region
+ * region, if we're associated with the default region, or
+ * we are forced.
  * Access: Public
  */
 void nmg_SurfaceRegion::
-setTextureDisplayed(int display, vrpn_bool respect_unassociate)
+setTextureDisplayed(int display, vrpn_bool force_set)
 {
-    if (d_currentAssociations.textureDisplayed || !respect_unassociate) {
-        d_currentState.textureDisplayed = display;
-        forceRebuildCondition();
+    if (d_currentAssociations.textureDisplayed || force_set) {
+        if (d_currentState.textureDisplayed != display) {
+            d_currentState.textureDisplayed = display;
+            forceRebuildCondition();
+        }
     }
 }
 
 /**
+ * Set texture mode, if we're associated with the default region, or
+ * we are forced.
  * Access: Public
  * 
  */
 void nmg_SurfaceRegion::
-setTextureMode(int mode, vrpn_bool respect_unassociate)
+setTextureMode(int mode, vrpn_bool force_set)
 {
-    if (d_currentAssociations.textureMode || !respect_unassociate) {
-        d_currentState.textureMode = mode;
-        forceRebuildCondition();
+    if (d_currentAssociations.textureMode || force_set) {
+        if (d_currentState.textureMode != mode) {
+            d_currentState.textureMode = mode;
+            forceRebuildCondition();
+        }
     }
 }
 
 /**
+ * Set texture transform mode, if we're associated with the default region, or
+ * we are forced.  
  * Access: Public
- * 
  */
 void nmg_SurfaceRegion::
-setTextureTransformMode(int mode, vrpn_bool respect_unassociate)
+setTextureTransformMode(int mode, vrpn_bool force_set)
 {
-    if (d_currentAssociations.textureTransformMode || !respect_unassociate) {
-        d_currentState.textureTransformMode = mode;
-        forceRebuildCondition();
+    if (d_currentAssociations.textureTransformMode || force_set) {
+        if (d_currentState.textureTransformMode != mode) {
+            d_currentState.textureTransformMode = mode;
+            forceRebuildCondition();
+        }
     }
 }
 

@@ -2548,10 +2548,11 @@ static void handle_contour_color_change (vrpn_int32, void * userdata) {
 //(int) contour_r, (int) contour_g, (int) contour_b);
 }
 
-static void     handle_contour_width_change (vrpn_float64, void * userdata) {
+static void handle_contour_width_change (vrpn_float64, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-  g->setContourWidth(contour_width);}
+  g->setContourWidth(contour_width);
+}
 
 // this should probably be moved to microscape_handlers.c
 static void handle_alpha_dataset_change (const char *, void * userdata)
@@ -4104,16 +4105,10 @@ static void handle_analyze_shape(vrpn_int32, void *)
     analyze_shape = 0;
 }
 
+/** Assumes viz plane and viz region exist. 
+ */
 void setup_region()
 {
-    if (!created_region) {
-        viz_region = graphics->createRegion();
-        created_region = true;
-    }
-
-    graphics->setRegionControlPlaneName(viz_comes_from.string(), viz_region);
-    graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);
-
     switch(viz_choice) {
     case 0:
         //Set the rest of the region to a lower stride;
@@ -4177,6 +4172,19 @@ void setup_region()
 
 static void handle_viz_change(vrpn_int32, void *)
 {        
+    BCPlane * plane = dataset->inputGrid->getPlaneByName
+        (viz_comes_from.string());
+    if (!plane) return;
+
+    if (!created_region) {
+        viz_region = graphics->createRegion();
+        created_region = true;
+    }
+
+    graphics->setRegionControlPlaneName(viz_comes_from.string(), viz_region);
+    // Don't think this is necessary. 
+    //graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);
+
     setup_region();
 }
 
@@ -4202,24 +4210,35 @@ static void handle_viz_dataset_change(const char *, void *)
     BCPlane * plane = dataset->inputGrid->getPlaneByName
         (viz_comes_from.string());
     
-    if (plane != (BCPlane*)NULL) {
-	    viz_min_limit = plane->minValue();
-	    viz_max_limit = plane->maxValue();
-	    viz_min = plane->minValue();
-	    viz_max = plane->maxValue();
-
-        setup_region();
-    }
-    else {
-	    viz_min_limit = 0;
-	    viz_max_limit = 1;
-	    viz_min = 0;
-	    viz_max = 1;
+    if (plane == NULL) {
+        viz_min_limit = 0;
+        viz_max_limit = 1;
+        viz_min = 0;
+        viz_max = 1;
         if (created_region) {
             graphics->destroyRegion(viz_region);
             created_region = false;
-        }        
-    }    
+        }
+        return;
+    }
+
+    if (!created_region) {
+        viz_region = graphics->createRegion();
+        created_region = true;
+    }
+
+    graphics->setRegionControlPlaneName(viz_comes_from.string(), viz_region);
+    // Call before setting viz_min and viz_max, avoids multiple re-calcs,
+    // call after setRegionControlPlaneName, so right source plane used. 
+    graphics->setRegionMaskHeight(plane->minValue(), plane->maxValue(), 
+                                  viz_region);
+
+    viz_min_limit = plane->minNonZeroValue();
+    viz_max_limit = plane->maxValue();
+    viz_min = plane->minNonZeroValue();
+    viz_max = plane->maxValue();
+
+    setup_region();
 }
 
 static void handle_viz_tex_new(const char *, void *) {
@@ -7051,6 +7070,9 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
 
     // Clear any remembered modifications
     forget_modification_data();
+
+    // Visualization region has been deleted. 
+    created_region = false;
 
     if (microscope) microscope->requestMutex();
 

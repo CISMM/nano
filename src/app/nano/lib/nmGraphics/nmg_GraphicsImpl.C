@@ -1039,7 +1039,7 @@ void nmg_Graphics_Implementation::enableChartjunk (int on) {
 
 void nmg_Graphics_Implementation::enableFilledPolygons (int on, int region) {
 //fprintf(stderr, "nmg_Graphics_Implementation::enableFilledPolygons().\n");
-  state->surface->enableFilledPolygons(on, region);
+  state->surface->setFilledPolygons(on, region);
 }
 
 void nmg_Graphics_Implementation::enableSmoothShading (int on) {

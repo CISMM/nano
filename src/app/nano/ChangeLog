@@ -1,7 +1,15 @@
+2002-04-01  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.C (handle_viz_dataset_change): Change the order of
+	operations so the viz plane is rebuilt correctly. 
+	(setup_region): same
+	(handle_viz_change): same, use plane->minNonZeroValue(). 
+	(createNewDatasetOrMicroscope): Clear flag, region is gone. 
+
 2002-03-27  David Borland  <borland@cs.unc.edu>
-        * import.C:  added callback for allowing the user to select
-        every nth point along the axis line when loading a tube--should
-        make for better performance on the AFM simulator side
+	* import.C:  added callback for allowing the user to select
+	every nth point along the axis line when loading a tube--should
+	make for better performance on the AFM simulator side
 
 2002-03-22  David Marshburn  <marshbur@evans.cs.unc.edu>
 

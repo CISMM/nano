@@ -55,7 +55,7 @@ public:
 
     //Appearance mutator functions
     void setAlpha(float alpha, int region);
-    void enableFilledPolygons(int enable, int region);
+    void setFilledPolygons(int enable, int region);
     void setTextureDisplayed(int display, int region);
     void setTextureMode(int mode, int region);
     void setTextureTransformMode(int mode, int region);

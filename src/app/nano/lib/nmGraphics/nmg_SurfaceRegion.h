@@ -90,12 +90,12 @@ public:
     nmg_SurfaceMask* getMaskPlane() {return d_regionalMask;}
 
     //Appearance mutator functions
-    void setAlpha(float alpha, vrpn_bool respect_unassociate);
-    void enableFilledPolygons(int enable, vrpn_bool respect_unassociate);
-    void setTextureDisplayed(int display, vrpn_bool respect_unassociate);
-    void setTextureMode(int mode, vrpn_bool respect_unassociate);
-    void setTextureTransformMode(int mode, vrpn_bool respect_unassociate);
-    void setStride(int stride, vrpn_bool respect_unassociate);
+    void setAlpha(float alpha, vrpn_bool force_set);
+    void setFilledPolygons(int enable, vrpn_bool force_set);
+    void setTextureDisplayed(int display, vrpn_bool force_set);
+    void setTextureMode(int mode, vrpn_bool force_set);
+    void setTextureTransformMode(int mode, vrpn_bool force_set);
+    void setStride(int stride, vrpn_bool force_set);
 
     //Accessor functions
     float getAlpha() const {return d_currentState.alpha;}

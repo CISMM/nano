@@ -456,11 +456,10 @@ renderSurface(nmg_State * state)
 }
 
 /**
- As with all the graphics mutator functions,
-            a region value of 0 means apply to all regions
-            that aren't unassociate.  And a normal value will
-            override this
-    Access: Public
+For the default region (0), apply the change to all regions
+(that aren't unassociated).  For a sub-region, force a change. 
+
+Access: Public
 */
 void nmg_Surface::
 setAlpha(float alpha, int region)
@@ -468,47 +467,45 @@ setAlpha(float alpha, int region)
     if (region == 0) {
         d_defaultRegion->setAlpha(alpha, VRPN_TRUE);
         for(int i = 0; i < d_numSubRegions; i++) {
-            d_subRegions[i]->setAlpha(alpha, VRPN_TRUE);
+            d_subRegions[i]->setAlpha(alpha, VRPN_FALSE);
         }
         return;
     }
 
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->setAlpha(alpha, VRPN_FALSE);
+        d_subRegions[region]->setAlpha(alpha, VRPN_TRUE);
     }
 }
 
 /**
- As with all the graphics mutator functions,
-            a region value of 0 means apply to all regions
-            that aren't unassociate.  And a normal value will
-            override this
-    Access: Public
+For the default region (0), apply the change to all regions
+(that aren't unassociated).  For a sub-region, force a change. 
+
+Access: Public
 */
 void nmg_Surface::
-enableFilledPolygons(int enable, int region)
+setFilledPolygons(int enable, int region)
 {
     if (region == 0) {
-        d_defaultRegion->enableFilledPolygons(enable, VRPN_TRUE);
+        d_defaultRegion->setFilledPolygons(enable, VRPN_TRUE);
         for(int i = 0; i < d_numSubRegions; i++) {
-            d_subRegions[i]->enableFilledPolygons(enable, VRPN_TRUE);
+            d_subRegions[i]->setFilledPolygons(enable, VRPN_FALSE);
         }
         return;
     }
 
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->enableFilledPolygons(enable, VRPN_FALSE);
+        d_subRegions[region]->setFilledPolygons(enable, VRPN_TRUE);
     }
 }
 
 /**
- As with all the graphics mutator functions,
-            a region value of 0 means apply to all regions
-            that aren't unassociate.  And a normal value will
-            override this
-    Access: Public
+For the default region (0), apply the change to all regions
+(that aren't unassociated).  For a sub-region, force a change. 
+
+Access: Public
 */
 void nmg_Surface::
 setTextureDisplayed(int display, int region)
@@ -516,23 +513,22 @@ setTextureDisplayed(int display, int region)
     if (region == 0) {
         d_defaultRegion->setTextureDisplayed(display, VRPN_TRUE);
         for(int i = 0; i < d_numSubRegions; i++) {
-            d_subRegions[i]->setTextureDisplayed(display, VRPN_TRUE);
+            d_subRegions[i]->setTextureDisplayed(display, VRPN_FALSE);
         }
         return;
     }
 
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->setTextureDisplayed(display, VRPN_FALSE);
+        d_subRegions[region]->setTextureDisplayed(display, VRPN_TRUE);
     }
 }
 
 /**
- As with all the graphics mutator functions,
-            a region value of 0 means apply to all regions
-            that aren't unassociate.  And a normal value will
-            override this
-    Access: Public
+For the default region (0), apply the change to all regions
+(that aren't unassociated).  For a sub-region, force a change. 
+
+Access: Public
 */
 void nmg_Surface::
 setTextureMode(int mode, int region)
@@ -540,23 +536,22 @@ setTextureMode(int mode, int region)
     if (region == 0) {
         d_defaultRegion->setTextureMode(mode, VRPN_TRUE);
         for(int i = 0; i < d_numSubRegions; i++) {
-            d_subRegions[i]->setTextureMode(mode, VRPN_TRUE);
+            d_subRegions[i]->setTextureMode(mode, VRPN_FALSE);
         }
         return;
     }
 
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->setTextureMode(mode, VRPN_FALSE);
+        d_subRegions[region]->setTextureMode(mode, VRPN_TRUE);
     }
 }
 
 /**
- As with all the graphics mutator functions,
-            a region value of 0 means apply to all regions
-            that aren't unassociate.  And a normal value will
-            override this
-    Access: Public
+For the default region (0), apply the change to all regions
+(that aren't unassociated).  For a sub-region, force a change. 
+
+Access: Public
 */
 void nmg_Surface::
 setTextureTransformMode(int mode, int region)
@@ -564,23 +559,22 @@ setTextureTransformMode(int mode, int region)
     if (region == 0) {
         d_defaultRegion->setTextureTransformMode(mode, VRPN_TRUE);
         for(int i = 0; i < d_numSubRegions; i++) {
-            d_subRegions[i]->setTextureTransformMode(mode, VRPN_TRUE);
+            d_subRegions[i]->setTextureTransformMode(mode, VRPN_FALSE);
         }
         return;
     }
 
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->setTextureTransformMode(mode, VRPN_FALSE);
+        d_subRegions[region]->setTextureTransformMode(mode, VRPN_TRUE);
     }
 }
 
 /**
- As with all the graphics mutator functions,
-            a region value of 0 means apply to all regions
-            that aren't unassociate.  And a normal value will
-            override this
-    Access: Public
+For the default region (0), apply the change to all regions
+(that aren't unassociated).  For a sub-region, force a change. 
+
+Access: Public
 */
 void nmg_Surface::
 setStride(unsigned int stride, int region)
@@ -588,21 +582,24 @@ setStride(unsigned int stride, int region)
     if (region == 0) {
         d_defaultRegion->setStride(stride, VRPN_TRUE);
         for(int i = 0; i < d_numSubRegions; i++) {
-            d_subRegions[i]->setStride(stride, VRPN_TRUE);
+            d_subRegions[i]->setStride(stride, VRPN_FALSE);
         }
         return;
     }
 
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->setStride(stride, VRPN_FALSE);
+        d_subRegions[region]->setStride(stride, VRPN_TRUE);
     }
 }
 
 /**
- 
-    Access: Public
-*/
+ * For a sub-region, \a associate == true means that its value will change
+ * whenever the default region's value changes (and we'll set it to be equal
+ * right now). Otherwise it will ignore changes to the default region, and
+ * wait for an explicit "set".
+ * Access: Public 
+ */
 void nmg_Surface::
 associateAlpha(vrpn_bool associate, int region)
 {
@@ -610,16 +607,19 @@ associateAlpha(vrpn_bool associate, int region)
         region--;
         d_subRegions[region]->associateAlpha(associate);
         //Reassociate with the surface
-        if (associate == VRPN_FALSE) {
+        if (associate == VRPN_TRUE) {
             d_subRegions[region]->setAlpha(d_defaultRegion->getAlpha(), VRPN_TRUE);
         }
     }
 }
 
 /**
- 
-    Access: Public
-*/
+ * For a sub-region, \a associate == true means that its value will change
+ * whenever the default region's value changes (and we'll set it to be equal
+ * right now). Otherwise it will ignore changes to the default region, and
+ * wait for an explicit "set".
+ * Access: Public 
+ */
 void nmg_Surface::
 associateFilledPolygons(vrpn_bool associate, int region)
 {
@@ -627,16 +627,19 @@ associateFilledPolygons(vrpn_bool associate, int region)
         region--;
         d_subRegions[region]->associateFilledPolygons(associate);
         //Reassociate with the surface
-        if (associate == VRPN_FALSE) {
-            d_subRegions[region]->enableFilledPolygons(d_defaultRegion->getFilledPolygonsEnabled(), VRPN_TRUE);
+        if (associate == VRPN_TRUE) {
+            d_subRegions[region]->setFilledPolygons(d_defaultRegion->getFilledPolygonsEnabled(), VRPN_TRUE);
         }
     }
 }
 
 /**
- 
-    Access: Public
-*/
+ * For a sub-region, \a associate == true means that its value will change
+ * whenever the default region's value changes (and we'll set it to be equal
+ * right now). Otherwise it will ignore changes to the default region, and
+ * wait for an explicit "set".
+ * Access: Public 
+ */
 void nmg_Surface::
 associateTextureDisplayed(vrpn_bool associate, int region)
 {
@@ -644,16 +647,19 @@ associateTextureDisplayed(vrpn_bool associate, int region)
         region--;
         d_subRegions[region]->associateTextureDisplayed(associate);
         //Reassociate with the surface
-        if (associate == VRPN_FALSE) {
+        if (associate == VRPN_TRUE) {
             d_subRegions[region]->setTextureDisplayed(d_defaultRegion->getTextureDisplayed(), VRPN_TRUE);
         }
     }
 }
 
 /**
- 
-    Access: Public
-*/
+ * For a sub-region, \a associate == true means that its value will change
+ * whenever the default region's value changes (and we'll set it to be equal
+ * right now). Otherwise it will ignore changes to the default region, and
+ * wait for an explicit "set".
+ * Access: Public 
+ */
 void nmg_Surface::
 associateTextureMode(vrpn_bool associate, int region)
 {
@@ -661,16 +667,19 @@ associateTextureMode(vrpn_bool associate, int region)
         region--;
         d_subRegions[region]->associateTextureMode(associate);
         //Reassociate with the surface
-        if (associate == VRPN_FALSE) {
+        if (associate == VRPN_TRUE) {
             d_subRegions[region]->setTextureMode(d_defaultRegion->getTextureMode(), VRPN_TRUE);
         }
     }
 }
 
 /**
- 
-    Access: Public
-*/
+ * For a sub-region, \a associate == true means that its value will change
+ * whenever the default region's value changes (and we'll set it to be equal
+ * right now). Otherwise it will ignore changes to the default region, and
+ * wait for an explicit "set".
+ * Access: Public 
+ */
 void nmg_Surface::
 associateTextureTransformMode(vrpn_bool associate, int region)
 {
@@ -678,16 +687,19 @@ associateTextureTransformMode(vrpn_bool associate, int region)
         region--;
         d_subRegions[region]->associateTextureTransformMode(associate);
         //Reassociate with the surface
-        if (associate == VRPN_FALSE) {
+        if (associate == VRPN_TRUE) {
             d_subRegions[region]->setTextureTransformMode(d_defaultRegion->getTextureTransformMode(), VRPN_TRUE);
         }
     }
 }
 
 /**
- 
-    Access: Public
-*/
+ * For a sub-region, \a associate == true means that its value will change
+ * whenever the default region's value changes (and we'll set it to be equal
+ * right now). Otherwise it will ignore changes to the default region, and
+ * wait for an explicit "set".
+ * Access: Public 
+ */
 void nmg_Surface::
 associateStride(vrpn_bool associate, int region)
 {
@@ -695,8 +707,8 @@ associateStride(vrpn_bool associate, int region)
         region--;
         d_subRegions[region]->associateStride(associate);
         //Reassociate with the surface
-        if (associate == VRPN_FALSE) {
-            d_subRegions[region]->setStride(d_defaultRegion->getStride(), VRPN_TRUE);
+        if (associate == VRPN_TRUE) {
+            d_subRegions[region]->setStride(d_defaultRegion->getStride(), VRPN_FALSE);
         }
     }
 }
