@@ -190,30 +190,34 @@ int main(int argc, char *argv[])
 		}
 		else if (!strcmp(argv[i], "-unca_nano")) {
 		        bool breakOut = false;
-		        if (++i > argc){
+				
+		        if (++i < argc){
 		        //determine if there are any arguments specific to the -unca_nano argument
 		        //by checking if next argument is another command line argument first--if not
-			//it has to be a parameter to -unca_nano
-			  if (!strcmp(argv[i], "-units"))  breakOut = true;
-			  else if (!strcmp(argv[i], "-type")) breakOut = true;
-			  else if (!strcmp(argv[i], "-tip_radius")) breakOut = true;
-			  if(breakOut == false){
-			    //if more arguments, but the next argument is none of the "standard"
-			    //arguments, it has to be a parameter for -unca_nano
-			    if ((i + 3) >= argc) { Usage(argv[0]); }//make sure there are 4 of them
-			    unca_minx = atof(argv[i]);
-			    unca_miny = atof(argv[++i]);
-			    unca_maxx = atof(argv[++i]);
-			    unca_maxy = atof(argv[++i]);
-			  }
-			  else{//breakOut == true
-			    unca_minx = 0;
-			    unca_miny = 0;
-			    unca_maxx = 5000;
-			    unca_maxy = 5000;
-			  }
+				//it has to be a parameter to -unca_nano
+					if (!strcmp(argv[i], "-units"))  breakOut = true;
+					else if (!strcmp(argv[i], "-type")) breakOut = true;
+					else if (!strcmp(argv[i], "-tip_radius")) breakOut = true;
+
+					if(breakOut == false){
+					//if more arguments, but the next argument is none of the "standard"
+					//arguments, it has to be a parameter for -unca_nano
+
+						if ((i + 3) >= argc) { Usage(argv[0]); }//make sure there are 4 of them
+						
+						unca_minx = atof(argv[i]);
+						unca_miny = atof(argv[++i]);
+						unca_maxx = atof(argv[++i]);
+						unca_maxy = atof(argv[++i]);
+					}
+					else{//breakOut == true
+						unca_minx = 0;
+						unca_miny = 0;
+						unca_maxx = 5000;
+						unca_maxy = 5000;
+					}
+				}
 			}
-		}
     }
 
 	if (!unitsGiven){
