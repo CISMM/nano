@@ -1,0 +1,4 @@
+2000-10-12  Adam Seeger  <seeger@cs.unc.edu>
+
+	* PNMImage.C (PNMImage::writeRAW) : reverses y order to make things
+	look right side up when you open the file up in xv
