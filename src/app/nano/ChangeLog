@@ -1,3 +1,8 @@
+2002-03-06  David Borland <borland@cs.unc.edu>
+
+        * import.C : Added a callback for user controll of the amount
+        of tesselation of loaded tubes
+
 2002-02-27  David Marshburn  <marshbur@cs.unc.edu>
 
 	* CollaborationManager.C (getPeer, getServer):  for completeness,
