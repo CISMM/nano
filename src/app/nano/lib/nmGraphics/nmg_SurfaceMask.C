@@ -1,0 +1,253 @@
+#include "nmg_SurfaceMask.h"
+#include <BCPlane.h>
+#include <stdio.h>
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::Constructor
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+nmg_SurfaceMask::
+nmg_SurfaceMask()
+{
+    d_maskData = (int*)NULL;
+    d_size = 0;
+    d_control = (BCPlane*)NULL;
+    d_derivationMode = NONE;
+    d_drawPartialMask = false;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::Destructor
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+nmg_SurfaceMask::
+~nmg_SurfaceMask()
+{
+    delete [] d_maskData;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::init
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+init(int size)
+{
+    if (size != d_size) {  
+        int x, y;
+        int *new_data = new int[size * size];
+
+        for(y = 0; y < d_size; y++) {
+            for(x = 0; x < d_size; x++) {
+                new_data[x+y*d_size] = d_maskData[x+y*d_size];
+            }
+        }
+
+        for(y = d_size; y < size; y++) {
+            for(x = d_size; x < size; x++) {
+                new_data[x+y*size] = 0;
+            }
+        }
+
+        d_size = size;
+        if (d_maskData) {
+            delete [] d_maskData;
+        }
+        d_maskData = new_data;
+    }
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::setControlPlane
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+setControlPlane(BCPlane *control)
+{
+    d_control = control;
+    if (d_control == (BCPlane*)NULL) {
+        d_derivationMode = NONE;
+        for(int y = 0; y < d_size; y++) {
+            for(int x = 0; x < d_size; x++) {
+                if (value(x,y) > 0) {
+                    addValue(x,y,-1);
+                }                
+            }            
+        }
+    }
+    
+    switch(d_derivationMode) {
+    case HEIGHT:
+        deriveMask(d_minHeight, d_maxHeight);
+        break;
+    default:
+        break;
+    }
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::remove
+//      Access: Public
+// Description: This sets as masked in this mask, the unmasked
+//              portions of the other mask
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+remove(nmg_SurfaceMask *other)
+{
+    if (d_size != other->d_size) {
+        printf("nmg_SurfaceMask::remove\tSize mismatch! (%d %d)\n",
+               d_size, other->d_size);
+    }
+
+    for(int y = 0; y < d_size; y++) {
+        for(int x = 0; x < d_size; x++) {
+            if (!other->value(x,y)) {
+                addValue(x,y,1);
+            }
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::add
+//      Access: Public
+// Description: This sets as unmasked in this mask, the unmasked
+//              portions of the other mask
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+add(nmg_SurfaceMask *other)
+{
+    if (d_size != other->d_size) {
+        printf("nmg_SurfaceMask::add\tSize mismatch! (%d %d)\n",
+               d_size, other->d_size);
+    }
+
+    for(int y = 0; y < d_size; y++) {
+        for(int x = 0; x < d_size; x++) {
+            if (!other->value(x,y)) {
+                if (value(x,y) > 0) {
+                    addValue(x,y,-1);
+                }                
+            }
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::deriveMask
+//      Access: Public
+// Description: Create a masking plane, using a range of
+//              height values
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+deriveMask(float min_height, float max_height)
+{
+    d_minHeight = min_height;
+    d_maxHeight = max_height;
+    d_derivationMode = HEIGHT;
+
+    if (d_control == (BCPlane*)NULL) {
+		//If there is no control plane, then bail		
+		return;
+	}
+
+    float z;
+    int maskVal;
+	for(int y = 0; y < d_control->numY(); y++) {
+        for(int x = 0; x < d_control->numX(); x++) {
+            if (value(x,y) > 0) {
+                addValue(x, y, -1);
+            }
+            z = d_control->value(x,y);
+            maskVal = ((z < min_height) || (z > max_height));
+            addValue(x, y, maskVal);
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::setDrawPartialMask
+//      Access: Public
+// Description: Set whether this SurfaceMask is to consider
+//              partially masked quads as unmasked or not.
+//              The default is for it to consider them masked.
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+setDrawPartialMask(bool draw)
+{
+    d_drawPartialMask = draw;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::quadMasked
+//      Access: Public
+// Description: Tell whether the quad (with the points given
+//              as the upper left of the quad) is to be
+//              considered masked or not
+////////////////////////////////////////////////////////////
+bool nmg_SurfaceMask::
+quadMasked(int x, int y, int stride)
+{
+    if (d_drawPartialMask) {
+        return (value(x,y) > 0 ||
+                value(x,y - stride) > 0 ||
+                value(x+stride,y) > 0 ||
+                value(x+stride,y - stride));
+    }
+    else {
+        return (value(x,y) > 0 &&
+                value(x,y - stride) > 0 &&
+                value(x+stride,y) > 0 &&
+                value(x+stride,y - stride));
+    }
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::completeImage
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+bool nmg_SurfaceMask::
+completeImage(nmg_SurfaceMask *other)
+{
+    if (d_size != other->d_size) {
+        printf("nmg_SurfaceMask::completeImage\tSize mismatch!\n");
+    }
+
+    for(int y = 0; y < d_size; y++) {
+        for(int x = 0; x < d_size; x++) {
+            int v1 = value(x,y);
+            int v2 = other->value(x,y);
+            if (v1 && v2) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::numberOfHoles
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+int nmg_SurfaceMask::
+numberOfHoles()
+{
+    int count = 0;
+
+    for(int y = 0; y < d_size; y++) {
+        for(int x = 0; x < d_size; x++) {
+            if (value(x,y)) {
+                count++;
+            }
+        }
+    }
+
+    return count;
+}

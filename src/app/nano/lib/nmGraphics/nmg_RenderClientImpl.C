@@ -5,7 +5,7 @@
 #include <BCGrid.h>
 #include <BCPlane.h>
 #include <nmb_TimerList.h>
-#include <nmg_Visualization.h>
+#include <nmg_Surface.h>
 
 #include <GL/glu.h>  // for gluErrorString
 //#include <GL/glut.h>
@@ -580,7 +580,7 @@ nmg_Graphics_RenderClient_Implementation
   // Removed because the vertex arrays are used to store normals so
   // they are always needed, and this conforms with nmg_Graphics_Implementation
 
-  if (!visualization->initVertexArrays(xsize, ysize)) {
+  if (!g_surface->init(xsize, ysize)) {
 	  fprintf(stderr," initVertexArrays: out of memory.\n");
       exit(0);
   }

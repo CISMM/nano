@@ -171,8 +171,8 @@ void nmg_Graphics_Null::setRulergridScale (float ) {}
 void nmg_Graphics_Null::setRulergridWidths (float , float ) {}
 void nmg_Graphics_Null::setSpecularity (int ) {}
 void nmg_Graphics_Null::setSphereScale (float ) {}
-void nmg_Graphics_Null::setTesselationStride (int ) {}
-void nmg_Graphics_Null::setTextureMode (TextureMode m, TextureTransformMode)
+void nmg_Graphics_Null::setTesselationStride (int, int) {}
+void nmg_Graphics_Null::setTextureMode (TextureMode m, TextureTransformMode, int)
    { d_textureMode = m; }
 void nmg_Graphics_Null::setTextureScale (float ) {}
 void nmg_Graphics_Null::setUserMode (int , int , int) {}
@@ -207,11 +207,18 @@ void nmg_Graphics_Null::createScreenImage
    const ImageType  type
 ) {}
 
-void nmg_Graphics_Null::chooseVisualization(int viz_type){}
-void nmg_Graphics_Null::setVisualizationMinHeight(float viz_min){}
-void nmg_Graphics_Null::setVisualizationMaxHeight(float viz_max){}
-void nmg_Graphics_Null::setVisualizationAlpha(float viz_alpha){}
+void nmg_Graphics_Null::setRegionMask(BCPlane *mask){}
 void nmg_Graphics_Null::setViztexScale (float ) {}
+void nmg_Graphics_Null::setRegionMaskHeight (float, float, int) {}
+void nmg_Graphics_Null::createRegion (){}
+void nmg_Graphics_Null::destroyRegion (int){}
+
+void nmg_Graphics_Null::lockAlpha(vrpn_bool lock, int region){}
+void nmg_Graphics_Null::lockFilledPolygons(vrpn_bool lock, int region){}
+void nmg_Graphics_Null::lockTextureDisplayed(vrpn_bool lock, int region){}
+void nmg_Graphics_Null::lockTextureMode(vrpn_bool lock, int region){}
+void nmg_Graphics_Null::lockTextureTransformMode(vrpn_bool lock, int region){}
+void nmg_Graphics_Null::lockStride(vrpn_bool lock, int region){}
 
 void nmg_Graphics_Null::getLightDirection (q_vec_type *) const {}
 

@@ -597,6 +597,15 @@ void compute_texture_matrix(double translate_x, double translate_y,
 
 
 
+void setFilled()
+{
+    if (g_config_filled_polygons) {
+	    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    } else {
+	    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+}
+
 //---------------------------------------------------------------------------
 // This routine sets up the lighting and some of the surface material
 // properties.  It should be the one used in both openGL and PixelFlow.
@@ -629,12 +638,6 @@ int setup_lighting (int)
     glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1.0);
     glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.0);
     glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.0);
-
-    if (g_config_filled_polygons) {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    } else {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
 
     if (g_config_smooth_shading != was_smooth_shading) {
 	was_smooth_shading = g_config_smooth_shading;

@@ -48,7 +48,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void causeGridRedraw (void);
     virtual void causeGridRebuild (void);
     virtual void enableChartjunk (int on);
-    virtual void enableFilledPolygons (int on);
+    virtual void enableFilledPolygons (int on, int region = 0);
     virtual void enableSmoothShading (int on);
     virtual void enableTrueTip (int on);
     virtual void setAdhesionSliderRange (float low, float hi);
@@ -73,10 +73,8 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setColorPlaneName (const char *);
     virtual void setContourPlaneName (const char *);
     virtual void setOpacityPlaneName (const char *);
-	virtual void setTransparentPlaneName (const char *);
 	virtual void setMaskPlaneName (const char *);
     virtual void setHeightPlaneName (const char *);
-	virtual void setVizPlaneName (const char *);
     virtual void setIconScale (float);
     virtual void enableCollabHand (vrpn_bool);
     virtual void setCollabHandPos(double [3], double [4]);
@@ -112,10 +110,10 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setSpecularity (int);
     virtual void setSpecularColor (float);
     virtual void setDiffusePercent (float);
-    virtual void setSurfaceAlpha (float);
+    virtual void setSurfaceAlpha (float, int region = 0);
     virtual void setSphereScale (float);
-    virtual void setTesselationStride (int);
-    virtual void setTextureMode (TextureMode,TextureTransformMode);
+    virtual void setTesselationStride (int, int region = 0);
+    virtual void setTextureMode (TextureMode,TextureTransformMode, int region = 0);
     virtual void setTextureScale (float);
     virtual void setTrueTipScale (float);
     virtual void setUserMode (int oldMode, int oldStyle, int newMode, int style, int tool);
@@ -148,18 +146,27 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void createScreenImage (const char * filename,
                                     const ImageType type);
     virtual void setViewTransform (v_xform_type);
-	virtual void chooseVisualization(int);
-	virtual void setVisualizationMinHeight(float);
-	virtual void setVisualizationMaxHeight(float);
-	virtual void setVisualizationAlpha(float);
-    virtual void setViztexScale (float);
-
 
     virtual void getLightDirection (q_vec_type *) const;
     virtual int getHandColor (void) const;
     virtual int getSpecularity (void) const;
     virtual const double * getMinColor (void) const;
     virtual const double * getMaxColor (void) const;
+
+    virtual void setViztexScale (float);
+    virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0);
+    virtual void setRegionControlPlaneName(const char *, int region = 0);
+    virtual int createRegion();
+    virtual void destroyRegion(int region);
+
+    //These functions are related to controlling what changes affect the
+    //entire surface and what don't.
+    virtual void lockAlpha(vrpn_bool lock, int region);
+    virtual void lockFilledPolygons(vrpn_bool lock, int region);
+    virtual void lockTextureDisplayed(vrpn_bool lock, int region);
+    virtual void lockTextureMode(vrpn_bool lock, int region);
+    virtual void lockTextureTransformMode(vrpn_bool lock, int region);
+    virtual void lockStride(vrpn_bool lock, int region);
 
   protected:
 

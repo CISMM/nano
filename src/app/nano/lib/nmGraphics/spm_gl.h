@@ -14,6 +14,7 @@
 #endif
 
 class BCGrid;  // from BCGrid.h
+class nmg_SurfaceMask;
 
 // MOVED to nmb_Decoration
 //#define MAX_LOCATION_INFOS (2000)
@@ -53,13 +54,13 @@ extern GLuint nM_shader;
 extern	int	spm_x_strip (nmb_PlaneSelection planes,
 						 GLdouble minColor [3], GLdouble maxColor [3], int which,
 						 Vertex_Struct * vertexArray);
-extern	int	spm_x_strip_masked (nmb_PlaneSelection planes,
+extern	int	spm_x_strip_masked (nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
 								GLdouble minColor [3], GLdouble maxColor [3], int which,
 								Vertex_Struct * vertexArray);
 extern	int	spm_y_strip (nmb_PlaneSelection planes,
 						 GLdouble minColor [3], GLdouble maxColor [3], int which,
 						 Vertex_Struct * vertexArray);
-extern	int	spm_y_strip_masked (nmb_PlaneSelection planes,
+extern	int	spm_y_strip_masked (nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
 								GLdouble minColor [3], GLdouble maxColor [3], int which,
 								Vertex_Struct * vertexArray);
 extern	int	spm_grid_to_tris (BCGrid *, GLdouble *, GLdouble *, int);

@@ -104,10 +104,10 @@ class nmg_Graphics_Null : public nmg_Graphics {
     virtual void setSpecularity (int);
     virtual void setSphereScale (float);
 
-    virtual void setTesselationStride (int);
+    virtual void setTesselationStride (int, int);
 
     virtual void setTextureMode (TextureMode, 
-	TextureTransformMode = RULERGRID_COORD);
+	TextureTransformMode = RULERGRID_COORD, int region = 0);
     virtual void setTextureScale (float);
 
     virtual void setUserMode (int oldMode, int newMode, int style);  // TODO
@@ -131,14 +131,22 @@ class nmg_Graphics_Null : public nmg_Graphics {
 
     virtual void createScreenImage(const char *filename, const ImageType type);
 
-	virtual void chooseVisualization(int);
-	virtual void setVisualizationMinHeight(float);
-	virtual void setVisualizationMaxHeight(float);
-	virtual void setVisualizationAlpha(float);
+	virtual void setRegionMask(BCPlane *mask);
     virtual void setViztexScale (float);
+    virtual void setRegionMaskHeight (float, float, int);
+    virtual void createRegion ();
+    virtual void destroyRegion (int);
+
+    //These functions are related to controlling what changes affect the
+    //entire surface and what don't.
+    virtual void lockAlpha(vrpn_bool lock, int region);
+    virtual void lockFilledPolygons(vrpn_bool lock, int region);
+    virtual void lockTextureDisplayed(vrpn_bool lock, int region);
+    virtual void lockTextureMode(vrpn_bool lock, int region);
+    virtual void lockTextureTransformMode(vrpn_bool lock, int region);
+    virtual void lockStride(vrpn_bool lock, int region);
+
     // ACCESSORS
-
-
     virtual void getLightDirection (q_vec_type *) const;
     virtual int getHandColor (void) const;
     virtual int getSpecularity (void) const;

@@ -24,6 +24,7 @@ void compute_texture_matrix(double translate_x, double translate_y,
                 double *mat);
 
 int setup_lighting (int nothing);
+void setFilled();
 
 void setLightDirection (const q_vec_type &);
 void getLightDirection (q_vec_type *);

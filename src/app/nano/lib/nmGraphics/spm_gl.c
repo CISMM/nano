@@ -31,6 +31,7 @@ All Rights Reserved.
 #include <nmb_PlaneSelection.h>
 #include <nmb_Decoration.h>
 #include <nmb_Globals.h>
+#include "nmg_SurfaceMask.h"
 
 #include "spm_gl.h"
 // #include "Tcl_Linkvar.h"
@@ -331,6 +332,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
         Color[1] = g_minColor[1];
         Color[2] = g_minColor[2];
     }
+    Color[3] = g_surface_alpha;
     
     // Set the alpha value for this vertex. 
     if (planes.opacity) {
@@ -339,10 +341,6 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
             - g_opacity_slider_min) /
             (g_opacity_slider_max - g_opacity_slider_min);
         Color[3] = (GLubyte) min(255.0, opacity_value);
-    } else {
-        // Alpha of all vertices are determined by a widget, defaults
-        // to opaque. 
-        Color[3] = g_surface_alpha;
     }
     
     if (g_transparent) {
@@ -721,7 +719,7 @@ int spm_y_strip( nmb_PlaneSelection planes,
  instead of 1 tripstrip like in the above procedure.
  */
 
-int spm_y_strip_masked( nmb_PlaneSelection planes,
+int spm_y_strip_masked( nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
                        GLdouble minColor[4], GLdouble maxColor[4], int which,
                        Vertex_Struct * vertexArray)
 {
@@ -756,17 +754,11 @@ int spm_y_strip_masked( nmb_PlaneSelection planes,
     
     x = which + g_stride;
     y = 0;
-    //Is the current quad partially masked?
-    bool quad_partial_mask = (planes.mask->value(x,y) <= 0 ||
-                              planes.mask->value(x-g_stride,y) <= 0 ||
-                              planes.mask->value(x,y+g_stride) <= 0 ||
-                              planes.mask->value(x-g_stride,y+g_stride) <= 0);
-
+    
     //Check the first quad to see if it is partially masked or not and
     //set up the state variables so that the following loop will run
     //correctly.
-    if ((g_mask == ENABLE_MASK && quad_partial_mask) ||
-        (g_mask == INVERT_MASK && !quad_partial_mask))
+    if (mask->quadMasked(x,y,g_stride))
     {
         //If the first quad shouldn't be drawn, telling the loop
         //that it should be currently skipping quads.
@@ -785,10 +777,7 @@ int spm_y_strip_masked( nmb_PlaneSelection planes,
     //be thought of as a quad strip, so we know that the "second" set of 
     //points will be the first set of the next quad on the next pass.
     for (y = g_stride; y < planes.height->numX() - g_stride; y += g_stride) {   // Left->right
-        quad_partial_mask = (planes.mask->value(x,y) <= 0 ||
-                             planes.mask->value(x-g_stride,y) <= 0 ||
-                             planes.mask->value(x,y+g_stride) <= 0 ||
-                             planes.mask->value(x-g_stride,y+g_stride) <= 0);
+        bool quad_masked = mask->quadMasked(x,y,g_stride);
         if (!skipping) {
             //If we get in here, then we know that on the previous run
             //of the loop we decided that the entire quad should be 
@@ -798,8 +787,7 @@ int spm_y_strip_masked( nmb_PlaneSelection planes,
             x_array[i] = x; x_array[i+1] = x - g_stride;
             y_array[i] = y; y_array[i+1] = y;
             i+=2;
-            if ((g_mask == ENABLE_MASK && quad_partial_mask) ||
-                (g_mask == INVERT_MASK && !quad_partial_mask))
+            if (quad_masked)
             {
                 //If we had some good values before, and we have decided
                 //that the current quad shouldn't be drawn, then set the
@@ -815,8 +803,7 @@ int spm_y_strip_masked( nmb_PlaneSelection planes,
             }
         }
         else if (skipping) {
-            if ((g_mask == INVERT_MASK && quad_partial_mask) ||
-                (g_mask == ENABLE_MASK && !quad_partial_mask))
+            if (!quad_masked)
             {
                 //We had some unknown amount of quads that we decided
                 //shouldn't be displayed and have found 1 that should.
@@ -999,7 +986,7 @@ int spm_x_strip( nmb_PlaneSelection planes,
  instead of 1 tripstrip like in the above procedure.
  */
 
-int spm_x_strip_masked( nmb_PlaneSelection planes,
+int spm_x_strip_masked( nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
                        GLdouble minColor[4], GLdouble maxColor[4], int which,
                        Vertex_Struct * vertexArray)
 {      
@@ -1034,19 +1021,13 @@ int spm_x_strip_masked( nmb_PlaneSelection planes,
     
     x = 0;
     y = which + g_stride;
-    //Is the first quad partially masked?
-    bool quad_partial_mask = (planes.mask->value(x,y) <= 0 ||
-                              planes.mask->value(x,y - g_stride) <= 0 ||
-                              planes.mask->value(x+g_stride,y) <= 0 ||
-                              planes.mask->value(x+g_stride,y - g_stride) <= 0);
 
     //Check the first quad to see if it is partially masked or not and
     //set up the state variables so that the following loop will run
     //correctly.
-    if ((g_mask == ENABLE_MASK && quad_partial_mask) ||
-        (g_mask == INVERT_MASK && !quad_partial_mask))
+    if (mask->quadMasked(x,y,g_stride))
     {
-        //If the first quad shouldn't be drawn, telling the loop
+        //If the first quad shouldn't be drawn, tell the loop
         //that it should be currently skipping quads.
         skipping = true;
     }
@@ -1063,10 +1044,7 @@ int spm_x_strip_masked( nmb_PlaneSelection planes,
     //be thought of as a quad strip, so we know that the "second" set of 
     //points will be the first set of the next quad on the next pass.
     for (x = g_stride; x < planes.height->numX() - g_stride; x += g_stride) {   // Left->right
-        quad_partial_mask = (planes.mask->value(x,y) <= 0 ||
-                             planes.mask->value(x,y - g_stride) <= 0 ||
-                             planes.mask->value(x+g_stride,y) <= 0 ||
-                             planes.mask->value(x+g_stride,y - g_stride) <= 0);
+        bool quad_masked = mask->quadMasked(x,y,g_stride);
         if (!skipping) {
             //If we get in here, then we know that on the previous run
             //of the loop we decided that the entire quad should be 
@@ -1076,8 +1054,7 @@ int spm_x_strip_masked( nmb_PlaneSelection planes,
             x_array[i] = x; x_array[i+1] = x;
             y_array[i] = y; y_array[i+1] = y - g_stride;
             i+=2;
-            if ((g_mask == ENABLE_MASK && quad_partial_mask) ||
-                (g_mask == INVERT_MASK && !quad_partial_mask))
+            if (quad_masked)
             {
                 //If we had some good values before, and we have decided
                 //that the current quad shouldn't be drawn, then set the
@@ -1093,8 +1070,7 @@ int spm_x_strip_masked( nmb_PlaneSelection planes,
             }
         }
         else if (skipping) {
-            if ((g_mask == INVERT_MASK && quad_partial_mask) ||
-                (g_mask == ENABLE_MASK && !quad_partial_mask))
+            if (!quad_masked)
             {
                 //We had some unknown amount of quads that we decided
                 //shouldn't be displayed and have found 1 that should.
@@ -1190,90 +1166,91 @@ int spm_x_strip_masked( nmb_PlaneSelection planes,
 /*	This routine will set up the material properties so that the
 * surface will appear to be made of shiny plastic. */
 
-void    spm_set_surface_materials(void)
-{	GLfloat	specular[4] = { (float)g_specular_color,
-(float)g_specular_color,
-(float)g_specular_color, 1.0 };
-GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
-
-
-//fprintf(stderr, "In spm_set_surface_materials with texture mode %d.\n",
-//g_texture_mode);
-TIMERVERBOSE(5, mytimer, "begin spm_set_surface_materials");
-
-/* Use local vertex color for ambient and diffuse */
-glEnable(GL_BLEND);
-glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-glEnable(GL_COLOR_MATERIAL);
-glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
-// Set up the specular characteristics.
-// Note that the ambient and diffuse colors are from the vertices.
-// NOTE: It is important that back is set first because front/back
-//       is ignored in an early implementation of FLOW, and it always
-//       set both.
-glMaterialfv(GL_BACK, GL_SPECULAR, dark);
-glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
-glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
-
-// Set the light model to have completely ambient-off.  There is
-// ambient specified in light 0.
-glLightModelfv(GL_LIGHT_MODEL_AMBIENT, dark);
-
-/* Set a color, in case the color is not being adjusted per vertex. */
-/* Use the min color for this. */
-
-g_minColor[3] = g_surface_alpha; //make sure alpha value is updated
-
-glColor4dv(g_minColor);
-
-// Turn texture mapping to the appropriate state
-// Note that the Enable has to be the last one, after all the
-// Disable calls.
-switch (g_texture_mode) {
-case GL_FALSE:
-    glDisable(GL_TEXTURE_1D);
-    glDisable(GL_TEXTURE_2D);
-#ifdef	sgi
-    glDisable(GL_TEXTURE_3D_EXT);
-#endif
-    break;
+void spm_set_surface_materials(void)
+{	
+    GLfloat	specular[4] = { (float)g_specular_color,
+        (float)g_specular_color,
+        (float)g_specular_color, 1.0 };
+    GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
     
-case GL_TEXTURE_1D:
-    glDisable(GL_TEXTURE_2D);
-#ifdef	sgi
-    glDisable(GL_TEXTURE_3D_EXT);
-#endif
-    glEnable(GL_TEXTURE_1D);
-    break;
     
-case GL_TEXTURE_2D:
-    glDisable(GL_TEXTURE_1D);
-#ifdef	sgi
-    glDisable(GL_TEXTURE_3D_EXT);
-#endif
-    glEnable(GL_TEXTURE_2D);
-    break;
+    //fprintf(stderr, "In spm_set_surface_materials with texture mode %d.\n",
+    //g_texture_mode);
+    TIMERVERBOSE(5, mytimer, "begin spm_set_surface_materials");
     
-#ifdef	sgi
-case GL_TEXTURE_3D_EXT:
-    glDisable(GL_TEXTURE_1D);
-    glDisable(GL_TEXTURE_2D);
-    glEnable(GL_TEXTURE_3D_EXT);
-    break;
-#endif
+    /* Use local vertex color for ambient and diffuse */
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     
-default:
+    // Set up the specular characteristics.
+    // Note that the ambient and diffuse colors are from the vertices.
+    // NOTE: It is important that back is set first because front/back
+    //       is ignored in an early implementation of FLOW, and it always
+    //       set both.
+    glMaterialfv(GL_BACK, GL_SPECULAR, dark);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+    glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
+    
+    // Set the light model to have completely ambient-off.  There is
+    // ambient specified in light 0.
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, dark);
+    
+    /* Set a color, in case the color is not being adjusted per vertex. */
+    /* Use the min color for this. */
+    
+    g_minColor[3] = g_surface_alpha; //make sure alpha value is updated
+    
+    glColor4dv(g_minColor);
+    
+    // Turn texture mapping to the appropriate state
+    // Note that the Enable has to be the last one, after all the
+    // Disable calls.
+    switch (g_texture_mode) {
+    case GL_FALSE:
+        glDisable(GL_TEXTURE_1D);
+        glDisable(GL_TEXTURE_2D);
+#ifdef	sgi
+        glDisable(GL_TEXTURE_3D_EXT);
+#endif
+        break;
+        
+    case GL_TEXTURE_1D:
+        glDisable(GL_TEXTURE_2D);
+#ifdef	sgi
+        glDisable(GL_TEXTURE_3D_EXT);
+#endif
+        glEnable(GL_TEXTURE_1D);
+        break;
+        
+    case GL_TEXTURE_2D:
+        glDisable(GL_TEXTURE_1D);
+#ifdef	sgi
+        glDisable(GL_TEXTURE_3D_EXT);
+#endif
+        glEnable(GL_TEXTURE_2D);
+        break;
+        
+#ifdef	sgi
+    case GL_TEXTURE_3D_EXT:
+        glDisable(GL_TEXTURE_1D);
+        glDisable(GL_TEXTURE_2D);
+        glEnable(GL_TEXTURE_3D_EXT);
+        break;
+#endif
+        
+    default:
+        if (spm_graphics_verbosity > 3)
+            fprintf(stderr, "spm_set_surface_materials:  "
+            "texture_mode %i\n", g_texture_mode);
+        break;
+    }
     if (spm_graphics_verbosity > 3)
         fprintf(stderr, "spm_set_surface_materials:  "
         "texture_mode %i\n", g_texture_mode);
-    break;
-}
-if (spm_graphics_verbosity > 3)
-fprintf(stderr, "spm_set_surface_materials:  "
-        "texture_mode %i\n", g_texture_mode);
-
-TIMERVERBOSE(5, mytimer, "end spm_set_surface_materials");
+    
+    TIMERVERBOSE(5, mytimer, "end spm_set_surface_materials");
 }
 
 /*	This routine will set up the material properties so that the
@@ -1281,43 +1258,44 @@ TIMERVERBOSE(5, mytimer, "end spm_set_surface_materials");
 * to specular and diffuse lighting, but will never be textured. */
 
 void    spm_set_icon_materials(void)
-{	GLfloat	specular[4] = { 1.0, 1.0, 1.0, 1.0 };
-GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
-
-VERBOSE(5, "    Entering spm_set_icon_materials()");
-TIMERVERBOSE(5, mytimer, "begin spm_set_icon_materials");
-
-/* Use local vertex color for ambient and diffuse */
-glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-glEnable(GL_COLOR_MATERIAL);
-
-// Set up the specular characteristics.
-// Note that the ambient and diffuse colors are from the vertices.
-// NOTE: It is important that back is set first because front/back
-//       is ignored in an early implementation of FLOW, and it always
-//       set both.
-glMaterialfv(GL_BACK, GL_SPECULAR, dark);
-glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
-glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
-glEnable(GL_BLEND);
-
-// Set the light model to have completely ambient-off.  There is
-// ambient specified in light 0.
-glLightModelfv(GL_LIGHT_MODEL_AMBIENT, dark);
-
-/* Set a color, in case the color is not being adjusted per vertex. */
-/* Use the min color for this. */
-g_minColor[3] = g_surface_alpha; //make sure alpha value is updated
-glColor4dv(g_minColor);
-
-// Disable texture-mapping.
-glDisable(GL_TEXTURE_1D);
-glDisable(GL_TEXTURE_2D);
+{	
+    GLfloat	specular[4] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
+    
+    VERBOSE(5, "    Entering spm_set_icon_materials()");
+    TIMERVERBOSE(5, mytimer, "begin spm_set_icon_materials");
+    
+    /* Use local vertex color for ambient and diffuse */
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    glEnable(GL_COLOR_MATERIAL);
+    
+    // Set up the specular characteristics.
+    // Note that the ambient and diffuse colors are from the vertices.
+    // NOTE: It is important that back is set first because front/back
+    //       is ignored in an early implementation of FLOW, and it always
+    //       set both.
+    glMaterialfv(GL_BACK, GL_SPECULAR, dark);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+    glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
+    glEnable(GL_BLEND);
+    
+    // Set the light model to have completely ambient-off.  There is
+    // ambient specified in light 0.
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, dark);
+    
+    /* Set a color, in case the color is not being adjusted per vertex. */
+    /* Use the min color for this. */
+    g_minColor[3] = g_surface_alpha; //make sure alpha value is updated
+    glColor4dv(g_minColor);
+    
+    // Disable texture-mapping.
+    glDisable(GL_TEXTURE_1D);
+    glDisable(GL_TEXTURE_2D);
 #ifdef	sgi
-glDisable(GL_TEXTURE_3D_EXT);
+    glDisable(GL_TEXTURE_3D_EXT);
 #endif
-
-TIMERVERBOSE(5, mytimer, "end spm_set_icon_materials");
+    
+    TIMERVERBOSE(5, mytimer, "end spm_set_icon_materials");
 }
 
 /*	This routine will set up the material properties so that the
@@ -1326,46 +1304,47 @@ TIMERVERBOSE(5, mytimer, "end spm_set_icon_materials");
 * coefficients to 1 and the diffuse/specular ones to 0.  */
 
 void    spm_set_measure_materials(void)
-{	GLfloat	bright[4] = { 1.0, 1.0, 1.0, 1.0 };
-GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
-
-VERBOSE(5, "    Entering spm_set_measure_materials()");
-TIMERVERBOSE(5, mytimer, "begin spm_set_measure_materials");
-
-/* Use local vertex color for ambient and diffuse */
-glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
-TIMERVERBOSE(7, mytimer, "spm_set_measure_materials:end glColorMaterial");
-glEnable(GL_COLOR_MATERIAL);
-glDisable(GL_BLEND);
-
-TIMERVERBOSE(7, mytimer, "spm_set_measure_materials:end glEnable(GL_COLOR_MATERIAL)");
-
-// Set up the specular characteristics.
-glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, dark);
-
-TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glMaterialfv");
-
-// Set the light model to have completely ambient-on.
-glLightModelfv(GL_LIGHT_MODEL_AMBIENT, bright);
-
-TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glLightModelfv");
-
-/* Set a color, in case the color is not being adjusted per vertex. */
-/* Use the min color for this. */
-g_minColor[3] = g_surface_alpha; //Make sure alpha value is updated
-glColor4dv(g_minColor);
-
-TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glColor3dv");
-
-// Disable texture-mapping.
-glDisable(GL_TEXTURE_1D);
-glDisable(GL_TEXTURE_2D);
+{	
+    GLfloat	bright[4] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
+    
+    VERBOSE(5, "    Entering spm_set_measure_materials()");
+    TIMERVERBOSE(5, mytimer, "begin spm_set_measure_materials");
+    
+    /* Use local vertex color for ambient and diffuse */
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    
+    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials:end glColorMaterial");
+    glEnable(GL_COLOR_MATERIAL);
+    glDisable(GL_BLEND);
+    
+    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials:end glEnable(GL_COLOR_MATERIAL)");
+    
+    // Set up the specular characteristics.
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, dark);
+    
+    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glMaterialfv");
+    
+    // Set the light model to have completely ambient-on.
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, bright);
+    
+    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glLightModelfv");
+    
+    /* Set a color, in case the color is not being adjusted per vertex. */
+    /* Use the min color for this. */
+    g_minColor[3] = g_surface_alpha; //Make sure alpha value is updated
+    glColor4dv(g_minColor);
+    
+    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glColor3dv");
+    
+    // Disable texture-mapping.
+    glDisable(GL_TEXTURE_1D);
+    glDisable(GL_TEXTURE_2D);
 #ifdef	sgi
-glDisable(GL_TEXTURE_3D_EXT);
+    glDisable(GL_TEXTURE_3D_EXT);
 #endif
-
-TIMERVERBOSE(5, mytimer, "end spm_set_measure_materials");
+    
+    TIMERVERBOSE(5, mytimer, "end spm_set_measure_materials");
 }
 
 

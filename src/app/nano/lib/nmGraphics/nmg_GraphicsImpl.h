@@ -41,7 +41,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void causeGridRebuild (void);
 
     virtual void enableChartjunk (int);
-    virtual void enableFilledPolygons (int);
+    virtual void enableFilledPolygons (int, int region = 0);
     virtual void enableSmoothShading (int);
     virtual void enableUber (int);
     virtual void enableTrueTip (int);
@@ -80,8 +80,6 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setOpacityPlaneName (const char *);
     virtual void setHeightPlaneName (const char *);
     virtual void setMaskPlaneName (const char *);
-    virtual void setTransparentPlaneName (const char *);
-	virtual void setVizPlaneName (const char *);
 
     virtual void setIconScale (float);
 
@@ -135,13 +133,13 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setSpecularity (int);
     virtual void setSpecularColor (float);
     virtual void setDiffusePercent (float);
-    virtual void setSurfaceAlpha (float);
+    virtual void setSurfaceAlpha (float, int region = 0);
     virtual void setSphereScale (float);
 
-    virtual void setTesselationStride (int);
+    virtual void setTesselationStride (int, int region = 0);
 
     virtual void setTextureMode (TextureMode, 
-		TextureTransformMode = RULERGRID_COORD);
+		TextureTransformMode = RULERGRID_COORD, int region = 0);
     virtual void setTextureScale (float);
     virtual void setTrueTipScale (float);
 
@@ -179,12 +177,21 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setViewTransform (v_xform_type);
     virtual void createScreenImage(const char *filename, const ImageType type);
 
-	/*New visualization method.  Chooses which visualizaton to use */
-	virtual void chooseVisualization(int);
-	virtual void setVisualizationMinHeight(float);
-	virtual void setVisualizationMaxHeight(float);
-	virtual void setVisualizationAlpha(float);
+	/*New surface based method.  Chooses which visualizaton to use */
+	virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0);
+    virtual void setRegionControlPlaneName (const char *, int region = 0);
     virtual void setViztexScale (float);
+    virtual int createRegion();
+    virtual void destroyRegion(int region);
+
+    //These functions are related to controlling what changes affect the
+    //entire surface and what don't.
+    virtual void lockAlpha(vrpn_bool lock, int region);
+    virtual void lockFilledPolygons(vrpn_bool lock, int region);
+    virtual void lockTextureDisplayed(vrpn_bool lock, int region);
+    virtual void lockTextureMode(vrpn_bool lock, int region);
+    virtual void lockTextureTransformMode(vrpn_bool lock, int region);
+    virtual void lockStride(vrpn_bool lock, int region);
 
     // ACCESSORS
 
@@ -269,8 +276,6 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setOpacityPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setHeightPlaneName (void *, vrpn_HANDLERPARAM);
 	static int handle_setMaskPlaneName (void *, vrpn_HANDLERPARAM);
-	static int handle_setTransparentPlaneName (void *, vrpn_HANDLERPARAM);
-	static int handle_setVizPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setMinColor (void *, vrpn_HANDLERPARAM);
     static int handle_setMaxColor (void *, vrpn_HANDLERPARAM);
     static int handle_setPatternMapName (void *, vrpn_HANDLERPARAM);
@@ -329,11 +334,18 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
   static int handle_setViewTransform (void *, vrpn_HANDLERPARAM);
   static int handle_createScreenImage(void *, vrpn_HANDLERPARAM);
-  static int handle_chooseVisualization(void *, vrpn_HANDLERPARAM);
-  static int handle_setVisualizationMinHeight(void *, vrpn_HANDLERPARAM);
-  static int handle_setVisualizationMaxHeight(void *, vrpn_HANDLERPARAM);
-  static int handle_setVisualizationAlpha(void *, vrpn_HANDLERPARAM);
   static int handle_setViztexScale (void *, vrpn_HANDLERPARAM);
+  static int handle_setRegionMaskHeight (void *, vrpn_HANDLERPARAM);
+  static int handle_setRegionControlPlaneName (void *, vrpn_HANDLERPARAM);
+  static int handle_createRegion (void *, vrpn_HANDLERPARAM);
+  static int handle_destroyRegion(void *, vrpn_HANDLERPARAM);
+  
+  static int handle_lockAlpha(void *, vrpn_HANDLERPARAM);
+  static int handle_lockFilledPolygons(void *, vrpn_HANDLERPARAM);
+  static int handle_lockStride(void *, vrpn_HANDLERPARAM);
+  static int handle_lockTextureDisplayed(void *, vrpn_HANDLERPARAM);
+  static int handle_lockTextureMode(void *, vrpn_HANDLERPARAM);
+  static int handle_lockTextureTransformMode(void *, vrpn_HANDLERPARAM);
 };
 
 #endif  // NMG_GRAPHICS_IMPL_H

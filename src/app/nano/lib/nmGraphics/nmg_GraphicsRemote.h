@@ -35,7 +35,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void causeGridRebuild (void);
 
     virtual void enableChartjunk (int);
-    virtual void enableFilledPolygons (int);
+    virtual void enableFilledPolygons (int, int region = 0);
     virtual void enableSmoothShading (int);
     virtual void enableTrueTip (int);
 
@@ -73,8 +73,6 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setOpacityPlaneName (const char *);
     virtual void setHeightPlaneName (const char *);
 	virtual void setMaskPlaneName (const char *);
-	virtual void setTransparentPlaneName (const char *);
-	virtual void setVizPlaneName (const char *);
 
     virtual void setIconScale (float);
 
@@ -123,13 +121,13 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setSpecularity (int);
     virtual void setSpecularColor (float);
     virtual void setDiffusePercent (float);
-    virtual void setSurfaceAlpha (float);
+    virtual void setSurfaceAlpha (float, int region = 0);
     virtual void setSphereScale (float);
 
-    virtual void setTesselationStride (int);
+    virtual void setTesselationStride (int, int region = 0);
 
     virtual void setTextureMode (TextureMode, 
-	TextureTransformMode = RULERGRID_COORD);
+	TextureTransformMode = RULERGRID_COORD, int region = 0);
     virtual void setTextureScale (float);
     virtual void setTrueTipScale (float);
 
@@ -167,14 +165,22 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void createScreenImage(const char *filename, const ImageType type);
 
-	virtual void chooseVisualization(int);
-	virtual void setVisualizationMinHeight(float);
-	virtual void setVisualizationMaxHeight(float);
-	virtual void setVisualizationAlpha(float);
+	virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0);
+    virtual void setRegionControlPlaneName(const char *, int region = 0);
     virtual void setViztexScale (float);
+    virtual int createRegion();
+    virtual void destroyRegion(int region);
+    
+    //These functions are related to controlling what changes affect the
+    //entire surface and what don't.
+    virtual void lockAlpha(vrpn_bool lock, int region);
+    virtual void lockFilledPolygons(vrpn_bool lock, int region);
+    virtual void lockTextureDisplayed(vrpn_bool lock, int region);
+    virtual void lockTextureMode(vrpn_bool lock, int region);
+    virtual void lockTextureTransformMode(vrpn_bool lock, int region);
+    virtual void lockStride(vrpn_bool lock, int region);
+
     // ACCESSORS
-
-
     virtual void getLightDirection (q_vec_type *) const;
     virtual int getHandColor (void) const;
     virtual int getSpecularity (void) const; 

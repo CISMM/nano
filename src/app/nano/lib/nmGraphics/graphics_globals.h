@@ -273,8 +273,8 @@ extern BCGrid * g_inputGrid;
 extern int g_mask;
 extern int g_transparent;
 
-class nmg_Visualization;
-extern nmg_Visualization * visualization;
+class nmg_Surface;
+extern nmg_Surface * g_surface;
 
 extern PPM * g_vizPPM;
 

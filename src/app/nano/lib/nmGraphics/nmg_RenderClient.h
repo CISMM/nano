@@ -92,10 +92,10 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     virtual void setRulergridWidths (float, float);
     virtual void setSpecularity (int);
     virtual void setDiffusePercent (float);
-    virtual void setSurfaceAlpha (float);
+    virtual void setSurfaceAlpha (float, int region = 0);
     virtual void setSpecularColor (float);
-    virtual void setTesselationStride (int);
-    virtual void setTextureMode (TextureMode, TextureTransformMode);
+    virtual void setTesselationStride (int, int region = 0);
+    virtual void setTextureMode (TextureMode, TextureTransformMode, int region = 0);
     virtual void setTextureScale (float);
 
     virtual void setViewTransform (v_xform_type);

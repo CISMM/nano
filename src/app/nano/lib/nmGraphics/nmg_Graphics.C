@@ -110,10 +110,6 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setHeightPlaneName");
   d_setMaskPlaneName_type =
     c->register_message_type("nmg Graphics setMaskPlaneName");
-  d_setTransparentPlaneName_type =
-    c->register_message_type("nmg Graphics setTransparentPlaneName");
-  d_setVizPlaneName_type =
-    c->register_message_type("nmg Graphics setVizPlaneName");
   d_setMinColor_type =
     c->register_message_type("nmg Graphics setMinColor");
   d_setMaxColor_type =
@@ -230,15 +226,28 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
   d_updateTexture_type =
     c->register_message_type("nmg Graphics updateTexture");
 
+  //For surface based approach
+  d_setRegionMaskHeight_type =
+      c->register_message_type("nmg Graphics setRegionMaskHeight");
+  d_setRegionControlPlaneName_type =
+    c->register_message_type("nmg Graphics setRegionControlPlaneName");
+  d_createRegion_type =
+    c->register_message_type("nmg Graphics createRegion");
+  d_destroyRegion_type =
+    c->register_message_type("nmg Graphics destroyRegion");
+  d_lockAlpha_type =
+    c->register_message_type("nmg Graphics lockAlpha");
+  d_lockFilledPolygons_type =
+    c->register_message_type("nmg Graphics lockFilledPolygons");
+  d_lockStride_type =
+    c->register_message_type("nmg Graphics lockStride");
+  d_lockTextureDisplayed_type =
+    c->register_message_type("nmg Graphics lockTextureDisplayed");
+  d_lockTextureMode_type =
+    c->register_message_type("nmg Graphics lockTextureMode");
+  d_lockTextureTransformMode_type =
+    c->register_message_type("nmg Graphics lockTextureTransformMode");
   //For visualization
-  d_chooseVisualization_type =
-    c->register_message_type("nmg Graphics chooseVisualization");
-  d_setVisualizationMinHeight_type =
-    c->register_message_type("nmg Graphics setVisualizationMinHeight");
-  d_setVisualizationMaxHeight_type =
-    c->register_message_type("nmg Graphics setVisualizationMaxHeight");
-  d_setVisualizationAlpha_type =
-    c->register_message_type("nmg Graphics setVisualizationAlpha");
   d_setViztexScale_type =
     c->register_message_type("nmg Graphics setViztexScale");
 }
@@ -321,7 +330,7 @@ int nmg_Graphics::decode_enableChartjunk (const char * buf,
 
 
 char * nmg_Graphics::encode_enableFilledPolygons
-                     (int * len, int value) {
+                     (int * len, int value, int region) {
   char * msgbuf = NULL;
   char * mptr;
   int mlen;
@@ -338,15 +347,17 @@ char * nmg_Graphics::encode_enableFilledPolygons
     mptr = msgbuf;
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, value);
+    vrpn_buffer(&mptr, &mlen, region);
   }
 
   return msgbuf;
 }
 
 int nmg_Graphics::decode_enableFilledPolygons (const char * buf,
-                                                int * value) {
+                                                int * value, int * region) {
   if (!buf || !value) return -1;
   CHECK(vrpn_unbuffer(&buf, value));
+  CHECK(vrpn_unbuffer(&buf, region));
   return 0;
 }
 
@@ -898,14 +909,6 @@ int nmg_Graphics::decode_setMaskPlaneName (const char *buf,
 					      const char *n) {
 }
 
-char * nmg_Graphics::encode_setTransparentPlaneName (int * len, const char * n) {
-
-}
-
-int nmg_Graphics::decode_setTransparentPlaneName (const char *buf,
-					      const char *n) {
-}
-
 char * nmg_Graphics::encode_setOpacityPlaneName (int * len, const char * n) {
 
 }
@@ -922,13 +925,6 @@ int nmg_Graphics::decode_setHeightPlaneName (const char * buf, const char * n) {
 
 }
 
-char * nmg_Graphics::encode_setVizPlaneName (int * len, const char * n) {
-
-}
-
-int nmg_Graphics::decode_setVizPlaneName (const char * buf, const char * n) {
-
-}
 #endif
 
 
@@ -1534,7 +1530,7 @@ int nmg_Graphics::decode_setDiffusePercent
 }
 
 char * nmg_Graphics::encode_setSurfaceAlpha
-		     (int *len, float surface_alpha) {
+		     (int *len, float surface_alpha, int region) {
   char * msgbuf = NULL;
   char * mptr;
   int mlen;
@@ -1551,6 +1547,7 @@ char * nmg_Graphics::encode_setSurfaceAlpha
     mptr = msgbuf;
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, surface_alpha);
+    vrpn_buffer(&mptr, &mlen, region);
   }
 
   return msgbuf;
@@ -1559,9 +1556,10 @@ char * nmg_Graphics::encode_setSurfaceAlpha
 
 
 int nmg_Graphics::decode_setSurfaceAlpha
-		   (const char *buf, float * surface_alpha) {
+		   (const char *buf, float * surface_alpha, int * region) {
   if (!buf || !surface_alpha) return -1;
   CHECK(vrpn_unbuffer(&buf, surface_alpha));
+  CHECK(vrpn_unbuffer(&buf, region));
   return 0;
 }
 
@@ -1627,14 +1625,14 @@ int nmg_Graphics::decode_setSphereScale
 }
 
 char * nmg_Graphics::encode_setTesselationStride
-                     (int * len, int stride) {
+                     (int * len, int stride, int region) {
   char * msgbuf = NULL;
   char * mptr;
   int mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(int);
+  *len = 2 * sizeof(int);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmg_Graphics::encode_setTesselationStride:  "
@@ -1644,27 +1642,29 @@ char * nmg_Graphics::encode_setTesselationStride
     mptr = msgbuf;
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, stride);
+    vrpn_buffer(&mptr, &mlen, region);
   }
 
   return msgbuf;
 }
 
 int nmg_Graphics::decode_setTesselationStride
-                   (const char * buf, int * stride) {
-  if (!buf || !stride) return -1;
+                   (const char * buf, int * stride, int * region) {
+  if (!buf || !stride || !region) return -1;
   CHECK(vrpn_unbuffer(&buf, stride));
+  CHECK(vrpn_unbuffer(&buf, region));
   return 0;
 }
 
 char * nmg_Graphics::encode_setTextureMode
-                     (int * len, TextureMode m, TextureTransformMode xm) {
+                     (int * len, TextureMode m, TextureTransformMode xm, int region) {
   char * msgbuf = NULL;
   char * mptr;
   int mlen;
 
   if (!len) return NULL;
 
-  *len = 2*sizeof(vrpn_int32);
+  *len = 3*sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmg_Graphics::encode_setTextureMode:  "
@@ -1713,6 +1713,8 @@ char * nmg_Graphics::encode_setTextureMode
 			"Got illegal texture transform mode %d.  "
 			"Sending RULERGRID_COORD instead.\n", xm);
 	vrpn_buffer(&mptr, &mlen, 0); break;
+
+    vrpn_buffer(&mptr, &mlen, region);
     }
   }
 
@@ -1721,10 +1723,10 @@ char * nmg_Graphics::encode_setTextureMode
 
 int nmg_Graphics::decode_setTextureMode
                    (const char * buf, TextureMode * m,
-			TextureTransformMode * xm) {
+			TextureTransformMode * xm, int * region) {
   int i;
 
-  if (!buf || !m) return -1;
+  if (!buf || !m || !xm || !region) return -1;
   CHECK(vrpn_unbuffer(&buf, &i));
 
   switch (i) {
@@ -1763,6 +1765,8 @@ int nmg_Graphics::decode_setTextureMode
       // fall through
       *xm = RULERGRID_COORD; break;
   }
+
+  CHECK(vrpn_unbuffer(&buf, region));
 
   return 0;
 }
@@ -2769,157 +2773,6 @@ int nmg_Graphics::decode_createScreenImage
 }
 // End screen capture network code
 
-char *nmg_Graphics::encode_chooseVisualization(int *len, int viz_type)
-{
-   char *msgbuf = NULL;
-   char *mptr;
-   int mlen;
-
-   if (!len) return NULL;
-
-   *len = sizeof(int);
-   msgbuf = new char[*len];
-   if (!msgbuf)
-   {
-      fprintf(stderr,"nmg_Graphics::encode_chooseVisualization: Out of memory!\n");
-      *len = 0;
-   }
-   else
-   {
-      mptr = msgbuf;
-      mlen = *len;
-      vrpn_buffer(&mptr, &mlen, viz_type);
-   }
-
-   return msgbuf;
-}
-
-int nmg_Graphics::decode_chooseVisualization(const char  *buf, int *viz_type)
-{
-   const char *bptr = buf;
-   int temp;
-   
-   if (!buf || !viz_type) return -1;
-
-   CHECK(vrpn_unbuffer(&bptr, &temp));
-
-   *viz_type = (int)(temp);
-   return 0;
-}
-
-char *nmg_Graphics::encode_setVisualizationMinHeight(int *len, float viz_min)
-{
-   char *msgbuf = NULL;
-   char *mptr;
-   int mlen;
-
-   if (!len) return NULL;
-
-   *len = sizeof(float);
-   msgbuf = new char[*len];
-   if (!msgbuf)
-   {
-      fprintf(stderr,"nmg_Graphics::encode_setVisualizationMinHeight: Out of memory!\n");
-      *len = 0;
-   }
-   else
-   {
-      mptr = msgbuf;
-      mlen = *len;
-      vrpn_buffer(&mptr, &mlen, viz_min);
-   }
-
-   return msgbuf;
-}
-
-int nmg_Graphics::decode_setVisualizationMinHeight(const char  *buf, float *viz_min)
-{
-   const char *bptr = buf;
-   int temp;
-   
-   if (!buf || !viz_min) return -1;
-
-   CHECK(vrpn_unbuffer(&bptr, &temp));
-
-   *viz_min = (float)(temp);
-   return 0;
-}
-
-char *nmg_Graphics::encode_setVisualizationMaxHeight(int *len, float viz_max)
-{
-   char *msgbuf = NULL;
-   char *mptr;
-   int mlen;
-
-   if (!len) return NULL;
-
-   *len = sizeof(float);
-   msgbuf = new char[*len];
-   if (!msgbuf)
-   {
-      fprintf(stderr,"nmg_Graphics::encode_setVisualizationMaxHeight: Out of memory!\n");
-      *len = 0;
-   }
-   else
-   {
-      mptr = msgbuf;
-      mlen = *len;
-      vrpn_buffer(&mptr, &mlen, viz_max);
-   }
-
-   return msgbuf;
-}
-
-int nmg_Graphics::decode_setVisualizationMaxHeight(const char  *buf, float *viz_max)
-{
-   const char *bptr = buf;
-   int temp;
-   
-   if (!buf || !viz_max) return -1;
-
-   CHECK(vrpn_unbuffer(&bptr, &temp));
-
-   *viz_max = (float)(temp);
-   return 0;
-}
-
-char *nmg_Graphics::encode_setVisualizationAlpha(int *len, float viz_alpha)
-{
-   char *msgbuf = NULL;
-   char *mptr;
-   int mlen;
-
-   if (!len) return NULL;
-
-   *len = sizeof(float);
-   msgbuf = new char[*len];
-   if (!msgbuf)
-   {
-      fprintf(stderr,"nmg_Graphics::encode_setVisualizationAlpha: Out of memory!\n");
-      *len = 0;
-   }
-   else
-   {
-      mptr = msgbuf;
-      mlen = *len;
-      vrpn_buffer(&mptr, &mlen, viz_alpha);
-   }
-
-   return msgbuf;
-}
-
-int nmg_Graphics::decode_setVisualizationAlpha(const char  *buf, float *viz_alpha)
-{
-   const char *bptr = buf;
-   int temp;
-   
-   if (!buf || !viz_alpha) return -1;
-
-   CHECK(vrpn_unbuffer(&bptr, &temp));
-
-   *viz_alpha = (float)(temp);
-   return 0;
-}
 
 char * nmg_Graphics::encode_setViztexScale
                      (int * len, float scale) {
@@ -2948,5 +2801,144 @@ int nmg_Graphics::decode_setViztexScale
                    (const char * buf, float * scale) {
   if (!buf || !scale) return -1;
   CHECK(vrpn_unbuffer(&buf, scale));
+  return 0;
+}
+
+char * nmg_Graphics::encode_setRegionMaskHeight
+                     (int * len, float min_height, 
+                      float max_height, int region) {
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = 2 * sizeof(float) + sizeof(int);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_setRegionMaskHeight:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, min_height);
+    vrpn_buffer(&mptr, &mlen, max_height);
+    vrpn_buffer(&mptr, &mlen, region);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_setRegionMaskHeight
+                   (const char * buf, float * min_height,
+                    float * max_height, int * region) {
+  if (!buf || !min_height || !max_height || !region) return -1;
+  CHECK(vrpn_unbuffer(&buf, min_height));
+  CHECK(vrpn_unbuffer(&buf, max_height));
+  CHECK(vrpn_unbuffer(&buf, region));
+  return 0;
+}
+
+char * nmg_Graphics::encode_setRegionControlPlaneName (int * len, const char * name, 
+                                                       int region) {
+  char * msgbuf = NULL;
+
+  if (!len) return NULL;
+
+  *len = sizeof(int) + strlen(name) + 3 + sizeof(region);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_setRegionControlPlaneName:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {    
+    sprintf( msgbuf, "%d %s %d", strlen(name), name, region);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_setRegionControlPlaneName (const char * buf, char ** name, 
+                                                    int *region) {
+  if (!buf || !name || !region) return -1;
+  int len;
+  const char *mptr;
+  sscanf( buf, "%d ", &len);
+  mptr = buf + sizeof(int);
+  *name = new char[len+1];
+  sscanf( mptr, "%s %d", *name, region );
+  return 0;
+}
+
+char * nmg_Graphics::encode_createRegion
+                     (int * len) {
+  return NULL;
+}
+
+int nmg_Graphics::decode_createRegion
+                   (const char * buf) {
+  return 0;
+}
+
+char * nmg_Graphics::encode_destroyRegion
+                     (int * len, int region) {
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(int);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_destroyRegion:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, region);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_destroyRegion
+                   (const char * buf, int * region) {
+  if (!buf || !region) return -1;
+  CHECK(vrpn_unbuffer(&buf, region));
+  return 0;
+}
+
+char * nmg_Graphics::encode_lock (int * len, vrpn_bool lock, int region)
+{
+ char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(vrpn_bool) + sizeof(int);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_lockAlpha:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, lock);
+    vrpn_buffer(&mptr, &mlen, region);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_lock (const char * buf, vrpn_bool *lock, int *region)
+{
+  if (!buf || !lock || !region) return -1;
+  CHECK(vrpn_unbuffer(&buf, lock));
+  CHECK(vrpn_unbuffer(&buf, region));
   return 0;
 }

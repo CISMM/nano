@@ -41,7 +41,7 @@ All Rights Reserved.
 extern UTree World;
 
 #include	"nmg_Graphics.h" // for enums
-#include    "nmg_Visualization.h"
+#include    "nmg_Surface.h"
 #include	"openGL.h"
 #include	"globjects.h"  // for myworld()
 #include	"graphics_globals.h"
@@ -149,6 +149,7 @@ void determine_GL_capabilities() {
     g_VERTEX_ARRAY = 0;
 #else
     g_VERTEX_ARRAY = gl_1_1; //Vertex arrays are standard as of GL 1.1
+    //g_VERTEX_ARRAY = 0;
 #endif
 }
 
@@ -181,13 +182,13 @@ GLfloat cur_modelview_matrix[16];
 
 int build_list_set
 (nmb_Interval subset,
- nmb_PlaneSelection planes,
+ nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
  GLuint base,
  GLsizei num_lists,
  GLdouble * minColor,
  GLdouble * maxColor,
  int (* stripfn)
- (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *),
+ (nmb_PlaneSelection, nmg_SurfaceMask *, GLdouble [3], GLdouble [3], int, Vertex_Struct *),
  Vertex_Struct **surface)
 {
     
@@ -203,14 +204,25 @@ int build_list_set
 #if defined(sgi) || defined(_WIN32)
     //#if defined(sgi)
     if (g_VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
-        if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE ||
-            g_null_data_alpha_toggle || g_transparent) {
+        
+        //The checks for whether to use GL_COLOR_ARRAY or not have been
+        //removed because of the surface alpha being a global AND not
+        //compiled into the display lists when the color isn't set over the
+        //entire array.  Since I've moved the real surface color into the
+        //new Surface and SurfaceRegion classes, this meant that if you set
+        //the surface alpha it would get overriden.  This is only a problem
+        //right now because I am trying to avoid sweeping changes, so I am
+        //leaving the globals alone and just pushing and poping state appropriately.
+        //That fails though in this case, however, when we get rid of globals
+        //and refactor all of this appropriately, this problem will disappear.
+        //if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE ||
+        //    g_null_data_alpha_toggle || g_transparent) {
             //glEnable(GL_COLOR_ARRAY_EXT);
             glEnableClientState(GL_COLOR_ARRAY);
-        } else {
+        //} else {
             //glDisable(GL_COLOR_ARRAY_EXT);
-            glDisableClientState(GL_COLOR_ARRAY);
-        }
+        //    glDisableClientState(GL_COLOR_ARRAY);
+        //}
         if (glGetError()!=GL_NO_ERROR) {
             printf(" Error setting GL_COLOR_ARRAY_EXT.\n");
         }
@@ -295,7 +307,7 @@ int build_list_set
         
         VERBOSECHECK(10);
         
-        if ((*stripfn)(planes, minColor, maxColor, i*g_stride, surface[i])) {
+        if ((*stripfn)(planes, mask, minColor, maxColor, i*g_stride, surface[i])) {
             if (g_VERTEX_ARRAY) {
                 fprintf(stderr, "build_list_set():  "
                     "Internal error - bad strip(vertex array)\n");
@@ -329,7 +341,7 @@ int build_list_set
             
             VERBOSECHECK(10);
             
-            if ((*stripfn)(planes, minColor, maxColor, i*g_stride, surface[i])) {
+            if ((*stripfn)(planes, mask, minColor, maxColor, i*g_stride, surface[i])) {
                 if (g_VERTEX_ARRAY) {
                     fprintf(stderr, "build_list_set():  "
                         "Internal error - bad strip(vertex array)\n");
@@ -362,7 +374,7 @@ int build_list_set
 *********************************************************************/
 int build_list_set (
                     nmb_Interval insubset,
-                    nmb_PlaneSelection planes,
+                    nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
                     GLuint base, GLsizei num,
                     int strips_in_x, Vertex_Struct **surface)
 {
@@ -382,22 +394,12 @@ int build_list_set (
     //MIN(maxStrip - 1, insubset.high()));
     
     int (* stripfn)
-        (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
+        (nmb_PlaneSelection, nmg_SurfaceMask *, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
     
     if (strips_in_x) {
-        if (g_mask == DISABLE_MASK) {
-            stripfn = spm_x_strip;
-        }
-        else {
-            stripfn = spm_x_strip_masked;
-        }
+        stripfn = spm_x_strip_masked;
     } else {
-        if (g_mask == DISABLE_MASK) {
-            stripfn = spm_y_strip;
-        }
-        else {
-            stripfn = spm_y_strip_masked;
-        }
+        stripfn = spm_y_strip_masked;
     }
     
     nmb_Interval subset (MAX(0, insubset.low()),
@@ -412,7 +414,7 @@ int build_list_set (
         VERBOSECHECK(8);
     } 
     
-    return build_list_set(subset, planes, base, num,
+    return build_list_set(subset, planes, mask, base, num,
         g_minColor, g_maxColor, stripfn, surface);
 }
 
@@ -432,14 +434,14 @@ int build_list_set (
 *  a particular base. 
 *************************************************************************/
 
-int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
-                             GLuint *base, GLsizei *num, GLsizei old_num,
-                             GLdouble *minColor, GLdouble *maxColor,
+int	build_grid_display_lists(nmb_PlaneSelection planes,  nmg_SurfaceMask *mask, 
+                             int strips_in_x, GLuint *base, GLsizei *num, 
+                             GLsizei old_num, GLdouble *minColor, GLdouble *maxColor,
                              Vertex_Struct **surface)
 {
     
     int (* stripfn)
-        (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
+        (nmb_PlaneSelection, nmg_SurfaceMask *, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
     
     VERBOSE(4,"     build_grid_display_lists in openGL.c");
     VERBOSECHECK(4);
@@ -472,20 +474,10 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
     // skipping along by stride gridpoints each time.
     if (strips_in_x) {
         *num = (planes.height->numY() - 1) / g_stride;
-        if (g_mask == DISABLE_MASK) {
-            stripfn = spm_x_strip;
-        }
-        else {
-            stripfn = spm_x_strip_masked;
-        }
+        stripfn = spm_x_strip_masked;
     } else {
         *num = (planes.height->numX() - 1) / g_stride;
-        if (g_mask == DISABLE_MASK) {
-            stripfn = spm_y_strip;
-        }
-        else {
-            stripfn = spm_y_strip_masked;
-        }
+        stripfn = spm_y_strip_masked;
     }
     
     //fprintf(stderr, "Generating %d lists.\n", *num);
@@ -516,7 +508,7 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
     }
 #endif
     
-    build_list_set(nmb_Interval (0, *num - 1), planes, *base, *num,
+    build_list_set(nmb_Interval (0, *num - 1), planes, mask, *base, *num,
         minColor, maxColor, stripfn, surface);
     
     VERBOSE(4,"     done build_grid_display_lists in openGL.c");
@@ -587,10 +579,7 @@ int draw_world (int) {
     
     VERBOSECHECK(4);
     VERBOSE(4,"    Setting surface materials");
-    TIMERVERBOSE(5, mytimer, "draw_world: spm_set_surface_materials");
-    
-    spm_set_surface_materials();
-    
+    TIMERVERBOSE(5, mytimer, "draw_world: spm_set_surface_materials");    
     TIMERVERBOSE(5, mytimer, "draw_world: spm_set_surface_materials");
     
     /************************************************************
@@ -604,7 +593,7 @@ int draw_world (int) {
         
         VERBOSECHECK(4);
         VERBOSE(4,"    Rebuilding display lists (for new selected region)");
-        if (!visualization->rebuildGrid()) {
+        if (!g_surface->rebuildSurface(VRPN_TRUE)) {
             fprintf(stderr,
                 "ERROR: Could not build grid display lists\n");
             dataset->done = V_TRUE;
@@ -634,7 +623,7 @@ int draw_world (int) {
                 
                 display_lists_in_x = 0;
                 VERBOSE(4,"    Rebuilding display lists (in y).");
-                if (!visualization->rebuildGrid()) {
+                if (!g_surface->rebuildSurface(VRPN_TRUE)) {
                     fprintf(stderr,
                         "ERROR: Could not build grid display lists\n");
                     dataset->done = V_TRUE;
@@ -648,7 +637,7 @@ int draw_world (int) {
                 
                 display_lists_in_x = 1;
                 VERBOSE(4,"    Rebuilding display lists (in x).");
-                if (!visualization->rebuildGrid()) {
+                if (!g_surface->rebuildSurface(VRPN_TRUE)) {
                     fprintf(stderr,
                         "ERROR: Could not build grid display lists\n");
                     dataset->done = V_TRUE;
@@ -660,6 +649,15 @@ int draw_world (int) {
         }
     }
     
+
+    //See if there are any regions that need rebuilding for
+    //some reason
+    if (!g_surface->rebuildSurface()) {
+        fprintf(stderr,
+            "ERROR: Could not build grid display lists\n");
+        dataset->done = V_TRUE;
+    }
+
     /**********************************************************
     *  Replace the display lists that have had points changed.
     * This includes those that are in the region of changed
@@ -744,7 +742,7 @@ int draw_world (int) {
     // Convert from rows to strips:  divide through by the tesselation stride
     
     
-    if (!visualization->rebuildInterval(low_row, high_row, display_lists_in_x)) {
+    if (!g_surface->rebuildInterval(low_row, high_row, display_lists_in_x)) {
         return -1;
     }
 
@@ -770,16 +768,18 @@ int draw_world (int) {
     VERBOSE(4,"    Drawing the grid");
     TIMERVERBOSE(5, mytimer, "draw_world:Drawing the grid");
     
-    visualization->renderSurface();
     /*
     for (i = 0; i < num_grid_lists; i++) {
     glCallList(grid_list_base + i);
     }
     */
     
-    /* Draw the light */
+    /* Draw the light */       
     setup_lighting(0);
+
+    g_surface->renderSurface();
     
+    setFilled();
     /*******************************************************/
     // Draw the parts of the scene other than the surface.
     /*******************************************************/

@@ -7,7 +7,7 @@
   ===3rdtech===*/
 #include "graphics_globals.h"
 #include "nmg_Graphics.h" // for enums
-#include "nmg_Visualization.h"
+#include "nmg_Surface.h"
 
 class BCGrid;  // from BCGrid.h
 class nmb_Subgrid;  // from nmb_Subgrid.h
@@ -223,11 +223,11 @@ char g_maskPlaneName [128];
 char g_transparentPlaneName [128];
 char g_vizPlaneName [128];
 
-int g_mask = DISABLE_MASK;
+int g_mask = ENABLE_MASK;
 int g_transparent = 0;
 float g_viztex_scale = 500.0f;
 
-nmg_Visualization *visualization;
+nmg_Surface *g_surface;
 
 PPM * g_vizPPM = NULL;
 

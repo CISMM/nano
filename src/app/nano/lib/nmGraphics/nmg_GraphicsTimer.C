@@ -34,9 +34,6 @@ void nmg_Graphics_Timer::timeViewpointChanges (vrpn_bool x) {
   d_timingViewpointChanges = x;
 }
 
-
-
-
 void nmg_Graphics_Timer::mainloop (void) {
 
   d_imp->mainloop();
@@ -93,9 +90,9 @@ void nmg_Graphics_Timer::enableChartjunk (int on) {
   d_imp->enableChartjunk(on);
 }
 
-void nmg_Graphics_Timer::enableFilledPolygons (int on) {
+void nmg_Graphics_Timer::enableFilledPolygons (int on, int region) {
   activateTimer();
-  d_imp->enableFilledPolygons(on);
+  d_imp->enableFilledPolygons(on, region);
 }
 
 void nmg_Graphics_Timer::enableSmoothShading (int on) {
@@ -108,8 +105,71 @@ void nmg_Graphics_Timer::enableTrueTip (int on) {
   d_imp->enableTrueTip(on);
 }
 
+void nmg_Graphics_Timer::setViztexScale (float s)
+{
+  activateTimer();
+  d_imp->setViztexScale(s);
+}
 
+void nmg_Graphics_Timer::setRegionMaskHeight(float min_height, float max_height, int region)
+{
+  activateTimer();
+  d_imp->setRegionMaskHeight(min_height, max_height, region);
+}
 
+void nmg_Graphics_Timer::setRegionControlPlaneName(const char *name, int region)
+{
+  activateTimer();
+  d_imp->setRegionControlPlaneName(name, region);
+}
+
+int nmg_Graphics_Timer::createRegion()
+{
+    activateTimer();
+    return d_imp->createRegion();
+}
+
+void nmg_Graphics_Timer::destroyRegion(int region)
+{
+    activateTimer();
+    d_imp->destroyRegion(region);
+}
+
+void nmg_Graphics_Timer::lockAlpha(vrpn_bool lock, int region)
+{
+    activateTimer();
+    d_imp->lockAlpha(lock, region);
+}
+
+void nmg_Graphics_Timer::lockFilledPolygons(vrpn_bool lock, int region)
+{
+    activateTimer();
+    d_imp->lockFilledPolygons(lock, region);
+}
+
+void nmg_Graphics_Timer::lockTextureDisplayed(vrpn_bool lock, int region)
+{
+    activateTimer();
+    d_imp->lockTextureDisplayed(lock, region);
+}
+
+void nmg_Graphics_Timer::lockTextureMode(vrpn_bool lock, int region)
+{
+    activateTimer();
+    d_imp->lockTextureMode(lock, region);
+}
+
+void nmg_Graphics_Timer::lockTextureTransformMode(vrpn_bool lock, int region)
+{
+    activateTimer();
+    d_imp->lockTextureTransformMode(lock, region);
+}
+
+void nmg_Graphics_Timer::lockStride(vrpn_bool lock, int region)
+{
+    activateTimer();
+    d_imp->lockStride(lock, region);;
+}
 
 void nmg_Graphics_Timer::setAdhesionSliderRange (float low,
                                                           float high) {
@@ -235,11 +295,6 @@ void nmg_Graphics_Timer::setContourPlaneName (const char * n) {
   d_imp->setContourPlaneName(n);
 }
 
-void nmg_Graphics_Timer::setTransparentPlaneName (const char * n) {
-  activateTimer();
-  d_imp->setTransparentPlaneName(n);
-}
-
 void nmg_Graphics_Timer::setOpacityPlaneName (const char * n) {
   activateTimer();
   d_imp->setOpacityPlaneName(n);
@@ -253,11 +308,6 @@ void nmg_Graphics_Timer::setMaskPlaneName (const char * n) {
 void nmg_Graphics_Timer::setHeightPlaneName (const char * n) {
   activateTimer();
   d_imp->setHeightPlaneName(n);
-}
-
-void nmg_Graphics_Timer::setVizPlaneName (const char * n) {
-  activateTimer();
-  d_imp->setVizPlaneName(n);
 }
 
 void nmg_Graphics_Timer::setContourWidth (float x) {
@@ -412,9 +462,9 @@ void nmg_Graphics_Timer::setDiffusePercent (float d) {
   d_imp->setDiffusePercent(d);
 }
 
-void nmg_Graphics_Timer::setSurfaceAlpha (float a) {
+void nmg_Graphics_Timer::setSurfaceAlpha (float a, int region) {
   activateTimer();
-  d_imp->setSurfaceAlpha(a);
+  d_imp->setSurfaceAlpha(a, region);
 }
 
 void nmg_Graphics_Timer::setSpecularColor (float s) {
@@ -427,15 +477,15 @@ void nmg_Graphics_Timer::setSphereScale (float s) {
   d_imp->setSphereScale(s);
 }
 
-void nmg_Graphics_Timer::setTesselationStride (int s) {
+void nmg_Graphics_Timer::setTesselationStride (int s, int region) {
   activateTimer();
-  d_imp->setTesselationStride(s);
+  d_imp->setTesselationStride(s, region);
 }
 
 void nmg_Graphics_Timer::setTextureMode (TextureMode m,
-	TextureTransformMode xm) {
+	TextureTransformMode xm, int region) {
   activateTimer();
-  d_imp->setTextureMode(m, xm);
+  d_imp->setTextureMode(m, xm, region);
   // EXTRA-SPECIAL STUFF - There's a default (nonvirtual)
   // implementation on nmg_Graphics that we can't intercept.
   d_textureMode = m;
@@ -571,35 +621,6 @@ void nmg_Graphics_Timer::createScreenImage
 {
   activateTimer();
   d_imp->createScreenImage(filename, type);
-}
-
-void nmg_Graphics_Timer::chooseVisualization(int viz_type)
-{
-  activateTimer();
-  d_imp->chooseVisualization(viz_type);
-}
-
-void nmg_Graphics_Timer::setVisualizationMaxHeight(float viz_max)
-{
-  activateTimer();
-  d_imp->setVisualizationMaxHeight(viz_max);
-}
-
-void nmg_Graphics_Timer::setVisualizationAlpha(float viz_alpha)
-{
-  activateTimer();
-  d_imp->setVisualizationAlpha(viz_alpha);
-}
-
-void nmg_Graphics_Timer::setVisualizationMinHeight(float viz_min)
-{
-  activateTimer();
-  d_imp->setVisualizationMinHeight(viz_min);
-}
-
-void nmg_Graphics_Timer::setViztexScale (float s) {
-  activateTimer();
-  d_imp->setViztexScale(s);
 }
 
 void nmg_Graphics_Timer::setViewTransform (v_xform_type x) {

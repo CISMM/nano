@@ -88,10 +88,8 @@ class nmg_Graphics {
 
     // indicates which texture is displayed:
     enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA,
-			 COLORMAP,
-			SEM_DATA, 
-			BUMPMAP, HATCHMAP, PATTERNMAP,
-                        REMOTE_DATA, VISUALIZATION };
+			           COLORMAP, SEM_DATA,  BUMPMAP, HATCHMAP, 
+                       PATTERNMAP, REMOTE_DATA, VISUALIZATION };
 
     // how texture coordinates are computed:
     enum TextureTransformMode {RULERGRID_COORD, VIZTEX_COORD, REGISTRATION_COORD, 
@@ -144,7 +142,7 @@ class nmg_Graphics {
     virtual void enableChartjunk (int on) = 0;
       // Controls display of chartjunk (text in screenspace).
       // Turn on for real use, off to capture images for publication.
-    virtual void enableFilledPolygons (int on) = 0;
+    virtual void enableFilledPolygons (int on, int region = 0) = 0;
       // Controls filling of surface.  Turn off to show wireframe for demos.
     virtual void enableSmoothShading (int on) = 0;
       // Controls smooth shading of surface.  Turn off to show faceting
@@ -224,8 +222,6 @@ class nmg_Graphics {
     virtual void setOpacityPlaneName (const char *) = 0;
     virtual void setHeightPlaneName (const char *) = 0;
     virtual void setMaskPlaneName (const char *) = 0;
-    virtual void setTransparentPlaneName (const char *) = 0;
-	virtual void setVizPlaneName (const char *) = 0;
 
     virtual void setIconScale (float) = 0;
       // Scale the 3D icons.
@@ -304,14 +300,14 @@ class nmg_Graphics {
     virtual void setSpecularColor (float) = 0;
       // ???
     virtual void setDiffusePercent (float) = 0;
-    virtual void setSurfaceAlpha (float) = 0;
+    virtual void setSurfaceAlpha (float, int region = 0) = 0;
     virtual void setSphereScale (float) = 0;
       // Set the size of the sphere drawn at the stylus tip in modify mode.
 
-    virtual void setTesselationStride (int) = 0;
+    virtual void setTesselationStride (int, int region = 0) = 0;
       // Sets the stride with which the data grid is tesselated.
 
-    virtual void setTextureMode (TextureMode,TextureTransformMode) = 0;
+    virtual void setTextureMode (TextureMode,TextureTransformMode, int region = 0) = 0;
       // Determines which texture to display currently.
       // q.v. enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA, OPACITYMAP };
 
@@ -382,15 +378,22 @@ class nmg_Graphics {
        const ImageType  type
     ) = 0;
 
-	/*New visualization method.  Chooses which visualizaton to use */
-	virtual void chooseVisualization(int) = 0;
-	virtual void setVisualizationMinHeight(float) = 0;
-	virtual void setVisualizationMaxHeight(float) = 0;
-	virtual void setVisualizationAlpha(float) = 0;
+	/*New surface based method.*/
+    virtual int createRegion() = 0;
+    virtual void destroyRegion(int region) = 0;
+	virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0) = 0;
+    virtual void setRegionControlPlaneName (const char *, int region = 0) = 0;
+
+    //These functions are related to controlling what changes affect the
+    //entire surface and what don't.
+    virtual void lockAlpha(vrpn_bool lock, int region) = 0;
+    virtual void lockFilledPolygons(vrpn_bool lock, int region) = 0;
+    virtual void lockTextureDisplayed(vrpn_bool lock, int region) = 0;
+    virtual void lockTextureMode(vrpn_bool lock, int region) = 0;
+    virtual void lockTextureTransformMode(vrpn_bool lock, int region) = 0;
+    virtual void lockStride(vrpn_bool lock, int region) = 0;
 
     // ACCESSORS
-
-
     virtual void getLightDirection (q_vec_type *) const = 0;
       // Returns the direction from which the light emanates.
     virtual int getHandColor (void) const = 0;
@@ -446,8 +449,6 @@ class nmg_Graphics {
     vrpn_int32 d_setOpacityPlaneName_type;
 	vrpn_int32 d_setHeightPlaneName_type;
 	vrpn_int32 d_setMaskPlaneName_type;
-	vrpn_int32 d_setTransparentPlaneName_type;
-	vrpn_int32 d_setVizPlaneName_type;
     vrpn_int32 d_setIconScale_type;
     vrpn_int32 d_setMinColor_type;
     vrpn_int32 d_setMaxColor_type;
@@ -512,13 +513,18 @@ class nmg_Graphics {
     //Screen capture
     vrpn_int32 d_createScreenImage_type;
 
-	//Visualization
-	vrpn_int32 d_chooseVisualization_type;
-	vrpn_int32 d_setVisualizationMinHeight_type;
-	vrpn_int32 d_setVisualizationMaxHeight_type;
-	vrpn_int32 d_setVisualizationAlpha_type;
     vrpn_int32 d_setViztexScale_type;
-
+    //Surface control variables
+    vrpn_int32 d_setRegionMaskHeight_type;
+    vrpn_int32 d_setRegionControlPlaneName_type;
+    vrpn_int32 d_createRegion_type;
+    vrpn_int32 d_destroyRegion_type;
+    vrpn_int32 d_lockAlpha_type;
+    vrpn_int32 d_lockFilledPolygons_type;
+    vrpn_int32 d_lockStride_type;
+    vrpn_int32 d_lockTextureDisplayed_type;
+    vrpn_int32 d_lockTextureMode_type;
+    vrpn_int32 d_lockTextureTransformMode_type;
 
     // Each encode_ routine will allocate a new char [] to hold
     // the appropriate encoding of its arguments, and write the
@@ -543,8 +549,8 @@ class nmg_Graphics {
 
     char * encode_enableChartjunk (int * len, int);
     int decode_enableChartjunk (const char * buf, int *);
-    char * encode_enableFilledPolygons (int * len, int);
-    int decode_enableFilledPolygons (const char * buf, int *);
+    char * encode_enableFilledPolygons (int * len, int, int);
+    int decode_enableFilledPolygons (const char * buf, int *, int *);
     char * encode_enableSmoothShading (int * len, int);
     int decode_enableSmoothShading (const char * buf, int *);
     //char * encode_enableUber (int * len, int);
@@ -623,16 +629,16 @@ class nmg_Graphics {
     int decode_setSpecularity (const char * buf, int *);
     char * encode_setDiffusePercent (int * len, float);
     int decode_setDiffusePercent (const char * buf, float *);
-    char * encode_setSurfaceAlpha (int * len, float);
-    int decode_setSurfaceAlpha (const char * buf, float *);
+    char * encode_setSurfaceAlpha (int * len, float, int);
+    int decode_setSurfaceAlpha (const char * buf, float *, int *);
     char * encode_setSpecularColor (int * len, float);
     int decode_setSpecularColor (const char * buf, float *);
     char * encode_setSphereScale (int * len, float);
     int decode_setSphereScale (const char * buf, float *);
-    char * encode_setTesselationStride (int * len, int);
-    int decode_setTesselationStride (const char * buf, int *);
-    char * encode_setTextureMode (int * len, TextureMode, TextureTransformMode);
-    int decode_setTextureMode (const char * buf, TextureMode *, TextureTransformMode *);
+    char * encode_setTesselationStride (int * len, int, int);
+    int decode_setTesselationStride (const char * buf, int *, int *);
+    char * encode_setTextureMode (int * len, TextureMode, TextureTransformMode, int);
+    int decode_setTextureMode (const char * buf, TextureMode *, TextureTransformMode *, int *);
     char * encode_setTextureScale (int * len, float);
     int decode_setTextureScale (const char * buf, float *);
     char * encode_setTrueTipScale (int * len, float);
@@ -740,20 +746,23 @@ class nmg_Graphics {
        ImageType   *type
     );
 
-	char *encode_chooseVisualization(int *len, int);
-	int decode_chooseVisualization(const char *buf, int *);
-
-	char *encode_setVisualizationMinHeight(int *len, float);
-	int decode_setVisualizationMinHeight(const char *buf, float *);
-
-	char *encode_setVisualizationMaxHeight(int *len, float);
-	int decode_setVisualizationMaxHeight(const char *buf, float *);
-
-	char *encode_setVisualizationAlpha(int *len, float);
-	int decode_setVisualizationAlpha(const char *buf, float *);
-
     char * encode_setViztexScale (int * len, float);
     int decode_setViztexScale (const char * buf, float *);
+
+    char * encode_setRegionMaskHeight (int * len, float, float, int);
+    int decode_setRegionMaskHeight (const char * buf, float *, float *, int *);
+    
+    char * encode_setRegionControlPlaneName (int * len, const char *, int region);
+    int decode_setRegionControlPlaneName (const char * buf, char **, int * region);
+
+    char * encode_createRegion (int * len);
+    int decode_createRegion (const char * buf);
+
+    char * encode_destroyRegion (int * len, int region);
+    int decode_destroyRegion (const char * buf, int * region);
+
+    char * encode_lock (int * len, vrpn_bool lock, int region);
+    int decode_lock (const char * buf, vrpn_bool *lock, int *region);
 };
 
 #endif  // NMG_GRAPHICS_H

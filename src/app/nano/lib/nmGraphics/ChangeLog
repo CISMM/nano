@@ -1,3 +1,40 @@
+2001-05-12  Jason Clark  <jclark@cs.unc.edu>
+
+	* spm_gl.c: Use new SurfaceMask class instead of a plane in the
+	grid to control masking.
+
+	* openGL.c: Minor modifications to support new approach.
+
+	* nmg_SurfaceRegion.C: A region controls the graphics state for
+	some sub-section of the surface.  Allowing the display to vary
+	across it.   A surface region contains a mask that controlls what
+	area of the data it controlls.
+
+	* nmg_SurfaceMask.C: A surface mask defines the region of the data
+	in the currently viewed height plane that a particular region is
+	affective over.  Masks can be added and removed from each other,
+	to ensure meshing at the various regions.   A mask is just like a
+	plane, so the region can be disconnected.
+
+	* nmg_Surface.C: This is the new surface class.  A surface has a
+	default region (which, initially, is what you normally see in the
+	NanoManipulator).  You can create more regions as desired, and for
+	each region you can specify whatever you want the graphics
+	settings to be.  This provides a flexible method for viewing the
+	surface in whatever manner you wish.
+
+	* nmg_Graphics.C: New functions for "locking" graphics state in
+	sub-regions away from the default region on a surface.  Also
+	modified some commands to send the region info that the surface
+	needs.  More will need to be modified as we move the graphics
+	functionality completely over to this surface-region based
+	approach. (Also modified all sub-classes appropriately)
+
+	* graphics.h: New setFilled function
+
+	* graphics.c (setFilled): Broke out the polygon filled setting as
+	a seperate function
+
 2001-05-11  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_GraphicsImpl.Ch (positionRubberCorner): Added parameter to

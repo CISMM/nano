@@ -169,13 +169,13 @@ void nmg_Graphics_Remote::enableChartjunk (int value) {
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::enableFilledPolygons (int value) {
+void nmg_Graphics_Remote::enableFilledPolygons (int value, int region) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  msgbuf = encode_enableFilledPolygons(&len, value);
+  msgbuf = encode_enableFilledPolygons(&len, value, region);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now, d_enableFilledPolygons_type,
@@ -699,25 +699,6 @@ void nmg_Graphics_Remote::setOpacityPlaneName (const char * name) {
 }
 
 // virtual
-void nmg_Graphics_Remote::setTransparentPlaneName (const char * name) {
-  int len = 0;
-  struct timeval now;
-  int retval;
-
-  if (name)
-    len = 1 + strlen(name);
-  gettimeofday(&now, NULL);
-  if (d_connection) {
-    retval = d_connection->pack_message(len, now, d_setTransparentPlaneName_type,
-                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setTransparentPlaneName:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-}
-
-// virtual
 void nmg_Graphics_Remote::setMaskPlaneName (const char * name) {
   int len = 0;
   struct timeval now;
@@ -750,25 +731,6 @@ void nmg_Graphics_Remote::setHeightPlaneName (const char * name) {
                            d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
     if (retval) {
       fprintf(stderr, "nmg_Graphics_Remote::setHeightPlaneName:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-}
-
-// virtual
-void nmg_Graphics_Remote::setVizPlaneName (const char * name) {
-  int len = 0;
-  struct timeval now;
-  int retval;
-
-  if (name)
-    len = 1 + strlen(name);
-  gettimeofday(&now, NULL);
-  if (d_connection) {
-    retval = d_connection->pack_message(len, now, d_setVizPlaneName_type,
-                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setVizPlaneName:  "
                       "Couldn't pack message to send to server.\n");
     }
   }
@@ -1493,13 +1455,13 @@ void nmg_Graphics_Remote::setDiffusePercent (float diffuse) {
 
 }
 
-void nmg_Graphics_Remote::setSurfaceAlpha (float surface_alpha) {
+void nmg_Graphics_Remote::setSurfaceAlpha (float surface_alpha, int region) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  msgbuf = encode_setSurfaceAlpha(&len, surface_alpha);
+  msgbuf = encode_setSurfaceAlpha(&len, surface_alpha, region);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now, d_setSurfaceAlpha_type,
@@ -1553,13 +1515,13 @@ void nmg_Graphics_Remote::setSphereScale (float scale) {
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setTesselationStride (int stride) {
+void nmg_Graphics_Remote::setTesselationStride (int stride, int region) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  msgbuf = encode_setTesselationStride(&len, stride);
+  msgbuf = encode_setTesselationStride(&len, stride, region);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now, d_setTesselationStride_type,
@@ -1574,7 +1536,7 @@ void nmg_Graphics_Remote::setTesselationStride (int stride) {
 }
 
 void nmg_Graphics_Remote::setTextureMode (TextureMode m,
-	TextureTransformMode xm) {
+	TextureTransformMode xm, int region) {
   struct timeval now;
   char * msgbuf;
   int len;
@@ -1582,7 +1544,7 @@ void nmg_Graphics_Remote::setTextureMode (TextureMode m,
 
   d_textureMode = m;
 
-  msgbuf = encode_setTextureMode(&len, m, xm);
+  msgbuf = encode_setTextureMode(&len, m, xm, region);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now, d_setTextureMode_type,
@@ -2053,98 +2015,49 @@ void nmg_Graphics_Remote::createScreenImage
       delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::chooseVisualization(int viz_type)
-{
-   struct timeval now;
-   char *msgbuf;
-   int len;
-   int retval;
 
-   msgbuf = encode_chooseVisualization(&len, viz_type);
-   gettimeofday(&now, NULL);
-   if (d_connection && msgbuf)
-   {
-      retval = d_connection->pack_message(len, now, d_createScreenImage_type,
-                                          d_myId, msgbuf,
-                                          vrpn_CONNECTION_RELIABLE);
-      if (retval)
-         fprintf(stderr, "nmg_Graphics_Remote::chooseVisualization:  "
-                         "Couldn't pack message to send to server.\n");
-   }
+void nmg_Graphics_Remote::setRegionMaskHeight(float min_height, float max_height, int region)
+{ 
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
 
-   if (msgbuf)
-      delete [] msgbuf;
+  msgbuf = encode_setRegionMaskHeight(&len, min_height, max_height, region);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_setRegionMaskHeight_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setRegionMaskHeight:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setVisualizationMinHeight(float viz_min)
+void nmg_Graphics_Remote::setRegionControlPlaneName(const char *name, int region)
 {
-   struct timeval now;
-   char *msgbuf;
-   int len;
-   int retval;
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
 
-   msgbuf = encode_setVisualizationMinHeight(&len, viz_min);
-   gettimeofday(&now, NULL);
-   if (d_connection && msgbuf)
-   {
-      retval = d_connection->pack_message(len, now, d_createScreenImage_type,
-                                          d_myId, msgbuf,
-                                          vrpn_CONNECTION_RELIABLE);
-      if (retval)
-         fprintf(stderr, "nmg_Graphics_Remote::setVisualizationMinHeight:  "
-                         "Couldn't pack message to send to server.\n");
-   }
-
-   if (msgbuf)
-      delete [] msgbuf;
+  msgbuf = encode_setRegionControlPlaneName(&len, name, region);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_setRegionMaskHeight_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setRegionControlPlaneName:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setVisualizationMaxHeight(float viz_max)
-{
-   struct timeval now;
-   char *msgbuf;
-   int len;
-   int retval;
-
-   msgbuf = encode_setVisualizationMinHeight(&len, viz_max);
-   gettimeofday(&now, NULL);
-   if (d_connection && msgbuf)
-   {
-      retval = d_connection->pack_message(len, now, d_createScreenImage_type,
-                                          d_myId, msgbuf,
-                                          vrpn_CONNECTION_RELIABLE);
-      if (retval)
-         fprintf(stderr, "nmg_Graphics_Remote::setVisualizationMaxHeight:  "
-                         "Couldn't pack message to send to server.\n");
-   }
-
-   if (msgbuf)
-      delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::setVisualizationAlpha(float viz_alpha)
-{
-   struct timeval now;
-   char *msgbuf;
-   int len;
-   int retval;
-
-   msgbuf = encode_setVisualizationMinHeight(&len, viz_alpha);
-   gettimeofday(&now, NULL);
-   if (d_connection && msgbuf)
-   {
-      retval = d_connection->pack_message(len, now, d_createScreenImage_type,
-                                          d_myId, msgbuf,
-                                          vrpn_CONNECTION_RELIABLE);
-      if (retval)
-         fprintf(stderr, "nmg_Graphics_Remote::setVisualizationAlpha:  "
-                         "Couldn't pack message to send to server.\n");
-   }
-
-   if (msgbuf)
-      delete [] msgbuf;
-}
- 
 void nmg_Graphics_Remote::setViztexScale (float scale) {
   struct timeval now;
   char * msgbuf;
@@ -2158,6 +2071,176 @@ void nmg_Graphics_Remote::setViztexScale (float scale) {
                            d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
     if (retval) {
       fprintf(stderr, "nmg_Graphics_Remote::setViztexScale:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+int nmg_Graphics_Remote::createRegion()
+{
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_createRegion(&len);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_createRegion_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::createRegion:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+
+  return 0;
+}
+
+void nmg_Graphics_Remote::destroyRegion(int region)
+{
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_destroyRegion(&len, region);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_destroyRegion_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::destroyRegion:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+void nmg_Graphics_Remote::lockAlpha(vrpn_bool lock, int region)
+{
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_lock(&len, lock, region);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_lockAlpha_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::lockAlpha:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+void nmg_Graphics_Remote::lockFilledPolygons(vrpn_bool lock, int region)
+{
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_lock(&len, lock, region);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_lockFilledPolygons_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::lockFilledPolygons:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+void nmg_Graphics_Remote::lockTextureDisplayed(vrpn_bool lock, int region)
+{
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_lock(&len, lock, region);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_lockTextureDisplayed_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::lockTextureDisplayed:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+void nmg_Graphics_Remote::lockTextureMode(vrpn_bool lock, int region)
+{
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_lock(&len, lock, region);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_lockTextureMode_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::lockTextureMode:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+void nmg_Graphics_Remote::lockTextureTransformMode(vrpn_bool lock, int region)
+{
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_lock(&len, lock, region);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_lockTextureTransformMode_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::lockTextureTransformMode:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+void nmg_Graphics_Remote::lockStride(vrpn_bool lock, int region)
+{
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_lock(&len, lock, region);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_lockStride_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::lockStride:  "
                       "Couldn't pack message to send to server.\n");
     }
   }

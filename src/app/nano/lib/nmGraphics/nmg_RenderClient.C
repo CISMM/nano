@@ -257,9 +257,9 @@ void nmg_Graphics_RenderClient::setDiffusePercent (float a) {
 }
 
 // virtual
-void nmg_Graphics_RenderClient::setSurfaceAlpha (float a) {
+void nmg_Graphics_RenderClient::setSurfaceAlpha (float a, int region) {
   blockTimer();
-  nmg_Graphics_Remote::setSurfaceAlpha (a);
+  nmg_Graphics_Remote::setSurfaceAlpha (a, region);
 }
 
 // virtual
@@ -269,16 +269,17 @@ void nmg_Graphics_RenderClient::setSpecularColor (float a) {
 }
 
 // virtual
-void nmg_Graphics_RenderClient::setTesselationStride (int a) {
+void nmg_Graphics_RenderClient::setTesselationStride (int a, int region) {
   blockTimer();
-  nmg_Graphics_Remote::setTesselationStride (a);
+  nmg_Graphics_Remote::setTesselationStride (a, region);
 }
 
 // virtual
 void nmg_Graphics_RenderClient::setTextureMode (TextureMode a,
-                                                TextureTransformMode b) {
+                                                TextureTransformMode b,
+                                                int region) {
   blockTimer();
-  nmg_Graphics_Remote::setTextureMode (a, b);
+  nmg_Graphics_Remote::setTextureMode (a, b, region);
 }
 
 // virtual

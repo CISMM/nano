@@ -22,7 +22,8 @@
 
 #include <nmb_Dataset.h>
 #include <nmb_Globals.h>
-#include "nmg_Visualization.h"
+#include "nmg_Surface.h"
+#include "nmg_SurfaceRegion.h"
 
 #include "graphics.h"
 #include "openGL.h"  // for check_extension(), display_lists_in_x
@@ -45,12 +46,6 @@
 
 #define CHECK(a) if (a == -1) return -1
 #define CHECKF(a,b) if (a == -1) { fprintf(stderr, "Error: %s\n", b); return -1; }
-
-//New visualization class. In order to avoid the necessity of creating
-//and deleting the object every time the user switches which viz to use,
-//create an array of all possible visualization methods and merely point
-//the global visualization object at the right one
-//nmg_Visualization *(viz_set[NUMBER_OF_VISUALIZATIONS]);
 
 nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     nmb_Dataset * data,
@@ -92,8 +87,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
         strcpy(g_heightPlaneName, "none");
         strcpy(g_opacityPlaneName, "none");
         strcpy(g_maskPlaneName, "none");
-        strcpy(g_transparentPlaneName, "none");
-		strcpy(g_vizPlaneName, "none");
     } else {
         g_inputGrid = data->inputGrid;
         strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
@@ -102,8 +95,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
         strcpy(g_heightPlaneName, data->heightPlaneName->string());
         strcpy(g_opacityPlaneName, data->opacityPlaneName->string());
         strcpy(g_maskPlaneName, data->maskPlaneName->string());
-        strcpy(g_transparentPlaneName, data->transparentPlaneName->string());
-		strcpy(g_vizPlaneName, data->vizPlaneName->string());
     }
 
 #ifdef FLOW
@@ -149,17 +140,15 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     v_replace_drawfunc(i, V_WORLD, draw_world);
     v_replace_lightingfunc(i, setup_lighting);
     
-    //////////////////////////////////////////////////////////////////////
-    // Initialize the various visualizations, then point the global at  //
-    // the default							//
-    //////////////////////////////////////////////////////////////////////
-    visualization = create_new_visualization(0, dataset);
+    
+    g_surface = new nmg_Surface;
+    g_surface->changeDataset(data);
     
     //////////////////////////////////////////////////////////////////////
-    // Build the display lists we'll need to draw the data, etc		//
-    //									//
+    // Build the display lists we'll need to draw the data, etc		    //
+    //									                                //
     // Note:  This code removed as all grid building needs to happen	//
-    //        through nmg_Visualization classes				//
+    //        through nmg_Surface classes				                //
     //////////////////////////////////////////////////////////////////////
     
     //fprintf(stderr,"Building display lists...\n");
@@ -215,8 +204,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 
     // Even though we may not be using the vertex array extension, we still
     // use the vertex array to cache calculated normals
-  if (!visualization->initVertexArrays(grid_size_x, grid_size_y) ) {
-      fprintf(stderr," initVertexArrays: out of memory.\n");
+  if (!g_surface->init(grid_size_x, grid_size_y) ) {
+      fprintf(stderr," initialization of surface: out of memory.\n");
       exit(0);
   }
 
@@ -334,12 +323,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_setMaskPlaneName_type,
 			   handle_setMaskPlaneName,
 			   this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setTransparentPlaneName_type,
-                               handle_setTransparentPlaneName,
-                               this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setVizPlaneName_type,
-                               handle_setVizPlaneName,
-                               this, vrpn_ANY_SENDER);
   connection->register_handler(d_setMinColor_type,
                                handle_setMinColor,
                                this, vrpn_ANY_SENDER);
@@ -514,20 +497,38 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler( d_createScreenImage_type,
 				handle_createScreenImage,
 				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_chooseVisualization_type,
-				handle_chooseVisualization,
-				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_setVisualizationMinHeight_type,
-				handle_setVisualizationMinHeight,
-				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_setVisualizationMaxHeight_type,
-				handle_setVisualizationMaxHeight,
-				this, vrpn_ANY_SENDER);
-  connection->register_handler( d_setVisualizationAlpha_type,
-				handle_setVisualizationAlpha,
-				this, vrpn_ANY_SENDER);
   connection->register_handler(d_setViztexScale_type,
                                handle_setViztexScale,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setRegionMaskHeight_type,
+                               handle_setRegionMaskHeight,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setRegionControlPlaneName_type,
+                               handle_setRegionControlPlaneName,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_createRegion_type,
+                               handle_createRegion,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_destroyRegion_type,
+                               handle_destroyRegion,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_lockAlpha_type,
+                               handle_lockAlpha,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_lockFilledPolygons_type,
+                               handle_lockFilledPolygons,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_lockStride_type,
+                               handle_lockStride,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_lockTextureDisplayed_type,
+                               handle_lockTextureDisplayed,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_lockTextureMode_type,
+                               handle_lockTextureMode,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_lockTextureTransformMode_type,
+                               handle_lockTextureTransformMode,
                                this, vrpn_ANY_SENDER);
 
 }
@@ -540,7 +541,7 @@ nmg_Graphics_Implementation::~nmg_Graphics_Implementation (void) {
     v_close_display(d_displayIndexList[i]);
   }
 
-  delete visualization;
+  delete g_surface;
 /*
   if (sem_data) {
     delete [] sem_data;
@@ -613,12 +614,9 @@ void nmg_Graphics_Implementation::changeDataset( nmb_Dataset * data)
   strcpy(g_colorPlaneName, data->colorPlaneName->string());
   strcpy(g_contourPlaneName, data->contourPlaneName->string());
   strcpy(g_heightPlaneName, data->heightPlaneName->string());
+  strcpy(g_maskPlaneName, data->maskPlaneName->string());
 
-  strcpy(g_maskPlaneName, data->vizPlaneName->string());
-  strcpy(g_transparentPlaneName, data->transparentPlaneName->string());
-  strcpy(g_vizPlaneName, data->vizPlaneName->string());
-
-  visualization->changeDataset(data);
+  g_surface->changeDataset(data);
   causeGridRebuild(); 
 }
 
@@ -980,17 +978,14 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
 
   // Even though we may not be using the vertex array extension, we still
   // use the vertex array to cache calculated normals
-  if (!visualization->initVertexArrays(d_dataset->inputGrid->numX(),
-                                       d_dataset->inputGrid->numY()) )
+  if (!g_surface->init(d_dataset->inputGrid->numX(),
+                     d_dataset->inputGrid->numY()) )
   {
-      fprintf(stderr," initVertexArrays: out of memory.\n");
+      fprintf(stderr," initialization of surface: out of memory.\n");
       exit(0);
   }
 
-  grid_size_x = d_dataset->inputGrid->numX();
-  grid_size_y = d_dataset->inputGrid->numY();
-
-  if (!visualization->rebuildGrid()) {
+  if (!g_surface->rebuildSurface(VRPN_TRUE)) {
     fprintf(stderr,
             "nmg_Graphics_Implementation::causeGridRebuild():  "
             "Couldn't build grid display lists\n");
@@ -1005,9 +1000,9 @@ void nmg_Graphics_Implementation::enableChartjunk (int on) {
   g_config_chartjunk = on;
 }
 
-void nmg_Graphics_Implementation::enableFilledPolygons (int on) {
+void nmg_Graphics_Implementation::enableFilledPolygons (int on, int region) {
 //fprintf(stderr, "nmg_Graphics_Implementation::enableFilledPolygons().\n");
-  g_config_filled_polygons = on;
+  g_surface->enableFilledPolygons(on, region);
 }
 
 void nmg_Graphics_Implementation::enableSmoothShading (int on) {
@@ -1244,20 +1239,13 @@ void nmg_Graphics_Implementation::setOpacityPlaneName (const char * n) {
   strcpy(g_opacityPlaneName, n);
 }
 
-// virtual
-void nmg_Graphics_Implementation::setTransparentPlaneName (const char * n) {
-  strcpy(g_transparentPlaneName, n);
-}
-
 void nmg_Graphics_Implementation::setMaskPlaneName (const char * n) {
   strcpy(g_maskPlaneName, n);
 }
 
-void nmg_Graphics_Implementation::setVizPlaneName (const char * n) {
-  strcpy(g_vizPlaneName, n);
-
-  nmb_PlaneSelection planes;  planes.lookup(d_dataset);
-  visualization->setControlPlane(planes.viz);
+void nmg_Graphics_Implementation::setRegionControlPlaneName (const char * n, int region) {
+  BCPlane * plane = dataset->inputGrid->getPlaneByName(n);
+  g_surface->setRegionControl(plane, region);
 }
 
 void nmg_Graphics_Implementation::setContourWidth (float x) {
@@ -1653,7 +1641,7 @@ void nmg_Graphics_Implementation::computeRealignPlane( const char *name,
   // Uses bi-linear interpolation for points that don't fall
   // exactly on the grid.
 
-  Vertex_Struct ** surface = visualization->getBaseSurface();
+  Vertex_Struct ** surface = g_surface->getRegion(0)->getRegionData();
   int numx = plane->numX();
   int numy = plane->numY();
   for ( int i = 0; i < numy; i++ )
@@ -1923,7 +1911,7 @@ void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
   float min = 3;
   float x_dis, y_dis;
 
-  Vertex_Struct ** surface = visualization->getBaseSurface();
+  Vertex_Struct ** surface = g_surface->getRegion(0)->getRegionData();
   for ( int i = 0; i < numy; i++ )
     for ( int j = 0; j < numx; j++ ) {
       x_dis = (surface[i][j * 2].Texcoord[1] - u)*
@@ -1949,7 +1937,7 @@ void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
 
 void nmg_Graphics_Implementation::initializeTextures(void)
 {
-    int i;
+  int i;
   //fprintf(stderr, "initializing textures\n");
 
   for (i = 0; i < N_TEX; i++) {
@@ -2373,10 +2361,9 @@ void nmg_Graphics_Implementation::setDiffusePercent (float d) {
   causeGridRedraw();
 }
 
-void nmg_Graphics_Implementation::setSurfaceAlpha (float a) {
+void nmg_Graphics_Implementation::setSurfaceAlpha (float a, int region) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setSurfaceAlpha().\n");
-  g_surface_alpha = a;
-  causeGridRedraw();
+  g_surface->setAlpha(a, region);
 }
 
 void nmg_Graphics_Implementation::setSpecularColor (float s) {
@@ -2390,18 +2377,14 @@ void nmg_Graphics_Implementation::setSphereScale (float s) {
   g_sphere_scale = s;
 }
 
-void nmg_Graphics_Implementation::setTesselationStride (int s) {
+void nmg_Graphics_Implementation::setTesselationStride (int s, int region) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setTesselationStride(%d).\n", s);
 
-  g_stride = s;
-
-  // Destroy the old triangle strips, then rebuilt the correct number
-  // of new ones.
-  causeGridRebuild();
+  g_surface->setStride(s, region);
 }
 
 void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
-	TextureTransformMode xm) {
+	TextureTransformMode xm, int region) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setTextureMode().\n");
 
   switch (m) {
@@ -2464,6 +2447,9 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
 //fprintf(stderr, "nmg_Graphics_Implementation:  entering REMOTE_DATA mode.\n");
       g_texture_mode = GL_TEXTURE_2D;
       break;
+    case VISUALIZATION:
+        g_texture_mode = GL_TEXTURE_2D;
+        break;
     default:
       fprintf(stderr, "nmg_Graphics_Implementation::setTextureMode:  "
                       "Unknown texture mode %d.\n", m);
@@ -2473,6 +2459,8 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
   switch (xm) {
     case RULERGRID_COORD:
 //    fprintf(stderr, "nmg_Graphics_Implementation: RULERGRID_COORD mode\n");
+      break;
+    case VIZTEX_COORD:
       break;
     case REGISTRATION_COORD:
 //    fprintf(stderr, "nmg_Graphics_Implementation: REGISTRATION_COORD mode\n");
@@ -2508,7 +2496,9 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
   g_texture_displayed = m;
   g_texture_transform_mode = xm;
 
-  causeGridRedraw();
+  g_surface->setTextureDisplayed(m, region);
+  g_surface->setTextureMode(g_texture_mode, region);
+  g_surface->setTextureTransformMode(xm, region);
 }
 
 void nmg_Graphics_Implementation::setTextureScale (float f) {
@@ -2750,46 +2740,59 @@ void nmg_Graphics_Implementation::createScreenImage
   }
 }
 
-void nmg_Graphics_Implementation::chooseVisualization(int viz_type) 
-{
-	float min = visualization->getMinHeight();
-	float max = visualization->getMaxHeight();
-	float alpha = visualization->getAlpha();
-	delete visualization;
-	visualization = create_new_visualization(viz_type, d_dataset);
-
-	nmb_PlaneSelection planes;  planes.lookup(d_dataset);
-	visualization->initVertexArrays(d_dataset->inputGrid->numX(),
-                                        d_dataset->inputGrid->numY());
-	visualization->setControlPlane(planes.viz);
-	visualization->setMinHeight(min);
-	visualization->setMaxHeight(max);
-	visualization->setAlpha(alpha);
-}
-
-void nmg_Graphics_Implementation::setVisualizationMinHeight(float viz_min) 
-{
-	visualization->setMinHeight(viz_min);
-	causeGridRebuild();
-}
-
-void nmg_Graphics_Implementation::setVisualizationMaxHeight(float viz_max) 
-{
-	visualization->setMaxHeight(viz_max);
-	causeGridRebuild();
-}
-
-void nmg_Graphics_Implementation::setVisualizationAlpha(float viz_alpha) 
-{
-	visualization->setAlpha(viz_alpha);
-	causeGridRebuild();
-}
-
 void nmg_Graphics_Implementation::setViztexScale (float s) {
   //fprintf(stderr, "nmg_Graphics_Implementation::setViztexScale().\n");
   g_viztex_scale = s;
   //causeGridRedraw();
 }
+
+void nmg_Graphics_Implementation::setRegionMaskHeight (float min_height,
+                                                       float max_height,
+                                                       int region) 
+{
+    g_surface->deriveMaskPlane(min_height, max_height, region);
+}
+
+int nmg_Graphics_Implementation::createRegion()
+{
+    return g_surface->createNewRegion();
+}
+
+void nmg_Graphics_Implementation::destroyRegion(int region)
+{
+    g_surface->destroyRegion(region);
+}
+
+void nmg_Graphics_Implementation::lockAlpha(vrpn_bool lock, int region)
+{
+    g_surface->lockAlpha(lock, region);
+}
+
+void nmg_Graphics_Implementation::lockFilledPolygons(vrpn_bool lock, int region)
+{
+    g_surface->lockFilledPolygons(lock, region);
+}
+
+void nmg_Graphics_Implementation::lockTextureDisplayed(vrpn_bool lock, int region)
+{
+    g_surface->lockTextureDisplayed(lock, region);
+}
+
+void nmg_Graphics_Implementation::lockTextureMode(vrpn_bool lock, int region)
+{
+    g_surface->lockTextureMode(lock, region);
+}
+
+void nmg_Graphics_Implementation::lockTextureTransformMode(vrpn_bool lock, int region)
+{
+    g_surface->lockTextureTransformMode(lock, region);
+}
+
+void nmg_Graphics_Implementation::lockStride(vrpn_bool lock, int region)
+{
+    g_surface->lockStride(lock, region);
+}
+
 
 void nmg_Graphics_Implementation::getLightDirection (q_vec_type * v) const {
 //fprintf(stderr, "nmg_Graphics_Implementation::getLightDirection().\n");
@@ -3017,9 +3020,10 @@ int nmg_Graphics_Implementation::handle_enableFilledPolygons
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int value;
+  int region;
 
-  CHECKF(it->decode_enableFilledPolygons(p.buffer, &value), "handle_enableFilledPolygons");
-  it->enableFilledPolygons(value);
+  CHECKF(it->decode_enableFilledPolygons(p.buffer, &value, &region), "handle_enableFilledPolygons");
+  it->enableFilledPolygons(value, region);
   return 0;
 }
 
@@ -3321,25 +3325,10 @@ int nmg_Graphics_Implementation::handle_setOpacityPlaneName (void * userdata,
   return 0;
 }
 
-// static
-int nmg_Graphics_Implementation::handle_setTransparentPlaneName (void * userdata,
-							     vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  it->setTransparentPlaneName(p.buffer);
-  return 0;
-}
-
 int nmg_Graphics_Implementation::handle_setMaskPlaneName (void * userdata,
 							     vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   it->setMaskPlaneName(p.buffer);
-  return 0;
-}
-
-int nmg_Graphics_Implementation::handle_setVizPlaneName (void * userdata,
-							     vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  it->setVizPlaneName(p.buffer);
   return 0;
 }
 
@@ -3352,6 +3341,17 @@ int nmg_Graphics_Implementation::handle_setHeightPlaneName (void * userdata,
   return 0;
 }
 
+int nmg_Graphics_Implementation::handle_setRegionControlPlaneName (void * userdata,
+                                                    vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  char *name;
+  int region;
+
+  CHECKF(it->decode_setRegionControlPlaneName(p.buffer, &name, &region), 
+      "handle_setRegionControlPlaneName");
+  it->setRegionControlPlaneName(name, region);
+  return 0;
+}
 
 // static
 int nmg_Graphics_Implementation::handle_setMinColor
@@ -3500,9 +3500,10 @@ int nmg_Graphics_Implementation::handle_setSurfaceAlpha
                                  (void * userdata, vrpn_HANDLERPARAM p) {
    nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
    float surface_alpha;
+   int region;
 
-   CHECKF(it->decode_setSurfaceAlpha(p.buffer, &surface_alpha), "handle_setSurfaceAlpha");
-   it->setSurfaceAlpha(surface_alpha);
+   CHECKF(it->decode_setSurfaceAlpha(p.buffer, &surface_alpha, &region), "handle_setSurfaceAlpha");
+   it->setSurfaceAlpha(surface_alpha, region);
    return 0;
 }
 
@@ -3532,10 +3533,10 @@ int nmg_Graphics_Implementation::handle_setSphereScale
 int nmg_Graphics_Implementation::handle_setTesselationStride
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  int stride;
+  int stride, region;
 
-  CHECKF(it->decode_setTesselationStride(p.buffer, &stride), "handle_setTesselationStride");
-  it->setTesselationStride(stride);
+  CHECKF(it->decode_setTesselationStride(p.buffer, &stride, &region), "handle_setTesselationStride");
+  it->setTesselationStride(stride, region);
   return 0;
 }
 
@@ -3545,9 +3546,10 @@ int nmg_Graphics_Implementation::handle_setTextureMode
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   TextureMode m;
   TextureTransformMode xm;
+  int region;
 
-  CHECKF(it->decode_setTextureMode(p.buffer, &m, &xm), "handle_setTextureMode");
-  it->setTextureMode(m, xm);
+  CHECKF(it->decode_setTextureMode(p.buffer, &m, &xm, &region), "handle_setTextureMode");
+  it->setTextureMode(m, xm, region);
   return 0;
 }
 
@@ -4107,67 +4109,6 @@ int nmg_Graphics_Implementation::handle_createScreenImage
    return 0;
 }
 
-//Switch visualizations
-int nmg_Graphics_Implementation::handle_chooseVisualization
-(
-   void              *userdata,
-   vrpn_HANDLERPARAM  p
-)
-{
-   int viz_type;
-
-   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
-   it->decode_chooseVisualization(p.buffer, &viz_type);
-   it->chooseVisualization(viz_type);
-
-   return 0;
-}
-
-int nmg_Graphics_Implementation::handle_setVisualizationMinHeight
-(
-   void              *userdata,
-   vrpn_HANDLERPARAM  p
-)
-{
-   float viz_min;
-
-   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
-   it->decode_setVisualizationMinHeight(p.buffer, &viz_min);
-   it->setVisualizationMinHeight(viz_min);
-
-   return 0;
-}
-
-int nmg_Graphics_Implementation::handle_setVisualizationMaxHeight
-(
-   void              *userdata,
-   vrpn_HANDLERPARAM  p
-)
-{
-   float viz_max;
-
-   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
-   it->decode_setVisualizationMaxHeight(p.buffer, &viz_max);
-   it->setVisualizationMaxHeight(viz_max);
-
-   return 0;
-}
-
-int nmg_Graphics_Implementation::handle_setVisualizationAlpha
-(
-   void              *userdata,
-   vrpn_HANDLERPARAM  p
-)
-{
-   float viz_alpha;
-
-   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
-   it->decode_setVisualizationAlpha(p.buffer, &viz_alpha);
-   it->setVisualizationMaxHeight(viz_alpha);
-
-   return 0;
-}
-
 // static
 int nmg_Graphics_Implementation::handle_setViztexScale
 (
@@ -4180,5 +4121,121 @@ int nmg_Graphics_Implementation::handle_setViztexScale
 
   CHECKF(it->decode_setViztexScale(p.buffer, &scale), "handle_setViztexScale");
   it->setViztexScale(scale);
+  return 0;
+}
+
+
+int nmg_Graphics_Implementation::handle_setRegionMaskHeight
+(
+    void * userdata, 
+    vrpn_HANDLERPARAM p
+) 
+{
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float min_height, max_height;
+  int region;
+
+  CHECKF(it->decode_setRegionMaskHeight(p.buffer, &min_height, &max_height, &region), 
+      "handle_setRegionMaskHeight");
+  it->setRegionMaskHeight(min_height, max_height, region);
+  return 0;
+}
+
+int nmg_Graphics_Implementation::handle_createRegion
+(
+    void * userdata, 
+    vrpn_HANDLERPARAM p
+) 
+{
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->createRegion();
+  return 0;
+}
+
+int nmg_Graphics_Implementation::handle_destroyRegion
+(
+    void * userdata, 
+    vrpn_HANDLERPARAM p
+) 
+{
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  int region;
+
+  CHECKF(it->decode_destroyRegion(p.buffer, &region), 
+      "handle_destroyRegion");
+  it->destroyRegion(region);
+  return 0;
+}
+
+int nmg_Graphics_Implementation::handle_lockAlpha(void *userdata, vrpn_HANDLERPARAM p)
+{
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  vrpn_bool lock;
+  int region;
+
+  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
+      "handle_lockAlpha");
+  it->lockAlpha(lock, region);
+  return 0;
+}
+
+int nmg_Graphics_Implementation::handle_lockFilledPolygons(void *userdata, vrpn_HANDLERPARAM p)
+{
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  vrpn_bool lock;
+  int region;
+
+  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
+      "handle_lockFilledPolygons");
+  it->lockFilledPolygons(lock, region);
+  return 0;
+}
+
+int nmg_Graphics_Implementation::handle_lockStride(void *userdata, vrpn_HANDLERPARAM p)
+{
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  vrpn_bool lock;
+  int region;
+
+  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
+      "handle_lockStride");
+  it->lockStride(lock, region);
+  return 0;
+}
+
+int nmg_Graphics_Implementation::handle_lockTextureDisplayed(void *userdata, vrpn_HANDLERPARAM p)
+{
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  vrpn_bool lock;
+  int region;
+
+  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
+      "handle_lockTextureDisplayed");
+  it->lockTextureDisplayed(lock, region);
+  return 0;
+}
+
+int nmg_Graphics_Implementation::handle_lockTextureMode(void *userdata, vrpn_HANDLERPARAM p)
+{
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  vrpn_bool lock;
+  int region;
+
+  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
+      "handle_lockTextureMode");
+  it->lockTextureMode(lock, region);
+  return 0;
+}
+
+int nmg_Graphics_Implementation::handle_lockTextureTransformMode(void *userdata, vrpn_HANDLERPARAM p)
+{
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  vrpn_bool lock;
+  int region;
+
+  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
+      "handle_lockTextureTransformMode");
+  it->lockTextureTransformMode(lock, region);
   return 0;
 }

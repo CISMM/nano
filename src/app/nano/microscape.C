@@ -90,7 +90,6 @@ pid_t getpid();
 #include <nmg_RenderServer.h>
 #include <nmg_RenderClient.h>
 #include <nmg_GraphicsTimer.h>
-#include <nmg_Visualization.h>
 
 // ui
 #include <ModFile.h>
@@ -756,13 +755,14 @@ Tclvar_string newScreenImageFileName("screenImage_filename", "");
 
 //-----------------------------------------------------------------
 /// These variables are for controlling visualizations
+bool created_region = false;
 Tclvar_int		viz_choice("viz_choice",0, handle_viz_change);
 Tclvar_float	viz_max_limit("viz_max_limit",1);
 Tclvar_float	viz_min_limit("viz_min_limit",0);
 Tclvar_float	viz_max("viz_max",1, handle_viz_max_change);
 Tclvar_float	viz_min("viz_min",0, handle_viz_min_change);
 Tclvar_float	viz_alpha("viz_alpha",0.5, handle_viz_alpha_change);
-
+Tclvar_string   viz_comes_from("viz_comes_from", "", handle_viz_dataset_change);
 //Probably should make all of these TclNet's
 TclNet_float    viztex_scale ("viztex_scale", 500);
 
@@ -4130,48 +4130,111 @@ static void handle_analyze_shape(vrpn_int32, void *)
     analyze_shape = 0;
 }
 
+int viz_region = 0;
 static void handle_viz_change(vrpn_int32, void *)
-{
-    graphics->chooseVisualization(viz_choice);
-    graphics->causeGridRebuild();
+{    
+    if (viz_choice == 0) {       
+        if (created_region) {
+            graphics->destroyRegion(viz_region);
+            created_region = false;
+        }
+        viz_region = 0;
+    } else {
+        graphics->setRegionControlPlaneName("none", 0);
+        if (!created_region) {
+            viz_region = graphics->createRegion();
+            created_region = true;
+        }  
+    }
+
+    graphics->setRegionControlPlaneName(viz_comes_from.string(), viz_region);
+    graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);    
+    switch(viz_choice) {
+    case 0:
+        break;
+    case 1:
+        //Transparency case, so lock alpha
+        graphics->lockAlpha(VRPN_TRUE, viz_region);
+
+        //Unlock everything else
+        graphics->lockFilledPolygons(VRPN_FALSE, viz_region);
+        graphics->lockStride(VRPN_FALSE, viz_region);
+        graphics->lockTextureDisplayed(VRPN_FALSE, viz_region);
+        graphics->lockTextureMode(VRPN_FALSE, viz_region);
+        graphics->lockTextureTransformMode(VRPN_FALSE, viz_region);
+        
+        graphics->setSurfaceAlpha(viz_alpha, viz_region);
+        break;
+    case 2:
+        //Wireframe, so lock the stride and polygon filling
+        graphics->lockFilledPolygons(VRPN_TRUE, viz_region);
+        graphics->lockStride(VRPN_TRUE, viz_region);
+        
+        //Unlock everything else
+        graphics->lockAlpha(VRPN_FALSE, viz_region);
+        graphics->lockTextureDisplayed(VRPN_FALSE, viz_region);
+        graphics->lockTextureMode(VRPN_FALSE, viz_region);
+        graphics->lockTextureTransformMode(VRPN_FALSE, viz_region);
+        
+        graphics->enableFilledPolygons(VRPN_FALSE, viz_region);
+        graphics->setTesselationStride(5, viz_region);
+        break;
+    case 3:
+        //Texture case, so lock all texture control variables
+        graphics->lockTextureDisplayed(VRPN_TRUE, viz_region);
+        graphics->lockTextureMode(VRPN_TRUE, viz_region);
+        graphics->lockTextureTransformMode(VRPN_TRUE, viz_region);
+
+        //Unlock everything else
+        graphics->lockAlpha(VRPN_FALSE, viz_region);
+        graphics->lockFilledPolygons(VRPN_FALSE, viz_region);
+        graphics->lockStride(VRPN_FALSE, viz_region);
+        
+        graphics->setTextureMode(nmg_Graphics::VISUALIZATION,
+                                 nmg_Graphics::VIZTEX_COORD,
+                                 viz_region);
+        break;
+    default:
+        break;
+    };
 }
 
 static void handle_viz_min_change(vrpn_float64, void *)
 {
-    graphics->setVisualizationMinHeight(viz_min);
+    graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);
 }
 
 static void handle_viz_max_change(vrpn_float64, void *)
 {
-    graphics->setVisualizationMaxHeight(viz_max);
+    graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);
 }
 
 static void handle_viz_alpha_change(vrpn_float64, void *)
 {
-    graphics->setVisualizationAlpha(viz_alpha);
+    if (viz_choice == 1) {
+        graphics->setSurfaceAlpha(viz_alpha, viz_region);
+    }
 }
 
 static void handle_viz_dataset_change(const char *, void *)
 {
     BCPlane * plane = dataset->inputGrid->getPlaneByName
-        (dataset->vizPlaneName->string());
+        (viz_comes_from.string());
     
     if (plane != (BCPlane*)NULL) {
-	viz_min_limit = plane->minValue();
-	viz_max_limit = plane->maxValue();
-	viz_min = plane->minValue();
-	viz_max = plane->maxValue();
+	    viz_min_limit = plane->minValue();
+	    viz_max_limit = plane->maxValue();
+	    viz_min = plane->minValue();
+	    viz_max = plane->maxValue();
     }
     else {
-	viz_min_limit = 0;
-	viz_max_limit = 1;
-	viz_min = 0;
-	viz_max = 1;
+	    viz_min_limit = 0;
+	    viz_max_limit = 1;
+	    viz_min = 0;
+	    viz_max = 1;
     }
-    
-    graphics->setVizPlaneName(dataset->vizPlaneName->string());
-    graphics->causeGridRebuild();
-    //graphics->causeGridRedraw();
+
+    graphics->setRegionControlPlaneName(viz_comes_from.string(), viz_region);
 }
 
 static void handle_viz_tex_new(const char *, void *) {
@@ -4393,12 +4456,6 @@ void setupCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
   ((Tclvar_string *) d->heightPlaneName)->addCallback
             (handle_z_dataset_change, m);
 
-  ((Tclvar_string *) d->vizPlaneName)->
-        initializeTcl("viz_comes_from");
-
-  ((Tclvar_string *) d->vizPlaneName)->addCallback
-            (handle_viz_dataset_change, m);
-
 }
 
 void teardownCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
@@ -4407,9 +4464,6 @@ void teardownCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
 
    ((Tclvar_string *) d->heightPlaneName)->removeCallback
              (handle_z_dataset_change, m);
-
-   ((Tclvar_string *) d->vizPlaneName)->removeCallback
-             (handle_viz_dataset_change, m);
 }
 
 void setupCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
@@ -6423,26 +6477,6 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     }
 
     if (graphics) {
-        //Make sure the current visualization choice is 
-        //0, which corresponds to normal opaque mode
-        //I wanted to be able to set the value here and
-        //have it be reflected in TCL but not trigger
-        //a callback, and this seems to be the only
-        //way to do that...
-        viz_choice.d_ignoreChange = VRPN_TRUE;
-        viz_min.d_ignoreChange = VRPN_TRUE;
-        viz_max.d_ignoreChange = VRPN_TRUE;
-        viz_min_limit.d_ignoreChange = VRPN_TRUE;
-        viz_max_limit.d_ignoreChange = VRPN_TRUE;
-        
-        viz_choice = 0;
-        viz_min = 0;
-        viz_max = 1;
-        viz_min_limit = 0;
-        viz_max_limit = 1;
-        graphics->chooseVisualization(viz_choice);
-        
-        
         // First time through graphics will be NULL. 
         graphics->changeDataset(new_dataset);
     }
