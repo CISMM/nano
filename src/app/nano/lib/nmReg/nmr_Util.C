@@ -30,7 +30,7 @@
 //static 
 int nmr_Util::computeResampleExtents(const nmb_Image &src,
                         const nmb_Image &target,
-                        nmr_ImageTransform &xform, int &min_i, int &min_j,
+                        nmb_ImageTransform &xform, int &min_i, int &min_j,
                         int &max_i, int &max_j)
 {
     /* approach: invert the transformation and find extrema by transforming
@@ -127,7 +127,7 @@ void nmr_Util::setRegionRelative(const nmb_Image &srcImage,
  */
 //static 
 void nmr_Util::createResampledImage(nmb_Image &targetImage,
-                        const nmr_ImageTransform &xform,
+                        const nmb_ImageTransform &xform,
                         nmb_Image &resampleImage)
 {
   int i,j;
@@ -168,7 +168,7 @@ void nmr_Util::createResampledImage(nmb_Image &targetImage,
 // static
 void nmr_Util::createResampledImageWithImageSpaceTransformation(
                         nmb_Image &targetImage,
-                        const nmr_ImageTransform &xform,
+                        const nmb_ImageTransform &xform,
                         nmb_Image &resampleImage)
 {
   int i,j;
@@ -180,7 +180,7 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
   double i_target, j_target; // pixel coordinates
   double value_target;
   double p_source_norm[4] = {0,0,0,1}; // normalized pixel coordinates
-  double p_target_norm[4];
+  double p_target_norm[4] = {0,0,0,1};
   double x_incr, y_incr;
 
   x_incr = 1.0/(double)w;
@@ -192,6 +192,7 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
 
   for (i = 0, i_center = 0.5*x_incr; i < w; i++, i_center += x_incr){
     for (j = 0, j_center = 0.5*y_incr; j < h; j++, j_center += y_incr){
+
       p_source_norm[0] = i_center;
       p_source_norm[1] = j_center;
       xform.transform(p_source_norm, p_target_norm);
@@ -222,6 +223,8 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
       } else {
           value_target = 0.0;
       }
+
+
       resampleImage.setValue(i,j, value_target);
     }
   }
@@ -245,7 +248,7 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
 //static 
 void nmr_Util::createResampledImage(const nmb_Image &targetImage,
                         const nmb_Image &sourceImage,
-                        const nmr_ImageTransform &xform,
+                        const nmb_ImageTransform &xform,
                         nmb_Image &resampleImage)
 {
   int i,j;

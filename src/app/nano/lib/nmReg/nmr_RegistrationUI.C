@@ -162,7 +162,7 @@ void nmr_RegistrationUI::handleRegistrationChange
        * ****************************************************************/
       //  first invert the transformation matrix that we get from the image
       projectionImage->getWorldToImageTransform(projImFromProjWorld_matrix);
-      nmr_ImageTransformAffine projWorldFromProjImage(4,4);
+      nmb_ImageTransformAffine projWorldFromProjImage(4,4);
       projWorldFromProjImage.setMatrix(projImFromProjWorld_matrix);
       projWorldFromProjImage.invert();
       d_ProjWorldFromTopoWorldTransform = d_ProjImageFromTopoWorldTransform;
