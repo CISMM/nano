@@ -416,8 +416,8 @@ int mode_display (void *) {
      //case USER_COMB_MODE:        message = (char *)"Comb Mode";           break;
   case USER_PLANE_MODE:       message = (char *)"Touch Stored Mode"; break;
   case USER_PLANEL_MODE:      message = (char *)"Touch & Prepare to Modify Mode"; break;
-  case USER_SCALE_UP_MODE:    message = (char *)"Scale Up Mode";       break;
-  case USER_SCALE_DOWN_MODE:  message = (char *)"Scale Down Mode";     break;
+  case USER_SCALE_UP_MODE:    message = (char *)"Scale Mode";       break;
+  case USER_SCALE_DOWN_MODE:  message = (char *)"Scale Mode";     break;
   case USER_SERVO_MODE:       message = (char *)"Select Mode";         break;
   case USER_GRAB_MODE:        message = (char *)"Grab Mode";     break;
   case USER_MEAS_MOVE_MODE:   message = (char *)"Measure Line Mode"; break;
