@@ -852,7 +852,9 @@ int make_region_box(float center_x,float center_y, float width,float height,
         glRotatef(angle, 0.0,0.0,1.0);
         glTranslatef(-center_x, -center_y, 0);
         
-        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_HEIGHT)) {
+        if ((highlight_mask & REG_SIZE)|(highlight_mask & REG_PREP_SIZE)|
+            (highlight_mask & REG_SIZE_HEIGHT) |
+            (highlight_mask & REG_PREP_SIZE_HEIGHT)) {
             glColor4fv(highlight_color);
         } else {
             glColor4fv(normal_color);
@@ -881,7 +883,8 @@ int make_region_box(float center_x,float center_y, float width,float height,
 	glEnd();
 
         // Central target
-        if ((highlight_mask & REG_TRANSLATE)) {
+        if ((highlight_mask & REG_TRANSLATE) | 
+            (highlight_mask & REG_PREP_TRANSLATE)) {
             glColor4fv(highlight_color);
         } else {
             glColor4fv(normal_color);
@@ -906,7 +909,9 @@ int make_region_box(float center_x,float center_y, float width,float height,
 	glEnd();
 
 
-        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_WIDTH)) {
+        if ((highlight_mask & REG_SIZE)|(highlight_mask & REG_PREP_SIZE)|
+            (highlight_mask & REG_SIZE_WIDTH)|
+            (highlight_mask & REG_PREP_SIZE_WIDTH)) {
             glColor4fv(highlight_color);
         } else {
             glColor4fv(normal_color);
@@ -935,7 +940,8 @@ int make_region_box(float center_x,float center_y, float width,float height,
 	glEnd();
 
         // Central target
-        if ((highlight_mask & REG_TRANSLATE)) {
+        if ((highlight_mask & REG_TRANSLATE) | 
+            (highlight_mask & REG_PREP_TRANSLATE)) {
             glColor4fv(highlight_color);
         } else {
             glColor4fv(normal_color);
@@ -960,7 +966,9 @@ int make_region_box(float center_x,float center_y, float width,float height,
         VERBOSE(20, "          glEnd()");
 	glEnd();
 
-        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_HEIGHT)) {
+        if ((highlight_mask & REG_SIZE)|(highlight_mask & REG_PREP_SIZE)|
+            (highlight_mask & REG_SIZE_HEIGHT) |
+            (highlight_mask & REG_PREP_SIZE_HEIGHT)) {
             glColor4fv(highlight_color);
         } else {
             glColor4fv(normal_color);
@@ -989,7 +997,8 @@ int make_region_box(float center_x,float center_y, float width,float height,
 	glEnd();
 
         // Central target
-        if ((highlight_mask & REG_TRANSLATE)) {
+        if ((highlight_mask & REG_TRANSLATE) | 
+            (highlight_mask & REG_PREP_TRANSLATE)) {
             glColor4fv(highlight_color);
         } else {
             glColor4fv(normal_color);
@@ -1014,7 +1023,9 @@ int make_region_box(float center_x,float center_y, float width,float height,
         VERBOSE(20, "          glEnd()");
 	glEnd();
 
-        if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_WIDTH)) {
+        if ((highlight_mask & REG_SIZE)|(highlight_mask & REG_PREP_SIZE)|
+            (highlight_mask & REG_SIZE_WIDTH)|
+            (highlight_mask & REG_PREP_SIZE_WIDTH)) {
             glColor4fv(highlight_color);
         } else {
             glColor4fv(normal_color);
@@ -1043,7 +1054,8 @@ int make_region_box(float center_x,float center_y, float width,float height,
 	glEnd();
   
         // Central target
-        if ((highlight_mask & REG_TRANSLATE)) {
+        if ((highlight_mask & REG_TRANSLATE) | 
+            (highlight_mask & REG_PREP_TRANSLATE)) {
             glColor4fv(highlight_color);
         } else {
             glColor4fv(normal_color);

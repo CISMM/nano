@@ -31,6 +31,7 @@
 #include "globjects.h"  // for replaceDefaultObjects()
 #include "graphics_globals.h"
 #include "spm_gl.h"  
+#include "nmg_Globals.h"
 
 #include "Timer.h"
 
@@ -60,7 +61,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   : nmg_Graphics (connection, "nmg Graphics Implementation GL"),
     d_dataset (data),
     d_displayIndexList (new v_index [NUM_USERS]),
-    d_textureTransformMode(RULERGRID_COORD)
+    d_textureTransformMode(RULERGRID_COORD),
+    d_last_region(-1)
 {
     if (d_dataset == NULL) {
         grid_size_x = 12;
@@ -2708,17 +2710,35 @@ void nmg_Graphics_Implementation::positionRegionBox
   (float center_x,float center_y, float width,float height, float angle, 
    int highlight_mask) {
 //fprintf(stderr, "nmg_Graphics_Implementation::positionRegionBox().\n");
-    static int region = -1;
 
+    // Always draw the icon representing the current region. 
     make_region_box(center_x, center_y, width, height, angle, highlight_mask);
 
-    if (region == -1) {
-        region = g_surface->createNewRegion();
-        g_surface->associateStride(VRPN_FALSE, region);
+    // If we don't have a region yet, make one. 
+    if (d_last_region == -1) {
+        d_last_region = g_surface->createNewRegion();
+        g_surface->associateStride(VRPN_FALSE, d_last_region);
         setTesselationStride(5, 1);
+        // Always derive the mask plane the first time. 
+        g_surface->deriveMaskPlane(center_x, center_y, width, 
+                                   height, angle, d_last_region);    
+    } else {
+        // Don't derive a mask plane while dimensions are changing.
+        // Only derive it if user has released widget. 
+        // And g_surface knows not to re-derive the same surface. 
+        // NOTE: maybe not quite the effect we want, since surface
+        // doesn't re-derive until user moves away from center or
+        // edge they were moving. Better to re-derive when they
+        // release phantom button?
+        if (highlight_mask == REG_NULL || 
+            highlight_mask == REG_PREP_TRANSLATE || 
+            highlight_mask == REG_PREP_SIZE_WIDTH || 
+            highlight_mask == REG_PREP_SIZE_HEIGHT || 
+            highlight_mask == REG_PREP_SIZE) {
+            g_surface->deriveMaskPlane(center_x, center_y, width, 
+                                       height, angle, d_last_region);    
+        }
     }
-
-    g_surface->deriveMaskPlane(center_x, center_y, width, height, angle, region);    
 }
 
 void nmg_Graphics_Implementation::positionSweepLine (const PointType topL,

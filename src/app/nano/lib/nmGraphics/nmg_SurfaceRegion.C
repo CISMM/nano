@@ -21,11 +21,7 @@
 #define M_PI		3.14159265358979323846
 #endif
 
-#ifdef FLOW
-#define VERBOSECHECK(level)	if (spm_graphics_verbosity >= level) ;
-#else
 #define VERBOSECHECK(level)	if (spm_graphics_verbosity >= level) report_gl_errors();
-#endif
 
 ////////////////////////////////////////////////////////////
 //    Function: nmg_SurfaceRegion::Constructor

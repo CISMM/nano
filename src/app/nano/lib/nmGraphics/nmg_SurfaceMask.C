@@ -25,8 +25,9 @@ nmg_SurfaceMask()
     d_height = 0;
     d_width = 0;
     
-    d_centerX = 0;
-    d_centerY = 0;
+    // -1 so different from default in interaction.c
+    d_centerX = -1;
+    d_centerY = -1;
     d_boxWidth = 0;
     d_boxHeight = 0;
     d_boxAngle = 0;
@@ -330,18 +331,20 @@ deriveBox(nmb_Dataset *dataset)
     d_oldDerivation->clear();
 
     double w_x, w_y;
-
+    //d_empty = true;
     for(int y = 0; y < dataset->inputGrid->numY(); y++) {
         for(int x = 0; x < dataset->inputGrid->numX(); x++) {
             //Transform row,col in grid into world coordinates
             dataset->inputGrid->gridToWorld(x,y,w_x,w_y);
             // Find out if that coord is within width/height of 
             // region box. Helper functions handle rotation.
+            // What a simple, slow method. Should rasterize!
             if ((xform_width(w_x-d_centerX, w_y-d_centerY, 
                              Q_DEG_TO_RAD(d_boxAngle)) < d_boxWidth)&&
                 (xform_height(w_x-d_centerX, w_y-d_centerY, 
                               Q_DEG_TO_RAD(d_boxAngle)) < d_boxHeight)){
                 d_oldDerivation->addValue(x,y,1);
+                //d_empty = false;
             }                    
         }
     }

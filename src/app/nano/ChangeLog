@@ -1,3 +1,9 @@
+2001-07-30  Aron Helser  <helser@cs.unc.edu>
+
+	* interaction.c (doRegion): Changes highlight param sent to
+	graphics, allows graphics to know when user has let go of phantom
+	button.
+
 2001-07-29  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* microscape.c:  include RobotControl.h only if building 

@@ -1,3 +1,21 @@
+2001-07-30  Aron Helser  <helser@cs.unc.edu>
+
+	* nmg_SurfaceMask.C (nmg_SurfaceMask): Initialization change so
+	initial region mode box is empty instead of whole surface. 
+
+	* nmg_GraphicsImpl.C (positionRegionBox): Only re-calculate region
+	when user is done moving box icon - communicated from UI with
+	highlight mode enum changes. 
+
+	* nmg_Globals.h (RegMode): Add members to region box highlight
+	mode enum. 
+
+	* globjects.c (make_region_box): Follow changes in highlight
+	mode. 
+
+	* nmg_SurfaceRegion.C (VERBOSECHECK): Removed FLOW conditional.
+
+
 2001-07-26  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C (createRealignTextures): Colormapping

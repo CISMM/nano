@@ -11,8 +11,11 @@ class nmg_Graphics;
 
 extern nmg_Graphics * graphics;
 
-enum RegMode { REG_NULL = 0, REG_TRANSLATE = 1, REG_SIZE = 2, 
-               REG_SIZE_WIDTH = 4, REG_SIZE_HEIGHT = 8 } ; 
+enum RegMode { REG_NULL = 0, 
+               REG_TRANSLATE = 1, REG_PREP_TRANSLATE = 2, 
+               REG_SIZE = 4, REG_PREP_SIZE = 8, 
+               REG_SIZE_WIDTH = 16, REG_PREP_SIZE_WIDTH = 32, 
+               REG_SIZE_HEIGHT = 64, REG_PREP_SIZE_HEIGHT = 128 } ; 
 
 #endif  // NMG_GLOBALS_H
 

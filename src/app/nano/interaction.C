@@ -3219,7 +3219,7 @@ doRegion(int whichUser, int userEvent)
                      region_angle) < 0.2*(region_width))&&
         (xform_height(handx-region_center_x, handy-region_center_y, 
                       region_angle) < 0.2*(region_height))){
-        prep_region_drag_mode = REG_TRANSLATE;
+        prep_region_drag_mode = REG_PREP_TRANSLATE;
     } else if ((xform_height(handx - region_center_x, 
                              handy - region_center_y, 
                              region_angle) < 1.03*region_height) && 
@@ -3231,7 +3231,7 @@ doRegion(int whichUser, int userEvent)
                              region_angle) < 1.1*(region_width)))
                ) {
         // near width edge, so resize those edges. 
-        prep_region_drag_mode = REG_SIZE_WIDTH;
+        prep_region_drag_mode = REG_PREP_SIZE_WIDTH;
 
     } else if ((xform_width(handx - region_center_x, 
                             handy - region_center_y, 
@@ -3244,7 +3244,7 @@ doRegion(int whichUser, int userEvent)
                               region_angle) < 1.1*(region_height)))
                ) {
         // near height edge, so resize those edges. 
-        prep_region_drag_mode = REG_SIZE_HEIGHT;
+        prep_region_drag_mode = REG_PREP_SIZE_HEIGHT;
         
     } else {
         prep_region_drag_mode = REG_NULL;
@@ -3254,17 +3254,18 @@ doRegion(int whichUser, int userEvent)
     switch ( userEvent ) {
 
     case PRESS_EVENT:	
-        region_drag_mode = prep_region_drag_mode;
-        switch(region_drag_mode) {
-        case REG_TRANSLATE:
+        switch(prep_region_drag_mode) {
+        case REG_PREP_TRANSLATE:
             region_center_x = handx;
             region_center_y = handy;
             region_base_tracker_angle = region_angle + hand_angle;
+            region_drag_mode = REG_TRANSLATE;
             break;
         case REG_NULL:
             // If we're not near a feature when we click, switch
             // to creating and sizing a new region. 
-            region_drag_mode = prep_region_drag_mode = REG_SIZE;
+            region_drag_mode = REG_SIZE;
+            prep_region_drag_mode = REG_PREP_SIZE;
             // reset region size for dragging. 
             region_center_x = handx;
             region_center_y = handy;
@@ -3273,7 +3274,14 @@ doRegion(int whichUser, int userEvent)
             region_base_tracker_angle = hand_angle;
             region_angle = 0;
              break;
-        default:
+        case REG_PREP_SIZE_WIDTH:
+            region_drag_mode = REG_SIZE_WIDTH;
+            break;
+        case REG_PREP_SIZE_HEIGHT:
+            region_drag_mode = REG_SIZE_HEIGHT;
+            break;
+        case REG_PREP_SIZE:
+            region_drag_mode = REG_SIZE;
             break;
         }
         /*printf("doregion, trans %d, range %f, %f -> %f %f\n"
@@ -3316,7 +3324,7 @@ doRegion(int whichUser, int userEvent)
                                          handy - region_center_y,
                                          region_angle);
             // passed as param below, so we display highlight. 
-            prep_region_drag_mode = REG_SIZE;
+            prep_region_drag_mode = REG_PREP_SIZE;
             break;
         default:
             break;

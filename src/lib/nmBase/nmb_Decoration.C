@@ -174,7 +174,7 @@ void nmb_Decoration::addScrapeMark (PointType Top, PointType Bottom,
   // we will use this later to shift all scrape marks up by the same
   // height needed to make them all visible
   if (surface_z - Bottom[2] > scrapeMaxDepth) {
-     scrapeMaxDepth = surface_z - Bottom[2];
+     scrapeMaxDepth = (float)(surface_z - Bottom[2]);
   }
 
   // Add a scrapes indicator to the list

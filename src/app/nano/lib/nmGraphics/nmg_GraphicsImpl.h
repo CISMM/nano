@@ -244,6 +244,9 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     TextureTransformMode d_textureTransformMode;
 
+    /// Region ID for the region tool. 
+    int d_last_region;
+
     static int handle_resizeViewport (void *, vrpn_HANDLERPARAM);
     static int handle_loadRulergridImage (void *, vrpn_HANDLERPARAM);
 	static int handle_loadVizImage (void *, vrpn_HANDLERPARAM);

@@ -688,7 +688,7 @@ void CNT_IA::cnt_image_order(char *txtFile)
 
 	int x, y;
 	long id0, id1;
-	long max_id;
+	//long max_id;
 	double theta, dx, dy;
 	int i = 0;
 	int count = cnt_image_x * cnt_image_y;//my best guess as to what count should be
@@ -1031,7 +1031,8 @@ void CNT_IA::cnt_image_order(char *txtFile)
                 Z3D[i] = cnt_image[id0] + dz;
         }
 
-	double orient, height;
+	//double orient;
+        double height;
 	FILE *fp;
 	char detailsTxtFile[255];
 
