@@ -22,8 +22,13 @@ nmr_ObjectiveMI::nmr_ObjectiveMI():
   d_sigmaRefRef(1.0), d_sigmaTestTest(1.0),
   d_sigmaTest(1.0), d_sigmaRef(1.0),
   d_dimensionMode(REF_2D),
-  d_sampleMode(NMR_JITTERED),
+  d_samplePositionMode(NMR_JITTERED),
+  d_sampleRejectionCriterion(NMR_NO_SELECT),
   d_minSampleSqrGradientMagnitude(0.0),
+  d_numRefFeaturePoints(0),
+  d_xFeature(NULL),
+  d_yFeature(NULL),
+  d_maxDistanceToFeaturePoint(10),
   d_testValue(NULL),
   d_gradX_test(NULL), d_gradY_test(NULL),
   d_refValue(NULL),
@@ -36,6 +41,27 @@ nmr_ObjectiveMI::~nmr_ObjectiveMI()
   if (d_workspace) {
     delete [] d_workspace;
   }
+  vrpn_bool deleteFailed = vrpn_FALSE;
+  if (d_testValue) {
+    deleteFailed = deleteFailed && nmb_Image::deleteImage(d_testValue);
+  }
+  if (d_gradX_test) {
+    deleteFailed = deleteFailed && nmb_Image::deleteImage(d_gradX_test);
+  }
+  if (d_gradY_test) {
+    deleteFailed = deleteFailed && nmb_Image::deleteImage(d_gradY_test);
+  }
+  if (d_refValue) {
+    deleteFailed = deleteFailed && nmb_Image::deleteImage(d_refValue);
+  }
+  if (d_refZ) {
+    deleteFailed = deleteFailed && nmb_Image::deleteImage(d_refZ);
+  }
+  if (deleteFailed) {
+    fprintf(stderr, "nmr_ObjectiveMI: Warning: possible memory leak\n");
+  }
+  if (d_xFeature) delete [] d_xFeature;
+  if (d_yFeature) delete [] d_yFeature;
 }
 
 void nmr_ObjectiveMI::setDimensionMode(nmr_DimensionMode mode)
@@ -95,14 +121,34 @@ void nmr_ObjectiveMI::getSampleSizes(int &sizeA, int &sizeB)
   sizeB = d_sizeB;
 }
 
-void nmr_ObjectiveMI::setSampleMode(nmr_SampleMode mode)
+void nmr_ObjectiveMI::setSamplePositionMode(nmr_SamplePositionMode mode)
 {
-  d_sampleMode = mode;
+  d_samplePositionMode = mode;
+}
+
+void nmr_ObjectiveMI::setSampleRejectionCriterion(
+                         nmr_SampleRejectionCriterion crit)
+{
+  d_sampleRejectionCriterion = crit;
 }
 
 void nmr_ObjectiveMI::setMinSampleSqrGradientMagnitude(double mag)
 {
   d_minSampleSqrGradientMagnitude = mag;
+}
+
+void nmr_ObjectiveMI::setRefFeaturePoints(int numPnts, double *x, double *y)
+{
+  int i;
+  d_numRefFeaturePoints = numPnts;
+  if (d_xFeature) delete [] d_xFeature;
+  if (d_yFeature) delete [] d_yFeature;
+  d_xFeature = new double[numPnts];
+  d_yFeature = new double[numPnts];
+  for (i = 0; i < numPnts; i++) {
+    d_xFeature[i] = x[i];
+    d_yFeature[i] = y[i];
+  }
 }
 
 void nmr_ObjectiveMI::setCovariance(double sigmaRefRef, double sigmaTestTest)
@@ -140,6 +186,7 @@ void nmr_ObjectiveMI::getRefVariance(double &sigma)
 void nmr_ObjectiveMI::setReferenceValueImage(nmb_Image *ref) 
 {
   d_refValue = ref;
+  d_refValue->normalize();
   if (d_refValue) {
     // make a reasonable guess at what the initial variance should be
     // for the Parzen windowing
@@ -162,6 +209,7 @@ void nmr_ObjectiveMI::setTestValueImage(nmb_Image *test)
     d_gradY_test = NULL;
   }
   d_testValue = test;
+  d_testValue->normalize();
   if (d_testValue) {
     // make a reasonable guess at what the initial variance should be
     // for the Parzen windowing
@@ -215,14 +263,16 @@ double nmr_ObjectiveMI::value(double *testFromReferenceTransform)
                                transformPixelUnits);
   int error = 0;
   error = buildSampleA(d_refValue, d_testValue, d_gradX_test, d_gradY_test,
-               transformPixelUnits, d_sampleMode, 
+               transformPixelUnits, d_samplePositionMode, 
+               d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude,
                d_refZ);
   if (error) {
     fprintf(stderr, "nmr_ObjectiveMI::value: error: cannot acquire sample A\n");
   }
   error = buildSampleB(d_refValue, d_testValue, d_gradX_test, d_gradY_test,
-               transformPixelUnits, d_sampleMode, 
+               transformPixelUnits, d_samplePositionMode, 
+               d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude,
                d_refZ);
   if (error) {
@@ -244,14 +294,16 @@ void nmr_ObjectiveMI::gradient(double *testFromReferenceTransform,
                                transformPixelUnits);
   int error = 0;
   error = buildSampleA(d_refValue, d_testValue, d_gradX_test, d_gradY_test,
-               transformPixelUnits, d_sampleMode,
+               transformPixelUnits, d_samplePositionMode,
+               d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude, d_refZ);
   if (error) {
     fprintf(stderr, "nmr_ObjectiveMI::gradient:"
                     " error: cannot acquire sample A\n");
   }
   error = buildSampleB(d_refValue, d_testValue, d_gradX_test, d_gradY_test,
-               transformPixelUnits, d_sampleMode, 
+               transformPixelUnits, d_samplePositionMode, 
+               d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude, d_refZ);
   if (error) {
     fprintf(stderr, "nmr_ObjectiveMI::gradient:" 
@@ -286,7 +338,8 @@ void nmr_ObjectiveMI::valueAndGradient(double *testFromReferenceTransform,
                                transformPixelUnits);
   int error = 0;
   buildSampleA(d_refValue, d_testValue, d_gradX_test, d_gradY_test,
-               transformPixelUnits, d_sampleMode, 
+               transformPixelUnits, d_samplePositionMode, 
+               d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude, d_refZ);
   if (error) {
     fprintf(stderr, "nmr_ObjectiveMI::gradient:" 
@@ -294,7 +347,8 @@ void nmr_ObjectiveMI::valueAndGradient(double *testFromReferenceTransform,
   }
 
   buildSampleB(d_refValue, d_testValue, d_gradX_test, d_gradY_test,
-               transformPixelUnits, d_sampleMode, 
+               transformPixelUnits, d_samplePositionMode, 
+               d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude, d_refZ);
   if (error) {
     fprintf(stderr, "nmr_ObjectiveMI::gradient:"
@@ -322,7 +376,6 @@ void nmr_ObjectiveMI::valueAndGradient(double *testFromReferenceTransform,
   gradMI[3] = 0;    gradMI[7] = 0;    gradMI[11] = 0;   gradMI[15] = 1.0;
   convertTransformToImageUnits(gradMI, gradMI);
 
-  computeMutualInformation(valueMI);
 }
 
 int nmr_ObjectiveMI::buildSampleSets(double *user_transform)
@@ -340,13 +393,15 @@ int nmr_ObjectiveMI::buildSampleSets(double *user_transform)
   }
   int error = 0;
   error = buildSampleA(d_refValue, d_testValue, d_gradX_test, d_gradY_test,
-               transform, d_sampleMode,
+               transform, d_samplePositionMode,
+               d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude, d_refZ);
   if (error) {
     return -1;
   }
   error = buildSampleB(d_refValue, d_testValue, d_gradX_test, d_gradY_test,
-               transform, d_sampleMode,
+               transform, d_samplePositionMode,
+               d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude, d_refZ);
   if (error) {
     return -1;
@@ -379,7 +434,8 @@ int nmr_ObjectiveMI::buildSampleHelper(nmb_Image *ref, nmb_Image *test,
                      nmb_Image *grad_x_test,
                      nmb_Image *grad_y_test,
                      double *transform,
-                     nmr_SampleMode sampleMode,
+                     nmr_SamplePositionMode samplePositionMode,
+                     nmr_SampleRejectionCriterion sampleRejectionCriterion,
                      nmb_Image *ref_z,
        int numPoints, double *x_ref, double *y_ref, double *z_ref,
        double *x_test, double *y_test, double *val_ref, double *val_test,
@@ -442,13 +498,13 @@ int nmr_ObjectiveMI::buildSampleHelper(nmb_Image *ref, nmb_Image *test,
       }
       i = 0;
     }
-    if (sampleMode == NMR_RANDOM || sampleMode == NMR_GRADIENT_SELECT) {
+    if (samplePositionMode == NMR_RANDOM) {
       x = nmr_Util::sampleUniformDistribution(xmin_ref, xmax_ref);
       y = nmr_Util::sampleUniformDistribution(ymin_ref, ymax_ref);
-    } else if (sampleMode == NMR_REGULAR){
+    } else if (samplePositionMode == NMR_REGULAR){
       x = xmin_ref + x_incr*(i+0.5);
       y = ymin_ref + y_incr*(j+0.5);
-    } else if (sampleMode == NMR_JITTERED) {
+    } else if (samplePositionMode == NMR_JITTERED) {
       double min_x = xmin_ref + x_incr*i;
       double max_x = min_x + x_incr;
       double min_y = ymin_ref + y_incr*j;
@@ -472,16 +528,24 @@ int nmr_ObjectiveMI::buildSampleHelper(nmb_Image *ref, nmb_Image *test,
       dtest_dy[numPointsAcquired] =
                    grad_y_test->getValueInterpolated(x2,y2);
       vrpn_bool passedGradientTest = vrpn_TRUE;
+      vrpn_bool passedFeatureDistanceTest = vrpn_TRUE;
 
-      if (sampleMode == NMR_GRADIENT_SELECT && minSqrGradientMagnitude > 0) {
-        double mag = dtest_dx[numPointsAcquired]*dtest_dx[numPointsAcquired] +
+      if (sampleRejectionCriterion == NMR_GRADIENT_SELECT) {
+        if (minSqrGradientMagnitude > 0) {
+          double mag = dtest_dx[numPointsAcquired]*dtest_dx[numPointsAcquired] +
                      dtest_dy[numPointsAcquired]*dtest_dy[numPointsAcquired];
-        if (mag < minSqrGradientMagnitude) {
-           passedGradientTest = vrpn_FALSE;
+          if (mag < minSqrGradientMagnitude) {
+             passedGradientTest = vrpn_FALSE;
+          }
+        }
+      } else if (sampleRejectionCriterion == NMR_REF_FEATURE_DISTANCE_SELECT) {
+        double dist = distanceToNearestFeaturePoint(x, y);
+        if (dist > d_maxDistanceToFeaturePoint) {
+          passedFeatureDistanceTest = vrpn_FALSE;
         }
       }
 
-      if (passedGradientTest) {
+      if (passedGradientTest && passedFeatureDistanceTest) {
         x_ref[numPointsAcquired] = x;
         y_ref[numPointsAcquired] = y;
         z_ref[numPointsAcquired] = z;
@@ -526,13 +590,14 @@ int nmr_ObjectiveMI::buildSampleA(nmb_Image *ref, nmb_Image *test,
                      nmb_Image *grad_x_test, 
                      nmb_Image *grad_y_test,
                      double *transform,
-                     nmr_SampleMode sampleMode,
+                     nmr_SamplePositionMode samplePositionMode,
+                     nmr_SampleRejectionCriterion sampleRejCrit,
                      double minSqrGradientMagnitude,
                      nmb_Image *ref_z)
 
 {
   int result = buildSampleHelper(ref, test, grad_x_test, grad_y_test, 
-         transform, sampleMode, ref_z,
+         transform, samplePositionMode, sampleRejCrit, ref_z,
          d_sizeA, d_Ax_ref, d_Ay_ref, d_Az_ref, d_Ax_test, d_Ay_test,
          d_refValuesA, d_testValuesA, d_dTestValueA_dx, d_dTestValueA_dy,
          minSqrGradientMagnitude);
@@ -547,12 +612,13 @@ int nmr_ObjectiveMI::buildSampleB(nmb_Image *ref, nmb_Image *test,
                      nmb_Image *grad_x_test,       
                      nmb_Image *grad_y_test,
                      double *transform,
-                     nmr_SampleMode sampleMode,
+                     nmr_SamplePositionMode samplePositionMode,
+                     nmr_SampleRejectionCriterion sampleRejCrit,
                      double minSqrGradientMagnitude,
                      nmb_Image *ref_z)
 {
   int result = buildSampleHelper(ref, test, grad_x_test, grad_y_test, 
-         transform, sampleMode, ref_z,
+         transform, samplePositionMode, sampleRejCrit, ref_z,
          d_sizeB, d_Bx_ref, d_By_ref, d_Bz_ref, d_Bx_test, d_By_test,
          d_refValuesB, d_testValuesB, d_dTestValueB_dx, d_dTestValueB_dy,
          minSqrGradientMagnitude);
@@ -1337,3 +1403,24 @@ void nmr_ObjectiveMI::convertTransformToImageUnits(double *T1, double *T2)
   return;
 }
 
+double nmr_ObjectiveMI::distanceToNearestFeaturePoint(double x, double y)
+{
+  double minDist;
+  double testDist;
+  int i;
+  double dx, dy;
+  if (d_numRefFeaturePoints == 0) return 0.0;
+  dx = x - d_xFeature[0];
+  dy = y - d_yFeature[0];
+  minDist = dx*dx + dy*dy;
+  for (i = 1; i < d_numRefFeaturePoints; i++) {
+    dx = x - d_xFeature[i];
+    dy = y - d_yFeature[i];
+    testDist = dx*dx+dy*dy;
+    if (testDist < minDist) {
+      minDist = testDist;
+    }
+  }
+  minDist = sqrt(minDist);
+  return minDist;
+}

@@ -36,11 +36,12 @@ class nmr_Registration_Proxy {
 
     vrpn_int32 mainloop(void);
 
+    vrpn_int32 setTransformationParameters(vrpn_float32 *parameters);
     vrpn_int32 setResolutions(vrpn_int32 numLevels, vrpn_float32 *stddev);
     vrpn_int32 setIterationLimit(vrpn_int32 maxIterations);
     vrpn_int32 setStepSize(vrpn_float32 stepSize);
     vrpn_int32 setCurrentResolution(vrpn_int32 resolutionIndex);
-    vrpn_int32 autoAlignImages();
+    vrpn_int32 autoAlignImages(vrpn_int32 mode);
     
     vrpn_int32 setGUIEnable(vrpn_bool enable);
     vrpn_int32 setColorMap(nmr_ImageType whichImage, nmb_ColorMap * cmap);
@@ -67,8 +68,8 @@ class nmr_Registration_Proxy {
        vrpn_float32 &size_x, vrpn_float32 &size_y,
        vrpn_bool &flip_x, vrpn_bool &flip_y);
     void getTransformationOptions(nmr_TransformationType &type);
-    void getRegistrationResult(vrpn_float64 *matrix44);
-    void getRegistrationResult(nmb_TransformMatrix44 &xform);
+    void getRegistrationResult(vrpn_int32 &which, vrpn_float64 *matrix44);
+    void getRegistrationResult(vrpn_int32 &which, nmb_TransformMatrix44 &xform);
 
   protected:
     nmr_Registration_Server *d_server; // non-NULL if local implementation
@@ -85,6 +86,7 @@ class nmr_Registration_Proxy {
 
     nmr_TransformationType d_transformType;
 
+    int d_transformSource;
     vrpn_float64 d_matrix44[16];
 
     int notifyMessageHandlers(nmr_MessageType type,

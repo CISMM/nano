@@ -112,6 +112,21 @@ int nmr_Registration_Client::setTransformationOptions(
   return dispatchMessage(len, msgbuf, d_SetTransformationOptions_type);
 }
 
+int nmr_Registration_Client::setTransformationParameters(
+                                    vrpn_float32 *parameters)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetTransformationParameters(&len, parameters);
+
+  if (!msgbuf) {
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetTransformationParameters_type);
+}
+
 int nmr_Registration_Client::sendFiducial(
                    vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
                    vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
@@ -199,18 +214,18 @@ int nmr_Registration_Client::setCurrentResolution(vrpn_int32 resolutionIndex)
   return dispatchMessage(len, msgbuf, d_SetCurrentResolution_type);
 }
 
-int nmr_Registration_Client::setAutoAlignEnable(vrpn_bool enable)
+int nmr_Registration_Client::autoAlign(vrpn_int32 mode)
 {
   char *msgbuf;
   vrpn_int32 len;
 
-  msgbuf = encode_SetAutoAlignEnable(&len, (vrpn_int32)enable);
+  msgbuf = encode_AutoAlign(&len, mode);
 
   if (!msgbuf) {
     return -1;
   }
 
-  return dispatchMessage(len, msgbuf, d_SetAutoAlignEnable_type);
+  return dispatchMessage(len, msgbuf, d_AutoAlign_type);
 }
 
 //static 
@@ -288,14 +303,16 @@ int nmr_Registration_Client::RcvRegistrationResult (
 {
   nmr_Registration_Client *me = (nmr_Registration_Client *)_userdata;
   const char * bufptr = _p.buffer;
+  vrpn_int32 whichTransform;
   vrpn_float64 matrix44[16];
 
-  if (decode_RegistrationResult(&bufptr, matrix44) == -1) {
+  if (decode_RegistrationResult(&bufptr, &whichTransform, matrix44) == -1) {
     fprintf(stderr,
         "nmr_Registration_Client::RcvRegistrationResult: decode failed\n");
     return -1;
   }
   int i;
+  me->d_whichTransform = whichTransform;
   for (i = 0; i < 16; i++) {
       me->d_matrix44[i] = matrix44[i];
   }
@@ -400,8 +417,10 @@ void nmr_Registration_Client::getTransformationOptions(
     type = d_transformType;
 }
 
-void nmr_Registration_Client::getRegistrationResult(vrpn_float64 *matrix44)
+void nmr_Registration_Client::getRegistrationResult(vrpn_int32 &whichTransform,
+                                                    vrpn_float64 *matrix44)
 {
+    whichTransform = d_whichTransform;
     int i;
     for (i = 0; i < 16; i++){
         matrix44[i] = d_matrix44[i];

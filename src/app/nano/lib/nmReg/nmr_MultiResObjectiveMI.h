@@ -36,8 +36,10 @@ class nmr_MultiResObjectiveMI {
 
     /// set whether to choose samples randomly, on a regular grid
     /// or randomly with a gradient magnitude-based sample rejection criterion
-    void setSampleMode(nmr_SampleMode mode);
+    void setSamplePositionMode(nmr_SamplePositionMode mode);
+    void setSampleRejectionCriterion(nmr_SampleRejectionCriterion crit);
     void setMinSampleSqrGradientMagnitude(double mag);
+    void setRefFeaturePoints(int numPnts, double *x, double *y);
 
     /// set images, if a list is supplied then multiple versions of the
     /// image will be added to the list for the various resolutions

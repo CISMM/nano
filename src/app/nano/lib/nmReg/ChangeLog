@@ -1,3 +1,37 @@
+2001-11-26  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_AlignerMI.C (takeGradientSteps): added some debugging printouts
+	(patternSearch): new function implementing pattern search optimization
+	(setRefFeaturePoints): new function to set special places in the
+	image to take samples from
+	* nmr_MultiResObjectiveMI.C : made default number of samples a constant
+	(setSampleMode): removed this function and replaced it with:
+	(setSamplePositionMode): selects how to pick sample locations
+	(setSampleRejectionCriterion): selects an additional option for picking
+	samples (e.g. based on gradient)
+	* nmr_RegistrationUI.C : added a whole bunch of controls to help with
+	testing
+ 	(handleRegistrationChange): made this a lot simpler
+	(updateTextureTransform): new function that contains stuff from
+	handleRegistrationChange
+	* nmr_Registration_Client.Ch: added new messages for testing alignment
+	* nmr_Registration_Interface.Ch: "
+	* nmr_Registration_Proxy.Ch: "
+	* nmr_Registration_Server.Ch: "
+	* nmr_Registration_Impl.Ch: " +
+	(setSourceImageDimensions): new function to make sure that when
+	the image dimensions are set, the pivot points (center of rotation and
+	shear) for transformations are also updated appropriately
+	* nmr_Util.hC : there was some confusion about the coordinate systems
+	for resampling that caused some bugs so I've attempted to clear it up
+	by adding the following two functions to use in other files
+	 (computeResampleTransformInWorldCoordinates)
+	 (computeResampleTransformInImageCoordinates)
+	(maximumOffset2D): new function that calculates maximum offset for 
+	a transformation within some rectangular region
+	(approxMeanOffset2D): new function that calculates approximate 
+	mean offset for a transformation
+
 2001-10-23  Adam Seeger  <seeger@cs.unc.edu>
 
 	* all - added separate command for making the automatic alignment

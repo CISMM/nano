@@ -152,6 +152,10 @@ void nmr_AlignerMI::takeGradientSteps(int resolutionIndex, int numSteps,
 
   // current transformation matrix
   double xform_matrix[16];
+  double tx, ty, phi, shz, scx, scy;
+  double cx, cy, cz;
+  d_transform.getCenter(cx, cy, cz);
+  printf("transform center: %g, %g, %g\n", cx, cy, cz);
 
   int i, j;
   for (i = 0; i < numSteps; i++) {
@@ -163,6 +167,15 @@ void nmr_AlignerMI::takeGradientSteps(int resolutionIndex, int numSteps,
     d_transform.getMatrixDerivative(dTransform_dShearZ, NMB_SHEAR_Z);
     d_transform.getMatrix(xform_matrix);
     d_objective->valueAndGradient(resolutionIndex,xform_matrix,valueMI,gradMI);
+    phi = d_transform.getRotation(NMB_Z);
+    tx = d_transform.getTranslation(NMB_X);
+    ty = d_transform.getTranslation(NMB_Y);
+    scx = d_transform.getScale(NMB_X);
+    scy = d_transform.getScale(NMB_Y);
+    shz = d_transform.getShear(NMB_Z);
+    printf("(tx,ty,phi,shz,scx,scy,MI)= %g,%g,%g,%g,%g,%g, %g\n",
+             tx,ty,phi,shz,scx,scy,valueMI);
+
     // convert the gradient using the chain rule
     dMI_dRotZ = 0; dMI_dTransX = 0; dMI_dTransY = 0;
     dMI_dScaleX = 0; dMI_dScaleY = 0; dMI_dShearZ = 0;
@@ -183,6 +196,18 @@ void nmr_AlignerMI::takeGradientSteps(int resolutionIndex, int numSteps,
                          dMI_dScaleY*scalingRate, 0);
     d_transform.shear(NMB_Z, dMI_dShearZ*shearingRate);
   }
+
+  d_transform.getMatrix(xform_matrix);
+  d_objective->valueAndGradient(resolutionIndex,xform_matrix,valueMI,gradMI);
+  phi = d_transform.getRotation(NMB_Z);
+  tx = d_transform.getTranslation(NMB_X);
+  ty = d_transform.getTranslation(NMB_Y);
+  scx = d_transform.getScale(NMB_X);
+  scy = d_transform.getScale(NMB_Y);
+  shz = d_transform.getShear(NMB_Z);
+  printf("(tx,ty,phi,shz,scx,scy,MI)= %g,%g,%g,%g,%g,%g, %g\n",
+           tx,ty,phi,shz,scx,scy,valueMI);
+
 }
 
 void nmr_AlignerMI::optimizeTransform()
@@ -270,6 +295,171 @@ void nmr_AlignerMI::setTransform(nmb_Transform_TScShR &xform)
 void nmr_AlignerMI::getTransform(nmb_Transform_TScShR &xform)
 {
   xform = d_transform;
+}
+
+#define GRADIENTPATTERNSEARCH
+void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
+                                  float translationStepSize)
+{
+
+  double imageSizeFactor = 0.5*(d_testWidth + d_testHeight);
+  double translationStep = translationStepSize;
+  // we set the other rates to be approximately commensurate with
+  // translation by taking into consideration the sizes of translations that
+  // occur in the image as a result of changing each parameter
+  // the rates are such that the maximum offset that occurs due to any
+  // rotation, scaling, or shearing changes is approximately equal to the
+  // offset introduced by a translation
+  double rotationStep = translationStep/imageSizeFactor;
+  double scalingStep = translationStep/imageSizeFactor;
+  double shearingStep = translationStep/imageSizeFactor;
+
+  const int numParameters = 6;
+  nmb_TransformParameter parameterTypes[numParameters] = 
+        {NMB_ROTATE_Z, NMB_TRANSLATE_X,
+         NMB_TRANSLATE_Y, NMB_SCALE_X, NMB_SCALE_Y, NMB_SHEAR_Z};
+  double patternVector[numParameters] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double exploreVector[numParameters] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double stepSize[numParameters] = 
+             {rotationStep, translationStep, translationStep,
+              scalingStep, scalingStep, shearingStep};
+
+  nmb_Transform_TScShR testTransform;
+  double xform_matrix[16];
+  d_transform.getMatrix(xform_matrix);
+
+  double maxObjective = d_objective->value(resolutionIndex, xform_matrix);
+  double testObjective;
+
+#ifdef GRADIENTPATTERNSEARCH
+  // the MI code computes the mutual information and its gradient in
+  // terms of 4x4 matrix elements
+  double gradMI[16];
+
+  // we want to work with the gradient in the coordinates of translation,
+  // rotation, scale, or shear
+  double dMI_dParam[numParameters];
+
+  // derivatives for transforming the gradient from being in terms of matrix
+  // elements to being in terms of rotation, translation, scale, or shear
+  double dTransform_dParam[numParameters][16];
+#endif
+
+  int i, j, k;
+  double paramVal;
+  testTransform = d_transform;
+  for (i = 0; i < numPatternMoves; i++) {
+    for (j = 0; j < numParameters; j++) {
+      paramVal = testTransform.getParameter(parameterTypes[j]);
+      paramVal += stepSize[j];
+      testTransform.setParameter(parameterTypes[j], paramVal);
+      testTransform.getMatrix(xform_matrix);
+#ifdef GRADIENTPATTERNSEARCH
+      d_objective->gradient(resolutionIndex, xform_matrix, gradMI);
+      testTransform.getMatrixDerivative(dTransform_dParam[j], 
+                                        parameterTypes[j]);
+      dMI_dParam[j] = 0;
+      for (k = 0; k < 16; k++) {
+        dMI_dParam[j] += dTransform_dParam[j][k]*gradMI[k];
+      }
+      if (dMI_dParam > 0) {
+#else
+      testObjective = d_objective->value(resolutionIndex, xform_matrix);     
+      if (testObjective > maxObjective) {
+#endif
+        maxObjective = testObjective;
+        d_transform = testTransform;
+        exploreVector[j] = 1.0;
+      } else {
+        exploreVector[j] = 0.0;
+      }
+      paramVal -= 2*stepSize[j];
+      testTransform.setParameter(parameterTypes[j], paramVal);
+      testTransform.getMatrix(xform_matrix);
+#ifdef GRADIENTPATTERNSEARCH
+      d_objective->gradient(resolutionIndex, xform_matrix, gradMI);
+      testTransform.getMatrixDerivative(dTransform_dParam[j], 
+                                        parameterTypes[j]);
+      dMI_dParam[j] = 0;
+      for (k = 0; k < 16; k++) {
+        dMI_dParam[j] += dTransform_dParam[j][k]*gradMI[k];
+      }
+      if (dMI_dParam[j] < 0) {
+#else 
+      testObjective = d_objective->value(resolutionIndex, xform_matrix);
+      if (testObjective > maxObjective) {
+#endif
+        maxObjective = testObjective;
+        d_transform = testTransform;
+        exploreVector[j] = -1.0;
+      } else {
+        testTransform.setParameter(parameterTypes[j], 
+                                   d_transform.getParameter(parameterTypes[j]));
+      }
+    }
+    // update pattern vector
+    printf("exploreVector: (");
+    vrpn_bool zeroExploreVector = vrpn_TRUE;
+    for (j = 0; j < numParameters; j++) {
+      if (exploreVector[j] != 0.0) {
+        patternVector[j] += exploreVector[j];
+        zeroExploreVector = vrpn_FALSE;
+      }
+      printf("%g,", exploreVector[j]);
+    }
+    printf(")\n");
+
+    if (zeroExploreVector) {
+      printf("zero explore vector found\n");
+    }
+
+    // pattern move
+    for (j = 0; j < numParameters; j++) {
+      paramVal = testTransform.getParameter(parameterTypes[j]);
+      paramVal += patternVector[j]*stepSize[j];
+      testTransform.setParameter(parameterTypes[j], paramVal);
+    }
+    testTransform.getMatrix(xform_matrix);
+#ifdef GRADIENTPATTERNSEARCH
+    d_objective->gradient(resolutionIndex, xform_matrix, gradMI);
+    double dotProd = 0;
+    for (j = 0; j < numParameters; j++) {
+      dMI_dParam[j] = 0;
+      for (k = 0; k < 16; k++) {
+        dMI_dParam[j] += dTransform_dParam[j][k]*gradMI[k];
+      }
+      dotProd += patternVector[j]*dMI_dParam[j];
+    }
+    if (dotProd > 0) {
+      printf("pattern move succeeded\n");
+      d_transform = testTransform;
+    } else {
+      printf("pattern move failed\n");
+      for (j = 0; j < numParameters; j++) {
+        //patternVector[j] = 0.0;
+        patternVector[j] *= 0.9;
+      }
+    }
+#else
+    testObjective = d_objective->value(resolutionIndex, xform_matrix);
+    if (testObjective > maxObjective) {
+      printf("pattern move succeeded\n");
+      maxObjective = testObjective;
+      d_transform = testTransform;
+    } else {
+      printf("pattern move failed, resetting to 0\n");
+      for (j = 0; j < numParameters; j++) {
+        patternVector[j] = 0.0;
+      }
+    }
+#endif
+    printf("patternVector: (");
+    for (j = 0; j < numParameters; j++) {
+      printf("%g,", patternVector[j]);
+    }
+    printf(")\n");
+
+  }
 }
 
 void nmr_AlignerMI::plotObjective(FILE *outf)
@@ -389,5 +579,12 @@ void nmr_AlignerMI::getBlurStdDev(float *stddev)
 {
   if (d_objective) {
     d_objective->getBlurStdDev(stddev);
+  }
+}
+
+void nmr_AlignerMI::setRefFeaturePoints(int numPnts, double *x, double *y)
+{
+  if (d_objective) {
+    d_objective->setRefFeaturePoints(numPnts, x, y);
   }
 }

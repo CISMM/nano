@@ -18,11 +18,10 @@ class nmr_Registration_Impl;
 
 /// This class provides a graphical user-interface to the
 /// nmr_Registration_Impl in order let the user edit correspondence 
-/// information and to allow the user to initiate registration based on
-/// the current correspondence
+/// information 
 class nmr_Registration_ImplUI {
   public:
-    nmr_Registration_ImplUI(nmr_Registration_Impl *impl);
+    nmr_Registration_ImplUI();
 
     ~nmr_Registration_ImplUI();
     void enable(vrpn_bool enable);
@@ -43,7 +42,7 @@ class nmr_Registration_ImplUI {
                               vrpn_bool flipX, vrpn_bool flipY);
     void getCorrespondence(Correspondence &c, int &srcIndex, int &tgtIndex);
 
-    static void handle_CorrespondenceChange(Correspondence &c, void *ud);
+    void registerCorrespondenceHandler(CorrespondenceCallback handler,void *ud);
 
   protected:
     static int s_numImages;
@@ -57,10 +56,9 @@ class nmr_Registration_ImplUI {
     static void handle_ServerMessage( void *ud,
                          const nmr_ServerChangeHandlerData &info);
 
-    CorrespondenceEditor *d_ce; // ui to display landmarks and
+    CorrespondenceEditor d_ce; // ui to display landmarks and
                               // let user set them
 
-    nmr_Registration_Impl *d_impl;
 };
 
 #endif

@@ -7,8 +7,11 @@ typedef enum {REF_2D,        // treat reference image as a simple 2D image
               REF_HEIGHTFIELD // treat reference image as a 2.5D image
 } nmr_DimensionMode;
 
-typedef enum {NMR_RANDOM, NMR_GRADIENT_SELECT, NMR_REGULAR, NMR_JITTERED} 
-              nmr_SampleMode;
+typedef enum {NMR_RANDOM, NMR_REGULAR, NMR_JITTERED}
+              nmr_SamplePositionMode;
+typedef enum {NMR_NO_SELECT, NMR_GRADIENT_SELECT, 
+              NMR_REF_FEATURE_DISTANCE_SELECT}
+              nmr_SampleRejectionCriterion;
 
 class nmr_ObjectiveMI {
   public:
@@ -36,8 +39,10 @@ class nmr_ObjectiveMI {
 
     /// set whether to choose samples randomly, on a regular grid
     /// or randomly with a gradient magnitude-based sample rejection criterion
-    void setSampleMode(nmr_SampleMode mode);
+    void setSamplePositionMode(nmr_SamplePositionMode mode);
+    void setSampleRejectionCriterion(nmr_SampleRejectionCriterion crit);
     void setMinSampleSqrGradientMagnitude(double mag);
+    void setRefFeaturePoints(int numPnts, double *x, double *y);
 
     /// set/get gaussian standard deviations for constructing Parzen
     /// window estimates of density 
@@ -178,7 +183,8 @@ class nmr_ObjectiveMI {
                      nmb_Image *grad_x_test, 
                      nmb_Image *grad_y_test, 
                      double *transform,
-                     nmr_SampleMode sampleMode = NMR_RANDOM,
+                 nmr_SamplePositionMode samplePositionMode = NMR_RANDOM,
+                 nmr_SampleRejectionCriterion sampleRejectCrit = NMR_NO_SELECT,
                      double minSqrGradientMagnitude = 0.0,
                      nmb_Image *ref_z = NULL);
 
@@ -186,7 +192,8 @@ class nmr_ObjectiveMI {
                      nmb_Image *grad_x_test, 
                      nmb_Image *grad_y_test,
                      double *transform,
-                     nmr_SampleMode sampleMode = NMR_RANDOM,
+                 nmr_SamplePositionMode samplePositionMode = NMR_RANDOM,
+                 nmr_SampleRejectionCriterion sampleRejectCrit = NMR_NO_SELECT,
                      double minSqrGradientMagnitude = 0.0,
                      nmb_Image *ref_z = NULL);
 
@@ -231,7 +238,8 @@ class nmr_ObjectiveMI {
                      nmb_Image *grad_x_test,
                      nmb_Image *grad_y_test,
                      double *transform,
-                     nmr_SampleMode sampleMode,
+                     nmr_SamplePositionMode samplePosMode,
+                     nmr_SampleRejectionCriterion sampleRejCrit,
                      nmb_Image *ref_z,
        int numPoints, double *x_ref, double *y_ref, double *z_ref,
        double *x_test, double *y_test, double *val_ref, double *val_test,
@@ -249,6 +257,8 @@ class nmr_ObjectiveMI {
 
     void convertTransformToPixelUnits(double *T1, double *T2);
     void convertTransformToImageUnits(double *T1, double *T2);
+
+    double distanceToNearestFeaturePoint(double x, double y);
 
     // allocation/deallocation reference for the x,y,z, and intensity arrays
     // for the A and B samples
@@ -288,8 +298,13 @@ class nmr_ObjectiveMI {
     nmr_DimensionMode d_dimensionMode;
 
     // how to pick samples
-    nmr_SampleMode d_sampleMode;
+    nmr_SamplePositionMode d_samplePositionMode;
+    nmr_SampleRejectionCriterion d_sampleRejectionCriterion;
     double d_minSampleSqrGradientMagnitude;
+    int d_numRefFeaturePoints;
+    double *d_xFeature;
+    double *d_yFeature;
+    double d_maxDistanceToFeaturePoint;
 
     // images
     nmb_Image *d_testValue;

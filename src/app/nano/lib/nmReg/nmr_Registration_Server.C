@@ -19,9 +19,11 @@ nmr_Registration_Server::nmr_Registration_Server(const char *name,
     d_resolutionIndex(0),
     d_maxIterations(0),
     d_stepSize(1),
-    d_autoAlignEnabled(vrpn_FALSE),   
+    d_autoAlignEnableMode(0),   
     d_x_src(0), d_y_src(0), d_z_src(0), 
-    d_x_tgt(0), d_y_tgt(0), d_z_tgt(0), d_messageHandlerList(NULL)
+    d_x_tgt(0), d_y_tgt(0), d_z_tgt(0), 
+    d_transformParameters(new vrpn_float32[nmb_numTransformParameters]),
+    d_messageHandlerList(NULL)
 {
 
   if (d_connection == NULL) {
@@ -41,6 +43,11 @@ nmr_Registration_Server::nmr_Registration_Server(const char *name,
   }
   if (d_connection->register_handler(d_SetTransformationOptions_type,
        RcvSetTransformationOptions, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_SetTransformationParameters_type,
+       RcvSetTransformationParameters, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
     return;
   }
@@ -74,8 +81,8 @@ nmr_Registration_Server::nmr_Registration_Server(const char *name,
     fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
     return;
   }
-  if (d_connection->register_handler(d_SetAutoAlignEnable_type,
-       RcvSetAutoAlignEnable, this)) {
+  if (d_connection->register_handler(d_AutoAlign_type,
+       RcvAutoAlign, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
     return;
   }
@@ -98,6 +105,10 @@ nmr_Registration_Server::~nmr_Registration_Server()
   }
   if (d_connection->unregister_handler(d_SetTransformationOptions_type,
        RcvSetTransformationOptions, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
+  }
+  if (d_connection->unregister_handler(d_SetTransformationParameters_type,
+       RcvSetTransformationParameters, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
   }
   if (d_connection->unregister_handler(d_EnableGUI_type,
@@ -124,10 +135,11 @@ nmr_Registration_Server::~nmr_Registration_Server()
        RcvSetCurrentResolution, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
   }
-  if (d_connection->unregister_handler(d_SetAutoAlignEnable_type,
-       RcvSetAutoAlignEnable, this)) {
+  if (d_connection->unregister_handler(d_AutoAlign_type,
+       RcvAutoAlign, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
   }
+  delete [] d_transformParameters;
 }
 
 int nmr_Registration_Server::setImageParameters(nmr_ImageType whichImage,
@@ -188,6 +200,16 @@ int nmr_Registration_Server::setTransformationOptions(
     return 0;
 }
 
+int nmr_Registration_Server::setTransformationParameters(
+                           vrpn_float32 *parameters)
+{
+  int i;
+  for (i = 0; i < nmb_numTransformParameters; i++) {
+    d_transformParameters[i] = parameters[i];
+  }
+  return 0;
+}
+
 int nmr_Registration_Server::setGUIEnable(vrpn_bool enable)
 {
     d_GUIEnabled = enable;
@@ -232,9 +254,9 @@ int nmr_Registration_Server::setCurrentResolution(vrpn_int32 resolutionIndex)
   return 0;
 }
 
-int nmr_Registration_Server::setAutoAlignEnable(vrpn_bool enable)   
+int nmr_Registration_Server::autoAlign(vrpn_int32 mode)   
 {
-    d_autoAlignEnabled = enable;
+    d_autoAlignEnableMode = mode;
     return 0;
 }
 
@@ -367,6 +389,28 @@ int nmr_Registration_Server::RcvSetTransformationOptions(void *_userdata,
 }
 
 //static
+int nmr_Registration_Server::RcvSetTransformationParameters(void *_userdata,
+                                           vrpn_HANDLERPARAM _p)
+{
+  int result = 0;
+  nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_float32 *parameters = new vrpn_float32[nmb_numTransformParameters];
+
+  if (decode_SetTransformationParameters(&bufptr, parameters) == -1) {
+    fprintf(stderr,
+        "nmr_Registration_Server::RcvSetTransformationParameters:"
+        " decode failed\n");
+    result = -1;
+  } else {
+    me->setTransformationParameters(parameters);
+    result = me->notifyMessageHandlers(NMR_TRANSFORM_PARAM, _p.msg_time);
+  }
+  delete [] parameters;
+  return result;
+}
+
+//static
 int nmr_Registration_Server::RcvEnableGUI (void *_userdata,
                                           vrpn_HANDLERPARAM _p)
 {
@@ -490,23 +534,23 @@ int nmr_Registration_Server::RcvSetCurrentResolution(void *_userdata,
 
 
 //static
-int nmr_Registration_Server::RcvSetAutoAlignEnable (void *_userdata,
+int nmr_Registration_Server::RcvAutoAlign (void *_userdata,
                                           vrpn_HANDLERPARAM _p)
 {
   nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
   const char * bufptr = _p.buffer;
-  vrpn_int32 enable;
+  vrpn_int32 mode;
 
-  if (decode_SetAutoAlignEnable(&bufptr, &enable) == -1) {
+  if (decode_AutoAlign(&bufptr, &mode) == -1) {
     fprintf(stderr,
-        "nmr_Registration_Server::RcvSetAutoAlignEnable:"
+        "nmr_Registration_Server::RcvAutoAlign:"
         " decode failed\n");
     return -1;
   }
 
-  me->setAutoAlignEnable(enable);
+  me->autoAlign(mode);
 
-  return me->notifyMessageHandlers(NMR_ENABLE_AUTOALIGN, _p.msg_time);
+  return me->notifyMessageHandlers(NMR_AUTOALIGN, _p.msg_time);
 }
 
 int nmr_Registration_Server::registerChangeHandler (void *userdata,
@@ -600,9 +644,9 @@ void nmr_Registration_Server::getImageParameters(nmr_ImageType &whichImage,
     }
 }
 
-void nmr_Registration_Server::getAutoAlignEnable(vrpn_bool &enabled)
+void nmr_Registration_Server::getAutoAlign(vrpn_int32 &mode)
 {
-    enabled = d_autoAlignEnabled;
+    mode = d_autoAlignEnableMode;
 }
 
 void nmr_Registration_Server::getGUIEnable(vrpn_bool &enabled)
@@ -614,6 +658,15 @@ void nmr_Registration_Server::getTransformationOptions(
       nmr_TransformationType &type)
 {
     type = d_transformType;
+}
+
+void nmr_Registration_Server::getTransformationParameters(
+                                 vrpn_float32 *parameters)
+{
+  int i;
+  for (i = 0; i < nmb_numTransformParameters; i++) {
+    parameters[i] = d_transformParameters[i];
+  }
 }
 
 void nmr_Registration_Server::getScanline(nmr_ImageType &whichImage,
@@ -659,12 +712,12 @@ void nmr_Registration_Server::getCurrentResolution(vrpn_int32 &resolutionIndex)
   resolutionIndex = d_resolutionIndex;
 }
 
-int nmr_Registration_Server::sendRegistrationResult(double xform[16])
+int nmr_Registration_Server::sendRegistrationResult(int which, double xform[16])
 {
   char *msgbuf;
   vrpn_int32 len;
 
-  msgbuf = encode_RegistrationResult(&len, xform);
+  msgbuf = encode_RegistrationResult(&len, which, xform);
 
   if (!msgbuf) {
     return -1;

@@ -9,6 +9,8 @@ int nmr_MultiResObjectiveMI::s_defaultNumResolutionLevels = 7;
 float nmr_MultiResObjectiveMI::s_defaultStdDev[] =
               {0.0, 0.5, 1.0, 2.0, 3.0, 4.0, 8.0};
 
+const int defaultSampleSize = 64;
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -22,7 +24,7 @@ nmr_MultiResObjectiveMI::nmr_MultiResObjectiveMI()
   for (i = 0; i < d_numResolutionLevels; i++) {
     d_stddev[i] = s_defaultStdDev[i];
     d_objectiveMI[i].setDimensionMode(REF_2D);
-    if (d_objectiveMI[i].setSampleSizes(64, 64)) {
+    if (d_objectiveMI[i].setSampleSizes(defaultSampleSize, defaultSampleSize)) {
       printf("setSampleSizes error\n");
     } else {
       //printf("setSampleSizes succeeded\n");
@@ -39,7 +41,7 @@ nmr_MultiResObjectiveMI::nmr_MultiResObjectiveMI(int numLevels, float *stddev):
   for (i = 0; i < d_numResolutionLevels; i++) {
     d_stddev[i] = stddev[i];
     d_objectiveMI[i].setDimensionMode(REF_2D);
-    if (d_objectiveMI[i].setSampleSizes(64, 64)) {
+    if (d_objectiveMI[i].setSampleSizes(defaultSampleSize, defaultSampleSize)) {
       printf("setSampleSizes error\n");
     } else {
       //printf("setSampleSizes succeeded\n");
@@ -92,11 +94,20 @@ void nmr_MultiResObjectiveMI::getSampleSizes(int &sizeA, int &sizeB)
   d_objectiveMI[0].getSampleSizes(sizeA, sizeB);
 }
 
-void nmr_MultiResObjectiveMI::setSampleMode(nmr_SampleMode mode)
+void nmr_MultiResObjectiveMI::setSamplePositionMode(nmr_SamplePositionMode mode)
 {
   int i;
   for (i = 0; i < d_numResolutionLevels; i++) {
-    d_objectiveMI[i].setSampleMode(mode);
+    d_objectiveMI[i].setSamplePositionMode(mode);
+  }
+}
+
+void nmr_MultiResObjectiveMI::setSampleRejectionCriterion
+         (nmr_SampleRejectionCriterion crit)
+{
+  int i;
+  for (i = 0; i < d_numResolutionLevels; i++) {
+    d_objectiveMI[i].setSampleRejectionCriterion(crit);
   }
 }
 
@@ -105,6 +116,15 @@ void nmr_MultiResObjectiveMI::setMinSampleSqrGradientMagnitude(double mag)
   int i;
   for (i = 0; i < d_numResolutionLevels; i++) {
     d_objectiveMI[i].setMinSampleSqrGradientMagnitude(mag);
+  }
+}
+
+void nmr_MultiResObjectiveMI::setRefFeaturePoints(int numPnts, 
+                                          double *x, double *y)
+{
+  int i;
+  for (i = 0; i < d_numResolutionLevels; i++) {
+    d_objectiveMI[i].setRefFeaturePoints(numPnts, x, y);
   }
 }
 

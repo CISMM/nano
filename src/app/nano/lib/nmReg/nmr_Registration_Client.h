@@ -34,6 +34,7 @@ class nmr_Registration_Client : public nmb_Device_Client,
     int setScanline(nmr_ImageType whichImage, vrpn_int32 row,
                            vrpn_int32 line_length, vrpn_float32 *data);
     int setTransformationOptions(nmr_TransformationType type);
+    int setTransformationParameters(vrpn_float32 *parameters);
     /// x,y are in pixels, z should be in whatever units the image is in;
     /// this will affect the registration result whenever that gets sent;
     /// intended for sending tip-position so that this can be corresponded
@@ -51,7 +52,7 @@ class nmr_Registration_Client : public nmb_Device_Client,
     int setIterationLimit(vrpn_int32 maxIterations);
     int setStepSize(vrpn_float32 stepSize);
     int setCurrentResolution(vrpn_int32 resolutionIndex);
-    int setAutoAlignEnable(vrpn_bool enable);
+    int autoAlign(vrpn_int32 mode);
 
     // message callback registration
     int registerChangeHandler (void *userdata,
@@ -69,7 +70,8 @@ class nmr_Registration_Client : public nmb_Device_Client,
                            vrpn_float32 &ySizeWorld,
                            vrpn_bool &flipX, vrpn_bool &flipY);
     void getTransformationOptions(nmr_TransformationType &type);
-    void getRegistrationResult(vrpn_float64 *matrix44);
+    void getRegistrationResult(vrpn_int32 &whichTransform,
+                               vrpn_float64 *matrix44);
 
   protected:
     static int RcvImageParameters (void *_userdata, vrpn_HANDLERPARAM _p);
@@ -90,6 +92,7 @@ class nmr_Registration_Client : public nmb_Device_Client,
 
     nmr_TransformationType d_transformType;
 
+    vrpn_int32 d_whichTransform;
     vrpn_float64 d_matrix44[16];
 
     // message callback management

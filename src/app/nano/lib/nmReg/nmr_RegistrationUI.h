@@ -7,34 +7,36 @@
   ===3rdtech===*/
 #ifndef NMR_REGISTRATIONUI_H
 #define NMR_REGISTRATIONUI_H
-#include "nmg_Graphics.h"
+#include "nmb_ImageDisplay.h"
 #include "nmb_Image.h"
+#include "nmb_Dataset.h"
 #include "nmb_String.h"
 #include "nmr_Registration_Proxy.h"
 #include "nmb_TransformMatrix44.h"
 #include "Tcl_Linkvar.h"
 #include "Tcl_Netvar.h"
 
-class nmb_Dataset;
 class nmui_ColorMap;
 
 /** This class is in charge of the client-side user interface which 
  lets the user manipulate and view data from an nmr_Registration_Client 
- The display of the registration results is done using nmg_Graphics and
- a projective texture; The control panel also provides utilities for
+ The display of the registration results is done through an nmb_ImageDisplay  
+ interface which may be implemented as a projective texture on a 3D surface
+ or a simpler 2D display;
+ The control panel also provides utilities for
  resampling an image using the registration result in order to align
  one image to another one.
 */
 /***************************************************************
-     there are 4 coordinate systems we need to worry about 
+     there are 4 coordinate systems
 
         We have two images: 
            1) Topography/3D/Source/Reference 
-                (unless using a 2D->2D transform this is the source for
+                (unless using a 2D->2D transform this is always the source for
                  points that get transformed)
            2) Projection/2D/Target/Test 
-                (unless using a 2D->2D transform this is the target space into
-                 which points get transformed)
+                (unless using a 2D->2D transform this is always the 
+                 target space into which points get transformed)
 
         For each image there is a world space (x,y,z) and an image space (u,v)
         The world space is unique for each device since different devices
@@ -56,14 +58,14 @@ class nmui_ColorMap;
 
 class nmr_RegistrationUI {
   public:
-    nmr_RegistrationUI(nmg_Graphics *g, nmb_Dataset *d,
-                       nmr_Registration_Proxy *aligner);
+    nmr_RegistrationUI(nmr_Registration_Proxy *aligner,
+                       nmb_ImageDisplay *display);
 
     ~nmr_RegistrationUI();
 
     void setupCallbacks();
     void teardownCallbacks();
-    void changeDataset(nmb_Dataset *d);
+    void changeDataset(nmb_Dataset *dataset);
     void handleRegistrationChange(const nmr_ProxyChangeHandlerData &info);
     static void handle_registrationChange(void *ud,
                   const nmr_ProxyChangeHandlerData &info);
@@ -76,8 +78,14 @@ class nmr_RegistrationUI {
     static void handle_registrationMinMax3D_change(vrpn_float64, void *ud);
     static void handle_registrationMinMax2D_change(vrpn_float64, void *ud);
     static void handle_textureDisplayEnabled_change(vrpn_int32 value, void *ud);
+    static void handle_textureTransformMode_change(const char *name, void *ud);
     static void handle_autoAlignRequested_change(vrpn_int32 value, void *ud);
     static void handle_registrationEnabled_change(vrpn_int32 value, void *ud);
+
+    static void handle_transformationParameter_change(vrpn_float64, void *ud);
+
+    void sendTransformationParameters();
+
     void createResampleImage(const char *imageName);
     void createResamplePlane(const char *imageName);
     void setProjectionImage(const char *imageName) {
@@ -86,9 +94,17 @@ class nmr_RegistrationUI {
     }
     void displayTexture(int enable) {d_textureDisplayEnabled = enable;};
     void autoAlignImages();
+    // set a function to be called whenever the worldToImage transformation
+    // changes for an image in the image list
+    void setTransformationCallback(void (*handler)(nmb_Image *));
 
   protected:
  
+    int getDisplayedTransformIndex();
+    int convertTransformSourceTypeToTransformIndex(int type);
+    void updateTextureTransform();
+    void setTransformationSource(nmr_RegistrationType source);
+
     TclNet_string d_registrationImageName3D;
     TclNet_string d_registrationImageName2D;
     TclNet_string d_newResampleImageName;
@@ -116,10 +132,27 @@ class nmr_RegistrationUI {
     static vrpn_float32 s_defaultStdDev[];
     Tclvar_list_of_strings d_resolutionLevelList;
 
-    vrpn_bool d_registrationValid;
-    nmg_Graphics *d_graphicsDisplay;
-    nmb_ImageList *d_imageList;
+    TclNet_float d_scaleX, d_scaleY;
+    TclNet_float d_translateX, d_translateY;
+    TclNet_float d_rotateX, d_rotateY, d_rotateZ;
+    TclNet_float d_shearZ;
+
+    static vrpn_int32 s_numAutoAlignModes;
+    static nmr_AutoAlignMode s_autoAlignModes[];
+    static char * s_autoAlignModeNames[];
+    TclNet_string d_autoAlignMode;
+    Tclvar_list_of_strings d_autoAlignModeList;
+
+    static vrpn_int32 s_numTransformationSources;
+    static nmr_RegistrationType s_transformationSources[];
+    static char * s_transformationSourceNames[];
+    TclNet_string d_transformationSource;
+    Tclvar_list_of_strings d_transformationSourceList;
+
+    nmb_ImageDisplay *d_imageDisplay;
+
     nmb_Dataset *d_dataset;
+
     nmr_Registration_Proxy *d_aligner;
     nmui_ColorMap * d_3DImageCMap;
     nmui_ColorMap * d_2DImageCMap;
@@ -127,9 +160,13 @@ class nmr_RegistrationUI {
     nmb_Image * d_last2DImage;
     nmb_Image * d_last3DImage;
 
-    nmb_TransformMatrix44 d_ProjWorldFromTopoWorldTransform;
-    nmb_TransformMatrix44 d_ProjImageFromTopoImageTransform;
-    nmb_TransformMatrix44 d_ProjImageFromTopoWorldTransform;
+    // determines whether images appear flipped or not in the two image windows
+    vrpn_bool d_flipX, d_flipY;
+
+    // transformations created by various means - manual, entry widgets, auto
+    // the order of elements corresponds to that for s_transformationSources
+    nmb_TransformMatrix44 *d_scaledProjImFromScaledTopoIm;
+
 };
 
 #endif

@@ -42,11 +42,12 @@ class nmr_Registration_Interface {
     vrpn_int32 d_SetImageParameters_type;
     vrpn_int32 d_SetImageScanlineData_type;
     vrpn_int32 d_SetTransformationOptions_type;
+    vrpn_int32 d_SetTransformationParameters_type;
     vrpn_int32 d_SetResolutions_type;
     vrpn_int32 d_SetIterationLimit_type;
     vrpn_int32 d_SetStepSize_type;
     vrpn_int32 d_SetCurrentResolution_type;
-    vrpn_int32 d_SetAutoAlignEnable_type;
+    vrpn_int32 d_AutoAlign_type;
     vrpn_int32 d_EnableGUI_type;
     vrpn_int32 d_Fiducial_type;
 
@@ -79,6 +80,10 @@ class nmr_Registration_Interface {
            vrpn_int32 transformType);
     static vrpn_int32 decode_SetTransformationOptions (const char **buf,
            vrpn_int32 *transformType);
+    static char * encode_SetTransformationParameters (vrpn_int32 *len,
+           vrpn_float32 *transformParameters);
+    static vrpn_int32 decode_SetTransformationParameters (const char **buf,
+           vrpn_float32 *transformParameters);
     static char * encode_SetResolutions (vrpn_int32 *len,
            vrpn_int32 numLevels, vrpn_float32 *std_dev);
     static vrpn_int32 decode_SetResolutions (const char **buf,
@@ -95,10 +100,10 @@ class nmr_Registration_Interface {
            vrpn_int32 resolutionLevel);
     static vrpn_int32 decode_SetCurrentResolution (const char **buf,
            vrpn_int32 *resolutionLevel); 
-    static char * encode_SetAutoAlignEnable (vrpn_int32 *len,
-           vrpn_int32 enable);
-    static vrpn_int32 decode_SetAutoAlignEnable (const char **buf,
-           vrpn_int32 *enable);
+    static char * encode_AutoAlign (vrpn_int32 *len,
+           vrpn_int32 mode);
+    static vrpn_int32 decode_AutoAlign (const char **buf,
+           vrpn_int32 *mode);
     static char * encode_EnableGUI (vrpn_int32 *len,
            vrpn_int32 enable);
     static vrpn_int32 decode_EnableGUI (const char **buf,
@@ -126,14 +131,41 @@ class nmr_Registration_Interface {
     static vrpn_int32 decode_TransformationOptions (const char **buf,
            vrpn_int32 *transformType);
     static char * encode_RegistrationResult (vrpn_int32 *len,
-                                    vrpn_float64 *matrix44);
+                           vrpn_int32 whichTransform, vrpn_float64 *matrix44);
     static vrpn_int32 decode_RegistrationResult (const char **buf,
-                                    vrpn_float64 *matrix44);
+                           vrpn_int32 *whichTransform, vrpn_float64 *matrix44);
 };
 
-/// represents source or target images (registration results in a
-/// transformation that transforms source image into target image)
+/// represents what role an image plays in the transformation
+/// SOURCE is the image from which points are transformed
+/// TARGET is the image into which the points from SOURCE are transformed
+/// SOURCE_HEIGHTFIELD provides a third dimension for points in the SOURCE
+/// image so that we can solve for a transformation from 3D to 2D - although
+/// the SOURCE image itself may be a height field, we can also imagine an
+/// application in which it is some kind of color textured on that heightfield
+/// so this is why the SOURCE and SOURCE_HEIGHTFIELD images are stored separate
+/// One of these values is sent as part of the SetImageParameters and 
+/// SetImageScanlineData messages
 enum nmr_ImageType {NMR_SOURCE, NMR_TARGET, NMR_SOURCE_HEIGHTFIELD};
+
+/// represents method by which the transformation was computed
+/// MANUAL is generated as a result of a manual alignment
+/// AUTOMATIC is generated as a result of automatic alignment
+/// DEFAULT is generated in response to setting the default transformation
+/// parameters from the client side
+/// One of these values is sent as part of the RegistrationResult message
+enum nmr_RegistrationType {NMR_MANUAL, NMR_AUTOMATIC, NMR_DEFAULT};
+
+/// options for using automatic alignment
+/// AUTOALIGN_FROM_MANUAL - starts searching for optimal transform from 
+/// whatever transformation was set manually
+/// AUTOALIGN_FROM_DEFAULT - starts searching for optimal transform from
+/// whatever transformation was set as the default
+/// AUTOALIGN_FROM_AUTO - starts searching for optimal transform from the
+/// last transformation that was set automatically
+/// One of these values is sent as part of the AutoAlign message
+enum nmr_AutoAlignMode {NMR_AUTOALIGN_FROM_MANUAL, NMR_AUTOALIGN_FROM_DEFAULT,
+                        NMR_AUTOALIGN_FROM_AUTO};
 
 /// these options will likely change in the future but NMR_2D2D_AFFINE
 /// is a safe choice
@@ -142,6 +174,7 @@ enum nmr_ImageType {NMR_SOURCE, NMR_TARGET, NMR_SOURCE_HEIGHTFIELD};
 // AFFINE = translation, rotation/shear, non-uniform scale (all in 2D)
 
 enum nmr_TransformationType {NMR_TRANSLATION, NMR_TRANSLATION_ROTATION_SCALE,
+                NMR_ROTATION, NMR_SCALE, 
                 NMR_2D2D_AFFINE, NMR_2D2D_PERSPECTIVE, NMR_3D2D};
 
 /// these represent types of updates you can expect from the registration
@@ -158,8 +191,9 @@ enum nmr_MessageType {
      NMR_SET_ITERATION_LIMIT,
      NMR_SET_STEPSIZE,
      NMR_SET_CURRENT_RESOLUTION,
-     NMR_ENABLE_AUTOALIGN,
-     NMR_ENABLE_GUI
+     NMR_AUTOALIGN,
+     NMR_ENABLE_GUI,
+     NMR_TRANSFORM_PARAM
 };
 
 #endif

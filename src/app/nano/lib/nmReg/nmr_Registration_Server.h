@@ -8,6 +8,7 @@
 #include "nmb_Device.h"
 #include "nmb_Image.h"
 #include "nmr_Registration_Interface.h"
+#include "nmb_Transform_TScShR.h"
 
 class nmr_Registration_Server;
 
@@ -36,6 +37,7 @@ class nmr_Registration_Server : public nmb_Device_Server,
                            vrpn_int32 line_length, vrpn_float32 *data);
 
     int setTransformationOptions(nmr_TransformationType type);
+    int setTransformationParameters(vrpn_float32 *parameters);
     int setGUIEnable(vrpn_bool enable);
     int setFiducial(vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
                     vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt);
@@ -45,7 +47,7 @@ class nmr_Registration_Server : public nmb_Device_Server,
     int setIterationLimit(vrpn_int32 maxIterations);
     int setStepSize(vrpn_float32 stepSize);
     int setCurrentResolution(vrpn_int32 resolutionIndex);
-    int setAutoAlignEnable(vrpn_bool enable);
+    int autoAlign(vrpn_int32 mode);
 
     // message callback registration
     int registerChangeHandler (void *userdata,
@@ -61,9 +63,10 @@ class nmr_Registration_Server : public nmb_Device_Server,
           vrpn_int32 &res_x, vrpn_int32 &res_y,
           vrpn_float32 &size_x, vrpn_float32 &size_y,
           vrpn_bool &flip_x, vrpn_bool &flip_y);
-    void getAutoAlignEnable(vrpn_bool &enabled);
+    void getAutoAlign(vrpn_int32 &mode);
     void getGUIEnable(vrpn_bool &enabled);
     void getTransformationOptions(nmr_TransformationType &type);
+    void getTransformationParameters(vrpn_float32 *parameters);
     void getScanline(nmr_ImageType &whichImage,
                            vrpn_int32 &row, vrpn_int32 &length,
                            vrpn_float32 **data);
@@ -76,12 +79,14 @@ class nmr_Registration_Server : public nmb_Device_Server,
     void getStepSize(vrpn_float32 &stepSize);
     void getCurrentResolution(vrpn_int32 &resolutionIndex);
 
-    int sendRegistrationResult(double xform[16]);
+    int sendRegistrationResult(int whichTransform, double xform[16]);
 
   protected:
     static int RcvSetImageParameters (void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvSetScanline (void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvSetTransformationOptions
+                                     (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvSetTransformationParameters
                                      (void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvEnableRegistration(void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvEnableGUI(void *_userdata, vrpn_HANDLERPARAM _p);
@@ -91,7 +96,7 @@ class nmr_Registration_Server : public nmb_Device_Server,
     static int RcvSetIterationLimit(void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvSetStepSize(void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvSetCurrentResolution(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvSetAutoAlignEnable(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvAutoAlign(void *_userdata, vrpn_HANDLERPARAM _p);
 
     int notifyMessageHandlers(nmr_MessageType type,
         const struct timeval &msg_time);
@@ -118,11 +123,13 @@ class nmr_Registration_Server : public nmb_Device_Server,
     vrpn_int32 d_resolutionIndex;
     vrpn_int32 d_maxIterations;
     vrpn_float32 d_stepSize;
-    vrpn_bool d_autoAlignEnabled;
+    vrpn_int32 d_autoAlignEnableMode;
 
     // for fiducial message
     vrpn_float32 d_x_src, d_y_src, d_z_src;
     vrpn_float32 d_x_tgt, d_y_tgt, d_z_tgt;
+
+    vrpn_float32 *d_transformParameters;
 
     // message callback management
     typedef struct _msg_handler {

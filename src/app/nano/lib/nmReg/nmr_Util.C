@@ -2,6 +2,52 @@
 #include "stdlib.h"
 #include "nmr_Gaussian.h"
 
+//static 
+int nmr_Util::computeResampleTransformInWorldCoordinates(
+           nmb_Image *imA, nmb_Image *imB,
+           nmb_TransformMatrix44 &scaledImA_from_scaledImB,
+           nmb_TransformMatrix44 &worldA_from_worldB)
+{
+  /*  
+    worldA_from_worldB = worldA_from_scaledImA *
+                         scaledImA_from_scaledImB *
+                         scaledImB_from_worldB
+  */
+  nmb_TransformMatrix44 temp;
+  nmb_TransformMatrix44 scaledImB_from_worldB;
+  imA->getWorldToScaledImageTransform(temp);
+  if (!temp.hasInverse()) {
+    return -1;
+  }
+  temp.invert();
+  temp.compose(scaledImA_from_scaledImB);
+  imB->getWorldToScaledImageTransform(scaledImB_from_worldB);
+  temp.compose(scaledImB_from_worldB);
+  worldA_from_worldB = temp;
+
+  return 0;
+}
+
+// static
+int nmr_Util::computeResampleTransformInImageCoordinates(
+           nmb_Image *imA, nmb_Image *imB,
+           nmb_TransformMatrix44 &scaledImA_from_scaledImB,
+           nmb_TransformMatrix44 &normalizedImageA_from_normalizedImageB)
+{
+  /*
+    imageA_from_imageB = imageA_from_scaledImA *
+                         scaledImA_from_scaledImB *
+                         scaledImB_from_imageB
+  */
+  nmb_TransformMatrix44 scaledImB_from_imageB;
+  imA->getScaledImageToImageTransform(normalizedImageA_from_normalizedImageB);
+  normalizedImageA_from_normalizedImageB.compose(scaledImA_from_scaledImB);
+  imB->getImageToScaledImageTransform(scaledImB_from_imageB);
+  normalizedImageA_from_normalizedImageB.compose(scaledImB_from_imageB);
+
+  return 0;
+}
+
 /**
  computeResampleExtents:
    given target image, source image and ImageTransform, this function
@@ -571,4 +617,189 @@ double nmr_Util::computeVariance(nmb_Image &im, double mean)
   }
   var *= num_samples_inv;
   return var;
+}
+
+double nmr_Util::maximumOffset2D(nmb_TransformMatrix44 xform,
+                                double minX, double maxX,
+                                double minY, double maxY,
+                                double &x_at_max, double &y_at_max)
+{
+  double xform_matrix[16];
+  xform.getMatrix(xform_matrix);
+
+  double a,b,c,d,e,f;
+  a = xform_matrix[0];
+  b = xform_matrix[4];
+  c = xform_matrix[12];
+  d = xform_matrix[1];
+  e = xform_matrix[5];
+  f = xform_matrix[13];
+
+  double x[4], y[4], dx, dy, dist;
+  x[0] = minX; y[0] = minY;
+  x[1] = minX; y[1] = maxY;
+  x[2] = maxX; y[2] = minY;
+  x[3] = maxX; y[3] = maxY;
+
+  double maxDist = -1.0;
+  int i;
+  for (i = 0; i < 4; i++) {
+    dx = (a-1)*x[i] + b*y[i] + c;
+    dy = d*x[i] + (e-1)*y[i] + f;
+    dist = sqrt(dx*dx + dy*dy);
+    if (dist > maxDist) {
+      maxDist = dist;
+      x_at_max = x[i];
+      y_at_max = y[i];
+    }
+  }
+  return maxDist;
+}
+
+/*
+this might be useful someday
+double nmr_Util::minimumBorderOffset2D(nmb_TransformMatrix44 xform,
+                                double minX, double maxX,
+                                double minY, double maxY,
+                                double &x, double &y)
+{
+*/
+/*
+x' = a*x + b*y + c
+y' = d*x + e*y + f
+f = (x'-x)*(x'-x) + (y'-y)*(y'-y)
+
+dfdx = 2*((a-1)*(a-1) + d*d)*x + 2*y*((a-1)*b + (e-1)*d) + 2*((a-1)*c + d*f);
+dfdy = 2*((e-1)*(e-1) + b*b)*y + 2*x*((a-1)*b + (e-1)*d) + 2*((e-1)*f + b*c);
+
+eqns = {dfdx==0, y==minY};
+Solve[eqns, {x}];
+eqns = {dfdx==0, y==maxY};
+Solve[eqns, {x}];
+eqns = {dfdy==0, x==minX};
+Solve[eqns, {y}];
+eqns = {dfdy==0, x==maxX};
+Solve[eqns, {y}];
+
+*/
+/*
+  double xform_matrix[16];
+  xform.getMatrix(xform_matrix);
+
+  double a,b,c,d,e,f;
+  a = xform_matrix[0];
+  b = xform_matrix[4];
+  c = xform_matrix[12];
+  d = xform_matrix[1];
+  e = xform_matrix[5];
+  f = xform_matrix[13];
+
+  double x_for_minY, x_for_maxY, y_for_minX, y_for_maxX;
+  double xp_minY, yp_minY; // result of transforming (x_for_minY, minY)
+  double xp_maxY, yp_maxY; // result of transforming (x_for_maxY, maxY)
+  double xp_minX, yp_minX; // result of transforming (minX, y_for_minX)
+  double xp_maxX, yp_maxX; // result of transforming (maxX, y_for_maxX)
+
+  double dist_minY, dist_maxY, dist_minX, dist_maxX;
+  double minDist = 0;
+  double dx, dy;
+  double x_denom = (1-2*a + a*a + d*d);
+  if (fabs(x_denom) > 1e-10) {
+    x_for_minY = (c - a*c - d*f + (b-a*b+d-d*e)*minY)/x_denom;
+    x_for_maxY = (c - a*c - d*f + (b-a*b+d-d*e)*maxY)/x_denom;
+    if (x_for_minY > maxX) x_for_minY = maxX;
+    if (x_for_minY < minX) x_for_minY = minX;
+    if (x_for_maxY > maxX) x_for_maxY = maxX;
+    if (x_for_maxY < minX) x_for_maxY = minX;
+  } else {
+    x_for_minY = 0.5*(minX + maxX);
+    x_for_maxY = x_for_minY;
+  }
+  xp_minY = a*x_for_minY + b*minY + c;
+  yp_minY = d*x_for_minY + e*minY + f;
+  xp_maxY = a*x_for_maxY + b*maxY + c;
+  yp_maxY = d*x_for_maxY + e*maxY + f;
+  dx = xp_minY - x_for_minY; dy = yp_minY - minY;
+  dist_minY = dx*dx + dy*dy;
+  dx = xp_maxY - x_for_maxY; dy = yp_maxY - maxY;
+  dist_maxY = dx*dx + dy*dy;
+  minDist = dist_minY;
+  x = x_for_minY; y = minY;
+  if (dist_maxY < minDist) {
+    minDist = dist_maxY;
+    x = x_for_maxY; y = maxY;
+  }
+    
+  double y_denom = (1-2*e + e*e + b*b);
+  if (fabs(y_denom) > 1e-10) {
+    y_for_minX = (f - e*f - b*c + (b-a*b+d-d*e)*minX)/y_denom;
+    y_for_maxX = (f - e*f - b*c + (b-a*b+d-d*e)*maxX)/y_denom;
+    if (y_for_minX > maxY) y_for_minX = maxY;
+    if (y_for_minX < minY) y_for_minX = minY;
+    if (y_for_maxX > maxY) y_for_maxX = maxY;
+    if (y_for_maxX < minY) y_for_maxX = minY;
+  } else {
+    y_for_minX = 0.5*(minY + maxY);
+    y_for_maxX = y_for_minX;
+  }
+  xp_minX = a*minX + b*y_for_minX + c;
+  yp_minX = d*minX + e*y_for_minX + f;
+  xp_maxX = a*maxX + b*y_for_maxX + c;
+  yp_maxX = d*maxX + e*y_for_maxX + f;
+  dx = xp_minX - minX; dy = yp_minX - y_for_minX;
+  dist_minX = dx*dx + dy*dy;
+  dx = xp_maxX - maxX; dy = yp_maxX - y_for_maxX;
+  dist_maxX = dx*dx + dy*dy;
+  if (dist_minX < minDist) {
+    minDist = dist_minX;
+    x = minX; y = y_for_minX;
+  }
+  if (dist_maxX < minDist) {
+    minDist = dist_maxX;
+    x = maxX; y = y_for_maxX;
+  }
+
+  minDist = sqrt(minDist);
+  return minDist;
+}
+*/
+
+double nmr_Util::approxMeanOffset2D(nmb_TransformMatrix44 xform,
+                                double minX, double maxX,
+                                double minY, double maxY)
+{
+  double xform_matrix[16];
+  xform.getMatrix(xform_matrix);
+
+  double a,b,c,d,e,f;
+  a = xform_matrix[0];
+  b = xform_matrix[4];
+  c = xform_matrix[12];
+  d = xform_matrix[1];
+  e = xform_matrix[5];
+  f = xform_matrix[13];
+/*
+   g = (((a-1)*x + b*y + c)^2 + ((e-1)*y + d*x + f)^2)^(0.5);
+   Integrate[g, {x, xmin, xmax}, {y, ymin, ymax}]
+   -> mathematica can't do this
+*/
+  
+  int i,j;
+  int numX = 10, numY = 10;
+  double deltaX = (maxX - minX)/(double)(numX-1);
+  double deltaY = (maxY - minY)/(double)(numY-1);
+
+  double x, y, xp, yp, dx, dy;
+  double sum = 0;
+  for (i = 0, x = minX; i < numX; i++, x += deltaX) {
+    for (j = 0, y = minY; j < numY; j++, y += deltaY) {
+      xp = a*x + b*y + c;
+      yp = d*x + e*y + f;
+      dx = x - xp;
+      dy = y - yp;
+      sum += sqrt(dx*dx + dy*dy);
+    }
+  }
+  double meanDist = sum/(double)(numX*numY);
+  return meanDist;
 }

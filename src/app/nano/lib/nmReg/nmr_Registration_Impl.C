@@ -31,7 +31,9 @@ nmr_Registration_Impl::nmr_Registration_Impl(nmr_Registration_Server *server):
                                        "unknown_units",
                                        100, 100);
 
-  d_alignerUI = new nmr_Registration_ImplUI(this);
+  d_alignerUI = new nmr_Registration_ImplUI();
+  d_alignerUI->registerCorrespondenceHandler(handle_CorrespondenceChange,
+                                             (void *) this);
 
 }
 
@@ -65,7 +67,16 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
   vrpn_int32 row, length;
   vrpn_float32 *data;
   vrpn_float32 x_src, y_src, z_src, x_tgt, y_tgt, z_tgt;
+  vrpn_int32 mode;
   vrpn_bool enabled;
+
+  vrpn_int32 numLevels;
+  vrpn_float32 resLevels[NMR_MAX_RESOLUTION_LEVELS];
+  vrpn_int32 maxIterations;
+  vrpn_float32 stepSize;
+  vrpn_int32 resolutionIndex;
+  vrpn_float32 *transformParameters = 
+                    new vrpn_float32[nmb_numTransformParameters];
 
   switch(info.msg_type) {
     case NMR_IMAGE_PARAM:
@@ -79,6 +90,10 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
       info.aligner->getTransformationOptions(xformtype);
       me->setTransformationOptions(xformtype);
       break;
+    case NMR_TRANSFORM_PARAM:
+      info.aligner->getTransformationParameters(transformParameters);
+      me->setTransformationParameters(transformParameters);
+      break;
     case NMR_SCANLINE:
 //      printf("nmr_Registration_Impl: scanline received\n");
       info.aligner->getScanline(whichImage, row, length, &data);
@@ -88,29 +103,34 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
       info.aligner->getFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
       me->setFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
       break;
-    case NMR_ENABLE_AUTOALIGN:
-      info.aligner->getAutoAlignEnable(enabled);
-      me->setAutoAlignEnable(enabled);
+    case NMR_AUTOALIGN:
+      info.aligner->getAutoAlign(mode);
+      me->autoAlign(mode);
       break;
     case NMR_ENABLE_GUI:
       info.aligner->getGUIEnable(enabled);
       me->setGUIEnable(enabled);
       break;
     case NMR_SET_RESOLUTIONS:
-      info.aligner->getResolutions(me->d_numLevels, me->d_stddev);
+      info.aligner->getResolutions(numLevels, resLevels);
+      me->setResolutions(numLevels, resLevels);
       break;
     case NMR_SET_ITERATION_LIMIT:
-      info.aligner->getIterationLimit(me->d_maxIterations);
+      info.aligner->getIterationLimit(maxIterations);
+      me->setIterationLimit(maxIterations);
       break;
     case NMR_SET_STEPSIZE:
-      info.aligner->getStepSize(me->d_stepSize);
+      info.aligner->getStepSize(stepSize);
+      me->setStepSize(stepSize);
       break;
     case NMR_SET_CURRENT_RESOLUTION:
-      info.aligner->getCurrentResolution(me->d_resolutionIndex);
+      info.aligner->getCurrentResolution(resolutionIndex);
+      me->setCurrentResolution(resolutionIndex);
       break;
     default:
-      return;
+      break;
   }
+  delete [] transformParameters;
 }
 
 nmb_Image *nmr_Registration_Impl::getImage(nmr_ImageType type)
@@ -125,44 +145,113 @@ nmb_Image *nmr_Registration_Impl::getImage(nmr_ImageType type)
     }
 }
 
-int nmr_Registration_Impl::setAutoAlignEnable(vrpn_bool enable)
+int nmr_Registration_Impl::setResolutions(vrpn_int32 numLevels, 
+                                          vrpn_float32 *stddev)
 {
-    double xform_matrix[16];
-    nmb_Transform_TScShR xform;
+  if (numLevels > NMR_MAX_RESOLUTION_LEVELS) return -1;
 
+  d_numLevels = numLevels;
+  int i;
+  for (i = 0; i < numLevels; i++) {
+    d_stddev[i] = stddev[i];
+  }
+  return 0;
+}
+
+int nmr_Registration_Impl::setIterationLimit(vrpn_int32 maxIterations)
+{
+  d_maxIterations = maxIterations;
+  return 0;
+}
+
+int nmr_Registration_Impl::setStepSize(vrpn_float32 stepSize)
+{
+  d_stepSize = stepSize;
+  return 0;
+}
+
+int nmr_Registration_Impl::setCurrentResolution(vrpn_int32 resolutionIndex)
+{
+  d_resolutionIndex = resolutionIndex;
+  return 0;
+}
+
+int nmr_Registration_Impl::autoAlign(vrpn_int32 mode)
+{
+  double xform_matrix[16];
+
+  switch (mode) {
+    case NMR_AUTOALIGN_FROM_MANUAL:
+      d_autoAlignmentResult = d_manualAlignmentResult;
+      break;
+    case NMR_AUTOALIGN_FROM_DEFAULT:
+      d_autoAlignmentResult = d_defaultTransformation;
+      break;
+    case NMR_AUTOALIGN_FROM_AUTO:
+      break;
+  }
+  registerImagesUsingMutualInformation(d_autoAlignmentResult);
+  d_autoAlignmentResult.getMatrix(xform_matrix);
+  sendResult(NMR_AUTOMATIC, xform_matrix);
+  return 0;
+}
+
+/*
     if (enable) {
         static Correspondence last_c;
         Correspondence c(2, 3);
         int corrSourceIndex, corrTargetIndex;
         d_alignerUI->getCorrespondence(c, corrSourceIndex, corrTargetIndex);
-        last_c = c;
-        double srcSizeX, srcSizeY, tgtSizeX, tgtSizeY;
-        d_images[SOURCE_IMAGE_INDEX]->
+        if (!last_c.equals(c)) {
+          printf("Warning: reinitializing auto-align with manual alignment\n");
+          last_c = c;
+          double srcSizeX, srcSizeY, tgtSizeX, tgtSizeY;
+          d_images[SOURCE_IMAGE_INDEX]->
                        getAcquisitionDimensions(srcSizeX, srcSizeY);
-        d_images[TARGET_IMAGE_INDEX]->
+          d_images[TARGET_IMAGE_INDEX]->
                        getAcquisitionDimensions(tgtSizeX, tgtSizeY);
-        c.scalePoints(corrSourceIndex, srcSizeX, srcSizeY, 1.0);
-        c.scalePoints(corrTargetIndex, tgtSizeX, tgtSizeY, 1.0);
-        double center[4] = {0.0, 0.0, 0.0, 1.0};
-        center[0] = 0.5*srcSizeX;
-        center[1] = 0.5*srcSizeY;
-        center[2] = d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(
+          c.scalePoints(corrSourceIndex, srcSizeX, srcSizeY, 1.0);
+          c.scalePoints(corrTargetIndex, tgtSizeX, tgtSizeY, 1.0);
+          double center[4] = {0.0, 0.0, 0.0, 1.0};
+          center[0] = 0.5*srcSizeX;
+          center[1] = 0.5*srcSizeY;
+          center[2] = d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(
                          0.5*d_images[SOURCE_IMAGE_INDEX]->width(),
                          0.5*d_images[SOURCE_IMAGE_INDEX]->height());
-        xform.setCenter(center[0], center[1], center[2]);
+          xform.setCenter(center[0], center[1], center[2]);
 
-        /* can insert a guess about Rx and Ry here (put into xform)*/
+          // can insert a guess about Rx and Ry here (put into xform)
 
-        adjustTransformFromRotatedCorrespondence(c, corrSourceIndex,
+          adjustTransformFromRotatedCorrespondence(c, corrSourceIndex,
                                   corrTargetIndex, xform);
+          double *feature_x, *feature_y;
+          int numPnts = c.numPoints();
+          feature_x = new double[numPnts];
+          feature_y = new double[numPnts];
+          int i;
+          corr_point_t pnt;
+          for (i = 0; i < c.numPoints(); i++) {
+            c.getPoint(corrSourceIndex, i, &pnt);
+            feature_x[i] = pnt.x;
+            feature_y[i] = pnt.y;
+          }
+          d_mutInfoAligner.setRefFeaturePoints(numPnts, feature_x, feature_y);
+          delete [] feature_x;
+          delete [] feature_y;
 
-        /* now we are ready to adjust xform using an automatic algorithm */
+        } else {
+          printf("Warning: continuing auto-align from "
+                 "result of previous auto-align\n");
+        }
+        
+        // now we are ready to adjust xform using an automatic algorithm 
         registerImagesUsingMutualInformation(xform);
         xform.getMatrix(xform_matrix);
         sendResult(xform_matrix);
     }
     return 0;
 }
+*/
 
 int nmr_Registration_Impl::setGUIEnable(vrpn_bool enable)
 {
@@ -189,8 +278,7 @@ int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
                                         "unknown_units",
                                         res_x, res_y);
         }
-        d_images[SOURCE_IMAGE_INDEX]->
-                  setAcquisitionDimensions(xSpan, ySpan);
+        setSourceImageDimensions(xSpan, ySpan);
     } else if (whichImage == NMR_TARGET) {
         if ((d_images[TARGET_IMAGE_INDEX]->width() != res_x) ||
             (d_images[TARGET_IMAGE_INDEX]->height() != res_y)) {
@@ -203,8 +291,7 @@ int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
                                         "unknown_units",
                                         res_x, res_y);
         }
-        d_images[TARGET_IMAGE_INDEX]->
-                  setAcquisitionDimensions(xSpan, ySpan);
+        setTargetImageDimensions(xSpan, ySpan);
     } else {
         fprintf(stderr, "RegistrationImpl::setImageParameters:"
                         " Error, unknown image type\n");
@@ -251,7 +338,7 @@ int nmr_Registration_Impl::setScanline(nmr_ImageType whichImage,
        im->setValue(i, row, data[i]);
   }
   d_alignerUI->newScanline(whichImage, row, im);
-  d_imageChangeSinceLastRegistration = vrpn_TRUE;;
+  d_imageChangeSinceLastRegistration = vrpn_TRUE;
   return 0;
 }
 
@@ -262,7 +349,21 @@ int nmr_Registration_Impl::setTransformationOptions(
     return 0;
 }
 
-int nmr_Registration_Impl::registerImagesFromPointCorrespondence(double *xform)
+int nmr_Registration_Impl::setTransformationParameters(vrpn_float32 *parameters)
+{
+  int i;
+  for (i = 0; i < nmb_numTransformParameters; i++) {
+    d_defaultTransformation.setParameter(nmb_transformParameterOrder[i],
+                                         parameters[i]);
+  }
+  double xform_matrix[16];
+  d_defaultTransformation.getMatrix(xform_matrix);
+  sendResult(NMR_DEFAULT, xform_matrix);
+  return 0;
+}
+
+int nmr_Registration_Impl::
+            registerImagesFromPointCorrespondenceAssumingDefaultRotation()
 {
    Correspondence c(2, 3);
    int corrSourceIndex, corrTargetIndex;
@@ -278,10 +379,15 @@ int nmr_Registration_Impl::registerImagesFromPointCorrespondence(double *xform)
    convertTo3DSpace(c, corrSourceIndex);
    ensureThreePoints(c, corrSourceIndex, vrpn_FALSE, vrpn_TRUE);
 
-   registerImagesFromPointCorrespondence(c, corrSourceIndex, 
-                                         corrTargetIndex, xform);
-
-   return 0;
+   nmb_Transform_TScShR solution = d_defaultTransformation;
+   int errorIndicator = adjustTransformFromRotatedCorrespondence(
+                   c, corrSourceIndex, corrTargetIndex, 
+                   solution);
+   // make sure this worked before replacing the last computed transformation
+   if (!errorIndicator) {
+     d_manualAlignmentResult = solution;
+   }
+   return errorIndicator;
 }
 
 int nmr_Registration_Impl::registerImagesFromPointCorrespondence(
@@ -307,9 +413,9 @@ int nmr_Registration_Impl::registerImagesFromPointCorrespondence(
     int result = transformSolver(xform_matrix, &error, c, 
 	corrSourceIndex, corrTargetIndex,
         transformType);
-    if (result == -1)
+    if (result == -1) {
 	return -1;
-
+    }
     if (xform) {
         for (int i = 0; i < 16; i++){
             xform[i] = xform_matrix[i];
@@ -341,18 +447,130 @@ int nmr_Registration_Impl::registerImagesUsingMutualInformation(
 
     d_mutInfoAligner.setTransform(xform);
     // here we go:
-    d_mutInfoAligner.takeGradientSteps(d_resolutionIndex,
-                                       d_maxIterations, d_stepSize);
+//    d_mutInfoAligner.takeGradientSteps(d_resolutionIndex,
+//                                       d_maxIterations, d_stepSize);
+    d_mutInfoAligner.patternSearch(d_resolutionIndex, 
+                                         d_maxIterations, d_stepSize);
+/*
+    FILE *outputFile = fopen("objectivePlot.txt", "w");
+    d_mutInfoAligner.plotObjective(outputFile);
+    fclose(outputFile);
+*/
     d_mutInfoAligner.getTransform(xform);
 
     return 0;
 }
 
-void nmr_Registration_Impl::sendResult(double *xform_matrix) 
+void nmr_Registration_Impl::setSourceImageDimensions(vrpn_float32 srcSizeX,
+                                                     vrpn_float32 srcSizeY)
+{
+    d_images[SOURCE_IMAGE_INDEX]->
+                  setAcquisitionDimensions(srcSizeX, srcSizeY);
+
+    double resX, resY;
+    resX = (double)d_images[SOURCE_IMAGE_INDEX]->width();
+    resY = (double)d_images[SOURCE_IMAGE_INDEX]->height();
+    double center[3];
+    center[0] = 0.5*srcSizeX;
+    center[1] = 0.5*srcSizeY;
+    center[2] = d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(
+                         0.5*resX,
+                         0.5*resY);
+    d_defaultTransformation.setCenter(center[0], center[1], center[2]);
+    d_manualAlignmentResult.setCenter(center[0], center[1], center[2]);
+    d_autoAlignmentResult.setCenter(center[0], center[1], center[2]);
+}
+
+void nmr_Registration_Impl::setTargetImageDimensions(vrpn_float32 tgtSizeX,
+                                                     vrpn_float32 tgtSizeY)
+{
+  d_images[TARGET_IMAGE_INDEX]->
+                  setAcquisitionDimensions(tgtSizeX, tgtSizeY);
+}
+
+void nmr_Registration_Impl::sendResult(int whichTransform, 
+                                       double *xform_matrix) 
 {
   if (d_server){
-    d_server->sendRegistrationResult(xform_matrix);
+    d_server->sendRegistrationResult(whichTransform, xform_matrix);
   }
+}
+/*
+    nmb_TransformMatrix44 transform;
+    transform.setMatrix(xform_matrix);
+    double centerX, centerY, tx, ty, phi, shz, scx, scy;
+    double srcSizeX, srcSizeY;
+    d_images[SOURCE_IMAGE_INDEX]->
+                       getAcquisitionDimensions(srcSizeX, srcSizeY);
+    centerX = 0.5*srcSizeX;
+    centerY = 0.5*srcSizeY;
+    transform.getTScShR_2DParameters(centerX,centerY,tx,ty,phi,shz,scx,scy);
+    double minX = 0, maxX = srcSizeX;
+    double minY = 0, maxY = srcSizeY;
+    double x_atMaxOffset = 0, y_atMaxOffset = 0;
+    double maxOffset, meanOffset;
+
+    maxOffset = nmr_Util::maximumOffset2D(transform, minX, maxX, minY, maxY,
+                              x_atMaxOffset, y_atMaxOffset);
+    meanOffset = nmr_Util::approxMeanOffset2D(transform,
+                              minX, maxX, minY, maxY);
+    printf("sending (tx,ty,phi,shz,scx,scy, cx, cy, maxOffset, meanOffset) = "
+           "%g, %g, %g, %g, %g, %g, %g, %g, %g, %g\n",
+           tx, ty, phi, shz, scx, scy, centerX, centerY, maxOffset, meanOffset);
+*/
+
+//static
+void nmr_Registration_Impl::handle_CorrespondenceChange(Correspondence &c,
+                                                          void *ud)
+{
+  double xform_matrix[16];
+  nmr_Registration_Impl *me = (nmr_Registration_Impl *)ud;
+  if (me->registerImagesFromPointCorrespondenceAssumingDefaultRotation() == 0) {
+    me->d_manualAlignmentResult.getMatrix(xform_matrix);
+    me->sendResult(NMR_MANUAL, xform_matrix);
+  }
+}
+
+int nmr_Registration_Impl::getManualAlignmentResult(nmb_Transform_TScShR
+                                                    &transform)
+{
+  transform = d_manualAlignmentResult;
+  return 0;
+}
+
+int nmr_Registration_Impl::getAutoAlignmentResult(nmb_Transform_TScShR
+                                                    &transform)
+{
+  transform = d_autoAlignmentResult;
+  return 0;
+}
+
+int nmr_Registration_Impl::getDefaultTransformation(nmb_Transform_TScShR
+                                                    &transform)
+{
+  transform = d_defaultTransformation;
+  return 0;
+}
+
+vrpn_int32 nmr_Registration_Impl::setImage(
+                        nmr_ImageType whichImage, nmb_Image *im,
+                        vrpn_bool flip_x, vrpn_bool flip_y)
+{
+  int i,j;
+  vrpn_float32 *data;
+  double xSize = 0, ySize = 0;
+  im->getAcquisitionDimensions(xSize, ySize);
+  setImageParameters(whichImage, im->width(), im->height(),
+                         xSize, ySize, flip_x, flip_y);
+  data = new vrpn_float32[im->width()];
+  for (i = 0; i < im->height(); i++) {
+      for (j = 0; j < im->width(); j++) {
+          data[j] = im->getValue(j, i);
+      }
+      setScanline(whichImage, i, im->width(), data);
+  }
+  delete [] data;
+  return 0;
 }
 
 void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
@@ -552,7 +770,10 @@ int nmr_Registration_Impl::adjustTransformFromRotatedCorrespondence(
   // position it holds in the sequence of transformations comes after the
   // translation of the pivot point to the origin (this confused me for a
   // while but it kind of makes sense now)
-  transform2D.getTScShR_2DParameters(0.0, 0.0, translate[0], translate[1],
+//  transform2D.getTScShR_2DParameters(0.0, 0.0, translate[0], translate[1],
+//                              rotateZ, shearZ, scaleX, scaleY);
+  transform2D.getTScShR_2DParameters(centerX, centerY, 
+                              translate[0], translate[1],
                               rotateZ, shearZ, scaleX, scaleY);
   translate[2] = 0.0;
   translate[3] = 1.0;
@@ -563,6 +784,7 @@ int nmr_Registration_Impl::adjustTransformFromRotatedCorrespondence(
   // T.Sc.Sh.Rz.Ry.Rx
 
   xform.setIdentity();
+  xform.setCenter(centerX, centerY, centerZ);
   xform.setTranslation(NMB_X, translate[0]);
   xform.setTranslation(NMB_Y, translate[1]);
   xform.setTranslation(NMB_Z, translate[2]);

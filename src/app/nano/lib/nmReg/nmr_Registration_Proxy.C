@@ -64,6 +64,12 @@ vrpn_int32 nmr_Registration_Proxy::mainloop(void)
     return 0;
 }
 
+vrpn_int32 nmr_Registration_Proxy::setTransformationParameters(
+                                   vrpn_float32 *parameters)
+{
+  return d_remote_impl->setTransformationParameters(parameters);
+}
+
 vrpn_int32 nmr_Registration_Proxy::setResolutions(vrpn_int32 numLevels, 
                                                   vrpn_float32 *stddev)
 {
@@ -86,9 +92,9 @@ vrpn_int32 nmr_Registration_Proxy::setCurrentResolution(
   return d_remote_impl->setCurrentResolution(resolutionIndex);
 }
 
-vrpn_int32 nmr_Registration_Proxy::autoAlignImages()
+vrpn_int32 nmr_Registration_Proxy::autoAlignImages(vrpn_int32 mode)
 {
-    d_remote_impl->setAutoAlignEnable(vrpn_TRUE);
+    d_remote_impl->autoAlign(mode);
 /*
     if (d_local){
         struct timeval now;
@@ -206,7 +212,8 @@ void nmr_Registration_Proxy::handle_registration_change(void *ud,
       break;
     case NMR_REG_RESULT:
       //printf("nmr_Registration_Proxy::got transform\n");
-      info.aligner->getRegistrationResult(me->d_matrix44);
+      info.aligner->getRegistrationResult(me->d_transformSource,
+                                          me->d_matrix44);
       break;
   }
 
@@ -299,15 +306,18 @@ void nmr_Registration_Proxy::getTransformationOptions(
     type = d_transformType;
 }
 
-void nmr_Registration_Proxy::getRegistrationResult(vrpn_float64 *matrix44)
+void nmr_Registration_Proxy::getRegistrationResult(vrpn_int32 &which, 
+                                                   vrpn_float64 *matrix44)
 {
+    which = d_transformSource;
     for (int i = 0; i < 16; i++){
         matrix44[i] = d_matrix44[i];
     }
 }
 
-void nmr_Registration_Proxy::getRegistrationResult(
+void nmr_Registration_Proxy::getRegistrationResult(vrpn_int32 &which, 
                                       nmb_TransformMatrix44 &xform)
 {
+  which = d_transformSource;
   xform.setMatrix(d_matrix44);
 }

@@ -1,4 +1,5 @@
 #include "nmr_Registration_Interface.h"
+#include "nmb_Transform_TScShR.h"
 
 nmr_Registration_Interface::nmr_Registration_Interface (const char * /*name*/,
                                                  vrpn_Connection * c)
@@ -10,6 +11,8 @@ nmr_Registration_Interface::nmr_Registration_Interface (const char * /*name*/,
                        ("nmr_Registration SetImageScanlineData");
     d_SetTransformationOptions_type = c->register_message_type
                        ("nmr_Registration SetTransformationOptions");
+    d_SetTransformationParameters_type = c->register_message_type
+                       ("nmr_Registration SetTransformationParameters");
     d_SetResolutions_type = c->register_message_type
                        ("nmr_Registration SetResolutions");
     d_SetIterationLimit_type= c->register_message_type
@@ -19,8 +22,8 @@ nmr_Registration_Interface::nmr_Registration_Interface (const char * /*name*/,
     d_SetCurrentResolution_type= c->register_message_type
                        ("nmr_Registration SetCurrentResolution");
 
-    d_SetAutoAlignEnable_type = c->register_message_type
-                       ("nmr_Registration SetAutoAlignEnable");
+    d_AutoAlign_type = c->register_message_type
+                       ("nmr_Registration AutoAlign");
     d_EnableGUI_type = c->register_message_type
                        ("nmr_Registration EnableGUI");
     d_Fiducial_type = c->register_message_type
@@ -203,6 +206,50 @@ vrpn_int32 nmr_Registration_Interface::decode_SetTransformationOptions (
 }
 
 //static 
+char * nmr_Registration_Interface::encode_SetTransformationParameters (
+           vrpn_int32 *len,
+           vrpn_float32 *transformParameters)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len =  nmb_numTransformParameters * sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr,
+           "nmr_Registration_Interface::encode_SetTransformationParameters:  "
+           "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    int i;
+    for (i = 0; i < nmb_numTransformParameters; i++) {
+      vrpn_buffer(&mptr, &mlen, transformParameters[i]);
+    }
+  }
+
+  return msgbuf;
+}
+
+//static 
+vrpn_int32 nmr_Registration_Interface::decode_SetTransformationParameters (
+           const char **buf,
+           vrpn_float32 *transformParameters)
+{
+  int i;
+  for (i = 0; i < nmb_numTransformParameters; i++) {
+    if (vrpn_unbuffer(buf, &(transformParameters[i]))) {
+      return -1;
+    }
+  }
+  return 0;
+}
+
+//static 
 char * nmr_Registration_Interface::encode_SetResolutions (vrpn_int32 *len,
            vrpn_int32 numLevels, vrpn_float32 *std_dev)
 {
@@ -355,7 +402,7 @@ vrpn_int32 nmr_Registration_Interface::decode_SetCurrentResolution (
 }
 
 //static
-char * nmr_Registration_Interface::encode_SetAutoAlignEnable (vrpn_int32 *len,
+char * nmr_Registration_Interface::encode_AutoAlign (vrpn_int32 *len,
            vrpn_int32 enable)
 {
   char * msgbuf = NULL;
@@ -367,7 +414,7 @@ char * nmr_Registration_Interface::encode_SetAutoAlignEnable (vrpn_int32 *len,
   *len = 1 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
-    fprintf(stderr, "nmr_Registration_Interface::encode_SetAutoAlignEnable:  "
+    fprintf(stderr, "nmr_Registration_Interface::encode_AutoAlign:  "
                     "Out of memory.\n");
     *len = 0;
   } else {
@@ -380,7 +427,7 @@ char * nmr_Registration_Interface::encode_SetAutoAlignEnable (vrpn_int32 *len,
 }
 
 //static
-vrpn_int32 nmr_Registration_Interface::decode_SetAutoAlignEnable
+vrpn_int32 nmr_Registration_Interface::decode_AutoAlign
           (const char **buf,
            vrpn_int32 *enable)
 {
@@ -567,7 +614,7 @@ vrpn_int32 nmr_Registration_Interface::decode_TransformationOptions (
 
 //static
 char * nmr_Registration_Interface::encode_RegistrationResult (vrpn_int32 *len,
-                                    vrpn_float64 *matrix44)
+                                    vrpn_int32 which, vrpn_float64 *matrix44)
 {
   char * msgbuf = NULL;
   char * mptr;
@@ -575,7 +622,7 @@ char * nmr_Registration_Interface::encode_RegistrationResult (vrpn_int32 *len,
 
   if (!len) return NULL;
 
-  *len = 16 * sizeof(vrpn_float64);
+  *len = 1*sizeof(vrpn_int32) + 16 * sizeof(vrpn_float64);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmr_Registration_Interface::encode_RegistrationResult:  "
@@ -584,6 +631,7 @@ char * nmr_Registration_Interface::encode_RegistrationResult (vrpn_int32 *len,
   } else {
     mptr = msgbuf;
     mlen = *len;
+    vrpn_buffer(&mptr, &mlen, which);
     for (int i = 0; i < 16; i++){
         vrpn_buffer(&mptr, &mlen, matrix44[i]);
     }
@@ -595,9 +643,13 @@ char * nmr_Registration_Interface::encode_RegistrationResult (vrpn_int32 *len,
 //static
 vrpn_int32 nmr_Registration_Interface::decode_RegistrationResult (
                                     const char **buf,
+                                    vrpn_int32 *which,
                                     vrpn_float64 *matrix44)
 {
   int i;
+  if (vrpn_unbuffer(buf, which)) {
+    return -1;
+  }
   for (i = 0; i < 16; i++) {
       if (vrpn_unbuffer(buf, &(matrix44[i]))) {
           return -1;

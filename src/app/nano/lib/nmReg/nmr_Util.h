@@ -12,6 +12,22 @@
 /// with registration results (basically resampling)
 class nmr_Util {
   public:
+    /// this function converts a transformation between scaled image 
+    /// coordinates in A and scaled image coordinates in image B
+    /// to one between world coordinates in A and world coordinates in B
+    static int computeResampleTransformInWorldCoordinates(
+           nmb_Image *imA, nmb_Image *imB,
+           nmb_TransformMatrix44 &scaledImA_from_scaledImB,
+           nmb_TransformMatrix44 &worldA_from_worldB);
+    /// this function converts a transformation between scaled image
+    /// coordinates in A and scaled image coordinates in image B
+    /// to one between normalized image coordinates in A and normalized
+    /// image coordinates in B
+    static int computeResampleTransformInImageCoordinates(
+           nmb_Image *imA, nmb_Image *imB,
+           nmb_TransformMatrix44 &scaledImA_from_scaledImB,
+           nmb_TransformMatrix44 &imA_from_imB);
+
     /// if xform is invertible, then this function will attempt to
     /// compute the corners of the image in pixel indices of the src image
     /// that will contain the region formed by transforming the
@@ -101,7 +117,7 @@ class nmr_Util {
                   float ws);
 
     /// this will linearly interpolate source and then integrate the
-    /// result into each pixel in resampledImage
+    /// result into each pixel in resampledImage - useful for subsampling
     static void resample(nmb_Image &source, nmb_Image &resampledImage);
  
     /// allocate numLevels images and put blurred versions of the argument
@@ -110,7 +126,8 @@ class nmr_Util {
                               float *stddev,
                               nmb_Image **pyramid);
 
-    /// blur image with a gaussian
+    /// blur image with a Gaussian kernel - takes advantage of separability
+    /// in x and y by composing two 1D convolutions
     static void blur(nmb_Image &im, double std_dev_x, double std_dev_y);
 
     static double sampleUniformDistribution(double min, double max);
@@ -120,7 +137,14 @@ class nmr_Util {
  
     static double computeMean(nmb_Image &im);
     static double computeVariance(nmb_Image &im, double mean);
- 
+
+    static double maximumOffset2D(nmb_TransformMatrix44 xform,
+                                double minX, double maxX,
+                                double minY, double maxY,
+                                double &x, double &y);
+    static double approxMeanOffset2D(nmb_TransformMatrix44 xform,
+                                double minX, double maxX,
+                                double minY, double maxY);
 };
 
 #endif

@@ -18,12 +18,16 @@ class nmr_AlignerMI {
     void optimizeVarianceParameters();
     void optimizeTransform();
     void takeGradientSteps(int resolutionIndex, int numSteps, float stepSize);
+    void patternSearch(int resolutionIndex, 
+                       int numPatternMoves, float stepSize);
+
     // transform is assumed to be in pixel units
     void setTransform(nmb_Transform_TScShR &xform);
     void getTransform(nmb_Transform_TScShR &xform);
     void plotObjective(FILE *outf);
     int getNumLevels();
     void getBlurStdDev(float *stddev);
+    void setRefFeaturePoints(int numPnts, double *x, double *y);
 
   protected:
     nmr_MultiResObjectiveMI *d_objective;
