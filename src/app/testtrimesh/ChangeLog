@@ -1,0 +1,6 @@
+2001-12-16  Tom Hudson	<hudsont@uncwil.edu>
+
+   * main.c : New file.
+   * Makefile : same.
+   * ChangeLog : same.
+
