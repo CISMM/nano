@@ -92,7 +92,13 @@ void Semaphore::init() {
   }
 #elif defined(_WIN32)
   // args are security, initial count, max count, and name
-  if ((hSemaphore = CreateSemaphore(NULL, 1, 1, NULL)) == NULL) {
+  // TCH 20 Feb 2001 - Make the PC behavior closer to the SGI behavior.
+  int numMax = cResources;
+  if (numMax < 1) {
+    numMax = 1;
+  }
+  hSemaphore = CreateSemaphore(NULL, cResources, numMax, NULL);
+  if (!hSemaphore) {
     // get error info from windows (from FormatMessage help page)
     LPVOID lpMsgBuf;
     
@@ -221,6 +227,7 @@ int Semaphore::p() {
     }
   }
 #elif defined(_WIN32)
+fprintf(stderr, "p for semaphore with %d resources, val %d\n", cResources, d);
   switch (WaitForSingleObject(hSemaphore, INFINITE)) {
   case WAIT_OBJECT_0:
     // got the resource
@@ -285,7 +292,7 @@ int Semaphore::v() {
 		   (LPTSTR) &lpMsgBuf,    0,    NULL );
     cerr << "Semaphore::v: error v'ing semaphore, "
       "WIN32 ReleaseSemaphore call caused the following error: "
-	 << lpMsgBuf NL;
+	 << (LPTSTR) lpMsgBuf NL;
     // Free the buffer.
     LocalFree( lpMsgBuf );
     return -1;
@@ -487,6 +494,15 @@ Thread::~Thread() {
 
 /*****************************************************************************\
   $Log$
+  Revision 1.1.1.1  1999/12/14 20:40:08  weigle
+  This is the new directory structure.  More documentation will be forth
+  coming, but there is a README.1ST which should get you compiling. 
+
+  NOTE: This does not currently go make libraries for you if they can not
+  be found, only complains that they are not there.  There are two places
+  where you must do a gmake to get libraries:
+     ./nano/src/lib  and  ./nano/src/app/nano/lib
+
   Revision 1.5  1999/10/05 02:03:15  helser
   Topo file read and write works for all images, including images of partial
   scans. The Topo file read/write routines do not attempt to translate
