@@ -688,9 +688,9 @@ long nmm_Microscope_Remote::ModifyMode (void) {
       fprintf(stderr, "DirectZ during forcecurve is an impossible setting.\n");
       return 0;
     } else {
-       long numpnts = (long)(state.modify.fc_num_points);
-       long numcycles = (long)(state.modify.fc_num_halfcycles);
-       long avgnum = (long)(state.modify.fc_avg_num);
+    long numpnts = (long)(double)(state.modify.fc_num_points);
+    long numcycles = (long)(double)(state.modify.fc_num_halfcycles);
+    long avgnum = (long)(double)(state.modify.fc_avg_num);
        return EnterForceCurveStyle(state.modify.setpoint,
                                 state.modify.fc_start_delay,
                                 state.modify.fc_z_start,
@@ -1528,9 +1528,9 @@ long nmm_Microscope_Remote::SetModForce () {
                            " (not contact or tapping)\n");
         return 0;
     }
-    long numpnts = (long)(state.modify.fc_num_points);
-    long numcycles = (long)(state.modify.fc_num_halfcycles);
-    long avgnum = (long)(state.modify.fc_avg_num);
+    long numpnts = (long)(double)(state.modify.fc_num_points);
+    long numcycles = (long)(double)(state.modify.fc_num_halfcycles);
+    long avgnum = (long)(double)(state.modify.fc_avg_num);
     return EnterForceCurveStyle(state.modify.setpoint,
                                 state.modify.fc_start_delay,
                                 state.modify.fc_z_start,
@@ -3808,6 +3808,12 @@ long nmm_Microscope_Remote::RcvWindowLineData(const long _x, const long _y,
   d_decoration->sl_right[2] = 
     d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string() )->scaledValue(xf,yf);
 
+  BCPlane *cp = d_dataset->inputGrid->getPlaneByName(d_dataset->colorPlaneName->string() );
+  // Color map drift compensation. Keep track of the average data value of the
+  // first scan line
+  if (cp && (_x == 0) && (_y == cp->numY() -1)) {
+      d_decoration->first_line_avg = d_dataset->getFirstLineAvg(cp);
+  }
   return 0;
 }
 

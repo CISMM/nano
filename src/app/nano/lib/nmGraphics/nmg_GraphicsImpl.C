@@ -62,7 +62,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
         grid_size_y = 12;
     } else {
         grid_size_x = d_dataset->inputGrid->numX();
-        grid_size_y = d_dataset->inputGrid->numX();
+        grid_size_y = d_dataset->inputGrid->numY();
     }
 
     //fprintf(stderr,
@@ -551,7 +551,7 @@ void nmg_Graphics_Implementation::changeDataset( nmb_Dataset * data)
 {
   d_dataset = data;
   grid_size_x = d_dataset->inputGrid->numX();
-  grid_size_y = d_dataset->inputGrid->numX();
+  grid_size_y = d_dataset->inputGrid->numY();
 
   g_inputGrid = data->inputGrid;
   strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
@@ -785,7 +785,7 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
     //  }
 
   grid_size_x = d_dataset->inputGrid->numX();
-  grid_size_y = d_dataset->inputGrid->numX();
+  grid_size_y = d_dataset->inputGrid->numY();
 
   if (build_grid_display_lists(planes,
                              display_lists_in_x, &grid_list_base,
@@ -1123,6 +1123,11 @@ void nmg_Graphics_Implementation::setColorPlaneName (const char * n) {
   if (planes.color != NULL) {
       g_data_min = planes.color->minNonZeroValue();
       g_data_max = planes.color->maxNonZeroValue();
+
+      // Colormap drift compensation. Reset the first line average numbers so
+      // the next time we start a scan, we can drift-compensate the color map.
+      decoration->first_line_avg = 0;
+      decoration->first_line_avg_prev = d_dataset->getFirstLineAvg(planes.color);
   }
 }
 

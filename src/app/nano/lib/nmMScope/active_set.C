@@ -458,6 +458,19 @@ int     Point_channel_selector::Update_microscope (nmm_Microscope_Remote * micro
     return 0;
 }
 
+int	Point_channel_selector::Clear_channels(void)
+{
+    // Clear all checkboxes
+    Channel_selector::Clear_channels();
+
+    // Clear out the point results we are saving to.  This make sure that
+    // cleared point data sets don't show up in the stripchart or modfiles.
+    while(!myresult->empty()) {
+        myresult->deleteHead();
+    }
+    return 0;
+}
+
 int	Point_channel_selector::Add_channel(char *name, char *units,
 		float offset,float scale, int num_samples)
 {

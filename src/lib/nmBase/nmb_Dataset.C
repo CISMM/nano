@@ -804,8 +804,7 @@ int nmb_Dataset::computeLBLFlattenedPlane (const char * outputPlane,
         }
         dataImages->addImage(output_im);
   } //end if
-  else {    //the output plane already exists (I don't know why you'd
-	    //output to a plane that already exists.)
+  else {    //the output plane already exists - replace existing plane.
 	pre = lblflat_ptr = d_lblflat_list_head;
 	while (lblflat_ptr) {
 		if (lblflat_ptr->data->lblflat_plane == outplane) {
@@ -997,3 +996,17 @@ void nmb_Dataset::updateLBLFlattenOnPlaneChange (BCPlane *, int /*x*/, int y,
 	data->lblflat_plane->setValue(i, y, data->from_plane->value(i, y) + diff);
   } //end for
 } //end updateLBLFlattenOnPlaneChange
+
+
+float nmb_Dataset::getFirstLineAvg(BCPlane * plane)
+{
+    float avgVal = 0;
+    if (!plane) return 0;
+    for (int i = 0; i < plane->numX(); i++) {
+	avgVal += plane->value(i, plane->numY()-1);
+    }
+    avgVal /= plane->numX();
+    printf("Found line average %g\n", avgVal);
+    return avgVal;
+
+}

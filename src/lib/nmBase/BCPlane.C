@@ -1039,7 +1039,8 @@ BCPlane::readPPMorPGMFile(FILE *file, double scale)
 
    int x,y;
 
-   for (y = 0; y < numY(); y++) 
+   // Reverse Y traversal so image is not flipped vertically.
+   for(y = numY() -1; y >=0; y-- ) 
    {
        fread(value, 3*sizeof(char), numX(), file );
        for (x = 0; x < numX(); x++ )
@@ -1065,7 +1066,9 @@ BCPlane::writePPMFile(int file_descriptor)
 {  
     char *value = (char *) calloc(numX(), 3 * sizeof(char));
 
-    double scale = 255.0 / (maxValue() - minValue());
+    double scale = 254.0 / (maxValue() - minNonZeroValue());
+
+    unsigned int val;
 
     int x, y;
 
@@ -1075,10 +1078,15 @@ BCPlane::writePPMFile(int file_descriptor)
     {
 	for(x = 0; x < numX(); x++ ) 
 	{
+            if (this->value(x,y) < minNonZeroValue()) {
+               val = 0;
+            } else {
+               val = 1 + 
+                     (unsigned)((this->value(x, y) - minNonZeroValue()) * scale);
+            }
 	    value[x*3] = 
 		value[x*3+1] = 
-		    value[x*3+2] = 
-			(unsigned)((this->value(x, y) - minValue()) * scale);
+                    value[x*3+2] = val;
 	    //printf("%d ", value[x*3]);
 	}
 	//printf("*****\n");

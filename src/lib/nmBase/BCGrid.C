@@ -1779,7 +1779,8 @@ BCGrid::readPPMorPGMFileNew(FILE *file, const char *filename)
 	for (i = 0; i < _num_x; i++) {
 		for (j = 0; j < _num_y; j++) {
 			ppm_file.Tellppm(i,j,&r,&g,&b);
-			plane->setValue(i,j,(float)r);
+                        // Flip y values so data is oriented correctly
+			plane->setValue(i,(_num_y -1) -j,(float)r);
 			if (r < min) min = r;
 			if (r > max) max = r;
 		}

@@ -140,7 +140,7 @@ class nmb_Dataset {
       ///< solves for the transformation that moves the corresponding points
       ///< into a flat plane, and creates outputPlane from inputPlane via that
       ///< transformation.  Output plane is updated as input plane changes.
-      ///< Tells collaborative host, if any, to create the same plane.
+      ///< ?? Tells collaborative host, if any, to create the same plane.
 
     void registerFlatPlaneCallback (void * userdata,
                                     void (*) (void *, const flatten_data *));
@@ -154,6 +154,8 @@ class nmb_Dataset {
     int computeLBLFlattenedPlane (const char * outputPlane,
 				  const char * inputPlane);
 
+    float getFirstLineAvg(BCPlane *);
+    ///< Computes average of the first scan line in the plane provided. 
 
   private:
 

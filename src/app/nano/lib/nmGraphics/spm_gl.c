@@ -27,6 +27,8 @@
 
 #include <colormap.h>
 #include <nmb_PlaneSelection.h>
+#include <nmb_Decoration.h>
+#include <nmb_Globals.h>
 
 #include "spm_gl.h"
 //#include "Tcl_Linkvar.h"
@@ -370,8 +372,16 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
       }
       
       if (planes.color) {
-          // stretch/shrink data based on data_min/max colors:
+          // Get the data value
           float data_value = planes.color->value(x, y);
+          // Drift-compensate the data value, based on 
+          // the stored average of the first scan line.
+          if ((decoration->first_line_avg !=0) && 
+              (decoration->first_line_avg_prev !=0)) {
+              data_value += decoration->first_line_avg_prev 
+                  - decoration->first_line_avg;
+          }
+          // stretch/shrink data based on data_min/max colors:
           // normalize the data to a zero to one scale - but data doesn't
           // have to fall in this range.
           data_value = (data_value - g_data_min)/(g_data_max - g_data_min);
@@ -467,8 +477,16 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
       // before writing it into a float?
   }
   else if (planes.color) {
-    // stretch/shrink data based on data_min/max colors:
-    float data_value = planes.color->value(x, y);
+      // Get the data value
+      float data_value = planes.color->value(x, y);
+      // Drift-compensate the data value, based on 
+      // the stored average of the first scan line.
+      if ((decoration->first_line_avg !=0) && 
+          (decoration->first_line_avg_prev !=0)) {
+          data_value += decoration->first_line_avg_prev 
+              - decoration->first_line_avg;
+      }
+      // stretch/shrink data based on data_min/max colors:
     // normalize the data to a zero to one scale - but data doesn't
     // have to fall in this range.
     data_value = (data_value - g_data_min)/(g_data_max - g_data_min);
