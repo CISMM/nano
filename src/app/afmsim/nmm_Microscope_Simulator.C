@@ -439,7 +439,7 @@ char * nmm_Microscope_Simulator::encode_ScanDataset (long * len, int numsets, ch
 {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 	//  long numsets;
 
   if (!len) return NULL;
@@ -456,13 +456,13 @@ char * nmm_Microscope_Simulator::encode_ScanDataset (long * len, int numsets, ch
   {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, (long)numsets);
+    vrpn_buffer(&mptr, &mlen, numsets);
     for (int i=0; i<numsets; i++) 
     {
-        nmb_Util::Buffer(&mptr, &mlen, name, 64);
-        nmb_Util::Buffer(&mptr, &mlen, units, 64);
-        nmb_Util::Buffer(&mptr, &mlen, (float)offset);
-        nmb_Util::Buffer(&mptr, &mlen, (float)scale);
+        vrpn_buffer(&mptr, &mlen, name, 64);
+        vrpn_buffer(&mptr, &mlen, units, 64);
+        vrpn_buffer(&mptr, &mlen, (float)offset);
+        vrpn_buffer(&mptr, &mlen, (float)scale);
     }
   }
 
@@ -481,8 +481,8 @@ char * nmm_Microscope_Simulator::encode_PointDataset (long * len, int numsets, c
 {      // XXX Tiger
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
-  long numsamples = 1; // JakeK I really have no idea what this is
+  vrpn_int32 mlen;
+  vrpn_int32 numsamples = 1; // JakeK I really have no idea what this is
 
 
   if (!len) return NULL;
@@ -497,15 +497,15 @@ char * nmm_Microscope_Simulator::encode_PointDataset (long * len, int numsets, c
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, (long)numsets);
+    vrpn_buffer(&mptr, &mlen, numsets);
     for (int i=0; i<numsets; i++) {
        // Need to figure this out...
-       //XXX        nmb_Util::Buffer(&mptr, &mlen, GetPointTypeName(point.idAcqType[i]), 64);
-        nmb_Util::Buffer(&mptr, &mlen, name, 64);
-        nmb_Util::Buffer(&mptr, &mlen, units,64);
-        nmb_Util::Buffer(&mptr, &mlen, (long)numsamples);
-        nmb_Util::Buffer(&mptr, &mlen, (float)offset);
-        nmb_Util::Buffer(&mptr, &mlen, (float)scale);
+       //XXX        vrpn_buffer(&mptr, &mlen, GetPointTypeName(point.idAcqType[i]), 64);
+        vrpn_buffer(&mptr, &mlen, name, 64);
+        vrpn_buffer(&mptr, &mlen, units,64);
+        vrpn_buffer(&mptr, &mlen, numsamples);
+        vrpn_buffer(&mptr, &mlen, (float)offset);
+        vrpn_buffer(&mptr, &mlen, (float)scale);
     }
   }
 

@@ -6,7 +6,6 @@
 #ifndef _WIN32
 #include <netinet/in.h>  // ntoh/hton conversions
 #endif
-#include <nmb_Util.h>  // Buffer() & Unbuffer()
 
 #define CHECK(a) if (a == -1) return -1
 
@@ -245,8 +244,8 @@ char * nmg_Graphics::encode_resizeViewport (int * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, width);
-    nmb_Util::Buffer(&mptr, &mlen, height);
+    vrpn_buffer(&mptr, &mlen, width);
+    vrpn_buffer(&mptr, &mlen, height);
   }
 
   return msgbuf;
@@ -255,8 +254,8 @@ char * nmg_Graphics::encode_resizeViewport (int * len,
 int nmg_Graphics::decode_resizeViewport (const char * buf, 
 					    int *width , int *height) {
   if (!buf || !width || !height) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, width));
-  CHECK(nmb_Util::Unbuffer(&buf, height));
+  CHECK(vrpn_unbuffer(&buf, width));
+  CHECK(vrpn_unbuffer(&buf, height));
   return 0;
 }
 
@@ -276,7 +275,7 @@ char * nmg_Graphics::encode_enableChartjunk (int * len, int value) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, value);
+    vrpn_buffer(&mptr, &mlen, value);
   }
 
   return msgbuf;
@@ -285,7 +284,7 @@ char * nmg_Graphics::encode_enableChartjunk (int * len, int value) {
 int nmg_Graphics::decode_enableChartjunk (const char * buf,
                                            int * value) {
   if (!buf || !value) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, value));
+  CHECK(vrpn_unbuffer(&buf, value));
   return 0;
 }
 
@@ -307,7 +306,7 @@ char * nmg_Graphics::encode_enableFilledPolygons
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, value);
+    vrpn_buffer(&mptr, &mlen, value);
   }
 
   return msgbuf;
@@ -316,7 +315,7 @@ char * nmg_Graphics::encode_enableFilledPolygons
 int nmg_Graphics::decode_enableFilledPolygons (const char * buf,
                                                 int * value) {
   if (!buf || !value) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, value));
+  CHECK(vrpn_unbuffer(&buf, value));
   return 0;
 }
 
@@ -338,7 +337,7 @@ char * nmg_Graphics::encode_enableSmoothShading
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, value);
+    vrpn_buffer(&mptr, &mlen, value);
   }
 
   return msgbuf;
@@ -347,7 +346,7 @@ char * nmg_Graphics::encode_enableSmoothShading
 int nmg_Graphics::decode_enableSmoothShading (const char * buf,
                                                int * value) {
   if (!buf || !value) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, value));
+  CHECK(vrpn_unbuffer(&buf, value));
   return 0;
 }
 
@@ -368,7 +367,7 @@ char * nmg_Graphics::encode_enableTrueTip
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, value);
+    vrpn_buffer(&mptr, &mlen, value);
   }
 
   return msgbuf;
@@ -377,7 +376,7 @@ char * nmg_Graphics::encode_enableTrueTip
 int nmg_Graphics::decode_enableTrueTip (const char * buf,
                                                int * value) {
   if (!buf || !value) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, value));
+  CHECK(vrpn_unbuffer(&buf, value));
   return 0;
 }
 
@@ -398,8 +397,8 @@ char * nmg_Graphics::encode_setAdhesionSliderRange
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, low);
-    nmb_Util::Buffer(&mptr, &mlen, hi);
+    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, hi);
   }
 
   return msgbuf;
@@ -408,8 +407,8 @@ char * nmg_Graphics::encode_setAdhesionSliderRange
 int nmg_Graphics::decode_setAdhesionSliderRange
                    (const char * buf, float * low, float * hi) {
   if (!buf || !low || !hi) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, low));
-  CHECK(nmb_Util::Unbuffer(&buf, hi));
+  CHECK(vrpn_unbuffer(&buf, low));
+  CHECK(vrpn_unbuffer(&buf, hi));
   return 0;
 }
 
@@ -431,9 +430,9 @@ char * nmg_Graphics::encode_setAlphaColor
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, r);
-    nmb_Util::Buffer(&mptr, &mlen, g);
-    nmb_Util::Buffer(&mptr, &mlen, b);
+    vrpn_buffer(&mptr, &mlen, r);
+    vrpn_buffer(&mptr, &mlen, g);
+    vrpn_buffer(&mptr, &mlen, b);
   }
 
   return msgbuf;
@@ -442,9 +441,9 @@ char * nmg_Graphics::encode_setAlphaColor
 int nmg_Graphics::decode_setAlphaColor
                    (const char * buf, float * r, float * g, float * b) {
   if (!buf || !r || !g || !b) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, r));
-  CHECK(nmb_Util::Unbuffer(&buf, g));
-  CHECK(nmb_Util::Unbuffer(&buf, b));
+  CHECK(vrpn_unbuffer(&buf, r));
+  CHECK(vrpn_unbuffer(&buf, g));
+  CHECK(vrpn_unbuffer(&buf, b));
   return 0;
 }
 
@@ -465,8 +464,8 @@ char * nmg_Graphics::encode_setAlphaSliderRange
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, low);
-    nmb_Util::Buffer(&mptr, &mlen, hi);
+    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, hi);
   }
 
   return msgbuf;
@@ -475,8 +474,8 @@ char * nmg_Graphics::encode_setAlphaSliderRange
 int nmg_Graphics::decode_setAlphaSliderRange
                    (const char * buf, float * low, float * hi) {
   if (!buf || !low || !hi) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, low));
-  CHECK(nmb_Util::Unbuffer(&buf, hi));
+  CHECK(vrpn_unbuffer(&buf, low));
+  CHECK(vrpn_unbuffer(&buf, hi));
   return 0;
 }
 
@@ -497,8 +496,8 @@ char * nmg_Graphics::encode_setColorSliderRange
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, low);
-    nmb_Util::Buffer(&mptr, &mlen, hi);
+    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, hi);
   }
 
   return msgbuf;
@@ -507,8 +506,8 @@ char * nmg_Graphics::encode_setColorSliderRange
 int nmg_Graphics::decode_setColorSliderRange
                    (const char * buf, float * low, float * hi) {
   if (!buf || !low || !hi) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, low));
-  CHECK(nmb_Util::Unbuffer(&buf, hi));
+  CHECK(vrpn_unbuffer(&buf, low));
+  CHECK(vrpn_unbuffer(&buf, hi));
   return 0;
 }
 
@@ -529,8 +528,8 @@ char * nmg_Graphics::encode_setComplianceSliderRange
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, low);
-    nmb_Util::Buffer(&mptr, &mlen, hi);
+    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, hi);
   }
 
   return msgbuf;
@@ -539,8 +538,8 @@ char * nmg_Graphics::encode_setComplianceSliderRange
 int nmg_Graphics::decode_setComplianceSliderRange
                    (const char * buf, float * low, float * hi) {
   if (!buf || !low || !hi) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, low));
-  CHECK(nmb_Util::Unbuffer(&buf, hi));
+  CHECK(vrpn_unbuffer(&buf, low));
+  CHECK(vrpn_unbuffer(&buf, hi));
   return 0;
 }
 
@@ -561,9 +560,9 @@ char * nmg_Graphics::encode_setContourColor
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, r);
-    nmb_Util::Buffer(&mptr, &mlen, g);
-    nmb_Util::Buffer(&mptr, &mlen, b);
+    vrpn_buffer(&mptr, &mlen, r);
+    vrpn_buffer(&mptr, &mlen, g);
+    vrpn_buffer(&mptr, &mlen, b);
   }
 
   return msgbuf;
@@ -572,9 +571,9 @@ char * nmg_Graphics::encode_setContourColor
 int nmg_Graphics::decode_setContourColor
                    (const char * buf, int * r, int * g, int * b) {
   if (!buf || !r || !g || !b) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, r));
-  CHECK(nmb_Util::Unbuffer(&buf, g));
-  CHECK(nmb_Util::Unbuffer(&buf, b));
+  CHECK(vrpn_unbuffer(&buf, r));
+  CHECK(vrpn_unbuffer(&buf, g));
+  CHECK(vrpn_unbuffer(&buf, b));
   return 0;
 }
 
@@ -595,7 +594,7 @@ char * nmg_Graphics::encode_setContourWidth
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, width);
+    vrpn_buffer(&mptr, &mlen, width);
   }
 
   return msgbuf;
@@ -604,7 +603,7 @@ char * nmg_Graphics::encode_setContourWidth
 int nmg_Graphics::decode_setContourWidth
                    (const char * buf, float * width) {
   if (!buf || !width) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, width));
+  CHECK(vrpn_unbuffer(&buf, width));
   return 0;
 }
 
@@ -625,8 +624,8 @@ char * nmg_Graphics::encode_setFrictionSliderRange
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, low);
-    nmb_Util::Buffer(&mptr, &mlen, hi);
+    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, hi);
   }
 
   return msgbuf;
@@ -635,8 +634,8 @@ char * nmg_Graphics::encode_setFrictionSliderRange
 int nmg_Graphics::decode_setFrictionSliderRange
                    (const char * buf, float * low, float * hi) {
   if (!buf || !low || !hi) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, low));
-  CHECK(nmb_Util::Unbuffer(&buf, hi));
+  CHECK(vrpn_unbuffer(&buf, low));
+  CHECK(vrpn_unbuffer(&buf, hi));
   return 0;
 }
 
@@ -657,8 +656,8 @@ char * nmg_Graphics::encode_setBumpSliderRange
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, low);
-    nmb_Util::Buffer(&mptr, &mlen, hi);
+    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, hi);
   }
 
   return msgbuf;
@@ -667,8 +666,8 @@ char * nmg_Graphics::encode_setBumpSliderRange
 int nmg_Graphics::decode_setBumpSliderRange
                    (const char * buf, float * low, float * hi) {
   if (!buf || !low || !hi) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, low));
-  CHECK(nmb_Util::Unbuffer(&buf, hi));
+  CHECK(vrpn_unbuffer(&buf, low));
+  CHECK(vrpn_unbuffer(&buf, hi));
   return 0;
 }
 
@@ -689,8 +688,8 @@ char * nmg_Graphics::encode_setBuzzSliderRange
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, low);
-    nmb_Util::Buffer(&mptr, &mlen, hi);
+    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, hi);
   }
 
   return msgbuf;
@@ -699,8 +698,8 @@ char * nmg_Graphics::encode_setBuzzSliderRange
 int nmg_Graphics::decode_setBuzzSliderRange
                    (const char * buf, float * low, float * hi) {
   if (!buf || !low || !hi) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, low));
-  CHECK(nmb_Util::Unbuffer(&buf, hi));
+  CHECK(vrpn_unbuffer(&buf, low));
+  CHECK(vrpn_unbuffer(&buf, hi));
   return 0;
 }
 
@@ -721,7 +720,7 @@ char * nmg_Graphics::encode_setHandColor
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, color);
+    vrpn_buffer(&mptr, &mlen, color);
   }
 
   return msgbuf;
@@ -730,7 +729,7 @@ char * nmg_Graphics::encode_setHandColor
 int nmg_Graphics::decode_setHandColor
                    (const char * buf, int * color) {
   if (!buf || !color) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, color));
+  CHECK(vrpn_unbuffer(&buf, color));
   return 0;
 }
 
@@ -758,7 +757,7 @@ char * nmg_Graphics::encode_setContourPlaneName (int * len, const char * n) {
 int nmg_Graphics::decode_setContourPlaneName (const char * buf,
                                               const char * n) {
   if (!buf || !color) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, n, 128));
+  CHECK(vrpn_unbuffer(&buf, n, 128));
   return 0;
 
 }
@@ -791,7 +790,7 @@ char * nmg_Graphics::encode_setIconScale
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, scale);
+    vrpn_buffer(&mptr, &mlen, scale);
   }
 
   return msgbuf;
@@ -800,7 +799,7 @@ char * nmg_Graphics::encode_setIconScale
 int nmg_Graphics::decode_setIconScale
                    (const char * buf, float * scale) {
   if (!buf || !scale) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, scale));
+  CHECK(vrpn_unbuffer(&buf, scale));
   return 0;
 }
 
@@ -820,14 +819,14 @@ char * nmg_Graphics::encode_enableCollabHand (int * len, vrpn_bool on) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, on);
+    vrpn_buffer(&mptr, &mlen, on);
   }
   return msgbuf;
 }
 
 int nmg_Graphics::decode_enableCollabHand (const char * buf, vrpn_bool * on) {
   if (!buf || !on) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, on));
+  CHECK(vrpn_unbuffer(&buf, on));
   return 0;
 }
 
@@ -852,13 +851,13 @@ char * nmg_Graphics::encode_setCollabHandPos(int * len, double pos[],
   else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, pos[0]);
-    nmb_Util::Buffer(&mptr, &mlen, pos[1]);
-    nmb_Util::Buffer(&mptr, &mlen, pos[2]);
-    nmb_Util::Buffer(&mptr, &mlen, quat[0]);
-    nmb_Util::Buffer(&mptr, &mlen, quat[1]);
-    nmb_Util::Buffer(&mptr, &mlen, quat[2]);
-    nmb_Util::Buffer(&mptr, &mlen, quat[3]);
+    vrpn_buffer(&mptr, &mlen, pos[0]);
+    vrpn_buffer(&mptr, &mlen, pos[1]);
+    vrpn_buffer(&mptr, &mlen, pos[2]);
+    vrpn_buffer(&mptr, &mlen, quat[0]);
+    vrpn_buffer(&mptr, &mlen, quat[1]);
+    vrpn_buffer(&mptr, &mlen, quat[2]);
+    vrpn_buffer(&mptr, &mlen, quat[3]);
   }
   return msgbuf;
 }
@@ -867,13 +866,13 @@ int nmg_Graphics::decode_setCollabHandPos(const char * buf, double pos[3],
 					  double quat[4])
 {
   if (!buf || !pos || !quat) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, &pos[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &pos[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &pos[2]));
-  CHECK(nmb_Util::Unbuffer(&buf, &quat[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &quat[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &quat[2]));
-  CHECK(nmb_Util::Unbuffer(&buf, &quat[3]));
+  CHECK(vrpn_unbuffer(&buf, &pos[0]));
+  CHECK(vrpn_unbuffer(&buf, &pos[1]));
+  CHECK(vrpn_unbuffer(&buf, &pos[2]));
+  CHECK(vrpn_unbuffer(&buf, &quat[0]));
+  CHECK(vrpn_unbuffer(&buf, &quat[1]));
+  CHECK(vrpn_unbuffer(&buf, &quat[2]));
+  CHECK(vrpn_unbuffer(&buf, &quat[3]));
   return 0;
 }
 
@@ -895,7 +894,7 @@ char * nmg_Graphics::encode_setCollabMode(int * len, int mode)
   else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, mode);
+    vrpn_buffer(&mptr, &mlen, mode);
   }
   return msgbuf;
 }
@@ -903,7 +902,7 @@ char * nmg_Graphics::encode_setCollabMode(int * len, int mode)
 int nmg_Graphics::decode_setCollabMode(const char * buf, int *mode)
 {
   if (!buf || !mode) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, mode));
+  CHECK(vrpn_unbuffer(&buf, mode));
   return 0;
 }
 
@@ -924,9 +923,9 @@ char * nmg_Graphics::encode_setMinColor
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, c[0]);
-    nmb_Util::Buffer(&mptr, &mlen, c[1]);
-    nmb_Util::Buffer(&mptr, &mlen, c[2]);
+    vrpn_buffer(&mptr, &mlen, c[0]);
+    vrpn_buffer(&mptr, &mlen, c[1]);
+    vrpn_buffer(&mptr, &mlen, c[2]);
   }
 
   return msgbuf;
@@ -935,9 +934,9 @@ char * nmg_Graphics::encode_setMinColor
 int nmg_Graphics::decode_setMinColor
                    (const char * buf, double c [3]) {
   if (!buf || !c) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, &c[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &c[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &c[2]));
+  CHECK(vrpn_unbuffer(&buf, &c[0]));
+  CHECK(vrpn_unbuffer(&buf, &c[1]));
+  CHECK(vrpn_unbuffer(&buf, &c[2]));
 
 fprintf(stderr, "Server got min color (%.4f, %.4f, %.4f)\n", c[0], c[1], c[2]);
   return 0;
@@ -961,9 +960,9 @@ char * nmg_Graphics::encode_setMaxColor
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, c[0]);
-    nmb_Util::Buffer(&mptr, &mlen, c[1]);
-    nmb_Util::Buffer(&mptr, &mlen, c[2]);
+    vrpn_buffer(&mptr, &mlen, c[0]);
+    vrpn_buffer(&mptr, &mlen, c[1]);
+    vrpn_buffer(&mptr, &mlen, c[2]);
   }
 
   return msgbuf;
@@ -972,9 +971,9 @@ char * nmg_Graphics::encode_setMaxColor
 int nmg_Graphics::decode_setMaxColor
                    (const char * buf, double c [3]) {
   if (!buf || !c) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, &c[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &c[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &c[2]));
+  CHECK(vrpn_unbuffer(&buf, &c[0]));
+  CHECK(vrpn_unbuffer(&buf, &c[1]));
+  CHECK(vrpn_unbuffer(&buf, &c[2]));
 
 fprintf(stderr, "Server got max color (%.4f, %.4f, %.4f)\n", c[0], c[1], c[2]);
   return 0;
@@ -1000,9 +999,9 @@ char * nmg_Graphics::encode_setMinColor
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, c[0] / 255.0);
-    nmb_Util::Buffer(&mptr, &mlen, c[1] / 255.0);
-    nmb_Util::Buffer(&mptr, &mlen, c[2] / 255.0);
+    vrpn_buffer(&mptr, &mlen, c[0] / 255.0);
+    vrpn_buffer(&mptr, &mlen, c[1] / 255.0);
+    vrpn_buffer(&mptr, &mlen, c[2] / 255.0);
   }
 
   return msgbuf;
@@ -1013,9 +1012,9 @@ int nmg_Graphics::decode_setMinColor
   double d [3];
 
   if (!buf || !c) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, &d[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &d[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &d[2]));
+  CHECK(vrpn_unbuffer(&buf, &d[0]));
+  CHECK(vrpn_unbuffer(&buf, &d[1]));
+  CHECK(vrpn_unbuffer(&buf, &d[2]));
 
   c[0] = (int) (255 * d[0]);
   c[1] = (int) (255 * d[1]);
@@ -1042,9 +1041,9 @@ char * nmg_Graphics::encode_setMaxColor
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, c[0] / 255.0);
-    nmb_Util::Buffer(&mptr, &mlen, c[1] / 255.0);
-    nmb_Util::Buffer(&mptr, &mlen, c[2] / 255.0);
+    vrpn_buffer(&mptr, &mlen, c[0] / 255.0);
+    vrpn_buffer(&mptr, &mlen, c[1] / 255.0);
+    vrpn_buffer(&mptr, &mlen, c[2] / 255.0);
   }
 
   return msgbuf;
@@ -1055,9 +1054,9 @@ int nmg_Graphics::decode_setMaxColor
   double d [3];
 
   if (!buf || !c) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, &d[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &d[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &d[2]));
+  CHECK(vrpn_unbuffer(&buf, &d[0]));
+  CHECK(vrpn_unbuffer(&buf, &d[1]));
+  CHECK(vrpn_unbuffer(&buf, &d[2]));
 
   c[0] = (int) (255 * d[0]);
   c[1] = (int) (255 * d[1]);
@@ -1084,7 +1083,7 @@ char * nmg_Graphics::encode_enableRulergrid
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, value);
+    vrpn_buffer(&mptr, &mlen, value);
   }
 
   return msgbuf;
@@ -1093,7 +1092,7 @@ char * nmg_Graphics::encode_enableRulergrid
 int nmg_Graphics::decode_enableRulergrid
                    (const char * buf, int * value) {
   if (!buf || !value) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, value));
+  CHECK(vrpn_unbuffer(&buf, value));
   return 0;
 }
 
@@ -1114,7 +1113,7 @@ char * nmg_Graphics::encode_setRulergridAngle
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, angle);
+    vrpn_buffer(&mptr, &mlen, angle);
   }
 
   return msgbuf;
@@ -1123,7 +1122,7 @@ char * nmg_Graphics::encode_setRulergridAngle
 int nmg_Graphics::decode_setRulergridAngle
                    (const char * buf, float * angle) {
   if (!buf || !angle) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, angle));
+  CHECK(vrpn_unbuffer(&buf, angle));
   return 0;
 }
 
@@ -1144,9 +1143,9 @@ char * nmg_Graphics::encode_setRulergridColor
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, r);
-    nmb_Util::Buffer(&mptr, &mlen, g);
-    nmb_Util::Buffer(&mptr, &mlen, b);
+    vrpn_buffer(&mptr, &mlen, r);
+    vrpn_buffer(&mptr, &mlen, g);
+    vrpn_buffer(&mptr, &mlen, b);
   }
 
   return msgbuf;
@@ -1155,9 +1154,9 @@ char * nmg_Graphics::encode_setRulergridColor
 int nmg_Graphics::decode_setRulergridColor
                    (const char * buf, int * r, int * g, int * b) {
   if (!buf || !r || !g || !b) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, r));
-  CHECK(nmb_Util::Unbuffer(&buf, g));
-  CHECK(nmb_Util::Unbuffer(&buf, b));
+  CHECK(vrpn_unbuffer(&buf, r));
+  CHECK(vrpn_unbuffer(&buf, g));
+  CHECK(vrpn_unbuffer(&buf, b));
   return 0;
 }
 
@@ -1178,8 +1177,8 @@ char * nmg_Graphics::encode_setRulergridOffset
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
   }
 
   return msgbuf;
@@ -1188,8 +1187,8 @@ char * nmg_Graphics::encode_setRulergridOffset
 int nmg_Graphics::decode_setRulergridOffset
                    (const char * buf, float * x, float * y) {
   if (!buf || !x || !y) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, x));
-  CHECK(nmb_Util::Unbuffer(&buf, y));
+  CHECK(vrpn_unbuffer(&buf, x));
+  CHECK(vrpn_unbuffer(&buf, y));
   return 0;
 }
 
@@ -1210,7 +1209,7 @@ char * nmg_Graphics::encode_setRulergridOpacity
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, alpha);
+    vrpn_buffer(&mptr, &mlen, alpha);
   }
 
   return msgbuf;
@@ -1219,7 +1218,7 @@ char * nmg_Graphics::encode_setRulergridOpacity
 int nmg_Graphics::decode_setRulergridOpacity
                    (const char * buf, float * alpha) {
   if (!buf || !alpha) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, alpha));
+  CHECK(vrpn_unbuffer(&buf, alpha));
   return 0;
 }
 
@@ -1240,7 +1239,7 @@ char * nmg_Graphics::encode_setRulergridScale
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, scale);
+    vrpn_buffer(&mptr, &mlen, scale);
   }
 
   return msgbuf;
@@ -1249,7 +1248,7 @@ char * nmg_Graphics::encode_setRulergridScale
 int nmg_Graphics::decode_setRulergridScale
                    (const char * buf, float * scale) {
   if (!buf || !scale) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, scale));
+  CHECK(vrpn_unbuffer(&buf, scale));
   return 0;
 }
 
@@ -1270,8 +1269,8 @@ char * nmg_Graphics::encode_setRulergridWidths
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
   }
 
   return msgbuf;
@@ -1280,8 +1279,8 @@ char * nmg_Graphics::encode_setRulergridWidths
 int nmg_Graphics::decode_setRulergridWidths
                    (const char * buf, float * x, float * y) {
   if (!buf || !x || !y) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, x));
-  CHECK(nmb_Util::Unbuffer(&buf, y));
+  CHECK(vrpn_unbuffer(&buf, x));
+  CHECK(vrpn_unbuffer(&buf, y));
   return 0;
 }
 
@@ -1302,7 +1301,7 @@ char * nmg_Graphics::encode_setSpecularity
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, shiny);
+    vrpn_buffer(&mptr, &mlen, shiny);
   }
 
   return msgbuf;
@@ -1311,7 +1310,7 @@ char * nmg_Graphics::encode_setSpecularity
 int nmg_Graphics::decode_setSpecularity
                    (const char * buf, int * shiny) {
   if (!buf || !shiny) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, shiny));
+  CHECK(vrpn_unbuffer(&buf, shiny));
   return 0;
 }
 
@@ -1332,7 +1331,7 @@ char * nmg_Graphics::encode_setDiffusePercent
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, diffuse);
+    vrpn_buffer(&mptr, &mlen, diffuse);
   }
 
   return msgbuf;
@@ -1343,7 +1342,7 @@ char * nmg_Graphics::encode_setDiffusePercent
 int nmg_Graphics::decode_setDiffusePercent
 		   (const char *buf, float * diffuse) {
   if (!buf || !diffuse) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, diffuse));
+  CHECK(vrpn_unbuffer(&buf, diffuse));
   return 0;
 }
 
@@ -1364,7 +1363,7 @@ char * nmg_Graphics::encode_setSurfaceAlpha
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, surface_alpha);
+    vrpn_buffer(&mptr, &mlen, surface_alpha);
   }
 
   return msgbuf;
@@ -1375,7 +1374,7 @@ char * nmg_Graphics::encode_setSurfaceAlpha
 int nmg_Graphics::decode_setSurfaceAlpha
 		   (const char *buf, float * surface_alpha) {
   if (!buf || !surface_alpha) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, surface_alpha));
+  CHECK(vrpn_unbuffer(&buf, surface_alpha));
   return 0;
 }
 
@@ -1397,7 +1396,7 @@ char * nmg_Graphics::encode_setSpecularColor
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, specular_color);
+    vrpn_buffer(&mptr, &mlen, specular_color);
   }
 
   return msgbuf;
@@ -1406,7 +1405,7 @@ char * nmg_Graphics::encode_setSpecularColor
 int nmg_Graphics::decode_setSpecularColor
                    (const char * buf, float * specular_color) {
   if (!buf || !specular_color) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, specular_color));
+  CHECK(vrpn_unbuffer(&buf, specular_color));
   return 0;
 }
 
@@ -1427,7 +1426,7 @@ char * nmg_Graphics::encode_setSphereScale
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, scale);
+    vrpn_buffer(&mptr, &mlen, scale);
   }
 
   return msgbuf;
@@ -1436,7 +1435,7 @@ char * nmg_Graphics::encode_setSphereScale
 int nmg_Graphics::decode_setSphereScale
                    (const char * buf, float * scale) {
   if (!buf || !scale) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, scale));
+  CHECK(vrpn_unbuffer(&buf, scale));
   return 0;
 }
 
@@ -1457,7 +1456,7 @@ char * nmg_Graphics::encode_setTesselationStride
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, stride);
+    vrpn_buffer(&mptr, &mlen, stride);
   }
 
   return msgbuf;
@@ -1466,7 +1465,7 @@ char * nmg_Graphics::encode_setTesselationStride
 int nmg_Graphics::decode_setTesselationStride
                    (const char * buf, int * stride) {
   if (!buf || !stride) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, stride));
+  CHECK(vrpn_unbuffer(&buf, stride));
   return 0;
 }
 
@@ -1490,23 +1489,23 @@ char * nmg_Graphics::encode_setTextureMode
 
     switch (m) {
       case CONTOUR:  
-        nmb_Util::Buffer(&mptr, &mlen, 1); break;
+        vrpn_buffer(&mptr, &mlen, 1); break;
       case RULERGRID:  
-        nmb_Util::Buffer(&mptr, &mlen, 2); break;
+        vrpn_buffer(&mptr, &mlen, 2); break;
       case ALPHA:  
-        nmb_Util::Buffer(&mptr, &mlen, 3); break;
+        vrpn_buffer(&mptr, &mlen, 3); break;
       case GENETIC:
-        nmb_Util::Buffer(&mptr, &mlen, 4); break;
+        vrpn_buffer(&mptr, &mlen, 4); break;
       case COLORMAP:
-	nmb_Util::Buffer(&mptr, &mlen, 5); break;
+	vrpn_buffer(&mptr, &mlen, 5); break;
       case SEM_DATA:
-	nmb_Util::Buffer(&mptr, &mlen, 6); break;
+	vrpn_buffer(&mptr, &mlen, 6); break;
       case BUMPMAP:
-	nmb_Util::Buffer(&mptr, &mlen, 7); break;
+	vrpn_buffer(&mptr, &mlen, 7); break;
       case HATCHMAP:
-	nmb_Util::Buffer(&mptr, &mlen, 8); break;
+	vrpn_buffer(&mptr, &mlen, 8); break;
       case PATTERNMAP:
-	nmb_Util::Buffer(&mptr, &mlen, 9); break;
+	vrpn_buffer(&mptr, &mlen, 9); break;
       default:
         fprintf(stderr, "nmg_Graphics::encode_setTextureMode:  "
                         "Got illegal texture mode %d.  "
@@ -1515,20 +1514,20 @@ char * nmg_Graphics::encode_setTextureMode
 	// fall through
 
       case NO_TEXTURES:
-        nmb_Util::Buffer(&mptr, &mlen, 0); break;
+        vrpn_buffer(&mptr, &mlen, 0); break;
     }
     switch (xm) {
       case RULERGRID_COORD:
-	nmb_Util::Buffer(&mptr, &mlen, 0); break;
+	vrpn_buffer(&mptr, &mlen, 0); break;
       case REGISTRATION_COORD:
-	nmb_Util::Buffer(&mptr, &mlen, 1); break;
+	vrpn_buffer(&mptr, &mlen, 1); break;
       case MANUAL_REALIGN_COORD:
-	nmb_Util::Buffer(&mptr, &mlen, 2); break;
+	vrpn_buffer(&mptr, &mlen, 2); break;
       default:
 	fprintf(stderr, "nmg_Graphics::encode_setTextureMode:  "
 			"Got illegal texture transform mode %d.  "
 			"Sending RULERGRID_COORD instead.\n", xm);
-	nmb_Util::Buffer(&mptr, &mlen, 0); break;
+	vrpn_buffer(&mptr, &mlen, 0); break;
     }
   }
 
@@ -1541,7 +1540,7 @@ int nmg_Graphics::decode_setTextureMode
   int i;
 
   if (!buf || !m) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, &i));
+  CHECK(vrpn_unbuffer(&buf, &i));
 
   switch (i) {
     case 0:  *m = NO_TEXTURES; break;
@@ -1565,7 +1564,7 @@ int nmg_Graphics::decode_setTextureMode
       *m = NO_TEXTURES; break;
   }
 
-  CHECK(nmb_Util::Unbuffer(&buf, &i));
+  CHECK(vrpn_unbuffer(&buf, &i));
   
   switch (i) {
     case 0:  *xm = RULERGRID_COORD; break;
@@ -1601,7 +1600,7 @@ char * nmg_Graphics::encode_setTextureScale
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, scale);
+    vrpn_buffer(&mptr, &mlen, scale);
   }
 
   return msgbuf;
@@ -1610,7 +1609,7 @@ char * nmg_Graphics::encode_setTextureScale
 int nmg_Graphics::decode_setTextureScale
                    (const char * buf, float * scale) {
   if (!buf || !scale) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, scale));
+  CHECK(vrpn_unbuffer(&buf, scale));
   return 0;
 }
 
@@ -1631,7 +1630,7 @@ char * nmg_Graphics::encode_setTrueTipScale
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, scale);
+    vrpn_buffer(&mptr, &mlen, scale);
   }
 
   return msgbuf;
@@ -1640,7 +1639,7 @@ char * nmg_Graphics::encode_setTrueTipScale
 int nmg_Graphics::decode_setTrueTipScale
                    (const char * buf, float * scale) {
   if (!buf || !scale) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, scale));
+  CHECK(vrpn_unbuffer(&buf, scale));
   return 0;
 }
 
@@ -1661,9 +1660,9 @@ char * nmg_Graphics::encode_setUserMode
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, oldMode);
-    nmb_Util::Buffer(&mptr, &mlen, newMode);
-    nmb_Util::Buffer(&mptr, &mlen, style);
+    vrpn_buffer(&mptr, &mlen, oldMode);
+    vrpn_buffer(&mptr, &mlen, newMode);
+    vrpn_buffer(&mptr, &mlen, style);
   }
 
   return msgbuf;
@@ -1673,9 +1672,9 @@ int nmg_Graphics::decode_setUserMode
                    (const char * buf, int * oldMode, int * newMode,
                              int * style) {
   if (!buf || !oldMode || !newMode || !style) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, oldMode));
-  CHECK(nmb_Util::Unbuffer(&buf, newMode));
-  CHECK(nmb_Util::Unbuffer(&buf, style));
+  CHECK(vrpn_unbuffer(&buf, oldMode));
+  CHECK(vrpn_unbuffer(&buf, newMode));
+  CHECK(vrpn_unbuffer(&buf, style));
   return 0;
 }
 
@@ -1696,9 +1695,9 @@ char * nmg_Graphics::encode_setLightDirection
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, v[0]);
-    nmb_Util::Buffer(&mptr, &mlen, v[1]);
-    nmb_Util::Buffer(&mptr, &mlen, v[2]);
+    vrpn_buffer(&mptr, &mlen, v[0]);
+    vrpn_buffer(&mptr, &mlen, v[1]);
+    vrpn_buffer(&mptr, &mlen, v[2]);
   }
 
   return msgbuf;
@@ -1707,9 +1706,9 @@ char * nmg_Graphics::encode_setLightDirection
 int nmg_Graphics::decode_setLightDirection
                    (const char * buf, q_vec_type & v) {
   if (!buf) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, &v[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &v[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &v[2]));
+  CHECK(vrpn_unbuffer(&buf, &v[0]));
+  CHECK(vrpn_unbuffer(&buf, &v[1]));
+  CHECK(vrpn_unbuffer(&buf, &v[2]));
   return 0;
 }
 
@@ -1730,12 +1729,12 @@ char * nmg_Graphics::encode_addPolylinePoint
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, point[0][0]);
-    nmb_Util::Buffer(&mptr, &mlen, point[0][1]);
-    nmb_Util::Buffer(&mptr, &mlen, point[0][2]);
-    nmb_Util::Buffer(&mptr, &mlen, point[1][0]);
-    nmb_Util::Buffer(&mptr, &mlen, point[1][1]);
-    nmb_Util::Buffer(&mptr, &mlen, point[1][2]);
+    vrpn_buffer(&mptr, &mlen, point[0][0]);
+    vrpn_buffer(&mptr, &mlen, point[0][1]);
+    vrpn_buffer(&mptr, &mlen, point[0][2]);
+    vrpn_buffer(&mptr, &mlen, point[1][0]);
+    vrpn_buffer(&mptr, &mlen, point[1][1]);
+    vrpn_buffer(&mptr, &mlen, point[1][2]);
   }
 
   return msgbuf;
@@ -1743,12 +1742,12 @@ char * nmg_Graphics::encode_addPolylinePoint
 
 int nmg_Graphics::decode_addPolylinePoint
                    (const char * buf, float point [2][3]) {
-  CHECK(nmb_Util::Unbuffer(&buf, &point[0][0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &point[0][1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &point[0][2]));
-  CHECK(nmb_Util::Unbuffer(&buf, &point[1][0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &point[1][1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &point[1][2]));
+  CHECK(vrpn_unbuffer(&buf, &point[0][0]));
+  CHECK(vrpn_unbuffer(&buf, &point[0][1]));
+  CHECK(vrpn_unbuffer(&buf, &point[0][2]));
+  CHECK(vrpn_unbuffer(&buf, &point[1][0]));
+  CHECK(vrpn_unbuffer(&buf, &point[1][1]));
+  CHECK(vrpn_unbuffer(&buf, &point[1][2]));
   return 0;
 }
 
@@ -1772,21 +1771,21 @@ char * nmg_Graphics::encode_addPolySweepPoints(int * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, topL[0]);
-    nmb_Util::Buffer(&mptr, &mlen, topL[1]);
-    nmb_Util::Buffer(&mptr, &mlen, topL[2]);
+    vrpn_buffer(&mptr, &mlen, topL[0]);
+    vrpn_buffer(&mptr, &mlen, topL[1]);
+    vrpn_buffer(&mptr, &mlen, topL[2]);
 
-    nmb_Util::Buffer(&mptr, &mlen, botL[0]);
-    nmb_Util::Buffer(&mptr, &mlen, botL[1]);
-    nmb_Util::Buffer(&mptr, &mlen, botL[2]);
+    vrpn_buffer(&mptr, &mlen, botL[0]);
+    vrpn_buffer(&mptr, &mlen, botL[1]);
+    vrpn_buffer(&mptr, &mlen, botL[2]);
 
-    nmb_Util::Buffer(&mptr, &mlen, topR[0]);
-    nmb_Util::Buffer(&mptr, &mlen, topR[1]);
-    nmb_Util::Buffer(&mptr, &mlen, topR[2]);
+    vrpn_buffer(&mptr, &mlen, topR[0]);
+    vrpn_buffer(&mptr, &mlen, topR[1]);
+    vrpn_buffer(&mptr, &mlen, topR[2]);
 
-    nmb_Util::Buffer(&mptr, &mlen, botR[0]);
-    nmb_Util::Buffer(&mptr, &mlen, botR[1]);
-    nmb_Util::Buffer(&mptr, &mlen, botR[2]);
+    vrpn_buffer(&mptr, &mlen, botR[0]);
+    vrpn_buffer(&mptr, &mlen, botR[1]);
+    vrpn_buffer(&mptr, &mlen, botR[2]);
   }
 
   return msgbuf;
@@ -1797,21 +1796,21 @@ int nmg_Graphics::decode_addPolySweepPoints(const char * buf,
 					    PointType botL,
 					    PointType topR,
 					    PointType botR ) {
-  CHECK(nmb_Util::Unbuffer(&buf, &topL[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &topL[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &topL[2]));
+  CHECK(vrpn_unbuffer(&buf, &topL[0]));
+  CHECK(vrpn_unbuffer(&buf, &topL[1]));
+  CHECK(vrpn_unbuffer(&buf, &topL[2]));
 
-  CHECK(nmb_Util::Unbuffer(&buf, &botL[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &botL[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &botL[2]));
+  CHECK(vrpn_unbuffer(&buf, &botL[0]));
+  CHECK(vrpn_unbuffer(&buf, &botL[1]));
+  CHECK(vrpn_unbuffer(&buf, &botL[2]));
 
-  CHECK(nmb_Util::Unbuffer(&buf, &topR[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &topR[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &topR[2]));
+  CHECK(vrpn_unbuffer(&buf, &topR[0]));
+  CHECK(vrpn_unbuffer(&buf, &topR[1]));
+  CHECK(vrpn_unbuffer(&buf, &topR[2]));
 
-  CHECK(nmb_Util::Unbuffer(&buf, &botR[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &botR[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &botR[2]));
+  CHECK(vrpn_unbuffer(&buf, &botR[0]));
+  CHECK(vrpn_unbuffer(&buf, &botR[1]));
+  CHECK(vrpn_unbuffer(&buf, &botR[2]));
   return 0;
 }
 
@@ -1831,16 +1830,16 @@ char * nmg_Graphics::encode_setRubberLineStart (int * len, const float p [2]) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, p[0]);
-    nmb_Util::Buffer(&mptr, &mlen, p[1]);
+    vrpn_buffer(&mptr, &mlen, p[0]);
+    vrpn_buffer(&mptr, &mlen, p[1]);
   }
 
   return msgbuf;
 }
 
 int nmg_Graphics::decode_setRubberLineStart (const char * buf, float p [2]) {
-  CHECK(nmb_Util::Unbuffer(&buf, &p[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &p[1]));
+  CHECK(vrpn_unbuffer(&buf, &p[0]));
+  CHECK(vrpn_unbuffer(&buf, &p[1]));
   return 0;
 }
 
@@ -1860,16 +1859,16 @@ char * nmg_Graphics::encode_setRubberLineEnd (int * len, const float p [2]) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, p[0]);
-    nmb_Util::Buffer(&mptr, &mlen, p[1]);
+    vrpn_buffer(&mptr, &mlen, p[0]);
+    vrpn_buffer(&mptr, &mlen, p[1]);
   }
 
   return msgbuf;
 }
 
 int nmg_Graphics::decode_setRubberLineEnd (const char * buf, float p [2]) {
-  CHECK(nmb_Util::Unbuffer(&buf, &p[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &p[1]));
+  CHECK(vrpn_unbuffer(&buf, &p[0]));
+  CHECK(vrpn_unbuffer(&buf, &p[1]));
   return 0;
 }
 
@@ -1891,13 +1890,13 @@ char * nmg_Graphics::encode_setRubberSweepLineStart (int * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, left[0]);
-    nmb_Util::Buffer(&mptr, &mlen, left[1]);
-    nmb_Util::Buffer(&mptr, &mlen, left[2]);
+    vrpn_buffer(&mptr, &mlen, left[0]);
+    vrpn_buffer(&mptr, &mlen, left[1]);
+    vrpn_buffer(&mptr, &mlen, left[2]);
 
-    nmb_Util::Buffer(&mptr, &mlen, right[0]);
-    nmb_Util::Buffer(&mptr, &mlen, right[1]);
-    nmb_Util::Buffer(&mptr, &mlen, right[2]);
+    vrpn_buffer(&mptr, &mlen, right[0]);
+    vrpn_buffer(&mptr, &mlen, right[1]);
+    vrpn_buffer(&mptr, &mlen, right[2]);
   }
 
   return msgbuf;
@@ -1906,13 +1905,13 @@ char * nmg_Graphics::encode_setRubberSweepLineStart (int * len,
 int nmg_Graphics::decode_setRubberSweepLineStart (const char * buf,
 						  PointType left,
 						  PointType right) {
-  CHECK(nmb_Util::Unbuffer(&buf, &left[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &left[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &left[2]));
+  CHECK(vrpn_unbuffer(&buf, &left[0]));
+  CHECK(vrpn_unbuffer(&buf, &left[1]));
+  CHECK(vrpn_unbuffer(&buf, &left[2]));
 
-  CHECK(nmb_Util::Unbuffer(&buf, &right[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &right[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &right[2]));
+  CHECK(vrpn_unbuffer(&buf, &right[0]));
+  CHECK(vrpn_unbuffer(&buf, &right[1]));
+  CHECK(vrpn_unbuffer(&buf, &right[2]));
   return 0;
 }
 
@@ -1935,13 +1934,13 @@ char * nmg_Graphics::encode_setRubberSweepLineEnd (int * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, left[0]);
-    nmb_Util::Buffer(&mptr, &mlen, left[1]);
-    nmb_Util::Buffer(&mptr, &mlen, left[2]);
+    vrpn_buffer(&mptr, &mlen, left[0]);
+    vrpn_buffer(&mptr, &mlen, left[1]);
+    vrpn_buffer(&mptr, &mlen, left[2]);
 
-    nmb_Util::Buffer(&mptr, &mlen, right[0]);
-    nmb_Util::Buffer(&mptr, &mlen, right[1]);
-    nmb_Util::Buffer(&mptr, &mlen, right[2]);
+    vrpn_buffer(&mptr, &mlen, right[0]);
+    vrpn_buffer(&mptr, &mlen, right[1]);
+    vrpn_buffer(&mptr, &mlen, right[2]);
   }
 
   return msgbuf;
@@ -1950,13 +1949,13 @@ char * nmg_Graphics::encode_setRubberSweepLineEnd (int * len,
 int nmg_Graphics::decode_setRubberSweepLineEnd (const char * buf,
 						PointType left,
 						PointType right) {
-  CHECK(nmb_Util::Unbuffer(&buf, &left[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &left[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &left[2]));
+  CHECK(vrpn_unbuffer(&buf, &left[0]));
+  CHECK(vrpn_unbuffer(&buf, &left[1]));
+  CHECK(vrpn_unbuffer(&buf, &left[2]));
 
-  CHECK(nmb_Util::Unbuffer(&buf, &right[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &right[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &right[2]));
+  CHECK(vrpn_unbuffer(&buf, &right[0]));
+  CHECK(vrpn_unbuffer(&buf, &right[1]));
+  CHECK(vrpn_unbuffer(&buf, &right[2]));
   return 0;
 }
 
@@ -1979,12 +1978,12 @@ char * nmg_Graphics::encode_setScanlineEndpoints (int * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, p[0]);
-    nmb_Util::Buffer(&mptr, &mlen, p[1]);
-    nmb_Util::Buffer(&mptr, &mlen, p[2]);
-    nmb_Util::Buffer(&mptr, &mlen, p[3]);
-    nmb_Util::Buffer(&mptr, &mlen, p[4]);
-    nmb_Util::Buffer(&mptr, &mlen, p[5]);
+    vrpn_buffer(&mptr, &mlen, p[0]);
+    vrpn_buffer(&mptr, &mlen, p[1]);
+    vrpn_buffer(&mptr, &mlen, p[2]);
+    vrpn_buffer(&mptr, &mlen, p[3]);
+    vrpn_buffer(&mptr, &mlen, p[4]);
+    vrpn_buffer(&mptr, &mlen, p[5]);
 
   }
 
@@ -1992,12 +1991,12 @@ char * nmg_Graphics::encode_setScanlineEndpoints (int * len,
 }
 
 int nmg_Graphics::decode_setScanlineEndpoints (const char * buf, float p [6]) {
-  CHECK(nmb_Util::Unbuffer(&buf, &p[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &p[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &p[2]));
-  CHECK(nmb_Util::Unbuffer(&buf, &p[3]));
-  CHECK(nmb_Util::Unbuffer(&buf, &p[4]));
-  CHECK(nmb_Util::Unbuffer(&buf, &p[5]));
+  CHECK(vrpn_unbuffer(&buf, &p[0]));
+  CHECK(vrpn_unbuffer(&buf, &p[1]));
+  CHECK(vrpn_unbuffer(&buf, &p[2]));
+  CHECK(vrpn_unbuffer(&buf, &p[3]));
+  CHECK(vrpn_unbuffer(&buf, &p[4]));
+  CHECK(vrpn_unbuffer(&buf, &p[5]));
   return 0;
 }
 
@@ -2018,7 +2017,7 @@ char * nmg_Graphics::encode_displayScanlinePosition (int * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, enable);
+    vrpn_buffer(&mptr, &mlen, enable);
 
   }
 
@@ -2027,7 +2026,7 @@ char * nmg_Graphics::encode_displayScanlinePosition (int * len,
 
 int nmg_Graphics::decode_displayScanlinePosition(const char * buf, 
 							int *enable){
-  CHECK(nmb_Util::Unbuffer(&buf, enable));
+  CHECK(vrpn_unbuffer(&buf, enable));
   return 0;
 }
 
@@ -2049,12 +2048,12 @@ char * nmg_Graphics::encode_positionAimLine
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, lo[0]);
-    nmb_Util::Buffer(&mptr, &mlen, lo[1]);
-    nmb_Util::Buffer(&mptr, &mlen, lo[2]);
-    nmb_Util::Buffer(&mptr, &mlen, hi[0]);
-    nmb_Util::Buffer(&mptr, &mlen, hi[1]);
-    nmb_Util::Buffer(&mptr, &mlen, hi[2]);
+    vrpn_buffer(&mptr, &mlen, lo[0]);
+    vrpn_buffer(&mptr, &mlen, lo[1]);
+    vrpn_buffer(&mptr, &mlen, lo[2]);
+    vrpn_buffer(&mptr, &mlen, hi[0]);
+    vrpn_buffer(&mptr, &mlen, hi[1]);
+    vrpn_buffer(&mptr, &mlen, hi[2]);
   }
 
   return msgbuf;
@@ -2063,12 +2062,12 @@ char * nmg_Graphics::encode_positionAimLine
 int nmg_Graphics::decode_positionAimLine
                    (const char * buf, PointType lo, PointType hi) {
   if (!buf || !lo || !hi) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, &lo[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &lo[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &lo[2]));
-  CHECK(nmb_Util::Unbuffer(&buf, &hi[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &hi[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &hi[2]));
+  CHECK(vrpn_unbuffer(&buf, &lo[0]));
+  CHECK(vrpn_unbuffer(&buf, &lo[1]));
+  CHECK(vrpn_unbuffer(&buf, &lo[2]));
+  CHECK(vrpn_unbuffer(&buf, &hi[0]));
+  CHECK(vrpn_unbuffer(&buf, &hi[1]));
+  CHECK(vrpn_unbuffer(&buf, &hi[2]));
   return 0;
 }
 
@@ -2089,10 +2088,10 @@ char * nmg_Graphics::encode_positionRubberCorner
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x0);
-    nmb_Util::Buffer(&mptr, &mlen, y0);
-    nmb_Util::Buffer(&mptr, &mlen, x1);
-    nmb_Util::Buffer(&mptr, &mlen, y1);
+    vrpn_buffer(&mptr, &mlen, x0);
+    vrpn_buffer(&mptr, &mlen, y0);
+    vrpn_buffer(&mptr, &mlen, x1);
+    vrpn_buffer(&mptr, &mlen, y1);
   }
 
   return msgbuf;
@@ -2102,10 +2101,10 @@ int nmg_Graphics::decode_positionRubberCorner
                    (const char * buf, float * x0, float * y0, float * x1,
                              float * y1) {
   if (!buf || !x0 || !y0 || !x1 || !y1) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, x0));
-  CHECK(nmb_Util::Unbuffer(&buf, y0));
-  CHECK(nmb_Util::Unbuffer(&buf, x1));
-  CHECK(nmb_Util::Unbuffer(&buf, y1));
+  CHECK(vrpn_unbuffer(&buf, x0));
+  CHECK(vrpn_unbuffer(&buf, y0));
+  CHECK(vrpn_unbuffer(&buf, x1));
+  CHECK(vrpn_unbuffer(&buf, y1));
   return 0;
 }
 
@@ -2129,21 +2128,21 @@ char * nmg_Graphics::encode_positionSweepLine(int * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, loL[0]);
-    nmb_Util::Buffer(&mptr, &mlen, loL[1]);
-    nmb_Util::Buffer(&mptr, &mlen, loL[2]);
+    vrpn_buffer(&mptr, &mlen, loL[0]);
+    vrpn_buffer(&mptr, &mlen, loL[1]);
+    vrpn_buffer(&mptr, &mlen, loL[2]);
 
-    nmb_Util::Buffer(&mptr, &mlen, hiL[0]);
-    nmb_Util::Buffer(&mptr, &mlen, hiL[1]);
-    nmb_Util::Buffer(&mptr, &mlen, hiL[2]);
+    vrpn_buffer(&mptr, &mlen, hiL[0]);
+    vrpn_buffer(&mptr, &mlen, hiL[1]);
+    vrpn_buffer(&mptr, &mlen, hiL[2]);
 
-    nmb_Util::Buffer(&mptr, &mlen, loR[0]);
-    nmb_Util::Buffer(&mptr, &mlen, loR[1]);
-    nmb_Util::Buffer(&mptr, &mlen, loR[2]);
+    vrpn_buffer(&mptr, &mlen, loR[0]);
+    vrpn_buffer(&mptr, &mlen, loR[1]);
+    vrpn_buffer(&mptr, &mlen, loR[2]);
 
-    nmb_Util::Buffer(&mptr, &mlen, hiR[0]);
-    nmb_Util::Buffer(&mptr, &mlen, hiR[1]);
-    nmb_Util::Buffer(&mptr, &mlen, hiR[2]);
+    vrpn_buffer(&mptr, &mlen, hiR[0]);
+    vrpn_buffer(&mptr, &mlen, hiR[1]);
+    vrpn_buffer(&mptr, &mlen, hiR[2]);
   }
 
   return msgbuf;
@@ -2153,21 +2152,21 @@ int nmg_Graphics::decode_positionSweepLine
                    (const char * buf, PointType loL, PointType hiL,
 		    PointType loR, PointType hiR) {
   if (!buf || !loL || !hiL || !loR || !hiR) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, &loL[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &loL[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &loL[2]));
+  CHECK(vrpn_unbuffer(&buf, &loL[0]));
+  CHECK(vrpn_unbuffer(&buf, &loL[1]));
+  CHECK(vrpn_unbuffer(&buf, &loL[2]));
 
-  CHECK(nmb_Util::Unbuffer(&buf, &hiL[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &hiL[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &hiL[2]));
+  CHECK(vrpn_unbuffer(&buf, &hiL[0]));
+  CHECK(vrpn_unbuffer(&buf, &hiL[1]));
+  CHECK(vrpn_unbuffer(&buf, &hiL[2]));
 
-  CHECK(nmb_Util::Unbuffer(&buf, &loR[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &loR[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &loR[2]));
+  CHECK(vrpn_unbuffer(&buf, &loR[0]));
+  CHECK(vrpn_unbuffer(&buf, &loR[1]));
+  CHECK(vrpn_unbuffer(&buf, &loR[2]));
 
-  CHECK(nmb_Util::Unbuffer(&buf, &hiR[0]));
-  CHECK(nmb_Util::Unbuffer(&buf, &hiR[1]));
-  CHECK(nmb_Util::Unbuffer(&buf, &hiR[2]));
+  CHECK(vrpn_unbuffer(&buf, &hiR[0]));
+  CHECK(vrpn_unbuffer(&buf, &hiR[1]));
+  CHECK(vrpn_unbuffer(&buf, &hiR[2]));
   return 0;
 }
 
@@ -2188,9 +2187,9 @@ char * nmg_Graphics::encode_positionSphere
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, z);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, z);
   }
 
   return msgbuf;
@@ -2199,9 +2198,9 @@ char * nmg_Graphics::encode_positionSphere
 int nmg_Graphics::decode_positionSphere
                    (const char * buf, float * x, float * y, float * z) {
   if (!buf || !x || !y || !z) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, x));
-  CHECK(nmb_Util::Unbuffer(&buf, y));
-  CHECK(nmb_Util::Unbuffer(&buf, z));
+  CHECK(vrpn_unbuffer(&buf, x));
+  CHECK(vrpn_unbuffer(&buf, y));
+  CHECK(vrpn_unbuffer(&buf, z));
   return 0;
 }
 
@@ -2227,7 +2226,7 @@ char * nmg_Graphics::encode_enableGeneticTextures (int * len, int value) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, value);
+    vrpn_buffer(&mptr, &mlen, value);
   }
 
   return msgbuf;
@@ -2237,7 +2236,7 @@ char * nmg_Graphics::encode_enableGeneticTextures (int * len, int value) {
 // from buf into * value. 
 int nmg_Graphics::decode_enableGeneticTextures (const char * buf, int *value) {
   if (!buf || !value) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, value));
+  CHECK(vrpn_unbuffer(&buf, value));
   return 0;
 }
 
@@ -2326,8 +2325,8 @@ char *nmg_Graphics::encode_setRealignTextureSliderRange ( int *len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, low);
-    nmb_Util::Buffer(&mptr, &mlen, hi);
+    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, hi);
   }
 
   return msgbuf;
@@ -2337,8 +2336,8 @@ char *nmg_Graphics::encode_setRealignTextureSliderRange ( int *len,
 int nmg_Graphics::decode_setRealignTextureSliderRange ( const char *buf,
 							float *low,float *hi) {
   if (!buf || !low || !hi) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, low));
-  CHECK(nmb_Util::Unbuffer(&buf, hi));
+  CHECK(vrpn_unbuffer(&buf, low));
+  CHECK(vrpn_unbuffer(&buf, hi));
   return 0;
 }
 
@@ -2380,7 +2379,7 @@ char *nmg_Graphics::encode_enableRealignTextures ( int *len, int on) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, on);
+    vrpn_buffer(&mptr, &mlen, on);
   }
 
   return msgbuf;
@@ -2389,7 +2388,7 @@ char *nmg_Graphics::encode_enableRealignTextures ( int *len, int on) {
 // Decodes one int after network transmission
 int nmg_Graphics::decode_enableRealignTextures ( const char *buf, int *on) {
   if (!buf || !on) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, on));
+  CHECK(vrpn_unbuffer(&buf, on));
   return 0;
 }
 
@@ -2410,8 +2409,8 @@ char *nmg_Graphics::encode_dx_dy ( int *len, float dx, float dy ) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, dx);
-    nmb_Util::Buffer(&mptr, &mlen, dy);
+    vrpn_buffer(&mptr, &mlen, dx);
+    vrpn_buffer(&mptr, &mlen, dy);
   }
 
   return msgbuf;
@@ -2420,8 +2419,8 @@ char *nmg_Graphics::encode_dx_dy ( int *len, float dx, float dy ) {
 // Decodes two floats after network transmission
 int nmg_Graphics::decode_dx_dy ( const char *buf, float *dx, float *dy ) {
   if (!buf || !dx || !dy) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, dx));
-  CHECK(nmb_Util::Unbuffer(&buf, dy));
+  CHECK(vrpn_unbuffer(&buf, dx));
+  CHECK(vrpn_unbuffer(&buf, dy));
   return 0;
 }
 
@@ -2441,7 +2440,7 @@ char *nmg_Graphics::encode_rotateTextures ( int *len, float theta ) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, theta);
+    vrpn_buffer(&mptr, &mlen, theta);
   }
   
   return msgbuf;
@@ -2450,7 +2449,7 @@ char *nmg_Graphics::encode_rotateTextures ( int *len, float theta ) {
 // Decodes one float after network transmission
 int nmg_Graphics::decode_rotateTextures ( const char *buf, float * theta) {
   if (!buf || !theta) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, theta));
+  CHECK(vrpn_unbuffer(&buf, theta));
   return 0;
 }
 
@@ -2475,13 +2474,13 @@ char *nmg_Graphics::encode_updateTexture ( int *len, int whichTexture,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, whichTexture);
-    nmb_Util::Buffer(&mptr, &mlen, name_len);
-    nmb_Util::Buffer(&mptr, &mlen, name, strlen(name));
-    nmb_Util::Buffer(&mptr, &mlen, start_x);
-    nmb_Util::Buffer(&mptr, &mlen, start_y);
-    nmb_Util::Buffer(&mptr, &mlen, end_x);
-    nmb_Util::Buffer(&mptr, &mlen, end_y);
+    vrpn_buffer(&mptr, &mlen, whichTexture);
+    vrpn_buffer(&mptr, &mlen, name_len);
+    vrpn_buffer(&mptr, &mlen, name, strlen(name));
+    vrpn_buffer(&mptr, &mlen, start_x);
+    vrpn_buffer(&mptr, &mlen, start_y);
+    vrpn_buffer(&mptr, &mlen, end_x);
+    vrpn_buffer(&mptr, &mlen, end_y);
   }
 
   return msgbuf;
@@ -2493,14 +2492,14 @@ int nmg_Graphics::decode_updateTexture ( const char *buf, int *whichTexture,
 
   if (!buf || !whichTexture || !name || !start_x || !start_y ||
 	!end_x || !end_y) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, whichTexture));
-  CHECK(nmb_Util::Unbuffer(&buf, &name_len));
+  CHECK(vrpn_unbuffer(&buf, whichTexture));
+  CHECK(vrpn_unbuffer(&buf, &name_len));
   *name = new char [name_len];
-  CHECK(nmb_Util::Unbuffer(&buf, *name, name_len));
-  CHECK(nmb_Util::Unbuffer(&buf, start_x));
-  CHECK(nmb_Util::Unbuffer(&buf, start_y));
-  CHECK(nmb_Util::Unbuffer(&buf, end_x));
-  CHECK(nmb_Util::Unbuffer(&buf, end_y));
+  CHECK(vrpn_unbuffer(&buf, *name, name_len));
+  CHECK(vrpn_unbuffer(&buf, start_x));
+  CHECK(vrpn_unbuffer(&buf, start_y));
+  CHECK(vrpn_unbuffer(&buf, end_x));
+  CHECK(vrpn_unbuffer(&buf, end_y));
   return 0;
 }
 
@@ -2522,7 +2521,7 @@ char *nmg_Graphics::encode_enableRegistration ( int *len, int on) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, on);
+    vrpn_buffer(&mptr, &mlen, on);
   }
 
   return msgbuf;
@@ -2531,7 +2530,7 @@ char *nmg_Graphics::encode_enableRegistration ( int *len, int on) {
 // Decodes one int after network transmission
 int nmg_Graphics::decode_enableRegistration ( const char *buf, int *on) {
   if (!buf || !on) return -1;
-  CHECK(nmb_Util::Unbuffer(&buf, on));
+  CHECK(vrpn_unbuffer(&buf, on));
   return 0;
 }
 
@@ -2553,7 +2552,7 @@ char *nmg_Graphics::encode_textureTransform(int *len, double *xform)
     mptr = msgbuf;
     mlen = *len;
     for (i = 0; i < 16; i++)
-    	nmb_Util::Buffer(&mptr, &mlen, xform[i]);
+    	vrpn_buffer(&mptr, &mlen, xform[i]);
   }
 
   return msgbuf;
@@ -2564,7 +2563,7 @@ int nmg_Graphics::decode_textureTransform(const char *buf, double *xform)
   if (!buf || !xform) return -1;
   int i;
   for (i = 0; i < 16; i++)
-      CHECK(nmb_Util::Unbuffer(&buf, &(xform[i])));
+      CHECK(vrpn_unbuffer(&buf, &(xform[i])));
   return 0;
 }
 
@@ -2587,14 +2586,14 @@ char * nmg_Graphics::encode_setViewTransform (
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, xform.xlate[0]);
-    nmb_Util::Buffer(&mptr, &mlen, xform.xlate[1]);
-    nmb_Util::Buffer(&mptr, &mlen, xform.xlate[2]);
-    nmb_Util::Buffer(&mptr, &mlen, xform.rotate[0]);
-    nmb_Util::Buffer(&mptr, &mlen, xform.rotate[1]);
-    nmb_Util::Buffer(&mptr, &mlen, xform.rotate[2]);
-    nmb_Util::Buffer(&mptr, &mlen, xform.rotate[3]);
-    nmb_Util::Buffer(&mptr, &mlen, xform.scale);
+    vrpn_buffer(&mptr, &mlen, xform.xlate[0]);
+    vrpn_buffer(&mptr, &mlen, xform.xlate[1]);
+    vrpn_buffer(&mptr, &mlen, xform.xlate[2]);
+    vrpn_buffer(&mptr, &mlen, xform.rotate[0]);
+    vrpn_buffer(&mptr, &mlen, xform.rotate[1]);
+    vrpn_buffer(&mptr, &mlen, xform.rotate[2]);
+    vrpn_buffer(&mptr, &mlen, xform.rotate[3]);
+    vrpn_buffer(&mptr, &mlen, xform.scale);
   }
 
   return msgbuf;
@@ -2605,14 +2604,14 @@ int nmg_Graphics::decode_setViewTransform (const char  * buf,
 //fprintf(stderr,"decode_setViewTransform\n");
   const char *bptr = buf;
   if (!buf || !xform) return -1;
-  CHECK(nmb_Util::Unbuffer(&bptr, &xform->xlate[0]));
-  CHECK(nmb_Util::Unbuffer(&bptr, &xform->xlate[1]));
-  CHECK(nmb_Util::Unbuffer(&bptr, &xform->xlate[2]));
-  CHECK(nmb_Util::Unbuffer(&bptr, &xform->rotate[0]));
-  CHECK(nmb_Util::Unbuffer(&bptr, &xform->rotate[1]));
-  CHECK(nmb_Util::Unbuffer(&bptr, &xform->rotate[2]));
-  CHECK(nmb_Util::Unbuffer(&bptr, &xform->rotate[3]));
-  CHECK(nmb_Util::Unbuffer(&bptr, &xform->scale));
+  CHECK(vrpn_unbuffer(&bptr, &xform->xlate[0]));
+  CHECK(vrpn_unbuffer(&bptr, &xform->xlate[1]));
+  CHECK(vrpn_unbuffer(&bptr, &xform->xlate[2]));
+  CHECK(vrpn_unbuffer(&bptr, &xform->rotate[0]));
+  CHECK(vrpn_unbuffer(&bptr, &xform->rotate[1]));
+  CHECK(vrpn_unbuffer(&bptr, &xform->rotate[2]));
+  CHECK(vrpn_unbuffer(&bptr, &xform->rotate[3]));
+  CHECK(vrpn_unbuffer(&bptr, &xform->scale));
   return 0;
 }
 
@@ -2643,8 +2642,8 @@ char *nmg_Graphics::encode_createScreenImage
    {
       mptr = msgbuf;
       mlen = *len;
-      nmb_Util::Buffer(&mptr, &mlen, filename, 512);
-      nmb_Util::Buffer(&mptr, &mlen, (int)(type));
+      vrpn_buffer(&mptr, &mlen, filename, 512);
+      vrpn_buffer(&mptr, &mlen, (int)(type));
    }
 
    return msgbuf;
@@ -2661,9 +2660,9 @@ int nmg_Graphics::decode_createScreenImage
    const char *bptr = buf;
    int temp;
    if (!buf || !(*filename) || !type) return -1;
-   CHECK(nmb_Util::Unbuffer(&bptr, *filename, 512));
+   CHECK(vrpn_unbuffer(&bptr, *filename, 512));
 //fprintf(stderr, "Filename: %s\n", *filename);
-   CHECK(nmb_Util::Unbuffer(&bptr, &temp));
+   CHECK(vrpn_unbuffer(&bptr, &temp));
 //fprintf(stderr, "Type: %d\n", temp);
    *type = (ImageType)(temp);
    return 0;

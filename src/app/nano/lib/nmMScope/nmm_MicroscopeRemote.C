@@ -19,7 +19,6 @@
 #include <nmb_Debug.h>
 //#include <nmb_Globals.h>  // get rid of this if we're going to be modular
 #include <nmb_Types.h>
-#include <nmb_Util.h>
 #include <nmb_Line.h>
 
 #include "drift.h"

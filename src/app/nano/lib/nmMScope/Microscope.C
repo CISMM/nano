@@ -102,12 +102,12 @@ Microscope::~Microscope (void) {
 
 // Added by Tiger       moved from nmm_Microscope.C
 char * Microscope::encode_GetNewPointDatasets
-                            (long * len,  // XXX should be vrpn_int32 ???
+                            (vrpn_int32 * len,  
                              const Tclvar_checklist * list) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
-  long numSets = 0;
+  vrpn_int32 mlen;
+  vrpn_int32 numSets = 0;
   int i;
 
   if (!len) return NULL;
@@ -124,18 +124,18 @@ char * Microscope::encode_GetNewPointDatasets
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, numSets);
+    vrpn_buffer(&mptr, &mlen, numSets);
     for (i = 0; i < list->Num_checkboxes(); i++)  // Tiger changed Num_entries to Num_checkboxes
       if (1 == list->Is_set(i)) {
 		// Tiger changed Entry_name to Checkbox_name
-        nmb_Util::Buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
+        vrpn_buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
 
         // Ask for 10 samples of each except Topography;
         // of that we want 90
         if (!strcmp("Topography", list->Checkbox_name(i))) // Tiger changed Entry_name to Checkbox_name
-          nmb_Util::Buffer(&mptr, &mlen, (long)90);
+          vrpn_buffer(&mptr, &mlen, 90);
         else
-          nmb_Util::Buffer(&mptr, &mlen, (long)10);
+          vrpn_buffer(&mptr, &mlen, 10);
       }
   }
 
@@ -145,12 +145,12 @@ char * Microscope::encode_GetNewPointDatasets
 
 // Added by Tiger       moved from nmm_Microscope.C
 char * Microscope::encode_GetNewScanDatasets
-                            (long * len,  // XXX should be vrpn_int32 ???
+                            (vrpn_int32 * len,  
                              const Tclvar_checklist * list) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
-  long numSets = 0;
+  vrpn_int32 mlen;
+  vrpn_int32 numSets = 0;
   long i;
 
   if (!len) return NULL;
@@ -162,7 +162,7 @@ char * Microscope::encode_GetNewScanDatasets
     if (1 == list->Is_set(i)) numSets++;
 
 // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets: numSets = %ld\n", numSets);
+  fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets: numSets = %d\n", numSets);
 // NANO END
   *len = sizeof(long) + STM_NAME_LENGTH * numSets;
   msgbuf = new char [*len];
@@ -173,10 +173,10 @@ char * Microscope::encode_GetNewScanDatasets
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, numSets);
+    vrpn_buffer(&mptr, &mlen, numSets);
     for (i = 0; i < list->Num_checkboxes(); i++)
       if (1 == list->Is_set(i))
-        nmb_Util::Buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
+        vrpn_buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
   }
 
   return msgbuf;

@@ -111,6 +111,7 @@ class nmm_Microscope {
     long d_MarkModify_type;
     long d_MarkImage_type;
     long d_Shutdown_type;
+
     long d_QueryScanRange_type;
     long d_QueryStdDevParams_type;
     long d_QueryPulseParams_type;
@@ -222,7 +223,7 @@ class nmm_Microscope {
     long d_PulseCompletedNM_type;
     long d_PulseFailureNM_type;
 
-
+    
 
 
     // encode_ functions take as parameters all the data carried in

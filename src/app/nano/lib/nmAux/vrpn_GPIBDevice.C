@@ -2,7 +2,6 @@
 #include <string.h>  // for strlen on HPs
 
 #include "vrpn_GPIBDevice.h"
-#include "nmb_Util.h"
 
 #define CHECK(a) if ((a) == -1) return -1
 
@@ -71,9 +70,9 @@ char * vrpn_GPIBDevice::encode_Device (vrpn_int32 * len, vrpn_int32 board_index,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, board_index);
-    nmb_Util::Buffer(&mptr, &mlen, primary_address);
-    nmb_Util::Buffer(&mptr, &mlen, secondary_address);
+    vrpn_buffer(&mptr, &mlen, board_index);
+    vrpn_buffer(&mptr, &mlen, primary_address);
+    vrpn_buffer(&mptr, &mlen, secondary_address);
   }
 
   return msgbuf;
@@ -82,9 +81,9 @@ char * vrpn_GPIBDevice::encode_Device (vrpn_int32 * len, vrpn_int32 board_index,
 vrpn_int32 vrpn_GPIBDevice::decode_Device (const char ** buf, vrpn_int32* board_index,
 		vrpn_int32* primary_address, vrpn_int32* secondary_address)
 {
-  CHECK(nmb_Util::Unbuffer(buf, board_index));
-  CHECK(nmb_Util::Unbuffer(buf, primary_address));
-  CHECK(nmb_Util::Unbuffer(buf, secondary_address));
+  CHECK(vrpn_unbuffer(buf, board_index));
+  CHECK(vrpn_unbuffer(buf, primary_address));
+  CHECK(vrpn_unbuffer(buf, secondary_address));
 
   return 0;
 }
@@ -108,8 +107,8 @@ char * vrpn_GPIBDevice::encode_Write (vrpn_int32 * len, char * my_buf)
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, slen);
-    nmb_Util::Buffer(&mptr, &mlen, my_buf, slen);
+    vrpn_buffer(&mptr, &mlen, slen);
+    vrpn_buffer(&mptr, &mlen, my_buf, slen);
   }
 
   return msgbuf;
@@ -118,7 +117,7 @@ char * vrpn_GPIBDevice::encode_Write (vrpn_int32 * len, char * my_buf)
 vrpn_int32 vrpn_GPIBDevice::decode_Write (const char ** buf, char ** my_buf)
 {
 	vrpn_int32 length;
-	CHECK(nmb_Util::Unbuffer(buf, &length));
+	CHECK(vrpn_unbuffer(buf, &length));
 	*my_buf = new char [length];
 	if (!*my_buf) {
 		fprintf(stderr, "vrpn_GPIBDevice::decode_Write:  "
@@ -126,7 +125,7 @@ vrpn_int32 vrpn_GPIBDevice::decode_Write (const char ** buf, char ** my_buf)
 		return -1;
 	}
 
-	CHECK(nmb_Util::Unbuffer(buf, *my_buf, length));
+	CHECK(vrpn_unbuffer(buf, *my_buf, length));
 
 	return 0;
 
@@ -149,7 +148,7 @@ char * vrpn_GPIBDevice::encode_Read (vrpn_int32 * len, vrpn_int32 max_len)
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, max_len);
+    vrpn_buffer(&mptr, &mlen, max_len);
   }
 
   return msgbuf;
@@ -157,7 +156,7 @@ char * vrpn_GPIBDevice::encode_Read (vrpn_int32 * len, vrpn_int32 max_len)
 
 vrpn_int32 vrpn_GPIBDevice::decode_Read (const char ** buf, vrpn_int32 *max_len)
 {
-  CHECK(nmb_Util::Unbuffer(buf, max_len));
+  CHECK(vrpn_unbuffer(buf, max_len));
 
   return 0;
 
@@ -200,9 +199,9 @@ char * vrpn_GPIBDevice::encode_ResultData (vrpn_int32 * len, vrpn_float32 * data
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, data_len);
+    vrpn_buffer(&mptr, &mlen, data_len);
 	for (int i = 0; i< data_len; i++) {
-	    nmb_Util::Buffer(&mptr, &mlen, data[i]);
+	    vrpn_buffer(&mptr, &mlen, data[i]);
 	}
   }
 
@@ -211,7 +210,7 @@ char * vrpn_GPIBDevice::encode_ResultData (vrpn_int32 * len, vrpn_float32 * data
 }
 vrpn_int32 vrpn_GPIBDevice::decode_ResultData (const char ** buf, vrpn_float32 ** data, vrpn_int32 * data_len)
 {
-	CHECK(nmb_Util::Unbuffer(buf, data_len));
+	CHECK(vrpn_unbuffer(buf, data_len));
 	*data = new vrpn_float32 [*data_len];
 	vrpn_float32 * temp_data = *data;
 	if (!*data) {
@@ -220,7 +219,7 @@ vrpn_int32 vrpn_GPIBDevice::decode_ResultData (const char ** buf, vrpn_float32 *
 		return -1;
 	}
 	for (int i = 0; i< *data_len; i++) {
-		CHECK(nmb_Util::Unbuffer(buf, &(temp_data[i])));
+		CHECK(vrpn_unbuffer(buf, &(temp_data[i])));
 	}
 	return 0;
 

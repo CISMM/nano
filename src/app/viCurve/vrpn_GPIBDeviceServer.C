@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 #include "vrpn_GPIBDeviceServer.h"
-#include "nmb_Util.h"
 
 #define CHECK(a) if ((a) == -1) return -1
 

@@ -13,7 +13,6 @@
 
 #include <stdio.h>
 
-#include "nmb_Util.h"
 #include "nma_Keithley2400.h"
 
 #define CHECK(a) if ((a) == -1) return -1

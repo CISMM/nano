@@ -398,6 +398,7 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
     long ZagTo (float x, float y, float yaw,
                float sweepWidth, float regionDiag);
     long Shutdown (void);
+    long GotConnection(void);
     long SetMaxMove (float distance);
     long SetStdDelay (long delay);
     long SetStPtDelay (long delay);
@@ -506,7 +507,7 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
 
 
 
-
+    static int handle_GotConnection2 (void *, vrpn_HANDLERPARAM);
     static int handle_InTappingMode (void *, vrpn_HANDLERPARAM);
     static int handle_InContactMode (void *, vrpn_HANDLERPARAM);
     static int handle_InDirectZControl (void *, vrpn_HANDLERPARAM);

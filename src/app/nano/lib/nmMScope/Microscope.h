@@ -11,11 +11,8 @@
 #if !defined(_WIN32)
 #include <sys/time.h> // for RecordResistance() 
 #endif
-#include "nmb_Util.h"           // Added by Tiger, because moved some
-                                // encode and decode functions here
 #include <nmm_Types.h>
 
-        // Added by Tiger       moved from nmm_Microscope.h
 class nmb_Dataset;  // from nmb_Dataset.h
 class nmb_Decoration;  // from nmb_Decoration.h
 
@@ -97,8 +94,8 @@ class Microscope : public nmm_Microscope {
 // Above added by Tiger moved from nmm_Microscope.h
 
 // Tiger        moved from nmm_Microscope.h
-    char * encode_GetNewPointDatasets (long * len, const Tclvar_checklist *);
-    char * encode_GetNewScanDatasets (long * len, const Tclvar_checklist *);
+    char * encode_GetNewPointDatasets (vrpn_int32 * len, const Tclvar_checklist *);
+    char * encode_GetNewScanDatasets (vrpn_int32 * len, const Tclvar_checklist *);
 // Tiger
 
 
