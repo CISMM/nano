@@ -1,3 +1,8 @@
+2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_SimulatedMicroscope_Remote.hdef: adding missing public 
+	inheritance specification for class
+
 2002-06-26  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* nmm_AFMSIMSERVER_Report.vrpndef : new message type,

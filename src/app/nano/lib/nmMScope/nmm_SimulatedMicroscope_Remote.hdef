@@ -25,7 +25,8 @@ CLASSNAME nmm_SimulatedMicroscope_Remote
 //
 
 
-class nmm_SimulatedMicroscope_Remote: public nmm_AFMSIM_Report, nmm_AFMSIMSERVER_Report, public nmb_SharedDevice_Remote {
+class nmm_SimulatedMicroscope_Remote: public nmm_AFMSIM_Report, 
+      public nmm_AFMSIMSERVER_Report, public nmb_SharedDevice_Remote {
 
 public:
 	nmm_SimulatedMicroscope_Remote(const char * name, vrpn_Connection * connection, 
