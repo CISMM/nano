@@ -25,7 +25,8 @@ set import_proj_text 1
 set import_CCW 1
 set import_tess 10
 set import_axis_step 10
-set import_clamp 0
+set import_lock_object 0
+set import_lock_texture 0
 set import_update_AFM 0
 set import_grab_object 0
 
@@ -174,8 +175,10 @@ button $nmInfo(basic_options).f2.import_reset_object -text "Reset Object" -comma
 button $nmInfo(basic_options).f1.f1.visibility_button -text "Hide" -command change_visibility
 checkbutton $nmInfo(basic_options).f1.f1.proj_text_button \
     -text "Show Projective Texture" -variable import_proj_text
-checkbutton $nmInfo(basic_options).f1.f1.clamp_button \
-    -text "Lock Projective Texture" -variable import_clamp
+checkbutton $nmInfo(basic_options).f1.f1.lock_object_button \
+    -text "Lock Object to Projective Texture" -variable import_lock_object
+checkbutton $nmInfo(basic_options).f1.f1.lock_texture_button \
+    -text "Lock Projective Texture to Object" -variable import_lock_texture
 button $nmInfo(basic_options).f1.f1.set_color \
         -text "Set color" -command {
             if {[choose_color import_color "Choose color" $nmInfo(basic_options)] } {
@@ -234,7 +237,8 @@ pack $nmInfo(basic_options).f1.import_grab_object -anchor sw -padx 1m -pady 1m -
 pack $nmInfo(basic_options).f1.f1 -anchor nw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f1.f1.visibility_button -anchor nw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f1.f1.proj_text_button -anchor nw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f1.f1.clamp_button -anchor sw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f1.f1.lock_object_button -anchor sw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f1.f1.lock_texture_button -anchor sw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f1.f1.set_color -anchor nw -side left -fill x
 pack $nmInfo(basic_options).f1.f1.colorsample -anchor nw -side left -fill x -expand yes
 

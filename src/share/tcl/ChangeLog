@@ -1,5 +1,10 @@
 2002-05-24 David Borland <borland@cs.unc.edu>
 
+        * import.tcl : added control for locking the projective texture's 
+	transform.
+
+2002-05-24 David Borland <borland@cs.unc.edu>
+
         * import.tcl : reorganized the imported object user interface
 
 
