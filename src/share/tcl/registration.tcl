@@ -163,7 +163,7 @@ radiobutton $nmInfo(registration).texture.image_mode_surface \
 pack $nmInfo(registration).texture.image_mode_surface -anchor nw
 
 radiobutton $nmInfo(registration).texture.image_mode_model \
-    -text "Model Mode" -variable reg_image_mode -value 0
+    -text "Model Mode" -variable reg_image_mode -value 0 -command "show.import_objects"
 
 pack $nmInfo(registration).texture.image_mode_model -anchor nw
 

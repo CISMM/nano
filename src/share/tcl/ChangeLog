@@ -1,5 +1,10 @@
 2002-06-06 David Borland <borland@cs.unc.edu>
 
+        * registration.tcl : automatically pop-up import objects window
+	when switching to model coordinate generation mode
+
+2002-06-06 David Borland <borland@cs.unc.edu>
+
         * import.tcl : minor change because there is no longer a grab texture
 	button in registration.tcl
 
