@@ -21,6 +21,8 @@ nmm_AFMSIMSERVER_Report::nmm_AFMSIMSERVER_Report (
        ("nmm SimulatedMicroscope ReportGridSize");
     d_ScanRange_type = connection->register_message_type
        ("nmm SimulatedMicroscope ScanRange");
+    d_Triangle_type = connection->register_message_type
+       ("nmm SimulatedMicroscope Triangle");
 
   }
 }
@@ -118,6 +120,78 @@ int nmm_AFMSIMSERVER_Report::decode_ScanRange (
   if (vrpn_unbuffer(buffer, xmax)) return -1;
   if (vrpn_unbuffer(buffer, ymax)) return -1;
   if (vrpn_unbuffer(buffer, zmax)) return -1;
+  return 0;
+}
+
+char * nmm_AFMSIMSERVER_Report::encode_Triangle (
+      int * len,
+      vrpn_float32 _1v1,
+      vrpn_float32 _1v2,
+      vrpn_float32 _1v3,
+      vrpn_float32 _2v1,
+      vrpn_float32 _2v2,
+      vrpn_float32 _2v3,
+      vrpn_float32 _3v1,
+      vrpn_float32 _3v2,
+      vrpn_float32 _3v3
+) {
+  char * msgbuf = NULL;
+  char *mptr[1];
+  int temp; int* mlen = &temp;
+  if (!len) return NULL;
+  *len =
+     (sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32));
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "encode_Triangle: Out of memory.\n");
+    *len = 0;
+  } else {
+    *mptr = msgbuf;
+    *mlen = *len;
+    vrpn_buffer(mptr, mlen, _1v1);
+    vrpn_buffer(mptr, mlen, _1v2);
+    vrpn_buffer(mptr, mlen, _1v3);
+    vrpn_buffer(mptr, mlen, _2v1);
+    vrpn_buffer(mptr, mlen, _2v2);
+    vrpn_buffer(mptr, mlen, _2v3);
+    vrpn_buffer(mptr, mlen, _3v1);
+    vrpn_buffer(mptr, mlen, _3v2);
+    vrpn_buffer(mptr, mlen, _3v3);
+  }
+  return msgbuf;
+}
+
+int nmm_AFMSIMSERVER_Report::decode_Triangle (
+      const char ** buffer,
+      vrpn_float32 (*_1v1),
+      vrpn_float32 (*_1v2),
+      vrpn_float32 (*_1v3),
+      vrpn_float32 (*_2v1),
+      vrpn_float32 (*_2v2),
+      vrpn_float32 (*_2v3),
+      vrpn_float32 (*_3v1),
+      vrpn_float32 (*_3v2),
+      vrpn_float32 (*_3v3)
+) {
+  if (!buffer
+   || !_1v1
+   || !_1v2
+   || !_1v3
+   || !_2v1
+   || !_2v2
+   || !_2v3
+   || !_3v1
+   || !_3v2
+   || !_3v3) return -1;
+  if (vrpn_unbuffer(buffer, _1v1)) return -1;
+  if (vrpn_unbuffer(buffer, _1v2)) return -1;
+  if (vrpn_unbuffer(buffer, _1v3)) return -1;
+  if (vrpn_unbuffer(buffer, _2v1)) return -1;
+  if (vrpn_unbuffer(buffer, _2v2)) return -1;
+  if (vrpn_unbuffer(buffer, _2v3)) return -1;
+  if (vrpn_unbuffer(buffer, _3v1)) return -1;
+  if (vrpn_unbuffer(buffer, _3v2)) return -1;
+  if (vrpn_unbuffer(buffer, _3v3)) return -1;
   return 0;
 }
 

@@ -41,7 +41,7 @@ nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
   d_connection(connection)
 {
 	REGISTER nmm_AFMSIM_Report;
-	REGISTER nmm_AFMSIMSERVER_Report;
+	//REGISTER nmm_AFMSIMSERVER_Report;
 	d_gotConnection_type =
         d_connection->register_message_type(vrpn_got_connection);
 	connection->register_handler(d_gotConnection_type,
@@ -74,9 +74,13 @@ int nmm_SimulatedMicroscope_Remote::handle_gotConnection (void * userdata, vrpn_
   const char * buffer = grpc_p.buffer;
   nmm_SimulatedMicroscope_Remote* grpc_me = (nmm_SimulatedMicroscope_Remote *) userdata;
   
+  //send grid and scan info
   grpc_me->encode_and_sendGridandScanInfo(grpc_me->d_dataset->inputGrid->numX(), grpc_me->d_dataset->inputGrid->numY(),
 			grpc_me->d_dataset->inputGrid->minX(),grpc_me->d_dataset->inputGrid->minY(),0,
 			grpc_me->d_dataset->inputGrid->maxX(),grpc_me->d_dataset->inputGrid->maxY(),128);
+  //send two triangles for testing
+  grpc_me->encode_and_sendTriangle(200.0f,200.0f,100.0f,300.0f,200.0f,100.0f,250.0f,300.0f,150.0f);
+  //grpc_me->encode_and_sendTriangle(400.0f,400.0f,400.0f,300.0f,300.0f,20.0f,400.0f,300.0f,20.0f);
   
   return 0;
 }
@@ -149,16 +153,6 @@ RECEIVE_MSG_HEADER ScanDataset {
 //		
 }
 
-HANDLERS nmm_AFMSIMSERVER_Report ; 
-
-RECEIVE_MSG ReportGridSize {
-
-}
-
-RECEIVE_MSG ScanRange {
-
-
-}
 //
 void nmm_SimulatedMicroscope_Remote::
 encode_and_sendGridandScanInfo(vrpn_int32 x, vrpn_int32 y,
@@ -170,11 +164,26 @@ encode_and_sendGridandScanInfo(vrpn_int32 x, vrpn_int32 y,
   char * msgbuf = encode_ScanRange(&len,xmin,ymin,zmin,xmax,ymax,zmax);//encode msgbuf
   int retval = -1;
   retval = Send((long)len, d_ScanRange_type, msgbuf);//send stuff
-  //ANDREA:  note took this out because above not working--just for now...
+  
   char * msgbuf2 = encode_ReportGridSize(&len,x,y);//encode msgbuf
   retval = -1;
   retval = Send((long)len, d_ReportGridSize_type, msgbuf2);//send stuff
   
+}
+//
+void nmm_SimulatedMicroscope_Remote::
+encode_and_sendTriangle(
+	vrpn_float32 _1v1, vrpn_float32 _1v2,vrpn_float32 _1v3,
+	vrpn_float32 _2v1, vrpn_float32 _2v2,vrpn_float32 _2v3,
+	vrpn_float32 _3v1, vrpn_float32 _3v2,vrpn_float32 _3v3){
+  //variables for encoding in msgbuf
+  int len = 0;
+  //
+  char * msgbuf = encode_Triangle(&len,_1v1,_1v2,_1v3,_2v1,_2v2,_2v3,_3v1,_3v2,_3v3);//encode msgbuf
+  int retval = -1;
+  if((retval = Send((long)len, d_Triangle_type, msgbuf)) == -1){
+	cout << "problem sending Triangle" << endl;
+  }//send stuff  
 }
 //
 int nmm_SimulatedMicroscope_Remote::

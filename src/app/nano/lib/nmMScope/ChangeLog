@@ -1,3 +1,19 @@
+2002 -02-25 Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nmm_AFMSIMSERVER_Report.vrpndef : add 'Triangle' message type
+	which sends 3 vertices given in x,y, and z
+
+	* nmm_SimulatedMicroscope_Remote.Ch : add
+	encode_and_sendTriangle function to send over an individual
+	triangle and code testing sending of triangles (temporary),
+	also decode and encode functions for Triangle added by 
+	inclusion of new message from nmm_AFMSIMSERVER_Report
+
+	* nmm_SimulatedMicroscope.Ch : add a linked list to hold
+	triangles when they are received so that receipt speed not held
+	up by processing speed, added Node class to create list, and 
+	data members Node * head and * holder
+
 2002-02-15  Aron Helser  <helser@cs.unc.edu>
 
 	* AFMState.Ch: Removed stm_z_scale, read_mode. These don't depend

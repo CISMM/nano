@@ -8,6 +8,22 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope.h
 #include "nmm_AFMSIMSERVER_Report.h"
 #include <nmb_SharedDevice.h>
 //
+class Node{//used to make a linked list of triangles so that triangles can be processed slower
+           //by the simulator than they are received without losing information
+
+public:
+	Node(){next = NULL;};
+	Node * next;
+	float v1_1;//vertice 1 x,y, and z
+	float v1_2;
+	float v1_3;
+	float v2_1;//vertice 2 x,y, and z
+	float v2_2;
+	float v2_3;
+	float v3_1;//vertice 3 x,y, and z
+	float v3_2;
+	float v3_3;
+};
 
 class nmb_SharedDevice_Server;
 //
@@ -23,12 +39,17 @@ public:
 	nmm_SimulatedMicroscope(char *name, vrpn_Connection *connection, int scanResolution);
 	virtual ~nmm_SimulatedMicroscope();
 	void encode_and_sendData(double ** Data, const int num_cols);
+							//encode a line from data array and pack to send (calls Send function)
 	void change_machineName(char * newName);
 	double return_Simpixels_to_realworld_ratio_x();	
 	double return_Simpixels_to_realworld_ratio_y();
 	double Sim_to_World_x;
 	double Sim_to_World_y;
-	bool grid_size_rcv;
+	bool grid_size_rcv;		//true when this mesage is received, so windows in simulator can be resized
+	bool triangleRcv;		//true when there are triangles to process
+	Node * head;			//head of list of triangles
+	Node * holder;			//temp Node to hold head of list before deletion without simulator needing 
+							//knowledgeof Node class
 
 private:
     RECEIVERS_DECL nmm_AFMSIM_Report;
@@ -36,13 +57,14 @@ private:
     HANDLERS_DECL ;
 
 	int Send( long len, vrpn_int32 msg_type, char * buf );
+							//send data across connection
 	char * d_name;
 	vrpn_Connection * d_connection;
-	long simulator_id;
-	int d_scanResolution;
-	double Remote_toSim_x;
-	double Remote_toSim_y;
-	float d_xmin;
+	long simulator_id;		//ID of sender
+	int d_scanResolution;	//columnheight/rowlength
+	double Remote_toSim_x;	//ratio of x resolution from nano to simulator
+	double Remote_toSim_y;	//ratio of y resolution from nano to simulator
+	float d_xmin;			//all of these show microscope-space extent
 	float d_xmax;
 	float d_ymin;
 	float d_ymax;

@@ -31,17 +31,23 @@ public:
 		const char * planename, nmb_Dataset * dataset);
 	virtual ~nmm_SimulatedMicroscope_Remote();
 	int mainloop();
-	void encode_and_sendGridandScanInfo(vrpn_int32 x, vrpn_int32 y,
+	void encode_and_sendGridandScanInfo(//encode grid and scan info (microscope extent) and nano
+										//grid size, and pack to send
+		vrpn_int32 x, vrpn_int32 y,
 		vrpn_float32 xmin,vrpn_float32 ymin,vrpn_float32 zmin,
 		vrpn_float32 xmax,vrpn_float32 ymax,vrpn_float32 zmax);
-	int Send(long len, vrpn_int32 msg_type, char * buf);
+	void encode_and_sendTriangle(//encode triangle vertices (for 1 triangle) and pack to send
+		vrpn_float32 _1v1, vrpn_float32 _1v2,vrpn_float32 _1v3,
+		vrpn_float32 _2v1, vrpn_float32 _2v2,vrpn_float32 _2v3,
+		vrpn_float32 _3v1, vrpn_float32 _3v2,vrpn_float32 _3v3);
+	int Send(long len, vrpn_int32 msg_type, char * buf);//send data across connection
 //
 private:
 
     RECEIVERS_DECL nmm_AFMSIM_Report;
-	RECEIVERS_DECL nmm_AFMSIMSERVER_Report;
+	//RECEIVERS_DECL nmm_AFMSIMSERVER_Report;
     HANDLERS_DECL nmm_AFMSIM_Report;
-	HANDLERS_DECL nmm_AFMSIMSERVER_Report;
+	//HANDLERS_DECL nmm_AFMSIMSERVER_Report;
 	static int handle_gotConnection(void * userdata, vrpn_HANDLERPARAM grpc_p);
 
 	nmb_Dataset * d_dataset;	//dataset that real di data is in
@@ -57,8 +63,9 @@ private:
 	bool UnitsOK;			    //so only load information if units check out,
 					            //match real afm scan plane
 	vrpn_Connection * d_connection;
-	long simulator_id;
-	vrpn_int32 d_gotConnection_type;
+	long simulator_id;				//our sender id
+	vrpn_int32 d_gotConnection_type;//id for connection message we need to receive before we send 
+									//anything
 	
 
 };

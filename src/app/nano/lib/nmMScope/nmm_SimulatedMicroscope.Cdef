@@ -162,4 +162,29 @@ RECEIVE_MSG ScanRange {
 	cout << endl << "ScanRange:\t" << xmin << "," << xmax << "\t" << ymin << "," << ymax << endl;
 }
 
+RECEIVE_MSG Triangle {
+//  float32 _1v1
+//  float32 _1v2
+//  float32 _1v3
+//  float32 _2v1
+//  float32 _2v2
+//  float32 _2v3
+//  float32 _3v1
+//  float32 _3v2
+//  float32 _3v3
 
+	triangleRcv = true;
+	Node * temp = new Node();//can fill in Node object now
+	temp->v1_1 = (float)_1v1;
+	temp->v1_2 = (float)_1v2;
+	temp->v1_3 = (float)_1v3;
+	temp->v2_1 = (float)_2v1;
+	temp->v2_2 = (float)_2v2;
+	temp->v2_3 = (float)_2v3;
+	temp->v3_1 = (float)_3v1;
+	temp->v3_2 = (float)_3v2;
+	temp->v3_3 = (float)_3v3;//fill in
+	temp->next = head;//put in front of list
+	head = temp;//call temp by head
+
+}

@@ -16,3 +16,15 @@ VRPN_MESSAGE ScanRange {
   float32 ymax
   float32 zmax
 }
+
+VRPN_MESSAGE Triangle{
+  float32 _1v1
+  float32 _1v2
+  float32 _1v3
+  float32 _2v1
+  float32 _2v2
+  float32 _2v3
+  float32 _3v1
+  float32 _3v2
+  float32 _3v3
+}
