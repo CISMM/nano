@@ -141,10 +141,10 @@ protected:
 private:
   
   // Receive callbacks
-  static int handle_Result( void *_userdata, vrpn_HANDLERPARAM _p );
-  static int handle_ResultData( void *_userdata, vrpn_HANDLERPARAM _p );
-  static int handle_Error( void *_userdata, vrpn_HANDLERPARAM _p );
-  static int handle_Shutdown( void *_userdata, vrpn_HANDLERPARAM _p );  
+  static int VRPN_CALLBACK handle_Result( void *_userdata, vrpn_HANDLERPARAM _p );
+  static int VRPN_CALLBACK handle_ResultData( void *_userdata, vrpn_HANDLERPARAM _p );
+  static int VRPN_CALLBACK handle_Error( void *_userdata, vrpn_HANDLERPARAM _p );
+  static int VRPN_CALLBACK handle_Shutdown( void *_userdata, vrpn_HANDLERPARAM _p );  
 };
 
 #endif

@@ -1,3 +1,8 @@
+2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nma_Keithley2400.h : Uses new VRPN_CALLBACK definition.
+	* vrpn_Ohmmeter.h : Uses new VRPN_CALLBACK definition.
+
 2004-04-26  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nma_Keithley2400_ui.C : Making compiler happy.

@@ -63,7 +63,7 @@ typedef struct {
         vrpn_float64 range_min;
         vrpn_float64 filter;
 } vrpn_SETOHMCB;
-typedef void (*vrpn_SETOHMCHANGEHANDLER)(void *userdata,
+typedef void (VRPN_CALLBACK *vrpn_SETOHMCHANGEHANDLER)(void *userdata,
                                         const vrpn_SETOHMCB &info);
 
 
@@ -76,7 +76,7 @@ class vrpn_Ohmmeter_ORPX2 : public nmb_Device_Server, public vrpn_Ohmmeter {
 				vrpn_SETOHMCHANGEHANDLER handler);
     virtual int unregister_change_handler(void *userdata,
 				vrpn_SETOHMCHANGEHANDLER handler);
-    static void handle_channel_set(void *userdata, const vrpn_SETOHMCB &info);
+    static void VRPN_CALLBACK handle_channel_set(void *userdata, const vrpn_SETOHMCB &info);
   protected:
     ORPX_SerialComm *theORPX;
     orpx_params_t chan_data[NUM_ORPX_CHANNELS];
@@ -92,7 +92,7 @@ class vrpn_Ohmmeter_ORPX2 : public nmb_Device_Server, public vrpn_Ohmmeter {
     } vrpn_ORPXCHANGELIST;
 	vrpn_ORPXCHANGELIST *change_list;
 
-    static int handle_change_message(void *userdata, vrpn_HANDLERPARAM p);
+    static int VRPN_CALLBACK handle_change_message(void *userdata, vrpn_HANDLERPARAM p);
 
 };
 
@@ -106,7 +106,7 @@ class vrpn_Ohmmeter_Server : public nmb_Device_Server, public vrpn_Ohmmeter {
                                 vrpn_SETOHMCHANGEHANDLER handler);
     virtual int unregister_change_handler(void *userdata,
                                 vrpn_SETOHMCHANGEHANDLER handler);
-    static void handle_channel_set(void *userdata, const vrpn_SETOHMCB &info);
+    static void VRPN_CALLBACK handle_channel_set(void *userdata, const vrpn_SETOHMCB &info);
   protected:
     orpx_params_t chan_data[NUM_ORPX_CHANNELS];
         vrpn_float32 channel_acquisition_time[NUM_ORPX_CHANNELS]; // seconds
@@ -121,7 +121,7 @@ class vrpn_Ohmmeter_Server : public nmb_Device_Server, public vrpn_Ohmmeter {
     } vrpn_ORPXCHANGELIST;
         vrpn_ORPXCHANGELIST *change_list;
 
-    static int handle_change_message(void *userdata, vrpn_HANDLERPARAM p);
+    static int VRPN_CALLBACK handle_change_message(void *userdata, vrpn_HANDLERPARAM p);
 
 };
 
@@ -187,9 +187,9 @@ class vrpn_Ohmmeter_Remote : public nmb_Device_Client, public vrpn_Ohmmeter {
     } vrpn_OHMMEASCHANGELIST;
 	vrpn_OHMMEASCHANGELIST *measure_change_list;
 
-	static int handle_measurement_message(void *userdata,
+	static int VRPN_CALLBACK handle_measurement_message(void *userdata,
 						vrpn_HANDLERPARAM p);
-	static int handle_ohmset_message(void *userdata,vrpn_HANDLERPARAM p);
+	static int VRPN_CALLBACK handle_ohmset_message(void *userdata,vrpn_HANDLERPARAM p);
 
 };
 
