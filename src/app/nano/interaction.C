@@ -3335,10 +3335,6 @@ int doFeelLive (int whichUser, int userEvent)
   decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
   nmui_Util::moveSphere(clipPos, graphics);
 
-  //thats all if we are in direct step mode and in xy lock.
-  if(microscope->state.modify.tool == DIRECT_STEP && xy_lock) {
-	  return 0;
-  }
   // if the style is sweep, set up additional icon for sweep width
   if (microscope->state.modify.style == SWEEP) {
     setupSweepIcon(whichUser, clipPos, plane);
@@ -3346,11 +3342,20 @@ int doFeelLive (int whichUser, int userEvent)
 
   switch ( userEvent ) {	    
   case PRESS_EVENT:
+	  //don't do anything if in Direct Step mode.
+      if(microscope->state.modify.tool == DIRECT_STEP && xy_lock) {
+		  return 0;
+	  }
   /* Request a reading from the current location,
 	  * and wait till tip gets there */
       microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
       break;
   case HOLD_EVENT:
+
+	  //don't do anything if in Direct Step mode.
+      if(microscope->state.modify.tool == DIRECT_STEP && xy_lock) {
+		  return 0;
+	  }
       if (microscope->state.modify.tool == FEELAHEAD) {
 		  // Feelahead mode IGNORES the commit button;  it never
 		  // leaves image mode.
