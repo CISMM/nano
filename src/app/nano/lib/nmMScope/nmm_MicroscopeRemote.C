@@ -3810,7 +3810,7 @@ long nmm_Microscope_Remote::RcvWindowLineData(const long _x, const long _y,
   nmb_Image *image;
   
   // need to convert from a nmb_string to a BCString
-  BCString o = BCString( (char *)(d_dataset->heightPlaneName) );
+  BCString o = BCString( (d_dataset->heightPlaneName->string()) );
   image = d_dataset->dataImages->getImageByName( o );
 
   // we want to stick the x,y and z values of every pixel along the
