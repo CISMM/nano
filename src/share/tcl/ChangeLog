@@ -1,3 +1,9 @@
+2002-01-20  David Borland <borland@cs.unc.edu>
+
+        * import.tcl: Added sliders to the spider object gui to control
+        curvature at the beginning and end of each leg.
+        
+
 2003-01-15  Alexandra Bokinsky  <bokinsky@cs.unc.edu>
 
 	* mainwin.tcl: Added NanoEd virus menu, displayed only when requested

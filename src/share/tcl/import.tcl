@@ -36,7 +36,8 @@ set spider_length 5
 set spider_width 2
 set spider_thick 0.1
 set spider_tess 10
-set spider_curve 0
+set spider_beg_curve 0
+set spider_end_curve 0
 set spider_legs 8
 set spider_filename ""
 
@@ -91,8 +92,11 @@ floatscale $nmInfo(spider_control).spider_thick_slide 0 5 1000 1 1 \
 intscale $nmInfo(spider_control).spider_tess_slide 1 50 1000 1 1 \
 	spider_tess "Spider Tesselation"
 
-floatscale $nmInfo(spider_control).spider_curve_slide 0 90 1000 1 1 \
-	spider_curve "Spider Curvature"
+floatscale $nmInfo(spider_control).spider_beg_curve_slide 0 120 1000 1 1 \
+	spider_beg_curve "Spider Curvature\nBegin"
+
+floatscale $nmInfo(spider_control).spider_end_curve_slide 0 120 1000 1 1 \
+	spider_end_curve "Spider Curvature\nEnd"
 
 intscale $nmInfo(spider_control).spider_legs_slide 1 8 1000 1 1 \
 	spider_legs "Spider Legs"
@@ -221,7 +225,8 @@ pack $nmInfo(spider_control).spider_length_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_width_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_thick_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_tess_slide -padx 1m -pady 1m -anchor nw
-pack $nmInfo(spider_control).spider_curve_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_beg_curve_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_end_curve_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_legs_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_save_to_file -padx 1m -pady 1m -anchor nw
 #
