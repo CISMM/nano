@@ -140,11 +140,11 @@ void nmr_Registration_Proxy::handle_registration_change(void *ud,
                me->d_res_x, me->d_res_y, me->d_heightField);
       break;
     case NMR_TRANSFORM_OPTION:
-      printf("nmr_Registration_Proxy::got transform option\n");
+      //printf("nmr_Registration_Proxy::got transform option\n");
       info.aligner->getTransformationOptions(me->d_transformType);
       break;
     case NMR_REG_RESULT:
-      printf("nmr_Registration_Proxy::got transform\n");
+      //printf("nmr_Registration_Proxy::got transform\n");
       info.aligner->getRegistrationResult(me->d_matrix44);
       break;
   }
