@@ -154,14 +154,14 @@ void nmr_AlignerMI::takeGradientSteps(int resolutionIndex, int numSteps,
 
   // current transformation matrix
   double xform_matrix[16];
-  double tx, ty, phi, shz, scx, scy;
+  double tx, ty, psi, shz, scx, scy;
   double cx, cy, cz;
   d_transform.getCenter(cx, cy, cz);
   printf("transform center: %g, %g, %g\n", cx, cy, cz);
 
   int i, j;
   for (i = 0; i < numSteps; i++) {
-    d_transform.getMatrixDerivative(dTransform_dRotZ, NMB_ROTATE_Z);
+    d_transform.getMatrixDerivative(dTransform_dRotZ, NMB_ROTATE_2D_Z);
     d_transform.getMatrixDerivative(dTransform_dTransX, NMB_TRANSLATE_X);
     d_transform.getMatrixDerivative(dTransform_dTransY, NMB_TRANSLATE_Y);
     d_transform.getMatrixDerivative(dTransform_dScaleX, NMB_SCALE_X);
@@ -169,14 +169,14 @@ void nmr_AlignerMI::takeGradientSteps(int resolutionIndex, int numSteps,
     d_transform.getMatrixDerivative(dTransform_dShearZ, NMB_SHEAR_Z);
     d_transform.getMatrix(xform_matrix);
     d_objective->valueAndGradient(resolutionIndex,xform_matrix,valueMI,gradMI);
-    phi = d_transform.getRotation(NMB_Z);
+    psi = d_transform.getRotation(NMB_PSI);
     tx = d_transform.getTranslation(NMB_X);
     ty = d_transform.getTranslation(NMB_Y);
     scx = d_transform.getScale(NMB_X);
     scy = d_transform.getScale(NMB_Y);
     shz = d_transform.getShear(NMB_Z);
-    printf("(tx,ty,phi,shz,scx,scy,MI)= %g,%g,%g,%g,%g,%g, %g\n",
-             tx,ty,phi,shz,scx,scy,valueMI);
+    printf("(tx,ty,psi,shz,scx,scy,MI)= %g,%g,%g,%g,%g,%g, %g\n",
+             tx,ty,psi,shz,scx,scy,valueMI);
 
     // convert the gradient using the chain rule
     dMI_dRotZ = 0; dMI_dTransX = 0; dMI_dTransY = 0;
@@ -191,7 +191,7 @@ void nmr_AlignerMI::takeGradientSteps(int resolutionIndex, int numSteps,
     }
 
     // take a step using the computed gradient and the rate factors
-    d_transform.rotate(NMB_Z, dMI_dRotZ*rotationRate);
+    d_transform.rotate(NMB_PSI, dMI_dRotZ*rotationRate);
     d_transform.translate(dMI_dTransX*translationRate,
                           dMI_dTransY*translationRate, 0);
     d_transform.addScale(dMI_dScaleX*scalingRate,
@@ -201,14 +201,14 @@ void nmr_AlignerMI::takeGradientSteps(int resolutionIndex, int numSteps,
 
   d_transform.getMatrix(xform_matrix);
   d_objective->valueAndGradient(resolutionIndex,xform_matrix,valueMI,gradMI);
-  phi = d_transform.getRotation(NMB_Z);
+  psi = d_transform.getRotation(NMB_PSI);
   tx = d_transform.getTranslation(NMB_X);
   ty = d_transform.getTranslation(NMB_Y);
   scx = d_transform.getScale(NMB_X);
   scy = d_transform.getScale(NMB_Y);
   shz = d_transform.getShear(NMB_Z);
-  printf("(tx,ty,phi,shz,scx,scy,MI)= %g,%g,%g,%g,%g,%g, %g\n",
-           tx,ty,phi,shz,scx,scy,valueMI);
+  printf("(tx,ty,psi,shz,scx,scy,MI)= %g,%g,%g,%g,%g,%g, %g\n",
+           tx,ty,psi,shz,scx,scy,valueMI);
 
 }
 
@@ -243,7 +243,7 @@ void nmr_AlignerMI::optimizeTransform()
     fprintf(outf, "rot, tx, ty, sx, sy, sh, MI, dMI_drot, dMI_dtx, dMI_dty, "
                   "dMI_dsx, dMI_dsy, dMI_dsh\n");
     for (i = 0; i < 100; i++) {
-      d_transform.getMatrixDerivative(dTransform_dRotZ, NMB_ROTATE_Z);
+      d_transform.getMatrixDerivative(dTransform_dRotZ, NMB_ROTATE_2D_Z);
       d_transform.getMatrixDerivative(dTransform_dTransX, NMB_TRANSLATE_X);
       d_transform.getMatrixDerivative(dTransform_dTransY, NMB_TRANSLATE_Y);
       d_transform.getMatrixDerivative(dTransform_dScaleX, NMB_SCALE_X);
@@ -261,7 +261,7 @@ void nmr_AlignerMI::optimizeTransform()
         dMI_dScaleY += dTransform_dScaleY[j]*gradMI[j];
         dMI_dShearZ += dTransform_dShearZ[j]*gradMI[j];
       }
-      rot = d_transform.getRotation(NMB_Z);
+      rot = d_transform.getRotation(NMB_PSI);
       tx = d_transform.getTranslation(NMB_X);
       ty = d_transform.getTranslation(NMB_Y);
       sx = d_transform.getScale(NMB_X);
@@ -271,7 +271,7 @@ void nmr_AlignerMI::optimizeTransform()
          rot, tx, ty, sx, sy, sh, valueMI,
          dMI_dRotZ, dMI_dTransX, dMI_dTransY, 
          dMI_dScaleX, dMI_dScaleY, dMI_dShearZ);
-      d_transform.rotate(NMB_Z, dMI_dRotZ*rotationRate);
+      d_transform.rotate(NMB_PSI, dMI_dRotZ*rotationRate);
       d_transform.translate(dMI_dTransX*translationRate, 
                           dMI_dTransY*translationRate, 0);
       d_transform.addScale(dMI_dScaleX*scalingRate, 
@@ -370,7 +370,7 @@ int nmr_AlignerMI::patternSearch(int resolutionIndex, int maxIterations,
 
   const int numParameters = 6;
   nmb_TransformParameter parameterTypes[numParameters] = 
-        {NMB_ROTATE_Z, NMB_TRANSLATE_X,
+        {NMB_ROTATE_2D_Z, NMB_TRANSLATE_X,
          NMB_TRANSLATE_Y, NMB_SCALE_X, NMB_SCALE_Y, NMB_SHEAR_Z};
   double patternVector[numParameters] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   double exploreVector[numParameters] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -478,7 +478,7 @@ void nmr_AlignerMI::plotObjective(FILE *outf)
   double paramVal;
 
   int numParameters = 6;
-  nmb_TransformParameter parameterTypes[6] = {NMB_ROTATE_Z, NMB_TRANSLATE_X,
+  nmb_TransformParameter parameterTypes[6] = {NMB_ROTATE_2D_Z, NMB_TRANSLATE_X,
          NMB_TRANSLATE_Y, NMB_SCALE_X, NMB_SCALE_Y, NMB_SHEAR_Z};
   char *paramNames[6] = {"rotate_z", "translate_x", "translate_y",
                          "scale_x", "scale_y", "shear_z"};

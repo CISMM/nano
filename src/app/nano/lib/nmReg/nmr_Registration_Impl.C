@@ -713,12 +713,12 @@ int nmr_Registration_Impl::adjustTransformFromRotatedCorrespondence(
           nmb_Transform_TScShR &xform)
 {
   nmb_Transform_TScShR rotation;
-  double rotateX, rotateY, rotateZ, scaleX, scaleY, shearZ, translate[4];
-  rotateX = xform.getRotation(NMB_X);
-  rotateY = xform.getRotation(NMB_Y);
+  double rotate2D_Z, rotate3D_X, rotate3D_Z, scaleX, scaleY, shearZ, translate[4];
+  rotate3D_X = xform.getRotation(NMB_THETA);
+  rotate3D_Z = xform.getRotation(NMB_PHI);
 
-  rotation.setRotation(NMB_X, rotateX);
-  rotation.setRotation(NMB_Y, rotateY);
+  rotation.setRotation(NMB_THETA, rotate3D_X);
+  rotation.setRotation(NMB_PHI, rotate3D_Z);
 
   // convert the source points from 2D normalized image coordinates to 
   // points in 3D spatial units (presumably nanometers)
@@ -772,7 +772,7 @@ int nmr_Registration_Impl::adjustTransformFromRotatedCorrespondence(
 //                              rotateZ, shearZ, scaleX, scaleY);
   transform2D.getTScShR_2DParameters(centerX, centerY, 
                               translate[0], translate[1],
-                              rotateZ, shearZ, scaleX, scaleY);
+                              rotate2D_Z, shearZ, scaleX, scaleY);
   translate[2] = 0.0;
   translate[3] = 1.0;
   // getTScShR_2DParameters gives the parameters for nmb_Transform_TScShR
@@ -786,9 +786,9 @@ int nmr_Registration_Impl::adjustTransformFromRotatedCorrespondence(
   xform.setTranslation(NMB_X, translate[0]);
   xform.setTranslation(NMB_Y, translate[1]);
   xform.setTranslation(NMB_Z, translate[2]);
-  xform.setRotation(NMB_X, rotateX);
-  xform.setRotation(NMB_Y, rotateY);
-  xform.setRotation(NMB_Z, rotateZ);
+  xform.setRotation(NMB_PSI, rotate2D_Z);
+  xform.setRotation(NMB_THETA, rotate3D_X);
+  xform.setRotation(NMB_PHI, rotate3D_Z);
   xform.setScale(NMB_X, scaleX);
   xform.setScale(NMB_Y, scaleY);
   xform.setShear(NMB_Z, shearZ);
@@ -798,18 +798,21 @@ int nmr_Registration_Impl::adjustTransformFromRotatedCorrespondence(
 
 // a couple utility functions to let us express things in terms of the 
 // transformed z axis R([0,0,1]) = [vx, vy, vz]
-void nmr_Registration_Impl::convertRyRxToViewingDirection(double Ry, double Rx,
+void nmr_Registration_Impl::convertRxRzToViewingDirection(double Rx, double Rz,
                          double &vx, double &vy, double &vz)
 {
+	/*
   vx = cos(Rx)*sin(Ry);
   vy = -sin(Rx);
   vz = cos(Rx)*cos(Ry);
+  */
 }
 
-void nmr_Registration_Impl::convertViewingDirectionToRyRx(
+void nmr_Registration_Impl::convertViewingDirectionToRxRz(
                                        double vx, double vy, double vz,
-                                       double &Ry, double &Rx)
+                                       double &Rx, double &Rz)
 {
+	/*
   double inv_mag = 1.0/sqrt(vx*vx + vy*vy + vz*vz);
   double vxn = vx*inv_mag, vyn = vy*inv_mag, vzn = vz*inv_mag;
   double inv_cos_Rx, sin_Ry, cos_Ry;
@@ -826,4 +829,5 @@ void nmr_Registration_Impl::convertViewingDirectionToRyRx(
   } else {
     Ry = 0.0;
   }
+  */
 }

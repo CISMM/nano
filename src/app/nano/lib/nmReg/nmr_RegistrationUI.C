@@ -20,6 +20,10 @@ extern nmg_Graphics* graphics;
 
 extern UTree World;
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 /*
 this is annoying because it takes too long to calculate the image pyramid
 vrpn_int32 nmr_RegistrationUI::s_defaultNumResolutionLevels = 15;
@@ -77,9 +81,9 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_translateX("reg_translateX", 0.0),
    d_translateY("reg_translateY", 0.0),
    d_translateZ("reg_translateZ", 0.0),
-   d_rotateX("reg_rotateX", 0.0), 
-   d_rotateY("reg_rotateY", 0.0), 
-   d_rotateZ("reg_rotateZ", 0.0),
+   d_rotate2D_Z("reg_rotate2D_Z", 0.0), 
+   d_rotate3D_X("reg_rotate3D_X", 0.0), 
+   d_rotate3D_Z("reg_rotate3D_Z", 0.0),
    d_shearZ("reg_shearZ", 0.0),
 
    d_autoAlignMode("auto_align_mode", s_autoAlignModeNames[0]),
@@ -150,9 +154,9 @@ void nmr_RegistrationUI::setupCallbacks()
     d_translateX.addCallback(handle_transformationParameter_change, this);
     d_translateY.addCallback(handle_transformationParameter_change, this);
 	d_translateZ.addCallback(handle_transformationParameter_change, this);
-    d_rotateX.addCallback(handle_transformationParameter_change, this);
-    d_rotateY.addCallback(handle_transformationParameter_change, this);
-    d_rotateZ.addCallback(handle_transformationParameter_change, this);
+    d_rotate2D_Z.addCallback(handle_transformationParameter_change, this);
+    d_rotate3D_X.addCallback(handle_transformationParameter_change, this);
+    d_rotate3D_Z.addCallback(handle_transformationParameter_change, this);
     d_shearZ.addCallback(handle_transformationParameter_change, this);
 
     d_registrationEnabled.addCallback
@@ -195,9 +199,9 @@ void nmr_RegistrationUI::teardownCallbacks()
     d_translateX.removeCallback(handle_transformationParameter_change, this);
     d_translateY.removeCallback(handle_transformationParameter_change, this);
 	d_translateZ.removeCallback(handle_transformationParameter_change, this);
-    d_rotateX.removeCallback(handle_transformationParameter_change, this);
-    d_rotateY.removeCallback(handle_transformationParameter_change, this);
-    d_rotateZ.removeCallback(handle_transformationParameter_change, this);
+    d_rotate2D_Z.removeCallback(handle_transformationParameter_change, this);
+    d_rotate3D_X.removeCallback(handle_transformationParameter_change, this);
+    d_rotate3D_Z.removeCallback(handle_transformationParameter_change, this);
     d_shearZ.removeCallback(handle_transformationParameter_change, this);
 
     d_registrationEnabled.removeCallback
@@ -278,8 +282,8 @@ void nmr_RegistrationUI::handleRegistrationChange
           setTransformationSource(NMR_MANUAL);
           break;
         case NMR_DEFAULT:
-          setAutoAlignMode(NMR_AUTOALIGN_FROM_DEFAULT);
-          setTransformationSource(NMR_DEFAULT);
+          //setAutoAlignMode(NMR_AUTOALIGN_FROM_DEFAULT);
+          //setTransformationSource(NMR_DEFAULT);
           break;
         case NMR_AUTOMATIC:
           setTransformationSource(NMR_AUTOMATIC);
@@ -726,9 +730,9 @@ void nmr_RegistrationUI::sendTransformationParameters()
 {
   vrpn_float32 *parameters = new vrpn_float32[nmb_numTransformParameters];
   nmb_Transform_TScShR transform;
-  transform.setParameter(NMB_ROTATE_X, (double)d_rotateX);
-  transform.setParameter(NMB_ROTATE_Y, (double)d_rotateY);
-  transform.setParameter(NMB_ROTATE_Z, (double)d_rotateZ);
+  transform.setParameter(NMB_ROTATE_2D_Z, (double)d_rotate2D_Z*M_PI/180.0);
+  transform.setParameter(NMB_ROTATE_3D_X, (double)d_rotate3D_X*M_PI/180.0);
+  transform.setParameter(NMB_ROTATE_3D_Z, (double)d_rotate3D_Z*M_PI/180.0);
   transform.setParameter(NMB_TRANSLATE_X, (double)d_translateX);
   transform.setParameter(NMB_TRANSLATE_Y, (double)d_translateY);
   transform.setParameter(NMB_TRANSLATE_Z, (double)d_translateZ);

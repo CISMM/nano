@@ -141,7 +141,7 @@ class nmr_RegistrationUI {
 
     Tclvar_float d_scaleX, d_scaleY;
     Tclvar_float d_translateX, d_translateY, d_translateZ;
-    Tclvar_float d_rotateX, d_rotateY, d_rotateZ;
+    Tclvar_float d_rotate2D_Z, d_rotate3D_X, d_rotate3D_Z;
     Tclvar_float d_shearZ;
 
     static vrpn_int32 s_numAutoAlignModes;

@@ -1,3 +1,10 @@
+2002-07-01  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_AlignerMI.C (takeGradientSteps, patternSearch, plotObjective,
+        optimizeTransform): changed name for the 2D rotation parameter
+	* nmr_RegistrationUI.C : changed names of rotation parameters
+	* nmr_Registration_Impl.C : changed rotation parameters
+
 2002-06-30  Adam Seeger  <seeger@cs.unc.edu>
 
         * nmr_RegistrationUI.[Ch]: made separate variables for flipping

@@ -75,10 +75,10 @@ class nmr_Registration_Impl {
     int adjustTransformFromRotatedCorrespondence(Correspondence &c,
                  int corrSourceIndex, int corrTargetIndex, 
                  nmb_Transform_TScShR &xform);
-    void convertRyRxToViewingDirection(double Ry, double Rx, 
+    void convertRxRzToViewingDirection(double Rx, double Rz, 
                          double &vx, double &vy, double &vz);
-    void convertViewingDirectionToRyRx(double vx, double vy, double vz,
-                                       double &Ry, double &Rx);
+    void convertViewingDirectionToRxRz(double vx, double vy, double vz,
+                                       double &Rx, double &Rz);
     void setSourceImageDimensions(vrpn_float32 srcSizeX, vrpn_float32 srcSizeY);
     void setTargetImageDimensions(vrpn_float32 tgtSizeX, vrpn_float32 tgtSizeY);
 
