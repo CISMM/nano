@@ -360,10 +360,232 @@ void build_viewport (CRhinoViewport & out_v,
 
 
 
+
+struct QuadCorners {
+    q_vec_type bottom_left;
+    q_vec_type bottom_right;
+    q_vec_type top_left;
+    q_vec_type top_right;
+
+    QuadCorners() {
+        reset();
+    }
+    
+    void reset() {
+        for (int i=0; i < 3; ++i) {
+            bottom_left [i] = 0;
+            bottom_right[i] = 0;
+            top_left    [i] = 0;
+            top_right   [i] = 0;
+        }
+    }
+};
+
+static
+ostream& write_q_vec (ostream& out, const q_vec_type v)
+{
+    out << "(" << v[0] << ", " << v[1] << ", " << v[2] << ")";
+    return out;
+}
+
+static
+ostream& operator << (ostream& out, const QuadCorners& qc)
+{
+    out << "[ bottom_left=";
+    write_q_vec (out, qc.bottom_left);
+    
+    out << "\n  bottom_right=";
+    write_q_vec (out, qc.bottom_right);
+    
+    out << "\n  top_left=";
+    write_q_vec (out, qc.top_left);
+    
+    out << "\n  top_right=";
+    write_q_vec (out, qc.top_right);
+    
+    out << " ]";
+    return out;
+}
+
+
+/** REturns a char string representing a rhino exception
+ * DO NOT MODIFY the return value from this function.
+ */
+static
+const char * rhinoException_to_string (CRhinoException e)
+{
+    const char* s = NULL;
+    switch ( e.m_type )
+    {
+    case CRhinoException::unable_to_write:
+        s = "unable_to_write";
+        break;
+    case CRhinoException::unable_to_read:
+        s = "unable_to_read";
+        break;
+    case CRhinoException::unable_to_seek:
+        s = "unable_to_seek";
+        break;
+    case CRhinoException::unexpected_end_of_file:
+        s = "unexpected_end_of_file";
+        break;
+    case CRhinoException::unexpected_value:
+        s = "unexpected_value";
+        break;
+    case CRhinoException::not_supported:
+        s = "not_supported";
+        break;
+    case CRhinoException::illegal_input:
+        s = "illegal_input";
+        break;
+    case CRhinoException::out_of_memory:
+        s = "out_of_memory";
+        break;
+    default:
+        s = "unknow exception";
+        break;
+    }
+    return s;
+}
+
+
+static
+bool set_quad_corner (QuadCorners &qc, const CRhinoPointSet & p)
+{
+    const char * const label = p.Label();
+    q_vec_type * vec = 0;
+
+    if (! strcmp ("bottom-left", label)) {
+        vec = & (qc.bottom_left);
+        cout << "setting corner bottom-left" << endl;
+    }
+    else if (! strcmp ("bottom-right", label)) {
+        vec = & (qc.bottom_right);
+        cout << "setting corner bottom-right" << endl;
+    }
+    else if (! strcmp ("top-left", label)) {
+        vec = & (qc.top_left);
+        cout << "setting corner top-left" << endl;
+    }
+    else if (! strcmp ("top-right", label)) {
+        vec = & (qc.top_right);
+        cout << "setting corner top-right" << endl;
+    }
+
+    if (! vec) {
+        return false;
+    }
+
+    if (p.PointCount()==0) {
+        cerr << "No points in point dataset.  Ignoring this PointSet" << endl;
+        return false;
+    }
+
+    if (p.PointCount() > 1) {
+        cerr << "Warning: PointSet \"" << label
+             << "\" has more than one point.  Using first point." << endl;
+    }
+    
+    p.GetPoint (0, (*vec)[0], (*vec)[1], (*vec)[2]);
+    return true;
+}
+
+
+
+/** Figures out view xform Reads from FILENAME and finds points that define
+ *  where the plane is to go into world space.  Then, computes an xform that
+ *  takes grid points to that place.
+ */
+static void get_view_xform (const char * filename)
+{
+    cout << "getting view xform from \"" << filename << "\"..." << endl;
+
+    QuadCorners model_in_rhino_frame;
+
+    FILE * pfile = fopen (filename, "rb");
+    if ( !pfile ) {
+        cerr << "Unable to open file \"" << filename << "\"." << endl;
+        return;
+    }
+    bool bOK = true;
+    try {
+        CRhinoFile* pRF = new CRhinoFile( pfile, CRhinoFile::read );
+        
+        CRhinoFile::eStatus status = CRhinoFile::good;
+        
+        for ( ;; ) {
+            CRhinoObject* pObj = pRF->Read( status );
+            if ( status != CRhinoFile::good )
+                break;
+            
+            // check if this object is on a layer we care about
+            bool we_care = false;
+            if (pObj->Layer() && pObj->Layer()->Name()) {
+                we_care =
+                    (0 == strcmp("screen points",
+                                 pObj->Layer()->Name()));
+            }
+            if (! we_care) {
+                // wrong layer
+                delete pObj;
+                pObj = 0;
+                continue;
+            }
+
+            // if it's a point object, extract the points we care about
+            switch (pObj->TypeCode())
+            {
+            default:              // throw away stuff we don't want
+                delete pObj;
+                pObj = 0;
+
+            case TCODE_RH_POINT:  // CRhinoPointSet ( 3d point list )
+
+                cout << "\t\"" << pObj->Label() << "\""
+                     << " from layer \"" << pObj->Layer()->Name() << "\""
+                     << " (" << pObj->ClassName() << ")"
+                     << endl;
+                
+                CRhinoPointSet *pPoint = dynamic_cast<CRhinoPointSet*>(pObj);
+                if (! pPoint) {
+                    cerr << "\tError casting point object to point class"
+                         << endl;
+                }
+                else {
+                    set_quad_corner (model_in_rhino_frame, *pPoint);
+                }
+                delete pObj;
+                pObj = 0;
+
+            } // switch (pObj->TypeCode())
+
+        } // for( ;; )
+
+        bOK = ( status == CRhinoFile::eof );
+        delete pRF;
+    }
+    catch( CRhinoException e ) {
+        bOK = false;
+        cerr << "threw CRhinoException: "
+             << rhinoException_to_string(e) << "." << endl;
+    }
+
+    if (! bOK) {
+        cerr << "Never reached end of file \"" << filename << "\"" << endl;
+    }
+    
+    fclose (pfile);
+    // XXX error checking
+    
+    cout << "...done reading view xform" << endl;
+
+    cout << "This is what I read:\n" << model_in_rhino_frame << endl;
+}
+
+
 /** Writes a .3dm file to `filename'.  It seems kind of messy passing both the
  * grid and the plane selection.  Perhaps the planeselection should have a
- * const pointer to the grid?  Or I can pass a nmb_Dataset intead.
- */
+ * const pointer to the grid?  Or I can pass a nmb_Dataset intead.  */
 void export_scene_to_openNURBS (
     const char * const         filename,
     const nmg_Graphics * const /*graphics*/,
@@ -395,6 +617,8 @@ void export_scene_to_openNURBS (
     }
     
 
+    get_view_xform ("nanodesk-2.3dm");
+
     /////////
     // Now, finally, open the file and write to it
     //
@@ -402,19 +626,23 @@ void export_scene_to_openNURBS (
     cout << "exporting scene to \"" << filename << "\"..." << flush;
     
     FILE * pfile = fopen (filename, "wb");
-    // XXX error checking
-    
-    {
+    if ( !pfile ) {
+        cerr << "Unable to open file \"" << filename << "\"." << endl;
+        return;
+    }
+    try {
         CRhinoFile rhino_file (pfile, CRhinoFile::write);
         rhino_file.SetUnitSystem (CRhinoFile::meters);
         
         for (int i=0;  i < total_num_viewports;  ++i) {
             my_viewports[i].Write (rhino_file);
-            // XXX error checking
         }
 
         my_mesh.Write (rhino_file);
-        // XXX error checking
+    }
+    catch (CRhinoException e) {
+        cerr << "threw CRhinoException: "
+             << rhinoException_to_string(e) << "." << endl;
     }
 
     fclose (pfile);
