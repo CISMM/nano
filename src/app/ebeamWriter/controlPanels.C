@@ -456,7 +456,7 @@ void ControlPanels::handleRegistrationChange
       // to do anything
       break;
     case NMR_REG_RESULT:
-      printf("got transformation\n");
+      //printf("got transformation\n");
 
       /* *******************************************************************
          Store the raw result from the registration code and compute inverse

@@ -897,10 +897,15 @@ int PatternEditor::mainWinDisplayHandler(
   GLfloat border_color[] = {0.0, 0.0, 0.0, 0.0};
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+
   glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
-  glTexEnvi(GL_TEXTURE_2D, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   GLfloat textureColor[] = {0.5, 0.5, 0.5, 0.5};
-  glTexEnvfv(GL_TEXTURE_2D, GL_TEXTURE_ENV_COLOR, textureColor);
+  glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, textureColor);
 
   glEnable(GL_BLEND);
 
@@ -999,8 +1004,10 @@ void PatternEditor::drawImage(const ImageElement &ie)
 
      vrpn_bool textureOkay = VRPN_TRUE;
      texture = ie.d_image->pixelData();
-     texwidth = ie.d_image->width() + 2*ie.d_image->border();
-     texheight = ie.d_image->height() + 2*ie.d_image->border();
+     texwidth = ie.d_image->width() + 
+                ie.d_image->borderXMin()+ie.d_image->borderXMax();
+     texheight = ie.d_image->height() +
+                ie.d_image->borderYMin()+ie.d_image->borderYMax();
      int pixType;
      switch (ie.d_image->pixelType()) {
        case NMB_UINT8:
@@ -1023,22 +1030,34 @@ void PatternEditor::drawImage(const ImageElement &ie)
      }
 
      if (textureOkay) {
-/*
-       printf("Loading texture %s with type %d\n",
+
+/*       printf("Loading texture %s with type %d\n",
               ie.d_image->name()->Characters(), ie.d_image->pixelType());
-       printf("width=%d,height=%d,border = %d\n", 
-         texwidth, texheight, ie.d_image->border());
+       printf("width=%d,height=%d,border = (%d,%d)(%d,%d)\n", 
+         texwidth, texheight, ie.d_image->borderXMin(),
+         ie.d_image->borderXMax(), ie.d_image->borderYMin(), 
+         ie.d_image->borderYMax());
 */
-       glPixelTransferf(GL_RED_SCALE, (float)ie.d_red);// *(float)ie.d_opacity);
-       glPixelTransferf(GL_GREEN_SCALE, (float)ie.d_green);// *(float)ie.d_opacity);
-       glPixelTransferf(GL_BLUE_SCALE, (float)ie.d_blue);// *(float)ie.d_opacity);
-       printf("change this to not do mipmapping\n");
+       glPixelTransferf(GL_RED_SCALE, (float)ie.d_red);
+                                       // *(float)ie.d_opacity);
+       glPixelTransferf(GL_GREEN_SCALE, (float)ie.d_green);
+                                       // *(float)ie.d_opacity);
+       glPixelTransferf(GL_BLUE_SCALE, (float)ie.d_blue);
+                                       // *(float)ie.d_opacity);
+       glPixelTransferf(GL_ALPHA_SCALE, (float)ie.d_opacity);
+
+/*
+       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                 GL_LINEAR_MIPMAP_LINEAR);
+
        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, texwidth, texheight, 
               GL_LUMINANCE,
               pixType, texture);
+*/
+       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
+                texwidth, texheight, 0, GL_LUMINANCE,
+                pixType, texture);
 
-       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-              GL_LINEAR_MIPMAP_LINEAR);
        ie.d_image->getWorldToImageTransform(worldToImage);
        nmb_ImageBounds ib;
        ie.d_image->getBounds(ib);
@@ -1062,8 +1081,8 @@ void PatternEditor::drawImage(const ImageElement &ie)
        float scaleFactorX = (float)(ie.d_image->width())/(float)texwidth;
        float scaleFactorY = (float)(ie.d_image->height())/(float)texheight;
        // in texture coordinates
-       float bordSizeX = (float)(ie.d_image->border())/(float)texwidth;
-       float bordSizeY = (float)(ie.d_image->border())/(float)texheight;
+       float bordSizeX = (float)(ie.d_image->borderXMin())/(float)texwidth;
+       float bordSizeY = (float)(ie.d_image->borderYMin())/(float)texheight;
        glLoadIdentity();
        // compensation for the border:
        glTranslatef(bordSizeX, bordSizeY, 0.0);

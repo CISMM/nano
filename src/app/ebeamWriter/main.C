@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 
-#include "GL/glut.h"
+#include "GL/glut_UNC.h"
 
 #include "patternEditor.h"
 #include "nmb_ImageTransform.h"
