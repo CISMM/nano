@@ -13,7 +13,7 @@ endif
 include ../Makefile.share
 
 # All generated files need to be created before ".depend" gets created.
-$(MAKEFILE_DEPEND): nmm_SPM_Control.h nmm_SPM_Report.h nmm_AFM_Control.h \
+generate: nmm_SPM_Control.h nmm_SPM_Report.h nmm_AFM_Control.h \
 	nmm_AFM_Report.h nmm_MicroscopeRemote.h \
 	nmm_SPM_Control.C nmm_SPM_Report.C nmm_AFM_Control.C \
 	nmm_AFM_Report.C nmm_MicroscopeRemote.C

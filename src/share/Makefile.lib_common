@@ -175,6 +175,8 @@ endif
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
    ifneq ($(findstring clobber,$(MAKECMDGOALS)),clobber)
+      ifneq ($(findstring generate,$(MAKECMDGOALS)),generate)
          include $(TOP_LEVEL_MAKE_DIR)/Makefile.depend
+      endif
    endif
 endif

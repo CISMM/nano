@@ -1,6 +1,6 @@
 2001-05-11  Aron Helser  <helser@cs.unc.edu>
 
-	* Makefile: Generated files need to be created before .depend
+	* Makefile: call "make generate" before "make" or "make depend"
 
 	* .cvsignore: new. Ignore generated files. 
 
