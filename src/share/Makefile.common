@@ -357,9 +357,10 @@ INCLUDE_FLAGS += $(LATE_INCLUDE_PATH)
 #
 
 LOAD_FLAGS := $(addprefix -L, $(EXTERNAL_LIB_DIR) \
-                              /usr/local/lib \
-                              /usr/local/contrib/unmod/lib \
-                              /usr/local/contrib/mod/lib)
+				/usr/local/lib \
+                              	/usr/local/contrib/unmod/lib \
+                              	/usr/local/contrib/mod/lib \
+				/afs/cs.unc.edu/proj/stm/src/external/glut/glut_UNC )
 
 ifeq ($(HW_OS),pc_cygwin)
   LOAD_FLAGS += -L/usr/X11R6.4/lib
@@ -425,7 +426,7 @@ ifeq ($(HW_OS), hp700_hpux10)
 endif
 
 ifeq ($(HW_OS), pc_linux)
-   GRAPHICS_LIBS := -lglut -lGLU -lGL
+   GRAPHICS_LIBS := -lglut_UNC -lGLU -lGL
 endif
 
 ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
@@ -485,7 +486,7 @@ endif
 
 # Hacks by TCH 1 May 00 to get afmcntsim (and multiscope) to compile -
 # added glut to EVERYBODY
-LIBS := $(EXTERNAL_LIBS) -lglui -lglut $(GRAPHICS_LIBS) \
+LIBS := $(EXTERNAL_LIBS) -lglui -lglut_UNC $(GRAPHICS_LIBS) \
         $(TCL_LIBS) -lXmu -lXext -lX11 $(ARCH_LIBS) -lm
 
 ifeq ($(HW_OS), hp700_hpux10)
