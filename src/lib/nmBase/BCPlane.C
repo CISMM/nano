@@ -629,8 +629,8 @@ int BCPlane::setGridSize(int x, int y)
 		return -1;
 	    }
 	    // Set timed values to zero - indicates that no data has arrived in the plane. 
-	    memset(_sec, 0, y*sizeof(long));
-	    memset(_usec, 0, y*sizeof(long));
+	    memset(_sec[i], 0, y*sizeof(long));
+	    memset(_usec[i], 0, y*sizeof(long));
 	}
     }
 
