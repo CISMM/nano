@@ -8,6 +8,8 @@
 
 
 nmb_Decoration::nmb_Decoration (void) :
+  selectedRegionMinX(0), selectedRegionMinY(0),
+  selectedRegionMaxX(0), selectedRegionMaxY(0),
   selectedRegion_changed (1),
   //red_changed (1),
   //green_changed (1),
@@ -49,6 +51,8 @@ nmb_Decoration::nmb_Decoration (void) :
 
 
 nmb_Decoration::nmb_Decoration (int markerHeight, int numMarkers) :
+  selectedRegionMinX(0), selectedRegionMinY(0),
+  selectedRegionMaxX(0), selectedRegionMaxY(0),
   selectedRegion_changed (1),
   //red_changed (1),
   //green_changed (1),
@@ -74,6 +78,7 @@ nmb_Decoration::nmb_Decoration (int markerHeight, int numMarkers) :
   scan_line (NULL),
   scanLineCount (0),
   drawScanLine (1),
+  num_slow_line_3d_markers (0),
   scrapeHeightScale(1),
   scrapeHeightOffset(0),
   scrapeMaxDepth(0)
