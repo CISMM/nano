@@ -362,11 +362,12 @@ void CollaborationManager::setPeerName
 
   sprintf(sfbuf, "%s/SharedIFRemLog-%ld.stream", d_logPath, d_logTime);
   if (d_replay) {
-    sprintf(peerHandName, "ccs0@file:%s", sfbuf);
-    sprintf(peerModeName, "Cmode0@file:%s", sfbuf);
+    sprintf(peerHandName, "handCoordinateServer0@file:%s", sfbuf);
+    sprintf(peerModeName, "userModeServer0@file:%s", sfbuf);
   } else {
-    sprintf(peerHandName, "ccs0@%s:%d", newName, d_peerPort);
-    sprintf(peerModeName, "Cmode0@%s:%d", newName, d_peerPort);
+    sprintf(peerHandName, "handCoordinateServer0@%s:%d", newName,
+d_peerPort);
+    sprintf(peerModeName, "userModeServer0@%s:%d", newName, d_peerPort);
   }
 
   d_peerHand = new vrpn_Tracker_Remote (peerHandName);

@@ -5964,10 +5964,11 @@ int initialize_environment() {
 
     envir = getenv("HOST");
     //fprintf(stderr, "HOST: %s\n", envir);
-    sprintf(nM_coord_change_server_name, "ccs0@%s", envir);
+    sprintf(nM_coord_change_server_name, "handCoordinateServer00@%s",
+envir);
     //  	fprintf(stderr, "nM_coord_change_server_name: %s\n",
     //  		nM_coord_change_server_name);
-    sprintf(local_ModeName, "Cmode0@%s", envir);
+    sprintf(local_ModeName, "userModeServer0@%s", envir);
     //  	fprintf(stderr, "local_ModeName: %s\n",
     //  		local_ModeName);
 
