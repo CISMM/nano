@@ -96,3 +96,5 @@ VRPN_MESSAGE InModMode {
 VRPN_MESSAGE InImgMode {
 }
 
+VRPN_MESSAGE FinishedFreehand {
+}

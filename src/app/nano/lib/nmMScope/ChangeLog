@@ -1,3 +1,13 @@
+2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_AFM_Report.vrpndef : new message type: FinishedFreehand - an echo in
+	response to MarkFinishFreehand message from client
+	* nmm_Microscope.C : added MarkFinishFreehand and FinishedFreehand messages
+    * nmm_MicroscopeRemote.C : "
+	* nmm_MicroscopeRemote.hdef: "
+	* nmm_MicroscopeRemoteGen.Cdef: "
+	* nmm_SPM_Control.vrpndef: "
+
 2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.[C/hdef] (FinishFreehand): new function

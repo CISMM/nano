@@ -193,3 +193,6 @@ VRPN_MESSAGE RecordResistance {
 //VRPN_MESSAGE SetMaxMove 
 //VRPN_MESSAGE SetStdDelay 
 //VRPN_MESSAGE SetStPtDelay 
+
+VRPN_MESSAGE MarkFinishFreehand {
+}

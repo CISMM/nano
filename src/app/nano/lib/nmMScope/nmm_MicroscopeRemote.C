@@ -486,8 +486,7 @@ long nmm_Microscope_Remote::ImageMode (void) {
 }
 
 long nmm_Microscope_Remote::FinishFreehand (void) {
-    fprintf(stderr, "nmm_Microscope_Remote::FinishFreehand: needs to be implemented\n");
-	
+	CHECK(MarkFinishFreehand());
 	return 0;
 }
 
@@ -1004,6 +1003,13 @@ long nmm_Microscope_Remote::MarkImageMode (void) {
   vrpn_int32 len = 0;
 
   return dispatchMessage(len, msgbuf, d_MarkImage_type);
+}
+
+long nmm_Microscope_Remote::MarkFinishFreehand (void) {
+  char * msgbuf = NULL;
+  vrpn_int32 len = 0;
+
+  return dispatchMessage(len, msgbuf, d_MarkFinishFreehand_type);
 }
 
 
@@ -1675,6 +1681,52 @@ long nmm_Microscope_Remote::unregisterImageModeHandler
   return 0;
 }
 
+long nmm_Microscope_Remote::registerFinishedFreehandHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  modeHandlerEntry * newEntry;
+
+  newEntry = new modeHandlerEntry;
+  if (!newEntry) {
+    fprintf(stderr, "nmm_Microscope_Remote::registerFinishedFreehandHandler:  "
+                    "Out of memory.\n");
+    return -1;
+  }
+
+  newEntry->handler = handler;
+  newEntry->userdata = userdata;
+  newEntry->next = d_finishedFreehandHandlers;
+
+  d_finishedFreehandHandlers = newEntry;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::unregisterFinishedFreehandHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  modeHandlerEntry * victim, ** snitch;
+
+  snitch = &d_finishedFreehandHandlers;
+  victim = *snitch;
+  while (victim &&
+         (victim->handler != handler) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr, "nmm_Microscope_Remote::unregisterFinishedFreehandHandler:  "
+                    "No such handler.\n");
+    return -1;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+
+  return 0;
+}
 
 long nmm_Microscope_Remote::registerScanlineModeHandler
                           (int (* handler) (void *),
@@ -1976,6 +2028,25 @@ void nmm_Microscope_Remote::doModifyModeCallbacks (void) {
   while (l) {
     if ((l->handler)(l->userdata)) {
       fprintf(stderr, "nmm_Microscope_Remote::doModifyModeCallbacks:  "
+                      "Nonzero return value.\n");
+      return;
+    }
+    l = l->next;
+  }
+
+
+}
+
+void nmm_Microscope_Remote::doFinishedFreehandCallbacks (void) {
+  modeHandlerEntry * l;
+
+  // Force decoration->elapsedTime to be updated, so ModFile callback
+  // can use it. 
+  getTimeSinceConnected();
+  l = d_finishedFreehandHandlers;
+  while (l) {
+    if ((l->handler)(l->userdata)) {
+      fprintf(stderr, "nmm_Microscope_Remote::doFinishedFreehandCallbacks:  "
                       "Nonzero return value.\n");
       return;
     }

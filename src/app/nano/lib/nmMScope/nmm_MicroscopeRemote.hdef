@@ -315,6 +315,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
                                   void * userdata);
     long unregisterImageModeHandler (int (* handler) (void *),
                                     void * userdata);
+    long registerFinishedFreehandHandler (int (* handler) (void *),
+                                  void * userdata);
+    long unregisterFinishedFreehandHandler (int (* handler) (void *),
+                                    void * userdata);
     long registerScanlineModeHandler (int (* handler) (void *),
 				  void *userdata);
     long unregisterScanlineModeHandler (int (* handler) (void *),
@@ -409,6 +413,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long SetRateNM (double rate);
     long MarkModifyMode (void);
     long MarkImageMode (void);
+	long MarkFinishFreehand (void);
     long EnterOscillatingMode(float p, float i, float d, float set, float amp,
          vrpn_float32 frequency, vrpn_int32 input_gain,
          vrpn_int32 drive_attenuation, vrpn_float32 phase,
@@ -508,12 +513,14 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     pointDataHandlerEntry * d_pointDataHandlers;
     modeHandlerEntry * d_modifyModeHandlers;
     modeHandlerEntry * d_imageModeHandlers;
+	modeHandlerEntry * d_finishedFreehandHandlers;
     modeHandlerEntry * d_scanlineModeHandlers;
     scanlineDataHandlerEntry *d_scanlineDataHandlers;
     feeltoHandlerEntry * d_feeltoHandlers;
 
     void doImageModeCallbacks (void);
     void doModifyModeCallbacks (void);
+	void doFinishedFreehandCallbacks (void);
     void doPointDataCallbacks (const Point_results *);
     void doScanlineModeCallbacks (void);
     void doScanlineDataCallbacks (const Scanline_results *);

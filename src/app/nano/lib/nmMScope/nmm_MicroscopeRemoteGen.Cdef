@@ -107,6 +107,7 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
     d_pointDataHandlers (NULL),
     d_modifyModeHandlers (NULL),
     d_imageModeHandlers (NULL),
+	d_finishedFreehandHandlers (NULL),
     d_scanlineModeHandlers (NULL),
     d_scanlineDataHandlers (NULL),
     d_feeltoHandlers (NULL),
@@ -621,6 +622,11 @@ RECEIVE_MSG InImgMode {
     }
   }
 }
+
+RECEIVE_MSG FinishedFreehand {
+  doFinishedFreehandCallbacks();
+}
+
 
 /* Helps with Thermo Image Analysis mode. When in this mode, most of 
  the widgets/dialogs that Nano needs to control the SPM aren't available

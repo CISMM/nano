@@ -124,6 +124,7 @@ class nmm_Microscope {
     long d_Echo_type;
     long d_MarkModify_type;
     long d_MarkImage_type;
+	long d_MarkFinishFreehand_type;
     long d_Shutdown_type;
 
     long d_QueryScanRange_type;
@@ -224,6 +225,7 @@ class nmm_Microscope {
     long d_InDirectZControl_type;
     long d_InSewingStyle_type;
     long d_InSpectroscopyMode_type;
+	long d_FinishedFreehand_type;
 
     long d_BeginFeelTo_type;
     long d_EndFeelTo_type;

@@ -115,6 +115,8 @@ nmm_Microscope::nmm_Microscope (
 	("nmm Microscope MarkModify");
     d_MarkImage_type = connection->register_message_type
         ("nmm Microscope MarkImage");
+	d_MarkFinishFreehand_type = connection->register_message_type
+		("nmm Microscope MarkFinishFreehand");
     // Used for the vrpn_dropped_connection type. 
 //      d_Shutdown_type = connection->register_message_type
 //           ("nmm Microscope Shutdown");
@@ -423,7 +425,7 @@ void nmm_Microscope::registerMicroscopeInputMessagesForForwarding
 
 
 // static
-long nmm_Microscope::d_numOutputMessageNames = 33;
+long nmm_Microscope::d_numOutputMessageNames = 34;
 // static
 char * nmm_Microscope::d_outputMessageName [] = {
          "nmm Microscope SetRegionNM",
@@ -455,13 +457,14 @@ char * nmm_Microscope::d_outputMessageName [] = {
          "nmm Microscope Echo",
          "nmm Microscope MarkModify",
          "nmm Microscope MarkImage",
+         "nmm Microscope MarkFinishFreehand",
          "nmm Microscope Shutdown",
          "nmm Microscope QueryScanRange",
          //"nmm Microscope QueryStdDevParams",
          "nmm Microscope QueryPulseParams",
 };
 // static
-long nmm_Microscope::d_numInputMessageNames = 78;
+long nmm_Microscope::d_numInputMessageNames = 79;
 // static
 char * nmm_Microscope::d_inputMessageName [] = {
          "nmm Microscope VoltsourceEnabled",
@@ -520,6 +523,7 @@ char * nmm_Microscope::d_inputMessageName [] = {
          "nmm Microscope AFM InImgModeT",
          "nmm Microscope AFM InModMode",
          "nmm Microscope AFM InImgMode",
+		 "nmm Microscope AFM FinishedFreehand",
          "nmm Microscope AFM ModForceSet",
          "nmm Microscope AFM ImgForceSet",
          "nmm Microscope AFM ModForceSetFailure",
