@@ -778,7 +778,7 @@ proc handle_texture_mode_change {mode name element op} {
 # disable all the other modes:
   global alpha_comes_from contour_comes_from rulergrid_enabled \
          sem_display_texture reg_display_texture 
-  global texture_mode_change_in_progress
+  global texture_mode_change_in_progress thirdtech_ui
 
   if {$texture_mode_change_in_progress == 1} {return;}
 
@@ -798,28 +798,30 @@ proc handle_texture_mode_change {mode name element op} {
 #  trace vdelete reg_display_texture w \
 #                "handle_texture_mode_change REGISTRATION"
 
-  #puts "setting the texture mode"
-  if {$mode != "ALPHA"} {
-	if {$alpha_comes_from != "none" } {
-	    set alpha_comes_from "none"
-	}
-  }
-  if {$mode != "CONTOUR"} {
-	if {$contour_comes_from != "none" } {
+  #puts "setting the texture to $mode"
+  if {[string compare $mode "CONTOUR"] != 0 } {
+	if {[string compare $contour_comes_from "none"] != 0 } {
 	    set contour_comes_from "none"
 	}
   }
-  if {$mode != "RULERGRID"} {
+  if {[string compare $mode "RULERGRID"] != 0 } {
 	if {$rulergrid_enabled != 0 } {
 	    set rulergrid_enabled 0
 	}
   }
-  if {$mode != "SEM"} {
+if { !$thirdtech_ui } {
+  if {[string compare $mode "ALPHA"] != 0 } {
+	if {[string compare $alpha_comes_from "none"] != 0 } {
+	    set alpha_comes_from "none"
+	}
+  }
+  if {[string compare $mode "SEM"] != 0 } {
 	if {$sem_display_texture != 0 } {
 	    set sem_display_texture 0
 	}
   }
-  if {$mode != "REGISTRATION"} {
+}
+  if {[string compare $mode "REGISTRATION"] != 0 } {
 	if {$reg_display_texture != 0 } {
 	    set reg_display_texture 0
 	}
@@ -839,14 +841,16 @@ proc handle_texture_mode_change {mode name element op} {
 #                 "handle_texture_mode_change REGISTRATION"
 }
 
-trace variable alpha_comes_from w \
-               "handle_texture_mode_change ALPHA"
 trace variable contour_comes_from w \
                "handle_texture_mode_change CONTOUR"
 trace variable rulergrid_enabled w \
                "handle_texture_mode_change RULERGRID"
+if { !$thirdtech_ui } {
+trace variable alpha_comes_from w \
+               "handle_texture_mode_change ALPHA"
 trace variable sem_display_texture w \
                "handle_texture_mode_change SEM"
+}
 trace variable reg_display_texture w \
                "handle_texture_mode_change REGISTRATION"
 

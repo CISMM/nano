@@ -1,3 +1,8 @@
+2002-03-29  Aron Helser  <helser@cs.unc.edu>
+
+	* mainwin.tcl (handle_texture_mode_change): Make it work when
+	thirdtech_ui is on. 
+
 2002-03-27  David Borland  <borland@cs.unc.edu>
         * import.tcl:  Added user control for clamping textures to objects
         Added user control for how many sections of a loaded nanotube are 
