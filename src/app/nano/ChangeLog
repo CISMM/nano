@@ -1,3 +1,8 @@
+2002-11-06  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.C : added new user interface objects from nmr_RegistrationUI.C
+	to viewRegister (since they're TclNetvars, they don't work otherwise!)
+
 2002-10-24  David Borland  <borland@cs.unc.edu>
 
         * microscape.c : changed the name of the TEM image.

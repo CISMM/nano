@@ -5494,6 +5494,7 @@ void teardownSynchronization( CollaborationManager *cm,
   viewRegister->remove(&(alignerUI->d_constrainToTopography));
   viewRegister->remove(&(alignerUI->d_invertWarp));
   viewRegister->remove(&(alignerUI->d_textureDisplayEnabled));
+  viewRegister->remove(&(alignerUI->d_textureAlpha));
   viewRegister->remove(&(alignerUI->d_resampleResolutionX));
   viewRegister->remove(&(alignerUI->d_resampleResolutionY));
   viewRegister->remove(&(alignerUI->d_resampleRatio));
@@ -5915,6 +5916,7 @@ void setupSynchronization( CollaborationManager * cm,
   viewRegister->add(&(alignerUI->d_constrainToTopography));
   viewRegister->add(&(alignerUI->d_invertWarp));
   viewRegister->add(&(alignerUI->d_textureDisplayEnabled));
+  viewRegister->add(&(alignerUI->d_textureAlpha));
   viewRegister->add(&(alignerUI->d_resampleResolutionX));
   viewRegister->add(&(alignerUI->d_resampleResolutionY));
   viewRegister->add(&(alignerUI->d_resampleRatio));
