@@ -1,3 +1,7 @@
+2004-07-08  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* Make the file into Unix format.
+
 2001-06-05  Aron Helser  <helser@cs.unc.edu>
 
 	* nano-doc.dox: Turned off warnings, turned off JAVADOC_AUTOBRIEF,

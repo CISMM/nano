@@ -2,6 +2,9 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
+11.3H: (July 7, 2004)
+	- Released for folks in Hamburg, including updates by Russ since May
+	  to enable the use of Imager plug-ins
 11.3:  (May 10, 2004) 
 	- fixed a bug that caused nano to crash when doing force curves.
 	  also, nano should no longer print lots of point-result error
