@@ -87,19 +87,19 @@ char	*handle_int_value_change(ClientData clientData,
 	} else if (intvar->d_ignoreChange) {
           intvar->d_ignoreChange = VRPN_FALSE;
 //if (strcmp(intvar->d_myTclVarname, "commit_pressed") == 0) 
-//fprintf(stderr, "handle_int_value_change (%s, %d):  ignoring the change.\n",
-//intvar->d_myTclVarname, value);
+fprintf(stderr, "handle_int_value_change (%s, %d):  ignoring the change.\n",
+intvar->d_myTclVarname, value);
 
         } else { //no errors: update the variable
           // Need to invoke operator = since it might be redefined
           // by derived class.  (?)
 
 //if (strcmp(intvar->d_myTclVarname, "commit_pressed") == 0) 
-//fprintf(stderr, "handle_int_value_change (%s, %d).\n",
-//intvar->d_myTclVarname, value);
+fprintf(stderr, "handle_int_value_change (%s, %d).\n",
+intvar->d_myTclVarname, value);
 
           //*intvar = value;
-//fprintf(stderr, "  .. set updateFromTcl.\n");
+fprintf(stderr, "  .. set updateFromTcl.\n");
           intvar->d_updateFromTcl = VRPN_TRUE;
           intvar->SetFromTcl(value);
           intvar->d_updateFromTcl = VRPN_FALSE;
@@ -360,37 +360,15 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
 int	Tclvar_mainloop (void)
 {
 
-	// Make sure there is a valid interpeter
-	if (interpreter == NULL) {
-		return -1;
-	}
-
-#if 0
-	int	i;
-	// Check for changes in the C strings and update the Tcl variables
-	// when they occur.
-	for (i = 0; i < num_strings; i++) {
-		if (string_list[i]->compareStrings() ||
-		    (string_list[i]->d_dirty)) {
-                        string_list[i]->resetString();
-			string_list[i]->d_dirty = VRPN_FALSE;
-			Tcl_SetVar(interpreter, string_list[i]->d_myTclVarname,
-                            (char *) string_list[i]->string(), TCL_GLOBAL_ONLY);
-		}
-	}
-#endif
-
 	return 0;
 }
 
-//	Add an entry into the list of active integer Tcl variables, and
-// point it to this variable.
-//	Add a Tcl callback, if an interpreter has been declared.
+/**
+ * Add an entry into the list of active integer Tcl variables, and
+ * point it to this variable.
+ * Add a Tcl callback, if an interpreter has been declared.
+ */
 
-/**	Add an entry into the list of active integer Tcl variables, and
- point it to this variable.
-	Add a Tcl callback, if an interpreter has been declared.
-*/
 Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
 	Linkvar_Intcall c, void * ud) :
   d_myTclVarname (NULL),
@@ -477,26 +455,19 @@ Tclvar_int::~Tclvar_int (void)
 //fprintf(stderr, " %d of %d\n", i, num_ints);
 
 	// Move the last entry to this one
-	int_list[i] = int_list[num_ints-1];
+	int_list[i] = int_list[num_ints - 1];
 
 	// Reduce the number in the list
 	num_ints--;
 }
 
-#if 0
-int Tclvar_int::initialize (Tcl_Interp * interpreter) {
-  if (!d_interpreter) {
-    d_interpreter = interpreter;
-  }
-  return 0;
-}
-#endif
 
 /**
-   Add a callback
-   @param cb Callback function
-   @param userdata a pointer useful to the callback
-*/
+ * Add a callback
+ * @param cb Callback function
+ * @param userdata a pointer useful to the callback
+ */
+
 void Tclvar_int::addCallback (Linkvar_Intcall cb, void * userdata) {
   tclIntCallbackEntry * newEntry;
 
@@ -523,11 +494,12 @@ void Tclvar_int::addCallback (Linkvar_Intcall cb, void * userdata) {
 }
 
 /**
-   remove a callback. Parameter must be identical to those
-   passed to the addCallback method previously.
-   @param cb Callback function
-   @param userdata a pointer useful to the callback
-*/
+ * remove a callback. Parameter must be identical to those
+ * passed to the addCallback method previously.
+ * @param cb Callback function
+ * @param userdata a pointer useful to the callback
+ */
+
 void Tclvar_int::removeCallback (Linkvar_Intcall cb, void * userdata) {
   tclIntCallbackEntry * entry, * prev_entry;
 
@@ -610,8 +582,8 @@ void Tclvar_int::updateTcl (void) {
   if (!interpreter) {
     return;
   }
-//fprintf(stderr, "Tclvar_int::updateTcl(%s, %d) - was %d.\n",
-//d_myTclVarname, d_myint, mylastint);
+fprintf(stderr, "Tclvar_int::updateTcl(%s, %d) - was %d.\n",
+d_myTclVarname, d_myint, mylastint);
 
     // If we're inside a Tcl callback, we're NOT going to generate
     // another Tcl callback with the Tcl_SetVar call below, since
@@ -628,7 +600,7 @@ void Tclvar_int::updateTcl (void) {
     // which we want to ignore to avoid endless loops or hitting the callback
     // twice.
 
-//fprintf(stderr, "Tclvar_int::updateTcl(%s):  setting d_ignoreChange.\n", d_myTclVarname);
+fprintf(stderr, "Tclvar_int::updateTcl(%s):  setting d_ignoreChange.\n", d_myTclVarname);
     d_ignoreChange = VRPN_TRUE;
   }
 

@@ -16,6 +16,8 @@
 
 #include <Tcl_Linkvar.h>
 
+class nmb_TimerList;  // from nmb_TimerList.h
+
 class vrpn_Connection;  // from vrpn_Connection.h
 class vrpn_SharedObject;  // from vrpn_SharedObject.h
 class vrpn_Shared_int32;
@@ -24,7 +26,13 @@ class vrpn_Shared_String;
 
 struct Tcl_Interp;  // from tcl.h
 
-void Tclnet_init (Tcl_Interp *, vrpn_bool useOptimisim = VRPN_FALSE);
+#define TCLNET_SERIALIZE_CENTRALIZED 0
+#define TCLNET_SERIALIZE_MIGRATING 1
+#define TCLNET_SERIALIZE_WALLCLOCK 2
+#define TCLNET_SERIALIZE_LAMPORTCLOCK 3
+
+void Tclnet_init (Tcl_Interp *, int collabMode = TCLNET_SERIALIZE_CENTRALIZED,
+                  nmb_TimerList * timer = NULL);
 /**<
  * Initializes Network-synchronized, replicated Tcl Variables,
  * specifying Tcl interpreter to use and choosing between locking
@@ -132,6 +140,8 @@ class Tcl_Netvar {
        * propagated with the last conditional update.
        * Mostly used for optimistic updates.
        */
+
+    void setupReplica (vrpn_SharedObject *);
 
     vrpn_SharedObject ** d_replica;
     vrpn_Connection ** d_replicaSource;

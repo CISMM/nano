@@ -1,3 +1,22 @@
+2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
+
+        * Tcl_Linkvar.C : clean up old code & comments
+
+        * Tcl_Netvar.C (Tclnet_init) : changed parameters
+        (activateTimer) : new function
+        (blockTimer) : same
+        (TclNetvar::setupReplica) : same
+        (TclNet_int::operator =) : call activateTimer(), becomeSerializer()
+        (TclNet_float::operator =) : same
+        (TclNet_string::operator =) : same
+        (TclNet_string::Set) : same
+        (TclNet_int::addServerReplica) : call setupReplica()
+        (TclNet_int::addRemoteReplica) : same
+        (TclNet_float::addServerReplica) : same
+        (TclNet_float::addRemoteReplica) : same
+        (TclNet_string::addServerReplica) : same
+        (TclNet_string::addRemoteReplica) : same
+
 2000-08-11  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* all: Merge thirdtech_branch code to trunk.

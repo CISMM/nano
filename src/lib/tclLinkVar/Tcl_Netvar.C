@@ -7,6 +7,8 @@
 #include <vrpn_Connection.h>
 #include <vrpn_SharedObject.h>  // for vrpn_Shared_int32 and the like
 
+#include <nmb_TimerList.h>
+
 /** \file Tcl_Netvar.C
  * Implementation for Tcl variables replicated and shared across the network.
  * Definitions:
@@ -44,13 +46,62 @@
 
 static Tcl_Interp * interpreter;
 static vrpn_int32 sharedObjectMode = VRPN_SO_DEFER_UPDATES;
+static vrpn_bool migrateSerializer = VRPN_FALSE;
+static nmb_TimerList * tclnetTimer = NULL;
 
-void Tclnet_init (Tcl_Interp * i, vrpn_bool useOptimism) {
+void Tclnet_init (Tcl_Interp * i, int collabMode,
+                  nmb_TimerList * timer) {
   interpreter = i;
-  if (useOptimism) {
-    sharedObjectMode = VRPN_SO_IGNORE_OLD;
+
+  switch (collabMode) {
+    
+    case TCLNET_SERIALIZE_CENTRALIZED:
+      break;
+    case TCLNET_SERIALIZE_MIGRATING:
+      migrateSerializer = VRPN_TRUE;
+      break;
+    case TCLNET_SERIALIZE_WALLCLOCK:
+      sharedObjectMode = VRPN_SO_IGNORE_OLD;
+      break;
+    case TCLNET_SERIALIZE_LAMPORTCLOCK:
+fprintf(stderr, "TCLNET_SERIALIZE_LAMPORTCLOCK not implemented!\n");
+      break;
+  }
+
+  tclnetTimer = timer;
+}
+
+static void activateTimer (void) {
+  vrpn_int32 sn;
+
+  if (!tclnetTimer) {
+    return;
+  }
+  sn = tclnetTimer->getListHead();
+  if (sn != -1) {
+    tclnetTimer->activate(sn);
+fprintf(stderr, "Activated timer %d.\n", sn);
   }
 }
+
+static int blockTimer (void *) {
+  vrpn_int32 sn;
+
+  if (!tclnetTimer) {
+    return 0;
+  }
+  sn = tclnetTimer->getListHead();
+  if (sn != -1) {
+    tclnetTimer->block(sn);
+fprintf(stderr, "Blocked timer %d.\n", sn);
+  }
+  return 0;
+}
+
+
+
+
+
 
 Tcl_Netvar::Tcl_Netvar (void) :
     d_replica (NULL),
@@ -210,6 +261,14 @@ void Tcl_Netvar::reallocateReplicaArrays (void) {
 
 }
 
+void Tcl_Netvar::setupReplica (vrpn_SharedObject * r) {
+  r->registerDeferredUpdateCallback(blockTimer, NULL);
+}
+
+
+
+
+
 
 
 TclNet_int::TclNet_int (const char * tcl_varname, vrpn_int32 default_value,
@@ -251,6 +310,8 @@ TclNet_int::~TclNet_int (void) {
 vrpn_int32 TclNet_int::operator = (vrpn_int32 newValue) {
   timeval now;
 
+  activateTimer();
+
   if (!isLocked()) {
 
     gettimeofday(&now, NULL);
@@ -262,6 +323,9 @@ vrpn_int32 TclNet_int::operator = (vrpn_int32 newValue) {
 
     if (d_replica[d_writeReplica]) {
       ((vrpn_Shared_int32 *) d_replica[d_writeReplica])->set(newValue, now);
+      if (migrateSerializer) {
+        d_replica[d_writeReplica]->becomeSerializer();
+      }
     } else {
       // Only triggered if we weren't properly initialized;  this
       // short-circuits around vrpn_SharedObject as if we were a Tclvar_int.
@@ -286,6 +350,8 @@ int TclNet_int::addServerReplica (void) {
     return -1;
   }
 
+  setupReplica(d_replica[d_numReplicas]);
+
   return d_numReplicas++;
 }
 
@@ -302,6 +368,8 @@ int TclNet_int::addRemoteReplica (void) {
     fprintf(stderr, "TclNet_int::addRemoteReplica:  Out of memory.\n");
     return -1;
   }
+
+  setupReplica(d_replica[d_numReplicas]);
 
   return d_numReplicas++;
 }
@@ -519,6 +587,8 @@ TclNet_float::~TclNet_float (void) {
 vrpn_float64 TclNet_float::operator = (vrpn_float64 newValue) {
   timeval now;
 
+  activateTimer();
+
   if (!isLocked()) {
 
     gettimeofday(&now, NULL);
@@ -527,6 +597,9 @@ vrpn_float64 TclNet_float::operator = (vrpn_float64 newValue) {
 //my_tcl_varname, newValue, d_writeReplica, now.tv_sec, now.tv_usec);
     if (d_replica[d_writeReplica]) {
       ((vrpn_Shared_float64 *) d_replica[d_writeReplica])->set(newValue, now);
+      if (migrateSerializer) {
+        d_replica[d_writeReplica]->becomeSerializer();
+      }
     } else {
       Tclvar_float::operator = (newValue);
     }
@@ -549,6 +622,8 @@ int TclNet_float::addServerReplica (void) {
     return -1;
   }
 
+  setupReplica(d_replica[d_numReplicas]);
+
   return d_numReplicas++;
 }
 
@@ -565,6 +640,8 @@ int TclNet_float::addRemoteReplica (void) {
     fprintf(stderr, "TclNet_float::addRemoteReplica:  Out of memory.\n");
     return -1;
   }
+
+  setupReplica(d_replica[d_numReplicas]);
 
   return d_numReplicas++;
 }
@@ -770,10 +847,15 @@ TclNet_string::~TclNet_string (void) {
 const char * TclNet_string::operator = (const char * newValue) {
   timeval now;
 
+  activateTimer();
+
   if (!isLocked()) {
       gettimeofday(&now, NULL);
       if (d_replica[d_writeReplica]) {
 	  ((vrpn_Shared_String *) d_replica[d_writeReplica])->set(newValue, now);
+      if (migrateSerializer) {
+        d_replica[d_writeReplica]->becomeSerializer();
+      }
       } else {
 	  Tclvar_string::operator = (newValue);
       }
@@ -786,10 +868,15 @@ const char * TclNet_string::operator = (const char * newValue) {
 const char * TclNet_string::operator = (char * newValue) {
   timeval now;
 
+  activateTimer();
+
   if (!isLocked()) {
       gettimeofday(&now, NULL);
       if (d_replica[d_writeReplica]) {
 	  ((vrpn_Shared_String *) d_replica[d_writeReplica])->set(newValue, now);
+      if (migrateSerializer) {
+        d_replica[d_writeReplica]->becomeSerializer();
+      }
       } else {
 	  Tclvar_string::operator = (newValue);
       }
@@ -802,10 +889,15 @@ const char * TclNet_string::operator = (char * newValue) {
 void TclNet_string::Set (const char * newValue) {
   timeval now;
 
+  activateTimer();
+
   if (!isLocked()) {
       gettimeofday(&now, NULL);
       if (d_replica[d_writeReplica]) {
 	  ((vrpn_Shared_String *) d_replica[d_writeReplica])->set(newValue, now);
+      if (migrateSerializer) {
+        d_replica[d_writeReplica]->becomeSerializer();
+      }
       } else {
 	  Tclvar_string::Set(newValue);
       }
@@ -826,6 +918,8 @@ int TclNet_string::addServerReplica (void) {
     return -1;
   }
 
+  setupReplica(d_replica[d_numReplicas]);
+
   return d_numReplicas++;
 }
 
@@ -842,6 +936,8 @@ int TclNet_string::addRemoteReplica (void) {
     fprintf(stderr, "TclNet_string::addRemoteReplica:  Out of memory.\n");
     return -1;
   }
+
+  setupReplica(d_replica[d_numReplicas]);
 
   return d_numReplicas++;
 }
