@@ -1,197 +1,30 @@
 Makefile info is in ./src/share/README-Makefiles
 
-Variables you may want set in your shell:
-
-   MY_NANO_SRC_DIR -- the directory containing your checked-out copy of
-                      the nano source tree (if not the default:
-                      /afs/cs.unc.edu/project/stm/src/<login>).
-                      That's _one above_ the nano directory.
-                      Also, if your ./stm/src/<you> isn't your login,
-                      you need to do this. On pc_*, a good way to do
-                      this is to cd to the parent (where nano is
-                      checked-out) and set this to `pwd -P`.
-
-   MY_NANO_OBJ_DIR -- where to put object files (if not the default:
-                      /afs/cs.unc.edu/project/stm/src/not_backed_up in
-                      unix and /tmp in cygwin).
-
-   NM_TLC_DIR      -- this checks-out to ./nano/src/share/tcl/. The new
-                      user interface has been committed (03/07/00) so you
-                      must update your old variable to point to these new
-                      tcl scripts. Under cygwin 1.0, the path must be kind
-                      of preverse, so set it as:
-                         `cygtclpath <full path to ./nano/src/share/tcl/>`.
-                      You must include the trailing /.
-
-Note, MY_NANO_???_DIR is no longer required under cygwin.
-
-
 How to compile nano (most archs, see below for cygwin-specific info):
 
- o This method is now outdated)
-     gmake in ./src/lib
-     gmake in ./src/app/nano/lib
-     gmake in ./src/app/nano
-
  o The easier way is to:
+     gmake generate in ./src/app/nano/lib/nmMScope
      gmake in ./src
 
  o The executable is ./obj/$(HW_OS)/app/nano/nano
 
  o More info pertaining to compiling can be found in
-   ./src/share/README-Makefiles
+   ./src/share/README-Makefiles and on the web
 
 
 How to get the non-vrpn version (no longer the default):
    gmake OLD_MICROSCOPE=1 instead
 
 
-How to compile nano on pc_cygwin:
-   1) Get sdi, quat, vogl (was vlib-openGL), and vrpn as per usual
-      and build them.
-   2) Get nano.
-   3) Make as per unix, but there is no `gmake':
-
-        make in ./src
-
-      or
-
-        make in ./src/lib
-        make in ./src/app/nano/lib
-        make in ./src/app/nano
-
-   The executable is /tmp/pc_cygwin/app/nano/nano.  If you set
-   MY_NANO_OBJ_DIR, the executable replace /tmp/pc_cygwin by that.
-
-   Note, MY_NANO_???_DIR is no longer required under cygwin.
-   (Note, juliano thinks he still needs to set MY_NANO_OBJ_DIR.)
-
-
-Some things that have moved:
-   1) imgformat, base, multip, and Tcl_*Var.* have moved to
-      ./src/lib/ImgFormat, ./src/lib/nmBase, ./src/lib/nmMP,
-      ./src/lib/tclLinkVar respectively
-   2) colormap.c is now part of the graphics library (to make
-      ./src/app/nano/lib/nmGraphics more self contained).
-   3) pieces of the ohmmeter and vicurve are now in
-      ./src/app/nano/lib/nmAux
-   4) active_set.*, stm_cmd.h, stm_file.* are now in
-      ./src/app/nano/lib/nmMScope
-   5) tcl is in ./nano/src/share/tcl
-   6) probably some more, I'll update this as I remember them/am asked
-
-
-How to link to a particular library (as opposed to a default):
-   MY_ALT_LIB_DIR can contain any number of compiler search paths for
-   libraries. Both the -I and -L must appear (though not in any particular
-   order).
-   For instance, to force use of stm/src/vrpn instead of your own copy
-   (which would normally be found first):
-
-      export MY_ALT_LIB_DIR=\
-      "-I/afs/unc/proj/stm/src/vrpn -L/afs/unc/proj/stm/src/vrpn/$HW_OS"
 
 
 ==========================================================================
-Compiling with Microsoft Visual C++ (tested with Visual C++ 6.0 only)
+Compiling with Microsoft Visual C++
 
-=============================================================================
-Installation of nano source tree on C: drive for compiling with VC++ compiler
-=============================================================================
-1. Create the directory C:\nsrc and C:\nsrc\obj
-2. Copy the external libraries directory from 
-        /afs/unc/proj/stm/src/external/pc_win32 to C:\nsrc\external\pc_win32
-   Copy the colormaps directory from
-        /afs/unc/proj/stm/etc/colormaps to C:\nsrc\colormaps
-3. Open cygwin shell and mount the nsrc directory like so:
-        mount -s -b C:\\nsrc /nsrc
-   (note it is important that Cygwin and DOS both see the directory
-    in the same place when you refer to it as /nsrc - Cygwin looks at
-    the mount point wherever the cygwin root directory is but DOS looks
-    at the top level of the drive when it sees "/")
-4. cd /nsrc
-5. cvs checkout quat
-   cvs checkout vrpn
-   cvs checkout vogl
-   cvs checkout nano
-6. cd nano/src
-7. edit vc-setup:
+ o See the directions on the web
 
-  change MSVSDIR and MY_NANO_OBJ_DIR exports
-  for example:
-  export MY_NANO_OBJ_DIR=/nsrc/obj
-  export MSVSDir=/c/PROGRA~1/MICROS~1
+ o The short form:
+     build quat, vogl and vrpn/vrpn_server/vrpn_phantom
+     make generate in ./src/app/nano/lib/nmMScope
+     make in ./src
 
-================================================================
-for compiling:
-================================================================
-8. source vc-setup
-
-9. Build quat, vogl, vrpn, vrpn/server_src/vrpn_phantom by opening the 
-   .dsw and .dsp files in VC++ Developer Studio. 
-
-   Make sure you have set the active configuration to pc_win32_MTd if it
-   is available or (in the case of vrpn) use the Debug configuration but make
-   sure you have the MTd (Multi-Thread debug) code generation setting in the
-   code generation options of the C++ tab in the project settings
-
-   Some more detailed instructions:
-   building vogl:
-     double click on C:\nsrc\vogl\vlib.dsw
-     from the Build menu, select "Set Active Configuration"
-       in the configurations window, select "vlib - Win32 pc_win32_MTd" and
-       close the window
-     from the Build menu, select "Build vogl.lib"
-
-   building quat:
-     double click on C:\nsrc\quat\quatlib.dsw
-     from the Build menu, select "Set Active Configuration"
-       in the configurations window, select "quatlib - Win32 pc_win32_MTd" and
-       close the window
-     from the Build menu, select "Build quat.lib"
-
-   building vrpn:
-     double click on C:\nsrc\vrpn\vrpn.dsw
-     from the Project menu, select "Set Active Project" and then select "vrpn"
-     from the Project menu, select "Settings" and make sure vrpn is the only
-        thing selected on the left hand side of thw dialog window
-     click on the C/C++ tab and under the "Category" select, pick 
-        "Code Generation"
-     next, under the "Use run-time library" selector pick "Debug Multithreaded"
-     click OK to dismiss the dialog
-     under the Build menu, select "Build vrpn.lib"
-
-   building vrpn_phantom:
-     double click on C:\nsrc\vrpn\server_src\vrpn_phantom.dsw
-     from the Build menu, select "Set Active Configuration"
-       in the configurations window, select 
-       "vrpn_phantom - Win32 pc_win32_MTd" and close the window
-     from the Build menu, select "Build vrpn_phantom.lib"
-
-10. for vrpn, copy the library from pc_win32/Debug/vrpn.lib to vrpn/pc_win32_MTd
-11. cd /nsrc/nano/src
-    make VC=1 NM_VERBOSE_MAKEFILE=1
-12. The executable should be in C:\nsrc\obj\pc_win32\app\nano
-13. Running the program:
-
-From your shell, you should be able to run by simply typing nano. If you
-aren't connected to a magellan make sure to supply the -nomagellan argument.
-
-If you want to run the program by double-clicking on it in windows then make 
-sure to set the following in System Properties:
-
-Environment variables to set and sample values:
-
-Under System Variables:
-Add the following to the Path variable just after the
-SystemRoot directories or at least before the cygwin directory: 
-
-C:\nsrc\external\pc_win32\bin
-
-Under User Variables (these values may need to be changed slightly depending
-on your installation):
-
-NM_COLORMAP_DIR = C:\\nsrc/colormaps
-NM_TCL_DIR = C:\\nsrc/nano/src/share/tcl/
-TCL_LIBRARY = C:/nsrc/external/pc_win32/bin/tcl8.2
-TRACKER = null Phantom_desktop
