@@ -24,7 +24,6 @@
 #include <nmb_Globals.h>
 #include "nmg_Surface.h"
 #include "nmg_SurfaceRegion.h"
-#include "nmg_StateGuardian.h"
 
 #include "graphics.h"
 #include "openGL.h"  // for check_extension(), display_lists_in_x
@@ -62,8 +61,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     d_displayIndexList (new v_index [NUM_USERS]),
     d_textureTransformMode(RULERGRID_COORD)
 {
-	g_guardian = new nmg_StateGuardian;
-
     if (d_dataset == NULL) {
         grid_size_x = 12;
         grid_size_y = 12;
@@ -982,11 +979,14 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
   // Even though we may not be using the vertex array extension, we still
   // use the vertex array to cache calculated normals
   if (!g_surface->init(d_dataset->inputGrid->numX(),
-                     d_dataset->inputGrid->numY()) )
+                       d_dataset->inputGrid->numY()) )
   {
       fprintf(stderr," initialization of surface: out of memory.\n");
       exit(0);
   }
+
+  grid_size_x = d_dataset->inputGrid->numX();
+  grid_size_y = d_dataset->inputGrid->numY();
 
   if (!g_surface->rebuildSurface(VRPN_TRUE)) {
     fprintf(stderr,

@@ -8,6 +8,7 @@ class BCPlane;
 class nmb_Dataset;
 class nmb_PlaneSelection;
 class nmg_SurfaceMask;
+class nmg_Surface;
 struct Vertex_Struct;
 
 typedef struct _GraphicsState
@@ -40,7 +41,7 @@ typedef struct _BehaviorLocks
 class nmg_SurfaceRegion
 {
 public:
-    nmg_SurfaceRegion();
+    nmg_SurfaceRegion(nmg_Surface *parent, int region_id);
     ~nmg_SurfaceRegion();
     
     //This function is to ensure that things start off in 
@@ -101,6 +102,8 @@ public:
     Vertex_Struct ** getRegionData();
     
 private:
+    nmg_Surface *d_parent;
+    int d_regionID;
     vrpn_bool d_needsFullRebuild;
     nmg_SurfaceMask *d_regionalMask;
     

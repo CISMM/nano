@@ -200,17 +200,19 @@ setDrawPartialMask(vrpn_bool draw)
 bool nmg_SurfaceMask::
 quadMasked(int x, int y, int stride)
 {
+    int index = x + y * d_width;
+    int step = stride*d_width;
     if (d_drawPartialMask) {
-        return (value(x,y) > 0 ||
-                value(x,y - stride) > 0 ||
-                value(x+stride,y) > 0 ||
-                value(x+stride,y - stride));
+        return (d_maskData[index] > 0 ||
+                d_maskData[index-step] > 0 ||
+                d_maskData[index+1] > 0 ||
+                d_maskData[index+1-step]);
     }
     else {
-        return (value(x,y) > 0 &&
-                value(x,y - stride) > 0 &&
-                value(x+stride,y) > 0 &&
-                value(x+stride,y - stride));
+        return (d_maskData[index] > 0 &&
+                d_maskData[index-step] > 0 &&
+                d_maskData[index+1] > 0 &&
+                d_maskData[index+1-step]);
     }
 }
 

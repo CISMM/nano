@@ -16,9 +16,9 @@ nmg_Surface()
     d_numSubRegions = 0;
     d_maxNumRegions = 1;
     d_subRegions = (nmg_SurfaceRegion**)malloc(d_maxNumRegions * sizeof(nmg_SurfaceRegion**));
-    d_defaultRegion = new nmg_SurfaceRegion;
+    d_defaultRegion = new nmg_SurfaceRegion(this, 0);
     d_dataset = (nmb_Dataset*)NULL;
-
+    
     d_defaultRegion->getMaskPlane()->setDrawPartialMask(VRPN_TRUE);
 }
 
@@ -50,7 +50,7 @@ init(unsigned int width, unsigned int height)
     if (!d_defaultRegion->init(d_initWidth, d_initHeight)) {
         return 0;
     }
-
+    
     for(int i = 0; i < d_numSubRegions; i++) {
         if (!d_subRegions[i]->init(d_initWidth, d_initHeight)) {
             return 0;
@@ -85,7 +85,8 @@ int nmg_Surface::
 createNewRegion()
 {
     //I really wish we could use STL vectors....
-    nmg_SurfaceRegion *new_region = new nmg_SurfaceRegion;
+    int region_id = d_numSubRegions+1;
+    nmg_SurfaceRegion *new_region = new nmg_SurfaceRegion(this, region_id);
     if (!new_region->init(d_initWidth, d_initHeight)) {
         return -1;
     }
@@ -104,8 +105,9 @@ createNewRegion()
         d_subRegions = new_regions;
     }
 
-    d_subRegions[d_numSubRegions] = new_region;    
-    return ++d_numSubRegions;
+    d_subRegions[d_numSubRegions] = new_region;
+    d_numSubRegions++;
+    return region_id;
 }
 
 ////////////////////////////////////////////////////////////
@@ -251,6 +253,38 @@ deriveMaskPlane(float min_height, float max_height, int region)
 }
 
 ////////////////////////////////////////////////////////////
+//    Function: nmg_Surface::rederive
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+void nmg_Surface::
+rederive(int region) 
+{
+    if (region >= 0 && region <= d_numSubRegions) {
+        if (region != 0) {
+            region--;
+            nmg_SurfaceMask *mask;
+            
+            mask = d_subRegions[region]->getMaskPlane();
+            if (mask->valid()) {
+                d_defaultRegion->getMaskPlane()->add(mask);
+            }
+            
+            d_subRegions[region]->getMaskPlane()->rederive();
+            
+            mask = d_subRegions[region]->getMaskPlane();
+            if (mask->valid()) {
+                d_defaultRegion->getMaskPlane()->remove(mask);
+                d_defaultRegion->forceRebuildCondition();
+            }
+        }
+        else {
+            d_defaultRegion->getMaskPlane()->rederive();
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////
 //    Function: nmg_Surface::rebuildRegion
 //      Access: Public
 // Description: 
@@ -309,7 +343,7 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
                                               high_row, strips_in_x)) {
             return 0;
         }
-        
+
         for(int i = 0; i < d_numSubRegions; i++) {
             if (!d_subRegions[i]->rebuildInterval(d_dataset, low_row, 
                                                   high_row, strips_in_x)) {

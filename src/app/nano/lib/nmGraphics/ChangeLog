@@ -1,3 +1,37 @@
+2001-05-16  Jason Clark  <jclark@cs.unc.edu>
+
+	* openGL.c: Make sure that Texture Blending is only attempted on
+	SGI's.  This fixes the crash bug that Adam found.
+
+	In the old way of doing things, the check for a very small plane
+	was only done for a full rebuild, and I guess this was okay.  Now
+	it was causing problems when the surface is rebuilt incrementally
+	because that check was not in that branch of the code.  Put the
+	check in.
+
+	* nmg_GraphicsImpl.C: I had accidentally removed the updating of
+	the internal storage of the size of the plane in
+	causeGridRebuild.  This resulted in a situation where the surface
+	was being completely rebuilt every frame.  This was the culprit of
+	the severe speed slow down.
+
+	* nmg_SurfaceRegion.C: Use parent rederive function
+
+	* nmg_SurfaceMask.C (quadMasked): Made this a bit more efficient
+
+	* nmg_Surface.Ch (rederive): New function that regions call when
+	they realize that they need to rederive their mask plane.  This is
+	done through a call to the parent Surface class to ensure that any
+	other regions that would get affected by the call are in fact
+	updated.  This fixes a bug with stream files not updating
+	correctly.
+
+	* graphics_globals.ch: Removed global state guardian object
+
+	* nmg_StateGuardian.ch: Classes removed as I created them
+	hurriedly and they are currently unneccessary. (Although I believe
+	something like them would be worth while)
+
 2001-05-15  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_StateGuardian.C (nmg_StateGuardian::nmg_StateGuardian):

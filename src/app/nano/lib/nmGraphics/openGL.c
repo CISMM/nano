@@ -268,9 +268,14 @@ int build_list_set
             printf(" Error setting GL_TEXTURE_COORD_ARRAY_EXT.\n");
         } 
 #else
-        if ( planes.contour || planes.alpha) {
+        if ( planes.contour) {
             //glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+#ifdef sgi
+        } else if ( planes.alpha ) {
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+#endif
         } else {
             //glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -401,6 +406,12 @@ int build_list_set (const nmb_Interval &insubset,
         stripfn = spm_y_strip_masked;
     }
     
+    // If we have a very small grid size, make sure g_stride doesn't tell us
+    // to skip any.
+    if ((planes.height->numY() <= 10) || (planes.height->numX() <= 10)) {
+        g_stride = 1;
+    }
+
     nmb_Interval subset (MAX(0, insubset.low()),
         MIN(num - 1, insubset.high()));
     
@@ -466,7 +477,7 @@ int	build_grid_display_lists(const nmb_PlaneSelection &planes,  nmg_SurfaceMask 
     
     // If we have a very small grid size, make sure g_stride doesn't tell us
     // to skip any.
-    if ((planes.height->numY() < 10) || (planes.height->numX() < 10)) {
+    if ((planes.height->numY() <= 10) || (planes.height->numX() <= 10)) {
         g_stride = 1;
     }
     // Figure out how many strips we will need.  Recall that we are
@@ -826,18 +837,7 @@ int draw_world (int) {
         make_blue_line(decoration->blue.top(), decoration->blue.bottom());
         decoration->blue.clearChanged();
     }
-    /* OBSOLETE, never called. 
-    if (decoration->selectedRegion_changed) {
-        //fprintf(stderr, "Making selected region marker.\n");
-        make_selected_region_marker
-            (decoration->selectedRegionMinX,
-            decoration->selectedRegionMinY,
-            decoration->selectedRegionMaxX,
-            decoration->selectedRegionMaxY);
-        decoration->selectedRegion_changed = 0;
-        // XXX won't this be cleared in draw_world()?
-    }
-    */
+
     if (decoration->aimLine.changed()) {
         make_aim(decoration->aimLine.top(), decoration->aimLine.bottom());
         decoration->aimLine.clearChanged();
