@@ -1,3 +1,9 @@
+2001-12-13  Nathan Conrad  <conrad@cs.unc.edu>
+
+	* Makefile: Makefile now auto-detects all *.??def files, and builds
+	them correctly, just like on VC++. Also, make clean removes the
+	generated files, but only when run in app/nano/lib/nmMScope.
+
 2001-12-04 Andrea Hilchey <hilchey@cs.unc.edu>
 	* nmm_SimulatedMicroscope_Remote.Cdef : updated
 	* nmm_SimulatedMicroscope_Remote.hdef : updated

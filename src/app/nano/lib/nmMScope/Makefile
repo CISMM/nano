@@ -6,91 +6,55 @@ EXCLUDE_SRC = stm_file.c
 
 NAUGHTY := 1
 
+include ../Makefile.share
+
+######################################
+#
+#  Find out which files must be generated
+#
+
+GEN-FILES-DEF	:= $(wildcard *.Cdef *.hdef *.vrpndef)
+GEN-FILES-H	:= $(patsubst %.hdef,%.h,$(wildcard *.hdef)) \
+		  $(patsubst %.vrpndef,%.h,$(wildcard *.vrpndef))
+GEN-FILES-C	:= $(patsubst %.Cdef,%.C,$(wildcard *.Cdef)) \
+                  $(patsubst %.vrpndef,%.C,$(wildcard *.vrpndef))
+GEN-FILES	:= $(GEN-FILES-H) $(GEN-FILES-C)
+# GEN-FILES-BASE only looks at .C and .vrpndef (and not header files) because they do not generate objects.
+GEN-FILES-BASE	:= $(basename $(GEN-FILES-C) $(GEN-FILES-DEF))
+GEN-FILES-O	:= $(addprefix $(OBJECT_DIR)/,$(addsuffix $(OBJECT_SUFFIX),$(GEN-FILES-BASE)))
+
+######################################
+#
+#  Find out how to generate files
+#
 ifdef VC
 GEN_RPC := ../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl
 else
 GEN_RPC := /usr/local/bin/perl ../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl
 endif
 
-include ../Makefile.share
+
+
+
+.PHONY: generate_hook
+generate_hook: $(GEN-FILES)
+
+.PHONY: clean-gen clean_hook
+clean_hook: clean-gen
 
 clean-gen: 
-	-rm -f nmm_SPM_Control.h nmm_SPM_Report.h nmm_AFM_Control.h \
-	nmm_AFM_Report.h nmm_MicroscopeRemote.h \
-	nmm_SPM_Control.C nmm_SPM_Report.C nmm_AFM_Control.C \
-	nmm_AFM_Report.C nmm_MicroscopeRemoteGen.C \
-	nmm_SimulatedMicroscope_Remote.C nmm_SimulatedMicroscope_Remote.h \
-	nmm_SimulatedMicroscope.C nmm_SimulatedMicroscope_Remote.C \
-	nmm_AFMSIM_Report.C nmm_AFMSIM_Report.h
+	-rm -f $(GEN-FILES)
 
+%.h : %.vrpndef
+	${GEN_RPC} -h $<
 
-# All generated files need to be created before ".depend" gets created.
-generate: nmm_SPM_Control.h nmm_SPM_Report.h nmm_AFM_Control.h \
-	nmm_AFM_Report.h nmm_MicroscopeRemote.h \
-	nmm_SPM_Control.C nmm_SPM_Report.C nmm_AFM_Control.C \
-	nmm_AFM_Report.C nmm_MicroscopeRemoteGen.C \
-	nmm_SimulatedMicroscope.h nmm_SimulatedMicroscope_Remote.h \
-	nmm_SimulatedMicroscope.C nmm_SimulatedMicroscope_Remote.C \
-	nmm_AFMSIM_Report.C nmm_AFMSIM_Report.h
+%.C : %.vrpndef
+	${GEN_RPC} -c $<
 
-nmm_SPM_Control.h: nmm_SPM_Control.vrpndef
-	${GEN_RPC} -h nmm_SPM_Control.vrpndef
-nmm_SPM_Control.C: nmm_SPM_Control.vrpndef
-	${GEN_RPC} -c nmm_SPM_Control.vrpndef
+%.h : %.hdef
+	$(GEN_RPC) $<
 
-nmm_SPM_Report.h: nmm_SPM_Report.vrpndef
-	${GEN_RPC} -h nmm_SPM_Report.vrpndef
-nmm_SPM_Report.C: nmm_SPM_Report.vrpndef
-	${GEN_RPC} -c nmm_SPM_Report.vrpndef
+%.C : %.Cdef
+	$(GEN_RPC) $<
 
-nmm_AFM_Control.h: nmm_AFM_Control.vrpndef
-	${GEN_RPC} -h nmm_AFM_Control.vrpndef
-nmm_AFM_Control.C: nmm_AFM_Control.vrpndef
-	${GEN_RPC} -c nmm_AFM_Control.vrpndef
-
-nmm_AFM_Report.h: nmm_AFM_Report.vrpndef
-	${GEN_RPC} -h nmm_AFM_Report.vrpndef
-nmm_AFM_Report.C: nmm_AFM_Report.vrpndef
-	${GEN_RPC} -c nmm_AFM_Report.vrpndef
-
-nmm_AFMSIM_Report.h: nmm_AFMSIM_Report.vrpndef
-	${GEN_RPC} -h nmm_AFMSIM_Report.vrpndef
-nmm_AFMSIM_Report.C: nmm_AFMSIM_Report.vrpndef
-	${GEN_RPC} -c nmm_AFMSIM_Report.vrpndef
-
-nmm_MicroscopeRemote.h: nmm_SPM_Control.vrpndef nmm_SPM_Report.vrpndef \
-	nmm_AFM_Control.vrpndef \
-	nmm_AFM_Report.vrpndef nmm_MicroscopeRemote.hdef
-	${GEN_RPC} nmm_MicroscopeRemote.hdef
-
-nmm_MicroscopeRemoteGen.C: nmm_SPM_Control.vrpndef nmm_SPM_Report.vrpndef \
-	nmm_AFM_Control.vrpndef \
-	nmm_AFM_Report.vrpndef nmm_MicroscopeRemoteGen.Cdef
-	${GEN_RPC} nmm_MicroscopeRemoteGen.Cdef
-
-
-nmm_SimulatedMicroscope_Remote.h: nmm_AFMSIM_Report.vrpndef \
-	nmm_SimulatedMicroscope_Remote.hdef
-	${GEN_RPC} nmm_SimulatedMicroscope_Remote.hdef
-
-nmm_SimulatedMicroscope.h: nmm_AFMSIM_Report.vrpndef \
-	nmm_SimulatedMicroscope.hdef
-	${GEN_RPC} nmm_SimulatedMicroscope.hdef
-
-
-nmm_SimulatedMicroscope_Remote.C: nmm_AFMSIM_Report.vrpndef \
-	nmm_SimulatedMicroscope_Remote.Cdef
-	${GEN_RPC} nmm_SimulatedMicroscope_Remote.Cdef
-
-nmm_SimulatedMicroscope.C: nmm_AFMSIM_Report.vrpndef \
-	nmm_SimulatedMicroscope.Cdef
-	${GEN_RPC} nmm_SimulatedMicroscope.Cdef
-
-${LIBRARY_ARCHIVE}: $(OBJECT_DIR)/nmm_MicroscopeRemoteGen$(OBJECT_SUFFIX) \
-	$(OBJECT_DIR)/nmm_SPM_Control$(OBJECT_SUFFIX) \
-	$(OBJECT_DIR)/nmm_SPM_Report$(OBJECT_SUFFIX) \
-	$(OBJECT_DIR)/nmm_AFM_Control$(OBJECT_SUFFIX) \
-	$(OBJECT_DIR)/nmm_AFM_Report$(OBJECT_SUFFIX) \
-	$(OBJECT_DIR)/nmm_SimulatedMicroscope_Remote$(OBJECT_SUFFIX) \
-	$(OBJECT_DIR)/nmm_SimulatedMicroscope$(OBJECT_SUFFIX) \
-	$(OBJECT_DIR)/nmm_AFMSIM_Report$(OBJECT_SUFFIX)
+${LIBRARY_ARCHIVE}: $(GEN-FILES-O)
