@@ -251,8 +251,9 @@ void  handle_region_message(void *, const vrpn_IMAGERREGIONCB info)
       fprintf(stderr, "Got total region, sending back text\n");
     }
 
-    volume *= (g_imager_client->maxX() - g_imager_client->minX()) *
-	      (g_imager_client->maxY() - g_imager_client->minY());
+    // Scale the volume by the footprint of one pixel on the image.
+    volume *= ((g_imager_client->maxX() - g_imager_client->minX()) / g_imager_client->nCols()) *
+	      ((g_imager_client->maxY() - g_imager_client->minY()) / g_imager_client->nRows());
 
     // Position 10nm above the center pixel, using the identity orientation
     vrpn_float64  pos[3], quat[4] = {0, 0, 0, 1};
