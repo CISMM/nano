@@ -407,6 +407,7 @@ long nmb_Device_Client::dispatchRedundantMessage (long len, const char * buf,
       return retval;
     }
     d_messageBufferTail->isRedundant = VRPN_TRUE;
+//fprintf(stderr, "nmb_Device_Client():  Buffered redundant message.\n");
   }
   return retval;
 }
