@@ -250,6 +250,10 @@ $filemenu add command -label "Save Plane Data..." -underline 5 -command \
 	"save_plane_data"
 $filemenu add command -label "Save Modification Data..." -underline 5 \
          -command "save_mod_dialog"
+$filemenu add command -label "Begin Video Capture..." -underline 0 -command \
+	"begin_video_capture"
+$filemenu add command -label "End Video Capture" -underline 0 -command \
+	"end_video_capture"
 
 # Experimental interface to save series of screenshots for a movie. 
 $filemenu add command -label "Save Image Sequence..." -underline 5 -command \

@@ -419,6 +419,39 @@ proc save_screenImage {} {
 #
 ################################
 #
+# Allows a user to save a video of the current session.
+# Continues until the user selects the "Stop Record" menu option.
+
+proc begin_video_capture {} {
+    global fileinfo video_capture_filename
+    set types { {"AVI" ".avi" } 
+                {"All files" *} }
+    set filename [tk_getSaveFile -filetypes $types \
+            -initialdir $fileinfo(save_dir)\
+            -title "Save a video file"]
+    if {$filename != ""} {
+	# setting this variable triggers a callback in C code
+	# which saves the file. 
+        set video_capture_filename $filename
+        set fileinfo(save_dir) [file dirname $filename]
+    } 
+    # otherwise do nothing.
+#    set video_capture_filename "test.avi"
+}
+
+#
+################################
+#
+# Stops capture of the current action to a video
+
+proc end_video_capture {} {
+    global video_capture_end
+    set video_capture_end 1
+}
+
+#
+################################
+#
 #
 
 #Initial dialog which allows user to choose which plane
