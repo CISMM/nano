@@ -600,12 +600,11 @@ void nmg_Graphics_Implementation::loadRulergridImage (const char * name) {
   }
 }
 
-void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM){
+void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
+{
   // code taken from graphics.c::makeAndInstallRulerImage():
-  int texture_size;
   int x,y;
   int r,g,b;
-  GLubyte texture[512*512*4];   // Maximum size for the image texture
 
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
@@ -613,15 +612,29 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM){
 // Tell how to index a given element.  Parameters are y,x,color
 #define texel(j,i,c) ( (c) + 4 * ( (i) + (j) * texture_size))
 
-  // Find out the smallest power-of-2 texture region we can use
+  // Find out the smallest power-of-2 texture region we can use.
+  // Remember that float->int conversion truncates, so add 0.5 for rounding
   // Make sure it is not too big.
-  texture_size = max(myPPM->nx, myPPM->ny);
-  texture_size = (int)pow( 2, ceil( log(texture_size)/log(2)  ) );
+  int ts_orig_ = max(myPPM->nx, myPPM->ny);
+  const int texture_size = int (0.5 + pow (2, ceil(log(ts_orig_)/log(2))));
+
+  if (texture_size > 512) {
+      fprintf (stderr,
+               "Using ruler texture of size %dx%d, "
+               "which is larger than previously allowed\n",
+               texture_size, texture_size);
+  }
+  
+#if 0 // old error message for static-sized array
   if (texture_size > 512) {
         fprintf(stderr,"Not enough space for %dx%d ruler texture\n",
                 texture_size, texture_size);
         return;
   }
+#endif
+
+  // multiply by 4 so we can store 4 values at each texel
+  GLubyte * texture = new GLubyte [4 * texture_size];
 
   // Fill the whole texture with black.  This will make a border around
   // any area not filled by the PPM file.
@@ -721,6 +734,8 @@ _______________________________********************/
   g_tex_installed_height[RULERGRID_TEX_ID] = texture_size;
   g_tex_image_width[RULERGRID_TEX_ID] = myPPM->nx;
   g_tex_image_height[RULERGRID_TEX_ID] = myPPM->ny;
+
+  delete [] texture;
 }
 
 
@@ -1196,7 +1211,8 @@ void nmg_Graphics_Implementation::setPatternMapName (const char * /*name*/)
 //
 // Texture maps must be in units of powers of 2,
 // So a texture map of 512x512 is allocated (hopefully this is big enough)
-// 
+//   -JFJ: correction, it's now a dynamically-allocated array of any
+//         power-of-2 size.
 //
 void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   // inputGrid is replaced with dataImages in this function so that
