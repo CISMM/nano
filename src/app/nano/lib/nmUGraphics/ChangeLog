@@ -1,3 +1,14 @@
+2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
+
+	* URHeightField.C (setSurface): added parameters to set the size/position
+	for the surface
+	(renderWithoutDisplayList): "
+	(setSurfaceRegion): new function
+	* URPolygon.C (Render): fixed a bug here - wasn't disabling textures after
+	drawing
+	* URVector.[Ch]: new file used by AFM-SEM-model code to display direction
+	of projection for SEM image
+
 2002-10-02  David Borland <borland@cs.unc.edu>
 
         * URender.C : added check to ChangeStaticFile to make sure

@@ -69,6 +69,9 @@ int URPolygon::Render(void * userdata){
 		glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
 		glPopAttrib();
+		if (GetProjTextEnable() && texture) {
+			texture->disable();
+		}
 	}
 
     if(recursion) return ITER_CONTINUE;

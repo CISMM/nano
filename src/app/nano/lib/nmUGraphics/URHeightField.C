@@ -41,6 +41,7 @@ int URHeightField::Render(void *userdata)
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glMultMatrixd(d_worldFromObject);
+		
 		glCallList(d_displayListID);
 		glPopMatrix();
 		glPopAttrib();
@@ -55,8 +56,14 @@ int URHeightField::Render(void *userdata)
 	}
 }
 
-void URHeightField::setSurface(nmb_Image *heightValues, int stride)
+void URHeightField::setSurface(nmb_Image *heightValues, 
+      double xmin, double ymin, double xmax, double ymax,
+	  int stride)
 {
+  d_minX = xmin;
+  d_minY = ymin;
+  d_maxX = xmax;
+  d_maxY = ymax;
   buildDisplayList(heightValues, stride);
 }
 
@@ -162,7 +169,9 @@ int URHeightField::computeNormal(nmb_Image *heightValues, int x, int y,
   return 0;
 }
 
-void URHeightField::renderWithoutDisplayList(nmb_Image *heightValues, int stride)
+void URHeightField::renderWithoutDisplayList(nmb_Image *heightValues, 
+	double xmin, double ymin, double xmax, double ymax,
+	int stride)
 {
 	int strideX = stride;
 	int strideY = stride;
@@ -220,8 +229,8 @@ void URHeightField::renderWithoutDisplayList(nmb_Image *heightValues, int stride
 
 	int numX = heightValues->width();
 	int numY = heightValues->height();
-	double lengthXinWorld = heightValues->widthWorld();
-	double lengthYinWorld = heightValues->heightWorld();
+	double lengthXinWorld = d_maxX - d_minX;
+	double lengthYinWorld = d_maxY - d_minY;
 	int numStrips;// = numY-1;
 
 	numStrips = (int)ceil((double)(numY-1)/(double)strideY);
@@ -237,7 +246,7 @@ void URHeightField::renderWithoutDisplayList(nmb_Image *heightValues, int stride
 	int arrayIndex;
 	int stripIndex;
 
-	double strip_y_min = 0.0, strip_y_max = 0.0;
+	double strip_y_min = d_minY, strip_y_max = d_minY;
 	int j_min = 0, j_max = 0;
 	for (stripIndex = 0; stripIndex < numStrips; stripIndex++) {
 		j_min = j_max;
@@ -248,7 +257,7 @@ void URHeightField::renderWithoutDisplayList(nmb_Image *heightValues, int stride
 			j_max = numY-1;
 			strip_y_max = lengthYinWorld;
 		}
-		double x_value = 0;
+		double x_value = d_minX;
 		int i = 0;
 		for (arrayIndex = 0; arrayIndex < halfStripLength; arrayIndex++) {
 			
@@ -291,7 +300,8 @@ void URHeightField::renderWithoutDisplayList(nmb_Image *heightValues, int stride
 
 }
 
-void URHeightField::buildDisplayList(nmb_Image *heightValues, int stride)
+void URHeightField::buildDisplayList(nmb_Image *heightValues, 
+		int stride)
 {
 	v_gl_set_context_to_vlib_window();
 	if (d_displayListID != 0) {
@@ -309,7 +319,8 @@ void URHeightField::buildDisplayList(nmb_Image *heightValues, int stride)
 
 	glNewList(d_displayListID, GL_COMPILE);
 
-	renderWithoutDisplayList(heightValues, stride);
+	renderWithoutDisplayList(heightValues, d_minX, d_minY, 
+		d_maxX, d_maxY, stride);
 
 	glEndList();
 
@@ -322,6 +333,31 @@ void URHeightField::setWorldFromObjectTransform(
 	for (i = 0; i < 16; i++) {
 		d_worldFromObject[i] = matrix[i];
 	}
+}
+
+void URHeightField::setSurfaceRegion(double minX, double minY, double maxX, double maxY)
+{
+  // the surface currently goes from (d_minX, d_minY) to (d_maxX, d_maxY)
+  // now we need to figure out what scaling and translation to apply to get it to
+  // fit (minX, minY) (maxX, maxY)
+  // m[0]*d_minX + m[4]*d_minY + m[12] = minX
+  // m[1]*d_minX + m[5]*d_minY + m[13] = minY
+  // m[0]*d_maxX + m[4]*d_maxY + m[12] = maxX
+  // m[1]*d_maxX + m[5]*d_maxY + m[13] = maxY
+  // m[0]*d_minX + m[4]*d_maxY + m[12] = minX
+  // m[1]*d_minX + m[5]*d_maxY + m[13] = maxY
+
+  double scaleX = (maxX - minX)/(d_maxX - d_minX);	// m[0]
+  double scaleY = (maxY - minY)/(d_maxY - d_minY);	// m[5]
+  double translateX = minX - scaleX*d_minX; // m[12]
+  double translateY = minY - scaleY*d_minY; // m[13]
+
+  double m[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+  m[0] = scaleX;
+  m[5] = scaleY;
+  m[12] = translateX;
+  m[13] = translateY;
+  setWorldFromObjectTransform(m);
 }
 
 void URHeightField::setTextureEnable(bool enable)

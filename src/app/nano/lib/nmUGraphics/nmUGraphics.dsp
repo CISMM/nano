@@ -145,6 +145,10 @@ SOURCE=.\URTubeFile.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\URVector.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\URWaveFront.C
 # End Source File
 # Begin Source File
@@ -230,6 +234,10 @@ SOURCE=.\URSpider.h
 # Begin Source File
 
 SOURCE=.\URTubeFile.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\URVector.h
 # End Source File
 # Begin Source File
 

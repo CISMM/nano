@@ -10,11 +10,17 @@ private:
   URHeightField();
   virtual ~URHeightField();
   virtual int Render(void *userdata=NULL);
-  void setSurface(nmb_Image *heightValues, int stride = 1);
-  static void renderWithoutDisplayList(nmb_Image *heightValues,
+  void setSurface(nmb_Image *heightValues, double xmin, double ymin,
+	  double xmax, double ymax, int stride = 1);
+  void renderWithoutDisplayList(nmb_Image *heightValues,
+	  double xmin, double ymin, double xmax, double ymax,
 	  int stride = 1);
   void buildDisplayList(nmb_Image *heightValues, int stride);
   void setWorldFromObjectTransform(double *matrix);
+  /// This is an alternative way to set the worldFromObject transformation
+  /// and it sets the transformation so that the surface spans and is 
+  /// bounded by the specified rectangle in world coordinates
+  void setSurfaceRegion(double minX, double minY, double maxX, double maxY);
   void setTextureEnable(bool enable);
 
   int SetProjTextureAll(void *userdata=NULL);
@@ -27,6 +33,7 @@ private:
    GLuint d_displayListID;
    GLdouble d_worldFromObject[16];
    bool d_textureEnabled;
+   double d_minX, d_minY, d_maxX, d_maxY;
 };
 
 #endif
