@@ -46,15 +46,9 @@
 
 // Margin that moves text out from the edge of the screen. 
 const float MARGIN = 0.02f;
-// Spacing of one line to the next.
-const float LINE_SPACE = 0.027f; 
 // Back-off from the screen in Z to avoid clipping
 const float Z_SLIVER = -0.00001f;
 
-// Top edge of the screen is scaled to be .75 in vlib somewhere
-const float TOP_EDGE = 0.75f;
-// right edge is scaled to 1.0
-const float RIGHT_EDGE = 1.0f;
 
 #include <v.h>  // to define GLfloat
 typedef GLfloat VertexType[3];
@@ -133,7 +127,7 @@ int scale_display (void * data) {
 
   glColor3f(1.0f, 1.0f, 1.0f);
   glScalef(size, size, size);
-  glTranslatef(MARGIN, 2*LINE_SPACE + MARGIN, Z_SLIVER);
+  glTranslatef(V_LEFT_EDGE+MARGIN, V_BOTTOM_EDGE+(2*V_LINE_SPACE + MARGIN), Z_SLIVER);
 
   double scale = 1.0;
 
@@ -184,7 +178,7 @@ int x_y_width_display (void *data) {
   glPushAttrib(GL_CURRENT_BIT);
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
-  glTranslatef(MARGIN, LINE_SPACE + MARGIN,Z_SLIVER);
+  glTranslatef(V_LEFT_EDGE+MARGIN, V_BOTTOM_EDGE+(V_LINE_SPACE + MARGIN),Z_SLIVER);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
   drawStringInFont(myfont, message);
   glPopMatrix(); 
@@ -252,7 +246,7 @@ int height_at_hand_display (void * data) {
   glPushAttrib(GL_CURRENT_BIT);
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
-  glTranslatef(MARGIN, MARGIN, Z_SLIVER);
+  glTranslatef(V_LEFT_EDGE+MARGIN, V_BOTTOM_EDGE+MARGIN, Z_SLIVER);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
   drawStringInFont(myfont, message);
   glPopMatrix(); 
@@ -293,7 +287,7 @@ int rate_display (void *data) {
       break;
   }
   glColor3f(1.0f, 1.0f, 1.0f);
-  glTranslatef(MARGIN, TOP_EDGE - MARGIN , Z_SLIVER);
+  glTranslatef(V_LEFT_EDGE+MARGIN, V_TOP_EDGE - MARGIN , Z_SLIVER);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
   drawStringInFont(myfont, message);
   glPopMatrix(); 
@@ -364,7 +358,8 @@ int control_display (void *data) {
 //fprintf(stderr, " <cd> got size\n");
 
   // Total screen is 1.0f across, but font width is in pixels. Convert. 
-  float char_width = RIGHT_EDGE * getFontWidth()/ w;
+  float char_width = getFontWidth() / (float)((w != 0)?w:1);
+
   glPushAttrib(GL_CURRENT_BIT);
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
@@ -378,11 +373,11 @@ int control_display (void *data) {
   // Find out length of message:
   float msg_width = char_width * strlen(message);
   // Need a bit bigger margin on the right edge. 
-  glTranslatef(RIGHT_EDGE - (3*MARGIN + msg_width), MARGIN, Z_SLIVER);
+  glTranslatef(V_RIGHT_EDGE - (3*MARGIN + 0.1f), V_BOTTOM_EDGE+MARGIN, Z_SLIVER); 
   //printf ("CD %f %f\n", char_width, msg_width);
   // Leave space for the Point result display to spill over 
   // to right side of screen.
-  glTranslatef(0.0f, LINE_SPACE, 0.0f);
+  glTranslatef(0.0f, V_LINE_SPACE, 0.0f);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
   drawStringInFont(myfont, message);
   
@@ -393,7 +388,7 @@ int control_display (void *data) {
   sprintf(message, 
 	  "Image setpoint : %.3g",
           decoration->imageSetpoint);
-  glTranslatef(0.0f, LINE_SPACE, 0.0f);
+  glTranslatef(0.0f, V_LINE_SPACE, 0.0f);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
   drawStringInFont(myfont, message);
 
@@ -440,7 +435,7 @@ int mode_display (void *data) {
   }
 
   // display in center top.
-  glTranslatef(0.5f*RIGHT_EDGE, TOP_EDGE - MARGIN, Z_SLIVER);
+  glTranslatef((V_RIGHT_EDGE+V_LEFT_EDGE)/(float)2.0, V_TOP_EDGE - MARGIN, Z_SLIVER);
 
   glRasterPos3f(0.0f, 0.0f, 0.0f);
   drawStringInFont(myfont, message);
@@ -491,16 +486,18 @@ int measure_display (void *data) {
    glPushMatrix();
  
 
-   glTranslatef(0.575f, TOP_EDGE - (MARGIN + 0.5*LINE_SPACE), Z_SLIVER);
+   //glTranslatef(0.575f, V_TOP_EDGE - (MARGIN + 0.5*V_LINE_SPACE), Z_SLIVER);
+   glTranslatef(V_RIGHT_EDGE-0.425f, V_TOP_EDGE - (MARGIN + 0.5*V_LINE_SPACE), Z_SLIVER);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
 
    glLineWidth(3.0);
 
    glBegin(GL_LINES);
    VERBOSE(20, "          glBegin(GL_LINES)");
-     glColor3f(1.0f, 0.0f, 0.0f);
-       glVertex3f(0.0f, 0.0f, 0.0f);
-       glVertex3f(0.0f, -0.095f, 0.0f);
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glVertex3f(0.0f, 0.0f, 0.0f);
+		//glVertex3f(0.0f, -0.095f, 0.0f);
+		glVertex3f(0.0f, -(3*V_LINE_SPACE), 0.0f);
    VERBOSE(20, "          glEnd()");
    glEnd();
 
@@ -522,7 +519,8 @@ int measure_display (void *data) {
    // It's yellow, not green, to avoid red-green colorblind problems.
      glColor3f(0.7f, 0.7f, 0.0f);
      glVertex3f(0.0f, 0.0f, 0.0f);
-     glVertex3f(0.0f, -0.095f, 0.0f);
+     //glVertex3f(0.0f, -0.095f, 0.0f);
+	 glVertex3f(0.0f, -(3*V_LINE_SPACE), 0.0f);
    VERBOSE(20, "          glEnd()");
    glEnd();
  
@@ -543,7 +541,8 @@ int measure_display (void *data) {
    VERBOSE(20, "          glBegin(GL_LINES)");
      glColor3f(0.0f, 0.0f, 1.0f);
      glVertex3f(0.0f, 0.0f, 0.0f);
-     glVertex3f(0.0f, -0.095f, 0.0f);
+     //glVertex3f(0.0f, -0.095f, 0.0f);
+	 glVertex3f(0.0f, -(3*V_LINE_SPACE), 0.0f);
    VERBOSE(20, "          glEnd()");
    glEnd();
  
@@ -566,7 +565,8 @@ int measure_display (void *data) {
    VERBOSE(20, "          glBegin(GL_LINES)");
      glColor3f(1.0f,0.0f,0.0f);
      glVertex3f(0.0f,0.0f,0.0f);
-     glVertex3f(0.0f,-0.095f,0.0f);
+     //glVertex3f(0.0f,-0.095f,0.0f);
+	 glVertex3f(0.0f, -(3*V_LINE_SPACE), 0.0f);
    VERBOSE(20, "          glEnd()");
    glEnd();
 
