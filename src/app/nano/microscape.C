@@ -1585,8 +1585,6 @@ static void handle_collab_machine_name_change
                    (const char * new_value,
                     void * userdata)
 {
-  char hnbuf [256];
-
   if (!new_value || !strlen(new_value)) {
     // transitory excitement during startup
     return;
@@ -1602,6 +1600,7 @@ static void handle_collab_machine_name_change
             NULL, handle_collab_mode_change);
   }
 
+  //char hnbuf [256];
   //sprintf(hnbuf, "%s:%d", new_value, wellKnownPorts->microscopeMutex);
   //fprintf(stderr, "Adding a peer named %s to the mutex.\n", hnbuf);
   //microscope->addPeer(hnbuf);
@@ -5067,7 +5066,13 @@ void sharedGraphicsServer (void * data) {
   // STEADY STATE
 
 //fprintf(stderr, "g>Graphics thread entering mainloop\n");
+#ifdef sgi
+#pragma set woff 1209
+#endif
   while (1) {
+#ifdef sgi
+#pragma reset woff 1209
+#endif
 
     TIMERVERBOSE(1, frametimer, "------------------ Frame timer ---------------");
     TIMERLOG(frametimer);
