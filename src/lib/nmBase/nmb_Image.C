@@ -1,6 +1,11 @@
 #include "Topo.h" // for TopoFile
 #include "nmb_Image.h"
+
+#ifndef _WIN32
 #include <limits.h> // for FLT_MAX
+#else
+#include <float.h> // for FLT_MAX
+#endif
 
 nmb_ImageBounds::nmb_ImageBounds() 
 {
@@ -832,14 +837,14 @@ template <class PixelType>
 float nmb_ImageArray<PixelType>::maxValue()
 {
     int i;
-    if (!d_maxValueCalculated) {
+    if (!d_maxValueComputed) {
         d_maxValue = (float)data[0];
         for (int i = 1; i < num_x*num_y; i++){
             if (data[i] > d_maxValue) {
 		d_maxValue = data[i];
             }
         }
-        d_maxValueCalculated = VRPN_TRUE;
+        d_maxValueComputed = VRPN_TRUE;
     }
     return d_maxValue;
 }
@@ -847,14 +852,14 @@ float nmb_ImageArray<PixelType>::maxValue()
 template <class PixelType>
 float nmb_ImageArray<PixelType>::minValue() 
 {
-    if (!d_minValueCalculated) {
+    if (!d_minValueComputed) {
         d_minValue = (float)data[0];
         for (int i = 1; i < num_x*num_y; i++){
             if (data[i] < d_maxValue) {
                 d_minValue = data[i];
             }
         }
-        d_minValueCalculated = VRPN_TRUE;
+        d_minValueComputed = VRPN_TRUE;
     }
     return d_minValue;
 }
