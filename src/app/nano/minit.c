@@ -59,7 +59,7 @@
 //  #include <nmg_Graphics.h>
 
 
-#include "x_util.h" /* qliu */
+//#include "x_util.h" /* qliu */
 #include "relax.h"
 #include "microscape.h"  // for #defines
 #include "butt_mode.h"   // for button defines

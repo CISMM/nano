@@ -1,3 +1,7 @@
+2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* minit.c: commented out #include x_util.h - not needed
+
 2002-09-04  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nm_Tip.C (nm_TipRenderer::Render): fixed automatic texture coordinate
