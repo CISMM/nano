@@ -42,21 +42,13 @@ namespace import blt::*
 namespace import -force blt::tile::*
 
 #set up some options for all the widgets in microscape
-#option add *background blanchedAlmond startupFile
-#option add *highlightBackground blanchedAlmond startupFile
 option add *background LemonChiffon1 startupFile
 option add *highlightBackground LemonChiffon1 startupFile
 option add *menu*background SystemMenu startupFile
-#option add *menu*background grey75 startupFile
 
 # This needs to be made dependent on how big the font is on the screen.
 catch { option add *font {helvetica -15 } startupFile}
 catch { option add *Font {helvetica -15 } startupFile}
-
-#global knobs
-#global  user_0_mode
-#global  maxR maxG maxB minR minG minB ruler_r ruler_g ruler_b
-#global  color_flag polish region_changed surface_changed
 
 #
 # 3rdTech modifications:
@@ -130,26 +122,14 @@ proc nano_fatal_error {msg } {
     tk_messageBox -message "$msg" -title "NanoManipulator Fatal Error" \
             -type ok -icon error 
     set quit_program_now 1 
-#    .error_dialog config -text "$msg" -title "NanoManipulator Fatal Error" \
-#            -bitmap error 
-#    .error_dialog buttonconfigure OK -command " set quit_program_now 1; .error_dialog deactivate 1"
-#    .error_dialog activate
 }
 proc nano_error {msg } {
     tk_messageBox -message "$msg" -title "NanoManipulator Error" \
             -type ok -icon error 
-#    .error_dialog config -text "$msg" -title "NanoManipulator Error" \
-#            -bitmap error 
-#    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
-#    .error_dialog activate
 }
 proc nano_warning {msg } {
     tk_messageBox -message "$msg" -title "NanoManipulator Warning" \
             -type ok -icon warning 
-#    .error_dialog config -text "$msg" -title "NanoManipulator Warning" \
-#            -bitmap warning
-#    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
-#    .error_dialog activate
 }
 
 # bgerror is a special name, provided by tcl/tk, called if there
@@ -219,8 +199,7 @@ $filemenu add command -label "Save Plane Data..." -underline 5 -command \
 	"save_plane_data"
 $filemenu add command -label "Save Modification Data..." -underline 5 \
          -command "save_mod_dialog"
-$filemenu add command -label "Export Scene..." -command \
-	"export_scene"
+
 # Experimental interface to save series of screenshots for a movie. 
 #$filemenu add command -label "Save Image Sequence..." -underline 5 -command \
 #	"save_sequenceImage"
@@ -304,8 +283,6 @@ $analysismenu add command -label "Data Registration..." -underline 0 \
 if { !$thirdtech_ui } {
 $analysismenu add command -label "Shape Analysis..." -underline 0 \
     -command "show.shape_analysis"
-# $analysismenu add command -label "Tip Convolution..." \
-#     -command "show.tip_conv"
 }
 
 #### TOOLS menu #############################
@@ -442,8 +419,6 @@ pack $w2.toolbar -side left
 label $w2.toolbar.speed -text "More Speed\nLess Detail"
 label $w2.toolbar.detail -text "More Detail\nLess Speed"
 # Scale is a non-intuitive interface. Let's try a row of radio-buttons.
-#scale $w2.toolbar.speed_detail -from 1 -to 6 -resolution 1 -orient horizontal \
-#	-variable tesselation_stride
 radiobutton $w2.toolbar.speed_detail1 -variable tesselation_stride \
 	-value 1
 radiobutton $w2.toolbar.speed_detail2 -variable tesselation_stride \
@@ -526,7 +501,6 @@ source [file join ${tcl_script_dir} shared_ptr.tcl]
 #Registration tool. Align two data sets with each other
 source [file join ${tcl_script_dir} registration.tcl]
 if { !$thirdtech_ui } {
-source [file join ${tcl_script_dir} tip_conv.tcl]
 source [file join ${tcl_script_dir} import.tcl]
 }
 # Dialogs accessed from the menus, like  vi_win, 
@@ -789,17 +763,12 @@ after idle {
     set main_width [expr $width + 2* $winborder ]
     set main_height [expr $height + ([winfo rooty .] - $main_ypos) + \
 	   $winborder ]
-#    puts " mainwin $width $height $main_xpos $main_ypos [wm geometry .]"
 
     # The stripchart window.
-    #Make the window appear on the top next to the main window
-    #wm geometry $graphmod(sc) +[expr $main_xpos + $width + 2*$winborder]+$main_ypos
-    # Nah. Top right corner.
+    #Make the window appear on the top right corner.
     wm geometry $graphmod(sc) -0+0
 
     # The colormap window - about the same as the stripchart window.
-#    wm geometry $nmInfo(colorscale) +[expr $main_xpos + $width \
-#            + 2*$winborder + 10]+[expr $main_ypos + 10]
     wm geometry $nmInfo(colorscale) -0+[expr $main_ypos + 10]
     # The image window
     # Make the window appear on the left edge below the main window
@@ -819,9 +788,7 @@ after idle {
 
     # find out how big the title bar is. 
     scan [wm geometry .image] %dx%d+%d+%d width height xpos ypos
-    #puts "image geometry $width $height $xpos $ypos"
     set titleborder [expr [winfo rooty .image] - $ypos]
-    #puts "image root pos [winfo rootx .image] [winfo rooty .image]"
     # check to make sure we aren't off the bottom of the screen. 
     set next_left_pos [expr $next_left_pos  +[winfo reqheight .image] \
             + $winborder + $titleborder]
@@ -878,13 +845,6 @@ if { !$thirdtech_ui } {
 
 }
 
-
-#set dataset1 $w2.dataset1
-#set dataset2 $w2.dataset2
-#set dataset3 $w2.dataset3
-#source [file join ${tcl_script_dir} dataset.tcl]
-
-#source [file join ${tcl_script_dir} modfile.tcl]
 
 if { !$thirdtech_ui } {
   source [file join ${tcl_script_dir} latency.tcl]

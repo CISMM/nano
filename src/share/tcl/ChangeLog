@@ -1,3 +1,9 @@
+2001-08-02  David Marshburn  <marshbur@cs.unc.edu>
+
+	* filemenu.tcl: removed export scene dialog
+	* mainwin.tcl:  removed tip convolution and export scene options.
+	Cleaned out some old code.
+
 2001-08-01  Aron Helser  <helser@cs.unc.edu>
 
 	* setupmenu.tcl: Moved some commands to "Other Settings"
