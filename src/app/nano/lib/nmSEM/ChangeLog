@@ -1,3 +1,7 @@
+2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_EDAX.h : changed defaults for x and y dac offsets to match Hitachi better
+
 2002-09-04  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmui_SEM.C : name change: SEM_DATA --> VIDEO
