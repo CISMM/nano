@@ -1,3 +1,9 @@
+2001-1-29  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmm_QueueMonitor.C (enqueue) : dispatch immediately if queueing
+	isn't enabled;  we learned the hard way that we can't queue for
+	any time at all and get correct behavior.
+
 2001-1-13  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmm_TimestampList.C (clear) : minor fix to statistics-gathering

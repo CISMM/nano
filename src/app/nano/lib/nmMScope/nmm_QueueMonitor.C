@@ -190,6 +190,15 @@ void nmm_QueueMonitor::enqueue (vrpn_HANDLERPARAM p) {
   }
 
   d_queueLength++;
+
+  // If queueing isn't enabled, send it immediately;
+  //   we can't wait at all if this is, for example, streamfile playback.
+  // BUG:  yes, it would be more efficient to do this first, rather
+  //   than all the allocation/deallocation/copying.
+
+  if (!d_isEnabled) {
+    dispatchQueueHead();
+  }
 }
 
 int nmm_QueueMonitor::dispatchQueueHead (void) {
