@@ -492,6 +492,22 @@ void tcl_colormapRedraw() {
       }
     }
   }
+  else if ( strcmp( dataset->colorPlaneName->string(), "none") != 0 ) {
+    for ( int i= 0; i < colormap_height; i++) {
+      float data_value = float(colormap_height - i)/colormap_height;
+      //      data_value = data_value * (data_max - data_min) + data_min;
+      
+      // clamp data based on the stretched/shrunk colormap:
+      if ( data_value <  color_min ) data_value = 0;
+      else if ( data_value > color_max ) data_value = 1.0;
+      else data_value = (data_value - color_min)/(color_max - color_min);
+      for ( int j = 0; j < colormap_width; j++ ) {
+	colormap_pixels[ i*colormap_width*3 + j*3 + 0] = (unsigned char)( surface_r * data_value);
+	colormap_pixels[ i*colormap_width*3 + j*3 + 1] = (unsigned char)( surface_g * data_value );
+	colormap_pixels[ i*colormap_width*3 + j*3 + 2] = (unsigned char)( surface_b * data_value );
+      }
+    }
+  }
   else {
     for ( int i= 0; i < colormap_height; i++) {
       for ( int j = 0; j < colormap_width; j++ ) {

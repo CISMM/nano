@@ -68,7 +68,7 @@ button $nmInfo(colorscale).pickframe.buttons.c.set_color \
         $nmInfo(colorscale).pickframe.buttons.c.colorsample configure -bg $surface_color 
         set_surface_color
         # Turn off the color map, if it is on. 
-        set color_comes_from "none"
+        set color_map "none"
     }
 }
 button $nmInfo(colorscale).pickframe.buttons.c.colorsample \
@@ -356,15 +356,15 @@ proc adjust_data_min { win name element op } {
     set data_min [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
     set data_y_low $y1
     
-    ## reposition arrow:
-    eval $win.canvas coords data_min_tri [left_triangle $data_x $data_y_low]
-    $win.canvas coords data_min_entry [expr $data_x - $triangle_width] $data_y_low
-    
     ## reposition line:
     eval $win.canvas coords data_line [draw_line $data_x $data_y_low  $data_y_high]
     
     ## reposition box:
     eval $win.canvas coords data_line_box [draw_rectangle $data_x $data_y_low $data_y_high]
+
+    ## reposition arrow:
+    eval $win.canvas coords data_min_tri [left_triangle $data_x $data_y_low]
+    $win.canvas coords data_min_entry [expr $data_x - $triangle_width] $data_y_low
 }
 
 ## This function gets called when the user moves the data_max triangle
@@ -436,15 +436,15 @@ proc adjust_data_max { win name element op } {
     set data_max [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
     set data_y_high $y1
     
-    ## reposition arrow:
-    eval $win.canvas coords data_max_tri [left_triangle $data_x $data_y_high]
-    $win.canvas coords data_max_entry [expr $data_x - $triangle_width] $data_y_high
-    
     ## reposition line:
     eval $win.canvas coords data_line [draw_line $data_x $data_y_low  $data_y_high]
     
     ## reposition box:
     eval $win.canvas coords data_line_box [draw_rectangle $data_x $data_y_low $data_y_high]
+
+    ## reposition arrow:
+    eval $win.canvas coords data_max_tri [left_triangle $data_x $data_y_high]
+    $win.canvas coords data_max_entry [expr $data_x - $triangle_width] $data_y_high
 }
 
 ## This function gets called when the box icon connecting the data triangles
@@ -569,16 +569,17 @@ proc adjust_color_min { win name element op } {
 	    set color_min [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
 	    set color_y_low $y1
 	}
-	## reposition arrow:
-	eval $win.canvas coords color_min_tri [right_triangle $color_x $color_y_low]
-	$win.canvas coords color_min_entry [expr $color_x + $triangle_width] $color_y_low
-	
+
 	## reposition line:
 	eval $win.canvas coords color_line [draw_line $color_x $color_y_low  $color_y_high]
 	
 	## reposition box:
 	eval $win.canvas coords color_line_box \
 		[draw_rectangle $color_x $color_y_low $color_y_high]
+
+	## reposition arrow:
+	eval $win.canvas coords color_min_tri [right_triangle $color_x $color_y_low]
+	$win.canvas coords color_min_entry [expr $color_x + $triangle_width] $color_y_low
     }
     set cmColor(min_changed) 0
 }
@@ -637,9 +638,6 @@ proc adjust_color_max { win name element op } {
 	    set color_max [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
 	    set color_y_high $y1
 	} 
-	## reposition arrow:
-	eval $win.canvas coords color_max_tri [right_triangle $color_x $color_y_high]
-	$win.canvas coords color_max_entry [expr $color_x + $triangle_width] $color_y_high
 	
 	## reposition line:
 	eval $win.canvas coords color_line [draw_line $color_x $color_y_low  $color_y_high]
@@ -647,6 +645,10 @@ proc adjust_color_max { win name element op } {
 	## reposition box:
 	eval $win.canvas coords color_line_box \
 		[draw_rectangle $color_x $color_y_low $color_y_high]
+
+	## reposition arrow:
+	eval $win.canvas coords color_max_tri [right_triangle $color_x $color_y_high]
+	$win.canvas coords color_max_entry [expr $color_x + $triangle_width] $color_y_high
     }
     set cmColor(max_changed) 0
 }
