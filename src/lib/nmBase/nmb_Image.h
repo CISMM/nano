@@ -285,6 +285,8 @@ class nmb_ImageGrid : public nmb_Image{
         static TopoFile s_openFileTopoHeader;
         static BCPlane *s_openFilePlane;
         static BCGrid *s_openFileGrid;
+        
+        vrpn_bool d_imagePositionSet;
 };
 
 /* This was originally written as a template with variable type for the pixel

@@ -1,3 +1,21 @@
+2001-04-16  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Image.Ch (nmb_ImageGrid::nmb_ImageGrid),
+                       (nmb_ImageGrid::getBounds),
+                       (nmb_ImageGrid::boundX),
+                       (nmb_ImageGrid::boundY):
+        for nmb_ImageGrid, added a boolean data member 
+        d_imagePositionSet that keeps track of whether d_imagePosition has
+        been set through the nmb_Image interface. If not, it uses the related
+        values for the image position given by the related plane/grid object
+        (minX, minY, maxX, maxY) when this state is requested through 
+        getBounds, boundX, boundY 
+        * nmb_Image.C (nmb_Image::areaInWorld): added a call to update
+	d_imagePosition using the getBounds function in case the particular
+        derived class does not keep this state consistent with the return
+        value of the function as is the case with nmb_ImageGrid because of
+        possible external references to the BCGrid/BCPlane object
+
 2001-03-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* BCPlane.Ch : replaced the _border variable with _borderMinX,

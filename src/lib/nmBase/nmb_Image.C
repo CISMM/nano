@@ -222,6 +222,9 @@ void nmb_Image::getWorldToImageTransform(double *matrix44)
     x01 = boundX(nmb_ImageBounds::MIN_X_MAX_Y);
     y01 = boundY(nmb_ImageBounds::MIN_X_MAX_Y);
 
+printf("debug: nmb_Image: image corners at: (%g, %g), (%g, %g), (%g, %g)\n",
+        x00, y00, x10, y10, x01, y01);
+
     double det;
     det = (x10-x00)*(y01-y00) - (y10-y00)*(x01-x00);
 
@@ -300,6 +303,7 @@ void nmb_Image::setWorldToImageTransform(double *matrix44)
 
 double nmb_Image::areaInWorld()
 {
+  getBounds(d_imagePosition);
   return d_imagePosition.area();
 }
 
@@ -383,7 +387,8 @@ nmb_ImageGrid *nmb_ImageGrid::getNextImage()
 nmb_ImageGrid::nmb_ImageGrid(const char *name, const char *units, 
 	short x, short y):
             nmb_Image(),
-            units_x("nm"), units_y("nm")
+            units_x("nm"), units_y("nm"),
+            d_imagePositionSet(vrpn_FALSE)
 {
     BCString name_str(name), units_str(units);
     grid = new BCGrid(x, y, 0.0, 1.0, 0.0, 1.0);
@@ -404,7 +409,8 @@ nmb_ImageGrid::nmb_ImageGrid(const char *name, const char *units,
 }
 
 nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
-    units_x("nm"), units_y("nm")
+    units_x("nm"), units_y("nm"),
+    d_imagePositionSet(vrpn_FALSE)
 {
     // WARNING: assumes (non-zero value <==> value was set) as
     // did BCPlane::findValidDataRange()
@@ -445,7 +451,8 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
 }
 
 nmb_ImageGrid::nmb_ImageGrid(BCGrid *g):nmb_Image(),
-    units_x("nm"), units_y("nm")
+    units_x("nm"), units_y("nm"),
+    d_imagePositionSet(vrpn_FALSE)
 {
     // WARNING: assumes (non-zero value <==> value was set) as
     // did BCPlane::findValidDataRange()
@@ -486,7 +493,8 @@ nmb_ImageGrid::nmb_ImageGrid(BCGrid *g):nmb_Image(),
 }
 
 
-nmb_ImageGrid::nmb_ImageGrid(nmb_Image *im)
+nmb_ImageGrid::nmb_ImageGrid(nmb_Image *im):
+    d_imagePositionSet(vrpn_FALSE)
 {
   int i,j;
   grid = new BCGrid(im->width(), im->height(), 0.0, 1.0, 0.0, 1.0);
@@ -516,6 +524,7 @@ nmb_ImageGrid::nmb_ImageGrid(nmb_Image *im)
   im->validDataRange(&max_y_set, &min_x_set, &min_y_set, &max_x_set);
   im->getTopoFileInfo(d_topoFileDefaults);
   im->getBounds(d_imagePosition);
+  d_imagePositionSet = vrpn_TRUE;
 }
 
 nmb_ImageGrid::~nmb_ImageGrid()
@@ -658,16 +667,33 @@ float nmb_ImageGrid::maxAttainableValue() const {
 
 double nmb_ImageGrid::boundX(nmb_ImageBounds::ImageBoundPoint ibp) const
 {
-    return d_imagePosition.getX(ibp);
+    if (d_imagePositionSet) {
+      return d_imagePosition.getX(ibp);
+    } else {
+      if (ibp == nmb_ImageBounds::MIN_X_MIN_Y || 
+          ibp == nmb_ImageBounds::MIN_X_MAX_Y)
+        return plane->minX();
+      else
+        return plane->maxX();
+    }
 }
 
 double nmb_ImageGrid::boundY(nmb_ImageBounds::ImageBoundPoint ibp) const
 {
-    return d_imagePosition.getY(ibp);
+    if (d_imagePositionSet) {
+      return d_imagePosition.getY(ibp);
+    } else {
+      if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
+          ibp == nmb_ImageBounds::MAX_X_MIN_Y) 
+        return plane->minY();
+      else 
+        return plane->maxY();
+    }
 }
 
 void nmb_ImageGrid::setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x)
 {
+    d_imagePositionSet = vrpn_TRUE;
     d_imagePosition.setX(ibp, x);
     // maintain some kind of backward consistency
     plane->_grid->setMinX(min(plane->minX(), x));
@@ -676,6 +702,7 @@ void nmb_ImageGrid::setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x)
 
 void nmb_ImageGrid::setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y)
 {
+    d_imagePositionSet = vrpn_TRUE;
     d_imagePosition.setY(ibp, y);
     // maintain some kind of backward consistency
     plane->_grid->setMinY(min(plane->minY(), y));
@@ -684,12 +711,29 @@ void nmb_ImageGrid::setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y)
 
 void nmb_ImageGrid::getBounds(nmb_ImageBounds &ib)  const
 {
-    ib = d_imagePosition;
+    if (d_imagePositionSet) {
+      ib = d_imagePosition;
+    } else {
+      double xmin, xmax, ymin, ymax;
+      xmin = plane->minX();
+      xmax = plane->maxX();
+      ymin = plane->minY();
+      ymax = plane->maxY();
+      ib.setX(nmb_ImageBounds::MIN_X_MIN_Y, xmin);
+      ib.setY(nmb_ImageBounds::MIN_X_MIN_Y, ymin);
+      ib.setX(nmb_ImageBounds::MIN_X_MAX_Y, xmin);
+      ib.setY(nmb_ImageBounds::MIN_X_MAX_Y, ymax);
+      ib.setX(nmb_ImageBounds::MAX_X_MIN_Y, xmax);
+      ib.setY(nmb_ImageBounds::MAX_X_MIN_Y, ymin);
+      ib.setX(nmb_ImageBounds::MAX_X_MAX_Y, xmax);
+      ib.setY(nmb_ImageBounds::MAX_X_MAX_Y, ymax);
+    }
 }
 
 void nmb_ImageGrid::setBounds(const nmb_ImageBounds &ib)
 {
     d_imagePosition = ib;
+    d_imagePositionSet = vrpn_TRUE;
     plane->_grid->setMinX(ib.minX());
     plane->_grid->setMinY(ib.minY());
     plane->_grid->setMaxX(ib.maxX());
