@@ -1,3 +1,8 @@
+2002-06-19 Jameson Miller <millerj@cs.unc.edu>
+	* microscape.c - added autoscan into params
+	for collaboration. cleaned up help printout
+	when wrong command line argument is given.
+
 2002-06-17  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nano.dsp:  remove vrpn_MousePhantom.[h,C]

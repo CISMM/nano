@@ -5352,6 +5352,9 @@ void teardownMicroscopeSynchronization( CollaborationManager *cm,
     paramControls->remove(&(m->state.modify.new_blunt_speed));
     paramControls->remove(&(m->state.numLinesToJumpBack));
 
+	//autoscan button
+	paramControls->remove(&(m->state.autoscan));
+
 	//direct step controls
 	paramControls->remove(&(m->state.modify.step_x_pos));
 	paramControls->remove(&(m->state.modify.step_y_pos));
@@ -5779,6 +5782,9 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
   paramControls->add(&(m->state.modify.step_x_size));
   paramControls->add(&(m->state.modify.step_y_size));
   paramControls->add(&(m->state.modify.step_z_size));
+
+  //autoscan button
+  paramControls->add(&(m->state.autoscan));
 
   // Image parameter controls
   nmui_Component* imageParamControls;
@@ -6319,11 +6325,12 @@ void Usage(char* s)
   fprintf(stderr, "       [-dsem device] [-daligner device]\n");
   fprintf(stderr, "       [-f infile] [-z scale] \n");
   fprintf(stderr, "       [-grid x y] [-perf]\n");
-  fprintf(stderr, "       [-i streamfile_rate streamfile_time][-o streamfile]\n");
+  fprintf(stderr, "       [-i streamfile_name _rate _time]\n");
+  fprintf(stderr, "       [-o output_Streamfile_name]\n");
   fprintf(stderr, "       [-index] \n");
   fprintf(stderr, "       [-keybd] \n");
   fprintf(stderr, "       [-region lowx lowy highx highy]\n");
-  fprintf(stderr, "       [-fmods max min (Setpt V)] " );
+  fprintf(stderr, "       [-fmods max min (Setpt V)]\n " );
   fprintf(stderr, "       [-fimgs max min (DrAmp V) setpt (V)]\n" );
   fprintf(stderr, "       [-color hr hg hb lr lg lb]\n" );
   fprintf(stderr, "       [-relax] [-norelax] [-minsep tmin tsep] \n");
@@ -6363,7 +6370,8 @@ void Usage(char* s)
   fprintf(stderr, "       -fmods: mod force range (def 50,0)\n");
   fprintf(stderr, "       -fimgs: img force range and setpt (def 10,0, 50)\n");
   fprintf(stderr, "       -grid: Take x by y samples for the grid\n");
-  fprintf(stderr, "       -i: Rate at which data is to be read from streamfile\n");
+  fprintf(stderr, "       -i: name of stream file, Rate at which data is to be read\n");
+  fprintf(stderr, "           from streamfile and time to jump to in stream file\n");
   fprintf(stderr, "           and time to jump to in stream file\n");
   fprintf(stderr, "       -o: Write the STM data stream to streamfile\n");
   fprintf(stderr, "       -region: Scan from low to high in x and y\n");
@@ -6377,81 +6385,81 @@ void Usage(char* s)
   fprintf(stderr, "       -disp: Don't display less than period ms apart (0)\n");
   fprintf(stderr, "       -gl: to display on openGL machine\n");
   fprintf(stderr, "       -mb3 : Use the 3rd mouse button as a trigger\n");
-  fprintf(stderr, "       -draw_when_centered: Only draw frame when "
-                         "user centers\n");
+  fprintf(stderr, "       -draw_when_centered: Only draw frame when\n"
+                  "         user centers\n");
   fprintf(stderr, "       -rulerimage: PPM file to use for the ruler image\n");
-  fprintf(stderr, "       -rulercolor: use r g b values for the "
-                         "rulergrid color\n");
+  fprintf(stderr, "       -rulercolor: use r g b values for the\n "
+                  "         rulergrid color\n");
   fprintf(stderr, "       -scrapeheight: Height above surf in nm\n");
   fprintf(stderr, "       -verbosity: How much info to print (default 0)\n");
-  fprintf(stderr, "       -gverbosity: How much graphics info to print "
-                         "(default 0)\n");
+  fprintf(stderr, "       -gverbosity: How much graphics info to print\n"
+                  "         (default 0)\n");
   fprintf(stderr, "       -cverbosity: How much collaboration info to print "
                          "(default 0)\n");
-  fprintf(stderr, "       -timerverbosity: How much timer info to print "
-                         "(default 0)\n");
+  fprintf(stderr, "       -timerverbosity: How much timer info to print\n"
+                  "        (default 0)\n");
   fprintf(stderr, "       -timeframe: How many frames to time (default 0)\n");
   fprintf(stderr, "       -timeGraphics: Time graphics code\n");
   fprintf(stderr, "       -allowdup: Allow streamfile duplication over net\n");
-  fprintf(stderr, "       -SPMhost: host and TCP port of mscope "
-                         "(udp = tcp+1)\n");
+  fprintf(stderr, "       -SPMhost: host and TCP port of mscope\n"
+                  "        (udp = tcp+1)\n");
   fprintf(stderr, "       -UDPport: use UDP and listen on this port\n");
-  fprintf(stderr, "       -MIXport: use TCP/UDP and listen for UDP "
-                         "on this port\n");
-  fprintf(stderr, "       -recv: playback from stream file using network "
-                         "receive times\n");
-  fprintf(stderr, "       -alphacolor: Set color for alpha texture "
-                         "(default 0.0 1.0 0.0)\n");
+  fprintf(stderr, "       -MIXport: use TCP/UDP and listen for UDP\n"
+                  "         on this port\n");
+  fprintf(stderr, "       -recv: playback from stream file using network\n"
+                  "         receive times\n");
+  fprintf(stderr, "       -alphacolor: Set color for alpha texture\n"
+                  "        (default 0.0 1.0 0.0)\n");
   fprintf(stderr, "       -vizimage: PPM file to use for the visualization image\n");
-  fprintf(stderr, "       -marshalltest: Test remote/server graphics pair "
-                         "in single process\n");
-  fprintf(stderr, "       -multithread: Spawn a second thread for the graphics"
-                         " and run multithreaded\n");
-  fprintf(stderr, "       -nomagellan: PC only. Don't try to a Magellan on COM1");
-  fprintf(stderr, "       -monitor:  open a VRPN Forwarder from the "
-                         "microscope on this port. OBSOLETE.\n");
-  fprintf(stderr, "       -collaborator:  open VRPN Forwarders both to and "
-                         "from the microscope on this port. OBSOLETE.\n");
+  fprintf(stderr, "       -marshalltest: Test remote/server graphics pair\n "
+                  "         in single process\n");
+  fprintf(stderr, "       -multithread: Spawn a second thread for the graphics\n"
+                  "         and run multithreaded\n");
+  fprintf(stderr, "       -nomagellan: PC only. Don't try to a Magellan on COM1\n");
+  fprintf(stderr, "       -monitor:  open a VRPN Forwarder from the\n "
+                  "         microscope on this port. OBSOLETE.\n");
+  fprintf(stderr, "       -collaborator:  open VRPN Forwarders both to and\n"
+                  "         from the microscope on this port. OBSOLETE.\n");
   fprintf(stderr, "       -peer:  connect to named collaborative peer.\n");
-  fprintf(stderr, "       -baseport:  consecutively numbered ports will be "
-                          "opened starting with this port\n");
-  fprintf(stderr, "       -renderserver:  start up as a server for "
-                          "remote rendering.\n");
-  fprintf(stderr, "       -renderclient:  start up as a client for "
-                          "remote rendering,\n");
-  fprintf(stderr, "       connected to the named host.\n");
+  fprintf(stderr, "       -baseport:  consecutively numbered ports will be\n "
+                  "         opened starting with this port\n");
+  fprintf(stderr, "       -renderserver:  start up as a server for\n"
+                  "         remote rendering.\n");
+  fprintf(stderr, "       -renderclient:  start up as a client for\n"
+                  "         remote rendering,\n");
+  fprintf(stderr, "         connected to the named host.\n");
 
-  fprintf(stderr, "       -trenderserver:  start up as a server for "
-                          "remote rendering.\n");
-  fprintf(stderr, "       -trenderclient:  start up as a client for "
-                          "remote rendering,\n");
-  fprintf(stderr, "       connected to the named host.\n");
+  fprintf(stderr, "       -trenderserver:  start up as a server for\n"
+                  "         remote rendering.\n");
+  fprintf(stderr, "       -trenderclient:  start up as a client for\n"
+                  "         remote rendering,\n");
+  fprintf(stderr, "         connected to the named host.\n");
 
-  fprintf(stderr, "       -vrenderserver:  start up as a server for "
-                          "remote rendering.\n");
-  fprintf(stderr, "       -vrenderclient:  start up as a client for "
-                          "remote rendering,\n");
-  fprintf(stderr, "       connected to the named host.\n");
+  fprintf(stderr, "       -vrenderserver:  start up as a server for\n"
+                  "         remote rendering.\n");
+  fprintf(stderr, "       -vrenderclient:  start up as a client for\n"
+                  "         remote rendering,\n");
+  fprintf(stderr, "         connected to the named host.\n");
 
   fprintf(stderr,
 "       -logif path:  open up stream files in specified directory to log all\n"
-"       use of (collaborative) interface.\n");
+"         use of (collaborative) interface.\n");
   fprintf(stderr,
 "       -logphantom path:  open up stream file in specified directory to\n"
-"       log all use of phantom.\n");
-  fprintf(stderr, "       -replayif path:  replay the interface (\"movie "
-                          "mode\") from stream files in the\n"
-                  "       specified directory.\n");
-  fprintf(stderr, "       -packetlimit n:  while replaying stream files "
-                          "play no more than n packets\n"
-                  "       before refreshing graphics (0 to disable).\n");
+"         log all use of phantom.\n");
+  fprintf(stderr, "       -replayif path:  replay the interface (\"movie\n"
+                  "         mode\") from stream files in the\n"
+                  "         specified directory.\n");
+  fprintf(stderr, "       -packetlimit n:  while replaying stream files\n"
+                  "         play no more than n packets\n"
+                  "         before refreshing graphics (0 to disable).\n");
   fprintf(stderr, "       -colormap name:  set default colormap.\n");
   fprintf(stderr, "       -colorplane name:  set default color plane.\n");
   fprintf(stderr, "       -heightplane name:  set default height plane.\n");
   fprintf(stderr, "       -optimistic:  optimistic concurrency control.\n");
   fprintf(stderr, "       -pessimistic:  centralized concurrency control.\n");
   fprintf(stderr, "       -NIC IPaddress:  use network interface with given\n"
-                  "       IP address.\n");
+                  "         IP address.\n");
   fprintf(stderr, "       -perf: Print performance statistics\n");
   fprintf(stderr, "       -udp:  UDP for phantom responses\n");
   fprintf(stderr, "       -qm t d:  queue monitoring (threshold, decay)\n");
