@@ -85,7 +85,7 @@ int done_drawing_objects=0;
 double thetax=0.,thetay=0.;
 int tesselation = 30;
 char units[100];
-char* SphereFilename;
+char* VolumeFilename;
 
 
 void write_to_unca(char *filename);
@@ -131,25 +131,55 @@ int main(int argc, char *argv[])
 
   if (argc > 2) {// load from a file
     if (0==strcmp(argv[2],"-p")) {//ntube file
-      addSpheresFromFile(argv[3],atof(argv[4]),!radius, centering);
+		if(argc == 5){
+			addSpheresFromFile(argv[3],atof(argv[4]),!radius, centering);
+		}
+		else{
+			cout << "Incorrect arguments.  See README file." << endl;
+			exit(0);
+		}
     }
     else if (0==strcmp(argv[2],"-t")) {//triangles file
-      addTrianglesFromFile(argv[3],atof(argv[4]));
+		if(argc == 5){
+			addTrianglesFromFile(argv[3],atof(argv[4]));
+		}
+		else{
+			cout << "Incorrect arguments.  See README file." << endl;
+			exit(0);
+		}
     }
     else if (0==strcmp(argv[2],"-d")) {//dna file
-      init_dna(argv[3]);
+		if(argc == 4){
+			init_dna(argv[3]);
+		}
+		else{
+			cout << "Incorrect arguments.  See README file." << endl;
+			exit(0);
+		}
     }
     else if(0==strcmp(argv[2],"-dp")){//dna and protein file
-      addSpheresFromFile(argv[4],atof(argv[5]), !radius, centering);
-      //dna first then protein in argv[]
-      init_dna(argv[3]);
+		if(argc == 6){
+			addSpheresFromFile(argv[4],atof(argv[5]), !radius, centering);
+			//dna first then protein in argv[]
+			init_dna(argv[3]);
+		}
+		else{
+			cout << "Incorrect arguments.  See README file." << endl;
+			exit(0);
+		}
     }
     else if(0==strcmp(argv[2],"-s")){//add spheres with radii from file, find volume, and quit
-      fout.open("sphere_output.txt", fstream::out | fstream::app);//append to end each time
+		if(argc == 5){
+			fout.open("sphere_output.txt", fstream::out | fstream::app);//append to end each time
 
-      addSpheresFromFile(argv[3],atof(argv[4]),radius, !centering);
-	  SphereFilename = argv[3];
-      //find_volume = true;//take care of volume finding below
+			addSpheresFromFile(argv[3],atof(argv[4]),radius, !centering);
+			VolumeFilename = argv[3];
+			//find_volume = true;//take care of volume finding below
+		}
+		else{
+			cout << "Incorrect arguments.  See README file." << endl;
+			exit(0);
+		}
     }
     else {
       cout << "\nUsage : ./sim [-p filename unit for proteins\n";
@@ -159,6 +189,7 @@ int main(int argc, char *argv[])
     }
   }
   else {
+	VolumeFilename = "";
     initObs(0);
   }
 
@@ -522,22 +553,22 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       done = false;
       c = getchar();
       while(int(c) != 10){//carriage return ascii value is 10
-	if(c != '.'){//handle numbers to the left first
-	  radius = radius*10 + int(c - '0');
-	  //cout << int(c) << flush;
-	}
-	else{//numbers to the right of the dec. pt.
-	  //cout << c << flush;
-	  c = getchar();
-	  while(int(c) != 10){
-      	    //cout << int(c) << flush;
-	    decimal = decimal/10 + int(c - '0')/10;
-	    c = getchar();
-	  }	  
-	  done = true;
-	}
-	if (done) break;
-	c = getchar();
+		if(c != '.'){//handle numbers to the left first
+			radius = radius*10 + int(c - '0');
+			//cout << int(c) << flush;
+		}
+		else{//numbers to the right of the dec. pt.
+			//cout << c << flush;
+			c = getchar();
+			while(int(c) != 10){
+      			//cout << int(c) << flush;
+				decimal = decimal/10 + int(c - '0')/10;
+				c = getchar();
+			}	  
+			done = true;
+		}
+		if (done) break;
+		c = getchar();
       }
       radius = radius + decimal;
       addNtube( SPHERE,  Vec3d( 0., 0., radius), 0., 0., 0., 0., radius*2.0);
@@ -546,8 +577,10 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       break;
     case 'f' ://find volume
       volume = find_volume();
-	  fout2 << SphereFilename << ":  ";
-      fout2 << "Volume of all objects on plane is " << volume << " " 
+	  if(VolumeFilename != ""){
+		fout2 << VolumeFilename << ":  ";
+	  }
+	  fout2 << "Volume of all objects on plane is " << volume << " " 
 			<< units << "^3.\n" << flush;
 	  cout	<< "Volume of all objects on plane is " << volume << " " 
 			<< units << "^3.\n\n" << flush;
