@@ -99,7 +99,7 @@ class nmr_RegistrationUI {
     // changes for an image in the image list
     void setTransformationCallback(void (*handler)(nmb_Image *));
 
-  protected:
+  //protected:
  
     int getDisplayedTransformIndex();
     int convertTransformSourceTypeToTransformIndex(int type);
@@ -107,26 +107,26 @@ class nmr_RegistrationUI {
     void setTransformationSource(nmr_RegistrationType source);
     void setAutoAlignMode(nmr_AutoAlignMode mode);
 
-    Tclvar_string d_registrationImageName3D;
-    Tclvar_string d_registrationImageName2D;
-    Tclvar_string d_newResampleImageName;
-    Tclvar_string d_newResamplePlaneName;
+    TclNet_string d_registrationImageName3D;
+    TclNet_string d_registrationImageName2D;
+    TclNet_string d_newResampleImageName;
+    TclNet_string d_newResamplePlaneName;
 
-    Tclvar_int d_registrationEnabled;
-    Tclvar_int d_constrainToTopography;
-    Tclvar_int d_invertWarp;
-    Tclvar_int d_textureDisplayEnabled;
-    Tclvar_int d_resampleResolutionX;
-    Tclvar_int d_resampleResolutionY;
-    Tclvar_float d_resampleRatio;
-    Tclvar_string d_registrationColorMap3D;
-    Tclvar_string d_registrationColorMap2D;
+    TclNet_int d_registrationEnabled;
+    TclNet_int d_constrainToTopography;
+    TclNet_int d_invertWarp;
+    TclNet_int d_textureDisplayEnabled;
+    TclNet_int d_resampleResolutionX;
+    TclNet_int d_resampleResolutionY;
+    TclNet_float d_resampleRatio;
+    TclNet_string d_registrationColorMap3D;
+    TclNet_string d_registrationColorMap2D;
 
     // for automatic alignment
-    Tclvar_int d_autoAlignRequested;
-    Tclvar_int d_numIterations;
-    Tclvar_float d_stepSize;
-    Tclvar_string d_resolutionLevel;
+    TclNet_int d_autoAlignRequested;
+    TclNet_int d_numIterations;
+    TclNet_float d_stepSize;
+    TclNet_string d_resolutionLevel;
     // this array is set by the C-code and is then copied into
     //  d_resolutionLevelList in a string representation
     vrpn_int32 d_numResolutionLevels;
@@ -135,21 +135,21 @@ class nmr_RegistrationUI {
     static vrpn_float32 s_defaultStdDev[];
     Tclvar_list_of_strings d_resolutionLevelList;
 
-    Tclvar_float d_scaleX, d_scaleY;
-    Tclvar_float d_translateX, d_translateY, d_translateZ;
-    Tclvar_float d_rotate2D_Z, d_rotate3D_X, d_rotate3D_Z;
-    Tclvar_float d_shearZ;
+    TclNet_float d_scaleX, d_scaleY;
+    TclNet_float d_translateX, d_translateY, d_translateZ;
+    TclNet_float d_rotate2D_Z, d_rotate3D_X, d_rotate3D_Z;
+    TclNet_float d_shearZ;
 
     static vrpn_int32 s_numAutoAlignModes;
     static nmr_AutoAlignMode s_autoAlignModes[];
     static char * s_autoAlignModeNames[];
-    Tclvar_string d_autoAlignMode;
+    TclNet_string d_autoAlignMode;
     Tclvar_list_of_strings d_autoAlignModeList;
 
     static vrpn_int32 s_numTransformationSources;
     static nmr_RegistrationType s_transformationSources[];
     static char * s_transformationSourceNames[];
-    Tclvar_string d_transformationSource;
+    TclNet_string d_transformationSource;
     Tclvar_list_of_strings d_transformationSourceList;
 
     nmb_ImageDisplay *d_imageDisplay;
@@ -165,7 +165,7 @@ class nmr_RegistrationUI {
 
     // determines whether images appear flipped or not in the two image windows
     vrpn_bool d_flipXreference, d_flipYreference;
-	Tclvar_int d_flipProjectionImageInX;
+	TclNet_int d_flipProjectionImageInX;
 	vrpn_bool d_flipYadjustable;
 
     // transformations created by various means - manual, entry widgets, auto

@@ -1,3 +1,7 @@
+2002-07-25  Woojin Seok  <seok@cs.unc.edu>
+
+        * nmr_RegistrationUI.h (class nmr_RegistrationUI): changed every Tclvar	        into TclNet in order to be shown in collaboration mode. 
+
 2002-07-16  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_RegistrationUI.C (createResampleImage and
