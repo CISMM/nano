@@ -1,3 +1,9 @@
+2002-02-05  David Marshburn  <marshbur@cs.unc.edu>
+
+	* GPIBKeithley2400.C:  Added TclLinkVars and callbacks for
+	streamfile timing control support.
+	* vi_client.dsp, vi-server.dsp:  build browse info, too.
+
 2002-01-31 David Marshburn  <marshbur@cs.unc.edu>
 
 	* GPIBKeithley2400.C:  changes to program and Tcl initialization.
