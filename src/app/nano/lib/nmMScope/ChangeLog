@@ -1,5 +1,10 @@
 2000-12-5  Tom Hudson  <hudson@cs.unc.edu>
 
+	* nmm_TimestampList.C : new file
+	* nmm_TimestampList.h : same
+
+2000-12-5  Tom Hudson  <hudson@cs.unc.edu>
+
 	* nmm_Microscope_Remote.C : add members for redundancy,
 	QueueMonitoring, and network statistics tracking
 	(constructor) : register PointDataHandler on queue monitor
