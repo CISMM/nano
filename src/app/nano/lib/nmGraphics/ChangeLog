@@ -1,3 +1,7 @@
+2000-08-30  Adam Seeger  <seeger@cs.unc.edu>
+
+        * Makefile: excludes export_scene.C for VC compile
+
 2000-08-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* chartjunk.c (scale_display): Changed snprintf back to 
