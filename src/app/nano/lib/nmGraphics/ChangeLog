@@ -1,3 +1,19 @@
+2001-05-13  Jason Clark  <jclark@cs.unc.edu>
+
+	* spm_gl.c: Use const references to the nmb_PlaneSelection and
+	nmb_Interval classes passed into the functions to avoid copy constructors.
+
+	* openGL.c: Use const references to the nmb_PlaneSelection and
+	nmb_Interval classes passed into the functions to avoid copy constructors.
+
+	* nmg_SurfaceRegion.C: Support for stream or live experiments that
+	was missing.  Still needs some work.
+
+	* nmg_SurfaceMask.C (init): Bug fix for segfault when closing a file.
+
+	* nmg_Surface.C: Some support for stream or live experiments that was
+	missing.  Still needs some work.
+
 2001-05-12  Aron Helser  <helser@cs.unc.edu>
 
 	* spm_gl.c (spm_render_mark): Partially transparent mod markers.

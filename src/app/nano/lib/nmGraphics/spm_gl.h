@@ -51,16 +51,16 @@ extern GLuint nM_diffuse;
 extern GLuint nM_shader;
 #endif
 
-extern	int	spm_x_strip (nmb_PlaneSelection planes,
+extern	int	spm_x_strip (const nmb_PlaneSelection &planes,
 						 GLdouble minColor [3], GLdouble maxColor [3], int which,
 						 Vertex_Struct * vertexArray);
-extern	int	spm_x_strip_masked (nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
+extern	int	spm_x_strip_masked (const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
 								GLdouble minColor [3], GLdouble maxColor [3], int which,
 								Vertex_Struct * vertexArray);
-extern	int	spm_y_strip (nmb_PlaneSelection planes,
+extern	int	spm_y_strip (const nmb_PlaneSelection &planes,
 						 GLdouble minColor [3], GLdouble maxColor [3], int which,
 						 Vertex_Struct * vertexArray);
-extern	int	spm_y_strip_masked (nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
+extern	int	spm_y_strip_masked (const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
 								GLdouble minColor [3], GLdouble maxColor [3], int which,
 								Vertex_Struct * vertexArray);
 extern	int	spm_grid_to_tris (BCGrid *, GLdouble *, GLdouble *, int);

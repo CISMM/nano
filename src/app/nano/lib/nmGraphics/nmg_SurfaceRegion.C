@@ -97,7 +97,7 @@ init(int width, int height)
         d_VertexArrayDim = dim;
     }
 
-    d_regionalMask->init(d_VertexArrayDim);
+    d_regionalMask->init(width, height);
     
     if (d_vertexPtr) {
         free(d_vertexPtr);
@@ -692,6 +692,8 @@ rebuildRegion(nmb_Dataset *dataset, vrpn_bool force)
     g_stride = d_currentState.stride;
     g_surface_alpha = d_currentState.alpha;
     
+    //Make sure we have a valid mask before we rebuild the display lists
+    d_regionalMask->rederive();
     if (build_grid_display_lists(planes, d_regionalMask, display_lists_in_x, &d_list_base, 
                                  &d_num_lists, d_num_lists, g_minColor,
                                  g_maxColor, d_vertexPtr)) {
@@ -723,6 +725,10 @@ rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x
     g_stride = d_currentState.stride;
     g_surface_alpha = d_currentState.alpha;
 
+    if (!update.empty() || !todo.empty()) {
+        //Make sure we have a valid mask before we rebuild the display lists
+        d_regionalMask->rederive();
+    }
     if (update.overlaps(todo) || update.adjacent(todo)) {
         if (build_list_set(update + todo, planes, d_regionalMask, d_list_base, 
                            d_num_lists, strips_in_x, d_vertexPtr)) return 0;

@@ -181,14 +181,14 @@ GLfloat cur_modelview_matrix[16];
 **********************************************************************/
 
 int build_list_set
-(nmb_Interval subset,
- nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
+(const nmb_Interval &subset,
+ const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
  GLuint base,
  GLsizei num_lists,
  GLdouble * minColor,
  GLdouble * maxColor,
  int (* stripfn)
- (nmb_PlaneSelection, nmg_SurfaceMask *, GLdouble [3], GLdouble [3], int, Vertex_Struct *),
+ (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], GLdouble [3], int, Vertex_Struct *),
  Vertex_Struct **surface)
 {
     
@@ -372,9 +372,8 @@ int build_list_set
 * procedure.  It makes the Visualization classes simpler
 *
 *********************************************************************/
-int build_list_set (
-                    nmb_Interval insubset,
-                    nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
+int build_list_set (const nmb_Interval &insubset,
+                    const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                     GLuint base, GLsizei num,
                     int strips_in_x, Vertex_Struct **surface)
 {
@@ -394,7 +393,7 @@ int build_list_set (
     //MIN(maxStrip - 1, insubset.high()));
     
     int (* stripfn)
-        (nmb_PlaneSelection, nmg_SurfaceMask *, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
+        (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
     
     if (strips_in_x) {
         stripfn = spm_x_strip_masked;
@@ -434,14 +433,14 @@ int build_list_set (
 *  a particular base. 
 *************************************************************************/
 
-int	build_grid_display_lists(nmb_PlaneSelection planes,  nmg_SurfaceMask *mask, 
+int	build_grid_display_lists(const nmb_PlaneSelection &planes,  nmg_SurfaceMask *mask, 
                              int strips_in_x, GLuint *base, GLsizei *num, 
                              GLsizei old_num, GLdouble *minColor, GLdouble *maxColor,
                              Vertex_Struct **surface)
 {
     
     int (* stripfn)
-        (nmb_PlaneSelection, nmg_SurfaceMask *, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
+        (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
     
     VERBOSE(4,"     build_grid_display_lists in openGL.c");
     VERBOSECHECK(4);

@@ -9,15 +9,15 @@ class nmb_Interval;
 class nmg_SurfaceMask;
 struct Vertex_Struct;
 
-extern int build_grid_display_lists (nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
+extern int build_grid_display_lists (const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                                      int strips_in_x,
                                      GLuint * base, GLsizei * num, GLsizei old_num,
                                      GLdouble * minColor,
                                      GLdouble * maxColor,
                                      Vertex_Struct **surface);
 
-extern int build_list_set (nmb_Interval insubset,
-                           nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
+extern int build_list_set (const nmb_Interval &insubset,
+                           const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                            GLuint base, GLsizei num,
                            int strips_in_x,
                            Vertex_Struct **surface);

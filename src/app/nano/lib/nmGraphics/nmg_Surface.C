@@ -19,7 +19,7 @@ nmg_Surface()
     d_defaultRegion = new nmg_SurfaceRegion;
     d_dataset = (nmb_Dataset*)NULL;
 
-    d_defaultRegion->getMaskPlane()->setDrawPartialMask(true);
+    d_defaultRegion->getMaskPlane()->setDrawPartialMask(VRPN_TRUE);
 }
 
 ////////////////////////////////////////////////////////////

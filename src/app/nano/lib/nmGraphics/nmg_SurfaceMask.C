@@ -11,7 +11,8 @@ nmg_SurfaceMask::
 nmg_SurfaceMask()
 {
     d_maskData = (int*)NULL;
-    d_size = 0;
+    d_height = 0;
+    d_width = 0;
     d_control = (BCPlane*)NULL;
     d_derivationMode = NONE;
     d_drawPartialMask = false;
@@ -34,29 +35,25 @@ nmg_SurfaceMask::
 // Description: 
 ////////////////////////////////////////////////////////////
 void nmg_SurfaceMask::
-init(int size)
+init(int width, int height)
 {
-    if (size != d_size) {  
+    if (width != d_width || height != d_height) {  
         int x, y;
-        int *new_data = new int[size * size];
-
-        for(y = 0; y < d_size; y++) {
-            for(x = 0; x < d_size; x++) {
-                new_data[x+y*d_size] = d_maskData[x+y*d_size];
-            }
-        }
-
-        for(y = d_size; y < size; y++) {
-            for(x = d_size; x < size; x++) {
-                new_data[x+y*size] = 0;
-            }
-        }
-
-        d_size = size;
+        
         if (d_maskData) {
             delete [] d_maskData;
         }
-        d_maskData = new_data;
+
+        d_maskData = new int[width * height];
+
+        for(y = 0; y < height; y++) {
+            for(x = 0; x < width; x++) {
+                d_maskData[x+y*width] = 0;
+            }
+        }
+
+        d_width = width;
+        d_height = height;
     }
 }
 
@@ -71,8 +68,8 @@ setControlPlane(BCPlane *control)
     d_control = control;
     if (d_control == (BCPlane*)NULL) {
         d_derivationMode = NONE;
-        for(int y = 0; y < d_size; y++) {
-            for(int x = 0; x < d_size; x++) {
+        for(int y = 0; y < d_height; y++) {
+            for(int x = 0; x < d_width; x++) {
                 if (value(x,y) > 0) {
                     addValue(x,y,-1);
                 }                
@@ -80,13 +77,7 @@ setControlPlane(BCPlane *control)
         }
     }
     
-    switch(d_derivationMode) {
-    case HEIGHT:
-        deriveMask(d_minHeight, d_maxHeight);
-        break;
-    default:
-        break;
-    }
+    rederive(true);
 }
 
 ////////////////////////////////////////////////////////////
@@ -98,13 +89,12 @@ setControlPlane(BCPlane *control)
 void nmg_SurfaceMask::
 remove(nmg_SurfaceMask *other)
 {
-    if (d_size != other->d_size) {
-        printf("nmg_SurfaceMask::remove\tSize mismatch! (%d %d)\n",
-               d_size, other->d_size);
+    if (d_height != other->d_height || d_width != other->d_width) {
+        printf("nmg_SurfaceMask::remove\tSize mismatch!\n");
     }
 
-    for(int y = 0; y < d_size; y++) {
-        for(int x = 0; x < d_size; x++) {
+    for(int y = 0; y < d_height; y++) {
+        for(int x = 0; x < d_width; x++) {
             if (!other->value(x,y)) {
                 addValue(x,y,1);
             }
@@ -121,13 +111,12 @@ remove(nmg_SurfaceMask *other)
 void nmg_SurfaceMask::
 add(nmg_SurfaceMask *other)
 {
-    if (d_size != other->d_size) {
-        printf("nmg_SurfaceMask::add\tSize mismatch! (%d %d)\n",
-               d_size, other->d_size);
+    if (d_height != other->d_height || d_width != other->d_width) {
+        printf("nmg_SurfaceMask::add\tSize mismatch!\n");
     }
 
-    for(int y = 0; y < d_size; y++) {
-        for(int x = 0; x < d_size; x++) {
+    for(int y = 0; y < d_height; y++) {
+        for(int x = 0; x < d_width; x++) {
             if (!other->value(x,y)) {
                 if (value(x,y) > 0) {
                     addValue(x,y,-1);
@@ -169,6 +158,25 @@ deriveMask(float min_height, float max_height)
     }
 }
 
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::rederive
+//      Access: Public
+// Description: Check the plane derivation method that is being
+//              used and rederive if necessary.
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+rederive(vrpn_bool force)
+{
+    switch(d_derivationMode) {
+    case HEIGHT:
+        deriveMask(d_minHeight, d_maxHeight);
+        break;
+    default:
+        break;
+    }
+}
+
 ////////////////////////////////////////////////////////////
 //    Function: nmg_SurfaceMask::setDrawPartialMask
 //      Access: Public
@@ -177,7 +185,7 @@ deriveMask(float min_height, float max_height)
 //              The default is for it to consider them masked.
 ////////////////////////////////////////////////////////////
 void nmg_SurfaceMask::
-setDrawPartialMask(bool draw)
+setDrawPartialMask(vrpn_bool draw)
 {
     d_drawPartialMask = draw;
 }
@@ -214,12 +222,12 @@ quadMasked(int x, int y, int stride)
 bool nmg_SurfaceMask::
 completeImage(nmg_SurfaceMask *other)
 {
-    if (d_size != other->d_size) {
+    if (d_height != other->d_height || d_width != other->d_width) {
         printf("nmg_SurfaceMask::completeImage\tSize mismatch!\n");
     }
 
-    for(int y = 0; y < d_size; y++) {
-        for(int x = 0; x < d_size; x++) {
+    for(int y = 0; y < d_height; y++) {
+        for(int x = 0; x < d_width; x++) {
             int v1 = value(x,y);
             int v2 = other->value(x,y);
             if (v1 && v2) {
@@ -241,8 +249,8 @@ numberOfHoles()
 {
     int count = 0;
 
-    for(int y = 0; y < d_size; y++) {
-        for(int x = 0; x < d_size; x++) {
+    for(int y = 0; y < d_height; y++) {
+        for(int x = 0; x < d_width; x++) {
             if (value(x,y)) {
                 count++;
             }

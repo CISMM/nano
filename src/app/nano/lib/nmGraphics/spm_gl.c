@@ -650,7 +650,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 *     X-------->                                                              
 *	This routine returns 0 on success and -1 on failure. */
 
-int spm_y_strip( nmb_PlaneSelection planes,
+int spm_y_strip(const  nmb_PlaneSelection &planes,
                 GLdouble minColor[4], GLdouble maxColor[4], int which,
                 Vertex_Struct * vertexArray)
 {
@@ -719,7 +719,7 @@ int spm_y_strip( nmb_PlaneSelection planes,
  instead of 1 tripstrip like in the above procedure.
  */
 
-int spm_y_strip_masked( nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
+int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                        GLdouble minColor[4], GLdouble maxColor[4], int which,
                        Vertex_Struct * vertexArray)
 {
@@ -917,7 +917,7 @@ int spm_y_strip_masked( nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
  *                                                                         
  *	This routine returns 0 on success and -1 on failure. */
 
-int spm_x_strip( nmb_PlaneSelection planes,
+int spm_x_strip(const  nmb_PlaneSelection &planes,
                 GLdouble minColor[4], GLdouble maxColor[4], int which,
                 Vertex_Struct * vertexArray)
 {
@@ -986,7 +986,7 @@ int spm_x_strip( nmb_PlaneSelection planes,
  instead of 1 tripstrip like in the above procedure.
  */
 
-int spm_x_strip_masked( nmb_PlaneSelection planes, nmg_SurfaceMask *mask,
+int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                        GLdouble minColor[4], GLdouble maxColor[4], int which,
                        Vertex_Struct * vertexArray)
 {      
