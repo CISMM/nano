@@ -42,13 +42,13 @@ for path in $* ; do
 
    if test -d "$path/$SRC1/" ; then
       echo 1>&2 "Found $TARGET in $path/$SRC1";
-      echo "-I$path/$SRC1 -L$path/$LIB1"
+      echo "-I$path/$SRC1 -L$path/$OBJ1"
       exit 0;
    fi
 
    if test -d "$path/$SRC2/" ; then
       echo 1>&2 "Found $TARGET in $path/$SRC2";
-      echo "-I$path/$SRC2 -L$path/$LIB2"
+      echo "-I$path/$SRC2 -L$path/$OBJ2"
       exit 0;
    fi
 done

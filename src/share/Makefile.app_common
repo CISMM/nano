@@ -93,7 +93,7 @@ $(OBJECT_DIR)/%.o: %.C
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(APP_EXEC): $(APP_OBJ)
-	$(CC) $(CFLAGS) $(DEFINES) -o $@ $^ $(DEP_LIBS_LD) $(LOAD_FLAGS) $(DEP_LIBS_LIB) $(LIBS)
+	$(CC) $(CFLAGS) $(DEFINES) -o $@ $(APP_OBJ) $(DEP_LIBS_LD) $(LOAD_FLAGS) $(DEP_LIBS_LIB) $(LIBS)
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
    include $(TOP_LEVEL_MAKE_DIR)/Makefile.depend
