@@ -2828,7 +2828,7 @@ static	void	handle_openStaticFilename_change (const char *, void *)
 
     const char	*files[1];
     files[0] = (const char *)openStaticFilename;
-    int ret = dataset->loadFiles(files, 1,microscope->d_topoFile);
+    int ret = dataset->loadFiles(files, 1, microscope->d_topoFile);
     if (ret == -1) {
 	display_error_dialog("Couldn't open %s as a data file.\n"
                              "It is not a valid static data file.",
@@ -2876,7 +2876,6 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     MicroscapeInitializationState * istate = (MicroscapeInitializationState *)userdata;
 
     if (strlen(openStreamFilename) <= 0) return;
-    long logmode = vrpn_LOG_NONE;
 
     istate->afm.writingStreamFile = VRPN_FALSE;
 
@@ -2888,10 +2887,8 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     strncpy(istate->afm.inputStreamName, openStreamFilename, 255);
     sprintf(istate->afm.deviceName, "file:%s", istate->afm.inputStreamName);
 
-    vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name        (istate->afm.deviceName,
-	   (char *) NULL,
-	   logmode,
-	   (char *) NULL);
+    vrpn_Connection * new_microscope_connection =
+        vrpn_get_connection_by_name (istate->afm.deviceName);
     if (!new_microscope_connection) {
 	display_error_dialog( "Couldn't find file %s",
 		istate->afm.inputStreamName);
@@ -2968,8 +2965,12 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
 */
 static void handle_openSPMDeviceName_change (const char *, void * userdata)
 {
+    MicroscapeInitializationState * istate;
+    long logmode;
+
 #ifdef VIEWER
-    display_fatal_error_dialog("Unable to open SPM connection in NanoManipulator Viewer. Exiting...");
+    display_fatal_error_dialog
+      ("Unable to open SPM connection in NanoManipulator Viewer. Exiting...");
     return;
 #endif
 
@@ -2980,8 +2981,8 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
 	return;
     }
 
-    MicroscapeInitializationState * istate = (MicroscapeInitializationState *)userdata;
-    long logmode = vrpn_LOG_NONE;
+    istate = (MicroscapeInitializationState *)userdata;
+    logmode = vrpn_LOG_NONE;
 
     if (strlen(openSPMDeviceName) <= 0) return;
     // If we are re-opening the same device, close the old connection first.
@@ -3007,9 +3008,7 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name(
           istate->afm.deviceName,
           istate->afm.writingStreamFile ? istate->afm.outputStreamName
-                                        : (char *) NULL,
-	  logmode,
-          (char *) NULL);
+                                        : (char *) NULL);
     if (!new_microscope_connection) {
 	display_error_dialog( "Couldn't find SPM device: %s.",
 		istate->afm.deviceName);
@@ -5744,22 +5743,27 @@ void sharedGraphicsServer (void * data) {
   Semaphore * ps = ((ThreadData *) data)->ps;
   int retval;
 
-//fprintf(stderr, "g>In graphics thread.\n");
+VERBOSE(1, "g>In graphics thread.\n");
 
   // INITIALIZE
 
   // start a server connection
-//fprintf(stderr, "g>Graphics thread starting vrpn server\n");
+VERBOSE(1, "g>Graphics thread starting vrpn server\n");
   c = new vrpn_Synchronized_Connection (wellKnownPorts->graphicsControl);
 
   // start a graphics implementation
-//fprintf(stderr, "g>Graphics thread starting graphics implementation\n");
-  g = new nmg_Graphics_Implementation (
-      dataset, minC, maxC, rulerPPMName, vizPPMName, c, wellKnownPorts->remote_gaEngine);
+VERBOSE(1, "g>Graphics thread starting graphics implementation\n");
+  g = new nmg_Graphics_Implementation
+        (dataset, minC, maxC, rulerPPMName, vizPPMName, c,
+         wellKnownPorts->remote_gaEngine);
+
+  // Turn off UberGraphics until we figure out how to get it
+  // properly initialized & synchronized in the other thread.
+  ((nmg_Graphics_Implementation *) g)->enableUber(0);
 
   // release the main process to run
 
-//fprintf(stderr, "g>Graphics thread relesing main process\n");
+VERBOSE(1, "g>Graphics thread relesing main process\n");
   retval = ps->v();
   if (retval) {
     display_fatal_error_dialog( "Coprocess couldn't release main process to run!");
@@ -5768,7 +5772,7 @@ void sharedGraphicsServer (void * data) {
 
   // STEADY STATE
 
-//fprintf(stderr, "g>Graphics thread entering mainloop\n");
+VERBOSE(1, "g>Graphics thread entering mainloop\n");
 #ifdef sgi
 #pragma set woff 1209
 #endif
@@ -5781,6 +5785,7 @@ void sharedGraphicsServer (void * data) {
     TIMERLOG(frametimer);
 
     g->mainloop();
+VERBOSE(10, "gmainloop.\n");
   }
 }
 
@@ -5798,18 +5803,18 @@ void spawnSharedGraphics (void) {
   // allocate semaphore in td.ps
   // Initialize to zero;  we don't leave this function until
   // the coprocess has finished initializing.
-//fprintf(stderr, "Allocating semaphore\n");
+VERBOSE(1, "Allocating semaphore\n");
   td.ps = new Semaphore (0);
 
   // Spawn the coprocess
-//fprintf(stderr, "Spawning new thread\n");
+VERBOSE(1, "Spawning new thread\n");
   graphicsServerThread = new Thread (sharedGraphicsServer, td);
 
-//fprintf(stderr, "Spawned;  now starting the new thread\n");
+VERBOSE(1, "Spawned;  now starting the new thread\n");
   graphicsServerThread->go();
 
   // Block until it's initialized
-//fprintf(stderr, "Blocking for new thread\n");
+VERBOSE(1, "Blocking for new thread\n");
   retval = td.ps->p();
   if (retval != 1) {
     display_error_dialog( "Main process wasn't successfully "
@@ -5818,8 +5823,10 @@ void spawnSharedGraphics (void) {
     exit(0);
   }
 
+VERBOSE(1, "Unblocked by new thread\n");
   // Release the semaphore in case either of us wants to grab it again.
   td.ps->v();
+VERBOSE(1, "Released semaphore again;  done spawning.\n");
 }
 
 // T. Hudson 8 Mar 2000
@@ -5868,6 +5875,11 @@ void createGraphics (MicroscapeInitializationState & istate) {
         sprintf(qualifiedName, "nmg@%s:%d", name,
                 wellKnownPorts->graphicsControl);
 
+        if (spm_verbosity >= 2) {
+          fprintf(stderr,
+                  "Connecting to shmem imp at \"%s\".\n", qualifiedName);
+        }
+
         range_ps = new Semaphore (1);
 
         shmem_connection = vrpn_get_connection_by_name (qualifiedName);
@@ -5875,6 +5887,8 @@ void createGraphics (MicroscapeInitializationState & istate) {
         if (istate.timeGraphics) {
           graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
         }
+
+	VERBOSE(2, "Done connecting to shared memory implementation.\n");
       }
       break; 
 
@@ -6645,11 +6659,12 @@ int main (int argc, char* argv[])
 
       // otherwise, open the device specified. 
       //fprintf(stderr, "   The connection name is %s\n", istate.afm.deviceName);
+      // TCH 17 Feb 01 only logs incoming messages
       microscope_connection = vrpn_get_connection_by_name
 	  (istate.afm.deviceName,
 	   istate.afm.writingStreamFile ? istate.afm.outputStreamName
                                         : (char *) NULL,
-	   logmode,
+	   NULL,
 	   istate.writingRemoteStream ? istate.remoteOutputStreamName
                                       : (char *) NULL);
       if (!microscope_connection || !(microscope_connection->doing_okay())) {
@@ -6808,8 +6823,7 @@ int main (int argc, char* argv[])
 
     internal_device_connection = new vrpn_Synchronized_Connection 
            (wellKnownPorts->localDevice,
-            istate.logPhantom ? phantomlog : NULL,
-            istate.logPhantom ? vrpn_LOG_INCOMING : vrpn_LOG_NONE);
+            istate.logPhantom ? phantomlog : NULL);
     if (peripheral_init(internal_device_connection, istate.magellanName)){
         display_fatal_error_dialog("Memory fault, cannot initialize peripheral devices\n");
         return(-1);
@@ -6872,7 +6886,7 @@ int main (int argc, char* argv[])
 	  (istate.ohm.deviceName,
 	   istate.ohm.writingLogFile ? istate.ohm.outputLogName
 	   : (char *) NULL,
-	   vrpn_LOG_INCOMING);
+	   NULL);
         if (!ohmmeter_connection) {
 	  display_error_dialog( "Couldn't open connection to %s.\n",
 		  istate.ohm.deviceName);
@@ -6929,7 +6943,7 @@ int main (int argc, char* argv[])
 		(istate.vicurve.deviceName,
 		 istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
 		 : (char *) NULL,
-		 vrpn_LOG_INCOMING);
+		 NULL);
 	    if (!vicurve_connection) {
 		display_error_dialog( "Couldn't open connection to %s.\n",
 			istate.vicurve.deviceName);
@@ -6989,7 +7003,7 @@ int main (int argc, char* argv[])
                 (istate.sem.deviceName,
                  istate.sem.writingLogFile ? istate.sem.outputLogName
                  : (char *) NULL,
-                 vrpn_LOG_INCOMING);
+                 NULL);
             if (!sem_connection) {
                 display_error_dialog( "Couldn't open connection to %s.\n",
                         istate.sem.deviceName);
@@ -7070,23 +7084,28 @@ int main (int argc, char* argv[])
   linkMicroscopeToInterface(microscope);
   microscope->requestMutex();
 
-  // Registration - displays images with glX or GLUT depending on V_GLUT
-  // flag
-  if (istate.alignerName == NULL){
+  // TCH 19 Feb 01 HACK - don't open graphics windows in this thread!
+  // We could *probably* get away with it by just calling glutInit();
+  if (istate.graphics_mode != SHMEM_GRAPHICS) {
+
+    // Registration - displays images with glX or GLUT depending on V_GLUT
+    // flag
+    if (istate.alignerName == NULL){
         char *aligner_name = getenv("NM_ALIGNER");
         if (aligner_name != NULL){
             istate.alignerName = new char [strlen(aligner_name) + 1];
             strcpy(istate.alignerName, aligner_name);
         }
+    }
+    // passing in NULL causes us to use the local implementation
+    // any non NULL string will be interpreted as a server name and
+    // the proxy will attempt to connect itself to the corresponding
+    // server
+    aligner = new nmr_Registration_Proxy(istate.alignerName);
+    alignerUI = new nmr_RegistrationUI(graphics, dataset->dataImages,
+        aligner);
+    alignerUI->setupCallbacks();
   }
-  // passing in NULL causes us to use the local implementation
-  // any non NULL string will be interpreted as a server name and
-  // the proxy will attempt to connect itself to the corresponding
-  // server
-  aligner = new nmr_Registration_Proxy(istate.alignerName);
-  alignerUI = new nmr_RegistrationUI(graphics, dataset->dataImages,
-      aligner);
-  alignerUI->setupCallbacks();
 
   ConvTip = new nmtc_TipConvolution(graphics, dataset->dataImages);
 
@@ -7304,8 +7323,7 @@ VERBOSE(1, "Entering main loop");
 
       VERBOSE(4,"  Updating displays");
       if ((glenable) && (justCentered || !drawOnlyOnCenter)){
-        //v_update_displays(displayIndexList); 
-        TIMERVERBOSE(1,  frametimer, "------------- Frame timer -----------");
+        //TIMERVERBOSE(1,  frametimer, "------------- Frame timer -----------");
         TIMERLOG(frametimer);
         graphics->mainloop();
       }
@@ -7320,7 +7338,7 @@ VERBOSE(1, "Entering main loop");
 
       if (gi) gi->mainloop();
 
-      TIMERVERBOSE(1, mytimer, "microscape.c:end gi->mainloop()");
+      //TIMERVERBOSE(1, mytimer, "microscape.c:end gi->mainloop()");
 
       if (updt_display(displayPeriod, d_time, stm_new_frame)) {
         n_displays++;

@@ -1,9 +1,24 @@
+2001-02-24  Tom Hudson  <hudson@cs.unc.edu>
+
+	* CollaborationManager.C (getPeer) : handle new vrpn syntax.
+	(getPeerReplay) : same.
+	(getServer) : same.
+	* microscape.c (handle_openStreamFilename_change) : same.
+	(handle_openSPMDeviceName_change) : same.
+	(main) : same.
+
+	* microscape.c (sharedGraphicsServer) : add VERBOSE output,
+	turn off UberGraphics in multithreaded graphics implementation.
+	(spawnSharedGraphics) : add VERBOSE output.
+	(createGraphics) : same.
+	(main) : don't start up Registration code in shared memory.
+
 2001-02-09  Jason Clark  <jclark@cs.unc.edu>
 
 	* microscopeHandlers.C: Changed handle_z_scale_change to call
 	causeGridRebuild instead of causeGridRedraw
 
-	* microscape.c: Added TCl variables and callback functions to
+	* microscape.c: Added Tcl variables and callback functions to
 	support	visualization interface
 
 2001-02-01  Aron Helser  <helser@cs.unc.edu>
