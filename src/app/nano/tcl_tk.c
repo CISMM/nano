@@ -51,7 +51,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	
 	VERBOSE(4, "  Initializing Tcl");
 	Tcl_Interp * my_tk_control_interp = Tcl_Interpreter::getInterpreter();
-
+        if (!my_tk_control_interp) return -1;
 #ifdef NO_MSCOPE_CONNECTION
         // Set variable to indicate that this is a Viewer only
         // interface. 
