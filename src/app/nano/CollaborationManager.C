@@ -22,6 +22,8 @@
 
 #include "nM_coord_change.h"
 #include "error_display.h"
+#include "tcl.h"
+#include "tk.h"
 #include "tcl_tk.h"
    // HACK - evil coupling to UI; ought to trigger a callback here
    // and have it handled by some routine in the UI space.
@@ -533,7 +535,7 @@ void CollaborationManager::setPeerName
     // to uniquely identify planes created.
 
     if (d_planeSync) {
-      d_planeSync->addPeer(d_peerRemote, newName);
+      d_planeSync->changePeer(d_peerRemote);
     }
   }
 
@@ -723,10 +725,7 @@ int CollaborationManager::fullyConnected (void) {
       tk_control_interp->result);
   }
 
-  // no return statement breaks build on PC (but not SGI?). - DTM 03-14-01
   return 0; 
-  // WARNING:  ADDITION WITHOUT REGARD FOR DESIRED FUNCTION.
-
 }
 
 

@@ -70,6 +70,10 @@ pid_t getpid();
 #include <nmb_PlaneSelection.h>
 #include <nmb_Dataset.h>
 #include <nmb_Decoration.h>
+#include <nmb_CalculatedPlane.h>
+#include <nmb_FlattenedPlane.h>
+#include <nmb_LBLFlattenedPlane.h>
+#include <nmb_SummedPlane.h>
 #include <nmb_Types.h>
 #include <nmb_Debug.h>
 #include <nmb_Line.h>
@@ -3353,86 +3357,107 @@ static	void	handle_filterPlaneName_change(const char *, void *) {
 
 
 
-
-
 /** See if the user has given a name to the flattened plane other
  than "".  If so, we should create a new plane and set the value
  back to "". */
-static	void	handle_flatPlaneName_change(const char *, void *)
+static void handle_flatPlaneName_change(const char *, void *)
 {
-
-    if (strlen(newFlatPlaneName.string()) > 0) {
-
-	// Create the new one.
-	BCPlane* new_flat_plane = 
-	    dataset->computeFlattenedPlane(newFlatPlaneName.string(),
-                                           dataset->heightPlaneName->string(),
- decoration->red.x(), decoration->green.x(), decoration->blue.x(),
- decoration->red.y(), decoration->green.y(), decoration->blue.y());
-	if (new_flat_plane == NULL) {
-            display_error_dialog("Couldn't create flatten plane %s\n"
-                            "Please try different measure line positions.",
-                             newFlatPlaneName.string());
-
-	// Add the plane into the list of available ones.
-	} else {
-	    // Here we DONT just use newFlatPlaneName, because 
-	    // computeFlattenedPlane will change the name,
-	    // to add "from hostname"
-	    dataset->inputPlaneNames->addEntry(new_flat_plane->name()->Characters());
-	}
-
-	newFlatPlaneName = (const char *) "";
+  if( strlen(newFlatPlaneName.string() ) <= 0 )
+    return;
+  
+  nmb_FlattenedPlane* flatPlane = NULL;
+  try
+    {
+      flatPlane = new nmb_FlattenedPlane(  dataset->heightPlaneName->string(),
+					   newFlatPlaneName.string(), 
+					   decoration->red.x(),
+					   decoration->green.x(),
+					   decoration->blue.x(),
+					   decoration->red.y(),
+					   decoration->green.y(),
+					   decoration->blue.y(),
+					   dataset );
     }
-}
+  catch( nmb_CalculatedPlaneCreationException e )
+    {
+      display_error_dialog( e.getMsgString() );
+      newFlatPlaneName = (const char *) "";
+      return;
+    }
+  
+  // Add the plane into the list of available ones.
+  // Here we DONT just use newFlatPlaneName, because 
+  // computeFlattenedPlane will change the name,
+  // to add "from hostname"
+  dataset->inputPlaneNames->addEntry(flatPlane->getName()->Characters());
+  newFlatPlaneName = (const char *) "";
+  
+} // end handle_flatPlaneName_change
+
 
 /**Added by Amy Henderson 1-9-99
  See if the user has given a name to the line-by-line flattened plane
  other than "".  If so, we should create a new plane and set the value
  back to "". */
-static  void	handle_lblflatPlaneName_change(const char *, void *)
+static void handle_lblflatPlaneName_change(const char *, void *)
 {
+  if( strlen( newLBLFlatPlaneName.string() ) <= 0) 
+    return;
+  
+  // Create the new one.  
+  nmb_LBLFlattenedPlane* flatPlane = NULL;
+  try
+    {
+      flatPlane 
+	= new nmb_LBLFlattenedPlane(  dataset->heightPlaneName->string(),
+				      newLBLFlatPlaneName.string(), 
+				      dataset );
+    }
+  catch( nmb_CalculatedPlaneCreationException e )
+    {
+      display_error_dialog( e.getMsgString() );
+      newFlatPlaneName = (const char *) "";
+      return;
+    }
+  
+  // Add the plane into the list of available ones.
+  dataset->inputPlaneNames->addEntry( flatPlane->getName( )->Characters( ) );
+  newLBLFlatPlaneName = (const char *) "";
+  
+} // end handle_lblflatPlaneName_change
 
-	
-	if (strlen(newLBLFlatPlaneName.string()) > 0) {
-	    // Create the new one.  
-	    if (dataset->computeLBLFlattenedPlane(newLBLFlatPlaneName.string(),
-                            dataset->heightPlaneName->string())) {
-		printf("Can not create line-by-line flattened plane %s\n",
-				newLBLFlatPlaneName.string());
-	    }
-	    // Add the plane into the list of available ones.
-	    else {
-		dataset->inputPlaneNames->addEntry(newLBLFlatPlaneName);
-	    }
 
-	    newLBLFlatPlaneName = (const char *) "";
-	}
-} 
 
 /** See if the user has given a name to the sum plane other
  than "".  If so, we should create a new plane and set the value
  back to "". */
 static	void	handle_sumPlaneName_change(const char *, void *)
 {
+  if( strlen( newSumPlaneName.string( ) ) <= 0 )
+    return;
 
-    if (strlen(newSumPlaneName.string()) > 0) {
+  // Create the new one from the sums.
+  nmb_SummedPlane* newSumPlane = NULL;
 
-	// Create the new one from the sums.
-	if (dataset->computeSumPlane(newSumPlaneName.string(),
-                                     sumPlane1Name.string(),
-                                     sumPlane2Name.string(), sumScale)) {
-		printf("Cannot create %s from %s and %s\n",
-			newSumPlaneName.string(),
-			sumPlane1Name.string(), sumPlane2Name.string());
-
-	// Add the plane into the list of available ones.
-	} else {
-	    dataset->inputPlaneNames->addEntry(newSumPlaneName);
-	}
-
-	newSumPlaneName = "";
+  try
+    {
+      newSumPlane = new nmb_SummedPlane( sumPlane1Name.string(),
+					 sumPlane2Name.string(),
+					 sumScale,
+					 newSumPlaneName.string(),
+					 dataset );
     }
+  catch( nmb_CalculatedPlaneCreationException e )
+    {
+      display_error_dialog( e.getMsgString() );
+      newSumPlaneName = (const char *) "";
+      return;
+    }
+    
+  // Add the plane into the list of available ones.
+  dataset->inputPlaneNames->addEntry(newSumPlane->getName()->Characters());
+  
+  newSumPlaneName = "";
 }
 
 /** See if the user has given a name to the adhesion plane other
@@ -5355,7 +5380,7 @@ void setupSynchronization (CollaborationManager * cm,
 
   nmui_PlaneSync * ps;
 
-  ps = new nmui_PlaneSync (dset, &(m->state.data), serverConnection);
+  ps = new nmui_PlaneSync (dset, serverConnection);
 
   // Since streamfileControls are timed, the toplevel MUST use
   // the timed callbacks.  Oops.  Took an hour or more to find,
@@ -7497,9 +7522,10 @@ int main (int argc, char* argv[])
   robotControl = new RobotControl(microscope, dataset);
   robotControl->show();
 #endif
-  
 
-
+  // did these in createNewMicroscope() but things were NULL then.
+  linkMicroscopeToInterface(microscope);
+  microscope->requestMutex();
 
   // TCH 19 Feb 01 HACK - don't open graphics windows in this thread!
   // We could *probably* get away with it by just calling glutInit();
@@ -9264,7 +9290,3 @@ int disableOtherTextures (TextureMode m) {
   return 0;
 }
 
-
-// Local Variables:
-// mode:c++
-// End:
