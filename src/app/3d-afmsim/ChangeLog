@@ -1,3 +1,16 @@
+2002-06-07  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* 3dobject.h,.cpp : added functions saveAllGroups() and
+	retrieveAllGroups().  saveAllGroups() saves object type,
+	position, orientation, etc. information for all objects in
+	simulator at time of saving, as well as grouping information,
+	so that objects can be reloaded later.  retrieveAllGroups()
+	loads objects from file saved by saveAllGroups().
+
+	* sim.cpp : keyboard commands for save ('S') and load ('L')
+
+	* Vec3d.h,.cpp : added overloaded >> operator
+
 2002-05-09  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* sim.cpp : changed initial scale value for when cylinders 
