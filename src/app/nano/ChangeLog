@@ -1,3 +1,7 @@
+2002-07-18 Jameson Miller <millerj@cs.unc.edu>
+	* interaction.c (h): tcl variables for handling displaying axes for
+	direct step handled here.
+
 2002-07-08  David Borland <borland@cs.unc.edu>
  
         * import.C : changed the projective texture mode callback so that

@@ -148,6 +148,20 @@ Tclvar_int	config_haptic_plane("haptic_from_flat", 0);
 //static nmui_SurfaceFeatures haptic_features;
 static nmui_HapticsManager haptic_manager;
 
+//tcl variables for handling turning on and off the axis drawn on the sphere for direct step
+static void handle_sphere_axis(vrpn_int32, void *);
+Tclvar_int draw_ds_sphere_axis("sphere_axis", 0, handle_sphere_axis);
+
+void handle_sphere_axis(vrpn_int32 x, void *) {
+	decoration ->ds_sphere_axis = x;
+	if( x == 1) {
+		enable_ds_sphere_axis();
+	} else {
+		disable_ds_sphere_axis();
+	}
+}
+
+
 static q_vec_type xyz_lock_pos;  // used for constrained freehand xyz
 
 /***************************

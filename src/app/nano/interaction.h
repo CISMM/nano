@@ -14,6 +14,11 @@ int set_aim_line_color (float);
 
 extern Tclvar_int user_0_mode;
 
+//external functions that set and unset drawing the sphere
+// for direct step
+extern void enable_ds_sphere_axis();
+extern void disable_ds_sphere_axis();
+
 extern Tclvar_int tcl_commit_pressed;
 extern Tclvar_int tcl_commit_canceled;
 void handle_commit_change( vrpn_int32, void *);
