@@ -71,6 +71,10 @@ clean:
 thisclean:
 	-rm -f $(addprefix $(OBJECT_DIR)/*,.o .a)
 
+.PHONY: clobber
+clobber: thisclean
+	-rm -f $(addprefix $(OBJECT_DIR)/,.depend .depend-old)
+
 #############################################################################
 #
 # implicit rule for all .c files
