@@ -1,3 +1,9 @@
+2002-07-24 David Borland <borland@cs.unc.edu>
+
+        * nmb_Image.C (nmb_ImageArray() : changed default values for the
+        uint16 and float32 data arrays to get rid of a black border when
+        then image is used to create a texture.
+
 2002-07-18 Jameson Miller <millerj@cs.unc.edu>
 	*nmb_decoration.c (h) - added state variable to keep track
 	of if we are dsiplaying the an axis at the position of the sphere

@@ -1353,7 +1353,7 @@ nmb_ImageArray::nmb_ImageArray(const char *name,
     switch (d_pixelType) {
       case NMB_FLOAT32:
         for (j = 0; j < array_size; j++) {
-           fData[j] = 0;
+           fData[j] = 1.0;
         }
         break;
       case NMB_UINT8:
@@ -1363,7 +1363,7 @@ nmb_ImageArray::nmb_ImageArray(const char *name,
         break;
       case NMB_UINT16:
         for (j = 0; j < array_size; j++) {
-           usData[j] = 0;
+           usData[j] = 65535;
         }
         break;
       default:
