@@ -153,6 +153,16 @@ checkbutton $nmInfo(registration).texture.display_texture \
 
 pack $nmInfo(registration).texture.display_texture -anchor nw
 
+radiobutton $nmInfo(registration).texture.image_mode_surface \
+    -text "Surface Mode" -variable reg_image_mode -value 1
+
+pack $nmInfo(registration).texture.image_mode_surface -anchor nw
+
+radiobutton $nmInfo(registration).texture.image_mode_model \
+    -text "Model Mode" -variable reg_image_mode -value 0
+
+pack $nmInfo(registration).texture.image_mode_model -anchor nw
+
 iwidgets::Labeledframe $nmInfo(registration).rsplane \
 	-labeltext "Create Plane (match Topog image region)" \
 	-labelpos nw

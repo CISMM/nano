@@ -1,3 +1,8 @@
+2002-05-30 David Borland <borland@cs.unc.edu>
+
+        * registration.tcl : added control of the new MODEL and SURFACE
+	REGISTRATION_COORD graphics modes.
+
 2002-05-24 David Borland <borland@cs.unc.edu>
 
         * import.tcl : added control for locking the projective texture's 
