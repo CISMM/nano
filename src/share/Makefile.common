@@ -98,7 +98,10 @@ ifeq ($(HW_OS),sgi_irix)
    ifndef SGI_ABI
       SGI_ABI := n32
    endif
-   OBJECT_DIR_SUFFIX := .$(SGI_ABI)
+   ifndef SGI_ARCH
+      SGI_ARCH := mips3
+   endif
+   OBJECT_DIR_SUFFIX := .$(SGI_ABI).$(SGI_ARCH)
 
    UNAME := $(shell uname -m)
    ifeq ($(UNAME),IP32)
@@ -156,7 +159,7 @@ ifdef PBASE_ROOT                    # Must be flow
    endif
 else
    ifeq ($(HW_OS),sgi_irix)
-      CC := CC -$(SGI_ABI) -fullwarn
+      CC := CC -$(SGI_ABI) -$(SGI_ARCH) -fullwarn
    else
       ifeq ($(HW_OS),hp700_hpux10)  # another odd case, hpux is "different"
          CC := CC +w
@@ -263,14 +266,6 @@ endif
 REAL_OBJECT_DIR := $(MY_NANO_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX)
 FULL_OBJECT_DIR := $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX)
 
-
-TCL_INC_DIR := /afs/unc/proj/stm/src/tcltk.sgi_irix/include \
-               /net/nano/nano3/tcltk.$(HW_OS)/include
-TCL_LIB_DIR := /afs/unc/proj/stm/src/tcltk.$(HW_OS)$(OBJECT_DIR_SUFFIX)/lib \
-               /net/nano/nano3/tcltk.$(HW_OS)$(OBJECT_DIR_SUFFIX)/lib \
-               /afs/unc/proj/stm/src/tcltk.$(HW_OS)/lib \
-               /net/nano/nano3/tcltk.$(HW_OS)/lib
-
 ### now find the external directory.
 ###  If it exists, we'll use "$(MY_NANO_SRC_DIR)/external",
 ###  otherwise we use "$(DEFAULT_PROJ_SRC_DIR)/external"
@@ -326,8 +321,7 @@ endif
 # {{{ Include flags
 #
 
-SYS_INCLUDE := $(TCL_INC_DIR) \
-               /usr/local/contrib/include /usr/local/contrib/mod/include
+SYS_INCLUDE := /usr/local/contrib/include /usr/local/contrib/mod/include
 
 ifeq ($(HW_OS),pc_cygwin)
    SYS_INCLUDE := 
@@ -344,7 +338,7 @@ ifeq ($(HW_OS),pc_linux)
 endif
 
 ifeq ($(HW_OS),sgi_irix)
-   SYS_INCLUDE := $(TCL_INC_DIR) /usr/local/contrib/mod/include
+   SYS_INCLUDE := /usr/local/contrib/mod/include
 endif
 
 INCLUDE_FLAGS := $(addprefix -I, . $(EXTERNAL_INC_DIR) $(SYS_INCLUDE))
@@ -367,7 +361,6 @@ INCLUDE_FLAGS += $(LATE_INCLUDE_PATH)
 #
 
 LOAD_FLAGS := $(addprefix -L, $(EXTERNAL_LIB_DIR) \
-                              $(TCL_LIB_DIR) \
                               /usr/local/lib \
                               /usr/local/contrib/unmod/lib \
                               /usr/local/contrib/mod/lib)
