@@ -369,7 +369,7 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 				calculatedPlane->setValue(i,y,val);
 				d_dataset->range_of_change.AddPoint(i,y);
 			}
-			for(i = 0; i < d_rowlength; i++){
+			for(int i = 0; i < d_rowlength; i++){
 				storeddataline[i] = newdataline[i];
 			}//now this is our old row			
 			--l_sim_y;

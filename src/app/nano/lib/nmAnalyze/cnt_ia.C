@@ -1,8 +1,20 @@
+
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
 #include <string>
 #include <vector>
 #include <iostream>
 #include <fstream>
 using namespace std;
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -475,8 +487,8 @@ void CNT_IA::cnt_image_fit(void)
 		               		for ( j=j0; j<=j1; j++ ) {
                 		  		if ( cnt_image_Med[index1] > 1.0 ) {
 							index2 = j*cnt_image_x + i;
-                     					p += cnt_image_Vpp[index2] / ( fabs(i-x) + 1 );
-                     					q += cnt_image_Vqq[index2] / ( fabs(j-y) + 1 );
+                     					p += cnt_image_Vpp[index2] / ( fabs((float)i-x) + 1 );
+                     					q += cnt_image_Vqq[index2] / ( fabs((float)j-y) + 1 );
 						}
 					}
 				}
