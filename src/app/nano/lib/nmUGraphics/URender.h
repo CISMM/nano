@@ -83,6 +83,15 @@ protected:
 	int grab_object;	// when true, translations and rotations from using the mouse in the
 						// surface window are applied to the current object
 
+	// locks for translations and rotations--helps when using the phantom to align objects with
+	// projective textures
+	int lock_transx;
+	int lock_transy;
+	int lock_transz;
+	int lock_rotx;
+	int lock_roty;
+	int lock_rotz;
+
 	// stuff for spiders
 	double spider_length;
 	double spider_width;
@@ -140,6 +149,12 @@ public:
 	void SetClamp(int c) { clamp = c; }
 	void SetUpdateAFM(int u) { update_AFM = u; }
 	void SetGrabObject(int g) { grab_object = g; }
+	void SetLockTransx(int l) { lock_transx = l; }
+	void SetLockTransy(int l) { lock_transy = l; }
+	void SetLockTransz(int l) { lock_transz = l; }
+	void SetLockRotx(int l) { lock_rotx = l; }
+	void SetLockRoty(int l) { lock_roty = l; }
+	void SetLockRotz(int l) { lock_rotz = l; }
 
 	void SetSpiderLength(double l) { spider_length = l; }
 	void SetSpiderWidth(double w) { spider_width = w; }
@@ -157,6 +172,12 @@ public:
 	int GetClamp() { return clamp; }
 	int GetUpdateAFM() { return update_AFM; }
 	int GetGrabObject() { return grab_object; }
+	int GetLockTransx() { return lock_transx; }
+	int GetLockTransy() { return lock_transy; }
+	int GetLockTransz() { return lock_transz; }
+	int GetLockRotx() { return lock_rotx; }
+	int GetLockRoty() { return lock_roty; }
+	int GetLockRotz() { return lock_rotz; }
 
 	double GetSpiderLength() { return spider_length; }
 	double GetSpiderWidth() { return spider_width; }

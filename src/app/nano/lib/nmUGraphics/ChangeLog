@@ -1,4 +1,9 @@
 2002-05-20  David Borland <borland@cs.unc.edu>
+
+        * URender.h : added variables and access functions for locking
+        translations and rotations
+
+2002-05-20  David Borland <borland@cs.unc.edu>
    
         * TubeFileGenerator.C : fixed a conflict between versions.
 
