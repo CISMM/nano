@@ -1,3 +1,8 @@
+2002-05-13  Adam Seeger  <seeger@cs.unc.edu>
+
+	* litho_main.tcl (save_image_file, save_buffer_dialog) :
+	fixed these so they set the correct file extension
+
 2002-05-07  David Marshburn  <marshbur@cs.unc.edu>
 
 	* mainwin.tcl (handle_texture_mode_change):  if the change turns

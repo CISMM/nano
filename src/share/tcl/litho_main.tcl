@@ -128,14 +128,20 @@ proc save_image_file {} {
         set types { {"All files" *}
         { "ThermoMicroscopes" ".tfr" }
         { "TIFF Image" ".tif" }
+        { "TIFF" ".tif" }
+        { "TIF" ".tif" }
+        { "JPG" ".jpg" }
         { "JPEG" ".jpg" }
+        { "BMP" ".bmp" }
+        { "PGM" ".pgm" }
+        { "PPM" ".ppm" }
         { "Text(MathCAD)" ".txt" }
         { "PPM Image" ".ppm" }
         { "SPIP" ".spip" }
         { "UNCA Image" ".ima" } }
 
         # Set the file extension correctly
-        set def_file_exten ".tfr"
+        set def_file_exten ".tif"
         #puts $save_image_filetype
         foreach item $types {
             #puts "[lindex $item 0] [lindex $item 1]"
@@ -180,7 +186,9 @@ iwidgets::dialog .save_buffer_dialog -title "Save buffer image"
     global fileinfo bufferImage_format
     .save_buffer_dialog deactivate 1
     set types { {"All files" *}
+    {"TIFF" ".tif" }
     {"TIF" ".tif" }
+    {"JPEG" ".jpg" }
     {"JPG" ".jpg" }
     {"BMP" ".bmp" }
     {"PGM" ".pgm" }
@@ -188,7 +196,9 @@ iwidgets::dialog .save_buffer_dialog -title "Save buffer image"
 
     # Set the file extension correctly
     set def_file_exten ".tif"
+    #puts $bufferImage_format
     foreach item $types {
+        #puts "[lindex $item 0] [lindex $item 1]"
         if { [string compare $bufferImage_format [lindex $item 0]] == 0} {
             set def_file_exten [lindex $item 1]
         }
