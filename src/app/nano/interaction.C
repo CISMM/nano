@@ -531,6 +531,7 @@ void Adaptor::updateWarpedPlane (nmui_HSWarpedPlane * wp) {
 }
 
 void Adaptor::setMicroscopeRTTEstimate (double rtt) {
+//fprintf(stderr, "Adaptor RTT Estimated %.5f\n", rtt);
   d_rttEstimate = rtt;
 }
 
