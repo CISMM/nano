@@ -15,6 +15,7 @@
 
 #include <vrpn_FileConnection.h>
 
+#include "myUtil.h"
 #include "nma_Keithley2400.h"
 
 #define CHECK(a) if ((a) == -1) return -1
@@ -461,7 +462,7 @@ int nma_Keithley2400::send_AcquireData()
 			" couldn't send message.\n");
 		return -1;
 	}
-	Sleep( 1000 );
+	vrpn_SleepMsecs( 1000 );
 	
 	// reset all the values to those we want for measurement
 	send_AllSettings();
