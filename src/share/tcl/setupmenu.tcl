@@ -158,7 +158,7 @@ proc color_scale_newscale {name element op} {
     set newtext [format "%.0f %.0f" $color_slider_min_limit $color_slider_max_limit]
     $nmInfo(colorscale).scales.center config -labeltext \
 	"Center ($newtext)"
-    set newtext [format "%.3f" [expr $color_slider_max_limit -$color_slider_min_limit ]]
+    set newtext [format "%.0f" [expr $color_slider_max_limit -$color_slider_min_limit ]]
     $nmInfo(colorscale).scales.range config -labeltext \
 	"Width (0 $newtext)"
 
