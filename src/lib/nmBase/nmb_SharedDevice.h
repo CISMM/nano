@@ -36,6 +36,10 @@ class nmb_SharedDevice : public nmb_Device_Client {
     //  ACCESSORS
 
 
+    vrpn_bool haveMutex (void) const;
+      ///< Returns VRPN_TRUE if we have exclusive control of
+      ///< the shared device.
+
     vrpn_bool typeIsSafe (vrpn_int32 type) const;
       ///< See markTypeAsSafe() below.  Returns VRPN_FALSE on
       ///< illegal input.

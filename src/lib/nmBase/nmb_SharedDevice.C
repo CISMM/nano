@@ -50,6 +50,10 @@ nmb_SharedDevice::~nmb_SharedDevice (void) {
 
 
 
+vrpn_bool nmb_SharedDevice::haveMutex (void) const {
+  return d_mutex.isHeldLocally();
+}
+
 vrpn_bool nmb_SharedDevice::typeIsSafe (vrpn_int32 type) const {
   if ((type < 0) || (type >= vrpn_CONNECTION_MAX_TYPES)) {
     return VRPN_FALSE;

@@ -2104,6 +2104,16 @@ int doFeelLive(int whichUser, int userEvent)
 	    return 0;
 	  }
 
+  // If we are running live, but we don't have control of the
+  // microscope, we can't do this, so put the user into grab mode.
+
+  if (!microscope->haveMutex()) {
+    handleCharacterCommand("G", &dataset->done, 1);
+    printf("Can't touch when we don't have access to the microscope.\n");
+    return 0;
+  }
+
+
 	/* Get the input plane and point */
 	BCPlane* plane = dataset->inputGrid->getPlaneByName
                      (dataset->heightPlaneName->string());
