@@ -13,6 +13,8 @@
 #include "nmm_Microscope_SEM_Remote.h"
 #include "nmm_EDAX.h"  // some constants peculiar to the EDAX SEM interface
 
+class nmui_ColorMap;
+
 
 #define SEM_TCL_FILE "sem.tcl"
 #define SEM_FILE_SUFFIX ".sem"
@@ -55,6 +57,9 @@ class nms_SEM_ui {
     Tclvar_int sem_acquire_image;
     Tclvar_int sem_acquire_continuous;
     Tclvar_int display_texture;
+    Tclvar_string sem_image_name;
+    Tclvar_string sem_colormap;
+    Tclvar_float sem_texture_alpha;
     Tclvar_int no_graphics_update;
     Tclvar_int sem_resolution; // an index into a set of image sizes
     Tclvar_int pixel_integration_time_nsec;
@@ -72,6 +77,9 @@ class nms_SEM_ui {
      int line_length, int num_fields, int num_lines, nmb_PixelType pix_type,
      void *data);
 
+    // colormap
+    nmui_ColorMap* CMap;
+
     // callbacks for user interface variables
     //   for acquire_image:
     static void handle_acquire_image(vrpn_int32 _newval, void *_userdata);
@@ -79,6 +87,12 @@ class nms_SEM_ui {
     static void handle_resolution_change(vrpn_int32 _newval, void *_ud);
     //   for texture display
     static void handle_texture_display_change(vrpn_int32 _newval, void *_ud);
+    //   for colormap
+    static void handle_colormap_change(const char *name, void *_ud);
+    //   for colormap minmax
+    static void handle_colormap_minmax_change(vrpn_float64, void *_ud);
+    //   for texture alpha
+    static void handle_sem_texture_alpha_change(vrpn_float64 _newval, void *_ud);
     //   for pixel_integration_time_nsec
     static void handle_integration_change(vrpn_int32 _newval, void *_ud);
     //   for inter_pixel_delay_time_nsec

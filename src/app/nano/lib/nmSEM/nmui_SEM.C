@@ -3,6 +3,7 @@
 #include "tcl.h"
 #include "nmb_Dataset.h"
 #include "nmg_Graphics.h"
+#include <nmui_ColorMap.h>
 
 extern nmb_Dataset * dataset;
 extern nmg_Graphics * graphics;
@@ -28,6 +29,9 @@ nms_SEM_ui::nms_SEM_ui(Tcl_Interp *interp, const char * /*tcl_script_dir*/,
     sem_acquire_image("sem_acquire_image", 0),
     sem_acquire_continuous("sem_acquire_continuous", 1),
     display_texture("sem_display_texture", 0),
+    sem_image_name("sem_cm(color_comes_from)", "none"),
+    sem_colormap("sem_cm(color_map)", "none"),
+    sem_texture_alpha("video_texture_alpha", 1),
     no_graphics_update("sem_no_graphics_update", 0),
     sem_resolution("sem_resolution", 0),
     pixel_integration_time_nsec("sem_pixel_integration_time_nsec", 0),
@@ -40,6 +44,12 @@ nms_SEM_ui::nms_SEM_ui(Tcl_Interp *interp, const char * /*tcl_script_dir*/,
     sem->registerChangeHandler(this, handle_device_change);
     fprintf(stderr, "done creating the sem\n");
     char *display_name;
+
+    
+    CMap = new nmui_ColorMap("sem_cm",
+                            &sem_image_name,
+                            &sem_colormap);
+    CMap->setSurfaceColor(255, 255, 255);
 
     /* Load the Tcl script that handles main interface window */
 /*
@@ -168,6 +178,40 @@ void nms_SEM_ui::handle_texture_display_change(vrpn_int32 _newval,
       }
     }
 
+}
+
+// static
+void nms_SEM_ui::handle_colormap_change(const char* name, void* _ud)
+{
+    nms_SEM_ui *me = (nms_SEM_ui *)_ud;
+
+    nmb_ColorMap* cmap = me->CMap->currentColorMap();
+
+    graphics->setTextureColormapConversionMap(nmg_Graphics::VIDEO, name, NULL);
+
+    me->image_viewer->setColorMap(me->image_window_id, cmap);
+}
+
+// static
+void nms_SEM_ui::handle_colormap_minmax_change(vrpn_float64, void* _ud)
+{
+printf("handle_colormap_minmax_change\n");
+
+    nms_SEM_ui *me = (nms_SEM_ui *)_ud;
+    double dmin,dmax,cmin,cmax;
+
+    me->CMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
+
+    graphics->setTextureColormapSliderRange(nmg_Graphics::VIDEO, dmin, dmax, cmin, cmax);
+
+    me->image_viewer->setColorMinMax(me->image_window_id, dmin, dmax, cmin, cmax);
+}
+
+// static
+void nms_SEM_ui::handle_sem_texture_alpha_change(vrpn_float64 _newval, 
+					       void * /*_ud*/)
+{   
+    graphics->setTextureAlpha(nmg_Graphics::VIDEO, _newval);
 }
 
 // static 
@@ -408,9 +452,11 @@ int nms_SEM_ui::set_tcl_callbacks()
    sem_acquire_image.addCallback(handle_acquire_image, this);
    sem_resolution.addCallback(handle_resolution_change, this);
    display_texture.addCallback(handle_texture_display_change, this);
+   sem_colormap.addCallback(handle_colormap_change, this);
+   sem_texture_alpha.addCallback(handle_sem_texture_alpha_change, this);
    pixel_integration_time_nsec.addCallback(handle_integration_change, this);
    inter_pixel_delay_time_nsec.addCallback(handle_delay_change, this);
-   sem_window_open.addCallback(
-                              handle_window_visibility_change, this);
+   sem_window_open.addCallback(handle_window_visibility_change, this);
+   CMap->addMinMaxCallback(handle_colormap_minmax_change, this);
    return 0;
 }
