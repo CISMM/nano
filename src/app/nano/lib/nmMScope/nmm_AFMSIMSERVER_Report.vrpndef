@@ -39,6 +39,12 @@ VRPN_MESSAGE Trans{
   float32 z
 }
 
+VRPN_MESSAGE Rot {
+  float32 yaw
+  float32 pitch
+  float32 roll
+}
+
 VRPN_MESSAGE Cylinder{
   float32 x
   float32 y

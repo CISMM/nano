@@ -59,6 +59,7 @@ public:
 	bool cylRcv;			//true when cylinders to process
 	bool scaleRcv;
 	bool transRcv;
+	bool rotRcv;
 	Node * head;			//head of list of triangles
 	Node * holder;			//temp Node to hold head of list before deletion without simulator needing 
 							//knowledgeof Node class
@@ -68,11 +69,13 @@ public:
 	double get_y_offset(){return d_ymin;};
     float _scale;
 	float trans_x,trans_y,trans_z;
+	float yaw,pitch,roll;
 
 private:
     RECEIVERS_DECL nmm_AFMSIM_Report;
 	RECEIVERS_DECL nmm_AFMSIMSERVER_Report;
     HANDLERS_DECL ;
+
 
 	int Send( long len, vrpn_int32 msg_type, char * buf );
 							//send data across connection
@@ -88,6 +91,7 @@ private:
 	float d_ymax;
 	float d_zmin;
 	float d_zmax;
+	
 
 };
 //

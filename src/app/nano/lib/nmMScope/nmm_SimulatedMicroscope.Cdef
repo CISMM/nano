@@ -34,7 +34,9 @@ nmm_SimulatedMicroscope(char *name, vrpn_Connection *connection, int scanResolut
 	Remote_toSim_x = 1;
 	Remote_toSim_y = 1;
 	grid_size_rcv = false;
-
+	scaleRcv = false;
+	rotRcv = false;
+	transRcv = false;
 }
 //
 nmm_SimulatedMicroscope::
@@ -183,6 +185,19 @@ RECEIVE_MSG Trans {
 
 }
 
+RECEIVE_MSG Rot {
+//  float32 yaw
+//  float32 pitch
+//  float32 roll
+
+	yaw = (float)yaw;
+	pitch = (float)pitch;
+	roll = (float)roll;
+
+	rotRcv = true;
+
+}
+
 RECEIVE_MSG Triangle {
 //  float32 _1v1
 //  float32 _1v2
@@ -209,6 +224,7 @@ RECEIVE_MSG Triangle {
 	head = temp;//call temp by head
 
 }
+
 
 RECEIVE_MSG Cylinder {
 //	vrpn_float32 x

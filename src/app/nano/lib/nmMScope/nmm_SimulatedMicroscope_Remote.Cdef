@@ -377,10 +377,15 @@ encode_and_sendTrans(vrpn_float32 x, vrpn_float32 y, vrpn_float32 z){
 }
 //
 void nmm_SimulatedMicroscope_Remote::
-encode_and_sendRot(vrpn_float32 q0, vrpn_float32 q1, vrpn_float32 q2, vrpn_float32 q3){
- 
-
-// just a stub for now
+encode_and_sendRot(vrpn_float32 yaw, vrpn_float32 pitch, vrpn_float32 roll){
+//variables for encoding in msgbuf
+  int len = 0;
+  //
+  char * msgbuf = encode_Rot(&len,yaw,pitch,roll);//encode msgbuf
+  int retval = -1;
+  if((retval = Send((long)len, d_Rot_type, msgbuf)) == -1){
+	cout << "problem sending Rotation" << endl;
+  }//send stuff  
 
 }
 //
