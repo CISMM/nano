@@ -3953,10 +3953,9 @@ doWorldGrab(int whichUser, int userEvent)
 			q_copy(oldObject.rotate, obj.GetLocalXform().GetRot());
 			q_vec_copy(oldObject.xlate, obj.GetLocalXform().GetTrans());
 		}
-
-		q_vec_set(oldTexture.xlate, texture_transx, texture_transy, texture_transz);
-		q_from_euler(oldTexture.rotate, texture_rotz, texture_roty, texture_rotx);
 	}
+	q_vec_set(oldTexture.xlate, texture_transx, texture_transy, texture_transz);
+	q_from_euler(oldTexture.rotate, texture_rotz, texture_roty, texture_rotx);
 
 	break;
 
@@ -3981,6 +3980,7 @@ doWorldGrab(int whichUser, int userEvent)
 	if (node != NULL) {
 		URender &obj = node->TGetContents();
 		if (obj.GetGrabObject() == 1) {
+			// Grabbing an object
 			q_type q;
 			q_vec_type v;
 
@@ -4121,6 +4121,32 @@ doWorldGrab(int whichUser, int userEvent)
 		else {
 			updateWorldFromRoom(&temp);
 		}
+	}
+	else if (reg_grab_texture == 1) {
+		// there is no object, so we do not lock or fine tune translations for now...
+		q_type q;
+		q_vec_type v;
+
+		// Get rotation to apply
+		q_invert(q, worldFromHand.rotate);
+		q_mult(q, q, oldWorldFromHand.rotate);
+
+		q_mult(q, oldTexture.rotate, q);
+		
+		// Translate
+		q_vec_subtract(v, oldWorldFromHand.xlate, worldFromHand.xlate);
+		q_vec_add(v, v, oldTexture.xlate);
+
+		// update tcl variables
+		texture_transx = v[0];
+		texture_transy = v[1];
+		texture_transz = v[2];
+
+		q_to_euler(v, q);
+
+		texture_rotx = v[2];
+		texture_roty = v[1];
+		texture_rotz = v[0];
 	}
 	else {
 		updateWorldFromRoom(&temp);

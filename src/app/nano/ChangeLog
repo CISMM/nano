@@ -1,5 +1,10 @@
 2002-06-03 David Borland <borland@cs.unc.edu>
 
+        * interaction.C : fixed a couple of minor bugs with UI for 
+        controlling projective textures with the phantom.
+
+2002-06-03 David Borland <borland@cs.unc.edu>
+
         * interaction.C (doWorldGrab) : code for controlling projective 
 	textures with the phantom.  There are still some problems (they 
 	can only be transformed in object space), but it works okay for 
