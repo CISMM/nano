@@ -40,7 +40,7 @@
  * searching a directory.
  */
 DIR*
-vc_opendir(const char* szPath)
+opendir(const char* szPath)
 {
 	DIR* nd;
 	struct _stat statDir;
@@ -125,7 +125,7 @@ vc_opendir(const char* szPath)
  * next entry in the directory.
  */
 struct dirent *
-vc_readdir( DIR *dirp )
+readdir( DIR *dirp )
 {
 	errno = 0;
 

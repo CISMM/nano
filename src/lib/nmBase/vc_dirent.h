@@ -76,9 +76,13 @@ typedef struct
 	char			dd_name[1];
 } DIR;
 
+#ifdef WIN32
+  #define opendir vc_opendir
+  #define readdir vc_readdir
+#endif
 
-DIR*		vc_opendir (const char* szPath);
-struct dirent*	vc_readdir (DIR* dir);
+DIR*		opendir (const char* szPath);
+struct dirent*	readdir (DIR* dir);
 int		closedir (DIR* dir);
 void		rewinddir (DIR* dir);
 long		telldir (DIR* dir);

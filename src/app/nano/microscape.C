@@ -4382,12 +4382,12 @@ int	loadProcProgNames(void)
 
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
-	if ( (directory = vc_opendir(procImageDir)) == NULL) {
+	if ( (directory = opendir(procImageDir)) == NULL) {
 		display_error_dialog("Couldn't load external filter programs\n"
                                 "from directory named: %s)\n",procImageDir);
 		return -1;
 	}
-	while ( (entry = vc_readdir(directory)) != NULL) {
+	while ( (entry = readdir(directory)) != NULL) {
 	    if (entry->d_name[0] != '.') {
 		procProgNames.addEntry(entry->d_name);
 	    }
@@ -4425,12 +4425,12 @@ int	loadPPMTextures(void)
 
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
-	if ( (directory = vc_opendir(textureDir)) == NULL) {
+	if ( (directory = opendir(textureDir)) == NULL) {
 		display_error_dialog("Could load static textures from\n"
                                      "directory named %s)\n",procImageDir);
 		return -1;
 	}
-	while ( (entry = vc_readdir(directory)) != NULL) {
+	while ( (entry = readdir(directory)) != NULL) {
 	    if (entry->d_name[0] != '.') {
 		textureNames.addEntry(entry->d_name);
 	    }

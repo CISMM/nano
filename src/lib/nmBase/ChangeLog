@@ -1,3 +1,9 @@
+2002-03-22  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* vc_dirent.[c,h]:  changed vc_opendir and vc_readdir back to
+	opendir and readdir, with a preprocessor macro to rename them
+	on the PC.
+
 2002-03-21  Aron Helser  <helser@cs.unc.edu>
 
 	* BCString.Ch: Removed. Replace with <string> std header.
