@@ -1,3 +1,7 @@
+2002-05-20 David Borland <borland@cs.unc.edu>
+
+        * import.tcl : user control for locking translations and rotations
+
 2002-05-16 Jameson Miller <millerj@cs.unc.edu>
 	* Modify.tcl : new button to toggle weather to take data
 	continuosly or not when paused in slow line mode.
