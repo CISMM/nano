@@ -2085,6 +2085,8 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
 	ohmmeterLogFile->reset();
     if (vicurveLogFile)
 	vicurveLogFile->reset();
+    if( keithley2400_ui)
+        keithley2400_ui->reset( );
     if (semLogFile)
         semLogFile->reset();
     rewind_stream = 0;  // necessary
@@ -7351,18 +7353,18 @@ int main (int argc, char* argv[])
       printf("main: attempting to connect to vicurve: %s\n",
 	     istate.vicurve.deviceName);
 #ifdef VRPN_5
-      vicurve_connection = vrpn_get_connection_by_name
-	(istate.vicurve.deviceName,
-	 istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
-	 : (char *) NULL,
-	 istate.vicurve.writingLogFile ? vrpn_LOG_INCOMING
-         : vrpn_LOG_NONE);
+      vicurve_connection = 
+	vrpn_get_connection_by_name( istate.vicurve.deviceName,
+				     istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
+				     : (char *) NULL,
+				     istate.vicurve.writingLogFile ? vrpn_LOG_INCOMING
+				     : vrpn_LOG_NONE);
 #else
-      vicurve_connection = vrpn_get_connection_by_name
-        (istate.vicurve.deviceName,
-         istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
-         : (char *) NULL,
-         NULL);
+      vicurve_connection = 
+	vrpn_get_connection_by_name( istate.vicurve.deviceName,
+				     istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
+				     : (char *) NULL,
+				     NULL);
 #endif
       if (!vicurve_connection) {
 	display_error_dialog( "Couldn't open connection to %s.\n",
@@ -7376,7 +7378,7 @@ int main (int argc, char* argv[])
 	  // But the file name is hidden inside istate.vicurve.deviceName and
 	  // only vrpn_Connection knows how to parse this
 	} else {
-	  // If we are reading a microscope stream file, we DONT want 
+	  // If we are reading a microscope stream file, we DON'T want 
 	  // to connect to a live device - kill connection in this case.
 	  if (istate.afm.readingStreamFile == VRPN_TRUE) {
 	    vicurve_connection = NULL;
@@ -7385,19 +7387,17 @@ int main (int argc, char* argv[])
 	if (vicurve_connection != NULL) {
 	  // If we got to here, we have a connection to vi_curve -
 	  // create the beast.
-	  keithley2400_ui = new nma_Keithley2400_ui(get_the_interpreter(), 
-						    tcl_script_dir, 
-						    "vi_curve@dummyname.com", 
-						    vicurve_connection);
+	  keithley2400_ui = new nma_Keithley2400_ui( get_the_interpreter(), 
+						     tcl_script_dir, 
+						     "vi_curve@dummyname.com", 
+						     vicurve_connection);
 	  // Allow the Keithley to take IV curves when we are doing a
 	  // modification - start when we enter modify mode, and stop
 	  // when we start imaging again.
-	  microscope->registerModifyModeHandler(
-						nma_Keithley2400_ui::EnterModifyMode, 
-						keithley2400_ui);
-	  microscope->registerImageModeHandler(
-					       nma_Keithley2400_ui::EnterImageMode, 
-					       keithley2400_ui);
+	  microscope->registerModifyModeHandler( nma_Keithley2400_ui::EnterModifyMode, 
+						 keithley2400_ui);
+	  microscope->registerImageModeHandler( nma_Keithley2400_ui::EnterImageMode, 
+					        keithley2400_ui);
 	} else {
 	  keithley2400_ui = NULL;
 	}

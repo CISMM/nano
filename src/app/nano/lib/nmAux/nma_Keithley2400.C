@@ -42,7 +42,6 @@ nma_Keithley2400::nma_Keithley2400(const char *name, vrpn_Connection *c) :
 
 	result_change_list(NULL),
 	error_change_list(NULL)
-
 {
   if ( !d_connection ) {
     fprintf(stderr, "No live connection to %s.\n", name );
@@ -74,6 +73,14 @@ int nma_Keithley2400::mainloop (const struct timeval * timeout ) {
 
   return 0;
 }
+
+
+bool nma_Keithley2400::isReadingStreamFile( )
+{
+  return ( d_connection->get_File_Connection() != NULL );
+}
+
+
 
 int nma_Keithley2400::send_AllSettings() {
     	if (send_OutputOff()) {

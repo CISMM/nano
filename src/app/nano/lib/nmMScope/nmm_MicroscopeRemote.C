@@ -1360,6 +1360,7 @@ int nmm_Microscope_Remote::getTimeSinceConnected(void) {
 
   timeval elapsedTime;
 
+  if( !d_connection ) return 0; // we're not really connected
   switch (ReadMode()) {
     case READ_DEVICE:
       d_connection->time_since_connection_open(&elapsedTime);

@@ -1,3 +1,19 @@
+2001-11-09    <marshbur@TUNGSTEN-CS>
+
+	* nma_Keithley2400_ui.[h,C]: formatting
+	(reset): new function, used when reading stream file
+	* nma_Keithley2400_ui.C (nma_Keithley2400_ui): turn on the
+	tcl stream-only controls if we're reading a stream file
+	* nma_Keithley2400.[h,C]:  formatting
+	(isReadingStreamFile): new function
+	
+
+2001-11-07    <marshbur@TUNGSTEN-CS>
+
+	* nma_Keithley2400_ui.C (nma_Keithley2400_ui): fixed the call 
+	to Tcl_Eval so that the Keithley tcl file is found even if
+	the path to it has spaces.
+
 2001-06-25  Shayne O'Neill  <oneill@tbone.cs.unc.edu>
 
 	* ohmmeter.c:  Added functions:
