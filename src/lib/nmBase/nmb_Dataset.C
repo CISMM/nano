@@ -987,12 +987,15 @@ void nmb_Dataset::updateSumOnPlaneChange (BCPlane *, int x, int y,
                             data->second_plane->value(x, y) * data->scale);
 }
 
-void nmb_Dataset::updateLBLFlattenOnPlaneChange (BCPlane *, int y,
+void nmb_Dataset::updateLBLFlattenOnPlaneChange (BCPlane *, int x, int y,
 						 void * userdata) {
   lblflatten_data * data = (lblflatten_data *) userdata;
   float avgVal = 0;
   float diff;
   int i;
+
+  // this is to force this function only to do stuff once per line
+  if (x != data->from_plane->numX()-1) return;
 
   for (i = 0; i < data->from_plane->numX(); i++) {
 	avgVal += data->from_plane->value(i, y);

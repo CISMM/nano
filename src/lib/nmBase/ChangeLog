@@ -1,3 +1,9 @@
+2001-04-19  Adam Seeger  <seeger@cs.unc.edu>
+
+	* BCPlane.Ch - took out changes from yesterday to reduce complexity
+	* nmb_Dataset.Ch (computeLBLFlattenedPlane): changed this so
+	it does nothing until it sees the last point in a line
+
 2001-04-18  Adam Seeger  <seeger@cs.unc.edu>
 
 	(oops, my last change would have messed up how the regular plane

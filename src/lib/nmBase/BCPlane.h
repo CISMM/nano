@@ -17,7 +17,6 @@ const double DEFAULT_MAX_ATTAINABLE_VALUE = 10;
 const int BCPLANE_OPTIMIZE_LINE = 0;
 const int BCPLANE_OPTIMIZE_AREA = 1;
 
-#include <vrpn_Types.h>
 #include "BCGrid.h"
 
 
@@ -27,7 +26,6 @@ const	int	MAX_PLANE_CALLBACKS = 32;
  all points may have changed (or the scale changed or something).
 */
 typedef	void	(*Plane_Valuecall)(BCPlane *plane, int x,int y, void *userdata);
-typedef void    (*Plane_Linecall)(BCPlane *plane, int y, void *userdata);
 
 class BCPlane
 {      
@@ -108,8 +106,7 @@ class BCPlane
 	return value(x,y) * (double) _scale;
     }
 
-    virtual void setValue(int x, int y, float value,
-                          vrpn_bool notifyLineCallbacks = vrpn_TRUE);
+    virtual void setValue(int x, int y, float value);
 
     inline double xInWorld(int x, double scale = 1.0) const {
 	return scale*( minX() + (maxX()-minX()) * ((double)x/(numX()-1)) );
@@ -136,8 +133,6 @@ class BCPlane
 	changes.  Return 0 on success and -1 on failure. */
     int add_callback(Plane_Valuecall cb, void *userdata);
     int remove_callback(Plane_Valuecall cb, void *userdata);
-    int add_callback(Plane_Linecall cb, void *userdata);
-    int remove_callback(Plane_Linecall cb, void *userdata);
 
     friend ostream& operator << (ostream& os, BCPlane* plane);
     friend ostream& operator << (ostream& os, BCGrid* grid); // in BCGrid.C
@@ -228,15 +223,9 @@ class BCPlane
     struct {
 	Plane_Valuecall callback;	///< Callback function to call
 	void		*userdata;	///< Value to pass as userdata
-    } _pointwise_callbacks[MAX_PLANE_CALLBACKS];
-    struct {
-        Plane_Linecall callback;    
-        void            *userdata;
-    } _linewise_callbacks[MAX_PLANE_CALLBACKS];
-    int _num_pointwise_callbacks;   ///< How many callbacks are registered?
-    int _num_linewise_callbacks;
+    } _callbacks[MAX_PLANE_CALLBACKS];
+    int _numcallbacks;          ///< How many callbacks are registered?
     int lookup_callback(Plane_Valuecall cb, void *userdata);
-    int lookup_callback(Plane_Linecall cb, void *userdata);
 };
 
 

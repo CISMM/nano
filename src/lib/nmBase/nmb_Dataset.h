@@ -176,7 +176,7 @@ class nmb_Dataset {
                                             void * userdata);
     static void updateSumOnPlaneChange (BCPlane *, int x, int y,
                                         void * userdata);
-    static void updateLBLFlattenOnPlaneChange (BCPlane *, int y,
+    static void updateLBLFlattenOnPlaneChange (BCPlane *, int x, int y,
 					       void * userdata);
 
 
