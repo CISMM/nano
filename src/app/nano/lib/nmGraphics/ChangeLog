@@ -1,5 +1,12 @@
 2000-08-11  Jeffrey Juliano  <juliano@cs.unc.edu>
 
+	* export_scene.C (build_mesh): Add xform to arg list.  Use xform.
+	(build_viewport_from_nano): Remove incorrect q_normalize.
+	(compute_view_xform, get_view_xform, export_scene_to_openNURBS):
+	Incorporate scale.
+
+2000-08-11  Jeffrey Juliano  <juliano@cs.unc.edu>
+
 	* export_scene.C (get_corners_from_file, compute_view_xform):
 	New functions.
 	(get_view_xform): Change parameter list. Move a lot of stuff to

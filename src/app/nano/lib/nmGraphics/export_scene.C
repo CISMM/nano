@@ -1,3 +1,8 @@
+
+/* Note, quat lib's q_mult (q_dest, q_left, q_right) creates a new quat that,
+ * when applied to a vec, first rotates by q_left, then by q_right.
+ */
+
 //#include <vector>
 
 #include <rhinoio.h>
@@ -18,8 +23,7 @@
     I've extracted the code from v_gl_calculate_view_matrices, and used it
     almost as-is to write this function.  It could probably go into vlib, but
     I don't want to be involved with actually changing vlib, so I'll just
-    leave it here.
-*/
+    leave it here.  */
 static
 void my_v_gl_calculate_inverse_view_xform(
     int whichUser,
@@ -39,13 +43,20 @@ double next_power_of_2 (double arg)
 }
 
 
-/** Builds the CRhinoMesh object
+/** Build the CRhinoMesh object.
+ *
+ * Xform the surface over GRID defined by PLANE_SELECTION.height and save it
+ * in OUT_MESH.  Xform the GRID by XF_SCALE, then by XF_ROT, then add
+ * XF_XLATE.
  */
 static
 void build_mesh (
-    CRhinoMesh & mesh,
-    const BCGrid * const grid,
-    const nmb_PlaneSelection & plane_selection)
+    CRhinoMesh &               out_mesh,
+    const BCGrid * const       grid,
+    const nmb_PlaneSelection & plane_selection,
+    q_type                     xf_rot,
+    q_vec_type                 xf_xlate,
+    const double               xf_scale)
 {
     // Number of gridpoints and faces in each axial direction
     const int num_X = grid->numX();
@@ -87,7 +98,6 @@ void build_mesh (
     CRhinoColor shiny (g_shiny, g_shiny, g_shiny);
     CRhinoColor dark (0,0,0);
     CRhinoColor white (255, 255, 255);
-    //CRhinoColor min_color (g_minColor[0], g_minColor[1], g_minColor[2]);
 
     // Create a material
     CRhinoMaterial material;
@@ -101,16 +111,16 @@ void build_mesh (
     material.SetRenderMaterialName ("nano_surface");  // shader name
     
     // Configure the non-geometry components
-    mesh.SetLabel ("height_data");
-    mesh.SetMaterial (material);
-    mesh.SetWireColor (white);
+    out_mesh.SetLabel ("height_data");
+    out_mesh.SetMaterial (material);
+    out_mesh.SetWireColor (white);
     
     // Must set these before filling in the vertex/face/norma/texcoord arrays
-    mesh.SetVertexCount (num_X * num_Y);
+    out_mesh.SetVertexCount (num_X * num_Y);
     
-    mesh.SetFaceCount (num_faces_X * num_faces_Y);
-    mesh.SetNormalsExist (true);
-    mesh.SetTCoordsExist (true);
+    out_mesh.SetFaceCount (num_faces_X * num_faces_Y);
+    out_mesh.SetNormalsExist (true);
+    out_mesh.SetTCoordsExist (true);
     
     // Valid texture coordinates are
     //     (u,v), st. (0 <= u < 1)  AND  0 <= v < 1)
@@ -135,7 +145,7 @@ void build_mesh (
         high_right[0] = num_X - 1;
         high_right[1] = num_Y - 1;
         
-        mesh.SetTextureDomain (low_left, high_right);
+        out_mesh.SetTextureDomain (low_left, high_right);
     }
     
 
@@ -144,29 +154,36 @@ void build_mesh (
     {
         for (int vx=0;  (vx < num_X);  ++vx)
         {
-            bool result =
-                mesh.SetVertex (vertex_number,
-                                min_X + (vx * width_X),
-                                min_Y + (vy * width_Y),
-                                height_scalar_field->scaledValue (vx, vy));
+            double vert[3];
+            vert[0] = xf_scale * (min_X + (vx * width_X));
+            vert[1] = xf_scale * (min_Y + (vy * width_Y));
+            vert[2] = xf_scale * (height_scalar_field->scaledValue (vx, vy));
+            
+            q_xform (vert, xf_rot, vert);
+            q_vec_add (vert, xf_xlate, vert);
 
+            bool result = out_mesh.SetVertex (vertex_number,
+                                              vert[0], vert[1], vert[2]);
             if (false == result) {
                 cout << "error setting vertex #" << vertex_number << endl;
             }
 
-            GLfloat normal[3];
+            GLfloat nano_normal[3];
             vrml_compute_plane_normal (height_scalar_field, vx, vy,
-                                       width_X, width_Y, 1.0, normal);
-            
-            result = mesh.SetNormal (vertex_number,
-                                     normal[0], normal[1], normal[2]);
-            
+                                       width_X, width_Y, 1.0, nano_normal);
+
+            double normal[3];
+            q_set_vec (normal, nano_normal[0], nano_normal[1], nano_normal[2]);
+            q_xform (normal, xf_rot, normal);
+            q_vec_normalize (normal, normal);
+            result = out_mesh.SetNormal (vertex_number,
+                                         normal[0], normal[1], normal[2]);
             if (false == result) {
                 cout << "error setting normal for vertex #"
                      << vertex_number << endl;
             }
 
-            result = mesh.SetTCoord (vertex_number, vx, vy);
+            result = out_mesh.SetTCoord (vertex_number, vx, vy);
             if (false == result) {
                 cout << "error setting texture coordinate for vertex #"
                      << vertex_number << endl;
@@ -202,8 +219,8 @@ void build_mesh (
             // compiler should be able to carry this for us, anyway. (I think)
             const int v0 = fx + (fy*num_X);
 
-            mesh.SetFace (face_number,
-                          v0, v0+1, v0+num_X+1, v0+num_X);
+            out_mesh.SetFace (face_number,
+                              v0, v0+1, v0+num_X+1, v0+num_X);
 
             ++face_number;
         }
@@ -212,12 +229,14 @@ void build_mesh (
 
 
 
-/** Builds the CRhinoViewport object.
+/** Builds the CRhinoViewport object.  The viewport matches the one currently
+ * being used in nano, as much as possible.  Rhino viewport objects don't
+ * currently support non-square frustums.
  */
 static
-void build_viewport (CRhinoViewport & out_v,
-                     const v_viewport_type & viewport,
-                     const int viewport_num)
+void build_viewport_from_nano (CRhinoViewport &        out_v,
+                               const v_viewport_type & viewport,
+                               const int               viewport_num)
 {
     /////////
     // Set the viewport name
@@ -260,7 +279,6 @@ void build_viewport (CRhinoViewport & out_v,
         v_x_xform_vector (camera_location, &xform_World_from_LeftEye, origin);
 
         v_x_xform_vector (camera_direction, &xform_World_from_LeftEye, neg_z);
-        q_normalize (camera_direction, camera_direction);
 
         // I'm making the assumption that these need to be specified in world
         // coordinates.  Also making assumptions for up.
@@ -357,8 +375,6 @@ void build_viewport (CRhinoViewport & out_v,
     */
     /////////
 }
-
-
 
 
 struct QuadCorners {
@@ -461,19 +477,15 @@ bool set_quad_corner (QuadCorners &qc, const CRhinoPointSet & p)
 
     if (! strcmp ("bottom-left", label)) {
         vec = & (qc.bottom_left);
-        cout << "setting corner bottom-left" << endl;
     }
     else if (! strcmp ("bottom-right", label)) {
         vec = & (qc.bottom_right);
-        cout << "setting corner bottom-right" << endl;
     }
     else if (! strcmp ("top-left", label)) {
         vec = & (qc.top_left);
-        cout << "setting corner top-left" << endl;
     }
     else if (! strcmp ("top-right", label)) {
         vec = & (qc.top_right);
-        cout << "setting corner top-right" << endl;
     }
 
     if (! vec) {
@@ -529,12 +541,6 @@ bool get_corners_from_file (
         }
 
         // We care!  Now, extract the points defining the corners
-        
-        cout << "\t\"" << pObj->Label() << "\""
-             << " from layer \"" << pObj->Layer()->Name() << "\""
-             << " (" << pObj->ClassName() << ")"
-             << endl;
-        
         CRhinoPointSet *pPoint = dynamic_cast<CRhinoPointSet*>(pObj);
         if (! pPoint) {
             cerr << "\tError casting point object to point class" << endl;
@@ -605,6 +611,7 @@ bool get_corners_from_file (
  *     point_in_model = xf.apply (point_in_grid)
  */
 static void compute_view_xform (
+    double &       out_scale,
     q_type         out_quat,
     q_vec_type     out_xlate,
     const BCGrid & grid,
@@ -612,7 +619,7 @@ static void compute_view_xform (
 {
     const int numX = grid.numX();
     const int numY = grid.numY();
-    const int * which_num = 0;
+    const int * which_num = &numX;
     
     if (numX != numY) {
         cout << "grid has different size in X and Y directions.  Using num";
@@ -626,15 +633,13 @@ static void compute_view_xform (
         }
         cout << endl;
     }
-    const int scale_factor = *which_num;
+
+    // Scale to unit square.
+    out_scale = 1.0 / double(*which_num);
     
-    q_matrix_type scale_model_from_dataset;
-    for (int i=0; i<3; ++i) {
-        for (int j=0; j<3; ++j) {
-            scale_model_from_dataset [i] [j] = 0;
-        }
-        scale_model_from_dataset [i] [i] = scale_factor;
-    }
+    //
+    // build the rotation matrix
+    //
 
     q_vec_type model_X;
     q_vec_subtract (model_X,
@@ -649,10 +654,8 @@ static void compute_view_xform (
     q_vec_type model_Z;
     q_vec_cross_product (model_Z, model_X, model_Y);
     q_vec_normalize     (model_Z, model_Z);
-    q_vec_scale         (model_Z,
-                         q_vec_magnitude (model_X),
-                         model_Z);
-    //< NB: this does strange thing if X and Y are different sizes.
+    q_vec_scale         (model_Z, double (*which_num), model_Z);
+    //< NB: this may stretch in Z direction if X and Y are different lengths.
     
     q_matrix_type changeBasisMatrix_model_from_dataset;
     for (int row=0; row < 3; ++row) {
@@ -661,17 +664,20 @@ static void compute_view_xform (
         changeBasisMatrix_model_from_dataset [row] [2] = model_Z [row];
 
         // clear both the last column and the last row
-        changeBasisMatrix_model_from_dataset [row] [3] = 0.;
-        changeBasisMatrix_model_from_dataset [3] [row] = 0.;
+        changeBasisMatrix_model_from_dataset [row] [3] = 0.0;
+        changeBasisMatrix_model_from_dataset [3] [row] = 0.0;
     }
     // one more cell to clear
-    changeBasisMatrix_model_from_dataset [3] [3] = 0.;
-    
-    out_xlate [0] = model_in_rhino_frame.bottom_left [0];
-    out_xlate [1] = model_in_rhino_frame.bottom_left [1];
-    out_xlate [2] = model_in_rhino_frame.bottom_left [2];
+    changeBasisMatrix_model_from_dataset [3] [3] = 1.0;
+
+    // out_scale alredy set
+    q_set_vec (out_xlate,
+               model_in_rhino_frame.bottom_left [0],
+               model_in_rhino_frame.bottom_left [1],
+               model_in_rhino_frame.bottom_left [2]);
     q_from_row_matrix (out_quat,
                        changeBasisMatrix_model_from_dataset);
+    //q_normalize (out_quat, out_quat);
 }
 
 
@@ -685,9 +691,13 @@ static void compute_view_xform (
  *
  *  GRID is needed to do proper scaling.  The xform that is returned has a
  *  scale component that is dependant on the grid size.
+ *
+ *  If an error occurs reading the file, then the out parameters are left
+ *  unchanged.
  */
 static
 void get_view_xform (
+    double &       out_scale,
     q_type         out_quat,
     q_vec_type     out_xlate,
     const char *   filename,
@@ -727,7 +737,8 @@ void get_view_xform (
     cout << "...done reading reference points\n";
     cout << "This is what I read:\n" << model_in_rhino_frame << endl;
 
-    compute_view_xform (out_quat, out_xlate, grid, model_in_rhino_frame);
+    compute_view_xform (out_scale, out_quat, out_xlate,
+                        grid, model_in_rhino_frame);
 }
 
 
@@ -745,9 +756,36 @@ void export_scene_to_openNURBS (
     // Build all the objects before opening the file
     //
 
+    double xf_scale = 0.0;
+
+    q_type xf_quat;
+    q_make (xf_quat, 0, 0, 1, 0);
+
+    q_vec_type xf_xlate;
+    q_set_vec (xf_xlate, 0, 0, 0);
+
+    get_view_xform (xf_scale, xf_quat, xf_xlate, "nanodesk-2.3dm", *grid);
+
+#if 0
+    // DEBUG: zero the rot and xlate
+    
+    q_type rot_about_z;
+    q_make (rot_about_z, 0, 0, 1, -3.14/2.0);
+    
+    q_type rot_about_x;
+    q_make (rot_about_x, 1, 0, 0, -3.14/2.0);
+
+    q_mult (xf_quat, rot_about_z, rot_about_x);
+    q_normalize (xf_quat, xf_quat);
+
+    q_make (xf_quat, 0, 0, 1, 0);
+#endif
+
+    q_set_vec (xf_xlate, 0, 0, 0);
+
     // We use a CRhinoMesh object to store the height field
     CRhinoMesh my_mesh;
-    build_mesh (my_mesh, grid, plane_selection);
+    build_mesh (my_mesh, grid, plane_selection, xf_quat, xf_xlate, xf_scale);
 
     // We store the viewports into CRhinoViewport objects
     // Let's find out how many viewports there are, among all users
@@ -762,14 +800,9 @@ void export_scene_to_openNURBS (
     CRhinoViewport * my_viewports = new CRhinoViewport [total_num_viewports];
     for (int vn=0;  vn < total_num_viewports;  ++vn) {
         const v_viewport_type & v = display.viewports [vn];
-        build_viewport (my_viewports[vn], v, vn);
+        build_viewport_from_nano (my_viewports[vn], v, vn);
     }
     
-    q_type     quat;
-    q_vec_type vec;
-    
-    get_view_xform (quat, vec, "nanodesk-2.3dm", *grid);
-
     /////////
     // Now, finally, open the file and write to it
     //
