@@ -604,7 +604,7 @@ void nmui_HSFeelAhead::sendForceUpdate (vrpn_ForceDevice_Remote * d) {
 
 void nmui_HSFeelAhead::updateModel (void) {
   Point_list * l;
-  const Point_results * p;
+  const Point_results * p, * p0, * p1, * p2;
   vrpn_int32 xside, yside, start;
   vrpn_int32 i, j, k;
 
@@ -612,8 +612,12 @@ void nmui_HSFeelAhead::updateModel (void) {
     // TODO
     // Mark this update as pending and submit it in update()/sendForceUpdate()
     // once we have all the data we need.
+//fprintf(stderr, "Feelahead has ms %d, dev %d so deferring.\n",
+//d_microscope, d_device);
     return;
   }
+
+//fprintf(stderr, "FA updateModel\n");
 
   // Send a trimesh up to the Phantom
   // For now hackishly assumes we've got a sample grid.
@@ -623,7 +627,21 @@ void nmui_HSFeelAhead::updateModel (void) {
 
   // Send the vertices
 
+  // BUG
+  // Besides the fact that these things are all coming through with
+  // a z of -1, this is in nano coordinates - we need to translate into
+  // Phantom coordinates (?)
+
   l = &d_microscope->state.data.receivedPointList;
+  xside = d_microscope->state.data.receivedAlgorithm.numx;
+  yside = d_microscope->state.data.receivedAlgorithm.numy;
+
+  if (l->numEntries() != xside * yside) {
+    fprintf(stderr, "nmui_HSFeelAhead::updateModel():  "
+                    "Didn't get enough data from microscope\n"
+                    "to reconstruct surface.\n");
+    return;
+  }
   for (i = 0; i < l->numEntries(); i++) {
     p = l->entry(i);
     d_device->setVertex(i, p->x(), p->y(), p->z());
@@ -634,8 +652,6 @@ void nmui_HSFeelAhead::updateModel (void) {
   // or any other space.
 
   //side = sqrt(l->numEntries());
-  xside = d_microscope->state.data.receivedAlgorithm.numx;
-  yside = d_microscope->state.data.receivedAlgorithm.numy;
 
   // Triangulate.
   // 0 - 1 - 2 - 3 - 4
@@ -656,6 +672,12 @@ void nmui_HSFeelAhead::updateModel (void) {
       d_device->setTriangle(k++, start + j, start + j + 1, start + j + xside);
       d_device->setTriangle(k++, start + j + 1, start + j + xside + 1,
                             start + j + xside);
+//p0 = l->entry(start + j);
+//p1 = l->entry(start + j + 1);
+//p2 = l->entry(start + j + xside);
+//fprintf(stderr, "    <%.2f %.2f %.2f> <%.2f %.2f %.2f> <%.2f %.2f %.2f>\n",
+//p0->x(), p0->y(), p0->z(), p1->x(), p1->y(), p1->z(),
+//p2->x(), p2->y(), p2->z());
     }
   }
 
