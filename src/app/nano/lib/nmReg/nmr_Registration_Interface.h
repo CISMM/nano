@@ -5,6 +5,7 @@
 #include <vrpn_Types.h>
 
 #define NMR_MAX_RESOLUTION_LEVELS (32)
+#define NMR_MAX_FIDUCIAL (32)
 
 /**
    design:
@@ -47,6 +48,7 @@ class nmr_Registration_Interface {
     vrpn_int32 d_SetIterationLimit_type;
     vrpn_int32 d_SetStepSize_type;
     vrpn_int32 d_SetCurrentResolution_type;
+    vrpn_int32 d_EnableAutoUpdate_type;
     vrpn_int32 d_AutoAlign_type;
     vrpn_int32 d_EnableGUI_type;
     vrpn_int32 d_Fiducial_type;
@@ -100,6 +102,10 @@ class nmr_Registration_Interface {
            vrpn_int32 resolutionLevel);
     static vrpn_int32 decode_SetCurrentResolution (const char **buf,
            vrpn_int32 *resolutionLevel); 
+    static char * encode_EnableAutoUpdate (vrpn_int32 *len,
+           vrpn_int32 enable);
+    static vrpn_int32 decode_EnableAutoUpdate (const char **buf,
+           vrpn_int32 *enable);
     static char * encode_AutoAlign (vrpn_int32 *len,
            vrpn_int32 mode);
     static vrpn_int32 decode_AutoAlign (const char **buf,
@@ -108,12 +114,6 @@ class nmr_Registration_Interface {
            vrpn_int32 enable);
     static vrpn_int32 decode_EnableGUI (const char **buf,
            vrpn_int32 *enable);
-    static char * encode_Fiducial (vrpn_int32 *len,
-           vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
-           vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt);
-    static vrpn_int32 decode_Fiducial (const char **buf,
-           vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
-           vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
 
     // server-->client
     static char * encode_ImageParameters (vrpn_int32 *len,
@@ -134,6 +134,16 @@ class nmr_Registration_Interface {
                            vrpn_int32 whichTransform, vrpn_float64 *matrix44);
     static vrpn_int32 decode_RegistrationResult (const char **buf,
                            vrpn_int32 *whichTransform, vrpn_float64 *matrix44);
+
+    // both
+    static char * encode_Fiducial (vrpn_int32 *len,
+           vrpn_int32 replace, vrpn_int32 num,
+           vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+           vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
+    static vrpn_int32 decode_Fiducial (const char **buf,
+           vrpn_int32 *replace, vrpn_int32 *num,
+           vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+           vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
 };
 
 /// represents what role an image plays in the transformation
@@ -175,7 +185,9 @@ enum nmr_AutoAlignMode {NMR_AUTOALIGN_FROM_MANUAL, NMR_AUTOALIGN_FROM_DEFAULT,
 
 enum nmr_TransformationType {NMR_TRANSLATION, NMR_TRANSLATION_ROTATION_SCALE,
                 NMR_ROTATION, NMR_SCALE, 
-                NMR_2D2D_AFFINE, NMR_2D2D_PERSPECTIVE, NMR_3D2D};
+                NMR_2D2D_AFFINE, NMR_2D2D_PERSPECTIVE, NMR_3D2D,
+                NMR_3D3D_AFFINE, NMR_2D2D_AFFINE_Z_TRANSLATE,
+                NMR_2D2D_AFFINE_Z_UNIFORMSCALING_Z_TRANSLATE};
 
 /// these represent types of updates you can expect from the registration
 /// server
@@ -191,6 +203,7 @@ enum nmr_MessageType {
      NMR_SET_ITERATION_LIMIT,
      NMR_SET_STEPSIZE,
      NMR_SET_CURRENT_RESOLUTION,
+     NMR_ENABLE_AUTOUPDATE,
      NMR_AUTOALIGN,
      NMR_ENABLE_GUI,
      NMR_TRANSFORM_PARAM

@@ -10,7 +10,7 @@ float nmr_MultiResObjectiveMI_direct::s_defaultStdDev[] =
               {0.0, 0.5, 1.0, 2.0, 3.0, 4.0, 8.0};
 
 #ifndef M_PI
-#define M_PI 3.14159265358979323846
+static double M_PI = 3.14159265358979323846;
 #endif
 
 nmr_MultiResObjectiveMI_direct::nmr_MultiResObjectiveMI_direct()

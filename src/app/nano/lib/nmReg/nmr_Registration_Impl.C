@@ -12,7 +12,7 @@
 
 // M_PI not defined for VC++, for some reason.
 #ifndef M_PI
-#define M_PI        3.14159265358979323846
+static double M_PI = 3.14159265358979323846;
 #endif
 
 nmr_Registration_Impl::nmr_Registration_Impl(nmr_Registration_Server *server):
@@ -34,7 +34,7 @@ nmr_Registration_Impl::nmr_Registration_Impl(nmr_Registration_Server *server):
   d_alignerUI = new nmr_Registration_ImplUI();
   d_alignerUI->registerCorrespondenceHandler(handle_CorrespondenceChange,
                                              (void *) this);
-
+  d_autoUpdateAlignment = vrpn_FALSE;
 }
 
 nmr_Registration_Impl::~nmr_Registration_Impl()
@@ -66,7 +66,10 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
   vrpn_bool flip_x, flip_y;
   vrpn_int32 row, length;
   vrpn_float32 *data;
-  vrpn_float32 x_src, y_src, z_src, x_tgt, y_tgt, z_tgt;
+  vrpn_int32 replace, numFiducial;
+  vrpn_float32 x_src[NMR_MAX_FIDUCIAL], y_src[NMR_MAX_FIDUCIAL], 
+         z_src[NMR_MAX_FIDUCIAL], x_tgt[NMR_MAX_FIDUCIAL], 
+         y_tgt[NMR_MAX_FIDUCIAL], z_tgt[NMR_MAX_FIDUCIAL];
   vrpn_int32 mode;
   vrpn_bool enabled;
 
@@ -100,9 +103,15 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
       me->setScanline(whichImage, row, length, data);
       break;
     case NMR_FIDUCIAL:
-      info.aligner->getFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
+      info.aligner->getFiducial(replace, numFiducial, 
+                                x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
       // x and y are in range 0..1, z is in nm
-      me->setFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
+      me->setFiducial(replace, numFiducial,
+                      x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
+      break;
+    case NMR_ENABLE_AUTOUPDATE:
+      info.aligner->getAutoUpdateEnable(enabled);
+      me->enableAutoUpdate(enabled);
       break;
     case NMR_AUTOALIGN:
       info.aligner->getAutoAlign(mode);
@@ -174,6 +183,12 @@ int nmr_Registration_Impl::setStepSize(vrpn_float32 stepSize)
 int nmr_Registration_Impl::setCurrentResolution(vrpn_int32 resolutionIndex)
 {
   d_resolutionIndex = resolutionIndex;
+  return 0;
+}
+
+int nmr_Registration_Impl::enableAutoUpdate(vrpn_bool enable)
+{
+  d_autoUpdateAlignment = enable;
   return 0;
 }
 
@@ -302,11 +317,12 @@ int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
 }
 
 // x and y are in range 0..1, z is in nm
-int nmr_Registration_Impl::setFiducial(
-		vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
-                vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
+int nmr_Registration_Impl::setFiducial(vrpn_int32 replace, vrpn_int32 num,
+		vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+                vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
 {
-    d_alignerUI->setFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
+    d_alignerUI->setFiducial(replace, num,
+                  x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
     return 0;
 }
 
@@ -522,11 +538,14 @@ void nmr_Registration_Impl::sendResult(int whichTransform,
 void nmr_Registration_Impl::handle_CorrespondenceChange(Correspondence &c,
                                                           void *ud)
 {
-  double xform_matrix[16];
   nmr_Registration_Impl *me = (nmr_Registration_Impl *)ud;
-  if (me->registerImagesFromPointCorrespondenceAssumingDefaultRotation() == 0) {
-    me->d_manualAlignmentResult.getMatrix(xform_matrix);
-    me->sendResult(NMR_MANUAL, xform_matrix);
+  if (me->d_autoUpdateAlignment) {
+    double xform_matrix[16];
+    if (me->registerImagesFromPointCorrespondenceAssumingDefaultRotation()
+         == 0) {
+      me->d_manualAlignmentResult.getMatrix(xform_matrix);
+      me->sendResult(NMR_MANUAL, xform_matrix);
+    }
   }
 }
 
@@ -803,40 +822,4 @@ int nmr_Registration_Impl::adjustTransformFromRotatedCorrespondence(
   xform.setShear(NMB_Z, shearZ);
 
   return 0;
-}
-
-// a couple utility functions to let us express things in terms of the 
-// transformed z axis R([0,0,1]) = [vx, vy, vz]
-void nmr_Registration_Impl::convertRxRzToViewingDirection(double Rx, double Rz,
-                         double &vx, double &vy, double &vz)
-{
-	/*
-  vx = cos(Rx)*sin(Ry);
-  vy = -sin(Rx);
-  vz = cos(Rx)*cos(Ry);
-  */
-}
-
-void nmr_Registration_Impl::convertViewingDirectionToRxRz(
-                                       double vx, double vy, double vz,
-                                       double &Rx, double &Rz)
-{
-	/*
-  double inv_mag = 1.0/sqrt(vx*vx + vy*vy + vz*vz);
-  double vxn = vx*inv_mag, vyn = vy*inv_mag, vzn = vz*inv_mag;
-  double inv_cos_Rx, sin_Ry, cos_Ry;
-  Rx = asin(-vyn);
-  // Rx could also be M_PI - Rx but I think it doesn't matter
-  if (fabs(vyn) < 1) {
-    inv_cos_Rx = 1.0/cos(Rx);
-    sin_Ry = vxn*inv_cos_Rx;
-    cos_Ry = vzn*inv_cos_Rx;
-    Ry = asin(sin_Ry);
-    if (cos_Ry < 0) {
-      Ry = M_PI - Ry;
-    }
-  } else {
-    Ry = 0.0;
-  }
-  */
 }

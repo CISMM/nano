@@ -1,3 +1,6 @@
+#ifndef TRANSFORMSOLVE_H
+#define TRANSFORMSOLVE_H
+
 #include "correspondence.h"
 
 #include <nmb_Types.h>       // for vrpn_bool
@@ -14,4 +17,6 @@ int numPointConstraintsToSpecify(nmr_TransformationType type);
 // that maps points in im0 to points in im1 with minimal error in the
 // specified corresondence.
 int transformSolver(double *xform_matrix, double *error,
-        Correspondence &c, int im0, int im1, nmr_TransformationType type);
+        const Correspondence &c, int im0, int im1, nmr_TransformationType type);
+
+#endif

@@ -12,7 +12,7 @@ float nmr_MultiResObjectiveMI_EMMA::s_defaultStdDev[] =
 const int defaultSampleSize = 64;
 
 #ifndef M_PI
-#define M_PI 3.14159265358979323846
+static double M_PI = 3.14159265358979323846;
 #endif
 
 nmr_MultiResObjectiveMI_EMMA::nmr_MultiResObjectiveMI_EMMA()

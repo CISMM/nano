@@ -39,8 +39,10 @@ class nmr_Registration_Server : public nmb_Device_Server,
     int setTransformationOptions(nmr_TransformationType type);
     int setTransformationParameters(vrpn_float32 *parameters);
     int setGUIEnable(vrpn_bool enable);
-    int setFiducial(vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
-                    vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt);
+    int setFiducial(vrpn_int32 replace, vrpn_int32 num,
+               vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+               vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
+    int enableAutoUpdate(vrpn_bool enable);
 
     // for auto-alignment
     int setResolutions(vrpn_int32 numLevels, vrpn_float32 *stddev);
@@ -70,9 +72,12 @@ class nmr_Registration_Server : public nmb_Device_Server,
     void getScanline(nmr_ImageType &whichImage,
                            vrpn_int32 &row, vrpn_int32 &length,
                            vrpn_float32 **data);
-    void getFiducial(vrpn_float32 &x_src, vrpn_float32 &y_src, 
-                     vrpn_float32 &z_src, vrpn_float32 &x_tgt,
-                     vrpn_float32 &y_tgt, vrpn_float32 &z_tgt);
+    void getFiducial(vrpn_int32 &replace, vrpn_int32 &num,
+                     vrpn_float32 *x_src, vrpn_float32 *y_src, 
+                     vrpn_float32 *z_src, vrpn_float32 *x_tgt,
+                     vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
+    void getAutoUpdateEnable(vrpn_bool &enabled);
+
     // for auto-alignment
     void getResolutions(vrpn_int32 &numLevels, vrpn_float32 *stddev);
     void getIterationLimit(vrpn_int32 &maxIterations);
@@ -91,6 +96,7 @@ class nmr_Registration_Server : public nmb_Device_Server,
     static int RcvEnableRegistration(void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvEnableGUI(void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvFiducial (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvEnableAutoUpdate (void *_userdata, vrpn_HANDLERPARAM _p);
 
     static int RcvSetResolutions(void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvSetIterationLimit(void *_userdata, vrpn_HANDLERPARAM _p);
@@ -117,6 +123,7 @@ class nmr_Registration_Server : public nmb_Device_Server,
     nmr_TransformationType d_transformType;
 
     vrpn_bool d_GUIEnabled;
+    vrpn_bool d_autoUpdateAlignment;
 
     vrpn_int32 d_numLevels;
     vrpn_float32 d_stddev[NMR_MAX_RESOLUTION_LEVELS];
@@ -126,8 +133,12 @@ class nmr_Registration_Server : public nmb_Device_Server,
     vrpn_int32 d_autoAlignEnableMode;
 
     // for fiducial message
-    vrpn_float32 d_x_src, d_y_src, d_z_src;
-    vrpn_float32 d_x_tgt, d_y_tgt, d_z_tgt;
+    int d_numFiducialPoints;
+    int d_replaceFiducialList;
+    vrpn_float32 d_x_src[NMR_MAX_FIDUCIAL], d_y_src[NMR_MAX_FIDUCIAL],
+                 d_z_src[NMR_MAX_FIDUCIAL];
+    vrpn_float32 d_x_tgt[NMR_MAX_FIDUCIAL], d_y_tgt[NMR_MAX_FIDUCIAL], 
+                 d_z_tgt[NMR_MAX_FIDUCIAL];
 
     vrpn_float32 *d_transformParameters;
 

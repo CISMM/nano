@@ -27,9 +27,12 @@ class Correspondence {
     Correspondence();
     Correspondence(int num_spaces, int max_points);
     void init(int num_spaces, int max_points);
+    void clear();
     int addPoint(corr_point_t &p);
+    int addPoint(corr_point_t *p);
     int addCurve(corr_curve_t &c);
-    int setPoint(int spaceIndex, int pntIndex, corr_point_t &p);
+    int setPoint(int spaceIndex, int pntIndex, const corr_point_t &p);
+    int setPoint(int pntIndex, corr_point_t *p);
     int deletePoint(int pntIndex);
     vrpn_bool findNearestPoint(int spaceIndex, double x, double y,
 	double x_max, double y_max, int *pntIndex);

@@ -26,6 +26,8 @@ nmr_Registration_Interface::nmr_Registration_Interface (const char * /*name*/,
                        ("nmr_Registration AutoAlign");
     d_EnableGUI_type = c->register_message_type
                        ("nmr_Registration EnableGUI");
+    d_EnableAutoUpdate_type = c->register_message_type
+                       ("nmr_Registration EnableAutoUpdate");
     d_Fiducial_type = c->register_message_type
                        ("nmr_Registration Fiducial");
 
@@ -474,9 +476,8 @@ vrpn_int32 nmr_Registration_Interface::decode_EnableGUI
 }
 
 //static
-char * nmr_Registration_Interface::encode_Fiducial (vrpn_int32 *len,
-           vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
-           vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
+char * nmr_Registration_Interface::encode_EnableAutoUpdate (vrpn_int32 *len,
+           vrpn_int32 enable)
 {
   char * msgbuf = NULL;
   char * mptr;
@@ -484,7 +485,52 @@ char * nmr_Registration_Interface::encode_Fiducial (vrpn_int32 *len,
 
   if (!len) return NULL;
 
-  *len = 6 * sizeof(vrpn_float32);
+  *len = 1 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_EnableAutoUpdate:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, enable);
+  }
+
+  return msgbuf;
+}
+
+//static
+vrpn_int32 nmr_Registration_Interface::decode_EnableAutoUpdate
+          (const char **buf,
+           vrpn_int32 *enable)
+{
+  if (vrpn_unbuffer(buf, enable)) {
+    return -1;
+  }
+  return 0;
+}
+
+//static
+char * nmr_Registration_Interface::encode_Fiducial (vrpn_int32 *len,
+           vrpn_int32 replace, vrpn_int32 num,
+           vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+           vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  int numPacked = num;
+  if (numPacked > NMR_MAX_FIDUCIAL) {
+    fprintf(stderr, "encode_Fiducial: Warning, truncating list of fiducials"
+                    " to the first %d points\n", NMR_MAX_FIDUCIAL);
+    numPacked = NMR_MAX_FIDUCIAL;
+  }
+
+  *len = numPacked * 6 * sizeof(vrpn_float32) + 2*sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmr_Registration_Interface::encode_Fiducial:  "
@@ -493,12 +539,17 @@ char * nmr_Registration_Interface::encode_Fiducial (vrpn_int32 *len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    vrpn_buffer(&mptr, &mlen, x_src);
-    vrpn_buffer(&mptr, &mlen, y_src);
-    vrpn_buffer(&mptr, &mlen, z_src);
-    vrpn_buffer(&mptr, &mlen, x_tgt);
-    vrpn_buffer(&mptr, &mlen, y_tgt);
-    vrpn_buffer(&mptr, &mlen, z_tgt);
+    vrpn_buffer(&mptr, &mlen, replace);
+    vrpn_buffer(&mptr, &mlen, numPacked);
+    int i;
+    for (i = 0; i < numPacked; i++) {
+      vrpn_buffer(&mptr, &mlen, x_src[i]);
+      vrpn_buffer(&mptr, &mlen, y_src[i]);
+      vrpn_buffer(&mptr, &mlen, z_src[i]);
+      vrpn_buffer(&mptr, &mlen, x_tgt[i]);
+      vrpn_buffer(&mptr, &mlen, y_tgt[i]);
+      vrpn_buffer(&mptr, &mlen, z_tgt[i]);
+    }
   }
 
   return msgbuf;
@@ -506,16 +557,24 @@ char * nmr_Registration_Interface::encode_Fiducial (vrpn_int32 *len,
 
 //static
 vrpn_int32 nmr_Registration_Interface::decode_Fiducial (const char **buf,
+           vrpn_int32 *replace, vrpn_int32 *num,
            vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
            vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
 {
-  if (vrpn_unbuffer(buf, x_src) ||
-      vrpn_unbuffer(buf, y_src) ||
-      vrpn_unbuffer(buf, z_src) ||
-      vrpn_unbuffer(buf, x_tgt) ||
-      vrpn_unbuffer(buf, y_tgt) ||
-      vrpn_unbuffer(buf, z_tgt)) {
+  if (vrpn_unbuffer(buf, replace) ||
+      vrpn_unbuffer(buf, num)) {
     return -1;
+  }
+  int i;
+  for (i = 0; i < (*num); i++) {
+    if (vrpn_unbuffer(buf, &(x_src[i])) ||
+        vrpn_unbuffer(buf, &(y_src[i])) ||
+        vrpn_unbuffer(buf, &(z_src[i])) ||
+        vrpn_unbuffer(buf, &(x_tgt[i])) ||
+        vrpn_unbuffer(buf, &(y_tgt[i])) ||
+        vrpn_unbuffer(buf, &(z_tgt[i]))) {
+      return -1;
+    }
   }
   return 0;
 }

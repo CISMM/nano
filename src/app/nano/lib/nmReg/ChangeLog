@@ -1,3 +1,22 @@
+2002-08-01  Adam Seeger  <seeger@cs.unc.edu>
+
+	* correspondence.Ch (clear): new function
+          (addPoint): added a new version of this function
+          (setPoint): "
+        * correspondenceEditor.Ch (clearFiducials): new function
+	* nmr_Registration_Interface.h: added some new transformation types
+	* transformSolve.C (transformSolver): added cases for the 
+          new transformation types
+	* nmr_SurfaceModel.h : new file that defines interface used by 
+          nmr_AFM_SEM_Calibration
+	* nmr_AFM_SEM_Calibration.Ch: new file that implements an
+	  AFM-SEM calibration algorithm; this works for a few 
+          synthesized sample inputs
+	* general: changed the fiducial message format so it can 
+	handle multiple points and added code to send the message 
+	from server to client; added EnableAutoUpdate message so
+	the automatic sending of transform messages can be disabled
+
 2002-07-25  Woojin Seok  <seok@cs.unc.edu>
 
         * nmr_RegistrationUI.h (class nmr_RegistrationUI): changed every Tclvar	        into TclNet in order to be shown in collaboration mode. 

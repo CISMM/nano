@@ -39,14 +39,16 @@ class nmr_Registration_Impl {
     int setStepSize(vrpn_float32 stepSize);
     int setCurrentResolution(vrpn_int32 resolutionIndex);
 
+    int enableAutoUpdate(vrpn_bool enable);
     int autoAlign(vrpn_int32 mode);
     int setGUIEnable(vrpn_bool enable);
     int setColorMap(nmr_ImageType whichImage, nmb_ColorMap * cmap);
     int setColorMinMax(nmr_ImageType whichImage, 
                               vrpn_float64 dmin, vrpn_float64 dmax,
                               vrpn_float64 cmin, vrpn_float64 cmax);
-    int setFiducial(vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
-                    vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt);
+    int setFiducial(vrpn_int32 replace, vrpn_int32 num,
+             vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+             vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
     int setScanline(nmr_ImageType whichImage,
          vrpn_int32 row, vrpn_int32 length, vrpn_float32 *data);
     int setTransformationOptions(nmr_TransformationType type);
@@ -75,10 +77,6 @@ class nmr_Registration_Impl {
     int adjustTransformFromRotatedCorrespondence(Correspondence &c,
                  int corrSourceIndex, int corrTargetIndex, 
                  nmb_Transform_TScShR &xform);
-    void convertRxRzToViewingDirection(double Rx, double Rz, 
-                         double &vx, double &vy, double &vz);
-    void convertViewingDirectionToRxRz(double vx, double vy, double vz,
-                                       double &Rx, double &Rz);
     void setSourceImageDimensions(vrpn_float32 srcSizeX, vrpn_float32 srcSizeY);
     void setTargetImageDimensions(vrpn_float32 tgtSizeX, vrpn_float32 tgtSizeY);
 
@@ -95,6 +93,8 @@ class nmr_Registration_Impl {
     vrpn_int32 d_resolutionIndex;
     vrpn_int32 d_maxIterations;
     vrpn_float32 d_stepSize;
+
+    vrpn_bool d_autoUpdateAlignment;
 
     nmb_Transform_TScShR d_defaultTransformation;
     nmb_Transform_TScShR d_manualAlignmentResult;

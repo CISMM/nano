@@ -56,6 +56,11 @@ void Correspondence::init(int num_im, int max_pnts)
         pnts[i] = new corr_point_t[max_points];
 }
 
+void Correspondence::clear()
+{
+  num_points = 0;
+}
+
 Correspondence &Correspondence::operator = (const Correspondence &c) {
     init(c.numSpaces(), c.numPoints());
     int i,j;
@@ -116,11 +121,32 @@ int Correspondence::addPoint(corr_point_t &p)
     return num_points-1;
 }
 
-int Correspondence::setPoint(int spaceIdx, int pntIdx, corr_point_t &p)
+int Correspondence::addPoint(corr_point_t *p)
+{
+    if (num_points == max_points) return -1;
+    unsigned int i;
+    for (i = 0; i < num_spaces; i++){
+        pnts[i][num_points] = p[i];
+    }
+    num_points++;
+    return num_points-1;
+}
+
+int Correspondence::setPoint(int spaceIdx, int pntIdx, const corr_point_t &p)
 {
     if (pntIdx < 0 || (unsigned)pntIdx >= num_points) return -1;
     if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return -1;
     pnts[spaceIdx][pntIdx] = p;
+    return 0;
+}
+
+int Correspondence::setPoint(int pntIdx, corr_point_t *p)
+{
+    if (pntIdx < 0 || (unsigned)pntIdx >= num_points) return -1;
+    unsigned int i;
+    for (i = 0; i < num_spaces; i++){
+        pnts[i][pntIdx] = p[i];
+    }
     return 0;
 }
 

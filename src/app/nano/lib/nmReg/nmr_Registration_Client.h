@@ -41,11 +41,13 @@ class nmr_Registration_Client : public nmb_Device_Client,
     /// with the image of the tip in the other image
     /// (this is information associated with but not visible in an
     ///  AFM image)
-    int sendFiducial(vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
-                  vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt);
+    int sendFiducial(vrpn_int32 replace, vrpn_int32 num,
+                vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+                vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
 
     // make the windows visible on the remote display
     int setGUIEnable(vrpn_bool enable);
+    int enableAutoUpdate(vrpn_bool enable);
 
     // for auto-alignment
     int setResolutions(vrpn_int32 numLevels, vrpn_float32 *stddev);
@@ -72,11 +74,16 @@ class nmr_Registration_Client : public nmb_Device_Client,
     void getTransformationOptions(nmr_TransformationType &type);
     void getRegistrationResult(vrpn_int32 &whichTransform,
                                vrpn_float64 *matrix44);
+    void getFiducial(
+              vrpn_int32 &replace, vrpn_int32 &num,
+              vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+              vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
 
   protected:
     static int RcvImageParameters (void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvTransformationOptions (void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvRegistrationResult (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvFiducial (void *_userdata, vrpn_HANDLERPARAM _p);
 
     int notifyMessageHandlers(nmr_MessageType type,
         const struct timeval &msg_time);
@@ -94,6 +101,13 @@ class nmr_Registration_Client : public nmb_Device_Client,
 
     vrpn_int32 d_whichTransform;
     vrpn_float64 d_matrix44[16];
+
+    int d_numFiducialPoints;
+    int d_replaceFiducialList;
+    vrpn_float32 d_x_src[NMR_MAX_FIDUCIAL], d_y_src[NMR_MAX_FIDUCIAL],
+                 d_z_src[NMR_MAX_FIDUCIAL];
+    vrpn_float32 d_x_tgt[NMR_MAX_FIDUCIAL], d_y_tgt[NMR_MAX_FIDUCIAL],
+                 d_z_tgt[NMR_MAX_FIDUCIAL];
 
     // message callback management
     typedef struct _msg_handler {

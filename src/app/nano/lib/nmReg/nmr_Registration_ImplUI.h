@@ -31,9 +31,10 @@ class nmr_Registration_ImplUI {
     void newScanline(nmr_ImageType whichImage,
                                 vrpn_int32 row, nmb_Image *im);
 
-    void setFiducial(vrpn_float32 x_src, vrpn_float32 y_src,
-                     vrpn_float32 z_src, vrpn_float32 x_tgt, 
-                     vrpn_float32 y_tgt, vrpn_float32 z_tgt);
+    void setFiducial(vrpn_int32 replace, vrpn_int32 num,
+                     vrpn_float32 *x_src, vrpn_float32 *y_src,
+                     vrpn_float32 *z_src, vrpn_float32 *x_tgt, 
+                     vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
     void setColorMap(nmr_ImageType whichImage, nmb_ColorMap * cmap);
     void setColorMinMax(nmr_ImageType whichImage, 
                               vrpn_float64 dmin, vrpn_float64 dmax,

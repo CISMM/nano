@@ -37,6 +37,7 @@ class CorrespondenceEditor {
                               Correspondence *corr, int *winIDs);
     void show();
     void hide();
+    void clearFiducials();
     void addFiducial(float *x, float *y, float *z);
     int setImage(int image_index, nmb_Image *im);
     int setImageOrientation(int image_index, vrpn_bool flipX, vrpn_bool flipY);

@@ -60,19 +60,25 @@ void nmr_Registration_ImplUI::newScanline(nmr_ImageType whichImage,
 }
 
 // x and y are in range 0..1, z is in nm
-void nmr_Registration_ImplUI::setFiducial(
-          vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
-          vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
+void nmr_Registration_ImplUI::setFiducial(vrpn_int32 replace, vrpn_int32 num,
+          vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+          vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
 {
   float x[2], y[2], z[2];
-  x[s_sourceImageIndex] = x_src;
-  y[s_sourceImageIndex] = y_src;
-  z[s_sourceImageIndex] = z_src;
-  x[s_targetImageIndex] = x_tgt;
-  y[s_targetImageIndex] = y_tgt;
-  z[s_targetImageIndex] = z_tgt;
+  if (replace) {
+    d_ce.clearFiducials();
+  }
+  int i;
+  for (i = 0; i < num; i++) {
+    x[s_sourceImageIndex] = x_src[i];
+    y[s_sourceImageIndex] = y_src[i];
+    z[s_sourceImageIndex] = z_src[i];
+    x[s_targetImageIndex] = x_tgt[i];
+    y[s_targetImageIndex] = y_tgt[i];
+    z[s_targetImageIndex] = z_tgt[i];
 
-  d_ce.addFiducial(x, y, z);
+    d_ce.addFiducial(x, y, z);
+  }
 }
 
 void nmr_Registration_ImplUI::getCorrespondence(Correspondence &c, 

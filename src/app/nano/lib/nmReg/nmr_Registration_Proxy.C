@@ -70,11 +70,13 @@ vrpn_int32 nmr_Registration_Proxy::setTransformationParameters(
   return d_remote_impl->setTransformationParameters(parameters);
 }
 
-vrpn_int32 nmr_Registration_Proxy::sendFiducial(
-                  vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
-                  vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
+vrpn_int32 nmr_Registration_Proxy::sendFiducial(vrpn_int32 replace,
+                vrpn_int32 num,
+                vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+                vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
 {
-  return d_remote_impl->sendFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
+  return d_remote_impl->sendFiducial(replace, num,
+                        x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
 }
 
 vrpn_int32 nmr_Registration_Proxy::setResolutions(vrpn_int32 numLevels, 
@@ -113,6 +115,12 @@ vrpn_int32 nmr_Registration_Proxy::autoAlignImages(vrpn_int32 mode)
     }
 */
     return 0;
+}
+
+vrpn_int32 nmr_Registration_Proxy::enableAutoUpdate(vrpn_bool enable)
+{
+  d_remote_impl->enableAutoUpdate(enable);
+  return 0;
 }
 
 vrpn_int32 nmr_Registration_Proxy::setGUIEnable(vrpn_bool enable)
@@ -222,6 +230,11 @@ void nmr_Registration_Proxy::handle_registration_change(void *ud,
       info.aligner->getRegistrationResult(me->d_transformSource,
                                           me->d_matrix44);
       break;
+    case NMR_FIDUCIAL:
+      info.aligner->getFiducial(me->d_replaceFiducialList,
+         me->d_numFiducialPoints, me->d_x_src, me->d_y_src, me->d_z_src,
+         me->d_x_tgt, me->d_y_tgt, me->d_z_tgt);
+      break;
   }
 
   // notify our user callbacks
@@ -327,4 +340,19 @@ void nmr_Registration_Proxy::getRegistrationResult(vrpn_int32 &which,
 {
   which = d_transformSource;
   xform.setMatrix(d_matrix44);
+}
+
+void nmr_Registration_Proxy::getFiducial(
+              vrpn_int32 &replace, vrpn_int32 &num,
+              vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+              vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
+{
+  replace = d_replaceFiducialList;
+  num = d_numFiducialPoints;
+  int i;
+  for (i = 0; i < d_numFiducialPoints; i++) {
+    x_src[i] = d_x_src[i]; y_src[i] = d_y_src[i]; z_src[i] = d_z_src[i];
+    x_tgt[i] = d_x_tgt[i]; y_tgt[i] = d_y_tgt[i]; z_tgt[i] = d_z_tgt[i];
+  }
+  return;
 }

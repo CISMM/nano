@@ -37,9 +37,9 @@ class nmr_Registration_Proxy {
     vrpn_int32 mainloop(void);
 
     vrpn_int32 setTransformationParameters(vrpn_float32 *parameters);
-    vrpn_int32 sendFiducial(
-                  vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
-                  vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt);
+    vrpn_int32 sendFiducial(vrpn_int32 replace, vrpn_int32 num,
+                vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+                vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
     vrpn_int32 setResolutions(vrpn_int32 numLevels, vrpn_float32 *stddev);
     vrpn_int32 setIterationLimit(vrpn_int32 maxIterations);
     vrpn_int32 setStepSize(vrpn_float32 stepSize);
@@ -47,6 +47,7 @@ class nmr_Registration_Proxy {
     vrpn_int32 autoAlignImages(vrpn_int32 mode);
     
     vrpn_int32 setGUIEnable(vrpn_bool enable);
+    vrpn_int32 enableAutoUpdate(vrpn_bool enable);
     vrpn_int32 setColorMap(nmr_ImageType whichImage, nmb_ColorMap * cmap);
     vrpn_int32 setColorMinMax(nmr_ImageType whichImage, 
                               vrpn_float64 dmin, vrpn_float64 dmax,
@@ -73,6 +74,10 @@ class nmr_Registration_Proxy {
     void getTransformationOptions(nmr_TransformationType &type);
     void getRegistrationResult(vrpn_int32 &which, vrpn_float64 *matrix44);
     void getRegistrationResult(vrpn_int32 &which, nmb_TransformMatrix44 &xform);
+    void getFiducial(
+              vrpn_int32 &replace, vrpn_int32 &num,
+              vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+              vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
 
   protected:
     nmr_Registration_Server *d_server; // non-NULL if local implementation
@@ -91,6 +96,13 @@ class nmr_Registration_Proxy {
 
     int d_transformSource;
     vrpn_float64 d_matrix44[16];
+
+    int d_numFiducialPoints;
+    int d_replaceFiducialList;
+    vrpn_float32 d_x_src[NMR_MAX_FIDUCIAL], d_y_src[NMR_MAX_FIDUCIAL],
+                 d_z_src[NMR_MAX_FIDUCIAL];
+    vrpn_float32 d_x_tgt[NMR_MAX_FIDUCIAL], d_y_tgt[NMR_MAX_FIDUCIAL],
+                 d_z_tgt[NMR_MAX_FIDUCIAL];
 
     int notifyMessageHandlers(nmr_MessageType type,
         const struct timeval &msg_time);

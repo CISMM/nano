@@ -96,7 +96,7 @@ We could determine this by some kind of calibration procedure
 
 // M_PI not defined for VC++, for some reason. 
 #ifndef M_PI
-#define M_PI        3.14159265358979323846
+static double M_PI = 3.14159265358979323846;
 #endif
 
 /* the transformation is returned in xform_matrix which is in this order:
@@ -109,7 +109,7 @@ We could determine this by some kind of calibration procedure
 
 
 int transformSolver(double *xform_matrix, double *error,
-        Correspondence &c, int im0, int im1, nmr_TransformationType type)
+        const Correspondence &c, int im0, int im1, nmr_TransformationType type)
 {
   if (c.numPoints() < numPointConstraintsToSpecify(type)) {
     fprintf(stderr, "transformSolver: Error, not enough points: "
@@ -321,9 +321,9 @@ int transformSolver(double *xform_matrix, double *error,
 
         --> solve for X = [a b d]
 
-        e*x_grid0 + f*y_grid0 + h = y_image0
-        e*x_grid1 + f*y_grid1 + h = y_image1
-        e*x_grid2 + f*y_grid2 + h = y_image2
+        e*im0.pt0.x + f*im0.pt0.y + h = im1.pt0.y
+        e*im0.pt1.x + f*im0.pt1.y + h = im1.pt1.y
+        e*im0.pt2.x + f*im0.pt2.y + h = im1.pt2.y
         ...
 
         --> A = [im0.pt0.x, im0.pt1.x, im0.pt2.x, ...
@@ -397,10 +397,465 @@ int transformSolver(double *xform_matrix, double *error,
         xform_matrix[2+2*4] = 1.0;
         xform_matrix[3+3*4] = 1.0;
 
-        for (i = 3; i < numEq; i++)
+        for (i = 3; i < numEq; i++) {
            *error += B[i]*B[i];
         }
+        delete [] A;
+        delete [] B;
+        }
         break;
+
+// *******************
+    case NMR_3D3D_AFFINE:
+// *******************
+        /*
+            The resulting transform matrix has this form:
+
+            a b c d
+            e f g h
+            i j k l
+        */
+
+/* ********************************************************************
+        a*im0.pt0.x + b*im0.pt0.y + c*im0.pt0.z + d = im1.pt0.x
+        a*im0.pt1.x + b*im0.pt1.y + c*im0.pt1.z + d = im1.pt1.x
+        a*im0.pt2.x + b*im0.pt2.y + c*im0.pt2.z + d = im1.pt2.x
+        ...
+
+        --> A = [im0.pt0.x, im0.pt1.x, im0.pt2.x, ...
+                 im0.pt0.y, im0.pt1.y, im0.pt2.y, ...
+                 im0.pt0.z, im0.pt1.z, im0.pt2.z, ...
+                 1.0,     1.0,     1.0,     ...]
+            B = [im1.pt0.x, im1.pt1.x, im1.pt2.x, ...]
+            m = 4+, n = 4 
+
+        --> solve for X = [a b c d]
+
+        e*im0.pt0.x + f*im0.pt0.y + g*im0.pt0.z + h = im1.pt0.y
+        e*im0.pt1.x + f*im0.pt1.y + g*im0.pt1.z + h = im1.pt1.y
+        e*im0.pt2.x + f*im0.pt2.y + g*im0.pt2.z + h = im1.pt2.y
+        ...
+
+        --> A = [im0.pt0.x, im0.pt1.x, im0.pt2.x, ...
+                 im0.pt0.y, im0.pt1.y, im0.pt2.y, ...
+                 im0.pt0.z, im0.pt1.z, im0.pt2.z, ...
+                 1.0,     1.0,     1.0,     ...]
+            B = [im1.pt0.y, im1.pt1.y, im1.pt2.y, ...]
+            m = 4+, n = 4 
+
+        --> solve for X = [e f g h]
+
+        i*im0.pt0.x + j*im0.pt0.y + k*im0.pt0.z + l = im1.pt0.z
+        i*im0.pt1.x + j*im0.pt1.y + k*im0.pt1.z + l = im1.pt1.z
+        i*im0.pt2.x + j*im0.pt2.y + k*im0.pt2.z + l = im1.pt2.z
+        ...
+
+        --> A = [im0.pt0.x, im0.pt1.x, im0.pt2.x, ...
+                 im0.pt0.y, im0.pt1.y, im0.pt2.y, ...
+                 im0.pt0.z, im0.pt1.z, im0.pt2.z, ...
+                 1.0,     1.0,     1.0,     ...]
+            B = [im1.pt0.z, im1.pt1.z, im1.pt2.z, ...]
+            m = 4+, n = 4
+
+        --> solve for X = [e f g h]
+
+        xform_matrix = [a b c d]
+                       [e f g h]
+                       [h i j k]
+                       [0 0 0 1]
+
+  ******************************************************************** */
+        {
+        int numPts = c.numPoints();
+        // we find the solution in three stages and these are the settings
+        // for one of them
+        int numVars = 4;
+        int numEq = numPts; // number of equations (rows in A)
+        double *A = new double[numEq*numVars];
+        double *B = new double[numEq];
+
+        // =========== stage 1 ===============
+        for (i = 0; i < numPts; i++){
+          c.getPoint(im0, i, &p0);
+          c.getPoint(im1, i, &p1);
+
+          A[i] = p0.x;
+          A[numEq+i] = p0.y;
+          A[2*numEq+i] = p0.z;
+          A[3*numEq+i] = 1.0;
+          B[i] = p1.x;
+        }
+        if (linearLeastSquaresSolve(numEq,numVars,A,B)){
+          fprintf(stderr, "Error: linleastsqr solver failed\n");
+          return -1;
+        }
+
+        xform_matrix[0*4] = B[0];   //a
+        xform_matrix[1*4] = B[1];   //b
+        xform_matrix[2*4] = B[2];   //c
+        xform_matrix[3*4] = B[3];   //d
+
+        *error = 0;
+        for (i = 4; i < numEq; i++) {
+          *error += B[i]*B[i];
+        }
+
+        // ============= stage 2 ==============
+        for (i = 0; i < numPts; i++){
+          c.getPoint(im0, i, &p0);
+          c.getPoint(im1, i, &p1);
+
+          A[i] = p0.x;
+          A[numEq+i] = p0.y;
+          A[2*numEq+i] = p0.z;
+          A[3*numEq+i] = 1.0;
+          B[i] = p1.y;
+        }
+        if (linearLeastSquaresSolve(numEq,numVars,A,B)){
+          fprintf(stderr, "Error: linleastsqr solver failed\n");
+          return -1;
+        }
+
+        xform_matrix[1+0*4] = B[0]; //e
+        xform_matrix[1+1*4] = B[1]; //f
+        xform_matrix[1+2*4] = B[2]; //g
+        xform_matrix[1+3*4] = B[3]; //h
+
+        for (i = 4; i < numEq; i++) {
+           *error += B[i]*B[i];
+        }
+
+        // ============ stage 3 ===============
+        for (i = 0; i < numPts; i++){
+          c.getPoint(im0, i, &p0);
+          c.getPoint(im1, i, &p1);
+
+          A[i] = p0.x;
+          A[numEq+i] = p0.y;
+          A[2*numEq+i] = p0.z;
+          A[3*numEq+i] = 1.0;
+          B[i] = p1.z;
+        }
+        if (linearLeastSquaresSolve(numEq,numVars,A,B)){
+          fprintf(stderr, "Error: linleastsqr solver failed\n");
+          return -1;
+        }
+
+        xform_matrix[2+0*4] = B[0]; //i
+        xform_matrix[2+1*4] = B[1]; //j
+        xform_matrix[2+2*4] = B[2]; //k
+        xform_matrix[2+3*4] = B[3]; //l
+
+        for (i = 4; i < numEq; i++) {
+           *error += B[i]*B[i];
+        }
+       
+        // fill in the last row
+        xform_matrix[3+0*4] = 0.0;
+        xform_matrix[3+1*4] = 0.0;
+        xform_matrix[3+2*4] = 0.0;
+        xform_matrix[3+3*4] = 1.0;
+
+        delete [] A;
+        delete [] B;
+        }
+        break;
+
+// *******************
+    case NMR_2D2D_AFFINE_Z_TRANSLATE:
+// *******************
+        /*
+            The resulting transform matrix has this form:
+
+            a b 0 d
+            e f 0 h
+            0 0 1 l
+        */
+
+/* ********************************************************************
+        a*im0.pt0.x + b*im0.pt0.y + d = im1.pt0.x
+        a*im0.pt1.x + b*im0.pt1.y + d = im1.pt1.x
+        a*im0.pt2.x + b*im0.pt2.y + d = im1.pt2.x
+        ...
+
+        --> A = [im0.pt0.x, im0.pt1.x, im0.pt2.x, ...
+                 im0.pt0.y, im0.pt1.y, im0.pt2.y, ...
+                 1.0,     1.0,     1.0,     ...]
+            B = [im1.pt0.x, im1.pt1.x, im1.pt2.x, ...]
+            m = 3+, n = 3
+
+        --> solve for X = [a b d]
+
+        e*im0.pt0.x + f*im0.pt0.y + h = im1.pt0.y
+        e*im0.pt1.x + f*im0.pt1.y + h = im1.pt1.y
+        e*im0.pt2.x + f*im0.pt2.y + h = im1.pt2.y
+        ...
+
+        --> A = [im0.pt0.x, im0.pt1.x, im0.pt2.x, ...
+                 im0.pt0.y, im0.pt1.y, im0.pt2.y, ...
+                 1.0,     1.0,     1.0,     ...]
+            B = [im1.pt0.y, im1.pt1.y, im1.pt2.y, ...]
+            m = 3+, n = 3
+
+        --> solve for X = [e f h]
+
+        i*im0.pt0.x + j*im0.pt0.y + k*im0.pt0.z + l = im1.pt0.z
+        i*im0.pt1.x + j*im0.pt1.y + k*im0.pt1.z + l = im1.pt1.z
+        i*im0.pt2.x + j*im0.pt2.y + k*im0.pt2.z + l = im1.pt2.z
+        ...
+
+        --> A = [1.0,     1.0,     1.0,     ...]
+            B = [im1.pt0.z-im0.pt0.z, im1.pt1.z-im0.pt1.z, 
+                                                 im1.pt2.z-im0.pt2.z, ...]
+            m = 3+, n = 1 
+
+        --> solve for X = [l]
+
+        l = average value of (im1.ptx.z - im0.ptx.z)
+
+        xform_matrix = [a b 0 d]
+                       [e f 0 h]
+                       [0 0 1 l]
+                       [0 0 0 1]
+
+  ******************************************************************** */
+        {
+        int numPts = c.numPoints();
+        // we find the solution in three stages and these are the settings
+        // for one of them
+        int numVars = 3;
+        int numEq = numPts; // number of equations (rows in A)
+        double *A = new double[numEq*numVars];
+        double *B = new double[numEq];
+
+        // =========== stage 1 ===============
+        for (i = 0; i < numPts; i++){
+          c.getPoint(im0, i, &p0);
+          c.getPoint(im1, i, &p1);
+
+          A[i] = p0.x;
+          A[numEq+i] = p0.y;
+          A[2*numEq+i] = 1.0;
+          B[i] = p1.x;
+        }
+        if (linearLeastSquaresSolve(numEq,numVars,A,B)){
+          fprintf(stderr, "Error: linleastsqr solver failed\n");
+          return -1;
+        }
+
+        xform_matrix[0*4] = B[0];   //a
+        xform_matrix[1*4] = B[1];   //b
+        xform_matrix[2*4] = 0;   //c
+        xform_matrix[3*4] = B[2];   //d
+
+        *error = 0;
+        for (i = 3; i < numEq; i++) {
+          *error += B[i]*B[i];
+        }
+
+        // ============= stage 2 ==============
+        for (i = 0; i < numPts; i++){
+          c.getPoint(im0, i, &p0);
+          c.getPoint(im1, i, &p1);
+
+          A[i] = p0.x;
+          A[numEq+i] = p0.y;
+          A[2*numEq+i] = 1.0;
+          B[i] = p1.y;
+        }
+        if (linearLeastSquaresSolve(numEq,numVars,A,B)){
+          fprintf(stderr, "Error: linleastsqr solver failed\n");
+          return -1;
+        }
+
+        xform_matrix[1+0*4] = B[0]; //e
+        xform_matrix[1+1*4] = B[1]; //f
+        xform_matrix[1+2*4] = 0; //g
+        xform_matrix[1+3*4] = B[2]; //h
+
+        for (i = 3; i < numEq; i++) {
+           *error += B[i]*B[i];
+        }
+
+        // ============ stage 3 ===============
+        double mean = 0.0;
+        for (i = 0; i < numPts; i++){
+          c.getPoint(im0, i, &p0);
+          c.getPoint(im1, i, &p1);
+          mean += p1.z - p0.z;
+        }
+        mean /= (double)numPts;
+ 
+        xform_matrix[2+0*4] = 0.0; //i
+        xform_matrix[2+1*4] = 0.0; //j
+        xform_matrix[2+2*4] = 1.0; //k
+        xform_matrix[2+3*4] = mean; //l
+
+        for (i = 2; i < numEq; i++) {
+           *error += B[i]*B[i];
+        }
+
+        // fill in the last row
+        xform_matrix[3+0*4] = 0.0;
+        xform_matrix[3+1*4] = 0.0;
+        xform_matrix[3+2*4] = 0.0;
+        xform_matrix[3+3*4] = 1.0;
+
+        delete [] A;
+        delete [] B;
+        }
+        break;
+
+// *******************
+    case NMR_2D2D_AFFINE_Z_UNIFORMSCALING_Z_TRANSLATE:
+// *******************
+        /*
+            The resulting transform matrix has this form:
+
+            a b 0 d
+            e f 0 h
+            0 0 k l
+            where k = sqrt(fabs(a*f) + fabs(b*e))
+        */
+
+/* ********************************************************************
+        a*im0.pt0.x + b*im0.pt0.y + d = im1.pt0.x
+        a*im0.pt1.x + b*im0.pt1.y + d = im1.pt1.x
+        a*im0.pt2.x + b*im0.pt2.y + d = im1.pt2.x
+        ...
+
+        --> A = [im0.pt0.x, im0.pt1.x, im0.pt2.x, ...
+                 im0.pt0.y, im0.pt1.y, im0.pt2.y, ...
+                 1.0,     1.0,     1.0,     ...]
+            B = [im1.pt0.x, im1.pt1.x, im1.pt2.x, ...]
+            m = 3+, n = 3
+
+        --> solve for X = [a b d]
+
+        e*im0.pt0.x + f*im0.pt0.y + h = im1.pt0.y
+        e*im0.pt1.x + f*im0.pt1.y + h = im1.pt1.y
+        e*im0.pt2.x + f*im0.pt2.y + h = im1.pt2.y
+        ...
+
+        --> A = [im0.pt0.x, im0.pt1.x, im0.pt2.x, ...
+                 im0.pt0.y, im0.pt1.y, im0.pt2.y, ...
+                 1.0,     1.0,     1.0,     ...]
+            B = [im1.pt0.y, im1.pt1.y, im1.pt2.y, ...]
+            m = 3+, n = 3
+
+        --> solve for X = [e f h]
+
+        i*im0.pt0.x + j*im0.pt0.y + k*im0.pt0.z + l = im1.pt0.z
+        i*im0.pt1.x + j*im0.pt1.y + k*im0.pt1.z + l = im1.pt1.z
+        i*im0.pt2.x + j*im0.pt2.y + k*im0.pt2.z + l = im1.pt2.z
+        ...
+
+        k = sqrt(fabs(a*f) + fabs(b*e))
+        --> A = [1.0,     1.0,     1.0,     ...]
+            B = [im1.pt0.z-k*im0.pt0.z, im1.pt1.z-k*im0.pt1.z,
+                                                 im1.pt2.z-k*im0.pt2.z, ...]
+            m = 3+, n = 1
+
+        --> solve for X = [l]
+
+        l = average value of (im1.ptx.z - k*im0.ptx.z)
+
+        xform_matrix = [a b 0 d]
+                       [e f 0 h]
+                       [0 0 k l]
+                       [0 0 0 1]
+
+  ******************************************************************** */
+        {
+        int numPts = c.numPoints();
+        // we find the solution in three stages and these are the settings
+        // for one of them
+        int numVars = 3;
+        int numEq = numPts; // number of equations (rows in A)
+        double *A = new double[numEq*numVars];
+        double *B = new double[numEq];
+
+        // =========== stage 1 ===============
+        for (i = 0; i < numPts; i++){
+          c.getPoint(im0, i, &p0);
+          c.getPoint(im1, i, &p1);
+
+          A[i] = p0.x;
+          A[numEq+i] = p0.y;
+          A[2*numEq+i] = 1.0;
+          B[i] = p1.x;
+        }
+        if (linearLeastSquaresSolve(numEq,numVars,A,B)){
+          fprintf(stderr, "Error: linleastsqr solver failed\n");
+          return -1;
+        }
+
+        xform_matrix[0*4] = B[0];   //a
+        xform_matrix[1*4] = B[1];   //b
+        xform_matrix[2*4] = 0;   //c
+        xform_matrix[3*4] = B[2];   //d
+
+        *error = 0;
+        for (i = 3; i < numEq; i++) {
+          *error += B[i]*B[i];
+        }
+
+        // ============= stage 2 ==============
+        for (i = 0; i < numPts; i++){
+          c.getPoint(im0, i, &p0);
+          c.getPoint(im1, i, &p1);
+
+          A[i] = p0.x;
+          A[numEq+i] = p0.y;
+          A[2*numEq+i] = 1.0;
+          B[i] = p1.y;
+        }
+        if (linearLeastSquaresSolve(numEq,numVars,A,B)){
+          fprintf(stderr, "Error: linleastsqr solver failed\n");
+          return -1;
+        }
+
+        xform_matrix[1+0*4] = B[0]; //e
+        xform_matrix[1+1*4] = B[1]; //f
+        xform_matrix[1+2*4] = 0; //g
+        xform_matrix[1+3*4] = B[2]; //h
+
+        for (i = 3; i < numEq; i++) {
+           *error += B[i]*B[i];
+        }
+
+        // ============ stage 3 ===============
+        double k = sqrt(fabs(xform_matrix[0]*xform_matrix[5]) +
+                        fabs(xform_matrix[4]*xform_matrix[1]));
+        double mean = 0.0;
+        for (i = 0; i < numPts; i++){
+          c.getPoint(im0, i, &p0);
+          c.getPoint(im1, i, &p1);
+          mean += p1.z - k*p0.z;
+        }
+        mean /= (double)numPts;
+
+        xform_matrix[2+0*4] = 0.0; //i
+        xform_matrix[2+1*4] = 0.0; //j
+        xform_matrix[2+2*4] = k; //k
+        xform_matrix[2+3*4] = mean; //l
+
+        for (i = 2; i < numEq; i++) {
+           *error += B[i]*B[i];
+        }
+
+        // fill in the last row
+        xform_matrix[3+0*4] = 0.0;
+        xform_matrix[3+1*4] = 0.0;
+        xform_matrix[3+2*4] = 0.0;
+        xform_matrix[3+3*4] = 1.0;
+
+        delete [] A;
+        delete [] B;
+        }
+        break;
+
+
     default:
         fprintf(stderr, "transformSolve: This shouldn't happen\n");
         return -1;
@@ -422,7 +877,12 @@ int numPointConstraintsToSpecify(nmr_TransformationType type)
       result = 2;
       break;
     case NMR_2D2D_AFFINE:
+    case NMR_2D2D_AFFINE_Z_TRANSLATE:
+    case NMR_2D2D_AFFINE_Z_UNIFORMSCALING_Z_TRANSLATE:
       result = 3;
+      break;
+    case NMR_3D3D_AFFINE:
+      result = 4;
       break;
     default:
       fprintf(stderr, "numPointConstraintsToSpecify: this shouldn't happen\n");

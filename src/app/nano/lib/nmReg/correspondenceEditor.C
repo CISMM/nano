@@ -463,11 +463,19 @@ void CorrespondenceEditor::hide() {
     }
 }
 
+void CorrespondenceEditor::clearFiducials()
+{
+  correspondence->clear();
+  int i;
+  for (i = 0; i < num_images; i++) {
+      viewer->dirtyWindow((winParam)[i].winID);
+  }
+}
+
 /** 
    x, y are in the range 0..1 and z is in nanometers
 
 */
-
 void CorrespondenceEditor::addFiducial(float *x, float *y, float *z)
 {
     corr_point_t p;

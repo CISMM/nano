@@ -15,16 +15,23 @@ nmr_Registration_Server::nmr_Registration_Server(const char *name,
     d_row(0), d_length(0), d_lengthAllocated(0), d_scanlineData(NULL),
     d_transformType(NMR_2D2D_AFFINE),
     d_GUIEnabled(vrpn_FALSE),
+    d_autoUpdateAlignment(vrpn_FALSE),
     d_numLevels(0),
     d_resolutionIndex(0),
     d_maxIterations(0),
     d_stepSize(1),
     d_autoAlignEnableMode(0),   
-    d_x_src(0), d_y_src(0), d_z_src(0), 
-    d_x_tgt(0), d_y_tgt(0), d_z_tgt(0), 
     d_transformParameters(new vrpn_float32[nmb_numTransformParameters]),
     d_messageHandlerList(NULL)
 {
+
+  int i;
+  for (i = 0; i < NMR_MAX_FIDUCIAL; i++) {
+    d_x_src[i] = 0; d_y_src[i] = 0; d_z_src[i] = 0;
+    d_x_tgt[i] = 0; d_y_tgt[i] = 0; d_z_tgt[i] = 0;
+  }
+  d_numFiducialPoints = 0;
+  d_replaceFiducialList = 0;
 
   if (d_connection == NULL) {
     fprintf(stderr, "nmr_Registration_Server: no connection\n");
@@ -53,6 +60,11 @@ nmr_Registration_Server::nmr_Registration_Server(const char *name,
   }
   if (d_connection->register_handler(d_EnableGUI_type,
        RcvEnableGUI, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
+    return;
+  }
+  if (d_connection->register_handler(d_EnableAutoUpdate_type,
+       RcvEnableAutoUpdate, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
     return;
   }
@@ -113,6 +125,10 @@ nmr_Registration_Server::~nmr_Registration_Server()
   }
   if (d_connection->unregister_handler(d_EnableGUI_type,
        RcvEnableGUI, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
+  }
+  if (d_connection->unregister_handler(d_EnableAutoUpdate_type,
+       RcvEnableAutoUpdate, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
   }
   if (d_connection->unregister_handler(d_Fiducial_type,
@@ -216,13 +232,25 @@ int nmr_Registration_Server::setGUIEnable(vrpn_bool enable)
     return 0;
 }
 
-int nmr_Registration_Server::setFiducial(
-                   vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
-                   vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
+int nmr_Registration_Server::setFiducial(vrpn_int32 replace, vrpn_int32 num,
+                 vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+                 vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
 {
-    d_x_src = x_src; d_y_src = y_src; d_z_src = z_src;
-    d_x_tgt = x_tgt; d_y_tgt = y_tgt; d_z_tgt = z_tgt;
-    return 0;
+  int i;
+  for (i = 0; i < num; i++) {
+    d_x_src[i] = x_src[i]; d_y_src[i] = y_src[i]; d_z_src[i] = z_src[i];
+    d_x_tgt[i] = x_tgt[i]; d_y_tgt[i] = y_tgt[i]; d_z_tgt[i] = z_tgt[i];
+  }
+  d_numFiducialPoints = num;
+  d_replaceFiducialList = replace;
+
+  return 0;
+}
+
+int nmr_Registration_Server::enableAutoUpdate(vrpn_bool enable)
+{
+  d_autoUpdateAlignment = enable;
+  return 0;
 }
 
 int nmr_Registration_Server::setResolutions(vrpn_int32 numLevels, 
@@ -436,18 +464,41 @@ int nmr_Registration_Server::RcvFiducial (void *_userdata,
 {
   nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
   const char * bufptr = _p.buffer;
-  vrpn_float32 x_src, y_src, z_src, x_tgt, y_tgt, z_tgt;
+  vrpn_int32 replace, num;
+  vrpn_float32 x_src[NMR_MAX_FIDUCIAL], y_src[NMR_MAX_FIDUCIAL],
+               z_src[NMR_MAX_FIDUCIAL], x_tgt[NMR_MAX_FIDUCIAL], 
+               y_tgt[NMR_MAX_FIDUCIAL], z_tgt[NMR_MAX_FIDUCIAL];
 
-  if (decode_Fiducial(&bufptr, &x_src, &y_src, &z_src, 
-                               &x_tgt, &y_tgt, &z_tgt) == -1) {
+  if (decode_Fiducial(&bufptr, &replace, &num, x_src, y_src, z_src, 
+                               x_tgt, y_tgt, z_tgt) == -1) {
     fprintf(stderr,
         "nmr_Registration_Server::RcvFiducial:"
         " decode failed\n");
     return -1;
   }
-  me->setFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
+  me->setFiducial(replace, num, x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
 
   return me->notifyMessageHandlers(NMR_FIDUCIAL, _p.msg_time);
+}
+
+// static
+int nmr_Registration_Server::RcvEnableAutoUpdate (void *_userdata,
+                                          vrpn_HANDLERPARAM _p)
+{
+  nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 enable;
+
+  if (decode_EnableAutoUpdate(&bufptr, &enable) == -1) {
+    fprintf(stderr,
+        "nmr_Registration_Server::RcvEnableAutoUpdate:"
+        " decode failed\n");
+    return -1;
+  }
+
+  me->enableAutoUpdate(enable);
+
+  return me->notifyMessageHandlers(NMR_ENABLE_AUTOUPDATE, _p.msg_time);
 }
 
 //static 
@@ -680,11 +731,22 @@ void nmr_Registration_Server::getScanline(nmr_ImageType &whichImage,
 }
 
 void nmr_Registration_Server::getFiducial(
-              vrpn_float32 &x_src, vrpn_float32 &y_src, vrpn_float32 &z_src,
-              vrpn_float32 &x_tgt, vrpn_float32 &y_tgt, vrpn_float32 &z_tgt)
+              vrpn_int32 &replace, vrpn_int32 &num,
+              vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+              vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
 {
-    x_src = d_x_src; y_src = d_y_src; z_src = d_z_src;
-    x_tgt = d_x_tgt; y_tgt = d_y_tgt; z_tgt = d_z_tgt;
+    replace = d_replaceFiducialList;
+    num = d_numFiducialPoints;
+    int i;
+    for (i = 0; i < d_numFiducialPoints; i++) {
+      x_src[i] = d_x_src[i]; y_src[i] = d_y_src[i]; z_src[i] = d_z_src[i];
+      x_tgt[i] = d_x_tgt[i]; y_tgt[i] = d_y_tgt[i]; z_tgt[i] = d_z_tgt[i];
+    }
+}
+
+void nmr_Registration_Server::getAutoUpdateEnable(vrpn_bool &enable)
+{
+  enable = d_autoUpdateAlignment;
 }
 
 void nmr_Registration_Server::getResolutions(vrpn_int32 &numLevels, 

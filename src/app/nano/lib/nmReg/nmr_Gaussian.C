@@ -4,7 +4,7 @@
 #include "stdio.h"
 
 #ifndef M_PI
-#define M_PI 3.14159265358979323846
+static double M_PI = 3.14159265358979323846;
 #endif
 
 vrpn_bool nmr_Gaussian::s_initialized = vrpn_FALSE;

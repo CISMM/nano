@@ -40,6 +40,10 @@ nmr_Registration_Client::nmr_Registration_Client (const char *name,
     fprintf(stderr, "nmr_Registration_Client: can't register handler\n");
     return; 
   }
+  if (d_connection->register_handler(d_Fiducial_type, RcvFiducial, this)) {
+    fprintf(stderr, "nmr_Registration_Client: can't register handler\n");
+    return;
+  }
 
 }
 
@@ -52,6 +56,7 @@ nmr_Registration_Client::~nmr_Registration_Client()
        RcvTransformationOptions, this);
     d_connection->unregister_handler(d_RegistrationResult_type,
        RcvRegistrationResult, this);
+    d_connection->unregister_handler(d_Fiducial_type, RcvFiducial, this);
   }
 }
 
@@ -127,14 +132,15 @@ int nmr_Registration_Client::setTransformationParameters(
   return dispatchMessage(len, msgbuf, d_SetTransformationParameters_type);
 }
 
-int nmr_Registration_Client::sendFiducial(
-                   vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
-                   vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
+int nmr_Registration_Client::sendFiducial(vrpn_int32 replace, vrpn_int32 num,
+                vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+                vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
 {
   char *msgbuf;
   vrpn_int32 len;
 
-  msgbuf = encode_Fiducial(&len, x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
+  msgbuf = encode_Fiducial(&len, 
+              replace, num, x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
 
   if (!msgbuf) {
     return -1;
@@ -155,6 +161,20 @@ int nmr_Registration_Client::setGUIEnable(vrpn_bool enable)
   }
 
   return dispatchMessage(len, msgbuf, d_EnableGUI_type);
+}
+
+int nmr_Registration_Client::enableAutoUpdate(vrpn_bool enable)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_EnableAutoUpdate(&len, (vrpn_int32)enable);
+
+  if (!msgbuf) {
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_EnableAutoUpdate_type);
 }
 
 int nmr_Registration_Client::setResolutions(vrpn_int32 numLevels, 
@@ -319,6 +339,38 @@ int nmr_Registration_Client::RcvRegistrationResult (
   return me->notifyMessageHandlers(NMR_REG_RESULT, _p.msg_time);
 }
 
+//static
+int nmr_Registration_Client::RcvFiducial (
+                void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmr_Registration_Client *me = (nmr_Registration_Client *)_userdata;
+  const char * bufptr = _p.buffer;
+
+  vrpn_int32 replace, num;
+  vrpn_float32 x_src[NMR_MAX_FIDUCIAL], y_src[NMR_MAX_FIDUCIAL], 
+               z_src[NMR_MAX_FIDUCIAL], x_tgt[NMR_MAX_FIDUCIAL],
+               y_tgt[NMR_MAX_FIDUCIAL], z_tgt[NMR_MAX_FIDUCIAL];
+               
+  if (decode_Fiducial(&bufptr, &replace, &num, x_src, y_src, z_src,
+                      x_tgt, y_tgt, z_tgt) == -1) {
+    fprintf(stderr,
+        "nmr_Registration_Client::RcvFiducial: decode failed\n");
+    return -1;
+  }
+  int i;
+  me->d_replaceFiducialList = replace;
+  me->d_numFiducialPoints = num;
+  for (i = 0; i < num; i++) {
+    me->d_x_src[i] = x_src[i];
+    me->d_y_src[i] = y_src[i];
+    me->d_z_src[i] = z_src[i];
+    me->d_x_tgt[i] = x_tgt[i];
+    me->d_y_tgt[i] = y_tgt[i];
+    me->d_z_tgt[i] = z_tgt[i];
+  }
+  return me->notifyMessageHandlers(NMR_FIDUCIAL, _p.msg_time);
+}
+
 int nmr_Registration_Client::registerChangeHandler (void *userdata,
         void (*handler)(void *ud, const nmr_ClientChangeHandlerData &info))
 {
@@ -426,3 +478,18 @@ void nmr_Registration_Client::getRegistrationResult(vrpn_int32 &whichTransform,
         matrix44[i] = d_matrix44[i];
     }
 }
+
+void nmr_Registration_Client::getFiducial(
+              vrpn_int32 &replace, vrpn_int32 &num,
+              vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+              vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
+{
+    replace = d_replaceFiducialList;
+    num = d_numFiducialPoints;
+    int i;
+    for (i = 0; i < d_numFiducialPoints; i++) {
+      x_src[i] = d_x_src[i]; y_src[i] = d_y_src[i]; z_src[i] = d_z_src[i];
+      x_tgt[i] = d_x_tgt[i]; y_tgt[i] = d_y_tgt[i]; z_tgt[i] = d_z_tgt[i];
+    }
+}
+
