@@ -1,3 +1,12 @@
+2001-03-29  Adam Seeger  <seeger@cs.unc.edu>
+
+        * nmg_GraphicsImpl.C: changed use of nmb_Image::border() to use the
+        more general nmb_Image::borderMinX(), borderMaxX(), borderMinY(),
+        borderMaxY()
+        * nmg_Visualization.C (setTexture): added x_offset and y_offset
+        calculations to translate the texture coordinates if the texture
+        has padding on all sides of the image
+
 2001-03-23  Jason Clark  <jclark@cs.unc.edu>
 
 	* openGL.c: Fix colormap weirdness

@@ -434,6 +434,8 @@ setTexture()
     double theta = 0.0;
     GLdouble texture_matrix[16];
     double x_scale_factor = 1.0, y_scale_factor = 1.0;
+    double x_translate = 0.0, y_translate = 0.0;
+
 
     switch (g_texture_transform_mode) {
       case nmg_Graphics::RULERGRID_COORD:
@@ -476,6 +478,10 @@ setTexture()
                              (double)g_tex_installed_width[RULERGRID_TEX_ID];
             y_scale_factor = (double)g_tex_image_height[RULERGRID_TEX_ID]/
                              (double)g_tex_installed_height[RULERGRID_TEX_ID];
+            x_translate = (double)g_tex_image_offsetx[RULERGRID_TEX_ID]/
+                          (double)g_tex_installed_width[RULERGRID_TEX_ID];
+            y_translate = (double)g_tex_image_offsety[RULERGRID_TEX_ID]/
+                          (double)g_tex_installed_height[RULERGRID_TEX_ID];
             break;
 	    /*
           case nmg_Graphics::GENETIC:
@@ -483,6 +489,10 @@ setTexture()
                              (double)g_tex_installed_width[GENETIC_TEX_ID];
             y_scale_factor = (double)g_tex_image_height[GENETIC_TEX_ID]/
                              (double)g_tex_installed_height[GENETIC_TEX_ID];
+            x_translate = (double)g_tex_image_offsetx[GENETIC_TEX_ID]/
+                          (double)g_tex_installed_width[GENETIC_TEX_ID];
+            y_translate = (double)g_tex_image_offsety[GENETIC_TEX_ID]/
+                          (double)g_tex_installed_height[GENETIC_TEX_ID];
             break;
 	    */
           case nmg_Graphics::COLORMAP:
@@ -490,29 +500,46 @@ setTexture()
                              (double)g_tex_installed_width[COLORMAP_TEX_ID];
             y_scale_factor = (double)g_tex_image_height[COLORMAP_TEX_ID]/
                              (double)g_tex_installed_height[COLORMAP_TEX_ID];
+            x_translate = (double)g_tex_image_offsetx[COLORMAP_TEX_ID]/
+                          (double)g_tex_installed_width[COLORMAP_TEX_ID];
+            y_translate = (double)g_tex_image_offsety[COLORMAP_TEX_ID]/
+                          (double)g_tex_installed_height[COLORMAP_TEX_ID];
             break;
           case nmg_Graphics::SEM_DATA:
             x_scale_factor = (double)g_tex_image_width[SEM_DATA_TEX_ID]/
                              (double)g_tex_installed_width[SEM_DATA_TEX_ID];
             y_scale_factor = (double)g_tex_image_height[SEM_DATA_TEX_ID]/
                              (double)g_tex_installed_height[SEM_DATA_TEX_ID];
+            x_translate = (double)g_tex_image_offsetx[SEM_DATA_TEX_ID]/
+                          (double)g_tex_installed_width[SEM_DATA_TEX_ID];
+            y_translate = (double)g_tex_image_offsety[SEM_DATA_TEX_ID]/
+                          (double)g_tex_installed_height[SEM_DATA_TEX_ID];
             break;
           case nmg_Graphics::REMOTE_DATA:
             x_scale_factor = (double)g_tex_image_width[REMOTE_DATA_TEX_ID]/
                              (double)g_tex_installed_width[REMOTE_DATA_TEX_ID];
             y_scale_factor = (double)g_tex_image_height[REMOTE_DATA_TEX_ID]/
                              (double)g_tex_installed_height[REMOTE_DATA_TEX_ID];
+            x_translate = (double)g_tex_image_offsetx[REMOTE_DATA_TEX_ID]/
+                          (double)g_tex_installed_width[REMOTE_DATA_TEX_ID];
+            y_translate = (double)g_tex_image_offsety[REMOTE_DATA_TEX_ID]/
+                          (double)g_tex_installed_height[REMOTE_DATA_TEX_ID];
             break;
 		  case nmg_Graphics::VISUALIZATION:
             x_scale_factor = (double)g_tex_image_width[VISUALIZATION_TEX_ID]/
                              (double)g_tex_installed_width[VISUALIZATION_TEX_ID];
             y_scale_factor = (double)g_tex_image_height[VISUALIZATION_TEX_ID]/
                              (double)g_tex_installed_height[VISUALIZATION_TEX_ID];
+            x_translate = (double)g_tex_image_offsetx[VISUALIZATION_TEX_ID]/
+                          (double)g_tex_installed_width[VISUALIZATION_TEX_ID];
+            y_translate = (double)g_tex_image_offsety[VISUALIZATION_TEX_ID]/
+                          (double)g_tex_installed_height[VISUALIZATION_TEX_ID];;
             break;
           default:
             fprintf(stderr, "Error, unknown texture set for display\n");
             break;
         }
+        glTranslated(x_translate, y_translate, 0.0);
         glScaled(x_scale_factor, y_scale_factor, 1.0);
         glMultMatrixd(g_texture_transform);
 	break;
