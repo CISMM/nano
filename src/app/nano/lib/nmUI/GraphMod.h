@@ -12,8 +12,9 @@
 #include <Point.h>
 // for Scanline_results
 #include <Scanline.h>
-// for Tclvar_int 
-#include <Tcl_Linkvar.h>
+// for TclNet_int
+#include <Tcl_Netvar.h>
+#include "nmui_Component.h"
 
 #define MAX_SCANLINE_GRAPH_PTS (300)	// don't draw too many points (50 is
 					// a good number - set to 300 for
@@ -56,7 +57,12 @@ class GraphMod {
     static void handle_StrideChange(vrpn_int32, void *);
     /**< Should be called when user changes stride control */
 
-  private:
+    void gm_SetupSynchronization(nmui_Component * container);
+    /**< Sets up synchronization on the TclNets */
+    void gm_TeardownSynchronization(nmui_Component * container);
+    /**< Tears down synchronization on the TclNets */
+
+    private:
     int d_currentmode;
     int d_lastmode;
     // This is a bad idea - should get from a globally maintained var. 
@@ -68,9 +74,9 @@ class GraphMod {
 	 stride is > 1. This count does not get decremented if d_max_points
 	 is exceeded and some points are removed from the graph.
       */
-    Tclvar_int d_max_points; 
+    TclNet_int d_max_points; 
       /**< maximum number of points to graph per channel. */
-    Tclvar_int d_stride; 
+    TclNet_int d_stride; 
       /**< Only graph every d_stride points. */
     
     void ShowStripchart (const char * tcl_script_dir);

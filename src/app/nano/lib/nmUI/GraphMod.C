@@ -50,7 +50,8 @@ GraphMod::GraphMod (void) :
 }
 
 GraphMod::~GraphMod (void) {
-
+  d_max_points.bindConnection(NULL);
+  d_stride.bindConnection(NULL);
 }
 
 // static
@@ -630,5 +631,17 @@ void GraphMod::handle_StrideChange(vrpn_int32 new_value, void * userdata)
 {
    GraphMod *me = (GraphMod *)userdata;
    
+}
+
+void GraphMod::gm_SetupSynchronization(nmui_Component * container)
+{
+  container->add(&d_max_points);
+  container->add(&d_stride);
+}
+
+void GraphMod::gm_TeardownSynchronization(nmui_Component * container)
+{
+  container->remove(&d_max_points);
+  container->remove(&d_stride);
 }
 
