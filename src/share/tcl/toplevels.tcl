@@ -15,6 +15,7 @@ basicjoys_create $nav_win.joy "Translate" "Rotate"
 
 set phantom_win [create_closing_toplevel phantom_win "Phantom Settings"]
 button $phantom_win.phantom_reset -text "Reset Phantom" -command "set reset_phantom 1"
+
 generic_radiobox $phantom_win.using_phantom_button \
 	using_phantom_button \
 	"Phantom Button" { "ButtonBox" "Phantom Trigger" }

@@ -189,12 +189,15 @@ extern  Tclvar_float            buzz_slider_min, buzz_slider_max;
 extern  Tclvar_string         buzzPlaneName;
 
 //--------------------------------------------------------------------------
-///These select the plane to map friction from and teh scale of the mapping.
+///These select the plane to map friction from and the scale of the mapping.
 extern  Tclvar_float            adhesion_slider_min_limit;
 extern  Tclvar_float            adhesion_slider_max_limit;
 extern  Tclvar_float            adhesion_slider_min, adhesion_slider_max;
 extern  Tclvar_string         adhesionPlaneName;
 
+//-------------------------------------------------------------------------
+///This value is used when no plane is assigned
+extern Tclvar_float             default_spring_k;
 
 //--------------------------------------------------------------------------
 ///For mapping sound to dataset

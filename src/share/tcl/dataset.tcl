@@ -24,6 +24,9 @@ global  adhesion_slider_min adhesion_slider_max
 global  compliance_slider_min_limit compliance_slider_max_limit
 global  compliance_slider_min compliance_slider_max
 
+global spring_slider_min_limit spring_slider_max_limit
+global spring_slider_min spring_slider_max
+
 global  sound_slider_min_limit sound_slider_max_limit
 global  sound_slider_min sound_slider_max
 

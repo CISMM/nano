@@ -481,6 +481,9 @@ set buzz_slider_max_limit 1
 set compliance_slider_min_limit 0 
 set compliance_slider_max_limit 1
 
+set spring_slider_min_limit 0.01
+set spring_slider_max_limit 1
+set spring_k_slider 0
 
 #proc adjust_adhesion {} {
 #    global bc
@@ -777,9 +780,6 @@ proc buzz_scale_newscale {name element op} {
 #        pack $nmInfo(adhesionscale).scale -fill x -side top
 #}
 
-
-
-
 #################################    
 #
 # This part of the script brings up a min/max slider to control the
@@ -832,6 +832,22 @@ proc compliance_scale_newscale {name element op} {
 	minmaxscale $nmInfo(compliancescale).scale $compliance_slider_min_limit \
 		$compliance_slider_max_limit 50 compliance_slider_min compliance_slider_max
 	pack $nmInfo(compliancescale).scale -fill x -side top
+}
+
+
+#################################
+#
+# This part of the script brings up a min/max slider to control the
+# mapping of values into the spring constant, assuming the compliance
+# plane button is set to 'none'
+#
+set nmInfo(springkscale) [frame $nmInfo(haptic).springkscale -relief raised -bd 4]
+pack $nmInfo(springkscale) -fill both
+
+if {$spring_slider_min_limit != $spring_slider_max_limit} {
+    floatscale $nmInfo(springkscale).scale $spring_slider_min_limit $spring_slider_max_limit \
+	    100 1 1 spring_k_slider "Spring Constant"
+    pack $nmInfo(springkscale).scale
 }
 
 

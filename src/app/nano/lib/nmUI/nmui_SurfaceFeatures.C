@@ -60,7 +60,7 @@ double nmui_SurfaceFeatureStrategy::scaledPointBumpSizeValue (void) {
 
 // virtual
 double nmui_SurfaceFeatureStrategy::pointComplianceValue (void) {
-  return max(0.0, Arm_knobs[FORCE_KNOB]);
+  return max( 0.01, min(1.0, (double)default_spring_k) );
 }
 
 // virtual

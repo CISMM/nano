@@ -563,6 +563,7 @@ Tclvar_float	adhesion_slider_max_limit("adhesion_slider_max_limit",1);
 Tclvar_string adhesionPlaneName
                ("adhesion_comes_from", "");
 
+Tclvar_float    default_spring_k("spring_k_slider",0.5);
 //-----------------------------------------------------------------------
 // This section deals with selecting the data set to map to sound.
 // It includes both a string to allow choosing the field to map
