@@ -79,7 +79,7 @@ class Xform;		//added from ugraphics
 // y) are near each other.  It is basically the floating-point equivalent
 // of '==', but allowing a little tolerance.
 // The tolerance given here is 0.01 nanometers, which is 1/10 Angstrom.
-inline	int NEAR(double x0,double x1) { return (fabs(x0-x1) < 0.01); };
+inline	int NM_NEAR(double x0,double x1) { return (fabs(x0-x1) < 0.01); };
 
 
 /****************************

@@ -21,6 +21,25 @@
 #include <vrpn_Analog.h>
 #include <vrpn_Clock.h>  // for round-trip-time routines (foo_rtt())
 
+// ############ getpid hack
+#if defined (__CYGWIN__) && defined (VRPN_USE_WINSOCK_SOCKETS)
+
+/* #include <sys/unistd.h>  // for getpid() */
+
+// cannot include sys/unistd.h because it would cause a conflict with the
+// windows-defined gethostbyname.  Instead, I'll declare getpid myslef.  This
+// is really ugly and dangerous.
+extern "C" {
+pid_t getpid();
+}
+
+
+// there is also a different getpid defined in Process.h in the VC-6.0 include
+// directory.  I think it has a different return type.
+
+#endif
+// ############
+
 // base
 #include <BCPlane.h>
 #include <colormap.h>
@@ -2995,17 +3014,21 @@ static	void	handle_screenImageFileName_change (const char *, void *userdata)
                          "Error: unknown image type '%s'\n",
                          screenImageFileType.string());
       } else {
+	  // Pop the window to the front.
+	  // Use different methods for GLUT and for
+	  // GLX windows. 
 #ifdef V_GLUT
-        v_gl_set_context_to_vlib_window();
-        glutPopWindow();
-        glutProcessEvents_UNC(); // make the window come to the front
+          v_gl_set_context_to_vlib_window();
+	  glutPopWindow();
+          glutProcessEvents_UNC(); // make the window come to the front
 #else 
-        XRaiseWindow(VLIB_dpy, VLIB_win);
-        XEvent event;
-       long event_mask = 0xFFFFFFFF;//StructureNotifyMask|ExposureMask;
-       while (XCheckWindowEvent(VLIB_dpy, VLIB_win,
-     	event_mask, &event)) {
-     	if (event.type == StructureNotifyMask) {
+	  XRaiseWindow(VLIB_dpy, VLIB_win);
+	  XEvent event;
+	  long event_mask = 0xFFFFFFFF;//StructureNotifyMask|ExposureMask;
+	  // Seems like the body of this loop never gets executed...
+	  while (XCheckWindowEvent(VLIB_dpy, VLIB_win,
+		event_mask, &event)) {
+		if (event.type == StructureNotifyMask) {
 			printf("structurenotify\n");
 		} else if (event.type == ExposureMask) {
 			printf("exposure\n");
@@ -6717,8 +6740,8 @@ fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
       
       /* See if the last result point was one we asked for.  If so, print
        * it. */
-      if ( NEAR(wanted_x, microscope->state.data.inputPoint->x()) && 
-	   NEAR(wanted_y, microscope->state.data.inputPoint->y()) ) {
+      if ( NM_NEAR(wanted_x, microscope->state.data.inputPoint->x()) && 
+	   NM_NEAR(wanted_y, microscope->state.data.inputPoint->y()) ) {
 	Point_value *val = microscope->state.data.inputPoint->head();
 	while (val) {
 	  printf("%s at (%g, %g) is %g (%s)\n",
@@ -6819,8 +6842,8 @@ fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
 
 	      do {
 		microscope->mainloop();
-	      } while (!(NEAR(-1.0, microscope->state.data.inputPoint->x()) &&
-			 NEAR(-1.0, microscope->state.data.inputPoint->y())));
+	      } while (!(NM_NEAR(-1.0, microscope->state.data.inputPoint->x()) &&
+			 NM_NEAR(-1.0, microscope->state.data.inputPoint->y())));
 
 #else
 
@@ -6829,8 +6852,8 @@ fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
 		  fprintf(stderr,"Can't read from SPM, bailing\n");
 		  return -1;
 		}
-	      } while (!(NEAR(-1.0, microscope->state.data.inputPoint->x()) &&
-			 NEAR(-1.0, microscope->state.data.inputPoint->y())));
+	      } while (!(NM_NEAR(-1.0, microscope->state.data.inputPoint->x()) &&
+			 NM_NEAR(-1.0, microscope->state.data.inputPoint->y())));
 
 #endif
 

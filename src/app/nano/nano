@@ -6,7 +6,14 @@
 APP_DIR=app/nano;
 APP_EXE=nano;
 
-if test $HW_OS != pc_cygwin ; then
+if [ -z "$HW_OS" ]; then
+   uname=`uname`;
+   if [ "${uname#CYGWIN}" != "$uname" ]; then
+      HW_OS="pc_cygwin";
+   fi
+fi
+
+if [ "$HW_OS" != "pc_cygwin" ]; then
    if [[ -n $MY_NANO_OBJ_DIR ]] ; then
       FULL_EXE=$MY_NANO_OBJ_DIR/$HW_OS/$APP_DIR/$APP_EXE;
    elif [[ -n $MY_NANO_SRC_DIR ]] ; then

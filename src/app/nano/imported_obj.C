@@ -35,6 +35,26 @@ Things which I didn't get around to, and which probably should be done:
 
 #include "imported_obj.h"
 
+// ############ getpid hack
+#if defined (__CYGWIN__) && defined (VRPN_USE_WINSOCK_SOCKETS)
+
+/* #include <sys/unistd.h>  // for getpid() */
+
+// cannot include sys/unistd.h because it would cause a conflict with the
+// windows-defined gethostbyname.  Instead, I'll declare getpid myslef.  This
+// is really ugly and dangerous.
+extern "C" {
+pid_t getpid();
+}
+
+
+// there is also a different getpid defined in Process.h in the VC-6.0 include
+// directory.  I think it has a different return type.
+
+#endif
+// ############
+
+
 #ifndef Q_X
 #define Q_X 0
 #endif
