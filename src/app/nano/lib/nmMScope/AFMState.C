@@ -141,9 +141,9 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
 
     max_z_step("modifyp_max_z_step", 1.0),
     max_xy_step("modifyp_max_xy_step", 1.0),
-    min_z_setpoint("modifyp_min_z_setpoint", -50.0),
-    max_z_setpoint("modifyp_max_z_setpoint", 50.0),
-    max_lat_setpoint("modifyp_max_lat_setpoint", 50.0),
+    min_z_setpoint("modifyp_min_z_setpoint", -10.0),
+    max_z_setpoint("modifyp_max_z_setpoint", 10.0),
+    max_lat_setpoint("modifyp_max_lat_setpoint", 10.0),
 
     stored_points (),
 

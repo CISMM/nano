@@ -877,6 +877,11 @@ int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
 {
   if (microscope->state.modify.tool != SLOW_LINE) return 0;
   if (microscope->state.modify.slow_line_committed != VRPN_TRUE) return 0;
+
+  // We don't want to send out new requests if the AFM is relaxing. 
+  if (microscope->d_relax_comp.is_ignoring_points()) return 0;
+
+
   if (microscope->state.modify.slow_line_playing == VRPN_TRUE) {
     //printf("slow_line: got point results, step to next %f %f\n", 
     //	   p->x(), p->y());

@@ -2323,7 +2323,6 @@ int doFeelLive(int whichUser, int userEvent)
 	   if (microscope->state.modify.constr_line_specified) {
 	      microscope->state.modify.constr_line_specified = VRPN_FALSE;
 	   }
-	   /*
 	   // Remove any points from the constraint line list.
 	   Position_list & p = microscope->state.modify.stored_points;
 	   if (!p.empty()) {
@@ -2339,7 +2338,6 @@ int doFeelLive(int whichUser, int userEvent)
 		 p.del();  //this moves the pointer forward to the next point.
 	      }
 	   }
-	   */	   
 	}
 	/* Start image mode and resume previous scan pattern */
         microscope->ResumeScan();

@@ -3720,12 +3720,14 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
      pv->setValue(lastResistanceReceived);
      // END HACK
 
+     
      doPointDataCallbacks(state.data.inputPoint); // to feel what we are
 							// doing but we don't
 							// want to store them
 							// in a modfile because
 							// its being used to
 							// store the force curve
+     
   }
   // latency compensation
   d_decoration->trueTipLocation[0] = _x;

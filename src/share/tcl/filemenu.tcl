@@ -170,7 +170,7 @@ proc save_mod_dialog {} {
 	    flush $modfile
 	    close $modfile
 	    if {$tcl_platform(platform) == "unix"} {
-		exec unix_to_dos $filename
+		exec unix_to_dos $file
 	    }
 
 	} 

@@ -839,7 +839,7 @@ RobotControl * robotControl = NULL;
 #endif
 
 /// Scales how much normal force is felt when using Direct Z Control
-Tclvar_float directz_force_scale("directz_force_scale", 0.1);
+Tclvar_float directz_force_scale("directz_force_scale", 1.0);
 
 
 // NANOX

@@ -213,6 +213,11 @@ $widgets(sweep) add 1 -text "Log"
 
 $widgets(sweep) select 0
 
+# Set some default values for the current sweep, which are much
+# smaller than those for the voltage sweep.
+set vi(sweep_start_save) -1e-6
+set vi(sweep_stop_save)   1e-6
+
 if { 0==[info exists vi(sweep_start)] } { set vi(sweep_start) 0 }
 set widgets(sweep_start) [my_entry $widgets(source_frame).sweep_start vi(sweep_start) \
 			      "Sweep start"  real ]
@@ -503,8 +508,21 @@ proc change_source {} {
 
     if {[$widgets(source) get]!= ""} {
 	set vi(source) [$widgets(source) get]
-	# If we source voltage, leave axis as-is. If we source current, invert them.
+	# If we source voltage, leave axis as-is. If we source
+	# current, invert them.
 	$vi(chart) configure -invertxy $vi(source) 
+	
+	# Set the defaults for the limits of the sweep. It will be
+	#based on the default values or the value we last set when entering
+	#this type of sweep.
+	set temp_start $vi(sweep_start)
+	set temp_stop $vi(sweep_stop)
+	set vi(sweep_start) $vi(sweep_start_save)
+	set vi(sweep_stop) $vi(sweep_stop_save)
+	# save values we were using for the next time we enter this kind
+	# of sweep. 
+	set vi(sweep_start_save) $temp_start
+	set vi(sweep_stop_save) $temp_stop 
     }
 }
 
