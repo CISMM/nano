@@ -16,6 +16,8 @@ set import_visibility 1
 set import_proj_text 1
 set import_CCW 1
 set import_tess 10
+set import_axis_step 1
+set import_clamp 0
 
 set import_color gray
 set import_r 192
@@ -65,9 +67,15 @@ generic_entry $nmInfo(basic_options).f3.import_scale import_scale \
      "Scale" real 
 generic_entry $nmInfo(basic_options).f3.import_tess import_tess \
      "Tube Loading Tesselation" integer
+generic_entry $nmInfo(basic_options).f3.import_axis_step import_axis_step \
+     "Tube Loading Axis Step" integer
+
 button $nmInfo(basic_options).f3.visibility_button -text "Hide" -command change_visibility
 checkbutton $nmInfo(basic_options).f3.proj_text_button \
     -text "Show Projective Texture" -variable import_proj_text
+checkbutton $nmInfo(basic_options).f3.clamp_button \
+    -text "Clamp Projective Texture" -variable import_clamp
+
 
 button $nmInfo(basic_options).f3.set_color \
         -text "Set color" -command {
@@ -104,8 +112,10 @@ pack $nmInfo(basic_options).f2.import_roty -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_rotz -padx 1m -pady 1m
 pack $nmInfo(basic_options).f3.import_scale -padx 1m -pady 1m -anchor nw
 pack $nmInfo(basic_options).f3.import_tess -padx 1m -pady 1m -anchor nw
+pack $nmInfo(basic_options).f3.import_axis_step -padx 1m -pady 1m -anchor nw
 pack $nmInfo(basic_options).f3.visibility_button -anchor nw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f3.proj_text_button -anchor nw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f3.clamp_button -anchor sw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f3.set_color -side left -padx 1m
 pack $nmInfo(basic_options).f3.colorsample -side left -padx 1m -fill x -expand yes
 
