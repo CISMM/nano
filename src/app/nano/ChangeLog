@@ -1,3 +1,11 @@
+2002-04-26  David Borland  <borland@cs.unc.edu>
+
+        * microscape.C : made changes to change static file code for 
+        loaded object.  Added change height plane code for objects
+
+        * import.C : took out setting default translation of loaded 
+        objects because this is done elsewhere now
+
 2002-04-23  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c (createNewDatasetOrMicroscope):  set up microscope
