@@ -30,6 +30,7 @@ class URProjectiveTexture {
   URProjectiveTexture();
   int doFastUpdates(bool enable);
   int setOpacity(double opacity);
+  void setWrapMode(GLuint wrapMode);
   int setImage(nmb_Image *image);
   int setImage(PPM *image);
 
@@ -38,7 +39,7 @@ class URProjectiveTexture {
 
   int installTexture(int width, int height, void *data,
 					GLuint internalFormat, GLuint dataFormat, 
-					GLuint dataType, GLuint wrapMode);
+					GLuint dataType);
   // by default the textureTransform is assumed to transform
   // points in object coordinates to texture coordinates
   // with the optional arguments filled in you make this function
@@ -82,6 +83,8 @@ class URProjectiveTexture {
   // texture blending attributes
   GLuint d_textureBlendFunction;
   double d_opacity;
+
+  GLuint d_wrapMode;
 
   // colormap stuff
 

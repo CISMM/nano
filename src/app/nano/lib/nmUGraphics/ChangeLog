@@ -1,3 +1,12 @@
+2003-03-19  Adam Seeger  <seeger@cs.unc.edu>
+
+	* URProjectiveTexture.hC - added wrapMode attribute
+	(setWrapMode): new function
+	(installTexture): removed wrapMode parameter
+	(enable): changed to use wrapMode attribute instead of GL_CLAMP
+	(updateTextureMipmap): "
+	(loadColorImageMipmap): "
+
 2003-02-24  Adam Seeger  <seeger@cs.unc.edu>
 
 	* URProjectiveTexture.C - added additional flag to trigger updates when

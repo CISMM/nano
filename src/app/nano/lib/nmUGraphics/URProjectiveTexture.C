@@ -14,6 +14,7 @@ URProjectiveTexture::URProjectiveTexture():
   d_textureMatrixNumY(0),
   d_textureBlendFunction(GL_DECAL),
   d_opacity(1.0),
+  d_wrapMode(GL_REPEAT),
   d_colormap_data_min(0),
   d_colormap_data_max(1),
   d_colormap_color_min(0),
@@ -25,6 +26,12 @@ URProjectiveTexture::URProjectiveTexture():
   d_colorImageTooBig(false)
 {
 
+}
+
+void URProjectiveTexture::setWrapMode(GLuint wrapMode)
+{
+	d_wrapMode = wrapMode;
+	return;
 }
 
 int URProjectiveTexture::doFastUpdates(bool enable)
@@ -86,8 +93,7 @@ int URProjectiveTexture::setTextureBlendFunction(GLuint blendFunc)
 }
 
 int URProjectiveTexture::installTexture(int width, int height, void *data,
-					GLuint internalFormat, GLuint dataFormat, GLuint dataType,
-					GLuint wrapMode)
+					GLuint internalFormat, GLuint dataFormat, GLuint dataType)
 {
 	
 	if (!d_textureObjectCreated) {
@@ -105,8 +111,8 @@ int URProjectiveTexture::installTexture(int width, int height, void *data,
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, tex_color);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, d_wrapMode);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, d_wrapMode);
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 
@@ -116,8 +122,8 @@ int URProjectiveTexture::installTexture(int width, int height, void *data,
     }
 	if (gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat, width,
                        height, dataFormat, dataType, data)!=0) {
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat,
                  width, height, 0, dataFormat, dataType, data);
 	}
@@ -265,6 +271,8 @@ int URProjectiveTexture::enable(double *textureTransform,
 	  break;
 	}
 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, d_wrapMode);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, d_wrapMode);
 
 	glPushAttrib(GL_TRANSFORM_BIT);
 	glMatrixMode(GL_TEXTURE);
@@ -404,8 +412,8 @@ int URProjectiveTexture::updateTextureNoMipmap()
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, d_textureID);
 
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, d_wrapMode);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, d_wrapMode);
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
@@ -709,6 +717,9 @@ int URProjectiveTexture::updateTextureMipmap()
 	glTexParameteri( GL_TEXTURE_2D, 
 		GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, d_wrapMode);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, d_wrapMode);
+
 	GLint internalFormat = GL_RGBA;
 
 	if (d_update_colormap && d_colormap) {
@@ -882,8 +893,8 @@ void URProjectiveTexture::loadColorImageMipmap()
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 	glBindTexture(GL_TEXTURE_2D, d_textureID);
-	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,d_wrapMode);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,d_wrapMode);
 
 	glTexParameteri( GL_TEXTURE_2D, 
 		GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -896,8 +907,8 @@ void URProjectiveTexture::loadColorImageMipmap()
 		printf("Error making mipmaps, using single-level texture instead.\n");
 		glTexImage2D(GL_TEXTURE_2D, 0, 4, d_textureMatrixNumX, 
 			d_textureMatrixNumY, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture);
-		glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 		if (glGetError()!=GL_NO_ERROR) {
 			printf(" Error making texture.\n");
 		}
