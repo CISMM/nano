@@ -1,4 +1,9 @@
 2002-07-08 David Borland <borland@cs.unc.edu>
+ 
+        * import.C : minor change to the callback that didn't get
+        committed last time.
+
+2002-07-08 David Borland <borland@cs.unc.edu>
 
         * import.C : added callback for projective texture coordinate 
         generation UI.  Moved here from the Registration UI.

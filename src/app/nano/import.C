@@ -452,11 +452,6 @@ static void handle_import_text_image_mode_change (vrpn_int32, void*) {
 		    }
         }
     }
-    else {
-        // since when texture display is re-enabled in the registration UI, it assumes surface registration, 
-        // go ahead and set this here to be consistent
-        import_text_image_mode = 1;
-    }
 }
 
 static  void handle_import_lock_object (vrpn_int32, void *)
