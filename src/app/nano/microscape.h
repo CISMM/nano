@@ -54,7 +54,7 @@ class vrpn_Tracker_AnalogFly;
 #endif
 class vrpn_Phantom;
 
-#define	MICROSCAPE_MAJOR_VERSION	(9)
+#define	MICROSCAPE_MAJOR_VERSION	(10)
 #define	MICROSCAPE_MINOR_VERSION	(0)
 
 
