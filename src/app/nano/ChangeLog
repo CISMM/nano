@@ -1,3 +1,8 @@
+2000-09-12  Kwan Torrich Skinner  <skinner@cs.unc.edu>
+	* microscape.c (main): moved gethostname call and corresponding
+	neighboring code to be executed before the dataset is initialized to
+	ensure the correct hostname is assigned to d_hostname in nmb_Dataset.
+
 2000-09-08  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (handle_openStreamFilename_change): took out

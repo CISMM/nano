@@ -6154,10 +6154,29 @@ int main(int argc, char* argv[])
       createForwarders(istate);
 
     }
+
+    // Must get hostname before initializing nmb_Dataset, but
+    // should do it after VRPN starts, I think.
+    char * hnbuf = new char[256];
+    if (gethostname(hnbuf, 256)) {
+	// get host failed! Try environment variable instead
+	delete [] hnbuf;
+	if ((hnbuf = getenv("HOSTNAME")) != NULL){
+	    // this is a global tclvar_String, so we can see it in tcl.
+	    my_hostname = hnbuf;
+	    // maybe use COMPUTERNAME?
+	}
+    } else {
+	// this is a global tclvar_String, so we can see it in tcl.
+	my_hostname = hnbuf;
+	delete [] hnbuf;
+    }
+
     if(createNewMicroscope(istate, microscope_connection)) {
       display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
       exit(0);
     }
+
     // When openStreamFilename changes, we try to open a stream,
     // which will call createNewMicroscope
     openStreamFilename.addCallback
@@ -6185,23 +6204,6 @@ int main(int argc, char* argv[])
     microscope->setPlaybackLimit(istate.packetlimit);  // HACK TCH 15 Feb 2000
 
 #endif
-
-    // Must get hostname before initializing nmb_Dataset, but
-    // should do it after VRPN starts, I think.
-    char * hnbuf = new char[256];
-    if (gethostname(hnbuf, 256)) {
-	// get host failed! Try environment variable instead
-	delete [] hnbuf;
-	if ((hnbuf = getenv("HOSTNAME")) != NULL){
-	    // this is a global tclvar_String, so we can see it in tcl.
-	    my_hostname = hnbuf;
-	    // maybe use COMPUTERNAME?
-	}
-    } else {
-	// this is a global tclvar_String, so we can see it in tcl.
-	my_hostname = hnbuf;
-	delete [] hnbuf;
-    }
 
     createGraphics(istate);
 
