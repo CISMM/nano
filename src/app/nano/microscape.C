@@ -4809,19 +4809,20 @@ void ParseArgs (int argc, char ** argv,
         istate->graphics_mode = TEST_GRAPHICS_MARSHALLING;
       } else if (!strcmp(argv[i], "-renderserver")) {
         istate->graphics_mode = RENDER_SERVER;
+      } else if (!strcmp(argv[i], "-trenderserver")) {
+        istate->graphics_mode = TEXTURE_SERVER;
+      } else if (!strcmp(argv[i], "-vrenderserver")) {
+        istate->graphics_mode = VIDEO_SERVER;
+      } else if (!strcmp(argv[i], "-crenderserver")) {
+        istate->graphics_mode = CLOUD_SERVER;
       } else if (!strcmp(argv[i], "-renderclient")) {
 	if (++i >= argc) Usage(argv[0]);
         istate->graphics_mode = RENDER_CLIENT;
-      } else if (!strcmp(argv[i], "-trenderserver")) {
-        istate->graphics_mode = TEXTURE_SERVER;
-      } else if (!strcmp(argv[i], "-crenderserver")) {
-        istate->graphics_mode = CLOUD_SERVER;
+        strncpy(istate->graphicsHost, argv[i], 256);
       } else if (!strcmp(argv[i], "-trenderclient")) {
 	if (++i >= argc) Usage(argv[0]);
         istate->graphics_mode = TEXTURE_CLIENT;
         strncpy(istate->graphicsHost, argv[i], 256);
-      } else if (!strcmp(argv[i], "-vrenderserver")) {
-        istate->graphics_mode = VIDEO_SERVER;
       } else if (!strcmp(argv[i], "-vrenderclient")) {
 	if (++i >= argc) Usage(argv[0]);
         istate->graphics_mode = VIDEO_CLIENT;

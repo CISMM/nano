@@ -1,8 +1,13 @@
+2001-06-20  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c (ParseArgs) : fix function, reorder strcmps to
+	keep like arguments together.
+
 2001-06-18  Tom Hudson  <hudson@cs.unc.edu>
 
 	* CollaborationManager.C : port forward hackishly to deal with
 	current VRPN.
-	microscape.C : same.  reenable -perf.  bring -peerbaseport across
+	microscape.c : same.  reenable -perf.  bring -peerbaseport across
 	from the main branch and also apply to remote graphics servers
 	so I can coexist happily with others (or myself?) on evans.
 	
