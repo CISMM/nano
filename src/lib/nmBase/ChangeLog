@@ -1,3 +1,11 @@
+2000-09-08  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Device.C (nmb_Device) : initialize vrpn_HANDLERPARAM passed 
+	to gotConnection handlers but not used (avoids warnings)
+	* nmb_SharedDevice.[hC] (unregister*) : adds several new functions
+	to unregister device-level handlers to match the ones for registering
+	handlers
+
 2000-09-07  Adam Seeger  <seeger@cs.unc.edu>
 
         * nmb_Decoration.C,h (setScrapeHeightScale) : new function

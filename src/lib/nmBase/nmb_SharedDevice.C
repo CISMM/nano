@@ -190,6 +190,32 @@ void nmb_SharedDevice_Remote::registerGotMutexCallback
 
 }
 
+void nmb_SharedDevice_Remote::unregisterGotMutexCallback
+	 (void * userdata,
+          void (* f) (void *, nmb_SharedDevice_Remote *))
+{
+  sharedDeviceCallback * victim, ** snitch;
+
+  snitch = &d_gotMutexCallbacks;
+  victim = *snitch;
+  while (victim &&
+         (victim->f != f) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr, "nmb_SharedDevice_Remote::unregisterGotMutexCallback:  "
+                    "No such handler.\n");
+    return;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+}
+
+
 // static
 void nmb_SharedDevice_Remote::registerDeniedMutexCallback
             (void * userdata,
@@ -209,6 +235,33 @@ void nmb_SharedDevice_Remote::registerDeniedMutexCallback
   d_deniedMutexCallbacks = cb;
 
 }
+
+void nmb_SharedDevice_Remote::unregisterDeniedMutexCallback
+         (void * userdata,
+          void (* f) (void *, nmb_SharedDevice_Remote *))
+{
+  sharedDeviceCallback * victim, ** snitch;
+
+  snitch = &d_deniedMutexCallbacks;
+  victim = *snitch;
+  while (victim &&
+         (victim->f != f) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr, "nmb_SharedDevice_Remote::unregisterDeniedMutexCallback:  "
+                    "No such handler.\n");
+    return;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+}
+
+
 
 // static
 void nmb_SharedDevice_Remote::registerMutexTakenCallback
@@ -230,6 +283,32 @@ void nmb_SharedDevice_Remote::registerMutexTakenCallback
 
 }
 
+void nmb_SharedDevice_Remote::unregisterMutexTakenCallback
+         (void * userdata,
+          void (* f) (void *, nmb_SharedDevice_Remote *))
+{
+  sharedDeviceCallback * victim, ** snitch;
+
+  snitch = &d_mutexTakenCallbacks;
+  victim = *snitch;
+  while (victim &&
+         (victim->f != f) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr, "nmb_SharedDevice_Remote::unregisterMutexTakenCallback:  "
+                    "No such handler.\n");
+    return;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+}
+
+
 // static
 void nmb_SharedDevice_Remote::registerMutexReleasedCallback
             (void * userdata,
@@ -249,6 +328,32 @@ void nmb_SharedDevice_Remote::registerMutexReleasedCallback
   d_mutexReleasedCallbacks = cb;
 
 }
+
+void nmb_SharedDevice_Remote::unregisterMutexReleasedCallback
+         (void * userdata,
+          void (* f) (void *, nmb_SharedDevice_Remote *))
+{
+  sharedDeviceCallback * victim, ** snitch;
+
+  snitch = &d_mutexReleasedCallbacks;
+  victim = *snitch;
+  while (victim &&
+         (victim->f != f) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr,"nmb_SharedDevice_Remote::unregisterMutexReleasedCallback:"
+                    "  No such handler.\n");
+    return;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+}
+
 
 // static
 int nmb_SharedDevice_Remote::handle_gotMutex (void * userdata) {

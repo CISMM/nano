@@ -108,6 +108,24 @@ class nmb_SharedDevice_Remote : public nmb_Device_Client {
       ///< Lets the using process take some action to notify the user
       ///< when any user releases the device.
 
+    void unregisterGotMutexCallback (void * userdata,
+                    void (*) (void *, nmb_SharedDevice_Remote *));
+      ///< Lets the using process not take some action to notify the user
+      ///< when the device is secured.
+    void unregisterDeniedMutexCallback (void * userdata,
+                    void (*) (void *, nmb_SharedDevice_Remote *));
+      ///< Lets the using process not take some action to notify the user
+      ///< when a request for the device has been denied.
+    void unregisterMutexTakenCallback (void * userdata,
+                    void (*) (void *, nmb_SharedDevice_Remote *));
+      ///< Lets the using process not take some action to notify the user
+      ///< when any user obtains access to the device.
+    void unregisterMutexReleasedCallback (void * userdata,
+                    void (*) (void *, nmb_SharedDevice_Remote *));
+      ///< Lets the using process not take some action to notify the user
+      ///< when any user releases the device.
+
+
   private:
 
     vrpn_Mutex_Remote d_mutex;

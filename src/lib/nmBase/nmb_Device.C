@@ -123,10 +123,12 @@ nmb_Device::nmb_Device(const char * name,
                                    handle_DroppedLastConnection,
                                    this);
     // XXX Bug in VRPN. If we're already connected before we register the
-    // handle_*GotConnection handlers, they never get executed. So we'll call
+    // handle_GotConnection handlers, they never get executed. So we'll call
     // them explicitly
     if (d_connected) {
         vrpn_HANDLERPARAM p;
+        p.type = 0; p.sender = 0; p.payload_len = 0;
+        p.msg_time.tv_sec = 0; p.msg_time.tv_usec = 0;
         p.buffer=NULL;
         handle_GotFirstConnection(this, p);
         handle_GotConnection(this, p);
