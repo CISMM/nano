@@ -1,3 +1,7 @@
+2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
+
+	* Makefile - added entries to USES_LIBS
+
 2002-06-26  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* nma_ShapeAnalyze.C : filled in stub functions
