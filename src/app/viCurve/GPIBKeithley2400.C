@@ -33,6 +33,7 @@ static void handle_set_stream_time_change( vrpn_float64 new_value, void * );
 // global variables
 static nma_Keithley2400_ui* keithley2400_ui;
 static vrpn_Connection* connection;
+char *tcl_script_dir = NULL, * nano_root = NULL;
 
 static Tcl_Interp* tcl_interp;
 static Tclvar_int* tcl_quit_button_pressed;
@@ -219,13 +220,32 @@ void parseArguments(int argc, char **argv)
 int main(unsigned argc, char *argv[])
 {
   unsigned short def_port_no = 4545;
-  char *tcl_script_dir, * nano_root;
   
   // -------------------------------------------
   // get environment variables
-  nano_root = getenv( "NANO_ROOT" );
-  tcl_script_dir = getenv( "NM_TCL_DIR" );
-  vi_device_name = getenv( "NM_VICRVE" );
+  char* tempstring = NULL;
+  nano_root = tcl_script_dir = vi_device_name = NULL;
+  tempstring = getenv( "NANO_ROOT" );
+  if( tempstring != NULL )
+  {
+    nano_root = new char[ strlen( tempstring ) + 1 ];
+    strcpy( nano_root, tempstring );
+  }
+
+  tempstring = getenv( "NM_TCL_DIR" );
+  if( tempstring != NULL )
+  {
+    tcl_script_dir = new char[ strlen( tempstring ) + 1 ];
+    strcpy( tcl_script_dir, tempstring );
+  }
+
+  tempstring = getenv( "NM_VICRVE" );
+  if( tempstring != NULL )
+  {
+    vi_device_name = new char[ strlen( tempstring ) + 1 ];
+    strcpy( vi_device_name, tempstring );
+  }
+  
 
   // --------------------------------------------------------------
   // set tcl_script_dir
@@ -327,14 +347,26 @@ int main(unsigned argc, char *argv[])
 } // end main
 
 
-void handle_quit_button(vrpn_int32, void *)
+void do_shutdown( )
 {
-  if ((*tcl_quit_button_pressed) != 1) return;
-  fprintf(stderr, "Shutting down and saving log file\n");
   if (keithley2400_ui)
     delete keithley2400_ui;
   if (connection)
     delete connection; // needed to make stream file write out
+  if( nano_root != NULL )
+    delete nano_root;
+  if( tcl_script_dir != NULL )
+    delete tcl_script_dir;
+  if( vi_device_name != NULL )
+    delete vi_device_name;
+}
+
+
+void handle_quit_button(vrpn_int32, void *)
+{
+  if ((*tcl_quit_button_pressed) != 1) return;
+  fprintf(stderr, "Shutting down and saving log file\n");
+  do_shutdown( );
   exit(0);
 }
 
@@ -342,9 +374,6 @@ void handle_quit_button(vrpn_int32, void *)
 void handle_cntl_c(int )
 {
   fprintf(stderr, "Received ^C signal, shutting down and saving log file\n");
-  if (connection) 
-    delete connection; // needed to make stream file write out
-  if (keithley2400_ui) 
-    delete keithley2400_ui;
+  do_shutdown( );
   exit(-1);
 }
