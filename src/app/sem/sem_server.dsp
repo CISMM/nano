@@ -37,12 +37,12 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "Release"
-# PROP Intermediate_Dir "Release"
+# PROP Output_Dir "pc_win32/Release"
+# PROP Intermediate_Dir "pc_win32/Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MLd /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /TP /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "." /I "../ebeamWriter" /I "../../../../vrpn" /I "../../../../external/pc_win32/include" /I "../../../../../external/pc_win32/include/stl" /I "../../../../quat" /I "../../lib/nmBase" /I "../../lib/nmMP" /I "../../lib/nmImageViewer" /I "../../lib/ImgFormat" /I "../../lib/tclLinkVar" /I "../nano/lib/nmReg" /I "../nano/lib/nmSEM" /I "../sem" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /D "V_GLUT" /D "VRPN_NO_STREAMS" /YX /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -50,7 +50,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 vrpn.lib wsock32.lib quat.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
+# ADD LINK32 vrpn.lib glut32_UNC.lib glu32.lib opengl32.lib wsock32.lib quat.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386 /libpath:"../../../../external/pc_win32/lib" /libpath:"../../../../../external/pc_win32/lib" /libpath:"../../../../vrpn/pc_win32/Release" /libpath:"../../../../quat/pc_win32/Release"
 
 !ELSEIF  "$(CFG)" == "sem_server - Win32 Debug"
 
