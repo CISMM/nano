@@ -1,3 +1,8 @@
+2002-08-05  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.C (main):  sleeps for 1 ms so that we don't 
+	use up a whole CPU.
+
 2002-07-10  David Marshburn  <marshbur@cs.unc.edu>
 
 	* import.C:  code for registering projected texture with imported

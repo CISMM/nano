@@ -8626,6 +8626,13 @@ vrpn_Connection* c;
     VERBOSE(4, "  Done with mainloop iteration");
     n++; 
 
+	
+	// Sleep for a short while to make sure we don't eat the whole CPU
+	//  This is particularly important for the phantom, whose thread 
+	//  needs reliable access to the CPU.
+	vrpn_SleepMsecs(1);
+	
+	
   }  // end of mainloop
 
   dataset->done = VRPN_TRUE; //XXXX
