@@ -2551,7 +2551,10 @@ int doFeelLive (int whichUser, int userEvent)  {
       if (microscopeRedundancyController) {
         // Instead of using TCP to transmit reliably,
         // send everything via UDP 3 times at 25 ms intervals.
-        microscopeRedundancyController->set(2, 0.025);
+        timeval interval;
+        interval.tv_sec = 0;
+        interval.tv_usec = 25000;
+        microscopeRedundancyController->set(2, interval);
       }
 
       /* Request a reading from the current location,
@@ -2677,7 +2680,9 @@ fprintf(stderr, "Feeling to %.2f, %.2f.\n", clipPos[0], clipPos[1]);
       }
 
       if (microscopeRedundancyController) {
-        microscopeRedundancyController->set(0, 0.0);
+        timeval interval;
+        interval.tv_sec = 0; interval.tv_usec = 0;
+        microscopeRedundancyController->set(0, interval);
       }
 
       /* Start image mode and resume previous scan pattern */

@@ -305,6 +305,11 @@ int stm_init (const vrpn_bool set_region,
 extern nmb_TimerList graphicsTimer;
 extern nmb_TimerList collaborationTimer;
 
+
+// Tom's MCN experiments - Oct 2000
+class vrpn_RedundantRemote;
+extern vrpn_RedundantRemote * microscopeRedundancyController;
+
 #endif	/* MICROSCAPE_H */
 
 
