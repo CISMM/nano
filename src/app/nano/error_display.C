@@ -8,6 +8,8 @@
 #include "tcl_tk.h"
 #include "error_display.h"
 
+int disable_dialogs = 0;
+
 /* Bug note. I started with const char *__format as the argument, 
  and it caused a segfault when used near a printf!!!! Don't use
  args starting with double underscore - they are reserved! */
@@ -17,6 +19,9 @@ void display_warning_dialog (const char *format, ...)
   va_list argptr;
   char txtptr[2000];
   char msgptr[2050]; 
+
+  if (disable_dialogs) return;
+
   /* Print text in a string */
   va_start(argptr, format);
   vsprintf (txtptr, format, argptr);
@@ -35,6 +40,9 @@ void display_error_dialog (const char *format, ...)
   va_list argptr;
   char txtptr[2000];
   char msgptr[2050]; 
+
+  if (disable_dialogs) return;
+
   /* Print text in a string */
   va_start(argptr, format);
   vsprintf (txtptr, format, argptr);
@@ -53,6 +61,9 @@ void display_fatal_error_dialog (const char *format, ...)
   va_list argptr;
   char txtptr[2000];
   char msgptr[2050]; 
+
+  if (disable_dialogs) return;
+
   /* Print text in a string */
   va_start(argptr, format);
   vsprintf (txtptr, format, argptr);

@@ -720,6 +720,7 @@ int teardown_phantom (vrpn_MousePhantom ** mousePhantomServer,
 
 int
 phantom_init (vrpn_Connection * local_device_connection,
+                vrpn_Connection * force_device_connection,
               const char * handTrackerName /*,
               vrpn_MousePhantom ** mousePhantomServer,
               vrpn_ForceDevice_Remote ** forceDevice,
@@ -734,21 +735,25 @@ phantom_init (vrpn_Connection * local_device_connection,
         bp = strchr(handTrackerName, '@');
         if (bp == NULL) {
             // If there is no local connection, we can't do anything.
-            if (local_device_connection == NULL) {
+            if (!local_device_connection || !force_device_connection) {
               return 0;
             }
 
-            if (!local_device_connection->get_File_Connection()) {
+            // Don't set up the server if it's really a streamfile.
+            // (All sorts of nasty error messages ensue, plus guaranteed
+            // confusion if there really is a Phantom attached to this
+            // host.)
+            if (!force_device_connection->get_File_Connection()) {
             
-            // Sleep to get phantom in reset positon
-            // Should notify user...
-            //vrpn_SleepMsecs(2000);
-            // 60 update a second, I guess. 
-            phantServer = new vrpn_Phantom((char *) handTrackerName, 
-                                           local_device_connection, 60);
-            if (phantServer==NULL) {
-              return -1;
-            }
+              // Sleep to get phantom in reset positon
+              // Should notify user...
+              //vrpn_SleepMsecs(2000);
+              // 60 update a second, I guess. 
+              phantServer = new vrpn_Phantom((char *) handTrackerName, 
+                                             force_device_connection, 60);
+              if (phantServer==NULL) {
+                return -1;
+              }
 
             }
         } else 
@@ -760,6 +765,7 @@ phantom_init (vrpn_Connection * local_device_connection,
             if (local_device_connection == NULL) {
               return -1;
             }
+            force_device_connection = local_device_connection;
         }
     } else {
     
@@ -779,7 +785,7 @@ phantom_init (vrpn_Connection * local_device_connection,
 
     // If we get here, some phantom server has been created or contacted.
     forceDevice = new vrpn_ForceDevice_Remote((char *) handTrackerName, 
-                                              local_device_connection);
+                                              force_device_connection);
         // Already set to [0.2, 1.0] by default
         //MAX_K = 1.0f;
         //MIN_K = 0.2f;
@@ -839,6 +845,7 @@ phantom_init (vrpn_Connection * local_device_connection,
 int
 peripheral_init
            (vrpn_Connection * local_device_connection,
+            vrpn_Connection * force_device_connection,
             const char * handTrackerName,
             const char * headTrackerName,
             const char * bdboxName,
@@ -850,7 +857,8 @@ peripheral_init
     int	i;
 
     /* initialize force device (single user) */
-    if (phantom_init(local_device_connection, handTrackerName)){
+    if (phantom_init(local_device_connection, force_device_connection,
+                     handTrackerName)){
 	fprintf(stderr, "Error: could not initialize force device.\n");
         vrpnHandTracker = NULL;
 	phantButton = NULL;

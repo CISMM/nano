@@ -4,7 +4,8 @@
 
 int x_init (char * argv []);
 int reset_phantom (void);
-int peripheral_init (vrpn_Connection *, const char * handTrackerName,
+int peripheral_init (vrpn_Connection *, vrpn_Connection *,
+                     const char * handTrackerName,
                      const char * headTrackerName, const char * bdboxName,
                      char * magellanName);
   ///< Calls phantom_init(), sets up head tracker, button box, magellan.
@@ -13,9 +14,12 @@ int peripheral_init (vrpn_Connection *, const char * handTrackerName,
   ///< which causes circular depenencies which are hard to understand and
   ///< maintain.
 
-int phantom_init (vrpn_Connection *, const char * handTrackerName);
+int phantom_init (vrpn_Connection *, vrpn_Connection *,
+                  const char * handTrackerName);
   ///< Sets up phantom.  Exposed so that the phantom connection can be
   ///< torn down and reestablished if we're replaying user input.
+  ///< First connection is for Tracker and Button (mostly data sources),
+  ///< Second is for ForceDevice (mostly data sink).
 int teardown_phantom
              (vrpn_MousePhantom ** mousePhantomServer,
               vrpn_ForceDevice_Remote ** forceDevice,

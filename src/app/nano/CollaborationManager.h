@@ -41,6 +41,9 @@ class CollaborationManager {
     vrpn_bool isCollaborationOn (void) const;
       ///< True if collaborative session is going on.
 
+    int logTime (void) const;
+      ///< Timestamp to be used on UI log files.
+      ///< (Exposed so that it can be used by Phantom logfiles)
 
     // MANIPULATORS
 

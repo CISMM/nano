@@ -5,4 +5,6 @@ void display_warning_dialog (const char *__format, ...);
 void display_error_dialog (const char *__format, ...);
 void display_fatal_error_dialog (const char *__format, ...);
 
+extern int disable_dialogs;
+
 #endif

@@ -1,3 +1,29 @@
+2001-07-19  Tom Hudson  <hudson@cs.unc.edu>
+
+        * error_display.C (disable_dialogs) : New global.
+        (display_warning_dialog) : Check disable_dialogs.
+        (display_error_dialog) : Check disable_dialogs.
+        (display_fatal_error_dialog) : Check disable_dialogs.
+        * microscape.c (ParseArgs) : Check for -nowarnings argument.
+        (main) : Don't popup "No file has been selected!" if -nowarnings
+        was passed in.
+
+        * CollaborationManager.C (logTime) : New (useless) function.
+
+        * microscape.c (WellKnownPorts::secondLocalDevice) : New (useless)
+        data member.
+        (force_device_connection) : New (useless) global variable).
+        (MicroscapeInitializationState::logSurface, surfaceLog) :
+        New data members.
+        (MicroscapeInitializationState constructor) : Initialize new
+        data members.
+        (ParseArgs) : Check for -logsurface argument.
+        (main) : Mess with creation of internal_device_connection.
+        Call force_device_connection->mainloop().
+        * minit.c (phantom_init) : Allow force_device_connection to
+        be specified separate from internal_device_connection.
+        (peripheral_init) : Same.
+
 2001-07-17  Tom Hudson  <hudson@cs.unc.edu>
 
         * microscape.c (shutdown_connections) : Delete

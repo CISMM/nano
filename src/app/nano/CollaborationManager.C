@@ -202,6 +202,10 @@ vrpn_bool CollaborationManager::isCollaborationOn (void) const {
   return d_isCollaborationOn;
 }
 
+int CollaborationManager::logTime (void) const {
+  return d_logTime;
+}
+
 
 void CollaborationManager::mainloop (void) {
 

@@ -950,6 +950,7 @@ class WellKnownPorts {
     const int remote_gaEngine;
     const int microscopeMutex;
     const int localDevice;
+    const int secondLocalDevice;
 
  public:
     WellKnownPorts (int base_port_number = defaultBasePort);
@@ -966,7 +967,8 @@ WellKnownPorts::WellKnownPorts (int base_port_number)
     roundTripTime           (5 + base_port_number),
     remote_gaEngine         (6 + base_port_number),
     microscopeMutex         (7 + base_port_number),
-    localDevice             (8 + base_port_number)
+    localDevice             (8 + base_port_number),
+    secondLocalDevice       (9 + base_port_number)
 {
     // empty
 }
@@ -1166,6 +1168,7 @@ double bdboxDialValues[BDBOX_NUMDIALS];
 /// connection for any internal devices - i.e. server and client both inside
 /// nano.
 vrpn_Connection * internal_device_connection = NULL;
+vrpn_Connection * force_device_connection = NULL;
 
 #ifndef NO_MAGELLAN
 ///  Magellan button and puck
@@ -1290,6 +1293,8 @@ struct MicroscapeInitializationState {
   char phantomLogPath [256];
   vrpn_bool replayPhantom;
   char phantomLog [256];
+  vrpn_bool logSurface;
+  char surfaceLog [256];
   timeval logTimestamp;
   vrpn_bool replayInterface;
 
@@ -1349,6 +1354,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   logInterface (VRPN_FALSE),
   logPhantom (VRPN_FALSE),
   replayPhantom (VRPN_FALSE),
+  logSurface (VRPN_FALSE),
   replayInterface (VRPN_FALSE),
   collabMode (2),
   phantomRate (60.0),  // standard default
@@ -1372,6 +1378,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   logPath[0] = '\0';
   phantomLogPath[0] = '\0';
   phantomLog[0] = '\0';
+  surfaceLog[0] = '\0';
   logTimestamp.tv_sec = 0;
   logTimestamp.tv_usec = 0;
   colorplane[0] = '\0';
@@ -1630,8 +1637,16 @@ void shutdown_connections (void) {
     if (internal_device_connection) {
        fprintf(stderr, "Now deleting internal_device_connection.\n");
         delete internal_device_connection;
-        internal_device_connection = NULL;
     }
+#if 0
+    if (force_device_connection &&
+        (force_device_connection != internal_device_connection)) {
+       fprintf(stderr, "Now deleting force_device_connection.\n");
+        delete force_device_connection;
+        force_device_connection = NULL;
+    }
+#endif
+    internal_device_connection = NULL;
 }
 
 #if defined (_WIN32) && !defined (__CYGWIN__)
@@ -4780,135 +4795,6 @@ fprintf(stderr, "Saving report of queue to %s.\n", nbuf);
 }
 
 
-#if 0
-// TCH Dissertation
-// May 2001
-// Set up and tear down Phantom connections dynamically so we can record
-// and replay streamfiles
-
-// This doesn't work;  after tearing down the connection the Phantom
-// doesn't come back correctly when we set the new internal_device_connection
-// up, and then the Tcl stack gets corrupted somehow.
-
-void doSetupPhantomConnection
-                    (vrpn_bool logPhantom,
-                     const char * handTrackerName,
-                     const char * phantomLogPath = NULL,
-                     timeval * logTimestamp = NULL);
-void doTeardownPhantomConnection (void);
-
-
-// static
-void handle_toggle_phantom_recording (vrpn_int32 on, void *) {
-  vrpn_bool logPhantom;
-  timeval now;
-
-  // Tear down the phantom connection, then set it up again in the correct
-  // recording mode.
-
-  doTeardownPhantomConnection();
-  if (on) {
-    logPhantom = strlen(phantom_record_name);
-    gettimeofday(&now, NULL);
-    doSetupPhantomConnection(logPhantom, handTrackerName,
-                             phantom_record_name, &now);
-  } else {
-    doSetupPhantomConnection(vrpn_FALSE, handTrackerName);
-  }
-}
-
-// static
-void handle_phantom_playback_once (vrpn_int32, void *) {
-  doTeardownPhantomConnection();
-  doSetupPhantomConnection(vrpn_FALSE, phantom_replay_name);
-  phantomReplayRepeat = 1;
-}
-
-// static
-void end_phantom_playback_once (void) {
-  doTeardownPhantomConnection();
-  doSetupPhantomConnection(vrpn_FALSE, handTrackerName);
-  phantomReplayRepeat = 0;
-}
-
-// static
-void handle_toggle_phantom_playback (vrpn_int32 on, void *) {
-  doTeardownPhantomConnection();
-  if (on) {
-    doSetupPhantomConnection(vrpn_FALSE, phantom_replay_name);
-    phantomReplayRepeat = 2;
-  } else {
-    doSetupPhantomConnection(vrpn_FALSE, handTrackerName);
-    phantomReplayRepeat = 0;
-  }
-}
-
-void doSetupPhantomConnection
-                    (vrpn_bool logPhantom,
-                     const char * handTrackerName,
-                     const char * phantomLogPath,
-                     timeval * logTimestamp) {
-  vrpn_Connection * c;
-  char phantomlog [256];
-  char * bp;
-
-  // Set up an internal device connection
-  sprintf(phantomlog, "%s/phantom-%d.log", phantomLogPath,
-          logTimestamp ? logTimestamp->tv_sec : 0L);
-
-  // See if it wasn't an internal device;  if so, open that connection
-  // explicitly in case we need to log.
-  bp = strchr(handTrackerName, '@');
-  if (bp) {
-    c = vrpn_get_connection_by_name (handTrackerName,
-                                     logPhantom ? phantomlog : NULL);
-  }
-
-  // If we're logging, and we didn't open it on the remote device, 
-  // we must intend to open it on the internal device connection.
-  internal_device_connection = new vrpn_Synchronized_Connection 
-           (wellKnownPorts->localDevice,
-            logPhantom && !bp ? phantomlog : NULL);
-
-  // BUG nmr_Registration_Proxy cached an internal_device_connection
-  // pointer and will crash if used after this point.
-
-  phantom_init(internal_device_connection, handTrackerName);
-
-  // nmui_HSFeelAhead caches force devices but will pick this change
-  // up on the next loop.
-  // As of May 2001 no other structure appears to cache
-  // a forceDevice pointer.
-}
-
-void doTeardownPhantomConnection (void) {
-  vrpn_Connection * c;
-  char * bp;
-
-  // Tear down the objects
-  teardown_phantom(&mousePhantomServer, &forceDevice, &phantButton,
-                   &vrpnHandTracker);
-
-  // Now tear down the connection
-
-  if (internal_device_connection) {
-    delete internal_device_connection;
-    internal_device_connection = NULL;
-  }
-
-  // BUG nmr_Registration_Proxy cached an internal_device_connection
-  // pointer and will crash if used after this point.
-
-  // See if it wasn't an internal device;  if so, delete that connection.
-  bp = strchr(handTrackerName, '@');
-  if (bp) {
-    c = vrpn_get_connection_by_name(handTrackerName);
-    if (c) {
-      delete c;
-    }
-  }
-}
-#endif
 
 
 void teardownSynchronization(CollaborationManager *cm, 
@@ -5693,6 +5579,14 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->phantomLog, argv[i]);
         fprintf(stderr, "Replaying phantom from path %s.\n", argv[i]);
+      } else if (!strcmp(argv[i], "-logsurface")) {
+        istate->logSurface = VRPN_TRUE;
+        if (++i >= argc) Usage(argv[0]);
+        strcpy(istate->surfaceLog, argv[i]);
+        fprintf(stderr, "Logging surface displayed to path %s.\n", argv[i]);
+      } else if (!strcmp(argv[i], "-nowarnings")) {
+        disable_dialogs = 1;
+        fprintf(stderr, "Turning off warnings and dialogs.\n");
       } else if (!strcmp(argv[i], "-packetlimit")) {
         if (++i >= argc) Usage(argv[0]);
         istate->packetlimit = atoi(argv[i]);
@@ -7127,26 +7021,44 @@ int main (int argc, char* argv[])
 
   VERBOSE(1,"Before tracker enable");
 
+  char surfacelog [256];
+
+  sprintf(surfacelog, "%s-surface.log", istate.surfaceLog);
+
   if (istate.replayPhantom) {
 
-     fprintf(stderr, "Opening connection to replay phantom from path %s.\n",
+    fprintf(stderr, "Opening connection to replay phantom from path %s.\n",
            istate.phantomLog);
 
     internal_device_connection =
-      new vrpn_File_Connection (istate.phantomLog);
+      new vrpn_File_Connection (istate.phantomLog, NULL,
+                      istate.logSurface ? surfacelog : NULL);
+
+    // The elegant way to do this would be to use
+    // vrpn_Connection::register_log_filter().  Unless we run into
+    // a storage problem, however, we'll do that as a postprocess.
 
     fprintf(stderr, "internal_device_connection opened as a file.\n");
+
+#if 0
+    // Need to open fdc as a true connection in order to get proper
+    // logging and all that.
+
+    force_device_connection = new vrpn_Synchronized_Connection
+            (wellKnownPorts->localDevice, NULL,
+             istate.logSurface ? surfacelog : NULL);
+#endif
 
   } else {
 
     char phantomlog [256];
 
-    sprintf(phantomlog, "%s-phantom-%d.log", istate.phantomLogPath,
-            istate.logTimestamp.tv_sec);
+    sprintf(phantomlog, "%s-phantom.log", istate.phantomLogPath);
 
     internal_device_connection = new vrpn_Synchronized_Connection 
            (wellKnownPorts->localDevice, NULL,
-            istate.logPhantom ? phantomlog : NULL);
+            istate.logPhantom ? phantomlog :
+            istate.logSurface ? surfacelog : NULL);
 
     if (istate.logPhantom) {
        fprintf(stderr,
@@ -7156,9 +7068,24 @@ int main (int argc, char* argv[])
 
     }
 
+#if 0
+    if (istate.logSurface) {
+      fprintf(stderr, "Creating separate connection to log "
+                            "force device.\n");
+      force_device_connection = new vrpn_Synchronized_Connection
+                    (wellKnownPorts->secondLocalDevice, NULL,
+                     surfacelog);
+    } else {
+      force_device_connection = internal_device_connection;
+    }
+#endif
+
   }
 
-  if (peripheral_init(internal_device_connection, handTrackerName,
+  force_device_connection = internal_device_connection;
+
+  if (peripheral_init(internal_device_connection, force_device_connection,
+                      handTrackerName,
                       headTrackerName, bdboxName, istate.magellanName)){
       display_fatal_error_dialog("Memory fault, cannot initialize "
                                  "peripheral devices\n");
@@ -7174,7 +7101,7 @@ int main (int argc, char* argv[])
   VERBOSE(1,"Before Tk initialization");
   if (tkenable) {
     // init_Tk_control_panels creates the interpreter and adds most of
-    // the Tk widgits
+    // the Tk widgets
     init_Tk_control_panels(tcl_script_dir, istate.collabMode,
                            &collaborationTimer);
     VERBOSE(1, "done initialising the control panels\n");
@@ -7263,18 +7190,17 @@ int main (int argc, char* argv[])
             handle_openStreamFilename_change(NULL, (void *)&istate);
         } else {
             openSPMDeviceName = istate.afm.deviceName;
-			if(istate.afm.writingStreamFile)
-			{
-				openSPMLogName = istate.afm.outputStreamName;
-			}
-			else
-			{
-				openSPMLogName = "";
-				// popup fileName chooser dialog (filemenu.tcl)
-				check_streamfile_save = 1;
-			}
-			// if file already exists, popup new fileName dialog (filemenu.tcl)
-			check_file_exists = 1;
+		if (istate.afm.writingStreamFile) {
+			openSPMLogName = istate.afm.outputStreamName;
+		} else {
+			openSPMLogName = "";
+			// popup fileName chooser dialog (filemenu.tcl)
+                  if (!disable_dialogs) {
+			check_streamfile_save = 1;
+                  }
+		}
+		// if file already exists, popup new fileName dialog (filemenu.tcl)
+		check_file_exists = 1;
             handle_openSPMDeviceName_change(NULL, (void *)&istate);
         }
     } else {
@@ -7739,6 +7665,10 @@ VERBOSE(1, "Entering main loop");
 
       if(internal_device_connection) {
           internal_device_connection->mainloop();
+      }
+
+      if (force_device_connection) {
+              force_device_connection->mainloop();
       }
 
 //nM_coord_change_server sends hand coordinates in world space from one copy
