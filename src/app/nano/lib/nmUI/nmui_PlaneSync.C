@@ -37,7 +37,7 @@ nmui_PlaneSync::~nmui_PlaneSync( void )
       vrpn_HANDLERPARAM_node* pnode = incomingCalcdPlaneList;
       while( pnode != NULL )
 	{
-	  delete (void*) pnode->data->buffer;
+	  delete (char*) pnode->data->buffer;
 	  delete pnode->data;
 	  incomingCalcdPlaneList = pnode->next;
 	  delete pnode;

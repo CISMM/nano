@@ -1,3 +1,8 @@
+2002-03-18  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* nmui_PlaneSync.C (~nmui_PlaneSync):  delete a memory block using
+	the type used to declare it (avoids a compiler warning).
+
 2002-03-15  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmui_Component.C (all):  check for null connection before doing 
