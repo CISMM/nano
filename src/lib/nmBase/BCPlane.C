@@ -50,10 +50,10 @@ BCPlane::setValue(int x, int y, float value)
     _modified = 1;
     _modified_nz = 1;
 
-    if (x < _validXMin) _validXMin = x;
-    if (x > _validXMax) _validXMax = x;
-    if (y < _validYMin) _validYMin = y;
-    if (y > _validYMax) _validYMax = y;
+    if (_validXMin == -1 || x < _validXMin) _validXMin = x;
+    if (_validXMax == -1 || x > _validXMax) _validXMax = x;
+    if (_validYMin == -1 || y < _validYMin) _validYMin = y;
+    if (_validYMax == -1 || y > _validYMax) _validYMax = y;
 
     for (int i = 0; i < _numcallbacks; i++)
 	_callbacks[i].callback(this, x,y, _callbacks[i].userdata);
@@ -243,75 +243,59 @@ double BCPlane::maxAttainableValue (void) const {
 
 /**
  findValidDataRange
-    Assuming the initial plane was filled with all zeros, finds
-   		the rectangle of data which is no longer zero. Used to write 
-		Topo files, versions 4 and 5. If you tell Topo that the whole
-		grid is valid, and part of the grid is filled with zeros, Topo
-		chokes. 
-		Returns -1 if the whole grid is still zero, otherwise 
-		returns 0 (success), and fills in the argument pointers with
-		the region it found. 
-        @author Aron Helser
- @date modified 10-4-99 Aron Helser
+
+Tracks which positions in the plane have been set with setValue() since the
+plane was created or cleared. Used to write Topo files, versions 4 and 5. If
+you tell Topo that the whole grid is valid, and part of the grid is filled
+with zeros, Topo chokes.
+
+Also used in graphics to simplify drawing the invalid data region.  
+
+@return -1 if the whole grid is still zero, otherwise returns 0 (success), and
+fills in the argument pointers with the region it found.
+
+@author Aron Helser
+@date modified 3-02 Aron Helser 
 */
 int
-BCPlane::findValidDataRange(short* o_top, short* o_left, short* o_bottom, short* o_right)
+BCPlane::findValidDataRange(short* o_minX, short* o_maxX, 
+                           short* o_minY, short* o_maxY)
 {
 /*
-AAS - commented this out and reimplemented by maintaining a rectangular 
+AAS - reimplemented by maintaining a rectangular 
 region that changes whenever you set a value
-This was too innefficient.
-
-    // top edge is y= numY -1, left is x = 0, etc. 
-    short top = -1, left = -1, bottom =-1, right =-1;
-    short x, y;
-
-    	for (x = 0; x < numX(); x++) 
-	{
-	    for (y = 0; y < numY(); y++) 
-	    {
-		double value = this->value(x, y);
-		if (value != 0.0) {
-		    // Is this first non-zero value?
-		    if (top == -1) {
-			// set region to be equal to this point.
-			top = bottom = y;
-			left = right = x;
-		    } else {
-			// expand the region to include new points. 
-			if (y > top) top = y;
-			if (y < bottom) bottom = y;
-			if (x < left) left = x;
-			if (x > right) right = x;
-		    }
-		}
-	    }
-	}
-
-	if ((top == -1) || (left == -1) || (bottom == -1) || (right == -1)) {
-	    // We didn't find any valid data in this grid. 
-	    return -1;
-	}
-        _validYMax = top;
-        _validXMin = left;
-        _validXMax = right;
-        _validYMin = bottom;
-
-	*o_top = top;
-	*o_left = left;
-	*o_right = right;
-	*o_bottom = bottom;
+Brute search was too innefficient.
 */
-    if (_validYMax < _validYMin || _validXMax < _validXMin) {
+    if (_validYMax ==-1 || _validYMin==-1 || _validXMax==-1 ||_validXMin==-1) {
       // no valid data in the grid
       return -1;
     }
-    *o_top = _validYMax;
-    *o_left = _validXMin;
-    *o_right = _validXMax;
-    *o_bottom = _validYMin;
+    *o_minX = _validXMin;
+    *o_maxX = _validXMax;
+    *o_minY = _validYMin;
+    *o_maxY = _validYMax;
     return 0;
 } // findValidDataRange
+
+void BCPlane::resetValid(){
+    _validXMin = -1;
+    _validXMax = -1;
+    _validYMin = -1;
+    _validYMax = -1;
+}
+
+/** Clear all data from the plane, and reset valid data region.
+ */
+int BCPlane::clear() {
+    for (short x = 0; x < numX(); x++) {
+        for (short y = 0; y < numY(); y++) {
+            setValue(x, y, 0);
+        }
+    }
+    
+    resetValid();
+    return 0;
+}
 
 /**
    Gives the data value stored in the plane at a location specified
@@ -590,10 +574,7 @@ BCPlane::BCPlane(BCString name, BCString units, int nx, int ny):
       exit(-1);
     }
 
-    _validXMin = _num_x;
-    _validXMax = -1;
-    _validYMin = _num_y;
-    _validYMax = -1;
+    resetValid();
 }
 
 
@@ -637,10 +618,7 @@ BCPlane::BCPlane(BCPlane* plane):
       fprintf(stderr,"BCPlane::BCPlane(): new failed!\n");
       exit(-1);
     }
-    _validXMin = _num_x;
-    _validXMax = -1;
-    _validYMin = _num_y;
-    _validYMax = -1;
+    resetValid();
 }
 
 BCPlane::BCPlane(BCPlane* plane, int newX, int newY):
@@ -677,10 +655,7 @@ BCPlane::BCPlane(BCPlane* plane, int newX, int newY):
       fprintf(stderr,"BCPlane::BCPlane(): new failed!\n");
       exit(-1);
     }
-    _validXMin = _num_x;
-    _validXMax = -1;
-    _validYMin = _num_y;
-    _validYMax = -1;
+    resetValid();
 }
    
 
@@ -720,6 +695,9 @@ int BCPlane::setGridSize(int x, int y)
   // Grid resolution has changed. Re-allocate and initialize plane to zero.
     delete [] _value;
     _value = NULL;
+
+    // Data is no longer "valid"
+    resetValid();
 
     int bordXMin, bordXMax, bordYMin, bordYMax;
 #ifdef PAD_IMAGE_TO_POWER_OF_TWO
@@ -1790,6 +1768,8 @@ CPlane::CPlane(BCString name, BCString units, int nx, int ny) :
     for (x = 0; x < _num_x+_borderXMin+_borderXMax; x++) 
 	for (y = 0; y < _num_y+_borderYMin+_borderYMax; y++)
 	    _value[x + y*(_num_x+_borderXMin+_borderXMax)] = 0.0;
+
+    // _valid* values unchanged, no need to reset. 
 }
 
 
@@ -1808,13 +1788,23 @@ CPlane::CPlane(CPlane* plane) : BCPlane(plane)
 
     int x, y;
     
-    for (x = 0; x < _num_x+_borderXMin+_borderXMax; x++) 
-	for (y = 0; y < _num_y+_borderYMin+_borderYMax; y++)
+    for (x = 0; x < _num_x+_borderXMin+_borderXMax; x++) {
+	for (y = 0; y < _num_y+_borderYMin+_borderYMax; y++) {
 	    _value[x + y*(_num_x+_borderXMin+_borderXMax)] = 0.0;
+        }
+    }
 
-    for (x = 0; x < plane->numX(); x++) 
-	for (y = 0; y < plane->numY(); y++) 
+    for (x = 0; x < plane->numX(); x++) {
+	for (y = 0; y < plane->numY(); y++) { 
 	    setValue(x,y,plane->value(x, y));
+        }
+    }
+
+    // Calling setValue changes _valid* flags - copy from input plane. 
+    if (plane->findValidDataRange(&_validXMin, &_validXMax, 
+                                  &_validYMin, &_validYMax)) {
+        resetValid();
+    }
 }
 
 CPlane::CPlane (CPlane * plane, int newX, int newY) :
@@ -1827,13 +1817,25 @@ CPlane::CPlane (CPlane * plane, int newX, int newY) :
 
     int x, y;
     
-    for (x = 0; x < newX+_borderXMin+_borderXMax; x++) 
-	for (y = 0; y < newY+_borderYMin+_borderYMax; y++)
+    for (x = 0; x < newX+_borderXMin+_borderXMax; x++) {
+	for (y = 0; y < newY+_borderYMin+_borderYMax; y++){
 	    _value[x + y*(newX+_borderXMin+_borderXMax)] = 0.0;
+        }
+    }
 
-    for (x = 0; x < newX; x++) 
-	for (y = 0; y < newY; y++) 
+    for (x = 0; x < newX; x++) {
+	for (y = 0; y < newY; y++) {
 	    setValue(x,y,plane->value(x, y));
+        }
+    }
+    // Calling setValue changes _valid* flags - copy from input plane. 
+    if (plane->findValidDataRange(&_validXMin, &_validXMax, 
+                                  &_validYMin, &_validYMax)) {
+        resetValid();
+    }
+    _validYMax = min( _validYMax, newY);
+    _validXMax = min( _validXMax, newX);
+
 }
 
 
@@ -1861,6 +1863,17 @@ CTimedPlane::setTime(int x, int y, long sec, long usec)
     _usec[x][y] = usec;
 } // setTime
 
+
+int CTimedPlane::clear() {
+    int ret = BCPlane::clear();
+    for (short x = 0; x < numX(); x++) {
+        for (short y = 0; y < numY(); y++) {
+    	    _sec[x][y] = 0;
+	    _usec[x][y] = 0;
+        }
+    }
+    return ret;
+}
 
 //virtual
 void CTimedPlane::computeMinMax (void) {
@@ -1917,6 +1930,8 @@ CTimedPlane::CTimedPlane(BCString name, BCString units, int nx, int ny) :
 	    _usec[x][y] = 0;
 	}
     }
+    // Calling setValue messes up our _valid region. Reset. 
+        resetValid();
 }
 
 
@@ -1940,12 +1955,13 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane) : BCPlane(plane)
 	_sec[x] = new long[_num_y];
 	_usec[x] = new long[_num_y];	
 
-	for (y = 0; y < _num_y; y++)
-	{
-            setValue(x,y,0.0);
-	    _sec[x][y] = 0;
-	    _usec[x][y] = 0; 
-	}
+        // Just writing memory twice, looks like. 
+//  	for (y = 0; y < _num_y; y++)
+//  	{
+//              setValue(x,y,0.0);
+//  	    _sec[x][y] = 0;
+//  	    _usec[x][y] = 0; 
+//  	}
     }
 
     for (x = 0; x < plane->numX(); x++) 
@@ -1956,6 +1972,11 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane) : BCPlane(plane)
 	    _sec[x][y] = plane->_sec[x][y];
 	    _usec[x][y] = plane->_usec[x][y];
 	}
+    }
+    // Calling setValue changes _valid* flags - copy from input plane. 
+    if (plane->findValidDataRange(&_validXMin, &_validXMax, 
+                                  &_validYMin, &_validYMax)) {
+        resetValid();
     }
 }
 
@@ -1991,6 +2012,11 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane, int newX, int newY) :
 	    _sec[x][y] = plane->_sec[x][y];
 	    _usec[x][y] = plane->_usec[x][y];
 	}
+    }
+    // Calling setValue changes _valid* flags - copy from input plane. 
+    if (plane->findValidDataRange(&_validXMin, &_validXMax, 
+                                  &_validYMin, &_validYMax)) {
+        resetValid();
     }
 }
 

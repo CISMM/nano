@@ -1372,7 +1372,7 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
         iLayers = 1;
 
         short top,left, bottom,right;
-        if(I->validDataRange(&top,&left,&bottom,&right) < 0) {
+        if(I->validDataRange(&left,&right,&bottom,&top) < 0) {
             printf("No valid data to export - abort\n");
             return -1;
         } else {
@@ -1506,7 +1506,7 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *plane){
        	iLayers = 1;
 
 	short top,left, bottom,right;
-	if(plane->findValidDataRange(&top,&left,&bottom,&right) < 0) {
+	if(plane->findValidDataRange(&left,&right,&bottom,&top) < 0) {
 	    fprintf(stderr,"No valid data to export - abort\n");
 	    return -1;
 	} else {

@@ -1,3 +1,31 @@
+2002-03-12  Aron Helser  <helser@cs.unc.edu>
+
+	* BCPlane.Ch (findValidDataRange): Changed parameter order for better
+	clarity. WARNING if you use this function, the parameter order
+	must be changed!
+	(setValue): corrected tracking of valid region. 
+	(CTimedPlane): corrected parameter order to findValidDataRange - it
+	was wrong to begin with. 
+	(Cplane): same
+	(clear): new, clears data and params for findValidDataRange. 
+	(resetValid): new. 
+	* BCGrid.Ch (clear): new, same as BCPlane.
+
+	* Topo.C: corrected calls to findValidDataRange.
+	* nmb_Image.Ch (validDataRange): Changed to match BCPlane. WARNING
+	if you use this function, the parameter order must be changed!
+	Changed calls to validDataRange. 
+	
+	* nmb_Decoration.Ch (initScanline): Handle own memory allocation.
+	(clearScanline): new, clear scanline indicator for static files. 
+
+	* nmb_Interval (operator -=): handle empty interval explicity. 
+	(operator +=): same
+	(includes): new
+
+	* nmb_Subgrid.C: indicator for empty subgrid stays within grid
+	bounds. 
+	
 2002-03-04  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmb_CalculatedPlane.Ch (getCalculatedPlane):  new function; returns

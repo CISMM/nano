@@ -35,6 +35,7 @@ nmb_Interval & nmb_Interval::operator = (const nmb_Interval & i) {
 }
 
 nmb_Interval & nmb_Interval::operator += (const nmb_Interval & i) {
+  if (i.empty()) return *this;
   d_low = min(d_low, i.d_low);
   d_high = max(d_high, i.d_high);
 
@@ -45,6 +46,7 @@ nmb_Interval & nmb_Interval::operator -= (const nmb_Interval & i) {
   int newlow = d_low;
   int newhigh = d_high;
 
+  if (i.empty()) return *this;
   if ((i.d_high >= d_low) &&
       (i.d_low <= d_low))
     newlow = i.d_high + 1;
@@ -82,6 +84,10 @@ int nmb_Interval::overlaps (const nmb_Interval & i) const {
   if ((i.d_low <= d_high) &&
       (i.d_low >= d_low) && (i.d_high >= i.d_low)) return 1;
   return 0;
+}
+
+int nmb_Interval::includes (int val) const {
+    return ((val <= d_high) && (val >= d_low));
 }
 
 int nmb_Interval::adjacent (const nmb_Interval & i) const {

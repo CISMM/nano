@@ -121,8 +121,8 @@ class nmb_Image {
         /// min and max representable values:
 	virtual float minAttainableValue() const = 0;
         virtual float maxAttainableValue() const = 0;
-	virtual int validDataRange(short* o_top, short* o_left, 
-                                   short* o_bottom, short*o_right) = 0;
+	virtual int validDataRange(short* o_minX, short* o_maxX, 
+                           short* o_minY, short* o_maxY) = 0;
 
 	float getValueInterpolated(double i, double j) const;
 	float getValueInterpolatedNZ(double i, double j) const;
@@ -302,8 +302,8 @@ class nmb_ImageGrid : public nmb_Image{
 	virtual int height() const;
 	virtual float getValue(int i, int j) const;
 	virtual void setValue(int i, int j, float val);
-        virtual int validDataRange(short* o_top, short* o_left,
-                                   short* o_bottom, short*o_right);
+        virtual int validDataRange(short* o_minX, short* o_maxX, 
+                           short* o_minY, short* o_maxY);
 	virtual float maxValue();
 	virtual float minValue();
         virtual int normalize();
@@ -412,8 +412,8 @@ class nmb_ImageArray : public nmb_Image {
     /// min and max representable values:
     virtual float minAttainableValue() const;
     virtual float maxAttainableValue() const;
-    virtual int validDataRange(short* o_top, short* o_left,
-                               short* o_bottom, short*o_right);
+    virtual int validDataRange(short* o_minX, short* o_maxX, 
+                           short* o_minY, short* o_maxY);
 
     virtual double boundX(nmb_ImageBounds::ImageBoundPoint ibp) const;
     virtual double boundY(nmb_ImageBounds::ImageBoundPoint ibp) const;

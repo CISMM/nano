@@ -22,6 +22,7 @@ class nmb_Interval {
     int operator == (const nmb_Interval &) const;
     int overlaps (const nmb_Interval &) const;
     int adjacent (const nmb_Interval &) const;
+    int includes (int) const;
     int empty (void) const; 
 
     int low (void) const

@@ -85,10 +85,17 @@ class BCPlane
 
     double scale() const { return _scale; }
     void setScale(double scale) { _scale = scale; }
-    void tweakScale(); ///< Set scale to reasonable value based
+    void tweakScale(); 
+    ///< Set scale to reasonable value based
     ///< on scan size and data range. 
 
-    int findValidDataRange(short* o_top, short* o_left, short* o_bottom, short* o_right);
+    int findValidDataRange(short* o_minX, short* o_maxX, 
+                           short* o_minY, short* o_maxY);
+    ///< Returns which rect of value has been set since plane was created or
+    ///< cleared.
+
+    virtual int clear(); 
+    ///< Sets all data values to 0, resets valid data range.
 
     void level();
 
@@ -168,6 +175,8 @@ class BCPlane
        in one place where they can be overridden by smarter subclasses
        (like CTimedPlane) */
 
+    void resetValid(); ///< reset the valid region flags to empty.
+
     int readTextFile(FILE* file);
     int writeTextFile(FILE* file);
 
@@ -218,7 +227,7 @@ class BCPlane
     int _num_x, _num_y; ///< The size of the 2D _value array
     int _max_value_x_coord, _max_value_y_coord;
     int _borderXMin, _borderXMax, _borderYMin, _borderYMax;
-    int _validXMin, _validXMax, _validYMin, _validYMax;
+    short _validXMin, _validXMax, _validYMin, _validYMax;
 
     long** _sec;        ///< Times for each data point
     long** _usec;
@@ -243,6 +252,8 @@ class CTimedPlane : public BCPlane
   public:
 
     virtual void setTime(int x, int y, long sec, long usec);
+
+    virtual int clear(); 
 
   protected:
 

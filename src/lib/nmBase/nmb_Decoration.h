@@ -52,6 +52,7 @@ class nmb_Decoration {
     // microscope current scanline (visual)
 
     void initScanline(long);
+    void clearScanline();
     PointType *scan_line;
     long scanLineCount;
     int drawScanLine;

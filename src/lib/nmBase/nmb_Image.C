@@ -867,7 +867,7 @@ nmb_ImageGrid::nmb_ImageGrid(nmb_Image *im):
   }
   d_units_scale = im->valueScale();
   d_units_offset = im->valueOffset();
-  im->validDataRange(&max_y_set, &min_x_set, &min_y_set, &max_x_set);
+  im->validDataRange(&min_x_set, &max_x_set, &min_y_set, &max_y_set);
   im->getTopoFileInfo(d_topoFileDefaults);
   im->getBounds(d_imagePosition);
   d_imagePositionSet = vrpn_TRUE;
@@ -932,7 +932,7 @@ int nmb_ImageGrid::normalize()
 
 float nmb_ImageGrid::maxValidValue() {
     short top, left, bottom, right;
-    if (validDataRange(&top, &left, &bottom, &right)) {
+    if (validDataRange(&left,&right,&bottom,&top)) {
         return 0;
     }
     if ((top == height()-1) && (bottom == 0) && 
@@ -958,7 +958,7 @@ float nmb_ImageGrid::maxValidValue() {
 float nmb_ImageGrid::minValidValue() {
     short top, left, bottom, right;
     float result;
-    if (validDataRange(&top, &left, &bottom, &right)) {
+    if (validDataRange(&left,&right,&bottom,&top)) {
         return 0;
     }
 
@@ -1002,22 +1002,23 @@ void nmb_ImageGrid::setValue(int i, int j, float val)
      max_y_set = MAX(max_y_set, j);
 }
 
-int nmb_ImageGrid::validDataRange(short* o_top, short* o_left,
-                                   short* o_bottom, short*o_right){
+int nmb_ImageGrid::validDataRange(short* o_minX, short* o_maxX, 
+                           short* o_minY, short* o_maxY){
      int result = 0;
      // if we are not the allocator then assume someone else is setting
      // values directly in the plane object without going through us and
      // so take the valid region from what the plane says
      if (!grid) {
-         result = plane->findValidDataRange(o_top, o_left, o_bottom, o_right);
+         result = plane->findValidDataRange(o_minX, o_maxX, 
+                           o_minY, o_maxY);
      }
      // if no valid data:
      else if (min_y_set > max_y_set || min_x_set > max_x_set) {
          result = -1;
      } else {
          // otherwise at least one valid data point:
-         *o_bottom = min_y_set; *o_top = max_y_set;
-         *o_left = min_x_set; *o_right = max_x_set;
+         *o_minX = min_x_set; *o_maxX = max_x_set;
+         *o_minY = min_y_set; *o_maxY = max_y_set;
      }
      return result;
 }
@@ -1388,7 +1389,7 @@ nmb_ImageArray::nmb_ImageArray(nmb_Image *im)
       setValue(i,j, im->getValue(i,j));
     }
   }
-  im->validDataRange(&max_y_set, &min_x_set, &min_y_set, &max_x_set);
+  im->validDataRange(&min_x_set, &max_x_set, &min_y_set, &max_y_set);
 }
 
 nmb_ImageArray::~nmb_ImageArray() {
@@ -1531,14 +1532,14 @@ void nmb_ImageArray::setImage(void *newdata) {
   max_y_set = num_y-1;
 }
 
-int nmb_ImageArray::validDataRange(short* o_top, short* o_left,
-                                   short* o_bottom, short*o_right){
+int nmb_ImageArray::validDataRange(short* o_minX, short* o_maxX, 
+                           short* o_minY, short* o_maxY){
      // if no valid data:
      if (min_y_set > max_y_set || min_x_set > max_x_set)
         return -1;
      // otherwise at least one valid data point:
-     *o_bottom = min_y_set; *o_top = max_y_set;
-     *o_left = min_x_set; *o_right = max_x_set;
+         *o_minX = min_x_set; *o_maxX = max_x_set;
+         *o_minY = min_y_set; *o_maxY = max_y_set;
      return 0;
 }
 
@@ -1643,7 +1644,7 @@ int nmb_ImageArray::normalize() {
 
 float nmb_ImageArray::maxValidValue() {
     short top, left, bottom, right;
-    if (validDataRange(&top, &left, &bottom, &right)) {
+    if (validDataRange(&left,&right,&bottom,&top)) {
         return 0;
     }
     if ((top == height()-1) && (bottom == 0) && 
@@ -1666,7 +1667,7 @@ float nmb_ImageArray::maxValidValue() {
 
 float nmb_ImageArray::minValidValue() {
     short top, left, bottom, right;
-    if (validDataRange(&top, &left, &bottom, &right)) {
+    if (validDataRange(&left,&right,&bottom,&top)) {
         return 0;
     }
     if ((top == height()-1) && (bottom == 0) &&

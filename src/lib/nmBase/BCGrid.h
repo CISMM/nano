@@ -72,6 +72,9 @@ class BCGrid
     int setGridSize(int x, int y);
       ///< Changes the grid size, erases all data.
 
+    int clear(); 
+    ///< Sets all data values in all planes to 0
+
     int deleteHead();
     int empty();
     int empty_list();

@@ -145,9 +145,24 @@ void nmb_Decoration::addSlowLine3dMarker(float x, float y, float z) {
   }
 }
 
-void nmb_Decoration::initScanline(long _lineCount) {
-  scanLineCount = _lineCount;
-  scan_line = new PointType[scanLineCount];
+void nmb_Decoration::initScanline(long lineCount) {
+    if (lineCount <=0) {
+        clearScanline();
+        return;
+    }
+    if (scanLineCount != lineCount) {
+        clearScanline();
+    }
+    scanLineCount = lineCount;
+    scan_line = new PointType[scanLineCount];
+}
+
+void nmb_Decoration::clearScanline() {
+    if (scan_line) {
+        delete [] scan_line;
+        scan_line = NULL;
+    }
+    scanLineCount = 0;
 }
 
 void nmb_Decoration::addScrapeMark (PointType Top, PointType Bottom,

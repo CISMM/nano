@@ -32,6 +32,13 @@ nmb_Subgrid::nmb_Subgrid (BCGrid * & _grid) :
   max_x (-1), max_y (-1),
   grid (_grid) {
 
+  if (!grid) return;
+
+  min_x = grid->numX()-1;
+  max_x = 0;
+  min_y = grid->numY()-1;
+  max_y = 0;
+
 }
 
 
@@ -97,9 +104,9 @@ void nmb_Subgrid::Clear (void) {
       fprintf(stderr, "Clearer had error in getting semaphore.\n");
   }
 
-  min_x = grid->numX();
+  min_x = grid->numX()-1;
   max_x = 0;
-  min_y = grid->numY();
+  min_y = grid->numY()-1;
   max_y = 0;
 
   if (range_ps) {
@@ -131,9 +138,9 @@ void nmb_Subgrid::GetBoundsAndClear (int * minX, int * maxX,
   if (minY) *minY = min_y;
   if (maxY) *maxY = max_y;
 
-  min_x = grid->numX();
+  min_x = grid->numX()-1;
   max_x = 0;
-  min_y = grid->numY();
+  min_y = grid->numY()-1;
   max_y = 0;
 
   if (range_ps) {

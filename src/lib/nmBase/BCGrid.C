@@ -576,6 +576,16 @@ void BCGrid::setMaxY (double max_y) {
   doMinMaxCallbacks();
 }
 
+int BCGrid::clear() {
+    BCPlane *p;
+    int ret = 0;
+    for (p = head(); p; p = p->next()) {
+        // If any clear fails, return failure. 
+        ret |= p->clear();
+    }
+    return ret;
+}
+
 void BCGrid::registerMinMaxCallback (BCGrid_MinMaxCallback cb,
                                      void * userdata) {
   MinMaxCB * st;
