@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmg_Graphics.h"
 
 #include <string.h> // for strlen, strtok, strcpy...

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /** \file vrml.C
  *					adapted to VRML by Will Allen
  * 	This file contains the functions needed to write out a VRML file
