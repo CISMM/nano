@@ -18,4 +18,5 @@ int jakeMain (float scan_time_diff = .1,
   ///< waitTime : amount of latency to simulate (in seconds)
   ///<   BUG - "latency" is badly broken
 
+extern int g_isRude;
 #endif

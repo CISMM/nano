@@ -1,7 +1,8 @@
 #include "surface.h"
 
 #include <time.h>
-#include <sys/time.h>
+//#include <sys/time.h>
+#include <vrpn_Types.h>  // for portable sys/time.h
 
 #include <stdio.h>
 #include <iostream.h>
@@ -18,51 +19,45 @@
 
 #include "nmm_Microscope_Simulator.h"  // for connection
 
+// Necessary to link with nmm_Microscope
 static TopoFile GTF;
 
-BCGrid * mygrid;  // Added Tom Hudson 10 June 99 to simplify
-BCPlane * myZPlane;
+// Added Tom Hudson 10 June 99 to simplify
+static BCPlane * g_myZPlane;
 
 /****************************************************************************
  *  Steve's PARSER
  ****************************************************************************/
 
-static short num_x, num_y;
-static int port = 4500;
-static char * image_name;
-static int last_point_x = 0;
-static int last_point_y = 0;
+static short g_numX = 300, g_numY = 300;
+static int g_port = 4500;
+static char * g_imageName;
 
-vrpn_bool isWaiting = vrpn_FALSE;
-float waitTime = 0.0f;
+static int g_planeShape;
 
-//        crib the text directly from there for familiarity's sake.
+#define PSHAPE_SINUSOIDAL 0
+#define PSHAPE_STEP 1
+#define PSHAPE_RAMP 2
+#define PSHAPE_HEMISPHERES 3
+
+static vrpn_bool g_isWaiting = vrpn_FALSE;
+static float g_waitTime = 0.0f;
+
 
 void usage (const char * argv0) {
   fprintf(stderr,
-    "Usage:  %s [-image <picture>] [-grid <x> <y>] [-port port]\n", argv0);
+    "Usage:  %s [-image <picture>] [-grid <x> <y>] [-port <port>]\n"
+    "        [-surface <n>]\n", argv0);
   fprintf(stderr,
-    "    -image:  Use picture specified (otherwise use function).\n");
-  fprintf(stderr,
-    "    -grid:  Take x by y samples for the grid.\n");
-  fprintf(stderr,
-    "    -port:  Port number for VRPN server to use (default 4500).\n");
-  //fprintf(stderr,
-    //"    -rude:  Don't sleep;  use 100% of the CPU.\n");
+    "    -image:  Use picture specified (otherwise use function).\n"
+    "    -grid:  Take x by y samples for the grid (default 300 x 300).\n"
+    "    -port:  Port number for VRPN server to use (default 4500).\n"
+    "    -surface:  Use given surface function:  0 = sinusoidal (default),\n"
+    "      1 = step functions, 2 = ramp, 3 = hemispheres.\n");
 
   exit(0);
 }
 
-void open_image (char * image_name) {
-  fprintf(stderr, "working with a function -open_image\n");
-  cout << "image_name -> " << image_name << endl;
-}
-
-void get_grid_info( int num_x, int num_y) {
-  fprintf(stderr, "working with a function get_grid_info\n");
-  cout << "num_x -> " << num_x << endl;
-  cout << "num_y -> " << num_y << endl;
-}
 
 
 // Parse argv and write the values into s.
@@ -78,24 +73,26 @@ int parse (int argc, char ** argv) {
     fprintf(stderr, "parse:  arg %d %s\n", i, argv[i]);
     if (!strcmp(argv[i], "-image")) {
       if (++i >= argc) usage(argv[0]);
-      image_name = argv[i];
-      open_image ( image_name );
+      g_imageName = argv[i];
     } else if (strcmp(argv[i], "-port") == 0) {
       if (++i >= argc) usage(argv[0]);
-      port = atoi(argv[i]);
+      g_port = atoi(argv[i]);
     } else if (strcmp(argv[i], "-grid") == 0) {
       if (++i >= argc) usage(argv[0]);
-      num_x = atoi(argv[i]);
+      g_numX = atoi(argv[i]);
       if (++i >= argc) usage(argv[0]);
-      num_y = atoi(argv[i]);
-      get_grid_info(num_x, num_y);
-      /*    } else if (!strcmp(argv[i], "-latency")) {
+      g_numY = atoi(argv[i]);
+    } else if (!strcmp(argv[i], "-surface")) {
       if (++i >= argc) usage(argv[0]);
-      isWaiting = vrpn_TRUE;
-      waitTime = atof(argv[i]);
-  //  } else if (!strcmp(argv[i], "-rude")) {
-  //    g_isRude = 1;
-     */
+      g_planeShape = atoi(argv[i]);
+#if 0
+    } else if (!strcmp(argv[i], "-latency")) {
+      if (++i >= argc) usage(argv[0]);
+      g_isWaiting = vrpn_TRUE;
+      g_waitTime = atof(argv[i]);
+    } else if (!strcmp(argv[i], "-rude")) {
+      g_isRude = 1;
+#endif
     } else {
       ret = 1;
     }
@@ -119,24 +116,28 @@ int parse (int argc, char ** argv) {
 
 int getImageHeightAtXYLoc (float x, float y, float * z) {
   double zz;
-  myZPlane->valueAt(&zz, x, y);
+  g_myZPlane->valueAt(&zz, x, y);
   *z = zz;
   return 1;
 }
 
 int moveTipToXYLoc( float x , float y, float set_point ) {
+
+  static int last_point_x = 0;
+  static int last_point_y = 0;
+
   const int numsets = 1;
   int i, j, k;
   //j = (int)x;
   //k = (int)y;
-  j = myZPlane->xInGrid(x);
-  k = myZPlane->yInGrid(y);
-  if(j>(num_x-1))
-	j = num_x-1;
+  j = g_myZPlane->xInGrid(x);
+  k = g_myZPlane->yInGrid(y);
+  if(j>(g_numX-1))
+	j = g_numX-1;
   if(j<0)
         j = 0;
-  if(k>(num_y-1))
-        k = num_y-1;
+  if(k>(g_numY-1))
+        k = g_numY-1;
   if(k<0)
         k = 0;
   if(last_point_x)  		// Use Bresenhams Line algorithm to drag tip
@@ -172,10 +173,10 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
 
       for (; dX>=0; dX--)            	 // process each point in the line one at a time (just use dX)
       {
-        if((myZPlane->value( Ax, Ay) - set_point) < 0)
-          myZPlane->setValue( Ax, Ay, 0);
+        if((g_myZPlane->value( Ax, Ay) - set_point) < 0)
+          g_myZPlane->setValue( Ax, Ay, 0);
         else
-           myZPlane->setValue( Ax, Ay, (myZPlane->value( Ax, Ay) - set_point));
+           g_myZPlane->setValue( Ax, Ay, (g_myZPlane->value( Ax, Ay) - set_point));
         //SetPixel(Ax, Ay, Color); 	 // plot the pixel
         if (P > 0)               	 // is the pixel going right AND up?
         { 
@@ -198,10 +199,10 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
 
       for (; dY>=0; dY--)                // process each point in the line one at a time (just use dY)
       {
-        if((myZPlane->value( Ax, Ay) - set_point) < 0)
-          myZPlane->setValue( Ax, Ay, 0);
+        if((g_myZPlane->value( Ax, Ay) - set_point) < 0)
+          g_myZPlane->setValue( Ax, Ay, 0);
         else
-          myZPlane->setValue( Ax, Ay, (myZPlane->value( Ax, Ay) - set_point));
+          g_myZPlane->setValue( Ax, Ay, (g_myZPlane->value( Ax, Ay) - set_point));
 	// SetPixel(Ax, Ay, Color);         // plot the pixel
         if (P > 0)                       // is the pixel going up AND right?
         { 
@@ -221,87 +222,11 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
   {
     //float point_value[numsets];
     for(int i = 0; i < numsets; i++)
-    if((myZPlane->value( j, k) - set_point) < 0)
-      myZPlane->setValue( j, k, 0);
+    if((g_myZPlane->value( j, k) - set_point) < 0)
+      g_myZPlane->setValue( j, k, 0);
     else
-      myZPlane->setValue( j, k, (myZPlane->value( j, k) - set_point));
+      g_myZPlane->setValue( j, k, (g_myZPlane->value( j, k) - set_point));
   }
-  
-
-  //float point_value[numsets];
-
-#if 0
-
-  // Original COMP 145 solution - gives the value at the corner of the
-  // current grid square.  This creates a surface that feels like a
-  // summation of step functions - since it is.
-
-  for(int i = 0; i < numsets; i++)
-  	point_value[i]=myZPlane->value(j,k);
-
-#else
-
-  // TCH June 1999 - instead, interpolate linearly within the current
-  // grid square.
-
-/*
-  // NOTE k is y, j is x!
-
-  float xF, yF;
-  int jprime, kprime;
-  int i;
-
-  // Make sure [j+1][k+1] is a legal grid coordinate:
-  //   make sure (j, k) is in [(0, 0), (num_x - 2, num_y - 2)]
-  //   so that (j+1, k+1) is <= (num_x - 1, num_y - 1).
-  // If we're off the square to the right or down, this should
-  //   reduce to interpolating along the right or bottom edge
-  //   (with a couple of extra multiplies/adds thrown in for
-  //   things that will be weighted 0).
-
-  jprime = j;
-  kprime = k;
-  if (jprime > num_x - 2) jprime = num_x - 2;
-  if (kprime > num_y - 2) kprime = num_y - 2;
-
-  // HACK - assumes j = floor(x), k = floor(y)
-
-  // Fractional part of x.
-  //  REVERSE IT to get the appropriate weights for the interpolation.
-
-  //xF = 1.0f - (x - jprime);
-  //yF = 1.0f - (y - kprime);
-
-  if (xF > 1.0f) xF = 1.0f;
-  if (xF < 0.0f) xF = 0.0f;
-  if (yF > 1.0f) yF = 1.0f;
-  if (yF < 0.0f) yF = 0.0f;
-
-  for (i = 0; i < numsets; i++)
-    point_value[i] = yF * xF * (myZPlane->value(jprime,kprime))
-                   + (1.0f - yF) * xF * (myZPlane->value(jprime+1,kprime))
-                   + yF * (1.0f - xF) * (myZPlane->value(jprime,kprime+1))
-                   + (1.0f - yF) * (1.0f - xF)
-                                 * (myZPlane->value(jprime+1,kprime+1));
-
-  for (i = 0; i < numsets; i++) {
-    myZPlane->valueAt(&point_value[i], x, y);
-  }
-*/
-
-//fprintf(stderr, "Interpolating at %.5f, %.5f with weights %.5f, %.5f:\n",
-//x, y, xF, yF);
-//fprintf(stderr, "   x[y = %d][x = %d] = %.5f\n",
-//kprime, jprime, surface[kprime][jprime]);
-//fprintf(stderr, "   x[%d][%d] = %.5f\n",
-//kprime + 1, jprime, surface[kprime + 1][jprime]);
-//fprintf(stderr, "   x[%d][%d] = %.5f\n",
-//kprime, jprime + 1, surface[kprime][jprime + 1]);
-//fprintf(stderr, "   x[%d][%d] = %.5f\n",
-//kprime + 1, jprime + 1, surface[kprime + 1][jprime + 1]);
-//fprintf(stderr, "   Output %.5f\n", point_value[0]);
-
-#endif
 
   last_point_x = j;
   last_point_y = k;
@@ -309,14 +234,76 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
 }
 
 
+void initializePlane (BCPlane * zPlane, int planeShape) {
+  int x, y;
+  float point;
+  float rx, ry;
+  float radius;
+  float targetradius;
+
+  switch (planeShape) {
+
+    case PSHAPE_SINUSOIDAL :
+      // sinusoidal surface with 50 nm amplitude and 40*pi nm wavelength
+      fprintf(stderr, "Setting up sinusoidal surface.\n");
+      for (x = 0; x < g_numX; x++) {
+        for (y = 0; y < g_numY; y++) {
+          point = fabs(50.0f * (sin((x + y) / 40.0f)));
+          zPlane->setValue(x, y, point);
+        }
+      } 
+      break;
+    case PSHAPE_STEP :
+      // surface with 50 nm steps every 40 nm
+      fprintf(stderr, "Setting up stepped surface.\n");
+      for (x = 0; x < g_numX; x++) {
+        for (y = 0; y < g_numY; y++) {
+          point = 50.0f * ceil((x + y) / 40.0f);
+          zPlane->setValue(x, y, point);
+        }
+      }
+      break;
+    case PSHAPE_RAMP :
+      // surface with smooth slope 1.25
+      fprintf(stderr, "Setting up ramped surface.\n");
+      for (x = 0; x < g_numX; x++) {
+        for (y = 0; y < g_numY; y++) {
+          point = 1.2f * (x + y);
+          zPlane->setValue(x, y, point);
+        }
+      }
+      break;
+    case PSHAPE_HEMISPHERES :
+      // flat surface with hemispheres of radius 40 nm every 100 nm
+      fprintf(stderr, "Setting up regular-hemisphere surface.\n");
+      targetradius = 40.0f;
+      for (x = 0; x < g_numX; x++) {
+        rx = ((x + 50) % 100) - 50;
+        for (y = 0; y < g_numY; y++) {
+          ry = ((y + 50) % 100) - 50;
+          radius = sqrt(x * x + y * y);
+          if (radius < targetradius) {
+            point = targetradius - radius;
+          } else {
+            point = 0.0f;
+          }
+          zPlane->setValue(x, y, point);
+        }
+      }
+      break;
+    default:
+      fprintf(stderr, "Unimplemented plane shape %d\n", planeShape);
+      exit(0);
+
+  }
+}
 
 
 int main (int argc, char ** argv) {
 
-  //FILE * outputfile;
-  float point;
+  BCGrid * mygrid;
+
   int readmode;
-  int x, y;
   int retval;
 
   retval = parse(argc, argv);
@@ -325,48 +312,32 @@ int main (int argc, char ** argv) {
     exit(0);
   }
 
-  if (image_name) {	// CODE USED IF IMAGE IS TO BE USED
+  if (g_imageName) {	// CODE USED IF IMAGE IS TO BE USED
 
     // create new grid
     readmode = READ_FILE;
-    mygrid = new BCGrid (num_x, num_y, 0.0, 300.0, 0.0, 300.0,
-                         readmode, image_name, GTF);
+    mygrid = new BCGrid (g_numX, g_numY, 0.0, 300.0, 0.0, 300.0,
+                         readmode, g_imageName, GTF);
 
     // add plane for Z data
-    myZPlane = mygrid->getPlaneByName("Topography-Forward");
+    // Double huh?
+    g_myZPlane = mygrid->getPlaneByName("Topography-Forward");
 
-    myZPlane = mygrid->getPlaneByName(image_name);
+    // Huh?
+    g_myZPlane = mygrid->getPlaneByName(g_imageName);
 
   } else {			// CODE USED IF MATH SURFACE TO BE USED
 
-    mygrid = new BCGrid (num_x,num_y,0,300,0,300);  
+    mygrid = new BCGrid (g_numX,g_numY,0,300,0,300);  
     mygrid->addNewPlane("Topography-Forward","nm", 0);
-    myZPlane = mygrid->getPlaneByName("Topography-Forward");
-    for(x = 0; x < num_x; x++) 	// SETS VALUES OF PLANE
-      {
-        for(y = 0; y < num_y; y++)
-          {
-            point = (fabs(50.0 * (sin((x + y) / 40.0))));
-            myZPlane->setValue(x, y, (float)(point));
-          }
-      } 
-  }
-  /*
-  if (isWaiting) {
-    // Create the connection here before initJake()
-    // so it's a DelayedConnection instead
-    // of just a plain SynchronizedConnection.
+    g_myZPlane = mygrid->getPlaneByName("Topography-Forward");
 
-fprintf(stderr, "Initializing simulated network latency to %.5f sec.\n",
-waitTime);
-    struct timeval delay;
-    delay = vrpn_MsecsTimeval(waitTime);
-    connection = new vrpn_DelayedConnection(delay, port);
+    initializePlane(g_myZPlane, g_planeShape);
   }
-  */
-  retval = initJake(num_x, num_y, port);
+
+  retval = initJake(g_numX, g_numY, g_port);
   while (!retval) {
-    jakeMain(.1, isWaiting, waitTime);
+    jakeMain(.1, g_isWaiting, g_waitTime);
   }
 }
 

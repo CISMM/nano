@@ -1,3 +1,34 @@
+2001-05-22  Tom Hudson <hudson@cs.unc.edu>
+
+	* afmcntsim:  restore - somebody accidentally overwrote
+	the script that runs the executable with the executable.
+
+	* Makefile : add comments about how to compile on NT (requires
+        manual makefile tweak).  Add ImgFormat library.
+
+	* simulator_server.C : replace sys/time.h with vrpn_Types.h
+	to get its trickery for NT (we're already using VRPN, so this
+	doesn't increase dependency).
+	g_isRude : remove static, since it's used (by commented-out code)
+	in surface.C.
+	* simulator_server.h : add g_isRude.
+
+	* surface.C : replace sys/time.h with vrpn_Types.h to get
+	its trickery for NT (we're already using VRPN, so this
+	doesn't increase dependency).
+	mygrid, myZPlane, num_x, num_y, port, image_name, last_point_x,
+        last_point_y : make local (non-global) or rename with g_ prefix
+        as appropriate.
+	(usage) : update for -surface option, remove -rude option.
+	(open_image) : remove pointless stub.
+	(get_grid_info) : same.
+	(parse) : remove calls to open_image and get_grid_info.
+	Rearrange cascaded if statements for clarity.
+	(moveTipToXYLoc) : remove lots of dead code.
+	(initializePlane) : new function.
+	(main) : move code to initializePlane().  remove dead code.
+
+
 2000-02-15  Kwan Torrich Skinner <skinner@cs.unc.edu>
 	* Makefile : updated LATE_INCLUDE_PATH and LATE_LOAD_PATH vars to
 	reflect glut's new location.

@@ -12,7 +12,8 @@
 #include "Topo.h" // added 4/19/99
 #include <iostream.h>
 #include <time.h>
-#include <sys/time.h>
+//#include <sys/time.h>
+#include <vrpn_Types.h>  // for portable <sys/time.h>
 #include <math.h>
 #include <stdlib.h>
 
@@ -21,9 +22,9 @@ TopoFile GTF; // added 4/19/99
 // Yucky that this is global, and scope doesn't regulate scanning within
 // itself.
 int currentline;
+int g_isRude = 0;
 
 static int num_x, num_y;
-static int g_isRude = 0;
 
 struct timeval t_scanStart, t_scopeStart, t_now;
 struct timeval latency;

@@ -1,4 +1,4 @@
-USES_LIBS := nmMScope nmBase vrpn
+USES_LIBS := nmMScope nmBase vrpn ImgFormat
 
 ifeq ($(MAKECMDGOALS),afmcntsim)
    EXTRA_CFLAGS+=-DAFMSIM
@@ -9,10 +9,13 @@ LATE_INCLUDE_PATH := -I/afs/unc/proj/stm/src/external/glut/glut-3.5/include
 LATE_LOAD_PATH := -L/afs/unc/proj/stm/src/external/glut/glut-3.5/lib/glut.n32 
 #endif
 
-# We're not going to get glui there, but we need to specify SOMETHING
-# so it looks there for Tcl
 
+#ifeq ($(HW_OS),sgi_irix)
 USES_EXTERNAL_LIBS := tcl
+#else
+#USES_EXTERNAL_LIBS := tcl82
+#endif
+
 
 
 
@@ -29,6 +32,9 @@ $(OBJECT_DIR)/surface:
 	$(MAKE) APP_NAME=surface \
            MAKECMDGOALS="$(filter-out surface,$(MAKECMDGOALS))" \
            EXCLUDE_SRC="warrencntsim.C vec2d.C"
+
+# For pc_win32
+#	$(MAKE) APP_NAME=surface.exe \
 
 .PHONY: afmcntsim
 afmcntsim: $(OBJECT_DIR)/afmcntsim
