@@ -1,5 +1,10 @@
 2002-05-20 David Borland <borland@cs.unc.edu>
 
+        * import.C : added user interface for locking translations and 
+        rotations
+
+2002-05-20 David Borland <borland@cs.unc.edu>
+
         * import.C : previous changes to the object rotation code had the
         objects rotating around the incorrect axes.  Fixed this.
 

@@ -23,9 +23,13 @@ static  void handle_import_axis_step_change (vrpn_int32, void *);
 static  void handle_import_transx_change (vrpn_float64, void *);
 static  void handle_import_transy_change (vrpn_float64, void *);
 static  void handle_import_transz_change (vrpn_float64, void *);
-static  void handle_import_rotx_change (vrpn_float64, void *);
-static  void handle_import_roty_change (vrpn_float64, void *);
-static  void handle_import_rotz_change (vrpn_float64, void *);
+static  void handle_import_lock_transx_change (vrpn_int32, void *);
+static  void handle_import_lock_transy_change (vrpn_int32, void *);
+static  void handle_import_lock_transz_change (vrpn_int32, void *);
+static  void handle_import_rot_change (vrpn_float64, void *);
+static  void handle_import_lock_rotx_change (vrpn_int32, void *);
+static  void handle_import_lock_roty_change (vrpn_int32, void *);
+static  void handle_import_lock_rotz_change (vrpn_int32, void *);
 static  void handle_import_visibility (vrpn_int32, void *);
 static  void handle_import_color_change (vrpn_int32, void *);
 static  void handle_import_alpha (vrpn_float64, void *);
@@ -58,9 +62,15 @@ Tclvar_float	import_scale("import_scale",1, handle_import_scale_change);
 Tclvar_float	import_transx("import_transx",0, handle_import_transx_change);
 Tclvar_float	import_transy("import_transy",0, handle_import_transy_change);
 Tclvar_float	import_transz("import_transz",0, handle_import_transz_change);
-Tclvar_float	import_rotx("import_rotx",0, handle_import_rotx_change);
-Tclvar_float	import_roty("import_roty",0, handle_import_roty_change);
-Tclvar_float	import_rotz("import_rotz",0, handle_import_rotz_change);
+Tclvar_int		import_lock_transx("import_lock_transx",0, handle_import_lock_transx_change);
+Tclvar_int		import_lock_transy("import_lock_transy",0, handle_import_lock_transy_change);
+Tclvar_int		import_lock_transz("import_lock_transz",0, handle_import_lock_transz_change);
+Tclvar_float	import_rotx("import_rotx",0, handle_import_rot_change);
+Tclvar_float	import_roty("import_roty",0, handle_import_rot_change);
+Tclvar_float	import_rotz("import_rotz",0, handle_import_rot_change);
+Tclvar_int		import_lock_rotx("import_lock_rotx",0, handle_import_lock_rotx_change);
+Tclvar_int		import_lock_roty("import_lock_roty",0, handle_import_lock_roty_change);
+Tclvar_int		import_lock_rotz("import_lock_rotz",0, handle_import_lock_rotz_change);
 Tclvar_int      import_visibility("import_visibility", 1, handle_import_visibility);
 Tclvar_int      import_proj_text("import_proj_text", 1, handle_import_proj_text);
 Tclvar_int		import_clamp("import_clamp", 0, handle_import_clamp);
@@ -207,6 +217,12 @@ when loading
             obj->GetLocalXform().SetTranslate(import_transx, import_transy, import_transz);
             obj->GetLocalXform().SetRotate(import_rotx, import_roty, import_rotz, 1);
 */
+			obj->SetLockTransx(import_lock_transx);
+			obj->SetLockTransy(import_lock_transy);
+			obj->SetLockTransz(import_lock_transz);
+			obj->SetLockRotx(import_lock_rotx);
+			obj->SetLockRoty(import_lock_roty);
+			obj->SetLockRotz(import_lock_rotz);
 			// truncate name so it correlates to the option menu
 			// i.e. C:/Data/cube.obj -> cube.obj
 
@@ -417,16 +433,18 @@ static  void handle_import_transx_change (vrpn_float64, void *)
 	    UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 			URender &obj = node->TGetContents();
-			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
-			obj.GetLocalXform().SetTranslate(import_transx, trans[1], trans[2]);
-			
-			// if a tube file and update_AFM selected, send trans
-			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL) &&
-				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
-															obj.GetLocalXform().GetTrans()[1],
-															obj.GetLocalXform().GetTrans()[2]);
+			if (!obj.GetLockTransx()) {
+				const q_vec_type &trans = obj.GetLocalXform().GetTrans();
+				obj.GetLocalXform().SetTranslate(import_transx, trans[1], trans[2]);
+				
+				// if a tube file and update_AFM selected, send trans
+				if ((strstr(*World.current_object, ".txt") != 0) && 
+					(SimulatedMicroscope != NULL) &&
+					obj.GetUpdateAFM()) {
+					SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+																obj.GetLocalXform().GetTrans()[1],
+																obj.GetLocalXform().GetTrans()[2]);
+				}
 			}
 		}
     }
@@ -443,16 +461,18 @@ static  void handle_import_transy_change (vrpn_float64, void *)
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 			URender &obj = node->TGetContents();
-			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
-			obj.GetLocalXform().SetTranslate(trans[0], import_transy, trans[2]);
-			
-			// if a tube file and update_AFM selected, send trans
-			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL) &&
-				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
-															obj.GetLocalXform().GetTrans()[1],
-															obj.GetLocalXform().GetTrans()[2]);
+			if (!obj.GetLockTransy()) {
+				const q_vec_type &trans = obj.GetLocalXform().GetTrans();
+				obj.GetLocalXform().SetTranslate(trans[0], import_transy, trans[2]);
+				
+				// if a tube file and update_AFM selected, send trans
+				if ((strstr(*World.current_object, ".txt") != 0) && 
+					(SimulatedMicroscope != NULL) &&
+					obj.GetUpdateAFM()) {
+					SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+																obj.GetLocalXform().GetTrans()[1],
+																obj.GetLocalXform().GetTrans()[2]);
+				}
 			}
 		}
     }
@@ -469,22 +489,24 @@ static  void handle_import_transz_change (vrpn_float64, void *)
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 			URender &obj = node->TGetContents();
-			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
-			obj.GetLocalXform().SetTranslate(trans[0], trans[1], import_transz);
-						
-			// if a tube file and update_AFM selected, send trans
-			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL) &&
-				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
-															obj.GetLocalXform().GetTrans()[1],
-															obj.GetLocalXform().GetTrans()[2]);
+			if (!obj.GetLockTransz()) {
+				const q_vec_type &trans = obj.GetLocalXform().GetTrans();
+				obj.GetLocalXform().SetTranslate(trans[0], trans[1], import_transz);
+							
+				// if a tube file and update_AFM selected, send trans
+				if ((strstr(*World.current_object, ".txt") != 0) && 
+					(SimulatedMicroscope != NULL) &&
+					obj.GetUpdateAFM()) {
+					SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+																obj.GetLocalXform().GetTrans()[1],
+																obj.GetLocalXform().GetTrans()[2]);
+				}
 			}
 		}
     }
 }
 
-static  void handle_import_rotx_change (vrpn_float64, void *)
+static  void handle_import_rot_change (vrpn_float64, void *)
 {
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
@@ -501,17 +523,22 @@ static  void handle_import_rotx_change (vrpn_float64, void *)
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 		    URender &obj = node->TGetContents();
-
 			q_vec_type euler;
 
-			euler[2] = Q_DEG_TO_RAD(import_rotx);
-			euler[1] = Q_DEG_TO_RAD(import_roty);
-			euler[0] = Q_DEG_TO_RAD(import_rotz);
+			if (!obj.GetLockRotx()) {
+				euler[2] = Q_DEG_TO_RAD(import_rotx);
+			}
+			if (!obj.GetLockRoty()) {
+				euler[1] = Q_DEG_TO_RAD(import_roty);
+			}
+			if (!obj.GetLockRotz()) {
+				euler[0] = Q_DEG_TO_RAD(import_rotz);
+			}
 
 			q_type rot;
 			q_from_euler(rot, euler[0], euler[1], euler[2]);
 
-		    obj.GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
+			obj.GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
 						
 			// if a tube file and update_AFM selected, send rot
 			if ((strstr(*World.current_object, ".txt") != 0) && 
@@ -524,86 +551,121 @@ static  void handle_import_rotx_change (vrpn_float64, void *)
     }
 }
 
-static  void handle_import_roty_change (vrpn_float64, void *)
+
+static  void handle_import_lock_transx_change (vrpn_int32, void *)
 {
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
-		double i = Q_DEG_TO_RAD(import_rotx);
-		double j = Q_DEG_TO_RAD(import_roty);
-		double k = Q_DEG_TO_RAD(import_rotz);
-		double array[3];
-		array[0] = i;
-		array[1] = j;
-		array[2] = k;
-		World.Do(&URender::SetRotAll, array);
+		int l = import_lock_transx;
+
+// only do per object for now...
+
+//		World.Do
 	}
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
-		    URender &obj = node->TGetContents();
-
-			q_vec_type euler;
-
-			euler[2] = Q_DEG_TO_RAD(import_rotx);
-			euler[1] = Q_DEG_TO_RAD(import_roty);
-			euler[0] = Q_DEG_TO_RAD(import_rotz);
-
-			q_type rot;
-			q_from_euler(rot, euler[0], euler[1], euler[2]);
-
-		    obj.GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
-						
-			// if a tube file and update_AFM selected, send rot
-			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL) &&
-				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
-				cout << "rot Sent: " << "x: " << euler[2] << "\ty: " << euler[1] << "\tz: " << euler[0] << endl;
-			}
+			URender &obj = node->TGetContents();
+			obj.SetLockTransx(import_lock_transx);
 		}
-    }
+	}
 }
 
-static  void handle_import_rotz_change (vrpn_float64, void *)
+static  void handle_import_lock_transy_change (vrpn_int32, void *)
 {
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
-		double i = Q_DEG_TO_RAD(import_rotx);
-		double j = Q_DEG_TO_RAD(import_roty);
-		double k = Q_DEG_TO_RAD(import_rotz);
-		double array[3];
-		array[0] = i;
-		array[1] = j;
-		array[2] = k;
-		World.Do(&URender::SetRotAll, array);
+		int l = import_lock_transy;
+
+// only do per object for now...
+
+//		World.Do
 	}
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
-		    URender &obj = node->TGetContents();
-
-			q_vec_type euler;
-
-			euler[2] = Q_DEG_TO_RAD(import_rotx);
-			euler[1] = Q_DEG_TO_RAD(import_roty);
-			euler[0] = Q_DEG_TO_RAD(import_rotz);
-
-			q_type rot;
-			q_from_euler(rot, euler[0], euler[1], euler[2]);
-
-		    obj.GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
-						
-			// if a tube file and update_AFM selected, send rot
-			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL) &&
-				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
-				cout << "rot Sent: " << "x: " << euler[2] << "\ty: " << euler[1] << "\tz: " << euler[0] << endl;
-			}
+			URender &obj = node->TGetContents();
+			obj.SetLockTransy(import_lock_transy);
 		}
-    }
-
+	}
 }
+
+static  void handle_import_lock_transz_change (vrpn_int32, void *)
+{
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		int l = import_lock_transz;
+
+// only do per object for now...
+
+//		World.Do
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetLockTransz(import_lock_transz);
+		}
+	}
+}
+
+static  void handle_import_lock_rotx_change (vrpn_int32, void *)
+{
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		int l = import_lock_rotx;
+
+// only do per object for now...
+
+//		World.Do
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetLockRotx(import_lock_rotx);
+		}
+	}
+}
+
+static  void handle_import_lock_roty_change (vrpn_int32, void *)
+{
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		int l = import_lock_roty;
+
+// only do per object for now...
+
+//		World.Do
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetLockRoty(import_lock_roty);
+		}
+	}
+}
+
+static  void handle_import_lock_rotz_change (vrpn_int32, void *)
+{
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		int l = import_lock_rotz;
+
+// only do per object for now...
+
+//		World.Do
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetLockRotz(import_lock_rotz);
+		}
+	}
+}
+
 
 static  void handle_import_color_change (vrpn_int32, void *)
 {
