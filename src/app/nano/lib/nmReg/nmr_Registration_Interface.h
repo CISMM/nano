@@ -149,23 +149,23 @@ class nmr_Registration_Interface {
 enum nmr_ImageType {NMR_SOURCE, NMR_TARGET, NMR_SOURCE_HEIGHTFIELD};
 
 /// represents method by which the transformation was computed
-/// MANUAL is generated as a result of a manual alignment
+/// CPOINTS is generated as a result of a manual alignment
 /// AUTOMATIC is generated as a result of automatic alignment
 /// DEFAULT is generated in response to setting the default transformation
 /// parameters from the client side
 /// One of these values is sent as part of the RegistrationResult message
-enum nmr_RegistrationType {NMR_MANUAL, NMR_AUTOMATIC, NMR_DEFAULT};
+enum nmr_RegistrationType {NMR_CPOINTS, NMR_AUTOMATIC, NMR_DEFAULT};
 
 /// options for using automatic alignment
-/// AUTOALIGN_FROM_MANUAL - starts searching for optimal transform from 
+/// AUTOALIGN_FROM_CPOINTS - starts searching for optimal transform from 
 /// whatever transformation was set manually
 /// AUTOALIGN_FROM_DEFAULT - starts searching for optimal transform from
 /// whatever transformation was set as the default
 /// AUTOALIGN_FROM_AUTO - starts searching for optimal transform from the
 /// last transformation that was set automatically
 /// One of these values is sent as part of the AutoAlign message
-enum nmr_AutoAlignMode {NMR_AUTOALIGN_FROM_MANUAL, NMR_AUTOALIGN_FROM_DEFAULT,
-                        NMR_AUTOALIGN_FROM_AUTO};
+enum nmr_AutoAlignMode {NMR_AUTOALIGN_FROM_CPOINTS,
+                        NMR_AUTOALIGN_FROM_AUTO, NMR_AUTOALIGN_FROM_DEFAULT};
 
 /// these options will likely change in the future but NMR_2D2D_AFFINE
 /// is a safe choice

@@ -1,3 +1,9 @@
+2002-09-12  Aron Helser  <helser@cs.unc.edu>
+
+	* nmr_RegistrationUI.h: Changed constant names. 
+	* nmr_RegistrationUI.C: Tweaks to UI, thirdtech special case.
+	* nmr_Registration_Impl.C: same.
+
 2002-07-10  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmr_RegistrationUI.[h,C]:  removed code for registration of 

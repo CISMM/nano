@@ -181,7 +181,7 @@ int nmr_Registration_Impl::autoAlign(vrpn_int32 mode)
   double xform_matrix[16];
 
   switch (mode) {
-    case NMR_AUTOALIGN_FROM_MANUAL:
+    case NMR_AUTOALIGN_FROM_CPOINTS:
       d_autoAlignmentResult = d_manualAlignmentResult;
       break;
     case NMR_AUTOALIGN_FROM_DEFAULT:
@@ -524,7 +524,7 @@ void nmr_Registration_Impl::handle_CorrespondenceChange(Correspondence &c,
   nmr_Registration_Impl *me = (nmr_Registration_Impl *)ud;
   if (me->registerImagesFromPointCorrespondenceAssumingDefaultRotation() == 0) {
     me->d_manualAlignmentResult.getMatrix(xform_matrix);
-    me->sendResult(NMR_MANUAL, xform_matrix);
+    me->sendResult(NMR_CPOINTS, xform_matrix);
   }
 }
 

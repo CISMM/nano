@@ -2694,6 +2694,36 @@ int doCrossSection(int whichUser, int userEvent)
     return(0);
 }
 
+static void setupSweepIcon (q_vec_type clipPos,
+                            BCPlane * plane) {
+  if (!microscope) return;
+  PointType TopL, BottomL, TopR, BottomR;
+
+  // now set up the sweep direction and length, 
+  // based on hand position (hand_mat).
+
+  TopL[X] = BottomL[X] = clipPos[0] +
+      (microscope->state.modify.sweep_width 
+       * cos( microscope->state.modify.yaw ))/2.0;
+  TopL[Y] = BottomL[Y] = clipPos[1] +
+      (microscope->state.modify.sweep_width 
+       * sin( microscope->state.modify.yaw ))/2.0;
+      
+  TopR[X] = BottomR[X] = clipPos[0] -
+      (microscope->state.modify.sweep_width 
+       * cos( microscope->state.modify.yaw ))/2.0;
+  TopR[Y] = BottomR[Y] = clipPos[1] -
+      (microscope->state.modify.sweep_width 
+       * sin( microscope->state.modify.yaw ))/2.0;
+      
+  nmb_Line::normalize(TopL, BottomL, plane);
+  nmb_Line::normalize(TopR, BottomR, plane);
+
+  //draw vertical green line representing sweep width.
+  graphics->positionSweepLine(TopL, BottomL, TopR, BottomR);
+
+}
+
 /**
  *
    doLine - Let the user specify points in a poly-line while feeling.
@@ -2785,30 +2815,8 @@ int doLine(int whichUser, int userEvent)
       q_col_matrix_to_euler( angles, hand_mat );
       microscope->state.modify.yaw = angles[YAW] + M_PI_2;
     }
-    
-    TopL[X] = BottomL[X] = clipPos[0] +
-      (microscope->state.modify.sweep_width 
-       * cos( microscope->state.modify.yaw ))/2.0;
-    TopL[Y] = BottomL[Y] = clipPos[1] +
-      (microscope->state.modify.sweep_width 
-       * sin( microscope->state.modify.yaw ))/2.0;
-    
-    TopR[X] = BottomR[X] = clipPos[0] -
-      (microscope->state.modify.sweep_width 
-       * cos( microscope->state.modify.yaw ))/2.0;
-    TopR[Y] = BottomR[Y] = clipPos[1] -
-      (microscope->state.modify.sweep_width 
-       * sin( microscope->state.modify.yaw ))/2.0;
-    
-    double z_val;
-    plane->valueAt( &z_val, clipPos[0], clipPos[1] );
-    BottomL[Z] =BottomR[Z] = (float)(z_val*plane->scale());
-    
-    TopL[Z] = TopR[Z] = plane->maxAttainableValue() *
-      plane->scale();
-    
-    //draw vertical green line representing sweep width.
-    graphics->positionSweepLine(TopL, BottomL, TopR, BottomR);
+
+    setupSweepIcon(clipPos, plane);
   }
   
   setupHaptics(USER_LINE_MODE);
@@ -2888,7 +2896,7 @@ int doLine(int whichUser, int userEvent)
       {
 	//Save current hand position as one point on the polyline-
 	//The list is saved in microscope->state.modify.stored_points
-	// don't send a stop surface when not surfacing (?)
+	// don't send a haptic surface when button released.
 	monitor.stopSurface();
 	monitor.stopForceField();
 	
@@ -2899,10 +2907,11 @@ int doLine(int whichUser, int userEvent)
 	else {
 	  //add an icon to represent this spot as part of polyline.
 	  PointType * markpts = new PointType[2];
-	  markpts[0][0] = markpts[1][0] = clipPos[0];
-	  markpts[0][1] = markpts[1][1] = clipPos[1];
-	  markpts[0][2] = plane->maxAttainableValue()*plane->scale();
-	  markpts[1][2] = plane->minAttainableValue()*plane->scale();
+          markpts[0][0] = markpts[1][0] = clipPos[0];
+          markpts[0][1] = markpts[1][1] = clipPos[1];
+          nmb_Line::normalize(markpts[0], markpts[1], plane);
+	  //markpts[0][2] = plane->maxAttainableValue()*plane->scale();
+	  //markpts[1][2] = plane->minAttainableValue()*plane->scale();
 	  
 	  list_id = graphics->addPolylinePoint(markpts);
 	}
@@ -2947,8 +2956,9 @@ int doLine(int whichUser, int userEvent)
 		PointType * markpts = new PointType[2];
 		markpts[0][0] = markpts[1][0] = pos_list.currX();
 		markpts[0][1] = markpts[1][1] = pos_list.currY();
-		markpts[0][2] = plane->maxAttainableValue()*plane->scale();
-		markpts[1][2] = plane->minAttainableValue()*plane->scale();
+		nmb_Line::normalize(markpts[0], markpts[1], plane);
+                //markpts[0][2] = plane->maxAttainableValue()*plane->scale();
+		//markpts[1][2] = plane->minAttainableValue()*plane->scale();
 		
 		list_id = graphics->addPolylinePoint(markpts);
 	      }
@@ -3120,48 +3130,6 @@ int doFeelFromGrid(int whichUser, int userEvent)
 }
 
 
-static void setupSweepIcon (int whichUser, q_vec_type clipPos,
-                            BCPlane * plane) {
-  if (!microscope) return;
-  PointType TopL, BottomL, TopR, BottomR;
-  v_xform_type worldFromHand;
-  q_matrix_type	hand_mat;
-  q_vec_type angles;
-  double z_val;
-
-  /* now set up the sweep direction and length, 
-   * based on hand position (hand_mat).
-   */
-
-  v_get_world_from_hand(whichUser, &worldFromHand);
-  q_to_col_matrix(hand_mat, worldFromHand.rotate);
-  q_col_matrix_to_euler( angles, hand_mat );
-  microscope->state.modify.yaw = angles[YAW] + M_PI_2;
-    
-  TopL[X] = BottomL[X] = clipPos[0] +
-      (microscope->state.modify.sweep_width 
-       * cos( microscope->state.modify.yaw ))/2.0;
-  TopL[Y] = BottomL[Y] = clipPos[1] +
-      (microscope->state.modify.sweep_width 
-       * sin( microscope->state.modify.yaw ))/2.0;
-      
-  TopR[X] = BottomR[X] = clipPos[0] -
-      (microscope->state.modify.sweep_width 
-       * cos( microscope->state.modify.yaw ))/2.0;
-  TopR[Y] = BottomR[Y] = clipPos[1] -
-      (microscope->state.modify.sweep_width 
-       * sin( microscope->state.modify.yaw ))/2.0;
-      
-  plane->valueAt( &z_val, clipPos[0], clipPos[1] );
-
-  BottomL[Z] =BottomR[Z] = (float)(z_val*plane->scale());
-
-  TopL[Z] = TopR[Z] = plane->maxAttainableValue() * plane->scale();
-
-  //draw vertical green line representing sweep width.
-  graphics->positionSweepLine(TopL, BottomL, TopR, BottomR);
-
-}
 
 /**
  *
@@ -3337,7 +3305,19 @@ int doFeelLive (int whichUser, int userEvent)
 
   // if the style is sweep, set up additional icon for sweep width
   if (microscope->state.modify.style == SWEEP) {
-    setupSweepIcon(whichUser, clipPos, plane);
+      v_xform_type worldFromHand;
+      q_matrix_type	hand_mat;
+      q_vec_type angles;
+
+      /* now set up the sweep direction and length, 
+       * based on hand position (hand_mat).
+       */
+
+      v_get_world_from_hand(whichUser, &worldFromHand);
+      q_to_col_matrix(hand_mat, worldFromHand.rotate);
+      q_col_matrix_to_euler( angles, hand_mat );
+      microscope->state.modify.yaw = angles[YAW] + M_PI_2;
+      setupSweepIcon(clipPos, plane);
   }
 
   switch ( userEvent ) {	    

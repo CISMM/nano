@@ -743,22 +743,41 @@ RECEIVE_MSG WindowLineData {
       d_decoration->initScanline(reports);
   }
 
-  BCPlane *plane = d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string() );
-  if (plane == NULL) return;
+  BCPlane *heightPlane = d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string() );
+  if (heightPlane == NULL) return;
   for (i = 0; i < reports; i++) {
     curr_x = x + i * dx;
     curr_y = y + i * dy;
     image->pixelToWorld( (double)curr_x, (double)curr_y, xf, yf);
     d_decoration->scan_line[i][0] = xf;
     d_decoration->scan_line[i][1] = yf;
-    d_decoration->scan_line[i][2] = plane->scaledValue( curr_x, curr_y );
+    d_decoration->scan_line[i][2] = heightPlane->scaledValue( curr_x, curr_y );
   }
 
-  BCPlane *cp = d_dataset->inputGrid->getPlaneByName(d_dataset->colorPlaneName->string() );
-  // Color map drift compensation. Keep track of the average data value of the
-  // first scan line
-  if (cp && (x == 0) && (y == cp->numY() -1)) {
-      d_decoration->first_line_avg = d_dataset->getFirstLineAvg(cp);
+  // When we get the first scan line:
+  if ((x == 0) && (y == heightPlane->numY() -1)) {
+      // Make sure measure lines and aim line are visible. 
+      if (heightPlane) {
+          d_decoration->red.doCallbacks(heightPlane->minX(), 
+                                        heightPlane->minY(),
+                                        heightPlane);
+          d_decoration->green.doCallbacks(heightPlane->maxX(), 
+                                          heightPlane->minY(),
+                                          heightPlane);
+          d_decoration->blue.doCallbacks(heightPlane->maxX(), 
+                                         heightPlane->maxY(),
+                                         heightPlane);
+          d_decoration->aimLine.moveTo(heightPlane->minX(), 
+                                       heightPlane->maxY(),
+                                       heightPlane);
+      }
+
+      BCPlane *cp = d_dataset->inputGrid->getPlaneByName(d_dataset->colorPlaneName->string() );
+      // Color map drift compensation. Keep track of the average data value of the
+      // first scan line
+      if (cp) {
+          d_decoration->first_line_avg = d_dataset->getFirstLineAvg(cp);
+      }
   }
   return;
 }

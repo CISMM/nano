@@ -355,7 +355,7 @@ iwidgets::dialog .save_screen_dialog -title "Save screen image"
     global fileinfo screenImage_format
     .save_screen_dialog deactivate 1
     set types { {"All files" *} 
-    {"TIF" ".tif" }
+    {"TIFF" ".tif" }
     {"JPG" ".jpg" }
     {"BMP" ".bmp" }
     {"PGM" ".pgm" } 
@@ -380,7 +380,9 @@ iwidgets::dialog .save_screen_dialog -title "Save screen image"
 	# Setting this variable triggers a callback which saves the file.
             # Dialog checks for writeable directory, and asks about
             # replacing existing files. 
-	set screenImage_filename $filename
+        # Must append extension for save to work!
+        set screenImage_filename "[file rootname $filename]$def_file_exten"
+
 	# Turn the screen information back on whatever happens
 	set chart_junk 1
 	}

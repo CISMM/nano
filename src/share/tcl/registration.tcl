@@ -46,7 +46,9 @@ button $nmInfo(registration).colormap2D -text "Colormap..."  \
 #	reg_projection_colormap_from \
 #	"Colormap" colorMapNames
 pack $nmInfo(registration).selection2D $nmInfo(registration).colormap2D -anchor nw -pady 3
-
+iwidgets::Labeledwidget::alignlabels \
+        $nmInfo(registration).selection3D \
+        $nmInfo(registration).selection2D 
 #proc printvar {fooa element op} {
 #    global reg_projection_cm
 #    puts "XXXX new  $reg_projection_cm(color_comes_from)"
@@ -76,35 +78,48 @@ trace variable reg_window_open w reg_close_cmap_windows
 set auto_align_resolution_list {none}
 set auto_align_mode_list {none}
 
-button $nmInfo(registration).auto_align -text "Auto Align" -command \
-    { set auto_align_requested 1 }
-pack $nmInfo(registration).auto_align -anchor nw
+iwidgets::Labeledframe $nmInfo(registration).align \
+	-labeltext "Automatic Alignment" \
+	-labelpos nw
+pack $nmInfo(registration).align -fill x -anchor nw
+set nmInfo(regalign) [$nmInfo(registration).align childsite] 
 
-generic_entry $nmInfo(registration).num_iteration_entry \
-        auto_align_num_iterations "# iterations" numeric
-pack $nmInfo(registration).num_iteration_entry -anchor nw
+generic_entry $nmInfo(regalign).num_iteration_entry \
+        auto_align_num_iterations "Iterations" numeric
+pack $nmInfo(regalign).num_iteration_entry -anchor nw
 
-generic_entry $nmInfo(registration).step_size_entry auto_align_step_size \
-        "step size (0,1)" real
-pack $nmInfo(registration).step_size_entry -anchor nw
+generic_entry $nmInfo(regalign).step_size_entry auto_align_step_size \
+        "Step size (0,1)" real
+pack $nmInfo(regalign).step_size_entry -anchor nw
 
-generic_optionmenu $nmInfo(registration).resolution_selector \
+generic_optionmenu $nmInfo(regalign).resolution_selector \
         auto_align_resolution \
-        "resolution level" auto_align_resolution_list
-pack $nmInfo(registration).resolution_selector -anchor nw
+        "Resolution level" auto_align_resolution_list
+pack $nmInfo(regalign).resolution_selector -anchor nw
 
-generic_optionmenu $nmInfo(registration).mode_selector \
+generic_optionmenu $nmInfo(regalign).mode_selector \
         auto_align_mode \
-        "mode" auto_align_mode_list
-pack $nmInfo(registration).mode_selector -anchor nw
+        "Initialize from:" auto_align_mode_list
+pack $nmInfo(regalign).mode_selector -anchor nw
+
+button $nmInfo(regalign).auto_align -text "Auto Align" -command \
+    { set auto_align_requested 1 }
+pack $nmInfo(regalign).auto_align -anchor s
+
+iwidgets::Labeledwidget::alignlabels \
+        $nmInfo(regalign).num_iteration_entry \
+        $nmInfo(regalign).step_size_entry \
+        $nmInfo(regalign).resolution_selector 
 
 ################ end of controls for automatic alignment
 
 ################ some manually-adjustable transformation parameters #####
 
 frame $nmInfo(registration).transformParameters -bd 3 -relief groove
-pack $nmInfo(registration).transformParameters -anchor nw
-
+if { !$thirdtech_ui } {
+# Not interesting for 3rdtech, don't display
+pack $nmInfo(registration).transformParameters -fill x -anchor nw
+}
 generic_entry $nmInfo(registration).transformParameters.scaleX \
         reg_scaleX "scale X" real
 pack $nmInfo(registration).transformParameters.scaleX -anchor nw
@@ -144,18 +159,20 @@ pack $nmInfo(registration).transformParameters.shearZ -anchor nw
 #################################################################
 set reg_transformation_source_list {none}
 
-frame $nmInfo(registration).texture -bd 3 -relief groove
-pack $nmInfo(registration).texture -anchor nw
-
-generic_optionmenu $nmInfo(registration).texture.source_selector \
+iwidgets::Labeledframe $nmInfo(registration).texture \
+	-labeltext "Overlay in Surface View window" \
+	-labelpos nw
+pack $nmInfo(registration).texture -fill x -anchor nw
+set nmInfo(regtex) [$nmInfo(registration).texture childsite] 
+generic_optionmenu $nmInfo(regtex).source_selector \
         reg_transformation_source \
-        "source" reg_transformation_source_list
-pack $nmInfo(registration).texture.source_selector -anchor nw
+        "Source:" reg_transformation_source_list
+pack $nmInfo(regtex).source_selector -anchor nw
 
-checkbutton $nmInfo(registration).texture.display_texture \
-    -text "Display in Surface View" -variable reg_display_texture -anchor nw
+checkbutton $nmInfo(regtex).display_texture \
+    -text "Display overlay" -variable reg_display_texture -anchor nw
 
-pack $nmInfo(registration).texture.display_texture -anchor nw
+pack $nmInfo(regtex).display_texture -anchor nw
 
 iwidgets::Labeledframe $nmInfo(registration).rsplane \
 	-labeltext "Create Plane (match Topog image region)" \
@@ -214,3 +231,8 @@ pack $nmInfo(reg_image).resolution_x $nmInfo(reg_image).resolution_y \
 generic_entry $nmInfo(reg_image).resample_image resample_image_name \
 	"Resample image name" ""
 pack $nmInfo(reg_image).resample_image  -fill x -anchor nw
+
+iwidgets::Labeledwidget::alignlabels \
+        $nmInfo(reg_image).resolution_x \
+        $nmInfo(reg_image).resolution_y \
+        $nmInfo(reg_image).resample_image

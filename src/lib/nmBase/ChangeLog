@@ -1,3 +1,8 @@
+2002-09-12  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_Line.Ch (normalize): Made ability to normalize a line to a
+	plane accessible through static method, used in interaction.c
+
 2002-06-14  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_ImgMagick.C (writeFileMagick): Comments about compression.

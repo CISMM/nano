@@ -24,19 +24,28 @@ vrpn_float32 nmr_RegistrationUI::s_defaultStdDev[] =
 vrpn_int32 nmr_RegistrationUI::s_defaultNumResolutionLevels = 5;
 vrpn_float32 nmr_RegistrationUI::s_defaultStdDev[] =
                 {0.0,1.0,2.0,4.0,8.0};
-
+#ifdef THIRDTECH
+// Ignore DEFAULT type. 
+vrpn_int32 nmr_RegistrationUI::s_numAutoAlignModes = 2;
+#else
 vrpn_int32 nmr_RegistrationUI::s_numAutoAlignModes = 3;
+#endif
 nmr_AutoAlignMode nmr_RegistrationUI::s_autoAlignModes[] = 
-                {NMR_AUTOALIGN_FROM_MANUAL, NMR_AUTOALIGN_FROM_DEFAULT,
-                        NMR_AUTOALIGN_FROM_AUTO};
+                {NMR_AUTOALIGN_FROM_CPOINTS,
+                        NMR_AUTOALIGN_FROM_AUTO, NMR_AUTOALIGN_FROM_DEFAULT};
 char * nmr_RegistrationUI::s_autoAlignModeNames[] =
-                {"Manual Init", "Default Init", "Auto Init"};
+                {"Corresp. Points", "Prev. Auto Align", "Manual"};
 
+#ifdef THIRDTECH
+// Ignore DEFAULT type. 
+vrpn_int32 nmr_RegistrationUI::s_numTransformationSources = 2;
+#else
 vrpn_int32 nmr_RegistrationUI::s_numTransformationSources = 3;
+#endif
 nmr_RegistrationType nmr_RegistrationUI::s_transformationSources[] =
-                {NMR_MANUAL, NMR_DEFAULT, NMR_AUTOMATIC};
+                {NMR_CPOINTS, NMR_DEFAULT, NMR_AUTOMATIC};
 char * nmr_RegistrationUI::s_transformationSourceNames[] =
-                {"Manual", "Default", "Auto"};
+                {"Corresp. Points", "Auto Align", "Manual"};
 
 nmr_RegistrationUI::nmr_RegistrationUI
   ( nmr_Registration_Proxy *aligner, 
@@ -50,8 +59,8 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_constrainToTopography("reg_constrain_to_topography", 0),
    d_invertWarp("reg_invert_warp", 0),
    d_textureDisplayEnabled("reg_display_texture", 0),
-   d_resampleResolutionX("resample_resolution_x", 100),
-   d_resampleResolutionY("resample_resolution_y", 100),
+   d_resampleResolutionX("resample_resolution_x", 300),
+   d_resampleResolutionY("resample_resolution_y", 300),
    d_resampleRatio("reg_resample_ratio", 0),
    d_registrationColorMap3D("reg_surface_cm(color_map)", "none"),
    d_registrationColorMap2D("reg_projection_cm(color_map)", "none"),
@@ -256,9 +265,9 @@ void nmr_RegistrationUI::handleRegistrationChange
         updateTextureTransform();
       }
       switch (whichTransform) {
-        case NMR_MANUAL:
-          setAutoAlignMode(NMR_AUTOALIGN_FROM_MANUAL);
-          setTransformationSource(NMR_MANUAL);
+        case NMR_CPOINTS:
+          setAutoAlignMode(NMR_AUTOALIGN_FROM_CPOINTS);
+          setTransformationSource(NMR_CPOINTS);
           break;
         case NMR_DEFAULT:
           setAutoAlignMode(NMR_AUTOALIGN_FROM_DEFAULT);

@@ -415,12 +415,9 @@ proc init_full {} {
 			 punchdist speed watchdog step_size z_start \
 			 z_end z_pullback force_limit fcdist num_layers \
 			 num_hcycles sample_speed pullback_speed start_speed feedback_speed \
-			 avg_num optimize_now direct_step]
-
-    if { !$thirdtech_ui } {    
-        lappend modifyplist max_z_step max_xy_step min_z_setpoint \
-			 max_z_setpoint max_lat_setpoint 
-    }
+			 avg_num optimize_now direct_step \
+                         max_z_step max_xy_step min_z_setpoint \
+                         max_z_setpoint max_lat_setpoint ]
     # Get globals for modifyp_* and newmodifyp_*.
     # newmodifyp_* gets updated as the user changes
     # selections, but only when Accept is pressed
@@ -688,26 +685,26 @@ proc init_full {} {
                 -variable newmodifyp_tool -value 6 -anchor nw
         radiobutton $nmInfo(modifyfull).tool.optimize_now -text "Optimize Now" \
                 -variable newmodifyp_tool -value 7 -anchor nw
-        radiobutton $nmInfo(modifyfull).tool.direct_step -text "Direct Step" \
-                -variable newmodifyp_tool -value 8 -anchor nw
     }
+    radiobutton $nmInfo(modifyfull).tool.direct_step -text "Direct Step" \
+            -variable newmodifyp_tool -value 8 -anchor nw
     eval lappend changing_widgets "$nmInfo(modifyfull).tool.freehand \
         $nmInfo(modifyfull).tool.line \
         $nmInfo(modifyfull).tool.constrfree \
-	$nmInfo(modifyfull).tool.slow_line"
+	$nmInfo(modifyfull).tool.slow_line \
+	$nmInfo(modifyfull).tool.direct_step"
     if { !$thirdtech_ui } {    
 	eval lappend changing_widgets "$nmInfo(modifyfull).tool.feelahead \
-	$nmInfo(modifyfull).tool.optimize_now \
-	$nmInfo(modifyfull).tool.direct_step "
+	$nmInfo(modifyfull).tool.optimize_now"
     }
     eval lappend device_only_controls "$nmInfo(modifyfull).tool.freehand \
         $nmInfo(modifyfull).tool.line \
         $nmInfo(modifyfull).tool.constrfree \
-	$nmInfo(modifyfull).tool.slow_line"
+	$nmInfo(modifyfull).tool.slow_line \
+	$nmInfo(modifyfull).tool.direct_step "
     if { !$thirdtech_ui } {    
 	eval lappend device_only_controls "$nmInfo(modifyfull).tool.feelahead \
-	$nmInfo(modifyfull).tool.optimize_now \
-	$nmInfo(modifyfull).tool.direct_step "
+	$nmInfo(modifyfull).tool.optimize_now "
     }
 
     ### TOOL PARAMETERS ###
@@ -747,59 +744,60 @@ proc init_full {} {
 
     ### CONTROL ###
     set modifyp_control 0
-    if { !$thirdtech_ui } {    
+    frame $nmInfo(modifyfull).control
+    label $nmInfo(modifyfull).control.label -text "Control" 
 
-	frame $nmInfo(modifyfull).control
-	label $nmInfo(modifyfull).control.label -text "Control" 
-
-	radiobutton $nmInfo(modifyfull).control.feedback -text "Feedback" \
+    radiobutton $nmInfo(modifyfull).control.feedback -text "Feedback" \
 	    -variable newmodifyp_control -value 0  -anchor nw
-	radiobutton $nmInfo(modifyfull).control.directz -text "Direct Z" \
+    radiobutton $nmInfo(modifyfull).control.directz -text "Direct Z" \
 	    -variable newmodifyp_control -value 1 -anchor nw \
             -command { enforce_directz_heightplane }
 
-	global mod_control_list
-	set mod_control_list "$nmInfo(modifyfull).control.feedback \
-                              $nmInfo(modifyfull).control.directz"
-
-	eval lappend changing_widgets "$nmInfo(modifyfull).control.feedback \
+    global mod_control_list
+    set mod_control_list "$nmInfo(modifyfull).control.feedback \
+            $nmInfo(modifyfull).control.directz"
+    
+    eval lappend changing_widgets "$nmInfo(modifyfull).control.feedback \
 	    $nmInfo(modifyfull).control.directz" 
-
-	eval lappend device_only_controls "$nmInfo(modifyfull).control.feedback \
+    
+    eval lappend device_only_controls "$nmInfo(modifyfull).control.feedback \
 	    $nmInfo(modifyfull).control.directz" 
-
-	### CONTROL PARAMETERS ###
-	set modifyp_max_z_step 1
-	set modifyp_max_xy_step 1
-	set modifyp_min_z_setpoint -50
-	set modifyp_max_z_setpoint 50
-	set modifyp_max_lat_setpoint 50
-
-	frame $nmInfo(modifyfull).controlparam
-	label $nmInfo(modifyfull).controlparam.label -text "Control parameters" 
-
-	generic_entry $nmInfo(modifyfull).controlparam.max_z_step newmodifyp_max_z_step \
+    
+    ### CONTROL PARAMETERS ###
+    set modifyp_max_z_step 1
+    set modifyp_max_xy_step 1
+    set modifyp_min_z_setpoint -50
+    set modifyp_max_z_setpoint 50
+    set modifyp_max_lat_setpoint 50
+    
+    frame $nmInfo(modifyfull).controlparam
+    label $nmInfo(modifyfull).controlparam.label -text "Control parameters" 
+    
+    generic_entry $nmInfo(modifyfull).controlparam.max_z_step newmodifyp_max_z_step \
 	    "max_z_step (0,5 nm)" real 
-	generic_entry $nmInfo(modifyfull).controlparam.max_xy_step newmodifyp_max_xy_step \
+    generic_entry $nmInfo(modifyfull).controlparam.max_xy_step newmodifyp_max_xy_step \
 	    "max_xy_step (0,5 nm)" real 
-	generic_entry $nmInfo(modifyfull).controlparam.min_z_setpoint newmodifyp_min_z_setpoint \
+    generic_entry $nmInfo(modifyfull).controlparam.min_z_setpoint newmodifyp_min_z_setpoint \
 	    "min_z_setpoint (-70,70 nA)" real 
-	generic_entry $nmInfo(modifyfull).controlparam.max_z_setpoint newmodifyp_max_z_setpoint \
+    generic_entry $nmInfo(modifyfull).controlparam.max_z_setpoint newmodifyp_max_z_setpoint \
 	    "max_z_setpoint (0,70 nA)" real 
-	generic_entry $nmInfo(modifyfull).controlparam.max_lat_setpoint newmodifyp_max_lat_setpoint \
+    generic_entry $nmInfo(modifyfull).controlparam.max_lat_setpoint newmodifyp_max_lat_setpoint \
 	    "max_lat_setpoint (0,70 nA)" real
-
-	global mod_directz_list
-	set mod_directz_list  "$nmInfo(modifyfull).controlparam.max_z_step \
-                               $nmInfo(modifyfull).controlparam.max_xy_step \
-                               $nmInfo(modifyfull).controlparam.min_z_setpoint \
-                               $nmInfo(modifyfull).controlparam.max_z_setpoint \
-                               $nmInfo(modifyfull).controlparam.max_lat_setpoint"
-
-	eval iwidgets::Labeledwidget::alignlabels $mod_directz_list
-
-	eval lappend device_only_controls $mod_directz_list
+    
+    global mod_directz_list
+    set mod_directz_list  "$nmInfo(modifyfull).controlparam.max_z_step \
+            $nmInfo(modifyfull).controlparam.max_xy_step \
+            $nmInfo(modifyfull).controlparam.min_z_setpoint \
+            $nmInfo(modifyfull).controlparam.max_z_setpoint"
+                               
+    if { !$thirdtech_ui } {    
+        # Lateral setpoint not implemented, so don't display it. 
+        eval lappend mod_directz_list "$nmInfo(modifyfull).controlparam.max_lat_setpoint"
     }
+    eval iwidgets::Labeledwidget::alignlabels $mod_directz_list
+    
+    eval lappend device_only_controls $mod_directz_list
+
 
     ##########################################################################
     # These variables only exist in tcl - the user changes
@@ -919,21 +917,17 @@ proc pack_quick {} {
 	}
     }
 
-    if { !$thirdtech_ui } {
-	switch $modifyp_control {
-	    0   {   #Feedback control
-		    $nmInfo(modifystate).mod_control configure -text "Control: Feedback"
-	        }
-	    1   {   #DirectZ control
-		    $nmInfo(modifystate).mod_control configure -text "Control: Direct Z"
-	        }
-	}
+    switch $modifyp_control {
+        0   {   #Feedback control
+            $nmInfo(modifystate).mod_control configure -text "Control: Feedback"
+        }
+        1   {   #DirectZ control
+            $nmInfo(modifystate).mod_control configure -text "Control: Direct Z"
+        }
     }
     # pack label at top
        # Label info
-       if { !$thirdtech_ui } {
-	   pack $nmInfo(modifystate).mod_control -side bottom -anchor nw
-       }
+       pack $nmInfo(modifystate).mod_control -side bottom -anchor nw
        pack $nmInfo(modifystate).mod_tool \
 	    $nmInfo(modifystate).mod_style \
 	    $nmInfo(modifystate).mod_mode \
@@ -1115,9 +1109,11 @@ proc pack_full {} {
     if { !$thirdtech_ui } {    
 	 pack $nmInfo(modifyfull).tool.feelahead \
 	 $nmInfo(modifyfull).tool.optimize_now \
-	 $nmInfo(modifyfull).tool.direct_step \
+         -side top -fill x
+     }
+     pack $nmInfo(modifyfull).tool.direct_step \
 	 -side top -fill x
-    }
+
     ### TOOL PARAMETERS ###
     global newmodifyp_tool
     # Only pack when tool is Line, Slow Line, or Optimize Now
@@ -1154,32 +1150,30 @@ proc pack_full {} {
 	default {}
     }
 
-    if { !$thirdtech_ui } {    
-	### CONTROL ###
-	# Always show this frame
-	pack $nmInfo(modifyfull).control -side left -padx 4 -fill both
-	pack $nmInfo(modifyfull).control.label -side top -anchor nw   
+    ### CONTROL ###
+    # Always show this frame
+    pack $nmInfo(modifyfull).control -side left -padx 4 -fill both
+    pack $nmInfo(modifyfull).control.label -side top -anchor nw   
 
-	lappend packing_list $nmInfo(modifyfull).control
+    lappend packing_list $nmInfo(modifyfull).control
 
-	pack $nmInfo(modifyfull).control.feedback \
+    pack $nmInfo(modifyfull).control.feedback \
 	    $nmInfo(modifyfull).control.directz \
 	    -side top -fill x
-
-	### CONTROL PARAMETERS ###
-	global newmodifyp_control
-	# Only pack when tool is DirectZ
-	if { $newmodifyp_control == 1 } {
-	    pack $nmInfo(modifyfull).controlparam -side left -padx 4 -fill both
-	    pack $nmInfo(modifyfull).controlparam.label -side top -anchor nw
-	    lappend packing_list $nmInfo(modifyfull).controlparam
-
-	    global mod_directz_list
-	    foreach element $mod_directz_list {
-		pack $element -side top -fill x -pady $fspady  
-	    }
-	}  
-    }
+    
+    ### CONTROL PARAMETERS ###
+    global newmodifyp_control
+    # Only pack when tool is DirectZ
+    if { $newmodifyp_control == 1 } {
+        pack $nmInfo(modifyfull).controlparam -side left -padx 4 -fill both
+        pack $nmInfo(modifyfull).controlparam.label -side top -anchor nw
+        lappend packing_list $nmInfo(modifyfull).controlparam
+        
+        global mod_directz_list
+        foreach element $mod_directz_list {
+            pack $element -side top -fill x -pady $fspady  
+        }
+    }  
 }
 
 ##################################
@@ -1422,7 +1416,7 @@ proc set_enabling {} {
             
             $nmInfo(modifyfull).tool.optimize_now configure -state disabled
         }
-	
+    }
 	# disable direct step
 	if {$style != 0} {
             $nmInfo(modifyfull).tool.direct_step configure -state disabled
@@ -1442,7 +1436,6 @@ proc set_enabling {} {
             
             $nmInfo(modifyfull).control.directz configure -state disabled
         }
-    }
 }
 
 #######################################
@@ -1619,20 +1612,18 @@ proc init_live_controls {} {
 	$nmInfo(ml_slow_line).slow_line_reverse \
 	$nmInfo(ml_slow_line).step-size $nmInfo(top_slow_line).slow_line_collect_data" 
 
-    if { !$thirdtech_ui } {
-	iwidgets::Labeledframe $nmInfo(modify_live).directz -labeltext "Direct Z" \
+    iwidgets::Labeledframe $nmInfo(modify_live).directz -labeltext "Direct Z" \
 	    -labelpos nw
-	set nmInfo(ml_directz) [$nmInfo(modify_live).directz childsite]
-	pack $nmInfo(modify_live).directz -fill both -expand yes
-
-	generic_entry $nmInfo(ml_directz).directz_force_scale directz_force_scale\
+    set nmInfo(ml_directz) [$nmInfo(modify_live).directz childsite]
+    pack $nmInfo(modify_live).directz -fill both -expand yes
+    
+    generic_entry $nmInfo(ml_directz).directz_force_scale directz_force_scale\
 	    "Force scale (1,3)" real
-
-	pack $nmInfo(ml_directz).directz_force_scale -side top -pady 2 -anchor nw
-
-	lappend device_only_controls \
+    
+    pack $nmInfo(ml_directz).directz_force_scale -side top -pady 2 -anchor nw
+    
+    lappend device_only_controls \
 	    $nmInfo(ml_directz).directz_force_scale
-    }
 }
 
 #### The Initialization calls

@@ -104,10 +104,9 @@ radiobutton $nmInfo(viewb3).select -text "Scan Area" \
 checkbutton $nmInfo(viewb7).xy_lock -text "XY Lock" \
 	-variable xy_lock_pressed -padx 0 -pady 0
 
-if { !$thirdtech_ui } {    
 checkbutton $nmInfo(viewb7).z_lock -text "Z Lock" \
     -variable z_lock_pressed -padx 0 -pady 0
-}
+
 # Commit to an operation, like starting to use modification force, or
 # accepting the new scan region
 button $nmInfo(viewb4).commit -text "Commit!" \
@@ -143,9 +142,7 @@ pack $nmInfo(viewb6).demotouch -side left
 pack $nmInfo(viewb6).region -side left 
 if { !$viewer_only } {
 pack $nmInfo(viewb7).xy_lock -side left
-if { !$thirdtech_ui } {    
 pack $nmInfo(viewb7).z_lock -side left
-}
 pack $nmInfo(viewb8).cancel -side left -fill x -expand yes
 }
 # Some of these controls are only relevant to live devices
@@ -154,7 +151,5 @@ if { !$viewer_only } {
 lappend device_only_controls $nmInfo(viewb3).live $nmInfo(viewb3).select \
         $nmInfo(viewb7).xy_lock $nmInfo(viewb4).commit \
         $nmInfo(viewb8).cancel 
-if { !$thirdtech_ui } {    
 lappend device_only_controls $nmInfo(viewb7).z_lock 
-}
 }
