@@ -1,3 +1,9 @@
+2002-01-21  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_Util.C (addImage): made this not add the intensities if
+	one of them is zero and just take the one that is non-zero instead
+	in that case
+
 2001-12-20    <marshbur@cs.unc.edu>
 
 	* nmReg.dsp:  removed references to ImgFormat

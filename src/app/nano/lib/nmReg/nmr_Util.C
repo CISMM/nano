@@ -496,7 +496,7 @@ void nmr_Util::addImage(nmb_Image &addend, nmb_Image &sum, float wa,
 
   for (i = 0,i_center = 0.5*x_incr;i < sum.width(); i++,i_center += x_incr) {
     for (j = 0,j_center = 0.5*y_incr;j < sum.height(); j++,j_center += y_incr) {
-      val = ws*sum.getValue(i,j);
+      val = sum.getValue(i,j);
       // get world coordinates for this point in sum image
       sumImageToWorld.transform(i_center, j_center, x_world, y_world);
       //sum.pixelToWorld(i_center, j_center, x_world, y_world);
@@ -507,10 +507,13 @@ void nmr_Util::addImage(nmb_Image &addend, nmb_Image &sum, float wa,
       if (i_addend >= 0 && j_addend >= 0 &&
           i_addend < addend.width() && 
           j_addend < addend.height()) {
-          val = ws*sum.getValue(i,j) + 
-                wa*(rangeFactor*
-                    (addend.getValueInterpolatedNZ(i_addend, j_addend)-offset)
-                    + sumOffset);
+          double valAddend = 
+               addend.getValueInterpolatedNZ(i_addend, j_addend);
+          if (val == 0) {
+            val = rangeFactor*(valAddend - offset) + sumOffset;
+          } else if (valAddend != 0) {
+            val = ws*val + wa*(rangeFactor*(valAddend-offset)+sumOffset);
+          }
 /*
                 wa*(sum_avg + 
                     val_scale*
