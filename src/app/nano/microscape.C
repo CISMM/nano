@@ -7076,6 +7076,80 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
             colorMapDir = new char [strlen(env_string) + 1];
             strcpy(colorMapDir, env_string);
 	}
+#if defined (_WIN32) && !defined (__CYGWIN__)
+    HANDLE hConsoleOutput;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    int bLaunched = vrpn_FALSE;
+
+    // From "console sample (with GUI IO)" Console.c in MSDN library. 
+    // Lets try a trick to determine if we were 'launched' as a separate
+    // screen, or just running from the command line.
+    // We will do this by simply getting the current cursor position. It
+    // 'should' always be (0,0) on a launch, and something else if we were
+    // executed as a command from a console window. 
+#ifdef X
+#undef X
+#endif
+#ifdef Y
+#undef Y
+#endif
+    hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(hConsoleOutput, &csbi);
+   if ((csbi.dwCursorPosition.X==0) && (csbi.dwCursorPosition.Y==0)) {
+        bLaunched = vrpn_TRUE;
+    }
+    if ((csbi.dwSize.X<=0) || (csbi.dwSize.Y <= 0)) bLaunched = FALSE;
+
+    //HANDLE hinst;
+    HWND hwnd;
+    // From "console sample (with GUI IO)" in MSDN library. 
+    //hinst = GetModuleHandle (NULL);
+    hwnd = GetForegroundWindow();  // GetFocus or GetForegroundWindow 
+    
+    // Prettiness tweak - minimize console window,
+    // without minimizing visual protect window.
+    if (bLaunched) {
+        ShowWindow(hwnd, SW_SHOWMINIMIZED); // keeps window in front, minimized
+    }
+    // Check to see if this run of nano is protected by Visual Protect.
+    char *vp_env = getenv("VPSTATUS");
+    if (vp_env) {
+        //See if we are registered, in trial period, or expired
+        if (!strcmp(vp_env, "REGISTERED")) {
+            // continue 
+        } else {
+            // any other value of env var, show register info. 
+            char * fname = new char[strlen(nano_root) + 50];
+            sprintf(fname, "%s\\share\\register.txt", nano_root );
+            FILE *file_ptr;
+            // "w" stands for write text - readable on PC platforms.
+
+            file_ptr=fopen(fname,"w");
+            fprintf(file_ptr, 
+             "Registration file for 3rdTech NanoManipulator DP-100\n\n"
+             "This file is located in: %s\n"
+             "Please use the 'E-mail registration' button on the intro screen\n"
+             "or e-mail this file or its contents to \n"
+             "      nano@3rdtech.com\n\n"
+             "When we receive it, we will e-mail you the file nano.vplr\n"
+             "to be copied into the %s\\bin directory.\n\n"
+             "This will permanently register and unlock this program\n"
+             "for use on this machine.\n\n"
+             "Machine serial number = %s\n", 
+                    fname, nano_root, getenv("VPCURRENTSERIAL"));
+//               getenv("VPSTATUS"), getenv("VPREGISTERTO"), 
+//               getenv("VPCURRENTSERIAL"));
+            fclose(file_ptr);
+            ShellExecute(hwnd, "open", "notepad.exe", fname, NULL, 
+                         SW_SHOWNORMAL);
+            delete [] fname;
+            // If we aren't in trial period, exit nano. 
+            if (strcmp(vp_env, "TRIAL")) {
+                exit(0);
+            }
+        }
+    }
+#endif
         delete [] env_string;
         delete [] nano_root;
     }
@@ -7166,8 +7240,20 @@ int main (int argc, char* argv[])
   if (tkenable) {
     // init_Tk_control_panels creates the interpreter and adds most of
     // the Tk widgits
-    init_Tk_control_panels(tcl_script_dir, istate.collabMode,
-                           &collaborationTimer);
+    if(init_Tk_control_panels(tcl_script_dir, istate.collabMode,
+                              &collaborationTimer)) {
+        fprintf(stderr, 
+                "NanoManipulator Control Panels failed to initialize.\n"
+                "This indicates the program is not installed properly, \n"
+                "some files are missing, or there is an error in the files.\n"
+                "Please re-install the NanoManipulator or contact us for\n"
+                "further assistance. \n\n"
+                "Press Enter to quit (or 'g Enter' to continue anyway)\n");
+        char c = getchar();
+        if (c != 'g') { 
+            exit(0);
+        }
+    }
     VERBOSE(1, "done initialising the control panels\n");
     init_Tk_variables ();
   }
@@ -9303,15 +9389,15 @@ static void find_center_xforms (q_vec_type * lock_userpos,
     get_Plane_Centers(&mid_x, &mid_y, &mid_z);
     //printf("center mid_z mm %f\n", mid_z);
 
-    (*lock_userpos)[X] = -screen_mid[0];
-    (*lock_userpos)[Y] = -screen_mid[1];
-    (*lock_userpos)[Z] = -screen_mid[2];
+    (*lock_userpos)[Q_X] = -screen_mid[0];
+    (*lock_userpos)[Q_Y] = -screen_mid[1];
+    (*lock_userpos)[Q_Z] = -screen_mid[2];
 
     q_vec_scale( *lock_userpos, *lock_userscale, *lock_userpos );
 
-    (*lock_userpos)[X] += mid_x;
-    (*lock_userpos)[Y] += mid_y;
-    (*lock_userpos)[Z] += mid_z;
+    (*lock_userpos)[Q_X] += mid_x;
+    (*lock_userpos)[Q_Y] += mid_y;
+    (*lock_userpos)[Q_Z] += mid_z;
 
 //     screen_mid[0] = (screenLL[0] + screenUR[0]) / 2.0;
 //     screen_mid[1] = (screenLL[1] + screenUR[1]) / 2.0;

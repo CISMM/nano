@@ -1,6 +1,14 @@
+2002-02-08  Aron Helser  <helser@cs.unc.edu>
+
+	* Makefile (USES_EXTERNAL_LIBS): Add shell32 to support microscape.c
+
+	* microscape.c (initialize_environment): Changes to check for
+	copy-protection using Visual Protect, and automatically minimize
+	console window if app created it. 
+
 2002-02-05  David Marshburn  <marshbur@cs.unc.edu>
 
-	* microscape.c  (handle_set_stream_time_change):  if reading a vi
+	* microscape.c (handle_set_stream_time_change):  if reading a vi
 	curve stream, and if jumping back in time, reset the keithley UI.
 
 2002-01-31  David Marshburn  <marshbur@cs.unc.edu>

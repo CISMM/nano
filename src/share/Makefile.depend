@@ -21,7 +21,7 @@ ifneq ($(DEPEND_EXISTS),true)
 	 	ALT_LIBS := $(foreach lib,$(USES_LIBS),$(findstring $(lib),$(filter-out -L/%,$(MY_ALT_LIB_DIR))))
 		SEARCH_LIBS := $(filter-out $(ALT_LIBS),$(USES_LIBS))
 		ifdef VC
-			USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) pc_win32_MTd$(OBJECT_DIR_SUFFIX) $(lib) $(SEARCH_PATH)))
+			USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) pc_win32$(OBJECT_DIR_SUFFIX) $(lib) $(SEARCH_PATH)))
 		else
 			USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) $(HW_OS)$(OBJECT_DIR_SUFFIX) $(lib) $(SEARCH_PATH)))
 		endif

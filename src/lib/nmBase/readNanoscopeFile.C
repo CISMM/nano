@@ -147,7 +147,7 @@ BCGrid::readNanoscopeFile(FILE* file, const char *filename, int ascii_flag)
     }
 
     _min_x = _min_y = 0.0;
-    if (file_info.image_mode == NS_HEIGHT_V44) {
+    if (file_info.image_mode == NS_HEIGHT_V43) {
         if (strcmp(file_info.scan_units, "~m") == 0) {
             // microns, translate to nm
             _max_x = file_info.scan_size * 1000.0;
@@ -161,53 +161,37 @@ BCGrid::readNanoscopeFile(FILE* file, const char *filename, int ascii_flag)
         _max_x = _max_y = file_info.scan_size;
     }
 
-    switch (file_info.image_mode) {
-        case NS_HEIGHT_V44:
-            if (strcmp(file_info.image_data_type, "Zscan") ==0) {
-		units_name = (char *)"nm";
-            } else if (strcmp(file_info.image_data_type, "Amplitude") ==0) {
-		units_name = (char *)"V?";
-            } else {
-		units_name = (char *)"unknown";
-            }
-            break;
-        case NS_HEIGHT_V41:
-            units_name = file_info.z_units;
-		break;
-	case NS_HEIGHT:
-	case NS_DEFLECTION:
-		units_name = (char *)"nm";
-		break;
-	case NS_AUXC:
-		units_name = (char *)"V";
-		break;
-	case NS_CURRENT:
-		units_name = (char *)"nA";
-		break;
-	default:
-		units_name = (char *)"unknown";
-    }
-    BCPlane* plane = addNewPlane(filename, units_name, TIMED);
-    
-    if (ascii_flag) {
-        plane->readAsciiNanoscopeFile(file, &file_info );
-    } else {
-        plane->readBinaryNanoscopeFile(file, &file_info);
-    }
+    // We know the file size, set our own grid size.
+    // Planes added later adopt new size 
+    _num_x = file_info.num_x;
+    _num_y = file_info.num_y;
+
+    // Use loop to avoid duplicating the image_mode switch.
+
     int  i = 2; // Start with 2 for easy user readability. 
-    nmb_diImageInfo * aux_info = file_info.next;
-    while (aux_info) {
-        char name[255];
-        sprintf(name, "%s layer %d", filename, i);
+    nmb_diImageInfo * aux_info = &file_info;
+    char name[255];
+    BCPlane * plane;
+    sprintf(name, "%s", filename);
         
+    while (aux_info) {
+
         switch (aux_info->image_mode) {
-        case NS_HEIGHT_V44:
-            if (strcmp(aux_info->image_data_type, "Zscan") ==0) {
-		units_name = (char *)"nm";
-            } else if (strcmp(aux_info->image_data_type, "Amplitude") ==0) {
-		units_name = (char *)"V?";
+        case NS_HEIGHT_V43:
+            // If we haven't found z_units already, guess. 
+            if (aux_info->z_units[0] == '\0') {
+                if (strcmp(aux_info->image_data_type, "Sens. Zscan") ==0) {
+                    units_name = (char *)"nm";
+                } else if (strcmp(aux_info->image_data_type, "Sens. Amplitude") ==0) {
+                    units_name = (char *)"nm?";
+                } else if (strcmp(aux_info->image_data_type, "Sens. Current") ==0) {
+                    units_name = (char *)"nA";
+                } else {
+                    // Lots of others, Deflection, E, Friction, Aux A B C D...
+                    units_name = (char *)"unknown";
+                }
             } else {
-		units_name = (char *)"unknown";
+                units_name = aux_info->z_units;
             }
             break;
         case NS_HEIGHT_V41:
@@ -226,6 +210,7 @@ BCGrid::readNanoscopeFile(FILE* file, const char *filename, int ascii_flag)
 	default:
 		units_name = (char *)"unknown";
         }
+        // First plane used to be timed, don't know if this matters. 
         plane = addNewPlane(name, units_name, NOT_TIMED);
         
         if (ascii_flag) {
@@ -234,6 +219,8 @@ BCGrid::readNanoscopeFile(FILE* file, const char *filename, int ascii_flag)
             plane->readBinaryNanoscopeFile(file, aux_info);
         }
         aux_info = aux_info->next;
+        // Set up name for next layer...
+        sprintf(name, "%s layer %d", filename, i);
         i++;
 	
     }
@@ -335,17 +322,13 @@ BCGrid::parseNanoscopeFileHeader(FILE* file, nmb_diImageInfo * file_info)
         return (parseNSv4_1(file_info));
 
     } else if (!strncasecmp(ptoken, "\\*Equipment list", strlen("\\*Equipment list"))) {
-        printf("Version 4.4\n");
-        return (parseNSv4_4(file_info));
+        printf("Version 4.3+\n");
+        return (parseNSv4_3(file_info, header_text));
         
     } else {
 	fprintf(stderr, "Unrecognized separator in header, %s!", ptoken);
 	return -1;
     }
-    // We know the file size, set our own grid size.
-    // Unnecessary -> planes added later adopt new size 
-    //setGridSize(_num_x, _num_y);
-
     // Shouldn't be reached, unhandled version. 
     return -1;        
     
@@ -354,6 +337,7 @@ BCGrid::parseNanoscopeFileHeader(FILE* file, nmb_diImageInfo * file_info)
 /**
    Parse a 4.1 Nanoscope header, probably also a 4.2
  Depends on strtok context from parseNanoscopeFileHeader!!!
+ To Do: handle image data types other that height
 */
 int
 BCGrid::parseNSv4_1 (nmb_diImageInfo * file_info)
@@ -389,11 +373,11 @@ BCGrid::parseNSv4_1 (nmb_diImageInfo * file_info)
         } else if (!strncasecmp(ptoken, "\\Samps/line:", 
                                 strlen("\\Samps/line:"))) {
             ngot = sscanf(ptoken + strlen("\\Samps/line: "),"%d", 
-                   &_num_x);
+                   &curr_info->num_x);
         } else if (!strncasecmp(ptoken, "\\Number of lines:", 
                                 strlen("\\Number of lines:"))) {
             ngot = sscanf(ptoken + strlen("\\Number of lines: "),"%d", 
-                   &_num_y);
+                   &curr_info->num_y);
         } else if (!strncasecmp(ptoken, "\\Scan size:", 
                                 strlen("\\Scan size:"))) {
             ngot = sscanf(ptoken + strlen("\\Scan size: "),"%lg %s", 
@@ -433,11 +417,11 @@ BCGrid::parseNSv4_1 (nmb_diImageInfo * file_info)
 
 }
 /**
-   Parse a 4.4 Nanoscope header, probably also later formats, if they exist.
+   Parse a 4.3 Nanoscope header, probably also later formats, if they exist.
  Depends on strtok context from parseNanoscopeFileHeader!!!
 */
 int
-BCGrid::parseNSv4_4 (nmb_diImageInfo * file_info)
+BCGrid::parseNSv4_3 (nmb_diImageInfo * file_info, char * header_text)
 {
     int	ngot = 1;
     char * ptoken;
@@ -452,7 +436,7 @@ BCGrid::parseNSv4_4 (nmb_diImageInfo * file_info)
 	fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: Can't find image sub-header!\n");
 	return -1;
     }
-    file_info->image_mode = NS_HEIGHT_V44;
+    file_info->image_mode = NS_HEIGHT_V43;
     nmb_diImageInfo * curr_info = file_info;
 
     ptoken = strtok(NULL, "\n");
@@ -466,11 +450,11 @@ BCGrid::parseNSv4_4 (nmb_diImageInfo * file_info)
         } else if (!strncasecmp(ptoken, "\\Samps/line:", 
                                 strlen("\\Samps/line:"))) {
             ngot = sscanf(ptoken + strlen("\\Samps/line: "),"%d", 
-                   &_num_x);
+                   &curr_info->num_x);
         } else if (!strncasecmp(ptoken, "\\Number of lines:", 
                                 strlen("\\Number of lines:"))) {
             ngot = sscanf(ptoken + strlen("\\Number of lines: "),"%d", 
-                   &_num_y);
+                   &curr_info->num_y);
         } else if (!strncasecmp(ptoken, "\\Scan size:", 
                                 strlen("\\Scan size:"))) {
             ngot = sscanf(ptoken + strlen("\\Scan size: "),"%lg %lg %s", 
@@ -478,8 +462,10 @@ BCGrid::parseNSv4_4 (nmb_diImageInfo * file_info)
                           curr_info->scan_units);
         } else if (!strncasecmp(ptoken, "\\@2:Z scale:", 
                                 strlen("\\@2:Z scale:"))) {
+            // %[^]] means anything not a "]", so [%[^]]] means
+            // [ anything not a "]" ]
             ngot = sscanf(ptoken + strlen("\\@2:Z scale: "),
-                          "V [Sens. %[^]]] (%*g V/LSB) %lg V", 
+                          "V [%[^]]] (%*g V/LSB) %lg V", 
                    curr_info->image_data_type, &curr_info->z_scale);
         } else if (!strncasecmp(ptoken, "\\*Ciao image list", 
                                 strlen("\\*Ciao image list"))) {
@@ -493,7 +479,7 @@ BCGrid::parseNSv4_4 (nmb_diImageInfo * file_info)
             printf("DI Second image layer found. Reading header info.\n");
             curr_info->next = new nmb_diImageInfo();
             curr_info = curr_info->next;
-            curr_info->image_mode = NS_HEIGHT_V44;
+            curr_info->image_mode = NS_HEIGHT_V43;
         }
         if (ngot <= 0) { 
             fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: "
@@ -507,6 +493,46 @@ BCGrid::parseNSv4_4 (nmb_diImageInfo * file_info)
                 "Required Z scale param not read.\n");
         return -1;
     }
+    // Now we need to retrieve the "soft scale" corresponding
+    // to each "hard scale" we read from the image section. 
+    // We do that by looking for a parameter that matches the 
+    // image_data_type we read earlier. It is in the *Scanner list
+    // section or *Ciao scan list section, probably. 
+
+    char desired_token[100];
+    // Yes we have to start scanning the header again...
+    // It's already been strtok'ed, so just start with first string.
+    ptoken = header_text;
+    while ( (NULL != ptoken ) && (CTL_Z != *ptoken) ) {
+        curr_info = file_info;
+        while (curr_info) {
+            sprintf(desired_token, "\\@%s: V ", curr_info->image_data_type);
+            if (!strncasecmp(ptoken, desired_token, 
+                                strlen(desired_token))) {
+                ngot = sscanf(ptoken + strlen(desired_token),
+                              "%lg", &curr_info->soft_z_scale);
+                // Units may be present, but usually aren't
+                if (sscanf(ptoken + strlen(desired_token),
+                           "%*g %s", curr_info->z_units) >0) {
+                    // Strip /V from units. nm/V or A/V are examples.
+                    if (curr_info->z_units[1] == '/') {
+                        curr_info->z_units[1] ='\0';
+                    } else if (curr_info->z_units[2] == '/') {
+                        curr_info->z_units[2] ='\0';
+                    } 
+                }
+            }
+            if (ngot <= 0) { 
+                fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: "
+                        "Error reading header parameter!\n");
+                return -1;
+            }
+            curr_info = curr_info->next;
+        }
+        // It's already been strtok'ed, go past the end of this string...
+        ptoken = ptoken + strlen(ptoken) + 1;
+    }
+    // Finally, we're done! 
     return 0;
 
 }
@@ -740,15 +766,23 @@ BCGrid::transform(short* datum, nmb_diImageInfo * file_info, int do_swap)
 
     switch (file_info->image_mode)
     {
-      case NS_HEIGHT_V44: 
+      case NS_HEIGHT_V43: 
+          {
+          //from DI Nanoscope v 4.3 manual, appendix B
+          double val = (*datum) * (file_info->z_scale/65536.0)
+              * file_info->soft_z_scale;
+          return val;
+          
+          }
       case NS_HEIGHT_V41: 
           {
           //Very simple, from DI Nanoscope v 4.1 manual, appendix B
           double val = (*datum)*file_info->z_scale/65536.0;
           return val;
 
-      }
-      case NS_HEIGHT: {
+          }
+      case NS_HEIGHT: 
+          {
 	double normalized = (*datum)/65536.0;
 	double volts = normalized * (2*file_info->z_max);
 	double nm = volts * file_info->z_sensitivity;
@@ -769,7 +803,8 @@ BCGrid::transform(short* datum, nmb_diImageInfo * file_info, int do_swap)
       case NS_DEFLECTION: {
 	double normalized = (*datum)/65536.0;
 	double scaled = normalized * (file_info->z_scale / 65536.0);
-	double nm = scaled * (2*file_info->input_1_max) * file_info->input_sensitivity /
+	double nm = scaled * (2*file_info->input_1_max) * 
+                    file_info->input_sensitivity /
 		    file_info->detection_sensitivity;
 
 /*XXX

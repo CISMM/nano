@@ -200,7 +200,7 @@ class BCGrid
       ///< defined in readNanoscopeFile.C
     int parseNSv4_1(nmb_diImageInfo * file_info);
       ///< defined in readNanoscopeFile.C
-    int parseNSv4_4(nmb_diImageInfo * file_info);
+    int parseNSv4_3(nmb_diImageInfo * file_info, char * header_text);
       ///< defined in readNanoscopeFile.C
 
     int readTopometrixFile(TopoFile& TF, FILE* file, const char *name);

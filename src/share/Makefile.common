@@ -114,6 +114,24 @@ endif
 
 ##########################
 #
+# What type of PC build?
+#
+
+ifeq ($(HW_OS),pc_win32)
+   ifndef VC_LIB_TYPE
+      VC_LIB_TYPE := D
+   endif
+   ifndef VC_RELEASE
+      VC_DBG_FLG := d
+   else 
+      VC_DBG_FLG := 
+   endif
+   # MDd DLL debug, MTD static debug
+   OBJECT_DIR_SUFFIX := _M$(VC_LIB_TYPE)$(VC_DBG_FLG)
+endif
+
+##########################
+#
 # How do I link?
 #
 
@@ -331,7 +349,7 @@ LOAD_FLAGS := $(addprefix -L, $(EXTERNAL_LIB_DIR) \
 				/afs/cs.unc.edu/proj/stm/src/external/glut/glut_UNC )
 
 ifeq ($(HW_OS),pc_win32)
-  LOAD_FLAGS = -L$(MY_NANO_SRC_DIR)/external/pc_win32/lib -L$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32_MTd /nodefaultlib:"glut32.lib"
+  LOAD_FLAGS = -L$(MY_NANO_SRC_DIR)/external/pc_win32/lib -L$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32$(OBJECT_DIR_SUFFIX) /nodefaultlib:"glut32.lib"
 
 endif
 
@@ -458,8 +476,9 @@ ifeq ($(THIRDTECH),1)
 CFLAGS += -DTHIRDTECH
 endif
 ifeq ($(HW_OS),pc_win32)
-  CFLAGS = /nologo /MTd /W3 /GX /Gm /Zi /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /TP 
+  CFLAGS = /nologo /MDd /W3 /GX /Gm /Zi /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /TP 
 # /MTd multi-threaded, debug lib - not DLL.
+# /MDd multi-threaded, DLL debug lib.
 # /W3 warning level 3
 # /Gm enable minimal rebuild - requires /Zi or /ZI
 # /GX enable synchronous exception handling

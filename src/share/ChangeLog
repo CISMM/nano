@@ -1,3 +1,10 @@
+2002-02-08  Aron Helser  <helser@cs.unc.edu>
+
+	* Makefile.depend: Allow cygwin make to compile MDd
+	* Makefile.common: same
+	* Makefile.app_common: same
+	* Makefile.lib_common: fixed typo during NM_VERBOSE_MAKEFILE=1
+
 2002-01-29  Aron Helser  <helser@cs.unc.edu>
 
 	* Makefile.lib_common: Special case for VC, CC -ar doesn't work

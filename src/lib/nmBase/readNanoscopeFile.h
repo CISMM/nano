@@ -14,7 +14,7 @@
 #define NS_DEFLECTION			(2)
 #define NS_AUXC				(3)
 #define	NS_HEIGHT_V41			(4)
-#define	NS_HEIGHT_V44			(5)
+#define	NS_HEIGHT_V43			(5)
 //#define NS_DO_SWAP			(10)
 
 class nmb_diImageInfo {
@@ -22,11 +22,14 @@ public:
     double scan_size; ///< Scan size for square, or x scan size
     double scan_size_y;  ///< y scan size, if needed. 
     char scan_units[10]; ///< units of scan, usually "nm"
-    int image_mode; ///< One of the NS_* variables above, infered from header
+    int image_mode; ///< One of the NS_* variables above, inferred from header
     char image_data_type[50]; ///< Text description of data, trans to units?
     int data_offset;
     double z_scale;
+    double soft_z_scale; ///< v4.3+ only
     char z_units[10];
+    int num_x;  ///< number of data points in x
+    int num_y;  ///< number of data points in y
     double z_scale_auxc;
     double attenuation_in_z;
     double detection_sensitivity;
@@ -43,6 +46,9 @@ public:
         image_mode(NS_HEIGHT),
         data_offset(8192),
         z_scale(-1),
+        soft_z_scale(1),
+        num_x(0),
+        num_y(0),
         z_scale_auxc(1),
         attenuation_in_z(65536),
         detection_sensitivity(0.04),

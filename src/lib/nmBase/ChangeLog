@@ -1,3 +1,9 @@
+2002-02-08  Aron Helser  <helser@cs.unc.edu>
+
+	* readNanoscopeFile.Ch: More tweaks to reading
+	DI files. 4.3+ should have correct units now. 
+	* BCGrid.h (parseNSv4_3): changed function name. 
+
 2002-02-01  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmBase.dsp:  added readNanoscopeFile.[C,h] to the project.
