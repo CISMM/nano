@@ -3288,6 +3288,8 @@ long nmm_Microscope::decode_FeelTo (const char ** buf,
   CHECK(vrpn_unbuffer(buf, dy));
   CHECK(vrpn_unbuffer(buf, orientation));
 
+//fprintf(stderr, "nmm_Microscope got FeelTo at %.5f, %.5f\n", *x, *y);
+
   return 0;
 }
 
