@@ -417,9 +417,9 @@ class nmm_Microscope {
                       vrpn_int32, float, float);
     long decode_PointResultNM (const char ** buf, float *, float *, 
                       vrpn_int32 *, vrpn_int32 *, float *, float *);
-    char * encode_ResultData (long * len, float, float, vrpn_int32, 
+    char * encode_ResultData (long * len, float, float, float, vrpn_int32, 
                       vrpn_int32, vrpn_int32, float *);
-    long decode_ResultData (const char ** buf, float *, float *, vrpn_int32 *,
+    long decode_ResultData (const char ** buf, float *, float *, float*, vrpn_int32 *,
                             vrpn_int32 *, vrpn_int32 *, float *);
     char * encode_ResultNM (long * len, float, float, vrpn_int32, vrpn_int32, 
                             float, float, float, float);

@@ -511,7 +511,7 @@ int	Point_channel_selector::Add_channel(char *name, char *units,
 	return 0;
 }
 
-int     Point_channel_selector::Handle_report( float x, float y,
+int     Point_channel_selector::Handle_report( float x, float y, float z,
 		long sec, long usec, float *vals, int numvalues,
                 vrpn_bool accumulatePoints)
 {
@@ -526,7 +526,7 @@ int     Point_channel_selector::Handle_report( float x, float y,
 
 	// Set location and time in the point results class
 	if (myresult) {
-		myresult->setPosition(x, y);
+		myresult->setPosition(x, y, z);
 		myresult->setTime(sec, usec);
 	}
 

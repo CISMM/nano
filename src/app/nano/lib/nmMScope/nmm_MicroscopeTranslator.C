@@ -90,7 +90,7 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
 {
   vrpn_int32    x,y;            /* Position of current read */
   vrpn_int32 dx, dy;
-  vrpn_float32  fx,fy;          /* Position as a float */
+  vrpn_float32  fx,fy,fz;          /* Position as a float */
   vrpn_int32    sec,usec;       /* When the value was obtained */
   vrpn_float32  value;          /* Value at this point */
   vrpn_float32  std_dev;        /* Standard deviation of value */
@@ -662,6 +662,7 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
     case SPM_POINT_RESULT_DATA:
       stm_unbuffer_float (&bufptr, &fx);
       stm_unbuffer_float (&bufptr, &fy);
+      stm_unbuffer_float (&bufptr, &fz);
       //stm_unbuffer_long (&bufptr, &sec);
       stm_unbuffer_int (&bufptr, &sec);
       //stm_unbuffer_long (&bufptr, &usec);
@@ -677,7 +678,7 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       now.tv_usec = usec;
       doTimeCorrection(now);
 
-      vrpnbuffer = encode_ResultData(&vbuflen, fx, fy, sec, usec, 
+      vrpnbuffer = encode_ResultData(&vbuflen, fx, fy, fz, sec, usec, 
                reports, data);
       vrpn_type = d_PointResultData_type;
       needToSend = VRPN_TRUE;
@@ -755,6 +756,7 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
     case SPM_BOTTOM_PUNCH_RESULT_DATA:
       stm_unbuffer_float (&bufptr, &fx);
       stm_unbuffer_float (&bufptr, &fy);
+      stm_unbuffer_float (&bufptr, &fz);
       //stm_unbuffer_long (&bufptr, &sec);
       //stm_unbuffer_long (&bufptr, &usec);
       stm_unbuffer_int (&bufptr, &sec);
@@ -772,7 +774,7 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       now.tv_usec = usec;
       doTimeCorrection(now);
 
-      vrpnbuffer = encode_ResultData(&vbuflen, fx, fy, sec, usec, reports, data);
+      vrpnbuffer = encode_ResultData(&vbuflen, fx, fy, fz, sec, usec, reports, data);
       vrpn_type = d_BottomPunchResultData_type;
       needToSend = VRPN_TRUE;
 
@@ -783,6 +785,7 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
     case SPM_TOP_PUNCH_RESULT_DATA:
       stm_unbuffer_float (&bufptr, &fx);
       stm_unbuffer_float (&bufptr, &fy);
+      stm_unbuffer_float (&bufptr, &fz);
       //stm_unbuffer_long (&bufptr, &sec);
       //stm_unbuffer_long (&bufptr, &usec);
       stm_unbuffer_int (&bufptr, &sec);
@@ -800,7 +803,7 @@ int nmm_Microscope_Translator::translate_packet(stm_stream *instream)
       now.tv_usec = usec;
       doTimeCorrection(now);
 
-      vrpnbuffer = encode_ResultData(&vbuflen, fx, fy, sec, usec, 
+      vrpnbuffer = encode_ResultData(&vbuflen, fx, fy, fz, sec, usec, 
            reports, data);
       vrpn_type = d_TopPunchResultData_type;
       needToSend = VRPN_TRUE;
