@@ -7,15 +7,15 @@
 class PatternFile {
   public:
     PatternFile();
-    void setPattern(list<PatternShape> &pattern);
-    list<PatternShape> &getPattern();
+    void setPattern(ExposurePattern &pattern);
+    ExposurePattern &getPattern();
     int writeToFile(const char *filename);
-    int writeToFile(list<PatternShape> &shapes, FILE *fout);
+    int writeToFile(list<PatternShapeListElement> &shapes, FILE *fout);
     int readFromFile(const char *filename);
-    int readFromFile(list<PatternShape> &shapes, FILE *fin);
+    int readFromFile(list<PatternShapeListElement> &shapes, FILE *fin);
 
   protected:
-    list<PatternShape> d_pattern;
+    ExposurePattern d_pattern;
 };
 
 #endif

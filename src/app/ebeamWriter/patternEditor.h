@@ -31,29 +31,34 @@ class ImageElement {
 
 typedef enum {PE_IDLE, PE_SET_REGION, PE_SET_TRANSLATE,
                  PE_DRAWMODE, PE_GRABMODE} PE_UserMode;
-typedef enum {PE_POLYLINE, PE_POLYGON, PE_DUMP_POINT, PE_SELECT} PE_DrawTool;
+typedef enum {PE_THINPOLYLINE, PE_THICKPOLYLINE, PE_POLYGON, PE_DUMP_POINT, 
+              PE_SELECT} PE_DrawTool;
 
 const int PE_SELECT_DIST = 10;
 
 class PatternEditor {
   public:
-   PatternEditor();
+   PatternEditor(int startX = 20, int startY = 100);
    ~PatternEditor();
+   void setWindowStartPosition(int startX, int startY);
    void show();
    void newPosition(nmb_Image *im);
    void addImage(nmb_Image *im, double opacity = 1.0, 
                  double r=1.0, double g=1.0, double b=1.0);
    void removeImage(nmb_Image *im);
    void setImageEnable(nmb_Image *im, vrpn_bool displayEnable);
+   vrpn_bool getImageEnable(nmb_Image *im);
    void setImageOpacity(nmb_Image *im, double opacity);
    void setImageColor(nmb_Image *im, double r, double g, double b);
    ImageElement *getImageParameters(nmb_Image *im);
    void showSingleImage(nmb_Image *im);
    int mainWinID() {return d_mainWinID;}
    void setDrawingParameters(double lineWidth_nm, 
-                             double exposure);
+                             double area_exposure, double line_exposure);
    void setDrawingTool(PE_DrawTool tool);
    void clearShape();
+   void addShape(PatternShape *shape);
+   void updateExposureLevels();
    void addTestGrid(double startX_nm, double startY_nm,
                     double endX_nm, double endY_nm,
                     int numHorizontal, int numVertical);
@@ -63,8 +68,11 @@ class PatternEditor {
                     double maxX_nm, double maxY_nm);
    void getViewport(double &minX_nm, double &minY_nm,
                     double &maxX_nm, double &maxY_nm);
-   list<PatternShape> &getShapeList();
-   void setShapeList(list<PatternShape> &shapes);
+   ExposurePattern &getPattern() {return d_pattern;}
+   void setPattern(ExposurePattern &pattern);
+   void setExposurePointDisplayEnable(vrpn_int32 enable);
+   void addExposurePoint(double x_nm, double y_nm);
+   void clearExposurePoints();
 
   protected:
    static int mainWinEventHandler(const ImageViewerWindowEvent &event, 
@@ -76,6 +84,10 @@ class PatternEditor {
    void drawImage(const ImageElement &ie);
    void drawPattern();
    void drawScale();
+   void drawExposureLevels();
+   void drawExposurePoints();
+   void exposureLevelColor(double exposure, double *color);
+   void exposureLevelColor(int rank, double *color);
 
    static int navWinEventHandler(const ImageViewerWindowEvent &event,
                                  void *ud);
@@ -109,14 +121,15 @@ class PatternEditor {
    // stuff for manipulating a pattern
    int updateGrab(const double x_nm, const double y_nm);
    vrpn_bool selectPoint(const double x_nm, const double y_nm);
+/*
    int findNearestShapePoint(const double x, const double y, 
-       list<PatternShape>::iterator &nearestShape,
+       list<PatternShapeListElement>::iterator &nearestShape,
        list<PatternPoint>::iterator &nearestPoint,
        double &minDist);
    int findNearestPoint(list<PatternPoint> points,
              const double x, const double y, 
              list<PatternPoint>::iterator &nearestPoint, double &minDist);
-
+*/
    void setUserMode(PE_UserMode mode);
    PE_UserMode getUserMode();
 
@@ -151,7 +164,8 @@ class PatternEditor {
    PE_DrawTool d_drawingTool;
    PE_UserMode d_userMode;
    double d_lineWidth_nm;
-   double d_exposure_uCoulombs_per_square_cm;
+   double d_area_exposure_uCoulombs_per_square_cm;
+   double d_line_exposure_pCoulombs_per_cm;
 
    vrpn_bool d_displaySingleImage;
    nmb_Image *d_currentSingleDisplayImage;
@@ -176,11 +190,18 @@ class PatternEditor {
    vrpn_bool d_grabInProgress;
    
    list<ImageElement> d_images;
-   list<PatternShape> d_pattern;
+   ExposurePattern d_pattern;
    list<PatternPoint>::iterator d_selectedPoint;
    list<PatternShape>::iterator d_selectedShape;
 
+   list<PatternPoint> d_exposurePoints;
+
    vrpn_bool d_viewportSet;
+
+   int d_numExposurePointsRecorded;
+   vrpn_bool d_exposurePointsDisplayed;
+
+   PatternShapeColorMap d_patternColorMap;
 
 };
 

@@ -7,7 +7,6 @@
 #include "nmb_Image.h"
 #include "nmr_Registration_Proxy.h"
 #include "nmm_EDAX.h"
-#include "exposureManager.h"
 #include "patternFile.h"
 
 // This class manages variables linked to the control panel components of
@@ -22,7 +21,7 @@ class ControlPanels {
    void setImageList(nmb_ImageList *data);
    nmb_ListOfStrings *imageNameList();
 
-   void displayDwellTimes();
+   void updateMinimumDoses();
  protected:
    // callback stuff
    void setupCallbacks();
@@ -39,7 +38,8 @@ class ControlPanels {
                                                  void *ud);
 
    static void handle_lineWidth_nm_change(double new_value, void *ud);
-   static void handle_exposure_change(double new_value, void *ud);
+   static void handle_line_exposure_change(double new_value, void *ud);
+   static void handle_area_exposure_change(double new_value, void *ud);
    static void handle_drawingTool_change(int new_value, void *ud);
    static void handle_clearDrawing_change(int new_value, void *ud);
    static void handle_addTestGrid_change(int new_value, void *ud);
@@ -76,10 +76,12 @@ class ControlPanels {
                                                  int new_value, void *ud);
 
    static void handle_semExposureMagnification_change(int new_value, void *ud);
-   static void handle_semBeamWidth_change(double new_value, void *ud);
+   static void handle_semDotSpacing_change(double new_value, void *ud);
+   static void handle_semLineSpacing_change(double new_value, void *ud);
    static void handle_semBeamCurrent_change(double new_value, void *ud);
    static void handle_semBeamExposePushed_change(int new_value, void *ud);
    static void handle_semDoTimingTest_change(int new_value, void *ud);
+   static void handle_semPointReportEnable_change(int new_value, void *ud);
 
    static void handle_registration_change(void *ud,
                               const nmr_ProxyChangeHandlerData &info);
@@ -88,9 +90,6 @@ class ControlPanels {
    static void handle_sem_change(void *ud,
                         const nmm_Microscope_SEM_ChangeHandlerData &info);
    void handleSEMChange(const nmm_Microscope_SEM_ChangeHandlerData &info);
-
-   static int handle_semWindowRedraw(const ImageViewerDisplayData &data,
-        void *ud);
 
    // list of all images available for display
    Tclvar_list_of_strings *d_imageNames;
@@ -110,7 +109,8 @@ class ControlPanels {
    // Tcl variables linked to control panels
    // drawing parameters:
    Tclvar_float d_lineWidth_nm;
-   Tclvar_float d_exposure_uCoulombs_per_square_cm;
+   Tclvar_float d_line_exposure_pCoulombs_per_cm;
+   Tclvar_float d_area_exposure_uCoulombs_per_square_cm;
    Tclvar_int d_drawingTool;
    Tclvar_int d_clearDrawing;
    Tclvar_int d_addTestGrid;
@@ -142,7 +142,7 @@ class ControlPanels {
    Tclvar_int d_semPixelIntegrationTime_nsec;
    Tclvar_int d_semInterPixelDelayTime_nsec;
    Tclvar_int d_semResolution;
-   Tclvar_int d_semAcquisitionMagnification; // for a 12.8 cm wide display
+   Tclvar_int d_semAcquisitionMagnification; // for a 10 cm wide display
    Tclvar_int d_semOverwriteOldData;
    Tclvar_int d_semBeamBlankEnable;
    Tclvar_int d_semHorizRetraceDelay_nsec;
@@ -153,25 +153,38 @@ class ControlPanels {
    Tclvar_int d_semExternalScanControlEnable;
    Tclvar_string d_semDataBuffer;
    Tclvar_list_of_strings *d_semBufferImageNames;
-   int d_semWinID;
 
    // Beam Control
-   Tclvar_int d_semExposureMagnification; // for a 12.8 cm wide display
-   Tclvar_float d_semBeamWidth_nm;
+   Tclvar_int d_semExposureMagnification; // for a 10 cm wide display
+/*
+   two cases:
+    1. thin lines (thinner than line spacing):
+       linear exposure, dot spacing, current --> dwell time
+
+    2. fat lines (thicker than line spacing) or polygons:
+       area exposure, dot spacing, line spacing, current --> dwell time
+*/
+   Tclvar_float d_semDotSpacing_nm;
+   Tclvar_float d_semLineSpacing_nm;
    Tclvar_float d_semBeamCurrent_picoAmps;
    Tclvar_int d_semBeamExposePushed;
    Tclvar_int d_semBeamExposeEnabled;
    Tclvar_int d_semDoTimingTest;
+   Tclvar_int d_semPointReportEnable;
    Tclvar_string d_semExposureStatus;
+   Tclvar_string d_semMinLinExposure;
+   Tclvar_string d_semMinAreaExposure;
+   double d_semMinLinExposure_pCoul_per_cm;
+   double d_semMinAreaExposure_uCoul_per_sq_cm;
 
    PatternEditor *d_patternEditor;
    PatternFile d_patternFile;
    nmr_Registration_Proxy *d_aligner;
    nmm_Microscope_SEM_Remote *d_SEM;
-   ExposureManager *d_exposureManager;
    nmb_ImageList *d_imageList;
    int imageCount[EDAX_NUM_SCAN_MATRICES]; // a count of the number 
                     // of images being stored at each resolution
+   char *d_autoEnabledImageName;
 
 };
 

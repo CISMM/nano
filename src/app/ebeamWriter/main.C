@@ -82,6 +82,7 @@ static TransformFile transformFile;
 static Tclvar_int timeToQuit ("time_to_quit", 0);
 static Tclvar_int semControlsEnabled("sem_controls_enabled", 1);
 static vrpn_bool needToDisableSEMControls = vrpn_FALSE;
+static Tclvar_int nextLeftWindowPos("next_left_pos", 0);
 
 vrpn_Connection *local_connection;
 PatternEditor *patternEditor = NULL;
@@ -98,6 +99,8 @@ static Tcl_Interp *tk_control_interp;
 void nullDisplayFunc() { ; }
 void nullIdleFunc() { ; }
 #endif
+
+void handle_LeftWindowPos_change(int value, void *ud);
 
 /**************** stuff for multithreading ******************/
 static ThreadData td;
@@ -171,7 +174,10 @@ int main(int argc, char **argv)
     glutIdleFunc(nullIdleFunc);
 #endif
     // this must come after we initialize graphics
-    patternEditor = new PatternEditor();
+    int windowPositionX = 50;
+    int windowPositionY = 50;
+    patternEditor = new PatternEditor(windowPositionX, windowPositionY);
+    nextLeftWindowPos.addCallback(handle_LeftWindowPos_change, patternEditor);
 
     // create the other two important objects for the program 
     // Registration and SEM
@@ -398,6 +404,14 @@ int init_Tk(){
   return 0;
 }
 
+void handle_LeftWindowPos_change(int value, void *ud)
+{
+  PatternEditor *pe = (PatternEditor *)ud;
+  int x = value + 20;
+  int y = 50;
+  pe->setWindowStartPosition(x, y);
+}
+
 void serverThreadStart(void *ud)
 {
   ThreadData *threadData = (ThreadData *)ud;
@@ -425,5 +439,6 @@ void serverThreadStart(void *ud)
     if (sem_server) {
       sem_server->mainloop();
     }
+    vrpn_SleepMsecs(10); // give the main thread a chance to do stuff
   }
 }

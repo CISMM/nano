@@ -1,3 +1,58 @@
+2001-09-01  Adam Seeger  <seeger@cs.unc.edu>
+
+	* Makefile - added dependence on nmMP and an include directory for
+        nmm_Microscope_EDAX.h - this should be in a library instead of in
+        an application directory
+	* controlpanels.hC - added separate line and area dose settings,
+        added separate dot and line spacing settings
+        added a checkbox to control reporting of dwell points
+        added display of minimum allowed dot and line doses
+        added automatic display of just-acquired SEM image in the main window
+         and removed code for the separate SEM image window
+        fixed bug with magnification setting not getting reported to server
+        took out beam width setting - replaced with dot and line spacing
+        several changes related to redesign of PatternShape classes
+	* exposurePattern.C - moved most code from here to patternShape.C
+        this file now contains a single class derived from 
+        CompositePatternShape that describes a complete pattern
+        * exposureManager.C - moved all code into patternShape.C
+        * exposureUtil.hC - some utility functions for calculating dwell times
+        and doses
+        * main.C : added some code to calculate appropriate window positions
+        put a sleep for 10 milliseconds in the server main loop so it doesn't
+        hog the cpu when it is idle
+        * patternEditor.Ch : added a window position parameter to the 
+        constructor and a function to set the window position
+	* fakeSEM.dsp, seegerizer.dsp, seegerizer_common.dsp:
+	organized the simulated and real SEM versions of the program into two
+	separate app projects and a library project that the two apps depend 
+	on - this simplifies maintenance of the project files and
+	speeds up compilation
+	* edgeTable.h : new file to contain class used by PolygonPatternShape
+	for drawing on the SEM
+        * patternShape.hC: new files that contain much of code that was in
+	exposureManager.hC and exposurePattern.hC
+        added class to manage coloring by exposure and display of the
+          corresponding legend
+        (updateExposureLevels): new function to update the coloring by exposure
+        level data
+
+        things to do and bugs to fix (from test on 8/31/2001):
+          * when you save image data from SEM the file doesn't get written
+          * use different color to indicate when a shape hasn't been finished
+          * use better colors to indicate exposure levels
+          * save all parameters to a file (current, dot and line spacing...)
+          * allow selection and more modification features for drawing
+ 	  * add mechanism to associate a pattern file with an image file such
+	    that transformations applied to the image also get applied to the
+            pattern - this will allow user to use predrawn patterns
+          * add a way to save transformations associated with image files
+          * add a measure marker feature to make it easier to measure distances
+          * add some kind of way to keep user from using a dose which
+            is below the minimum possible dose given the current, dot, and
+            line spacing - currently there is just a printed warning when the
+            dose is set below what is possible
+
 2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
 
 	* controlPanels.C (handle_openPatternFileName_change),

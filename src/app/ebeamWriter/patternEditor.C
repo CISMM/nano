@@ -5,8 +5,13 @@
 #define M_PI           3.14159265358979323846
 #endif
 
-PatternEditor::PatternEditor()
+PatternEditor::PatternEditor(int startX, int startY)
 {
+   d_patternColorMap.setMinLineExposureColor(0.0, 1.0, 1.0);
+   d_patternColorMap.setMaxLineExposureColor(1.0, 1.0, 0.0);
+   d_patternColorMap.setMinAreaExposureColor(0.0, 1.0, 1.0);
+   d_patternColorMap.setMaxAreaExposureColor(1.0, 1.0, 0.0);
+
    d_viewer = ImageViewer::getImageViewer();
    char *display_name = (char *)getenv("DISPLAY");
    if (!display_name) {
@@ -14,14 +19,14 @@ PatternEditor::PatternEditor()
    }
    d_viewer->init(display_name);
    d_mainWinID = d_viewer->createWindow(display_name, 
-         20, 100, 300, 300, "Pattern Editor");
+         startX, startY, 300, 300, "Pattern Editor");
    d_viewer->setWindowEventHandler(d_mainWinID, 
          PatternEditor::mainWinEventHandler, this);
    d_viewer->setWindowDisplayHandler(d_mainWinID, 
          PatternEditor::mainWinDisplayHandler, this);
 
    d_navWinID = d_viewer->createWindow(display_name,
-         330, 100, 100, 100, "Navigation");
+         startX + 500, startY, 100, 100, "Navigation");
    d_viewer->setWindowEventHandler(d_navWinID,
          PatternEditor::navWinEventHandler, this);
    d_viewer->setWindowDisplayHandler(d_navWinID,
@@ -54,10 +59,11 @@ PatternEditor::PatternEditor()
    d_nearDistX_nm = 100;
    d_nearDistY_nm = 100;
 
-   d_drawingTool = PE_POLYLINE;
+   d_drawingTool = PE_THINPOLYLINE;
    d_userMode = PE_IDLE;
    d_lineWidth_nm = 0.0;
-   d_exposure_uCoulombs_per_square_cm = 0.0;
+   d_line_exposure_pCoulombs_per_cm = 0.0;
+   d_area_exposure_uCoulombs_per_square_cm = 0.0;
 
    d_displaySingleImage = vrpn_FALSE;
    d_currentSingleDisplayImage = NULL;
@@ -81,6 +87,15 @@ PatternEditor::PatternEditor()
 
    d_grabInProgress = vrpn_FALSE;
    d_viewportSet = vrpn_FALSE;
+ 
+   d_numExposurePointsRecorded = 0;
+   d_exposurePointsDisplayed = vrpn_FALSE;
+}
+
+void PatternEditor::setWindowStartPosition(int startX, int startY)
+{
+  d_viewer->setWindowPosition(d_mainWinID, startX, startY);
+  d_viewer->setWindowPosition(d_navWinID, startX + 400, startY);
 }
 
 PatternEditor::~PatternEditor()
@@ -148,6 +163,19 @@ void PatternEditor::setImageEnable(nmb_Image *im, vrpn_bool displayEnable)
      }
   }
   d_viewer->dirtyWindow(d_mainWinID);
+}
+
+vrpn_bool PatternEditor::getImageEnable(nmb_Image *im)
+{
+    list<ImageElement>::iterator imIter;
+  for (imIter = d_images.begin();
+       imIter != d_images.end(); imIter++)
+  {
+     if ((*imIter).d_image == im) {
+          return (*imIter).d_enabled;
+     }
+  }
+  return vrpn_FALSE;
 }
 
 void PatternEditor::setImageOpacity(nmb_Image *im, double opacity)
@@ -223,19 +251,31 @@ void PatternEditor::newPosition(nmb_Image * im)
   d_viewer->dirtyWindow(d_mainWinID);
 }
 
-void PatternEditor::setDrawingParameters(double lineWidth_nm, double exposure)
+void PatternEditor::setDrawingParameters(double lineWidth_nm, 
+                                         double area_exposure,
+                                         double line_exposure)
 {
-    d_lineWidth_nm = lineWidth_nm;
-    d_exposure_uCoulombs_per_square_cm = exposure;
-    if (d_currShape) {
-      d_currShape->d_lineWidth_nm = lineWidth_nm;
-      d_currShape->d_exposure_uCoulombs_per_square_cm = exposure;
-      d_viewer->dirtyWindow(d_mainWinID);
-    }
+ d_lineWidth_nm = lineWidth_nm;
+ d_area_exposure_uCoulombs_per_square_cm = area_exposure;
+ d_line_exposure_pCoulombs_per_cm = line_exposure;
+
+ if (d_currShape) {
+   d_currShape->setExposure(d_line_exposure_pCoulombs_per_cm,
+                            d_area_exposure_uCoulombs_per_square_cm);
+   updateExposureLevels();
+   if (d_currShape->type() == PS_POLYLINE && 
+       d_drawingTool == PE_THICKPOLYLINE) {
+     ((PolylinePatternShape *)d_currShape)->setLineWidth(d_lineWidth_nm);
+   }
+   d_viewer->dirtyWindow(d_mainWinID);
+ }
 }
 
 void PatternEditor::setDrawingTool(PE_DrawTool tool)
 {
+    if (d_shapeInProgress) {
+      endShape();
+    }
     d_drawingTool = tool;
 }
 
@@ -247,10 +287,31 @@ void PatternEditor::clearShape()
      d_viewer->dirtyWindow(d_mainWinID);
   }
   else if (!d_pattern.empty()) {
-    d_pattern.pop_back();
+    d_pattern.removeSubShape();
+    updateExposureLevels();
     d_viewer->dirtyWindow(d_mainWinID);
   }
   return;
+}
+
+void PatternEditor::addShape(PatternShape *shape)
+{
+  d_pattern.addSubShape(shape);
+  updateExposureLevels();
+  d_viewer->dirtyWindow(d_mainWinID);
+}
+
+void PatternEditor::updateExposureLevels()
+{
+  list<double> lineExposureLevels, areaExposureLevels;
+  d_pattern.getExposureLevels(lineExposureLevels, areaExposureLevels);
+  if (d_currShape) {
+    list<double> lineExposureLevels2, areaExposureLevels2;
+    d_currShape->getExposureLevels(lineExposureLevels2, areaExposureLevels2);
+    lineExposureLevels.merge(lineExposureLevels2);
+    areaExposureLevels.merge(areaExposureLevels2);
+  }
+  d_patternColorMap.setExposureLevels(lineExposureLevels, areaExposureLevels);
 }
 
 void PatternEditor::addTestGrid(double minX_nm, double minY_nm,
@@ -264,9 +325,11 @@ void PatternEditor::addTestGrid(double minX_nm, double minY_nm,
   if (d_shapeInProgress) {
     endShape();
   }
-  PatternShape grid(0, 0, PS_COMPOSITE);
-  PatternShape gridline(d_lineWidth_nm, 
-                        d_exposure_uCoulombs_per_square_cm, PS_POLYLINE);
+  CompositePatternShape *grid = new CompositePatternShape();
+
+  PolylinePatternShape gridline;
+  gridline.setExposure(d_line_exposure_pCoulombs_per_cm,
+                       d_area_exposure_uCoulombs_per_square_cm);
 
   double x_begin, y_begin, x_end, y_end;
   int i; 
@@ -279,7 +342,7 @@ void PatternEditor::addTestGrid(double minX_nm, double minY_nm,
   for (i = 0; i < numHorizontal; i++) {
     gridline.addPoint(x_begin, y_begin);
     gridline.addPoint(x_end, y_end);
-    grid.addSubShape(gridline);
+    grid->addSubShape(new PolylinePatternShape(gridline));
     gridline.clearPoints();
     y_begin += yIncrement_nm;
     y_end += yIncrement_nm;
@@ -292,18 +355,18 @@ void PatternEditor::addTestGrid(double minX_nm, double minY_nm,
   for (i = 0; i < numVertical; i++) {
     gridline.addPoint(x_begin, y_begin);
     gridline.addPoint(x_end, y_end);
-    grid.addSubShape(gridline);
+    grid->addSubShape(new PolylinePatternShape(gridline));
     gridline.clearPoints();
     x_begin += xIncrement_nm;
     x_end += xIncrement_nm;
   }
 
-  d_pattern.push_back(grid);
-  d_viewer->dirtyWindow(d_mainWinID);
+  addShape(grid);
 }
 
+/*
 int PatternEditor::findNearestShapePoint(double x, double y, 
-                    list<PatternShape>::iterator &nearestShape,
+                    list<PatternShapeListElement>::iterator &nearestShape,
                     list<PatternPoint>::iterator &nearestPoint,
                     double &minDist)
 {
@@ -311,16 +374,16 @@ int PatternEditor::findNearestShapePoint(double x, double y,
   // and return it
   if (d_pattern.empty()) return -1;
  
-  list<PatternShape>::iterator currShape;
+  list<PatternShapeListElement>::iterator currShape;
   list<PatternPoint>::iterator pointRef;
-  currShape = d_pattern.begin();
+  currShape = d_pattern.getSubShapes().begin();
   double currDist;
 
   nearestShape = currShape;
   findNearestPoint((*currShape).d_points, x, y, nearestPoint, minDist);
   
   currShape++;
-  while (currShape != d_pattern.end()) {
+  while (currShape != d_pattern.getSubShapes().end()) {
     findNearestPoint((*currShape).d_points, x, y, pointRef, currDist);
     if (currDist < minDist) {
       minDist = currDist;
@@ -359,6 +422,7 @@ int PatternEditor::findNearestPoint(list<PatternPoint> points,
   minDist = sqrt(minDist);
   return 0;
 }
+*/
 
 void PatternEditor::saveImageBuffer(const char *filename, 
                                     const ImageType filetype)
@@ -417,15 +481,39 @@ void PatternEditor::getViewport(double &minX_nm, double &minY_nm,
   maxY_nm = d_mainWinMaxY_nm;
 }
 
-list<PatternShape> &PatternEditor::getShapeList()
+void PatternEditor::setPattern(ExposurePattern &pattern)
 {
-  return d_pattern;
+  d_pattern = pattern;
+  updateExposureLevels();
+  d_viewer->dirtyWindow(d_mainWinID);
 }
 
-void PatternEditor::setShapeList(list<PatternShape> &shapes)
+void PatternEditor::setExposurePointDisplayEnable(vrpn_int32 enable)
 {
-  d_pattern = shapes;
+  if (enable && !d_exposurePointsDisplayed ||
+      !enable && d_exposurePointsDisplayed) {
+    d_exposurePointsDisplayed = !d_exposurePointsDisplayed;
+    d_viewer->dirtyWindow(d_mainWinID);
+  }
+}
+
+void PatternEditor::addExposurePoint(double x_nm, double y_nm)
+{
+  d_exposurePoints.push_back(PatternPoint(x_nm, y_nm));
   d_viewer->dirtyWindow(d_mainWinID);
+
+  if (d_numExposurePointsRecorded == 40000) {
+    d_exposurePoints.pop_front();   
+  } else {
+    d_numExposurePointsRecorded++;
+  }
+}
+
+void PatternEditor::clearExposurePoints()
+{
+  d_exposurePoints.clear();
+  d_viewer->dirtyWindow(d_mainWinID);
+  d_numExposurePointsRecorded = 0;
 }
 
 int PatternEditor::mainWinEventHandler(
@@ -478,7 +566,9 @@ int PatternEditor::handleMainWinEvent(
            case IV_LEFT_BUTTON:
              // start dragging an object
              if (getUserMode() != PE_DRAWMODE) {
-               if (d_drawingTool == PE_POLYLINE) {
+               if (d_drawingTool == PE_THINPOLYLINE) {
+                 startShape(PS_POLYLINE);
+               } else if (d_drawingTool == PE_THICKPOLYLINE) {
                  startShape(PS_POLYLINE);
                } else if (d_drawingTool == PE_POLYGON) {
                  startShape(PS_POLYGON);
@@ -761,6 +851,12 @@ int PatternEditor::mainWinDisplayHandler(
 
   me->drawScale();
 
+  me->drawExposureLevels();
+
+  if (me->d_exposurePointsDisplayed) {
+    me->drawExposurePoints();
+  }
+
   if (currMode == PE_SET_REGION || currMode == PE_SET_TRANSLATE) {
     me->d_mainWinMinX_nm = minXSave;
     me->d_mainWinMaxX_nm = maxXSave;
@@ -808,20 +904,13 @@ void PatternEditor::drawPattern()
                       (double)d_mainWinWidth;
   units_per_pixel_y = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/
                       (double)d_mainWinHeight;
-
-  list<PatternShape>::iterator shapeIter;
-  int numShapes = 0;
   if (d_currShape) {
-    numShapes++;
-    d_currShape->draw(units_per_pixel_x, units_per_pixel_y);
+    d_currShape->drawToDisplay(units_per_pixel_x, units_per_pixel_y,
+                           d_patternColorMap);
   }
-  for (shapeIter = d_pattern.begin();
-       shapeIter != d_pattern.end(); shapeIter++)
-  {
-     (*shapeIter).draw(units_per_pixel_x, units_per_pixel_y);
-     numShapes++;
-  }
-//  printf("drawing %d shapes\n", numShapes);
+  d_pattern.drawToDisplay(units_per_pixel_x, units_per_pixel_y, 
+                           d_patternColorMap);
+
 }
 
 void PatternEditor::drawScale()
@@ -868,6 +957,40 @@ void PatternEditor::drawScale()
   for (i = 0; i < strlen(str); i++) {
     glutBitmapCharacter(GLUT_BITMAP_8_BY_13, str[i]);
   }
+}
+
+void PatternEditor::drawExposureLevels()
+{
+  char str[64];
+  double x, y;
+  // XXX - should do this without so much magic
+  x = 0.3*d_mainWinMaxX_nm + 0.7*d_mainWinMinX_nm;
+  y = 0.9*d_mainWinMaxY_nm + 0.1*d_mainWinMinY_nm;
+
+  double units_per_pixel_x, units_per_pixel_y;
+
+  units_per_pixel_x = (d_mainWinMaxX_nm - d_mainWinMinX_nm)/
+                      (double)d_mainWinWidth;
+  units_per_pixel_y = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/
+                      (double)d_mainWinHeight;
+
+  d_patternColorMap.draw(x, y, units_per_pixel_x, units_per_pixel_y);
+}
+
+
+void PatternEditor::drawExposurePoints()
+{
+  list<PatternPoint>::iterator point = d_exposurePoints.begin();
+
+  if (point == d_exposurePoints.end()) return;
+
+  glColor4f(0.0, 1.0, 0.0, 1.0);
+  glBegin(GL_POINTS);
+  while (point != d_exposurePoints.end()) {
+    glVertex2d((*point).d_x, (*point).d_y);
+    point++;
+  }
+  glEnd();
 }
 
 int PatternEditor::navWinEventHandler(
@@ -1229,21 +1352,49 @@ int PatternEditor::startShape(ShapeType type)
 
   printf("starting shape\n");
   d_shapeInProgress = vrpn_TRUE;
-  d_currShape = new PatternShape(d_lineWidth_nm, 
-                                 d_exposure_uCoulombs_per_square_cm,
-                                 type);
+
+  PatternShape *newShape = NULL;
+  PolygonPatternShape *newPolygon = NULL;
+  PolylinePatternShape *newPolyline = NULL;
+  DumpPointPatternShape *newDumpPoint = NULL;
+
+  switch(type) {
+    case PS_POLYLINE:
+      newPolyline = new PolylinePatternShape();
+      newPolyline->setExposure(d_line_exposure_pCoulombs_per_cm,
+                               d_area_exposure_uCoulombs_per_square_cm);
+      if (d_drawingTool == PE_THICKPOLYLINE) {
+        newPolyline->setLineWidth(d_lineWidth_nm);
+      } else {
+        newPolyline->setLineWidth(0);
+      }
+      newShape = (PatternShape *)newPolyline;
+      break;
+    case PS_POLYGON:
+      newPolygon = new PolygonPatternShape();
+      newPolygon->setExposure(d_line_exposure_pCoulombs_per_cm,
+                               d_area_exposure_uCoulombs_per_square_cm);
+      newShape = (PatternShape *)newPolygon;
+      break;
+    case PS_DUMP:
+      newDumpPoint = new DumpPointPatternShape();
+      newShape = (PatternShape *)newDumpPoint;
+      break;
+  }
+  d_currShape = newShape;
   return 0;
 }
 
 vrpn_bool PatternEditor::selectPoint(const double x_nm, const double y_nm)
 {
-  list<PatternShape>::iterator shapeRef;
+  list<PatternShapeListElement>::iterator shapeRef;
   list<PatternPoint>::iterator pntRef;
 
   double minDist, minDistPixels;
   double x_pnt, y_pnt;
   //double x_offset, y_offset;
   vrpn_bool selectedSomething = vrpn_FALSE;
+/*
   if (findNearestShapePoint(x_nm, y_nm, shapeRef, pntRef, minDist)) {
       return vrpn_FALSE;
   }
@@ -1258,6 +1409,7 @@ vrpn_bool PatternEditor::selectPoint(const double x_nm, const double y_nm)
       d_grabInProgress = vrpn_TRUE;
       selectedSomething = vrpn_TRUE;
   }
+*/
   return selectedSomething;
 }
 
@@ -1273,7 +1425,13 @@ int PatternEditor::startPoint(const double x_nm, const double y_nm)
   d_pointInProgress = vrpn_TRUE;
   if (d_shapeInProgress) {
     printf("adding point to current shape\n");
-    d_currShape->addPoint(x_nm, y_nm);
+    if (d_currShape->type() == PS_POLYGON) {
+      ((PolygonPatternShape *)d_currShape)->addPoint(x_nm, y_nm);
+    } else if (d_currShape->type() == PS_POLYLINE) {
+      ((PolylinePatternShape *)d_currShape)->addPoint(x_nm, y_nm);
+    } else if (d_currShape->type() == PS_DUMP) {
+      ((DumpPointPatternShape *)d_currShape)->setLocation(x_nm, y_nm);
+    }
     return 0;
   } else if (d_drawingTool == PE_SELECT){
     selectPoint(x_nm, y_nm);
@@ -1289,8 +1447,15 @@ int PatternEditor::updatePoint(const double x_nm, const double y_nm)
 {
   if (d_pointInProgress) {
     if (d_shapeInProgress) {
-      d_currShape->removePoint();
-      d_currShape->addPoint(x_nm, y_nm);
+      if (d_currShape->type() == PS_POLYGON) {
+        ((PolygonPatternShape *)d_currShape)->removePoint();
+        ((PolygonPatternShape *)d_currShape)->addPoint(x_nm, y_nm);
+      } else if (d_currShape->type() == PS_POLYLINE) {
+        ((PolylinePatternShape *)d_currShape)->removePoint();
+        ((PolylinePatternShape *)d_currShape)->addPoint(x_nm, y_nm);
+      } else if (d_currShape->type() == PS_DUMP) {
+        ((DumpPointPatternShape *)d_currShape)->setLocation(x_nm, y_nm);
+      }
       return 0;
     } else if (d_drawingTool == PE_SELECT && d_grabInProgress){
       updateGrab(x_nm, y_nm);
@@ -1316,7 +1481,7 @@ int PatternEditor::endShape()
 {
   //printf("ending shape\n");
   // put the shape into the pattern and clear drawing state
-  d_pattern.push_back(*d_currShape);
+  addShape(d_currShape->duplicate());
   clearDrawingState();
   return 0;
 }
