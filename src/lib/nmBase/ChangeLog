@@ -1,3 +1,6 @@
+2002-11-13 Jameson Miller <millerj@cs.unc.edu>
+	*nmb_SummedPlane.C: fixed backwards test in dependsOnPlane function.
+
 2002-11-06  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_ImageDisplay.h : removed functions that weren't being used

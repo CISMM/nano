@@ -143,9 +143,9 @@ bool nmb_SummedPlane::
 dependsOnPlane( const char* planeName )
 {
   if( planeName == NULL ) return false;
-  if( this->sourcePlane1->name()->compare(planeName) )
+  if(this->sourcePlane1->name()->compare(planeName) == 0 )
     return true;
-  else if( this->sourcePlane2->name()->compare(planeName) )
+  else if( this->sourcePlane2->name()->compare(planeName) == 0 )
     return true;
   else
     return false;
