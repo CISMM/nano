@@ -37,9 +37,12 @@ export PATH="`cygpath -u "$NANO_ROOT"/bin`:$PATH"
 # Shouldn't have to change variable below this point, assuming 
 # you did a standard install of VC++ 6.0
 
+# Tell the makefiles we are using VC++
+export VC=1
+
 #
 # Root of Visual Developer Studio Common files.
-export VSCommonDir=$MSVSDir/common
+export VSCommonDir=$MSVSDir/Common
 
 #
 # Root of Visual Developer Studio installed files.
