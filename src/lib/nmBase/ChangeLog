@@ -1,3 +1,8 @@
+2000-10-03  Tom Hudson  <hudson@cs.unc.edu>
+
+	* Point.C (Point_list::clear) : add check for non-NULL before
+        deleting
+
 2000-10-02  Adam Seeger  <seeger@cs.unc.edu>
 
         * nmb_Image.C (nmb_ImageArray::boundX, boundY) : fixed these

@@ -314,7 +314,9 @@ void Point_list::clear(void)
 {
 	int i;
 	for (i = 0; i < _num_entries; i++) {
+          if (_entries[i]) {
 		delete _entries[i];
+          }
 	}
 	_num_entries = 0;
 }
