@@ -175,9 +175,9 @@ int build_list_set
   if (subset.empty()) return 0;
 
 #if defined(sgi) || defined(__CYGWIN__)
-//#if defined(sgi)
   if (g_VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
-    if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE) {
+    if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE ||
+        g_null_data_alpha_toggle) {
       glEnable(GL_COLOR_ARRAY_EXT);
     } else {
       glDisable(GL_COLOR_ARRAY_EXT);

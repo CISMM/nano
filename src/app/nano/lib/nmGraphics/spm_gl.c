@@ -406,13 +406,12 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
       for (i = 0; i < 3; i++) {
 	double  color_diff = (maxColor[i] - minColor[i]);
 	Color[i] = minColor[i] + (color_diff * scale);
-	if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+      }
+      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
 	  Color[3] = (GLubyte) 0;
-	}
-	else {
+      }
+      else {
 	   Color[3] = (GLubyte) (g_surface_alpha * 255);
-     	}
-      
       }
     }
   }
@@ -420,12 +419,26 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
 	// No color plane, but need to set the alpha for the color.
 	// So, set the color to the default that was set in the
 	// set_surface_materials() call, and adjust alpha per-vertex
-    /*	// to 0 if it is a zero (not filled in) height value.
-	Color[0] = XXX;
-	Color[1] = XXX;
-	Color[2] = XXX;
-	Color[3] = XXX;    */
+    	// to 0 if it is a zero (not filled in) height value.
+       
+        Color[0] = g_minColor[0];
+	Color[1] = g_minColor[1];
+	Color[2] = g_minColor[2];
+	if (Vertex[2] == 0.0)    
+	  {
+	    Color[3] =  0;
+	    
+	    //  puts ("ARGHHHHHHHHHHHHHHHHHHHHHH");
+	    // printf("Color is %f", Color[3]);
+	  }
+	else
+	  {
+	    Color[3] = g_surface_alpha * 255;
+	    // puts ("YEAAAAAAAAHHHHHHHHHHHHHHHH");
+	    }
+	
   }
+
   if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color ||
 	g_null_data_alpha_toggle) {
     if (g_VERTEX_ARRAY) {
@@ -443,7 +456,7 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
       if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0 ) ){
 	Color[3] = 0.0;
 	glColor4fv(Color);
-      }
+	}
       else {
 	glColor4fv(Color);
       }
