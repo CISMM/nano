@@ -504,9 +504,9 @@ static  void handle_import_rotx_change (vrpn_float64, void *)
 
 			q_vec_type euler;
 
-			euler[0] = Q_DEG_TO_RAD(import_rotx);
+			euler[2] = Q_DEG_TO_RAD(import_rotx);
 			euler[1] = Q_DEG_TO_RAD(import_roty);
-			euler[2] = Q_DEG_TO_RAD(import_rotz);
+			euler[0] = Q_DEG_TO_RAD(import_rotz);
 
 			q_type rot;
 			q_from_euler(rot, euler[0], euler[1], euler[2]);
@@ -544,9 +544,9 @@ static  void handle_import_roty_change (vrpn_float64, void *)
 
 			q_vec_type euler;
 
-			euler[0] = Q_DEG_TO_RAD(import_rotx);
+			euler[2] = Q_DEG_TO_RAD(import_rotx);
 			euler[1] = Q_DEG_TO_RAD(import_roty);
-			euler[2] = Q_DEG_TO_RAD(import_rotz);
+			euler[0] = Q_DEG_TO_RAD(import_rotz);
 
 			q_type rot;
 			q_from_euler(rot, euler[0], euler[1], euler[2]);
@@ -562,7 +562,6 @@ static  void handle_import_roty_change (vrpn_float64, void *)
 			}
 		}
     }
-
 }
 
 static  void handle_import_rotz_change (vrpn_float64, void *)
@@ -585,9 +584,9 @@ static  void handle_import_rotz_change (vrpn_float64, void *)
 
 			q_vec_type euler;
 
-			euler[0] = Q_DEG_TO_RAD(import_rotx);
+			euler[2] = Q_DEG_TO_RAD(import_rotx);
 			euler[1] = Q_DEG_TO_RAD(import_roty);
-			euler[2] = Q_DEG_TO_RAD(import_rotz);
+			euler[0] = Q_DEG_TO_RAD(import_rotz);
 
 			q_type rot;
 			q_from_euler(rot, euler[0], euler[1], euler[2]);
