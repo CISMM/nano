@@ -49,11 +49,9 @@ proc init_modify {} {
     wm maxsize .modify [expr [winfo screenwidth .] - 50] [expr [winfo screenheight .] - 50]
 
     # create canvas for scrolling
-    set nmInfo(canvas) [canvas .modify.modifyCanvas -xscrollcommand ".modify.scrollH set" \
-			                        -yscrollcommand ".modify.scrollV set" ]
+    set nmInfo(canvas) [canvas .modify.modifyCanvas -xscrollcommand ".modify.scrollH set"]
 
     # create scrollbars
-    set nmInfo(scrollV) [scrollbar .modify.scrollV -orient vertical -command ".modify.modifyCanvas yview"]
     set nmInfo(scrollH) [scrollbar .modify.scrollH -orient horizontal -command ".modify.modifyCanvas xview"]
 
     # add frame to canvas so that widgets can be added to frame
@@ -84,12 +82,21 @@ proc init_modify {} {
 # views or rearranging full view).   #
 ######################################
 proc set_view {} {
-    global modify_quick_or_full nmInfo
+    global modify_quick_or_full nmInfo full_height full_width
 
     if {$modify_quick_or_full == "full"} {
 	pack_full
 	pack_display
 	pack $nmInfo(modifyfull) -side left -expand no 
+	
+	# reset height in case it has changed 
+	update idletasks
+	set full_height [expr [winfo reqheight $nmInfo(modifyfull)]\
+		         + [winfo reqheight $nmInfo(modifydisplay)]\
+			 + [winfo reqheight $nmInfo(modify).quick_or_full]\
+			 + [winfo reqheight $nmInfo(scrollH)]]
+	
+	wm geometry .modify =[set full_width]x[set full_height]
     } else {
 	pack_quick
 	pack_display
@@ -113,7 +120,6 @@ proc switch_view {} {
         pack forget $nmInfo(modifyquick)
 	pack forget $nmInfo(canvas)
 	pack $nmInfo(scrollH) -side bottom -fill x
-	pack $nmInfo(scrollV) -side right -fill y
 	pack $nmInfo(canvas) -side left -expand yes -fill both
 
 	eval set_view
@@ -125,14 +131,14 @@ proc switch_view {} {
 
 	#set_window_size
 	wm resizable .modify 1 1
-	if {$full_width == 0 || $full_height == 0} {
-	    set full_width [expr [winfo reqwidth $nmInfo(modifyfull)]\
-				 + [winfo reqwidth $nmInfo(scrollV)]]
-	    set full_height [expr [winfo reqheight $nmInfo(modifyfull)]\
-			         + [winfo reqheight $nmInfo(modifydisplay)]\
-				 + [winfo reqheight $nmInfo(modify).quick_or_full]\
-				 + [winfo reqheight $nmInfo(scrollH)]]
+	if {$full_width == 0} {
+	    set full_width [expr [winfo reqwidth $nmInfo(modifyfull)]]
 	}
+
+	set full_height [expr [winfo reqheight $nmInfo(modifyfull)]\
+		         + [winfo reqheight $nmInfo(modifydisplay)]\
+			 + [winfo reqheight $nmInfo(modify).quick_or_full]\
+			 + [winfo reqheight $nmInfo(scrollH)]]
 	
 	wm geometry .modify =[set full_width]x[set full_height]
 
@@ -159,7 +165,6 @@ proc switch_view {} {
 
         pack forget $nmInfo(modifyfull)
 	pack forget $nmInfo(scrollH)
-	pack forget $nmInfo(scrollV)
 
 	eval set_view
 
@@ -850,7 +855,7 @@ proc pack_full {} {
 
     pack $nmInfo(modifyfull).mode.relaxcomp -side top -fill x -pady 20
 
-    pack $nmInfo(modifyfull).mode.cancel $nmInfo(modifyfull).mode.accept -side bottom -fill x  
+    pack $nmInfo(modifyfull).mode.accept $nmInfo(modifyfull).mode.cancel -side top -fill x  
   
     ### MODE PARAMETERS ###
     global newmodifyp_mode newmodifyp_ampl_or_phase
@@ -1064,11 +1069,52 @@ proc change_made {nm el op} {
     }
 }
 
-#########################################
-# Dynamically enables/disables widgets  #
-# based on other widgets that have been #
-# selected by the user.                 #
-#########################################
+##############################################
+# Dynamically enables/disables widgets       #
+# based on other widgets that have been      #
+# selected by the user.                      #
+# For a listing of which number corresponds  #
+# to which mode/style/tool/control, see the  #
+# big switch statement in init_quick.        #
+# To add an item to set_enabling, do the     #
+# following:                                 #
+# 1) Determine which combinations of         #
+#    mode/style/tool/control should cause    #
+#    your new widget to be disabled.         #
+# 2) Write an if statement that checks for   #
+#    all of the possibilities found in 1).   #
+# 3) If the if statement is true, disable    #
+#    your new widget.                        #
+# 4) Determine which widgets should be       #
+#    disabled when your widget is selected.  #
+#    For each of those widgets, add the      #
+#    condition for your widget to their if   #
+#    statement.                              #
+#                                            #
+#  Example:                                  #
+#   Let's pretend that you are adding a tool #
+#   to the window.  Let's say that your tool #
+#   is radio button number 12 (radio buttons #
+#   get assigned numbers in init_full).      #
+#   Let's also say that you can't use your   #
+#   new tool if you're in contact mode       #
+#   ($mode == 1) , or if the style is sharp  #
+#   ($style == 0).  You should then add the  #
+#   following code:                          #
+#                                            ##############################################
+#   # disable your_widget                                                                 #
+#   if { $mode == 1  ||                                                                   #
+#        $style == 0 }{                                                                   #
+#                                                                                         #
+#        $nmInfo(modifyfull).tool.your_widget configure -state disabled                   #
+#   }                                                                                     #
+#                                                                                         #
+#   ...and you should add the following statement to the #disable contact if statement:   #
+#     $tool == 12  ||                                                                     #
+#                                                                                         #
+#   ...and you should add the following statement to the #disable sharp if statement:     #
+#     $tool == 12  ||                                                                     #
+###########################################################################################
 proc set_enabling {} {
     global nmInfo changing_widgets
 
