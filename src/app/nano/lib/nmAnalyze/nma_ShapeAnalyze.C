@@ -195,6 +195,7 @@ nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const cha
 						 d_sourcePlane(sourcePlane), d_dataset(dataset), d_outputPlaneName(outputPlaneName), 
 						 d_dataArray(dataArray)
 {
+  origdatasend = true;
   d_rowlength = d_sourcePlane->GetGrid()->numX();
   d_columnheight = d_sourcePlane->GetGrid()->numY();
   firstblur = true;
@@ -212,7 +213,9 @@ nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const cha
   //and want to have 0 and 1 for first row processed (y=0 from simulator)
 
   nano_y = 0;
+  sim_y = 0;
 
+  time = new timeval[d_columnheight];
   d_array_size = create_ShapeIdentifiedPlane();
 
   if(creator != NULL){
@@ -231,6 +234,7 @@ nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const cha
   : nmb_CalculatedPlane(outputPlaneName, dataset), d_sourcePlane(sourcePlane), 
   d_dataset(dataset), d_outputPlaneName(outputPlaneName), d_dataArray(NULL)
 {
+  origdatasend = true;
   d_array_size = 0; 
   d_rowlength = d_sourcePlane->GetGrid()->numX();
   d_columnheight = d_sourcePlane->GetGrid()->numY();
@@ -249,6 +253,9 @@ nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const cha
   //and want to have 0 and 1 for first row processed (y=0 from simulator)
 
   nano_y = 0;
+  sim_y = 0;
+
+  time = new timeval[d_columnheight];
 
   d_sourcePlane->add_callback(sourcePlaneChangeCallback, this);
 
@@ -318,10 +325,17 @@ _handleSourcePlaneChange(int x, int y){
 	if(remoteEroderConnObj != NULL){		
 		if(remoteEroderConnObj->deviceNameRcv){
 			if(strcmp(remoteEroderConnObj->server_name,"Eroder")==0){
-				remoteEroderConnObj->encode_and_sendScanData(rowptr, y, d_rowlength);
+                timeval currenttime;
+                gettimeofday(&currenttime,NULL);
+                if((vrpn_TimevalDiff(currenttime,time[y])).tv_sec >= 3.0 || origdatasend){
+                    if(x==0 && y==0)    printf("sending data, origdatasend = %d",(int)origdatasend);
+				    remoteEroderConnObj->encode_and_sendScanData(rowptr, y, d_rowlength);
+                    gettimeofday(&time[y],NULL);
+                }
 			}
 			if(y == d_sourcePlane->numY()-1){
 				//cout << remoteEroderConnObj->server_name << endl;
+                origdatasend = false;
 				cout << d_sourcePlane;
 			}
 		}
@@ -347,7 +361,9 @@ UpdateDataArray(double * dataline, int y, int datain_rowlen){
   int sourceplane_size = d_rowlength*d_columnheight;
   if(d_array_size == sourceplane_size){//already filled once, array_size starts out at zero
 	  if(d_rowlength >= datain_rowlen){
-		  stepsize = ((double)((double)datain_rowlen - 1))/((double)((double)d_rowlength - 1));
+		  stepsize = ((double)(double)datain_rowlen - 1)/((double)(double)d_rowlength - 1);
+		  //cout << "stepsize = " << stepsize << endl;
+		  //ANDREA:  changed from datain_rowlen  and d_rowlength 
 		  blur_data_up(&dataline,y,datain_rowlen);
 	  }
 	  else if (datain_rowlen > d_rowlength){
@@ -368,8 +384,8 @@ UpdateDataArray(double * dataline, int y, int datain_rowlen){
 //(filling in points in between since d_rowlength is larger, and blur between current row 
 //of data and previous row)
 void nma_ShapeIdentifiedPlane::
-blur_data_up(double** dataline, int& y, int& datain_rowlen){
-
+blur_data_up(double** dataline, const int y, int& datain_rowlen){//y is the incoming y value
+    //cout << y << " ";
     int i;
 	double old_data;
 	double * newdataline = new double[d_rowlength];
@@ -410,8 +426,9 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 
 
 	//fill in rows (step through y)
-	l_sim_y = (++l_sim_y)%datain_numrows;//always want l_sim_y to be within the range [0,datain_numrows-1]
+	l_sim_y = (++l_sim_y)%(datain_numrows-1);//always want l_sim_y to be within the range [0,datain_numrows-1]
 	h_sim_y = l_sim_y +1;
+    
 	//can increment these two at beginning of function because initialized to -1 and 0
 
 	int y_flipped;//flip y for display:  array is filled in such that the top of the grid corresponds to 
@@ -420,13 +437,64 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 	//but must "flip" y to display the plane
 	int index;//current index we are on now
 
+	if(sim_y != y){//if we have gotten off track, modify place holder values to get back on
+        //fprintf(outfile,"[sim_y %d does not match incoming y %d]\n",sim_y,y);
+        //fprintf(outfile,"%d:  placeholder_y,sim_y: %lf %d ",nano_y,placeholder_y,sim_y);
+		/*int diff = y - sim_y;//what we are off
+		h_sim_y = y;//prepare for next go round, these will be incremented before while loop
+		l_sim_y = y - 1;
+		
+        while(placeholder_y > l_sim_y){
+                placeholder_y -= stepsize;
+        }
+		while(placeholder_y <= l_sim_y){
+			placeholder_y += stepsize;
+		}
+        
+        printf("%lf %d\n",placeholder_y,sim_y);
+		
+		if(diff > 0){//incoming is ahead, row skipped?
+            nano_y = (nano_y + diff + 1)%d_columnheight;
+		    sim_y = y + 1;
+
+            for(i = 0; i < d_rowlength; i++){
+			    storeddataline[i] = newdataline[i];
+		    }//store the current data line so can interpolate between it and new data line next time around
+
+			return;
+		}
+		else{//sim_y is ahead, continue on with new sim_y value
+            sim_y = y;
+            //h_sim_y++;
+            //l_sim_y++;
+            
+            if(abs(diff) != datain_numrows){//only change nano_y this way if not a sim_y 300, incoming y 0 error
+                nano_y = placeholder_y/stepsize;
+            }
+            else if(abs(diff) == datain_numrows){
+                nano_y = 0;
+                placeholder_y = 0;
+                l_sim_y = 0;
+                h_sim_y = 0;
+            }
+            else{//abs(diff) > datain_rowlen
+                //shouldn't ever get here
+            }
+		    printf("%lf %d\n",placeholder_y,sim_y);
+		}*/
+	}
+
+    if(sim_y != h_sim_y){
+        //fprintf(outfile,"h_sim_y %d does not match sim_y %d and y %d\n",h_sim_y,sim_y,y);
+        //h_sim_y = sim_y;
+    }
 	//nano_y starts at 0
 	while(nano_y <= (d_columnheight-1)){
 		//handle first row
 		if(placeholder_y == 0){//just insert row--no interpolation between this row and previous row
 			double val;
 
-			int y = d_columnheight - placeholder_y - 1;
+			int y_tofill = d_columnheight - placeholder_y - 1;
 			for(i = 0; i < d_rowlength; ++i){
 
 				old_data = d_dataArray[i];
@@ -434,14 +502,17 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 				d_dataArray[i] = newdataline[i];
 				val = d_dataArray[i];
 
-				fprintf(outfile,"%04.4lf ",val);	
+				//fprintf(outfile,"%04.4lf ",val);	
 				
 				if(old_data != val){//data has changed, redraw
-					calculatedPlane->setValue(i,y,val);
-					d_dataset->range_of_change.AddPoint(i,y);
+					//cout << "new data different" << endl;
+					calculatedPlane->setValue(i,y_tofill,val);
+					d_dataset->range_of_change.AddPoint(i,y_tofill);
+					gettimeofday(&time[y_tofill],NULL);//get time that this updated
 				}
+				
 			}
-			fprintf(outfile,"\n");
+			//fprintf(outfile,"\n");
 			for(i = 0; i < d_rowlength; i++){
 				storeddataline[i] = newdataline[i];
 			}//now this is our old row			
@@ -449,13 +520,17 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 			--h_sim_y;//so that can cover placeholder_y values between 0 and 1 next time around
 			placeholder_y = (placeholder_y + stepsize);
 			++nano_y;
+            sim_y = y+1;
+			
 			if(firstblur) firstblur = false;//we have entered a row for the first time (necessary that y = 0)
 			return;//wait until we get another row of data in to do anything else
 		}
 		//handle all rows between (and including) 1 and d_columnheight - 1 (in nano y-space)
 		else if((placeholder_y >= l_sim_y) && (placeholder_y <= h_sim_y)){//interpolate between l_sim_y and h_sim_y
-			percent_between = placeholder_y - l_sim_y;//= incremental distance past l_sim_y
-			for(i = 0;i < d_rowlength; ++i){
+			//printf("\ngetting here\n");
+            percent_between = placeholder_y - l_sim_y;//= incremental distance past l_sim_y
+            bool unsaid = true;
+			for(i = 0;i < d_rowlength; ++i){               
 				placeholder_val = percent_between*(newdataline[i] - storeddataline[i]) + storeddataline[i];	
 				//linear interpolation scheme based on percentage between l_sim_y and h_sim_y that placeholder_y falls
 				index = nano_y*datain_rowlen + i;
@@ -464,25 +539,49 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 
 				d_dataArray[index] = placeholder_val;
 				y_flipped = d_columnheight - nano_y - 1;
-				fprintf(outfile,"%04.4lf ",placeholder_val);	
+				//fprintf(outfile,"%04.4lf ",placeholder_val);	
 							
 				if(old_data != placeholder_val){//data has changed, redraw
+					//cout << "new data different" << endl;
 					calculatedPlane->setValue(i,y_flipped,placeholder_val);
 					d_dataset->range_of_change.AddPoint(i,y_flipped);
+                    /*if(1){
+                        fprintf(outfile,"\nupdate at nano (%d,%d)\told val %lf, new val %lf\n",i,nano_y,old_data,placeholder_val);
+                        fprintf(outfile,"y = %d,sim_y = %d,placeholder_y = %lf\n",y,sim_y,placeholder_y);
+                        unsaid = false;
+                    }*/
+					gettimeofday(&time[y_flipped],NULL);//get time that this updated
 				}
 			}
-			fprintf(outfile,"\n");
+			//fprintf(outfile,"\n");
 
-			placeholder_y = (placeholder_y + stepsize);
+			placeholder_y = placeholder_y + stepsize;
 			++nano_y;
+            sim_y = (y+1)%datain_numrows;//increment here, next incoming y should now be one greater
+			                                //than sim_y has been, find better mod value ANDREA
+			
 			//increment placeholder_y and nano_y for next insertion (whether on this function call or next)
-			if(nano_y == d_columnheight){
-				placeholder_y = 0;
-				nano_y = 0;
-				l_sim_y = -1;
-				h_sim_y = 0;
-			}//zero placeholder_y and nano_y and re-initialize l_sim_y and h_sim_y so that, on next run-through,
-			 //they are incremented to 0 and 1 (which occurs at the beginning of the function)
+            if(d_columnheight!=datain_numrows){
+			    if(nano_y == d_columnheight-1){
+				    placeholder_y = 0;
+				    nano_y = 0;
+				    sim_y = 0;
+				    l_sim_y = -1;
+				    h_sim_y = 0;
+                    return;
+			    }//zero placeholder_y and nano_y and re-initialize l_sim_y and h_sim_y so that, on next run-through,
+			     //they are incremented to 0 and 1 (which occurs at the beginning of the function)
+            }
+            else{
+                if(nano_y == d_columnheight){
+                    placeholder_y = 0;
+				    nano_y = 0;
+				    sim_y = 0;
+				    l_sim_y = -1;
+				    h_sim_y = 0;
+                    return;
+                }
+            }
 		}
 		//prepare to handle next line of data if have handled all the points we can with current line
 		else if(placeholder_y > h_sim_y){//we need to wait for a new line of data to be fed in
@@ -491,6 +590,8 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 			}//store the current data line so can interpolate between it and new data line next time around
 
 			//keep placeholder_y and thus nano_y as they are
+            sim_y = (y+1)%datain_numrows;
+            
 			return;//wait for next dataline
 		}
 		else if(placeholder_y < l_sim_y){
@@ -498,6 +599,7 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 		}//shouldn't ever run through this else if statement but, just in case...
 	}
 
+	
 }
 
 
@@ -575,10 +677,12 @@ create_ShapeIdentifiedPlane()
 			if(y%2 == 0){
 				d_dataArray[y*d_columnheight+x] = 0.0;
 				calculatedPlane->setValue(x, y,0.0f); 
+				gettimeofday(&time[y],NULL);//get time that this updated
 			}
 			else{
 				d_dataArray[y*d_columnheight+x] = 0.0;
 				calculatedPlane->setValue(x, y,0.0f); 
+				gettimeofday(&time[y],NULL);//get time that this updated
 			}
 		}
 	}
@@ -587,6 +691,7 @@ create_ShapeIdentifiedPlane()
 	  for(int y = 0; y <= d_columnheight - 1; y++) {
 		for( int x = 0; x <= d_rowlength - 1; x++){
 			calculatedPlane->setValue(x, y,(float)(d_dataArray[y*d_rowlength + x]));
+			gettimeofday(&time[y],NULL);//get time that this updated
 			//the array d_dataArray fills from the bottom up when you "chunk" the array
 			//into pieces of length rowlength.  
 		}

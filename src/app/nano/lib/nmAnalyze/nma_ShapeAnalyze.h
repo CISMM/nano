@@ -122,7 +122,7 @@ protected:
 	//(filling in points in between if d_rowlength is larger, and blur between current row 
 	//of data and previous row
 	//void nonblur(double ** dataline, int& y, int& datain_rowlen);
-	void blur_data_up(double ** dataline, int& y, int& datain_rowlen);
+	void blur_data_up(double ** dataline, const int y, int& datain_rowlen);
 	void blur_plane_up(double ** dataline, int& y, int& datain_rowlen);
 
 private:
@@ -159,10 +159,13 @@ private:
 									//values for rownumber placeholder_y
 	int h_sim_y;					//upper rownumber in sim y-space to interpolate between
 	int nano_y;						//y value in the source plane array at which the new point is being inserted
+	int sim_y;						//holds the y value in terms of the simulator that the simulator should be
+									//sending over
 	nmm_SimulatedMicroscope_Remote* remoteEroderConnObj;	//pointer to simulated microscope object that created
 															//this shape identified plane object, if there is one
 	FILE * outfile;					//for reading out data array
-
+	timeval* time;                  //for controlling sending data to eroder
+    bool origdatasend;              //same
 };
 
 

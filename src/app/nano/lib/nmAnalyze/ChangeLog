@@ -1,3 +1,9 @@
+2002-07-04  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nma_ShapeAnalyze.C : fixed bug with interpolation code--rapid
+	redraw problem dealing with boundary condition difference
+	depending on whether nano and device grid sizes equal or not
+
 2002-07-02  Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* nma_ShapeAnalyze.C : fixed a bug that was causing
