@@ -1,3 +1,9 @@
+2002-03-29  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_Interval.C (operator +=): Better handling of empty
+	intervals. 
+	(operator -=): same. 
+
 2002-03-28  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_Interval.Ch: Added copyrights

@@ -43,17 +43,21 @@ nmb_Interval & nmb_Interval::operator = (const nmb_Interval & i) {
 
 nmb_Interval & nmb_Interval::operator += (const nmb_Interval & i) {
   if (i.empty()) return *this;
-  d_low = min(d_low, i.d_low);
-  d_high = max(d_high, i.d_high);
-
+  if (this->empty()) {
+      d_low = i.d_low;
+      d_high = i.d_high;
+  } else {
+      d_low = min(d_low, i.d_low);
+      d_high = max(d_high, i.d_high);
+  }
   return *this;
 }
 
 nmb_Interval & nmb_Interval::operator -= (const nmb_Interval & i) {
+  if (i.empty() || this->empty()) return *this;
   int newlow = d_low;
   int newhigh = d_high;
 
-  if (i.empty()) return *this;
   if ((i.d_high >= d_low) &&
       (i.d_low <= d_low))
     newlow = i.d_high + 1;
