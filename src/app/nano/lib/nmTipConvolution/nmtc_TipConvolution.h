@@ -4,7 +4,6 @@
 #include "nmb_Image.h"
 #include "nmb_String.h"
 #include "nmr_Registration_Proxy.h"
-#include "nmr_ImageTransform.h"
 #include "Tcl_Linkvar.h"
 #include "Tcl_Netvar.h"
 
@@ -28,8 +27,6 @@ class nmtc_TipConvolution {
 
   nmg_Graphics *d_graphicsDisplay;
   nmb_ImageList *d_imageList;
-
-  nmr_ImageTransformAffine d_imageTransform;  
 
 };
 #endif

@@ -8,8 +8,7 @@ nmtc_TipConvolution::nmtc_TipConvolution(nmg_Graphics *g, nmb_ImageList *im):
   d_convolutionTipName("tip_comes_from", "none"),
   d_resultImageName("result_image_name" ,"none"),
   d_graphicsDisplay(g),
-  d_imageList(im),
-  d_imageTransform(4,4)
+  d_imageList(im)
 
 {
 
