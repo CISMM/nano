@@ -6855,11 +6855,16 @@ int main (int argc, char* argv[])
         graphics->loadVizImage(vizPPMName);
     }
 
-    // These call is duplicated in createNewMicroscope, 
+    // These calls are duplicated in createNewMicroscope, 
     // but we do it here too because createNewMicroscope is called above
     // when graphics is NULL.
     microscope->registerImageModeHandler(clear_polyline, graphics);
     setupCallbacks(dataset, graphics);
+
+    // This call is duplicated in the nmb_SharedDevice constructor,
+    // but Tcl isn't initialized then so all the user interface stuff
+    // doesn't happen.
+    microscope->requestMutex();
 
     // initialize graphics
     VERBOSE(1, "Before X display initialization");

@@ -491,12 +491,24 @@ int connect_Magellan() {
         
         // Next make a tracker
         // Update rate is 30.0 times per second
-        if ((magellanTrackerServer = new vrpn_Tracker_AnalogFly(MAGELLAN_NAME,
-                                                     magellan_connection,
-                                                     magellan_param, 30.0)) == NULL) return -1;
+        // This tracker must ONLY get updates when changes have occurred,
+        // to avoid drowning out collaborators' phantom actions when
+        // in fly mode - once the user presses "*" the Magellan would
+        // send a constant stream of updates even when no change occurred,
+        // and one user would override any phantom or Magellan updates
+	// sent by the other.  Thus the second flag to the constructor is TRUE.
+        magellanTrackerServer = new vrpn_Tracker_AnalogFly
+           (MAGELLAN_NAME, magellan_connection, magellan_param, 30.0,
+            vrpn_FALSE, vrpn_TRUE);
+        if (magellanTrackerServer == NULL) {
+          return -1;
+        }
         // Client for the buttons
-        if ((magellanButtonBox = new vrpn_Button_Remote(MAGELLAN_NAME,
-                                                   magellan_connection)) == NULL) return -1;
+        magellanButtonBox = new vrpn_Button_Remote
+           (MAGELLAN_NAME, magellan_connection);
+        if (magellanButtonBox == NULL) {
+          return -1;
+        }
         // Analog won't be used for anything, unless we need to get
         // direct analog output from the puck. 
         if ((magellanPuckAnalog = new vrpn_Analog_Remote(MAGELLAN_NAME,
