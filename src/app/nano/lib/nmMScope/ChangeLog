@@ -1,3 +1,7 @@
+2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
+
+        * splat.c (mkSplat) : changed return value
+
 2000-09-20  Tom Hudson  <hudson@cs.unc.edu>
 
         * nmm_Microscope.h:  added data members d_FeelTo_type,

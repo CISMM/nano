@@ -47,7 +47,7 @@ float ** mkSplat (BCGrid * grid)
 
   if (!dx || !dy || !dmx || !dmy) {
     fprintf(stderr, "mkSplat:  fatal error!\n");
-    return;
+    return NULL;
   }
 
   /* if we've already made one, deallocate and make up a fresh one 
