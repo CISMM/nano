@@ -22,10 +22,13 @@ public :
 
 
 class CNT_IA {				// image analysis to find CNT
-private :
+public :
 
 	int cnt_image_x;		// image size X
 	int cnt_image_y;		// image size Y
+
+private:
+
 	double cnt_image_height;// differenece between max and min image height in nanometers //*
 
 	double cnt_scale_x;		// pixel <-> nano

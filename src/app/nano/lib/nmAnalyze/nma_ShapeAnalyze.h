@@ -59,6 +59,7 @@ private:
 
 	CNT_IA *d_cntRec;
 	nma_ShapeIdentifiedPlane *shapePlane;
+	double * reverse_array;
 
 };
 
