@@ -1,0 +1,7 @@
+2001-07-20  Tom Hudson  <hudson@cs.unc.edu>
+
+	* truePlanes.C : New program.  Given a (PPM) surface snapshot and
+	a Phantom (tracker + button) streamfile computes the exact set of
+	planes that should have been displayed to the ForceDevice at
+	every time the button was down.
+
