@@ -506,13 +506,13 @@ proc save_xs_dialog { which } {
 # Change controls and data display when the input planes change. 
 proc xs_change_input_planes { nm el op } {
     global xsect xswidget inputPlaneNames
-    puts "xs Changed plane names $inputPlaneNames"
+#    puts "xs Changed plane names $inputPlaneNames"
 
     for { set index 0 } { $index < 2 } { incr index } {
         if { $xsect(data${index}_init) == 0 } { continue; }
         set vecname "xs$index"
         set vec_names [info globals "${vecname}_*"]
-        puts "vecs $vec_names"
+        #puts "vecs $vec_names"
         set name_list ""
         # Search the input plane names
         foreach name $inputPlaneNames {
