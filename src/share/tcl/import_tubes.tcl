@@ -45,16 +45,7 @@ set load_button_press 0
 
 ##Set up frame which contains the tabnotebook, which will contain each 
 # object's translate and rotate widgets, as well as the file loading widgets
-set importobj(import_objects) .import_objects
-toplevel $importobj(import_objects)
-wm withdraw $importobj(import_objects)
-
-##Set up a button to close the tabnotebook frame
-button $importobj(import_objects).close -text "Close" -command {
-  wm withdraw $importobj(import_objects)
-}
-wm protocol $importobj(import_objects) WM_DELETE_WINDOW {$importobj(import_objects).close invoke}
-pack $importobj(import_objects).close -anchor nw
+set importobj(import_objects) [create_closing_toplevel import_objects "Import Model Objects" ]
 
 ##Set up a "subframe" to hold the tabnotebook
 frame $importobj(import_objects).sources

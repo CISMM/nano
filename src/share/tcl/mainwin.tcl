@@ -305,9 +305,9 @@ $analysismenu add command -label "Data Registration..." -underline 0 \
     -command "show.registration"
 $analysismenu add command -label "Tip Convolution..." \
     -command "show.tip_conv"
+$analysismenu add command -label  "Import Objects..."  \
+    -command "show.import_objects"
 }
-#        $analysismenu add command -label  "Import Objects..." -command \
-#		{.message_dialog activate}
 
 
 #### TOOLS menu #############################
@@ -335,10 +335,10 @@ if {(![info exist env(TRACKER)]) \
 } else {
     # Use a real phantom.
     # must be left-justified so strip_unc program can remove it.
-    if { !$viewer_only } {
-        $toolmenu add command -label "Phantom" -underline 0 \
-                -command "show.phantom_win"
-    }
+if { !$viewer_only } {
+    $toolmenu add command -label "Phantom" -underline 0 \
+            -command "show.phantom_win"
+}
 }
 $toolmenu add command -label "Magellan" -underline 0 \
     -command "show.magellan_win"
@@ -364,7 +364,6 @@ $toolmenu add command -label "VI Curve" -underline 0 \
 
 $toolmenu add command -label "Latency Adaptation" -underline 0 \
     -command "show.latency"
-
 
 $toolmenu add command -label "SEM" -underline 1 \
     -command "show.sem_win"
@@ -482,12 +481,15 @@ source [file join ${tcl_script_dir} analysismenu.tcl]
 source [file join ${tcl_script_dir} stripchart.tcl]
 # Streamfile replay controls. Position depends on image window. 
 source [file join ${tcl_script_dir} streamfile.tcl]
+if { !$thirdtech_ui } {
 #Shared resource controls. Synchronize two copies of nM running
 # on different machines. Position depends on streamfile window.
 source [file join ${tcl_script_dir} shared_ptr.tcl]
 #Registration tool. Align two data sets with each other
 source [file join ${tcl_script_dir} registration.tcl]
 source [file join ${tcl_script_dir} tip_conv.tcl]
+source [file join ${tcl_script_dir} import_tubes.tcl]
+}
 # Dialogs accessed from the menus, like  vi_win, 
 # and nav_win.
 source [file join ${tcl_script_dir} toplevels.tcl]
@@ -769,6 +771,7 @@ after idle {
 
     wm geometry .streamfile ${left_strip_width}x${req_height}+${main_xpos}+$next_left_pos
 
+if { !$thirdtech_ui } {
     # Finally the shared_ptr window, for collaboration.
     #Make the window appear on the left edge below the streamfile window
     update idletasks
@@ -785,7 +788,7 @@ after idle {
 #  Can't specify the window size because we want it to change when we pack
 # the finegrained coupling controls.
     wm geometry .sharedptr +${main_xpos}+$next_left_pos
-
+}
 
     # Make the modify live window appear at the same position as the image
     wm geometry .modify_live +${main_xpos}+[expr $main_ypos +$main_height + 20]
