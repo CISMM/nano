@@ -78,7 +78,7 @@ class nmb_String {
 
     virtual const char * operator = (const char *);
     virtual const char * operator = (char *);
-      // aargh!  SGI compiler doesn't treat the (const char *) version
+      // XXX aargh!  SGI compiler doesn't treat the (const char *) version
       // right;  we end up invoking the plainest Tclvar_string
       // constructor.  Maybe we ought to get rid of it...
 

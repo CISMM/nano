@@ -696,13 +696,15 @@ void nmb_Image::triggerChangeHandlers()
 }
 
 const int nmb_ImageGrid::num_export_formats = 7;
+// Warning -- you must edit this list both here and in the filemenu.tcl
+// script.  The names in each list must match!
 const char *nmb_ImageGrid::export_formats_list[] = {	"ThermoMicroscopes",
-                                 		"TIFF",
-                                 		"PPM",
-                                 		"Other",
+                                 		"TIFF Image",
+                                 		"PPM Image",
+                                 		"Other Image",
                                  		"Text(MathCAD)",
                                  		"SPIP",
-                                 		"UNCA" };
+                                 		"UNCA Image" };
 const nmb_ImageGrid::FileExportingFunction 
 	nmb_ImageGrid::file_exporting_function[] = 
 				{nmb_ImageGrid::writeTopoFile,

@@ -1,3 +1,13 @@
+2004-06-11  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmBase.dsp : Removed include of 16-bit version of ImageMagick,
+		which was causing problems.  This will break the video
+		stuff for spot tracking, but no helping it.
+	* nmb_Image.C : Made the names of the save types match those found
+		in the Tcl script.
+	* nmb_MorphologyPlane.C : Switched from glut.h to glut_unc.h
+	* nmb_String.h : Added a "come fix" comment.
+
 2004-04-26  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* readHamburgFile.h : Data and routines needed to parse and

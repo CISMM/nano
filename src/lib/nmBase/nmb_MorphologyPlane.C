@@ -11,7 +11,7 @@
 #include "nmb_Dataset.h"
 
 #include <GL/gl.h> 
-#include <GL/glut.h>
+#include <GL/glut_unc.h>
 
 #ifdef _WIN32
 // turns off warning C4290: C++ Exception Specification ignored
