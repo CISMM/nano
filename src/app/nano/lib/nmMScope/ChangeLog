@@ -1,3 +1,24 @@
+2002-03-29 Andrea HIlchey <hilchey@cs.unc.edu>
+
+	* nmm_AFMSIMSERVER_Report : added new message type: Cylinder
+
+	* nmm_SimulatedMicroscope : added function to handle receipt of
+	cylinders (actually nanotubes), and some new data members
+
+	* nmm_SimulatedMicroscope_Remote : handle_gotConnection sends
+	cylinders from its myURenderObject data member if that data
+	member is not NULL (i.e. their is a model object already
+	created).  new function:  encode_and_sendCylinder.  if model
+	object not already created when connection
+	established, sending is handled my the URender object that is
+	associated with the model calling the sendCylinders function.
+	this function is also new:
+	void encode_and_sendCylinder(
+		vrpn_float32 x, vrpn_float32 y,vrpn_float32 z,
+		vrpn_float32 altitude, vrpn_float32 azimuth,
+		vrpn_float32 length, vrpn_float32 radius);
+	void sendCylinders(URender * obj);
+
 2002-03-27  David Borland  <borland@cs.unc.edu>
 
         * nmm_SimulatedMicroscope_Remote.Cdef: fixed build problem on sgi

@@ -3236,15 +3236,22 @@ static void handle_SimScanPlaneName_change(const char *, void *)
 
 
 static void startSimulatedMicroscope(){
-	UTree* object = World.TGetNodeByName("mask.detail.txt");
-
+	const char * c = World.current_object->string();
+	UTree* object = World.TGetNodeByName(c);
+	
 	//form cname from hostname:port (I think)
 	connection = vrpn_get_connection_by_name(SimScanIPAddress);
 	if(connection != NULL){
 		if(SimulatedMicroscope != NULL)	delete SimulatedMicroscope;
 		
-		SimulatedMicroscope = new nmm_SimulatedMicroscope_Remote(SimScanIPAddress, 
-			connection, SimScanStoredPlaneName, dataset, &object->TGetContents());
+		if(object == NULL){
+			SimulatedMicroscope = new nmm_SimulatedMicroscope_Remote(SimScanIPAddress, 
+				connection, SimScanStoredPlaneName, dataset);
+		}
+		else{
+			SimulatedMicroscope = new nmm_SimulatedMicroscope_Remote(SimScanIPAddress, 
+				connection, SimScanStoredPlaneName, dataset, &object->TGetContents());
+		}
 	}
 	else{
 		cout << "\nConnection is NULL\nTry setting up remote simulated microscope again.\n";
@@ -5546,7 +5553,11 @@ void setupSynchronization( CollaborationManager * cm,
   }
 
 
+
+
+
   // Miscellaneous and ad-hoc synchronization
+
 
   // Set up a utility class to make sure derived planes are synchronized
   // between all replicas.

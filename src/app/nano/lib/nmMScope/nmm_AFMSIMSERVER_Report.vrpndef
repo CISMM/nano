@@ -29,7 +29,17 @@ VRPN_MESSAGE Triangle{
   float32 _3v3
 }
 
-VRPN_MESSAGE TriangleScale{
+VRPN_MESSAGE Scale{
   float32 scale
+}
+
+VRPN_MESSAGE Cylinder{
+  float32 x
+  float32 y
+  float32 z
+  float32 azimuth
+  float32 altitude
+  float32 length
+  float32 radius
 }
 

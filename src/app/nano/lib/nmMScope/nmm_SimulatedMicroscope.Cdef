@@ -163,10 +163,12 @@ RECEIVE_MSG ScanRange {
 	cout << endl << "ScanRange:\t" << xmin << "," << xmax << "\t" << ymin << "," << ymax << endl;
 }
 
-RECEIVE_MSG TriangleScale {
+RECEIVE_MSG Scale {
 //  float32 scale
 
-    tri_scale = (float)scale;
+    _scale = (float)scale;
+	
+	scaleRcv = true;
 
 }
 
@@ -196,3 +198,28 @@ RECEIVE_MSG Triangle {
 	head = temp;//call temp by head
 
 }
+
+RECEIVE_MSG Cylinder {
+//	vrpn_float32 x
+//	vrpn_float32 y
+//	vrpn_float32 z
+//	vrpn_float32 altitude
+//	vrpn_float32 azimuth
+//	vrpn_float32 length
+//	vrpn_float32 radius
+
+	cylRcv = true;
+	CylNode * temp = new CylNode();
+
+	temp->x = x;
+	temp->y = y;
+	temp->z = z;
+	temp->altitude = altitude;
+	temp->azimuth = azimuth;
+	temp->length = length;
+	temp->radius = radius;
+
+	temp->next = cylHead;//put in front of list
+	cylHead = temp;//call temp by head
+}
+

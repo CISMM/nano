@@ -9,6 +9,9 @@
 #include <MSIFileGenerator.h>
 #include <string.h>
 
+#include <nmm_SimulatedMicroscope_Remote.h>	// so we know if there is an open connection for
+											// sending tubes when we open a tube file 
+
 ///import_object handlers
 static  void handle_import_file_change (const char *, void *);
 static	void handle_current_object_new(const char*, void*);
@@ -62,6 +65,10 @@ Tclvar_int      import_b("import_b", 192);
 Tclvar_float    import_alpha("import_alpha", 1, handle_import_alpha);
 
 //-----------------------------------------------------------------
+///SimulatedMicroscope object
+extern nmm_SimulatedMicroscope_Remote* SimulatedMicroscope;
+
+//-----------------------------------------------------------------
 ///MSI File specific variables
 Tclvar_int      msi_bond_mode("msi_bond_mode", 0, handle_msi_bond_mode);
 Tclvar_float    msi_atom_radius("msi_atom_radius", 1, handle_msi_atom_radius);
@@ -112,10 +119,14 @@ static void handle_import_file_change (const char *, void *) {
     static char * old_name = "";
     static const float convert = 1.0f/255;
 	    
-    if (modelFile.string()) {        
-        if (strcmp(modelFile.string(),"") != 0) {          
-            //Only try to create the object if there is a file specified.
+printf("here\n");
 
+printf("%s\n", modelFile.string());
+
+
+    if (modelFile.string()) {  
+        if (/*strcmp(modelFile.string(),"") != 0*/ 1) {          
+            //Only try to create the object if there is a file specified.
             URPolygon *obj = new URPolygon;
 			obj->SetCCW(import_CCW);
 			obj->SetTess(import_tess);
@@ -139,6 +150,12 @@ static void handle_import_file_change (const char *, void *) {
 			char* c = name + strlen(name);
 			while (*(--c) != '/');
             World.TAddNode(obj, c + 1);
+
+			// if a tube file, send to simulator
+			if ((strstr(name, ".txt") != 0) && (SimulatedMicroscope != NULL)) {
+				SimulatedMicroscope->sendCylinders(obj);
+			}
+
 			delete name;
         }
 // Took this out because we want more than one object loaded at a time...
@@ -236,6 +253,9 @@ static  void handle_import_axis_step_change (vrpn_int32, void *)
 
 static  void handle_import_scale_change (vrpn_float64, void *)
 {
+// ONLY SENDS SCALE INFO IF NOT ALL SELECTED RIGHT NOW...CHANGE THIS
+
+
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
 		double i = import_scale;
@@ -246,6 +266,13 @@ static  void handle_import_scale_change (vrpn_float64, void *)
 		if (node != NULL) {
 			URender &obj = node->TGetContents();
 			obj.GetLocalXform().SetScale(import_scale);
+
+			// if a tube file, send scale
+			if ((strstr(*World.current_object, ".txt") != 0) && 
+				(SimulatedMicroscope != NULL)) {
+				SimulatedMicroscope->encode_and_sendScale(import_scale);
+			}
+
 		}
 	}
 }

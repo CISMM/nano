@@ -25,6 +25,15 @@ public:
 	float v3_3;
 };
 
+class CylNode{//used to make a linked list of cylinders so that cylinders can be processed slower
+              //by the simulator than they are received without losing information
+
+public:
+	CylNode(){next = NULL;};
+	CylNode * next;
+	float x,y,z,altitude,azimuth, length, radius;
+};
+
 class nmb_SharedDevice_Server;
 //
 USE_MSG_GROUP nmm_AFMSIM_Report
@@ -47,12 +56,16 @@ public:
 	double Sim_to_World_y;
 	bool grid_size_rcv;		//true when this mesage is received, so windows in simulator can be resized
 	bool triangleRcv;		//true when there are triangles to process
+	bool cylRcv;			//true when cylinders to process
+	bool scaleRcv;
 	Node * head;			//head of list of triangles
 	Node * holder;			//temp Node to hold head of list before deletion without simulator needing 
 							//knowledgeof Node class
+	CylNode * cylHead;		//head of list of cylinders
+	CylNode * cylHolder;	//temp CylNode
 	double get_x_offset(){return d_xmin;};
 	double get_y_offset(){return d_ymin;};
-    float tri_scale;
+    float _scale;
 
 private:
     RECEIVERS_DECL nmm_AFMSIM_Report;
