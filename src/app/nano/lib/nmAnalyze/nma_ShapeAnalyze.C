@@ -134,7 +134,7 @@ setOrderFile(const char *file)
 }
 
 
-void nma_ShapeAnalyze::
+/*void nma_ShapeAnalyze::
 imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 {
 	BCPlane *imagePlane;
@@ -161,7 +161,7 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 	//		d_cntRec.cnt_image_write("blur.ppm", d_cntRec.cnt_image_Blr);
 	//		d_cntRec.cnt_image_write("medial.ppm", d_cntRec.cnt_image_Med);
 	if (d_maskWrite) {
-	  //d_cntRec->cnt_image_write(d_imgMaskFile/*image file (name)*/, d_cntRec->cnt_image_Msk/*data array*/);
+	  //d_cntRec->cnt_image_write(d_imgMaskFile, d_cntRec->cnt_image_Msk);
 
           nma_ShapeIdentifiedPlane shapePlane(imagePlane, dataset, 
 			  d_desiredFilename, d_cntRec->cnt_image_Msk);
@@ -179,6 +179,61 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 			  }
 			  shapePlane.UpdateDataArray(d_cntMask, y, 512.0);
 		  }
+		 
+		  //update shapePlane
+		 		  
+	}
+	if (d_ordWrite) {
+		d_cntRec->cnt_image_write(d_imgOrdFile, d_cntRec->cnt_image_Ord);
+	}
+}*/
+
+void nma_ShapeAnalyze::
+imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
+{
+	BCPlane *imagePlane;
+	imagePlane = planeSelection.height;
+
+	d_cntRec->cnt_image_read(imagePlane);			// read image from BCPlane //*
+	
+	d_cntRec->cnt_image_flat();
+	d_cntRec->cnt_image_filter();
+	d_cntRec->cnt_image_medial();
+	d_cntRec->cnt_image_fit();
+	d_cntRec->cnt_image_label();
+	d_cntRec->cnt_image_order(d_txtFile);
+
+	BCGrid * currentGrid = dataset->inputGrid;//for right now just keep as 
+        //dataset->inputGrid, but can change it later to get planes in other 
+        //related BCGrids as well
+
+	d_cntRec->cnt_image_select(d_txtFile, imagePlane->name()->Characters());
+	//above line commented out because causes system to crash
+	
+	//d_cntRec->cnt_image_Msk = NULL;
+	//set to NULL for testing without calling cnt_image_select
+	
+	//		d_cntRec.cnt_image_write("blur.ppm", d_cntRec.cnt_image_Blr);
+	//		d_cntRec.cnt_image_write("medial.ppm", d_cntRec.cnt_image_Med);
+	if (d_maskWrite) {
+	  d_cntRec->cnt_image_write(d_imgMaskFile/*image file (name)*/, d_cntRec->cnt_image_Msk/*data array*/);
+	//above line commented out because causes system to crash
+		  shapePlane = new nma_ShapeIdentifiedPlane(imagePlane, dataset, 
+			  d_desiredFilename, d_cntRec->cnt_image_Msk);
+          //this code tests the function UpdateDataArray
+		  //fill in array
+		  /*double * d_cntMask = new double[512];
+		  for(int y = 0; y <= 512 - 1; y++) {
+			  for( int x = 0; x <= 512 - 1; x++){
+						if(y%2 == 0){
+							d_cntMask[x] =  256.0;
+						}
+						else{
+							d_cntMask[x] =  0.0;
+						}
+			  }
+			  shapePlane.UpdateDataArray(d_cntMask, y, 512.0);
+		  }*/
 		 
 		  //update shapePlane
 		 		  

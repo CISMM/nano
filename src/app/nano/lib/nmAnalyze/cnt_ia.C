@@ -683,7 +683,7 @@ void CNT_IA::cnt_image_label(void)
 //   axis point, set cnt_image_Ord[i] to the ordered index of that
 //   point along the current tube
 void CNT_IA::cnt_image_order(char *txtFile)
-{/*
+{
 	// Find "most medial" point.
 	//cnt_image_Med[index] = 50.0 - 2*Xpr + 6*(10-fabs(atan(Ypr/Xpr))*180.0/3.14) + 2*(Zpr-190);
 	//if ( cnt_image_Med[index] < 220.0 ) cnt_image_Med[index] = 0.0;
@@ -692,7 +692,7 @@ void CNT_IA::cnt_image_order(char *txtFile)
 
 	int x, y;
 	long id0, id1;
-	//long max_id;
+	long max_id;
 	double theta, dx, dy;
 	int i = 0;
 	int count = cnt_image_x * cnt_image_y;//my best guess as to what count should be
@@ -903,7 +903,7 @@ void CNT_IA::cnt_image_order(char *txtFile)
 			}
 		}
 	}
-	int count = int (mx-mn) + 1;
+	count = int (mx-mn) + 1;
 
 	// Increment all the order values by -mn+1, so that the min will be 1.
 	for ( y=0; y<cnt_image_y; y++ ) {
@@ -1041,15 +1041,21 @@ void CNT_IA::cnt_image_order(char *txtFile)
 
 	strcpy(detailsTxtFile, txtFile);
 	strcat(detailsTxtFile, ".details.txt");
-	fp = fopen(detailsTxtFile, "w");
-        fprintf(fp, "  s    height   azimuth altitude  radius     x        y     newX     newY     newZ\n\n");  // NEW
+
+	if ((fp = fopen("detailsTxtFile", "w")) == NULL) {
+		cout << "open failed" << endl;
+	}
+
+	fprintf(fp, "  s    height   azimuth altitude  radius     x        y     newX     newY     newZ\n\n");  // NEW
 	for ( y=cnt_image_y-1; y>=0; y-- ) {
 		for ( x=0; x<cnt_image_x; x++ ) {
 			id0 = y * cnt_image_x + x;
 			if ( cnt_image_Ord[id0] > 0.0 ) {
                                 height = cnt_image[id0] * cnt_image_height / 255.0;
 				id1 = int (cnt_image_Ord[id0]) - 1; // NEW
-                                fprintf(fp, "%3.0lf %8.2lf %8.2lf %8.2lf %8.2lf %8d %8d %8.2lf %8.2lf %8.2lf\n", 
+				fprintf(fp, "%3.0lf %8.2lf %8.2lf %8.2lf %8.2lf %8d %8d %8.2lf %8.2lf %8.2lf\n", 
+					cnt_image_Ord[id0], height, az[id1], alt[id1], rad_of_curv[id1], x, y, X3D[id1], Y3D[id1], Z3D[id1]);  // NEW
+				printf("%3.0lf %8.2lf %8.2lf %8.2lf %8.2lf %8d %8d %8.2lf %8.2lf %8.2lf\n", 
 					cnt_image_Ord[id0], height, az[id1], alt[id1], rad_of_curv[id1], x, y, X3D[id1], Y3D[id1], Z3D[id1]);  // NEW
 			}
 		}
@@ -1062,7 +1068,7 @@ void CNT_IA::cnt_image_order(char *txtFile)
 //			id0 = x * cnt_image_x + y;
 //			cnt_image_Ord[id0] = 0.0;
 //		}
-//	}*/
+//	}
 }
 
 
@@ -1224,7 +1230,7 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
 					}
 
 /////////////////
-/* 3D STUFF TEMPORARILY REMOVED -- BUGGY
+/* 3D STUFF TEMPORARILY REMOVED -- BUGGY */
 /////////////////
 				        // Compute 3D info.
 				        int prevId, nextId;
@@ -1301,12 +1307,13 @@ if ((prevId > 1000) && (nextId > 1000) && (prevId < 1000000) && (nextId < 100000
 				                Y3D[i] = double (Ys[i]) + dy;
                 				Z3D[i] = cnt_image[id0] + dz;
 				        }
-*/
+
 					fprintf(fDet, "TUBE #%1d\n", tubeCount++);
+					fprintf(fDet, "    i\tXs[i]\tYs[i]\tX3D[i]\tY3D[i]\tZ3D[i]\taz[i]\talt[i]\trad_of_curv[i]\n\n");
 					for ( j=0; j<count; j++ ) {
 						i = ord[j];
-//						fprintf(fDet, "%5d %8d %8d %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf\n", i, Xs[i], Ys[i], X3D[i], Y3D[i], Z3D[i], az[i], alt[i], rad_of_curv[i]);
-						fprintf(fDet, "%5d %8d %8d\n", i, Xs[i], Ys[i]);
+						fprintf(fDet, "%5d %8d %8d %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf\n", i, Xs[i], Ys[i], X3D[i], Y3D[i], Z3D[i], az[i], alt[i], rad_of_curv[i]);
+//						fprintf(fDet, "%5d %8d %8d\n", i, Xs[i], Ys[i]);
 					}
 					fprintf(fDet, "\n");
 

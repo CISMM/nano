@@ -11,6 +11,7 @@
 
 class nmb_PlaneSelection;
 class CNT_IA;
+class nma_ShapeIdentifiedPlane;
 
 #include "nmb_CalculatedPlane.h"
 #include <vrpn_Connection.h>
@@ -57,6 +58,7 @@ private:
 	int d_ordWrite;
 
 	CNT_IA *d_cntRec;
+	nma_ShapeIdentifiedPlane *shapePlane;
 
 };
 
