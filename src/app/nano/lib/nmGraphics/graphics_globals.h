@@ -21,9 +21,9 @@
 #define INCLUDED_V_H
 #endif
 
-#include "vrpn_Types.h"
+#include <vrpn_Types.h>
 
-#include <colormap.h>
+#include "colormap.h"
 #include "nmg_Funclist.h"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
