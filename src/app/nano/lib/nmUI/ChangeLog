@@ -1,3 +1,10 @@
+2003-02-23  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmui_AFM_SEM_CalibrationUI.C : modified the code that sets the
+	transformation between the AFM and the model used when you press the
+	"Make Test Data" button. This change makes more of the surface visible
+	in the simulated SEM images so they look nicer
+
 2003-01-13 Jameson Miller <millerj@cs.unc.edu>
 	* haptic_surface.c - new functions to start to enable the option of
 		sending a grid to the phantom. grid being sent to the phantom

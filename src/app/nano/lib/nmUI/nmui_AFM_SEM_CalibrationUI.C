@@ -1106,6 +1106,8 @@ void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 	if (value) {
 		if (me->d_modelToSEM_modelImage) {
 			double widthWorld = me->d_modelToSEM_modelImage->widthWorld();
+			double minX = me->d_modelToSEM_modelImage->boundX(MIN_X_MIN_Y);
+			double minY = me->d_modelToSEM_modelImage->boundY(MIN_X_MIN_Y);
 			nmb_Transform_TScShR SEM_from_AFM;
 			double angle = 0.7854;
 			SEM_from_AFM.setScale(NMB_X, 1.0/widthWorld);
@@ -1116,8 +1118,10 @@ void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 			SEM_from_AFM.getMatrix(me->d_SEMfromAFM_test);
 
 			nmb_Transform_TScShR AFM_from_model;
-			AFM_from_model.setTranslation(NMB_Z, widthWorld*0.2);
-			AFM_from_model.setTranslation(NMB_X, -widthWorld*0.2);
+			AFM_from_model.setTranslation(NMB_Z, widthWorld*0.4);
+			AFM_from_model.setTranslation(NMB_Y, -widthWorld*0.4-minY);
+			AFM_from_model.setTranslation(NMB_X, -minX);
+			fprintf(stderr, "surface minX=%g, minY=%g\n", minX, minY);
 
 			AFM_from_model.getMatrix(me->d_AFMfromModel_test);
 
