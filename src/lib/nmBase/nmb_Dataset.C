@@ -23,10 +23,9 @@
 #define max(a,b) ((a)>(b) ? (a) : (b))
 #endif
 
-
-	//initialize static variables for height and color plane command line
-        //args
-bool nmb_Dataset::initHeightColor = false;
+//variables to store command line information needed to set variables
+bool nmb_Dataset::doInitColorPlane = false;
+bool nmb_Dataset::doInitHeight = false;
 char nmb_Dataset::initHeight[256];
 char nmb_Dataset::initColorPlane[256];
 
@@ -65,9 +64,12 @@ nmb_Dataset::nmb_Dataset
   calculatedPlane_head( NULL ),
   d_hostname(hostname)
 {
+
 	//variables to save the command line args for heightplane and colorplane
 	initHeight[0] = '\0';
 	initColorPlane[0] = '\0';
+
+
 
 	int i;
 
