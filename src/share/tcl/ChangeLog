@@ -1,5 +1,12 @@
+2002-06-21  Aron Helser  <helser@cs.unc.edu>
+
+	* modify.tcl (enforce_directz_heightplane): Add dialogs so user
+	knows we are changing the scan data and height plane to z piezo.
+	(set_directz_heightplane): same
+
 2002-06-19  Woojin Seok  <seok@cs.unc.edu>
-        *shared_ptr.tcl: Remove all lines related to "New Site"
+
+	* shared_ptr.tcl: Remove all lines related to "New Site"
         The newSite was the variable holding the name of "New Site", 
         and we had to fill the entry to run collaboration 
         even though it was not necessary to any work.

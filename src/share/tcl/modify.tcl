@@ -291,22 +291,47 @@ proc flip_optimize_selection_mode {optimize_mode_param element op} {
 ####################################################
 proc set_directz_heightplane { plane_name { rec_level 0 } } {
     global z_comes_from inputPlaneNames nmInfo scandatalist data_sets
+    global newmodifyp_control
     # Check to see if Z Piezo is available in height plane list. 
     set id [lsearch -exact $inputPlaneNames $plane_name]
     #puts "$plane_name next $rec_level"
     if { $id != -1 } {
-        puts "DirectZ: Setting Z Piezo as heightplane"
-        # Switch to viewing Z Piezo. 
-        #Doesn't send change to C: $nmInfo(z_mapping).z_dataset select $id
-        # but this works:
-        set z_comes_from $plane_name
-        return
+        set response [tk_messageBox -type okcancel -title "Z Piezo Heightfield" \
+                -parent .modify -default ok -message "
+The Direct Z control requires that 
+Z Piezo (Forward or Reverse) be displayed as the 
+heightfield. 
+Press OK to use $plane_name as the heightfield.
+Press Cancel to resolve yourself." ]
+        switch -- $response {
+            ok {
+                puts "DirectZ: Setting Z Piezo as heightplane"
+                # Switch to viewing Z Piezo. 
+                #Doesn't send change to C: 
+                #$nmInfo(z_mapping).z_dataset select $id
+                # but this works:
+                set z_comes_from $plane_name
+                return
+            }
+            cancel {
+                # User backed out, set Control back to feedback. 
+                set newmodifyp_control 0
+                return
+            }
+        }
     } elseif { $rec_level > 15 } {
         # We've waited more that 1.5 seconds, give up.
-        puts "DirectZ: Unable to automatically select Z Piezo as scan plane"
+        tk_messageBox -type ok -title "Z Piezo Heightfield" \
+                -parent .modify -default ok -message "
+Direct Z control is unable to set 
+$plane_name as the heightfield. 
+Please resolve before using 
+Direct Z control."
+        set newmodifyp_control 0
         return
     } else {
-        puts "Waiting $rec_level"
+        # Wait some more for Z Peizo to become available as a heightplane.
+        #puts "Waiting $rec_level"
         after 100 [list set_directz_heightplane $plane_name [expr $rec_level +1]]
     }
 }
@@ -318,6 +343,7 @@ proc set_directz_heightplane { plane_name { rec_level 0 } } {
 ####################################################
 proc enforce_directz_heightplane {} {
     global z_comes_from inputPlaneNames nmInfo scandatalist data_sets
+    global newmodifyp_control
     # Check to see if height plane is Z Piezo forward/reverse
     if { !([string equal "$z_comes_from" "Z Piezo-Forward"] || \
             [string equal "$z_comes_from" "Z Piezo-Reverse"]) } {
@@ -330,14 +356,31 @@ proc enforce_directz_heightplane {} {
         }
         # Variable is 1 if Z Piezo is selected. 
         if { (!$data_sets(scan$id2)) && (!$data_sets(scan$id3)) } {
-            # Neither is selected, so select Z Piezo Forward
-            $nmInfo(data_sets).scan.scanbutton$id2 select
-            
-            after 100 [list set_directz_heightplane "Z Piezo-Forward" ]
-            return
+            # Neither is selected, so ask the user if they want to 
+            # select Z Piezo Forward
+            set response [tk_messageBox -type okcancel -title "Scan Z Piezo" \
+                    -parent .modify -default ok -message "
+The Direct Z control requires that 
+Z Piezo (Forward or Reverse) be collected
+as a scan dataset and displayed as the 
+heightfield. 
+Press OK to begin collecting Z Piezo Forward.
+Press Cancel to resolve yourself." ]
+            switch -- $response {
+                ok {
+                    $nmInfo(data_sets).scan.scanbutton$id2 select
+                    after 100 [list set_directz_heightplane "Z Piezo-Forward" ]
+                    return
+                }
+                cancel {
+                    # User backed out, set Control back to feedback. 
+                    set newmodifyp_control 0
+                    return
+                }
+            }
         }
         # Otherwise, Z Piezo being collected, but is not the height plane
-        # Make it the height plane. 
+        # Ask user to make it the height plane. 
         if { $data_sets(scan$id2) } {
             set_directz_heightplane "Z Piezo-Forward" 
         } elseif { $data_sets(scan$id3) } {
