@@ -166,7 +166,6 @@ pid_t getpid();
 /*********** UGRAPHICS *******************/
 #include "UTree.h"
 #include "URAxis.h"
-#include "URTexture.h"
 //#include "URTubeFile.h"
 
 // UGraphics made us depend explicitly on vlib again in this file (?)
@@ -7913,7 +7912,6 @@ int main (int argc, char* argv[])
 
     VERBOSE(1, "Creating Ugraphics");
     World.TSetName("World");
-    Textures.TSetName("Texture Store\n");  
     
     //INIT THE WORLD
     //put an invisible axis in the world
