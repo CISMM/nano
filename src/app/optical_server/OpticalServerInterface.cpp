@@ -77,6 +77,7 @@ void OpticalServerInterface_myGlutIdle( )
 {
 	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
 	printf( "glut idle func\n" );
+	vrpn_SleepMsecs( 100 );
 }
 
 
@@ -109,16 +110,16 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
 	GLUI_Master.set_glutMouseFunc( OpticalServerInterface_myGlutMouse );
 	GLUI_Master.set_glutReshapeFunc( OpticalServerInterface_myGlutReshape );
 	GLUI_Master.set_glutIdleFunc( OpticalServerInterface_myGlutIdle );
-	GLUI_Master.set_glutIdleFunc( NULL );
+	//GLUI_Master.set_glutIdleFunc( NULL );
 	
 	//iface->glui_window = GLUI_Master.create_glui( "Optical Microscope Controls" );
 	//printf( " GLUI window id:  %d\n", iface->glui_window->get_glut_window_id( ) );
-	iface->glui_window 
-		= GLUI_Master.create_glui_subwindow( iface->image_window, GLUI_SUBWINDOW_LEFT );
+	//iface->glui_window 
+	//	= GLUI_Master.create_glui_subwindow( iface->image_window, GLUI_SUBWINDOW_LEFT );
 	
-	iface->glui_window->set_main_gfx_window( iface->image_window );
+	//iface->glui_window->set_main_gfx_window( iface->image_window );
 
-	
+	/*
 	GLUI_Panel* panel = iface->glui_window->add_panel( "Resolution" );
 	iface->resRadioGroup 
 		= iface->glui_window->add_radiogroup_to_panel( panel, NULL, -1, 
@@ -136,7 +137,7 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
 	iface->binningListbox->add_item( 2, "2" );
 	iface->binningListbox->add_item( 3, "3" );
 	iface->binningListbox->add_item( 4, "4" );
-	
+	*/
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();

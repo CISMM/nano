@@ -1,4 +1,11 @@
 2003-11-22  David Marshburn  <marshbur@cs.unc.edu>
+	
+	* nmm_Microscope_SEM_diaginc.cpp:  only sends an image when one has
+	been requested.  was accidentally sending every image captured.
+	* OpticalServerInterface.cpp (OpticalServerInterface_myGlutIdle):
+	sleeps for 100 msecs.
+	
+2003-11-22  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmm_Microscope_SEM_diaginc.[h,cpp]:  setBinning/getBinning functions
 	* nmm_Microscope_SEM_diaginc.cpp (setupCamera):  initialize binning

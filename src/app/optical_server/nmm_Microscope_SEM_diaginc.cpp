@@ -559,9 +559,12 @@ acquireImage()
 				((vrpn_uint8 *)myImageBuffer)[i*(resX + resX%4) + j] = 
 					((i+(int)count)%resY)*250/resY;
 			}
-			reportScanlineData(i);
+			if( d_scans_to_do > 0 )
+				reportScanlineData(i);
 		}
 		count++;
+		if( d_scans_to_do > 0 )
+			d_scans_to_do--;
 	}
 	else // the real thing
 	{
@@ -581,9 +584,13 @@ acquireImage()
 			return -1;
 		}
 		memcpy( myImageBuffer, cameraImageBuffer, this->maxBufferSize );
-		for (i = 0; i < resY; i++)
+		if( d_scans_to_do > 0 ) 
 		{
-			reportScanlineData(i);
+			for (i = 0; i < resY; i++)
+			{
+				reportScanlineData(i);
+			}
+			d_scans_to_do--;
 		}
 	}
 
