@@ -1,3 +1,9 @@
+2003-01-13 Jameson Miller <millerj@cs.unc.edu>
+	*microscope.c : added TCL variables and functions to handle adding 
+         graphics to show haptic grid
+	 *interaction.c : code for showing the haptic grid that
+		is being sent to phantom.
+
 2002-12-01 Jameson Miller <millerl@cs.unc.edu>
       *microscope.c : added TCL variables and functions to handle adding 
          graphics to show haptic plane

@@ -159,6 +159,9 @@ extern int mouse3button;
 extern int using_mouse3button;
 extern int do_cpanels;
 
+extern TclNet_int use_haptic_mesh;
+
+
 #define VTK_NO 0
 
 

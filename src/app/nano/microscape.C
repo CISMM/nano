@@ -847,10 +847,11 @@ static char * vizPPMName = NULL;   ///< Name of image to use for viz tex.
 
 static void handle_show_feel_plane (vrpn_int32, void * userdata);
 static void handle_show_feel_grid (vrpn_int32, void * userdata);
-
+static void handle_use_haptic_mesh (vrpn_int32, void * userdata);
 
 TclNet_int show_feel_plane("show_feel_plane",0,handle_show_feel_plane);
 TclNet_int show_feel_grid("show_feel_grid",0,handle_show_feel_grid);
+TclNet_int use_haptic_mesh("use_mesh_grid",0,handle_use_haptic_mesh);
 
 static void handle_show_feel_plane (vrpn_int32, void * userdata) {
   haptic_graphics->set_show_feel_plane(show_feel_plane);
@@ -858,6 +859,10 @@ static void handle_show_feel_plane (vrpn_int32, void * userdata) {
 
 static void handle_show_feel_grid (vrpn_int32, void * userdata) {
     haptic_graphics->set_show_feel_grid(show_feel_grid);
+}
+
+//JM feel from a mesh instead of a plane.
+static void handle_use_haptic_mesh (vrpn_int32, void * userdata) {
 
 }
 

@@ -1209,6 +1209,10 @@ void setupHaptics (int mode) {
 	switch (mode) {
 
     case USER_PLANE_MODE:
+        if(use_haptic_mesh) {
+            haptic_manager.d_canned->use_grid_mesh = use_haptic_mesh;
+            haptic_manager.d_canned->sendForceUpdate(forceDevice);
+        }
 		haptic_manager.setSurface(haptic_manager.d_canned);
 		haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy
 			(haptic_manager.d_gridFeatures);
@@ -3115,11 +3119,14 @@ int doFeelFromGrid(int whichUser, int userEvent)
                 monitor.startSurface();
             }
             
-            //JM always true for debugging
-            //TODO: put in toggle switch later on.
+            //JM
+            //draw the haptic plane / haptic grid if selected.
             if (haptic_graphics->get_show_feel_plane()) {
                 
                 haptic_graphics->do_show_feel_plane(1);
+            }
+            if(haptic_graphics->get_show_feel_grid()) {
+                haptic_graphics->do_show_feel_grid(1);
             }
             break;
 
@@ -3138,8 +3145,10 @@ int doFeelFromGrid(int whichUser, int userEvent)
           // Stop applying forces. 
           monitor.stopSurface();
           
+          //stop drawing the haptic graphics for the
+          //feel grid/ feel plane
           haptic_graphics->do_show_feel_plane(0);
-
+          haptic_graphics->do_show_feel_grid(0);
 
 	    
 	    break;

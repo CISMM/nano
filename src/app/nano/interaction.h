@@ -19,6 +19,8 @@ extern Tclvar_int user_0_mode;
 extern void enable_ds_sphere_axis();
 extern void disable_ds_sphere_axis();
 
+extern TclNet_int use_haptic_mesh;
+
 extern Tclvar_int tcl_commit_pressed;
 extern Tclvar_int tcl_commit_canceled;
 void handle_commit_change( vrpn_int32, void *);
