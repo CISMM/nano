@@ -2995,17 +2995,17 @@ static	void	handle_screenImageFileName_change (const char *, void *userdata)
                          "Error: unknown image type '%s'\n",
                          screenImageFileType.string());
       } else {
-#ifdef __CYGWIN__
-          v_gl_set_context_to_vlib_window();
-	  glutPopWindow();
-          glutProcessEvents_UNC(); // make the window come to the front
+#ifdef V_GLUT
+        v_gl_set_context_to_vlib_window();
+        glutPopWindow();
+        glutProcessEvents_UNC(); // make the window come to the front
 #else 
-	  XRaiseWindow(VLIB_dpy, VLIB_win);
-	  XEvent event;
-	  long event_mask = 0xFFFFFFFF;//StructureNotifyMask|ExposureMask;
-	  while (XCheckWindowEvent(VLIB_dpy, VLIB_win,
-		event_mask, &event)) {
-		if (event.type == StructureNotifyMask) {
+        XRaiseWindow(VLIB_dpy, VLIB_win);
+        XEvent event;
+       long event_mask = 0xFFFFFFFF;//StructureNotifyMask|ExposureMask;
+       while (XCheckWindowEvent(VLIB_dpy, VLIB_win,
+     	event_mask, &event)) {
+     	if (event.type == StructureNotifyMask) {
 			printf("structurenotify\n");
 		} else if (event.type == ExposureMask) {
 			printf("exposure\n");
