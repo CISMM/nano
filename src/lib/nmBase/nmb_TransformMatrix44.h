@@ -13,7 +13,9 @@ class nmb_TransformMatrix44 {
     void getMatrix(double *matrix);
     void compose(nmb_TransformMatrix44 &m);
     virtual void transform(double *p_src, double *p_dest) const;
+    virtual void transform(double *pnt) const;
     virtual void invTransform(double *p_src, double *p_dest);
+    virtual void invTransform(double *pnt);
     virtual void invert();
     virtual nmb_TransformMatrix44 *duplicate() const;
     virtual vrpn_bool hasInverse();

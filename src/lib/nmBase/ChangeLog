@@ -1,3 +1,8 @@
+2001-07-24  Adam Seeger  <seeger@cs.unc.edu>
+	
+	* nmb_TransformMatrix44.C (transform): added one argument version
+	  (invTransform): "
+
 2001-07-17  Adam Seeger  <seeger@cs.unc.edu>
 	* BCGrid.C (readPPMorPGMFileNew): changed intensity units from "nm"
 	"unknown_units" since we don't have any way to know what the units are

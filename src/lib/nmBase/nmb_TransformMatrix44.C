@@ -108,13 +108,17 @@ void nmb_TransformMatrix44::compose(nmb_TransformMatrix44 &m)
 }
 
 void nmb_TransformMatrix44::transform(double *p_src, double *p_dest) const {
-
     for (int i = 0; i < 4; i++){
         p_dest[i] = 0;
         for (int j = 0; j < 4; j++){
             p_dest[i] += xform[i][j]*p_src[j];
         }
     }
+}
+
+void nmb_TransformMatrix44::transform(double *pnt) const {
+   double temp[4] = {pnt[0], pnt[1], pnt[2], pnt[3]};
+   transform(temp, pnt);
 }
 
 void nmb_TransformMatrix44::invTransform(double *p_src, double *p_dest) {
@@ -126,16 +130,18 @@ void nmb_TransformMatrix44::invTransform(double *p_src, double *p_dest) {
 //    printf("invTransform\n");
 //    print();
 
-    double result[4] = {0,0,0,0};
     int i,j;
     for (i = 0; i < 4; i++){
+        p_dest[i] = 0.0;
         for (j = 0; j < 4; j++){
-            result[i] += inverse_xform[i][j]*p_src[j];
+            p_dest[i] += inverse_xform[i][j]*p_src[j];
         }
     }
-    for (i = 0; i < 4; i++){
-        p_dest[i] = result[i];
-    }
+}
+
+void nmb_TransformMatrix44::invTransform(double *pnt) {
+   double temp[4] = {pnt[0], pnt[1], pnt[2], pnt[3]};
+   invTransform(temp, pnt);
 }
 
 void nmb_TransformMatrix44::invert() {
