@@ -56,8 +56,8 @@
 #include <nmg_Globals.h>
 
 #include <nmui_Util.h>
-
 #include <nmui_HapticSurface.h>
+#include <nmui_SurfaceFeatures.h>
 
 #include "normal.h"
 #include "relax.h"
@@ -133,6 +133,10 @@ actual feeling helps the students understand the surface.
 */
 Tclvar_int_with_button	config_haptic_enable("Enable Haptic", ".sliders", 1);
 Tclvar_int_with_button	config_haptic_plane("Haptic from flat", ".sliders", 0);
+
+static nmui_HSCanned * canned_haptics = NULL;
+static nmui_PointFeatures * point_haptic_features = NULL;
+static nmui_GridFeatures * grid_haptic_features = NULL;
 
 /***************************
  * Mode of user operation
@@ -232,18 +236,16 @@ Tclvar_int	tcl_phantom_reset_pressed("reset_phantom", 0,
 
 // turn linearization of haptics stimuli on/off
 static void handle_friction_linear_change(vrpn_int32 val, void *userdata);
+static void handle_bumpscale_linear_change(vrpn_int32 val, void *userdata);
+static void handle_buzzscale_linear_change(vrpn_int32 val, void *userdata);
+
 Tclvar_int friction_linear("friction_linear", 0, handle_friction_linear_change);
-int flinear = 0;
 Tclvar_int adhesion_linear("adhesion_linear", 0);
 Tclvar_int compliance_linear("compliance_linear", 0);
-static void handle_bumpscale_linear_change(vrpn_int32 val, void *userdata);
 Tclvar_int bumpscale_linear("bumpscale_linear", 0,
 			    handle_bumpscale_linear_change);
-int bumplinear = 0;
-static void handle_buzzscale_linear_change(vrpn_int32 val, void *userdata);
 Tclvar_int buzzscale_linear("buzzscale_linear", 0,
 			    handle_buzzscale_linear_change);
-int buzzlinear = 0;
 
 Tclvar_float handTracker_update_rate ("handTracker_update_rate", 60.0,
                                       handle_handTracker_update_rate);
@@ -256,15 +258,6 @@ int qmf_lookat(q_type ,  q_vec_type,  q_vec_type,  q_vec_type);
 int doLight(int, int);
 int doFly(int, int);
 int doScale(int, int, double);
-void specify_surface_compliance(int, int);
-void specify_surface_friction(int, int);
-void specify_surface_adhesion(int, int);
-void specify_surface_bumpsize(int, int);
-void specify_surface_buzzamplitude(int, int);
-void specify_point_friction(void);
-void specify_point_adhesion(void);
-void specify_point_bumpsize(void);
-void specify_point_buzzamplitude(void);
 int specify_directZ_force(int);
 double touch_canned_from_plane(int, q_vec_type handpos);
 double touch_flat_from_measurelines(int, q_vec_type handpos);
@@ -273,10 +266,6 @@ int plane_norm(int);
 int set_aim_line_color(float);
 int meas_cross( float, float, float, float, float);
 int doMeasure(int, int);
-
-///to take a log in an arbitrary base to linearize magnitude perception of
-///haptic stimuli 
-double log_any_base(double, double);
 
 int doLine(int, int);
 int doFeelFromGrid(int, int);
@@ -341,15 +330,18 @@ TclNet_float tcl_wfr_scale
 
 
 static void handle_friction_linear_change(vrpn_int32 val, void *) {
-  flinear = val;
+  point_haptic_features->useLinearFriction(val);
+  grid_haptic_features->useLinearFriction(val);
 }
 
 static void handle_bumpscale_linear_change(vrpn_int32 val, void *) {
-  bumplinear = val;
+  point_haptic_features->useLinearBumps(val);
+  grid_haptic_features->useLinearBumps(val);
 }
 
 static void handle_buzzscale_linear_change(vrpn_int32 val, void *) {
-  buzzlinear = val;
+  point_haptic_features->useLinearBuzzing(val);
+  grid_haptic_features->useLinearBuzzing(val);
 }
 
 static void handle_handTracker_update_rate (vrpn_float64 v, void *) {
@@ -1308,58 +1300,6 @@ doScale(int whichUser, int userEvent, double scale_factor)
 return 0;
 }	/* doScale */
 
-/*****************************************************************************
- *
-   specify_surface_compliance - ??????
- *
- *****************************************************************************/
-
-void specify_surface_compliance(int x, int y)
-{
-    static int firstExecution = 1;
-    double Kspring = Arm_knobs[FORCE_KNOB]*(MAX_K-MIN_K)+MIN_K;
-
-    if (firstExecution)
-        printf("Setting surface compliance...\n");
- 
-    BCPlane* plane = dataset->inputGrid->getPlaneByName
-                      (compliancePlaneName.string());
-    if (plane == NULL) {
-	if (forceDevice)
-        	forceDevice->setSurfaceKspring(Kspring);
-	if (firstExecution) 
-		printf("Kspring = %g\n", Kspring);
-        firstExecution = 0;
-        return;
-    }
-
-    if (compliance_slider_max != compliance_slider_min) {
-
-        if (firstExecution)
-            printf("Basing Kspring on compliance data set\n");
-
-        Kspring = (plane->value(x,y) - compliance_slider_min) /
-                 (compliance_slider_max - compliance_slider_min);
-	//already linear scaling with perception, so don't have to take log
-	printf("kspring: %f\n", Kspring);
-        Kspring = min(1,Kspring);   /*click scale to be in [0,1] */
-        Kspring = max(0,Kspring);
-	// XXX Magic number!!
-        Kspring *=1.3;
-        Kspring =  Kspring *(MAX_K-MIN_K)+MIN_K;
-
-        if (firstExecution) 
-		printf("Kspring = %g\n", Kspring);
-	if (forceDevice)
-        	forceDevice->setSurfaceKspring(Kspring);
-    } 
-    else if (forceDevice){
-    	forceDevice->setSurfaceKspring(Kspring);
-    }
-
-    firstExecution = 0;
-}
-
 void specify_sound(int x, int y)
 {
   static int firstExecution = 1;
@@ -1392,231 +1332,6 @@ void specify_sound(int x, int y)
    firstExecution = 0;
 }
 
-double log_any_base(double base, double x)
-{
-	return log(x) / log(base);
-}
-
-void specify_surface_friction(int x, int y)
-{
-  static int firstExecution = 1;
-  double kS;
-  BCPlane *plane;
-
-  if (firstExecution)
-    printf("Setting surface friction...\n");
-  
-  
-  // Find out which plane to use.  If there is none, set the friction
-  // based on the knob setting.
-  plane = dataset->inputGrid->getPlaneByName(frictionPlaneName.string());
-  if (plane == NULL) {
-    kS = max(0.0, Arm_knobs[FRICTION_KNOB] ); /* [0,1]  */
-    if (forceDevice){
-        forceDevice->setSurfaceFstatic(kS); 
-        forceDevice->setSurfaceFdynamic(0.5 * kS);
-    }
-    firstExecution = 0;
-    return;
-  }  
-  
-// If the friction range is zero length, set static friction cosntant based on
-// knob.
- 
-  if (friction_slider_max != friction_slider_min) {
-   
-    
-    if (firstExecution)
-      printf("Basing friction (kS) on auxiliary data set...\n");
-    
-    kS = (plane->value(x,y) - friction_slider_min) / 
-      (friction_slider_max - friction_slider_min);
-
-    if (flinear == 1) {
-      kS = log_any_base(1.5, kS); /* 1.5 because perceived magnitude is
-				    proportional to x^1.5, but we want to get a
-				    linear scaling with perception. */
-    }
-    
-    kS = min(1,kS);   /*click scale to be in [0,1] */
-    kS = max(0,kS);
-    
-    if (firstExecution) printf("kS = %g\n", kS);
-    if (forceDevice) forceDevice->setSurfaceFstatic(kS);
-  } else {
-    kS = max(0.0, Arm_knobs[FRICTION_KNOB]); /*[0, 1]*/
-    if (forceDevice) forceDevice->setSurfaceFstatic(kS); /*[0, 1]*/
-  }
-  if (forceDevice) forceDevice->setSurfaceFdynamic(0.5 * kS);
-  firstExecution = 0;
-}
-
-void specify_surface_bumpsize(int x, int y)
-{
-  static int firstExecution = 1;
-  double wavelength;
-  BCPlane *plane;
-
-  if (firstExecution)
-    printf("Setting surface bump size...\n");
- 
- 
-  // Find out which plane to use.  If there is none, set the bump amplitude
-  // to zero
-  plane = dataset->inputGrid->getPlaneByName(bumpPlaneName.string());
-  if (plane == NULL) {
-    if (forceDevice){
-        forceDevice->setSurfaceTextureAmplitude(0);
-    }
-    firstExecution = 0;
-    return;
-  } 
-
-// If the bump range is zero length, disable bumps
-
-  if (bump_slider_max != bump_slider_min) {
-  
-   
-    if (firstExecution)
-      printf("Basing bump size (wavelength) on auxiliary data set...\n");
-
-/*
-    wavelength = (plane->value(x,y) - bump_slider_min) /
-      (bump_slider_max - bump_slider_min);
-*/
-	wavelength = (plane->value(x,y) - plane->minValue())/
-		(plane->maxValue() - plane->minValue());
-
-	if (bumplinear == 1) {
-	  wavelength = log_any_base(0.86, wavelength); /*0.86 because perceived
-							 magnitude is
-							 proportional to x^0.8
-							 but we want to get a
-							 linear scaling with
-							 perception. */
-	}
-    wavelength = min(1,wavelength);   /*clamp scale to be in [0,1] */
-    wavelength = max(0,wavelength);
-	wavelength = 0.0004 + wavelength*0.004;	// XXX magic number
-
-    if (firstExecution) printf("haptic texture wavelength = %g\n", wavelength);
-    if (forceDevice) {
-//		printf("setting wavelength %f meters\n", wavelength);
-		forceDevice->setSurfaceTextureWavelength(wavelength);
-		// use a constant ratio (0.01) between amplitude and wavelength to
-		// keep maximum slope constant
-		forceDevice->setSurfaceTextureAmplitude(0.1*wavelength);
-	}
-  } else {
-    if (forceDevice) forceDevice->setSurfaceTextureAmplitude(0);
-  }
-  firstExecution = 0;
-}
-
-void specify_surface_buzzamplitude(int x, int y)
-{
-  static int firstExecution = 1;
-  double amp;
-  BCPlane *plane;
-
-  if (firstExecution)
-    printf("Setting surface buzz amplitude...\n");
-
-
-  // Find out which plane to use.  If there is none, set the buzz amplitude
-  // to zero
-  plane = dataset->inputGrid->getPlaneByName(buzzPlaneName.string());
-  if (plane == NULL) {
-    if (forceDevice){
-        forceDevice->setSurfaceBuzzAmplitude(0);
-    }
-    firstExecution = 0;
-    return;
-  }
-
-// If the buzz range is zero length, disable buzzing
-
-  if (buzz_slider_max != buzz_slider_min) {
-
-
-    if (firstExecution)
-      printf("Basing buzzing (amplitude) on auxiliary data set...\n");
-
-/*
-    amp = (plane->value(x,y) - buzz_slider_min) /
-      (buzz_slider_max - buzz_slider_min);
-*/
-
-	amp = (plane->value(x,y) - plane->minValue()) /
-		(plane->maxValue() - plane->minValue());
-	if (buzzlinear == 1) {
-	  amp = log_any_base(0.95, amp); //0.95 because perceived magnitude is
-                                //proportional to x^0.95, but we want to get a
-                                //linear scaling with perception.
-        }
-    amp = min(1,amp);   /*click scale to be in [0,1] */
-    amp = max(0,amp);
-
-	amp = 0.0001 + 0.0009*amp;
-    if (firstExecution) printf("buzzing amplitude = %g\n", amp);
-    if (forceDevice) {
-//		printf("setting amplitude %f meters\n", amp);
-		// use the same frequency used in our psychophysical experiment
-        forceDevice->setSurfaceBuzzFrequency(115.0);
-        forceDevice->setSurfaceBuzzAmplitude(amp);
-    }
-  } else {
-    if (forceDevice) forceDevice->setSurfaceBuzzAmplitude(0);
-  }
-  firstExecution = 0;
-}
-
-/*****************************************************************************
- *
-   specify_surface_adhesion - called by touch_canned_from_plane
- *
- *****************************************************************************/
-void specify_surface_adhesion(int x, int y)
-{
-
-    static int firstExecution = 1;
-
-    if (firstExecution)
-        printf("Setting surface adhesion...\n");
-
-    int k_adhesion_const = adhesion_constant;
-
-    // Use a name that selects from which grid to use
-    // for adhesion, and also a minmax scale to map that to each of its
-    // parameters.
-
-    BCPlane* plane = dataset->inputGrid->getPlaneByName
-                      (adhesionPlaneName.string());
-    if (plane == NULL) {
-      firstExecution = 0;
-      return;
-    }
-
-    if (adhesion_slider_max != adhesion_slider_min) {
-        double scale, k_adhesion;
-
-        if (firstExecution)
-            printf("Basing adhesion (k_adhesion) on auxiliary data set...\n");
-
-        scale = (plane->value(x,y) - adhesion_slider_min) /
-                 (adhesion_slider_max - adhesion_slider_min);
-        scale = min(1,scale);   /*click scale to be in [0,1] */
-        scale = max(0,scale);
-
-        k_adhesion = k_adhesion_const * scale;  
-        if (firstExecution)
-             printf("scale = %g, k_adhesion = %g\n", scale, k_adhesion);
-
-    }
-
-    firstExecution = 0;
-}
-
 
 
 /*****************************************************************************
@@ -1639,32 +1354,32 @@ void specify_surface_adhesion(int x, int y)
 
 double touch_canned_from_plane (int whichUser, q_vec_type handpos) {
 
-  static nmui_HSCanned haptics (dataset);
   q_vec_type n;
   double d;
 
   // If the user has selected feel_from_flat, then call that routine
   // instead.
   if (config_haptic_plane) {
-	return touch_flat_from_measurelines(whichUser, handpos);
+    return touch_flat_from_measurelines(whichUser, handpos);
   }
 
-  haptics.setLocation(handpos);
-  haptics.update();
+  canned_haptics->setLocation(handpos);
+  canned_haptics->update();
 
   if (forceDevice) {
-    haptics.getOutputPlane(n, &d);
+    canned_haptics->getOutputPlane(n, &d);
     forceDevice->set_plane(n[0], n[1], n[2], d);
   }
 
-  specify_surface_compliance(haptics.getGridX(), haptics.getGridY());
-  specify_surface_friction(haptics.getGridX(), haptics.getGridY());
-  specify_surface_bumpsize(haptics.getGridX(), haptics.getGridY());
-  specify_surface_buzzamplitude(haptics.getGridX(), haptics.getGridY());
+  // Set adhesion, compliance, bumps, buzzing, ...
+  // Must come after canned_haptics->setLocation(), and
+  // probably update() too.
+
+  grid_haptic_features->update();
 
   // Return signed distance above plane (plane in world space).
 
-  return haptics.distanceFromSurface();
+  return canned_haptics->distanceFromSurface();
 }
 
 
@@ -1753,11 +1468,10 @@ double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
     haptics.getOutputPlane(n, &d);
     forceDevice->set_plane(n[0], n[1], n[2], d);
       
-    forceDevice->setSurfaceKspring(Arm_knobs[FORCE_KNOB]*(MAX_K-MIN_K)+MIN_K);
-    specify_point_friction();
-    specify_point_adhesion();
-    specify_point_bumpsize();
-    specify_point_buzzamplitude();
+    // Set friction, adhesion, compliance...
+    // Must happen after haptics.setLocation(), and probably update().
+
+    point_haptic_features->update();
 
     /* Send the plane to the haptic server */
     forceDevice->sendSurface();
@@ -1765,223 +1479,6 @@ double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
 
   return haptics.distanceFromSurface();
 }
-
-/*****************************************************************************
- *
-   specify_point_friction - called by touch_live_to_plane_fit_to_line
- *
- *****************************************************************************/
-
-void specify_point_friction(void)
-{
-   static int firstExecution=1;
-
-   if(firstExecution) {
-      printf("Setting surface friction...\n");
-      firstExecution = 0;
-   }
-
-   if (!forceDevice) return;
-   forceDevice->setSurfaceFdynamic(max(0.0, Arm_knobs[FRICTION_KNOB]));
-
-
-    // Scale the value by the scale factor of the currently-displayed
-    // data set.  If there is no data set, use the knob value.
-    Point_value *value =
-        microscope->state.data.inputPoint->getValueByPlaneName
-                     (frictionPlaneName.string());
-
-    if (value == NULL) { // No friction specified -- use knob
-       forceDevice->setSurfaceFstatic(max(0.0, Arm_knobs[FRICTION_KNOB])); /* [0, 1] */        
-         return;
-    }
-
-    // If the range for friction is of zero length, base the friction
-    // on the knob value. 
-    double kS;
-
-    if(friction_slider_min!=friction_slider_max) {       
-        if (firstExecution)
-           printf("Basing friction (kS) on friction plane...\n");
- 
-        kS = ( value->value()  - friction_slider_min) /
-                (friction_slider_max - friction_slider_min);
-	if (flinear == 1) {
-	  kS = log_any_base(1.5, kS); /*1.5 because perceived magnitude is
-					proportional to x^1.5, but we want to get a
-					linear scaling with perception. */
-	}
-        kS = min(1,kS);   /*click scale to be in [0,1] */
-        kS = max(0,kS);
-
-        if (firstExecution)
-           printf("kS = %g\n", kS);
-
-       forceDevice->setSurfaceFstatic(kS);
-    } else {
-      kS = max(0.0, Arm_knobs[FRICTION_KNOB]);
-      forceDevice->setSurfaceFstatic(kS);
-   }
-
-}   
-
-/*****************************************************************************
- *
-   specify_point_bumpsize - called by touch_live_to_plane_fit_to_line
- *
- *****************************************************************************/
-
-void specify_point_bumpsize(void)
-{
-   static int firstExecution=1;
-
-   if(firstExecution) {
-      printf("Setting point bumpsize...\n");
-      firstExecution = 0;
-   }
-
-   if (!forceDevice) return;
-
-    // Scale the value by the scale factor of the currently-displayed
-    // data set.  If there is no data set, disable bump texture.
-    Point_value *value =
-			microscope->state.data.inputPoint->getValueByPlaneName
-                                (bumpPlaneName.string());
-
-    if (value == NULL) { // No bump size specified, disable
-       forceDevice->setSurfaceTextureAmplitude(0);
-       return;
-    }
-
-    // If the range for bumps is of zero length, disable bumps
-    double wavelength;
-
-    if(bump_slider_min!=bump_slider_max) {
-        if (firstExecution)
-           printf("Basing haptic texture (wavelength) on bump plane...\n");
-
-        wavelength = ( value->value()  - bump_slider_min) /
-                (bump_slider_max - bump_slider_min);
-	if (bumplinear == 1) {
-	  wavelength = log_any_base(0.86, wavelength); /*0.86 because perceived
-							 magnitude is
-							 proportional to
-							 x^0.86, but we want
-							 to get a linear
-							 scaling with
-							 perception. */
-	}
-
-        wavelength = min(1,wavelength);   /*click scale to be in [0,1] */
-        wavelength = max(0,wavelength);
-
-        if (firstExecution)
-           printf("wavelength = %g\n", wavelength);
-
-	   // convert from cm to meters
-       forceDevice->setSurfaceTextureWavelength(wavelength*0.01);
-	   forceDevice->setSurfaceTextureAmplitude(0.1*wavelength*0.01);
-    } else {
-      forceDevice->setSurfaceTextureAmplitude(0);
-   }
-}  
-
-/*****************************************************************************
- *
-   specify_point_buzzamplitude - called by touch_live_to_plane_fit_to_line
- *
- *****************************************************************************/
-
-void specify_point_buzzamplitude(void)
-{
-   static int firstExecution=1;
-
-   if(firstExecution) {
-      printf("Setting point buzzsize...\n");
-      firstExecution = 0;
-   }
-
-   if (!forceDevice) return;
-
-    // Scale the value by the scale factor of the currently-displayed
-    // data set.  If there is no data set, disable buzzing
-    Point_value *value =
-            microscope->state.data.inputPoint->getValueByPlaneName
-                (buzzPlaneName.string());
-
-    if (value == NULL) { // No buzz amplitude specified, disable
-       forceDevice->setSurfaceBuzzAmplitude(0);
-       return;
-    }
-
-    // If the range for amp is of zero length, disable buzzing
-    double amp;
-
-    if(buzz_slider_min!=buzz_slider_max) {
-        if (firstExecution)
-           printf("Basing buzzing (amplitude) on buzz plane...\n");
-
-        amp = ( value->value()  - buzz_slider_min) /
-                (buzz_slider_max - buzz_slider_min);
-	if (buzzlinear == 1) {
-	  amp = log_any_base(0.95, amp); //0.95 because perceived magnitude is
-                                //proportional to x^0.95, but we want to get a
-                                //linear scaling with perception.
-        }
-        amp = min(1,amp);   /*click scale to be in [0,1] */
-        amp = max(0,amp);
-
-        if (firstExecution)
-           printf("amplitude = %g\n", amp);
-
-       // see comments in specify_surface_buzzamplitude
-       forceDevice->setSurfaceBuzzAmplitude(amp*0.002);
-       forceDevice->setSurfaceBuzzFrequency(115.0);
-    } else {
-      forceDevice->setSurfaceBuzzAmplitude(0);
-   }
-} 
-
-/*****************************************************************************
- *
-   specify_point_adhesion - called by touch_live_to_plane_fit_to_line
- *
- *****************************************************************************/
-
-void specify_point_adhesion(void)
-{
-   static int firstExecution=1;
-
-   if(firstExecution) {
-      printf("Setting point adhesion...\n");
-      firstExecution = 0;
-   }
-
-   //int k_adhesion_const=adhesion_constant;
-
-   // Scale the value by the scale factor of the currently-displayed
-   // data set.  If there is no value, set the adhesion to 0.
-   Point_value *value =
-        microscope->state.data.inputPoint->getValueByPlaneName
-                     (adhesionPlaneName.string());
-
-   if (value == NULL)
-         return;
-
-   // If the adhesion range is of zero length, set the adhesion to 0.
-   if(adhesion_slider_min != adhesion_slider_max) {
-        double scale /*, k_adhesion */ ;
-
-        scale = ( value->value()  - adhesion_slider_min) /
-                (adhesion_slider_max - adhesion_slider_min);
-        scale = min(1,scale);   /*click to be in [0,1] */
-        scale = max(0,scale);
-   }
-}
-
-
-
-
 
 
 /*****************************************************************************
@@ -2654,6 +2151,7 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	    /* if user is below the surface on the initial press, don't send
 	       the surface, because the user will get a strong upward force. */
 	    aboveSurf= touch_canned_from_plane(whichUser, clipPos);
+//fprintf(stderr, "doFeelFromGrid() PRESS %.5f above surface.\n", aboveSurf);
 	    if( !SurfaceGoing && aboveSurf>0) {
 	      if (forceDevice && config_haptic_enable) {
               	forceDevice->startSurface();
@@ -2666,6 +2164,7 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	    /* stylus continues to be pressed */
 	    /* Apply force to the user based on grid */
 	    aboveSurf = touch_canned_from_plane(whichUser, clipPos);
+//fprintf(stderr, "doFeelFromGrid() HOLD %.5f above surface.\n", aboveSurf);
 	    if (SurfaceGoing || aboveSurf>0) {
 	      if (forceDevice && config_haptic_enable) {
               	forceDevice->sendSurface();
@@ -3214,6 +2713,11 @@ void initializeInteraction (void) {
 //(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
 //fprintf(stderr, "Starting world scale is %.5f\n",
 //(vrpn_float64) tcl_wfr_scale);
+
+  canned_haptics = new nmui_HSCanned (dataset);
+  point_haptic_features = new nmui_PointFeatures (microscope);
+  grid_haptic_features = new nmui_GridFeatures (canned_haptics, dataset);
+
 }
 
 
