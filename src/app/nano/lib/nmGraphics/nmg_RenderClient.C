@@ -81,7 +81,10 @@ void nmg_Graphics_RenderClient::blockTimer (void) {
   vrpn_int32 sn;
   vrpn_int32 msglen;
 
-  if (!d_timer || !d_timeGraphics) {
+  if (!d_timeGraphics) {
+    return;
+  }
+  if (!d_timer) {
     fprintf(stderr, "nmg_Graphics_RenderClient::blockTimer:  no timer!\n");
     return;
   }
