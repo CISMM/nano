@@ -113,26 +113,12 @@ void nmb_SharedDevice_Remote::releaseMutex (void) {
 
 // virtual
 long nmb_SharedDevice_Remote::sendBuffer(void) {
-  long retval = 0;
+  long retval;
   vrpn_bool use_buffer_save = getBufferEnable();
+
   setBufferEnable(vrpn_FALSE);
 
-  messageBufferEntry *m = d_messageBufferHead;
-  while (m) {
-    if (!retval) {
-      retval = dispatchMessage(m->len, m->buf, m->type);
-    }
-    else {
-      fprintf(stderr, 
-            "nmb_SharedDevice_Remote::sendBuffer failure:"
-            " throwing away messages\n");
-    }
-    d_messageBufferHead = m->next;
-    delete m;
-    m = d_messageBufferHead;
-  }
-  // we've deleted the whole buffer now so tail should be NULL
-  d_messageBufferTail = NULL;
+  retval = nmb_Device_Client::sendBuffer();
 
   setBufferEnable(use_buffer_save);
 
@@ -147,6 +133,23 @@ long nmb_SharedDevice_Remote::dispatchMessage (long len, const char * buf,
   vrpn_bool bufferingOn = getBufferEnable();
   if (d_mutex.isHeldLocally() || typeIsSafe(type) || bufferingOn) {
     return nmb_Device_Client::dispatchMessage(len, buf, type);
+  }
+
+//fprintf(stderr, "nmb_SharedDevice_Remote:  throwing out a message\n"
+//"  (type %d, to %s) since we don't have the lock.\n", type, d_myName);
+
+  return 0;
+}
+
+
+// virtual
+long nmb_SharedDevice_Remote::dispatchRedundantMessage
+                                       (long len, const char * buf,
+                                        vrpn_int32 type) {
+
+  vrpn_bool bufferingOn = getBufferEnable();
+  if (d_mutex.isHeldLocally() || typeIsSafe(type) || bufferingOn) {
+    return nmb_Device_Client::dispatchRedundantMessage(len, buf, type);
   }
 
 //fprintf(stderr, "nmb_SharedDevice_Remote:  throwing out a message\n"

@@ -6,6 +6,8 @@
 
 #include "nmb_Device.h"
 
+#include <vrpn_RedundantTransmission.h>
+
 char * nmb_Device::encode_RequestSynchronization (long *len,
           vrpn_int32 operation_id, vrpn_int32 synch_id,
           const char *comment)
@@ -83,9 +85,10 @@ long nmb_Device::decode_Synchronization (const char ** buf,
 
 nmb_Device::nmb_Device(const char * name,
                        vrpn_Connection * connection) :
-                       d_connection (connection),
-                       d_fileController (new vrpn_File_Controller (connection)),
-                       d_connected(VRPN_FALSE)
+    d_connection (connection),
+    d_fileController (new vrpn_File_Controller (connection)),
+    d_connected (VRPN_FALSE),
+    d_redundancy (NULL)
 {
   char * servicename = NULL;
   servicename = vrpn_copy_service_name(name);
@@ -182,6 +185,31 @@ long nmb_Device::dispatchMessage (long len, const char * buf,
   }
   return retval;
 }
+
+long nmb_Device::dispatchRedundantMessage (long len, const char * buf,
+                                           vrpn_int32 type)
+{
+  struct timeval now;
+  long retval = 0;
+
+  gettimeofday(&now, NULL);
+  // If we aren't connected to anything, just pretend we sent the message
+  // Useful if we are viewing a file
+  if (d_redundancy) {
+      retval = d_redundancy->pack_message(len, now, type, d_myId, (char *) buf,
+                                          vrpn_CONNECTION_RELIABLE);
+  } else if (d_connection) {
+      retval = d_connection->pack_message(len, now, type, d_myId,
+                                      (char *) buf, vrpn_CONNECTION_RELIABLE);
+  } else {
+      retval = 0;
+  }
+  if (len > 0) {
+      delete [] ((char *) buf);
+  }
+  return retval;
+}
+
 
 vrpn_bool nmb_Device::connected()
 {
@@ -322,9 +350,12 @@ long nmb_Device_Client::sendBuffer()
   messageBufferEntry *m = d_messageBufferHead;
   while (m) {
     if (!retval) {
-      retval = nmb_Device::dispatchMessage(m->len, m->buf, m->type);
-    }
-    else {
+      if (m->isRedundant) {
+        retval = nmb_Device::dispatchRedundantMessage(m->len, m->buf, m->type);
+      } else {
+        retval = nmb_Device::dispatchMessage(m->len, m->buf, m->type);
+      }
+    } else {
       fprintf(stderr, "Warning: sendBuffer failure: throwing away messages\n");
     }
     d_messageBufferHead = m->next;
@@ -354,26 +385,32 @@ long nmb_Device_Client::dispatchMessage (long len, const char * buf,
   if (!d_useBuffer) {
     return nmb_Device::dispatchMessage(len, buf, type);
   } else {
-    if (!d_messageBufferHead) {
-      d_messageBufferHead = new messageBufferEntry;
-      d_messageBufferTail = d_messageBufferHead;
-    } else {
-      assert(d_messageBufferTail != NULL);
-      d_messageBufferTail->next = new messageBufferEntry;
-      if (!(d_messageBufferTail->next)) {
-          fprintf(stderr, "nmb_Device_Client::dispatchMessage: Error, "
-            "out of memory\n");
-          return -1;
-      }
-      d_messageBufferTail = d_messageBufferTail->next;
+    retval = bufferMessage(len, buf, type);
+    if (retval) {
+      return retval;
     }
-    d_messageBufferTail->len = len;
-    d_messageBufferTail->buf = (char *) buf;
-    d_messageBufferTail->type = type;
-    d_messageBufferTail->next = NULL;
+    d_messageBufferTail->isRedundant = VRPN_FALSE;
   }
   return retval;
 }
+
+long nmb_Device_Client::dispatchRedundantMessage (long len, const char * buf,
+                                      vrpn_int32 type)
+{
+  long retval = 0;
+
+  if (!d_useBuffer) {
+    return nmb_Device::dispatchRedundantMessage(len, buf, type);
+  } else {
+    retval = bufferMessage(len, buf, type);
+    if (retval) {
+      return retval;
+    }
+    d_messageBufferTail->isRedundant = VRPN_TRUE;
+  }
+  return retval;
+}
+
 
 
 // static
@@ -401,6 +438,29 @@ int nmb_Device_Client::handle_Synchronization(void *userdata,
 
   // comment may be allocated in decode_Synchronization()
   if (comment) delete [] comment;
+
+  return 0;
+}
+
+int nmb_Device_Client::bufferMessage (long len, const char * buf,
+                                       vrpn_int32 type) {
+  if (!d_messageBufferHead) {
+    d_messageBufferHead = new messageBufferEntry;
+    d_messageBufferTail = d_messageBufferHead;
+  } else {
+    assert(d_messageBufferTail != NULL);
+    d_messageBufferTail->next = new messageBufferEntry;
+    if (!(d_messageBufferTail->next)) {
+        fprintf(stderr, "nmb_Device_Client::dispatchMessage: Error, "
+          "out of memory\n");
+        return -1;
+    }
+    d_messageBufferTail = d_messageBufferTail->next;
+  }
+  d_messageBufferTail->len = len;
+  d_messageBufferTail->buf = (char *) buf;
+  d_messageBufferTail->type = type;
+  d_messageBufferTail->next = NULL;
 
   return 0;
 }

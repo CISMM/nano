@@ -86,6 +86,9 @@ class nmb_SharedDevice_Remote : public nmb_Device_Client {
       ///< message on to nmb_Device_Client::dispatchMessage() to be buffered
       ///< or sent as appropriate.
 
+    virtual long dispatchRedundantMessage
+                            (long len, const char * buf, vrpn_int32 type);
+
 
     void markTypeAsSafe (vrpn_int32 type);
       ///< Messages of the given type will be dispatched even when we don't

@@ -1,3 +1,17 @@
+2000-12-05  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmb_Device.C : add new member d_redundancy
+	(nmb_Device::dispatchRedundantMessage) : new function
+	(nmb_Device_Client::dispatchRedundantMessage) : same
+	(nmb_Device_Client::bufferMessage) : same
+	(nmb_Device_Client::dispatchMessage) : factor common code into
+	bufferMessage()
+	* nmb_SharedDevice.C
+	(nmb_SharedDevice_Remote::sendBuffer) : instead of duplicating
+	code, call nmb_Device_Client::sendBuffer()
+	(nmb_SharedDevice_Remote::dispatchRedundantMessage) : new function
+
+
 2000-12-05  Kwan Torrich Skinner <skinner@cs.unc.edu>
 
 	* BCPlane.[C,h] (BCPlane::computeOptimizeMinMax) : new function.
