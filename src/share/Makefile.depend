@@ -15,7 +15,7 @@ endif
 # The depend file sets the following variables itself.
 #
 
-DEPEND_EXISTS := $(shell test -r $(MAKEFILE_DEPEND) && echo "true")a
+DEPEND_EXISTS := $(shell test -r $(MAKEFILE_DEPEND) && echo "true")
 ifneq ($(DEPEND_EXISTS),true)
 	ifdef USES_LIBS
 	 	ALT_LIBS := $(foreach lib,$(USES_LIBS),$(findstring $(lib),$(filter-out -L/%,$(MY_ALT_LIB_DIR))))

@@ -1,3 +1,8 @@
+2002-01-21  Aron Helser  <helser@cs.unc.edu>
+
+	* Makefile.depend (DEPEND_EXISTS): Removed typo "a" that was
+	causing test to always fail. 
+
 2002-01-16  Nathan Conrad  <conrad@cs.unc.edu>
 
 	* Makefile.depend (MAKEFILE_DEPEND): Reverted the top portion of
