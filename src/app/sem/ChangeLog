@@ -1,3 +1,11 @@
+2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM_EDAX.C: changed the response to the requestScan
+	message so if the number of scans requested is positive, the sem server 
+    will acquire one image before processing additional messages - this was
+	necessary to allow acquisition of an image to 
+    be a synchronizable event
+
 2002-09-30  Adam Seeger  <seeger@cs.unc.edu>
 
     * nmm_Microscope_SEM_EDAX.C: changed default pixel integration time from

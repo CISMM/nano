@@ -813,6 +813,8 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::requestScan(vrpn_int32 nscans)
     } else {
         d_scan_enabled = vrpn_TRUE;
         d_scans_to_do += nscans;
+		acquireImage();
+		d_scans_to_do--;
     }
     return 0;
 }
