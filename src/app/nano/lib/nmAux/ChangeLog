@@ -1,3 +1,9 @@
+2002-01-14    <conrad@cs.unc.edu>
+
+	* nmAux.dsp: Added an include to ..\.. in the VC++ .dsp file
+	for the 'Release' target. This caused Release, but not Debug, to
+	fail to compile.
+	
 2001-12-20  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* Makefile:  remove ImgFormat from USES_LIBS
