@@ -375,9 +375,6 @@ class nmg_Graphics {
     TextureMode getTextureMode (void) const;
 
 
-    static const unsigned int defaultPort;
-      // port on which to connect to a graphics server
-
   protected:
 
     TextureMode d_textureMode;
