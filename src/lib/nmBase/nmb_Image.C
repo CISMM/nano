@@ -222,9 +222,6 @@ void nmb_Image::getWorldToImageTransform(double *matrix44)
     x01 = boundX(nmb_ImageBounds::MIN_X_MAX_Y);
     y01 = boundY(nmb_ImageBounds::MIN_X_MAX_Y);
 
-printf("debug: nmb_Image: image corners at: (%g, %g), (%g, %g), (%g, %g)\n",
-        x00, y00, x10, y10, x01, y01);
-
     double det;
     det = (x10-x00)*(y01-y00) - (y10-y00)*(x01-x00);
 
@@ -904,14 +901,14 @@ nmb_ImageArray::nmb_ImageArray(const char *name,
        nx_test /= 2;
        nx_round *= 2;
     }
-    if (nx_round < num_x) {
+    if (nx_round <= num_x) {
        nx_round *= 2;
     }
     while (ny_test > 1) {
        ny_test /= 2;
        ny_round *= 2;
     }
-    if (ny_round < num_y) {
+    if (ny_round <= num_y) {
        ny_round *= 2;
     }
     d_borderXMin = (nx_round-num_x)/2;
@@ -964,7 +961,7 @@ nmb_ImageArray::nmb_ImageArray(const char *name,
         break;
       case NMB_UINT8:
         for (j = 0; j < array_size; j++) {
-           ucData[j] = 0;
+           ucData[j] = 255;
         }
         break;
       case NMB_UINT16:
