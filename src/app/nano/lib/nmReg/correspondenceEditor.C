@@ -33,8 +33,6 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
 	char *display_name;
 	display_name = (char *)getenv("V_X_DISPLAY");
 	if (display_name == NULL)
-		display_name = (char *)getenv("DISPLAY");
-	if (display_name == NULL)
 		display_name = strdup("unix:0");
 	else
 		display_name = strdup(display_name);

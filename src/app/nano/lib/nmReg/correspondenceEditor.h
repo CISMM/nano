@@ -3,6 +3,8 @@
 
 #include "imageViewer.h"
 #include "correspondence.h"
+#include "PNMImage.h"
+#include "PPM.h"
 
 #define POINT_SIZE (4)
 /* this class is responsible for displaying and allowing the manipulation of

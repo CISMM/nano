@@ -30,10 +30,10 @@ into windows and to convert from window to image coordinates and vice versa.
 #	include <unistd.h>
 #endif
 
-#include "BCPlane.h"
-#include "PNMImage.h"
-#include "PPM.h"
-#include "nmb_Types.h"       // for vrpn_bool
+//#include "BCPlane.h"
+//#include "PNMImage.h"
+//#include "PPM.h"
+#include "vrpn_Types.h"
 
 
 #define MAX_WIN (10)
@@ -60,8 +60,9 @@ typedef struct _ImageViewerWindowEvent {
     unsigned int keycode;
 } ImageViewerWindowEvent;
 
-typedef int (*ImageViewerWindowEventHandler)
-		(const ImageViewerWindowEvent &event, void *ud);
+typedef int (*ImageViewerWindowEventHandler) 
+	(const ImageViewerWindowEvent &ivwe, void *ud);
+		
 
 typedef struct _ImageViewerDisplayData {
     int winID;
@@ -95,7 +96,8 @@ class ImageWindow {
     int display_index;
     vrpn_bool visible;
     vrpn_bool needs_redisplay;
-    float *image;
+    void *image;
+    int d_pixelMode;
     double min_value, max_value;
     ImageViewerWindowEventHandler event_handler;
     void *event_handler_ud;
@@ -126,12 +128,14 @@ class ImageViewer {
     int init(char *display);
     void mainloop(); // updates displays, checks for user interaction
     int createWindow(char *display_name,
-		int x, int y, int w, int h, char *name);
+		int x, int y, int w, int h, char *name, 
+                int pixelType = GL_FLOAT);
     int setWindowImageSize(int winID, int im_w, int im_h);
     int imageWidth(int winID);
     int imageHeight(int winID);
     int setValueRange(int winID, double min, double max);
     int setValue(int winID, int x, int y, double value);
+    int setScanline(int winID, int y, vrpn_uint8 *line);
     int showWindow(int winID);
     int hideWindow(int winID);
     int setWindowEventHandler(int winID,

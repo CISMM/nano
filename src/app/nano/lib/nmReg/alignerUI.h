@@ -13,7 +13,8 @@
 class AlignerUI {
   public:
 	AlignerUI(nmg_Graphics *g, nmb_ImageList *im,Tcl_Interp *interp, 
-					const char *tcl_script_dir);
+                   const char *tcl_script_dir,
+                   nmb_String * (* string_allocator) (const char *));
 	~AlignerUI();
     	int addImage(nmb_Image *im);
         void displayTexture(int enable) {textureDisplayEnabled = enable;};
@@ -30,24 +31,30 @@ class AlignerUI {
   private:
 
 	// control panel variables
-	Tclvar_string datasetRegistrationPlaneName3D;
-	Tclvar_string datasetRegistrationPlaneName2D;
+	//Tclvar_string *datasetRegistrationPlaneName3D;
+        nmb_String *datasetRegistrationPlaneName3D;
+	//Tclvar_string *datasetRegistrationPlaneName2D;
+        nmb_String *datasetRegistrationPlaneName2D;
 	Tclvar_string newResamplePlaneName;
 	Tclvar_int datasetRegistrationEnabled;
 	Tclvar_int datasetRegistrationNeeded;
 	Tclvar_int datasetRegistrationRotate3DEnabled;
+        Tclvar_int constrainToTopography;
         Tclvar_int textureDisplayEnabled;
 	Tclvar_int resampleResolutionX;
 	Tclvar_int resampleResolutionY;
+        Tclvar_float resampleRatio;
 
 	const int num_image_windows; // equals ce->numImages()
 	// these are the indices of the images represented by
-    // datasetRegistrationPlaneName3D and datasetRegistrationPlaneName2D
-    // passed to the CorrespondenceEditor. The CorrespondenceEditor then
-    // uses the same indices in the resulting Correspondence so we
-    // know which points go with which image
-    const int height_image;   // index from 0..ce->numImages()
-    const int texture_image;  // index from 0..ce->numImages()
+        // datasetRegistrationPlaneName3D and datasetRegistrationPlaneName2D
+        // passed to the CorrespondenceEditor. The CorrespondenceEditor then
+        // uses the same indices in the resulting Correspondence so we
+        // know which points go with which image
+        const int height_image;   // index from 0..ce->numImages()
+        const int texture_image;  // index from 0..ce->numImages()
+
+        vrpn_bool registration_valid;
 
 	CorrespondenceEditor *ce;	// ui to let user set landmarks in
 					// a set of images

@@ -2,6 +2,7 @@
 #define IMAGETRANSFORM_H
 
 #include "nmb_Image.h"
+#include "vrpn_Types.h"
 #include <assert.h>
 
 /*
@@ -15,7 +16,12 @@ class ImageTransform {
   public:
     ImageTransform(int d_src, int d_dest):dim_src(d_src), dim_dest(d_dest){}
     virtual void transform(double *p_src, double *p_dest) const = 0;
-	virtual ImageTransform *duplicate() const = 0;
+    virtual void invTransform(double *p_src, double *p_dest) = 0;
+    virtual ImageTransform *duplicate() const = 0;
+    virtual int dimSrc() const {return dim_src;}
+    virtual int dimDest() const {return dim_dest;}
+    virtual vrpn_bool hasInverse() = 0;
+
   protected:
     int dim_src, dim_dest;	// image dimensions
 };
@@ -29,10 +35,33 @@ class ImageTransformAffine : public ImageTransform {
     ImageTransformAffine(int d_src, int d_dest);
     void set(int i_dest, int i_src, double value);
     virtual void transform(double *p_src, double *p_dest) const;
+    virtual void invTransform(double *p_src, double *p_dest);
     virtual ImageTransform *duplicate() const;
+    virtual vrpn_bool hasInverse();
+    virtual void print();
 
   protected:
+    void buildIdentity(double m[4][4]);
+    vrpn_bool computeInverse();
+    inline void switch_rows(double m[4][4], int r1, int r2) const
+    {
+        for(int i=0;i<4;i++){
+            double tmp=m[r1][i];
+            m[r1][i]=m[r2][i];
+            m[r2][i]=tmp;
+        }
+    }
+    inline void sub_rows(double m[4][4], int r1, int r2, double mul) const
+    {
+        for(int i=0;i<4;i++)
+            m[r1][i] -= m[r2][i]*mul;
+    }
+
+
     double xform[4][4];
+    double inverse_xform[4][4];
+    vrpn_bool inverse_needs_to_be_computed;
+    vrpn_bool inverse_valid;
 };
 
 

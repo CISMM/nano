@@ -130,6 +130,173 @@ void Aligner::getGLtransform(int src, int dest, double *xform_mat) {
 */
 }
 
+/*
+  Aligner::computeResampleExtents:
+   (helper function)
+   given target image, source image and ImageTransform, this function
+   computes the extents of the source image in the pixel coordinates of the
+   target image
+
+   example:
+
+   (1) source image (diamond shape) aligned with target image region (square)
+   (2) new image to contain both regions (the resample image) with image axes
+       and pixels aligned to target but sized and translated appropriately
+
+                                ____________ 
+       (1)  /\             (2)  |    /\    |
+           /  \                 |   /  \   |
+          /    \                |  /    \  |
+         / ---- \               | / ---- \ |
+        /  |  |  \       --->   |/  |  |  \|
+        \  |  |  /              |\  |  |  /|
+         \ ---- /               | \ ---- / |
+          \    /                |  \    /  |
+           \  /                 |   \  /   |
+            \/                  |    \/    |
+                                ------------
+                                            
+                                            
+*/
+
+int Aligner::computeResampleExtents(const nmb_Image &source_image,
+         const nmb_Image &target_image, ImageTransform &xform,
+         int &min_i, int &min_j, int &max_i, int &max_j)
+{
+    double dmin_i, dmin_j, dmax_i, dmax_j;
+    if (computeResampleExtents(source_image, target_image, xform,
+            dmin_i, dmin_j, dmax_i, dmax_j)){
+        return -1;
+    }
+
+    min_i = (int)ceil(dmin_i);
+    min_j = (int)ceil(dmin_j);
+    max_i = (int)floor(dmax_i);
+    max_j = (int)floor(dmax_j);
+    return 0;
+}
+
+int Aligner::computeResampleExtents(const nmb_Image &source_image,
+         const nmb_Image &target_image, ImageTransform &xform,
+         double &min_i, double &min_j, double &max_i, double &max_j)
+{
+    /* approach: invert the transformation and find extrema by transforming
+                 corners of source_image - this works for affine 
+		 transformations but not in general and I don't expect
+		 we'll be using any transformations that would differ
+		 much from an affine approximation
+     */
+    if (!xform.hasInverse()) {
+        fprintf(stderr, "Aligner::computeResampleResolutionAndOffset: Error, "
+                "transformation not invertible\n");
+        return -1;
+    }
+
+    /* now we transform corners of the source image into the target space */
+    nmb_ImageBounds ib;
+    source_image.getBounds(ib);
+    double corner_pnt[4][4] = {{0, 0, 0, 1},
+                               {0, 0, 0, 1},
+                               {0, 0, 0, 1},
+                               {0, 0, 0, 1}};
+
+    corner_pnt[0][0] = ib.getX(nmb_ImageBounds::MIN_X_MIN_Y);
+    corner_pnt[0][1] = ib.getY(nmb_ImageBounds::MIN_X_MIN_Y);
+    xform.invTransform(corner_pnt[0], corner_pnt[0]);
+    corner_pnt[1][0] = ib.getX(nmb_ImageBounds::MIN_X_MAX_Y);
+    corner_pnt[1][1] = ib.getY(nmb_ImageBounds::MIN_X_MAX_Y);
+    xform.invTransform(corner_pnt[1], corner_pnt[1]);
+    corner_pnt[2][0] = ib.getX(nmb_ImageBounds::MAX_X_MIN_Y);
+    corner_pnt[2][1] = ib.getY(nmb_ImageBounds::MAX_X_MIN_Y);
+    xform.invTransform(corner_pnt[2], corner_pnt[2]);
+    corner_pnt[3][0] = ib.getX(nmb_ImageBounds::MAX_X_MAX_Y);
+    corner_pnt[3][1] = ib.getY(nmb_ImageBounds::MAX_X_MAX_Y);
+    xform.invTransform(corner_pnt[3], corner_pnt[3]);
+
+
+    /* now, corner_pnt gives the positions of the corners of the source image
+       in the world coordinates of the target image ,
+       convert these into pixels in target space */
+    double i_corner[4], j_corner[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        target_image.worldToPixel(corner_pnt[i][0], corner_pnt[i][1],
+                                  i_corner[i], j_corner[i]);
+    }
+    min_i = max_i = i_corner[0];
+    min_j = max_j = j_corner[0];
+    for (i = 1; i < 4; i++) {
+        if (i_corner[i] < min_i) min_i = i_corner[i];
+        else if (i_corner[i] > max_i) max_i = i_corner[i];
+        if (j_corner[i] < min_j) min_j = j_corner[i];
+        else if (j_corner[i] > max_j) max_j = j_corner[i];
+    }
+
+    return 0;
+}
+
+/* Aligner::resample2DImageTo2DImage
+        This function is basically like resampleImageToDepthImage() which was
+   written first. The difference is that here we only deal with 2D->2D
+   transformations. 
+*/
+
+void Aligner::resample2DImageTo2DImage(
+                        const nmb_Image &source_image,
+                        const nmb_Image &target_image,
+                        const ImageTransform &xform,
+                        nmb_Image &resample_image,
+                        double target_weighting)
+{
+  int i,j;
+  int w,h;
+  w = resample_image.width();
+  h = resample_image.height();
+  double i_center, j_center;
+  double p_target[4] = {0,0,0,1}, p_source[4]; // world coordinates
+  double i_target, j_target, i_source, j_source; // pixel coordinates
+  double value_src, value_target;
+  double source_weighting = (1.0 - target_weighting);
+
+  if (target_weighting < 0 || target_weighting > 1.0) {
+      fprintf(stderr, "resample2DImageTo2DImage: "
+	"Error, weight factor not between 0 and 1\n");
+      return;
+  }
+  for (i = 0, i_center = 0.5; i < w; i++, i_center += 1.0){
+    for (j = 0, j_center = 0.5; j < h; j++, j_center += 1.0){
+      // find corresponding location in the target image which may be
+      // at a different resolution and offset (this is essentially a 
+      // translation and scaling)
+      resample_image.pixelToWorld(i_center, j_center, p_target[0],p_target[1]);
+      target_image.worldToPixel(p_target[0], p_target[1], i_target, j_target);
+      // i_target, j_target give the location in the target image coordinates
+      // but they don't necessarily fall inside the target image
+      // now we transform p_world into the source image
+      xform.transform(p_target, p_source);
+      source_image.worldToPixel(p_source[0], p_source[1], i_source, j_source);
+      if (i_target >= 0 && j_target >= 0 && 
+               i_target < target_image.width() &&
+               j_target < target_image.height()) {
+          value_target = target_image.getValueInterpolated(i_target, j_target);
+      } else {
+          value_target = 0.0;
+      }
+      if (i_source >= 0 && j_source >= 0 && 
+               i_source < source_image.width() && 
+               j_source < source_image.height()){
+          value_src = source_image.getValueInterpolated(i_source, j_source);
+      } else {
+          value_src = 0.0;
+      }
+      resample_image.setValue(i,j, 
+             (target_weighting*value_target+source_weighting*value_src));
+    }
+  }
+}
+
+
+
 /* Aligner::resampleImageToDepthImage
 	short description: projection is texture-mapped onto a surface given
 			by depth_image and then reprojected onto the x,y plane for

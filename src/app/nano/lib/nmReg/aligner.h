@@ -29,9 +29,21 @@ class Aligner {
     void setCorrespondence(Correspondence c) {corr = c;corr_set = VRPN_TRUE;}
     int updateTransform(int src, int dest);
     void transform(int src, double *p_src, int dest, double *p_dest);
-	void getGLtransform(int src, int dest, double *xform);
-	ImageTransform *getTransform(int src, int dest) {
+    void getGLtransform(int src, int dest, double *xform);
+    ImageTransform *getTransform(int src, int dest) {
 		return xform[src + dest*num_images];}
+    int computeResampleExtents(const nmb_Image &source_image,
+         const nmb_Image &target_image, ImageTransform &xform,
+         int &min_i, int &min_j, int &max_i, int &max_j);
+    int computeResampleExtents(const nmb_Image &source_image,
+         const nmb_Image &target_image, ImageTransform &xform,
+         double &min_i, double &min_j, double &max_i, double &max_j);
+    void resample2DImageTo2DImage(
+                        const nmb_Image &source_image,
+                        const nmb_Image &target_image,
+                        const ImageTransform &xform,
+                        nmb_Image &resample_image,
+                        double mixingRatio);
 
 	/* projection_image - this is assumed to be a projection of some scalar
 		value from the surface represented by depth_image

@@ -7,19 +7,23 @@
 extern Tclvar_string texturePlaneName;
 
 AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
-    Tcl_Interp *tcl_interp, const char *tcl_script_dir):
-	datasetRegistrationPlaneName3D("none"),
-	datasetRegistrationPlaneName2D("none"),
-	newResamplePlaneName("reg(resample_plane_name)", ""),
+    Tcl_Interp *tcl_interp, const char *tcl_script_dir,
+    nmb_String * (* string_allocator) (const char *)):
+	datasetRegistrationPlaneName3D(string_allocator("none")),
+	datasetRegistrationPlaneName2D(string_allocator("none")),
+	newResamplePlaneName("resample_plane_name", ""),
 	datasetRegistrationEnabled("reg_window_open", 0),
-	datasetRegistrationNeeded("reg(registration_needed)", 0),
-	datasetRegistrationRotate3DEnabled("reg(rotate3D_enable)", 0),
-        textureDisplayEnabled("reg(display_texture)", 0),
-	resampleResolutionX("reg(resample_resolution_x)", 100),
-	resampleResolutionY("reg(resample_resolution_y)", 100),
+	datasetRegistrationNeeded("registration_needed", 0),
+	datasetRegistrationRotate3DEnabled("reg_rotate3D_enable", 0),
+        constrainToTopography("reg_constrain_to_topography", 0),
+        textureDisplayEnabled("reg_display_texture", 0),
+	resampleResolutionX("resample_resolution_x", 100),
+	resampleResolutionY("resample_resolution_y", 100),
+        resampleRatio("reg_resample_ratio", 0),
 	num_image_windows(2),
 	height_image(0),
         texture_image(1),
+        registration_valid(vrpn_FALSE),
 	ce(NULL),
 	aligner(NULL),
 	images(im),
@@ -41,19 +45,21 @@ AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
 	ce = new CorrespondenceEditor(num_image_windows, reg_win_names);
 	aligner = new Aligner(num_image_windows);
 
-	datasetRegistrationPlaneName3D.initializeTcl
-		("topography_data");
+
+	((Tclvar_string *)datasetRegistrationPlaneName3D)->initializeTcl
+		("reg_surface_comes_from");
 	//datasetRegistrationPlaneName3D.bindList(images->imageNameList());
-	datasetRegistrationPlaneName2D.initializeTcl
-		("texture_data");
+	((Tclvar_string *)datasetRegistrationPlaneName2D)->initializeTcl
+		("reg_projection_comes_from");
 	//datasetRegistrationPlaneName2D.bindList(images->imageNameList());
 
 	datasetRegistrationEnabled.addCallback
 		(handle_registration_enabled_change, (void *)this);
-	datasetRegistrationPlaneName3D.addCallback
+	((Tclvar_string *)datasetRegistrationPlaneName3D)->addCallback
 		(handle_registration_dataset3D_change, (void *)this);
-	datasetRegistrationPlaneName2D.addCallback
+	((Tclvar_string *)datasetRegistrationPlaneName2D)->addCallback
 		(handle_registration_dataset2D_change, (void *)this);
+
 	datasetRegistrationNeeded.addCallback
 		(handle_registration_change, (void *)this);
 	datasetRegistrationRotate3DEnabled.addCallback
@@ -85,22 +91,28 @@ int AlignerUI::addImage(nmb_Image *im) {
 // static
 void     AlignerUI::handle_resamplePlaneName_change(const char *, void *ud)
 {
-	AlignerUI *aui = (AlignerUI *)ud;
-	Aligner *aligner = aui->aligner;
-	nmb_Image *new_image;
-	nmb_Image *im_3D = aui->images->getImageByName
-                            (aui->datasetRegistrationPlaneName3D.string());
-	nmb_Image *im_2D = aui->images->getImageByName
-                            (aui->datasetRegistrationPlaneName2D.string());
+    AlignerUI *aui = (AlignerUI *)ud;
+    Aligner *aligner = aui->aligner;
+    nmb_Image *new_image;
+    nmb_Image *im_3D = aui->images->getImageByName
+                          (aui->datasetRegistrationPlaneName3D->string());
+    nmb_Image *im_2D = aui->images->getImageByName
+                          (aui->datasetRegistrationPlaneName2D->string());
+    // the transformation that takes points from height image to points
+    // in the texture image
+    ImageTransform *xform;       
 
-	// Make sure we have all the information we need and
+    // Make sure we have all the information we need and
     // see if the user has given a name to the resampled plane
     // other than "".  If so, we should create a new plane and set the value
     // back to "".
-	if (!im_3D || !im_2D || 
+    if (!aui->registration_valid) {
+        fprintf(stderr, 
+                "Error, cannot resample if registration is not valid\n");
+    } else if (!im_3D || !im_2D || 
 	    (strlen(aui->newResamplePlaneName.string()) == 0)){
 		return;
-	} else {
+    } else if (aui->constrainToTopography){
 		// we might want to use a different resolution here:
 		new_image = new nmb_ImageGrid(
 			(const char *)(aui->newResamplePlaneName.string()),
@@ -110,16 +122,51 @@ void     AlignerUI::handle_resamplePlaneName_change(const char *, void *ud)
 		im_3D->getBounds(im3D_bounds);
 		new_image->setBounds(im3D_bounds);
 		aui->newResamplePlaneName = (const char *) "";
-	}
-	// get the transformation that takes points from height image to points
-	// in the texture image
-	ImageTransform *xform = aligner->getTransform(aui->height_image,
-		aui->texture_image);
+                xform = aligner->getTransform(aui->height_image,
+                                              aui->texture_image);
+                aligner->resampleImageToDepthImage((*im_2D), (*im_3D), (*xform),
+                                      (*new_image));
+    } else {
+                /* here we figure out what resolution is required to preserve
+                   the entire 2D projection image */
+                int min_i, min_j, max_i, max_j;
+                xform = aligner->getTransform(aui->height_image,
+                                              aui->texture_image);
+                aligner->computeResampleExtents((*im_2D), (*im_3D), (*xform),
+                                                min_i, min_j, max_i, max_j);
+                int res_x = max_i - min_i;
+                int res_y = max_j - min_j;
+                printf("got extents: %d x %d\n", res_x, res_y);
+                double x, y;
+                double resample_ratio = aui->resampleRatio;
+                new_image = new nmb_ImageGrid(
+                        (const char *)(aui->newResamplePlaneName.string()),
+                        (const char *)(im_2D->unitsValue()),
+                        res_x, res_y);
+                printf("allocated image\n");
+                // there must be a cleaner way to set these corner points
+                // but this should be conceptually clear:
+                nmb_ImageBounds imResample_bounds;
 
-	aligner->resampleImageToDepthImage((*im_2D), (*im_3D), (*xform), 
-					(*new_image));
-	// now make it available elsewhere:
-	aui->images->addImage(new_image);
+                im_3D->pixelToWorld((double)min_i, (double)min_j, x, y);
+                imResample_bounds.setX(nmb_ImageBounds::MIN_X_MIN_Y, x);
+                imResample_bounds.setY(nmb_ImageBounds::MIN_X_MIN_Y, y);
+                im_3D->pixelToWorld((double)min_i, (double)(max_j+1), x, y);
+                imResample_bounds.setX(nmb_ImageBounds::MIN_X_MAX_Y, x);
+                imResample_bounds.setY(nmb_ImageBounds::MIN_X_MAX_Y, y);
+                im_3D->pixelToWorld((double)(max_i+1), (double)min_j, x, y);
+                imResample_bounds.setX(nmb_ImageBounds::MAX_X_MIN_Y, x);
+                imResample_bounds.setY(nmb_ImageBounds::MAX_X_MIN_Y, y);
+                im_3D->pixelToWorld((double)(max_i+1), (double)(max_j+1), x, y);
+                imResample_bounds.setX(nmb_ImageBounds::MAX_X_MAX_Y, x);
+                imResample_bounds.setY(nmb_ImageBounds::MAX_X_MAX_Y, y);
+                new_image->setBounds(imResample_bounds);
+                aligner->resample2DImageTo2DImage((*im_2D), (*im_3D), (*xform),
+                                        (*new_image), resample_ratio);
+                printf("resampled image\n");
+    }
+    // now make it available elsewhere:
+    aui->images->addImage(new_image);
 }
 
 // callbacks for dataset registration control panel
@@ -129,12 +176,13 @@ void    AlignerUI::handle_registration_enabled_change(vrpn_int32 new_value,
 				void *userdata) {
   AlignerUI *aui = (AlignerUI *)userdata;
   nmb_Image *im = aui->images->getImageByName
-                        (aui->datasetRegistrationPlaneName2D.string());
+                        (aui->datasetRegistrationPlaneName2D->string());
+  printf("reg_window_open = %d\n", new_value);
   if (new_value){
     aui->ce->show();
     if (im) {
         aui->graphics_display->createRealignTextures(
-	    aui->datasetRegistrationPlaneName2D.string());
+	    aui->datasetRegistrationPlaneName2D->string());
     }
   }
   else {
@@ -147,8 +195,9 @@ void    AlignerUI::handle_registration_dataset3D_change(const char *,
 {
   AlignerUI *aui = ((AlignerUI *)userdata);
   nmb_Image *im = aui->images->getImageByName
-                            (aui->datasetRegistrationPlaneName3D.string());
+                            (aui->datasetRegistrationPlaneName3D->string());
 
+  aui->registration_valid = vrpn_FALSE;
   if (im != NULL) {
     aui->ce->setImage(aui->height_image, im);		// set UI state
 	aui->resampleResolutionX = im->width();
@@ -164,12 +213,13 @@ void    AlignerUI::handle_registration_dataset2D_change(const char *name,
 		//	(aui->datasetRegistrationPlaneName2D.string());
 
 	printf("in handle_registration_dataset2D_change\n");
+        aui->registration_valid = vrpn_FALSE;
 	if (im != NULL) {
 		// set UI state
                 // NOTE: call to createRealignTextures is generated in the
                 // callback for the variable "texturePlaneName"
 		texturePlaneName = 
-			(aui->datasetRegistrationPlaneName2D.string());
+			(aui->datasetRegistrationPlaneName2D->string());
 		aui->ce->setImage(aui->texture_image, im);
 		aui->graphics_display->createRealignTextures(name);
 		//	aui->datasetRegistrationPlaneName2D.string());
@@ -210,9 +260,9 @@ void    AlignerUI::handle_registration_change(vrpn_int32 val, void *userdata) {
   Correspondence c;
 
   nmb_Image *h_im = aui->images->getImageByName
-                            (aui->datasetRegistrationPlaneName3D.string());
+                            (aui->datasetRegistrationPlaneName3D->string());
   nmb_Image *t_im = aui->images->getImageByName
-		(aui->datasetRegistrationPlaneName2D.string());
+		(aui->datasetRegistrationPlaneName2D->string());
 
   // note: correspondence point coordinates for texture_image are left
   // as normalized coordinates with x,y in [0..1, 0..1]
@@ -231,6 +281,7 @@ void    AlignerUI::handle_registration_change(vrpn_int32 val, void *userdata) {
   aligner->setData(aui->texture_image, t_im);
   aligner->updateTransform(aui->height_image, aui->texture_image);
 
+  aui->registration_valid = vrpn_TRUE;
   aui->datasetRegistrationNeeded = 0;
   double xform_matrix[16];
 
@@ -329,7 +380,9 @@ be here; will take out after testing
 
 void    AlignerUI::handle_registration_type_change(vrpn_int32 val, void *ud)
 {
+  AlignerUI *aui = ((AlignerUI *)ud);
   printf("change in registration type\n");
+  aui->registration_valid = vrpn_FALSE;
 }
 
 void    AlignerUI::handle_texture_display_change(vrpn_int32 val, void *ud)

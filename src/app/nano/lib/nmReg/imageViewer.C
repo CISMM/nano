@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "vrpn_Types.h"
 
 #define USING_REG_WINDOWS
 
@@ -8,10 +9,14 @@
 #else
 #	include <GL/glx.h> 
 #	include <GL/gl.h>
+#       include <X11/cursorfont.h>
 #endif
+
+#ifndef WIN32
 #include <unistd.h>
+#endif
+
 #include <assert.h>
-#include <X11/cursorfont.h>
 #include <math.h>
 
 #include "imageViewer.h"
@@ -134,7 +139,8 @@ static Bool WaitForUnmapNotify(Display *d, XEvent *e, char *arg) {
 
 // returns window id or 0 if error occurred
 int ImageViewer::createWindow(char *display_name,
-                      int x, int y, int w, int h, char *win_name){
+                      int x, int y, int w, int h, char *win_name,
+                      int pixelType){
     int dpy_index;
     for (dpy_index = 0; dpy_index < num_displays; dpy_index++){
 		if (display_name == NULL){
@@ -171,7 +177,7 @@ int ImageViewer::createWindow(char *display_name,
     window[num_windows].win = win;
 #else
 #ifdef USING_REG_WINDOWS
-    //glutInitWindowSize(w,h);
+    //glutInitWindowSize(w,h); - this should be done by user
     //glutInitWindowPosition(x,y);
     //glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
     //int win_save = glutGetWindow(); // this was necessary until I added
@@ -196,6 +202,7 @@ int ImageViewer::createWindow(char *display_name,
 #endif
 #endif
 
+    window[num_windows].d_pixelMode = pixelType;
     window[num_windows].display_index = dpy_index;
     window[num_windows].id = num_windows+1;
     window[num_windows].win_width = w;
@@ -206,14 +213,29 @@ int ImageViewer::createWindow(char *display_name,
                                (float)window[num_windows].win_width;
     window[num_windows].im_y_per_pixel = (float)window[num_windows].im_height /
                                (float)window[num_windows].win_height;
-    if (window[num_windows].image)
-        delete window[num_windows].image;
-    window[num_windows].image = new float[window[num_windows].im_width*
-					window[num_windows].im_height];
+    window[num_windows].image = NULL;
+
     int i;
-    for (i = 0; i < window[num_windows].im_width*
+    if (pixelType == GL_FLOAT) {
+      window[num_windows].image = 
+                             new float[window[num_windows].im_width*
+					window[num_windows].im_height];
+      for (i = 0; i < window[num_windows].im_width*
 			window[num_windows].im_height; i++){
-        window[num_windows].image[i] = 0.0;
+          ((float *)(window[num_windows].image))[i] = 0.0;
+      }
+    } else if (pixelType == GL_UNSIGNED_BYTE){
+      window[num_windows].image =   
+                   new vrpn_uint8[window[num_windows].im_width*
+                                  window[num_windows].im_height];
+      for (i = 0; i < window[num_windows].im_width*
+                        window[num_windows].im_height; i++){
+          ((vrpn_uint8 *)(window[num_windows].image))[i] = 0;
+      }
+    } else {
+      fprintf(stderr,
+             "ImageViewer::createWindow: Error, unknown pixel type\n");
+      return 0;
     }
 
     num_windows++;
@@ -240,8 +262,8 @@ int ImageViewer::showWindow(int winID){
 
     if (window[win_index].visible) {
 #ifdef V_GLUT
-	glutSetWindow(window[win_index].win_id);
-	glutPopWindow();
+        glutSetWindow(window[win_index].win_id);
+        glutPopWindow();
 #else
 	XRaiseWindow(dpy[window[win_index].display_index].x_dpy,
 		(*(window[win_index].win)));	
@@ -292,8 +314,11 @@ int ImageViewer::showWindow(int winID){
 
 #ifdef V_GLUT
 #ifdef USING_REG_WINDOWS
+    // this caused problems in non-cygwin winNT
+#if (!defined(_WIN32) || defined(__CYGWIN__))
     glutPositionWindow(x_loc,y_loc);
     glutReshapeWindow(window[win_index].im_width, window[win_index].im_height);
+#endif
     glutSetWindow(curr_win);
 #endif
 #else
@@ -732,11 +757,24 @@ int ImageViewer::setWindowImageSize(int winID, int im_w, int im_h) {
         return 0;
 
     if (window[win_index].image)
-	delete window[win_index].image;
-    window[win_index].image = new float[im_w*im_h];
-    for (i = 0; i < im_w*im_h; i++){
-	window[win_index].image[i] = 0.0;
+	delete [] window[win_index].image;
+
+    if (window[win_index].d_pixelMode == GL_FLOAT){
+        window[win_index].image = (void *)new float[im_w*im_h];
+        for (i = 0; i < im_w*im_h; i++){
+             ((float *)(window[win_index].image))[i] = 0;
+        }
+    } else if (window[win_index].d_pixelMode == GL_UNSIGNED_BYTE){
+        window[win_index].image = (void *)new vrpn_uint8[im_w*im_h];
+        for (i = 0; i < im_w*im_h; i++){
+             ((vrpn_uint8 *)(window[win_index].image))[i] = 0;
+        }
+    } else {
+        fprintf(stderr, "ImageViewer::setWindowImageSize: Error, "
+               "unknown pixel type\n");
+        return -1;
     }
+
     window[win_index].im_width = im_w;
     window[win_index].im_height = im_h;
     window[win_index].im_x_per_pixel = (float)window[win_index].im_width /
@@ -745,10 +783,11 @@ int ImageViewer::setWindowImageSize(int winID, int im_w, int im_h) {
                                        (float)window[win_index].win_height;
 #ifdef V_GLUT
 #ifdef USING_REG_WINDOWS
-    int curr_win = glutGetWindow();
-    glutSetWindow(window[win_index].win_id);
-    glutReshapeWindow(window[win_index].im_width, window[win_index].im_height); 
-    glutSetWindow(curr_win);
+      // this caused problems in winNT
+    //int curr_win = glutGetWindow();
+    //glutSetWindow(window[win_index].win_id);
+    //glutReshapeWindow(window[win_index].im_width, window[win_index].im_height); 
+    //glutSetWindow(curr_win);
 #endif
 #else
     XResizeWindow(dpy[window[win_index].display_index].x_dpy,
@@ -785,9 +824,33 @@ int ImageViewer::setValue(int winID, int x, int y, double value) {
 	actual_value = window[win_index].min_value;
     scaled_value = (actual_value - window[win_index].min_value)/
 		(window[win_index].max_value - window[win_index].min_value);
-    window[win_index].image[x + y*window[win_index].im_width] = scaled_value;
+    if (window[win_index].d_pixelMode == GL_FLOAT){
+        float *im = (float *)window[win_index].image;
+        im[x + y*window[win_index].im_width] = scaled_value;
+    } else if (window[win_index].d_pixelMode == GL_UNSIGNED_BYTE) {
+        vrpn_uint8 *im = (vrpn_uint8 *)(window[win_index].image);
+        im[x + y*window[win_index].im_width] = (vrpn_uint8)scaled_value;
+    } else {
+        fprintf(stderr, "setValue: unknown pixel type\n");
+        return -1;
+    }
     window[win_index].needs_redisplay = VRPN_TRUE;
     return 0;
+}
+
+int ImageViewer::setScanline(int winID, int y, vrpn_uint8 *line){
+    int win_index = winID-1;
+    if (window[win_index].d_pixelMode != GL_UNSIGNED_BYTE){
+        fprintf(stderr, "setScanline: wrong pixel size\n");
+        return -1;
+    }
+    memmove(
+      (void *)(&
+          ((char *)window[win_index].image)[y*window[win_index].im_width]),
+      (const void *)line,
+      window[win_index].im_width);
+      window[win_index].needs_redisplay = VRPN_TRUE;
+      return 0;
 }
 
 // draw into a window the current image for that window
@@ -811,8 +874,17 @@ int ImageViewer::drawImage(int winID) {
     glLoadIdentity();
     glRasterPos2f(-1.0, -1.0);
     glPixelZoom(pix_per_im_x, pix_per_im_y);
-    glDrawPixels(window[win_index].im_width, window[win_index].im_height,
-	GL_LUMINANCE, GL_FLOAT, window[win_index].image);
+    if (window[win_index].d_pixelMode == GL_FLOAT) {
+        glDrawPixels(window[win_index].im_width, window[win_index].im_height,
+            GL_LUMINANCE, GL_FLOAT, (float *)(window[win_index].image));
+    } else if (window[win_index].d_pixelMode == GL_UNSIGNED_BYTE){
+	vrpn_uint8 *im = (vrpn_uint8 *)(window[win_index].image);
+	glDrawPixels(window[win_index].im_width, window[win_index].im_height,
+            GL_LUMINANCE, GL_UNSIGNED_BYTE, im);
+    } else {
+		fprintf(stderr, "drawImage: Error, unknown pixel type\n");
+		return -1;
+	}
 
     return 0;
 }
