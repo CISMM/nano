@@ -1426,6 +1426,8 @@ int MicroscapeInitializationState::ReadMode (void)
  * Functions defined in this file (added by KPJ to satisfy g++)...
  *********/
 
+static int workingMsg();
+static int doneWorkingMsg();
 static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
                          vrpn_Connection * c);
 int main (int argc, char * argv []);
@@ -2277,10 +2279,16 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
 
   if (set_stream_time_now == 0) return;
 
-  struct timeval newStreamTime;
+  struct timeval newStreamTime, currentTime;
   newStreamTime.tv_sec = (long) ((double) set_stream_time);
   newStreamTime.tv_usec = 999999L;
   if (vrpnLogFile) {
+    vrpnLogFile->time_since_connection_open( &currentTime );
+    if( newStreamTime.tv_sec < currentTime.tv_sec ||
+        newStreamTime.tv_sec - currentTime.tv_sec > 20) {
+        // Tell the user we're busy. 
+        workingMsg();
+    }
     vrpnLogFile->play_to_time(newStreamTime);
   }
   if (ohmmeterLogFile) {
@@ -2290,7 +2298,6 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
     printf( "handle_set_stream_time_change vicurveLogfile time:  %d\n", newStreamTime.tv_sec );
     // tell the keithley UI to reset if we just to an earlier
     // time because vrpn will replay from the beginning
-    struct timeval currentTime;
     vicurveLogFile->time_since_connection_open( &currentTime );
     if( newStreamTime.tv_sec < currentTime.tv_sec )
       keithley2400_ui->reset( );
@@ -2301,6 +2308,8 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
     semLogFile->play_to_time(newStreamTime);
   }
   set_stream_time_now = 0; 
+  //We're done. 
+  doneWorkingMsg();
 }
 
 static void handle_shiny_change (vrpn_int32, void * userdata) {
@@ -2731,6 +2740,22 @@ static int forget_modification_data ()
     return 0;
 }
 
+/// Give the user feedback when we are doing something that may 
+/// take a long time and lock up the app. 
+static int workingMsg() 
+{
+    char command [] = "nano_working";
+    TCLEVALCHECK(Tcl_Interpreter::getInterpreter(), command);
+    return 0;
+}
+/// Close the working dialog, may be called when dialog isn't open. 
+static int doneWorkingMsg() 
+{
+    char command [] = "nano_done_working";
+    TCLEVALCHECK(Tcl_Interpreter::getInterpreter(), command);
+    return 0;
+}
+
 /** See if the user has given a name to the open filename other
  than "".  If so, we should open a file and set the value
  back to "". If there are any errors, report them and leave name alone.  */
@@ -2812,6 +2837,10 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
 	//display_error_dialog("Error: Cannot change stream file in collaborative session");
 	//return;
     //}
+
+    // Give the use a little feedback that we're doing something that
+    // might take a while. 
+    workingMsg();
 
     MicroscapeInitializationState * istate = (MicroscapeInitializationState *)userdata;
 
@@ -2902,6 +2931,9 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     }
 
     openStreamFilename = "";
+
+    // We're done, tell the user. 
+    doneWorkingMsg();
 }
 
 /** See if the user has given a name to the open device name other
@@ -3047,6 +3079,8 @@ static void openDefaultMicroscope()
 
     // Default microscope has NULL vrpn_connection
     if (createNewDatasetOrMicroscope(*istate, NULL)) {
+        // Make sure "working" dialog is gone. 
+        doneWorkingMsg();
 	display_fatal_error_dialog("Failed to create default microscope");
         return ;
     }
@@ -3063,6 +3097,9 @@ static void openDefaultMicroscope()
     }
     microscope_connection = NULL;
     vrpnLogFile = NULL;
+
+    // Make sure "working" dialog is gone. 
+    doneWorkingMsg();
 }
 
 /** See if the user has given a name to the export plane other
@@ -4190,16 +4227,23 @@ static void handle_viz_change(vrpn_int32, void *)
 
 static void handle_viz_min_change(vrpn_float64, void *)
 {
-    graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);
+    if (created_region) {
+        graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);
+    }
 }
 
 static void handle_viz_max_change(vrpn_float64, void *)
 {
-    graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);
+    if (created_region) {
+        graphics->setRegionMaskHeight(viz_min, viz_max, viz_region);
+    }
 }
 
 static void handle_viz_alpha_change(vrpn_float64, void *)
 {
+    // I think we want to send this even if the region has not
+    // been created, because alpha is not sent when the viz_dataset
+    // changes. 
     if (viz_choice == 1) {
         graphics->setSurfaceAlpha(viz_alpha, viz_region);
     }
@@ -4211,14 +4255,14 @@ static void handle_viz_dataset_change(const char *, void *)
         (viz_comes_from.string());
     
     if (plane == NULL) {
-        viz_min_limit = 0;
-        viz_max_limit = 1;
-        viz_min = 0;
-        viz_max = 1;
         if (created_region) {
             graphics->destroyRegion(viz_region);
             created_region = false;
         }
+        viz_min_limit = 0;
+        viz_max_limit = 1;
+        viz_min = 0;
+        viz_max = 1;
         return;
     }
 
