@@ -81,7 +81,8 @@ vrpn_bool Correspondence::equals(const Correspondence &c)
       for (i = 0; i < num_spaces; i++){
           if (c.pnts[i][j].x != pnts[i][j].x ||
               c.pnts[i][j].y != pnts[i][j].y ||
-              c.pnts[i][j].z != pnts[i][j].z)
+              c.pnts[i][j].is2D != pnts[i][j].is2D ||
+              (!c.pnts[i][j].is2D && c.pnts[i][j].z != pnts[i][j].z))
               return VRPN_FALSE;
       }
   }
@@ -94,7 +95,11 @@ void Correspondence::print()
    printf("%d points, %d spaces\n", num_points, num_spaces);
    for (i = 0; i < num_points; i++) {
        for (j = 0; j < num_spaces; j++){
-           printf("(%g,%g,%g) ", pnts[j][i].x, pnts[j][i].y, pnts[j][i].z);
+           if (pnts[j][i].is2D) {
+             printf("(%g,%g) ", pnts[j][i].x, pnts[j][i].y);
+           } else {
+             printf("(%g,%g,%g) ", pnts[j][i].x, pnts[j][i].y, pnts[j][i].z);
+           }
        }
        printf("\n");
    }
@@ -181,6 +186,13 @@ int Correspondence::setValuesFromImage(int spaceIdx, nmb_Image *im)
 	double x_world, y_world;
     unsigned int i;
     for (i = 0; i < num_points; i++) {
+        if (!pnts[spaceIdx][i].is2D) {
+          // if this happens, probably either the fiducial should have 
+          // been created as a 2D fiducial or this function should be changed
+          // to not mess with 3D fiducials
+          fprintf(stderr, "Correspondence::setValuesFromImage:"
+           "Warning, loss of 3D fiducial z value - likely programmer error\n");
+        }
     	x_normalized = pnts[spaceIdx][i].x;	// x is 0..1
     	y_normalized = pnts[spaceIdx][i].y;	// y is 0..1
 	x_pixels = x_normalized*(im->width());
@@ -204,6 +216,13 @@ int Correspondence::setValuesFromPlane(int spaceIdx, BCPlane *p)
     double x, y, z;
     unsigned int i;
     for (i = 0; i < num_points; i++) {
+        if (!pnts[spaceIdx][i].is2D) {
+          // if this happens, probably either the fiducial should have 
+          // been created as a 2D fiducial or this function should be changed
+          // to not mess with 3D fiducials
+          fprintf(stderr, "Correspondence::setValuesFromPlane:"
+           "Warning, loss of 3D fiducial z value - likely programmer error\n");
+        }
 	x = pnts[spaceIdx][i].x;
 	y = pnts[spaceIdx][i].y;
 	z = p->interpolatedValue(x*p->numX(), y*p->numY());

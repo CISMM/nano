@@ -37,6 +37,9 @@ class nmr_Registration_Proxy {
     vrpn_int32 mainloop(void);
 
     vrpn_int32 setTransformationParameters(vrpn_float32 *parameters);
+    vrpn_int32 sendFiducial(
+                  vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
+                  vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt);
     vrpn_int32 setResolutions(vrpn_int32 numLevels, vrpn_float32 *stddev);
     vrpn_int32 setIterationLimit(vrpn_int32 maxIterations);
     vrpn_int32 setStepSize(vrpn_float32 stepSize);

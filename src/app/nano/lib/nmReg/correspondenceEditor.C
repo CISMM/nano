@@ -470,12 +470,18 @@ void CorrespondenceEditor::hide() {
 
 void CorrespondenceEditor::addFiducial(float *x, float *y, float *z)
 {
-    corr_point_t p(0, 0, 0);
+    corr_point_t p;
+    if (z) {
+      p.is2D = vrpn_FALSE;
+    }
     int pntIndex = correspondence->addPoint(p);
     int i;
     if (pntIndex >= 0) {
       for (i = 0; i < num_images; i++) {
-         p.x = x[i]; p.y = y[i]; p.z = z[i];
+         p.x = x[i]; p.y = y[i]; 
+         if (z) {
+           p.z = z[i];
+         }
          correspondence->setPoint(i, pntIndex, p);
       }
     }

@@ -1,3 +1,17 @@
+2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
+
+	* correspondence.[Ch] : added distinction between 2D points (specified
+ 	by clicking in the window) and 3D points (where z has been specified
+	somehow - like when a sendFiducial message is sent)
+        * correspondenceEditor.C (addFiducial): allows z to be NULL if
+	the fiducial point is only 2D in both images
+	* nmr_Registration_Client.h : changed a comment
+	* nmr_Registraiton_Impl.C (convertTo3DSpace): this used to augment
+	all points with a z-value taken from the corresponding image
+	Now it only sets the z-value on points for which z has not
+	previously been specified.
+	* nmr_Registration_Proxy.[Ch] (sendFiducial): new function 
+
 2002-07-01  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_AlignerMI.C (takeGradientSteps, patternSearch, plotObjective,

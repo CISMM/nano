@@ -70,6 +70,13 @@ vrpn_int32 nmr_Registration_Proxy::setTransformationParameters(
   return d_remote_impl->setTransformationParameters(parameters);
 }
 
+vrpn_int32 nmr_Registration_Proxy::sendFiducial(
+                  vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
+                  vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
+{
+  return d_remote_impl->sendFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
+}
+
 vrpn_int32 nmr_Registration_Proxy::setResolutions(vrpn_int32 numLevels, 
                                                   vrpn_float32 *stddev)
 {

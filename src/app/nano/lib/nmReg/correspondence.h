@@ -7,8 +7,11 @@
 
 class corr_point_t {
   public:
-    corr_point_t(double xp = 0, double yp = 0, double zp = 0){
-	x = xp; y = yp; z = zp; };
+    corr_point_t(double xp=0.0, double yp=0.0):
+        is2D(true),x(xp),y(yp),z(0.0) {}
+    corr_point_t(double xp, double yp, double zp):
+        is2D(false),x(xp),y(yp),z(zp) {}
+    vrpn_bool is2D;
     double x, y, z;
 };
 

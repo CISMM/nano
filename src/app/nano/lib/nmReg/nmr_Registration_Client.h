@@ -35,7 +35,7 @@ class nmr_Registration_Client : public nmb_Device_Client,
                            vrpn_int32 line_length, vrpn_float32 *data);
     int setTransformationOptions(nmr_TransformationType type);
     int setTransformationParameters(vrpn_float32 *parameters);
-    /// x,y are in pixels, z should be in whatever units the image is in;
+    /// x,y are 0..1, z should be in whatever units the image is in;
     /// this will affect the registration result whenever that gets sent;
     /// intended for sending tip-position so that this can be corresponded
     /// with the image of the tip in the other image

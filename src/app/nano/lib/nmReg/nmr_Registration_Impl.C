@@ -101,6 +101,7 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
       break;
     case NMR_FIDUCIAL:
       info.aligner->getFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
+      // x and y are in range 0..1, z is in nm
       me->setFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
       break;
     case NMR_AUTOALIGN:
@@ -300,6 +301,7 @@ int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
     return 0;
 }
 
+// x and y are in range 0..1, z is in nm
 int nmr_Registration_Impl::setFiducial(
 		vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
                 vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
@@ -652,6 +654,10 @@ void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
   }
 }
 
+// converts 2D points in the source image to 3D using the 
+// height values in the source image
+// 3D points that do not lie on the surface represented by the source image
+// will not be converted (e.g. from AFM probe position-based fiducials)
 void nmr_Registration_Impl::convertTo3DSpace(Correspondence &c,
                  int corrSourceIndex)
 {
@@ -670,8 +676,11 @@ void nmr_Registration_Impl::convertTo3DSpace(Correspondence &c,
              (double)d_images[SOURCE_IMAGE_INDEX]->width();
     yIndex = srcPoint.y*invSrcSizeY*
              (double)d_images[SOURCE_IMAGE_INDEX]->height();
-    srcPoint.z =
+    if (srcPoint.is2D) {
+      srcPoint.z =
            d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(xIndex, yIndex);
+      srcPoint.is2D = vrpn_FALSE;
+    }
     c.setPoint(corrSourceIndex, pointIndex, srcPoint);
   }
 }
