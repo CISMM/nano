@@ -48,20 +48,25 @@ nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
                     handle_gotConnection,
                     this);
 //
-	simulator_id = d_connection->register_sender("AFMSimulator");
+	simulator_id = d_connection->register_sender("RemoteSimMicroscope");
 	Xdim = d_dataset->inputGrid->numX();
 	Ydim = d_dataset->inputGrid->numY();
 	DATA_ARRAY_SIZE = Xdim*Ydim;
 	DataArray = NULL;
-	SimScanPlane = new nma_ShapeIdentifiedPlane(RealAFMPlane, d_dataset, planename,NULL);
-	DataArray = new double*[Xdim]; //ANDREA:  check on whether this should be something sent over
-								   //or stay as is
+	DeviceViewPlane = new nma_ShapeIdentifiedPlane(RealAFMPlane, d_dataset, planename, NULL, this);
+	DataArray = new double*[Ydim]; 
+	for(int i = 0;i<Ydim;++i)	DataArray[i] = NULL;//initialize to NULL
 	UnitsOK = true;
+	deviceNameRcv = false;
 	myURenderObject = testobject;
 }
 //
 nmm_SimulatedMicroscope_Remote::~nmm_SimulatedMicroscope_Remote() {
-	//delete SimScanPlane;
+	//delete DeviceViewPlane;
+}
+//
+char* nmm_SimulatedMicroscope_Remote::get_server_name(){
+	return server_name;
 }
 //
 int nmm_SimulatedMicroscope_Remote::mainloop() {
@@ -99,91 +104,49 @@ HANDLERS nmm_AFMSIM_Report ;
 //
 int nmm_SimulatedMicroscope_Remote::
 handle_gotConnection (void * userdata, vrpn_HANDLERPARAM grpc_p) {
-  //int i;
-  float midpt_x,midpt_y,midpt_z;
-  const char * buffer = grpc_p.buffer;
-  nmm_SimulatedMicroscope_Remote* grpc_me = (nmm_SimulatedMicroscope_Remote *) userdata;
-  
-  //send grid and scan info
-  grpc_me->encode_and_sendGridandScanInfo(grpc_me->d_dataset->inputGrid->numX(), grpc_me->d_dataset->inputGrid->numY(),
-			grpc_me->d_dataset->inputGrid->minX(),grpc_me->d_dataset->inputGrid->minY(),0,
-			grpc_me->d_dataset->inputGrid->maxX(),grpc_me->d_dataset->inputGrid->maxY(),128);
-//
+	//int i;
+	float midpt_x,midpt_y,midpt_z;
+	const char * buffer = grpc_p.buffer;
+	nmm_SimulatedMicroscope_Remote* me = (nmm_SimulatedMicroscope_Remote *) userdata;
 
+	//send grid and scan info
+	me->encode_and_sendGridandScanInfo(me->d_dataset->inputGrid->numX(), me->d_dataset->inputGrid->numY(),
+			me->d_dataset->inputGrid->minX(),me->d_dataset->inputGrid->minY(),
+			me->DeviceViewPlane->d_sourcePlane->minValue(),me->d_dataset->inputGrid->maxX(),
+			me->d_dataset->inputGrid->maxY(),me->DeviceViewPlane->d_sourcePlane->maxValue());
 
-//
-  if(grpc_me->myURenderObject != NULL){
+	if(me->myURenderObject != NULL){
    
-/*		//model-triangles stuff
-		int num_vertices = (grpc_me->myURenderObject->num_triangles * 3);
-		cout << "num triangles: " << grpc_me->myURenderObject->num_triangles 
-		     << "\tnum vertices: " << num_vertices << endl;
+		for(int i = 0; i < me->myURenderObject->num_cylinders; ++i){
+			//only sends cylinders if they have been filled in in URender 
+			//(i.e. num_cylinders != 0), so safe to keep have this for loop here
+				midpt_x = (me->myURenderObject->cylinders[i].x2 + me->myURenderObject->cylinders[i].x1)/2;
+				midpt_y = (me->myURenderObject->cylinders[i].y2 + me->myURenderObject->cylinders[i].y1)/2;
+				midpt_z = (me->myURenderObject->cylinders[i].z2 + me->myURenderObject->cylinders[i].z1)/2;
+				me->encode_and_sendCylinder(
+					midpt_x,midpt_y,midpt_z,
+					me->myURenderObject->cylinders[i].alt,
+					me->myURenderObject->cylinders[i].az,
+					me->myURenderObject->cylinders[i].length,
+					me->myURenderObject->cylinders[i].radius);
 
-		//send triangle scale
-		if (num_vertices != 0){
-			grpc_me->encode_and_sendScale(grpc_me->myURenderObject->scale_triangles);
-		}
-//
-		//send triangles
-		for(i = 0; i < num_vertices;i += 3){//only sends triangles if they have been filled in in URender 
-                                          //(i.e. num_triangles != 0), so safe to keep have this for loop here
-			grpc_me->encode_and_sendTriangle(
-				grpc_me->myURenderObject->triangles[i][0],  
-				grpc_me->myURenderObject->triangles[i][1],
-				grpc_me->myURenderObject->triangles[i][2],
-				grpc_me->myURenderObject->triangles[i + 1][0],
-				grpc_me->myURenderObject->triangles[i + 1][1],
-				grpc_me->myURenderObject->triangles[i + 1][2],
-				grpc_me->myURenderObject->triangles[i + 2][0],
-				grpc_me->myURenderObject->triangles[i + 2][1],
-				grpc_me->myURenderObject->triangles[i + 2][2]);  
-		}
-//
-		//for debugging puposes
-		FILE * file;
-		if ( (file = fopen("triangles_sent.txt", "w")) == NULL) {
-				fprintf(stderr,"Could not open triangles.txt for write\n");
-				return -1;
-		}
-//
-		for(i = 0; i < num_vertices;i++){
-
-			fprintf(file,"%g,%g,%g\n\n",
-				grpc_me->myURenderObject->triangles[i][0],
-				grpc_me->myURenderObject->triangles[i][1],
-				grpc_me->myURenderObject->triangles[i][2]);
-		}
-		fclose(file);
-
-*/
+					cout << "handle_gotConnection: alt: " << me->myURenderObject->cylinders[i].alt << "\taz:  " 
+						 << me->myURenderObject->cylinders[i].az << endl;
+			}
+			
+			me->encode_and_sendTrans(me->myURenderObject->GetLocalXform().GetTrans()[0],
+											me->myURenderObject->GetLocalXform().GetTrans()[1],
+											me->myURenderObject->GetLocalXform().GetTrans()[2]);
+			me->encode_and_sendScale(me->myURenderObject->GetLocalXform().GetScale());
 		
-		for(int i = 0; i < grpc_me->myURenderObject->num_cylinders; ++i){
-		//only sends cylinders if they have been filled in in URender 
-        //(i.e. num_cylinders != 0), so safe to keep have this for loop here
-		    midpt_x = (grpc_me->myURenderObject->cylinders[i].x2 + grpc_me->myURenderObject->cylinders[i].x1)/2;
-			midpt_y = (grpc_me->myURenderObject->cylinders[i].y2 + grpc_me->myURenderObject->cylinders[i].y1)/2;
-			midpt_z = (grpc_me->myURenderObject->cylinders[i].z2 + grpc_me->myURenderObject->cylinders[i].z1)/2;
-		    grpc_me->encode_and_sendCylinder(
-				midpt_x,midpt_y,midpt_z,
-				grpc_me->myURenderObject->cylinders[i].alt,
-				grpc_me->myURenderObject->cylinders[i].az,
-				grpc_me->myURenderObject->cylinders[i].length,
-				grpc_me->myURenderObject->cylinders[i].radius);
+	}//end if(me->myURenderObject != NULL)
 
-				cout << "handle_gotConnection: alt: " << grpc_me->myURenderObject->cylinders[i].alt << "\taz:  " 
-					 << grpc_me->myURenderObject->cylinders[i].az << endl;
-		}
-		
-		grpc_me->encode_and_sendTrans(grpc_me->myURenderObject->GetLocalXform().GetTrans()[0],
-										grpc_me->myURenderObject->GetLocalXform().GetTrans()[1],
-										grpc_me->myURenderObject->GetLocalXform().GetTrans()[2]);
-		grpc_me->encode_and_sendScale(grpc_me->myURenderObject->GetLocalXform().GetScale());
-		
-	}//end if(grpc_me->myURenderObject != NULL)
-//
+
   //code from when we were using triangles, keeping it here in case want to use quaternions (scaling)/triangles
   //any time in the future
   /*if(grpc_me->myURenderObject != NULL){
+
+		//start send triangles--new method
 		q_vec_type p1, p2, p3;
 
 		//send triangle scale
@@ -234,46 +197,35 @@ handle_gotConnection (void * userdata, vrpn_HANDLERPARAM grpc_p) {
 				p2[0], p2[1], p2[2],
 				p3[0], p3[1], p3[2]);  
 		}
-//
-		//for debugging puposes
-		FILE * file;
-		if ( (file = fopen("triangles_sent.txt", "w")) == NULL) {
-				fprintf(stderr,"Could not open triangles.txt for write\n");
-				return -1;
-		}
-//
-		for(i = 0; i < num_vertices;i++){
-
-			fprintf(file,"%g,%g,%g\n\n",
-				grpc_me->myURenderObject->triangles[i][0],
-				grpc_me->myURenderObject->triangles[i][1],
-				grpc_me->myURenderObject->triangles[i][2]);
-		}
-		fclose(file);
+		//end send triangles--new method
   }*/
 
-	//grpc_me->encode_and_sendCylinder(60.0f,60.0f,0.0f,30.0f,30.0f,100.0f,10.0f);
+
 
 	return 0;
 }
 //
-/*
-typedef struct {
-	double x, y, z;
-	double radius;
-	double az;
-	double alt;
-} cylinder;
 
-	cylinder* cylinders;
-	long num_cylinders;
-*/
+RECEIVE_MSG DeviceName {
+// char name[64];
+	strcpy(server_name,name);
+	deviceNameRcv = true;
+	//cout << "received device name" << endl;
 
+	//cout << "before sending init. data" << endl;
+	//cout << "server name = " << server_name << endl;
+	if(strcmp(server_name,"Eroder") == 0){
+		for(int y = 0; y < Ydim;y++){
+			DeviceViewPlane->_handleSourcePlaneChange(0, y);//send initial data across to eroder
+			mainloop();//call mainloop for each message packed so no overflow problems
+		}
+	}
+	//cout << "after sending init. data" << endl;
+}
 //
 
 RECEIVE_MSG WindowLineData {
 
-//
 	if(UnitsOK){//check that units match before allowing in data
 //
 		//check to see that the data the "microscope" wants to send is not greater than the
@@ -303,8 +255,9 @@ RECEIVE_MSG WindowLineData {
 			DataArray[y][i] = (double)(data[new_x][0]);//fill in
 		}
 		//
-		if(SimScanPlane){
-			SimScanPlane->UpdateDataArray(DataArray[y], y, reports);//send line of data
+		//cout << "receiving line " << y << endl;
+		if(DeviceViewPlane){
+			DeviceViewPlane->UpdateDataArray(DataArray[y], y, reports);//send line of data
 		}
 		else{
 			return;
@@ -338,7 +291,6 @@ RECEIVE_MSG_HEADER ScanDataset {
 	
 //		
 }
-
 //
 void nmm_SimulatedMicroscope_Remote::
 encode_and_sendGridandScanInfo(vrpn_int32 x, vrpn_int32 y,
@@ -354,7 +306,7 @@ encode_and_sendGridandScanInfo(vrpn_int32 x, vrpn_int32 y,
   char * msgbuf2 = encode_ReportGridSize(&len,x,y);//encode msgbuf
   retval = -1;
   retval = Send((long)len, d_ReportGridSize_type, msgbuf2);//send stuff
-  
+  //cout << "sending grid/scan info" << endl;
 }
 //
 void nmm_SimulatedMicroscope_Remote::
@@ -423,6 +375,58 @@ encode_and_sendCylinder(
   if((retval = Send((long)len, d_Cylinder_type, msgbuf)) == -1){
 	cout << "problem sending Cylinder" << endl;
   }//send stuff  
+}
+//
+//send one line of data
+void nmm_SimulatedMicroscope_Remote::
+encode_and_sendScanData(float * Data, int y, const int num_cols){
+  //cout << y << " ";
+
+  int dummy;
+  if(y==212){
+	dummy = 3;
+  }
+  vrpn_float32 ** line = new vrpn_float32*[num_cols];
+
+  int i;
+  if(Data!= NULL){
+   for(i = 0; i < num_cols; ++i){
+	line[i] = new vrpn_float32[1];
+	line[i][0] = (vrpn_float32)Data[i];
+   }
+  }
+  else{
+   cout << "line " << y << " had a problem" << endl;
+  }
+
+  //variables for encoding in msgbuf
+  timeval time;
+  gettimeofday(&time,NULL);
+  int len;
+  vrpn_int32 x,dx,dy,reports,fields;
+  x = 0;
+  dx = 1;//step across a row
+  dy = 0;//but don't move in y
+  reports = num_cols;
+  fields = 1;//only height
+
+  //encode msgbuf
+  char * msgbuf = encode_OrigScanLineData(&len, x, y, dx, dy, reports, 
+  	  fields, time.tv_sec, time.tv_usec, line);
+ 
+  //send stuff
+  int retval = -1;
+  //cout << "sending scan info for line" << y << endl;
+  if(retval = Send((long)len, d_OrigScanLineData_type, msgbuf)==-1){
+	cout << "problem sending window line data" << endl;
+  }
+
+  //clean up before next iteration
+  for(i = 0; i < num_cols; ++i){
+   delete line[i];
+  }
+  delete line;
+
 }
 //
 int nmm_SimulatedMicroscope_Remote::

@@ -31,7 +31,7 @@ class CylNode{//used to make a linked list of cylinders so that cylinders can be
 public:
 	CylNode(){next = NULL;};
 	CylNode * next;
-	float x,y,z,altitude,azimuth, length, radius;
+	float x,y,z,altitude,azimuth,length,radius;
 };
 
 class nmb_SharedDevice_Server;
@@ -45,21 +45,32 @@ class nmm_SimulatedMicroscope : public nmb_SharedDevice_Server,
 	public nmm_AFMSIM_Report, public nmm_AFMSIMSERVER_Report {
 
 public:
-	nmm_SimulatedMicroscope(char *name, vrpn_Connection *connection, int scanResolution);
+	nmm_SimulatedMicroscope(char *name, vrpn_Connection *connection, int xResolution, int yResolution=0);
 	virtual ~nmm_SimulatedMicroscope();
 	void encode_and_sendData(double ** Data, const int num_cols);
 							//encode a line from data array and pack to send (calls Send function)
+	void encode_and_sendDeviceName();
 	void change_machineName(char * newName);
 	double return_Simpixels_to_realworld_ratio_x();	
 	double return_Simpixels_to_realworld_ratio_y();
-	double Sim_to_World_x;
-	double Sim_to_World_y;
+	float get_xrange();	//returns the x range (real world extent)
+	float get_yrange();	//returns the y range (real world extent)
+	float get_zrange(); //returns the z range (real world extent)
+	float get_xsize();	//returns the x dimension of the grid in nano
+	float get_ysize();	//returns the y dimension of the grid in nano
+	float get_zoffset();//returns d_zmin, the z offset
+	bool FillDataArray(double*** ArrayToFill,int &xResolution,int &yResolution,float zscale);
+						//fills ArrayToFill with data from DataArray, returns xResolution and yResolution
+						//by reference
+	float Sim_to_World_x;
+	float Sim_to_World_y;
 	bool grid_size_rcv;		//true when this mesage is received, so windows in simulator can be resized
 	bool triangleRcv;		//true when there are triangles to process
 	bool cylRcv;			//true when cylinders to process
 	bool scaleRcv;
 	bool transRcv;
 	bool rotRcv;
+	bool scanRcv;
 	Node * head;			//head of list of triangles
 	Node * holder;			//temp Node to hold head of list before deletion without simulator needing 
 							//knowledge of Node class
@@ -70,19 +81,20 @@ public:
     float _scale;
 	float trans_x,trans_y,trans_z;
 	float rot_x,rot_y,rot_z;
+	vrpn_Connection * d_connection;
+	int last_filled_y;		//last row of data filled in from data received from nano
+
 
 private:
-    RECEIVERS_DECL nmm_AFMSIM_Report;
-	RECEIVERS_DECL nmm_AFMSIMSERVER_Report;
-    HANDLERS_DECL ;
-
+	RECEIVERS_DECL nmm_AFMSIMSERVER_Report ;
+	HANDLERS_DECL nmm_AFMSIMSERVER_Report ;
 
 	int Send( long len, vrpn_int32 msg_type, char * buf );
 							//send data across connection
-	char * d_name;
-	vrpn_Connection * d_connection;
+	char *d_name;
 	long simulator_id;		//ID of sender
-	int d_scanResolution;	//columnheight/rowlength
+	int d_xscanResolution;	//rowlength, number of columns
+	int d_yscanResolution;  //columnheight, number of rows
 	double Remote_toSim_x;	//ratio of x resolution from nano to simulator
 	double Remote_toSim_y;	//ratio of y resolution from nano to simulator
 	float d_xmin;			//all of these show microscope-space extent
@@ -91,7 +103,9 @@ private:
 	float d_ymax;
 	float d_zmin;
 	float d_zmax;
-	
+	int xsize, ysize;
+	int last_rcv_y;			//gives the rownumber for the last line of data received from nano
+	double ** DataArray;	//data array for scan data received from nano	
 
 };
 //

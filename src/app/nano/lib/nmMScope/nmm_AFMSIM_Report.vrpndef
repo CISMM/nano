@@ -1,9 +1,13 @@
+//these are messages that go from the server to the client
 // MESSAGE_GROUP must come first, before any VRPN_MESSAGE directives. 
 MESSAGE_GROUP nmm_AFMSIM_Report
 
 MESSAGE_PREFIX "nmm SimulatedMicroscope "
 
-DEFINE SPM_NAME_LENGTH 64
+
+VRPN_MESSAGE DeviceName {
+  char name[64]
+}
 
 //message is a line of data
 VRPN_MESSAGE WindowLineData {

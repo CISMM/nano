@@ -23,20 +23,24 @@ CLASSNAME nmm_SimulatedMicroscope
 //
 //name is the name of this device
 nmm_SimulatedMicroscope::
-nmm_SimulatedMicroscope(char *name, vrpn_Connection *connection, int scanResolution) : 
+nmm_SimulatedMicroscope(char *name, vrpn_Connection *connection, int xResolution,int yResolution) : 
 						nmb_SharedDevice_Server(name,connection), nmm_AFMSIM_Report(connection), 
 						nmm_AFMSIMSERVER_Report(connection), d_connection(connection),
-						d_scanResolution(scanResolution) {
-	REGISTER nmm_AFMSIMSERVER_Report;
-	d_name = new char[100];
+						d_xscanResolution(xResolution){
+	REGISTER nmm_AFMSIMSERVER_Report;	
+	d_name = new char[64];
 	strcpy(d_name,name);  
-	simulator_id = d_connection->register_sender("AFMSimulator");
+	simulator_id = d_connection->register_sender(d_name);
 	Remote_toSim_x = 1;
 	Remote_toSim_y = 1;
 	grid_size_rcv = false;
 	scaleRcv = false;
 	rotRcv = false;
 	transRcv = false;
+	scanRcv = false;
+	if(yResolution != 0)	d_yscanResolution = yResolution;
+	else					d_yscanResolution = xResolution;
+	last_filled_y = -1;		//initialize to -1 so that in FillDataArray, last_filled_y + 1 = 0
 }
 //
 nmm_SimulatedMicroscope::
@@ -47,7 +51,7 @@ nmm_SimulatedMicroscope::
 void nmm_SimulatedMicroscope::
 change_machineName(char * newName){
 	delete d_name;
-	d_name = new char[100];
+	d_name = new char[64];
 	strcpy(d_name,newName);
 }
 //
@@ -82,6 +86,7 @@ encode_and_sendData(double ** Data, const int num_cols){
 //  
   //send stuff
   int retval = -1;
+  //cout << "sending line " << y << endl;
   retval = Send((long)len, d_WindowLineData_type, msgbuf);
 //
   //clean up before next iteration
@@ -90,6 +95,18 @@ encode_and_sendData(double ** Data, const int num_cols){
   }
   delete line;
  }
+}
+//
+void nmm_SimulatedMicroscope::
+encode_and_sendDeviceName(){
+  //variables for encoding in msgbuf
+  int len = 0;
+  //
+  char * msgbuf = encode_DeviceName(&len,d_name);//encode msgbuf
+  int retval = -1;
+  if((retval = Send((long)len, d_DeviceName_type, msgbuf)) == -1){
+	cout << "problem sending DeviceName" << endl;
+  }//send stuff  
 }
 //
 int nmm_SimulatedMicroscope::
@@ -115,35 +132,148 @@ Send(long len, vrpn_int32 msg_type, char * buf){
 
 double nmm_SimulatedMicroscope::
 return_Simpixels_to_realworld_ratio_x(){
-	double to_return = (double)(d_scanResolution/(d_xmax - d_xmin));
+	double to_return = (double)(d_xscanResolution/(d_xmax - d_xmin));
 	if(to_return > 0)	return to_return;
 	else				return -to_return;
 }
 
 double nmm_SimulatedMicroscope::
 return_Simpixels_to_realworld_ratio_y(){
-	double to_return = (double)(d_scanResolution/(d_ymax - d_ymin));
+	double to_return = (double)(d_yscanResolution/(d_ymax - d_ymin));
 	if(to_return > 0)	return to_return;
 	else				return -to_return;
 }
 
+float nmm_SimulatedMicroscope::
+get_xrange(){
+	return (d_xmax - d_xmin);
+}
+
+float nmm_SimulatedMicroscope::
+get_yrange(){
+	return (d_xmax - d_xmin);
+}
+
+float nmm_SimulatedMicroscope::
+get_zrange(){
+    //cout << "range is: " << (d_zmax - d_zmin) << endl;
+	return (d_zmax - d_zmin);
+}
+
+float nmm_SimulatedMicroscope::
+get_xsize(){
+	return xsize;
+}
+
+float nmm_SimulatedMicroscope::
+get_ysize(){
+	return ysize;
+}
+
+float nmm_SimulatedMicroscope::
+get_zoffset(){
+	return d_zmin;
+}
+
+bool nmm_SimulatedMicroscope::
+FillDataArray(double*** ArrayToFill,int &xResolution,int &yResolution, float zscale){
+	xResolution = xsize;
+	yResolution = ysize;
+	//create new rows only if they have not yet been created
+	if((*ArrayToFill) == NULL){
+	  (*ArrayToFill) = new double*[ysize];
+	  for(int y=0; y < ysize; y++ ){
+		  (*ArrayToFill)[y] = new double[xsize];
+		  //initialize to NULL so can check and see if we have to create the row array later
+		  //(only want to do this once too...)
+	  }
+	}
+
+	for(int y = last_filled_y + 1; y <= last_rcv_y; ++y){
+		for(int x=0; x < xsize; x++ ){
+			(*ArrayToFill)[y][x] = ( DataArray[y][x] - get_zoffset() )/* *zscale */;
+			//scale values so within the range used by ArrayToFill
+		}
+		delete [] DataArray[y];
+		//cleanup for next go-round
+	}
+
+	last_filled_y = last_rcv_y;//highest number row filled now
+
+	if((*ArrayToFill) != NULL)		return true;//true that array filled
+	else						return false;//array not filled
+
+}
+
 HANDLERS nmm_AFMSIMSERVER_Report ; 
+
+//
+RECEIVE_MSG OrigScanLineData{
+//  int32 x 
+//  int32 y 
+//  int32 dx 
+//  int32 dy 
+//  int32 reports
+//  int32 fields
+//  int32 sec 
+//  int32 usec 
+//  float32 data [reports][fields]
+
+	//cout << "receiving window line data for line " << y << endl;
+	//check to see that the data is not greater than the number of samples the input grid contains/can hold
+	//check is whether initial (x), which is counted as zero, + (reports - 1), the number
+	//of data points following the Oth data point sent, is greater than the number of 
+	//points per row; analogous situation for y
+	int datain_xmax = x+(reports-1)*dx;
+	int datain_ymax = y+(reports-1)*dy;
+	if (x < 0 || y < 0 || datain_xmax > xsize || datain_ymax > ysize) {
+		cerr << "Internal: grid size doesn't match reported data size."
+			 << "Exiting to avoid loss of data." << endl; 
+		return;
+	}
+
+	if(DataArray[y] == NULL){
+		DataArray[y] = new double[reports];//DataArray[y] is a double*
+		//for each new y that is sent, create a new array to be filled in
+	}
+
+	for (int i = 0; i < reports; i++) {
+		int new_x = x + i*dx;
+		int new_y = y + i*dy;
+
+		DataArray[y][i] = (double)(data[new_x][0]);//fill in
+	}
+
+
+	last_rcv_y = y;
+	scanRcv = true;
+
+  	return;
+}
+
 
 //get the grid size of the file in nano
 RECEIVE_MSG ReportGridSize {
 //  int32 x
 //  int32 y
-	if(x != d_scanResolution){
-		Remote_toSim_x = double(x)/double(d_scanResolution);
+	xsize = x;
+	ysize = y;
+	if(x != d_xscanResolution){
+		d_xscanResolution = x;
 	}
-	if(y != d_scanResolution){
-		Remote_toSim_y = double(y)/double(d_scanResolution);
+	if(y != d_yscanResolution){
+		d_yscanResolution = y;
 	}
-	cout << endl << "Ratio remote to simulator grid sizes:\t" << Remote_toSim_x << ", " << Remote_toSim_y << endl;
+	
 	Sim_to_World_x = return_Simpixels_to_realworld_ratio_x();
 	Sim_to_World_y = return_Simpixels_to_realworld_ratio_y();
 	cout << "Ratio simulator pixels to real world distance:\t" << Sim_to_World_x << ", " << Sim_to_World_y << endl;
 	grid_size_rcv = true;
+
+	DataArray = new double*[xsize];
+	for(int i = 0;i<d_yscanResolution;++i){
+		DataArray[i] = NULL;//initialize to NULL
+	}
 
 }
 
@@ -162,7 +292,10 @@ RECEIVE_MSG ScanRange {
 	d_ymax = ymax;
 	d_zmin = zmin;
 	d_zmax = zmax;
-	cout << endl << "ScanRange:\t" << xmin << "," << xmax << "\t" << ymin << "," << ymax << endl;
+	cout << endl << "ScanRange:\t" << xmin << "," << xmax << "\t" << ymin << "," << ymax << endl << flush;
+
+	encode_and_sendDeviceName();//when connection established, ScanRange sent by remote side, and
+								//safe to send device name
 }
 
 RECEIVE_MSG Scale {
@@ -249,4 +382,5 @@ RECEIVE_MSG Cylinder {
 	temp->next = cylHead;//put in front of list
 	cylHead = temp;//call temp by head
 }
+
 
