@@ -432,10 +432,18 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 	
 	    // sleep to allow piezo relaxation
 	    sleep(2);
+
+            // XXX - might want to move everything below up to init_slow_line
+            // into init_slow_line
+         
+            if (microscope->state.modify.tool == SLOW_LINE) {
+                microscope->state.modify.slow_line_relax_done = VRPN_FALSE;
+            }
+
 	    //printf("handle_commit_change: peizo relax done\n");
 	    // start modification force!
 	    microscope->ModifyMode();
-
+           
 	    // Wait for the mode to finish (XXX should wait for response)
 	    sleep(1);
 	    //printf("handle_commit_change: in modify mode.\n");

@@ -16,6 +16,8 @@
 		// can enable or disable each of the scanlines individually
 		// the user can acheive the same effect less elegantly
 
+#define MAX_DATA_VECTORS (32)
+
 class Tcl_Interp;  // from <tcl.h>
 
 class GraphMod {
@@ -42,6 +44,11 @@ class GraphMod {
     /**< Should be called with every scanline result received
        from the microscope. */
 
+    static void handle_MaxPointsChange(vrpn_int32, void *);
+    /**< Should be called when user changes max points control */
+    static void handle_StrideChange(vrpn_int32, void *);
+    /**< Should be called when user changes stride control */
+
   private:
     int d_currentmode;
     int d_lastmode;
@@ -61,6 +68,10 @@ class GraphMod {
     
     void ShowStripchart (const char * tcl_script_dir);
     /**< Pops the stripchart window up. Catches the user's attention. */
+
+    // data vector names
+    int d_numDataVectors;
+    char d_dataVectorNames[MAX_DATA_VECTORS][128];
 
     // stuff for scanline display:
     int d_num_scanlines;

@@ -169,6 +169,8 @@ struct AFMModifyState {
   ///< Location of blue marker lines specified by user. currPt is the
   ///< one we are stepping towards, and prevPt is the one we started at.
 
+  vrpn_bool slow_line_relax_done;
+
   // Obsolete?
 
   int modify_enabled;

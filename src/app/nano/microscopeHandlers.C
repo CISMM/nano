@@ -763,7 +763,9 @@ void init_slow_line (void * _mptr)
   p.next();
   microscope->state.modify.slow_line_currPt =  p.curr();
   microscope->state.modify.slow_line_prevPt = p.peekPrev();
-
+  // send barrier message to detect end of relaxation points
+//  printf("sending barrier synch request for slow line\n");
+  microscope->requestSynchronization(0, 0, RELAX_MSG);
 }
 
 /** If the line has been specified, and commit has been pressed, start
@@ -779,7 +781,7 @@ void	handle_slow_line_playing_change (vrpn_int32, void * _mptr)
   // the "play" flag (set in Tcl) tells the point result handler to
   // keep stepping forward.
   //printf("Slow line play\n");
-  handle_slow_line_step_change(1, _mptr);
+  //handle_slow_line_step_change(1, _mptr);
 
 }
 
@@ -836,18 +838,23 @@ void	handle_slow_line_step_change (vrpn_int32, void * _mptr)
     microscope->state.modify.slow_line_position_param = 0.0;
   } 
   // Take a normal step. 
+
+// Following is commented out because we already should have a request sent
+// which will trigger the next request with this new point - this gets
+// started from nmm_Microscope_Remote::handle_barrierSynch
+
   // find the position our parameter corresponds to .
-  float x = x2*(microscope->state.modify.slow_line_position_param) +
+/*  float x = x2*(microscope->state.modify.slow_line_position_param) +
             x1*(1.0-microscope->state.modify.slow_line_position_param);
   float y = y2*(microscope->state.modify.slow_line_position_param) +
             y1*(1.0-microscope->state.modify.slow_line_position_param);
-  
+*/
   //printf("Slow line, start %f %f, stop %f %f, step to %f %f \n", 
   //	 x1, y1, x2, y2, x, y);
   // Take the step. Note: we _always_ want to take a step, so that we
   // get back point results, the slow_line_ReceiveNewPoint fcn is
   // called, and we can request more point results.
-  microscope->TakeModStep(x,y);
+//  microscope->TakeModStep(x,y);
   
 
 }
@@ -877,16 +884,20 @@ int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
 {
   if (microscope->state.modify.tool != SLOW_LINE) return 0;
   if (microscope->state.modify.slow_line_committed != VRPN_TRUE) return 0;
-
+  if (microscope->state.modify.slow_line_relax_done != VRPN_TRUE) return 0;
   // We don't want to send out new requests if the AFM is relaxing. 
-  if (microscope->d_relax_comp.is_ignoring_points()) return 0;
+//  if (microscope->d_relax_comp.is_ignoring_points()) return 0;
 
 
   if (microscope->state.modify.slow_line_playing == VRPN_TRUE) {
     //printf("slow_line: got point results, step to next %f %f\n", 
     //	   p->x(), p->y());
     handle_slow_line_step_change(1, _mptr);
-  } else {
+  } 
+
+// this should always be done while in SLOW_LINE now that 
+// handle_slow_line_step_change doesn't send point requests
+//else {
     //printf("slow_line: got point results, stay at %f %f\n", 
     //	   p->x(), p->y());
     // Take the step to the same place we just were.  We can't just
@@ -906,7 +917,7 @@ int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
               y1*(1.0-microscope->state.modify.slow_line_position_param);
  
     microscope->TakeModStep(x,y);
-  }
+ // }
   return 0;
 }
 

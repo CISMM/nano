@@ -31,9 +31,13 @@ GraphMod::GraphMod (void) :
     d_num_points_graphed (0),
     d_max_points ("gm_max_num_points", 10000),
     d_stride ("gm_stride", 2),
+    d_numDataVectors(0),
     d_num_scanlines(0),
     d_numscanline_channels(0),
     d_scanlength(0) {
+
+ d_max_points.addCallback(handle_MaxPointsChange, this);
+ d_stride.addCallback(handle_StrideChange, this);
 
 //fprintf(stderr, "GraphMod constructor\n");
 }
@@ -520,19 +524,19 @@ static   long	first_sec,first_usec;
 	  me->d_max_points = 2;
       }
       // If the data vector has become too long, chop off the  
-      // second element. We leave the first element to indicate
-      // that data has been removed.
+      // first element. 
       if (me->d_num_points_graphed > me->d_max_points) {
-	  sprintf(command, "gm_timevec delete 1");
+	  sprintf(command, "gm_timevec delete 0");
 	  TCLEVALCHECK(me->d_interp, command);
-	  sprintf(command, "gm_svec delete 1");
+	  sprintf(command, "gm_svec delete 0");
 	  TCLEVALCHECK(me->d_interp, command);
-	  sprintf(command, "gm_xsurfvec delete 1");
+	  sprintf(command, "gm_xsurfvec delete 0");
 	  TCLEVALCHECK(me->d_interp, command);
-	  sprintf(command, "gm_ysurfvec delete 1");
+	  sprintf(command, "gm_ysurfvec delete 0");
 	  TCLEVALCHECK(me->d_interp, command);
       }
       // plot the next point for each data value
+      me->d_numDataVectors = 0;
       for (value = p->head(); value != NULL; value = value->next()) {
 	 // make sure we have a vector to put the value in.
 	 sprintf(str,"gm_%s_%s", value->name()->Characters(), 
@@ -549,16 +553,24 @@ static   long	first_sec,first_usec;
 		    me->d_interp->result);
 	    break;
 	 }
+         strcpy(me->d_dataVectorNames[me->d_numDataVectors], str);
+         me->d_numDataVectors++;
+         if (me->d_numDataVectors == MAX_DATA_VECTORS) {
+            fprintf(stderr, "Stripchart Error: out of space (>32 data vectors)\n");
+	    break;
+         }
 	 //Set the value in the vector, so it gets plotted.
 	 sprintf(command, "%s append %12.9g", str, value->value());
 	 TCLEVALCHECK(me->d_interp, command);
 	 // If the data vector has become too long, chop off the
-	 // second element. We leave the first element to indicate
-	 // that data has been removed.
+	 // first element.
 	 if (me->d_num_points_graphed > me->d_max_points) {
-	     sprintf(command, "%s delete 1", str);
+	     sprintf(command, "%s delete 0", str);
 	     TCLEVALCHECK(me->d_interp, command);
 	 }
+      }
+      if (me->d_num_points_graphed > me->d_max_points) {
+          me->d_num_points_graphed--;
       }
 
    } // end if-else (me->d_num_points = 0)
@@ -576,4 +588,35 @@ void GraphMod::ShowStripchart (const char * ) {
    }	
 }
 
+// static
+void GraphMod::handle_MaxPointsChange(vrpn_int32 new_value, void * userdata)
+{
+   int i;
+   GraphMod *me = (GraphMod *)userdata;
+   char command[100];
+
+   int num_extra_points = me->d_num_points_graphed - me->d_max_points;
+   if (num_extra_points > 0) {
+      sprintf(command, "gm_timevec delete 0:%d", num_extra_points-1);
+      TCLEVALCHECK2(me->d_interp, command);
+      sprintf(command, "gm_svec delete 0:%d", num_extra_points-1);
+      TCLEVALCHECK2(me->d_interp, command);
+      sprintf(command, "gm_xsurfvec delete 0:%d", num_extra_points-1);
+      TCLEVALCHECK2(me->d_interp, command);
+      sprintf(command, "gm_ysurfvec delete 0:%d", num_extra_points-1);
+      TCLEVALCHECK2(me->d_interp, command);
+      for (i = 0; i < me->d_numDataVectors; i++) {
+         sprintf(command, "%s delete 0:%d", me->d_dataVectorNames[i], num_extra_points-1);
+         TCLEVALCHECK2(me->d_interp, command);
+      }
+      me->d_num_points_graphed -= num_extra_points;
+   }
+}
+
+// static
+void GraphMod::handle_StrideChange(vrpn_int32 new_value, void * userdata)
+{
+   GraphMod *me = (GraphMod *)userdata;
+   
+}
 

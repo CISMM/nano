@@ -155,6 +155,7 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     slow_line_playing("slow_line_playing", 0),
     slow_line_step("slow_line_step",0),
     slow_line_direction("slow_line_direction", FORWARD),
+    slow_line_relax_done(VRPN_FALSE),
 
     modify_enabled (VRPN_FALSE),
 

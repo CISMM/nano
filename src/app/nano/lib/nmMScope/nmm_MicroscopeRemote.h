@@ -53,6 +53,8 @@ class nmm_Sample;  // from nmm_Sample.h
 // someday.
 
 
+#define RELAX_MSG "relaxation done"
+
 class nmm_Microscope_Remote : public nmb_SharedDevice,
                               public nmm_Microscope {
 
@@ -655,6 +657,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice,
 
     nmm_Sample * d_sampleAlgorithm;
     vrpn_bool d_accumulatePointResults;
+
+    static int handle_barrierSynch (void *ud, const nmb_SynchMessage *msg);
 };
 
 #endif  // NMM_MICROSCOPE_REMOTE_H

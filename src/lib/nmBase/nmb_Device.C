@@ -379,6 +379,8 @@ int nmb_Device_Client::handle_Synchronization(void *userdata,
 {
   nmb_Device_Client *me = (nmb_Device_Client *) userdata;
 
+  //printf("in nmb_Device_Client::handle_Synchronization\n");
+
   vrpn_int32 operation_id;
   vrpn_int32 synch_id;
   char *comment;
@@ -440,6 +442,7 @@ int nmb_Device_Server::handle_RequestSynchronization(void *userdata,
 {
   nmb_Device_Server *me = (nmb_Device_Server *) userdata;
 
+//  printf("in nmb_Device_Server::handle_RequestSynchronization\n");
   // just echo the message back to the client
   char *msgbuf;
   long len;

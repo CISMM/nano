@@ -67,8 +67,6 @@
 
 // All callbacks are in MicroscopeRcv.C
 
-
-
 nmm_Microscope_Remote::nmm_Microscope_Remote
   (const AFMInitializationState & i,
    vrpn_Connection * c) :
@@ -83,7 +81,7 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
     d_mod_window_min_y (0),
     d_mod_window_max_x (0),
     d_mod_window_max_y (0),
-    d_mod_window_pad (5),
+    d_mod_window_pad (10),
     readMode (READ_FILE),   // differentiates between Live and Replay
     d_pointDataHandlers (NULL),
     d_modifyModeHandlers (NULL),
@@ -303,6 +301,8 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
   d_connection->register_handler(d_ScanlineData_type,
 				 handle_ScanlineData,
 				 this);
+
+  registerSynchHandler(handle_barrierSynch, this);
 }
 
 
@@ -4372,4 +4372,32 @@ void nmm_Microscope_Remote::doScanlineDataCallbacks (const Scanline_results *s)
     }
     l = l->next;
   }
+}
+
+// static 
+int nmm_Microscope_Remote::handle_barrierSynch (void *ud, 
+                                  const nmb_SynchMessage *msg)
+{
+   nmm_Microscope_Remote *me = (nmm_Microscope_Remote *)ud;
+//   printf("got barrier synch message for slow line(?)\n");
+   if (strcmp(msg->comment, RELAX_MSG) == 0) {
+      if (me->state.modify.tool != SLOW_LINE) {
+         fprintf(stderr, "nmm_Microscope::handle_barrierSynch: Error, not in"
+                         " slow line mode\n");
+         return 0;
+      }
+      float x1 =  me->state.modify.slow_line_prevPt->x();
+      float y1 =  me->state.modify.slow_line_prevPt->y();
+      float x2 =  me->state.modify.slow_line_currPt->x();
+      float y2 =  me->state.modify.slow_line_currPt->y();
+
+      float x = x2*(me->state.modify.slow_line_position_param) +
+              x1*(1.0-me->state.modify.slow_line_position_param);
+      float y = y2*(me->state.modify.slow_line_position_param) +
+              y1*(1.0-me->state.modify.slow_line_position_param);
+//      printf("sending first point request of slow line mode\n");
+      me->state.modify.slow_line_relax_done = VRPN_TRUE;
+      me->TakeModStep(x,y);
+   }
+   return 0;
 }
