@@ -214,7 +214,7 @@ int	main(unsigned argc, char *argv[])
     
     if( (connection = vrpn_get_connection_by_name(con_name,
 			  (isWritingStreamFile ? outputStreamName
-			   : (char *)NULL), vrpn_LOG_INCOMING)) == NULL) {
+			   : (char *)NULL))) == NULL) {
        // connection failed. VRPN prints error message.
       return -1;
     }
