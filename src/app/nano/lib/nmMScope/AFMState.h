@@ -228,6 +228,9 @@ struct AFMModifyState {
   TclNet_int slow_line_direction;
   ///< forward or reverse
 
+  TclNet_int slow_line_collect_data;
+  ///< take data continuosly?
+
   float slow_line_position_param;
   ///< ranges from 0 to 1, parameterizes the position of the tip along
   ///< the current line segment

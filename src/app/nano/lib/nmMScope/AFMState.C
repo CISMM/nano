@@ -172,6 +172,8 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     step_size ("modifyp_step_size", 1.0),
     new_step_size ("newmodifyp_step_size", 1.0),
 
+	slow_line_collect_data("collect_data", 1),
+
     max_z_step("modifyp_max_z_step", 1.0),
     new_max_z_step("newmodifyp_max_z_step", 1.0),
     max_xy_step("modifyp_max_xy_step", 1.0),
