@@ -159,8 +159,8 @@ extern TclNet_int surface_b;
 ///These select the plane to map compliance from and teh scale of the mapping.
 extern  Tclvar_float            compliance_slider_min_limit;
 extern  Tclvar_float            compliance_slider_max_limit;
-extern  Tclvar_float            compliance_slider_min,compliance_slider_max;
-extern  Tclvar_string         compliancePlaneName;
+extern  TclNet_float            compliance_slider_min,compliance_slider_max;
+extern  TclNet_string         compliancePlaneName;
 
 
 
@@ -168,26 +168,26 @@ extern  Tclvar_string         compliancePlaneName;
 ///These select the plane to map friction from and teh scale of the mapping.
 extern  Tclvar_float            friction_slider_min_limit;
 extern  Tclvar_float            friction_slider_max_limit;
-extern  Tclvar_float            friction_slider_min, friction_slider_max;
-extern  Tclvar_string         frictionPlaneName;
+extern  TclNet_float            friction_slider_min, friction_slider_max;
+extern  TclNet_string         frictionPlaneName;
 
 //--------------------------------------------------------------------------
 ///These select the plane to map bump size from and the scale of the mapping.
 extern  Tclvar_float            bump_slider_min_limit;
 extern  Tclvar_float            bump_slider_max_limit;
-extern  Tclvar_float            bump_slider_min, bump_slider_max;
-extern  Tclvar_string         bumpPlaneName;
+extern  TclNet_float            bump_slider_min, bump_slider_max;
+extern  TclNet_string         bumpPlaneName;
 
 //--------------------------------------------------------------------------
 ///This selects the plane to map opacity to.
-extern  Tclvar_string           bumpPlaneName;
+extern  TclNet_string           bumpPlaneName;
 
 //--------------------------------------------------------------------------
 ///These select the plane to map buzz amplitude from and the scale of the mapping
 extern  Tclvar_float            buzz_slider_min_limit;
 extern  Tclvar_float            buzz_slider_max_limit;
-extern  Tclvar_float            buzz_slider_min, buzz_slider_max;
-extern  Tclvar_string         buzzPlaneName;
+extern  TclNet_float            buzz_slider_min, buzz_slider_max;
+extern  TclNet_string         buzzPlaneName;
 
 //--------------------------------------------------------------------------
 ///These select the plane to map friction from and the scale of the mapping.
@@ -198,7 +198,7 @@ extern  Tclvar_string         adhesionPlaneName;
 
 //-------------------------------------------------------------------------
 ///This value is used when no plane is assigned
-extern Tclvar_float             default_spring_k;
+extern TclNet_float             default_spring_k;
 
 //--------------------------------------------------------------------------
 ///For mapping sound to dataset
@@ -218,6 +218,10 @@ extern  Tclvar_float           directz_force_scale;
 /// Guardedscan TCL/TK interface variables
 extern  Tclvar_int   guarded_plane_acquire;
 extern	Tclvar_float guarded_plane_depth;
+
+//-----------------------------------------------------------------------------
+// Setup -> Display Settings "fine-grained coupling"
+extern TclNet_int finegrained_coupling;
 
 /*********
  * Functions defined in one file and used in another (added by KPJ to satisfy

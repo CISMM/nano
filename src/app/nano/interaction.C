@@ -209,7 +209,7 @@ static float region_base_tracker_angle = 0;
 
 /** parameter locking the tip in sharp tip mode */
 static void handle_xyLock (vrpn_int32, void *);
-Tclvar_int xy_lock ("xy_lock_pressed", 0, handle_xyLock);
+TclNet_int xy_lock ("xy_lock_pressed", 0, handle_xyLock);
 
 /// Trigger button from the virtual button box in Tcl
 static int	tcl_trigger_just_forced_on = 0;
@@ -267,12 +267,12 @@ static void handle_friction_linear_change(vrpn_int32 val, void *userdata);
 static void handle_bumpscale_linear_change(vrpn_int32 val, void *userdata);
 static void handle_buzzscale_linear_change(vrpn_int32 val, void *userdata);
 
-Tclvar_int friction_linear("friction_linear", 0, handle_friction_linear_change);
+TclNet_int friction_linear("friction_linear", 0, handle_friction_linear_change);
 Tclvar_int adhesion_linear("adhesion_linear", 0);
-Tclvar_int compliance_linear("compliance_linear", 0);
-Tclvar_int bumpscale_linear("bumpscale_linear", 0,
+TclNet_int compliance_linear("compliance_linear", 0);
+TclNet_int bumpscale_linear("bumpscale_linear", 0,
 			    handle_bumpscale_linear_change);
-Tclvar_int buzzscale_linear("buzzscale_linear", 0,
+TclNet_int buzzscale_linear("buzzscale_linear", 0,
 			    handle_buzzscale_linear_change);
 
 Tclvar_float handTracker_update_rate ("handTracker_update_rate", 60.0,

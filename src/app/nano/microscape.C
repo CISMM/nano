@@ -465,14 +465,14 @@ static  char    defaultFilterDir[] = "/afs/unc/proj/stm/etc/filters";
 static	char	*procImageDir;
 
 /// This is the filter program name.
-Tclvar_string	procProgName ("pick_program", "");
+TclNet_string	procProgName ("pick_program", "");
 /// The string that is used to determine which inputGrid field to use
-Tclvar_string	procPlaneName ("pick_plane", "");
+TclNet_string	procPlaneName ("pick_plane", "");
 /// Parameters to pass literally to the filter program
-Tclvar_string	procParams ("proc_params","");
+TclNet_string	procParams ("proc_params","");
 
 /// This is the output plane 
-Tclvar_string	newFilterPlaneName("filterplane_name","");
+TclNet_string	newFilterPlaneName("filterplane_name","");
 
 /// Determine the angle for programs that use it.
 Tclvar_float procAngle ("proc_angle", 0.0f);
@@ -492,38 +492,38 @@ Tclvar_float	adhNumToAvg("adhesion_average",3);
 /// Haptic visualization of data. 
 static void handle_compliance_slider_change (vrpn_float64, void * userdata);
 static void handle_compliance_dataset_change(const char *, void * userdata);
-Tclvar_float    compliance_slider_min("compliance_slider_min",0);
-Tclvar_float    compliance_slider_max("compliance_slider_max",0);
+TclNet_float    compliance_slider_min("compliance_slider_min",0);
+TclNet_float    compliance_slider_max("compliance_slider_max",0);
 Tclvar_float	compliance_slider_min_limit("compliance_slider_min_limit",0);
 Tclvar_float	compliance_slider_max_limit("compliance_slider_max_limit",1);
-Tclvar_string compliancePlaneName ("compliance_comes_from", "");
+TclNet_string compliancePlaneName ("compliance_comes_from", "");
 
 static void handle_friction_slider_change (vrpn_float64, void * userdata);
 static void handle_friction_dataset_change(const char *, void * userdata);
-Tclvar_float    friction_slider_min("friction_slider_min",0);
-Tclvar_float	friction_slider_max("friction_slider_max",1);
+TclNet_float    friction_slider_min("friction_slider_min",0);
+TclNet_float	friction_slider_max("friction_slider_max",1);
 /// The limits on the Tk slider where min and max value are selected
 Tclvar_float	friction_slider_min_limit("friction_slider_min_limit",0);
 Tclvar_float	friction_slider_max_limit("friction_slider_max_limit",1);
-Tclvar_string frictionPlaneName ("friction_comes_from", "");
+TclNet_string frictionPlaneName ("friction_comes_from", "");
 
 static void handle_bump_slider_change (vrpn_float64, void * userdata);
 static void handle_bump_dataset_change(const char *, void * userdata);
-Tclvar_float    bump_slider_min("bump_slider_min",0);
-Tclvar_float    bump_slider_max("bump_slider_max",1);
+TclNet_float    bump_slider_min("bump_slider_min",0);
+TclNet_float    bump_slider_max("bump_slider_max",1);
 // The limits on the Tk slider where min and max value are selected
 Tclvar_float    bump_slider_min_limit("bump_slider_min_limit",0);
 Tclvar_float    bump_slider_max_limit("bump_slider_max_limit",1);
-Tclvar_string bumpPlaneName ("bumpsize_comes_from", "");
+TclNet_string bumpPlaneName ("bumpsize_comes_from", "");
 
 static void handle_buzz_slider_change (vrpn_float64, void * userdata);
 static void handle_buzz_dataset_change(const char *, void * userdata);
-Tclvar_float    buzz_slider_min("buzz_slider_min",0);
-Tclvar_float    buzz_slider_max("buzz_slider_max",1);
+TclNet_float    buzz_slider_min("buzz_slider_min",0);
+TclNet_float    buzz_slider_max("buzz_slider_max",1);
 // The limits on the Tk slider where min and max value are selected
 Tclvar_float    buzz_slider_min_limit("buzz_slider_min_limit",0);
 Tclvar_float    buzz_slider_max_limit("buzz_slider_max_limit",1);
-Tclvar_string buzzPlaneName ("buzzing_comes_from", "");
+TclNet_string buzzPlaneName ("buzzing_comes_from", "");
 
 // ?? Where is handle_adhesion_slider_change?
 static void    handle_adhesion_dataset_change(const char *, void * userdata);
@@ -534,7 +534,7 @@ Tclvar_float	adhesion_slider_min_limit("adhesion_slider_min_limit",0);
 Tclvar_float	adhesion_slider_max_limit("adhesion_slider_max_limit",1);
 Tclvar_string adhesionPlaneName ("adhesion_comes_from", "");
 
-Tclvar_float    default_spring_k("spring_k_slider",0.5);
+TclNet_float    default_spring_k("spring_k_slider",0.5);
 
 //-----------------------------------------------------------------------
 /// Navigate window, moves the surface view. 
@@ -636,12 +636,12 @@ Tclvar_int config_chartjunk ("chart_junk",  1,
 
 static void handle_global_icon_scale_change (vrpn_float64, void *);
 /// Scale for all hand icons, except red sphere. 
-Tclvar_float global_icon_scale ("global_icon_scale", 1.0);
+TclNet_float global_icon_scale ("global_icon_scale", 1.0);
 
 static void handle_sphere_scale_change (vrpn_float64 new_value, void * userdata);
 /// Scaling factor for the red sphere hand-icon. Should be sized in world
 /// space to be in nano-meters, default is 12.5 nm. 
-Tclvar_float sphere_scale ("sphere_scale", 12.5f);
+TclNet_float sphere_scale ("sphere_scale", 12.5f);
 
 static void handle_save_xform_change (vrpn_int32 new_value, void * userdata);
 static void handle_set_xform_change (vrpn_int32 new_value, void * userdata);
@@ -652,12 +652,12 @@ Tclvar_int set_xform ("set_xform", 0);
 
 static void handle_config_fp_change (vrpn_int32, void *);
 /// Triangle-display method: filled or wireframe
-Tclvar_int config_filled_polygons ("filled_triangles", 1, 
+TclNet_int config_filled_polygons ("filled_triangles", 1, 
                                    handle_config_fp_change, NULL);
 
 static void handle_config_ss_change (vrpn_int32, void *);
 /// Triangle-display method: smooth or flat shading. 
-Tclvar_int config_smooth_shading ("smooth_shading",  1, 
+TclNet_int config_smooth_shading ("smooth_shading",  1, 
                                   handle_config_ss_change, NULL);
 
 static void    handle_stride_change (vrpn_int32 newval, void * userdata);
@@ -754,7 +754,7 @@ TclNet_int copy_to_shared_state ("copy_to_shared_state", 0);
 TclNet_string collab_machine_name ("collab_machine_name", "");
 
 static void handle_finegrained_changed (vrpn_int32 value, void *) ;
-Tclvar_int finegrained_coupling ("finegrained_coupling", 0,
+TclNet_int finegrained_coupling ("finegrained_coupling", 0,
                                  handle_finegrained_changed, NULL);
 
 //-----------------------------------------------------------------------
@@ -1057,7 +1057,6 @@ static	char	*textureDir;
 
 //----------------------------------------------------------------------
 Tclvar_string newResamplePlaneName("resample_plane_name", "");
-
 
 
 /// Controls for the french Ohmmeter. Uses ohmmeter.tcl for widgets. 
@@ -1465,7 +1464,11 @@ void shutdown_connections (void) {
   openStreamFilename.bindConnection(NULL);
   openSPMDeviceName.bindConnection(NULL);
 
-  if (microscope) microscope->state.stm_z_scale.bindConnection(NULL);
+  if (microscope) {
+    microscope->state.stm_z_scale.bindConnection(NULL);
+    microscope->state.numLinesToJumpBack.bindConnection(NULL);
+  }
+
   if (dataset) ((TclNet_string *) dataset->heightPlaneName)->bindConnection(NULL);
   tcl_wfr_xlate_X.bindConnection(NULL);
   tcl_wfr_xlate_Y.bindConnection(NULL);
@@ -1500,6 +1503,12 @@ void shutdown_connections (void) {
   diffuse.bindConnection(NULL);
   surface_alpha.bindConnection(NULL);
   specular_color.bindConnection(NULL);
+  // Setup -> Display Settings
+  config_smooth_shading.bindConnection(NULL);
+  config_filled_polygons.bindConnection(NULL);
+  global_icon_scale.bindConnection(NULL);
+  sphere_scale.bindConnection(NULL);
+  finegrained_coupling.bindConnection(NULL);
 
   texture_scale.bindConnection(NULL);
   contour_width.bindConnection(NULL);
@@ -1508,6 +1517,26 @@ void shutdown_connections (void) {
   contour_b.bindConnection(NULL);
   contour_changed.bindConnection(NULL);
   if (dataset) ((TclNet_string *) dataset->contourPlaneName)->bindConnection(NULL);
+
+  // viewHapticControls
+  // Setup -> Haptics
+  frictionPlaneName.bindConnection(NULL);
+  friction_linear.bindConnection(NULL);
+  friction_slider_min.bindConnection(NULL);
+  friction_slider_max.bindConnection(NULL);
+  bumpPlaneName.bindConnection(NULL);
+  bumpscale_linear.bindConnection(NULL);
+  bump_slider_min.bindConnection(NULL);
+  bump_slider_max.bindConnection(NULL);
+  buzzPlaneName.bindConnection(NULL);
+  buzzscale_linear.bindConnection(NULL);
+  buzz_slider_min.bindConnection(NULL);
+  buzz_slider_max.bindConnection(NULL);
+  compliancePlaneName.bindConnection(NULL);
+  compliance_linear.bindConnection(NULL);
+  compliance_slider_min.bindConnection(NULL);
+  compliance_slider_max.bindConnection(NULL);
+  default_spring_k.bindConnection(NULL);
 
   ((TclNet_string *) dataset->opacityPlaneName)->bindConnection(NULL);
 
@@ -1541,6 +1570,18 @@ void shutdown_connections (void) {
   changed_modify_params.bindConnection(NULL);
   changed_image_params.bindConnection(NULL);
   changed_scanline_params.bindConnection(NULL);
+
+  /* */ // tclUIControls
+  // Buttons on the main window
+  xy_lock.bindConnection(NULL);
+
+  // Setup -> External Filters
+  procProgName.bindConnection(NULL);
+  procPlaneName.bindConnection(NULL);
+  procParams.bindConnection(NULL);
+  newFilterPlaneName.bindConnection(NULL);
+
+  /* */
 
   // output stream should be closed by microscope destructor,
   // WHICH WE MUST EXPLICITLY DELETE!
@@ -5284,11 +5325,45 @@ void teardownSynchronization(CollaborationManager *cm,
     if (viewColorControls) {
       viewColorControls->remove((TclNet_string *) dset->colorPlaneName);
       viewColorControls->remove((TclNet_string *) dset->colorMapName);
+      viewColorControls->remove(&shiny);
+      viewColorControls->remove(&specular_color);
+      viewColorControls->remove(&diffuse);
+      viewColorControls->remove(&local_viewer);
+      viewColorControls->remove(&surface_alpha);
+      // Setup -> Display Settings
+      viewColorControls->remove(&config_smooth_shading);
+      viewColorControls->remove(&config_filled_polygons);
+      viewColorControls->remove(&global_icon_scale);
+      viewColorControls->remove(&sphere_scale);
+      viewColorControls->remove(&toggle_null_data_alpha);
+      viewColorControls->remove(&finegrained_coupling);
     }
     nmui_Component * viewPlaneControls = viewControls->find("View Plane");
     if (viewPlaneControls) {
       viewPlaneControls->remove(&m->state.stm_z_scale);
       viewPlaneControls->remove((TclNet_string *) dset->heightPlaneName);
+    }
+
+    nmui_Component * viewHapticControls = viewControls->find("Haptic");
+    if (viewHapticControls) {
+      // Setup -> Haptics
+      viewHapticControls->remove(&frictionPlaneName);
+      viewHapticControls->remove(&friction_linear);
+      viewHapticControls->remove(&friction_slider_min);
+      viewHapticControls->remove(&friction_slider_max);
+      viewHapticControls->remove(&bumpPlaneName);
+      viewHapticControls->remove(&bumpscale_linear);
+      viewHapticControls->remove(&bump_slider_min);
+      viewHapticControls->remove(&bump_slider_max);
+      viewHapticControls->remove(&buzzPlaneName);
+      viewHapticControls->remove(&buzzscale_linear);
+      viewHapticControls->remove(&buzz_slider_min);
+      viewHapticControls->remove(&buzz_slider_max);
+      viewHapticControls->remove(&compliancePlaneName);
+      viewHapticControls->remove(&compliance_linear);
+      viewHapticControls->remove(&compliance_slider_min);
+      viewHapticControls->remove(&compliance_slider_max);
+      viewHapticControls->remove(&default_spring_k);
     }
   }
 
@@ -5344,8 +5419,35 @@ void teardownSynchronization(CollaborationManager *cm,
     //paramControls->remove(&(m->state.modify.slow_line_direction));
     paramControls->remove(&(m->state.modify.new_blunt_size));
     paramControls->remove(&(m->state.modify.new_blunt_speed));
+    paramControls->remove(&(m->state.numLinesToJumpBack));
   }
-  
+
+  /* */
+  nmui_Component * tclUIControls = ui_Root->find("TclUI");
+  if(tclUIControls) {
+    // Buttons on main window
+    tclUIControls->remove(&xy_lock);
+
+    // Setup -> External Filters
+    tclUIControls->remove(&procProgName);
+    tclUIControls->remove(&procPlaneName);
+    tclUIControls->remove(&procParams);
+    tclUIControls->remove(&newFilterPlaneName);
+
+  // Analysis -> Tip Convolution
+    if(ConvTip) {
+      ConvTip->nmtc_TeardownSync(tclUIControls);
+    }
+  }
+  /* */
+
+  /* */
+  nmui_Component * frenchOhmmeterControls = ui_Root->find("Ohmmeter");
+  if(frenchOhmmeterControls) {
+    the_french_ohmmeter_ui->ohm_TeardownSync(frenchOhmmeterControls);
+  }
+  /* */
+
   nmui_PlaneSync * ps = cm->planeSync();
   if (ps) {
     delete ps;
@@ -5504,6 +5606,13 @@ void setupSynchronization (CollaborationManager * cm,
   viewColorControls->add(&diffuse);
   viewColorControls->add(&surface_alpha);
   viewColorControls->add(&specular_color);
+  // Setup -> Display Settings
+  viewColorControls->add(&config_smooth_shading);
+  viewColorControls->add(&config_filled_polygons);
+  viewColorControls->add(&global_icon_scale);
+  viewColorControls->add(&sphere_scale);
+  viewColorControls->add(&toggle_null_data_alpha);
+  viewColorControls->add(&finegrained_coupling);
 /* */
 
   nmui_Component * viewContourControls;
@@ -5540,12 +5649,37 @@ void setupSynchronization (CollaborationManager * cm,
   viewGridControls->add(&rulergrid_enabled);
 /* */
 
+  nmui_Component * viewHapticControls;
+  viewHapticControls = new nmui_Component("Haptic");
+
+/* */
+  // Setup -> Haptics
+  viewHapticControls->add(&frictionPlaneName);
+  viewHapticControls->add(&friction_linear);
+  viewHapticControls->add(&friction_slider_min);
+  viewHapticControls->add(&friction_slider_max);
+  viewHapticControls->add(&bumpPlaneName);
+  viewHapticControls->add(&bumpscale_linear);
+  viewHapticControls->add(&bump_slider_min);
+  viewHapticControls->add(&bump_slider_max);
+  viewHapticControls->add(&buzzPlaneName);
+  viewHapticControls->add(&buzzscale_linear);
+  viewHapticControls->add(&buzz_slider_min);
+  viewHapticControls->add(&buzz_slider_max);
+  viewHapticControls->add(&compliancePlaneName);
+  viewHapticControls->add(&compliance_linear);
+  viewHapticControls->add(&compliance_slider_min);
+  viewHapticControls->add(&compliance_slider_max);
+  viewHapticControls->add(&default_spring_k);
+
+/* */
   viewControls->add(viewPlaneControls);
   viewControls->add(viewColorControls);
   viewControls->add(viewMeasureControls);
   viewControls->add(viewLightingControls);
   viewControls->add(viewContourControls);
   viewControls->add(viewGridControls);
+  viewControls->add(viewHapticControls);
 
   //adding viewControls to rootUIControl
   rootUIControl->add(viewControls);
@@ -5611,8 +5745,43 @@ void setupSynchronization (CollaborationManager * cm,
   //paramControls->add(&(m->state.modify.slow_line_direction));
   paramControls->add(&(m->state.modify.new_blunt_size));
   paramControls->add(&(m->state.modify.new_blunt_speed));
+  paramControls->add(&(m->state.numLinesToJumpBack));
 
   rootUIControl->add(paramControls);
+
+  /* */
+  // Tcl UI Controls - All other TCL UI controls
+  nmui_Component * tclUIControls;
+  tclUIControls = new nmui_Component ("TclUI");
+
+  // Buttons on main window
+  tclUIControls->add(&xy_lock);
+
+  // Setup -> External Filters
+  tclUIControls->add(&procProgName);
+  tclUIControls->add(&procPlaneName);
+  tclUIControls->add(&procParams);
+  tclUIControls->add(&newFilterPlaneName);
+
+  // Analysis -> Tip Convolution
+  if(ConvTip) {
+    ConvTip->nmtc_SetupSync(tclUIControls);
+  }
+
+  rootUIControl->add(tclUIControls);
+  /* */
+
+  /* */
+  if(the_french_ohmmeter_ui) {
+
+    nmui_Component * frenchOhmmeterControls;
+    frenchOhmmeterControls = new nmui_Component("Ohmmeter");
+
+    the_french_ohmmeter_ui->ohm_SetupSync(frenchOhmmeterControls);
+
+    rootUIControl->add(frenchOhmmeterControls);
+  }
+  /* */
 
   rootUIControl->bindConnection(serverConnection);
 

@@ -1,3 +1,18 @@
+2001-06-25  Shayne O'Neill  <oneill@tbone.cs.unc.edu>
+
+	* microscape.c:  Changed a bunch of Tclvars to TclNets.
+	                 Changed variables related to:
+			    Display Settings (Bug 2.7.4)
+			    Haptics (Bug 2.7.2)
+			    External Filters (Bug 2.7.3) 
+			    xyLock (Bug 2.4.1)
+			 Added these variables to setupSynchronization(),
+			 teardownSynchronization(), and shutdown_connections().
+	* microscape.h:  Changed some Tclvars to TclNets.
+	                 Made some TclNets external.
+	* interaction.c: Changed some Tclvars to TclNets.
+	* interaction.h: Changed some Tclvars to TclNets.
+
 2001-06-25  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c:  removed g_syncPending variable and 

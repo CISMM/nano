@@ -51,7 +51,14 @@ extern TclNet_float tcl_wfr_scale;
 
 extern Tclvar_float handTracker_update_rate;
 
-extern Tclvar_int xy_lock;
+extern TclNet_int xy_lock;
+
+// Tcl UI vars needed for proper collaboration
+extern TclNet_int friction_linear;
+extern TclNet_int compliance_linear;
+extern TclNet_int bumpscale_linear;
+extern TclNet_int buzzscale_linear;
+
 extern void position_sphere(float, float, float);
 
 /************************
