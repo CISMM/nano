@@ -118,6 +118,7 @@ pid_t getpid();
 #include "nmr_Registration_Proxy.h"
 #include "nmr_RegistrationUI.h"
 #include "nmg_ImageDisplayProjectiveTexture.h"
+#include "nmui_AFM_SEM_CalibrationUI.h"
 #endif // PROJECTIVE_TEXTURE
 
 
@@ -1087,7 +1088,7 @@ vrpn_int32 GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) {       // chang
                 ((vrpn_uint16*)image2)[x * y - i - 1] = ((vrpn_uint16*)image)[i];
             }
             image_uint16->setImage((vrpn_uint16*)image2);
-            graphics->updateTexture(nmg_Graphics::SEM_DATA, "SEM_DATA16_128x128", 0, 0, x, y);
+            graphics->updateTexture(nmg_Graphics::SEM_DATA, "TEM_DATA16_128x128", 0, 0, x, y);
         }
         else if (pixel_size == sizeof(vrpn_float32)) {
             if (!image_float32) {
@@ -1318,8 +1319,10 @@ nms_SEM_ui * sem_ui = NULL;
 /// Controls for registration
 nmr_RegistrationUI *alignerUI = NULL;
 nmg_ImageDisplayProjectiveTexture *alignmentTextureDisplay = NULL;
+
 nmr_Registration_Proxy *aligner = NULL;
 
+nmui_AFM_SEM_CalibrationUI *afm_sem_calibrationUI = NULL;
 
 nmui_CrossSection *cross = NULL;
 
@@ -7475,6 +7478,9 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
   if (tipDisplayUI) {
     tipDisplayUI->setSPM(NULL);
   }
+  if (afm_sem_calibrationUI) {
+    afm_sem_calibrationUI->setSPM(NULL);
+  }
 
   if (collaborationManager && dataset) {
     teardownSynchronization(collaborationManager, dataset);
@@ -7628,18 +7634,23 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
 
     if (new_microscope) linkMicroscopeToInterface(new_microscope);
 
+    if (imageManager) {
+      delete imageManager;
+    }
+    imageManager = new nmb_ImageManager(new_dataset->dataImages,
+         new_dataset->inputGrid, new_dataset->inputPlaneNames);
+
     if(alignerUI) {
-      if (imageManager) {
-        delete imageManager;
-      }
-      imageManager = new nmb_ImageManager(new_dataset->dataImages,
-           new_dataset->inputGrid, new_dataset->inputPlaneNames);
       alignerUI->changeDataset(imageManager);
       alignerUI->setupCallbacks();
     }
 
-    if (new_microscope && tipDisplayUI) {
+    if (tipDisplayUI) {
       tipDisplayUI->setSPM(new_microscope);
+    }
+    if (afm_sem_calibrationUI) {
+      afm_sem_calibrationUI->setSPM(new_microscope);
+	  afm_sem_calibrationUI->changeDataset(imageManager);
     }
 
   // There is no turning back. If any operations fail, the 
@@ -8265,6 +8276,11 @@ int main (int argc, char* argv[])
     alignmentTextureDisplay = new nmg_ImageDisplayProjectiveTexture(graphics);
     alignerUI = new nmr_RegistrationUI(aligner, alignmentTextureDisplay);
     alignerUI->setupCallbacks();
+
+    afm_sem_calibrationUI = new nmui_AFM_SEM_CalibrationUI(aligner,
+		&World, alignmentTextureDisplay);
+    afm_sem_calibrationUI->setSPM(microscope);
+	afm_sem_calibrationUI->changeDataset(imageManager);
   }
 
   
@@ -8594,6 +8610,8 @@ int main (int argc, char* argv[])
 				tcl_script_dir,
 				"SEM@dummyname.com",
 				sem_connection);
+	afm_sem_calibrationUI->setSEM(sem_ui->semClient());
+
       }
     }
   }

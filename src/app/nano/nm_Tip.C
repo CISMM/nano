@@ -1,6 +1,7 @@
 #include "nm_Tip.h"
 #include <GL/glut_UNC.h>
 #include <math.h>
+#include "v.h"
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -48,6 +49,10 @@ nm_TipDisplayControls::~nm_TipDisplayControls()
 {
   UTree *myNode = World.TGetNodeByName(s_renderName);
   World.TRemoveTreeNode(myNode);
+
+  if (d_AFM) {
+    d_AFM->unregisterPointDataHandler(pointDataHandler, this);
+  }
 }
 
 void nm_TipDisplayControls::handleEnableDisplayChange (vrpn_int32 newval, 
@@ -159,7 +164,7 @@ void nm_TipDisplayControls::sendFiducial()
   if (d_aligner) {
     printf("Sending tip location as fiducial: (%g,%g): %g nm\n",
           fiducialX, fiducialY, fiducialZ);
-    d_aligner->sendFiducial(vrpn_FALSE, 1, 
+    d_aligner->setFiducial(vrpn_FALSE, 1, 
                             &fiducialX, &fiducialY, &fiducialZ,
                             &fiducialX, &fiducialY, &fiducialZ);
   } else {
@@ -222,6 +227,7 @@ void nm_TipRenderer::setTextureEnable(bool enable)
 
 void nm_TipRenderer::buildDisplayList()
 {
+  v_gl_set_context_to_vlib_window();
   double coneAngle_rad = d_tipModel->d_coneAngle_deg*M_PI/180.0;
   double sinTheta = sin(coneAngle_rad);
   double cosTheta = cos(coneAngle_rad);
