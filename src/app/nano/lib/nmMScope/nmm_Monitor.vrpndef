@@ -13,7 +13,6 @@ MESSAGE_PREFIX "nmm Microscope "
 VRPN_MESSAGE PointResultData {
   float32 x
   float32 y
-  float32 z
   int32 sec
   int32 usec
   int32 reports

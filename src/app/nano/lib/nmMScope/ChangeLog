@@ -1,3 +1,17 @@
+2001-05-29  Aron Helser  <helser@cs.unc.edu>
+
+	* AFMState.C: New defaults for region size match loading of PPM
+	files.
+
+	* active_set.Ch: Revert to previous version. Addition of "z"
+	parameter to PointResult message type causes all stream files to
+	be mis-interpreted, and crashes Nano. 
+	* nmm_Microscope.Ch: same
+	* nmm_MicroscopeRemote.Cdef: same
+	* nmm_MicroscopeTranslator.C: same
+	* nmm_Monitor.vrpndef: same
+	* nmm_SPM_Report.vrpndef: same
+
 2001-05-15  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.Cdef (RcvGotConnection2): added call to 

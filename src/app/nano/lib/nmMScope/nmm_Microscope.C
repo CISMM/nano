@@ -1974,7 +1974,7 @@ long nmm_Microscope::decode_PointResultNM (const char ** buf,
 }
 
 char * nmm_Microscope::encode_ResultData (long * len,
-           vrpn_float32 x, vrpn_float32 y, vrpn_float32 z, vrpn_int32 sec, vrpn_int32 usec, vrpn_int32 fieldCount,
+           vrpn_float32 x, vrpn_float32 y, vrpn_int32 sec, vrpn_int32 usec, vrpn_int32 fieldCount,
 	   vrpn_float32 * data) {
   char * msgbuf = NULL;
   char * mptr;
@@ -1983,7 +1983,7 @@ char * nmm_Microscope::encode_ResultData (long * len,
 
   if (!len) return NULL;
 
-  *len = 3*sizeof(vrpn_int32) + 3*sizeof(vrpn_float32) + fieldCount * sizeof(vrpn_float32);
+  *len = 3*sizeof(vrpn_int32) + 2*sizeof(vrpn_float32) + fieldCount * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ResultData:  "
@@ -1994,7 +1994,6 @@ char * nmm_Microscope::encode_ResultData (long * len,
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, x);
     vrpn_buffer(&mptr, &mlen, y);
-    vrpn_buffer(&mptr, &mlen, z);
     vrpn_buffer(&mptr, &mlen, sec);
     vrpn_buffer(&mptr, &mlen, usec);
     vrpn_buffer(&mptr, &mlen, fieldCount);
@@ -2006,13 +2005,12 @@ char * nmm_Microscope::encode_ResultData (long * len,
 }
 
 long nmm_Microscope::decode_ResultData (const char ** buf,
-         vrpn_float32 * x, vrpn_float32 * y, vrpn_float32* z, vrpn_int32 * sec, vrpn_int32 * usec, vrpn_int32 * fieldCount,
+         vrpn_float32 * x, vrpn_float32 * y, vrpn_int32 * sec, vrpn_int32 * usec, vrpn_int32 * fieldCount,
          vrpn_float32 * data) {
   long i;
 
   CHECK(vrpn_unbuffer(buf, x));
   CHECK(vrpn_unbuffer(buf, y));
-  CHECK(vrpn_unbuffer(buf, z));
   CHECK(vrpn_unbuffer(buf, sec));
   CHECK(vrpn_unbuffer(buf, usec));
   CHECK(vrpn_unbuffer(buf, fieldCount));

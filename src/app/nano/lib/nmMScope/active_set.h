@@ -139,7 +139,7 @@ class	Point_channel_selector : public Channel_selector
 	int Add_channel(char *name, char *units,
 		float offset, float scale, int num_samples);
 
-	int	Handle_report(float x, float y, float z, long sec, long usec,
+	int	Handle_report(float x, float y, long sec, long usec,
 			float *vals, int numvalues, vrpn_bool accumulatePoints);
           ///< If accumulatePoints is true, stashes a copy of myresult
           ///< in d_pointList.

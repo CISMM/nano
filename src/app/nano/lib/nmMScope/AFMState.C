@@ -439,10 +439,10 @@ AFMInitializationState::AFMInitializationState (void) :
   MaxSafeMove (100.0f),
   ModSubWinSz (15),
 
-  xMin (-2500.0f),
-  xMax ( 2500.0f),
-  yMin (-2500.0f),
-  yMax ( 2500.0f),
+  xMin (0.0f),
+  xMax (5000.0f),
+  yMin (0.0f),
+  yMax (5000.0f),
 
   mutexPort (-1),
 
@@ -493,8 +493,8 @@ AFMState::AFMState (const AFMInitializationState & i) :
     xMax (i.xMax),
     yMin (i.yMin),
     yMax (i.yMax),
-    zMin (-5000.0f),
-    zMax ( 5000.0f),
+    zMin (0.0f),
+    zMax (10000.0f),
 
     doDriftComp    (i.doDriftComp),
     doRelaxComp    ("doRelaxComp", i.doRelaxComp),
