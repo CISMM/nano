@@ -1,3 +1,21 @@
+2000-09-26  Tom Hudson  <hudson@cs.unc.edu>
+
+	* CollaborationManager.C : include nmb_Debug.h
+        (getPeer) : replace fprintf() with collabVerbose()
+        (getPeerReplay) : same
+        (getServer) : same
+        (setLogging) : same
+        (setPeerName) : same
+        (sendOurTimer) : same
+        (respondToPeerTimer) : same
+        (handle_peerTimer) : same
+        (handle_timerResponse) : same
+	* microscape.c : handle -cverbosity command line argument
+
+	* interaction.c : add fprintf() during feelAhead
+	* microscopeHandlers.C : same
+
+
 2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
 
         * microscape.c (local_time_sync) : must return a value

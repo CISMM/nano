@@ -808,6 +808,9 @@ void handle_modify_accept (vrpn_int32, void * _mptr) {
       case SLOW_LINE:
       case SLOW_LINE_3D:
 	break;
+      case FEELAHEAD:
+fprintf(stderr, "Feelahead mode!\n");
+        break;
       default:
         printf("  Unknown modify tool!!!\n");
       }

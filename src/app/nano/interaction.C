@@ -2457,6 +2457,8 @@ int doFeelLive (int whichUser, int userEvent)  {
         // Feelahead mode IGNORES the commit button;  it never
         // leaves image mode.
 
+fprintf(stderr, "Feeling to %.2f, %.2f.\n", clipPos[0], clipPos[1]);
+
         microscope->TakeSampleSet(clipPos[0], clipPos[1]);
 
       } else if (!tcl_commit_pressed) { 

@@ -15,10 +15,16 @@
 #include <vrpn_Tracker.h>
 #include <vrpn_Analog.h>
 
+#include <nmb_Debug.h>
+
 #include <nmui_Component.h>
 #include <nmui_PlaneSync.h>
 
 #include "nM_coord_change.h"
+
+// Verbosity scheme
+// 1 - initialization & major changes
+// 10 - timing
 
 
 static
@@ -32,8 +38,9 @@ vrpn_Connection * getPeer (const char * hostname, int port,
   sprintf(buf, "%s:%d", hostname, port);
   sprintf(sfbuf, "%s/SharedIFRemLog-%ld.stream", loggingPath, timestamp);
 
-//fprintf(stderr, "Connecting to peer %s on NIC %s;  any logging is to %s.\n",
-//buf, NIC_IP, sfbuf);
+  collabVerbose(1, "Collaboration Manager:  "
+                "Connecting to peer %s on NIC %s;  any logging is to %s.\n",
+                buf, NIC_IP, sfbuf);
 
   return vrpn_get_connection_by_name (buf,
              loggingInterface ? sfbuf : NULL,
@@ -49,7 +56,8 @@ vrpn_Connection * getPeerReplay (const char * loggingPath, int timestamp) {
   sprintf(sfbuf, "file:%s/SharedIFRemLog-%ld.stream", loggingPath,
           timestamp); 
 
-//fprintf(stderr, "Replaying peer from file %s.\n", sfbuf);
+  collabVerbose(1, "Collaboration Manager:  "
+                "Replaying peer from file %s.\n", sfbuf);
 
   return vrpn_get_connection_by_name (sfbuf);
 }
@@ -63,8 +71,9 @@ vrpn_Connection * getServer (int port,
 
   sprintf(sfbuf, "%s/SharedIFSvrLog-%ld.stream", loggingPath, timestamp); 
 
-//  fprintf(stderr, "Opening peer server on port %d, NIC %s.\n",
-//  port, NIC_IP);
+  collabVerbose(1, "Collaboration Manager:  "
+                "Opening peer server on port %d, NIC %s.\n",
+                port, NIC_IP);
 
   return new vrpn_Synchronized_Connection
         (port,
@@ -264,7 +273,8 @@ void CollaborationManager::setServerPort (int port) {
 
 void CollaborationManager::setLogging (char * path, int timestamp) {
   setString(&d_logPath, path);
-//fprintf(stderr, "Logging to path \"%s\".\n", d_logPath);
+  collabVerbose(1, "Collaboration Manager:  "
+                "Logging to path \"%s\".\n", d_logPath);
   d_logTime = timestamp;
 }
 
@@ -370,6 +380,9 @@ void CollaborationManager::setPeerName
   vrpn_int32 newConnection_type;
   vrpn_int32 timerSNreply;
 
+  collabVerbose(1, "CollaborationManager::setPeerName:  Peer named %s.\n",
+                newName);
+
   // Open peerRemote FIRST so we're sure logging happens
 
   if (d_replay) {
@@ -386,8 +399,7 @@ void CollaborationManager::setPeerName
     sprintf(peerHandName, "handCoordinateServer0@file:%s", sfbuf);
     sprintf(peerModeName, "userModeServer0@file:%s", sfbuf);
   } else {
-    sprintf(peerHandName, "handCoordinateServer0@%s:%d", newName,
-d_peerPort);
+    sprintf(peerHandName, "handCoordinateServer0@%s:%d", newName, d_peerPort);
     sprintf(peerModeName, "userModeServer0@%s:%d", newName, d_peerPort);
   }
 
@@ -506,8 +518,8 @@ void CollaborationManager::sendOurTimer (void) {
   d_peerRemote->pack_message(24 - msglen, now, d_timerSN_type,
                              d_myId_rem, msgbuf, vrpn_CONNECTION_RELIABLE);
 
-//fprintf(stderr, "CollaborationManager::sendOurTimer:  "
-                //"Sent message for sn %d.\n", sn);
+  collabVerbose(10, "CollaborationManager::sendOurTimer:  "
+                "Sent message for sn %d.\n", sn);
 }
 
 
@@ -530,8 +542,8 @@ void CollaborationManager::respondToPeerTimer (void) {
     d_peerServer->pack_message(msglen, now, d_timerSNreply_type,
                                d_myId_svr, msgbuf, vrpn_CONNECTION_RELIABLE);
 
-//fprintf(stderr, "CollaborationManager::respondToPeerTimer:  "
-                //"Done with sn %d.\n", sn);
+  collabVerbose(10, "CollaborationManager::respondToPeerTimer:  "
+                "Done with sn %d.\n", sn);
   }
 
 }
@@ -549,8 +561,8 @@ int CollaborationManager::handle_peerTimer (void * userdata,
 
   cm->d_peerTimer.insert(sn);
 
-//fprintf(stderr, "CollaborationManager::handle_peerTimer:  "
-                //"Queueing up sn %d.\n", sn);
+  collabVerbose(10, "CollaborationManager::handle_peerTimer:  "
+                "Queueing up sn %d.\n", sn);
 
   return 0;
 }
@@ -569,8 +581,8 @@ int CollaborationManager::handle_timerResponse (void * userdata,
   if (cm->d_timer) {
     cm->d_timer->unblock(sn);
 
-//fprintf(stderr, "CollaborationManager::handle_timerResponse:  "
-                //"Unblocking sn %d.\n", sn);
+  collabVerbose(10, "CollaborationManager::handle_timerResponse:  "
+                "Unblocking sn %d.\n", sn);
   }
 
   return 0;

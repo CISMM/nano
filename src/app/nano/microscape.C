@@ -4973,6 +4973,9 @@ void ParseArgs (int argc, char ** argv,
       } else if (strcmp(argv[i], "-gverbosity") == 0) {
         if (++i >= argc) Usage(argv[0]);
         spm_graphics_verbosity = atoi(argv[i]);
+      } else if (strcmp(argv[i], "-cverbosity") == 0) {
+        if (++i >= argc) Usage(argv[0]);
+        collab_verbosity = atoi(argv[i]);
       } else if (strcmp (argv[i], "-MIXport") == 0) {
         // clark 7/21/97  -- allow for split communication streams
         if (++i >= argc) Usage (argv[0]);
@@ -5092,6 +5095,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-logif path] [-replayif path] [-packetlimit n]\n");
   fprintf(stderr, "       [-optimistic] [-pessimistic] [-phantomrate rate]\n");
   fprintf(stderr, "       [-tesselation stride] [-NIC IPaddress]\n");
+  fprintf(stderr, "       [-gverbosity n] [-cverbosity n]\n");
   fprintf(stderr, "       \n");
 
   fprintf(stderr, "       -d: Use given spm device (default sdi_stm0)\n");
@@ -5127,6 +5131,8 @@ void Usage(char* s)
   fprintf(stderr, "       -scrapeheight: Height above surf in nm\n");
   fprintf(stderr, "       -verbosity: How much info to print (default 0)\n");
   fprintf(stderr, "       -gverbosity: How much graphics info to print "
+                         "(default 0)\n");
+  fprintf(stderr, "       -cverbosity: How much collaboration info to print "
                          "(default 0)\n");
   fprintf(stderr, "       -timerverbosity: How much timer info to print "
                          "(default 0)\n");
