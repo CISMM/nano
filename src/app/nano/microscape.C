@@ -5291,10 +5291,7 @@ void teardownMicroscopeSynchronization( CollaborationManager *cm,
   nmui_Component * paramControls = ui_Root->find("Params");
   if(paramControls) {
 
-	//seok
-	paramControls->remove(&(m->state.doRelaxComp));
-
-
+    paramControls->remove(&(m->state.doRelaxComp));
     paramControls->remove(&(m->state.modify.new_mode));
     paramControls->remove(&(m->state.modify.new_tool));
     paramControls->remove(&(m->state.modify.new_control));
@@ -5712,9 +5709,8 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
   paramControls->add(&changed_image_params);
   paramControls->add(&changed_scanline_params);
 
-  //seok
-  paramControls->add(&(m->state.doRelaxComp));
 
+  paramControls->add(&(m->state.doRelaxComp));
   paramControls->add(&m->state.modify.new_mode);
   paramControls->add(&m->state.modify.new_tool);
   paramControls->add(&m->state.modify.new_control);
