@@ -31,10 +31,13 @@ export VcOsDir=WINNT
 
 # Some additional setup so we can run:
 # Path to the nano executable and path to the Tcl dlls. 
-export PATH="$MY_NANO_OBJ_DIR/pc_win32/app/nano:/c/nsrc/external/pc_win32/bin:/c/Progra~1/Tcl/Bin:$PATH"
+export PATH="$MY_NANO_OBJ_DIR/pc_win32/app/nano:`cygpath -u $NANO_ROOT/bin`:$PATH"
 
 # Shouldn't have to change variable below this point, assuming 
 # you did a standard install of VC++ 6.0
+
+# Tell the makefiles we are using VC++
+export VC=1
 
 #
 # Root of Visual Developer Studio Common files.

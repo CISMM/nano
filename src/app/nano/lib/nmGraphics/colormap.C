@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include	<stdlib.h>
 #include	<stdio.h>
 #include	<fcntl.h>
@@ -5,11 +12,52 @@
 #include	<math.h>
 #include	"colormap.h"
 
-ColorMap::ColorMap (const char * filename, const char * dir) {
-	table = NULL;
-	num_entries = 0;
-	num_allocated = 0;
-	interp = COLORMAP_LINEAR;
+/* Plans, 10/25/00 Aron Helser 
+
+Should add a solid-color "map", which always returns a single color.  Method
+addEntry, allows modification of a color map. Specify value, rgba and it will
+update the table. If value is the same as an existing entry, entry is
+overwritten.  Method removeEntry gets rid of an entry by value.  Hook these up
+to the right Tcl interface, and use the store_to_file method, and we have a
+complete color map editor!!!
+*/
+
+ColorMap::ColorMap (int r1, int g1, int b1, int a1, 
+                    int r2, int g2, int b2, int a2) :
+    table (NULL),
+    num_entries (0),
+    num_allocated (0),
+    interp (COLORMAP_LINEAR)
+{
+    // Two color map, with color 1 at 0.0 and color 2 at 1.0
+
+    table = new Colormap_Table_Entry[2];
+    if (table == NULL) {
+        fprintf(stderr,"ColorMap::Colormap(): new() failed!\n");
+        return;
+    } else {
+        num_allocated = 2;
+    }
+    num_entries =2;
+    table[0].value = 0.0f;
+    table[0].r = r1/255.0f;
+    table[0].g = g1/255.0f;
+    table[0].b = b1/255.0f;
+    table[0].a = a1/255.0f;
+
+    table[1].value = 1.0f;
+    table[1].r = r2/255.0f;
+    table[1].g = g2/255.0f;
+    table[1].b = b2/255.0f;
+    table[1].a = a2/255.0f;
+}
+ 
+ColorMap::ColorMap (const char * filename, const char * dir) :
+    table (NULL),
+    num_entries (0),
+    num_allocated (0),
+    interp (COLORMAP_LINEAR)
+{
 
 	// If the filename is NULL, we're done
 	// Load the file into the table if not
@@ -28,6 +76,53 @@ ColorMap::~ColorMap()
 	if (table) {
 		delete [] table;
 	}
+}
+
+int	ColorMap::setGradient(int r1, int g1, int b1, int a1,
+                              int r2, int g2, int b2, int a2)
+{
+    // Two color map, with color 1 at 0.0 and color 2 at 1.0
+    if (table) delete [] table;
+    table = new Colormap_Table_Entry[2];
+    if (table == NULL) {
+        fprintf(stderr,"ColorMap::setGradient(): new() failed!\n");
+        return -1;
+    } else {
+        num_allocated = 2;
+    }
+    num_entries =2;
+    table[0].value = 0.0f;
+    table[0].r = r1/255.0f;
+    table[0].g = g1/255.0f;
+    table[0].b = b1/255.0f;
+    table[0].a = a1/255.0f;
+
+    table[1].value = 1.0f;
+    table[1].r = r2/255.0f;
+    table[1].g = g2/255.0f;
+    table[1].b = b2/255.0f;
+    table[1].a = a2/255.0f;
+    return 0;
+}
+
+int	ColorMap::setConst(int r1, int g1, int b1, int a1)
+{
+    // One color map, constant color.
+    if (table) delete [] table;
+    table = new Colormap_Table_Entry[1];
+    if (table == NULL) {
+        fprintf(stderr,"ColorMap::setConst(): new() failed!\n");
+        return -1;
+    } else {
+        num_allocated = 1;
+    }
+    num_entries =1;
+    table[0].value = 1.0f;
+    table[0].r = r1/255.0f;
+    table[0].g = g1/255.0f;
+    table[0].b = b1/255.0f;
+    table[0].a = a1/255.0f;
+    return 0;
 }
 
 int	ColorMap::get_full_name (const char * filename, const char * dir,
@@ -53,7 +148,7 @@ int	ColorMap::get_full_name (const char * filename, const char * dir,
 
 int	ColorMap::load_from_file (const char * filename, const char * dir)
 {
-	char	full_name[5000];
+	char	full_name[1000];
 	FILE	*infile;
 	char	line[200];
 
@@ -90,12 +185,18 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
 	// Look for the word 'ColorMap' at the start of the file
 	fgets(line, sizeof(line), infile);
 	if (strncmp(line,"Colormap",strlen("Colormap"))) {
+            // Attempt to read a Thermo PAL file instead. 
+            if (read_PAL_from_file(line, sizeof(line), infile )) {
 		fprintf(stderr,
 		  "ColorMap::load_from_file(): Expected 'Colormap' in file\n");
 		fprintf(stderr,
 		  "   (got %s)\n",line);
 		fprintf(stderr,"   (File %s)\n",full_name);
 		return -1;
+            } else {
+                // We successfully read a ThermoMicroscopes PAL colormap
+                return 0;
+            }
 	}
 	// Look for the line of -----------'s separating header from body
 	while (strncmp(line,"--------",8)) {
@@ -129,10 +230,10 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
 
 		// Fill in the new entry
 		table[num_entries].value = value;
-		table[num_entries].r = r/255.0;
-		table[num_entries].g = g/255.0;
-		table[num_entries].b = b/255.0;
-		table[num_entries].a = a/255.0;
+		table[num_entries].r = r/255.0f;
+		table[num_entries].g = g/255.0f;
+		table[num_entries].b = b/255.0f;
+		table[num_entries].a = a/255.0f;
 		num_entries++;
 	}
 
@@ -144,6 +245,64 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
 	return 0;
 }
 
+/** Reads a ThermoMicroscopes PAL colormap from a file. First line has already
+ been read by read_from_file above - we attempt to continue reading. This file
+ is an arbitrary number of lines, each with three ints, for R G and B. Seems
+ like thermo only uses files of length 192 and 230, for some reason.
+  */
+int ColorMap::read_PAL_from_file(char * line, int line_len, FILE * infile )
+{
+    int ret;
+    int	r,g,b;
+    // If line is null, error. 
+    if (!line) return -1;
+
+    // First line has been read. See if it contains 3 ints. 
+    ret = sscanf(line,"%d%d%d", &r, &g, &b);
+    if (ret != 3) return -1; // Not 3 numbers - error
+
+    // Fill in the new entry
+    table[0].value = 0.0f;  // Scale 0 to 1 later. 
+    table[0].r = r/255.0f;
+    table[0].g = g/255.0f;
+    table[0].b = b/255.0f;
+    table[0].a = 255.0f;
+    num_entries=1;
+
+    // Read in the file body.  Each line is float value, int r,g,b,a
+    while (fgets(line,line_len,infile)) {
+
+        // line has been read. See if it contains 3 ints. 
+        ret = sscanf(line,"%d%d%d", &r, &g, &b);
+        if (ret != 3) return -1; // Not 3 numbers - error
+        
+        // XXX Ensure we have enough room for the entry
+        if (num_entries >= num_allocated) {
+            fprintf(stderr,"ColorMap::load_from_file(): Too many entries (ignoring the rest)\n");
+            continue;
+        }
+        
+        // Fill in the new entry
+        table[num_entries].value = num_entries/230.0f;  // Scale 0 to 1 later. 
+        table[num_entries].r = r/255.0f;
+        table[num_entries].g = g/255.0f;
+        table[num_entries].b = b/255.0f;
+        table[num_entries].a = 255.0f;
+        num_entries++;
+    }
+
+    // Scale the values to the range 0..1
+    float inv_max_val = 1.0f/table[num_entries -1].value ;
+    for (int i = 0; i < num_entries; i++) {
+        table[i].value = table[i].value * inv_max_val;
+    }
+    // Close the file
+    if (fclose(infile)) {
+        perror("ColorMap::load_from_file(): Error closing file");
+        return -1;
+    }
+    return 0;
+}
 
 int	ColorMap::store_to_file (const char * filename, const char * dir)
 {

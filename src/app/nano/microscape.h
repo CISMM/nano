@@ -48,8 +48,10 @@ class Xform;		//added from ugraphics
 #ifndef NO_MAGELLAN
 class vrpn_Magellan;
 class vrpn_Tracker_AnalogFly;
+class vrpn_Text_Receiver;
 #endif
 class vrpn_Phantom;
+class vrpn_MousePhantom;
 
 #define	MICROSCAPE_MAJOR_VERSION	(10)
 #define	MICROSCAPE_MINOR_VERSION	(0)
@@ -103,6 +105,7 @@ extern	float		MAX_K;  /* for each device		  */
 #define HOLD_EVENT	3	///< button pressed at least twice in a row
 
 extern  vrpn_Phantom * phantServer;
+extern  vrpn_MousePhantom * mousePhantomServer;
 extern  vrpn_ForceDevice_Remote *forceDevice;
 extern  vrpn_Tracker_Remote *vrpnHeadTracker[NUM_USERS];
 extern  vrpn_Tracker_Remote *vrpnHandTracker[NUM_USERS];
@@ -123,7 +126,10 @@ extern  vrpn_Button_Remote *magellanButtonBox;
 extern  int magellanButtonState[MAGELLAN_NUMBUTTONS];
 extern  vrpn_Analog_Remote *magellanPuckAnalog;
 extern  vrpn_Tracker_Remote *magellanPuckTracker;
+extern  vrpn_Text_Receiver * magellanTextRcvr;
 extern  vrpn_bool magellanPuckActive;
+
+void shutdown_Magellan();
 #endif
 /* end vrpn stuff */
 
@@ -232,7 +238,7 @@ extern int register_vrpn_phantom_callbacks(void);
 
 // XXX - this has to do with the user interface but there isn't
 // a global user interface object so I put it here temporarily (AAS)
-enum TextureMode {RULERGRID, SEM, REGISTRATION, MANUAL_REALIGN, GENETIC};
+enum TextureMode {RULERGRID, CONTOUR, ALPHA, SEM, REGISTRATION, MANUAL_REALIGN};
 extern int disableOtherTextures (TextureMode m);
 
 // things defined in global.h:  spm_graphics_verbosity, timer_verbosity,

@@ -58,10 +58,18 @@ proc open_stream_file {} {
 #
 # Open a device - SPM.
 
-set deviceNames       { "Explorer1" "Explorer2" "Discoverer"}
+# Default for 3rdTech
+set deviceNames {}
+set deviceConnections {} 
+
+if { !$thirdtech_ui } {
+# Maintain list of all UNC SPMs available here. Don't add UNC SPMs to spm_list_def.tcl
+set deviceNames       { "Explorer1" "Explorer2" "Discoverer" "Same-machine SPM (testing)"}
 set deviceConnections { "nmm_Microscope@sodium-cs" \
         "nmm_Microscope@phantom-cs" \
-        "nmm_Microscope@iron-cs"}
+        "nmm_Microscope@iron-cs" \
+        "nmm_Microscope@127.0.0.1" }
+}
 
 # Dialog which allows user to choose which device
 # and which log file. 
@@ -90,12 +98,19 @@ proc choose_logfile { } {
     if {$filename != ""} {
         # No error checking here - do that below 
         # in open_spm_connection
+
+        # Make sure filename ends in .nms extension. tk_getSaveFile dialog
+        # will strip it, if "hide known file extensions" is on in NT Explorer. 
+        if { [string compare -nocase [file extension $filename] ".nms"] != 0 } {
+            append filename ".nms"
+        }
         set open_spm_log_name $filename
         set fileinfo(save_dir) [file dirname $filename]
     }
     # otherwise do nothing - user pressed cancel or didn't enter file name
 }
 
+set open_spm_log_name ""
 generic_entry $win.open_logfile open_spm_log_name \
 	"Auto lab notebook:" ""
 $win.open_logfile configure -width 20
@@ -111,23 +126,30 @@ proc open_spm_connection {} {
     if { [.open_device_dialog activate] } {
         # Make sure the logfile is OK - MUST be able to write log before 
         # connection opens!
+        
         # Get name of logfile even if user didn't press Enter.
         set open_spm_log_name [[.open_device_dialog childsite].open_logfile get]
+     
+        if { $open_spm_log_name != "" } {
+            # Make sure filename ends in .nms extension. 
+            if { [string compare -nocase [file extension $open_spm_log_name] ".nms"] != 0 } {
+                append open_spm_log_name ".nms"
+            }
 
-        # directory must exist, must be writable. File must not exist.
-        if {![file exists [file dirname $open_spm_log_name]]} {
-            nano_error "Cannot save streamfile $open_spm_log_name\nDirectory doesn't exist!"
-            return;
-        }
-        if {![file writable [file dirname $open_spm_log_name]]} {
-            nano_error "Cannot save streamfile $open_spm_log_name\nCan't create a file in this directory!"
-            return;
-        }
-        if {[file exists $open_spm_log_name]} {
-            nano_error "Cannot save streamfile $open_spm_log_name\nFile already exists!"
-            return;
-        }
-                
+            # directory must exist, must be writable. File must not exist.
+            if {![file exists [file dirname $open_spm_log_name]]} {
+                nano_error "Cannot save streamfile $open_spm_log_name\nDirectory doesn't exist!"
+                return;
+            }
+            if {![file writable [file dirname $open_spm_log_name]]} {
+                nano_error "Cannot save streamfile $open_spm_log_name\nCan't create a file in this directory!"
+                return;
+            }
+            if {[file exists $open_spm_log_name]} {
+                nano_error "Cannot save streamfile $open_spm_log_name\nFile already exists!"
+                return;
+            }
+        }                
         # User chose a device, translate it into a vrpn device name for Nano
         set open_spm_device_name [lindex $deviceConnections $chosen_device_index]
         #puts "$open_spm_device_name"
@@ -166,10 +188,11 @@ pack $win.export_filetype -anchor nw
 
 # Allow the user to save 
 proc save_plane_data {} {
-    global export_plane export_filetype export_filename fileinfo imageNames
+    global export_plane export_filetype export_filename fileinfo imageNames z_comes_from
     # Trigger the export_filetype widget to display formats for
     # the default selected export_plane.
-    set export_plane [lindex $imageNames 0]
+    #set export_plane [lindex $imageNames 0]
+    set export_plane $z_comes_from
     if { [.save_plane_dialog activate] } {
 	set types { {"All files" *} 
         { "ThermoMicroscopes" ".tfr" }
@@ -180,9 +203,9 @@ proc save_plane_data {} {
 
         # Set the file extension correctly
         set def_file_exten ".tfr"
-        puts $export_filetype
+        #puts $export_filetype
         foreach item $types {
-            puts "[lindex $item 0] [lindex $item 1]"
+            #puts "[lindex $item 0] [lindex $item 1]"
             if { [string compare $export_filetype [lindex $item 0]] == 0} {
                 set def_file_exten [lindex $item 1]
             }
@@ -228,7 +251,8 @@ iwidgets::dialog .save_screen_dialog -title "Save screen image"
     .save_screen_dialog deactivate 1
     set types { {"All files" *} 
     {"TIFF" ".tif" }
-    {"PNM" ".pnm" } }
+    {"PPM/PGM" ".pgm" } 
+    {"PPM/PGM" ".ppm" } }
 
         # Set the file extension correctly
         set def_file_exten ".tif"
@@ -325,9 +349,14 @@ proc remember_mod_data { time_stamp} {
 
 }
 
+# Allows the C code, microscape.c, to clear saved modifications from
+# the list when streamfiles or connections change. 
+
 proc forget_mod_data { } {
     global mod_data
-    unset mod_data
+    if { [info exists mod_data] } {
+        unset mod_data
+    }
 }
 
 # Allow the user to save 

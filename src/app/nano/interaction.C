@@ -35,6 +35,9 @@
  *
  */
 #include <stdio.h>
+#ifdef __CYGWIN__
+#include <unistd.h> // for sleep()
+#endif
 
 #include <quat.h>
 
@@ -696,7 +699,7 @@ static void drawLine (void) {
 	return;
     }
 
-    microscope->EnableUpdatableQueue(VRPN_FALSE);
+    //microscope->EnableUpdatableQueue(VRPN_FALSE);
 
     /* Do a poly-line modification!!! */
     // Wait for tip to get to starting position
@@ -708,7 +711,7 @@ static void drawLine (void) {
       if (value == NULL) {
 	fprintf(stderr, "drawLine():  "
 		"could not get input point!\n");
-        microscope->EnableUpdatableQueue(VRPN_TRUE);
+        //microscope->EnableUpdatableQueue(VRPN_TRUE);
 	return;
       }
       printf("drawLine: points in list, doing modify.\n");
@@ -751,7 +754,7 @@ static void drawLine (void) {
       microscope->state.modify.slow_line_committed = VRPN_TRUE;
       // Call this function to initialize the slow_line tool
       init_slow_line(microscope);
-      microscope->EnableUpdatableQueue(vrpn_TRUE);
+      //microscope->EnableUpdatableQueue(vrpn_TRUE);
       return;
     }
     p.next();
@@ -785,7 +788,7 @@ static void drawLine (void) {
     // resume normal scanning operation of AFM
     printf("drawLine: done modifying, resuming scan.\n");
 
-    microscope->EnableUpdatableQueue(VRPN_TRUE);
+    //microscope->EnableUpdatableQueue(VRPN_TRUE);
 
     microscope->ResumeScan();
     // All done - turn off commit button
@@ -804,6 +807,8 @@ static void drawLine (void) {
 
 void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 {
+
+    //printf("handle_commit_change called, commit: %d\n", (int)tcl_commit_pressed);
     // This handles double callbacks, when we set tcl_commit_pressed to
     // zero below.
     if (tcl_commit_pressed != 1) return;
@@ -904,7 +909,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	    // This comparison sets the smallest possible scan region 
 	    // to be 0.01 nm - 0.1 Angstrom. Ought to be safe. 
 	    // only do something if region has been specified.
-	    printf ( "Setting region, size %f\n", microscope->state.select_region_rad);
+	    //printf ( "Setting region, size %f\n", microscope->state.select_region_rad);
 	    // here's how the region is specified. 
 	    //x_min = centerx - rad;
 	    //x_max = centerx + rad;
@@ -945,7 +950,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
  */
 void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 {
-    printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
+    //printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
     // This handles double callbacks, when we set tcl_commit_canceled to
     // zero below.
     if (tcl_commit_canceled != 1) return;
@@ -991,7 +996,7 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 	      decoration->num_slow_line_3d_markers = 0;
 	    }
 
-	    fprintf(stderr, "handle_commit_cancel: Aborting modify, resuming scan.\n");
+	    //fprintf(stderr, "handle_commit_cancel: Aborting modify, resuming scan.\n");
 	}
 	// I think we should always resume scan - if the user hits "cancel"
 	// that should mean "start over", so we always begin scanning again.
@@ -1025,14 +1030,13 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 
 static void handle_phantom_reset (vrpn_int32, void *)
 {
-  printf("handle phantom reset invoked\n");
+    //printf("handle phantom reset invoked\n");
     if (tcl_phantom_reset_pressed != 1) return;
 
     if (reset_phantom())
 	fprintf(stderr, "Error: could not reinitialize phantom\n");
 
     tcl_phantom_reset_pressed = 0;
-    handle_phantom_reset( (vrpn_int32)-1, NULL);
 
 }
 
@@ -2877,7 +2881,7 @@ int doFeelLive (int whichUser, int userEvent)  {
       }
 
       if (microscopeRedundancyController) {
-        microscopeRedundancyController->set(0, vrpn_MsecsTimeval(0.0));
+          //microscopeRedundancyController->set(0, vrpn_MsecsTimeval(0.0));
       }
 
       /* Start image mode and resume previous scan pattern */

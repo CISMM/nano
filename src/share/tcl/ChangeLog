@@ -1,3 +1,7 @@
+2000-12-20  Aron Helser  <helser@cs.unc.edu>
+
+	* all: 3rdtech merge into main trunk. 
+
 2000-12-5  Tom Hudson  <hudson@cs.unc.edu>
 
 	* latency.tcl : add forward error correction, queue monitoring,

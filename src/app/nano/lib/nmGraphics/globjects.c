@@ -189,11 +189,6 @@ int clear_world_modechange(int mode, int style, int tool_param)
     break;
   case USER_MEASURE_MODE:
     removeFunctionFromFunclist(&v_hand,hand_id);
-    if ( !g_config_chartjunk ) {
-      removeFunctionFromFunclist(&vir_world, red_line_struct_id);
-      removeFunctionFromFunclist(&vir_world, green_line_struct_id);
-      removeFunctionFromFunclist(&vir_world, blue_line_struct_id);
-    }
     break;
     //  case USER_PULSE_MODE:
     //    removeFunctionFromFunclist(&vir_world,aim_struct_id);
@@ -264,7 +259,16 @@ int clear_world_modechange(int mode, int style, int tool_param)
   if (g_draw_collab_hand) {
     removeFunctionFromFunclist(&vir_world, collabHand_id);
   }
-  /* */
+
+  // We added them in init_world_modechange, so we should remove them here.
+  //if (g_config_measurelines) {
+  removeFunctionFromFunclist(&vir_world, red_line_struct_id);
+  removeFunctionFromFunclist(&vir_world, green_line_struct_id );
+  removeFunctionFromFunclist(&vir_world, blue_line_struct_id );
+  //}
+  //if (g_scanline_display_enabled) {
+  scanline_id = removeFunctionFromFunclist(&vir_world, scanline_id );
+  //}
 
   return(0);
 }
@@ -1060,6 +1064,10 @@ int myworld (void)
   nmg_Funclist *head;
   head=vir_world;
   
+  // Don't draw anything if chart junk is off
+  if (!g_config_chartjunk) {
+	return 0;
+  }
   while(head != NULL)
     {
       if (spm_graphics_verbosity >= 12)
@@ -1280,10 +1288,11 @@ int selecthand(void *)
 #ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
 #endif
+  glRotated(90.0, 0.0, 1.0, 0.0);	//Yes, this is necessary.
 
-  glColor3f(1.0,0.0,0.0); 
-  glScalef(size * g_icon_scale, size * g_icon_scale, size * g_icon_scale);
-  mycube();
+  glColor3f(0.0,0.0,1.0); 
+  //glScalef(size * g_icon_scale, size * g_icon_scale, size * g_icon_scale);
+  glCallList(vx_half_down);
 
 #ifndef FLOW
   glPopAttrib();

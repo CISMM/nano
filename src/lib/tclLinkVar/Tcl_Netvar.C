@@ -650,12 +650,12 @@ vrpn_float64 TclNet_float::operator = (vrpn_float64 newValue) {
 
   if (!isLocked()) {
 
+    gettimeofday(&now, NULL);
     collabVerbose(6, "TclNet_float (%s)::operator = (%.5f) "
                   "into d_replica[%d] at %ld:%ld.\n",
                   d_myTclVarname, newValue, d_writeReplica,
                   now.tv_sec, now.tv_usec);
 
-    gettimeofday(&now, NULL);
 //fprintf(stderr, "TclNet_float (%s)::operator = (%.5f) "
 //"into d_replica[%d] at %ld:%ld.\n",
 //my_tcl_varname, newValue, d_writeReplica, now.tv_sec, now.tv_usec);

@@ -71,7 +71,6 @@
   Revised: Thu May 14 10:10:08 1998 by weberh
   $Source$
   $Locker$
-  $Revision$
 \*****************************************************************************/
 #ifndef _MYUTIL_H_
 #define _MYUTIL_H_
@@ -283,11 +282,11 @@ void glDebugOff();
 // these were grabbed from vrpn_Shared.h
 // for sockets and gettimeofday
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #include <sys/timeb.h>
 #include <winsock.h>   // timeval is defined here
   /* from HP-UX */
-#if !defined(__CYGWIN__)
+//#if !defined(__CYGWIN__)
 #ifndef _STRUCT_TIMEVAL
 #define _STRUCT_TIMEVAL
 struct timezone {
@@ -301,7 +300,7 @@ struct timezone {
 // CYGWIN defines gettimeofday, but it uses C style linkage.
 // If we define it here, the compiler thinks it has C++ style 
 // linkage and can't find it later.
-#endif // CYGWIN
+//#endif // CYGWIN
 // #define close closesocket
 #else
 // unix time headers
@@ -361,177 +360,6 @@ int nonblockingGetch(char *, int fEcho=1);
 
 
 /*****************************************************************************\
-  $Log$
-  Revision 1.2.2.1  2000/07/04 00:38:41  helser
-  Removed many more printfs. Most on startup are now from vrpn.
-
-  Removed Genetic Textures.
-
-  WARNING: Tclvar_string can't be cast to a char * on VC++ - instead you
-  must use the ->string() method. Fixed bug caused by this in
-  interaction.c, possible bug in nmm_MicroscopeRemote.c
-
-  Fixed active_set.C and the channel selector classes. The tcl has now
-  been re-written so the channel selectors can be destroyed and
-  re-created without repercussions for the tcl interface.
-
-  Fixed bug when hitting accept in modify window.
-
-  Added Magellan button box. Buttons are the same as on the main window,
-  but leave out scale-up and scale-down. Uses Russ' vrpn_Magellan
-  class.
-
-  Grid_size widget added to image controls. Segfault caused by using
-  tesselation_stride with a small gridsize fixed. Error when topo failed
-  to report new grid size fixed.
-
-  Added messages, message types and methods to handle a PauseScan
-  message, a WithdrawTip message from nano to Thermo, and a Scanning
-  message from Thermo to nano. These implement the functions of two
-  buttons on the main nano window which were already added.
-
-  Revision 1.2  2000/04/07 19:00:13  helser
-  Changes to allow nano to compile with MS Visual C++. It doesn't link yet,
-  but it compiles. Issues still to be resolved:
-  directory operations, termio.c raw terminal operations.
-  Changes compile, link and run with g++ on cygwin,
-  compile and link on SGI (haven't tested running...)
-
-  Revision 1.1.1.1  1999/12/14 20:40:08  weigle
-  This is the new directory structure.  More documentation will be forth
-  coming, but there is a README.1ST which should get you compiling. 
-
-  NOTE: This does not currently go make libraries for you if they can not
-  be found, only complains that they are not there.  There are two places
-  where you must do a gmake to get libraries:
-     ./nano/src/lib  and  ./nano/src/app/nano/lib
-
-  Revision 1.5  1999/05/28 21:44:22  lovelace
-  One small change that was left out of the previous NT commit.  These
-  files had been changed in the include directory, but not in the
-  multip directory.
-
-  Revision 1.3  1999/03/23 15:22:55  hudson
-  Added a new control panel (for latency compensation techniques).
-  Added (an early version of) the first compensation technique -
-    showing both the Phantom tip and true tip positions.
-  Migrated a few small pieces of data onto nmb_Decoration.
-
-  Revision 1.2  1998/06/01 20:56:26  kumsu
-  put in code to compile with aCC for pxfl
-
-  Revision 1.1  1998/05/27 19:30:41  hudson
-  * Added multip/Makefile
-                 README
-                 myUtil.h
-                 util.C
-                 threads.[Ch]
-  * Wrote sharedGraphicsServer() and spawnSharedGraphics() in microscape.c
-
-  This is Hans Weber's multithreading library, used for a shared-memory
-  multiprocessing version of microscape.
-
-  Revision 1.2  1998/05/01 05:10:39  weberh
-  *** empty log message ***
-
-  Revision 1.1  1998/04/23 04:14:33  weberh
-  Initial revision
-
-  Revision 4.1  1998/03/31 03:03:17  weberh
-   pc threading compiles
-  >
-
-  Revision 4.0  1998/03/29 22:40:41  weberh
-   sgi threading works. now on to pc threading.
-
-  Revision 3.4  1998/03/25 23:06:26  weberh
-  *** empty log message ***
-
-  Revision 3.3  1998/03/16 16:04:15  weberh
-  *** empty log message ***
-
-  Revision 3.2  1998/03/15 22:18:38  weberh
-  *** empty log message ***
-
-  Revision 3.1  1998/03/05 15:18:48  weberh
-  added scale func
-
-  Revision 3.0  1998/02/25 20:13:18  weberh
-  all in good shape for viewer
-
-  Revision 1.19  1998/02/19 22:22:50  weberh
-  *** empty log message ***
-
-  Revision 1.18  1998/02/10 21:26:47  weberh
-   got rid of all_assert
-
-  Revision 1.17  1998/02/09 19:34:13  weberh
-  *** empty log message ***
-
-  Revision 1.16  1997/12/21 10:34:57  weberh
-  better gettimeofday, etc. for pc
-
-  Revision 1.15  1997/12/14 08:15:30  weberh
-  timing calls added -- tvDiff, tvSum tvElapsedMsecs
-  also windwos gettimeofday implemented.
-
-  Revision 1.14  1997/12/11 06:38:08  weberh
-  added pc sleep and gettimeofday
-
-  Revision 1.13  1997/12/08 21:46:34  weberh
-  *** empty log message ***
-
-  Revision 1.12  1997/12/01 22:35:53  weberh
-  *** empty log message ***
-
-  Revision 1.11  1997/11/17 23:04:08  weberh
-  added binary read/write
-
-  Revision 1.10  1997/11/15 00:27:33  weberh
-  lots of read and write.
-
-  Revision 1.9  1997/11/12 18:10:06  weberh
-  added binary write and read for basic types.
-
-  Revision 1.8  1997/11/04 06:51:46  weberh
-  utility routines for adjusting endianess
-
-  Revision 1.7  1997/10/30 16:26:22  weberh
-  added proper new handler call for windows
-
-  Revision 1.6  1997/10/28 21:24:44  weberh
-  compiles with proper enums
-
-  Revision 1.5  1997/10/10 20:06:37  weberh
-  *** empty log message ***
-
-  Revision 1.4  1997/10/10 17:10:26  weberh
-  fixed for windows
-
-  Revision 1.3  1997/09/18 20:00:10  weberh
-  fixed up assert msg
-
-  Revision 1.2  1997/09/17 07:44:35  weberh
-  *** empty log message ***
-
-  Revision 1.1  1997/09/17 07:39:51  weberh
-  Initial revision
-
-  Revision 1.5  1997/09/16 20:28:20  weberh
-  fixed up enum so true=1 is confirmed
-  /
-
-  Revision 1.4  1997/09/16 20:22:00  weberh
-  added NL, SP, TAB, and new_handler
-
-  Revision 1.3  1997/09/09 21:53:07  weberh
-  small changes for windows
-
-  Revision 1.2  1997/09/09 08:54:08  weberh
-  got rid of assert all together -- just my own c++ macro now.
-
-  Revision 1.1  1997/09/09 06:23:12  weberh
-  Initial revision
 
 \*****************************************************************************/
 

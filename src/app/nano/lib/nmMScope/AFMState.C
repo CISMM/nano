@@ -396,8 +396,9 @@ AFMInitializationState::AFMInitializationState (void) :
   yMin (-2500.0f),
   yMax ( 2500.0f),
 
-  mutexPort (-1)
+  mutexPort (-1),
 
+  incr_save(1)
 {
   strcpy (deviceName, "null");
 }
@@ -467,7 +468,7 @@ AFMState::AFMState (const AFMInitializationState & i) :
     rasterX (0),
     rasterY (0),
 
-    dlistchange (VRPN_FALSE),
+    //dlistchange (VRPN_FALSE),
     select_center_x (0.0f),
     select_center_y (0.0f),
     select_region_rad (0.0f),

@@ -9,11 +9,10 @@
 # for widgets that change behavior of modify mode
 #
 set nmInfo(modify) [create_closing_toplevel modify "Modify Parameters"]
+# Prevent changes in size of the window by user.
+wm resizable $nmInfo(modify) 0 0 
 set nmInfo(modifyquick) [frame $nmInfo(modify).quick]
 set nmInfo(modifyfull) [frame $nmInfo(modify).full]
-
-# Prevent changes in size of the window by user.
-wm resizable $nmInfo(modify) 0 0
 
 # Button swaps between quick and full param frames.  
 set modify_quick_or_full "quick"
@@ -45,8 +44,11 @@ pack $nmInfo(modifyquick).modifystate $nmInfo(modifypage) \
         -side top -fill x 
 
 set nmInfo(modifystate) [$nmInfo(modifyquick).modifystate childsite]
-generic_entry $nmInfo(modifypage).setpoint modifyp_setpoint \
-	"Setpoint (-64,64)" real \
+generic_entry $nmInfo(modifypage).setpoint_nA modifyp_setpoint \
+	"Setpoint (-64,64 nA)" real \
+        { set accepted_modify_params 1 }
+generic_entry $nmInfo(modifypage).setpoint_pcnt modifyp_setpoint \
+	"Setpoint (0,100 %)" real \
         { set accepted_modify_params 1 }
 generic_entry $nmInfo(modifypage).p-gain modifyp_p_gain "P-Gain (0,5)" real \
         { set accepted_modify_params 1 }
@@ -58,23 +60,25 @@ generic_entry $nmInfo(modifypage).rate modifyp_rate "Rate (um/sec)" real \
         { set accepted_modify_params 1 }
 
 	
-pack    $nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
+pack    $nmInfo(modifypage).setpoint_nA $nmInfo(modifypage).p-gain \
 	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
 	$nmInfo(modifypage).rate \
-	-side top -anchor nw
+	-side top -anchor nw -fill x
 
 proc align_mq_labels {} {
     global nmInfo
 
     iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
+	$nmInfo(modifypage).setpoint_nA $nmInfo(modifypage).setpoint_pcnt \
+        $nmInfo(modifypage).p-gain \
 	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
 	$nmInfo(modifypage).rate 
 }
 align_mq_labels
 
 lappend device_only_controls \
-	$nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
+	$nmInfo(modifypage).setpoint_nA $nmInfo(modifypage).setpoint_pcnt \
+        $nmInfo(modifypage).p-gain \
 	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
 	$nmInfo(modifypage).rate 
 
@@ -330,106 +334,6 @@ if { $thirdtech_ui } {
     trace vdelete modifyp_max_lat_setpoint w "updateFromC modifyp_max_lat_setpoint "
 }
 
-trace variable modifyp_mode w "updateFromC modifyp_mode "
-trace variable modifyp_control w "updateFromC modifyp_control "
-trace variable modifyp_style w "updateFromC modifyp_style "
-trace variable modifyp_tool w "updateFromC modifyp_tool "
-
-trace variable modifyp_setpoint w "updateFromC modifyp_setpoint "
-trace variable modifyp_p_gain w "updateFromC modifyp_p_gain "
-trace variable modifyp_i_gain w "updateFromC modifyp_i_gain "
-trace variable modifyp_d_gain w "updateFromC modifyp_d_gain "
-trace variable modifyp_amplitude w "updateFromC modifyp_amplitude "
-trace variable modifyp_rate w "updateFromC modifyp_rate "
-
-#trace variable modifyp_tri_size w "updateFromC modifyp_tri_size "
-#trace variable modifyp_tri_speed w "updateFromC modifyp_tri_speed "
-trace variable modifyp_sweep_width w "updateFromC modifyp_sweep_width "
-
-trace variable modifyp_bot_delay w "updateFromC modifyp_bot_delay "
-trace variable modifyp_top_delay w "updateFromC modifyp_top_delay "
-trace variable modifyp_z_pull w "updateFromC modifyp_z_pull "
-trace variable modifyp_punchdist w "updateFromC modifyp_punchdist "
-trace variable modifyp_speed w "updateFromC modifyp_speed "
-trace variable modifyp_watchdog w "updateFromC modifyp_watchdog "
-
-trace variable modifyp_start_delay w "updateFromC modifyp_start_delay "
-trace variable modifyp_z_start w "updateFromC modifyp_z_start "
-trace variable modifyp_z_end w "updateFromC modifyp_z_end "
-trace variable modifyp_z_pullback w "updateFromC modifyp_z_pullback "
-trace variable modifyp_force_limit w "updateFromC modifyp_force_limit "
-trace variable modifyp_fcdist w "updateFromC modifyp_fcdist "
-trace variable modifyp_num_layers w "updateFromC modifyp_num_layers "
-trace variable modifyp_num_hcycles w "updateFromC modifyp_num_hcycles "
-trace variable modifyp_sample_speed w "updateFromC modifyp_sample_speed "
-trace variable modifyp_pullback_speed w "updateFromC modifyp_pullback_speed "
-trace variable modifyp_start_speed w "updateFromC modifyp_start_speed "
-trace variable modifyp_feedback_speed w "updateFromC modifyp_feedback_speed "
-trace variable modifyp_avg_num w "updateFromC modifyp_avg_num "
-trace variable modifyp_sample_delay w "updateFromC modifyp_sample_delay "
-trace variable modifyp_pullback_delay w "updateFromC modifyp_pullback_delay "
-trace variable modifyp_feedback_delay w "updateFromC modifyp_feedback_delay "
-
-trace variable modifyp_step_size w "updateFromC modifyp_step_size "
-
-trace variable modifyp_max_z_step w "updateFromC modifyp_max_z_step "
-trace variable modifyp_max_xy_step w "updateFromC modifyp_max_xy_step "
-trace variable modifyp_min_z_setpoint w "updateFromC modifyp_min_z_setpoint "
-trace variable modifyp_max_z_setpoint w "updateFromC modifyp_max_z_setpoint "
-trace variable modifyp_max_lat_setpoint w "updateFromC modifyp_max_lat_setpoint "
-
-
-# these traces change the color of Accept and Cancel when you haven't
-# pressed Accept yet.
-trace variable newmodifyp_mode w modBackgChReal
-trace variable newmodifyp_control w modBackgChReal
-trace variable newmodifyp_style w modBackgChReal
-trace variable newmodifyp_tool w modBackgChReal
-
-trace variable newmodifyp_setpoint w modBackgChReal
-trace variable newmodifyp_p_gain w modBackgChReal
-trace variable newmodifyp_i_gain w modBackgChReal
-trace variable newmodifyp_d_gain w modBackgChReal
-trace variable newmodifyp_amplitude w modBackgChReal
-trace variable newmodifyp_rate w modBackgChReal
-
-#trace variable newmodifyp_tri_size w modBackgChReal
-#trace variable newmodifyp_tri_speed w modBackgChReal
-trace variable newmodifyp_sweep_width w modBackgChReal
-
-trace variable newmodifyp_bot_delay w modBackgChReal
-trace variable newmodifyp_top_delay w modBackgChReal
-trace variable newmodifyp_z_pull w modBackgChReal
-trace variable newmodifyp_punchdist w modBackgChReal
-trace variable newmodifyp_speed w modBackgChReal
-trace variable newmodifyp_watchdog w modBackgChReal
-
-trace variable newmodifyp_start_delay w modBackgChReal
-trace variable newmodifyp_z_start w modBackgChReal
-trace variable newmodifyp_z_end w modBackgChReal
-trace variable newmodifyp_z_pullback w modBackgChReal
-trace variable newmodifyp_force_limit w modBackgChReal
-trace variable newmodifyp_fcdist w modBackgChReal
-trace variable newmodifyp_num_layers w modBackgChReal
-trace variable newmodifyp_num_hcycles w modBackgChReal
-trace variable newmodifyp_sample_speed w modBackgChReal
-trace variable newmodifyp_pullback_speed w modBackgChReal
-trace variable newmodifyp_start_speed w modBackgChReal
-trace variable newmodifyp_feedback_speed w modBackgChReal
-trace variable newmodifyp_avg_num w modBackgChReal
-trace variable newmodifyp_sample_delay w modBackgChReal
-trace variable newmodifyp_pullback_delay w modBackgChReal 
-trace variable newmodifyp_feedback_delay w modBackgChReal
-
-
-trace variable newmodifyp_step_size w modBackgChReal
-
-trace variable newmodifyp_max_z_step w modBackgChReal
-trace variable newmodifyp_max_xy_step w modBackgChReal
-trace variable newmodifyp_min_z_setpoint w modBackgChReal
-trace variable newmodifyp_max_z_setpoint w modBackgChReal
-trace variable newmodifyp_max_lat_setpoint w modBackgChReal
-
 set mod_control_list "$nmInfo(modifyfull).control.feedback $nmInfo(modifyfull).control.directz"
 
 # forward declaration of the procedure, so radiobox doesn't get upset.
@@ -479,8 +383,10 @@ lappend device_only_controls \
 label $nmInfo(modifyfull).modeparam.label -text "Mode parameters" 
 pack $nmInfo(modifyfull).modeparam.label -side top -anchor nw
 
-generic_entry $nmInfo(modifyfull).modeparam.setpoint newmodifyp_setpoint \
-	"Setpoint(-64,64)" real
+generic_entry $nmInfo(modifyfull).modeparam.setpoint_nA newmodifyp_setpoint \
+	"Setpoint(-64,64 nA)" real
+generic_entry $nmInfo(modifyfull).modeparam.setpoint_pcnt newmodifyp_setpoint \
+	"Setpoint(0,100 %)" real
 generic_entry $nmInfo(modifyfull).modeparam.p-gain newmodifyp_p_gain "P-Gain (0,5)" real 
 generic_entry $nmInfo(modifyfull).modeparam.i-gain newmodifyp_i_gain "I-Gain (0,2)" real 
 generic_entry $nmInfo(modifyfull).modeparam.d-gain newmodifyp_d_gain "D-Gain (0,5)" real 
@@ -502,7 +408,7 @@ generic_optionmenu $nmInfo(modifyfull).modeparam.drive_attenuation \
 generic_entry $nmInfo(modifyfull).modeparam.phase newmodifyp_phase \
 	"Phase (0 360)" real 
 
-pack    $nmInfo(modifyfull).modeparam.setpoint \
+pack    $nmInfo(modifyfull).modeparam.setpoint_nA \
         $nmInfo(modifyfull).modeparam.p-gain \
 	$nmInfo(modifyfull).modeparam.i-gain \
         $nmInfo(modifyfull).modeparam.d-gain \
@@ -512,7 +418,8 @@ pack    $nmInfo(modifyfull).modeparam.setpoint \
 proc align_mf_labels {} {
     global nmInfo
   iwidgets::Labeledwidget::alignlabels \
-    $nmInfo(modifyfull).modeparam.setpoint \
+    $nmInfo(modifyfull).modeparam.setpoint_nA \
+    $nmInfo(modifyfull).modeparam.setpoint_pcnt \
     $nmInfo(modifyfull).modeparam.p-gain \
     $nmInfo(modifyfull).modeparam.i-gain \
     $nmInfo(modifyfull).modeparam.d-gain \
@@ -543,7 +450,8 @@ set mod_oscillating_list [list $nmInfo(modifyfull).modeparam.amplitude \
     $nmInfo(modifyfull).modeparam.phase ]
 
 lappend device_only_controls \
-    $nmInfo(modifyfull).modeparam.setpoint \
+    $nmInfo(modifyfull).modeparam.setpoint_nA \
+    $nmInfo(modifyfull).modeparam.setpoint_pcnt \
     $nmInfo(modifyfull).modeparam.p-gain \
     $nmInfo(modifyfull).modeparam.i-gain \
     $nmInfo(modifyfull).modeparam.d-gain \
@@ -771,16 +679,24 @@ eval lappend device_only_controls $mod_directz_list
 # Procedure change_setpoint_label defined in image.tcl
 trace variable newmodifyp_mode w "change_setpoint_label \
         newmodifyp_mode newmodifyp_ampl_or_phase \
-        $nmInfo(modifyfull).modeparam.setpoint align_mf_labels"
+        $nmInfo(modifyfull).modeparam.setpoint_nA \
+        $nmInfo(modifyfull).modeparam.setpoint_pcnt \
+        $nmInfo(modifyfull).modeparam.p-gain $fspady"
 trace variable newmodifyp_ampl_or_phase w "change_setpoint_label \
         newmodifyp_mode newmodifyp_ampl_or_phase \
-        $nmInfo(modifyfull).modeparam.setpoint align_mf_labels"
+        $nmInfo(modifyfull).modeparam.setpoint_nA \
+        $nmInfo(modifyfull).modeparam.setpoint_pcnt \
+        $nmInfo(modifyfull).modeparam.p-gain $fspady"
 trace variable modifyp_mode w "change_setpoint_label \
         modifyp_mode modifyp_ampl_or_phase \
-        $nmInfo(modifypage).setpoint align_mq_labels"
+        $nmInfo(modifypage).setpoint_nA \
+        $nmInfo(modifypage).setpoint_pcnt \
+        $nmInfo(modifypage).p-gain 0"
 trace variable modifyp_ampl_or_phase w "change_setpoint_label \
         modifyp_mode modifyp_ampl_or_phase \
-        $nmInfo(modifypage).setpoint align_mq_labels"
+        $nmInfo(modifypage).setpoint_nA \
+        $nmInfo(modifypage).setpoint_pcnt \
+        $nmInfo(modifypage).p-gain 0"
 
 #
 #

@@ -534,6 +534,11 @@ ifeq ($(HW_OS),pc_linux)
   BAREDEFINES += V_GLUT NO_EXT_TEXTURES NO_MAGELLAN NO_PHANTOM_SERVER
 endif
 
+# Allows compilation of viewer-only version of Nano on all platforms. 
+ifdef VIEWER
+     BAREDEFINES += VIEWER
+endif
+
 BAREDEFINES += PROJECTIVE_TEXTURE
 
 DEFINES = $(addprefix -D,$(BAREDEFINES))

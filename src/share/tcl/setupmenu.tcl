@@ -13,9 +13,9 @@
 set nmInfo(data_sets) [create_closing_toplevel data_sets "Datasets Setup" ]
 
 frame $nmInfo(data_sets).scan -relief sunken -bd 2
-label $nmInfo(data_sets).scan.label -text "Image Scan"
+label $nmInfo(data_sets).scan.label -text "Scan"
 frame $nmInfo(data_sets).touch -relief sunken -bd 2
-label $nmInfo(data_sets).touch.label -text Touch
+label $nmInfo(data_sets).touch.label -text "Touch and Modify"
 label $nmInfo(data_sets).touch.instr -text "Hit Enter to change no. of samples"
 frame $nmInfo(data_sets).forcecurve -relief sunken -bd 2
 label $nmInfo(data_sets).forcecurve.label -text "Force Curve"

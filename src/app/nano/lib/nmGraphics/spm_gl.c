@@ -28,6 +28,8 @@
 
 #include <colormap.h>
 #include <nmb_PlaneSelection.h>
+#include <nmb_Decoration.h>
+#include <nmb_Globals.h>
 
 #include "spm_gl.h"
 // #include "Tcl_Linkvar.h"
@@ -105,7 +107,7 @@ inline	void	vector_normalize(GLfloat a[3])
     mag = sqrt(a[0] * a[0] + a[1]*a[1] + a[2]*a[2]); 
 
     if (mag == 0.0) {
-        fprintf(stderr,"pg_vector_normalize:  vector has zero magnitude\n");
+        fprintf(stderr,"vector_normalize:  vector has zero magnitude\n");
         a[0] = a[1] = a[2] = 1.0/sqrt(3.0);
     } else {
         mag = 1.0/mag;
@@ -194,7 +196,8 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
 }
 
 
-/*	This routine will create the openGL commands needed to display a
+/* I don't know what routine this comment is for, but it's not init_vertex_array!
+ *	This routine will create the openGL commands needed to display a
  * triangle strip for one of the strips needed to show a grid.  This routine
  * displays a strip along the X axis;  the "which" parameter selects from the
  * strips to be drawn.  The first strip is 0 and the last is grid->num_y - 1,
@@ -217,10 +220,12 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
  *    Y    1     3     5     7     9 
  *     X-------->                           
  *                                                                         
- *	This routine returns 0 on success and -1 on failure. */
+ *	This routine returns 1 on success and 0 on failure. */
 
 int init_vertexArray(int x, int y)
-{  int dim;
+{
+    static int old_grid_dim = 0;
+  int dim, i;
 
   if(x<=y) {
      dim=y;
@@ -229,17 +234,21 @@ int init_vertexArray(int x, int y)
      dim=x;
   }       
 
-  // with RenderClient may be called more than once;  why waste memory?
+  // Called every time grid is resized - reclaim memory.
   if (vertexptr) {
-    free(vertexptr);
+      for(i=0;i< old_grid_dim;i++) {
+          if ( vertexptr[i] ) free (vertexptr[i]);
+      }
+      free(vertexptr);
   }
+  old_grid_dim = dim;
 
    vertexptr= (Vertex_Struct **)malloc(
                                sizeof(Vertex_Struct *) * dim);
 
    if (vertexptr == NULL)
       return 0;
-   for(int i=0;i< dim;i++) {
+   for(i=0;i< dim;i++) {
      vertexptr[i]= (Vertex_Struct *)malloc(sizeof(Vertex_Struct)* dim * 2);
 
      if(vertexptr[i] == NULL )
@@ -281,9 +290,6 @@ void specify_vertexArray(nmb_PlaneSelection /*planes*/, int i, int count)
 
     glDrawArraysEXT( GL_TRIANGLE_STRIP,0,count);
 #else
-    i = i;           // Keep the compiler happy
-    count = count;
-
 
     int vert;
     glBegin(GL_TRIANGLE_STRIP);
@@ -298,7 +304,7 @@ void specify_vertexArray(nmb_PlaneSelection /*planes*/, int i, int count)
 			vertexptr[i][vert].Color[2],
 			vertexptr[i][vert].Color[3]);
 	if (g_texture_mode == GL_TEXTURE_1D) {// (planes.contour)
-	    glTexCoord1f(vertexptr[i][vert].Texcoord[0]);
+	    glTexCoord1f(vertexptr[i][vert].Texcoord[2]);
         }
         glVertex3f(vertexptr[i][vert].Vertex[0],
 		   vertexptr[i][vert].Vertex[1],
@@ -344,6 +350,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     return -1;
   }
 
+  // Vertices used in following calculations. Compute here.
   Vertex[0]= (float) height_plane.xInWorld(x);
   Vertex[1]= (float) height_plane.yInWorld(y);
   Vertex[2]= (float) height_plane.valueInWorld(x, y);
@@ -383,43 +390,49 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
         // before writing it into a float?
     }
     else if (planes.color) {
-      // stretch/shrink data based on data_min/max colors:
-      float data_value = planes.color->value(x, y);
-      data_value = (data_value - planes.color->minNonZeroValue())/
-        (planes.color->maxNonZeroValue() - planes.color->minNonZeroValue());
-
-      data_value = data_value * (g_data_max - g_data_min) + g_data_min;
-
-      // clamp data based on the stretched/shrunk colormap:
-      if ( data_value <  g_color_min ) data_value = 0;
-      else if ( data_value > g_color_max ) data_value = 1.0;
-      else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
-
-      if (g_curColorMap) {    // Use the color map loaded from file
-        float r, g, b, a;
-        g_curColorMap->lookup(data_value, &r, &g, &b, &a);
-        Color[0] = r;
-        Color[1] = g;
-        Color[2] = b;
-        if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
-          Color[3] = (GLubyte) 0;
-        }
-        else {
-          Color[3] = (GLubyte) (g_surface_alpha * 255);
-        }
-      }
-      else {      // Use the CUSTOM color mapping tool
-        for (i = 0; i < 3; i++) {
-          double  color_diff = (maxColor[i] - minColor[i]);
-          Color[i] = minColor[i] + (color_diff);
-        }
-        if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
-            Color[3] = (GLubyte) 0;
-        }
-        else {
-             Color[3] = (GLubyte) (g_surface_alpha * 255);
-        }
-      }
+          // Get the data value
+          float data_value = planes.color->value(x, y);
+          // Drift-compensate the data value, based on 
+          // the stored average of the first scan line.
+          if ((decoration->first_line_avg !=0) && 
+              (decoration->first_line_avg_prev !=0)) {
+              data_value += decoration->first_line_avg_prev 
+                  - decoration->first_line_avg;
+          }
+          // stretch/shrink data based on data_min/max colors:
+          // normalize the data to a zero to one scale - but data doesn't
+          // have to fall in this range.
+          data_value = (data_value - g_data_min)/(g_data_max - g_data_min);
+    
+          // Scale data again based on color map widget controls
+          data_value = data_value * (g_data_max_norm - g_data_min_norm) 
+              + g_data_min_norm;
+      
+          // clamp data based on the stretched/shrunk colormap:
+          if ( data_value <  g_color_min ) data_value = 0;
+          else if ( data_value > g_color_max ) data_value = 1.0;
+          else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
+      
+          if (g_curColorMap) {    // Use the color map loaded from file
+              float r, g, b, a;
+              g_curColorMap->lookup(data_value, &r, &g, &b, &a);
+              Color[0] = r;
+              Color[1] = g;
+              Color[2] = b;
+              Color[3] = (GLubyte) (g_surface_alpha * 255);
+          }
+      
+          else {      // Use the CUSTOM color mapping tool
+              for (i = 0; i < 3; i++) {
+                  Color[i] = minColor[i] * data_value;
+              }
+              if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+                  Color[3] = (GLubyte) 0;
+              }
+              else {
+                  Color[3] = (GLubyte) (g_surface_alpha * 255);
+              }
+          }
     }
     else if (g_null_data_alpha_toggle) {
         // No color plane, but need to set the alpha for the color.
@@ -439,83 +452,27 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     }
     if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color ||
         g_null_data_alpha_toggle) {
-      if (g_VERTEX_ARRAY) {
+
         vertexArray.Color[0] = (GLubyte) (Color[0] * 255);
         vertexArray.Color[1] = (GLubyte) (Color[1] * 255);
         vertexArray.Color[2] = (GLubyte) (Color[2] * 255);
-        if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
-          vertexArray.Color[3] = 0;
-        } else {
-          vertexArray.Color[3] = (GLubyte) (g_surface_alpha * 255);
+        vertexArray.Color[3] = (GLubyte) (Color[3] * 255);
+        if (!g_VERTEX_ARRAY) {
+            glColor4fv(Color);
         }
-      }
-      else {
-        if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0 ) ){
-          Color[3] = 0.0;
-        } else {
-          Color[3] = g_surface_alpha;
-        }
-        vertexArrayPtr->Color[0] = (GLubyte) (Color[0] * 255);
-        vertexArrayPtr->Color[1] = (GLubyte) (Color[1] * 255);
-        vertexArrayPtr->Color[2] = (GLubyte) (Color[2] * 255);
-        vertexArrayPtr->Color[3] = (GLubyte) (Color[3] * 255);
-        glColor4fv(Color);
-      }
-
     }
 
+    // XXX WRONG. This re-sets the color value again! Should be combined with g_null_data_alpha_toggle
     if (planes.opacity) {
       float opacity_value = (planes.opacity->value(x, y) - g_opacity_slider_min) /
         (g_opacity_slider_max - g_opacity_slider_min);
-      if (g_VERTEX_ARRAY) {
-        vertexArray.Color[3] = (GLubyte) min(255.0, opacity_value);
-      } else {
-        Color[3] = min(1.0, (opacity_value / 255.0));
-        glColor4fv(Color);
+      vertexArray.Color[3] = (GLubyte) min(255.0, opacity_value);
+      if(!g_VERTEX_ARRAY) {
+          Color[3] = min(1.0, (opacity_value / 255.0));
+          glColor4fv(Color);
       }
     }
 
-    if (g_just_color) {
-      Normal[0] = float( vertexArrayPtr->Normal[0] )/32767;
-      Normal[1] = float( vertexArrayPtr->Normal[1] )/32767;
-      Normal[2] = float( vertexArrayPtr->Normal[2] )/32767;
-
-      Vertex[0] = vertexArrayPtr->Vertex[0];
-      Vertex[1] = vertexArrayPtr->Vertex[1];
-      Vertex[2] = vertexArrayPtr->Vertex[2];
-
-      if (!g_VERTEX_ARRAY) {
-        glNormal3fv(Normal);
-        glVertex3fv(Vertex);
-      }
-
-      return 0;
-    }
-
-    /* Find the normal for the vertex */
-    // Using prerendered colors (and no lighting), we don't need normals
-    if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
-      if (stm_compute_plane_normal(planes.height, x,y,
-         (float) ((max_x - min_x) / height_plane.numX()),
-         (float) ((max_y - min_y) / height_plane.numY()),
-			         1.0f,
-			         Normal)) {
-        fprintf(stderr,"describe_gl_vertex(): Can't find normal!\n");
-        return -1;
-      }
-
-      if (g_VERTEX_ARRAY) {
-        vertexArray.Normal[0] = (GLshort) (Normal[0] * 32767);
-        vertexArray.Normal[1] = (GLshort) (Normal[1] * 32767);
-        vertexArray.Normal[2] = (GLshort) (Normal[2] * 32767);
-      }
-      else {
-        vertexArrayPtr->Normal[0] = (GLshort) (Normal[0] * 32767);
-        vertexArrayPtr->Normal[1] = (GLshort) (Normal[1] * 32767);
-        vertexArrayPtr->Normal[2] = (GLshort) (Normal[2] * 32767);
-        glNormal3fv(Normal);
-      }
-    }
 
 #ifndef PROJECTIVE_TEXTURE
   // Realigning Textures, no need to recalculate  
@@ -529,10 +486,8 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 	g_tex_coord_center_x += g_translate_tex_dx;
 	g_tex_coord_center_y += g_translate_tex_dy;
       }
-      if ( g_VERTEX_ARRAY ) {
-	vertexArray.Texcoord[1] += g_translate_tex_dx;
-	vertexArray.Texcoord[2] += g_translate_tex_dy;
-      }
+      vertexArray.Texcoord[1] += g_translate_tex_dx;
+      vertexArray.Texcoord[2] += g_translate_tex_dy;
       return 0;
     }
 
@@ -540,19 +495,17 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
       if ( (x == (num_x -1)) && (y == (num_y -1))) {
 	g_scale_textures = 0;
       }
-      if ( g_VERTEX_ARRAY ) {
-        GLfloat scale_coord[2];
-	scale_coord[0]=
+      GLfloat scale_coord[2];
+      scale_coord[0]=
 	  g_tex_coord_center_x +
 	  (( vertexArray.Texcoord[1] - g_tex_coord_center_x ) *
 	   g_scale_tex_dx );
-	scale_coord[1]=
+      scale_coord[1]=
 	  g_tex_coord_center_y +
 	  (( vertexArray.Texcoord[2] - g_tex_coord_center_y ) *
 	   g_scale_tex_dy);
-	vertexArray.Texcoord[1]=  scale_coord[0];
- 	vertexArray.Texcoord[2]=  scale_coord[1];
-      }
+      vertexArray.Texcoord[1]=  scale_coord[0];
+      vertexArray.Texcoord[2]=  scale_coord[1];
       return 0;
     }
     
@@ -560,19 +513,17 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
       if ( (x == (num_x -1)) && (y == (num_y -1))) {
 	g_shear_textures = 0;
       }
-      if ( g_VERTEX_ARRAY ) {
-        GLfloat shear_coord[2];
-	shear_coord[0] = g_tex_coord_center_x +
+      GLfloat shear_coord[2];
+      shear_coord[0] = g_tex_coord_center_x +
 	  ( ( vertexArray.Texcoord[1] - g_tex_coord_center_x) +
 	    ( g_shear_tex_dx *
 	      ( vertexArray.Texcoord[2] - g_tex_coord_center_y ) ) );
-	shear_coord[1] = g_tex_coord_center_y +
+      shear_coord[1] = g_tex_coord_center_y +
 	  ( ( vertexArray.Texcoord[2] - g_tex_coord_center_y ) +
 	    ( g_shear_tex_dy *
 	      ( vertexArray.Texcoord[1] - g_tex_coord_center_x ) ) );
-	vertexArray.Texcoord[1]=  shear_coord[0];
- 	vertexArray.Texcoord[2]=  shear_coord[1];
-      }		
+      vertexArray.Texcoord[1]=  shear_coord[0];
+      vertexArray.Texcoord[2]=  shear_coord[1];
       return 0;
     }
 
@@ -580,22 +531,20 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
       if ( (x == (num_x -1)) && (y == (num_y -1))) {
 	g_rotate_textures = 0;
       }
-      if ( g_VERTEX_ARRAY ) {
-        GLfloat rotate_coord[2];
-	rotate_coord[0] = g_tex_coord_center_x +
+      GLfloat rotate_coord[2];
+      rotate_coord[0] = g_tex_coord_center_x +
 	  ( ( vertexArray.Texcoord[1] - g_tex_coord_center_x ) *
 	    cos( g_rotate_tex_theta ) + 
 	    ( vertexArray.Texcoord[2] - g_tex_coord_center_y ) *
 	    sin( g_rotate_tex_theta ) );
-	rotate_coord[1] = g_tex_coord_center_y +
+      rotate_coord[1] = g_tex_coord_center_y +
 	  ( ( vertexArray.Texcoord[1] - g_tex_coord_center_x ) *
 	    -sin( g_rotate_tex_theta ) +
 	    ( vertexArray.Texcoord[2] - g_tex_coord_center_y ) *
 	    cos( g_rotate_tex_theta ) );
-	vertexArray.Texcoord[1]=  rotate_coord[0];
-	vertexArray.Texcoord[2]=  rotate_coord[1];
-      }		
-
+      vertexArray.Texcoord[1]=  rotate_coord[0];
+      vertexArray.Texcoord[2]=  rotate_coord[1];
+      
       return 0;
     }
   }
@@ -609,10 +558,8 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     GLfloat Scoord =
       (float) (planes.contour->value(x, y) /
 	       (g_texture_scale * 10.0f));
-    if(g_VERTEX_ARRAY) {
-      vertexArray.Texcoord[2] = Scoord;
-    }
-    else {
+    vertexArray.Texcoord[2] = Scoord;
+    if(!g_VERTEX_ARRAY) {
       glTexCoord1f(Scoord);
     }
   }
@@ -644,12 +591,10 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     checktexcoord[1] = y * 6.0f / height_plane.numY();
     checktexcoord[2] = value;
     
-    if(g_VERTEX_ARRAY) {
-      vertexArray.Texcoord[0] = checktexcoord[0];
-      vertexArray.Texcoord[1] = checktexcoord[1];
-      vertexArray.Texcoord[2] = checktexcoord[2]; 
-    }
-    else {
+    vertexArray.Texcoord[0] = checktexcoord[0];
+    vertexArray.Texcoord[1] = checktexcoord[1];
+    vertexArray.Texcoord[2] = checktexcoord[2]; 
+    if(!g_VERTEX_ARRAY) {
       glTexCoord3fv(checktexcoord);
     }	
   }
@@ -686,11 +631,9 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 			       g_rulergrid_xoffset) * g_rulergrid_sin) /
 			     g_rulergrid_scale);
     
-    if(g_VERTEX_ARRAY) {
-      vertexArray.Texcoord[1] = rulercoord[0];
-      vertexArray.Texcoord[2] = rulercoord[1];
-    }
-    else {
+    vertexArray.Texcoord[1] = rulercoord[0];
+    vertexArray.Texcoord[2] = rulercoord[1];
+    if(!g_VERTEX_ARRAY) {
       glTexCoord2fv(rulercoord);
     }
   } 
@@ -706,11 +649,9 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     }
     man_realign_coord[0]= (float) (x/512.0);
     man_realign_coord[1]= (float) (y/512.0);         
-    if(g_VERTEX_ARRAY) {
-      vertexArrayPtr->Texcoord[1]=  man_realign_coord[0];
-      vertexArrayPtr->Texcoord[2]=  man_realign_coord[1];
-    }
-    else {
+    vertexArrayPtr->Texcoord[1]=  man_realign_coord[0];
+    vertexArrayPtr->Texcoord[2]=  man_realign_coord[1];
+    if(!g_VERTEX_ARRAY) {
       glTexCoord2fv(man_realign_coord);
     }		
   }
@@ -725,31 +666,53 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     tc[0] = x / 512.0f;
     tc[1] = y / 512.0f;
 
-    if (g_VERTEX_ARRAY) {
-      vertexArray.Texcoord[0] = tc[0];
-      vertexArray.Texcoord[1] = tc[1];
-    } else {
+    vertexArray.Texcoord[0] = tc[0];
+    vertexArray.Texcoord[1] = tc[1];
+    if(!g_VERTEX_ARRAY) {
       glTexCoord2fv(tc);
     }
   }
 
 #endif
 
-  /* Put the vertex at the correct location */
+  // "Just" color the surface - means specify color and textures, but
+  // use the normals cached in the vertex array, and return.
+    if (g_just_color) {
+      Normal[0] = float( vertexArrayPtr->Normal[0] )/32767;
+      Normal[1] = float( vertexArrayPtr->Normal[1] )/32767;
+      Normal[2] = float( vertexArrayPtr->Normal[2] )/32767;
 
-  Vertex[0]= (float) height_plane.xInWorld(x);
-  Vertex[1]= (float) height_plane.yInWorld(y);
-  Vertex[2]= (float) height_plane.valueInWorld(x, y);
+      if (!g_VERTEX_ARRAY) {
+        glNormal3fv(Normal);
+        // Use already-computed vertex.
+        glVertex3fv(Vertex);
+      }
 
-  if(g_VERTEX_ARRAY) {
-    vertexArray.Vertex[0] = Vertex[0];
-    vertexArray.Vertex[1] = Vertex[1];
-    vertexArray.Vertex[2] = Vertex[2];
-  }
-  else {
-    vertexArrayPtr->Vertex[0] = Vertex[0];
-    vertexArrayPtr->Vertex[1] = Vertex[1];
-    vertexArrayPtr->Vertex[2] = Vertex[2];
+      return 0;
+    }
+
+    /* Find the normal for the vertex */
+    // Using prerendered colors (and no lighting), we don't need normals
+    if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
+      if (stm_compute_plane_normal(planes.height, x,y,
+         (float) ((max_x - min_x) / height_plane.numX()),
+         (float) ((max_y - min_y) / height_plane.numY()),
+			         1.0f,
+			         Normal)) {
+        fprintf(stderr,"describe_gl_vertex(): Can't find normal!\n");
+        return -1;
+      }
+
+      vertexArray.Normal[0] = (GLshort) (Normal[0] * 32767);
+      vertexArray.Normal[1] = (GLshort) (Normal[1] * 32767);
+      vertexArray.Normal[2] = (GLshort) (Normal[2] * 32767);
+      if (!g_VERTEX_ARRAY) {
+        glNormal3fv(Normal);
+      }
+    }
+
+  /* Specify the already-computed vertex */
+  if(!g_VERTEX_ARRAY) {
     glVertex3fv(Vertex);
   }
   
@@ -819,8 +782,8 @@ int spm_y_strip( nmb_PlaneSelection planes,
         glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
 
       if (g_VERTEX_ARRAY){
-        for (y = 0; y < planes.height->numY(); y += g_stride) {   // Left->right
-         for (x = which+g_stride; x >= which; x -= g_stride) {     // top->bottom
+        for (y = 0; y < planes.height->numY(); y += g_stride) {
+         for (x = which+g_stride; x >= which; x -= g_stride) { 
             if (describe_gl_vertex(planes, minColor,maxColor,x,y,
                                    &(vertexArray[i]))) {
               fprintf(stderr, "spm_y_strip:  describe_gl_vertex() failed.\n");
@@ -835,9 +798,9 @@ int spm_y_strip( nmb_PlaneSelection planes,
       } else {
 	glBegin(GL_TRIANGLE_STRIP);
   VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
-	for (y = 0; y < planes.height->numY(); y += g_stride) {	// bottom->top
-	  for (x = which+g_stride; x >= which; x -= g_stride) {// right->left
-	    if (describe_gl_vertex(planes, minColor,maxColor, x,y, NULL)) {
+	for (y = 0; y < planes.height->numY(); y += g_stride) {
+	  for (x = which+g_stride; x >= which; x -= g_stride) {
+	    if (describe_gl_vertex(planes, minColor,maxColor, x,y, &(vertexArray[i]))) {
 		return(-1);
 	    }
 	  }

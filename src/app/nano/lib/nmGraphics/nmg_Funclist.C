@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmg_Funclist.h"
 
 #include <stdlib.h>  // for NULL
@@ -66,11 +73,11 @@ int removeFunctionFromFunclist (nmg_Funclist ** list, int id) {
 
   // list empty or off right
   if (!head) {
-    if (!prev)
-      fprintf(stderr, "removeFunctionFromFunclist:  Already empty!\n");
-    else
-      fprintf(stderr, "removeFunctionFromFunclist:  "
-                      "No function in list with id %d.\n", id);
+//      if (!prev)
+//        fprintf(stderr, "removeFunctionFromFunclist:  Already empty!\n");
+//      else
+//        fprintf(stderr, "removeFunctionFromFunclist:  "
+//                        "No function in list with id %d.\n", id);
     return -1;
   }
 

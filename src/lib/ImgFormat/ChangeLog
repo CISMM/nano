@@ -1,3 +1,7 @@
+2000-12-20  Aron Helser  <helser@cs.unc.edu>
+
+	* all: 3rdtech merge into main trunk. 
+
 2000-10-12  Adam Seeger  <seeger@cs.unc.edu>
 
 	* PNMImage.C (PNMImage::writeRAW) : reverses y order to make things

@@ -63,13 +63,13 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
         grid_size_y = 12;
     } else {
         grid_size_x = d_dataset->inputGrid->numX();
-        grid_size_y = d_dataset->inputGrid->numX();
+        grid_size_y = d_dataset->inputGrid->numY();
     }
 
     //fprintf(stderr,
     //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
 
-    int i;
+    int i = 0;
 
     g_inputGrid = data->inputGrid;
     strcpy(g_opacityPlaneName, data->opacityPlaneName->string());
@@ -108,9 +108,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     /* Set up the viewing info */
   
     /* Set initial user mode */
-    for (i = 0; i < NUM_USERS; i++) {
-        g_user_mode[i] = USER_GRAB_MODE;
-    }
+    g_user_mode = USER_GRAB_MODE;
+
     /* set up user and object trees     */
     //printf("Creating the world...\n");
     v_create_world(NUM_USERS, d_displayIndexList);
@@ -567,7 +566,7 @@ void nmg_Graphics_Implementation::changeDataset( nmb_Dataset * data)
 {
   d_dataset = data;
   grid_size_x = d_dataset->inputGrid->numX();
-  grid_size_y = d_dataset->inputGrid->numX();
+  grid_size_y = d_dataset->inputGrid->numY();
 
   g_inputGrid = data->inputGrid;
   strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
@@ -786,7 +785,8 @@ _______________________________********************/
 
 void nmg_Graphics_Implementation::causeGridReColor (void) {
   g_just_color = 1;
-  causeGridRedraw();
+  // Don't cause geometry to be re-calculated !!
+  //causeGridRedraw();
 }
 
 
@@ -819,7 +819,7 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
    }
 
   grid_size_x = d_dataset->inputGrid->numX();
-  grid_size_y = d_dataset->inputGrid->numX();
+  grid_size_y = d_dataset->inputGrid->numY();
 
   if (build_grid_display_lists(planes,
                              display_lists_in_x, &grid_list_base,
@@ -836,13 +836,6 @@ void nmg_Graphics_Implementation::enableChartjunk (int on) {
   if ( g_config_chartjunk == on )
     return;
   g_config_chartjunk = on;
-  if ( on == 1 ) {
-    init_world_modechange( USER_GRAB_MODE, 0, 0);
-  }
-  else if ( on == 0 ) {
-    clear_world_modechange( USER_MEASURE_MODE, 0, 0);
-    clear_world_modechange( USER_GRAB_MODE, 0, 0);
-  }
 }
 
 void nmg_Graphics_Implementation::enableFilledPolygons (int on) {
@@ -1000,9 +993,9 @@ void nmg_Graphics_Implementation::setColorMinMax (float low, float high) {
 
 void nmg_Graphics_Implementation::setDataColorMinMax (float low, float high) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setDataColorMinMax().\n");
-  if ( (g_data_min != low) || (g_data_max != high) ) {
-    g_data_min = low;
-    g_data_max = high;
+  if ( (g_data_min_norm != low) || (g_data_max_norm != high) ) {
+    g_data_min_norm = low;
+    g_data_max_norm = high;
     causeGridReColor();
   }
 }
@@ -1159,6 +1152,23 @@ void nmg_Graphics_Implementation::setAlphaPlaneName (const char * n) {
 // virtual
 void nmg_Graphics_Implementation::setColorPlaneName (const char * n) {
   strcpy(g_colorPlaneName, n);
+
+  // This function is called when the user chooses a new colormap plane,
+  // or when the use hits the button "Autoscale". These are the
+  // only times we want to change what "0" and "1" mean for
+  // the g_data_min_norm and g_data_max_norm variables. So we set
+  // g_data_m* here. 
+  nmb_PlaneSelection planes;  planes.lookup(d_dataset);
+
+  if (planes.color != NULL) {
+      g_data_min = planes.color->minNonZeroValue();
+      g_data_max = planes.color->maxNonZeroValue();
+
+      // Colormap drift compensation. Reset the first line average numbers so
+      // the next time we start a scan, we can drift-compensate the color map.
+      decoration->first_line_avg = 0;
+      decoration->first_line_avg_prev = d_dataset->getFirstLineAvg(planes.color);
+  }
 }
 
 // virtual
@@ -2270,7 +2280,7 @@ void nmg_Graphics_Implementation::setRulergridAngle (float v) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridAngle().\n");
   g_rulergrid_sin = sin(-v / 180.0 * M_PI);
   g_rulergrid_cos = cos(-v / 180.0 * M_PI);
-  causeGridRedraw();
+  //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setRulergridColor (int r, int g, int b) {
@@ -2293,7 +2303,7 @@ void nmg_Graphics_Implementation::setRulergridOffset (float x, float y) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridOffset().\n");
   g_rulergrid_xoffset = x;
   g_rulergrid_yoffset = y;
-  causeGridRedraw();
+  //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setNullDataAlphaToggle( int v ) {
@@ -2321,7 +2331,7 @@ void nmg_Graphics_Implementation::setRulergridOpacity (float alpha) {
 void nmg_Graphics_Implementation::setRulergridScale (float s) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRulergridScale().\n");
   g_rulergrid_scale = s;
-  causeGridRedraw();
+  //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setRulergridWidths (float x, float y) {
@@ -2514,6 +2524,7 @@ void nmg_Graphics_Implementation::setUserMode (int oldMode, int oldStyle,
 //fprintf(stderr, "nmg_Graphics_Implementation::setUserMode().\n");
   clear_world_modechange(oldMode, oldStyle, tool);
   init_world_modechange(newMode, style, tool);
+  g_user_mode = newMode;
 }
 
 

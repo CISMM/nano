@@ -35,9 +35,34 @@ generic_optionmenu $nmInfo(colorscale).pickframe.colormap_plane \
 	"Colormap plane" inputPlaneNames
 
 set colorMapNames {none }
+proc show_colormap_images {nm el op} {
+    global nmInfo colorMapNames colorbarmenu
+
+    set m [$nmInfo(colorscale).pickframe.colormap component popupMenu] 
+    set i 0
+    foreach cm_name $colorMapNames {
+        $m entryconfigure $i -image cm_image_$cm_name -columnbreak 1
+        incr i
+    }
+    # Handle a really long list of colormaps. 
+    set j [expr $i/12]
+    if { $j > 0 } {
+        for {set k 0} {$k < $i} { incr k} {
+            if {[expr $k % $j]} {
+                $m entryconfigure $k -columnbreak 0
+            }
+        }
+    }
+}
+
+trace variable colorMapNames w show_colormap_images
+
 generic_optionmenu $nmInfo(colorscale).pickframe.colormap \
 	color_map \
 	"Colormap" colorMapNames
+# This doesn't actually set the width, but it prevents the width
+# from being too large
+$nmInfo(colorscale).pickframe.colormap configure -width 30
 
 iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(colorscale).pickframe.colormap_plane \
@@ -68,7 +93,7 @@ button $nmInfo(colorscale).pickframe.buttons.c.set_color \
         $nmInfo(colorscale).pickframe.buttons.c.colorsample configure -bg $surface_color 
         set_surface_color
         # Turn off the color map, if it is on. 
-        set color_comes_from "none"
+        set color_map "none"
     }
 }
 button $nmInfo(colorscale).pickframe.buttons.c.colorsample \
@@ -214,6 +239,19 @@ proc draw_rectangle { x y1 y2 } {
 	    [expr $y1 + ($y2 - $y1)/2 + $box_height] \
 	    ]
 }
+### Line - drawn first so it is below box and tris
+eval $nmInfo(colorscale).canvas create line [draw_line $data_x $data_y_low $data_y_high ] \
+	-width 3 -fill blue4 -tags data_line
+###
+### The box to drag both Data selectors.
+### Drawn first so triangles get dragged if there is overlap. 
+###
+eval $nmInfo(colorscale).canvas create rectangle \
+	[draw_rectangle $data_x $data_y_low $data_y_high]\
+	-fill blue4 -outline blue4 -tags data_line_box
+$nmInfo(colorscale).canvas bind data_line_box <B1-Motion>\
+	"colormap_set_data_line $nmInfo(colorscale) %y"
+
 ###
 ### The triangle and entry widget for the Data Min selector
 ### the motion of the triangle is restricted to up/down.
@@ -240,15 +278,20 @@ trace variable cmData(max_value) w "adjust_data_max $nmInfo(colorscale)"
 $nmInfo(colorscale).canvas create window [expr $data_x - $triangle_width] $data_y_high\
 	-anchor e -window $nmInfo(colorscale).data_max_entry -tags data_max_entry
 
-eval $nmInfo(colorscale).canvas create line [draw_line $data_x $data_y_low $data_y_high ] \
-	-width 3 -fill blue4 -tags data_line
 
+### Line - drawn first so it is below box and tris
+eval $nmInfo(colorscale).canvas create line [draw_line $color_x $color_y_low $color_y_high]\
+	-width 3 -fill blue4 -tags color_line
+
+###
+### The box to drag both Color selectors.
+### Drawn first so triangles get dragged if there is overlap. 
+###
 eval $nmInfo(colorscale).canvas create rectangle \
-	[draw_rectangle $data_x $data_y_low $data_y_high]\
-	-fill blue4 -outline blue4 -tags data_line_box
-$nmInfo(colorscale).canvas bind data_line_box <B1-Motion>\
-	"colormap_set_data_line $nmInfo(colorscale) %y"
-
+	[draw_rectangle $color_x $color_y_low $color_y_high] \
+	-fill blue4 -outline blue4 -tags color_line_box
+$nmInfo(colorscale).canvas bind color_line_box <B1-Motion> \
+	"colormap_set_color_line $nmInfo(colorscale) %y"
 ###
 ### The triangle and entry widget for the Color Min selector
 ### the motion of the triangle is restricted to up/down.
@@ -275,16 +318,8 @@ trace variable cmColor(max_value) w "adjust_color_max $nmInfo(colorscale)"
 $nmInfo(colorscale).canvas create window [expr $color_x + $triangle_width] $color_y_high\
 	-anchor w -window $nmInfo(colorscale).color_max_entry -tags color_max_entry
 
-eval $nmInfo(colorscale).canvas create line [draw_line $color_x $color_y_low $color_y_high]\
-	-width 3 -fill blue4 -tags color_line
-
-eval $nmInfo(colorscale).canvas create rectangle \
-	[draw_rectangle $color_x $color_y_low $color_y_high] \
-	-fill blue4 -outline blue4 -tags color_line_box
-$nmInfo(colorscale).canvas bind color_line_box <B1-Motion> \
-	"colormap_set_color_line $nmInfo(colorscale) %y"
-
-set imh [image create photo "colormap_image" -height $image_height -width $image_width]
+set imh [image create photo "colormap_image" ]
+#-height $image_height -width $image_width]
 $nmInfo(colorscale).canvas create image $image_x $image_y -anchor se -image $imh
 
 ## This function gets called when the user moves the data_min triangle
@@ -356,15 +391,15 @@ proc adjust_data_min { win name element op } {
     set data_min [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
     set data_y_low $y1
     
-    ## reposition arrow:
-    eval $win.canvas coords data_min_tri [left_triangle $data_x $data_y_low]
-    $win.canvas coords data_min_entry [expr $data_x - $triangle_width] $data_y_low
-    
     ## reposition line:
     eval $win.canvas coords data_line [draw_line $data_x $data_y_low  $data_y_high]
     
     ## reposition box:
     eval $win.canvas coords data_line_box [draw_rectangle $data_x $data_y_low $data_y_high]
+
+    ## reposition arrow:
+    eval $win.canvas coords data_min_tri [left_triangle $data_x $data_y_low]
+    $win.canvas coords data_min_entry [expr $data_x - $triangle_width] $data_y_low
 }
 
 ## This function gets called when the user moves the data_max triangle
@@ -436,15 +471,15 @@ proc adjust_data_max { win name element op } {
     set data_max [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
     set data_y_high $y1
     
-    ## reposition arrow:
-    eval $win.canvas coords data_max_tri [left_triangle $data_x $data_y_high]
-    $win.canvas coords data_max_entry [expr $data_x - $triangle_width] $data_y_high
-    
     ## reposition line:
     eval $win.canvas coords data_line [draw_line $data_x $data_y_low  $data_y_high]
     
     ## reposition box:
     eval $win.canvas coords data_line_box [draw_rectangle $data_x $data_y_low $data_y_high]
+
+    ## reposition arrow:
+    eval $win.canvas coords data_max_tri [left_triangle $data_x $data_y_high]
+    $win.canvas coords data_max_entry [expr $data_x - $triangle_width] $data_y_high
 }
 
 ## This function gets called when the box icon connecting the data triangles
@@ -569,16 +604,17 @@ proc adjust_color_min { win name element op } {
 	    set color_min [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
 	    set color_y_low $y1
 	}
-	## reposition arrow:
-	eval $win.canvas coords color_min_tri [right_triangle $color_x $color_y_low]
-	$win.canvas coords color_min_entry [expr $color_x + $triangle_width] $color_y_low
-	
+
 	## reposition line:
 	eval $win.canvas coords color_line [draw_line $color_x $color_y_low  $color_y_high]
 	
 	## reposition box:
 	eval $win.canvas coords color_line_box \
 		[draw_rectangle $color_x $color_y_low $color_y_high]
+
+	## reposition arrow:
+	eval $win.canvas coords color_min_tri [right_triangle $color_x $color_y_low]
+	$win.canvas coords color_min_entry [expr $color_x + $triangle_width] $color_y_low
     }
     set cmColor(min_changed) 0
 }
@@ -637,9 +673,6 @@ proc adjust_color_max { win name element op } {
 	    set color_max [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
 	    set color_y_high $y1
 	} 
-	## reposition arrow:
-	eval $win.canvas coords color_max_tri [right_triangle $color_x $color_y_high]
-	$win.canvas coords color_max_entry [expr $color_x + $triangle_width] $color_y_high
 	
 	## reposition line:
 	eval $win.canvas coords color_line [draw_line $color_x $color_y_low  $color_y_high]
@@ -647,6 +680,10 @@ proc adjust_color_max { win name element op } {
 	## reposition box:
 	eval $win.canvas coords color_line_box \
 		[draw_rectangle $color_x $color_y_low $color_y_high]
+
+	## reposition arrow:
+	eval $win.canvas coords color_max_tri [right_triangle $color_x $color_y_high]
+	$win.canvas coords color_max_entry [expr $color_x + $triangle_width] $color_y_high
     }
     set cmColor(max_changed) 0
 }

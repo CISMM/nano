@@ -521,7 +521,7 @@ proc updateOptionmenu {menu entry_list_name var name element op} {
 }
 
 # called when the C code changes the list of menu entries.
-proc updateOptionmenuEntries {menu entry_list_name var name element op} { 
+proc updateOptionmenuEntries {menu entry_list_name var name_or_index name element op} { 
     global optionmenu_setting_list optionmenu_selecting_default
     upvar #0 $entry_list_name entry_list
     upvar #0 $var varval 
@@ -554,7 +554,13 @@ proc updateOptionmenuEntries {menu entry_list_name var name element op} {
 	$menu select 0
 	# this is necessary - the "select" command doesn't do it, 
 	# because the first menu item is already selected.
-	set varval [$menu get]
+        if {$name_or_index} {
+            # generic_optionmenu behavior
+            set varval [$menu get]
+        } else {
+            # generic_optionmenu_with_index behavior
+            set varval [$menu index select]
+        }
     } else {
 	#puts "    TCL: optionmenu search else $var"
 	# We don't ever want callbacks for the global variable
@@ -607,7 +613,7 @@ proc generic_optionmenu { name var label entry_list_name } {
     # Find out when the global variable connected with the menu entries
     # gets set by someone else.
     trace variable entry_list w \
-	    "updateOptionmenuEntries $name $entry_list_name $var "
+	    "updateOptionmenuEntries $name $entry_list_name $var yes "
 
     return $name
 }
@@ -665,7 +671,7 @@ proc generic_optionmenu_with_index { name var label entry_list_name } {
     # Find out when the global variable connected with the menu entries
     # gets set by someone else.
     trace variable entry_list w \
-            "updateOptionmenuEntries $name $entry_list_name $var "
+            "updateOptionmenuEntries $name $entry_list_name $var no "
 
     return $name
 }

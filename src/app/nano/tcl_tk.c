@@ -54,18 +54,12 @@ extern "C" int Blt_SafeInit(Tcl_Interp *interp);
 #define FALSE (0)
 
 
-static	Tcl_Interp *tk_control_interp;
+static	Tcl_Interp *tk_control_interp = NULL;
 static	int	old_user_mode;
 //static	double	old_x_min_scale, old_x_max_scale;
 static	int	controls_on = 0;
 static  int  old_knobs[8];
 static  int  knobs_set_from_c;
-
-// Global variables for the colormap widget:
-static Tk_PhotoImageBlock colormap;
-static unsigned char *colormap_pixels;
-static int colormap_width = 32, colormap_height = 256;
-static Tk_PhotoHandle image;
 
 
 static void (* command_handler) (char *, vrpn_bool *, int);
@@ -158,7 +152,6 @@ char *handle_knob_change(ClientData /*clientData*/,
 	return NULL;
 }
 
-
 char * handle_term_input (ClientData, Tcl_Interp * interp,
                           char * name1, char *, int)
 {
@@ -193,83 +186,95 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	//int i, new_val;
 	
 	VERBOSE(4, "  Initializing Tcl");
-	tk_control_interp = Tcl_CreateInterp();
+	Tcl_Interp * my_tk_control_interp = Tcl_CreateInterp();
 
-  printf("init_Tk_control_panels(): just created the tcl/tk interpreter\n");
+	VERBOSE(1,"init_Tk_control_panels(): just created the tcl/tk interpreter\n");
 
 #if defined (_WIN32) && !defined (__CYGWIN__)
-        if (Tcl_InitStubs(tk_control_interp, TCL_VERSION, 1) == NULL) {
+        if (Tcl_InitStubs(my_tk_control_interp, TCL_VERSION, 1) == NULL) {
             fprintf(stderr, "Non matching version of tcl and tk\n");
             return -1;
         }
 #endif
 	/* Start a Tcl interpreter */
 	VERBOSE(4, "  Starting Tcl interpreter");
-	if (Tcl_Init(tk_control_interp) == TCL_ERROR) {
+	if (Tcl_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Tcl_Init failed: %s\n",tk_control_interp->result);
+			"Tcl_Init failed: %s\n",my_tk_control_interp->result);
 		return(-1);
 	}
 
 	/* Initialize Tk using the Tcl interpreter */
 	VERBOSE(4, "  Initializing Tk");
-	if (Tk_Init(tk_control_interp) == TCL_ERROR) {
+	if (Tk_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Tk_Init failed: %s\n",tk_control_interp->result);
+			"Tk_Init failed: %s\n",my_tk_control_interp->result);
 		return(-1);
 	}
-	Tcl_StaticPackage(tk_control_interp, "Tk", Tk_Init, Tk_SafeInit);
+	Tcl_StaticPackage(my_tk_control_interp, "Tk", Tk_Init, Tk_SafeInit);
 
 #ifndef NO_ITCL
 	/* Initialize Tcl packages */
-	if (Blt_Init(tk_control_interp) == TCL_ERROR) {
+	if (Blt_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Package_Init failed: %s\n",tk_control_interp->result);
+			"Package_Init failed: %s\n",my_tk_control_interp->result);
 		return(-1);
 	}
-	Tcl_StaticPackage(tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
+	Tcl_StaticPackage(my_tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
 
-	if (Itcl_Init(tk_control_interp) == TCL_ERROR) {
+	if (Itcl_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Package_Init failed: %s\n",tk_control_interp->result);
+			"Package_Init failed: %s\n",my_tk_control_interp->result);
 		return(-1);
 	}
-	if (Itk_Init(tk_control_interp) == TCL_ERROR) {
+	if (Itk_Init(my_tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
-			"Package_Init failed: %s\n",tk_control_interp->result);
+			"Package_Init failed: %s\n",my_tk_control_interp->result);
 		return(-1);
 	}
-	Tcl_StaticPackage(tk_control_interp, "Itcl", Itcl_Init, Itcl_SafeInit);
-	Tcl_StaticPackage(tk_control_interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
+	Tcl_StaticPackage(my_tk_control_interp, "Itcl", Itcl_Init, Itcl_SafeInit);
+	Tcl_StaticPackage(my_tk_control_interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
 #endif	
         // Check to see if we have a Tk main window.
 	VERBOSE(4, "  Checking Tk mainwindow");
-	tk_control_window = Tk_MainWindow(tk_control_interp);
+	tk_control_window = Tk_MainWindow(my_tk_control_interp);
 	if (tk_control_window == NULL) {
 		fprintf(stderr,"Tk can't get main window: %s\n",
-			tk_control_interp->result);
+			my_tk_control_interp->result);
 		return(-1);
 	}
 
+#ifdef VIEWER
+        // Set variable to indicate that this is a Viewer only
+        // interface. 
+	sprintf(cvalue, "1");
+	Tcl_SetVar(my_tk_control_interp,"viewer_only",(char *) cvalue,TCL_GLOBAL_ONLY);
+#endif
 	/* The Tcl script that holds widget definitions is sourced from
 	 * inside the main window script*/
 	/* Load the Tcl script that handles main interface window
 	 * and mode changes */
 	VERBOSE(4, "  Loading Tcl script");
-	sprintf(command, "source %s%s",tcl_script_dir,TCL_MODE_FILE);
-	if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
+	sprintf(command, "%s%s",tcl_script_dir,TCL_MODE_FILE);
+	if (Tcl_EvalFile(my_tk_control_interp, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-			tk_control_interp->result);
+			my_tk_control_interp->result);
 		return(-1);
 	}
 
         /* Initialize the Tclvar variables */
         VERBOSE(4, "  Calling Tclvar_init()");
-        Tclnet_init(tk_control_interp, collabMode, timer);
-        if (Tclvar_init(tk_control_interp)) {
+        Tclnet_init(my_tk_control_interp, collabMode, timer);
+        if (Tclvar_init(my_tk_control_interp)) {
                 fprintf(stderr,"Tclvar_init failed.\n");
                 return(-1);
         }
+
+        // Initialize the global tcl interpreter
+        // Waiting til here makes sure the error_display functions get to use a
+        // fully-initialized interpreter, and don't cause a seg-fault.
+        tk_control_interp = my_tk_control_interp;
+
         return 0;
 }
 
@@ -336,20 +341,8 @@ int     init_Tk_variables ()
 	controls_on = 1;
 
 
-	// This code sets up the colormap bar displayed in the colormap
-	// tcl window.
-	colormap_pixels = new unsigned char[ colormap_height * colormap_width * 3];
-	for (i= 0; i < colormap_height*colormap_width*3; i++)
-	  colormap_pixels[i] = 128;
-	colormap.pixelPtr = colormap_pixels;
-	colormap.width = colormap_width;
-	colormap.height = colormap_height;
-	colormap.pixelSize = 3;
-	colormap.pitch = colormap_width * 3;
-	colormap.offset[0] = 0;	colormap.offset[1] = 1;	colormap.offset[2] = 2;
-	image = Tk_FindPhoto( tk_control_interp, "colormap_image" );
-	Tk_PhotoPutBlock( image, &colormap, 0, 0, colormap_width, colormap_height );
-	// end of colormap setup
+        // Initialize the color bar display. Needs inited interpreter. 
+        tcl_colormapRedraw();
 
 	return(0);
 }
@@ -400,40 +393,74 @@ int	poll_Tk_control_panels(void)
 	return 0;
 }
 
+/** Take a colormap and makes an color-bar image in Tcl with specified name,
+    width, height.  c_min and c_max are values between 0 and 1 which can
+    squash the colormap range, making the whole colormap appear in a small
+    window in the larger image. Defaults perform no squashing. 
+ */
+int makeColorMapImage(ColorMap * cmap, char * name, int width, int height, 
+                      float c_min , float c_max ) 
+{
+    Tk_PhotoImageBlock colormap;
+    unsigned char *colormap_pixels = new unsigned char[ height * width * 3];
+    Tk_PhotoHandle image;
 
+    char command[200];
+    // This code sets up the colormap bars displayed in the colormap
+    // choice menu in tcl.
+    colormap.pixelPtr = colormap_pixels;
+    colormap.width = width;
+    colormap.height = height;
+    colormap.pixelSize = 3;
+    colormap.pitch = width * 3;
+    colormap.offset[0] = 0; colormap.offset[1] = 1; colormap.offset[2] = 2;
 
+    // Make an image in Tcl based on the colormap.
+    float ci;
+    int r, g, b, a;
+    for ( int i= 0; i < height; i++) {
+        for ( int j = 0; j < width; j++ ) {
+            ci = 1.0 - float(i)/height;
+            if ( ci <  c_min ) ci = 0;
+            else if ( ci > c_max ) ci = 1.0;
+            else ci = (ci - c_min)/(c_max - c_min);
+            
+            cmap->lookup( ci, &r, &g, &b, &a);
+            
+            colormap_pixels[ i*width*3 + j*3 + 0] = (unsigned char)( r );
+            colormap_pixels[ i*width*3 + j*3 + 1] = (unsigned char)( g );
+            colormap_pixels[ i*width*3 + j*3 + 2] = (unsigned char)( b );
+        }
+    }
+    // "image create" will replace any existing instance of the image. 
+    sprintf (command, "image create photo %s", name);
+    TCLEVALCHECK( get_the_interpreter(), command);
+    image = Tk_FindPhoto( get_the_interpreter(), name );
+    Tk_PhotoPutBlock( image, &colormap, 0, 0, width, height );
+
+    return 0;
+}
 
 void tcl_colormapRedraw() {
     
-  delete [] colormap_pixels;
-  colormap_pixels = new unsigned char[colormap_height * colormap_width * 3];
-  if (curColorMap) {
-    float ci, r, g, b, a;
-    for ( int i= 0; i < colormap_height; i++) {
-      for ( int j = 0; j < colormap_width; j++ ) {
-	ci = 1.0 - float(i)/colormap_height;
-	if ( ci <  color_min ) ci = 0;
-	else if ( ci > color_max ) ci = 1.0;
-	else ci = (ci - color_min)/(color_max - color_min);
-	
-	curColorMap->lookup( ci, &r, &g, &b, &a);
-	
-	colormap_pixels[ i*colormap_width*3 + j*3 + 0] = (unsigned char)( r * 255 );
-	colormap_pixels[ i*colormap_width*3 + j*3 + 1] = (unsigned char)( g * 255 );
-	colormap_pixels[ i*colormap_width*3 + j*3 + 2] = (unsigned char)( b * 255 );
-      }
+    // Must match the colormap widget:
+    const int colormap_width = 32, colormap_height = 256;
+
+    // Draw a colormap bar if either colorPlaneName or colorMapName 
+    // aren't "none"
+    if (curColorMap &&
+        ( ( strcmp( dataset->colorPlaneName->string(), "none") != 0 ) ||
+          ( strcmp( dataset->colorMapName->string(), "none") != 0) ) ) {
+        // color_max and color_min "squash" the color map image based
+        // on tcl controls. 
+        makeColorMapImage(curColorMap, "colormap_image", 
+                          colormap_width, colormap_height, 
+                          color_min, color_max);
     }
-  }
-  else {
-    for ( int i= 0; i < colormap_height; i++) {
-      for ( int j = 0; j < colormap_width; j++ ) {
-	colormap_pixels[ i*colormap_width*3 + j*3 + 0] = (unsigned char)( surface_r );
-	colormap_pixels[ i*colormap_width*3 + j*3 + 1] = (unsigned char)( surface_g );
-	colormap_pixels[ i*colormap_width*3 + j*3 + 2] = (unsigned char)( surface_b );
-      }
-    }
-  }
-  colormap.pixelPtr = colormap_pixels;
-  Tk_PhotoPutBlock( image, &colormap, 0, 0, colormap_width, colormap_height );
-  
+    else {
+        ColorMap constmap;
+        constmap.setConst(surface_r , surface_g, surface_b, 255);
+        makeColorMapImage(&constmap, "colormap_image", 
+                          colormap_width, colormap_height);
+    }  
 }

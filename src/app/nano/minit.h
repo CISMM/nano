@@ -4,7 +4,7 @@
 
 int x_init (char * argv []);
 int reset_phantom (void);
-int peripheral_init(vrpn_Connection *, vrpn_bool do_magellan);
+int peripheral_init(vrpn_Connection *, char * magellanName);
 
 
 

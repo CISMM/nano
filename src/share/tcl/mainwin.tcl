@@ -57,6 +57,17 @@ catch { option add *Font {helvetica -15 } startupFile}
 #global  maxR maxG maxB minR minG minB ruler_r ruler_g ruler_b
 #global  color_flag polish region_changed term_input surface_changed
 
+#
+# 3rdTech modifications:
+#   There are several parts of the interface we don't expose in the
+#   commercial version. This flag turns them off.
+#
+set thirdtech_ui 0
+
+# We will also watch for "viewer_only" to be set, indicating this
+# version can't connect to live SPMs.
+if {![info exists viewer_only] } { set viewer_only 0 }
+ 
 # where do I find supporting files?
 # If the environment variable NM_TCL_DIR is not set, 
 # check for NANO_ROOT. If that is not set, 
@@ -65,7 +76,11 @@ catch { option add *Font {helvetica -15 } startupFile}
 if {[info exists env(NM_TCL_DIR)] } {
     set tcl_script_dir $env(NM_TCL_DIR)
 } elseif {[info exists env(NANO_ROOT)]} {
-    set tcl_script_dir [file join $env(NANO_ROOT) share tcl]
+    if {$viewer_only} {
+        set tcl_script_dir [file join $env(NANO_ROOT) share tcl_view]
+    } else {
+        set tcl_script_dir [file join $env(NANO_ROOT) share tcl]
+    }
 } else {
     set tcl_script_dir .
 }
@@ -74,13 +89,6 @@ if {[info exists env(NM_TCL_DIR)] } {
 if {[string match "*wish*" [info nameofexecutable]] } {
     set tcl_script_dir .
 }
-
-#
-# 3rdTech modifications:
-#   There are several parts of the interface we don't expose in the
-#   commercial version. This flag turns them off.
-#
- set thirdtech_ui 0
 
 #appearance variables
     # vertical padding between floatscales - image and modify windows
@@ -100,13 +108,17 @@ set imageNames {none }
 #set color_flag "Maximum"
 set term_input ""
 
+# Hide until set up.
+wm withdraw .
 
 #Make the window appear in the upper left corner
 wm geometry . +0+0
 
 # Give it a title
+wm title . "NMViewer"
+if { !$viewer_only } {
 wm title . "NanoManipulator"
-wm iconbitmap . error
+}
 # contains definition of useful widgets for the 
 # Tcl_Linkvar library.
 source [file join ${tcl_script_dir} Tcl_Linkvar_widgets.tcl]
@@ -115,32 +127,50 @@ source [file join ${tcl_script_dir} panel_tools.tcl]
 ################ Error Handling #############################
 ### Message dialog for warnings and errors. 
 # Designed to be called from C code, as well. 
-iwidgets::messagedialog .error_dialog -title "NanoManipulator Error" \
-    -bitmap error -text "Error" -modality application
 
-.error_dialog hide Help
+# The iwidgets message box had a problem when reporting Phantom errors,
+# for some reason - Tcl_Eval failed in that situation.
+# Switched to tk_messageBox procedure, and things work fine. 
+#iwidgets::messagedialog .error_dialog -title "NanoManipulator Error" \
+#    -bitmap error -text "Error" -modality application
+
+#.error_dialog hide Help
 #.message_dialog buttonconfigure OK -text "Yes"
-.error_dialog hide Cancel 
+#.error_dialog hide Cancel 
 proc nano_fatal_error {msg } {
     global term_input
-    .error_dialog config -text "$msg" -title "NanoManipulator Fatal Error" \
-            -bitmap error 
-    .error_dialog buttonconfigure OK -command "set term_input q ; .error_dialog deactivate 1"
-    .error_dialog activate
+    tk_messageBox -message "$msg" -title "NanoManipulator Fatal Error" \
+            -type ok -icon error 
+    set term_input q 
+#    .error_dialog config -text "$msg" -title "NanoManipulator Fatal Error" \
+#            -bitmap error 
+#    .error_dialog buttonconfigure OK -command "set term_input q ; .error_dialog deactivate 1"
+#    .error_dialog activate
 }
 proc nano_error {msg } {
     global term_input
-    .error_dialog config -text "$msg" -title "NanoManipulator Error" \
-            -bitmap error 
-    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
-    .error_dialog activate
+    tk_messageBox -message "$msg" -title "NanoManipulator Error" \
+            -type ok -icon error 
+#    .error_dialog config -text "$msg" -title "NanoManipulator Error" \
+#            -bitmap error 
+#    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
+#    .error_dialog activate
 }
 proc nano_warning {msg } {
     global term_input
-    .error_dialog config -text "$msg" -title "NanoManipulator Warning" \
-            -bitmap warning
-    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
-    .error_dialog activate
+    tk_messageBox -message "$msg" -title "NanoManipulator Warning" \
+            -type ok -icon warning 
+#    .error_dialog config -text "$msg" -title "NanoManipulator Warning" \
+#            -bitmap warning
+#    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
+#    .error_dialog activate
+}
+
+# bgerror is a special name, provided by tcl/tk, called if there
+# is a background error in the script. Don't necessarily want
+# these to be fatal. 
+proc bgerror {msg} {
+    nano_error "Internal tcl error: $msg"
 }
 ######################
 
@@ -152,7 +182,8 @@ frame .menubar -relief raised -bd 4
 frame .main 
 
 # w1 is for stuff that stay on the screen all the time
-frame .main.w1 
+frame .main.w1 -relief raised -bd 2
+
 # w2 is for stuff that changes depending on what you are doing - 
 #   see procedure flip_w2
 frame .main.w2 
@@ -160,7 +191,8 @@ frame .main.w2
 #set up window
 pack .menubar .main -side top -fill x 
 
-pack .main.w1 .main.w2 -side top -fill x
+pack .main.w1 -side top -fill x
+pack .main.w2 -side bottom -fill x
 
 #initialize frame names
 set w1 .main.w1
@@ -184,11 +216,13 @@ $filemenu add command -label "Open Static File..." -underline 12 \
 	-command "open_static_file"
 $filemenu add command -label "Open Stream File..." -underline 0 \
 	-command "open_stream_file"
+if { !$viewer_only } {
 $filemenu add command -label "Open SPM Connection..." -underline 9 \
 	-command "open_spm_connection"
-#        $filemenu add command -label "Close..." -underline 0 -command \
-#		{.message_dialog activate}
-#        $filemenu add separator
+}
+$filemenu add command -label "Close..." -underline 0 -command \
+        "set close_microscope 1"
+$filemenu add separator
 $filemenu add command -label "Save Screen..." -underline 0 -command \
 	"save_screenImage"
 $filemenu add command -label "Save Plane Data..." -underline 5 -command \
@@ -216,8 +250,10 @@ set setupmenu .menu.setup
 menu $setupmenu -tearoff 0
 .menu add cascade -label "Setup" -menu $setupmenu -underline 0
 
+if { !$viewer_only } {
 $setupmenu add command -label "Data Sets..." -underline 0 \
 	-command "show.data_sets"
+}
 $setupmenu add command -label "Height Plane..." -underline 0 -command \
 	"show.z_mapping"
 $setupmenu add command -label "Color Map..." -underline 0 -command \
@@ -235,9 +271,10 @@ $setupmenu add command -label "External Filters..." -underline 0 -command \
 $setupmenu add command -label "Display Settings..." -underline 8 -command \
 		"show.display_settings"
 
+if { !$viewer_only } {
 lappend device_only_controls \
         [list $setupmenu entryconfigure "Data Sets..."]
-
+}
 #### TIPCONTROL menu #############################
 set tipcontrolmenu .menu.tipcontrol
 menu $tipcontrolmenu -tearoff 0
@@ -247,9 +284,10 @@ $tipcontrolmenu add command -label "Image Params..." -underline 0 \
 	-command "show.image"
 $tipcontrolmenu add command -label "Modify Params..." -underline 0 \
 	-command "show.modify"
+if { !$viewer_only } {
 $tipcontrolmenu add command -label "Modify Live Controls..." -underline 7 \
 	-command "show.modify_live"
-
+}
 
 #### ANALYSIS menu #############################
 set analysismenu .menu.analysis
@@ -276,9 +314,34 @@ $analysismenu add command -label "Tip Convolution..." \
 set toolmenu .menu.tool
 menu $toolmenu -tearoff 0
 .menu add cascade -label "Tools" -menu $toolmenu -underline 1
-        
-$toolmenu add command -label "Phantom" -underline 0 \
-    -command "show.phantom_win"
+
+set show_mode_buttons 1
+$toolmenu add checkbutton -label "Show Mode Buttons" -underline 10 \
+        -variable show_mode_buttons \
+        -command {
+    if { $show_mode_buttons } {
+        pack $view -side top -fill both
+    } else {
+        pack forget $view
+    }
+}
+
+#Only use the Mouse Phantom if the hand-tracker is null
+if {(![info exist env(TRACKER)]) \
+        || ([string compare -nocase [lindex $env(TRACKER) 1] "null"] == 0) \
+        || ($viewer_only)} {
+    $toolmenu add command -label "Mouse Phantom" -underline 6 \
+            -command "show.mouse_phantom_win"
+} else {
+    # Use a real phantom.
+    # must be left-justified so strip_unc program can remove it.
+if { !$viewer_only } {
+    $toolmenu add command -label "Phantom" -underline 0 \
+            -command "show.phantom_win"
+}
+}
+$toolmenu add command -label "Magellan" -underline 0 \
+    -command "show.magellan_win"
 
 $toolmenu add command -label "Navigate" -underline 0 \
     -command "show.nav_win"
@@ -331,7 +394,7 @@ wm protocol . WM_DELETE_WINDOW {$filemenu invoke "Exit"}
 # variable "view" determines what frame the View control
 #     box will appear in.
 #     It will stay all the time so it's in w1
-set view $w1.view
+set view $w1
 
 source [file join ${tcl_script_dir} view.tcl]
 
@@ -358,13 +421,13 @@ radiobutton $w2.toolbar.speed_detail4 -variable tesselation_stride \
 radiobutton $w2.toolbar.speed_detail5 -variable tesselation_stride \
 	-value 5
 
-# Anchor south to make the labels sit on the bottom with the slider.
 pack $w2.toolbar.detail $w2.toolbar.speed_detail1 $w2.toolbar.speed_detail2 \
 	$w2.toolbar.speed_detail3 $w2.toolbar.speed_detail4 \
 	$w2.toolbar.speed_detail5 $w2.toolbar.speed \
 	-side left 
 
 
+if { !$viewer_only } {
 set spm_scanning 1
 # toggle scanning flag. 
 button $w2.toolbar.pause_scan -text "Stop\nScan" \
@@ -388,9 +451,15 @@ pack $w2.toolbar.pause_scan $w2.toolbar.withdraw_tip -side left -padx 5
 
 # These two button should only be available when reading a DEVICE
 lappend device_only_controls $w2.toolbar.pause_scan $w2.toolbar.withdraw_tip
-
+}
 #File menu commands
 source [file join ${tcl_script_dir} filemenu.tcl]
+
+# Get the list of SPM generated by the setup program, but only if it exists. 
+set spm_list_filename [file join ${tcl_script_dir} spm_list.tcl]
+if { [file exists "$spm_list_filename"] } {
+    source "$spm_list_filename"
+}
 
 #Setup menu commands
 source [file join ${tcl_script_dir} setupmenu.tcl]
@@ -436,7 +505,7 @@ source [file join ${tcl_script_dir} french_ohmmeter.tcl]
 # for the current activity. 
 # First version based totally on whether we are reading files, a stream,
 # or a device.  Ran into race conditions with
-# diable_device_widgets_for_commands_suspended when we tried to generalize that
+# disable_device_widgets_for_commands_suspended when we tried to generalize that
 # to non-device contexts.
 
 set READ_DEVICE 0
@@ -444,7 +513,7 @@ set READ_FILE 1
 set READ_STREAM 2
 if {![info exists spm_read_mode] } { set spm_read_mode $READ_FILE }
 
-proc diable_widgets_for_readmode { name el op } {
+proc disable_widgets_for_readmode { name el op } {
     global device_only_controls stream_only_controls stream_and_device_only_controls 
     global spm_read_mode toolmenu
     global readmode_device_commands_suspended
@@ -547,9 +616,9 @@ proc diable_widgets_for_readmode { name el op } {
         }
     }
 }
-trace variable spm_read_mode w diable_widgets_for_readmode
+trace variable spm_read_mode w disable_widgets_for_readmode
 
-proc diable_device_widgets_for_commands_suspended { name el op } {
+proc disable_device_widgets_for_commands_suspended { name el op } {
     global device_only_controls  
     global spm_commands_suspended
     global collab_commands_suspended
@@ -603,7 +672,7 @@ proc diable_device_widgets_for_commands_suspended { name el op } {
 #puts "Done disabling"
         }
     }
-#puts "Done with diable_device_widgets_for_commands_suspended"
+#puts "Done with disable_device_widgets_for_commands_suspended"
 }
 
 # Helps with Thermo Image Analysis mode. When in this mode, most of 
@@ -611,12 +680,12 @@ proc diable_device_widgets_for_commands_suspended { name el op } {
 # So we avoid issuing any commands to Thermo, by disabling all device 
 # controls. 
 if {![info exists spm_commands_suspended] } { set spm_commands_suspended 0 }
-trace variable spm_commands_suspended w diable_device_widgets_for_commands_suspended
+trace variable spm_commands_suspended w disable_device_widgets_for_commands_suspended
 
 if {![info exists readmode_device_commands_suspended] } \
                     { set readmode_device_commands_suspended 0 }
 trace variable readmode_device_commands_suspended w \
-                    diable_device_widgets_for_commands_suspended
+                    disable_device_widgets_for_commands_suspended
 
 #----------------
 # Setup window positions and geometries to be convenient and pleasant!
@@ -643,12 +712,14 @@ after idle {
 
     # The stripchart window.
     #Make the window appear on the top next to the main window
-    wm geometry $graphmod(sc) +[expr $main_xpos + $width + 2*$winborder]+$main_ypos
+    #wm geometry $graphmod(sc) +[expr $main_xpos + $width + 2*$winborder]+$main_ypos
+    # Nah. Top right corner.
+    wm geometry $graphmod(sc) -0+0
 
     # The colormap window - about the same as the stripchart window.
-    wm geometry $nmInfo(colorscale) +[expr $main_xpos + $width \
-            + 2*$winborder + 10]+[expr $main_ypos + 10]
-
+#    wm geometry $nmInfo(colorscale) +[expr $main_xpos + $width \
+#            + 2*$winborder + 10]+[expr $main_ypos + 10]
+    wm geometry $nmInfo(colorscale) -0+[expr $main_ypos + 10]
     # The image window
     # Make the window appear on the left edge below the main window
     
@@ -707,7 +778,7 @@ after idle {
     # wm maxsize . gives us the size of the available space. 
     # Make sure the window doesn't appear off the bottom of the screen.
     set req_height [winfo reqheight .sharedptr] 
-    if { $next_left_pos > [lindex [wm maxsize .] 1] } {
+    if { [expr $next_left_pos + $req_height] > [lindex [wm maxsize .] 1] } {
 	set next_left_pos [expr $main_ypos +$main_height]
     }
 
@@ -733,10 +804,13 @@ if { !$thirdtech_ui } {
   source [file join ${tcl_script_dir} latency.tcl]
 }
 
+# Prevent changes in size of the main window by user.
+wm resizable . 0 0 
 # puts the focus on the main window, instead of any other windows 
 # which have been created. 
-wm deiconify .
-
+after idle {
+    wm deiconify .
+}
 # Just for fun - total number of commands invoked so far
 #puts "Command count: [info cmdcount]"
 
@@ -751,7 +825,7 @@ wm deiconify .
 
 if {![info exists collab_commands_suspended] } \
                  { set collab_commands_suspended 1; \
-                   diable_device_widgets_for_commands_suspended 0 0 0 }
+                   disable_device_widgets_for_commands_suspended 0 0 0 }
 
-trace variable collab_commands_suspended w diable_device_widgets_for_commands_suspended
+trace variable collab_commands_suspended w disable_device_widgets_for_commands_suspended
 

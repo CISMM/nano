@@ -140,7 +140,7 @@ void PPM::constructor_worker (FILE * infile)
 		}
 
 	} else if (strncmp(magic,"P2",2) ==0) {	// ASCII PGM file
-		if (read_P3_body(infile,maxc)) {
+		if (read_P2_body(infile,maxc)) {
 			valid = 0;
 			return;
 		}
@@ -179,7 +179,8 @@ int	PPM::read_P5_body(FILE *infile)
 		}
 	}
 
-	for (y = 0; y < ny; y++) {
+        // Reverse Y traversal so image is not flipped vertically.
+        for (y = ny -1; y >=0; y-- ) {
 
 	  /* Read one row of values from the file */
 	  n_values_read = fread((char*)pgmrow, 1, nx, infile);
@@ -232,7 +233,8 @@ int	PPM::read_P6_body(FILE *infile)
 		}
 	}
 
-	for (y = 0; y < ny; y++) {
+        // Reverse Y traversal so image is not flipped vertically.
+        for (y = ny -1; y >=0; y-- ) {
 
 	  /* Read one row of values from the file */
 	  if (fread((char*)ppmrow, 1, nx*sizeof(P_COLOR), infile) !=
@@ -278,7 +280,8 @@ int	PPM::read_P2_body(FILE *infile, int maxc)
 	// Read in the value for each pixel.  Convert each from the range
 	// 0..maxc into the range 0..255, then assign to each of R,G,B
 	// the same color (this is a grayscale file).
-	for (y = 0; y < ny; y++) {
+        // Reverse Y traversal so image is not flipped vertically.
+        for (y = ny -1; y >=0; y-- ) {
 	  for (x = 0; x < nx; x++) {
 	    if (read_int(infile,&V)) {
 		fprintf(stderr,"Error reading value!\n");
@@ -317,7 +320,8 @@ int	PPM::read_P3_body(FILE *infile, int maxc)
 
 	// Read in the RGB values for each pixel.  Convert each from the range
 	// 0..maxc into the range 0..255.
-	for (y = 0; y < ny; y++) {
+        // Reverse Y traversal so image is not flipped vertically.
+        for (y = ny -1; y >=0; y-- ) {
 	  for (x = 0; x < nx; x++) {
 	    if (read_int(infile,&R) || read_int(infile,&G) ||
 			read_int(infile,&B)) {
@@ -384,7 +388,7 @@ int	PPM::Putppm(int x,int y, int red,int green,int blue)
 
 int	PPM::Value_at_normalized(double normx,double normy, int *red,int *green,int *blue)
 {
-	float	sx = normx, sy = normy;	/* Scaled to 0-->1 */
+	double	sx = normx, sy = normy;	/* Scaled to 0-->1 */
 	int x,y;			/* Truncated integer coordinate */
 	double	dx,dy;			/* Delta from the integer coord */
 

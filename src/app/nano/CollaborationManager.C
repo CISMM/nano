@@ -7,7 +7,7 @@
   ===3rdtech===*/
 #include "CollaborationManager.h"
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 #include <unistd.h>  // for gethostname()
 #endif
 

@@ -237,17 +237,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long DisableVoltsource (long which);
       ///< Enables one of the voltage sources.
 
-    long InitDevice (const vrpn_bool _setRegion,
-                            const vrpn_bool _setMode,
-                            const long /* _socketType */,
-                            const char * _SPMhost,
-                            const long /* _SPMport */,
-		     const long /* _UDPport */);
-
-    long InitStream (const char * /* _inputStreamName */);
-
-    long Init (void);
-
     long RecordResistance(long channel, timeval t, float r,
 			float voltage, float range, float filter); 
 	///< XXX - this function was used for the French Ohmmeter
@@ -688,6 +677,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     static int handle_barrierSynch (void * ud, const nmb_SynchMessage * msg);
     static void handle_GotMicroscopeControl (void * ud, 
                                              nmb_SharedDevice_Remote * dev);
+
+    vrpn_bool d_incr_save;
 
   public:
 

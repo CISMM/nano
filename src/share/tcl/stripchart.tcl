@@ -14,7 +14,7 @@ option add *Stripchart.*symbol ""
 option add *Stripchart.*pixels 1.25m
 
 option add *Stripchart.*PlotPad 0
-option add *Stripchart.width 700
+option add *Stripchart.width 665
 option add *Stripchart.height 200
 option add *Stripchart.*Smooth linear
 option add *Stripchart.plotBackground black
@@ -50,11 +50,11 @@ $graphmod(stripchart) yaxis configure -title "Point Results"
 $graphmod(stripchart) axis create gm_timevec -title "Time (sec)" \
     -autorange 25.0 -shiftby 0.1 
 $graphmod(stripchart) axis create gm_svec -title "Path Length (nm)" \
-    -autorange 2000.0 -shiftby 0.1
-$graphmod(stripchart) axis create gm_xsurfvec_x -title "Surface X axis (nm)" \
-    -autorange 2000.0 -shiftby 0.1
-$graphmod(stripchart) axis create gm_ysurfvec_x -title "Surface Y axis (nm)" \
-    -autorange 2000.0 -shiftby 0.1
+    -autorange 4000.0 -shiftby 0.1
+$graphmod(stripchart) axis create gm_Surface_X_Axis_x -title "Surface X axis (nm)" \
+    -autorange 4000.0 -shiftby 0.1
+$graphmod(stripchart) axis create gm_Surface_Y_Axis_x -title "Surface Y axis (nm)" \
+    -autorange 4000.0 -shiftby 0.1
 
 $graphmod(stripchart) xaxis use gm_timevec
 set graphmod(cur_x_axis) gm_timevec
@@ -67,9 +67,9 @@ proc set_for_scanline_mode {} {
 	-autorange 0.0 -shiftby 0.0
     $graphmod(stripchart) axis configure gm_svec \
 	-autorange 0.0 -shiftby 0.0
-    $graphmod(stripchart) axis configure gm_xsurfvec_x \
+    $graphmod(stripchart) axis configure gm_Surface_X_Axis_x \
 	-autorange 0.0 -shiftby 0.0
-    $graphmod(stripchart) axis configure gm_ysurfvec_x \
+    $graphmod(stripchart) axis configure gm_Surface_Y_Axis_x \
 	-autorange 0.0 -shiftby 0.0
 }
 
@@ -79,11 +79,11 @@ proc set_for_point_mode {} {
     $graphmod(stripchart) axis configure gm_timevec \
         -autorange 25.0 -shiftby 0.1
     $graphmod(stripchart) axis configure gm_svec \
-        -autorange 2000.0 -shiftby 0.1
-    $graphmod(stripchart) axis configure gm_xsurfvec_x \
-        -autorange 2000.0 -shiftby 0.1
-    $graphmod(stripchart) axis configure gm_ysurfvec_x \
-        -autorange 2000.0 -shiftby 0.1
+        -autorange 4000.0 -shiftby 0.1
+    $graphmod(stripchart) axis configure gm_Surface_X_Axis_x \
+        -autorange 4000.0 -shiftby 0.1
+    $graphmod(stripchart) axis configure gm_Surface_Y_Axis_x \
+        -autorange 4000.0 -shiftby 0.1
 
 }
 
@@ -116,10 +116,26 @@ button $graphmod(top).axis_config -text "Axis config..." -command \
 	show.stripchart_axis_config
 pack $graphmod(top).axis_config -side bottom -anchor nw
 
+proc range_trace_proc { var } {
+    global graphmod
+    upvar #0 $var varval
+    
+    # Set back to default values if user clears the entry field
+    if {$varval == ""} {
+        if { $graphmod(cur_x_axis) == "gm_timevec" } {
+            set varval 25
+        } else { 
+            set varval 4000
+        } 
+    }
+    $graphmod(stripchart) axis configure $graphmod(cur_x_axis) \
+            -autorange $varval
+}
+
 #set up the controls to control the X axis, which will display either
 # time, length along path (s), surface x distance or surface y distance.
 proc add_time_dist_controls { } {
-    global graphmod
+    global graphmod gm_range
 
     set win [frame $graphmod(axis_config).time_dist -relief raised -bd 2]
     pack $win -side left -expand yes -fill both
@@ -135,33 +151,64 @@ proc add_time_dist_controls { } {
     # However, we need to pass in vector name without trailing "_x" 
     # so we get the real data.
     $win.rb add xdist -text "Surface X axis" \
-	-command {change_x_axis gm_xsurfvec_x gm_xsurfvec}
+            -command {change_x_axis gm_Surface_X_Axis_x gm_Surface_X_Axis}
     $win.rb add ydist -text "Surface Y axis" \
-	-command {change_x_axis gm_ysurfvec_x gm_ysurfvec}
+            -command {change_x_axis gm_Surface_Y_Axis_x gm_Surface_Y_Axis}
     $win.rb select dist
-
+    
     pack $win.rb -padx 4 -pady 4 -side top -anchor nw
 
     # change the range of the X axis 
     # Don't set it's min and max, because we want it to slide with
     # new values.
-    iwidgets::entryfield $win.range -labeltext "Range:" -validate real \
-	-width 12 \
-	-command "\$graphmod(stripchart) axis configure \$graphmod(cur_x_axis) -autorange \[$win.range get\]"
+    generic_entry $win.range gm_range "Range:" real "range_trace_proc gm_range"
+
     pack $win.range -side top -anchor nw -pady 4 
 
     generic_entry $win.max_points gm_max_num_points "Max pts:" numeric
     generic_entry $win.stride gm_stride "Use every nth pt:" numeric
     pack $win.max_points $win.stride -side top -anchor nw -pady 4 
+    iwidgets::Labeledwidget::alignlabels  \
+            $win.range $win.max_points $win.stride 
 }
 
 #set time/dist controls up!
 add_time_dist_controls
 
+# Make the min/max entries change axis display.
+# BUG in BLT. If both min/max are set, then if one of the min/max
+# values is set to "", it is supposed to auto-scale, but it
+# seems to set one or the other to MIN/MAX_DOUBLE.
+# SO, we work around it by setting both limits to "", then setting the
+# relevant limit, and NOT setting the other unless it is not ""
+
+proc axis_min_change { minvar maxvar axis_name } {
+    global graphmod
+    upvar #0 $minvar minvarval
+    upvar #0 $maxvar maxvarval
+
+    $graphmod(stripchart) axis configure $axis_name -min "" -max ""
+    $graphmod(stripchart) axis configure $axis_name -min "$minvarval" 
+    if { $maxvarval != "" } {
+        $graphmod(stripchart) axis configure $axis_name  -max "$maxvarval"
+    }
+}
+proc axis_max_change { maxvar minvar axis_name } {
+    global graphmod
+    upvar #0 $minvar minvarval
+    upvar #0 $maxvar maxvarval
+
+    $graphmod(stripchart) axis configure $axis_name -min "" -max ""
+    $graphmod(stripchart) axis configure $axis_name -max "$maxvarval"
+    if { $minvarval != "" } {
+        $graphmod(stripchart) axis configure $axis_name -min "$minvarval"
+    }
+}
+
 # create an element which will be graphed in the stripchart. A BLT
 # vector named $name should exist before this procedure is called, and
-# the vectors for the x axis (gm_timevec, gm_svec, gm_xsurfvec,
-# gm_ysurfvec) should exist as well. $id is used to get a unique color
+# the vectors for the x axis (gm_timevec, gm_svec, gm_Surface_X_Axis,
+# gm_Surface_Y_Axis) should exist as well. $id is used to get a unique color
 # for this element, and to determine whether it is the first element,
 # so should be linked to the main y axis. $intensity should be between
 # 0 and 1 and is a factor which multiplies the color.
@@ -173,26 +220,35 @@ add_time_dist_controls
 # will be displayed on the same y axis so that they can be compared to
 # each other.
 
-proc add_stripchart_element { name id intensity min max} {
+proc add_stripchart_element { name id intensity {min 0} {max 0} } {
     global graphmod
+    global ${name}_min ${name}_max
 
     if { [$graphmod(stripchart) element exists $name] } { 
         if { $min != 0 || $max != 0} {
 	    $graphmod(stripchart) axis configure $name -min $min -max $max
+            set ${name}_min $min
+            set ${name}_max $max
 	} 
 	return; 
     }
 
+    # Label strips off the leading "gm_"
     $graphmod(stripchart) element create $name \
-	-xdata $graphmod(cur_x_axis) -ydata $name -color [unique_color $id $intensity]
-    # new BLT version
+	-xdata $graphmod(cur_x_axis) -ydata $name \
+        -color [unique_color $id $intensity] \
+        -label [string range $name 3 end]
+    # new BLT version requires new syntax for axis creation.
+    # Title strips off the leading "gm_"
     if {[catch {$graphmod(stripchart) axis create $name \
 	    -limitscolor [unique_color $id $intensity] \
-	    -limitsformat \"%4.4g\" -title $name } ]} {
+	    -limitsformat \"%4.4g\" \
+            -title [string range $name 3 end] } ]} {
 	# Do it the old way if the new way fails:
 	$graphmod(stripchart) axis create $name \
 	    -limitcolor [unique_color $id $intensity] \
-	    -limits \"%4.4g\" -title $name
+	    -limits \"%4.4g\" \
+            -title [string range $name 3 end]
 	
     }
     $graphmod(stripchart) element configure $name \
@@ -203,7 +259,12 @@ proc add_stripchart_element { name id intensity min max} {
 
     if { $min != 0 || $max != 0} {
 	$graphmod(stripchart) axis configure $name -min $min -max $max
-    }
+        set ${name}_min $min
+        set ${name}_max $max
+    } else {
+        set ${name}_min ""
+        set ${name}_max ""
+    }        
 
     # Creates some controls for an element in the stripchart. 
     # A checkbox turns the graph of the element on and off.
@@ -220,7 +281,8 @@ proc add_stripchart_element { name id intensity min max} {
     checkbutton $win.active -text "Active" -variable graphmod($name-active) \
 	-command "
 	if { \$graphmod($name-active) } {
-          \$graphmod(stripchart) element configure $name -hide no -label $name
+          \$graphmod(stripchart) element configure $name -hide no \
+                  -label [string range $name 3 end]
           \$graphmod(stripchart) axis configure $name -hide no 
 #-limitsformat \"%4.4g\"
         } else {
@@ -241,12 +303,13 @@ proc add_stripchart_element { name id intensity min max} {
           \$graphmod(stripchart) axis configure $name -descending no
         }"
 
-
     pack $win.active $win.invert $win.getaxis -side top -anchor nw
-    iwidgets::entryfield $win.max -labeltext "Max:" -validate real -width 12 \
-	-command "\$graphmod(stripchart) axis configure $name -max \[$win.max get\]"
-    iwidgets::entryfield $win.min -labeltext "Min:" -validate real -width 12 \
-	-command "\$graphmod(stripchart) axis configure $name -min \[$win.min get\]"
+
+    generic_entry $win.max ${name}_max "Max:" real \
+            "axis_max_change ${name}_max ${name}_min $name"
+    generic_entry $win.min ${name}_min "Min:" real \
+            "axis_min_change ${name}_min ${name}_max $name"
+
     iwidgets::Labeledwidget::alignlabels  $win.max $win.min
     pack $win.max $win.min -side top -anchor nw
 

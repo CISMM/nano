@@ -36,6 +36,7 @@
 #include "nmm_RelaxComp.h"
 #include "nmm_Sample.h"
 
+#include "vrpn_FileConnection.h"	// for vrpn_File_Connection class
 #include "error_display.h"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -103,6 +104,7 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
     d_feeltoHandlers (NULL),
     d_sampleAlgorithm (NULL),
     d_accumulatePointResults (vrpn_FALSE),
+    d_incr_save(i.incr_save),
     d_redundancy (new vrpn_RedundantTransmission (c)),
     d_redReceiver (new vrpn_RedundantReceiver (c)),
     d_monitor (new nmm_QueueMonitor (this, d_redReceiver)),
@@ -403,9 +405,10 @@ nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
   d_connection->unregister_handler(d_PointResultNM_type,
                                  handle_PointResultNM,
                                  this);
-  d_connection->unregister_handler(d_PointResultData_type,
-                                 handle_PointResultData,
-                                 this);
+  // TCH network adaptations Nov 2000
+//    d_connection->unregister_handler(d_PointResultData_type,
+//                                   handle_PointResultData,
+//                                   this);
   d_connection->unregister_handler(d_BottomPunchResultData_type,
                                  handle_BottomPunchResultData,
                                  this);
@@ -2414,71 +2417,6 @@ void nmm_Microscope_Remote::accumulatePointResults (vrpn_bool on) {
 }
 
 
-long nmm_Microscope_Remote::InitDevice (vrpn_bool /* _setRegion */,
-                            vrpn_bool /* _setMode */,
-                            long /* _socketType */,
-                            const char * /* _SPMhost */,
-                            long /* _SPMport */,
-                            long /* _UDPport */) {
-  readMode = READ_DEVICE;	//  to differentiate Live and Replay
-
-  // XXX Bug in VRPN. If we're already connected before we register the
-  // handle_GotConnection handlers, they never get executed. So we'll call
-  // them explicitly, if needed.
-
-  if (d_connection->connected()) {
-      vrpn_HANDLERPARAM p;
-      handle_GotConnection2(this, p);
-  } 
-
-  // Register this callback here because it segfaults if I execute the handler
-  // in the constructor, and I need to register at the same place it is
-  // conditionally executed.
-
-  d_connection->register_handler(d_GotConnection_type,
-                                 handle_GotConnection2,
-                                 this);
-  
-
-  return 0;
-}
-
-
-
-
-long nmm_Microscope_Remote::InitStream (const char * /* _inputStreamName */) {
-
-  readMode = READ_STREAM; 	// to differentiate Live and Replay
-  if (!d_connection->get_File_Connection()) {
-     fprintf(stderr,"nmm_Microscope_Remote::InitStream():  "
-		    "could not open input log file %c\n", 0x08);
-     return -1;
-  }
-
-  return 0;
-}
-
-
-
-
-// Initialization code common to both live and canned data
-
-long nmm_Microscope_Remote::Init (void) {
-
-  // used for sweep mode
-  state.modify.region_diag =
-    sqrt(((d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX()) *
-          (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())) +
-         ((d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY()) *
-          (d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY())));
-
-
-  return 0;
-}
-
-
-
-
 
 // Common code from by RcvPointResultNM and RcvResultNM, and,
 // with a little stretching (_z and _checkZ), RcvResultData
@@ -2962,13 +2900,12 @@ int nmm_Microscope_Remote::handle_WindowLineData (void * userdata,
   if (x < 0 || y < 0 || 
      (x+(lineCount-1)*dx) > (ms->d_dataset->inputGrid->numX()-1) ||
      (y+(lineCount-1)*dy) > (ms->d_dataset->inputGrid->numY()-1)) {
-     display_error_dialog( "Internal: grid size (%d,%d) doesn't match"
+     display_fatal_error_dialog( "Internal: grid size (%d,%d) doesn't match"
            "data size (%dx%d). Time to die.", 
            ms->d_dataset->inputGrid->numX(),
            ms->d_dataset->inputGrid->numY(),
            lineCount, lineCount);
      ignoringData = VRPN_TRUE;
-     ms->d_dataset->done = VRPN_TRUE;
   }
 
   for (i = 0; i < lineCount; i++) {
@@ -4124,8 +4061,8 @@ void nmm_Microscope_Remote::RcvRelaxSet (long _min, long _sep) {
       d_relax_comp.enable(nmm_RelaxComp::DECAY);
   }
 
-  printf("Relax ignore time set at %ld\n", _min);
-  printf("Relax separation time set at %ld\n", _sep);
+//  printf("Relax ignore time set at %ld\n", _min);
+//  printf("Relax separation time set at %ld\n", _sep);
 }
 
 void nmm_Microscope_Remote::RcvForceSet (float _force) {
@@ -4200,17 +4137,23 @@ long nmm_Microscope_Remote::RcvWindowLineData(long _x, long _y,
   else {
     d_decoration->initScanline(_lineCount);
   }
-
+  BCPlane *plane = d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string() );
+  if (plane == NULL) return 0;
   for (int i=0; i < _lineCount; i++) {
     curr_x = _x + i * _dx;
     curr_y = _y + i * _dy;
     image->pixelToWorld( (double)curr_x, (double)curr_y, xf, yf);
     d_decoration->scan_line[i][0] = xf;
     d_decoration->scan_line[i][1] = yf;
-    d_decoration->scan_line[i][2] = d_dataset->inputGrid->getPlaneByName( o )->
-        scaledValue( curr_x, curr_y );
+    d_decoration->scan_line[i][2] = plane->scaledValue( curr_x, curr_y );
   }
 
+  BCPlane *cp = d_dataset->inputGrid->getPlaneByName(d_dataset->colorPlaneName->string() );
+  // Color map drift compensation. Keep track of the average data value of the
+  // first scan line
+  if (cp && (_x == 0) && (_y == cp->numY() -1)) {
+      d_decoration->first_line_avg = d_dataset->getFirstLineAvg(cp);
+  }
   return 0;
 }
 
@@ -4218,7 +4161,13 @@ long nmm_Microscope_Remote::RcvWindowLineData (void) {
   // blue, since we are not touching or modifying
   d_decoration->mode = nmb_Decoration::IMAGE;
 
-  state.dlistchange = VRPN_TRUE;        //XXX Need more here
+  // XXX May cause slowdown on network drives. Incremental save of stream file
+  // when user is not touching or modifying the sample.
+  if (d_incr_save) {
+      d_connection->save_log_so_far();
+  }
+
+//    state.dlistchange = VRPN_TRUE;  OBSOLETE
   return 0;
 }
 

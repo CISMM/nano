@@ -204,7 +204,7 @@ int height_at_hand_display (void *) {
   v_xform_type	worldFromHand;
   char message[1000], msgpart[500];
 
-  if (decoration->user_mode == USER_PLANEL_MODE) {	// sharp tip mode
+  if (g_user_mode == USER_PLANEL_MODE) {	// sharp tip mode
 	// Print all of the values in the intputPoint list of values
 	Point_value *value = microscope->state.data.inputPoint->head();
 
@@ -411,7 +411,7 @@ int mode_display (void *) {
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
 
-  switch(decoration->user_mode) {
+  switch(g_user_mode) {
      /* Don't comment any of these out unless the modes are totally 
       * removed from the code. When I commented out "comb mode", 
       * I got a seg-fault, even though the code was supposed to safely 

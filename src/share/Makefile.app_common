@@ -13,9 +13,11 @@ DIR := $(shell test -d $(REAL_OBJECT_DIR) && echo "true")
 ifneq ($(DIR),true)
    DUMMY := $(shell mkdir -p $(REAL_OBJECT_DIR))
 endif
+ifndef VC
 DIR := $(shell test -l $(FULL_OBJECT_DIR) && echo "true")
 ifneq ($(DIR),true)
    DUMMY := $(shell $(LINK) $(REAL_OBJECT_DIR)/ $(FULL_OBJECT_DIR))
+endif
 endif
 DIR := $(shell test -d $(OBJECT_DIR) && echo "true")
 ifneq ($(DIR),true)
@@ -71,7 +73,11 @@ endif
 endif
 
 ifndef APP_NAME
+ifdef VC
+   APP_NAME := $(notdir $(CWD)).exe
+else
    APP_NAME := $(notdir $(CWD))
+endif
 endif
 
 ifndef APP_EXEC
@@ -79,8 +85,9 @@ ifndef APP_EXEC
 endif
 
 ifdef VC
-  OUTPUT_CMD := /OUT:"$(shell cygpath -w $(APP_EXEC).exe)"
-  LINK_FLAGS =  /DEBUG /PDB:none /NOLOGO /NODEFAULTLIB:MSVCRTD
+  OUTPUT_CMD := /OUT:"$(shell cygpath -w $(APP_EXEC))"
+  LINK_FLAGS =  /DEBUG /PDB:none /NOLOGO /NODEFAULTLIB:LIBCMT
+#  LINK_FLAGS =  /DEBUG /PDB:none /NOLOGO /NODEFAULTLIB:MSVCRTD
 # /MTd /Z7 /link
 
   # Must be =, not :=, because DEP_LIBS_LIB isn't defined yet.
@@ -162,32 +169,31 @@ endif
 $(OBJECT_DIR)/%.obj: %.c
 ifdef NM_VERBOSE_MAKEFILE
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-	      /Fo"$@" /c $<
-	# /Fd"$(OBJECT_DIR)" /Fp"$(OBJECT_DIR)"
+	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 else
 	@echo $(CC) ... $(<F)
 	@$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-	       /Fo"$@" /c $<
+	       /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 endif
 
 $(OBJECT_DIR)/%.obj: %.C
 ifdef NM_VERBOSE_MAKEFILE
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-	      /Fo"$@" /c $<
+	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 else
 	@echo $(CC) ... $(<F)
 	@$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-	       /Fo"$@" /c $<
+	       /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 endif
 
 $(OBJECT_DIR)/%.obj: %.cc
 ifdef NM_VERBOSE_MAKEFILE
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-	      /Fo"$@" /c $<
+	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 else
 	@echo $(CC) ... $(<F)
 	@$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-	       /Fo"$@" /c $<
+	       /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 endif
 
 $(APP_EXEC): $(APP_OBJ)

@@ -1,3 +1,7 @@
+2000-12-20  Aron Helser  <helser@cs.unc.edu>
+
+	* all: 3rdtech merge into main trunk. 
+
 2000-10-11  Chris Weigle  <weigle@cs.unc.edu>
 
         * Makefile.root_common: fixed OBJECT_DIR line to do right thing

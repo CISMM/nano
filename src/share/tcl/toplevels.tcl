@@ -21,6 +21,8 @@ set nav_win [create_closing_toplevel nav_win "Navigate Tool"]
 
 basicjoys_create $nav_win.joy "Translate" "Rotate"
 
+# -------
+# Phantom controls 
 set phantom_win [create_closing_toplevel phantom_win "Phantom Settings"]
 button $phantom_win.phantom_reset -text "Reset Phantom" -command "set reset_phantom 1"
 
@@ -33,12 +35,7 @@ generic_radiobox $phantom_win.phantom_button_mode \
 	phantom_button_mode \
 	"Phantom Button" $rb_list
 
-#################################
-#
-# This part of the script brings up a min/max slider to control the
-# mapping of values into the spring constant, assuming the compliance
-# plane button is set to 'none'
-#
+# Phantom spring constant, 
 set spring_slider_min_limit 0.01
 set spring_slider_max_limit 1
 set spring_k_slider 0
@@ -48,3 +45,40 @@ floatscale $phantom_win.spring_k $spring_slider_min_limit $spring_slider_max_lim
 
 pack $phantom_win.phantom_reset $phantom_win.phantom_button_mode $phantom_win.spring_k \
 	-side top -fill x
+
+# --------
+# Magellan controls
+set magellan_win [create_closing_toplevel magellan_win "Magellan Settings"]
+button $magellan_win.magellan_reset -text "Reconnect to Magellan" -command "set reconnect_magellan 1"
+pack $magellan_win.magellan_reset -side top -fill x
+
+# -------
+# Mouse Phantom controls - let the mouse emulate a phantom tracker and button
+# (but not forces, of course...)
+set mouse_phantom_win [create_closing_toplevel mouse_phantom_win "Mouse Phantom Settings"]
+#checkbutton $mouse_phantom_win.mp_enable \
+#	-text "Enabled" -variable mp_enabled -anchor nw
+
+button $mouse_phantom_win.phantom_reset -text "Reset Mouse Phantom" -command "set reset_phantom 1"
+
+# Rotational and translational motion scale for mouse control. 
+set mp_rot_scale 1.0
+floatscale $mouse_phantom_win.mp_rot_scale 0.3 3.0 \
+	    100 1 1 mp_rot_scale "Rotational Motion Scale"
+set mp_trans_scale 1.0
+floatscale $mouse_phantom_win.mp_trans_scale 0.3 3.0 \
+	    100 1 1 mp_trans_scale "Translational Motion Scale"
+
+pack $mouse_phantom_win.phantom_reset \
+        $mouse_phantom_win.mp_rot_scale \
+        $mouse_phantom_win.mp_trans_scale \
+	-side top -fill x -expand yes
+
+pack [label $mouse_phantom_win.instr -justify left -text \
+"Left button-down translates 
+the hand in the X-Y plane.
+Hold the Control key for rotation.
+Hold the Shift key for Z motion.
+Right button-down translates 
+the hand and pushes the 
+Phantom button. "] 

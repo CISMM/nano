@@ -6,8 +6,7 @@ TAGS_CMD=etags
 TAGS_FILENAME=TAGS
 TAGS_FLAGS=-C -I -a
 TAGS_CMD_LINE=xargs -0 -e ${TAGS_CMD} ${TAGS_FLAGS}
-
-.PHONY: nano-all lib app/nano/lib app/nano
+.PHONY: nano-all lib app/nano/lib app/nano install clean clean_view
 
 nano-all: lib app/nano/lib app/nano
 nano-app: app/nano/lib app/nano
@@ -23,11 +22,16 @@ app/nano: app/nano/lib
 app/nano/lib:
 	$(MAKE) -C app/nano/lib
 
-.PHONY:	clean
+install:
+	$(MAKE) -C app/nano install
+
 clean:
 	$(MAKE) -C lib clean
 	$(MAKE) -C app/nano/lib clean
 	$(MAKE) -C app/nano clean
+
+clean_view:
+	$(MAKE) -C app/nano clean_view
 
 .PHONY: depend
 depend:
@@ -51,3 +55,4 @@ TAGS:
 	-#find lib      -type f -name '*.cc' -print0   | ${TAGS_CMD_LINE}
 	-#find lib      -type f -name '*.cpp' -print0  | ${TAGS_CMD_LINE}
 	-#find app/nano -type f -name '*.cpp' -print0  | ${TAGS_CMD_LINE}
+

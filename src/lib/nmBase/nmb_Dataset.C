@@ -172,7 +172,7 @@ nmb_Dataset::~nmb_Dataset (void) {
 /**
    Loads a list of files, by calling BCGrid::loadFiles, then
    adding any new planes to our dataImages list. 
-   @return -1 on error, 0 on success
+   @return -1 on invalid data, -2 on conflict with existing grid data, 0 on success
    @author Aron Helser
    @date modified 3-22-00 Aron Helser
 */
@@ -181,9 +181,9 @@ nmb_Dataset::loadFiles(const char** file_names, int num_files,
 		       TopoFile &topoFile)
 {
   // Load the files
-
-    if (inputGrid->loadFiles(file_names, num_files, topoFile)) {
-        return -1;
+    int ret;
+    if ((ret = inputGrid->loadFiles(file_names, num_files, topoFile)) != 0) {
+        return ret;
     }
   
   // Add any new planes to our lists. 
@@ -568,17 +568,27 @@ BCPlane* nmb_Dataset::computeFlattenedPlane
               "measure lines out of bounds.\n");
       return NULL;
   }
+  if (x3 == x1) {
+      // These two points are co-linear in a bad way - swap point 2 and point 3
+      x3 = plane->xInGrid(greenX);
+      x2 = plane->xInGrid(blueX);
+
+      y3 = plane->yInGrid(greenY);
+      y2 = plane->yInGrid(blueY);
+      plane->valueAt(&z3, greenX, greenY);
+      plane->valueAt(&z2, blueX, blueY);
+  }
   
   //solve dx,dy for
   // z3-z1= dx(x3-x1) + dy(y3-y1)
   // z2-z1= dx(x2-x1) + dy(y2-y1)
 
-  double k;
   if (x3 == x1) {
+      // These points are also co-linear in a bad way - abort.
       fprintf(stderr,"compute_flattened_plane(): overlapping points.\n");
       return NULL;
   }
-
+  double k;
   k = (x2 - x1) / (x3 - x1);
 
   //test if those points are collinear
@@ -594,11 +604,17 @@ BCPlane* nmb_Dataset::computeFlattenedPlane
   // Add the host name to the plane name so we can distinguish
   // where the plane came from
   char new_outputPlane[256];
+#if 0
   if (d_hostname) {
       sprintf(new_outputPlane, "%s from %s", outputPlane, d_hostname);
   } else {
       sprintf(new_outputPlane, "%s from local", outputPlane);
   }
+#else
+  // XXX 3rdTech only - no weird plane names.
+  sprintf(new_outputPlane, "%s", outputPlane);
+#endif
+
   computeFlattenedPlane(new_outputPlane, inputPlane, dx, dy, offset);
 
   outplane = inputGrid->getPlaneByName(new_outputPlane);
@@ -982,3 +998,17 @@ void nmb_Dataset::updateLBLFlattenOnPlaneChange (BCPlane *, int /*x*/, int y,
 	data->lblflat_plane->setValue(i, y, data->from_plane->value(i, y) + diff);
   } //end for
 } //end updateLBLFlattenOnPlaneChange
+
+
+float nmb_Dataset::getFirstLineAvg(BCPlane * plane)
+{
+    float avgVal = 0;
+    if (!plane) return 0;
+    for (int i = 0; i < plane->numX(); i++) {
+	avgVal += plane->value(i, plane->numY()-1);
+    }
+    avgVal /= plane->numX();
+    //printf("Found line average %g\n", avgVal);
+    return avgVal;
+
+}

@@ -8,10 +8,6 @@ set sharedptr(sp) [create_closing_toplevel sharedptr "Collaboration Tools"]
 # Changed TCH 31 Oct 99 to a generic_entry so that if the name
 # is set with command-line parameters it shows up in the tcl interface
 
-# iwidgets::entryfield $sharedptr(sp).collab_machine_name \
-# 	-labeltext "Machine to connect to:" \
-# 	-command { set collab_machine_name \
-# 		[$sharedptr(sp).collab_machine_name get]}
 #set collab_machine_name ""
 generic_entry $sharedptr(sp).collab_machine_name \
               collab_machine_name \
@@ -157,7 +153,6 @@ proc mutex_gotRequest_callback {} {
   # trigger a trace function in mainwin.tcl
   set collab_commands_suspended 0
 
-  $view.xy_lock configure -state normal
 }
 
 proc mutex_deniedRequest_callback {} {
@@ -175,7 +170,6 @@ proc mutex_deniedRequest_callback {} {
   # trigger a trace function in mainwin.tcl
   set collab_commands_suspended 1
 
-  $view.xy_lock configure -state disabled
 }
 
 proc mutex_taken_callback {} {
@@ -194,7 +188,6 @@ proc mutex_taken_callback {} {
   # set collab_commands_suspended 1
   #$sharedptr(sp).mutex.release_mutex_button configure \
           #-state disabled
-  #$view.xy_lock configure -state disabled
 }
 
 proc mutex_release_callback {} {
@@ -212,7 +205,6 @@ proc mutex_release_callback {} {
   # trigger a trace function in mainwin.tcl
   set collab_commands_suspended 1
 
-  $view.xy_lock configure -state disabled
 }
 
 
@@ -220,7 +212,6 @@ proc mutex_release_callback {} {
 #   The C++ code sends a request every time it connects to a
 # new microscope to see if we can grab the mutex for this connection.
 
-$view.xy_lock configure -state disabled
 $sharedptr(sp).mutex.request_mutex_button configure \
           -state disabled
 

@@ -14,11 +14,10 @@ proc imBackgChReal {fooa element op} {
 }
 
 set nmInfo(image) [create_closing_toplevel image "Image Parameters"]
+# Prevent changes in size of the window by user.
+wm resizable $nmInfo(image) 0 0 
 set nmInfo(imagequick) [frame $nmInfo(image).quick]
 set nmInfo(imagefull) [frame $nmInfo(image).full]
-
-# Prevent changes in size of the window by user.
-wm resizable $nmInfo(image) 0 0
 
 # Button swaps between quick and full param frames.  
 set image_quick_or_full "quick"
@@ -57,8 +56,12 @@ pack $nmInfo(imagestate).image_mode -side top -fill x
 
 # Callback procedures set a variable to tell C code that
 # it's time to send new values to AFM. 
-generic_entry $nmInfo(imagepage).setpoint imagep_setpoint \
-	"Setpoint (0,100%)" real \
+generic_entry $nmInfo(imagepage).setpoint_pcnt imagep_setpoint \
+	"Setpoint (0,100 %)" real \
+        { set accepted_image_params 1 }
+# Second setpoint widget with correct label for contact. 
+generic_entry $nmInfo(imagepage).setpoint_nA imagep_setpoint \
+	"Setpoint (-64,64 nA)" real \
         { set accepted_image_params 1 }
 generic_entry $nmInfo(imagepage).p-gain imagep_p_gain "P-Gain (0,5)" real \
         { set accepted_image_params 1 }
@@ -69,22 +72,24 @@ generic_entry $nmInfo(imagepage).d-gain imagep_d_gain "D-Gain (0,5)" real\
 generic_entry $nmInfo(imagepage).rate imagep_rate "Rate (um/sec)" real\
         { set accepted_image_params 1 }
 
-pack    $nmInfo(imagepage).setpoint $nmInfo(imagepage).p-gain \
+pack    $nmInfo(imagepage).setpoint_pcnt $nmInfo(imagepage).p-gain \
 	$nmInfo(imagepage).i-gain $nmInfo(imagepage).d-gain \
 	$nmInfo(imagepage).rate \
-	-side top -anchor nw
+	-side top -anchor nw -fill x
 
 proc align_iq_labels {} {
     global nmInfo
     iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(imagepage).setpoint $nmInfo(imagepage).p-gain \
+	$nmInfo(imagepage).setpoint_nA $nmInfo(imagepage).setpoint_pcnt \
+        $nmInfo(imagepage).p-gain \
 	$nmInfo(imagepage).i-gain $nmInfo(imagepage).d-gain \
 	$nmInfo(imagepage).rate 
 }
 align_iq_labels
 
 lappend device_only_controls \
-	$nmInfo(imagepage).setpoint $nmInfo(imagepage).p-gain \
+	$nmInfo(imagepage).setpoint_nA $nmInfo(imagepage).setpoint_pcnt \
+        $nmInfo(imagepage).p-gain \
 	$nmInfo(imagepage).i-gain $nmInfo(imagepage).d-gain \
 	$nmInfo(imagepage).rate 
 
@@ -219,8 +224,10 @@ lappend device_only_controls \
 label $nmInfo(imagefull).modeparam.label -text "Mode parameters" 
 pack $nmInfo(imagefull).modeparam.label -side top -anchor nw 
 
-generic_entry $nmInfo(imagefull).modeparam.setpoint newimagep_setpoint \
-	"Set Point  (0,100%)" real 
+generic_entry $nmInfo(imagefull).modeparam.setpoint_pcnt newimagep_setpoint \
+	"Set Point (0,100 %)" real 
+generic_entry $nmInfo(imagefull).modeparam.setpoint_nA newimagep_setpoint \
+	"Set Point (-64,64 nA)" real 
 generic_entry $nmInfo(imagefull).modeparam.p-gain newimagep_p_gain \
         "P-Gain (0,5)" real 
 generic_entry $nmInfo(imagefull).modeparam.i-gain newimagep_i_gain \
@@ -254,7 +261,7 @@ generic_optionmenu $nmInfo(imagefull).modeparam.drive_attenuation \
 generic_entry $nmInfo(imagefull).modeparam.phase newimagep_phase \
 	"Phase (0 360)" real 
 
-pack    $nmInfo(imagefull).modeparam.setpoint \
+pack    $nmInfo(imagefull).modeparam.setpoint_pcnt \
         $nmInfo(imagefull).modeparam.p-gain \
 	$nmInfo(imagefull).modeparam.i-gain \
         $nmInfo(imagefull).modeparam.d-gain \
@@ -264,7 +271,8 @@ pack    $nmInfo(imagefull).modeparam.setpoint \
 proc align_if_labels {} {
     global nmInfo
   iwidgets::Labeledwidget::alignlabels \
-    $nmInfo(imagefull).modeparam.setpoint \
+    $nmInfo(imagefull).modeparam.setpoint_nA \
+    $nmInfo(imagefull).modeparam.setpoint_pcnt \
     $nmInfo(imagefull).modeparam.p-gain \
     $nmInfo(imagefull).modeparam.i-gain \
     $nmInfo(imagefull).modeparam.d-gain \
@@ -295,7 +303,8 @@ set im_oscillating_list [list $nmInfo(imagefull).modeparam.amplitude \
     $nmInfo(imagefull).modeparam.phase ]
 
 lappend device_only_controls \
-    $nmInfo(imagefull).modeparam.setpoint \
+    $nmInfo(imagefull).modeparam.setpoint_nA \
+    $nmInfo(imagefull).modeparam.setpoint_pcnt \
     $nmInfo(imagefull).modeparam.p-gain \
     $nmInfo(imagefull).modeparam.i-gain \
     $nmInfo(imagefull).modeparam.d-gain \
@@ -365,12 +374,46 @@ proc flip_im_mode {im_mode element op} {
     }
 }
 
+# This procedure causes the dreaded WIDGET CREEP (oh no!)
+# Each time iwidgets::Labeledwidget::alignlabels is called,
+# the widgets get 1 pixel wider. This is ANNOYING, when you are
+# trying to save screen space. See new procedure below. 
+#-------------------------- 
 # Change the label on setpoint widgets
 # takes the name of vars that tell whether it's oscillating or contact
 # and ampl or phase, and name of widget which needs the change in label.
 # Also the name of a procedure to align labels.
 # last three are bogus arguments so this can be used as trace proc. 
-proc change_setpoint_label {osc_con phase_ampl widg algn_proc name element op } {
+#proc change_setpoint_label {osc_con phase_ampl widg algn_proc name element op } {
+#    upvar #0 $osc_con osc_con_var
+#    upvar #0 $phase_ampl phase_ampl_var
+    # Change the label on the Setpoint widget
+#    if { $osc_con_var == 0 } {
+        # oscillating
+#        if { $phase_ampl_var == 0 } {
+            # If using phase imaging, setpoint is nA
+#            $widg configure -labeltext "Set Point (-64,64nA)" 
+#        } else {
+            # If using amplitude imaging, setpoint is %
+#            $widg configure -labeltext "Set Point  (0,100%)" 
+#        }
+#    } else {
+        #contact
+#        $widg configure -labeltext "Set Point (-64,64nA)" 
+#    }
+    #align some labels.
+#    $algn_proc
+#}
+
+# The new procedure, since alignlabels doesn't work. 
+# Create separate widgets with the correct labels, and hide or
+# show them as needed.
+# takes the name of vars that tell whether it's oscillating or contact
+# and ampl or phase, widget with nA label, widget with % label, widget 
+# to make them appear "before" in the window,
+# y padding for pack command.
+# last three are bogus arguments so this can be used as trace proc. 
+proc change_setpoint_label {osc_con phase_ampl nA_widg pcnt_widg before_widg fspady name element op } {
     upvar #0 $osc_con osc_con_var
     upvar #0 $phase_ampl phase_ampl_var
     # Change the label on the Setpoint widget
@@ -378,31 +421,42 @@ proc change_setpoint_label {osc_con phase_ampl widg algn_proc name element op } 
         # oscillating
         if { $phase_ampl_var == 0 } {
             # If using phase imaging, setpoint is nA
-            $widg configure -labeltext "Set Point (-64,64nA)" 
+            pack forget $pcnt_widg
+            pack $nA_widg -side top -fill x -pady $fspady -before $before_widg
         } else {
             # If using amplitude imaging, setpoint is %
-            $widg configure -labeltext "Set Point  (0,100%)" 
+            pack forget $nA_widg
+            pack $pcnt_widg -side top -fill x -pady $fspady -before $before_widg
         }
     } else {
         #contact
-        $widg configure -labeltext "Set Point (-64,64nA)" 
+        pack forget $pcnt_widg
+        pack $nA_widg -side top -fill x -pady $fspady -before $before_widg
     }
     #align some labels.
-    $algn_proc
+    #$algn_proc
 }
 # puts the correct label on setpoint, both full and quick controls
 trace variable newimagep_mode w "change_setpoint_label \
         newimagep_mode newimagep_ampl_or_phase \
-        $nmInfo(imagefull).modeparam.setpoint align_if_labels"
+        $nmInfo(imagefull).modeparam.setpoint_nA \
+        $nmInfo(imagefull).modeparam.setpoint_pcnt \
+        $nmInfo(imagefull).modeparam.p-gain $fspady"
 trace variable newimagep_ampl_or_phase w "change_setpoint_label \
         newimagep_mode newimagep_ampl_or_phase \
-        $nmInfo(imagefull).modeparam.setpoint align_if_labels"
+        $nmInfo(imagefull).modeparam.setpoint_nA \
+        $nmInfo(imagefull).modeparam.setpoint_pcnt \
+        $nmInfo(imagefull).modeparam.p-gain $fspady"
 trace variable imagep_mode w "change_setpoint_label \
         imagep_mode imagep_ampl_or_phase \
-        $nmInfo(imagepage).setpoint align_iq_labels"
+        $nmInfo(imagepage).setpoint_nA \
+        $nmInfo(imagepage).setpoint_pcnt \
+        $nmInfo(imagepage).p-gain 0"
 trace variable imagep_ampl_or_phase w "change_setpoint_label \
         imagep_mode imagep_ampl_or_phase \
-        $nmInfo(imagepage).setpoint align_iq_labels"
+        $nmInfo(imagepage).setpoint_nA \
+        $nmInfo(imagepage).setpoint_pcnt \
+        $nmInfo(imagepage).p-gain 0"
 
 #
 # Change the background of Accept and Cancel buttons

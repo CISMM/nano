@@ -408,6 +408,9 @@ struct AFMInitializationState {
   float yMax;
 
   int mutexPort;
+
+  // Incremental save of stream files to disk, on by default. 
+  vrpn_bool incr_save;
 };
 
 
@@ -482,7 +485,8 @@ struct AFMState {
   int rasterX,                     // used to be x, y in animate.c
       rasterY;
 
-  vrpn_bool dlistchange;
+    //OBSOLETE
+    //vrpn_bool dlistchange;
     // if true triggers update of X display
     //   in MicroscopeIO.C (was in animate.c)
 

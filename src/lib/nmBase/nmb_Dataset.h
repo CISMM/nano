@@ -156,6 +156,8 @@ class nmb_Dataset {
     int computeLBLFlattenedPlane (const char * outputPlane,
 				  const char * inputPlane);
 
+    float getFirstLineAvg(BCPlane *);
+    ///< Computes average of the first scan line in the plane provided. 
 
   private:
 

@@ -13,9 +13,11 @@ DIR := $(shell test -d $(REAL_OBJECT_DIR) && echo "true")
 ifneq ($(DIR),true)
    DUMMY := $(shell mkdir -p $(REAL_OBJECT_DIR))
 endif
+ifndef VC
 DIR := $(shell test -l $(FULL_OBJECT_DIR) && echo "true")
 ifneq ($(DIR),true)
    DUMMY := $(shell $(LINK) $(REAL_OBJECT_DIR)/ $(FULL_OBJECT_DIR))
+endif
 endif
 DIR := $(shell test -d $(OBJECT_DIR) && echo "true")
 ifneq ($(DIR),true)
@@ -130,32 +132,31 @@ endif
 $(OBJECT_DIR)/%.obj: %.c
 ifdef NM_VERBOSE_MAKEFILE
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-	      /Fo"$@" /c $<
-	# /Fd"$(OBJECT_DIR)" /Fp"$(OBJECT_DIR)"
+	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 else
 	@echo $(CC) ... $(<F)
 	@$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-	       /Fo"$@" /c $<
+	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 endif
 
 $(OBJECT_DIR)/%.obj: %.C
 ifdef NM_VERBOSE_MAKEFILE
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-              /Fo"$@" /c $<
+	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 else
 	@echo $(CC) ... $(<F)
 	@$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-               /Fo"$@" /c $<
+	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 endif
 
 $(OBJECT_DIR)/%.obj: %.cc
 ifdef NM_VERBOSE_MAKEFILE
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-	      /Fo"$@" /c $<
+	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 else
 	@echo $(CC) ... $(<F)
 	@$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
-	       /Fo"$@" /c $<
+	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 endif
 
 $(LIBRARY_ARCHIVE): $(LIBRARY_OBJ)

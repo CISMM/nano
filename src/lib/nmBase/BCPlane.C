@@ -1106,7 +1106,8 @@ BCPlane::readPPMorPGMFile(FILE *file, double scale)
 
    int x,y;
 
-   for (y = 0; y < numY(); y++) 
+   // Reverse Y traversal so image is not flipped vertically.
+   for(y = numY() -1; y >=0; y-- ) 
    {
        fread(value, 3*sizeof(char), numX(), file );
        for (x = 0; x < numX(); x++ )
@@ -1140,7 +1141,8 @@ BCPlane::writePPMFile(int file_descriptor)
     int x, y;
 
     //printf("%f %f %f\n", minValue(), maxValue(), scale);
-    for(y = 0; y < numY(); y++ ) 
+    // Reverse Y traversal so image is not flipped vertically.
+    for(y = numY() -1; y >=0; y-- ) 
     {
 	for(x = 0; x < numX(); x++ ) 
 	{

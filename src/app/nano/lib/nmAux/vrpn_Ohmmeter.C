@@ -8,7 +8,7 @@
 // Include vrpn_Shared.h _first_ to avoid conflicts with sys/time.h 
 // and netinet/in.h and ...
 #include "vrpn_Shared.h"
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 #include <netinet/in.h>
 #endif
 

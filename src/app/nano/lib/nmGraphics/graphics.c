@@ -124,7 +124,8 @@ static void createPyramid (float center, float width, int white_flag)
       //to the ImageWidth, so we "wrap around" the texture map
       if (translation < 0)
 	translation = contourImageWidth + translation;
-#ifndef _WIN32
+//#ifndef _WIN32
+#if 1
       contourImage[(int) translation][3] = (int) opacity;
 #else
       contourImage[(int) translation][3] = 255;
@@ -181,7 +182,8 @@ static void makeTexture (void) {
 
   // Fill the image with unsaturated red and completely transparent
   for(i = 0; i < contourImageWidth; i++) {
-#ifndef _WIN32
+//#ifndef _WIN32
+#if 1
      contourImage[i][0] = g_contour_r;
      contourImage[i][1] = g_contour_g;
      contourImage[i][2] = g_contour_b;
@@ -263,7 +265,8 @@ void makeRulerImage (void) {
   int rwidth_x, rwidth_y;
   int i, j;
   
-#ifndef _WIN32
+//#ifndef _WIN32
+#if 1
   // Colors are OK at this point
   //printf("mkRulerImage %d %d %d\n", g_ruler_r, g_ruler_g, g_ruler_b);
   for (i = 0;i < rulerImageHeight; i++) {

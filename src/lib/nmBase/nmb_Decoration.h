@@ -88,6 +88,10 @@ class nmb_Decoration {
     float imageSetpoint, imageSetpointMin, imageSetpointMax;
     float scanlineSetpoint, scanlineSetpointMin, scanlineSetpointMax;
 
+    /// Color map drift compensation, keep track of changes in
+    /// first scan line data.
+    float first_line_avg, first_line_avg_prev;
+
 // To add:
 // state.data.inputPoint
 // state.modify.setpoint/min/max

@@ -36,6 +36,7 @@
 #ifndef NO_MAGELLAN
 #include <vrpn_Magellan.h>
 #include <vrpn_Tracker_AnalogFly.h>
+#include <vrpn_Text.h>
 #endif
 
 #include <Tcl_Linkvar.h>
@@ -60,10 +61,14 @@
 #include "microscape.h"  // for #defines
 #include "butt_mode.h"   // for button defines
 #include "interaction.h"
+#include "error_display.h"
 // Must be included after Tcl headers or "list" produces a conflict. 
 #ifndef NO_PHANTOM_SERVER
 #include <vrpn_Phantom.h>
 #endif
+
+// Make the mouse behave like the Phantom. 
+#include "vrpn_MousePhantom.h"
 
 // MOVED #ifdef FLOW includes and declarations to graphics.C
 
@@ -95,11 +100,15 @@ Don't think we need this anymore (AAS 8/17/00)
 
 #ifndef NO_MAGELLAN
 const char MAGELLAN_NAME[] = "Magellan0";
+// Default name for magellan
+const char * magellan_name = MAGELLAN_NAME;
 // * in front means "use the connection I give you" to the AnalogFly
 char AF_MAGELLAN_NAME[] = "*Magellan0";
 
 //#ifndef NO_MAGELLAN
 static vrpn_Tracker_AnalogFlyParam *magellan_param;
+static int magellan_reset_count = 0;
+static vrpn_Connection * magellan_connection = NULL;
 #endif
 
 /*****************************************************************************
@@ -148,15 +157,27 @@ void handle_phantom_error(void * /*userdata*/, const vrpn_FORCEERRORCB ferr){
    switch(ferr.error_code){
       case FD_VALUE_OUT_OF_RANGE:
 	fprintf(stderr, "Parameter out of range\n");
+        display_error_dialog("Phantom parameter error\n\n"
+                             "Please choose Tool menu .. Phantom "
+                             ".. Reset Phantom");
 	break;
       case FD_DUTY_CYCLE_ERROR:
 	fprintf(stderr, "Duty cycle taking too long\n");
+        display_error_dialog("Phantom duty cycle error\n\n"
+                             "Please choose Tool menu .. Phantom "
+                             ".. Reset Phantom");
 	break;
       case FD_FORCE_ERROR:
-	fprintf(stderr, "Exceeded max. force or velocity or temperature\n");
+	fprintf(stderr, "Exceeded max. force, velocity or temperature\n");
+        display_error_dialog("Phantom force/velocity/temperature error\n\n"
+                             "Please choose Tool menu .. Phantom "
+                             ".. Reset Phantom");
 	break;
       default:
 	fprintf(stderr, "Unknown error\n");
+        display_error_dialog("Misc. Phantom error\n\n"
+                             "Please check Phantom cable connections, then\n"
+                             "restart the NanoManipulator.");
 	break;
    }
 }
@@ -200,8 +221,14 @@ void handle_bdbox_dial_change(void *userdata, const vrpn_ANALOGCB info){
 
 #ifndef NO_MAGELLAN
 /** callbacks for vrpn_Button_Remote for magellan button box (registered below)
+ * Buttons 3,4,7,8 are inactive if we aren't connected to a live AFM, or 
+ * if commands to the live AFM are currently suspended. (Thermo in analysis mode). 
  */
 void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
+   // Incidental - if we are getting button reports, magellan is not
+   // resetting repeatedly.  Decement count.
+   if (magellan_reset_count > 0) magellan_reset_count--;
+
    int * magellanButtonStates = (int *)userdata;
    magellanButtonStates[b.button] = b.state;
    //printf("Magellan button %d -> %d\n",  b.button, b.state);
@@ -230,7 +257,9 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        }
        break;
        
-   case 3: 		
+   case 3:
+       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
+       if ((microscope) && (microscope->state.commands_suspended)) return;
        mode_change = 1;	
        // Cycling button -cycles through Touch Live and Select
        if (user_mode[0] == USER_PLANEL_MODE) {
@@ -240,6 +269,8 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        }
        break;
    case 4:              /* Commit button */
+       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
+       if ((microscope) && (microscope->state.commands_suspended)) return;
        tcl_commit_pressed = 1;
       // we must call "handle_commit_change" explicitly, 
       // because tclvars are set to ignore changes from C.
@@ -253,9 +284,13 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        user_mode[0] = USER_PLANE_MODE;
        break;
    case 7: 		/* XY lock */
+       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
+       if ((microscope) && (microscope->state.commands_suspended)) return;
        xy_lock = !xy_lock;
        break;
    case 8:              /* Cancel button */
+       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
+       if ((microscope) && (microscope->state.commands_suspended)) return;
        tcl_commit_canceled = 1;
       // we must call "handle_commit_cancel" explicitly, 
       // because tclvars are set to ignore changes from C.
@@ -288,9 +323,10 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
    switch (user_mode[0]) {
    case USER_GRAB_MODE:
    case USER_LIGHT_MODE:
-   case USER_PLANE_MODE:
+   case USER_MEASURE_MODE:
    case USER_SCALE_UP_MODE:
    case USER_SCALE_DOWN_MODE:
+   case USER_PLANE_MODE:
        if (puck_active) {
            if (!old_puck_active) {
               // This "activates" the puck, sets up later interaction.  Save
@@ -392,7 +428,223 @@ collabVerbose(5, "handle_magellan_puck_change:  updateWorldFromRoom().\n");
    }
    old_puck_active = puck_active;
 }
-#endif
+
+/** Handles text messages from the Magellan server.
+ * If we get an ERROR, disconnect from the Magellan and tell the user
+ * to restart if they want to re-connect.
+ */
+void handle_magellan_text_message(void *userdata, const vrpn_TEXTCB p)
+{
+    if (p.type == vrpn_TEXT_ERROR) {
+            shutdown_Magellan();
+        display_error_dialog("Unable to communicate with Magellan\n\n"
+                             "Please check that Magellan is plugged in to COM 1\n"
+                             "and that all connections are tight, then choose.\n"
+                             "Tools .. Magellan .. Reconnect to Magellan.\n"
+                             "If a Magellan will not be connected, refer to the User Manual\n"
+                             "for instructions on disabling the Magellan connection.");
+    } else if (strncmp(p.message, "vrpn_Magellan reset", 19) == 0) {
+        // Magellan is sending out reset messages. 
+        // Count to 10, then disconnect Magellan. 
+        // Count will be decremented in handle_magellan_button_change
+        if (++magellan_reset_count > 10) {
+            shutdown_Magellan();
+            display_error_dialog("Unable to communicate with Magellan\n\n"
+                             "Don't touch the Magellan during startup.\n"
+                             "Please check that Magellan is plugged in to COM 1\n"
+                             "and that all connections are tight, then choose\n"
+                             "Tools .. Magellan .. Reconnect to Magellan.\n"
+                             "If a Magellan will not be connected, refer to the User Manual\n"
+                             "for instructions on disabling the Magellan connection.");
+        }
+    }        
+}
+ 
+int connect_Magellan() {
+    // If name is "", don't connect to anything. 
+    if (magellan_name[0] == '\0') return 0;
+
+    // Reset the error count. 
+    magellan_reset_count= 0;
+    // check for local vs remote server by examining name
+    // "Magellan0" means local server - device attached to com1
+    // "Magellan0@somewhere.unc.edu" means remote server. 
+    char * bp= NULL;
+    bp = strchr(magellan_name, '@');
+    if ((bp == NULL)&&(magellan_connection)) {
+        // NOTE: we are ignoring the name passed in and
+        // forcing the name to be MAGELLAN0 so that the 
+        // vrpn_Tracker_AnalogFlyParam is consistent with the
+        // server names, and it shouldn't make any difference. 
+
+        // Open the Magellan puck and button box.
+        if ((magellanButtonBoxServer = new vrpn_Magellan(MAGELLAN_NAME, 
+                                                    magellan_connection, 
+                                                    "COM1", 9600)) == NULL) return -1;
+        // This server listens to the analog output of the Magellan puck
+        // and makes it seem like a tracker. 
+        // First set up parameters
+        // Defaults for the axes, threshold = 0, power=1 are OK. 
+        double scale = 2.0;
+        if ((magellan_param = new vrpn_Tracker_AnalogFlyParam) == NULL) return -1;
+        magellan_param->x.name = AF_MAGELLAN_NAME;
+        magellan_param->x.channel = 0;
+        magellan_param->x.scale = scale;
+        magellan_param->y.name = AF_MAGELLAN_NAME;
+        magellan_param->y.channel = 1;
+        magellan_param->y.scale = scale;
+        magellan_param->z.name = AF_MAGELLAN_NAME;
+        magellan_param->z.channel = 2;
+        magellan_param->z.scale = scale;
+        magellan_param->sx.name = AF_MAGELLAN_NAME;
+        magellan_param->sx.channel = 3;
+        magellan_param->sx.scale = scale;
+        magellan_param->sy.name = AF_MAGELLAN_NAME;
+        magellan_param->sy.channel = 4;
+        magellan_param->sy.scale = scale;
+        magellan_param->sz.name = AF_MAGELLAN_NAME;
+        magellan_param->sz.channel = 5;
+        magellan_param->sz.scale = scale;
+        
+        // Next make a tracker
+        // Update rate is 30.0 times per second
+        if ((magellanTrackerServer = new vrpn_Tracker_AnalogFly(MAGELLAN_NAME,
+                                                     magellan_connection,
+                                                     magellan_param, 30.0)) == NULL) return -1;
+        // Client for the buttons
+        if ((magellanButtonBox = new vrpn_Button_Remote(MAGELLAN_NAME,
+                                                   magellan_connection)) == NULL) return -1;
+        // Analog won't be used for anything, unless we need to get
+        // direct analog output from the puck. 
+        if ((magellanPuckAnalog = new vrpn_Analog_Remote(MAGELLAN_NAME,
+                                       magellan_connection)) == NULL) return -1;
+        if ((magellanPuckTracker = new vrpn_Tracker_Remote(MAGELLAN_NAME,
+                                       magellan_connection)) == NULL) return -1;
+        // Special handling. If it's been created, don't re-create.
+        if (magellanTextRcvr == NULL) {
+            if ((magellanTextRcvr = new vrpn_Text_Receiver(MAGELLAN_NAME,
+                                       magellan_connection)) == NULL) return -1;
+            if (magellanTextRcvr->register_message_handler(NULL, handle_magellan_text_message)) {
+                fprintf(stderr, "Error: can't register magellan error message handler\n");
+            }
+        }
+    } else {
+        // There is no local magellan server, so create the clients for
+        // a remote server. 
+        // Client for the buttons
+        if ((magellanButtonBox = new vrpn_Button_Remote(magellan_name)) == NULL) return -1;
+        // Analog won't be used for anything, unless we need to get
+        // direct analog output from the puck. 
+        if ((magellanPuckAnalog = new vrpn_Analog_Remote(magellan_name)) == NULL) return -1;
+        if ((magellanPuckTracker = new vrpn_Tracker_Remote(magellan_name)) == NULL) return -1;
+        // Special handling. If it's been created, don't re-create.
+        if (magellanTextRcvr == NULL) {
+            if ((magellanTextRcvr = new vrpn_Text_Receiver(magellan_name)) == NULL) return -1;
+            if (magellanTextRcvr->register_message_handler(NULL, handle_magellan_text_message)) {
+                fprintf(stderr, "Error: can't register magellan error message handler\n");
+            }
+        }
+    }
+    // Callback handlers are the same, local or remote. 
+    if ( magellanButtonBox->register_change_handler(magellanButtonState,
+                                handle_magellan_button_change)) {
+        fprintf(stderr, "Error: can't register magellan vrpn_Button handler\n");
+    }
+//    if ( magellanPuckAnalog->register_change_handler(&magellanPuckActive,
+//                             handle_magellan_puck_change)) {
+//    fprintf(stderr, "Error: can't register magellan vrpn_Analog handler\n");
+//    }
+    if ( magellanPuckTracker->register_change_handler(&magellanPuckActive,
+                                handle_magellan_puck_change)) {
+        fprintf(stderr, "Error: can't register magellan vrpn_Tracker handler\n");
+    }
+    return 0;
+}
+
+void shutdown_Magellan() {
+    // This fcn sometimes called within method of magellanTextRcvr
+    // If we delete magellanTextRcvr, we get a segfault. 
+//          if (magellanTextRcvr) {
+//              delete magellanTextRcvr;
+//              magellanTextRcvr = NULL;
+//          }
+        if (magellanPuckTracker) {
+            delete magellanPuckTracker;
+            magellanPuckTracker = NULL;
+        }
+        if (magellanPuckAnalog) {
+            delete magellanPuckAnalog;
+            magellanPuckAnalog = NULL;
+        }
+        if (magellanButtonBox) {
+            delete magellanButtonBox;
+            magellanButtonBox = NULL;
+        }
+        if (magellanTrackerServer) {
+            delete magellanTrackerServer;
+            magellanTrackerServer= NULL;
+        }
+        if (magellanButtonBoxServer) {
+            delete magellanButtonBoxServer;
+            magellanButtonBoxServer= NULL;
+        }
+}
+
+/** Reset the Magellan from tcl control. Unusued for now, 
+ * haven't found a need to call reset() explicitly */
+void handle_magellan_reset (vrpn_int32, void * userdata) 
+{
+    if (magellanButtonBoxServer) {
+        magellanButtonBoxServer->reset();
+    }
+}
+
+void handle_magellan_reconnect (vrpn_int32, void * userdata);
+Tclvar_int tcl_reconnect_magellan("reconnect_magellan", 0, 
+                                  handle_magellan_reconnect, NULL);
+
+/** Reconnect will totally shut down the Magellan by deleting
+ * all objects, and then re-creating them.
+ */
+void handle_magellan_reconnect (vrpn_int32, void * userdata) 
+{
+    if (tcl_reconnect_magellan != 1) return;
+
+    // Delete all objects connection with Magellan, if they exist.
+    shutdown_Magellan();
+    //sleep(2);
+    // Attempt to re-connect to Magellan. 
+    connect_Magellan();
+
+    tcl_reconnect_magellan = 0;
+}
+
+void handle_tcl_magellan_button (vrpn_int32, void * userdata);
+Tclvar_int tcl_magellan_button("magellan_button", 0, 
+                                  handle_tcl_magellan_button, NULL);
+
+/** Handles a tclvar being set to an integer as if the Magellan 
+ * button of the same number had been pressed. 
+ * Sends event to the VRPN button event handler. 
+ */
+void handle_tcl_magellan_button (vrpn_int32, void * userdata) 
+{
+    //Check for valid button number. 
+    // We allow button 0 (asterix) even though it isn't in the interface
+    if ((tcl_magellan_button < 0)||(tcl_magellan_button > 8)) return;
+
+    struct timeval	msg_time;
+    gettimeofday(&msg_time, NULL);
+
+    vrpn_BUTTONCB buttoncb;
+    buttoncb.button = tcl_magellan_button;
+    buttoncb.state = 1;   //represents a button press. 
+    buttoncb.msg_time = msg_time;   // not currently used, but doesn't hurt. 
+
+    handle_magellan_button_change(magellanButtonState, buttoncb);
+}
+
+#endif  // NO_MAGELLAN
 
 // This will reset the transforms on the Premium model, 
 // and shouldn't do any harm with a Desktop model. 
@@ -413,15 +665,13 @@ phantom_init(vrpn_Connection * local_device_connection)
     if (strcmp(handTrackerName, "null") != 0){
         // Are we going to set up a server, too? Check the name.
         // If it includes an @, we look on another machine. Otherwise, local. 
-        vrpn_bool local_Phantom = VRPN_FALSE;
 #ifndef NO_PHANTOM_SERVER
         char * bp= NULL;
         bp = strchr(handTrackerName, '@');
         if (bp == NULL) {
             // If there is no local connection, we can't do anything.
             if (local_device_connection == NULL) return 0;
-            // Set up a local server
-            local_Phantom = VRPN_TRUE;
+            
             // Sleep to get phantom in reset positon
             // Should notify user...
             //vrpn_SleepMsecs(2000);
@@ -429,14 +679,26 @@ phantom_init(vrpn_Connection * local_device_connection)
             phantServer = new vrpn_Phantom(handTrackerName, 
                                            local_device_connection, 60);
             if (phantServer==NULL) return -1;
-        }
+        } else 
 #endif
-        if (local_Phantom) {
-            forceDevice = new vrpn_ForceDevice_Remote(handTrackerName, 
-                                                      local_device_connection);
-        } else {
-            forceDevice = new vrpn_ForceDevice_Remote(handTrackerName);
+        {
+            // If it's not a local phantom, get the remote connection.
+            local_device_connection = vrpn_get_connection_by_name(handTrackerName);
+            if (local_device_connection == NULL) return -1;
         }
+    } else {
+    
+        // Make a mouse phantom server - the mouse acts like a phantom
+        // Only if there is no real phantom - they conflict. 
+        mousePhantomServer = vrpn_MousePhantom::createMousePhantom(
+                                              handTrackerName, 
+                                              local_device_connection, 60);
+        if (mousePhantomServer==NULL) return -1;
+    }
+
+    // If we get here, some phantom server has been created or contacted.
+    forceDevice = new vrpn_ForceDevice_Remote(handTrackerName, 
+                                              local_device_connection);
         // Already set to [0.2, 1.0] by default
         //MAX_K = 1.0f;
         //MIN_K = 0.2f;
@@ -454,12 +716,8 @@ phantom_init(vrpn_Connection * local_device_connection)
 			"Error: can't register vrpn_ForceDevice handler\n");
 		return -1;
 	}
-        if (local_Phantom) {
-            phantButton = new vrpn_Button_Remote(handTrackerName, 
-                                                 local_device_connection);
-        } else {
-            phantButton = new vrpn_Button_Remote(handTrackerName);
-        }
+        phantButton = new vrpn_Button_Remote(handTrackerName, 
+                                             local_device_connection);
         if (phantButton->register_change_handler(&phantButtonState,
                 handle_phant_button_change)){
                 fprintf(stderr, "Error: can't register vrpn_Button handler\n");
@@ -471,12 +729,8 @@ phantom_init(vrpn_Connection * local_device_connection)
         // Get the right initial setting.
         handle_phantom_button_mode_change(phantom_button_mode, 
                                           &phantButtonState);
-        if (local_Phantom) {
-            vrpnHandTracker[0] = new vrpn_Tracker_Remote(handTrackerName, 
-                                                 local_device_connection);
-        } else {
-            vrpnHandTracker[0] = new vrpn_Tracker_Remote(handTrackerName);
-        }
+        vrpnHandTracker[0] = new vrpn_Tracker_Remote(handTrackerName, 
+                                                     local_device_connection);
         handSensor[0] = 0;
 
         vrpn_Connection * c = NULL;
@@ -492,23 +746,18 @@ phantom_init(vrpn_Connection * local_device_connection)
         vrpn_int32 new_conn_id =
             c->register_message_type(vrpn_got_connection);
         c->register_handler(new_conn_id, handle_phantom_reconnect, NULL);
-    }
-    else {
-        vrpnHandTracker[0] = NULL;
-        phantButton = NULL;
-        forceDevice = NULL;
-    }
-    return 0;
+        return 0;
 }
 
-/*****************************************************************************
+/**
  *
-   peripheral_init - initialize force, tracker, buttons, sound devices
+ * peripheral_init - initialize force, tracker, buttons, sound devices
+ * @return -1 on memory error, 0 otherwise.
  *
- *****************************************************************************/
+ */
 int
 peripheral_init(vrpn_Connection * local_device_connection,
-                vrpn_bool do_magellan)
+                char * input_magellan_name)
 {
     int	i;
 
@@ -542,8 +791,8 @@ peripheral_init(vrpn_Connection * local_device_connection,
     dialBox = NULL;
     if (strcmp(bdboxName, "null") != 0)
     {
-	buttonBox = new vrpn_Button_Remote(bdboxName);
-	dialBox = new vrpn_Analog_Remote(bdboxName);
+	if ((buttonBox = new vrpn_Button_Remote(bdboxName)) == NULL) return -1;
+	if ((dialBox = new vrpn_Analog_Remote(bdboxName)) == NULL) return -1;
 	if (buttonBox->register_change_handler(bdboxButtonState,
 		handle_bdbox_button_change))
 		fprintf(stderr, "Error: can't register vrpn_Button handler\n");
@@ -559,65 +808,14 @@ peripheral_init(vrpn_Connection * local_device_connection,
     }
 
 #ifndef NO_MAGELLAN
-    // Open the Magellan puck and button box.
-    if (local_device_connection && do_magellan) {
-        magellanButtonBoxServer = new vrpn_Magellan(MAGELLAN_NAME, 
-                                                    local_device_connection, 
-                                                    "COM1", 9600);
-        // This server listens to the analog output of the Magellan puck
-        // and makes it seem like a tracker. 
-        // First set up parameters
-        // Defaults for the axes, threshold = 0, power=1, scale =1 are OK. 
-        double scale = 2.0;
-        magellan_param = new vrpn_Tracker_AnalogFlyParam;
-        magellan_param->x.name = AF_MAGELLAN_NAME;
-        magellan_param->x.channel = 0;
-        magellan_param->x.scale = scale;
-        magellan_param->y.name = AF_MAGELLAN_NAME;
-        magellan_param->y.channel = 1;
-        magellan_param->y.scale = scale;
-        magellan_param->z.name = AF_MAGELLAN_NAME;
-        magellan_param->z.channel = 2;
-        magellan_param->z.scale = scale;
-        magellan_param->sx.name = AF_MAGELLAN_NAME;
-        magellan_param->sx.channel = 3;
-        magellan_param->sx.scale = scale;
-        magellan_param->sy.name = AF_MAGELLAN_NAME;
-        magellan_param->sy.channel = 4;
-        magellan_param->sy.scale = scale;
-        magellan_param->sz.name = AF_MAGELLAN_NAME;
-        magellan_param->sz.channel = 5;
-        magellan_param->sz.scale = scale;
-        
-        // Next make a tracker
-        // Update rate is 20.0 times per second
-         magellanTrackerServer = new vrpn_Tracker_AnalogFly(MAGELLAN_NAME,
-                                                     local_device_connection,
-                                                     magellan_param, 20.0);
-        // Client for the buttons
-        magellanButtonBox = new vrpn_Button_Remote(MAGELLAN_NAME,
-                                                   local_device_connection);
-        if ( magellanButtonBox->register_change_handler(magellanButtonState,
-                                handle_magellan_button_change)) {
-            fprintf(stderr, "Error: can't register magellan vrpn_Button handler\n");
-        }
-        // This won't be used for anything, unless we need to get
-        // direct analog output from the puck. 
-        magellanPuckAnalog = new vrpn_Analog_Remote(MAGELLAN_NAME,
-                                       local_device_connection);
-//          if ( magellanPuckAnalog->register_change_handler(&magellanPuckActive,
-//                                  handle_magellan_puck_change)) {
-//              fprintf(stderr, "Error: can't register magellan vrpn_Analog handler\n");
-//          }
-        magellanPuckTracker = new vrpn_Tracker_Remote(MAGELLAN_NAME,
-                                       local_device_connection);
-        if ( magellanPuckTracker->register_change_handler(&magellanPuckActive,
-                                handle_magellan_puck_change)) {
-            fprintf(stderr, "Error: can't register magellan vrpn_Tracker handler\n");
-        }
-    }
+    // Copy the name to global so we can connect (and reconnect later).
+    char * mn = new char[strlen(input_magellan_name) + 1];
+    strcpy (mn, input_magellan_name);
+    magellan_name = mn;
+    magellan_connection = local_device_connection;
+    connect_Magellan();
+  
 #endif
     return 0;
 }
-
 

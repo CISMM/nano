@@ -1,3 +1,7 @@
+2000-12-20  Aron Helser  <helser@cs.unc.edu>
+
+	* all: 3rdtech merge into main trunk. 
+
 2000-12-05  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmb_Device.C : add new member d_redundancy
