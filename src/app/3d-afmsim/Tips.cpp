@@ -28,6 +28,12 @@ void SphereTip :: set_r(double _r) {
   }
 }
 
+void InvConeSphereTip :: set_r(double _r) {
+	if (_r >= 0) {
+		ConeSphere::set_r(_r);
+	}
+}
+
 void SphereTip :: print() {
   cout << "r = " << r << endl;
 }

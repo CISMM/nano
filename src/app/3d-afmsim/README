@@ -2,54 +2,151 @@ Gokul Varadhan
 varadhan@cs.unc.edu
 May 2001
 
+modified and changed by: 
+Andrea Hilchey
+hilchey@cs.unc.edu
+July 2001
+
 This is a 3D AFM simulator based on Warren Robinett's CNT simulator (robinett@cs.unc.edu)
 
 Compiling
+---------
 
-	- Weird step ! Create a file called depend (could be empty)	
-	- make clean
-	- make dep
-	- make
+	1.  Weird step ! Create a file called depend (could be empty)	
+	2.  make clean
+	3.  make dep
+	4.  make
 
 Running the program
+-------------------
 
-	./sim [-p filename unit [-w]] for proteins
-        ./sim [-t filename scale] for triangulated models
-        ./sim [-d dna-filename]
+There are several command line argument options, but none are mandatory.  they are set up
+so that, as long as you have the correct arguments for each parameter that you want to 
+specify, you can put the parameters in any order.  The parameters that can be specified are
+as follows:
 
+	1.  units used
+	2.  tip radius
+	3.  type of file to open
 
-1. To simply run the simulator run
+1.  To specify what units you are using, type:
+	-units <units>
 
-./sim
+	(remember to include the '-'!)
+ 	where <units> is a string such as "nanometers", or "nm".
+	Note that if you do not enter anything, the default units of nanometers
+	will be used.
+
+2.  To specify what tip radius to use, type:
+	-tip_radius <radius>
+	
+	where <radius> is a floating point value such as 7.5.  If you do not specify
+	a tip radius, the default value of 5.0 will be used.
+
+3.  To specify a file to be opened, use one of the following formats:
+	-type -p
+ 	-type -d
+	-type -t
+	-type -s
+	-type -dp
+
+	In order, these are for opening a protein file, dna file, triangle file, 
+	spheres file, and both a dna and protein file at the same time.  Note that you do
+	not have to open a file in order to run the simulation; leaving out a file type
+	specification opens the simulation without any objects.  Various keyboard commands
+	can then be used to place objects where desired.
+
+Explanation of the '-type' command usage
+----------------------------------------
+
+1. To simply run the simulator, type:
+
+	./sim				if you are on an sgi
+		or
+	./3d_afm/Debug/3d_afm.exe	if you are working in cygwin, or have the 
+					application on your pc
+
+	Note that all future references to the application will use './sim' to lessen
+	confusion, but in all cases, either of the two options listed could be used.
 
 2. To get the AFM of a protein
-
-./sim -p <protein filename> unit
-
-unit is a number  = (Unit assumed in the file)/(1 nm) e.g 0.1 for Angstrom\n
-
-Example : ./sim -p lac.data 1
+	./sim -type -p <protein filename> <ratio>
+	<ratio> is a number  = (Unit assumed in the file)/(1 nm) e.g 0.1 for Angstrom\n
+	Example : ./sim -type -p lac.data 1
 
 Read pdb/README on how to generate a '.data' file from a PDB file.
-
+--See Protein file format below
 
 3. To get AFM of a triangular model run
-
-./sim -t filename scale
-
-Example :
-
-./sim -t teddy.obj 10
-
-scale scales the values in the given input file
+	./sim -type -t <filename> <scale>
+	<scale> scales the values in the given input file
+	Example :  ./sim -type -t teddy.obj 10	
 
 4. To run DNA simulator
+	./sim -type -d <dna-filename>
+	Example :  ./sim -type -d dna.dat
 
-./sim -d dna-filename
+--See DNA file format below
 
-Example :
+5.  To run DNA simulator and protein file
+	./sim -type -dp <dna-filename> <protein-filename> <ratio>
+	Example : ./sim -type -dp dna2.dat lac-smaller.dat 1
 
-./sim -d dna.dat
+--Note that in order to run the dna simulator and the protein at the same time, 
+the data for the protein cannot be too large.  For example, the size of the file 
+lac.data is too large to refresh all the data in a reasonable amount of time, but
+the file lac-smaller, which has been pared down, is okay.  Look at these files to 
+gauge an appropriate size when preparing your data file.
+
+--Note also that the protein as a whole will also be centered in the simulation
+
+6.  To get the AFM of spheres where the position you specify is absolute
+	./sim -type -s <sphere-filename> <ratio>
+	Example :  ./sim -type -s testfile.dat 1
+
+--See Sphere file format below
+
+
+Again, for any of the above examples, tip radius and/or units can also be specified,
+and the order in which the three parameters (the above two and file type) are specified
+is arbitrary.  So, the last example, ./sim -type -s testfile.dat 1, could also be any 
+of the following, if we also wanted to specify tip radius and units:
+
+	./sim -units nm -tip_radius 10.0 -type -s testfile.dat 1
+	./sim -units nm -type -s testfile.dat 1 -tip_radius 10.0
+	./sim -tip_radius 10.0 -units nm -type -s testfile.dat 1
+	./sim -tip_radius 10.0 -type -s testfile.dat 1 -units nm
+	./sim -type -s testfile.dat 1 -units nm -tip_radius 10.0
+	./sim -type -s testfile.dat 1 -tip_radius 10.0 -units nm
+
+
+Format for the protein file
+---------------------------
+
+x_position y_position z_position
+repeat for all spheres
+
+Example
+
+34.0 34.0 0.0
+36.0 36.0 5.0
+
+--The above file would create a protein consisting of 2 spheres with the 
+default radius.
+
+
+Format for the sphere file
+--------------------------
+x_position y_position z_position radius
+repeat for all spheres
+
+Example
+
+34.0 34.0 0.0 2.0
+67.0 74.0 5.0 5.0
+
+--The above file would create two spheres.
+
 
 Format for the dna file
 -----------------------
@@ -71,27 +168,38 @@ Example (see file dna.dat)
 	-50 -100 0
 
 
+
 Information
+-----------
 
-. This code uses display lists. They are turned on by default. To turn them off, change the #define DISP_LIST in defns.h and recompile.
+. This code uses display lists. They are turned on by default. To turn them off, change 
+the #define DISP_LIST in defns.h and recompile.
 
-. For objects totally composed of spheres, use the type SPHERE instead of NTUBE. This enable a number of optimizations. However you cannot change the length of an object declared as a SPHERE.
+. For objects totally composed of spheres, use the type SPHERE instead of NTUBE. This 
+enable a number of optimizations. However you cannot change the length of an object 
+declared as a SPHERE.
 
 
-Key and Mouse bindings :
+Key and Mouse bindings
+----------------------
 
 . Left mouse click on an object selects it. The object's color turns red
-. Left mouse when clicked and moved while the key remains pressed moves the object along XY plane.
+. Left mouse when clicked and moved while the key remains pressed moves the object along 
+XY plane.
 . Right mouse click works on triangles. It is used to select a side of a triangle.
 
 The following keys produce global changes (not object specific)
+--------------------------------------------------------------
 
 . 'q' - exit
 . 'o' - draw objects. By default, objects are not drawn, only the AFM is.
 . 'w' - write the AFM to a file.
 	In uncertainty mode, it writes out the uncertainty map.
 . 'n' - add a new nano tube
-. 's' - add a sphere
+. 's' - add a sphere, you will get a prompt to enter a radius, which can be any
+	reasonably-sized floating point number
+. 'f' - find the volume of all objects drawn, the volume will be printed to the
+	screen and will also be appended to the file sphere_output.txt
 . 't' - add a new triangle
 . 'p' - toggle the tip model, the default is the inverted ConeSphere tip model
 . 'r', 'R' - change the tip radius
@@ -99,7 +207,8 @@ The following keys produce global changes (not object specific)
 . 'i' - toggles between "no scan" to "semi solid scan" to "solid scan".
 . 'u' - to toggle to uncertainty mode
 
-The following perform object specific actions.
+The following perform object specific actions
+---------------------------------------------
 
 . DELETE - deleted that object
 . 'd', 'D' - change diam
@@ -110,6 +219,7 @@ The following perform object specific actions.
 . 'z', 'Z' - rotate about X
 
 The following will have effect only on nano tubes
+-------------------------------------------------
 
 . 'e', 'E' - change roll
 . 'f', 'F' - change yaw
@@ -119,7 +229,9 @@ The following will have effect only on nano tubes
 Important Note :
 ----------------
 
-We had said earlier, right click selects one side of a triangle. But since a side of a triangle is modelled as a nanotube, you can perform all the nanotube operations on that side.
+We had said earlier, right click selects one side of a triangle. But since a side of a 
+triangle is modelled as a nanotube, you can perform all the nanotube operations on that 
+side.
 
 
 

@@ -34,8 +34,8 @@ public:
   InvConeSphereTip() {}
   InvConeSphereTip(double _r, double _ch, double _angle, int _tesselation);
   void set(double _r, double _ch, double _angle, int _tesselation);
+  void set_r(double _r);
   void draw();
-
   int tesselation;
   int epoch;
 };

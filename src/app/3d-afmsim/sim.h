@@ -26,6 +26,8 @@ extern double orthoFrustumBottomEdge;
 extern double orthoFrustumWidth;
 extern double orthoFrustumHeight;
 
+extern float TipSize;
+
 extern int uncertainty_mode;
 
 #endif

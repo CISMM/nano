@@ -401,7 +401,7 @@ void Ntube :: afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
     // Scale and translate the created display list, then call it.
     glPushMatrix();
     glTranslatef(pos.x,pos.y, pos.z);
-    glScalef( fullradius/tipRadius, fullradius/tipRadius, fullradius/tipRadius);
+    glScalef( fullradius/tipRadius, fullradius/tipRadius, fullradius/fRadius);
     glCallList(TIP_CONE_SPHERE_LIST);
     glPopMatrix();
 #else

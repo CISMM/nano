@@ -15,6 +15,7 @@
 #include "Vec3d.h"
 #include "Tips.h"
 
+
 #define NULLOB (-1)
 // object types
 #define UNUSED 0

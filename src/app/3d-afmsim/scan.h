@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "defns.h"
 
+
 // raw values (normalized) from Z-buffer
 extern float zBuffer[ 128*128 ];			
 // array of heights: image scan data

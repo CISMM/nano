@@ -84,9 +84,10 @@ int stopAFM=0;
 int done_drawing_objects=0;
 double thetax=0.,thetay=0.;
 int tesselation = 30;
+
 char units[100];
 char* VolumeFilename;
-
+float TipSize;
 
 void write_to_unca(char *filename);
 void displayFuncMain( void );
@@ -108,90 +109,84 @@ void grabNearestOb(int xy_or_xz);
 int findNearestObToMouse(int xy_or_xz);
 void findNearestTriangleSideToMouse( void );
 void select_triangle_side();
+void	Usage(char *progname)
+{
+    cerr << "See README file for usage instructions." << endl; 
+    exit(-1);
+}
 
 //command line format is ./sim <units> -<type of file> <filenames in alphabetical order> 
 //<protein unit ratio to nm>
 int main(int argc, char *argv[])
 {
-	if(argc > 1){
-		strcpy(units,argv[1]);
-	}
-	else{
-		strcpy(units, "nm");
-		cout << "You did not enter what units you would like to work in."  << endl
-			 << "The default units of nanometers has been chosen for you." << endl
-			 << "Press 'q' to quit if you want to try again with different units." << endl;
-	}
-  adjustOrthoProjectionParams();
-  bool radius = true;//for protein/spheres files--false means use default
-                     //true means the file contains radii
-  bool centering = true;
-  //double volume;
-  //bool find_volume = false;
-
-  if (argc > 2) {// load from a file
-    if (0==strcmp(argv[2],"-p")) {//ntube file
-		if(argc == 5){
-			addSpheresFromFile(argv[3],atof(argv[4]),!radius, centering);
-		}
-		else{
-			cout << "Incorrect arguments.  See README file." << endl;
-			exit(0);
-		}
-    }
-    else if (0==strcmp(argv[2],"-t")) {//triangles file
-		if(argc == 5){
-			addTrianglesFromFile(argv[3],atof(argv[4]));
-		}
-		else{
-			cout << "Incorrect arguments.  See README file." << endl;
-			exit(0);
-		}
-    }
-    else if (0==strcmp(argv[2],"-d")) {//dna file
-		if(argc == 4){
-			init_dna(argv[3]);
-		}
-		else{
-			cout << "Incorrect arguments.  See README file." << endl;
-			exit(0);
-		}
-    }
-    else if(0==strcmp(argv[2],"-dp")){//dna and protein file
-		if(argc == 6){
-			addSpheresFromFile(argv[4],atof(argv[5]), !radius, centering);
-			//dna first then protein in argv[]
-			init_dna(argv[3]);
-		}
-		else{
-			cout << "Incorrect arguments.  See README file." << endl;
-			exit(0);
-		}
-    }
-    else if(0==strcmp(argv[2],"-s")){//add spheres with radii from file, find volume, and quit
-		if(argc == 5){
-			fout.open("sphere_output.txt", fstream::out | fstream::app);//append to end each time
-
-			addSpheresFromFile(argv[3],atof(argv[4]),radius, !centering);
-			VolumeFilename = argv[3];
-			//find_volume = true;//take care of volume finding below
-		}
-		else{
-			cout << "Incorrect arguments.  See README file." << endl;
-			exit(0);
-		}
-    }
-    else {
-      cout << "\nUsage : ./sim [-p filename unit for proteins\n";
-      cout << "        ./sim [-t filename scale] for triangulated models\n";
-      cout << "        ./sim [-d dna-filename]\n\nSee README\n\n";
-      exit(0);
-    }
-  }
-  else {
+	adjustOrthoProjectionParams();
+	bool radius = true;	//for protein/spheres files--false means use default
+						//true means the file contains radii
+	bool centering = true;
 	VolumeFilename = "";
-    initObs(0);
-  }
+	bool unitsGiven = false;
+
+
+    // Parse the command line
+    for (int i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "-units")) {
+			if(++i >= argc) { Usage(argv[0]); }
+			strcpy(units,argv[i]);
+			unitsGiven = true;
+		}
+		else if (!strcmp(argv[i], "-type")) {
+			if(++i > argc) { Usage(argv[0]); }
+			if(!strcmp(argv[i], "-p")){
+				if ((++i + 1) >= argc) { Usage(argv[0]); }     
+				VolumeFilename = argv[i];
+				addSpheresFromFile(VolumeFilename,atof(argv[++i]),!radius, 
+						   centering);
+			}
+			else if(!strcmp(argv[i], "-d")){
+				if (++i >= argc) { Usage(argv[0]); }	
+				VolumeFilename = argv[i];
+				init_dna(VolumeFilename);
+			}
+			else if(!strcmp(argv[i], "-dp")){//protein filename first then dna filename
+				if ((++i + 2) >= argc) { Usage(argv[0]); }
+				char * proteinFile = argv[i];
+				float ratio = atof(argv[++i]);
+				char * dnaFile = argv[++i];
+				addSpheresFromFile(proteinFile, ratio, !radius, centering);
+				char * proteinPortion = strcat(proteinFile, " & ");
+				VolumeFilename = strcat(proteinPortion, dnaFile);
+				init_dna(dnaFile);
+			}
+			else if(!strcmp(argv[i], "-t")){//triangles file
+				if ((++i + 1) >= argc) { Usage(argv[0]); }
+				VolumeFilename = argv[i];
+				addTrianglesFromFile(VolumeFilename,atof(argv[++i]));
+			}
+			else if(!strcmp(argv[i], "-s")){
+				if ((++i + 1) >= argc) { Usage(argv[0]); }
+				VolumeFilename = argv[i];
+				fout.open("sphere_output.txt", fstream::out | fstream::app);
+				//append to end each time
+				addSpheresFromFile(VolumeFilename,atof(argv[++i]),radius, 
+						   !centering);
+			}
+			else{//inappropriate file type given 
+				Usage(argv[0]); 
+			}
+		} 
+		else if (!strcmp(argv[i], "-tip_radius")) {
+			if (++i > argc) { Usage(argv[0]); }
+			TipSize = atof(argv[i]);
+			sp.set_r(TipSize);
+			ics.set_r(TipSize);//let the user specify the tip radius desired
+		}
+    }
+
+	if (!unitsGiven){
+		strcpy(units, "nm");
+		cout << "Your units are the default, nanometers." << endl
+			 << "Press 'q' if this is not what you intended." << endl;
+	}
 
 
   // Deal with command line.

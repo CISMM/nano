@@ -13,8 +13,8 @@
 #include "3Dobject.h"
 #include "ConeSphere.h"
 #include "Tips.h"
-#include "defns.h"
 #include "sim.h"
+#include "defns.h"
 #include "lightcol.h"
 #include "scan.h"
 
