@@ -1,3 +1,9 @@
+2003-03-31  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscope.C (createNewDatasetOrMicroscope): added call to 
+	sem_ui->clearImageBuffers to avoid dangling pointers when all the
+	images get deleted
+
 2003-02-24  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.C: took out unused argument in call to 

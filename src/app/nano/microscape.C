@@ -7406,6 +7406,14 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
         // First time through graphics will be NULL. 
         graphics->changeDataset(new_dataset);
     }
+
+	if (sem_ui) {
+		// sets potentially dangling image pointers to NULL. The images they now point to will
+		// be deleted when we delete dataset below - XXX - fix this another way
+		sem_ui->clearImageBuffers();
+	}
+	// XXX - todo: reinitialize the SEM and its stream file if the user wants to use it
+
     if (&World.TGetContents() != NULL) {
 	    World.Do(&(URender::ChangeDataset), new_dataset);
     }
