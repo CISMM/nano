@@ -1,3 +1,11 @@
+2001-05-15  Adam Seeger  <seeger@cs.unc.edu>
+
+	* litho_main.tcl: added image saving menu item to file menu
+	* registration.tcl: unfixed the data-registration-window-closing-nano
+	fix from 2001-05-02. This wasn't a fix for the problem; it only disabled
+	the registration window from ever being shown and in so doing prevented
+	the user from clicking on the close box
+
 2001-05-12  Aron Helser  <helser@cs.unc.edu>
 
 	* filemenu.tcl (save_plane_data): added writing TIFF files. 

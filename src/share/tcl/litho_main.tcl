@@ -83,8 +83,92 @@ pack .main .menubar -side top -fill x
 menu .menu -tearoff 0
 
 #### FILE menu globals, windows and procedures #####################
+
+# globals for remembering where the user opens and saves files
 set fileinfo(open_dir) ""
 set fileinfo(save_dir) ""
+
+#
+################################
+#
+# This allows the user to export a file that
+# holds the values for a given plane, in any of several formats
+#
+
+#Initial dialog which allows user to choose which plane
+#of data to save.
+iwidgets::dialog .save_plane_dialog -title "Save plane data"\
+  -modality application
+
+.save_plane_dialog hide Help
+.save_plane_dialog buttonconfigure OK -text "Save" -command {
+    .save_plane_dialog deactivate 1
+}
+.save_plane_dialog hide Apply
+# "Cancel" button is already set up correctly
+
+set win [.save_plane_dialog childsite]
+generic_optionmenu $win.export_plane export_plane \
+        "Plane to extract data from:" imageNames
+pack $win.export_plane -anchor nw
+
+set save_image_format_list {none}
+generic_optionmenu $win.save_image_filetype save_image_filetype \
+        "Format for saved data:" save_image_format_list
+pack $win.save_image_filetype -anchor nw
+
+# Allow the user to save
+proc save_plane_data {} {
+    global export_plane save_image_filetype save_image_filename \
+           fileinfo imageNames
+    # Trigger the export_filetype widget to display formats for
+    # the default selected export_plane.
+    set export_plane [lindex $imageNames 0]
+    if { [.save_plane_dialog activate] } {
+        set types { {"All files" *}
+        { "ThermoMicroscopes" ".tfr" }
+        { "Text(MathCAD)" ".txt" }
+        { "PPM Image" ".ppm" }
+        { "SPIP" ".spip" }
+        { "UNCA Image" ".ima" } }
+
+        # Set the file extension correctly
+        set def_file_exten ".tfr"
+        #puts $save_image_filetype
+        foreach item $types {
+            #puts "[lindex $item 0] [lindex $item 1]"
+            if { [string compare $save_image_filetype [lindex $item 0]] == 0} {
+                set def_file_exten [lindex $item 1]
+            }
+        }
+
+        # Let the user choose a file to save the data in.
+        set filename [tk_getSaveFile -filetypes $types \
+                -initialfile "${export_plane}$def_file_exten" \
+                -initialdir $fileinfo(save_dir)\
+                -title "Save plane data"]
+        if {$filename != ""} {
+            #puts "Save plane data: $save_image_filename $export_plane $save_image_filetype"
+            # setting this variable triggers a callback in C code
+            # which saves the file.
+
+            # Dialog checks for writeable directory, and asks about
+            # replacing existing files.
+            set save_image_filename $filename
+            set fileinfo(save_dir) [file dirname $save_image_filename]
+        }
+        # otherwise do nothing - user pressed cancel or didn't enter file name
+    } else {
+        # user pressed "cancel" so do nothing
+    }
+}
+
+#
+################################
+#
+# This allows the user to export a file that
+# is a snapshot of the window on the screen, in any of several formats
+#
 
 iwidgets::dialog .save_buffer_dialog -title "Save buffer image"
 #-modality application
@@ -170,6 +254,9 @@ $filemenu add command -label "Open File..." -underline 0 \
 
 $filemenu add command -label "Save Buffer..." -underline 0 \
     -command "save_buffer"
+
+$filemenu add command -label "Save Plane Data..." -underline 5 -command \
+    "save_plane_data"
 
 $filemenu add command -label "Quit" -underline 1 -command {
     if {[string match "*wish*" [info nameofexecutable]] } {

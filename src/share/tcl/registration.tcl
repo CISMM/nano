@@ -7,11 +7,8 @@ global resample_image_name
 set reg_surface_comes_from "none"
 set reg_projection_comes_from "none"
 
-#set nmInfo(registration) [create_closing_toplevel_with_notify \
-#                                      registration reg_window_open]
-set nmInfo(registration) [create_closing_toplevel \
+set nmInfo(registration) [create_closing_toplevel_with_notify \
                                       registration reg_window_open]
-
 
 generic_optionmenu $nmInfo(registration).selection3D reg_surface_comes_from \
         "Topography image" imageNames
