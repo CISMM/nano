@@ -1,5 +1,12 @@
 2001-07-03  Tom Hudson  <hudson@cs.unc.edu>
 
+	* nmg_RenderClientImpl.C (causeGridRebuild) : New function -
+	overrides virtual function on nmg_Graphics_Implementation.
+	(checkGridSize) : Bugfix.
+	* spm_gl.c (init_vertexArray) : Clean up memory leak.
+
+2001-07-03  Tom Hudson  <hudson@cs.unc.edu>
+
 	* nmg_GraphicsImpl.C (checkGridSize) : New function.
 	(mainloop) : Call checkGridSize so derived classes can override.
 	* nmg_RenderClientImpl.C (checkGridSize) : New function.

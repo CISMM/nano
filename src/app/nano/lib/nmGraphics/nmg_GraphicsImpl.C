@@ -802,6 +802,7 @@ void nmg_Graphics_Implementation::causeGridRedraw (void) {
   }
 }
 
+// virtual
 void nmg_Graphics_Implementation::causeGridRebuild (void) {
 //fprintf(stderr, "nmg_Graphics_Implementation::causeGridRebuild().\n");
 

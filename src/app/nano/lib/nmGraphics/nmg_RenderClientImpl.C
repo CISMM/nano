@@ -11,6 +11,7 @@
 
 #include "graphics_globals.h"  // for g_PRERENDERED_COLORS
 #include "spm_gl.h"  // for init_vertexArray()
+#include "openGL.h"  // for build_grid_display_lists()
 
 #include "graphics.h"  // for buildRemoteRenderedTexture
 
@@ -640,6 +641,48 @@ void nmg_Graphics_RenderClient_Implementation::mainloop (void) {
 
 }
 
+// virtual
+void nmg_Graphics_RenderClient_Implementation::causeGridRebuild (void) {
+
+  // Only difference between this and the base case is that we
+  // use the max of two different grid dimensions to build the
+  // vertex array.  Somebody smart could refactor this into a
+  // smaller virtual function & cut down the code duplication.
+
+  int xsize, ysize;
+  int retval;
+
+  xsize = max(d_dataset->inputGrid->numX(), d_renderingGrid->numX());
+  ysize = max(d_dataset->inputGrid->numY(), d_renderingGrid->numY());
+
+  g_just_color = 0;
+  // Rebuilds the texture coordinate array:
+  nmb_PlaneSelection planes;  planes.lookup(d_dataset);
+
+  // Even though we may not be using the vertex array extension, we still
+  // use the vertex array to cache calculated normals
+  retval = init_vertexArray(xsize, ysize);
+  if (!retval) {
+    fprintf(stderr," init_vertexArray: out of memory.\n");
+    exit(0);
+  }
+
+  grid_size_x = d_dataset->inputGrid->numX();
+  grid_size_y = d_dataset->inputGrid->numX();
+
+  retval = build_grid_display_lists
+               (planes,
+                display_lists_in_x, &grid_list_base,
+                &num_grid_lists, g_minColor, g_maxColor);
+  if (retval) {
+    fprintf(stderr,
+          "nmg_Graphics_Implementation::causeGridRebuild():  "
+          "Couldn't build grid display lists\n");
+    d_dataset->done = V_TRUE;
+  }
+}
+
+
 vrpn_Connection * nmg_Graphics_RenderClient_Implementation::inputConnection
         (void) {
   return d_inputConnection;
@@ -751,8 +794,10 @@ void nmg_Graphics_RenderClient_Implementation::getNewBounds
 // virtual
 void nmg_Graphics_RenderClient_Implementation::checkGridSize (void) {
 
-  if ( (grid_size_x != d_renderingGrid->numX()) ||
-       (grid_size_y != d_renderingGrid->numY())    ) {
+  if ( (grid_size_x != max(d_renderingGrid->numX(),
+                           d_dataset->inputGrid->numX())) ||
+       (grid_size_y != max(d_renderingGrid->numY(),
+                           d_dataset->inputGrid->numY()))    ) {
     causeGridRebuild();
   }
 

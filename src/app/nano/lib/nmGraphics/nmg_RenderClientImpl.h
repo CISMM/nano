@@ -37,6 +37,14 @@ class nmg_Graphics_RenderClient_Implementation :
 
     virtual void mainloop (void);
 
+    virtual void causeGridRebuild (void);
+      ///< Just like checkGridSize() below, we have to make sure
+      ///< we've a big enough vertexArray to deal with either of two
+      ///< BCGrids from which we may be taking input.
+      ///< (The RCIStrategies could be more precise and thus more
+      ///< more parsimonious, but the "or" case we can implement here
+      ///< without knowing details of the strategies should be adequate.)
+
     nmb_Subgrid rangeOfChange;
 
   // functions for use by strategies

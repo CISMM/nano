@@ -219,33 +219,56 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
  *                                                                         
  *	This routine returns 0 on success and -1 on failure. */
 
-int init_vertexArray(int x, int y)
-{  int dim;
+int init_vertexArray(int x, int y) {
 
-  if(x<=y) {
-     dim=y;
-  }
-  else {
-     dim=x;
+  static int lastdim = 0;
+  int dim;
+  int i, j;
+
+  if (x <= y) {
+     dim = y;
+  } else {
+     dim = x;
   }       
+
+fprintf(stderr, "init_vertexArray dim %d.\n", dim);
+
+  if (lastdim == dim) {
+fprintf(stderr,
+"  vertexArray dim Matches previous allocation, so returning.\n");
+    return 1;
+  }
 
   // with RenderClient may be called more than once;  why waste memory?
   if (vertexptr) {
+    for (i = 0; i < lastdim; i++) {
+      free(vertexptr[i]);
+    }
     free(vertexptr);
   }
 
-   vertexptr= (Vertex_Struct **)malloc(
-                               sizeof(Vertex_Struct *) * dim);
+   vertexptr = (Vertex_Struct **) malloc(sizeof(Vertex_Struct *) * dim);
 
-   if (vertexptr == NULL)
+   if (!vertexptr) {
       return 0;
-   for(int i=0;i< dim;i++) {
-     vertexptr[i]= (Vertex_Struct *)malloc(sizeof(Vertex_Struct)* dim * 2);
-
-     if(vertexptr[i] == NULL )
-       return 0;
    }
-   return 1;
+
+   for (i = 0; i < dim; i++) {
+     vertexptr[i] = (Vertex_Struct *) malloc(sizeof(Vertex_Struct) * dim * 2);
+
+     if (!vertexptr[i]) {
+       for (j = 0; j < i; j++) {
+         free(vertexptr[i]);
+       }
+       free(vertexptr);
+       vertexptr = NULL;
+       lastdim = 0;
+       return 0;
+     }
+  }
+  lastdim = dim;
+
+  return 1;
 }
 
 void specify_vertexArray(nmb_PlaneSelection /*planes*/, int i, int count)
