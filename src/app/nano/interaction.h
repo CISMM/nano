@@ -14,6 +14,8 @@ int set_aim_line_color (float);
 
 extern Tclvar_int user_0_mode;
 
+extern bool printViewTransform;
+
 //external functions that set and unset drawing the sphere
 // for direct step
 extern void enable_ds_sphere_axis();

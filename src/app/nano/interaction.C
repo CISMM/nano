@@ -167,6 +167,9 @@ void handle_sphere_axis(vrpn_int32 x, void *) {
 
 static q_vec_type xyz_lock_pos;  // used for constrained freehand xyz
 
+
+bool printViewTransform = false;
+
 /***************************
  * Mode of user operation
  ***************************/
@@ -4205,6 +4208,15 @@ void updateWorldFromRoom (v_xform_type * t) {
   tcl_wfr_rot_3 = t->rotate[3];
 
   tcl_wfr_scale = t->scale;
+
+   if( printViewTransform )
+  {
+	  printf( "View transform:    %f %f %f %f %f %f %f %f\n",
+			t->xlate[0], t->xlate[1], t->xlate[2],
+			t->rotate[0], t->rotate[1], t->rotate[2], 
+			t->rotate[3], t->scale ); 
+  }
+
 }
 
 

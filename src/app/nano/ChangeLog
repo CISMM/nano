@@ -1,3 +1,14 @@
+2003-11-06  David Marshburn  <marshbur@cs.unc.edu>
+
+	* interaction.h:  added a boolean variable printViewTransform
+	* interaction.C (updateWorldFromRoom):  prints the view transform,
+	if we're doing that.
+	* microscape.C (class MicroscopeInitializationState):  added members
+	for initializing the viewing transform.
+	(parseArgs):  options for initializing and printing the view transform
+	(Usage):  new args
+	(main):  initialize the view transform
+
 2003-11-05  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.C (main):  removed the color plane and colormap

@@ -1682,6 +1682,9 @@ public:
   char colormap [256];
   char heightplane [256];
 
+  v_xform_type view;
+  vrpn_bool initializeView;
+
   int initTime;
   vrpn_bool index_mode;
 
@@ -1736,7 +1739,8 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   laUseWPA (vrpn_FALSE),
   laUseFA (vrpn_FALSE),
   laFaN (0),
-  laFaD (0)
+  laFaD (0),
+  initializeView( vrpn_FALSE )
 {
   graphicsHost[0] = '\0';
   SPMhost[0] = '\0';
@@ -1750,6 +1754,10 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   colormap[0] = '\0';
   heightplane[0] = '\0';
   magellanName[0]= '\0';
+
+  view.xlate[0] = view.xlate[1] = view.xlate[2] = 0;
+  view.rotate[0] = view.rotate[1] = view.rotate[2] = view.rotate[3] = 0;
+  view.scale = 0;
  
   initTime = 0;
 }
@@ -6302,11 +6310,11 @@ void ParseArgs (int argc, char ** argv,
         }
         istate->use_file_resolution = vrpn_FALSE;
       } else if (strcmp(argv[i], "-fi") == 0) {
-	if (++i >= argc) Usage(argv[0]);
-	if (istate->num_image_files >= MAXFILES) {
-	  display_error_dialog( "Only %d IMAGE files allowed, ignoring file: %s",
-			MAXFILES,argv[i]);
-	} else {
+		if (++i >= argc) Usage(argv[0]);
+		if (istate->num_image_files >= MAXFILES) {
+			display_error_dialog( "Only %d IMAGE files allowed, ignoring file: %s",
+				MAXFILES,argv[i]);
+		} else {
             istate->image_file_names[istate->num_image_files] = argv[i];
             istate->num_image_files++;
         }
@@ -6314,37 +6322,37 @@ void ParseArgs (int argc, char ** argv,
         istate->afm.readingStreamFile = 1;
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->afm.inputStreamName, argv[i]);
-	// Change so the rate of replay is not a required arguement.
+		// Change so the rate of replay is not a required arguement.
         if (++i >= argc) {
 	    // if no next arg, use 1 as replay rate.
-	    decoration->rateOfTime =1;
-	} else {
-	    int play_rate = atoi(argv[i]);
-	    if ((play_rate == 0)&&(strcmp("0", argv[i])!=0)) {
-		// next arg is not a number - let next iteration process it.
-		decoration->rateOfTime =1;
-		--i;
-	    } else {
-		// next arg is a number
-		decoration->rateOfTime = play_rate;
-		if (++i < argc){
-			//check and see if next arg is a number
-			int time_to_jump = atoi(argv[i]);
-			if((time_to_jump == 0) && (strcmp("0", argv[i]) != 0)){
-				// not a number, let next iteration process it.
+			decoration->rateOfTime =1;
+		} else {
+			int play_rate = atoi(argv[i]);
+			if ((play_rate == 0)&&(strcmp("0", argv[i])!=0)) {
+				// next arg is not a number - let next iteration process it.
+				decoration->rateOfTime =1;
 				--i;
+			} else {
+				// next arg is a number
+				decoration->rateOfTime = play_rate;
+				if (++i < argc){
+					//check and see if next arg is a number
+					int time_to_jump = atoi(argv[i]);
+					if((time_to_jump == 0) && (strcmp("0", argv[i]) != 0)){
+						// not a number, let next iteration process it.
+						--i;
+					}
+					else{
+						//arg is a number, set stream time to jump to
+						istate->initTime = time_to_jump;
+					}
+				}
 			}
-			else{
-				//arg is a number, set stream time to jump to
-				istate->initTime = time_to_jump;
-			}
+			
 		}
-		}
-		
-	}
-	replay_rate = decoration->rateOfTime;
+		replay_rate = decoration->rateOfTime;
       } else if ( strcmp( argv[i], "-index" ) == 0 ) {
-	istate->index_mode = VRPN_TRUE;
+		istate->index_mode = VRPN_TRUE;
       } else if ( strcmp(argv[i],"-Loop_num")==0) {
         LOOP_NUM = atoi(argv[++i]);
       } else if (!strcmp(argv[i], "-marshalltest")) {
@@ -6366,9 +6374,9 @@ void ParseArgs (int argc, char ** argv,
       } else if (!strcmp(argv[i], "-vrenderserver")) {
         istate->graphics_mode = VIDEO_SERVER;
       } else if (!strcmp(argv[i], "-vrenderclient")) {
-	if (++i >= argc) Usage(argv[0]);
-        istate->graphics_mode = VIDEO_CLIENT;
-        strncpy(istate->graphicsHost, argv[i], 256);
+		if (++i >= argc) Usage(argv[0]);
+		istate->graphics_mode = VIDEO_CLIENT;
+		strncpy(istate->graphicsHost, argv[i], 256);
       } else if (!strcmp(argv[i], "-phantomrate")) {
         if (++i >= argc) Usage(argv[0]);
         istate->phantomRate = atof(argv[i]);
@@ -6392,7 +6400,7 @@ void ParseArgs (int argc, char ** argv,
         fprintf(stderr, "Warning: -nocall obsolete.\n");
       } else if (strcmp(argv[i], "-nocpanels") == 0) {
           //do_cpanels = 0;
-	  fprintf(stderr, "Warning: -nocpanels obsolete.\n");
+		  fprintf(stderr, "Warning: -nocpanels obsolete.\n");
       } else if (strcmp(argv[i], "-nodevice") == 0) {
         //do_ad_device = 0;
         fprintf(stderr, "Warning: -nodevice obsolete.\n");
@@ -6412,12 +6420,12 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->afm.outputStreamName, argv[i]);
         openSPMLogName.Set( argv[i] );
-	istate->ohm.writingLogFile = 1;
-	sprintf(istate->ohm.outputLogName, "%s%s", argv[i],
-		OHM_FILE_SUFFIX);
-	istate->vicurve.writingLogFile = 1;
-	sprintf(istate->vicurve.outputLogName, "%s%s", argv[i],
-		VICURVE_FILE_SUFFIX);
+		istate->ohm.writingLogFile = 1;
+		sprintf(istate->ohm.outputLogName, "%s%s", argv[i],
+			OHM_FILE_SUFFIX);
+		istate->vicurve.writingLogFile = 1;
+		sprintf(istate->vicurve.outputLogName, "%s%s", argv[i],
+			VICURVE_FILE_SUFFIX);
         istate->sem.writingLogFile = 1;
         sprintf(istate->sem.outputLogName, "%s%s", argv[i],
                 SEM_FILE_SUFFIX);
@@ -6509,9 +6517,9 @@ void ParseArgs (int argc, char ** argv,
       } else if (strcmp(argv[i], "-move") == 0) {
         if (++i >= argc) Usage(argv[0]);
         //istate->afm.MaxSafeMove = atof(argv[i]);
-	fprintf(stderr, "Warning: -move is obsolete\n");
+		fprintf(stderr, "Warning: -move is obsolete\n");
       } else if (strcmp(argv[i], "-silent") == 0) {
-	fprintf(stderr, "Warning: -silent is obsolete\n");
+		fprintf(stderr, "Warning: -silent is obsolete\n");
       } else if (strcmp(argv[i], "-tap") == 0) {
 	  //istate->afm.image.mode = TAPPING;
 	  //istate->afm.modify.mode = TAPPING;
@@ -6525,7 +6533,6 @@ void ParseArgs (int argc, char ** argv,
 	  //istate->afm.image.mode = TAPPING;
 	  //istate->afm.modify.mode = CONTACT;
         fprintf(stderr, "Warning: -tc obsolete.\n");
-
       } else if (strcmp(argv[i], "-disp") == 0) {
         if (++i >= argc) Usage(argv[0]);
         displayPeriod = atoi(argv[i])*1000L;
@@ -6603,10 +6610,10 @@ void ParseArgs (int argc, char ** argv,
         int ruler_g = (GLubyte)atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
         int ruler_b = (GLubyte)atoi(argv[i]);
-	char *tmp = new char[7];
-  	sprintf(tmp,"#%02x%02x%02x",(int)ruler_r, (int)ruler_g, (int)ruler_b);
-	tmp[6] = '\0';
-  	ruler_color = tmp;
+		char *tmp = new char[7];
+		sprintf(tmp,"#%02x%02x%02x",(int)ruler_r, (int)ruler_g, (int)ruler_b);
+		tmp[6] = '\0';
+		ruler_color = tmp;
       } else if (strcmp (argv[i], "-SPMhost") == 0) {
         // Added by Michele Clark 6/2/97
         // Next arguments are the hostname and port # of SPM server
@@ -6620,10 +6627,10 @@ void ParseArgs (int argc, char ** argv,
       } else if (!strcmp(argv[i], "-timegraphics")) {
         istate->timeGraphics = VRPN_TRUE;
       } else if (strcmp(argv[i], "-timeframe") == 0) {
-        if (++i >= argc) Usage(argv[0]);
-        time_frame = atoi(argv[i]);
-	framelog = 1;
-	frametimer.startlog(time_frame);
+		  if (++i >= argc) Usage(argv[0]);
+		  time_frame = atoi(argv[i]);
+		  framelog = 1;
+		  frametimer.startlog(time_frame);
       } else if (strcmp(argv[i], "-colormap") == 0) {
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->colormap, argv[i]);
@@ -6633,6 +6640,42 @@ void ParseArgs (int argc, char ** argv,
       } else if (strcmp(argv[i], "-heightplane") == 0) {
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->heightplane, argv[i]);
+	  } else if ( strcmp( argv[i], "-initview" ) == 0) {
+        istate->initializeView = vrpn_TRUE;
+        if (i+8 >= argc) Usage(argv[0]);
+		// try the conversions
+		char* remainder = NULL;
+		istate->view.xlate[0] = strtod( argv[i+1], &remainder );
+		if( istate->view.xlate[0] == 0 && remainder == argv[i+1] ) 
+			Usage( argv[0] );  // wasn't a number
+		istate->view.xlate[1] = strtod( argv[i+2], &remainder );
+		if( istate->view.xlate[1] == 0 && remainder == argv[i+2] ) 
+			Usage( argv[0] );  // wasn't a number
+		istate->view.xlate[2] = strtod( argv[i+3], &remainder );
+		if( istate->view.xlate[2] == 0 && remainder == argv[i+3] ) 
+			Usage( argv[0] );  // wasn't a number
+		istate->view.rotate[0] = strtod( argv[i+4], &remainder );
+		if( istate->view.rotate[0] == 0 && remainder == argv[i+4] ) 
+			Usage( argv[0] );  // wasn't a number
+		istate->view.rotate[1] = strtod( argv[i+5], &remainder );
+		if( istate->view.rotate[1] == 0 && remainder == argv[i+5] ) 
+			Usage( argv[0] );  // wasn't a number
+		istate->view.rotate[2] = strtod( argv[i+6], &remainder );
+		if( istate->view.rotate[2] == 0 && remainder == argv[i+6] ) 
+			Usage( argv[0] );  // wasn't a number
+		istate->view.rotate[3] = strtod( argv[i+7], &remainder );
+		if( istate->view.rotate[4] == 0 && remainder == argv[i+7] ) 
+			Usage( argv[0] );  // wasn't a number
+		istate->view.scale = strtod( argv[i+8], &remainder );
+		if( istate->view.scale == 0 && remainder == argv[i+8] ) 
+			Usage( argv[0] );  // wasn't a number
+		printf( "Initial view transform:  %f %f %f %f %f %f %f %f\n",
+			istate->view.xlate[0], istate->view.xlate[1], istate->view.xlate[2],
+			istate->view.rotate[0], istate->view.rotate[1], istate->view.rotate[2], 
+			istate->view.rotate[3], istate->view.scale ); 
+		i += 8;
+	  } else if ( strcmp( argv[i], "-printviewtransform" ) == 0 ) {
+		printViewTransform = vrpn_TRUE;
       } else if (strcmp(argv[i], "-timerverbosity") == 0) {
         if (++i >= argc) Usage(argv[0]);
         timer_verbosity = atoi(argv[i]);
@@ -6688,7 +6731,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-index] \n");
   fprintf(stderr, "       [-keybd] \n");
   fprintf(stderr, "       [-region lowx lowy highx highy]\n");
-  fprintf(stderr, "       [-fmods max min (Setpt V)]\n " );
+  fprintf(stderr, "       [-fmods max min (Setpt V)]\n" );
   fprintf(stderr, "       [-fimgs max min (DrAmp V) setpt (V)]\n" );
   fprintf(stderr, "       [-color hr hg hb lr lg lb]\n" );
   fprintf(stderr, "       [-relax] [-norelax] [-minsep tmin tsep] \n");
@@ -6708,11 +6751,12 @@ void Usage(char* s)
   fprintf(stderr, "       [-renderserver] [-renderclient host]\n");
   fprintf(stderr, "       [-trenderserver] [-trenderclient host]\n");
   fprintf(stderr, "       [-vrenderserver] [-vrenderclient host]\n"
-"       [-logif path] [-logphantom path] [-replayif path] [-packetlimit n]\n");
+				  "       [-logif path] [-logphantom path] [-replayif path] [-packetlimit n]\n");
   fprintf(stderr, "       [-optimistic] [-pessimistic] [-phantomrate rate]\n");
   fprintf(stderr, "       [-tesselation stride] [-NIC IPaddress]\n");
   fprintf(stderr, "       [-gverbosity n] [-cverbosity n]\n");
   fprintf(stderr, "       [-colorplane name] [-colormap name] [-heightplane name]\n");
+  fprintf(stderr, "       [-printfviewtransform] [-initview tx ty tz r0 r1 r2 r3 s]\n" );
   fprintf(stderr, "       [-udp] [-qm t d] [-wpa] [-fa n d]\n");
   fprintf(stderr, "       \n");
 
@@ -6799,12 +6843,10 @@ void Usage(char* s)
                   "         remote rendering,\n");
   fprintf(stderr, "         connected to the named host.\n");
 
-  fprintf(stderr,
-"       -logif path:  open up stream files in specified directory to log all\n"
-"         use of (collaborative) interface.\n");
-  fprintf(stderr,
-"       -logphantom path:  open up stream file in specified directory to\n"
-"         log all use of phantom.\n");
+  fprintf(stderr, "       -logif path:  open up stream files in specified directory to log all\n"
+				  "         use of (collaborative) interface.\n");
+  fprintf(stderr, "       -logphantom path:  open up stream file in specified directory to\n"
+				  "         log all use of phantom.\n");
   fprintf(stderr, "       -replayif path:  replay the interface (\"movie\n"
                   "         mode\") from stream files in the\n"
                   "         specified directory.\n");
@@ -6814,6 +6856,10 @@ void Usage(char* s)
   fprintf(stderr, "       -colormap name:  set default colormap.\n");
   fprintf(stderr, "       -colorplane name:  set default color plane.\n");
   fprintf(stderr, "       -heightplane name:  set default height plane.\n");
+  fprintf(stderr, "       -printviewtransform:  print the view transform, upon change, \n"
+				  "         to the console.\n");
+  fprintf(stderr, "       -initview tx ty tz r0 r1 r2 r3 s:  initialize the view to \n"
+				  "         the given transformation (as reported by -printviewtransform).\n" );
   fprintf(stderr, "       -optimistic:  optimistic concurrency control.\n");
   fprintf(stderr, "       -pessimistic:  centralized concurrency control.\n");
   fprintf(stderr, "       -NIC IPaddress:  use network interface with given\n"
@@ -8610,6 +8656,10 @@ if (microscope) microscope->ResetClock();
     set_stream_time=istate.initTime;
   }
   
+  if( istate.initializeView )
+  {
+	  updateWorldFromRoom( &(istate.view) );
+  }
 
 	/* 
 	 * main interactive loop
@@ -9061,6 +9111,12 @@ if (microscope) microscope->ResetClock();
 			center( );
 		}
 
+		// if an initial view was specified, go to that now
+		if( istate.initializeView )
+		{
+			updateWorldFromRoom( &(istate.view) );
+		}
+		
 		// colormap initialization options:
 		// these are here because the stream file needs time
 		// to be primed (and one pass through the loop should do).
