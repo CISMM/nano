@@ -909,14 +909,10 @@ int draw_list (void * data)
   GLint *listnum;
   listnum = (GLint *) data;
   glPushMatrix();
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
   glCallList(*listnum);
 
-#ifndef FLOW
   glPopAttrib();
-#endif 
 
   glPopMatrix();
   return(0);
@@ -996,9 +992,7 @@ int myhand (int)
 int myscreen (int)
 {
   nmg_Funclist *head;
-#ifndef FLOW
   GLint saveMatrixMode;
-#endif
   head = v_screen;
 
   // Don't draw anything if chart junk is off
@@ -1022,7 +1016,6 @@ int myscreen (int)
   // Correct values for the translation and scale were found by
   // iteration.
 
-#ifndef FLOW
   if (g_CRT_correction) {
     glGetIntegerv(GL_MATRIX_MODE, &saveMatrixMode);
     if (saveMatrixMode != GL_PROJECTION)
@@ -1031,7 +1024,6 @@ int myscreen (int)
     glTranslatef(-0.0225f, -0.018f, 0.0f);
     glScalef(0.075f, 0.075f, 0.2f);
   }
-#endif
 
   while (head != NULL) {
 
@@ -1047,14 +1039,12 @@ int myscreen (int)
     head = head->next;
   }
 
-#ifndef FLOW
   if (g_CRT_correction) {
     glScalef(13.333333f, 13.333333f, 5.0f);
     glTranslatef(0.0225f, 0.018f, 0.0f);
     if (saveMatrixMode != GL_PROJECTION) 
       glMatrixMode((GLenum) saveMatrixMode);
   }
-#endif
 
   return(0);
 }
@@ -1086,17 +1076,13 @@ int grabhand(void *data)
   size = (float *)data;
 
   glPushMatrix();
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
 
   glColor3f(0.0,1.0,0.0); 
   glScalef(*size * g_icon_scale, *size * g_icon_scale, *size * g_icon_scale);
   mycube();
 
-#ifndef FLOW
   glPopAttrib();
-#endif
 
   glPopMatrix();
   return(0);
@@ -1150,9 +1136,7 @@ int lighthand(void *data)
 
   glScalef(size * g_icon_scale, size * g_icon_scale, size * g_icon_scale);
 
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
 
   glColor3f(0.5,0.0,0.9); 
 
@@ -1270,10 +1254,7 @@ int lighthand(void *data)
     VERBOSE(20, "          glEnd()");
   glEnd();
   
-#ifndef FLOW
   glPopAttrib();
-#endif
-
   glPopMatrix();
   return(0);
 }
@@ -1285,19 +1266,14 @@ int selecthand(void *)
 
   glPushMatrix();
 
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
   glRotated(90.0, 0.0, 1.0, 0.0);	//Yes, this is necessary.
 
   glColor3f(0.0,0.0,1.0); 
   //glScalef(size * g_icon_scale, size * g_icon_scale, size * g_icon_scale);
   glCallList(vx_half_down);
 
-#ifndef FLOW
   glPopAttrib();
-#endif
-
   glPopMatrix();
   return(0);
 }
@@ -1499,17 +1475,13 @@ int mysphere(void * /*data*/ )
   //float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
 
        	glPushMatrix();
-#ifndef FLOW
 	glPushAttrib(GL_CURRENT_BIT);
-#endif
 	glColor3f(1.0,0.0,0.0);
         glTranslatef(sphere_x,sphere_y,sphere_z);
 	//the scaling is obtained from a tcl slider
 	glScalef(g_sphere_scale, g_sphere_scale, g_sphere_scale);
         glCallList(sphere);
-#ifndef FLOW
 	glPopAttrib();
-#endif
 	glPopMatrix();
 
 	return(0);
@@ -1530,9 +1502,7 @@ int Tip(void *data)
 	glRotatef(-90.0, 0.0,1.0,0.0); // XXX HACK!!! (or was it wrong before!?)
 
 
-#ifndef FLOW
 	glPushAttrib(GL_CURRENT_BIT);
-#endif
 
 	glColor3f(0.0,0.0,1.0);
 	glScalef(handlescale * g_icon_scale,
@@ -1557,10 +1527,7 @@ int Tip(void *data)
         VERBOSE(20, "          glEnd()");
 	glEnd();
 
-#ifndef FLOW
 	glPopAttrib();
-#endif
-
 	glPopMatrix();
 
 	return(0);
@@ -1597,9 +1564,7 @@ int TrueTip (void *)
 
 	glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
 
-#ifndef FLOW
 	glPushAttrib(GL_CURRENT_BIT);
-#endif
 
 	glColor3f(0.8f, 0.0f, 0.4f);
 	glScalef(g_trueTipScale * handlescale * g_icon_scale,
@@ -1626,10 +1591,7 @@ int TrueTip (void *)
         VERBOSE(20, "          glEnd()");
 	glEnd();
 
-#ifndef FLOW
 	glPopAttrib();
-#endif
-
 	glPopMatrix();
 
 	return 0;
@@ -1649,9 +1611,7 @@ int measure_hand(void *data)
   color = (int *)data;
 
   glPushMatrix();
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
  
   if( *color==RED) {
     glColor3f(1.0,0.2,0.2);   //red
@@ -1722,9 +1682,7 @@ int measure_hand(void *data)
       glVertex3f(1.0,1.0,1.0);
       VERBOSE(20, "          glEnd()");
   glEnd();
-#ifndef FLOW
   glPopAttrib();
-#endif 
   glPopMatrix();
   return(0);
 }
@@ -1741,18 +1699,14 @@ int vx_down_icon(void *data)
 {  
 	data = data;	// Keep the compiler happy
 
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
   glPushMatrix();
   glColor3f(1.0,0.0,0.0);
     glCallList(vx_half_down);
     glRotatef(180.0, 0.0,0.0,1.0);
     glCallList(vx_half_down);
   glPopMatrix();
-#ifndef FLOW
   glPopAttrib();
-#endif 
 
   return(0);
 }	/* vx_down_icon */
@@ -1763,18 +1717,14 @@ int vx_up_icon(void *data)
 {
 	data = data;	// Keep the compiler happy
 
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
   glPushMatrix();
   glColor3f(0.0,1.0,0.0);
     glCallList(vx_half_up);
     glRotatef(180.0, 0.0,0.0,1.0);
     glCallList(vx_half_up);
   glPopMatrix();
-#ifndef FLOW
   glPopAttrib();
-#endif 
 
   return(0);
 }	/* vx_up_icon */
@@ -1798,9 +1748,7 @@ int draw_north_pointing_arrow (void *)
 		z_value = 0.0f;
 	}
 		
-#ifndef FLOW
 	glPushAttrib(GL_CURRENT_BIT);
-#endif
 	glPushMatrix();
 	glColor3f(1.0,0.0,0.0);
 	glTranslatef( g_inputGrid->minX() + x_wide/2.0,
@@ -1809,9 +1757,7 @@ int draw_north_pointing_arrow (void *)
 	glScalef(scale, scale, scale);
 	big_flat_arrow(); 
 	glPopMatrix();
-#ifndef FLOW
 	glPopAttrib();
-#endif
 	return(0);
 }	/* draw_north_pointing_arrow */
 
@@ -1821,16 +1767,12 @@ int my_line_mark(void *data)
     float *a = (float *)(data);  // extract endpoints of line
     float *b = (&(a[3]));
 
-#ifndef FLOW
-  glPushAttrib(GL_CURRENT_BIT);
-#endif
+    glPushAttrib(GL_CURRENT_BIT);
     glColor3f(0.0,0.9,0.9);
     glLineWidth(2.0);
     make_line(a,b);
     glLineWidth(1.0);
-#ifndef FLOW
     glPopAttrib();
-#endif 
     
     return(0);
 }
@@ -1839,17 +1781,13 @@ int my_3d_point_marker(void *data) {
 
   data = data;
   glPushMatrix();
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
   glColor3f(0.0,1.0,0.0);
   glTranslatef(sphere_x,sphere_y,sphere_z);
   //the scaling is obtained from a tcl slider
   glScalef(g_sphere_scale, g_sphere_scale, g_sphere_scale);
   glCallList(sphere);
-#ifndef FLOW
   glPopAttrib();
-#endif
   glPopMatrix();
   return(0);
 }
@@ -1898,9 +1836,7 @@ int my_rubber_line(void * data)
     z_range = z_max - z_min;
 
     // Now we draw some lines - 7 horizontal lines.
-#ifndef FLOW
     glPushAttrib(GL_CURRENT_BIT);
-#endif
     glColor3f(0.0,0.9,0.9);
 
     a[2]=z_min;
@@ -1925,9 +1861,7 @@ int my_rubber_line(void * data)
     b[2]=z_max;
     make_line(a,b);
 
-#ifndef FLOW
     glPopAttrib();
-#endif 
     return(0);
 
 }
@@ -1972,9 +1906,7 @@ int my_scanline_indicator(void *data) {
 	b[i][2] = p0[2]*r0 + p1[2]*r1;
     }
 
-#ifndef FLOW
     glPushAttrib(GL_CURRENT_BIT);
-#endif
     glColor3f(0.0,0.9,0.9);
     glLineWidth(2.0);
     // XXX - hack to get line to look nice since it doesn't exactly
@@ -1998,9 +1930,7 @@ int my_scanline_indicator(void *data) {
     make_line(a[NUM_SCANLINE_INDICATOR_POINTS-1],
 		b[NUM_SCANLINE_INDICATOR_POINTS-1]);
     //glEnable(GL_DEPTH_TEST);
-#ifndef FLOW
     glPopAttrib();
-#endif
     return(0);
 }
 

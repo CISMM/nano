@@ -70,8 +70,6 @@
 // Make the mouse behave like the Phantom. 
 #include "vrpn_MousePhantom.h"
 
-// MOVED #ifdef FLOW includes and declarations to graphics.C
-
 int x_init(char* argv[]);
 //  int stm_init (const vrpn_bool, const vrpn_bool, const vrpn_bool,
 //                const int, const char *, const int, const int);
@@ -82,19 +80,6 @@ extern int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM);
 
 // Added by Michele Clark 6/2/97
 unsigned long inet_addr();
-
-/*
-Don't think we need this anymore (AAS 8/17/00)
-#ifdef FLOW
-  extern int sdi_start_server(char *, char *, char *);
-  extern int sdi_connect_to_device(char *);
-#else
-  #ifdef __cplusplus
-     extern "C" int sdi_start_server(char *, char *, char *);
-     extern "C" int sdi_connect_to_device(char *);
-  #endif
-#endif
-*/
 
 #define NANO_FONT	(34)
 

@@ -37,13 +37,7 @@
 #define	STREAM_DUP_STATE_LISTENING	(1)
 #define	STREAM_DUP_STATE_CONNECTED	(2)
 
-#ifdef FLOW
-  extern int sdi_noint_select(int nfds, fd_set *readfds,
-		 fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
-  extern int sdi_noint_block_write(int outfile, char buffer[], int length);
-  extern int sdi_noint_block_read(int infile, char buffer[], int length);
-#else
-  #ifdef __cplusplus
+#ifdef __cplusplus
      extern "C" int sdi_noint_select(int nfds, fd_set *readfds,
 		 fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
      extern "C" int sdi_noint_block_write(int outfile, char buffer[], int length);
@@ -51,7 +45,6 @@
      #ifdef _WIN32
         extern "C" int sdi_noint_block_file_read(int infile, char buffer[], int length);
      #endif
-  #endif
 #endif
 
 /*	This routine creates a stream for writing and returns a pointer

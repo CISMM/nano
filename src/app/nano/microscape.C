@@ -170,11 +170,11 @@ static imported_obj_list* object_list = NULL;
 
 // need to cast away constness
 
-#if defined(FLOW) || defined(linux) || defined(sgi) || defined(hpux) || defined(__CYGWIN__) || defined(_WIN32)
+#if defined(linux) || defined(sgi) || defined(hpux) || defined(__CYGWIN__) || defined(_WIN32)
 # define UGLYCAST (double *)
 #else
 # define UGLYCAST
-#endif  // not FLOW || linux || sgi || hpux || __CYGWIN__
+#endif  // linux || sgi || hpux || __CYGWIN__
 
 #if (!defined(X) || !defined(Y) || !defined(Z))
 #define	X	(0)
@@ -1251,17 +1251,6 @@ static int vec_cmp (const q_vec_type a, const q_vec_type b);
 //static void guessAdhesionNames (void);
 void guessAdhesionNames (nmb_Dataset * dset);
 
-/*
-don't think we need this anymore AAS 8/17/00
-#ifdef FLOW
-   extern int sdi_disconnect_from_device(int);
-#else
-  #ifdef __cplusplus
-     extern "C" int sdi_disconnect_from_device(int);
-  #endif
-#endif
-*/
-    
 // REMOTERENDERING
 nmb_TimerList graphicsTimer;
 nmb_TimerList collaborationTimer;
@@ -4931,13 +4920,6 @@ void ParseArgs (int argc, char ** argv,
   Tcl_FindExecutable(argv[0]);
 
 
-#ifdef FLOW
-    // vlib needs special arguments for pxfl. pass them as 
-    // env. var. PXFL_ARGS
-    char pxflArgs [256] = "PXFL_ARGS=";
-    //fprintf(stderr,"ParseArgs:  pxfl_Args %s\n", pxflArgs);
-#endif 
-
     i = 1;
     while (i < argc) {
         //fprintf(stderr,"ParseArgs:  arg %i %s\n", i, argv[i]);
@@ -5361,32 +5343,6 @@ void ParseArgs (int argc, char ** argv,
         istate->socketType = SOCKET_UDP;
  
 
-#ifdef FLOW
-      } else if ( (strcmp(argv[i], "-b") == 0) ||
-                  (strcmp(argv[i], "-w") == 0) ||
-                  (strcmp(argv[i], "-h") == 0) ||
-                  (strcmp(argv[i], "-x") == 0) ||
-                  (strcmp(argv[i], "-y") == 0) ||
-                  (strcmp(argv[i], "-c") == 0) ||
-                  (strcmp(argv[i], "-g") == 0) ||
-                  (strcmp(argv[i], "-s") == 0) ||
-                  // same as microscape
-                  //            (strcmp(argv[i], "-f") == 0) ||
-                  (strcmp(argv[i], "-o") == 0) ||
-                  (strcmp(argv[i], "-v") == 0) ||
-                  (strcmp(argv[i], "-l") == 0) ||
-                  (strcmp(argv[i], "-p") == 0) ||
-                  (strcmp(argv[i], "-S") == 0) ||
-                  (strcmp(argv[i], "-m") == 0) ||
-                  (strcmp(argv[i], "-C") == 0) ||
-                  (strcmp(argv[i], "-H") == 0) ) {
-        strcat(pxflArgs, " ");
-        strcat(pxflArgs, argv[i]);
-        strcat(pxflArgs, " ");
-        strcat(pxflArgs, argv[++i]);
-        fprintf(stderr, "parsing args: pxfl Args %s\n",pxflArgs);
-#endif
-        
       } else if (argv[i][0] == '-') {
           // Unknown argument starting with "-"
           Usage(argv[0]);
@@ -6638,7 +6594,7 @@ int main (int argc, char* argv[])
     // initialize graphics
     VERBOSE(1, "Before X display initialization");
     if (glenable) {
-#if !defined(FLOW) && !defined(V_GLUT)  /* don't use with glut or PixelFlow */
+#if !defined(V_GLUT)  /* don't use with glut  */
 	/*INITIALIZE EVENT MASK FOR VLIB WINDOW -- DCR Sept 29, 1997*/
 	XSelectInput(VLIB_dpy,VLIB_win,ResizeRedirectMask);
 #elif defined(V_GLUT)
@@ -6669,7 +6625,7 @@ int main (int argc, char* argv[])
 #endif
 
 
-#if !defined(FLOW) && !defined(V_GLUT)
+#if !defined(V_GLUT)
 	if( (VLIB_dpy == NULL) || ((void*)VLIB_win == NULL) ) {
 	  //printf("VLIB display vars=NULL no virtual arm\n");	
 	}
@@ -7697,7 +7653,7 @@ static float testarray [1000];
   static double wanted_x = -2;
   static double wanted_y = -1;
   
-#if !defined(FLOW) && !defined(V_GLUT)
+#if !defined(V_GLUT)
   static float startx, starty;
   static v_xform_type shadowxform,modxform;
   static int mode=M_NULL;
@@ -8047,9 +8003,9 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
   }
   else if(xenable){
 
-#endif /* !defined(FLOW) && !defined(V_GLUT) */
+#endif /* !defined(V_GLUT) */
 
-#if defined(FLOW) || defined(V_GLUT)
+#if defined(V_GLUT)
     if(xenable){
 #endif
 

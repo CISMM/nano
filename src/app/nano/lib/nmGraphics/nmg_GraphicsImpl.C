@@ -88,11 +88,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
         strcpy(g_heightPlaneName, data->heightPlaneName->string());
     }
 
-#ifdef FLOW
-    g_data_tex_size = max(grid_size_x, grid_size_y);
-    g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
-#endif
-
     /* initialize graphics  */
     //printf("Initializing graphics...\n");
 
@@ -489,18 +484,6 @@ nmg_Graphics_Implementation::~nmg_Graphics_Implementation (void) {
   for (i = 0; i < NUM_USERS; i++)
     v_close_display(d_displayIndexList[i]);
 
-#ifdef FLOW
-  // free the dynamic memory allocated for date textures
-  if (bump_data) {
-    delete [] bump_data;
-  }
-  if (pattern_data) {
-    delete [] pattern_data;
-  }
-  if (hatch_data) {
-    delete [] hatch_data;
-  }
-#endif
 /*
   if (sem_data) {
     delete [] sem_data;
@@ -573,11 +556,6 @@ void nmg_Graphics_Implementation::changeDataset( nmb_Dataset * data)
   strcpy(g_colorPlaneName, data->colorPlaneName->string());
   strcpy(g_contourPlaneName, data->contourPlaneName->string());
   strcpy(g_heightPlaneName, data->heightPlaneName->string());
-
-#ifdef FLOW
-    g_data_tex_size = max(grid_size_x, grid_size_y);
-    g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
-#endif
 
     causeGridRebuild();
  
@@ -747,18 +725,6 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 
-#ifdef  FLOW
-  /**********************-_________________________
-    glTexImage2D(GL_TEXTURE_2D, 0, 4,
-                 texture_size, texture_size,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                 (const GLvoid*)texture);
-    if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error making ruler texture.\n");
-    }
-_______________________________********************/
-#endif
-
 #if defined(sgi) || defined(_WIN32)
   // Build the texture map and set the mode for 2D textures
   if (gluBuild2DMipmaps(GL_TEXTURE_2D,4, texture_size, texture_size,
@@ -884,62 +850,6 @@ void nmg_Graphics_Implementation::setBumpMapName (const char * /*name*/)
 {
 //fprintf(stderr, "nmg_Graphics_Implementation::setBumpMapName().\n");
 
-#ifdef FLOW
-  BCPlane * plane = g_inputGrid->getPlaneByName(name);
-
-  double value;
-  GLubyte c;
-  int x, y;
-
-  // make sure gl calls are directed to the right context
-  v_gl_set_context_to_vlib_window();
-
-  if (plane) {
-    setTextureMode(BUMPMAP, RULERGRID_COORD);
-
-    for (x = 0; x < plane->numX(); x++)
-      for (y = 0; y < plane->numY(); y++) {
-        value = (plane->value(x, y) - g_friction_slider_min) /
-                 (g_friction_slider_max - g_friction_slider_min);
-        value = min(1.0, value);
-        value = max(0.0, value);
-        c = (GLubyte)((int) (value * 255.0 + 0.5));
-
-        bump_data[(y * g_data_tex_size + x) * 3] = (GLubyte) c;
-        bump_data[(y * g_data_tex_size + x) * 3 + 1] = (GLubyte) c;
-        bump_data[(y * g_data_tex_size + x) * 3 + 2] = (GLubyte) c;
-      }
-
-    shader_mask = shader_mask | BUMP_BIT;
-
-    // bind active mask
-    glBoundMaterialiEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("active_mask"),
-                        shader_mask);
-
-    glBindTexture(GL_TEXTURE_2D, shader_tex_ids[BUMP_DATA_TEX_ID]);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size,
-                 0, GL_RGB, GL_BYTE, (const GLvoid *) bump_data);
-  } else {
-    for(x = 0; x < g_data_tex_size; x++)
-      for(y = 0; y < g_data_tex_size; y++) {
-        bump_data[(y * g_data_tex_size + x) * 3] = (GLubyte) 0;
-        bump_data[(y * g_data_tex_size + x) * 3 + 1] = (GLubyte) 0;
-        bump_data[(y * g_data_tex_size + x) * 3 + 2] = (GLubyte) 0;
-      }
-    shader_mask = shader_mask & (~BUMP_BIT);
-
-    // bind active mask
-    glBoundMaterialiEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("active_mask"),
-                        shader_mask);
-
-    glBindTexture(GL_TEXTURE_2D, shader_tex_ids[BUMP_DATA_TEX_ID]);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
-                 GL_RGB, GL_BYTE, (const GLvoid *) bump_data);
-  }
-
-#endif
 
 }
 
@@ -1003,7 +913,7 @@ void nmg_Graphics_Implementation::setDataColorMinMax (float low, float high) {
 void nmg_Graphics_Implementation::setOpacitySliderRange (float low, float high) {
   g_opacity_slider_min = low;
   g_opacity_slider_max = high;
-  causeGridRedraw();
+  causeGridReColor();
 }
 
 void nmg_Graphics_Implementation::setComplianceSliderRange (float low, float high) {
@@ -1084,62 +994,6 @@ void nmg_Graphics_Implementation::setHatchMapName (const char * /*name*/)
 {
 //fprintf(stderr, "nmg_Graphics_Implementation::setHatchMapName().\n");
 
-#ifdef FLOW
-  BCPlane * plane = g_inputGrid->getPlaneByName(name);
-
-  double value;
-  GLubyte c;
-  int x, y;
-
-  // make sure gl calls are directed to the right context
-  v_gl_set_context_to_vlib_window();
-
-  if (plane) {
-    setTextureMode(HATCHMAP, RULERGRID_COORD);
-
-    for (x = 0; x < plane->numX(); x++)
-      for (y = 0; y < plane->numY(); y++) {
-        value = (plane->value(x, y) - g_adhesion_slider_min) /
-                 (g_adhesion_slider_max - g_adhesion_slider_min);
-        value = min(1.0, value);
-        value = max(0.0, value);
-        c = (GLubyte)((int) (value * 255.0 + 0.5));
-
-        hatch_data[(y * g_data_tex_size + x) * 3] = (GLubyte) c;
-        hatch_data[(y * g_data_tex_size + x) * 3 + 1] = (GLubyte) c;
-        hatch_data[(y * g_data_tex_size + x) * 3 + 2] = (GLubyte) c;
-      }
-
-    shader_mask = shader_mask | HATCH_BIT;
-
-    // bind active mask
-    glBoundMaterialiEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("active_mask"),
-                        shader_mask);
-
-    glBindTexture(GL_TEXTURE_2D, shader_tex_ids[HATCH_DATA_TEX_ID]);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size,
-                 0, GL_RGB, GL_BYTE, (const GLvoid *) hatch_data);
-  } else {
-    for(x = 0; x < g_data_tex_size; x++)
-      for(y = 0; y < g_data_tex_size; y++) {
-        hatch_data[(y * g_data_tex_size + x) * 3] = (GLubyte) 0;
-        hatch_data[(y * g_data_tex_size + x) * 3 + 1] = (GLubyte) 0;
-        hatch_data[(y * g_data_tex_size + x) * 3 + 2] = (GLubyte) 0;
-      }
-    shader_mask = shader_mask & (~HATCH_BIT);
-
-    // bind active mask
-    glBoundMaterialiEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("active_mask"),
-                        shader_mask);
-
-    glBindTexture(GL_TEXTURE_2D, shader_tex_ids[HATCH_DATA_TEX_ID]);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
-                 GL_RGB, GL_BYTE, (const GLvoid *) hatch_data);
-  }
-
-#endif  // FLOW
 
 }
 
@@ -1226,64 +1080,6 @@ void nmg_Graphics_Implementation::setPatternMapName (const char * /*name*/)
 {
 //fprintf(stderr, "nmg_Graphics_Implementation::setPatternMapName().\n");
 
-#ifdef FLOW
-  BCPlane * plane = g_inputGrid->getPlaneByName(name);
-
-  GLubyte c;
-  double value;
-  int x, y;
-
-  // make sure gl calls are directed to the right context
-  v_gl_set_context_to_vlib_window();
-
-  if (plane) {
-    setTextureMode(PATTERNMAP, RULERGRID_COORD);
-    for (x = 0; x < plane->numX(); x++)
-      for (y = 0; y < plane->numY(); y++) {
-        value = (plane->value(x, y) - g_alpha_slider_min) /
-                (g_alpha_slider_max - g_alpha_slider_min);
-        value = min(1.0, value);
-        value = max(0.0, value);
-        c = (GLubyte) ((int) (value * 255.0 + 0.5));
-
-        pattern_data[(y * g_data_tex_size + x) * 3] = c;
-        pattern_data[(y * g_data_tex_size + x) * 3 + 1] = c;
-        pattern_data[(y * g_data_tex_size + x) * 3 + 2] = c;
-      }
-
-    shader_mask |= PATTERN_BIT;
-
-    // bind active mask
-
-    glBoundMaterialiEXT(nM_shader,
-                 glGetMaterialParameterNameEXT("active_mask"),
-                 shader_mask);
-
-    glBindTexture(GL_TEXTURE_2D, shader_tex_ids[PATTERN_DATA_TEX_ID]);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size,
-                 0, GL_RGB, GL_BYTE, (const GLvoid *) pattern_data);
-  } else {
-    for (x = 0; x < g_data_tex_size; x++)
-      for (y = 0; y < g_data_tex_size; y++) {
-        pattern_data[(y * g_data_tex_size + x) * 3] = 0;
-        pattern_data[(y * g_data_tex_size + x) * 3 + 1] = 255;
-        pattern_data[(y * g_data_tex_size + x) * 3 + 2] = 0;
-      }
-
-    shader_mask &= (~PATTERN_BIT);
-
-    glBoundMaterialiEXT(nM_shader,
-                 glGetMaterialParameterNameEXT("active_mask"),
-                 shader_mask);
-
-    glBindTexture(GL_TEXTURE_2D, shader_tex_ids[PATTERN_DATA_TEX_ID]);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size,
-                 0, GL_RGB, GL_BYTE, (const GLvoid *) pattern_data);
-  }
-
-#endif  // FLOW
-
-  causeGridRedraw();
 }
 
 //
@@ -1567,11 +1363,9 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
                    g_tex_installed_width[COLORMAP_TEX_ID], 
                    g_tex_installed_height[COLORMAP_TEX_ID],
 	       0, GL_RGBA, GL_FLOAT, realign_data);
- #ifndef FLOW
   if (glGetError()!=GL_NO_ERROR) {
     printf(" Error making realign texture.\n");
   }
- #endif
 #endif
 #endif
 */
@@ -1966,66 +1760,10 @@ void nmg_Graphics_Implementation::initializeTextures(void)
 
   glGenTextures(N_TEX, tex_ids);
 
-#ifdef FLOW
-  glGenTextures(N_SHADER_TEX, shader_tex_ids);
-
-  PPMImageRec *image = new PPMImageRec;
-
-  // initialize pattern texture
-  glBindTexture(GL_TEXTURE_2D, shader_tex_ids[PATTERN_TEX_ID]);
-  // Load textures from the specified directory.
-  sprintf(filename,"%schecker", g_textureDir);
-  PPMImageLoad(image, filename);
-  glTexImage2D(GL_TEXTURE_2D, 0, 3, image->width, image->height, 0,
-               GL_RGB, GL_BYTE, (const GLvoid *)image->data);
-
-  // initialize bump texture
-  glBindTexture(GL_TEXTURE_2D, shader_tex_ids[BUMP_TEX_ID]);
-  sprintf(filename,"%sstripes-bump", g_textureDir);
-  PPMImageLoad(image, filename);
-  glTexImage2D(GL_TEXTURE_2D, 0, 3, image->width, image->height, 0,
-               GL_RGB, GL_BYTE, (const GLvoid *)image->data);
-
-  glBindTexture(GL_TEXTURE_2D, shader_tex_ids[HATCH_NOISE_TEX_ID]);
-  sprintf(filename,"%suniform_noise2", g_textureDir);
-  PPMImageLoad(image, filename);
-  glTexImage2D(GL_TEXTURE_2D, 0, 3, image->width, image->height, 0,
-               GL_RGB, GL_BYTE, (const GLvoid *)image->data);
-  spotnoise_tex_size = min(image->width, image->height);
-
-  PPMImageDelete(image);
-
-  // initiailize bump data
-  //bump_data = new GLuint [g_data_tex_size * g_data_tex_size * 3];
-  bump_data = new GLubyte [g_data_tex_size * g_data_tex_size * 3];
-  for (i = 0; i < g_data_tex_size * g_data_tex_size * 3; i++)
-    bump_data[i] = 0;
-  glBindTexture(GL_TEXTURE_2D, shader_tex_ids[BUMP_DATA_TEX_ID]);
-  glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
-               GL_RGB, GL_BYTE, (const GLvoid *)bump_data);
-
-  // initialize pattern data
-  //pattern_data = new GLuint [g_data_tex_size * g_data_tex_size * 3];
-  pattern_data = new GLubyte [g_data_tex_size * g_data_tex_size * 3];
-  for (i = 0; i < g_data_tex_size * g_data_tex_size * 3; i++)
-    pattern_data[i] = 0;
-  glBindTexture(GL_TEXTURE_2D, shader_tex_ids[PATTERN_DATA_TEX_ID]);
-  glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
-               GL_RGB, GL_BYTE, (const GLvoid *)pattern_data)
-
-  // initialize hatch data
-  //hatch_data = new GLuint [g_data_tex_size * g_data_tex_size * 3];
-  hatch_data = new GLubyte [g_data_tex_size * g_data_tex_size * 3];
-  for (i = 0; i < g_data_tex_size * g_data_tex_size * 3; i++)
-    hatch_data[i] = 0;
-  glBindTexture(GL_TEXTURE_2D, shader_tex_ids[HATCH_DATA_TEX_ID]);
-  glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
-               GL_RGB, GL_BYTE, (const GLvoid *)hatch_data);
-#endif
 
   buildContourTexture();
 
-#if defined(sgi) || defined(FLOW) || defined(_WIN32)
+#if defined(sgi) || defined(_WIN32)
   //fprintf(stderr, "Initializing checkerboard texture.\n");
   makeCheckImage();
   buildAlphaTexture();
@@ -2308,7 +2046,7 @@ void nmg_Graphics_Implementation::setRulergridOffset (float x, float y) {
 
 void nmg_Graphics_Implementation::setNullDataAlphaToggle( int v ) {
   g_null_data_alpha_toggle = v;
-  causeGridRedraw();
+  causeGridReColor();
 }
 
 void nmg_Graphics_Implementation::setRulergridOpacity (float alpha) {
@@ -2393,11 +2131,6 @@ void nmg_Graphics_Implementation::setTesselationStride (int s) {
 void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
 	TextureTransformMode xm) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setTextureMode().\n");
-
-// on FLOW, do we need to not change out of TEXTURE_2D?
-#ifdef FLOW
-  m = RULERGRID;
-#endif
 
   switch (m) {
 
@@ -3687,11 +3420,9 @@ int nmg_Graphics_Implementation::genetic_textures_ready( void *p ) {
   //   glBindTexture( GL_TEXTURE_2D, &texName );
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
 	       512, 512, 0, GL_RGB, GL_FLOAT, it->gaRemote->data[0]);
- #ifndef FLOW
   if (glGetError()!=GL_NO_ERROR) {
     printf(" Error making genetic texture.\n");
   }
- #endif
 #endif
 
   return 0;

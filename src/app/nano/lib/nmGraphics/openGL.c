@@ -52,9 +52,7 @@
 /*Globals*/
 extern int	do_y_fastest;		/* Tells which direction to scan in */
 extern int	do_raster;	      /* Raster (vs. Boustrophedonic) scan? */
-#ifndef FLOW
 extern int setup_lighting(int);
-#endif
 
 #ifdef MIN
   #undef MIN
@@ -67,11 +65,7 @@ extern int setup_lighting(int);
 
 int	display_lists_in_x = 1;	/* Are display lists strips in X? */
 
-#ifdef FLOW
-  #define VERBOSECHECK(level)	if (spm_graphics_verbosity >= level) ;
-#else
   #define VERBOSECHECK(level)	if (spm_graphics_verbosity >= level) report_gl_errors();
-#endif
 
 // Define EXPENSIVE_DISPLAY_LISTS if recomputing display lists is very
 // expensive on the current architecture (but you still want to use them).
@@ -187,12 +181,13 @@ int build_list_set
 #if defined(sgi) || defined(_WIN32)
 //#if defined(sgi)
   if (g_VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
-    if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE ||
-        g_null_data_alpha_toggle) {
+      // Always enable surface colors (right?!?)
+//      if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE ||
+//          g_null_data_alpha_toggle) {
       glEnable(GL_COLOR_ARRAY_EXT);
-    } else {
-      glDisable(GL_COLOR_ARRAY_EXT);
-    }
+//      } else {
+//        glDisable(GL_COLOR_ARRAY_EXT);
+//      }
     if (glGetError()!=GL_NO_ERROR) {
       printf(" Error setting GL_COLOR_ARRAY_EXT.\n");
     }
@@ -825,21 +820,6 @@ int draw_world (int) {
       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
                          g_tex_blend_func[ALPHA_3D_TEX_ID]);
 #endif
-    case nmg_Graphics::BUMPMAP:
-#ifdef FLOW
-      glBindTexture(GL_TEXTURE_2D, shader_tex_ids[BUMP_DATA_TEX_ID]);
-#endif
-      break;
-    case nmg_Graphics::HATCHMAP:
-#ifdef FLOW
-      glBindTexture(GL_TEXTURE_2D, shader_tex_ids[HATCH_DATA_TEX_ID]);
-#endif
-      break;
-    case nmg_Graphics::PATTERNMAP:
-#ifdef FLOW
-      glBindTexture(GL_TEXTURE_2D, shader_tex_ids[PATTERN_DATA_TEX_ID]);
-#endif
-      break;
     case nmg_Graphics::RULERGRID:
       glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
@@ -1109,10 +1089,8 @@ int draw_world (int) {
     g_position_collab_hand = 0;
   }	
 
-#ifndef FLOW  
   /* Draw the light */
   setup_lighting(0);
-#endif
 
   // Set the lighting model for the measurement things
   VERBOSECHECK(4);
@@ -1139,10 +1117,7 @@ int draw_world (int) {
   /***************************/
   /* Check for any GL errors */
   /***************************/
-
-#ifndef FLOW
   report_gl_errors();
-#endif
 
   TIMERVERBOSE(3, mytimer, "end draw_world");
 

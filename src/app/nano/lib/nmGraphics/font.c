@@ -183,12 +183,7 @@ int loadFont (const char * filename)
 		}
 		for (i = 32; i < 127; i++) {
 		    glNewList(i+fontOffset, GL_COMPILE);
-#ifndef FLOW
-// XXX This causes a "Stray signal 15" message in the pxglnode logfile,
-//     while running with pbase.  Need to check with PxFl group if
-//     glBitmap() is currently supported.   (by C.Chang 3/20/96)
-			glBitmap(8, 13, 0.0, 2.0, getFontWidth(), 0.0, rasters[i-32]);
-#endif
+                    glBitmap(8, 13, 0.0, 2.0, getFontWidth(), 0.0, rasters[i-32]);
 		    glEndList();
 		}
 	}
@@ -198,17 +193,14 @@ int loadFont (const char * filename)
 
 void drawStringInFont (int fontOffset, const char * s) {
 
-#ifndef FLOW
     glPushAttrib(GL_LIST_BIT);
     if (spm_graphics_verbosity >= 14)
       fprintf(stderr, "drawStringInFont setting list base to %d.\n",
               fontOffset);
-#endif
 
     glListBase(fontOffset);
     glCallLists(strlen(s), GL_UNSIGNED_BYTE, (GLubyte *) s);
 
-#ifndef FLOW
     glPopAttrib ();
 
     if (spm_graphics_verbosity >= 14) {
@@ -217,7 +209,6 @@ void drawStringInFont (int fontOffset, const char * s) {
       fprintf(stderr, "drawStringInFont popped state "
                       "to restore list base %d.\n", i);
     }
-#endif
 
 }
 

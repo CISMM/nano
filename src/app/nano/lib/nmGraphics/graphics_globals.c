@@ -218,54 +218,6 @@ char g_contourPlaneName [128];
 char g_heightPlaneName [128];
 char g_opacityPlaneName [128];
 
-#ifdef FLOW
-
-int g_data_tex_size;
-
-  // shaders
-  GLuint nM_shader;
-  GLuint nM_diffuse;     // just shows the diffuse color shader
-
-  // texture id for shaders
-  GLuint shader_tex_ids[N_SHADER_TEX];
-
-  // data set values
-  GLubyte *pattern_data;  // g_data_tex_size * g_data_tex_size * 3
-  GLubyte *hatch_data;    // g_data_tex_size * g_data_tex_size * 3
-  GLubyte *bump_data;     // g_data_tex_size * g_data_tex_size * 3
-
-  // which shader to turn on
-  unsigned char shader_mask = NO_SHADER;
-
-  // for time-varying phenomena
-  float px_framenum = 1.0;
-
-  //=====Bump Shader=====
-  float bumpiness = 1.0;          // max amount of bumpiness
-  float bump_pulserate = 0.0;   // bump pulse rate
-  float bump_scale = 1.0;       // scale of bump texture
-
-  //=====Pattern Blend Shader=====
-  float pattern_blend = 1.0;     // max amount of blending
-  float pattern_color[3] = {0.995, 0.0, 0.0};  // color of the pattern to blend
-  float pattern_scale = 1.0;     // scale of the pattern texture
-  float pattern_pulserate = 0.0; // pattern pulse rate
-
-  //=====Spot Noise Shader=====
-  float spotnoise_tex_size = 256.0;  // spot noise texture size
-  float spot_pulserate = 0.0;        // spot noise pulse rate
-  float spot_blend = 1.0;            // max amont of spot noise to blend in
-  unsigned char whichspot = PLUS_X;  // which spot noise to use
-  float contrast = 2.5;              // to adjust contrast on noise functions
-  float rotate_amount = 75.0;        // amount to rotate the kernel
-  unsigned char swap_kernel = 0;   // switch kernels used for high and low data
-  unsigned char kernel_size = 9;   // size of the gaussian shaders
-  unsigned char dense = 1;         //sparse or dense noise
-  float wobblerate = 4.0;          // rate of wobbling for wobble_plus
-
-#endif
-
-
 // Local Variables:
 // mode:c++
 // End:

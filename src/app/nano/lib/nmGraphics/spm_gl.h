@@ -40,12 +40,6 @@ extern Vertex_Struct **vertexptr;
 extern  int     init_vertexArray(int x, int y);
 extern  void    specify_vertexArray(nmb_PlaneSelection plane, int i, int count);
 
-// pcfl shader ids
-#ifdef FLOW
-extern GLuint nM_diffuse;
-extern GLuint nM_shader;
-#endif
-
 extern	int	spm_x_strip (nmb_PlaneSelection planes,
 		GLdouble minColor [3], GLdouble maxColor [3], int which,
                 Vertex_Struct * vertexArray);

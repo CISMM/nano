@@ -21,7 +21,7 @@ extern int report_gl_errors(void);
 
 extern void post_handle_exportFileName_change(void);
 
-#if defined(FLOW) || defined (sgi) || defined(linux)
+#if defined (sgi) || defined(linux)
 	extern int draw_world (int);
 #else
 	extern "C" int draw_world(int);

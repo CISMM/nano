@@ -181,15 +181,11 @@ void MSIFile::BuildListMSI(GLuint dl){
     glColor3f(sphere_colorR,sphere_colorG,sphere_colorB);
     for (j=0;j<atom_count;j++){
       glPushMatrix();
-    #ifndef FLOW
       glPushAttrib(GL_CURRENT_BIT);
-    #endif
       glTranslatef(atomx[j],atomy[j],atomz[j]);
       glScalef(sphere_radius,sphere_radius,sphere_radius);
       glCallList(atom_dl); //Call the sphere's display list
-    #ifndef FLOW
       glPopAttrib();
-    #endif
       glPopMatrix();
     }
    glEndList();

@@ -355,39 +355,24 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
   Vertex[1]= (float) height_plane.yInWorld(y);
   Vertex[2]= (float) height_plane.valueInWorld(x, y);
 
-  vertexArrayPtr->Vertex[0] = Vertex[0];
-  vertexArrayPtr->Vertex[1] = Vertex[1];
-  vertexArrayPtr->Vertex[2] = Vertex[2];
+  vertexArray.Vertex[0] = Vertex[0];
+  vertexArray.Vertex[1] = Vertex[1];
+  vertexArray.Vertex[2] = Vertex[2];
 
 
-  /* Color the vertex according to its color parameter, if we have
-   * a color plane.  Clip the value mapped to color from 0 to 1.  */
+  // Phase 1: Color the vertex 
     if (g_PRERENDERED_TEXTURE) {
       // Do we need a flat white background to modulate the texture?
       Color[0] = 1.0f;
       Color[1] = 1.0f;
       Color[2] = 1.0f;
 
-      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
-          Color[3] = 0.0f;
-      }
-      else {
-          Color[3] = g_surface_alpha * 255;
-      }
     }
     else if (g_PRERENDERED_COLORS) {
       Color[0] = planes.red->value(x, y);
       Color[1] = planes.green->value(x, y);
       Color[2] = planes.blue->value(x, y);
 
-      if ( (g_null_data_alpha_toggle) && Vertex[2] == 0.0 ) {
-        Color[3] = 0.0f;
-      }
-      else {
-        Color[3] = g_surface_alpha * 255;
-      }
-        // XXX why do the other implementations cast this to a GLubyte
-        // before writing it into a float?
     }
     else if (planes.color) {
           // Get the data value
@@ -414,45 +399,50 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
           else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
       
           if (g_curColorMap) {    // Use the color map loaded from file
+              // a = alpha is ignored. 
               float r, g, b, a;
               g_curColorMap->lookup(data_value, &r, &g, &b, &a);
               Color[0] = r;
               Color[1] = g;
               Color[2] = b;
-              Color[3] = (GLubyte) (g_surface_alpha * 255);
-          }
-      
-          else {      // Use the CUSTOM color mapping tool
+          } else {      // Use the "none" color mapping tool
               for (i = 0; i < 3; i++) {
                   Color[i] = minColor[i] * data_value;
               }
-              if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
-                  Color[3] = (GLubyte) 0;
-              }
-              else {
-                  Color[3] = (GLubyte) (g_surface_alpha * 255);
-              }
           }
     }
-    else if (g_null_data_alpha_toggle) {
-        // No color plane, but need to set the alpha for the color.
-        // So, set the color to the default that was set in the
-        // set_surface_materials() call, and adjust alpha per-vertex
-        // to 0 if it is a zero (not filled in) height value.
-
+    else {
+        // No special color cases exists, so set the surface to a solid color.
         Color[0] = g_minColor[0];
         Color[1] = g_minColor[1];
         Color[2] = g_minColor[2];
+    }
+
+    // Set the alpha value for this vertex. 
+    if (planes.opacity) {
+        // A data plane determines the opacity value.
+        float opacity_value = (planes.opacity->value(x, y) 
+                               - g_opacity_slider_min) /
+            (g_opacity_slider_max - g_opacity_slider_min);
+        Color[3] = (GLubyte) min(255.0, opacity_value);
+    } else if (g_null_data_alpha_toggle) {
+        // Show zero (not filled in) height values as completely transparent. 
         if (Vertex[2] == 0.0)  {
             Color[3] =  0;
+        } else {
+            // Alpha of all vertices are determined by a widget, defaults
+            // to opaque. 
+            Color[3] = g_surface_alpha;
         }
-        else {
-            Color[3] = g_surface_alpha * 255;
-        }
+    } else {
+        // Alpha of all vertices are determined by a widget, defaults
+        // to opaque. 
+        Color[3] = g_surface_alpha;
     }
-    if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color ||
-        g_null_data_alpha_toggle) {
 
+    // Always specify a vertex color (right?!?)
+//      if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color ||
+//          g_null_data_alpha_toggle) {
         vertexArray.Color[0] = (GLubyte) (Color[0] * 255);
         vertexArray.Color[1] = (GLubyte) (Color[1] * 255);
         vertexArray.Color[2] = (GLubyte) (Color[2] * 255);
@@ -460,19 +450,10 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
         if (!g_VERTEX_ARRAY) {
             glColor4fv(Color);
         }
-    }
 
-    // XXX WRONG. This re-sets the color value again! Should be combined with g_null_data_alpha_toggle
-    if (planes.opacity) {
-      float opacity_value = (planes.opacity->value(x, y) - g_opacity_slider_min) /
-        (g_opacity_slider_max - g_opacity_slider_min);
-      vertexArray.Color[3] = (GLubyte) min(255.0, opacity_value);
-      if(!g_VERTEX_ARRAY) {
-          Color[3] = min(1.0, (opacity_value / 255.0));
-          glColor4fv(Color);
-      }
-    }
 
+
+    // Phase 2: Find the texture coordinates for the vertex. 
 
 #ifndef PROJECTIVE_TEXTURE
   // Realigning Textures, no need to recalculate  
@@ -564,17 +545,6 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     }
   }
 
-#ifdef  FLOW
-  // Define the texture coordinate for pxfl
-  {
-    GLfloat texcoord[2];
-    texcoord[0] = (GLfloat) x / g_data_tex_size; 
-    texcoord[1] = (GLfloat) y / g_data_tex_size;
-    glTexCoord2fv(texcoord);
-  }
-#endif
-  
-  
 #if defined(sgi)
   if (planes.alpha) {
     double value;
@@ -649,8 +619,8 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     }
     man_realign_coord[0]= (float) (x/512.0);
     man_realign_coord[1]= (float) (y/512.0);         
-    vertexArrayPtr->Texcoord[1]=  man_realign_coord[0];
-    vertexArrayPtr->Texcoord[2]=  man_realign_coord[1];
+    vertexArray.Texcoord[1]=  man_realign_coord[0];
+    vertexArray.Texcoord[2]=  man_realign_coord[1];
     if(!g_VERTEX_ARRAY) {
       glTexCoord2fv(man_realign_coord);
     }		
@@ -658,7 +628,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 #endif
 
 
-#if defined(sgi) || defined(_WIN32) || defined(FLOW)
+#if defined(sgi) || defined(_WIN32)
 
   if (g_PRERENDERED_TEXTURE) {
     GLfloat tc [2];
@@ -678,9 +648,9 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
   // "Just" color the surface - means specify color and textures, but
   // use the normals cached in the vertex array, and return.
     if (g_just_color) {
-      Normal[0] = float( vertexArrayPtr->Normal[0] )/32767;
-      Normal[1] = float( vertexArrayPtr->Normal[1] )/32767;
-      Normal[2] = float( vertexArrayPtr->Normal[2] )/32767;
+      Normal[0] = float( vertexArray.Normal[0] )/32767;
+      Normal[1] = float( vertexArray.Normal[1] )/32767;
+      Normal[2] = float( vertexArray.Normal[2] )/32767;
 
       if (!g_VERTEX_ARRAY) {
         glNormal3fv(Normal);
@@ -691,7 +661,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
       return 0;
     }
 
-    /* Find the normal for the vertex */
+    // Phase 3: Find the normal for the vertex 
     // Using prerendered colors (and no lighting), we don't need normals
     if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
       if (stm_compute_plane_normal(planes.height, x,y,
@@ -711,12 +681,12 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
       }
     }
 
-  /* Specify the already-computed vertex */
-  if(!g_VERTEX_ARRAY) {
-    glVertex3fv(Vertex);
-  }
-  
-  return(0);
+    /* Specify the already-computed vertex */
+    if(!g_VERTEX_ARRAY) {
+        glVertex3fv(Vertex);
+    }
+    
+    return(0);
 }
 
         
@@ -893,10 +863,6 @@ void    spm_set_surface_materials(void)
 	glEnable(GL_COLOR_MATERIAL);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
-#ifdef FLOW
-    glShaderEXT(nM_shader);
-#endif
-
 	// Set up the specular characteristics.
 	// Note that the ambient and diffuse colors are from the vertices.
 	// NOTE: It is important that back is set first because front/back
@@ -980,9 +946,6 @@ void    spm_set_icon_materials(void)
 	/* Use local vertex color for ambient and diffuse */
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glEnable(GL_COLOR_MATERIAL);
-#ifdef FLOW
-    glShaderEXT(nM_diffuse);
-#endif
 
 	// Set up the specular characteristics.
 	// Note that the ambient and diffuse colors are from the vertices.
@@ -1033,10 +996,6 @@ void    spm_set_measure_materials(void)
         glDisable(GL_BLEND);
      
 	TIMERVERBOSE(7, mytimer, "spm_set_measure_materials:end glEnable(GL_COLOR_MATERIAL)");
-
-#ifdef FLOW
-        glShaderEXT(nM_diffuse);
-#endif
 
 	// Set up the specular characteristics.
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, dark);

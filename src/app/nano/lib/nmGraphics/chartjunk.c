@@ -120,9 +120,7 @@ int scale_display (void * data) {
   size = (float *) data;
 
   char *message = NULL;
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
   glPushMatrix();
 
   glColor3f(1.0f, 1.0f, 1.0f);
@@ -153,16 +151,12 @@ int scale_display (void * data) {
       }
   }
   glRasterPos3f(0.0f, 0.0f, 0.0f);
-#ifndef FLOW
   if (message != NULL) {
     drawStringInFont(myfont, message);
     delete [] message;
   }
-#endif
   glPopMatrix(); 
-#ifndef FLOW
   glPopAttrib();
-#endif
 
   return(0);
 }
@@ -178,20 +172,14 @@ int x_y_width_display (void *) {
         g_inputGrid->maxY() - g_inputGrid->minY());
 
   // Print the message at the appropriate location on the screen
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
   glTranslatef(MARGIN, LINE_SPACE + MARGIN,Z_SLIVER);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
-#ifndef FLOW
   drawStringInFont(myfont, message);
-#endif
   glPopMatrix(); 
-#ifndef FLOW
   glPopAttrib();
-#endif
 
   return(0);
 }
@@ -250,20 +238,14 @@ int height_at_hand_display (void *) {
   }
 
   // Print the message at the appropriate location on the screen
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
   glTranslatef(MARGIN, MARGIN, Z_SLIVER);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
-#ifndef FLOW
   drawStringInFont(myfont, message);
-#endif
   glPopMatrix(); 
-#ifndef FLOW
   glPopAttrib();
-#endif
 
   return(0);
 }
@@ -273,9 +255,7 @@ int rate_display (void *) {
 
   char message[100];
 
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
   glPushMatrix();
 
   switch (g_inputGrid->readMode()) {
@@ -303,13 +283,9 @@ int rate_display (void *) {
   glColor3f(1.0f, 1.0f, 1.0f);
   glTranslatef(MARGIN, TOP_EDGE - MARGIN , Z_SLIVER);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
-#ifndef	FLOW
   drawStringInFont(myfont, message);
-#endif
   glPopMatrix(); 
-#ifndef FLOW
   glPopAttrib();
-#endif
 
   return(0);
 }
@@ -359,9 +335,7 @@ int control_display (void *) {
   graphics->getViewportSize(&w, &h);
   // Total screen is 1.0f across, but font width is in pixels. Convert. 
   float char_width = RIGHT_EDGE * getFontWidth()/ w;
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -378,9 +352,7 @@ int control_display (void *) {
   // to right side of screen.
   glTranslatef(0.0f, LINE_SPACE, 0.0f);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
-#ifndef	FLOW
   drawStringInFont(myfont, message);
-#endif
   
   // Used to be amplitude, but we think it should be setpoint
   // Added extra space so it's the same length as modify message above.
@@ -389,14 +361,10 @@ int control_display (void *) {
           decoration->imageSetpoint);
   glTranslatef(0.0f, LINE_SPACE, 0.0f);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
-#ifndef	FLOW
   drawStringInFont(myfont, message);
-#endif
 
   glPopMatrix(); 
-#ifndef FLOW
   glPopAttrib();
-#endif
 
   return(0);
 }
@@ -405,9 +373,7 @@ int mode_display (void *) {
 
   char *message;
 
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -441,14 +407,10 @@ int mode_display (void *) {
   glTranslatef(0.5f*RIGHT_EDGE, TOP_EDGE - MARGIN, Z_SLIVER);
 
   glRasterPos3f(0.0f, 0.0f, 0.0f);
-#ifndef	FLOW
   drawStringInFont(myfont, message);
-#endif
 
   glPopMatrix(); 
-#ifndef FLOW
   glPopAttrib();
-#endif
 
   return(0);
 }
@@ -487,9 +449,7 @@ int measure_display (void *) {
          decoration->blue.getIntercept(plane) -
          decoration->red.getIntercept(plane);
 
-#ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
-#endif
    glPushMatrix();
  
 
@@ -510,16 +470,12 @@ int measure_display (void *) {
    glTranslatef(0.016f, -0.01f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
    sprintf(message,"Dxy=%.5g",measure_data.rgDxy);
-#ifndef FLOW
    drawStringInFont(myfont,message);
-#endif
 
    glTranslatef(0.0f, -0.023f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
    sprintf(message,"Dz =%.5g",measure_data.rgDz);
-#ifndef FLOW
    drawStringInFont(myfont,message);
-#endif
 
    glTranslatef(0.1f, 0.033f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
@@ -536,16 +492,12 @@ int measure_display (void *) {
    glTranslatef(0.016f, -0.01f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
    sprintf(message,"Dxy=%.5g",measure_data.gbDxy);
-#ifndef FLOW
    drawStringInFont(myfont,message);
-#endif
 
    glTranslatef(0.0f, -0.023f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
    sprintf(message,"Dz =%.5g",measure_data.gbDz);
-#ifndef FLOW
    drawStringInFont(myfont,message);
-#endif
 
    glTranslatef(0.1f, 0.033f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
@@ -562,16 +514,12 @@ int measure_display (void *) {
    glTranslatef(0.016f, -0.01f, 0.0f);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
    sprintf(message,"Dxy=%.5g",measure_data.brDxy);
-#ifndef FLOW
    drawStringInFont(myfont,message);
-#endif
 
    glTranslatef(0.0f,-0.023f,0.0f);
    glRasterPos3f(0.0f,0.0f,0.0f);
    sprintf(message,"Dz =%.5g",measure_data.brDz);
-#ifndef FLOW
    drawStringInFont(myfont,message);
-#endif
 
 
    glTranslatef(0.1f, 0.033f,0.0f);
@@ -590,21 +538,15 @@ int measure_display (void *) {
    glTranslatef(-0.321f,-0.059f,0.0f);
    glRasterPos3f(0.0f,0.0f,0.0f);
    sprintf(message,"Angle:  %.4g",measure_data.rgbAngle);
-#ifndef FLOW
    drawStringInFont(myfont,message);
-#endif
 
    glTranslatef(0.192f,0.0f,0.0f);
    glRasterPos3f(0.0f,0.0f,0.0f);
    sprintf(message,"%.4g",measure_data.gbrAngle);
-#ifndef FLOW
    drawStringInFont(myfont,message);
-#endif
 
    glPopMatrix();
-#ifndef FLOW
-  glPopAttrib();
-#endif
+   glPopAttrib();
 
    return(0);
 }

@@ -47,13 +47,8 @@ class Position_list;  // from Position.h
 #define NUM_OBJECTS (100)
 #define NUM_ELEMENTS (20)
 
-#ifdef FLOW
-#define PUSH_ATTRIB(x)
-#define POP_ATTRIB()
-#else
 #define PUSH_ATTRIB(x) glPushAttrib(x)
 #define POP_ATTRIB() glPopAttrib()
-#endif  // FLOW
 
 extern float g_adhesion_slider_min;
 extern float g_adhesion_slider_max;
@@ -257,97 +252,6 @@ extern char g_heightPlaneName [128];
 extern char g_opacityPlaneName [128];
 
 extern BCGrid * g_inputGrid;
-
-#ifdef FLOW
-
-/*****************************************************************
- This part should be the same as nM_global.h.
- It will match which shader to turn on and which texture_id is
- mapped to where.
- *****************************************************************/
-
-// total number of textures used by shaders
-#define N_SHADER_TEX 7
-
-// texture id num
-#define BUMP_TEX_ID          0
-#define PATTERN_TEX_ID       1
-#define HATCH_NOISE_TEX_ID   2
-
-//data texture id num
-#define BUMP_DATA_TEX_ID         3
-#define PATTERN_DATA_TEX_ID      4
-#define HATCH_DATA_TEX_ID        5
-#define ANI_CONTOUR_DATA_TEX_ID  6
-
-// active shader bit for shader_mask
-#define NO_SHADER      0
-#define PATTERN_BIT    1
-#define HATCH_BIT      2
-#define BUMP_BIT       4
-#define ANI_CONTOUR    8
-
-// constant for which spot noise to use for the spot noise shader 
-#define HATCH_ROTATE 0       // default
-#define GUASS_BOX    1
-#define GUASS_HATCH  2
-#define GUASS_PLUS   3
-#define GUASS_SIZE   4
-#define PLUS_X       5
-#define PLUS_RING    6
-#define WOBBLE_PLUS  7
-#define GAUSS_DISK   8
-
-/******************************************************************/
-
-
-  //shaders
-  extern GLuint nM_shader;
-  extern GLuint nM_diffuse;     // just shows the diffuse color shader
-
-  // texture id for shaders
-  extern GLuint shader_tex_ids[N_SHADER_TEX];
-
-  // data set values
-  extern GLubyte *pattern_data;  // data_tex_size*data_tex_size*3
-  extern GLubyte *hatch_data;    // data_tex_size*data_tex_size*3
-  extern GLubyte *bump_data;     // data_tex_size*data_tex_size*3
-
-  // which shaders to turn on
-  extern unsigned char shader_mask;
-
-  // for time-varying phenomena
-  extern float px_framenum;
-
-  //=====Bump Shader=====
-  extern float bumpiness;          // max amount of bumpiness
-  extern float bump_pulserate;   // bump pulse rate
-  extern float bump_scale;       // scale of bump texture
-
-  //=====Pattern Blend Shader=====
-  extern float pattern_blend;     // max amount of blending
-  extern float pattern_color[3];  // color of the pattern to blend
-  extern float pattern_scale;     // scale of the pattern texture
-  extern float pattern_pulserate; // pattern pulse rate
-  
-  //=====Spot Noise Shader=====
-  extern float spotnoise_tex_size;      // spot noise texture size
-  extern float spot_pulserate;          // spot noise pulse rate
-  extern float spot_blend;              // max amont of spot noise to blend in
-  extern unsigned char whichspot;       // which spot noise to use
-  extern float contrast;                // to adjust contrast on noise functions
-  extern float rotate_amount;           // amount to rotate the kernel
-  extern unsigned char swap_kernel; // switch kernels used for high and low data
-  extern unsigned char kernel_size;     // size of the gaussian shaders
-  extern unsigned char dense;           //sparse or dense noise
-  extern float wobblerate;              // rate of wobbling for wobble_plus 
-
-  // size of the data texture.
-  extern int g_data_tex_size;
-
-/******************************************************************/
-
-#endif  // FLOW
 
 #endif  // GRAPHICS_GLOBALS_H
 

@@ -58,14 +58,6 @@ static GLubyte checkImage [checkImageDepth][checkImageWidth]
 static GLubyte rulerImage [rulerImageHeight][rulerImageWidth][4];
 
 
-#ifdef FLOW
-  #include <util/aux/kernel.h>
-  #include <util/aux/image.h>
-  #include <util/aux/aperror.h>
-  #include <pxapi/pxfl.h>
-#endif
-
-
 // local functions:
 //   void createPyramid (float center, float width, int white_flag)
 //   void makeTexture (void)
@@ -424,15 +416,6 @@ void buildContourTexture (void) {
     fprintf(stderr, "Error creating contour texture image\n");
   }
 #endif
-        /********************88888888888_____________________
-#ifdef FLOW
-  glTexImage1D(GL_TEXTURE_1D, 0, 4, contourImageWidth, 0,
-               GL_RGBA, GL_UNSIGNED_BYTE, contourImage);
-  if (glGetError()!=GL_NO_ERROR) {
-    fprintf(stderr, "what a mess, man\n");
-  }
-#endif
-_______________________________________*/
 }
 
 
@@ -471,18 +454,6 @@ void buildRulergridTexture (void) {
       fprintf(stderr, " Error making ruler texture.\n");
   }
 #endif 
-#ifdef FLOW
-  /****************____________________________
-  glTexImage2D(GL_TEXTURE_2D, 0, 4,
-               rulerImageWidth, rulerImageHeight,
-               0, GL_RGBA, GL_UNSIGNED_BYTE,
-               rulerImage);
-  if (glGetError() != GL_NO_ERROR)
-    fprintf(stderr, " Error making ruler texture.\n");
-  else
-    fprintf(stderr, "made ruler textures\n");
-___________________**********************/
-#endif
 
 }
 
@@ -512,167 +483,15 @@ void buildAlphaTexture (void) {
           checkImageWidth, checkImageHeight, checkImageDepth,
           0, GL_RGBA, GL_UNSIGNED_BYTE, &checkImage[0][0][0][0]);
 #endif
-#ifndef FLOW
   if (glGetError() != GL_NO_ERROR) {
           fprintf(stderr, "error in making checker board texture.\n");
   }
-#endif
 }
 
 
 
 void setupMaterials (void) {
-
-#ifdef FLOW
-// This sets up the material parameters for the programmable shader that
-// we are using.
-// XXX Dont know if the setup_lighting() calls actually do anything
-// anymore.  Since the picture is over-specular when we raise the specular
-// component below, probably they do not.
-//
-// XXX Since the phong shader was not working properly when we needed to
-// get an image, we set the material properties and just use them, ignoring
-// the openGL lighting specifications.  We need to get a real shader that
-// does this (should call Phong routine?)
-    {
-    /********************************************************************/
-    /* Select the PxFl programmable shader here */
-    /********************************************************************/
-    GLfloat mat_specular[3] = { 0.4, 0.4, 0.4 };
-    GLfloat phong_shininess[1] = {64.0};
-    GLuint loadh;
-    int l;
-    char filename[256];
-
-    fprintf(stderr,"\n*** Setting up PxFl programmable shader...***\n\n");
-
-    // make sure gl calls are directed to the right context
-    v_gl_set_context_to_vlib_window();
-
-    glEnable(GL_TEXTURE_2D);
-
-    loadh = glLoadExtensionCodeEXT(GL_SHADER_FUNCTION_EXT,"/gouraud");
-    nM_diffuse = glNewShaderEXT(loadh);
-    glEndShaderEXT();
-
-    char shadername[15] = "nMShader";
-    loadh = glLoadExtensionCodeEXT(GL_SHADER_FUNCTION_EXT, shadername);
-    fprintf(stderr,"DEBUG: loading shader %s.\n", shadername);
-
-    nM_shader = glNewShaderEXT(loadh);
-
-    // print out the shader parameters
-    {
-      GLuint  num_params;
-      GLenum *pname_list;
-
-      num_params = glGetNumMaterialParametersEXT(nM_shader);
-      pname_list = new GLenum[num_params];
-      glGetMaterialParametersEXT(nM_shader, pname_list);
-
-      fprintf(stderr, "Params for shader '%s' = \n", shadername);
-      for ( GLuint k=0; k<num_params; k++ ) {
-        fprintf(stderr, "\t%s\n",
-                glGetMaterialParameterStringEXT(pname_list[k]));
-      }
-    }
-
-    // normal, color, texture coordinates, and position will vary
-    glShaderParameterBindingEXT(
-            glGetMaterialParameterNameEXT("px_material_diffuse"),
-            GL_MATERIAL_EXT);
-    glShaderParameterBindingEXT(
-            glGetMaterialParameterNameEXT("px_material_normal"),
-            GL_MATERIAL_EXT);
-    glShaderParameterBindingEXT(
-            glGetMaterialParameterNameEXT("px_shader_texcoord"),
-            GL_MATERIAL_EXT);
-    glEndShaderEXT();
-
-    // ********** Set the uniform parameters of the shader ***************
-
-    // texture ids. you have to pass floats
-    float j[N_SHADER_TEX];
-    for (l = 0; l < N_SHADER_TEX; l++)
-      j[l] = shader_tex_ids[l];
-    glBoundMaterialfvEXT(nM_shader,
-                         glGetMaterialParameterNameEXT("tex_id"),
-                         j);
-
-    // active mask
-    glBoundMaterialiEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("active_mask"),
-                        shader_mask);
-
-    // for time varying stuff
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("framenum"),
-                        px_framenum);
-
-    //=====Bump Shader=====
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("bumpiness"),
-                        bumpiness);
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("bump_pulserate"),
-                        bump_pulserate);
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("bump_scale"),
-                        bump_scale);
-
-    //=====Pattern Blen Shader=====
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("pattern_blend"),
-                        pattern_blend);
-    glBoundMaterialfvEXT(nM_shader,
-                         glGetMaterialParameterNameEXT("pattern_blend_color"),
-                         pattern_color);
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("pattern_scale"),
-                        pattern_scale);
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("pattern_pulserate"),
-                        pattern_pulserate);
-
-    //=====Spot Noise Shader
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("spotnoise_tex_size"),
-                        spotnoise_tex_size);
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("spot_pulserate"),
-                        spot_pulserate);
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("spot_blend"),
-                        spot_blend);
-    glBoundMaterialiEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("whichspot"),
-                        whichspot);
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("contrast"),
-                        contrast);
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("rotate_amount"),
-                        rotate_amount);
-    glBoundMaterialiEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("swap_kernel"),
-                        swap_kernel);
-    glBoundMaterialiEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("kernel_size"),
-                        kernel_size);
-    glBoundMaterialiEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("dense"),
-                        dense);
-    glBoundMaterialfEXT(nM_shader,
-                        glGetMaterialParameterNameEXT("wobblerate"),
-                        wobblerate);
-
-    //VERBOSE(1, "Finished loading shaders here\n");
-
-    // *************************** texture mode 
-      g_texture_mode = GL_TEXTURE_2D;
-
-    }
-#endif  //end FLOW specific stuff
+    // Obsolete function used for Pxfl setup
 
 }
 
@@ -785,7 +604,6 @@ int setup_lighting (int)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 
-#ifndef FLOW
     if (g_config_smooth_shading != was_smooth_shading) {
 	was_smooth_shading = g_config_smooth_shading;
 	if (g_config_smooth_shading) {
@@ -794,7 +612,6 @@ int setup_lighting (int)
 	    glShadeModel(GL_FLAT);	/* Flat shading */
 	}
     }
-#endif
 
   if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
     // With prerendered colors we don't have any normals;  this REALLY
