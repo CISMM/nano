@@ -1794,6 +1794,10 @@ void handle_z_dataset_change(const char *, void * ds)
     Index_mode::newPlane( dataset->inputGrid->getPlaneByName
                           (plane->name()->c_str() ) );
   }
+
+  // update loaded objects z offset
+  double z = plane->minNonZeroValue();
+  World.Do(&URender::ChangeHeightPlane, &z);
 }
 
 /// Update the grid scale and rebuild the display lists
@@ -2771,7 +2775,8 @@ static void handle_openStaticFilename_change (const char *, void *)
     //}
 
 	// assume same scale in x and y
-	double scale = dataset->inputGrid->maxX();
+	change_static_file csf;
+	csf.scale = dataset->inputGrid->maxX() - dataset->inputGrid->minX();
 
     if (strlen(openStaticFilename) <= 0) return;
 
@@ -2812,12 +2817,15 @@ static void handle_openStaticFilename_change (const char *, void *)
     decoration->selectedRegionMaxX = dataset->inputGrid->maxX();
     decoration->selectedRegionMaxY = dataset->inputGrid->maxY();
 
-	// If an object is loaded, scale it appropriately
-	// Doesn't register in the TCL window yet...
+	// scale and translate objects appear in the same place in the new height plane
 //	if (state->config_enableUber) {
-    scale /= dataset->inputGrid->maxX();
-	scale = 1.0 / scale;
-	World.Do(&URender::ChangeStaticFile, &scale);
+    csf.scale /= dataset->inputGrid->maxX() - dataset->inputGrid->minX();
+	csf.scale = 1.0 / csf.scale;
+	csf.xoffset = dataset->inputGrid->minX();
+	csf.yoffset = dataset->inputGrid->minY();
+	csf.zoffset = dataset->inputGrid->getPlaneByName
+					(dataset->heightPlaneName->string())->minNonZeroValue();
+	World.Do(&URender::ChangeStaticFile, &csf);
 //}
     
     openStaticFilename = "";
@@ -3095,6 +3103,16 @@ static void openDefaultMicroscope()
     }
     microscope_connection = NULL;
     vrpnLogFile = NULL;
+
+	// reset objects  --  doesn't work correctly yet, but better than nothing.
+//	if (state->config_enableUber) {
+	change_static_file csf;
+    csf.scale = 1.0;
+	csf.xoffset = 0.0;
+	csf.yoffset = 0.0;
+	csf.zoffset = 0.0;
+	World.Do(&URender::ChangeStaticFile, &csf);
+//}
 
     // Make sure "working" dialog is gone. 
     doneWorkingMsg();

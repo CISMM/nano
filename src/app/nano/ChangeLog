@@ -1,3 +1,14 @@
+2002-05-07  David Borland  <borland@cs.unc.edu>
+        * microscape.C:
+        (handle_openStaticFilename_change:  added code for automatically
+        translating and scaling objects when a new static file is opened.
+        This code had been previously committed, but it seems to have
+        disappeared from the repository...
+
+        (handle_z_dataset_change:  added code for automatically translating
+        objects in z when switching between height planes.  Once again, this
+        code was previously committed, but has disappeared...
+
 2002-05-06  David Borland  <borland@cs.unc.edu>
         * import.C:  added callbacks for spider objects
 
