@@ -123,6 +123,11 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
         return -1;
     }
     image_info=CloneImageInfo((ImageInfo *) NULL);
+    // Zip is the only one that works (well) for TIF files, but some programs
+    // don't read it. 
+    // LZW is not even available. 
+    image_info->compression=NoCompression;
+    //SetImageInfo(image_info,true,&exception);
     strcpy(flip_image->filename,filename);
     if(!WriteImage(image_info, flip_image)) {
         return -1;
@@ -196,6 +201,9 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     //Default is NoCompression. BZipCompression, JPEGCompression,
     // LosslessJPEGCompression, LZWCompression, RunlengthEncodedCompression
     // ZipCompression
+    // Zip is the only one that works (well) for TIF files, but some programs
+    // don't read it. 
+    // LZW is not even available. 
     image_info->compression=NoCompression;
 
     if(!WriteImage(image_info, image)) {
@@ -270,6 +278,9 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     //Default is NoCompression. BZipCompression, JPEGCompression,
     // LosslessJPEGCompression, LZWCompression, RunlengthEncodedCompression
     // ZipCompression
+    // Zip is the only one that works (well) for TIF files, but some programs
+    // don't read it. 
+    // LZW is not even available. 
     image_info->compression=NoCompression;
 
     if(!WriteImage(image_info, image)) {

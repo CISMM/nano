@@ -1,3 +1,7 @@
+2002-06-14  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_ImgMagick.C (writeFileMagick): Comments about compression.
+
 2002-05-29  David Borland <borland@cs.unc.edu>
 
         * nmb_Dataset.C (loadFile) : when the loaded image is either the
