@@ -1,0 +1,83 @@
+MAKEFILE := Makefile
+MAKE := $(MAKE) -f $(MAKEFILE)
+HW_OS := $(shell /usr/local/bin/hw_os)
+CC := /usr/bin/CC -32
+
+XLIBS := /usr/lib/X11R5
+
+ifeq ($(HW_OS),pc_linux)
+ WHOAMI := $(shell /usr/bin/whoami)
+ CC := g++
+ XLIBS := /usr/X11R6/lib
+else
+ ifeq ($(HW_OS),sparc_solaris)
+  WHOAMI := $(shell /usr/ucb/whoami)
+ else
+  WHOAMI := $(shell /bin/whoami)
+ endif
+endif
+
+# Looks for a customized, personal version, and if that fails
+# uses the group default copy.
+VRPN_DIR := /afs/unc/proj/stm/src/$(WHOAMI)/vrpn
+VRPN_DEFAULT_DIR := /afs/cs.unc.edu/project/stm/src/vrpn
+
+VRPN_INC_DIRS	= -I$(VRPN_DIR) -I$(VRPN_DEFAULT_DIR)
+VRPN_LIB_DIRS	= -L$(VRPN_DIR)/$(HW_OS) -L$(VRPN_DEFAULT_DIR)/$(HW_OS)
+
+######################################################################################
+# Be sure to change the -D flad to SURFACE or AFMSIM depending on which simulation you
+# want to compile.
+# This is just a hack for now.
+CFLAGS := -g -I../include -I.. -I. -I/net/nano/nano3/tcltk.$(HW_OS)/include $(VRPN_INC_DIRS) -I/afs/unc/proj/walk/include -D AFMSIM -o32
+######################################################################################
+
+
+LFLAGS = -L../server_microscape/$(HW_OS) \
+         -L/net/nano/nano3/tcltk.$(HW_OS)/lib \
+	 $(VRPN_LIB_DIRS) -L/usr/local/lib -L/$(XLIBS) \
+	 -L/afs/unc/proj/alk/lib/sgi_irix \
+	-L/usr/local/contrib/unmod/lib
+LIBS = -lnmb -ltk -ltcl -lglut.o32 -lGLU -lGL -lXmu -lXext -lX11 -lvrpn -lm 
+
+#APPS = nano_Control afmcntsim surface
+APPS = afmcntsim surface
+
+.c.o:
+	$(CC) $(CFLAGS) -c $*.c
+
+.C.o:
+	$(CC) $(CFLAGS) -c $*.C
+
+
+
+.PHONY: all
+all:	server_microscape_base $(APPS)
+
+.PHONY: clean
+clean:
+	\rm -f *.o $(APPS)
+
+# nano_Control: nano_Control.o Tcl_Linkvar.o
+#	\rm -rf nano_Control
+#	$(CC) $(LFLAGS) -o nano_Control nano_Control.o Tcl_Linkvar.o $(LIBS)
+
+# Tcl_Linkvar.o: Tcl_Linkvar.C Tcl_Linkvar.h
+# nano_Control.o: nano_Control.C Tcl_Linkvar.h
+
+SIM_OBJS1 = warrencntsim.o vec2d.o simulator_server.o nmm_Microscope_Simulator.o ../server_microscape/$(HW_OS)/nmm_Microscope.o ../server_microscape/$(HW_OS)/BCGrid.o ../server_microscape/$(HW_OS)/BCPlane.o ../server_microscape/$(HW_OS)/BCString.o ../server_microscape/$(HW_OS)/BCDebug.o ../server_microscape/$(HW_OS)/Topo.o
+SIM_OBJS2 = surface.o simulator_server.o nmm_Microscope_Simulator.o ../server_microscape/$(HW_OS)/nmm_Microscope.o ../server_microscape/$(HW_OS)/BCGrid.o ../server_microscape/$(HW_OS)/BCPlane.o ../server_microscape/$(HW_OS)/BCString.o ../server_microscape/$(HW_OS)/BCDebug.o ../server_microscape/$(HW_OS)/Topo.o
+
+surface: $(SIM_OBJS2)
+	\rm -rf surface
+	$(CC) $(LFLAGS) -o surface $(SIM_OBJS2) $(LIBS)
+
+afmcntsim: $(SIM_OBJS1)
+	\rm -rf afmcntsim
+	$(CC) $(LFLAGS) -o afmcntsim $(SIM_OBJS1) $(LIBS)
+
+.PHONY: server_microscape_base
+server_microscape_base:
+	$(MAKE) base -C ../server_microscape
+
+

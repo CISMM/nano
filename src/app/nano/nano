@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# Find the right ./nano executable to run.
+# Depends on environment ($MY_NANO_???_DIR) and system ($HW_OS).
+
+if test $HW_OS != pc_cygwin ; then
+   if [[ -n $MY_NANO_OBJ_DIR ]] ; then
+      NANO=$MY_NANO_OBJ_DIR/$HW_OS/app/nano/nano;
+   elif [[ -n $MY_NANO_SRC_DIR ]] ; then
+      NANO=$MY_NANO_SRC_DIR/nano/obj/$HW_OS/app/nano/nano;
+   else
+      NANO=../../../obj/$HW_OS/app/nano/nano;
+   fi
+else # /bin/sh is really bash here, and doesn't do [[ ]]
+   if test -n $MY_NANO_OBJ_DIR ; then
+      NANO=$MY_NANO_OBJ_DIR/$HW_OS/app/nano/nano;
+   elif test -n $MY_NANO_SRC_DIR ; then
+      NANO=$MY_NANO_SRC_DIR/nano/obj/$HW_OS/app/nano/nano;
+   else
+      NANO=../../../obj/$HW_OS/app/nano/nano;
+   fi
+fi
+
+$NANO $*

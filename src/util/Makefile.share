@@ -1,0 +1,2 @@
+include ../../share/Makefile.common
+include ../../share/Makefile.app_common
