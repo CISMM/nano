@@ -14,7 +14,7 @@ class TIFFImage : public AbstractImage
 
 
    public:
-      virtual ~TIFFImage(void) { Die(); }
+      virtual ~TIFFImage (void);
 
       TIFFImage(void) : AbstractImage() { }
 

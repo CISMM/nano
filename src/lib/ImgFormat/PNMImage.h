@@ -34,7 +34,7 @@ class PNMImage : public AbstractImage
 
 
    public:
-      virtual ~PNMImage(void) { Die(); }
+      virtual ~PNMImage (void);
 
       PNMImage(void) : AbstractImage() { }
 

@@ -36,7 +36,7 @@ class AbstractImage
 
 
    public:
-      virtual ~AbstractImage(void) { Die(); }
+      virtual ~AbstractImage (void);
 
       AbstractImage(void) :
          image(NULL)

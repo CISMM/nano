@@ -31,6 +31,12 @@ const short TIFF_Entries = 0x0E;
 const short TIFF_Pad     = 0x00;
 
 
+// virtual
+TIFFImage::~TIFFImage (void) {
+  // Don't need this - AbstractImage does it.
+  // Die();
+}
+
 bool TIFFImage::writeHeader(ofstream &tiff)
 {
    double r = 600.0;

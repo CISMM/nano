@@ -3,6 +3,16 @@
 
 #include "PNMImage.h"
 
+// virtual
+PNMImage::~PNMImage (void) {
+
+  // This isn't necessary;
+  // We call AbstractImage's destructor, which will do this.
+  // Die() probably ought to be private on AbstractImage?
+  //Die();
+
+}
+
 
 bool PNMImage::readInt
 (
