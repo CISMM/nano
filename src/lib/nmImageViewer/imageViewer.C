@@ -206,22 +206,12 @@ int ImageViewer::createWindow(char *display_name,
     XDefineCursor(dpy[dpy_index].x_dpy, *win, window[num_windows].cursor);
     window[num_windows].win = win;
 #else
-    //glutInitWindowSize(w,h); - this should be done by user
-    //glutInitWindowPosition(x,y);
-    //glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-    //int win_save = glutGetWindow(); // this was necessary until I added
-	// v_gl_set_context_to_vlib_window() and inserted it before all
-	// display list generators for stuff to be drawn to vlib window
-	// If something doesn't draw and you're using display lists then
-	// try uncommenting this and the corresponding glutSetWindow
-	// below to see if that fixes it (AAS)
     int wid = glutCreateWindow(win_name);
     glutHideWindow();
     window[num_windows].win_id = wid;
 
     glutReshapeWindow(w, h);
     glutPositionWindow(x,y);
-    //glutIdleFunc(ImageViewer::idleCallbackForGLUT); 
     glutDisplayFunc(ImageViewer::displayCallbackForGLUT);
 
     glutVisibilityFunc(ImageViewer::visibilityCallbackForGLUT);
@@ -230,7 +220,6 @@ int ImageViewer::createWindow(char *display_name,
     glutMouseFunc(ImageViewer::mouseCallbackForGLUT);
     glutKeyboardFunc(ImageViewer::keyboardCallbackForGLUT);
     glutSpecialFunc(ImageViewer::specialCallbackForGLUT);
-    //glutSetWindow(win_save);
 #endif
 
     window[num_windows].d_pixelMode = pixelType;
@@ -272,7 +261,6 @@ int ImageViewer::createWindow(char *display_name,
       }
     }
     num_windows++;
-//    showWindow(num_windows);
     return num_windows;
 }
 
@@ -361,8 +349,6 @@ int ImageViewer::showWindow(int winID){
     if (!validWinID(winID)) return -1;
     int win_index = get_window_index_from_winID(winID);
 
-    //window[win_index].win_width = window[win_index].im_width;
-    //window[win_index].win_height = window[win_index].im_height;
     window[win_index].im_x_per_pixel = (float)window[win_index].im_width /
                                (float)window[win_index].win_width;
     window[win_index].im_y_per_pixel = (float)window[win_index].im_height /
@@ -634,7 +620,6 @@ void ImageViewer::mainloop() {
 	// now we should have exausted the queue for this window so we go on to
 	// updating the image if necessary
 	if (window[i].needs_redisplay && window[i].visible){
-//	    printf("calling glXWaitX()\n");
 	    glXWaitX();
 	    glXMakeCurrent(dpy[window[i].display_index].x_dpy,
                 *(window[i].win), dpy[window[i].display_index].cx);
@@ -656,9 +641,7 @@ void ImageViewer::mainloop() {
 
 	    glXSwapBuffers(dpy[window[i].display_index].x_dpy, 
 		*(window[i].win));
-//	    printf("calling glXWaitGL()\n");
 	    glXWaitGL();
-//	    printf("done with update\n");
 	    window[i].needs_redisplay = VRPN_FALSE; 
 	}
     }
@@ -827,7 +810,6 @@ void ImageViewer::keyboardCallbackForGLUT(unsigned char key, int x, int y) {
                 "Error, ImageViewer::keyboardCallback, window not found\n");
         return;
     }
-    //printf("Ascii key '%c' 0x%02x\n", key, key);
     ImageViewerWindowEvent ivw_event;
     ivw_event.winID = v->get_winID_from_window_index(i);
     ivw_event.mouse_x = x;
@@ -842,8 +824,7 @@ void ImageViewer::keyboardCallbackForGLUT(unsigned char key, int x, int y) {
 }
 
 // static
-void ImageViewer::specialCallbackForGLUT(int key, int x, int y) {
-    //printf("special key %d\n", key);
+void ImageViewer::specialCallbackForGLUT(int /*key*/, int /*x*/, int /*y*/) {
 
 }
 
@@ -1011,7 +992,6 @@ int ImageViewer::drawImage(int winID) {
     glRasterPos2f(-1.0, -1.0);
     // XXXX Adam's image flip. 
     glPixelZoom(-pix_per_im_x, pix_per_im_y);
-    //glPixelZoom(pix_per_im_x, pix_per_im_y);
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
     if (window[win_index].d_colormap) {
         // gl first converts the luminance pixels to RGBA, then
@@ -1152,30 +1132,12 @@ int ImageViewer::drawImageAsTexture(int winID, nmb_Image *image,
     texheight = image->height() +
                 image->borderYMin()+image->borderYMax();
 
-//    printf("begin draw texture for %s\n", image->name()->Characters());
-
-/*    printf("Loading texture %s with type %d\n",
-           image->name()->Characters(), image->pixelType());
-    printf("width=%d,height=%d,border = (%d,%d)(%d,%d)\n",
-      texwidth, texheight, image->borderXMin(),
-      image->borderXMax(), image->borderYMin(),
-      image->borderYMax());
-*/
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_TEXTURE_GEN_S);
     glEnable(GL_TEXTURE_GEN_T);
     glEnable(GL_TEXTURE_GEN_R);
     glEnable(GL_TEXTURE_GEN_Q);
 
-/*
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-              GL_LINEAR_MIPMAP_LINEAR);
-
-    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, texwidth, texheight,
-           GL_LUMINANCE,
-           pixType, texture);
-*/
-    //glTexImage2D(GL_PROXY_TEXTURE_2D, ...
     glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, texwidth);
@@ -1268,7 +1230,6 @@ int ImageViewer::drawImageAsTexture(int winID, nmb_Image *image,
     glPopMatrix();
     
     glFinish();
-//    printf("end draw texture\n");
   }
   return 0;
 }
@@ -1334,8 +1295,6 @@ int ImageViewer::drawImageAsPixels(int winID, nmb_Image *image,
     int skipPixels = image->borderXMin();
     int skipRows = image->borderYMin();
 
-//    printf("begin drawPixels for %s\n", image->name()->Characters());
-
     // these are the dimensions of the texture minus the border
     int imageWidth = image->width();
     int imageHeight = image->height();
@@ -1379,7 +1338,6 @@ int ImageViewer::drawImageAsPixels(int winID, nmb_Image *image,
     if (scx*(rasterPos_wu[0] - boundX) <= 0) {
       skipIncX = (int)ceil(fabs(rasterPos_wu[0] - boundX)/wuPerImagePixelX);
       skipPixels += skipIncX;
-//      rasterPos_wu[0] += (scx > 0)*skipIncX*wuPerImagePixelX;
       if (scx > 0) {
         rasterPos_wu[0] += skipIncX*wuPerImagePixelX;
       } else {
@@ -1402,7 +1360,6 @@ int ImageViewer::drawImageAsPixels(int winID, nmb_Image *image,
     if (scy*(rasterPos_wu[1] - boundY) <= 0) {
       skipIncY = (int)ceil(fabs(rasterPos_wu[1] - boundY)/wuPerImagePixelY);
       skipRows += skipIncY;
-//      rasterPos_wu[1] += (scy > 0)*skipIncY*wuPerImagePixelY;
       if (scy > 0) {
         rasterPos_wu[1] += skipIncY*wuPerImagePixelY;
       } else {
@@ -1518,7 +1475,6 @@ int ImageViewer::drawImageAsPixels(int winID, nmb_Image *image,
     glPopMatrix();
 
     glFinish();
-    //printf("end draw pixels\n");
   }
   return 0;
 }
@@ -1753,7 +1709,6 @@ int ImageViewer::setColorMinMax(int winID,
                                 vrpn_float64 dmin, vrpn_float64 dmax,
                                 vrpn_float64 cmin, vrpn_float64 cmax)
 {
-    //printf("Got %f %f %f %f\n", dmin, dmax, cmin, cmax);
     if (!validWinID(winID)) return -1;
     int win_index = get_window_index_from_winID(winID);
     window[win_index].d_data_min = dmin;
@@ -1768,7 +1723,6 @@ int ImageViewer::setColorMinMax(int winID,
 int ImageViewer::calcColorMap(int winID) 
 {
     int win_index = get_window_index_from_winID(winID);
-    double scaled_value = 0.0;
     if (window[win_index].d_colormap) {
         float dummy;
         for (int i = 0; i < CMAP_SIZE_GL; i++) {

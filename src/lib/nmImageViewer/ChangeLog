@@ -1,3 +1,7 @@
+2001-12-18  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* imageViewer.C: remove compiler warnings, commented-out code
+
 2001-10-23    <conrad@cs.unc.edu>
 
 	* imageViewer.C: Changed #ifndef to _WIN32 from WIN32 so that it
