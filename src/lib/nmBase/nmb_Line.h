@@ -42,6 +42,9 @@ class nmb_Line {
       ///< Move to (x, y) and normalize.
     void normalize (BCPlane * plane);
       ///< Make sure that Z extents are from the top to the bottom of plane.
+    static void normalize (PointType & top, PointType & bottom, 
+                           BCPlane * plane);
+      ///< Utility to normalize PointTypes consistently throughout nano 
 
     void clearChanged (void);
 

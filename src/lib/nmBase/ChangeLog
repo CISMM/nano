@@ -1,3 +1,8 @@
+2002-09-30  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* nmb_Line.h (normalize):  new, static version
+	* nmb_Line.C (normalize):  same.  also, old fxn now calls static fxn.
+
 2002-06-14  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_ImgMagick.C (writeFileMagick): Comments about compression.

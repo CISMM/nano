@@ -81,34 +81,43 @@ vrpn_bool nmb_Line::changed (void) const {
 }
 
 void nmb_Line::normalize (BCPlane * plane) {
+    // Allow a NULL plane, but do nothing.
+    if (!plane) return;
+    normalize(d_top, d_bottom, plane);
+    d_changed = VRPN_TRUE;
+}
+
+/* static */
+void nmb_Line::normalize (PointType & top, PointType & bottom, 
+                          BCPlane * plane) {
 
     // Allow a NULL plane, but do nothing.
     if (!plane) return;
 
   // Bounds check!  Should workaround bug in collaboration.
 
-  if (d_top[0] < plane->minX()) {
-    d_top[0] = plane->minX();
-    d_bottom[0] = plane->minX();
+  if (top[0] < plane->minX()) {
+    top[0] = plane->minX();
+    bottom[0] = plane->minX();
   }
-  if (d_top[0] > plane->maxX()) {
-    d_top[0] = plane->maxX();
-    d_bottom[0] = plane->maxX();
+  if (top[0] > plane->maxX()) {
+    top[0] = plane->maxX();
+    bottom[0] = plane->maxX();
   }
-  if (d_top[1] < plane->minY()) {
-    d_top[1] = plane->minY();
-    d_bottom[1] = plane->minY();
+  if (top[1] < plane->minY()) {
+    top[1] = plane->minY();
+    bottom[1] = plane->minY();
   }
-  if (d_top[1] > plane->maxY()) {
-    d_top[1] = plane->maxY();
-    d_bottom[1] = plane->maxY();
+  if (top[1] > plane->maxY()) {
+    top[1] = plane->maxY();
+    bottom[1] = plane->maxY();
   }
 
   // BUG note: Don't use m**AttainableValue, because that creates very long
   // lines, which cause transformation problems and quantized XY position due
   // to round-off error on the NVidia Quadra boards (I think... 6/2001)
-  d_top[2] = plane->maxNonZeroValue() * plane->scale();
-  d_bottom[2] = plane->minNonZeroValue() * plane->scale();
+  top[2] = plane->maxNonZeroValue() * plane->scale();
+  bottom[2] = plane->minNonZeroValue() * plane->scale();
   // We're using the range of the data, which can be very small, resulting in
   // short lines.  So let's make the line height about twice the xy extent of
   // the surface.
@@ -116,31 +125,14 @@ void nmb_Line::normalize (BCPlane * plane) {
   // plane's scale and units to get lines of fairly consistent length on the
   // screen. 
   float range = plane->maxX() - plane->minX();
-  if (( d_top[2] - d_bottom[2] ) < range) {
-    d_top[2] += range;
-    d_bottom[2] -= range;
+  if (( top[2] - bottom[2] ) < range) {
+    top[2] += range;
+    bottom[2] -= range;
   }
-  d_changed = VRPN_TRUE;
 }
 
 void nmb_Line::moveTo (float x, float y, BCPlane * plane) {
-  // Bounds check
-    // Allow a NULL plane - just ignore bounds check. 
-  if (plane) {
-      //fprintf(stderr, "nmb_Line::moveTo:  NULL plane!\n");
-      if (x < plane->minX()) {
-          x = plane->minX();
-      }
-      if (x > plane->maxX()) {
-          x = plane->maxX();
-      }
-      if (y < plane->minY()) {
-          y = plane->minY();
-      }
-      if (y > plane->maxY()) {
-          y = plane->maxY();
-      }
-  }
+  // Bounds check performed in normalize
   d_top[0] = x;
   d_top[1] = y;
 
