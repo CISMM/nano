@@ -28,6 +28,16 @@ float nmb_Line::y (void) const {
   return d_top[1];
 }
 
+double nmb_Line::getIntercept (BCPlane * plane) const {
+  return plane->valueAt(d_top[0], d_top[1]) * plane->scale();
+}
+
+void nmb_Line::getIntercept (q_vec_type p, BCPlane * plane) const {
+  p[0] = d_top[0];
+  p[1] = d_top[1];
+  p[2] = getIntercept(plane);
+}
+
 
 vrpn_bool nmb_Line::changed (void) const {
   return d_changed;
@@ -101,11 +111,28 @@ void nmb_Line::registerMoveCallback (nmb_LINE_MOVE_CALLBACK f,
   d_moveCallbacks = e;
 }
 
-void nmb_Line::doCallbacks (void) {
+void nmb_Line::doCallbacks (float x, float y, BCPlane * plane) {
   moveCallbackEntry * e;
 
+  if (!plane) {
+    fprintf(stderr, "nmb_Line::doCallbacks:  NULL plane!\n");
+    return;
+  }
+  if (x < plane->minX()) {
+    x = plane->minX();
+  }
+  if (x > plane->maxX()) {
+    x = plane->maxX();
+  }
+  if (y < plane->minY()) {
+    y = plane->minY();
+  }
+  if (y > plane->maxY()) {
+    y = plane->maxY();
+  }
+
   for (e = d_moveCallbacks; e; e = e->next) {
-    (e->f)(this, e->userdata);
+    (e->f)(x, y, e->userdata);
   }
 }
 

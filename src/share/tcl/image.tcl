@@ -4,13 +4,14 @@
 # for widgets that change behavior of image mode
 #
  
-frame $image -relief raised -bd 3 -bg $bc
-frame $image.mode -bg $bc
-frame $image.modeparam -bg $bc
-frame $image.style -bg $bc
-frame $image.styleparam -bg $bc
-frame $image.tool -bg $bc
-frame $image.toolparam -bg $bc
+set image [create_closing_toplevel image]
+
+frame $image.mode 
+frame $image.modeparam 
+frame $image.style 
+frame $image.styleparam 
+frame $image.tool 
+frame $image.toolparam 
 
 # Tool variable initialization
 # in the real thing these will be inherited from microscope - i think
@@ -29,12 +30,9 @@ set imagep_i_gain 0.3
 set imagep_d_gain 0.0
 set imagep_amplitude 0.1
 set imagep_rate 1.0
-#set imagep_tri_size 1
-#set imagep_tri_speed 5000
 
 # list of all the variables above, imagep_*
 set imageplist "{mode style tool setpoint p_gain i_gain d_gain amplitude rate}"
-# removed tri_speed and tri_size
 
 # These variables only exist in tcl - the user changes
 # them, and then the "accept" button copies them into the vars
@@ -49,26 +47,41 @@ set newimagep_i_gain $imagep_i_gain
 set newimagep_d_gain $imagep_d_gain
 set newimagep_amplitude $imagep_amplitude
 set newimagep_rate $imagep_rate
-#set newimagep_tri_size $imagep_tri_size
-#set newimagep_tri_speed $imagep_tri_speed
 
 # flips between sets of parameters
 trace variable newimagep_mode w flip_im_mode
-trace variable newimagep_style w flip_im_style
+
+proc updateFromC {realname name element op} {
+    global image
+    global modify
+    global scanline
+    global fc
+    
+    upvar #0 $realname oldimvar
+    global new$realname
+    set new$realname $oldimvar
+#    puts "Update from C: new$realname $oldimvar"
+
+    $image.mode.accept configure -background $fc
+    $image.mode.cancel configure -background $fc
+    $modify.mode.accept configure -background $fc
+    $modify.mode.cancel configure -background $fc
+#    $scanline.mode.accept configure -background $fc
+#    $scanline.mode.cancel configure -background $fc
+
+}
 
 # checks to see if C code changes values of our variables.
-trace variable imagep_mode w updateFromC
-trace variable imagep_style w updateFromC 
-trace variable imagep_tool  w updateFromC
+trace variable imagep_mode w "updateFromC imagep_mode "
+trace variable imagep_style w "updateFromC imagep_style "
+trace variable imagep_tool w "updateFromC imagep_tool "
 
-trace variable imagep_setpoint  w updateFromC
-trace variable imagep_p_gain  w updateFromC
-trace variable imagep_i_gain  w updateFromC
-trace variable imagep_d_gain  w updateFromC
-trace variable imagep_amplitude  w updateFromC
-trace variable imagep_rate    w updateFromC
-#trace variable imagep_tri_size  w updateFromC
-#trace variable imagep_tri_speed  w updateFromC
+trace variable imagep_setpoint  w "updateFromC imagep_setpoint "
+trace variable imagep_p_gain  w "updateFromC imagep_p_gain "
+trace variable imagep_i_gain  w "updateFromC imagep_i_gain "
+trace variable imagep_d_gain  w "updateFromC imagep_d_gain "
+trace variable imagep_amplitude  w "updateFromC imagep_amplitude "
+trace variable imagep_rate    w "updateFromC imagep_rate "
 
 # Changes the accept and cancel buttons to pink
 # when these variables change, as a reminder to user.
@@ -81,8 +94,6 @@ trace variable newimagep_i_gain  w imBackgChReal
 trace variable newimagep_d_gain  w imBackgChReal
 trace variable newimagep_amplitude  w imBackgChReal
 trace variable newimagep_rate    w imBackgChReal
-#trace variable newimagep_tri_size  w imBackgChReal
-#trace variable newimagep_tri_speed  w imBackgChReal
 
 #
 #setup Image box
@@ -91,17 +102,17 @@ pack $image.mode $image.modeparam $image.style $image.styleparam $image.tool \
 	$image.toolparam -side left -padx 3m -fill both
 
 #setup Image mode box
-label $image.mode.label -text "Image Mode" -bg $bc
+label $image.mode.label -text "Image Mode" 
 pack $image.mode.label -side top -anchor nw
-radiobutton $image.mode.oscillating -text "Oscillating" -variable newimagep_mode -value 0 -bg $fc
-radiobutton $image.mode.contact -text "Contact" -variable newimagep_mode -value 1 -bg $fc
-button $image.mode.accept -text "Accept" -bg $fc -command "acceptImageVars $imageplist"
-button $image.mode.cancel -text "Cancel" -bg $fc -command "cancelImageVars $imageplist"
+radiobutton $image.mode.oscillating -text "Oscillating" -variable newimagep_mode -value 0 
+radiobutton $image.mode.contact -text "Contact" -variable newimagep_mode -value 1 
+button $image.mode.accept -text "Accept" -command "acceptImageVars $imageplist"
+button $image.mode.cancel -text "Revert" -command "cancelImageVars $imageplist"
 pack $image.mode.oscillating $image.mode.contact -side top -anchor nw -fill x
 pack $image.mode.cancel $image.mode.accept -side bottom -fill x
 
 #setup Image modeparam box
-label $image.modeparam.label -text "Mode parameters" -bg $bc
+label $image.modeparam.label -text "Mode parameters" 
 pack $image.modeparam.label -side top -anchor nw 
 
 floatscale $image.modeparam.setpoint 0 100 101 1 1 newimagep_setpoint \
@@ -125,44 +136,28 @@ if {$newimagep_mode==0} {
 set im_oscillating_list "$image.modeparam.amplitude"
 
 #setup Image style box
-label $image.style.label -text "Style" -bg $bc
+label $image.style.label -text "Style" 
 pack $image.style.label -side top -anchor nw
-radiobutton $image.style.sharp -text "Sharp" -variable newimagep_style -value 0 -bg $fc
-#radiobutton $image.style.blunt -text "Blunt" -variable newimagep_style -value 1 -bg $fc
-
+radiobutton $image.style.sharp -text "Sharp" -variable newimagep_style -value 0
 pack $image.style.sharp -side top -fill x 
 
 
 #setup Image styleparam box
-label $image.styleparam.label -text "Style parameters" -bg $bc
+label $image.styleparam.label -text "Style parameters" 
 pack $image.styleparam.label -side top 
-
-#floatscale $image.styleparam.tri-size 0.5 5 101 1 1 newimagep_tri_size \
-#	"Tri Size" 
-#floatscale $image.styleparam.tri-speed 1000 10000 101 1 1 newimagep_tri_speed \
-#	"Tri Speed" 
-
-#set im_blunt_list "$image.styleparam.tri-size $image.styleparam.tri-speed"
 
 
 #setup Image tool box
-label $image.tool.label -text "Tool" -bg $bc
+label $image.tool.label -text "Tool" 
 pack $image.tool.label -side top 
 
-radiobutton $image.tool.freehand -text "Freehand" -variable newimagep_tool -value 0 -bg $fc 
+radiobutton $image.tool.freehand -text "Freehand" -variable newimagep_tool -value 0  
 
 pack $image.tool.freehand  -side top -fill x
 
 #setup Image toolparam box
-label $image.toolparam.label -text "Tool parameters" -bg $bc
+label $image.toolparam.label -text "Tool parameters" 
 pack $image.toolparam.label -side top -anchor nw
-#label $image.toolparam.step-sizel -text "Step-Size" -bg $bc
-#entry $image.toolparam.step-size -width 10 -relief sunken
-#pack  $image.toolparam.step-sizel $image.toolparam.step-size \
-#	-side top -fill x -anchor nw
-
-
-
 
 
 #
@@ -195,26 +190,6 @@ proc flip_im_mode {im_mode element op} {
     }
 }
 
-
-# flips $image.styleparam widgets
-proc flip_im_style {im_style element op} {
-    global image
-#    global im_blunt_list
-    global fspady
-
-    upvar $im_style k
-
-    if {$k==0} {
-        # selected sharp
-	set plist [lrange [pack slaves $image.styleparam] 1 end] 
-	foreach widg $plist {pack forget $widg} 
-#    } elseif {$k==1} {
-	# selected blunt
-#	set plist [lrange [pack slaves $image.styleparam] 1 end] 
-#	foreach widg $plist {pack forget $widg}
-#	foreach widg $im_blunt_list {pack $widg -side top -fill x -pady $fspady}
-    }
-}
 
 #
 # Change the background of Accept and Cancel buttons
@@ -269,22 +244,3 @@ proc cancelImageVars {varlist} {
 	$image.mode.cancel configure -background $fc
 }
 
-proc updateFromC {name element op} {
-    global image
-    global modify
-    global scanline
-    global fc
-    
-    upvar $name oldimvar
-    global new$name
-    set new$name $oldimvar
-#    puts "Update from C: new$name $oldimvar"
-
-    $image.mode.accept configure -background $fc
-    $image.mode.cancel configure -background $fc
-    $modify.mode.accept configure -background $fc
-    $modify.mode.cancel configure -background $fc
-    $scanline.mode.accept configure -background $fc
-    $scanline.mode.cancel configure -background $fc
-
-}

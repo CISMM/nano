@@ -72,6 +72,57 @@ proc newvalue_dialogue {varname {tlabel ""} } {
 }
 
 #
+################################
+#
+# This part of the script enables the creation of dialog boxes that will
+# allow the user to enter a string and have it set the value of a global
+# variable when the "Create" button is pushed.  This is intended to be
+# used to allow the user to specify the creation of new data sets.
+#
+
+proc copy_newlabel {from to} {
+        global  $from $to
+        set $to [eval set $from]
+}
+
+proc newlabel_dialogue {varname parent} {
+        global ${varname}nfdvar
+
+        # Make the two frames, top for the value and bottom for the buttons
+        frame $parent.top -relief raised -bd 1
+        pack $parent.top -side top -fill both
+        frame $parent.bottom -relief raised -bd 1
+        pack $parent.bottom -side bottom -fill both
+
+        # Make a place to enter the new value, initially blank
+        set ${varname}nfdvar ""
+        entry $parent.top.entry -relief sunken -bd 2 \
+              -textvariable ${varname}nfdvar
+        pack $parent.top.entry
+
+        # Make Create and Clear buttons.
+        # Create will set the global variable to the same value as the
+        #    filled-in value, and clear the filled-in value
+        # Clear just clears the filled-in value
+        button $parent.bottom.button1 -text "Create" -command \
+             "copy_newlabel ${varname}nfdvar $varname ; set ${varname}nfdvar {}"
+        button $parent.bottom.button2 -text "Clear" \
+               -command "set ${varname}nfdvar {}"
+        pack $parent.bottom.button1 -side left -fill x
+        pack $parent.bottom.button2 -side right
+
+        # Make Create what happens on <Return>
+        # Make Clear what happens on <Escape>
+        bind $parent <Return> "$parent.bottom.button1 invoke"
+        bind $parent <KP_Enter> "$parent.bottom.button1 invoke"
+        bind $parent <Escape> "$parent.bottom.button2 invoke"
+        bind $parent.top.entry <Return> "$parent.bottom.button1 invoke"
+        bind $parent.top.entry <KP_Enter> "$parent.bottom.button1 invoke"
+        bind $parent.top.entry <Escape> "$parent.bottom.button2 invoke"
+}
+
+
+#
 # Helper procedure for floatscale that modifies the global variable when
 # the scale changes.  It assumes that it is passed the whole record which
 # contains various fields of information that it needs.
@@ -301,10 +352,9 @@ proc minmaxscale {name min max steps var1 var2
 proc updateEntry {entry var name element op} { 
     upvar #0 $entry.textbg mybg
     upvar #0 $var varval 
-    #if { $varval != [$entry get] } {
+#    puts "updateEntry $var $varval"
       $entry delete 0 end 
       $entry insert 0 $varval 
-    #}
     $entry configure -textbackground $mybg
 }
 
@@ -312,9 +362,8 @@ proc updateEntry {entry var name element op} {
 proc setEntry {entry var } {
     upvar #0 $entry.textbg mybg
     upvar #0 $var varval 
-    #if { $varval != [$entry get] } {
+#    puts "setEntry $var $varval"
       set varval [$entry get]
-    #}
     $entry configure -textbackground $mybg
 }
 
@@ -324,16 +373,22 @@ proc setWarnBackground { entry name element op } {
     $entry configure -textbackground LightPink1
 }   
 
-# Create an integer entry field.
+# Create an entry field. Validation determines what kind of
+# numbers/letters can be entered.
+# The global variable passed in as "var" must exist
+# and have a valid initial value.
 proc generic_entry { name var label validation} {
     upvar #0 $var varval
     iwidgets::entryfield "$name" \
-        -command "setEntry $name $var" \
-        -validate $validation \
-        -textvariable "$name.gvar" \
-        -labeltext "$label"
-    #set the initial contents.
-    $name insert 0 $varval
+	-command "setEntry $name $var" \
+	-validate $validation \
+	-textvariable "$name.gvar" \
+	-labeltext "$label" \
+	-width 8
+    if {[info exists varval]} {
+	#set the initial contents.
+	$name insert 0 $varval
+    }
 
     global $name.textbg $name.gvar
 
@@ -357,11 +412,210 @@ proc intentry { name var } {
     pack $name
 }
 
+# Help prevent nested callbacks.
+set optionmenu_setting_list 0
 
+# help prevent setting global when it doesn't need to be
+set optionmenu_selecting_default 0
 
+# called when the C code sets the global value variable
+proc updateOptionmenu {menu var name element op} { 
+    global optionmenu_setting_list
+    upvar #0 $var varval 
 
+    # If this callback results from the entry_list being changed
+    # ignore it.
+    if { $optionmenu_setting_list } { return; }
+    #puts "TCL: updateOptionmenu $var $varval"
 
+    set old_menu_val "[$menu get]"
+    # If the new variable value is not one of the menu choices,
+    # use the old selection
+    if { "$varval" != "$old_menu_val" } {
+	# Check to see if menu item exists using a list search
+	set menu_list [$menu get 0 end]
+	if {[lsearch -exact $menu_list "$varval"] == -1} {
+	    # We force this menu to contain the value the 
+	    # global variable was set to. Programmer knows best :)
+	    $menu insert end "$varval"
+	    $menu select "$varval"
+	} else {
+	    $menu select "$varval"
+	}
+    }
+}
 
+# called when the C code changes the list of menu entries.
+proc updateOptionmenuEntries {menu entry_list_name var name element op} { 
+    global optionmenu_setting_list optionmenu_selecting_default
+    upvar #0 $entry_list_name entry_list
+    upvar #0 $var varval 
+    #puts "TCL: updateOptionmenuEntries $var $varval "
 
+    set old_menu_val [$menu get]
+    if { $entry_list == "" } {
+	set entry_list "none"
+    }
+    # Tell the updateOptionmenu callback we are deleting the list.
+    set optionmenu_setting_list 1
+    # Tell the optionmenu command to ignore the "$menu select 0" event caused
+    # by resetting the list
+    set optionmenu_selecting_default 1
 
+    $menu delete 0 end
+    # Use "eval" so the list members are treated as individual args.
+    eval $menu insert end $entry_list
 
+    set optionmenu_selecting_default 0
+    set optionmenu_setting_list 0
+
+    # Try to select the same entry as before the menu entries changed
+    # Check to see if the item is in the new menu entries.
+    # Menu entries must be in quotes to handle values with spaces!
+    if {[lsearch -exact $entry_list "$old_menu_val"] == -1} {
+	#puts "    TCL: optionmenu search if $var"
+	# The old menu item doesn't exist, so just choose the first item
+	$menu select 0
+	# this is necessary - the "select" command doesn't do it, 
+	# because the first menu item is already selected.
+	set varval [$menu get]
+    } else {
+	#puts "    TCL: optionmenu search else $var"
+	# We don't ever want callbacks for the global variable
+	# to be activated if we are just adjusting the menu entries
+	# so guard the "select" command so it won't re-set the 
+	# global variable. 
+	set optionmenu_selecting_default 1
+	$menu select "$old_menu_val"
+	set optionmenu_selecting_default 0
+    }
+}
+
+# Create an option menu for choosing from a list of strings.
+# Two global variable are associated with it.
+# "var" is a global representing the currently selected item
+# "entry_list_name" is a global list representing all the items to
+# choose from in the menu.
+proc generic_optionmenu { name var label entry_list_name} {
+    upvar #0 $var varval
+    upvar #0 $entry_list_name entry_list
+
+    iwidgets::optionmenu $name \
+	    -labeltext "$label" -labelpos w \
+	    -command "if {!\$optionmenu_selecting_default} {
+	set $var \[ $name get \]
+    }" 
+
+    if { $entry_list != "" } {
+	# Use "eval" so the list members are treated as individual args.
+	eval $name insert end $entry_list
+    } else {
+	$name insert end "none"
+    }
+
+    # Force the global variable to be set to the initial menu entry.
+    set varval "[ $name get ]"
+    
+    # Find out when the global variable connected with the entry
+    # gets set by someone else.
+    trace variable varval w "updateOptionmenu $name $var "
+
+    # Find out when the global variable connected with the menu entries
+    # gets set by someone else.
+    trace variable entry_list w \
+	    "updateOptionmenuEntries $name $entry_list_name $var "
+
+    return $name
+}
+
+# Create a window with a "close" button at the top, 
+# and a procedure to open it again. 
+proc create_closing_toplevel { win_name {title "" } } {
+
+    toplevel .$win_name
+    wm withdraw .$win_name
+    
+    if { "$title" != "" } {
+	wm title .$win_name "$title"
+    }
+
+    button .$win_name.close -text "Close" -command "
+	wm withdraw .$win_name
+    "
+    wm protocol .$win_name WM_DELETE_WINDOW ".$win_name.close invoke"
+    #pack .$win_name.close -anchor nw
+    
+    proc show.${win_name} {} "
+	wm deiconify .$win_name
+	raise .$win_name
+    "
+    return .$win_name
+}
+
+# Creates a standard dialog for choosing a color, and sets the
+# value of a global variable based on the user's choice. If the
+# user hits "cancel", the global variable's value is unchanged. 
+proc choose_color { color_var_name {title "Choose color"} } {
+    global nmInfo
+    upvar #0 $color_var_name color_var
+    set color [tk_chooseColor -title "$title" \
+	    -initialcolor $color_var]
+    if { $color != "" } {
+	set color_var $color
+    }
+}
+
+# called when the C code sets the tcl global variable
+proc updateRadiobox {boxname var name element op} { 
+    upvar #0 $var varval 
+
+    # Make sure new value of variable is inside legal limits for 
+    # the radiobox.
+    if { ($varval >= 0) && ($varval <= [$boxname index end]) } {
+	$boxname select $varval
+    } else {
+	# Illegal value !
+	# Return to whatever value the radiobox used to have.
+	set varval [$boxname get]
+    }
+}
+
+# Command looks up the value of the selected radiobox item. It
+# is a number starting at 0, because we set it up that way. 
+proc radiobox_command {name var } {
+    upvar #0 $var varval
+    if {[$name get]!= ""} {
+	set varval [$name get]
+    } 
+    #puts "Radiobox setting $var to [$name get]"
+}
+
+# This radiobox takes a list of items as input and a global variable
+# as input. Each item in the list is assigned a number starting with 0.
+# If the user selects an item in the list, the global variable gets
+# set to it's numerical index. 
+proc generic_radiobox { name var label entry_list} {
+    upvar #0 $var varval
+    
+    # Set default value for radiobox, if it doesn't exist already
+    if { 0==[info exists varval] } { set varval 0 }
+    iwidgets::radiobox $name -labeltext "$label" -labelpos nw -command \
+	    [list radiobox_command $name $var] 
+
+    # add each of the elements in the list passed in. Use a numerical tag.
+    set i 0
+    foreach entry $entry_list {
+	$name add $i -text "$entry"
+	incr i
+    }
+
+    if { ($varval < $i) && ($varval >= 0) } {
+	$name select $varval
+    } else {
+	$name select 0
+    }
+
+    # Find out when the global variable connected with the radiobox
+    # gets set by someone else.
+    trace variable varval w "updateRadiobox $name $var "
+}

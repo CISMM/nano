@@ -3,7 +3,7 @@
 #include	<string.h>
 #include	<ctype.h>
 
-#include "nmb_Selector.h"
+#include "nmb_String.h"
 #include "Tcl_Linkvar.h"
 #include "Tcl_Netvar.h"
 
@@ -15,48 +15,47 @@
 // file because we had to change it to virtual and that generated
 // warnings on the HP compiler.  - T. Hudson, Sept 99
 
-static	const int MAX_INTS =	1000;	// Max number of int variables
-static	const int MAX_IB =	1000;	// Max number of int/buttons
-static	const int MAX_FLOATS =	1000;	// Max number of float variables
-static	const int MAX_FS =	1000;	// Max number of floatscale vars
-static	const int MAX_IS =	1000;	// Max number of intscale vars
-static	const int MAX_INTENTRY= 1000;	// Max number of intentry vars
-static	const int MAX_CHECKENTRY= 1000;	// Max number of intentry vars
-static	const int MAX_SELS =	1000;	// Max number of selectors
+static	const int MAX_INTS =	1000;	///< Max number of int variables
+static	const int MAX_IB =	1000;	///< Max number of int/buttons
+static	const int MAX_FLOATS =	1000;	///< Max number of float variables
+//static	const int MAX_FS =	1000;	// Max number of floatscale vars
+//static	const int MAX_IS =	1000;	// Max number of intscale vars
+static	const int MAX_INTENTRY= 1000;	///< Max number of intentry vars
+static	const int MAX_CHECKENTRY= 1000;	///< Max number of intentry vars
+static	const int MAX_STRINGS =	1000;	///< Max number of strings
+static	const int MAX_LIST_OF_STRINGS =	1000;	///< Max number of lists of strings
 
-static	int	num_ints = 0;			// Number of int variables
-static	Tclvar_int	*int_list[MAX_INTS];	// Int variables
+static	int	num_ints = 0;			///< Number of int variables
+static	Tclvar_int	*int_list[MAX_INTS];	///< Int variables
 
-static	int	num_ib = 0;			// Number of ints with buttons
-static	Tclvar_int_with_button	*ib_list[MAX_IB];// IB variables
+static	int	num_ib = 0;			///< Number of ints with buttons
+static	Tclvar_int_with_button	*ib_list[MAX_IB];///< IB variables
 
-static	int	num_floats = 0;			// Number of float variables
-static	Tclvar_float	*float_list[MAX_FLOATS];// Float variables
+static	int	num_floats = 0;			///< Number of float variables
+static	Tclvar_float	*float_list[MAX_FLOATS];///< Float variables
 
-static	int	num_fs = 0;			// Number of floats with scales
-static	Tclvar_float_with_scale	*fs_list[MAX_FS];// Floatscale variables
+static	int	num_intentry = 0;		///< Number of ints with scales
+static	Tclvar_int_with_entry	*intentry_list[MAX_INTENTRY];///< Intscale variables
 
-static	int	num_is = 0;			// Number of ints with scales
-static	Tclvar_int_with_scale	*is_list[MAX_IS];// Intscale variables
+static	int	num_checkentry = 0;		///< Number of ints with scales
+static	Tclvar_checklist_with_entry	*checkentry_list[MAX_CHECKENTRY];///< Intscale variab
 
-static	int	num_intentry = 0;		// Number of ints with scales
-static	Tclvar_int_with_entry	*intentry_list[MAX_INTENTRY];// Intscale variables
+static	int	num_strings = 0;		///< Number of stringss
+static	Tclvar_string		*string_list[MAX_STRINGS];
 
-static	int	num_checkentry = 0;		// Number of ints with scales
-static	Tclvar_checklist_with_entry	*checkentry_list[MAX_CHECKENTRY];// Intscale variab
+static	int	num_list_of_strings = 0;	///< Number of list of strings
+static	Tclvar_list_of_strings	*list_of_strings_list[MAX_LIST_OF_STRINGS];
 
-static	int	num_sels = 0;			// Number of selectors
-static	Tclvar_selector		*sel_list[MAX_SELS];
-
-static	Tcl_Interp	*interpreter = NULL;	// Tcl interpreter used
+static	Tcl_Interp	*interpreter = NULL;	///< Tcl interpreter used
 
 // DO NOT USE commands such as Tcl_GetVar2 (with the 2 at the end)
 // if we use Tcl_GetVar instead, we wil be able to link with array elements 
 // in TCL. 
 
-//	Update the integer variable in the handler that is pointed to
-// when the variables changes.
-
+/**	Update the integer variable in the handler that is pointed to
+ when the variables changes.
+*/
+//static 
 char	*handle_int_value_change(ClientData clientData,
 	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
 {
@@ -68,41 +67,44 @@ char	*handle_int_value_change(ClientData clientData,
 	Tclvar_int	*intvar = (Tclvar_int*)(clientData);
 
 	// Look up the new value of the variable
-	cvalue = Tcl_GetVar(interp, intvar->my_tcl_varname,
+	cvalue = Tcl_GetVar(interp, intvar->d_myTclVarname,
 		 TCL_GLOBAL_ONLY);
 	if (cvalue == NULL) {
 		fprintf(stderr,"Warning!  Can't read %s from Tcl\n",
-			intvar->my_tcl_varname);
+			intvar->d_myTclVarname);
 		intvar->d_dirty = VRPN_TRUE;
 	} else if (Tcl_GetInt(interp, cvalue, &value) != TCL_OK) {
 		fprintf(stderr,"Warning!  %s not int from Tcl\n",
-			intvar->my_tcl_varname);
+			intvar->d_myTclVarname);
 		intvar->d_dirty = VRPN_TRUE;
 	} else if (intvar->d_ignoreChange) {
           intvar->d_ignoreChange = VRPN_FALSE;
 
 //fprintf(stderr, "handle_int_value_change (%s, %d):  ignoring the change.\n",
-//intvar->my_tcl_varname, value);
+//intvar->d_myTclVarname, value);
 
         } else { //no errors: update the variable
           // Need to invoke operator = since it might be redefined
           // by derived class.  (?)
 
 //fprintf(stderr, "handle_int_value_change (%s, %d).\n",
-//intvar->my_tcl_varname, value);
+//intvar->d_myTclVarname, value);
 
           //*intvar = value;
+//fprintf(stderr, "  .. set updateFromTcl.\n");
           intvar->d_updateFromTcl = VRPN_TRUE;
           intvar->SetFromTcl(value);
+          intvar->d_updateFromTcl = VRPN_FALSE;
           intvar->mylastint = value;
 	} 
 
 	return NULL;
 };
 
-//	Update the float variable in the handler that is pointed to
-// when the variables changes.
-
+/**	Update the float variable in the handler that is pointed to
+ when the variables changes.
+*/
+//static
 char	*handle_float_value_change(ClientData clientData,
 	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
 {
@@ -110,58 +112,91 @@ char	*handle_float_value_change(ClientData clientData,
 	vrpn_float64	value;
 	Tclvar_float	*floatvar = (Tclvar_float*)(clientData);
 
-// 	printf("floatvalchange: %s %s %s\n", name1, name2, floatvar->my_tcl_varname);
+// 	printf("floatvalchange: %s %s %s\n", name1, name2, floatvar->d_myTclVarname);
 	// Look up the new value of the variable
-	cvalue = Tcl_GetVar(interp, floatvar->my_tcl_varname, 
+	cvalue = Tcl_GetVar(interp, floatvar->d_myTclVarname, 
 		 TCL_GLOBAL_ONLY);
 	if (cvalue == NULL) {
 		fprintf(stderr,"Warning!  Can't read %s from Tcl\n",
-			floatvar->my_tcl_varname);
+			floatvar->d_myTclVarname);
 		floatvar->d_dirty = VRPN_TRUE;
 	} else if (Tcl_GetDouble(interp, cvalue, &value) != TCL_OK) {
 		fprintf(stderr,"Warning!  %s not double from Tcl\n",
-			floatvar->my_tcl_varname);
+			floatvar->d_myTclVarname);
 		floatvar->d_dirty = VRPN_TRUE;
         } else if (floatvar->d_ignoreChange) {
           floatvar->d_ignoreChange = VRPN_FALSE;
 	} else { // no errors: update the variable
 //  fprintf(stderr, "handle_float_value_change: %s %s old %f new %f\n", 
-//         floatvar->my_tcl_varname, cvalue, floatvar->mylastfloat, value);
+//         floatvar->d_myTclVarname, cvalue, floatvar->mylastfloat, value);
            // Need to invoke operator = since it might be redefined
            // by derived class.  (?)
 	   //*floatvar = value;
-          floatvar->d_updateFromTcl = VRPN_TRUE;
+           floatvar->d_updateFromTcl = VRPN_TRUE;
            floatvar->SetFromTcl(value);
+           floatvar->d_updateFromTcl = VRPN_FALSE;
 	   floatvar->mylastfloat = value;
 	}
 	return NULL;
 };
 
-//	Update the string variable in the handler that is pointed to
-// when the variables changes.
-
+/**	Update the string variable in the handler that is pointed to
+ when the variables changes.
+*/
+//static
 char	*handle_string_value_change(ClientData clientData,
 	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
 {
         char    *cvalue;
-	Tclvar_selector	*selvar = (Tclvar_selector*)(clientData);
+	Tclvar_string	*stringvar = (Tclvar_string*)(clientData);
 
 	// Look up the new value of the variable
-	cvalue = Tcl_GetVar(interp, selvar->d_myTclVarname, 
+	cvalue = Tcl_GetVar(interp, stringvar->d_myTclVarname, 
 		 TCL_GLOBAL_ONLY);
 	if (cvalue == NULL) {
 		fprintf(stderr,"Warning!  Can't read %s from Tcl\n",
-			selvar->d_myTclVarname);
-		selvar->d_dirty = VRPN_TRUE;
-	} else if (selvar->d_ignoreChange) {
+			stringvar->d_myTclVarname);
+		stringvar->d_dirty = VRPN_TRUE;
+	} else if (stringvar->d_ignoreChange) {
 //fprintf(stderr, "handle_string_value_change:  ignoring.\n");
-          selvar->d_ignoreChange = VRPN_FALSE;
+          stringvar->d_ignoreChange = VRPN_FALSE;
         } else { // no errors: update the variable
 //fprintf(stderr, "handle_string_value_change:  changing %s to %s.\n",
-//selvar->d_myTclVarname, cvalue);
-           // BUG BUG BUG - doesn't use operator =?
-          selvar->d_updateFromTcl = VRPN_TRUE;
-           selvar->SetFromTcl(cvalue);
+//stringvar->d_myTclVarname, cvalue);
+	    stringvar->d_updateFromTcl = VRPN_TRUE;
+	    stringvar->SetFromTcl(cvalue);
+	    stringvar->d_updateFromTcl = VRPN_FALSE;
+	    stringvar->resetString();
+	}
+	return NULL;
+};
+
+//	Update the list_of_strings variable in the handler that is pointed to
+// when the variables changes.
+
+//static
+char	*handle_list_of_strings_value_change(ClientData clientData,
+	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
+{
+        char    *cvalue;
+	Tclvar_list_of_strings	*list_of_stringsvar = (Tclvar_list_of_strings*)(clientData);
+
+	// Look up the new value of the variable
+	cvalue = Tcl_GetVar(interp, list_of_stringsvar->d_myTclVarname, 
+		 TCL_GLOBAL_ONLY);
+	if (cvalue == NULL) {
+		fprintf(stderr,"Warning!  Can't read %s from Tcl\n",
+			list_of_stringsvar->d_myTclVarname);
+		list_of_stringsvar->d_dirty = VRPN_TRUE;
+	} else if (list_of_stringsvar->d_ignoreChange) {
+//fprintf(stderr, "handle_list_of_strings_value_change:  ignoring.\n");
+          list_of_stringsvar->d_ignoreChange = VRPN_FALSE;
+        } else { // no errors: update the variable
+//fprintf(stderr, "handle_list_of_strings_value_change:  changing %s to %s.\n",
+//list_of_stringsvar->d_myTclVarname, cvalue);
+	    // TEMPORARY - Cannot set the variable in Tcl
+	    // Changes will be ignored!
+	    //list_of_stringsvar->SetFromTcl(cvalue);
 	}
 	return NULL;
 };
@@ -186,15 +221,15 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
 		// initialize the tcl variable with the value from the
 		// C variable
 		sprintf(cvalue, "%d", (vrpn_int32) *int_list[i]);
-		Tcl_SetVar(interpreter, int_list[i]->my_tcl_varname,
+		Tcl_SetVar(interpreter, int_list[i]->d_myTclVarname,
 			   cvalue, TCL_GLOBAL_ONLY);
-		if (Tcl_TraceVar(interpreter, int_list[i]->my_tcl_varname,
+		if (Tcl_TraceVar(interpreter, int_list[i]->d_myTclVarname,
 			TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
 			handle_int_value_change,
 			(ClientData)((void*)(int_list[i]))) != TCL_OK) {
 			fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n",
-				int_list[i]->my_tcl_varname,
-				interpreter->result);
+				int_list[i]->d_myTclVarname,
+				Tcl_GetStringResult(interpreter));
 			return(-1);
 		}
 	}
@@ -204,15 +239,15 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
 		// initialize the tcl variable with the value from the
 		// C variable
 		sprintf(cvalue, "%g", (vrpn_float64) *float_list[i]);
-		Tcl_SetVar(interpreter, float_list[i]->my_tcl_varname,
+		Tcl_SetVar(interpreter, float_list[i]->d_myTclVarname,
 			   cvalue, TCL_GLOBAL_ONLY);
-		if (Tcl_TraceVar(interpreter, float_list[i]->my_tcl_varname,
+		if (Tcl_TraceVar(interpreter, float_list[i]->d_myTclVarname,
 			TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
 			handle_float_value_change,
 			(ClientData)((void*)(float_list[i]))) != TCL_OK) {
 			fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n",
-				float_list[i]->my_tcl_varname,
-				interpreter->result);
+				float_list[i]->d_myTclVarname,
+				Tcl_GetStringResult(interpreter));
 			return(-1);
 		}
 
@@ -241,6 +276,7 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
 	}
 
 	// Set up the floatscales.
+	/*
 	for (i = 0; i < num_fs; i++) {
 	    if (fs_list[i]->tcl_widget_name != NULL) {
 		if (fs_list[i]->initialize(interpreter)) return(-1);
@@ -253,7 +289,7 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
 		if (is_list[i]->initialize(interpreter)) return(-1);
 	    }
 	}
-
+	*/
 	// Set up the intentries.
 	for (i = 0; i < num_intentry; i++) {
 	    if (intentry_list[i]->tcl_widget_name != NULL) {
@@ -261,29 +297,51 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
 	    }
 	}
 
-	// Insert callbacks for the selector variables
-	// Set up the selectors.
-	for (i = 0; i < num_sels; i++) {
-          if (sel_list[i]->d_myTclVarname) {  // TCH  6 April 98
-//fprintf(stderr, "Tracing selector %d.\n", i);
-            if (Tcl_TraceVar(interpreter, sel_list[i]->d_myTclVarname,
+	// Insert callbacks for the list_of_strings variables
+	// Set up the list_of_stringss.
+	// Do list_of_strings before strings because some strings
+	// get their values from list_of_strings.
+	for (i = 0; i < num_list_of_strings; i++) {
+          if (list_of_strings_list[i]->d_myTclVarname) {  // TCH  6 April 98
+	      // initialize the tcl variable with the value from the
+	      // C variable
+	      // This is different because it creates a string representation
+	      // of the list, then sends it to tcl.
+	      list_of_strings_list[i]->updateTcl();
+//fprintf(stderr, "Tracing list_of_strings %d.\n", i);
+            if (Tcl_TraceVar(interpreter, list_of_strings_list[i]->d_myTclVarname,
                              TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
-                             handle_string_value_change,
-                             (ClientData)((void*)(sel_list[i]))) != TCL_OK) {
+                             handle_list_of_strings_value_change,
+                             (ClientData)((void*)(list_of_strings_list[i]))) != TCL_OK) {
               fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n",
-                      sel_list[i]->d_myTclVarname,
-                      interpreter->result);
+                      list_of_strings_list[i]->d_myTclVarname,
+                      Tcl_GetStringResult(interpreter));
               return(-1);
             }
           }
-          if (sel_list[i]->d_tclWidgetName) {
-//fprintf(stderr, "Initializing selector %d (%s).\n",
-//i, sel_list[i]->d_myTclVarname);
-            if (sel_list[i]->initialize(interpreter)) return(-1);
-          } else {
-            //fprintf(stderr, "Selector %d has no widget.\n", i);
+	}
+
+	// Insert callbacks for the string variables
+	// Set up the strings.
+	for (i = 0; i < num_strings; i++) {
+          if (string_list[i]->d_myTclVarname) {  // TCH  6 April 98
+	      // initialize the tcl variable with the value from the
+	      // C variable
+	      Tcl_SetVar(interpreter, string_list[i]->d_myTclVarname,
+			 (char *) string_list[i]->string(), TCL_GLOBAL_ONLY);
+//fprintf(stderr, "Tracing string %d.\n", i);
+            if (Tcl_TraceVar(interpreter, string_list[i]->d_myTclVarname,
+                             TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
+                             handle_string_value_change,
+                             (ClientData)((void*)(string_list[i]))) != TCL_OK) {
+              fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n",
+                      string_list[i]->d_myTclVarname,
+                      Tcl_GetStringResult(interpreter));
+              return(-1);
+            }
           }
 	}
+
 
 	return	0;
 
@@ -291,7 +349,6 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
 
 int	Tclvar_mainloop (void)
 {
-	int	i;
 
 	// Make sure there is a valid interpeter
 	if (interpreter == NULL) {
@@ -299,15 +356,16 @@ int	Tclvar_mainloop (void)
 	}
 
 #if 0
-	// Check for changes in the C selectors and update the Tcl variables
+	int	i;
+	// Check for changes in the C strings and update the Tcl variables
 	// when they occur.
-	for (i = 0; i < num_sels; i++) {
-		if (sel_list[i]->compareStrings() ||
-		    (sel_list[i]->d_dirty)) {
-                        sel_list[i]->resetString();
-			sel_list[i]->d_dirty = VRPN_FALSE;
-			Tcl_SetVar(interpreter, sel_list[i]->d_myTclVarname,
-                            (char *) sel_list[i]->string(), TCL_GLOBAL_ONLY);
+	for (i = 0; i < num_strings; i++) {
+		if (string_list[i]->compareStrings() ||
+		    (string_list[i]->d_dirty)) {
+                        string_list[i]->resetString();
+			string_list[i]->d_dirty = VRPN_FALSE;
+			Tcl_SetVar(interpreter, string_list[i]->d_myTclVarname,
+                            (char *) string_list[i]->string(), TCL_GLOBAL_ONLY);
 		}
 	}
 #endif
@@ -315,23 +373,23 @@ int	Tclvar_mainloop (void)
 	return 0;
 }
 
-//	Add an entry into the list of active integer Tcl variables, and
-// point it to this variable.
-//	Add a Tcl callback, if an interpreter has been declared.
-
+/**	Add an entry into the list of active integer Tcl variables, and
+ point it to this variable.
+	Add a Tcl callback, if an interpreter has been declared.
+*/
 Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
 	Linkvar_Intcall c, void * ud) :
-  my_tcl_varname (NULL),
-  d_myint (default_value),
+  d_myTclVarname (NULL),
   mylastint (default_value),
   d_dirty (VRPN_FALSE),
   d_ignoreChange (VRPN_FALSE),
   d_permitIdempotentChanges (VRPN_FALSE),
+  d_myint (default_value),
   d_callbacks (NULL),
   d_inCallback (VRPN_FALSE),
   d_updateFromTcl (VRPN_FALSE)
 {
-//fprintf(stderr, "Tclvar_int constructor\n");
+//fprintf(stderr, "Tclvar_int constructor %s\n", tcl_varname);
 
 	if (num_ints >= (MAX_INTS-1)) {
 		fprintf(stderr,"Tclvar_int::Tclvar_int(): Can't link to %s\n",
@@ -339,45 +397,53 @@ Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
 		fprintf(stderr,"                          (Out of storage)\n");
 	} else {
 		int_list[num_ints] = this;
-		my_tcl_varname = new char [strlen(tcl_varname) + 1];
-		if (my_tcl_varname == NULL) {
+		d_myTclVarname = new char [strlen(tcl_varname) + 1];
+		if (d_myTclVarname == NULL) {
 			fprintf(stderr,"Tclvar_int::Tclvar_int(): Out of memory\n");
 		} else {
-			strcpy(my_tcl_varname, tcl_varname);
+			strcpy(d_myTclVarname, tcl_varname);
 			num_ints++;
 		}
 	}
 
 	// Add a callback for change if there is an interpreter
 	if (interpreter != NULL) {
-		if (Tcl_TraceVar(interpreter, my_tcl_varname,
-			TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
-			handle_int_value_change,
-			(ClientData)((void*)(this))) != TCL_OK) {
-			fprintf(stderr, "Tclvar_int::Tclvar_int(): Tcl_TraceVar(%s) failed: %s\n",
-				my_tcl_varname, interpreter->result);
-		}
+		// initialize the tcl variable with the value from the
+		// C variable
+	    char cvalue[100];
+	    sprintf(cvalue, "%d", d_myint);
+	    Tcl_SetVar(interpreter, d_myTclVarname,
+		       cvalue, TCL_GLOBAL_ONLY);
+	    if (Tcl_TraceVar(interpreter, d_myTclVarname,
+			     TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
+			     handle_int_value_change,
+			     (ClientData)((void*)(this))) != TCL_OK) {
+		fprintf(stderr, "Tclvar_int::Tclvar_int(): Tcl_TraceVar(%s) failed: %s\n",
+			d_myTclVarname, Tcl_GetStringResult(interpreter));
+	    }
 	}
 
-  addCallback(c, ud);
+	addCallback(c, ud);
 };
 
-//	Remove the entry from the list of active integer Tcl variables.
-
+///	Remove the entry from the list of active integer Tcl variables.
 Tclvar_int::~Tclvar_int (void)
 {
-	register int	i = 0;
-//fprintf(stderr, "~Tclvar_int() %s", my_tcl_varname);
+	int	i = 0;
+//fprintf(stderr, "~Tclvar_int() %s", d_myTclVarname);
 	// Remove the trace callback, if there is an interpreter
-	if (interpreter != NULL) {
-		Tcl_UntraceVar(interpreter, my_tcl_varname,
+	if (interpreter && d_myTclVarname) {
+		Tcl_UntraceVar(interpreter, d_myTclVarname,
 			TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
 			handle_int_value_change,
 			(ClientData)((void*)(this)));
 	}
 
 	// Free the space for the name
-	if (my_tcl_varname != NULL) {delete [] my_tcl_varname; }
+	if (d_myTclVarname != NULL) {
+	    delete [] d_myTclVarname; 
+	    d_myTclVarname = NULL;
+	}
 
 	// Find this entry in the list of variables
 	while ( (i < num_ints) && (int_list[i] != this) ) { i++; };
@@ -403,6 +469,11 @@ int Tclvar_int::initialize (Tcl_Interp * interpreter) {
 }
 #endif
 
+/**
+   Add a callback
+   @param cb Callback function
+   @param userdata a pointer useful to the callback
+*/
 void Tclvar_int::addCallback (Linkvar_Intcall cb, void * userdata) {
   tclIntCallbackEntry * newEntry;
 
@@ -432,6 +503,7 @@ void Tclvar_int::doCallbacks (void) {
   tclIntCallbackEntry * e;
 
   if (d_inCallback) {
+//fprintf(stderr, "Tclvar_int::doCallbacks(%s):  nested calls!\n", d_myTclVarname);
     return;
   }
   d_inCallback = VRPN_TRUE;
@@ -470,30 +542,49 @@ void Tclvar_int::SetFromTcl (vrpn_int32 v) {
   vrpn_int32 retval;
   retval = (d_myint = v);
   doCallbacks();
+
+
 }
 
 void Tclvar_int::updateTcl (void) {
   char cvalue [100];
 
-  if (d_updateFromTcl) {
-    d_updateFromTcl = VRPN_FALSE;
-    return;
-  }
-  // Idempotent check. Only notify tcl if the new value is
-  // different from the old value. 
   if (!interpreter) {
     return;
   }
-  if ((d_myint != mylastint) ||
-      (d_permitIdempotentChanges)) {
-  d_ignoreChange = VRPN_TRUE;
-    mylastint = d_myint;
-    d_dirty = VRPN_FALSE;
-    sprintf(cvalue, "%d", d_myint);
-    Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
-//fprintf(stderr, "Tclvar_int::updateTcl(%d) - was %d.\n",
-//d_myint, mylastint);
+
+//fprintf(stderr, "Tclvar_int::updateTcl(%s, %d) - was %d.\n",
+//d_myTclVarname, d_myint, mylastint);
+
+    // If we're inside a Tcl callback, we're NOT going to generate
+    // another Tcl callback with the Tcl_SetVar call below, since
+    // Tcl refuses to nest callbacks, so we don't want to set d_ignoreChange.
+
+    // However, we STILL need to execute the Tcl_SetVar, because
+    // some widgets accept input and then clear themselves by executing
+    // operator = in the C code, and their new (empty) value needs to
+    // be passed up to Tcl.
+
+  if (!d_updateFromTcl) {
+
+    // Since we're not inside a Tcl callback, we're about to generate one,
+    // which we want to ignore to avoid endless loops or hitting the callback
+    // twice.
+
+//fprintf(stderr, "Tclvar_int::updateTcl(%s):  setting d_ignoreChange.\n", d_myTclVarname);
+    d_ignoreChange = VRPN_TRUE;
   }
+
+//    if ((d_myint == mylastint) || d_permitIdempotentChanges) {
+//      d_ignoreChange = VRPN_FALSE;
+//      return;
+//    }
+
+  mylastint = d_myint;
+  d_dirty = VRPN_FALSE;
+  sprintf(cvalue, "%d", d_myint);
+  Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
+
 }
 
 
@@ -504,7 +595,7 @@ void Tclvar_int::updateTcl (void) {
 
 Tclvar_float::Tclvar_float(const char * tcl_varname, vrpn_float64 default_value,
 	Linkvar_Floatcall c, void * ud) :
-  my_tcl_varname (NULL),
+  d_myTclVarname (NULL),
   mylastfloat (default_value),
   d_dirty (VRPN_FALSE),
   d_ignoreChange (VRPN_FALSE),
@@ -522,24 +613,30 @@ Tclvar_float::Tclvar_float(const char * tcl_varname, vrpn_float64 default_value,
 		fprintf(stderr,"                          (Out of storage)\n");
 	} else {
 		float_list[num_floats] = this;
-		my_tcl_varname = new char[strlen(tcl_varname)+1];
+		d_myTclVarname = new char[strlen(tcl_varname)+1];
 //fprintf(stderr, "  Allocated for tcl_varname %s.\n", tcl_varname);
-		if (my_tcl_varname == NULL) {
+		if (d_myTclVarname == NULL) {
 			fprintf(stderr,"Tclvar_float::Tclvar_float(): Out of memory\n");
 		} else {
-			strcpy(my_tcl_varname, tcl_varname);
+			strcpy(d_myTclVarname, tcl_varname);
 			num_floats++;
 		}
 	}
 
         // Add a callback for change if there is an interpreter
         if (interpreter != NULL) {
-                if (Tcl_TraceVar(interpreter, my_tcl_varname,
+		// initialize the tcl variable with the value from the
+		// C variable
+	    char cvalue[100];
+		sprintf(cvalue, "%g", d_myfloat);
+		Tcl_SetVar(interpreter, d_myTclVarname,
+			   cvalue, TCL_GLOBAL_ONLY);
+                if (Tcl_TraceVar(interpreter, d_myTclVarname,
                         TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
                         handle_float_value_change,
 			(ClientData)((void*)this)) != TCL_OK) {
                         fprintf(stderr, "Tclvar_float::Tclvar_float(): Tcl_TraceVar(%s) failed: %s\n",
-                                my_tcl_varname, interpreter->result);
+                                d_myTclVarname, Tcl_GetStringResult(interpreter));
                 }
         }
   addCallback(c, ud);
@@ -551,19 +648,22 @@ Tclvar_float::Tclvar_float(const char * tcl_varname, vrpn_float64 default_value,
 
 Tclvar_float::~Tclvar_float (void)
 {
-//fprintf(stderr, "~Tclvar_float() %s", my_tcl_varname);
+//fprintf(stderr, "~Tclvar_float() %s", d_myTclVarname);
 	register int	i = 0;
 
 	// Remove the trace callback, if there is an interpreter
 	if (interpreter != NULL) {
-		Tcl_UntraceVar(interpreter, my_tcl_varname, 
+		Tcl_UntraceVar(interpreter, d_myTclVarname, 
 			TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
 			handle_float_value_change,
 			(ClientData)((void*)this));
 	}
 
 	// Free the space for the name
-	if (my_tcl_varname != NULL) { delete [] my_tcl_varname; }
+	if (d_myTclVarname != NULL) { 
+	    delete [] d_myTclVarname; 
+	    d_myTclVarname = NULL;
+	}
 
 	// Find this entry in the list of variables
 	while ( (i < num_floats) && (float_list[i] != this) ) { i++; };
@@ -608,7 +708,7 @@ void Tclvar_float::addCallback (Linkvar_Floatcall cb, void * userdata) {
 void Tclvar_float::doCallbacks (void) {
   tclFloatCallbackEntry * e;
 
-//fprintf(stderr, "Tclvar_float::doCallbacks (%s).\n", my_tcl_varname);
+//fprintf(stderr, "Tclvar_float::doCallbacks (%s).\n", d_myTclVarname);
 
   if (d_inCallback) {
     return;
@@ -623,28 +723,10 @@ void Tclvar_float::doCallbacks (void) {
 // virtual
 vrpn_float64 Tclvar_float::operator = (vrpn_float64 v) {
   vrpn_float64 retval;
-  char cvalue [100];
-
-//fprintf(stderr, "Tclvar_float: %s = %.5f\n", my_tcl_varname, v);
+//fprintf(stderr, "Tclvar_float: %s = %.5f\n", d_myTclVarname, v);
 
   retval = (d_myfloat = v);
-
-  if (d_updateFromTcl) {
-    d_updateFromTcl = VRPN_FALSE;
-    return retval;
-  }
-  if (!interpreter) {
-    return retval;
-  }
-  if ((d_myfloat != mylastfloat) ||
-      (d_permitIdempotentChanges)) {
-    d_ignoreChange = VRPN_TRUE;
-    mylastfloat = d_myfloat;
-    d_dirty = VRPN_FALSE;
-    sprintf(cvalue, "%f", d_myfloat);
-    Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
-  }
-
+  updateTcl();
   return retval;
 }
 
@@ -655,6 +737,43 @@ void Tclvar_float::SetFromTcl (vrpn_float64 v) {
   retval = (d_myfloat = v);
 
   doCallbacks();
+}
+
+void Tclvar_float::updateTcl (void) {
+  char cvalue [100];
+
+  if (!interpreter) {
+    return;
+  }
+
+    // If we're inside a Tcl callback, we're NOT going to generate
+    // another Tcl callback with the Tcl_SetVar call below, since
+    // Tcl refuses to nest callbacks, so we don't want to set d_ignoreChange.
+
+    // However, we STILL need to execute the Tcl_SetVar, because
+    // some widgets accept input and then clear themselves by executing
+    // operator = in the C code, and their new (empty) value needs to
+    // be passed up to Tcl.
+
+  if (!d_updateFromTcl) {
+
+    // Since we're not inside a Tcl callback, we're about to generate one,
+    // which we want to ignore to avoid endless loops or hitting the callback
+    // twice.
+
+    d_ignoreChange = VRPN_TRUE;
+  }
+
+//    if ((d_myfloat == mylastfloat) || d_permitIdempotentChanges) {
+//      d_ignoreChange = VRPN_FALSE;
+//      return;
+//    }
+
+  mylastfloat = d_myfloat;
+  d_dirty = VRPN_FALSE;
+  sprintf(cvalue, "%g", d_myfloat);
+  Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
+
 }
 
 
@@ -668,7 +787,7 @@ Tclvar_int_with_button::Tclvar_int_with_button
         Linkvar_Intcall c, void *ud) :
 	TclNet_int (tcl_varname, default_value, c, ud)
 {
-//fprintf(stderr, "Tclvar_int_with_button constructor\n");
+//fprintf(stderr, "Tclvar_int_with_button constructor %s\n", tcl_varname);
 
 	// Add this to the list of integers with buttons
 	if (num_ib >= (MAX_IB-1)) {
@@ -677,11 +796,11 @@ Tclvar_int_with_button::Tclvar_int_with_button
 		fprintf(stderr,"                          (Out of storage)\n");
 	} else {
 		ib_list[num_ib] = this;
-		my_tcl_varname = new char[strlen(tcl_varname)+1];
-		if (my_tcl_varname == NULL) {
+		d_myTclVarname = new char[strlen(tcl_varname)+1];
+		if (d_myTclVarname == NULL) {
 			fprintf(stderr,"Tclvar_int_with_button::Tclvar_int_with_button(): Out of memory\n");
 		} else {
-			strcpy(my_tcl_varname, tcl_varname);
+			strcpy(d_myTclVarname, tcl_varname);
 			d_myint = mylastint = default_value;
 			num_ib++;
 		}
@@ -731,12 +850,15 @@ Tclvar_int_with_button::~Tclvar_int_with_button (void)
 		sprintf(command,"destroy %s",tcl_widget_name);
 		if (Tcl_Eval(interpreter, command) != TCL_OK) {
 			fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-				interpreter->result);
+				Tcl_GetStringResult(interpreter));
 		}
 	}
 
 	// Free the space for the widget name
-	if (tcl_widget_name != NULL) { delete [] tcl_widget_name; }
+	if (tcl_widget_name != NULL) { 
+	    delete [] tcl_widget_name; 
+	    d_myTclVarname = NULL;
+	}
 
 	// Find this entry in the list of variables
 	while ( (i < num_ib) && (ib_list[i] != this) ) { i++; };
@@ -768,22 +890,22 @@ int	Tclvar_int_with_button::initialize(Tcl_Interp *interpreter)
 
 	// Set the variable to its default value
 	sprintf(cvalue,"%d", d_myint);
-	Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
 
 	// Create the checkbutton.  Only use the truncated name for the
 	// text in the widget (the part of the variable name after the
 	// last '.').
-	last_part = strrchr(my_tcl_varname, '.');
+	last_part = strrchr(d_myTclVarname, '.');
 	if (last_part == NULL) {
-		last_part = my_tcl_varname;
+		last_part = d_myTclVarname;
 	} else {
 		last_part++;	// Skip the .
 	}
 	sprintf(command,"checkbutton {%s} -text {%s} -variable {%s} -anchor w",
-		tcl_widget_name, last_part, my_tcl_varname);
+		tcl_widget_name, last_part, d_myTclVarname);
 	if (Tcl_Eval(interpreter, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-			interpreter->result);
+			Tcl_GetStringResult(interpreter));
 		return(-1);
 	}
 
@@ -791,7 +913,7 @@ int	Tclvar_int_with_button::initialize(Tcl_Interp *interpreter)
 	sprintf(command,"pack {%s} -fill x\n", tcl_widget_name);
 	if (Tcl_Eval(interpreter, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-			interpreter->result);
+			Tcl_GetStringResult(interpreter));
 		return(-1);
 	}
 
@@ -818,7 +940,7 @@ vrpn_int32 Tclvar_int_with_button::operator ++ (int v) {
 //	Add an entry into the list of active floatscale Tcl variables, and
 // point it to this variable.  Set up the min and max floats.
 //	Add a trace callback and handler widget if there is an interpreter.
-
+/*
 Tclvar_float_with_scale::Tclvar_float_with_scale
        (const char * tcl_varname, const char * parent_name,
         vrpn_float64 minval, vrpn_float64 maxval, vrpn_float64 default_value,
@@ -836,11 +958,11 @@ Tclvar_float_with_scale::Tclvar_float_with_scale
 		fprintf(stderr,"                          (Out of storage)\n");
 	} else {
 		fs_list[num_fs] = this;
-		my_tcl_varname = new char[strlen(tcl_varname)+1];
-		if (my_tcl_varname == NULL) {
+		d_myTclVarname = new char[strlen(tcl_varname)+1];
+		if (d_myTclVarname == NULL) {
 			fprintf(stderr,"Tclvar_float_with_scale::Tclvar_float_with_scale(): Out of memory\n");
 		} else {
-			strcpy(my_tcl_varname, tcl_varname);
+			strcpy(d_myTclVarname, tcl_varname);
 			d_myfloat = mylastfloat = default_value;
 			num_fs++;
 		}
@@ -887,12 +1009,12 @@ Tclvar_float_with_scale::~Tclvar_float_with_scale (void)
 		sprintf(command,"destroy %s",tcl_widget_name);
 		if (Tcl_Eval(interpreter, command) != TCL_OK) {
 			fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-				interpreter->result);
+				Tcl_GetStringResult(interpreter));
 		}
 		sprintf(command,"destroy %s",tcl_label_name);
 		if (Tcl_Eval(interpreter, command) != TCL_OK) {
 			fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-				interpreter->result);
+				Tcl_GetStringResult(interpreter));
 		}
 	}
 
@@ -927,23 +1049,23 @@ int	Tclvar_float_with_scale::initialize(Tcl_Interp *interpreter)
 
 	// Set the variable to its default value
 	sprintf(cvalue,"%g", d_myfloat);
-	Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
 
 	// Create the floatscale
 	sprintf(command,"floatscale %s %g %g 300 0 1 %s",
-		tcl_widget_name, minvalue, maxvalue, my_tcl_varname);
+		tcl_widget_name, minvalue, maxvalue, d_myTclVarname);
 	if (Tcl_Eval(interpreter, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-			interpreter->result);
+			Tcl_GetStringResult(interpreter));
 		return(-1);
 	}
 
 	// Make the label for the floatscale
 	sprintf(tcl_label_name,"%slabel",tcl_widget_name);
-	sprintf(command,"label %s -text %s", tcl_label_name, my_tcl_varname);
+	sprintf(command,"label %s -text %s", tcl_label_name, d_myTclVarname);
 	if (Tcl_Eval(interpreter, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-			interpreter->result);
+			Tcl_GetStringResult(interpreter));
 		return(-1);
 	}
 
@@ -951,7 +1073,7 @@ int	Tclvar_float_with_scale::initialize(Tcl_Interp *interpreter)
 	sprintf(command,"pack %s %s\n", tcl_label_name, tcl_widget_name);
 	if (Tcl_Eval(interpreter, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-			interpreter->result);
+			Tcl_GetStringResult(interpreter));
 		return(-1);
 	}
 
@@ -962,12 +1084,12 @@ int	Tclvar_float_with_scale::initialize(Tcl_Interp *interpreter)
 vrpn_float64 Tclvar_float_with_scale::operator = (vrpn_float64 v) {
   return TclNet_float::operator = (v);
 }
-
+*/
 
 //	Add an entry into the list of active intscale Tcl variables, and
 // point it to this variable.  Set up the min and max ints.
 //	Add a trace callback and handler widget if there is an interpreter.
-
+/*
 Tclvar_int_with_scale::Tclvar_int_with_scale
        (const char * tcl_varname, const char * parent_name,
         vrpn_int32 minval, vrpn_int32 maxval, vrpn_int32 default_value,
@@ -986,12 +1108,12 @@ Tclvar_int_with_scale::Tclvar_int_with_scale
 		fprintf(stderr,"                          (Out of storage)\n");
 	} else {
 		is_list[num_is] = this;
-		my_tcl_varname = new char[strlen(tcl_varname)+1];
-		if (my_tcl_varname == NULL) {
+		d_myTclVarname = new char[strlen(tcl_varname)+1];
+		if (d_myTclVarname == NULL) {
 			fprintf(stderr,"Tclvar_int_with_scale::"
                              "Tclvar_int_with_scale(): Out of memory\n");
 		} else {
-			strcpy(my_tcl_varname, tcl_varname);
+			strcpy(d_myTclVarname, tcl_varname);
 			d_myint = mylastint = default_value;
 			num_is++;
 		}
@@ -1040,12 +1162,12 @@ Tclvar_int_with_scale::~Tclvar_int_with_scale (void)
 		sprintf(command,"destroy %s",tcl_widget_name);
 		if (Tcl_Eval(interpreter, command) != TCL_OK) {
 			fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-				interpreter->result);
+				Tcl_GetStringResult(interpreter));
 		}
 		sprintf(command,"destroy %s",tcl_label_name);
 		if (Tcl_Eval(interpreter, command) != TCL_OK) {
 			fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-				interpreter->result);
+				Tcl_GetStringResult(interpreter));
 		}
 	}
 
@@ -1082,23 +1204,23 @@ int	Tclvar_int_with_scale::initialize(Tcl_Interp *interpreter)
 
 	// Set the variable to its default value
 	sprintf(cvalue,"%d", d_myint);
-	Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
 
 	// Create the int_entry
 	sprintf(command,"intscale %s %d %d 300 0 1 %s",
-		tcl_widget_name, minvalue, maxvalue, my_tcl_varname);
+		tcl_widget_name, minvalue, maxvalue, d_myTclVarname);
 	if (Tcl_Eval(interpreter, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-			interpreter->result);
+			Tcl_GetStringResult(interpreter));
 		return(-1);
 	}
 
 	// Make the label for the intscale
 	sprintf(tcl_label_name,"%slabel",tcl_widget_name);
-	sprintf(command,"label %s -text %s", tcl_label_name, my_tcl_varname);
+	sprintf(command,"label %s -text %s", tcl_label_name, d_myTclVarname);
 	if (Tcl_Eval(interpreter, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-			interpreter->result);
+			Tcl_GetStringResult(interpreter));
 		return(-1);
 	}
 
@@ -1106,7 +1228,7 @@ int	Tclvar_int_with_scale::initialize(Tcl_Interp *interpreter)
 	sprintf(command,"pack %s %s\n", tcl_label_name, tcl_widget_name);
 	if (Tcl_Eval(interpreter, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-			interpreter->result);
+			Tcl_GetStringResult(interpreter));
 		return(-1);
 	}
 
@@ -1118,7 +1240,7 @@ vrpn_int32 Tclvar_int_with_scale::operator = (vrpn_int32 v) {
   return TclNet_int::operator = (v);
 }
 
-
+*/
 
 
 
@@ -1131,7 +1253,7 @@ Tclvar_int_with_entry::Tclvar_int_with_entry(const char *tcl_varname,
 	Linkvar_Intcall c, void *ud) :
 	TclNet_int(tcl_varname, default_value, c, ud)
 {
-//fprintf(stderr, "Tclvar_int_with_entry constructor\n");
+//fprintf(stderr, "Tclvar_int_with_entry constructor %s\n", tcl_varname);
 
 
 	if (num_intentry >= (MAX_INTENTRY-1)) {
@@ -1140,11 +1262,11 @@ Tclvar_int_with_entry::Tclvar_int_with_entry(const char *tcl_varname,
 		fprintf(stderr,"                          (Out of storage)\n");
 	} else {
 		intentry_list[num_intentry] = this;
-		my_tcl_varname = new char[strlen(tcl_varname)+1];
-		if (my_tcl_varname == NULL) {
+		d_myTclVarname = new char[strlen(tcl_varname)+1];
+		if (d_myTclVarname == NULL) {
 			fprintf(stderr,"Tclvar_int_with_entry::Tclvar_int_with_entry(): Out of memory\n");
 		} else {
-			strcpy(my_tcl_varname, tcl_varname);
+			strcpy(d_myTclVarname, tcl_varname);
 			d_myint = mylastint = default_value;
 			num_intentry++;
 		}
@@ -1197,7 +1319,7 @@ Tclvar_int_with_entry::Tclvar_int_with_entry(const char *tcl_varname,
 		tcl_widget_name = NULL;
 	}
 	
-	//printf("int_w_entry contsr: %s %s %s\n", my_tcl_varname, parent_name,tcl_widget_name); 
+	//printf("int_w_entry contsr: %s %s %s\n", d_myTclVarname, parent_name,tcl_widget_name); 
 	
 	// Add and pack a intentry if there is an interpreter and a widget
 	if ( (interpreter != NULL) && (tcl_widget_name != NULL) ) {
@@ -1219,18 +1341,24 @@ Tclvar_int_with_entry::~Tclvar_int_with_entry (void)
 		sprintf(command,"destroy %s",tcl_widget_name);
 		if (Tcl_Eval(interpreter, command) != TCL_OK) {
 			fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-				interpreter->result);
+				Tcl_GetStringResult(interpreter));
 		}
 		sprintf(command,"destroy %s",tcl_label_name);
 		if (Tcl_Eval(interpreter, command) != TCL_OK) {
 			fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-				interpreter->result);
+				Tcl_GetStringResult(interpreter));
 		}
 	}
 
 	// Free the space for the widget name
-	if (tcl_widget_name != NULL) { delete [] tcl_widget_name; }
-	if (tcl_label_name != NULL) { delete [] tcl_label_name; }
+	if (tcl_widget_name != NULL) { 
+	    delete [] tcl_widget_name; 
+	    tcl_widget_name = NULL;
+	}
+	if (tcl_label_name != NULL) { 
+	    delete [] tcl_label_name; 
+	    tcl_label_name = NULL;
+	}
 
 	// Find this entry in the list of variables
 	while ( (i < num_intentry) && (intentry_list[i] != this) ) { i++; };
@@ -1260,13 +1388,13 @@ int	Tclvar_int_with_entry::initialize(Tcl_Interp *interpreter)
 
 	// Create the intentry
 	sprintf(command,"intentry {%s} {%s}",
-		tcl_widget_name, my_tcl_varname);
+		tcl_widget_name, d_myTclVarname);
 	TCLEVALCHECK(interpreter, command);
 
 	//set the initial value of the entry field
 	// Set the variable to its default value
 	sprintf(cvalue,"%d", d_myint);
-	Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
 
 	// Make the label for the intentry
 	sprintf(tcl_label_name,"%slabel",tcl_widget_name);
@@ -1284,73 +1412,70 @@ vrpn_int32 Tclvar_int_with_entry::operator = (vrpn_int32 v) {
 
 
 
-// Too dangerous - interferes with nmb_Selector::operator = (const char *).
-// Perhaps we could just write Tclvar_selector::operator =, but I don't
+// Too dangerous - interferes with nmb_String::operator = (const char *).
+// Perhaps we could just write Tclvar_string::operator =, but I don't
 // think that's the right thing to do.
 
-Tclvar_selector::Tclvar_selector (const char * initial_value) :
-  nmb_Selector (NULL, initial_value),
+Tclvar_string::Tclvar_string (const char * initial_value) :
+  nmb_String (initial_value),
   d_myTclVarname (NULL),
-  d_tclWidgetName (NULL),
-  d_tclLabelName (NULL),
   d_dirty (VRPN_FALSE),
   d_ignoreChange (VRPN_FALSE),
   d_permitIdempotentChanges (VRPN_FALSE),
   d_callbacks (NULL),
-  d_initialized (VRPN_FALSE),
   d_inCallback (VRPN_FALSE),
-  d_updateFromTcl (VRPN_FALSE)
+  d_updateFromTcl (VRPN_FALSE),
+  d_initialized (VRPN_FALSE)
 {
-  if (num_sels >= (MAX_SELS - 1)) {
-    fprintf(stderr, "Tclvar_selector:  "
+  if (num_strings >= (MAX_STRINGS - 1)) {
+    fprintf(stderr, "Tclvar_string:  "
                     "Can't link to nameless variable.\n"
                     "(Out of storage)\n");
     return;
   }
-  sel_list[num_sels] = this;
-  num_sels++;
+  string_list[num_strings] = this;
+  num_strings++;
 
-//fprintf(stderr, "Constructed Tclvar_selector # %d ( = %s).\n", num_sels,
+//fprintf(stderr, "Constructed Tclvar_string # %d ( = %s).\n", num_strings,
 //initial_value);
 }
 
 
 
-Tclvar_selector::Tclvar_selector
+Tclvar_string::Tclvar_string
                     (const char * tcl_varname,
-                     const char * parent_name,
-                     nmb_ListOfStrings * list,
                      const char * initial_value,
-                     Linkvar_Selectcall c,
+                     Linkvar_Stringcall c,
                      void * userdata) :
-  nmb_Selector (list, initial_value),
+  nmb_String (initial_value),
   d_myTclVarname (NULL),
-  d_tclWidgetName (NULL),
-  d_tclLabelName (NULL),
   d_dirty (VRPN_FALSE),
-  d_callbacks (NULL), 
+  d_ignoreChange (VRPN_FALSE),
+  d_permitIdempotentChanges (VRPN_FALSE),
+  d_callbacks (NULL),
+  d_inCallback (VRPN_FALSE),
+  d_updateFromTcl (VRPN_FALSE),
   d_initialized (VRPN_FALSE)
 {
-  if (num_sels >= (MAX_SELS - 1)) {
-    fprintf(stderr, "Tclvar_selector:  "
+  if (num_strings >= (MAX_STRINGS - 1)) {
+    fprintf(stderr, "Tclvar_string:  "
                     "Can't link to nameless variable.\n"
                     "(Out of storage)\n");
     return;
   }
-  sel_list[num_sels] = this;
-  num_sels++;
-  initializeTcl(tcl_varname, parent_name);
+  string_list[num_strings] = this;
+  num_strings++;
+  initializeTcl(tcl_varname);
 
   addCallback(c, userdata);
 
-//fprintf(stderr, "Constructed & Tcl-initialized Tclvar_selector "
+//fprintf(stderr, "Constructed & Tcl-initialized Tclvar_string "
 //"# %d (%s = %s).\n",
-//num_sels, tcl_varname, initial_value);
+//num_strings, tcl_varname, initial_value);
 }
 
 //virtual
-Tclvar_selector::~Tclvar_selector (void) {
-  char command [1000];
+Tclvar_string::~Tclvar_string (void) {
   int i;
 
   // Remove the trace callback, if there is an interpreter.
@@ -1361,51 +1486,34 @@ Tclvar_selector::~Tclvar_selector (void) {
                    (ClientData) (void *) this);
   }
 
-  if (interpreter && d_tclWidgetName) {
-    sprintf(command, "destroy %s", d_tclWidgetName);
-    if (Tcl_Eval(interpreter, command) != TCL_OK) {
-      fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
-              interpreter->result);
-    }
-  }
-  if (interpreter && d_tclLabelName) {
-    sprintf(command, "destroy %s", d_tclLabelName);
-    if (Tcl_Eval(interpreter, command) != TCL_OK) {
-      fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
-              interpreter->result);
-    }
-  }
-
-  if (d_myTclVarname)
+  if (d_myTclVarname) {
     delete [] d_myTclVarname;
-  if (d_tclWidgetName)
-    delete [] d_tclWidgetName;
-  if (d_tclLabelName)
-    delete [] d_tclLabelName;
+    d_myTclVarname = NULL;
+  }
 
-  for (i = 0; (i < num_sels) && (sel_list[i] != this); i++) ;
-  if (i >= num_sels) {
-    fprintf(stderr, "~Tclvar_selector:  Internal error.\n");
+  for (i = 0; (i < num_strings) && (string_list[i] != this); i++) ;
+  if (i >= num_strings) {
+    fprintf(stderr, "~Tclvar_string:  Internal error.\n");
     return;
   }
 
-  sel_list[i] = sel_list[num_sels - 1];
-  num_sels--;
+  string_list[i] = string_list[num_strings - 1];
+  num_strings--;
 
 }
 
-void Tclvar_selector::addCallback (Linkvar_Selectcall cb, void * userdata) {
-  tclSelectCallbackEntry * newEntry;
+void Tclvar_string::addCallback (Linkvar_Stringcall cb, void * userdata) {
+  tclStringCallbackEntry * newEntry;
 
   if (!cb) {
-    //fprintf(stderr, "Tclvar_selector::addCallback:  NULL handler.\n");
+    //fprintf(stderr, "Tclvar_string::addCallback:  NULL handler.\n");
     return;
   }
 
   // Allocate and initialize new entry
-  newEntry = new tclSelectCallbackEntry;
+  newEntry = new tclStringCallbackEntry;
   if (!newEntry) {
-    fprintf(stderr, "Tclvar_selector::addCallback:  Out of memory.\n");
+    fprintf(stderr, "Tclvar_string::addCallback:  Out of memory.\n");
     return;
   }
 
@@ -1419,8 +1527,8 @@ void Tclvar_selector::addCallback (Linkvar_Selectcall cb, void * userdata) {
   d_callbacks = newEntry;
 }
 
-void Tclvar_selector::doCallbacks (void) {
-  tclSelectCallbackEntry * e;
+void Tclvar_string::doCallbacks (void) {
+  tclStringCallbackEntry * e;
 
   if (d_inCallback) {
     return;
@@ -1433,62 +1541,7 @@ void Tclvar_selector::doCallbacks (void) {
 }
 
 
-
-
-// virtual
-const char * Tclvar_selector::operator = (const char * v) {
-  nmb_Selector::operator = (v);
-  updateTcl();
-  return string();
-}
-
-// virtual
-const char * Tclvar_selector::operator = (char * v) {
-  nmb_Selector::operator = (v);
-  updateTcl();
-  return string();
-}
-
-//virtual
-void Tclvar_selector::Set (const char * v) {
-  nmb_Selector::Set(v);
-  // nmb_Selector::Set() will call Tclvar_selector::operator =(),
-  // which will call updateTcl(), which will trigger SetFromTcl(),
-  // which will call doCallbacks().
-}
-
-//virtual
-void Tclvar_selector::SetFromTcl (const char * v) {
-  nmb_Selector::operator = (v);
-  doCallbacks();
-}
-
-//
-void Tclvar_selector::updateTcl (void) {
-
-  if (d_updateFromTcl) {
-    d_updateFromTcl = VRPN_FALSE;
-    return;
-  }
-
-  if (!interpreter) {
-    return;
-  }
-
-  // Idempotent check.
-  if (compareStrings() ||
-      d_permitIdempotentChanges) {
-    d_ignoreChange = VRPN_TRUE;
-    resetString();
-    d_dirty = VRPN_FALSE;
-    Tcl_SetVar(interpreter, d_myTclVarname, (char *) string(), TCL_GLOBAL_ONLY);
-//fprintf(stderr, "Tclvar_int::updateTcl(%s) - was %s.\n",
-//string(), d_myLastString);
-  }
-}
-
-void Tclvar_selector::initializeTcl (const char * tcl_varname,
-                                     const char * parent_name) {
+void Tclvar_string::initializeTcl (const char * tcl_varname) {
   if (!tcl_varname) {
     //fprintf(stderr, "Tclvar_selector::initializeTcl:  "
                     //"NULL variable name!\n");
@@ -1497,256 +1550,331 @@ void Tclvar_selector::initializeTcl (const char * tcl_varname,
 
   d_myTclVarname = new char [strlen(tcl_varname) + 1];
   if (!d_myTclVarname) {
-    fprintf(stderr, "Tclvar_selector::initializeTcl:  Out of memory.\n");
+    fprintf(stderr, "Tclvar_string::initializeTcl:  Out of memory.\n");
     return;
   }
   strcpy(d_myTclVarname, tcl_varname);
 //fprintf(stderr, "  Set varname %s.\n", tcl_varname);
 
-  if (parent_name) {
-    d_tclWidgetName = new char [strlen(parent_name) +
-                                strlen(tcl_varname) + 2];
-    if (!d_tclWidgetName) {
-      fprintf(stderr, "Tclvar_selector::initializeTcl:  Out of memory.\n");
-      return;
-    }
-    sprintf(d_tclWidgetName, "%s.%s", parent_name, tcl_varname);
-//fprintf(stderr, "  Set widget name %s.\n", d_tclWidgetName);
-
-    d_tclLabelName = new char [strlen(parent_name) +
-                                strlen(tcl_varname) + 12];  // +7?
-    if (!d_tclLabelName) {
-      fprintf(stderr, "Tclvar_selector::initializeTcl:  Out of memory.\n");
-      return;
-    }
-    sprintf(d_tclLabelName, "%s.%slabel", parent_name, tcl_varname);
-//fprintf(stderr, "  Set label name %s.\n", d_tclLabelName);
-  }
-
   // Add a callback for changes if there is an interpreter.
   if (interpreter) {
-    if (Tcl_TraceVar(interpreter, d_myTclVarname,
+      // initialize the tcl variable with the value from the
+      // C variable
+      Tcl_SetVar(interpreter, d_myTclVarname, 
+		 (char *) string(), TCL_GLOBAL_ONLY);
+      if (Tcl_TraceVar(interpreter, d_myTclVarname,
                      TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
                      handle_string_value_change,
                      (ClientData) (void *) this) != TCL_OK) {
-      fprintf(stderr, "Tclvar_selector::initializeTcl:  "
+      fprintf(stderr, "Tclvar_string::initializeTcl:  "
                       "Tcl_TraceVar(%s) failed:  %s\n",
-              d_myTclVarname, interpreter->result);
+              d_myTclVarname, Tcl_GetStringResult(interpreter));
     }
   }
 
-  // Build the menu for this selector, if there is an interpreter
-  // and a widget name.
-  if (interpreter && d_tclWidgetName) {
-    initialize(interpreter);
-  } else {
-    //fprintf(stderr, "  No interpreter yet.\n");
-  }
+}
+
+
+// virtual
+const char * Tclvar_string::operator = (const char * v) {
+  nmb_String::operator = (v);
+  updateTcl();
+  return string();
+}
+
+// virtual
+const char * Tclvar_string::operator = (char * v) {
+  nmb_String::operator = (v);
+  updateTcl();
+  return string();
 }
 
 //virtual
-int Tclvar_selector::bindList (nmb_ListOfStrings * list) {
-  int ret = 0;
-
-  clearList(); // we need to do this before we replace d_myList
-  ret = nmb_Selector::bindList(list);
-
-  if (d_initialized && list && !ret) {
-    ret = initializeList();
-  } else if (d_initialized && !list && !ret) {
-    ret = clearList();
-  }
-
-  return ret;
+void Tclvar_string::Set (const char * v) {
+  nmb_String::Set(v);
+  // nmb_String::Set() will call Tclvar_string::operator =(),
+  // which will call updateTcl(), which will trigger SetFromTcl(),
+  // which will call doCallbacks().
 }
 
-int Tclvar_selector::initialize (Tcl_Interp * interpreter) {
-  char command [1000];
-  int ret;
-
-//fprintf(stderr, "In Tclvar_selector::initialize() for widget %s\n",
-//d_tclWidgetName);
-
-  // Set default value
-  Tcl_SetVar(interpreter, d_myTclVarname, d_myString, TCL_GLOBAL_ONLY);
-
-  // Create button to invoke menu
-  sprintf(command, "menubutton %s -textvariable %s -bd 2 -relief raised "
-                   "-menu %s.menu",
-          d_tclWidgetName, d_myTclVarname, d_tclWidgetName);
-  if (Tcl_Eval(interpreter, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
-            interpreter->result);
-    return -1;
-  }
-
-  // Cause button 3 to bring up a dialog box
-  sprintf(command, "bind %s <Button-3> { newvalue_dialogue %s }",
-          d_tclWidgetName, d_myTclVarname);
-  if (Tcl_Eval(interpreter, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
-            interpreter->result);
-    return -1;
-  }
-
-  // Create the menu
-  sprintf(command, "menu %s.menu", d_tclWidgetName);
-  if (Tcl_Eval(interpreter, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
-            interpreter->result);
-    return -1;
-  }
-
-  if (d_myList) {
-    ret = initializeList();
-    if (ret < 0)
-      return -1;
-  }
-
-  // Make the label for the menu
-  sprintf(d_tclLabelName, "%slabel", d_tclWidgetName);
-  sprintf(command, "label %s -text %s", d_tclLabelName, d_myTclVarname);
-  if (Tcl_Eval(interpreter, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
-            interpreter->result);
-    return -1;
-  }
-
-  // Pack the label and the menu
-  sprintf(command, "pack %s %s", d_tclLabelName, d_tclWidgetName);
-  if (Tcl_Eval(interpreter, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
-            interpreter->result);
-    return -1;
-  }
-
-  d_initialized = VRPN_TRUE;
-
-  return 0;
+//virtual
+void Tclvar_string::SetFromTcl (const char * v) {
+  nmb_String::operator = (v);
+  doCallbacks();
 }
 
-int Tclvar_selector::clearList (void) {
-  int retval; 
-  if (!d_myList) return 0;
-  for (int i = 0; i < d_myList->numEntries(); i++) {
-    retval = deleteEntry(d_myList->entry(i));
-    if (retval) {
-      return -1;
-    }
-  }
-  return 0;
-}  
+//
+void Tclvar_string::updateTcl (void) {
 
-int Tclvar_selector::initializeList (void) {
-  int i;
-  int retval;
-
-  if (!d_myList) return 0;
-
-  for (i = 0; i < d_myList->numEntries(); i++) {
-    retval = addEntry(d_myList->entry(i));
-    if (retval) {
-      return -1;
-    }
+  if (!interpreter) {
+    return;
   }
 
-  return 0;
+  // If we're inside a Tcl callback, we're NOT going to generate
+  // another Tcl callback with the Tcl_SetVar call below, since
+  // Tcl refuses to nest callbacks, so we don't want to set d_ignoreChange.
+
+  // However, we STILL need to execute the Tcl_SetVar, because
+  // some widgets accept input and then clear themselves by executing
+  // operator = in the C code, and their new (empty) value needs to
+  // be passed up to Tcl.
+  if (!d_updateFromTcl) {
+
+    // Since we're not inside a Tcl callback, we're about to generate one,
+    // which we want to ignore to avoid endless loops or hitting the callback
+    // twice.
+
+    d_ignoreChange = VRPN_TRUE;
+  }
+
+//    if (!compareStrings() || d_permitIdempotentChanges) {
+//      d_ignoreChange = VRPN_FALSE;
+//      return;
+//    }
+
+  // Idempotent check.
+  //fprintf(stderr, "Tclvar_int::updateTcl(%s) - was %s.\n",
+  //string(), d_myLastString);
+  resetString();
+  d_dirty = VRPN_FALSE;
+  Tcl_SetVar(interpreter, d_myTclVarname, (char *) string(), TCL_GLOBAL_ONLY);
 }
 
-
-
-
-
-
-
-// virtual
-int Tclvar_selector::addEntry (const char * entry) {
-  char command [1000];
-
-  if (!interpreter) return 0;
-  if (!d_tclWidgetName) return 0;
-//fprintf(stderr, "Adding %s to menu %s.\n", entry,
-//d_tclWidgetName);
-  int i;
-  if (d_tclWidgetName[0] == '$') {
-    printf("Tclvar_selector::addEntry: Warning: assuming global var in path and declaring it as such\n");
-    sprintf(command, "global %s", &(d_tclWidgetName[1]));
-    for (i = 7; i < strlen(d_tclWidgetName) + 7; i++){
-      if (command[i] == '(' || command[i] == '.'){
-        command[i] = '\0';
-        break;
-      }
-    }
-    if (Tcl_Eval(interpreter, command) != TCL_OK) {
-      fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
-            interpreter->result);
-      return -1;
-    }
-  }
-
-  sprintf(command, "%s.menu add command -label {%s} -underline 0 "
-                   "-command \"set %s {%s}\"",
-          d_tclWidgetName, entry, d_myTclVarname, entry);
-  if (Tcl_Eval(interpreter, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
-            interpreter->result);
-    return -1;
-  }
-
-  return 0;
-}
-
-
-// virtual
-int Tclvar_selector::deleteEntry (const char * entry) {
-  char command [1000];
-
-  if (!interpreter) return 0;
-  if (!d_tclWidgetName) return 0;
-
-//fprintf(stderr, "In deleteEntry for %s, %s.\n",
-//d_tclWidgetName, entry);
-  int i;
-  if (d_tclWidgetName[0] == '$') {
-    printf("Tclvar_selector::addEntry: Warning: assuming global var in path and"
-		"declaring it as such\n");
-    sprintf(command, "global %s", &(d_tclWidgetName[1]));
-    for (i = 7; i < strlen(d_tclWidgetName) + 7; i++){
-      if (command[i] == '(' || command[i] == '.'){
-        command[i] = '\0';
-        break;
-      }
-    }
-    if (Tcl_Eval(interpreter, command) != TCL_OK) {
-      fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
-            interpreter->result);
-      return -1;
-    }
-  }
-
-  sprintf(command, "%s.menu delete {%s}",
-          d_tclWidgetName, entry);
-  if (Tcl_Eval(interpreter, command) != TCL_OK) {
-    fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
-            interpreter->result);
-    return -1;
-  }
-
-  return 0;
-}
-
-int Tclvar_selector::compareStrings (void) {
+int Tclvar_string::compareStrings (void) {
   return strcmp(d_myLastString, d_myString);
 }
 
-void Tclvar_selector::resetString (void) {
+void Tclvar_string::resetString (void) {
   strcpy(d_myLastString, d_myString);
 }
 
 
 
-nmb_Selector * allocate_Tclvar_selector (const char * initialValue) {
-  return new Tclvar_selector (initialValue);
+nmb_String * allocate_Tclvar_string (const char * initialValue) {
+  return new Tclvar_string (initialValue);
+}
+
+
+
+//-----------------------------------------------------------------------
+// List of strings 
+
+Tclvar_list_of_strings::Tclvar_list_of_strings () :
+  nmb_ListOfStrings (),
+  d_myTclVarname (NULL),
+  d_dirty (VRPN_FALSE),
+  d_ignoreChange (VRPN_FALSE),
+  d_permitIdempotentChanges (VRPN_FALSE),
+  d_callbacks (NULL),
+  d_myString(NULL)
+{
+  if (num_list_of_strings >= (MAX_LIST_OF_STRINGS - 1)) {
+    fprintf(stderr, "Tclvar_list_of_strings:  "
+                    "Can't link to nameless variable.\n"
+                    "(Out of storage)\n");
+    return;
+  }
+  list_of_strings_list[num_list_of_strings] = this;
+  num_list_of_strings++;
+
+//fprintf(stderr, "Constructed Tclvar_list_of_strings # %d ( = %s).\n", num_list_of_strings,
+//initial_value);
+}
+
+
+
+Tclvar_list_of_strings::Tclvar_list_of_strings
+                    (const char * tcl_varname,
+                     Linkvar_ListOfStringscall c,
+                     void * userdata) :
+  nmb_ListOfStrings (),
+  d_myTclVarname (NULL),
+  d_dirty (VRPN_FALSE),
+  d_ignoreChange (VRPN_FALSE),
+  d_permitIdempotentChanges (VRPN_FALSE),
+  d_callbacks (NULL),
+  d_myString(NULL)
+{
+  if (num_list_of_strings >= (MAX_STRINGS - 1)) {
+    fprintf(stderr, "Tclvar_list_of_strings:  "
+                    "Can't link to variable %s.\n"
+                    "(Out of storage)\n", tcl_varname);
+    return;
+  }
+  list_of_strings_list[num_list_of_strings] = this;
+  num_list_of_strings++;
+  initializeTcl(tcl_varname);
+
+  addCallback(c, userdata);
+
+//fprintf(stderr, "Constructed & Tcl-initialized Tclvar_list_of_strings "
+//"# %d (%s = %s).\n",
+//num_list_of_strings, tcl_varname, initial_value);
+}
+
+//virtual
+Tclvar_list_of_strings::~Tclvar_list_of_strings (void) {
+  int i;
+
+  // Remove the trace callback, if there is an interpreter.
+  if (interpreter && d_myTclVarname) {
+    Tcl_UntraceVar(interpreter, d_myTclVarname,
+                   TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
+                   handle_list_of_strings_value_change,
+                   (ClientData) (void *) this);
+  }
+
+  if (d_myTclVarname) {
+    delete [] d_myTclVarname;
+    d_myTclVarname = NULL;
+  }
+
+  for (i = 0; (i < num_list_of_strings) && (list_of_strings_list[i] != this); i++) ;
+  if (i >= num_list_of_strings) {
+    fprintf(stderr, "~Tclvar_list_of_strings:  Internal error.\n");
+    return;
+  }
+
+  list_of_strings_list[i] = list_of_strings_list[num_list_of_strings - 1];
+  num_list_of_strings--;
+
+}
+
+void Tclvar_list_of_strings::addCallback (Linkvar_ListOfStringscall cb, void * userdata) {
+  tclListOfStringsCallbackEntry * newEntry;
+
+  if (!cb) {
+    //fprintf(stderr, "Tclvar_list_of_strings::addCallback:  NULL handler.\n");
+    return;
+  }
+
+  // Allocate and initialize new entry
+  newEntry = new tclListOfStringsCallbackEntry;
+  if (!newEntry) {
+    fprintf(stderr, "Tclvar_list_of_strings::addCallback:  Out of memory.\n");
+    return;
+  }
+
+  // Add this handler to the chain at the beginning (don't check to see
+  // if it is already there, since duplication is okay).
+
+  newEntry->handler = cb;
+  newEntry->userdata = userdata;
+  newEntry->next = d_callbacks;
+
+  d_callbacks = newEntry;
+}
+
+void Tclvar_list_of_strings::doCallbacks (void) {
+  tclListOfStringsCallbackEntry * e;
+
+  for (e = d_callbacks; e; e = e->next) {
+    (*e->handler)(d_myString, e->userdata);
+  }
+}
+
+
+void Tclvar_list_of_strings::initializeTcl (const char * tcl_varname) {
+  if (!tcl_varname) {
+    //fprintf(stderr, "Tclvar_selector::initializeTcl:  "
+                    //"NULL variable name!\n");
+    return;
+  }
+
+  d_myTclVarname = new char [strlen(tcl_varname) + 1];
+  if (!d_myTclVarname) {
+    fprintf(stderr, "Tclvar_list_of_strings::initializeTcl:  Out of memory.\n");
+    return;
+  }
+  strcpy(d_myTclVarname, tcl_varname);
+//fprintf(stderr, "  Set varname %s.\n", tcl_varname);
+
+  // Add a callback for changes if there is an interpreter.
+  if (interpreter) {
+      // set the list value in the interpreter.
+      updateTcl();
+    if (Tcl_TraceVar(interpreter, d_myTclVarname,
+                     TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
+                     handle_list_of_strings_value_change,
+                     (ClientData) (void *) this) != TCL_OK) {
+      fprintf(stderr, "Tclvar_list_of_strings::initializeTcl:  "
+                      "Tcl_TraceVar(%s) failed:  %s\n",
+              d_myTclVarname, Tcl_GetStringResult(interpreter));
+    }
+  }
+
+}
+
+//
+void Tclvar_list_of_strings::updateTcl (void) {
+  if (!interpreter) {
+    return;
+  }
+
+  d_dirty = VRPN_FALSE;
+
+  // XXX - need to add an idempotency check here some bright day
+
+  // If d_myString has been created previously, free the memory
+  if (d_myString) {
+//fprintf(stderr, "%s:  Tcl_Free %d.\n", d_myTclVarname, d_myString);
+    Tcl_Free(d_myString);
+  }
+  // Merge together the elements in the list into a correct Tcl list.
+  d_myString = Tcl_Merge(d_numEntries, d_entries);
+//fprintf(stderr, "%s:  Tcl returned  d_myString at %d.\n",
+//d_myTclVarname, d_myString);
+  Tcl_SetVar(interpreter, d_myTclVarname, d_myString, TCL_GLOBAL_ONLY);
+    
+}
+
+int Tclvar_list_of_strings::clearList()
+{
+    int ret = nmb_ListOfStrings::clearList();
+    // zero return value indicates success
+    if ( !ret) updateTcl();
+    return (ret);
+}
+
+int Tclvar_list_of_strings::addEntry(const char * newEntry)
+{
+  int ret = nmb_ListOfStrings::addEntry(newEntry);
+  // zero return value indicates success
+  if ( !ret) updateTcl();
+  return (ret);
+}
+
+int Tclvar_list_of_strings::deleteEntry(const char * oldEntry)
+{
+  int ret = nmb_ListOfStrings::deleteEntry(oldEntry);
+  // zero return value indicates success
+  if ( !ret) updateTcl();
+  return (ret);
+
+}
+
+int Tclvar_list_of_strings::copyList(nmb_ListOfStrings * newList)
+{
+    int ret = nmb_ListOfStrings::copyList(newList);
+    // zero return value indicates success
+    if ( !ret) updateTcl();
+    return (ret);
+
+}
+
+/*
+int Tclvar_list_of_strings::compareStrings (void) {
+  return strcmp(d_myLastString, d_myString);
+}
+
+void Tclvar_list_of_strings::resetString (void) {
+  strcpy(d_myLastString, d_myString);
+}
+*/
+
+
+nmb_ListOfStrings * allocate_Tclvar_list_of_strings () {
+  return new Tclvar_list_of_strings ();
 }
 
 
@@ -1799,11 +1927,15 @@ Tclvar_checklist::~Tclvar_checklist (void) {
 //fprintf(stderr, "~Tclvar_checklist()\n");
 
 	// Free the space for the name
-	if (tcl_parent_name != NULL) { delete [] tcl_parent_name; }
+	if (tcl_parent_name != NULL) { 
+	    delete [] tcl_parent_name; 
+	    tcl_parent_name = NULL;
+	}
 
 	// Destroy all of the checkboxes 
 	for (i = 0; i < num_checkboxes; i++) {
 		delete checkboxes[i].button;
+		checkboxes[i].button = NULL;
 	}
 }
 
@@ -2043,12 +2175,19 @@ Tclvar_checklist_with_entry::~Tclvar_checklist_with_entry (void)
 //fprintf(stderr, "~Tclvar_checklist_with_entry()\n");
 
 	// Free the space for the name
-	if (tcl_parent_name != NULL) { delete [] tcl_parent_name; }
+	if (tcl_parent_name != NULL) { 
+	    delete [] tcl_parent_name; 
+	    tcl_parent_name = NULL;
+	}
 
 	// Destroy all of the checkboxes and entries
 	for (i = 0; i < num_checkboxes; i++) {
 		delete checkboxes[i].button;
-		if ( checkboxes[i].entry != NULL) delete checkboxes[i].entry;
+		checkboxes[i].button = NULL;
+		if ( checkboxes[i].entry != NULL) {
+		    delete checkboxes[i].entry;
+		    checkboxes[i].entry= NULL;
+		}
 	}
 }
 
@@ -2086,7 +2225,7 @@ int	Tclvar_checklist_with_entry::initialize(Tcl_Interp *interpreter)
 	   sprintf(command, "pack [frame %s.%sf.e] -side right", 
 		   tcl_parent_name, my_checkbox_name);
 	   TCLEVALCHECK(interpreter, command);
-	   delete my_checkbox_name;
+	   delete [] my_checkbox_name;
 	}
 	return 0;
 }
@@ -2209,7 +2348,7 @@ int	Tclvar_checklist_with_entry::Add_checkbox_entry (const char * checkbox_name,
                         addCallback(checklist_callback, parm);
 	checkboxes[num_checkboxes - 1].entry->
                         addCallback(checklist_callback, parm);
-	delete my_checkbox_name;
+	delete [] my_checkbox_name;
 	return 0;
 };
 

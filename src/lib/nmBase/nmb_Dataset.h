@@ -3,7 +3,7 @@
 
 class BCGrid;  // from BCGrid.h
 class BCPlane;  // from BCPlane.h
-class nmb_Selector;  // from nmb_Selector.h
+class nmb_String;  // from nmb_String.h
 
 #include "nmb_Types.h"  // for PointType
 #include "nmb_Image.h"  // for nmb_ImageLIst
@@ -17,17 +17,23 @@ class nmb_Selector;  // from nmb_Selector.h
 //
 // Tom Hudson, November 1997
 
-//    Contains a (pointer to a) BCGrid with all known data from microscopes,
-//  and an nmb_Subgrid used to record the portions of that grid that have
-//  changed.
-//    Contains the names of BCPlanes in the BCGrid that are mapped
-//  to specific visualization techniques or parameters.
-
+// List of flatten planes, and the data necessary to calculate one.
 struct flatten_data {
     BCPlane * flat_plane;
     BCPlane * from_plane;
     double dx, dy, offset;
 };
+struct flatten_node {
+    flatten_data * data;
+    flatten_node * next;
+};
+
+
+//    Contains a (pointer to a) BCGrid with all known data from microscopes,
+//  and an nmb_Subgrid used to record the portions of that grid that have
+//  changed.
+//    Contains the names of BCPlanes in the BCGrid that are mapped
+//  to specific visualization techniques or parameters.
 
 
 class nmb_Dataset {
@@ -38,7 +44,8 @@ class nmb_Dataset {
                  float xMin, float xMax, float yMin, float yMax,
                  int readMode, const char ** fileNames, int numFiles,
 		 const char ** imageFileNames, int numImageFiles,
-                 nmb_Selector * (* allocator) (const char *));
+		 const char * hostname, 
+                 nmb_String * (* string_allocator) (const char *));
       // Constructor.
 
     ~nmb_Dataset (void);
@@ -54,16 +61,16 @@ class nmb_Dataset {
     nmb_Subgrid range_of_change;
         // portion of inputGrid that changed since the last render
 
-    nmb_Selector * alphaPlaneName;
+    nmb_String * alphaPlaneName;
       // name of the plane whose data should control
       // alphablending of a texture
-    nmb_Selector * colorPlaneName;
+    nmb_String * colorPlaneName;
       // name of the plane to map color from
-    nmb_Selector * colorMapName;
+    nmb_String * colorMapName;
       // name of the color map to use
-    nmb_Selector * contourPlaneName;
+    nmb_String * contourPlaneName;
       // name of the plane to render contours for
-    nmb_Selector * heightPlaneName;
+    nmb_String * heightPlaneName;
       // name of the plane to render as height (Z)
 
     vrpn_bool done;
@@ -105,7 +112,7 @@ class nmb_Dataset {
       // Output plane is updated as first and second plane change.
 
 
-    int computeFlattenedPlane (const char * outputPlane,
+    BCPlane* computeFlattenedPlane (const char * outputPlane,
                                const char * inputPlane,
                  float redX, float greenX, float blueX,
                  float redY, float greenY, float blueY);
@@ -147,6 +154,7 @@ class nmb_Dataset {
     };
     newFlatPlaneCB * d_flatPlaneCB;
 
+    char * d_hostname;
 };
 
 

@@ -10,15 +10,141 @@
 #include <Tcl_Linkvar.h>
 
 class vrpn_Connection;  // from vrpn_Connection.h
-class vrpn_Shared_int32;  // from vrpn_SharedObject.h
+class vrpn_SharedObject;  // from vrpn_SharedObject.h
+class vrpn_Shared_int32;
 class vrpn_Shared_float64;
 class vrpn_Shared_String;
 
 class Tcl_Interp;  // from tcl.h
 
-void Tclnet_init (Tcl_Interp *);
+void Tclnet_init (Tcl_Interp *, vrpn_bool useOptimisim = VRPN_FALSE);
+/**<
+ * Initializes Network-synchronized, replicated Tcl Variables,
+ * specifying Tcl interpreter to use and choosing between locking
+ * and optimistic consistiency control.
+ */
 
-class TclNet_int : public Tclvar_int {
+
+/** \class Tcl_Netvar
+ * Common behavior for all Network-synchronized, replicated Tcl Variables.
+ * Once we have template support all the derived classes
+ * should collapse into here.
+ * \see TclNet_int
+ * \see TclNet_float
+ * \see TclNet_string
+ */
+
+class Tcl_Netvar {
+
+  public:
+
+    Tcl_Netvar (void);
+    virtual ~Tcl_Netvar (void);
+
+    // ACCESSORS
+
+    vrpn_bool isSerializer (void) const;
+      /**<
+       * Returns true if this process is serializing updates to the
+       * shared variable.
+       */
+    vrpn_bool isLocked (void) const;
+      /**<
+       * Returns true if this shared variable is locked by this
+       * process.
+       * @see lock()
+       * @see unlock()
+       */
+
+
+    // MANIPULATORS
+
+    void bindConnection (vrpn_Connection *);
+      /**<
+       * Specifies the server connection for the Netvar.
+       * If we required passing the server connection to the constructor,
+       * we wouldn't be able to have globals.
+       */
+    void bindLogConnection (vrpn_Connection *);
+      /**<
+       * Specifies a connection on which to write out a log.
+       */
+
+    void addPeer (vrpn_Connection *, vrpn_bool serialize);
+      /**<
+       * Adds a new replica for this variable.
+       * If serialize is true, we're a "master copy" and this replica
+       * communicates over the connection passed in bindConnection().
+       * If serialize is false, we're a "slave copy" and this replica
+       * communicates over the connection passed as its first argument.
+       * This is the ugliest function in the class, and should be redesigned.
+       */
+
+
+    void lock (void);
+      /**<
+       * UNIMPLEMENTED support for remotely locking and unlocking variables.
+       */
+    void unlock (void);
+      /**<
+       * UNIMPLEMENTED support for remotely locking and unlocking variables.
+       */
+
+  protected:
+
+    virtual int addServerReplica (void) = 0;
+      /**<
+       * Adds a new vrpn_Shared_*_Server to an empty slot in d_replica[],
+       * sets the corresponding entry in d_replicaSource[], and returns
+       * the index used (which should be d_numReplicas), or -1 on error.
+       * \warning All implementations in derived classes must first call
+       * reallocateReplicaArrays() to make sure there's room for the new
+       * replica.
+       */
+
+    virtual int addRemoteReplica (void) = 0;
+      /**<
+       * Adds a new vrpn_Shared_*_Remote to an empty slot in d_replica[],
+       * sets the corresponding entry in d_replicaSource[], and returns
+       * the index used (which should be d_numReplicas), or -1 on error.
+       * \warning All implementations in derived classes must first call
+       * reallocateReplicaArrays() to make sure there's room for the new
+       * replica.
+       */
+
+    void reallocateReplicaArrays (void);
+      /**<
+       * Makes sure there's room for a new entry in d_replica[] and
+       * d_replicaSource[].
+       * \warning Must be called by any implementation of add*Replica().
+       */
+
+    timeval d_lastUpdate;
+      /**<
+       * Time at which the last update was made, or the timestamp
+       * propagated with the last conditional update.
+       * Mostly used for optimistic updates.
+       */
+
+    vrpn_SharedObject ** d_replica;
+    vrpn_Connection ** d_replicaSource;
+
+    int d_writeReplica;
+    int d_activeReplica;  // for reads
+    int d_numReplicas;
+    int d_numReplicasAllocated;
+
+  private:
+
+    vrpn_bool d_isLocked;
+
+};
+
+
+
+
+
+class TclNet_int : public Tclvar_int, public Tcl_Netvar {
 
   public:
 
@@ -28,56 +154,32 @@ class TclNet_int : public Tclvar_int {
 
     // ACCESSORS
 
-    vrpn_bool isLocked (void) const;
-    vrpn_bool isSerializer (void) const;
 
     // MANIPULATORS
 
     virtual vrpn_int32 operator = (vrpn_int32);
-      // Require changing base class;  should also check the
-      // return type of these against reference books.
-      // All of these set the value of d_replica[0],
-      // which will transmit the new value to the appropriate
-      // vrpn_Shared_int32_Remotes.
-
-    void bindConnection (vrpn_Connection *);
-      // Don't insist that the vrpn_Connection be available in
-      // the constructor, or we can't have globals.
-    void bindLogConnection (vrpn_Connection *);
-    void addPeer (vrpn_Connection *, vrpn_bool serialize);
-      // Add a new peer connection, add a replica, and start
-      // tracking changes.
 
     void copyReplica (int whichReplica);
       // Copy the state of the which-th replica.
       // ISSUE:  Need a better way of specifying which one (?)
       // ISSUE:  Probably should syncReplica(0) first?
+    void copyFromToReplica (int sourceReplica, int destReplica);
+      // Copy the state of the source replica to the destination replica.
     void syncReplica (int whichReplica);
       // Copy the state of the which-th replica, and any changes to it.
       // To "unsync", issue syncReplica(0)
 
-    void lock (void);
-    void unlock (void);
-      // While locked, a Tcl_Netvar will ignore all calls to operator =
-      // or operator ++.
+    // These two functions are NOT defined;  they should
+    // generate compile-time errors.
+    TclNet_int (const TclNet_int &);
+    TclNet_int & operator = (const TclNet_int &);
 
   protected:
 
+    virtual int addServerReplica (void);
+    virtual int addRemoteReplica (void);
+
     virtual void SetFromTcl (vrpn_int32);
-
-    vrpn_bool d_isLocked;
-
-    timeval d_lastUpdate;
-      // Time at which the last update was made, or the timestamp
-      // propagated with the last conditional update.
-
-    vrpn_Shared_int32 ** d_replica;
-    vrpn_Connection ** d_replicaSource;
-
-    int d_writeReplica;
-    int d_activeReplica;  // for reads
-    int d_numReplicas;
-    int d_numReplicasAllocated;
 
     static int propagateReceivedUpdate (void * userdata, vrpn_int32 newValue,
                                         timeval when, vrpn_bool isLocal);
@@ -85,7 +187,7 @@ class TclNet_int : public Tclvar_int {
 
 };
 
-class TclNet_float : public Tclvar_float {
+class TclNet_float : public Tclvar_float, public Tcl_Netvar {
 
   public:
 
@@ -95,56 +197,32 @@ class TclNet_float : public Tclvar_float {
 
     // ACCESSORS
 
-    vrpn_bool isLocked (void) const;
-    vrpn_bool isSerializer (void) const;
 
     // MANIPULATORS
 
     virtual vrpn_float64 operator = (vrpn_float64);
-      // Require changing base class;  should also check the
-      // return type of these against reference books.
-      // All of these set the value of d_replica[0],
-      // which will transmit the new value to the appropriate
-      // vrpn_Shared_float64_Remotes.
-
-    void bindConnection (vrpn_Connection *);
-      // Don't insist that the vrpn_Connection be available in
-      // the constructor, or we can't have globals.
-    void bindLogConnection (vrpn_Connection *);
-    void addPeer (vrpn_Connection *, vrpn_bool serialize);
-      // Add a new peer connection, add a replica, and start
-      // tracking changes.
 
     void copyReplica (int whichReplica);
       // Copy the state of the which-th replica.
       // ISSUE:  Need a better way of specifying which one (?)
       // ISSUE:  Probably should syncReplica(0) first?
+    void copyFromToReplica (int sourceReplica, int destReplica);
+      // Copy the state of the source replica to the destination replica.
     void syncReplica (int whichReplica);
       // Copy the state of the which-th replica, and any changes to it.
       // To "unsync", issue syncReplica(0)
 
-    void lock (void);
-    void unlock (void);
-      // While locked, a Tcl_Netvar will ignore all calls to operator =
-      // or operator ++.
+    // These two functions are NOT defined;  they should
+    // generate compile-time errors.
+    TclNet_float (const TclNet_float &);
+    TclNet_float & operator = (const TclNet_float &);
 
   protected:
 
+    virtual int addServerReplica (void);
+    virtual int addRemoteReplica (void);
+
     virtual void SetFromTcl (vrpn_float64);
-
-    vrpn_bool d_isLocked;
-
-    timeval d_lastUpdate;
-      // Time at which the last update was made, or the timestamp
-      // propagated with the last conditional update.
-
-    vrpn_Shared_float64 ** d_replica;
-    vrpn_Connection ** d_replicaSource;
-
-    int d_writeReplica;
-    int d_activeReplica;
-    int d_numReplicas;
-    int d_numReplicasAllocated;
 
     static int propagateReceivedUpdate (void * userdata, vrpn_float64 newValue,
                                         timeval when, vrpn_bool isLocal);
@@ -152,21 +230,18 @@ class TclNet_float : public Tclvar_float {
 
 };
 
-class TclNet_selector : public Tclvar_selector {
+class TclNet_string : public Tclvar_string, public Tcl_Netvar {
 
   public:
 
-    TclNet_selector (const char * initial_value = NULL);
-    TclNet_selector (const char * tcl_varname,
-                     const char * parent_name,
-                     const char * default_value = "",
-                     Linkvar_Selectcall c = NULL, void * userdata = NULL);
-    virtual ~TclNet_selector (void);
+    TclNet_string (const char * initial_value = "");
+    TclNet_string (const char * tcl_varname,
+                     const char * default_value,
+                     Linkvar_Stringcall c = NULL, void * userdata = NULL);
+    virtual ~TclNet_string (void);
 
     // ACCESSORS
 
-    vrpn_bool isLocked (void) const;
-    vrpn_bool isSerializer (void) const;
 
     // MANIPULATORS
 
@@ -176,48 +251,30 @@ class TclNet_selector : public Tclvar_selector {
       // sometimes doesn't resolve correctly?
     virtual void Set (const char *);
 
-    virtual void initializeTcl (const char * tcl_varname,
-                                const char * parent_name);
+    virtual void initializeTcl (const char * tcl_varname);
 
-
-    void bindConnection (vrpn_Connection *);
-      // Don't insist that the vrpn_Connection be available in
-      // the constructor, or we can't have globals.
-    void bindLogConnection (vrpn_Connection *);
-    void addPeer (vrpn_Connection *, vrpn_bool serialize);
-      // Add a new peer connection, add a replica, and start
-      // tracking changes.
 
     void copyReplica (int whichReplica);
       // Copy the state of the which-th replica.
       // ISSUE:  Need a better way of specifying which one (?)
       // ISSUE:  Probably should syncReplica(0) first?
+    void copyFromToReplica (int sourceReplica, int destReplica);
+      // Copy the state of the source replica to the destination replica.
     void syncReplica (int whichReplica);
       // Copy the state of the which-th replica, and any changes to it.
       // To "unsync", issue syncReplica(0)
 
-    void lock (void);
-    void unlock (void);
-      // While locked, a Tcl_Netvar will ignore all calls to operator =
-      // or operator ++.
+    // These two functions are NOT defined;  they should
+    // generate compile-time errors.
+    TclNet_string (const TclNet_string &);
+    TclNet_string & operator = (const TclNet_string &);
 
   protected:
 
+    virtual int addServerReplica (void);
+    virtual int addRemoteReplica (void);
+
     virtual void SetFromTcl (const char *);
-
-    vrpn_bool d_isLocked;
-
-    timeval d_lastUpdate;
-      // Time at which the last update was made, or the timestamp
-      // propagated with the last conditional update.
-
-    vrpn_Shared_String ** d_replica;
-    vrpn_Connection ** d_replicaSource;
-
-    int d_writeReplica;
-    int d_activeReplica;
-    int d_numReplicas;
-    int d_numReplicasAllocated;
 
     static int propagateReceivedUpdate (void * userdata, const char * newValue,
                                         timeval when, vrpn_bool isLocal);
@@ -225,7 +282,7 @@ class TclNet_selector : public Tclvar_selector {
 
 };
 
-nmb_Selector * allocate_TclNet_selector (const char * initialValue);
+nmb_String * allocate_TclNet_string (const char * initialValue);
 
 
 class	Tclvar_int_with_button: public TclNet_int {
@@ -246,61 +303,14 @@ class	Tclvar_int_with_button: public TclNet_int {
 	virtual vrpn_int32 operator ++ (int);
 
 	char            *tcl_widget_name;
+
+    // These two functions are NOT defined;  they should
+    // generate compile-time errors.
+    Tclvar_int_with_button (const Tclvar_int_with_button &);
+    Tclvar_int_with_button & operator = (const Tclvar_int_with_button &);
+
 };
 
-
-//	When variables of this class are declared, the calling program must
-// have had Tcl load the file "russ_widgets.tcl" in order to include the
-// floatscale function definition.
-//	This variable type will automatically display a floatscale inside
-// the parent widget (unless the parent has NULL name) to track the value and
-// allow its control.
-
-class	Tclvar_float_with_scale: public TclNet_float {
-    public:
-	Tclvar_float_with_scale
-               (const char *tcl_varname,
-                const char *parent_name,
-		vrpn_float64 minval, vrpn_float64 maxval,
-                vrpn_float64 default_value = 0,
-		Linkvar_Floatcall c = NULL, void *ud = NULL);
-	virtual	~Tclvar_float_with_scale (void);
-
-	int	initialize(Tcl_Interp *interpreter);
-
-	inline operator vrpn_float64() {return d_myfloat;}
-	virtual vrpn_float64 operator = (vrpn_float64 v);
-
-	char		*tcl_widget_name;
-	char		*tcl_label_name;
-	vrpn_float64		minvalue, maxvalue;
-};
-
-//	When variables of this class are declared, the calling program must
-// have had Tcl load the file "russ_widgets.tcl" in order to include the
-// intscale function definition.
-//	This variable type will automatically display an intscale inside
-// the parent widget (unless the parent has NULL name) to track the value and
-// allow its control.
-
-class	Tclvar_int_with_scale: public TclNet_int {
-    public:
-	Tclvar_int_with_scale
-               (const char * tcl_varname, const char * parent_name,
-		vrpn_int32 minval, vrpn_int32 maxval,
-                vrpn_int32 default_value = 0,
-		Linkvar_Intcall c = NULL, void *ud = NULL);
-	virtual	~Tclvar_int_with_scale (void);
-
-	int	initialize(Tcl_Interp *interpreter);  // NOT VIRTUAL
-
-	inline operator vrpn_int32() {return d_myint;}
-	virtual vrpn_int32 operator = (vrpn_int32 v);
-
-	char		*tcl_widget_name;
-	char		*tcl_label_name;
-	vrpn_int32		minvalue, maxvalue;
-};
 
 //	When variables of this class are declared, the calling program must
 // have had Tcl load the package [incr tcl] in order to include the 
@@ -324,7 +334,14 @@ class	Tclvar_int_with_entry: public TclNet_int {
 
 	char		*tcl_widget_name;
 	char		*tcl_label_name;
+
+    // These two functions are NOT defined;  they should
+    // generate compile-time errors.
+    Tclvar_int_with_entry (const Tclvar_int_with_entry &);
+    Tclvar_int_with_entry & operator = (const Tclvar_int_with_entry &);
 };
+
+
 
 
 #endif  // TCL_NET_VAR_H

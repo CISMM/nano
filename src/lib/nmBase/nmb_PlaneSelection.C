@@ -5,7 +5,7 @@
 #include "BCPlane.h"
 #include "BCGrid.h"
 #include "nmb_Dataset.h"
-#include "nmb_Selector.h"
+#include "nmb_String.h"
 
 
 nmb_PlaneSelection::nmb_PlaneSelection (void) :

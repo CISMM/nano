@@ -1,17 +1,16 @@
-# This file sets up the $modify frame, and must be sourced from a
-# specific location inside tools.tcl
 #
 # for widgets that change behavior of modify mode
 #
-frame $modify -relief raised -bd 3 -bg $bc
-frame $modify.mode -bg $bc
-frame $modify.modeparam -bg $bc
-frame $modify.style -bg $bc
-frame $modify.styleparam -bg $bc
-frame $modify.tool -bg $bc
-frame $modify.toolparam -bg $bc
-frame $modify.control -bg $bc
-frame $modify.controlparam -bg $bc
+set modify [create_closing_toplevel modify]
+
+frame $modify.mode 
+frame $modify.modeparam 
+frame $modify.style 
+frame $modify.styleparam 
+frame $modify.tool 
+frame $modify.toolparam 
+frame $modify.control 
+frame $modify.controlparam 
 
 # Tool variable initialization
 # in the real thing these will be inherited from microscope - i think
@@ -143,55 +142,53 @@ trace variable newmodifyp_tool w flip_mod_tool
 
 trace variable newmodifyp_control w flip_mod_control
 
-# proc updateFromC defined inside image.tcl 
-# it must be sourced before this file!!!
-trace variable modifyp_mode w updateFromC
-trace variable modifyp_control w updateFromC
-trace variable modifyp_style w updateFromC
-trace variable modifyp_tool w updateFromC
+trace variable modifyp_mode w "updateFromC modifyp_mode "
+trace variable modifyp_control w "updateFromC modifyp_control "
+trace variable modifyp_style w "updateFromC modifyp_style "
+trace variable modifyp_tool w "updateFromC modifyp_tool "
 
-trace variable modifyp_setpoint w updateFromC
-trace variable modifyp_p_gain w updateFromC
-trace variable modifyp_i_gain w updateFromC
-trace variable modifyp_d_gain w updateFromC
-trace variable modifyp_amplitude w updateFromC
-trace variable modifyp_rate w updateFromC
+trace variable modifyp_setpoint w "updateFromC modifyp_setpoint "
+trace variable modifyp_p_gain w "updateFromC modifyp_p_gain "
+trace variable modifyp_i_gain w "updateFromC modifyp_i_gain "
+trace variable modifyp_d_gain w "updateFromC modifyp_d_gain "
+trace variable modifyp_amplitude w "updateFromC modifyp_amplitude "
+trace variable modifyp_rate w "updateFromC modifyp_rate "
 
-#trace variable modifyp_tri_size w updateFromC
-#trace variable modifyp_tri_speed w updateFromC
-trace variable modifyp_sweep_width w updateFromC
+#trace variable modifyp_tri_size w "updateFromC modifyp_tri_size "
+#trace variable modifyp_tri_speed w "updateFromC modifyp_tri_speed "
+trace variable modifyp_sweep_width w "updateFromC modifyp_sweep_width "
 
-trace variable modifyp_bot_delay w updateFromC
-trace variable modifyp_top_delay w updateFromC
-trace variable modifyp_z_pull w updateFromC
-trace variable modifyp_punchdist w updateFromC
-trace variable modifyp_speed w updateFromC
-trace variable modifyp_watchdog w updateFromC
+trace variable modifyp_bot_delay w "updateFromC modifyp_bot_delay "
+trace variable modifyp_top_delay w "updateFromC modifyp_top_delay "
+trace variable modifyp_z_pull w "updateFromC modifyp_z_pull "
+trace variable modifyp_punchdist w "updateFromC modifyp_punchdist "
+trace variable modifyp_speed w "updateFromC modifyp_speed "
+trace variable modifyp_watchdog w "updateFromC modifyp_watchdog "
 
-trace variable modifyp_start_delay w updateFromC
-trace variable modifyp_z_start w updateFromC
-trace variable modifyp_z_end w updateFromC
-trace variable modifyp_z_pullback w updateFromC
-trace variable modifyp_force_limit w updateFromC
-trace variable modifyp_fcdist w updateFromC
-trace variable modifyp_num_layers w updateFromC
-trace variable modifyp_num_hcycles w updateFromC
-trace variable modifyp_sample_speed w updateFromC
-trace variable modifyp_pullback_speed w updateFromC
-trace variable modifyp_start_speed w updateFromC
-trace variable modifyp_feedback_speed w updateFromC
-trace variable modifyp_avg_num w updateFromC
-trace variable modifyp_sample_delay w updateFromC
-trace variable modifyp_pullback_delay w updateFromC
-trace variable modifyp_feedback_delay w updateFromC
+trace variable modifyp_start_delay w "updateFromC modifyp_start_delay "
+trace variable modifyp_z_start w "updateFromC modifyp_z_start "
+trace variable modifyp_z_end w "updateFromC modifyp_z_end "
+trace variable modifyp_z_pullback w "updateFromC modifyp_z_pullback "
+trace variable modifyp_force_limit w "updateFromC modifyp_force_limit "
+trace variable modifyp_fcdist w "updateFromC modifyp_fcdist "
+trace variable modifyp_num_layers w "updateFromC modifyp_num_layers "
+trace variable modifyp_num_hcycles w "updateFromC modifyp_num_hcycles "
+trace variable modifyp_sample_speed w "updateFromC modifyp_sample_speed "
+trace variable modifyp_pullback_speed w "updateFromC modifyp_pullback_speed "
+trace variable modifyp_start_speed w "updateFromC modifyp_start_speed "
+trace variable modifyp_feedback_speed w "updateFromC modifyp_feedback_speed "
+trace variable modifyp_avg_num w "updateFromC modifyp_avg_num "
+trace variable modifyp_sample_delay w "updateFromC modifyp_sample_delay "
+trace variable modifyp_pullback_delay w "updateFromC modifyp_pullback_delay "
+trace variable modifyp_feedback_delay w "updateFromC modifyp_feedback_delay "
 
-trace variable modifyp_step_size w updateFromC
+trace variable modifyp_step_size w "updateFromC modifyp_step_size "
 
-trace variable modifyp_max_z_step w updateFromC
-trace variable modifyp_max_xy_step w updateFromC
-trace variable modifyp_min_z_setpoint w updateFromC
-trace variable modifyp_max_z_setpoint w updateFromC
-trace variable modifyp_max_lat_setpoint w updateFromC
+trace variable modifyp_max_z_step w "updateFromC modifyp_max_z_step "
+trace variable modifyp_max_xy_step w "updateFromC modifyp_max_xy_step "
+trace variable modifyp_min_z_setpoint w "updateFromC modifyp_min_z_setpoint "
+trace variable modifyp_max_z_setpoint w "updateFromC modifyp_max_z_setpoint "
+trace variable modifyp_max_lat_setpoint w "updateFromC modifyp_max_lat_setpoint "
 
 
 # these traces change the color of Accept and Cancel when you haven't
@@ -253,17 +250,17 @@ pack $modify.mode $modify.modeparam $modify.style $modify.styleparam \
     -side left -padx 2m -fill both
 
 #setup Modify mode box
-label $modify.mode.label -text "Modify Mode" -bg $bc
+label $modify.mode.label -text "Modify Mode" 
 pack $modify.mode.label -side top -anchor nw
-radiobutton $modify.mode.oscillating -text "Oscillating" -variable newmodifyp_mode -value 0 -bg $fc
-radiobutton $modify.mode.contact -text "Contact" -variable newmodifyp_mode -value 1 -bg $fc
-button $modify.mode.accept -text "Accept" -bg $fc \
+radiobutton $modify.mode.oscillating -text "Oscillating" -variable newmodifyp_mode -value 0 -anchor nw
+radiobutton $modify.mode.contact -text "Contact" -variable newmodifyp_mode -value 1 -anchor nw
+button $modify.mode.accept -text "Accept"  \
 	-command "acceptModifyVars $modifyplist"
-button $modify.mode.cancel -text "Cancel" -bg $fc \
+button $modify.mode.cancel -text "Revert"  \
 	-command "cancelModifyVars $modifyplist"
 
 checkbutton $modify.mode.relaxcomp -text "Relax Comp on" -variable doRelaxComp \
-	-bg $fc
+	
 
 pack $modify.mode.oscillating $modify.mode.contact -side top -fill x
 pack $modify.mode.relaxcomp -side top -fill x -pady 20
@@ -272,7 +269,7 @@ pack $modify.mode.cancel $modify.mode.accept -side bottom -fill x
 
 
 #setup Modify modeparam box
-label $modify.modeparam.label -text "Mode parameters" -bg $bc
+label $modify.modeparam.label -text "Mode parameters" 
 pack $modify.modeparam.label -side top -anchor nw
 
 floatscale $modify.modeparam.setpoint -70 70 141 1 1 newmodifyp_setpoint \
@@ -295,24 +292,24 @@ if {$newmodifyp_mode == 0} {
 set mod_oscillating_list "$modify.modeparam.amplitude"
 
 #setup Modify style box
-label $modify.style.label -text "Style" -bg $bc
+label $modify.style.label -text "Style" 
 pack $modify.style.label -side top -anchor nw
 radiobutton $modify.style.sharp -text "Sharp" -variable newmodifyp_style \
-	-value 0 -bg $fc
+	-value 0 -anchor nw
 #radiobutton $modify.style.blunt -text "Blunt" -variable newmodifyp_style \
-#	-value 1 -bg $fc
+#	-value 1 -anchor nw
 
 radiobutton $modify.style.sweep -text "Sweep" -variable newmodifyp_style \
-	-value 2 -bg $fc
+	-value 2 -anchor nw
 radiobutton $modify.style.sewing -text "Sewing" -variable newmodifyp_style \
-	-value 3 -bg $fc
+	-value 3 -anchor nw
 radiobutton $modify.style.forcecurve -text "ForceCurve" \
-	-variable newmodifyp_style -value 4 -bg $fc
+	-variable newmodifyp_style -value 4  -anchor nw
 pack $modify.style.sharp $modify.style.sweep $modify.style.sewing \
 	$modify.style.forcecurve -side top -fill x
 
 #setup Modify styleparam box
-label $modify.styleparam.label -text "Style parameters" -bg $bc
+label $modify.styleparam.label -text "Style parameters" 
 pack $modify.styleparam.label -side top -anchor nw
 
 #floatscale $modify.styleparam.tri-size 0.5 5 101 1 1 \
@@ -390,21 +387,21 @@ set mod_forcecurve_list " \
 #	$modify.styleparam.pullback-delay $modify.styleparam.feedback-delay"
 
 #setup Modify tool box
-label $modify.tool.label -text "Tool" -bg $bc
+label $modify.tool.label -text "Tool" 
 pack $modify.tool.label -side top -anchor nw
 radiobutton $modify.tool.freehand -text "Freehand" -variable newmodifyp_tool \
-	-value 0 -bg $fc 
+	-value 0   -anchor nw
 radiobutton $modify.tool.line -text "Line" -variable newmodifyp_tool \
-	-value 1 -bg $fc 
+	-value 1   -anchor nw
 radiobutton $modify.tool.constrfree -text "Constr. Free" -variable newmodifyp_tool \
-	-value 2 -bg $fc 
+	-value 2   -anchor nw
 radiobutton $modify.tool.slow_line -text "Slow Line" -variable newmodifyp_tool\
-	-value 3 -bg $fc 
+	-value 3   -anchor nw
 pack $modify.tool.freehand $modify.tool.line $modify.tool.constrfree \
-	$modify.tool.slow_line -side top -fill x
+	$modify.tool.slow_line -side top -fill x 
 
 #setup Modify toolparam box
-label $modify.toolparam.label -text "Tool parameters" -bg $bc
+label $modify.toolparam.label -text "Tool parameters" 
 pack $modify.toolparam.label -side top -anchor nw
 
 floatscale $modify.toolparam.step-size 0 5 51 1 1 newmodifyp_step_size \
@@ -449,16 +446,16 @@ set mod_slow_line_list "$modify.toolparam.step-size \
 	$modify.toolparam.slow_line_reverse"
 
 #setup Modify control box
-label $modify.control.label -text "Control" -bg $bc
+label $modify.control.label -text "Control" 
 pack $modify.control.label -side top -anchor nw
 radiobutton $modify.control.feedback -text "Feedback" \
-    -variable newmodifyp_control -value 0 -bg $fc
+    -variable newmodifyp_control -value 0  -anchor nw
 radiobutton $modify.control.directz -text "Direct Z" \
-    -variable newmodifyp_control -value 1 -bg $fc 
-pack $modify.control.feedback $modify.control.directz -side top -fill x
+    -variable newmodifyp_control -value 1   -anchor nw
+pack $modify.control.feedback $modify.control.directz -side top -fill x 
 
 #setup Modify controlparam box
-label $modify.controlparam.label -text "Control parameters" -bg $bc
+label $modify.controlparam.label -text "Control parameters" 
 pack $modify.controlparam.label -side top -anchor nw
 
 floatscale $modify.controlparam.max_z_step 0 5 51 1 1 newmodifyp_max_z_step \

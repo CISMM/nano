@@ -15,6 +15,8 @@
 // specified in the parameters it advances the pointer into the buffer
 // past the unbuffered data item.
 
+#include <vrpn_Types.h>
+
 struct nmb_Util {
 
   static int Buffer (char ** insertPt, long * buflen,
@@ -37,6 +39,10 @@ struct nmb_Util {
                      const struct timeval & time);
   static int Buffer (char ** insertPt, int * buflen,
                      const struct timeval & time);
+  static int Buffer (char ** insertPt, long * buflen,
+                     const vrpn_bool value);
+  static int Buffer (char ** insertPt, int * buflen,
+                     const vrpn_bool value);
 
   static int Unbuffer (const char ** buffer, long *);	// Tiger implemented with long type
   static int Unbuffer (const char ** buffer, int *);
@@ -45,6 +51,7 @@ struct nmb_Util {
   static int Unbuffer (const char ** buffer, char *,
                        unsigned long len);
   static int Unbuffer (const char ** buffer, struct timeval *);
+  static int Unbuffer (const char ** buffer, vrpn_bool *);
 
 };
 

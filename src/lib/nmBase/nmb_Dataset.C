@@ -2,7 +2,7 @@
 
 #include "BCGrid.h"
 #include "BCPlane.h"
-#include "nmb_Selector.h"
+#include "nmb_String.h"
 
 #include "filter.h"  // for filter_plane
 
@@ -15,11 +15,6 @@
 #endif
 
 
-
-struct flatten_node {
-    flatten_data * data;
-    flatten_node * next;
-};
 
 // Stores data needed to compute a new plane from two others.  The
 // formula used is:  output_plane = first_plane + (second_plane * scale);
@@ -55,22 +50,24 @@ nmb_Dataset::nmb_Dataset
                float xMin, float xMax, float yMin, float yMax,
                int readMode, const char ** gridFileNames, int numGridFiles,
                const char ** imageFileNames, int numImageFiles,
-               nmb_Selector * (* allocator) (const char *)) :
+	       const char * hostname,
+               nmb_String * (* string_allocator) (const char *)):
 
   inputGrid (new BCGrid (xSize, ySize, xMin, xMax, yMin, yMax,
                          readMode, gridFileNames, numGridFiles)),
   dataImages (new nmb_ImageList(imageFileNames, numImageFiles)),
   range_of_change (inputGrid),   // reference to pointer!
 
-  alphaPlaneName (allocator("none")),
-  colorPlaneName (allocator("none")),
-  colorMapName (allocator("CUSTOM")),
-  contourPlaneName (allocator("none")),
-  heightPlaneName (allocator("Topography-Forward")),
+  alphaPlaneName (string_allocator("none")),
+  colorPlaneName (string_allocator("none")),
+  colorMapName (string_allocator("CUSTOM")),
+  contourPlaneName (string_allocator("none")),
+  heightPlaneName (string_allocator("Topography-Forward")),
 
   done (0),
 
-  d_flatPlaneCB (NULL)
+  d_flatPlaneCB (NULL),
+  d_hostname(NULL)
 
 {
   //BCPlane * std_dev_plane;
@@ -116,6 +113,10 @@ nmb_Dataset::nmb_Dataset
     }
   }
 
+  if (hostname) {
+      d_hostname = new char [strlen(hostname) +1];
+      strcpy(d_hostname, hostname);
+  }
 }
 
 nmb_Dataset::~nmb_Dataset (void) {
@@ -123,6 +124,8 @@ nmb_Dataset::~nmb_Dataset (void) {
     delete inputGrid;
   if (dataImages)
     delete dataImages;
+  if (d_hostname)
+      delete [] d_hostname;
 }
 
 
@@ -445,7 +448,7 @@ int nmb_Dataset::computeSumPlane (const char * outputPlane,
 //     hook up callbacks for the two planes feeding into this.
 
 
-int nmb_Dataset::computeFlattenedPlane
+BCPlane* nmb_Dataset::computeFlattenedPlane
                         (const char * outputPlane,
                          const char * inputPlane,
                          float redX, float greenX, float blueX,
@@ -460,7 +463,7 @@ int nmb_Dataset::computeFlattenedPlane
   if(strcmp(outputPlane, inputPlane)==0) {
      fprintf(stderr,
             "compute_flattened_plane(): can not flatten from itself\n");
-     return -1;
+     return NULL;
   }
 
   BCPlane * plane = inputGrid->getPlaneByName(inputPlane);
@@ -468,7 +471,7 @@ int nmb_Dataset::computeFlattenedPlane
   {
       fprintf(stderr,
              "compute_flattened_plane(): could not get height plane!\n");
-      return -1;
+      return NULL;
   }
 
   x1 = plane->xInGrid(redX);
@@ -490,7 +493,7 @@ int nmb_Dataset::computeFlattenedPlane
   double k;
   if (x3 == x1) {
       fprintf(stderr,"compute_flattened_plane(): overlapping points.\n");
-      return -1;
+      return NULL;
   }
 
   k = (x2 - x1) / (x3 - x1);
@@ -498,16 +501,24 @@ int nmb_Dataset::computeFlattenedPlane
   //test if those points are collinear
   if( ( (y2-y1)*(x3-x1)+ (y1-y3)*(x2-x1) )== 0) {
        fprintf(stderr,"compute_flattened_plane(): collinear points.\n");
-       return -1;
+       return NULL;
   }
 
   dy = (z2 - z1 + (z1 - z3) * k) / (y2 - y1 + (y1 - y3) * k);
   dx = (z3 - z1 - dy * (y3 - y1)) / (x3 - x1);
   offset = dx * inputGrid->numX() / 2 + dy * inputGrid->numY() / 2;
 
-  computeFlattenedPlane(outputPlane, inputPlane, dx, dy, offset);
+  // Add the host name to the plane name so we can distinguish
+  // where the plane came from
+  char new_outputPlane[256];
+  if (d_hostname) {
+      sprintf(new_outputPlane, "%s from %s", outputPlane, d_hostname);
+  } else {
+      sprintf(new_outputPlane, "%s from local", outputPlane);
+  }
+  computeFlattenedPlane(new_outputPlane, inputPlane, dx, dy, offset);
 
-  outplane = inputGrid->getPlaneByName(outputPlane);
+  outplane = inputGrid->getPlaneByName(new_outputPlane);
 
   flatten_struct.dx = dx;
   flatten_struct.dy = dy;
@@ -521,7 +532,7 @@ int nmb_Dataset::computeFlattenedPlane
     (*st->cb)(st->userdata, &flatten_struct);
   }
 
-  return 0;
+  return outplane;
 }
 
 int nmb_Dataset::computeFlattenedPlane
@@ -593,7 +604,8 @@ int nmb_Dataset::computeFlattenedPlane
   fprintf(stderr, "Flattening: dx=%g, dy=%g, offset=%g\n", dx, dy, offset);
   outplane->setMinAttainableValue(plane->minAttainableValue());
   outplane->setMaxAttainableValue(plane->maxAttainableValue());
-  // BUG - isn't this wrong?
+  // I think this OK. Except for static file, mxxAttainableValue is from
+  // the range of the scanner, not the data range itself. 
 
   flatten_data  *flatten_struct = new flatten_data;
   if (flatten_struct == NULL) {

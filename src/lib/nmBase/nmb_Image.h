@@ -5,7 +5,7 @@
 #include "BCPlane.h"
 #include "BCGrid.h"
 #include "vrpn_Types.h"
-#include "nmb_Selector.h"
+#include "nmb_String.h"
 #include <math.h>
 
 #ifndef __CYGWIN__

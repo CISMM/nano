@@ -212,6 +212,40 @@ int nmb_Util::Buffer (char ** insertPt, int * buflen,
 }
 
 //static
+int nmb_Util::Buffer (char ** insertPt, long * buflen,
+                      const vrpn_bool value) {
+  vrpn_int32 netValue;
+  long length = sizeof(vrpn_int32);
+
+  CHECK(length < *buflen);
+
+  netValue = htonl(value);
+
+  memcpy(*insertPt, &netValue, length);
+  *insertPt += length;
+  *buflen -= length;
+
+  return 0;
+}
+
+//static
+int nmb_Util::Buffer (char ** insertPt, int * buflen,
+                      const vrpn_bool value) {
+  vrpn_int32 netValue;
+  int length = sizeof(vrpn_int32);
+
+  CHECK(length < *buflen);
+
+  netValue = htonl(value);
+
+  memcpy(*insertPt, &netValue, length);
+  *insertPt += length;
+  *buflen -= length;
+
+  return 0;
+}
+
+//static
 int nmb_Util::Unbuffer (const char ** buffer, long * i) { // Tiger change int* to long*
 /* NANO BEGIN
   fprintf(stderr, "nmb_Util::Unbuffer(long): netValue = %lX\t sizeof(netValue) = %d\n", *(long *)(*buffer), sizeof(*(long *)(*buffer)));
@@ -280,6 +314,15 @@ int nmb_Util::Unbuffer (const char ** buffer, struct timeval * tv) {
   tv->tv_usec = ntohl(((struct timeval *) (*buffer))->tv_usec);
 
   *buffer += sizeof(struct timeval);
+  return 0;
+}
+
+
+//static
+int nmb_Util::Unbuffer (const char ** buffer, vrpn_bool * v) {
+  *v = ntohl(((vrpn_int32 *)(*buffer))[0]);
+
+  *buffer += sizeof(vrpn_int32);
   return 0;
 }
 

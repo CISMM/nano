@@ -1,11 +1,7 @@
 #ifndef NMB_LINE_H
 #define NMB_LINE_H
 
-//#include <vrpn_Types.h>  // for vrpn_bool
-
-#if 0
-#include <Tcl_Netvar.h>  // for TclNet_float
-#endif
+#include <quat.h>  // for q_vec_type
 
 #include "nmb_Types.h"  // for PointType, vrpn_Types
 
@@ -17,7 +13,7 @@ class BCPlane;  // from BCPlane.h
 
 class nmb_Line;
 
-typedef void (* nmb_LINE_MOVE_CALLBACK) (nmb_Line *, void * userdata);
+typedef void (* nmb_LINE_MOVE_CALLBACK) (float x, float y, void * userdata);
 
 class nmb_Line {
 
@@ -25,11 +21,7 @@ class nmb_Line {
 
     // CONSTRUCTORS
 
-#if 0
-    nmb_Line (const char * name);
-#else
     nmb_Line (void);
-#endif
     ~nmb_Line (void);
 
     // ACCESSORS
@@ -40,6 +32,17 @@ class nmb_Line {
     float y (void) const;
 
     vrpn_bool changed (void) const;
+
+    double getIntercept (BCPlane *) const;
+    void getIntercept (q_vec_type p, BCPlane *) const;
+      /**< Computes the point at which this line intercepts the given plane
+       * and returns it in p.
+       * Uses BCPlane::valueAt(), which will actually give the Z value
+       * of a nearby grid point rather than interpolating to the "exact"
+       * plane value at (x, y).
+       * Assumes normalize() or moveTo() have guaranteed integrity of
+       * current position.
+       */
 
     // MANIPULATORS
 
@@ -52,12 +55,7 @@ class nmb_Line {
 
     void registerMoveCallback (nmb_LINE_MOVE_CALLBACK f, void * userdata);
 
-    void doCallbacks (void);
-
-#if 0
-    TclNet_int d_x;
-    TclNet_int d_y;
-#endif
+    void doCallbacks (float x, float y, BCPlane * plane);
 
   private:
 

@@ -141,6 +141,7 @@ struct topoRECT {
 };
 
 // This is defined as a DWORD in the topo code, in topo/wtvsuprt/wintv.h
+// Already defined in a standard windows header
 #ifdef _WIN32
 typedef long unsigned int COLORREF;
 #else

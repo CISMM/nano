@@ -116,7 +116,9 @@ void nmb_TimerList::block (vrpn_int32 sN) {
     }
   }
 
-  fprintf(stderr, "nmb_TimerList::block:  %d not in list.\n", sN);
+  if (sN != -1) {
+    fprintf(stderr, "nmb_TimerList::block:  %d not in list.\n", sN);
+  }
 }
 
 void nmb_TimerList::unblock (vrpn_int32 sN) {
@@ -129,7 +131,9 @@ void nmb_TimerList::unblock (vrpn_int32 sN) {
     }
   }
 
-  fprintf(stderr, "nmb_TimerList::unblock:  %d not in list.\n", sN);
+  if (sN != -1) {
+    fprintf(stderr, "nmb_TimerList::unblock:  %d not in list.\n", sN);
+  }
 }
 
 void nmb_TimerList::activate (vrpn_int32 sN) {
@@ -138,12 +142,14 @@ void nmb_TimerList::activate (vrpn_int32 sN) {
   for (ts = d_list; ts; ts = ts->next) {
     if (ts->serialNumber == sN) {
       ts->active = VRPN_TRUE;
-fprintf(stderr, "Activated timestamp %d.\n", sN);
+//fprintf(stderr, "Activated timestamp %d.\n", sN);
       return;
     }
   }
 
-  fprintf(stderr, "nmb_TimerList::activate:  %d not in list.\n", sN);
+  if (sN != -1) {
+    fprintf(stderr, "nmb_TimerList::activate:  %d not in list.\n", sN);
+  }
 }
 
 

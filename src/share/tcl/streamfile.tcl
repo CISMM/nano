@@ -1,90 +1,163 @@
-set streammod(sf) .streamfile
+# Controls for replaying a stream file
+# Includes changing replay speed,
+# pausing replay, and jumping to a new time.
+
+
+set streamplay(sf) [create_closing_toplevel streamfile "Replay Controls"]
+# We can show the window with show.streamfile procedure.
+
 
 #-------------------------------------------------------------------
-toplevel $streammod(sf)
-wm withdraw $streammod(sf)
+label $streamplay(sf).label -text "Stream Replay Controls"
+pack $streamplay(sf).label -side top -anchor nw -padx 5 -pady 5
 
-button $streammod(sf).close -text "Close" -command {
-    wm withdraw $streammod(sf)
+set streamplay(buttons) [frame $streamplay(sf).buttons]
+pack $streamplay(buttons) -side top -fill x -pady 5
+
+button $streamplay(buttons).rewind_stream -text "Rewind" \
+    -command {set rewind_stream 1} -padx 8
+
+button $streamplay(buttons).play_button -text "Play" \
+    -command {streamplay_play_command} -padx 8
+
+button $streamplay(buttons).pause_button -text "Pause" \
+    -command {streamplay_pause_command} -padx 8
+
+pack $streamplay(buttons).rewind_stream \
+	$streamplay(buttons).play_button \
+	$streamplay(buttons).pause_button -side left 
+
+
+if {[info exist stream_replay_rate]} {
+    set new_replay_rate $stream_replay_rate
+} else {
+    set stream_replay_rate 1
+    set new_replay_rate 1
 }
+# This widget doesn't actually set the replay rate! See the 
+# trace procedure below: streamplay_replay_rate_update
+generic_entry $streamplay(sf).replay_rate new_replay_rate \
+	"Speed (1,30)" real
 
-wm protocol $streammod(sf) WM_DELETE_WINDOW {$streammod(sf).close invoke}
-pack $streammod(sf).close -anchor nw
-
-proc show_streamfile_win {} {
-    global streammod 
-    wm deiconify $streammod(sf)
-    raise $streammod(sf)
-}
-
-button $streammod(sf).rewind_stream -text "Rewind Stream" -bg tan \
-    -command {set rewind_stream 1}
-
-pack $streammod(sf).rewind_stream -side top
-
-#iwidgets::entryfield $streammod(sf).set_stream_time -labeltext "Go to time:" \
-#    -validate numeric \
-#    -command {set set_stream_time [$streammod(sf).set_stream_time get]} 
-
-# use generic_entry, originally from keithley2400.tcl
-
+# Jump to a new time in the stream file with this widget.
 set set_stream_time 0
-
-generic_entry $streammod(sf).set_stream_time set_stream_time \
+set set_stream_time_now 0
+generic_entry $streamplay(sf).set_stream_time set_stream_time \
     "Go to time:" numeric
 
-pack $streammod(sf).set_stream_time -side top
+# Handle an idempotent change in the stream time. If the user sets
+# the stream time to the same value, we want the stream to go back to 
+# that time. In a more normal widget we would ignore the change. 
+proc handle_set_stream_time_change { name el op } {
+global set_stream_time_now
+    puts "TCL: stream time"
+    set set_stream_time_now 1
+}
+trace variable set_stream_time w handle_set_stream_time_change
+
+# Make it pretty.
+iwidgets::Labeledwidget::alignlabels \
+	$streamplay(sf).set_stream_time \
+	$streamplay(sf).replay_rate \
+
+pack $streamplay(sf).set_stream_time \
+	$streamplay(sf).replay_rate \
+	-side top -anchor nw -padx 5 -pady 5
+
+
+# One button must be disabled to begin with....
+if {$new_replay_rate > 0 } {
+    $streamplay(buttons).play_button configure -state disabled
+} else {
+    $streamplay(buttons).pause_button configure -state disabled
+}
 
 #--------- implement pause/resume button ------------
 
-## I can't seem to get access to $streammod(sf).<variable> from in a command
-## for the buttons, so I'll make a global variable instead
-set streamreplay_old_rate "not_set"
+# If the user hits "pause":
+#   disable pause button
+#   enable play button
+#   set the actual stream replay rate to zero
+proc streamplay_pause_command {} {
+    global streamplay
+    global stream_replay_rate
 
-proc $streammod(sf).pause_command {} {
-    global streammod
-    global replay_rate
+    set stream_replay_rate 0
+    $streamplay(buttons).play_button configure \
+	    -state normal
+    $streamplay(buttons).pause_button configure \
+	    -state disabled
 
-    ## doesn't work
-    #global $streammod(sf).old_rate
-    #set $streammod(sf).old_rate $replay_rate
-    ## use this instead
-    global streamreplay_old_rate
-    set streamreplay_old_rate $replay_rate
-
-    set replay_rate 0
-    $streammod(sf).pause_button configure \
-            -text "Resume (at speed $streamreplay_old_rate)" \
-            -command {$streammod(sf).unpause_command $streamreplay_old_rate}
-
-    # set a trace on the slider
-    trace variable replay_rate w $streammod(sf).fix_pause_button
 }
 
-proc $streammod(sf).unpause_command {rate} {
-    global streammod
-    global replay_rate
-    trace vdelete replay_rate w $streammod(sf).fix_pause_button
-    set replay_rate $rate
-    $streammod(sf).pause_button configure -text "Pause Stream" \
-            -command {$streammod(sf).pause_command}
-    global streamreplay_old_rate
-    set streamreplay_old_rate "not_set"
+# If the user hits "play":
+#   enable pause button
+#   disable play button
+#   set the actual stream replay rate to the value of the replay_rate widget
+proc streamplay_play_command {} {
+    global streamplay
+    global new_replay_rate
+    global stream_replay_rate
+
+    set stream_replay_rate $new_replay_rate
+    $streamplay(buttons).play_button configure \
+	    -state disabled
+    $streamplay(buttons).pause_button configure \
+	    -state normal
+}
+set ignore_rate_change 0
+
+# If the replay rate widget changes, either 
+#   change real replay rate if the stream is currently playing
+#   Do nothing if the stream is paused. 
+proc streamplay_replay_rate_update {name element op} {
+    global streamplay
+    global new_replay_rate stream_replay_rate
+    global ignore_rate_change
+
+    # make sure the displayed play rate is always positive
+    # user must stop playback with the "pause" button.
+    if { $new_replay_rate <= 0 } { 
+	set new_replay_rate 1
+    }
+    set pstate [$streamplay(buttons).play_button cget -state]
+    if { "$pstate" == "disabled" } {
+	# This variable avoids recursive callbacks. 
+	set ignore_rate_change 1
+	set stream_replay_rate $new_replay_rate
+	set ignore_rate_change 0
+    }
 }
 
-proc $streammod(sf).fix_pause_button {name element op} {
-    global streammod
-    global replay_rate
-    $streammod(sf).pause_button configure -text "Pause Stream" \
-            -command {$streammod(sf).pause_command}
-    trace vdelete replay_rate w $streammod(sf).fix_pause_button
-    global streamreplay_old_rate
-    set streamreplay_old_rate "not_set"
+# set a trace on the replay rate widget variable. 
+trace variable new_replay_rate w streamplay_replay_rate_update
+
+# The replay_rate widget doesn't display the correct replay
+# rate unless we trace changes made in the C code...
+# Fix which button is disabled, as well. 
+proc streamplay_update_replay_widget {name element op} {
+    global streamplay
+    global new_replay_rate stream_replay_rate
+    global ignore_rate_change
+
+    # avoid a recursive callback from streamplay_replay_rate_update
+    if { $ignore_rate_change } return;
+
+    if { $stream_replay_rate > 0 } {
+	set new_replay_rate $stream_replay_rate
+	$streamplay(buttons).play_button configure \
+		-state disabled
+	$streamplay(buttons).pause_button configure \
+		-state normal
+    } else {
+	# leave the new_replay_rate the way it was.
+	# Fix the buttons
+	$streamplay(buttons).play_button configure \
+		-state normal
+	$streamplay(buttons).pause_button configure \
+		-state disabled
+    }	
 }
 
-button $streammod(sf).pause_button -text "Pause Stream" -bg tan \
-    -command {$streammod(sf).pause_command}
-
-pack $streammod(sf).pause_button -side top
-
+trace variable stream_replay_rate w streamplay_update_replay_widget
 #------- end pause/resume button ----------

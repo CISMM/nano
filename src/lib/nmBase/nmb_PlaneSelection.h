@@ -11,7 +11,7 @@
 // the routines, since it just calls the lookup() member to fill it in.
 
 // We could, instead, consider putting these pointers on nmb_Dataset
-// (in place of the Tclvar_selectors there).
+// (in place of the Tclvar_Strings there).
 
 class BCPlane;  // from BCPlane.h
 class BCGrid;  // from BCGrid.h
