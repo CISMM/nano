@@ -80,10 +80,15 @@ static inline	void	vector_normalize(GLfloat a[3])
  * points in the grid (one away in x or y.)
  *	This routine takes into account the current stride in x and y
  * between tesselated points and grid points.
- *	This routine returns 0 on success and -1 on failure. */
+ *
+ * x and y are the indices of the point.  dx and dy are the distances between
+ * points in the X and Y directions.  I think dz is the Z scale.
+ *
+ *	This routine returns 0 on success and -1 on failure.
+ */
 
-static int	vrml_compute_plane_normal(BCPlane *plane, int x,int y,
-			     double dx,double dy,double dz, GLfloat Normal[3])
+int vrml_compute_plane_normal(const BCPlane *plane, int x,int y,
+                              double dx,double dy,double dz, GLfloat Normal[3])
 {
 	static	GLfloat	X_norm[3] = {1.0, 0.0, 0.0};
 	static	GLfloat	Y_norm[3] = {0.0, 1.0, 0.0};
