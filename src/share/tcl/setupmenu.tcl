@@ -99,6 +99,32 @@ foreach name $forcecurvedatalist {
 
 #
 ################################
+# This part of the script describes the framework for a control panel
+# for the external filter programs.
+#
+set nmInfo(external_filters) [create_closing_toplevel external_filters \
+	"External Filter Programs"]
+
+generic_optionmenu $nmInfo(external_filters).pick_program_name pick_program \
+	"External Filter Program" filter_names
+pack $nmInfo(external_filters).pick_program_name
+
+generic_optionmenu $nmInfo(external_filters).pick_plane pick_plane \
+	"Plane to Filter" inputPlaneNames
+pack $nmInfo(external_filters).pick_plane
+
+label $nmInfo(external_filters).plabel -text "Program Parameters"
+set proc_params ""
+entry $nmInfo(external_filters).entry -relief sunken -bd 2 \
+	-textvariable proc_params
+label $nmInfo(external_filters).dlabel -text "Filtered Plane Name"
+pack $nmInfo(external_filters).plabel $nmInfo(external_filters).entry \
+	$nmInfo(external_filters).dlabel -side top
+newlabel_dialogue filterplane_name $nmInfo(external_filters)
+
+
+#
+################################
 #
 # This part of the script describes the framework for a control panel
 # for the Z data.  This allows both the selection of the plane to use

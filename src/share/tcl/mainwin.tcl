@@ -89,6 +89,10 @@ set fspady 3
 # List of the available planes of data in the input grid. Should be set from C.
 set inputPlaneNames {none }
 
+# List of the available external filters found in the NM_FILTER_DIR env. 
+# variable directory
+set filter_names {none }
+
 # List of available images including those not in the input grid
 set imageNames {none }
 
@@ -225,6 +229,8 @@ $setupmenu add command -label "Texture Blend..." -underline 0 -command \
 	"show.alphascale"
 $setupmenu add command -label "Haptic..." -underline 2 -command \
 	"show.haptic"
+$setupmenu add command -label "External Filters..." -underline 0 -command \
+	"show.external_filters"
 }
 $setupmenu add command -label "Display Settings..." -underline 8 -command \
 		"show.display_settings"

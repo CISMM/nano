@@ -228,16 +228,17 @@ frame .procimage.c3
 pack .procimage.c1 .procimage.c2 .procimage.c3 -side left -fill y
 
 
+### Moved to setupmenu.tcl
 #
 # Stuff to start the image processing going.
 #
-label .procimage.c2.plabel -text "Program Parameters"
-set proc_params ""
-entry .procimage.c2.entry -relief sunken -bd 2 \
-	-textvariable proc_params
-label .procimage.c2.dlabel -text "Filtered Plane Name"
-pack .procimage.c2.plabel .procimage.c2.entry .procimage.c2.dlabel -side top
-newlabel_dialogue filterplane_name .procimage.c2
+#label .procimage.c2.plabel -text "Program Parameters"
+#set proc_params ""
+#entry .procimage.c2.entry -relief sunken -bd 2 \
+#	-textvariable proc_params
+#label .procimage.c2.dlabel -text "Filtered Plane Name"
+#pack .procimage.c2.plabel .procimage.c2.entry .procimage.c2.dlabel -side top
+#newlabel_dialogue filterplane_name .procimage.c2
 
 #
 # Genetic Textures

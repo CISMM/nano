@@ -774,7 +774,8 @@ Tclvar_string	xPlaneName ("x_comes_from", "");
 /// This is the list of image processing programs available.  It
 /// should be loaded with the files in the image proc directory, and "none".
 
-nmb_ListOfStrings	procProgNames;
+//nmb_ListOfStrings	procProgNames;
+Tclvar_list_of_strings procProgNames("filter_names");
 
 //-----------------------------------------------------------------------
 /// These are widgets which allow the use to pick the name and parameters 

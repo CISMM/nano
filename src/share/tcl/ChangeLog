@@ -1,3 +1,9 @@
+2000-08-27  Kwan Torrich Skinner  <skinner@cs.unc.edu>
+
+	* dataset.tcl: removed external filter tcl.
+	* setupmenu.tcl: added external filter code.
+	* mainwin.tcl: added "external filters" to drop-down menu.
+	
 2000-08-18  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* modify.tcl: Fixed the problem with feedback not popping back up from slowline mode.
