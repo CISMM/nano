@@ -206,6 +206,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     void getLatestGridChange (int * minX, int * maxX, int * minY, int * maxY);
 
   private:
+    int grid_size_x;
+    int grid_size_y;
 
     v_index * d_displayIndexList;
 

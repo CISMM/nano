@@ -147,16 +147,17 @@ void
 nmb_Dataset::loadFiles(const char** file_names, int num_files, 
 		       TopoFile &topoFile)
 {
-    // Load the files
-    inputGrid->loadFiles(file_names, num_files, topoFile);
-    // Add any new planes to our lists. 
-    for (BCPlane *p = inputGrid->head(); p != NULL; p = p->next()) {
-        if (dataImages->getImageByName(*(p->name())) == NULL){
-            nmb_Image *im = new nmb_ImageGrid(p);
-            dataImages->addImage(im);
-        }
+  // Load the files
+
+  inputGrid->loadFiles(file_names, num_files, topoFile);
+  
+  // Add any new planes to our lists. 
+  for (BCPlane *p = inputGrid->head(); p != NULL; p = p->next()) {
+    if (dataImages->getImageByName(*(p->name())) == NULL){
+      nmb_Image *im = new nmb_ImageGrid(p);
+      dataImages->addImage(im);
     }
-    
+  }
 }
 
 

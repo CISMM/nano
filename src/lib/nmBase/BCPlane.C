@@ -576,6 +576,7 @@ BCPlane::~BCPlane()
 
 
 /**
+   Check the grid size to see if it's changed. If so, 
    Changes the grid resolution, and erases the data in this plane
 Protected so no one except the grid can change our resolution.
 
@@ -585,6 +586,10 @@ Protected so no one except the grid can change our resolution.
  */
 int BCPlane::setGridSize(int x, int y)
 {
+  if ((x==_num_x) && (y==_num_y)) {
+    return 0;
+  }
+  // Grid resolution has changed. Re-allocate and initialize plane to zero.
     delete [] _value;
     _value = NULL;
     _value = new float [x * y];
@@ -593,9 +598,11 @@ int BCPlane::setGridSize(int x, int y)
 	_num_x = _num_y = 0;
 	return -1;
     }
+    // Set plane values to zero - indicates that no data has arrived in the plane. 
+    memset(_value, 0, x*y*sizeof(float));
 
     if (_timed == TIMED) {
-	int i, j;
+	int i;
 
 	for (i = _num_x; i > 0; --i) {
 	    delete [] _sec[i-1];
@@ -621,13 +628,9 @@ int BCPlane::setGridSize(int x, int y)
 		_num_x = _num_y = 0;
 		return -1;
 	    }
-
-	    for (j = 0; j < y; j++) {
-		// Initialize all values to zero - prep for new data.
-		_value[i * y + j] =  0.0;
-		_sec[i][j] = 0;
-		_usec[i][j] = 0;
-	    }
+	    // Set timed values to zero - indicates that no data has arrived in the plane. 
+	    memset(_sec, 0, y*sizeof(long));
+	    memset(_usec, 0, y*sizeof(long));
 	}
     }
 

@@ -50,6 +50,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     d_displayIndexList (new v_index [NUM_USERS]),
     d_textureTransformMode(RULERGRID_COORD)
 {
+  grid_size_x = d_dataset->inputGrid->numX();
+  grid_size_y = d_dataset->inputGrid->numX();
+
     //fprintf(stderr,
     //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
 
@@ -518,6 +521,11 @@ void nmg_Graphics_Implementation::mainloop (void) {
   }
 
 
+  if ( (grid_size_x != d_dataset->inputGrid->numX()) ||
+       (grid_size_y != d_dataset->inputGrid->numY())    ) {
+    causeGridRebuild();
+  }
+
   TIMERVERBOSE(5, mytimer, "GImainloop: nmg_Graphics::mainloop");
 
   nmg_Graphics::mainloop();
@@ -719,6 +727,18 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
 
   // Rebuilds the texture coordinate array:
   nmb_PlaneSelection planes;  planes.lookup(dataset);
+
+  if (g_VERTEX_ARRAY) {
+    if (!init_vertexArray(d_dataset->inputGrid->numX(),
+                          d_dataset->inputGrid->numY()) ) {
+          fprintf(stderr," init_vertexArray: out of memory.\n");
+          exit(0);
+     }
+  }
+
+  grid_size_x = d_dataset->inputGrid->numX();
+  grid_size_y = d_dataset->inputGrid->numX();
+
   if (build_grid_display_lists(planes,
                              display_lists_in_x, &grid_list_base,
                              &num_grid_lists, g_minColor, g_maxColor)) {

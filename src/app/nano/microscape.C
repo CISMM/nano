@@ -2627,8 +2627,6 @@ static	void	handle_openStaticFilename_change (const char *, void *)
     }
     
     openStaticFilename = "";
-    
-
 }
 
 /** See if the user has given a name to the export plane other

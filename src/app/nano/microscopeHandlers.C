@@ -644,28 +644,28 @@ void    handle_export_dataset_change(const char *new_value, void * )
 
 void    handle_z_dataset_change(const char *, void * _mptr)
 {
-        BCPlane * plane = dataset->inputGrid->getPlaneByName
-                                 (dataset->heightPlaneName->string());
-
-        /* if user is feeling from data at the same time she is changing the
-           grid dataset, could get a strong jerk from the phantom, so put her
-           into grab mode first */
-        if ((user_mode[0] == USER_PLANE_MODE) || (user_mode[0] == USER_PLANEL_MODE))
-          {
-            handleCharacterCommand("G", &dataset->done, 1);
-          }
-
-        // If the plane cannot be found, look for another one instead.
-        // We NEED to have a height plane.
-        if (plane == NULL) { 
-           plane = dataset->ensureHeightPlane(); 
-        }
-
-        // Set the scale to that of the one we just selected.
-        microscope->state.stm_z_scale = plane->scale();
-
-        //cause_grid_redraw(0.0, _mptr);
+  BCPlane * plane = dataset->inputGrid->getPlaneByName
+    (dataset->heightPlaneName->string());
+  
+  /* if user is feeling from data at the same time she is changing the
+     grid dataset, could get a strong jerk from the phantom, so put her
+     into grab mode first */
+  if ((user_mode[0] == USER_PLANE_MODE) || (user_mode[0] == USER_PLANEL_MODE))
+    {
+      handleCharacterCommand("G", &dataset->done, 1);
+    }
+  
+  // If the plane cannot be found, look for another one instead.
+  // We NEED to have a height plane.
+  if (plane == NULL) { 
+    plane = dataset->ensureHeightPlane(); 
+  }
+  
+  // Set the scale to that of the one we just selected.
+  microscope->state.stm_z_scale = plane->scale();
+  
   graphics->setHeightPlaneName(dataset->heightPlaneName->string());
+  graphics->causeGridRebuild();
   graphics->causeGridRedraw();
 }
 

@@ -239,9 +239,9 @@ int build_list_set
 #endif // sgi or __CYGWIN__
 //#endif // sgi 
 
-  if (spm_graphics_verbosity >= 15) {
+  if (spm_graphics_verbosity >= 15) { 
     fprintf(stderr, "  updating %d - %d", subset.low(), subset.high());
-  }
+  } 
 
   for (i = subset.low(); i <= subset.high(); i++) {
 
@@ -303,6 +303,7 @@ int build_list_set (
 //fprintf(stderr, "Max strip is %d;  input max was %d.\n", maxStrip, insubset.high());
   //nmb_Interval subset (MAX(0, insubset.low()),
                        //MIN(maxStrip - 1, insubset.high()));
+
   nmb_Interval subset (MAX(0, insubset.low()),
                        MIN(num_grid_lists - 1, insubset.high()));
 
@@ -338,81 +339,81 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
        
   int (* stripfn)
     (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
-
-	static	int	first_call = 1;	/* First time we were called? */
-	static	int	last_num_lists = 0;	// Number of lists before
-
-	VERBOSE(4,"     build_grid_display_lists in openGL.c");
-        VERBOSECHECK(4);
- 
-	v_gl_set_context_to_vlib_window(); 
-
-	/* If this is not the first time around, free the old display lists */
-	if (first_call) {
-		first_call = 0;		/* Won't be next time */
-	} else {
-		glDeleteLists(*base, last_num_lists);
-		if (spm_graphics_verbosity >= 6)
-			fprintf(stderr, "      deleted display lists "
-                                "from %d for %d.\n", *base, last_num_lists);
-	}
-
-	VERBOSE(4,"     build_grid_display_lists in openGL.c");
-	TIMERVERBOSE(5, mytimer, "begin build_grid_display_lists");
- 
-        /* set material parameters */
-        spm_set_surface_materials();
-        if (report_gl_errors()) {
-	   printf("spm_set_surface_materials: generated gl error\n");
-	}
-
-	// Figure out how many strips we will need.  Recall that we are
-	// skipping along by stride gridpoints each time.
-	if (strips_in_x) {
-		*num = (planes.height->numY() - 1) / g_stride;
-		stripfn = spm_x_strip;
-	} else {
-		*num = (planes.height->numX() - 1) / g_stride;
-		stripfn = spm_y_strip;
-	}
-
-//fprintf(stderr, "Generating %d lists.\n", *num);
-
-	// Generate a new set of display list indices
-	if ( (*base = glGenLists(*num)) == 0) {
-		fprintf(stderr,
-			"build_grid_display_lists(): Couldn't get indices\n");
-		return(-1);
-	}
-        if (spm_graphics_verbosity >= 6)
-          fprintf(stderr, "    allocated display lists from %d for %d.\n",
-                  *base, *num);
-
+  
+  static	int	first_call = 1;	/* First time we were called? */
+  static	int	last_num_lists = 0;	// Number of lists before
+  
+  VERBOSE(4,"     build_grid_display_lists in openGL.c");
+  VERBOSECHECK(4);
+  
+  v_gl_set_context_to_vlib_window(); 
+  
+  /* If this is not the first time around, free the old display lists */
+  if (first_call) {
+    first_call = 0;		/* Won't be next time */
+  } else {
+    glDeleteLists(*base, last_num_lists);
+    if (spm_graphics_verbosity >= 6)
+      fprintf(stderr, "      deleted display lists "
+	      "from %d for %d.\n", *base, last_num_lists);
+  }
+  
+  VERBOSE(4,"     build_grid_display_lists in openGL.c");
+  TIMERVERBOSE(5, mytimer, "begin build_grid_display_lists");
+  
+  /* set material parameters */
+  spm_set_surface_materials();
+  if (report_gl_errors()) {
+    printf("spm_set_surface_materials: generated gl error\n");
+  }
+  
+  // Figure out how many strips we will need.  Recall that we are
+  // skipping along by stride gridpoints each time.
+  if (strips_in_x) {
+    *num = (planes.height->numY() - 1) / g_stride;
+    stripfn = spm_x_strip;
+  } else {
+    *num = (planes.height->numX() - 1) / g_stride;
+    stripfn = spm_y_strip;
+  }
+  
+  //fprintf(stderr, "Generating %d lists.\n", *num);
+  
+  // Generate a new set of display list indices
+  if ( (*base = glGenLists(*num)) == 0) {
+    fprintf(stderr,
+	    "build_grid_display_lists(): Couldn't get indices\n");
+    return(-1);
+  }
+  if (spm_graphics_verbosity >= 6)
+    fprintf(stderr, "    allocated display lists from %d for %d.\n",
+	    *base, *num);
+  
 #if defined(sgi) || defined(__CYGWIN__)
 //#if defined(sgi)
-	// use vertex array extension
-	if (g_VERTEX_ARRAY) {
-	  glEnable(GL_VERTEX_ARRAY_EXT);
-          // Color arrays are enabled/disabled dynamically depending
-          // on whether or not planes.color or g_PRERENDERED_COLORS are
-          // valid.
-          if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
-	    glEnable(GL_NORMAL_ARRAY_EXT);
-          }
-	}
+  // use vertex array extension
+  if (g_VERTEX_ARRAY) {
+    glEnable(GL_VERTEX_ARRAY_EXT);
+    // Color arrays are enabled/disabled dynamically depending
+    // on whether or not planes.color or g_PRERENDERED_COLORS are
+    // valid.
+    if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
+      glEnable(GL_NORMAL_ARRAY_EXT);
+    }
+  }
 #endif
-
-	build_list_set(nmb_Interval (0, *num - 1), planes, *base,
-                       minColor, maxColor, stripfn);
-
-	last_num_lists = *num;	// Remember how may done this time
-
-	VERBOSE(4,"     done build_grid_display_lists in openGL.c");
-        VERBOSECHECK(4);
- 
-	TIMERVERBOSE(5, mytimer, "end build_grid_display_lists");
-
-	return(0);
+  
+  build_list_set(nmb_Interval (0, *num - 1), planes, *base,
+		 minColor, maxColor, stripfn);
+  
+  last_num_lists = *num;	// Remember how may done this time
+  
+  VERBOSE(4,"     done build_grid_display_lists in openGL.c");
+  VERBOSECHECK(4);
+  
+  TIMERVERBOSE(5, mytimer, "end build_grid_display_lists");
+  
+  return(0);
 }
 
 //UGRAPHICS GLOBAL DEFINED IN MICROSCAPE.C
@@ -519,7 +520,7 @@ int draw_world (int) {
       if (display_lists_in_x) {	/* Going wrong way */
 	
 	display_lists_in_x = 0;
-        VERBOSE(4,"    Rebuilding display lists (in y).");
+	VERBOSE(4,"    Rebuilding display lists (in y).");
 	if (build_grid_display_lists(planes,
 				     display_lists_in_x, &grid_list_base,
 				     &num_grid_lists, g_minColor,g_maxColor)) {
@@ -535,7 +536,7 @@ int draw_world (int) {
       if (!display_lists_in_x) {	/* Going wrong way */
 	
 	display_lists_in_x = 1;
-        VERBOSE(4,"    Rebuilding display lists (in x).");
+	VERBOSE(4,"    Rebuilding display lists (in x).");
 	if (build_grid_display_lists(planes,
 				     display_lists_in_x, &grid_list_base,
 				     &num_grid_lists, g_minColor,g_maxColor)) {

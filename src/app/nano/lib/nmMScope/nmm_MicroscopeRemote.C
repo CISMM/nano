@@ -3964,8 +3964,6 @@ int nmm_Microscope_Remote::RcvReportGridSize (const long _x, const long _y) {
 	// New strategy, so don't abruptly exit...
 	//exit(-1); // we get a bus error before the next iteration, so exit now.
     }
-    // Cause a full rebuild of the grid display lists. 
-    //graphics->causeGridRebuild();
   }
   return 0;
 }

@@ -64,6 +64,7 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
 	return;
     }
 
+
     // Check to see if our grid has any meaningful data. 
     if ((head() == NULL) ||
         ( *(head()->name()) == BCString(EMPTY_PLANE_NAME))) {
@@ -92,6 +93,7 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
     for (; i < num_files; i++) {
 	BCGrid grid(_num_x,_num_y, _min_x,_max_x,
 		    _min_y, _max_y, _read_mode, file_names[i], topoFile);
+
 	if (!(grid.empty())) {
 	    // 		if ( (grid._num_x != _num_x) ||
 	    // 		     (grid._num_y != _num_y) ||
@@ -121,6 +123,7 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
     }
 
     _modified = 1;
+
 }
 
 /**
