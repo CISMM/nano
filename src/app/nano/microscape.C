@@ -216,6 +216,8 @@ static  void    handle_x_dataset_change(const char *new_value, void *userdata);
 
 static  void    handle_surface_color_change(vrpn_int32 new_value, void *userdata);
 static	void    handle_colormap_change(const char *new_value, void *userdata);
+static void handle_color_dataset_change (const char *, void * _mptr);
+static void handle_sound_dataset_change (const char *, void * _mptr);
 static void handle_openStaticFilename_change (const char *, void * userdata);
 static void handle_closeMicroscope_change (vrpn_int32, void * );
 static	void	handle_exportFileName_change(const char *new_value, void *userdata);
@@ -1603,7 +1605,7 @@ void handle_tcl_quit(vrpn_int32 , void *)
 void    handle_stride_change (vrpn_int32 newval, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-        nmb_PlaneSelection planes; planes.lookup(dataset);
+  //        nmb_PlaneSelection planes; planes.lookup(dataset);
 
         // Make sure that the value is an integer and in range.  Then
         // assign it to the stride.
@@ -1823,7 +1825,7 @@ static void handle_rulergrid_color_change (vrpn_int32, void * userdata) {
 //(int) ruler_r,(int) ruler_g, (int) ruler_b);
 }
 
-/// Handle the color change of the rulergrid
+/// Handle opacity change of the rulergrid
 static void handle_rulergrid_opacity_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
@@ -2873,6 +2875,52 @@ static	void	handle_colormap_change (const char *, void * userdata) {
   tcl_colormapRedraw();
 }
 
+void handle_color_dataset_change(const char *, void * userdata)
+{
+  nmg_Graphics * g = (nmg_Graphics *) userdata;
+
+    BCPlane * plane = dataset->inputGrid->getPlaneByName
+                          (dataset->colorPlaneName->string());
+
+    if (plane != NULL) {
+	// Try to set this to a useful value for a stream file
+
+      color_min_limit = plane->minNonZeroValue();
+      color_max_limit = plane->maxNonZeroValue();
+    }
+    else {  // so selected data set is "none"
+        color_min_limit = 0;
+        color_max_limit = 1;
+    }
+
+    g->setColorPlaneName(dataset->colorPlaneName->string());
+    g->causeGridReColor();
+}
+
+void     handle_sound_dataset_change(const char *, void * )
+{
+
+  BCPlane * plane = dataset->inputGrid->getPlaneByName
+                         (soundPlaneName.string());
+
+  if (plane != NULL)
+    {
+      sound_slider_min_limit = plane->minAttainableValue();
+      sound_slider_min = plane->minNonZeroValue();
+      sound_slider_max_limit = plane->maxAttainableValue();
+      sound_slider_max = plane->maxNonZeroValue();
+    }
+
+  else
+    {
+      /* turn off sound */
+      sound_slider_min_limit = 0;
+      sound_slider_min = 0;
+      sound_slider_max_limit = 0;
+      sound_slider_max = 0;
+    }
+}
+
 /** Erases any modification data which has been saved. Should be called when
 stream file or connection is changed. 
 */
@@ -3433,10 +3481,8 @@ static	void	handle_sumPlaneName_change(const char *, void *)
 {
   if( strlen( newSumPlaneName.string( ) ) <= 0 )
     return;
-
   // Create the new one from the sums.
   nmb_SummedPlane* newSumPlane = NULL;
-
   try
     {
       newSumPlane = new nmb_SummedPlane( sumPlane1Name.string(),
@@ -4512,28 +4558,6 @@ void setupCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
 
   if (!d || !m) return;
 
-  ((Tclvar_list_of_strings *) d->imageNames)->
-        initializeTcl("imageNames");
-  ((Tclvar_list_of_strings *) d->inputPlaneNames)->
-        initializeTcl("inputPlaneNames");
-
-  ((Tclvar_string *) d->alphaPlaneName)->
-        initializeTcl("alpha_comes_from");
-  
-  ((Tclvar_string *) d->colorMapName)->
-        initializeTcl("color_map");
-  //d->colorMapName->bindList(&colorMapNames);
-
-  ((Tclvar_string *) d->colorPlaneName)->
-        initializeTcl("color_comes_from");
-  ((Tclvar_string *) d->colorPlaneName)->addCallback
-            (handle_color_dataset_change, m);
-
-  ((Tclvar_string *) d->contourPlaneName)->
-        initializeTcl("contour_comes_from");
-
-  ((Tclvar_string *) d->opacityPlaneName)->
-        initializeTcl("opacity_comes_from");
 
   ((Tclvar_string *) d->heightPlaneName)->
         initializeTcl("z_comes_from");
@@ -4554,6 +4578,28 @@ void setupCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
 
   if (!d || !g) return;
 
+  ((Tclvar_list_of_strings *) d->imageNames)->
+        initializeTcl("imageNames");
+  ((Tclvar_list_of_strings *) d->inputPlaneNames)->
+        initializeTcl("inputPlaneNames");
+
+  ((Tclvar_string *) d->alphaPlaneName)->
+        initializeTcl("alpha_comes_from");
+  
+  ((Tclvar_string *) d->colorMapName)->
+        initializeTcl("color_map");
+  //d->colorMapName->bindList(&colorMapNames);
+
+  ((Tclvar_string *) d->colorPlaneName)->
+        initializeTcl("color_comes_from");
+  ((Tclvar_string *) d->colorPlaneName)->addCallback
+            (handle_color_dataset_change, g);
+
+  ((Tclvar_string *) d->contourPlaneName)->
+        initializeTcl("contour_comes_from");
+
+  ((Tclvar_string *) d->opacityPlaneName)->
+        initializeTcl("opacity_comes_from");
   ((Tclvar_string *) d->alphaPlaneName)->addCallback
             (handle_alpha_dataset_change, g);
   ((Tclvar_string *) d->colorMapName)->addCallback
@@ -4568,6 +4614,8 @@ void teardownCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
 
   if (!d || !g) return;
 
+  ((Tclvar_string *) d->colorPlaneName)->removeCallback
+            (handle_color_dataset_change, g);
   ((Tclvar_string *) d->alphaPlaneName)->removeCallback
             (handle_alpha_dataset_change, g);
   ((Tclvar_string *) d->colorMapName)->removeCallback
@@ -4674,7 +4722,7 @@ void setupCallbacks (nmm_Microscope_Remote * m) {
   adhesionPlaneName = "none";
   soundPlaneName = "none";
   soundPlaneName.addCallback
-            (handle_sound_dataset_change, m);
+            (handle_sound_dataset_change, NULL);
 
   xPlaneName = "none";
   xPlaneName.addCallback
@@ -4737,7 +4785,7 @@ void teardownCallbacks (nmm_Microscope_Remote * m) {
   if (!m) return;
 
   soundPlaneName.removeCallback
-            (handle_sound_dataset_change, m);
+            (handle_sound_dataset_change, NULL);
 
   xPlaneName.removeCallback
             (handle_x_dataset_change, NULL);

@@ -1,3 +1,11 @@
+2001-06-08  Aron Helser  <helser@cs.unc.edu>
+
+	* microscopeHandlers.Ch (handle_color_dataset_change): remove
+	(handle_sound_dataset_change): remove - they don't use the microscope. 
+	
+	* microscape.c (handle_color_dataset_change): add
+	(handle_sound_dataset_change): add
+
 2001-06-05  David Marshburn  <marshbur@cs.unc.edu>
 
 	* CollaborationManager.C:  changes to accomodate new PlaneSync.

@@ -58,8 +58,6 @@ void cause_grid_redraw (vrpn_float64, void *);  // argument not used!
 
 void handle_export_dataset_change (const char *, void * _mptr);
 void handle_z_dataset_change (const char *, void * _mptr);
-void handle_color_dataset_change (const char *, void * _mptr);
-void handle_sound_dataset_change (const char *, void * _mptr);
 
 // Slow line tool callbacks.
 void init_slow_line (void * _mptr);
