@@ -1,5 +1,4 @@
 #include "URPolygon.h"
-#include "URTexture.h"
 #include "UTree.h"
 
 #include <Tcl_Linkvar.h>
@@ -38,17 +37,17 @@ int URPolygon::SetVisibilityAll(void* userdata) {
 	else return ITER_STOP;
 }
 
-int URPolygon::SetProjTextAll(void* userdata) {
-	int setprojtext = *(int*) userdata;
+int URPolygon::SetProjTextEnableAll(void* userdata) {
+	int enableProjTexture = *(int*) userdata;
 
-	this->SetProjText(setprojtext);
+	this->SetProjTextEnable(enableProjTexture);
 
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
 }
 
 int URPolygon::SetLockObjectAll(void* userdata) {
-	int setlockobject = *(int*) userdata;
+	bool setlockobject = (*(int*) userdata) != 0;
 
 	this->SetLockObject(setlockobject);
 
@@ -205,142 +204,70 @@ int URPolygon::SetAlphaAll(void* userdata) {
 	else return ITER_STOP;
 }
 
-	
+int URPolygon::SetProjTextureAll(void *userdata) {
+	URProjectiveTexture *texture = (URProjectiveTexture *)userdata;
+
+	this->SetProjTexture(texture);
+
+	if (recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URPolygon::SetTextureTransformAll(void* userdata) {
+	double *xform = (double*) userdata;
+
+	if (!this->GetLockTexture()) {
+		this->SetTextureTransform(xform);
+	}
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
 
 int URPolygon::Render(void * userdata){
+	Xform object_xform;
 
-
-// Commented code was here before--not sure what, if any, of this is needed... 
-
-
-/*	if(visible){		//if visible draw things
- 		if(texture!=NULL){
-			if(texture->GetType()==URTEXTURE){
-				texture->Render();	//setup texturing
-				glColor3f(1,1,1);
+	if(visible){		//if visible draw things
+		if (GetProjTextEnable() && texture) {
+			double objectToWorld[16];
+			if (GetLockObject()) {
+				localXformForLockedObject.GetOpenGLMatrix(objectToWorld);
+			} else {
+				GetLocalXform().GetOpenGLMatrix(objectToWorld);
+				localXformForLockedObject = GetLocalXform();
 			}
+			texture->enable(textureTransform, objectToWorld, true);
 		}
 
-		else{
+		glPushAttrib(GL_CURRENT_BIT | GL_TRANSFORM_BIT);
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		this->GetLocalXform().Push_As_OGL();
+		glColor4fv(c);
+		// if alpha is not 1 then use alpha blending
+		if(c[3]!=1.0){
+			glPushAttrib(GL_COLOR_BUFFER_BIT);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+			glAlphaFunc(GL_GREATER,0);
+			glEnable(GL_ALPHA_TEST);
+		}
 
-			glColor4fv(c);
-
-			// if alpha is not 1 then use alpha blending
-			if(c[3]!=1.0){
-
-
-				glPushAttrib(GL_COLOR_BUFFER_BIT);
-
-				glEnable(GL_BLEND);
-				glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-				glAlphaFunc(GL_GREATER,0);
-				glEnable(GL_ALPHA_TEST);
-
-				glPopAttrib();
-
-			}
-	  	}
-
-		int i;		//draw display lists
-		for(i = 0; i < num_objects; i++) { 
+		//draw display lists
+		for(int i = 0; i < num_objects; i++) { 
 			glCallList(Dlist_array[i]);
 		}
-
 		if(selected){		//draw bounding box
 			DrawBounds();
 		}
 
 		if(c[3]!=1.0){		//turn off alpha blending
-       			glDisable(GL_BLEND);
-			glEnable(GL_ALPHA_TEST);
-		}
-
-		if(texture!=NULL){	//clean up after the texture -- turn texturing off
-			if(texture->GetType() == URTEXTURE){
-				((URTexture *)texture)->PostRender();
-			}
-		}
-
-	}
-*/
-	Xform object_xform;
-
-	if(visible){		//if visible draw things
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		this->GetLocalXform().Push_As_OGL();
-
-		if (* (int*)userdata == 1 /* displaying projective textures */ ) {
-			glMatrixMode(GL_TEXTURE);
-                        glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
-			if (this->ShowProjText()) { 
-				glEnable(GL_TEXTURE_2D);
-				glEnable(GL_TEXTURE_GEN_S);
-				glEnable(GL_TEXTURE_GEN_T);
-				glEnable(GL_TEXTURE_GEN_R);
-				glEnable(GL_TEXTURE_GEN_Q);
-
-				glPushMatrix();
-
-				if (!this->GetLockObject()) {
-					// don't lock object to projective texture
-
-					// save the current Xform
-					this->GetSavedObjectXform() = this->GetLocalXform();
-
-					// set up the xform to give to GL
-					object_xform = this->GetLocalXform();
-				}
-				else {
-					// lock object to projective texture
-
-					// load the saved object transform
-					object_xform = this->GetSavedObjectXform();
-				}
-
-				if (!this->GetLockTexture()) {
-					// don't lock projective texture to object
-
-					// save the current Xform
-					glGetDoublev(GL_TEXTURE_MATRIX, this->GetSavedTextureMatrix());
-				}
-				else {
-					// lock projective texture to object
-
-					// load the saved texture transform
-					glLoadMatrixd(saved_texture_xform);
-				}
-				// give GL the transform for the object
-				object_xform.Push_As_OGL();
-			}
-			else {
-				glDisable(GL_TEXTURE_2D);
-				glDisable(GL_TEXTURE_GEN_S);
-				glDisable(GL_TEXTURE_GEN_T);
-				glDisable(GL_TEXTURE_GEN_R);
-				glDisable(GL_TEXTURE_GEN_Q);
-			}
-                        glPopAttrib();
-		}
-
-		glColor4fv(c);
-		glPushAttrib(GL_COLOR_BUFFER_BIT);
-	
-		//draw display lists
-		for(int i = 0; i < num_objects; i++) { 
-			glCallList(Dlist_array[i]);
-		}
-		glPopAttrib();
-
-		if (* (int*)userdata == 1) {
-			if (this->ShowProjText()) {
-				glMatrixMode(GL_TEXTURE);
-				glPopMatrix();
-			}
+			glPopAttrib();
 		}
 
 		glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
+		glPopAttrib();
 	}
 
     if(recursion) return ITER_CONTINUE;

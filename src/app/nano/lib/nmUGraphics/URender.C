@@ -85,9 +85,9 @@ int URender::SetVisibilityAll(void * /*userdata*/) {
 	else return ITER_STOP;
 }
 
-int URender::SetProjTextAll(void * /*userdata*/) {	
+int URender::SetProjTextEnableAll(void * /*userdata*/) {	
 	//base class does nothing
-	cerr << "Base class Setting Projective Texture\n";
+	cerr << "Base class Setting Projective Texture Enable\n";
 	if(recursion) return ITER_CONTINUE; 
 	else return ITER_STOP;
 }
@@ -136,25 +136,38 @@ int URender::SetTranszAll(void * /*userdata*/) {
 
 int URender::SetRotAll(void * /*userdata*/) {	
 	//base class does nothing
-	cerr << "Base class Translating\n";
+	cerr << "Base class SetRotAll\n";
 	if(recursion) return ITER_CONTINUE; 
 	else return ITER_STOP;
 }
 
 int URender::SetColorAll(void * /*userdata*/) {	
 	//base class does nothing
-	cerr << "Base class Translating\n";
+	cerr << "Base class SetColorAll\n";
 	if(recursion) return ITER_CONTINUE; 
 	else return ITER_STOP;
 }
 
 int URender::SetAlphaAll(void * /*userdata*/) {	
 	//base class does nothing
-	cerr << "Base class Translating\n";
+	cerr << "Base class SetAlphaAll\n";
 	if(recursion) return ITER_CONTINUE; 
 	else return ITER_STOP;
 }
 
+int URender::SetProjTextureAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class SetProjTextureAll\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+int URender::SetTextureTransformAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class SetTextureTransformAll\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
 
 int URender::ChangeStaticFile(void* /*userdata*/) {
 	// base class does nothing
@@ -165,6 +178,14 @@ int URender::ChangeStaticFile(void* /*userdata*/) {
 int URender::ChangeHeightPlane(void* /*userdata*/) {
 	// base class does nothing
 	cerr << "Base class Changing Static File\n";
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+int URender::ChangeDataset(void* userdata) {
+	nmb_Dataset *dataset = (nmb_Dataset *)userdata;
+	if (texture) {
+		texture->changeDataset(dataset);
+	}
 	if(recursion) return  ITER_CONTINUE;
 	else return ITER_STOP;
 }
@@ -226,16 +247,6 @@ ostream& operator<< (ostream& co,const URender& r){
   
 	return co;
 }
-
-void URender::SetTexture(URender *tex)
-{
-	if(tex->obj_type!=URTEXTURE){
-		cerr << "Tried to bind an object as texture which wasn't of type URTexture\n";
-		return;
-	}
-	texture=tex;
-}
-
 
 void GetNormal(double p1[3], double p2[3], double p3[3], q_vec_type n);
 double TestIntersection(double planepoint[3], double p1[3], double p2[3], q_vec_type n);

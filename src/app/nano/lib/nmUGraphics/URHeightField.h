@@ -10,12 +10,15 @@ private:
   URHeightField();
   virtual ~URHeightField();
   virtual int Render(void *userdata=NULL);
-
   void setSurface(nmb_Image *heightValues, int stride = 1);
   static void renderWithoutDisplayList(nmb_Image *heightValues,
 	  int stride = 1);
   void buildDisplayList(nmb_Image *heightValues, int stride);
   void setWorldFromObjectTransform(double *matrix);
+  void setTextureEnable(bool enable);
+
+  int SetProjTextureAll(void *userdata=NULL);
+  int SetTextureTransformAll(void *userdata=NULL);
  
  private:
    static int computeNormal(nmb_Image *heightValues, 
@@ -23,6 +26,7 @@ private:
 
    GLuint d_displayListID;
    GLdouble d_worldFromObject[16];
+   bool d_textureEnabled;
 };
 
 #endif

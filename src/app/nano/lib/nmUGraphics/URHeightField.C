@@ -2,10 +2,11 @@
 #include <GL/glut_UNC.h>
 #include <v.h>
 
-URHeightField::URHeightField()
+URHeightField::URHeightField():URender()
 {
   d_displayListID = 0;
   visible = false;
+  d_textureEnabled = false;
   int i;
   // initialize transformation to the identity
   for (i = 0; i < 16; i++) {
@@ -31,14 +32,26 @@ int URHeightField::Render(void *userdata)
 {
 	if (d_displayListID != 0 && visible) {
 		glPushAttrib(GL_TRANSFORM_BIT);
+		if (d_textureEnabled && texture) {
+			texture->enable(textureTransform, 
+				d_worldFromObject, textureInWorldCoordinates);
+		}
+
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glMultMatrixd(d_worldFromObject);
 		glCallList(d_displayListID);
 		glPopMatrix();
 		glPopAttrib();
+		if (d_textureEnabled && texture) {
+			texture->disable();
+		}
 	}
-	return 0;
+	if (recursion) {
+		return ITER_CONTINUE;
+	} else {
+		return ITER_STOP;
+	}
 }
 
 void URHeightField::setSurface(nmb_Image *heightValues, int stride)
@@ -172,7 +185,7 @@ void URHeightField::renderWithoutDisplayList(nmb_Image *heightValues, int stride
 	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
 	glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
 	*/
-	glColor4f(1.0, 0.5, 0.25, 0.7);
+	glColor4f(1.0, 0.7, 1.0, 1.0);//0.7);
 	glEnable(GL_COLOR_MATERIAL);
 
 	// setup lighting
@@ -308,4 +321,23 @@ void URHeightField::setWorldFromObjectTransform(
 	for (i = 0; i < 16; i++) {
 		d_worldFromObject[i] = matrix[i];
 	}
+}
+
+void URHeightField::setTextureEnable(bool enable)
+{
+	d_textureEnabled = enable;
+}
+
+int URHeightField::SetProjTextureAll(void *userdata)
+{
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URHeightField::SetTextureTransformAll(void *userdata)
+{
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
 }

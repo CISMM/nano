@@ -35,6 +35,7 @@ class UTree;
 extern UTree World;
 #include "Xform.h"
 #include "URenderAux.h"
+#include "URProjectiveTexture.h"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 // bogus double to float conversion warning.
@@ -65,11 +66,14 @@ protected:
 	int show_bounds;	//not used yet
 	int wireframe;		//not used yet
 	int disp_proj_text;
-	int lock_object;	// controls whether or not to lock the object to the projective texture
-	int lock_texture;	// controls whether or not to lock the projective texture to the object
+	bool textureInWorldCoordinates;// true==> textureTransform gives worldToTexture
+	                               // false==> textureTransform gives objectToTexture
+	bool lockTextureTransform;	// true/false==> textureTransform is/isn't set when a new transform
+	                            //          is broadcast using SetTextureTransformAll
 	int grab_object;	// when true, translations and rotations from using the mouse in the
 						// surface window are applied to the current object
 
+	bool lockLocalTransform;
 	// locks for translations and rotations--helps when using the phantom to align objects with
 	// projective textures
 	int lock_transx;
@@ -101,7 +105,8 @@ protected:
 	// was the reason for abstracting the tree out??
 
 	//Texture stuff and color
-	URender *texture;
+	URProjectiveTexture *texture;
+	double textureTransform[16];
 	GLfloat c[4];
 
 	char *name;
@@ -111,12 +116,6 @@ protected:
 
 	//xform made public for access
 	Xform lxform;
-
-	//saved xform for locking the object to the projective texture
-	Xform saved_object_xform;
-
-	//saved matrix for locking the projective texture to the object
-	qogl_matrix_type saved_texture_xform;
 	
 public:
 
@@ -129,9 +128,9 @@ public:
 	void SetVisibility(int s);
 	void SetRecursion(int r);
 	void SetSelect(int s){ if(s>0) selected=1; else selected=0;}
-	void SetProjText(int b) { disp_proj_text = b; }
-	void SetLockObject(int l) { lock_object = l; }
-	void SetLockTexture(int l) { lock_texture = l; }
+	void SetProjTextEnable(int b) { disp_proj_text = b; }
+	void SetLockObject(bool l) { lockLocalTransform = l; }
+	void SetLockTexture(int l) { lockTextureTransform = (l!=0); }
 	void SetGrabObject(int g) { grab_object = g; }
 	void SetLockTransx(int l) { lock_transx = l; }
 	void SetLockTransy(int l) { lock_transy = l; }
@@ -141,13 +140,18 @@ public:
 	void SetLockRotz(int l) { lock_rotz = l; }
 	void SetTuneTrans(int t) { tune_trans = t; }
 	void SetTuneRot(int t) { tune_rot = t; }
+	void SetProjTexture(URProjectiveTexture *t) {texture = t;}
+	void SetTextureTransform(double *xform)
+	{if (xform) {int i; for (i = 0; i < 16; i++) textureTransform[i] = xform[i];}}
+	void SetTextureCoordinatesInWorld(bool textureInWorld) 
+	{textureInWorldCoordinates = textureInWorld;}
 
 	int GetVisibility(){return visible;}
 	int GetRecursion(){return recursion;}
 	int GetSelect(){ return selected;}
-	int ShowProjText() { return disp_proj_text; }
-	int GetLockObject() { return lock_object; }
-	int GetLockTexture() { return lock_texture; }
+	int GetProjTextEnable() { return disp_proj_text; }
+	bool GetLockObject() { return lockLocalTransform; }
+	int GetLockTexture() { return lockTextureTransform; }
 	int GetGrabObject() { return grab_object; }
 	int GetLockTransx() { return lock_transx; }
 	int GetLockTransy() { return lock_transy; }
@@ -157,8 +161,11 @@ public:
 	int GetLockRotz() { return lock_rotz; }
 	int GetTuneTrans() { return tune_trans; }
 	int GetTuneRot() { return tune_rot; }
+	URProjectiveTexture *GetProjTexture() {return texture;}
+	void GetTextureTransform(double *xform)
+	{if (xform) {int i; for (i = 0; i < 16; i++) xform[i] = textureTransform[i];}}
+	bool GetTextureCoordinatesInWorld() {return textureInWorldCoordinates;}
 
-	void SetTexture(URender *t);
 	void SetColor(GLfloat nc[4]){c[0]=nc[0];c[1]=nc[1];c[2]=nc[2];c[3]=nc[3];}
     void SetColor3(GLfloat r, GLfloat g, GLfloat b){c[0]=r;c[1]=g;c[2]=b;}
     void SetAlpha(GLfloat a){c[3] = a;}
@@ -177,8 +184,7 @@ public:
 	//info functions
 	URender_Type GetType(){return obj_type;}
 	Xform &GetLocalXform(){return lxform;}
-	Xform &GetSavedObjectXform(){return saved_object_xform;}
-	qogl_matrix_type &GetSavedTextureMatrix(){return saved_texture_xform;}
+
 	double maxX(){ return bounds.xmax;}
 	double maxY(){ return bounds.ymax;}
 	double maxZ(){ return bounds.zmax;}
@@ -196,7 +202,7 @@ public:
 	// these functions are used to change the properties of all objects to the 
 	// appropriate value -- called from tcl callbacks
 	virtual int SetVisibilityAll(void *userdata=NULL);
-	virtual int SetProjTextAll(void *userdata=NULL);
+	virtual int SetProjTextEnableAll(void *userdata=NULL);
 	virtual int SetLockObjectAll(void *userdata=NULL);
 	virtual int SetLockTextureAll(void *userdata=NULL);
 	virtual int ScaleAll(void *userdata=NULL);
@@ -206,9 +212,12 @@ public:
 	virtual int SetRotAll(void *userdata=NULL);
 	virtual int SetColorAll(void *userdata=NULL);
 	virtual int SetAlphaAll(void *userdata=NULL);
+	virtual int SetProjTextureAll(void *userdata=NULL);
+	virtual int SetTextureTransformAll(void *userdata=NULL);
 
 	virtual int ChangeStaticFile(void *userdata=NULL);
 	virtual int ChangeHeightPlane(void *userdata=NULL);
+	virtual int ChangeDataset(void *userdata=NULL);
 
 	virtual void ReloadGeometry();
 

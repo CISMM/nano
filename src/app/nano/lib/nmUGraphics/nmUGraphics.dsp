@@ -133,6 +133,10 @@ SOURCE=.\URPolygon.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\URProjectiveTexture.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\URSpider.C
 # End Source File
 # Begin Source File
@@ -218,6 +222,10 @@ SOURCE=.\URHeightField.h
 # Begin Source File
 
 SOURCE=.\URPolygon.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\URProjectiveTexture.h
 # End Source File
 # Begin Source File
 

@@ -40,6 +40,9 @@ using namespace std;
   double Yoffset;
   double Zoffset;	 
 
+  bool transformMatrixNeedsUpdate;
+  double transformMatrix[16];
+
   int lock_trans;		//lock translations
   int lock_rot;			//lock rotations
   int lock_scale;		//lock scale
@@ -105,6 +108,7 @@ public:
 
   //TO OPTIMIZE: SHOULD CACHE THE MATRIX RATHER THAN REBUILD IT EVERY TIME
   //THIS IS PROBABLY BAD TO HAVE OPENGL STUFF IN MY XFORM CLASS -- MAYBE MOVE IT ELSEWHERE
+  void GetOpenGLMatrix(double *matrix);
   void Push_As_OGL();					//builds the matrix
 							//and pushes it as an OpenGL stack
 
@@ -115,7 +119,6 @@ public:
   Xform& operator=(const Xform&);			//copy constructor
   Xform operator*(const Xform&);			//multiply two matrices
   Xform4x4 operator*(const Xform4x4& x);
-
 
 };
 

@@ -249,7 +249,7 @@ int URTexture::SetVisibilityAll(void* /*userdata*/) {
 	else return ITER_STOP;
 }
 
-int URTexture::SetProjTextAll(void* /*userdata*/) {
+int URTexture::SetProjTextEnableAll(void* /*userdata*/) {
 	// do nothing
 	if(recursion) return  ITER_CONTINUE;
 	else return ITER_STOP;
@@ -320,9 +320,6 @@ int URTexture::SetAlphaAll(void* /*userdata*/) {
 	if(recursion) return  ITER_CONTINUE;
 	else return ITER_STOP;
 }
-
-
-
 
 int URTexture::ChangeStaticFile(void* /*userdata*/) {
 	// do nothing

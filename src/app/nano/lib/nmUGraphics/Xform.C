@@ -12,6 +12,7 @@ Xform::Xform(q_vec_type t, q_type r, double s, int lt, int lr, int ls)
   lock_rot=lr;
   lock_scale=ls;
   lock_trans=lt;
+  transformMatrixNeedsUpdate = true;
 }
 
 Xform::Xform(q_vec_type t, q_type r, double s)
@@ -20,6 +21,7 @@ Xform::Xform(q_vec_type t, q_type r, double s)
   q_vec_copy(trans,t);
   scale=s;
   lock_rot=lock_scale=lock_trans=0;
+  transformMatrixNeedsUpdate = true;
 }
 
 
@@ -32,6 +34,7 @@ Xform::Xform()
         lock_rot=lock_scale=lock_trans=0;
 	trans[0]=trans[1]=trans[2]=0;
 	scale=1;
+	transformMatrixNeedsUpdate = true;
 }
 
 void Xform::SetTransLock(int i){	
@@ -51,81 +54,90 @@ void Xform::SetScaleLock(int i){
 
 void Xform::AddRotate(q_type q){
 	q_mult(rot,rot,q);
+	transformMatrixNeedsUpdate = true;
 }
 
 void Xform::SetRotate(q_type q){
 	rot[Q_X]=q[Q_X]; rot[Q_Y]=q[Q_Y]; rot[Q_Z]=q[Q_Z]; rot[Q_W]=q[Q_W];
+	transformMatrixNeedsUpdate = true;
 }
 
 void Xform::SetRotate(double rx, double ry, double rz, double rw){
 	rot[Q_X]=rx; rot[Q_Y]=ry; rot[Q_Z]=rz; rot[Q_W]=rw;
+	transformMatrixNeedsUpdate = true;
 }
 
 void Xform::SetTranslate(q_vec_type t){
 	trans[0]=t[0] + Xoffset;
 	trans[1]=t[1] + Yoffset;
 	trans[2]=t[2] + Zoffset;
+	transformMatrixNeedsUpdate = true;
 }
 
 void Xform::SetTranslate(double tx, double ty, double tz){
 	trans[0]=tx + Xoffset;
 	trans[1]=ty + Yoffset;
 	trans[2]=tz + Zoffset;
+	transformMatrixNeedsUpdate = true;
 }
 
 void Xform::SetXOffset(double x) {
 	trans[0] += -Xoffset + x;
 	Xoffset = x;
+	transformMatrixNeedsUpdate = true;
 }
 
 void Xform::SetYOffset(double y) {
 	trans[1] += -Yoffset + y;
 	Yoffset = y;
+	transformMatrixNeedsUpdate = true;
 }
 
 void Xform::SetZOffset(double z) {
 	trans[2] += -Zoffset + z;
 	Zoffset = z;
+	transformMatrixNeedsUpdate = true;
 }
 
 void Xform::AddTranslate(q_vec_type t){
 	trans[0]+=t[0];trans[1]+=t[1];trans[2]+=t[2];
+	transformMatrixNeedsUpdate = true;
 }
 
 void Xform::SetScale(double s){
 	scale=s;
+	transformMatrixNeedsUpdate = true;
+}
+
+void Xform::GetOpenGLMatrix(double *matrix)
+{
+	if (transformMatrixNeedsUpdate) {
+		double m[16];
+		glPushAttrib(GL_TRANSFORM_BIT);
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslated(trans[0],trans[1],trans[2]);
+		q_to_ogl_matrix(m, rot);
+		glMultMatrixd(m);
+		glScaled(scale, scale, scale);
+		glGetDoublev(GL_MODELVIEW_MATRIX, transformMatrix);
+		glPopMatrix();
+		glPopAttrib();
+		transformMatrixNeedsUpdate = false;
+	}
+	int i;
+	for (i = 0; i < 16; i++) {
+		matrix[i] = transformMatrix[i];
+	}
 }
 
 void Xform::Push_As_OGL(){
-  GLdouble m[4][4];
+	GLdouble m[16];
+	GetOpenGLMatrix(m);
+	glMultMatrixd(m);
+	return;
 
-  //I THINK this should be a column vector format but GL seems to do it strangley
-  //with quat lib rotations ... so I'm using row vector instead
-  //this is a HACK to fix it -- DON'T do this for actually printing
-  //because the matrix will come out funny... but for actually pushing on 
-  //the stack the m[4][4] arrangement from quatlib is weird when OGL is 
-  //expecting an m[16].  I think the order of references is what causes
-  //the problem
-
-  //scale the point, then rotate it, then translate
-  glTranslated(trans[0],trans[1],trans[2]); 
-  q_to_row_matrix(m,rot);
-  glMultMatrixd(&m[0][0]);
-  glScaled(scale,scale,scale);
- 
-  /*q_to_col_matrix(m,rot);
-  int i,j;
-  for(i=0; i < 3; i++){
-	for(j=0; j<3; j++){
-	  m[i][j]=m[i][j]*scale;
-	}
-  }
-  m[0][3]=trans[0];
-  m[1][3]=trans[1];
-  m[2][3]=trans[2];
-  glMultMatrixd(&m[0][0]);*/
-
-  return;
 }
 
 ostream& operator<< (ostream& co,const Xform& x){

@@ -42,7 +42,7 @@ int URAxis::SetVisibilityAll(void* /*userdata*/) {
 	else return ITER_STOP;
 }
 
-int URAxis::SetProjTextAll(void* /*userdata*/) {
+int URAxis::SetProjTextEnableAll(void* /*userdata*/) {
 	// do nothing
 	if(recursion) return  ITER_CONTINUE;
 	else return ITER_STOP;
@@ -114,7 +114,19 @@ int URAxis::SetAlphaAll(void* /*userdata*/) {
 	else return ITER_STOP;
 }
 
+int URAxis::SetProjTextureAll(void *userdata)
+{
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
 
+int URAxis::SetTextureTransformAll(void *userdata)
+{
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
 
 
 
