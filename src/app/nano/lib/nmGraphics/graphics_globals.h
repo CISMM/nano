@@ -17,7 +17,7 @@
 // That means NO Tclvars!
 
 #ifndef INCLUDED_V_H
-#include <v.h>  // for GLfloat, GLenum
+#include <v.h>  // for GLfloat, GLenum, v_index
 #define INCLUDED_V_H
 #endif
 
@@ -92,6 +92,8 @@ extern int g_contour_r;
 extern int g_contour_g;
 extern int g_contour_b;
 extern float g_contour_width;
+
+extern v_index * g_displayIndexList;
 
 extern float g_friction_slider_min;
 extern float g_friction_slider_max;

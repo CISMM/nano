@@ -26,13 +26,14 @@
 
 #include "nmg_Funclist.h"
 #include "globjects.h"
-#include "graphics_globals.h"
+#include "graphics_globals.h" // actually, this is all we need for VERBOSE
 #include "spm_gl.h"
 #include "font.h"
 #include "chartjunk.h"
 
 #include "Timer.h"
-#include "nmg_Globals.h"  // guess we need this for VERBOSE.  Yuck.
+//#include "nmg_Globals.h"  // guess we need this for VERBOSE.  Yuck.
+
 
 #include "nmm_Types.h"  // for OPTIMIZE_NOW
 
@@ -1018,8 +1019,9 @@ int myscreen (int)
 
   if (g_CRT_correction) {
     glGetIntegerv(GL_MATRIX_MODE, &saveMatrixMode);
-    if (saveMatrixMode != GL_PROJECTION)
+    if (saveMatrixMode != GL_PROJECTION) {
       glMatrixMode(GL_PROJECTION);
+    }
 
     glTranslatef(-0.0225f, -0.018f, 0.0f);
     glScalef(0.075f, 0.075f, 0.2f);
@@ -1029,8 +1031,9 @@ int myscreen (int)
 
     TIMERVERBOSE(5, mytimer, "myscreen:draw function");
 
-    if (spm_graphics_verbosity >= 12)
+    if (spm_graphics_verbosity >= 8) {
       fprintf(stderr,"            Drawing %s\n", head->name);
+    }
 
     head->function(head->data);
 

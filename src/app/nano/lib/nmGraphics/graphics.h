@@ -29,6 +29,8 @@ void setLightDirection (const q_vec_type &);
 void getLightDirection (q_vec_type *);
 void resetLightDirection (void);
 
+void getViewportSize (int * width, int * height);
+
 #define CYGWIN_TEXTURE_FUNCTION GL_DECAL
 // This seems to be a reasonable choice on a pc that doesn't handle alpha
 // correctly (on my pc, GL_DECAL becomes GL_REPLACE) (AAS), 

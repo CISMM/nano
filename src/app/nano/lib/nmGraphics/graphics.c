@@ -692,7 +692,11 @@ void resetLightDirection (void) {
   l0_position[3] = 0.0;
 }
 
-
+void getViewportSize (int * width, int * height) {
+  *width  = v_display_table[g_displayIndexList[0]].viewports[0].fbExtents[0];
+  *height = v_display_table[g_displayIndexList[0]].viewports[0].fbExtents[1];
+}
+
 // Local Variables:
 // mode:c++
 // End:

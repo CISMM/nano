@@ -81,6 +81,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 
     g_inputGrid = data->inputGrid;
 
+    // This is risky...
+    g_displayIndexList = d_displayIndexList;
+
     if (d_dataset == NULL) {
         g_inputGrid = NULL;
         strcpy(g_alphaPlaneName, "none");
@@ -573,8 +576,9 @@ nmg_Graphics_Implementation::~nmg_Graphics_Implementation (void) {
 
   int i;
 
-  for (i = 0; i < NUM_USERS; i++)
+  for (i = 0; i < NUM_USERS; i++) {
     v_close_display(d_displayIndexList[i]);
+  }
 
   delete visualization;
 /*
@@ -675,8 +679,10 @@ void nmg_Graphics_Implementation::resizeViewport(int width, int height) {
 }
 
 void nmg_Graphics_Implementation::getViewportSize(int *width, int *height) {
+//fprintf(stderr, "ngi get viewport size\n");
    *width  = v_display_table[d_displayIndexList[0]].viewports[0].fbExtents[0];
    *height = v_display_table[d_displayIndexList[0]].viewports[0].fbExtents[1];
+//fprintf(stderr, "ngi get viewport size done (%d, %d)\n", *width, *height);
 }
 
 void nmg_Graphics_Implementation::getDisplayPosition (q_vec_type &ll,

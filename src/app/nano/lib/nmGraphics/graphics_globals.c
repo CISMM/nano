@@ -30,6 +30,8 @@ int g_just_color = 0;
 float g_color_min = 0; // ColorMap lower and upper bounds for color
 float g_color_max = 1.0;
 
+v_index * g_displayIndexList = NULL;
+
 float g_data_min_norm = 0; // ColorMap lower and upper bounds for data, normalized
 float g_data_max_norm = 1.0;
 float g_data_min = 0; // data min/max, real units.

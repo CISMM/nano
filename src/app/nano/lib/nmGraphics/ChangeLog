@@ -1,3 +1,16 @@
+2001-02-17  Tom Hudson  <hudson@cs.unc.edu>
+
+	* graphics.h (getViewportSize) : new function.
+	* graphics.c (getViewportSize) : same.
+	* chartjunk.c (control_display) : call getViewportSize instead of
+	nmg_Graphics_Implementation::getViewportSize.
+	* graphics_globals.h (g_displayIndexList) : new pointer.
+	* graphics_globals.c (g_displayIndexList) : same.
+	* nmg_GraphicsImpl.C (constructor) : initialize g_displayIndexList
+	to point to d_displayIndexList - what a risky hack.
+
+	* globjects.c : remove #include "nmg_Globals.h" as unnecessary.
+
 2001-02-09  Jason Clark  <jclark@cs.unc.edu>
 
 	* openGL.c (build_list_set): Support for new strip functions in spm_gl

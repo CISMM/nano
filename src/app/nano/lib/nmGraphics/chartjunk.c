@@ -18,11 +18,12 @@
 #include <nmm_Globals.h>
 #include <nmm_MicroscopeRemote.h>
 
-#include "nmg_GraphicsImpl.h"
-#include "nmg_Globals.h" // for graphics pointer.
+//#include "nmg_GraphicsImpl.h"
+//#include "nmg_Globals.h" // for graphics pointer.
 #include "graphics_globals.h"  // for VERBOSE
 #include "font.h"  // drawStringInFont()
 #include "nmg_Funclist.h"
+#include "graphics.h"  // for getViewportSize
 
 
 
@@ -330,15 +331,34 @@ int screenaxis_display (void *) {
 
 int control_display (void *) {
 
+//fprintf(stderr, " <cd> in;  graphics is %d\n", graphics);
+
   char message[100];
   int w,h;
-  graphics->getViewportSize(&w, &h);
+
+/*
+  if (graphics) {
+    graphics->getViewportSize(&w, &h);
+  } else {
+    fprintf(stderr, "NULL graphics pointer;  assuming 1024x768.\n");
+    w = 1024;
+    h = 768;
+  }
+*/
+
+  // TCH 18 Feb 2001
+  getViewportSize(&w, &h);
+
+//fprintf(stderr, " <cd> got size\n");
+
   // Total screen is 1.0f across, but font width is in pixels. Convert. 
   float char_width = RIGHT_EDGE * getFontWidth()/ w;
   glPushAttrib(GL_CURRENT_BIT);
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
 
+
+//fprintf(stderr, " <cd> modify setpoint\n");
 
   sprintf(message, 
 	  "Modify setpoint: %.3g",
@@ -354,6 +374,8 @@ int control_display (void *) {
   glRasterPos3f(0.0f, 0.0f, 0.0f);
   drawStringInFont(myfont, message);
   
+//fprintf(stderr, " <cd> image setpoint\n");
+
   // Used to be amplitude, but we think it should be setpoint
   // Added extra space so it's the same length as modify message above.
   sprintf(message, 
@@ -365,6 +387,8 @@ int control_display (void *) {
 
   glPopMatrix(); 
   glPopAttrib();
+
+//fprintf(stderr, " <cd> out\n");
 
   return(0);
 }
