@@ -1,5 +1,10 @@
 2002-10-02  David Borland <borland@cs.unc.edu>
 
+        * URender.C : added check to ChangeStaticFile to make sure
+        the current object has a name.
+
+2002-10-02  David Borland <borland@cs.unc.edu>
+
         * URender.[Ch] : removed the URTEXTURE enum and a reference to it.
 
 2002-10-02  David Borland <borland@cs.unc.edu>

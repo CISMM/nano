@@ -118,6 +118,11 @@ int URender::ChangeStaticFile(void* userdata) {
 	extern Tclvar_float import_transz;
 	extern Tclvar_string current_object;
 
+    if (this->name == NULL) {
+        if(recursion) return ITER_CONTINUE;
+	    else return ITER_STOP;
+    }
+
 	change_static_file csf = *(change_static_file*) userdata;
 
 	this->GetLocalXform().SetXOffset(csf.xoffset);
