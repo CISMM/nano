@@ -47,6 +47,7 @@
 #include <nmb_PlaneSelection.h>
 #include <nmb_Decoration.h>
 #include <nmb_Globals.h>
+#include <nmb_Debug.h>
 
 #include <nmm_MicroscopeRemote.h>
 

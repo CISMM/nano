@@ -249,7 +249,7 @@ nmg_RSStrategy_CloudTexture::
 void nmg_RSStrategy_CloudTexture::
 render (void)
 {
-//  nmg_RenderServer_Strategy::render();
+    nmg_RenderServer_Strategy::render();
     q_vec_type lightdir;
     d_server->getLightDirection(&lightdir);
     //Don't know how to get ahold of an "intensity" value.  So use 1 for now
