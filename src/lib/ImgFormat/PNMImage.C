@@ -203,8 +203,10 @@ bool PNMImage::writeRAW(ofstream &pnm)
    pnm << (1 == image->Colors() ? "P5" : "P6") << endl << image->Columns()
        << " " << image->Rows() << endl << 255 << endl;
 
+   // reverse the y order so as to be consistent with TIFF output and
+   // xv3.1 viewer
    for (unsigned int y = 0; y < image->Rows(); y++)
-      pnm.write(&(image->Pixel(y)),
+      pnm.write(&(image->Pixel(image->Rows() - 1 - y)),
                 image->Columns()*image->Colors()*sizeof(char));
 
    return true;

@@ -94,6 +94,12 @@ proc choose_logfile { } {
     if {$filename != ""} {
         # No error checking here - do that below 
         # in open_spm_connection
+
+        # Make sure filename ends in .nms extension. tk_getSaveFile dialog
+        # will strip it, if "hide known file extensions" is on in NT Explorer. 
+        if { [string compare -nocase [file extension $filename] ".nms"] != 0 } {
+            append filename ".nms"
+        }
         set open_spm_log_name $filename
         set fileinfo(save_dir) [file dirname $filename]
     }

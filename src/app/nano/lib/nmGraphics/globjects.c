@@ -1266,10 +1266,11 @@ int selecthand(void *)
 #ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
 #endif
+  glRotated(90.0, 0.0, 1.0, 0.0);	//Yes, this is necessary.
 
-  glColor3f(1.0,0.0,0.0); 
-  glScalef(size * g_icon_scale, size * g_icon_scale, size * g_icon_scale);
-  mycube();
+  glColor3f(0.0,0.0,1.0); 
+  //glScalef(size * g_icon_scale, size * g_icon_scale, size * g_icon_scale);
+  glCallList(vx_half_down);
 
 #ifndef FLOW
   glPopAttrib();

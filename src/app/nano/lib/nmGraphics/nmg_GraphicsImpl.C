@@ -1128,8 +1128,10 @@ void nmg_Graphics_Implementation::setColorPlaneName (const char * n) {
   // g_data_m* here. 
   nmb_PlaneSelection planes;  planes.lookup(d_dataset);
 
-  g_data_min = planes.color->minNonZeroValue();
-  g_data_max = planes.color->maxNonZeroValue();
+  if (planes.color != NULL) {
+      g_data_min = planes.color->minNonZeroValue();
+      g_data_max = planes.color->maxNonZeroValue();
+  }
 }
 
 // virtual

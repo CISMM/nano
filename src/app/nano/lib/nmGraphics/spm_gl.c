@@ -308,7 +308,7 @@ void specify_vertexArray(nmb_PlaneSelection /*planes*/, int i, int count)
 			vertexptr[i][vert].Color[2],
 			vertexptr[i][vert].Color[3]);
 	if (g_texture_mode == GL_TEXTURE_1D) {// (planes.contour)
-	    glTexCoord1f(vertexptr[i][vert].Texcoord[0]);
+	    glTexCoord1f(vertexptr[i][vert].Texcoord[2]);
         }
         glVertex3f(vertexptr[i][vert].Vertex[0],
 		   vertexptr[i][vert].Vertex[1],
@@ -348,56 +348,80 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
   }
   
   if ( g_just_color ) {
-    Normal[0] = float( vertexArrayPtr->Normal[0] )/32767;
-    Normal[1] = float( vertexArrayPtr->Normal[1] )/32767;
-    Normal[2] = float( vertexArrayPtr->Normal[2] )/32767;
-    glNormal3fv(Normal);
-
-    if (planes.color) {
-      // stretch/shrink data based on data_min/max colors:
-      float data_value = planes.color->value(x, y);
-      // normalize the data to a zero to one scale - but data doesn't
-      // have to fall in this range.
-      data_value = (data_value - g_data_min)/(g_data_max - g_data_min);
+      if ( !g_VERTEX_ARRAY) {
+          Normal[0] = float( vertexArrayPtr->Normal[0] )/32767;
+          Normal[1] = float( vertexArrayPtr->Normal[1] )/32767;
+          Normal[2] = float( vertexArrayPtr->Normal[2] )/32767;
+          glNormal3fv(Normal);
+          
+          if (planes.contour) {
+              GLfloat Scoord =
+                  (float) (planes.contour->value(x, y) /
+                           (g_texture_scale * 10.0f));
+              glTexCoord1f(Scoord);
+          }
+          else {
+              GLfloat Textcoord[3];
+              Textcoord[0] = vertexArrayPtr->Texcoord[0];
+              Textcoord[1] = vertexArrayPtr->Texcoord[1];
+              Textcoord[2] = vertexArrayPtr->Texcoord[2];
+              glTexCoord3fv(Textcoord);
+          }
+      }
+      
+      if (planes.color) {
+          // stretch/shrink data based on data_min/max colors:
+          float data_value = planes.color->value(x, y);
+          // normalize the data to a zero to one scale - but data doesn't
+          // have to fall in this range.
+          data_value = (data_value - g_data_min)/(g_data_max - g_data_min);
     
-      // Scale data again based on color map widget controls
-      data_value = data_value * (g_data_max_norm - g_data_min_norm) 
-          + g_data_min_norm;
+          // Scale data again based on color map widget controls
+          data_value = data_value * (g_data_max_norm - g_data_min_norm) 
+              + g_data_min_norm;
       
-      // clamp data based on the stretched/shrunk colormap:
-      if ( data_value <  g_color_min ) data_value = 0;
-      else if ( data_value > g_color_max ) data_value = 1.0;
-      else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
+          // clamp data based on the stretched/shrunk colormap:
+          if ( data_value <  g_color_min ) data_value = 0;
+          else if ( data_value > g_color_max ) data_value = 1.0;
+          else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
       
-      if (g_curColorMap) {    // Use the color map loaded from file
-	float r, g, b, a;
-	g_curColorMap->lookup(data_value, &r, &g, &b, &a);
-	Color[0] = r;
-	Color[1] = g;
-	Color[2] = b;
-	Color[3] = (GLubyte) (g_surface_alpha * 255);
+          if (g_curColorMap) {    // Use the color map loaded from file
+              float r, g, b, a;
+              g_curColorMap->lookup(data_value, &r, &g, &b, &a);
+              Color[0] = r;
+              Color[1] = g;
+              Color[2] = b;
+              Color[3] = (GLubyte) (g_surface_alpha * 255);
+          }
+      
+          else {      // Use the CUSTOM color mapping tool
+              for (i = 0; i < 3; i++) {
+                  Color[i] = minColor[i] * data_value;
+              }
+              Color[3] = (GLubyte) (g_surface_alpha * 255);
+          }
       }
-      
       else {      // Use the CUSTOM color mapping tool
-	for (i = 0; i < 3; i++) {
-	  Color[i] = minColor[i] * data_value;
-	}
-	Color[3] = (GLubyte) (g_surface_alpha * 255);
+          for (i = 0; i < 3; i++) {
+              Color[i] = minColor[i];
+          }
+          Color[3] = (GLubyte) (g_surface_alpha * 255);
       }
-    }
-    else {      // Use the CUSTOM color mapping tool
-      for (i = 0; i < 3; i++) {
-	Color[i] = minColor[i];
+      if ( !g_VERTEX_ARRAY) {
+          glColor4fv(Color);
+        
+          Vertex[0] = vertexArrayPtr->Vertex[0];
+          Vertex[1] = vertexArrayPtr->Vertex[1];
+          Vertex[2] = vertexArrayPtr->Vertex[2];
+          glVertex3fv(Vertex);
       }
-      Color[3] = (GLubyte) (g_surface_alpha * 255);
-    }
-    glColor4fv(Color);
-
-    Vertex[0] = vertexArrayPtr->Vertex[0];
-    Vertex[1] = vertexArrayPtr->Vertex[1];
-    Vertex[2] = vertexArrayPtr->Vertex[2];
-    glVertex3fv(Vertex);
-    return 0;
+      else {
+          vertexArrayPtr->Color[0] = (GLubyte) (Color[0]);
+          vertexArrayPtr->Color[1] = (GLubyte) (Color[1]); 
+          vertexArrayPtr->Color[2] = (GLubyte) (Color[2]); 
+          vertexArrayPtr->Color[3] = (GLubyte) (Color[3]);
+      }
+      return 0; // end of just color calculations
   }
 
   /* Find the normal for the vertex */

@@ -567,17 +567,27 @@ BCPlane* nmb_Dataset::computeFlattenedPlane
               "measure lines out of bounds.\n");
       return NULL;
   }
+  if (x3 == x1) {
+      // These two points are co-linear in a bad way - swap point 2 and point 3
+      x3 = plane->xInGrid(greenX);
+      x2 = plane->xInGrid(blueX);
+
+      y3 = plane->yInGrid(greenY);
+      y2 = plane->yInGrid(blueY);
+      plane->valueAt(&z3, greenX, greenY);
+      plane->valueAt(&z2, blueX, blueY);
+  }
   
   //solve dx,dy for
   // z3-z1= dx(x3-x1) + dy(y3-y1)
   // z2-z1= dx(x2-x1) + dy(y2-y1)
 
-  double k;
   if (x3 == x1) {
+      // These points are also co-linear in a bad way - abort.
       fprintf(stderr,"compute_flattened_plane(): overlapping points.\n");
       return NULL;
   }
-
+  double k;
   k = (x2 - x1) / (x3 - x1);
 
   //test if those points are collinear
