@@ -1420,9 +1420,9 @@ int make_ds_sphere_axis (nmg_State *state, const q_type rot )
 	q_vec_type sphere ={sphere_x, sphere_y, sphere_z};
 	
 	//rotate axis vectors
-	q_xform(red_axis,rot,red_axis);
-	q_xform(green_axis,rot,green_axis);
-	q_xform(blue_axis,rot,blue_axis);
+	q_xform(red_axis,(double*)rot,red_axis);
+	q_xform(green_axis,(double*)rot,green_axis);
+	q_xform(blue_axis,(double*)rot,blue_axis);
 
 	//scale axis vectors to get the end points
 	q_vec_scale(red_axis_end, axis_scale, red_axis);

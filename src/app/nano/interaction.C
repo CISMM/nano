@@ -3993,8 +3993,8 @@ doWorldGrab(int whichUser, int userEvent)
 	if (node != NULL) {
 		URender &obj = node->TGetContents();
 		if (obj.GetGrabObject() == 1) {
-			q_copy(oldObject.rotate, obj.GetLocalXform().GetRot());
-			q_vec_copy(oldObject.xlate, obj.GetLocalXform().GetTrans());
+			q_copy(oldObject.rotate,(double*)obj.GetLocalXform().GetRot());
+			q_vec_copy(oldObject.xlate,(double*)obj.GetLocalXform().GetTrans());
 		}
 	}
 	break;

@@ -49,6 +49,11 @@
 #include <vrpn_Shared.h> // get timeval some other way
 #endif
 
+// We seem to need this now
+#include <nmb_Decoration.h>
+#include <nmb_Dataset.h>
+nmb_Decoration * decoration = NULL;
+nmb_Dataset * dataset = NULL;
 
 GLuint list_sphere;
 GLuint list_cylinder;
@@ -752,15 +757,15 @@ void displayFuncDepth( void ) {
 
         //find the group center
 		Vec3d group_center;
-		for(int i = 0; i < number_in_group[obj_group];i++){
-			OB * this_obj = group_of_obs[obj_group][i];
+		for(int j = 0; j < number_in_group[obj_group];j++){
+			OB * this_obj = group_of_obs[obj_group][j];
 			group_center += this_obj->pos;
 		}
 		group_center /= number_in_group[obj_group];
 
         // translate to group center, rotate, translate back
-		for(i = 0; i < number_in_group[obj_group];i++){
-			OB * this_obj = group_of_obs[obj_group][i];
+		for(int k = 0; k < number_in_group[obj_group];k++){
+			OB * this_obj = group_of_obs[obj_group][k];
 			Vec3d rel_pos = this_obj->pos - group_center;
             q_vec_set(v, rel_pos.x, rel_pos.y, rel_pos.z);
             q_xform(v, q, v);
@@ -768,7 +773,7 @@ void displayFuncDepth( void ) {
 		}
 		
 		//rotate objects about themselves 
-        for(i = 0; i < number_in_group[obj_group];i++){
+        for(int i = 0; i < number_in_group[obj_group];i++){
 			Ntube * n = (Ntube *)group_of_obs[obj_group][i];
 			Vec3d left;
 			Vec3d right;
@@ -1409,8 +1414,12 @@ void mouseFuncMain( int button, int state, int x, int y ) {
     if( state == GLUT_DOWN ){
 		//cout << "processing button press " << bcounter++ << endl;
 		buttonpress=LEFT_BUTTON;
+		#if _WIN32
 		int nState = GetKeyState(VK_SHIFT);//check status of shift key
-	
+		#else
+		int nState = 0;
+		#endif
+		
 		if(nState < 0){//indicates shift button held down
 			selectedOb = findNearestObToMouse(xy_or_xz);
 			cout << "grouping" << endl;

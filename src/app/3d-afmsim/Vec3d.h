@@ -25,16 +25,6 @@ using namespace std;
 #ifndef _VEC3D_H_
 #define _VEC3D_H_
 
-#define true 1
-#define false 0
-
-#ifndef _WIN32
-typedef int bool;
-#define true 1
-#define false 0
-#endif
-
-
 class Vec3d {
 public:
 	double x;

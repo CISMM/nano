@@ -50,8 +50,8 @@ int URTubeFile::ChangeStaticFile(void* userdata) {
 
 	q_vec_type q2, q3;
 
-	q_vec_copy(q2, q1);
-	q_vec_copy(q3, q1);
+	q_vec_copy(q2, (double*)q1);
+	q_vec_copy(q3, (double*)q1);
 
 	q_vec_scale(q2, csf.scale, q2);
 

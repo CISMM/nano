@@ -189,7 +189,8 @@ static void handle_current_object(const char*, void*) {
 			import_lock_transz = obj.GetLockTransz();
 
 			q_vec_type euler;
-			q_to_euler(euler, obj.GetLocalXform().GetRot());
+			q_to_euler(euler,(double*)obj.
+				GetLocalXform().GetRot());
 			import_rotx = Q_RAD_TO_DEG(euler[2]);
 			import_roty = Q_RAD_TO_DEG(euler[1]);
 			import_rotz = Q_RAD_TO_DEG(euler[0]);
@@ -520,7 +521,7 @@ static  void handle_import_update_AFM (vrpn_int32, void *)
 																tube.GetLocalXform().GetTrans()[1],
 																tube.GetLocalXform().GetTrans()[2]);
 					q_vec_type q;
-					q_to_euler(q, tube.GetLocalXform().GetRot());
+					q_to_euler(q,(double*)tube.GetLocalXform().GetRot());
 					SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
 				}
 				return;

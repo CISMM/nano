@@ -527,7 +527,7 @@ bool nmg_HeightField::intersectsRaySegment(nmg_RaySegment &raySegment,
 
   double testT;
 
-  int temp = (int)2*(fabs(x0-x1)+1)*(fabs(y0-y1)+1);
+  int temp = (int)2*( fabs( (double) (x0-x1) )+1)*( fabs( (double) (y0-y1))+1);
 
   bool hitedge0, hitedge1, hitedge2;
 

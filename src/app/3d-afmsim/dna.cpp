@@ -126,7 +126,8 @@ void Dna :: set(Vec3d _P1, Vec3d _P2, Vec3d _dP1, Vec3d _dP2, double _length) {
 
 extern void	setColor( int colorIndex );
 void Dna :: draw() {
-  for (int i=0;i<numSegments;i++) {
+  int i;
+  for (i=0;i<numSegments;i++) {
 
 
     // we want different colors for our objects
@@ -331,7 +332,8 @@ void Dna :: set_segment_stretched_forces(int i) {
 void Dna :: calc_force_at_all_pts() {
 
   F[0] = Vec3d(0.0,0.,0.); // a weird initialization step
-  for (int i=0;i<numSegments; i++) {
+  int i;
+  for (i=0;i<numSegments; i++) {
     /* 
      * this figures out the forces on points i and i+1 due to segment i
      */
@@ -368,7 +370,8 @@ void Dna :: compute_new_pos() {
  *
  */
 void Dna :: print_angles() {
-  for (int i=1;i<numSegments;i++) {
+  int i;
+  for (i=1;i<numSegments;i++) {
     Vec3d a = pos[i-1] - pos[i];
     a = a.normalize();
     Vec3d b = pos[i+1] - pos[i];
@@ -383,13 +386,15 @@ void Dna :: print_angles() {
 
 // print an array of Vec3d
 void Dna :: print() {
-  for (int i=0;i<(numSegments+1);i++) {
+  int i;
+  for (i=0;i<(numSegments+1);i++) {
     pos[i].print();
   }
 }
 
 void Dna :: printF() {
-  for (int i=0;i<(numSegments+1);i++) {
+  int i;
+  for (i=0;i<(numSegments+1);i++) {
     F[i].print();
   }
 }
@@ -399,7 +404,8 @@ double Dna :: maxF() {
   
   m = pos[0].magnitude();
 
-  for (int i=1; i<(numSegments+1); i++) {
+  int i;
+  for (i=1; i<(numSegments+1); i++) {
     double magni = pos[i].magnitude();
     if (magni > m) {
       m = magni;
@@ -410,7 +416,8 @@ double Dna :: maxF() {
 
 double Dna :: calc_dna_length() {
   double len = 0.;
-  for (int i=0;i<numSegments;i++) {
+  int i;
+  for (i=0;i<numSegments;i++) {
     Vec3d t = pos[i+1] - pos[i];
     len +=  t.magnitude();
   }
@@ -444,32 +451,37 @@ int Dna :: done_run() {
 }
 
 void Dna :: afm_sphere_tip(SphereTip sp) {
-  for (int i=0;i<numSegments;i++) {
+  int i;
+  for (i=0;i<numSegments;i++) {
     segs[i]->afm_sphere_tip(sp);
   }
 }
 
 void Dna :: uncert_afm_sphere_tip(SphereTip sp) {
-  for (int i=0;i<numSegments;i++) {
+  int i;
+  for (i=0;i<numSegments;i++) {
     segs[i]->uncert_afm_sphere_tip(sp);
   }
 }
 
 void Dna :: afm_inv_cone_sphere_tip(InvConeSphereTip ics) {
-  for (int i=0;i<numSegments;i++) {
+  int i;
+  for (i=0;i<numSegments;i++) {
     segs[i]->afm_inv_cone_sphere_tip(ics);
   }
 }
 
 void Dna :: uncert_afm_inv_cone_sphere_tip(InvConeSphereTip ics) {
-  for (int i=0;i<numSegments;i++) {
+  int i;
+  for (i=0;i<numSegments;i++) {
     segs[i]->uncert_afm_inv_cone_sphere_tip(ics);
   }
 }
 
 double Dna :: xy_distance(Vec3d vMouseWorld) {
   double dist=1000000.;
-  for (int i=0;i<numSegments;i++) {
+  int i;
+  for (i=0;i<numSegments;i++) {
     double t = segs[i]->xy_distance(vMouseWorld);
     dist = (t < dist ? t : dist); 
   }
@@ -479,7 +491,8 @@ double Dna :: xy_distance(Vec3d vMouseWorld) {
 
 double Dna :: xz_distance(Vec3d vMouseWorld) {
   double dist=1000000.;
-  for (int i=0;i<numSegments;i++) {
+  int i;
+  for (i=0;i<numSegments;i++) {
     double t = segs[i]->xz_distance(vMouseWorld);
     dist = (t < dist ? t : dist); 
   }
@@ -489,7 +502,8 @@ double Dna :: xz_distance(Vec3d vMouseWorld) {
 
 void Dna :: grabOb(Vec3d vMouseWorld, int xy_or_xz) {
   double dist=1000000.;
-  for (int i=0;i<numSegments;i++) {
+  int i;
+  for (i=0;i<numSegments;i++) {
     double t;
     if (xy_or_xz == XY_GRAB) {
       t = segs[i]->xy_distance(vMouseWorld);

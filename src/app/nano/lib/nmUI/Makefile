@@ -1,4 +1,4 @@
-USES_LIBS := nmReg nmUGraphics nmMP tclLinkVar nmBase nmImageViewer nmGraphics nmMScope vrpn vogl quat
+USES_LIBS := nmSEM nmGeometry nmReg nmUGraphics nmMP tclLinkVar nmBase nmImageViewer nmGraphics nmMScope vrpn vogl quat
 
 USES_EXTERNAL_LIBS := TclTk
 
