@@ -30,6 +30,10 @@
 #define	Z	(2)
 #endif
 
+#ifndef M_PI
+#define M_PI 3.141592653589793238
+#define M_PI_2		1.57079632679489661923
+#endif
 
 void setupStateCallbacks (nmm_Microscope_Remote * ms) {
 
@@ -138,6 +142,8 @@ void setupStateCallbacks (nmm_Microscope_Remote * ms) {
 
   ms->state.image.grid_resolution.addCallback
     (handle_grid_resolution_change, ms);
+  ms->state.image.scan_angle.addCallback
+    (handle_scan_angle_change, ms);
 
   ms->state.image.setpoint.addCallback
     (handle_Imode_p_change, ms);
@@ -336,6 +342,8 @@ void teardownStateCallbacks (nmm_Microscope_Remote * ms) {
 
   ms->state.image.grid_resolution.removeCallback
     (handle_grid_resolution_change, ms);
+  ms->state.image.scan_angle.removeCallback
+    (handle_scan_angle_change, ms);
 
   ms->state.image.setpoint.removeCallback
     (handle_Imode_p_change, ms);
@@ -468,6 +476,20 @@ void handle_grid_resolution_change (vrpn_int32, void * _mptr) {
     return;
 }
 
+// Change by the user interface - angle in degrees. 
+void handle_scan_angle_change (vrpn_float64, void * _mptr) {
+    // Boundary check - clamp to inside range -360 to 360
+    while (microscope->state.image.scan_angle >= 360.0) {
+        microscope->state.image.scan_angle = 
+            microscope->state.image.scan_angle - 360.0;
+    }
+    while (microscope->state.image.scan_angle <= -360.0) {
+        microscope->state.image.scan_angle = 
+           microscope->state.image.scan_angle + 360.0;
+    }
+    microscope->SetScanAngle(microscope->state.image.scan_angle);
+
+}
 // M stands for modify 
 // I stands for image
 // _p_ stands for parameters
@@ -981,7 +1003,7 @@ void    handle_color_dataset_change(const char *, void * /*_mptr*/)
     }
 
     graphics->setColorPlaneName(dataset->colorPlaneName->string());
-    graphics->causeGridRedraw();
+    graphics->causeGridReColor();
 }
 
 void     handle_sound_dataset_change(const char *, void * )
@@ -1196,6 +1218,10 @@ int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
     float x2 =  microscope->state.modify.slow_line_currPt->x();
     float y2 =  microscope->state.modify.slow_line_currPt->y();
     float z1, z2;
+    
+    // Set yaw so if we sweep it will be perpendicular to the slow-line path. 
+    microscope->state.modify.yaw = atan2((y2 - y1), (x2 - x1)) - M_PI_2;
+
     float x = x2*(microscope->state.modify.slow_line_position_param) +
               x1*(1.0-microscope->state.modify.slow_line_position_param);
     float y = y2*(microscope->state.modify.slow_line_position_param) +

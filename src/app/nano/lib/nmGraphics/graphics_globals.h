@@ -68,6 +68,7 @@ extern ColorMap g_colorMap;
 extern char * g_colorMapDir;
 extern ColorMap * g_curColorMap;
 
+extern int g_just_color;
 extern float g_color_min; // ColorMap lower and upper bounds for color
 extern float g_color_max;
 

@@ -34,7 +34,7 @@ int main(unsigned argc, char *argv[])
 {
 	float	r,g,b, hue1, hue2,s,v;
 	float	i;
-	int	COUNT = 200;
+	int	COUNT = 201;
 	if ( argc == 3 ) {
 	  hue1 = atof( argv[1] );
 	  hue2 = atof( argv[2] );
@@ -61,7 +61,7 @@ int main(unsigned argc, char *argv[])
 	// Second half: goes from unsaturated gray to second hue
 	v = 0.8;	// Constant intensity
 	for (i = COUNT/2; i < COUNT; i++) {
-		s = (i-COUNT/2)/(COUNT/2-1);	// Saturate
+		s = (i-COUNT/2)/((COUNT-1)/2);	// Saturate
 		hsv_to_rgb(hue2,s,v, &r,&g,&b);
 		printf("%7.3g\t%d\t%d\t%d\t%d\n", i/(COUNT-1),
 			(int)(r*255),(int)(g*255),(int)(b*255), 255);

@@ -24,6 +24,8 @@ ColorMap g_colorMap;
 char * g_colorMapDir = NULL;
 ColorMap * g_curColorMap = NULL;
 
+int g_just_color = 0;
+
 float g_color_min = 0; // ColorMap lower and upper bounds for color
 float g_color_max = 1.0;
 

@@ -174,6 +174,8 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope BluntResultNM");
     d_ScanRange_type = connection->register_message_type
          ("nmm Microscope ScanRange");
+    d_ReportScanAngle_type = connection->register_message_type
+         ("nmm Microscope ReportScanAngle");
     d_Scanning_type = connection->register_message_type
          ("nmm Microscope Scanning");
     d_SetRegionCompleted_type = connection->register_message_type
@@ -2224,6 +2226,37 @@ long nmm_Microscope::decode_ScanRange (const char ** buf,
 
   return 0;
 }
+
+char * nmm_Microscope::encode_ReportScanAngle (long * len,
+					    vrpn_float32 angle) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_ReportScanAngle:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, angle);
+  }
+
+  return msgbuf;
+}
+
+long nmm_Microscope::decode_ReportScanAngle (const char ** buf,
+        vrpn_float32 * angle) {
+  CHECK(vrpn_unbuffer(buf, angle));
+
+  return 0;
+}
+
 
 char * nmm_Microscope::encode_SetRegionC (long * len,
            vrpn_float32 minX, vrpn_float32 minY, vrpn_float32 maxX, vrpn_float32 maxY) {

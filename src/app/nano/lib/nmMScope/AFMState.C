@@ -215,6 +215,7 @@ AFMImageState::AFMImageState (const AFMImageInitializationState & i) :
     tool ("imagep_tool", FREEHAND),
 
     grid_resolution("imagep_grid_resolution", i.grid_resolution),
+    scan_angle("imagep_scan_angle", 0),
 
     setpoint ("imagep_setpoint", i.setpoint ),
     setpoint_min (i.setpoint_min ),
@@ -441,7 +442,6 @@ AFMState::AFMState (const AFMInitializationState & i) :
     yMax (i.yMax),
     zMin (-5000.0f),
     zMax ( 5000.0f),
-    scanAngle(0),
 
     doDriftComp    (i.doDriftComp),
     doRelaxComp    ("doRelaxComp", i.doRelaxComp),

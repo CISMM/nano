@@ -43,7 +43,7 @@ pack $nmInfo(modifyquick).modifystate $nmInfo(modifypage) \
 
 set nmInfo(modifystate) [$nmInfo(modifyquick).modifystate childsite]
 generic_entry $nmInfo(modifypage).setpoint modifyp_setpoint \
-	"Setpoint (0,100%)" real \
+	"Setpoint (-64,64)" real \
         { set accepted_modify_params 1 }
 generic_entry $nmInfo(modifypage).p-gain modifyp_p_gain "P-Gain (0,5)" real \
         { set accepted_modify_params 1 }
@@ -60,10 +60,15 @@ pack    $nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
 	$nmInfo(modifypage).rate \
 	-side top -anchor nw
 
-iwidgets::Labeledwidget::alignlabels \
+proc align_mq_labels {} {
+    global nmInfo
+
+    iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
 	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
 	$nmInfo(modifypage).rate 
+}
+align_mq_labels
 
 lappend device_only_controls \
 	$nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
@@ -118,8 +123,14 @@ proc show_tool {name path nm element op} {
 	#Constrained freehand tool
 	$path configure -text "Constr. Free"
     } elseif { $tool == 3 } {
+	#Constrained freehand xyz tool
+	$path configure -text "Constr. Free XYZ"
+    } elseif { $tool == 4 } {
 	# Slow line tool
 	$path configure -text "Slow Line"
+    } elseif { $tool == 5 } {
+	# Slow line 3d tool
+	$path configure -text "Slow Line 3d"
     }
 }
 
@@ -458,7 +469,7 @@ label $nmInfo(modifyfull).modeparam.label -text "Mode parameters"
 pack $nmInfo(modifyfull).modeparam.label -side top -anchor nw
 
 generic_entry $nmInfo(modifyfull).modeparam.setpoint newmodifyp_setpoint \
-	"Setpoint(-70 70)" real
+	"Setpoint(-64,64)" real
 generic_entry $nmInfo(modifyfull).modeparam.p-gain newmodifyp_p_gain "P-Gain (0,5)" real 
 generic_entry $nmInfo(modifyfull).modeparam.i-gain newmodifyp_i_gain "I-Gain (0,2)" real 
 generic_entry $nmInfo(modifyfull).modeparam.d-gain newmodifyp_d_gain "D-Gain (0,5)" real 
@@ -487,7 +498,9 @@ pack    $nmInfo(modifyfull).modeparam.setpoint \
         $nmInfo(modifyfull).modeparam.rate \
 	-side top -fill x -pady $fspady
 
-iwidgets::Labeledwidget::alignlabels \
+proc align_mf_labels {} {
+    global nmInfo
+  iwidgets::Labeledwidget::alignlabels \
     $nmInfo(modifyfull).modeparam.setpoint \
     $nmInfo(modifyfull).modeparam.p-gain \
     $nmInfo(modifyfull).modeparam.i-gain \
@@ -498,6 +511,8 @@ iwidgets::Labeledwidget::alignlabels \
     $nmInfo(modifyfull).modeparam.input_gain \
     $nmInfo(modifyfull).modeparam.drive_attenuation \
     $nmInfo(modifyfull).modeparam.phase
+}
+align_mf_labels
 
 if {$newmodifyp_mode==0} {
     pack $nmInfo(modifyfull).modeparam.amplitude \
@@ -648,7 +663,9 @@ pack $nmInfo(modifyfull).tool.freehand $nmInfo(modifyfull).tool.line \
 lappend device_only_controls \
         $nmInfo(modifyfull).tool.freehand $nmInfo(modifyfull).tool.line \
         $nmInfo(modifyfull).tool.constrfree \
-	$nmInfo(modifyfull).tool.slow_line 
+	$nmInfo(modifyfull).tool.constrfree_xyz \
+	$nmInfo(modifyfull).tool.slow_line \
+	$nmInfo(modifyfull).tool.slow_line_3d 
 
 #setup Modify toolparam box
 label $nmInfo(modifyfull).toolparam.label -text "Tool parameters" 
@@ -704,6 +721,21 @@ eval iwidgets::Labeledwidget::alignlabels $mod_directz_list
 eval lappend device_only_controls $mod_directz_list
 
 }
+
+# puts the correct label on setpoint, both full and quick controls
+# Procedure change_setpoint_label defined in image.tcl
+trace variable newmodifyp_mode w "change_setpoint_label \
+        newmodifyp_mode newmodifyp_ampl_or_phase \
+        $nmInfo(modifyfull).modeparam.setpoint align_mf_labels"
+trace variable newmodifyp_ampl_or_phase w "change_setpoint_label \
+        newmodifyp_mode newmodifyp_ampl_or_phase \
+        $nmInfo(modifyfull).modeparam.setpoint align_mf_labels"
+trace variable modifyp_mode w "change_setpoint_label \
+        modifyp_mode modifyp_ampl_or_phase \
+        $nmInfo(modifypage).setpoint align_mq_labels"
+trace variable modifyp_ampl_or_phase w "change_setpoint_label \
+        modifyp_mode modifyp_ampl_or_phase \
+        $nmInfo(modifypage).setpoint align_mq_labels"
 
 #
 #
@@ -790,8 +822,7 @@ proc flip_mod_tool {mod_tool element op} {
     global nmInfo
     global mod_line_list mod_slow_line_list mod_control_list \
 	    constr_xyz_param_list
-    global fspady
-    global newmodifyp_control
+    global fspady newmodifyp_style
 
     upvar $mod_tool k
 
@@ -799,10 +830,14 @@ proc flip_mod_tool {mod_tool element op} {
         # selected freehand
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg} 
-	foreach widg $mod_control_list {pack forget $widg}
-	foreach widg $mod_control_list {pack $widg -side top -fill x}
-#        # Hide the controls for slow_line tool
-#        hide.modify_live
+        # Hide the controls for slow_line tool
+        hide.modify_live
+        # enable styles that might have been disabled. 
+        $nmInfo(modifyfull).style.sewing configure -state normal
+        $nmInfo(modifyfull).style.forcecurve configure -state normal
+# ks
+#	foreach widg $mod_control_list {pack forget $widg}
+#	foreach widg $mod_control_list {pack $widg -side top -fill x}
     } elseif {$k==1} {
 	# selected line
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
@@ -812,6 +847,9 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $mod_control_list {pack $widg -side top -fill x}
         # Hide the controls for slow_line tool
         hide.modify_live
+        # enable styles that might have been disabled. 
+        $nmInfo(modifyfull).style.sewing configure -state normal
+        $nmInfo(modifyfull).style.forcecurve configure -state normal
     } elseif {$k==2} {
 	# selected constrained freehand
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
@@ -820,6 +858,9 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $mod_control_list {pack $widg -side top -fill x}
         # Hide the controls for slow_line tool
         hide.modify_live
+         # enable styles that might have been disabled. 
+        $nmInfo(modifyfull).style.sewing configure -state normal
+        $nmInfo(modifyfull).style.forcecurve configure -state normal
     } elseif {$k==3} {
        # selected constrained freehand xyz
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
@@ -828,6 +869,9 @@ proc flip_mod_tool {mod_tool element op} {
         foreach widg $constr_xyz_param_list {pack $widg -side top -fill x}
         foreach widg $mod_control_list {pack $widg -side top -fill x}
 	hide.modify_live
+         # enable styles that might have been disabled. 
+        $nmInfo(modifyfull).style.sewing configure -state normal
+        $nmInfo(modifyfull).style.forcecurve configure -state normal
     } elseif {$k==4} {
 	# selected slow line
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
@@ -836,6 +880,13 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $mod_control_list {pack forget $widg}
 	foreach widg $mod_control_list {pack $widg -side top -fill x}
         show.modify_live
+        # Don't allow selection of styles that don't work with slow_line
+        if { ($newmodifyp_style == 3) || ($newmodifyp_style == 4) } {
+            # Can't do sweep or sewing, set to sharp
+            set newmodifyp_style 0
+        }
+        $nmInfo(modifyfull).style.sewing configure -state disabled
+        $nmInfo(modifyfull).style.forcecurve configure -state disabled
     } elseif {$k==5} {
 	# selected slow line 3d
 	# anyone want to make this more elegant?
@@ -847,6 +898,13 @@ proc flip_mod_tool {mod_tool element op} {
 	set newmodifyp_control 1
 	# show the modify live controls
 	show.modify_live
+        # Don't allow selection of styles that don't work with slow_line
+        if { ($newmodifyp_style == 3) || ($newmodifyp_style == 4) } {
+            # Can't do sweep or sewing, set to sharp
+            set newmodifyp_style 0
+        }
+        $nmInfo(modifyfull).style.sewing configure -state disabled
+        $nmInfo(modifyfull).style.forcecurve configure -state disabled
     }
 }
 

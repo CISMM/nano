@@ -98,6 +98,9 @@ void nmg_Graphics_Remote::loadRulergridImage (const char * name) {
   }
 }
 
+void nmg_Graphics_Remote::causeGridReColor (void) {
+}
+
 void nmg_Graphics_Remote::causeGridRedraw (void) {
   struct timeval now;
   int retval;

@@ -752,14 +752,17 @@ proc create_closing_toplevel_with_notify { win_name signal_var_name {title "" } 
 # Creates a standard dialog for choosing a color, and sets the
 # value of a global variable based on the user's choice. If the
 # user hits "cancel", the global variable's value is unchanged. 
-proc choose_color { color_var_name {title "Choose color"} } {
+# Returns 1 if user hit OK, and 0 if user hit Cancel
+proc choose_color { color_var_name {title "Choose color"} {parent .} } {
     global nmInfo
     upvar #0 $color_var_name color_var
     set color [tk_chooseColor -title "$title" \
-	    -initialcolor $color_var]
+	    -initialcolor $color_var -parent $parent]
     if { $color != "" } {
 	set color_var $color
+        return 1
     }
+    return 0
 }
 
 # called when the C code sets the tcl global variable

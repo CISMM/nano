@@ -1385,12 +1385,16 @@ doScale(int whichUser, int userEvent, double scale_factor)
         v_x_copy(&temp, &v_world.users.xforms[whichUser]);
 	
 
-        // Very similar operatin to v_scale_about_hand, 
+        // Very similar operation to v_scale_about_hand, 
         // but we scale around the intersection of the aim line with
         // the height plane. 
 
         // get spot to scale from in world space. 
         decoration->aimLine.getIntercept(worldFromHand.xlate, plane);
+
+        // If the plane height has been exaggerated, we need to 
+        // adjust the translation point by that scale to get world coords. 
+        worldFromHand.xlate[2] *= plane->scale();
      
         // now scale by scale amount	
         scaleXform.scale = scale_factor;

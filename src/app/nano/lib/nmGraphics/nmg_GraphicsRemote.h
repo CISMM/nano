@@ -29,6 +29,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void loadRulergridImage (const char *);
 
+    virtual void causeGridReColor (void);
     virtual void causeGridRedraw (void);
     virtual void causeGridRebuild (void);
 

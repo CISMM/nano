@@ -1,3 +1,7 @@
+2000-08-31  Kwan Torrich Skinner  <skinner@cs.unc.edu>
+
+        * all : merged merge-2000-summer-thirdtech code with trunk.
+
 2000-08-30  Adam Seeger  <seeger@cs.unc.edu>
 
         * Makefile: excludes export_scene.C for VC compile

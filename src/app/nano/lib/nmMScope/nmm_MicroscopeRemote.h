@@ -290,7 +290,9 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long JumpToScanLine(long line);
 
     long SetGridSize (const long _x, const long _y);
-      // Set the size of the grid:  # data points to collect in each dimension.
+      ///< Set the size of the grid:  # data points to collect in each dimension.
+    long SetScanAngle (const float _angle);
+      ///< Angle of the scan, in degrees 
 
     // ODDS AND ENDS
 
@@ -522,7 +524,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     void RcvScanning (const vrpn_int32);
     void RcvScanRange (const float, const float, const float, const float,
                        const float, const float);
-    void RcvSetScanAngle (const float);
+    void RcvReportScanAngle (const float);
     void RcvSetRegionC (const long,
                         const float, const float, const float, const float);
     void RcvResistanceFailure (const long);
@@ -610,7 +612,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     static int handle_PulseFailureNM (void *, vrpn_HANDLERPARAM);
     static int handle_Scanning (void *, vrpn_HANDLERPARAM);
     static int handle_ScanRange (void *, vrpn_HANDLERPARAM);
-    static int handle_SetScanAngle (void *, vrpn_HANDLERPARAM);
+    static int handle_ReportScanAngle (void *, vrpn_HANDLERPARAM);
     static int handle_SetRegionCompleted (void *, vrpn_HANDLERPARAM);
     static int handle_SetRegionClipped (void *, vrpn_HANDLERPARAM);
     static int handle_ResistanceFailure (void *, vrpn_HANDLERPARAM);

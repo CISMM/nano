@@ -1,43 +1,61 @@
-#
-# Root of Visual Developer Studio Common files.
-export VSCommonDir=/e/PROGRA~1/MICROS~3/COMMON
+# This is taken directly from VCVARS32.bat, and translated into a bash
+#  shell script. This file is located in $MSVSDIR/VC98/bin
 
-#
-# Root of Visual Developer Studio installed files.
-#
-export MSDevDir=/e/PROGRA~1/MICROS~1/COMMON/msdev98
+# First: the object directory for nano must be visible as the same
+# directory by bash/cygwin and CL, a dos program. 
+# 1. Source code and object directory must live on the same drive
+# 2. Create obj directory 
+# 3. mount directory in cygwin so root-relative path looks the
+# same in DOS or cygwin.
+# 4. set MY_NANO_OBJ_DIR to point there. 
+# Ex. I created the directory e:/nsrc/obj as my object directory
+# At a bash prompt, execute: mount -s -b E:\\nsrc /nsrc
+# In my .nano_aliases file, add line: export MY_NANO_OBJ_DIR=/nsrc/obj
 
-#
-# Root of Visual C++ installed files.
-#
-export MSVCDir=/PROGRA~1/MICROS~1/VC98
+# Change these to match your setup
+
+# Root of MS Visual Studio. 
+# Use ls with paths of this form to determine which numbers to use. 
+export MSVSDir=/e/PROGRA~1/MICROS~1
 
 #
 # VcOsDir is used to help create either a Windows 95 or Windows NT specific path.
 #
-export VcOsDir=WIN95
-#if ("$OS" == "Windows_NT") 
-	export VcOsDir=WINNT
-#endif
+#export VcOsDir=WIN95
+export VcOsDir=WINNT
+
+# Some additional setup so we can run:
+# Path to the nano executable and path to the Tcl dlls. 
+export PATH="$MY_NANO_OBJ_DIR/pc_win32/app/nano:/c/Progra~1/Tcl/Bin:$PATH"
+
+# Shouldn't have to change variable below this point, assuming 
+# you did a standard install of VC++ 6.0
+
+#
+# Root of Visual Developer Studio Common files.
+export VSCommonDir=$MSVSDir/COMMON
+
+#
+# Root of Visual Developer Studio installed files.
+#
+export MSDevDir=$VSCommonDir/msdev98
+
+#
+# Root of Visual C++ installed files.
+#
+export MSVCDir=$MSVSDir/VC98
+
 #
 echo Setting environment for using Microsoft Visual C++ tools.
 #
 
-#if ("$OS" == "Windows_NT") 
-#	export PATH=$MSDevDir/BIN:/e$MSVCDir/BIN:$VSCommonDir/TOOLS/$VcOsDir:$VSCommonDir/TOOLS:$PATH
-#endif
-#if ("$OS" == "") 
-	export PATH="$MSDevDir/BIN":/e"$MSVCDir/BIN":"$VSCommonDir/TOOLS/$VcOsDir":"$VSCommonDir/TOOLS":"$PATH"
-#endif
+export PATH="$MSDevDir/BIN":"$MSVCDir/BIN":"$VSCommonDir/TOOLS/$VcOsDir":"$VSCommonDir/TOOLS":"$PATH"
 
-export INCLUDE="$MSVCDir/ATL/INCLUDE;$MSVCDir/INCLUDE;$MSVCDir/MFC/INCLUDE;$INCLUDE"
-export LIB="$MSVCDir/LIB;$MSVCDir/MFC/LIB;$LIB"
+export INCLUDE="`cygtclpath $MSVCDir/ATL/INCLUDE`;`cygtclpath $MSVCDir/INCLUDE`;`cygtclpath $MSVCDir/MFC/INCLUDE`;$INCLUDE"
+export LIB="`cygtclpath $MSVCDir/LIB`;`cygtclpath $MSVCDir/MFC/LIB`;$LIB"
 
 #export VcOsDir=
 #export VSCommonDir=
 
 # export PATH MSDevDir MSVCDir INCLUDE LIB
 
-# Some additional setup so we can run:
-export PATH="/nsrc/obj/pc_win32/app/nano:/c/Progra~1/Tcl/Bin:$PATH"
-export TCL_LIBRARY=`cygtclpath /c/Progra~1/Tcl/lib/tcl8.2`

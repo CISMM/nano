@@ -193,7 +193,7 @@ void nmb_Image::getWorldToImageTransform(double *matrix44)
 }
 
 const int nmb_ImageGrid::num_export_formats = 5;
-const char *nmb_ImageGrid::export_formats_list[] = {	"Topometrix",
+const char *nmb_ImageGrid::export_formats_list[] = {	"ThermoMicroscopes",
                                  		"Text(MathCAD)",
                                  		"PPM Image",
                                  		"SPIP",
