@@ -6,8 +6,7 @@
 
 nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
     nmr_Registration_Proxy *aligner,
-	UTree *world,
-	nmg_ImageDisplayProjectiveTexture *textureDisplay): 
+	UTree *world): 
 
 	d_aligner(aligner), 
 	d_windowOpen("afm_sem_window_open", 0),
@@ -35,6 +34,9 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
 	d_drawSurface("afm_sem_draw_surface", 0),
 	d_drawSurfaceTexture("afm_sem_draw_surface_texture", 0),
 	d_liveSEMTexture("afm_sem_live_sem_texture", 0),
+	d_textureOpacity("afm_sem_texture_opacity", 0.5),
+    d_semColormapImageName("afm_sem_cm(color_comes_from)", "none"),
+    d_semColormap("afm_sem_cm(color_map)", "none"),
 	d_generateTestData("afm_sem_generate_test_data", 0),
 	d_AFM(NULL),
 	d_SEM(NULL),
@@ -45,7 +47,6 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
 	d_surfaceModelRenderer(),
 	d_textureProjectionDirectionRenderer(),
 	d_world(world),
-	d_textureDisplay(textureDisplay),
 	d_surfaceStride(3),
 	d_heightField(NULL),
 	d_heightFieldNeedsUpdate(vrpn_TRUE),
@@ -61,6 +62,11 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
   d_numFreePoints = 0;
   d_modelToSEM_modelImage = NULL;
   d_modelToSEM_SEMImage = NULL;
+
+  d_colorMapUI = new nmui_ColorMap("afm_sem_cm",
+                            &d_semColormapImageName,
+                            &d_semColormap);
+  d_colorMapUI->setSurfaceColor(255, 255, 255);
 
   int i, j;
   nmr_CalibrationPoint defaultPointValue = {0,0,0,1};
@@ -96,6 +102,10 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
   d_drawSurface.addCallback(handle_drawSurface_change, this);
   d_drawSurfaceTexture.addCallback(handle_drawSurfaceTexture_change, this);
   d_liveSEMTexture.addCallback(handle_liveSEMTexture_change, this);
+  d_textureOpacity.addCallback(handle_textureOpacity_change, this);
+
+  d_semColormap.addCallback(handle_colormap_change, this);
+  d_colorMapUI->addMinMaxCallback(handle_colormap_minmax_change, this);
 
   d_generateTestData.addCallback(handle_generateTestData_change, this);
 
@@ -154,6 +164,10 @@ void nmui_AFM_SEM_CalibrationUI::changeDataset(nmb_ImageManager *dataset)
 							d_modelToSEM_modelImageName.string());
 		double xmin, ymin, xmax, ymax;
 		d_modelToSEM_modelImage->getWorldRectangle(xmin, ymin, xmax, ymax);
+		xmax -= xmin;
+		ymax -= ymin;
+		xmin = 0.0;
+		ymin = 0.0;
 		d_surfaceModelRenderer.setSurface(d_modelToSEM_modelImage, 
 			xmin, ymin, xmax, ymax,
 			d_surfaceStride);
@@ -173,6 +187,8 @@ void nmui_AFM_SEM_CalibrationUI::changeDataset(nmb_ImageManager *dataset)
 			maxX = inputGrid->maxX();
 			maxY = inputGrid->maxY();
 			d_surfaceModelRenderer.setSurfaceRegion(minX, minY, maxX, maxY);
+			printf("setting surfacemodel to match AFM region (%g,%g)-(%g,%g)\n",
+				minX, minY, maxX, maxY);
 		}
 	}
 }
@@ -224,6 +240,10 @@ int nmui_AFM_SEM_CalibrationUI::drawTestImages(const ImageViewerDisplayData &dat
 
 	double minX, minY, maxX, maxY;
 	d_modelToSEM_modelImage->getWorldRectangle(minX, minY, maxX, maxY);
+	maxX -= minX;
+	maxY -= minY;
+	minX = 0;
+	minY = 0;
 	d_surfaceModelRenderer.renderWithoutDisplayList(
 		d_modelToSEM_modelImage, minX, minY, maxX, maxY, 2);
 	glPopMatrix();
@@ -714,6 +734,10 @@ void nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_model_change(
 		double modelMinX, modelMinY, modelMaxX, modelMaxY;
 		me->d_modelToSEM_modelImage->getWorldRectangle(
 			modelMinX, modelMinY, modelMaxX, modelMaxY);
+		modelMaxX -= modelMinX;
+		modelMaxY -= modelMinY;
+		modelMinX = 0.0;
+		modelMinY = 0.0;
 		me->d_surfaceModelRenderer.setSurface(me->d_modelToSEM_modelImage,
 			modelMinX, modelMinY, modelMaxX, modelMaxY,
 			me->d_surfaceStride);
@@ -762,6 +786,10 @@ void nmui_AFM_SEM_CalibrationUI::handle_updateModel_change(
 		double modelMinX, modelMinY, modelMaxX, modelMaxY;
 		me->d_modelToSEM_modelImage->getWorldRectangle(
 			modelMinX, modelMinY, modelMaxX, modelMaxY);
+		modelMaxX -= modelMinX;
+		modelMaxY -= modelMinY;
+		modelMinX = 0;
+		modelMinY = 0;
 		me->d_surfaceModelRenderer.setSurface(me->d_modelToSEM_modelImage,
 			modelMinX, modelMinY, modelMaxX, modelMaxY,
 			me->d_surfaceStride);
@@ -1099,6 +1127,42 @@ void nmui_AFM_SEM_CalibrationUI::handle_liveSEMTexture_change(
 	}
 }
 
+void nmui_AFM_SEM_CalibrationUI::handle_textureOpacity_change(
+		vrpn_float64 value, void *ud)
+{
+	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
+
+	double alpha = value;
+	if (alpha > 1.0) alpha = 1.0;
+	if (alpha < 0.0) alpha = 0.0;
+	me->d_SEMTexture.setOpacity(alpha);
+}
+
+// static
+void nmui_AFM_SEM_CalibrationUI::handle_colormap_change(const char* name, void* _ud)
+{
+    nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)_ud;
+
+    nmb_ColorMap* cmap = me->d_colorMapUI->currentColorMap();
+
+	me->d_SEMTexture.setColorMap(cmap);
+	me->d_SEMTexture.setUpdateColorMap(true);
+}
+
+// static
+void nmui_AFM_SEM_CalibrationUI::handle_colormap_minmax_change(vrpn_float64, void* _ud)
+{
+//printf("handle_colormap_minmax_change\n");
+
+    nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)_ud;
+    double dmin,dmax,cmin,cmax;
+
+    me->d_colorMapUI->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
+
+    me->d_SEMTexture.setColorMapMinMax(dmin, dmax, cmin, cmax);
+	me->d_SEMTexture.setUpdateColorMap(true);
+}
+
 void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 		vrpn_int32 value, void *ud)
 {
@@ -1106,14 +1170,15 @@ void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 	if (value) {
 		if (me->d_modelToSEM_modelImage) {
 			double widthWorld = me->d_modelToSEM_modelImage->widthWorld();
-			double minX = me->d_modelToSEM_modelImage->boundX(MIN_X_MIN_Y);
-			double minY = me->d_modelToSEM_modelImage->boundY(MIN_X_MIN_Y);
+			double minX = 0;//me->d_modelToSEM_modelImage->boundX(MIN_X_MIN_Y);
+			double minY = 0;//me->d_modelToSEM_modelImage->boundY(MIN_X_MIN_Y);
 			nmb_Transform_TScShR SEM_from_AFM;
 			double angle = 0.7854;
 			SEM_from_AFM.setScale(NMB_X, 1.0/widthWorld);
 			SEM_from_AFM.setScale(NMB_Y, 1.0/widthWorld);
 			SEM_from_AFM.setScale(NMB_Z, 1.0/widthWorld);
 			SEM_from_AFM.setRotation(NMB_THETA, -angle);
+			SEM_from_AFM.setRotation(NMB_PHI, angle);
 
 			SEM_from_AFM.getMatrix(me->d_SEMfromAFM_test);
 
@@ -1121,7 +1186,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 			AFM_from_model.setTranslation(NMB_Z, widthWorld*0.4);
 			AFM_from_model.setTranslation(NMB_Y, -widthWorld*0.4-minY);
 			AFM_from_model.setTranslation(NMB_X, -minX);
-			fprintf(stderr, "surface minX=%g, minY=%g\n", minX, minY);
+			//fprintf(stderr, "surface minX=%g, minY=%g\n", minX, minY);
 
 			AFM_from_model.getMatrix(me->d_AFMfromModel_test);
 
@@ -1268,6 +1333,10 @@ void nmui_AFM_SEM_CalibrationUI::updateSolution()
 			double minX, minY, maxX, maxY;
 			d_modelToSEM_modelImage->getWorldRectangle(
 				minX, minY, maxX, maxY);
+			maxX -= minX;
+			maxY -= minY;
+			minX = 0.0;
+			minY = 0.0;
 			d_heightField = new nmr_SurfaceModelHeightField(
 				d_modelToSEM_modelImage, minX, minY, maxX, maxY);
 			d_heightFieldNeedsUpdate = vrpn_FALSE;
@@ -1370,6 +1439,10 @@ void nmui_AFM_SEM_CalibrationUI::updateSolutionDisplay()
 	double surfCenter[4] = {0,0,0,1};
 	double minX, minY, maxX, maxY;
 	d_modelToSEM_modelImage->getWorldRectangle(minX, minY, maxX, maxY);
+	maxX -= minX;
+	maxY -= minY;
+	minX = 0.0;
+	minY = 0.0;
 	surfCenter[0] = 0.5*(minX + maxX);
 	surfCenter[1] = 0.5*(minY + maxY);
 	int w = d_modelToSEM_modelImage->width();

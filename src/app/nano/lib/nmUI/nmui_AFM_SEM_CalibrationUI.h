@@ -12,13 +12,13 @@
 #include "UTree.h"
 #include "URHeightField.h"
 #include "URVector.h"
+#include "nmui_ColorMap.h"
 
 class nmui_AFM_SEM_CalibrationUI {
   public:
 
     nmui_AFM_SEM_CalibrationUI(nmr_Registration_Proxy *aligner,
-		UTree *world,
-		nmg_ImageDisplayProjectiveTexture *textureDisplay);
+		UTree *world);
     ~nmui_AFM_SEM_CalibrationUI();
 
 	void setSPM(nmm_Microscope_Remote *scope);
@@ -75,6 +75,11 @@ class nmui_AFM_SEM_CalibrationUI {
 	static void handle_drawSurface_change(vrpn_int32 value, void *ud);
 	static void handle_drawSurfaceTexture_change(vrpn_int32 value, void *ud);
 	static void handle_liveSEMTexture_change(vrpn_int32 value, void *ud);
+	static void handle_textureOpacity_change(vrpn_float64 value, void *ud);
+	    //   for colormap
+    static void handle_colormap_change(const char *name, void *_ud);
+    //   for colormap minmax
+    static void handle_colormap_minmax_change(vrpn_float64, void *_ud);
 	
 	static void handle_generateTestData_change(
 		vrpn_int32 value, void *ud);
@@ -119,8 +124,15 @@ class nmui_AFM_SEM_CalibrationUI {
 	Tclvar_int d_drawSurfaceTexture;
 	Tclvar_int d_liveSEMTexture;
 
+	Tclvar_float d_textureOpacity;
+
+	Tclvar_string d_semColormapImageName;
+    Tclvar_string d_semColormap;
+
 	Tclvar_int d_generateTestData;
  
+	nmui_ColorMap* d_colorMapUI;
+
     // AFM
     nmm_Microscope_Remote *d_AFM;
 	int finishedFreehandHandler();
@@ -171,7 +183,6 @@ class nmui_AFM_SEM_CalibrationUI {
 	URProjectiveTexture d_SEMTexture;
 	int d_surfaceStride;
 	UTree *d_world;
-	nmg_ImageDisplayProjectiveTexture *d_textureDisplay;
 	nmr_SurfaceModelHeightField *d_heightField;
 	vrpn_bool d_heightFieldNeedsUpdate;
     URender *d_tipRenderer;

@@ -1,3 +1,13 @@
+2003-02-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmui_AFM_SEM_CalibrationUI.C : fixed (I think) a bug that affects
+	alignment to model surfaces that don't have the origin at the upper left 
+	corner of the image - this may have only been a problem when using
+	the synthesized images for testing
+	Took out unnecessary nmg_ImageDisplayProjectiveTexture argument to
+	constructor.
+	Added colormap and opacity controls.
+
 2003-02-23  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmui_AFM_SEM_CalibrationUI.C : modified the code that sets the
