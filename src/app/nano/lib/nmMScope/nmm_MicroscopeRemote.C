@@ -3304,7 +3304,6 @@ void nmm_Microscope_Remote::RcvAmpDisabled (const long _ampNum) {
 
  
 void nmm_Microscope_Remote::RcvStartingToRelax (const long _sec, const long _usec) {
-  state.relaxComp = state.doRelaxComp;
   if (state.doRelaxComp) {
     d_relax_comp.start_fix(_sec, _usec, state.lastZ);
     printf("Beginning relaxation compensation at %ld:%ld\n", _sec, _usec);

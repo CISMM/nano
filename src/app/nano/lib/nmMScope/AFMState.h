@@ -13,6 +13,9 @@
 #include <Tcl_Netvar.h>
 #include <active_set.h>  // Scan_channel_selector
 
+// Forces normally range from -64 to 60 nanoAmps  
+#define BOGUS_FORCE -100
+
 /** \file AFMState.h
 
 Tom Hudson, September, 1997
@@ -447,8 +450,6 @@ struct AFMState {
   vrpn_bool saveStream;            // BUG - should be state on IO (!)
   vrpn_bool allowdup;
   vrpn_bool useRecvTime;           // Michele Clark's experiments
-
-  int relaxComp;                   ///< status of relaxation compensation
 
   int rasterX,                     // used to be x, y in animate.c
       rasterY;

@@ -144,6 +144,8 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     min_z_setpoint("modifyp_min_z_setpoint", -10.0),
     max_z_setpoint("modifyp_max_z_setpoint", 10.0),
     max_lat_setpoint("modifyp_max_lat_setpoint", 10.0),
+    freespace_normal_force(BOGUS_FORCE),
+    freespace_lat_force(BOGUS_FORCE),
 
     stored_points (),
 
@@ -439,8 +441,6 @@ AFMState::AFMState (const AFMInitializationState & i) :
     saveStream           (VRPN_TRUE),
     allowdup             (i.allowdup),
     useRecvTime          (i.useRecvTime),
-
-    relaxComp (0),
 
     rasterX (0),
     rasterY (0),

@@ -505,7 +505,7 @@ BCPlane* nmb_Dataset::computeFlattenedPlane
   if (plane == NULL)
   {
       fprintf(stderr,
-             "compute_flattened_plane(): could not get height plane!\n");
+             "compute_flattened_plane(): could not get input plane!\n");
       return NULL;
   }
 
@@ -615,8 +615,9 @@ int nmb_Dataset::computeFlattenedPlane
       pre = flat_ptr = list_head;
       while (flat_ptr) {
          if ( flat_ptr->data->flat_plane == outplane ) {
+	     // userdata must be the same as when we added the callback!
             flat_ptr->data->from_plane->remove_callback
-              (updateFlattenOnPlaneChange, (void *) flat_ptr);
+              (updateFlattenOnPlaneChange, (void *) (flat_ptr->data));
             pre->next = flat_ptr->next;
             free(flat_ptr->data);
             free(flat_ptr);
