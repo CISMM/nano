@@ -11,7 +11,7 @@
 #include <fstream.h>
 #include <vector>
 #include <math.h>		//math.h vs cmath
-#include <GL/glut.h>
+#include <GL/glut_UNC.h>
 #include "Vec3d.h"
 #include "3Dobject.h"
 #include "ConeSphere.h"
@@ -120,7 +120,10 @@ void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit,
 			}
 			Vec3d centroid = Vec3d((minx+maxx)/2.,(miny+maxy)/2.,(minz+maxz)/2.)+translate;
 		}
+
+		infile.close();
 	}
+
     
 }
 

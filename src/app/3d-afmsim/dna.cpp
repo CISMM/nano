@@ -8,7 +8,7 @@
 #include <fstream.h>
 #include "3Dobject.h"
 #include <math.h>		//math.h vs cmath
-#include <GL/glut.h>
+#include <GL/glut_UNC.h>
 #include "defns.h"
 #include "Tips.h"
 #include "sim.h"

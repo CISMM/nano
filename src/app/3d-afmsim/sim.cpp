@@ -13,7 +13,7 @@
 #include <fstream.h>
 #include <vector>
 #include <math.h>		//math.h vs cmath
-#include <GL/glut.h>
+#include <GL/glut_UNC.h>
 //#include <string.h>
 #include "Vec3d.h"
 #include "3Dobject.h"
@@ -30,7 +30,7 @@
 #include "uncert.h"
 #include "sim.h"
 #include <vrpn_Connection.h>
-//#include <nmm_SimulatedMicroscope.h>
+#include <nmm_SimulatedMicroscope.h>
 //ANDREA
 
 GLuint list_sphere;
@@ -121,11 +121,14 @@ void findNearestTriangleSideToMouse( void );
 void select_triangle_side();
 void Usage(char *progname);
 
+//has to be put out here so variable that can be accessed later...
+char * machineName = "dummy_name";
+vrpn_Synchronized_Connection *connection = new vrpn_Synchronized_Connection();
+nmm_SimulatedMicroscope AFM_Simulator(machineName, connection);
 
 
 int main(int argc, char *argv[])
 {
-	
 	adjustOrthoProjectionParams();
 	bool radius = true;	//for protein/spheres files--false means use default
 						//true means the file contains radii
@@ -198,11 +201,9 @@ int main(int argc, char *argv[])
 			ics.set_r(TipSize);//let the user specify the tip radius desired
 		}
 		else if (!strcmp(argv[i], "-connection")) {
-			if (++i > argc) { Usage(argv[0]); }
 			connection_to_nano = true;
-			char * machineName = argv[i];
-			//vrpn_Synchronized_Connection *connection = new vrpn_Synchronized_Connection();
-			//nmm_SimulatedMicroscope AFM_Simulator(machineName, connection);
+			char * newName = "AFMSimulator"/*argv[i]*/;
+			AFM_Simulator.change_machineName(newName);
 			//ANDREA
 		}
 		else if (!strcmp(argv[i], "-unca_nano")) {
@@ -338,9 +339,9 @@ int main(int argc, char *argv[])
 	 << units << "^3.\n" << flush;
 
     
-    }*/
+   }*/
 
-  fout.close();
+  //fout.close();
 
   // app's main loop, from which callbacks to above routines occur
   glutMainLoop();
@@ -418,7 +419,7 @@ void  displayFuncDepth( void ) {
     HeightData = doImageScanApprox(length);
 	if(connection_to_nano){
 		//ANDREA
-		//AFM_Simulator.encode_and_sendData(HeightData,length);
+		AFM_Simulator.encode_and_sendData(HeightData,length);
 	}
 
     // end of display frame, so flip buffers
@@ -560,7 +561,10 @@ void remake_cone_sphere(InvConeSphereTip ics) {
 
 // Keyboard callback for main window.
 void commonKeyboardFunc(unsigned char key, int x, int y) {
-    ofstream fout2;
+    int nTest;
+	int nTest2;
+	int nTest3;
+	ofstream fout2;
     fout2.open("sphere_output.txt", fstream::out | fstream::app);
     char c;
     float radius = 0;

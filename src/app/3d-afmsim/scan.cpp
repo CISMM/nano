@@ -8,7 +8,7 @@
 #include <iostream.h>
 #include <vector>
 #include <math.h>		//math.h vs cmath
-#include <GL/glut.h>
+#include <GL/glut_UNC.h>
 #include "Vec3d.h"
 #include "3Dobject.h"
 #include "ConeSphere.h"

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>	
 #include <math.h>	
-#include <GL/glut.h>
+#include <GL/glut_UNC.h>
 #include <string.h>
 #include "ConeSphere.h"
 #include "defns.h"

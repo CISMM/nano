@@ -4,7 +4,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <GL/glut.h>
+#include <GL/glut_UNC.h>
 #include "defns.h"
 #include "lightcol.h"
 #include "sim.h"

@@ -2,7 +2,7 @@
 #define _MYGLU_H_
 
 #include <stdio.h>
-#include <GL/glut.h>
+#include <GL/glut_UNC.h>
 #include "Tips.h"
 #include "defns.h"
 
