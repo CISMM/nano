@@ -33,4 +33,22 @@ void setFilled(nmg_State * state);
 
 void computeModelRegistrationTextureTransform(nmg_State * state, double *matrix);
 
+
+// int AppendFrameToAVI(char *a_sFilename, unsigned int a_nWidth, unsigned int a_nHeight, unsigned char *a_pImage, int a_nFrameRate)
+//
+// Credits:
+// The BMP file portion of this code was taken from somewhere, and I've forgotten where -  <deepest apologies to the author>
+//
+// The remainder of the code appends to the AVI... it's pretty straightforward...
+
+// USAGE:	a_sFilename is a pointer to the AVI file
+//			a_nWidth and a_nHeight are the dimensions of an RGB (24 bpp) image
+//			a_pImage is the image pointer
+//			a_nFrameRate is the AVI frame rate (the added frame will be displayed for 1/a_nFrameRate seconds... or something like that)
+
+#include <vfw.h>
+
+
+int AppendFrameToAVI(unsigned int a_nWidth, unsigned int a_nHeight, unsigned char *a_pImage);
+
 #endif	/* OPENGL_H */

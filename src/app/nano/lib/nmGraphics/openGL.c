@@ -61,6 +61,16 @@ extern int config_feelGrid_temp;
 // default position of the light:  overhead, at infinity
 static GLfloat l0_position [4] = { 0.0, 1.0, 0.1, 0.0 };
 
+// extra data for video capture functionality
+extern unsigned char * read_buffer;
+static unsigned int read_frame = 0;
+extern int save_frame = 0;
+extern PAVISTREAM pStream;
+extern unsigned int save_width, save_height;
+
+extern void handle_videoCaptureEnd_change(int, void *);
+
+
 #ifdef MIN
 #undef MIN
 #endif
@@ -377,7 +387,37 @@ int draw_world (int, void * data)
     TIMERVERBOSE(5, mytimer, "draw_world:Drawing the world");
     
     myworld(state);
-    
+
+	/* Extra code to read back the window for writing to a video file. */
+	read_frame = (read_frame + 1) % 4;
+	if (save_frame && read_frame == 0) {
+		GLint viewport[4];
+		glFlush();
+		//glReadBuffer(GL_BACK);
+		glGetIntegerv(GL_VIEWPORT, viewport);
+		//printf("debug %u x %u + %u x %u\n", viewport[2], viewport[3], viewport[0], viewport[1]);
+		int width = viewport[2] & 0xfffffffc;
+		int height = viewport[3] & 0xfffffffc;
+		//if (width & 3) {
+		//	width >>= 2;
+		//	width++;
+		//	width <<= 2;
+		//}
+		if (read_buffer == NULL)
+			printf("NULL BUFFER!!\n");
+		//if (viewport[0] != 0 || viewport[1] != 0)
+		//	printf("starting at %i x %i\n", viewport[0], viewport[1]);
+		if (width == save_width && height == save_height) {
+			glReadPixels(viewport[0], viewport[1], width, height, /*GL_RGB*/ GL_BGR_EXT, GL_UNSIGNED_BYTE, read_buffer);
+			//printf("width: %u\n", width);
+			//imdebug("bgr w=%d h=%d %p", width, viewport[3] - viewport[1], read_buffer);
+			AppendFrameToAVI(width, height, read_buffer);
+		} else {
+			printf("Window resized. Ending video capture.\n");
+			handle_videoCaptureEnd_change(0, NULL);
+		}
+	}
+
     /***************************/
     /* Check for any GL errors */
     /***************************/
@@ -389,6 +429,74 @@ int draw_world (int, void * data)
 }
 
 
+// Link against vfw32.lib
+#pragma comment( lib, "vfw32" )
+
+
+int AppendFrameToAVI(unsigned int a_nWidth, unsigned int a_nHeight, unsigned char *a_pImage)
+{
+    //BITMAPFILEHEADER bmpFileHeader;
+    //FILE *filep;
+    //unsigned int row, column;
+    //unsigned char *paddedImage = NULL, *paddedImagePtr, *imagePtr;
+	//unsigned int a_nWidth = 320, a_nHeight = 240;
+	int a_nFrameRate = 15;
+
+    /* The .bmp format requires that the image data is aligned on a 4 byte boundary.  For 24 - bit bitmaps,
+       this means that the width of the bitmap  * 3 must be a multiple of 4. This code determines
+       the extra padding needed to meet this requirement. */
+
+	/// CD: This is for writing BMP files (commented out for AVI usage)
+    // Fill the bitmap file header structure
+    //bmpFileHeader.bfType = 'MB';   // Bitmap header
+    //bmpFileHeader.bfSize = 0;      // This can be 0 for BI_RGB bitmaps
+    //bmpFileHeader.bfReserved1 = 0;
+    //bmpFileHeader.bfReserved2 = 0;
+    //bmpFileHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+
+
+	/* kent: removed the copy for this proof-of-concept portion
+	   because OpenGL will do the alignment and BGR thing for us
+	
+	   Also, using calloc() in a video-capture setting?  UGH!!! */
+    // Allocate memory for some temporary storage
+    //paddedImage = (unsigned char *)calloc(sizeof(unsigned char), bytesize);
+    //if (paddedImage == NULL) {
+    //        printf("Error allocating memory \n");
+	//      //fclose(filep);
+    //        return FALSE;
+    //}
+
+
+    /* This code does three things.  First, it flips the image data upside down, as the .bmp
+       format requires an upside down image.  Second, it pads the image data with extrabytes 
+            number of bytes so that the width in bytes of the image data that is written to the
+            file is a multiple of 4.  Finally, it swaps (r, g, b) for (b, g, r).  This is another
+            quirk of the .bmp file format. */
+
+    //for (row = 0; row < a_nHeight; row++) {
+            
+	//		/// CD: It turns out that I didn't need this line.  I replaced it with the next.
+	//		//imagePtr = image + (height - 1 - row) * width * 3;				
+	//		imagePtr = a_pImage + (row * a_nWidth * 3);
+
+    //        paddedImagePtr = paddedImage + row * (a_nWidth * 3 + extrabytes);
+    //        for (column = 0; column < a_nWidth; column++) {
+    //                *paddedImagePtr = *(imagePtr + 2);
+    //                *(paddedImagePtr + 1) = *(imagePtr + 1);
+    //                *(paddedImagePtr + 2) = *imagePtr;
+    //                imagePtr += 3;
+    //                paddedImagePtr += 3;
+    //        }
+    //}
+
+	// Append the bitmap to the stream...
+	AVIStreamWrite(pStream, max(0, AVIStreamEnd(pStream)), 1, a_pImage/*paddedImage*/, a_nWidth * 3 * a_nHeight, AVIIF_KEYFRAME, NULL, NULL);
+
+    //free(paddedImage);
+    return TRUE;
+}
 
 
 
