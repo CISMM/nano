@@ -1,3 +1,8 @@
+2001-08-21  Aron Helser  <helser@cs.unc.edu>
+
+	* stripchart.tcl: Add controls for Z coordinate for force-curve
+	modifications. 
+
 2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
 
 	* litho_main.tcl: added stuff for loading and saving pattern files

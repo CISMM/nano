@@ -1,3 +1,8 @@
+2001-08-21  Aron Helser  <helser@cs.unc.edu>
+
+	* GraphMod.Ch (ReceiveNewPoint): Add handling of Z coords 
+	(handle_MaxPointsChange): same
+
 2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
 
 	* Makefile: added dependence on nmMP

@@ -86,6 +86,8 @@ class GraphMod {
     int d_numDataVectors;
     char d_dataVectorNames[MAX_DATA_VECTORS][128];
 
+    int d_is3D; ///< did the current mod include Z data as well?
+
     // stuff for scanline display:
     int d_num_scanlines;
     int d_numscanline_channels;

@@ -41,8 +41,9 @@ GraphMod::GraphMod (void) :
     d_numDataVectors(0),
     d_num_scanlines(0),
     d_numscanline_channels(0),
-    d_scanlength(0) {
-
+    d_scanlength(0),
+    d_is3D(0) 
+{
  d_max_points.addCallback(handle_MaxPointsChange, this);
  d_stride.addCallback(handle_StrideChange, this);
 
@@ -383,7 +384,7 @@ static   long	first_sec,first_usec;
       last_x = p->x();
       last_y = p->y();
       //last_z = p->z();
-      //is3D = p->is3D();
+      me->d_is3D = p->is3D();
       first_sec = p->sec();
       first_usec =p->usec();
       s = 0; time = 0;	// No distance yet.
@@ -444,6 +445,22 @@ static   long	first_sec,first_usec;
       sprintf(command, "gm_Surface_Y_Axis set {%f}", p->y());
       TCLEVALCHECK(me->d_interp, command);
 
+      if (me->d_is3D) {
+          //set up the z surface vector.
+          sprintf(str, "gm_Surface_Z_Axis");
+          if (!Blt_VectorExists(me->d_interp, str))  {
+              //create the vector
+              if (Blt_CreateVector(me->d_interp, str,0,&vecPtr) != TCL_OK) {
+                  fprintf(stderr, "Tcl_Eval(BLT_CreateVector) failed: %s\n",
+                          me->d_interp->result);
+                  return -1;
+              }
+          }
+          // chop it off to one element
+          sprintf(command, "gm_Surface_Z_Axis set {%f}", p->z());
+          TCLEVALCHECK(me->d_interp, command);
+      }
+
       int j = 0;
       // Attach the X and Y surface elements to the y axis of the
       // stripchart. 
@@ -455,6 +472,13 @@ static   long	first_sec,first_usec;
 		"gm_Surface_Y_Axis", j);
       TCLEVALCHECK(me->d_interp, command);
       j++;
+      if (me->d_is3D) {
+          // Do Z as well, if necessary. 
+          sprintf(command, "add_stripchart_element \"%s\" %d 1.0 0.0 0.0",
+                  "gm_Surface_Z_Axis", j);
+          TCLEVALCHECK(me->d_interp, command);
+          j++;
+      }
 
       // create a vector for each value returned from microscope
       // and attach it to a graph in the stripchart
@@ -531,6 +555,11 @@ static   long	first_sec,first_usec;
       sprintf(command, "gm_Surface_Y_Axis append %f", p->y());
       TCLEVALCHECK(me->d_interp, command);
 
+      if (me->d_is3D) {
+          // update the z surface vector
+          sprintf(command, "gm_Surface_Z_Axis append %f", p->z());
+          TCLEVALCHECK(me->d_interp, command);
+      }
       // sanity check on d_max_points
       if (me->d_max_points < 2) {
 	  me->d_max_points = 2;
@@ -546,6 +575,10 @@ static   long	first_sec,first_usec;
 	  TCLEVALCHECK(me->d_interp, command);
 	  sprintf(command, "gm_Surface_Y_Axis delete 0");
 	  TCLEVALCHECK(me->d_interp, command);
+          if (me->d_is3D) {
+              sprintf(command, "gm_Surface_Z_Axis delete 0");
+              TCLEVALCHECK(me->d_interp, command);
+          }
       }
       // plot the next point for each data value
       me->d_numDataVectors = 0;
@@ -618,6 +651,10 @@ void GraphMod::handle_MaxPointsChange(vrpn_int32 new_value, void * userdata)
       TCLEVALCHECK2(me->d_interp, command);
       sprintf(command, "gm_Surface_Y_Axis delete 0:%d", num_extra_points-1);
       TCLEVALCHECK2(me->d_interp, command);
+      if (me->d_is3D) {
+          sprintf(command, "gm_Surface_Z_Axis delete 0:%d", num_extra_points-1);
+          TCLEVALCHECK2(me->d_interp, command);
+      }
       for (i = 0; i < me->d_numDataVectors; i++) {
          sprintf(command, "%s delete 0:%d", me->d_dataVectorNames[i], num_extra_points-1);
          TCLEVALCHECK2(me->d_interp, command);

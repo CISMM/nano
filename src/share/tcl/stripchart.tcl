@@ -55,6 +55,8 @@ $graphmod(stripchart) axis create gm_Surface_X_Axis_x -title "Surface X axis (nm
     -autorange 4000.0 -shiftby 0.1
 $graphmod(stripchart) axis create gm_Surface_Y_Axis_x -title "Surface Y axis (nm)" \
     -autorange 4000.0 -shiftby 0.1
+$graphmod(stripchart) axis create gm_Surface_Z_Axis_x -title "Surface Z axis (nm)" \
+    -autorange 4000.0 -shiftby 0.1
 
 $graphmod(stripchart) xaxis use gm_timevec
 set graphmod(cur_x_axis) gm_timevec
@@ -154,6 +156,8 @@ proc add_time_dist_controls { } {
             -command {change_x_axis gm_Surface_X_Axis_x gm_Surface_X_Axis}
     $win.rb add ydist -text "Surface Y axis" \
             -command {change_x_axis gm_Surface_Y_Axis_x gm_Surface_Y_Axis}
+    $win.rb add zdist -text "Surface Z axis" \
+            -command {change_x_axis gm_Surface_Z_Axis_x gm_Surface_Z_Axis}
     $win.rb select dist
     
     pack $win.rb -padx 4 -pady 4 -side top -anchor nw
