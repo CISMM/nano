@@ -224,7 +224,7 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
 
 {
 
-fprintf(stderr, "AFMModifyState constructor\n");
+//fprintf(stderr, "AFMModifyState constructor\n");
 }
 
 // Destructor only here to keep the HP compilers happy.
@@ -291,7 +291,7 @@ AFMImageState::AFMImageState (const AFMImageInitializationState & i) :
 {
 
 
-    //fprintf(stderr, "AFMImageState constructor\n");
+//fprintf(stderr, "AFMImageState constructor\n");
 }
 
 // Destructor only here to keep the HP compilers happy.

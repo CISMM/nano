@@ -1,5 +1,4 @@
 #include "nmm_MicroscopeTranslator.h"
-#include "vrpn_Ohmmeter.h"      // for ohmmeter status types
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -10,6 +9,8 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #endif
+
+#include <vrpn_Ohmmeter.h>      // for ohmmeter status types
 
 #include "stm_cmd.h"
 
