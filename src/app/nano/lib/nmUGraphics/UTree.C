@@ -42,7 +42,7 @@ ostream& operator<< ( ostream& co, const UTree& t )
 }
 
 /*======================= SET FUNCTIONS ===============================*/
-void UTree::TSetName(char *newname)
+void UTree::TSetName(const char *newname)
 {
   if(contents==NULL) return;
   if(contents->name!=NULL) delete [](contents->name);
@@ -62,8 +62,10 @@ UTree* UTree::TGetNodeByName(const char *nodename)
   int i;
   UTree *temp;
 
-  if(strcmp(nodename,contents->name)==0){
-        return this;
+  if (contents->name != NULL) {
+      if(strcmp(nodename,contents->name)==0){
+            return this;
+      }
   }
 
   for(i=0; i < num_children;i++){
@@ -197,7 +199,7 @@ int UTree::TReparent(const char *nodename, const char *parentname)	//returns 1 o
 }
 
 
-void UTree::TAddNode(URender *r, char *name){
+void UTree::TAddNode(URender *r, const char *name){
 
 	if(r==NULL || name==NULL) return;
 	
@@ -207,8 +209,8 @@ void UTree::TAddNode(URender *r, char *name){
            //kill(getpid(),SIGINT);
            return;
         }
-	nt->TSetName(name);
 	nt->TSetContents(r);
+    nt->TSetName(name);
 	TAddTreeNode(nt);
 	return;
 }

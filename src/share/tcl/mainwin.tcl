@@ -305,8 +305,6 @@ $analysismenu add command -label "Data Registration..." -underline 0 \
     -command "show.registration"
 $analysismenu add command -label "Tip Convolution..." \
     -command "show.tip_conv"
-$analysismenu add command -label  "Import Objects..."  \
-    -command "show.import_objects"
 }
 
 
@@ -367,6 +365,9 @@ $toolmenu add command -label "Latency Adaptation" -underline 0 \
 
 $toolmenu add command -label "SEM" -underline 1 \
     -command "show.sem_win"
+
+$toolmenu add command -label  "Import Objects..." -underline 0 \
+    -command "show.import_objects"
 }
 
 lappend stream_only_controls [list $toolmenu entryconfigure "Replay Control"]
@@ -492,7 +493,7 @@ if { !$thirdtech_ui } {
 #Registration tool. Align two data sets with each other
 source [file join ${tcl_script_dir} registration.tcl]
 source [file join ${tcl_script_dir} tip_conv.tcl]
-source [file join ${tcl_script_dir} import_tubes.tcl]
+source [file join ${tcl_script_dir} import.tcl]
 }
 # Dialogs accessed from the menus, like  vi_win, 
 # and nav_win.

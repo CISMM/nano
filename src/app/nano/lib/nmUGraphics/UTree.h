@@ -53,13 +53,15 @@ class UTree{
 		int  TReparent(const char *node_name,
 		               const char *new_parent_name);
 		void TAddTreeNode(UTree *);
-		void TAddNode(URender *renderable, char *name);
+		void TAddNode(URender *renderable, const char *name);
 		void TRemoveTreeNode(UTree *);
 
 		//set functions
-		void TSetName(char *newname);
-		void TSetContents(URender *r){if(contents!=NULL) delete r;
-						contents=r;
+		void TSetName(const char *newname);
+		void TSetContents(URender *r)
+        {
+            if (contents!=NULL) delete contents;
+            contents=r;
 		}
 
 		//iterators
@@ -68,7 +70,7 @@ class UTree{
 		//get functions
 		const char* TGetName();
 		UTree *TGetNodeByName(const char *nodename);	//retrieve a node by name
-		UTree *TGetParent();
+        UTree *TGetParent() {return parent;}
 		Xform TGetXformByName(const char *from_node, const char* to_node);
 							//traverse the tree between
 							//two nodes and build the matrix

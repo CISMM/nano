@@ -9,18 +9,6 @@ URPolygon::URPolygon():URender(){
 
   obj_type=URPOLYGON;		//set object type
   c[0]=c[1]=c[2]=1; c[3]=1;	//set color and alpha
-  filename=NULL;
-}
-
-MSIFile* URPolygon::GetMSIFile(){
-  return MyMSIFile;
-}
-
-void URPolygon::StoreFilename(char* fname){
-  if(filename) delete []filename;
-  filename=new char[strlen(fname)+1];
-  strcpy(filename,fname);
-  return;
 }
 
 URPolygon::~URPolygon(){
@@ -28,6 +16,11 @@ URPolygon::~URPolygon(){
   for(i=0; i < num_objects; i++){
 	  if(Dlist_array[i]!=0) glDeleteLists(Dlist_array[i],1);
   }
+}
+
+GeometryGenerator* URPolygon::GetGenerator()
+{
+    return d_generator;
 }
 
 int URPolygon::Render(void * /*userdata*/ ){
@@ -73,38 +66,16 @@ int URPolygon::Render(void * /*userdata*/ ){
 	else return ITER_STOP;
 }
 
-void URPolygon::LoadGeometry(char *fname){
-	int index,i;
-	
-	index=strlen(fname);		//save filename
-	StoreFilename(fname);
-
-	for(i=index-1; i>=0; i--){
-		if(fname[i]=='.') break;
-	}
-	if(strncmp(fname+i+1,"obj",3)==0){
-		num_objects=LoadWaveFrontFile(this,fname,Dlist_array);
-	}
-        //added by Leila Plummer for loading objects from tube_foundry
-      	else if (strncmp(fname+i+1,"msi",3)==0){
-	  //It seemed best to create the structure for loading .msi files
-          //as a class, since it is time-efficient for much of the .msi
-          //file's data to be stored for later use.  It would be logical
-          //to change the WaveFrontFiles to a similar format
-           MyMSIFile = new MSIFile(this,fname);
-           //num_objects=MyMSIFile->LoadMSIFile();
-           num_objects=MyMSIFile->LoadMSIFile(Dlist_array);
-	}
-	else{
-		cerr << "File type not recognized for " << fname << "\n";
-	}	
-	return;
+void URPolygon::LoadGeometry(GeometryGenerator *gen)
+{
+    d_generator = gen;
+    num_objects = d_generator->Load(this, Dlist_array);
 }
 
 /**Added by Leila Plummer, based on above code, for importing from tube_foundry**/
 
 void URPolygon::ReloadGeometry(){
-  num_objects=MyMSIFile->ReloadMSIFile(Dlist_array);
+  num_objects = d_generator->ReLoad(this, Dlist_array);
 }
 
 

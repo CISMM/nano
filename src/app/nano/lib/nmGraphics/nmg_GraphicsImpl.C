@@ -335,11 +335,11 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 			   handle_setMaskPlaneName,
 			   this, vrpn_ANY_SENDER);
   connection->register_handler(d_setTransparentPlaneName_type,
-			   handle_setTransparentPlaneName,
-			   this, vrpn_ANY_SENDER);
+                               handle_setTransparentPlaneName,
+                               this, vrpn_ANY_SENDER);
   connection->register_handler(d_setVizPlaneName_type,
-			   handle_setVizPlaneName,
-			   this, vrpn_ANY_SENDER);
+                               handle_setVizPlaneName,
+                               this, vrpn_ANY_SENDER);
   connection->register_handler(d_setMinColor_type,
                                handle_setMinColor,
                                this, vrpn_ANY_SENDER);

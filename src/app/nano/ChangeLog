@@ -1,3 +1,15 @@
+2001-03-12  Jason Clark  <jclark@cs.unc.edu>
+
+	* microscape.c: Includes and uses new import code
+
+	* imported_obj.C: Modified to compile with changes to Ubergraphics
+
+	* import.h: See below
+
+	* import.C: New file for handling importing of objects.  Old
+	import_tubes file was only for MSI files, this file is for any
+	kind of file to be imported.  That's why it's a new file.
+
 2001-03-09  Tom Hudson  <hudson@cs.unc.edu>
 
 	* CollaborationManager.h (d_peerName, d_gotPeerServer,

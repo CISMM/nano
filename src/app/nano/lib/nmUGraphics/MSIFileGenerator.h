@@ -1,11 +1,14 @@
-//#include "URender.h"
+#ifndef MSIFILE_GENERATOR_H
+#define MSIFILE_GENERATOR_H
+
+#include "FileGenerator.h"
 
 /*For MSISphere*/
 typedef GLfloat VertexType[3];
 #define xx .525731112119133606
 #define zz .850650808352039932
 
-class MSIFile; //forward declaration
+class MSIFileGenerator; //forward declaration
 
 //MSISphere is basically mysphere of graphics/globjects.c, but modified
 //and in class form.  It is used to draw atoms.
@@ -19,14 +22,12 @@ class MSISphere{
     void Subdivide(float*,float*,float*,int);
     GLuint DisplayList();
     ~MSISphere();
-    friend class MSIFile;
+    friend class MSIFileGenerator;
 };
 
 //This class handles all loading of a geometry contained in a .msi file into a display list, which is stored in an uberGraphics tree
-class MSIFile{
-  //private:
-    char *filename; //MSI filename
-    URender *Pobject;
+class MSIFileGenerator : public FileGenerator {
+  private:
     GLuint dl; //index of display list
     MSISphere* atom_ptr; //pointer to the atom we want to use in our display list
 
@@ -41,11 +42,12 @@ class MSIFile{
     int import_mode; //import_mode is 0 for bond mode, 1 for sphere mode
     int visibility_mode; //visibility_mode is 0 for hide mode, 1 for show mode
   public:
-    MSIFile();
-    MSIFile(URender*,char*);
+    MSIFileGenerator(const char* fname = NULL);
+    
+    virtual int Load(URender *node, GLuint *&Dlist_array);
+    virtual int ReLoad(URender *node, GLuint *&Dlist_array);
+
     void BuildListMSI(GLuint);
-    int LoadMSIFile(GLuint *&Dlist_array);
-    int ReloadMSIFile(GLuint *&Dlist_array);
     void SetImportMode(int);
     void SetVisibilityMode(int);
     void SetBondWidth(float);
@@ -57,5 +59,7 @@ class MSIFile{
     void SetSphereColorR(float);
     void SetSphereColorG(float);
     void SetSphereColorB(float);
-    ~MSIFile();
+    ~MSIFileGenerator();
 };
+
+#endif

@@ -1,3 +1,12 @@
+2001-03-12  Jason Clark  <jclark@cs.unc.edu>
+
+	* mainwin.tcl: Use new import interface
+
+	* import.tcl: New import objects interface that works for any kind
+	of recognized file. One portion of the interface is common to all
+	files, and another portion is created dynamically depending on the
+	file type.  Allowing interfaces specialized to a file type.
+
 2001-03-09  Tom Hudson  <hudson@cs.unc.edu>
 
 	* shared_ptr.tcl (collab_connection_good) : new procedure actually

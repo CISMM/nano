@@ -72,7 +72,6 @@ pid_t getpid();
 #include <nmb_Decoration.h>
 #include <nmb_Types.h>
 #include <nmb_Debug.h>
-#include <Tcl_Netvar.h>
 #include <nmb_Line.h>
 #include <nmb_TimerList.h>
 #include <Topo.h>
@@ -141,7 +140,6 @@ pid_t getpid();
 /*********** UGRAPHICS *******************/
 #include "UTree.h"
 #include "URAxis.h"
-#include "URPolygon.h"
 #include "URTexture.h"
 
 // UGraphics made us depend explicitly on vlib again in this file (?)
@@ -295,9 +293,8 @@ static void	handle_forcedevice_scp_change(void *userdata,
 static void	handle_unit2sensor_change(void *userdata,
 					const vrpn_TRACKERUNIT2SENSORCB info);
 
-///import_object handlers
-static  void    handle_import_filename_change (const char *, void *);
-static  void    handle_load_import_file_change (vrpn_int32, void *);
+//static  void handle_import_filename_change (const char *, void *);
+//static  void    handle_load_import_file_change (vrpn_int32, void *);
 static void handle_load_button_press_change (vrpn_int32, void *);
 
 // NANOX
@@ -758,8 +755,6 @@ Tclvar_float	viz_min_limit("viz_min_limit",0);
 Tclvar_float	viz_max("viz_max",1, handle_viz_max_change);
 Tclvar_float	viz_min("viz_min",0, handle_viz_min_change);
 Tclvar_float	viz_alpha("viz_alpha",0.5, handle_viz_alpha_change);
-
-//-----------------------------------------------------------------
 
 //-----------------------------------------------------------------
 /// These variables are for controlling shape analysis
@@ -1860,7 +1855,6 @@ static void handle_markers_shown_change (vrpn_int32 new_value, void * /*userdata
   graphics->causeGridRedraw();
 }
 
-
 /// Change the height of all (future?) scrape markers drawn.
 // Aron Helser, 13 April 99
 static void handle_markers_height_change (vrpn_int32 new_value, void * /*userdata*/) {
@@ -1870,18 +1864,18 @@ static void handle_markers_height_change (vrpn_int32 new_value, void * /*userdat
   decoration->marker_height = v;
 }
 
-//For importing from tube_foundry
+/*
 static void handle_import_filename_change (const char *new_value, void *) { 
   import_filename_string = new_value;
 }
 
-static void handle_load_import_file_change (vrpn_int32 /*new_value*/, void * /*userdata*/) {
+static void handle_load_import_file_change (vrpn_int32 , void *) {
   if (object_list == NULL)
     object_list = new imported_obj_list;
   UTree* tree_ptr = &World;
   object_list->import_new_obj((char *) import_filename_string,tree_ptr);
 }
-
+*/
 static void handle_load_button_press_change (vrpn_int32 /*new_value*/, void * /*userdata*/ ) {
   char command[256];
   Tcl_Interp *tk_control_interp = get_the_interpreter();
@@ -4561,10 +4555,12 @@ void setupCallbacks (nmg_Graphics * g) {
             (handle_stride_change, g);
 
   //for importing from tube_foundry
+  /*
   import_filename.addCallback
             (handle_import_filename_change, g);
   load_import_file.addCallback
             (handle_load_import_file_change, g);
+   */
   load_button_press.addCallback
     (handle_load_button_press_change, g);
 

@@ -1,6 +1,11 @@
 
 /** \file imported_obj.C
 
+Last modified 3/1/01 by Jason Clark
+  This file is extremely out of date!!!  I am modifying just to allow
+  compilation, however this file assumes that is is importing MSI files
+  which is a bad assumption to make.
+
 Last modified 7/1/99 by Leila Plummer
 
 This file contains methods for classes imported_obj and imported_obj_list,
@@ -32,6 +37,8 @@ Things which I didn't get around to, and which probably should be done:
 */
 
 #include "imported_obj.h"
+#include <MSIFileGenerator.h>
+#include <FileGenerator.h>
 
 // ############ getpid hack
 #if defined (__CYGWIN__) && defined (VRPN_USE_WINSOCK_SOCKETS)
@@ -409,7 +416,7 @@ void imported_obj::handle_import_mode_change (vrpn_int32 /*new_value*/,
     me->bond_colorG->addCallback(handle_bond_colorG_change,me);
     me->bond_colorB->addCallback(handle_bond_colorB_change,me);
     //Set up MSI flag to reflect that we are now in bond mode
-    me->GetURPoly()->GetMSIFile()->SetImportMode(0);
+    ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetImportMode(0);
   }  
   else { //we are now in sphere mode
     delete me->bond_width;
@@ -439,7 +446,7 @@ void imported_obj::handle_import_mode_change (vrpn_int32 /*new_value*/,
     me->sphere_colorG->addCallback(handle_sphere_colorG_change,me);
     me->sphere_colorB->addCallback(handle_sphere_colorB_change,me);
     //Set up MSI flag to reflect that we are now in sphere mode
-    me->GetURPoly()->GetMSIFile()->SetImportMode(1);
+    ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetImportMode(1);
   }
   //Reload the display lists so that the object will now be drawn in the new mode
   me->GetURPoly()->ReloadGeometry();
@@ -458,10 +465,10 @@ void imported_obj::handle_visibility_mode_change (vrpn_int32 /*new_value*/,
     me->visibility_mode_value = 0;
   //Change MSI flag to reflect whether or not to draw the object
   if (me->visibility_mode_value == 0){ //we are now in hide mode
-    me->GetURPoly()->GetMSIFile()->SetVisibilityMode(0);
+    ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetVisibilityMode(0);
   }  
   else { //we are now in sphere mode
-    me->GetURPoly()->GetMSIFile()->SetVisibilityMode(1);
+    ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetVisibilityMode(1);
   }
   //Rebuild display lists
   me->GetURPoly()->ReloadGeometry();
@@ -471,7 +478,7 @@ void imported_obj::handle_visibility_mode_change (vrpn_int32 /*new_value*/,
 void imported_obj::handle_bond_width_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI bond_width value
-  me->GetURPoly()->GetMSIFile()->SetBondWidth(new_value);
+  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetBondWidth(new_value);
   me->bond_width_value = new_value;
   //Rebuild the display lists
   me->GetURPoly()->ReloadGeometry();
@@ -481,7 +488,7 @@ void imported_obj::handle_bond_width_change (vrpn_float64 new_value, void *userd
 void imported_obj::handle_bond_colorR_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI bond R color coordinate
-  me->GetURPoly()->GetMSIFile()->SetBondColorR(new_value);
+  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetBondColorR(new_value);
   me->bond_colorR_value = new_value;
   //Rebuild display lists
   me->GetURPoly()->ReloadGeometry();
@@ -491,7 +498,7 @@ void imported_obj::handle_bond_colorR_change (vrpn_float64 new_value, void *user
 void imported_obj::handle_bond_colorG_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI bond G color coordinate
-  me->GetURPoly()->GetMSIFile()->SetBondColorG(new_value);
+  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetBondColorG(new_value);
   me->bond_colorG_value = new_value;
   //Rebuild display list
   me->GetURPoly()->ReloadGeometry();
@@ -501,7 +508,7 @@ void imported_obj::handle_bond_colorG_change (vrpn_float64 new_value, void *user
 void imported_obj::handle_bond_colorB_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI bond B color coordinate
-  me->GetURPoly()->GetMSIFile()->SetBondColorB(new_value);
+  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetBondColorB(new_value);
   me->bond_colorB_value = new_value;
   //Rebuild display list
   me->GetURPoly()->ReloadGeometry();
@@ -511,7 +518,7 @@ void imported_obj::handle_bond_colorB_change (vrpn_float64 new_value, void *user
 void imported_obj::handle_sphere_radius_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI radius value
-  me->GetURPoly()->GetMSIFile()->SetSphereRadius(new_value);
+  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetSphereRadius(new_value);
   me->sphere_radius_value = new_value;
   //Rebuild display list
   me->GetURPoly()->ReloadGeometry();
@@ -521,7 +528,7 @@ void imported_obj::handle_sphere_radius_change (vrpn_float64 new_value, void *us
 void imported_obj::handle_sphere_tesselation_change (vrpn_int32 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI sphere depth value
-  me->GetURPoly()->GetMSIFile()->SetSphereDepth(new_value);
+  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetSphereDepth(new_value);
   me->sphere_tesselation_value = new_value;
   //Rebuild display list
   me->GetURPoly()->ReloadGeometry();
@@ -531,7 +538,7 @@ void imported_obj::handle_sphere_tesselation_change (vrpn_int32 new_value, void 
 void imported_obj::handle_sphere_colorR_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI sphere color R coordinate
-  me->GetURPoly()->GetMSIFile()->SetSphereColorR(new_value);
+  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetSphereColorR(new_value);
   me->sphere_colorR_value = new_value;
   //Rebuild display list
   me->GetURPoly()->ReloadGeometry();
@@ -540,7 +547,7 @@ void imported_obj::handle_sphere_colorR_change (vrpn_float64 new_value, void *us
 /** PURPOSE: Handle a change of the sphere_color's G coordinate*/
 void imported_obj::handle_sphere_colorG_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
-  me->GetURPoly()->GetMSIFile()->SetSphereColorG(new_value);
+  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetSphereColorG(new_value);
   me->sphere_colorG_value = new_value;
   //Rebuild the display list
   me->GetURPoly()->ReloadGeometry();
@@ -549,7 +556,7 @@ void imported_obj::handle_sphere_colorG_change (vrpn_float64 new_value, void *us
 /** PURPOSE: Handle a change of the sphere_color's B coordinate*/
 void imported_obj::handle_sphere_colorB_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
-  me->GetURPoly()->GetMSIFile()->SetSphereColorB(new_value);
+  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetSphereColorB(new_value);
   me->sphere_colorB_value = new_value;
   //Rebuild display list
   me->GetURPoly()->ReloadGeometry();
@@ -575,58 +582,58 @@ imported_obj_list::imported_obj_list() { //default constructor
     @param World Pointer to uberGraphics World to which we are going to add
                the new object*/
 void imported_obj_list::import_new_obj(char* filename,UTree *World) {
-
-  //Empty linked list
-  if(imported_obj_list_head==NULL){
-    imported_obj_list_head = new imported_obj;
-    imported_obj_list_tail = imported_obj_list_head;
-    if (imported_obj_list_head==NULL){
-      cerr << "Memory fault\n"; 
-      //kill(getpid(),SIGINT);
-      return;
+    GeometryGenerator *gen = FileGenerator::CreateFileGenerator(filename);
+    //Empty linked list
+    if(imported_obj_list_head==NULL){
+        imported_obj_list_head = new imported_obj;
+        imported_obj_list_tail = imported_obj_list_head;
+        if (imported_obj_list_head==NULL){
+            cerr << "Memory fault\n"; 
+            //kill(getpid(),SIGINT);
+            return;
+        }
+        else{
+            if (imported_obj_list_head->URPoly!=NULL){
+                imported_obj_list_head->GetURPoly()->GetLocalXform().SetScale(ugraphics_scale);
+                imported_obj_list_head->GetURPoly()->GetLocalXform().SetTranslate(0,0,0);
+                imported_obj_list_head->GetURPoly()->LoadGeometry(gen);
+                World->TAddNode(imported_obj_list_head->GetURPoly(),filename);
+            }
+            else{ 
+                cerr << "Memory fault\n"; 
+                //kill(getpid(),SIGINT);
+                delete imported_obj_list_head;
+                imported_obj_list_head = NULL;
+                /* This can't possibly be right - if we delete it, we can't
+                reference it! I'm taking it out!!! */
+                imported_obj_list_head->GetURPoly()->GetLocalXform().SetScale(ugraphics_scale);
+                imported_obj_list_head->GetURPoly()->GetLocalXform().SetTranslate(0,0,0);
+                imported_obj_list_head->GetURPoly()->LoadGeometry(gen);
+                World->TAddNode(imported_obj_list_head->GetURPoly(),filename);
+            }
+        }
     }
-    else{
-      if (imported_obj_list_head->URPoly!=NULL){
-        imported_obj_list_head->GetURPoly()->GetLocalXform().SetScale(ugraphics_scale);
-        imported_obj_list_head->GetURPoly()->GetLocalXform().SetTranslate(0,0,0);
-        imported_obj_list_head->GetURPoly()->LoadGeometry(filename);
-        World->TAddNode(imported_obj_list_head->GetURPoly(),filename);
-       }
-      else{ 
-        cerr << "Memory fault\n"; 
-        //kill(getpid(),SIGINT);
-        delete imported_obj_list_head;
-	imported_obj_list_head = NULL;
-	/* This can't possibly be right - if we delete it, we can't
-	   reference it! I'm taking it out!!! */
-        imported_obj_list_head->GetURPoly()->GetLocalXform().SetScale(ugraphics_scale);
-        imported_obj_list_head->GetURPoly()->GetLocalXform().SetTranslate(0,0,0);
-        imported_obj_list_head->GetURPoly()->LoadGeometry(filename);
-        World->TAddNode(imported_obj_list_head->GetURPoly(),filename);
-      }
+    else{ //Nonempty linked list
+        imported_obj_list_tail->next = new imported_obj;
+        if (imported_obj_list_tail->next == NULL){
+            cerr << "Memory fault\n"; 
+            //kill(getpid(),SIGINT);
+            return;
+        }
+        else{
+            if (imported_obj_list_tail->next->URPoly!=NULL){
+                imported_obj_list_tail = imported_obj_list_tail->next;
+                imported_obj_list_tail->GetURPoly()->GetLocalXform().SetScale(ugraphics_scale);
+                imported_obj_list_tail->GetURPoly()->GetLocalXform().SetTranslate(0,0,0);
+                imported_obj_list_tail->GetURPoly()->LoadGeometry(gen);
+                World->TAddNode(imported_obj_list_tail->GetURPoly(),filename);
+            }
+            else{
+                cerr <<"Memory fault\n"; 
+                //kill(getpid(), SIGINT);
+                delete imported_obj_list_tail;
+                imported_obj_list_tail = NULL;
+            }
+        }
     }
-  }
-  else{ //Nonempty linked list
-    imported_obj_list_tail->next = new imported_obj;
-    if (imported_obj_list_tail->next == NULL){
-        cerr << "Memory fault\n"; 
-        //kill(getpid(),SIGINT);
-        return;
-    }
-    else{
-      if (imported_obj_list_tail->next->URPoly!=NULL){
-        imported_obj_list_tail = imported_obj_list_tail->next;
-        imported_obj_list_tail->GetURPoly()->GetLocalXform().SetScale(ugraphics_scale);
-        imported_obj_list_tail->GetURPoly()->GetLocalXform().SetTranslate(0,0,0);
-        imported_obj_list_tail->GetURPoly()->LoadGeometry(filename);
-        World->TAddNode(imported_obj_list_tail->GetURPoly(),filename);
-      }
-      else{
-        cerr <<"Memory fault\n"; 
-        //kill(getpid(), SIGINT);
-        delete imported_obj_list_tail;
-	imported_obj_list_tail = NULL;
-      }
-    }
-  }
 }/*imported_obj_list::import_new_obj*/

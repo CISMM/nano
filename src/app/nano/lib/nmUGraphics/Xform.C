@@ -63,7 +63,6 @@ void Xform::SetRotate(double rx, double ry, double rz, double rw){
 
 void Xform::SetTranslate(q_vec_type t){
 	trans[0]=t[0];trans[1]=t[1];trans[2]=t[2];
-        cerr<<"Entering SetTranslate\n";
 }
 
 void Xform::SetTranslate(double tx, double ty, double tz){

@@ -696,7 +696,7 @@ rebuildGrid()
 ////////////////////////////////////////////////////////////
 //    Function: nmg_Viz_Opaque::renderSurface
 //      Access: Protected, Virtual
-// Description: Renders the world.
+// Description: Renders the surface.
 ////////////////////////////////////////////////////////////
 void nmg_Viz_Opaque::
 renderSurface()
@@ -853,7 +853,7 @@ rebuildGrid()
 ////////////////////////////////////////////////////////////
 //    Function: nmg_Viz_Transparent::renderSurface
 //      Access: Protected, Virtual
-// Description: Renders the world.
+// Description: Renders the surface.
 ////////////////////////////////////////////////////////////
 void nmg_Viz_Transparent::
 renderSurface()
@@ -1035,7 +1035,7 @@ rebuildGrid()
 ////////////////////////////////////////////////////////////
 //    Function: nmg_Viz_WireFrame::renderSurface
 //      Access: Protected, Virtual
-// Description: Renders the world.
+// Description: Renders the surface.
 ////////////////////////////////////////////////////////////
 void nmg_Viz_WireFrame::
 renderSurface()
@@ -1258,7 +1258,7 @@ rebuildGrid()
 ////////////////////////////////////////////////////////////
 //    Function: nmg_Viz_OpaqueTexture::renderSurface
 //      Access: Protected, Virtual
-// Description: Renders the world.
+// Description: Renders the surface.
 ////////////////////////////////////////////////////////////
 void nmg_Viz_OpaqueTexture::
 renderSurface()

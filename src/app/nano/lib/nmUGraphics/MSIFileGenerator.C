@@ -1,7 +1,7 @@
-//MSIFile.C
+//MSIFileGenerator.C
 
 #include "URender.h"
-#include "MSIFile.h"
+#include "MSIFileGenerator.h"
 
 #ifdef __CYGWIN__
 // XXX juliano 9/19/99
@@ -111,31 +111,10 @@ MSISphere::~MSISphere() { //destructor
     glDeleteLists(dl,1);
 }
 
-//Default constructor
-MSIFile::MSIFile(){
-  filename = NULL;
-  Pobject = NULL;
-  atom_ptr = NULL;
-  dl = 0;
-
-  bond_width = 1.0;
-  sphere_radius = 1.0;
-  //bonds start out blue
-  bond_colorR = 0.0;
-  bond_colorG = 0.0;
-  bond_colorB = 1.0;
-  //spheres start out red
-  sphere_colorR = 0.0;
-  sphere_colorG = 0.0;
-  sphere_colorB = 1.0;
-  import_mode = 0; //assume we start out in bond mode
-  visibility_mode = 1; //assume we start out in show mode
-} /*MSIFile::MSIFile*/
-
-MSIFile::MSIFile(URender* pobj,char* fname){
-  /*PURPOSE: Constructs an instance of MSIFile*/
-  filename = fname;
-  Pobject = pobj;
+MSIFileGenerator::MSIFileGenerator(const char* fname)
+    : FileGenerator(fname,"msi")
+{
+  /*PURPOSE: Constructs an instance of MSIFileGenerator*/
   atom_ptr = NULL;
   dl = 0; //no display lists created yet
 
@@ -151,9 +130,9 @@ MSIFile::MSIFile(URender* pobj,char* fname){
   sphere_colorB = 1.0;
   import_mode = 0; //assume we start out in bond mode
   visibility_mode = 1; //assume we start out in show mode
-}/*MSIFile::MSIFile*/
+}/*MSIFileGenerator::MSIFileGenerator*/
 
-void MSIFile::BuildListMSI(GLuint dl){
+void MSIFileGenerator::BuildListMSI(GLuint dl){
 /*PURPOSE: Build the MSI file's display list*/
 /**Note: We should never be here in Hide mode**/
   int i, j, atom_i;
@@ -190,53 +169,53 @@ void MSIFile::BuildListMSI(GLuint dl){
     }
    glEndList();
   }
-} /*MSIFile::BuildListMSI*/
+} /*MSIFileGenerator::BuildListMSI*/
 
-void MSIFile::SetImportMode(int new_import_mode){
+void MSIFileGenerator::SetImportMode(int new_import_mode){
   import_mode = new_import_mode;
-}/*MSIFile::SetImportMode*/
+}/*MSIFileGenerator::SetImportMode*/
 
-void MSIFile::SetVisibilityMode(int new_visibility_mode){
+void MSIFileGenerator::SetVisibilityMode(int new_visibility_mode){
   visibility_mode = new_visibility_mode;
-}/*MSIFile::SetVisibility*/
+}/*MSIFileGenerator::SetVisibility*/
 
-void MSIFile::SetBondWidth(float new_bond_width){
+void MSIFileGenerator::SetBondWidth(float new_bond_width){
   bond_width = new_bond_width;
-}/*MSIFile::SetBondWidth*/
+}/*MSIFileGenerator::SetBondWidth*/
 
-void MSIFile::SetBondColorR(float new_color){
+void MSIFileGenerator::SetBondColorR(float new_color){
   bond_colorR = new_color;
-}/*MSIFile::SetBondColorR*/
+}/*MSIFileGenerator::SetBondColorR*/
 
-void MSIFile::SetBondColorG(float new_color){
+void MSIFileGenerator::SetBondColorG(float new_color){
   bond_colorG = new_color;
-}/*MSIFile::SetBondColorG*/
+}/*MSIFileGenerator::SetBondColorG*/
 
-void MSIFile::SetBondColorB(float new_color){
+void MSIFileGenerator::SetBondColorB(float new_color){
   bond_colorB = new_color;
-}/*MSIFile::SetBondColorB*/
+}/*MSIFileGenerator::SetBondColorB*/
 
-void MSIFile::SetSphereRadius(float new_sphere_radius){
+void MSIFileGenerator::SetSphereRadius(float new_sphere_radius){
   sphere_radius = new_sphere_radius;
-}/*MSIFile::SetSphereRadius*/
+}/*MSIFileGenerator::SetSphereRadius*/
 
-void MSIFile::SetSphereDepth(int new_sphere_depth){
+void MSIFileGenerator::SetSphereDepth(int new_sphere_depth){
   sphere_depth = new_sphere_depth;
-}/*MSIFile::SetSphereDepth*/
+}/*MSIFileGenerator::SetSphereDepth*/
 
-void MSIFile::SetSphereColorR(float new_color){
+void MSIFileGenerator::SetSphereColorR(float new_color){
   sphere_colorR = new_color;
-}/*MSIFile::SetSphereColorR*/
+}/*MSIFileGenerator::SetSphereColorR*/
 
-void MSIFile::SetSphereColorG(float new_color){
+void MSIFileGenerator::SetSphereColorG(float new_color){
   sphere_colorG = new_color;
-}/*MSIFile::SetSphereColorG*/
+}/*MSIFileGenerator::SetSphereColorG*/
 
-void MSIFile::SetSphereColorB(float new_color){
+void MSIFileGenerator::SetSphereColorB(float new_color){
   sphere_colorB = new_color;
-}/*MSIFile::SetSphereColorB*/
+}/*MSIFileGenerator::SetSphereColorB*/
 
-int MSIFile::LoadMSIFile(GLuint *&Dlist_array){
+int MSIFileGenerator::Load(URender *, GLuint *&Dlist_array){
 /*PURPOSE: Loads the geometry contained in a .msi file*/
 
   ifstream readfile;
@@ -403,20 +382,20 @@ int MSIFile::LoadMSIFile(GLuint *&Dlist_array){
     BuildListMSI(dl+l);
     Dlist_array[l]=dl+l;
   }
-  /**Unlike in LoadWavefrontFile, we DO NOT clean up after ourselves and 
+  /**Unlike in WaveFrontFileGenerator, we DO NOT clean up after ourselves and 
     delete the arrays, since we may have to use the reload function later
     and it will be nice to have the data already stored.  THEREFORE we
     have to call a delete function when an imported_obj is deleted.
-    (LoadMSIFile is called whenever an imported_obj is created)**/
+    (Load is called whenever an imported_obj is created)**/
   readfile.close();
   return (model_count);
-} /*MSIFile::LoadMSIFile*/
+} /*MSIFileGenerator::LoadMSIFile*/
 
-int MSIFile::ReloadMSIFile(GLuint *&Dlist_array){
+int MSIFileGenerator::ReLoad(URender *, GLuint *&Dlist_array){
 /*PURPOSE: Loads the geometry contained in a .msi file*/
 
   int l;
-  if ((glIsList(dl)) && (dl != 0)) //lists were previously created for this MSIFile--we want to
+  if ((glIsList(dl)) && (dl != 0)) //lists were previously created for this MSIFileGenerator--we want to
                     //deleted them
     glDeleteLists(dl,model_count);
   //we do not delete dl in the case that dl=0, since some other display list may be using this index.  We had to initialize dl to something, though, and I chose 0
@@ -441,12 +420,12 @@ int MSIFile::ReloadMSIFile(GLuint *&Dlist_array){
      have to call a delete function when an imported_obj is deleted.
      (LoadMSIFile, which creates the arrays, is called whenever an imported_obj is created)**/
   return (model_count);
-} /*MSIFile::ReloadMSIFile*/
+} /*MSIFileGenerator::ReloadMSIFile*/
 
-MSIFile::~MSIFile(){
+MSIFileGenerator::~MSIFileGenerator(){
   //clean up after myself
   delete atomx; delete atomy; delete atomz;
   delete bond1; delete bond2;
   if (glIsList(dl))
     glDeleteLists(dl,model_count);
-}/*MSIFile::~MSIFile*/
+}/*MSIFileGenerator::~MSIFileGenerator*/

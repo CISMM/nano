@@ -1,3 +1,27 @@
+2001-03-12  Jason Clark  <jclark@cs.unc.edu>
+
+	* Xform.C: Bug fix and removed spurious print out
+
+	* UTree.h: Bug fixes and filled in a few function stubs that were
+	never coded.
+
+	* UTree.C: See above
+
+	* URPolygon.h: Bug fixes to original code and modified to work
+	with new Generator classes.
+
+	* URPolygon.C: See above
+
+	* GeomGenerator.h: New classes that are used for loading the
+	display list code into URPolygons.  Provides an abstract interface
+	for any method to build these display lists.  For example, from
+	.msi or .obj files, and for tubes build from tube analysis code.
+	New classe are FileGenerator (special for any Generator that works
+	by generating the display lists from a file),
+	WaveFrontFileGenerator, MSIFileGenerator and TubeGenerator.
+
+	* GeomGenerator.C: See above
+
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 
         * Makefile : added glut as external lib
