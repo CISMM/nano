@@ -1,5 +1,12 @@
 2001-07-03  Tom Hudson  <hudson@cs.unc.edu>
 
+	* microscape.c (createGraphics) : Generalize grid size arguments
+	to all render server constructors.  They can't take non-square windows
+	(since I'm using the -grid command-line argument), but that could
+	be worked around.
+
+2001-07-03  Tom Hudson  <hudson@cs.unc.edu>
+
 	* microscape.c : Add new file-global bools rrServer, rrTimeNow;
         make time1, time2, and interval from main() file-global.
 	(handle_timingGotFirst) : New function.

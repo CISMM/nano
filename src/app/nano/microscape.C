@@ -5608,7 +5608,9 @@ void createGraphics (MicroscapeInitializationState & istate) {
                   nmg_Graphics::SUPERSAMPLED_COLORS,
                   nmg_Graphics::NO_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
-                  512, 512, rulerPPMName, renderServerControlConnection);
+                  istate.afm.image.grid_resolution,
+                  istate.afm.image.grid_resolution,
+                  rulerPPMName, renderServerControlConnection);
 
       rrServer = VRPN_TRUE;
       rrTimeNow = VRPN_FALSE;
@@ -5634,7 +5636,9 @@ void createGraphics (MicroscapeInitializationState & istate) {
                   nmg_Graphics::CLOUDMODEL_COLORS,
                   nmg_Graphics::NO_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
-                  512, 512, rulerPPMName, renderServerControlConnection);
+                  istate.afm.image.grid_resolution,
+                  istate.afm.image.grid_resolution,
+                  rulerPPMName, renderServerControlConnection);
 
       rrServer = VRPN_TRUE;
       rrTimeNow = VRPN_FALSE;
@@ -5660,7 +5664,9 @@ void createGraphics (MicroscapeInitializationState & istate) {
                 nmg_Graphics::SUPERSAMPLED_COLORS,
                 nmg_Graphics::NO_DEPTH,
                 nmg_Graphics::PERSPECTIVE_PROJECTION,
-                512, 512, rulerPPMName, renderServerControlConnection);
+                  istate.afm.image.grid_resolution,
+                  istate.afm.image.grid_resolution,
+                rulerPPMName, renderServerControlConnection);
 
       rrServer = VRPN_TRUE;
       rrTimeNow = VRPN_FALSE;
@@ -5734,7 +5740,9 @@ void createGraphics (MicroscapeInitializationState & istate) {
            (dataset, minC, maxC, renderClientInputConnection,
             nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
             nmg_Graphics::ORTHO_PROJECTION,
-            512, 512, renderServerControlConnection, &graphicsTimer);
+            istate.afm.image.grid_resolution,
+            istate.afm.image.grid_resolution,
+            renderServerControlConnection, &graphicsTimer);
 
       ((nmg_Graphics_RenderClient *) graphics)->setGraphicsTiming
                  (istate.timeGraphics);
@@ -5772,7 +5780,9 @@ void createGraphics (MicroscapeInitializationState & istate) {
            (dataset, minC, maxC, renderClientInputConnection,
             nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
             nmg_Graphics::PERSPECTIVE_PROJECTION,
-            512, 512, renderServerControlConnection, &graphicsTimer);
+            istate.afm.image.grid_resolution,
+            istate.afm.image.grid_resolution,
+            renderServerControlConnection, &graphicsTimer);
 
       ((nmg_Graphics_RenderClient *) graphics)->setGraphicsTiming
                  (istate.timeGraphics);
