@@ -72,14 +72,8 @@ nmb_FlattenedPlane( const char* inputPlaneName,
 	}
     }
 
-  // add ourselves to the dataset
-  dataset->addNewCalculatedPlane( this );
-
   // register ourselves to receive plane updates
   sourcePlane->add_callback( sourcePlaneChangeCallback, this );
-
-  // let interested parties know a new plane has been created.
-  nmb_CalculatedPlane::addNewCalculatedPlane( this );
 
 } // end nmb_FlattenedPlane( ... )
 
