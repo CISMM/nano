@@ -1,3 +1,8 @@
+2002-07-08  David Borland <borland@cs.unc.edu>
+ 
+        * import.C : changed the projective texture mode callback so that
+        it updates the enable texture button in the Registration UI.:wq
+
 2002-07-08 David Borland <borland@cs.unc.edu>
 
         * import.C : fixed a bug that was causing spider object to be loaded
