@@ -1,3 +1,12 @@
+2002-03-01  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nma_Keithley2400_ui.C (handle_connect_and_init):  send "clear" when
+	connecting to the device.
+
+	* nma_Keithley2400.C (send_AllSettings):  don't send clear every time
+	a setting is changed.
+	(send_Source):  send delay parameter here instead of with trigger settings.
+	
 2002-01-31 David Marshburn   <marshbur@cs.unc.edu>
 
 	* nmAux.dsp:  builds with non-static run-time libraries.

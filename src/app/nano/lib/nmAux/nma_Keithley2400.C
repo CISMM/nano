@@ -108,10 +108,6 @@ int nma_Keithley2400::send_AllSettings() {
 	    printf("send_OutputOff() failed\n");
 	    return -1;
 	}
-	if (send_Clear()) {
-	    printf("send_Clear()  failed\n");
-	    return -1;
-	}
 	if (send_DisplayEnable())  {
 	    printf("send_DisplayEnable() failed\n");
 	    return -1;
@@ -201,13 +197,11 @@ int nma_Keithley2400::send_DisplayEnable()
 	}
 	vrpn_int32 len;
 	char  buf[256];
-	if (d_display_enable) {
-		sprintf(buf, ":DISPLAY:ENABLE ON");
-		//		sprintf(buf, "GTL");
-	} else {
-		sprintf(buf, ":DISPLAY:ENABLE OFF");
-		//		sprintf(buf, "LLO");
-	} 
+        if (d_display_enable) {
+          sprintf(buf, ":DISPLAY:ENABLE ON");
+        } else {
+          sprintf(buf, ":DISPLAY:ENABLE OFF");
+        } 
 	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_Function: out of memory.\n");
@@ -262,12 +256,36 @@ int nma_Keithley2400::send_Source()
 	vrpn_int32 len;
 	char buf[256] ;
 	if (d_source == VOLTAGE) {
-		sprintf(buf, ":Sour1:Func Volt;:Sour1:Volt:Mode SWE;:Sour1:Volt:Rang:Auto On;:Sour1:Swe:Dir Up;Spac %s;:Sour1:Volt:Start %g;Stop %g;:Sour1:Swe:Poin %d;", 
-			((d_sweep == LINEAR)? "LIN":"LOG"), (float)d_sweep_start,(float)d_sweep_stop, (int)d_sweep_numpoints);
+		sprintf(buf, ":SOUR:FUNC VOLT;"
+                             ":SOUR:VOLT:MODE SWE;"
+                             ":SOUR:VOLT:RANG:AUTO ON;"
+                             ":SOUR:SWE:DIR UP;"
+                             ":SOUR:SWE:SPAC %s;"
+                             ":SOUR:VOLT:START %g;"
+                             ":SOUR:VOLT:STOP %g;"
+                             ":SOUR:SWE:POIN %d;"
+                             ":SOUR:DEL %g;", 
+                             ((d_sweep == LINEAR)? "LIN":"LOG"), 
+                             (float)d_sweep_start, 
+                             (float)d_sweep_stop, 
+                             (int)d_sweep_numpoints,
+                             (float) d_sweep_delay );
 
 	} else if (d_source == CURRENT) {
-		sprintf(buf, ":Sour1:Func Curr;:Sour1:Curr:Mode SWE;:Sour1:Curr:Rang:Auto On;:Sour1:Swe:Dir Up;Spac %s;:Sour1:Curr:Start %g;Stop %g;:Sour1:Swe:Poin %d;", 
-			((d_sweep == LINEAR)? "LIN":"LOG"), (float)d_sweep_start,(float)d_sweep_stop, (int)d_sweep_numpoints);
+		sprintf(buf, ":SOUR:FUNC CURR;"
+                             ":SOUR:CURR:MODE SWE;"
+                             ":SOUR:CURR:RANG:AUTO ON;"
+                             ":SOUR:SWE:DIR UP;"
+                             ":SOUR:SWE:SPAC %s;"
+                             ":SOUR:CURR:START %g;"
+                             ":SOUR:CURR:STOP %g;"
+                             ":SOUR:SWE:POIN %d;"
+                             ":SOUR:DEL %g;", 
+                             ( (d_sweep == LINEAR) ? "LIN" : "LOG"), 
+                             (float) d_sweep_start, 
+                             (float) d_sweep_stop, 
+                             (int) d_sweep_numpoints,
+                             (float) d_sweep_delay );
 	} else {
 	    fprintf(stderr, "nma_Keithley2400::send_Source: unknown source type.\n");
 	    return -1; 
@@ -295,11 +313,16 @@ int nma_Keithley2400::send_Sense()
 	vrpn_int32 len;
 	char buf[256] ;
 	if (d_compliance == CURRENT) {
-		sprintf(buf, ":SENS:CURR:NPLC %g;Prot %g;:CURR:RANG:AUTO ON;", 
-			(float)d_num_power_line_cycles, (float)d_compliance_val);
+		sprintf(buf, ":SENS:CURR:NPLC %g;"
+                             ":SENS:CURR:PROT %g;"
+                             ":SENS:CURR:RANG:AUTO ON;",
+                             (float)d_num_power_line_cycles, 
+                             (float)d_compliance_val);
 
 	} else if (d_compliance == VOLTAGE){
-		sprintf(buf, ":SENS:VOLT:NPLC %g;Prot %g;:VOLT:RANG:AUTO ON;", 
+		sprintf(buf, ":SENS:VOLT:NPLC %g;"
+                             ":SENS:VOLT:PROT %g;"
+                             ":SENS:VOLT:RANG:AUTO ON;", 
 			(float)d_num_power_line_cycles, (float)d_compliance_val);
 	} else {
 	    fprintf(stderr, "nma_Keithley2400::send_Sense: unknown compliance type.\n");
@@ -327,8 +350,10 @@ int nma_Keithley2400::send_Trigger()
 
 	vrpn_int32 len;
 	char buf[256] ;
-	sprintf(buf, ":TRIG:COUN %d;SOUR IMM;DEL %g;TCON:DIR SOUR;", 
-		(int)(d_sweep_numpoints), (float)d_sweep_delay);
+	sprintf(buf, ":TRIG:COUN %d;"
+                     "SOUR IMM;"
+                     "TCON:DIR SOUR;", 
+                     (int)(d_sweep_numpoints) );
 	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_Trigger: out of memory.\n");

@@ -143,6 +143,7 @@ handle_connect_and_init(vrpn_int32 /*_newvalue*/, void *_userdata) {
   nma_Keithley2400_ui * me = (nma_Keithley2400_ui *)_userdata;
   
   me->keithley2400->send_Device();
+  me->keithley2400->send_Clear( );
   me->keithley2400->send_AllSettings();
   
 }
