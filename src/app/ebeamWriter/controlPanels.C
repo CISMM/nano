@@ -381,16 +381,17 @@ void ControlPanels::handle_saveImageFileName_change(const char * /*new_value*/,
                                 me->d_saveImageFileName.string());
           return;
       }
-
+      fclose(file_ptr);
+      file_ptr = NULL;
       if (im->exportToFile(file_ptr, me->d_saveImageFileType.string(),
                               me->d_saveImageFileName.string())) {
           fprintf(stderr, "Couldn't write to this file: %s\n"
                                 "Please try another name or directory",
                                 me->d_saveImageFileName.string());
-        fclose(file_ptr);
+        //fclose(file_ptr);
         return;
       }
-      fclose(file_ptr);
+      //fclose(file_ptr);
 
   }
   me->d_saveImageFileName = "";

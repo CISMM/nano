@@ -1,3 +1,10 @@
+2001-09-04  Adam Seeger  <seeger@cs.unc.edu>
+
+	* controlPanels.C (handle_saveImageFileName_change): changed this
+	so it closes the file right after checking if it exists and doesn't
+	leave it open during the call to exportToFile() - this was preventing
+	ImgMagick from writing to the file
+
 2001-09-01  Adam Seeger  <seeger@cs.unc.edu>
 
 	* Makefile - added dependence on nmMP and an include directory for
