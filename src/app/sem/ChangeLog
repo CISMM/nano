@@ -1,0 +1,10 @@
+2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM_EDAX.C : added automatic relinquishing of external
+	control when not scanning - has problem at 64x50 resolution with
+	detecting non-scanning condition too early (hence the clicking noise)
+	- should be looking at a flag saying whether or not scanning has been
+	turned off remotely but this is okay for now
+	added stuff for sending 16-bit data when code expects to be reading
+	16-bit data but this still gets filled with 8-bit pixels (need help
+	from EDAX for this)
