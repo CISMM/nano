@@ -1,3 +1,7 @@
+2001-07-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmui_SEM.C (nms_SEM_ui): set better default location for image window
+
 2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmm_Edax.h : reorder #includes, fix braces.

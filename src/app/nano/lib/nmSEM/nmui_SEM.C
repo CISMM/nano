@@ -68,7 +68,7 @@ nms_SEM_ui::nms_SEM_ui(Tcl_Interp *interp, const char * /*tcl_script_dir*/,
     image_viewer->init(display_name);
 
     image_window_id = image_viewer->createWindow(
-          display_name, 10, 10, 256, 200, "SEM");
+          display_name, 300, 200, 256, 200, "SEM");
     image_viewer->setValueRange(image_window_id, 0.0, 255.0);
     image_viewer->setWindowDisplayHandler(image_window_id, drawGreyscaleWindow,
            this);
