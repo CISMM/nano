@@ -227,7 +227,6 @@ int Semaphore::p() {
     }
   }
 #elif defined(_WIN32)
-fprintf(stderr, "p for semaphore with %d resources, val %d\n", cResources, d);
   switch (WaitForSingleObject(hSemaphore, INFINITE)) {
   case WAIT_OBJECT_0:
     // got the resource
@@ -494,6 +493,12 @@ Thread::~Thread() {
 
 /*****************************************************************************\
   $Log$
+  Revision 1.2  2001/02/20 17:50:32  hudson
+
+  	* thread.C (Semaphore::v) : add cast to make error message work.
+  	(Semaphore::init) : change NT initialization of semaphore to behave
+  	more like SGI.
+
   Revision 1.1.1.1  1999/12/14 20:40:08  weigle
   This is the new directory structure.  More documentation will be forth
   coming, but there is a README.1ST which should get you compiling. 
