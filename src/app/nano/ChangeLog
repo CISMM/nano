@@ -1,3 +1,7 @@
+2001-12-19  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* index_mode.C: remove references to ImgFormat package
+
 2001-12-18  Aron Helser  <helser@cs.unc.edu>
 
 	* interaction.c (doCrossSection): new phantom mode, place and move

@@ -14,7 +14,6 @@
 #include "nmb_Decoration.h"
 #include "nmg_Globals.h"
 #include "nmg_Graphics.h"
-#include "ImageMaker.h"
 
 #include "microscape.h"
 #include "index_mode.h"
@@ -153,7 +152,7 @@ Index_mode::snapshot( )
   graphics->enableChartjunk( false );
   center( ); // from microscape.h
   graphics->mainloop();
-  graphics->createScreenImage( filename, TIFFImageType );
+  graphics->createScreenImage( filename, NULL );
   graphics->enableChartjunk( true );
   
   cout<< "Index_mode: Snapshot taken:" << filename << endl;
