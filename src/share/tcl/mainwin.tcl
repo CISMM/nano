@@ -565,22 +565,22 @@ proc diable_widgets_for_readmode { name el op } {
 }
 trace variable spm_read_mode w diable_widgets_for_readmode
 
-# Helps with Thermo Image Analysis mode. When in this mode, most of 
-# the widgets/dialogs that Nano needs to control the SPM aren't available
-# So we avoid issuing any commands to Thermo, by disabling all device 
-# controls. 
-if {![info exists spm_commands_suspended] } { set spm_commands_suspended 0 }
-proc diable_widgets_for_commands_suspended { name el op } {
+proc diable_widgets_for_commands_suspended { variable name el op } {
     global device_only_controls  
     global spm_commands_suspended
+    global collab_commands_suspended
     global spm_read_mode READ_DEVICE
 
     # Don't do anything if we aren't talking to a device
     if { $spm_read_mode != $READ_DEVICE } { return; }
 
+    set commands_suspended 0
+    if $spm_commands_suspended {set commands_suspended 1}
+    if $collab_commands_suspended {set commands_suspended 1}
+
     # Note: $ substitution for the patterns won't work because
     # the switch body is in brackets. 
-    switch $spm_commands_suspended {
+    switch $commands_suspended {
         0 {
             # Commands aren't suspended, enable controls
             foreach widget $device_only_controls {
@@ -609,6 +609,12 @@ proc diable_widgets_for_commands_suspended { name el op } {
         }
     }
 }
+
+# Helps with Thermo Image Analysis mode. When in this mode, most of 
+# the widgets/dialogs that Nano needs to control the SPM aren't available
+# So we avoid issuing any commands to Thermo, by disabling all device 
+# controls. 
+if {![info exists spm_commands_suspended] } { set spm_commands_suspended 0 }
 trace variable spm_commands_suspended w diable_widgets_for_commands_suspended
 
 
@@ -716,12 +722,6 @@ after idle {
 }
 
 
-# Hack to allow microscape to run!
-#frame .sliders
-
-#set bc tan
-#set fc tan
-
 #set dataset1 $w2.dataset1
 #set dataset2 $w2.dataset2
 #set dataset3 $w2.dataset3
@@ -729,7 +729,9 @@ after idle {
 
 #source [file join ${tcl_script_dir} modfile.tcl]
 
-#source [file join ${tcl_script_dir} latency.tcl]
+if { !$thirdtech_ui } {
+  source [file join ${tcl_script_dir} latency.tcl]
+}
 
 # puts the focus on the main window, instead of any other windows 
 # which have been created. 
@@ -737,3 +739,19 @@ wm deiconify .
 
 # Just for fun - total number of commands invoked so far
 #puts "Command count: [info cmdcount]"
+
+# Put this at the end to make sure things get disabled?
+
+# Helps with Collaboration.  If we don't have the mutex, we should disable
+# all the widgets/dialogs that control the microscope.
+
+# Default state:  assume somebody else holds the mutex
+#   The C++ code sends a request every time it connects to a
+# new microscope to see if we can grab the mutex for this connection.
+
+if {![info exists collab_commands_suspended] } \
+                 { set collab_commands_suspended 1; \
+                   disable_widgets_for_commands_suspended }
+
+trace variable collab_commands_suspended w diable_widgets_for_commands_suspended
+

@@ -18,7 +18,7 @@ set truetip_showing 0
 set truetip_scale 1.0
 
 # Button to turn on and off
-checkbutton $latency(la).truetip_showing -text "Show true tip location" -bg $fc \
+checkbutton $latency(la).truetip_showing -text "Show true tip location" \
         -variable truetip_showing
 
 # Slider to control scale
@@ -40,11 +40,11 @@ set constraint_kspring 10.0
 
 # Buttons to select mode
 radiobutton $latency(la).constraint.none_enabled -text \
-         "No constraint" -bg $fc -variable constraint_mode -value 0
+         "No constraint" -variable constraint_mode -value 0
 radiobutton $latency(la).constraint.point_enabled -text \
-         "Point constraint" -bg $fc -variable constraint_mode -value 1
+         "Point constraint" -variable constraint_mode -value 1
 radiobutton $latency(la).constraint.line_enabled -text \
-         "Line constraint" -bg $fc -variable constraint_mode -value 2
+         "Line constraint" -variable constraint_mode -value 2
 
 # Slider to control spring constant
 floatscale $latency(la).constraint.kspring 1.0 100.0 100 10.0 1 \

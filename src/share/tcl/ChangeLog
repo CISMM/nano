@@ -1,3 +1,20 @@
+2000-11-29  Tom Hudson  <hudson@cs.unc.edu>
+
+	* mainwin.tcl : add variable collab_commands_suspended and trace
+        (disable_widgets_for_commands_suspended) : generalize to also
+	support suspending commands when we're collaborating and don't
+	have the mutex
+
+	* shared_ptr.tcl (mutex_gotRequest_callback) : clear
+	collab_commands_suspended, enable $view.xy_lock
+	(mutex_deniedRequest_callback) : set
+        collab_commands_suspended, disable $view.xy_lock
+
+	* mainwin.tcl : enclose "source latency.tcl" in test of
+        thirdtech_ui instead of commenting it out.
+
+	* latency.tcl : get rid of dependence on $fc and $bc
+
 2000-11-13  Adam Seeger  <seeger@cs.unc.edu>
 
 	* filemenu.tcl : changed open_spm_connection to make it take

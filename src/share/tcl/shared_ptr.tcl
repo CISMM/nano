@@ -140,16 +140,28 @@ proc mutex_request_command {} {
 
 proc mutex_gotRequest_callback {} {
   global sharedptr
+  global collab_commands_suspended
 
   $sharedptr(sp).mutex.release_mutex_button configure \
           -state normal
+
+  # trigger a trace function in mainwin.tcl
+  set collab_commands_suspended 0
+
+  $view.xy_lock configure -state enabled
 }
 
 proc mutex_deniedRequest_callback {} {
   global sharedptr
+  global collab_commands_suspended
 
   $sharedptr(sp).mutex.request_mutex_button configure \
           -state normal
+
+  # trigger a trace function in mainwin.tcl
+  set collab_commands_suspended 1
+
+  $view.xy_lock configure -state disabled
 }
 
 proc mutex_taken_callback {} {
@@ -166,6 +178,14 @@ proc mutex_release_callback {} {
           -state normal
 }
 
+
+# Default state:  assume somebody else holds the mutex
+#   The C++ code sends a request every time it connects to a
+# new microscope to see if we can grab the mutex for this connection.
+
+$view.xy_lock configure -state disabled
+$sharedptr(sp).mutex.request_mutex_button configure \
+          -state disabled
 
 
 #----- hierarchical fine-grained coupling controls -----
