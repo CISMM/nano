@@ -3,7 +3,11 @@
 	* microscape.C : now passes aligner to the tipDisplayUI for alignment
 	of SEM images to the AFM tip (in combined AFM/SEM)
   	* nm_Tip.[Ch] : added nmr_Registration_Proxy as data member and
-	added button so user can enter the current tip location as a landmark
+	added button so user can enter the current tip location as a landmark;
+	added a bunch of other Tcl variables to control the tip model;
+	fixed enable/disable of texture and took out variables that were
+	going to be used for loading the texture - we'll just use the 
+	textures that are loaded in the graphics code
 	(sendFiducial): new function to send the tip location to the aligner
 
 2002-07-01  Aron Helser  <helser@cs.unc.edu>

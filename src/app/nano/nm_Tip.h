@@ -57,15 +57,6 @@ class nm_TipModel {
   double d_rotation_deg;
   double d_offset[3]; // offset to get from corner of image to tip apex
 
-  // image of tip (as from SEM) along with projection matrix used to display
-  // the image as a projective texture
-  nmb_Image *d_projectionImage;
-  double d_projectionMatrix[16];
-  // optimization - keeps track of how many times d_projectionImage has
-  // been set so that rendering code knows when it doesn't need to update the
-  // texture
-  int d_projImUpdateCount;
-
   // cone sphere approximation (available as default)
   double d_radius_nm;
   double d_coneAngle_deg;
@@ -117,13 +108,32 @@ class nm_TipDisplayControls {
  private:
   int pointDataHandler(const Point_results *pr);
   static int pointDataHandler(void *ud, const Point_results *pr);
-  static void handleEnableDisplayChange(vrpn_int32 newval, void *userdata);
-  static void handleEnableTextureChange(vrpn_int32 newval, void *userdata);
+
+  static void handleEnableDisplayChange(vrpn_int32 newval, void *ud);
+  static void handleEnableTextureChange(vrpn_int32 newval, void *ud);
+  
+  static void handleTipModelModeChange(vrpn_int32 newval, void *ud);
+
+  static void handleTipTopographyImageChange(const char *name, void *ud);
+
+  static void handleConeSphereChange(vrpn_float64 newval, void *ud);
+
   static void handleSendFiducialRequested(vrpn_int32 newval, void *userdata);
 
+
   // control panel variables
+  Tclvar_int d_tipModelModeImage;
+  Tclvar_int d_tipModelModeConeSphere;
+
   Tclvar_int d_enableDisplay;
   Tclvar_int d_enableTexture;
+  Tclvar_int d_tipModelMode;
+  
+  Tclvar_string d_tipTopographyImage;
+ 
+  Tclvar_float d_tipConeSphereRadius;
+  Tclvar_float d_tipConeSphereAngle;
+  Tclvar_float d_tipConeSphereHeight;
 
   Tclvar_int d_sendFiducialRequested;
 

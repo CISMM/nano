@@ -8,20 +8,39 @@
 
 char *nm_TipDisplayControls::s_renderName = "AFM Tip";
 
-nm_TipDisplayControls::nm_TipDisplayControls(nmm_Microscope_Remote *scope,
+nm_TipDisplayControls::nm_TipDisplayControls(nmm_Microscope_Remote *spm,
                                              nmr_Registration_Proxy *aligner):
   d_AFM(NULL),
+  d_tipModel(),
+  d_tipModelModeImage("tip_model_mode_image"),
+  d_tipModelModeConeSphere("tip_model_mode_conesphere"),
   d_aligner(aligner),
   d_enableDisplay("tip_display_enable", 0),
   d_enableTexture("tip_display_texture_enable", 0),
+  d_tipModelMode("tip_model_mode", 2),
+  d_tipTopographyImage("tip_topography_image", "none"),
+  d_tipConeSphereRadius("tip_cone_sphere_radius", 200.),
+  d_tipConeSphereAngle("tip_cone_sphere_angle", 40.),
+  d_tipConeSphereHeight("tip_cone_sphere_height", 450.0),
   d_sendFiducialRequested("send_fiducial_requested", 0),
-  d_tipModel(),
   d_tipRenderer(&d_tipModel)
 {
-  setSPM(scope);
+  setSPM(spm);
   World.TAddNode(&d_tipRenderer, s_renderName);
   d_enableDisplay.addCallback(handleEnableDisplayChange, this);
   d_enableTexture.addCallback(handleEnableTextureChange, this);
+
+  d_tipModelMode.addCallback(handleTipModelModeChange, this);
+  d_tipTopographyImage.addCallback(handleTipTopographyImageChange, this);
+  d_tipConeSphereRadius.addCallback(handleConeSphereChange, this);
+  d_tipConeSphereAngle.addCallback(handleConeSphereChange, this);
+  d_tipConeSphereHeight.addCallback(handleConeSphereChange, this);
+
+  d_tipModel.d_radius_nm = d_tipConeSphereRadius;
+  d_tipModel.d_coneAngle_deg = d_tipConeSphereAngle;
+  d_tipModel.d_totalHeight_nm = d_tipConeSphereHeight;
+
+  d_tipRenderer.buildDisplayList();
   d_sendFiducialRequested.addCallback(handleSendFiducialRequested, this);
 }
 
@@ -43,6 +62,31 @@ void nm_TipDisplayControls::handleEnableTextureChange (vrpn_int32 newval,
 {
   nm_TipDisplayControls *me = (nm_TipDisplayControls *)userdata;
   me->setTextureEnable(newval);
+}
+
+void nm_TipDisplayControls::handleTipModelModeChange(vrpn_int32 newval, 
+                                                     void *ud)
+{
+  nm_TipDisplayControls *me = (nm_TipDisplayControls *)ud;
+  if (newval == (vrpn_int32)(me->d_tipModelModeImage)) {
+  } else if (newval == (vrpn_int32)(me->d_tipModelModeConeSphere)) {
+  }
+}
+
+void nm_TipDisplayControls::handleTipTopographyImageChange(const char *name, 
+                                                           void *ud)
+{
+  nm_TipDisplayControls *me = (nm_TipDisplayControls *)ud;
+}
+
+void nm_TipDisplayControls::handleConeSphereChange(vrpn_float64 newval, 
+                                                        void *ud)
+{
+  nm_TipDisplayControls *me = (nm_TipDisplayControls *)ud;
+  me->d_tipModel.d_radius_nm = me->d_tipConeSphereRadius;
+  me->d_tipModel.d_coneAngle_deg = me->d_tipConeSphereAngle;
+  me->d_tipModel.d_totalHeight_nm = me->d_tipConeSphereHeight;
+  me->d_tipRenderer.buildDisplayList();
 }
 
 void nm_TipDisplayControls::handleSendFiducialRequested (vrpn_int32 newval,
@@ -96,16 +140,21 @@ void nm_TipDisplayControls::setTextureEnable(int enable)
 
 void nm_TipDisplayControls::sendFiducial()
 {
+  double minX, maxX, minY, maxY;
   double scanWidthX_nm = 1.0, scanWidthY_nm = 1.0;
   if (d_AFM) {
-    scanWidthX_nm = d_AFM->state.xMax - d_AFM->state.xMin;
-    scanWidthY_nm = d_AFM->state.yMax - d_AFM->state.yMin;
+	minX = d_AFM->Data()->inputGrid->minX();
+	maxX = d_AFM->Data()->inputGrid->maxX();
+	minY = d_AFM->Data()->inputGrid->minY();
+	maxY = d_AFM->Data()->inputGrid->maxY();
+	scanWidthX_nm = maxX - minX;
+	scanWidthY_nm = maxY - minY;
   } else {
     fprintf(stderr, "nm_TipDisplayControls::sendFiducial: Error, no AFM\n");
   }
   double fiducialX, fiducialY, fiducialZ;
-  fiducialX = d_tipModel.d_pos[0]/scanWidthX_nm;
-  fiducialY = d_tipModel.d_pos[1]/scanWidthY_nm;
+  fiducialX = (d_tipModel.d_pos[0]-minX)/scanWidthX_nm;
+  fiducialY = (d_tipModel.d_pos[1]-minY)/scanWidthY_nm;
   fiducialZ = d_tipModel.d_pos[2];
   if (d_aligner) {
     printf("Sending tip location as fiducial: (%g,%g): %g nm\n",
@@ -119,16 +168,10 @@ void nm_TipDisplayControls::sendFiducial()
 
 nm_TipModel::nm_TipModel()
 {
-  int i;
   d_pos[0] = 0; d_pos[1] = 0; d_pos[2] = 0;
   d_tipSurface = NULL;
   d_rotation_deg = 0;
   d_offset[0] = 0; d_offset[1] = 0; d_offset[2] = 0;
-  d_projectionImage = 0;
-  for (i = 0; i < 16; i++) {
-    d_projectionMatrix[i] = 0;
-  }
-  d_projImUpdateCount = 0;
   d_radius_nm = 50;
   d_coneAngle_deg = 20;
   d_totalHeight_nm = 200;
@@ -216,7 +259,6 @@ void nm_TipRenderer::buildDisplayList()
 // virtual
 int nm_TipRenderer::Render(void * /*userdata*/)
 {
-  bool doTexture = d_drawTexture && d_tipModel->d_projImUpdateCount > 0;
   if (visible) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -224,36 +266,26 @@ int nm_TipRenderer::Render(void * /*userdata*/)
     double tx, ty, tz;
     d_tipModel->getPosition(tx, ty, tz);
     glTranslatef(tx, ty, tz);
-    if (doTexture) {
-      if (d_tipModel->d_projImUpdateCount != d_lastInstallProjImCount) {
-        // install the new texture image
-        d_lastInstallProjImCount = d_tipModel->d_projImUpdateCount;
-      }
-      glMatrixMode(GL_TEXTURE);
-      glPushMatrix();
-      glLoadMatrixd(d_tipModel->d_projectionMatrix);
+    glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
+    if (d_drawTexture) {
       glEnable(GL_TEXTURE_2D);
       glEnable(GL_TEXTURE_GEN_S);
       glEnable(GL_TEXTURE_GEN_T);
       glEnable(GL_TEXTURE_GEN_R);
       glEnable(GL_TEXTURE_GEN_Q);
- 
+    } else {
+      glDisable(GL_TEXTURE_2D);
+      glDisable(GL_TEXTURE_GEN_S);
+      glDisable(GL_TEXTURE_GEN_T);
+      glDisable(GL_TEXTURE_GEN_R);
+      glDisable(GL_TEXTURE_GEN_Q);
     }
     if (d_drawConeSphere) {
       if (d_displayListID != 0) {
         glCallList(d_displayListID);
       }
     }
-    if (doTexture) {
-      glDisable(GL_TEXTURE_2D);
-      glDisable(GL_TEXTURE_GEN_S);
-      glDisable(GL_TEXTURE_GEN_T);
-      glDisable(GL_TEXTURE_GEN_R);
-      glDisable(GL_TEXTURE_GEN_Q);
-
-      glMatrixMode(GL_TEXTURE);
-      glPopMatrix();
-    }
+    glPopAttrib();
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
