@@ -1,3 +1,7 @@
+2002-07008 Jameson Miller
+	* directStep.tcl : new controls for handling axis object. re-did
+	User Interface for stepping along user defined axis.
+
 2002-07-08  David Borland <borland@cs.unc.edu>
 
         * import.tcl : added radiobutton for projective texture mode
