@@ -92,7 +92,7 @@ void reportStats ()
 }
 
 
-/* 	this routine enables the sending of data to outfile via
+/** 	this routine enables the sending of data to outfile via
 ** stm_send_buffer_to().  it should be called if in READ_DEVICE_MODE,
 ** ie. if there's a device out there to receive commands.  This
 ** allows user modes to always function as if there was a microscope
@@ -105,7 +105,7 @@ int	stm_enable_send()
 	return (stm_send_disabled = 0);
 }
 
-/*	This routine will clear the outgoing buffer and prepare it to
+/**	This routine will clear the outgoing buffer and prepare it to
  * be filled with commands or data for the other side.  It reserves
  * space for the length of the buffer to be placed as the first thing
  * in the buffer. */
@@ -120,7 +120,7 @@ stm_clear_outgoing_buffer()
 }
 
 
-/*	These routines will add the given types into the buffer. */
+/**	These routines will add the given types into the buffer. */
 
 int stm_buffer_int(int value) 
 {
@@ -158,14 +158,14 @@ int stm_buffer_chars(char *c, int len)
 	return(0); 
 }
 
-/*	This routine will fill in the length of the outgoing buffer and
+/**	This routine will fill in the length of the outgoing buffer and
  *      send the buffer to the client.  It will hang until the entire buffer
  *      has been sent or there is an error in the sending.
  *	If there is not data in the buffer, the buffer will not be sent.
  *	Returns number of bytes written on success, -1 on failure.
- *	The file descriptor to be sent to is passed. */
+ *	The file descriptor to be sent to is passed. 
 
-/* 
+ 
    Changes made by Michele Clark:
      o returns actual number of bytes written on success (including size) (6/22)
      o if using UDP, add sequence number  (6/23)
@@ -259,16 +259,16 @@ int	stm_send_buffer_to(int outfile)
 }
 
 
-/*	This routine will read a block that was sent from the other
+/**	This routine will read a block that was sent from the other
  * side.  It returns the number of characters that were read in the
  * block.  It will hang until it has got all of the next block that
  * is sent or there is an error.
  *	It is up to the caller to guarantee that there is enough
  * space to receive the block (maxlen).
  *	This routine returns the number of characters in the block
- * on success and -1 on failure. */
+ * on success and -1 on failure. 
 
-/* 
+ 
     Changes made by Michele Clark:
      o if using UDP, get sequence number (6/23/97)
      o if using UDP, calculate lost or out-of-order messages

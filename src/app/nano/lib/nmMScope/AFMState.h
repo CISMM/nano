@@ -13,15 +13,15 @@
 #include <Tcl_Netvar.h>
 #include <active_set.h>  // Scan_channel_selector
 
-// AFMState
-//
-// Tom Hudson, September, 1997
-// Taken from global variables declared in microscape.c, animate.c,
-// interaction.c, and elsewhere.
+/** \file AFMState.h
 
-// These structs gather many of the global variables scattered throughout
-// the code into a single hierarchy
+Tom Hudson, September, 1997
+Taken from global variables declared in microscape.c, animate.c,
+interaction.c, and elsewhere.
 
+These structs gather many of the global variables scattered throughout
+the code into a single hierarchy
+*/
 
 
 struct AFMModifyInitializationState {
@@ -50,8 +50,8 @@ struct AFMModifyState {
   int     std_dev_samples;
   int     std_dev_samples_cache;
   float   std_dev_frequency;
-    // number of samples to take at a point, and frequency with which to
-    // take them, when determining standard deviation
+    ///< number of samples to take at a point, and frequency with which to
+    ///< take them, when determining standard deviation
 
   vrpn_bool mode_changed,
             style_changed,
@@ -66,17 +66,17 @@ struct AFMModifyState {
   Tclvar_int control;
   Tclvar_int style;
   Tclvar_int tool;
-    // the current mode of the microscope
+    ///< the current mode of the microscope
 
   // parameters for Tapping and Contact mode
   Tclvar_float setpoint;
-  float        setpoint_min,     // control range of the "modify force" knob
+  float        setpoint_min,     ///< control range of the "modify force" knob
                setpoint_max;
   Tclvar_float p_gain;
   Tclvar_float i_gain;
   Tclvar_float d_gain;
   Tclvar_float amplitude;
-  float        amplitude_min,    // control range of the "modify force" knob
+  float        amplitude_min,    ///< control range of the "modify force" knob
                amplitude_max;
   Tclvar_float scan_rate_microns;
 
@@ -94,23 +94,23 @@ struct AFMModifyState {
   Tclvar_float watchdog;
 
   // parameters for Force Curve style
-  Tclvar_float fc_start_delay;	// usec
-  Tclvar_float fc_z_start;	// nm
-  Tclvar_float fc_z_end;	// nm
-  Tclvar_float fc_z_pullback;	// nm
-  Tclvar_float fc_force_limit;	// nA
-  Tclvar_float fc_movedist;	// nm
-  Tclvar_float fc_num_points;	// how many values of z to use between start
-				// and end
-  Tclvar_float fc_num_halfcycles;// # 'down' curves + # 'up' curves
-  Tclvar_float fc_sample_speed; // um (speed while sampling)
-  Tclvar_float fc_pullback_speed; // um (speed while going to pullback height)
-  Tclvar_float fc_start_speed; // um (speed in going to start height)
-  Tclvar_float fc_feedback_speed; // um (speed in going to feedback point)
-  Tclvar_float fc_avg_num;	// # of samples per point
-  Tclvar_float fc_sample_delay; 	// us
-  Tclvar_float fc_pullback_delay; 	// us
-  Tclvar_float fc_feedback_delay;	// us
+  Tclvar_float fc_start_delay;	///< usec
+  Tclvar_float fc_z_start;	///< nm
+  Tclvar_float fc_z_end;	///< nm
+  Tclvar_float fc_z_pullback;	///< nm
+  Tclvar_float fc_force_limit;	///< nA
+  Tclvar_float fc_movedist;	///< nm
+  Tclvar_float fc_num_points;	///< how many values of z to use between start
+				///< and end
+  Tclvar_float fc_num_halfcycles;///< # 'down' curves + # 'up' curves
+  Tclvar_float fc_sample_speed; ///< um (speed while sampling)
+  Tclvar_float fc_pullback_speed; ///< um (speed while going to pullback height)
+  Tclvar_float fc_start_speed; ///< um (speed in going to start height)
+  Tclvar_float fc_feedback_speed; ///< um (speed in going to feedback point)
+  Tclvar_float fc_avg_num;	///< # of samples per point
+  Tclvar_float fc_sample_delay; 	///< us
+  Tclvar_float fc_pullback_delay; 	///< us
+  Tclvar_float fc_feedback_delay;	///< us
 
   // parameter for Poly-line tool
   Tclvar_float step_size;
@@ -123,47 +123,47 @@ struct AFMModifyState {
   Tclvar_float max_z_setpoint;
   Tclvar_float max_lat_setpoint;
 
-    // information returned by the Topo AFM used during directZ control
+    /// information returned by the Topo AFM used during directZ control
   float freespace_normal_force;
   float freespace_lat_force;
 
 
   Position_list stored_points;
-    // list of points used to actually carry out a modification
-    // after COMMIT is pressed
+    ///< list of points used to actually carry out a modification
+    ///< after COMMIT is pressed
 
    vrpn_bool constr_line_specified; 
-       // CONSTR_FREEHAND tool starts contraining feeling and modification
-       // when this is changed to VRPN_TRUE
+       ///< CONSTR_FREEHAND tool starts contraining feeling and modification
+       ///< when this is changed to VRPN_TRUE
 
   vrpn_bool slow_line_committed;
-  // SLOW_LINE tool acts like line mode until the commit button is
-  // pressed - then the user has to press PLAY or STEP to make the tip
-  // move. This flag marks that change.
+  ///< SLOW_LINE tool acts like line mode until the commit button is
+  ///< pressed - then the user has to press PLAY or STEP to make the tip
+  ///< move. This flag marks that change.
 
   Tclvar_int slow_line_playing;
-  // SLOW_LINE tool, set to true when use has hit PLAY and tool takes
-  // a step each time the data from the previous step is received.
+  ///< SLOW_LINE tool, set to true when use has hit PLAY and tool takes
+  ///< a step each time the data from the previous step is received.
 
   Tclvar_int slow_line_step;
-  // Set to 1 when the user hits the "step" button.
+  ///< Set to 1 when the user hits the "step" button.
 
   Tclvar_int slow_line_direction;
-  // forward or reverse
+  ///< forward or reverse
 
   float slow_line_position_param;
-  // ranges from 0 to 1, parameterizes the position of the tip along
-  // the current line segment
+  ///< ranges from 0 to 1, parameterizes the position of the tip along
+  ///< the current line segment
 
   Position * slow_line_currPt;
   Position * slow_line_prevPt;
-  // Location of blue marker lines specified by user. currPt is the
-  // one we are stepping towards, and prevPt is the one we started at.
+  ///< Location of blue marker lines specified by user. currPt is the
+  ///< one we are stepping towards, and prevPt is the one we started at.
 
   // Obsolete?
 
   int modify_enabled;
-  // referenced in a bodiless if() in interaction.c::interaction()
+  ///< referenced in a bodiless if() in interaction.c::interaction()
 
   // parameters for Blunt style
   Tclvar_float blunt_size;
@@ -200,16 +200,16 @@ struct AFMImageState {
   Tclvar_int mode;
   Tclvar_int style;
   Tclvar_int tool;
-    // the current mode of the microscope
+    ///< the current mode of the microscope
 
   Tclvar_float setpoint;
-  float        setpoint_min,   // control range of the "image force" knob
+  float        setpoint_min,   ///< control range of the "image force" knob
                setpoint_max;
   Tclvar_float p_gain;
   Tclvar_float i_gain;
   Tclvar_float d_gain;
   Tclvar_float amplitude;
-  float        amplitude_min,   // control range of the "image force" knob
+  float        amplitude_min,   ///< control range of the "image force" knob
                amplitude_max;
   Tclvar_float scan_rate_microns;
 
@@ -254,7 +254,7 @@ struct AFMScanlineState {
     // flags to tell the user interface that something changed.
     // these ought to be moved somewhere else if we make an interface module.
 
-  Tclvar_int mode;	// tapping or contact
+  Tclvar_int mode;	///< tapping or contact
   Tclvar_int feedback_enabled;
   Tclvar_int forcelimit_enabled;
   Tclvar_int continuous_rescan;
@@ -263,14 +263,14 @@ struct AFMScanlineState {
 
   Tclvar_int resolution;
   Tclvar_float setpoint;
-  float        setpoint_min,   // control range of the setpoint knob
+  float        setpoint_min,   ///< control range of the setpoint knob
                setpoint_max;
   Tclvar_float p_gain;
   Tclvar_float i_gain;
   Tclvar_float d_gain;
   Tclvar_float width;
   Tclvar_float amplitude;
-  float        amplitude_min,   // control range of the amplitude knob
+  float        amplitude_min,   ///< control range of the amplitude knob
                amplitude_max;
   Tclvar_float scan_rate_microns_per_sec;
   
@@ -303,13 +303,13 @@ class AFMDataset {
     int Initialize (nmb_Dataset *);
 
     Point_results * inputPoint;
+      ///< last point accessed by this microscope and all data values there
     Point_results * fc_inputPoint;
     Scanline_results currentScanlineData;
 
-      // last point accessed by this microscope and all data values there
 
     Tclvar_list_of_strings inputPlaneNames;
-      // lists the names of all planes of data
+      ///< lists the names of all planes of data
       // should be part of user interface?
 
     Tclvar_list_of_strings inputPointNames;
@@ -390,8 +390,8 @@ struct AFMState {
   vrpn_bool do_y_fastest;
   vrpn_bool raster_scan_backwards;
 
-  char deviceName [100];         // (sdi) name of microscope to try to open
-  char outputStreamName [256];   // filenames
+  char deviceName [100];         ///< (sdi) name of microscope to try to open
+  char outputStreamName [256];   ///< filenames
   char inputStreamName [256];
 
   AFMModifyState   modify;
@@ -399,7 +399,7 @@ struct AFMState {
   AFMScanlineState scanline;
   AFMDataset       data;
 
-  int acquisitionMode;// replaces inModifyMode which replaced doing_modify_mode
+  int acquisitionMode;///< replaces inModifyMode which replaced doing_modify_mode
 
   Tclvar_int slowScanEnabled;
   vrpn_bool cannedLineVisible;
@@ -408,19 +408,19 @@ struct AFMState {
   int lost_changes;
   vrpn_bool new_epoch;
 
-  vrpn_bool regionFlag;            // only draw region marker if TRUE
+  vrpn_bool regionFlag;            ///< only draw region marker if TRUE
 
-  float xMin, xMax,              // maximum scan range of which the
-        yMin, yMax,              // spm is capable
+  float xMin, xMax,              
+        yMin, yMax,              
         zMin, zMax;
-
-  float scrapeHeight;            // height above surface of scrape lines
+    ///< maximum scan range of which the spm is capable
+  float scrapeHeight;            ///< height above surface of scrape lines
   
   // optional system components
-  vrpn_bool doDriftComp;           // compensate for drift
-  Tclvar_int doRelaxComp;           // compensate for relaxation -can change in Tcl.
-  vrpn_bool doRelaxUp;             // do relaxation even if in imagemode
-  vrpn_bool doSplat;               // splat incoming data into grid
+  vrpn_bool doDriftComp;           ///< compensate for drift
+  Tclvar_int doRelaxComp;           ///< compensate for relaxation -can change in Tcl.
+  vrpn_bool doRelaxUp;             ///< do relaxation even if in imagemode
+  vrpn_bool doSplat;               ///< splat incoming data into grid
   vrpn_bool snapPlaneFit;
 
   vrpn_bool writingStreamFile;     // was DO_OUTPUT_STREAM
@@ -430,7 +430,7 @@ struct AFMState {
   vrpn_bool allowdup;
   vrpn_bool useRecvTime;           // Michele Clark's experiments
 
-  int relaxComp;                   // status of relaxation compensation
+  int relaxComp;                   ///< status of relaxation compensation
 
   int rasterX,                     // used to be x, y in animate.c
       rasterY;
@@ -439,10 +439,10 @@ struct AFMState {
     // if true triggers update of X display
     //   in MicroscopeIO.C (was in animate.c)
 
-    // Used in doSelect to set the scan region. These are the last values
+    /// Used in doSelect to set the scan region. These are the last values
   float select_center_x;
   float select_center_y;
-  float select_region_rad;  // this is half the width of the select region
+  float select_region_rad;  ///< this is half the width of the select region
 
   // Obsolete?
 

@@ -264,9 +264,8 @@ void handle_Istyle_p_change (vrpn_float64, void * _mptr) {
 }
 
 
-// Controls whether the slow scan direction is enabled,
-// or instead the microscope just repeatedly scans the same line.
-
+/// Controls whether the slow scan direction is enabled,
+/// or instead the microscope just repeatedly scans the same line.
 void handle_tcl_scanEnable_change (vrpn_int32 _value, void * _mptr) {
   microscope->SetSlowScan(_value);
 }
@@ -363,9 +362,8 @@ void handle_scanline_position_display_change (vrpn_int32 _value,
   graphics->displayScanlinePosition(_value);
 }
 
-// Update the grid scale and rebuild the display lists
-// whenever the Z scale changes.
-
+/// Update the grid scale and rebuild the display lists
+/// whenever the Z scale changes.
 void handle_z_scale_change (vrpn_float64 _value, void * _mptr) {
   BCPlane * plane =
     dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
@@ -428,9 +426,8 @@ void handle_image_accept (vrpn_int32, void * _mptr) {
 }
 
 
-// Called when the user clicks "accept" in the Modify frame
-// in the main TCL window
-
+/// Called when the user clicks "accept" in the Modify frame
+/// in the main TCL window
 void handle_modify_accept (vrpn_int32, void * _mptr) {
    if (microscope->state.modify.mode_changed) {
       
@@ -565,13 +562,13 @@ void handle_scanline_accept (vrpn_int32, void * _mptr) {
     }
 }
 
-// This routine causes the entire grid to be redrawn at the next loop
-// iteration.
-// It also repositions the red, green and blue measurement lines so
-// that they track the surface with all of its changes.
-// The reason for the parameters is so that this can be set up as a
-// Tcl_Linkvar callback, which requires them.
-
+/** This routine causes the entire grid to be redrawn at the next loop
+ iteration.
+ It also repositions the red, green and blue measurement lines so
+ that they track the surface with all of its changes.
+ The reason for the parameters is so that this can be set up as a
+ Tcl_Linkvar callback, which requires them.
+*/
 void cause_grid_redraw (vrpn_float64, void *) {
 
 #if 1
@@ -612,8 +609,7 @@ void cause_grid_redraw (vrpn_float64, void *) {
 
 }
 
-// Export a new .txt file whenever the user selects a new data set
-
+/// Export a new .txt file whenever the user selects a new data set
 void    handle_export_dataset_change(const char *new_value, void * )
 {
         BCPlane *plane = dataset->inputGrid->getPlaneByName(new_value);
@@ -736,9 +732,9 @@ void     handle_sound_dataset_change(const char *, void * )
 
 // Controls for the SLOW LINE tool
 
-// Call this function right after the user has hit "commit" for the
-// slow-line tool - they are ready to hit Play or Step to move the
-// tip.
+/** Call this function right after the user has hit "commit" for the
+ slow-line tool - they are ready to hit Play or Step to move the
+ tip. */
 void init_slow_line (void * _mptr) 
 {
   microscope->state.modify.slow_line_position_param = 0.0;
@@ -751,9 +747,9 @@ void init_slow_line (void * _mptr)
 
 }
 
-// If the line has been specified, and commit has been pressed, start
-// taking steps along that line. Otherwise, do nothing. The line is
-// specified in interaction.c in the doLine function.
+/** If the line has been specified, and commit has been pressed, start
+ taking steps along that line. Otherwise, do nothing. The line is
+ specified in interaction.c in the doLine function. */
 void	handle_slow_line_playing_change (vrpn_int32, void * _mptr)
 {
   if (microscope->state.modify.tool != SLOW_LINE) return;
@@ -768,11 +764,11 @@ void	handle_slow_line_playing_change (vrpn_int32, void * _mptr)
 
 }
 
-// If the line has been specified, and commit has been pressed, take
-// one step along that line. Otherwise, do nothing. If we are in
-// "play" mode, and we reach the end of our line segment, turn "play"
-// off. Always take a step, so the slow_line_ReceiveNewPoint fcn has a
-// chance to request another point.
+/** If the line has been specified, and commit has been pressed, take
+one step along that line. Otherwise, do nothing. If we are in
+"play" mode, and we reach the end of our line segment, turn "play"
+off. Always take a step, so the slow_line_ReceiveNewPoint fcn has a
+chance to request another point. */
 void	handle_slow_line_step_change (vrpn_int32, void * _mptr)
 {
   if (microscope->state.modify.tool != SLOW_LINE) return;
@@ -837,8 +833,8 @@ void	handle_slow_line_step_change (vrpn_int32, void * _mptr)
 
 }
 
-// If we are "playing", then pause, so that the next time we hit
-// "play" we will go in the other direction.
+/** If we are "playing", then pause, so that the next time we hit
+    "play" we will go in the other direction. */
 void	handle_slow_line_direction_change (vrpn_int32, void * _mptr)
 {
   if (microscope->state.modify.tool != SLOW_LINE) return;
@@ -851,13 +847,13 @@ void	handle_slow_line_direction_change (vrpn_int32, void * _mptr)
   
 }
 
-// This is a point result callback, registered with the microscope
-// object. Whenever we receive point results, this function will get
-// called.  Only do something if we are doing a Slow Line tool
-// modification, and user has hit the "commit" button.  
+/** This is a point result callback, registered with the microscope
+object. Whenever we receive point results, this function will get
+called.  Only do something if we are doing a Slow Line tool
+modification, and user has hit the "commit" button.  
 
-// Either take a step along the line segment, if "play" has been
-// pressed, or take another measurment at the same point.
+Either take a step along the line segment, if "play" has been
+pressed, or take another measurment at the same point. */
 int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
 {
   if (microscope->state.modify.tool != SLOW_LINE) return 0;

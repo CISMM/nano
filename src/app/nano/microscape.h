@@ -1,6 +1,5 @@
-/*****************************************************************************
- *
-    microscape.h - All user #defines and typedefs
+/** \file microscape.h 
+    All user #defines and typedefs
 
     If it doesn't need to be visible outside its source file,
     don't declare it here!
@@ -14,15 +13,6 @@
 // iostream must come before this, in order to compile with Flow!
 #ifdef	hpux
 #define	signed
-#endif
-
-//switching for textures on sgi and FLOW
-#ifdef sgi
-#define sgi_or_flow 1
-#endif
-
-#ifdef FLOW
-#define sgi_or_flow 1
 #endif
 
 #include <nmb_Types.h>
@@ -75,17 +65,12 @@ class Xform;		//added from ugraphics
 
 #define DEFAULT_BG_COLOR    {0, 40, 120}
 
-// This function is used to determine whether two coordinates (in x or
-// y) are near each other.  It is basically the floating-point equivalent
-// of '==', but allowing a little tolerance.
-// The tolerance given here is 0.01 nanometers, which is 1/10 Angstrom.
+/** This function is used to determine whether two coordinates (in x or
+ y) are near each other.  It is basically the floating-point equivalent
+ of '==', but allowing a little tolerance.
+ The tolerance given here is 0.01 nanometers, which is 1/10 Angstrom. */
 inline	int NM_NEAR(double x0,double x1) { return (fabs(x0-x1) < 0.01); };
 
-
-/****************************
-something defined by Qiang
-****************************/
-//extern char	message[1000];		
 
 // used by vrpn.c
 extern	ColorMap	*curColorMap;	// microscape.c
@@ -131,10 +116,10 @@ extern	float		MAX_K;  /* for each device		  */
 #define BDBOX_NUMDIALS 8
 
 // button events - set by interaction
-#define NULL_EVENT	0	// button not pressed at least twice in a row
-#define PRESS_EVENT	1	// button just pressed
-#define RELEASE_EVENT	2	// button just released
-#define HOLD_EVENT	3	// button pressed at least twice in a row
+#define NULL_EVENT	0	///< button not pressed at least twice in a row
+#define PRESS_EVENT	1	///< button just pressed
+#define RELEASE_EVENT	2	///< button just released
+#define HOLD_EVENT	3	///< button pressed at least twice in a row
 
 extern  vrpn_ForceDevice_Remote *forceDevice;
 extern  vrpn_Tracker_Remote *vrpnHeadTracker[NUM_USERS];
@@ -168,13 +153,13 @@ extern int do_cpanels;
 
 
 //---------------------------------------------------------------------------
-// These select the plane to map color from and the scale of the mapping. 
+/// These select the plane to map color from and the scale of the mapping. 
 extern  Tclvar_float            color_slider_min_limit;
 extern  Tclvar_float            color_slider_max_limit;
 extern  TclNet_float            color_slider_min, color_slider_max;
 
 //--------------------------------------------------------------------------
-//These select the plane to map compliance from and teh scale of the mapping.
+///These select the plane to map compliance from and teh scale of the mapping.
 extern  Tclvar_float            compliance_slider_min_limit;
 extern  Tclvar_float            compliance_slider_max_limit;
 extern  Tclvar_float            compliance_slider_min,compliance_slider_max;
@@ -183,28 +168,28 @@ extern  Tclvar_string         compliancePlaneName;
 
 
 //--------------------------------------------------------------------------
-//These select the plane to map friction from and teh scale of the mapping.
+///These select the plane to map friction from and teh scale of the mapping.
 extern  Tclvar_float            friction_slider_min_limit;
 extern  Tclvar_float            friction_slider_max_limit;
 extern  Tclvar_float            friction_slider_min, friction_slider_max;
 extern  Tclvar_string         frictionPlaneName;
 
 //--------------------------------------------------------------------------
-//These select the plane to map bump size from and the scale of the mapping.
+///These select the plane to map bump size from and the scale of the mapping.
 extern  Tclvar_float            bump_slider_min_limit;
 extern  Tclvar_float            bump_slider_max_limit;
 extern  Tclvar_float            bump_slider_min, bump_slider_max;
 extern  Tclvar_string         bumpPlaneName;
 
 //--------------------------------------------------------------------------
-//These select the plane to map buzz amplitude from and the scale of the mapping
+///These select the plane to map buzz amplitude from and the scale of the mapping
 extern  Tclvar_float            buzz_slider_min_limit;
 extern  Tclvar_float            buzz_slider_max_limit;
 extern  Tclvar_float            buzz_slider_min, buzz_slider_max;
 extern  Tclvar_string         buzzPlaneName;
 
 //--------------------------------------------------------------------------
-//These select the plane to map friction from and teh scale of the mapping.
+///These select the plane to map friction from and teh scale of the mapping.
 extern  Tclvar_float            adhesion_slider_min_limit;
 extern  Tclvar_float            adhesion_slider_max_limit;
 extern  Tclvar_float            adhesion_slider_min, adhesion_slider_max;
@@ -212,7 +197,7 @@ extern  Tclvar_string         adhesionPlaneName;
 
 
 //--------------------------------------------------------------------------
-//For mapping sound to dataset
+///For mapping sound to dataset
 extern Tclvar_float              sound_slider_min_limit;
 extern Tclvar_float              sound_slider_max_limit;
 extern Tclvar_float              sound_slider_min, sound_slider_max;
@@ -220,7 +205,7 @@ extern Tclvar_string           soundPlaneName;
 
 
 //---------------------------------------------------------------------------
-// These select the offset and scale of the overlaid ruler grid, when it is on
+/// These select the offset and scale of the overlaid ruler grid, when it is on
 // used in interaction.c
 extern  TclNet_int rulergrid_position_line;
 extern  TclNet_int rulergrid_orient_line;
@@ -230,21 +215,21 @@ extern  TclNet_float rulergrid_angle;
 extern	TclNet_int rulergrid_enabled;
 
 //---------------------------------------------------------------------------
-// These select the plane to map alpha from and the scale of the mapping. 
+/// These select the plane to map alpha from and the scale of the mapping. 
 extern  Tclvar_float            alpha_slider_min_limit;
 extern  Tclvar_float            alpha_slider_max_limit;
 extern  Tclvar_float            alpha_slider_min, alpha_slider_max;
 
 
 //---------------------------------------------------------------------------
-// These select the plane to map x from and the scale of the mapping. 
+/// These select the plane to map x from and the scale of the mapping. 
 extern  Tclvar_float            x_min_value;
 extern  Tclvar_float            x_max_value;
 extern  Tclvar_float            x_min_scale, alpha_max_scale;
 extern  Tclvar_string         xPlaneName;
 
 //---------------------------------------------------------------------------
-// The scale factor for force applied in Direct Z Control
+/// The scale factor for force applied in Direct Z Control
 extern  Tclvar_float           directz_force_scale;
 
 
@@ -274,7 +259,7 @@ int stm_init (const vrpn_bool set_region,
               const vrpn_bool set_mode, const int, const char *,
               const int, const int);
 
-/* TopoFile class global declaration to store header information from stream/topo files */
+/** TopoFile class global declaration to store header information from stream/topo files */
 extern TopoFile GTF;
 
 // things defined in global.h:  spm_graphics_verbosity, timer_verbosity,

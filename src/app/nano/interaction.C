@@ -1,4 +1,4 @@
- /*****************************************************************************
+ /** \file interaction.c
  *
     interaction.c - handles all interaction for user program
     
@@ -27,8 +27,7 @@
      NIH #5-R24-RR-02170
    
  *
- *****************************************************************************/
-
+ */
 #include <stdio.h>
 
 /*#include "tracker.h"*/
@@ -46,12 +45,12 @@
 #include <nmb_TimerList.h>
 
 #include <nmm_Globals.h>
-#ifndef USE_VRPN_MICROSCOPE	// #ifndef #else #endif	Added by Tiger
+#ifndef USE_VRPN_MICROSCOPE
 #include <Microscope.h>
 #else
 #include <nmm_MicroscopeRemote.h>
 #endif
-#include <nmm_Types.h>  // for Blunt_result, enums
+#include <nmm_Types.h>  // for point_result, enums
 
 #include <nmg_GraphicsImpl.h>
 #include <nmg_Globals.h>
@@ -90,11 +89,11 @@
 #define MIN_MV_KNOB	(4)
 #define MAX_MAX_MV	(200.0)
 
-// a scale to slow down the change in sweep width when
-// phantom pen is rotated.
+/// a scale to slow down the change in sweep width when
+/// phantom pen is rotated.
 #define SWEEP_WIDTH_SCALE (0.05)
 
-/* IS_AIM_MODE is true for modification modes (show aiming structure) */
+/** IS_AIM_MODE is true for modification modes (show aiming structure) */
 #define	IS_AIM_MODE(m)	( 			\
 		( (m) == USER_PULSE_MODE )	\
 		||				\
@@ -126,12 +125,12 @@
 #endif
 
 //------------------------------------------------------------------------
-// Configure the force-display method. This is to allow us to turn off
-// forces or else make the user feel from a flat plane rather than from the
-// actual data set being displayed. These are to be used when we take the
-// system to Orange High School to enable us to determine how much the
-// actual feeling helps the students understand the surface.
-
+/** Configure the force-display method. This is to allow us to turn off
+forces or else make the user feel from a flat plane rather than from the
+actual data set being displayed. These are to be used when we take the
+system to Orange High School to enable us to determine how much the
+actual feeling helps the students understand the surface.
+*/
 Tclvar_int_with_button	config_haptic_enable("Enable Haptic", ".sliders", 1);
 Tclvar_int_with_button	config_haptic_plane("Haptic from flat", ".sliders", 0);
 
@@ -141,7 +140,7 @@ Tclvar_int_with_button	config_haptic_plane("Haptic from flat", ".sliders", 0);
 
 // moved user_mode to globals.c
 
-int	last_mode[NUM_USERS];		/* Previous mode of operation */
+int	last_mode[NUM_USERS];		/**< Previous mode of operation */
 
 char    *user_hand_icons[] = {  (char *)"v_arrow",
 				(char *)"myRoboHand",
@@ -180,7 +179,7 @@ char    *MODE_SOUNDS[] = {      (char *)"fly_mode",
  *	Force modifications enabled, parameters
  ******************************/
 
-int	plane_line_set = 0;		/* 1 if plane_line initialized	*/
+int	plane_line_set = 0;		/**< 1 if plane_line initialized */
 
 
 /******************************
@@ -190,27 +189,27 @@ int	plane_line_set = 0;		/* 1 if plane_line initialized	*/
 
 int     pulse_enabled = 0;              /* 1 if pulses are enabled, 0 if not */
 
-/*parameters locking the width in sweep mode (qliu 6/29/95)*/
+/** parameters locking the width in sweep mode (qliu 6/29/95)*/
 Tclvar_int lock_width("sweep_lock_pressed");
 
-/*parameter locking the tip in sharp tip mode */
+/** parameter locking the tip in sharp tip mode */
 Tclvar_int xy_lock("xy_lock_pressed");
 
-// Trigger button from the virtual button box in Tcl
+/// Trigger button from the virtual button box in Tcl
 static int	tcl_trigger_just_forced_on = 0;
 static int	tcl_trigger_just_forced_off = 0;
 static void	handle_trigger_change( vrpn_int32 val, void *userdata );
 Tclvar_int	tcl_trigger_pressed("trigger_pressed",0, handle_trigger_change);
 
-/**********
+/**
  * callback function for Commit button in tcl interface.
  **********/
 static void handle_commit_change( vrpn_int32 val, void *userdata);
-/**********
+/**
  * callback function for Cancel commit button in tcl interface.
  **********/
 static void handle_commit_cancel( vrpn_int32 val, void *userdata);
-/**********
+/**
  * callback function for PHANToM reset button in tcl interface.
  **********/
 static void handle_phantom_reset( vrpn_int32 val, void *userdata);
@@ -275,8 +274,8 @@ int set_aim_line_color(float);
 int meas_cross( float, float, float, float, float);
 int doMeasure(int, int);
 
-//to take a log in an arbitrary base to linearize magnitude perception of
-//haptic stimuli 
+///to take a log in an arbitrary base to linearize magnitude perception of
+///haptic stimuli 
 double log_any_base(double, double);
 
 int doLine(int, int);
@@ -786,7 +785,6 @@ VERBOSE(4, "  Entering interaction() loop.");
  *  of the other so that grabbing and flying can be done together
  */
 for ( user = 0; user < NUM_USERS; user++ ) {
-	int             used_events;
 	int		triggerButtonPressed = 0; 
 
 	// get value for trigger button event
@@ -889,40 +887,6 @@ for ( user = 0; user < NUM_USERS; user++ ) {
             }
 	}
 
-    /*******************************************************************/
-    /** Here is where the vtk update occurs.  Note that if the A/D    **/
-    /** device events are not "used" by the control panel (i.e. if    **/
-    /** the buttons don't affect anything in the control panel), then **/
-    /** the vtk_update_control_panel() returns VTK_NO, and the events **/
-    /** can be legitimately used to perform other functions.          **/
-    /*******************************************************************/
-
-    if (do_cpanels) {
-	    /* check the pulse control panel */
-	    if (pulse_enabled) {
-	    } else {
-		used_events = VTK_NO;
-	    }
-
-	    if ( used_events == VTK_NO ) {      /* Okay to use events */
-	    }
-
-	    /* check the force control panel */
-	    if (used_events == VTK_NO) {
-	      if (microscope->state.modify.modify_enabled) {
-	      } else {
-		used_events = VTK_NO;
-	      }
-	    }
-
-	    /* Check the std dev control panel */
-	    if ( used_events == VTK_NO ) {      /* Okay to use events */
-	    }
-    } else {
-	    used_events = VTK_NO;
-    }
-
-    if ( used_events == VTK_NO ) {	/* Okay to use events */
 	float	force;			/* force level [0..1] */
 
 	// Make sure the old_* static variable are initialized correctly.
@@ -1118,7 +1082,6 @@ VERBOSE(6, "    Calling dispatch_event().");
 	dispatch_event(user, user_mode[user], eventList[0], timer);
 	lastTriggerEvent = eventList[0];
 
-    } /* End of excluded events due to control panel taking them */
 
     /* Last mode next time around is the current mode this time around */
     last_mode[user] = user_mode[user];
@@ -1132,7 +1095,7 @@ return 0;
 }	/* interaction */
 
 
-/*=======================================================================
+/**=======================================================================
 ** qmf_lookat - produce an orientation quaternion that will line up the
 **	viewing vector (+Z) from from to at, and the Y axis roughly along
 **	up.

@@ -30,33 +30,29 @@ static char *DEFAULT_SCAN_CHANNEL_UNITS[NUM_DEFAULT_SCAN_CHANNELS] =
 	 "V","V"};
 */
 
-// AFMState
-//
-// Tom Hudson, September, 1997
-// Taken from global variables declared in microscape.c, animate.c,
-// interaction.c, and elsewhere.
+/** \file AFMState.C
 
-// These structs gather many of the global variables scattered throughout
-// the code into a single hierarchy
+Tom Hudson, September, 1997
+Taken from global variables declared in microscape.c, animate.c,
+interaction.c, and elsewhere.
 
-// The default parameters given here are, or were once, "reasonable",
-// according to the physicists.
+These structs gather many of the global variables scattered throughout
+the code into a single hierarchy
 
-// Flaws:
-//   We'd like to make this code part of a Microscope library someday.
-//   To do that, we need to get rid of the compile-time dependancy on
-// callbacks, which means using set_tcl_change_callback extensively.
+The default parameters given here are, or were once, "reasonable",
+according to the physicists.
+
+Flaws:
+  We'd like to make this code part of a Microscope library someday.
+  To do that, we need to get rid of the compile-time dependancy on
+callbacks, which means using set_tcl_change_callback extensively.
+*/
 
 // juliano 9/19/99 added conditional around this defn to supress warning
 #ifndef max  
 #define max(a,b) ((a)<(b)?(b):(a))
 #endif
 
-// ModifyState:
-//   State of the microscope during modification.
-//   This is explicitly kept separate from image mode state so that when
-// the user changes back and forth between the two she does not have to
-// completely reset setpoint, amplitude, and things like that.
 
 
 AFMModifyInitializationState::AFMModifyInitializationState (void) :
@@ -74,7 +70,12 @@ AFMModifyInitializationState::AFMModifyInitializationState (void) :
 
 }
 
-
+/** ModifyState:
+  State of the microscope during modification.
+  This is explicitly kept separate from image mode state so that when
+the user changes back and forth between the two she does not have to
+completely reset setpoint, amplitude, and things like that.
+*/
 AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     std_dev_samples (i.std_dev_samples ),
     std_dev_samples_cache (1),
@@ -155,9 +156,6 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
 
 {
 
-  // TODO:  consider getting default values from the microscope!
-  // (not done in previous version)
-
 //fprintf(stderr, "AFMModifyState constructor\n");
 }
 
@@ -170,11 +168,6 @@ AFMModifyState::~AFMModifyState (void) {
 
 
 
-// ImageState:
-//   State of the microscope during imaging.
-//   This is explicitly kept separate from modify mode state so that when
-// the user changes back and forth between the two she does not have to
-// completely reset setpoint, amplitude, and things like that.
 
 AFMImageInitializationState::AFMImageInitializationState (void) :
   mode (TAPPING),
@@ -187,8 +180,13 @@ AFMImageInitializationState::AFMImageInitializationState (void) :
 {
 
 }
-
-
+/**
+ImageState:
+  State of the microscope during imaging.
+  This is explicitly kept separate from modify mode state so that when
+the user changes back and forth between the two she does not have to
+completely reset setpoint, amplitude, and things like that.
+*/
 AFMImageState::AFMImageState (const AFMImageInitializationState & i) :
     mode_changed    (VRPN_FALSE),
     style_changed   (VRPN_FALSE),
@@ -215,10 +213,8 @@ AFMImageState::AFMImageState (const AFMImageInitializationState & i) :
 
 {
 
-  // TODO:  consider getting default values from the microscope!
-  // (not done in previous version)
 
-fprintf(stderr, "AFMImageState constructor\n");
+    //fprintf(stderr, "AFMImageState constructor\n");
 }
 
 // Destructor only here to keep the HP compilers happy.
@@ -302,7 +298,7 @@ void AFMScanlineState::getFinishPoint(BCPlane *p, float *x, float *y, float *z){
     return;
 }
 
-// moves scanline in the scanline coordinate system
+/// moves scanline in the scanline coordinate system
 void AFMScanlineState::moveScanlineRelative(float dist_fast_dir, 
 											float dist_slow_dir) {
 	float cosa = cos(angle*M_PI/180.0);
@@ -311,11 +307,12 @@ void AFMScanlineState::moveScanlineRelative(float dist_fast_dir,
 	y_end = (float)y_end + dist_fast_dir*sina - dist_slow_dir*cosa;
 }
 
-// Dataset:
-//   Lumps together a lot of the things that seemed sensible to keep
-// in one place as pertaining to the data rather than the 'scope itself.
-// This will change in the future.
-
+/**
+ Dataset:
+   Lumps together a lot of the things that seemed sensible to keep
+ in one place as pertaining to the data rather than the 'scope itself.
+ This will change in the future.
+*/
 AFMDataset::AFMDataset (void) :
     inputPoint (NULL),
     fc_inputPoint(NULL),
@@ -374,8 +371,7 @@ AFMInitializationState::AFMInitializationState (void) :
 
 
 
-// State not part of a particular mode or distinguished subset.
-
+/// State not part of a particular mode or distinguished subset.
 AFMState::AFMState (const AFMInitializationState & i) :
     StdDelay (200),
     StPtDelay (200),

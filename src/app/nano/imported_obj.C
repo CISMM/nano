@@ -1,14 +1,12 @@
-//imported_obj.C
 
-/**************************************************************************
+/** \file imported_obj.C
+
 Last modified 7/1/99 by Leila Plummer
-***************************************************************************/
-/**************************************************************************
+
 This file contains methods for classes imported_obj and imported_obj_list,
 which are used for importing objects, such as nanotubes from tube_foundry,
 using uberGraphics
-**************************************************************************/
-/**************************************************************************
+
 Things which I didn't get around to, and which critically need to be done: 
 --Add the ability to scale objects once they have been imported
   (this can probably be done fairly easily by adding a TCL scale variable
@@ -31,7 +29,7 @@ Things which I didn't get around to, and which probably should be done:
   than a separate window
 --Place object filenames at top of tabs, rather than "Object #"
 --Merge my sphere class with sphere stuff in globjects.c
-**************************************************************************/
+*/
 
 #include "imported_obj.h"
 
@@ -76,10 +74,11 @@ int imported_obj::imported_obj_count = 0; //initialize variable which keeps
 Methods for imported_obj
 *****************************************************************************/
 
+/** PURPOSE: Default constructor for imported_obj.  
+    Initializes basic variables, including
+    Tcl widgets to be shown in import_objects and View windows.  Sets up Tcl
+    callbacks for Tcl widgets.*/
 imported_obj::imported_obj(){
-/*PURPOSE: Default constructor for imported_obj.  Initializes basic variables, including
-           Tcl widgets to be shown in import_objects and View windows.  Sets up Tcl
-           callbacks for Tcl widgets.*/
   char widget_name[256];
   char page_name[256];
   char view_name[256];
@@ -169,14 +168,14 @@ void imported_obj::set_tcl_change_callback(){
   bond_colorB->addCallback(handle_bond_colorB_change,this);
 } /*imported_obj::set_tcl_change_callback*/
 
+/** @return The object's URPolygon*/
 URPolygon* imported_obj::GetURPoly(){
-/*RETURNS: The object's URPolygon*/
   return URPoly;
 } /*imported_obj::GetURPoly*/
 
+/** PURPOSE: Handle a change in the translate_x Tcl slider -- 
+    Translates object to x-position new_value*/
 void imported_obj::handle_translate_x_change(vrpn_int32 new_value,void *userdata){
-/*PURPOSE: Handle a change in the translate_x Tcl slider -- 
-           Translates object to x-position new_value*/
   const double *t;
   imported_obj *me = (imported_obj *)userdata;
 
@@ -184,9 +183,9 @@ void imported_obj::handle_translate_x_change(vrpn_int32 new_value,void *userdata
   me->URPoly->GetLocalXform().SetTranslate(new_value,t[1],t[2]);
 } /*imported_obj::handle_translate_x_change*/
 
+/** PURPOSE: Handle a change in the translate_y Tcl slider --
+    Translates object to y-position new_value*/
 void imported_obj::handle_translate_y_change(vrpn_int32 new_value,void *userdata){
-/*PURPOSE: Handle a change in the translate_y Tcl slider --
-           Translates object to y-position new_value*/
   const double *t;
   imported_obj *me = (imported_obj *)userdata;
 
@@ -194,9 +193,9 @@ void imported_obj::handle_translate_y_change(vrpn_int32 new_value,void *userdata
   me->URPoly->GetLocalXform().SetTranslate(t[0],new_value,t[2]);
 } /*imported_obj::handle_translate_y_change*/
 
-void imported_obj::handle_translate_z_change(vrpn_int32 new_value,void *userdata){
-/*PURPOSE: Handle a change in the translate_z Tcl slider --
+/** PURPOSE: Handle a change in the translate_z Tcl slider --
            Translates object to z-position new_value*/
+void imported_obj::handle_translate_z_change(vrpn_int32 new_value,void *userdata){
   const double *t;
   imported_obj *me = (imported_obj *)userdata;
 
@@ -204,11 +203,11 @@ void imported_obj::handle_translate_z_change(vrpn_int32 new_value,void *userdata
   me->URPoly->GetLocalXform().SetTranslate(t[0],t[1],new_value);
 } /*imported_obj::handle_translate_z_change*/
 
-void imported_obj::handle_rotate_x_change (vrpn_int32 new_value, void *userdata) {
-/*PURPOSE: Handle a change in the rotate_x Tcl slider --
-           Causes combined rotation around x-axis to be new_value degrees*/
-  /**NOTE: Basically takes a rotation function from the quat library and 
+/** PURPOSE: Handle a change in the rotate_x Tcl slider --
+           Causes combined rotation around x-axis to be new_value degrees
+NOTE: Basically takes a rotation function from the quat library and 
            modifies it for our purposes**/
+void imported_obj::handle_rotate_x_change (vrpn_int32 new_value, void *userdata) {
   q_type r;
   double length, cosA, sinA;
   double x, y, z, angle, desired_angle;
@@ -256,11 +255,11 @@ void imported_obj::handle_rotate_x_change (vrpn_int32 new_value, void *userdata)
   me->URPoly->GetLocalXform().AddRotate(r);
 } /*imported_obj::handle_rotate_x_change*/
 
-void imported_obj::handle_rotate_y_change (vrpn_int32 new_value, void *userdata) {
-/*PURPOSE: Handle a change in the rotate_y Tcl slider --
-           Causes combined rotation around y-axis to be new_value degrees*/
-  /**NOTE: Basically takes a rotation function from the quat library and 
+/** PURPOSE: Handle a change in the rotate_y Tcl slider --
+           Causes combined rotation around y-axis to be new_value degrees
+NOTE: Basically takes a rotation function from the quat library and 
            modifies it for our purposes**/
+void imported_obj::handle_rotate_y_change (vrpn_int32 new_value, void *userdata) {
   q_type r;
   double length, cosA, sinA;
   double x, y, z, angle, desired_angle;
@@ -306,11 +305,11 @@ void imported_obj::handle_rotate_y_change (vrpn_int32 new_value, void *userdata)
   me->URPoly->GetLocalXform().AddRotate(r);
 } /*imported_obj::handle_rotate_y_change*/
 
+/** PURPOSE: Handle a change in the rotate_z Tcl slider --
+           Causes combined rotation around z-axis to be new_value degrees
+NOTE: Basically takes a rotation function from the quat library and 
+           modifies it for our purposes */
 void imported_obj::handle_rotate_z_change (vrpn_int32 new_value, void *userdata) {
-/*PURPOSE: Handle a change in the rotate_z Tcl slider --
-           Causes combined rotation around z-axis to be new_value degrees*/
-  /**NOTE: Basically takes a rotation function from the quat library and 
-           modifies it for our purposes**/
   q_type r;
   double length, cosA, sinA;
   double x, y, z, angle, desired_angle;
@@ -357,19 +356,19 @@ void imported_obj::handle_rotate_z_change (vrpn_int32 new_value, void *userdata)
   me->URPoly->GetLocalXform().AddRotate(r);
 } /*imported_obj::handle_rotate_z_change*/
 
-void imported_obj::handle_scale_change(vrpn_float64 new_value, void *userdata) {
-  /*PURPOSE: Handle a change in the scale Tcl slider --
+/** PURPOSE: Handle a change in the scale Tcl slider --
 	     Causes the object to be drawn using the new scale factor */
+void imported_obj::handle_scale_change(vrpn_float64 new_value, void *userdata) {
 
   imported_obj *me = (imported_obj *)userdata;
 
   me->URPoly->GetLocalXform().SetScale(new_value);
 } /*imported_obj::handle_scale_change*/
 
+/** PURPOSE: Handle a change of import mode, which is caused by pressing the
+             Atoms or Bonds button, thereby changing the import mode */
 void imported_obj::handle_import_mode_change (vrpn_int32 /*new_value*/, 
 					      void *userdata) {
-  /*PURPOSE: Handle a change of import mode, which is caused by pressing the
-             Atoms or Bonds button, thereby changing the import mode*/
   char view_name[256];
   char widget_name[256];
   imported_obj *me = (imported_obj *)userdata;
@@ -442,10 +441,10 @@ void imported_obj::handle_import_mode_change (vrpn_int32 /*new_value*/,
   me->GetURPoly()->ReloadGeometry();
 } /*imported_obj::handle_import_mode_change*/
 
+/** PURPOSE: Handle a change of the visibility mode, which is caused
+           by pressing the Hide or Show button*/
 void imported_obj::handle_visibility_mode_change (vrpn_int32 /*new_value*/, 
 						  void *userdata) {
-/*PURPOSE: Handle a change of the visibility mode, which is caused by pressing
-           the Hide or Show button*/
 
   imported_obj *me = (imported_obj *)userdata;
 
@@ -464,8 +463,8 @@ void imported_obj::handle_visibility_mode_change (vrpn_int32 /*new_value*/,
   me->GetURPoly()->ReloadGeometry();
 } /*imported_obj::handle_visibility_mode_change*/
 
+/** PURPOSE: Handle a change of the bond_width slider*/
 void imported_obj::handle_bond_width_change (vrpn_float64 new_value, void *userdata) {
-/*PURPOSE: Handle a change of the bond_width slider*/
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI bond_width value
   me->GetURPoly()->GetMSIFile()->SetBondWidth(new_value);
@@ -474,8 +473,8 @@ void imported_obj::handle_bond_width_change (vrpn_float64 new_value, void *userd
   me->GetURPoly()->ReloadGeometry();
 } /*imported_obj::handle_bond_width_change*/
 
+/** PURPOSE: Handle a change of the bond's R color coordinate*/
 void imported_obj::handle_bond_colorR_change (vrpn_float64 new_value, void *userdata) {
-  /*PURPOSE: Handle a change of the bond's R color coordinate*/
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI bond R color coordinate
   me->GetURPoly()->GetMSIFile()->SetBondColorR(new_value);
@@ -484,8 +483,8 @@ void imported_obj::handle_bond_colorR_change (vrpn_float64 new_value, void *user
   me->GetURPoly()->ReloadGeometry();
 } /*imported_obj::handle_bond_colorR_change*/
 
+/** PURPOSE: Handle a change of the bond's G color coordinate*/
 void imported_obj::handle_bond_colorG_change (vrpn_float64 new_value, void *userdata) {
-  /*PURPOSE: Handle a change of the bond's G color coordinate*/
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI bond G color coordinate
   me->GetURPoly()->GetMSIFile()->SetBondColorG(new_value);
@@ -494,8 +493,8 @@ void imported_obj::handle_bond_colorG_change (vrpn_float64 new_value, void *user
   me->GetURPoly()->ReloadGeometry();
 } /*imported_obj::handle_bond_colorG_change*/
 
+/** PURPOSE: Handle a change of the bond's B color coordinate*/
 void imported_obj::handle_bond_colorB_change (vrpn_float64 new_value, void *userdata) {
-  /*PURPOSE: Handle a change of the bond's B color coordinate*/
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI bond B color coordinate
   me->GetURPoly()->GetMSIFile()->SetBondColorB(new_value);
@@ -504,8 +503,8 @@ void imported_obj::handle_bond_colorB_change (vrpn_float64 new_value, void *user
   me->GetURPoly()->ReloadGeometry();
 } /*imported_obj::handle_bond_colorB_change*/
 
+/** PURPOSE: Handle a change of the sphere_radius widget*/
 void imported_obj::handle_sphere_radius_change (vrpn_float64 new_value, void *userdata) {
-  /*PURPOSE: Handle a change of the sphere_radius widget*/
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI radius value
   me->GetURPoly()->GetMSIFile()->SetSphereRadius(new_value);
@@ -514,8 +513,8 @@ void imported_obj::handle_sphere_radius_change (vrpn_float64 new_value, void *us
   me->GetURPoly()->ReloadGeometry();
 } /*imported_obj::handle_sphere_radius_change*/
 
+/**PURPOSE: Handle a change of the sphere_tesselation widget*/
 void imported_obj::handle_sphere_tesselation_change (vrpn_int32 new_value, void *userdata) {
-  /*PURPOSE: Handle a change of the sphere_tesselation widget*/
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI sphere depth value
   me->GetURPoly()->GetMSIFile()->SetSphereDepth(new_value);
@@ -524,8 +523,8 @@ void imported_obj::handle_sphere_tesselation_change (vrpn_int32 new_value, void 
   me->GetURPoly()->ReloadGeometry();
 } /*imported_obj::handle_sphere_tesselation_change*/
 
+/** PURPOSE: Handle a change of the sphere_color's R coordinate*/
 void imported_obj::handle_sphere_colorR_change (vrpn_float64 new_value, void *userdata) {
-  /*PURPOSE: Handle a change of the sphere_color's R coordinate*/
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI sphere color R coordinate
   me->GetURPoly()->GetMSIFile()->SetSphereColorR(new_value);
@@ -534,8 +533,8 @@ void imported_obj::handle_sphere_colorR_change (vrpn_float64 new_value, void *us
   me->GetURPoly()->ReloadGeometry();
 } /*imported_obj::handle_sphere_colorR_change*/
 
+/** PURPOSE: Handle a change of the sphere_color's G coordinate*/
 void imported_obj::handle_sphere_colorG_change (vrpn_float64 new_value, void *userdata) {
-  /*PURPOSE: Handle a change of the sphere_color's G coordinate*/
   imported_obj *me = (imported_obj *)userdata;
   me->GetURPoly()->GetMSIFile()->SetSphereColorG(new_value);
   me->sphere_colorG_value = new_value;
@@ -543,8 +542,8 @@ void imported_obj::handle_sphere_colorG_change (vrpn_float64 new_value, void *us
   me->GetURPoly()->ReloadGeometry();
 } /*imported_obj::handle_sphere_colorG_change*/
 
+/** PURPOSE: Handle a change of the sphere_color's B coordinate*/
 void imported_obj::handle_sphere_colorB_change (vrpn_float64 new_value, void *userdata) {
-  /*PURPOSE: Handle a change of the sphere_color's B coordinate*/
   imported_obj *me = (imported_obj *)userdata;
   me->GetURPoly()->GetMSIFile()->SetSphereColorB(new_value);
   me->sphere_colorB_value = new_value;
@@ -565,13 +564,13 @@ imported_obj_list::imported_obj_list() { //default constructor
   imported_obj_list_tail = NULL;
 } /*imported_obj_list::imported_obj_list*/
 
-void imported_obj_list::import_new_obj(char* filename,UTree *World) {
-  /*PURPOSE: Create an import_obj and add it to the display list.  Also, add
+/** PURPOSE: Create an import_obj and add it to the display list.  Also, add
              its URPoly to the uberGraphics World, and set its basic
              uberGraphics values
-    ACCEPTS: Filename of new object file whose geometry will be loaded
-             Pointer to uberGraphics World to which we are going to add
+    @param filename Filename of new object file whose geometry will be loaded
+    @param World Pointer to uberGraphics World to which we are going to add
                the new object*/
+void imported_obj_list::import_new_obj(char* filename,UTree *World) {
 
   //Empty linked list
   if(imported_obj_list_head==NULL){

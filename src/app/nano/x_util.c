@@ -254,8 +254,8 @@ void clearWindow()
 }
 
 
-/* The origin of the X window is in the upper left corner. */
-/* This differs from Xlib's view of the world, which is in the
+/** The origin of the X window is in the upper left corner.
+ * This differs from Xlib's view of the world, which is in the
  * lower left.  As a result, the y axis must be subtracted from the
  * bottom. */
 
@@ -273,7 +273,7 @@ void	put_pixel(int x, int y, int color)
 	XFillRectangle(display, window, gc, x*size, screen_y, size, size);
 }
 
-/* This routine is called to set the range of values to be displayed on
+/** This routine is called to set the range of values to be displayed on
  * the window.  This is used to determine how to scale values for the
  * put_pixel() routine.
  * If max < min, they are swapped. */
@@ -288,7 +288,7 @@ void	x_set_scale(double min, double max) {
 	}
 }
 
-/* This routine will plot an incoming value based on the scale that has
+/** This routine will plot an incoming value based on the scale that has
  * been set for the x window. */
 
 void	x_put_value(int x, int y, double value)
@@ -298,8 +298,7 @@ void	x_put_value(int x, int y, double value)
 
 // TCH 6 May 98
 //
-// Draws one pulse/scrape marker.
-
+/// Draws one pulse/scrape marker.
 int x_draw_marker (const nmb_LocationInfo & m, void *) {
   double frac_x, frac_y;
 
@@ -411,7 +410,7 @@ restore_window(TwoDLineStrip * strip)
   return(0);
 }
 
-/* This function puts a dot on the screen. It takes parameters x,y ranging from 0 to 1 and maps them to a screen coordinate (qliu 7/10/95)*/
+/** This function puts a dot on the screen. It takes parameters x,y ranging from 0 to 1 and maps them to a screen coordinate (qliu 7/10/95)*/
 void	put_dot(double x, double y, /* point from 0 to 1 */
 		int color, /* Cmap entry for the pixel */
 		int ratio)
@@ -433,7 +432,7 @@ void	put_dot(double x, double y, /* point from 0 to 1 */
 }
 
 
-/* This routine will put a line in the highlight color (red) from the
+/** This routine will put a line in the highlight color (red) from the
  * start (sx,sy) to the end (ex,ey).  Coordinates are the same as for
  * put_pixel() and put_dot(). */
 void	put_line_xwin(int sx,int sy, int ex,int ey)
@@ -442,7 +441,7 @@ void	put_line_xwin(int sx,int sy, int ex,int ey)
 	XDrawLine(display,window,gc, sx,(WINSIZE-1)-sy, ex,(WINSIZE-1)-ey);
 }
 
-/*	This routine will return >0 if there was a button press event
+/**	This routine will return >0 if there was a button press event
  * in the event queue for the window and 0 if there was not.  If there
  * was an event, then the x and y coordinates of the press are returned.
  *	The number of the button that was pressed is returned.
@@ -469,12 +468,11 @@ button_pressed_in_window(int *x, int* y)
 	return(button.button);
 }
 
-/*	This routine will return >0 if there was a button motion event
+/**	This routine will return >0 if there was a button motion event
  * in the event queue for the window and 0 if there was not.  If there
  * was an event, then the x and y coordinates of the press are returned.
  *	The number of the button that was pressed is returned.
  *	If there is an error, then -1 is returned. */
-
 int	button2_moved_in_window(int* x, int* y)
 {
 	XEvent		event;		/* The event that is checked */
@@ -496,7 +494,7 @@ int	button2_moved_in_window(int* x, int* y)
 	return(1);
 }
 
-/*	This routine will return >0 if there was a button RELEASE event
+/**	This routine will return >0 if there was a button RELEASE event
  * in the event queue for the window and 0 if there was not.  If there
  * was an event, then the x and y coordinates of the press are returned.
  *	The number of the button that was pressed is returned.
@@ -525,7 +523,7 @@ int	button_released_in_window(int *x, int* y)
 }
 
 
-/*	This routine will map from the window coordinates returned from the
+/**	This routine will map from the window coordinates returned from the
  * button_xxx_in_window routines into region space.
  *	The location will be in nanometers, since that is what the surface
  * is in.
@@ -553,8 +551,7 @@ void	mouse_xy_to_region(int x, int y, double* rx, double* ry)
               *ry * (dataset->inputGrid->maxY() - dataset->inputGrid->minY());
 }
 
-// Convert from nm in the dataset to xwindow coordinates 
-
+/// Convert from nm in the dataset to xwindow coordinates 
 void region_xy_to_mouse (double x, double y, int * mx, int * my) {
 
   int points_per_pixel, covered_x, covered_y;

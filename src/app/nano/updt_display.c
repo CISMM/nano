@@ -8,13 +8,13 @@
 /* externs */
 //extern	int	new_epoch;	/* animate.c */
 
-/*****************************************************************************
+/**
 
 generic function to update display
 
-******************************************************************************/
 
-// dependence on globals, and other creative hacking, removed 19 Aug 97 by TCH
+dependence on globals, and other creative hacking, removed 19 Aug 97 by TCH
+******************************************************************************/
 vrpn_bool updt_display (const long _displayPeriod, struct timeval & _dTime,
                         vrpn_bool & _stmNewFrame) {
   struct timeval	now;

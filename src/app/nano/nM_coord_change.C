@@ -1,4 +1,4 @@
-/* nM_coord_change.C
+/** \file nM_coord_change.C
 	last modified by Tom Hudson on 23 Feb 2000.
 	This is the server that takes the position/orientation messages from
 	the phantom, transforms these into world-space coordinates, and then

@@ -1,11 +1,12 @@
-// renderer.C
-// Tom Hudson, September 1998
-//
-// This is the core of a process to render frames for the nanoManipulator.
-// Controlled by an nmm_Graphics_Remote.  Has an nmm_Microscope_Remote
-// to get the dataset and microscope state to be rendered from the
-// microscope.
+/** \file renderer.C
 
+\author Tom Hudson, September 1998
+
+This is the core of a process to render frames for the nanoManipulator.
+Controlled by an nmm_Graphics_Remote.  Has an nmm_Microscope_Remote
+to get the dataset and microscope state to be rendered from the
+microscope.
+*/
 #include <stdio.h>
 #include <signal.h>
 
@@ -39,13 +40,12 @@ nmg_Graphics_Implementation * graphics = NULL;
 vrpn_Connection * microscope_connection = NULL;
 vrpn_Connection * graphics_connection = NULL;
 
-// RendererInitializationState carries everything that can be set
-// by command line arguments.
-// Default values are initialized in constructor.
-
 static char tcl_default_dir [] = "/afs/cs.unc.edu/project/stm/bin/";
 static char defaultColormapDirectory [] = "/afs/unc/proj/stm/etc/colormaps";
 
+/** RendererInitializationState carries everything that can be set
+ by command line arguments.
+ Default values are initialized in constructor. */
 struct RendererInitializationState {
   AFMInitializationState afm;
   char * microscopeName;
@@ -103,8 +103,7 @@ RendererInitializationState::RendererInitializationState (void) :
   }
 }
 
-// Die, gracefully.
-
+/// Die, gracefully.
 void handle_interrupt (int) {
 
   fprintf(stderr, "Got an interrupt...\n");
@@ -140,10 +139,9 @@ void handle_interrupt (int) {
   exit(0);
 }
 
-// Quit, gracefully.
-// TODO:  add more command-line options from microscape.
-//        crib the text directly from there for familiarity's sake.
-
+/// Quit, gracefully.
+/// TODO:  add more command-line options from microscape.
+///        crib the text directly from there for familiarity's sake.
 void usage (const char * argv0) {
   fprintf(stderr, "Usage:  %s -d device [-grid <x> <y>]\n", argv0);
   fprintf(stderr, "        [-region lowx lowy highx highy]\n");
@@ -162,10 +160,9 @@ void usage (const char * argv0) {
 
 }
 
-// Parse argv and write the values into s.
-// Return nonzero on failure.
-// TODO:  add more command-line options from microscape.
-
+/// Parse argv and write the values into s.
+/// Return nonzero on failure.
+/// TODO:  add more command-line options from microscape.
 int parse (RendererInitializationState * s, int argc, char ** argv) {
 
   int ret = 0;

@@ -86,9 +86,9 @@ class Timer {
 };
 
 extern Timer mytimer;
-extern int   timer_verbosity; // How much information about timer to print
+extern int   timer_verbosity; ///< How much information about timer to print
 //extern int   time_frame;      // How much frames to time
-extern int   framelog;        // Flag to see if frame time log is on
+extern int   framelog;        ///< Flag to see if frame time log is on
 
 #define TIMERVERBOSE(level, timer, msg) if (timer_verbosity>=level) timer.read(msg);
 #define TIMERLOG(timer) if (framelog != 0) timer.log();

@@ -60,7 +60,7 @@ extern int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM);
 
 
 //-----------------------------------------------------------------------
-// Configure triangle-display methods
+/// Configure triangle-display methods
 Tclvar_int config_filled_polygons
      ("filled_triangles", 1, handle_config_fp_change, NULL);
 Tclvar_int config_smooth_shading
@@ -143,7 +143,6 @@ x_init(char* argv[])
  * callback for vrpn_Button_Remote for phantom stylus button (registered below)
    there is only one button so we just put the state into the state variable
   *********/
-   
 void handle_phant_button_change(void *userdata, const vrpn_BUTTONCB b){
    *(int *)userdata = b.state;
 }
@@ -172,7 +171,7 @@ void handle_phantom_error(void * /*userdata*/, const vrpn_FORCEERRORCB ferr){
    }
 }
 
-/* callbacks for vrpn_Button_Remote and vrpn_Analog_Remote for sgi button/dial
+/** callbacks for vrpn_Button_Remote and vrpn_Analog_Remote for sgi button/dial
    box (registered below)
  */
 void handle_bdbox_button_change(void *userdata, const vrpn_BUTTONCB b){
@@ -258,7 +257,6 @@ phantom_init()
    peripheral_init - initialize force, tracker, buttons, sound devices
  *
  *****************************************************************************/
-
 int
 peripheral_init()
 {
@@ -360,7 +358,6 @@ int     describe_version_to_stream(stm_stream *s)
    stm_init - initialize stm
  *
  *****************************************************************************/
-
 int stm_init (const vrpn_bool set_region,
               const vrpn_bool set_mode, const int socketType,
               const char * SPMhost,

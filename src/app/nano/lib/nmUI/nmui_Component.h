@@ -7,7 +7,7 @@
 #include <vrpn_Types.h>  // for vrpn_bool
 
 #define NMUI_COMPONENT_MAX_SIZE 100
-  // No more than 100 linkvars of each type in the component.
+  ///< No more than 100 linkvars of each type in the component.
 
 // name is limited to 30 characters so that we can fit in a VRPN
 // sender ID
@@ -165,14 +165,16 @@ class nmui_Component {
     void registerSyncCompleteHandler (nmui_SyncCompleteHandler, void *);
 
     vrpn_bool d_maintain;
-      // Controls behavior of handle_syncComplete().
-      // If 0, assumes the syncComplete message recieved is
-      // the completion of a copyReplica() call.  If 1,
-      // assume it's the completion of a syncReplica() call.
-      // Probably should be rewritten to have two different
-      // syncRequest/syncComplete messages.
-      // This bool *could* get corrupted by interleaving
-      // presses of sync and copy, but that might not hurt anything.
+      /**<
+	 Controls behavior of handle_syncComplete().
+	 If 0, assumes the syncComplete message recieved is
+	 the completion of a copyReplica() call.  If 1,
+	 assume it's the completion of a syncReplica() call.
+	 Probably should be rewritten to have two different
+	 syncRequest/syncComplete messages.
+	 This bool *could* get corrupted by interleaving
+	 presses of sync and copy, but that might not hurt anything.
+      */
 
     static int handle_reconnect (void *, vrpn_HANDLERPARAM);
       /**<
@@ -205,7 +207,7 @@ class nmui_Component {
     nmui_Component * d_components [NMUI_COMPONENT_MAX_SIZE];
 
     int d_synchronizedTo;
-      // state for d_synchronizedTo
+      ///< state for d_synchronizedTo
 
     int d_numPeers;
 
@@ -241,11 +243,11 @@ class nmui_Component {
     lockHandlerEntry * d_unlockHandlers;
 
     void do_handle_syncRequest (void);
-      // do_handle_syncRequest() is the part of handle_syncRequest()
-      // that actually needs to recurse down the tree, calling handlers
-      // that may be registered at subnodes.
-      // HACK:  there should probably be an equivalent function for
-      // handle_syncComplete().
+    /**< do_handle_syncRequest() is the part of handle_syncRequest()
+      that actually needs to recurse down the tree, calling handlers
+      that may be registered at subnodes.
+      HACK:  there should probably be an equivalent function for
+      handle_syncComplete(). */
     static int handle_syncRequest (void *, vrpn_HANDLERPARAM);
     static int handle_syncComplete (void *, vrpn_HANDLERPARAM);
 

@@ -1,6 +1,5 @@
-/*****************************************************************************
- *
-    termio.c - raw terminal i/o routines
+/** \file termio.c 
+    raw terminal i/o routines
     
     
     Overview:

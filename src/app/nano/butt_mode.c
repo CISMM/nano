@@ -2,16 +2,18 @@
 
 #include "microscape.h"  // for #defines
 
-/* Button bit values returned by vrpn */
-// Arranged like this:
-//      0   1   2   3
-//  4   5   6   7   8   9
-// 10  11  12  13  14  15
-// 16  17  18  19  20  21
-// 22  23  24  25  26  27
-//     28  29  30  31
+/** \file butt_mode.c
+Button bit values returned by vrpn
+Arranged like this:
+     0   1   2   3
+ 4   5   6   7   8   9
+10  11  12  13  14  15
+16  17  18  19  20  21
+22  23  24  25  26  27
+    28  29  30  31
+ */
 
-// 0 is the trigger on the phantom, duplicated on button box
+/// 0 is the trigger on the phantom, duplicated on button box
 extern const int TRIGGER_BT = 0;
 extern const int MENU_BT    = 1;
 extern const int FORC_BT    = 2;
@@ -36,8 +38,6 @@ extern const int XY_LOCK_BT = 20;
 extern const int PH_RSET_BT = 21; // reset phantom
 extern const int COMMIT_BT  = 22;
 extern const int CANCEL_BT  = 23;
-// We found a problem in adlib. None of the buttons - no longer a problem (vrpn)
-// below work on Histidine...
 extern const int SLINE_BT   = 24;
 extern const int NULL1_BT   = 25;
 extern const int NULL2_BT   = 26;
@@ -47,7 +47,7 @@ extern const int NULL5_BT   = 29;
 extern const int NULL6_BT   = 30;
 extern const int NULL7_BT   = 31;
 
-/* allow the user to select a mode with a button press.
+/** allow the user to select a mode with a button press.
  * mode <-> button defined in butt_mode.h.
  * all buttons select a specific mode.
  */

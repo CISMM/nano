@@ -58,11 +58,11 @@ static  int  knobs_set_from_c;
 
 static void (* command_handler) (char *, vrpn_bool *, int);
 
-Tcl_Interp *get_the_interpreter(void)
 /***********************************************************
  * here's a little function that will let outsiders accesss
  * the interpreter once it gets created in init_Tk_control_panels
  ***********************************************************/
+Tcl_Interp *get_the_interpreter(void)
 {
   return tk_control_interp;
 }
@@ -71,8 +71,7 @@ void set_Tk_command_handler (void (* f) (char *, vrpn_bool *, int)) {
   command_handler = f;
 }
 
-/* Trace routine that handles updates to user_0_mode variable from Tcl */
-
+/** Trace routine that handles updates to user_0_mode variable from Tcl */
 char *handle_Tk_mode_change(ClientData /*clientData*/,
 			    Tcl_Interp *interp, char *name1, char *name2, 
 			    int /*flags*/)
@@ -218,9 +217,8 @@ char * handle_term_input (ClientData, Tcl_Interp * interp,
 // standard automatic TclLinkvar stuff
 //char * handle_Tk_x_value_change
 
-/* Initialize the Tk control panels and connect them up to the variables
+/** Initialize the Tk control panels and connect them up to the variables
  * they will be controlling */
-
 int	init_Tk_control_panels (const char * tcl_script_dir,
                                 vrpn_bool useOptimism)
 {
@@ -390,9 +388,8 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 }
 
 
-/* Check C variable that are associated with Tcl variables.  If the C
+/** Check C variable that are associated with Tcl variables.  If the C
  * variables have changed, set the Tcl variables as a result. */
-
 int	poll_Tk_control_panels(void)
 {
 	char	cvalue[100];

@@ -20,6 +20,10 @@ int nmui_Util::getHandInWorld (int user, q_vec_type & position) {
 }
 
 // static
+/** Takes a position in world space, and makes sure it is inside
+ the edges of the plane passed in. This works because the boundaries
+of the plane are defined in world space. Also scales the z component
+of the hand position into plane coordinates. */
 int nmui_Util::clipPosition (BCPlane * plane, q_vec_type & position) {
   if (!plane) {
     fprintf(stderr, "Error in nmui_Util::clipPosition:  "
@@ -40,8 +44,8 @@ int nmui_Util::clipPosition (BCPlane * plane, q_vec_type & position) {
   return 0;
 }
 
-// Constrain movement to a line, represented by the first two points in the
-// position_list.
+/** Constrain movement to a line, represented by the first two points in the
+    position_list. */
 
 // static
 int nmui_Util::clipPositionLineConstraint (BCPlane * plane, 

@@ -25,6 +25,8 @@ class BCGrid
   friend class TopoFile;
   public:
 
+    BCGrid();
+
     BCGrid(short num_x, short num_y, 
 	   double min_x, double max_x, 
 	   double min_y, double max_y,

@@ -4,7 +4,8 @@
 
 #include <stdio.h>
 
-/* personal little nothing's - mf
+/** \file mf.h 
+**    personal little nothing's - mf
 **
 ** These provide inline documentation with optional printed traces
 ** in the code.  They progress in detail of debugging downward.

@@ -34,7 +34,7 @@ int BCGrid::_read_mode = READ_DEVICE;
 int BCGrid::_times_invoked = 0;
 
 /**
-BCGridFill --> Called by constructurs
+BCGridFill --> Called by constructors
    description: 
         author: Kimberly Passarella Jones
  last modified: 11-2-95 by Russ Taylor
@@ -205,37 +205,63 @@ BCGrid --> constructor
  last modified: 9-10-95 by Kimberly Passarella Jones
 */
 BCGrid::BCGrid(short num_x, short num_y, 
-		       double min_x, double max_x, 
-		       double min_y, double max_y)
+	       double min_x, double max_x, 
+	       double min_y, double max_y) :
+    _next(NULL),
+    d_minMaxCB(NULL),
+
+    _num_x(num_x),
+    _num_y(num_y),
+    _min_x(min_x),
+    _max_x(max_x),
+    _min_y(min_y),
+    _max_y(max_y),
+    _derange_x(1.0), 
+    _derange_y(1.0), 
+    _num_planes(0),
+
+    _head(NULL),
+
+    _detection_sensitivity(1.0),
+    _attenuation_in_z(1.0),
+    _z_max(-1.0e33),
+    _input_sensitivity(1.0),
+    _z_sensitivity(1.0),
+    _input_1_max(1.0),
+    _input_2_max(1.0),
+    _modified(1)
 {    
    //BCDebug debug("BCGrid::BCGrid", GRID_CODE);
 
-    d_minMaxCB = NULL;
-
-    _num_x = num_x;
-    _num_y = num_y;
-    _min_x = min_x;
-    _max_x = max_x;
-    _min_y = min_y;
-    _max_y = max_y;
-    _derange_x = 1.0; 
-    _derange_y = 1.0; 
-    _num_planes = 0;
-
-    _head = NULL;
-
-    _next = NULL;
-    _detection_sensitivity = 1.0;
-    _attenuation_in_z = 1.0;
-    _z_max = -1.0e33;; 
-    _input_sensitivity = 1.0;
-    _z_sensitivity = 1.0;
-    _input_1_max = 1.0;
-    _input_2_max = 1.0;
-
-    _modified = 1;
 }
 
+BCGrid::BCGrid() :
+    _next(NULL),
+    d_minMaxCB(NULL),
+
+    _num_x(3),
+    _num_y(3),
+    _min_x(-1),
+    _max_x(1),
+    _min_y(-1),
+    _max_y(1),
+    _derange_x(1.0), 
+    _derange_y(1.0), 
+    _num_planes(0),
+
+    _head(NULL),
+
+    _detection_sensitivity(1.0),
+    _attenuation_in_z(1.0),
+    _z_max(-1.0e33),
+    _input_sensitivity(1.0),
+    _z_sensitivity(1.0),
+    _input_1_max(1.0),
+    _input_2_max(1.0),
+    _modified(1)
+{    
+   //BCDebug debug("BCGrid::BCGrid", GRID_CODE);
+}
 // Copy constructor
 
 BCGrid::BCGrid (const BCGrid * grid) :

@@ -173,7 +173,7 @@ float distance_of_linestrip(TwoDLineStrip strip,int seg)
   return(temp);
 }
 
-/* function construct a float array from a line strip for display using Tk;
+/** function construct a float array from a line strip for display using Tk;
    return number of floats initiated if successful, return -1 otherwise 
    function f takes two points and a float as arguments
    only catch: the size has to been smaller than the size of the array.
@@ -218,7 +218,7 @@ int construct_float_from_linestrip(float a[], TwoDLineStrip strip, int wi,
   return(index-1);
 }
 
-/* Scale the array so that its values all run from -hi/2 to hi/2.  Then, return
+/** Scale the array so that its values all run from -hi/2 to hi/2.  Then, return
  * the scale factor needed to map the values back to distance values.
  * This produces and offset in the values, but differences between two
  * values will still be valid. */

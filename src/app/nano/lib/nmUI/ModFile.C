@@ -84,6 +84,7 @@ int ModFile::ReceiveNewPoint (void * userdata, const Point_results * _p) {
 }
 
 void ModFile::ShowModFile (void) {
+    // Turns out we don't want to pop up the modfile window. Ever.
     /*
    char command [100];
    sprintf(command, "show_mod_win");

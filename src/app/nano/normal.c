@@ -24,8 +24,6 @@
  * refers to the part of the grid for which space has been allocated.	      *
  **mmm adapted from version on GP's.  could be better, but fine for now	      *
  ******************************************************************************/
-
-
 int Compute_Norm(int x, int y,VectorType Normal, BCPlane* plane)
 {
 	double	dx = (plane->maxX() - plane->minX()) / (plane->numX()-1);

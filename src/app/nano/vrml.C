@@ -1,5 +1,4 @@
-/*
- *				vrml.C
+/** \file vrml.C
  *					adapted to VRML by Will Allen
  * 	This file contains the functions needed to write out a VRML file
  * containing a description of the surface that is currently mapped to
@@ -76,7 +75,7 @@ static inline	void	vector_normalize(GLfloat a[3])
 }
 
 
-/*	This routine finds the normal to the surface at the given grid
+/**	This routine finds the normal to the surface at the given grid
  * point.  It does this by averaging the normals with the four 4-connected
  * points in the grid (one away in x or y.)
  *	This routine takes into account the current stride in x and y

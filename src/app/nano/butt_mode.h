@@ -1,5 +1,7 @@
-/* defines for which buttons cause selection of which modes.
-**/
+/** \file butt_mode.h
+Code to control the SGI button boxes. 
+Defines which buttons cause selection of which modes.
+*/
 
 extern const int TRIGGER_BT;
 extern const int MENU_BT;

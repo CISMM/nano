@@ -11,17 +11,17 @@ int interaction (int bdbox_buttons [], double bdbox_dials [],
 int set_aim_line_color (float);
 
 // NANOX
-// Set up synchronization variables with meaningful values.
+/// Set up synchronization variables with meaningful values.
 
 void initializeInteraction (void);
 
 // NANOX
-// Send our new proposed world_from_room transform
-// (v_world.users[whichUser].xforms[0]) out into the net to be
-// synchronized if necessary.  There SHOULD be a callback that makes
-// sure that the new values get written into Tcl;  we need to verify
-// that it's actually firing.  If src is NULL reads directly out of
-// vlib (v_world.users[whichUser].xforms[0]).
+/** Send our new proposed world_from_room transform
+(v_world.users[whichUser].xforms[0]) out into the net to be
+ synchronized if necessary.  There SHOULD be a callback that makes
+ sure that the new values get written into Tcl;  we need to verify
+ that it's actually firing.  If src is NULL reads directly out of
+ vlib (v_world.users[whichUser].xforms[0]). */
 
 void updateWorldFromRoom (v_xform_type * src = NULL);
 

@@ -129,8 +129,9 @@ UTree Textures;
 /*********** IMPORT OBJECTS **************/
 
 static const char * import_filename_string;
-   //the filename containing the geometry of the object we want to import
-static imported_obj_list* object_list = NULL; //a linked list of imported_objs
+   ///<the filename containing the geometry of the object we want to import
+static imported_obj_list* object_list = NULL; 
+   ///<a linked list of imported_objs
 
 /*********** UGRAPHICS *******************/
 
@@ -167,7 +168,7 @@ static void handle_color_slider_change (vrpn_float64, void *);
 static void handle_rulergrid_offset_change (vrpn_float64, void *);
 static void handle_rulergrid_scale_change (vrpn_float64, void *);
 
-//so we can track hand position of collaborator(s)
+///so we can track hand position of collaborator(s)
 static void handle_collab_machine_name_change(const char *new_value, void *userdata);
 
 static  void    handle_x_dataset_change(const char *new_value, void *userdata);
@@ -183,7 +184,7 @@ static	void	handle_adhesion_average_change(vrpn_float64 new_value, void *userdat
 static	void	handle_filterPlaneName_change(const char *new_value, void *userdata);
 static  void    handle_rulergrid_selected_change(vrpn_int32 new_value, void *userdata);
 static	void	handle_rulergrid_color_change(vrpn_int32 new_value, void *userdata);
-//need this separate from color because of float new_value
+///need this separate from color because of float new_value
 static  void    handle_rulergrid_opacity_change(vrpn_float64 new_value, void *userdata);
 static	void	handle_friction_slider_change (vrpn_float64, void * userdata);
 static  void	handle_bump_slider_change (vrpn_float64, void * userdata);
@@ -213,19 +214,19 @@ static	void	handle_save_xform_change (vrpn_int32 new_value, void * userdata);
 static	void	handle_set_xform_change (vrpn_int32 new_value, void * userdata);
 static void handle_global_icon_scale_change (vrpn_float64, void *);
 
-// Callback functions for latency compensation techniques.
+/// Callback functions for latency compensation techniques.
 static void handle_trueTip_change (vrpn_int32, void *);
 static void handle_trueTip_scale_change (vrpn_float64, void *);
 static void handle_constraint_mode_change (vrpn_int32, void *);
 static void handle_constraint_kspring_change (vrpn_float64, void *);
 
-// Callback for screen capture
+/// Callback for screen capture
 static void handle_screenImageFileName_change(const char *new_value, void *userdata);
 
 static void handle_rulergridOrientLine_change (vrpn_int32, void *);
 static void handle_rulergridPositionLine_change (vrpn_int32, void *);
 
-// VRPN callback functions
+/// VRPN callback functions
 static void	handle_tracker2room_change(void *userdata, 
 					const vrpn_TRACKERTRACKER2ROOMCB info);
 static void	handle_sensor2tracker_change(void *userdata, 
@@ -233,14 +234,14 @@ static void	handle_sensor2tracker_change(void *userdata,
 
 static void handle_collab_sensor2tracker_change(void *userdata,
 					const vrpn_TRACKERCB info);
-	//handle_collab_sensor2tracker_change is the callback for the position
-	//and orientation messages sent from the nM_coord_change_server (to
-	//track a collaborator's hand position)
+/**< handle_collab_sensor2tracker_change is the callback for the position
+	and orientation messages sent from the nM_coord_change_server (to
+	track a collaborator's hand position) */
 
 static void handle_collab_mode_change(void *userdata,
 					const vrpn_ANALOGCB info);
-	//handle_collab_mode_change is the callback for the mode
-	//that track a collaborator's mode
+/**< handle_collab_mode_change is the callback for the mode
+   that track a collaborator's mode */
 
 /**** Not currently used
 static void	handle_sensor2tracker_quat_change(void *userdata,
@@ -251,13 +252,13 @@ static void	handle_forcedevice_scp_change(void *userdata,
 static void	handle_unit2sensor_change(void *userdata,
 					const vrpn_TRACKERUNIT2SENSORCB info);
 
-//import_object handlers
+///import_object handlers
 static  void    handle_import_filename_change (const char *, void *);
 static  void    handle_load_import_file_change (vrpn_int32, void *);
 static void handle_load_button_press_change (vrpn_int32, void *);
 
 // NANOX
-// synchronization UI handlers
+/// synchronization UI handlers
 // generic synchronization
 //static void handle_synchronize_change (vrpn_int32, void *);
 //static void handle_get_sync (vrpn_int32, void *);
@@ -276,9 +277,6 @@ static void handle_center_pressed (vrpn_int32, void *);
 // used where???
 char * tcl_script_dir;
 
-// never set?
-//char    **myargv;
-
 static BCPlane * oldxPlane= NULL;
 
 // Used in Timer.h
@@ -286,8 +284,9 @@ static BCPlane * oldxPlane= NULL;
 int     framelog = 0;           // Flag to see if frame time log is on
 
 #define NANO_FONT	(34)
-#define	MAXFILES	(30)		/* Maximum number of files to load */
-static vrpn_bool    head_tracked = VRPN_FALSE;              /* Flag set when head tracking is active */
+#define	MAXFILES	(30)		///< Maximum number of files to load 
+static vrpn_bool    head_tracked = VRPN_FALSE;              
+    ///< Flag set when head tracking is active
 
 nmb_Dataset * dataset;
 nmb_Decoration * decoration;
@@ -308,15 +307,15 @@ static int LOOP_NUM;
 TopoFile GTF;
 
 // used in interaction.c
-int	using_mouse3button = 0;	// Using Mouse3 button as trigger?
-int	mouse3button = 0;	// Status of mouse button 3
+int	using_mouse3button = 0;	///< Using Mouse3 button as trigger?
+int	mouse3button = 0;	///< Status of mouse button 3
 
-static float	alpha_red = 0.0;		// Color of the alpha pattern
+static float	alpha_red = 0.0;		///< Color of the alpha pattern
 static float	alpha_green = 1.0;
 static float	alpha_blue = 0.0;
 
 #ifndef _WIN32
-// only used in the unix version of microscape.
+/// only used in the unix version of microscape.
 static	void	update_xdisp_on_plane_change (BCPlane * p,
                                               int x, int y, void *) {
 
@@ -336,9 +335,9 @@ int headSensor [NUM_USERS];
 int handSensor [NUM_USERS];
 
 // NANOX
-// collaboratingPeerServerConnection carries shared data for
-// hand tracking, streamfile synchronization, and (some bright day)
-// view sharing.
+/** collaboratingPeerServerConnection carries shared data for
+ hand tracking, streamfile synchronization, and
+ view sharing. */
 static vrpn_Connection *
                 collaboratingPeerServerConnection = NULL;
 static vrpn_Connection *
@@ -349,15 +348,15 @@ static vrpn_Connection *
 // remote peers.
 
 
-//These are used in tracking a remote user's hand position.
+///These are used in tracking a remote user's hand position.
 vrpn_Tracker_Remote *vrpnHandTracker_collab[NUM_USERS];
 nM_coord_change *nM_coord_change_server;
 
-// These are used to track a remote user's mode.
+/// These are used to track a remote user's mode.
 vrpn_Analog_Remote *vrpnMode_collab[NUM_USERS];
 vrpn_Analog_Server *vrpnMode_Local;
 
-// These are used for synchronizing with a remote user's streamfile playback.
+/// These are used for synchronizing with a remote user's streamfile playback.
 static vrpn_bool isSynchronized;
 
 // static can't be decalred for this struct?
@@ -389,23 +388,23 @@ const int WellKnownPorts::roundTripTime (4581);
 // TCL initialization section.
 //-----------------------------------------------------------------------
 
-// Host where the user interface of microscape is running.
+/// Host where the user interface of microscape is running.
 static Tclvar_string my_hostname("my_hostname", "localhost");
 
 //-----------------------------------------------------------------------
-// This is the list of color map files from which mappings can be made.  It
-// should be loaded with the files in the colormap directory, and "CUSTOM".
+/// This is the list of color map files from which mappings can be made.  It
+/// should be loaded with the files in the colormap directory, and "CUSTOM".
 
 static Tclvar_list_of_strings	colorMapNames("colorMapNames");
 
 //-----------------------------------------------------------------------
-// This is a string that lets the user choose a color map to use.
+/// This is a string that lets the user choose a color map to use.
 
 static	char	defaultColormapDirectory[] = "/afs/unc/proj/stm/etc/colormaps";
 static	char	*colorMapDir;
 
-static ColorMap	colorMap;		// Color map currently loaded
-ColorMap	*curColorMap = NULL;	// Pointer to the current color map
+static ColorMap	colorMap;		///< Color map currently loaded
+ColorMap	*curColorMap = NULL;	///< Pointer to the current color map
   // used in vrml.C
 
 
@@ -418,13 +417,6 @@ Tclvar_string	exportFileType("export_filetype","");
 Tclvar_string newExportFileName("export_filename", "");
 
 //-----------------------------------------------------------------------
-// This section deals with selecting the data set to map to Z.
-// It includes both a string to allow choosing the field to map
-// from and the scale of the mapping.
-
-
-
-//-----------------------------------------------------------------------
 // This section deals with selecting the color to apply to the surface.
 // It includes both a string to allow choosing the field to map color
 // from, the min and max colors, and the min and max values that are
@@ -433,35 +425,35 @@ Tclvar_string newExportFileName("export_filename", "");
 static int	minC[3] = {255,255,255};
 static int	maxC[3] = {255,255,255};
 
-// The limits on the Tk slider where min and max value are selected
+/// The limits on the Tk slider where min and max value are selected
 Tclvar_float	color_slider_min_limit("color_slider_min_limit",0);
 Tclvar_float	color_slider_max_limit("color_slider_max_limit",1);
 
 
 // NANOX
-// The positions of the min and max values within the Tk slider
+/// The positions of the min and max values within the Tk slider
 TclNet_float	color_slider_min("color_slider_min",0);
 TclNet_float	color_slider_max("color_slider_max",1);
 
 
 // NANOX
-// Streamfile controls
+/// Streamfile controls
 TclNet_int replay_rate("stream_replay_rate", 1,
 			 handle_replay_rate_change, NULL);
 
-// Signal that the stream file should be rewound to the beginning
+/// Signal that the stream file should be rewound to the beginning
 TclNet_int	rewind_stream("rewind_stream",0,
 			handle_rewind_stream_change, NULL);
 
-// This is the time value to jump to in the stream file. 
+/// This is the time value to jump to in the stream file. 
 TclNet_int set_stream_time ("set_stream_time", 0);
-// This is a flag (0/1) to say " jump to new time now!"
+/// This is a flag (0/1) to say " jump to new time now!"
 TclNet_int set_stream_time_now ("set_stream_time_now", 0,
                              handle_set_stream_time_change, NULL);
 
 #if 1
 // NANOX - XXX
-// Quick method of sharing measure line locations
+/// Quick method of sharing measure line locations
 TclNet_float measureRedX ("measure_red_x", 0.0,
                            handle_collab_measure_change, (void *) 0);
 TclNet_float measureRedY ("measure_red_y", 0.0,
@@ -477,8 +469,8 @@ TclNet_float measureBlueY ("measure_blue_y", 0.0,
 #endif
 
 
-// the Tk slider for recovery time
-// XXX What is recovery time for? Adhesion?
+/// the Tk slider for recovery time
+/// XXX What is recovery time for? Adhesion?
 TclNet_float recovery_time ("recovery_time", 1);
 
 // The string that is used to determine which inputGrid field to use
@@ -487,13 +479,13 @@ Tclvar_float    compliance_slider_min("compliance_slider_min",0);
 Tclvar_float    compliance_slider_max("compliance_slider_max",0);
 Tclvar_float	compliance_slider_min_limit("compliance_slider_min_limit",0);
 Tclvar_float	compliance_slider_max_limit("compliance_slider_max_limit",1);
-//This section deals with the compliance plane
+///This section deals with the compliance plane
 Tclvar_string compliancePlaneName
                ("compliance_comes_from", "");
 
 Tclvar_float    friction_slider_min("friction_slider_min",0);
 Tclvar_float	friction_slider_max("friction_slider_max",1);
-// The limits on the Tk slider where min and max value are selected
+/// The limits on the Tk slider where min and max value are selected
 Tclvar_float	friction_slider_min_limit("friction_slider_min_limit",0);
 Tclvar_float	friction_slider_max_limit("friction_slider_max_limit",1);
 
@@ -551,15 +543,13 @@ Tclvar_float sound_slider_max_limit("sound_slider_max_limit",1);
 
 //instead, put these in the rulergrid dialog box
 
-// if on, set the rulergrid position by the red line
-// does not need a callback
+/// if on, set the rulergrid position by the red line
 TclNet_int rulergrid_position_line ("rulergrid_position_line", 0,
                                     handle_rulergridPositionLine_change, NULL);
-// if on, set the rulergrid angle by the green line
-//does not need a callback
+/// if on, set the rulergrid angle by the green line
 TclNet_int rulergrid_orient_line ("rulergrid_orient_line", 0,
                                   handle_rulergridOrientLine_change, NULL);
-// otherwise set with these sliders
+/// otherwise set with these sliders
 TclNet_float rulergrid_xoffset ("rulergrid_x", 0);
 TclNet_float rulergrid_yoffset ("rulergrid_y", 0);
 TclNet_float rulergrid_scale ("rulergrid_scale", 500);
@@ -567,7 +557,7 @@ TclNet_float rulergrid_angle ("rulergrid_angle", 0);
 TclNet_float ruler_width_x ("ruler_width_x", 1);
 TclNet_float ruler_width_y ("ruler_width_y", 1);
 
-//set default Rulergrid opacity to 128 (50%) instead of 255 (100%)
+///set default Rulergrid opacity to 128 (50%) instead of 255 (100%)
 TclNet_float ruler_opacity ("ruler_opacity", 128);
 
 
@@ -587,22 +577,22 @@ TclNet_int	rulergrid_enabled ("rulergrid_enabled",0);
 // are used in the GA process..
 //
 
-// Which GA datasets to use:
+/// Which GA datasets to use:
 Tclvar_checklist *genetic_checklist = NULL;      
 
-// Activates call-back to send data on-demand...
+/// Activates call-back to send data on-demand...
 Tclvar_int gen_send_data( "gen_send_data", 0, NULL, NULL );
 
-// Activates the call-back to display the GA texture...
+/// Activates the call-back to display the GA texture...
 Tclvar_int gen_tex_activate( "gen_tex_activate", 0, NULL, NULL );
 
-// Enables the GA textues... (toggle button on main tcl window)
+/// Enables the GA textues... (toggle button on main tcl window)
 Tclvar_int genetic_textures_enabled ("genetic_textures_enabled", 0);
 
 
 
 //-----------------------------------------------------------------
-// Enables the realigning textues... (toggle button on main tcl window)
+/// Enables the realigning textues... (toggle button on main tcl window)
 // XXX This function is not included in the one screen tcl interface.
 Tclvar_int display_realign_textures ("display_dataset", 0);
 Tclvar_int realign_textures_enabled ("realign_dataset", 0);
@@ -623,7 +613,7 @@ TclNet_float diffuse ("diffuse", 0.5);	//What should default be?
 TclNet_float surface_alpha ("surface_alpha", 1.0);
 TclNet_float specular_color ("specular_color", 1.0);
 
-// Tom Hudson's latency compensation techniques
+/// Tom Hudson's latency compensation techniques
 
 Tclvar_int truetip_showing ("truetip_showing", 0);
 Tclvar_float truetip_scale ("truetip_scale", 1);
@@ -632,7 +622,7 @@ Tclvar_int constraint_mode ("constraint_mode", 0);
 Tclvar_float constraint_kspring ("constraint_kspring", 10.0f);
 
 //-----------------------------------------------------------------------
-// This section deals with an image type for a screen capture
+/// This section deals with an image type for a screen capture
 const char **screenImage_formats_list = ImageType_names;
 Tclvar_list_of_strings screenImage_formats("screenImage_format_list");
 
@@ -643,14 +633,14 @@ Tclvar_string newScreenImageFileName("screenImage_filename", "");
 //-----------------------------------------------------------------
 
 
-//PPM	*rulerPPM = NULL;	// Image to use for the ruler
-static char * rulerPPMName = NULL;   // Name of image to use for the ruler
-static PPM * alphaPPM = NULL;	// Image to use for the alpha blending
-static PPM * bumpPPM = NULL;	// Image to use for the bump mapping
-static PPM * noisePPM = NULL;   // Uniform noise image for spot noise shader 
+//PPM	*rulerPPM = NULL;	///< Image to use for the ruler
+static char * rulerPPMName = NULL;   ///< Name of image to use for the ruler
+static PPM * alphaPPM = NULL;	///< Image to use for the alpha blending
+static PPM * bumpPPM = NULL;	///< Image to use for the bump mapping
+static PPM * noisePPM = NULL;   ///< Uniform noise image for spot noise shader 
 
 //---------------------
-// Scaling factor for the sphere icon
+/// Scaling factor for the sphere icon
 Tclvar_float sphere_scale ("sphere_scale", 12.5f);
 
 //-----------------------------------------------------------------------
@@ -687,38 +677,38 @@ Tclvar_float    x_min_value ("x_min_value", 0);
 Tclvar_float    x_max_value ("x_max_value", 1);
 
 
-// The string that is used to determine which inputGrid field to use
+/// The string that is used to determine which inputGrid field to use
 Tclvar_string	xPlaneName ("x_comes_from", "");
 
 //-----------------------------------------------------------------------
-// This is the list of image processing programs available.  It
-// should be loaded with the files in the image proc directory, and "none".
+/// This is the list of image processing programs available.  It
+/// should be loaded with the files in the image proc directory, and "none".
 
 nmb_ListOfStrings	procProgNames;
 
 //-----------------------------------------------------------------------
-// These are widgets which allow the use to pick the name and parameters 
-// of the image processing program, like input and output.
-// "proc" is short for "processing"
+/// These are widgets which allow the use to pick the name and parameters 
+/// of the image processing program, like input and output.
+/// "proc" is short for "processing"
 
 static  char    defaultFilterDir[] = "/afs/unc/proj/stm/etc/filters";
 static	char	*procImageDir;
 
-// This is the filter program name.
+/// This is the filter program name.
 Tclvar_string	procProgName ("pick_program", "");
-// The string that is used to determine which inputGrid field to use
+/// The string that is used to determine which inputGrid field to use
 Tclvar_string	procPlaneName ("pick_plane", "");
 Tclvar_string	procParams ("proc_params","");
 
-// This is the output plane - parent is NULL (see below)
+/// This is the output plane 
 Tclvar_string	newFilterPlaneName("filterplane_name","");
 
-// Float scales to determine the angle and scale for programs that use them
+/// Float scales to determine the angle and scale for programs that use them
 Tclvar_float procAngle ("proc_angle", 0.0f);
 Tclvar_float procScale ("proc_scale", 1.0f);
 
 
-// A list of the textures which can be used for the pxfl shader. 
+/// A list of the textures which can be used for the pxfl shader. 
 nmb_ListOfStrings	textureNames;
 
 static  char    defaultTextureDir[] = "/afs/unc/proj/stm/etc/textures";
@@ -758,8 +748,8 @@ Tclvar_int save_xform ("save_xform", 0);
 Tclvar_int set_xform ("set_xform", 0);
 
 //----------------------------------------------------------------------
-// These tcl vars link to a pad which rotates the view of the surface.
-// They are defined in panel_tools.tcl, and instantiated in view.tcl
+/// These tcl vars link to a pad which rotates the view of the surface.
+/// They are defined in panel_tools.tcl, and instantiated in view.tcl
 
 Tclvar_float	joy0x("joy0(x)",0.0,
 		      handle_joymove, (void*)"t");
@@ -787,25 +777,25 @@ Tclvar_int markerHeight ("marker_height", 100);
 
 Tclvar_float global_icon_scale ("global_icon_scale", 0.25);
 
-// Controls for the french Ohmmeter - creates many tcl widgets
+/// Controls for the french Ohmmeter - creates many tcl widgets
 Ohmmeter *the_french_ohmmeter_ui = NULL;
 
-// Controls for the VI curve generator -
-// uses keithley2400.tcl for most widgets.
+/// Controls for the VI curve generator -
+/// uses keithley2400.tcl for most widgets.
 nma_Keithley2400_ui * keithley2400_ui = NULL;
 
 
-// Controls for the SEM
+/// Controls for the SEM
 nms_SEM_ui * sem_ui = NULL;
 
-// Controls for registration
+/// Controls for registration
 AlignerUI * aligner_ui = NULL;
 
 #ifdef NANO_WITH_ROBOT
 RobotControl * robotControl = NULL;
 #endif
 
-// Scales how much normal force is felt when using Direct Z Control
+/// Scales how much normal force is felt when using Direct Z Control
 Tclvar_float directz_force_scale("directz_force_scale", 0.1);
 
 
@@ -819,8 +809,8 @@ TclNet_int copy_inactive_state ("copy_inactive_state", 0);
 TclNet_int copy_to_private_state ("copy_to_private_state", 0);
 TclNet_int copy_to_shared_state ("copy_to_shared_state", 0);
 
-//to get the name of the machine where the collaborator is whose hand
-//position we want to track
+///to get the name of the machine where the collaborator is whose hand
+///position we want to track
 TclNet_string collab_machine_name ("collab_machine_name", "");
 
 
@@ -833,8 +823,8 @@ static timeval loggingTimestamp;
 Tclvar_int tcl_center_pressed ("center_pressed", 0, handle_center_pressed);
 
 //---------------------------------------------------------------------------
-// Deal with the stride between rows on the grid for tesselation.  This is
-// the step size between one row/column of the display list and the next.
+/// Deal with the stride between rows on the grid for tesselation.  This is
+/// the step size between one row/column of the display list and the next.
 
 TclNet_int tclstride ("tesselation_stride", 1);
 
@@ -860,40 +850,36 @@ char * handTrackerName;	// = phantom server name
  * Variables to turn on/off optional parts of the system
  ************/
 
-// used in interaction.c
-int do_cpanels = 1;			/* Control panels created by default */
-
-
 //----------------------------------------------------------------------
 // file-scoped globals
 
-static long displayPeriod = 0L; /* minimum interval between displays */
+static long displayPeriod = 0L; ///< minimum interval between displays 
 
-static int read_mode = READ_DEVICE;	/* Where get info from? */
+static int read_mode = READ_DEVICE;	///< Where get info from? 
 
 
 // HACK TCH 18 May 98 - program doesn't run with glenable 0
-static int glenable = 1;           /* Default gl display is enabled */
-static int tkenable = 1;           /* Default is to use Tk control panels */
+static int glenable = 1;           ///< Default gl display is enabled 
+static int tkenable = 1;           ///< Default is to use Tk control panels 
 
-static int drawOnlyOnCenter=0;	// Only draw a frame when the user centers?
+static int drawOnlyOnCenter=0;	///< Only draw a frame when the user centers?
 
-static int ttyFD;				/* File desc for TTY device */
+static int ttyFD;			///< File desc for TTY device 
 
 /***********
  * globals for drawing the graph
  ***********/
 
-static int xmode = 0;             /* default not draw any graph */
+static int xmode = 0;             ///< default not draw any graph 
 
 static TwoDLineStrip * teststrip = NULL;
 
-static int gwi = 400;	// Width of the graphical window
-static int ghi = 400;	// Height of the graphical window
+static int gwi = 400;	///< Width of the graphical window
+static int ghi = 400;	///< Height of the graphical window
 
-static float xscale;	// Scale to map window pixels to nM
-static float yscale;	// Scale to map window pixels to the Y axis
-static float yoffset;	// Offset to add to Y-axis values (already scaled)
+static float xscale;	///< Scale to map window pixels to nM
+static float yscale;	///< Scale to map window pixels to the Y axis
+static float yoffset;	///< Offset to add to Y-axis values (already scaled)
 
 static float testarray [1000];
 
@@ -906,21 +892,21 @@ static char tcl_default_dir [] = "/afs/cs.unc.edu/project/stm/bin/";
 
 //static int perf_mode = 0;			/* No perfmeter by default */
 //static int do_menus = 1;			/* Menus on by default */
-static int do_keybd = 1;                   /* Keyboard on by default */
+static int do_keybd = 1;                   ///< Keyboard on by default
 //static int do_ad_device = 1;               /* A/D devices on by default */
 //static int show_cpanels = 0;		/* Control panels hidden by default */
 //static int show_grid = 0;		/* Measuring grid hidden by default */
 int using_phantom_button = 0;
 //static int ubergraphics_enabled = 0;
 
-static vrpn_bool set_region = VRPN_FALSE; // Should we set the region at start?
-static vrpn_bool set_mode = VRPN_FALSE; // Should we set tap/con at startup?
+static vrpn_bool set_region = VRPN_FALSE; ///< Should we set the region at start?
+static vrpn_bool set_mode = VRPN_FALSE; ///< Should we set tap/con at startup?
 
 /********
  * Variables to control the scanning
  ********/
 
-//Names of tracker and server for following a remote user's hand position
+///Names of tracker and server for following a remote user's hand position
 static char collab_handTrackerName [256];
 static char nM_coord_change_server_name [256];
 static char collab_ModeName [256];
@@ -958,8 +944,8 @@ double bdboxDialValues[BDBOX_NUMDIALS];
 vrpn_Ohmmeter_Remote *ohmmeter;
 
 
-// These variables signal when someone has clicked "accept" in the 
-// image/modify tk window.
+/// These variables signal when someone has clicked "accept" in the 
+/// image/modify tk window.
 
 Tclvar_int changed_image_params ("accepted_image_params", 0);
 Tclvar_int changed_modify_params ("accepted_modify_params", 0);
@@ -970,8 +956,8 @@ enum { NO_GRAPHICS, LOCAL_GRAPHICS, SHMEM_GRAPHICS,
        RENDER_SERVER, TEXTURE_SERVER, VIDEO_SERVER,
        RENDER_CLIENT, TEXTURE_CLIENT, VIDEO_CLIENT };
 
-// A thread structure for multiprocessing.
-// Global so it can be shut down by signal handlers et al.
+/// A thread structure for multiprocessing.
+/// Global so it can be shut down by signal handlers et al.
 
 static Thread * graphicsServerThread = NULL;
 
@@ -987,13 +973,13 @@ static vrpn_Connection * renderServerControlConnection = NULL;
 static vrpn_Connection * renderClientInputConnection = NULL;
 
 #ifdef USE_VRPN_MICROSCOPE
-// File Connection	for replay vrpn log file
+/// File Connection	for replay vrpn log file
 static vrpn_File_Connection * vrpnLogFile;
 #endif
 
 static vrpn_Connection *ohmmeter_connection = NULL;
 static vrpn_File_Connection * ohmmeterLogFile;
-// connection for the Keithley 2400 vi curve generator
+/// connection for the Keithley 2400 vi curve generator
 static vrpn_Connection *vicurve_connection = NULL;
 static vrpn_File_Connection * vicurveLogFile;
 static vrpn_Connection *sem_connection = NULL;
@@ -1001,14 +987,14 @@ static vrpn_File_Connection *semLogFile;
 
 static nmg_Graphics * gi = NULL;
 
-// Quick hack for multiple users - allow somebody to monitor
-// or to collaborate
+/// Quick hack for multiple users - allow somebody to monitor
+/// or to collaborate
 static vrpn_Connection * monitor_forwarder_connection = NULL;
 static vrpn_Connection * collab_forwarder_connection = NULL;
 
-// Exposing a server on port 4581 to report Round-Trip time (RTT) between the
-// application and the microscope controller.
-// TCH April 99
+/// Exposing a server on port 4581 to report Round-Trip time (RTT) between the
+/// application and the microscope controller.
+/// TCH April 99
 static vrpn_Connection * rtt_server_connection = NULL;
 static vrpn_Analog_Server * rtt_server = NULL;
 
@@ -1063,7 +1049,7 @@ nmb_TimerList collaborationTimer;
 
 #endif
 
-// Handle exiting cleanly
+/// Handle exiting cleanly
 
 void shutdown_connections (void) {
 
@@ -1234,7 +1220,7 @@ void	handle_cntl_c(int which_signal)
 	exit(0);
 }
 //---------------------------------------------------------------------------
-// Deal with changes in the stride between rows on the grid for tesselation.
+/// Deal with changes in the stride between rows on the grid for tesselation.
 void    handle_stride_change (vrpn_int32 newval, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -1256,11 +1242,11 @@ void    handle_stride_change (vrpn_int32 newval, void * userdata) {
 
 /*Import from tube_foundry*/
 
-//Tcl variable for getting filename containing geometry info for
-//object that we want to import
+///Tcl variable for getting filename containing geometry info for
+///object that we want to import
 Tclvar_string import_filename ("import_filename", "");
-//Button which signals that we should import the object whose
-//geometry is contained above
+///Button which signals that we should import the object whose
+///geometry is contained above
 Tclvar_int load_import_file ("load_import_file",0);
 Tclvar_int load_button_press ("load_button_press", 0);
 
@@ -1300,7 +1286,7 @@ static void handle_x_value_change (vrpn_float64, void *) {
 }
 
 
-// Handle the color change of the rulergrid
+/// Handle the color change of the rulergrid
 static void handle_rulergrid_color_change (vrpn_int32, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
@@ -1311,7 +1297,7 @@ static void handle_rulergrid_color_change (vrpn_int32, void * userdata) {
 //(int) ruler_r,(int) ruler_g, (int) ruler_b);
 }
 
-// Handle the color change of the rulergrid
+/// Handle the color change of the rulergrid
 static void handle_rulergrid_opacity_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
@@ -1364,10 +1350,10 @@ static void handle_recovery_time_change (vrpn_float64 value, void * userdata)
         }
 }
 
-// Handle the width change of the rulergrid
-// should be able to scale width less than 1, but I dont know 
-// how I should do that right now, so Im just implementing integer scaling
-// scaling is done with respect to original line width, which is 1
+/// Handle the width change of the rulergrid
+/// should be able to scale width less than 1, but I dont know 
+/// how I should do that right now, so Im just implementing integer scaling
+/// scaling is done with respect to original line width, which is 1
 static void handle_ruler_widthx_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
@@ -1385,7 +1371,7 @@ static void handle_ruler_widthy_change (vrpn_float64, void * userdata) {
 }
 
 
-// Change the number of pulse or scrape markers displayed
+/// Change the number of pulse or scrape markers displayed
 // Tom Hudson, 5 May 98
 
 static void handle_markers_shown_change (vrpn_int32 new_value, void * /*userdata*/) {
@@ -1399,7 +1385,7 @@ static void handle_markers_shown_change (vrpn_int32 new_value, void * /*userdata
 }
 
 
-// Change the height of all (future?) scrape markers drawn.
+/// Change the height of all (future?) scrape markers drawn.
 // Aron Helser, 13 April 99
 static void handle_markers_height_change (vrpn_int32 new_value, void * /*userdata*/) {
   int v;
@@ -1631,13 +1617,13 @@ static void handle_rulergridOrientLine_change (vrpn_int32, void *) {
 }
 
 
-// Updating both X and Y position of the line at the same time
-// doesn't work - it locks down one coord. This semaphor prevents that. 
+/// Updating both X and Y position of the line at the same time
+/// doesn't work - it locks down one coord. This semaphor prevents that. 
 static vrpn_bool ignoreCollabMeasureChange = 0;
 
 // NANOX
-// Line position has changed in tcl (probably due to update from
-// collaborator) so change the position onscreen.
+/// Line position has changed in tcl (probably due to update from
+/// collaborator) so change the position onscreen.
 static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
                                           void * userdata) {
     // Ignore some changes caused by tcl variables. 
@@ -1676,19 +1662,19 @@ static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
 }
 
 // NANOX
-// If the user changes the measure line positon, update Tcl variables.
-// If we are collaborating, this will update our collaborator.
-// Because we want to set both the X and Y position of the line at 
-// the same time, we explicitly tell the other handler to ignore
-// the change we make to X, and pay attention to the change to Y. 
+/** If the user changes the measure line positon, update Tcl variables.
+If we are collaborating, this will update our collaborator.
+Because we want to set both the X and Y position of the line at 
+the same time, we explicitly tell the other handler to ignore
+the change we make to X, and pay attention to the change to Y. 
 
-// doMeasure() in interaction.c triggers handle_collab_measure_move.
-// Through the magic of Tcl_Linkvar/Tcl_Netvar, this will take care of
-// any necessary network synchronization or collaboration, and at the end
-// will call handle_collab_measure_change(), above, which executes the
-// final moveTo() on each nmb_Line and updates rulergrid parameters if
-// necessary.
-
+doMeasure() in interaction.c triggers handle_collab_measure_move.
+Through the magic of Tcl_Linkvar/Tcl_Netvar, this will take care of
+any necessary network synchronization or collaboration, and at the end
+will call handle_collab_measure_change(), above, which executes the
+final moveTo() on each nmb_Line and updates rulergrid parameters if
+necessary.
+*/
 static void handle_collab_measure_move (float x, float y,
                                           void * userdata) {
   int whichLine = (int) userdata;   // hack to get the data here
@@ -1726,7 +1712,7 @@ static void handle_collab_measure_move (float x, float y,
 
 
 // NANOX
-// Callback to button which rewinds the stream file to the beginning.
+/// Callback to button which rewinds the stream file to the beginning.
 static void handle_rewind_stream_change (vrpn_int32 /*new_value*/, 
 					     void * /*userdata*/)
 {
@@ -1818,10 +1804,11 @@ struct sync_plane_struct {
     nmui_PlaneSync * planesync;
 };
 
-// Checkbox - if checked, request that the peer keep us synced;
-//   if unchecked, stop keeping synced.
-// Currently assumes that only the most recently added peer is
-//   "valid";  others are a (small?) memory/network leak.
+/** Checkbox - if checked, request that the peer keep us synced;
+  if unchecked, stop keeping synced.
+Currently assumes that only the most recently added peer is
+  "valid";  others are a (small?) memory/network leak.
+*/
 static void handle_synchronize_timed_change (vrpn_int32 value,
                                              void * userdata) {
   sync_plane_struct * stuff = (sync_plane_struct *)userdata;
@@ -1885,9 +1872,8 @@ fprintf(stderr, "handle_peer_sync_change called, value %d\n",value);
 
 }
 
-/* DISABLED until it can be debugged.  */
-// Linked to button in tcl UI. If pressed, copy the shared state to
-// the private state.
+/// Linked to button in tcl UI. If pressed, copy the shared state to
+/// the private state.
 static void handle_copy_to_private (vrpn_int32 value, void * userdata) {
   sync_plane_struct * stuff = (sync_plane_struct *)userdata;
   nmui_Component * sync = stuff->component;
@@ -1927,8 +1913,8 @@ fprintf(stderr, "++ In handle_copy_to_private() copied immediately.\n");
 
 }
 
-// Linked to button in tcl UI. If pressed, copy the private state to
-// the shared state.
+/// Linked to button in tcl UI. If pressed, copy the private state to
+/// the shared state.
 static void handle_copy_to_shared (vrpn_int32 value, void * userdata) {
   sync_plane_struct * stuff = (sync_plane_struct *)userdata;
   nmui_Component * sync = stuff->component;
@@ -1957,12 +1943,12 @@ fprintf(stderr, "++ In handle_copy_to_shared() copy immediately.\n");
   }
 
 }
-/* */
 
-// Button - if pressed, request immediate sync.
-// (If synchronize_stream is checked, this is meaningless.)
-// Currently assumes that only the most recently added peer is
-//   "valid";  others are a (small?) memory/network leak.
+/** Button - if pressed, request immediate sync.
+(If synchronize_stream is checked, this is meaningless.)
+Currently assumes that only the most recently added peer is
+  "valid";  others are a (small?) memory/network leak.
+*/
 static void handle_timed_sync (vrpn_int32 value, void * userdata) {
   sync_plane_struct * stuff = (sync_plane_struct *)userdata;
   nmui_Component * sync = stuff->component;
@@ -2138,8 +2124,8 @@ static void handle_sphere_scale_change (vrpn_float64 new_value, void * userdata)
 
 // Genetic Textures -- Alexandra Bokinsky
 //
-// Called when the genetic_textures_enabled toggle switch on the main
-// miscroscape tcl window is pressed, either on or off.
+/// Called when the genetic_textures_enabled toggle switch on the main
+/// miscroscape tcl window is pressed, either on or off.
 static void handle_genetic_textures_selected_change(vrpn_int32 value, void *userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -2264,9 +2250,9 @@ static void handle_genetic_send_data (vrpn_int32 , void * userdata)
 }
 
 
-// Realigning Textures Interactively:
-// Called when the realign_textures_enabled toggle switch on the main
-// miscroscape tcl window is pressed, either on or off.
+/// Realigning Textures Interactively:
+/// Called when the realign_textures_enabled toggle switch on the main
+/// miscroscape tcl window is pressed, either on or off.
 static void handle_display_textures_selected_change(vrpn_int32 value, void *userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -2390,7 +2376,7 @@ static void handle_realign_plane_name_change (const char *, void * userdata) {
 
 
 
-// Handle setting or clearing of ruler selected
+/// Handle setting or clearing of ruler selected
 static	void	handle_rulergrid_selected_change(vrpn_int32 value, void *userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -2407,7 +2393,7 @@ static	void	handle_rulergrid_selected_change(vrpn_int32 value, void *userdata)
 //  cause_grid_redraw(0.0, NULL);
 }
 
-// Handle rulergrid angle change -- recompute sin() and cos() of angle
+/// Handle rulergrid angle change -- recompute sin() and cos() of angle
 static	void	handle_rulergrid_angle_change (vrpn_float64 value, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -2574,9 +2560,10 @@ static	void	handle_colormap_change (const char *, void * userdata) {
 
 }
 
-// See if the user has given a name to the export plane other
-// than "".  If so, we should export a file and set the value
-// back to "". If there are any errors, report them and leave name alone. 
+/** See if the user has given a name to the export plane other
+ than "".  If so, we should export a file and set the value
+ back to "". If there are any errors, report them and leave name alone. 
+*/
 static	void	handle_exportFileName_change (const char *, void *)
 {
 
@@ -2612,11 +2599,12 @@ static	void	handle_exportFileName_change (const char *, void *)
     newExportFileName = "";
 }
 
-// Why do we need to do anything here? This just specifies
-// which plane to export if we set newExportPlaneName to something...
-// I see - different planes can have different lists of 
-// export types. So if we change planes, we may need to change
-// the list of export types. 
+/** Why do we need to do anything here? This just specifies
+ which plane to export if we set newExportPlaneName to something...
+ I see - different planes can have different lists of 
+ export types. So if we change planes, we may need to change
+ the list of export types. 
+*/
 static  void    handle_exportPlaneName_change (const char *, void *ud)
 {
     nmb_Dataset *d = (nmb_Dataset *)ud;
@@ -2649,11 +2637,11 @@ static  void    handle_exportPlaneName_change (const char *, void *ud)
     */
 }
 
+/** See if the user has given a name to the filtered plane other
+ than "".  If so, we should create a new plane and set the value
+ back to "". */
 static	void	handle_filterPlaneName_change(const char *, void *) {
 
-    // See if the user has given a name to the filtered plane other
-    // than "".  If so, we should create a new plane and set the value
-    // back to "".
     if (strlen(newFilterPlaneName.string()) > 0) {
 
 	// Create the new one.
@@ -2680,12 +2668,12 @@ static	void	handle_filterPlaneName_change(const char *, void *) {
 
 
 
+/** See if the user has given a name to the flattened plane other
+ than "".  If so, we should create a new plane and set the value
+ back to "". */
 static	void	handle_flatPlaneName_change(const char *, void *)
 {
 
-    // See if the user has given a name to the flattened plane other
-    // than "".  If so, we should create a new plane and set the value
-    // back to "".
     if (strlen(newFlatPlaneName.string()) > 0) {
 
 	// Create the new one.
@@ -2710,13 +2698,13 @@ static	void	handle_flatPlaneName_change(const char *, void *)
     }
 }
 
-//Added by Amy Henderson 1-9-99
+/**Added by Amy Henderson 1-9-99
+ See if the user has given a name to the line-by-line flattened plane
+ other than "".  If so, we should create a new plane and set the value
+ back to "". */
 static  void	handle_lblflatPlaneName_change(const char *, void *)
 {
 
-    // See if the user has given a name to the line-by-line flattened plane
-    // other than "".  If so, we should create a new plane and set the value
-    // back to "".
 	
 	if (strlen(newLBLFlatPlaneName.string()) > 0) {
 	    // Create the new one.  
@@ -2734,12 +2722,12 @@ static  void	handle_lblflatPlaneName_change(const char *, void *)
 	}
 } 
 
+/** See if the user has given a name to the sum plane other
+ than "".  If so, we should create a new plane and set the value
+ back to "". */
 static	void	handle_sumPlaneName_change(const char *, void *)
 {
 
-    // See if the user has given a name to the sum plane other
-    // than "".  If so, we should create a new plane and set the value
-    // back to "".
     if (strlen(newSumPlaneName.string()) > 0) {
 
 	// Create the new one from the sums.
@@ -2759,12 +2747,12 @@ static	void	handle_sumPlaneName_change(const char *, void *)
     }
 }
 
+/** See if the user has given a name to the adhesion plane other
+ than "".  If so, we should create a new plane and set the value
+ back to "". */
 static	void	handle_adhPlaneName_change(const char *, void *)
 {
 
-    // See if the user has given a name to the adhesion plane other
-    // than "".  If so, we should create a new plane and set the value
-    // back to "".
     if (strlen(newAdhPlaneName.string()) > 0) {
 
 	// Create the new one.
@@ -2814,13 +2802,13 @@ static	void	handle_adhesion_average_change(vrpn_float64 val, void *)
 }
 
 
-// Aron Helser Temporary, testing how to save and restore a viewpoint
+/// Aron Helser Temporary, testing how to save and restore a viewpoint
 static v_xform_type save_diff_xform = { { 0, 0, 0},
 					{ 1, 0, 0, M_PI/4.0},
 					0 };
 static q_vec_type save_light_dir = { 0, 0, 0 };
 
-// Aron Helser Temporary, testing how to save and restore a viewpoint
+/// Aron Helser Temporary, testing how to save and restore a viewpoint
 static	void	handle_save_xform_change (vrpn_int32, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -2841,7 +2829,7 @@ static	void	handle_save_xform_change (vrpn_int32, void * userdata)
 
 }
 
-// Aron Helser Temporary, testing how to save and restore a viewpoint
+/// Aron Helser Temporary, testing how to save and restore a viewpoint
 static	void	handle_set_xform_change (vrpn_int32, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -3302,8 +3290,8 @@ void handle_phantom_reconnect (void *, vrpn_HANDLERPARAM) {
 
 }
 
-// Handles call back for setting the name for the file to write screen
-// captures into. At this point, the type of file is known as well.
+/// Handles call back for setting the name for the file to write screen
+/// captures into. At this point, the type of file is known as well.
 static	void	handle_screenImageFileName_change (const char *, void *userdata)
 {
    // See if the user has given a name other than ""
@@ -3383,14 +3371,12 @@ int register_vrpn_callbacks(void){
     return 0;
 }
 
-/******************************************************************************\
-@loadColorMaps
+/**
+loadColorMaps
 	This routine looks up the names of the color maps that we might want
  to load.  It also sets up the directory path to the color map files so that
  the routines that load them can know where to look.
---------------------------------------------------------------------------------
-\******************************************************************************/
-
+*/
 int	loadColorMapNames(void)
 {
 	DIR	*directory;
@@ -3421,13 +3407,12 @@ int	loadColorMapNames(void)
 	return 0;
 }
 
-/***************************************************************************\
+/**
 loadProcImage
 	This routine looks up the names image processing tools we might want
  to load.  It also sets up the directory path to the image proc tools so that
  the routines that load them can know where to look.
-\***************************************************************************/
-
+*/
 int	loadProcProgNames(void)
 {
 	DIR	*directory;
@@ -3458,13 +3443,12 @@ int	loadProcProgNames(void)
 	return 0;
 }
 
-/***************************************************************************\
+/**
 loadPPMTextures
 	This routine looks up the names of textures we might want
  to load.  It also sets up the directory path to the textures so that
  the routines that load them can know where to look.
-\***************************************************************************/
-
+*/
 int	loadPPMTextures(void)
 {
 	DIR	*directory;
@@ -4339,7 +4323,7 @@ void ParseArgs (int argc, char ** argv,
         //DO_CALLBACKS = 0;
         fprintf(stderr, "-nocall no longer affects anything!\n");
       } else if (strcmp(argv[i], "-nocpanels") == 0) {
-        do_cpanels = 0;
+          //do_cpanels = 0;
       } else if (strcmp(argv[i], "-nodevice") == 0) {
         //do_ad_device = 0;
       } else if (strcmp(argv[i], "-nokeybd") == 0) {
@@ -4857,11 +4841,12 @@ void sharedGraphicsServer (void * data) {
   }
 }
 
-// spawnSharedGraphics()
-//
-// Starts a new thread in process sharedGraphicsServer();
-// blocks until that thread signals completion.
+/**
+spawnSharedGraphics()
 
+Starts a new thread in process sharedGraphicsServer();
+blocks until that thread signals completion.
+*/
 void spawnSharedGraphics (void) {
 
   ThreadData td;
@@ -4897,7 +4882,6 @@ void spawnSharedGraphics (void) {
 // T. Hudson 8 Mar 2000
 // Would like to replace createGraphics() with a proper Abstract Factory
 // some day.
-
 void createGraphics (MicroscapeInitializationState & istate) {
 
   char name [50], qualifiedName [50];
@@ -5448,12 +5432,6 @@ int main(int argc, char* argv[])
 
     fprintf(stderr, "Microscope initialized\n");
 
-    /*    mVCController = new vrpn_File_Controller (microscope_connection);
-    if (!mVCController) {
-      fprintf(stderr, "Couldn't create File Controller.\n");
-      exit(0);
-    }
-    */
 
     if (vrpnLogFile) {
       vrpnLogFile->limit_messages_played_back(istate.packetlimit);
@@ -7749,9 +7727,9 @@ void get_Plane_Extents(float* offsetx, float *offsety, float* offsetz){
     }
 }
 
-// Look for planes named ".ffl" or ".FFL".  If there are any, find the last
-// one;  fill in the names of the adhesion planes with the halfway and last
-// such planes.
+/** Look for planes named ".ffl" or ".FFL".  If there are any, find the last
+ one;  fill in the names of the adhesion planes with the halfway and last
+ such planes. */
 void guessAdhesionNames (void) {
         int     max_ffl = 0;
         char    max_name[1000];
@@ -7789,9 +7767,10 @@ void guessAdhesionNames (void) {
         }
 }
 
-// The purpose of this is to just enforce mutual exclusion in the gui
-// alternative would be to use a radio button group but since these are
-// in separate parts of the gui we can't do this
+/** The purpose of this is to just enforce mutual exclusion in the gui
+ alternative would be to use a radio button group but since these are
+ in separate parts of the gui we can't do this
+*/
 int disableOtherTextures (TextureMode m) {
 
   // Not compatible with collaboration.
