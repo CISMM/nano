@@ -1,3 +1,9 @@
+2001-08-08  Shayne O'Neill  <soneill@mindspring.com>
+
+	* modify.tcl: Added function do_enabling_change
+	Causes widget in the modify window to enable / disable
+	based on other widgets that have been selected.
+
 2001-08-07  Nathan Conrad  <conrad@cs.unc.edu>
 
 	* mainwin.tcl: Disabled the "External Filters..." and

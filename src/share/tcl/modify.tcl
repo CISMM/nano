@@ -23,6 +23,7 @@ button $nmInfo(modify).quick_or_full -text "Full params" -command {
         pack $nmInfo(modifyfull) -side top -expand yes -fill both
         set modify_quick_or_full "full"
         $nmInfo(modify).quick_or_full configure -text "Quick params"
+	do_enabling_change
     } else {
         pack forget $nmInfo(modifyfull)
         pack $nmInfo(modifyquick) -side top -expand yes -fill both
@@ -687,6 +688,16 @@ eval lappend device_only_controls $mod_directz_list
 
 }
 
+set temp_list [list mode.contact mode.oscillating \
+		   style.sharp style.sweep style.sewing style.forcecurve \
+		   tool.freehand tool.line tool.constrfree tool.slow_line tool.optimize_now \
+		   control.feedback control.directz]
+
+set changing_widgets ""
+foreach element $temp_list {
+    lappend changing_widgets $nmInfo(modifyfull).$element
+}
+
 # puts the correct label on setpoint, both full and quick controls
 # Procedure change_setpoint_label defined in image.tcl
 trace variable newmodifyp_mode w "change_setpoint_label \
@@ -717,6 +728,129 @@ trace variable modifyp_ampl_or_phase w "change_setpoint_label \
 #   These change the displayed widgets, depending on the
 # value of a global variable, i.e. which radiobutton is pressed.
 #
+proc do_enabling_change {} {
+    global nmInfo changing_widgets
+
+    puts "Start do_enabling_change"
+
+    upvar #0 newmodifyp_mode mode
+    upvar #0 newmodifyp_style style
+    upvar #0 newmodifyp_tool tool
+    upvar #0 newmodifyp_control control
+
+    # First, enable everything
+    foreach widget $changing_widgets {
+	$widget configure -state normal
+    }
+
+    # disable oscillating
+    if { $style == 4                                     || \
+	 $style == 3                                     || \
+	($style == 2 && ($control == 1 || $tool == 7))   || \
+	($style == 0 && $tool == 1 && $control == 1)     } {
+	
+	$nmInfo(modifyfull).mode.oscillating configure -state disabled
+    }
+
+    # disable contact
+    if { ($style != 0 && ($control == 1 || $tool == 7))                  || \
+	 (($style == 4 || $style == 3) && $tool == 4)                    || \
+	 ($style == 0 && $control == 1 && ($tool == 1 || $tool == 7))    } {
+	
+	$nmInfo(modifyfull).mode.contact configure -state disabled
+    }
+
+    # disable sharp
+    if { ($mode == 0 && $tool == 1 && $control == 1)                   || \
+	 ($mode == 1 && ($tool == 1 || $tool == 7) && $control == 1)   } {
+
+	$nmInfo(modifyfull).style.sharp configur -state disabled
+    }
+
+    # disable sweep
+    if { $tool == 7     || \
+	 $control == 1  } {
+
+	$nmInfo(modifyfull).style.sweep configure -state disabled
+    }
+
+    # disable sewing
+    if { $mode == 0     || \
+	 $tool == 4     || \
+	 $tool == 7     || \
+	 $control == 1  } {
+
+	$nmInfo(modifyfull).style.sewing configure -state disabled
+    }
+
+    # disable forcecurve
+    if { $mode == 0     || \
+	 $tool == 4     || \
+	 $tool == 7     || \
+	 $control == 1  } {
+
+	$nmInfo(modifyfull).style.forcecurve configure -state disabled
+    }
+
+    # disable freehand
+    if { ($style != 0 && $control == 1)                || \
+	 ($mode == 0 && ($style == 3 || $style == 4))  } {
+
+	$nmInfo(modifyfull).tool.freehand configure -state disabled
+    }
+
+    # disable line
+    if { $control == 1                                 || \
+	 ($mode == 0 && ($style == 3 || $style == 4))  } {
+
+	$nmInfo(modifyfull).tool.line configure -state disabled
+    }
+
+    # disable constrained freehand
+    if { ($style != 0 && $control == 1)                || \
+	 ($mode == 0 && ($style == 3 || $style == 4))  } {
+
+	$nmInfo(modifyfull).tool.constrfree configure -state disabled
+    }
+
+    # disable slow line
+    if { ($style != 0 && $control == 1) || \
+	 $style == 3                    || \
+         $style == 4                    } {
+
+	$nmInfo(modifyfull).tool.slow_line configure -state disabled
+    }
+
+    # disable optimize now
+    if { $style != 0                                   || \
+	 ($style == 0 && $mode == 1 && $control == 1)  } {
+
+	$nmInfo(modifyfull).tool.optimize_now configure -state disabled
+    }
+
+    # disable feedback
+    if { ($style != 0 && $tool == 7)                                   || \
+	 (($mode == 0 || $tool == 4) && ($style == 3 || $style == 4))  } {
+	 
+	$nmInfo(modifyfull).control.feedback configure -state disabled
+    }
+
+    # disable directz
+    if { $style != 0                || \
+	 $tool == 1                 || \
+	 ($mode == 1 && $tool == 7) } {
+
+	$nmInfo(modifyfull).control.directz configure -state disabled
+    }
+
+    # The following widgets have been removed from service.
+    # I am simply disabling them until we want to delete them.
+
+    $nmInfo(modifyfull).tool.constrfree_xyz configure -state disabled
+    $nmInfo(modifyfull).tool.slow_line_3d configure -state disabled
+    $nmInfo(modifyfull).tool.feelahead configure -state disabled
+    
+}
 
 # flips $nmInfo(modifyfull).modeparam widgets
 # also disables controls that are illegal with oscillating mode
@@ -735,23 +869,22 @@ proc flip_mod_mode {mod_mode element op} {
 	foreach widg $plist {pack forget $widg} 
 	foreach widg $mod_oscillating_list {pack $widg -side top -fill x -pady $fspady}
         # Don't allow selection of styles that don't work with oscillating
-        if { ($newmodifyp_style == 3) || ($newmodifyp_style == 4) } {
-            # Can't do sweep or sewing, set to sharp
-            set newmodifyp_style 0
+        switch {$newmodifyp_style} {
+	    3  { set newmodifyp_style 0}
+	    4  {
+		# Can't do sweep or sewing, set to sharp
+		set newmodifyp_style 0
+	    }
+	    default {}
         }
-        $nmInfo(modifyfull).style.sewing configure -state disabled
-        $nmInfo(modifyfull).style.forcecurve configure -state disabled
     } elseif {$k==1} {
 	# selected contact
 	set plist [lrange [pack slaves $nmInfo(modifyfull).modeparam] 6 end] 
 	foreach widg $plist {pack forget $widg}
-        # enable styles that might have been disabled. 
-        $nmInfo(modifyfull).style.sewing configure -state normal
-        $nmInfo(modifyfull).style.forcecurve configure -state normal
     }
 
-    # disable widgets if you don't have the lock 
-    disable_widgets_for_commands_suspended 0 0 0
+    # enable / disable widgets
+    do_enabling_change
 }
 
 # flips $nmInfo(modifyfull).styleparam widgets
@@ -790,6 +923,7 @@ proc flip_mod_style {mod_style element op} {
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_forcecurve_list {pack $widg -side top -fill x -pady $fspady}
     }
+    do_enabling_change
 }
 
 # flips $nmInfo(modifyfull).toolparam widgets
@@ -812,10 +946,6 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $constr_xyz_param_list {pack forget $widg}
         # Hide the controls for slow_line tool
         hide.modify_live
-        # enable styles that might have been disabled. 
-        $nmInfo(modifyfull).style.sweep configure -state normal
-        $nmInfo(modifyfull).style.sewing configure -state normal
-        $nmInfo(modifyfull).style.forcecurve configure -state normal
     } elseif {$k==1} {
 	# selected line
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
@@ -826,9 +956,6 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $constr_xyz_param_list {pack forget $widg}
         # Hide the controls for slow_line tool
         hide.modify_live
-        # enable styles that might have been disabled. 
-        $nmInfo(modifyfull).style.sewing configure -state normal
-        $nmInfo(modifyfull).style.forcecurve configure -state normal
     } elseif {$k==2} {
  	# selected constrained freehand
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
@@ -838,9 +965,6 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $constr_xyz_param_list {pack forget $widg}
         # Hide the controls for slow_line tool
         hide.modify_live
-         # enable styles that might have been disabled. 
-        $nmInfo(modifyfull).style.sewing configure -state normal
-        $nmInfo(modifyfull).style.forcecurve configure -state normal
     } elseif {$k==3} {
        # selected constrained freehand xyz
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
@@ -849,9 +973,6 @@ proc flip_mod_tool {mod_tool element op} {
         foreach widg $constr_xyz_param_list {pack $widg -side top -fill x}
         foreach widg $mod_control_list {pack $widg -side top -fill x}
 	hide.modify_live
-         # enable styles that might have been disabled. 
-        $nmInfo(modifyfull).style.sewing configure -state normal
-        $nmInfo(modifyfull).style.forcecurve configure -state normal
     } elseif {$k==4} {
 	# selected slow line
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
@@ -866,8 +987,6 @@ proc flip_mod_tool {mod_tool element op} {
             # Can't do sweep or sewing, set to sharp
             set newmodifyp_style 0
         }
-        $nmInfo(modifyfull).style.sewing configure -state disabled
-        $nmInfo(modifyfull).style.forcecurve configure -state disabled
     } elseif {$k==5} {
 	# selected slow line 3d
 	set plist [lrange [pack slaves $nmInfo(modifyfull).control] 1 end]
@@ -884,8 +1003,6 @@ proc flip_mod_tool {mod_tool element op} {
             # Can't do sweep or sewing, set to sharp
             set newmodifyp_style 0
         }
-        $nmInfo(modifyfull).style.sewing configure -state disabled
-        $nmInfo(modifyfull).style.forcecurve configure -state disabled
     } elseif {$k==6} {
 
         # selected feelahead
@@ -903,11 +1020,6 @@ proc flip_mod_tool {mod_tool element op} {
         # set style to sharp, control to feedback
         set newmodifyp_style 0
 	set newmodifyp_control 0
-
-        # disable other styles
-        $nmInfo(modifyfull).style.sweep configure -state disabled
-        $nmInfo(modifyfull).style.sewing configure -state disabled
-        $nmInfo(modifyfull).style.forcecurve configure -state disabled
     } elseif {$k==7} {
  	# selected optimize_now
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
@@ -919,13 +1031,10 @@ proc flip_mod_tool {mod_tool element op} {
 
         # Hide the controls for slow_line tool
         hide.modify_live
-         # enable styles that might have been disabled. 
-        $nmInfo(modifyfull).style.sewing configure -state normal
-        $nmInfo(modifyfull).style.forcecurve configure -state normal
     }
 
-    # disable widgets if you don't have the lock 
-    disable_widgets_for_commands_suspended 0 0 0
+    # enable / disable widgets 
+    do_enabling_change
 }
 
 # flips $nmInfo(modifyfull).controlparam widgets
@@ -948,6 +1057,7 @@ proc flip_mod_control {mod_control element op} {
         # Show the controls for direct z control
         show.modify_live
     }
+    do_enabling_change
 }
 
 #
