@@ -1,5 +1,8 @@
 2000-09-07  Adam Seeger  <seeger@cs.unc.edu>
-
+        
+        * microscape.c (handle_openStreamFilename_change) : added delete
+	of microscope connection before getting a new one - this somehow
+	fixes a crash on the pc when opening the same file more than once
         * microscopeHandlers.C (handle_z_scale_change): this now updates
         nmb_Decoration so it can scale the modify markers to match the plane
         * interaction.c (handle_commit_cancel): allows cancelling of 
