@@ -73,6 +73,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	char* token;
 	ifstream readfile;
 
+        int i;
 	float radius, x, y, z, az, alt;
 	double theta;
 //	tubes t;				// gives a bunch of warnings because the name is too big...
@@ -138,7 +139,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 				// get vertices
 				theta = 0.0;
-				for (int i = 0; i < tess; i++) {
+				for (i = 0; i < tess; i++) {
 					v.clear();
 
 					// set point
@@ -174,7 +175,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	// create space for triangles in Pobject
 	Pobject->num_triangles -= numtubes * tess * 2;
 	Pobject->triangles = new float* [Pobject->num_triangles * 3];
-	for (int i = 0; i < Pobject->num_triangles * 3; i++) {
+	for (i = 0; i < Pobject->num_triangles * 3; i++) {
 		Pobject->triangles[i] = new float[4];
 	}
 
@@ -194,7 +195,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	}
 
 	int count = 0;
-	for (int i = 0; i < numtubes; i++){  // dtm
+	for (i = 0; i < numtubes; i++){  // dtm
 		//BuildList actually builds the geometry from
 		//the data structures previously built
         BuildList(Pobject, dl + i, t[i], count);

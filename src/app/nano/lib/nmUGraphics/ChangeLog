@@ -1,3 +1,7 @@
+2002-03-20  David Marshburn  <marshbur@cs.unc.edu>
+
+	* TubeFileGenerator.C (BuildList): loop variable structure
+
 2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* Xform4x4.h: compiler pragmas to ignore warnings in std. library

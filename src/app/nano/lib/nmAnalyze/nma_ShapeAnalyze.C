@@ -308,6 +308,7 @@ UpdateDataArray(double * dataline, int y, int datain_rowlen){
 void nma_ShapeIdentifiedPlane::
 blur_data_up(double** dataline, int& y, int& datain_rowlen){
 
+        int i;
 	double * newdataline = new double[d_rowlength];
 	//holds "new" line of data consisting of old data with interpolated values inbetween
 	//now we have an incoming data line of the appropriate length
@@ -363,13 +364,13 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 			double val;
 
 			int y = d_columnheight - placeholder_y - 1;
-			for(int i = 0; i < d_rowlength; ++i){
+			for(i = 0; i < d_rowlength; ++i){
 				d_dataArray[i] = newdataline[i];
 				val = d_dataArray[i];
 				calculatedPlane->setValue(i,y,val);
 				d_dataset->range_of_change.AddPoint(i,y);
 			}
-			for(int i = 0; i < d_rowlength; i++){
+			for(i = 0; i < d_rowlength; i++){
 				storeddataline[i] = newdataline[i];
 			}//now this is our old row			
 			--l_sim_y;
@@ -382,7 +383,7 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 		//handle all rows between (and including) 1 and d_columnheight - 1 (in nano y-space)
 		else if((placeholder_y >= l_sim_y) && (placeholder_y <= h_sim_y)){//interpolate between l_sim_y and h_sim_y
 			percent_between = placeholder_y - l_sim_y;//= incremental distance past l_sim_y
-			for(int i = 0;i < d_rowlength; ++i){
+			for(i = 0;i < d_rowlength; ++i){
 				placeholder_val = percent_between*(newdataline[i] - storeddataline[i]) + storeddataline[i];	
 				//linear interpolation scheme based on percentage between l_sim_y and h_sim_y that placeholder_y falls
 				index = nano_y*datain_rowlen + i;
@@ -404,7 +405,7 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 		}
 		//prepare to handle next line of data if have handled all the points we can with current line
 		else if(placeholder_y > h_sim_y){//we need to wait for a new line of data to be fed in
-			for(int i = 0; i < d_rowlength; i++){
+			for(i = 0; i < d_rowlength; i++){
 				storeddataline[i] = newdataline[i];
 			}//store the current data line so can interpolate between it and new data line next time around
 

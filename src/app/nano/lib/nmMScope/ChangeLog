@@ -1,3 +1,8 @@
+2002-03-20  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmm_SimulatedMicroscope.Cdef (encode_and_sendData):  
+	loop variable change.
+
 2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* nmm_SimulatedMicroscope.Cdef (encode_and_sendData):  

@@ -1,3 +1,7 @@
+2002-03-20  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nma_ShapeAnalyze.C: loop variable change
+
 2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* cnt_ia.C (cnt_image_fit): added explicit casts to
