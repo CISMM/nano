@@ -16,17 +16,24 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope.C
 //
 //
 USE_MSG_GROUP nmm_AFMSIM_Report
+USE_MSG_GROUP nmm_AFMSIMSERVER_Report
 //
 CLASSNAME nmm_SimulatedMicroscope
 //
 //
 //name is the name of this device
 nmm_SimulatedMicroscope::
-nmm_SimulatedMicroscope(char *name, vrpn_Connection *c) : nmb_SharedDevice_Server(name,c), 
-						nmm_AFMSIM_Report(c), d_connection(c) {
+nmm_SimulatedMicroscope(char *name, vrpn_Connection *connection, int scanResolution) : 
+						nmb_SharedDevice_Server(name,connection), nmm_AFMSIM_Report(connection), 
+						nmm_AFMSIMSERVER_Report(connection), d_connection(connection),
+						d_scanResolution(scanResolution) {
+	REGISTER nmm_AFMSIMSERVER_Report;
 	d_name = new char[100];
 	strcpy(d_name,name);  
 	simulator_id = d_connection->register_sender("AFMSimulator");
+	Remote_toSim_x = 1;
+	Remote_toSim_y = 1;
+	grid_size_rcv = false;
 
 }
 //
@@ -72,8 +79,6 @@ encode_and_sendData(double ** Data, const int num_cols){
 //  
   //send stuff
   int retval = -1;
-  char * temp = new char[len];
-  strcpy(temp,msgbuf);
   retval = Send((long)len, d_WindowLineData_type, msgbuf);
 //
   //clean up before next iteration
@@ -105,7 +110,55 @@ Send(long len, vrpn_int32 msg_type, char * buf){
 	return retval;
 }
 
+double nmm_SimulatedMicroscope::
+return_Simpixels_to_realworld_ratio_x(){
+	double to_return = (double)(d_scanResolution/(d_xmax - d_xmin));
+	if(to_return > 0)	return to_return;
+	else				return -to_return;
+}
 
+double nmm_SimulatedMicroscope::
+return_Simpixels_to_realworld_ratio_y(){
+	double to_return = (double)(d_scanResolution/(d_ymax - d_ymin));
+	if(to_return > 0)	return to_return;
+	else				return -to_return;
+}
 
+HANDLERS nmm_AFMSIMSERVER_Report ; 
+
+//get the grid size of the file in nano
+RECEIVE_MSG ReportGridSize {
+//  int32 x
+//  int32 y
+	if(x != d_scanResolution){
+		Remote_toSim_x = double(x)/double(d_scanResolution);
+	}
+	if(y != d_scanResolution){
+		Remote_toSim_y = double(y)/double(d_scanResolution);
+	}
+	Sim_to_World_x = return_Simpixels_to_realworld_ratio_x();
+	Sim_to_World_y = return_Simpixels_to_realworld_ratio_y();
+	cout << Sim_to_World_x << ", " << Sim_to_World_y << flush;
+	grid_size_rcv = true;
+
+}
+
+//get the real world coords from the file in nano
+RECEIVE_MSG ScanRange {
+//  float32 xmin
+//  float32 ymin
+//  float32 zmin
+//  float32 xmax
+//  float32 ymax
+//  float32 zmax
+
+	d_xmin = xmin;
+	d_xmax = xmax;
+	d_ymin = ymin;
+	d_ymax = ymax;
+	d_zmin = zmin;
+	d_zmax = zmax;
+	cout << "ScanRange: " << xmin << "," << xmax << "\t" << ymin << "," << ymax << "\n";
+}
 
 

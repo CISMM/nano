@@ -34,3 +34,5 @@ VRPN_MESSAGE ScanDataset {
   } datasets [count]
 }
 //in case of simulator, there is only one field, so datasets will only have one element (height)
+
+

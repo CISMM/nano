@@ -402,6 +402,33 @@ BuildCmds= \
 # End Source File
 # Begin Source File
 
+SOURCE=.\nmm_AFMSIMSERVER_Report.vrpndef
+
+!IF  "$(CFG)" == "nmMScopeGenerate - Win32 Debug"
+
+# PROP Ignore_Default_Tool 1
+# Begin Custom Build
+WkspDir=.
+InputPath=.\nmm_AFMSIMSERVER_Report.vrpndef
+InputName=nmm_AFMSIMSERVER_Report
+
+BuildCmds= \
+	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)\app\nano\lib\nmMScope'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -h '$(InputPath)'; '../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl' -c '$(InputPath)' "
+
+"$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+   $(BuildCmds)
+
+"$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+   $(BuildCmds)
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "nmMScopeGenerate - Win32 Release"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmm_Monitor.vrpndef
 
 !IF  "$(CFG)" == "nmMScopeGenerate - Win32 Debug"

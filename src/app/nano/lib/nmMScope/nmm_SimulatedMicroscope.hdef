@@ -5,28 +5,49 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope.h
 #define NMM_SIMULATEDMICROSCOPE_H
 //
 #include "nmm_AFMSIM_Report.h"
+#include "nmm_AFMSIMSERVER_Report.h"
 #include <nmb_SharedDevice.h>
 //
+
 class nmb_SharedDevice_Server;
 //
 USE_MSG_GROUP nmm_AFMSIM_Report
+USE_MSG_GROUP nmm_AFMSIMSERVER_Report
 
 CLASSNAME nmm_SimulatedMicroscope
 //
 class nmm_SimulatedMicroscope : public nmb_SharedDevice_Server, 
-	public nmm_AFMSIM_Report {
+	public nmm_AFMSIM_Report, public nmm_AFMSIMSERVER_Report {
 
 public:
-	nmm_SimulatedMicroscope(char *name, vrpn_Connection *c);
+	nmm_SimulatedMicroscope(char *name, vrpn_Connection *connection, int scanResolution);
 	virtual ~nmm_SimulatedMicroscope();
 	void encode_and_sendData(double ** Data, const int num_cols);
 	void change_machineName(char * newName);
-//
+	double return_Simpixels_to_realworld_ratio_x();	
+	double return_Simpixels_to_realworld_ratio_y();
+	double Sim_to_World_x;
+	double Sim_to_World_y;
+	bool grid_size_rcv;
+
 private:
+    RECEIVERS_DECL nmm_AFMSIM_Report;
+	RECEIVERS_DECL nmm_AFMSIMSERVER_Report;
+    HANDLERS_DECL ;
+
 	int Send( long len, vrpn_int32 msg_type, char * buf );
 	char * d_name;
 	vrpn_Connection * d_connection;
 	long simulator_id;
+	int d_scanResolution;
+	double Remote_toSim_x;
+	double Remote_toSim_y;
+	float d_xmin;
+	float d_xmax;
+	float d_ymin;
+	float d_ymax;
+	float d_zmin;
+	float d_zmax;
 
 };
 //

@@ -20,6 +20,7 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope_Remote.C
 
 
 USE_MSG_GROUP nmm_AFMSIM_Report
+USE_MSG_GROUP nmm_AFMSIMSERVER_Report
 
 CLASSNAME nmm_SimulatedMicroscope_Remote
 
@@ -33,13 +34,16 @@ CLASSNAME nmm_SimulatedMicroscope_Remote
 
 nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
   (const char * name, vrpn_Connection * connection, const char * planename, 
-  nmb_Dataset * dataset) : nmm_AFMSIM_Report(connection), nmb_SharedDevice_Remote(name,
-  connection), d_dataset(dataset), RealAFMPlaneName(d_dataset->heightPlaneName->string()),
+  nmb_Dataset * dataset) : nmm_AFMSIM_Report(connection), nmm_AFMSIMSERVER_Report(connection),
+  nmb_SharedDevice_Remote(name,connection), d_dataset(dataset), 
+  RealAFMPlaneName(d_dataset->heightPlaneName->string()),
   RealAFMPlane(d_dataset->inputGrid->getPlaneByName(RealAFMPlaneName)), 
   d_connection(connection)
 {
 	REGISTER nmm_AFMSIM_Report;
+	REGISTER nmm_AFMSIMSERVER_Report;
 //
+	simulator_id = d_connection->register_sender("AFMSimulator");
 	Xdim = d_dataset->inputGrid->numX();
 	Ydim = d_dataset->inputGrid->numY();
 	DATA_ARRAY_SIZE = Xdim*Ydim;
@@ -58,18 +62,12 @@ int nmm_SimulatedMicroscope_Remote::mainloop() {
   return d_connection->mainloop();
 }
 //
+
 HANDLERS nmm_AFMSIM_Report ; 
+
 //
 RECEIVE_MSG WindowLineData {
-//    int32 x
-//    int32 y
-//    int32 dx
-//    int32 dy
-//    int32 reports
-//    int32 fields
-//    int32 sec
-//    int32 usec
-//    float32 data [reports][fields]
+
 //
 	if(UnitsOK){//check that units match before allowing in data
 //
@@ -115,13 +113,6 @@ RECEIVE_MSG WindowLineData {
 //message tells what order the fields are in
 //in case of simulator, there is only one field, so datasets will only have one element (height)
 RECEIVE_MSG_BODY ScanDataset {
-//  int32 count
-//  struct ScanDataset {
-//    char name [64] //name of field
-//    char units [64] //units in
-//    float32 offset 
-//    float32 scale
-//  } datasets [count]
 
 //
 	//only deal with datasets[0]
@@ -136,18 +127,62 @@ RECEIVE_MSG_BODY ScanDataset {
 //message tells what order the fields are in
 //in case of simulator, there is only one field, so datasets will only have one element (height)
 RECEIVE_MSG_HEADER ScanDataset {
-//  int32 count
-//  struct ScanDataset {
-//    char name [64] //name of field
-//    char units [64] //units in
-//    float32 offset 
-//    float32 scale
-//  } datasets [count]
 
 //
 	//only deal with datasets[0]
 	
 //		
 }
+
+HANDLERS nmm_AFMSIMSERVER_Report ; 
+
+RECEIVE_MSG ReportGridSize {
+
+}
+
+RECEIVE_MSG ScanRange {
+
+
+}
+//
+void nmm_SimulatedMicroscope_Remote::
+encode_and_sendGridandScanInfo(vrpn_int32 x, vrpn_int32 y,
+	vrpn_float32 xmin,vrpn_float32 ymin,vrpn_float32 zmin,
+	vrpn_float32 xmax,vrpn_float32 ymax,vrpn_float32 zmax){
+  //variables for encoding in msgbuf
+  int len = 0;
+  //
+  char * msgbuf = encode_ScanRange(&len,xmin,ymin,zmin,xmax,ymax,zmax);//encode msgbuf
+  int retval = -1;
+  retval = Send((long)len, d_ScanRange_type, msgbuf);//send stuff
+  //ANDREA:  note took this out because above not working--just for now...
+  /*char * msgbuf2 = encode_ReportGridSize(&len,x,y);//encode msgbuf
+  retval = -1;
+  retval = Send((long)len, d_ReportGridSize_type, msgbuf2);//send stuff*/
+  
+}
+//
+int nmm_SimulatedMicroscope_Remote::
+Send(long len, vrpn_int32 msg_type, char * buf){
+	int retval = -1;//initial value denotes failure, do not continue if remains -1
+	timeval now;	
+	gettimeofday(&now, NULL);
+	//pack message
+	retval = d_connection->pack_message(len, now, msg_type, simulator_id,
+				      buf, vrpn_CONNECTION_RELIABLE);
+	if(retval != -1){
+		d_connection->mainloop();//send message here
+	}
+	else{
+		cout << "Message not sent" << endl;
+	}
+	//
+	if ( buf ) {
+		delete buf;
+	}
+	return retval;
+}
+
+
 
 

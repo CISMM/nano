@@ -5,6 +5,7 @@ OUTPUT_FILENAME nmm_SimulatedMicroscope_Remote.h
 
 //
 #include "nmm_AFMSIM_Report.h"
+#include "nmm_AFMSIMSERVER_Report.h"
 #include <nmb_SharedDevice.h>
 #include <nmb_Dataset.h>
 #include "nma_ShapeAnalyze.h"
@@ -17,25 +18,30 @@ class nmb_Dataset;
 
 //
 USE_MSG_GROUP nmm_AFMSIM_Report
+USE_MSG_GROUP nmm_AFMSIMSERVER_Report
 
 CLASSNAME nmm_SimulatedMicroscope_Remote
 //
 
 
-class nmm_SimulatedMicroscope_Remote: public nmm_AFMSIM_Report, public nmb_SharedDevice_Remote {
+class nmm_SimulatedMicroscope_Remote: public nmm_AFMSIM_Report, nmm_AFMSIMSERVER_Report, public nmb_SharedDevice_Remote {
 
 public:
 	nmm_SimulatedMicroscope_Remote(const char * name, vrpn_Connection * connection, 
 		const char * planename, nmb_Dataset * dataset);
-
 	virtual ~nmm_SimulatedMicroscope_Remote();
-
 	int mainloop();
+	void encode_and_sendGridandScanInfo(vrpn_int32 x, vrpn_int32 y,
+		vrpn_float32 xmin,vrpn_float32 ymin,vrpn_float32 zmin,
+		vrpn_float32 xmax,vrpn_float32 ymax,vrpn_float32 zmax);
+	int Send(long len, vrpn_int32 msg_type, char * buf);
 //
 private:
 
     RECEIVERS_DECL nmm_AFMSIM_Report;
-    HANDLERS_DECL ;
+	RECEIVERS_DECL nmm_AFMSIMSERVER_Report;
+    HANDLERS_DECL nmm_AFMSIM_Report;
+	HANDLERS_DECL nmm_AFMSIMSERVER_Report;
 
 	nmb_Dataset * d_dataset;	//dataset that real di data is in
 	BCString RealAFMPlaneName;	//name of plane with real di data
@@ -50,6 +56,7 @@ private:
 	bool UnitsOK;			    //so only load information if units check out,
 					            //match real afm scan plane
 	vrpn_Connection * d_connection;
+	long simulator_id;
 	
 
 };

@@ -113,6 +113,10 @@ SOURCE=.\nmm_AFMSIM_Report.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\nmm_AFMSIMSERVER_Report.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmm_GuardedscanClient.C
 # End Source File
 # Begin Source File
@@ -244,6 +248,10 @@ SOURCE=.\nmm_AFM_Report.h
 # Begin Source File
 
 SOURCE=.\nmm_AFMSIM_Report.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmm_AFMSIMSERVER_Report.h
 # End Source File
 # Begin Source File
 
