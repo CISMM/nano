@@ -22,7 +22,7 @@ const int APPROACH_STEPS = 25; // specifies how many m_fMaxZSteps should be take
 #define q_vec_print(msg, vec) {printf("   %s=(%0.3f, %0.3f, %0.3f)\n", msg, vec[0], vec[1], vec[2]);}
 
 CGuardedScan::CGuardedScan() :
-  m_bModeActive(0),
+  m_bModeActive(FALSE),
   guarded_scan_start("guarded_scan_start", 0),
   guarded_scan_stop("guarded_scan_stop", 0),
   guarded_plane_acquire("guarded_plane_acquire", 0),
@@ -30,7 +30,7 @@ CGuardedScan::CGuardedScan() :
   guarded_scan_max_step("guarded_scan_max_step", 0.01f),
   m_pPlane(NULL),
   m_pDecoration(NULL),
-  m_bScanRight(1),
+  m_bScanRight(TRUE),
   m_fGuardDepth(0.0f)
 {
   // Register TCL callbacks...
@@ -150,7 +150,7 @@ void CGuardedScan::mainloop()
       if(m_nLastXSample > m_pPlane->numX()) {
 	m_nLastXSample = m_pPlane->numX() - 1;
 	m_nLastYSample++;
-	m_bScanRight = 0; // Scan to the left now...
+	m_bScanRight = FALSE; // Scan to the left now...
       }
     } else {
       m_nLastXSample--; // next sample is to the left...
@@ -159,7 +159,7 @@ void CGuardedScan::mainloop()
       if(m_nLastXSample < 0) {
 	m_nLastXSample = 0;
 	m_nLastYSample++;
-	m_bScanRight = 1; // Scan to the right now...
+	m_bScanRight = TRUE; // Scan to the right now...
       }
     }
       

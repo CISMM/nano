@@ -8,6 +8,9 @@
 #include "nmb_Decoration.h"
 #include "BCPlane.h"
 
+#define TRUE 1
+#define FALSE 0
+
 class CGuardedScan {
  public:
   CGuardedScan();
