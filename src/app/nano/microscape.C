@@ -7120,7 +7120,9 @@ int main (int argc, char* argv[])
       vrpnLogFile->limit_messages_played_back(istate.packetlimit);
     }
 
-    microscope->EnableUpdatableQueue(VRPN_TRUE);
+    // This causes a unitialized memory read if we don't actually have
+    // a connection, moved this to nmm_Microscope_Remote::RcvGotConnection2
+    //microscope->EnableUpdatableQueue(VRPN_TRUE);
 
     createGraphics(istate);
 

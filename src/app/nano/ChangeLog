@@ -1,3 +1,10 @@
+2001-05-15  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c (main): moved call of
+	microscope->EnableUpdatableQueue() to nmm_MicroscopeRemote.Cdef so
+	that this gets called at a more appropriate place (when
+	connection is actually made to the microscope)
+
 2001-05-12  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.c (handle_local_viewer_change): Send command to
