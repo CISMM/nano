@@ -3889,8 +3889,7 @@ doWorldGrab(int whichUser, int userEvent)
 	if (node != NULL) {
 		URender &obj = node->TGetContents();
 		if (obj.GetGrabObject() == 1) {
-			q_type q, q1, qchange;
-
+			q_type q;
 			q_invert(q, oldWorldFromHand.rotate);
 			q_mult(q, worldFromHand.rotate, q);
 			q_mult(q, q, oldObject.rotate);
