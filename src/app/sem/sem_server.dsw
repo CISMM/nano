@@ -15,7 +15,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "sem_client"=.\sem_client.dsp - Package Owner=<4>
+Project: "sem_client1"=.\sem_client1.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

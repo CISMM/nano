@@ -1,3 +1,21 @@
+2001-05-14  Adam Seeger  <seeger@cs.unc.edu>
+
+	* edax_server.C : replaced vrpn_SleepMsecs call with timeout parameter
+		passed to connection.mainloop()
+	* nmm_Microscope_SEM_EDAX.C : added handlers for new pattern shape
+	messages; added d_virtualAcquisition flag to control whether
+	or not we use the EDAX library although this doesn't allow us
+	to completely replace the compile time flag because of edax
+	include files; uncommented out SpMoveEx now that we are 
+	compiling with a more recent version of the edax library that 
+	has it
+	        - uncommented out USE_BUSYWAIT_DELAY - this is definitely
+	necessary since the set dwell time has no effect on the time
+	to execute SpMoveEx which is constant at 100usec
+		- changed video polarity to be inverted since this matches
+	the Hitachi display; also, changed default dwell time for image
+	collection to be 1000 nsec instead of 100 nsec
+
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 
 	This is the first version that works for point mode.

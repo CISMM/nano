@@ -17,12 +17,20 @@ int main(int argc, char **argv)
 //    atexit(handleQuit);
 
     vrpn_Synchronized_Connection connection;
-    sem = new nmm_Microscope_SEM_EDAX("SEM", &connection);
 
+#ifdef VIRTUAL_SEM
+    sem = new nmm_Microscope_SEM_EDAX("SEM", &connection, vrpn_TRUE);
+#else
+    sem = new nmm_Microscope_SEM_EDAX("SEM", &connection, vrpn_FALSE);
+#endif
+
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 10000;
+ 
     while (1){
-        vrpn_SleepMsecs(10.0);
         sem->mainloop();
-        connection.mainloop();
+        connection.mainloop(&timeout);
     }
     return 0;
 }
