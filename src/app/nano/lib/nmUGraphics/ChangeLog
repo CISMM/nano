@@ -1,3 +1,9 @@
+2002-05-09  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* TubeFileGenerator.C : changed method of finding centerpoint of
+	tube object from approximation using endpoints to averaging of
+	all cylinder positions
+
 2002-05-07  Andrea Hilchey <hilchey@cs.unc.edu>
 
         * URPolygon.C : changed parameters passed in to

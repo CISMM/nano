@@ -331,9 +331,31 @@ printf("%f\n", height->scaledMaxValue());
 	cs.pop_back();
 
 	// set up tubes so that it's origin is around the center--helps for doing scaling and rotation
+	
+	//commented out by Andrea--trying to match up method of finding center of tube between afm 
+	//simulator and nano--switching from approximation using only endpts to avg. of all cylinders
+	/*
 	xmid = cs.front().x1 + (cs.back().x2 - cs.front().x1) / 2;
 	ymid = cs.front().y1 + (cs.back().y2 - cs.front().y1) / 2;
 	zmid = cs.front().z1 + (cs.back().z2 - cs.front().z1) / 2;
+	*/
+
+	xmid = 0;//initialize to zero
+	ymid = 0;
+	zmid = 0;
+	for (i = 0; i < cs.size(); i++) {
+		xmid +=(cs[i].x1 +cs[i].x2)/2;//get x midpt. of each tube and add to running total
+		ymid +=(cs[i].y1 +cs[i].y2)/2;
+		zmid +=(cs[i].z1 +cs[i].z2)/2;
+	}
+	xmid = xmid/cs.size();
+	ymid = ymid/cs.size();
+	zmid = zmid/cs.size();
+
+	printf("group center: [%d,%d,%d]\n",xmid,ymid,zmid);
+
+	//divide by size to get avg. x,y,z position of the entire tube
+	
 
 	for (i = 0; i < numtubes; i++){
 		for (j = 0; j < t[i].size(); j++) {
@@ -369,7 +391,7 @@ printf("%f\n", height->scaledMaxValue());
 	}
 
 
-	for (i = 0; i < Pobject->num_cylinders; i++) {
+	/*for (i = 0; i < Pobject->num_cylinders; i++) {
 		printf("x1 = %f\n", Pobject->cylinders[i].x1);
 		printf("y1 = %f\n", Pobject->cylinders[i].y1);
 		printf("z1 = %f\n", Pobject->cylinders[i].z1);
@@ -380,7 +402,7 @@ printf("%f\n", height->scaledMaxValue());
 		printf("radius = %f\n", Pobject->cylinders[i].radius);
 		printf("azimuth = %f\n", Pobject->cylinders[i].az);
 		printf("altitude = %f\n\n", Pobject->cylinders[i].alt);
-	}
+	}*/
 
 
 
