@@ -73,11 +73,11 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 	// SPOT camera initialization
 	if( !d_virtualAcquisition )
 	{
-		if( setupCamera( ) != 0 ) { return; }
+		if( setupCamera( ) != SPOT_SUCCESS ) { return; }
 	}
-
+	
 	initializeParameterDefaults();
-
+	
 	// create buffers in which to store data
 	short maxExtents[2]; // width then height
 	if( d_virtualAcquisition )
@@ -138,6 +138,49 @@ setupCamera( )
 	
 	// add our callback
 	SpotSetCallback( nmm_Microscope_SEM_diaginc_spotCallback, (DWORD) this );
+
+	success = setResolution( EDAX_SCAN_MATRIX_X[EDAX_DEFAULT_SCAN_MATRIX], 
+							 EDAX_SCAN_MATRIX_Y[EDAX_DEFAULT_SCAN_MATRIX] );
+	if( success != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
+			"and initializing the SPOT camera.  Code:  %d\n", success );
+		return success;
+	}
+	
+	// Set the color to monochrome mode (turn off filter wheels)
+	SPOT_COLOR_ENABLE_STRUCT2 colorstruct;
+	colorstruct.bEnableRed = false;
+	colorstruct.bEnableGreen = false;
+	colorstruct.bEnableBlue = false;
+	colorstruct.bEnableClear = false;
+	success = SpotSetValue(SPOT_COLORENABLE2, &colorstruct);
+	if( success != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
+			"and initializing the SPOT camera.  Code:  %d\n", success );
+		return success;
+	}
+	
+	// ask for 8 bits per pixel
+	int bitdepth = 8;
+	success = SpotSetValue(SPOT_BITDEPTH, &bitdepth);
+	if( success != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
+			"and initializing the SPOT camera.  Code:  %d\n", success );
+		return success;
+	}
+	
+	// turn off auto-exposure
+	bool autoexpose = false;
+	//success = SpotSetValue( SPOT_AUTOEXPOSE, &autoexpose );
+	if( success != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
+			"and initializing the SPOT camera.  Code:  %d\n", success );
+		return success;
+	}
 
 	return 0;
 }
@@ -280,7 +323,7 @@ setResolution( vrpn_int32 res_x, vrpn_int32 res_y )
 
 	// get the index for this resolution
 	int resInd = this->resolutionToIndex( res_x, res_y );
-	if( resInd != 0 )
+	if( resInd < 0 )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolution:  "
 			"invalid resolution requested:  %d x %d\n", res_x, res_y );
@@ -448,6 +491,7 @@ acquireImage()
 				"failed on the SPOT camera.  Code:  %d\n", retVal);
 			return -1;
 		}
+		memcpy( myImageBuffer, cameraImageBuffer, this->maxBufferSize );
 		for (i = 0; i < resY; i++)
 		{
 			reportScanlineData(i);

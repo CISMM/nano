@@ -1,5 +1,16 @@
 2003-11-07  David Marshburn  <marshbur@cs.unc.edu>
 
+	* nmm_Microscope_SEM_diaginc.cpp (setupCamera):  asks the camera for
+	an initial resolution, monochrome mode, 8 bits per pixel and no 
+	auto-exposure.
+	(nmm_Microscope_SEM_diaginc):  corrected the return value we test 
+	against for the call to setupCamera.
+	(setResolution):  corrected a test for resolution appropriateness
+	(acquireImage):  copy the image from the camera buffer to a local one.
+	* nmm_Microscope_SEM_diaginc.h:  changed the default resolution
+	
+2003-11-07  David Marshburn  <marshbur@cs.unc.edu>
+
 	* all:  changes from before I got sick
 
 2003-09-17  David Marshburn  <marshbur@cs.unc.edu>

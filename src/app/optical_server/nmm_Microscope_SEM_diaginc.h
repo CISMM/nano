@@ -23,7 +23,7 @@ void WINAPI nmm_Microscope_SEM_diaginc_spotCallback( int iStatus, long lInfo, DW
 const int EDAX_NUM_SCAN_MATRICES =(7);
 extern int EDAX_SCAN_MATRIX_X[EDAX_NUM_SCAN_MATRICES];
 extern int EDAX_SCAN_MATRIX_Y[EDAX_NUM_SCAN_MATRICES];
-const int EDAX_DEFAULT_SCAN_MATRIX =(4);	// (1024 x 800)
+const int EDAX_DEFAULT_SCAN_MATRIX =(3);	// (512 x 400)
 
 
 class nmm_Microscope_SEM_diaginc : 
