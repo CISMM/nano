@@ -16,12 +16,13 @@
 #endif
 
 #include <stdio.h>
-#include "BCGrid.h"
-#include "BCPlane.h"
-#include "Topo.h"
-#include "iostream.h"
+#include <iostream.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include <BCGrid.h>
+#include <BCPlane.h>
+#include <Topo.h>
 
 void usage( const char * );
 

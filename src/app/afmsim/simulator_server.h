@@ -8,7 +8,7 @@ int handle_wuit (void* , vrpn_HANDLERPARAM);
 
 int handle_any_print (void* , vrpn_HANDLERPARAM);
 
-int initJake( int, int);
+int initJake (int num_x, int num_y, int port = 4500);
 
 int jakeMain();
 

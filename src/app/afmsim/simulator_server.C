@@ -23,7 +23,6 @@ TopoFile GTF; // added 4/19/99
 int currentline;
 
 static int num_x, num_y;
-static int port = 4500;
 static int g_isWaiting = 0;
 static float g_waitTime = 0.0f;
   // How long to pause before each call to connection->mainloop(),
@@ -64,8 +63,11 @@ int handle_any_print (void * userdata, vrpn_HANDLERPARAM p)
 
 
 
-int initJake (int x, int y)
-{  
+int initJake (int x, int y, int port) {  
+  if (!x || !y) {
+    fprintf(stderr, "initJake:  a 0-size grid makes microscopes crash!\n");
+    return -1;
+  }
   num_x = x;
   num_y = y;
   int quitNow = 0;
@@ -76,8 +78,8 @@ int initJake (int x, int y)
   quitType = connection->register_message_type("Server Quit Type");
   connection->register_handler(quitType, handle_quit, &quitNow);
   connection->register_handler(vrpn_ANY_TYPE, handle_any_print, connection);
-  return 0;
   gettimeofday(&t_start, NULL);
+  return 0;
 }
 
 

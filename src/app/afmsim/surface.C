@@ -7,6 +7,8 @@
 //#include "nmm_Microscope_Simulator.h"
 //#endif
 
+static TopoFile GTF;
+
 BCGrid * mygrid;  // Added Tom Hudson 10 June 99 to simplify
 BCPlane * myZPlane;
 
@@ -14,7 +16,7 @@ BCPlane * myZPlane;
  *  Steve's PARSER
  ****************************************************************************/
 
-static int num_x, num_y;
+static short num_x, num_y;
 static int port = 4500;
 static char * image_name;
 int last_point_x = NULL;
@@ -285,25 +287,34 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
 
 
 
-int main( int argc, char ** argv)
-{
+int main (int argc, char ** argv) {
+
   FILE * outputfile;
   float point;
+  int readmode;
   int x, y;
   int retval;
+
   retval = parse(argc, argv);
   if (retval) {
     usage(argv[0]);
     exit(0);
   }
-  if(image_name)	// CODE USED IF IMAGE IS TO BE USED
-  {
-    mygrid = new BCGrid (num_x,num_y,0,300,0,300, READ_FILE, image_name); // creates new grid
-    myZPlane = mygrid->getPlaneByName("Topography-Forward");	// adds plane for Z data
-    myZPlane = mygrid->getPlaneByName(image_name);	// sets data in Z grid
-  }
-  else			// CODE USED IF MATH SURFACE TO BE USED
-  {
+
+  if (image_name) {	// CODE USED IF IMAGE IS TO BE USED
+
+    // create new grid
+    readmode = READ_FILE;
+    mygrid = new BCGrid (num_x, num_y, 0.0, 300.0, 0.0, 300.0,
+                         readmode, image_name, GTF);
+
+    // add plane for Z data
+    myZPlane = mygrid->getPlaneByName("Topography-Forward");
+
+    myZPlane = mygrid->getPlaneByName(image_name);
+
+  } else {			// CODE USED IF MATH SURFACE TO BE USED
+
     mygrid = new BCGrid (num_x,num_y,0,300,0,300);  
     mygrid->addNewPlane("Topography-Forward","nm", 0);
     myZPlane = mygrid->getPlaneByName("Topography-Forward");
@@ -316,8 +327,8 @@ int main( int argc, char ** argv)
           }
       } 
   }
-  initJake(num_x, num_y);
-  while (1) {
+  retval = initJake(num_x, num_y, port);
+  while (!retval) {
     jakeMain();
   }
 }

@@ -97,7 +97,14 @@ int
 main(int argc, char *argv[])
 {
 #ifdef AFMSIM
-	initJake(orthoFrustumWidthNominal , orthoFrustumHeightNominal);
+	int retval;
+
+	retval = initJake(orthoFrustumWidthNominal , orthoFrustumHeightNominal);
+
+	if (retval) {
+	  exit(0);
+	}
+  
 #endif
 
 	// Deal with command line.
