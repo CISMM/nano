@@ -47,13 +47,13 @@ class nmg_Graphics_RenderClient_Implementation :
 
   protected:
 
-    static int handle_pixelData (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_pixelData (void *, vrpn_HANDLERPARAM);
       /**< Receives colors from the RenderServer over d_inputConnection */
 
-    static int handle_depthData (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_depthData (void *, vrpn_HANDLERPARAM);
       /**< Receives depths from the RenderServer over d_inputConnection */
 
-    static int handle_timerSN (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_timerSN (void *, vrpn_HANDLERPARAM);
       /**<
        * Support for timing (nmb_TimerList).
        * When a graphics command is queued up by the nmg_Graphics_RenderClient,

@@ -1,3 +1,9 @@
+2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmg_GraphicsImpl.h : Uses new VRPN_CALLBACK definition.
+	* nmg_RenderClientImpl.h : Uses new VRPN_CALLBACK definition.
+	* nmg_RenderServer.h : Uses new VRPN_CALLBACK definition.
+
 2003-08-07  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_SurfaceRegion.C (build_list_set): Fix compile warning.

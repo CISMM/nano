@@ -48,8 +48,7 @@
 #include <windows.h>
 #endif
 #include <GL/gl.h>
-
-#include "nmg_State.h"  // for VERBOSE
+#include "nmg_State.h"  // for nmg_State
 
 static	GLubyte rasters[][13] = {
 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, 

@@ -110,8 +110,8 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
     vrpn_int32 d_timerSN_type_in;
     vrpn_int32 d_timerSN_type_out;
 
-    static int handle_newConnection (void *, vrpn_HANDLERPARAM);
-    static int handle_timerSN (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_newConnection (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_timerSN (void *, vrpn_HANDLERPARAM);
 
     nmb_TimerList d_timerList;
 
