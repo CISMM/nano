@@ -2753,7 +2753,7 @@ void nmg_Graphics_Implementation::chooseVisualization(int viz_type)
 
 	nmb_PlaneSelection planes;  planes.lookup(d_dataset);
 	visualization->initVertexArrays(d_dataset->inputGrid->numX(),
-									d_dataset->inputGrid->numY());
+                                        d_dataset->inputGrid->numY());
 	visualization->setControlPlane(planes.viz);
 	visualization->setMinHeight(min);
 	visualization->setMaxHeight(max);

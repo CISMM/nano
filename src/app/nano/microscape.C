@@ -331,6 +331,8 @@ static void handle_viz_max_change(vrpn_float64 , void *);
 static void handle_viz_min_change(vrpn_float64 , void *);
 static void handle_viz_alpha_change(vrpn_float64 , void *);
 static void handle_viztex_scale_change (vrpn_float64, void * userdata);
+static void handle_viz_tex_new(const char *, void *);
+tatic void handle_viz_tex(const char *, void *);
 
 static vrpn_bool g_syncPending = VRPN_FALSE;
 
@@ -763,6 +765,13 @@ Tclvar_float	viz_alpha("viz_alpha",0.5, handle_viz_alpha_change);
 
 //Probably should make all of these TclNet's
 TclNet_float    viztex_scale ("viztex_scale", 500);
+
+//This should probably be generalized to just a method for
+//loading textures and anything that wants one can use it, but
+//this will do for now
+Tclvar_list_of_strings viz_tex_files("viz_tex_files");
+Tclvar_string viz_tex_new("viz_tex_new", "", handle_viz_tex_new);
+Tclvar_string viz_tex("viz_tex", "", handle_viz_tex);
 
 //-----------------------------------------------------------------
 /// These variables are for controlling shape analysis
@@ -4123,46 +4132,56 @@ static void handle_analyze_shape(vrpn_int32, void *)
 
 static void handle_viz_change(vrpn_int32, void *)
 {
-	graphics->chooseVisualization(viz_choice);
+    graphics->chooseVisualization(viz_choice);
+    graphics->causeGridRebuild();
 }
 
 static void handle_viz_min_change(vrpn_float64, void *)
 {
-	graphics->setVisualizationMinHeight(viz_min);
+    graphics->setVisualizationMinHeight(viz_min);
 }
 
 static void handle_viz_max_change(vrpn_float64, void *)
 {
-	graphics->setVisualizationMaxHeight(viz_max);
+    graphics->setVisualizationMaxHeight(viz_max);
 }
 
 static void handle_viz_alpha_change(vrpn_float64, void *)
 {
-	graphics->setVisualizationAlpha(viz_alpha);
+    graphics->setVisualizationAlpha(viz_alpha);
 }
 
 static void handle_viz_dataset_change(const char *, void *)
 {
-  BCPlane * plane = dataset->inputGrid->getPlaneByName
-    (dataset->vizPlaneName->string());
-  
-  if (plane != (BCPlane*)NULL) {
+    BCPlane * plane = dataset->inputGrid->getPlaneByName
+        (dataset->vizPlaneName->string());
+    
+    if (plane != (BCPlane*)NULL) {
 	viz_min_limit = plane->minValue();
 	viz_max_limit = plane->maxValue();
 	viz_min = plane->minValue();
 	viz_max = plane->maxValue();
-  }
-  else {
+    }
+    else {
 	viz_min_limit = 0;
 	viz_max_limit = 1;
 	viz_min = 0;
 	viz_max = 1;
-  }
-
-  graphics->setVizPlaneName(dataset->vizPlaneName->string());
-  graphics->causeGridRebuild();
-  graphics->causeGridRedraw();
+    }
+    
+    graphics->setVizPlaneName(dataset->vizPlaneName->string());
+    graphics->causeGridRebuild();
+    //graphics->causeGridRedraw();
 }
+
+static void handle_viz_tex_new(const char *, void *) {
+    viz_tex_files.addEntry(viz_tex_new.string());
+}
+
+static void handle_viz_tex(const char *, void *) {
+    graphics->loadVizImage(viz_tex.string());
+}
+
 
 static void handle_viztex_scale_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -6404,8 +6423,28 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     }
 
     if (graphics) {
-      // First time through graphics will be NULL. 
-      graphics->changeDataset(new_dataset);
+        //Make sure the current visualization choice is 
+        //0, which corresponds to normal opaque mode
+        //I wanted to be able to set the value here and
+        //have it be reflected in TCL but not trigger
+        //a callback, and this seems to be the only
+        //way to do that...
+        viz_choice.d_ignoreChange = VRPN_TRUE;
+        viz_min.d_ignoreChange = VRPN_TRUE;
+        viz_max.d_ignoreChange = VRPN_TRUE;
+        viz_min_limit.d_ignoreChange = VRPN_TRUE;
+        viz_max_limit.d_ignoreChange = VRPN_TRUE;
+        
+        viz_choice = 0;
+        viz_min = 0;
+        viz_max = 1;
+        viz_min_limit = 0;
+        viz_max_limit = 1;
+        graphics->chooseVisualization(viz_choice);
+        
+        
+        // First time through graphics will be NULL. 
+        graphics->changeDataset(new_dataset);
     }
 
     if (new_microscope->ReadMode() == READ_FILE)
@@ -6881,7 +6920,8 @@ int main (int argc, char* argv[])
     if (rulerPPMName) {
       graphics->loadRulergridImage(rulerPPMName);
     }
-
+    //Did the user want to load an initial texture for use with
+    //visualizations?
     if (vizPPMName) {        
         graphics->loadVizImage(vizPPMName);
     }
