@@ -1,3 +1,7 @@
+2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* Makefile : added glut as external lib
+
 2001-02-20  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmg_Visualization.C : add new VERBOSE messages.
