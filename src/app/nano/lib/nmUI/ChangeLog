@@ -1,4 +1,10 @@
-2003-05-01  Adam Seeger  <seeger@cs.unc.edu>
+2003-05-09  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmui_AFM_SEM_CalibrationUI.C (finishedFreehandHandler): added some
+	code to enable external scan control before acquiring an image and
+	disable it after acquiring the image
+
+2003-05-07  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmui_AFM_SEM_CalibrationUI.C : put in some printfs and changed so 
 	currently selected free or contact point is automatically set when a

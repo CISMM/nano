@@ -1215,9 +1215,17 @@ int nmui_AFM_SEM_CalibrationUI::finishedFreehandHandler()
 	if (d_windowOpen) {
 	  fprintf(stderr, "nmui_AFM_SEM_CalibrationUI: auto-acquiring calibration point\n");
 	  if (d_SEM) {
+        vrpn_int32 scanPreviouslyEnabled;
+        d_SEM->getExternalScanControlEnable(scanPreviouslyEnabled);
+        if (!scanPreviouslyEnabled) {
+          d_SEM->setExternalScanControlEnable(1);
+        }
 		d_SEM->requestScan(1);
 		// send a synchronization message so we know when the scan has completed
 		d_SEM->requestSynchronization(0, 0, SCAN_COMPLETION_MESSAGE);
+        if (!scanPreviouslyEnabled) {
+          d_SEM->setExternalScanControlEnable(0);
+        }
 	  }
 	}
 	return 0;
@@ -1411,6 +1419,7 @@ void nmui_AFM_SEM_CalibrationUI::updateSolution()
 
 void nmui_AFM_SEM_CalibrationUI::updateSolutionDisplay()
 {
+#ifdef _WIN32
     int i; 
 	for (i = 0; i < 16; i++) {
 		if (!_finite(d_AFMfromModel[i]) ||
@@ -1421,6 +1430,7 @@ void nmui_AFM_SEM_CalibrationUI::updateSolutionDisplay()
 			return;
 		}
 	}
+#endif
 	// display plan:
 	//   display model surface as an uberGraphics object
 	//   set transform for model according to afm<-->model 
