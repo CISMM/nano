@@ -51,7 +51,9 @@ set nmInfo(basic_options) [$nmInfo(import_objects).basics childsite]
 pack $nmInfo(import_objects).basics -side top -fill x
 
 frame $nmInfo(basic_options).file
-frame $nmInfo(basic_options).file.buttons
+frame $nmInfo(basic_options).file.buttons -bd 3 -relief groove
+frame $nmInfo(basic_options).file.buttons.f1
+frame $nmInfo(basic_options).file.buttons.f1.f1
 
 generic_optionmenu $nmInfo(basic_options).file.buttons.imported_files current_object\
 	"Current Object" imported_objects
@@ -59,17 +61,56 @@ generic_optionmenu $nmInfo(basic_options).file.buttons.imported_files current_ob
 #label $nmInfo(basic_options).file.import_file_label -justify left -text \
 #	"Current Imported file: $import_file_label"
 
-button $nmInfo(basic_options).file.buttons.import_button -text "Import File" -command open_import_file
-radiobutton $nmInfo(basic_options).file.buttons.ccw -text "CCW" -variable import_CCW -value 1
-radiobutton $nmInfo(basic_options).file.buttons.cw -text "CW" -variable import_CCW -value 0
-button $nmInfo(basic_options).file.buttons.close_button -text "Close File" -command close_import_file
+button $nmInfo(basic_options).file.buttons.f1.import_button -text "Import File" -command open_import_file
+radiobutton $nmInfo(basic_options).file.buttons.f1.f1.ccw -text "CCW" -variable import_CCW -value 1
+radiobutton $nmInfo(basic_options).file.buttons.f1.f1.cw -text "CW" -variable import_CCW -value 0
+button $nmInfo(basic_options).file.buttons.f1.close_button -text "Close File" -command close_import_file
 #button $nmInfo(basic_options).file.buttons.close_button -text "Close File" import_close_file 
+
+# Spider Stuff
+button $nmInfo(basic_options).file.buttons.spider_create_button -text "Create Spider" \
+	-command create_spider
+
+set nmInfo(spider_control) [create_closing_toplevel spider_control "Spider Control" ]
+
+generic_optionmenu $nmInfo(spider_control).spider_which_leg_menu spider_current_leg \
+	"Current Leg" spider_which_leg
+
+floatscale $nmInfo(spider_control).spider_length_slide 0 20 1000 1 1 \
+	spider_length "Spider Length"
+
+floatscale $nmInfo(spider_control).spider_width_slide 0 10 1000 1 1 \
+	spider_width "Spider Width"
+
+floatscale $nmInfo(spider_control).spider_thick_slide 0 5 1000 1 1 \
+	spider_thick "Spider Thickness"
+
+intscale $nmInfo(spider_control).spider_tess_slide 1 50 1000 1 1 \
+	spider_tess "Spider Tesselation"
+
+floatscale $nmInfo(spider_control).spider_curve_slide 0 90 1000 1 1 \
+	spider_curve "Spider Curvature"
+
+intscale $nmInfo(spider_control).spider_legs_slide 1 8 1000 1 1 \
+	spider_legs "Spider Legs"
+
+#
+
+generic_entry $nmInfo(basic_options).file.buttons.import_tess import_tess \
+     "Tube Loading Tesselation" integer
+generic_entry $nmInfo(basic_options).file.buttons.import_axis_step import_axis_step \
+     "Tube Loading Axis Step" integer
+
+
+
+
+
 
 #generic_entry $nmInfo(basic_options).modelFile modelFile "Enter the file to import:" ""
 
 frame $nmInfo(basic_options).f1
 frame $nmInfo(basic_options).f2
-frame $nmInfo(basic_options).f3
+frame $nmInfo(basic_options).f1.f1 -bd 3 -relief groove
 generic_entry $nmInfo(basic_options).f1.import_scale import_scale \
      "Scale" real 
 floatscale $nmInfo(basic_options).f1.import_scale_slide 0.1 1000.0 100 1 1 \
@@ -127,81 +168,53 @@ checkbutton $nmInfo(basic_options).f2.import_tune_rot_button \
     -text "Fine Tune Rotations" -variable import_tune_rot
 button $nmInfo(basic_options).f2.import_lock_rotall_button \
     -text "Lock All Rotations" -command lock_rotall
-
-
-
 button $nmInfo(basic_options).f2.import_reset_object -text "Reset Object" -command reset_object
 
-generic_entry $nmInfo(basic_options).f3.import_tess import_tess \
-     "Tube Loading Tesselation" integer
-generic_entry $nmInfo(basic_options).f3.import_axis_step import_axis_step \
-     "Tube Loading Axis Step" integer
 
-
-# Spider Stuff
-button $nmInfo(basic_options).f3.spider_create_button -text "Create Spider" \
-	-command create_spider
-
-set nmInfo(spider_control) [create_closing_toplevel spider_control "Spider Control" ]
-
-generic_optionmenu $nmInfo(spider_control).spider_which_leg_menu spider_current_leg \
-	"Current Leg" spider_which_leg
-
-floatscale $nmInfo(spider_control).spider_length_slide 0 20 1000 1 1 \
-	spider_length "Spider Length"
-
-floatscale $nmInfo(spider_control).spider_width_slide 0 10 1000 1 1 \
-	spider_width "Spider Width"
-
-floatscale $nmInfo(spider_control).spider_thick_slide 0 5 1000 1 1 \
-	spider_thick "Spider Thickness"
-
-intscale $nmInfo(spider_control).spider_tess_slide 1 50 1000 1 1 \
-	spider_tess "Spider Tesselation"
-
-floatscale $nmInfo(spider_control).spider_curve_slide 0 90 1000 1 1 \
-	spider_curve "Spider Curvature"
-
-intscale $nmInfo(spider_control).spider_legs_slide 1 8 1000 1 1 \
-	spider_legs "Spider Legs"
-
-#
-
-button $nmInfo(basic_options).f3.visibility_button -text "Hide" -command change_visibility
-checkbutton $nmInfo(basic_options).f3.proj_text_button \
+button $nmInfo(basic_options).f1.f1.visibility_button -text "Hide" -command change_visibility
+checkbutton $nmInfo(basic_options).f1.f1.proj_text_button \
     -text "Show Projective Texture" -variable import_proj_text
-checkbutton $nmInfo(basic_options).f3.clamp_button \
+checkbutton $nmInfo(basic_options).f1.f1.clamp_button \
     -text "Lock Projective Texture" -variable import_clamp
-
-
-
-button $nmInfo(basic_options).f3.set_color \
+button $nmInfo(basic_options).f1.f1.set_color \
         -text "Set color" -command {
             if {[choose_color import_color "Choose color" $nmInfo(basic_options)] } {
-                $nmInfo(basic_options).f3.colorsample configure -bg $import_color 
+                $nmInfo(basic_options).f1.f1.colorsample configure -bg $import_color 
                 set_import_color
             }
         }  
-
-button $nmInfo(basic_options).f3.colorsample \
+button $nmInfo(basic_options).f1.f1.colorsample \
         -relief groove -bd 2 -bg $import_color \
-        -command { $nmInfo(basic_options).f3.set_color invoke}
+        -command { $nmInfo(basic_options).f1.f1.set_color invoke}
 
 
 #pack $nmInfo(basic_options).modelFile -side top -anchor w -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).file -anchor w -fill x
 #pack $nmInfo(basic_options).file.import_file_label -anchor w -side left
 pack $nmInfo(basic_options).file.buttons -anchor w -fill x
-pack $nmInfo(basic_options).file.buttons.imported_files -anchor nw -side left -padx 1m -pady 1m
-pack $nmInfo(basic_options).file.buttons.import_button -anchor nw -side left -padx 1m -pady 1m
-pack $nmInfo(basic_options).file.buttons.close_button -anchor nw -side left -padx 1m -pady 1m
-pack $nmInfo(basic_options).file.buttons.ccw -anchor nw 
-pack $nmInfo(basic_options).file.buttons.cw -anchor nw
+pack $nmInfo(basic_options).file.buttons.imported_files -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).file.buttons.f1 -anchor nw
+pack $nmInfo(basic_options).file.buttons.f1.import_button -anchor nw -side left -padx 1m -pady 1m
+pack $nmInfo(basic_options).file.buttons.f1.f1 -anchor nw -side left
+pack $nmInfo(basic_options).file.buttons.f1.f1.ccw -anchor nw 
+pack $nmInfo(basic_options).file.buttons.f1.f1.cw -anchor nw 
+pack $nmInfo(basic_options).file.buttons.f1.close_button -anchor nw -padx 1m -pady 1m
+# Spider Stuff
+pack $nmInfo(basic_options).file.buttons.spider_create_button -anchor nw -padx 1m -pady 1m
 
+pack $nmInfo(spider_control).spider_which_leg_menu -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_length_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_width_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_thick_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_tess_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_curve_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_legs_slide -padx 1m -pady 1m -anchor nw
+#
+pack $nmInfo(basic_options).file.buttons.import_tess -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).file.buttons.import_axis_step -anchor nw -padx 1m -pady 1m
 
 pack $nmInfo(basic_options).f1 -anchor nw -side left -pady 7m -fill x
-pack $nmInfo(basic_options).f2 -anchor nw -side left -pady 22m -fill x
-pack $nmInfo(basic_options).f3 -anchor nw -side left -pady 5m  -fill x
+pack $nmInfo(basic_options).f2 -anchor nw -pady 22m -fill x
 
 #pack $nmInfo(basic_options).f1.import_scale -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f1.import_scale_slide -anchor nw -padx 1m -pady 1m
@@ -218,6 +231,13 @@ pack $nmInfo(basic_options).f1.import_tune_trans_button -anchor nw -padx 1m -pad
 pack $nmInfo(basic_options).f1.import_lock_transall_button -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f1.import_update_AFM -anchor sw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f1.import_grab_object -anchor sw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f1.f1 -anchor nw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f1.f1.visibility_button -anchor nw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f1.f1.proj_text_button -anchor nw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f1.f1.clamp_button -anchor sw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f1.f1.set_color -anchor nw -side left -fill x
+pack $nmInfo(basic_options).f1.f1.colorsample -anchor nw -side left -fill x -expand yes
+
 
 #pack $nmInfo(basic_options).f2.import_rotx -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_rotx_slide -anchor nw -padx 1m -pady 1m
@@ -232,26 +252,6 @@ pack $nmInfo(basic_options).f2.import_tune_rot_button -anchor nw -padx 1m -pady 
 pack $nmInfo(basic_options).f2.import_lock_rotall_button -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_reset_object -anchor sw -padx 1m -pady 1m -fill x
 
-pack $nmInfo(basic_options).f3.import_tess -padx 1m -pady 1m -anchor nw
-pack $nmInfo(basic_options).f3.import_axis_step -padx 1m -pady 1m -anchor nw
-
-# Spider Stuff
-pack $nmInfo(basic_options).f3.spider_create_button -padx 1m -pady 5m -anchor nw
-
-pack $nmInfo(spider_control).spider_which_leg_menu -padx 1m -pady 1m -anchor nw
-pack $nmInfo(spider_control).spider_length_slide -padx 1m -pady 1m -anchor nw
-pack $nmInfo(spider_control).spider_width_slide -padx 1m -pady 1m -anchor nw
-pack $nmInfo(spider_control).spider_thick_slide -padx 1m -pady 1m -anchor nw
-pack $nmInfo(spider_control).spider_tess_slide -padx 1m -pady 1m -anchor nw
-pack $nmInfo(spider_control).spider_curve_slide -padx 1m -pady 1m -anchor nw
-pack $nmInfo(spider_control).spider_legs_slide -padx 1m -pady 1m -anchor nw
-#
-
-pack $nmInfo(basic_options).f3.visibility_button -anchor nw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f3.proj_text_button -anchor nw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f3.clamp_button -anchor sw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f3.set_color -anchor nw -side left -fill x
-pack $nmInfo(basic_options).f3.colorsample -anchor nw -side left -fill x -expand yes
 
 
 trace variable import_type w SetupOptions
@@ -379,11 +379,11 @@ proc change_visibility {} {
    
   if { $import_visibility == 1 } {
     ##Change the hide button to a show button
-    $nmInfo(basic_options).f3.visibility_button configure -text "Show"
+    $nmInfo(basic_options).f1.f1.visibility_button configure -text "Show"
     set import_visibility 0
   } else { 
     ##Change the show button to a hide button  
-    $nmInfo(basic_options).f3.visibility_button configure -text "Hide"
+    $nmInfo(basic_options).f1.f1.visibility_button configure -text "Hide"
     set import_visibility 1
   }
 }

@@ -1,3 +1,8 @@
+2002-05-24 David Borland <borland@cs.unc.edu>
+
+        * import.tcl : reorganized the imported object user interface
+
+
 2002-05-23 David Borland <borland@cs.unc.edu>
 
         * import.tcl : user control for fine-tuning translations and rotations
