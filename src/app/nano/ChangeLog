@@ -1,3 +1,10 @@
+2000-09-08  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c (handle_openStreamFilename_change): took out
+	delete of microscope connection 
+	(the problem was in not unregistering vrpn handlers with
+	references to the old microscope)
+
 2000-09-07  Adam Seeger  <seeger@cs.unc.edu>
         
         * microscape.c (handle_openStreamFilename_change) : added delete

@@ -2726,11 +2726,6 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     strncpy(istate->afm.inputStreamName, openStreamFilename, 255);
     sprintf(istate->afm.deviceName, "file:%s", istate->afm.inputStreamName);
 
-    // without this line we get a crash on the PC after opening the 
-    // same file 2 or 3 times but I don't see exactly why. 
-    // (Adam Seeger, 9/7/00) 
-    if (microscope_connection) delete microscope_connection;
-
     vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name        (istate->afm.deviceName,
 	   (char *) NULL,
 	   logmode,
