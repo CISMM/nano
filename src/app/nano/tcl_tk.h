@@ -20,5 +20,6 @@ extern void set_Tk_command_handler (void (*) (char *, vrpn_bool *, int));
 
 extern Tcl_Interp * get_the_interpreter (void);
 
+void tcl_colormapRedraw();
 
 #endif //TCL_TK_H

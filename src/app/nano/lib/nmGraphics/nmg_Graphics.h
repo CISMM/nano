@@ -168,9 +168,8 @@ class nmg_Graphics {
       // Specifies the path in which to search for color maps.
     virtual void setColorMapName (const char *) = 0;
       // Specifies the name of the color map to use.
-    virtual void setColorSliderRange (float low, float hi) = 0;
-      // Specifies the range of values over which to interpolate
-      // the color map.
+    virtual void setColorMinMax (float low, float hi) = 0;
+    virtual void setDataColorMinMax (float low, float hi) = 0;
 
     virtual void setTextureDirectory (const char *) = 0;
       // Specifies the path in which to search for textures.
@@ -406,7 +405,8 @@ class nmg_Graphics {
     vrpn_int32 d_setBumpMapName_type;
     vrpn_int32 d_setColorMapDirectory_type;
     vrpn_int32 d_setColorMapName_type;
-    vrpn_int32 d_setColorSliderRange_type;
+    vrpn_int32 d_setColorMinMax_type;
+    vrpn_int32 d_setDataColorMinMax_type;
     vrpn_int32 d_setTextureDirectory_type;
     vrpn_int32 d_setComplianceSliderRange_type;
     vrpn_int32 d_setContourColor_type;
@@ -526,9 +526,10 @@ class nmg_Graphics {
     char * encode_setAlphaSliderRange (int * len, float low, float hi);
     int decode_setAlphaSliderRange (const char * buf,
                                      float * low, float * hi);
-    char * encode_setColorSliderRange (int * len, float low, float hi);
-    int decode_setColorSliderRange (const char * buf,
-                                     float * low, float * hi);
+    char * encode_setColorMinMax (int * len, float low, float hi);
+    int decode_setColorMinMax (const char * buf, float * low, float * hi);
+    char * encode_setDataColorMinMax (int * len, float low, float hi);
+    int decode_setDataColorMinMax (const char * buf, float * low, float * hi);
     char * encode_setComplianceSliderRange (int * len, float low, float hi);
     int decode_setComplianceSliderRange (const char * buf,
                                      float * low, float * hi);

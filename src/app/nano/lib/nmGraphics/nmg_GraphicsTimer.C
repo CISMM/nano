@@ -134,9 +134,14 @@ void nmg_Graphics_Timer::setColorMapName (const char * name) {
   d_imp->setColorMapName(name);
 }
 
-void nmg_Graphics_Timer::setColorSliderRange (float low, float high) {
+void nmg_Graphics_Timer::setColorMinMax (float low, float high) {
   activateTimer();
-  d_imp->setColorSliderRange(low, high);
+  d_imp->setColorMinMax(low, high);
+}
+
+void nmg_Graphics_Timer::setDataColorMinMax (float low, float high) {
+  activateTimer();
+  d_imp->setDataColorMinMax(low, high);
 }
 
 void nmg_Graphics_Timer::setComplianceSliderRange (float low, float high) {

@@ -55,8 +55,10 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setColorMapDirectory");
   d_setColorMapName_type =
     c->register_message_type("nmg Graphics setColorMapName");
-  d_setColorSliderRange_type =
-    c->register_message_type("nmg Graphics setColorSliderRange");
+  d_setColorMinMax_type =
+    c->register_message_type("nmg Graphics setColorMinMax");
+  d_setDataColorMinMax_type =
+    c->register_message_type("nmg Graphics setDataColorMinMax");
   d_setTextureDirectory_type =
     c->register_message_type("nmg Graphics setTextureDirectory");
   d_setComplianceSliderRange_type =
@@ -479,7 +481,7 @@ int nmg_Graphics::decode_setAlphaSliderRange
   return 0;
 }
 
-char * nmg_Graphics::encode_setColorSliderRange
+char * nmg_Graphics::encode_setColorMinMax
                      (int * len, float low, float hi) {
   char * msgbuf = NULL;
   char * mptr;
@@ -490,7 +492,7 @@ char * nmg_Graphics::encode_setColorSliderRange
   *len = 2 * sizeof(float);
   msgbuf = new char [*len];
   if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setColorSliderRange:  "
+    fprintf(stderr, "nmg_Graphics::encode_setColorMinMax:  "
                     "Out of memory.\n");
     *len = 0;
   } else {
@@ -503,7 +505,39 @@ char * nmg_Graphics::encode_setColorSliderRange
   return msgbuf;
 }
 
-int nmg_Graphics::decode_setColorSliderRange
+int nmg_Graphics::decode_setColorMinMax
+                   (const char * buf, float * low, float * hi) {
+  if (!buf || !low || !hi) return -1;
+  CHECK(vrpn_unbuffer(&buf, low));
+  CHECK(vrpn_unbuffer(&buf, hi));
+  return 0;
+}
+
+char * nmg_Graphics::encode_setDataColorMinMax
+                     (int * len, float low, float hi) {
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = 2 * sizeof(float);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_setDataColorMinMax:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, hi);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_setDataColorMinMax
                    (const char * buf, float * low, float * hi) {
   if (!buf || !low || !hi) return -1;
   CHECK(vrpn_unbuffer(&buf, low));

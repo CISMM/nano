@@ -45,7 +45,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void setColorMapDirectory (const char *);
     virtual void setColorMapName (const char *);
-    virtual void setColorSliderRange (float low, float hi);
+    virtual void setColorMinMax (float low, float hi);
+    virtual void setDataColorMinMax (float low, float hi);
 
     virtual void setTextureDirectory (const char *);
 
@@ -193,8 +194,10 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     double d_minAlpha;
     double d_maxAlpha;
-    double d_color_slider_min;
-    double d_color_slider_max;
+    double d_color_min;
+    double d_color_max;
+    double d_data_min;
+    double d_data_max;
 };
 
 #endif  // NMG_GRAPHICS_REMOTE

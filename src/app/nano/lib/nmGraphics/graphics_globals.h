@@ -54,8 +54,12 @@ extern float g_alpha_slider_max;
 extern ColorMap g_colorMap;
 extern char * g_colorMapDir;
 extern ColorMap * g_curColorMap;
-extern float g_color_slider_min;
-extern float g_color_slider_max;
+
+extern float g_color_min; // ColorMap lower and upper bounds for color
+extern float g_color_max;
+
+extern float g_data_min; // ColorMap lower and upper bounds for data
+extern float g_data_max;
 
 extern char * g_textureDir;
 

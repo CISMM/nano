@@ -188,7 +188,7 @@ static  void    handle_contour_color_change(vrpn_int32 new_value, void *userdata
 static void handle_contour_width_change(vrpn_float64 new_value, void *userdata);
 static void handle_alpha_dataset_change(const char *new_value, void *userdata);
 static void handle_alpha_slider_change (vrpn_float64, void *);
-static void handle_color_slider_change (vrpn_float64, void *);
+static void handle_color_change (vrpn_float64, void *);
 static void handle_rulergrid_offset_change (vrpn_float64, void *);
 static void handle_rulergrid_scale_change (vrpn_float64, void *);
 
@@ -483,14 +483,16 @@ static int	minC[3] = {150,50,150};
 static int	maxC[3] = {250,50,50};
 
 /// The limits on the Tk slider where min and max value are selected
-Tclvar_float	color_slider_min_limit("color_slider_min_limit",0);
-Tclvar_float	color_slider_max_limit("color_slider_max_limit",1);
+Tclvar_float	color_min_limit("color_min_limit",0);
+Tclvar_float	color_max_limit("color_max_limit",1);
 
 
 // NANOX
 /// The positions of the min and max values within the Tk slider
-TclNet_float	color_slider_min("color_slider_min",0);
-TclNet_float	color_slider_max("color_slider_max",1);
+TclNet_float	color_min("color_min",0);
+TclNet_float	color_max("color_max",1);
+TclNet_float	data_min("data_min",0);
+TclNet_float	data_max("data_max",1);
 
 
 // NANOX
@@ -1222,8 +1224,8 @@ void shutdown_connections (void) {
 
   ((TclNet_string *) dataset->colorPlaneName)->bindConnection(NULL);
   ((TclNet_string *) dataset->colorMapName)->bindConnection(NULL);
-  color_slider_min.bindConnection(NULL);
-  color_slider_max.bindConnection(NULL);
+  color_min.bindConnection(NULL);
+  color_max.bindConnection(NULL);
 
   measureRedX.bindConnection(NULL);
   measureRedY.bindConnection(NULL);
@@ -1392,9 +1394,11 @@ static void handle_alpha_slider_change (vrpn_float64, void * userdata) {
   //cause_grid_redraw(0.0, NULL);
 }
 
-static void handle_color_slider_change (vrpn_float64, void * userdata) {
+static void handle_color_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-  g->setColorSliderRange(color_slider_min, color_slider_max);
+  g->setColorMinMax(color_min, color_max);
+  g->setDataColorMinMax(data_min, data_max);
+  tcl_colormapRedraw();
   //cause_grid_redraw(0.0, NULL);
 }
 
@@ -2679,7 +2683,7 @@ static	void	handle_colormap_change (const char *, void * userdata) {
           colorMap.load_from_file(dataset->colorMapName->string(), colorMapDir);
           curColorMap = &colorMap;
   }
-
+  tcl_colormapRedraw();
 }
 
 /** See if the user has given a name to the open filename other
@@ -4117,10 +4121,10 @@ void setupCallbacks (nmg_Graphics * g) {
             (handle_alpha_slider_change, g);
   alpha_slider_max.addCallback
             (handle_alpha_slider_change, g);
-  color_slider_min.addCallback
-            (handle_color_slider_change, g);
-  color_slider_max.addCallback
-            (handle_color_slider_change, g);
+  color_min.addCallback(handle_color_change, g);
+  color_max.addCallback(handle_color_change, g);
+  data_min.addCallback(handle_color_change, g);
+  data_max.addCallback(handle_color_change, g);
   texture_scale.addCallback
             (handle_texture_scale_change, g);
   rulergrid_xoffset.addCallback
@@ -4343,8 +4347,10 @@ void setupSynchronization (CollaborationManager * cm,
 
   viewColorControls->add((TclNet_string *) dset->colorPlaneName);
   viewColorControls->add((TclNet_string *) dset->colorMapName);
-  viewColorControls->add(&color_slider_min);
-  viewColorControls->add(&color_slider_max);
+  viewColorControls->add(&color_min);
+  viewColorControls->add(&color_max);
+  viewColorControls->add(&data_min);
+  viewColorControls->add(&data_max);
 
   nmui_Component * viewMeasureControls;
   viewMeasureControls = new nmui_Component ("View Measure");
@@ -6064,7 +6070,6 @@ int main(int argc, char* argv[])
     set_Tk_command_handler(handleCharacterCommand);
     VERBOSE(1, "done initialising the control panels\n");
   }
-
 
     VERBOSE(1, "Before french ohmmeter initialization");
     //if ( tkenable && (dataset->inputGrid->readMode() == READ_DEVICE) ) {

@@ -54,7 +54,8 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setBumpMapName (const char *);
     virtual void setColorMapDirectory (const char *);
     virtual void setColorMapName (const char *);
-    virtual void setColorSliderRange (float low, float hi);
+    virtual void setColorMinMax (float low, float hi);
+    virtual void setDataColorMinMax (float low, float hi);
     virtual void setTextureDirectory (const char *);
     virtual void setComplianceSliderRange (float low, float hi);
     virtual void setContourColor (int r, int g, int b);

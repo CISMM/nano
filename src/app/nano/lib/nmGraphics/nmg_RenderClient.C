@@ -109,9 +109,15 @@ void nmg_Graphics_RenderClient::setColorMapName (const char * a) {
 }
 
 // virtual
-void nmg_Graphics_RenderClient::setColorSliderRange (float a, float b) {
+void nmg_Graphics_RenderClient::setColorMinMax (float a, float b) {
   blockTimer();
-  nmg_Graphics_Remote::setColorSliderRange (a, b);
+  nmg_Graphics_Remote::setColorMinMax (a, b);
+}
+
+// virtual
+void nmg_Graphics_RenderClient::setDataColorMinMax (float a, float b) {
+  blockTimer();
+  nmg_Graphics_Remote::setDataColorMinMax (a, b);
 }
 
 // virtual

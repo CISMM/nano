@@ -254,8 +254,11 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_setColorMapName_type,
                                handle_setColorMapName,
                                this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setColorSliderRange_type,
-                               handle_setColorSliderRange,
+  connection->register_handler(d_setColorMinMax_type,
+                               handle_setColorMinMax,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setDataColorMinMax_type,
+                               handle_setDataColorMinMax,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setComplianceSliderRange_type,
                                handle_setComplianceSliderRange,
@@ -952,11 +955,22 @@ void nmg_Graphics_Implementation::setColorMapName (const char * name) {
   causeGridRedraw();
 }
 
-void nmg_Graphics_Implementation::setColorSliderRange (float low, float high) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setColorSliderRange().\n");
-  g_color_slider_min = low;
-  g_color_slider_max = high;
-  causeGridRedraw();
+void nmg_Graphics_Implementation::setColorMinMax (float low, float high) {
+//fprintf(stderr, "nmg_Graphics_Implementation::setColorMinMax().\n");
+  if ( (g_color_min != low) || (g_color_max != high) ) {
+    g_color_min = low;
+    g_color_max = high;
+    causeGridRedraw();
+  }
+}
+
+void nmg_Graphics_Implementation::setDataColorMinMax (float low, float high) {
+//fprintf(stderr, "nmg_Graphics_Implementation::setDataColorMinMax().\n");
+  if ( (g_data_min != low) || (g_data_max != high) ) {
+    g_data_min = low;
+    g_data_max = high;
+    causeGridRedraw();
+  }
 }
 
 void nmg_Graphics_Implementation::setComplianceSliderRange (float low, float high) {
@@ -2836,13 +2850,24 @@ int nmg_Graphics_Implementation::handle_setColorMapName
 }
 
 // static
-int nmg_Graphics_Implementation::handle_setColorSliderRange
+int nmg_Graphics_Implementation::handle_setColorMinMax
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float low, hi;
 
-  CHECK(it->decode_setColorSliderRange(p.buffer, &low, &hi));
-  it->setColorSliderRange(low, hi);
+  CHECK(it->decode_setColorMinMax(p.buffer, &low, &hi));
+  it->setColorMinMax(low, hi);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setDataColorMinMax
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float low, hi;
+
+  CHECK(it->decode_setDataColorMinMax(p.buffer, &low, &hi));
+  it->setDataColorMinMax(low, hi);
   return 0;
 }
 

@@ -83,154 +83,12 @@ iwidgets::Labeledwidget::alignlabels \
 pack $nmInfo(colorscale).pickframe.colormap_plane \
 	$nmInfo(colorscale).pickframe.colormap -anchor nw -fill x
 
-#
-# It requires the the russ_widgets scripts have been executed to define
-# the floatscale procedure.
-# Also the color_slider_min_limit and color_slider_max_limit variables
-# must have been set to the proper values for initialization.
-# Set traces on the max_limit and min_limit variables.  If they
-# change, destroy the old sliders and set up new ones within the old
-# frame.
-#
-
-set color_slider_min 0
-set color_slider_max 1
-
-set color_slider_min_limit 0
-set color_slider_max_limit 1
-
-set color_slider_center [expr ($color_slider_min_limit+$color_slider_max_limit)/2.0]
-set color_slider_range [expr $color_slider_max-$color_slider_min]
-
-generic_entry $nmInfo(colorscale).scales.center color_slider_center \
-	"Center ($color_slider_min_limit $color_slider_max_limit)" real
-generic_entry $nmInfo(colorscale).scales.range color_slider_range \
-	"Width (0 [expr $color_slider_max_limit -$color_slider_min_limit ])" \
-	real
-
-iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(colorscale).scales.center \
-	$nmInfo(colorscale).scales.range
-
-pack  $nmInfo(colorscale).scales.center \
-	$nmInfo(colorscale).scales.range -side top -anchor nw
-
-# Autoscales the color map, by setting color_comes_from to it's
-# current value, which prompts the C code to do it.
-button $nmInfo(colorscale).scales.autoscale -text "Autoscale now" \
-	-command {
-    set color_comes_from [$nmInfo(colorscale).pickframe.colormap_plane get]
-}
-pack $nmInfo(colorscale).scales.autoscale -side top -anchor nw
 
 # these are semaphores, to prevent recursive callbacks from
 # screwing things up. "Trace" can be very annoying!
 set setting_minmax 0
 set setting_cr 0
 
-#
-# Helper routine for the color scale that destroys and then recreates the
-# slider with new values if the endpoints change.
-# Checks for the scales existence before destroying so it is safe to 
-# call the first time to create the scales. (see below)
-#
-
-proc color_scale_newscale {name element op} {
-    global  color_slider_min_limit color_slider_max_limit
-    global  color_slider_min color_slider_max
-    global  color_slider_center color_slider_range
-    global setting_cr
-    global nmInfo
-
-    # check for absurd conditions
-    if {$color_slider_min > $color_slider_max} then return
-    if {$color_slider_min_limit > $color_slider_max_limit} then return
-    
-    # Change titles to reflect new range
-    # format statements keep the labels from getting really long. 
-    set newtext [format "%.0f %.0f" $color_slider_min_limit $color_slider_max_limit]
-    $nmInfo(colorscale).scales.center config -labeltext \
-	"Center ($newtext)"
-    set newtext [format "%.0f" [expr $color_slider_max_limit -$color_slider_min_limit ]]
-    $nmInfo(colorscale).scales.range config -labeltext \
-	"Width (0 $newtext)"
-
-    iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(colorscale).scales.center \
-	$nmInfo(colorscale).scales.range
-
-    # new scale, so reset params to the default values 
-    set setting_cr 1
-    set color_slider_center [expr ($color_slider_max_limit+$color_slider_min_limit)/2.0]
-    # decided not to expand the width of color maps above 
-    # current data range - that's just annoying. But min/max of slider
-    # are still wider than current data range. 
-    set color_slider_range [expr ($color_slider_max_limit -$color_slider_min_limit)]
-    set setting_cr 0
-}
-
-# 
-# Helper routine so we can change the sliders representing the
-# center and range of the color map into the min and max values
-# of the color map used in the C code.
-proc color_scale_change {name element op} {
-    global color_slider_center color_slider_range 
-    global color_slider_max color_slider_min
-    global setting_minmax setting_cr
-
-# check the semaphore to prevent recursive callbacks
-    if { $setting_cr } then return
-
-    set setting_minmax 1
-    set color_slider_max [expr $color_slider_center + $color_slider_range/2.0]
-    set color_slider_min [expr $color_slider_center - $color_slider_range/2.0]
-    set setting_minmax 0
-    #puts "csc min max $color_slider_min $color_slider_max"
-}
-
-# 
-# Helper routine so if min and max get set from C, 
-# we can update center and range
-proc color_scale_change_from_c {name element op} {
-    global color_slider_center color_slider_range 
-    global color_slider_max color_slider_min
-    global setting_minmax setting_cr
-
-# check the semaphore to prevent recursive callbacks
-    if { $setting_minmax } then return
-
-    #puts "from c minmax $color_slider_min $color_slider_max"
-
-    set setting_cr 1
-    
-    set color_slider_center [expr ($color_slider_min + $color_slider_max)/2.0]
-    set color_slider_range [expr $color_slider_max-$color_slider_min]
-    set setting_cr 0
-
-    #puts "from c center range $color_slider_center $color_slider_range"
-}
-
-#
-#Finally, create some controls for the color map.
-#
-# call procedure to create the scales for the first time
-color_scale_newscale "" "" ""
-
-# set up traces on variables using the procedures above. 
-trace variable color_slider_min_limit w color_scale_newscale
-trace variable color_slider_max_limit w color_scale_newscale
-trace variable color_slider_center w color_scale_change
-trace variable color_slider_range w color_scale_change
-trace variable color_slider_min w color_scale_change_from_c
-trace variable color_slider_max w color_scale_change_from_c
-
-
-#
-# A button to bring up the control panel for min/max color
-# and other parameters of the CUSTOM color map. 
-#
-button $nmInfo(colorscale).pickframe.setcolor -text "Adjust Custom Colormap" -command adjust_color
-pack $nmInfo(colorscale).pickframe.setcolor -anchor nw
 
 # Make it easy to create a flat plane to use for a color map.
 button $nmInfo(colorscale).pickframe.calc_planes -text "Calculate Data Planes..."  \
@@ -246,80 +104,608 @@ set maxR 255
 set maxG 255
 set maxB 255
 
-proc adjust_color {} {
-    global minR minG minB maxR maxG maxB color_flag surface_changed
-    toplevel .c 
 
-    set pwidth 3c
+set color_min_limit 0
+set color_max_limit 1
+trace variable color_min_limit w adjust_data_min_value
+trace variable color_max_limit w adjust_data_max_value
 
-    frame .c.menubar -relief raised -bd 4
-    frame .c.label
-    frame .c.samplemax -height 3c -width 3c -relief groove -bd 5
-    frame .c.colorbutts
-
-    label .c.label.a -textvariable color_flag
-    label .c.label.b -text "Color Setting"
-    scale .c.red -label Red -from 0 -to 255 -orient horizontal \
-           -command new_color -bg tan -length $pwidth -relief raised -bd 3
-    scale .c.green -label Green -from 0 -to 255 -orient horizontal \
-           -command new_color -bg tan -length $pwidth -relief raised -bd 3
-    scale .c.blue -label Blue -from 0 -to 255 -orient horizontal \
-           -command new_color -bg tan -length $pwidth -relief raised -bd 3
-
-    pack .c.menubar -side top -fill both
-    pack .c.label.a .c.label.b -side left
-    pack .c.label -side top -anchor n
-    pack .c.red .c.green .c.blue -side top -anchor w -fill x -pady 1m -padx 3m
-    pack .c.samplemax -side top -anchor e -padx 3m -fill x
-    pack .c.colorbutts -side top 
- 
-    button .c.menubar.exitwin -bg red -text "Close Color Panel" -command "destroy .c"
-    radiobutton .c.colorbutts.min -text "set min"  -variable color_flag \
-	    -value "Minimum" -bg SteelBlue -command toggle_color 
-    radiobutton .c.colorbutts.max -text "set max"  -variable color_flag \
-            -value "Maximum" -bg SteelBlue -command toggle_color
-    button .c.colorbutts.go -bg yellow -text "OK" -command set_color
-
-    pack .c.colorbutts.min .c.colorbutts.max  .c.colorbutts.go -side left -pady 3m \
-	     -padx 3m -ipadx 1m -ipady 1m -fill both
- 
-    pack .c.menubar.exitwin -side top -anchor e -ipadx 3m
-
-    toggle_color
+proc adjust_data_min_value {name element op} {
+    global color_min_limit data_min_value color_min_value
+    set color_min_value $color_min_limit
+}
+proc adjust_data_max_value {name element op} {
+    global color_max_limit data_max_value color_max_value
+    set color_max_value $color_max_limit
 }
 
-proc new_color {value} {
-    set color [format #%02x%02x%02x [.c.red get] [.c.green get] [.c.blue get]]
-    .c.samplemax configure -bg $color
+canvas $nmInfo(colorscale).canvas -background LemonChiffon1
+pack $nmInfo(colorscale).canvas
+set triangle_width 8
+set triangle_height 6
+set box_width 4
+set box_height 6
+
+set canvas_lower_bound 9
+set canvas_upper_bound 265
+
+set image_x 200 
+set image_y 265
+set image_width 32
+set image_height 256
+set image_heightf 256.0
+
+set data_x [expr $image_x - $image_width - 10]
+set data_y_low $image_y
+set data_y_high [expr $image_y - $image_height]
+
+set data_min_value 0
+set data_max_value 1
+set data_min_change 0
+set data_max_change 0
+set data_min_changed 0
+set data_max_changed 0
+set data_min_previous $data_min_value
+set data_max_previous $data_max_value
+
+###set cmData(min_value) 0
+
+
+set color_x [expr $image_x + 10]
+set color_y_low $image_y
+set color_y_high [expr $image_y - $image_height]
+set color_min_value 0
+set color_max_value 1
+set color_min_changed 0
+set color_max_changed 0
+
+
+proc left_triangle { x y } {
+    global triangle_width triangle_height
+    return [list [expr $x + $triangle_width] $y \
+	    [expr $x - $triangle_width] [expr $y + $triangle_height] \
+	    [expr $x - $triangle_width] [expr $y - $triangle_height]]
 }
-proc set_color {} {
-    global minR minG minB maxR maxG maxB color_flag surface_changed 
-    if {$color_flag=="Minimum"} {
-	set minR [.c.red get]
-	set minG [.c.green get]
-	set minB [.c.blue get]
-    }
-    if {$color_flag=="Maximum"} { 
-	set maxR [.c.red get]
-	set maxG [.c.green get]
-	set maxB [.c.blue get]
-    }
-    set surface_changed 1
+proc right_triangle { x y } {
+    global triangle_width triangle_height
+    return [list [expr $x - $triangle_width] $y \
+	    [expr $x + $triangle_width] [expr $y + $triangle_height] \
+	    [expr $x + $triangle_width] [expr $y - $triangle_height]]
+}
+proc draw_line { x y1 y2 } {
+    return [list  $x [expr $y2] $x [expr $y1] ]
 }
 
-proc toggle_color {} {
-    global minR minG minB maxR maxG maxB color_flag
-    if {$color_flag=="Minimum"} {
-	.c.red set $minR
-	.c.green set $minG
-	.c.blue set $minB
+proc draw_rectangle { x y1 y2 } {
+    global box_width box_height
+
+    return [list \
+	    [expr $x - $box_width]\
+	    [expr $y1 + ($y2 - $y1)/2 - $box_height] \
+	    [expr $x  + $box_width]\
+	    [expr $y1 + ($y2 - $y1)/2 + $box_height] \
+	    ]
+}
+###
+### The triangle and entry widget for the Data Min selector
+### the motion of the triangle is restricted to up/down.
+###
+eval $nmInfo(colorscale).canvas create polygon [left_triangle $data_x $data_y_low] \
+	-fill blue4 -tags data_min_tri
+$nmInfo(colorscale).canvas bind data_min_tri <B1-Motion>\
+	"colormap_set_data_min $nmInfo(colorscale) %y"
+generic_entry $nmInfo(colorscale).data_min_entry data_min_value "Data Min" real
+trace variable data_min_value w "adjust_data_min $nmInfo(colorscale)"
+$nmInfo(colorscale).canvas create window [expr $data_x - $triangle_width] $data_y_low\
+	-anchor se -window $nmInfo(colorscale).data_min_entry -tags data_min_entry
+
+###
+### The triangle and entry widget for the Data Max selector
+### the motion of the triangle is restricted to up/down.
+###
+eval $nmInfo(colorscale).canvas create polygon [left_triangle $data_x $data_y_high]\
+	-fill blue4 -tags data_max_tri
+$nmInfo(colorscale).canvas bind data_max_tri <B1-Motion>\
+	"colormap_set_data_max $nmInfo(colorscale) %y"
+generic_entry $nmInfo(colorscale).data_max_entry data_max_value "Data Max" real
+trace variable data_max_value w "adjust_data_max $nmInfo(colorscale)"
+$nmInfo(colorscale).canvas create window [expr $data_x - $triangle_width] $data_y_high\
+	-anchor ne -window $nmInfo(colorscale).data_max_entry -tags data_max_entry
+
+eval $nmInfo(colorscale).canvas create line [draw_line $data_x $data_y_low $data_y_high ] \
+	-width 3 -fill blue4 -tags data_line
+
+eval $nmInfo(colorscale).canvas create rectangle [draw_rectangle $data_x $data_y_low $data_y_high]\
+	-fill blue4 -outline blue4 -tags data_line_box
+$nmInfo(colorscale).canvas bind data_line_box <B1-Motion>\
+	"colormap_set_data_line $nmInfo(colorscale) %y"
+
+
+
+###
+### The triangle and entry widget for the Color Min selector
+### the motion of the triangle is restricted to up/down.
+###
+eval $nmInfo(colorscale).canvas create polygon [right_triangle $color_x $color_y_low]\
+	-fill blue4 -tags color_min_tri
+$nmInfo(colorscale).canvas bind color_min_tri <B1-Motion> \
+	"colormap_set_color_min $nmInfo(colorscale) %y"
+generic_entry $nmInfo(colorscale).color_min_entry color_min_value "Color Min" real
+trace variable color_min_value w "adjust_color_min $nmInfo(colorscale)"
+$nmInfo(colorscale).canvas create window [expr $color_x + $triangle_width] $color_y_low\
+	-anchor sw -window $nmInfo(colorscale).color_min_entry -tags color_min_entry
+
+###
+### The triangle and entry widget for the Color Max selector
+### the motion of the triangle is restricted to up/down.
+###
+eval $nmInfo(colorscale).canvas create polygon [right_triangle $color_x $color_y_high]\
+	-fill blue4 -tags color_max_tri
+$nmInfo(colorscale).canvas bind color_max_tri <B1-Motion> \
+	"colormap_set_color_max $nmInfo(colorscale) %y"
+generic_entry $nmInfo(colorscale).color_max_entry color_max_value "Color Max" real
+trace variable color_max_value w "adjust_color_max $nmInfo(colorscale)"
+$nmInfo(colorscale).canvas create window [expr $color_x + $triangle_width] $color_y_high\
+	-anchor nw -window $nmInfo(colorscale).color_max_entry -tags color_max_entry
+
+eval $nmInfo(colorscale).canvas create line [draw_line $color_x $color_y_low $color_y_high]\
+	-width 3 -fill blue4 -tags color_line
+
+eval $nmInfo(colorscale).canvas create rectangle \
+	[draw_rectangle $color_x $color_y_low $color_y_high] \
+	-fill blue4 -outline blue4 -tags color_line_box
+$nmInfo(colorscale).canvas bind color_line_box <B1-Motion> \
+	"colormap_set_color_line $nmInfo(colorscale) %y"
+
+set imh [image create photo "colormap_image" -height $image_height -width $image_width]
+$nmInfo(colorscale).canvas create image $image_x $image_y -anchor se -image $imh
+
+proc colormap_set_data_min { win y } {
+    global data_min data_y_low data_y_high data_x
+    global canvas_lower_bound canvas_upper_bound triangle_width
+    global image_heightf
+    global data_min_value color_min_limit color_max_limit
+    global data_min_previous
+
+    set data_min_changed 1
+
+    set y1 $y
+    if { $y1 < $canvas_lower_bound } {
+	set y1 $canvas_lower_bound
+    } elseif { $y1 > $canvas_upper_bound } {
+	set y1 $canvas_upper_bound
     }
-    if {$color_flag=="Maximum"} { 
-	.c.red set $maxR
-	.c.green set $maxG
-	.c.blue set $maxB
+
+    set data_min [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
+    set data_min_previous $data_min_value
+    set data_min_changed 1
+    set data_min_value $data_min
+    set data_y_low $y1
+
+    ## reposition arrow:
+    eval $win.canvas coords data_min_tri [left_triangle $data_x $data_y_low]
+    $win.canvas coords data_min_entry [expr $data_x - $triangle_width] $data_y_low
+
+    ## reposition line:
+    eval $win.canvas coords data_line [draw_line $data_x $data_y_low  $data_y_high]
+
+    ## reposition box:
+    eval $win.canvas coords data_line_box [draw_rectangle $data_x $data_y_low $data_y_high]
+}
+
+proc adjust_data_min { win name element op } {
+    global data_min data_y_low data_y_high data_x
+    global canvas_lower_bound canvas_upper_bound triangle_width
+    global image_heightf
+    global data_min_value color_min_limit color_max_limit
+    global data_min_changed 
+    global color_min_changed color_min_value
+    global color_max_changed color_max_value
+    global data_max_value data_min_previous data_max_previous
+
+    set ratio [expr (($data_max_previous - $data_min_previous)/\
+	    ($data_max_value - $data_min_value))]
+
+    set translate [expr ($data_max_value * ($color_max_limit - $color_min_limit)) + \
+	    $color_min_limit]
+
+    set tmp [expr (($color_max_value - $translate) * $ratio) + $translate]
+    set color_max_changed 1
+    set color_max_value $tmp
+
+    set tmp [expr (($color_min_value - $translate) * $ratio) + $translate]
+    set color_min_changed 1
+    set color_min_value $tmp
+    if { $data_min_changed == 0 } {
+	set y1 [expr 1.0 - $data_min_value]
+	set y1 [expr $y1 * ($canvas_upper_bound - $canvas_lower_bound)]
+	set y1 [expr $y1 + $canvas_lower_bound]
+	
+	if { $y1 < $canvas_lower_bound } {
+	    set y1 $canvas_lower_bound
+	} elseif { $y1 > $canvas_upper_bound } {
+	    set y1 $canvas_upper_bound
+	}
+	set data_min [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
+	set data_min_previous $data_min_value
+	set data_y_low $y1
+	
+	## reposition arrow:
+	eval $win.canvas coords data_min_tri [left_triangle $data_x $data_y_low]
+	$win.canvas coords data_min_entry [expr $data_x - $triangle_width] $data_y_low
+	
+	## reposition line:
+	eval $win.canvas coords data_line [draw_line $data_x $data_y_low  $data_y_high]
+	
+	## reposition box:
+	eval $win.canvas coords data_line_box [draw_rectangle $data_x $data_y_low $data_y_high]
+    } else {
+	set data_min_changed 0
     }
-    new_color 0
+}
+
+proc colormap_set_data_max { win y } {
+    global data_max data_y_low data_y_high data_x
+    global canvas_lower_bound canvas_upper_bound
+    global triangle_width triangle_height box_width box_height
+    global image_heightf
+    global data_max_value color_min_limit color_max_limit
+    global data_max_change data_max_changed data_max_previous
+
+    set y1 $y
+    if { $y1 < $canvas_lower_bound } {
+	set y1 $canvas_lower_bound
+    } elseif { $y1 > $canvas_upper_bound } {
+	set y1 $canvas_upper_bound
+    }
+    set data_max [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
+    set data_max_previous $data_max_value
+    set data_max_changed 1
+    set data_max_value $data_max
+    set data_y_high $y1
+
+    ## reposition arrow:
+    eval $win.canvas coords data_max_tri [left_triangle $data_x $data_y_high]
+    $win.canvas coords data_max_entry [expr $data_x - $triangle_width] $data_y_high
+
+    ## reposition line:
+    eval $win.canvas coords data_line [draw_line $data_x $data_y_low $data_y_high]
+
+    ## reposition box:
+    eval $win.canvas coords data_line_box [draw_rectangle $data_x $data_y_low $data_y_high]
+}
+
+proc adjust_data_max { win name element op } {
+    global data_max data_y_low data_y_high data_x
+    global canvas_lower_bound canvas_upper_bound triangle_width
+    global image_heightf
+    global data_max_value color_min_limit color_max_limit
+    global data_max_changed
+    global data_max_change data_max_previous data_min_previous
+    global data_min_value
+    global color_max_changed color_max_value
+    global color_min_changed color_min_value
+
+    set ratio [expr (($data_max_previous - $data_min_previous)/\
+	    ($data_max_value - $data_min_value))]
+
+    set translate [expr ($data_max_value * ($color_max_limit - $color_min_limit)) + \
+	    $color_min_limit]
+
+    set tmp [expr (($color_max_value - $translate) * $ratio) + $translate]
+    set color_max_changed 1
+    set color_max_value $tmp
+
+    set tmp [expr (($color_min_value - $translate) * $ratio) + $translate]
+    set color_min_changed 1
+    set color_min_value $tmp
+    if { $data_max_changed == 0 } {
+	set y1 [expr 1.0 - $data_max_value]
+	set y1 [expr $y1 * ($canvas_upper_bound - $canvas_lower_bound)]
+	set y1 [expr $y1 + $canvas_lower_bound]
+	
+	if { $y1 < $canvas_lower_bound } {
+	    set y1 $canvas_lower_bound
+	} elseif { $y1 > $canvas_upper_bound } {
+	    set y1 $canvas_upper_bound
+	}
+	set data_max [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
+	set data_max_previous $data_max_value
+	set data_y_high $y1
+	
+	## reposition arrow:
+	eval $win.canvas coords data_max_tri [left_triangle $data_x $data_y_high]
+	$win.canvas coords data_max_entry [expr $data_x - $triangle_width] $data_y_high
+	
+	## reposition line:
+	eval $win.canvas coords data_line [draw_line $data_x $data_y_low  $data_y_high]
+	
+	## reposition box:
+	eval $win.canvas coords data_line_box [draw_rectangle $data_x $data_y_low $data_y_high]
+    } else {
+	set data_max_changed 0
+    }
+}
+
+proc colormap_set_data_line { win y } {
+    global data_max data_min data_y_high data_y_low data_x
+    global canvas_lower_bound canvas_upper_bound
+    global triangle_width triangle_height box_width box_height
+    global image_heightf
+    global data_min_value data_max_value color_min_limit color_max_limit
+    global data_min_changed data_max_changed data_max_previous data_min_previous
+
+    set y1 $y
+    if { $y1 < $canvas_lower_bound } {
+	set y1 $canvas_lower_bound
+    } elseif { $y1 > $canvas_upper_bound } {
+	set y1 $canvas_upper_bound
+    }
+
+    set dif [expr (($data_y_high - $y1) - ($y1 - $data_y_low))/2]
+
+    set data_y_low_tmp [expr $data_y_low - $dif] 
+    set data_y_high_tmp [expr $data_y_high - $dif]
+    set size [expr $data_y_low_tmp - $data_y_high_tmp]
+    
+    if { $data_y_high_tmp < $canvas_lower_bound } {
+	set data_y_high $canvas_lower_bound
+	set data_y_low [expr $data_y_high + $size]
+    } elseif { $data_y_high_tmp > $canvas_upper_bound } {
+    } elseif { $data_y_low_tmp < $canvas_lower_bound } {
+    } elseif { $data_y_low_tmp > $canvas_upper_bound } {
+	set data_y_low $canvas_upper_bound
+	set data_y_high [expr $data_y_low - $size]
+    } else {
+	set data_y_low $data_y_low_tmp
+	set data_y_high $data_y_high_tmp
+    }
+
+    set data_min [expr 1.0 - ($data_y_low - $canvas_lower_bound)/$image_heightf]
+    set data_min_previous $data_min_value
+    set data_min_changed 1
+    set data_min_value $data_min
+
+    set data_max [expr 1.0 - ($data_y_high  - $canvas_lower_bound)/$image_heightf]
+    set data_max_previous $data_max_value
+    set data_max_changed 1
+    set data_max_value $data_max
+
+    ## reposition arrows:
+    eval $win.canvas coords data_min_tri [left_triangle $data_x $data_y_low]
+    $win.canvas coords data_min_entry [expr $data_x - $triangle_width] $data_y_low
+
+    eval $win.canvas coords data_max_tri [left_triangle $data_x $data_y_high]
+    $win.canvas coords data_max_entry [expr $data_x - $triangle_width] $data_y_high
+
+    ## reposition line:
+    eval $win.canvas coords data_line [draw_line $data_x $data_y_low $data_y_high]
+
+    ## reposition box:
+    eval $win.canvas coords data_line_box [draw_rectangle $data_x $data_y_low $data_y_high]
+}
+
+
+proc colormap_set_color_min { win y } {
+    global color_min color_y_low color_y_high color_x
+    global canvas_lower_bound canvas_upper_bound
+    global triangle_width triangle_height box_width box_height
+    global image_heightf
+    global color_min_value color_max_value color_min_limit color_max_limit
+    global color_min_changed
+    global data_min_value
+
+    set y1 $y
+    if { $y1 < $canvas_lower_bound } {
+	set y1 $canvas_lower_bound
+    } elseif { $y1 > $canvas_upper_bound } {
+	set y1 $canvas_upper_bound
+    }
+    set color_min [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
+
+    set color_min_value_tmp [expr $color_min * ($color_max_limit - $color_min_limit)]
+    set color_min_value_tmp [expr $color_min_value_tmp + $color_min_limit]
+
+    set tmp [expr $data_min_value * ($color_max_limit - $color_min_limit)]
+    set tmp [expr $tmp + $color_min_limit]
+
+    set color_min_changed 1
+    set color_min_value [expr $color_min_value_tmp - $tmp]
+
+    set color_y_low $y1
+
+    ## reposition arrow:
+    eval $win.canvas coords color_min_tri [right_triangle $color_x $color_y_low]
+    $win.canvas coords color_min_entry [expr $color_x + $triangle_width] $color_y_low
+
+    ## reposition line:
+    eval $win.canvas coords color_line [draw_line $color_x $color_y_low $color_y_high]
+
+    ## reposition box:
+    eval $win.canvas coords color_line_box [draw_rectangle $color_x $color_y_low $color_y_high]
+}
+
+proc adjust_color_min { win name element op } {
+    global color_min color_y_low color_y_high color_x
+    global canvas_lower_bound canvas_upper_bound triangle_width
+    global image_heightf
+    global color_min_value color_min_limit color_max_limit
+    global color_min_changed
+
+    if { $color_min_changed == 0 } {
+	set y1 [expr ($color_min_value - $color_min_limit)/ \
+		($color_max_limit - $color_min_limit)]
+	set y1 [expr 1.0 - $y1]
+	set y1 [expr $y1 * ($canvas_upper_bound - $canvas_lower_bound)]
+	set y1 [expr $y1 + $canvas_lower_bound]
+	
+	if { $y1 < $canvas_lower_bound } {
+	    set y1 $canvas_lower_bound
+	} elseif { $y1 > $canvas_upper_bound } {
+	    set y1 $canvas_upper_bound
+	}
+	set color_min [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
+	set color_y_low $y1
+	
+	## reposition arrow:
+	eval $win.canvas coords color_min_tri [right_triangle $color_x $color_y_low]
+	$win.canvas coords color_min_entry [expr $color_x + $triangle_width] $color_y_low
+	
+	## reposition line:
+	eval $win.canvas coords color_line [draw_line $color_x $color_y_low  $color_y_high]
+	
+	## reposition box:
+	eval $win.canvas coords color_line_box \
+		[draw_rectangle $color_x $color_y_low $color_y_high]
+    } else {
+	set color_min_changed 0.0
+    }
+}
+
+proc colormap_set_color_max { win y } {
+    global color_max color_y_low color_y_high color_x
+    global canvas_lower_bound canvas_upper_bound
+    global triangle_width triangle_height box_width box_height
+    global image_heightf
+    global color_min_value color_max_value color_min_limit color_max_limit
+    global color_max_changed
+    global data_max_change
+
+    set y1 $y
+    if { $y1 < $canvas_lower_bound } {
+	set y1 $canvas_lower_bound
+    } elseif { $y1 > $canvas_upper_bound } {
+	set y1 $canvas_upper_bound
+    }
+    set color_max [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
+
+    set color_max_value_tmp [expr $color_max * ($color_max_limit - $color_min_limit)]
+    set color_max_value_tmp [expr $color_max_value_tmp + $color_min_limit]
+
+    set tmp [expr $data_max_change * ($color_max_limit - $color_min_limit)]
+    set tmp [expr $tmp + $color_min_limit]
+
+    set color_max_changed 1
+    set color_max_value [expr $color_max_value_tmp + $tmp]
+
+    set color_y_high $y1
+
+    ## reposition arrow:
+    eval $win.canvas coords color_max_tri [right_triangle $color_x $color_y_high]
+    $win.canvas coords color_max_entry [expr $color_x + $triangle_width] $color_y_high
+
+    ## reposition line:
+    eval $win.canvas coords color_line [draw_line $color_x $color_y_low $color_y_high]
+
+    ## reposition box:
+    eval $win.canvas coords color_line_box [draw_rectangle $color_x $color_y_low $color_y_high]
+}
+
+proc adjust_color_max { win name element op } {
+    global color_max color_y_low color_y_high color_x
+    global canvas_lower_bound canvas_upper_bound triangle_width
+    global image_heightf
+    global color_max_value color_min_limit color_max_limit
+    global color_max_changed
+
+    if { $color_max_changed == 0 } {
+	set y1 [expr ($color_max_value - $color_min_limit)/ \
+		($color_max_limit - $color_min_limit)]
+	set y1 [expr 1.0 - $y1]
+	set y1 [expr $y1 * ($canvas_upper_bound - $canvas_lower_bound)]
+	set y1 [expr $y1 + $canvas_lower_bound]
+	
+	if { $y1 < $canvas_lower_bound } {
+	    set y1 $canvas_lower_bound
+	} elseif { $y1 > $canvas_upper_bound } {
+	    set y1 $canvas_upper_bound
+	}
+	set color_max [expr 1.0 - (($y1 - $canvas_lower_bound)/$image_heightf)]
+	set color_y_high $y1
+	
+	## reposition arrow:
+	eval $win.canvas coords color_max_tri [right_triangle $color_x $color_y_high]
+	$win.canvas coords color_max_entry [expr $color_x + $triangle_width] $color_y_high
+	
+	## reposition line:
+	eval $win.canvas coords color_line [draw_line $color_x $color_y_low  $color_y_high]
+	
+	## reposition box:
+	eval $win.canvas coords color_line_box \
+		[draw_rectangle $color_x $color_y_low $color_y_high]
+    } else {
+	set color_max_changed 0
+    }
+}
+
+proc colormap_set_color_line { win y } {
+    global color_max color_min color_y_high color_y_low color_x
+    global canvas_lower_bound canvas_upper_bound
+    global triangle_width triangle_height box_width box_height
+    global image_heightf
+    global color_min_value color_max_value color_min_limit color_max_limit
+    global color_min_changed color_max_changed
+    global data_min_value data_max_change
+
+    set y1 $y
+    if { $y1 < $canvas_lower_bound } {
+	set y1 $canvas_lower_bound
+    } elseif { $y1 > $canvas_upper_bound } {
+	set y1 $canvas_upper_bound
+    }
+
+    set dif [expr (($color_y_high - $y1) - ($y1 - $color_y_low))/2]
+
+    set color_y_low_tmp [expr $color_y_low - $dif] 
+    set color_y_high_tmp [expr $color_y_high - $dif]
+    set size [expr $color_y_low_tmp - $color_y_high_tmp]
+    
+    if { $color_y_high_tmp < $canvas_lower_bound } {
+	set color_y_high $canvas_lower_bound
+	set color_y_low [expr $color_y_high + $size]
+    } elseif { $color_y_high_tmp > $canvas_upper_bound } {
+    } elseif { $color_y_low_tmp < $canvas_lower_bound } {
+    } elseif { $color_y_low_tmp > $canvas_upper_bound } {
+	set color_y_low $canvas_upper_bound
+	set color_y_high [expr $color_y_low - $size]
+    } else {
+	set color_y_low $color_y_low_tmp
+	set color_y_high $color_y_high_tmp
+    }
+
+    set color_min [expr 1.0 - ($color_y_low - $canvas_lower_bound)/$image_heightf]
+    set color_min_value_tmp [expr $color_min * ($color_max_limit - $color_min_limit)]
+    set color_min_value_tmp [expr $color_min_value_tmp + $color_min_limit]
+
+    set tmp [expr $data_min_value * ($color_max_limit - $color_min_limit)]
+    set tmp [expr $tmp + $color_min_limit]
+
+    set color_min_changed 1
+    set color_min_value [expr $color_min_value_tmp - $tmp]
+
+
+    set color_max [expr 1.0 - ($color_y_high - $canvas_lower_bound)/$image_heightf]
+    set color_max_value_tmp [expr $color_max * ($color_max_limit - $color_min_limit)]
+    set color_max_value_tmp [expr $color_max_value_tmp + $color_min_limit]
+
+    set tmp [expr $data_max_change * ($color_max_limit - $color_min_limit)]
+    set tmp [expr $tmp + $color_min_limit]
+
+    set color_max_changed 1
+    set color_max_value [expr $color_max_value + $tmp]
+
+    ## reposition arrows:
+    eval $win.canvas coords color_min_tri [right_triangle $color_x $color_y_low]
+    $win.canvas coords color_min_entry [expr $color_x + $triangle_width] $color_y_low
+
+    eval $win.canvas coords color_max_tri [right_triangle $color_x $color_y_high]
+    $win.canvas coords color_max_entry [expr $color_x + $triangle_width] $color_y_high
+
+    ## reposition line:
+    eval $win.canvas coords color_line [draw_line $color_x $color_y_low $color_y_high]
+
+    ## reposition box:
+    eval $win.canvas coords color_line_box [draw_rectangle $color_x $color_y_low $color_y_high]
 }
 
 ##########

@@ -154,9 +154,10 @@ extern	Tclvar_int using_phantom_button;	// microscape.c
 
 //---------------------------------------------------------------------------
 /// These select the plane to map color from and the scale of the mapping. 
-extern  Tclvar_float            color_slider_min_limit;
-extern  Tclvar_float            color_slider_max_limit;
-extern  TclNet_float            color_slider_min, color_slider_max;
+extern  Tclvar_float            color_min_limit;
+extern  Tclvar_float            color_max_limit;
+extern  TclNet_float            color_min, color_max;
+extern  TclNet_float            data_min, data_max;
 
 //--------------------------------------------------------------------------
 ///These select the plane to map compliance from and teh scale of the mapping.

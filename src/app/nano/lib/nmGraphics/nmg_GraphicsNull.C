@@ -117,7 +117,8 @@ void nmg_Graphics_Null::setAlphaSliderRange (float , float ) {}
 void nmg_Graphics_Null::setBumpMapName (const char * ) {}
 void nmg_Graphics_Null::setColorMapDirectory (const char * ) {}
 void nmg_Graphics_Null::setColorMapName (const char * ) {}
-void nmg_Graphics_Null::setColorSliderRange (float , float ) {}
+void nmg_Graphics_Null::setColorMinMax (float , float ) {}
+void nmg_Graphics_Null::setDataColorMinMax (float , float ) {}
 void nmg_Graphics_Null::setTextureDirectory (const char * ) {}
 void nmg_Graphics_Null::setComplianceSliderRange (float , float ) {}
 void nmg_Graphics_Null::setContourColor (int , int , int ) {}

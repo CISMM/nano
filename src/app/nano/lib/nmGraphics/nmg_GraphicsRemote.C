@@ -365,22 +365,45 @@ void nmg_Graphics_Remote::setColorMapName (const char * name) {
   }
 }
 
-void nmg_Graphics_Remote::setColorSliderRange (float low, float hi) {
+void nmg_Graphics_Remote::setColorMinMax (float low, float hi) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  d_color_slider_min = low;
-  d_color_slider_max = hi;
+  d_color_min = low;
+  d_color_max = hi;
 
-  msgbuf = encode_setColorSliderRange(&len, low, hi);
+  msgbuf = encode_setColorMinMax(&len, low, hi);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now, d_setColorSliderRange_type,
+    retval = d_connection->pack_message(len, now, d_setColorMinMax_type,
                            d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
     if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setColorSliderRange:  "
+      fprintf(stderr, "nmg_Graphics_Remote::setColorMinMax:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+void nmg_Graphics_Remote::setDataColorMinMax (float low, float hi) {
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  d_data_min = low;
+  d_data_max = hi;
+
+  msgbuf = encode_setDataColorMinMax(&len, low, hi);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_setDataColorMinMax_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setDataColorMinMax:  "
                       "Couldn't pack message to send to server.\n");
     }
   }

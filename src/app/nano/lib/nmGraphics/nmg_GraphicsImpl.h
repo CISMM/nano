@@ -53,7 +53,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void setColorMapDirectory (const char *);
     virtual void setColorMapName (const char *);
-    virtual void setColorSliderRange (float low, float hi);
+    virtual void setColorMinMax (float low, float hi);
+    virtual void setDataColorMinMax (float low, float hi);
 
     virtual void setTextureDirectory (const char *);
 
@@ -235,7 +236,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setBumpMapName (void *, vrpn_HANDLERPARAM);
     static int handle_setColorMapDirectory (void *, vrpn_HANDLERPARAM);
     static int handle_setColorMapName (void *, vrpn_HANDLERPARAM);
-    static int handle_setColorSliderRange (void *, vrpn_HANDLERPARAM);
+    static int handle_setColorMinMax (void *, vrpn_HANDLERPARAM);
+    static int handle_setDataColorMinMax (void *, vrpn_HANDLERPARAM);
     static int handle_setTextureDirectory (void *, vrpn_HANDLERPARAM);
     static int handle_setComplianceSliderRange (void *, vrpn_HANDLERPARAM);
     static int handle_setContourColor (void *, vrpn_HANDLERPARAM);

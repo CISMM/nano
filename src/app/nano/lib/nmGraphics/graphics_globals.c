@@ -16,8 +16,12 @@ float g_alpha_slider_max = 1.0f;
 ColorMap g_colorMap;
 char * g_colorMapDir = NULL;
 ColorMap * g_curColorMap = NULL;
-float g_color_slider_min = 0.0f;
-float g_color_slider_max = 1.0f;
+
+float g_color_min = 0; // ColorMap lower and upper bounds for color
+float g_color_max = 1.0;
+
+float g_data_min = 0; // ColorMap lower and upper bounds for data
+float g_data_max = 1.0;
 
 char * g_textureDir = NULL;
 

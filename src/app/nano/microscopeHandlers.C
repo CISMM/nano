@@ -861,8 +861,6 @@ void    handle_color_dataset_change(const char *, void * /*_mptr*/)
 	// Try to set this to a useful value for a stream file
 	// minAttainableValue is much too small to be useful, except
 	// for Topo files.
-	//color_slider_min_limit = plane->minAttainableValue();
-	//color_slider_max_limit = plane->maxAttainableValue();
 	// So, only use these if they are within a reasonable distance
 	// of the data range.
         // Use plane->m*NonZeroValue(), as opposed to plane->m*Value(), so
@@ -874,31 +872,29 @@ void    handle_color_dataset_change(const char *, void * /*_mptr*/)
       // We set min_limit = min_value - range and max_limit = max_value +
       // range to account for drifting.  Yes, we know this is a kluge.
 
+      /*
       printf("minAttainable = %f, maxAttainable = %f\n",
              plane->minAttainableValue(), plane->maxAttainableValue());
 
       if ( plane->minAttainableValue() > (plane->minNonZeroValue() - range)){
-	    color_slider_min_limit = plane->minAttainableValue();
+	    color_min_limit = plane->minAttainableValue();
       } else {
-	color_slider_min_limit = (plane->minNonZeroValue() - range);
+	color_min_limit = (plane->minNonZeroValue() - range);
       }
       if ( plane->maxAttainableValue() < (plane->maxNonZeroValue() + range)){
-	color_slider_max_limit = plane->maxAttainableValue();
+	color_max_limit = plane->maxAttainableValue();
       } else {
-	color_slider_max_limit = (plane->maxNonZeroValue() + range);
+	color_max_limit = (plane->maxNonZeroValue() + range);
       }
-
-      color_slider_min = plane->minNonZeroValue();
-      color_slider_max = plane->maxNonZeroValue();
+      */
+      color_min_limit = plane->minNonZeroValue();
+      color_max_limit = plane->maxNonZeroValue();
     }
     else {  // so selected data set is "none"
-        color_slider_min_limit = 0;
-        color_slider_max_limit = 1;
-        color_slider_min = 0;
-        color_slider_max = 1;
+        color_min_limit = 0;
+        color_max_limit = 1;
     }
 
-    //cause_grid_redraw(0.0, _mptr);
     graphics->setColorPlaneName(dataset->colorPlaneName->string());
     graphics->causeGridRedraw();
 }
