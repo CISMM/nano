@@ -1,3 +1,8 @@
+2002-05-30 David Borland <borland@cs.unc.edu>
+
+        * nmg_SurfaceRegion.C (setTexture) : phantom control of projective
+	textures
+
 2002-05-30 David Borland <borland.cs.unc.edu>
 
         * nmg_SurfaceRegion.C (setTexture) : experimenting with using the

@@ -301,9 +301,6 @@ setTexture(nmg_State * state, nmb_Dataset *data)
         case nmg_Graphics::PER_QUAD_COORD:
             break;
         case nmg_Graphics::SURFACE_REGISTRATION_COORD:		// split REGISTRATION_COORD into SURFACE_ and MODEL_
-
-printf("SURFACE_REGISTRATION_COORD\n");
-
             glLoadIdentity();
             // scale by actual texture image given divided by texture image
             // used (i.e. the one actually in texture memory is a power of 2
@@ -388,11 +385,7 @@ printf("SURFACE_REGISTRATION_COORD\n");
             //case nmg_Graphics::REMOTE_COORD;
             //glLoadIdentity();
 		case nmg_Graphics::MODEL_REGISTRATION_COORD:
-
-
-//printf("MODEL_REGISTRATION_COORD\n");
-
- //           glLoadIdentity();
+            glLoadIdentity();
 			switch (state->texture_displayed) {
             case nmg_Graphics::NO_TEXTURES:
             case nmg_Graphics::BUMPMAP:
@@ -455,39 +448,16 @@ printf("SURFACE_REGISTRATION_COORD\n");
                 break;
             }
 
-			// undo the scaling to fit the surface
+			// undo the scaling that fits to the surface
 			temp = x_scale_factor / y_scale_factor;
-//printf("%f\n", temp);
 			x_scale_factor *= temp;
 
-qogl_matrix_type mat;
-glGetDoublev(GL_TEXTURE_MATRIX, mat);
-//printf("current texture matrix\n");
-//qogl_print_matrix(mat);
-//printf("\n");
-
-			glLoadIdentity();
-			
 			glTranslated(x_translate, y_translate, 0.0);
-
-printf("mat[12] = %f\n", mat[12]);
-printf("mat[13] = %f\n", mat[13]);
-qogl_print_matrix(mat);
-			glTranslated(mat[12], mat[13], 0.0);
-
 			glScaled(x_scale_factor, y_scale_factor, 1.0);
 
-//			glMultMatrixd(state->texture_transform);
+			glMultMatrixd(state->texture_transform);
 
-//qogl_print_matrix(state->texture_transform);
-//printf("\n");
-
-			glScaled(state->texture_transform[0], state->texture_transform[5], 1.0);
-
-			glMultMatrixd(mat);
-
-//			glPopMatrix();
-			
+		
             break;
             //case nmg_Graphics::REMOTE_COORD;
             //glLoadIdentity();
@@ -502,6 +472,7 @@ qogl_print_matrix(mat);
     if (d_currentState.textureMode == GL_TEXTURE_1D) {
         glEnable(GL_TEXTURE_1D);
     }
+
 }
 
 /**
