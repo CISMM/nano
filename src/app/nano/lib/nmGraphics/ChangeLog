@@ -1,3 +1,9 @@
+2001-10-12  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmg_Graphics.h: added "#pragam set woff 3201" for sgi only
+	in order to remove a ton of warnings about unreferenced
+	parameters.  Also reset woff 3201 at end of file.
+
 2001-10-12  Aron Helser  <helser@cs.unc.edu>
 
 	* openGL.ch: move measure_materials functions here, move surface
