@@ -1,0 +1,4 @@
+2001-10-16  Adam Seeger  <seeger@cs.unc.edu>
+
+   * I've created a bunch of project files and a workspace file for
+   building nano using the VC++ GUI

@@ -1,0 +1,224 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "ImgFormat"=.\ImgFormat.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nano"=.\nano.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name ImgFormat
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmAnalyze
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmAux
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmBase
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmGraphics
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmImageViewer
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmMP
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmMScope
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmReg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmSEM
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmUGraphics
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmUI
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tclLinkVar
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "nmAnalyze"=.\nmAnalyze.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmAux"=.\nmAux.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmBase"=.\nmBase.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmGraphics"=.\nmGraphics.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmImageViewer"=.\nmImageViewer.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmMP"=.\nmMP.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmMScope"=.\nmMScope.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmReg"=.\nmReg.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmSEM"=.\nmSEM.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmUGraphics"=.\nmUGraphics.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmUI"=.\nmUI.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "tclLinkVar"=.\tclLinkVar.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+
