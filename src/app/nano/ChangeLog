@@ -1,3 +1,9 @@
+2002-05-02  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.c (main):  the vi curve initialization code now only
+	asks for a log (stream) file name if we are actually connecting
+	to a vi curve device.
+
 2002-05-01  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c (handle_openSPMDeviceName_change):  catch attempts

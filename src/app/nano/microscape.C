@@ -7904,47 +7904,49 @@ int main (int argc, char* argv[])
 	strcpy(istate.vicurve.deviceName, vicurve_device);
     }
 
-    if( istate.vicurve.writingLogFile == false )
-    {
-      // popup fileName chooser dialog (filemenu.tcl)
-      check_streamfile_save = 1;
-      // if file already exists, popup new fileName dialog (filemenu.tcl)
-      check_file_exists = 1;
-    }
-    if( strcmp( openSPMLogName, "" ) != 0 )
-    {
-      	istate.vicurve.writingLogFile = 1;
-	sprintf(istate.vicurve.outputLogName, "%s%s", openSPMLogName.string(),
-		VICURVE_FILE_SUFFIX);
-    }
-
     // Make a connection
-    if (strcmp(istate.vicurve.deviceName, "null") != 0) {
+    if( strcmp(istate.vicurve.deviceName, "null" ) != 0
+      && strcmp( istate.vicurve.deviceName, "" ) != 0 ) 
+    {
       printf("main: attempting to connect to vicurve: %s\n",
-	     istate.vicurve.deviceName);
+        istate.vicurve.deviceName);
+      if( istate.vicurve.writingLogFile == false )
+      {
+        // popup fileName chooser dialog (filemenu.tcl)
+        check_streamfile_save = 1;
+        // if file already exists, popup new fileName dialog (filemenu.tcl)
+        check_file_exists = 1;
+      }
+      if( strcmp( openSPMLogName, "" ) != 0 )
+      {
+        istate.vicurve.writingLogFile = 1;
+        sprintf(istate.vicurve.outputLogName, "%s%s", openSPMLogName.string(),
+          VICURVE_FILE_SUFFIX);
+      }
+      
 #ifdef VRPN_5
       vicurve_connection = vrpn_get_connection_by_name
-	(istate.vicurve.deviceName,
-	 istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
-	 : (char *) NULL,
-	 istate.vicurve.writingLogFile ? vrpn_LOG_INCOMING
-         : vrpn_LOG_NONE);
+        (istate.vicurve.deviceName,
+        istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
+        : (char *) NULL,
+        istate.vicurve.writingLogFile ? vrpn_LOG_INCOMING
+        : vrpn_LOG_NONE);
 #else
       vicurve_connection = vrpn_get_connection_by_name
         (istate.vicurve.deviceName,
-         istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
-         : (char *) NULL,
-         NULL);
+        istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
+        : (char *) NULL,
+        NULL);
 #endif
       if (!vicurve_connection) {
-	display_error_dialog( "Couldn't open connection to %s.\n",
-			      istate.vicurve.deviceName);
-	//exit(0);
+        display_error_dialog( "Couldn't open connection to %s.\n",
+          istate.vicurve.deviceName);
+        //exit(0);
       } else {
-	// Decide whether reading vrpn log file or a real device
-	vicurveLogFile = vicurve_connection->get_File_Connection();
-	if (vicurveLogFile){
-	  istate.vicurve.readingLogFile = 1;
+        // Decide whether reading vrpn log file or a real device
+        vicurveLogFile = vicurve_connection->get_File_Connection();
+        if (vicurveLogFile){
+          istate.vicurve.readingLogFile = 1;
 	  // But the file name is hidden inside istate.vicurve.deviceName and
 	  // only vrpn_Connection knows how to parse this
 	} else {
