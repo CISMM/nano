@@ -135,6 +135,8 @@ class nmm_Microscope {
     long d_VoltsourceDisabled_type;
     long d_AmpEnabled_type;
     long d_AmpDisabled_type;
+    long d_SuspendCommands_type;
+    long d_ResumeCommands_type;
     long d_StartingToRelax_type;
     long d_RelaxSet_type;
     long d_StdDevParameters_type;

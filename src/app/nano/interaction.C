@@ -1185,7 +1185,7 @@ doLight(int whichUser, int userEvent)
   //VectorType		lightpos; //, lightdir;
   q_vec_type            lightdir;
   q_vec_type		q_tmp;
-  v_xform_type	worldFromPart, worldFromHand;
+  v_xform_type	worldFromPart;
   //v_xform_type	PartFromWorld;
   q_type		q_room;
   static v_xform_type	oldWorldFromHand;
@@ -1217,14 +1217,7 @@ doLight(int whichUser, int userEvent)
 
   switch ( userEvent ) {
     case PRESS_EVENT:
-	// get snapshot of hand in world space == w_from_h 
-	//v_get_world_from_hand(whichUser, &oldWorldFromHand);
-	// Save the old light direction
-        //  [juliano 20000406] oldLightDir is currently unused, so I'm
-        //  commenting it out.  Uncomment it if you need it again.
-        //oldLightDir[X] = tcl_lightDirX;
-        //oldLightDir[Y] = tcl_lightDirY;
-        //oldLightDir[Z] = tcl_lightDirZ;
+
 	break;
 
     case HOLD_EVENT:
@@ -1232,18 +1225,8 @@ doLight(int whichUser, int userEvent)
 	// Any rotation that the hand undergoes, we 
 	// will apply the same rotation to the light direction.
 	
-	// First find the rotation of the hand in the world.
-	// Get current hand in world space.
-	//v_get_world_from_hand(whichUser, &worldFromHand);
-	
-	// now get the rotation from one to the other. 
-	
-	// Apply to the light direction.
-
 	/* Rotate light from world space to room space */
         v_get_world_from_head(whichUser, &worldFromPart);
-	// doesn't do anything.
-	//v_x_invert( &PartFromWorld, &worldFromPart );
 
 	q_copy(q_room, worldFromPart.rotate);
 	q_invert(q_room, q_room);

@@ -142,6 +142,10 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope AmpEnabled");
     d_AmpDisabled_type = connection->register_message_type
          ("nmm Microscope AmpDisabled");
+    d_SuspendCommands_type = connection->register_message_type
+        ("nmm Microscope SuspendCommands");
+    d_ResumeCommands_type = connection->register_message_type
+        ("nmm Microscope ResumeCommands");
     d_StartingToRelax_type = connection->register_message_type
          ("nmm Microscope StartingToRelax");
     d_RelaxSet_type = connection->register_message_type

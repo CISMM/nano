@@ -464,6 +464,8 @@ struct AFMState {
 
   Tclvar_int read_mode;          // Are we reading device, stream, or files?
 
+  Tclvar_int commands_suspended; // Does Thermo want us to stop sending commands?
+
   vrpn_bool writingStreamFile;     // was DO_OUTPUT_STREAM
   vrpn_bool writingNetworkStream;  // was DO_NETOUT_STREAM
   vrpn_bool readingStreamFile;     // Getting data from stream file?

@@ -450,6 +450,8 @@ AFMState::AFMState (const AFMInitializationState & i) :
 
     read_mode("spm_read_mode", READ_FILE),
 
+    commands_suspended("spm_commands_suspended", 0),
+
     writingStreamFile    (i.writingStreamFile),
     writingNetworkStream (VRPN_FALSE),
     readingStreamFile    (i.readingStreamFile),

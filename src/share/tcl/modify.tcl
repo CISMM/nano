@@ -333,7 +333,7 @@ button $nmInfo(modifyfull).mode.accept -text "Accept"  \
 button $nmInfo(modifyfull).mode.cancel -text "Revert"  \
 	-command "cancelModifyVars modifyplist" -highlightthickness 0
 
-checkbutton $nmInfo(modifyfull).mode.relaxcomp -text "Relax Comp on" -variable doRelaxComp \
+checkbutton $nmInfo(modifyfull).mode.relaxcomp -text "Offset Comp on" -variable doRelaxComp \
 	
 
 pack $nmInfo(modifyfull).mode.oscillating $nmInfo(modifyfull).mode.contact -side top -fill x

@@ -451,6 +451,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     void RcvVoltsourceDisabled (const long);
     void RcvAmpEnabled (const long, const float, const float, const long);
     void RcvAmpDisabled (const long);
+    void RcvSuspendCommands();
+    void RcvResumeCommands();
     void RcvStartingToRelax (const long, const long);
     void RcvInModModeT (const long, const long);
     void RcvInModMode (void);
@@ -546,6 +548,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     static int handle_VoltsourceDisabled (void *, vrpn_HANDLERPARAM);
     static int handle_AmpEnabled (void *, vrpn_HANDLERPARAM);
     static int handle_AmpDisabled (void *, vrpn_HANDLERPARAM);
+    static int handle_SuspendCommands (void *, vrpn_HANDLERPARAM);
+    static int handle_ResumeCommands (void *, vrpn_HANDLERPARAM);
     static int handle_StartingToRelax (void *, vrpn_HANDLERPARAM);
     static int handle_InModModeT (void *, vrpn_HANDLERPARAM);
     static int handle_InModMode (void *, vrpn_HANDLERPARAM);

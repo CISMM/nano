@@ -140,6 +140,12 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
   d_connection->register_handler(d_AmpDisabled_type,
                                  handle_AmpDisabled,
                                  this);
+  d_connection->register_handler(d_SuspendCommands_type,
+                                 handle_SuspendCommands,
+                                 this);
+  d_connection->register_handler(d_ResumeCommands_type,
+                                 handle_ResumeCommands,
+                                 this);
   d_connection->register_handler(d_StartingToRelax_type,
                                  handle_StartingToRelax,
                                  this);
@@ -2338,6 +2344,25 @@ int nmm_Microscope_Remote::handle_AmpDisabled (void * userdata,
 }
 
 //static
+int nmm_Microscope_Remote::handle_SuspendCommands (void * userdata,
+                                             vrpn_HANDLERPARAM param) {
+  nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+
+  ms->RcvSuspendCommands();
+
+  return 0;
+}
+//static
+int nmm_Microscope_Remote::handle_ResumeCommands (void * userdata,
+                                             vrpn_HANDLERPARAM param) {
+  nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+
+  ms->RcvResumeCommands();
+
+  return 0;
+}
+
+//static
 int nmm_Microscope_Remote::handle_StartingToRelax (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
@@ -3433,7 +3458,23 @@ void nmm_Microscope_Remote::RcvAmpDisabled (const long _ampNum) {
   printf("Amplifier %ld has been disabled\n", _ampNum);
 }
 
- 
+/* Helps with Thermo Image Analysis mode. When in this mode, most of 
+ the widgets/dialogs that Nano needs to control the SPM aren't available
+ So we avoid issuing any commands to Thermo, by disabling all device 
+ controls. 
+*/
+void nmm_Microscope_Remote::RcvSuspendCommands() 
+{
+    if (ReadMode() != READ_DEVICE) return;
+    state.commands_suspended = 1;
+}
+
+void nmm_Microscope_Remote::RcvResumeCommands() 
+{
+    if (ReadMode() != READ_DEVICE) return;
+    state.commands_suspended = 0;
+}
+
 void nmm_Microscope_Remote::RcvStartingToRelax (const long _sec, const long _usec) {
   if (state.doRelaxComp) {
     d_relax_comp.start_fix(_sec, _usec, state.lastZ);
@@ -3935,7 +3976,7 @@ void nmm_Microscope_Remote::RcvPulseFailureNM (const float, const float) {
 
 // Is the microscope scanning (1), or is the scan paused (0)? 
 void nmm_Microscope_Remote::RcvScanning(vrpn_int32 on_off) {
-    printf("Scanning is %s\n", (on_off ? "on": "off"));
+    //printf("Scanning is %s\n", (on_off ? "on": "off"));
     state.scanning = on_off;
 }
 

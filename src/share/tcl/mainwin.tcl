@@ -442,8 +442,9 @@ proc diable_widgets_for_readmode { name el op } {
             #show.modify_live
             foreach widget $device_only_controls {
                 if {([llength $widget] > 1) } {
-                    #some widget have a special "configure" command saved in the list
-                    #with the widget name, like ".a.rb buttonconfigure 0 -state normal"
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
                     eval $widget -state normal
                 } else {
                     $widget configure -state normal
@@ -451,8 +452,9 @@ proc diable_widgets_for_readmode { name el op } {
             }
             foreach widget $stream_only_controls {
                 if {([llength $widget] > 1) } {
-                    #some widget have a special "configure" command saved in the list
-                    #with the widget name, like ".a.rb buttonconfigure 0 -state normal"
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
                     eval $widget -state disabled
                 } else {
                     $widget configure -state disabled
@@ -460,8 +462,9 @@ proc diable_widgets_for_readmode { name el op } {
             }
             foreach widget $stream_and_device_only_controls {
                 if {([llength $widget] > 1) } {
-                    #some widget have a special "configure" command saved in the list
-                    #with the widget name, like ".a.rb buttonconfigure 0 -state normal"
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
                     eval $widget -state normal
                 } else {
                     $widget configure -state normal
@@ -476,8 +479,9 @@ proc diable_widgets_for_readmode { name el op } {
             #hide.modify_live
             foreach widget $device_only_controls {
                 if {([llength $widget] > 1) } {
-                    #some widget have a special "configure" command saved in the list
-                    #with the widget name, like ".a.rb buttonconfigure 0 -state normal"
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
                     eval $widget -state disabled
                 } else {
                     $widget configure -state disabled
@@ -485,8 +489,9 @@ proc diable_widgets_for_readmode { name el op } {
             }
             foreach widget $stream_only_controls {
                 if {([llength $widget] > 1) } {
-                    #some widget have a special "configure" command saved in the list
-                    #with the widget name, like ".a.rb buttonconfigure 0 -state normal"
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
                     eval $widget -state disabled
                 } else {
                     $widget configure -state disabled
@@ -494,8 +499,9 @@ proc diable_widgets_for_readmode { name el op } {
             }
             foreach widget $stream_and_device_only_controls {
                 if {([llength $widget] > 1) } {
-                    #some widget have a special "configure" command saved in the list
-                    #with the widget name, like ".a.rb buttonconfigure 0 -state normal"
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
                     eval $widget -state disabled
                 } else {
                     $widget configure -state disabled
@@ -510,8 +516,9 @@ proc diable_widgets_for_readmode { name el op } {
             hide.modify_live
             foreach widget $device_only_controls {
                 if { ([llength $widget] > 1) } {
-                    #some widget have a special "configure" command saved in the list
-                    #with the widget name, like ".a.rb buttonconfigure 0 -state normal"
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
                     eval $widget -state disabled
                 } else {
                     $widget configure -state disabled
@@ -519,8 +526,9 @@ proc diable_widgets_for_readmode { name el op } {
             }
             foreach widget $stream_only_controls {
                 if {([llength $widget] > 1) } {
-                    #some widget have a special "configure" command saved in the list
-                    #with the widget name, like ".a.rb buttonconfigure 0 -state normal"
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
                     eval $widget -state normal
                 } else {
                     $widget configure -state normal
@@ -528,8 +536,9 @@ proc diable_widgets_for_readmode { name el op } {
             }
             foreach widget $stream_and_device_only_controls {
                 if {([llength $widget] > 1) } {
-                    #some widget have a special "configure" command saved in the list
-                    #with the widget name, like ".a.rb buttonconfigure 0 -state normal"
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
                     eval $widget -state normal
                 } else {
                     $widget configure -state normal
@@ -542,6 +551,49 @@ proc diable_widgets_for_readmode { name el op } {
     }
 }
 trace variable spm_read_mode w diable_widgets_for_readmode
+
+# Helps with Thermo Image Analysis mode. When in this mode, most of 
+# the widgets/dialogs that Nano needs to control the SPM aren't available
+# So we avoid issuing any commands to Thermo, by disabling all device 
+# controls. 
+if {![info exists spm_commands_suspended] } { set spm_commands_suspended 0 }
+proc diable_widgets_for_commands_suspended { name el op } {
+    global device_only_controls  
+    global spm_commands_suspended
+
+    # Note: $ substitution for the patterns won't work because
+    # the switch body is in brackets. 
+    switch $spm_commands_suspended {
+        0 {
+            # Commands aren't suspended, enable controls
+            foreach widget $device_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state normal
+                } else {
+                    $widget configure -state normal
+                }
+            }
+        }
+        1 {
+            # Commands are suspended, disable controls
+            foreach widget $device_only_controls {
+                if { ([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state disabled
+                } else {
+                    $widget configure -state disabled
+                }
+            }
+        }
+    }
+}
+trace variable spm_commands_suspended w diable_widgets_for_commands_suspended
+
 
 #----------------
 # Setup window positions and geometries to be convenient and pleasant!
