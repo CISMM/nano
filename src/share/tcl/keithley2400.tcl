@@ -486,26 +486,53 @@ trace variable vi(save_curves_now) w "vi_save_curve"
 
 
 set array name_time_pairs
+
+
+# make sure there are only 9 elements in the graph.
+proc vi_trim_chart_elements { curr_id curr_time } {
+    global vi
+    global name_time_pairs
+
+    # delete any elements later than the current time
+    set elem_list [$vi(chart) element names]
+    foreach elem $elem_list {
+	if { $elem > $curr_time } {
+	    $vi(chart) element delete $elem
+	}
+    }
+
+    # delete any elements earlier than the eighth element before this.
+    # first, find the eighth element before this
+    if { $curr_id >= 9 } {
+	if { [$vi(chart) element exists [expr $name_time_pairs([expr $curr_id - 8 ]) ]] } {
+	    set early_time $name_time_pairs([expr $curr_id - 8])
+	    # now, delete everything before it
+	    set elem_list [$vi(chart) element names]
+	    foreach elem $elem_list {
+		if { $elem < $early_time } { 
+		    $vi(chart) element delete $elem
+		}
+	    }
+	}
+    }
+}
+
+
 # Graphs the data in vectors name_x and name_y
 proc vi_add_chart_element { name_x name_y id time } {
     global vi
     global name_time_pairs
     if { [$vi(chart) element exists $time] } { 
 	puts "vi curve:  ignoring chart element named $time; it already exists."
-	return ; 
+    } else {
+	$vi(chart) element create $time \
+	    -xdata $name_x -ydata $name_y -color [vi_unique_color $id]
+	array set name_time_pairs "$id $time"
     }
-
-    $vi(chart) element create $time \
-	-xdata $name_x -ydata $name_y -color [vi_unique_color $id]
-    array set name_time_pairs "$id $time"
-    # Limit the number of chart elements displayed to 9
-    if { $id >= 9 } {
-	if { [$vi(chart) element exists [expr $name_time_pairs([expr $id - 9 ]) ]] } {
-	    $vi(chart) element delete $name_time_pairs([expr $id - 9])
-	    # array unset name_time_pairs $id $name_time_pairs([expr ($id - 9)])
-	}
-    }
+    # Limit the number of chart elements displayed to 9 
+    vi_trim_chart_elements $id $time
 }
+
 
 proc clear_curves_now  {} {
     global vi
