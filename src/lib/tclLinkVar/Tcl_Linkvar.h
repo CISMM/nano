@@ -174,7 +174,7 @@ class	Tclvar_selector : public nmb_Selector {
                      Linkvar_Selectcall c = NULL,
                      void * userdata = NULL);
 
-    ~Tclvar_selector (void);
+    virtual ~Tclvar_selector (void);
 
     virtual const char * operator = (const char *);
     virtual const char * operator = (char *);
@@ -248,7 +248,7 @@ typedef	struct {
 class	Tclvar_checklist {
     public:
 	Tclvar_checklist (const char * parent_name);
-	~Tclvar_checklist (void);
+	virtual ~Tclvar_checklist (void);
 
         void addCallback (Linkvar_Checkcall, void * userdata);
 
@@ -287,7 +287,7 @@ class	Tclvar_checklist {
 class	Tclvar_checklist_with_entry : public Tclvar_checklist {
     public:
 	Tclvar_checklist_with_entry (const char * parent_name);
-	~Tclvar_checklist_with_entry (void);
+	virtual ~Tclvar_checklist_with_entry (void);
 
 	int	Add_checkbox_entry (const char *checkbox_name, int checkval, int entryval);
 	int	Remove_checkbox (const char *checkbox_name);
