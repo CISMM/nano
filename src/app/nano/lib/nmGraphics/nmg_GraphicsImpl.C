@@ -211,7 +211,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   BCPlane* plane = dataset->inputGrid->getPlaneByName
     (dataset->heightPlaneName->string());
   decoration->aimLine.moveTo(plane->minX(), plane->maxY(), plane);
-  init_world_modechange( USER_GRAB_MODE, 0 );
+  init_world_modechange( USER_GRAB_MODE, 0, 0 );
 
 
   if (!connection) return;
@@ -837,11 +837,11 @@ void nmg_Graphics_Implementation::enableChartjunk (int on) {
     return;
   g_config_chartjunk = on;
   if ( on == 1 ) {
-    init_world_modechange( USER_GRAB_MODE, 0);
+    init_world_modechange( USER_GRAB_MODE, 0, 0);
   }
   else if ( on == 0 ) {
-    clear_world_modechange( USER_MEASURE_MODE, 0);
-    clear_world_modechange( USER_GRAB_MODE, 0);
+    clear_world_modechange( USER_MEASURE_MODE, 0, 0);
+    clear_world_modechange( USER_GRAB_MODE, 0, 0);
   }
 }
 
@@ -2513,10 +2513,11 @@ void nmg_Graphics_Implementation::setTrueTipScale (float f) {
 
 
 void nmg_Graphics_Implementation::setUserMode (int oldMode, int oldStyle,
-					       int newMode, int style) {
+					       int newMode, int style,
+					       int tool) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setUserMode().\n");
-  clear_world_modechange(oldMode, oldStyle);
-  init_world_modechange(newMode, style);
+  clear_world_modechange(oldMode, oldStyle, tool);
+  init_world_modechange(newMode, style, tool);
 }
 
 
@@ -3471,10 +3472,10 @@ int nmg_Graphics_Implementation::handle_setTrueTipScale
 int nmg_Graphics_Implementation::handle_setUserMode
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  int oldMode, oldStyle, newMode, style;
+  int oldMode, oldStyle, newMode, style, tool;
 
-  CHECK(it->decode_setUserMode(p.buffer, &oldMode, &oldStyle, &newMode, &style));
-  it->setUserMode(oldMode, oldStyle, newMode, style);
+  CHECK(it->decode_setUserMode(p.buffer, &oldMode, &oldStyle, &newMode, &style, &tool));
+  it->setUserMode(oldMode, oldStyle, newMode, style, tool);
   return 0;
 }
 

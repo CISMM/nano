@@ -1,3 +1,28 @@
+2000-12-05  Kwan Torrich Skinner  <skinner@cs.unc.edu>
+
+	* globjects.c : #include "nmm_Types.h"
+	(clear_world_modechange) : new parameter to function and new code to handle
+	icon settings for optimize now mode.
+	(init_world_modechange) : same.
+	(make_rubber_corner) : added alpha channel to select box icon.
+	* globjects.h (clear_world_modechange) : parameter update.
+	(init_world_modechange) : same.
+	* nmg_Graphics.[C,h] : (encode_setUserMode) : new parameter for optimize now.
+	(decode_setUserMode) : same.
+	* nmg_GraphicsImpl.[C,h] : 
+	(nmg_Graphics_Implementation::nmg_Graphics_Implementation) : parameter update
+	for call to init_world_modechange.
+	(nmg_Graphics_Implementation::enableChartjunk) : parameter update for call to
+	clear_world_modechange.
+	(nmg_Graphics_Implementation::setUserMode) : parameter update for
+	optimize_now mode.
+	(nmg_Graphics_Implementation::handle_setUserMode) : same.
+	* nmg_GraphicsImpl.[C,h] (setUserMode) : same.
+	* nmg_GraphicsRemote.[C,h] (setUserMode) : same.
+	* nmg_GraphicsTimer.[C,h] (setUserMode) : same.
+	* spm_gl.c (spm_set_icon_materials) : enabled blending.
+	
+	
 2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
         * nmg_GraphicsImpl.C (initializeTextures) : initializes the texture

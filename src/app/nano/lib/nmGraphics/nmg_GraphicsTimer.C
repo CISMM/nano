@@ -435,9 +435,9 @@ void nmg_Graphics_Timer::setTrueTipScale (float f) {
 
 
 void nmg_Graphics_Timer::setUserMode (int oldMode, int oldStyle, int newMode,
-                                               int style) {
+				      int style, int tool) {
   activateTimer();
-  d_imp->setUserMode(oldMode, oldStyle, newMode, style);
+  d_imp->setUserMode(oldMode, oldStyle, newMode, style, tool);
 }
 
 

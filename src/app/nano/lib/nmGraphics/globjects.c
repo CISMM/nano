@@ -34,6 +34,8 @@
 #include "Timer.h"
 #include "nmg_Globals.h"  // guess we need this for VERBOSE.  Yuck.
 
+#include "nmm_Types.h"  // for OPTIMIZE_NOW
+
 #define ARROW_SCALE  0.005
 #define xx .525731112119133606
 #define zz .850650808352039932
@@ -175,7 +177,7 @@ static float sphere_x, sphere_y, sphere_z;
 
 /* When the user changes modes, clear the world of any 
  * icons dependent on that mode. */
-int clear_world_modechange(int mode, int style)
+int clear_world_modechange(int mode, int style, int tool_param)
 {
   switch(mode) {
   case USER_LIGHT_MODE:
@@ -240,6 +242,9 @@ int clear_world_modechange(int mode, int style)
     removeFunctionFromFunclist(&v_hand,hand_id);
     removeFunctionFromFunclist(&vir_world,rubber_corner_id);
     removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    if (tool_param == OPTIMIZE_NOW_AREA) {
+      removeFunctionFromFunclist(&vir_world,sphere_id);
+    }
     break;
   case USER_GRAB_MODE:
     removeFunctionFromFunclist(&v_hand,hand_id);
@@ -272,7 +277,7 @@ int clear_world_modechange(int mode, int style)
  * stationary with respect to the surface. It can be moved 
  * explicitly, though, see make_aim() and make_sweep()
  */
-int init_world_modechange(int mode, int style)
+int init_world_modechange(int mode, int style, int tool_param)
 {
   if (g_config_planeonly) {
     // display NOTHING but the plane - used by nmg_RenderServer
@@ -328,6 +333,9 @@ int init_world_modechange(int mode, int style)
                                              "draw_list(rubber_corner)");
     aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
                                           "draw_list(aim_struct)");
+    if (tool_param == OPTIMIZE_NOW_AREA) {
+      sphere_id = addFunctionToFunclist(&vir_world, mysphere, NULL, "mysphere");
+    }
     break;
   case USER_GRAB_MODE:
     aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
@@ -569,7 +577,7 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max)
 
 	v_gl_set_context_to_vlib_window(); 
 	glNewList(rubber_corner,GL_COMPILE);
-	glColor3f(1.0,0.0,0.0);
+	glColor4f(1.0,0.0,0.0,0.6);
   	Points[0][Z] = z_min;
 	Points[0][X]=x_min;
 	Points[0][Y]=y_min;
@@ -1039,7 +1047,7 @@ int myscreen (int)
   if (g_CRT_correction) {
     glScalef(13.333333f, 13.333333f, 5.0f);
     glTranslatef(0.0225f, 0.018f, 0.0f);
-    if (saveMatrixMode != GL_PROJECTION)
+    if (saveMatrixMode != GL_PROJECTION) 
       glMatrixMode((GLenum) saveMatrixMode);
   }
 #endif

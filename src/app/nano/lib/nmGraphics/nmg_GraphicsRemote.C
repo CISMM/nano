@@ -1563,13 +1563,14 @@ void nmg_Graphics_Remote::setTrueTipScale (float scale) {
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setUserMode (int oldMode, int oldStyle, int newMode, int style) {
+void nmg_Graphics_Remote::setUserMode (int oldMode, int oldStyle, int newMode, int style,
+				       int tool) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  msgbuf = encode_setUserMode(&len, oldMode, oldStyle, newMode, style);
+  msgbuf = encode_setUserMode(&len, oldMode, oldStyle, newMode, style, tool);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now, d_setUserMode_type,

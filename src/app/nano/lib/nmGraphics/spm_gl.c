@@ -1029,7 +1029,7 @@ void    spm_set_icon_materials(void)
 	glMaterialfv(GL_BACK, GL_SPECULAR, dark);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
 	glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
-        glDisable(GL_BLEND);
+	glEnable(GL_BLEND);
 
 	// Set the light model to have completely ambient-off.  There is
 	// ambient specified in light 0.

@@ -130,7 +130,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setTextureScale (float);
     virtual void setTrueTipScale (float);
 
-    virtual void setUserMode (int oldMode, int oldStyle, int newMode, int style);
+    virtual void setUserMode (int oldMode, int oldStyle, int newMode, int style,
+			      int tool);
 
     virtual void setLightDirection (q_vec_type &);
     virtual void resetLightDirection (void);
