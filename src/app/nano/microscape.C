@@ -8871,7 +8871,9 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 	    }
 	    
 	    /* Resume previous scan pattern */
-	    microscope->ResumeScan();
+	    if (microscope->state.autoscan) {
+		    microscope->ResumeScan();
+	    }
 	    
 	    break;
 	    

@@ -1,5 +1,12 @@
 2000-12-05  Russ Taylor  <taylorr@cs.unc.edu>
 
+	* interaction.c : Check to see if the "autoscan" feature is turned
+		on before resuming scan after lines, freedhand modifications,
+		etc.
+	* microscape.c : Same for x-window touching.
+
+2000-12-05  Russ Taylor  <taylorr@cs.unc.edu>
+
 	* interaction.c (specify_directZ_force) :
 		Make it specify a zero force, rather than doing nothing,
 		when it has no good information to display.  Removed print

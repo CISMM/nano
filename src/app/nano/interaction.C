@@ -813,7 +813,9 @@ static void drawLine (void) {
 
     //microscope->EnableUpdatableQueue(VRPN_TRUE);
 
-    microscope->ResumeScan();
+    if (microscope->state.autoscan) {
+	    microscope->ResumeScan();
+    }
     // All done - turn off commit button
     tcl_commit_pressed = 0;	
     old_commit_pressed = 0;
@@ -1045,7 +1047,9 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 	}
 	// I think we should always resume scan - if the user hits "cancel"
 	// that should mean "start over", so we always begin scanning again.
-	microscope->ResumeScan();
+	  if (microscope->state.autoscan) {
+		microscope->ResumeScan();
+          }
 	}
 	break;
     case USER_SERVO_MODE:
@@ -3003,7 +3007,9 @@ int doFeelLive (int whichUser, int userEvent)
        * we don't scan more, and to stop points from coming into the list
        * of points) and resume previous scan pattern. */
       microscope->ImageMode();
-      microscope->ResumeScan();
+      if (microscope->state.autoscan) {
+	      microscope->ResumeScan();
+      }
 
       break;
 
