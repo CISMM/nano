@@ -1349,10 +1349,6 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   if (pixelType == GL_FLOAT) {
     nmb_Image *im_copy = new nmb_ImageGrid(im);
     im_copy->normalize();
-    if (glGetError()!=GL_NO_ERROR)
-      printf("error before gluBuild2DMipmaps for float\n");
-    else 
-      printf("all clear before gluBuild2DMipmaps for float\n");
     gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
                  im_copy->width() + 2*im_copy->border(),
                  im_copy->height() + 2*im_copy->border(),
