@@ -1,3 +1,32 @@
+2001-02-09  Jason Clark  <jclark@cs.unc.edu>
+
+	* openGL.c (build_list_set): Support for new strip functions in spm_gl
+
+	* spm_gl.c: Modification to ensure that the work done for masking
+	is only done when requested, also to ensure that the mask plane is
+	not accessed when it isn't needed or there.
+
+	* nmg_Visualization.C: Two new functions ensureMaskPlane and
+	ensureTransparentPlane created to fix timing issue of when those
+	planes are created that was causing problems when opening and
+	closing files one the program was running
+
+	* nmg_Graphics.h: Support for new viz plane
+	* nmg_Graphics.C: same
+	* nmg_GraphicsImpl.h: same
+	* nmg_GraphicsImpl.C: same
+	* nmg_GraphicsNull.h: same
+	* nmg_GraphicsNull.C: same
+	* nmg_GraphicsRemote.h: same
+	* nmg_GraphicsRemote.C: same
+	* nmg_GraphicsTimer.h: same
+	* nmg_GraphicsTimer.C: same
+
+	* graphics_globals.c: See below
+
+	* graphics_globals.h: New viz plane to determine which plane is
+	controlling how visualizations are being determined.
+
 2001-01-19  Jason Clark  <jclark@cs.unc.edu>
 
 	* spm_gl.c (specify_vertexArray): Bug fix. See below

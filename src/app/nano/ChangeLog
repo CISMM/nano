@@ -1,3 +1,11 @@
+2001-02-09  Jason Clark  <jclark@cs.unc.edu>
+
+	* microscopeHandlers.C: Changed handle_z_scale_change to call
+	causeGridRebuild instead of causeGridRedraw
+
+	* microscape.c: Added TCl variables and callback functions to
+	support	visualization interface
+
 2001-02-01  Aron Helser  <helser@cs.unc.edu>
 
 	* minit.c (handle_phantom_error): On any phantom error, release

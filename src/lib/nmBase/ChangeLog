@@ -1,3 +1,10 @@
+2001-02-09  Jason Clark  <jclark@cs.unc.edu>
+
+	* nmb_Dataset.h: New viz plane
+	* nmb_Dataset.C: same
+	* nmb_PlaneSelection.h: same
+	* nmb_PlaneSelection.C: same
+
 2001-01-14  Jason Clark  <jclark@cs.unc.edu>
 
 	* nmb_PlaneSelection.h: Added two new planes, mask and transparency.
