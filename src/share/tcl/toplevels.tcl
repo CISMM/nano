@@ -1,3 +1,11 @@
+#/*===3rdtech===
+#  Copyright (c) 2000 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
+
 # Create a toplevel window for the Keithley VI Curve generator controls.
 # It is initially hidden, but can be shown by calling
 # the "show" procedure.

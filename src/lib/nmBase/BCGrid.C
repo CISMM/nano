@@ -43,9 +43,9 @@ int BCGrid::_times_invoked = 0;
    Loads a list of files. If the only plane in the grid is EMPTY_PLANE_NAME,
    fill the grid. If there is data already in the grid, add planes of data 
    only if the grid size matches.
-   @returns -1 on error, 0 on success
+   @return -1 on error, 0 on success
    @author Aron Helser
-   @date modified 3-18-00 Aron Helser
+   @date modified 7-14-00 Aron Helser
 */
 int
 BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
@@ -115,6 +115,7 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
 		fprintf(stderr,"Error! BCGrid::BCGrid: Grid size mismatch"
 			" in file \"%s\", ignoring the file\n",
 			file_names[i]);
+                return -1;
 	    } else {
 		BCPlane *nextplane, *newplane;
 		BCString name;
@@ -130,7 +131,7 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
     }
 
     _modified = 1;
-
+    return 0;
 }
 
 /**

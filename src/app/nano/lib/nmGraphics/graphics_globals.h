@@ -26,6 +26,12 @@
 #include <colormap.h>
 #include "nmg_Funclist.h"
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+// bogus double to float conversion warning.
+#pragma warning(disable:4244)
+#pragma warning(disable:4305)
+#endif
+
 class BCGrid;  // from BCGrid.h
 class nmb_Subgrid;  // from nmb_Subgrid.h
 

@@ -598,10 +598,12 @@ eval lappend device_only_controls $mod_directz_list
 #
 
 # flips $nmInfo(modifyfull).modeparam widgets
+# also disables controls that are illegal with oscillating mode
 proc flip_mod_mode {mod_mode element op} {
     global nmInfo
     global mod_oscillating_list
     global fspady
+    global newmodifyp_style 
 
     upvar $mod_mode k
 
@@ -611,10 +613,20 @@ proc flip_mod_mode {mod_mode element op} {
 	set plist [lrange [pack slaves $nmInfo(modifyfull).modeparam] 6 end] 
 	foreach widg $plist {pack forget $widg} 
 	foreach widg $mod_oscillating_list {pack $widg -side top -fill x -pady $fspady}
+        # Don't allow selection of styles that don't work with oscillating
+        if { ($newmodifyp_style == 3) || ($newmodifyp_style == 4) } {
+            # Can't do sweep or sewing, set to sharp
+            set newmodifyp_style 0
+        }
+        $nmInfo(modifyfull).style.sewing configure -state disabled
+        $nmInfo(modifyfull).style.forcecurve configure -state disabled
     } elseif {$k==1} {
 	# selected contact
 	set plist [lrange [pack slaves $nmInfo(modifyfull).modeparam] 6 end] 
 	foreach widg $plist {pack forget $widg}
+        # enable styles that might have been disabled. 
+        $nmInfo(modifyfull).style.sewing configure -state normal
+        $nmInfo(modifyfull).style.forcecurve configure -state normal
     }
 }
 

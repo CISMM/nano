@@ -4031,6 +4031,8 @@ void nmm_Microscope_Remote::RcvSetRegionC (const long /* _type */,
                             heightPlane);
   d_decoration->blue.doCallbacks(heightPlane->maxX(), heightPlane->maxY(),
                             heightPlane);
+  d_decoration->aimLine.moveTo(heightPlane->minX(), heightPlane->maxY(),
+                            heightPlane);
 
   state.SetDefaultScanlineForRegion(d_dataset);
 

@@ -1067,21 +1067,33 @@ void	handle_slow_line_step_change (vrpn_int32, void * _mptr)
   float line_length = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
   float param_step = microscope->state.modify.step_size / line_length;
   
+  Position_list & p = microscope->state.modify.stored_points;
   if (microscope->state.modify.slow_line_direction == FORWARD) {
     if ( microscope->state.modify.slow_line_position_param == 1.0) {
-      // don't step off the end of the segment
-      // Turn off "play" if it was on. 
-      microscope->state.modify.slow_line_playing = VRPN_FALSE;
-      // XXX set up for next segment, if any. 
+        if ( !p.peekNext() ) {
+            microscope->state.modify.slow_line_playing = VRPN_FALSE;
+        }
+        else {
+            p.next();
+            microscope->state.modify.slow_line_currPt = p.curr();
+            microscope->state.modify.slow_line_prevPt = p.peekPrev();
+            microscope->state.modify.slow_line_position_param = 0;
+        }
     } else {
       microscope->state.modify.slow_line_position_param += param_step;
     }
   } else if (microscope->state.modify.slow_line_direction == REVERSE) {
     if ( microscope->state.modify.slow_line_position_param == 0.0){
-      // don't step off the end of the segment
-      // Turn off "play" if it was on. 
-       microscope->state.modify.slow_line_playing = VRPN_FALSE;
-      // XXX set up for next segment, if any. 
+        p.prev();
+        if ( !p.peekPrev() ) {
+            microscope->state.modify.slow_line_playing = VRPN_FALSE;
+            p.next();
+        }
+        else {
+            microscope->state.modify.slow_line_prevPt = p.peekPrev();
+            microscope->state.modify.slow_line_currPt = p.curr();
+            microscope->state.modify.slow_line_position_param = 1.0;
+        }
     } else {
       microscope->state.modify.slow_line_position_param -= param_step;
     }

@@ -119,9 +119,9 @@ static int collabHand_id;
 // screen space
 static int g_CRT_correction = 0;
 
-static float * hand_scale;
-static float * room_scale;
-static float * screen_scale;
+static float hand_scale[1];
+static float room_scale[1];
+static float screen_scale[1];
 
 /*functions prototypes*/
 /* remember that v_dlist_ptr_type is a int func_name(int) */
@@ -180,7 +180,7 @@ int clear_world_modechange(int mode, int style)
 {
   switch(mode) {
   case USER_LIGHT_MODE:
-    removeFunctionFromFunclist(&v_hand,hand_id);
+    removeFunctionFromFunclist(&vir_world,hand_id);
     break;
   case USER_FLY_MODE:
     removeFunctionFromFunclist(&v_hand,hand_id);
@@ -281,7 +281,7 @@ int init_world_modechange(int mode, int style)
   }
   switch(mode) {
   case USER_LIGHT_MODE:
-    hand_id = addFunctionToFunclist(&v_hand,lighthand,hand_scale, "hand_scale");
+    hand_id = addFunctionToFunclist(&vir_world,lighthand,hand_scale, "hand_scale");
     break;
   case USER_FLY_MODE:
     hand_id = addFunctionToFunclist(&v_hand, Tip, NULL, "Tip");
@@ -1082,37 +1082,109 @@ int grabhand(void *data)
 
 int lighthand(void *data)
 {
-  float *size;
+    float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
+    float y_wide = g_inputGrid->maxY() - g_inputGrid->minY();
+    float z_value;
 
-  size = (float *)data;
+    float size = 0.15*x_wide;
+    v_xform_type	worldFromHand;
+    q_matrix_type hand_mat;
+    q_type q_world_from_hand;
 
-  glPushMatrix();
+    //size = *((float *)data);
+
+    glPushMatrix();
+
+    BCPlane *height = g_inputGrid->getPlaneByName
+        (g_heightPlaneName);
+  
+    if (height) {
+        z_value = height->scaledValue(g_inputGrid->numX() / 2,
+                                      g_inputGrid->numY() / 2);
+    } else {
+        z_value = 0.0f;
+    }
+    
+    // Approximate center of the surface. 
+    glTranslatef( g_inputGrid->minX() + x_wide/2.0,
+                  g_inputGrid->minY() + y_wide/2.0,
+                  z_value*1.05);  
+
+  // Make it correspond to hand rotation
+  v_get_world_from_hand(0, &worldFromHand);
+  q_copy(q_world_from_hand, worldFromHand.rotate);
+
+  // Apply hand rotation directly to the light icon. 
+  q_to_row_matrix(hand_mat, q_world_from_hand);
+  glMultMatrixd((double *)hand_mat);
+
+  // back away from the surface so icon "orbits" the center of the surface.
+  glTranslatef(0.0, x_wide/2.0, 0.0);
 
   // rotate so light ray sticks out in -y direction in hand space
   glRotatef(-90, 1.0, 0.0, 0.0);
+
+  glScalef(size * g_icon_scale, size * g_icon_scale, size * g_icon_scale);
 
 #ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
 #endif
 
-  glColor3f(0.0,0.0,0.0); 
-  glScalef(*size * g_icon_scale, *size * g_icon_scale, *size * g_icon_scale);
+  glColor3f(0.5,0.0,0.9); 
 
-  /* outside */
+  // The base of the light (cube, with -z open)
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(0.0,0.0,1.0);
-      glVertex3f(-1.0,1.0,1.0);
-      glVertex3f(-1.0,-1.0,1.0);
-      glVertex3f(1.0,-1.0,1.0);
-      glVertex3f(1.0,1.0,1.0);
+      glVertex3f(-0.5,0.5,1.0);
+      glVertex3f(-0.5,-0.5,1.0);
+      glVertex3f(0.5,-0.5,1.0);
+      glVertex3f(0.5,0.5,1.0);
       VERBOSE(20, "          glEnd()");
   glEnd();
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(0.0,-1.0,0.0);
-      glVertex3f(1.0,-1.0,1.0);
-      glVertex3f(-1.0,-1.0,1.0);
+      glVertex3f(0.5,-0.5,1.0);
+      glVertex3f(-0.5,-0.5,1.0);
+      glVertex3f(-0.5,-0.5,0.0); 
+      glVertex3f(0.5,-0.5,0.0);
+      VERBOSE(20, "          glEnd()");
+  glEnd();
+  glBegin(GL_POLYGON);
+      VERBOSE(20, "          glBegin(GL_POLYGON)");
+      glNormal3f(0.0,1.0,0.0);
+      glVertex3f(0.5,0.5,1.0);
+      glVertex3f(0.5,0.5,0.0);
+      glVertex3f(-0.5,0.5,0.0);
+      glVertex3f(-0.5,0.5,1.0);
+      VERBOSE(20, "          glEnd()");
+  glEnd();
+  glBegin(GL_POLYGON);
+      VERBOSE(20, "          glBegin(GL_POLYGON)");
+      glNormal3f(-1.0,0.0,0.0);
+      glVertex3f(-0.5,0.5,1.0);
+      glVertex3f(-0.5,0.5,0.0);
+      glVertex3f(-0.5,-0.5,0.0);
+      glVertex3f(-0.5,-0.5,1.0);
+      VERBOSE(20, "          glEnd()");
+  glEnd();
+  glBegin(GL_POLYGON);
+      VERBOSE(20, "          glBegin(GL_POLYGON)");
+      glNormal3f(1.0,0.0,0.0);
+      glVertex3f(0.5,-0.5,1.0);
+      glVertex3f(0.5,-0.5,0.0);
+      glVertex3f(0.5,0.5,0.0);
+      glVertex3f(0.5,0.5,1.0);
+      VERBOSE(20, "          glEnd()");
+  glEnd();
+
+  // The shade of the light
+  glBegin(GL_POLYGON);
+      VERBOSE(20, "          glBegin(GL_POLYGON)");
+      glNormal3f(0.0,-1.0,0.0);
+      glVertex3f(0.5,-0.5,0.0);
+      glVertex3f(-0.5,-0.5,0.0);
       glVertex3f(-1.0,-1.0,-1.0); 
       glVertex3f(1.0,-1.0,-1.0);
       VERBOSE(20, "          glEnd()");
@@ -1120,59 +1192,57 @@ int lighthand(void *data)
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(0.0,1.0,0.0);
-      glVertex3f(1.0,1.0,1.0);
+      glVertex3f(0.5,0.5,0.0);
       glVertex3f(1.0,1.0,-1.0);
       glVertex3f(-1.0,1.0,-1.0);
-      glVertex3f(-1.0,1.0,1.0);
+      glVertex3f(-0.5,0.5,0.0);
       VERBOSE(20, "          glEnd()");
   glEnd();
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(-1.0,0.0,0.0);
-      glVertex3f(-1.0,1.0,1.0);
+      glVertex3f(-0.5,0.5,0.0);
       glVertex3f(-1.0,1.0,-1.0);
       glVertex3f(-1.0,-1.0,-1.0);
-      glVertex3f(-1.0,-1.0,1.0);
+      glVertex3f(-0.5,-0.5,0.0);
       VERBOSE(20, "          glEnd()");
   glEnd();
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(1.0,0.0,0.0);
-      glVertex3f(1.0,-1.0,1.0);
+      glVertex3f(0.5,-0.5,0.0);
       glVertex3f(1.0,-1.0,-1.0);
       glVertex3f(1.0,1.0,-1.0);
-      glVertex3f(1.0,1.0,1.0);
+      glVertex3f(0.5,0.5,0.0);
       VERBOSE(20, "          glEnd()");
   glEnd();
-
-  /* inside */
+  // inside 
+  // yellow square so inside of light looks lit. 
   glColor3f(1.0,1.0,0.0);
-  glBegin(GL_TRIANGLES);
-      VERBOSE(20, "          glBegin(GL_TRIANGLES)");
+  glBegin(GL_POLYGON);
+      VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(0.0,0.0,1.0);
-      glVertex3f(1.0,1.0,-1.0);
-      glVertex3f(-1.0,1.0,-1.0);
-      glVertex3f(0.0,0.0,1.0);
-
-      glVertex3f(-1.0,1.0,-1.0);
-      glVertex3f(-1.0,-1.0,-1.0);
-      glVertex3f(0.0,0.0,1.0);
-
-      glVertex3f(-1.0,-1.0,-1.0);
-      glVertex3f(1.0,-1.0,-1.0);
-      glVertex3f(0.0,0.0,1.0);
-
-      glVertex3f(1.0,-1.0,-1.0);
-      glVertex3f(1.0,1.0,-1.0);
-      glVertex3f(0.0,0.0,1.0);
+      glVertex3f(-0.45,0.45,0.9);
+      glVertex3f(-0.45,-0.45,0.9);
+      glVertex3f(0.45,-0.45,0.9);
+      glVertex3f(0.45,0.45,0.9);
       VERBOSE(20, "          glEnd()");
   glEnd();
 
+  // Light ray from center.
   glBegin(GL_LINES);
     VERBOSE(20, "          glBegin(GL_LINES)");
     glColor3f(1.0,1.0,0.0);
-    glVertex3f(0.0,0.0,-10.0);
+    glVertex3f(0.0,0.0,-7.0);
     glVertex3f(0.0,0.0,0.0);
+    glVertex3f(0.8,0.8,-5.0);
+    glVertex3f(0.8,0.8,-0.8);
+    glVertex3f(-0.8,0.8,-5.0);
+    glVertex3f(-0.8,0.8,-0.8);
+    glVertex3f(-0.8,-0.8,-5.0);
+    glVertex3f(-0.8,-0.8,-0.8);
+    glVertex3f(0.8,-0.8,-5.0);
+    glVertex3f(0.8,-0.8,-0.8);
     VERBOSE(20, "          glEnd()");
   glEnd();
   
@@ -1185,11 +1255,9 @@ int lighthand(void *data)
 }
 
 
-int selecthand(void *data)
+int selecthand(void *)
 {
-	data = data;	// Keep the compiler happy
-
-  static float size=0.02;
+  float size=0.02;
 
   glPushMatrix();
 
@@ -1927,16 +1995,13 @@ int replaceDefaultObjects(void)
   /* create subdivided sphere display list */
   init_sphere();
 
-  hand_scale = (float *)malloc(sizeof(float));
   *hand_scale = 0.02;
-  hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");
+  //hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");
 
   /* Moving text feedback displays from head space to screen space to make them
    * stationary in head tracked mode.
    */
-  room_scale = (float *) malloc(sizeof(float));
   *room_scale = 1.0;
-  screen_scale = (float *) malloc(sizeof(float));
   *screen_scale = 1.0;
 
   // MOVED to chartjunk.c

@@ -699,6 +699,10 @@ void dispatch_event(int user, int mode, int event, nmb_TimerList * /*timer*/)
 {
     int ret = 0;
 
+    // If no hand tracker this function shouldn't do anything
+    if ( vrpnHandTracker[user] == NULL )
+        return;
+
     switch(mode) {
 	case USER_LIGHT_MODE:
 		ret = doLight(user,event);
@@ -1214,7 +1218,7 @@ doLight(int whichUser, int userEvent)
   switch ( userEvent ) {
     case PRESS_EVENT:
 	// get snapshot of hand in world space == w_from_h 
-	v_get_world_from_hand(whichUser, &oldWorldFromHand);
+	//v_get_world_from_hand(whichUser, &oldWorldFromHand);
 	// Save the old light direction
         //  [juliano 20000406] oldLightDir is currently unused, so I'm
         //  commenting it out.  Uncomment it if you need it again.
@@ -1230,7 +1234,7 @@ doLight(int whichUser, int userEvent)
 	
 	// First find the rotation of the hand in the world.
 	// Get current hand in world space.
-	v_get_world_from_hand(whichUser, &worldFromHand);
+	//v_get_world_from_hand(whichUser, &worldFromHand);
 	
 	// now get the rotation from one to the other. 
 	
@@ -1296,7 +1300,7 @@ int
 doFly(int whichUser, int userEvent)
 {
 
-switch ( userEvent )
+    switch ( userEvent )
     {
 
     case HOLD_EVENT:
@@ -1311,7 +1315,7 @@ switch ( userEvent )
 	break;
     }
 
-return 0;
+    return 0;
 }	/* doFly */
 
 /**
@@ -2546,15 +2550,14 @@ doWorldGrab(int whichUser, int userEvent)
     v_xform_type            roomFromHand, roomFromSensor, handFromRoom;
     static v_xform_type     oldWorldFromHand;
 
-  BCPlane* plane = dataset->inputGrid->getPlaneByName
+    BCPlane* plane = dataset->inputGrid->getPlaneByName
                      (dataset->heightPlaneName->string());
-  if (plane == NULL)
-  {
-      fprintf(stderr, "Error in doWorldGrab: could not get plane!\n");
-      return -1;
-  }     
-    /* Move the aiming line to the users hand location 
-     XXX The aim line is only show in Touch modes. Why move it here? */
+    if (plane == NULL)
+    {
+        fprintf(stderr, "Error in doWorldGrab: could not get plane!\n");
+        return -1;
+    }     
+    // Move the aiming line to the users hand location 
     v_get_world_from_hand(whichUser, &worldFromHand);
     //nmui_Util::moveAimLine(worldFromHand.xlate);
     decoration->aimLine.moveTo(worldFromHand.xlate[0],

@@ -21,6 +21,11 @@ extern UTree World;
 #include "Xform.h"
 #include "URenderAux.h"
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+// bogus double to float conversion warning.
+#pragma warning(disable:4244)
+#pragma warning(disable:4305)
+#endif
 
 //RUN TIME TYPE INFORMATION THAT I'M KEEPING FOR EACH OBJECT
 enum URender_Type {URENDER, URAXIS, URTEXTURE, URPOLYGON};

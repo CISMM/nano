@@ -171,7 +171,7 @@ nmb_Dataset::~nmb_Dataset (void) {
 /**
    Loads a list of files, by calling BCGrid::loadFiles, then
    adding any new planes to our dataImages list. 
-   @returns -1 on error, 0 on success
+   @return -1 on error, 0 on success
    @author Aron Helser
    @date modified 3-22-00 Aron Helser
 */

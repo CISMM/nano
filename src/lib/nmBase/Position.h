@@ -99,6 +99,14 @@ public:
 		return _curr;
 	}
     }
+    inline Position * prev() {
+	if (_curr == NULL) {
+		return NULL;
+	} else {
+		_curr = _curr->prev();
+		return _curr;
+	}
+    }
 
     /* methods to let you look around in the list, without
      * affecting your position in the list */

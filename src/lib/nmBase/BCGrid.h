@@ -23,6 +23,12 @@ extern const char * EMPTY_PLANE_NAME;
 #include <stdio.h> // for FILE
 #include "BCString.h"
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+// bogus double to float conversion warning.
+#pragma warning(disable:4244)
+#pragma warning(disable:4305)
+#endif
+
 class BCPlane;
 
 typedef void (* BCGrid_MinMaxCallback) (void * userdata,

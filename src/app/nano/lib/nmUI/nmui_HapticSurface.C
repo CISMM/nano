@@ -318,6 +318,11 @@ void nmui_HSMeasurePlane::update (nmm_Microscope_Remote * scope) {
   d_decoration->green.getIntercept(green, plane);
   d_decoration->blue.getIntercept(blue, plane);
 
+  // Scale the z value into world coordinates:
+  red[2] *= plane->scale();
+  green[2] *= plane->scale();
+  blue[2] *= plane->scale();
+
   //---------------------------------------------------------------------
   // Pick one of the points (red) as the plane origin, then find the
   // normal using cross-products for the vectors to the other two

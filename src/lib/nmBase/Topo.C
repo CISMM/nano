@@ -496,8 +496,8 @@ int TopoFile::getGridInfoFromHeader (const char * temp) {
 
       for (i = 0; i < sizeof(szRelease); i++)
 	  szRelease[i] = *(const char *)(w + 9 + i);
-      fprintf(stderr, "TopoFile::getInfo got szRelease \"%s\"\n",
-	      szRelease);
+//        fprintf(stderr, "TopoFile::getInfo got szRelease \"%s\"\n",
+//  	      szRelease);
       for (i = 0; i < sizeof(szDatetime); i++)
 	  szDatetime[i] = *(const char *)(w + 25 + i);
       //fprintf(stderr, "TopoFile::ParseDocInfo got szDatetime \"%s\"\n",
@@ -846,7 +846,7 @@ int TopoFile::parseData(int handle){
 
 	/* Seeking to where the data should start - this was not done in the
          * code from Topometrix. */
-        printf("TopoFile::ParseData: Reading data starting at byte %ld\n",(long)iOffset);
+//          printf("TopoFile::ParseData: Reading data starting at byte %ld\n",(long)iOffset);
 	if( lseek( handle, iOffset, SEEK_SET) == -1) { /* Error */
                 return -1;
         }

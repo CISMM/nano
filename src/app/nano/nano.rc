@@ -7,3 +7,4 @@
 // remains consistent on all systems.
 NANO                     ICON    DISCARDABLE     "NANO.ICO"
 GLUT_ICON                ICON                    "NANO.ICO"
+tk                       ICON    DISCARDABLE     "NANO.ICO"

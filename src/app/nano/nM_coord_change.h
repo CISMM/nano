@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /** \class nM_coord_change
 This is a server to take the tracker position and orientation coming in from 
 the phantom and pass it to a collaborator in a different coordinate system 

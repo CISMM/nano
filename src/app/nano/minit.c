@@ -35,6 +35,7 @@
 #include <vrpn_Tracker.h>
 #ifndef NO_MAGELLAN
 #include <vrpn_Magellan.h>
+#include <vrpn_Tracker_AnalogFly.h>
 #endif
 
 #include "stm_file.h"
@@ -90,6 +91,11 @@ unsigned long inet_addr();
 #endif
 
 #define NANO_FONT	(34)
+
+const char MAGELLAN_NAME[] = "Magellan0";
+// * in front means "use the connection I give you" to the AnalogFly
+char AF_MAGELLAN_NAME[] = "*Magellan0";
+static vrpn_Tracker_AnalogFlyParam *magellan_param;
 
 /*****************************************************************************
 
@@ -198,7 +204,8 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
    if (b.state == 0) return;
    switch (b.button) {
    case 0:
-       // This is the * button, we don't use it for anything. 
+       // This is the * button, we use it to turn on and off the puck
+       magellanPuckActive = !magellanPuckActive;
        break;
    case 1: 		/* Grab World mode */
        mode_change = 1;	/* Will make icon change */
@@ -228,7 +235,6 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        }
        break;
    case 4:              /* Commit button */
-       printf("Magellan commit pressed\n");
        tcl_commit_pressed = 1;
       // we must call "handle_commit_change" explicitly, 
       // because tclvars are set to ignore changes from C.
@@ -253,6 +259,131 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
    }
 
 
+}
+/** callbacks for vrpn_Tracker_Remote for magellan (registered below)
+ */
+void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr) 
+{
+   vrpn_bool puck_active = VRPN_FALSE;
+   static vrpn_bool old_puck_active = VRPN_FALSE;
+   static q_xyz_quat_type old_puck_transform;
+   q_xyz_quat_type puck_transform, puck_diff_transform;
+
+   static v_xform_type old_world_from_room;
+   v_xform_type curr_world_from_room, new_world_from_room, puck_rotate_xform,
+       curr_room_from_world;
+
+   static float offsetx, offsety, offsetz;
+   q_vec_type plane_center;
+
+   double trans_scale = 1.0;
+
+   if (userdata) puck_active = *((vrpn_bool *)userdata);
+
+   switch (user_mode[0]) {
+   case USER_GRAB_MODE:
+   case USER_LIGHT_MODE:
+   case USER_PLANE_MODE:
+   case USER_SCALE_UP_MODE:
+   case USER_SCALE_DOWN_MODE:
+       if (puck_active) {
+           if (!old_puck_active) {
+              // This "activates" the puck, sets up later interaction.  Save
+               // the current puck transforms, so we can do diffs with them.
+               q_vec_scale( old_puck_transform.xyz, trans_scale, 
+                            (double *)tr.pos);
+               q_copy ( old_puck_transform.quat, (double *)tr.quat);
+               q_xyz_quat_invert( &old_puck_transform, &old_puck_transform);
+
+               // Save the center of the plane, basis for rotations. 
+               get_Plane_Extents(&offsetx,&offsety,&offsetz);
+//                 printf("offsets %g %g %g\n", offsetx, offsety, offsetz);
+//                 printf("old wfr ");
+//                 v_x_print( &old_world_from_room);
+           } else {
+               // Save the old world_from_room transform as a basis for puck
+               // action. Move to activate section above if we aren't doing
+               // incremental xforms.
+               v_get_world_from_head(0, &old_world_from_room);
+
+               // We are active, and changing the surface position
+               v_init_xform(&new_world_from_room);
+               q_vec_scale( puck_transform.xyz, trans_scale, 
+                           (double *)tr.pos);
+               q_copy ( puck_transform.quat, (double *)tr.quat);
+
+               // old_puck_transform is inverted so when we compose it
+               // below, it "undoes" the starting transform, to get diff. 
+               q_xyz_quat_compose(&puck_diff_transform, 
+                                  &old_puck_transform, &puck_transform);
+
+               v_xform_type vxtemp;
+               // Identity transforms
+               q_type q_ident = Q_ID_QUAT;
+               q_vec_type v_ident = Q_NULL_VECTOR;
+
+               // ROTATE the surface, same as the puck.
+               // Make rotation happen about center of the plane. 
+               q_vec_set(plane_center, offsetx, 
+                         offsety, 
+                         offsetz);
+
+               // Plane center is in world coords, we need it in room coords
+               v_get_world_from_head(0, &curr_world_from_room);
+               v_x_invert(&curr_room_from_world, &curr_world_from_room);
+               
+               // xform plane_center vector into room coords. 
+               v_x_xform_vector(plane_center, &curr_room_from_world, plane_center);
+
+//                 v_x_print(&curr_world_from_room);
+//                 q_vec_print(plane_center);
+
+               // translate plane center to zero, rotate
+               v_x_set(&puck_rotate_xform, plane_center,
+                       puck_diff_transform.quat, 1.0);
+               q_vec_invert(plane_center, plane_center);
+               v_x_set(&vxtemp, plane_center, q_ident, 1.0);
+               // translate plane center back to proper position
+               v_x_compose(&puck_rotate_xform, &puck_rotate_xform, 
+                           &vxtemp);
+
+//                 v_x_print(&puck_rotate_xform);
+               
+               v_x_compose(&new_world_from_room, 
+                           &old_world_from_room, &puck_rotate_xform);
+
+               
+               // TRANSLATE the surface based on puck translation. 
+               // Inversion necessary for natural movement. Don't know why. 
+               q_vec_invert(puck_diff_transform.xyz, puck_diff_transform.xyz);
+               v_x_set(&vxtemp, puck_diff_transform.xyz, q_ident, 1.0);
+               v_x_compose(&new_world_from_room, &new_world_from_room, &vxtemp);
+//                 v_x_print(&new_world_from_room);
+               
+               // May be necessary because of instability for large 
+               // rotations
+//                 q_normalize(new_world_from_room.rotate, 
+//                             new_world_from_room.rotate);
+
+               updateWorldFromRoom(&new_world_from_room);
+//                 printf ("\n");
+
+               // INCREMENTAL transform. If we do this, transforms are
+               // updated frame-to-frame. If we don't, they are update
+               // based on puck position when we activate the puck. 
+               // We seem to need this for stability. Non-incremental 
+               // transforms explode when we get near 360 rotation. 
+               q_vec_scale( old_puck_transform.xyz, trans_scale, 
+                            (double *)tr.pos);
+               q_copy ( old_puck_transform.quat, (double *)tr.quat);
+               q_xyz_quat_invert( &old_puck_transform, &old_puck_transform);
+           }
+       }
+       break;
+   default:
+       break;
+   }
+   old_puck_active = puck_active;
 }
 #endif
 
@@ -286,7 +417,7 @@ phantom_init(vrpn_Connection * local_device_connection)
             local_Phantom = VRPN_TRUE;
             // Sleep to get phantom in reset positon
             // Should notify user...
-            vrpn_SleepMsecs(2000);
+            //vrpn_SleepMsecs(2000);
             // 60 update a second, I guess. 
             phantServer = new vrpn_Phantom(handTrackerName, 
                                            local_device_connection, 60);
@@ -369,7 +500,8 @@ phantom_init(vrpn_Connection * local_device_connection)
  *
  *****************************************************************************/
 int
-peripheral_init(vrpn_Connection * local_device_connection)
+peripheral_init(vrpn_Connection * local_device_connection,
+                vrpn_bool do_magellan)
 {
     int	i;
 
@@ -421,15 +553,60 @@ peripheral_init(vrpn_Connection * local_device_connection)
 
 #ifndef NO_MAGELLAN
     // Open the Magellan puck and button box.
-    if (local_device_connection) {
-        magellanButtonBoxServer = new vrpn_Magellan("Magellan0", 
+    if (local_device_connection && do_magellan) {
+        magellanButtonBoxServer = new vrpn_Magellan(MAGELLAN_NAME, 
                                                     local_device_connection, 
                                                     "COM1", 9600);
-        magellanButtonBox = new vrpn_Button_Remote("Magellan0",
+        // This server listens to the analog output of the Magellan puck
+        // and makes it seem like a tracker. 
+        // First set up parameters
+        // Defaults for the axes, threshold = 0, power=1, scale =1 are OK. 
+        double scale = 2.0;
+        magellan_param = new vrpn_Tracker_AnalogFlyParam;
+        magellan_param->x.name = AF_MAGELLAN_NAME;
+        magellan_param->x.channel = 0;
+        magellan_param->x.scale = scale;
+        magellan_param->y.name = AF_MAGELLAN_NAME;
+        magellan_param->y.channel = 1;
+        magellan_param->y.scale = scale;
+        magellan_param->z.name = AF_MAGELLAN_NAME;
+        magellan_param->z.channel = 2;
+        magellan_param->z.scale = scale;
+        magellan_param->sx.name = AF_MAGELLAN_NAME;
+        magellan_param->sx.channel = 3;
+        magellan_param->sx.scale = scale;
+        magellan_param->sy.name = AF_MAGELLAN_NAME;
+        magellan_param->sy.channel = 4;
+        magellan_param->sy.scale = scale;
+        magellan_param->sz.name = AF_MAGELLAN_NAME;
+        magellan_param->sz.channel = 5;
+        magellan_param->sz.scale = scale;
+        
+        // Next make a tracker
+        // Update rate is 20.0 times per second
+         magellanTrackerServer = new vrpn_Tracker_AnalogFly(MAGELLAN_NAME,
+                                                     local_device_connection,
+                                                     magellan_param, 20.0);
+        // Client for the buttons
+        magellanButtonBox = new vrpn_Button_Remote(MAGELLAN_NAME,
                                                    local_device_connection);
         if ( magellanButtonBox->register_change_handler(magellanButtonState,
                                 handle_magellan_button_change)) {
             fprintf(stderr, "Error: can't register magellan vrpn_Button handler\n");
+        }
+        // This won't be used for anything, unless we need to get
+        // direct analog output from the puck. 
+        magellanPuckAnalog = new vrpn_Analog_Remote(MAGELLAN_NAME,
+                                       local_device_connection);
+//          if ( magellanPuckAnalog->register_change_handler(&magellanPuckActive,
+//                                  handle_magellan_puck_change)) {
+//              fprintf(stderr, "Error: can't register magellan vrpn_Analog handler\n");
+//          }
+        magellanPuckTracker = new vrpn_Tracker_Remote(MAGELLAN_NAME,
+                                       local_device_connection);
+        if ( magellanPuckTracker->register_change_handler(&magellanPuckActive,
+                                handle_magellan_puck_change)) {
+            fprintf(stderr, "Error: can't register magellan vrpn_Tracker handler\n");
         }
     }
 #endif

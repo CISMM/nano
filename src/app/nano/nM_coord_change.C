@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /** \file nM_coord_change.C
 	last modified by Tom Hudson on 23 Feb 2000.
 	This is the server that takes the position/orientation messages from

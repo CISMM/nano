@@ -33,6 +33,7 @@
 #include <vrpn_Clock.h>  // for round-trip-time routines (foo_rtt())
 #ifndef NO_MAGELLAN
 #include <vrpn_Magellan.h>
+#include <vrpn_Tracker_AnalogFly.h>
 #endif
 
 #ifndef NO_PHANTOM_SERVER
@@ -985,26 +986,22 @@ static char local_ModeName [256];
     spring coefficient, and damping coefficient through  it.
  ********/
 
-// local Phantom Server - only used if TRACKER env var doesn't
-// contain a machine name for the Phantom.
 #ifndef NO_PHANTOM_SERVER
+/// local Phantom Server - only used if TRACKER env var doesn't
+/// contain a machine name or IP address for the Phantom.
 vrpn_Phantom * phantServer = NULL;
 #endif
 
-// used in interaction.c, minit.c
+/// Phantom force device, used in interaction.c, minit.c
 vrpn_ForceDevice_Remote *forceDevice = NULL;
 
-/*********
- * remote button for PHANToM
- ********/
-
+/// remote button for PHANToM
 vrpn_Button_Remote *phantButton = NULL;
 int phantButtonState = 0;
 
 /********
  * SGI button and dial box
  *******/
-
 vrpn_Button_Remote *buttonBox = NULL;
 vrpn_Analog_Remote *dialBox = NULL;
 int bdboxButtonState[BDBOX_NUMBUTTONS];
@@ -1014,22 +1011,27 @@ double bdboxDialValues[BDBOX_NUMDIALS];
 /// nano.
 vrpn_Connection * internal_device_connection = NULL;
 
-//  Magellan button and puck
 #ifndef NO_MAGELLAN
+///  Magellan button and puck
 vrpn_Magellan *magellanButtonBoxServer = NULL;
+vrpn_Tracker_AnalogFly *magellanTrackerServer = NULL;
+
 vrpn_Button_Remote *magellanButtonBox = NULL;
 int magellanButtonState[MAGELLAN_NUMBUTTONS];
+
+vrpn_Analog_Remote *magellanPuckAnalog = NULL;
+vrpn_Tracker_Remote *magellanPuckTracker = NULL;
+vrpn_bool magellanPuckActive = VRPN_FALSE;
 #endif
+
 /************
  * Ohmmeter
  ***********/
-
 vrpn_Ohmmeter_Remote *ohmmeter = NULL;
 
 
 /// These variables signal when someone has clicked "accept" in the 
 /// image/modify tk window.
-
 Tclvar_int changed_image_params ("accepted_image_params", 0);
 Tclvar_int changed_modify_params ("accepted_modify_params", 0);
 Tclvar_int changed_scanline_params ("accepted_scanline_params", 0);
@@ -2256,8 +2258,10 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
 
 static void handle_shiny_change (vrpn_int32 new_value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-
-  g->setSpecularity(new_value);
+  // Values less than zero or more than 128 cause "GL error GL_INVALID_VALUE"
+  if (shiny < 0) shiny = 0;
+  if (shiny > 128) shiny = 128;
+  g->setSpecularity(shiny);
 }
 
 
@@ -3116,27 +3120,29 @@ static void handle_global_icon_scale_change (vrpn_float64 value, void * userdata
 
 void handle_contour_dataset_change (const char *, void * userdata)
 {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
-        BCPlane * plane = dataset->inputGrid->getPlaneByName
-                               (dataset->contourPlaneName->string());
+    nmg_Graphics * g = (nmg_Graphics *) userdata;
+    BCPlane * plane = dataset->inputGrid->getPlaneByName
+        (dataset->contourPlaneName->string());
 
-        if (plane != NULL) {
-                texture_scale = (plane->maxValue() -
-                                 plane->minValue()) / 10;
-                g->setTextureScale(texture_scale);
-                g->setTextureMode(nmg_Graphics::CONTOUR,
-				  nmg_Graphics::RULERGRID_COORD);
-        } else {        // No plane
+    if (plane != NULL) {
+        texture_scale = (plane->maxNonZeroValue() -
+                         plane->minNonZeroValue()) / 10;
+        g->setTextureScale(texture_scale);
+        g->setTextureMode(nmg_Graphics::CONTOUR,
+                          nmg_Graphics::RULERGRID_COORD);
+    } else {        // No plane
+        if (strcmp(dataset->contourPlaneName->string(), "none") != 0) {
             display_error_dialog( "Couldn't find plane for contours; \n"
                                   "turning contours off.");
-          if (g->getTextureMode() == nmg_Graphics::CONTOUR) {
-            g->setTextureMode(nmg_Graphics::NO_TEXTURES,
-		  nmg_Graphics::RULERGRID_COORD);
-          }
         }
+        if (g->getTextureMode() == nmg_Graphics::CONTOUR) {
+            g->setTextureMode(nmg_Graphics::NO_TEXTURES,
+                              nmg_Graphics::RULERGRID_COORD);
+        }
+    }
 
-  g->setContourPlaneName(dataset->contourPlaneName->string());
-  g->causeGridRedraw();
+    g->setContourPlaneName(dataset->contourPlaneName->string());
+    g->causeGridRedraw();
 }
 
 //callbacks for when the datasets for the haptic stimuli change
@@ -4748,7 +4754,7 @@ void ParseArgs (int argc, char ** argv,
       } else if (strcmp(argv[i], "-ugraphics") == 0) {
         fprintf(stderr, "Warning: -ugraphics obsolete.\n");
         //ubergraphics_enabled = 1;
-      } else if (strcmp(argv[i], "-verbosity") == 0) {
+      } else if (strncmp(argv[i], "-verbos", strlen("-verbos")) == 0) {
         if (++i >= argc) Usage(argv[0]);
         spm_verbosity = atoi(argv[i]);
       } else if (strcmp(argv[i], "-z") == 0) {
@@ -4929,13 +4935,13 @@ void ParseArgs (int argc, char ** argv,
         strcat(pxflArgs, argv[++i]);
         fprintf(stderr, "parsing args: pxfl Args %s\n",pxflArgs);
 #endif
-
-      } else if (argv[i][0] == '-') Usage(argv[0]);
-      else {
-        switch (real_params) {
-        default: Usage(argv[0]);
-        }
-        real_params++;
+        
+      } else if (argv[i][0] == '-') {
+          // Unknown argument starting with "-"
+          Usage(argv[0]);
+      } else {
+          // An argument without a "-", so we don't know what to do. 
+          Usage(argv[0]);
       }
       i++;
     }
@@ -5603,6 +5609,7 @@ void update_rtt (void) {
 int createNewMicroscope( MicroscapeInitializationState &istate,
    vrpn_Connection * c) 
 {
+    VERBOSE(1, "Creating a new microscope");
   // Callbacks can do strange things, because re-creating
   // tclvars can cause changes to be propagated through tcl to
   // the new objects. I was getting a segfault in the microscope 
@@ -5724,6 +5731,8 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
     decoration->green.moveTo(height_plane->maxX(), height_plane->minY(),
                              height_plane);
     decoration->blue.moveTo(height_plane->maxX(), height_plane->maxY(),
+                            height_plane);
+    decoration->aimLine.moveTo(height_plane->minX(), height_plane->maxY(),
                             height_plane);
     // DO NOT doCallbacks()?
 
@@ -6116,12 +6125,8 @@ int main(int argc, char* argv[])
     // (this space is allocated in v_create_world())
     // Initialize force, tracker, a/d device, sound
     VERBOSE(1,"Before tracker enable");
-    if (istate.do_magellan) {
-        internal_device_connection = new vrpn_Synchronized_Connection (wellKnownPorts->localDevice);
-    } else {
-        internal_device_connection = NULL;
-    }
-    if (peripheral_init(internal_device_connection)){
+    internal_device_connection = new vrpn_Synchronized_Connection (wellKnownPorts->localDevice);
+    if (peripheral_init(internal_device_connection, istate.do_magellan)){
         display_fatal_error_dialog("Cannot initialize peripheral devices\n");
         return(-1);
     }
@@ -6484,8 +6489,17 @@ VERBOSE(1, "Entering main loop");
             magellanButtonBox = NULL;
         }
       }
+      if (magellanTrackerServer) {
+	magellanTrackerServer->mainloop();
+      }
       if (magellanButtonBox) {
 	magellanButtonBox->mainloop();
+      }
+      if (magellanPuckAnalog) {
+	magellanPuckAnalog->mainloop();
+      }
+      if (magellanPuckTracker) {
+	magellanPuckTracker->mainloop();
       }
 #endif
 
@@ -6797,9 +6811,21 @@ VERBOSE(1, "Entering main loop");
       }
     }
 #ifndef NO_MAGELLAN
+    if (magellanPuckTracker) {
+	delete magellanPuckTracker;
+	magellanPuckTracker = NULL;
+    }
+    if (magellanPuckAnalog) {
+	delete magellanPuckAnalog;
+	magellanPuckAnalog = NULL;
+    }
     if (magellanButtonBox) {
 	delete magellanButtonBox;
 	magellanButtonBox = NULL;
+    }
+    if (magellanTrackerServer) {
+        delete magellanTrackerServer;
+        magellanTrackerServer= NULL;
     }
     if (magellanButtonBoxServer) {
         delete magellanButtonBoxServer;

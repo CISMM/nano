@@ -204,7 +204,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   // position for the aimLine...
   BCPlane* plane = dataset->inputGrid->getPlaneByName
     (dataset->heightPlaneName->string());
-  decoration->aimLine.moveTo(plane->numX()/2, plane->numY()/2, plane);
+  decoration->aimLine.moveTo(plane->minX(), plane->maxY(), plane);
   init_world_modechange( USER_GRAB_MODE, 0 );
 
 
@@ -759,6 +759,7 @@ void nmg_Graphics_Implementation::causeGridRedraw (void) {
     decoration->red.normalize(plane);
     decoration->green.normalize(plane);
     decoration->blue.normalize(plane);
+    decoration->aimLine.normalize(plane);
   }
 }
 

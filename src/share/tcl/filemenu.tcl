@@ -56,9 +56,10 @@ proc open_stream_file {} {
 #
 # Open a device - SPM.
 
-set deviceNames       { "Local SPM" "Nano Demo"}
-set deviceConnections { "nmm_Microscope@127.0.0.1:4580" \
-        "nmm_Microscope@172.18.2.241"  }
+set deviceNames       { "Local SPM" "Nano Demo" "Black Box"}
+set deviceConnections { "nmm_Microscope@127.0.0.1" \
+        "nmm_Microscope@172.18.2.241" \
+        "nmm_Microscope@172.18.2.251" }
 
 # Dialog which allows user to choose which device
 # and which log file. 

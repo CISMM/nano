@@ -343,7 +343,8 @@ void makeRulerImage (void) {
   for (i = 0; i < rulerImageHeight; i++)
     for (j = 0; j < rulerImageWidth; j++)
       if ((j < rwidth_x) ||
-          (rwidth_x > (rulerImageWidth - 1 - j)) || (i < rwidth_y)){
+          (rwidth_x > (rulerImageWidth - 1 - j)) || (i < rwidth_y)||
+          (rwidth_y > (rulerImageHeight - 1 - i)) ){
 	rulerImage[i][j][0] = (GLubyte)((float)g_ruler_r*g_ruler_opacity/255.0);
 	rulerImage[i][j][1] = (GLubyte)((float)g_ruler_g*g_ruler_opacity/255.0);
 	rulerImage[i][j][2] = (GLubyte)((float)g_ruler_b*g_ruler_opacity/255.0);

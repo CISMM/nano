@@ -154,7 +154,7 @@ set nmInfo(contour_lines) [create_closing_toplevel contour_lines \
         "Contour Lines Setup" ]
 
 generic_optionmenu $nmInfo(contour_lines).contour_dataset contour_comes_from \
-	"Contour dataset" inputPlaneNames
+	"Contour plane" inputPlaneNames
 pack $nmInfo(contour_lines).contour_dataset -anchor nw
     
 button $nmInfo(contour_lines).set_color -text "Set contour color" -command {
@@ -646,21 +646,20 @@ if {$spring_slider_min_limit != $spring_slider_max_limit} {
 
 
 ############################
-# Preferences
+# display_settings
 
 # This is for anything the user won't want to change very often, but
 # which affects the general appearance of the screen and
-# application. Should be saved in a preferences file, but it won't be
-# right now.
-set nmInfo(preferences) [create_closing_toplevel preferences "Preferences" ]
+# application. 
+set nmInfo(display_settings) [create_closing_toplevel display_settings "Display Settings..." ]
 
 #
 # Surface shading parameters
 #
-iwidgets::Labeledframe $nmInfo(preferences).surf_shading \
+iwidgets::Labeledframe $nmInfo(display_settings).surf_shading \
 	-labeltext "Surface Shading" \
 	-labelpos nw
-set nmInfo(pref_surf_shading) [$nmInfo(preferences).surf_shading childsite]
+set nmInfo(pref_surf_shading) [$nmInfo(display_settings).surf_shading childsite]
 # Spec Color, Spec highlight sharpness, diffuse color, opacity of surface. 
 generic_entry $nmInfo(pref_surf_shading).shiny shiny \
 	"Highlight sharpness (1,128)" integer
@@ -671,7 +670,7 @@ generic_entry $nmInfo(pref_surf_shading).diffuse diffuse \
 generic_radiobox $nmInfo(pref_surf_shading).smooth \
 	smooth_shading \
 	"Shading" { "Flat" "Smooth" }
-pack $nmInfo(preferences).surf_shading -fill both
+pack $nmInfo(display_settings).surf_shading -fill both
 pack $nmInfo(pref_surf_shading).shiny \
 	$nmInfo(pref_surf_shading).specular_color \
 	$nmInfo(pref_surf_shading).diffuse \
@@ -680,17 +679,17 @@ pack $nmInfo(pref_surf_shading).shiny \
 #
 # Surface tesselation
 #
-iwidgets::Labeledframe $nmInfo(preferences).surf_tris \
+iwidgets::Labeledframe $nmInfo(display_settings).surf_tris \
 	-labeltext "Surface Tesselation" \
 	-labelpos nw
-set nmInfo(pref_surf_tris) [$nmInfo(preferences).surf_tris childsite]
+set nmInfo(pref_surf_tris) [$nmInfo(display_settings).surf_tris childsite]
 generic_radiobox $nmInfo(pref_surf_tris).filled \
 	filled_triangles \
 	"Surface triangles" { "Wireframe" "Filled" }
 generic_entry $nmInfo(pref_surf_tris).surface_alpha surface_alpha \
 	"Surface opacity (0,1)" real
 
-pack $nmInfo(preferences).surf_tris -fill both
+pack $nmInfo(display_settings).surf_tris -fill both
 pack $nmInfo(pref_surf_tris).filled \
 	$nmInfo(pref_surf_tris).surface_alpha -fill x
 
@@ -698,10 +697,10 @@ pack $nmInfo(pref_surf_tris).filled \
 #
 # Icons
 #
-iwidgets::Labeledframe $nmInfo(preferences).icons \
+iwidgets::Labeledframe $nmInfo(display_settings).icons \
 	-labeltext "Icons" \
 	-labelpos nw
-set nmInfo(pref_icons) [$nmInfo(preferences).icons childsite]
+set nmInfo(pref_icons) [$nmInfo(display_settings).icons childsite]
 
 set sphere_scale 12.5
 generic_entry $nmInfo(pref_icons).icon_scale global_icon_scale \
@@ -709,23 +708,23 @@ generic_entry $nmInfo(pref_icons).icon_scale global_icon_scale \
 generic_entry $nmInfo(pref_icons).sphere_scale sphere_scale \
 	"Sphere scale (1,100nm)" real
 
-pack $nmInfo(preferences).icons -fill both
+pack $nmInfo(display_settings).icons -fill both
 pack $nmInfo(pref_icons).icon_scale $nmInfo(pref_icons).sphere_scale \
 	-side top -fill x
 #
 # Acquisition Parameters
 #
-iwidgets::Labeledframe $nmInfo(preferences).acquisition \
+iwidgets::Labeledframe $nmInfo(display_settings).acquisition \
 	-labeltext "Acquisition Parameters" \
 	-labelpos nw
-set nmInfo(pref_acq) [$nmInfo(preferences).acquisition childsite]
+set nmInfo(pref_acq) [$nmInfo(display_settings).acquisition childsite]
 
 set num_lines_to_jump_back 1000
 generic_entry $nmInfo(pref_acq).jump_back num_lines_to_jump_back \
 	"Post-modify jumpback" integer
 
 if { !$thirdtech_ui } {
-pack $nmInfo(preferences).acquisition -fill both
+pack $nmInfo(display_settings).acquisition -fill both
 pack $nmInfo(pref_acq).jump_back -side top -fill x
 }
 iwidgets::Labeledwidget::alignlabels \
@@ -740,14 +739,14 @@ iwidgets::Labeledwidget::alignlabels \
 # Coupling
 #
 if { !$thirdtech_ui } {
-iwidgets::Labeledframe $nmInfo(preferences).coupling \
+iwidgets::Labeledframe $nmInfo(display_settings).coupling \
         -labeltext "Coupling" \
         -labelpos nw
-set nmInfo(pref_coupling) [$nmInfo(preferences).coupling childsite]
+set nmInfo(pref_coupling) [$nmInfo(display_settings).coupling childsite]
 
 checkbutton $nmInfo(pref_coupling).finegrained_coupling \
         -text "fine-grained coupling" -variable finegrained_coupling
 
-pack $nmInfo(preferences).coupling -fill both
+pack $nmInfo(display_settings).coupling -fill both
 pack $nmInfo(pref_coupling).finegrained_coupling -side top -fill x
 }

@@ -1,3 +1,10 @@
+#/*===3rdtech===
+#  Copyright (c) 2000 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
 #
 # Helper procedure that will bring up a dialogue box to edit a value.
 # It assumes that the variable whose name is passed to it is the one it

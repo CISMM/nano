@@ -69,6 +69,9 @@ if {[info exists env(NM_TCL_DIR)] } {
 } else {
     set tcl_script_dir .
 }
+if {[string match -nocase "*wish*" [info nameofexecutable]] } {
+    set tcl_script_dir .
+}
 
 #
 # 3rdTech modifications:
@@ -97,7 +100,7 @@ wm geometry . +0+0
 
 # Give it a title
 wm title . "NanoManipulator"
-
+wm iconbitmap . error
 # contains definition of useful widgets for the 
 # Tcl_Linkvar library.
 source [file join ${tcl_script_dir} Tcl_Linkvar_widgets.tcl]
@@ -171,21 +174,21 @@ set filemenu .menu.file
 menu $filemenu -tearoff 0
 .menu add cascade -label "File" -menu $filemenu -underline 0
 
-$filemenu add command -label "Open Static File..." -underline 0 \
+$filemenu add command -label "Open Static File..." -underline 12 \
 	-command "open_static_file"
-$filemenu add command -label "Open Stream File..." \
+$filemenu add command -label "Open Stream File..." -underline 0 \
 	-command "open_stream_file"
-$filemenu add command -label "Open SPM Connection..." \
+$filemenu add command -label "Open SPM Connection..." -underline 9 \
 	-command "open_spm_connection"
 #        $filemenu add command -label "Close..." -underline 0 -command \
 #		{.message_dialog activate}
 #        $filemenu add separator
-$filemenu add command -label "Save Screen..." -command \
+$filemenu add command -label "Save Screen..." -underline 0 -command \
 	"save_screenImage"
-$filemenu add command -label "Save Plane Data..." -command \
+$filemenu add command -label "Save Plane Data..." -underline 5 -command \
 	"save_plane_data"
-$filemenu add command -label "Save Modification Data..." -command \
-	"save_mod_dialog"
+$filemenu add command -label "Save Modification Data..." -underline 5 \
+        -command "save_mod_dialog"
 $filemenu add separator
 $filemenu add command -label "Exit" -underline 1 -command {
     if {[string match -nocase "*wish*" [info nameofexecutable]] } {
@@ -205,22 +208,22 @@ set setupmenu .menu.setup
 menu $setupmenu -tearoff 0
 .menu add cascade -label "Setup" -menu $setupmenu -underline 0
 
-$setupmenu add command -label "Data Sets..." \
+$setupmenu add command -label "Data Sets..." -underline 0 \
 	-command "show.data_sets"
-$setupmenu add command -label "Height Plane..." -command \
+$setupmenu add command -label "Height Plane..." -underline 0 -command \
 	"show.z_mapping"
-$setupmenu add command -label "Color Map..." -command \
+$setupmenu add command -label "Color Map..." -underline 0 -command \
 	"show.colorscale"
-$setupmenu add command -label "Contour Lines..." -command \
+$setupmenu add command -label "Contour Lines..." -underline 8 -command \
 	"show.contour_lines"
 if { !$thirdtech_ui } {
-$setupmenu add command -label "Texture Blend..." -command \
+$setupmenu add command -label "Texture Blend..." -underline 0 -command \
 	"show.alphascale"
-$setupmenu add command -label "Haptic..." -command \
+$setupmenu add command -label "Haptic..." -underline 2 -command \
 	"show.haptic"
 }
-$setupmenu add command -label "Preferences..." -command \
-		"show.preferences"
+$setupmenu add command -label "Display Settings..." -underline 8 -command \
+		"show.display_settings"
 
 lappend device_only_controls \
         [list $setupmenu entryconfigure "Data Sets..."]
@@ -230,11 +233,11 @@ set tipcontrolmenu .menu.tipcontrol
 menu $tipcontrolmenu -tearoff 0
 .menu add cascade -label "Tipcontrol" -menu $tipcontrolmenu -underline 0
 
-$tipcontrolmenu add command -label "Image Params..." \
+$tipcontrolmenu add command -label "Image Params..." -underline 0 \
 	-command "show.image"
-$tipcontrolmenu add command -label "Modify Params..." \
+$tipcontrolmenu add command -label "Modify Params..." -underline 0 \
 	-command "show.modify"
-$tipcontrolmenu add command -label "Modify Live Controls..." \
+$tipcontrolmenu add command -label "Modify Live Controls..." -underline 7 \
 	-command "show.modify_live"
 
 
@@ -243,23 +246,18 @@ set analysismenu .menu.analysis
 menu $analysismenu -tearoff 0
 .menu add cascade -label "Analysis" -menu $analysismenu -underline 0
 
-$analysismenu add command -label  "Calculate Data Planes..."  \
+$analysismenu add command -label  "Calculate Data Planes..." -underline 0 \
     -command "show.calc_planes"
-$analysismenu add command -label  "Rulergrid..."  \
+$analysismenu add command -label  "Rulergrid..." -underline 0  \
     -command "show.rulergrid"
-$analysismenu add radiobutton -label "Measure Lines" \
+$analysismenu add radiobutton -label "Measure Lines" -underline 0 \
     -variable user_0_mode -value 9 
 if { !$thirdtech_ui } {
-$analysismenu add command -label "Data Registration..." \
+$analysismenu add command -label "Data Registration..." -underline 0 \
     -command "show.registration"
 }
 #        $analysismenu add command -label  "Import Objects..." -command \
 #		{.message_dialog activate}
-#        $analysismenu add command -label  "Filter a plane..." -command \
-#		{.message_dialog activate}
-#        $analysismenu add command -label  "Sum Plane..." -command \
-#		{.message_dialog activate}
-
 
 
 #### TOOLS menu #############################
@@ -267,33 +265,33 @@ set toolmenu .menu.tool
 menu $toolmenu -tearoff 0
 .menu add cascade -label "Tools" -menu $toolmenu -underline 1
         
-$toolmenu add command -label "Phantom" \
+$toolmenu add command -label "Phantom" -underline 0 \
     -command "show.phantom_win"
 
-$toolmenu add command -label "Navigate" \
+$toolmenu add command -label "Navigate" -underline 0 \
     -command "show.nav_win"
 
-$toolmenu add command -label "Stripchart" \
+$toolmenu add command -label "Stripchart" -underline 0 \
 	-command "show.stripchart"
 
-$toolmenu add command -label "Replay Control" \
+$toolmenu add command -label "Replay Control" -underline 0 \
 	-command "show.streamfile"
 
 if { !$thirdtech_ui } {
-$toolmenu add command -label "Collaboration" \
+$toolmenu add command -label "Collaboration" -underline 0 \
 	-command "show.sharedptr"
 
-$toolmenu add command -label  "Ohmmeter"  \
+$toolmenu add command -label  "Ohmmeter" -underline 0  \
     -command "show.french_ohmmeter"
 
-$toolmenu add command -label "VI Curve" \
+$toolmenu add command -label "VI Curve" -underline 0 \
     -command "show.vi_win"
 
-$toolmenu add command -label "Latency Adaptation" \
+$toolmenu add command -label "Latency Adaptation" -underline 0 \
     -command "show.latency"
 
 
-$toolmenu add command -label "SEM" \
+$toolmenu add command -label "SEM" -underline 1 \
     -command "show.sem_win"
 }
 
