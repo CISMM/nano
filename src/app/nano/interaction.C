@@ -3890,10 +3890,18 @@ doWorldGrab(int whichUser, int userEvent)
 		URender &obj = node->TGetContents();
 		if (obj.GetGrabObject() == 1) {
 			q_type q;
+			q_vec_type v;
 
 			// Get rotation to apply
 			q_invert(q, oldWorldFromHand.rotate);
 			q_mult(q, worldFromHand.rotate, q);
+
+			// Check to see if fine tuning.  If so, scale by 0.1
+			if (obj.GetTuneRot()) {
+				q_to_euler(v, q);
+				q_vec_scale(v, 0.1, v);
+				q_from_euler(q, v[0], v[1], v[2]);
+			}
 
 			// Check to see if any axes are locked.  Note that if so, we apply the rotations in object space.
 			// Else, we apply the rotations in world space...
@@ -3914,10 +3922,14 @@ doWorldGrab(int whichUser, int userEvent)
 				//  WORLD SPACE 
 				q_mult(q, q, oldObject.rotate);
 			}
-
+			
 			// Translate
-			q_vec_type v;
 			q_vec_subtract(v, worldFromHand.xlate, oldWorldFromHand.xlate);
+
+			// Check to see if fine tuning.  If so, scale by 0.1
+			if (obj.GetTuneTrans()) {
+				q_vec_scale(v, 0.1, v);
+			}
 			q_vec_add(v, v, oldObject.xlate);
 	
 			// don't need to do this, as we shall do it in the tcl callbacks

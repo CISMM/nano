@@ -1,5 +1,14 @@
 2002-05-23 David Borland <borland@cs.unc.edu>
 
+        * import.C : added code for "fine-tuning" translations and rotations
+	with the phantom.  When selected, translations and/or rotations are
+	divided by ten.  Useful for fine-tuning object/projective texture 
+	alignment.
+
+	* interaction.C : same as above
+
+2002-05-23 David Borland <borland@cs.unc.edu>
+
         * microscape.C : added a check for the existence of Ubergraphics Tree
         contents in openDefaultMicroscope
 

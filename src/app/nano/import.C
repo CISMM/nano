@@ -39,6 +39,8 @@ static	void handle_import_clamp (vrpn_int32, void *);
 static	void handle_import_CCW (vrpn_int32, void *);
 static	void handle_import_update_AFM (vrpn_int32, void *);
 static	void handle_import_grab_object (vrpn_int32, void *);
+static	void handle_import_tune_trans_change (vrpn_int32, void *);
+static	void handle_import_tune_rot_change (vrpn_int32, void *);
 
 static	void handle_spider_current_leg(const char*, void*);
 static	void handle_spider_length_change(vrpn_float64, void*);
@@ -87,6 +89,8 @@ Tclvar_int      import_r("import_r", 192);
 Tclvar_int      import_g("import_g", 192);
 Tclvar_int      import_b("import_b", 192);
 Tclvar_float    import_alpha("import_alpha", 1, handle_import_alpha);
+Tclvar_int		import_tune_trans("import_tune_trans",0, handle_import_tune_trans_change);
+Tclvar_int		import_tune_rot("import_tune_rot",0, handle_import_tune_rot_change);
 
 Tclvar_list_of_strings spider_which_leg("spider_which_leg");
 Tclvar_string	spider_current_leg("spider_current_leg", "", handle_spider_current_leg);
@@ -256,6 +260,8 @@ when loading
 			obj->SetLockRotx(import_lock_rotx);
 			obj->SetLockRoty(import_lock_roty);
 			obj->SetLockRotz(import_lock_rotz);
+			obj->SetTuneTrans(import_tune_trans);
+			obj->SetTuneRot(import_tune_rot);
 			// truncate name so it correlates to the option menu
 			// i.e. C:/Data/cube.obj -> cube.obj
 
@@ -696,6 +702,43 @@ static  void handle_import_lock_rotz_change (vrpn_int32, void *)
 	}
 }
 
+static  void handle_import_tune_trans_change (vrpn_int32, void *)
+{
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		int l = import_lock_transx;
+
+// only do per object for now...
+
+//		World.Do
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetTuneTrans(import_tune_trans);
+		}
+	}
+}
+
+static  void handle_import_tune_rot_change (vrpn_int32, void *)
+{
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		int l = import_lock_transx;
+
+// only do per object for now...
+
+//		World.Do
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetTuneRot(import_tune_rot);
+		}
+	}
+}
 
 static  void handle_import_color_change (vrpn_int32, void *)
 {
