@@ -13,15 +13,24 @@ extern void handle_step_go_to_pos(vrpn_int32, void *mptr);
 
 
 
-
-
 //direct step variables
 extern TclNet_float step_x;
 extern TclNet_float step_y;
 extern TclNet_float step_z;
 
-// extern position_sphere(float, float, float);
+
 extern double z_pos;
 extern TclNet_int xy_lock;
+
+//class DirectStep {
+//public:
+
+//	DirectStep();
+	void set_axis(q_type rot);
+
+//private:
+
+//};
+
 #endif //DIRECTSTEP_H
 
