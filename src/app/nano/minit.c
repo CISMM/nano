@@ -483,6 +483,7 @@ int connect_Magellan() {
         // vrpn_Tracker_AnalogFlyParam is consistent with the
         // server names, and it shouldn't make any difference. 
 
+            if (!magellan_connection->get_File_Connection()) {
         // Open the Magellan puck and button box.
         if ((magellanButtonBoxServer = new vrpn_Magellan(MAGELLAN_NAME, 
                                                     magellan_connection, 
@@ -526,6 +527,10 @@ int connect_Magellan() {
         if (magellanTrackerServer == NULL) {
           return -1;
         }
+            }
+
+
+
         // Client for the buttons
         magellanButtonBox = new vrpn_Button_Remote
            (MAGELLAN_NAME, magellan_connection);
@@ -732,6 +737,8 @@ phantom_init (vrpn_Connection * local_device_connection,
             if (local_device_connection == NULL) {
               return 0;
             }
+
+            if (!local_device_connection->get_File_Connection()) {
             
             // Sleep to get phantom in reset positon
             // Should notify user...
@@ -741,6 +748,8 @@ phantom_init (vrpn_Connection * local_device_connection,
                                            local_device_connection, 60);
             if (phantServer==NULL) {
               return -1;
+            }
+
             }
         } else 
 #endif
@@ -754,6 +763,8 @@ phantom_init (vrpn_Connection * local_device_connection,
         }
     } else {
     
+            if (!local_device_connection->get_File_Connection()) {
+
         // Make a mouse phantom server - the mouse acts like a phantom
         // Only if there is no real phantom - they conflict. 
         mousePhantomServer = vrpn_MousePhantom::createMousePhantom(
@@ -762,6 +773,8 @@ phantom_init (vrpn_Connection * local_device_connection,
         if (mousePhantomServer==NULL) {
           return -1;
         }
+
+            }
     }
 
     // If we get here, some phantom server has been created or contacted.

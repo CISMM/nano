@@ -1,5 +1,20 @@
 2001-07-17  Tom Hudson  <hudson@cs.unc.edu>
 
+        * microscape.c (shutdown_connections) : Delete
+        internal_device_connection.  Probably all connections should be
+        deleted here;  at some point somebody put a bunch of connection
+        deletions at the end of main(), where they aren't guaranteed to
+        be called (and thus are guaranteed to lose streamfiles on control-c
+        and other abnormal non-crash exits).
+        (main) : Fix opening internal_device_connection when logging phantom.
+        Remove delete of internal_device_connection.
+
+        * minit.c (connect_Magellan) : Don't create server if reading from
+        a file connection.
+        (phantom_init) : Same.
+
+2001-07-17  Tom Hudson  <hudson@cs.unc.edu>
+
 	Lots of stuff from a private copy of the code I made long ago.
 
 	* interaction.c (Adaptor::updateWarpedPlane) : New function.

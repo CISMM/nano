@@ -1626,6 +1626,12 @@ void shutdown_connections (void) {
     delete collaborationManager;
     collaborationManager = NULL;
   }
+
+    if (internal_device_connection) {
+       fprintf(stderr, "Now deleting internal_device_connection.\n");
+        delete internal_device_connection;
+        internal_device_connection = NULL;
+    }
 }
 
 #if defined (_WIN32) && !defined (__CYGWIN__)
@@ -5450,7 +5456,7 @@ void ParseArgs (int argc, char ** argv,
 
     i = 1;
     while (i < argc) {
-        //fprintf(stderr,"ParseArgs:  arg %i %s\n", i, argv[i]);
+      fprintf(stderr,"ParseArgs:  arg %i %s\n", i, argv[i]);
 		
       if (strcmp(argv[i], "-allowdup") == 0) {
         istate->afm.allowdup = 1;
@@ -5681,10 +5687,12 @@ void ParseArgs (int argc, char ** argv,
         istate->logPhantom = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->phantomLogPath, argv[i]);
+        fprintf(stderr, "Logging phantom to path %s.\n", argv[i]);
       } else if (!strcmp(argv[i], "-replayphantom")) {
         istate->replayPhantom = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->phantomLog, argv[i]);
+        fprintf(stderr, "Replaying phantom from path %s.\n", argv[i]);
       } else if (!strcmp(argv[i], "-packetlimit")) {
         if (++i >= argc) Usage(argv[0]);
         istate->packetlimit = atoi(argv[i]);
@@ -7121,8 +7129,13 @@ int main (int argc, char* argv[])
 
   if (istate.replayPhantom) {
 
+     fprintf(stderr, "Opening connection to replay phantom from path %s.\n",
+           istate.phantomLog);
+
     internal_device_connection =
       new vrpn_File_Connection (istate.phantomLog);
+
+    fprintf(stderr, "internal_device_connection opened as a file.\n");
 
   } else {
 
@@ -7132,8 +7145,17 @@ int main (int argc, char* argv[])
             istate.logTimestamp.tv_sec);
 
     internal_device_connection = new vrpn_Synchronized_Connection 
-           (wellKnownPorts->localDevice,
+           (wellKnownPorts->localDevice, NULL,
             istate.logPhantom ? phantomlog : NULL);
+
+    if (istate.logPhantom) {
+       fprintf(stderr,
+             "Opening internal_device_connection "
+             "to record phantom to path %s.\n",
+             phantomlog);
+
+    }
+
   }
 
   if (peripheral_init(internal_device_connection, handTrackerName,
@@ -8093,10 +8115,6 @@ VERBOSE(1, "Entering main loop");
         delete mousePhantomServer;
         mousePhantomServer = NULL;
     }
-    if (internal_device_connection) {
-        delete internal_device_connection;
-        internal_device_connection = NULL;
-    }
 
     if (buttonBox) {
 	delete buttonBox;
@@ -8122,8 +8140,10 @@ VERBOSE(1, "Entering main loop");
   }
 #endif
 
-  if (graphicsServerThread)
+  if (graphicsServerThread) {
     graphicsServerThread->kill();  // NOT PORTABLE TO NT!
+  }
+
   shutdown_connections();
 
   if (do_keybd == 1) {
