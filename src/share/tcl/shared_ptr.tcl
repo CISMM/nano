@@ -28,16 +28,20 @@ iwidgets::dialog .choose_collaborator_dialog -title "Choose Collaborator" \
   -modality application
 .choose_collaborator_dialog hide Help
 .choose_collaborator_dialog buttonconfigure OK -text "Connect" -command {
+   focus .choose_collaborator_dialog.shellchildsite.bbox
   .choose_collaborator_dialog deactivate 1
 }
 .choose_collaborator_dialog hide Apply
 
-#set okbutton [.choose_collaborator_dialog childsite]
-#bind $okbutton <Enter> "focus $okbutton"
-
 set win [.choose_collaborator_dialog childsite]
 generic_optionmenu_with_index $win.site_name chosen_site_index \
   "Collaborator site:" collaborationNames
+
+# force focus to be taken off the entry box so that collaborator is set
+# from whatever has been typed in so far
+set buttbox .choose_collaborator_dialog.shellchildsite.bbox 
+bind $buttbox <Enter> "focus $buttbox"
+
 pack $win.site_name -anchor nw -side top
 
 set newSite ""

@@ -1,4 +1,9 @@
 2001-04-30  Adam Seeger  <seeger@cs.unc.edu>
+        * shared_ptr.tcl: make focus change off of entry box in choose 
+        collaborator widget dialog bind
+        to <Entry> of button box region in that window
+
+2001-04-30  Adam Seeger  <seeger@cs.unc.edu>
         * shared_ptr.tcl: temporary comment out of last commit
 
 2001-04-30  Chris Weigle  <weigle@cs.unc.edu>
