@@ -87,6 +87,7 @@ pid_t getpid();
 // microscope
 #include <nmm_Globals.h>	
 #include <nmm_MicroscopeRemote.h>
+#include <nmm_SimulatedMicroscope_Remote.h>
 #include <nmm_Types.h>
 
 // graphics
@@ -418,8 +419,10 @@ Tclvar_string newScreenImageFileName("screenImage_filename", "");
 /// Calculated data plane controls. 
 static void handle_sumPlaneName_change(const char *new_value, void *userdata);
 static void handle_adhPlaneName_change(const char *new_value, void *userdata);
+static void handle_SimScanPlaneName_change(const char *new_value, void *userdata);
 static void handle_flatPlaneName_change(const char *new_value, void *userdata);
 static void handle_lblflatPlaneName_change(const char *new_value, void *userdata);
+Tclvar_string	newSimScanPlaneName("simscanplane_name","");
 Tclvar_string	newFlatPlaneName("flatplane_name","");
 
 //added 1-9-99 by Amy Henderson
@@ -3027,6 +3030,35 @@ static void handle_filterPlaneName_change(const char *, void *) {
     }
 }
 
+/** See if the user has given a name to the sim. scan plane other
+ than "".  If so, we should create a new plane and set the value
+ back to "". */
+static void handle_SimScanPlaneName_change(const char *, void *)
+{
+  if( strlen(newSimScanPlaneName.string() ) <= 0 )
+    return;
+  
+  try
+    {
+        nmm_SimulatedMicroscope_Remote(vrpn_Connection * connection, char * planename,
+		nmb_Dataset * dataset);
+
+      /*new BCPlane(  newSimScanPlaneName.string(),"nm", 
+		  dataset->inputGrid->(getPlaneByName(dataset->heightPlaneName->string()))->numX(),
+		  dataset->inputGrid->(getPlaneByName(dataset->heightPlaneName->string()))->numY()  );*/
+
+	  //ANDREA:  change this to nmm_SimulatedMicroscope(), with the BCPlane stuff activated
+	  //by the call to this constructor...
+    }
+  catch( nmb_CalculatedPlaneCreationException e )
+    {
+      display_error_dialog( e.getMsgString() );
+      newSimScanPlaneName = (const char *) "";
+      return;
+    }
+
+  newSimScanPlaneName = (const char *) "";  
+} 
 
 
 
@@ -4374,6 +4406,11 @@ void setupCallbacks (nmm_Microscope_Remote * m) {
   newFilterPlaneName.addCallback
             (handle_filterPlaneName_change, NULL);
 #endif
+
+  newSimScanPlaneName = "";
+  newSimScanPlaneName.addCallback
+            (handle_SimScanPlaneName_change, NULL);
+
 
   newFlatPlaneName = "";
   newFlatPlaneName.addCallback
