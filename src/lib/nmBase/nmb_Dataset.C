@@ -59,7 +59,7 @@ nmb_Dataset::nmb_Dataset
                float xMin, float xMax, float yMin, float yMax,
                int readMode, const char ** gridFileNames, int numGridFiles,
                const char ** imageFileNames, int numImageFiles,
-	       const char * hostname,
+	       nmb_String * hostname,
                nmb_String * (* string_allocator) (const char *),
 	       nmb_ListOfStrings * (* list_of_strings_allocator) (),
                TopoFile &topoFile):
@@ -91,7 +91,7 @@ nmb_Dataset::nmb_Dataset
   d_lblflat_list_head(NULL),
   d_sum_list_head(NULL),
   d_flatPlaneCB (NULL),
-  d_hostname(NULL)
+  d_hostname(hostname)
 
 {
   //BCPlane * std_dev_plane;
@@ -152,10 +152,6 @@ nmb_Dataset::nmb_Dataset
     }
   }
 
-  if (hostname) {
-      d_hostname = new char [strlen(hostname) +1];
-      strcpy(d_hostname, hostname);
-  }
 }
 
 nmb_Dataset::~nmb_Dataset (void) {
@@ -167,8 +163,6 @@ nmb_Dataset::~nmb_Dataset (void) {
     delete inputPlaneNames;
   if (inputGrid)
     delete inputGrid;
-  if (d_hostname)
-      delete [] d_hostname;
 
   // XXX Clean up computed planes lists
   // Clean up flat plane callback list.
@@ -636,7 +630,7 @@ BCPlane* nmb_Dataset::computeFlattenedPlane
   char new_outputPlane[256];
 #if 1
   if (d_hostname) {
-      sprintf(new_outputPlane, "%s from %s", outputPlane, d_hostname);
+      sprintf(new_outputPlane, "%s from %s", outputPlane, d_hostname->string());
   } else {
       sprintf(new_outputPlane, "%s from local", outputPlane);
   }

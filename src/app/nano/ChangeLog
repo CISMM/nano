@@ -1,3 +1,14 @@
+2001-06-01  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.c (initialize_environment): Hostname initialization
+	(handle_openStreamFilename_change): Stuff moved from one-time init
+	to everytime. 
+	(handle_openSPMDeviceName_change): same
+	(main): Re-order initialization so simple, default microscope is
+	created first, then tcl/tk is initialized, then complicated,
+	error-prone microscope init happens - error dialogs can be
+	displayed if needed. 
+
 2001-05-31  Aron Helser  <helser@cs.unc.edu>
 
 	* tcl_tk.c (init_Tk_control_panels): Tell tcl script what

@@ -1,3 +1,9 @@
+2001-06-01  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_Dataset.Ch (nmb_Dataset): Change d_hostname to nmb_String so
+	it can be updated after construction.
+	(computeFlattenedPlane): same
+
 2001-05-31  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_Dataset.Ch (addImageToGrid): new. Plane contained in

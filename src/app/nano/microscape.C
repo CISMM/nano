@@ -3032,6 +3032,8 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     // because otherwise you start playing wherever you were playing it before
     vrpnLogFile->reset();
 
+    vrpnLogFile->limit_messages_played_back(istate->packetlimit);
+
     // Run mainloop of the microscope once to make sure this is a valid vrpn
     // log file- it will check the cookie and fail if it is not. 
     if (microscope->mainloop()) {
@@ -3157,6 +3159,8 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
       // latency compensation control panel?  HACK HACK HACK
       vrpn_System_TextPrinter.remove_object(microscopeRedundancyController);
     }
+
+    microscope->EnableUpdatableQueue(VRPN_TRUE);
 
     openSPMDeviceName = "";
     openSPMLogName = "";
@@ -6638,6 +6642,17 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
 			    microscope);
   }
 
+    // Must get hostname before initializing nmb_Dataset, but
+    // should do it after VRPN starts, I think.
+  if (my_hostname == "localhost") {
+      char * hnbuf = new char[256];
+      if (!gethostname(hnbuf, 256)) {
+          // this is a global tclvar_String, so we can see it in tcl.
+          my_hostname = hnbuf;
+          delete [] hnbuf;
+      }
+  }
+
   nmm_Microscope_Remote *
     new_microscope = new nmm_Microscope_Remote (istate.afm, c);
     if (!new_microscope) {
@@ -6655,7 +6670,7 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
                                istate.num_stm_files, 
                                (const char **) istate.image_file_names,
                                istate.num_image_files,
-			       (const char *)my_hostname,
+			       &my_hostname,
                                allocate_TclNet_string,
                                allocate_Tclvar_list_of_strings,
                                new_microscope->d_topoFile);
@@ -6851,13 +6866,31 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
         }
     }
 
-    envir = getenv("HOST");
+    // Must get hostname before initializing nmb_Dataset, but
+    // should do it after VRPN starts, I think.
+    char * hnbuf = new char[256];
+    if (gethostname(hnbuf, 256)) {
+        // get host failed! Try environment variable instead
+        delete [] hnbuf;
+        if ((hnbuf = getenv("HOSTNAME")) != NULL){
+            // this is a global tclvar_String, so we can see it in tcl.
+            my_hostname = hnbuf;
+            // maybe use COMPUTERNAME?
+        } else if ((hnbuf = getenv("HOST")) != NULL) {
+            my_hostname = hnbuf;
+        }
+    } else {
+        // this is a global tclvar_String, so we can see it in tcl.
+        my_hostname = hnbuf;
+        delete [] hnbuf;
+    }
+
     //fprintf(stderr, "HOST: %s\n", envir);
     sprintf(nM_coord_change_server_name, "handCoordinateServer0@%s",
-envir);
+            my_hostname.string());
     //  	fprintf(stderr, "nM_coord_change_server_name: %s\n",
     //  		nM_coord_change_server_name);
-    sprintf(local_ModeName, "userModeServer0@%s", envir);
+    sprintf(local_ModeName, "userModeServer0@%s", my_hostname.string());
     //  	fprintf(stderr, "local_ModeName: %s\n",
     //  		local_ModeName);
 
@@ -7004,151 +7037,17 @@ int main (int argc, char* argv[])
     loadPPMTextures();
 #endif
 
-    istate.afm.mutexPort = wellKnownPorts->microscopeMutex;
 
-    // Open a port (4581) that will report unfiltered observed RTT
-    // to the microscope.
-    initialize_rtt();
-
-    long logmode = vrpn_LOG_NONE;
-    long remote_logmode = vrpn_LOG_NONE;
-
-    if (istate.afm.writingStreamFile)
-      logmode |= vrpn_LOG_INCOMING;
-    if (istate.writingRemoteStream)
-      remote_logmode |= vrpn_LOG_INCOMING;
-
-    //fprintf(stderr, "About to init microscope\n");
-
-    // If user has specified a stream file with -i option, try
-    // to open it as a VRPN stream file. 
-    if (istate.afm.readingStreamFile) {
-	if (strcmp(istate.afm.deviceName, "null")) {
-	    display_warning_dialog( "Both input stream and microscope "
-                                    "device specified, using input stream");
-	}
-	sprintf(istate.afm.deviceName, "file:%s", istate.afm.inputStreamName);
-
-    } else {
-#ifdef NO_MSCOPE_CONNECTION
-        if (strcmp(istate.afm.deviceName, "null")) {
-            display_fatal_error_dialog("Unable to open SPM connection in"
-                                       " NanoManipulator Viewer. Exiting...");
-            return -1;
-        }
-#endif
-    }
-
-    // Check for no microscope connection - i.e. we are opening Topo
-    // or PPM files.
-
-    if (strcmp(istate.afm.deviceName, "null")) {
-
-      // otherwise, open the device specified. 
-      //fprintf(stderr, "   The connection name is %s\n", istate.afm.deviceName);
-      // TCH 17 Feb 01 only logs incoming messages
-#ifdef VRPN_5
-      microscope_connection = vrpn_get_connection_by_name
-	  (istate.afm.deviceName,
-	   istate.afm.writingStreamFile ? istate.afm.outputStreamName
-                                        : (char *) NULL,
-	   istate.afm.writingStreamFile ? vrpn_LOG_INCOMING
-                                        : vrpn_LOG_NONE,
-	   istate.writingRemoteStream ? istate.remoteOutputStreamName
-                                      : (char *) NULL,
-           istate.writingRemoteStream ? vrpn_LOG_INCOMING
-                                      : vrpn_LOG_NONE);
-#else
-      microscope_connection = vrpn_get_connection_by_name
-          (istate.afm.deviceName,
-           istate.afm.writingStreamFile ? istate.afm.outputStreamName
-                                        : (char *) NULL,
-           NULL,
-           istate.writingRemoteStream ? istate.remoteOutputStreamName
-                                        : (char *) NULL);
-#endif
-      if (!microscope_connection || !(microscope_connection->doing_okay())) {
-	display_fatal_error_dialog( "   Couldn't open connection to %s.\n",
-		istate.afm.deviceName);
-	exit(0);
-      }
-    
-      // Decide whether reading vrpn log file or doing live.
-      vrpnLogFile = microscope_connection->get_File_Connection();
-      if (!vrpnLogFile) {
-	//fprintf(stderr, "   microscape.c:: in Live mode\n");
-      } else {
-	// Allow the user to open a stream file with "-d file:..." 
-	// Set the read_mode. 
-	istate.afm.readingStreamFile = 1;
-        strcpy(istate.afm.inputStreamName, vrpnLogFile->get_filename());
-	//decoration->rateOfTime = 3;	// use 3 for rate default
-	//fprintf(stderr, "   microscape.c:: in Replay mode\n");
-      }
-
-      // BEFORE we call mainloop on our connection to the microscope,
-      // open up a forwarder and spin until it is connected to.
-      //createForwarders(istate);
-
-      microscopeRedundancyController = new vrpn_RedundantRemote
-          (microscope_connection);
-
-      // This object may be created with a server that doesn't support
-      // it, in which case VRPN spews error messages which scare people.
-      // Since that's only an error when we're trying to do latency
-      // compensation, which isn't the usual case, turn off those
-      // error messages.  Of course SOMETIMES we want them, but VRPN
-      // doesn't yet give us a good way to handle that (?) - maybe we
-      // could explicitly call add_object() when we start using the
-      // latency compensation control panel?  HACK HACK HACK
-      vrpn_System_TextPrinter.remove_object(microscopeRedundancyController);
-    }
-
-    // Must get hostname before initializing nmb_Dataset, but
-    // should do it after VRPN starts, I think.
-    char * hnbuf = new char[256];
-    if (gethostname(hnbuf, 256)) {
-	// get host failed! Try environment variable instead
-	delete [] hnbuf;
-	if ((hnbuf = getenv("HOSTNAME")) != NULL){
-	    // this is a global tclvar_String, so we can see it in tcl.
-	    my_hostname = hnbuf;
-	    // maybe use COMPUTERNAME?
-	}
-    } else {
-	// this is a global tclvar_String, so we can see it in tcl.
-	my_hostname = hnbuf;
-	delete [] hnbuf;
-    }
-
-    if (createNewMicroscope(istate, microscope_connection)) {
-      display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
-      exit(0);
-    }
-
-    // When openStreamFilename changes, we try to open a stream,
-    // which will call createNewMicroscope
-    openStreamFilename.addCallback
-	(handle_openStreamFilename_change, &istate);
-    // When openSPMDevicName changes, we try to open an SPM connection,
-    // which will call createNewMicroscope
-    openSPMDeviceName.addCallback
-	(handle_openSPMDeviceName_change, &istate);
+    VERBOSE(1,"Default microscope initialization");
+    openDefaultMicroscope();
+//      if (createNewMicroscope(istate, microscope_connection)) {
+//        display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
+//        exit(0);
+//      }
+    VERBOSE(1,"Before guarded scan initialization");
+    guardedScan = new CGuardedScan;
 
     //fprintf(stderr, "Microscope initialized\n");
-
-    // Initialize the display of the size of the grid.
-    decoration->selectedRegionMinX = dataset->inputGrid->minX();
-    decoration->selectedRegionMinY = dataset->inputGrid->minY();
-    decoration->selectedRegionMaxX = dataset->inputGrid->maxX();
-    decoration->selectedRegionMaxY = dataset->inputGrid->maxY();
-
-
-    if (vrpnLogFile) {
-      vrpnLogFile->limit_messages_played_back(istate.packetlimit);
-    }
-
-    microscope->EnableUpdatableQueue(VRPN_TRUE);
 
     createGraphics(istate);
 
@@ -7169,16 +7068,26 @@ int main (int argc, char* argv[])
         graphics->loadVizImage(vizPPMName);
     }
 
+    VERBOSE(1, "Creating Ugraphics");
+    World.TSetName("World");
+    Textures.TSetName("Texture Store\n");  
+    
+    //INIT THE WORLD
+    //put an invisible axis in the world
+    URAxis *temp=new URAxis;   //set the contents of the World node so it isn't EMPTY!
+    if(temp==NULL){cerr << "Memory fault\n"; 
+    //kill(getpid(),SIGINT);
+    return -1; }
+    temp->SetVisibility(0);    
+    World.TSetContents(temp);
+    
+    CenterUbergraphics();
+
     // These calls are duplicated in createNewMicroscope, 
     // but we do it here too because createNewMicroscope is called above
     // when graphics is NULL.
     microscope->registerImageModeHandler(clear_polyline, graphics);
     setupCallbacks(dataset, graphics);
-
-    // This call is duplicated in the nmb_SharedDevice constructor,
-    // but Tcl isn't initialized then so all the user interface stuff
-    // doesn't happen.
-    microscope->requestMutex();
 
     // initialize graphics
     VERBOSE(1, "Before X display initialization");
@@ -7252,6 +7161,125 @@ int main (int argc, char* argv[])
         return(-1);
     }
 
+  setupCallbacks(forceDevice);
+  handTracker_update_rate = istate.phantomRate;
+
+  VERBOSE(1,"Before Tk initialization");
+  if (tkenable) {
+    // init_Tk_control_panels creates the interpreter and adds most of
+    // the Tk widgits
+    init_Tk_control_panels(tcl_script_dir, istate.collabMode,
+                           &collaborationTimer);
+    VERBOSE(1, "done initialising the control panels\n");
+    init_Tk_variables ();
+  }
+  
+  // Load the names of usable color maps
+  VERBOSE(1, "Loading color maps");
+  loadColorMapNames(colorMapDir);
+  
+#ifndef NO_RAW_TERM
+  /* open raw terminal with echo if keyboard isn't off  */
+  if (do_keybd == 1){
+    VERBOSE(1,"Opening raw terminal");
+    if ((ttyFD = open_raw_term(1)) < 0)
+      display_error_dialog( "open_raw_term(): error opening terminal.\n");
+  }
+#endif
+  
+  //Prepare signal handler for ^C,so we save the stream file and exit cleanly
+  VERBOSE(1,"Setting ^C Handle");
+
+#if defined (_WIN32) && !defined (__CYGWIN__)
+  // This handles all kinds of signals.
+  SetConsoleCtrlHandler(handleConsoleSignalsWin, TRUE);
+#else 
+  signal(SIGINT, handle_cntl_c);
+#endif
+   if(atexit(at_exit_shutdown_connections)) {
+       display_fatal_error_dialog("Unable to register exit handler.\n"
+            "Stream files may not be saved! Contact product support.\n");
+    }
+
+  // only print the keyboard options if it is turned on
+  if (do_keybd == 1) {
+    KeyboardUsage();
+  }
+
+  initializeInteraction();
+
+  // did these in createNewMicroscope() but things were NULL then.
+  linkMicroscopeToInterface(microscope);
+    // This call is duplicated in the nmb_SharedDevice constructor,
+    // but Tcl isn't initialized then so all the user interface stuff
+    // doesn't happen.
+  microscope->requestMutex();
+
+  //--------------------------------------
+  // Initialize microscope from command line
+  //--------------------------------------
+
+    istate.afm.mutexPort = wellKnownPorts->microscopeMutex;
+
+    // Open a port (4581) that will report unfiltered observed RTT
+    // to the microscope.
+    initialize_rtt();
+
+
+    //fprintf(stderr, "About to init microscope\n");
+
+    // If user has specified a stream file with -i option, try
+    // to open it as a VRPN stream file. 
+    if (istate.afm.readingStreamFile) {
+	if (strcmp(istate.afm.deviceName, "null")) {
+	    display_warning_dialog( "Both input stream and microscope "
+                                    "device specified, using input stream");
+	}
+	//sprintf(istate.afm.deviceName, "file:%s", istate.afm.inputStreamName);
+        openStreamFilename = istate.afm.inputStreamName;
+        // Open the streamfile. 
+        handle_openStreamFilename_change(NULL, (void *)&istate);
+
+    } else if (strcmp(istate.afm.deviceName, "null")) {
+#ifdef NO_MSCOPE_CONNECTION
+        display_fatal_error_dialog("Unable to open SPM connection in"
+                                   " NanoManipulator Viewer. Exiting...");
+        return -1;
+#endif
+        // Open a device connection, specified with -d option, probably. 
+        if (strncmp(istate.afm.deviceName, "file:", 5) == 0) {
+            // someone specified a streamfile using device arg. 
+            openStreamFilename = &(istate.afm.inputStreamName[5]);
+            // Open the streamfile. 
+            handle_openStreamFilename_change(NULL, (void *)&istate);
+        } else {
+            openSPMDeviceName = istate.afm.deviceName;
+            openSPMLogName = istate.afm.outputStreamName;
+            handle_openSPMDeviceName_change(NULL, (void *)&istate);
+        }
+    } else {
+        // Handle other command line arguments which might have 
+        // been passed to the microscope, like -f or -fi
+        createNewMicroscope(istate, NULL);
+    }
+
+//      if (createNewMicroscope(istate, microscope_connection)) {
+//        display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
+//        exit(0);
+//      }
+    // When openStreamFilename changes, we try to open a stream,
+    // which will call createNewMicroscope
+    openStreamFilename.addCallback
+	(handle_openStreamFilename_change, &istate);
+    // When openSPMDevicName changes, we try to open an SPM connection,
+    // which will call createNewMicroscope
+    openSPMDeviceName.addCallback
+	(handle_openSPMDeviceName_change, &istate);
+
+    //--------------------------------------
+    // Final initialization - stuff that must go after
+    // a live microscope connection being established. 
+
   // NANOX
   // Initialize collaboration.
 
@@ -7272,28 +7300,8 @@ int main (int argc, char* argv[])
 
   setupSynchronization(collaborationManager, dataset, microscope);
 
-  setupCallbacks(forceDevice);
-  handTracker_update_rate = istate.phantomRate;
-
-  VERBOSE(1,"Before Tk initialization");
-  if (tkenable) {
-    // init_Tk_control_panels creates the interpreter and adds most of
-    // the Tk widgits
-    init_Tk_control_panels(tcl_script_dir, istate.collabMode,
-                           &collaborationTimer);
-    VERBOSE(1, "done initialising the control panels\n");
-    init_Tk_variables ();
-  }
-  
-  VERBOSE(1,"Before guarded scan initialization");
-  if(tkenable) {
-    guardedScan = new CGuardedScan;
-  }
-  
-  // Load the names of usable color maps
-  VERBOSE(1, "Loading color maps");
-  loadColorMapNames(colorMapDir);
-  
+  // ----------------------
+  // Auxiliary device initialization. 
   VERBOSE(1, "Before french ohmmeter initialization");
   if ( tkenable ) {
     // create the ohmmeter control panel
@@ -7490,53 +7498,8 @@ int main (int argc, char* argv[])
   robotControl->show();
 #endif
   
-#ifndef NO_RAW_TERM
-  /* open raw terminal with echo if keyboard isn't off  */
-  if (do_keybd == 1){
-    VERBOSE(1,"Opening raw terminal");
-    if ((ttyFD = open_raw_term(1)) < 0)
-      display_error_dialog( "open_raw_term(): error opening terminal.\n");
-  }
-#endif
-  
-  //Prepare signal handler for ^C,so we save the stream file and exit cleanly
-  VERBOSE(1,"Setting ^C Handle");
 
-#if defined (_WIN32) && !defined (__CYGWIN__)
-  // This handles all kinds of signals.
-  SetConsoleCtrlHandler(handleConsoleSignalsWin, TRUE);
-#else 
-  signal(SIGINT, handle_cntl_c);
-#endif
-   if(atexit(at_exit_shutdown_connections)) {
-       display_fatal_error_dialog("Unable to register exit handler.\n"
-            "Stream files may not be saved! Contact product support.\n");
-    }
 
-  // only print the keyboard options if it is turned on
-  if (do_keybd == 1) {
-    KeyboardUsage();
-  }
-
-  VERBOSE(1, "Creating Ugraphics");
-  World.TSetName("World");
-  Textures.TSetName("Texture Store\n");  
-
-  //INIT THE WORLD
-  //put an invisible axis in the world
-  URAxis *temp=new URAxis;   //set the contents of the World node so it isn't EMPTY!
-  if(temp==NULL){cerr << "Memory fault\n"; 
-  //kill(getpid(),SIGINT);
-  return -1; }
-  temp->SetVisibility(0);    
-  World.TSetContents(temp);
- 
-  CenterUbergraphics();
-  initializeInteraction();
-
-  // did these in createNewMicroscope() but things were NULL then.
-  linkMicroscopeToInterface(microscope);
-  microscope->requestMutex();
 
   // TCH 19 Feb 01 HACK - don't open graphics windows in this thread!
   // We could *probably* get away with it by just calling glutInit();

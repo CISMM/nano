@@ -54,7 +54,7 @@ class nmb_Dataset {
                  float xMin, float xMax, float yMin, float yMax,
                  int readMode, const char ** fileNames, int numFiles,
 		 const char ** imageFileNames, int numImageFiles,
-		 const char * hostname, 
+		 nmb_String * hostname, 
                  nmb_String * (* string_allocator) (const char *),
                  nmb_ListOfStrings * (* list_of_strings_allocator) (),
                  TopoFile &topoFile);
@@ -197,7 +197,7 @@ class nmb_Dataset {
     };
     newFlatPlaneCB * d_flatPlaneCB;
 
-    char * d_hostname;
+    nmb_String * d_hostname;
 };
 
 
