@@ -1,3 +1,11 @@
+2002-05-21 Jameson Miller <millerj@cs.unc.edu>
+	*modify.tcl : edited functions :
+		set_enabling - only enable modify widgets if you
+			have control of mutex.
+	
+		set_view - only copy modify params to new modify params
+			when switching views if you have mutex
+
 2002-05-20 David Borland <borland@cs.unc.edu>
 
         * import.tcl : user control for number of spider legs

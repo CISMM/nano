@@ -108,7 +108,7 @@ proc set_view {} {
 # (if switching from full to quick).   #
 ########################################
 proc switch_view {} {
-    global modify_quick_or_full nmInfo full_width full_height save_bg
+    global modify_quick_or_full nmInfo full_width full_height save_bg collab_commands_suspended
 
     # Switching to full view
     if {$modify_quick_or_full == "quick"} {
@@ -147,13 +147,15 @@ proc switch_view {} {
 	# Switching to quick view
 	set modify_quick_or_full "quick"
 
-	# reset newmodifyp_*
-	global modifyplist
-	foreach var $modifyplist {
-	    global newmodifyp_$var modifyp_$var
-	    set newmodifyp_$var [set modifyp_$var]
+	# reset newmodifyp_*, if you have mutex
+	if { $collab_commands_suspended == 0 } {
+	    global modifyplist
+	    foreach var $modifyplist {
+		global newmodifyp_$var modifyp_$var
+		set newmodifyp_$var [set modifyp_$var]
+	    }
 	}
-
+	
 	# save full view size
 	if {$full_width != 0 && $full_height != 0} {
 	    set full_width [winfo width .modify]
@@ -1160,7 +1162,12 @@ proc change_made {nm el op} {
 #     $tool == 12  ||                                                    #
 ##########################################################################
 proc set_enabling {} {
-    global nmInfo changing_widgets thirdtech_ui
+    global nmInfo changing_widgets thirdtech_ui collab_commands_suspended
+
+    #if we don't have mutex, we don't want to turn on any widgets
+    if { $collab_commands_suspended == 1 } {
+	return
+    }
 
     upvar #0 newmodifyp_mode mode
     upvar #0 newmodifyp_style style
@@ -1455,7 +1462,7 @@ pack $nmInfo(top_slow_line).slow_line_collect_data \
 	$nmInfo(ml_slow_line).slow_line_step \
 	$nmInfo(ml_slow_line).slow_line_forward \
 	$nmInfo(ml_slow_line).slow_line_reverse \
-	$nmInfo(ml_slow_line).step-size" 
+	$nmInfo(ml_slow_line).step-size $nmInfo(top_slow_line).slow_line_collect_data" 
 
     if { !$thirdtech_ui } {
 	iwidgets::Labeledframe $nmInfo(modify_live).directz -labeltext "Direct Z" \
@@ -1479,6 +1486,10 @@ init_quick
 init_display
 init_full
 init_live_controls
+
+#set collab command variable so it can be read
+global collab_commands_suspended
+set collab_commands_suspended 1
 
 # Call this so that the quick window
 # starts off at the right size
