@@ -1,3 +1,9 @@
+2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_SurfaceModel.C (nmr_SurfaceModelHeightField): changed so it takes
+	a rectangle in the x-y plane to determine the position/size of the surface
+	* nmr_Util.C: type change for nmb_ImageBounds
+
 2002-09-30  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_RegistrationUI.C : changed default sizes for registration windows

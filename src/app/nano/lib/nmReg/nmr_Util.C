@@ -156,17 +156,17 @@ void nmr_Util::setRegionRelative(const nmb_Image &srcImage,
     nmb_ImageBounds resampleImageBounds;
     double x, y;
     srcImage.pixelToWorld((double)min_i, (double)min_j, x, y);
-    resampleImageBounds.setX(nmb_ImageBounds::MIN_X_MIN_Y, x);
-    resampleImageBounds.setY(nmb_ImageBounds::MIN_X_MIN_Y, y);
+    resampleImageBounds.setX(MIN_X_MIN_Y, x);
+    resampleImageBounds.setY(MIN_X_MIN_Y, y);
     srcImage.pixelToWorld((double)min_i, (double)(max_j+1), x, y);
-    resampleImageBounds.setX(nmb_ImageBounds::MIN_X_MAX_Y, x);
-    resampleImageBounds.setY(nmb_ImageBounds::MIN_X_MAX_Y, y);
+    resampleImageBounds.setX(MIN_X_MAX_Y, x);
+    resampleImageBounds.setY(MIN_X_MAX_Y, y);
     srcImage.pixelToWorld((double)(max_i+1), (double)min_j, x, y);
-    resampleImageBounds.setX(nmb_ImageBounds::MAX_X_MIN_Y, x);
-    resampleImageBounds.setY(nmb_ImageBounds::MAX_X_MIN_Y, y);
+    resampleImageBounds.setX(MAX_X_MIN_Y, x);
+    resampleImageBounds.setY(MAX_X_MIN_Y, y);
     srcImage.pixelToWorld((double)(max_i+1), (double)(max_j+1), x, y);
-    resampleImageBounds.setX(nmb_ImageBounds::MAX_X_MAX_Y, x);
-    resampleImageBounds.setY(nmb_ImageBounds::MAX_X_MAX_Y, y);
+    resampleImageBounds.setX(MAX_X_MAX_Y, x);
+    resampleImageBounds.setY(MAX_X_MAX_Y, y);
     resampleImage.setBounds(resampleImageBounds);
 }
 

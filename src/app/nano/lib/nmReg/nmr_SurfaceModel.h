@@ -33,7 +33,8 @@ class nmr_SurfaceModelPlane : public nmr_SurfaceModel {
 
 class nmr_SurfaceModelHeightField : public nmr_SurfaceModel {
 public:
-	nmr_SurfaceModelHeightField(nmb_Image *heightValues);
+	nmr_SurfaceModelHeightField(nmb_Image *heightValues,
+		double minX, double minY, double maxX, double maxY);
 	~nmr_SurfaceModelHeightField();
 	virtual vrpn_bool surfaceRayIntersection(double x, double y, double z,
                                       double vx, double vy, double vz, 

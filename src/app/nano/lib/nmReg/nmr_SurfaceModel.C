@@ -1,13 +1,12 @@
 #include "nmr_SurfaceModel.h"
 
 nmr_SurfaceModelHeightField::nmr_SurfaceModelHeightField(
-	nmb_Image *heightValues)
+	nmb_Image *heightValues,
+	double minX, double minY, double maxX, double maxY)
 {
 	if (heightValues) {
-		double sideLength = heightValues->widthWorld()/
-			(double)(heightValues->width()-1);
 		d_heightField = new nmg_HeightField(heightValues, 
-		sideLength, 1.0);
+		minX, minY, maxX, maxY, 1.0);
 	} else {
 		d_heightField = NULL;
 	}
