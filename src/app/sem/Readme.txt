@@ -2,6 +2,16 @@ This directory contains code that deals directly with the EDAX system for
 controlling the SEM. 
 
 === some notes:
+ scan voltage polarities:
+scan voltages for x and y both grow more negative over the course of a line
+scan or the slow scan for an image and these directions correspond to leftward
+and upward motion in the display window on the Hitachi display
+
+If we can do it maybe this should be switched because the scan is 
+obviously reversed in Hitachi (the 
+voltage increases in x and y over the course of an image scan
+---------
+
 vertical retrace has a small effect but its hard to tell exactly what its doing 
   seems to add a positive offset to the y-scan as it is increased
 horizontal retrace does change the x-scan: but doesn't change much below 10 usec

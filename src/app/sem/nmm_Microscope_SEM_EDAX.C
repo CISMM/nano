@@ -47,7 +47,14 @@ nmm_Microscope_SEM_EDAX::nmm_Microscope_SEM_EDAX
     d_dotSpacing_nm(0.0),
     d_lineSpacing_nm(0.0),
     d_linearExposure_pCoul_per_cm(0.0),
-    d_areaExposure_uCoul_per_sq_cm(0.0)
+    d_areaExposure_uCoul_per_sq_cm(0.0),
+    d_currShapeType(PS_DEFAULT),
+    d_timingTestFirstPoint(vrpn_FALSE),
+    d_timingTestActive(vrpn_FALSE),
+    d_totalPatternNumPoints(0),
+    d_totalPatternDwellTime_sec(0.0),
+    d_completedPatternNumPoints(0),
+    d_completedPatternDwellTime_sec(0.0)
 {
   int i;
   for (i = 0; i < PS_NUMSHAPETYPES; i++) {
