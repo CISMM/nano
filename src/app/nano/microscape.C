@@ -580,7 +580,7 @@ static void handle_clear_markers_change (vrpn_int32, void *);
 static void handle_markers_shown_change (vrpn_int32, void *);
 static void handle_markers_height_change (vrpn_int32, void *);
 /// Clear modify markers now. 
-Tclvar_int clearMarkers ("clear_markers", 0,
+TclNet_int clearMarkers ("clear_markers", 0,
                          handle_clear_markers_change);
 /// Change the number of pulse or scrape markers to show
 Tclvar_int numMarkersShown ("number_of_markers_shown", 1000,
@@ -1518,6 +1518,8 @@ void shutdown_connections (void) {
   sphere_scale.bindConnection(NULL);
   finegrained_coupling.bindConnection(NULL);
 
+  clearMarkers.bindConnection(NULL);
+
   texture_scale.bindConnection(NULL);
   contour_width.bindConnection(NULL);
   contour_r.bindConnection(NULL);
@@ -1563,7 +1565,7 @@ void shutdown_connections (void) {
   ruler_color.bindConnection(NULL);
   rulergrid_changed.bindConnection(NULL);
   rulergrid_enabled.bindConnection(NULL);
-
+  
   viztex_scale.bindConnection(NULL);
 
   toggle_null_data_alpha.bindConnection(NULL);
@@ -5147,6 +5149,8 @@ void teardownSynchronization( CollaborationManager *cm,
     delete ps;
     cm->setPlaneSync(NULL);
   }
+
+  collab_machine_name.removeCallback(handle_collab_machine_name_change, cm);
 } // end teardownSynchronization(...)
 
 
@@ -5158,6 +5162,7 @@ void teardownMicroscopeSynchronization( CollaborationManager *cm,
   nmui_Component * paramControls = ui_Root->find("Params");
   if(paramControls) {
     paramControls->remove(&(m->state.modify.new_mode));
+    paramControls->remove(&(m->state.modify.new_tool));
     paramControls->remove(&(m->state.modify.new_control));
     paramControls->remove(&(m->state.modify.new_style));
     paramControls->remove(&m->state.modify.new_constr_xyz_param);
@@ -5202,10 +5207,12 @@ void teardownMicroscopeSynchronization( CollaborationManager *cm,
     paramControls->remove(&(m->state.modify.new_min_z_setpoint));
     paramControls->remove(&(m->state.modify.new_max_z_setpoint));
     paramControls->remove(&(m->state.modify.new_max_lat_setpoint));
-    //paramControls->remove(&(m->state.modify.slow_line_playing));
-    //paramControls->remove(&(m->state.modify.slow_line_step));
-    //paramControls->remove(&(m->state.modify.slow_line_direction));
-    paramControls->remove(&(m->state.modify.new_blunt_size));
+    
+	paramControls->remove(&(m->state.modify.slow_line_playing));
+    paramControls->remove(&(m->state.modify.slow_line_step));
+    paramControls->remove(&(m->state.modify.slow_line_direction));
+    
+	paramControls->remove(&(m->state.modify.new_blunt_size));
     paramControls->remove(&(m->state.modify.new_blunt_speed));
     paramControls->remove(&(m->state.numLinesToJumpBack));
   }
@@ -5351,6 +5358,7 @@ void setupSynchronization( CollaborationManager * cm,
   viewPlaneControls->add(&tcl_wfr_scale);
   //viewPlaneControls->add(&tcl_wfr_changed);
   viewPlaneControls->add(&tclstride);
+  viewPlaneControls->add(&clearMarkers);
 
   nmui_Component * viewColorControls;
   viewColorControls = new nmui_Component ("View Color");
@@ -5552,6 +5560,7 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
   paramControls->add(&changed_scanline_params);
 
   paramControls->add(&m->state.modify.new_mode);
+  paramControls->add(&m->state.modify.new_tool);
   paramControls->add(&m->state.modify.new_control);
   paramControls->add(&m->state.modify.new_style);
   paramControls->add(&m->state.modify.new_constr_xyz_param);
@@ -5596,9 +5605,11 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
   paramControls->add(&(m->state.modify.new_min_z_setpoint));
   paramControls->add(&(m->state.modify.new_max_z_setpoint));
   paramControls->add(&(m->state.modify.new_max_lat_setpoint));
-  //paramControls->add(&(m->state.modify.slow_line_playing));
-  //paramControls->add(&(m->state.modify.slow_line_step));
-  //paramControls->add(&(m->state.modify.slow_line_direction));
+  
+  paramControls->add(&(m->state.modify.slow_line_playing));
+  paramControls->add(&(m->state.modify.slow_line_step));
+  paramControls->add(&(m->state.modify.slow_line_direction));
+  
   paramControls->add(&(m->state.modify.new_blunt_size));
   paramControls->add(&(m->state.modify.new_blunt_speed));
   paramControls->add(&(m->state.numLinesToJumpBack));
