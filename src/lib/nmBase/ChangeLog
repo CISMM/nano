@@ -1,3 +1,7 @@
+2001-06-25 Jameson Miller <millerj@cs.unc.edu>
+	* BCPlane.c, .h - moved optimize_now code to its own file in nmMScope
+	directory
+	
 2001-06-25  Andrea Hilchey  <hilchey@cs.unc.edu>
 
 	* BCString.h: removed function listed below because found way

@@ -61,10 +61,6 @@ class BCPlane
     double minNonZeroValue();
     double maxNonZeroValue();
 
-    void computeOptimizeMinMax(int type, int x0, int y0, int x1, int y1,
-			       double *x_max_coord, double *y_max_coord);
- 
-
     inline double minValueComputedLast() const { return _min_value; }
     inline double maxValueComputedLast() const { return _max_value; }
 
