@@ -2,7 +2,7 @@
 
 	* export_scene.C (get_view_xform): Read unit system from template.
 	(export_scene_to_openNURBS): Perform error-checking on args.
-	(export_scene_to_openNURBS): Write unit system to .3dm file.
+	Write unit system to .3dm file.  Put mesh on a layer.
 
 2000-08-11  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 

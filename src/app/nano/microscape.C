@@ -4029,14 +4029,12 @@ void setupCallbacks (nmb_Dataset *d) {
   // sets up callbacks that have to do with data as opposed to callbacks
   // that affect or refer to some device which produces data
 
-    // When openStaticFilename changes, we try to open a file.
-    openStaticFilename.addCallback
-	(handle_openStaticFilename_change, NULL);
+  // When openStaticFilename changes, we try to open a file.
+  openStaticFilename.addCallback (handle_openStaticFilename_change, NULL);
 
-    //exportPlaneName.bindList(d->dataImages->imageNameList());
+  //exportPlaneName.bindList(d->dataImages->imageNameList());
   exportPlaneName = "none";
-  exportPlaneName.addCallback
-	(handle_exportPlaneName_change, d);
+  exportPlaneName.addCallback (handle_exportPlaneName_change, d);
 
   // make the list contain all the known export file formats
   // now, the image which is being exported determines what formats it
@@ -4047,12 +4045,10 @@ void setupCallbacks (nmb_Dataset *d) {
 
   // When newExportFileName is changed, we actually save a file.
   newExportFileName  = "";
-  newExportFileName.addCallback
-            (handle_exportFileName_change, NULL);
+  newExportFileName.addCallback (handle_exportFileName_change, NULL);
 
   exportScene_Filename = "";
-  exportScene_Filename.addCallback (handle_exportScene_Filename_change,
-                                    dataset);
+  exportScene_Filename.addCallback (handle_exportScene_Filename_change, d);
 
   // REALIGN TEXTURES:
   // handler for enabling/disabling the Realignment of Textures
