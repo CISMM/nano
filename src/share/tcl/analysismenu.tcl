@@ -98,6 +98,26 @@ pack $nmInfo(simscanplane).simscanlabel $nmInfo(simscanplane).simscanplane \
 		$nmInfo(simscanplane).simIPaddress \
 	-side top -anchor nw
 
+#Eroder plane
+iwidgets::Labeledframe $nmInfo(calc_planes).eroder \
+	-labeltext "Create plane showing eroded scan" \
+	-labelpos nw
+set nmInfo(eroderplane) [$nmInfo(calc_planes).eroder childsite]
+
+pack $nmInfo(calc_planes).eroder -side top -fill x
+
+# Allow the user to create a eroded plane:
+label $nmInfo(eroderplane).eroderlabel -justify left -text \
+	"Enter a plane name and the name of the\ncomputer the eroder is running on:"
+generic_entry $nmInfo(eroderplane).eroderplane eroderplane_name \
+	"Eroded Scan Plane" ""
+# Allow the user to specify the computer the eroder is running on:
+generic_entry $nmInfo(eroderplane).eroderIPaddress eroderIPaddress \
+	"IP Address" ""
+pack $nmInfo(eroderplane).eroderlabel $nmInfo(eroderplane).eroderplane \
+		$nmInfo(eroderplane).eroderIPaddress \
+	-side top -anchor nw
+
 }
 
 
