@@ -1,7 +1,16 @@
+2002-04-21  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nma_Keithley2400.h:  new data members, d_inital_delay and
+	d_zero-after_meas.  new method, SendImmediately.
+	* nma_Keithley2400.C (send_AcquireData):  before measuring, sets the 
+	output to the start value and waits for a bit.  sets the output to 
+	zero after a measurement.
+	(SendImmediately):  new.  as Send(), but forces the connection to 
+	send the message immediately.
+
 2002-03-21  Aron Helser  <helser@cs.unc.edu>
 
-	* vrpn_Ohmmeter.C: Handle replacement BCString ->
-	string
+	* vrpn_Ohmmeter.C: Handle replacement BCString -> string
 	* nmAux.dsp: Release config now builds.
 
 2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
@@ -16,7 +25,8 @@
 
 	* nma_Keithley2400.C (send_AllSettings):  don't send clear every time
 	a setting is changed.
-	(send_Source):  send delay parameter here instead of with trigger settings.
+	(send_Source):  send delay parameter here instead of with trigger 
+	settings.
 	
 2002-01-31 David Marshburn   <marshbur@cs.unc.edu>
 

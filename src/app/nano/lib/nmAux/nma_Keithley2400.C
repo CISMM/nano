@@ -40,6 +40,8 @@ nma_Keithley2400::nma_Keithley2400(const char *name, vrpn_Connection *c) :
 	d_sweep_stop((float)1.0),
 	d_sweep_numpoints(21),
 	d_sweep_delay((float)0.01),
+	d_initial_delay( 1 ),
+	d_zero_after_meas( true ),
 	d_wire_type(2),
 
 	result_change_list(NULL),
@@ -174,7 +176,7 @@ int nma_Keithley2400::send_Clear()
 		return -1;
 	}
 	vrpn_int32 len;
-	char buf[]  = ":ABOR;*CLS;*RST";
+	char buf[]  = ":ABOR;*CLS;*RST;";
 	//	char buf[]  = "SDC";
 	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
@@ -423,21 +425,75 @@ int nma_Keithley2400::send_AcquireData()
 		fprintf(stderr, "send_StartCurve - Keithley not initialized, not sending\n");
 		return -1;
 	}
-
-	vrpn_int32 len;
-	char buf[256] ;
-
 	if (! d_output_on) {
 		printf("send_StartCurve: Ouput not on - did you really want to do this?\n");
 	}
-	sprintf(buf, ":READ?");
-	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
+
+	vrpn_int32 len;
+	char buf[256] ;
+	
+	// jump the voltage/current to start point and wait 1 second
+	if (d_source == VOLTAGE) 
+	{		
+		sprintf( buf, ":SOUR:VOLT:MODE FIX;"
+					  ":SOUR:VOLT %f;"
+					  ":TRIG:COUN 1;"
+					  ":INIT;",  d_sweep_start );
+	}
+	else if (d_source == CURRENT )
+	{
+		sprintf( buf, ":SOUR:CURR:MODE FIX;"
+					  ":SOUR:CURR %f;"
+					  ":TRIG:COUN 1;"
+					  ":INIT;", d_sweep_start );
+	}
+	else
+	{
+		sprintf( buf, "" );
+	}
+	char* msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
-		fprintf(stderr, "nma_Keithley2400::send_StartCurve: out of memory.\n");
+		fprintf(stderr, "nma_Keithley2400::send_AcquireData: out of memory.\n");
+		return -1;
+	}
+	if(SendImmediately(len, d_Write_type, msgbuf)) {
+		fprintf(stderr, "nma_Keithley2400::send_AcquireData:"
+			" couldn't send message.\n");
+		return -1;
+	}
+	Sleep( 1000 );
+	
+	// reset all the values to those we want for measurement
+	send_AllSettings();
+
+	// read data, and set the output to 0 afterwards
+	if( d_zero_after_meas == true && d_source == VOLTAGE) 
+	{		
+		sprintf( buf, ":READ?;"
+					  ":SOUR:VOLT:MODE FIX;"
+					  ":SOUR:VOLT 0;"
+					  ":TRIG:COUN 1;"
+					  ":INIT;" );
+	}
+	else if( d_zero_after_meas == true && d_source == CURRENT )
+	{
+		sprintf( buf, ":READ?;"
+					  ":SOUR:CURR:MODE FIX;"
+					  ":SOUR:CURR 0;"
+					  ":TRIG:COUN 1;"
+					  ":INIT;" );
+	}
+	else
+	{
+		sprintf( buf, ":READ?;" );
+	}
+	msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
+	if (msgbuf == NULL) {
+		fprintf(stderr, "nma_Keithley2400::send_AcquireData: out of memory.\n");
 		return -1;
 	}
 	if(Send(len, d_Write_type, msgbuf)) {
-		fprintf(stderr, "nma_Keithley2400::send_StartCurve:"
+		fprintf(stderr, "nma_Keithley2400::send_AcquireData:"
 			" couldn't send message.\n");
 		return -1;
 	}
@@ -655,12 +711,6 @@ int nma_Keithley2400::handle_ResultData( void *_userdata, vrpn_HANDLERPARAM _p )
 	me->decode_ResultData(&_p.buffer, &pad, &sad, &my_data, &len);
 	if ( (pad != me->d_primary_address) || (sad != me->d_secondary_address) )
 	    return 0;
-	/* DEBUG print results received.
-	for (vrpn_int32 i = 0; i< len; i++) {
-		printf("%g ", my_data[i]);
-	}
-	printf("\n");
-	*/
 
 	// Yank some callbacks. 
 	vrpn_VIRESULTDATACB info;
@@ -728,3 +778,14 @@ int nma_Keithley2400::Send( vrpn_int32 len, vrpn_int32 msg_type, char * buf )
   return retval;
 }
 
+
+// Send a message, force the connection to send it immediately, delete [] the message buffer
+int nma_Keithley2400::SendImmediately( vrpn_int32 len, vrpn_int32 msg_type, char* buf )
+{
+	int retval = this->Send( len, msg_type, buf );
+	if( retval == 0 ) // okay so far
+	{
+		retval = retval || d_connection->send_pending_reports();
+	}
+	return retval;
+}

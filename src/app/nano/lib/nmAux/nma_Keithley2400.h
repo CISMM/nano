@@ -107,7 +107,9 @@ public:
   float d_sweep_start;
   float d_sweep_stop;
   int d_sweep_numpoints; // number of points in linear or log sweep.
-  float d_sweep_delay;   // Delay before a measurement is taken. Can be zero. 
+  float d_sweep_delay;   // Delay before a measurement is taken. Can be zero.
+  float d_initial_delay;  // delay between moving to sweep start and first measurement
+  bool d_zero_after_meas;  // should we move the output to zero after a measurement?
   
   
   int d_wire_type;
@@ -132,6 +134,10 @@ protected:
   
   // Send a message, delete [] the message buffer.
   int Send( vrpn_int32 len, vrpn_int32 msg_type, char * buf );
+
+  // Send a message, force the connection to send it immediately, delete [] the message buffer
+  int SendImmediately( vrpn_int32 len, vrpn_int32 msg_type, char* buf );
+
 private:
   
   // Receive callbacks
