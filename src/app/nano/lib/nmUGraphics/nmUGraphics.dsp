@@ -125,6 +125,10 @@ SOURCE=.\URender.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\URHeightField.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\URPolygon.C
 # End Source File
 # Begin Source File
@@ -206,6 +210,10 @@ SOURCE=.\URender.h
 # Begin Source File
 
 SOURCE=.\URenderAux.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\URHeightField.h
 # End Source File
 # Begin Source File
 

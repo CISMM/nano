@@ -1,3 +1,6 @@
+2002-08-13  Adam Seeger  <seeger@cs.unc.edu>
+	* URHeightField.[Ch]: new class to render an image as a surface
+
 2002-07-08 Jameson Miller <millerj@cs.unc.edu>
 	* DsAxisGenerator.C : set the scale of the axis icon when loaded.
 
