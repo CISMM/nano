@@ -25,9 +25,10 @@ int handle_any_print (void * userdata, vrpn_HANDLERPARAM p) {
   vrpn_Connection * c = (vrpn_Connection *) userdata;
  struct timeval el;
  connection->time_since_connection_open(&el);
-  printf("Msg \"%s\" from \"%s\" time %ld.%ld timestamp %ld.%ld\n",
+  printf("Msg \"%s\" from \"%s\" time %ld.%ld timestamp %ld.%ld, type=%ld\n",
           c->message_type_name(p.type), c->sender_name(p.sender),
-	  el.tv_sec, el.tv_usec, p.msg_time.tv_sec, p.msg_time.tv_usec);
+	  el.tv_sec, el.tv_usec, p.msg_time.tv_sec, p.msg_time.tv_usec,
+          p.type);
 
   return 0;  // non-error completion
 }
