@@ -1,3 +1,8 @@
+2001-18-09 Jameson Miller <millerj@cs.unc.edu>
+	*interaction.c - when setting the region,SetGridSize is called so that
+	Topo sets teh grid size correctly. This is so direct step takes the
+	correct step size after changing the scan region.
+
 2001-11-09    <marshbur@TUNGSTEN-CS>
 
 	* microscape.c: some formatting around vi curve code
