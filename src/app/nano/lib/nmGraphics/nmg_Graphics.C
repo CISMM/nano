@@ -1445,7 +1445,7 @@ char * nmg_Graphics::encode_setTextureMode
     switch (xm) {
       case RULERGRID_COORD:
 	vrpn_buffer(&mptr, &mlen, 0); break;
-      case REGISTRATION_COORD:
+      case SURFACE_REGISTRATION_COORD:
 	vrpn_buffer(&mptr, &mlen, 1); break;
       case MANUAL_REALIGN_COORD:
 	vrpn_buffer(&mptr, &mlen, 2); break;
@@ -1494,7 +1494,7 @@ int nmg_Graphics::decode_setTextureMode
   
   switch (i) {
     case 0:  *xm = RULERGRID_COORD; break;
-    case 1:  *xm = REGISTRATION_COORD; break;
+    case 1:  *xm = SURFACE_REGISTRATION_COORD; break;
     case 2:  *xm = MANUAL_REALIGN_COORD; break;
     default:
       fprintf(stderr, "nmg_Graphics::decode_setTextureMode:  "

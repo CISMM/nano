@@ -13,7 +13,7 @@ addImageToDisplay( nmb_Image* /*image*/ )
 {
   if (!d_graphicsDisplay) return;
   d_graphicsDisplay->setTextureMode(nmg_Graphics::COLORMAP,
-                                    nmg_Graphics::REGISTRATION_COORD);
+                                    nmg_Graphics::SURFACE_REGISTRATION_COORD);
   d_projectiveTexturesEnabled = vrpn_TRUE;
 }
 

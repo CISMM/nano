@@ -406,7 +406,7 @@ void nmg_RCIS_Texture::mainloop (void) {
   // causeGridRedraw(), which regenerates the grid.
   d_imp->getState()->texture_mode = GL_TEXTURE_2D;
   d_imp->getState()->texture_displayed = nmg_Graphics::REMOTE_DATA;
-  d_imp->getState()->texture_transform_mode = nmg_Graphics::REGISTRATION_COORD;
+  d_imp->getState()->texture_transform_mode = nmg_Graphics::SURFACE_REGISTRATION_COORD;
 
   // in the right window
   v_gl_set_context_to_vlib_window();
@@ -602,7 +602,7 @@ nmg_Graphics_RenderClient_Implementation
     d_strategy->initializeTextures();
   }
 
-  setTextureMode(REMOTE_DATA, REGISTRATION_COORD);
+  setTextureMode(REMOTE_DATA, SURFACE_REGISTRATION_COORD);
 
 }
 

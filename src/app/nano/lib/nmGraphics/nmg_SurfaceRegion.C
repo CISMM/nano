@@ -265,12 +265,13 @@ setTexture(nmg_State * state, nmb_Dataset *data)
         
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
-        glLoadIdentity();
+//        glLoadIdentity();
         
         double theta = 0.0;
         GLdouble texture_matrix[16];
         double x_scale_factor = 1.0, y_scale_factor = 1.0;
         double x_translate = 0.0, y_translate = 0.0;
+		double temp;
 
         switch (d_currentState.textureTransformMode) {
         case nmg_Graphics::RULERGRID_COORD:
@@ -299,7 +300,10 @@ setTexture(nmg_State * state, nmb_Dataset *data)
             break;
         case nmg_Graphics::PER_QUAD_COORD:
             break;
-        case nmg_Graphics::REGISTRATION_COORD:
+        case nmg_Graphics::SURFACE_REGISTRATION_COORD:		// split REGISTRATION_COORD into SURFACE_ and MODEL_
+
+printf("SURFACE_REGISTRATION_COORD\n");
+
             glLoadIdentity();
             // scale by actual texture image given divided by texture image
             // used (i.e. the one actually in texture memory is a power of 2
@@ -373,14 +377,105 @@ setTexture(nmg_State * state, nmb_Dataset *data)
             // See code in ImageViewer::drawImageAsTexture() for example.
             // (AAS, 8-10-01)
 
-            glTranslated(x_translate, y_translate, 0.0);
-            glScaled(x_scale_factor, y_scale_factor, 1.0);
+			
+			glTranslated(x_translate, y_translate, 0.0);
+			glScaled(x_scale_factor, y_scale_factor, 1.0);
 
-            glMultMatrixd(state->texture_transform);
-            glScaled(1.0, 1.0, 1.0/surface_z_scale);
+			glMultMatrixd(state->texture_transform);
+			glScaled(1.0, 1.0, 1.0/surface_z_scale);
+
             break;
             //case nmg_Graphics::REMOTE_COORD;
             //glLoadIdentity();
+		case nmg_Graphics::MODEL_REGISTRATION_COORD:
+
+
+//printf("MODEL_REGISTRATION_COORD\n");
+
+ //           glLoadIdentity();
+			switch (state->texture_displayed) {
+            case nmg_Graphics::NO_TEXTURES:
+            case nmg_Graphics::BUMPMAP:
+            case nmg_Graphics::HATCHMAP:
+            case nmg_Graphics::PATTERNMAP:
+				// nothing to do here
+                break;
+            case nmg_Graphics::RULERGRID:
+                x_scale_factor = (double)state->tex_image_width[RULERGRID_TEX_ID]/
+                    (double)state->tex_installed_width[RULERGRID_TEX_ID];
+                y_scale_factor = (double)state->tex_image_height[RULERGRID_TEX_ID]/
+                    (double)state->tex_installed_height[RULERGRID_TEX_ID];
+                x_translate = (double)state->tex_image_offsetx[RULERGRID_TEX_ID]/
+                    (double)state->tex_installed_width[RULERGRID_TEX_ID];
+                y_translate = (double)state->tex_image_offsety[RULERGRID_TEX_ID]/
+                    (double)state->tex_installed_height[RULERGRID_TEX_ID];
+                break;
+            case nmg_Graphics::COLORMAP:
+                x_scale_factor = (double)state->tex_image_width[COLORMAP_TEX_ID]/
+                    (double)state->tex_installed_width[COLORMAP_TEX_ID];
+                y_scale_factor = (double)state->tex_image_height[COLORMAP_TEX_ID]/
+                    (double)state->tex_installed_height[COLORMAP_TEX_ID];
+                x_translate = (double)state->tex_image_offsetx[COLORMAP_TEX_ID]/
+                    (double)state->tex_installed_width[COLORMAP_TEX_ID];
+                y_translate = (double)state->tex_image_offsety[COLORMAP_TEX_ID]/
+                    (double)state->tex_installed_height[COLORMAP_TEX_ID];
+                break;
+            case nmg_Graphics::SEM_DATA:
+                x_scale_factor = (double)state->tex_image_width[SEM_DATA_TEX_ID]/
+                    (double)state->tex_installed_width[SEM_DATA_TEX_ID];
+                y_scale_factor = (double)state->tex_image_height[SEM_DATA_TEX_ID]/
+                    (double)state->tex_installed_height[SEM_DATA_TEX_ID];
+                x_translate = (double)state->tex_image_offsetx[SEM_DATA_TEX_ID]/
+                    (double)state->tex_installed_width[SEM_DATA_TEX_ID];
+                y_translate = (double)state->tex_image_offsety[SEM_DATA_TEX_ID]/
+                    (double)state->tex_installed_height[SEM_DATA_TEX_ID];
+                break;
+            case nmg_Graphics::REMOTE_DATA:
+                x_scale_factor = (double)state->tex_image_width[REMOTE_DATA_TEX_ID]/
+                    (double)state->tex_installed_width[REMOTE_DATA_TEX_ID];
+                y_scale_factor = (double)state->tex_image_height[REMOTE_DATA_TEX_ID]/
+                    (double)state->tex_installed_height[REMOTE_DATA_TEX_ID];
+                x_translate = (double)state->tex_image_offsetx[REMOTE_DATA_TEX_ID]/
+                    (double)state->tex_installed_width[REMOTE_DATA_TEX_ID];
+                y_translate = (double)state->tex_image_offsety[REMOTE_DATA_TEX_ID]/
+                    (double)state->tex_installed_height[REMOTE_DATA_TEX_ID];
+                break;
+            case nmg_Graphics::VISUALIZATION:
+                x_scale_factor = (double)state->tex_image_width[VISUALIZATION_TEX_ID]/
+                    (double)state->tex_installed_width[VISUALIZATION_TEX_ID];
+                y_scale_factor = (double)state->tex_image_height[VISUALIZATION_TEX_ID]/
+                    (double)state->tex_installed_height[VISUALIZATION_TEX_ID];
+                x_translate = (double)state->tex_image_offsetx[VISUALIZATION_TEX_ID]/
+                    (double)state->tex_installed_width[VISUALIZATION_TEX_ID];
+                y_translate = (double)state->tex_image_offsety[VISUALIZATION_TEX_ID]/
+                    (double)state->tex_installed_height[VISUALIZATION_TEX_ID];
+                break;
+            default:
+                fprintf(stderr, "Error, unknown texture set for display\n");
+                break;
+            }
+
+			// undo the scaling to fit the surface
+			temp = x_scale_factor / y_scale_factor;
+//printf("%f\n", temp);
+			x_scale_factor *= temp;
+
+//qogl_matrix_type mat;
+//glGetDoublev(GL_TEXTURE_MATRIX, mat);
+//printf("current texture matrix\n");
+//qogl_print_matrix(mat);
+//printf("\n");
+			
+			glTranslated(x_translate, y_translate, 0.0);
+			glScaled(x_scale_factor, y_scale_factor, 1.0);
+
+			glMultMatrixd(state->texture_transform);
+//			glPopMatrix();
+			
+            break;
+            //case nmg_Graphics::REMOTE_COORD;
+            //glLoadIdentity();
+
         default:
             fprintf(stderr, "Error, unknown texture coordinate mode\n");
             break;
@@ -1018,6 +1113,32 @@ renderRegion(nmg_State * state, nmb_Dataset *dataset)
 
     set_gl_surface_materials(state);
     setFilled(state);
+
+
+//	qogl_matrix_type mat;
+//	glGetDoublev(GL_TEXTURE_MATRIX, mat);
+//	printf("current texture matrix\n");
+//	qogl_print_matrix(mat);
+//	printf("\n");
+/*
+	qogl_matrix_type rot45 = { .000245, 0, 0, 0,
+								0, .000245, 0, 0,
+								0, 0, 1, 0,
+								.207031, .207031, 0, 1 };
+
+
+
+	glMatrixMode(GL_TEXTURE);
+	glLoadMatrixd(rot45);
+
+	glGetDoublev(GL_TEXTURE_MATRIX, mat);
+	printf("new texture matrix\n");
+	qogl_print_matrix(mat);
+	printf("\n");
+*/
+
+
+
 
     for (i = 0; i < d_num_lists; i++) {
         glCallList(d_list_base + i);

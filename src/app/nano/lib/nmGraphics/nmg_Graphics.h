@@ -97,7 +97,7 @@ class nmg_Graphics {
                        PATTERNMAP, REMOTE_DATA, VISUALIZATION };
 
     /// how texture coordinates are computed:
-    enum TextureTransformMode {RULERGRID_COORD, VIZTEX_COORD, REGISTRATION_COORD, 
+    enum TextureTransformMode {RULERGRID_COORD, VIZTEX_COORD, SURFACE_REGISTRATION_COORD, MODEL_REGISTRATION_COORD,
 		MANUAL_REALIGN_COORD, REMOTE_COORD, PER_QUAD_COORD};
 
     /// enums for Remote Rendering

@@ -1,3 +1,21 @@
+2002-05-30  David Borland <borland.cs.unc.edu>
+
+        * nmg_Graphics.C : split REGISTRATION_COORD into two modes : 
+	SURFACE_REGISTRATION_COORD and MODEL_REGISTRATION_COORD.  These
+	two modes differ in how the z_scale is treated (MODEL ignores it)
+	and whether or not the texture is stretched to fit the surface (MODEL
+	does not do this).
+
+	* nmg_Graphics.h : same
+
+	* nmg_GraphicsImpl.C : same
+
+	* nmg_ImageDisplayProjectiveTexure.C : same
+
+	* nmg_RenderClientImpl.C : same
+
+	* nmg_SurfaceRegion.C : same
+
 2002-05-13  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C (causeGridReColor): Prevent black strip
