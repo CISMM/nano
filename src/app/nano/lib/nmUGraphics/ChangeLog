@@ -1,3 +1,8 @@
+2002-05-07  Andrea Hilchey <hilchey@cs.unc.edu>
+
+        * URPolygon.C : changed parameters passed in to
+	encode_and_sendRot function calls
+
 2002-05-06  David Borland <borland@cs.unc.edu>
 
         * WaveFrontFileGenerator.C:  deleted a couple of lines by mistake 

@@ -224,9 +224,8 @@ int URPolygon::SetRotxAll(void* userdata) {
 	if ((strstr(this->name, ".txt") != 0) && 
 		(SimulatedMicroscope != NULL) &&
 		this->GetUpdateAFM()) {
-		q_vec_type q;
-		q_to_euler(q,this->GetLocalXform().GetRot());
-		SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
+		SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
+		cout << "rot Sent: " << "x: " << euler[2] << "\ty: " << euler[1] << "\tz: " << euler[0] << endl;
 	}
 
 	if(recursion) return ITER_CONTINUE;	
@@ -250,9 +249,8 @@ int URPolygon::SetRotyAll(void* userdata) {
 	if ((strstr(this->name, ".txt") != 0) && 
 		(SimulatedMicroscope != NULL) &&
 		this->GetUpdateAFM()) {
-		q_vec_type q;
-		q_to_euler(q,this->GetLocalXform().GetRot());
-		SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
+		SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
+		cout << "rot Sent: " << "x: " << euler[2] << "\ty: " << euler[1] << "\tz: " << euler[0] << endl;
 	}
 
 	if(recursion) return ITER_CONTINUE;	
@@ -277,9 +275,8 @@ int URPolygon::SetRotzAll(void* userdata) {
 	if ((strstr(this->name, ".txt") != 0) && 
 		(SimulatedMicroscope != NULL) &&
 		this->GetUpdateAFM()) {
-		q_vec_type q;
-		q_to_euler(q,this->GetLocalXform().GetRot());
-		SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
+		SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
+		cout << "rot Sent: " << "x: " << euler[2] << "\ty: " << euler[1] << "\tz: " << euler[0] << endl;
 	}
 
 	if(recursion) return ITER_CONTINUE;	
