@@ -1,3 +1,8 @@
+2001-11-27 Jameson Miller <millerj@cs.unc.edu>
+	*directstep.C - cleaned up code so that compiler won't complain when
+	compiling
+
+
 2001-11-26  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_MicroscopeRemoteGen.Cdef (BeginFeelTo): Added params x and y to

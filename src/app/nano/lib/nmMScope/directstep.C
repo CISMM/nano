@@ -5,8 +5,6 @@
 *
 *
 *
-*
-*
 **/
 
 #include <BCPlane.h>
@@ -14,10 +12,7 @@
 #include <nmm_MicroscopeRemote.h>
 
 #include "microscape.h"
-#include <nmb_Globals.h>
-#include <nmm_Globals.h>
 #include "directstep.h"
-#include <nmb_Decoration.h>
 
 #include <interaction.h>
 
@@ -27,16 +22,15 @@
 
 double x;
 double y;
-static double z;
 double z_pos;
 
 
 //---------------------------------------------------------------------
 //direct step
 
-extern void handle_take_x_step(vrpn_float64, void *mptr);
-extern void handle_take_y_step(vrpn_float64, void *mptr);
-extern void handle_take_z_step(vrpn_float64, void *mptr);
+extern void handle_take_x_step(vrpn_float64, void * /*_mptr*/);
+extern void handle_take_y_step(vrpn_float64, void * /*_mptr*/);
+extern void handle_take_z_step(vrpn_float64, void * /*_mptr*/);
 Tclvar_float step_x("take_x_step",1.0,handle_take_x_step,NULL);
 Tclvar_float step_y("take_y_step",1.0,handle_take_y_step,NULL);
 Tclvar_float step_z("take_z_step",1.0,handle_take_z_step,NULL);
@@ -46,17 +40,17 @@ Tclvar_float step_x_pos("step_x_pos",1.0);
 Tclvar_float step_y_pos("step_y_pos",1.0);
 Tclvar_float step_z_pos("step_z_pos",-1.0);
 
-extern void handle_step_go_to_pos(vrpn_int32, void *mptr);
+extern void handle_step_go_to_pos(vrpn_int32, void * /*_mptr*/);
 Tclvar_int go_to_pos("step_go_to_pos",1,handle_step_go_to_pos,NULL);
 //-----------------------------------------------------------------------
 
 //takes a step in the +/- X direction when user presses button
-void handle_take_x_step(vrpn_float64, void * _mptr)
+void handle_take_x_step(vrpn_float64, void * /*_mptr*/)
 {
   //variables for the min and max positions of microscope in real world
   //so that we don't step out of bounds
 
-  double min_x,min_y,max_x, max_y;
+  double min_x,max_x;
 
 	//make sure we are in xy_lock, if not, don't take step
 	if(!xy_lock){
@@ -69,8 +63,6 @@ void handle_take_x_step(vrpn_float64, void * _mptr)
 	//find min and max coordinates where we can send microscope
    	min_x = plane->xInWorld(0);
 	max_x = plane->xInWorld(plane->numX()-1);
-	min_y = plane->yInWorld(0);
-	max_y = plane->yInWorld(plane->numY()-1);
 
 	Point_value * _point = 
 		microscope->state.data.inputPoint->getValueByPlaneName
@@ -107,11 +99,11 @@ void handle_take_x_step(vrpn_float64, void * _mptr)
 }
 
 //takes a step in the +/- Y direction when user presses button
-void handle_take_y_step(vrpn_float64, void * _mptr)
+void handle_take_y_step(vrpn_float64, void * /*_mptr*/)
 {	
 
   //variables for the min and max coord's of where we can send microscope
-  double min_x,min_y,max_x,max_y;
+  double min_y,max_y;
 
   //make sure we are in xy_lock, exit if not
 	if(!xy_lock)
@@ -124,8 +116,6 @@ void handle_take_y_step(vrpn_float64, void * _mptr)
 
 
 	//min and max variables assigned from min and max in BCGrid
-   	min_x = plane->xInWorld(0);
-	max_x = plane->xInWorld(plane->numX()-1);
 	min_y = plane->yInWorld(0);
 	max_y = plane->yInWorld(plane->numY()-1);
 
@@ -164,7 +154,7 @@ void handle_take_y_step(vrpn_float64, void * _mptr)
 
 
 //takes a step in the +/- Z direction when user presses button
-void handle_take_z_step(vrpn_float64, void * _mptr)
+void handle_take_z_step(vrpn_float64, void * /*_mptr*/)
 {
 
 	//make sure we are in xy_lock. return if not
@@ -172,10 +162,6 @@ void handle_take_z_step(vrpn_float64, void * _mptr)
 	{
 		return;
 	}
-
-	BCPlane * plane = dataset->inputGrid->getPlaneByName
-		(dataset->heightPlaneName->string());
-	
 		  Point_value * _point = 
 			  microscope->state.data.inputPoint->getValueByPlaneName
 			  (dataset->heightPlaneName->string());
@@ -193,7 +179,7 @@ void handle_take_z_step(vrpn_float64, void * _mptr)
 
 
 //sends microscope to a point when user presses "G0 To Position" button from Tcl
-void handle_step_go_to_pos(vrpn_int32, void *mptr)
+void handle_step_go_to_pos(vrpn_int32, void * /*_mptr*/)
 {
 	//make sure we are in xy_lock. return if not
 	if(!xy_lock) 
@@ -203,7 +189,7 @@ void handle_step_go_to_pos(vrpn_int32, void *mptr)
 
   //the microscope coordinates are different than input coordinates.
   double min_x, max_x, min_y, max_y;
-  double x_scale,y_scale,x_pos,y_pos;
+  double x_pos,y_pos;
 
 	BCPlane * plane = dataset->inputGrid->getPlaneByName
 		(dataset->heightPlaneName->string());
