@@ -1,4 +1,9 @@
-2000-10-24  Adam Seeger <seeger@cs.unc.edu>
+2000-10-26  Adam Seeger  <seeger@cs.unc.edu>
+
+	* filemenu.tcl : sets spm connection list to
+	 explorer1, explorer2 and discoverer
+
+2000-10-24  Adam Seeger  <seeger@cs.unc.edu>
 
 	* image.tcl : disables window resizing as in thirdtech_branch
 	* modify.tcl : same
