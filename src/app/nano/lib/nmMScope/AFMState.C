@@ -165,6 +165,7 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     new_fc_pullback_delay("newmodifyp_pullback_delay", 0.0),
     fc_feedback_delay("modifyp_feedback_delay", 200.0),
     new_fc_feedback_delay("newmodifyp_feedback_delay", 200.0),
+    this_mod_fc(VRPN_FALSE),
 
     step_size ("modifyp_step_size", 1.0),
     new_step_size ("newmodifyp_step_size", 1.0),

@@ -179,6 +179,10 @@ struct AFMModifyState {
   Tclvar_float fc_feedback_delay;	///< us
   TclNet_float new_fc_feedback_delay;	///< us
 
+  vrpn_bool this_mod_fc;
+    ///< Set if current modification is a force curve - used to ignore
+    ///< point results in favor of FC results. 
+
   // parameter for Poly-line tool
   Tclvar_float step_size;
   TclNet_float new_step_size;

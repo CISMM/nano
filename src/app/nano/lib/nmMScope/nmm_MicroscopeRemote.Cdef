@@ -2398,6 +2398,10 @@ RECEIVE_MSG InSpectroscopyMode {
     state.modify.fc_sample_delay = sampleDelay;
     state.modify.fc_pullback_delay = pullbackDelay;
     state.modify.fc_feedback_delay = feedbackDelay;
+
+    // This mod is a force curve - flag so we don't do callbacks with regular
+    // point results.
+    state.modify.this_mod_fc = VRPN_TRUE;
   } else {
     fprintf(stderr, "Can't do Image/SpectroscopyMode!\n");
   }
@@ -2434,6 +2438,9 @@ RECEIVE_MSG InImgMode {
   // into image mode from modify mode. 
   //if (!state.doRelaxUp) { ... }
 
+  // We are no longer doing any modification, include a FC mod. 
+  state.modify.this_mod_fc = VRPN_FALSE;
+  
   doImageModeCallbacks();
 
   d_mod_window_pad = state.numLinesToJumpBack;
@@ -2739,8 +2746,7 @@ RECEIVE_MSG PointResultData nmm_Monitor {
                      state.data.inputPoint->y(),
                      0.0f, z_value, VRPN_TRUE);
   }
-  if (state.modify.style != FORCECURVE)	{
-      // XXX HACK - we need point results
+  if (state.modify.this_mod_fc == VRPN_FALSE)	{
 //      if (ohmmeter !=NULL) {
         if (lastResistanceReceived >= 0) {
           // HACK - to get ohmmeter data in point results
@@ -2759,14 +2765,12 @@ RECEIVE_MSG PointResultData nmm_Monitor {
               pv->setValue(lastResistanceReceived);
           }
           // END HACK
-      }
+        }
      
-     doPointDataCallbacks(state.data.inputPoint); // to feel what we are
-						// doing but we don't
-						// want to store them
-						// in a modfile because
-						// its being used to
-						// store the force curve
+        // We need point results to feel what we are doing but we
+        // don't want to store them in a modfile because its being used to
+        // store the force curve, in separate ForceCurveResults function. 
+        doPointDataCallbacks(state.data.inputPoint); 
      
   }
 

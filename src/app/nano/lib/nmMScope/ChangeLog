@@ -1,3 +1,13 @@
+2001-09-12  Aron Helser  <helser@cs.unc.edu>
+
+	* nmm_MicroscopeRemote.Cdef (InSpectroscopyMode): Set state
+	variable, this_mod_fc
+	(InImgMode): unset state var
+	(PointResultData): Check state var, do pointdata callbacks only if
+	we aren't doing FC mod - these are called instead on FC results. 
+
+	* AFMState.Ch (AFMModifyState): new state variable
+
 2001-08-23    <dwyer@BISMUTH-CS>
 
 	* nmm_Microscope.C: Add channel/direction selector for guardedscan
