@@ -742,7 +742,7 @@ nmb_ImageArray::nmb_ImageArray(const char *name,
                                           nmb_PixelType pixType):
         nmb_Image(), 
         fData(NULL),ucData(NULL), usData(NULL), data(NULL),
-        num_x(x), num_y(y), d_border(1),
+        num_x(x), num_y(y), d_border(2),
         units_x("none"), units_y("none"), units("ADC"),
         my_name(name),
         d_minNonZeroValueComputed(VRPN_FALSE),
