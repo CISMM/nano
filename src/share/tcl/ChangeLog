@@ -1,3 +1,7 @@
+2002-12-01 Jameson Miller <millerj@cs.unc.edu>
+	* setupmenu.tcl : added controls for displaying haptic graphics
+
+
 2002-11-04  David Borland <borland@cs.unc.edu>
 
         * sem.tcl : added colormap control and alpha control for the 

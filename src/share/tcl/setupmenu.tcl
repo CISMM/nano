@@ -178,6 +178,32 @@ proc set_surface_color {} {
 ###################################
 
 
+
+#
+##################################
+# Controls for haptics visualization
+# JM 11/02
+
+set nmInfo(viz_hap_settings) [nmInfo(visualizations).frame childsite]
+
+iwidgets::Labeledframe $nmInfo(viz_hap_settings).frame \
+	-labeltext "Haptics Visualization options" \
+	-labelpos nw
+
+checkbutton $nmInfo(viz_hap_settings).feel_grid -text "Feel Grid Enable" -variable \
+	feel_grid_enabled
+checkbutton $nmInfo(viz_hap_settings).feel_plane -text "Feel Plane Enable" -variable \
+	feel_plane_enabled
+
+
+
+
+pack $nmInfo(viz_hap_settings).frame -side top -fill x  
+    pack $nmInfo(viz_hap_settings).feel_grid $nmInfo(viz_hap_settings).feel_plane -side left
+
+
+
+
 #
 #################################    
 # Controls for the various visualizations
