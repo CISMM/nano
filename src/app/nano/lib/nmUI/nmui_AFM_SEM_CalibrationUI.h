@@ -186,6 +186,9 @@ class nmui_AFM_SEM_CalibrationUI {
 	int d_testImageWinID;
 	bool d_testImageWinCreated;
 	bool d_testImageWinNeedsUpdate;
+
+	bool d_modelNeedsUpdate;
+	bool d_SEMNeedsUpdate;
 };
 
 

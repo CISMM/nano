@@ -138,7 +138,9 @@ void nmui_AFM_SEM_CalibrationUI::setSEM(nmm_Microscope_SEM_Remote *sem)
 void nmui_AFM_SEM_CalibrationUI::setTipRenderer(URender *renderer)
 {
   d_tipRenderer = renderer;
-  d_tipRenderer->SetProjTexture(&d_SEMTexture);
+  if (d_tipRenderer) {
+	d_tipRenderer->SetProjTexture(&d_SEMTexture);
+  }
 }
 
 void nmui_AFM_SEM_CalibrationUI::changeDataset(nmb_ImageManager *dataset)
@@ -239,6 +241,7 @@ int nmui_AFM_SEM_CalibrationUI::drawTestImages(const ImageViewerDisplayData &dat
 		image->width() + image->borderXMin() + image->borderXMax());
 	glReadPixels(0, 0, image->width(), image->height(), 
 		GL_RED, GL_FLOAT, image->pixelData());
+	d_dataset->dataImages()->removeImageByName(imageName);
 	d_dataset->dataImages()->addImage(image);
 
 	nmb_TransformMatrix44 SEM_from_AFM;
@@ -315,7 +318,7 @@ int nmui_AFM_SEM_CalibrationUI::drawTestImages(const ImageViewerDisplayData &dat
 		glEnd();
 		char imageName[128];
 		sprintf(imageName, "simulated_SEM_for_contactPoint%d", pntIndex);
-		image = new nmb_ImageArray(imageName, "units", 500, 500,
+		image = new nmb_ImageArray(imageName, "units", data.winWidth, data.winHeight,
 				NMB_FLOAT32);
 		glReadPixels(0, 0, image->width(), image->height(), 
 			GL_RED, GL_FLOAT, image->pixelData());
@@ -341,7 +344,7 @@ int nmui_AFM_SEM_CalibrationUI::drawTestImages(const ImageViewerDisplayData &dat
 		glEnd();
 		char imageName[128];
 		sprintf(imageName, "simulated_SEM_for_freePoint%d", pntIndex);
-		image = new nmb_ImageArray(imageName, "units", 500, 500,
+		image = new nmb_ImageArray(imageName, "units", data.winWidth, data.winHeight,
 				NMB_FLOAT32);
 		glReadPixels(0, 0, image->width(), image->height(), 
 			GL_RED, GL_FLOAT, image->pixelData());
@@ -378,7 +381,8 @@ void nmui_AFM_SEM_CalibrationUI::createTestImages()
        }
     }
 	d_testImageWinID = 
-		imageViewer->createWindow(display_name, 10, 10, 500, 500, "modelRender");
+		imageViewer->createWindow(display_name, 10, 10, 
+		500, 500, "modelRender");
 
 
 	imageViewer->setWindowDisplayHandler(d_testImageWinID, 
@@ -545,6 +549,12 @@ void nmui_AFM_SEM_CalibrationUI::handle_windowOpen_change(
 		// selected by the user and sent back to us from the server
 		me->d_aligner->enableAutoUpdate(vrpn_FALSE);
 		handle_registrationMode_change((vrpn_int32)(me->d_registrationMode),ud);
+		if (me->d_modelNeedsUpdate) {
+			nmui_AFM_SEM_CalibrationUI::handle_updateModel_change(1, me);
+		}
+		if (me->d_SEMNeedsUpdate) {
+			nmui_AFM_SEM_CalibrationUI::handle_updateSEMImage_change(1, me);
+		}
 	} else {
 		me->d_aligner->setGUIEnable(vrpn_FALSE, NMR_ALLWINDOWS);
 		me->d_aligner->setEditEnable(vrpn_TRUE, vrpn_TRUE);
@@ -688,6 +698,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_model_change(
 {
 	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
 	if (!(vrpn_int32)(me->d_windowOpen)) {
+		me->d_modelNeedsUpdate = true;
 		return;
 	}
 	printf("modelToSEM_model: %s\n", name);
@@ -697,6 +708,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_model_change(
 		if (!me->d_modelToSEM_modelImage) {
 			fprintf(stderr, "nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_model_change: \n"
 				"image not found: %s\n", name);
+			me->d_modelNeedsUpdate = true;
 			return;
 		}
 		double modelMinX, modelMinY, modelMaxX, modelMaxY;
@@ -751,7 +763,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_updateModel_change(
 		me->d_modelToSEM_modelImage->getWorldRectangle(
 			modelMinX, modelMinY, modelMaxX, modelMaxY);
 		me->d_surfaceModelRenderer.setSurface(me->d_modelToSEM_modelImage,
-			modelMinX+1000, modelMinY+1000, modelMaxX+1000, modelMaxY+1000,
+			modelMinX, modelMinY, modelMaxX, modelMaxY,
 			me->d_surfaceStride);
 		// find out where the surface model renderer will put the surface
 		// and scale and translate this so it fits where the AFM thinks the
@@ -774,6 +786,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_updateModel_change(
 				vrpn_FALSE, vrpn_FALSE);
 	}
 	me->updateInputStatus();
+	me->d_modelNeedsUpdate = false;
 }
 
 // static 
@@ -782,6 +795,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_SEMImage_change(
 {
 	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
 	if (!(vrpn_int32)(me->d_windowOpen)) {
+		me->d_SEMNeedsUpdate = true;
 		return;
 	}
 	printf("modelToSEM_SEMImage: %s\n", name);
@@ -791,6 +805,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_SEMImage_change(
 		if (!me->d_modelToSEM_modelImage) {
 			fprintf(stderr, "nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_SEMImage_change: \n"
 				"image not found: %s\n", name);
+			me->d_SEMNeedsUpdate = true;
 			return;
 		}
 		me->d_heightFieldNeedsUpdate = vrpn_TRUE;
@@ -834,6 +849,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_updateSEMImage_change(
 	}
 	me->d_SEMTexture.setImage(me->d_modelToSEM_SEMImage);
 	me->updateInputStatus();
+	me->d_SEMNeedsUpdate = false;
 }
 
 // AFM_SEM_contact
@@ -1361,5 +1377,7 @@ void nmui_AFM_SEM_CalibrationUI::updateSolutionDisplay()
 		projDirX, projDirY, projDirZ);
 	d_surfaceModelRenderer.SetTextureTransform(d_SEMfromModel);
 	d_surfaceModelRenderer.SetTextureCoordinatesInWorld(false);
-	d_tipRenderer->SetTextureTransform(d_SEMfromAFM);
+	if (d_tipRenderer) {
+		d_tipRenderer->SetTextureTransform(d_SEMfromAFM);
+	}
 }

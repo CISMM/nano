@@ -1,5 +1,15 @@
 2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
 
+        * nmui_AFM_SEM_CalibrationUI.C (setTipRenderer): added check 
+        for NULL pointer
+        (drawTestImages): removes old test image from image list before 
+        creating a new one
+        (handle_updateModel_change): took out some changes I had accidentally
+        committed that were only supposed to be for debugging
+        (handle_windowOpen_change): updates state dependent on model and SEM 
+        images if the image selectors changed while the window was closed
+        (updateSolutionDisplay): checks for NULL tipRenderer
+
 	* GraphMod.C : fixed this so it doesn't try to access the z value from
 	a Point_results object that doesn't have a z value - uses 0 instead.
 	* nmui_AFM_SEM_CalibrationUI.C : added refresh buttons for model and
