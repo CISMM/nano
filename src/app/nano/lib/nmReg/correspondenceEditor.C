@@ -65,7 +65,8 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
 	else
 		sprintf(win_name, "%s", win_names[i]);
         winParam[i].winID = 
-             viewer->createWindow(display_name,0,0,400,400,win_name);
+             viewer->createWindow(display_name,i*110 + 200,200,
+                                  100,100,win_name);
         viewer->setWindowEventHandler(winParam[i].winID,
                 CorrespondenceEditor::eventHandler, (void *)this);
         viewer->setWindowDisplayHandler(winParam[i].winID,
@@ -542,8 +543,8 @@ int CorrespondenceEditor::setColorMinMax(int spaceIndex,
     v->init(0);
 
     int window_ids[2];
-    window_ids[0] = v->createWindow(NULL, 0, 0, 400, 400, "win0");
-    window_ids[1] = v->createWindow(NULL, 140, 0, 400, 400, "win1");
+    window_ids[0] = v->createWindow(NULL, 100, 100, 100, 100, "win0");
+    window_ids[1] = v->createWindow(NULL, 200, 100, 100, 100, "win1");
 
     v->setWindowImageSize(window_ids[0], 100, 100);
     int i;
