@@ -22,6 +22,8 @@ set collaborationConnections { \
   "chem-gfx-nn.nanonet.unc.edu" "gt-gfx-nn.nanonet.unc.edu" \
 }
 
+
+
 iwidgets::dialog .choose_collaborator_dialog -title "Choose Collaborator" \
   -modality application
 .choose_collaborator_dialog hide Help
@@ -29,6 +31,9 @@ iwidgets::dialog .choose_collaborator_dialog -title "Choose Collaborator" \
   .choose_collaborator_dialog deactivate 1
 }
 .choose_collaborator_dialog hide Apply
+
+set okbutton [.choose_collaborator_dialog buttonconfigure]
+$okbutton <ENTER> "focus $okbutton"
 
 set win [.choose_collaborator_dialog childsite]
 generic_optionmenu_with_index $win.site_name chosen_site_index \

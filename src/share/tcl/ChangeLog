@@ -1,3 +1,7 @@
+2001-04-30  Chris Weigle  <weigle@cs.unc.edu>
+        * shared_ptr.tcl: make <Enter> in choose collaborator widget bind
+        to the conenct button
+
 2001-04-24  Adam Seeger  <seeger@cs.unc.edu>
 
 	* mainwin.tcl: the last commit (merged stuff from thirdtech_branch
