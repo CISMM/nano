@@ -171,7 +171,7 @@ void nmui_SurfaceFeatures::specifyBuzzAmplitude (void) {
   amp = d_strategy->scaledPointBuzzAmplitude();
 
   // Percieved magnitude of buzzing is proportional to x^0.95
-  if (d_useLinearFriction) {
+  if (d_useLinearBuzzing) {
     amp = log(amp) / log(0.95);
   }
 
