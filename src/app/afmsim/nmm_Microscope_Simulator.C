@@ -424,7 +424,7 @@ stm_init(void)
   // Code added by JakeK and AFMS team                                //
   //////////////////////////////////////////////////////////////////////
 
-  int retval;
+  //int retval;
   char * msgbuf;
   long len;
  
@@ -670,7 +670,7 @@ spm_report_latest_resolution()
 
 // Called by real Topo AFM when the client first connects - initialization info
 int nmm_Microscope_Simulator::
-spm_report_latest_data_sets( SET_OF_DATA_SETS * set )
+spm_report_latest_data_sets( SET_OF_DATA_SETS * /* set */)
 {
   long len;
   char * msgbuf;
@@ -701,7 +701,7 @@ spm_report_latest_data_sets( SET_OF_DATA_SETS * set )
 
 // Called by real Topo AFM when the client first connects - initialization info
 int nmm_Microscope_Simulator::
-spm_report_latest_point_sets( SET_OF_POINT_SETS point )
+spm_report_latest_point_sets( SET_OF_POINT_SETS /* point */ )
 {
   long len;
   char * msgbuf;
@@ -1111,6 +1111,28 @@ RcvZagPointNM( void *_userdata, vrpn_HANDLERPARAM _p )
   if ( tmp->stm_sweep_point_nm( bufptr ) ) {
       ServerError ("stm_sweep_point_nm failed");
       return -1;
+  }
+
+  return 0;
+}
+
+int nmm_Microscope_Simulator::RcvFeelTo (void * userdata,
+                                         vrpn_HANDLERPARAM p) {
+  nmm_Microscope_Simulator * tmn = (nmm_Microscope_Simulator *) userdata;
+  const char * bufptr = p.buffer;
+  vrpn_float32 x, y;
+  int retval;
+
+  retval = tmn->decode_BeginFeelTo(&bufptr, &x, &y);
+  if (retval) {
+    ServerError("decode_BeginFeelTo failed");
+    return -1;
+  }
+
+  retval = tmn->afmFeelToPoint(x, y);
+  if (retval) {
+    ServerError("afmFeelToPoint failed");
+    return -1;
   }
 
   return 0;
@@ -1873,6 +1895,34 @@ stm_scan_point_nm( const char *bufptr )
   return 0;
 }
 
+int nmm_Microscope_Simulator::afmFeelToPoint (vrpn_float32 x, vrpn_float32 y) {
+
+  int retval;
+  int i, j;
+  double nx, ny;
+
+  double incx = 5;
+  double incy = 5;
+
+  ServerOutputAdd(1, "afmFeelToPoint %.2f %.2f", x, y);
+
+  sendBeginFeelTo(x, y);
+  for (i = 0, nx = x - 2 * incx; i < 5; i++, nx += incx) {
+    for (j = 0, ny = y - 2 * incy; j < 5; j++, ny += incy) {
+      retval = goto_point_and_report_it(nx, ny);
+      if (retval) {
+        ServerOutputAdd(1, "***ERROR***:  afmFeelToPoint");
+      }
+    }
+    // Hackish "backscan"
+    spm_goto_xynm(nx, y - 2 * incy);
+  }
+  sendEndFeelTo(x, y);
+
+  return 0;
+}
+
+
 // This function called by real Topo AFM, indirectly
 int nmm_Microscope_Simulator::
 stm_sweep_point_nm( const char *bufptr )
@@ -2142,7 +2192,7 @@ spm_request_point_datasets( const char *bufptr )
       ServerOutputAdd( 2, "Point Data sets %i : %s", i, name );
   }
 
-  int retval;
+  //int retval;
   char * msgbuf;
   long len;
   msgbuf = encode_PointDataset(&len, 1, "Topography", "nm", 0, 1);
@@ -2304,29 +2354,13 @@ spm_echo( const char */*bufptr*/ )
   return 0;
 }
 
-// Tiger        XXX HACK        We had spm_echo before, but now using following
-//                                              two functions, one for Modify Mode, one for
-//                                              Image Mode.
 int nmm_Microscope_Simulator::
-spm_echo_ModifyMode( const char *bufptr )
+spm_echo_ModifyMode( const char * /* bufptr */ )
 {
   long len = 0;
   char * msgbuf = NULL;
   int retval;
 
-  // This message doesn't need to contain any info, but VRPN won't send
-  // an empty message...
-/*
-  if (decode_MarkModify(&bufptr) == -1) {
-     ServerOutputAdd(2, "nmm_Microscope_Topometrix::spm_echo_ModifyMode: bad parameters passed to spm_enable_voltsource");
-     return -1;
-  }
-  msgbuf = encode_MarkModify(&len);
-  if ( !msgbuf ) {
-    ServerOutputAdd( 2, "nmm_Microscope_Topometrix::spm_echo_ModifyMode:  Buffer overflow!!" );
-    return -1;
-  } else {
-*/
     printf("sending InModMode message\n");
     retval = Send( len, d_InModMode_type, msgbuf );
     if ( retval ) {
@@ -2338,11 +2372,8 @@ spm_echo_ModifyMode( const char *bufptr )
   return 0;
 }
 
-// Tiger        XXX HACK        We had spm_echo before, but now using following
-//                                              two functions, one for Modify Mode, one for
-//                                              Image Mode.
 int nmm_Microscope_Simulator::
-spm_echo_ImageMode( const char *bufptr )
+spm_echo_ImageMode( const char * /* bufptr */ )
 {
   long len = 0;
   char * msgbuf = NULL;
@@ -2352,14 +2383,6 @@ spm_echo_ImageMode( const char *bufptr )
   ServerOutputAdd(2, "nmm_Microscope_Simulator::spm_echo_ImageMode(): Client want to go into Image mode!!!");
   // NANO END
 
-/*
-  // This message doesn't need to contain any info, but VRPN won't send
-  // an empty message...
-  if (decode_MarkImage(&bufptr) == -1) {
-     ServerOutputAdd(2, "nmm_Microscope_Simulator::spm_echo_ImageMode: bad parameters passed to spm_enable_voltsource");
-     return -1;
-  }
-*/
   // If we were just in Forcecurve Style or Sewing Style,
   // we will get this message before we have re-enabled
   // param_reporting. So I am going to comment this out. 9/22/99
@@ -3256,7 +3279,7 @@ report_point_set( float x, float y )
   const int numsets = 1;
   if(set_point > 1)		// Checks to see if surface is to be modified
   {
-     float point_value[numsets];
+     //float point_value[numsets];
      moveTipToXYLoc( (x-(num_x/2)), (y-(num_y/2))); 
   }
 
@@ -3562,6 +3585,27 @@ spm_report_tapping_mode(void)
 
   return 0;
 }
+
+void nmm_Microscope_Simulator::sendBeginFeelTo (vrpn_float32 x,
+                                                vrpn_float32 y) {
+  long len;
+  char * msgbuf;
+
+  msgbuf = encode_BeginFeelTo(&len, x, y);
+  Send(len, d_BeginFeelTo_type, msgbuf);
+
+}
+
+void nmm_Microscope_Simulator::sendEndFeelTo (vrpn_float32 x,
+                                              vrpn_float32 y) {
+  long len;
+  char * msgbuf;
+
+  msgbuf = encode_EndFeelTo(&len, x, y);
+  Send(len, d_EndFeelTo_type, msgbuf);
+
+}
+
 
 ///////////////////////////////////////////////////////////////////////
 // JakeK and AFMS team: This was changed so that we can stop the simulator

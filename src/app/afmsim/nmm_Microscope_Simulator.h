@@ -389,6 +389,8 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
 
      int stm_sweep_point_nm( const char *bufptr );
 
+     int afmFeelToPoint (vrpn_float32 x, vrpn_float32 y);
+
      int spm_query_scan_range( void );
 
      int spm_set_max_move( const char *bufptr );
@@ -489,6 +491,9 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
 
      int spm_report_tapping_mode(void);
 
+     void sendBeginFeelTo (vrpn_float32 x, vrpn_float32 y);
+     void sendEndFeelTo (vrpn_float32 x, vrpn_float32 y);
+
 
 	 void get_startup_params(float *pv, float *iv, float *dv,
 								float *setpoint, float *scanrate, vrpn_bool *scanmode);
@@ -528,6 +533,8 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
      static int RcvSetRelax( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvMeasureResist( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvZigPointNM( void *_userdata, vrpn_HANDLERPARAM _p );
+     static int RcvFeelTo (void *, vrpn_HANDLERPARAM);
+
      static int RcvSnapShot( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvSnapCancel( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvBluntPointNM( void *_userdata, vrpn_HANDLERPARAM _p );

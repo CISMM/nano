@@ -41,8 +41,7 @@ long quitType;
 
 
 
-int handle_quit (void * userdata, vrpn_HANDLERPARAM) 
-{
+int handle_quit (void * userdata, vrpn_HANDLERPARAM) {
   int * quitNow = (int *) userdata;
   printf("Quitting now...\n");
   *quitNow = 1;
@@ -50,9 +49,8 @@ int handle_quit (void * userdata, vrpn_HANDLERPARAM)
   return 0;  // non-error completion
 }
 
-int handle_any_print (void * userdata, vrpn_HANDLERPARAM p) 
-{
-  vrpn_Connection * c = (vrpn_Connection *) userdata;
+int handle_any_print (void * userdata, vrpn_HANDLERPARAM) {
+  //vrpn_Connection * c = (vrpn_Connection *) userdata;
 
   //fprintf(stderr, "Got message \"%s\" from \"%s\".\n",
           //c->message_type_name(p.type), c->sender_name(p.sender));
@@ -71,8 +69,6 @@ int initJake (int x, int y, int port) {
   num_x = x;
   num_y = y;
   int quitNow = 0;
-  latency.tv_sec = g_waitTime;
-  latency.tv_usec = (g_waitTime - latency.tv_sec) * 1000000;
   currentline = 0;
   StartServer((num_x), (num_y), port);
   quitType = connection->register_message_type("Server Quit Type");
