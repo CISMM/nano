@@ -1,5 +1,9 @@
 2002-10-02  David Borland <borland@cs.unc.edu>
 
+        * URender.[Ch] : removed the URTEXTURE enum and a reference to it.
+
+2002-10-02  David Borland <borland@cs.unc.edu>
+
         * URAxis.[Ch] : removed functions Set*variable*All functions
         from URAxis.  These are now found in URender, which performs the
         default action for the functions.

@@ -332,9 +332,6 @@ ostream& operator<< (ostream& co,const URender& r){
 	case URENDER:
 	  co << " (UR)\n";
 	  break;
-	case URTEXTURE:
-	  co << " (URTex)\n";
-	  break;
 	case URPOLYGON:
 	  co <<" (URPoly)\n";
 	  break;
