@@ -1,3 +1,11 @@
+2001-04-25  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmm_Microscope.C (RcvScanning) : add tweak to
+        state.scanning.d_ignoreChange to avoid start-stop infinite loop
+        problem.  This is a patch that should be corrected by systemic
+        changes, since this could arise for other variables (although
+        no others are quite so fragile?)
+
 2001-04-19  Adam Seeger  <seeger@cs.unc.edu>
 
 	* active_set.Ch - took out changes from yesterday to reduce complexity

@@ -4433,7 +4433,9 @@ void nmm_Microscope_Remote::RcvScanning(vrpn_int32 on_off) {
     //printf("Scanning is %s\n", (on_off ? "on": "off"));
   // hack to avoid infinite loops
   if (state.scanning != on_off) {
+    state.scanning.d_ignoreChange = VRPN_TRUE;
     state.scanning = on_off;
+    state.scanning.d_ignoreChange = VRPN_FALSE;
   }
 }
 
