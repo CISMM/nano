@@ -3,7 +3,9 @@
 
 #include "vrpn_Types.h"
 #include "nmb_TransformMatrix44.h"
-#include "list.h"
+#include <list>
+
+using namespace std;
 
 /*
 format for transformation file (the matrix gives the world to image xform):

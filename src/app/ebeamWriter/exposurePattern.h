@@ -1,7 +1,7 @@
 #ifndef EXPOSUREPATTERN_H
 #define EXPOSUREPATTERN_H
 
-#include "list.h"
+#include <list>
 #include "patternShape.h"
 
 class ExposurePattern : public CompositePatternShape {

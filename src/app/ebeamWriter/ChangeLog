@@ -1,3 +1,10 @@
+2002-04-11  Adam Seeger  <seeger@cs.unc.edu>
+
+	* changed #include <list.h> to #include <list>; added
+	"using namespace std;" where necessary as well as a few compile
+	settings and adding some files to make the program compile and bring
+        this code up to date with changes elsewhere in the nano code.
+
 2002-03-20  Aron Helser  <helser@cs.unc.edu>
 
 	* controlPanels.C: Handle replacement BCString -> string

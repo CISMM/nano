@@ -1,8 +1,10 @@
 #ifndef PATTERNSHAPE_H
 #define PATTERNSHAPE_H
 
+#include <list>
 #include "vrpn_Types.h"
-#include "list.h"
+
+using namespace std;
 
 /* note on goToPoint usage:
 

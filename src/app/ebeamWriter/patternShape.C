@@ -1,3 +1,4 @@
+#include "windows.h"
 #include "patternShape.h"
 #include "edgeTable.h"
 #include "math.h"

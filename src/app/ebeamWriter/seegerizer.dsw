@@ -14,6 +14,9 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name seegerizer_common
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name seegerizer_external
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -29,11 +32,26 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name seegerizer_common
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name seegerizer_external
+    End Project Dependency
 }}}
 
 ###############################################################################
 
 Project: "seegerizer_common"=.\seegerizer_common.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "seegerizer_external"=.\seegerizer_external.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

@@ -3,7 +3,7 @@
 
 #include "imageViewer.h"
 #include "nmb_Image.h"
-#include "list.h"
+#include <list>
 #include "Tcl_Linkvar.h"
 #include "ImageMaker.h"
 #include "exposurePattern.h"
