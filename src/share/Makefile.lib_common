@@ -178,12 +178,14 @@ else
 	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 endif
 
+
 $(LIBRARY_ARCHIVE): $(LIBRARY_OBJ)
 ifdef NM_VERBOSE_MAKEFILE
-	$(AR) ruv $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
+	$(CC) -ar -WR,-u,-v -o $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
 else
-	@echo $(AR) ruv $(@F) ...
-	@$(AR) ruv $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
+	@echo $(CC) -ar -WR,-u,-v -o $(@F) ...
+	@$(CC) -ar -WR,-u,-v -o $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
+#	@$(AR) ruv $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
 endif
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
