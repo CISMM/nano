@@ -231,22 +231,17 @@ char * handle_term_input (ClientData, Tcl_Interp * interp,
 // standard automatic TclLinkvar stuff
 //char * handle_Tk_x_value_change
 
-/** Initialize the Tk control panels and connect them up to the variables
- * they will be controlling */
+/** Initialize the Tk control panels */
 int	init_Tk_control_panels (const char * tcl_script_dir,
                                 int collabMode,
                                 nmb_TimerList * timer)
 {
 	char    command[256];
-	char	cvalue[100];
-	char    index[2];
+	//char	cvalue[100];
+	//char    index[2];
 	Tk_Window       tk_control_window;
-	int i, new_val;
+	//int i, new_val;
 	
-	const double * minColor;
-	const double * maxColor;
-
-
 	VERBOSE(4, "  Initializing Tcl");
 	tk_control_interp = Tcl_CreateInterp();
 
@@ -318,6 +313,29 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 		return(-1);
 	}
 
+        /* Initialize the Tclvar variables */
+        VERBOSE(4, "  Calling Tclvar_init()");
+        Tclnet_init(tk_control_interp, collabMode, timer);
+        if (Tclvar_init(tk_control_interp)) {
+                fprintf(stderr,"Tclvar_init failed.\n");
+                return(-1);
+        }
+        return 0;
+}
+
+
+/** connect some C variables to tk variables */
+int     init_Tk_variables ()
+{
+        char    command[256];
+        char    cvalue[100];
+        char    index[2];
+        int i, new_val;
+
+        const double * minColor;
+        const double * maxColor;
+
+
 	/* Link the variables that need linking and the callback routines
 	 * to handle updates to the mode from either end. */
 	VERBOSE(4, "  Tracing more Tcl variables");
@@ -374,6 +392,8 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 		return(-1);
 	}
 
+
+
 	minColor = graphics->getMinColor();
 	maxColor = graphics->getMaxColor();
 
@@ -395,14 +415,6 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	Tcl_SetVar(tk_control_interp,"polish",(char *) cvalue,TCL_GLOBAL_ONLY);
 	controls_on = 1;
 
-
-	/* Initialize the Tclvar variables */
-	VERBOSE(4, "  Calling Tclvar_init()");
-        Tclnet_init(tk_control_interp, collabMode, timer);
-	if (Tclvar_init(tk_control_interp)) {
-		fprintf(stderr,"Tclvar_init failed.\n");
-		return(-1);
-	}
 
 	// This code sets up the colormap bar displayed in the colormap
 	// tcl window.

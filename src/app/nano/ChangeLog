@@ -1,3 +1,19 @@
+2000-09-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c (main) : moved call to init_Tk_control_panels to an
+	earlier point so that interpreter exists when some Tclvars are
+	initialized in nmb_Dataset - this didn't fix the bug I was tracking
+	down but it seems to make Tclvar_list_of_strings::initializeTcl 
+	happier (I don't see how else it could get the callback set up for
+	changes from tcl although we don't expect such a change for most 
+	if not all of these types of variables) and doesn't seem to break 
+ 	anything
+	* tcl_tk.hc (init_Tk_control_panels) : split this into two functions
+	called init_Tk_control_panels and init_Tk_variables - the second one
+	probably contains some obsolete variables (this change was needed
+	to allow the interpreter to be created earlier in the startup
+	sequence)
+
 2000-09-26  Tom Hudson  <hudson@cs.unc.edu>
 
 	* CollaborationManager.C : include nmb_Debug.h

@@ -6155,6 +6155,16 @@ int main(int argc, char* argv[])
 	delete [] hnbuf;
     }
 
+    VERBOSE(1,"Before Tk initialization");
+    if (tkenable) {
+      // init_Tk_control_panels creates the interpreter and adds most of
+      // the Tk widgits
+      init_Tk_control_panels(tcl_script_dir, istate.collabMode,
+                           &collaborationTimer);
+      set_Tk_command_handler(handleCharacterCommand);
+      VERBOSE(1, "done initialising the control panels\n");
+    }
+
     if (createNewMicroscope(istate, microscope_connection)) {
       display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
       exit(0);
@@ -6297,15 +6307,9 @@ int main(int argc, char* argv[])
   setupCallbacks(forceDevice);
   handTracker_update_rate = istate.phantomRate;
 
-  VERBOSE(1,"Before Tk initialization");
-  if (tkenable) {
-    // init_Tk_control_panels creates the interpreter and adds most of
-    // the Tk widgits
-    init_Tk_control_panels(tcl_script_dir, istate.collabMode,
-                           &collaborationTimer);
-    set_Tk_command_handler(handleCharacterCommand);
-    VERBOSE(1, "done initialising the control panels\n");
-  }
+    if (tkenable) {
+        init_Tk_variables ();
+    }
 
     VERBOSE(1, "Before french ohmmeter initialization");
     if ( tkenable ) {

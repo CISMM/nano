@@ -16,6 +16,9 @@ struct Tcl_Interp;  // from <tcl.h>
 extern int init_Tk_control_panels (const char * tcl_script_dir,
                                    int collabMode,
                                    nmb_TimerList *);
+
+extern int init_Tk_variables ();
+
 extern int poll_Tk_control_panels (void);
 
 extern void set_Tk_command_handler (void (*) (char *, vrpn_bool *, int));
