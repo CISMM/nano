@@ -1,3 +1,9 @@
+2000-08-14  Jeffrey Juliano  <juliano@cs.unc.edu>
+
+	* export_scene.C (get_view_xform): Read unit system from template.
+	(export_scene_to_openNURBS): Perform error-checking on args.
+	(export_scene_to_openNURBS): Write unit system to .3dm file.
+
 2000-08-11  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* all: Merge thirdtech_branch code to trunk.

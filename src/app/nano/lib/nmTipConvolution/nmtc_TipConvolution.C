@@ -22,7 +22,7 @@ nmtc_TipConvolution::nmtc_TipConvolution(nmg_Graphics *g, nmb_ImageList *im):
     (handle_convolutionImageData_change, (void *)this);
   d_convolutionTipName.addCallback
     (handle_convolutionTipName_change, (void *)this);
-  printf("This is a test");
+  printf("This is a test\n");
 }
 
 nmtc_TipConvolution::~nmtc_TipConvolution()

@@ -1,3 +1,7 @@
+2000-08-14  Jeffrey Juliano  <juliano@cs.unc.edu>
+
+	* microscape.c (main): Add call to ios::sync_with_stdio().
+
 2000-08-11  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* all: Merge thirdtech_branch code to trunk.

@@ -1,0 +1,5 @@
+2000-08-14  Jeffrey Juliano  <juliano@cs.unc.edu>
+
+	* nmtc_TipConvolution.C (nmtc_TipConvolution): Add newline to
+	debugging printf.  This printf can probably be removed.
+

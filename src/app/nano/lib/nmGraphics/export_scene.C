@@ -16,6 +16,9 @@
 
 #include <v.h>
 
+/** Unit system used by template file.  We will output using these units. */
+static CRhinoFile::eUnitSystem unit_system = CRhinoFile::no_units;
+
 
 /** Computes the xform that is used in the viewing transformation.
     Unfortunately, vlib doesn't give a way to get the xform, only to get the
@@ -786,6 +789,10 @@ void get_view_xform (
 
     try {
         CRhinoFile* pRF = new CRhinoFile( pfile, CRhinoFile::read );
+
+        // get the unit system from file.  Returns FALSE if "no_units".
+        bOK = pRF->GetUnitSystem (& unit_system);
+
         bOK = get_corners_from_file (model_in_rhino_frame, pRF);
         delete pRF;
     }
@@ -822,6 +829,19 @@ void export_scene_to_openNURBS (
     const BCGrid * const       grid,
     const nmb_PlaneSelection & plane_selection)
 {
+    /////////
+    // First, some error checking.
+    //
+    const char * const fun_name = "export_scene_to_openNURBS";
+    if (! filename) {
+        cerr << fun_name << ": NULL filename--aborting." << endl;
+        return;
+    }
+    if (! grid) {
+        cerr << fun_name << ": NULL BCGrid--aborting." << endl;
+        return;
+    }
+
     /////////
     // Build all the objects before opening the file
     //
@@ -869,8 +889,15 @@ void export_scene_to_openNURBS (
     }
     try {
         CRhinoFile rhino_file (pfile, CRhinoFile::write);
-        rhino_file.SetUnitSystem (CRhinoFile::meters);
+
+        // Use the same unit system as was used in the template file.
+        rhino_file.SetUnitSystem (unit_system);
         
+        // Create a layer for our data
+        CRhinoLayerPtr pLayer = CRhinoLayer::New ("microscope data",
+                                                  CRhinoColor (0, 0, 255));
+        my_mesh.SetLayer (pLayer);
+
         for (int i=0;  i < total_num_viewports;  ++i) {
             my_viewports[i].Write (rhino_file);
         }

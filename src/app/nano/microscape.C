@@ -6012,6 +6012,8 @@ int initialize_environment() {
 
 int main(int argc, char* argv[])
 {
+    ios::sync_with_stdio();
+
     /* Things needed for the timing information */
     MicroscapeInitializationState istate;
     struct          timeval d_time;
