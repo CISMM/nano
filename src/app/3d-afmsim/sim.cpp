@@ -16,7 +16,6 @@
 #include "scan.h"
 #include "draw.h"
 #include "lightcol.h"
-#include "myglu.h"
 #include "sim.h"
 
 GLuint list_sphere;

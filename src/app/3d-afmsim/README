@@ -66,6 +66,7 @@ The following keys produce global changes (not object specific)
 . 'r', 'R' - change the tip radius
 . 'a', 'A' - change the tip angle in case of inv ConeSphere tip.
 . 'i' - toggles between "no scan" to "semi solid scan" to "solid scan".
+. 'u' - to toggle to uncertainty mode
 
 The following perform object specific actions.
 
