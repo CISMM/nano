@@ -15,3 +15,10 @@ app/nano: app/nano/lib
 ### this should probably be moved into app/nano/Makefile
 app/nano/lib:
 	$(MAKE) -C app/nano/lib
+
+.PHONY:	clean
+clean:
+	$(MAKE) -C lib clean
+	$(MAKE) -C app/nano clean
+	$(MAKE) -C app/nano/lib clean
+
