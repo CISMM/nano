@@ -9,9 +9,6 @@
 #ifndef NMB_PLANE_SELECTION_H
 #include <nmb_PlaneSelection.h>
 #endif
-#ifndef NMB_DECORATION_H
-#include <nmb_Decoration.h>  // for nmb_LocationInfo
-#endif
 
 class BCGrid;  // from BCGrid.h
 class nmg_SurfaceMask;
@@ -64,13 +61,13 @@ extern	int	spm_y_strip_masked (const nmb_PlaneSelection &planes, nmg_SurfaceMask
 								GLdouble minColor [3], GLdouble maxColor [3], int which,
 								Vertex_Struct * vertexArray);
 extern	int	spm_grid_to_tris (BCGrid *, GLdouble *, GLdouble *, int);
+extern void setupMaterials (void);  // for initialization
+
 extern	void	spm_set_surface_materials (void);
 extern	void	spm_set_icon_materials (void);
 extern	void	spm_set_measure_materials (void);
 //extern	void	spm_show_location_indicators (int total_num,
 //                     nmb_LocationInfo [], int num_to_show, int last_one);
-extern int spm_render_mark (const nmb_LocationInfo &, void *);
-
 #endif  /* SPM_GL_H */
 
 

@@ -1,3 +1,15 @@
+2001-05-18  Aron Helser  <helser@cs.unc.edu>
+
+	* globjects.hc (spm_render_mark): Moved here, to be with other
+	code that draws objects. 
+	(replaceDefaultObjects): unchanged, just moved in file. 
+
+	* spm_gl.hc (setupMaterials): Moved here, included state that
+	doesn't change. 
+	Doxygen comments. 
+
+	* graphics.hc (setupMaterials): moved to spm_gl
+
 2001-05-18  Jason Clark  <jclark@cs.unc.edu>
 
 	* nmg_Surface.hC: Changed terminology from locking, to associating

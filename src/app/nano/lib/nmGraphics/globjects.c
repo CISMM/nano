@@ -2262,86 +2262,6 @@ int my_scanline_indicator(void *data) {
     return(0);
 }
 
-int replaceDefaultObjects(void)
-{
-  /*init various data struct set list pointer to NULL or empty*/
-  v_room = NULL;
-  v_head = NULL;
-  v_hand = NULL;
-  //v_tracker = NULL;
-  v_screen = NULL;
-  vir_world = NULL;
-
-  /*allocate Lists id's for display lists and save in GLint variables */ 
-  vx_quarter_down = glGenLists(1);
-  vx_half_down = glGenLists(1);
-  vx_quarter_up = glGenLists(1);
-  vx_half_up = glGenLists(1);
-  rubber_corner = glGenLists(1);
-  region_box = glGenLists(1);
-  region_marker = glGenLists(1);
-  aim_struct = glGenLists(1);
-  red_line_struct = glGenLists(1);
-  green_line_struct = glGenLists(1);
-  blue_line_struct = glGenLists(1);
-  collab_hand_struct = glGenLists(1); 
-
-  marker_list = (marker_type *)malloc(sizeof(marker_type));
-  marker_list->id = glGenLists(1);
-  marker_list->next = NULL;
-
-  sweep_struct = glGenLists(1);
-  sphere = glGenLists(1);
-
-  /* init world objects */
-  myobjects();
-  /* create subdivided sphere display list */
-  init_sphere();
-
-  *hand_scale = 0.02;
-  //hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");
-
-  /* Moving text feedback displays from head space to screen space to make them
-   * stationary in head tracked mode.
-   */
-  *room_scale = 1.0;
-  *screen_scale = 1.0;
-
-  // MOVED to chartjunk.c
-  addChartjunk(&v_screen, screen_scale);
-
-  /* End changes */
-
-  // binding display functions to positions in the vlib tree
-
-  addFunctionToFunclist(&vir_world, draw_north_pointing_arrow, NULL,
-	"draw_north_pointing_arrow");
-
-  // THis is commented out as we now call init_world_modechange on graphics startup, so
-  // it should be unnessary
-  //  if (g_config_measurelines) {
-  //    red_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
-  //                          "draw_list(red_line_struct)"); 
-  //    green_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
-  //                          "draw_list(green_line_struct)");
-  //    blue_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
-  //                          "draw_list(blue_line_struct)");
-  //  }
-
-  marker_type *marker_node = marker_list;
-  while (marker_node != NULL) {
-    addFunctionToFunclist(&vir_world,draw_list, &(marker_node->id),
-                                                "draw_list(marker_node->id)");
-    marker_node= marker_node->next;
-  }
-
-  v_replace_drawfunc(0, V_HAND, myhand);
-  v_replace_drawfunc(0, V_ROOM, myroom);
-  v_replace_drawfunc(0, V_HEAD, myhead);
-  v_replace_drawfunc(0, V_SCREEN, myscreen);
-
-  return 0;
-}
 
 int make_rubber_line_point (const PointType point[2], Position_list * p) {
 //int make_rubber_line_point (const float point [2][3], Position_list * p) {
@@ -2457,6 +2377,129 @@ void empty_rubber_line (Position_list * p, int index) {
    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[index + 2]);
    draw_rubber_line[index] = 0;
    draw_rubber_corner_line[index] = 0;
+}
+
+// WARNING
+// This may be inefficient.
+// If it is too slow, write spm_draw_scrapes() and spm_draw_pulses()
+// that do the glLineWidth/glDisable/glBegin/glEnd and just send the
+// vertices in spm_render_mark
+
+int spm_render_mark (const nmb_LocationInfo & p, void *) {
+    GLfloat Bottom [3], Top [3];
+    GLfloat LowerThanBottom[3];
+    
+    Bottom[0] = Top[0] = p.x;
+    Bottom[1] = Top[1] = p.y;
+    Bottom[2] = p.bottom;
+    Top[2] = p.top;
+    LowerThanBottom[0] = p.x; LowerThanBottom[1] = p.y;
+    LowerThanBottom[2] = Bottom[2] - (Top[2] - Bottom[2]);
+    
+    
+    // Partially transparent to make it easier to see surface. 
+    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+
+    glLineWidth(1.0);
+    glDisable(GL_LINE_STIPPLE);
+    glBegin(GL_LINES);
+    VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
+    glVertex3fv(Bottom);
+    glVertex3fv(Top);
+    VERBOSE(20, "          glEnd()");
+    //glEnd();
+    
+    
+    // Partially transparent to make it easier to see surface. 
+    glColor4f(1.0f, 0.0f, 0.5f, 0.5f);
+
+    //glBegin(GL_LINES);
+    glVertex3fv(Bottom);
+    glVertex3fv(LowerThanBottom);
+    glEnd();
+    
+    return 0;
+}
+
+int replaceDefaultObjects(void)
+{
+  /*init various data struct set list pointer to NULL or empty*/
+  v_room = NULL;
+  v_head = NULL;
+  v_hand = NULL;
+  //v_tracker = NULL;
+  v_screen = NULL;
+  vir_world = NULL;
+
+  /*allocate Lists id's for display lists and save in GLint variables */ 
+  vx_quarter_down = glGenLists(1);
+  vx_half_down = glGenLists(1);
+  vx_quarter_up = glGenLists(1);
+  vx_half_up = glGenLists(1);
+  rubber_corner = glGenLists(1);
+  region_box = glGenLists(1);
+  region_marker = glGenLists(1);
+  aim_struct = glGenLists(1);
+  red_line_struct = glGenLists(1);
+  green_line_struct = glGenLists(1);
+  blue_line_struct = glGenLists(1);
+  collab_hand_struct = glGenLists(1); 
+
+  marker_list = (marker_type *)malloc(sizeof(marker_type));
+  marker_list->id = glGenLists(1);
+  marker_list->next = NULL;
+
+  sweep_struct = glGenLists(1);
+  sphere = glGenLists(1);
+
+  /* init world objects */
+  myobjects();
+  /* create subdivided sphere display list */
+  init_sphere();
+
+  *hand_scale = 0.02;
+  //hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");
+
+  /* Moving text feedback displays from head space to screen space to make them
+   * stationary in head tracked mode.
+   */
+  *room_scale = 1.0;
+  *screen_scale = 1.0;
+
+  // MOVED to chartjunk.c
+  addChartjunk(&v_screen, screen_scale);
+
+  /* End changes */
+
+  // binding display functions to positions in the vlib tree
+
+  addFunctionToFunclist(&vir_world, draw_north_pointing_arrow, NULL,
+	"draw_north_pointing_arrow");
+
+  // THis is commented out as we now call init_world_modechange on graphics startup, so
+  // it should be unnessary
+  //  if (g_config_measurelines) {
+  //    red_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
+  //                          "draw_list(red_line_struct)"); 
+  //    green_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
+  //                          "draw_list(green_line_struct)");
+  //    blue_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
+  //                          "draw_list(blue_line_struct)");
+  //  }
+
+  marker_type *marker_node = marker_list;
+  while (marker_node != NULL) {
+    addFunctionToFunclist(&vir_world,draw_list, &(marker_node->id),
+                                                "draw_list(marker_node->id)");
+    marker_node= marker_node->next;
+  }
+
+  v_replace_drawfunc(0, V_HAND, myhand);
+  v_replace_drawfunc(0, V_ROOM, myroom);
+  v_replace_drawfunc(0, V_HEAD, myhead);
+  v_replace_drawfunc(0, V_SCREEN, myscreen);
+
+  return 0;
 }
 
 int initialize_globjects (const char * fontName) {

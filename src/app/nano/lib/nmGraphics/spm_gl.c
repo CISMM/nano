@@ -65,9 +65,9 @@ inline	void	vector_cross(GLfloat a[3], GLfloat b[3], GLfloat c[3])
 #endif  // 0
 
 // TCH 15 May 98
-// Speed up stm_compute_plane_normal() by specilizing cross-product routines,
-// knowing that we're multiplying by axis-aligned unit vectors.
-// Gives us about a 10% speedup.
+/// Speed up stm_compute_plane_normal() by specilizing cross-product routines,
+/// knowing that we're multiplying by axis-aligned unit vectors.
+/// Gives us about a 10% speedup.
 inline void vector_cross_X (GLfloat a[3], GLfloat c[3]) {
     c[0] = 0.0f;
     c[1] = a[2];
@@ -118,7 +118,7 @@ inline	void	vector_normalize(GLfloat a[3])
 }
 
 
-/*	This routine finds the normal to the surface at the given grid
+/**	This routine finds the normal to the surface at the given grid
 * point.  It does this by averaging the normals with the four 4-connected
 * points in the grid (one away in x or y.)
 *	This routine takes into account the current stride in x and y
@@ -235,7 +235,7 @@ void specify_vertexArray(Vertex_Struct * vertexArray, int *vert_counts, int num_
 }
 
 
-/*      This routine will describe the vertex from the grid specified
+/**      This routine will describe the vertex from the grid specified
 * by the (x,y) coordinates.
 *      This routine returns 0 on success and -1 on failure. */
 static int
@@ -615,7 +615,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 
 
 
-/*	This routine will create the openGL commands needed to display a
+/**	This routine will create the openGL commands needed to display a
 * triangle strip for one of the strips needed to show a grid.  This routine
 * displays a strip along the Y axis;  the "which" parameter selects from the
 * strips to be drawn.  The first strip is 0 and the last is grid->num_x - 1,
@@ -701,7 +701,7 @@ int spm_y_strip(const  nmb_PlaneSelection &planes,
     return 0;
 }
 
-/*
+/**
  This version of spm_y_strip uses an assumed masking plane to decide
  what to draw and what not to draw.  Since there could be situations
  where every 2 points alternated on whether they were set to be drawn
@@ -891,7 +891,7 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     return 0;
 }
 
-/*
+/**
  *	This routine will create the openGL commands needed to display a
  * triangle strip for one of the strips needed to show a grid.  This routine
  * displays a strip along the X axis;  the "which" parameter selects from the
@@ -968,7 +968,7 @@ int spm_x_strip(const  nmb_PlaneSelection &planes,
     return 0;
 }
 
-/*
+/**
  This version of spm_x_strip uses an assumed masking plane to decide
  what to draw and what not to draw.  Since there could be situations
  where every 2 points alternated on whether they were set to be drawn
@@ -1161,9 +1161,19 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
 }
 
 
+/** Sets material properties that never change. */
+void setupMaterials (void) {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_COLOR_MATERIAL);
+    /* Use local vertex color for ambient and diffuse */
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    
+}
 
 
-/*	This routine will set up the material properties so that the
+/**	This routine will set up the material properties so that the
 * surface will appear to be made of shiny plastic. */
 
 void spm_set_surface_materials(void)
@@ -1177,12 +1187,6 @@ void spm_set_surface_materials(void)
     //fprintf(stderr, "In spm_set_surface_materials with texture mode %d.\n",
     //g_texture_mode);
     TIMERVERBOSE(5, mytimer, "begin spm_set_surface_materials");
-    
-    /* Use local vertex color for ambient and diffuse */
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_COLOR_MATERIAL);
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     
     // Set up the specular characteristics.
     // Note that the ambient and diffuse colors are from the vertices.
@@ -1253,7 +1257,7 @@ void spm_set_surface_materials(void)
     TIMERVERBOSE(5, mytimer, "end spm_set_surface_materials");
 }
 
-/*	This routine will set up the material properties so that the
+/**	This routine will set up the material properties so that the
 * icons and such will appear to be made of shiny plastic, and will react
 * to specular and diffuse lighting, but will never be textured. */
 
@@ -1265,10 +1269,6 @@ void    spm_set_icon_materials(void)
     VERBOSE(5, "    Entering spm_set_icon_materials()");
     TIMERVERBOSE(5, mytimer, "begin spm_set_icon_materials");
     
-    /* Use local vertex color for ambient and diffuse */
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    glEnable(GL_COLOR_MATERIAL);
-    
     // Set up the specular characteristics.
     // Note that the ambient and diffuse colors are from the vertices.
     // NOTE: It is important that back is set first because front/back
@@ -1277,7 +1277,6 @@ void    spm_set_icon_materials(void)
     glMaterialfv(GL_BACK, GL_SPECULAR, dark);
     glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
     glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
-    glEnable(GL_BLEND);
     
     // Set the light model to have completely ambient-off.  There is
     // ambient specified in light 0.
@@ -1298,7 +1297,7 @@ void    spm_set_icon_materials(void)
     TIMERVERBOSE(5, mytimer, "end spm_set_icon_materials");
 }
 
-/*	This routine will set up the material properties so that the
+/**	This routine will set up the material properties so that the
 * measurement tools (lines and text) will not depend on the lighting
 * model or be texture-mapped.  This is done by setting the ambient
 * coefficients to 1 and the diffuse/specular ones to 0.  */
@@ -1310,15 +1309,6 @@ void    spm_set_measure_materials(void)
     
     VERBOSE(5, "    Entering spm_set_measure_materials()");
     TIMERVERBOSE(5, mytimer, "begin spm_set_measure_materials");
-    
-    /* Use local vertex color for ambient and diffuse */
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    
-    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials:end glColorMaterial");
-    glEnable(GL_COLOR_MATERIAL);
-    glDisable(GL_BLEND);
-    
-    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials:end glEnable(GL_COLOR_MATERIAL)");
     
     // Set up the specular characteristics.
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, dark);
@@ -1348,44 +1338,3 @@ void    spm_set_measure_materials(void)
 }
 
 
-// WARNING
-// This may be inefficient.
-// If it is too slow, write spm_draw_scrapes() and spm_draw_pulses()
-// that do the glLineWidth/glDisable/glBegin/glEnd and just send the
-// vertices in spm_render_mark
-
-int spm_render_mark (const nmb_LocationInfo & p, void *) {
-    GLfloat Bottom [3], Top [3];
-    GLfloat LowerThanBottom[3];
-    
-    Bottom[0] = Top[0] = p.x;
-    Bottom[1] = Top[1] = p.y;
-    Bottom[2] = p.bottom;
-    Top[2] = p.top;
-    LowerThanBottom[0] = p.x; LowerThanBottom[1] = p.y;
-    LowerThanBottom[2] = Bottom[2] - (Top[2] - Bottom[2]);
-    
-    
-    // Partially transparent to make it easier to see surface. 
-    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-
-    glLineWidth(1.0);
-    glDisable(GL_LINE_STIPPLE);
-    glBegin(GL_LINES);
-    VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
-    glVertex3fv(Bottom);
-    glVertex3fv(Top);
-    VERBOSE(20, "          glEnd()");
-    //glEnd();
-    
-    
-    // Partially transparent to make it easier to see surface. 
-    glColor4f(1.0f, 0.0f, 0.5f, 0.5f);
-
-    //glBegin(GL_LINES);
-    glVertex3fv(Bottom);
-    glVertex3fv(LowerThanBottom);
-    glEnd();
-    
-    return 0;
-}

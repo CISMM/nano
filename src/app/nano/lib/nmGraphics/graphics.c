@@ -524,9 +524,6 @@ void buildAlphaTexture (void) {
 
 
 
-void setupMaterials (void) {
-}
-
 // rotation is in degrees
 void compute_texture_matrix(double translate_x, double translate_y,
 		double rotation, double scale_x, double scale_y,

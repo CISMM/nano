@@ -1,6 +1,10 @@
 #ifndef GLOBJECTS_H
 #define GLOBJECTS_H
 
+#ifndef NMB_DECORATION_H
+#include <nmb_Decoration.h>  // for nmb_LocationInfo
+#endif
+
 class Position_list;  // from Position.h
 
 // Function Prototypes
@@ -15,7 +19,6 @@ extern int make_selected_region_marker (float x_min, float y_min, float x_max,
 extern int make_green_line(const float a[], const float b[]);
 
 //   Called in nmg_GraphicsImpl.c
-extern int replaceDefaultObjects (void);
 extern int make_aim (const float a [], const float b []);
 extern int clear_world_modechange (int mode, int style, int tool_param);
 extern int init_world_modechange (int mode, int style, int tool_param);
@@ -41,7 +44,10 @@ extern int make_slow_line_3d_marker(const float point[2][3], Position_list * p);
   // third is the position list to add this point to.
 extern void empty_rubber_line (Position_list *);
 extern void empty_rubber_line (Position_list *, int);
+extern int spm_render_mark (const nmb_LocationInfo &, void *);
 
+
+extern int replaceDefaultObjects (void);
 extern int initialize_globjects (const char * fontName = NULL);
 
 #endif  // GLOBJECTS_H
