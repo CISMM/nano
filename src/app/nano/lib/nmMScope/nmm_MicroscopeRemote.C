@@ -59,6 +59,7 @@
 // from nmm_Microscope.h
 #define FC_MAX_HALFCYCLES (100)
 
+
 // Microscope
 //
 // Tom Hudson, September 1997
@@ -70,18 +71,25 @@
 
 nmm_Microscope_Remote::nmm_Microscope_Remote
   (const AFMInitializationState & i,
-   vrpn_Connection * c)
-      : nmm_Microscope ("nmm_Microscope@lysine", c),
-        state(i),
-        d_relax_comp(this),
-        d_dataset (NULL),
-        d_decoration (NULL),
-        readMode (READ_FILE),	// differentiates between Live and Replay
-        d_pointDataHandlers (NULL),
-        d_modifyModeHandlers (NULL),
-        d_imageModeHandlers (NULL),
-        d_scanlineModeHandlers (NULL),
-        d_scanlineDataHandlers (NULL)
+   vrpn_Connection * c) :
+    nmb_Device_Client("nmm_Microscope@lysine", c),
+    nmm_Microscope ("nmm_Microscope@lysine", c),
+    state(i),
+    d_relax_comp(this),
+    d_dataset (NULL),
+    d_decoration (NULL),
+    d_mod_window_initialized(vrpn_FALSE),
+    d_mod_window_min_x(0),
+    d_mod_window_min_y(0),
+    d_mod_window_max_x(0),
+    d_mod_window_max_y(0),
+    d_mod_window_pad(5),
+    readMode (READ_FILE),   // differentiates between Live and Replay
+    d_pointDataHandlers (NULL),
+    d_modifyModeHandlers (NULL),
+    d_imageModeHandlers (NULL),
+    d_scanlineModeHandlers (NULL),
+    d_scanlineDataHandlers (NULL)
 {
   gettimeofday(&d_nowtime, &d_nowzone);
   d_next_time.tv_sec = 0L;
@@ -548,7 +556,6 @@ long nmm_Microscope_Remote::NewEpoch (void) {
   state.current_epoch++;
   return 0;
 }
-
 
 
 long nmm_Microscope_Remote::ModifyMode (void) {
@@ -1529,6 +1536,19 @@ long nmm_Microscope_Remote::SetScanlineModeParameters(){
     default:
 	return 0;
   }
+}
+
+long nmm_Microscope_Remote::JumpToScanLine(long line)
+{
+  char * msgbuf;
+  long len;
+ 
+  msgbuf = encode_JumpToScanLine(&len, line);
+
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_JumpToScanLine_type);
 }
 
 long nmm_Microscope_Remote::SetStdDevParams (const long _samples,
@@ -2906,9 +2926,6 @@ int nmm_Microscope_Remote::handle_UdpSeqNum (void * userdata,
   return 0;
 }
 
-
-
-
 /////////////////////////////////////////////////////////////////////////
 
 
@@ -3225,6 +3242,8 @@ void nmm_Microscope_Remote::RcvInModMode (void) {
   state.acquisitionMode = MODIFY;
   //printf("In modify mode\n");
 
+  d_mod_window_initialized = vrpn_FALSE;
+
   // I think this should only be done if we get the startingToRelax message.
   // Do relaxation compensation ( if it is enabled)
   //d_relax_comp.start_fix(_sec, _usec, state.lastZ);
@@ -3257,6 +3276,8 @@ void nmm_Microscope_Remote::RcvInImgModeT (const long, const long) {
 // case AFM_IN_IMG_MODE:
 // case SPM_INVISIBLE_TRAIL:
 void nmm_Microscope_Remote::RcvInImgMode (void) {
+
+  int previousAcquisitionMode = state.acquisitionMode;
   state.acquisitionMode = IMAGE;
   //printf("In image mode\n");
 
@@ -3270,6 +3291,32 @@ void nmm_Microscope_Remote::RcvInImgMode (void) {
   //if (!state.doRelaxUp) { ... }
 
   doImageModeCallbacks();
+
+  // did we just come out of modifying and did we receive at least one 
+  // point result?
+  if ((previousAcquisitionMode == MODIFY) && d_mod_window_initialized) {
+    // add padding to the region
+    d_mod_window_min_x -= d_mod_window_pad;
+    d_mod_window_min_y -= d_mod_window_pad;
+    d_mod_window_max_x += d_mod_window_pad;
+    d_mod_window_max_y += d_mod_window_pad;
+    // check to make sure we don't exceed the image boundaries
+    if (d_mod_window_min_x < 0) d_mod_window_min_x = 0;
+    if (d_mod_window_min_y < 0) d_mod_window_min_y = 0;
+    if (d_mod_window_max_x > d_dataset->inputGrid->numX() - 1)
+        d_mod_window_max_x = d_dataset->inputGrid->numX() - 1;
+    if (d_mod_window_max_y > d_dataset->inputGrid->numY() - 1)
+        d_mod_window_max_y = d_dataset->inputGrid->numY() - 1;
+
+    // this function would be nice but isn't implemented and probably
+    // would require someone to write new Topometrix dsp code
+    //SetScanWindow(d_mod_window_min_x, d_mod_window_min_y,
+    //              d_mod_window_max_x, d_mod_window_max_y);
+
+    // instead we do this:
+    JumpToScanLine(d_mod_window_min_y);
+
+  }
 }
 
 void nmm_Microscope_Remote::RcvModForceSet (const float _value) {
@@ -3556,6 +3603,20 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
   d_decoration->trueTipLocation[2] = z_value->value();
   d_decoration->trueTipLocation_changed = 1;
 
+  if (state.acquisitionMode == MODIFY) {
+     if (!d_mod_window_initialized){
+        d_mod_window_min_x = _x;
+        d_mod_window_min_y = _y;
+        d_mod_window_max_x = _x;
+        d_mod_window_max_y = _y;
+        d_mod_window_initialized = vrpn_TRUE;
+     } else {
+        if (_x < d_mod_window_min_x) d_mod_window_min_x = _x;
+        else if (_x > d_mod_window_max_x) d_mod_window_max_x = _x;
+        if (_y < d_mod_window_min_y) d_mod_window_min_y = _y;
+        else if (_y > d_mod_window_max_y) d_mod_window_max_y = _y;
+     }
+  }
 }
 
 // case STM_ZIG_RESULT_NM:
@@ -3877,14 +3938,13 @@ void nmm_Microscope_Remote::RcvServerPacketTimestamp (const long, const long) {
   // This message is for use by networking code
 }
 
-extern TopoFile GTF;
 void nmm_Microscope_Remote::RcvTopoFileHeader (const long _length, const char *header) {
   printf("********** RCV'D TOPO FILE HEADER **********\n");
   // DO NOTHING
   if(_length < 1536){
 	printf("Unexpected Header length %ld need 1536\n",_length);
   }else{
-	GTF.parseHeader(header,_length);
+	d_topoFile.parseHeader(header,_length);
   	printf("********** Got Topometrix file header, length %ld\n", _length);
 /*	handle=fopen("temp.tfr","w");
 	if(handle == NULL){printf("ERROR WRITING TEMP.TFR");}

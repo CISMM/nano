@@ -28,6 +28,8 @@ struct stm_stream;  // from stm_file.h
 
 #include <Scanline.h>
 
+#include <Topo.h>
+
 // Microscope
 //
 // Tom Hudson, September 1997
@@ -49,7 +51,7 @@ struct stm_stream;  // from stm_file.h
 // someday.
 
 
-class nmm_Microscope_Remote : public nmm_Microscope {
+class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
     friend class nmm_RelaxComp;
   public:
 
@@ -63,6 +65,8 @@ class nmm_Microscope_Remote : public nmm_Microscope {
     virtual long mainloop (void);
 
     AFMState state;
+
+    TopoFile d_topoFile;
 
     nmm_RelaxComp d_relax_comp;
 
@@ -219,13 +223,17 @@ class nmm_Microscope_Remote : public nmm_Microscope {
 
     int getTimeSinceConnected(void);
 
-    // Scanline mode
+    // Scanline mode - parameters sent by these functions reside in
+    // state.scanline and are typically set in the user interface
     long EnterScanlineMode(void);
     long ExitScanlineMode(void);
     long AcquireScanline(void);
     long SetScanlineModeParameters(void);
     long SetFeedbackForScanline(void);
  
+    // set which line to start scanning in image mode
+    long JumpToScanLine(long line);
+
     // ODDS AND ENDS
 
     void ResetClock (void);
@@ -270,6 +278,21 @@ class nmm_Microscope_Remote : public nmm_Microscope {
 
     nmb_Dataset * d_dataset;
     nmb_Decoration * d_decoration;
+
+    // to keep track of region to be sent using SetScanWindow():
+    // this basically just accumulates a bounding box for all points
+    // received during the latest modification
+    vrpn_bool d_mod_window_initialized; // is the mod_window initialized
+                                        // for the current modification
+                                        // when we first switch to img mode
+                                        // this refers to the previous
+                                        // modification but after that it
+                                        // refers to the next modification
+    vrpn_int32 d_mod_window_min_x;
+    vrpn_int32 d_mod_window_min_y;
+    vrpn_int32 d_mod_window_max_x;
+    vrpn_int32 d_mod_window_max_y;
+    vrpn_int32 d_mod_window_pad; // some padding on the boundary
 
   private: // OBSOLETE
 
@@ -517,7 +540,6 @@ class nmm_Microscope_Remote : public nmm_Microscope {
     static int handle_RecvTimestamp (void *, vrpn_HANDLERPARAM);
     static int handle_FakeSendTimestamp (void *, vrpn_HANDLERPARAM);
     static int handle_UdpSeqNum (void *, vrpn_HANDLERPARAM);
-
 
     // OBSOLETE
     //void RcvSnapShotBegin (const long, const long);

@@ -26,17 +26,15 @@
 nmm_Microscope::nmm_Microscope
     (const char * name,
      vrpn_Connection * connection) :
-
-  d_connection (connection),
-  d_fileController (new vrpn_File_Controller (connection)),
+//  d_connection (connection),             moved to nmb_Device
+//  d_fileController (new vrpn_File_Controller (connection)),moved to nmb_Device
   d_tcl_script_dir (NULL) {
 
-  char * servicename;           // Tiger HACK probably need to do that
-  servicename = vrpn_copy_service_name(name);   // to get the right name.
+//  char * servicename;           // Tiger HACK probably need to do that
+//  servicename = vrpn_copy_service_name(name);   // to get the right name.
 
   if (connection) {
-    d_myId = connection->register_sender(servicename);	// Tiger changed name
-							// to servicename
+//    d_myId = connection->register_sender(servicename); moved to nmb_Device
 
 /* ****************************************************************
    Can't do echo, because if you sent a message containing a message
@@ -293,10 +291,14 @@ nmm_Microscope::nmm_Microscope
         ("nmm Microscope InScanlineMode");
     d_ScanlineData_type = connection->register_message_type
         ("nmm Microscope ScanlineData");
+
+    // unrelated to Scanline mode (this is for 2D scanning)
+    d_JumpToScanLine_type = connection->register_message_type
+        ("nmm Microscope JumpToScanLine");
   }
 
-  if (servicename)
-    delete [] servicename;
+//  if (servicename)	moved to nmb_Device
+//    delete [] servicename;
 }
 
 
@@ -307,12 +309,14 @@ nmm_Microscope::~nmm_Microscope (void) {
 
 }
 
+/*
 long nmm_Microscope::mainloop (void) {
   if (d_connection)
     CHECK(d_connection->mainloop());
 
   return 0;
 }
+*/
 
 // static
 void nmm_Microscope::registerMicroscopeMessagesForForwarding
@@ -4025,12 +4029,17 @@ long nmm_Microscope::decode_RequestScanLine(const char ** buf, vrpn_float32 *x,
 // data array; successive elements for each dataset are expected to
 // immediately follow the first (i.e. the data for a given channel is one
 // contiguous block)
-char * nmm_Microscope::encode_ScanlineData(long *len, vrpn_float32 x,
-    vrpn_float32 y, vrpn_float32 z, vrpn_float32 angle, vrpn_float32 slope, vrpn_float32 width,
-    vrpn_int32 resolution, vrpn_int32 feedback_enabled, vrpn_int32 checking_forcelimit,
-    vrpn_float32 max_force_setting, vrpn_float32 max_z_step, vrpn_float32 max_xy_step,
+char * nmm_Microscope::encode_ScanlineData(long *len, 
+    vrpn_float32 x, vrpn_float32 y, vrpn_float32 z,
+    vrpn_float32 angle, 
+    vrpn_float32 slope, vrpn_float32 width,
+    vrpn_int32 resolution, vrpn_int32 feedback_enabled, 
+    vrpn_int32 checking_forcelimit,
+    vrpn_float32 max_force_setting, 
+    vrpn_float32 max_z_step, vrpn_float32 max_xy_step,
     vrpn_int32 sec, vrpn_int32 usec,
-    vrpn_int32 num_channels, vrpn_int32 * offset, vrpn_float32 *data) {
+    vrpn_int32 num_channels, vrpn_int32 * offset, 
+    vrpn_float32 *data) {
   char * msgbuf = NULL;
   char * mptr;
   vrpn_int32 mlen;
@@ -4075,10 +4084,13 @@ char * nmm_Microscope::encode_ScanlineData(long *len, vrpn_float32 x,
 }
 
 long nmm_Microscope::decode_ScanlineDataHeader(const char ** buf,
-    vrpn_float32 *x, vrpn_float32 *y, vrpn_float32 *z, vrpn_float32 *angle, vrpn_float32 *slope, vrpn_float32 *width,
-        vrpn_int32 *resolution, vrpn_int32 *feedback_enabled, vrpn_int32 *checking_forcelimit,
-        vrpn_float32 *max_force_setting, vrpn_float32 * max_z_step, vrpn_float32 *max_xy_step,
-        vrpn_int32 *sec, vrpn_int32 *usec, vrpn_int32 *num_channels)
+    vrpn_float32 *x, vrpn_float32 *y, vrpn_float32 *z, 
+    vrpn_float32 *angle, vrpn_float32 *slope, vrpn_float32 *width,
+    vrpn_int32 *resolution, 
+    vrpn_int32 *feedback_enabled, vrpn_int32 *checking_forcelimit,
+    vrpn_float32 *max_force_setting, 
+    vrpn_float32 * max_z_step, vrpn_float32 *max_xy_step,
+    vrpn_int32 *sec, vrpn_int32 *usec, vrpn_int32 *num_channels)
 {
   CHECK(vrpn_unbuffer(buf, x));
   CHECK(vrpn_unbuffer(buf, y));
@@ -4100,29 +4112,40 @@ long nmm_Microscope::decode_ScanlineDataHeader(const char ** buf,
 }
 
 long nmm_Microscope::decode_ScanlineDataPoint(const char ** buf,
-                                vrpn_int32 fieldCount, vrpn_float32 *fieldValues){
+            vrpn_int32 fieldCount, vrpn_float32 *fieldValues){
   for (int i = 0; i < fieldCount; i++)
     CHECK(vrpn_unbuffer(buf, &(fieldValues[i])));
 
   return 0;
 }
 
-long nmm_Microscope::dispatchMessage (long len, const char * buf, vrpn_int32 type) {
-  struct timeval now;
-  long retval;
+char * nmm_Microscope::encode_JumpToScanLine (long *len, 
+                                              vrpn_int32 line_number)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
 
-  gettimeofday(&now, NULL);
-  // If we aren't connected to anything, just pretend we sent the message
-  // Useful if we are viewing a file, like a Topo file.
-  if (d_connection) {
-      retval = d_connection->pack_message(len, now, type, d_myId, (char *) buf,
-                                      vrpn_CONNECTION_RELIABLE);
+  if (!len) return NULL;
+  
+  *len = sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_JumpToScanLine:  "
+                    "Out of memory.\n");
+    *len = 0;
   } else {
-      retval = 0;
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, line_number);
   }
-  if (len > 0) {
-      delete [] (char *) buf;
-  }
-  return retval;
+
+  return msgbuf;
 }
 
+long nmm_Microscope::decode_JumpToScanLine (const char ** buf, 
+                                            vrpn_int32 *line_number)
+{
+  CHECK(vrpn_unbuffer(buf, line_number));
+  return 0;
+}

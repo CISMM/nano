@@ -41,7 +41,7 @@ extern Ohmmeter *the_french_ohmmeter_ui;
 //#include "globjects.h"  // make_selected_region_marker
 
 // from microscape.c
-extern TopoFile TF;
+//extern TopoFile GTF;
 
 #if (!defined(X) || !defined(Y) || !defined(Z))
 #define	X	(0)
@@ -1101,14 +1101,13 @@ void Microscope::RcvServerPacketTimestamp (const int, const int) {
   // This message is for use by networking code
 }
 
-extern TopoFile GTF;
 void Microscope::RcvTopoFileHeader (const int _length, const char *header) {
   printf("********** RCV'D TOPO FILE HEADER **********\n");
   // DO NOTHING
   if(_length < 1536){
 	printf("Unexpected Header length %d need 1536\n",_length);
   }else{
-	GTF.parseHeader(header,_length);
+	d_topoFile.parseHeader(header,_length);
   	printf("********** Got Topometrix file header, length %d\n", _length);
 /*	handle=fopen("temp.tfr","w");
 	if(handle == NULL){printf("ERROR WRITING TEMP.TFR");}

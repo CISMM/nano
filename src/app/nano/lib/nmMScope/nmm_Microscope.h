@@ -11,6 +11,7 @@ class vrpn_ConnectionForwarder;
 
 class vrpn_Connection;
 
+#include <nmb_Device.h>
 
 // nmm_Microscope
 //
@@ -37,7 +38,7 @@ class nmm_Microscope {
     virtual ~nmm_Microscope (void);
       // Destructor. HP compiler doesn't like this declared with "= 0;"
 
-    virtual long mainloop (void);
+//    virtual long mainloop (void);
 
     enum Direction { Forward, Backward };
 
@@ -65,14 +66,14 @@ class nmm_Microscope {
 
   protected:
 
-    vrpn_Connection * d_connection;
-    vrpn_File_Controller * d_fileController;
+//    vrpn_Connection * d_connection; moved to nmb_Device
+//    vrpn_File_Controller * d_fileController; moved to nmb_Device
 
     char * d_tcl_script_dir;
 
     // VRPN stuff
 
-    long d_myId;
+//    long d_myId; moved to nmb_Device
 
     static long d_numOutputMessageNames;
     static char * d_outputMessageName [];
@@ -81,7 +82,7 @@ class nmm_Microscope {
 
     // general messages
 
-    long d_SetRegionNM_type;  // from client
+    long d_SetRegionNM_type;  // client ==> server
     long d_ScanTo_type;
     long d_ScanToZ_type;
     long d_ZagTo_type;
@@ -116,11 +117,13 @@ class nmm_Microscope {
     long d_QueryStdDevParams_type;
     long d_QueryPulseParams_type;
 
-    // scanline mode
+    // scanline mode - should probably be called linescan mode
     long d_EnterScanlineMode_type;
     long d_RequestScanLine_type;
 
-    long d_VoltsourceEnabled_type;  // from server
+    long d_JumpToScanLine_type;
+
+    long d_VoltsourceEnabled_type;  // server ==> client
     long d_VoltsourceDisabled_type;
     long d_AmpEnabled_type;
     long d_AmpDisabled_type;
@@ -264,8 +267,10 @@ class nmm_Microscope {
     char * encode_SetStPtDelay (long * len, vrpn_int32 delay);
     long decode_SetStPtDelay (const char ** buf, vrpn_int32 * delay);
     char * encode_SetRelax (long * len, vrpn_int32 min, vrpn_int32 sep);
-    long decode_SetRelax (const char ** buf, vrpn_int32 * min, vrpn_int32 * sep);
-    char * encode_RecordResistance (long * len, vrpn_int32 meter, struct timeval time,
+    long decode_SetRelax (const char ** buf, vrpn_int32 * min, 
+                          vrpn_int32 * sep);
+    char * encode_RecordResistance (long * len, vrpn_int32 meter, 
+                  struct timeval time,
                   float resistance, float v, float r, float f);
     long decode_RecordResistance (const char ** buf, vrpn_int32 * meter,
                struct timeval * time, float * resistance, float * v,
@@ -274,22 +279,26 @@ class nmm_Microscope {
     long decode_SetStdDevParams (const char ** buf,
                vrpn_int32 * samples, float * freq);
     char * encode_SetScanWindow (long * len,
-                  vrpn_int32 minx, vrpn_int32 miny, vrpn_int32 maxx, vrpn_int32 maxy);
+           vrpn_int32 minx, vrpn_int32 miny, vrpn_int32 maxx, vrpn_int32 maxy);
     long decode_SetScanWindow (const char ** buf,
-               vrpn_int32 * minx, vrpn_int32 * miny, vrpn_int32 * maxx, vrpn_int32 * maxy);
+           vrpn_int32 * minx, vrpn_int32 * miny, vrpn_int32 * maxx, 
+           vrpn_int32 * maxy);
     char * encode_SetGridSize (long * len, vrpn_int32 x, vrpn_int32 y);
     long decode_SetGridSize (const char ** buf, vrpn_int32 * x, vrpn_int32 * y);
-    char * encode_SetOhmmeterSampleRate (long * len, vrpn_int32 which, vrpn_int32 rate);
+    char * encode_SetOhmmeterSampleRate (long * len, vrpn_int32 which, 
+                                         vrpn_int32 rate);
     long decode_SetOhmmeterSampleRate (const char ** buf,
                vrpn_int32 * which, vrpn_int32 * rate);
     char * encode_EnableAmp (long * len,
-                  vrpn_int32 which, float offset, float percentOffset, vrpn_int32 gain);
+                  vrpn_int32 which, float offset, float percentOffset, 
+                  vrpn_int32 gain);
     long decode_EnableAmp (const char ** buf,
                vrpn_int32 * which, float * offset, float * percentOffset,
 	       vrpn_int32 * gain);
     char * encode_DisableAmp (long * len, vrpn_int32 which);
     long decode_DisableAmp (const char ** buf, vrpn_int32 * which);
-    char * encode_EnableVoltsource (long * len, vrpn_int32 which, float voltage);
+    char * encode_EnableVoltsource (long * len, vrpn_int32 which, 
+                                    float voltage);
     long decode_EnableVoltsource (const char ** buf,
                vrpn_int32 * which, float * voltage);
     char * encode_DisableVoltsource (long * len, vrpn_int32 which);
@@ -299,7 +308,8 @@ class nmm_Microscope {
     char * encode_SetMaxMove (long * len, float distance);
     long decode_SetMaxMove (const char ** buf, float * distance);
     char * encode_SetModForce (int * len, float newforce, float min, float max);
-    int decode_SetModForce (const char ** buf, float * distance, float * min, float * max);
+    int decode_SetModForce (const char ** buf, float * distance, 
+                         float * min, float * max);
 
     char * encode_DrawSharpLine (long * len,
                   float startx, float starty, float endx, float endy,
@@ -340,7 +350,8 @@ class nmm_Microscope {
     char * encode_VoltsourceDisabled (long * len, vrpn_int32);
     long decode_VoltsourceDisabled (const char ** buf, vrpn_int32 *);
     char * encode_AmpEnabled (long * len, vrpn_int32, float, float, vrpn_int32);
-    long decode_AmpEnabled (const char ** buf, vrpn_int32 *, float *, float *, vrpn_int32 *);
+    long decode_AmpEnabled (const char ** buf, vrpn_int32 *, float *, 
+                            float *, vrpn_int32 *);
     char * encode_AmpDisabled (long * len, vrpn_int32);
     long decode_AmpDisabled (const char ** buf, vrpn_int32 *);
     char * encode_StartingToRelax (long * len, vrpn_int32, vrpn_int32);
@@ -349,37 +360,41 @@ class nmm_Microscope {
     long decode_RelaxSet (const char ** buf, vrpn_int32 *, vrpn_int32 *);
     char * encode_StdDevParameters (long * len, vrpn_int32, float);
     long decode_StdDevParameters (const char ** buf, vrpn_int32 *, float *);
-    char * encode_WindowLineData (long * len, vrpn_int32 x, vrpn_int32 y, vrpn_int32 dx, vrpn_int32 dy,
-                                  vrpn_int32, vrpn_int32, vrpn_int32 *, vrpn_int32 sec, vrpn_int32 usec,
-                                  unsigned short ** data);
-    char * encode_WindowLineData (long * len, vrpn_int32 x, vrpn_int32 y, vrpn_int32 dx, vrpn_int32 dy,
-                                  vrpn_int32, vrpn_int32, vrpn_int32 sec, vrpn_int32 usec,
-                                  float ** data);
+    char * encode_WindowLineData (long * len, vrpn_int32 x, vrpn_int32 y, 
+               vrpn_int32 dx, vrpn_int32 dy, vrpn_int32, vrpn_int32,
+               vrpn_int32 *, vrpn_int32 sec, vrpn_int32 usec,
+               unsigned short ** data);
+    char * encode_WindowLineData (long * len, vrpn_int32 x, vrpn_int32 y, 
+               vrpn_int32 dx, vrpn_int32 dy, vrpn_int32, vrpn_int32,
+               vrpn_int32 sec, vrpn_int32 usec,
+               float ** data);
     long decode_WindowLineDataHeader (const char ** buf, vrpn_int32 *,
-                                      vrpn_int32 *, vrpn_int32 *, vrpn_int32 *,
-                                      vrpn_int32 *, vrpn_int32 *, vrpn_int32 *, vrpn_int32 *);
+               vrpn_int32 *, vrpn_int32 *, vrpn_int32 *,
+               vrpn_int32 *, vrpn_int32 *, vrpn_int32 *, vrpn_int32 *);
     long decode_WindowLineDataField (const char ** buf, 
-                                     vrpn_int32, float *);
-    char * encode_WindowScanNM (long * len, vrpn_int32, vrpn_int32, vrpn_int32, vrpn_int32, float,
-				float);
-    long decode_WindowScanNM (const char ** buf, vrpn_int32 *, vrpn_int32 *, vrpn_int32 *, vrpn_int32 *,
-                              float *, float *);
-    char * encode_WindowBackscanNM (long * len, vrpn_int32, vrpn_int32, vrpn_int32, vrpn_int32, float,
-                                    float);
-    long decode_WindowBackscanNM (const char ** buf, vrpn_int32 *, vrpn_int32 *, vrpn_int32 *,
-                                  vrpn_int32 *, float *, float *);
-    char * encode_PointResultNM (long * len, float, float, vrpn_int32, vrpn_int32, float,
-                                 float);
-    long decode_PointResultNM (const char ** buf, float *, float *, vrpn_int32 *,
-                               vrpn_int32 *, float *, float *);
-    char * encode_ResultData (long * len, float, float, vrpn_int32, vrpn_int32, vrpn_int32,
-                              float *);
+               vrpn_int32, float *);
+    char * encode_WindowScanNM (long * len, vrpn_int32, vrpn_int32, vrpn_int32,
+                      vrpn_int32, float, float);
+    long decode_WindowScanNM (const char ** buf, vrpn_int32 *, 
+                      vrpn_int32 *, vrpn_int32 *, vrpn_int32 *,
+                      float *, float *);
+    char * encode_WindowBackscanNM (long * len, vrpn_int32, vrpn_int32, 
+                      vrpn_int32, vrpn_int32, float, float);
+    long decode_WindowBackscanNM (const char ** buf, vrpn_int32 *, 
+                      vrpn_int32 *, vrpn_int32 *,
+                      vrpn_int32 *, float *, float *);
+    char * encode_PointResultNM (long * len, float, float, vrpn_int32, 
+                      vrpn_int32, float, float);
+    long decode_PointResultNM (const char ** buf, float *, float *, 
+                      vrpn_int32 *, vrpn_int32 *, float *, float *);
+    char * encode_ResultData (long * len, float, float, vrpn_int32, 
+                      vrpn_int32, vrpn_int32, float *);
     long decode_ResultData (const char ** buf, float *, float *, vrpn_int32 *,
                             vrpn_int32 *, vrpn_int32 *, float *);
-    char * encode_ResultNM (long * len, float, float, vrpn_int32, vrpn_int32, float, float,
-                            float, float);
-    long decode_ResultNM (const char ** buf, float *, float *, vrpn_int32 *, vrpn_int32 *,
-                          float *, float *, float *, float *);
+    char * encode_ResultNM (long * len, float, float, vrpn_int32, vrpn_int32, 
+                            float, float, float, float);
+    long decode_ResultNM (const char ** buf, float *, float *, vrpn_int32 *, 
+                      vrpn_int32 *, float *, float *, float *, float *);
     char * encode_ScanRange (long * len, float, float, float, float, float,
                              float);
     long decode_ScanRange (const char ** buf, float *, float *, float *,
@@ -389,16 +404,20 @@ class nmm_Microscope {
                             float *, float *);
     char * encode_ResistanceFailure (long * len, vrpn_int32);
     long decode_ResistanceFailure (const char ** buf, vrpn_int32 *);
-    char * encode_Resistance (long * len, vrpn_int32, vrpn_int32, vrpn_int32, float);
-    long decode_Resistance (const char ** buf, vrpn_int32 *, vrpn_int32 *, vrpn_int32 *, float *);
+    char * encode_Resistance (long * len, vrpn_int32, vrpn_int32, 
+                              vrpn_int32, float);
+    long decode_Resistance (const char ** buf, vrpn_int32 *, vrpn_int32 *, 
+                              vrpn_int32 *, float *);
     char * encode_Resistance2 (long * len, vrpn_int32, vrpn_int32, vrpn_int32, 
-				float, float, float, float);
-    long decode_Resistance2 (const char ** buf, vrpn_int32 *, vrpn_int32 *, vrpn_int32 *, float *,
+			      float, float, float, float);
+    long decode_Resistance2 (const char ** buf, vrpn_int32 *, 
+                             vrpn_int32 *, vrpn_int32 *, float *,
                              float *, float *, float *);
-	long decode_ResistanceWithStatus(const char ** buf, vrpn_int32 *, vrpn_int32 *, 
-			vrpn_int32 *, float *, float *, float *, float *, vrpn_int32 *);
-	char * encode_ResistanceWithStatus (long * len, vrpn_int32, vrpn_int32,
-			vrpn_int32, float, float, float, float, vrpn_int32);
+    long decode_ResistanceWithStatus(const char ** buf, vrpn_int32 *, 
+                vrpn_int32 *, vrpn_int32 *,
+                float *, float *, float *, float *, vrpn_int32 *);
+    char * encode_ResistanceWithStatus (long * len, vrpn_int32, vrpn_int32,
+                vrpn_int32, float, float, float, float, vrpn_int32);
 
     char * encode_ReportSlowScan (long * len, vrpn_int32);
     long decode_ReportSlowScan (const char ** buf, vrpn_int32 *);
@@ -408,12 +427,14 @@ class nmm_Microscope {
       // Allocates *length characters in *buffer and fills it in with
       // the scan parameters.  It is the caller's responsibility to delete [].
 
-    char * encode_HelloMessage (long * len, char *, char *, vrpn_int32, vrpn_int32);
+    char * encode_HelloMessage (long * len, char *, char *, vrpn_int32, 
+                              vrpn_int32);
     long decode_HelloMessage (const char ** buf, char *, char *, vrpn_int32 *,
                               vrpn_int32 *);
-    char * encode_ClientHello (long * len, char *, char *, vrpn_int32, vrpn_int32);
+    char * encode_ClientHello (long * len, char *, char *, vrpn_int32, 
+                              vrpn_int32);
     long decode_ClientHello (const char ** buf, char *, char *, vrpn_int32 *,
-                             vrpn_int32 *);
+                              vrpn_int32 *);
     long decode_ScanDatasetHeader (const char ** buf, vrpn_int32 *);
     long decode_ScanDataset (const char ** buf, char *, char *, float *,
                              float *);
@@ -428,7 +449,8 @@ class nmm_Microscope {
     char * encode_ReportGridSize (long * len, vrpn_int32, vrpn_int32);
     long decode_ReportGridSize (const char ** buf, vrpn_int32 *, vrpn_int32 *);
     char * encode_ServerPacketTimestamp (long * len, vrpn_int32, vrpn_int32);
-    long decode_ServerPacketTimestamp (const char ** buf, vrpn_int32 *, vrpn_int32 *);
+    long decode_ServerPacketTimestamp (const char ** buf, vrpn_int32 *, 
+                   vrpn_int32 *);
 // Implemented by Tiger
     char * encode_TopoFileHeader (long * len, char * buf, vrpn_int32 size);
 // Tiger
@@ -438,44 +460,45 @@ class nmm_Microscope {
 
     // similar structure to WindowLineData: num_points = reports,
     //				    num_halfcycles = fields
-    char * encode_ForceCurveData (long * len, float x, float y, vrpn_int32 num_points,
-				vrpn_int32 num_halfcycles, vrpn_int32 sec, vrpn_int32 usec,
-				float *z, float **data);
+    char * encode_ForceCurveData (long * len, float x, float y, 
+               vrpn_int32 num_points,
+               vrpn_int32 num_halfcycles, vrpn_int32 sec, vrpn_int32 usec,
+               float *z, float **data);
     long decode_ForceCurveDataHeader (const char ** buf, float *x, float *y,
-				vrpn_int32 *num_points, vrpn_int32 *num_halfcycles, 
-				vrpn_int32 *sec, vrpn_int32 *usec);
+		vrpn_int32 *num_points, vrpn_int32 *num_halfcycles, 
+		vrpn_int32 *sec, vrpn_int32 *usec);
     long decode_ForceCurveDataSingleLevel (const char ** buf,
-				vrpn_int32 num_halfcycles, float *z, float * data);
+		vrpn_int32 num_halfcycles, float *z, float * data);
 
     // Scanline mode (client-->server):
     char * encode_EnterScanlineMode(long *len, vrpn_int32);
     long decode_EnterScanlineMode(const char **buf,
                                 vrpn_int32 *);
     char * encode_RequestScanLine(long *len, 	float, float, float,
-                                  		float, float, float, 
-						vrpn_int32, vrpn_int32, vrpn_int32,
-				  		float, float, float);
+                              float, float, float, 
+                              vrpn_int32, vrpn_int32, vrpn_int32,
+                              float, float, float);
     long decode_RequestScanLine(const char ** buf, 
-						float *, float *, float *,
-						float *, float *, float *,
-						vrpn_int32 *, vrpn_int32 *, vrpn_int32 *,
-                                                float *, float *, float *);
+                              float *, float *, float *,
+                              float *, float *, float *,
+                              vrpn_int32 *, vrpn_int32 *, vrpn_int32 *,
+                              float *, float *, float *);
 
     // Scanline mode (server-->client)
     char * encode_InScanlineMode(long *len, vrpn_int32);
     long decode_InScanlineMode(const char **buf, vrpn_int32 *);
     char * encode_ScanlineData(long *len, 	float, float, float, 
-						float, float, float,
-						vrpn_int32, vrpn_int32, vrpn_int32,
-						float, float, float,
-						vrpn_int32, vrpn_int32, vrpn_int32, vrpn_int32 *,
-						float *);
+			float, float, float,
+			vrpn_int32, vrpn_int32, vrpn_int32,
+			float, float, float,
+			vrpn_int32, vrpn_int32, vrpn_int32, vrpn_int32 *,
+			float *);
     long decode_ScanlineDataHeader(const char ** buf, 
-						float *, float *, float *,
-						float *, float *, float *,
-						vrpn_int32 *, vrpn_int32 *, vrpn_int32 *,
-						float *, float *, float *,
-						vrpn_int32 *, vrpn_int32 *, vrpn_int32 *);
+			float *, float *, float *,
+			float *, float *, float *,
+			vrpn_int32 *, vrpn_int32 *, vrpn_int32 *,
+			float *, float *, float *,
+			vrpn_int32 *, vrpn_int32 *, vrpn_int32 *);
     long decode_ScanlineDataPoint(const char ** buf, vrpn_int32, float *);
 
     // messages for Michele Clark's experiments
@@ -485,6 +508,9 @@ class nmm_Microscope {
     long decode_FakeSendTimestamp (const char ** buf, struct timeval *);
     char * encode_UdpSeqNum (long * len, vrpn_int32);
     long decode_UdpSeqNum (const char ** buf, vrpn_int32 *);
+
+    char * encode_JumpToScanLine (long *len, vrpn_int32 line_number);
+    long decode_JumpToScanLine (const char ** buf, vrpn_int32 *line_number);
 
     // AFM-ish
 
@@ -507,21 +533,22 @@ class nmm_Microscope {
 				  float *);
 
     char * encode_EnterSpectroscopyMode (long * len, float, float, float, float,
-			float, float, float, vrpn_int32, vrpn_int32,float,float,float,float,
-			vrpn_int32, float, float, float);
-    long decode_EnterSpectroscopyMode (const char ** buf,float *,float *,float *,
-			float *, float *, float *, float *, vrpn_int32 *, vrpn_int32 *,
-			float *, float *, float *, float *,
-			vrpn_int32 *, float *, float *, float *);
+	float, float, float, vrpn_int32, vrpn_int32,float,float,float,float,
+	vrpn_int32, float, float, float);
+    long decode_EnterSpectroscopyMode (const char ** buf,float *,float *,
+                float *,
+		float *, float *, float *, float *, vrpn_int32 *, vrpn_int32 *,
+		float *, float *, float *, float *,
+		vrpn_int32 *, float *, float *, float *);
 
     char * encode_InTappingMode (long * len, float, float, float,
-				float, float);
+		float, float);
     long decode_InTappingMode (const char ** buf, float *, float *, float *,
-                               float *, float *);
+                float *, float *);
     char * encode_InContactMode (long * len, float, float, float,
-				float);
+		float);
     long decode_InContactMode (const char ** buf, float *, float *, float *,
-                               float *);
+                float *);
     char * encode_InDirectZControl (long * len, float, float, float,
 				float, float, float, float);
     long decode_InDirectZControl (const char ** buf, float *, float *, float *,
@@ -532,13 +559,13 @@ class nmm_Microscope {
     long decode_InSewingStyle (const char ** buf, float *, float *, float *,
                               float *, float *, float *, float *);
     char * encode_InSpectroscopyMode (long * len,float,float,float,float,float,
-				float, float, vrpn_int32, vrpn_int32,float,float,float,float,
-				vrpn_int32, float, float,float);
+		float, float, vrpn_int32, vrpn_int32,float,float,float,float,
+		vrpn_int32, float, float,float);
     long decode_InSpectroscopyMode (const char ** buf, 
-				float *, float *, float *, float *,
-				float *, float *, float *, vrpn_int32 *, vrpn_int32 *,
-				float *, float *, float *, float *,
-				vrpn_int32 *, float *, float *, float *);
+		float *, float *, float *, float *,
+		float *, float *, float *, vrpn_int32 *, vrpn_int32 *,
+		float *, float *, float *, float *,
+		vrpn_int32 *, float *, float *, float *);
     char * encode_ForceParameters (long * len, vrpn_int32, float);
     long decode_ForceParameters (const char ** buf, vrpn_int32 *, float *);
     char * encode_BaseModParameters (long * len, float, float);
@@ -554,9 +581,11 @@ class nmm_Microscope {
     char * encode_ImgForceSet (long * len, float);
     long decode_ImgForceSet (const char ** buf, float *);
     char * encode_ModSet (long * len, vrpn_int32, float, float, float);
-    long decode_ModSet (const char ** buf, vrpn_int32 *, float *, float *, float *);
+    long decode_ModSet (const char ** buf, vrpn_int32 *, float *, float *, 
+               float *);
     char * encode_ImgSet (long * len, vrpn_int32, float, float, float);
-    long decode_ImgSet (const char ** buf, vrpn_int32 *, float *, float *, float *);
+    long decode_ImgSet (const char ** buf, vrpn_int32 *, float *, float *, 
+               float *);
     char * encode_ForceSet (long * len, float);
     long decode_ForceSet (const char ** buf, float *);
     char * encode_ForceSetFailure (long * len, float);
@@ -581,8 +610,8 @@ class nmm_Microscope {
     long decode_PulsePointNM (const char ** buf, float *, float *);
 
     char * encode_PulseParameters (long * len, vrpn_int32, float, float, float);
-    long decode_PulseParameters (const char ** buf, vrpn_int32 *, float *, float *,
-                               float *);
+    long decode_PulseParameters (const char ** buf, vrpn_int32 *, float *, 
+                                 float *, float *);
     char * encode_PulseCompletedNM (long * len, float, float);
     long decode_PulseCompletedNM (const char ** buf, float *, float *);
     char * encode_PulseFailureNM (long * len, float, float);
@@ -596,11 +625,9 @@ class nmm_Microscope {
     char * encode_TunnellingAttainedNM (long * len, float);
     long decode_TunnellingAttainedNM (const char ** buf, float *);
 
-    long dispatchMessage (long len, const char * buf, vrpn_int32 type);
+// moved to nmb_Device:
+//    long dispatchMessage (long len, const char * buf, vrpn_int32 type);
       // packs the message reliably and then deletes [] buf
-
-
-
 
 };
 

@@ -34,6 +34,7 @@ class GraphMod;
 
 #include <Scanline.h>
 
+#include <Topo.h>
 
 // Microscope
 //
@@ -69,6 +70,7 @@ class Microscope : public nmm_Microscope {
   public:
 
     Microscope (const AFMInitializationState &, int replayRate);
+                
       //   Constructor.
 
     ~Microscope (void);
@@ -76,6 +78,8 @@ class Microscope : public nmm_Microscope {
 
 // Added by Tiger       moved from nmm_Microscope.h
     AFMState state;
+
+    TopoFile d_topoFile;
 
 // Added by Tiger       moved from nmm_Microscope.h
     // MANIPULATORS

@@ -47,7 +47,7 @@
 
 
 
-Microscope::Microscope (const AFMInitializationState & i, int replayRate) :
+Microscope::Microscope (const AFMInitializationState & i, int replayRate):
     nmm_Microscope ("nmm Microscope AFM Remote"), // Tiger: don't have AFMState in base class now
 // Added by Tiger       moved from nmm_Microscope.C
     state(i),
