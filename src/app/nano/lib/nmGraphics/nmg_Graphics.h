@@ -345,6 +345,9 @@ class nmg_Graphics {
     /// Screen capture
     virtual void createScreenImage(const char* filename,
                                    const char*  type ) {};
+    /// Screen capture
+    virtual void createStereoScreenImages(const char* filename,
+                                          const char*  type ) {};
 
 	/*New surface based method.*/
     virtual int createRegion() {return 0;};

@@ -202,13 +202,13 @@ void nmg_Graphics_RenderServer::resizeViewport (int /*width*/, int /*height*/) {
 
 void nmg_Graphics_RenderServer::screenCapture (void) {
   int w, h;
-  nmg_Graphics_Implementation::screenCapture(&w, &h, &d_pixelBuffer, VRPN_FALSE);
+  nmg_Graphics_Implementation::screenCapture(&w, &h, &d_pixelBuffer, GL_FRONT);
 }
 
 
 void nmg_Graphics_RenderServer::depthCapture (void) {
   int w, h;
-  nmg_Graphics_Implementation::depthCapture(&w, &h, &d_depthBuffer, VRPN_FALSE);
+  nmg_Graphics_Implementation::depthCapture(&w, &h, &d_depthBuffer, GL_FRONT);
 }
 
 void nmg_Graphics_RenderServer::sendPartialPixelData (int minx, int maxx,

@@ -160,6 +160,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void setViewTransform (v_xform_type);
     virtual void createScreenImage(const char *filename, const char* type);
+    virtual void createStereoScreenImages(const char *filename, const char* type);
 
 	/*New surface based method.  Chooses which visualizaton to use */
 	virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0);
@@ -206,15 +207,14 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     // initializes all texture objects
 
     void screenCapture (int * w, int * h, unsigned char ** pixels,
-                        vrpn_bool captureBack = VRPN_TRUE);
+                        GLenum buffer = GL_BACK);
     void depthCapture (int * w, int * h, float ** depths,
-                        vrpn_bool captureBack = VRPN_TRUE);
+                        GLenum buffer = GL_BACK);
       // If (*pxiels) or (*depths) is non-NULL, assumes it is a
       // properly-sized array and writes into it;  otherwise news
       // a w*h*3 or w*h array respectively.
-      // By default captures from the back buffer, but can be set to
-      // capture from the front buffer instead.
-
+      // By default captures from the back buffer, but can caputure
+      // from any buffer
     nmb_Dataset * d_dataset;
 
     nmg_State * state;

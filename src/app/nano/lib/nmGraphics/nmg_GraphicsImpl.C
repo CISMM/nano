@@ -2031,7 +2031,7 @@ createScreenImage( const char* filename,
   int w, h;
   unsigned char * pixels = NULL;
 
-  screenCapture(&w, &h, &pixels, vrpn_FALSE);
+  screenCapture(&w, &h, &pixels, GL_FRONT);
   if (!pixels) {
     return;
   }
@@ -2040,6 +2040,43 @@ createScreenImage( const char* filename,
       fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
   }
   delete [] pixels;
+}
+
+void nmg_Graphics_Implementation::
+createStereoScreenImages( const char* filename,
+		   const char* type )
+{
+  int w, h;
+
+  char* filename_l = new char[512];
+  char* filename_r = new char[512];
+  strcpy(filename_l, filename);
+  strcpy(filename_r, filename);
+  strcat(filename_l, "l");
+  strcat(filename_r, "r");
+  unsigned char * pixels_left = NULL;
+  unsigned char * pixels_right = NULL;
+
+  screenCapture(&w, &h, &pixels_left, GL_BACK_LEFT);
+  if (!pixels_left) {
+    return;
+  }
+  screenCapture(&w, &h, &pixels_right, GL_BACK_RIGHT);
+  if (!pixels_right) {
+    return;
+  }
+
+  if(nmb_ImgMagick::writeFileMagick(filename_l, type, w, h, 3, pixels_left)) {
+      fprintf(stderr, "Failed to write screen to '%s'!\n", filename_l);
+  }
+  if(nmb_ImgMagick::writeFileMagick(filename_r, type, w, h, 3, pixels_right)) {
+      fprintf(stderr, "Failed to write screen to '%s'!\n", filename_r);
+  }
+
+  delete [] filename_l;
+  delete [] filename_r;
+  delete [] pixels_left;
+  delete [] pixels_right;
 }
 
 void nmg_Graphics_Implementation::setViztexScale (float s) {
@@ -2152,7 +2189,7 @@ void nmg_Graphics_Implementation::initDisplays (void) {
 
 void nmg_Graphics_Implementation::screenCapture (int * w, int * h,
                                                  unsigned char ** pixels,
-                                                 vrpn_bool captureBack) {
+                                                 GLenum buffer) {
 
   v_display_type *displayPtr;
   v_viewport_type *windowPtr;
@@ -2176,13 +2213,15 @@ void nmg_Graphics_Implementation::screenCapture (int * w, int * h,
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  if (captureBack) {
-    glReadBuffer(GL_BACK); // read the back buffer, no interference from WM
+//  if (captureBack) {
+//    glReadBuffer(GL_BACK); // read the back buffer, no interference from WM
 //fprintf(stderr, "nmg_Graphics_Implementation::screenCapture:  BACK BUFFER.\n");
-  } else {
-    glReadBuffer(GL_FRONT);
+//  } else {
+//    glReadBuffer(GL_FRONT);
 //fprintf(stderr, "nmg_Graphics_Implementation::screenCapture:  FRONT BUFFER.\n");
-  }
+//  }
+
+  glReadBuffer(buffer);
 
   glPixelStorei(GL_PACK_ALIGNMENT, 1); // byte alignment, slower
   glReadPixels(0, 0, *w, *h, GL_RGB, GL_UNSIGNED_BYTE, *pixels);
@@ -2199,7 +2238,7 @@ void nmg_Graphics_Implementation::screenCapture (int * w, int * h,
 
 void nmg_Graphics_Implementation::depthCapture (int * w, int * h,
                                                  float ** depths,
-                                                 vrpn_bool captureBack) {
+                                                 GLenum buffer) {
   v_display_type *displayPtr;
   v_viewport_type *windowPtr;
 
@@ -2222,11 +2261,7 @@ void nmg_Graphics_Implementation::depthCapture (int * w, int * h,
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  if (captureBack) {
-    glReadBuffer(GL_BACK); // read the back buffer, no interference from WM
-  } else {
-    glReadBuffer(GL_FRONT);
-  }
+  glReadBuffer(buffer);
 
   glReadPixels(0, 0, *w, *h, GL_DEPTH_COMPONENT, GL_FLOAT, *depths);
 

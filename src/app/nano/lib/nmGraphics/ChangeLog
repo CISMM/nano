@@ -1,6 +1,16 @@
+2003-07-03  David Jack  <jackd@cs.unc.edu>
+	* nmg_Graphics.h, nmg_GraphicsImpl.[Ch] (createStereoScreenImages): 
+	new function takes filename and type and saves the back left and back
+	right buffers to filenamel and filenamer, respectively.
+	* nmg_GraphicsImpl.[Ch] (screenCapture, depthCapture): changed 
+	declarations to take a GLenum specifying the buffer to capture from
+	rather than a boolean (where true -> GL_BACK, false -> GL_FRONT)
+	* nmg_GraphicsImpl.C, nmg_RenderServer.C: changed all calls to
+	screenCapture and depthCapture to match the new declaration
+	
 2003-05-13  David Jack  <jackd@cs.unc.edu>
-    * nmg_GraphicsImpl.C (getDisplayPosition): modified so that it returns the corners
-	of the viewport, not the display
+	* nmg_GraphicsImpl.C (getDisplayPosition): modified so that it returns 
+	the corners of the viewport, not the display
 
 2003-03-19  Adam Seeger  <seeger@cs.unc.edu>
 
