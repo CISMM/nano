@@ -1079,7 +1079,6 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
   	int tubeCount = 0;
 
 	int count;
-	double dx, dy, theta;
 	long *IDs = new long [cnt_image_x*cnt_image_y];
 	int *Xs = new int [cnt_image_x*cnt_image_y];
 	int *Ys = new int [cnt_image_x*cnt_image_y];
@@ -1097,7 +1096,7 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
 	char detailsTxtFile[255];
 	strcpy(detailsTxtFile, txtFile);
 	strcat(detailsTxtFile, ".details.txt");
-	fSum = fopen(detailsTxtFile, "w");
+	fDet = fopen(detailsTxtFile, "w");
 
 	fprintf(fSum, "INPUT IMAGE FILE:  %s\n\n", fileName);
 
@@ -1230,6 +1229,7 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
 				        // Compute 3D info.
 				        int prevId, nextId;
 				        int prevX, prevY, nextX, nextY;
+					double dx, dy, theta;
         				double prevZ, nextZ, dz, norm_alt, mag;
         				double *az = new double [count];
         				double *alt = new double [count];
