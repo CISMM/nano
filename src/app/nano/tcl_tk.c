@@ -84,6 +84,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
         } else {
             sprintf(command, "%s/%s",tcl_script_dir,TCL_MODE_FILE);
         }
+
 	if (Tcl_EvalFile(my_tk_control_interp, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
 			Tcl_GetStringResult(my_tk_control_interp));
@@ -98,6 +99,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
                 return(-1);
         }
 
+		
         return 0;
 }
 

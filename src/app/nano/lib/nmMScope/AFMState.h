@@ -554,7 +554,11 @@ struct AFMState {
 
   // optional system components
   vrpn_bool doDriftComp;           ///< compensate for drift. Always FALSE
-  Tclvar_int doRelaxComp;           ///< compensate for relaxation -can change in Tcl.
+  //seok
+  TclNet_int doRelaxComp; 
+  //Tclvar_int doRelaxComp;           ///< compensate for relaxation -can change in Tcl.
+  //seok.end
+
   vrpn_bool doRelaxUp;             ///< do relaxation even if in imagemode. Always FALSE
   vrpn_bool doSplat;               ///< splat incoming data into grid. Always FALSE
   vrpn_bool snapPlaneFit;
