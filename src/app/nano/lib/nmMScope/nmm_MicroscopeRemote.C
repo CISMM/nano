@@ -70,7 +70,7 @@
 nmm_Microscope_Remote::nmm_Microscope_Remote
   (const AFMInitializationState & i,
    vrpn_Connection * c) :
-    nmb_SharedDevice ("nmm_Microscope@lysine", i.mutexPort, c),
+    nmb_SharedDevice_Remote ("nmm_Microscope@lysine", c),
     nmm_Microscope ("nmm_Microscope@lysine", c),
     state(i),
     d_relax_comp(this),
@@ -336,7 +336,7 @@ int nmm_Microscope_Remote::mainloop (void) {
   struct timeval skiptime;
   struct timeval last_time;
 
-  nmb_SharedDevice::mainloop();
+  //nmb_SharedDevice::mainloop();
 
   // Read in the changes
   VERBOSE(5, "   setup");

@@ -52,10 +52,9 @@ class nmm_Sample;  // from nmm_Sample.h
 //   Currently contains InitializeDataset() call that'll be moved elsewhere
 // someday.
 
-
 #define RELAX_MSG "relaxation done"
 
-class nmm_Microscope_Remote : public nmb_SharedDevice,
+class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
                               public nmm_Microscope {
 
   friend class nmm_RelaxComp;
