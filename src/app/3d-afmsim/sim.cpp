@@ -109,14 +109,14 @@ void grabNearestOb(int xy_or_xz);
 int findNearestObToMouse(int xy_or_xz);
 void findNearestTriangleSideToMouse( void );
 void select_triangle_side();
+
 void	Usage(char *progname)
 {
     cerr << "See README file for usage instructions." << endl; 
     exit(-1);
 }
 
-//command line format is ./sim <units> -<type of file> <filenames in alphabetical order> 
-//<protein unit ratio to nm>
+
 int main(int argc, char *argv[])
 {
 	adjustOrthoProjectionParams();
