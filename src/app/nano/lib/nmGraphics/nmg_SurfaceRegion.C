@@ -1,10 +1,3 @@
-/*===3rdtech===
-  Copyright (c) 2001 by 3rdTech, Inc.
-  All Rights Reserved.
-
-  This file may not be distributed without the permission of 
-  3rdTech, Inc. 
-  ===3rdtech===*/
 #include "nmg_SurfaceRegion.h"
 
 #include <nmb_Dataset.h>
