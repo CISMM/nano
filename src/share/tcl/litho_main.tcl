@@ -440,10 +440,15 @@ button $drawing_parameters_win.clear_drawing -text "Delete Last" -command \
     { set clear_drawing 1 }
 pack $drawing_parameters_win.clear_drawing -anchor sw -side left
 
-#generic_optionmenu $drawing_parameters_win.coordinate_system \
-#     drawing_coordinate_system "Coordinate System" imageNames
+frame $drawing_parameters_win.segment_length -relief solid \
+      -borderwidth 2
+label $drawing_parameters_win.segment_length.title -text "length:"
+label $drawing_parameters_win.segment_length.value \
+      -textvariable segment_length -width 10 -anchor w -justify left
 
-#pack $drawing_parameters_win.coordinate_system -side top
+pack $drawing_parameters_win.segment_length 
+pack $drawing_parameters_win.segment_length.title -side left
+pack $drawing_parameters_win.segment_length.value -side left
 
 ######### End of Drawing Parameters Control Panel ####################
 
@@ -457,6 +462,7 @@ set image_r 255
 set image_g 255
 set image_b 120
 set image_opacity 50.0
+set image_magnification 1000.0
 set hide_other_images 0
 set enable_image_display 0
 set current_image "none"
@@ -514,6 +520,11 @@ generic_entry $display_parameters_win.image_opacity image_opacity \
      "Image opacity" real
 
 pack $display_parameters_win.image_opacity -side top -fill x -padx 3 -pady 3
+
+generic_entry $display_parameters_win.magnification image_magnification \
+     "Image magnification" real
+
+pack $display_parameters_win.magnification -side top -fill x -padx 3 -pady 3
 
 checkbutton $display_parameters_win.hide_others_check \
    -text "Hide Others" -variable hide_other_images

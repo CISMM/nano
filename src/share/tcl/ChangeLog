@@ -1,3 +1,8 @@
+2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* litho_main.tcl: added segment length indicator and an entry box to
+	set the magnification of an image
+
 2002-09-07  Adam Seeger  <seeger@cs.unc.edu>
 
 	* litho_main.tcl: added optionmenu for canvas image
