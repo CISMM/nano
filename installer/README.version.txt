@@ -2,6 +2,11 @@ This program requires the NSRG runtime to be installed.
 
 Versions:
 ---------
+11.4: (October 1, 2004)
+	- Makes the "direction of projected texture" icon invisible by
+	  default, so that we don't see it when loading tiny regions.
+	- Puts things where they need to be to make the ImageMagick
+	  file reads and writes work.
 11.3H: (July 7, 2004)
 	- Released for folks in Hamburg, including updates by Russ since May
 	  to enable the use of Imager plug-ins

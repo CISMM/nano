@@ -1,3 +1,4 @@
 [autorun]
-open=nano_11_3.exe
-label=NanoManipulator 11.3
+open=nano_11_04.exe
+icon=nano_11_04.exe
+label=NanoManipulator 11.04
