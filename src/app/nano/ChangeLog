@@ -1,3 +1,13 @@
+2002-05-21 David Borland <borland@cs.unc.edu>
+
+        * import.C : took out code for locking rotations from here
+
+        * interaction.C : moved code for locking rotations here.  When 
+        there are no locks, rotations are performed in world space.  When
+        there are locks, rotations are performed in object space.  Hopefully
+        this will help for aligning objects with projective textures.  Need
+        to try it with a real phantom though.
+
 2002-05-20 David Borland <borland@cs.unc.edu>
 
         * import.C : added user interface for controlling the number of

@@ -525,22 +525,16 @@ static  void handle_import_rot_change (vrpn_float64, void *)
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
+			// Note:  Locks are only applied when "grabbing" the object with
+			// the phantom/mouse phantom.  No check is applied here.
+
 		    URender &obj = node->TGetContents();
 			q_type rot;
-			q_copy(rot, obj.GetLocalXform().GetRot());
 			q_vec_type euler;
 
-			q_to_euler(euler, rot);
-
-			if (!obj.GetLockRotx()) {
-				euler[2] = Q_DEG_TO_RAD(import_rotx);
-			}
-			if (!obj.GetLockRoty()) {
-				euler[1] = Q_DEG_TO_RAD(import_roty);
-			}
-			if (!obj.GetLockRotz()) {
-				euler[0] = Q_DEG_TO_RAD(import_rotz);
-			}
+			euler[2] = Q_DEG_TO_RAD(import_rotx);
+			euler[1] = Q_DEG_TO_RAD(import_roty);
+			euler[0] = Q_DEG_TO_RAD(import_rotz);
 
 			q_from_euler(rot, euler[0], euler[1], euler[2]);
 

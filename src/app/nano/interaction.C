@@ -3864,6 +3864,10 @@ doWorldGrab(int whichUser, int userEvent)
 		if (obj.GetGrabObject() == 1) {
 			q_copy(oldObject.rotate, obj.GetLocalXform().GetRot());
 			q_vec_copy(oldObject.xlate, obj.GetLocalXform().GetTrans());
+
+			printf("old rotation:\n");
+			q_print(oldObject.rotate);
+			printf("\n");
 		}
 	}
 	break;
@@ -3890,17 +3894,38 @@ doWorldGrab(int whichUser, int userEvent)
 		URender &obj = node->TGetContents();
 		if (obj.GetGrabObject() == 1) {
 			q_type q;
+
+			// Get rotation to apply
 			q_invert(q, oldWorldFromHand.rotate);
 			q_mult(q, worldFromHand.rotate, q);
-			q_mult(q, q, oldObject.rotate);
 
+			// Check to see if any axes are locked.  Note that if so, we apply the rotations in object space.
+			// Else, we apply the rotations in world space...
+			if (obj.GetLockRotx() || obj.GetLockRoty() || obj.GetLockRotz()) {
+				if (obj.GetLockRotx()) {
+					q[0] = 0;
+				}
+				if (obj.GetLockRoty()) {
+					q[1] = 0;
+				}
+				if (obj.GetLockRotz()) {
+					q[2] = 0;
+				}
+				// OBJECT SPACE
+				q_mult(q, oldObject.rotate, q);
+			}
+			else {
+				//  WORLD SPACE 
+				q_mult(q, q, oldObject.rotate);
+			}
+
+			// Translate
 			q_vec_type v;
 			q_vec_subtract(v, worldFromHand.xlate, oldWorldFromHand.xlate);
 			q_vec_add(v, v, oldObject.xlate);
 	
 			// don't need to do this, as we shall do it in the tcl callbacks
 //			node->TGetContents().GetLocalXform().SetRotate(q);
-//			node->TGetContents().GetLocalXform().SetRotate(o.rotate);
 //			node->TGetContents().GetLocalXform().SetTranslate(v);
 
 			// update tcl variables
