@@ -5455,7 +5455,9 @@ void teardownSynchronization( CollaborationManager *cm,
   // Analysis -> Registration
   nmui_Component * viewRegister = ui_Root->find("Register");
   viewRegister->remove(&(alignerUI->d_registrationImageName3D));
+  viewRegister->remove(&(alignerUI->d_refresh3D));
   viewRegister->remove(&(alignerUI->d_registrationImageName2D));
+  viewRegister->remove(&(alignerUI->d_refresh2D));
   viewRegister->remove(&(alignerUI->d_newResampleImageName));
   viewRegister->remove(&(alignerUI->d_newResamplePlaneName));
   viewRegister->remove(&(alignerUI->d_registrationEnabled));
@@ -5874,7 +5876,9 @@ void setupSynchronization( CollaborationManager * cm,
   nmui_Component * viewRegister;
   viewRegister = new nmui_Component("Register");
   viewRegister->add(&(alignerUI->d_registrationImageName3D));
+  viewRegister->add(&(alignerUI->d_refresh3D));
   viewRegister->add(&(alignerUI->d_registrationImageName2D));
+  viewRegister->add(&(alignerUI->d_refresh2D));
   viewRegister->add(&(alignerUI->d_newResampleImageName));
   viewRegister->add(&(alignerUI->d_newResamplePlaneName));
   viewRegister->add(&(alignerUI->d_registrationEnabled));

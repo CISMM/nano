@@ -1,3 +1,7 @@
+2002-09-30  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c : added TclNetvar stuff for new registration controls
+
 2002-09-28    <marshbur@cs.unc.edu>
 
 	* CollaborationManager.C:  removed #include <tk.h> -- extraneous
