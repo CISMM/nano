@@ -1,3 +1,11 @@
+2002-04-19  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* BCGrid.[C,h]:  compiler pragmas to prevent warnings from system 
+	files.  Also removed some dead #include statements.
+	* Point.h:  same
+	* Scanline.h:  same
+	* nmb_Image.h:  same
+
 2002-04-11  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmb_FlattenedPlane.C:  only calculates data within the valid

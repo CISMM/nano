@@ -1,10 +1,20 @@
 #ifndef POINT_H
 #define POINT_H
 
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
 #include <stdio.h>
-//#include <tcl.h>
 #include <string>
 using namespace std;
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
+
 
 class	Point_value;
 class	Point_results;

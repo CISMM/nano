@@ -1,9 +1,20 @@
 #ifndef SCANLINE_H
 #define SCANLINE_H
 
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
 #include <stdio.h>
 #include <string>
 using namespace std;
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
+
 
 class   Scanline_data;
 class   Scanline_results;

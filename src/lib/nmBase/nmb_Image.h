@@ -8,24 +8,28 @@
 #ifndef NMB_IMAGE_H
 #define NMB_IMAGE_H
 
-#include <vrpn_Shared.h>
+
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
+#include <assert.h>
+#include <math.h>
 #include <string>
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
+
+#include <vrpn_Shared.h>
+
 #include "BCPlane.h"
 #include "BCGrid.h"
 #include "nmb_String.h"
 #include "nmb_TransformMatrix44.h"
-#include <math.h>
 #include "Topo.h"
-#include <assert.h>
-
-#if !(defined(__CYGWIN__) || defined(_WIN32))
-#include <values.h>	// for MAXSHORT - probably different on windows
-#else
-// MAXSHORT taken care of by vrpn_Shared.h above - it's in a windows header.
-//#include <limits.h>
-//#ifndef MAXSHORT
-//#define MAXSHORT SHRT_MAX
-#endif
 
 class nmb_Dataset;
 

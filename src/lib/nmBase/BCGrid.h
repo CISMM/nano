@@ -19,12 +19,21 @@ const int READ_STREAM = 2;
 
 extern const char * EMPTY_PLANE_NAME;
 
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
 #include <ctype.h> 
 #include <stdio.h> // for FILE
-//#include "string"
 #include <string>
 #include <iostream>
 using namespace std;
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 // bogus double to float conversion warning.

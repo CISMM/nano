@@ -5,27 +5,32 @@
   This file may not be distributed without the permission of 
   3rdTech, Inc. 
   ===3rdtech===*/
+
 #ifdef	_WIN32
 #include <io.h>
 #endif
+
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
 #include <fcntl.h> // for open()
-//#include <malloc.h> // for calloc() and free()
 #include <errno.h> // for perror()
 #include <time.h> // for time() and ctime()
 #include <limits.h>
 #include <math.h> // for exp()
+#include <iostream>
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
+
 #ifndef _WIN32
 #include <unistd.h>
-#elif defined(__CYGWIN__)
-// [juliano 9/19/99]
-//   added these decl so can compile BCGrid.C on my PC in cygwin.
-//   I have this problem with both egcs-2.91.57  and gcc-2.95.
-extern "C" {
-int write( int fildes, const void *buf, size_t nbyte );
-int close( int filedes );
-}
 #endif
-#include <iostream>
+
 
 #include "BCGrid.h"
 #include "BCPlane.h"
