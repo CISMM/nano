@@ -11,6 +11,9 @@
 
 ///import_object handlers
 static  void handle_import_file_change (const char *, void *);
+static	void handle_imported_object_change(const char*, void*);
+static	void handle_current_object_new(const char*, void*);
+static	void handle_current_object(const char*, void*);
 static  void handle_import_scale_change (vrpn_float64, void *);
 static  void handle_import_transx_change (vrpn_float64, void *);
 static  void handle_import_transy_change (vrpn_float64, void *);
@@ -32,6 +35,11 @@ static  void handle_msi_atom_radius(vrpn_float64, void *);
 ///These variables are for controlling importing of objects
 Tclvar_string	modelFile("modelFile", "", handle_import_file_change);
 Tclvar_string	import_type("import_type", "");
+
+Tclvar_list_of_strings imported_objects("imported_objects");
+Tclvar_string current_object_new("current_object_new", "", handle_current_object_new);
+Tclvar_string current_object("current_object", "", handle_current_object);
+
 Tclvar_float	import_scale("import_scale",1, handle_import_scale_change);
 Tclvar_float	import_transx("import_transx",0, handle_import_transx_change);
 Tclvar_float	import_transy("import_transy",0, handle_import_transy_change);
@@ -55,12 +63,25 @@ Tclvar_float    msi_atom_radius("msi_atom_radius", 1, handle_msi_atom_radius);
 
 //------------------------------------------------------------------------
 //Functions necessary for all imported objects
+
+static void handle_current_object_new(const char*, void*) {
+	if (imported_objects.numEntries() == 0) {
+		// add "all" entry
+		imported_objects.addEntry("all");
+	}
+
+	imported_objects.addEntry(current_object_new.string());
+}
+
+static void handle_current_object(const char*, void*) {
+	*(World.current_object) = current_object.string();
+}
+
+
 static void handle_import_file_change (const char *, void *) {
     static char * old_name = "";
     static const float convert = 1.0f/255;
-
-cout << "in handle_import_file_change" << endl;
-    
+	    
     if (modelFile.string()) {        
         if (strcmp(modelFile.string(),"") != 0) {          
             //Only try to create the object if there is a file specified.
@@ -77,9 +98,18 @@ cout << "in handle_import_file_change" << endl;
             obj->GetLocalXform().SetScale(import_scale);
             obj->GetLocalXform().SetTranslate(import_transx, import_transy, import_transz);
             obj->GetLocalXform().SetRotate(import_rotx, import_roty, import_rotz, 1);
-            World.TAddNode(obj, modelFile.string());
+			// truncate name so it correlates to the option menu
+			// i.e. C:/Data/cube.obj -> cube.obj
+			char* name;
+			name = new char[strlen(modelFile.string()) + 1];
+			strcpy(name, modelFile.string());
+			char* c = name + strlen(name);
+			while (*(--c) != '/');
+            World.TAddNode(obj, c + 1);
+			delete name;
         }
 // Took this out because we want more than one object loaded at a time...
+// can't close files now...should change this...
 /*        if (strcmp(old_name, "") != 0) {
             UTree *node = World.TGetNodeByName(old_name);
 
@@ -91,14 +121,19 @@ cout << "in handle_import_file_change" << endl;
         }
 */
 
-        old_name = new char[strlen(modelFile.string())+1];
-        strcpy(old_name, modelFile.string());
+//        old_name = new char[strlen(modelFile.string())+1];
+//        strcpy(old_name, modelFile.string());
     }
+}
+
+static void handle_imported_object_change(const char*, void*) {
+// code to switch between objects should go here
+	cout << "hello" << endl;
 }
 
 static  void handle_import_visibility (vrpn_int32, void *)
 {
-    UTree *node = World.TGetNodeByName(modelFile.string());
+    UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         obj.SetVisibility(import_visibility);
@@ -107,7 +142,7 @@ static  void handle_import_visibility (vrpn_int32, void *)
 
 static  void handle_import_proj_text (vrpn_int32, void *)
 {
-    UTree *node = World.TGetNodeByName(modelFile.string());
+	UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         obj.SetProjText(import_proj_text);
@@ -116,7 +151,7 @@ static  void handle_import_proj_text (vrpn_int32, void *)
 
 static  void handle_import_CCW (vrpn_int32, void *)
 {
-    UTree *node = World.TGetNodeByName(modelFile.string());
+    UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         obj.SetCCW(import_CCW);
@@ -125,7 +160,7 @@ static  void handle_import_CCW (vrpn_int32, void *)
 
 static  void handle_import_scale_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(modelFile.string());
+    UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         obj.GetLocalXform().SetScale(import_scale);
@@ -134,7 +169,7 @@ static  void handle_import_scale_change (vrpn_float64, void *)
 
 static  void handle_import_transx_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(modelFile.string());
+    UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         const q_vec_type &trans = obj.GetLocalXform().GetTrans();
@@ -144,7 +179,7 @@ static  void handle_import_transx_change (vrpn_float64, void *)
 
 static  void handle_import_transy_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(modelFile.string());
+    UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         const q_vec_type &trans = obj.GetLocalXform().GetTrans();
@@ -154,7 +189,7 @@ static  void handle_import_transy_change (vrpn_float64, void *)
 
 static  void handle_import_transz_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(modelFile.string());
+    UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         const q_vec_type &trans = obj.GetLocalXform().GetTrans();
@@ -164,7 +199,7 @@ static  void handle_import_transz_change (vrpn_float64, void *)
 
 static  void handle_import_rotx_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(modelFile.string());
+    UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         const q_type &rot = obj.GetLocalXform().GetRot();
@@ -174,7 +209,7 @@ static  void handle_import_rotx_change (vrpn_float64, void *)
 
 static  void handle_import_roty_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(modelFile.string());
+    UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         const q_type &rot = obj.GetLocalXform().GetRot();
@@ -184,7 +219,7 @@ static  void handle_import_roty_change (vrpn_float64, void *)
 
 static  void handle_import_rotz_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(modelFile.string());
+    UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         const q_type &rot = obj.GetLocalXform().GetRot();
@@ -195,7 +230,7 @@ static  void handle_import_rotz_change (vrpn_float64, void *)
 static  void handle_import_color_change (vrpn_int32, void *)
 {
     static const float convert = 1.0f/255;
-    UTree *node = World.TGetNodeByName(modelFile.string());
+    UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         obj.SetColor3(convert * import_r, convert * import_g, convert * import_b);
@@ -204,7 +239,7 @@ static  void handle_import_color_change (vrpn_int32, void *)
 
 static  void handle_import_alpha (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(modelFile.string());
+    UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
         obj.SetAlpha(import_alpha);
