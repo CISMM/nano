@@ -9,7 +9,7 @@ void collabVerbose (int level, char * msg, ...) {
 
   if (collab_verbosity >= level) {
     va_start(argptr, msg);
-    vfprintf(stderr, msg, argptr)
+    vfprintf(stderr, msg, argptr);
     va_end(argptr);
   }
 
