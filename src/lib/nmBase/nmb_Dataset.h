@@ -81,6 +81,12 @@ class nmb_Dataset {
 
     // MANIPULATORS
 
+    void loadFiles(const char** file_names, int num_files, TopoFile &topoFile);
+      ///< Load files with the same grid size into this grid.
+      ///< Load files with any grid size if no meaningful data has 
+      ///< yet been loaded.
+    int setGridSize(int x, int y);
+    ///< Change the grid size of the input grid.
 
     BCPlane * ensureHeightPlane (void);
     /**< Call to make sure there is a height plane in inputGrid.

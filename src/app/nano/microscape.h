@@ -105,7 +105,6 @@ extern	ColorMap	*curColorMap;	// microscape.c
  ************************/
 
 extern int      stride;                 // vrml.C
-extern	int	using_phantom_button;	// microscape.c
 
 #define	NUM_KNOBS	(5)
 extern	float		MIN_K;  /* make these variable, different */
@@ -151,6 +150,7 @@ extern int do_cpanels;
 
 // Only list things here if they need to be shared with other files!
 
+extern	Tclvar_int using_phantom_button;	// microscape.c
 
 //---------------------------------------------------------------------------
 /// These select the plane to map color from and the scale of the mapping. 

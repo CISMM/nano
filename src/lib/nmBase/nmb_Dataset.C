@@ -133,8 +133,33 @@ nmb_Dataset::~nmb_Dataset (void) {
       delete [] d_hostname;
 }
 
+/**
+   Loads a list of files, by calling BCGrid::loadFiles, then
+   adding any new planes to our dataImages list. 
+   @author Aron Helser
+   @date modified 3-22-00 Aron Helser
+*/
+void
+nmb_Dataset::loadFiles(const char** file_names, int num_files, 
+		       TopoFile &topoFile)
+{
+    // Load the files
+    inputGrid->loadFiles(file_names, num_files, topoFile);
+    // Add any new planes to our lists. 
+    for (BCPlane *p = inputGrid->head(); p != NULL; p = p->next()) {
+        if (dataImages->getImageByName(*(p->name())) == NULL){
+            nmb_Image *im = new nmb_ImageGrid(p);
+            dataImages->addImage(im);
+        }
+    }
+    
+}
 
 
+int nmb_Dataset::setGridSize(int x, int y)
+{
+    return (inputGrid->setGridSize(x,y));
+}
 
 BCPlane * nmb_Dataset::ensureHeightPlane (void) {
 
@@ -153,10 +178,10 @@ BCPlane * nmb_Dataset::ensureHeightPlane (void) {
     plane = plane->next();
   }
   if (plane == NULL) {
-    plane = inputGrid->getPlaneByName("Topography-Forward");
+    plane = inputGrid->getPlaneByName(EMPTY_PLANE_NAME);
     if (!plane) {
       fprintf(stderr,"Warning! No height plane input, using zero plane\n");
-      plane = inputGrid->addNewPlane("Topography-Forward", "nm", NOT_TIMED);
+      plane = inputGrid->addNewPlane(EMPTY_PLANE_NAME, "nm", NOT_TIMED);
       heightPlaneName->Set(plane->name()->Characters());
       dataImages->addImage(new nmb_ImageGrid(plane));
     }
@@ -443,14 +468,15 @@ int nmb_Dataset::computeSumPlane (const char * outputPlane,
         return 0;
 }
 
-
-/**---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+/**
 Compute a new plane that is a flattening of an height plane according to
 the positions of three measure lines.
 After the flattening, the intersections of three measure lines to the
 surface have the same z value.
-XXX When we implement dynamic updates based on scan data, we need
+@warning XXX When we implement dynamic updates based on scan data, we need
     hook up callbacks for the two planes feeding into this.
+@return NULL on failure.
 */
 BCPlane* nmb_Dataset::computeFlattenedPlane
                         (const char * outputPlane,
@@ -486,10 +512,14 @@ BCPlane* nmb_Dataset::computeFlattenedPlane
   y2 = plane->yInGrid(greenY);
   y3 = plane->yInGrid(blueY);
 
-  z1 = plane->valueAt(redX, redY);
-  z2 = plane->valueAt(greenX, greenY);
-  z3 = plane->valueAt(blueX, blueY);
-
+  if (( plane->valueAt(&z1, redX, redY)) ||
+      ( plane->valueAt(&z2, greenX, greenY))||
+      ( plane->valueAt(&z3, blueX, blueY))) {
+      fprintf(stderr,"compute_flattened_plane(): "
+              "measure lines out of bounds.\n");
+      return NULL;
+  }
+  
   //solve dx,dy for
   // z3-z1= dx(x3-x1) + dy(y3-y1)
   // z2-z1= dx(x2-x1) + dy(y2-y1)

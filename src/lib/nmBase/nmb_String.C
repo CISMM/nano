@@ -24,6 +24,28 @@ nmb_ListOfStrings::~nmb_ListOfStrings (void) {
   }
   
 }
+/** Returns an entry in this list, by numerical index.
+Returns NULL if index is not valid for this list.
+*/
+const char * nmb_ListOfStrings::entry (int i) const
+{ 
+    if ((i <0) || (i>=d_numEntries)) return NULL;
+    return d_entries[i]; 
+}
+
+/** Checks to see if the character string /a name is 
+in this list. If it is, it returns it's numerical index.
+If not, returns -1
+*/
+int nmb_ListOfStrings::getIndex (const char * name) const
+{ 
+    for (int i = 0; i < d_numEntries; i++) {
+        if (strncmp(name, d_entries[i], nmb_STRING_LENGTH) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
 
 int nmb_ListOfStrings::clearList () 
 {

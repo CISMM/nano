@@ -130,7 +130,7 @@ class MicroscopeIO {
     int SetStdDelay (const int);
     int SetStPtDelay (const int);
     int SetRelax (const int, const int);
-    int SetStdDevParams (const int, const float);
+    //int SetStdDevParams (const int, const float);
 
     int SetScanWindow (const int, const int, const int, const int);
     int SetGridSize (const int, const int);
@@ -147,7 +147,7 @@ class MicroscopeIO {
     int QueryPulseParams (void);
 
     int QueryScanRange (void);
-    int QueryStdDevParams (void);
+    //int QueryStdDevParams (void);
 
     int SetRateNM (const float);
     int SetMaxMove (const float);

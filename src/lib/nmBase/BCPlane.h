@@ -83,8 +83,8 @@ class BCPlane
     virtual	void setTime(int x, int y, long sec, long usec) = 0;
 
     inline float value(int x, int y) const { return _value[x * _num_y + y]; }
-    float valueAt (double x, double y);
-
+    int valueAt (double * result, double x, double y);
+    
     float interpolatedValue(double x, double y);
     float interpolatedValueAt(double x, double y);
 
@@ -138,6 +138,9 @@ class BCPlane
       { return _value; }
 
   protected: 
+
+    int setGridSize(int x, int y);
+    ///< Changes to a new grid size, deletes the data. 
 
     virtual void computeMinMax (void);
     /** Puts the identical portions of minValue() and maxValue()

@@ -1,13 +1,17 @@
-# Open a plane of data 
-# This doesn't do anything right now - files must be loaded
-# from the command line on startup.
-# It _should_ be changed to open any type of file handled by BCGrid
+#
+################################
+#
+# Open a static file. 
+# It should open any type of file handled by BCGrid
 # Eventually, it should allow opening of stream files. 
-proc open_plane_data {} {
+proc open_static_file {} {
+    global open_static_filename
     set types { {"All files" *} }
     set file [tk_getOpenFile -filetypes $types -initialfile plane.tfr ]    
     if {$file != ""} {
-        puts $file
+	# setting this variable triggers a callback in C code
+	# which saves the file. 
+	set open_static_filename $file
     } 
     # otherwise do nothing.
 }
@@ -15,7 +19,7 @@ proc open_plane_data {} {
 #
 ################################
 #
-# This provides a selector to allow the user to export a file that
+# This allows the user to export a file that
 # holds the values for a given plane, in any of several formats
 #
 

@@ -343,6 +343,7 @@ proc set_contour_color {} {
     # and save into contour_r g b
     scan $contour_color #%02x%02x%02x contour_r contour_g contour_b
     set contour_changed 1
+    puts "Contour color $contour_r $contour_g $contour_b"
 }
 
 #

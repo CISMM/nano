@@ -118,7 +118,7 @@ class	Scan_channel_selector : public Channel_selector
 			int numvalues);
 
     protected:
-	BCGrid	*mygrid;
+        BCGrid * mygrid;
 	BCPlane	*planes[MAX_CHANNELS];	// Planes to store data in
 };
 

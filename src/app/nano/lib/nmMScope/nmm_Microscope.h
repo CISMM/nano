@@ -275,9 +275,11 @@ class nmm_Microscope {
     long decode_RecordResistance (const char ** buf, vrpn_int32 * meter,
                struct timeval * time, float * resistance, float * v,
                float * r, float * f);
+    /* OBSOLETE */
     char * encode_SetStdDevParams (long * len, vrpn_int32 samples, float freq);
     long decode_SetStdDevParams (const char ** buf,
                vrpn_int32 * samples, float * freq);
+
     char * encode_SetScanWindow (long * len,
            vrpn_int32 minx, vrpn_int32 miny, vrpn_int32 maxx, vrpn_int32 maxy);
     long decode_SetScanWindow (const char ** buf,
@@ -358,6 +360,7 @@ class nmm_Microscope {
     long decode_StartingToRelax (const char ** buf, vrpn_int32 *, vrpn_int32 *);
     char * encode_RelaxSet (long * len, vrpn_int32, vrpn_int32);
     long decode_RelaxSet (const char ** buf, vrpn_int32 *, vrpn_int32 *);
+    /* OBSOLETE */
     char * encode_StdDevParameters (long * len, vrpn_int32, float);
     long decode_StdDevParameters (const char ** buf, vrpn_int32 *, float *);
     char * encode_WindowLineData (long * len, vrpn_int32 x, vrpn_int32 y, 

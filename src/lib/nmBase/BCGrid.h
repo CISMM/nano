@@ -10,6 +10,8 @@ const int READ_DEVICE = 0;
 const int READ_FILE = 1;
 const int READ_STREAM = 2;
 
+extern const char * EMPTY_PLANE_NAME;
+
 #include <ctype.h> 
 #include <stdio.h> // for FILE
 #include "BCDebug.h"
@@ -49,9 +51,20 @@ class BCGrid
 
     virtual ~BCGrid (void);
 
-    void     findUniquePlaneName(BCString base_name, BCString *result_name);
+    /// Makes a name unique.
+    void     findUniquePlaneName (
+	  BCString base_name, ///< Desired name
+	  BCString *result_name ///< Uniqueified name
+	  );
     BCPlane* addNewPlane(BCString dataset, BCString units, int timed);
     BCPlane* addPlaneCopy(BCPlane* grid);
+
+    void loadFiles(const char** file_names, int num_files, TopoFile &topoFile);
+      ///< Load files with the same grid size into this grid.
+      ///< Load files with any grid size if no meaningful data has 
+      ///< yet been loaded.
+    int setGridSize(int x, int y);
+      ///< Changes the grid size, erases all data.
 
     int deleteHead();
     int empty();

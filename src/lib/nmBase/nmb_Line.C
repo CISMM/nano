@@ -28,11 +28,37 @@ float nmb_Line::y (void) const {
   return d_top[1];
 }
 
-double nmb_Line::getIntercept (BCPlane * plane) const {
-  return plane->valueAt(d_top[0], d_top[1]) * plane->scale();
-}
+/**
+ * Computes the point at which this line intercepts the given plane
+ * and returns the Z value at that point.
+ * Uses BCPlane::valueAt(), which will actually give the Z value
+ * of a nearby grid point rather than interpolating to the "exact"
+ * plane value at (x, y).
+ * Uses moveTo to move the line inside the bounds of \a plane 
+ * if necessary.
+ 
+ @return 0.0 on failure (plane->valueAt fails twice)
+*/
+double nmb_Line::getIntercept (BCPlane * plane) {
+    double result = 0.0;
+    if ( plane->valueAt(&result, d_top[0], d_top[1])) {
+        // We requested an out-of-bound value. Fix it.
+        // moveTo will do bounds checking and move the line
+        // in-bounds.
+        moveTo(d_top[0], d_top[1], plane);
+                
+        plane->valueAt(&result, d_top[0], d_top[1]);
+    }
+    result *=plane->scale();
 
-void nmb_Line::getIntercept (q_vec_type p, BCPlane * plane) const {
+    return result;
+}
+/**
+ * Computes the point at which this line intercepts the given plane
+ * and returns it in p.
+ @overload double nmb_Line::getIntercept (BCPlane * plane)
+ */
+void nmb_Line::getIntercept (q_vec_type p, BCPlane * plane) {
   p[0] = d_top[0];
   p[1] = d_top[1];
   p[2] = getIntercept(plane);

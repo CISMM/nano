@@ -777,6 +777,7 @@ int MicroscopeIO::SetRelax (const int _min, const int _sep) {
 }
 
 
+/* OBSOLETE
 int MicroscopeIO::SetStdDevParams (const int _samples,
                                           const float _freq) {
   char * msgbuf;
@@ -789,7 +790,7 @@ int MicroscopeIO::SetStdDevParams (const int _samples,
   delete [] msgbuf;
   return comm.SendBuffer();
 }
-
+*/
 
 int MicroscopeIO::SetScanWindow (const int _minx, const int _miny,
                                         const int _maxx, const int _maxy) {
@@ -864,12 +865,13 @@ int MicroscopeIO::QueryScanRange (void) {
   return comm.SendBuffer();
 }
 
+/* OBSOLETE
 int MicroscopeIO::QueryStdDevParams (void) {
   comm.ClearSendBuffer();
   comm.Buffer(STM_QUERY_STD_DEV_PARAMS);
   return comm.SendBuffer();
 }
-
+*/
 int MicroscopeIO::SetRateNM (const float _rate) {
   char * msgbuf;
   long len;	// Tiger change int to long
@@ -1492,7 +1494,9 @@ void MicroscopeIO::RcvStdDevParameters (char ** _bufptr) {
   float frequency;
 
   microscope->decode_StdDevParameters(UGLYCAST _bufptr, &samples, &frequency);
-  microscope->RcvStdDevParameters(samples, frequency);
+  /* OBSOLETE
+     microscope->RcvStdDevParameters(samples, frequency);
+  */
 }
 
 void MicroscopeIO::RcvWindowLineData (char ** _bufptr) {

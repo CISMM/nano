@@ -125,9 +125,9 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
   d_connection->register_handler(d_RelaxSet_type,
                                  handle_RelaxSet,
                                  this);
-  d_connection->register_handler(d_StdDevParameters_type,
-                                 handle_StdDevParameters,
-                                 this);
+//    d_connection->register_handler(d_StdDevParameters_type,
+//                                   handle_StdDevParameters,
+//                                   this);
   d_connection->register_handler(d_WindowLineData_type,
                                  handle_WindowLineData,
                                  this);
@@ -514,7 +514,7 @@ long nmm_Microscope_Remote::Initialize (int (* f) (stm_stream *)) {
 // These messages were only needed with the old microscope (STM),
 // which had to take more samples per point when feeling to reduce
 // the noise in the results.
-
+/* OBSOLETE
 long nmm_Microscope_Remote::SetSamples (const nmm_Microscope_Remote::SampleMode _mode) {
 
   switch (_mode) {
@@ -532,7 +532,7 @@ long nmm_Microscope_Remote::SetSamples (const nmm_Microscope_Remote::SampleMode 
 
   return 0;
 }
-
+*/
 
 
 
@@ -848,7 +848,6 @@ int nmm_Microscope_Remote::TakeSampleSet (float x, float y) {
   }
 
   d_sampleAlgorithm->sampleAt(x, y);
-
   return 0;
 }
 
@@ -1565,6 +1564,7 @@ long nmm_Microscope_Remote::JumpToScanLine(long line)
   return dispatchMessage(len, msgbuf, d_JumpToScanLine_type);
 }
 
+/* OBSOLETE
 long nmm_Microscope_Remote::SetStdDevParams (const long _samples,
                                             const float _freq) {
   state.modify.std_dev_samples = _samples;
@@ -1584,7 +1584,7 @@ long nmm_Microscope_Remote::SetStdDevParams (void) {
 
   return dispatchMessage(len, msgbuf, d_SetStdDevParams_type);
 }
-
+*/
 
 
 
@@ -1596,11 +1596,11 @@ long nmm_Microscope_Remote::QueryScanRange (void) {
 
 
 
-
+/* OBSOLETE
 long nmm_Microscope_Remote::QueryStdDevParams (void) {
   return dispatchMessage(0, NULL, d_QueryStdDevParams_type);
 }
-
+*/
 
 
 
@@ -1907,7 +1907,8 @@ long nmm_Microscope_Remote::InitDevice (const vrpn_bool _setRegion,
   }
 
   // Set the safe speed limit (non-modification)
-  CHECK(SetMaxMove(state.MaxSafeMove));
+  // This no longer does anything. Don't send it. 
+  //CHECK(SetMaxMove(state.MaxSafeMove));
 
   // Ask it for the scan range in x, y, and z.
   // When this is read back, Z will be used to set min_z and max_z.
@@ -1924,8 +1925,10 @@ long nmm_Microscope_Remote::InitDevice (const vrpn_bool _setRegion,
 
   // Tell it where to scan.
   // (Grid size == window size to begin with)
-  CHECK(SetGridSize(d_dataset->inputGrid->numX(),
-                    d_dataset->inputGrid->numY()));
+  // We don't want to SET the grid size, we want to query it. 
+  // AFM should tell us what grid size its using. 
+//    CHECK(SetGridSize(d_dataset->inputGrid->numX(),
+//                      d_dataset->inputGrid->numY()));
   CHECK(ResumeFullScan());
 
   // Tell it how many samples to take at each point, at what rate
@@ -2382,6 +2385,7 @@ int nmm_Microscope_Remote::handle_PulseParameters (void * userdata,
   return 0;
 }
 
+/* OBSOLETE
 //static
 int nmm_Microscope_Remote::handle_StdDevParameters (void * userdata,
                                               vrpn_HANDLERPARAM param) {
@@ -2394,6 +2398,7 @@ int nmm_Microscope_Remote::handle_StdDevParameters (void * userdata,
 
   return 0;
 }
+*/
 
 //static
 int nmm_Microscope_Remote::handle_WindowLineData (void * userdata,
@@ -3448,12 +3453,13 @@ void nmm_Microscope_Remote::RcvPulseParameters (const long _pulseEnabled,
   }
 }
 
+/* OBSOLETE
 void nmm_Microscope_Remote::RcvStdDevParameters (const long _samples, const float _freq) {
   state.modify.std_dev_samples = _samples;
   state.modify.std_dev_frequency = _freq;
   printf("Num samples/point = %ld, Frequency = %g\n", _samples, _freq);
 }
-
+*/
 
 long nmm_Microscope_Remote::RcvWindowLineData (const long _x, const long _y,
                                     const long _sec, const long _usec,
@@ -3949,11 +3955,19 @@ int nmm_Microscope_Remote::RcvReportGridSize (const long _x, const long _y) {
   printf("Grid size from scanner:  %ldx%ld\n", _x, _y);
   if ((_x != d_dataset->inputGrid->numX()) ||
       (_y != d_dataset->inputGrid->numY())) {
-    fprintf(stderr, "Does not match command line grid size!\n");
-    // If we don't set exit flag here, we just get a bus error later.
-    d_dataset->done = VRPN_TRUE;
-    exit(-1); // we get a bus error before the next iteration, so exit now.
-    //return -1;
+    fprintf(stderr, "Reset grid size from %d %d!\n",
+	    d_dataset->inputGrid->numX(),
+	    d_dataset->inputGrid->numY());
+    if (d_dataset->setGridSize(_x, _y)) {
+	// Non-zero indicates error!
+	fprintf(stderr, "ERROR: unable to reset grid size\n");
+	// If we don't set exit flag here, we just get a bus error later.
+	d_dataset->done = VRPN_TRUE;
+	// New strategy, so don't abruptly exit...
+	//exit(-1); // we get a bus error before the next iteration, so exit now.
+    }
+    // Cause a full rebuild of the grid display lists. 
+    //graphics->causeGridRebuild();
   }
   return 0;
 }

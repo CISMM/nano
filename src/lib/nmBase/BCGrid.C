@@ -27,16 +27,106 @@ int close( int filedes );
 
 #include "readNanoscopeFile.C" // <------------ reading a .C file!
 
+const char * EMPTY_PLANE_NAME = "Empty-HeightPlane";
+
 const double STANDARD_DEVIATIONS = 3.0;
 
-int BCGrid::_read_mode = READ_DEVICE;
+int BCGrid::_read_mode = READ_FILE;
 int BCGrid::_times_invoked = 0;
 
 /**
+   Loads a list of files. If the only plane in the grid is EMPTY_PLANE_NAME,
+   fill the grid. If there is data already in the grid, add planes of data 
+   only if the grid size matches.
+   @author Aron Helser
+   @date modified 3-18-00 Aron Helser
+*/
+void
+BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
+{
+    int i;
+    FILE *infile;
+
+    //
+    // Read the first file from the list into a grid structure
+    // if there is at least one file to open
+    //
+    if ((num_files <= 0)||(file_names == NULL) || (file_names[0] == NULL)) {
+	return;
+    }
+    // "rb" is nessesary on _WIN32 and doesn't hurt elsewhere. 
+    infile = fopen(file_names[0],"rb");
+
+    if (infile == NULL) {
+	fprintf(stderr,
+		"Error! BCGrid::BCGrid: Could not open input file %s!\n",
+		file_names[0]);
+	return;
+    }
+
+    // Check to see if our grid has any meaningful data. 
+    if ((head() == NULL) ||
+        ( *(head()->name()) == BCString(EMPTY_PLANE_NAME))) {
+	// if not, read in the first file.
+	if (readFile(infile,file_names[0], topoFile) == -1) {
+	    fprintf(stderr,
+		    "Error! BCGrid::BCGrid: Could not read grid from %s!\n",
+		    file_names[0]);
+	    return;
+	}
+	// start comparison of data with second file
+	i=1;
+    } else {
+	// start comparison of data with first file
+	i=0;
+    }
+
+    //
+    // For each of the later grids, read them one at a time into their
+    // own grid structure, then compare the size of the new grid with the
+    // size of the existing grid.  If they match, copy all of the planes
+    // into the first grid, ensuring that all planes have unique names.
+    //
+    // i is initialized above, based on whether we read in the first file.
+    for (; i < num_files; i++) {
+	BCGrid grid(_num_x,_num_y, _min_x,_max_x,
+		    _min_y, _max_y, _read_mode, file_names[i], topoFile);
+	if (!(grid.empty())) {
+	    // 		if ( (grid._num_x != _num_x) ||
+	    // 		     (grid._num_y != _num_y) ||
+	    // 		     (grid._min_x != _min_x) ||
+	    // 		     (grid._max_x != _max_x) ||
+	    // 		     (grid._min_y != _min_y) ||
+	    // 		     (grid._max_y != _max_y) ) {
+	    // Only compare the grid sizes, so that we can load
+	    // datasets of different scan areas, and re-align them!
+	    if ( (grid._num_x != _num_x) ||
+		 (grid._num_y != _num_y) ) {
+		fprintf(stderr,"Error! BCGrid::BCGrid: Grid size mismatch"
+			" in file %s, ignoring the file\n",
+			file_names[i]);
+	    } else {
+		BCPlane *nextplane, *newplane;
+		BCString name;
+		for (nextplane = grid.head();
+		     nextplane != NULL;
+		     nextplane = nextplane->_next) {
+		    findUniquePlaneName(nextplane->_dataset,&name);
+		    newplane = addPlaneCopy(nextplane);
+		    newplane->rename(name);
+		}
+	    }
+	}
+    }
+
+    _modified = 1;
+}
+
+/**
 BCGridFill --> Called by constructors
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 11-2-95 by Russ Taylor
+    
+@author Kimberly Passarella Jones
+@date modified 3-18-00 Aron Helser
 */
 void
 BCGrid::BCGridFill(short num_x, short num_y, 
@@ -46,7 +136,6 @@ BCGrid::BCGridFill(short num_x, short num_y,
                        TopoFile &topoFile)
 {
    //BCDebug debug("BCGrid::BCGridFill", GRID_CODE);
-    int i;
 
     d_minMaxCB = NULL;
 
@@ -82,69 +171,8 @@ BCGrid::BCGridFill(short num_x, short num_y,
       }
       break;
       case READ_FILE: 
-      {	  FILE *infile;
-
-	 //
-	 // Read the first file from the list into a grid structure
-	 // if there is at least one file to open
-	 //
-	 if (num_files > 0) {
-#ifdef _WIN32
-	  infile = fopen(file_names[0],"rb");
-#else
-	  infile = fopen(file_names[0],"r");
-#endif
-	  if (infile == NULL) 
-	  {
-	      fprintf(stderr,
-		 "Error! BCGrid::BCGrid: Could not open input file %s!\n",
-			file_names[0]);
-	      return;
-	  }
-  
-	  if (readFile(infile,file_names[0], topoFile) == -1) 
-	  {
-	      fprintf(stderr,
-		"Error! BCGrid::BCGrid: Could not read grid from %s!\n",
-			file_names[0]);
-              return;
-	  }
-	 } // End of reading the first file
-
-	 //
-	 // For each of the later grids, read them one at a time into their
-	 // own grid structure, then compare the size of the new grid with the
-	 // size of the existing grid.  If they match, copy all of the planes
-	 // into the first grid, ensuring that all planes have unique names.
-	 //
-	 for (i = 1; i < num_files; i++) {
-	  BCGrid grid(num_x,num_y, min_x,max_x,
-		      min_y, max_y, read_mode, file_names[i], topoFile);
-	  if (!(grid.empty())) {
-// 		if ( (grid._num_x != _num_x) ||
-// 		     (grid._num_y != _num_y) ||
-// 		     (grid._min_x != _min_x) ||
-// 		     (grid._max_x != _max_x) ||
-// 		     (grid._min_y != _min_y) ||
-// 		     (grid._max_y != _max_y) ) {
-	    // Only compare the grid sizes, so that we can load
-	    // datasets of different scan areas, and re-align them!
-		if ( (grid._num_x != _num_x) ||
-		     (grid._num_y != _num_y) ) {
-			fprintf(stderr,"Error! BCGrid::BCGrid: Grid size mismatch in file %s, ignoring the file\n",file_names[i]);
-		} else {
-		  BCPlane *nextplane, *newplane;
-		  BCString name;
-		  for (nextplane = grid.head();
-		       nextplane != NULL;
-		       nextplane = nextplane->_next) {
-			findUniquePlaneName(nextplane->_dataset,&name);
-			newplane = addPlaneCopy(nextplane);
-			newplane->rename(name);
-		  }
-		}
-	  }
-	 }
+      {	  
+	  loadFiles(file_names, num_files, topoFile);
       }
       break;
       default:
@@ -161,10 +189,10 @@ BCGrid::BCGridFill(short num_x, short num_y,
 
 /**
 BCGrid --> constructor
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+    
+        @author Kimberly Passarella Jones
+ @date modified 9-10-95 by Kimberly Passarella Jones
+*/
 BCGrid::BCGrid(short num_x, short num_y, 
 		       double min_x, double max_x, 
 		       double min_y, double max_y,
@@ -177,12 +205,12 @@ BCGrid::BCGrid(short num_x, short num_y,
 
 /**
 BCGrid --> constructor
-   description: Calls the more general read routine after modifying the
+    Calls the more general read routine after modifying the
 		file_name parameter into a list format.  This is done for
 		backwards compatibility with code that passed only one file
 		name in.
-        author: Russ Taylor
- last modified: 11-2-95 by Russ Taylor
+        @author Russ Taylor
+ @date modified 11-2-95 by Russ Taylor
 */
 BCGrid::BCGrid(short num_x, short num_y, 
 		       double min_x, double max_x, 
@@ -202,9 +230,9 @@ BCGrid::BCGrid(short num_x, short num_y,
 
 /**
 BCGrid --> constructor
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 9-10-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 BCGrid::BCGrid(short num_x, short num_y, 
 	       double min_x, double max_x, 
@@ -264,8 +292,9 @@ BCGrid::BCGrid() :
 {    
    //BCDebug debug("BCGrid::BCGrid", GRID_CODE);
 }
-// Copy constructor
 
+
+// Copy constructor
 BCGrid::BCGrid (const BCGrid * grid) :
   _next (NULL),
   d_minMaxCB ( NULL),
@@ -301,10 +330,10 @@ BCGrid::BCGrid (const BCGrid * grid) :
 
 /**
 ~BCGrid --> destructor
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/ 
+    
+        @author Kimberly Passarella Jones
+ @date modified 9-10-95 by Kimberly Passarella Jones
+*/
 BCGrid::~BCGrid()
 {   
     BCPlane* current;
@@ -329,18 +358,21 @@ BCGrid::~BCGrid()
     }
 } // ~BCGrid
 
-/**
+/*
 findUniquePlaneName
-   description: Finds a plane name that does not match any existing plane
+    Finds a plane name that does not match any existing plane
 		name already linked to the Grid.  It does so by appending
 		numbers (from 2 on up) to the base_name until it finds a
 		name not already in the list.  If the base name is unique
 		as it stands, then no number is appended.
-        author: Russ Taylor
- last modified: 11-2-95 by Russ Taylor
+        @author Russ Taylor
+ @date modified 11-2-95 by Russ Taylor
 */
 void
-BCGrid::findUniquePlaneName(BCString base_name, BCString *result_name)
+BCGrid::findUniquePlaneName(
+	  BCString base_name, ///< Desired name
+	  BCString *result_name ///< Uniqueified name
+)
 {
 	int	next_number_to_try = 2;
 	char	appendix[10];
@@ -357,9 +389,9 @@ BCGrid::findUniquePlaneName(BCString base_name, BCString *result_name)
 
 /**
 addNewPlane
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 9-10-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 BCPlane*
 BCGrid::addNewPlane(BCString dataset, BCString units, int timed)
@@ -384,9 +416,9 @@ BCGrid::addNewPlane(BCString dataset, BCString units, int timed)
 
 /**
 addPlaneCopy
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 9-10-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 BCPlane* 
 BCGrid::addPlaneCopy(BCPlane* plane)
@@ -408,12 +440,33 @@ BCGrid::addPlaneCopy(BCPlane* plane)
 
 } // addPlaneCopy
 
+/**
+   Changes the grid resolution, including those of all it's planes,
+and erases the data in those planes.
+
+   @param x new grid x dimension
+   @param y new grid y dimension
+   @return 0 if successful, -1 on failure.
+ */
+int BCGrid::setGridSize(int x, int y)
+{
+    _num_x = x;
+    _num_y = y;
+
+    BCPlane* nextplane;
+    for (nextplane = head();
+	 nextplane != NULL;
+	 nextplane = nextplane->_next) {
+	if (nextplane->setGridSize(x,y)) { return -1; }
+    }
+    return 0;
+}
 
 /**
 deleteHead
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 9-10-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int 
 BCGrid::deleteHead()
@@ -434,9 +487,9 @@ BCGrid::deleteHead()
 
 /**
 empty
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 9-10-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int 
 BCGrid::empty()
@@ -455,9 +508,9 @@ int BCGrid::empty_list()
 }
 /**
 getPlaneByName
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 9-10-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 BCPlane* 
 BCGrid::getPlaneByName(BCString name)
@@ -480,13 +533,13 @@ BCGrid::getPlaneByName(BCString name)
 
 /**
 decimate
-   description:
+   
     usage note: IMPORTANT! This method destroys the list of planes maintained
                 by the Grid. Thus any pointers to individual planes in this
 		list that the user has obtained by using head() or getPlaneByName
 		will no longer be valid!
-        author: ?
- last modified: 9-16-95 by Kimberly Passarella Jones
+        @author ?
+ @date modified 9-16-95 by Kimberly Passarella Jones
 */
 void
 BCGrid::decimate(short num_x, short num_y)
@@ -612,10 +665,10 @@ void BCGrid::doMinMaxCallbacks (void) {
 
 /**
 writeTextFile
-   description: This method (in conjunction with CPlane::writeTextFile) writes
+    This method (in conjunction with CPlane::writeTextFile) writes
                 files readable by BCGrid::readTextFile.
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
+        @author ?
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int	
 BCGrid::writeTextFile(FILE* file, BCPlane* plane)
@@ -646,10 +699,10 @@ BCGrid::writeTextFile(FILE* file, BCPlane* plane)
 
 /**
 writeBinaryFile
-   description: This method (in conjunction with BCPlane::writeBinaryFile) writes
+    This method (in conjunction with BCPlane::writeBinaryFile) writes
                 files readable by BCGrid::readBinaryFile.
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
+        @author ?
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int	
 BCGrid::writeBinaryFile(FILE* file, BCPlane* plane)
@@ -697,10 +750,10 @@ BCGrid::writeBinaryFile(FILE* file, BCPlane* plane)
 
 /**
 writeUNCAFile
-   description: This method (in conjunction with BCPlane::writeUNCAFile) writes
+    This method (in conjunction with BCPlane::writeUNCAFile) writes
                 files readable by BCGrid::readUNCAFile.
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
+        @author ?
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int  
 BCGrid::writeUNCAFile(FILE* file, BCPlane* plane)
@@ -956,9 +1009,9 @@ int BCGrid::readAsciiRHKFile(TopoFile &TGF, FILE* file, const char *name)
 
 /**
 writePPMFile
-   description: 
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
+    
+        @author ?
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int 
 BCGrid::writePPMFile(FILE* file, BCPlane* plane)
@@ -992,10 +1045,10 @@ BCGrid::writePPMFile(FILE* file, BCPlane* plane)
 
 /**
 writeRawVolFile
-   description: Write a raw volume file from the planes in the grid
+    Write a raw volume file from the planes in the grid
                 Useful for input to the VolVis program from SUNY Stony Brook
-        author: Aron Helser
- last modified: Aug 12 1998 Aron Helser
+        @author Aron Helser
+ @date modified Aug 12 1998 Aron Helser
 */
 int 
 BCGrid::writeRawVolFile(const char* file_name)
@@ -1062,9 +1115,9 @@ BCGrid::writeRawVolFile(const char* file_name)
 
 /**
 writeNCFile
-   description: 
-        author: Russell Taylor
- last modified: 1-2-98 by Russell Taylor
+    
+        @author Russell Taylor
+ @date modified 1-2-98 by Russell Taylor
 */
 int 
 BCGrid::writeNCFile(FILE* file, BCPlane* plane,
@@ -1103,9 +1156,9 @@ BCGrid::writeNCFile(FILE* file, BCPlane* plane,
   
 /**
 addPlane
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 9-10-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 void
 BCGrid::addPlane(BCPlane* plane)
@@ -1137,10 +1190,10 @@ BCGrid::addPlane(BCPlane* plane)
 
 /**
 makeMask
-   description: This method makes a Gaussian mask.
+    This method makes a Gaussian mask.
          input: xExtent and yExtent (one-sided extents, not dimensions!)
-        author: ?
- last modified: 9-16-95 by Kimberly Passarella Jones
+        @author ?
+ @date modified 9-16-95 by Kimberly Passarella Jones
 */
 double**
 BCGrid::makeMask (short xExtent, short yExtent)
@@ -1224,12 +1277,12 @@ void BCGrid::decimateRegion (short minx, short miny, short maxx, short maxy,
 
 /**
 readFile
-   description: This method will read any file type. It first determines what 
+    This method will read any file type. It first determines what 
                 is in the file by looking the first four characters, which
 		are kind of a "magic number" for the file.  Then it reads the
  		file contents.
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
+        @author ?
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int
 BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
@@ -1321,7 +1374,7 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
 
 /**
 readTextFile
-   description: This method (in conjunction with BCPlane::readTextFile) read 
+    This method (in conjunction with BCPlane::readTextFile) read 
                 files with the format given below:
 
 		DSAA 		<-- 4 character ascii
@@ -1334,8 +1387,8 @@ readTextFile
 
 		It also creates a plane (an instance of the BCPlane class) and
 		adds it to the lists of planes which begins with _head. 
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
+        @author ?
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int
 BCGrid::readTextFile(FILE* file, const char *name)
@@ -1347,6 +1400,9 @@ BCGrid::readTextFile(FILE* file, const char *name)
 	perror("BCGrid::readTextFile: Could not read num_x and num_y!");
 	return -1;
     }
+    // We know the file size, set our own grid size.
+    setGridSize(_num_x, _num_y);
+
     if (fscanf(file,"%lf %lf", &_min_x, &_max_x) != 2) 
     {
 	perror("BCGrid::readTextFile: Could not read min/max x!");
@@ -1375,7 +1431,7 @@ BCGrid::readTextFile(FILE* file, const char *name)
 
 /**
 readBinaryFile
-   description: This method (in conjunction with BCPlane::readBinaryFile) reads
+    This method (in conjunction with BCPlane::readBinaryFile) reads
                 files withthe format given below:
 
 		DSBB 		<-- 4 character ascii
@@ -1388,8 +1444,8 @@ readBinaryFile
 
 		It also creates a plane (an instance of the BCPlane class) and
 		adds it to the lists of planes which begins with _head.
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
+        @author ?
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int	
 BCGrid::readBinaryFile(FILE* file, const char *name)
@@ -1401,6 +1457,9 @@ BCGrid::readBinaryFile(FILE* file, const char *name)
 	perror("BCGrid::readBinaryFile: Could not read num_x!");
 	return -1;
     }
+    // We know the file size, set our own grid size.
+    setGridSize(_num_x, _num_y);
+
     if (fread(&_num_y, sizeof(_num_y), 1, file) != 1) 
     {
 	perror("BCGrid::readBinaryFile: Could not read num_y!");
@@ -1444,7 +1503,7 @@ BCGrid::readBinaryFile(FILE* file, const char *name)
 
 /**
 readUNCAFile
-   description: This method (in conjunction with BCPlane::readUNCAFile) read 
+    This method (in conjunction with BCPlane::readUNCAFile) read 
                 files with the format given below:
 
 		UNCA 		<-- 4 character ascii
@@ -1457,8 +1516,8 @@ readUNCAFile
 
 		It also creates a plane (an instance of the BCPlane class) and
 		adds it to the lists of planes which begins with _head.
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
+        @author ?
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int 
 BCGrid::readUNCAFile(FILE* file, const char *name)
@@ -1470,6 +1529,9 @@ BCGrid::readUNCAFile(FILE* file, const char *name)
 	perror("BCGrid::readUNCAFile: Could not read num_x and num_y");
 	return -1;
     }
+    // We know the file size, set our own grid size.
+    setGridSize(_num_x, _num_y);
+
     if (fscanf(file, "%lf %lf", &_min_x, &_max_x) != 2) 
     {
 	perror("BCGrid::readUNCAFile: Could not read min/max x");
@@ -1498,7 +1560,7 @@ BCGrid::readUNCAFile(FILE* file, const char *name)
 
 /**
 readUNCBFile
-   description: This method (in conjunction with BCPlane::readUNCBFile) read 
+    This method (in conjunction with BCPlane::readUNCBFile) read 
                 files with the format given below:
 
 		UNCB		<-- 4 character ascii
@@ -1511,8 +1573,8 @@ readUNCBFile
 
 		It also creates a plane (an instance of the BCPlane class) and 
 		adds it to the lists of planes which begins with _head.
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
+        @author ?
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int     
 BCGrid::readUNCBFile(FILE* file, const char *name)
@@ -1529,6 +1591,9 @@ BCGrid::readUNCBFile(FILE* file, const char *name)
 	perror("BCGrid::readUNCBFile: Could not read num_y!");
 	return -1;
     }
+    // We know the file size, set our own grid size.
+    setGridSize(_num_x, _num_y);
+
     if (fread(&_min_x, sizeof(_min_x), 1, file) != 1) 
     {
 	perror("BCGrid::readUNCBFile: Could not read min_x!");
@@ -1568,9 +1633,9 @@ BCGrid::readUNCBFile(FILE* file, const char *name)
 
 /**
 readComment
-   description: 
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
+    
+        @author ?
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int     
 BCGrid::readComment(FILE *file, char *buffer, double* max_value) 
@@ -1608,7 +1673,7 @@ BCGrid::readComment(FILE *file, char *buffer, double* max_value)
 
 /**
 readPPMorPGMFile
-   description: This method (in conjunction with BCPlane::readPPMorPGMFile and
+    This method (in conjunction with BCPlane::readPPMorPGMFile and
                 readComment) reads files with the format given below:
 
 		P2 or P6	<-- 2 character ascii
@@ -1622,8 +1687,8 @@ readPPMorPGMFile
 
 		It also creates a plane (an instance of the BCPlane class) and adds
 		it to the lists of planes which begins with _head.
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
+        @author ?
+ @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int 
 BCGrid::readPPMorPGMFile(FILE *file, const char *name)
@@ -1639,7 +1704,7 @@ BCGrid::readPPMorPGMFile(FILE *file, const char *name)
     //  magic number in readFile (4B for a 2B magic #))
     rewind(file);
 
-    debug.warn("file rewound");
+    //debug.warn("file rewound");
 
     char buffer[80];
     double max_value = 400.0;
@@ -1666,6 +1731,8 @@ BCGrid::readPPMorPGMFile(FILE *file, const char *name)
 		_num_x, _num_y);
 	return -1;
     }
+    // We know the file size, set our own grid size.
+    setGridSize(_num_x, _num_y);
 
     // get maximum color value.(and make certain it is in the range (0..255] - it
     // will be used to normalize plane values
@@ -1707,6 +1774,9 @@ BCGrid::readPPMorPGMFileNew(FILE *file, const char *filename)
 	}
 	_num_x = ppm_file.nx;
 	_num_y = ppm_file.ny;
+	// We know the file size, set our own grid size.
+	setGridSize(_num_x, _num_y);
+	
 	BCPlane* plane = addNewPlane(filename, "nm", TIMED);
 
 	float min, max;
@@ -1723,6 +1793,9 @@ BCGrid::readPPMorPGMFileNew(FILE *file, const char *filename)
 			if (r > max) max = r;
 		}
 	}
+
+	// Artificially re-scale the values in the PPM so 
+	// they no longer run 0-255.
 	plane->_max_value = 400.0;
 	plane->_min_value = 0.0;
 	float scale = 400.0/max;

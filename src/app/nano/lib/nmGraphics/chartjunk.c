@@ -215,10 +215,12 @@ int height_at_hand_display (void *) {
 		sprintf(message,
 		"Closest grid height to current hand location is unknown");
 	} else {
+            double result;
+            plane->valueAt(&result, x_loc,y_loc);
 		sprintf(message,
 			"Closest grid height to current hand location is %g",
-		plane->valueAt(x_loc,y_loc));
-	}
+                        result);
+        }
   }
 
   // Print the message at the appropriate location on the screen

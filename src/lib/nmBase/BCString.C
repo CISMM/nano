@@ -2,9 +2,9 @@
 
 /**
 BCString() --> constructor
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString::BCString()
 {
@@ -20,9 +20,9 @@ BCString::BCString()
 
 /**
 BCString() --> constructor
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString::BCString(int i)
 {
@@ -42,9 +42,9 @@ BCString::BCString(int i)
 
 /**
 BCString() --> constructor
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString::BCString(const char *s)
 {   
@@ -61,9 +61,9 @@ BCString::BCString(const char *s)
 
 /**
 BCString() --> constructor
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString::BCString(char c)
 {   
@@ -77,9 +77,9 @@ BCString::BCString(char c)
 
 /**
 BCString() --> constructor
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString::BCString(const BCString& s)
 {   
@@ -102,9 +102,9 @@ BCString::BCString(const BCString& s)
 
 /**
 operator =
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString&
 BCString::operator = (const char* s)
@@ -124,9 +124,9 @@ BCString::operator = (const char* s)
 
 /**
 operator =
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString&
 BCString::operator = (char c)
@@ -143,9 +143,9 @@ BCString::operator = (char c)
 
 /**
 operator =
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString&
 BCString::operator = (const BCString& s)
@@ -168,9 +168,9 @@ BCString::operator = (const BCString& s)
 
 /**
 operator +=
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString&
 BCString::operator += (const char* s)
@@ -189,9 +189,9 @@ BCString::operator += (const char* s)
 
 /**
 operator +=
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString&
 BCString::operator += (char c)
@@ -210,9 +210,9 @@ BCString::operator += (char c)
 
 /**
 operator +=
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString&
 BCString::operator += (const BCString& s)
@@ -231,9 +231,9 @@ BCString::operator += (const BCString& s)
 
 /**
 operator +
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 BCString
 operator + (const BCString& s1, const BCString& s2)
@@ -252,9 +252,9 @@ operator + (const BCString& s1, const BCString& s2)
 
 /**
 operator[]
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 char&
 BCString::operator[](int index)
@@ -268,9 +268,9 @@ BCString::operator[](int index)
 
 /**
 operator <<
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 ostream&
 operator << (ostream& os, const BCString& s)
@@ -284,9 +284,9 @@ operator << (ostream& os, const BCString& s)
 
 /**
 operator >>
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
+    
+        @author Kimberly Passarella Jones
+ @date 2-5-95 by Kimberly Passarella Jones
 */
 istream&
 operator >> (istream& is, BCString& s)

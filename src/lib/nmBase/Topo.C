@@ -1217,6 +1217,8 @@ int TopoFile::topoDataToGrid(BCGrid* G, const char* filename){
         G->_max_x = fXmax * XYunits2nm;
         G->_min_y = fYmin * XYunits2nm;
         G->_max_y = fYmax * XYunits2nm;
+        // We know the file size, set our own grid size.
+        G->setGridSize(G->_num_x, G->_num_y);
 
 	/* Printf duplicates info printed from read of header. 
         printf("  min_x %f max_x %f\n",G->_min_x,G->_max_x);

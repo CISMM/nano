@@ -29,18 +29,14 @@ class nmb_Line {
 
     vrpn_bool changed (void) const;
 
-    double getIntercept (BCPlane *) const;
-    void getIntercept (q_vec_type p, BCPlane *) const;
-      /**< Computes the point at which this line intercepts the given plane
-       * and returns it in p.
-       * Uses BCPlane::valueAt(), which will actually give the Z value
-       * of a nearby grid point rather than interpolating to the "exact"
-       * plane value at (x, y).
-       * Assumes normalize() or moveTo() have guaranteed integrity of
-       * current position.
-       */
-
     // MANIPULATORS
+    double getIntercept (BCPlane *);
+    ///< Computes intercept of line with plane. Side-effect: moves
+    ///< line inside bounds of plane if necessary.
+
+    void getIntercept (q_vec_type p, BCPlane *) ;
+    ///< Computes intercept of line with plane. Side-effect: moves
+    ///< line inside bounds of plane if necessary.
 
     void moveTo (float x, float y, BCPlane * plane);
       ///< Move to (x, y) and normalize.

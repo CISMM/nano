@@ -1725,19 +1725,23 @@ int my_rubber_line(void * data)
 	return -1;
     }
     
-    float z_min,z_max;
-    float p_scale = plane->scale();
-
-    z_max = plane->valueAt(a[0], a[1])*p_scale;
+    double z_min,z_max, b_val;
+    double p_scale = plane->scale();
+    plane->valueAt(&z_max, a[0], a[1]);
+    z_max *=p_scale;
+    plane->valueAt(&b_val, b[0], b[1]);
+    b_val *=p_scale;
+    
     z_min = z_max;
 
-    if(z_min> plane->valueAt(b[0], b[1]) * p_scale) 
-	z_min=plane->valueAt(b[0], b[1]) * p_scale;
-    if(z_max< plane->valueAt(b[0], b[1]) * p_scale) 
-	z_max=plane->valueAt(b[0], b[1]) * p_scale;
+    if(z_min> b_val) {
+        z_min=b_val;
+    }
+    if(z_max< b_val) 
+	z_max=b_val;
 
     // Make limits 10% bigger (+ const) so lines are visible above min and max. 
-    float z_range = z_max - z_min;
+    double z_range = z_max - z_min;
     z_min = (z_min-(z_range * 0.1 + 500));
     z_max = (z_max+(z_range * 0.1 + 500));
     z_range = z_max - z_min;

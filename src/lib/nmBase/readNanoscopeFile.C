@@ -99,6 +99,8 @@ BCGrid::readNanoscopeFileWithoutHeader(FILE* file, const char *filename)
     }
 
     _num_x = _num_y = i_scrap;
+    // We know the file size, set our own grid size.
+    setGridSize(_num_x, _num_y);
 
     // guess min/max x, and y
     _min_x = -10;
@@ -434,8 +436,11 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
 	} else if (!strncasecmp(token, "Samps/line", strlen("Samps/line"))) {
 	    ngot = fscanf(file, ": %hd %hd", &_num_x, &_num_y);
 	    
-	    if (ngot < 2)
+	    if (ngot < 2) {
 		_num_y =_num_x;
+	    }
+	    // We know the file size, set our own grid size.
+	    setGridSize(_num_x, _num_y);
 
 	} else if (!strncasecmp(token, "Data offset", strlen("Data offset"))) {
 	    // read multi-layer data (added by qliu on 6/27/95)

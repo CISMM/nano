@@ -65,8 +65,10 @@ nmm_Microscope::nmm_Microscope
          ("nmm Microscope SetRelax");
     d_RecordResistance_type = connection->register_message_type
          ("nmm Microscope RecordResistance");
+    /* OBSOLETE */
     d_SetStdDevParams_type = connection->register_message_type
          ("nmm Microscope SetStdDevParams");
+
     d_SetScanWindow_type = connection->register_message_type
          ("nmm Microscope SetScanWindow");
     d_ResumeWindowScan_type = connection->register_message_type
@@ -107,6 +109,7 @@ nmm_Microscope::nmm_Microscope
          ("nmm Microscope Shutdown");
     d_QueryScanRange_type = connection->register_message_type
          ("nmm Microscope QueryScanRange");
+    /* OBSOLETE */
     d_QueryStdDevParams_type = connection->register_message_type
          ("nmm Microscope QueryStdDevParams");
     d_QueryPulseParams_type = connection->register_message_type
@@ -123,8 +126,10 @@ nmm_Microscope::nmm_Microscope
          ("nmm Microscope StartingToRelax");
     d_RelaxSet_type = connection->register_message_type
          ("nmm Microscope RelaxSet");
+    /* OBSOLETE */
     d_StdDevParameters_type = connection->register_message_type
          ("nmm Microscope StdDevParameters");
+
     d_WindowLineData_type = connection->register_message_type
          ("nmm Microscope WindowLineData");
     d_WindowScanNM_type = connection->register_message_type
@@ -397,7 +402,7 @@ char * nmm_Microscope::d_outputMessageName [] = {
          "nmm Microscope SetStPtDelay",
          "nmm Microscope SetRelax",
          "nmm Microscope RecordResistance",
-         "nmm Microscope SetStdDevParams",
+         //"nmm Microscope SetStdDevParams",
          "nmm Microscope SetScanWindow",
          "nmm Microscope ResumeWindowScan",
          "nmm Microscope SetGridSize",
@@ -419,7 +424,7 @@ char * nmm_Microscope::d_outputMessageName [] = {
          "nmm Microscope MarkImage",
          "nmm Microscope Shutdown",
          "nmm Microscope QueryScanRange",
-         "nmm Microscope QueryStdDevParams",
+         //"nmm Microscope QueryStdDevParams",
          "nmm Microscope QueryPulseParams",
 };
 // static
@@ -432,7 +437,7 @@ char * nmm_Microscope::d_inputMessageName [] = {
          "nmm Microscope AmpDisabled",
          "nmm Microscope StartingToRelax",
          "nmm Microscope RelaxSet",
-         "nmm Microscope StdDevParameters",
+         //"nmm Microscope StdDevParameters",
          "nmm Microscope WindowLineData",
          "nmm Microscope WindowScanNM",
          "nmm Microscope WindowBackscanNM",
@@ -759,7 +764,7 @@ char * nmm_Microscope::encode_SetStdDelay (long * len,
   vrpn_int32 mlen;
 
   // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): Entering...\n");
+  //fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): Entering...\n");
   // NANO END
 
   if (!len) return NULL;
@@ -800,7 +805,7 @@ char * nmm_Microscope::encode_SetStPtDelay (long * len,
   vrpn_int32 mlen;
 
   // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): Entering...\n");
+  //fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): Entering...\n");
   // NANO END
 
   if (!len) return NULL;
@@ -842,7 +847,7 @@ char * nmm_Microscope::encode_SetRelax (long * len,
   vrpn_int32 mlen;
 
   // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope::encode_SetRelax(): Entering...\n");
+  //fprintf(stderr, "nmm_Microscope::encode_SetRelax(): Entering...\n");
   // NANO END
   if (!len) return NULL;
 
@@ -920,7 +925,7 @@ long nmm_Microscope::decode_RecordResistance (const char ** buf,
 }
 
 
-
+/* OBSOLETE */
 char * nmm_Microscope::encode_SetStdDevParams (long * len,
                  vrpn_int32 samples, vrpn_float32 freq) {
   char * msgbuf = NULL;
@@ -1230,7 +1235,7 @@ char * nmm_Microscope::encode_SetMaxMove (long * len,
   vrpn_int32 mlen;
 
   // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): Entering...\n");
+  //fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): Entering...\n");
   // NANO END
   if (!len) return NULL;
 
@@ -1749,6 +1754,7 @@ long nmm_Microscope::decode_RelaxSet (const char ** buf,
 }
 
 
+/* OBSOLETE */
 char * nmm_Microscope::encode_StdDevParameters (long * len,
            vrpn_int32 samples, vrpn_float32 frequency) {
   char * msgbuf = NULL;
@@ -1784,6 +1790,7 @@ long nmm_Microscope::decode_StdDevParameters (const char ** buf,
 
   return 0;
 }
+
 
 char * nmm_Microscope::encode_WindowLineData (long * len,
            vrpn_int32 x, vrpn_int32 y, 

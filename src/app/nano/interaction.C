@@ -5,7 +5,6 @@
     
     Overview:
     	- handles all button presses for grabbing & flying
-	- fly with left button;  grab with right
     
     Revision History:
 
@@ -30,7 +29,6 @@
  */
 #include <stdio.h>
 
-/*#include "tracker.h"*/
 #include <quat.h>
 
 #include <BCPlane.h>
@@ -207,10 +205,12 @@ Tclvar_int	tcl_trigger_pressed("trigger_pressed",0, handle_trigger_change);
  * callback function for Commit button in tcl interface.
  **********/
 static void handle_commit_change( vrpn_int32 val, void *userdata);
+
 /**
  * callback function for Cancel commit button in tcl interface.
  **********/
 static void handle_commit_cancel( vrpn_int32 val, void *userdata);
+
 /**
  * callback function for PHANToM reset button in tcl interface.
  **********/
@@ -361,13 +361,13 @@ static void handle_trigger_change( vrpn_int32 val, void * )
     }
 }
 
-/**********
+/**
  * callback function for Commit button in tcl interface.
  * It must prevent commit from being pressed at the wrong time, 
  * and do the correct thing when commit is pressed in line mode, and 
  * select mode. The commit button also starts modification in FeelLive mode,
  * but that is taken care of in doFeelLive().
- **********/
+ */
 
 static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 {
@@ -550,13 +550,12 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
     }
 }
 
-/**********
+/**
  * callback function for Cancel commit button in tcl interface.
  * This button backs out of an operation, instead of commiting it.
  * In polyline mode - it clears any saved points. 
  * In select mode - it sets the region invalid, and clears its icon.
- **********/
-
+ */
 static void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 {
     //printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
@@ -634,12 +633,11 @@ static void handle_phantom_reset( vrpn_int32, void *) // don't use val, userdata
     tcl_phantom_reset_pressed = 0;
 }
 
-/*****************************************************************************
+/**
  *
-   dispatch_event - dispatch the given event based on the current mode and user
+ * dispatch_event - dispatch the given event based on the current mode and user
  *
- *****************************************************************************/
-
+ */
 void	dispatch_event(int user, int mode, int event, nmb_TimerList * timer)
 {
     int ret = 0;
@@ -716,7 +714,7 @@ void	dispatch_event(int user, int mode, int event, nmb_TimerList * timer)
 }
 
 
-/*****************************************************************************
+/**
  *
    interaction - handles force level changes from knob box,
                  handles button presses from Phantom or other device 
@@ -725,8 +723,7 @@ void	dispatch_event(int user, int mode, int event, nmb_TimerList * timer)
 		 Otherwise, change the "hand" icon and call dispatch_event 
 		 to do the real work.
  *
- *****************************************************************************/
-
+ */
 int interaction(int bdbox_buttons[], double bdbox_dials[], 
 		int phantButtonPressed, nmb_TimerList * timer)
 {
@@ -1086,12 +1083,12 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
 }	/* interaction */
 
 
-/**=======================================================================
-** qmf_lookat - produce an orientation quaternion that will line up the
-**	viewing vector (+Z) from from to at, and the Y axis roughly along
-**	up.
-**-----------------------------------------------------------------------
-**/
+/**
+ * qmf_lookat - produce an orientation quaternion that will line up the
+ *	viewing vector (+Z) from from to at, and the Y axis roughly along
+ *	up.
+ *
+ */
 int 
 qmf_lookat(q_type orient,  q_vec_type from,  q_vec_type at,  q_vec_type up )
 {
@@ -1139,24 +1136,24 @@ qmf_lookat(q_type orient,  q_vec_type from,  q_vec_type at,  q_vec_type up )
    return 0;
    }
   
-/*.......................................................................
-**/
+//.......................................................................
 
-/*****************************************************************************
+/**
  *
    doLight - adjust the position of the light
  *
- *****************************************************************************/
-
+ */
 int
 doLight(int whichUser, int userEvent)
 {
   //VectorType		lightpos; //, lightdir;
   q_vec_type            lightdir;
   q_vec_type		q_tmp;
-  v_xform_type	worldFromPart;
+  v_xform_type	worldFromPart, worldFromHand;
   v_xform_type	PartFromWorld;
   q_type		q_room;
+  static v_xform_type	oldWorldFromHand;
+  static q_vec_type	oldLightDir;
 
   q_matrix_type lightDirection;
   q_xyz_quat_type xyzQuat;
@@ -1176,20 +1173,39 @@ doLight(int whichUser, int userEvent)
    * This represents the direction that the light will
    * shine from.  The light ray out of the lighthand
    * cube is along the -y-axis, so the light needs to 
-   * shine along the -y-axis in hand-space.  This transform
-   * transforms the hand-space -y-direction to world-space.
+   * shine along the -y-axis in hand-space.  
    */
   q_tmp[X] = ( -lightDirection[1][0] );
   q_tmp[Y] = ( -lightDirection[1][1] );
   q_tmp[Z] = ( -lightDirection[1][2] );
 
   switch ( userEvent ) {
+    case PRESS_EVENT:
+	// get snapshot of hand in world space == w_from_h 
+	v_get_world_from_hand(whichUser, &oldWorldFromHand);
+	// Save the old light direction
+        oldLightDir[X] = tcl_lightDirX;
+        oldLightDir[Y] = tcl_lightDirY;
+        oldLightDir[Z] = tcl_lightDirZ;
+	break;
 
     case HOLD_EVENT:
 
-	/* Rotate force from world space to room space */
+	// Any rotation that the hand undergoes, we 
+	// will apply the same rotation to the light direction.
+	
+	// First find the rotation of the hand in the world.
+	// Get current hand in world space.
+	v_get_world_from_hand(whichUser, &worldFromHand);
+	
+	// now get the rotation from one to the other. 
+	
+	// Apply to the light direction.
+
+	/* Rotate light from world space to room space */
         v_get_world_from_head(whichUser, &worldFromPart);
-	v_x_invert( &PartFromWorld, &worldFromPart );
+	// doesn't do anything.
+	//v_x_invert( &PartFromWorld, &worldFromPart );
 
 	q_copy(q_room, worldFromPart.rotate);
 	q_invert(q_room, q_room);
@@ -1209,13 +1225,12 @@ doLight(int whichUser, int userEvent)
         //graphics->setLightDirection(lightdir);
 
         // NANOX
-        tcl_lightDirX = lightdir[X];
+	tcl_lightDirX = lightdir[X];
         tcl_lightDirY = lightdir[Y];
         tcl_lightDirZ = lightdir[Z];
 
 	break;
 
-    case PRESS_EVENT:
     case RELEASE_EVENT:
     default:
     	/* do nothing if no button pressed  */
@@ -1236,14 +1251,13 @@ void handle_lightDir_change (vrpn_float64, void *) {
   graphics->setLightDirection(lightdir);
 }
 
-/*****************************************************************************
+/**
  *
    doFly - fly through the world when button is pressed
 	 - scale motion based on user's size in the world
 	   (Allows a person to fly faster when they are huge)
  *
- *****************************************************************************/
-
+ */
 int
 doFly(int whichUser, int userEvent)
 {
@@ -1266,12 +1280,11 @@ switch ( userEvent )
 return 0;
 }	/* doFly */
 
-/*****************************************************************************
+/**
  *
    doScale - scale the world when button is pressed
  *
- *****************************************************************************/
-
+ */
 int
 doScale(int whichUser, int userEvent, double scale_factor)
 {
@@ -1329,7 +1342,7 @@ void specify_sound(int x, int y)
 
 
 
-/*****************************************************************************
+/**
   modified Feb 2000 by Tom Hudson
               - Uses nmui_HapticSurface
 
@@ -1345,8 +1358,7 @@ void specify_sound(int x, int y)
 	      - Handle differences in scale between user and world
 	      - Handle differences in orientation between user and world
 	      - Uses info from grid only to compute mag and direction.
- *****************************************************************************/
-
+*/
 double touch_canned_from_plane (int whichUser, q_vec_type handpos) {
 
   static nmui_HSCanned haptics (dataset);
@@ -1377,7 +1389,6 @@ double touch_canned_from_plane (int whichUser, q_vec_type handpos) {
   // Set adhesion, compliance, bumps, buzzing, ...
   // Must come after haptics.setLocation(), and
   // probably update() too.
-
   haptic_features.update();
 
   // Return signed distance above plane (plane in world space).
@@ -1386,7 +1397,7 @@ double touch_canned_from_plane (int whichUser, q_vec_type handpos) {
 }
 
 
-/*****************************************************************************
+/**
   modified Feb 2000 by Tom Hudson
               - Uses nmui_HapticSurface
 
@@ -1404,8 +1415,7 @@ double touch_canned_from_plane (int whichUser, q_vec_type handpos) {
 		surface).
 	      - Handle differences in scale between user and world
 	      - Handle differences in orientation between user and world
- *****************************************************************************/
-
+*/
 double touch_flat_from_measurelines(int whichUser, q_vec_type handpos)
 {
   //---------------------------------------------------------------------
@@ -1429,7 +1439,7 @@ double touch_flat_from_measurelines(int whichUser, q_vec_type handpos)
   return haptics.distanceFromSurface();
 }
 
-/*****************************************************************************
+/**
  *
   modified Feb 2000 by Tom Hudson
               - Uses nmui_HapticSurface
@@ -1449,8 +1459,7 @@ double touch_flat_from_measurelines(int whichUser, q_vec_type handpos)
 		in plane of Z and line of travel.
 	      - MUST BE IN LOCK STEP BEFORE CALLING !!!
  *
- *****************************************************************************/
-
+ */
 double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
 {
   static nmui_HSLivePlane haptics (dataset, microscope);
@@ -1487,7 +1496,7 @@ double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
 }
 
 
-/*****************************************************************************
+/**
  *
    plane_norm - Apply force to user based on difference in Z value
 	      - Handle differences in scale between user and world
@@ -1495,8 +1504,7 @@ double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
 	      - Uses Normal from microscope.
 	      - MUST BE IN LOCK STEP BEFORE CALLING !!!
  *
- *****************************************************************************/
-
+ */
 int plane_norm(int whichUser)
 {
      Blunt_result * blunt_result;
@@ -1566,6 +1574,9 @@ int plane_norm(int whichUser)
      return 0;
 }
 
+/** When controling the position of the tip in 3D, this calculates
+ * the force the user should feel based on internal sensor measurements.
+ */
 int specify_directZ_force(int whichUser) 
 {
      q_vec_type		        point;
@@ -1654,14 +1665,14 @@ int specify_directZ_force(int whichUser)
     return 0;
 }
 
-/*****************************************************************************
+/// used in meas_cross 
+#define IABS(i,e)	(((i)=(e)) < 0 ? (i)=-(i) : (i))
+/**
  *
    meas_cross - draw out the cross section between two points.  draws only
      nearest neighbor calc of grid point values at grid x,y's.
  *
- *****************************************************************************/
-#define IABS(i,e)	(((i)=(e)) < 0 ? (i)=-(i) : (i))
-
+*/
 int 
 meas_cross( float x0, float y0, float x1, float y1, float z_scale)
 {
@@ -1689,19 +1700,21 @@ meas_cross( float x0, float y0, float x1, float y1, float z_scale)
   dy = (y1-y0)/n;
 
   Top[X] = x0; Top[Y] = y0; 
-  if( 
-	(Top[X] <= plane->maxX())
-	&&
-	(Top[X] >= plane->minX())
-	&&
-	(Top[Y] <= plane->maxY())
-	&&
-	(Top[Y] >= plane->minY())
-    )
-  	Top[Z] = plane->valueAt( x0, y0 )*z_scale;
-  else
-	Top[Z] = 0.0;
-
+  if( (Top[X] <= plane->maxX())
+      &&
+      (Top[X] >= plane->minX())
+      &&
+      (Top[Y] <= plane->maxY())
+      &&
+      (Top[Y] >= plane->minY())
+      ) {
+      double z_val;
+      plane->valueAt( &z_val, x0, y0 );
+      Top[Z] = (float)(z_val*z_scale);
+  } else {
+      Top[Z] = 0.0;
+  }
+  
   for( x = x0+dx, y = y0+dy; n--; x += dx, y += dy ) {
 
     Bot[X] = ( (int)((x-plane->minX())*dataset->inputGrid->derangeX()) )*ranger_x + plane->minX();
@@ -1714,26 +1727,30 @@ meas_cross( float x0, float y0, float x1, float y1, float z_scale)
 	(Bot[Y] <= plane->maxY())
 	&&
 	(Bot[Y] >= plane->minY())
-      )
-    	Bot[Z] = plane->valueAt( Bot[X], Bot[Y] )*z_scale;
-    else
-	Bot[Z] = 0.0;
-    Top[X] = Bot[X]; Top[Y] = Bot[Y]; Top[Z] = Bot[Z];
+        ) {
+        
+        double z_val;
+    	plane->valueAt( &z_val, Bot[X], Bot[Y] );
+        Bot[Z]=(float)(z_val*z_scale);
+    } else {
+        Bot[Z] = 0.0;
     }
-  return 0;
+    Top[X] = Bot[X]; Top[Y] = Bot[Y]; Top[Z] = Bot[Z];
   }
+  return 0;
+}
+
 #undef IABS
 
-/*****************************************************************************
+
+#define RED   1    ///< index of red line, for convenience in doMeasure
+#define GREEN 2    ///< index of green line, for convenience in doMeasure
+#define BLUE  3    ///< index of blue line, for convenience in doMeasure
+/**
 *
    doMeasure - Moving the red, green, blue measure lines around.
 *
-******************************************************************************/
-
-#define RED   1
-#define GREEN 2
-#define BLUE  3
-
+*/
 int doMeasure(int whichUser, int userEvent)
 { 
         q_vec_type clipPos;
@@ -1819,7 +1836,7 @@ int doMeasure(int whichUser, int userEvent)
 
 
 
-/*****************************************************************************
+/**
  *
    doLine - Let the user specify points in a poly-line while feeling.
             When they press commit, do this (see handle_commit_pressed):
@@ -1829,8 +1846,7 @@ int doMeasure(int whichUser, int userEvent)
 	    Pause at the start point before moving to allow the offset
 		due to piezo relaxation to go away.
  *
- *****************************************************************************/
-
+ */
 int doLine(int whichUser, int userEvent)
 {
 	v_xform_type	worldFromHand;
@@ -1916,8 +1932,10 @@ VERBOSE(8, "      In doLine().");
 	      (microscope->state.modify.sweep_width 
 	       * sin( microscope->state.modify.yaw ))/2.0;
 	    
-	    BottomL[Z] = BottomR[Z] = plane->valueAt( clipPos[0], clipPos[1] ) *
-	      plane->scale();
+            double z_val;
+            plane->valueAt( &z_val, clipPos[0], clipPos[1] );
+	    BottomL[Z] =BottomR[Z] = (float)(z_val*plane->scale());
+
 	    TopL[Z] = TopR[Z] = plane->maxAttainableValue() *
 		  plane->scale();
 	    
@@ -2120,13 +2138,13 @@ int doPositionScanline(int whichUser, int userEvent)
 
 }
 
-/*****************************************************************************
+/**
  *
    doFeelFromGrid - Control tip in x and y, updating grid in vicinity of hand.
      Feel contours of grid surface, NOT the real data.
+     "Demo mode" for touching the grid.
  *
- *****************************************************************************/
-
+ */
 int doFeelFromGrid(int whichUser, int userEvent)
 {
         q_vec_type clipPos;
@@ -2200,15 +2218,16 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	return(0);
 }
 
-/*****************************************************************************
+/**
  *
    doFeelLive - Control tip in x and y, microscope returns z at each point.
 	We use the last two returned points to determine a plane and present
 	that plane to the user as a surface.
         When user presses "commit" button, switch to appropriate modify mode.
+	Now includes ability to handle Direct Z control, where user
+	moves the tip in x, y and z.
  *
- *****************************************************************************/
-
+ */
 int doFeelLive(int whichUser, int userEvent)  
 {
 
@@ -2331,8 +2350,10 @@ int doFeelLive(int whichUser, int userEvent)
 	      (microscope->state.modify.sweep_width 
 	       * sin( microscope->state.modify.yaw ))/2.0;
 	    
-	    BottomL[Z] = BottomR[Z] = plane->valueAt( clipPos[0], clipPos[1] ) *
-	      plane->scale();
+            double z_val;
+            plane->valueAt( &z_val, clipPos[0], clipPos[1] );
+	    BottomL[Z] =BottomR[Z] = (float)(z_val*plane->scale());
+
 	    TopL[Z] = TopR[Z] = plane->maxAttainableValue() *
 		  plane->scale();
 	    
@@ -2502,13 +2523,12 @@ int doFeelLive(int whichUser, int userEvent)
 }
 
 
-/*****************************************************************************
+/**
  *
    Select mode
    doSelect - Perform rubber-banding upon press, move, release
  *
- *****************************************************************************/
-
+ */
 int 
 doSelect(int whichUser, int userEvent)
 {
@@ -2609,12 +2629,11 @@ doSelect(int whichUser, int userEvent)
 }
 
 
-/*****************************************************************************
+/**
  *
    doWorldGrab - handle world grab operation
  *
- *****************************************************************************/
-
+ */
 int
 doWorldGrab(int whichUser, int userEvent)
 {
@@ -2629,7 +2648,8 @@ doWorldGrab(int whichUser, int userEvent)
       fprintf(stderr, "Error in doWorldGrab: could not get plane!\n");
       return -1;
   }     
-    /* Move the aiming line to the users hand location */
+    /* Move the aiming line to the users hand location 
+     XXX The aim line is only show in Touch modes. Why move it here? */
     v_get_world_from_hand(whichUser, &worldFromHand);
     //nmui_Util::moveAimLine(worldFromHand.xlate);
     decoration->aimLine.moveTo(worldFromHand.xlate[0],
@@ -2673,15 +2693,14 @@ switch ( userEvent )
 return 0;
 }	/* doWorldGrab */
 
-/*****************************************************************************
+/**
  *
    doMeasureGridGrab - Control height of measuring grid
 
    * It is unclear what this function is supposed to do, even if it
    * was implemented...
- *
- *****************************************************************************/
-
+   * It currently consists of an empty switch statement.
+ */
 int 
 doMeasureGridGrab(int /*whichUser*/,  int userEvent)
 {
@@ -2734,17 +2753,17 @@ void initializeInteraction (void) {
 }
 
 
-// These two functions work together to make sure that all changes
-// of the world-room transform work properly with collaboration.
-// Everything that used to write v_world.users.xforms[0] instead
-// calls updateWorldFromRoom(), which triggers Tcl_Netvar updates.
-// If we're using a centralized serializer and we're not it, we
-// then send that message out over the network;  on some future
-// frame it'll come back to us & update then through the same
-// path as non-centralized or non-serialized:
-// handle_worldFromRoom_change(), which actually writes into
-// v_world.users.xforms[0]
-
+/** These two functions work together to make sure that all changes
+ of the world-room transform work properly with collaboration.
+ Everything that used to write v_world.users.xforms[0] instead
+ calls updateWorldFromRoom(), which triggers Tcl_Netvar updates.
+ If we're using a centralized serializer and we're not it, we
+ then send that message out over the network;  on some future
+ frame it'll come back to us & update then through the same
+ path as non-centralized or non-serialized:
+ handle_worldFromRoom_change(), which actually writes into
+ v_world.users.xforms[0]
+*/
 //static int lock_xform = 0;
 
 void updateWorldFromRoom (v_xform_type * t) {

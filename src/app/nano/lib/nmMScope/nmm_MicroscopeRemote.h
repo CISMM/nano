@@ -359,6 +359,7 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
 
 
     // Commands only sent by member functions
+/* OBSOLETE
     long SetStdDevParams (void);
 
     long SetStdDevParams (const long, const float);
@@ -366,6 +367,7 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
       // and the rate in Hz at which to sample.
 
     long QueryStdDevParams (void);
+*/
     long QueryScanRange (void);
     long SetGridSize (const long _x, const long _y);
       // Set the size of the grid:  # data points to collect in each dimension.
@@ -439,7 +441,7 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
     void RcvForceSet (const float);
     void RcvForceSetFailure (const float);
     void RcvPulseParameters (const long, const float, const float, const float);
-    void RcvStdDevParameters (const long, const float);
+    //void RcvStdDevParameters (const long, const float);
     long RcvWindowLineData (const long, const long, const long, const long,
                             const long, const float *);
     long RcvWindowLineData (void);
@@ -528,7 +530,7 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
     static int handle_ForceSet (void *, vrpn_HANDLERPARAM);
     static int handle_ForceSetFailure (void *, vrpn_HANDLERPARAM);
     static int handle_PulseParameters (void *, vrpn_HANDLERPARAM);
-    static int handle_StdDevParameters (void *, vrpn_HANDLERPARAM);
+    //static int handle_StdDevParameters (void *, vrpn_HANDLERPARAM);
     static int handle_WindowLineData (void *, vrpn_HANDLERPARAM);
     static int handle_WindowScanNM (void *, vrpn_HANDLERPARAM);
     static int handle_WindowBackscanNM (void *, vrpn_HANDLERPARAM);

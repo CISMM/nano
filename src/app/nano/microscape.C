@@ -134,7 +134,9 @@ static imported_obj_list* object_list = NULL;
 
 /*********** UGRAPHICS *******************/
 
-#define DATA_SIZE 128
+/// Default grid size on startup. Kept to a minimum size.
+/// 12 because that allows a tesselation_stride of up to 6 without crashing.
+#define DATA_SIZE 12
 
 // need to cast away constness
 
@@ -407,12 +409,20 @@ ColorMap	*curColorMap = NULL;	///< Pointer to the current color map
   // used in vrml.C
 
 
+/// Filename to get data from. Setting this variable in tcl triggers
+/// the open file process.
+Tclvar_string openStaticFilename("open_static_filename", "");
 
-
+/// When you choose a plane of data to save, this list is set
+/// to the possible formats.
 static Tclvar_list_of_strings export_formats("export_formats");
 
+/// Plane of data to save in a file
 Tclvar_string	exportPlaneName("export_plane","");
+/// The format the plane of data will use, chosen from export_formats
 Tclvar_string	exportFileType("export_filetype","");
+/// Filename to save the data in. Setting this variable in tcl triggers
+/// the save process.
 Tclvar_string newExportFileName("export_filename", "");
 
 //-----------------------------------------------------------------------
@@ -421,8 +431,8 @@ Tclvar_string newExportFileName("export_filename", "");
 // from, the min and max colors, and the min and max values that are
 // mapped to the min and max colors.
 
-static int	minC[3] = {255,255,255};
-static int	maxC[3] = {255,255,255};
+static int	minC[3] = {150,50,150};
+static int	maxC[3] = {250,50,50};
 
 /// The limits on the Tk slider where min and max value are selected
 Tclvar_float	color_slider_min_limit("color_slider_min_limit",0);
@@ -827,6 +837,9 @@ Tclvar_int tcl_center_pressed ("center_pressed", 0, handle_center_pressed);
 
 TclNet_int tclstride ("tesselation_stride", 1);
 
+/// If 1, we are using the phantom's trigger button, otherwise we are
+/// using the trigger button on the button box.
+Tclvar_int using_phantom_button("using_phantom_button", 1);
 
 // END tcl declarations
 //----------------------------------------------------------------------
@@ -854,7 +867,7 @@ char * handTrackerName;	// = phantom server name
 
 static long displayPeriod = 0L; ///< minimum interval between displays 
 
-static int read_mode = READ_DEVICE;	///< Where get info from? 
+static int read_mode = READ_FILE;	///< Where get info from? 
 
 
 // HACK TCH 18 May 98 - program doesn't run with glenable 0
@@ -891,11 +904,11 @@ static char tcl_default_dir [] = "/afs/cs.unc.edu/project/stm/bin/";
 
 //static int perf_mode = 0;			/* No perfmeter by default */
 //static int do_menus = 1;			/* Menus on by default */
-static int do_keybd = 1;                   ///< Keyboard on by default
+static int do_keybd = 0;                   ///< Keyboard off by default
 //static int do_ad_device = 1;               /* A/D devices on by default */
 //static int show_cpanels = 0;		/* Control panels hidden by default */
 //static int show_grid = 0;		/* Measuring grid hidden by default */
-int using_phantom_button = 0;
+
 //static int ubergraphics_enabled = 0;
 
 static vrpn_bool set_region = VRPN_FALSE; ///< Should we set the region at start?
@@ -2196,7 +2209,7 @@ static void handle_genetic_textures_set_parameters (vrpn_int32 , void *)
     delete [] name;  
   }
 
-  sprintf(command, "button .genetic_data_sets.button -text \"Send data now\" -bg $fc -command \"set gen_send_data 1\"");
+  sprintf(command, "button .genetic_data_sets.button -text \"Send data now\" -command \"set gen_send_data 1\"");
   if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
     fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
 	    tk_control_interp->result);
@@ -2554,6 +2567,35 @@ static	void	handle_colormap_change (const char *, void * userdata) {
           colorMap.load_from_file(dataset->colorMapName->string(), colorMapDir);
           curColorMap = &colorMap;
   }
+
+}
+
+/** See if the user has given a name to the open filename other
+ than "".  If so, we should open a file and set the value
+ back to "". If there are any errors, report them and leave name alone. 
+*/
+static	void	handle_openStaticFilename_change (const char *, void *)
+{
+
+    if (strlen(openStaticFilename) <= 0) return;
+
+    printf("I really want to open this file: %s\n", 
+           (const char *)openStaticFilename);
+    const char	*files[1];
+    files[0] = (const char *)openStaticFilename;
+    
+    dataset->loadFiles(files, 1,microscope->d_topoFile);
+    for (BCPlane *p = dataset->inputGrid->head(); p != NULL; p = p->next()) {
+        printf("Found plane %s\n", (p->name())->Characters());
+        // Add it to the list if it's not there already.
+        if (microscope->state.data.inputPlaneNames.getIndex(*(p->name())) == -1) {
+            printf("Add entry\n");
+            microscope->state.data.inputPlaneNames.addEntry(*(p->name()));
+        }
+    }
+    
+    openStaticFilename = "";
+    
 
 }
 
@@ -3539,6 +3581,10 @@ void setupCallbacks (nmb_Dataset *d) {
   // sets up callbacks that have to do with data as opposed to callbacks
   // that affect or refer to some device which produces data
 
+    // When openStaticFilename changes, we try to open a file.
+    openStaticFilename.addCallback
+	(handle_openStaticFilename_change, NULL);
+
     //exportPlaneName.bindList(d->dataImages->imageNameList());
   exportPlaneName = "none";
   exportPlaneName.addCallback
@@ -4187,11 +4233,9 @@ void ParseArgs (int argc, char ** argv,
           fprintf(stderr, "Cannot read ppm file %s\n",argv[i]);
           exit(-1);
         }
-      } else if (strcmp(argv[i], "-b") == 0) {
-        using_phantom_button = 1;
       } else if (strcmp(argv[i], "-call") == 0) {
         //DO_CALLBACKS = 1;
-        fprintf(stderr, "-call no longer affects anything!\n");
+        fprintf(stderr, "Warning: -call obsolete.\n");
       } else if (!strcmp(argv[i], "-collaborator")) {
         if (++i >= argc) Usage (argv[0]);
         istate->collabPort = atoi(argv[i]);
@@ -4211,14 +4255,16 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         minC[2] = atoi(argv[i]);
       } else if (strcmp(argv[i], "-con") == 0) {
-        istate->afm.image.mode = CONTACT;
-        istate->afm.modify.mode = CONTACT;
+	  //istate->afm.image.mode = CONTACT;
+	  //istate->afm.modify.mode = CONTACT;
+        fprintf(stderr, "Warning: -con obsolete.\n");
       } else if (strcmp(argv[i], "-d") == 0) {
         if (++i >= argc) Usage(argv[0]);
+        read_mode = READ_DEVICE; 
         strcpy(istate->afm.deviceName, argv[i]);
       } else if (strcmp(argv[i], "-dir") == 0) {
         if (++i >= argc) Usage(argv[0]);
-        //OBSOLETE (?)
+        fprintf(stderr, "Warning: -dir obsolete.\n");
         //lock_dir = atof(argv[i]);
         //lock_dir *= M_PI/180.0;
       } else if (strcmp(argv[i], "-do") == 0) {
@@ -4318,15 +4364,18 @@ void ParseArgs (int argc, char ** argv,
         istate->graphics_mode = SHMEM_GRAPHICS;
       } else if (strcmp(argv[i], "-nocall") == 0) {
         //DO_CALLBACKS = 0;
-        fprintf(stderr, "-nocall no longer affects anything!\n");
+        fprintf(stderr, "Warning: -nocall obsolete.\n");
       } else if (strcmp(argv[i], "-nocpanels") == 0) {
           //do_cpanels = 0;
+	  fprintf(stderr, "Warning: -nocpanels obsolete.\n");
       } else if (strcmp(argv[i], "-nodevice") == 0) {
         //do_ad_device = 0;
-      } else if (strcmp(argv[i], "-nokeybd") == 0) {
-        do_keybd = 0;
+        fprintf(stderr, "Warning: -nodevice obsolete.\n");
+      } else if (strcmp(argv[i], "-keybd") == 0) {
+        do_keybd = 1;
       } else if (strcmp(argv[i], "-nomenus") == 0) {
         //do_menus = 0;
+        fprintf(stderr, "Warning: -nomenus obsolete.\n");
       } else if (strcmp(argv[i], "-o") == 0) {
         istate->afm.writingStreamFile = 1;
         if (++i >= argc) Usage(argv[0]);
@@ -4357,6 +4406,7 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         istate->logTimestamp.tv_sec = atoi(argv[i]);
       } else if (strcmp(argv[i], "-perf") == 0) {
+        fprintf(stderr, "Warning: -std obsolete.\n");
         //perf_mode = 1;
       } else if (strcmp (argv[i], "-recv") == 0) {
         // clark -- use NANO_RECV_TIMESTAMPs for playback times
@@ -4364,26 +4414,28 @@ void ParseArgs (int argc, char ** argv,
       } else if (strcmp(argv[i], "-relax") == 0) {
         istate->afm.doRelaxComp = 1;
       } else if (strcmp(argv[i], "-relax_up_also") == 0) {
+        fprintf(stderr, "Warning: -std obsolete.\n");
 	  printf("Warning: -relax_up_also obsolete in nM\n");
         istate->afm.doRelaxUp = 1;
       } else if (strcmp(argv[i], "-showcps") == 0) {
+        fprintf(stderr, "Warning: -std obsolete.\n");
         //show_cpanels = 1;
       } else if (strcmp(argv[i], "-showgrid") == 0) {
+        fprintf(stderr, "Warning: -std obsolete.\n");
         //show_grid = 1;
       } else if (strcmp(argv[i], "-splat") == 0) {
         istate->afm.doSplat = 1;
       } else if (strcmp(argv[i], "-std") == 0) {
         if (++i >= argc) Usage(argv[0]);
-        istate->afm.modify.std_dev_samples = atoi(argv[i]);
+        //istate->afm.modify.std_dev_samples = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
-        istate->afm.modify.std_dev_frequency = atof(argv[i]);
+        //istate->afm.modify.std_dev_frequency = atof(argv[i]);
         if (++i >= argc) Usage(argv[0]);
-        fprintf(stderr,
-           "Warning:  std_dev_color_scale (set to \"%s\") is obsolete.\n",
-           argv[i]);
+        fprintf(stderr, "Warning: -std obsolete.\n");
         //std_dev_color_scale = atof(argv[i]);
         //decoration->std_dev_color_scale = std_dev_color_scale;
       } else if (strcmp(argv[i], "-ugraphics") == 0) {
+        fprintf(stderr, "Warning: -ugraphics obsolete.\n");
         //ubergraphics_enabled = 1;
       } else if (strcmp(argv[i], "-verbosity") == 0) {
         if (++i >= argc) Usage(argv[0]);
@@ -4416,19 +4468,23 @@ void ParseArgs (int argc, char ** argv,
         set_mode = VRPN_TRUE;      // Send these at startup
       } else if (strcmp(argv[i], "-move") == 0) {
         if (++i >= argc) Usage(argv[0]);
-        istate->afm.MaxSafeMove = atof(argv[i]);
+        //istate->afm.MaxSafeMove = atof(argv[i]);
+	fprintf(stderr, "Warning: -move is obsolete\n");
       } else if (strcmp(argv[i], "-silent") == 0) {
-	fprintf(stderr, "Warning: '-silent' is currently obsolete\n");
+	fprintf(stderr, "Warning: -silent is obsolete\n");
       } else if (strcmp(argv[i], "-tap") == 0) {
-        istate->afm.image.mode = TAPPING;
-        istate->afm.modify.mode = TAPPING;
+	  //istate->afm.image.mode = TAPPING;
+	  //istate->afm.modify.mode = TAPPING;
+        fprintf(stderr, "Warning: -tap obsolete.\n");
       } else if (strcmp(argv[i], "-tapsew") == 0) {
-        istate->afm.image.mode = TAPPING;
-        istate->afm.modify.mode = CONTACT;
-        istate->afm.modify.style = SEWING;
+	  //istate->afm.image.mode = TAPPING;
+	  //istate->afm.modify.mode = CONTACT;
+	  //istate->afm.modify.style = SEWING;
+        fprintf(stderr, "Warning: -tapsew obsolete.\n");
       } else if (strcmp(argv[i], "-tc") == 0) {
-        istate->afm.image.mode = TAPPING;
-        istate->afm.modify.mode = CONTACT;
+	  //istate->afm.image.mode = TAPPING;
+	  //istate->afm.modify.mode = CONTACT;
+        fprintf(stderr, "Warning: -tc obsolete.\n");
 
       } else if (strcmp(argv[i], "-disp") == 0) {
         if (++i >= argc) Usage(argv[0]);
@@ -4445,11 +4501,12 @@ void ParseArgs (int argc, char ** argv,
       } else if (strcmp(argv[i], "-measure") == 0) {
         if (++i >= argc) Usage(argv[0]);
         //measure_spacing = atof(argv[i]);
-        fprintf(stderr, "-measure no longer affects anything!.\n");
+        fprintf(stderr, "Warning: -measure obsolete.\n");
       } else if (!strcmp(argv[i], "-nographics")) {
         istate->graphics_mode = NO_GRAPHICS;
       } else if (strcmp(argv[i], "-notk") == 0) {
-        tkenable=0;
+        fprintf(stderr, "Warning: -notk obsolete.\n");
+        //tkenable=0;
       } else if (strcmp(argv[i], "-region") == 0) {
         if (++i >= argc) Usage(argv[0]);
         istate->x_min = atof(argv[i]);
@@ -4472,12 +4529,13 @@ void ParseArgs (int argc, char ** argv,
         }
         strcpy(rulerPPMName, argv[i]);
       } else if (strcmp(argv[i], "-sub") == 0) {
+        fprintf(stderr, "Warning: -sub obsolete.\n");
         if (++i >= argc) Usage(argv[0]);
-        istate->afm.ModSubWinSz = atoi(argv[i])/2;
+        //istate->afm.ModSubWinSz = atoi(argv[i])/2;
       } else if (strcmp(argv[i], "-xc") == 0) {
-        xc_enable();
-        xenable=1;
-
+	  //xc_enable();
+	  //xenable=1;
+	  fprintf(stderr, "Warning: -xc obsolete.\n");
       } else if (strcmp(argv[i], "-bumpimage") == 0) {
         if (++i >= argc) Usage(argv[0]);
         bumpPPM = new PPM(argv[i]);
@@ -4576,30 +4634,27 @@ void ParseArgs (int argc, char ** argv,
 
 void Usage(char* s)
 {
-  fprintf(stderr, "Usage: %s [-sphere] [-poly] [-dot] [-hole]\n",s);
+  fprintf(stderr, "Usage: %s \n",s);
   fprintf(stderr, "       [-d device] [-do device] [-div device]\n");
   fprintf(stderr, "       [-dsem device]\n");
-  fprintf(stderr, "       [-f infile] [-z scale] [-rate rate]\n");
-  fprintf(stderr, "       [-call/nocall] [-grid x y] [-perf]\n");
+  fprintf(stderr, "       [-f infile] [-z scale] \n");
+  fprintf(stderr, "       [-grid x y] [-perf]\n");
   fprintf(stderr, "       [-i streamfile rate][-o streamfile]\n");
-  fprintf(stderr, "       [-std num rate scale] [-nokeybd] [-nodevice]");
+  fprintf(stderr, "       [-keybd] ");
   fprintf(stderr, "       [-region lowx lowy highx highy]\n");
-  fprintf(stderr, "       [-measure dist] [-nomenus] [-nocpanels]\n");
   fprintf(stderr, "       [-fmods max min (Setpt V)] " );
   fprintf(stderr, "       [-fimgs max min (DrAmp V) setpt (V)]\n" );
-  fprintf(stderr, "       [-con | -tap | -tc | -tapsew (def -tc)]\n" );
-  fprintf(stderr, "       [-sub numpix] [-move dist]\n" );
-  fprintf(stderr, "       [-dir deg] [-color hr hg hb lr lg lb]\n" );
-  fprintf(stderr, "       [-relax] [-minsep tmin tsep] [-relax_up_also]\n");
-  fprintf(stderr, "       [-splat] [-notk] [-gl] [-nographics]\n" );
-  fprintf(stderr, "       [-disp period(ms)] [-x] [-xc] [-b] [-mb3]\n" );
+  fprintf(stderr, "       [-color hr hg hb lr lg lb]\n" );
+  fprintf(stderr, "       [-relax] [-minsep tmin tsep] \n");
+  fprintf(stderr, "       [-splat] [-gl] [-nographics]\n" );
+  fprintf(stderr, "       [-disp period(ms)] [-mb3]\n" );
   fprintf(stderr, "       [-draw_when_centered] [-rulerimage file.ppm]\n");
   fprintf(stderr, "       [-rulercolor r g b]");
   fprintf(stderr, "       [-scrapeheight h] [-verbosity n] [-allowdup]\n");
   fprintf(stderr, "       [-timerverbosity n] [-timeframe n]\n");
   fprintf(stderr, "       [-SPMhost host port] [-UDPport port]\n");
   fprintf(stderr, "       [-MIXport port] [-recv] [-alphacolor r g b]\n");
-  fprintf(stderr, "       [-marshalltest] [-multithread] [-ugraphics]\n");
+  fprintf(stderr, "       [-marshalltest] [-multithread] \n");
   fprintf(stderr, "       [-monitor port] [-collaborate port] [-peer name]\n");
   fprintf(stderr, "       [-renderserver] [-renderclient host]\n");
   fprintf(stderr, "       [-trenderserver] [-trenderclient host]\n");
@@ -4608,10 +4663,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-optimistic] [-phantomrate rate]\n");
   fprintf(stderr, "       [-tesselation stride]\n");
   fprintf(stderr, "       \n");
-  //fprintf(stderr, "       -poly: Display poligonal surface (default)\n");
-  //fprintf(stderr, "       -sphere: Display as spheres\n");
-  //fprintf(stderr, "       -dot: Display as dots\n");
-  //fprintf(stderr, "       -hole: Display poligonal surface with holes\n");
+
   fprintf(stderr, "       -d: Use given spm device (default sdi_stm0)\n");
   fprintf(stderr, "       -do: Use given ohmmeter device (default none)\n");
   fprintf(stderr, "       -div: Use given iv-curve device (default none)\n");
@@ -4620,45 +4672,21 @@ void Usage(char* s)
   fprintf(stderr, "           Multiple -f options will read multiple files\n");
   fprintf(stderr, "           All must have same grid resolution and range\n");
   fprintf(stderr, "       -z: Scale of z relative to x/y (default 1)\n");
-  fprintf(stderr, "       -rate: Rate of scanning (default 20 uMeters/sec)\n");
   fprintf(stderr, "       -color: high to low color range (Red to Blue def)\n");
   fprintf(stderr, "       -fmods: mod force range (def 50,0)\n");
   fprintf(stderr, "       -fimgs: img force range and setpt (def 10,0, 50)\n");
-  fprintf(stderr, "       -move: max tip move of dist nm per ms (def 100)\n");
-  fprintf(stderr, "       -dir: direction user facing (deg from north) \n");
-  fprintf(stderr, "       -call: Use callbacks (default)\n");
-  fprintf(stderr, "       -nocall: Do not use callbacks\n");
   fprintf(stderr, "       -grid: Take x by y samples for the grid\n");
-  fprintf(stderr, "       -perf: Turn on the perfmeter\n");
   fprintf(stderr, "       -i: Rate at which data is to be read "
                          "from streamfile\n");
   fprintf(stderr, "       -o: Write the STM data stream to streamfile\n");
-  fprintf(stderr, "       -std: Take num samples at rate per point\n");
-  fprintf(stderr, "             Multiply std_dev by scale to get [0,1]\n");
   fprintf(stderr, "       -region: Scan from low to high in x and y\n");
   fprintf(stderr, "                (Default what scanner has, units are nm)\n");
-  fprintf(stderr, "       -sub: Scan a square numXnum around mods (def 24)\n" );
-  fprintf(stderr, "       -measure: Put a measure line every dist nm "
-                         "(default 10)\n");
-  fprintf(stderr, "       -nomenus: Turn off the menus\n");
-  fprintf(stderr, "       -nokeybd: Turn off keyboard options\n");
-  fprintf(stderr, "       -nodevice: Turn off A/D device\n");
-  fprintf(stderr, "       -nocpanels: Turn off the control panels\n");
-  fprintf(stderr, "       -showcps: Start the control panels invisible\n");
-  fprintf(stderr, "       -showgrid: Start the measuring grid invisible\n");
-					/* mod 03/15/94 mf per SW req.	*/
+  fprintf(stderr, "       -keybd: Turn on keyboard options\n");
   fprintf(stderr, "       -relax: Perform relaxation compensation\n");
-  fprintf(stderr, "       -relax_up_also: Relax when back in image mode\n");
   fprintf(stderr, "       -minsep: min time and seperation after trans\n");
   fprintf(stderr, "       -splat: Splat incoming data into grid\n");
-  //fprintf(stderr, "       -snap: Snapshots save dimensioned nxXny (512^2)\n");
   fprintf(stderr, "       -disp: Don't display less than period ms apart (0)\n");
-  fprintf(stderr, "       -x: Use the x window display\n");
-  fprintf(stderr, "       -xc: Use the x window to display the contour map\n");
   fprintf(stderr, "       -gl: to display on openGL machine\n");
-  fprintf(stderr, "       -notk: to turn off tcl/tk interface\n");
-  fprintf(stderr, "       -b : Use the button on the Phantom's stylus "
-                         "as a trigger\n");
   fprintf(stderr, "       -mb3 : Use the 3rd mouse button as a trigger\n");
   fprintf(stderr, "       -draw_when_centered: Only draw frame when "
                          "user centers\n");
@@ -4686,7 +4714,6 @@ void Usage(char* s)
                          "in single process\n");
   fprintf(stderr, "       -multithread: Spawn a second thread for the graphics "
                          "and run multithreaded\n");
-  fprintf(stderr, "       -ugraphics: Run with ubergraphics\n");
   fprintf(stderr, "       -monitor:  open a VRPN Forwarder from the "
                          "microscope on this port. OBSOLETE.\n");
   fprintf(stderr, "       -collaborator:  open VRPN Forwarders both to and "
@@ -4721,6 +4748,28 @@ void Usage(char* s)
                           "play no more than n packets\n"
                   "       before refreshing graphics (0 to disable).\n");
   fprintf(stderr, "       -optimistic:  use optimistic concurrency control.\n");
+  fprintf(stderr, "   OBSOLETE (ignored)\n");
+  fprintf(stderr, "       -call: Use callbacks (default)\n");
+  fprintf(stderr, "       -nocall: Do not use callbacks\n");
+  fprintf(stderr, "       -nodevice: Turn off A/D device\n");
+  fprintf(stderr, "       -nocpanels: Turn off the control panels\n");
+  fprintf(stderr, "       -nomenus: Turn off the menus\n");
+  fprintf(stderr, "       -measure: Put a measure line every dist nm "
+                         "(default 10)\n");
+  fprintf(stderr, "       -move: max tip move of dist nm per ms (def 100)\n");
+  fprintf(stderr, "       -dir: direction user facing (deg from north) \n");
+  fprintf(stderr, "       -perf: Turn on the perfmeter\n");
+  fprintf(stderr, "       -std: Take num samples at rate per point\n");
+  fprintf(stderr, "             Multiply std_dev by scale to get [0,1]\n");
+  fprintf(stderr, "       -sub: Scan a square numXnum around mods (def 24)\n");
+  fprintf(stderr, "       -showcps: Start the control panels invisible\n");
+  fprintf(stderr, "       -showgrid: Start the measuring grid invisible\n");
+					/* mod 03/15/94 mf per SW req.	*/
+  fprintf(stderr, "       -relax_up_also: Relax when back in image mode\n");
+  fprintf(stderr, "       -notk: to turn off tcl/tk interface\n");
+  fprintf(stderr, "       -ugraphics: Run with ubergraphics\n");
+  fprintf(stderr, "       -x: Use the x window display\n");
+  fprintf(stderr, "       -xc: Use the x window to display the contour map\n");
 
   exit(-1);
 }
@@ -5562,7 +5611,7 @@ int main(int argc, char* argv[])
       graphics->loadRulergridImage(rulerPPMName);
 
     // initialize graphics
-    VERBOSE(1, "Before graphics initialization");
+    VERBOSE(1, "Before X display initialization");
     if (glenable)
     {
 #if !defined(FLOW) && !defined(V_GLUT)  /* don't use with glut or PixelFlow */

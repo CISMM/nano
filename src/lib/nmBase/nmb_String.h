@@ -31,7 +31,8 @@ class nmb_ListOfStrings {
     virtual ~nmb_ListOfStrings (void);
 
     int numEntries (void) const { return d_numEntries; }
-    const char * entry (int i) const { return d_entries[i]; }
+    const char * entry (int i) const;
+    int getIndex(const char * name) const;
 
     // Return nonzero on failure.  Do consistency, legality checks.
     virtual int clearList ();

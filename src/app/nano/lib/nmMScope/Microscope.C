@@ -250,7 +250,7 @@ int Microscope::Initialize (int (* f) (stm_stream *)) {
 // These messages were only needed with the old microscope (STM),
 // which had to take more samples per point when feeling to reduce
 // the noise in the results.
-
+/*
 int Microscope::SetSamples (const Microscope::SampleMode _mode) {
 
   switch (_mode) {
@@ -268,7 +268,7 @@ int Microscope::SetSamples (const Microscope::SampleMode _mode) {
 
   return 0;
 }
-
+*/
 
 //updates streamReplayRate whenever decoration->rateOfTime gets changed 
 void Microscope::SetStreamReplayRate(int replayRate) {
@@ -835,6 +835,7 @@ int Microscope::RecordResistance(int meter, struct timeval t, float res,
   return io->RecordResistance(meter, t, res, v, r, f, status);
 }
 
+/* OBSOLETE
 int Microscope::SetStdDevParams (const int _samples, const float _freq) {
   state.modify.std_dev_samples = _samples;
   state.modify.std_dev_frequency = _freq;
@@ -847,7 +848,7 @@ int Microscope::SetStdDevParams (void) {
   return io->SetStdDevParams(state.modify.std_dev_samples,
                             state.modify.std_dev_frequency);
 }
-
+*/
 
 
 int Microscope::QueryScanRange (void) {
@@ -856,10 +857,11 @@ int Microscope::QueryScanRange (void) {
 
 
 
+/* OBSOLETE
 int Microscope::QueryStdDevParams (void) {
   return io->QueryStdDevParams();
 }
-
+*/
 
 
 
@@ -1411,7 +1413,7 @@ nmm_Microscope::CB Microscope::callbacks [] = {
     { "", handle_ForceSet },
     { "", handle_ForceSetFailure },
     { "", handle_PulseParameters },
-    { "", handle_StdDevParameters },
+    //{ "", handle_StdDevParameters },
     { "", handle_WindowLineData },
     { "", handle_WindowScanNM },
     { "", handle_WindowBackscanNM },
@@ -1724,6 +1726,7 @@ int Microscope::handle_PulseParameters (void * userdata,
 }
 
 //static
+/* OBSOLETE
 int Microscope::handle_StdDevParameters (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
@@ -1735,7 +1738,7 @@ int Microscope::handle_StdDevParameters (void * userdata,
 
   return 0;
 }
-
+*/
 //static
 int Microscope::handle_WindowLineData (void * userdata,
                                              vrpn_HANDLERPARAM param) {

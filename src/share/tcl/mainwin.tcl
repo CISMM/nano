@@ -119,9 +119,8 @@ set filemenu .menu.file
 menu $filemenu -tearoff 0
 .menu add cascade -label "File" -menu $filemenu -underline 0
 
-#        $filemenu add command -label "Open..." -underline 0 -command \
-#		"open_plane_data"
-#		{.message_dialog activate}
+$filemenu add command -label "Open static file..." -underline 0 \
+	-command "open_static_file"
 #        $filemenu add command -label "Close..." -underline 0 -command \
 #		{.message_dialog activate}
 #        $filemenu add separator
@@ -196,6 +195,9 @@ set toolmenu .menu.tool
 menu $toolmenu -tearoff 0
 .menu add cascade -label "Tools" -menu $toolmenu -underline 1
         
+$toolmenu add command -label "Phantom" \
+    -command "show.phantom_win"
+
 $toolmenu add command -label "Navigate" \
     -command "show.nav_win"
 
@@ -216,6 +218,7 @@ $toolmenu add command -label "VI Curve" \
 
 $toolmenu add command -label "Latency Adaptation" \
     -command "show.latency"
+
 
 $toolmenu add command -label "SEM" \
     -command "show.sem_win"
@@ -276,10 +279,9 @@ pack $w2.toolbar.detail $w2.toolbar.speed_detail1 $w2.toolbar.speed_detail2 \
 	$w2.toolbar.speed_detail5 $w2.toolbar.speed \
 	-side left 
 
-button $w2.toolbar.phantom_reset -text "Reset Phantom" -command "set reset_phantom 1"
 radiobutton $w2.toolbar.demotouch -text "Touch Surface" \
 	-variable user_0_mode -value 11 
-pack $w2.toolbar.phantom_reset $w2.toolbar.demotouch -side left -padx 5
+pack $w2.toolbar.demotouch -side left -padx 5
 
 #File menu commands
 source [file join ${tcl_script_dir} filemenu.tcl]
