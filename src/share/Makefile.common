@@ -132,7 +132,7 @@ else
       ifeq ($(HW_OS),hp700_hpux10)  # another odd case, hpux is "different"
          CC := CC +w
       else                          # default case
-         CC := g++ -Wall -march=i686 -O2
+         CC := g++ -Wall
       endif
    endif
 endif
