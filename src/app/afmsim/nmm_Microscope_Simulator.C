@@ -142,10 +142,10 @@ void ConnectServer (int port)
 // Constructor
 //
 nmm_Microscope_Simulator::
-nmm_Microscope_Simulator( const char * _name,
-			vrpn_Connection * _c ) :
-    nmb_Device_Server(  _name, _c ),
-    nmm_Microscope(_name, d_connection)
+nmm_Microscope_Simulator (const char * _name,
+			  vrpn_Connection * _c) :
+    nmb_SharedDevice_Server (_name, _c),
+    nmm_Microscope (_name, d_connection)
 {
 
 
