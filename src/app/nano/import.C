@@ -44,6 +44,7 @@ static	void handle_spider_width_change(vrpn_float64, void*);
 static	void handle_spider_thick_change(vrpn_float64, void*);
 static	void handle_spider_tess_change(vrpn_int32, void*);
 static	void handle_spider_curve_change(vrpn_float64, void*);
+static	void handle_spider_legs_change(vrpn_int32, void*);
 
 ///Import object handlers specifically for MSI files
 static  void handle_msi_bond_mode (vrpn_int32, void *);
@@ -89,6 +90,7 @@ Tclvar_float    spider_width("spider_width", 2, handle_spider_width_change);
 Tclvar_float    spider_thick("spider_thick", 0.1, handle_spider_thick_change);
 Tclvar_int		spider_tess("spider_tess", 10, handle_spider_tess_change);
 Tclvar_float    spider_curve("spider_curve", 0, handle_spider_curve_change);
+Tclvar_int		spider_legs("spider_legs", 8, handle_spider_legs_change);
 
 //-----------------------------------------------------------------
 ///SimulatedMicroscope object
@@ -194,6 +196,7 @@ static void handle_import_file_change (const char *, void *) {
 			obj->SetSpiderThick(spider_thick);
 			obj->SetSpiderTess(spider_tess);
 			obj->SetSpiderCurve(Q_DEG_TO_RAD(spider_curve));
+			obj->SetSpiderLegs(spider_legs);
             FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
             import_type = gen->GetExtension();
             obj->LoadGeometry(gen);
@@ -523,7 +526,11 @@ static  void handle_import_rot_change (vrpn_float64, void *)
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 		    URender &obj = node->TGetContents();
+			q_type rot;
+			q_copy(rot, obj.GetLocalXform().GetRot());
 			q_vec_type euler;
+
+			q_to_euler(euler, rot);
 
 			if (!obj.GetLockRotx()) {
 				euler[2] = Q_DEG_TO_RAD(import_rotx);
@@ -535,7 +542,6 @@ static  void handle_import_rot_change (vrpn_float64, void *)
 				euler[0] = Q_DEG_TO_RAD(import_rotz);
 			}
 
-			q_type rot;
 			q_from_euler(rot, euler[0], euler[1], euler[2]);
 
 			obj.GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
@@ -757,6 +763,17 @@ static  void handle_spider_curve_change (vrpn_float64, void *)
 		URender &obj = node->TGetContents();
 		
 		obj.SetSpiderCurve(Q_DEG_TO_RAD(spider_curve));
+		obj.ReloadGeometry();
+	}
+}
+
+static  void handle_spider_legs_change (vrpn_int32, void *)
+{
+	if (strcmp(*World.current_object, "spider.spi") == 0) {
+		UTree *node = World.TGetNodeByName("spider.spi");
+		URender &obj = node->TGetContents();
+		
+		obj.SetSpiderLegs(spider_legs);
 		obj.ReloadGeometry();
 	}
 }

@@ -1,5 +1,10 @@
 2002-05-20 David Borland <borland@cs.unc.edu>
 
+        * import.C : added user interface for controlling the number of
+        spider legs
+
+2002-05-20 David Borland <borland@cs.unc.edu>
+
         * import.C : added user interface for locking translations and 
         rotations
 
