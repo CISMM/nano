@@ -72,6 +72,7 @@ class nmb_Decoration {
 
     long elapsedTime;  ///< seconds
     int rateOfTime;  ///< seconds/second, instream_rate or 1 if live
+    long totalStreamTime; ///< total length of stream, seconds
     int user_mode;  ///< user_mode[0] from interaction.c
 
 
