@@ -1,3 +1,9 @@
+2004-06-11  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* OpticalServerInterface.cpp : Turned to Unix format.
+	* nmm_Microscope_SEM_diaging.cpp : same.
+	* opticalServer.cpp : same.
+
 2003-12-09  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmm_Microscope_SEM_diaginc.h/cpp:  returns to 8 bit images.  12-bit
