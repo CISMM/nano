@@ -137,7 +137,7 @@ void ConeSphere :: uncert_draw() {
 
   glPushMatrix();
   glTranslatef(0, 0, -sphereHeight);
-  uncert_frustum( qobj, cr, topRadius, topHeight, 30, 30, 0, gcol);
+  uncert_frustum( qobj, cr, topRadius, topHeight, 30, 30, gcol, gcol);
   glPopMatrix();
 #else
   glPushMatrix();

@@ -8,6 +8,7 @@
 extern float zBuffer[ 128*128 ];			
 // array of heights: image scan data
 extern double zHeight [MAX_GRID][MAX_GRID];	
+extern float colorBuffer[ 128*128 ];			
 extern int    scanResolution;
 extern double scanStep;
 extern double scanXMin;

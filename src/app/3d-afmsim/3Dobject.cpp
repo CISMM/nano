@@ -598,7 +598,6 @@ void Ntube :: uncert_afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
 #if 1
     // get color for the quad
     GLfloat gcol = get_sphere_color_rho(PI/2.-theta);
-    //    GLfloat gcol = get_sphere_color_z(sin(theta));
 
     Vec3d xyz = Vec3d :: crossProd(A-B,A-D);
     xyz.normalize();
@@ -609,7 +608,6 @@ void Ntube :: uncert_afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
     glVertex3f( A.x, A.y, A.z );
     glVertex3f( B.x, B.y, B.z );
 
-    glColor3f(0.,0.,0.);
     glVertex3f( C.x, C.y, C.z );
     glVertex3f( D.x, D.y, D.z );
     glEnd();
@@ -623,7 +621,6 @@ void Ntube :: uncert_afm_inv_cone_sphere_tip(InvConeSphereTip icsTip) {
     glVertex3f( A2.x, A2.y, A2.z );
     glVertex3f( B2.x, B2.y, B2.z );
 
-    glColor3f(0.,0.,0.);
     glVertex3f( C2.x, C2.y, C2.z );
     glVertex3f( D2.x, D2.y, D2.z );
     glEnd();

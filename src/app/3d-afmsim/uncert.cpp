@@ -568,7 +568,7 @@ void make_uncert_cone_sphere(InvConeSphereTip ics) {
   
   glPushMatrix();
   glTranslatef(0,0,-bignum);
-  uncert_frustum( qobj, c.cr, c.topRadius, c.topHeight, tesselation, tesselation,0,gcol);
+  uncert_frustum( qobj, c.cr, c.topRadius, c.topHeight, tesselation, tesselation,gcol,gcol);
   glPopMatrix();
   glEndList();
 

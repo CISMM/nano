@@ -89,6 +89,7 @@ The following keys produce global changes (not object specific)
 . 'q' - exit
 . 'o' - draw objects. By default, objects are not drawn, only the AFM is.
 . 'w' - write the AFM to a file.
+	In uncertainty mode, it writes out the uncertainty map.
 . 'n' - add a new nano tube
 . 's' - add a sphere
 . 't' - add a new triangle

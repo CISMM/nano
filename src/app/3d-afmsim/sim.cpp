@@ -18,6 +18,7 @@
 #include <string.h>
 #include "defns.h"
 #include "Unca.h"
+#include "Uncertw.h"
 #include "input.h"
 #include "scan.h"
 #include "draw.h"
@@ -224,14 +225,18 @@ int main(int argc, char *argv[])
 
 
 void write_to_unca(char *filename) {
-  double orthoFrustumNearEdge =  scanNear;
-  /* All far pts get mapped to scanFar. Allow round off of 1 */
-  double orthoFrustumFarEdge  =   scanFar+1;
   
   // Everythinghere is in Angstroms. Unca takes care of this.
-  Unca u = Unca(DEPTHSIZE, DEPTHSIZE, orthoFrustumLeftEdge,(orthoFrustumLeftEdge + orthoFrustumWidth),orthoFrustumBottomEdge,(orthoFrustumBottomEdge + orthoFrustumHeight), orthoFrustumNearEdge, orthoFrustumFarEdge, (double *)zHeight);
+  Unca u = Unca(DEPTHSIZE, DEPTHSIZE, orthoFrustumLeftEdge,(orthoFrustumLeftEdge + orthoFrustumWidth),orthoFrustumBottomEdge,(orthoFrustumBottomEdge + orthoFrustumHeight), -scanFar, -scanNear, (double *)zHeight);
   u.writeUnca(filename);
 }
+
+void write_to_uncertw(char *filename) {
+  // Everythinghere is in Angstroms. Unca takes care of this.
+  Uncertw u = Uncertw(DEPTHSIZE, DEPTHSIZE, orthoFrustumLeftEdge,(orthoFrustumLeftEdge + orthoFrustumWidth),orthoFrustumBottomEdge,(orthoFrustumBottomEdge + orthoFrustumHeight), 0, 1., colorBuffer);
+  u.writeUncertw(filename);
+}
+
 
 /**************************************************************************************/
 // This routine is called only after input events.
@@ -535,10 +540,24 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       afm_scan = NO_AFM;
     break;
   case 'w':
-#if 1
     stopAFM=1;
-  // write output to a file.
-    {
+
+    if (uncertainty_mode) {// write out uncert.map
+      char filename[40];
+      if (tip.type == SPHERE_TIP) {
+	sprintf(filename,"uncert_sptip_r_%.1lfnm.UNCERTW",tip.spTip->r);
+      }
+      else {
+	sprintf(filename,"uncert_icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCERTW",tip.icsTip->r,tip.icsTip->ch,RAD_TO_DEG*tip.icsTip->theta);
+      }
+      cout << "Writing to file " << filename << endl;
+      write_to_uncertw(filename);
+      cout << "Finished writing to file " << filename << endl;
+      
+    }
+    else {
+      {
+      // write output to a file.
 	char filename[40];
 	if (tip.type == SPHERE_TIP) {
 	  sprintf(filename,"sptip_r_%.1lfnm.UNCA",tip.spTip->r);
@@ -549,9 +568,10 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
 	cout << "Writing to file " << filename << endl;
 	write_to_unca(filename);
 	cout << "Finished writing to file " << filename << endl;
-	stopAFM=0;
+      }
     }
-#endif
+
+    stopAFM=0;
     break;
   case 'q' :
     exit(0);
