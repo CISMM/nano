@@ -1,3 +1,8 @@
+2002-05-30 David Borland <borland.cs.unc.edu>
+
+        * nmg_SurfaceRegion.C (setTexture) : experimenting with using the
+        phantom to control projective texture transformations
+
 2002-05-30  David Borland <borland.cs.unc.edu>
 
         * nmg_Graphics.C : split REGISTRATION_COORD into two modes : 

@@ -460,16 +460,32 @@ printf("SURFACE_REGISTRATION_COORD\n");
 //printf("%f\n", temp);
 			x_scale_factor *= temp;
 
-//qogl_matrix_type mat;
-//glGetDoublev(GL_TEXTURE_MATRIX, mat);
+qogl_matrix_type mat;
+glGetDoublev(GL_TEXTURE_MATRIX, mat);
 //printf("current texture matrix\n");
 //qogl_print_matrix(mat);
 //printf("\n");
+
+			glLoadIdentity();
 			
 			glTranslated(x_translate, y_translate, 0.0);
+
+printf("mat[12] = %f\n", mat[12]);
+printf("mat[13] = %f\n", mat[13]);
+qogl_print_matrix(mat);
+			glTranslated(mat[12], mat[13], 0.0);
+
 			glScaled(x_scale_factor, y_scale_factor, 1.0);
 
-			glMultMatrixd(state->texture_transform);
+//			glMultMatrixd(state->texture_transform);
+
+//qogl_print_matrix(state->texture_transform);
+//printf("\n");
+
+			glScaled(state->texture_transform[0], state->texture_transform[5], 1.0);
+
+			glMultMatrixd(mat);
+
 //			glPopMatrix();
 			
             break;
