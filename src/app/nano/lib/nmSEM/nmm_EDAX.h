@@ -40,13 +40,13 @@ const int EDAX_MAX_GAIN = 32767;
 const int EDAX_MIN_OFFSET = -32766;
 const int EDAX_MAX_OFFSET = 32767;
 
-// by default we start with all values in the middle of their range
-const int EDAX_DEFAULT_X_DAC_GAIN = ((EDAX_MAX_GAIN + EDAX_MIN_GAIN)/2);
-const int EDAX_DEFAULT_Y_DAC_GAIN = EDAX_DEFAULT_X_DAC_GAIN;
+// 18500, 17800 are used to match Hitachi settings
+const int EDAX_DEFAULT_X_DAC_GAIN = 18500;//((EDAX_MAX_GAIN + EDAX_MIN_GAIN)/2);
+const int EDAX_DEFAULT_Y_DAC_GAIN = 17800;//EDAX_DEFAULT_X_DAC_GAIN;
 const int EDAX_DEFAULT_Z_ADC_GAIN = EDAX_DEFAULT_X_DAC_GAIN;
-// (6000,7000) seems to match the Hitachi settings better than (0,0)
-const int EDAX_DEFAULT_X_DAC_OFFSET = 6000;//((EDAX_MAX_OFFSET + EDAX_MIN_OFFSET)/2);
-const int EDAX_DEFAULT_Y_DAC_OFFSET = 7000;//((EDAX_MAX_OFFSET + EDAX_MIN_OFFSET)/2);
+// (5000,4000) match the Hitachi settings better than (0,0)
+const int EDAX_DEFAULT_X_DAC_OFFSET = 5000;//((EDAX_MAX_OFFSET + EDAX_MIN_OFFSET)/2);
+const int EDAX_DEFAULT_Y_DAC_OFFSET = 4000;//((EDAX_MAX_OFFSET + EDAX_MIN_OFFSET)/2);
 const int EDAX_DEFAULT_Z_ADC_OFFSET = ((EDAX_MAX_OFFSET + EDAX_MIN_OFFSET)/2);
 
 // for SgSetVideoPolarity
