@@ -119,20 +119,6 @@ button $win.get_logfile_name -text "Choose..." -command choose_logfile
 
 pack $win.open_logfile $win.get_logfile_name  -side left
 
-# This is a messageBox asking if the user wishes to continue without saving.
-# If yes, a microscope connection will be established without a logFile.
-# If no, the SPMDeviceConnection dialog box will be opened again. 
-	iwidgets::dialog .file_select_warning -title "Are you sure?" -modality application
-	label [.file_select_warning childsite].label_1 -text "WARNING:\tNo file has been selected!\n"
-	pack [.file_select_warning childsite].label_1
-	.file_select_warning hide Help
-	.file_select_warning buttonconfigure OK -text "Continue without saving" \
-							    -command {.file_select_warning deactivate 1}
-	.file_select_warning hide Apply
-	.file_select_warning buttonconfigure Cancel -text "Select a file" \
-								  -command {.file_select_warning deactivate 0}
-
-
 # Allow the user to save 
 proc open_spm_connection {} {
     global deviceNames deviceConnections 
@@ -172,11 +158,17 @@ proc open_spm_connection {} {
 
 	   } else {
 	       # Ask whether the user really wants to continue without saving
-		if { [.file_select_warning activate] } {
+			# Set check_streamfile_save to 1
+			# remove trace first
+			global check_streamfile_save
+			trace vdelete check_streamfile_save w popup_check_streamfile_dialog
+			set check_streamfile_save 1
+			# reset trace
+			trace variable check_streamfile_save w popup_check_streamfile_dialog
+		if { [popup_check_streamfile_dialog] } {
 			set open_spm_device_name [lindex $deviceConnections $chosen_device_index]
 			return; 
-		} else { open_spm_connection
-			   return; }
+		} else { return; }
 		}					
 
     } else {
@@ -184,6 +176,65 @@ proc open_spm_connection {} {
     }
 }
 
+### Makes sure the user wants to continue without saving
+proc popup_check_streamfile_dialog { {nm ""} {el ""} {op ""} } {
+	global open_spm_log_name check_streamfile_save
+
+	if { $check_streamfile_save == 0 } {return 1;}
+	
+	if { [tk_dialog ".file_warning_dialog" "Warning" "WARNING: No file has been selected!\n" \
+				"warning" "" "Continue without saving" "Select a file"] } {
+		puts "popup_check_streamfile_dialog3"
+		choose_logfile 
+	}
+
+	popup_check_file_exists
+	set check_streamfile_save 0
+	return 1;
+}
+
+### Checks for existence of open_spm_log_name and forces user to select
+### a new file if so.
+proc popup_check_file_exists { {nm ""} {el ""} {op ""} } {
+
+	global open_spm_log_name
+
+	if { $open_spm_log_name == "" } {return;}
+
+	set checkAgain 1
+
+	while {$checkAgain} {
+
+		set checkAgain 0
+
+		# Make sure filename ends in .nms extension. 
+      	if { [string compare [file extension $open_spm_log_name] ".nms"] != 0 } {
+           		append open_spm_log_name ".nms"
+     		}
+
+		# directory must exist, must be writable. File must not exist.
+            if {![file exists [file dirname $open_spm_log_name]]} {
+                	nano_error "Cannot save streamfile $open_spm_log_name\nDirectory doesn't exist!"
+			choose_logfile
+			set checkAgain 1;
+           	}
+            if {![file writable [file dirname $open_spm_log_name]]} {
+                	nano_error "Cannot save streamfile $open_spm_log_name\nCan't create a file in this directory!"
+                	choose_logfile
+			set checkAgain 1;
+           	}
+           	if {[file exists $open_spm_log_name]} {
+                	nano_error "Cannot save streamfile $open_spm_log_name\nFile already exists!"
+                	choose_logfile
+			set checkAgain 1;
+            }
+	}
+}
+	
+
+trace variable check_streamfile_save w popup_check_streamfile_dialog
+trace variable check_file_exists w popup_check_file_exists
+		
 #
 ################################
 #
