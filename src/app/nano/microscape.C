@@ -7383,7 +7383,10 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
       microscope->unregisterImageModeHandler( nma_Keithley2400_ui::EnterImageMode, 
                                             keithley2400_ui );
   }
-  if (g_imager_plugin) { delete g_imager_plugin; g_imager_plugin = NULL; }
+  if (g_imager_plugin) {
+    delete g_imager_plugin;
+    g_imager_plugin = NULL;
+  }
 
   // Must get hostname before initializing nmb_Dataset, but
   // should do it after VRPN starts, I think.
@@ -7568,7 +7571,7 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
     microscope = new_microscope;
     dataset = new_dataset;
 
-    // Re-create an imager pluging, using the new data set.
+    // Re-create an imager plugin, using the new data set.
     g_imager_plugin = new imagerPlugin(dataset);
 
     // Connection switch cleanup!
@@ -8101,6 +8104,18 @@ int main (int argc, char* argv[])
     internal_device_connection = new vrpn_Synchronized_Connection 
            (wellKnownPorts->localDevice,
             istate.logPhantom ? phantomlog : NULL);
+
+    //---------------------------------------------------------------
+    // If we leave the imager plugin open across the peripheral init
+    // call, it leaves a file handle open that keeps us from stopping
+    // and starting it later.  This happens when we use a Phantom, but
+    // not when we don't -- presumably the real-time thread doesn't close
+    // its open file descriptors.
+    if (g_imager_plugin) {
+      delete g_imager_plugin;
+      g_imager_plugin = NULL;
+    }
+
     if (peripheral_init(internal_device_connection, handTrackerName,
                         headTrackerName, bdboxName, istate.magellanName)){
         display_fatal_error_dialog("Memory fault, cannot initialize peripheral devices\n");
@@ -8109,6 +8124,10 @@ int main (int argc, char* argv[])
         display_fatal_error_dialog("Cannot setup tracker callbacks\n");
         return(-1);
     }
+
+    // Re-create the imager plugin.
+    g_imager_plugin = new imagerPlugin(dataset);
+    //---------------------------------------------------------------
 
   setupCallbacks(forceDevice);
   handTracker_update_rate = istate.phantomRate;
