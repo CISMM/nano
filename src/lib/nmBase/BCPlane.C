@@ -151,7 +151,6 @@ BCPlane::minNonZeroValue()
 	FILE* out;
 	out = fopen("BCPlane.txt","a");	
 	//if(out!=NULL && _dataset=="e1")	fprintf(out,"%d %d\n",numX(),numY());
-	//else			cout << "out = NULL" << endl;
 
     if (!_modified_nz){
 		fclose(out);
@@ -161,10 +160,9 @@ BCPlane::minNonZeroValue()
 		int x, y;
 		_min_nonzero_value = 0;
 		_max_nonzero_value = 0;
-		cout << "numX() = " << numX() << endl;
-		//if(numX() != 300)	_grid->_num_x = 300;
-		cout << "numY() = " << numY() << endl;
-		//if(numY() != 300)	_grid->_num_y = 300;
+		//cout << "numX() = " << numX() << endl;		
+		//cout << "numY() = " << numY() << endl;
+		
 		for (x = 0; x < numX(); x++) {
 			
 			for (y = 0; y < numY(); y++) {
