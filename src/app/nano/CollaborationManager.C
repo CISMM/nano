@@ -708,7 +708,7 @@ int CollaborationManager::fullyConnected (void) {
   int retval;
 
   if (d_isCollaborationOn) {
-    return;
+    return 0;
   }
 
   display_warning_dialog("Now collaborating with %s.\n", d_peerName);

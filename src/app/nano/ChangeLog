@@ -1,5 +1,10 @@
 2001-04-30  Tom Hudson  <hudsoncs.unc.edu>
 
+	* CollaborationManager.C (fullyConnected) : PC insists on a
+	return value.
+
+2001-04-30  Tom Hudson  <hudsoncs.unc.edu>
+
 	* CollaborationManager.C (fullyConnected) : Test to see if we're
 	already connected so we don't display the "got connected" message
 	and call subsequent handlers twice.  Hack, but should work as long
