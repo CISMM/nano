@@ -495,7 +495,9 @@ void nmg_Graphics_RenderServer::screenCapture (void) {
   nmg_Graphics_Implementation::screenCapture(&w, &h, &d_pixelBuffer, VRPN_FALSE);
 }
 
-void nmg_Graphics_RenderServer::sendDepthData (void) {
+/* void nmg_Graphics_RenderServer::sendDepthData (void) {
+}
+*/
 
 void nmg_Graphics_RenderServer::depthCapture (void) {
   int w, h;
