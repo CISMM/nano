@@ -380,7 +380,7 @@ void nmb_Image::getWorldToImageTransform(double *matrix44) const
         order col0row0-3, col1row0-3, col2row0-3, col3row0-3
   */
 
-  if (d_worldToImageMatrixSet) {
+  if (d_usingWorldToImageMatrix) {
     int i; 
     for (i = 0; i < 16; i++){
       matrix44[i] = d_worldToImageMatrix[i];
@@ -501,7 +501,7 @@ void nmb_Image::getImageToTextureTransform(nmb_TransformMatrix44 &xform,
 
 void nmb_Image::setWorldToImageTransform(double *matrix44)
 {
-    d_worldToImageMatrixSet = VRPN_TRUE;
+    d_usingWorldToImageMatrix = VRPN_TRUE;
     d_dimensionUnknown = vrpn_FALSE;
     int i;
     for (i = 0; i < 16; i++){
@@ -666,6 +666,24 @@ double nmb_Image::areaInWorld() const
 vrpn_bool nmb_Image::dimensionUnknown()
 {
   return d_dimensionUnknown;
+}
+
+void nmb_Image::registerChangeHandler(nmb_ImageChangeHandler handler,
+			void *userdata)
+{
+  printf("not implemented yet\n");
+}
+
+void nmb_Image::unregisterChangeHandler(nmb_ImageChangeHandler handler,
+			void *userdata)
+{
+  printf("not implemented yet\n");
+}
+
+
+void nmb_Image::triggerChangeHandlers()
+{
+  printf("not implemented yet\n");
 }
 
 const int nmb_ImageGrid::num_export_formats = 7;

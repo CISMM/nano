@@ -14,9 +14,19 @@
 #pragma set woff 1110,1424,3201
 #endif
 
+#ifdef _WIN32
+#pragma warning( push )
+#pragma warning( disable : 4786)  
+#endif
+
 #include <assert.h>
 #include <math.h>
 #include <string>
+#include <list>
+
+#ifdef _WIN32
+#pragma warning( pop ) 
+#endif
 
 // and reset the warnings
 #ifdef sgi
@@ -84,6 +94,14 @@ class nmb_ImageBounds {
     double x[4], y[4];
 };
 
+typedef void (*nmb_ImageChangeHandler) (void *userdata, nmb_Image *image);
+class nmb_ImageChangeCallback {
+public:
+	nmb_ImageChangeCallback() {handler = NULL; userdata = NULL;}
+	nmb_ImageChangeHandler handler;
+	void *userdata;
+};
+
 class nmb_ImageList;
 /**
 	nmb_ImageList provides a way to unite images from different BCGrids
@@ -95,7 +113,7 @@ class nmb_Image {
         friend class nmb_ImageList;
   public:
 	nmb_Image():num_referencing_lists(0),
-                d_worldToImageMatrixSet(VRPN_FALSE),
+                d_usingWorldToImageMatrix(VRPN_FALSE),
                 d_imagePosition(0.0, 0.0, 1.0, 1.0),
                 d_units_scale(1.0), d_units_offset(0.0),
                 d_DAC_scale(1.0), d_DAC_offset(0),
@@ -151,11 +169,11 @@ class nmb_Image {
 	double widthWorld() const;
 	double heightWorld() const;
 
-        //void setWidthWorld(double width, double originX = 0.5);
-        //void setHeightWorld(double height, double originY = 0.5);
+    //void setWidthWorld(double width, double originX = 0.5);
+    //void setHeightWorld(double height, double originY = 0.5);
 
-        void setAcquisitionDimensions(double distX, double distY);
-        void getAcquisitionDimensions(double &distX, double &distY) const;
+    void setAcquisitionDimensions(double distX, double distY);
+    void getAcquisitionDimensions(double &distX, double &distY) const;
 
 	/// convert a position in an image given as a pixel location into a
 	/// position in the world coordinate system for the image
@@ -253,14 +271,21 @@ class nmb_Image {
         /// about the dimensions of the image in the world
         virtual vrpn_bool dimensionUnknown();
 
+		virtual void registerChangeHandler(nmb_ImageChangeHandler handler,
+			void *userdata);
+		virtual void unregisterChangeHandler(nmb_ImageChangeHandler handler,
+			void *userdata);
+
+		virtual void triggerChangeHandlers();
+
   protected:
         virtual ~nmb_Image (void);
         int num_referencing_lists;
 
-        /// has d_worldToImageMatrix been set?
-        vrpn_bool d_worldToImageMatrixSet;
+        /// are we using d_worldToImageMatrix?
+        vrpn_bool d_usingWorldToImageMatrix;
         /// the transformation matrix returned by getWorldToImageTransform
-        /// if its been set through setWorldToImageTransform
+        /// if d_usingWorldToImageMatrix
         double d_worldToImageMatrix[16];
         /// position of the corners of the image in the world
         nmb_ImageBounds d_imagePosition;
@@ -290,6 +315,8 @@ class nmb_Image {
         /// this is to give us some clue about whether or not we know anything
         /// about the dimensions of the image in the world
         vrpn_bool d_dimensionUnknown;
+
+		list<nmb_ImageChangeCallback> d_changeHandlers;
 };
 
 /// container class for BCGrid/BCPlane-based images
@@ -555,6 +582,5 @@ class nmb_ImageList {
         nmb_Image *images[NMB_MAX_IMAGELIST_LENGTH];
 	nmb_ListOfStrings *imageNames;
 };
-
 
 #endif

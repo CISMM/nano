@@ -1,3 +1,11 @@
+2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Image.C (registerChangeHandler): new function
+	(unregisterChangeHandler): new function
+    (triggerChangeHandlers): new function
+    * nmb_Image.h: turned off a VC++ warning about long function names
+	added #include <list> to be used for the callback list
+
 2002-09-04  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_Image.C (getImageToTextureTransform): added optional arguments to
