@@ -77,14 +77,15 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	char* token;
 	ifstream readfile;
 
-	int i;
-	float radius, x, y, z, az, alt;
+	int i, j;
+	double radius, x, y, z, az, alt;
 	double theta;
 	double minX, maxX, minY, maxY, z_value;
+	double xmid, ymid, zmid;
 	int imageX, imageY;
 	int cur_step = 0;
 	double scale_factor;
-	bool skip_first;		// skips first point--sometimes the azimuth is off...
+	bool skip_first;		// skips first point--sometimes the azimuth is incorrect...
 
 	// pointer to the current plane
 	BCPlane *height = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
@@ -144,7 +145,7 @@ printf("%f\n", height->scaledMaxValue());
 
 
 	// set up translation to correct place in height plane
-	q_vec_set(trans, minX, maxY, z_value);
+	q_vec_set(trans, 0, maxY - minY, 0);
 
 	readfile.open(filename);
     assert(readfile);
@@ -264,8 +265,8 @@ printf("%f\n", height->scaledMaxValue());
 						// coordinate systems are different
 						// this fixes it
 						q_xform(p1, coord_fix, p1);
-						q_vec_add(p1, p1, trans);	
-						
+						q_vec_add(p1, p1, trans);
+
 						// set up rotation quat
 						q_from_euler(q, az, 0, alt);
 
@@ -298,10 +299,9 @@ printf("%f\n", height->scaledMaxValue());
 							Pobject->num_triangles += 2;	// two triangles per vertex
 						}
 						// do cylinder stuff
-						// translates back from correct place in height plane
-						c.x1 = p1[0] - minX;
-						c.y1 = p1[1] - minY;
-						c.z1 = p1[2] - z_value;
+						c.x1 = p1[0];
+						c.y1 = p1[1];
+						c.z1 = p1[2];
 
 						if (!newtube) {	
 							// fill in last guys second point
@@ -330,6 +330,20 @@ printf("%f\n", height->scaledMaxValue());
 	// get rid of last cylinder--it is bogus
 	cs.pop_back();
 
+	// set up tubes so that it's origin is around the center--helps for doing scaling and rotation
+	xmid = cs.front().x1 + (cs.back().x2 - cs.front().x1) / 2;
+	ymid = cs.front().y1 + (cs.back().y2 - cs.front().y1) / 2;
+	zmid = cs.front().z1 + (cs.back().z2 - cs.front().z1) / 2;
+
+	for (i = 0; i < numtubes; i++){
+		for (j = 0; j < t[i].size(); j++) {
+			t[i][j][0] -= xmid;
+			t[i][j][1] -= ymid;
+			t[i][j][2] -= zmid;
+		}
+	}
+
+
 
 	// create space for triangles in Pobject
 	Pobject->num_triangles -= numtubes * tess * 2;
@@ -343,6 +357,15 @@ printf("%f\n", height->scaledMaxValue());
 	Pobject->cylinders = new cylinder[Pobject->num_cylinders];
 	for (i = 0; i < Pobject->num_cylinders; i++) {
 		memcpy(&Pobject->cylinders[i], &cs[i], sizeof(c));
+	}
+	// set up tubes so that it's origin is around the center--helps for doing scaling and rotation
+	for (i = 0; i < Pobject->num_cylinders; i++) {
+		Pobject->cylinders[i].x1 -= xmid;
+		Pobject->cylinders[i].y1 -= ymid;
+		Pobject->cylinders[i].z1 -= zmid;
+		Pobject->cylinders[i].x2 -= xmid;
+		Pobject->cylinders[i].y2 -= ymid;
+		Pobject->cylinders[i].z2 -= zmid;
 	}
 
 /*
@@ -374,7 +397,7 @@ printf("%f\n", height->scaledMaxValue());
 	}
 
 	int count = 0;
-	for (i = 0; i < numtubes; i++){  // dtm
+	for (i = 0; i < numtubes; i++){
 		//BuildList actually builds the geometry from
 		//the data structures previously built
         BuildList(Pobject, dl + i, t[i], count);
@@ -382,6 +405,22 @@ printf("%f\n", height->scaledMaxValue());
 	}
 
 	readfile.close();
+
+	// add minimum extents of the height plane
+	Pobject->GetLocalXform().SetXOffset(minX);
+	Pobject->GetLocalXform().SetYOffset(minY);
+	Pobject->GetLocalXform().SetZOffset(z_value);
+
+	// translate back from object center at origin
+//	Pobject->GetLocalXform().SetTranslate(xmid * scale_factor, ymid * scale_factor, zmid * scale_factor);
+	Pobject->GetLocalXform().SetTranslate(xmid, ymid, zmid);
+	// coordinate systems are different
+	// this fixes it
+//	Pobject->GetLocalXform().SetTranslate(trans[0] + xmid, trans[1] + ymid, trans[2] + zmid);
+//	Pobject->GetLocalXform().SetTranslate(0,0,0);
+
+	// scale 
+//	Pobject->GetLocalXform().SetScale(scale_factor);
 
 	return numtubes;  // should be number of display lists
 }

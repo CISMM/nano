@@ -1,3 +1,33 @@
+2002-04-26  David Borland <borland@cs.unc.edu>
+
+        * TubeFileGenerator.C:  changed loaded tubes center so that scaling
+        and rotation are performed at the object center
+
+        * URAxis.C:  added change height plane code for loaded objects
+
+        * URAxis.h:  added change height plane code for loaded objects
+
+        * URPolygon.C:  added change height plane code for loaded objects
+
+        * URPolygon.h:  added change height plane code for loaded objects
+
+        * URTexture.C:  added change height plane code for loaded objects
+
+        * URRender.C:  added change height plane code for loaded objects
+
+        * URRender.h:  added change height plane code for loaded objects
+        
+        * UTree.h:  added struct for new change static file code
+
+        * WaveFrontFileGenerator.C:  added code to account for new offset
+        in the Xform translation
+
+        * Xform.C:  added offset so that setting and getting translation
+        takes into account the fact that the height plane might not be
+        at the origin in nano
+
+        * Xform.C:  added offset like above
+
 2002-04-15  David Borland <borland@cs.unc.edu>
 
         * TubeFileGenerator.C:  made changes so that when the current static

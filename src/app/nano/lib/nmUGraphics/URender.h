@@ -191,6 +191,7 @@ public:
 	virtual int SetAlphaAll(void *userdata=NULL);
 
 	virtual int ChangeStaticFile(void *userdata=NULL);
+	virtual int ChangeHeightPlane(void *userdata=NULL);
 
 	int IntersectLine(void *userdata=NULL);
 

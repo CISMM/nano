@@ -8,11 +8,11 @@
 using std::vector;
 #endif
 
-
-
+#include <nmb_Dataset.h>
 
 #include "URender.h"
 #include "WaveFrontFileGenerator.h"
+
 
 // Heavily updated by Borland 1/18/02
 // Should be much more robust now, and handle
@@ -35,6 +35,9 @@ pid_t getpid();
 #endif
 
 #define MAXLENGTH 512		// buffer size
+
+
+extern nmb_Dataset * dataset;
 
 
 
@@ -189,10 +192,20 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	vector<face> faces;					//faces
 	vector<group> groups;				//groups
 
+	double minX, minY, z_value;
+
     char *buf, *val;
 	int i, j, flag;
 	int current_group = 0;
 	GLuint dl;
+
+	// pointer to the current plane
+	BCPlane *height = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
+
+	// set up min and max values for the current plane
+	minX = height->minX();
+	minY = height->minY();
+	z_value = height->minNonZeroValue();
 
 	g.name[0] = '\0';
 
@@ -229,7 +242,7 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 				while (!isspace(*++val)) {}
 				if (*val == '\n') flag = 0;
 				*val = '\0';
-				v.push_back(atof(buf));
+				v.push_back(atof(buf));				
 				buf = val;
 
 				if (!flag) break;
@@ -468,6 +481,14 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	}
 
 	readfile.close();
+
+	
+	// add minimum extents of the height plane
+	Pobject->GetLocalXform().SetXOffset(minX);
+	Pobject->GetLocalXform().SetYOffset(minY);
+	Pobject->GetLocalXform().SetZOffset(z_value);
+	Pobject->GetLocalXform().SetTranslate(0, 0, 0);
+
 
 	return groups.size();
 }

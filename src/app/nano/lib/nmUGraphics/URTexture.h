@@ -75,6 +75,7 @@ public:
 	int SetAlphaAll(void *userdata=NULL);
 
 	int ChangeStaticFile(void *userdata=NULL);
+	int ChangeHeightPlane(void *userdata=NULL);
 
 	void PostRender();
 	void Compile2DTexture();

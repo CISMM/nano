@@ -1,5 +1,9 @@
 #include "URPolygon.h"
 #include "URTexture.h"
+#include "UTree.h"
+
+#include <Tcl_Linkvar.h>
+#include <Tcl_Netvar.h>
 
 #include <nmm_SimulatedMicroscope_Remote.h>	// so we know if there is an open connection for
 											// scaling tubes when we change scale 
@@ -57,18 +61,70 @@ int URPolygon::SetClampAll(void* userdata) {
 }
 
 int URPolygon::ChangeStaticFile(void* userdata) {
+    // modifies the scale and translation so appears in same place...
+	int i;
+	extern Tclvar_float	import_scale;
+	extern Tclvar_float import_transx;
+	extern Tclvar_float import_transy;
+	extern Tclvar_float import_transz;
+	extern Tclvar_string current_object;
+
+	change_static_file csf = *(change_static_file*) userdata;
+
+	this->GetLocalXform().SetXOffset(csf.xoffset);
+	this->GetLocalXform().SetYOffset(csf.yoffset);
+	this->GetLocalXform().SetZOffset(csf.zoffset);
+
+	this->GetLocalXform().SetScale(this->GetLocalXform().GetScale() * csf.scale);
+
+	// if current object, update the tcl stuff
+	if (strcmp(this->name, current_object.string()) == 0) {
+		import_scale = this->GetLocalXform().GetScale();
+	}
+
+	const q_vec_type &q1 = this->GetLocalXform().GetTrans();
+
+	q_vec_type q2, q3;
+
+	q_vec_copy(q2, q1);
+	q_vec_copy(q3, q1);
+
+	q_vec_scale(q2, csf.scale, q2);
+
+	this->GetLocalXform().SetTranslate(q2);
+
+	// if current object, update the tcl stuff
+	if (strcmp(this->name, current_object.string()) == 0) {
+		import_transx = q2[0];
+		import_transy = q2[1];
+		import_transz = q2[2];
+	}
+
+	// line up cylinders to send to AFM properly
+	for (i = 0; i < num_cylinders; i++) {
+		cylinders[i].x1 += q3[0] - q2[0];
+		cylinders[i].y1 += q3[1] - q2[1];
+		cylinders[i].z1 += q3[2] - q2[2];
+		cylinders[i].x2 += q3[0] - q2[0];
+		cylinders[i].y2 += q3[1] - q2[1];
+		cylinders[i].z2 += q3[2] - q2[2];
+	}
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URPolygon::ChangeHeightPlane(void* userdata) {
 	// modifies the scale and translation so appears in same place...
 
-	double scale = *(double*) userdata;
-
-	this->GetLocalXform().SetScale(this->GetLocalXform().GetScale() * scale);
+	double z = *(double*) userdata;
 
 	const q_vec_type &q1 = this->GetLocalXform().GetTrans();
 	q_vec_type q2;
-	
-	q2[0] = q1[0]; q2[1] = q1[1]; q2[2] = q1[2];
 
-	q_vec_scale(q2, scale, q2);
+	q_vec_copy(q2, q1);
+
+	this->GetLocalXform().SetZOffset(z);
 
 	this->GetLocalXform().SetTranslate(q2);
 

@@ -62,11 +62,30 @@ void Xform::SetRotate(double rx, double ry, double rz, double rw){
 }
 
 void Xform::SetTranslate(q_vec_type t){
-	trans[0]=t[0];trans[1]=t[1];trans[2]=t[2];
+	trans[0]=t[0] + Xoffset;
+	trans[1]=t[1] + Yoffset;
+	trans[2]=t[2] + Zoffset;
 }
 
 void Xform::SetTranslate(double tx, double ty, double tz){
-	trans[0]=tx;trans[1]=ty;trans[2]=tz;
+	trans[0]=tx + Xoffset;
+	trans[1]=ty + Yoffset;
+	trans[2]=tz + Zoffset;
+}
+
+void Xform::SetXOffset(double x) {
+	trans[0] += -Xoffset + x;
+	Xoffset = x;
+}
+
+void Xform::SetYOffset(double y) {
+	trans[1] += -Yoffset + y;
+	Yoffset = y;
+}
+
+void Xform::SetZOffset(double z) {
+	trans[2] += -Zoffset + z;
+	Zoffset = z;
 }
 
 void Xform::AddTranslate(q_vec_type t){

@@ -32,7 +32,13 @@ using namespace std;
   friend class Xform4x4;  
   q_type rot;
   q_vec_type trans;
+  q_vec_type gettrans;	// used for returning the translation vector
+						// need this so what we return is not a temporary variable
   double scale;
+
+  double Xoffset;		// These values correspond to the current height-plane's origin
+  double Yoffset;
+  double Zoffset;	 
 
   int lock_trans;		//lock translations
   int lock_rot;			//lock rotations
@@ -65,6 +71,12 @@ public:
   void SetTransLock(int i);				//Set the translation lock
   void SetScaleLock(int i);				//Set the scale lock
 
+  
+  // the offset of the current height plane...add to translations
+  void SetXOffset(double x); 
+  void SetYOffset(double y);
+  void SetZOffset(double z); 
+
 
   //the set commands ignore the locks -- only the multiplication currently
   //respects the locks
@@ -77,7 +89,10 @@ public:
 
   void SetScale(double s);				//set scale
 
-  const q_vec_type & GetTrans(){return trans;}		//get translation
+  const q_vec_type & GetTrans(){	q_vec_set(gettrans,	trans[0] - Xoffset, 
+														trans[1] - Yoffset,
+														trans[2] - Zoffset);
+									return gettrans;}		//get translation
   const q_type & GetRot(){return rot;}			//get rotation
   const double & GetScale(){return scale;}		//get scale
 

@@ -167,8 +167,13 @@ int URender::SetAlphaAll(void * /*userdata*/) {
 }
 
 
-
 int URender::ChangeStaticFile(void* /*userdata*/) {
+	// bas class does nothing
+	cerr << "Base class Changing Static File\n";
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+int URender::ChangeHeightPlane(void* /*userdata*/) {
 	// bas class does nothing
 	cerr << "Base class Changing Static File\n";
 	if(recursion) return  ITER_CONTINUE;

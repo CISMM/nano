@@ -117,4 +117,10 @@ int URAxis::ChangeStaticFile(void* /*userdata*/) {
 	if(recursion) return  ITER_CONTINUE;
 	else return ITER_STOP;
 }
+int URAxis::ChangeHeightPlane(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
 

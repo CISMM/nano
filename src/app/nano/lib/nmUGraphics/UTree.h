@@ -10,6 +10,14 @@ class URender;
 #define CHILDCHUNK 10			//# of slots to add if I overflow the child array
 #define MAX_TREE_DEPTH 200		//maximum levels of the tree
 
+
+struct change_static_file {
+	double scale;
+	double xoffset;
+	double yoffset;
+	double zoffset;
+};
+
 typedef int (URender::*IteratorFunction)(void *userdata);
 class UTree{
 	private:
