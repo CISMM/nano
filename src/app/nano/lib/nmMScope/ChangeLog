@@ -1,3 +1,13 @@
+2002 -02-26 Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nmm_SimulatedMicroscope_Remote.* : changed number of triangles
+	sent from arbitrary value to real number in extracted model,
+      also added URender * myURenderObject to access triangle info
+      (temp)
+
+      * nmm_SimulatedMicroscope.hdef : added functions get_y_offset()
+      and get_x_offset() to offset triangles sent in the simulator
+
 2002 -02-25 Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* nmm_AFMSIMSERVER_Report.vrpndef : add 'Triangle' message type

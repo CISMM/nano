@@ -1,3 +1,15 @@
+2002-02-26 David Borland <borland@cs.unc.edu>
+
+	* FileGenerator.C : Added "mask.details.txt" to possible names
+                     		    of files to load tubes from
+
+ 	* TubeFileGenerator.C : Fixed some problems with the loading of
+                         the tube geometry
+
+ 	* URender.C : Added initializer for new num_triangles variable
+
+ 	* URender.h : Added new num_triangles variable
+
 2002-02-25 David Borland <borland@cs.unc.edu>
 
         * TubeFileGenerator.C: new file for loading files output by

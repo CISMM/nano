@@ -1,12 +1,19 @@
 2002-01-25 Andrea Hilchey <hilchey@cs.unc.edu>
 
+	* sim.cpp : added offset to vertices for triangle display
+
+	* scan.cpp : some modification to zscale for object information
+	sent from simulator to nano, further modification needed
+
+2002-02-26 Andrea Hilchey <hilchey@cs.unc.edu>
+
 	* 3d_afm.dsp : deleted .dat files (not needed) and changed Debug
 	configuration settings so that they match the Release settings,
 	also changed linking with vrpn.lib so that looking in correct
 	location
 
 
-2002-01-25 Andrea Hilchey <hilchey@cs.unc.edu>
+2002-02-25 Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* sim.cpp : added code to check for triangles stored in list in
 	nmm_SimulatedMicroscope object (SimMicroscopeServer), and draws 
