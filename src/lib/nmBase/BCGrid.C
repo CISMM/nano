@@ -413,6 +413,7 @@ addNewPlane
 BCPlane*
 BCGrid::addNewPlane(BCString dataset, BCString units, int timed)
 {
+
     if (timed)
     {
 	CTimedPlane* plane = new CTimedPlane(dataset, units, _num_x, _num_y);

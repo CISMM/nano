@@ -49,6 +49,7 @@ class BCString
     char& operator[](int);
 
     const char* Characters() const;
+    char * nonconst_characters() const;
 
     operator const char*() const;
 
@@ -137,14 +138,21 @@ BCString::operator != (const BCString &s) const
     return (strcmp(_str, s._str) != 0);
 }
 
-
+//returns a const char *
 inline const char* 
 BCString::Characters() const 
 { 
     return &(_str[0]); 
 }
 
+//returns a char *, use with arrays
+inline char *
+BCString::nonconst_characters() const 
+{ 
+    return &(_str[0]); 
+}
 
+//returns a const char *
 inline BCString::operator const char*() const
 {
     return &(_str[0]);

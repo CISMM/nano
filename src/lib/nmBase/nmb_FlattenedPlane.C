@@ -158,6 +158,7 @@ createFlattenedPlane( nmb_Dataset* dataset,
   // plane of name "outputPlaneName" does not exist already
   char newunits[1000];
   sprintf(newunits, "%s_flat", sourcePlane->units()->Characters());
+
   outputPlane 
     = dataset->inputGrid->addNewPlane(outputPlaneName, newunits, NOT_TIMED);
   if( outputPlane == NULL ) 
