@@ -398,7 +398,6 @@ void AFMScanlineState::moveScanlineRelative(float dist_fast_dir,
 AFMDataset::AFMDataset (void) :
     inputPoint (NULL),
     fc_inputPoint(NULL),
-    inputPlaneNames ("inputPlaneNames"),
     inputPointNames ("inputPointNames"),
     scan_channels (NULL),
     point_channels (NULL),
@@ -592,7 +591,6 @@ int AFMDataset::Initialize (nmb_Dataset * dataset) {
   inputPoint = new Point_results;
   fc_inputPoint = new Point_results;
 
-  inputPlaneNames.addEntry("none");
   inputPointNames.addEntry("none");
   fc_inputPointNames.addEntry("none");
 
@@ -601,7 +599,6 @@ int AFMDataset::Initialize (nmb_Dataset * dataset) {
   // to map to outputs
   p = dataset->inputGrid->head();
   while (p) {
-    inputPlaneNames.addEntry(p->name()->Characters());
     inputPointNames.addEntry(p->name()->Characters());
     p = p->next();
   }
@@ -613,7 +610,7 @@ int AFMDataset::Initialize (nmb_Dataset * dataset) {
   // if needed).
 
   scan_channels = new Scan_channel_selector (dataset->inputGrid,
-                                             &inputPlaneNames,
+                                             dataset->inputPlaneNames,
                                              dataset);
   point_channels = new Point_channel_selector (inputPoint,
                                                &inputPointNames,

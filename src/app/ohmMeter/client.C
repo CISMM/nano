@@ -48,7 +48,7 @@ vrpn_Ohmmeter_Remote *ohmmeter_device = NULL;
 int main(int argc, char **argv) {
         Ohmmeter *ohmmeter_controls;
 	char *tcl_script_dir;
-	char command[128];
+	char command[256];
         char *quitButtonText = "quit";
 	
 	parseArguments(argc, argv);
@@ -80,11 +80,18 @@ int main(int argc, char **argv) {
 	  sprintf(command, "wm withdraw .");
 	  TCLEVALCHECK(tk_control_interp, command);
 
+          // Tell tcl script what directory it lives in. 
+          sprintf(command, "%s",tcl_script_dir);
+          Tcl_SetVar(tk_control_interp,"tcl_script_dir",command,TCL_GLOBAL_ONLY);
           // source the french_ohmmeter.tcl file
-          sprintf(command, "source %s%s",tcl_script_dir,"french_ohmmeter.tcl");
-          if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
+          if ((tcl_script_dir[strlen(tcl_script_dir)-1]) == '/') {
+              sprintf(command, "%s%s",tcl_script_dir,"french_ohmmeter.tcl");
+          } else {
+              sprintf(command, "%s/%s",tcl_script_dir,"french_ohmmeter.tcl");
+          }
+          if (Tcl_EvalFile(tk_control_interp, command) != TCL_OK) {
               fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
-                    tk_control_interp->result);
+                      tk_control_interp->result);
               return 0;
           }
 

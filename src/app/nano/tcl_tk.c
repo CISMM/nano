@@ -146,16 +146,19 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	Tcl_SetVar(my_tk_control_interp,"no_phantom",&cvalue[0],TCL_GLOBAL_ONLY);
 #endif
 
+        // Tell tcl script what directory it lives in. 
+        sprintf(command, "%s",tcl_script_dir);
+	Tcl_SetVar(my_tk_control_interp,"tcl_script_dir",command,TCL_GLOBAL_ONLY);
 	/* The Tcl script that holds widget definitions is sourced from
 	 * inside the main window script*/
 	/* Load the Tcl script that handles main interface window
 	 * and mode changes */
 	VERBOSE(4, "  Loading Tcl script");
-        if ((tcl_script_dir[strlen(tcl_script_dir)]) == '/') {
+        if ((tcl_script_dir[strlen(tcl_script_dir)-1]) == '/') {
             sprintf(command, "%s%s",tcl_script_dir,TCL_MODE_FILE);
         } else {
             sprintf(command, "%s/%s",tcl_script_dir,TCL_MODE_FILE);
-        }            
+        }
 	if (Tcl_EvalFile(my_tk_control_interp, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
 			my_tk_control_interp->result);

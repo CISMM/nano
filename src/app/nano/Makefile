@@ -21,15 +21,17 @@ endif
 
 ifdef VIEWER
 NO_MSCOPE_CONNECTION := 1
+APP_SUFFIX := _view
 endif
 
 # new name for a viewer-only app.
-ifdef NO_MSCOPE_CONNECTION
+ifdef APP_SUFFIX
 ifdef VC
-   APP_NAME := nano_view.exe
+   APP_NAME := nano$(APP_SUFFIX).exe
 else
-   APP_NAME := nano_view
+   APP_NAME := nano$(APP_SUFFIX)
 endif
+BAREDEFINES += APP_SUFFIX='"$(APP_SUFFIX)"'
 endif
 
 include ../Makefile.share
@@ -39,15 +41,23 @@ install:
 	cp $(APP_EXEC) $(NANO_ROOT)/bin
 #	cp -R -u -f $(TOP_LEVEL_SRC_DIR)/share/tcl $(NANO_ROOT)/share
 ifdef NO_MSCOPE_CONNECTION
+# 3rdtech VIEWER install - strip UNC development stuff and 
+# MSCOPE from interface. 
 	cp -R -u -f $(TOP_LEVEL_SRC_DIR)/share/tcl/images $(NANO_ROOT)/share/tcl_view
 	$(TOP_LEVEL_SRC_DIR)/util/tcl_filters/strip_unc.tcl \
 	$(TOP_LEVEL_SRC_DIR)/share/tcl $(NANO_ROOT)/share/tcl_view \
 	thirdtech_ui viewer_only
 else
+ifdef APP_SUFFIX
+# Copy all tcl files unchanged
+	cp -R -u -f $(TOP_LEVEL_SRC_DIR)/share/tcl/* $(NANO_ROOT)/share/tcl$(APP_SUFFIX)
+else
+# 3rdtech install - strip UNC development stuff from interface. 
 	cp -R -u -f $(TOP_LEVEL_SRC_DIR)/share/tcl/images $(NANO_ROOT)/share/tcl
 	$(TOP_LEVEL_SRC_DIR)/util/tcl_filters/strip_unc.tcl \
 	$(TOP_LEVEL_SRC_DIR)/share/tcl $(NANO_ROOT)/share/tcl \
 	thirdtech_ui
+endif
 endif
 
 #Which obj files differentiate the full version from the viewer-only version?

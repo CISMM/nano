@@ -7,15 +7,17 @@
   ===3rdtech===*/
 #include "nmr_RegistrationUI.h"
 #include "nmr_Util.h"
+#include <nmb_Dataset.h>
 #include <microscape.h> // for disableOtherTextures
 
 nmr_RegistrationUI::nmr_RegistrationUI
-  (nmg_Graphics *g, nmb_ImageList *im,
+  (nmg_Graphics *g, nmb_Dataset *d,
    nmr_Registration_Proxy *aligner):
 
    d_registrationImageName3D("reg_surface_comes_from", "none"),
    d_registrationImageName2D("reg_projection_comes_from", "none"),
    d_newResampleImageName("resample_image_name", ""),
+   d_newResamplePlaneName("resample_plane_name", ""),
    d_registrationEnabled("reg_window_open", 0),
    d_registrationRequested("registration_needed", 0),
    d_constrainToTopography("reg_constrain_to_topography", 0),
@@ -26,19 +28,20 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_resampleRatio("reg_resample_ratio", 0),
    d_registrationValid(vrpn_FALSE),
    d_graphicsDisplay(g),
-   d_imageList(im),
+   d_imageList(d->dataImages),
+   d_dataset(d),
    d_aligner(aligner),
    d_ProjWorldFromTopoWorldTransform(4,4),
    d_ProjImageFromTopoImageTransform(4,4),
    d_TopoImageFromProjImageTransform(4,4),
    d_ProjImageFromTopoWorldTransform(4,4)
 {
-    d_newResampleImageName = "";
-    d_resampleResolutionX = 100;
-    d_resampleResolutionY = 100;
+//      d_newResampleImageName = "";
+//      d_resampleResolutionX = 100;
+//      d_resampleResolutionY = 100;
 
-    d_registrationImageName3D = "none";
-    d_registrationImageName2D = "none";
+//      d_registrationImageName3D = "none";
+//      d_registrationImageName2D = "none";
 
     int i;
     vrpn_bool set3D = vrpn_FALSE, set2D = vrpn_FALSE; 
@@ -81,6 +84,8 @@ void nmr_RegistrationUI::setupCallbacks()
          (handle_textureDisplayEnabled_change, (void *)this);
     d_newResampleImageName.addCallback
          (handle_resampleImageName_change, (void *)this);
+    d_newResamplePlaneName.addCallback
+         (handle_resamplePlaneName_change, (void *)this);
 
     d_registrationImageName3D.addCallback
        (handle_registrationImage3D_change, (void *)this);
@@ -99,6 +104,8 @@ void nmr_RegistrationUI::teardownCallbacks()
          (handle_textureDisplayEnabled_change, (void *)this);
     d_newResampleImageName.removeCallback
          (handle_resampleImageName_change, (void *)this);
+    d_newResamplePlaneName.removeCallback
+         (handle_resamplePlaneName_change, (void *)this);
 
     d_registrationImageName3D.removeCallback
        (handle_registrationImage3D_change, (void *)this);
@@ -107,9 +114,10 @@ void nmr_RegistrationUI::teardownCallbacks()
 
 }
 
-void nmr_RegistrationUI::changeDataset(nmb_ImageList *im)
+void nmr_RegistrationUI::changeDataset(nmb_Dataset *d)
 {
-  d_imageList=im;
+  d_imageList=d->dataImages;
+  d_dataset = d;
 }
 
 void nmr_RegistrationUI::handleRegistrationChange
@@ -191,6 +199,15 @@ void nmr_RegistrationUI::handle_resampleImageName_change(const char *name,
 {
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
     me->createResampleImage(name);
+
+}
+
+// static 
+void nmr_RegistrationUI::handle_resamplePlaneName_change(const char *name, 
+                                                         void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    me->createResamplePlane(name);
 
 }
 
@@ -368,5 +385,54 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
     printf("finished resampling image\n");
     // now make it available elsewhere:
     d_imageList->addImage(new_image);
+}
+
+void nmr_RegistrationUI::createResamplePlane(const char * /*imageName */)
+{
+    printf("nmr_RegistrationUI::createResamplePlane\n");
+    nmb_ImageGrid *new_image;
+    nmb_Image *im_3D = d_imageList->getImageByName
+                          (d_registrationImageName3D.string());
+    nmb_Image *im_2D = d_imageList->getImageByName
+                          (d_registrationImageName2D.string());
+
+    // d_imageTransformWorldSpace is the transformation that takes points from
+    // height image to points in the texture image
+
+    // Make sure we have all the information we need and
+    // see if the user has given a name to the resampled plane
+    // other than "".  If so, we should create a new plane and set the value
+    // back to "".
+    if (!d_registrationValid) {
+        fprintf(stderr,
+                "Error, cannot resample if registration is not valid\n");
+        return;
+    } else if (!im_3D || !im_2D ||
+               (strlen(d_newResamplePlaneName.string()) == 0)){
+        return;
+
+    } 
+    // resample the SEM data onto the AFM grid only 
+    //Region is the same as the AFM grid, resolution is the same as the AFM
+    //grid
+        new_image = new nmb_ImageGrid(
+                (const char *)(d_newResamplePlaneName.string()),
+                (const char *)(im_2D->unitsValue()),
+                im_3D->width(), im_3D->height());
+        nmb_ImageBounds im3D_bounds;
+        im_3D->getBounds(im3D_bounds);
+        new_image->setBounds(im3D_bounds);
+        TopoFile tf;
+        im_3D->getTopoFileInfo(tf);
+        new_image->setTopoFileInfo(tf);
+        d_newResamplePlaneName = (const char *) "";
+        nmr_Util::createResampledImage((*im_2D), (*im_3D),
+                 d_ProjWorldFromTopoWorldTransform, (*new_image));
+
+    printf("finished resampling image\n");
+    // now make it available elsewhere:
+    d_dataset->addImageToGrid(new_image);
+    //d_imageList->addImage(new_image);
+    delete new_image;
 }
 

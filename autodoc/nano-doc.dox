@@ -20,7 +20,7 @@ PROJECT_NAME         = nanoManipulator
 # This could be handy for archiving the generated documentation or 
 # if some version control system is used.
 
-PROJECT_NUMBER       = 8.1
+PROJECT_NUMBER       = 10.1
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
 # base path where the generated documentation will be put. 
@@ -355,6 +355,13 @@ MAN_OUTPUT           =
 # the generated man pages (default is the subroutine's section .3)
 
 MAN_EXTENSION        = .3
+
+
+#---------------------------------------------------------------------------
+# configuration options related to the RTF output
+#---------------------------------------------------------------------------
+
+GENERATE_RTF         = NO
 
 #---------------------------------------------------------------------------
 # Configuration options related to the preprocessor 

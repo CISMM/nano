@@ -1,12 +1,12 @@
 #include "nmui_PlaneSync.h"
 
 
-nmui_PlaneSync::nmui_PlaneSync (nmb_Dataset * d, AFMDataset * afmd, 
+nmui_PlaneSync::nmui_PlaneSync (nmb_Dataset * d, AFMDataset * /*afmd*/, 
 				vrpn_Connection * c) :
     d_server (c),
     d_peer (NULL),
     d_dataset (d),
-    d_afmdata (afmd),
+    //    d_afmdata (afmd),
     d_sync_hostname (NULL),
     d_accepting (VRPN_FALSE),
     d_outgoing_flat_list (NULL),
@@ -86,7 +86,7 @@ int nmui_PlaneSync::handle_flatPlaneSync (void * userdata,
       // where the plane came from
       it->d_dataset->computeFlattenedPlane(outputPlane, inputPlane,
 					   dx, dy, offset);
-      it->d_afmdata->inputPlaneNames.addEntry(outputPlane);
+      it->d_dataset->inputPlaneNames->addEntry(outputPlane);
   } else {
       // Create the flatten plane, but don't tell the user about it. 
       // This is cribbed from nmb_Dataset.C::computeFlattenPlane
@@ -229,7 +229,7 @@ void nmui_PlaneSync::acceptUpdates (void)
 		 curr_node->data->dy, 
 		 curr_node->data->offset);
 	// Now we want the user to see the plane.
-	d_afmdata->inputPlaneNames.addEntry(
+	d_dataset->inputPlaneNames->addEntry(
 		 curr_node->data->flat_plane->name()->Characters());
 	last_node = curr_node;
 	curr_node = curr_node->next;

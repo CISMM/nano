@@ -1760,8 +1760,8 @@ BCGrid::readPPMorPGMFile(FILE *file, const char *name)
 {
     // initialize the scaling parameters.
 
-    _min_x = _min_y = 0.0;
-    _max_x = _max_y = 4000.0;
+//      _min_x = _min_y = 0.0;
+//      _max_x = _max_y = 4000.0;
 
     //  rewind the file pointer (we went too far when getting the
     //  magic number in readFile (4B for a 2B magic #))

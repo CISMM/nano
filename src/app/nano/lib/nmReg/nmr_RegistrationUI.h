@@ -15,6 +15,7 @@
 #include "Tcl_Linkvar.h"
 #include "Tcl_Netvar.h"
 
+class nmb_Dataset;
 /// This class is in charge of the client-side user interface which 
 /// lets the user manipulate and view data from an nmr_Registration_Client 
 /// The display of the registration results is done using nmg_Graphics and
@@ -51,24 +52,26 @@
 
 class nmr_RegistrationUI {
   public:
-    nmr_RegistrationUI(nmg_Graphics *g, nmb_ImageList *im,
+    nmr_RegistrationUI(nmg_Graphics *g, nmb_Dataset *d,
                        nmr_Registration_Proxy *aligner);
 
     ~nmr_RegistrationUI();
 
     void setupCallbacks();
     void teardownCallbacks();
-    void changeDataset(nmb_ImageList *im);
+    void changeDataset(nmb_Dataset *d);
     void handleRegistrationChange(const nmr_ProxyChangeHandlerData &info);
     static void handle_registrationChange(void *ud,
                   const nmr_ProxyChangeHandlerData &info);
     static void handle_resampleImageName_change(const char *name, void *ud);
+    static void handle_resamplePlaneName_change(const char *name, void *ud);
     static void handle_registrationImage3D_change(const char *name, void *ud);
     static void handle_registrationImage2D_change(const char *name, void *ud);
     static void handle_textureDisplayEnabled_change(vrpn_int32 value, void *ud);
     static void handle_registrationRequest_change(vrpn_int32 value, void *ud);
     static void handle_registrationEnabled_change(vrpn_int32 value, void *ud);
     void createResampleImage(const char *imageName);
+    void createResamplePlane(const char *imageName);
     void setProjectionImage(const char *imageName) {
        d_registrationImageName2D = imageName;
        handle_registrationImage2D_change(imageName, (void *)this);
@@ -80,6 +83,7 @@ class nmr_RegistrationUI {
     Tclvar_string d_registrationImageName3D;
     Tclvar_string d_registrationImageName2D;
     Tclvar_string d_newResampleImageName;
+    Tclvar_string d_newResamplePlaneName;
     Tclvar_int d_registrationEnabled;
     Tclvar_int d_registrationRequested;
     Tclvar_int d_constrainToTopography;
@@ -92,6 +96,7 @@ class nmr_RegistrationUI {
     vrpn_bool d_registrationValid;
     nmg_Graphics *d_graphicsDisplay;
     nmb_ImageList *d_imageList;
+    nmb_Dataset *d_dataset;
     nmr_Registration_Proxy *d_aligner;
 
     nmb_ImageTransformAffine d_ProjWorldFromTopoWorldTransform;

@@ -1008,6 +1008,9 @@ TclNet_int tclstride ("tesselation_stride", 1);
 /// If 2, we are using the trigger button on the button box.
 Tclvar_int phantom_button_mode("phantom_button_mode", 0);
 
+/// Allow interface to display frame rate, if desired. 
+Tclvar_float frame_rate("frame_rate", 0);
+
 // END tcl declarations
 //----------------------------------------------------------------------
 
@@ -2669,7 +2672,7 @@ static void handle_realign_plane_name_change (const char *, void * userdata) {
      g->computeRealignPlane( texturePlaneName.string(),
 				    newRealignPlaneName.string() );
      
-     microscope->state.data.inputPlaneNames.addEntry(newRealignPlaneName);
+     dataset->inputPlaneNames->addEntry(newRealignPlaneName);
      
      newRealignPlaneName = "";
    }
@@ -2919,9 +2922,9 @@ static	void	handle_openStaticFilename_change (const char *, void *)
     for (BCPlane *p = dataset->inputGrid->head(); p != NULL; p = p->next()) {
         //printf("Found plane %s\n", (p->name())->Characters());
         // Add it to the list if it's not there already.
-        if (microscope->state.data.inputPlaneNames.getIndex(*(p->name())) == -1) {
+        if (dataset->inputPlaneNames->getIndex(*(p->name())) == -1) {
             //printf("Add entry\n");
-            microscope->state.data.inputPlaneNames.addEntry(*(p->name()));
+            dataset->inputPlaneNames->addEntry(*(p->name()));
             // This is the new plane we just added, so switch the heightplane
             // to display it, if we are displaying nothing...
             if ( strcmp(dataset->heightPlaneName->string(), EMPTY_PLANE_NAME) == 0) {
@@ -2931,6 +2934,11 @@ static	void	handle_openStaticFilename_change (const char *, void *)
             resetMeasureLines(dataset, decoration);
         }
     }
+    // Initialize the display of the size of the grid.
+    decoration->selectedRegionMinX = dataset->inputGrid->minX();
+    decoration->selectedRegionMinY = dataset->inputGrid->minY();
+    decoration->selectedRegionMaxX = dataset->inputGrid->maxX();
+    decoration->selectedRegionMaxY = dataset->inputGrid->maxY();
     
     openStaticFilename = "";
 }
@@ -3331,7 +3339,7 @@ static	void	handle_filterPlaneName_change(const char *, void *) {
 
 	// Add the plane into the list of available ones.
 	} else {
-		microscope->state.data.inputPlaneNames.addEntry(newFilterPlaneName);
+		dataset->inputPlaneNames->addEntry(newFilterPlaneName);
 	}
 
 	newFilterPlaneName = (const char *) "";
@@ -3367,7 +3375,7 @@ static	void	handle_flatPlaneName_change(const char *, void *)
 	    // Here we DONT just use newFlatPlaneName, because 
 	    // computeFlattenedPlane will change the name,
 	    // to add "from hostname"
-	    microscope->state.data.inputPlaneNames.addEntry(new_flat_plane->name()->Characters());
+	    dataset->inputPlaneNames->addEntry(new_flat_plane->name()->Characters());
 	}
 
 	newFlatPlaneName = (const char *) "";
@@ -3391,7 +3399,7 @@ static  void	handle_lblflatPlaneName_change(const char *, void *)
 	    }
 	    // Add the plane into the list of available ones.
 	    else {
-		microscope->state.data.inputPlaneNames.addEntry(newLBLFlatPlaneName);
+		dataset->inputPlaneNames->addEntry(newLBLFlatPlaneName);
 	    }
 
 	    newLBLFlatPlaneName = (const char *) "";
@@ -3416,7 +3424,7 @@ static	void	handle_sumPlaneName_change(const char *, void *)
 
 	// Add the plane into the list of available ones.
 	} else {
-	    microscope->state.data.inputPlaneNames.addEntry(newSumPlaneName);
+	    dataset->inputPlaneNames->addEntry(newSumPlaneName);
 	}
 
 	newSumPlaneName = "";
@@ -3441,7 +3449,7 @@ static	void	handle_adhPlaneName_change(const char *, void *)
 
 	// Add the plane into the list of available ones.
 	} else {
-		microscope->state.data.inputPlaneNames.addEntry(newAdhPlaneName);
+		dataset->inputPlaneNames->addEntry(newAdhPlaneName);
 	}
 
 	strcpy(lastAdhPlaneName, newAdhPlaneName.string());
@@ -4479,10 +4487,11 @@ void setupCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
 
   ((Tclvar_list_of_strings *) d->imageNames)->
         initializeTcl("imageNames");
+  ((Tclvar_list_of_strings *) d->inputPlaneNames)->
+        initializeTcl("inputPlaneNames");
 
   ((Tclvar_string *) d->alphaPlaneName)->
         initializeTcl("alpha_comes_from");
-  //d->alphaPlaneName->bindList(&m->state.data.inputPlaneNames);
   
   ((Tclvar_string *) d->colorMapName)->
         initializeTcl("color_map");
@@ -4490,20 +4499,17 @@ void setupCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
 
   ((Tclvar_string *) d->colorPlaneName)->
         initializeTcl("color_comes_from");
-  //d->colorPlaneName->bindList(&m->state.data.inputPlaneNames);
   ((Tclvar_string *) d->colorPlaneName)->addCallback
             (handle_color_dataset_change, m);
 
   ((Tclvar_string *) d->contourPlaneName)->
         initializeTcl("contour_comes_from");
-  //d->contourPlaneName->bindList(&m->state.data.inputPlaneNames);
 
   ((Tclvar_string *) d->opacityPlaneName)->
         initializeTcl("opacity_comes_from");
 
   ((Tclvar_string *) d->heightPlaneName)->
         initializeTcl("z_comes_from");
-  //d->heightPlaneName->bindList(&m->state.data.inputPlaneNames);
   ((Tclvar_string *) d->heightPlaneName)->addCallback
             (handle_z_dataset_change, m);
 
@@ -5478,9 +5484,10 @@ void ParseArgs (int argc, char ** argv,
         if (istate->num_stm_files >= MAXFILES) {
           display_error_dialog( "Only %d files allowed, ignoring file: %s\n",
                   MAXFILES,argv[i]);
+        } else {
+            istate->stm_file_names[istate->num_stm_files] = argv[i];
+            istate->num_stm_files++;
         }
-        istate->stm_file_names[istate->num_stm_files] = argv[i];
-        istate->num_stm_files++;
       } else if (strcmp(argv[i], "-grid") == 0) {
         if (++i >= argc) Usage(argv[0]);
         istate->afm.image.grid_resolution = atoi(argv[i]);
@@ -5494,9 +5501,10 @@ void ParseArgs (int argc, char ** argv,
 	if (istate->num_image_files >= MAXFILES) {
 	  display_error_dialog( "Only %d IMAGE files allowed, ignoring file: %s",
 			MAXFILES,argv[i]);
-	}
-	istate->image_file_names[istate->num_image_files] = argv[i];
-	istate->num_image_files++;
+	} else {
+            istate->image_file_names[istate->num_image_files] = argv[i];
+            istate->num_image_files++;
+        }
       } else if (strcmp(argv[i], "-i") == 0) {
         istate->afm.readingStreamFile = 1;
         if (++i >= argc) Usage(argv[0]);
@@ -6743,7 +6751,7 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     linkMicroscopeToInterface(new_microscope);
 
     if(alignerUI) {
-      alignerUI->changeDataset(new_dataset->dataImages);
+      alignerUI->changeDataset(new_dataset);
       alignerUI->setupCallbacks();
     }
 
@@ -6898,10 +6906,10 @@ envir);
 //          }
 //  #endif
         if ( tcl_script_dir == NULL) {
-#ifdef NO_MSCOPE_CONNECTION
-            sprintf(env_string, "%s/share/tcl_view/", nano_root);
+#ifdef APP_SUFFIX
+            sprintf(env_string, "%s/share/tcl" APP_SUFFIX , nano_root);
 #else
-            sprintf(env_string, "%s/share/tcl/", nano_root);
+            sprintf(env_string, "%s/share/tcl", nano_root);
 #endif
             tcl_script_dir = new char [strlen(env_string) + 1];
             strcpy(tcl_script_dir, env_string);
@@ -6921,6 +6929,7 @@ envir);
     if ( colorMapDir == NULL) {
         colorMapDir = defaultColormapDirectory;
     }
+    //printf("%s\n", tcl_script_dir);
     return 0;
     
 }
@@ -6935,7 +6944,7 @@ int main (int argc, char* argv[])
 
     /* Things needed for the timing information */
     MicroscapeInitializationState istate;
-    struct          timeval d_time;
+    struct          timeval d_time, d_last_time;
     struct          timeval time1,time2;
     struct          timezone zone1,zone2;
     long            start,stop;
@@ -7127,6 +7136,12 @@ int main (int argc, char* argv[])
 	(handle_openSPMDeviceName_change, &istate);
 
     //fprintf(stderr, "Microscope initialized\n");
+
+    // Initialize the display of the size of the grid.
+    decoration->selectedRegionMinX = dataset->inputGrid->minX();
+    decoration->selectedRegionMinY = dataset->inputGrid->minY();
+    decoration->selectedRegionMaxX = dataset->inputGrid->maxX();
+    decoration->selectedRegionMaxY = dataset->inputGrid->maxY();
 
 
     if (vrpnLogFile) {
@@ -7546,7 +7561,7 @@ int main (int argc, char* argv[])
       aligner = new nmr_Registration_Proxy(NULL,
                                          internal_device_connection);
     }
-    alignerUI = new nmr_RegistrationUI(graphics, dataset->dataImages,
+    alignerUI = new nmr_RegistrationUI(graphics, dataset,
         aligner);
     alignerUI->setupCallbacks();
   }
@@ -7591,6 +7606,7 @@ int main (int argc, char* argv[])
 VERBOSE(1, "Starting timing");
 gettimeofday(&time1,&zone1);
 gettimeofday(&d_time,&zone1);
+gettimeofday(&d_last_time,&zone1);
 microscope->ResetClock();
 
   graphicsTimer.start();
@@ -7806,7 +7822,12 @@ VERBOSE(1, "Entering main loop");
 
       if (updt_display(displayPeriod, d_time, stm_new_frame)) {
         n_displays++;
-
+        if(print_performance) {
+            frame_rate = 1.0/ ((d_time.tv_sec-d_last_time.tv_sec)
+                               + (d_time.tv_usec-d_last_time.tv_usec)/1000000.0); 
+            d_last_time.tv_usec = d_time.tv_usec;
+            d_last_time.tv_sec = d_time.tv_sec;
+        }
         ttest0(t_avg_d, "display");
       } /* end if updt */
 

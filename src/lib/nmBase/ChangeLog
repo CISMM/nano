@@ -1,3 +1,10 @@
+2001-05-31  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_Dataset.Ch (addImageToGrid): new. Plane contained in
+	nmb_ImageGrid added to main BCGrid. 
+	(imagePlaneNames): new, moved from AFMState.C
+	(all): handle move of imagePlaneNames here. 
+
 2001-05-15  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_Decoration.C (nmb_Decoration::nmb_Decoration):

@@ -1,0 +1,4 @@
+2001-05-31  Aron Helser  <helser@cs.unc.edu>
+
+	* client.C (main): Tell tcl script value of tcl_script_dir
+

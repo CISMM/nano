@@ -34,19 +34,10 @@ catch { option add *font {helvetica -15 } startupFile}
 catch { option add *Font {helvetica -15 } startupFile}
 
 # where do I find supporting files?
-# If the environment variable NM_TCL_DIR is not set, 
-# check for NANO_ROOT. If that is not set, 
+# If variable is not set, 
 # assume files are in the current directory. Allows
 # "wish litho_main.tcl" to bring up the interface.
-if {[info exists env(NM_TCL_DIR)] } {
-    set tcl_script_dir $env(NM_TCL_DIR)
-} elseif {[info exists env(NANO_ROOT)]} {
-    set tcl_script_dir [file join $env(NANO_ROOT) share tcl]
-} else {
-    set tcl_script_dir .
-}
-### ks
-if {[string match "*wish*" [info nameofexecutable]] } {
+if {![info exists tcl_script_dir] } {
     set tcl_script_dir .
 }
 

@@ -406,10 +406,6 @@ class AFMDataset {
     Point_list incomingPointList;
       ///< Current, incomplete results from a feel-ahead call.
 
-    Tclvar_list_of_strings inputPlaneNames;
-      ///< lists the names of all planes of data
-      // should be part of user interface?
-
     Tclvar_list_of_strings inputPointNames;
       // should be part of user interface?
 

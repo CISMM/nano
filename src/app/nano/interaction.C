@@ -1749,6 +1749,11 @@ doScale(int whichUser, int userEvent, double scale_factor)
     v_xform_type            scaleXform = V_ID_XFORM; 
     v_xform_type    	    handFromObject;
     v_xform_type    	    scaledWorldFromHand;
+    static v_xform_type	    startWorldFromHand;
+    static v_xform_type	    startWorldFromRoom;
+    v_xform_type    	    trackerFromHand;
+    static v_xform_type	    startTrackerFromHand;
+    //static v_xform_type	    lastWorldFromHand;
     v_xform_type    	    handFromWorld;
     v_xform_type    	    worldFromHand = V_ID_XFORM;
 
@@ -1758,38 +1763,41 @@ doScale(int whichUser, int userEvent, double scale_factor)
       return -1;
     }     
     v_get_world_from_hand(whichUser, &worldFromHand);
-    decoration->aimLine.moveTo(worldFromHand.xlate[0],
-			       worldFromHand.xlate[1], plane);
     
     switch ( userEvent )
       {
       case HOLD_EVENT:
         v_xform_type temp;
-        v_x_copy(&temp, &v_world.users.xforms[whichUser]);
-	
 
         // Very similar operation to v_scale_about_hand, 
         // but we scale around the intersection of the aim line with
         // the height plane. 
 
-        // get spot to scale from in world space. 
-        decoration->aimLine.getIntercept(worldFromHand.xlate, plane);
+        // First bit done in press event. 
 
-        // If the plane height has been exaggerated, we need to 
-        // adjust the translation point by that scale to get world coords. 
-        worldFromHand.xlate[2] *= plane->scale();
-     
-        // now scale by scale amount	
-        scaleXform.scale = scale_factor;
+        // Find a scale factor base on in/down vs. out/up movement, since the
+        // last frame.
+        // This is based on absolute movement of the Phantom, so 
+        // you can scale a reasonable amount if the surface is big. 
+        v_x_copy(&trackerFromHand,&v_users[whichUser].xforms[V_TRACKER_FROM_HAND_SENSOR]);
+        scale_factor = 1.0 + 10.0 
+            *(-trackerFromHand.xlate[2]
+              + startTrackerFromHand.xlate[2]);
+        //printf("%f\n",scale_factor);
+        if (scale_factor < 0.01) scale_factor = 0.01;
+
+        // now scale by scale amount, use square to emphasize
+        // scale-down. 
+        scaleXform.scale = scale_factor*scale_factor;
 
         // scaled_w_f_ha = w_f_h * scale   
-        v_x_compose(&scaledWorldFromHand, &worldFromHand, &scaleXform);
+        v_x_compose(&scaledWorldFromHand, &startWorldFromHand, &scaleXform);
         
         //scaling's done, so get back into object space 
-        v_x_invert(&handFromWorld, &worldFromHand);
+        v_x_invert(&handFromWorld, &startWorldFromHand);
     
         // ha_f_o = ha_f_w * w_f_o  
-        v_x_compose(&handFromObject, &handFromWorld, &temp);
+        v_x_compose(&handFromObject, &handFromWorld, &startWorldFromRoom);
     
         // scaled_w_f_o = scaled_w_f_h * h_f_o	
         v_x_compose(&temp, &scaledWorldFromHand, &handFromObject);
@@ -1797,12 +1805,32 @@ doScale(int whichUser, int userEvent, double scale_factor)
 collabVerbose(5, "doScale:  updateWorldFromRoom().\n");
 
         updateWorldFromRoom(&temp);
+
+        //v_x_copy(&lastWorldFromHand, &worldFromHand);
 	break;
 	
       case PRESS_EVENT:
+          // grab the initial position to scale around 
+          v_get_world_from_hand(whichUser, &startWorldFromHand);
+          v_x_copy(&startTrackerFromHand,&v_users[whichUser].xforms[V_TRACKER_FROM_HAND_SENSOR]);
+          //v_get_world_from_hand(whichUser, &lastWorldFromHand);
+          v_x_copy(&startWorldFromRoom, &v_world.users.xforms[whichUser]);
+        // get spot to scale from in world space. 
+        decoration->aimLine.getIntercept(startWorldFromHand.xlate, plane);
+
+        // If the plane height has been exaggerated, we need to 
+        // adjust the translation point by that scale to get world coords. 
+        startWorldFromHand.xlate[2] *= plane->scale();
+     
+          // move aim line only if we aren't actively scaling. 
+          decoration->aimLine.moveTo(worldFromHand.xlate[0],
+			       worldFromHand.xlate[1], plane);
+	break;
       case RELEASE_EVENT:
       default:
-    	/* do nothing if no button pressed  */
+          // move aim line only if we aren't actively scaling. 
+          decoration->aimLine.moveTo(worldFromHand.xlate[0],
+			       worldFromHand.xlate[1], plane);
 	break;
     }
 
@@ -3118,6 +3146,11 @@ doRegion(int whichUser, int userEvent)
     q_matrix_type	hand_mat;
     q_vec_type          angles;
     float	        handx,handy, hand_angle;
+    float new_region_center_x = region_center_x;
+    float new_region_center_y = region_center_y;
+    float new_region_width = region_width;
+    float new_region_height = region_height;
+    float new_region_angle = region_angle;
 
     BCPlane* plane = dataset->inputGrid->getPlaneByName
         (dataset->heightPlaneName->string());

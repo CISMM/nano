@@ -72,24 +72,10 @@ if {![info exists viewer_only] } { set viewer_only 0 }
 if {![info exists no_phantom] } { set no_phantom 0 }
 
 # where do I find supporting files?
-# If the environment variable NM_TCL_DIR is not set, 
-# check for NANO_ROOT. If that is not set, 
+# If variable is not set, 
 # assume files are in the current directory. Allows
 # "wish mainwin.tcl" to bring up the interface.
-if {[info exists env(NM_TCL_DIR)] } {
-    set tcl_script_dir $env(NM_TCL_DIR)
-} elseif {[info exists env(NANO_ROOT)]} {
-    if {$viewer_only} {
-        set tcl_script_dir [file join $env(NANO_ROOT) share tcl_view]
-    } else {
-        set tcl_script_dir [file join $env(NANO_ROOT) share tcl]
-    }
-} else {
-    set tcl_script_dir .
-}
-### ks
-#if {[string match -nocase "*wish*" [info nameofexecutable]] } {
-if {[string match "*wish*" [info nameofexecutable]] } {
+if {![info exists tcl_script_dir] } {
     set tcl_script_dir .
 }
 
@@ -399,6 +385,34 @@ lappend stream_only_controls [list $toolmenu entryconfigure "Replay Control"]
 #        $helpmenu add command -label "Help..." -command \
 #		{.message_dialog activate}
 
+# Frame rate display, as a menu so it stays out of the way.
+set frame_rate 0
+set last_frame_rate 0
+# Only create and update the menu displaying frame rate 
+# if frame rate is non-zero. 
+proc fr_label { nm el op } {
+    global frame_rate last_frame_rate
+    if { $frame_rate != 0 } {
+        if { $last_frame_rate != 0 } {
+            .menu entryconfigure end -label \
+                    [list [format "%.1f" $frame_rate] frames/sec] 
+        } else {
+            .menu add command -label \
+                    [list [format "%.1f" $frame_rate] frames/sec] -command {}
+        }
+    } else {
+        if { $last_frame_rate != 0 } {
+            .menu delete end
+        }
+    }
+    set last_frame_rate $frame_rate
+}
+
+trace variable frame_rate w fr_label
+
+#label $w2.toolbar.fps -textvariable frame_rate
+#pack $w2.toolbar.fps -side left -padx 5
+
 # This command attaches the menu to the main window
 # and allows you to use "alt-KEY" to access the menus. 
 . config -menu .menu
@@ -474,6 +488,7 @@ pack $w2.toolbar.pause_scan $w2.toolbar.withdraw_tip -side left -padx 5
 # These two button should only be available when reading a DEVICE
 lappend device_only_controls $w2.toolbar.pause_scan $w2.toolbar.withdraw_tip
 }
+
 #File menu commands
 source [file join ${tcl_script_dir} filemenu.tcl]
 source [file join ${tcl_script_dir} movie.tcl]

@@ -1,3 +1,10 @@
+2001-05-31  Aron Helser  <helser@cs.unc.edu>
+
+	* nmr_RegistrationUI.Ch (nmr_RegistrationUI): Take dataset as arg.
+	(createResamplePlane): New fcn, creates a plane with same
+	resolution and region as heightplane. 
+	(handle_resamplePlaneName_change): new
+	
 2001-05-22  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_AlignerMI.hC: new file containing code to do alignment by

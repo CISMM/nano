@@ -26,6 +26,8 @@
 //#define MAXSHORT SHRT_MAX
 #endif
 
+class nmb_Dataset;
+
 // min and max also in Topo.h
 #ifdef MAX
 #undef MAX
@@ -207,6 +209,7 @@ class nmb_Image {
 
 /// container class for BCGrid/BCPlane-based images
 class nmb_ImageGrid : public nmb_Image{
+    friend nmb_Dataset;
   public:
 	nmb_ImageGrid(const char *name, const char *units, short x, short y);
         // makes a wrapper object which is responsible for deallocating 

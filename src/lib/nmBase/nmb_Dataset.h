@@ -66,6 +66,10 @@ class nmb_Dataset {
     BCGrid * inputGrid;
         ///< incoming data from microscope (data may be changed 
 	///< during acquisition)
+
+    nmb_ListOfStrings * inputPlaneNames;
+      ///< lists the names of all planes of data
+
     nmb_ListOfStrings * imageNames;
         ///< List of names of image in dataImages list.
     nmb_ImageList * dataImages;
@@ -107,6 +111,9 @@ class nmb_Dataset {
       ///< Load files with the same grid size into this grid.
       ///< Load files with any grid size if no meaningful data has 
       ///< yet been loaded.
+    int addImageToGrid(nmb_ImageGrid * new_image) ;
+    ///< Add an nmb_Image to existing grid, if it fits. 
+
     int setGridSize(int x, int y);
     ///< Change the grid size of the input grid.
 

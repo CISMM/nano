@@ -1,3 +1,23 @@
+2001-05-31  Aron Helser  <helser@cs.unc.edu>
+
+	* tcl_tk.c (init_Tk_control_panels): Tell tcl script what
+	directory it lives directly, instead of with environment. 
+
+	* minit.c (handle_magellan_button_change): Grab button has
+	quasi-mode when held, turning on scale mode. 
+
+	* microscape.c: move of inputPlaneNames to nmb_Dataset, several
+	places.
+	(frame_rate): new tclvar to show frame rate. Use "-perf" arg. 
+	(ParseArgs): fixed logic bugs if too many files on cmd line
+
+	* interaction.c (doScale): New use method. Click defines center of
+	scale, in-out drag defines scale. 
+
+	* Makefile (APP_SUFFIX): new define so app and tcl directory can
+	have extension. Allows multiple versions to exist in same
+	directory structure. 
+
 2001-05-18  Jason Clark  <jclark@cs.unc.edu>
 
 	* microscape.c (setup_region): Use new terminology for

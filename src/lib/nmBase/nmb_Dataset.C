@@ -67,6 +67,7 @@ nmb_Dataset::nmb_Dataset
   inputGrid (new BCGrid (xSize, ySize, xMin, xMax, yMin, yMax,
                          readMode, gridFileNames, numGridFiles,
                          topoFile)),
+  inputPlaneNames (list_of_strings_allocator()),
   imageNames(list_of_strings_allocator()),
   dataImages (new nmb_ImageList(imageNames,
 				imageFileNames, numImageFiles,
@@ -129,11 +130,21 @@ nmb_Dataset::nmb_Dataset
     mapInputToInputNormalized("auxiliary 0", "friction");
   }
 
+  inputPlaneNames->addEntry("none");
+  // Add every plane in the input grid list into the possible ones
+  // to map to outputs
+  BCPlane * p;
+  p = inputGrid->head();
+  while (p) {
+    inputPlaneNames->addEntry(p->name()->Characters());
+    p = p->next();
+  }
+
   // in addition to static images, 
   // dataImages should include data from all microscopes so here we
   // add data images from the spm grid (actually, these are just
   // pointers into inputGrid)
-  for (BCPlane *p = inputGrid->head(); p != NULL; p = p->next()) {
+  for (p = inputGrid->head(); p != NULL; p = p->next()) {
     if (dataImages->getImageByName(*(p->name())) == NULL){
     	nmb_Image *im = new nmb_ImageGrid(p);
         im->setTopoFileInfo(topoFile);
@@ -152,6 +163,8 @@ nmb_Dataset::~nmb_Dataset (void) {
     delete dataImages;
   if (imageNames)
     delete imageNames;
+  if (inputPlaneNames)
+    delete inputPlaneNames;
   if (inputGrid)
     delete inputGrid;
   if (d_hostname)
@@ -201,6 +214,19 @@ nmb_Dataset::loadFiles(const char** file_names, int num_files,
   return 0;
 }
 
+int
+nmb_Dataset::addImageToGrid(nmb_ImageGrid * new_image) 
+{
+    BCPlane *newplane;
+    BCString name;
+    inputGrid->findUniquePlaneName(*(new_image->name()),&name);
+    newplane = inputGrid->addPlaneCopy(new_image->plane);
+    newplane->rename(name);
+    inputPlaneNames->addEntry(name);
+    dataImages->addImage(new nmb_ImageGrid(newplane));
+
+    return 0;
+}
 
 int nmb_Dataset::setGridSize(int x, int y)
 {

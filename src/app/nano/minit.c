@@ -213,12 +213,18 @@ void handle_bdbox_dial_change(void *userdata, const vrpn_ANALOGCB info){
  */
 void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
    // Incidental - if we are getting button reports, magellan is not
-   // resetting repeatedly.  Decement count.
+   // resetting repeatedly.  Decrement count.
    if (magellan_reset_count > 0) magellan_reset_count--;
 
    int * magellanButtonStates = (int *)userdata;
    magellanButtonStates[b.button] = b.state;
    //printf("Magellan button %d -> %d\n",  b.button, b.state);
+
+   // Special case - quasi-mode testing. Scale and Grab
+   if ((b.state == 0) && (b.button == 1) && (user_0_mode == USER_SCALE_UP_MODE)) {
+       user_0_mode = USER_GRAB_MODE;
+       return;
+   } 
    // if it's a button release event, ignore it. 
    if (b.state == 0) return;
    switch (b.button) {
@@ -227,7 +233,12 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        magellanPuckActive = !magellanPuckActive;
        break;
    case 1: 		/* Grab World mode */
-       user_0_mode = USER_GRAB_MODE;
+       if (user_0_mode != USER_GRAB_MODE) {
+           user_0_mode = USER_GRAB_MODE;
+       } else {
+           // Special case - quasi-mode testing. Scale and Grab
+           user_0_mode = USER_SCALE_UP_MODE;
+       }
        break;
    case 2:
        // Cycling button - cycles through Light, Measure, Scale up, Scale down.

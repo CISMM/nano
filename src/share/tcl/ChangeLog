@@ -1,3 +1,14 @@
+2001-05-31  Aron Helser  <helser@cs.unc.edu>
+
+	* french_ohmmeter.tcl: tcl_script_dir simplified. 
+	* litho_main.tcl: same
+
+	* registration.tcl: Major change in layout for usability, first
+	pass. Added plane creation. 
+
+	* mainwin.tcl: tcl_script_dir simplified. 
+	frame_rate display added.
+
 2001-05-15  Adam Seeger  <seeger@cs.unc.edu>
 
 	* litho_main.tcl: added image saving menu item to file menu
