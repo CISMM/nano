@@ -205,8 +205,8 @@ TCL_LIB_DIR := /net/nano/nano3/tcltk.$(HW_OS)/lib \
 # Need to use a library?  Just say so ...
 #
 
-SEARCH_PATH := $(FULL_OBJECT_DIR) $(TOP_LEVEL_DIR) $(MY_ALT_LIB_DIR)\
-               $(DEFAULT_NANO_SRC_DIR) $(MY_NANO_SRC_DIR) $(DEFAULT_PROJ_SRC_DIR)
+SEARCH_PATH := $(FULL_OBJECT_DIR) $(TOP_LEVEL_DIR) $(MY_NANO_SRC_DIR) \
+               $(DEFAULT_NANO_SRC_DIR) $(DEFAULT_PROJ_SRC_DIR)
 
 SEARCH_PROG := $(TOP_LEVEL_SRC_DIR)/share/find-lib.sh
 
