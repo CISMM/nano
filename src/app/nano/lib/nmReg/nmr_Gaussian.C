@@ -2,6 +2,10 @@
 #include "nmr_Gaussian.h"
 #include "math.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 vrpn_bool nmr_Gaussian::s_initialized = vrpn_FALSE;
 double nmr_Gaussian::s_xMin = -4.0;
 double nmr_Gaussian::s_xMax = 4.0;

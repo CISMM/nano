@@ -1,4 +1,5 @@
 #include "nmr_Util.h"
+#include "stdlib.h"
 
 /**
  computeResampleExtents:
@@ -490,6 +491,11 @@ void nmr_Util::resample(const nmb_Image &src, nmb_Image &dest)
 // select value randomly from a uniform distribution between min and max
 // call this twice to select a random point in an image
 double nmr_Util::sampleUniformDistribution(double min, double max) {
+#ifndef _WIN32
   return min + (max-min)*drand48();
+#else 
+  double randval = ((double)rand())/(double)RAND_MAX;
+  return min + (max-min)*randval;
+#endif
 }
 
