@@ -287,6 +287,7 @@ class nmg_Graphics {
       // Sets the specularity of the surface.
     virtual void setSpecularColor (float) = 0;
       // ???
+    virtual void setLocalViewer (vrpn_bool) = 0;
     virtual void setDiffusePercent (float) = 0;
     virtual void setSurfaceAlpha (float) = 0;
     virtual void setSphereScale (float) = 0;

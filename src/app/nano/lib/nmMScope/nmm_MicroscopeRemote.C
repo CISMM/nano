@@ -3271,6 +3271,27 @@ void nmm_Microscope_Remote::RcvInOscillatingMode (const float _p,
     state.image.ampl_or_phase = _ampl_or_phase;
     state.image.drive_attenuation = _drive_attenuation;
     state.image.phase = _phase;
+    // We want the modify  defaults to match the first report of image mode.
+    // We watch for the initialization message sent by the AFM to tell us
+    // what the state is. So if this is the first time we get this
+    // message, we will set the modify state as well.
+    if (state.first_PID_message_pending ){
+	state.first_PID_message_pending = VRPN_FALSE;
+	// Set defaults for modify mode...
+        // Don't change mode or setpoint!
+        state.modify.p_gain = _p;
+        state.modify.i_gain = _i;
+        state.modify.d_gain = _d;
+        //    state.modify.setpoint = _setpoint;
+        state.modify.amplitude = _amp;
+        state.modify.frequency = _frequency;
+        state.modify.input_gain = _input_gain;
+        state.modify.ampl_or_phase = _ampl_or_phase;
+        state.modify.drive_attenuation = _drive_attenuation;
+        state.modify.phase = _phase;
+        // Copy scan rate, too
+        state.modify.scan_rate_microns = (vrpn_float32)state.image.scan_rate_microns;
+    }
   } else if (state.acquisitionMode == SCANLINE){
     printf("Matching AFM scanline parameters (Oscillating).\n");
     printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, Ph=%g\n",
@@ -3288,10 +3309,13 @@ void nmm_Microscope_Remote::RcvInOscillatingMode (const float _p,
     state.scanline.ampl_or_phase = _ampl_or_phase;
     state.scanline.drive_attenuation = _drive_attenuation;
     state.scanline.phase = _phase;
+    state.first_PID_message_pending = VRPN_FALSE;
   }
   else {
    fprintf(stderr, "RcvInOscillatingMode: Error, in unknown mode\n");
   }
+
+  state.first_PID_message_pending = VRPN_FALSE;
 }
 
 void nmm_Microscope_Remote::RcvInContactMode (const float _p, const float _i,
@@ -3316,6 +3340,21 @@ void nmm_Microscope_Remote::RcvInContactMode (const float _p, const float _i,
     state.image.d_gain = _d;
     state.image.setpoint = _setpoint;
     d_decoration->imageSetpoint = _setpoint;
+    // We want the modify  defaults to match the first report of image mode.
+    // We watch for the initialization message sent by the AFM to tell us
+    // what the state is. So if this is the first time we get this
+    // message, we will set the modify state as well.
+    if (state.first_PID_message_pending ){
+	state.first_PID_message_pending = VRPN_FALSE;
+	// Set defaults for modify mode...
+        // Don't change mode or setpoint!
+        state.modify.p_gain = _p;
+        state.modify.i_gain = _i;
+        state.modify.d_gain = _d;
+        //    state.modify.setpoint = _setpoint;
+        // Copy scan rate, too
+        state.modify.scan_rate_microns = (vrpn_float32)state.image.scan_rate_microns;
+    }
   } else if (state.acquisitionMode == SCANLINE){
     printf("Matching AFM scanline parameters (Contact).\n");
     printf("   S=%g  P=%g, I=%g, D=%g\n", _setpoint,_p, _i, _d);
@@ -3330,6 +3369,7 @@ void nmm_Microscope_Remote::RcvInContactMode (const float _p, const float _i,
   else {
     fprintf(stderr, "RcvInContactMode: Error, in unknown mode\n");
   }
+  state.first_PID_message_pending = VRPN_FALSE;
 }
 
 void nmm_Microscope_Remote::RcvInDirectZControl (const float _max_z_step, 
@@ -4292,27 +4332,14 @@ void nmm_Microscope_Remote::RcvPointDataset (const char * _name, const char * _u
 void nmm_Microscope_Remote::RcvPidParameters (const float _p, const float _i,
                                    const float _d) {
   printf("Feedback:  P=%g, I=%g, D=%g\n", _p, _i, _d);
-  // We want the modify PID defaults to match the PID of image mode.
-  // This is the initialization message sent by the AFM to tell us
-  // what the PID are. So if this is the first time we get this
-  // message, we will set the modify PID as well.
-  static int first_message_received = 1;
   if (state.acquisitionMode == MODIFY) {
     state.modify.p_gain = _p;
     state.modify.i_gain = _i;
     state.modify.d_gain = _d;
-    first_message_received = 0;
   } else {
     state.image.p_gain = _p;
     state.image.i_gain = _i;
     state.image.d_gain = _d;
-    if (first_message_received ){
-	first_message_received = 0;
-	// Set defaults for modify mode...
-	state.modify.p_gain = _p;
-	state.modify.i_gain = _i;
-	state.modify.d_gain = _d;
-    }
   }
 }
 

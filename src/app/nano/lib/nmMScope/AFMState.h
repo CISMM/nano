@@ -477,6 +477,10 @@ struct AFMState {
   int rasterX,                     // used to be x, y in animate.c
       rasterY;
 
+    /// tracks when PID received from AFM/stream, so we can set
+    /// modify PID to match.
+  vrpn_bool first_PID_message_pending;
+
     //OBSOLETE
     //vrpn_bool dlistchange;
     // if true triggers update of X display

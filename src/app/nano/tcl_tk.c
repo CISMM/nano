@@ -298,12 +298,19 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 		return(-1);
 	}
 
-#ifdef VIEWER
+#ifdef NO_MSCOPE_CONNECTION
         // Set variable to indicate that this is a Viewer only
         // interface. 
 	sprintf(cvalue, "1");
-	Tcl_SetVar(my_tk_control_interp,"viewer_only",(char *) cvalue,TCL_GLOBAL_ONLY);
+	Tcl_SetVar(my_tk_control_interp,"viewer_only",&cvalue[0],TCL_GLOBAL_ONLY);
 #endif
+#ifdef NO_PHANTOM
+        // Set variable to indicate that the Phantom is disabled 
+        // during compile.
+	sprintf(cvalue, "1");
+	Tcl_SetVar(my_tk_control_interp,"no_phantom",&cvalue[0],TCL_GLOBAL_ONLY);
+#endif
+
 	/* The Tcl script that holds widget definitions is sourced from
 	 * inside the main window script*/
 	/* Load the Tcl script that handles main interface window

@@ -478,7 +478,17 @@ endif
 
 # Allows compilation of viewer-only version of Nano on all platforms. 
 ifdef VIEWER
-     BAREDEFINES += VIEWER
+NO_PHANTOM := 1
+NO_MSCOPE_CONNECTION := 1
+endif
+
+# Selective disable of Phantom
+ifdef NO_PHANTOM
+      BAREDEFINES += NO_PHANTOM 
+endif
+# Selective disable of microscope connections
+ifdef NO_MSCOPE_CONNECTION
+      BAREDEFINES += NO_MSCOPE_CONNECTION 
 endif
 
 BAREDEFINES += PROJECTIVE_TEXTURE
@@ -542,5 +552,8 @@ export LIBS
 
 export DEFINES
 export CFLAGS
+
+export NO_PHANTOM
+export NO_MSCOPE_CONNECTION
 
 endif

@@ -67,7 +67,10 @@ set thirdtech_ui 1
 # We will also watch for "viewer_only" to be set, indicating this
 # version can't connect to live SPMs.
 if {![info exists viewer_only] } { set viewer_only 0 }
- 
+# Watch for "no_phantom" to be set, indicating this
+# version can't connect to a Phantom.
+if {![info exists no_phantom] } { set no_phantom 0 }
+
 # where do I find supporting files?
 # If the environment variable NM_TCL_DIR is not set, 
 # check for NANO_ROOT. If that is not set, 
@@ -319,13 +322,13 @@ $toolmenu add checkbutton -label "Show Mode Buttons" -underline 10 \
 #Only use the Mouse Phantom if the hand-tracker is null
 if {(![info exist env(TRACKER)]) \
         || ([string compare -nocase [lindex $env(TRACKER) 1] "null"] == 0) \
-        || ($viewer_only)} {
+        || ($no_phantom)} {
     $toolmenu add command -label "Mouse Phantom" -underline 6 \
             -command "show.mouse_phantom_win"
 } else {
     # Use a real phantom.
     # must be left-justified so strip_unc program can remove it.
-if { !$viewer_only } {
+if { !$no_phantom } {
     $toolmenu add command -label "Phantom" -underline 0 \
             -command "show.phantom_win"
 }

@@ -553,28 +553,21 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max)
 	    return -1;
 	}
 
-	i=0;
-	j=0;
-	z_min=z_max= plane->scaledValue(i,j);
-	i=0;
-	j=num_y;
-	if(z_min> plane->scaledValue(i,j)) z_min=plane->scaledValue(i,j);
-	if(z_max<plane->scaledValue(i,j)) z_max=plane->scaledValue(i,j);
-	i=num_x;
-	j=num_y;
-	if(z_min>plane->scaledValue(i, j)) z_min=plane->scaledValue(i, j);
-	if(z_max<plane->scaledValue(i, j)) z_max=plane->scaledValue(i, j);
-	i=num_x;
-	j=0;
-	if(z_min>plane->scaledValue(i, j)) z_min=plane->scaledValue(i, j);
-	if(z_max<plane->scaledValue(i, j)) z_max=plane->scaledValue(i, j);
-
-	z_min=z_min-10/plane->scale();
-	z_max=z_max+10/plane->scale();
+        // Init with reasonable value. 
+	z_min=z_max= plane->scaledValue(0,0);
+        // If min max inverted, plane has no real data.
+        if (plane->maxNonZeroValue() > plane->minNonZeroValue()) {
+            z_min=plane->minNonZeroValue()*plane->scale();
+            z_max=plane->maxNonZeroValue()*plane->scale();
+        }
+        // Add 10 nm to edges to make sure it's visible. 
+	z_min=z_min-10*plane->scale();
+	z_max=z_max+10*plane->scale();
 
 	v_gl_set_context_to_vlib_window(); 
 	glNewList(rubber_corner,GL_COMPILE);
-	glColor3f(1.0,0.0,0.0);
+        // Partially transparent to make it easier to see surface. 
+	glColor4f(1.0,0.0,0.0,0.5);
   	Points[0][Z] = z_min;
 	Points[0][X]=x_min;
 	Points[0][Y]=y_min;

@@ -373,6 +373,10 @@ void nmg_Graphics_Timer::setSpecularity (int s) {
   d_imp->setSpecularity(s);
 }
 
+void nmg_Graphics_Timer::setLocalViewer (vrpn_bool s) {
+  activateTimer();
+  d_imp->setLocalViewer(s);
+}
 
 void nmg_Graphics_Timer::setDiffusePercent (float d) {
   activateTimer();

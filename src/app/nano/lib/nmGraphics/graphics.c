@@ -825,7 +825,15 @@ int setup_lighting (int)
 	GLfloat global_ambient[4] = { 0.0, 0.0, 0.0, 1.0 };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
   }
-  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+
+  // Local viewer is slower, and creates a highlight It's more realistic, but
+  // can hide features outside the highlight and possibly cause
+  // mis-interpretation of bumps.
+  if (g_local_viewer) {
+      glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+  } else {
+      glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
+  }
 
   // 2 sided lighting causes black lines to show through the surface on Nvidia
   // Quadro2Pro, and it's probably slower, anyway.

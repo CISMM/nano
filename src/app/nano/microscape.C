@@ -240,6 +240,7 @@ static	void	handle_markers_height_change (vrpn_int32, void *);
 
 static	void	handle_rewind_stream_change (vrpn_int32 new_value, void * userdata);
 static	void	handle_shiny_change (vrpn_int32 new_value, void * userdata);
+static	void	handle_local_viewer_change (vrpn_int32 new_value, void * userdata);
 static	void	handle_diffuse_change (vrpn_float64 new_value, void * userdata);
 static  void    handle_surface_alpha_change (vrpn_float64 new_value, void * userdata);
 static	void	handle_specular_color_change (vrpn_float64 new_value, void * userdata);
@@ -546,7 +547,7 @@ TclNet_int	rewind_stream("rewind_stream",0,
 			handle_rewind_stream_change, NULL);
 
 /// This is the time value to jump to in the stream file. 
-TclNet_int set_stream_time ("set_stream_time", 0);
+TclNet_float set_stream_time ("set_stream_time", 0);
 /// This is a flag (0/1) to say " jump to new time now!"
 TclNet_int set_stream_time_now ("set_stream_time_now", 0,
                              handle_set_stream_time_change, NULL);
@@ -679,6 +680,7 @@ Tclvar_float realign_textures_slider_max("realign_textures_slider_max", 1.0);
 Tclvar_string	newRealignPlaneName("realignplane_name","");
 
 TclNet_int shiny ("shiny", 55);
+TclNet_int local_viewer ("local_viewer", 1);
 TclNet_float diffuse ("diffuse", 0.5);	//What should default be?
 TclNet_float surface_alpha ("surface_alpha", 1.0);
 TclNet_float specular_color ("specular_color", 0.7);
@@ -1285,6 +1287,7 @@ void shutdown_connections (void) {
   tcl_lightDirY.bindConnection(NULL);
   tcl_lightDirZ.bindConnection(NULL);
   shiny.bindConnection(NULL);
+  local_viewer.bindConnection(NULL);
   diffuse.bindConnection(NULL);
   surface_alpha.bindConnection(NULL);
   specular_color.bindConnection(NULL);
@@ -2328,6 +2331,7 @@ static void handle_center_pressed (vrpn_int32 newValue, void * /*userdata*/) {
 }
 
 
+// Handler for set_stream_time_now, NOT set_stream_time. 
 static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
 //fprintf(stderr, "handle_set_stream_time_change to %d (flag %d).\n",
 //(vrpn_int32) set_stream_time, (vrpn_int32) set_stream_time_now);
@@ -2340,6 +2344,7 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
   // whole stream file?
   newStreamTime.tv_sec = set_stream_time;
   newStreamTime.tv_usec = 999999L;
+//  newStreamTime.tv_usec = (long)((set_stream_time - (long)set_stream_time)*1000000L);
 #ifdef USE_VRPN_MICROSCOPE
   if (vrpnLogFile) {
     vrpnLogFile->play_to_time(newStreamTime);
@@ -2364,6 +2369,11 @@ static void handle_shiny_change (vrpn_int32 new_value, void * userdata) {
   if (shiny < 0) shiny = 0;
   if (shiny > 128) shiny = 128;
   g->setSpecularity(shiny);
+}
+
+static void handle_local_viewer_change (vrpn_int32 , void * userdata) {
+  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  g->setLocalViewer((vrpn_bool)local_viewer);
 }
 
 
@@ -2871,7 +2881,7 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
 */
 static void handle_openSPMDeviceName_change (const char *, void * userdata)
 {
-#ifdef VIEWER
+#ifdef NO_MSCOPE_CONNECTION
     display_fatal_error_dialog("Unable to open SPM connection in NanoManipulator Viewer. Exiting...");
     return;
 #endif
@@ -3812,7 +3822,7 @@ static	void	handle_screenImageFileName_change (const char *, void *userdata)
       
 
       int i;
-
+      timeval start, end;
 //        fprintf(stderr, "handle_screenFileName_change:: "
 //                        "Saving screen to %s image '%s'\n",
 //                        screenImageFileType.string(),
@@ -3826,6 +3836,8 @@ static	void	handle_screenImageFileName_change (const char *, void *userdata)
          display_error_dialog( "Internal: Unknown image type '%s' chosen",
                          screenImageFileType.string());
       } else {
+          gettimeofday(&start, NULL);
+
 	  // Pop the window to the front.
 	  // Use different methods for GLUT and for
 	  // GLX windows. 
@@ -3852,6 +3864,9 @@ static	void	handle_screenImageFileName_change (const char *, void *userdata)
 	  graphics->mainloop();
 
           g->createScreenImage(newScreenImageFileName.string(), (ImageType)i);
+          gettimeofday(&end, NULL);
+          printf("Screen save time %f\n", (end.tv_usec - start.tv_usec)/1000000.0 +
+	        (end.tv_sec - start.tv_sec));
       }
    }
 
@@ -4384,6 +4399,8 @@ void setupCallbacks (nmg_Graphics * g) {
 
   shiny.addCallback
             (handle_shiny_change, g);
+  local_viewer.addCallback
+            (handle_local_viewer_change, g);
   diffuse.addCallback
 	    (handle_diffuse_change, g); 
   surface_alpha.addCallback
@@ -4578,6 +4595,7 @@ void setupSynchronization (CollaborationManager * cm,
   viewPlaneControls->add(&tcl_lightDirY);
   viewPlaneControls->add(&tcl_lightDirZ);
   viewColorControls->add(&shiny);
+  viewColorControls->add(&local_viewer);
   viewColorControls->add(&diffuse);
   viewColorControls->add(&surface_alpha);
   viewColorControls->add(&specular_color);
@@ -5993,7 +6011,7 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
             handTrackerName = (char *) "null";
         }
     }
-#ifdef VIEWER
+#ifdef NO_PHANTOM
     // Viewer doesn't allow use of Phantom
     headTrackerName = (char *) "null";
     handTrackerName = (char *) "null";
@@ -6081,7 +6099,7 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
 //          }
 //  #endif
         if ( tcl_script_dir == NULL) {
-#ifdef VIEWER
+#ifdef NO_MSCOPE_CONNECTION
             sprintf(env_string, "%s/share/tcl_view/", nano_root);
 #else
             sprintf(env_string, "%s/share/tcl/", nano_root);
@@ -6195,7 +6213,7 @@ int main(int argc, char* argv[])
 	sprintf(istate.afm.deviceName, "file:%s", istate.afm.inputStreamName);
 
     } else {
-#ifdef VIEWER
+#ifdef NO_MSCOPE_CONNECTION
         if (strcmp(istate.afm.deviceName, "null")) {
             display_fatal_error_dialog("Unable to open SPM connection in"
                                        " NanoManipulator Viewer. Exiting...");

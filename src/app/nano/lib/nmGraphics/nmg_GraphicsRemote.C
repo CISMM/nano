@@ -1335,6 +1335,9 @@ void nmg_Graphics_Remote::setSpecularity (int shiny) {
   d_specularity = shiny;
 }
 
+void nmg_Graphics_Remote::setLocalViewer (vrpn_bool lv) {
+fprintf(stderr, "nmg_Graphics_Remote::setLocalViewer() NOT IMPLEMENTED.\n");
+}
 
 void nmg_Graphics_Remote::setDiffusePercent (float diffuse) {
   struct timeval now;

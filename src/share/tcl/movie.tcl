@@ -64,7 +64,7 @@ pack $win.chart_junk $win.screenImage_format -anchor nw
 set num_images 10
 generic_entry $win.num_images num_images "Num images" integer
 set time_step 1
-generic_entry $win.time_step time_step "Time step (sec)" integer
+generic_entry $win.time_step time_step "Time step (sec)" real
 set base_time 0
 set time_so_far 0
 generic_entry $win.base_time base_time "Base time (sec)" numeric
@@ -96,7 +96,7 @@ proc save_an_image {} {
     set fdir [file dirname $sequenceImage_basefile]
     set froot [file rootname $sequenceImage_basefile]
     set fext [file extension $sequenceImage_basefile]
-    set filename [file join $fdir ${froot}${num_images_so_far}${fext}]
+    set filename [file join $fdir ${froot}[format %04d $num_images_so_far]${fext}]
     puts "$filename "
     update idletasks
 
@@ -108,5 +108,5 @@ proc save_an_image {} {
     set set_stream_time_now 1
 
     incr num_images_so_far
-    after 2000 save_an_image 
+    after 500 save_an_image 
 }

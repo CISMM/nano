@@ -1040,6 +1040,8 @@ void    spm_set_icon_materials(void)
 	TIMERVERBOSE(5, mytimer, "begin spm_set_icon_materials");
 
 	/* Use local vertex color for ambient and diffuse */
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glEnable(GL_COLOR_MATERIAL);
 #ifdef FLOW
@@ -1054,7 +1056,7 @@ void    spm_set_icon_materials(void)
 	glMaterialfv(GL_BACK, GL_SPECULAR, dark);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
 	glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
-        glDisable(GL_BLEND);
+//          glDisable(GL_BLEND);
 
 	// Set the light model to have completely ambient-off.  There is
 	// ambient specified in light 0.
@@ -1088,13 +1090,12 @@ void    spm_set_measure_materials(void)
 	TIMERVERBOSE(5, mytimer, "begin spm_set_measure_materials");
 
 	/* Use local vertex color for ambient and diffuse */
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_COLOR_MATERIAL);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	
 	TIMERVERBOSE(7, mytimer, "spm_set_measure_materials:end glColorMaterial");
-	glEnable(GL_COLOR_MATERIAL);
-        glDisable(GL_BLEND);
-     
-	TIMERVERBOSE(7, mytimer, "spm_set_measure_materials:end glEnable(GL_COLOR_MATERIAL)");
 
 #ifdef FLOW
         glShaderEXT(nM_diffuse);

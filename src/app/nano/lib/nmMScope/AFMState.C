@@ -462,6 +462,8 @@ AFMState::AFMState (const AFMInitializationState & i) :
     rasterX (0),
     rasterY (0),
 
+    first_PID_message_pending(VRPN_TRUE),  //message starts out pending
+
     //dlistchange (VRPN_FALSE),
     select_center_x (0.0f),
     select_center_y (0.0f),
