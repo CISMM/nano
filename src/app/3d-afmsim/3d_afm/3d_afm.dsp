@@ -381,19 +381,6 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmUI\nmUI.lib
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=..\..\..\..\obj\pc_win32\debug\lib\ImgFormat\ImgFormat.lib
-
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
-
-# PROP Exclude_From_Build 1
-
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\obj\pc_win32\debug\lib\nmBase\nmBase.lib
 
 !IF  "$(CFG)" == "3d_afm - Win32 Release"
@@ -560,19 +547,6 @@ SOURCE=..\..\..\..\obj\pc_win32\release\app\nano\lib\nmUI\nmUI.lib
 # Begin Group "lib"
 
 # PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=..\..\..\..\obj\pc_win32\release\lib\ImgFormat\ImgFormat.lib
-
-!IF  "$(CFG)" == "3d_afm - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
-
-# PROP Exclude_From_Build 1
-
-!ENDIF 
-
-# End Source File
 # Begin Source File
 
 SOURCE=..\..\..\..\obj\pc_win32\release\lib\nmBase\nmBase.lib
