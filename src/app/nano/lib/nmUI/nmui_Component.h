@@ -184,7 +184,7 @@ class nmui_Component {
 	 presses of sync and copy, but that might not hurt anything.
       */
 
-    static int handle_reconnect (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_reconnect (void *, vrpn_HANDLERPARAM);
       /**<
        * Re-registers type and sender ids.
        * You will probably want to have this as a callback for
@@ -257,8 +257,8 @@ class nmui_Component {
       that may be registered at subnodes.
       HACK:  there should probably be an equivalent function for
       handle_syncComplete(). */
-    static int handle_syncRequest (void *, vrpn_HANDLERPARAM);
-    static int handle_syncComplete (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_syncRequest (void *, vrpn_HANDLERPARAM);
+    static int VRPN_CALLBACK handle_syncComplete (void *, vrpn_HANDLERPARAM);
 
 
     // HACK

@@ -1,3 +1,10 @@
+2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmui_AFM_SEM_CALIBRATION_UI.C : Uses new VRPN_CALLBACK definition.
+	* nmui_AFM_SEM_CALIBRATION_UI.h : Uses new VRPN_CALLBACK definition.
+	* nmui_Component.h : Uses new VRPN_CALLBACK definition.
+	* nmui_PlaneSync.h : Uses new VRPN_CALLBACK definition.
+
 2004-05-10  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmui_AFM_SEM_CalibrationUI.C (pointDataHandler):  do nothing

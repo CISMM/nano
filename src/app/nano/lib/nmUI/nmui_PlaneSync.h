@@ -39,7 +39,7 @@ protected:
   /// Are we accepting new updates right now?
   vrpn_bool d_accepting;
   
-  static int handleCalculatedPlaneSync( void *, vrpn_HANDLERPARAM );
+  static int VRPN_CALLBACK handleCalculatedPlaneSync( void *, vrpn_HANDLERPARAM );
   
   static NewCalculatedPlaneCallback queueCalculatedPlaneForSync;
   // see nmb_CalculatedPlane for definiton of this (function) type.

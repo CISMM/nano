@@ -138,12 +138,12 @@ void nmui_AFM_SEM_CalibrationUI::setSEM(nmm_Microscope_SEM_Remote *sem)
 {
   if (d_SEM) {
     d_SEM->unregisterChangeHandler(this, semDataHandler);
-	d_SEM->unregisterSynchHandler(semSynchHandler, this);
+    d_SEM->unregisterSynchHandler(semSynchHandler, this);
   }
   d_SEM = sem;
   if (d_SEM) {
     d_SEM->registerChangeHandler(this, semDataHandler);
-	d_SEM->registerSynchHandler(semSynchHandler, this);
+    d_SEM->registerSynchHandler(semSynchHandler, this);
   }
 }
 
