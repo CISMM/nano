@@ -547,7 +547,11 @@ int     Point_channel_selector::Handle_report( float x, float y,
 
         // Are we stashing a copy of this data in a point list?
         if (accumulatePoints && myresult && d_pointList) {
+           //fprintf(stderr, "Accumulated point at %.5f, %.5f ts %d.%d\n",
+                   //x, y, sec, usec);
           d_pointList->addEntry(*myresult);
+        } else {
+           //fprintf(stderr, "Didin't accumulate point at %.5f, %.5f\n", x, y);
         }
 
 	return 0;
