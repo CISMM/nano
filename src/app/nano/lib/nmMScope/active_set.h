@@ -114,7 +114,7 @@ class	Scan_channel_selector : public Channel_selector
 		float offset, float scale);
 
 	int	Handle_report(int x, int y, long sec, long usec, float *values,
-			int numvalues, vrpn_bool notifyCallbacks = vrpn_TRUE);
+			int numvalues, vrpn_bool notifyLineCallbacks = vrpn_TRUE);
 
     protected:
         BCGrid * mygrid;
