@@ -3272,6 +3272,8 @@ char * nmm_Microscope::encode_FeelTo (long * len,
     vrpn_buffer(&mptr, &mlen, orientation);
   }
 
+  fprintf(stderr, "Encoded FeelTo %.5f, %.5f\n", x, y);
+
   return msgbuf;
 }
   
