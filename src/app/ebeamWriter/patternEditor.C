@@ -518,7 +518,7 @@ void PatternEditor::addFocusTest(double centerX_nm, double centerY_nm,
 	double x_begin, y_begin, x_end, y_end;
 	int i; 
 
-	double canvasFromWorld[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+	double canvasFromWorld[16] = {1.0/d_scanMaxX_nm,0,0,0,0,1.0/d_scanMaxY_nm,0,0,0,0,1,0,0,0,0,1};
 	if (d_canvasImage) {
 		d_canvasImage->getWorldToImageTransform(canvasFromWorld);
 	}
@@ -996,12 +996,11 @@ void PatternEditor::clampMainWinRectangle(double &xmin, double &ymin,
   xmin = max(xmin, d_worldMinX_nm);
   ymin = max(ymin, d_worldMinY_nm);
   xmax = min(xmax, d_worldMaxX_nm);
-  ymax = min(ymax, d_worldMaxY_nm);
-         //ymin + (xmax - xmin)*(d_mainWinHeight)/(double)(d_mainWinWidth);
-  //if (ymax > d_worldMaxY_nm) {
-  //  ymin -= (ymax - d_worldMaxY_nm);
-  //  ymax = d_worldMaxY_nm;
-  //}
+  ymax = ymin + (xmax - xmin)*(d_mainWinHeight)/(double)(d_mainWinWidth);
+  if (ymax > d_worldMaxY_nm) {
+    ymin -= (ymax - d_worldMaxY_nm);
+    ymax = d_worldMaxY_nm;
+  }
 }
 
 int PatternEditor::mainWinDisplayHandler(

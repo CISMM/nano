@@ -930,7 +930,7 @@ void PolylinePatternShape::drawToDisplayZeroWidth(double units_per_pixel_x,
   double x_xMax, y_xMax;
   glLineWidth(1);
   if(d_selected) {
-    glColor4f(0.5*r, 0.5*g, 0.5*b, 1.0);
+    glColor4f(r, 0.5*g, b+0.5*(1.0-b), 1.0);
   } else {
     glColor4f(r,g,b, 1.0);
   }
@@ -1205,11 +1205,11 @@ void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
 
   float x, y;
   glLineWidth(1);
-  if(d_selected) {
-    glColor4f(0.5*r, 0.5*g, 0.5*b, 1.0);
-  } else {
-    glColor4f(r,g,b, 1.0);
-  }
+    if(d_selected) {
+      glColor4f(r, 0.5*g, b+0.5*(1.0-b), 1.0);
+    } else {
+      glColor4f(r,g,b, 1.0);
+    }
 
   glPushAttrib(GL_TRANSFORM_BIT);
   glMatrixMode(GL_MODELVIEW);
@@ -1734,13 +1734,20 @@ void CompositePatternShape::drawToDisplay(double units_per_pixel_x,
 {
   list<PatternShapeListElement>::iterator shape;
 
+  double r_s = r, g_s = g, b_s = b;
+
+    if(d_selected) {
+      g_s = 0.5*g;
+	  b_s = b+0.5*(1.0-b);
+    }
+
   glPushAttrib(GL_TRANSFORM_BIT);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glMultMatrixd(d_parentFromObject);
   for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
     (*shape).drawToDisplay(units_per_pixel_x, units_per_pixel_y, 
-		r, g, b);
+		r_s, g_s, b_s);
   }
   glPopMatrix();
   glPopAttrib();
@@ -1750,6 +1757,7 @@ void CompositePatternShape::drawToSEM(nmm_Microscope_SEM_Remote *sem)
 {
   list<PatternShapeListElement>::iterator shape;
   for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
+	(*shape).d_shape->setParent(this); // XXX hack to fix problem of pattern not getting transformed
     (*shape).drawToSEM(sem);
   }
 }

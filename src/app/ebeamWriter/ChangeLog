@@ -1,3 +1,15 @@
+2003-04-11  Adam Seeger  <seeger@cs.unc.edu>
+
+	* patternEditor.C (addFocusTest): changed default canvasToWorld transform
+	when no canvas image is set
+	(clampMainWinRectangle): fixed this so it doesn't distort the aspect ratio
+	when you zoom near the edges
+	* patternShape.C: changed how selection color is set
+	(drawToSEM(nmm_Microscope_SEM_Remote *)): added temporary fix for 
+	mysterious initialization bug - somehow parent pointer isn't set
+	correctly in this function and so shapes don't get transformed when they 
+	are sent to the SEM although they are drawn correctly
+
 2003-04-08  David Jack  <jackd@cs.unc.edu>
 	* controlPanels.[Ch] - added handler for third line width box
 	* patternEditor.C (handleMainWinEvent): spacebar for switching
