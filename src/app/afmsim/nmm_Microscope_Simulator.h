@@ -113,7 +113,7 @@ extern int	currentline;
 extern vrpn_Connection * connection;
 extern nmm_Microscope_Simulator * AFMSimulator;
 
-class nmm_Microscope_Simulator: public nmm_Microscope
+class nmm_Microscope_Simulator: public nmb_Device_Server, nmm_Microscope
 {
 
 	// Simulator server for Microscope
