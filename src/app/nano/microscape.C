@@ -4042,11 +4042,38 @@ void handle_guardedscan_planeacquire(vrpn_int32 a_nVal, void* a_pObject)
   CGuardedScanClient& aGS = pMe->m_oGuardedScan;
   aGS.AcquirePlane();
 
-  printf("Plane acquired.\n");
+  printf("Plane acquired:");
   aGS.GetNormal(pMe->state.guardedscan.fNormalX, 
 		pMe->state.guardedscan.fNormalY, 
 		pMe->state.guardedscan.fNormalZ);
   pMe->state.guardedscan.fPlaneD = aGS.GetPlaneDistance();
+
+  // Initialize the channel and direction from the currently selected height plane...
+  char* sPlane = _strlwr(strdup(dataset->heightPlaneName->string()));
+  printf("Height plane = %s\n", sPlane);
+
+  char* pFound = strstr(sPlane, "reverse");
+  if(pFound == NULL) {
+    // Forward...
+    printf(" Forward - ");
+    pMe->state.guardedscan.bDirection = 1;
+  } else {
+    // Reverse...
+    printf(" Reverse - ");
+    pMe->state.guardedscan.bDirection = 0;
+  }
+
+  pFound = strstr(sPlane, "z piezo");
+  if(pFound == NULL) {
+    // Topography...
+    printf("Topography.\n");
+    pMe->state.guardedscan.nChannel = 0;
+  } else {
+    // Z-piezo
+    printf("Z-Piezo.\n");
+    pMe->state.guardedscan.nChannel = 1;
+  }
+  delete sPlane;
 
   printf(" guard depth is now=%lf\n", pMe->state.guardedscan.fGuardDepth);
 }

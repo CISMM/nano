@@ -1,3 +1,7 @@
+2001-08-23    <dwyer@BISMUTH-CS>
+
+	* microscape.c (handle_guardedscan_planeacquire): Added channel/direction selector for guardedscan (uses current heightplane)
+
 2001-08-21  Aron Helser  <helser@cs.unc.edu>
 
 	* interaction.c (region_drag_mode): default to REG_DEL so surface
