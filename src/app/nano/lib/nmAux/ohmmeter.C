@@ -194,6 +194,38 @@ void Ohmmeter::handle_measurement (void *userdata,
     }
 }
 
+// used to setup synchronization on protected
+// TclNet member variables
+void Ohmmeter::ohm_SetupSync(nmui_Component * container)
+{
+  for(int i = 0; i < NUM_OHMMETER_CHANNELS; i++) {
+    container->add(d_channelParams[i]->enable);
+    container->add(d_channelParams[i]->autorange);
+    container->add(d_channelParams[i]->voltage);
+    container->add(d_channelParams[i]->range);
+    container->add(d_channelParams[i]->filter);
+    container->add(d_channelParams[i]->resistance);
+    container->add(d_channelParams[i]->status);
+    container->add(d_channelParams[i]->error);
+  }
+}
+
+// used to teardown synchronization on protected
+// TclNet member variables
+void Ohmmeter::ohm_TeardownSync(nmui_Component * container)
+{
+  for(int i = 0; i < NUM_OHMMETER_CHANNELS; i++) {
+    container->remove(d_channelParams[i]->enable);
+    container->remove(d_channelParams[i]->autorange);
+    container->remove(d_channelParams[i]->voltage);
+    container->remove(d_channelParams[i]->range);
+    container->remove(d_channelParams[i]->filter);
+    container->remove(d_channelParams[i]->resistance);
+    container->remove(d_channelParams[i]->status);
+    container->remove(d_channelParams[i]->error);
+  }
+}
+
 // static 
 void nmui_ORPXChannelParameters::handle_param_change(
     vrpn_int32 /*new_value*/, void *ud)
@@ -240,39 +272,39 @@ nmui_ORPXChannelParameters::nmui_ORPXChannelParameters(
     // the device
     strcpy(var_name, enable_var_base_name);
     strcat(var_name, channel_name);
-    enable = new Tclvar_int(var_name, 0);
+    enable = new TclNet_int(var_name, 0);
     enable->addCallback(handle_param_change, this);
 
     strcpy(var_name, autorange_var_base_name);
     strcat(var_name, channel_name);
-    autorange = new Tclvar_int(var_name, 0);
+    autorange = new TclNet_int(var_name, 0);
 
     strcpy(var_name, voltage_var_base_name);
     strcat(var_name, channel_name);
-    voltage = new Tclvar_int(var_name, 0);
+    voltage = new TclNet_int(var_name, 0);
     voltage->addCallback(handle_param_change, this);
 
     strcpy(var_name, range_var_base_name);
     strcat(var_name, channel_name);
-    range = new Tclvar_int(var_name, 0);
+    range = new TclNet_int(var_name, 0);
     range->addCallback(handle_param_change, this);
 
     strcpy(var_name, filter_var_base_name);
     strcat(var_name, channel_name);
-    filter = new Tclvar_int(var_name, 0);
+    filter = new TclNet_int(var_name, 0);
     filter->addCallback(handle_param_change, this);
 
     strcpy(var_name, resistance_var_base_name);
     strcat(var_name, channel_name);
-    resistance = new Tclvar_string(var_name, "0.000");
+    resistance = new TclNet_string(var_name, "0.000");
 
     strcpy(var_name, status_var_base_name);
     strcat(var_name, channel_name);
-    status = new Tclvar_string(var_name, "unknown");
+    status = new TclNet_string(var_name, "unknown");
 
     strcpy(var_name, error_var_base_name);
     strcat(var_name, channel_name);
-    error = new Tclvar_int(var_name, 0);
+    error = new TclNet_int(var_name, 0);
 
     if (!enable || !autorange || !voltage || !range || !filter || 
         !resistance || !status || !error) {

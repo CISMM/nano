@@ -10,6 +10,7 @@
 #include <nmb_Types.h>	// for vrpn_bool
 
 #include <nmm_MicroscopeRemote.h>
+#include <nmui_Component.h>
 
 #define NUM_SELECTION_VALUES (6)
 #define AUTORANGE_WAIT (2)
@@ -61,14 +62,14 @@ class nmui_ORPXChannelParameters {
                                int c_id, vrpn_Ohmmeter_Remote *d);
     ~nmui_ORPXChannelParameters();
 
-    Tclvar_int *enable;
-    Tclvar_int *autorange;
-    Tclvar_int *voltage;
-    Tclvar_int *range;
-    Tclvar_int *filter;
-    Tclvar_string *resistance;
-    Tclvar_string *status;
-    Tclvar_int *error;
+    TclNet_int *enable;
+    TclNet_int *autorange;
+    TclNet_int *voltage;
+    TclNet_int *range;
+    TclNet_int *filter;
+    TclNet_string *resistance;
+    TclNet_string *status;
+    TclNet_int *error;
 
     int autorange_num_over;
     int autorange_num_under;
@@ -101,6 +102,14 @@ class Ohmmeter {
 
     void updateDisplay(int chnum, float resistance, int status,
         float voltage, float range, float filter);
+
+    // used to setup synchronization on protected
+    // TclNet member variables
+    void ohm_SetupSync(nmui_Component * container);
+
+    // used to teardown synchronization on protected
+    // TclNet member variables
+    void ohm_TeardownSync(nmui_Component * container);
 
   protected:
 

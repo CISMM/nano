@@ -1,3 +1,11 @@
+2001-06-25  Shayne O'Neill  <oneill@tbone.cs.unc.edu>
+
+	* ohmmeter.c:  Added functions:
+	                 ohm_setupSync()
+			 ohm_teardownSync()
+		       Changed some Tclvars to TclNets.
+	* ohmmeter.h:  same
+
 2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nma_Keithley2400.h : reorder #includes, fix brackets.
