@@ -1,15 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <malloc.h>
 #include <math.h>
 
-#ifndef sgi
-#include <vector.h>					// ghost-stl vector
-#endif
 
 #ifdef sgi
-#include <vector>
+using std::vector
 #endif
+
+#include <vector>
+
 
 #include "URender.h"
 #include "WaveFrontFileGenerator.h"
@@ -193,7 +192,6 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	GLuint dl;
 
 	g.name[0] = '\0';
-
 
 	readfile.open(filename);
     assert(readfile);
