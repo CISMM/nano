@@ -422,7 +422,7 @@ if (!d_virtualAcquisition) {
 
     d_horzRetrace_usec = EDAX_DEFAULT_HORZ_RETRACE;
     d_vertRetrace_usec = EDAX_DEFAULT_VERT_RETRACE;
-    d_xScanDir = EDAX_DIR_NORMAL;
+    d_xScanDir = EDAX_DIR_MIRRORED;
     d_yScanDir = EDAX_DIR_NORMAL;
     for (i = 0; i < EDAX_NUM_INPUT_CHANNELS; i++){
       d_videoPolarity[i] = EDAX_POLARITY_INVERTED;
@@ -971,7 +971,7 @@ void nmm_Microscope_SEM_EDAX::convert_DAC_to_nm(const int xDAC, const int yDAC,
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
 {
-  int i;
+  int i, j;
 
   if (d_shared_settings_changed) {
     configureSharedSettings();
@@ -1059,13 +1059,12 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
       t_CollectSgLine += vrpn_TimevalMsecs(t0);
       t_reportScanlineData += vrpn_TimevalMsecs(t1);
     }
-#endif
-  } else {
+#endif // not VIRTUAL_SEM
+  } else { // assert(d_virtualAcquisition == true)
   // make some fake data:
   static int count = 0;
 
   int dx, dy;
-
   for (i = 0; i < d_resolution_y; i++){
 #ifdef UCHAR_PIXEL
 /*
@@ -1074,7 +1073,6 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
 */
     dy = i-d_resolution_y/4;
     if (dy < 0) dy = -dy;
-    int j;
     for (j = 0; j < d_resolution_x; j++){
         dx = j-d_resolution_x/3;
         if (dx < 0) dx = -dx;
@@ -1083,12 +1081,12 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
              (d_resolution_y/4);
     }
 #else
-    int j;
     for (j = 0; j < d_resolution_x; j++){
         ((vrpn_uint16 *)d_scanBuffer)[i*d_resolution_x + j] = 
             ((i+(int)count)%d_resolution_y)*64000/d_resolution_y;
     }
 #endif
+
     reportScanlineData(i);
     //d_connection->mainloop();
   }
