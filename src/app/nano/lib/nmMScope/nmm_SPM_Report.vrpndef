@@ -1,0 +1,184 @@
+/* General SPM reports, info from an SPM
+   This is what we want in principle, but in practice, these
+   are messages registered with VRPN with the prefix "nmm Microscope"
+*/
+
+// MESSAGE_GROUP must come first, before any VRPN_MESSAGE directives. 
+MESSAGE_GROUP nmm_SPM_Report
+
+MESSAGE_PREFIX "nmm Microscope "
+
+DEFINE SPM_NAME_LENGTH 64
+
+VRPN_MESSAGE HelloMessage {
+  char nm [4]
+  char scopeName [SPM_NAME_LENGTH]
+  int32 majorVersion
+  int32 minorVersion
+}
+
+VRPN_MESSAGE ScanrateParameter {
+  float32 rate
+}
+
+VRPN_MESSAGE PidParameters {
+  float32 P
+  float32 I
+  float32 D
+}
+
+VRPN_MESSAGE ReportGridSize {
+  int32 x
+  int32 y
+}
+
+VRPN_MESSAGE SetRegionClipped {
+  float32 xmin
+  float32 ymin
+  float32 xmax
+  float32 ymax
+}
+
+VRPN_MESSAGE ScanRange {
+  float32 xmin
+  float32 ymin
+  float32 zmin
+  float32 xmax
+  float32 ymax
+  float32 zmax
+}
+
+VRPN_MESSAGE ReportScanAngle {
+  float32 angle
+}
+
+VRPN_MESSAGE ReportSlowScan {
+  int32 enabled
+}
+
+/* Not implemented by Thermo SPMs
+VRPN_MESSAGE ReportScanWindow {
+  int32 grid_xmin
+  int32 grid_ymin
+  int32 grid_xmax
+  int32 grid_ymax
+}
+*/
+VRPN_MESSAGE Scanning {
+  int32 on_off
+}
+
+VRPN_MESSAGE ScanDataset {
+  int32 count
+  struct ScanDataset {
+    char name [64]
+    char units [64]
+    float32 offset
+    float32 scale
+  } datasets [count]
+}
+VRPN_MESSAGE WindowLineData {
+  int32 x
+  int32 y
+  int32 dx
+  int32 dy
+  int32 reports
+  int32 fields
+  int32 sec
+  int32 usec
+  float32 data [reports][fields]
+}
+
+VRPN_MESSAGE PointDataset {
+  int32 count
+  struct PointDataset {
+    char name [64]
+    char units [64]
+    int32 numSamples
+    float32 offset
+    float32 scale
+  } datasets [count]
+}
+/* Handled by queue monitor object
+VRPN_MESSAGE PointResultData {
+  float32 x
+  float32 y
+  int32 sec
+  int32 usec
+  int32 reports
+  float32 data [reports]
+}
+*/
+
+VRPN_MESSAGE ForceCurveData {
+  float32 x
+  float32 y
+  int32 numSamples
+  int32 numHalfcycles
+  int32 sec
+  int32 usec
+  struct FCData {
+    float32 z
+    float32 d [numHalfcycles]
+  } samples [numSamples]
+}
+/**/
+
+VRPN_MESSAGE RelaxSet {
+  int32 minTime
+  int32 sepTime
+}
+
+VRPN_MESSAGE StartingToRelax {
+  int32 sec
+  int32 usec
+}
+
+VRPN_MESSAGE TopoFileHeader {
+  int32 length
+  char header [length]
+}
+
+VRPN_MESSAGE SuspendCommands {
+}
+
+VRPN_MESSAGE ResumeCommands {
+}
+
+VRPN_MESSAGE MaxSetpointExceeded{
+}
+
+VRPN_MESSAGE InScanlineMode {
+  int32 enabled   
+}
+
+VRPN_MESSAGE ScanlineData {
+  float32 x
+  float32 y
+  float32 z
+  float32 angle
+  float32 slope
+  float32 width
+  int32 resolution
+  int32 feedback_enabled
+  int32 checking_forcelimit
+  float32 max_force_setting
+  float32 max_z_step
+  float32 max_xy_step
+  int32 sec
+  int32 usec
+  int32 num_channels
+  float32 data[resolution][num_channels]
+}
+
+VRPN_MESSAGE BeginFeelTo {
+}
+VRPN_MESSAGE EndFeelTo {
+  float32 x
+  float32 y
+  int32 numx
+  int32 numy
+  float32 dx
+  float32 dy
+  float32 orientation
+}

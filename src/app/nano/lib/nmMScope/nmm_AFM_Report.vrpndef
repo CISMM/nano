@@ -1,0 +1,84 @@
+/* AFM messages, info from an AFM
+   This is what we want in principle, but in practice, these
+   are messages registered with VRPN with the prefix "nmm Microscope AFM"
+*/
+
+// MESSAGE_GROUP must come first, before any VRPN_MESSAGE directives. 
+MESSAGE_GROUP nmm_AFM_Report
+
+MESSAGE_PREFIX "nmm Microscope AFM "
+
+VRPN_MESSAGE InContactMode {
+  float32 P
+  float32 I
+  float32 D
+  float32 setpoint
+}
+
+VRPN_MESSAGE InTappingMode {
+  float32 P
+  float32 I
+  float32 D
+  float32 setpoint
+  float32 amplitude
+}
+
+VRPN_MESSAGE InOscillatingMode {
+  float32 P
+  float32 I
+  float32 D
+  float32 setpoint
+  float32 amplitude
+  float32 frequency
+  int32 input_gain 
+  int32 drive_attenuation
+  float32 phase
+  bool ampl_or_phase
+}
+
+VRPN_MESSAGE InSewingStyle {
+  float32 setpoint
+  float32 bottomDelay
+  float32 topDelay
+  float32 pullBackDistance
+  float32 moveDistance
+  float32 moveRate
+  float32 maxDistanceToApproach
+}
+
+VRPN_MESSAGE InSpectroscopyMode {
+  float32 setpoint
+  float32 startDelay
+  float32 zStart
+  float32 zEnd
+  float32 zPullback
+  float32 forceLimit
+  float32 distBetweenFC
+  int32 numPoints
+  int32 numHalfcycles
+  float32 sampleSpeed
+  float32 pullbackSpeed
+  float32 startSpeed
+  float32 feedbackSpeed
+  int32 averageNum
+  float32 sampleDelay
+  float32 pullbackDelay
+  float32 feedbackDelay
+}
+
+VRPN_MESSAGE InDirectZControl {
+  float32 max_z_step
+  float32 max_xy_step
+  float32 min_setpoint
+  float32 max_setpoint
+  float32 max_lateral_force
+  float32 freespace_normal_force
+  float32 freespace_lat_force
+}
+
+VRPN_MESSAGE InModMode {
+}
+
+VRPN_MESSAGE InImgMode {
+}
+

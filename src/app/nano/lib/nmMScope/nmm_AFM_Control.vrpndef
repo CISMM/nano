@@ -1,0 +1,70 @@
+/* AFM control commands, messages to an AFM
+   This is what we want in principle, but in practice, these
+   are messages registered with VRPN with the prefix "nmm Microscope AFM"
+*/
+
+// MESSAGE_GROUP must come first, before any VRPN_MESSAGE directives. 
+MESSAGE_GROUP nmm_AFM_Control
+
+MESSAGE_PREFIX "nmm Microscope AFM "
+
+VRPN_MESSAGE EnterTappingMode {
+  float32 p
+  float32 i
+  float32 d
+  float32 setpoint
+  float32 amplitude
+}
+VRPN_MESSAGE EnterOscillatingMode {
+  float32 p
+  float32 i
+  float32 d
+  float32 setpoint
+  float32 amplitude
+  float32 frequency
+  int32 input_gain
+  bool ampl_or_phase
+  int32 drive_attenuation
+  float32 phase
+}
+VRPN_MESSAGE EnterContactMode {
+  float32 p
+  float32 i
+  float32 d
+  float32 setpoint
+}
+VRPN_MESSAGE EnterDirectZControl {
+  float32 max_z_step
+  float32 max_xy_step
+  float32 min_setpoint
+  float32 max_setpoint
+  float32 max_lateral_force
+}
+VRPN_MESSAGE EnterSewingStyle {
+  float32 setpoint
+  float32 bottomDelay
+  float32 topDelay
+  float32 pullBackDistance
+  float32 distanceBetweenPunches
+  float32 speed
+  float32 limitOfDescent
+}
+VRPN_MESSAGE EnterSpectroscopyMode {
+  float32 setpoint
+  float32 startDelay
+  float32 zStart
+  float32 zEnd
+  float32 zPullback
+  float32 forceLimit
+  float32 distBetweenFC
+  int32 numPoints
+  int32 numHalfcycles
+  float32 sampleSpeed
+  float32 pullbackSpeed
+  float32 startSpeed
+  float32 feedbackSpeed
+  int32 avgNum
+  float32 sampleDelay
+  float32 pullbackDelay
+  float32 feedbackDelay
+}

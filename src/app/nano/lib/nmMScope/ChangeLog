@@ -1,3 +1,12 @@
+2001-03-02  Aron Helser  <helser@cs.unc.edu>
+
+	* nmm_AFM_Report.vrpndef: VRPN rpc message definition file. In
+	preparation for automatically generating parts of nmm_Microscope*,
+	and for support of util/streamPrint/nmsPrint.Cdef
+	* nmm_AFM_Control.vrpndef: same
+	* nmm_SPM_Report.vrpndef: same
+	* nmm_SPM_Control.vrpndef: same
+
 2001-1-29  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmm_QueueMonitor.C (enqueue) : dispatch immediately if queueing

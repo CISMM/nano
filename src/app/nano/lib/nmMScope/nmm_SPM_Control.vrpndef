@@ -1,0 +1,193 @@
+/* General SPM control commands, messages to an SPM
+   This is what we want in principle, but in practice, these
+   are messages registered with VRPN with the prefix "nmm Microscope"
+*/
+
+// MESSAGE_GROUP must come first, before any VRPN_MESSAGE directives. 
+MESSAGE_GROUP nmm_SPM_Control
+
+MESSAGE_PREFIX "nmm Microscope "
+
+DEFINE SPM_NAME_LENGTH 64
+
+VRPN_MESSAGE GetNewPointDatasets {
+  int32 numSets
+  struct PointSet {
+    char name [SPM_NAME_LENGTH]
+    int32 numSamples
+  } pset [numSets]
+}
+
+VRPN_MESSAGE GetNewScanDatasets {
+  int32 numSets
+  struct PointSet {
+    char name [SPM_NAME_LENGTH]
+  } pset [numSets]
+}
+
+
+VRPN_MESSAGE ResumeWindowScan {
+}
+
+VRPN_MESSAGE PauseScanning {
+}
+
+VRPN_MESSAGE WithdrawTip {
+}
+
+VRPN_MESSAGE DrawSharpLine {
+  float32 startx
+  float32 starty
+  float32 endx
+  float32 endy
+  float32 stepSize
+}
+VRPN_MESSAGE DrawSweepLine {
+  float32 startx
+  float32 starty
+  float32 startYaw
+  float32 startSweepWidth
+  float32 endx
+  float32 endy
+  float32 endYaw
+  float32 endSweepWidth
+  float32 stepSize
+}
+VRPN_MESSAGE DrawSweepArc {
+  float32 x
+  float32 y
+  float32 startAngle
+  float32 startSweepWidth
+  float32 endAngle
+  float32 endSweepWidth
+  float32 stepSize
+}
+VRPN_MESSAGE DrawSweepLineCenter {
+  float32 startx
+  float32 starty
+  float32 startYaw
+  float32 startSweepWidth
+  float32 endx
+  float32 endy
+  float32 endYaw
+  float32 endSweepWidth
+  float32 stepSize
+}
+VRPN_MESSAGE DrawSweepArcCenter {
+  float32 x
+  float32 y
+  float32 startAngle
+  float32 startSweepWidth
+  float32 endAngle
+  float32 endSweepWidth
+  float32 stepSize
+}
+VRPN_MESSAGE ScanTo {
+  float32 x
+  float32 y
+}
+VRPN_MESSAGE ScanToZ {
+  float32 x
+  float32 y
+  float32 z
+}
+VRPN_MESSAGE FeelTo {
+  float32 x
+  float32 y
+  int32 numx
+  int32 numy
+  float32 dx
+  float32 dy
+  float32 orientation
+}
+VRPN_MESSAGE SetRegionNM {
+  float32 minx
+  float32 miny 
+  float32 maxx
+  float32 maxy
+}
+VRPN_MESSAGE SetScanStyle {
+  int32 style
+}
+VRPN_MESSAGE SetScanWindow {
+  int32 grid_minx
+  int32 grid_miny 
+  int32 grid_maxx
+  int32 grid_maxy
+}
+VRPN_MESSAGE SetRateNM {
+  float32 rate
+}
+VRPN_MESSAGE MarkModify {
+}
+VRPN_MESSAGE MarkImage {
+}
+VRPN_MESSAGE ZagTo {
+  float32 x
+  float32 y
+  float32 yaw
+  float32 sweepWidth
+  float32 regionDiag
+}
+VRPN_MESSAGE ZagToCenter {
+  float32 x
+  float32 y
+  float32 yaw
+  float32 sweepWidth
+  float32 regionDiag
+}
+VRPN_MESSAGE SetRelax {
+  int32 minTime
+  int32 sepTime
+}
+VRPN_MESSAGE SetGridSize {
+  int32 x
+  int32 y 
+}
+VRPN_MESSAGE SetScanAngle {
+  float32 angle
+}
+VRPN_MESSAGE SetSlowScan {
+  int32 value
+}
+VRPN_MESSAGE EnterScanlineMode {
+  int32 enable
+}
+
+VRPN_MESSAGE RequestScanLine {
+  float32 x
+  float32 y
+  float32 z
+  float32 angle
+  float32 slope
+  float32 width
+  int32 resolution
+  int32 enable_feedback
+  int32 check_forcelimit
+  float32 max_force
+  float32 max_z_step
+  float32 max_xy_step
+}
+
+VRPN_MESSAGE JumpToScanLine {
+  int32 line_number
+}
+VRPN_MESSAGE QueryScanRange {
+}
+VRPN_MESSAGE EnableUpdatableQueue {
+  bool on
+}
+
+VRPN_MESSAGE RecordResistance {
+  int32 meter
+  timeval time
+  float32 resistance
+  float32 v
+  float32 r
+  float32 f
+}
+
+//VRPN_MESSAGE SetModForce
+//VRPN_MESSAGE SetMaxMove 
+//VRPN_MESSAGE SetStdDelay 
+//VRPN_MESSAGE SetStPtDelay 
