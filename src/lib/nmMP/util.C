@@ -69,7 +69,9 @@
 
 #include "myUtil.h"
 #include <math.h>
+#if !defined(_WIN32) || defined(__CYGWIN__)
 #include <sys/time.h>
+#endif
 
 // set up a handler for when new fails
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -755,6 +757,15 @@ int nonblockingGetch( char *, int ) {
 
 /*****************************************************************************\
   $Log$
+  Revision 1.1.1.1  1999/12/14 20:40:09  weigle
+  This is the new directory structure.  More documentation will be forth
+  coming, but there is a README.1ST which should get you compiling. 
+
+  NOTE: This does not currently go make libraries for you if they can not
+  be found, only complains that they are not there.  There are two places
+  where you must do a gmake to get libraries:
+     ./nano/src/lib  and  ./nano/src/app/nano/lib
+
   Revision 1.7  1999/05/26 20:28:39  lovelace
   These changes allow microscape to be compiled on the WIN32 platform
   using the Cygnus Solutions Cygwin Environment (a WIN32 port of the

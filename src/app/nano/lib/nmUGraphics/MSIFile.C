@@ -355,7 +355,7 @@ int MSIFile::LoadMSIFile(GLuint *&Dlist_array){
   bond2 = new int[bond_count];
   if(!(atomx && atomy && atomz && bond1 && bond2)){
     cerr << "Unable to allocate sufficient memory store for MSI file\n";
-	kill(getpid(),SIGINT);
+    //kill(getpid(),SIGINT);
       	return 0;
   }
   //skip first line 
@@ -398,7 +398,8 @@ int MSIFile::LoadMSIFile(GLuint *&Dlist_array){
   Dlist_array=new GLuint[model_count];
   dl=glGenLists(model_count);
   if(dl==0 || Dlist_array==NULL){ cerr << "Bad Display List generation\n"; 
-		   kill(getpid(),SIGINT); return 0;
+     //kill(getpid(),SIGINT); 
+     return 0;
   }  
   for(l=0; l<model_count; l++){
     //BuildListMSI  actually builds the geometry from
@@ -428,7 +429,8 @@ int MSIFile::ReloadMSIFile(GLuint *&Dlist_array){
     Dlist_array=new GLuint[model_count];
     dl=glGenLists(model_count);
     if(dl==0 || Dlist_array==NULL){ cerr << "Bad Display List generation\n"; 
-		   kill(getpid(),SIGINT); return 0;
+       //kill(getpid(),SIGINT);
+       return 0;
     }  
     for(l=0; l<model_count; l++){
       //BuildListMSI  actually builds the geometry from

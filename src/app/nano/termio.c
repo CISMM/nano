@@ -30,10 +30,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#if !defined (_WIN32) || defined (__CYGWIN__)
 #include <unistd.h>
+#include <sys/file.h>	/* for O_RDWR in open_raw_term()	    	*/
+#endif
 #include <fcntl.h>
 #include <errno.h>  	/* for errno on ioctl call  */
-#include <sys/file.h>	/* for O_RDWR in open_raw_term()	    	*/
 
 #if defined(sparc) || defined(linux)
 #include <sgtty.h>  	/* for sgttyb */

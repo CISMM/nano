@@ -37,6 +37,10 @@
 
 #include	"Timer.h"
 
+// M_PI not defined for VC++, for some reason. 
+#ifndef M_PI
+#define M_PI		3.14159265358979323846
+#endif
 
 /*Globals*/
 extern int	do_y_fastest;		/* Tells which direction to scan in */
@@ -748,7 +752,8 @@ int draw_world (int) {
       }
 #endif
   }
-#ifndef __CYGWIN__
+#if !(defined(__CYGWIN__) || defined(_WIN32))
+  //#ifndef __CYGWIN__
   if ((g_texture_mode == GL_TEXTURE_1D) ||
       (g_texture_mode == GL_TEXTURE_3D_EXT)) {
       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
@@ -764,7 +769,7 @@ int draw_world (int) {
       glBindTexture(GL_TEXTURE_1D, tex_ids[CONTOUR_1D_TEX_ID]);
       break;
     case nmg_Graphics::ALPHA:
-#if !(defined(__CYGWIN__) || defined(hpux))
+#if !(defined(__CYGWIN__) || defined(hpux) || defined(_WIN32))
       glBindTexture(GL_TEXTURE_3D, tex_ids[ALPHA_3D_TEX_ID]);
 #endif
     case nmg_Graphics::BUMPMAP:

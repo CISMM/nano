@@ -1,6 +1,6 @@
 #include <math.h>
 #include <blt.h>  // for BLT vector class and functions.
-#if defined (__CYGWIN__) || (linux)
+#if defined (__CYGWIN__) || (linux) || (_WIN32)
 #include <float.h> // for FLT_MAX
 #endif
 
@@ -270,7 +270,7 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
 
       float minval, maxval;	// computed per channel
       for (i = 0; i < me->d_numscanline_channels; i++){
-#if defined (__CYGWIN__) || (linux)
+#if defined (__CYGWIN__) || (linux) || (_WIN32)
 	minval = FLT_MAX;
 	maxval = -FLT_MAX;
 #else

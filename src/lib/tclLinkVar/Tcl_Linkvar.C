@@ -57,7 +57,7 @@ static	Tcl_Interp	*interpreter = NULL;	///< Tcl interpreter used
 */
 //static 
 char	*handle_int_value_change(ClientData clientData,
-	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
+	Tcl_Interp *interp, char * /*name1*/, char * /*name2*/, int /*flags*/)
 {
         char    *cvalue;
 	int	value;
@@ -106,7 +106,7 @@ char	*handle_int_value_change(ClientData clientData,
 */
 //static
 char	*handle_float_value_change(ClientData clientData,
-	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
+	Tcl_Interp *interp, char * /*name1*/, char * /*name2*/, int /*flags*/)
 {
         char    *cvalue;
 	vrpn_float64	value;
@@ -147,7 +147,7 @@ char	*handle_float_value_change(ClientData clientData,
  when the variables changes.
 */
 char	*handle_string_value_change(ClientData clientData,
-	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
+	Tcl_Interp *interp, char * /*name1*/, char * /*name2*/, int /*flags*/)
 {
         char    *cvalue;
 	Tclvar_string	*stringvar = (Tclvar_string*)(clientData);
@@ -177,7 +177,7 @@ char	*handle_string_value_change(ClientData clientData,
  when the variables changes.
 */
 char	*handle_list_of_strings_value_change(ClientData clientData,
-	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
+	Tcl_Interp *interp, char * /*name1*/, char * /*name2*/, int /*flags*/)
 {
         char    *cvalue;
 	Tclvar_list_of_strings	*list_of_stringsvar = (Tclvar_list_of_strings*)(clientData);

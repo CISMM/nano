@@ -68,7 +68,12 @@ ifeq ($(UNAME),FreeBSD)             # hw_os does not exist on FreeBSD at UNC
    HW_OS := pc_FreeBSD
 else
    ifeq ($(findstring CYGWIN,$(UNAME)),CYGWIN)    # Cygwin may not have HW_OS
-      HW_OS := pc_cygwin
+      ifdef VC
+         # define VC on the command line to compile with VC++ and CL compiler
+         HW_OS := pc_win32
+      else
+         HW_OS := pc_cygwin
+      endif
    else
       ifeq ($(UNAME),Linux)         # Linux may not have HW_OS
          HW_OS := pc_linux
@@ -144,16 +149,24 @@ else
    else
       ifeq ($(HW_OS),hp700_hpux10)  # another odd case, hpux is "different"
          CC := CC +w
-      else                          # default case
-         CC := g++ -Wall
+      else
+	ifeq ($(HW_OS),pc_win32)
+	   CC := cl
+        else                          # default case
+           CC := g++ -Wall
+        endif
       endif
    endif
 endif
 
 ##########################
-# }}}
-# {{{ directories
-#
+# 
+# Setup for using MS VC++ compiler in the cygwin environment
+#   All values copied from VCVARS32.BAT
+
+# I don't know how to do this yet. Probably should be set up in the
+# cygwin environment before calling make.
+
 
 ##########################
 #
@@ -193,7 +206,8 @@ TOP_LEVEL_SRC_DIR  := $(TOP_LEVEL_DIR)/src
 TOP_LEVEL_MAKE_DIR := $(TOP_LEVEL_SRC_DIR)/share
 
 ifndef MY_NANO_OBJ_DIR
-   ifeq ($(HW_OS),pc_cygwin)
+   ifeq ($(HW_OS),pc_win32)
+#   if (($(HW_OS)==pc_cygwin)||($(HW_OS)==pc_win32))
       MY_NANO_OBJ_DIR   := /tmp
       TOP_LEVEL_OBJ_DIR := $(MY_NANO_OBJ_DIR)
    else
@@ -241,6 +255,10 @@ SYS_INCLUDE := $(TCL_INC_DIR) \
 
 ifeq ($(HW_OS),pc_cygwin)
    SYS_INCLUDE := /usr/local/include 
+endif
+
+ifeq ($(HW_OS),pc_win32)
+   SYS_INCLUDE := /progra~1/tcl/include
 endif
 
 ifeq ($(HW_OS),pc_linux)
@@ -386,23 +404,51 @@ endif
 # {{{ Defines for the compilation, CFLAGS
 #
 
-DEFINES := -DINCLUDE_CALLBACK_CODE
+BAREBAREDEFINES := INCLUDE_CALLBACK_CODE
 
 ifndef OLD_MICROSCOPE
-   DEFINES += -DUSE_VRPN_MICROSCOPE
+   BAREDEFINES += USE_VRPN_MICROSCOPE
 endif
 
 ifeq ($(HW_OS),pc_cygwin)
-  DEFINES += -DV_GLUT
+  BAREDEFINES += V_GLUT
+endif
+
+ifeq ($(HW_OS),pc_win32)
+  BAREDEFINES += V_GLUT
 endif
 
 ifeq ($(HW_OS),pc_linux)
-  DEFINES += -DV_GLUT
+  BAREDEFINES += V_GLUT
 endif
 
-DEFINES += -DPROJECTIVE_TEXTURE
+BAREDEFINES += PROJECTIVE_TEXTURE
+
+ifeq ($(HW_OS),pc_win32)
+  DEFINES = $(addprefix /D,$(BAREDEFINES))
+else
+  DEFINES = $(addprefix -D,$(BAREDEFINES))
+endif
 
 CFLAGS += -g
+
+ifeq ($(HW_OS),pc_win32)
+  CFLAGS = /nologo /MTd /W3 /GX /Z7 /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /TP 
+# /MTd multi-threaded, debug lib - not DLL.
+# /W3 warning level 3
+# /Gm enable minimal rebuild - requires /Zi or /ZI
+# /GX enable synchronous exception handling
+# /Od turn off optimizations - (debug build).
+# /Z7 include C7 debug info. /Zi program database.
+# /YX use precompiled headers.
+# /Fp output name/dir for precompiled headers.
+# /Fo output name/directory for .obj
+# /Fd program database name/directory
+# /FD do good stuff with dependencies.
+# /GZ catch bugs cause by optimizations when using debug code
+# /TP compile everything C++
+# /c suppresses link.
+endif
 
 #ifeq ($(HW_OS),pc_cygwin)
 #  CFLAGS += -fhuge-objects

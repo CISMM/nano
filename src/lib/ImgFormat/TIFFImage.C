@@ -1,4 +1,8 @@
+#if ((defined _WIN32) && !(defined __CYGWIN__))
+#include <windows.h>
+#else
 #include <netinet/in.h>
+#endif
 
 #include "TIFFImage.h"
 

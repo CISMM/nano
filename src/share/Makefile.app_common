@@ -40,8 +40,13 @@ ifndef APP_SRC
 endif
 
 ifndef APP_OBJ
+ifeq ($(HW_OS),pc_win32)
+   APP_OBJ := $(addprefix $(OBJECT_DIR)/, \
+                              $(addsuffix .obj,$(basename $(APP_SRC))))
+else 
    APP_OBJ := $(addprefix $(OBJECT_DIR)/, \
                           $(addsuffix .o,$(strip $(basename $(APP_SRC)))))
+endif
 endif
 
 ifndef APP_NAME
@@ -80,7 +85,7 @@ clobber: thisclean
 # implicit rule for all .c files
 #
 
-.SUFFIXES: .c .C .cc .o .a
+.SUFFIXES: .c .C .cc .o .a .obj
 
 $(OBJECT_DIR):
 	-mkdir -p $(FULL_OBJECT_DIR)
@@ -95,6 +100,15 @@ $(OBJECT_DIR)/%.o: %.cc
 
 $(OBJECT_DIR)/%.o: %.C
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
+
+$(OBJECT_DIR)/%.obj: %.c
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
+# /Fd"$(OBJECT_DIR)" /Fp"$(OBJECT_DIR)"
+$(OBJECT_DIR)/%.obj: %.C
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
+
+$(OBJECT_DIR)/%.obj: %.cc
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
 
 $(APP_EXEC): $(APP_OBJ)
 	$(CC) $(CFLAGS) $(DEFINES) -o $@ $(APP_OBJ) $(DEP_LIBS_LD) $(LOAD_FLAGS) $(DEP_LIBS_LIB) $(LIBS)

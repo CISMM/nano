@@ -1,7 +1,7 @@
 
 #include	<stdlib.h>
 #include	<stdio.h>
-#include	<sys/time.h>
+#include	<vrpn_Shared.h>
 //#include	"microscape.h"
 #include        "updt_display.h"
 
@@ -14,7 +14,7 @@ generic function to update display
 
 
 dependence on globals, and other creative hacking, removed 19 Aug 97 by TCH
-******************************************************************************/
+*/
 vrpn_bool updt_display (const long _displayPeriod, struct timeval & _dTime,
                         vrpn_bool & _stmNewFrame) {
   struct timeval	now;

@@ -1,5 +1,6 @@
 #include	<stdio.h>
-#include	<sys/time.h>  // time before types
+#include	<vrpn_Shared.h>
+//#include	<sys/time.h>  // time before types
 #include	<sys/types.h>
 #include	<errno.h>
 #include 	<math.h>

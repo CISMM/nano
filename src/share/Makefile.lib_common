@@ -8,6 +8,7 @@ CWD := $(shell $(PWD_COMMAND))
 THIS_DIR := $(subst $(TOP_LEVEL_SRC_DIR),,$(CWD))
 
 OBJECT_DIR := $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX)$(THIS_DIR)
+#OBJECT_DIR := $(TOP_LEVEL_OBJ_DIR)/obj/$(HW_OS)$(OBJECT_DIR_SUFFIX)$(THIS_DIR)
 
 DIR := $(shell test -d $(OBJECT_DIR) && echo "true")
 ifneq ($(DIR),true)
@@ -40,12 +41,21 @@ ifndef LIBRARY_SRC
 endif
 
 ifndef LIBRARY_OBJ
+ifeq ($(HW_OS),pc_win32)
+   LIBRARY_OBJ := $(addprefix $(OBJECT_DIR)/, \
+                              $(addsuffix .obj,$(basename $(LIBRARY_SRC))))
+else 
    LIBRARY_OBJ := $(addprefix $(OBJECT_DIR)/, \
                               $(addsuffix .o,$(basename $(LIBRARY_SRC))))
 endif
+endif
 
 ifndef LIBRARY_NAME
+ifeq ($(HW_OS),pc_win32)
+   LIBRARY_NAME := $(notdir $(CWD)).lib
+else
    LIBRARY_NAME := lib$(notdir $(CWD)).a
+endif
 endif
 
 ifndef LIBRARY_ARCHIVE
@@ -80,7 +90,7 @@ clobber: thisclean
 # implicit rule for all .c files
 #
 
-.SUFFIXES: .c .C .cc .o .a
+.SUFFIXES: .c .C .cc .o .a .obj
 
 $(OBJECT_DIR):
 	mkdir -p $(FULL_OBJECT_DIR)
@@ -96,12 +106,22 @@ $(OBJECT_DIR)/%.o: %.C
 $(OBJECT_DIR)/%.o: %.cc
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
+$(OBJECT_DIR)/%.obj: %.c
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
+# /Fd"$(OBJECT_DIR)" /Fp"$(OBJECT_DIR)"
+$(OBJECT_DIR)/%.obj: %.C
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
+
+$(OBJECT_DIR)/%.obj: %.cc
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
+
 $(LIBRARY_ARCHIVE): $(LIBRARY_OBJ)
-	$(AR) ruv $(LIBRARY_ARCHIVE) $(OBJECT_DIR)/*.o
+	$(AR) ruv $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
+# $(OBJECT_DIR)/*.o $(OBJECT_DIR)/*.obj
 	-ranlib $(LIBRARY_ARCHIVE)
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
    ifneq ($(findstring clobber,$(MAKECMDGOALS)),clobber)
-      include $(TOP_LEVEL_MAKE_DIR)/Makefile.depend
+         include $(TOP_LEVEL_MAKE_DIR)/Makefile.depend
    endif
 endif

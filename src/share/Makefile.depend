@@ -38,9 +38,29 @@ endif
 SRC_LIST := $(APP_SRC) $(LIBRARY_SRC)
 
 ifdef APP_EXEC
-   APP_LIST := "$(APP_EXEC): $(join $(patsubst -L%,%,$(USES_LIBS_LD)),$(addprefix /lib,$(addsuffix .a,$(SEARCH_LIBS))))"
+   ifeq ($(HW_OS),pc_win32)
+     # libraries are named foo.lib with VC++
+     APP_LIST := "$(APP_EXEC): $(join $(patsubst -L%,%,$(USES_LIBS_LD)),$(addprefix /,$(addsuffix .lib,$(SEARCH_LIBS))))"
+   else 
+     APP_LIST := "$(APP_EXEC): $(join $(patsubst -L%,%,$(USES_LIBS_LD)),$(addprefix /lib,$(addsuffix .a,$(SEARCH_LIBS))))"
+   endif
 endif
 
+ifdef VC
+# CL compiler for VC++ doesn't seem to have an equivalent of the -M
+# option for g++ and CC. So we won't include that info in the .depend
+# file. Instead, we can use built-in minimal-recompile functions of the
+# CL compiler, if we want.
+DEPEND_BUILD_RULE := ( \
+   echo $(APP_LIST) ; \
+   echo DEP_LIBS_INC := $(filter-out -L%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_INC) ; \
+   echo DEP_LIBS_LD := $(filter-out -I%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_LD) ; \
+   echo DEP_LIBS_LIB := $(USES_LIBS_LIB) ; \
+   echo MY_ALT_LIB_DIR := $(MY_ALT_LIB_DIR) ; \
+   echo ALT_LIBS := $(ALT_LIBS) ; \
+   echo SEARCH_LIBS := $(SEARCH_LIBS) \
+                     )
+else
 DEPEND_BUILD_RULE := ( \
    $(CC) -M $(CFLAGS) $(DEFINES) $(filter-out -L%,$(MY_ALT_LIB_DIR)) $(USES_LIBS_INC) $(INCLUDE_FLAGS) $(SRC_LIST) | perl -pe "s|(.*\\.o\\w*:)|$(OBJECT_DIR)/\\1|g;" ; \
    echo $(APP_LIST) ; \
@@ -51,6 +71,7 @@ DEPEND_BUILD_RULE := ( \
    echo ALT_LIBS := $(ALT_LIBS) ; \
    echo SEARCH_LIBS := $(SEARCH_LIBS) \
                      )
+endif
 
 .PHONY: depend
 depend: $(OBJECT_DIR) $(MAKEFILE_DEPEND)

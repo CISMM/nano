@@ -78,7 +78,7 @@ int LoadWaveFrontFile(URender *Pobject, char *filename, GLuint *&Dlist_array)
 	objname=new char*[objcount];
         if(!(vx && vy && vz && vt_u && vt_v && vnx && vny && vnz && objcount)){
                 cerr << "Unable to allocate sufficient memory store for WAVEFRONT file\n";
-		kill(getpid(),SIGINT);
+		//kill(getpid(),SIGINT);
 		return 0;
         }
 
@@ -94,7 +94,7 @@ int LoadWaveFrontFile(URender *Pobject, char *filename, GLuint *&Dlist_array)
                         objname[i]=new char[strlen(buf)+1];
                         if(objname[i]==NULL){
                                 cerr << "Error allocating objectname\n";
-                                kill(getpid(),SIGINT);
+                                //kill(getpid(),SIGINT);
 				return 0;
                         }
                         strcpy(objname[i],buf+2);
@@ -128,7 +128,8 @@ int LoadWaveFrontFile(URender *Pobject, char *filename, GLuint *&Dlist_array)
 	Dlist_array=new GLuint[objcount];
         dl=glGenLists(objcount);
         if(dl==0 || Dlist_array==NULL){ cerr << "Bad Display List generation\n"; 
-		   kill(getpid(),SIGINT); return 0;
+        //kill(getpid(),SIGINT); 
+                   return 0;
 	}
 
 	//TO OPTIMIZE: could do some normal smoothing operations here, or 

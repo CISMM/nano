@@ -83,7 +83,7 @@ int UTree::TGetPathByName(const char *node_name, int depth, UTree** scratch ){
   if(depth >= MAX_TREE_DEPTH){
         cerr << "TREE HAS EXCEEDED A LOGICAL LIMIT FOR TRANSFORM OPERATIONS --\n";
         cerr << "CHANGE MAX_TREE_DEPTH CONSTANT IN UTREE.H AND RECOMPILE\n";
-	kill(getpid(),SIGINT);
+	//kill(getpid(),SIGINT);
 	return -1;
   }
 
@@ -113,7 +113,7 @@ Xform UTree::TGetXformByName(const char *from_node_name, const char *to_node_nam
   if(scratch_pad1 == NULL || scratch_pad2==NULL){
 	cerr << "Unable to allocate scratch space for search -- GetPathByName\n";
 	cerr << "Critical failure\n";
-	kill(getpid(),SIGINT);	//send a signal
+	//kill(getpid(),SIGINT);	//send a signal
 	return Xform();		//return identity 
   }
   depth1=TGetPathByName(from_node_name,0,scratch_pad1);
@@ -203,7 +203,10 @@ void UTree::TAddNode(URender *r, char *name){
 	
 	UTree *nt;
 	nt=new UTree;
-	if(nt==NULL){cerr << "Memory fault! Add Render Node\n"; kill(getpid(),SIGINT);}
+	if(nt==NULL){cerr << "Memory fault! Add Render Node\n"; 
+           //kill(getpid(),SIGINT);
+           return;
+        }
 	nt->TSetName(name);
 	nt->TSetContents(r);
 	TAddTreeNode(nt);
@@ -219,7 +222,8 @@ void UTree::TAddTreeNode(UTree* nt)
 		temp=new UTree*[size+CHILDCHUNK];
 		if(temp==NULL){
 			cerr << "Could not allocate new child node memory error\n";
-			kill(getpid(),SIGINT);	//send a signal
+			//kill(getpid(),SIGINT);	//send a signal
+                        return;
 		}
 
 		for(i=0; i < size; i++){  //copy old members over to new larger list

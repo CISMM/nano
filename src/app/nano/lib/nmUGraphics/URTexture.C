@@ -90,7 +90,8 @@ int URTexture::LoadPPMFile(char *filename, int *filter)
     texture_data = new GLubyte[isize];
     if(texture_data==NULL){
 	cerr << "Could not allocate texture data array -- memory fault\n";
-	kill(getpid(),SIGINT);
+	//kill(getpid(),SIGINT);
+        return -1;
     }
     in.read(texture_data, rsize);
 

@@ -332,7 +332,8 @@ extern struct timeval timevalFromMsecs( const double dMsecs );
 #include <winbase.h>
 // For some reason cygwin doesn't like this.
 #ifndef __CYGWIN__
-unsigned int sleep( unsigned int cSeconds );
+// VC++ compile problem
+//unsigned int sleep( unsigned int cSeconds );
 #endif
 #endif
 
@@ -365,6 +366,15 @@ int nonblockingGetch(char *, int fEcho=1);
 
 /*****************************************************************************\
   $Log$
+  Revision 1.1.1.1  1999/12/14 20:40:08  weigle
+  This is the new directory structure.  More documentation will be forth
+  coming, but there is a README.1ST which should get you compiling. 
+
+  NOTE: This does not currently go make libraries for you if they can not
+  be found, only complains that they are not there.  There are two places
+  where you must do a gmake to get libraries:
+     ./nano/src/lib  and  ./nano/src/app/nano/lib
+
   Revision 1.5  1999/05/28 21:44:22  lovelace
   One small change that was left out of the previous NT commit.  These
   files had been changed in the include directory, but not in the

@@ -3,9 +3,7 @@
 #include <X11/Xutil.h>
 #include <string.h>
 #include <fcntl.h>
-#ifndef __CYGWIN__
-#include <sys/time.h>
-#endif
+#include <vrpn_Shared.h>
 
 #include <BCPlane.h>
 #include <nmb_Dataset.h>

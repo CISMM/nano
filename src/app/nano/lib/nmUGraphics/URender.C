@@ -156,7 +156,8 @@ int URender::IntersectLine(void *userdata){
 	if(s==NULL) s=new SelectionSet;
 	if(s==NULL){
 		cerr << "Unable to create selection set .. Memory fault -- aborting\n"; 
-		kill(getpid(),SIGINT);
+		//kill(getpid(),SIGINT);
+                return -1;
 	}
 
 	if(obj_type==URPOLYGON){

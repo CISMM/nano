@@ -88,10 +88,15 @@ We could determine this by some kind of calibration procedure
 #include "linLeastSqr.h"
 #include <math.h>
 #include "quat.h"
-#ifdef __CYGWIN__
+#if ((defined __CYGWIN__) || (defined _WIN32))
 #include <float.h> // for DBL_MAX
 #else
 #include <values.h> // for MAXDOUBLE
+#endif
+
+// M_PI not defined for VC++, for some reason. 
+#ifndef M_PI
+#define M_PI		3.14159265358979323846
 #endif
 
 /* This function solves for the optimal transformation 
@@ -126,7 +131,7 @@ int transformSolver(double *xform_matrix, double *error,
     double shear_x = 0.0, shear_y = 0.0;
 	// we also leave shear as a constant for similar reasons to those for
 	// leaving the scale_ratio constant
-#ifdef __CYGWIN__
+#if ((defined __CYGWIN__) || (defined _WIN32))
     double error_min = DBL_MAX;
 #else
     double error_min = MAXDOUBLE;

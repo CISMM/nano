@@ -8,7 +8,7 @@
 
 #include "Point.h"
 
-ImageViewer *g_iViewer(NULL);
+ImageViewer *g_iViewer = NULL;
 
 int g_iViewerWin(-1);
 
@@ -19,9 +19,9 @@ typedef enum { SCAN_MODE, IMAGE_MODE, MODIFY_MODE } ScopeMode;
 
 ScopeMode g_activeMode(SCAN_MODE);
 
-nmb_Dataset *g_dataset(NULL);
+nmb_Dataset *g_dataset =NULL;
 
-nmm_Microscope_Remote *g_microscope(NULL);
+nmm_Microscope_Remote *g_microscope = NULL;
 
 
 #ifndef V_GLUT

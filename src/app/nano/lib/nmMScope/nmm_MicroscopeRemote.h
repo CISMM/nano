@@ -5,9 +5,10 @@
 
 #include "AFMState.h"
 
-#ifndef _WIN32
-#include <sys/time.h> // for timeval?
-#endif
+//#ifndef _WIN32
+//#include <sys/time.h> // for timeval?
+//#endif
+#include <vrpn_Shared.h>  // for timeval/timezone
 
 class Tclvar_checklist;  // from <Tcl_Linkvar.h>
 struct stm_stream;  // from <stm_file.h>

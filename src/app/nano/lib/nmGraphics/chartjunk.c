@@ -32,9 +32,11 @@
 #define xx .525731112119133606
 #define zz .850650808352039932
 #define SPHERE_DEPTH 2
-//XXX this is redundant with math.h, which SOMEBODY ELSE up above
-// us is including in their header file.  Yuck.
-#define PI 3.1415926535
+
+// M_PI not defined for VC++, for some reason. 
+#ifndef M_PI
+#define M_PI		3.14159265358979323846
+#endif
 
 #include <v.h>  // to define GLfloat
 typedef GLfloat VertexType[3];

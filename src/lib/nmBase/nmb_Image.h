@@ -8,7 +8,7 @@
 #include "nmb_String.h"
 #include <math.h>
 
-#ifndef __CYGWIN__
+#if !((defined __CYGWIN__) || (_WIN32))
 #include <values.h>	// for MAXSHORT - probably different on windows
 #else
 #include <limits.h>

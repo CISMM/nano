@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <string.h>
+#if !defined (_WIN32) || defined (__CYGWIN__)
 #include <strings.h>            // bzero(), bcopy()
+#endif
 #include <stdlib.h>
 #include <math.h>
 
 // socket includes
-#ifndef __CYGWIN__
+#ifndef _WIN32
 #include <netinet/in.h>
 #include <sys/time.h>	// time before types
 #include <sys/types.h>

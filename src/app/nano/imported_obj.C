@@ -52,6 +52,10 @@ pid_t getpid();
 #endif
 // ############
 
+// M_PI not defined for VC++, for some reason. 
+#ifndef M_PI
+#define M_PI		3.14159265358979323846
+#endif
 
 #ifndef Q_X
 #define Q_X 0
@@ -577,7 +581,9 @@ void imported_obj_list::import_new_obj(char* filename,UTree *World) {
     imported_obj_list_head = new imported_obj;
     imported_obj_list_tail = imported_obj_list_head;
     if (imported_obj_list_head==NULL){
-      cerr << "Memory fault\n"; kill(getpid(),SIGINT);
+      cerr << "Memory fault\n"; 
+      //kill(getpid(),SIGINT);
+      return;
     }
     else{
       if (imported_obj_list_head->URPoly!=NULL){
@@ -587,7 +593,8 @@ void imported_obj_list::import_new_obj(char* filename,UTree *World) {
         World->TAddNode(imported_obj_list_head->GetURPoly(),filename);
        }
       else{ 
-        cerr << "Memory fault\n"; kill(getpid(),SIGINT);
+        cerr << "Memory fault\n"; 
+        //kill(getpid(),SIGINT);
         delete imported_obj_list_head;
 	imported_obj_list_head = NULL;
 	/* This can't possibly be right - if we delete it, we can't
@@ -602,7 +609,9 @@ void imported_obj_list::import_new_obj(char* filename,UTree *World) {
   else{ //Nonempty linked list
     imported_obj_list_tail->next = new imported_obj;
     if (imported_obj_list_tail->next == NULL){
-      cerr << "Memory fault\n"; kill(getpid(),SIGINT);
+        cerr << "Memory fault\n"; 
+        //kill(getpid(),SIGINT);
+        return;
     }
     else{
       if (imported_obj_list_tail->next->URPoly!=NULL){
@@ -613,7 +622,8 @@ void imported_obj_list::import_new_obj(char* filename,UTree *World) {
         World->TAddNode(imported_obj_list_tail->GetURPoly(),filename);
       }
       else{
-        cerr <<"Memory fault\n"; kill(getpid(), SIGINT);
+        cerr <<"Memory fault\n"; 
+        //kill(getpid(), SIGINT);
         delete imported_obj_list_tail;
 	imported_obj_list_tail = NULL;
       }

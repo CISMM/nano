@@ -3,11 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#ifndef __CYGWIN__
+#ifndef _WIN32
 #include <sys/time.h>
 #endif
 #include <sys/stat.h>
+#if !defined (_WIN32) || defined (__CYGWIN__)
 #include <dirent.h>
+#else
+#include <direct.h>
+#endif
 
 #include <tcl.h>
 #include <tk.h>  // for Tk_DoOneEvent()
@@ -121,6 +125,11 @@ pid_t getpid();
 //  [juliano 12/99] this *must* be included after v.h, or gcc craps out
 #include <thread.h>
 
+// M_PI not defined for VC++, for some reason. 
+#ifndef M_PI
+#define M_PI		3.14159265358979323846
+#endif
+
 UTree World;
 UTree Textures;
 
@@ -140,7 +149,7 @@ static imported_obj_list* object_list = NULL;
 
 // need to cast away constness
 
-#if defined(FLOW) || defined(linux) || defined(sgi) || defined(hpux) || defined(__CYGWIN__)
+#if defined(FLOW) || defined(linux) || defined(sgi) || defined(hpux) || defined(__CYGWIN__) || defined(_WIN32)
 # define UGLYCAST (double *)
 #else
 # define UGLYCAST
@@ -369,7 +378,7 @@ class WellKnownPorts {
 
  public:
 
-    static const int defaultBasePort = 4501;
+    static const int defaultBasePort;
     
     const int basePortNumber; ///< the start of the range of port nums
 
@@ -386,6 +395,8 @@ class WellKnownPorts {
  public:
     WellKnownPorts (int base_port_number=defaultBasePort);
 };
+
+const int WellKnownPorts::defaultBasePort= 4501;
 
 WellKnownPorts::WellKnownPorts (int base_port_number)
   : basePortNumber          (0+base_port_number),
@@ -2524,14 +2535,14 @@ static void handle_x_dataset_change (const char *, void *) {
         BCPlane	*plane = dataset->inputGrid->getPlaneByName
                                       (xPlaneName.string());
 	
-#ifndef __CYGWIN__
+#ifndef _WIN32
         int retval;
         int x, y;
 #endif
 	
         if(oldxPlane!=NULL) {
            // remove the old call back
-#ifndef __CYGWIN__
+#ifndef _WIN32
 	   oldxPlane->remove_callback(update_xdisp_on_plane_change,NULL);
 	   freeWindow();
 #endif
@@ -2544,7 +2555,7 @@ static void handle_x_dataset_change (const char *, void *) {
 	   xenable  = 0;
 	}
         else {
-#ifdef __CYGWIN__
+#ifdef _WIN32
 	fprintf(stderr, "This feature is not implemented in windows NT port\n");
 #else
 	  xenable = 1;
@@ -3445,9 +3456,10 @@ loadColorMaps
 */
 int	loadColorMapNames(void)
 {
+#if !defined (_WIN32) || defined (__CYGWIN__)
 	DIR	*directory;
 	struct	dirent *entry;
-
+#endif
 	// Set the default entry to use the custom color controls
 	colorMapNames.addEntry("CUSTOM");
 
@@ -3456,6 +3468,7 @@ int	loadColorMapNames(void)
 		colorMapDir = defaultColormapDirectory;
 	}
 
+#if !defined (_WIN32) || defined (__CYGWIN__)
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
 	if ( (directory = opendir(colorMapDir)) == NULL) {
@@ -3469,7 +3482,7 @@ int	loadColorMapNames(void)
 	    }
 	}
 	closedir(directory);
-
+#endif
 	return 0;
 }
 
@@ -3481,9 +3494,10 @@ loadProcImage
 */
 int	loadProcProgNames(void)
 {
+#if !defined (_WIN32) || defined (__CYGWIN__)
 	DIR	*directory;
 	struct	dirent *entry;
-
+#endif
 	// Set the default entry to use the custom color controls
 	procProgNames.addEntry("none");
 
@@ -3492,6 +3506,7 @@ int	loadProcProgNames(void)
 		procImageDir = defaultFilterDir;
 	}
 
+#if !defined (_WIN32) || defined (__CYGWIN__)
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
 	if ( (directory = opendir(procImageDir)) == NULL) {
@@ -3505,7 +3520,7 @@ int	loadProcProgNames(void)
 	    }
 	}
 	closedir(directory);
-
+#endif
 	return 0;
 }
 
@@ -3517,9 +3532,10 @@ loadPPMTextures
 */
 int	loadPPMTextures(void)
 {
+#if !defined (_WIN32) || defined (__CYGWIN__)
 	DIR	*directory;
 	struct	dirent *entry;
-
+#endif
 	// Set the default entries
 	textureNames.addEntry("off");
 	textureNames.addEntry("uniform");
@@ -3536,6 +3552,7 @@ int	loadPPMTextures(void)
 	   }
 	}
 
+#if !defined (_WIN32) || defined (__CYGWIN__)
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
 	if ( (directory = opendir(textureDir)) == NULL) {
@@ -3549,7 +3566,7 @@ int	loadPPMTextures(void)
 	    }
 	}
 	closedir(directory);
-
+#endif
 	return 0;
 }
 
@@ -4263,7 +4280,7 @@ void ParseArgs (int argc, char ** argv,
           exit(-1);
         }
       } else if (strcmp(argv[i], "-b") == 0) {
-        using_phantom_button = 1;
+        fprintf(stderr, "Warning: -b obsolete.\n");
       } else if (strcmp(argv[i], "-baseport") == 0) {
         if (++i >= argc) Usage (argv[0]);
         istate->basePort = atoi(argv[i]);
@@ -5284,6 +5301,7 @@ int main(int argc, char* argv[])
 
     ParseArgs(argc, argv, &istate);
 
+
     /* set up list of well-known ports based on optional command-line args */
     wellKnownPorts = new WellKnownPorts (istate.basePort);
     
@@ -6059,7 +6077,9 @@ VERBOSE(1, "Creating Ugraphics");
   //INIT THE WORLD
   //put an invisible axis in the world
   URAxis *temp=new URAxis;   //set the contents of the World node so it isn't EMPTY!
-  if(temp==NULL){cerr << "Memory fault\n"; kill(getpid(),SIGINT);}
+  if(temp==NULL){cerr << "Memory fault\n"; 
+  //kill(getpid(),SIGINT);
+  return -1; }
   temp->SetVisibility(0);    
   World.TSetContents(temp);
   

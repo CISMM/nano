@@ -205,11 +205,11 @@ int parse (RendererInitializationState * s, int argc, char ** argv) {
       if (++i >= argc) usage(argv[0]);
       s->minColor[2] = atoi(argv[i]);
     } else if (strcmp(argv[i], "-alphacolor") == 0) {
-      if (++i >= argc) Usage(argv[0]);
+      if (++i >= argc) usage(argv[0]);
       s->alpha_red = atof(argv[i]);
-      if (++i >= argc) Usage(argv[0]);
+      if (++i >= argc) usage(argv[0]);
       s->alpha_green = atof(argv[i]);
-      if (++i >= argc) Usage(argv[0]);
+      if (++i >= argc) usage(argv[0]);
       s->alpha_blue = atof(argv[i]);
     } else
       ret = 1;
