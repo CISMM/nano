@@ -16,8 +16,9 @@ set import_visibility 1
 set import_proj_text 1
 set import_CCW 1
 set import_tess 10
-set import_axis_step 1
+set import_axis_step 10
 set import_clamp 0
+set import_update_AFM 1
 
 set import_color gray
 set import_r 192
@@ -52,20 +53,22 @@ button $nmInfo(basic_options).file.buttons.close_button -text "Close File" -comm
 frame $nmInfo(basic_options).f1
 frame $nmInfo(basic_options).f2
 frame $nmInfo(basic_options).f3
+generic_entry $nmInfo(basic_options).f1.import_scale import_scale \
+     "Scale" real 
 generic_entry $nmInfo(basic_options).f1.import_transx import_transx \
      "X Translation" real
 generic_entry $nmInfo(basic_options).f1.import_transy import_transy \
      "Y Translation" real
 generic_entry $nmInfo(basic_options).f1.import_transz import_transz \
      "Z Translation" real
+checkbutton $nmInfo(basic_options).f1.import_update_AFM \
+     -text "Update AFM" -variable import_update_AFM
 generic_entry $nmInfo(basic_options).f2.import_rotx import_rotx \
      "X Rotation" real
 generic_entry $nmInfo(basic_options).f2.import_roty import_roty \
      "Y Rotation" real
 generic_entry $nmInfo(basic_options).f2.import_rotz import_rotz \
      "Z Rotation" real
-generic_entry $nmInfo(basic_options).f3.import_scale import_scale \
-     "Scale" real 
 generic_entry $nmInfo(basic_options).f3.import_tess import_tess \
      "Tube Loading Tesselation" integer
 generic_entry $nmInfo(basic_options).f3.import_axis_step import_axis_step \
@@ -76,6 +79,7 @@ checkbutton $nmInfo(basic_options).f3.proj_text_button \
     -text "Show Projective Texture" -variable import_proj_text
 checkbutton $nmInfo(basic_options).f3.clamp_button \
     -text "Lock Projective Texture" -variable import_clamp
+
 
 
 button $nmInfo(basic_options).f3.set_color \
@@ -102,23 +106,28 @@ pack $nmInfo(basic_options).file.buttons.ccw -anchor nw
 pack $nmInfo(basic_options).file.buttons.cw -anchor nw
 
 
-pack $nmInfo(basic_options).f1 -side left -fill x
-pack $nmInfo(basic_options).f2 -side left -fill x
-pack $nmInfo(basic_options).f3 -side left -fill x
-pack $nmInfo(basic_options).f1.import_transx -padx 1m -pady 1m -anchor nw
-pack $nmInfo(basic_options).f1.import_transy -padx 1m -pady 1m
-pack $nmInfo(basic_options).f1.import_transz -padx 1m -pady 1m
-pack $nmInfo(basic_options).f2.import_rotx -padx 1m -pady 1m -anchor nw
+pack $nmInfo(basic_options).f1 -anchor nw -side left -pady 7m -fill x
+pack $nmInfo(basic_options).f2 -anchor nw -side left -pady 15m -fill x
+pack $nmInfo(basic_options).f3 -anchor nw -side left -pady 5m  -fill x
+
+pack $nmInfo(basic_options).f1.import_scale -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f1.import_transx -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f1.import_transy -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f1.import_transz -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f1.import_update_AFM -anchor sw -padx 1m -pady 1m -fill x
+
+pack $nmInfo(basic_options).f2.import_rotx -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_roty -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_rotz -padx 1m -pady 1m
-pack $nmInfo(basic_options).f3.import_scale -padx 1m -pady 1m -anchor nw
+
 pack $nmInfo(basic_options).f3.import_tess -padx 1m -pady 1m -anchor nw
 pack $nmInfo(basic_options).f3.import_axis_step -padx 1m -pady 1m -anchor nw
 pack $nmInfo(basic_options).f3.visibility_button -anchor nw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f3.proj_text_button -anchor nw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f3.clamp_button -anchor sw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f3.set_color -side left -padx 1m
-pack $nmInfo(basic_options).f3.colorsample -side left -padx 1m -fill x -expand yes
+pack $nmInfo(basic_options).f3.set_color -anchor nw -side left -fill x
+pack $nmInfo(basic_options).f3.colorsample -anchor nw -side left -fill x -expand yes
+
 
 trace variable import_type w SetupOptions
 

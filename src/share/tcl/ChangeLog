@@ -1,3 +1,9 @@
+2002-04-11  David Borland <borland@cs.unc.edu>  
+
+        * import.tcl:  Did some reorganization of the UI.  Added user
+        control for sending orientation and scale updates to the AFM
+        simulator
+
 2002-04-04  Aron Helser  <helser@cs.unc.edu>
 
 	* mainwin.tcl: Add a "working" dialog to indicate when nano is
