@@ -424,14 +424,14 @@ quadMasked(int x, int y, int stride)
     if (d_drawPartialMask) {
         return (d_maskData[index] > 0 ||
                 d_maskData[index-step] > 0 ||
-                d_maskData[index+1] > 0 ||
-                d_maskData[index+1-step]);
+                d_maskData[index+stride] > 0 ||
+                d_maskData[index+stride-step]> 0 );
     }
     else {
         return (d_maskData[index] > 0 &&
                 d_maskData[index-step] > 0 &&
-                d_maskData[index+1] > 0 &&
-                d_maskData[index+1-step]);
+                d_maskData[index+stride] > 0 &&
+                d_maskData[index+stride-step]> 0 );
     }
 }
 

@@ -673,9 +673,6 @@ int spm_y_strip(const  nmb_PlaneSelection &planes,
         return -1;
     }
     
-    /* Fill in the vertices for the triangle strip */
-    glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
-    
     if (!g_VERTEX_ARRAY) {
         glBegin(GL_TRIANGLE_STRIP);
         VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
@@ -742,9 +739,6 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
         fprintf(stderr, "Strip %d is off stride.\n", which);
         return(-1);
     }
-    
-    /* Fill in the vertices for the triangle strip */
-    glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
     
     int number_of_strips = 0;
     bool skipping = false;
@@ -940,9 +934,6 @@ int spm_x_strip(const  nmb_PlaneSelection &planes,
         return -1;
     }
     
-    /* Fill in the vertices for the triangle strip */
-    glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
-    
     if (!g_VERTEX_ARRAY) {
         glBegin(GL_TRIANGLE_STRIP);
         VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
@@ -1009,9 +1000,6 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
         fprintf(stderr, "Strip %d is off stride.\n", which);
         return(-1);
     }
-    
-    /* Fill in the vertices for the triangle strip */
-    glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
     
     int number_of_strips = 0;
     bool skipping = false;
@@ -1169,6 +1157,9 @@ void setupMaterials (void) {
     glEnable(GL_COLOR_MATERIAL);
     /* Use local vertex color for ambient and diffuse */
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+
+    /* Counter-clockwise is forward for the surface and all objects. */
+    glFrontFace(GL_CCW);
     
 }
 
