@@ -1,3 +1,13 @@
+2001-07-25    <marshbur@GOLD-CS>
+
+	* nmb_LBLFlattenedPlane.C (nmb_LBLFlattenedPlane): removed call
+	to dataset->inputPlaneNames->addEntry
+	* nmb_SummedPlane.C (nmb_SummedPlane): ditto
+	* nmb_FlattenedPlane.C (nmb_FlattenedPlane): ditto
+	
+	* nmb_Dataset.C (addNewCalculatedPlane): adds the new plane's name
+	to the list of inputPlaneNames
+
 2001-07-24  Adam Seeger  <seeger@cs.unc.edu>
 	
 	* nmb_TransformMatrix44.C (transform): added one argument version

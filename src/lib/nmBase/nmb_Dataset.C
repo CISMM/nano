@@ -359,6 +359,13 @@ int nmb_Dataset::computeAdhesionFromDeflection
 void nmb_Dataset::
 addNewCalculatedPlane( nmb_CalculatedPlane* plane )
 {
+  if( plane == NULL )
+    {
+      fprintf( stderr, "nmb_Dataset::addNewCalculatedPlane:  "
+	       "null plane.  Sorry.\n" );
+      return;
+    }
+
   nmb_CalculatedPlaneNode* node = new nmb_CalculatedPlaneNode;
   if( !node ) 
     {
@@ -369,6 +376,8 @@ addNewCalculatedPlane( nmb_CalculatedPlane* plane )
   node->data = plane;
   node->next = calculatedPlane_head;
   calculatedPlane_head = node;
+
+  inputPlaneNames->addEntry( plane->getName()->Characters() );
 
 } // end addNewCalculatedPlane( ... )
 
