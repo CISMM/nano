@@ -2466,8 +2466,8 @@ static int handle_timed_sync_request (void *) {
 
   set_stream_time = decoration->elapsedTime;
 
-//fprintf(stderr, "++ In handle_timed_sync_request() at %ld seconds;  "
-//"wrote data into replica.\n", decoration->elapsedTime);
+  //  fprintf(stderr, "++ In handle_timed_sync_request() at %ld seconds;  "
+  //	  "wrote data into replica.\n", decoration->elapsedTime);
 
   return 0;
 }
@@ -2477,8 +2477,8 @@ static int local_time_sync (void *) {
 
   set_stream_time.setReplica(0, decoration->elapsedTime);
 
-//fprintf(stderr, "++ In local_time_sync() at %ld seconds;  "
-//"wrote data into replica.\n", decoration->elapsedTime);
+  //  fprintf(stderr, "++ In local_time_sync() at %ld seconds;  "
+  //	  "wrote data into replica.\n", decoration->elapsedTime);
 
   return 0;
 }
@@ -3493,14 +3493,8 @@ static void handle_flatPlaneName_change(const char *, void *)
       newFlatPlaneName = (const char *) "";
       return;
     }
-  
-  // Add the plane into the list of available ones.
-  // Here we DONT just use newFlatPlaneName, because 
-  // computeFlattenedPlane will change the name,
-  // to add "from hostname"
-  dataset->inputPlaneNames->addEntry(flatPlane->getName()->Characters());
-  newFlatPlaneName = (const char *) "";
-  
+
+  newFlatPlaneName = (const char *) "";  
 } // end handle_flatPlaneName_change
 
 
@@ -5418,7 +5412,7 @@ void setupSynchronization (CollaborationManager * cm,
   streamfileControls->add(&openSPMDeviceName);
   // Don't want to synchronize this;  TCL sets it when set_stream_time
   // sync occurs.
-  //streamfileControls->add(&set_stream_time_now);
+  // streamfileControls->add(&set_stream_time_now);
 
   //adding streamfileControls to rootUIControl
   rootUIControl->add(streamfileControls);
