@@ -11,7 +11,6 @@
 //#include <GL/glut.h>
 
 #include "graphics_globals.h"  // for g_PRERENDERED_COLORS
-#include "spm_gl.h"  // for init_vertexArray()
 
 #include "graphics.h"  // for buildRemoteRenderedTexture
 
@@ -517,15 +516,14 @@ void nmg_RCIS_Video::mainloop (void) {
 nmg_Graphics_RenderClient_Implementation::
 nmg_Graphics_RenderClient_Implementation
                       (nmb_Dataset * data,
-                       const int minColor [3],
-                       const int maxColor [3],
+                       const int surfaceColor [3],
                        vrpn_Connection * inputConnection,
                        RemoteColorMode cMode,
                        RemoteDepthMode dMode,
                        RemoteProjectionMode pMode,
                        nmb_TimerList * timer,
                        int xsize, int ysize) :
-    nmg_Graphics_Implementation (data, minColor, maxColor, NULL, NULL),
+    nmg_Graphics_Implementation (data, surfaceColor, NULL, NULL),
     rangeOfChange (d_renderingGrid),
     //d_pixelBuffer (new unsigned char [xsize * ysize * 3]),
     //d_depthBuffer (new float [xsize * ysize]),

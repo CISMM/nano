@@ -82,11 +82,9 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setCollabMode (int);
 
     // arguments in range [0..1]
-    virtual void setMinColor (const double [3]);
-    virtual void setMaxColor (const double [3]);
+    virtual void setSurfaceColor (const double [3]);
     // arguments in range [0..255]
-    virtual void setMinColor (const int [3]);
-    virtual void setMaxColor (const int [3]);
+    virtual void setSurfaceColor (const int [3]);
 
     virtual void setPatternMapName (const char *);  // RENAME?
 
@@ -188,8 +186,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual int getSpecularity (void) const; 
 //    virtual float getDiffusePercent (void) const;
 
-    virtual const double * getMinColor (void) const;
-    virtual const double * getMaxColor (void) const;
+    virtual const double * getSurfaceColor (void) const;
 
     // Note:
     //   This implementation's accessors is *NOT* guaranteed
@@ -203,8 +200,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     float d_diffuse;
     float d_surface_alpha;
 
-    double d_minColor [3];
-    double d_maxColor [3];
+    double d_surfaceColor [3];
 
     // added Nov 98 to support RenderMan.c;  should be obsolete
 

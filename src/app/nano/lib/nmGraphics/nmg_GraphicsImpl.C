@@ -30,7 +30,6 @@
 #include "openGL.h"  // for check_extension(), display_lists_in_x
 #include "globjects.h"  // for replaceDefaultObjects()
 #include "graphics_globals.h"
-#include "spm_gl.h"  
 #include "nmg_Globals.h"
 
 #include "Timer.h"
@@ -51,8 +50,7 @@
 
 nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     nmb_Dataset * data,
-    const int minColor [3],
-    const int maxColor [3],
+    const int surfaceColor [3],
     const char * rulergridName,
     const char * vizName,
     vrpn_Connection * connection,
@@ -127,8 +125,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     /* Set the background color to light blue */
     glClearColor(0.3, 0.3, 0.7,  0.0);
     
-    setMinColor(minColor);
-    setMaxColor(maxColor);
+    setSurfaceColor(surfaceColor);
     
     initialize_globjects(NULL);  // load default font
     
@@ -321,11 +318,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_setMaskPlaneName_type,
 			   handle_setMaskPlaneName,
 			   this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setMinColor_type,
-                               handle_setMinColor,
-                               this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setMaxColor_type,
-                               handle_setMaxColor,
+  connection->register_handler(d_setSurfaceColor_type,
+                               handle_setSurfaceColor,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setPatternMapName_type,
                                handle_setPatternMapName,
@@ -1263,32 +1257,18 @@ void nmg_Graphics_Implementation::setContourWidth (float x) {
   causeGridRedraw();
 }
 
-void nmg_Graphics_Implementation::setMinColor (const double c [4]) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setMinColor().\n");
-  memcpy(g_minColor, c, 3 * sizeof(double));
+void nmg_Graphics_Implementation::setSurfaceColor (const double c [4]) {
+//fprintf(stderr, "nmg_Graphics_Implementation::setSurfaceColor().\n");
+  memcpy(g_surfaceColor, c, 3 * sizeof(double));
 }
 
-void nmg_Graphics_Implementation::setMaxColor (const double c [4]) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setMaxColor().\n");
-  memcpy(g_maxColor, c, 3 * sizeof(double));
-}
-
-void nmg_Graphics_Implementation::setMinColor (const int c [4]) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setMinColor().\n");
-  g_minColor[0] = c[0] / 255.0;
-  g_minColor[1] = c[1] / 255.0;
-  g_minColor[2] = c[2] / 255.0;
+void nmg_Graphics_Implementation::setSurfaceColor (const int c [4]) {
+//fprintf(stderr, "nmg_Graphics_Implementation::setSurfaceColor().\n");
+  g_surfaceColor[0] = c[0] / 255.0;
+  g_surfaceColor[1] = c[1] / 255.0;
+  g_surfaceColor[2] = c[2] / 255.0;
   //use alpha value from Opacity scrollbar
-  g_minColor[3] = g_surface_alpha;
-}
-
-void nmg_Graphics_Implementation::setMaxColor (const int c [4]) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setMaxColor().\n");
-  g_maxColor[0] = c[0] / 255.0;
-  g_maxColor[1] = c[1] / 255.0;
-  g_maxColor[2] = c[2] / 255.0;
-  //use alpha value from Opacity scrollbar
-  g_maxColor[3] = g_surface_alpha;
+  g_surfaceColor[3] = g_surface_alpha;
 }
 
 void nmg_Graphics_Implementation::setPatternMapName (const char * /*name*/)
@@ -2712,16 +2692,10 @@ float nmg_Graphics_Implementation::getDiffusePercent (void) const {
 }
 */
 
-const double * nmg_Graphics_Implementation::getMinColor (void) const {
-//fprintf(stderr, "nmg_Graphics_Implementation::getMinColor().\n");
-  return g_minColor;
+const double * nmg_Graphics_Implementation::getSurfaceColor (void) const {
+//fprintf(stderr, "nmg_Graphics_Implementation::getSurfaceColor().\n");
+  return g_surfaceColor;
 }
-
-const double * nmg_Graphics_Implementation::getMaxColor (void) const {
-//fprintf(stderr, "nmg_Graphics_Implementation::getMaxColor().\n");
-  return g_maxColor;
-}
-
 
 
 
@@ -3251,24 +3225,13 @@ int nmg_Graphics_Implementation::handle_setRegionControlPlaneName (void * userda
 }
 
 // static
-int nmg_Graphics_Implementation::handle_setMinColor
+int nmg_Graphics_Implementation::handle_setSurfaceColor
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   double c [3];
 
-  CHECKF(it->decode_setMinColor(p.buffer, c), "handle_setMinColor");
-  it->setMinColor(c);
-  return 0;
-}
-
-// static
-int nmg_Graphics_Implementation::handle_setMaxColor
-                                 (void * userdata, vrpn_HANDLERPARAM p) {
-  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  double c [3];
-
-  CHECKF(it->decode_setMaxColor(p.buffer, c), "handle_setMaxColor");
-  it->setMaxColor(c);
+  CHECKF(it->decode_setSurfaceColor(p.buffer, c), "handle_setSurfaceColor");
+  it->setSurfaceColor(c);
   return 0;
 }
 

@@ -315,24 +315,14 @@ void nmg_Graphics_Timer::setContourWidth (float x) {
   d_imp->setContourWidth(x);
 }
 
-void nmg_Graphics_Timer::setMinColor (const double c [4]) {
+void nmg_Graphics_Timer::setSurfaceColor (const double c [4]) {
   activateTimer();
-  d_imp->setMinColor(c);
+  d_imp->setSurfaceColor(c);
 }
 
-void nmg_Graphics_Timer::setMaxColor (const double c [4]) {
+void nmg_Graphics_Timer::setSurfaceColor (const int c [4]) {
   activateTimer();
-  d_imp->setMaxColor(c);
-}
-
-void nmg_Graphics_Timer::setMinColor (const int c [4]) {
-  activateTimer();
-  d_imp->setMinColor(c);
-}
-
-void nmg_Graphics_Timer::setMaxColor (const int c [4]) {
-  activateTimer();
-  d_imp->setMaxColor(c);
+  d_imp->setSurfaceColor(c);
 }
 
 void nmg_Graphics_Timer::setPatternMapName (const char * name) {
@@ -647,11 +637,7 @@ int nmg_Graphics_Timer::getHandColor (void) const {
 int nmg_Graphics_Timer::getSpecularity (void) const {
   return d_imp->getSpecularity();
 }
-const double * nmg_Graphics_Timer::getMinColor (void) const {
-  return d_imp->getMinColor();
+const double * nmg_Graphics_Timer::getSurfaceColor (void) const {
+  return d_imp->getSurfaceColor();
 }
-const double * nmg_Graphics_Timer::getMaxColor (void) const {
-  return d_imp->getMaxColor();
-}
-
 

@@ -22,8 +22,8 @@ public:
     int rebuildRegion(int region);
     ///rebuild display lists for whole surface, all subregions, optional force
     int rebuildSurface(vrpn_bool force = VRPN_FALSE);
-    ///rebuild a few strips of the surface
-    int rebuildInterval(int low_row, int high_row, int strips_in_x);
+    ///rebuild a few strips of the surface, based on d_dataset->range_of_change
+    int rebuildInterval();
 
     ///only recolor the surface, don't re-calc display lists or normals
     int recolorSurface();
@@ -64,6 +64,8 @@ private:
     nmg_SurfaceRegion **d_subRegions;
     nmg_SurfaceRegion *d_defaultRegion;
     unsigned int d_initHeight, d_initWidth;
+    int d_display_lists_in_x;
+
 };
 
 #endif

@@ -1,15 +1,28 @@
 #ifndef NMG_SURFACE_REGION_H
 #define NMG_SURFACE_REGION_H
 
+#include        <v.h>
+
 #include <vrpn_Types.h>
 #include <nmb_Interval.h>
 
+#ifndef NMB_PLANE_SELECTION_H
+#include <nmb_PlaneSelection.h>
+#endif
+
+class nmb_Interval;
 class BCPlane;
 class nmb_Dataset;
 class nmb_PlaneSelection;
 class nmg_SurfaceMask;
 class nmg_Surface;
-struct Vertex_Struct;
+// structure for vertex array
+struct Vertex_Struct {
+        GLfloat Texcoord [3];
+        GLubyte Color [4];
+        GLshort Normal [3];
+        GLfloat Vertex [3];
+};
 
 typedef struct _GraphicsState
 {
@@ -104,7 +117,7 @@ public:
             {d_currentAssociations.stride = associate;}
     
     //Rendering functions
-    int rebuildRegion(nmb_Dataset *dataset, vrpn_bool force = VRPN_FALSE);
+    int rebuildRegion(nmb_Dataset *dataset, int display_lists_in_x, vrpn_bool force = VRPN_FALSE);
     int rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x);	
     void renderRegion();
 
@@ -154,6 +167,32 @@ private:
     void RestoreRenderState();
     void setTexture();
     void cleanUp();
+
+    /// Render the surface!
+    int build_grid_display_lists (const nmb_PlaneSelection &planes, 
+                                  nmg_SurfaceMask *mask,
+                                  int strips_in_x,
+                                  GLuint * base, GLsizei * num, 
+                                  GLsizei old_num,
+                                  GLdouble * surfaceColor,
+                                  Vertex_Struct **surface);
+
+    int build_list_set(
+        const nmb_Interval &subset,
+        const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
+        GLuint base,
+        GLsizei num_lists,
+        GLdouble * surfaceColor,
+        int (* stripfn)
+        (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], int, Vertex_Struct *),
+        Vertex_Struct **surface);
+    int build_list_set (const nmb_Interval &insubset,
+                        const nmb_PlaneSelection &planes, 
+                        nmg_SurfaceMask *mask,
+                        GLuint base, GLsizei num,
+                        int strips_in_x,
+                        Vertex_Struct **surface);
+
 };
 
 #endif

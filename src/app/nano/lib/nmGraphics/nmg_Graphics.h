@@ -79,6 +79,11 @@ class vrpn_Connection;  // from vrpn_Connection.h
  * extension (at the expense of losing compile-time detection of when
  * you haven't done the extension for all the subclasses - which most
  * people don't care about).
+ *
+ * 12 Oct 2001
+ * Plan to have most of above functions generated automatically using
+ * vrpn gen_rpc perl script. So remove " =0" from base class, so pattern
+ * for adding functions is clear. 
  */
 
 
@@ -86,16 +91,16 @@ class nmg_Graphics {
 
   public:
 
-    // indicates which texture is displayed:
+    /// indicates which texture is displayed:
     enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA,
 			           COLORMAP, SEM_DATA,  BUMPMAP, HATCHMAP, 
                        PATTERNMAP, REMOTE_DATA, VISUALIZATION };
 
-    // how texture coordinates are computed:
+    /// how texture coordinates are computed:
     enum TextureTransformMode {RULERGRID_COORD, VIZTEX_COORD, REGISTRATION_COORD, 
 		MANUAL_REALIGN_COORD, REMOTE_COORD, PER_QUAD_COORD};
 
-    // enums for Remote Rendering
+    /// enums for Remote Rendering
     enum RemoteColorMode { NO_COLORS, VERTEX_COLORS, 
                            SUPERSAMPLED_COLORS, CLOUDMODEL_COLORS };
 
@@ -105,7 +110,7 @@ class nmg_Graphics {
 
     nmg_Graphics (vrpn_Connection *, const char * name);
 
-    virtual ~nmg_Graphics (void);
+    virtual ~nmg_Graphics (void) = 0;
 
 
     virtual void mainloop (void) = 0;
@@ -114,296 +119,294 @@ class nmg_Graphics {
 
     //  ALL MANIPULATORS MUST NOT BE IMPLEMENTED IN THIS CLASS!
 
-    virtual void changeDataset( nmb_Dataset * data) = 0;
+    virtual void changeDataset( nmb_Dataset * data) {};
 
-    virtual void resizeViewport(int width, int height) = 0;
-      // changes the size of the display window (actually this only
-      // handles changing the way the world is drawn into the display
-      // window and the actual resizing may be done by the window system)
-    virtual void getViewportSize(int *width, int * height)=0;
+    virtual void resizeViewport(int width, int height) {};
+      ///< changes the size of the display window (actually this only
+      ///< handles changing the way the world is drawn into the display
+      ///< window and the actual resizing may be done by the window system)
+    virtual void getViewportSize(int *width, int * height) {};
 
     virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
-                                                        q_vec_type &ur) = 0;
-      // gets position of lower left, upper left and upper right corners
-      // of the screen in room space
+                                                        q_vec_type &ur) {};
+      ///< gets position of lower left, upper left and upper right corners
+      ///< of the screen in room space
 
-    virtual void loadRulergridImage (const char * name) = 0;
-      // Specifies the name of a PPM file to display as the rulergrid.
+    virtual void loadRulergridImage (const char * name) {};
+      ///< Specifies the name of a PPM file to display as the rulergrid.
 
-	virtual void loadVizImage (const char * name) = 0;
-    virtual void setViztexScale (float) = 0;
+    virtual void loadVizImage (const char * name) {};
+    virtual void setViztexScale (float) {};
 
-    virtual void causeGridReColor (void) = 0;
-    virtual void causeGridRedraw (void) = 0;
-      // Forces the entire set of display lists to be regenerated.
-    virtual void causeGridRebuild (void) = 0;
-      // Forces the entire set of display lists to be regenerated.
+    virtual void causeGridReColor (void) {};
+      ///< Regenerates vertex colors, but not normals or vertex coords. 
+    virtual void causeGridRedraw (void) {};
+      ///< Forces the entire set of display lists to be regenerated.
+    virtual void causeGridRebuild (void) {};
+      ///< Forces the entire set of display lists to be regenerated.
 
-    virtual void enableChartjunk (int on) = 0;
-      // Controls display of chartjunk (text in screenspace).
-      // Turn on for real use, off to capture images for publication.
-    virtual void enableFilledPolygons (int on, int region = 0) = 0;
-      // Controls filling of surface.  Turn off to show wireframe for demos.
-    virtual void enableSmoothShading (int on) = 0;
-      // Controls smooth shading of surface.  Turn off to show faceting
-      // for demos.
+    virtual void enableChartjunk (int on) {};
+      ///< Controls display of chartjunk (text in screenspace).
+      ///< Turn on for real use, off to capture images for publication.
+    virtual void enableFilledPolygons (int on, int region = 0) {};
+      ///< Controls filling of surface,  Turn off to show wireframe for demos.
+    virtual void enableSmoothShading (int on) {};
+      ///< Controls smooth shading of surface,  Turn off to show faceting
+      ///< for demos.
 
-    //virtual void enableUber (int on) = 0;
+    //virtual void enableUber (int on) {};
       // Controls execution of UberGraphics addins.  Turn off for
       // multiprocessing (on PCs).
-    virtual void enableTrueTip (int on) = 0;
-      // Controls latency compensation technique:  displaying second
-      // tip image.
+    virtual void enableTrueTip (int on) {};
+      ///< Controls latency compensation technique:  displaying second
+      ///< tip image.
 
-    virtual void setAdhesionSliderRange (float low, float hi) = 0;
+    virtual void setAdhesionSliderRange (float low, float hi) {};
       // Sets the range over which adhesion is interpolated from 0 to 1.
       // Adhesion is not normally a graphics parameter, but is mapped
       // to one on PxFl.  This could be made clearer by renaming
       // "adhesion" within this module.
 
-    virtual void setAlphaColor (float r, float g, float b) = 0;
-      // Sets the color of the alpha-blended texture.
-    virtual void setAlphaSliderRange (float low, float hi) = 0;
-      // Sets the range over which the alpha-blended texture's
-      // alpha values vary from 0 to 1.
+    virtual void setAlphaColor (float r, float g, float b) {};
+      ///< Sets the color of the alpha-blended texture.
+    virtual void setAlphaSliderRange (float low, float hi) {};
+      ///< Sets the range over which the alpha-blended texture's
+      ///< alpha values vary from 0 to 1.
 
-    virtual void setBumpMapName (const char *) = 0;
-      // Specifies the name of the dataset to use to drive bump mapping
-      // on PxFl.
+    virtual void setBumpMapName (const char *) {};
+      ///< Specifies the name of the dataset to use to drive bump mapping
+      ///< on PxFl.
 
-    virtual void setColorMapDirectory (const char *) = 0;
-      // Specifies the path in which to search for color maps.
-    virtual void setColorMapName (const char *) = 0;
-      // Specifies the name of the color map to use.
-    virtual void setColorMinMax (float low, float hi) = 0;
-    virtual void setDataColorMinMax (float low, float hi) = 0;
-    virtual void setOpacitySliderRange (float low, float hi) = 0;
-      // Specifies the range of values over which to interpolate
-      // the opacity map.
+    virtual void setColorMapDirectory (const char *) {};
+      ///< Specifies the path in which to search for color maps.
+    virtual void setColorMapName (const char *) {};
+      ///< Specifies the name of the color map to use.
+    virtual void setColorMinMax (float low, float hi) {};
+    virtual void setDataColorMinMax (float low, float hi) {};
+    virtual void setOpacitySliderRange (float low, float hi) {};
+      ///< Specifies the range of values over which to interpolate
+      ///< the opacity map.
 
-    virtual void setTextureDirectory (const char *) = 0;
-      // Specifies the path in which to search for textures.
+    virtual void setTextureDirectory (const char *) {};
+      ///< Specifies the path in which to search for textures.
 
-    virtual void setComplianceSliderRange (float low, float hi) = 0;
-      // Sets the range over which compliance is interpolated from
-      // 0 to 1.  Compliance is not normally a graphics parameter,
-      // but is mapped to one on PxFl.  This could be made clearer
-      // by renaming "compliance" within this module.
+    virtual void setComplianceSliderRange (float low, float hi) {};
+      ///< Sets the range over which compliance is interpolated from
+      ///< 0 to 1.  Compliance is not normally a graphics parameter,
+      ///< but is mapped to one on PxFl.  This could be made clearer
+      ///< by renaming "compliance" within this module.
 
-    virtual void setContourColor (int r, int g, int b) = 0;
-      // Sets the color of the intermediate lines drawn in the
-      // contour map.  Apparently the major lines (every 10th)
-      // are hardwired to be white?
-    virtual void setContourWidth (float) = 0;
-      // Sets the width of the contour lines.
+    virtual void setContourColor (int r, int g, int b) {};
+      ///< Sets the color of the intermediate lines drawn in the
+      ///< contour map (The major lines, every 10th,
+      ///< are hardwired to be white)
+    virtual void setContourWidth (float) {};
+      ///< Sets the width of the contour lines.
 
-    virtual void setFrictionSliderRange (float low, float hi) = 0;
-      // Sets the range over which friction is interpolated from
-      // 0 to 1.  Friction is not normally a graphics parameter,
-      // but is mapped to one on PxFl.  This could be made clearer
-      // by renaming "friction" within this module.
+    virtual void setFrictionSliderRange (float low, float hi) {};
+      ///< Sets the range over which friction is interpolated from
+      ///< 0 to 1.  Friction is not normally a graphics parameter,
+      ///< but is mapped to one on PxFl.  This could be made clearer
+      ///< by renaming "friction" within this module.
 
-	virtual void setBumpSliderRange (float low, float hi) = 0;
-		// sets the range over which haptic bump size is
-		// interpolated from 0 to 1
-	virtual void setBuzzSliderRange (float low, float hi) = 0;
-		// sets the range over which haptic buzz amplitude is
-		// interpolated from 0 to 1
+	virtual void setBumpSliderRange (float low, float hi) {};
+		///< sets the range over which haptic bump size is
+		///< interpolated from 0 to 1
+	virtual void setBuzzSliderRange (float low, float hi) {};
+		///< sets the range over which haptic buzz amplitude is
+		///< interpolated from 0 to 1
 
-    virtual void setHandColor (int) = 0;
-      // UNKNOWN.
-    virtual void setHatchMapName (const char *) = 0;  // RENAME?
-      // Specifies the name of the data plane to use to drive hatch
-      // maps on PxFl.
+    virtual void setHandColor (int) {};
+      ///< UNKNOWN.
+    virtual void setHatchMapName (const char *) {};  // RENAME?
+      ///< Specifies the name of the data plane to use to drive hatch
+      ///< maps on PxFl.
 
-    virtual void setAlphaPlaneName (const char *) = 0;
-    virtual void setColorPlaneName (const char *) = 0;
-    virtual void setContourPlaneName (const char *) = 0;
-    virtual void setOpacityPlaneName (const char *) = 0;
-    virtual void setHeightPlaneName (const char *) = 0;
-    virtual void setMaskPlaneName (const char *) = 0;
+    virtual void setAlphaPlaneName (const char *) {};
+    virtual void setColorPlaneName (const char *) {};
+    virtual void setContourPlaneName (const char *) {};
+    virtual void setOpacityPlaneName (const char *) {};
+    virtual void setHeightPlaneName (const char *) {};
+    virtual void setMaskPlaneName (const char *) {};
 
-    virtual void setIconScale (float) = 0;
-      // Scale the 3D icons.
+    virtual void setIconScale (float) {};
+      ///< Scale the 3D icons.
 
-    virtual void enableCollabHand (vrpn_bool on) = 0;
-    virtual void setCollabHandPos(double [3], double [4]) = 0;
-      //for setting position and rotation of icon for collaborator's hand
-      //icon
+    virtual void enableCollabHand (vrpn_bool on) {};
+    virtual void setCollabHandPos(double [3], double [4]) {};
+      ///<for setting position and rotation of icon for collaborator's hand
+      ///<icon
 
-    virtual void setCollabMode(int) = 0;
-      //for setting position and rotation of icon for collaborator's hand
-      //icon
+    virtual void setCollabMode(int) {};
+      ///<for setting position and rotation of icon for collaborator's hand
+      ///<icon
 
     // arguments in range [0..1]
-    virtual void setMinColor (const double [3]) = 0;
-    virtual void setMaxColor (const double [3]) = 0;
+    virtual void setSurfaceColor (const double [3]) {};
     // arguments in range [0..255]
-    virtual void setMinColor (const int [3]) = 0;
-    virtual void setMaxColor (const int [3]) = 0;
+    virtual void setSurfaceColor (const int [3]) {};
 
-    virtual void setPatternMapName (const char *) = 0;  // RENAME?
-      // Specifies the name of the data plane to use to drive pattern
-      // maps on PxFl.
+    virtual void setPatternMapName (const char *) {};  // RENAME?
+      ///< Specifies the name of the data plane to use to drive pattern
+      ///< maps on PxFl.
 
     // Realigning Textures:
-    virtual void createRealignTextures( const char * ) = 0;
-    virtual void setRealignTextureSliderRange (float, float, float, float) = 0;
+    virtual void createRealignTextures( const char * ) {};
+    virtual void setRealignTextureSliderRange (float, float, float, float) {};
     virtual void setRealignTexturesConversionMap
-                    (const char *, const char *) = 0;
-    virtual void computeRealignPlane( const char *, const char * ) = 0;
+                    (const char *, const char *) {};
+    virtual void computeRealignPlane( const char *, const char * ) {};
 
 // functionality moved to setTextureMode()
-//    virtual void enableRealignTextures (int on) = 0;
+//    virtual void enableRealignTextures (int on) {};
 
-    virtual void translateTextures ( int on, float dx, float dy ) = 0;
-    virtual void scaleTextures ( int on, float dx, float dy ) = 0;
-    virtual void shearTextures ( int on, float dx, float dy ) = 0;
-    virtual void rotateTextures ( int on, float theta ) = 0;
-    virtual void setTextureCenter( float dx, float dy ) = 0;
+    virtual void translateTextures ( int on, float dx, float dy ) {};
+    virtual void scaleTextures ( int on, float dx, float dy ) {};
+    virtual void shearTextures ( int on, float dx, float dy ) {};
+    virtual void rotateTextures ( int on, float theta ) {};
+    virtual void setTextureCenter( float dx, float dy ) {};
 
     virtual void loadRawDataTexture(const int which, const char *image_name,
-        const int start_x, const int start_y) = 0;
+        const int start_x, const int start_y) {};
     virtual void updateTexture(int which, const char *image_name,
        int start_x, int start_y, 
-       int end_x, int end_y) = 0;
+       int end_x, int end_y) {};
 
 // functionality moved to setTextureMode()
-//    virtual void enableRegistration(int on) = 0;
+//    virtual void enableRegistration(int on) {};
 
-    virtual void setTextureTransform(double *xform) = 0;
+    virtual void setTextureTransform(double *xform) {};
 
 // functionality moved to setTextureMode()
-//    virtual void enableRulergrid (int on) = 0;
+//    virtual void enableRulergrid (int on) {};
       // Controls display of the rulergrid.
 
-    virtual void setRulergridAngle (float) = 0;
-      // Sets the angle at which the rulergrid is rotated.
-    virtual void setRulergridColor (int r, int g, int b) = 0;
-      // Sets the color used to draw the rulergrid.
-    virtual void setRulergridOffset (float x, float y) = 0;
-      // Sets the translation of the rulergrid from its default
-      // position.  (In nm?)
-    virtual void setRulergridOpacity (float alpha) = 0;
-      // Sets the alpha value to use with the rulergrid.
-    virtual void setRulergridScale (float) = 0;
-      // Toggles whether or not to set the data with z-values 0.0 (i.e.
-      // it hasn't been received yet) to be rendered invisible or not
-    virtual void setNullDataAlphaToggle( int v ) = 0;
-      // Sets the number of nanometers between rulings in the
-      // rulergrid.
-    virtual void setRulergridWidths (float x, float y) = 0;
-      // Sets the width of the lines in the rulergrid.
+    virtual void setRulergridAngle (float) {};
+      ///< Sets the angle at which the rulergrid is rotated.
+    virtual void setRulergridColor (int r, int g, int b) {};
+      ///< Sets the color used to draw the rulergrid.
+    virtual void setRulergridOffset (float x, float y) {};
+      ///< Sets the translation of the rulergrid from its default
+      ///< position.  (In nm?)
+    virtual void setRulergridOpacity (float alpha) {};
+      ///< Sets the alpha value to use with the rulergrid.
+    virtual void setRulergridScale (float) {};
+      ///< Toggles whether or not to set the data with z-values 0.0 (i.e.
+      ///< it hasn't been received yet) to be rendered invisible or not
+    virtual void setNullDataAlphaToggle( int v ) {};
+      ///< Sets the number of nanometers between rulings in the
+      ///< rulergrid.
+    virtual void setRulergridWidths (float x, float y) {};
+      ///< Sets the width of the lines in the rulergrid.
 
-    virtual void setSpecularity (int) = 0;
-      // Sets the specularity of the surface.
-    virtual void setSpecularColor (float) = 0;
-      // ???
-    virtual void setLocalViewer (vrpn_bool) = 0;
-    virtual void setDiffusePercent (float) = 0;
-    virtual void setSurfaceAlpha (float, int region = 0) = 0;
-    virtual void setSphereScale (float) = 0;
-      // Set the size of the sphere drawn at the stylus tip in modify mode.
+    virtual void setSpecularity (int) {};
+      ///< Sets the specularity of the surface.
+    virtual void setSpecularColor (float) {};
+      ///< Sets color of specular light, may be obsolete, not in interface
+    virtual void setLocalViewer (vrpn_bool) {};
+      ///< Sets whether the view is local (more realistic) or at infinity
+      ///< (faster).
+    virtual void setDiffusePercent (float) {};
+    virtual void setSurfaceAlpha (float, int region = 0) {};
+      ///< Sets transparency of surface
+    virtual void setSphereScale (float) {};
+      ///< Set the size of the sphere drawn at the stylus tip in modify mode.
 
-    virtual void setTesselationStride (int, int region = 0) = 0;
-      // Sets the stride with which the data grid is tesselated.
+    virtual void setTesselationStride (int, int region = 0) {};
+      ///< Sets the stride with which the data grid is tesselated.
 
-    virtual void setTextureMode (TextureMode,TextureTransformMode, int region = 0) = 0;
-      // Determines which texture to display currently.
+    virtual void setTextureMode (TextureMode,TextureTransformMode, int region = 0) {};
+      ///< Determines which texture to display currently.
       // q.v. enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA, OPACITYMAP };
 
-    virtual void setTextureScale (float) = 0;
-      // Interval between contour lines.
+    virtual void setTextureScale (float) {};
+      ///< Interval between contour lines.
 
-    virtual void setTrueTipScale (float) = 0;
-      // Size at which true tip indicator is drawn
-      // FOR DEBUGGING ONLY
+    virtual void setTrueTipScale (float) {};
+      ///< Size at which true tip indicator is drawn
+      ///< FOR DEBUGGING ONLY
 
     virtual void setUserMode (int oldMode, int oldStyle, int newMode, int style,
-			      int tool) = 0;
-      // Specifies the mode of interaction currently being used.
-      // Controls which widgets are displayed.
+			      int tool) {};
+      ///< Specifies the mode of interaction currently being used,
+      ///< Controls which widgets are displayed.
 
-    virtual void setLightDirection (q_vec_type &) = 0;
-      // Sets the direction from which the scene is illuminated.
-    virtual void resetLightDirection (void) = 0;
-      // Resets the direction from which the scene is illuminated
-      // to the default.
+    virtual void setLightDirection (q_vec_type &) {};
+      ///< Sets the direction from which the scene is illuminated.
+    virtual void resetLightDirection (void) {};
+      ///< Resets the direction from which the scene is illuminated
+      ///< to the default.
 
     // WARNING:  This code assumes there is only one polyline being
     // maintained (by the server).  If you need more, rewrite it.
 
-    virtual int addPolylinePoint( const PointType [2] ) = 0;
-    //    virtual int addPolylinePoint (const float [2][3]) = 0;
-      // Adds a point to the active polyline.
-    virtual void emptyPolyline (void) = 0;
-      // Throws away all the points in the active polyline.
+    virtual int addPolylinePoint( const PointType [2] ) {return 0;};
+      ///< Adds a point to the active polyline.
+    //    virtual int addPolylinePoint (const float [2][3]) {};
+    virtual void emptyPolyline (void) {};
+      ///< Throws away all the points in the active polyline.
 
-    virtual void setRubberLineStart (float, float) = 0;
-    virtual void setRubberLineEnd (float, float) = 0;
-    virtual void setRubberLineStart (const float [2]) = 0;
-    virtual void setRubberLineEnd (const float [2]) = 0;
+    virtual void setRubberLineStart (float, float) {};
+    virtual void setRubberLineEnd (float, float) {};
+    virtual void setRubberLineStart (const float [2]) {};
+    virtual void setRubberLineEnd (const float [2]) {};
 
-    virtual void setScanlineEndpoints(const float[3], const float [3]) = 0;
-    virtual void displayScanlinePosition(const int enable) = 0;
+    virtual void setScanlineEndpoints(const float[3], const float [3]) {};
+    virtual void displayScanlinePosition(const int enable) {};
 
     virtual void positionAimLine (const PointType top,
-                                  const PointType bottom) = 0;
-      // positionAimLine() is OBSOLETE
+                                  const PointType bottom) {};
+      ///< positionAimLine() is OBSOLETE
 
     virtual void positionRubberCorner (float x0, float y0,
-                                       float x1, float y1, int) = 0;
-    virtual void positionRegionBox (float, float, float, float, float, int) = 0;
+                                       float x1, float y1, int) {};
+    virtual void positionRegionBox (float, float, float, float, float, int) {};
     virtual void positionSweepLine (const PointType topL,
                                     const PointType bottomL,
 				    const PointType topR,
-				    const PointType bottomR) = 0;
+				    const PointType bottomR) {};
     virtual int addPolySweepPoints (const PointType topL,
 				    const PointType bottomL,
 				    const PointType topR,
-				    const PointType bottomR) = 0;
-    virtual void setRubberSweepLineStart (const PointType, const PointType) = 0;
-    virtual void setRubberSweepLineEnd (const PointType, const PointType) = 0;
+				    const PointType bottomR) { return 0;};
+    virtual void setRubberSweepLineStart (const PointType, const PointType) {};
+    virtual void setRubberSweepLineEnd (const PointType, const PointType) {};
 
-    virtual void positionSphere (float x, float y, float z) = 0;
+    virtual void positionSphere (float x, float y, float z) {};
 
-    virtual void setViewTransform (v_xform_type) = 0;
+    virtual void setViewTransform (v_xform_type) {};
       /**< Specifies the view transform (in a vlib implementation,
        *  this is v_world.users.xforms[0]).
        */
 
-    // Screen capture
-    virtual void createScreenImage
-    (
-       const char      *filename,
-       const ImageType  type
-    ) = 0;
+    /// Screen capture
+    virtual void createScreenImage(const char *filename,
+                                   const ImageType  type ) {};
 
 	/*New surface based method.*/
-    virtual int createRegion() = 0;
-    virtual void destroyRegion(int region) = 0;
-	virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0) = 0;
-    virtual void setRegionControlPlaneName (const char *, int region = 0) = 0;
+    virtual int createRegion() {return 0;};
+    virtual void destroyRegion(int region) {};
+	virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0) {};
+    virtual void setRegionControlPlaneName (const char *, int region = 0) {};
 
     //These functions are related to controlling what changes affect the
     //entire surface and what don't.
-    virtual void associateAlpha(vrpn_bool associate, int region) = 0;
-    virtual void associateFilledPolygons(vrpn_bool associate, int region) = 0;
-    virtual void associateTextureDisplayed(vrpn_bool associate, int region) = 0;
-    virtual void associateTextureMode(vrpn_bool associate, int region) = 0;
-    virtual void associateTextureTransformMode(vrpn_bool associate, int region) = 0;
-    virtual void associateStride(vrpn_bool associate, int region) = 0;
+    virtual void associateAlpha(vrpn_bool associate, int region) {};
+    virtual void associateFilledPolygons(vrpn_bool associate, int region) {};
+    virtual void associateTextureDisplayed(vrpn_bool associate, int region) {};
+    virtual void associateTextureMode(vrpn_bool associate, int region) {};
+    virtual void associateTextureTransformMode(vrpn_bool associate, int region) {};
+    virtual void associateStride(vrpn_bool associate, int region) {};
 
     // ACCESSORS
-    virtual void getLightDirection (q_vec_type *) const = 0;
-      // Returns the direction from which the light emanates.
-    virtual int getHandColor (void) const = 0;
-      // Returns the last value passed by setHandColor().
-    virtual int getSpecularity (void) const = 0;
-      // Returns the specularity of the surface.
+    virtual void getLightDirection (q_vec_type *) const {};
+      ///< Returns the direction from which the light emanates.
+    virtual int getHandColor (void) const {return 0;};
+      ///< Returns the last value passed by setHandColor().
+    virtual int getSpecularity (void) const { return 0;};
+      ///< Returns the specularity of the surface.
 
-    virtual const double * getMinColor (void) const = 0;
-    virtual const double * getMaxColor (void) const = 0;
+    virtual const double * getSurfaceColor (void) const {return NULL;};
 
     TextureMode getTextureMode (void) const;
 
@@ -451,8 +454,7 @@ class nmg_Graphics {
 	vrpn_int32 d_setHeightPlaneName_type;
 	vrpn_int32 d_setMaskPlaneName_type;
     vrpn_int32 d_setIconScale_type;
-    vrpn_int32 d_setMinColor_type;
-    vrpn_int32 d_setMaxColor_type;
+    vrpn_int32 d_setSurfaceColor_type;
     vrpn_int32 d_setPatternMapName_type;
     vrpn_int32 d_enableRulergrid_type;
     vrpn_int32 d_setRulergridAngle_type;
@@ -486,12 +488,12 @@ class nmg_Graphics {
     vrpn_int32 d_positionSweepLine_type;
     vrpn_int32 d_positionSphere_type;
 
-    //type for collaborator's hand position/orientation
+    ///type for collaborator's hand position/orientation
     vrpn_int32 d_enableCollabHand_type;
     vrpn_int32 d_setCollabHandPos_type;
     vrpn_int32 d_setCollabMode_type;
 
-    // Realign Textures Network Types:
+    /// Realign Textures Network Types:
     vrpn_int32 d_createRealignTextures_type;
     vrpn_int32 d_setRealignTexturesConversionMap_type;
     vrpn_int32 d_setRealignTextureSliderRange_type;
@@ -511,11 +513,11 @@ class nmg_Graphics {
     vrpn_int32 d_displayScanlinePosition_type;
     vrpn_int32 d_setViewTransform_type;
 
-    //Screen capture
+    ///Screen capture
     vrpn_int32 d_createScreenImage_type;
 
     vrpn_int32 d_setViztexScale_type;
-    //Surface control variables
+    ///Surface control variables
     vrpn_int32 d_setRegionMaskHeight_type;
     vrpn_int32 d_setRegionControlPlaneName_type;
     vrpn_int32 d_createRegion_type;
@@ -602,14 +604,10 @@ class nmg_Graphics {
     //int decode_setHeightPlaneName (const char * buf, const char *);
     char * encode_setIconScale (int * len, float);
     int decode_setIconScale (const char * buf, float *);
-    char * encode_setMinColor (int * len, const double [3]);
-    int decode_setMinColor (const char * buf, double [3]);
-    char * encode_setMaxColor (int * len, const double [3]);
-    int decode_setMaxColor (const char * buf, double [3]);
-    char * encode_setMinColor (int * len, const int [3]);
-    int decode_setMinColor (const char * buf, int [3]);
-    char * encode_setMaxColor (int * len, const int [3]);
-    int decode_setMaxColor (const char * buf, int [3]);
+    char * encode_setSurfaceColor (int * len, const double [3]);
+    int decode_setSurfaceColor (const char * buf, double [3]);
+    char * encode_setSurfaceColor (int * len, const int [3]);
+    int decode_setSurfaceColor (const char * buf, int [3]);
     char * encode_enableRulergrid (int * len, int);
     int decode_enableRulergrid (const char * buf, int *);
     char * encode_setRulergridAngle (int * len, float);
@@ -734,18 +732,10 @@ class nmg_Graphics {
     char * encode_setViewTransform (int * len, v_xform_type);
     int decode_setViewTransform (const char * buf, v_xform_type *);
 
-    char *encode_createScreenImage
-    (
-       int             *len,
-       const char      *filename,
-       const ImageType  type
-    );
-    int decode_createScreenImage
-    (
-       const char  *buf,
-       char       **filename,
-       ImageType   *type
-    );
+    char *encode_createScreenImage(int *len, const char *filename,
+                                   const ImageType  type );
+    int decode_createScreenImage(const char *buf, char **filename,
+                                 ImageType   *type );
 
     char * encode_setViztexScale (int * len, float);
     int decode_setViztexScale (const char * buf, float *);

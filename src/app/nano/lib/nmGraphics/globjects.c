@@ -27,7 +27,7 @@
 #include "nmg_Funclist.h"
 #include "globjects.h"
 #include "graphics_globals.h" // actually, this is all we need for VERBOSE
-#include "spm_gl.h"
+#include "openGL.h"
 #include "font.h"
 #include "chartjunk.h"
 
@@ -41,9 +41,12 @@
 #define xx .525731112119133606
 #define zz .850650808352039932
 #define SPHERE_DEPTH 2
-//XXX this is redundant with math.h, which SOMEBODY ELSE up above
-// us is including in their header file.  Yuck.
-#define PI 3.1415926535
+
+// M_PI not defined for VC++, for some reason. 
+#ifndef M_PI
+#define M_PI		3.14159265358979323846
+//#define M_PI_2		1.57079632679489661923
+#endif
 
 #include <v.h>  // to define GLfloat
 typedef GLfloat VertexType[3];
@@ -1098,14 +1101,14 @@ static int make_cone ()
   glBegin(GL_TRIANGLE_FAN);
     glVertex3f(750, 0.0, 0.0);
     for (i = 0; i < 17; i++) {
-      glVertex3f(750, 100.0*cos(i*PI/8.0), 100.0*sin(i*PI/8.0));
+      glVertex3f(750, 100.0*cos(i*M_PI/8.0), 100.0*sin(i*M_PI/8.0));
     } 
   glEnd();
 
   glBegin(GL_TRIANGLE_FAN);
     glVertex3f(0.0, 0.0, 0.0);
     for (i = 0; i < 17; i++) {
-      glVertex3f(750, 100.0*cos(i*PI/8.0), 100.0*sin(i*PI/8.0));
+      glVertex3f(750, 100.0*cos(i*M_PI/8.0), 100.0*sin(i*M_PI/8.0));
     }
   glEnd();
   return 0;
@@ -1252,11 +1255,11 @@ int myroom (int)
   // Set material parameters for the space, then draw things in room space.
   // Since all in room space is text or lines, set measure materials.
 
-  TIMERVERBOSE(5, mytimer, "globjects.c:myroom:spm_set_measure_materials");
+  TIMERVERBOSE(5, mytimer, "globjects.c:myroom:set_gl_measure_materials");
 
-  spm_set_measure_materials();
+  set_gl_measure_materials();
 
-  TIMERVERBOSE(5, mytimer, "globjects.c:myroom:end spm_set_measure_materials");
+  TIMERVERBOSE(5, mytimer, "globjects.c:myroom:end set_gl_measure_materials");
 
   while(head != NULL) {
       if (spm_graphics_verbosity >= 12)
@@ -1279,7 +1282,7 @@ int myhead (int)
 
   // Set material parameters for the space, then draw things in head space.
   // Since all in head space is text or lines, set measure materials.
-  spm_set_measure_materials();
+  set_gl_measure_materials();
   while(head != NULL) {
       if (spm_graphics_verbosity >= 12)
         fprintf(stderr,"            Drawing %s\n", head->name);
@@ -1300,7 +1303,7 @@ int myhand (int)
   }
 
   // Set material parameters for the space, which holds the icon 
-  spm_set_icon_materials(); 
+  set_gl_icon_materials(); 
   while(head != NULL) {
       if (spm_graphics_verbosity >= 12)
         fprintf(stderr,"            Drawing %s\n", head->name);
@@ -1324,11 +1327,11 @@ int myscreen (int)
   // Set material parameters for the space, then draw things in head space.
   // Since all in screen space is text or lines, set measure materials.
 
-  TIMERVERBOSE(5, mytimer, "myscreen;spm_set_measure_materials");
+  TIMERVERBOSE(5, mytimer, "myscreen;set_gl_measure_materials");
 
-  spm_set_measure_materials();
+  set_gl_measure_materials();
 
-  TIMERVERBOSE(5, mytimer, "myscreen; end spm_set_measure_materials");
+  TIMERVERBOSE(5, mytimer, "myscreen; end set_gl_measure_materials");
 
   // Ugly kluge to put text on CRTs "in front of" the screen.
   // There isn't enough depth on the projection stack to push/pop
@@ -1812,9 +1815,8 @@ int mysphere(void * /*data*/ )
 
 // Position of user's hand
 
-int Tip(void *data)
+int Tip(void *)
 {
-	data = data;	// Keep the compiler happy
         int i;
         static float handlescale = 0.1f;
 
@@ -1822,8 +1824,7 @@ int Tip(void *data)
 
 /* I don't know who keeps taking this out but unless we change
 	how the tip is drawn it seems to be necessary */
-	glRotatef(-90.0, 0.0,1.0,0.0); // XXX HACK!!! (or was it wrong before!?)
-
+	glRotatef(-90.0, 0.0,1.0,0.0); 
 
 	glPushAttrib(GL_CURRENT_BIT);
 
@@ -1837,7 +1838,7 @@ int Tip(void *data)
         VERBOSE(20, "          glBegin(GL_TRIANGLE_FAN)");
 	glVertex3f(TIP_HEIGHT,0.0,0.0);
 	for (i=0;i<17;i++)
-	  glVertex3f(TIP_HEIGHT,0.1*cos(i*PI/8.0),0.1*sin(i*PI/8.0));
+	  glVertex3f(TIP_HEIGHT,0.1*cos(i*M_PI/8.0),0.1*sin(i*M_PI/8.0));
         VERBOSE(20, "          glEnd()");
 	glEnd();
 	
@@ -1846,7 +1847,7 @@ int Tip(void *data)
         VERBOSE(20, "          glBegin(GL_TRIANGLE_FAN)");
 	glVertex3f(0.0,0.0,0.0);
 	for (i=0;i<17;i++)
-	  glVertex3f(TIP_HEIGHT,0.1*cos(i*PI/8.0),0.1*sin(i*PI/8.0));
+	  glVertex3f(TIP_HEIGHT,0.1*cos(i*M_PI/8.0),0.1*sin(i*M_PI/8.0));
         VERBOSE(20, "          glEnd()");
 	glEnd();
 
@@ -1899,8 +1900,8 @@ int TrueTip (void *)
         VERBOSE(20, "          glBegin(GL_TRIANGLE_FAN)");
 	glVertex3f(TIP_HEIGHT, 0.0f, 0.0f);
 	for (i = 0; i < 17; i++)
-	  glVertex3f(TIP_HEIGHT, 0.1f * cos(i * PI / 8.0f),
-                                 0.1f * sin(i * PI / 8.0f));
+	  glVertex3f(TIP_HEIGHT, 0.1f * cos(i * M_PI / 8.0f),
+                                 0.1f * sin(i * M_PI / 8.0f));
         VERBOSE(20, "          glEnd()");
 	glEnd();
 	
@@ -1909,8 +1910,8 @@ int TrueTip (void *)
         VERBOSE(20, "          glBegin(GL_TRIANGLE_FAN)");
 	glVertex3f(0.0f, 0.0f, 0.0f);
 	for (i = 0; i < 17; i++)
-	  glVertex3f(TIP_HEIGHT, 0.1f * cos(i * PI / 8.0f),
-                                 0.1f * sin(i * PI / 8.0f));
+	  glVertex3f(TIP_HEIGHT, 0.1f * cos(i * M_PI / 8.0f),
+                                 0.1f * sin(i * M_PI / 8.0f));
         VERBOSE(20, "          glEnd()");
 	glEnd();
 

@@ -13,8 +13,7 @@
 
 nmg_Graphics_RenderClient::nmg_Graphics_RenderClient
           (nmb_Dataset * data,
-           const int minColor [3],
-           const int maxColor [3],
+           const int surfaceColor [3],
            vrpn_Connection * inputConnection,
            RemoteColorMode cMode,
            RemoteDepthMode dMode,
@@ -23,7 +22,7 @@ nmg_Graphics_RenderClient::nmg_Graphics_RenderClient
            vrpn_Connection * controlConnection,
            nmb_TimerList * timer) :
     nmg_Graphics_Remote (controlConnection),
-    d_implementation (data, minColor, maxColor, inputConnection,
+    d_implementation (data, surfaceColor, inputConnection,
                       cMode, dMode, pMode, timer, xsize, ysize),
     d_timer (timer),
     d_timeGraphics (VRPN_FALSE) {
@@ -329,14 +328,8 @@ int nmg_Graphics_RenderClient::getSpecularity (void) const
 }
 
 // virtual
-const double * nmg_Graphics_RenderClient::getMinColor (void) const
+const double * nmg_Graphics_RenderClient::getSurfaceColor (void) const
 {
-    return d_implementation.getMinColor();
-}
-
-// virtual
-const double * nmg_Graphics_RenderClient::getMaxColor (void) const
-{
-    return d_implementation.getMaxColor();
+    return d_implementation.getSurfaceColor();
 }
 

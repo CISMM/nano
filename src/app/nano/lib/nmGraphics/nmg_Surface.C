@@ -14,6 +14,7 @@
 #include "nmg_SurfaceRegion.h"
 #include "nmg_SurfaceMask.h"
 
+#include "graphics_globals.h"
 /**
  
     Access: Public
@@ -28,6 +29,7 @@ nmg_Surface()
     d_dataset = (nmb_Dataset*)NULL;
 
     d_defaultRegion->getMaskPlane()->setDrawPartialMask(VRPN_TRUE);
+    d_display_lists_in_x = 1;	/* Are display lists strips in X? */
 }
 
 /**
@@ -285,7 +287,7 @@ rebuildRegion(int region)
     }
     if (region > 0 && region <= d_numSubRegions) {        
         region--;
-        return d_subRegions[region]->rebuildRegion(d_dataset);
+        return d_subRegions[region]->rebuildRegion(d_dataset, d_display_lists_in_x );
     }
     return 0;
 }
@@ -301,39 +303,105 @@ rebuildRegion(int region)
 int nmg_Surface::
 rebuildSurface(vrpn_bool force)
 {
-    if (d_dataset != (nmb_Dataset*)NULL) {
-        for(int i = 0; i < d_numSubRegions; i++) {
-            if (!d_subRegions[i]->rebuildRegion(d_dataset, force)) {
-                return 0;
-            }
-        }
+  if (d_dataset != (nmb_Dataset*)NULL) {
 
-        if (!d_defaultRegion->rebuildRegion(d_dataset, force)) {
-            return 0;
+    // If the scan direction is inefficiently using the display 
+    // lists, switch to using display lists in the other direction.
+    if (d_dataset->range_of_change.Changed()) {
+        float	ratio;
+        
+        /* See which way more changes occurred */
+        ratio = d_dataset->range_of_change.RatioOfChange();
+        
+        /* If the ratio is very skewed, make sure we are
+	 * scanning in the correct direction. */
+        if (ratio > 4) {		/* 4x as much in y */
+            if (d_display_lists_in_x) {	/* Going wrong way */
+                d_display_lists_in_x = 0;
+                force = VRPN_TRUE;
+            }
+        } else if (ratio < 0.25) {	/* 4x as much in x */
+            if (!d_display_lists_in_x) {	/* Going wrong way */
+                d_display_lists_in_x = 1;
+                force = VRPN_TRUE;
+            }
         }
     }
 
-    return 1;
+    for(int i = 0; i < d_numSubRegions; i++) {
+        if (!d_subRegions[i]->rebuildRegion(d_dataset, d_display_lists_in_x , force)) {
+            return 0;
+        }
+    }
+    
+    if (!d_defaultRegion->rebuildRegion(d_dataset, d_display_lists_in_x , force)) {
+        return 0;
+    }
+
+    if (force) {
+        /* Clear the range of change */
+        d_dataset->range_of_change.Clear();
+    }
+  }
+
+  return 1;
 }
 
 /**
  rebuild the interval of the entire surface
             that changed
     Access: Public
+WARNING: uses some global variables!
 */
 int nmg_Surface::
-rebuildInterval(int low_row, int high_row, int strips_in_x)
+rebuildInterval()
 {
+    // Semi-optimized, thread-safe version of display list redrawing code.
+    // TCH 17 June 98
+    
+    // Trys to figure out which direction the scanning tip is moving
+    // to reduce the amount of redrawing done.  Delays by one graphics
+    // loop drawing strips that it expects to have to redraw after
+    // receiving the next update from the microscope.
+    
+    // (Nearly) starvation-free:  if we ever stop receiving updates from
+    // the microscope, all old cached lines (stored in last_marked)
+    // are updated on the next pass through this routine.  There is one
+    // starvation case:  if the microscope ever continuously scans and
+    // rescans the same line of the sample more often than the graphics
+    // process runs, that new data will never be drawn.
+    
+    int low_row;
+    int high_row;
+    
+    // Get the data (low and high X, Y vales changed) atomically
+    // so we have bulletproof synchronization.
+    
+    d_dataset->range_of_change.GetBoundsAndClear
+        (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
+    if (g_PRERENDERED_COLORS || g_PRERENDERED_DEPTH) {
+        g_prerenderedChange->GetBoundsAndClear
+            (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
+    }
+    
+    if (d_display_lists_in_x) {
+        low_row = g_minChangedY;
+        high_row = g_maxChangedY;
+    } else {
+        low_row = g_minChangedX;
+        high_row = g_maxChangedX;
+    }
+    
     if (d_dataset != (nmb_Dataset*)NULL) {
         for(int i = 0; i < d_numSubRegions; i++) {
             if (!d_subRegions[i]->rebuildInterval(d_dataset, low_row, 
-                                                  high_row, strips_in_x)) {
+                                      high_row, d_display_lists_in_x)) {
                 return 0;
             }
         }
 
         if (!d_defaultRegion->rebuildInterval(d_dataset, low_row, 
-                                              high_row, strips_in_x)) {
+                                      high_row, d_display_lists_in_x)) {
             return 0;
         }
     }

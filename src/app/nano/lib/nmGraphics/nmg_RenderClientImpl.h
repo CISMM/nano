@@ -24,8 +24,7 @@ class nmg_Graphics_RenderClient_Implementation :
   public:
 
     nmg_Graphics_RenderClient_Implementation (nmb_Dataset * data,
-                       const int minColor [3],
-                       const int maxColor [3],
+                       const int surfaceColor [3],
                        vrpn_Connection * inputConnection,
                        RemoteColorMode cMode,
                        RemoteDepthMode dMode,

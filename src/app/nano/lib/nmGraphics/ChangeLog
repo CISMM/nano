@@ -1,3 +1,14 @@
+2001-10-12  Aron Helser  <helser@cs.unc.edu>
+
+	* openGL.ch: move measure_materials functions here, move surface
+	related funtions to Surface and SurfaceRegion
+	* spm_gl.ch: renamed surface_strip_create.ch
+	* surface_strip_create.ch: new
+	Several: get rid of min/maxColor in favor of surfaceColor
+	* nmg_Graphics.h: get rid of abstract specifications, add empty
+	function bodies for everything. Now Remote, Timer subclasses don't
+	have to be updated until needed. 
+
 2001-09-25  David Marshburn  <marshbur@cs.unc.edu>
 
 	* chartjunk.c: removed references to USER_MEAS_MOVE_MODE (unused)

@@ -16,8 +16,7 @@
 
 nmg_Graphics_RenderServer::nmg_Graphics_RenderServer
                                 (nmb_Dataset * data,
-                                 const int minColor [3],
-                                 const int maxColor [3],
+                                 const int surfaceColor [3],
                                  vrpn_Connection * outputConnection,
                                  RemoteColorMode cMode,
                                  RemoteDepthMode dMode,
@@ -26,8 +25,8 @@ nmg_Graphics_RenderServer::nmg_Graphics_RenderServer
                                  const char * rulergridName,
 								 const char * vizName,
                                  vrpn_Connection * controlConnection) :
-    nmg_Graphics_Implementation (data, minColor, maxColor, rulergridName, 
-								 vizName, controlConnection),
+    nmg_Graphics_Implementation (data, surfaceColor, rulergridName, 
+                                 vizName, controlConnection),
     //d_colorMode (cMode),
     //d_depthMode (dMode),
     d_pixelBuffer (NULL),

@@ -110,8 +110,7 @@ extern int g_hand_color;
 extern float g_icon_scale;
 
 
-extern double g_minColor [4];
-extern double g_maxColor [4];
+extern double g_surfaceColor [4];
 
 extern int g_minChangedX;
 extern int g_maxChangedX;

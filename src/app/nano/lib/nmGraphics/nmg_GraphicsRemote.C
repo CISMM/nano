@@ -822,47 +822,23 @@ void nmg_Graphics_Remote::setCollabMode (int mode)
 }
 
     // arguments in range [0..1]
-void nmg_Graphics_Remote::setMinColor (const double c [3]) {
+void nmg_Graphics_Remote::setSurfaceColor (const double c [3]) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  d_minColor[0] = c[0];
-  d_minColor[1] = c[1];
-  d_minColor[2] = c[2];
+  d_surfaceColor[0] = c[0];
+  d_surfaceColor[1] = c[1];
+  d_surfaceColor[2] = c[2];
 
-  msgbuf = encode_setMinColor(&len, c);
+  msgbuf = encode_setSurfaceColor(&len, c);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now, d_setMinColor_type,
+    retval = d_connection->pack_message(len, now, d_setSurfaceColor_type,
                            d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
     if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setMinColor:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::setMaxColor (const double c [3]) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  d_maxColor[0] = c[0];
-  d_maxColor[1] = c[1];
-  d_maxColor[2] = c[2];
-
-  msgbuf = encode_setMaxColor(&len, c);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now, d_setMaxColor_type,
-                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setMaxColor:  "
+      fprintf(stderr, "nmg_Graphics_Remote::setSurfaceColor:  "
                       "Couldn't pack message to send to server.\n");
     }
   }
@@ -871,47 +847,23 @@ void nmg_Graphics_Remote::setMaxColor (const double c [3]) {
 }
 
     // arguments in range [0..255]
-void nmg_Graphics_Remote::setMinColor (const int c [3]) {
+void nmg_Graphics_Remote::setSurfaceColor (const int c [3]) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  d_minColor[0] = c[0] / 255.0;
-  d_minColor[1] = c[1] / 255.0;
-  d_minColor[2] = c[2] / 255.0;
+  d_surfaceColor[0] = c[0] / 255.0;
+  d_surfaceColor[1] = c[1] / 255.0;
+  d_surfaceColor[2] = c[2] / 255.0;
 
-  msgbuf = encode_setMinColor(&len, c);
+  msgbuf = encode_setSurfaceColor(&len, c);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now, d_setMinColor_type,
+    retval = d_connection->pack_message(len, now, d_setSurfaceColor_type,
                            d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
     if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setMinColor:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-
-void nmg_Graphics_Remote::setMaxColor (const int c [3]) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  d_maxColor[0] = c[0] / 255.0;
-  d_maxColor[1] = c[1] / 255.0;
-  d_maxColor[2] = c[2] / 255.0;
-
-  msgbuf = encode_setMaxColor(&len, c);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now, d_setMaxColor_type,
-                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setMaxColor:  "
+      fprintf(stderr, "nmg_Graphics_Remote::setSurfaceColor:  "
                       "Couldn't pack message to send to server.\n");
     }
   }
@@ -2268,14 +2220,10 @@ int nmg_Graphics_Remote::getSpecularity (void) const {
   return d_specularity;
 }
 
-const double * nmg_Graphics_Remote::getMinColor (void) const {
-  return d_minColor;
+const double * nmg_Graphics_Remote::getSurfaceColor (void) const {
+  return d_surfaceColor;
 }
 
-
-const double * nmg_Graphics_Remote::getMaxColor (void) const {
-  return d_maxColor;
-}
 
 
 

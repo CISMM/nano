@@ -32,8 +32,9 @@ All Rights Reserved.
 #include <nmb_Decoration.h>
 #include <nmb_Globals.h>
 #include "nmg_SurfaceMask.h"
+#include "nmg_SurfaceRegion.h"
 
-#include "spm_gl.h"
+#include "surface_strip_create.h"
 // #include "Tcl_Linkvar.h"
 #include "graphics_globals.h"
 #include "BCPlane.h"
@@ -126,7 +127,8 @@ inline	void	vector_normalize(GLfloat a[3])
 *	This routine returns 0 on success and -1 on failure. */
 
 int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
-                             double dx,double dy,double dz, GLfloat Normal[3])
+                                 double dx,double dy,double dz, 
+                                 int stride, GLfloat Normal[3])
 {
     GLfloat		diff_vec[3];
     GLfloat		local_norm[3];
@@ -136,7 +138,7 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
     // point.
     if ( (x < 0) || (x > plane->numX()-1) ||
         (y < 0) || (y > plane->numY()-1) ||
-        (x % g_stride) || (y % g_stride) ){
+        (x % stride) || (y % stride) ){
         return(-1);
     }
     
@@ -147,10 +149,10 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
     
     // Find the normal with stride more in x, if it is within the grid
     
-    if ( (x+g_stride) < plane->numX()) {
-        diff_vec[X] = dx * g_stride;
+    if ( (x+stride) < plane->numX()) {
+        diff_vec[X] = dx * stride;
         diff_vec[Y] = 0;
-        diff_vec[Z] = dz * (float) (plane->valueInWorld(x+g_stride,y) -
+        diff_vec[Z] = dz * (float) (plane->valueInWorld(x+stride,y) -
             plane->valueInWorld(x, y));
         vector_cross_Y(diff_vec, local_norm);
         vector_add(local_norm,Normal, Normal);
@@ -158,10 +160,10 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
     
     // Find the normal with stride more in y, if it is within the grid
     
-    if ( (y+g_stride) < plane->numY()) {
+    if ( (y+stride) < plane->numY()) {
         diff_vec[X] = 0;
-        diff_vec[Y] = dy * g_stride;
-        diff_vec[Z] = (float) (dz * (plane->valueInWorld(x,y+g_stride) -
+        diff_vec[Y] = dy * stride;
+        diff_vec[Z] = (float) (dz * (plane->valueInWorld(x,y+stride) -
             plane->valueInWorld(x,y)));
         vector_cross_NX(diff_vec, local_norm);
         vector_add(local_norm,Normal, Normal);
@@ -169,10 +171,10 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
     
     // Find the normal with stride less in x, if it is within the grid
     
-    if ( (x-g_stride) >= 0) {
-        diff_vec[X] = -dx * g_stride;
+    if ( (x-stride) >= 0) {
+        diff_vec[X] = -dx * stride;
         diff_vec[Y] = 0;
-        diff_vec[Z] = (float) (dz * (plane->valueInWorld(x-g_stride,y) -
+        diff_vec[Z] = (float) (dz * (plane->valueInWorld(x-stride,y) -
             plane->valueInWorld(x, y)));
         vector_cross_NY(diff_vec, local_norm);
         vector_add(local_norm,Normal, Normal);
@@ -180,10 +182,10 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
     
     // Find the normal with stride less in y, if it is within the grid
     
-    if ( (y-g_stride) >= 0) {
+    if ( (y-stride) >= 0) {
         diff_vec[X] = 0;
-        diff_vec[Y] = -dy * g_stride;
-        diff_vec[Z] = (float) (dz * (plane->valueInWorld(x,y-g_stride) -
+        diff_vec[Y] = -dy * stride;
+        diff_vec[Z] = (float) (dz * (plane->valueInWorld(x,y-stride) -
             plane->valueInWorld(x, y)));
         vector_cross_X(diff_vec, local_norm);
         vector_add(local_norm,Normal, Normal);
@@ -237,11 +239,11 @@ void specify_vertexArray(Vertex_Struct * vertexArray, int *vert_counts, int num_
 
 /**      This routine will describe the vertex from the grid specified
 * by the (x,y) coordinates.
-*      This routine returns 0 on success and -1 on failure. */
+*      This routine returns 0 on success and -1 on failure. 
+* WARNING depends on many, many global variables. */
 static int
 describe_gl_vertex(const nmb_PlaneSelection & planes,
-                   GLdouble minColor[4],
-                   GLdouble maxColor[4],
+                   GLdouble surfaceColor[3],
                    int x, int y, 
                    Vertex_Struct *vertexArrayPtr)
 {
@@ -322,15 +324,15 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
             Color[2] = b;
         } else {      // Use the "none" color mapping tool
             for (i = 0; i < 3; i++) {
-                Color[i] = minColor[i] * data_value;
+                Color[i] = surfaceColor[i] * data_value;
             }
         }
     }
     else {
         // No special color cases exists, so set the surface to a solid color.
-        Color[0] = g_minColor[0];
-        Color[1] = g_minColor[1];
-        Color[2] = g_minColor[2];
+        Color[0] = g_surfaceColor[0];
+        Color[1] = g_surfaceColor[1];
+        Color[2] = g_surfaceColor[2];
     }
     Color[3] = g_surface_alpha;
     
@@ -591,7 +593,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
         if (stm_compute_plane_normal(planes.height, x,y,
             (float) ((max_x - min_x) / height_plane.numX()),
             (float) ((max_y - min_y) / height_plane.numY()),
-			         1.0f,
+                     1.0f, g_stride,
                      Normal)) {
             fprintf(stderr,"describe_gl_vertex(): Can't find normal!\n");
             return -1;
@@ -651,7 +653,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 *	This routine returns 0 on success and -1 on failure. */
 
 int spm_y_strip(const  nmb_PlaneSelection &planes,
-                GLdouble minColor[4], GLdouble maxColor[4], int which,
+                GLdouble surfaceColor[3], int which,
                 Vertex_Struct * vertexArray)
 {
     int     x,y;
@@ -680,7 +682,7 @@ int spm_y_strip(const  nmb_PlaneSelection &planes,
     
     for (y = 0; y < planes.height->numY(); y += g_stride) {   
         for (x = which+g_stride; x >= which; x -= g_stride) { 
-            if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[i]))) {
+            if (describe_gl_vertex(planes, surfaceColor,x,y,&(vertexArray[i]))) {
                 fprintf(stderr, "spm_y_strip:  describe_gl_vertex() failed.\n");
                 return(-1);
             }
@@ -717,7 +719,7 @@ int spm_y_strip(const  nmb_PlaneSelection &planes,
  */
 
 int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
-                       GLdouble minColor[4], GLdouble maxColor[4], int which,
+                       GLdouble surfaceColor[3], int which,
                        Vertex_Struct * vertexArray)
 {
     int     x,y;
@@ -858,7 +860,8 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                 }
             }
             else {
-                if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[vert]))) {
+                if (describe_gl_vertex(planes, surfaceColor,x,y,
+                                       &(vertexArray[vert]))) {
                     fprintf(stderr, "spm_x_strip_masked:  describe_gl_vertex() failed.\n");
                     return(-1);
                 }
@@ -912,7 +915,7 @@ int spm_y_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
  *	This routine returns 0 on success and -1 on failure. */
 
 int spm_x_strip(const  nmb_PlaneSelection &planes,
-                GLdouble minColor[4], GLdouble maxColor[4], int which,
+                GLdouble surfaceColor[3], int which,
                 Vertex_Struct * vertexArray)
 {
     int     x,y;
@@ -941,7 +944,8 @@ int spm_x_strip(const  nmb_PlaneSelection &planes,
     
     for (x = 0; x < planes.height->numX(); x += g_stride) {   
         for (y = which+g_stride; y >= which; y -= g_stride) { 
-            if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[i]))) {
+            if (describe_gl_vertex(planes, surfaceColor,x,y,
+                                   &(vertexArray[i]))) {
                 fprintf(stderr, "spm_x_strip:  describe_gl_vertex() failed.\n");
                 return(-1);
             }
@@ -978,7 +982,7 @@ int spm_x_strip(const  nmb_PlaneSelection &planes,
  */
 
 int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
-                       GLdouble minColor[4], GLdouble maxColor[4], int which,
+                       GLdouble surfaceColor[3], int which,
                        Vertex_Struct * vertexArray)
 {      
     int     x,y;
@@ -1120,7 +1124,7 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
                 }
             }
             else {
-                if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[vert]))) {
+                if (describe_gl_vertex(planes, surfaceColor,x,y,&(vertexArray[vert]))) {
                     fprintf(stderr, "spm_x_strip_masked:  describe_gl_vertex() failed.\n");
                     return(-1);
                 }
@@ -1148,184 +1152,5 @@ int spm_x_strip_masked(const  nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     return 0;
 }
 
-
-/** Sets material properties that never change. */
-void setupMaterials (void) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-    glEnable(GL_COLOR_MATERIAL);
-    /* Use local vertex color for ambient and diffuse */
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
-    /* Counter-clockwise is forward for the surface and all objects. */
-    glFrontFace(GL_CCW);
-    
-}
-
-
-/**	This routine will set up the material properties so that the
-* surface will appear to be made of shiny plastic. */
-
-void spm_set_surface_materials(void)
-{	
-    GLfloat	specular[4] = { (float)g_specular_color,
-        (float)g_specular_color,
-        (float)g_specular_color, 1.0 };
-    GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
-    
-    
-    //fprintf(stderr, "In spm_set_surface_materials with texture mode %d.\n",
-    //g_texture_mode);
-    TIMERVERBOSE(5, mytimer, "begin spm_set_surface_materials");
-    
-    // Set up the specular characteristics.
-    // Note that the ambient and diffuse colors are from the vertices.
-    // NOTE: It is important that back is set first because front/back
-    //       is ignored in an early implementation of FLOW, and it always
-    //       set both.
-    glMaterialfv(GL_BACK, GL_SPECULAR, dark);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
-    glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
-    
-    // Set the light model to have completely ambient-off.  There is
-    // ambient specified in light 0.
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, dark);
-    
-    /* Set a color, in case the color is not being adjusted per vertex. */
-    /* Use the min color for this. */
-    
-    g_minColor[3] = g_surface_alpha; //make sure alpha value is updated
-    
-    glColor4dv(g_minColor);
-    
-    // Turn texture mapping to the appropriate state
-    // Note that the Enable has to be the last one, after all the
-    // Disable calls.
-    switch (g_texture_mode) {
-    case GL_FALSE:
-        glDisable(GL_TEXTURE_1D);
-        glDisable(GL_TEXTURE_2D);
-#ifdef	sgi
-        glDisable(GL_TEXTURE_3D_EXT);
-#endif
-        break;
-        
-    case GL_TEXTURE_1D:
-        glDisable(GL_TEXTURE_2D);
-#ifdef	sgi
-        glDisable(GL_TEXTURE_3D_EXT);
-#endif
-        glEnable(GL_TEXTURE_1D);
-        break;
-        
-    case GL_TEXTURE_2D:
-        glDisable(GL_TEXTURE_1D);
-#ifdef	sgi
-        glDisable(GL_TEXTURE_3D_EXT);
-#endif
-        glEnable(GL_TEXTURE_2D);
-        break;
-        
-#ifdef	sgi
-    case GL_TEXTURE_3D_EXT:
-        glDisable(GL_TEXTURE_1D);
-        glDisable(GL_TEXTURE_2D);
-        glEnable(GL_TEXTURE_3D_EXT);
-        break;
-#endif
-        
-    default:
-        if (spm_graphics_verbosity > 3)
-            fprintf(stderr, "spm_set_surface_materials:  "
-            "texture_mode %i\n", g_texture_mode);
-        break;
-    }
-    if (spm_graphics_verbosity > 3)
-        fprintf(stderr, "spm_set_surface_materials:  "
-        "texture_mode %i\n", g_texture_mode);
-    
-    TIMERVERBOSE(5, mytimer, "end spm_set_surface_materials");
-}
-
-/**	This routine will set up the material properties so that the
-* icons and such will appear to be made of shiny plastic, and will react
-* to specular and diffuse lighting, but will never be textured. */
-
-void    spm_set_icon_materials(void)
-{	
-    GLfloat	specular[4] = { 1.0, 1.0, 1.0, 1.0 };
-    GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
-    
-    VERBOSE(5, "    Entering spm_set_icon_materials()");
-    TIMERVERBOSE(5, mytimer, "begin spm_set_icon_materials");
-    
-    // Set up the specular characteristics.
-    // Note that the ambient and diffuse colors are from the vertices.
-    // NOTE: It is important that back is set first because front/back
-    //       is ignored in an early implementation of FLOW, and it always
-    //       set both.
-    glMaterialfv(GL_BACK, GL_SPECULAR, dark);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
-    glMaterialf(GL_FRONT, GL_SHININESS, g_shiny);
-    
-    // Set the light model to have completely ambient-off.  There is
-    // ambient specified in light 0.
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, dark);
-    
-    /* Set a color, in case the color is not being adjusted per vertex. */
-    /* Use the min color for this. */
-    g_minColor[3] = g_surface_alpha; //make sure alpha value is updated
-    glColor4dv(g_minColor);
-    
-    // Disable texture-mapping.
-    glDisable(GL_TEXTURE_1D);
-    glDisable(GL_TEXTURE_2D);
-#ifdef	sgi
-    glDisable(GL_TEXTURE_3D_EXT);
-#endif
-    
-    TIMERVERBOSE(5, mytimer, "end spm_set_icon_materials");
-}
-
-/**	This routine will set up the material properties so that the
-* measurement tools (lines and text) will not depend on the lighting
-* model or be texture-mapped.  This is done by setting the ambient
-* coefficients to 1 and the diffuse/specular ones to 0.  */
-
-void    spm_set_measure_materials(void)
-{	
-    GLfloat	bright[4] = { 1.0, 1.0, 1.0, 1.0 };
-    GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
-    
-    VERBOSE(5, "    Entering spm_set_measure_materials()");
-    TIMERVERBOSE(5, mytimer, "begin spm_set_measure_materials");
-    
-    // Set up the specular characteristics.
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, dark);
-    
-    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glMaterialfv");
-    
-    // Set the light model to have completely ambient-on.
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, bright);
-    
-    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glLightModelfv");
-    
-    /* Set a color, in case the color is not being adjusted per vertex. */
-    /* Use the min color for this. */
-    g_minColor[3] = g_surface_alpha; //Make sure alpha value is updated
-    glColor4dv(g_minColor);
-    
-    TIMERVERBOSE(7, mytimer, "spm_set_measure_materials: end glColor3dv");
-    
-    // Disable texture-mapping.
-    glDisable(GL_TEXTURE_1D);
-    glDisable(GL_TEXTURE_2D);
-#ifdef	sgi
-    glDisable(GL_TEXTURE_3D_EXT);
-#endif
-    
-    TIMERVERBOSE(5, mytimer, "end spm_set_measure_materials");
-}
 
 

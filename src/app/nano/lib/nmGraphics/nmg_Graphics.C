@@ -110,14 +110,10 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setHeightPlaneName");
   d_setMaskPlaneName_type =
     c->register_message_type("nmg Graphics setMaskPlaneName");
-  d_setMinColor_type =
-    c->register_message_type("nmg Graphics setMinColor");
-  d_setMaxColor_type =
-    c->register_message_type("nmg Graphics setMaxColor");
-  d_setMinColor_type =
-    c->register_message_type("nmg Graphics setMinColor");
-  d_setMaxColor_type =
-    c->register_message_type("nmg Graphics setMaxColor");
+  d_setSurfaceColor_type =
+    c->register_message_type("nmg Graphics setSurfaceColor");
+  d_setSurfaceColor_type =
+    c->register_message_type("nmg Graphics setSurfaceColor");
   d_setPatternMapName_type =
     c->register_message_type("nmg Graphics setPatternMapName");
   d_enableRulergrid_type =
@@ -1062,7 +1058,7 @@ int nmg_Graphics::decode_setCollabMode(const char * buf, int *mode)
   return 0;
 }
 
-char * nmg_Graphics::encode_setMinColor
+char * nmg_Graphics::encode_setSurfaceColor
                      (int * len, const double c [3]) {
   char * msgbuf = NULL;
   char * mptr;
@@ -1073,7 +1069,7 @@ char * nmg_Graphics::encode_setMinColor
   *len = 3 * sizeof(double);
   msgbuf = new char [*len];
   if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setMinColor:  "
+    fprintf(stderr, "nmg_Graphics::encode_setSurfaceColor:  "
                     "Out of memory.\n");
     *len = 0;
   } else {
@@ -1087,7 +1083,7 @@ char * nmg_Graphics::encode_setMinColor
   return msgbuf;
 }
 
-int nmg_Graphics::decode_setMinColor
+int nmg_Graphics::decode_setSurfaceColor
                    (const char * buf, double c [3]) {
   if (!buf || !c) return -1;
   CHECK(vrpn_unbuffer(&buf, &c[0]));
@@ -1099,46 +1095,10 @@ fprintf(stderr, "Server got min color (%.4f, %.4f, %.4f)\n", c[0], c[1], c[2]);
 }
 
 
-char * nmg_Graphics::encode_setMaxColor
-                     (int * len, const double c [3]) {
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-
-  if (!len) return NULL;
-
-  *len = 3 * sizeof(double);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setMaxColor:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, c[0]);
-    vrpn_buffer(&mptr, &mlen, c[1]);
-    vrpn_buffer(&mptr, &mlen, c[2]);
-  }
-
-  return msgbuf;
-}
-
-int nmg_Graphics::decode_setMaxColor
-                   (const char * buf, double c [3]) {
-  if (!buf || !c) return -1;
-  CHECK(vrpn_unbuffer(&buf, &c[0]));
-  CHECK(vrpn_unbuffer(&buf, &c[1]));
-  CHECK(vrpn_unbuffer(&buf, &c[2]));
-
-fprintf(stderr, "Server got max color (%.4f, %.4f, %.4f)\n", c[0], c[1], c[2]);
-  return 0;
-}
-
   // Translate integer arguments in range [0..255]
   // to doubles in range [0..1]
 
-char * nmg_Graphics::encode_setMinColor
+char * nmg_Graphics::encode_setSurfaceColor
                      (int * len, const int c [3]) {
   char * msgbuf = NULL;
   char * mptr;
@@ -1149,7 +1109,7 @@ char * nmg_Graphics::encode_setMinColor
   *len = 3 * sizeof(double);
   msgbuf = new char [*len];
   if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setMinColor:  "
+    fprintf(stderr, "nmg_Graphics::encode_setSurfaceColor:  "
                     "Out of memory.\n");
     *len = 0;
   } else {
@@ -1163,7 +1123,7 @@ char * nmg_Graphics::encode_setMinColor
   return msgbuf;
 }
 
-int nmg_Graphics::decode_setMinColor
+int nmg_Graphics::decode_setSurfaceColor
                    (const char * buf, int c [3]) {
   double d [3];
 
@@ -1177,48 +1137,6 @@ int nmg_Graphics::decode_setMinColor
   c[2] = (int) (255 * d[2]);
 
 fprintf(stderr, "Server got min color (%d, %d, %d)\n", c[0], c[1], c[2]);
-  return 0;
-}
-
-char * nmg_Graphics::encode_setMaxColor
-                     (int * len, const int c [3]) {
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-
-  if (!len) return NULL;
-
-  *len = 3 * sizeof(double);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setMaxColor:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, c[0] / 255.0);
-    vrpn_buffer(&mptr, &mlen, c[1] / 255.0);
-    vrpn_buffer(&mptr, &mlen, c[2] / 255.0);
-  }
-
-  return msgbuf;
-}
-
-int nmg_Graphics::decode_setMaxColor
-                   (const char * buf, int c [3]) {
-  double d [3];
-
-  if (!buf || !c) return -1;
-  CHECK(vrpn_unbuffer(&buf, &d[0]));
-  CHECK(vrpn_unbuffer(&buf, &d[1]));
-  CHECK(vrpn_unbuffer(&buf, &d[2]));
-
-  c[0] = (int) (255 * d[0]);
-  c[1] = (int) (255 * d[1]);
-  c[2] = (int) (255 * d[2]);
-
-fprintf(stderr, "Server got max color (%d, %d, %d)\n", c[0], c[1], c[2]);
   return 0;
 }
 

@@ -19,8 +19,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
   public:
 
     nmg_Graphics_Implementation (nmb_Dataset * data,
-                                 const int minColor [3],
-                                 const int maxColor [3],
+                                 const int surfaceColor [3],
                                  const char * rulergridName = NULL,
                                  const char * vizName = NULL,
                                  vrpn_Connection * = NULL,
@@ -89,11 +88,9 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setCollabMode (int);
 
     // arguments in range [0..1]
-    virtual void setMinColor (const double [3]);
-    virtual void setMaxColor (const double [3]);
+    virtual void setSurfaceColor (const double [3]);
     // arguments in range [0..255]
-    virtual void setMinColor (const int [3]);
-    virtual void setMaxColor (const int [3]);
+    virtual void setSurfaceColor (const int [3]);
 
     virtual void setPatternMapName (const char *);  // RENAME?
 
@@ -203,8 +200,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual int getHandColor (void) const;
     virtual int getSpecularity (void) const;
 //  virtual float getDiffusePercent (void) const;
-    virtual const double * getMinColor (void) const;
-    virtual const double * getMaxColor (void) const;
+    virtual const double * getSurfaceColor (void) const;
 
   protected:
 
@@ -281,8 +277,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setOpacityPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setHeightPlaneName (void *, vrpn_HANDLERPARAM);
 	static int handle_setMaskPlaneName (void *, vrpn_HANDLERPARAM);
-    static int handle_setMinColor (void *, vrpn_HANDLERPARAM);
-    static int handle_setMaxColor (void *, vrpn_HANDLERPARAM);
+    static int handle_setSurfaceColor (void *, vrpn_HANDLERPARAM);
     static int handle_setPatternMapName (void *, vrpn_HANDLERPARAM);
 //    static int handle_enableRulergrid (void *, vrpn_HANDLERPARAM);
     static int handle_setRulergridAngle (void *, vrpn_HANDLERPARAM);

@@ -79,10 +79,8 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void enableCollabHand (vrpn_bool);
     virtual void setCollabHandPos(double [3], double [4]);
     virtual void setCollabMode(int);
-    virtual void setMinColor (const double [3]);
-    virtual void setMaxColor (const double [3]);
-    virtual void setMinColor (const int [3]);
-    virtual void setMaxColor (const int [3]);
+    virtual void setSurfaceColor (const double [3]);
+    virtual void setSurfaceColor (const int [3]);
     virtual void setPatternMapName (const char *);
     virtual void createRealignTextures( const char * );
     virtual void setRealignTextureSliderRange (float, float, float, float);
@@ -151,8 +149,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void getLightDirection (q_vec_type *) const;
     virtual int getHandColor (void) const;
     virtual int getSpecularity (void) const;
-    virtual const double * getMinColor (void) const;
-    virtual const double * getMaxColor (void) const;
+    virtual const double * getSurfaceColor (void) const;
 
     virtual void setViztexScale (float);
     virtual void setRegionMaskHeight(float min_height, float max_height, int region = 0);

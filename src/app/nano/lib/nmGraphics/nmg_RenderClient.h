@@ -22,8 +22,7 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
   public:
 
     nmg_Graphics_RenderClient (nmb_Dataset * data,
-                         const int minColor [3],  // get rid of this
-                         const int maxColor [3],  // get rid of this
+                         const int surfaceColor [3],  // get rid of this
                          vrpn_Connection * inputConnection,
                          RemoteColorMode cMode,
                          RemoteDepthMode dMode,
@@ -51,8 +50,7 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     virtual void getLightDirection (q_vec_type *) const;
     virtual int getHandColor (void) const;
     virtual int getSpecularity (void) const;
-    virtual const double * getMinColor (void) const;
-    virtual const double * getMaxColor (void) const;
+    virtual const double * getSurfaceColor (void) const;
 
     nmb_Subgrid & rangeOfChange (void);
 

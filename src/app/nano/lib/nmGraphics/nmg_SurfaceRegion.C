@@ -16,13 +16,14 @@
 #include "graphics_globals.h"
 #include "globjects.h"
 #include "graphics.h"
-#include "spm_gl.h"  
+#include "surface_strip_create.h"  
 #include "openGL.h"  // for check_extension(), display_lists_in_x
 #include "nmg_Graphics.h"
 
 #include "nmg_Surface.h"
 #include "nmg_SurfaceMask.h"
 
+#include	"Timer.h"
 // M_PI not defined for VC++, for some reason. 
 #ifndef M_PI
 #define M_PI		3.14159265358979323846
@@ -61,6 +62,7 @@ nmg_SurfaceRegion(nmg_Surface *parent, int region_id)
 
     d_list_base = 0;
     d_num_lists = 0;
+
 }
 
 /**
@@ -710,7 +712,7 @@ RestoreRenderState()
  * Access: Public
  */
 int nmg_SurfaceRegion::
-rebuildRegion(nmb_Dataset *dataset, vrpn_bool force)
+rebuildRegion(nmb_Dataset *dataset, int display_lists_in_x, vrpn_bool force)
 {  
     //Make sure we have a valid mask before we rebuild the display lists
     d_parent->rederive(d_regionID);
@@ -731,7 +733,7 @@ rebuildRegion(nmb_Dataset *dataset, vrpn_bool force)
         
     if (build_grid_display_lists(planes, d_regionalMask, display_lists_in_x, 
 				 &d_list_base, &d_num_lists, d_num_lists, 
-				 g_minColor, g_maxColor, d_vertexPtr)) {
+				 g_surfaceColor, d_vertexPtr)) {
         return 0;
     }
     RestoreBuildState();
@@ -754,8 +756,23 @@ recolorRegion()
 }
 
 /**
+ *  Replace the display lists that have had points changed.
+ * This includes those that are in the region of changed
+ * points and also those that are past the edge of this
+ * region, as these points will have had their normals
+ * adjusted (in the picture below, '+' represents a point
+ * that is on the stride, '.' indicates a point off stride,
+ * and the lists that need to be redrawn because of a point
+ * change is shown).  The normal of the two on-stride points
+ * around the changed point is changed, requiring the redraw
+ * of all strips that include these points.
+ * @code
+ *            norm   changed  norm                        
+ * 	+ . . .	+ . . .	+ . . .	+ . . .	+ . . .	+
+ * 	|_______|_______|_______|_______|_______|
+ *     list-2  list-1  list    list+1
+ * @endcode
  * Access: Public
- * 
  */
 int nmg_SurfaceRegion::
 rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x)
@@ -811,7 +828,7 @@ renderRegion()
     g_texture_displayed = d_currentState.textureDisplayed;
     g_texture_transform_mode = d_currentState.textureTransformMode;
 
-    spm_set_surface_materials();
+    set_gl_surface_materials();
     setFilled();
 
     for (i = 0; i < d_num_lists; i++) {
@@ -821,3 +838,339 @@ renderRegion()
     cleanUp();
     RestoreRenderState();
 }
+
+/**
+* This routine creates display lists for the grid.
+* It relies on an external routine to determine the set of lists to
+* make, the direction (whether x or y is faster), and other important
+* variables.
+* Returns -1 on failure, 0 on success.
+*/
+
+int nmg_SurfaceRegion::build_list_set(
+    const nmb_Interval &subset,
+    const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
+    GLuint base,
+    GLsizei num_lists,
+    GLdouble * surfaceColor,
+    int (* stripfn)
+    (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], int, Vertex_Struct *),
+    Vertex_Struct **surface)
+{
+    
+    v_gl_set_context_to_vlib_window(); 
+    // globals:
+    // surface
+    // min/maxColor
+    
+    int i;
+    
+    if (!g_just_color && subset.empty()) return 0;
+    
+#if defined(sgi) || defined(_WIN32)
+    //#if defined(sgi)
+    if (g_VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
+        
+        //The checks for whether to use GL_COLOR_ARRAY or not have been
+        //removed because of the surface alpha being a global AND not
+        //compiled into the display lists when the color isn't set over the
+        //entire array.  Since I've moved the real surface color into the
+        //new Surface and SurfaceRegion classes, this meant that if you set
+        //the surface alpha it would get overriden.  This is only a problem
+        //right now because I am trying to avoid sweeping changes, so I am
+        //leaving the globals alone and just pushing and poping state appropriately.
+        //That fails though in this case, however, when we get rid of globals
+        //and refactor all of this appropriately, this problem will disappear.
+        //if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE ||
+        //    g_null_data_alpha_toggle || g_transparent) {
+            glEnableClientState(GL_COLOR_ARRAY);
+        //} else {
+        //    glDisableClientState(GL_COLOR_ARRAY);
+        //}
+        if (glGetError()!=GL_NO_ERROR) {
+            printf(" Error setting GL_COLOR_ARRAY_EXT.\n");
+        }
+    }
+    
+#ifdef PROJECTIVE_TEXTURE
+    GLfloat eyePlaneS[] =
+    {1.0, 0.0, 0.0, 0.0};
+    GLfloat eyePlaneT[] =
+    {0.0, 1.0, 0.0, 0.0};
+    GLfloat eyePlaneR[] =
+    {0.0, 0.0, 1.0, 0.0};
+    GLfloat eyePlaneQ[] =
+    {0.0, 0.0, 0.0, 1.0};
+    
+    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glTexGenfv(GL_S, GL_OBJECT_PLANE, eyePlaneS);
+    
+    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glTexGenfv(GL_T, GL_OBJECT_PLANE, eyePlaneT);
+    
+    glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glTexGenfv(GL_R, GL_OBJECT_PLANE, eyePlaneR);
+    
+    glTexGeni(GL_Q, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+    glTexGenfv(GL_Q, GL_OBJECT_PLANE, eyePlaneQ);
+    if (report_gl_errors()) {
+        printf(" Error calling glTexGen.\n");
+    } 
+    
+#endif
+    
+    if (g_VERTEX_ARRAY) { // same extension is for TEXTURE_COORD_ARRAY
+#ifndef PROJECTIVE_TEXTURE
+        if (g_texture_displayed != nmg_Graphics::NO_TEXTURES) {
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        } else {
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+        if (glGetError() != GL_NO_ERROR) {
+            printf(" Error setting GL_TEXTURE_COORD_ARRAY_EXT.\n");
+        } 
+#else
+        if ( planes.contour) {
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+#ifdef sgi
+        } else if ( planes.alpha ) {
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+#endif
+        } else {
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+        if (glGetError() != GL_NO_ERROR) {
+            printf(" Error setting GL_TEXTURE_COORD_ARRAY_EXT.\n");
+        } 
+#endif // PROJECTIVE_TEXTURE
+    }
+    
+#endif // sgi or win32
+    
+    if (spm_graphics_verbosity >= 15) { 
+        fprintf(stderr, "  updating %d - %d", subset.low(), subset.high());
+    } 
+    // Store g_just_color
+    vrpn_bool g_just_color_was_on = g_just_color;
+    // If we are re-doing the whole surface, we don't need to then
+    // re-do the color, so turn flag off.
+    if ( (subset.low() == 0) && (subset.high() == num_lists -1) ) {
+        g_just_color_was_on = 0;
+    }
+    
+    // turn g_just_color off so only geometry gets re-generated
+    g_just_color = 0;
+    for (i = subset.low(); i <= subset.high(); i++) {
+        
+        if (spm_graphics_verbosity >= 10) {
+            fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
+        }
+        
+        glNewList(base + i, GL_COMPILE);
+        
+        VERBOSECHECK(10);
+        
+        if ((*stripfn)(planes, mask, surfaceColor, i*g_stride, surface[i])) {
+            if (g_VERTEX_ARRAY) {
+                fprintf(stderr, "build_list_set():  "
+                    "Internal error - bad strip(vertex array)\n");
+            }
+            else {
+                fprintf(stderr, "build_list_set():  "
+                    "Internal error - bad strip\n");
+            }
+            return -1;
+        }
+        
+        if (spm_graphics_verbosity >= 10) {
+            fprintf(stderr, "    updated %d.\n", i);
+        }
+        VERBOSECHECK(10);
+        
+        glEndList();
+    }
+    if ( g_just_color_was_on ) {
+        // Flag tells stripfn to only regenerate color, and use cached normals 
+        // and vertices. 
+        g_just_color = 1;
+        // re-color the whole surface
+        for (i = 0; i < num_lists; i++) {
+            
+            if (spm_graphics_verbosity >= 10) {
+                fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
+            }
+            
+            glNewList(base + i, GL_COMPILE);
+            
+            VERBOSECHECK(10);
+            
+            if ((*stripfn)(planes, mask, surfaceColor, i*g_stride, surface[i])) {
+                if (g_VERTEX_ARRAY) {
+                    fprintf(stderr, "build_list_set():  "
+                        "Internal error - bad strip(vertex array)\n");
+                }
+                else {
+                    fprintf(stderr, "build_list_set():  "
+                        "Internal error - bad strip\n");
+                }
+                return -1;
+            }          
+            
+            if (spm_graphics_verbosity >= 10) {
+                fprintf(stderr, "    updated %d.\n", i);
+            }
+            VERBOSECHECK(10);
+            
+            glEndList();
+        }
+    }
+    g_just_color = 0;
+    return 0;
+}
+
+/**
+* Modified by Jason 11/19/00
+*
+* It's useful to not have to pass in the strip function to this
+* procedure.  It makes the Visualization classes simpler
+*
+*/
+int nmg_SurfaceRegion::build_list_set (
+    const nmb_Interval &insubset,
+    const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
+    GLuint base, GLsizei num,
+    int strips_in_x, Vertex_Struct **surface)
+{
+    
+    v_gl_set_context_to_vlib_window(); 
+    
+    int (* stripfn)
+      (const nmb_PlaneSelection&, nmg_SurfaceMask *, 
+	 GLdouble [3], int, Vertex_Struct *);
+    
+    if (strips_in_x) {
+        stripfn = spm_x_strip_masked;
+    } else {
+        stripfn = spm_y_strip_masked;
+    }
+    
+    // If we have a very small grid size, make sure g_stride doesn't tell us
+    // to skip any.
+    if ((planes.height->numY() <= 10) || (planes.height->numX() <= 10)) {
+        g_stride = 1;
+    }
+
+    nmb_Interval subset (MAX(0, insubset.low()),
+        MIN(num - 1, insubset.high()));
+    
+    if (!subset.empty()) {      
+      if (spm_graphics_verbosity >= 8) {
+	fprintf(stderr, "Deleting display lists from %d for %d.\n",
+                base + subset.low(), subset.high() - subset.low() + 1);
+      }
+      glDeleteLists(base + subset.low(), subset.high() - subset.low() + 1);
+      VERBOSECHECK(8);
+    } 
+    
+    return build_list_set(subset, planes, mask, base, num,
+        g_surfaceColor, stripfn, surface);
+}
+
+
+/**
+*	This routine creates display lists for the grid.  It will make
+* the lists in either X or Y fastest, and will delete the old lists (if
+* this is not the first time around) before making the new ones.
+* 	It returns the base name of the display lists (which are
+* contiguous) and the number of lists that it generates.
+*	This routine returns -1 on failure and 0 on success.
+*
+*  Modified by JMC on 11/19/00
+*  build_grid_display_lists now assumes that old_num specifies the old
+*  number of lists allocated for the current base.  If old_num is less than
+*  1, then it assumes that it is being called for the first time for
+*  a particular base. 
+*/
+
+int nmg_SurfaceRegion::build_grid_display_lists(
+    const nmb_PlaneSelection &planes,  nmg_SurfaceMask *mask, 
+    int strips_in_x, GLuint *base, GLsizei *num, 
+    GLsizei old_num, GLdouble *surfaceColor, 
+    Vertex_Struct **surface)
+{
+    
+    int (* stripfn)
+        (const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], 
+	 int, Vertex_Struct *);
+    
+    VERBOSE(4,"     build_grid_display_lists in openGL.c");
+    VERBOSECHECK(4);
+    
+    v_gl_set_context_to_vlib_window(); 
+    
+    /* If this is not the first time around, free the old display lists */
+    if (old_num > 0) {
+      glDeleteLists(*base, old_num);
+      if (spm_graphics_verbosity >= 6)
+	fprintf(stderr, "      deleted display lists "
+		"from %d for %d.\n", *base, old_num);
+    }
+    
+    VERBOSE(4,"     build_grid_display_lists in openGL.c");
+    TIMERVERBOSE(5, mytimer, "begin build_grid_display_lists");
+    
+    /* set material parameters */
+    //set_gl_surface_materials();
+    //if (report_gl_errors()) {
+    //    printf("set_gl_surface_materials: generated gl error\n");
+    //}
+    
+    // If we have a very small grid size, make sure g_stride doesn't tell us
+    // to skip any.
+    if ((planes.height->numY() <= 10) || (planes.height->numX() <= 10)) {
+        g_stride = 1;
+    }
+    // Figure out how many strips we will need.  Recall that we are
+    // skipping along by stride gridpoints each time.
+    if (strips_in_x) {
+        *num = (planes.height->numY() - 1) / g_stride;
+        stripfn = spm_x_strip_masked;
+    } else {
+        *num = (planes.height->numX() - 1) / g_stride;
+        stripfn = spm_y_strip_masked;
+    }
+    
+    // Generate a new set of display list indices
+    if ( (*base = glGenLists(*num)) == 0) {
+        fprintf(stderr,
+            "build_grid_display_lists(): Couldn't get indices\n");
+        return(-1);
+    }
+    if (spm_graphics_verbosity >= 6)
+        fprintf(stderr, "    allocated display lists from %d for %d.\n",
+        *base, *num);
+    
+#if defined(sgi) || defined(_WIN32)
+    // use vertex array extension
+    if (g_VERTEX_ARRAY) {
+        glEnableClientState(GL_VERTEX_ARRAY);
+        // Color arrays are enabled/disabled dynamically depending
+        // on whether or not planes.color or g_PRERENDERED_COLORS are
+        // valid.
+        if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
+            glEnableClientState(GL_NORMAL_ARRAY);
+        }
+    }
+#endif
+    
+    build_list_set(nmb_Interval (0, *num - 1), planes, mask, *base, *num,
+        surfaceColor, stripfn, surface);
+    
+    VERBOSE(4,"     done build_grid_display_lists in openGL.c");
+    VERBOSECHECK(4);
+    
+    TIMERVERBOSE(5, mytimer, "end build_grid_display_lists");
+    
+    return(0);
+}
+

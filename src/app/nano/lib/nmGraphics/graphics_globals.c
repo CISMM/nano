@@ -81,10 +81,7 @@ double g_collabHandPos[3];  //no initial value
 double g_collabHandQuat[4];  //no initial value
 vrpn_int32 g_collabMode = 0;
 
-//initially set alpha value to 0.0
-double g_minColor [4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-//initially set alpha value to 1.0
-double g_maxColor [4] = { 1.0f, 0.88f, 0.04f, 1.0f };
+double g_surfaceColor [4] = { 1.0f, 0.88f, 0.04f, 1.0f };
 
 int g_minChangedX;
 int g_maxChangedX;
