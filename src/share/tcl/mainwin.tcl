@@ -687,7 +687,7 @@ proc disable_widgets_for_commands_suspended { name el op } {
 
     # Note: $ substitution for the patterns won't work because
     # the switch body is in brackets. 
-    switch $spm_commands_suspended {
+    switch $commands_suspended {
         0 {
             # Commands aren't suspended, enable controls
             foreach widget $device_only_controls {
