@@ -21,20 +21,11 @@
 
 #include "graphics_globals.h"
 
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
+#ifndef NMG_MIN
+#define NMG_MIN(a,b) ((a)<(b)?(a):(b))
 #endif
-#ifndef max
-#define max(a,b) ((a)<(b)?(b):(a))
-#endif
-
-//switching for textures on sgi and FLOW
-#ifdef sgi
-#define sgi_or_flow 1
-#endif
-
-#ifdef FLOW
-#define sgi_or_flow 1
+#ifndef NMG_MAX
+#define NMG_MAX(a,b) ((a)<(b)?(b):(a))
 #endif
 
 
@@ -69,24 +60,8 @@ static GLubyte rulerImage [rulerImageHeight][rulerImageWidth][4];
 
 
 // local functions:
-//   int vec_cmp (const q_vec_type, const q_vec_type)
 //   void createPyramid (float center, float width, int white_flag)
 //   void makeTexture (void)
-//   void makeCheckImage (void)
-//   void makeRulerImage (void)
-
-
-
-
-/* Quick function to compare two vectors since this isn't in quatlib.
- * Probably should be added there.
- */
-int vec_cmp(q_vec_type a, q_vec_type b) {
-   return ((a[0] == b[0]) && (a[1] == b[1]) && (a[2] == b[2]));
-}
-
-
-
 
 
 /********************************************************
@@ -109,7 +84,7 @@ red or white line should fall on the texture map, so nearby texels
 opacity values must be adjusted to create the correct map 
 
 *****************************************/
-void createPyramid (float center, float width, int white_flag)
+static void createPyramid (float center, float width, int white_flag)
 {
   float slope, /* start, end, */ i, opacity, translation;
   //one side of the triangle spans width/2 in x
@@ -131,7 +106,7 @@ void createPyramid (float center, float width, int white_flag)
       opacity = slope * i + 255;
 
       //clamp the opacity to 255
-      opacity = min(opacity, 255.0f);
+      opacity = NMG_MIN(opacity, 255.0f);
 
       //translate the value to center
       //use mod so we dont fall off the edge of the contourImage
@@ -172,7 +147,7 @@ void createPyramid (float center, float width, int white_flag)
 //  float g_contour_width
 //  int g_contour_[rgb]
 
-void makeTexture (void) {
+static void makeTexture (void) {
 
   // num holds the (non-integer) number of texels between red lines
   double num = contourImageWidth / 10.0;
@@ -841,3 +816,7 @@ void resetLightDirection (void) {
   l0_position[3] = 0.0;
 }
 
+
+// Local Variables:
+// mode:c++
+// End:

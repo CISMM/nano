@@ -241,4 +241,7 @@ int g_data_tex_size;
 
 #endif
 
-
+
+// Local Variables:
+// mode:c++
+// End:

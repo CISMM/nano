@@ -8,7 +8,6 @@
 class PPM;  // from PPM.h
 
 void setupMaterials (void);  // for initialization
-void buildAllTextures (void);
 
 void buildContourTexture (void);  // for update
 void buildRemoteRenderedTexture (int width, int height, void *);
@@ -16,7 +15,6 @@ void makeCheckImage (void);
 void buildAlphaTexture (void);
 void makeRulerImage (void);
 void buildRulergridTexture (void);
-void makeAndInstallRulerImage (PPM *);
 
 void compute_texture_matrix(double translate_x, double translate_y,
                 double rotation, double scale_x, double scale_y,

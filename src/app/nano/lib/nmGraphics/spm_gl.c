@@ -1066,3 +1066,8 @@ int spm_render_mark (const nmb_LocationInfo & p, void *) {
 
   return 0;
 }
+
+
+// Local Variables:
+// mode:c++
+// End:

@@ -604,6 +604,10 @@ void nmg_Graphics_Implementation::loadRulergridImage (const char * name) {
   }
 }
 
+
+// Tell how to index a given element.  Parameters are y,x,color
+#define texel(j,i,c) ( (c) + 4 * ( (i) + (j) * texture_size))
+
 void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
 {
   // code taken from graphics.c::makeAndInstallRulerImage():
@@ -612,9 +616,6 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
 
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
-
-// Tell how to index a given element.  Parameters are y,x,color
-#define texel(j,i,c) ( (c) + 4 * ( (i) + (j) * texture_size))
 
   // Find out the smallest power-of-2 texture region we can use.
   // Remember that float->int conversion truncates, so add 0.5 for rounding
@@ -741,6 +742,8 @@ _______________________________********************/
 
   delete [] texture;
 }
+
+#undef texel
 
 
 void nmg_Graphics_Implementation::causeGridRedraw (void) {
