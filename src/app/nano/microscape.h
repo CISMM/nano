@@ -8,7 +8,8 @@
 #ifndef	MICROSCAPE_H
 #define	MICROSCAPE_H
 
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 
 // iostream must come before this, in order to compile with Flow!
 #ifdef	hpux

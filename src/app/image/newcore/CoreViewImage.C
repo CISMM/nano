@@ -15,7 +15,8 @@
 #include <imprelud.h>
 
 #include <stdio.h>
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 #include <string>
 #include "CoreViewImage.h"
 

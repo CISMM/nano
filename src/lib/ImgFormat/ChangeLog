@@ -1,3 +1,8 @@
+2002-03-13  Aron Helser  <helser@cs.unc.edu>
+
+	* PNMImage.C: Change to standard iostream/STL headers. 
+	* TIFFImage.C: same
+	
 2001-06-23  Russell Taylor  <taylorr@cs.unc.edu>
 
 	* PNMImage.C (Read) : Changed polarity of test so that it prints an error

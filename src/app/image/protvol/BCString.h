@@ -8,7 +8,8 @@ description:
 #ifndef STRING_H
 #define STRING_H
 
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 #include <stdio.h>
 #include <string.h>
 

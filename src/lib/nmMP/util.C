@@ -336,7 +336,7 @@ struct timeval timevalFromMsecs( const double dMsecs ) {
 // hopefully the one from vrpn
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-#include <iostream.h>
+#include <iostream>
 #include <math.h>
 
 // utility routines to read the pentium time stamp counter
@@ -760,6 +760,9 @@ int nonblockingGetch( char *, int ) {
 
 /*****************************************************************************\
   $Log$
+  Revision 1.3  2000/08/11 21:41:05  skinner
+  This merges the code in the trunk with the code in thirdtech_branch.
+
   Revision 1.2.2.1  2000/07/04 00:38:41  helser
   Removed many more printfs. Most on startup are now from vrpn.
 

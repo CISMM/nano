@@ -1,7 +1,7 @@
 #include "URTexture.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <fstream.h>
+#include <fstream>
 #include <assert.h>
 
 #ifdef __CYGWIN__
@@ -92,7 +92,7 @@ int URTexture::LoadPPMFile(char *filename, int *filter)
 	//kill(getpid(),SIGINT);
         return -1;
     }
-    in.read(texture_data, rsize);
+    in.read((char *)texture_data, rsize);
 
     if(filter){
 	for(i=(xsize*ysize-1); i>=0; i--){

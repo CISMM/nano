@@ -6,7 +6,8 @@
 //class in order to do the mouse based picking operation
 
 #include <quat.h>
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 #include "Xform.h"
 
 class Xform;

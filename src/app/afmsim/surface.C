@@ -5,7 +5,8 @@
 #include <vrpn_Types.h>  // for portable sys/time.h
 
 #include <stdio.h>
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 #include <stdlib.h>
 #include <math.h>
 

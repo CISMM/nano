@@ -2,7 +2,8 @@
 
 //don't forget to remove the next two includes--for debugging only!
 #include <stdio.h>
-#include <fstream.h>
+#include <fstream>
+using namespace std;
 
 #include <vrpn_Types.h>
 

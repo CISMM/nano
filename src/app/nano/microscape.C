@@ -7384,6 +7384,8 @@ int main (int argc, char* argv[])
     //fprintf(stderr, "Microscope initialized\n");
     createGraphics(istate);
 
+    // Debug icon sizing
+    printf("Icon size %d %d\n", GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON));
     setupCallbacks(decoration);
 
     setupCallbacks(graphics);

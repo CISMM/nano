@@ -75,9 +75,10 @@
 #ifndef _MYUTIL_H_
 #define _MYUTIL_H_
 
-#include <iostream.h>
-#include <iomanip.h>
-#include <fstream.h>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+using namespace std;
 #include <new.h>
 #include <stdlib.h>
 

@@ -1,3 +1,8 @@
+2002-03-13  Aron Helser  <helser@cs.unc.edu>
+
+	* cnt_ia.C: Change to standard iostream/STL headers. 
+	* nmAnalyze.dsp: same
+
 2002-02-25 Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* 3d_afm.dsp : deleted unnecessary .dat files and changed Debug

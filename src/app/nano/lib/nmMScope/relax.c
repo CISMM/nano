@@ -172,7 +172,7 @@ int relax_comp(long sec, long usec, float* z)
 	      z1 /= n_avg;
 	      relax_state = BIAS_READY;
 	      Z0 -= z1;
-	      *z += Z0;
+	      *z += (float)Z0;
 	      n_avg = 0;
 	      }  /* end averaged enough, gone READY */
 	   return 1;
@@ -182,7 +182,7 @@ int relax_comp(long sec, long usec, float* z)
      /* Just add the computed offset to this z value
      **/
      case BIAS_READY:
-	*z += Z0;
+	*z += (float)Z0;
 	return 1;
 
      /* Look for samples for first data point 
@@ -228,7 +228,7 @@ int relax_comp(long sec, long usec, float* z)
 	      Z0 -= z1 - k/t1;
 
 	      /* go ahead an compensate this one */
-	      *z += Z0 - k/t;
+	      *z += (float)(Z0 - k/t);
 	      return 1;
 	      }  /* end averaged enough, gone READY */
 	   } /* end past separation interval */
@@ -242,7 +242,7 @@ int relax_comp(long sec, long usec, float* z)
 	     relax_state = BIAS_READY;
 	     k = 0.0;
 	     }
-	*z += Z0 - k/t;
+	*z += (float)(Z0 - k/t);
 	return 1;
 
 	/* anything else, try to stop system from calling us anymore, and

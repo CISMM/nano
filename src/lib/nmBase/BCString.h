@@ -8,10 +8,10 @@ description:
 #ifndef STRING_H
 #define STRING_H
 
-#include <iostream.h>
+#include <iostream>
 #include <stdio.h>
 #include <string.h>
-
+using namespace std;
 
 class BCString 
 {

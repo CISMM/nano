@@ -6,7 +6,8 @@
  */
 
 #include <stdio.h>
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 #include <math.h>		//math.h vs cmath
 #include <GL/glut_UNC.h>
 #include "ConeSphere.h"

@@ -21,8 +21,8 @@
 
 #include "Vec3d.h"
 #include <math.h>
-#include <iostream.h>
-#include <fstream.h>
+#include <iostream>
+#include <fstream>
 
 // definition of Vec3d helper functions
 

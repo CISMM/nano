@@ -3,7 +3,8 @@
 
 /* Write out uncertainty map */
 
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 
 class Uncertw {
 public:

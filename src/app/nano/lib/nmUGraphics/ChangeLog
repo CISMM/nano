@@ -1,3 +1,14 @@
+2002-03-13  Aron Helser  <helser@cs.unc.edu>
+
+	* URPolygon.h: Change to standard iostream/STL headers. 
+	* URTexture.C: same
+	* URTexture.h: same
+	* URender.h: same
+	* UTree.C: same
+	* Xform.h: same
+	* Xform4x4.h: same
+	* nmUGraphics.dsp: same
+
 2002-03-06 David Borland <borland@cs.unc.edu>
         * TubeFileGenerator.C : Added code to allow for user-control of
         the tesselation of the nanotube

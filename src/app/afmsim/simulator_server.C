@@ -10,7 +10,8 @@
 #include "BCGrid.h"
 #include "BCPlane.h"
 #include "Topo.h" // added 4/19/99
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 #include <time.h>
 //#include <sys/time.h>
 #include <vrpn_Types.h>  // for portable <sys/time.h>

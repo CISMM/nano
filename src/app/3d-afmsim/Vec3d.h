@@ -19,7 +19,8 @@
  *
  ***************************************************************************/
 
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 
 #ifndef _VEC3D_H_
 #define _VEC3D_H_

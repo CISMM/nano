@@ -126,7 +126,7 @@ init(int width, int height)
     d_VertexArrayDim = dim;
 
     //d_vertexPtr = (Vertex_Struct **)malloc(d_VertexArrayDim * sizeof(Vertex_Struct **));
-    d_vertexPtr = (Vertex_Struct **)new Vertex_Struct[d_VertexArrayDim];
+    d_vertexPtr = new Vertex_Struct*[d_VertexArrayDim];
     
     if (d_vertexPtr == NULL) {
         fprintf(stderr, 

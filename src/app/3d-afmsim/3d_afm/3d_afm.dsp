@@ -224,6 +224,18 @@ SOURCE=..\..\..\..\..\external\pc_win32\lib\glut32_UNC.lib
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\..\external\pc_win32\lib\GHOST31.lib
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\..\quat\pc_win32_MTd\quat.lib
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\..\vogl\pc_win32_MTd\vogl.lib
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\..\vrpn\pc_win32\Debug\vrpn.lib
 # End Source File
 # End Group
@@ -292,6 +304,19 @@ SOURCE=..\..\..\..\obj\pc_win32\debug\app\nano\lib\nmUI\nmUI.lib
 # Begin Source File
 
 SOURCE=..\..\..\..\obj\pc_win32\debug\lib\nmBase\nmBase.lib
+
+!IF  "$(CFG)" == "3d_afm - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "3d_afm - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\obj\pc_win32\debug\lib\nmImageViewer\nmImageViewer.lib
 
 !IF  "$(CFG)" == "3d_afm - Win32 Release"
 

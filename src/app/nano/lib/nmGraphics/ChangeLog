@@ -1,3 +1,7 @@
+2002-03-15  Aron Helser  <helser@cs.unc.edu>
+
+	* nmg_SurfaceRegion.C (init): Corrected type of "new"ed memory. 
+
 2002-03-13  David Marshburn  <marshbur@cs.unc.edu>
 
 	* chartjunk.c (mode_display):  changed user mode strings:

@@ -1,7 +1,8 @@
 #ifndef _UNCA_H_
 #define _UNCA_H_
 
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 
 class Unca {
 public:

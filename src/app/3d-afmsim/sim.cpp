@@ -13,8 +13,8 @@
 //#include <unistd.h>
 //#include <sys/types.h>
 //#include <sys/time.h>
-#include <iostream.h>
-#include <fstream.h>
+#include <iostream>
+#include <fstream>
 #include <vector>
 #include <math.h> //math.h vs cmath
 #include <GL/glut_UNC.h>

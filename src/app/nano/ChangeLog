@@ -1,4 +1,14 @@
-2002-03-13    <marshbur@cs.unc.edu>
+2002-03-13  Aron Helser  <helser@cs.unc.edu>
+
+	* imported_obj.h: Change to standard iostream/STL headers. 
+	* index_mode.C: same
+	* microscape.h: same
+	* vrml.C: same
+	* nano.dsp: same, stop including ghost-stl. 
+	* nano_unc.ico: Reduced to 16 colors, fixed memory error when glut
+	loaded 24bit color icon. 
+
+2002-03-13  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c:  adds comments for using APP_SUFFIX
 	* nano.dsp:  link with Debug-located quat and vogl rather than
@@ -38,7 +48,7 @@
 2002-02-21  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c 
-	(setupSynchroniztion):  Changed to only do non-microscope variables.
+	(setupSynchronization):  Changed to only do non-microscope variables.
 	Also added z_lock to the shared variables.
 	(teardownSynchroniztion):  same.
 	(setupMicroscopeSynchronization):  new

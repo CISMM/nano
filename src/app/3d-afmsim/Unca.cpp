@@ -2,7 +2,7 @@
  * varadhan@cs.unc.edu
  * Dec 2000
  */
-#include <iostream.h>
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include "Unca.h"

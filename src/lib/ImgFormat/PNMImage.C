@@ -20,7 +20,7 @@ bool PNMImage::readInt
    int      &value
 )
 {
-   unsigned char c = ' ';
+    char c = ' ';
 
 
    while (isspace(c) || c == '#')
@@ -175,7 +175,7 @@ bool PNMImage::readASCII(ifstream &pnm)
 bool PNMImage::readRAW(ifstream &pnm)
 {
    for (unsigned int y = 0; y < image->Rows(); y++)
-      pnm.read(&(image->Pixel(y)),
+      pnm.read((char *)&(image->Pixel(y)),
                image->Columns()*image->Colors()*sizeof(char));
 
    return true;
@@ -206,7 +206,7 @@ bool PNMImage::writeRAW(ofstream &pnm)
    // reverse the y order so as to be consistent with TIFF output and
    // xv3.1 viewer
    for (unsigned int y = 0; y < image->Rows(); y++)
-      pnm.write(&(image->Pixel(image->Rows() - 1 - y)),
+      pnm.write((char *)&(image->Pixel(image->Rows() - 1 - y)),
                 image->Columns()*image->Colors()*sizeof(char));
 
    return true;
@@ -243,12 +243,13 @@ bool PNMImage::Read(const char *filename)
    return Valid();
 }
 
+/* Not available using standard iostream library. 
 bool PNMImage::Read(FILE *file)
 {
    if (image && image->Valid())
       Die();
 
-   ifstream pnm(fileno(file));
+   ifstream pnm((filedesc)fileno(file));
 
    if (!pnm)
    {
@@ -265,7 +266,7 @@ bool PNMImage::Read(FILE *file)
 
    return Valid();
 }
-
+*/
 bool PNMImage::Write(const char *filename)
 {
    if (!image || !image->Valid())
@@ -309,7 +310,7 @@ bool PNMImage::Write(const char *filename)
 
    return ret;
 }
-
+/* Not available using standard iostream library. 
 bool PNMImage::Write(FILE *file)
 {
    if (!image || !image->Valid())
@@ -347,3 +348,4 @@ bool PNMImage::Write(FILE *file)
 
    return ret;
 }
+*/

@@ -239,7 +239,7 @@ bool TIFFImage::Write(const char *filename)
       return false;
    }
 
-   tiff.write(&(image->Pixel()),image->Rows()*image->Columns()*image->Colors());
+   tiff.write((char *)&(image->Pixel()),image->Rows()*image->Columns()*image->Colors());
 
    if (tiff.fail())
    {
@@ -254,6 +254,7 @@ bool TIFFImage::Write(const char *filename)
    return true;
 }
 
+/*  Not available using standard iostream library. 
 bool TIFFImage::Write(FILE *file)
 {
 
@@ -287,3 +288,4 @@ bool TIFFImage::Write(FILE *file)
 
    return true;
 }
+*/

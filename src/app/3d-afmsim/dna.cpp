@@ -4,8 +4,8 @@
  */
 #include <stdlib.h>		//stdlib.h vs cstdlib
 #include <stdio.h>		//stdio.h vs cstdio
-#include <iostream.h>
-#include <fstream.h>
+#include <iostream>
+#include <fstream>
 #include "3Dobject.h"
 #include <math.h>		//math.h vs cmath
 #include <GL/glut_UNC.h>

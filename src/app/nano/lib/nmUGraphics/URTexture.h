@@ -1,7 +1,8 @@
 #ifndef URTEXTURE_H
 #define URTEXTURE_H
 
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 #include "URender.h"
 #include <GL/gl.h>
 #include <GL/glu.h>

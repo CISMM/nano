@@ -1,3 +1,9 @@
+2002-03-13  Aron Helser  <helser@cs.unc.edu>
+
+	* Makefile.common (BAREBAREDEFINES): added VRPN_NO_STREAMS 
+	(SYS_INCLUDE): removed ghost and ghost-stl from include
+	directories - these conflict with standard STL includes.
+
 2002-02-08  Aron Helser  <helser@cs.unc.edu>
 
 	* Makefile.depend: Allow cygwin make to compile MDd
@@ -42,7 +48,7 @@
 	and necessary infrastructure to add a pre-depend step. This is 
 	useful for generating files before a depend. (lexical analysis, etc...)
 
-	* Makefile*: Removed all references to archatectures other than 
+	* Makefile*: Removed all references to architectures other than 
 	VC/Cygwin and SGI.
 
 2001-11-25  Aron Helser  <helser@cs.unc.edu>

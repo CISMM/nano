@@ -2,7 +2,7 @@
  * varadhan@cs.unc.edu
  * May 2001
  */
-#include <iostream.h>
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include "Uncertw.h"

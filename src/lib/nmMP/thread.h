@@ -102,7 +102,7 @@
 #include <unistd.h>
 #endif
 
-#include <iostream.h>
+#include <iostream>
 #include "myUtil.h"
 
 class Semaphore {
@@ -214,6 +214,9 @@ protected:
 
 /*****************************************************************************\
   $Log$
+  Revision 1.2  2000/01/06 15:59:25  weigle
+  Tom wants to work in the new tree, so I'm making sure we're up to date.
+
   Revision 1.7  1999/12/15 15:26:11  juliano
   get rid of the typedef around struct ThreadData.  Now, compiler errors have the real name, not the phony struct tag.
 

@@ -2,7 +2,8 @@
 #define XFORM_H
 
 #include <quat.h>
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 #include "Xform4x4.h"		//adds additional xform functionality for a generalized 4x4 matrix
 
 #define XP_4BY4 0		// CONSTANTS FOR PRINT

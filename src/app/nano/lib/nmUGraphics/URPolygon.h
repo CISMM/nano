@@ -1,7 +1,8 @@
 #ifndef URPOLYGON_H
 #define URPOLYGON_H
 
-#include <iostream.h>
+#include <iostream>
+using namespace std;
 #include "URender.h"
 #include "GeomGenerator.h"
 

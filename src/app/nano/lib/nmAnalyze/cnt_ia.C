@@ -1,7 +1,8 @@
 #include <string>
 #include <vector>
-#include <iostream.h>
-#include <fstream.h>
+#include <iostream>
+#include <fstream>
+using namespace std;
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdio.h>

@@ -14,8 +14,9 @@
  *	The function write_to_vrml() is the operative one.
  */
 
-#include <iostream.h>
-#include <fstream.h>
+#include <iostream>
+#include <fstream>
+using namespace std;
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
