@@ -167,6 +167,7 @@ double x_to_y = 1.0;
 int TriangleCounter = 0;
 bool once_thru = false;
 FILE *file;
+float current_scale;
 
 Tclvar_string cname("tclname","");
 
@@ -575,7 +576,8 @@ void displayFuncDepth( void ) {
 		double ratio = SimMicroscopeServer.Sim_to_World_x;
 		double x_offset = SimMicroscopeServer.get_x_offset();
 		double y_offset = SimMicroscopeServer.get_y_offset();
-		float scale = ratio*SimMicroscopeServer._scale;
+		current_scale = SimMicroscopeServer._scale;
+		float scale = current_scale * ratio;
 
 		float x,y,z,altitude,azimuth,length,radius;
 		
@@ -600,14 +602,16 @@ void displayFuncDepth( void ) {
 		SimMicroscopeServer.cylRcv = false;
 		
 	}
-	if(SimMicroscopeServer.scaleRcv){
+	else if(SimMicroscopeServer.scaleRcv){
 		float _scale = SimMicroscopeServer._scale;
+		float new_scale = _scale/current_scale;
+		current_scale = _scale;
 		
 		for(int i=0; i<numObs; i++ ) {
-			ob[i]->scale(_scale);
-			ob[i]->setPos(Vec3d(ob[i]->pos.x*_scale,
-						  ob[i]->pos.y*_scale,
-						  ob[i]->pos.z*_scale));
+			ob[i]->scale(new_scale);
+			ob[i]->setPos(Vec3d(ob[i]->pos.x*new_scale,
+						  ob[i]->pos.y*new_scale,
+						  ob[i]->pos.z*new_scale));
 		}
 		SimMicroscopeServer.scaleRcv = false;
 
