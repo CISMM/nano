@@ -337,7 +337,9 @@ ifeq ($(HW_OS),sgi_irix)
    SYS_INCLUDE := /usr/local/contrib/mod/include
 endif
 
-INCLUDE_FLAGS := $(addprefix -I, . $(EXTERNAL_INC_DIR) $(SYS_INCLUDE))
+INCLUDE_FLAGS := $(addprefix -I, . $(EXTERNAL_INC_DIR) \
+				$(EXTERNAL_INC_DIR)/magick/formats \
+				$(SYS_INCLUDE))
 
 ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
    INCLUDE_FLAGS := $(APDEBUG) $(APCCFLAGS) $(APIFLAGS) -Dhpux -DFLOW \
@@ -357,6 +359,7 @@ INCLUDE_FLAGS += $(LATE_INCLUDE_PATH)
 #
 
 LOAD_FLAGS := $(addprefix -L, $(EXTERNAL_LIB_DIR) \
+				$(EXTERNAL_LIB_DIR)/magick \
 				/usr/local/lib \
 	                       	/usr/local/contrib/unmod/lib \
 	                      	/usr/local/contrib/mod/lib \
