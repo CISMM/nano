@@ -104,7 +104,7 @@ Installation of nano source tree on C: drive for compiling with VC++ compiler
    Copy the colormaps directory from
         /afs/unc/proj/stm/etc/colormaps to C:\nsrc\colormaps
 3. Open cygwin shell and mount the nsrc directory like so:
-        mount -s -b C:\nsrc /nsrc
+        mount -s -b C:\\nsrc /nsrc
    (note it is important that Cygwin and DOS both see the directory
     in the same place when you refer to it as /nsrc - Cygwin looks at
     the mount point wherever the cygwin root directory is but DOS looks
