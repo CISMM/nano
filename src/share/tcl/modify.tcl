@@ -301,7 +301,8 @@ set modifyplist [list mode control style tool \
   num_layers num_hcycles \
   sample_speed pullback_speed start_speed feedback_speed \
   avg_num sample_delay pullback_delay feedback_delay \
-  max_z_step max_xy_step min_z_setpoint max_z_setpoint max_lat_setpoint]
+  max_z_step max_xy_step min_z_setpoint max_z_setpoint max_lat_setpoint \
+  constr_xyz_mode optimize_now]
 
 # These variables only exist in tcl - the user changes
 # them, and then the "accept" button copies them into the vars
@@ -607,19 +608,27 @@ set mod_slow_line_list "$nmInfo(modifyfull).toolparam.step-size"
 
 #setup Constr. Freehand XYZ params box
 radiobutton $nmInfo(modifyfull).toolparam.line -text "Line Mode" \
-	-variable modifyp_constr_xyz_mode -value 0 -anchor nw
+	-variable newmodifyp_constr_xyz_mode -value 0 -anchor nw
 radiobutton $nmInfo(modifyfull).toolparam.plane -text "Plane Mode" \
-	-variable modifyp_constr_xyz_mode -value 1 -anchor nw
+	-variable newmodifyp_constr_xyz_mode -value 1 -anchor nw
 set constr_xyz_param_list "$nmInfo(modifyfull).toolparam.line \
 	$nmInfo(modifyfull).toolparam.plane"
 
+lappend device_only_controls \
+	$nmInfo(modifyfull).toolparam.line \
+	$nmInfo(modifyfull).toolparam.plane
+
 #setup Optimize Now params box
 radiobutton $nmInfo(modifyfull).toolparam.optimize_line -text "Optimize Line" \
-	-variable modifyp_optimize_now -value 0 -anchor nw
+	-variable newmodifyp_optimize_now -value 0 -anchor nw
 radiobutton $nmInfo(modifyfull).toolparam.optimize_area -text "Optimize Area" \
-	-variable modifyp_optimize_now -value 1 -anchor nw
+	-variable newmodifyp_optimize_now -value 1 -anchor nw
 set optimize_now_param_list "$nmInfo(modifyfull).toolparam.optimize_line \
 	$nmInfo(modifyfull).toolparam.optimize_area"
+
+lappend device_only_controls \
+	$nmInfo(modifyfull).toolparam.optimize_line \
+	$nmInfo(modifyfull).toolparam.optimize_area
 
 proc flip_optimize_selection_mode {optimize_mode_param element op} {
 
@@ -638,7 +647,7 @@ proc flip_optimize_selection_mode {optimize_mode_param element op} {
     }
 }
 
-trace variable modifyp_optimize_now w flip_optimize_selection_mode
+trace variable newmodifyp_optimize_now w flip_optimize_selection_mode
 
 # eval command expands the lists so we get one list of single elements. 
 eval lappend device_only_controls $mod_line_list
@@ -740,6 +749,9 @@ proc flip_mod_mode {mod_mode element op} {
         $nmInfo(modifyfull).style.sewing configure -state normal
         $nmInfo(modifyfull).style.forcecurve configure -state normal
     }
+
+    # disable widgets if you don't have the lock 
+    disable_widgets_for_commands_suspended 0 0 0
 }
 
 # flips $nmInfo(modifyfull).styleparam widgets
@@ -787,6 +799,7 @@ proc flip_mod_tool {mod_tool element op} {
     global mod_line_list mod_slow_line_list mod_control_list \
 	    constr_xyz_param_list optimize_now_param_list
     global fspady newmodifyp_style
+    global collab_commands_suspended
 
     upvar $mod_tool k
 
@@ -910,6 +923,9 @@ proc flip_mod_tool {mod_tool element op} {
         $nmInfo(modifyfull).style.sewing configure -state normal
         $nmInfo(modifyfull).style.forcecurve configure -state normal
     }
+
+    # disable widgets if you don't have the lock 
+    disable_widgets_for_commands_suspended 0 0 0
 }
 
 # flips $nmInfo(modifyfull).controlparam widgets
