@@ -119,10 +119,27 @@ button $win.get_logfile_name -text "Choose..." -command choose_logfile
 
 pack $win.open_logfile $win.get_logfile_name  -side left
 
+# This is a messageBox asking if the user wishes to continue without saving.
+# If yes, a microscope connection will be established without a logFile.
+# If no, the SPMDeviceConnection dialog box will be opened again. 
+	iwidgets::dialog .file_select_warning -title "Are you sure?" -modality application
+	label [.file_select_warning childsite].label_1 -text "WARNING:\tNo file has been selected!\n"
+	pack [.file_select_warning childsite].label_1
+	.file_select_warning hide Help
+	.file_select_warning buttonconfigure OK -text "Continue without saving" \
+							    -command {.file_select_warning deactivate 1}
+	.file_select_warning hide Apply
+	.file_select_warning buttonconfigure Cancel -text "Select a file" \
+								  -command {.file_select_warning deactivate 0}
+
+
 # Allow the user to save 
 proc open_spm_connection {} {
     global deviceNames deviceConnections 
     global chosen_device_index open_spm_device_name open_spm_log_name
+
+    # variable used when no streamFile is selected.  MessageBox asks whether this is correct.
+    set go_on 0
 
     if { [.open_device_dialog activate] } {
         # Make sure the logfile is OK - MUST be able to write log before 
@@ -150,10 +167,18 @@ proc open_spm_connection {} {
                 nano_error "Cannot save streamfile $open_spm_log_name\nFile already exists!"
                 return;
             }
-        }                
-        # User chose a device, translate it into a vrpn device name for Nano
-        set open_spm_device_name [lindex $deviceConnections $chosen_device_index]
-        #puts "$open_spm_device_name"
+
+		set open_spm_device_name [lindex $deviceConnections $chosen_device_index]
+
+	   } else {
+	       # Ask whether the user really wants to continue without saving
+		if { [.file_select_warning activate] } {
+			set open_spm_device_name [lindex $deviceConnections $chosen_device_index]
+			return; 
+		} else { open_spm_connection
+			   return; }
+		}					
+
     } else {
         # user pressed "cancel" so do nothing
     }
