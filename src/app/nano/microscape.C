@@ -108,6 +108,7 @@ pid_t getpid();
 // Registration
 #include "nmr_Registration_Proxy.h"
 #include "nmr_RegistrationUI.h"
+#include "nmg_ImageDisplayProjectiveTexture.h"
 #endif // PROJECTIVE_TEXTURE
 
 #ifndef NO_XWINDOWS
@@ -1025,6 +1026,7 @@ nms_SEM_ui * sem_ui = NULL;
 
 /// Controls for registration
 nmr_RegistrationUI *alignerUI = NULL;
+nmg_ImageDisplayProjectiveTexture *alignmentTextureDisplay = NULL;
 nmr_Registration_Proxy *aligner = NULL;
 
 /// User controls for the colormap applied to the heightfield/surface
@@ -2222,7 +2224,7 @@ static void handle_display_textures_selected_change(vrpn_int32 value, void *user
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 //  printf("handle_display_textures_selected_change, %d\n", value);
   if (value){
-    disableOtherTextures(MANUAL_REALIGN);
+    //disableOtherTextures(MANUAL_REALIGN);
     g->setTextureMode(nmg_Graphics::COLORMAP,
 		      nmg_Graphics::MANUAL_REALIGN_COORD);
   } else {
@@ -2351,7 +2353,7 @@ static void handle_rulergrid_selected_change(vrpn_int32 value, void *userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   if (value) {
-    disableOtherTextures(RULERGRID);
+    //disableOtherTextures(RULERGRID);
     g->setTextureMode(nmg_Graphics::RULERGRID,
 		      nmg_Graphics::RULERGRID_COORD);
   } else {
@@ -2417,7 +2419,7 @@ static void handle_alpha_dataset_change (const char *, void * userdata)
 
 	//        printf("handle_alpha_dataset_change\n");
 	if (plane != NULL) {
-            disableOtherTextures(ALPHA);
+            //disableOtherTextures(ALPHA);
 		alpha_slider_min_limit = plane->minAttainableValue();
 		alpha_slider_min = plane->minValue();
 		alpha_slider_max_limit = plane->maxAttainableValue();
@@ -3270,7 +3272,7 @@ void handle_contour_dataset_change (const char *, void * userdata)
         (dataset->contourPlaneName->string());
 
     if (plane != NULL) {
-        disableOtherTextures(CONTOUR);
+        //disableOtherTextures(CONTOUR);
         texture_scale = (plane->maxNonZeroValue() -
                          plane->minNonZeroValue()) / 10;
         g->setTextureScale(texture_scale);
@@ -7199,6 +7201,35 @@ int main (int argc, char* argv[])
     // doesn't happen.
   microscope->requestMutex();
 
+  // TCH 19 Feb 01 HACK - don't open graphics windows in this thread!
+  // We could *probably* get away with it by just calling glutInit();
+  if (istate.graphics_mode != SHMEM_GRAPHICS) {
+
+    // Registration - displays images with glX or GLUT depending on V_GLUT
+    // flag
+    if (istate.alignerName == NULL){
+        char *aligner_name = getenv("NM_ALIGNER");
+        if (aligner_name != NULL){
+            istate.alignerName = new char [strlen(aligner_name) + 1];
+            strcpy(istate.alignerName, aligner_name);
+        }
+    }
+    // passing in NULL causes us to use the local implementation
+    // any non NULL string will be interpreted as a server name and
+    // the proxy will attempt to connect itself to the corresponding
+    // server
+    if (istate.alignerName) {
+      aligner = new nmr_Registration_Proxy(istate.alignerName);
+    } else {
+      aligner = new nmr_Registration_Proxy(NULL,
+                                         internal_device_connection);
+    }
+    alignmentTextureDisplay = new nmg_ImageDisplayProjectiveTexture(graphics);
+    alignerUI = new nmr_RegistrationUI(aligner, alignmentTextureDisplay);
+    alignerUI->setupCallbacks();
+  }
+
+
   //--------------------------------------
   // Initialize microscope from command line
   //--------------------------------------
@@ -7494,34 +7525,6 @@ int main (int argc, char* argv[])
   // did these in createNewMicroscope() but things were NULL then.
   linkMicroscopeToInterface(microscope);
   microscope->requestMutex();
-
-  // TCH 19 Feb 01 HACK - don't open graphics windows in this thread!
-  // We could *probably* get away with it by just calling glutInit();
-  if (istate.graphics_mode != SHMEM_GRAPHICS) {
-
-    // Registration - displays images with glX or GLUT depending on V_GLUT
-    // flag
-    if (istate.alignerName == NULL){
-        char *aligner_name = getenv("NM_ALIGNER");
-        if (aligner_name != NULL){
-            istate.alignerName = new char [strlen(aligner_name) + 1];
-            strcpy(istate.alignerName, aligner_name);
-        }
-    }
-    // passing in NULL causes us to use the local implementation
-    // any non NULL string will be interpreted as a server name and
-    // the proxy will attempt to connect itself to the corresponding
-    // server
-    if (istate.alignerName) {
-      aligner = new nmr_Registration_Proxy(istate.alignerName);
-    } else {
-      aligner = new nmr_Registration_Proxy(NULL,
-                                         internal_device_connection);
-    }
-    alignerUI = new nmr_RegistrationUI(graphics, dataset,
-        aligner);
-    alignerUI->setupCallbacks();
-  }
 
   // This should be activated by setupCallbacks(graphics), but doesn't
   // seem to be?
@@ -9283,6 +9286,7 @@ void guessAdhesionNames (nmb_Dataset * dset) {
  alternative would be to use a radio button group but since these are
  in separate parts of the gui we can't do this
 */
+/*
 int disableOtherTextures (TextureMode m) {
 
   // Not compatible with collaboration.
@@ -9316,4 +9320,4 @@ int disableOtherTextures (TextureMode m) {
 
   return 0;
 }
-
+*/

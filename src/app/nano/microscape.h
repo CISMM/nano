@@ -269,7 +269,7 @@ extern void updateRulergridAngle(void);
 // XXX - this has to do with the user interface but there isn't
 // a global user interface object so I put it here temporarily (AAS)
 enum TextureMode {RULERGRID, CONTOUR, ALPHA, SEM, REGISTRATION, MANUAL_REALIGN};
-extern int disableOtherTextures (TextureMode m);
+//extern int disableOtherTextures (TextureMode m);
 
 
 // things defined in global.h:  spm_graphics_verbosity, timer_verbosity,
