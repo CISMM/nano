@@ -1,3 +1,7 @@
+2002-01-31  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmUI.dsp:  builds with non-static run-time libraries.
+
 2002-01-11  Aron Helser  <helser@cs.unc.edu>
 
 	* nmui_CrossSection.Ch: made cross-sections variable length, to
