@@ -4,6 +4,7 @@
 #include "nmr_Registration_Interface.h"
 #include "nmr_Registration_Client.h"
 #include "nmr_Registration_Impl.h"
+#include "nmb_TransformMatrix44.h"
 
 /**
   This class provides an interface that can either be to a server program
@@ -49,6 +50,7 @@ class nmr_Registration_Proxy {
        vrpn_float32 &size_x, vrpn_float32 &size_y);
     void getTransformationOptions(nmr_TransformationType &type);
     void getRegistrationResult(vrpn_float64 *matrix44);
+    void getRegistrationResult(nmb_TransformMatrix44 &xform);
 
   protected:
     nmr_Registration_Server *d_server; // non-NULL if local implementation

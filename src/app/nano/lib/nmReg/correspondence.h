@@ -36,6 +36,7 @@ class Correspondence {
     int getPoint(int spaceIndex, int pntIndex, corr_point_t *pnt) const;
     int setValuesFromPlane(int spaceIdx, BCPlane *p);
 	int setValuesFromImage(int spaceIdx, nmb_Image *im);
+    int scalePoints(int spaceIndex, double sx, double sy, double sz);
     Correspondence &operator = (const Correspondence &c);
     vrpn_bool equals(const Correspondence &c);
     void print();

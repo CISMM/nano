@@ -143,8 +143,6 @@ void nmr_RegistrationUI::handleRegistrationChange
       double projImFromTopoIm_matrix[16];
       d_aligner->getRegistrationResult(projImFromTopoIm_matrix);
 
-      d_ProjImageFromTopoImageTransform.setMatrix(projImFromTopoIm_matrix);
-
       nmb_Image *topographyImage = d_imageList->getImageByName
                           (d_registrationImageName3D.string());
       nmb_Image *projectionImage = d_imageList->getImageByName
@@ -153,16 +151,27 @@ void nmr_RegistrationUI::handleRegistrationChange
            fprintf(stderr, "handleRegistrationChange: can't find image\n");
            return;
       }
-      double topoImFromTopoWorld_matrix[16];
-      double projImFromProjWorld_matrix[16];
+
+      double topoAcqDistX, topoAcqDistY, projAcqDistX, projAcqDistY;
+      topographyImage->getAcquisitionDimensions(topoAcqDistX, topoAcqDistY);
+      projectionImage->getAcquisitionDimensions(projAcqDistX, projAcqDistY);
+
+      // adjust for scaling of images
+      int i;
+      for (i = 0; i < 4; i++) {
+        projImFromTopoIm_matrix[i] *= topoAcqDistX;
+        projImFromTopoIm_matrix[i+4] *= topoAcqDistY;
+        projImFromTopoIm_matrix[4*i] /= projAcqDistX;
+        projImFromTopoIm_matrix[4*i+1] /= projAcqDistY;
+      }
+      d_ProjImageFromTopoImageTransform.setMatrix(projImFromTopoIm_matrix);
 
       /* ****************************************************************
          ProjImFromTopoWorld = ProjImFromTopoImage * TopoImFromTopoWorld
        * ****************************************************************/
 
-      topographyImage->getWorldToImageTransform(topoImFromTopoWorld_matrix);
       nmb_TransformMatrix44 topoImFromTopoWorld;
-      topoImFromTopoWorld.setMatrix(topoImFromTopoWorld_matrix);
+      topographyImage->getWorldToImageTransform(topoImFromTopoWorld);
   
       d_ProjImageFromTopoWorldTransform.setMatrix(projImFromTopoIm_matrix);
 
@@ -207,14 +216,9 @@ void nmr_RegistrationUI::handleRegistrationChange
          ProjWorldFromTopoWorld = ProjWorldFromProjIm * ProjImFromTopoWorld
        * ****************************************************************/
       //  first invert the transformation matrix that we get from the image
-
-      projectionImage->getWorldToImageTransform(projImFromProjWorld_matrix);
-
       nmb_TransformMatrix44 projWorldFromProjImage;
-      projWorldFromProjImage.setMatrix(projImFromProjWorld_matrix);
-
+      projectionImage->getWorldToImageTransform(projWorldFromProjImage);
       projWorldFromProjImage.invert();
-
 
       d_ProjWorldFromTopoWorldTransform = projWorldFromProjImage;
       d_ProjWorldFromTopoWorldTransform.

@@ -208,3 +208,19 @@ int Correspondence::setValuesFromPlane(int spaceIdx, BCPlane *p)
     }
     return 0;
 }
+
+int Correspondence::scalePoints(int spaceIdx, 
+                                double sx, double sy, double sz)
+{
+    // note: points are assumed to be normalized image units with
+    // x,y from 0..1
+    if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return -1;
+
+    int i;
+    for (i = 0; i < num_points; i++) {
+        pnts[spaceIdx][i].x *= sx;
+        pnts[spaceIdx][i].y *= sy;
+        pnts[spaceIdx][i].z *= sz;
+    }
+    return 0;
+}

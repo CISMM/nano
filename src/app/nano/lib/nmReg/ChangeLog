@@ -1,3 +1,19 @@
+2001-07-17  Adam Seeger  <seeger@cs.unc.edu>
+
+	* correspondence.hC (scalePoints): added this function to let you
+	transform from image units (x,y go from 0..1) to some real units
+	like nanometers
+	* nmr_RegistrationUI.C (handleRegistrationChange): added
+	scaling compensation for what happens in the registration server to
+	get the transformation back to image units so that it can be composed
+	with the worldToImage transformation we get from the topography image 
+	nmr_Registration_Impl.C (setRegistrationEnable): changed this to
+	use the scaling values in nmb_Image::d_acquisitionDimension
+	(setImageParameters): "
+	(registerImagesFromPointCorrespondence): "
+	(ensureThreePoints): "
+	* nmr_Registration_Proxy.C (setImage): "
+
 2001-07-12  Adam Seeger  <seeger@cs.unc.edu>
 
 	* correspondence.hC (equals): new function to check equivalence

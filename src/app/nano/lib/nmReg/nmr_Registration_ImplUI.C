@@ -2,8 +2,8 @@
 
 int nmr_Registration_ImplUI::s_numImages = 2;
 char *nmr_Registration_ImplUI::s_imageWinNames[] = 
-                  {"registration:topography",
-                   "registration:texture"};
+                  {"registration:reference",
+                   "registration:adjustable"};
 int nmr_Registration_ImplUI::s_sourceImageIndex = 0;
 int nmr_Registration_ImplUI::s_targetImageIndex = 1;
 

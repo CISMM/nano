@@ -113,12 +113,18 @@ int nmr_Registration_Impl::setRegistrationEnable(vrpn_bool enable)
         Correspondence c(2, 3);
         int corrSourceIndex, corrTargetIndex;
         d_alignerUI->getCorrespondence(c, corrSourceIndex, corrTargetIndex);
-
+        double srcSizeX, srcSizeY, tgtSizeX, tgtSizeY;
+        d_images[SOURCE_IMAGE_INDEX]->
+                       getAcquisitionDimensions(srcSizeX, srcSizeY);
+        d_images[TARGET_IMAGE_INDEX]->
+                       getAcquisitionDimensions(tgtSizeX, tgtSizeY);
+        c.scalePoints(corrSourceIndex, srcSizeX, srcSizeY, 1.0);
+        c.scalePoints(corrTargetIndex, tgtSizeX, tgtSizeY, 1.0);
         static double xform_matrix[16];
         static nmb_Transform_TScShR xform;
         double center[4] = {0.0, 0.0, 0.0, 1.0};
-        center[0] = 0.5*d_images[SOURCE_IMAGE_INDEX]->widthWorld();
-        center[1] = 0.5*d_images[SOURCE_IMAGE_INDEX]->heightWorld();
+        center[0] = 0.5*srcSizeX;
+        center[1] = 0.5*srcSizeY;
         center[2] = d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(
                            0.5*d_images[SOURCE_IMAGE_INDEX]->width(),
                            0.5*d_images[SOURCE_IMAGE_INDEX]->height());
@@ -128,7 +134,6 @@ int nmr_Registration_Impl::setRegistrationEnable(vrpn_bool enable)
                                     corrTargetIndex, xform);
         xform.getMatrix(xform_matrix);
         sendResult(xform_matrix);
-
     }
     return 0;
 }
@@ -157,8 +162,8 @@ int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
                                         "unknown_units",
                                         res_x, res_y);
         }
-        d_images[SOURCE_IMAGE_INDEX]->setWidthWorld(xSpan);
-        d_images[SOURCE_IMAGE_INDEX]->setHeightWorld(ySpan);
+        d_images[SOURCE_IMAGE_INDEX]->
+                  setAcquisitionDimensions(xSpan, ySpan);
     } else if (whichImage == NMR_TARGET) {
         if ((d_images[TARGET_IMAGE_INDEX]->width() != res_x) ||
             (d_images[TARGET_IMAGE_INDEX]->height() != res_y)) {
@@ -171,8 +176,8 @@ int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
                                         "unknown_units",
                                         res_x, res_y);
         }
-        d_images[TARGET_IMAGE_INDEX]->setWidthWorld(xSpan);
-        d_images[TARGET_IMAGE_INDEX]->setHeightWorld(ySpan);
+        d_images[TARGET_IMAGE_INDEX]->
+                  setAcquisitionDimensions(xSpan, ySpan);
     } else {
         fprintf(stderr, "RegistrationImpl::setImageParameters:"
                         " Error, unknown image type\n");
@@ -218,7 +223,13 @@ int nmr_Registration_Impl::registerImagesFromPointCorrespondence(double *xform)
    Correspondence c(2, 3);
    int corrSourceIndex, corrTargetIndex;
    d_alignerUI->getCorrespondence(c, corrSourceIndex, corrTargetIndex);
-
+   double srcSizeX, srcSizeY, tgtSizeX, tgtSizeY;
+   d_images[SOURCE_IMAGE_INDEX]->
+                   getAcquisitionDimensions(srcSizeX, srcSizeY);
+   d_images[TARGET_IMAGE_INDEX]->
+                   getAcquisitionDimensions(tgtSizeX, tgtSizeY);
+   c.scalePoints(corrSourceIndex, srcSizeX, srcSizeY, 1.0);
+   c.scalePoints(corrTargetIndex, tgtSizeX, tgtSizeY, 1.0);
 
    convertTo3DSpace(c, corrSourceIndex);
    ensureThreePoints(c, corrSourceIndex, vrpn_FALSE, vrpn_TRUE);
@@ -388,9 +399,9 @@ void nmr_Registration_Impl::sendResult(double *xform_matrix)
 void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
       int corrSourceIndex, vrpn_bool normalized, vrpn_bool lookupZ)
 {
-  double srcSizeX, srcSizeY;
-  srcSizeX = d_images[SOURCE_IMAGE_INDEX]->widthWorld();
-  srcSizeY = d_images[SOURCE_IMAGE_INDEX]->heightWorld();
+  double srcSizeX, srcSizeY, tgtSizeX, tgtSizeY;
+  d_images[SOURCE_IMAGE_INDEX]->getAcquisitionDimensions(srcSizeX, srcSizeY);
+  d_images[TARGET_IMAGE_INDEX]->getAcquisitionDimensions(tgtSizeX, tgtSizeY);
 
   // XXX: this function is serving the additional purpose of ensuring that
   // there are at least three points in the correspondence so that the
@@ -400,13 +411,18 @@ void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
   // result was correct when given only 1 or 2 points since it would do a
   // pure translation when given only one point but now a single point
   // does not
-  double maxX, maxY;
+  double srcMaxX, srcMaxY;
+  double tgtMaxX, tgtMaxY;
   if (normalized) {
-    maxX = 1.0;
-    maxY = 1.0;
+    srcMaxX = 1.0;
+    srcMaxY = 1.0;
+    tgtMaxX = 1.0;
+    tgtMaxY = 1.0;
   } else {
-    maxX = srcSizeX;
-    maxY = srcSizeY;
+    srcMaxX = srcSizeX;
+    srcMaxY = srcSizeY;
+    tgtMaxX = tgtSizeX;
+    tgtMaxY = tgtSizeY;
   }
   corr_point_t p0, p1, p2;
   double xIndex, yIndex;
@@ -416,14 +432,14 @@ void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
     c.addPoint(p0);
     c.getPoint(corrSourceIndex, 0, &p0);
     // ensure that the new point falls in the src image
-    if (p0.x > 0.5*maxX) {
+    if (p0.x > 0.5*srcMaxX) {
       offset *= -1;
     }
-    p1.x = p0.x + offset*maxX;
+    p1.x = p0.x + offset*srcMaxX;
     p1.y = p0.y;
     if (lookupZ) {
-      xIndex = (double)d_images[SOURCE_IMAGE_INDEX]->width()*p1.x/maxX;
-      yIndex = (double)d_images[SOURCE_IMAGE_INDEX]->height()*p1.y/maxY;
+      xIndex = (double)d_images[SOURCE_IMAGE_INDEX]->width()*p1.x/srcMaxX;
+      yIndex = (double)d_images[SOURCE_IMAGE_INDEX]->height()*p1.y/srcMaxY;
       p1.z = d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(xIndex, yIndex);
       c.setPoint(corrSourceIndex, 1, p1);
       p1.z = 0;
@@ -431,7 +447,7 @@ void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
     for (i = 0; i < c.numSpaces(); i++) {
       if (i != corrSourceIndex) {
         c.getPoint(i, 0, &p0);
-        p1.x = p0.x + offset;
+        p1.x = p0.x + offset*tgtMaxX;
         p1.y = p0.y;
         p1.z = 0.0;
         c.setPoint(i, 1, p1);
@@ -446,14 +462,14 @@ void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
     c.getPoint(corrSourceIndex, 1, &p1);
     p2.x = 0.5*(p0.x + p1.x) + offsetFactor*(p1.y - p0.y);
     p2.y = 0.5*(p0.y + p1.y) - offsetFactor*(p1.x - p0.x);
-    if (p2.x < 0 || p2.x > maxX || p2.y < 0 || p2.y > maxY) {
+    if (p2.x < 0 || p2.x > srcMaxX || p2.y < 0 || p2.y > srcMaxY) {
       offsetFactor *= -1;
-      p2.x = 0.5*(p0.x + p1.x) + offsetFactor*(p1.y - p0.y);//*maxX/maxY;
-      p2.y = 0.5*(p0.y + p1.y) - offsetFactor*(p1.x - p0.x);//*maxY/maxX;
+      p2.x = 0.5*(p0.x + p1.x) + offsetFactor*(p1.y - p0.y);//*srcMaxX/srcMaxY;
+      p2.y = 0.5*(p0.y + p1.y) - offsetFactor*(p1.x - p0.x);//*srcMaxY/srcMaxX;
     }
     if (lookupZ) {
-      xIndex = (double)d_images[SOURCE_IMAGE_INDEX]->width()*p2.x/maxX;
-      yIndex = (double)d_images[SOURCE_IMAGE_INDEX]->height()*p2.y/maxY;
+      xIndex = (double)d_images[SOURCE_IMAGE_INDEX]->width()*p2.x/srcMaxX;
+      yIndex = (double)d_images[SOURCE_IMAGE_INDEX]->height()*p2.y/srcMaxY;
       p2.z = d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(xIndex, yIndex);
       c.setPoint(corrSourceIndex, 2, p2);
       p2.z = 0;
@@ -473,19 +489,21 @@ void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
 void nmr_Registration_Impl::convertTo3DSpace(Correspondence &c,
                  int corrSourceIndex)
 {
+  double invSrcSizeX, invSrcSizeY;
   double srcSizeX, srcSizeY;
-  srcSizeX = d_images[SOURCE_IMAGE_INDEX]->widthWorld();
-  srcSizeY = d_images[SOURCE_IMAGE_INDEX]->heightWorld();
+  d_images[SOURCE_IMAGE_INDEX]->getAcquisitionDimensions(srcSizeX, srcSizeY);
+  invSrcSizeX = 1.0/srcSizeX;
+  invSrcSizeY = 1.0/srcSizeY;
 
   int pointIndex = 0;
   corr_point_t srcPoint;
   double xIndex, yIndex;
   for (pointIndex = 0; pointIndex < c.numPoints(); pointIndex++) {
     c.getPoint(corrSourceIndex, pointIndex, &srcPoint);
-    xIndex = srcPoint.x*(double)d_images[SOURCE_IMAGE_INDEX]->width();
-    yIndex = srcPoint.y*(double)d_images[SOURCE_IMAGE_INDEX]->height();
-    srcPoint.x = srcPoint.x * srcSizeX;
-    srcPoint.y = srcPoint.y * srcSizeY;
+    xIndex = srcPoint.x*invSrcSizeX*
+             (double)d_images[SOURCE_IMAGE_INDEX]->width();
+    yIndex = srcPoint.y*invSrcSizeY*
+             (double)d_images[SOURCE_IMAGE_INDEX]->height();
     srcPoint.z =
            d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(xIndex, yIndex);
     c.setPoint(corrSourceIndex, pointIndex, srcPoint);

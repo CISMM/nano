@@ -90,10 +90,12 @@ vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
 {
   int i,j;
   vrpn_float32 *data;
+  double xSize = 0, ySize = 0;
 /*
   if (d_local){
+    im->getAcquisitionDimensions(xSize, ySize);
     d_local_impl->setImageParameters(whichImage, im->width(), im->height(),
-                 im->widthWorld(), im->heightWorld(), 1.0);
+                 xSize, ySize, 1.0);
     data = new vrpn_float32[im->width()];
     for (i = 0; i < im->height(); i++) {
         for (j = 0; j < im->width(); j++) {
@@ -107,8 +109,9 @@ vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
     printf("nmr_Registration_Proxy::setImage: "
            "sending image parameters to remote: (%dx%d)\n",
            im->width(), im->height());
+    im->getAcquisitionDimensions(xSize, ySize);
     d_remote_impl->setImageParameters(whichImage, im->width(), im->height(),
-                         im->widthWorld(), im->heightWorld());
+                         xSize, ySize);
     d_remote_impl->mainloop();
     printf("nmr_Registration_Proxy::setImage: "
            "sending image data to remote\n");
@@ -242,4 +245,10 @@ void nmr_Registration_Proxy::getRegistrationResult(vrpn_float64 *matrix44)
     for (int i = 0; i < 16; i++){
         matrix44[i] = d_matrix44[i];
     }
+}
+
+void nmr_Registration_Proxy::getRegistrationResult(
+                                      nmb_TransformMatrix44 &xform)
+{
+  xform.setMatrix(d_matrix44);
 }
