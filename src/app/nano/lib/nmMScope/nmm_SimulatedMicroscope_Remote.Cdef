@@ -79,18 +79,19 @@ int nmm_SimulatedMicroscope_Remote::handle_gotConnection (void * userdata, vrpn_
   grpc_me->encode_and_sendGridandScanInfo(grpc_me->d_dataset->inputGrid->numX(), grpc_me->d_dataset->inputGrid->numY(),
 			grpc_me->d_dataset->inputGrid->minX(),grpc_me->d_dataset->inputGrid->minY(),0,
 			grpc_me->d_dataset->inputGrid->maxX(),grpc_me->d_dataset->inputGrid->maxY(),128);
-  //send two triangles for testing
-  //grpc_me->encode_and_sendTriangle(200.0f,200.0f,100.0f,300.0f,200.0f,100.0f,250.0f,300.0f,150.0f);
-  //grpc_me->encode_and_sendTriangle(400.0f,400.0f,400.0f,300.0f,300.0f,20.0f,400.0f,300.0f,20.0f);
-  int counter = 0;
+    
   int num_vertices = (grpc_me->myURenderObject->num_triangles * 3);
   cout << "num triangles: " << grpc_me->myURenderObject->num_triangles << "\tnum vertices: " << num_vertices << endl;
-  for(int i = 0; i < num_vertices;i++){
+  //send triangles
+  if (num_vertices != 0){
+	grpc_me->encode_and_sendTriangleScale(grpc_me->myURenderObject->scale_triangles);
+  }
+  for(int i = 0; i < num_vertices;i++){//only sends triangles if they have been filled in in URender 
+                                       //(i.e. num_triangles != 0), so safe to keep have this for loop here
 	grpc_me->encode_and_sendTriangle(
 		grpc_me->myURenderObject->triangles[i][0],  grpc_me->myURenderObject->triangles[i][1],grpc_me->myURenderObject->triangles[i][2],
 		grpc_me->myURenderObject->triangles[++i][0],grpc_me->myURenderObject->triangles[i][1],grpc_me->myURenderObject->triangles[i][2],
 		grpc_me->myURenderObject->triangles[++i][0],grpc_me->myURenderObject->triangles[i][1],grpc_me->myURenderObject->triangles[i][2]);
-	cout << counter++ << flush << " ";
   }
   
   return 0;
@@ -180,6 +181,18 @@ encode_and_sendGridandScanInfo(vrpn_int32 x, vrpn_int32 y,
   retval = -1;
   retval = Send((long)len, d_ReportGridSize_type, msgbuf2);//send stuff
   
+}
+//
+void nmm_SimulatedMicroscope_Remote::
+encode_and_sendTriangleScale(vrpn_float32 scale){
+  //variables for encoding in msgbuf
+  int len = 0;
+  //
+  char * msgbuf = encode_TriangleScale(&len,scale);//encode msgbuf
+  int retval = -1;
+  if((retval = Send((long)len, d_TriangleScale_type, msgbuf)) == -1){
+	cout << "problem sending Triangle Scale" << endl;
+  }//send stuff  
 }
 //
 void nmm_SimulatedMicroscope_Remote::

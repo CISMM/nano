@@ -28,6 +28,7 @@ class nmm_AFMSIMSERVER_Report
     vrpn_int32 d_ReportGridSize_type;
     vrpn_int32 d_ScanRange_type;
     vrpn_int32 d_Triangle_type;
+    vrpn_int32 d_TriangleScale_type;
 
 
   char * encode_ReportGridSize (
@@ -81,6 +82,14 @@ class nmm_AFMSIMSERVER_Report
       vrpn_float32 (*_3v1),
       vrpn_float32 (*_3v2),
       vrpn_float32 (*_3v3)
+  );
+  char * encode_TriangleScale (
+      int * len,
+      vrpn_float32 scale
+  );
+  int decode_TriangleScale (
+      const char ** buffer,
+      vrpn_float32 (*scale)
   );
 };
 #endif // NMM_AFMSIMSERVER_REPORT_H

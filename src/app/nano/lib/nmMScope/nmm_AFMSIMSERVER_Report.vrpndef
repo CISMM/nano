@@ -28,3 +28,8 @@ VRPN_MESSAGE Triangle{
   float32 _3v2
   float32 _3v3
 }
+
+VRPN_MESSAGE TriangleScale{
+  float32 scale
+}
+

@@ -52,6 +52,7 @@ public:
 							//knowledgeof Node class
 	double get_x_offset(){return d_xmin;};
 	double get_y_offset(){return d_ymin;};
+    float tri_scale;
 
 private:
     RECEIVERS_DECL nmm_AFMSIM_Report;

@@ -23,6 +23,8 @@ nmm_AFMSIMSERVER_Report::nmm_AFMSIMSERVER_Report (
        ("nmm SimulatedMicroscope ScanRange");
     d_Triangle_type = connection->register_message_type
        ("nmm SimulatedMicroscope Triangle");
+    d_TriangleScale_type = connection->register_message_type
+       ("nmm SimulatedMicroscope TriangleScale");
 
   }
 }
@@ -192,6 +194,38 @@ int nmm_AFMSIMSERVER_Report::decode_Triangle (
   if (vrpn_unbuffer(buffer, _3v1)) return -1;
   if (vrpn_unbuffer(buffer, _3v2)) return -1;
   if (vrpn_unbuffer(buffer, _3v3)) return -1;
+  return 0;
+}
+
+char * nmm_AFMSIMSERVER_Report::encode_TriangleScale (
+      int * len,
+      vrpn_float32 scale
+) {
+  char * msgbuf = NULL;
+  char *mptr[1];
+  int temp; int* mlen = &temp;
+  if (!len) return NULL;
+  *len =
+     (sizeof(vrpn_float32));
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "encode_TriangleScale: Out of memory.\n");
+    *len = 0;
+  } else {
+    *mptr = msgbuf;
+    *mlen = *len;
+    vrpn_buffer(mptr, mlen, scale);
+  }
+  return msgbuf;
+}
+
+int nmm_AFMSIMSERVER_Report::decode_TriangleScale (
+      const char ** buffer,
+      vrpn_float32 (*scale)
+) {
+  if (!buffer
+   || !scale) return -1;
+  if (vrpn_unbuffer(buffer, scale)) return -1;
   return 0;
 }
 

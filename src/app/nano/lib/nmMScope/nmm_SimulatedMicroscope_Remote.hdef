@@ -41,6 +41,7 @@ public:
 		vrpn_float32 _1v1, vrpn_float32 _1v2,vrpn_float32 _1v3,
 		vrpn_float32 _2v1, vrpn_float32 _2v2,vrpn_float32 _2v3,
 		vrpn_float32 _3v1, vrpn_float32 _3v2,vrpn_float32 _3v3);
+	void encode_and_sendTriangleScale(vrpn_float32 scale);
 	int Send(long len, vrpn_int32 msg_type, char * buf);//send data across connection
 //
 private:
