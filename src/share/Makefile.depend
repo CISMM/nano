@@ -1,4 +1,7 @@
 MAKEFILE_DEPEND := $(OBJECT_DIR)/.depend
+ifdef APP_NAME
+   MAKEFILE_DEPEND := $(MAKEFILE_DEPEND)-$(APP_NAME)
+endif
 
 ifeq ($(findstring depend,$(MAKECMDGOALS)),depend)
    DUMMY := $(shell mv -f $(MAKEFILE_DEPEND) $(MAKEFILE_DEPEND)-old)

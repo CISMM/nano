@@ -12,14 +12,14 @@ surface: $(OBJECT_DIR)/surface
 
 $(OBJECT_DIR)/surface:
 	$(MAKE) APP_NAME=surface \
-            MAKECMDGOALS="" \
-            EXCLUDE_SRC="warrencntsim.C vec2d.C"
+           MAKECMDGOALS="$(filter-out surface,$(MAKECMDGOALS))" \
+           EXCLUDE_SRC="warrencntsim.C vec2d.C"
 
 .PHONY: afmcntsim
 afmcntsim: $(OBJECT_DIR)/afmcntsim
 
 $(OBJECT_DIR)/afmcntsim:
 	$(MAKE) APP_NAME=afmcntsim \
-                EXCLUDE_SRC=surface.C \
-                MAKECMDGOALS=""
+           MAKECMDGOALS="$(filter-out afmcntsim,$(MAKECMDGOALS))" \
+           EXCLUDE_SRC=surface.C
 endif

@@ -73,7 +73,7 @@ thisclean:
 
 .PHONY: clobber
 clobber: thisclean
-	-rm -f $(addprefix $(OBJECT_DIR)/,.depend .depend-old)
+	-rm -f $(OBJECT_DIR)/.depend*
 
 #############################################################################
 #
