@@ -255,7 +255,7 @@ public:
 	virtual int ChangeStaticFile(void *userdata=NULL);
 	virtual int ChangeHeightPlane(void *userdata=NULL);
 
-	virtual void ReloadGeometry()=0;
+	virtual void ReloadGeometry();
 
 	int IntersectLine(void *userdata=NULL);
 

@@ -1,3 +1,10 @@
+2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
+
+	* URender.C (ReloadGeometry) : added dummy base class implementation so
+	this function isn't pure virtual since it isn't required for the 
+	basic UGraphics functionality but is assumed by some other code that
+	reads models in from files.
+
 2002--6-26  David Borland <borland@cs.unc.edu>
 
         * SpiderGenerator.C : added code for parsing data from .spi files.

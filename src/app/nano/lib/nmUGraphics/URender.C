@@ -173,6 +173,10 @@ int URender::ChangeHeightPlane(void* /*userdata*/) {
 	else return ITER_STOP;
 }
 
+void URender::ReloadGeometry() {
+        // bas class does nothing
+        cerr << "Base class Reloading Geometry\n";
+}
 
 
 void URender::SaveSpider(const char* filename) {
@@ -201,9 +205,6 @@ void URender::SaveSpider(const char* filename) {
 
 	writefile.close();
 }
-
-
-
 
 void URender::DrawBounds(){
 
