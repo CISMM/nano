@@ -148,11 +148,17 @@ set widgets(display_enable) [checkbutton $vi_win.left.display_enable -text "Keit
 pack $widgets(display_enable) -anchor w
 #set vi(display_enable) 1
 
+# Bother. Radiobox seems to execute it's command when it gets created.
+# So we'll define the change_source procedure here, then re-define it later
+# after the chart has been created.
+proc change_source {} {
+}
+
 # Is the Keithley going to supply (source) voltage or current
 if { 0==[info exists vi(source)] } { set vi(source) 0 }
 set widgets(source) [iwidgets::radiobox $widgets(source_frame).source \
 	 -labeltext "Source:" -labelpos nw -command \
-	 {if {[$widgets(source) get]!= ""} {set vi(source) [$widgets(source) get]} }]
+	 { change_source } ]
 
 $widgets(source) add 0 -text "Voltage"
 $widgets(source) add 1 -text "Current"
@@ -160,7 +166,7 @@ $widgets(source) add 1 -text "Current"
 $widgets(source) select $vi(source)
 
 # We can't handle sourcing current yet, so disable it
-$widgets(source) buttonconfigure 1 -state disabled
+##$widgets(source) buttonconfigure 1 -state disabled
 pack $widgets(source) -padx $def_pad -pady $def_pad -fill both 
 
 
@@ -174,7 +180,17 @@ $widgets(compliance) add 0 -text "Voltage"
 $widgets(compliance) add 1 -text "Current"
 
 $widgets(compliance) select 1
-$widgets(compliance) buttonconfigure 0 -state disabled
+##$widgets(compliance) buttonconfigure 0 -state disabled
+
+set widgets(four_wire) [iwidgets::radiobox $widgets(measure_frame).four_wire \
+     -labeltext "Two/Four Wire:" -labelpos nw -command \
+     {if {[$widgets(four_wire) get]!= ""} {set vi(wire_type) [$widgets(four_wire) get]} }]
+pack $widgets(four_wire) -padx $def_pad -pady $def_pad -fill both 
+
+$widgets(four_wire) add 2 -text "Two Probe"
+$widgets(four_wire) add 4 -text "Four Probe"
+
+$widgets(four_wire) select 0
 
 if { 0==[info exists vi(compliance_val)] } { set vi(compliance_val) 0 }
 set widgets(compliance_val) [my_entry $widgets(measure_frame).compliance_val vi(compliance_val) \
@@ -290,6 +306,11 @@ set widgets(curr_min) [iwidgets::entryfield $widgets(bottom).imin -labeltext "Cu
 iwidgets::Labeledwidget::alignlabels \
     $widgets(volt_max) $widgets(volt_min) $widgets(curr_max) $widgets(curr_min)
 
+# Clears any curves that have been graphed so far. 
+set widgets(clear_curves) [button $widgets(bottom).clear_curves -text "Clear Curves" \
+			   -command { clear_curves_now }]
+
+pack $widgets(clear_curves) -side top -anchor nw
 
 # keep track of which vectors we have saved so far
 set vi(first_curve_not_saved) 0
@@ -461,7 +482,29 @@ proc vi_add_chart_element { name_x name_y id } {
 	-xdata $name_x -ydata $name_y -color [vi_unique_color $id]
 # Limit the number of chart elements displayed to 9
     if { $id >= 9 } {
-	$vi(chart) element delete [expr $id -9]
+	if { [$vi(chart) element exists [expr $id -9]] } {
+	    $vi(chart) element delete [expr $id -9]
+	}
+    }
+}
+
+proc clear_curves_now  {} {
+    global vi
+    set elem_list [$vi(chart) element names]
+    foreach id $elem_list {
+	$vi(chart) element delete $id
+    }
+
+}
+
+proc change_source {} {
+    global vi
+    global widgets
+
+    if {[$widgets(source) get]!= ""} {
+	set vi(source) [$widgets(source) get]
+	# If we source voltage, leave axis as-is. If we source current, invert them.
+	$vi(chart) configure -invertxy $vi(source) 
     }
 }
 

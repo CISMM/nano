@@ -65,7 +65,7 @@ public:
     Tclvar_int display_enable;
     
     Tclvar_int take_iv_curves;
-    
+
 // Take IV curves over and over until this variable is turned off
     Tclvar_int take_repeat_iv_curves;
     
@@ -76,6 +76,8 @@ public:
     // Save the curves we have taken now
     Tclvar_int save_curves_now;
 
+    Tclvar_int wire_type;
+    
 // Remember the number of data vectors that have been received,
     // so we can create unique names
     int num_data_vecs;
@@ -111,6 +113,7 @@ int set_voltage_vector();
 
 static void handle_take_iv_curves(vrpn_int32 /*_newvalue*/, void *_userdata);
 static void handle_take_repeat_iv_curves(vrpn_int32 /*_newvalue*/, void *_userdata);
+static void handle_wire_type_change(vrpn_int32 /*_newvalue*/, void *_userdata);
 int set_tcl_callbacks();
 
 // Receive data when it arrives from the Keithley, save it, and display it.

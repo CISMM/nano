@@ -57,8 +57,10 @@ nma_Keithley2400_ui::nma_Keithley2400_ui (Tcl_Interp	*interp,
     take_repeat_iv_curves("vi(take_repeat_iv_curves)", 0),
     take_iv_curves_during_mod("vi(curves_during_mod)", 0),    
     save_curves_now("vi(save_curves_now)", 0),
+    wire_type("vi(wire_type)",2),
     num_data_vecs(0),
     expected_num_data_vecs(0)
+
 {
     char    command[256];
     keithley2400 = new nma_Keithley2400(name, c);
@@ -109,6 +111,15 @@ void nma_Keithley2400_ui::handle_int_param_change(vrpn_int32 /*_newvalue*/, void
 	me->keithley2400->d_sweep_numpoints = me->sweep_numpoints;
 	me->keithley2400->d_display_enable = me->display_enable;
 	me->keithley2400->send_AllSettings();
+}
+
+void nma_Keithley2400_ui::handle_wire_type_change(vrpn_int32 /*_newvalue*/, void *_userdata) {
+	nma_Keithley2400_ui * me = (nma_Keithley2400_ui *)_userdata;
+
+	me->keithley2400->d_wire_type = me->wire_type;
+	me->keithley2400->send_OutputOff();
+	me->keithley2400->send_WireType();
+	me->keithley2400->send_OutputOn();
 }
 
 void nma_Keithley2400_ui::handle_float_param_change(vrpn_float64 /*_newvalue*/, void *_userdata) {
@@ -316,6 +327,7 @@ int nma_Keithley2400_ui::set_tcl_callbacks()
 		handle_take_iv_curves, this);
 	take_repeat_iv_curves.addCallback(
 		handle_take_repeat_iv_curves, this);
+	wire_type.addCallback(handle_wire_type_change, this);
 	return 0;
 }
 

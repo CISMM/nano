@@ -61,7 +61,6 @@ nma_Keithley2400::nma_Keithley2400(const char *name, vrpn_Connection *c) :
   d_connection->register_handler(d_Shutdown_type,
 				handle_Shutdown,
 				this);
-
 }
 
 int nma_Keithley2400::mainloop (const struct timeval * timeout ) {
@@ -72,15 +71,42 @@ int nma_Keithley2400::mainloop (const struct timeval * timeout ) {
 }
 
 int nma_Keithley2400::send_AllSettings() {
-    	if (send_OutputOff()) return -1;
-	if (send_Clear()) return -1;
-	if (send_DisplayEnable()) return -1;
-	if (send_Function()) return -1;
-	if (send_Source()) return -1;
-	if (send_Sense()) return -1;
-	if (send_Trigger()) return -1;
-	if (send_DataFormat()) return -1;
-	if (send_OutputOn()) return -1;
+    	if (send_OutputOff()) {
+	    printf("send_OutputOff() failed\n");
+	    return -1;
+	}
+	if (send_Clear()) {
+	    printf("send_Clear()  failed\n");
+	    return -1;
+	}
+	if (send_DisplayEnable())  {
+	    printf("send_DisplayEnable() failed\n");
+	    return -1;
+	}
+	if (send_Function()) {
+	    printf("send_Function() failed\n");
+	    return -1;
+	}
+	if (send_Source()) {
+	    printf("send_Source() failed\n");
+	    return -1;
+	}
+	if (send_Sense()) {
+	    printf("send_Sense()  failed\n");
+	    return -1;
+	}
+	if (send_Trigger()) {
+	    printf("send_Trigger() failed\n");
+	    return -1;
+	}
+	if (send_DataFormat()) {
+	    printf("send_DataFormat() failed\n");
+	    return -1;
+	}
+	if (send_OutputOn()) {
+	    printf("send_OutputOn() failed\n");
+	    return -1;
+	}
 	return 0;
 }
 
@@ -97,7 +123,8 @@ int nma_Keithley2400::send_Device()
 		return -1;
 	}
 	// Clear the instrument right away.
-	if(Send(0, d_Clear_type, NULL)) {
+	msgbuf = encode_DeviceID(&len, d_primary_address, d_secondary_address);
+	if(Send(len, d_Clear_type, msgbuf)) {
 		fprintf(stderr, "nma_Keithley2400::send_Device: couldn't send message.\n");
 		return -1;
 	}
@@ -115,7 +142,8 @@ int nma_Keithley2400::send_Clear()
 	}
 	vrpn_int32 len;
 	char buf[]  = ":ABOR;*CLS;*RST";
-	char * msgbuf = encode_Write(&len, buf);
+	//	char buf[]  = "SDC";
+	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_Clear: out of memory.\n");
 		return -1;
@@ -138,10 +166,12 @@ int nma_Keithley2400::send_DisplayEnable()
 	char  buf[256];
 	if (d_display_enable) {
 		sprintf(buf, ":DISPLAY:ENABLE ON");
+		//		sprintf(buf, "GTL");
 	} else {
 		sprintf(buf, ":DISPLAY:ENABLE OFF");
+		//		sprintf(buf, "LLO");
 	} 
-	char * msgbuf = encode_Write(&len, buf);
+	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_Function: out of memory.\n");
 		return -1;
@@ -171,7 +201,7 @@ int nma_Keithley2400::send_Function()
 	    fprintf(stderr, "nma_Keithley2400::send_Function: unknown source type.\n");
 	    return -1; 
 	}
-	char * msgbuf = encode_Write(&len, buf);
+	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_Function: out of memory.\n");
 		return -1;
@@ -205,7 +235,7 @@ int nma_Keithley2400::send_Source()
 	    fprintf(stderr, "nma_Keithley2400::send_Source: unknown source type.\n");
 	    return -1; 
 	}
-	char * msgbuf = encode_Write(&len, buf);
+	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_Source: out of memory.\n");
 		return -1;
@@ -238,7 +268,7 @@ int nma_Keithley2400::send_Sense()
 	    fprintf(stderr, "nma_Keithley2400::send_Sense: unknown compliance type.\n");
 	    return -1;
 	}
-	char * msgbuf = encode_Write(&len, buf);
+	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_Sense: out of memory.\n");
 		return -1;
@@ -262,7 +292,7 @@ int nma_Keithley2400::send_Trigger()
 	char buf[256] ;
 	sprintf(buf, ":TRIG:COUN %d;SOUR IMM;DEL %g;TCON:DIR SOUR;", 
 		(int)(d_sweep_numpoints), (float)d_sweep_delay);
-	char * msgbuf = encode_Write(&len, buf);
+	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_Trigger: out of memory.\n");
 		return -1;
@@ -288,7 +318,7 @@ int nma_Keithley2400::send_DataFormat()
 	// Always read both voltage and current, so that we 
 	// can tell what was measured in the stream file. 
 	sprintf(buf, ":FORM:ELEM VOLT,CURR;DATA SREAL;BORD SWAP;");
-	char * msgbuf = encode_Write(&len, buf);
+	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_DataFormat: out of memory.\n");
 		return -1;
@@ -311,7 +341,7 @@ int nma_Keithley2400::send_OutputOn()
 	vrpn_int32 len;
 	char buf[256] ;
 	sprintf(buf, ":Outp:Smode NORM;Interlock:State Off;:Outp On");
-	char * msgbuf = encode_Write(&len, buf);
+	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_OutputOn: out of memory.\n");
 		return -1;
@@ -339,7 +369,7 @@ int nma_Keithley2400::send_AcquireData()
 		printf("send_StartCurve: Ouput not on - did you really want to do this?\n");
 	}
 	sprintf(buf, ":READ?");
-	char * msgbuf = encode_Write(&len, buf);
+	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_StartCurve: out of memory.\n");
 		return -1;
@@ -364,7 +394,7 @@ int nma_Keithley2400::send_ReadData()
 	
 	// I think there are 14 ascii characters per data point, 
 	// so overestimate a bit. Both voltage and current measured
-	char * msgbuf = encode_Read(&len, d_sweep_numpoints*32);
+	char * msgbuf = encode_Read(&len, d_primary_address, d_secondary_address, d_sweep_numpoints*32);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_GetData: out of memory.\n");
 		return -1;
@@ -386,7 +416,7 @@ int nma_Keithley2400::send_ReadFloatData()
 
 	vrpn_int32 len;
 	// Send number of floats
-	char * msgbuf = encode_ReadData(&len, 2*d_sweep_numpoints);
+	char * msgbuf = encode_ReadData(&len, d_primary_address, d_secondary_address, 2*d_sweep_numpoints);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_GetData: out of memory.\n");
 		return -1;
@@ -415,7 +445,7 @@ int nma_Keithley2400::send_OutputOff()
 	vrpn_int32 len;
 	char buf[256] ;
 	sprintf(buf, ":Outp Off");
-	char * msgbuf = encode_Write(&len, buf);
+	char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "nma_Keithley2400::send_OutputOff: out of memory.\n");
 		return -1;
@@ -428,6 +458,35 @@ int nma_Keithley2400::send_OutputOff()
 	d_output_on = 0;
 
 	return 0;
+}
+
+int nma_Keithley2400::send_WireType() 
+{
+    if (!d_initialized) { 
+	fprintf(stderr, "send_DataFormat - Keithley not initialized, not sending\n");
+	return -1;
+    }
+
+    vrpn_int32 len;
+    char buf[256] ;
+
+    if ( d_wire_type == 2 ) {
+	sprintf(buf, ":SENS:FUNC:CONC ON; :FORM:ELEM VOLT,CURR;DATA SREAL;BORD SWAP; :SYST:RSEN OFF");
+    }
+    else {
+	sprintf(buf, ":SENS:FUNC:CONC ON; :FORM:ELEM VOLT,CURR;DATA SREAL;BORD SWAP; :SYST:RSEN ON");
+    }
+    char * msgbuf = encode_Write(&len, d_primary_address, d_secondary_address, buf);
+    if (msgbuf == NULL) {
+	fprintf(stderr, "nma_Keithley2400::send_DataFormat: out of memory.\n");
+	return -1;
+    }
+    if(Send(len, d_Write_type, msgbuf)) {
+	fprintf(stderr, "nma_Keithley2400::send_DataFormat: couldn't send message.\n");
+	return -1;
+    }
+    
+    return 0;
 }
 
 int nma_Keithley2400::register_result_handler(void *userdata,
@@ -509,7 +568,10 @@ int nma_Keithley2400::handle_Result( void *_userdata, vrpn_HANDLERPARAM _p )
 	nma_Keithley2400 * me = (nma_Keithley2400 *)_userdata;
 	char * my_buf;
 	
-	me->decode_Result(&_p.buffer, &my_buf);
+	vrpn_int32 pad, sad;
+	me->decode_Result(&_p.buffer, &pad,&sad, &my_buf);
+	if ( (pad != me->d_primary_address) || (sad != me->d_secondary_address) )
+	    return 0;
 	if(my_buf) {
 		printf("Result: %s\n", my_buf);
 		delete [] my_buf;
@@ -529,7 +591,10 @@ int nma_Keithley2400::handle_ResultData( void *_userdata, vrpn_HANDLERPARAM _p )
 	vrpn_int32 len; 
 	float * my_data;
 	
-	me->decode_ResultData(&_p.buffer, &my_data, &len);
+	vrpn_int32 pad, sad;
+	me->decode_ResultData(&_p.buffer, &pad, &sad, &my_data, &len);
+	if ( (pad != me->d_primary_address) || (sad != me->d_secondary_address) )
+	    return 0;
 	/* DEBUG print results received.
 	for (vrpn_int32 i = 0; i< len; i++) {
 		printf("%g ", my_data[i]);
@@ -567,12 +632,15 @@ int nma_Keithley2400::handle_Error( void *_userdata, vrpn_HANDLERPARAM _p )
 	nma_Keithley2400 * me = (nma_Keithley2400 *)_userdata;
 	char * my_buf;
 	
-	me->decode_Error(&_p.buffer, &my_buf);
+	vrpn_int32 pad, sad;
+	me->decode_Error(&_p.buffer, &pad, &sad, &my_buf);
+	if ( (pad != me->d_primary_address) || (sad != me->d_secondary_address) )
+	    return 0;
 	return(me->rcv_Error(my_buf));
 }
 
 //static 
-int nma_Keithley2400::handle_Shutdown( void *_userdata, vrpn_HANDLERPARAM )
+int nma_Keithley2400::handle_Shutdown( void *_userdata, vrpn_HANDLERPARAM _p)
 {
 	nma_Keithley2400 * me = (nma_Keithley2400 *)_userdata;
 

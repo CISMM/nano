@@ -218,7 +218,7 @@ int	main(unsigned argc, char *argv[])
        // connection failed. VRPN prints error message.
       return -1;
     }
-  
+    
    keithley2400_ui = new nma_Keithley2400_ui(tcl_interp, 
 					     tcl_script_dir,
 					     "vi_curve@dummyname.com", 

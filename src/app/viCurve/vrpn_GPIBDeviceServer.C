@@ -39,6 +39,7 @@ vrpn_GPIBDeviceServer::vrpn_GPIBDeviceServer(const char *name, vrpn_Connection *
   d_connection->register_handler(d_Shutdown_type,
 				handle_Shutdown,
 				this);
+  init_ids();
 
 }
 
@@ -51,80 +52,106 @@ int vrpn_GPIBDeviceServer::mainloop (const struct timeval * timeout) {
 
 int vrpn_GPIBDeviceServer::rcv_Device(int board_index, int primary_address, int secondary_address)
 {
-	d_device_id = ibdev(           // Create a unit descriptor handle         
+    vrpn_int32 index = get_device_id_index( primary_address, secondary_address );
+    if ( index == -1 ) { // Connecting to new device:
+	d_device_id[d_num_devices] = ibdev(           // Create a unit descriptor handle         
          board_index,              // Board Index (GPIB0 = 0, GPIB1 = 1, ...) 
          primary_address,          // Device primary address                  
          secondary_address,        // Device secondary address                
          T10s,                    // Timeout setting (T10s = 10 seconds)     
          1,                       // Assert EOI line at end of write         
          0);                      // EOS termination mode                    
+	d_primary_address[d_num_devices] = primary_address;
+	d_secondary_address[d_num_devices] = secondary_address;
+	d_num_devices++;
+    }
+    else {                   // Re-Connecting to existing device:
+	d_device_id[index] = ibdev(           // Create a unit descriptor handle         
+         board_index,              // Board Index (GPIB0 = 0, GPIB1 = 1, ...) 
+         primary_address,          // Device primary address                  
+         secondary_address,        // Device secondary address                
+         T10s,                    // Timeout setting (T10s = 10 seconds)     
+         1,                       // Assert EOI line at end of write         
+         0);                      // EOS termination mode                    
+	d_primary_address[index] = primary_address;
+	d_secondary_address[index] = secondary_address;
+    }
 	if (ibsta & ERR) {             // Check for GPIB Error  
-      GpibError("ibdev Error"); 
+	    GpibError( d_primary_address[index], d_secondary_address[index], "ibdev Error"); 
 	}
 	d_board_index = board_index;
-	d_primary_address = primary_address;
-	d_secondary_address = secondary_address;
 	return 0;
 }
 
-int vrpn_GPIBDeviceServer::rcv_Clear()
+int vrpn_GPIBDeviceServer::rcv_Clear( vrpn_int32 pad, vrpn_int32 sad)
 {
-   ibclr(d_device_id);                 // Clear the device 
-   if (ibsta & ERR) {
-      GpibError("ibclr Error");
-   }
+    int index = get_device_id_index(pad, sad);
+    if ( index == -1 )
+	return -1;
+    ibclr(d_device_id[index]);                 // Clear the device 
+    if (ibsta & ERR) {
+	GpibError( d_primary_address[index], d_secondary_address[index], "ibclr Error"); 
+    }
 	return 0;
 }
 
-int vrpn_GPIBDeviceServer::rcv_Write(char * my_buf)
+int vrpn_GPIBDeviceServer::rcv_Write(vrpn_int32 pad, vrpn_int32 sad, char * my_buf)
 {
-	if(my_buf) {
-		ibwrt(d_device_id, my_buf, strlen(my_buf));
-		if (ibsta & ERR) { GpibError("ibwrt Error"); }
-		delete [] my_buf;
-	}
-
-	return 0;
-}
-
-int vrpn_GPIBDeviceServer::rcv_Read(int bytes)
-{
-	// allow 1 extra character for null-termination
-	char * buffer = new char[bytes+1];
-	vrpn_int32 len;
-	if (buffer == NULL) {
-		fprintf(stderr, "vrpn_GPIBDeviceServer::rcv_Read: out of memory\n");
-		return -1;
-	}
-	ibrd(d_device_id, buffer, bytes);   
+    int index = get_device_id_index(pad, sad);
+    if ( index == -1 )
+	return -1;
+    if(my_buf) {
+	ibwrt(d_device_id[index], my_buf, strlen(my_buf));
 	if (ibsta & ERR) {
-		GpibError("ibrd Error");	
+	    GpibError( d_primary_address[index], d_secondary_address[index], "ibwrt Error"); 
 	}
+	delete [] my_buf;
+    }
+    
+    return 0;
+}
 
-	buffer[ibcntl] = '\0';         // Null terminate the ASCII string 
-
-	//printf("%s\n", Buffer);       
-
-	// Send result of read to the client.
-	char * msgbuf = encode_Result(&len, buffer);
-	if (msgbuf == NULL) {
-		fprintf(stderr, "vrpn_GPIBDeviceServer::rcv_Read: out of memory.\n");
-		return -1;
-	}
-	if(Send(len, d_Result_type, msgbuf)) {
-		fprintf(stderr, "vrpn_GPIBDeviceServer::rcv_Read: couldn't send message.\n");
-		return -1;
-	}
-
-	if (buffer) delete [] buffer;
-
-	return 0;
+int vrpn_GPIBDeviceServer::rcv_Read(vrpn_int32 pad, vrpn_int32 sad, int bytes)
+{
+    // allow 1 extra character for null-termination
+    char * buffer = new char[bytes+1];
+    vrpn_int32 len;
+    if (buffer == NULL) {
+	fprintf(stderr, "vrpn_GPIBDeviceServer::rcv_Read: out of memory\n");
+	return -1;
+    }
+    int index = get_device_id_index(pad, sad);
+    if ( index == -1 )
+	return -1;
+    ibrd(d_device_id[index], buffer, bytes);   
+    if (ibsta & ERR) {
+	GpibError( d_primary_address[index], d_secondary_address[index], "ibrd Error"); 
+    }
+    
+    buffer[ibcntl] = '\0';         // Null terminate the ASCII string 
+    
+    //printf("%s\n", Buffer);       
+    
+    // Send result of read to the client.
+    char * msgbuf = encode_Result(&len, pad, sad, buffer);
+    if (msgbuf == NULL) {
+	fprintf(stderr, "vrpn_GPIBDeviceServer::rcv_Read: out of memory.\n");
+	return -1;
+    }
+    if(Send(len, d_Result_type, msgbuf)) {
+	fprintf(stderr, "vrpn_GPIBDeviceServer::rcv_Read: couldn't send message.\n");
+	return -1;
+    }
+    
+    if (buffer) delete [] buffer;
+    
+    return 0;
 }
 
 // Parameter specifies the max number of 4 byte floats to read from device.
 // XXX Should be modified to allow for a variable header and trailer, instead
 // of hardcoding the 2byte header and 1byte trailer
-int vrpn_GPIBDeviceServer::rcv_ReadData(int data_len)
+int vrpn_GPIBDeviceServer::rcv_ReadData(vrpn_int32 pad, vrpn_int32 sad, int data_len)
 {
 	int buf_len = sizeof(vrpn_float32)*data_len + 3;
 	char * buffer = new char[buf_len];
@@ -135,9 +162,12 @@ int vrpn_GPIBDeviceServer::rcv_ReadData(int data_len)
 	}
 	// Add 2 bytes for the standard header of "#0" and 
 	// one byte for the terminal end-of-data character
-	ibrd(d_device_id, buffer, buf_len);   
+	int index = get_device_id_index(pad, sad);
+	if ( index == -1 )
+	    return -1;
+	ibrd(d_device_id[index], buffer, buf_len);   
 	if (ibsta & ERR) {
-		GpibError("ibrd Error");	
+	    GpibError( d_primary_address[index], d_secondary_address[index], "ibrd Error"); 
 	}
 	// Check the standard header
 	if ((buffer[0] != '#') || (buffer[1] != '0')) {
@@ -162,7 +192,7 @@ int vrpn_GPIBDeviceServer::rcv_ReadData(int data_len)
 
 	// Send result of read to the client.
 	vrpn_int32 len;
-	char * msgbuf = encode_ResultData(&len, data_buf, data_read_len);
+	char * msgbuf = encode_ResultData(&len, pad, sad, data_buf, data_read_len);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "vrpn_GPIBDeviceServer::rcv_ReadData: out of memory.\n");
 		return -1;
@@ -181,23 +211,26 @@ int vrpn_GPIBDeviceServer::rcv_ReadData(int data_len)
 // When the connection shuts down, close the instrument we are talking to.
 int vrpn_GPIBDeviceServer::rcv_Shutdown()
 {
-	//Make sure the device output is not on!
-	// These are supposed to be standard GPIB commands...
-	printf("Reset GPIB device.\n");
-	ibwrt(d_device_id, "*CLS;*RST", strlen("*CLS;*RST"));
-	if (ibsta & ERR) { GpibError("ibwrt Error"); }
-
-	ibonl(d_device_id, 0);              /* Take the device offline                 */
-   if (ibsta & ERR) {
-      GpibError("ibonl Error");	
-   }
-
-   ibonl(d_board_index, 0);          /* Take the interface offline              */
-   if (ibsta & ERR) {
-      GpibError("ibonl Error");	
-   }
-	return 0;
-
+    //Make sure the device output is not on!
+    // These are supposed to be standard GPIB commands...
+    printf("Reset GPIB device.\n");
+    for ( int i = 0; i < d_num_devices; i++ ) { // shutdown all devices
+	ibwrt(d_device_id[i], "*CLS;*RST", strlen("*CLS;*RST"));
+	if (ibsta & ERR) {
+	    GpibError( d_primary_address[i], d_secondary_address[i], "ibwrt Error"); 
+	}
+	ibonl(d_device_id[i], 0);              /* Take the device offline                 */
+    
+	if (ibsta & ERR) {
+	    GpibError( d_primary_address[i], d_secondary_address[i], "ibonl Error"); 
+	}
+    }
+    ibonl(d_board_index, 0);          /* Take the interface offline              */
+    if (ibsta & ERR) {
+	GpibError( d_primary_address[0], d_secondary_address[0], "ibonl Error"); 
+    }
+    return 0;
+    
 }
 
 
@@ -215,21 +248,21 @@ int vrpn_GPIBDeviceServer::rcv_Shutdown()
  *
  * The EXIT function will terminate this program.
  */
-int vrpn_GPIBDeviceServer::GpibError(char *msg) {
+int vrpn_GPIBDeviceServer::GpibError(vrpn_int32 pad, vrpn_int32 sad, char *msg) {
 
- 	vrpn_int32 len;
-	printf ("%s\n", msg);
-	// Send error to the client.
-	// XXX Should pack the complete error info and send it.
-	char * msgbuf = encode_Error(&len, msg);
-	if (msgbuf == NULL) {
-		fprintf(stderr, "vrpn_GPIBDeviceServer::GpibError: out of memory.\n");
-		return -1;
-	}
-	if(Send(len, d_Error_type, msgbuf)) {
-		fprintf(stderr, "vrpn_GPIBDeviceServer::GpibError: couldn't send message.\n");
-		return -1;
-	}
+    vrpn_int32 len;
+    printf ("%s\n", msg);
+    // Send error to the client.
+    // XXX Should pack the complete error info and send it.
+    char * msgbuf = encode_Error(&len, pad, sad, msg);
+    if (msgbuf == NULL) {
+	fprintf(stderr, "vrpn_GPIBDeviceServer::GpibError: out of memory.\n");
+	return -1;
+    }
+    if(Send(len, d_Error_type, msgbuf)) {
+	fprintf(stderr, "vrpn_GPIBDeviceServer::GpibError: couldn't send message.\n");
+	return -1;
+    }
 
     printf ("ibsta = &H%x  <", ibsta);
     if (ibsta & ERR )  printf (" ERR");
@@ -269,7 +302,10 @@ int vrpn_GPIBDeviceServer::GpibError(char *msg) {
     printf ("\n");
 
     /* Call ibonl to take the device and interface offline */
-    ibonl (d_device_id,0);
+    int index = get_device_id_index(pad, sad);
+    if ( index == -1 )
+	return -1;
+    ibonl (d_device_id[index],0);
     ibonl (d_board_index,0);
 
     //exit(1);
@@ -283,10 +319,10 @@ int vrpn_GPIBDeviceServer::GpibError(char *msg) {
 int vrpn_GPIBDeviceServer::handle_Device( void *_userdata, vrpn_HANDLERPARAM _p )
 {
 	vrpn_GPIBDeviceServer * me = (vrpn_GPIBDeviceServer *)_userdata;
-	vrpn_int32 board_index,primary_address,secondary_address;
+	vrpn_int32 board_index,pad,sad;
 	
-	me->decode_Device(&_p.buffer, &board_index,&primary_address,&secondary_address);
-	return(me->rcv_Device(board_index,primary_address,secondary_address));
+	me->decode_Device(&_p.buffer, &board_index,&pad,&sad);
+	return(me->rcv_Device(board_index,pad,sad));
 }
 
 //static 
@@ -294,7 +330,9 @@ int vrpn_GPIBDeviceServer::handle_Clear( void *_userdata, vrpn_HANDLERPARAM _p )
 {
 	vrpn_GPIBDeviceServer * me = (vrpn_GPIBDeviceServer *)_userdata;
 
-	return(me->rcv_Clear());
+	vrpn_int32 pad, sad;
+	me->decode_DeviceID(&_p.buffer, &pad,&sad);
+	return(me->rcv_Clear(pad,sad));
 	
 }
 
@@ -304,8 +342,9 @@ int vrpn_GPIBDeviceServer::handle_Write( void *_userdata, vrpn_HANDLERPARAM _p )
 	vrpn_GPIBDeviceServer * me = (vrpn_GPIBDeviceServer *)_userdata;
 	char * my_buf;
 	
-	me->decode_Write(&_p.buffer, &my_buf);
-	return(me->rcv_Write(my_buf));
+	vrpn_int32 pad, sad;
+	me->decode_Write(&_p.buffer, &pad, &sad, &my_buf);
+	return(me->rcv_Write(pad, sad, my_buf));
 }
 
 //static 
@@ -314,8 +353,9 @@ int vrpn_GPIBDeviceServer::handle_Read( void *_userdata, vrpn_HANDLERPARAM _p )
 	vrpn_GPIBDeviceServer * me = (vrpn_GPIBDeviceServer *)_userdata;
 	vrpn_int32 max_len;
 	
-	me->decode_Read(&_p.buffer, &max_len);
-	return(me->rcv_Read(max_len));
+	vrpn_int32 pad, sad;
+	me->decode_Read(&_p.buffer, &pad, &sad, &max_len);
+	return(me->rcv_Read(pad, sad, max_len));
 }
 
 //static 
@@ -324,8 +364,9 @@ int vrpn_GPIBDeviceServer::handle_ReadData( void *_userdata, vrpn_HANDLERPARAM _
 	vrpn_GPIBDeviceServer * me = (vrpn_GPIBDeviceServer *)_userdata;
 	vrpn_int32 max_len;
 	
-	me->decode_ReadData(&_p.buffer, &max_len);
-	return(me->rcv_ReadData(max_len));
+	vrpn_int32 pad, sad;
+	me->decode_ReadData(&_p.buffer, &pad, &sad, &max_len);
+	return(me->rcv_ReadData(pad, sad, max_len));
 }
 
 //static 
@@ -354,3 +395,19 @@ int vrpn_GPIBDeviceServer::Send( long len, long msg_type, char * buf )
   return retval;
 }
 
+int vrpn_GPIBDeviceServer::get_device_id_index( vrpn_int32 pad, vrpn_int32 sad ) {
+    for ( int i = 0; i < d_num_devices; i++ )
+	if ( (d_primary_address[i] == pad) &&
+	     (d_secondary_address[i] == sad)  )
+	    return i;
+    return -1;
+}
+
+void vrpn_GPIBDeviceServer::init_ids(  ) {
+    for ( int i = 0; i < MAX_DEVICES; i++ ) {
+	d_device_id[i] = 0;
+	d_primary_address[i] = 0;
+	d_secondary_address[i] = 0;
+    }
+    d_num_devices = 0;
+}

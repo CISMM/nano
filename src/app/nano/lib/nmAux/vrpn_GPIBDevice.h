@@ -39,33 +39,37 @@ class vrpn_GPIBDevice {
 	vrpn_int32 decode_Device (const char ** buf, vrpn_int32* board_index,
 			vrpn_int32* primary_address, vrpn_int32* secondary_address);
 
+	char * encode_DeviceID (vrpn_int32 * len,
+			vrpn_int32 primary_address, vrpn_int32 secondary_address);
+	vrpn_int32 decode_DeviceID (const char ** buf,
+			vrpn_int32* primary_address, vrpn_int32* secondary_address);
+
 	// Write commands must send a valid, null-terminated string!
-	char * encode_Write (vrpn_int32 * len, char * write_buf);
-	vrpn_int32 decode_Write (const char ** buf, char ** write_buf);
+	char * encode_Write (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, char * write_buf);
+	vrpn_int32 decode_Write (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, char ** write_buf);
 		// allocated memory for the write_buf - user must delete.
 
 	// Specifies the number of 1 byte characters to read 
-	char * encode_Read (vrpn_int32 * len, vrpn_int32 max_len);
-	vrpn_int32 decode_Read (const char ** buf, vrpn_int32 *max_len);
+	char * encode_Read (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, vrpn_int32 max_len);
+	vrpn_int32 decode_Read (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, vrpn_int32 *max_len);
 
 	// Specifies the number of 4 byte floats to read.
-	char * encode_ReadData (vrpn_int32 * len, vrpn_int32 max_len);
-	vrpn_int32 decode_ReadData (const char ** buf, vrpn_int32 *max_len);
+	char * encode_ReadData (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, vrpn_int32 max_len);
+	vrpn_int32 decode_ReadData (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, vrpn_int32 *max_len);
 
 	// Result commands must send a valid, null-terminated string!
-	char * encode_Result (vrpn_int32 * len, char * write_buf);
-	vrpn_int32 decode_Result (const char ** buf, char ** write_buf);
+	char * encode_Result (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, char * write_buf);
+	vrpn_int32 decode_Result (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, char ** write_buf);
 		// allocated memory for the write_buf - user must delete.
 
-	char * encode_ResultData (vrpn_int32 * len, vrpn_float32 * data, vrpn_int32 data_len);
-	vrpn_int32 decode_ResultData (const char ** buf, vrpn_float32 ** data, vrpn_int32 * data_len);
+	char * encode_ResultData (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, vrpn_float32 * data, vrpn_int32 data_len);
+	vrpn_int32 decode_ResultData (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, vrpn_float32 ** data, vrpn_int32 * data_len);
 		// allocated memory for the data - user must delete.
 
 	// Error commands must send a valid, null-terminated string!
-	char * encode_Error (vrpn_int32 * len, char * write_buf);
-	vrpn_int32 decode_Error (const char ** buf, char ** write_buf);
+	char * encode_Error (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, char * write_buf);
+	vrpn_int32 decode_Error (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, char ** write_buf);
 		// allocated memory for the write_buf - user must delete.
-
 };
 
 

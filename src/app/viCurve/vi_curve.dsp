@@ -1,5 +1,5 @@
 # Microsoft Developer Studio Project File - Name="vi_curve" - Package Owner=<4>
-# Microsoft Developer Studio Generated Build File, Format Version 6.00
+# Microsoft Developer Studio Generated Build File, Format Version 5.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Console Application" 0x0103
@@ -17,12 +17,12 @@ CFG=vi_curve - Win32 Debug
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "vi_curve - Win32 Release" (based on "Win32 (x86) Console Application")
+!MESSAGE "vi_curve - Win32 Release" (based on\
+ "Win32 (x86) Console Application")
 !MESSAGE "vi_curve - Win32 Debug" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 
 # Begin Project
-# PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
@@ -88,6 +88,10 @@ SOURCE=".\Decl-32.h"
 # End Source File
 # Begin Source File
 
+SOURCE=".\Gpib-32.obj"
+# End Source File
+# Begin Source File
+
 SOURCE=.\GPIBServer.C
 # End Source File
 # Begin Source File
@@ -97,14 +101,6 @@ SOURCE=..\..\lib\nmBase\nmb_Device.C
 # Begin Source File
 
 SOURCE=..\..\lib\nmBase\nmb_Device.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\lib\nmBase\nmb_Util.C
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\lib\nmBase\nmb_Util.h
 # End Source File
 # Begin Source File
 
@@ -121,10 +117,6 @@ SOURCE=.\vrpn_GPIBDeviceServer.C
 # Begin Source File
 
 SOURCE=.\vrpn_GPIBDeviceServer.h
-# End Source File
-# Begin Source File
-
-SOURCE=".\Gpib-32.obj"
 # End Source File
 # End Target
 # End Project

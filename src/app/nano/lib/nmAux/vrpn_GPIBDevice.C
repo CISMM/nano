@@ -88,7 +88,40 @@ vrpn_int32 vrpn_GPIBDevice::decode_Device (const char ** buf, vrpn_int32* board_
   return 0;
 }
 
-char * vrpn_GPIBDevice::encode_Write (vrpn_int32 * len, char * my_buf)
+char * vrpn_GPIBDevice::encode_DeviceID (vrpn_int32 * len, vrpn_int32 primary_address, vrpn_int32 secondary_address)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 2 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "vrpn_GPIBDevice::encode_Device:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, primary_address);
+    vrpn_buffer(&mptr, &mlen, secondary_address);
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 vrpn_GPIBDevice::decode_DeviceID (const char ** buf,
+		vrpn_int32* primary_address, vrpn_int32* secondary_address)
+{
+  CHECK(vrpn_unbuffer(buf, primary_address));
+  CHECK(vrpn_unbuffer(buf, secondary_address));
+
+  return 0;
+}
+
+char * vrpn_GPIBDevice::encode_Write (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, char * my_buf)
 {
   char * msgbuf = NULL;
   char * mptr;
@@ -98,7 +131,7 @@ char * vrpn_GPIBDevice::encode_Write (vrpn_int32 * len, char * my_buf)
 
   // include string terminator
   slen = strlen(my_buf) + 1;
-  *len = sizeof(vrpn_int32) + slen;
+  *len = 3 * sizeof(vrpn_int32) + slen;
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "vrpn_GPIBDevice::encode_Write:  "
@@ -107,6 +140,8 @@ char * vrpn_GPIBDevice::encode_Write (vrpn_int32 * len, char * my_buf)
   } else {
     mptr = msgbuf;
     mlen = *len;
+    vrpn_buffer(&mptr, &mlen, pad);
+    vrpn_buffer(&mptr, &mlen, sad);
     vrpn_buffer(&mptr, &mlen, slen);
     vrpn_buffer(&mptr, &mlen, my_buf, slen);
   }
@@ -114,9 +149,11 @@ char * vrpn_GPIBDevice::encode_Write (vrpn_int32 * len, char * my_buf)
   return msgbuf;
 
 }
-vrpn_int32 vrpn_GPIBDevice::decode_Write (const char ** buf, char ** my_buf)
+vrpn_int32 vrpn_GPIBDevice::decode_Write (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, char ** my_buf)
 {
 	vrpn_int32 length;
+	CHECK(vrpn_unbuffer(buf, pad));
+	CHECK(vrpn_unbuffer(buf, sad));
 	CHECK(vrpn_unbuffer(buf, &length));
 	*my_buf = new char [length];
 	if (!*my_buf) {
@@ -131,7 +168,7 @@ vrpn_int32 vrpn_GPIBDevice::decode_Write (const char ** buf, char ** my_buf)
 
 }
 
-char * vrpn_GPIBDevice::encode_Read (vrpn_int32 * len, vrpn_int32 max_len)
+char * vrpn_GPIBDevice::encode_Read (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, vrpn_int32 max_len)
 {
   char * msgbuf = NULL;
   char * mptr;
@@ -139,7 +176,7 @@ char * vrpn_GPIBDevice::encode_Read (vrpn_int32 * len, vrpn_int32 max_len)
 
   if (!len) return NULL;
 
-  *len = 1 * sizeof(vrpn_int32);
+  *len = 3 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "vrpn_GPIBDevice::encode_Device:  "
@@ -148,40 +185,44 @@ char * vrpn_GPIBDevice::encode_Read (vrpn_int32 * len, vrpn_int32 max_len)
   } else {
     mptr = msgbuf;
     mlen = *len;
+    vrpn_buffer(&mptr, &mlen, pad);
+    vrpn_buffer(&mptr, &mlen, sad);
     vrpn_buffer(&mptr, &mlen, max_len);
   }
 
   return msgbuf;
 }
 
-vrpn_int32 vrpn_GPIBDevice::decode_Read (const char ** buf, vrpn_int32 *max_len)
+vrpn_int32 vrpn_GPIBDevice::decode_Read (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, vrpn_int32 *max_len)
 {
+  CHECK(vrpn_unbuffer(buf, pad));
+  CHECK(vrpn_unbuffer(buf, sad));
   CHECK(vrpn_unbuffer(buf, max_len));
 
   return 0;
 
 }
 
-char * vrpn_GPIBDevice::encode_ReadData (vrpn_int32 * len, vrpn_int32 max_len)
+char * vrpn_GPIBDevice::encode_ReadData (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, vrpn_int32 max_len)
 {
-	return(encode_Read(len, max_len));
+	return(encode_Read(len, pad, sad, max_len));
 }
 
-vrpn_int32 vrpn_GPIBDevice::decode_ReadData (const char ** buf, vrpn_int32 *max_len)
+vrpn_int32 vrpn_GPIBDevice::decode_ReadData (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, vrpn_int32 *max_len)
 {
-	return(decode_Read(buf,max_len));
+	return(decode_Read(buf,pad, sad, max_len));
 }
 
-char * vrpn_GPIBDevice::encode_Result (vrpn_int32 * len, char * my_buf)
+char * vrpn_GPIBDevice::encode_Result (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, char * my_buf)
 {
-	return (encode_Write(len, my_buf));
+	return (encode_Write(len,pad,sad,my_buf));
 }
-vrpn_int32 vrpn_GPIBDevice::decode_Result (const char ** buf, char ** my_buf)
+vrpn_int32 vrpn_GPIBDevice::decode_Result (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, char ** my_buf)
 {
-	return (decode_Write(buf,my_buf));
+	return (decode_Write(buf,pad,sad,my_buf));
 }
 
-char * vrpn_GPIBDevice::encode_ResultData (vrpn_int32 * len, vrpn_float32 * data, vrpn_int32 data_len)
+char * vrpn_GPIBDevice::encode_ResultData (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, vrpn_float32 * data, vrpn_int32 data_len)
 {
   char * msgbuf = NULL;
   char * mptr;
@@ -190,7 +231,7 @@ char * vrpn_GPIBDevice::encode_ResultData (vrpn_int32 * len, vrpn_float32 * data
   if (!len) return NULL;
 
   // include string terminator
-  *len = sizeof(vrpn_int32) + sizeof(vrpn_float32)*data_len;
+  *len = 3 * sizeof(vrpn_int32) + sizeof(vrpn_float32)*data_len;
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "vrpn_GPIBDevice::encode_ResultData:  "
@@ -199,6 +240,8 @@ char * vrpn_GPIBDevice::encode_ResultData (vrpn_int32 * len, vrpn_float32 * data
   } else {
     mptr = msgbuf;
     mlen = *len;
+    vrpn_buffer(&mptr, &mlen, pad);
+    vrpn_buffer(&mptr, &mlen, sad);
     vrpn_buffer(&mptr, &mlen, data_len);
 	for (int i = 0; i< data_len; i++) {
 	    vrpn_buffer(&mptr, &mlen, data[i]);
@@ -208,8 +251,10 @@ char * vrpn_GPIBDevice::encode_ResultData (vrpn_int32 * len, vrpn_float32 * data
   return msgbuf;
 
 }
-vrpn_int32 vrpn_GPIBDevice::decode_ResultData (const char ** buf, vrpn_float32 ** data, vrpn_int32 * data_len)
+vrpn_int32 vrpn_GPIBDevice::decode_ResultData (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, vrpn_float32 ** data, vrpn_int32 * data_len)
 {
+	CHECK(vrpn_unbuffer(buf, pad));
+	CHECK(vrpn_unbuffer(buf, sad));
 	CHECK(vrpn_unbuffer(buf, data_len));
 	*data = new vrpn_float32 [*data_len];
 	vrpn_float32 * temp_data = *data;
@@ -225,12 +270,12 @@ vrpn_int32 vrpn_GPIBDevice::decode_ResultData (const char ** buf, vrpn_float32 *
 
 }
 
-char * vrpn_GPIBDevice::encode_Error (vrpn_int32 * len, char * my_buf)
+char * vrpn_GPIBDevice::encode_Error (vrpn_int32 * len, vrpn_int32 pad, vrpn_int32 sad, char * my_buf)
 {
-	return (encode_Write(len, my_buf));
+	return (encode_Write(len, pad, sad, my_buf));
 }
-vrpn_int32 vrpn_GPIBDevice::decode_Error (const char ** buf, char ** my_buf)
+vrpn_int32 vrpn_GPIBDevice::decode_Error (const char ** buf, vrpn_int32 *pad, vrpn_int32 *sad, char ** my_buf)
 {
-	return (decode_Write(buf,my_buf));
+	return (decode_Write(buf,pad, sad,my_buf));
 }
 

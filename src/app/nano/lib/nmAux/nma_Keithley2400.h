@@ -59,6 +59,7 @@ public:
 	int send_DataFormat();
 	int send_OutputOn();
 	int send_OutputOff();
+	int send_WireType();
 
     // Take some data
 	int send_AcquireData();
@@ -107,6 +108,7 @@ public:
     float d_sweep_delay;            // Delay before a measurement is taken. Can be zero. 
 
 
+    int d_wire_type;
 	enum Channel { VOLTAGE, CURRENT };
 	enum Scale { LINEAR, LOG };
 
