@@ -116,8 +116,10 @@ generic_entry $nmInfo(basic_options).file.buttons.import_axis_step import_axis_s
 
 frame $nmInfo(basic_options).f1
 frame $nmInfo(basic_options).f2
-frame $nmInfo(basic_options).f1.f1 -bd 3 -relief groove
-frame $nmInfo(basic_options).f1.f2 -bd 3 -relief groove 
+frame $nmInfo(basic_options).f3
+
+frame $nmInfo(basic_options).f3.f1 -bd 3 -relief groove
+frame $nmInfo(basic_options).f3.f2 -bd 3 -relief groove 
 
 generic_entry $nmInfo(basic_options).f1.import_scale import_scale \
      "Scale" real 
@@ -173,30 +175,30 @@ button $nmInfo(basic_options).f2.import_lock_rotall_button \
 button $nmInfo(basic_options).f2.import_reset_object -text "Reset Object" -command reset_object
 
 
-button $nmInfo(basic_options).f1.f1.visibility_button -text "Hide" -command change_visibility
-checkbutton $nmInfo(basic_options).f1.f1.proj_text_button \
+button $nmInfo(basic_options).f3.f1.visibility_button -text "Hide" -command change_visibility
+checkbutton $nmInfo(basic_options).f3.f1.proj_text_button \
     -text "Show Projective Texture" -variable import_proj_text
-checkbutton $nmInfo(basic_options).f1.f1.lock_object_button \
+checkbutton $nmInfo(basic_options).f3.f1.lock_object_button \
     -text "Lock Object to Projective Texture" -variable import_lock_object
-checkbutton $nmInfo(basic_options).f1.f1.lock_texture_button \
+checkbutton $nmInfo(basic_options).f3.f1.lock_texture_button \
     -text "Lock Projective Texture to Object" -variable import_lock_texture
-button $nmInfo(basic_options).f1.f1.set_color \
+button $nmInfo(basic_options).f3.f1.set_color \
         -text "Set color" -command {
             if {[choose_color import_color "Choose color" $nmInfo(basic_options)] } {
-                $nmInfo(basic_options).f1.f1.colorsample configure -bg $import_color 
+                $nmInfo(basic_options).f3.f1.colorsample configure -bg $import_color 
                 set_import_color
             }
         }  
-button $nmInfo(basic_options).f1.f1.colorsample \
+button $nmInfo(basic_options).f3.f1.colorsample \
         -relief groove -bd 2 -bg $import_color \
-        -command { $nmInfo(basic_options).f1.f1.set_color invoke}
+        -command { $nmInfo(basic_options).f3.f1.set_color invoke}
 
 # radio button for projective texture mode
-label $nmInfo(basic_options).f1.f2.image_mode_label \
+label $nmInfo(basic_options).f3.f2.image_mode_label \
     -text "Projective Texture\nTransform Generation Mode"
-radiobutton $nmInfo(basic_options).f1.f2.image_mode_surface \
+radiobutton $nmInfo(basic_options).f3.f2.image_mode_surface \
     -text "Surface Mode" -variable import_text_image_mode -value 1
-radiobutton $nmInfo(basic_options).f1.f2.image_mode_model \
+radiobutton $nmInfo(basic_options).f3.f2.image_mode_model \
     -text "Model Mode" -variable import_text_image_mode -value 0 
 
 
@@ -227,7 +229,8 @@ pack $nmInfo(basic_options).file.buttons.import_tess -anchor nw -padx 1m -pady 1
 pack $nmInfo(basic_options).file.buttons.import_axis_step -anchor nw -padx 1m -pady 1m
 
 pack $nmInfo(basic_options).f1 -anchor nw -side left -pady 7m -fill x
-pack $nmInfo(basic_options).f2 -anchor nw -pady 22m -fill x
+pack $nmInfo(basic_options).f2 -anchor nw -side left -pady 22m -fill x
+pack $nmInfo(basic_options).f3 -anchor nw -side left -fill x
 
 #pack $nmInfo(basic_options).f1.import_scale -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f1.import_scale_slide -anchor nw -padx 1m -pady 1m
@@ -244,18 +247,22 @@ pack $nmInfo(basic_options).f1.import_tune_trans_button -anchor nw -padx 1m -pad
 pack $nmInfo(basic_options).f1.import_lock_transall_button -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f1.import_update_AFM -anchor sw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f1.import_grab_object -anchor sw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f1.f1 -anchor nw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f1.f1.visibility_button -anchor nw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f1.f1.proj_text_button -anchor nw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f1.f1.lock_object_button -anchor sw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f1.f1.lock_texture_button -anchor sw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f1.f1.set_color -anchor nw -side left -fill x
-pack $nmInfo(basic_options).f1.f1.colorsample -anchor nw -side left -fill x -expand yes
 
-pack $nmInfo(basic_options).f1.f2 -anchor nw -padx 1m -pady 1m -fill x
-pack $nmInfo(basic_options).f1.f2.image_mode_label -side top
-pack $nmInfo(basic_options).f1.f2.image_mode_surface -anchor nw
-pack $nmInfo(basic_options).f1.f2.image_mode_model -anchor nw
+
+pack $nmInfo(basic_options).f3.f1 -side top -anchor nw -padx 1m \
+                                  -pady 1m -fill x
+pack $nmInfo(basic_options).f3.f1.visibility_button -anchor nw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f3.f1.proj_text_button -anchor nw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f3.f1.lock_object_button -anchor sw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f3.f1.lock_texture_button -anchor sw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f3.f1.set_color -anchor nw -side left -fill x
+pack $nmInfo(basic_options).f3.f1.colorsample -anchor nw -side left -fill x -expand yes
+
+pack $nmInfo(basic_options).f3.f2 -side top -anchor nw -padx 1m \
+                                 -pady 1m -fill x
+pack $nmInfo(basic_options).f3.f2.image_mode_label -side top
+pack $nmInfo(basic_options).f3.f2.image_mode_surface -anchor nw
+pack $nmInfo(basic_options).f3.f2.image_mode_model -anchor nw
 
 #pack $nmInfo(basic_options).f2.import_rotx -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_rotx_slide -anchor nw -padx 1m -pady 1m
@@ -268,7 +275,7 @@ pack $nmInfo(basic_options).f2.import_rotz_slide -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_lock_rotz_button -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_tune_rot_button -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_lock_rotall_button -anchor nw -padx 1m -pady 1m
-pack $nmInfo(basic_options).f2.import_reset_object -anchor sw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f2.import_reset_object -anchor nw -padx 1m -pady 1m -fill x
 
 
 
@@ -422,11 +429,11 @@ proc change_visibility {} {
    
   if { $import_visibility == 1 } {
     ##Change the hide button to a show button
-    $nmInfo(basic_options).f1.f1.visibility_button configure -text "Show"
+    $nmInfo(basic_options).f3.f1.visibility_button configure -text "Show"
     set import_visibility 0
   } else { 
     ##Change the show button to a hide button  
-    $nmInfo(basic_options).f1.f1.visibility_button configure -text "Hide"
+    $nmInfo(basic_options).f3.f1.visibility_button configure -text "Hide"
     set import_visibility 1
   }
 }

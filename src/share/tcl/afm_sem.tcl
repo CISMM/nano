@@ -74,13 +74,19 @@ pack $calibration.afm_sem_free -anchor nw -padx 3 -pady 3 -fill x
 
 set afm_sem_free [$calibration.afm_sem_free childsite]
 
-button $calibration.generate_test_data \
-      -text "Make Test Data" -command {set afm_sem_generate_test_data 1}
-pack $calibration.generate_test_data -fill x
-
 button $calibration.update_solution \
       -text "Update Solution" -command {set afm_sem_update_solution 1}
 pack $calibration.update_solution -fill x
+
+iwidgets::labeledframe $calibration.display_settings \
+        -labeltext "Display Settings"
+pack $calibration.display_settings -anchor nw -padx 3 -pady 3 -fill x
+
+set display_settings [$calibration.display_settings childsite]
+
+button $calibration.generate_test_data \
+      -text "Make Test Data" -command {set afm_sem_generate_test_data 1}
+pack $calibration.generate_test_data -fill x
 
 ###################################################################
 # model_sem controls
@@ -161,6 +167,19 @@ pack $afm_sem_free.status.variable -side left
 
 ###################################################################
 
+checkbutton $display_settings.draw_surface \
+      -variable afm_sem_draw_surface -text "Draw Surface"
+pack $display_settings.draw_surface
+
+checkbutton $display_settings.draw_surface_texture \
+      -variable afm_sem_draw_surface_texture -text "Draw Surface Texture"
+pack $display_settings.draw_surface_texture
+
+checkbutton $display_settings.live_sem_texture \
+      -variable afm_sem_live_sem_texture -text "Live SEM Texture"
+pack $display_settings.live_sem_texture
+
+###################################################################
 proc handle_sufficient_data_change {label varname element op} {
   upvar $varname statusVar
   if {$statusVar== 0} {

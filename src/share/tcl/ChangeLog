@@ -1,3 +1,9 @@
+2002-09-04  Adam Seeger  <seeger@cs.unc.edu>
+
+	* afm_sem.tcl: added checkboxes for drawing surface, surface texture,
+	and whether or not texture comes from live SEM image
+	* import.tcl: rearranged a few things so this fits on my screen
+
 2002-08-13  Adam Seeger  <seeger@cs.unc.edu>
 
 	* afm_sem.tcl: new file that goes with nmui_AFM_SEM_CalibrationUI.[hC]
