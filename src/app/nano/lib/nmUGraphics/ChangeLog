@@ -2,6 +2,7 @@
 
 	* URProjectiveTexture.C - added additional flag to trigger updates when
 	opacity or colormap changes - it wasn't updating in all cases
+    (updateTextureMipmap): fixed big memory leak here - added call to delete
 
 2003-02-07  David Borland <borland@cs.unc.edu>
 

@@ -188,6 +188,7 @@ int URProjectiveTexture::enable(double *textureTransform,
 	if (d_greyscaleImage || d_colorImage) {
 		if (d_imageChangedSinceTextureInstalled) {
 			createTexture(d_doingFastUpdates);
+			d_imageChangedSinceTextureInstalled = false;
 		}
         else if (d_doingFastUpdates) {
             updateTextureNoMipmap();
@@ -732,7 +733,7 @@ int URProjectiveTexture::updateTextureMipmap()
         glPixelMapfv(GL_PIXEL_MAP_A_TO_A, GL_CMAP_SIZE, &d_amap[0]);
 	}
 
-	void* imageDataAlpha;
+	void* imageDataAlpha = NULL;
     int i, j, k = 0;
     if (pixelType == GL_UNSIGNED_BYTE) {
         imageDataAlpha= new GLubyte[2 * imageBufferNumX * imageBufferNumY];
@@ -799,6 +800,9 @@ int URProjectiveTexture::updateTextureMipmap()
 
 	glPopAttrib();
 	glPopClientAttrib();
+
+	if (imageDataAlpha) delete [] imageDataAlpha;
+	imageDataAlpha = NULL;
 	return 0;
 }
 
