@@ -19,6 +19,8 @@ int main( int argc, char* argv[] )
 
 	nmm_Microscope_SEM_diaginc m( "SEM", &connection, vrpn_TRUE );
 
+	iface->setMicroscope( &m );
+
     struct timeval timeout;
     timeout.tv_sec = 0;
     timeout.tv_usec = 10000;

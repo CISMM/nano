@@ -39,12 +39,15 @@ public:
     virtual vrpn_int32 mainloop(const struct timeval *timeout = NULL);
 
     // functions that change settings
-    vrpn_int32 setResolution(vrpn_int32 res_x, vrpn_int32 res_y);
-    vrpn_int32 requestScan(vrpn_int32 nscans);
+    vrpn_int32 setResolution( vrpn_int32 res_x, vrpn_int32 res_y );
+	vrpn_int32 setBinning( vrpn_int32 bin );
+    vrpn_int32 requestScan( vrpn_int32 nscans );
 
     // functions for getting settings
     vrpn_int32 getResolution(vrpn_int32 &res_x, vrpn_int32 &res_y);
+	vrpn_int32 getResolutionIndex( ) { return currentResolutionIndex;  }
 	vrpn_int32 getMaxResolution( vrpn_int32& x, vrpn_int32& y );
+	vrpn_int32 getBinning( vrpn_int32& bin );
     vrpn_bool scanEnabled();
     vrpn_int32 getScanRegion_nm(double &x_span_nm, double &y_span_nm);
     vrpn_int32 getMaxScan(int &x_span_DAC, int &y_span_DAC);
@@ -97,6 +100,7 @@ private:
 
 	int currentResolutionIndex;
 	int maxBufferSize;
+	int currentBinning;
 	vrpn_uint8* myImageBuffer;
 	vrpn_uint8* cameraImageBuffer;
 

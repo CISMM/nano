@@ -10,8 +10,8 @@
 #include "OpticalServerInterface.h"
 
 
-#define VIRTUAL_ACQ_RES_X (128)
-#define VIRTUAL_ACQ_RES_Y (100)
+#define VIRTUAL_ACQ_RES_X (1024)
+#define VIRTUAL_ACQ_RES_Y (800)
 
 
 int EDAX_SCAN_MATRIX_X[EDAX_NUM_SCAN_MATRICES] ={64, 128, 256, 512, 1024, 2048, 4096};
@@ -52,7 +52,8 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 	  d_lines_per_message(1), 
 	  d_scans_to_do(0),
 	  d_virtualAcquisition(virtualAcq),
-	  currentResolutionIndex( EDAX_DEFAULT_SCAN_MATRIX )
+	  currentResolutionIndex( EDAX_DEFAULT_SCAN_MATRIX ),
+	  currentBinning( 1 )
 {
 	// VRPN initialization
 	if (!d_connection) {
@@ -158,7 +159,7 @@ setupCamera( )
 	if( success != SPOT_SUCCESS )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
-			"and initializing the SPOT camera.  Code:  %d\n", success );
+			"and initializing the SPOT camera (monochrome).  Code:  %d\n", success );
 		return success;
 	}
 	
@@ -168,20 +169,42 @@ setupCamera( )
 	if( success != SPOT_SUCCESS )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
-			"and initializing the SPOT camera.  Code:  %d\n", success );
+			"and initializing the SPOT camera (bit depth).  Code:  %d\n", success );
 		return success;
 	}
 	
 	// turn off auto-exposure
 	bool autoexpose = false;
-	//success = SpotSetValue( SPOT_AUTOEXPOSE, &autoexpose );
+	success = SpotSetValue( SPOT_AUTOEXPOSE, &autoexpose );
 	if( success != SPOT_SUCCESS )
 	{
 		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
-			"and initializing the SPOT camera.  Code:  %d\n", success );
+			"and initializing the SPOT camera (auto-expose).  Code:  %d\n", success );
 		return success;
 	}
-
+	
+	// set an exposure time
+	SPOT_EXPOSURE_STRUCT exposure;
+	exposure.lExpMSec = 2000;
+	exposure.lGreenExpMSec = 2000;
+	exposure.lBlueExpMSec = 2000;
+	exposure.nGain = 2;
+	success = SpotSetValue( SPOT_EXPOSURE, &exposure );
+	if( success != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
+			"and initializing the SPOT camera (exposure).  Code:  %d\n", success );
+		return success;
+	}
+	
+	// set bin size
+	short binning = 2;
+	success = SpotSetValue( SPOT_BINSIZE, &binning );
+	if( success != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setupCamera:  Error opening "
+			"and initializing the SPOT camera (binning).  Code:  %d\n", success );
+	   }
 	return 0;
 }
 
@@ -287,6 +310,38 @@ getResolution( vrpn_int32 &res_x, vrpn_int32 &res_y )
 
 
 vrpn_int32 nmm_Microscope_SEM_diaginc::
+getBinning( vrpn_int32 &bin )
+{
+	if( d_virtualAcquisition )
+	{
+		bin = 1;
+	}
+	else
+	{
+		short binning;
+		int ret = SpotGetValue( SPOT_BINSIZE, &binning );
+		if( ret != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::getBinning:  "
+				"Error getting bin size.  Code:  %d\n", ret );
+			bin = -1;
+			return ret;
+		}
+		bin = binning;
+	}
+
+	if( bin != currentBinning )
+	{
+		OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+		iface->setBinning( bin );
+		currentBinning = bin;
+	}
+
+	return 0;
+}
+
+
+vrpn_int32 nmm_Microscope_SEM_diaginc::
 getMaxResolution( vrpn_int32& x, vrpn_int32& y )
 {
 	if( d_virtualAcquisition )
@@ -364,6 +419,40 @@ setResolution( vrpn_int32 res_x, vrpn_int32 res_y )
 	}
 	
 	return reportResolution();
+} // end setResolution(...)
+
+
+vrpn_int32 nmm_Microscope_SEM_diaginc::
+setBinning( vrpn_int32 bin )
+{
+	if( d_virtualAcquisition )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
+			"virtual acquisition on.  We're making up data and not changing the binning.\n" );
+		return currentBinning;
+	}
+
+	// check that the requested bin size is in range
+	if( bin <= 0 || bin > 4 )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
+			"bin size %d out of range.\n", bin );
+		return currentBinning;
+	}
+
+	// request the new resolution.  the requested area is centered in 
+	// the camera's capture area.
+	short binsize = bin;
+	int retVal = SpotSetValue( SPOT_BINSIZE, &binsize );
+	if( retVal != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setBinning:  "
+			"failed on the SPOT camera.  Code:  %d\n", retVal);
+	}
+	vrpn_int32 binning = 0;
+	getBinning( binning );
+	
+	return currentBinning;
 } // end setResolution(...)
 
 
