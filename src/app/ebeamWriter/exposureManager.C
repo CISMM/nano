@@ -37,6 +37,32 @@ void ExposureManager::exposePattern(list<PatternShape> shapes,
                      nmm_Microscope_SEM_Remote *sem, int mag)
 {
   list<PatternShape>::iterator shape;
+  PatternPoint pnt_nm;
+  double dwell_time_sec;
+  double dwell_time_nsec;
+  int x_DAC, y_DAC;
+
+  sem->getScanRegion_nm(d_xSpan_nm, d_ySpan_nm);
+  sem->getMaxScan(d_xSpan_DACunits, d_ySpan_DACunits);
+
+  for (shape = shapes.begin();
+       shape != shapes.end(); shape++) {
+    initShape(*shape);
+    while (getNextPoint(pnt_nm, dwell_time_sec)) {
+      dwell_time_nsec = (vrpn_int32)floor(d_line_dwell_time_sec*1e9);
+      sem->setPointDwellTime(dwell_time_nsec);
+      convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
+      sem->goToPoint(x_DAC, y_DAC);
+    }
+  }
+}
+
+/* this version is disabled for testing initShape and getNextPoint
+void ExposureManager::exposePattern(list<PatternShape> shapes,
+                     list<PatternPoint> dump_points,
+                     nmm_Microscope_SEM_Remote *sem, int mag)
+{
+  list<PatternShape>::iterator shape;
   list<PatternPoint>::iterator point;
   vrpn_bool firstTime = vrpn_TRUE;
   int i;
@@ -101,6 +127,7 @@ void ExposureManager::exposePattern(list<PatternShape> shapes,
   }
   printf("Exposure done. %d shapes drawn\n", numShapes);
 }
+*/
 
 void ExposureManager::setExposure(double uCoul_per_cm2)
 {
@@ -165,7 +192,7 @@ int ExposureManager::initShape(PatternShape &shape)
   
   setExposure(d_currShape->d_exposure_uCoulombs_per_square_cm);
   
-  d_pointListPtr = d_currShape->d_points.begin();
+  d_pointListPtr = d_currShape->pointListBegin();
   start_x = (*d_pointListPtr).d_x;
   start_y = (*d_pointListPtr).d_y;
   d_pointListPtr++;
@@ -175,19 +202,17 @@ int ExposureManager::initShape(PatternShape &shape)
 }
 
 // get the next exposure point for the current shape
-int ExposureManager::getNextPoint(PatternPoint &point, double &time)
+vrpn_bool ExposureManager::getNextPoint(PatternPoint &point, double &time)
 {
-  if (d_currShape == NULL) return -1; // error, no shape being drawn
+  if (d_currShape == NULL) return vrpn_FALSE; // error, no shape being drawn
 
   point = d_nextExposePoint;
   time = d_line_dwell_time_sec;
 
-  list<PatternPoint>::iterator testPtr = d_pointListPtr;
-  testPtr++;
-  if (testPtr == d_currShape->pointListEnd()) {
+  if (d_pointListPtr == d_currShape->pointListEnd()) {
     delete d_currShape;
     d_currShape = NULL;
-    return 1; // indicate we are done with the current shape
+    return vrpn_TRUE;
   }
 
   double end_x = (*d_pointListPtr).d_x;
@@ -204,5 +229,5 @@ int ExposureManager::getNextPoint(PatternPoint &point, double &time)
     d_nextExposePoint.d_x += d_line_inter_dot_dist_nm*dx/distToEnd;
     d_nextExposePoint.d_y += d_line_inter_dot_dist_nm*dy/distToEnd;
   }
-  return 0; // shape is in progress
+  return vrpn_TRUE; // shape is in progress
 }

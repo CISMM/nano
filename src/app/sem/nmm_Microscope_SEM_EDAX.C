@@ -7,6 +7,7 @@
 
 //#define TRUST_EDAX
 //#define USE_SCAN_TABLE
+#define USE_SET_SCAN_PARAMS
 #define USE_BUSYWAIT_DELAY
 #define UCHAR_PIXEL
 //#define VIRTUAL_SEM

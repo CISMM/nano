@@ -87,6 +87,8 @@ ControlPanels::ControlPanels(PatternEditor *pe,
   }
   handle_semAcquisitionMagnification_change(
           (int)d_semAcquisitionMagnification, (void *)this);
+  d_patternEditor->setDrawingParameters((double)(d_lineWidth_nm),
+                    (double)(d_exposure_uCoulombs_per_square_cm));
 }
 
 ControlPanels::~ControlPanels()
@@ -705,7 +707,7 @@ void ControlPanels::handleSEMChange(
       if (point_count % 1000 == 0) {
          printf("%d points exposed\n", point_count);
       }
-//      printf("BEAM_LOCATION: %d, %d\n", x, y);
+      printf("BEAM_LOCATION: %d, %d\n", x, y);
       break;
     case nmm_Microscope_SEM::RETRACE_DELAYS:
       info.sem->getRetraceDelays(h_time_nsec, v_time_nsec);

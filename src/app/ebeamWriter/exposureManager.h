@@ -16,7 +16,7 @@ class ExposureManager {
                            double beamWidth_nm,
                            double current_picoAmps);
   int initShape(PatternShape &shape);
-  int getNextPoint(PatternPoint &point, double &time);
+  vrpn_bool getNextPoint(PatternPoint &point, double &time);
   void convert_nm_to_DAC(const double x_nm, const double y_nm, 
                          int &xDAC, int &yDAC);
 
