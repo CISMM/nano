@@ -1,3 +1,9 @@
+2002-01-15  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* microscape.c : added nmm_SimulatedMicroscope_Remote setup and call to
+	mainloop in main and fixed simscanplanename so that actually retains 
+	the name it is given in the tcl window
+
 2002-01-15  David Marshburn  <marshbur@cs.unc.edu>
 
 	* CollaborationManager.C (setPeerName):  force local and remote 
