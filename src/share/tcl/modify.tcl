@@ -285,6 +285,70 @@ proc flip_optimize_selection_mode {optimize_mode_param element op} {
 }
 
 ####################################################
+# Recursive procedure called by enforce_directz_heightplane
+# to set the heightplane to Z Piezo. We have to wait
+# for the AFM to respond so that Z Piezo is available to choose.
+####################################################
+proc set_directz_heightplane { plane_name { rec_level 0 } } {
+    global z_comes_from inputPlaneNames nmInfo scandatalist data_sets
+    # Check to see if Z Piezo is available in height plane list. 
+    set id [lsearch -exact $inputPlaneNames $plane_name]
+    #puts "$plane_name next $rec_level"
+    if { $id != -1 } {
+        puts "DirectZ: Setting Z Piezo as heightplane"
+        # Switch to viewing Z Piezo. 
+        #Doesn't send change to C: $nmInfo(z_mapping).z_dataset select $id
+        # but this works:
+        set z_comes_from $plane_name
+        return
+    } elseif { $rec_level > 15 } {
+        # We've waited more that 1.5 seconds, give up.
+        puts "DirectZ: Unable to automatically select Z Piezo as scan plane"
+        return
+    } else {
+        puts "Waiting $rec_level"
+        after 100 [list set_directz_heightplane $plane_name [expr $rec_level +1]]
+    }
+}
+
+####################################################
+# Direct Z requires that the height plane be
+# Z Peizo forward or reverse. Put up a dialog
+# to enforce that requirement.
+####################################################
+proc enforce_directz_heightplane {} {
+    global z_comes_from inputPlaneNames nmInfo scandatalist data_sets
+    # Check to see if height plane is Z Piezo forward/reverse
+    if { !([string equal "$z_comes_from" "Z Piezo-Forward"] || \
+            [string equal "$z_comes_from" "Z Piezo-Reverse"]) } {
+        # Check to see that Z Piezo is being collected as a scan dataset
+        set id2 [lsearch -exact $scandatalist {Z Piezo-Forward}]
+        set id3 [lsearch -exact $scandatalist {Z Piezo-Reverse}]
+        if { $id2 == -1 || $id3 == -1 } { 
+            nano_error "Internal: Z Piezo not available as scan dataset"
+            return
+        }
+        # Variable is 1 if Z Piezo is selected. 
+        if { (!$data_sets(scan$id2)) && (!$data_sets(scan$id3)) } {
+            # Neither is selected, so select Z Piezo Forward
+            $nmInfo(data_sets).scan.scanbutton$id2 select
+            
+            after 100 [list set_directz_heightplane "Z Piezo-Forward" ]
+            return
+        }
+        # Otherwise, Z Piezo being collected, but is not the height plane
+        # Make it the height plane. 
+        if { $data_sets(scan$id2) } {
+            set_directz_heightplane "Z Piezo-Forward" 
+        } elseif { $data_sets(scan$id3) } {
+            set_directz_heightplane "Z Piezo-Reverse"
+        }
+    } else {
+        #puts "nothing to be done."
+    }
+}
+
+####################################################
 # Initializes the full view.  All of the variables #
 # that weren't set in init_quick get set here.     #
 ####################################################
@@ -648,7 +712,8 @@ proc init_full {} {
 	radiobutton $nmInfo(modifyfull).control.feedback -text "Feedback" \
 	    -variable newmodifyp_control -value 0  -anchor nw
 	radiobutton $nmInfo(modifyfull).control.directz -text "Direct Z" \
-	    -variable newmodifyp_control -value 1 -anchor nw
+	    -variable newmodifyp_control -value 1 -anchor nw \
+            -command { enforce_directz_heightplane }
 
 	global mod_control_list
 	set mod_control_list "$nmInfo(modifyfull).control.feedback \

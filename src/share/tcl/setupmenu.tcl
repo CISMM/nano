@@ -87,8 +87,8 @@ foreach name $touchdatalist {
 }
 #set num_touchdata [expr $i -1]
 
-# spmlab allows two out of three including the following and
-# the two auxiliary channels, but selection of other than the default
+# spmlab allows two out of three possible channels including "Internal Sensor" and
+# the two auxiliary channels, but selection of other than "Internal Sensor"
 # hasn't been implemented yet
 set forcecurvedatalist [list "Internal Sensor" ]
 set i 0

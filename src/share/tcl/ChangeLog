@@ -1,3 +1,12 @@
+2002-06-19  Aron Helser  <helser@cs.unc.edu>
+
+	* modify.tcl (enforce_directz_heightplane): New, makes sure
+	user of directZ is looking at Z Piezo heightplane. Needs more
+	work, like dialogs telling user we're making changes. 
+	(set_directz_heightplane): new, called by
+	enforce_directz_heightplane 
+	* setupmenu.tcl: comment changes. 
+
 2002-06-14  Aron Helser  <helser@cs.unc.edu>
 
 	* mainwin.tcl: Command order changes. 
@@ -18,61 +27,61 @@
 
 2002-06-06 David Borland <borland@cs.unc.edu>
 
-        * registration.tcl : automatically pop-up import objects window
+	* registration.tcl : automatically pop-up import objects window
 	when switching to model coordinate generation mode
 
 2002-06-06 David Borland <borland@cs.unc.edu>
 
-        * import.tcl : minor change because there is no longer a grab texture
+	* import.tcl : minor change because there is no longer a grab texture
 	button in registration.tcl
 
 	* registration.tcl : removed grab texture button
 
 2002-06-05 Jameson Miller <millerj@cs.unc.edu>
-	*directStep.tcl - add direct step controls into the device only list.
+	* directStep.tcl: add direct step controls into the device only list.
 
-	*mainwin.tcl - withdraw tip button greys out when scanning.
+	* mainwin.tcl: withdraw tip button greys out when scanning.
 
 2002-6-04 Jameson Miller <millerj@cs.unc.edu>
-	*modify.tcl - modify window resizes to fit all parameters
+	* modify.tcl: modify window resizes to fit all parameters
 	in the window when changing tools.
 
-	*directStep.tcl - changed variable names around to better reflect
+	* directStep.tcl: changed variable names around to better reflect
 	connection with C variables and collaboration.
 	
 2002--6-03 David Borland <borland@cs.unc.edu>
 
-        * registration.tcl : user control for grabbing the projective 
+	* registration.tcl: user control for grabbing the projective 
 	texture with the phantom.
 
 	* import.tcl : same
 
 2002-05-30 David Borland <borland@cs.unc.edu>
 
-        * registration.tcl : added control of the new MODEL and SURFACE
+	* registration.tcl : added control of the new MODEL and SURFACE
 	REGISTRATION_COORD graphics modes.
 
 2002-05-24 David Borland <borland@cs.unc.edu>
 
-        * import.tcl : added control for locking the projective texture's 
+	* import.tcl : added control for locking the projective texture's 
 	transform.
 
 2002-05-24 David Borland <borland@cs.unc.edu>
 
-        * import.tcl : reorganized the imported object user interface
+	* import.tcl : reorganized the imported object user interface
 
 
 2002-05-23 David Borland <borland@cs.unc.edu>
 
-        * import.tcl : user control for fine-tuning translations and rotations
+	* import.tcl : user control for fine-tuning translations and rotations
 
 2002-05-23 David Borland <borland@cs.unc.edu>
 
-        * import.tcl : added user control for individual manipulation of
-        spider legs
+	* import.tcl : added user control for individual manipulation of
+	spider legs
 
 2002-05-22 David Borland <borland@cs.unc.edu>
-        * import.tcl : added buttons to lock all translationa and all rotations
+	* import.tcl : added buttons to lock all translationa and all rotations
 
 2002-05-21 Jameson Miller <millerj@cs.unc.edu>
 	*modify.tcl : edited functions :
@@ -84,11 +93,11 @@
 
 2002-05-20 David Borland <borland@cs.unc.edu>
 
-        * import.tcl : user control for number of spider legs
+	* import.tcl : user control for number of spider legs
 
 2002-05-20 David Borland <borland@cs.unc.edu>
 
-        * import.tcl : user control for locking translations and rotations
+	* import.tcl : user control for locking translations and rotations
 
 2002-05-16 Jameson Miller <millerj@cs.unc.edu>
 	* Modify.tcl : new button to toggle weather to take data
@@ -105,13 +114,13 @@
 	off some texture mode, do not change any other modes.
 
 2002-05-07  David Borland <borland@cs.unc.edu>
-        * import.tcl:  made the spider control stuff a new window--the import
-        objects window was getting pretty cluttered
+	* import.tcl:  made the spider control stuff a new window--the import
+	objects window was getting pretty cluttered
 
 2002-05-06  David Borland <borland@cs.unc.edu>
 
-        * import.tcl:  added UI for spider objects, added control for 
-        grabbing objects for controlling with mouse phantom
+	* import.tcl:  added UI for spider objects, added control for 
+	grabbing objects for controlling with mouse phantom
 
 2002-05-02    <marshbur@cs.unc.edu>
 
@@ -125,8 +134,8 @@
 	labels on the no-log-file warning window slightly for clarification.
 
 2002-04-26  David Borland  <borland@cs.unc.edu>
-        * import.tcl : changed from typing input to sliders.  added reset
-        objects button
+	* import.tcl : changed from typing input to sliders.  added reset
+	objects button
 
 2002-04-23  David Marshburn  <marshbur@cs.unc.edu>
 
@@ -141,14 +150,14 @@
 
 2002-04-15  David Borland <borland@cs.unc.edu>
 
-        * import.tcl:  changed default value for sending position and
-        orientation to AFM
+	* import.tcl:  changed default value for sending position and
+	orientation to AFM
 
 2002-04-11  David Borland <borland@cs.unc.edu>  
 
-        * import.tcl:  Did some reorganization of the UI.  Added user
-        control for sending orientation and scale updates to the AFM
-        simulator
+	* import.tcl:  Did some reorganization of the UI.  Added user
+	control for sending orientation and scale updates to the AFM
+	simulator
 
 2002-04-04  Aron Helser  <helser@cs.unc.edu>
 
@@ -172,9 +181,9 @@
 	thirdtech_ui is on. 
 
 2002-03-27  David Borland  <borland@cs.unc.edu>
-        * import.tcl:  Added user control for clamping textures to objects
-        Added user control for how many sections of a loaded nanotube are 
-        used
+	* import.tcl:  Added user control for clamping textures to objects
+	Added user control for how many sections of a loaded nanotube are 
+	used
 
 2002-03-21  Aron Helser  <helser@cs.unc.edu>
 
@@ -483,16 +492,16 @@
 	data-registration-window-closing-nano bug.
 
 2001-04-30  Adam Seeger  <seeger@cs.unc.edu>
-        * shared_ptr.tcl: make focus change off of entry box in choose 
-        collaborator widget dialog bind
-        to <Entry> of button box region in that window
+	* shared_ptr.tcl: make focus change off of entry box in choose 
+	collaborator widget dialog bind
+	to <Entry> of button box region in that window
 
 2001-04-30  Adam Seeger  <seeger@cs.unc.edu>
-        * shared_ptr.tcl: temporary comment out of last commit
+	* shared_ptr.tcl: temporary comment out of last commit
 
 2001-04-30  Chris Weigle  <weigle@cs.unc.edu>
-        * shared_ptr.tcl: make <Enter> in choose collaborator widget bind
-        to the conenct button
+	* shared_ptr.tcl: make <Enter> in choose collaborator widget bind
+	to the conenct button
 
 2001-04-24  Adam Seeger  <seeger@cs.unc.edu>
 
@@ -552,9 +561,9 @@
 
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 
-        * mainwin.tcl: removed an extra call to 
-        source [file join ${tcl_script_dir} shared_ptr.tcl] that caused
-        nano to crash
+	* mainwin.tcl: removed an extra call to 
+	source [file join ${tcl_script_dir} shared_ptr.tcl] that caused
+	nano to crash
 
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 
@@ -610,7 +619,7 @@
 	* mainwin.tcl (diable_widgets_for_readmode) : get rid of race
 	condition / fighting with diable_device_widgets_for_commands_suspended
 	(diable_device_widgets_for_commands_suspended) : clean up and
-        add device_ to name to make clearer
+	add device_ to name to make clearer
 
 	* shared_ptr.tcl (mutex_taken_callback) : make consistent
 	with gotRequest/deniedRequest handlers
@@ -619,17 +628,17 @@
 2000-11-29  Tom Hudson  <hudson@cs.unc.edu>
 
 	* mainwin.tcl : add variable collab_commands_suspended and trace
-        (disable_widgets_for_commands_suspended) : generalize to also
+	(disable_widgets_for_commands_suspended) : generalize to also
 	support suspending commands when we're collaborating and don't
 	have the mutex
 
 	* shared_ptr.tcl (mutex_gotRequest_callback) : clear
 	collab_commands_suspended, enable $view.xy_lock
 	(mutex_deniedRequest_callback) : set
-        collab_commands_suspended, disable $view.xy_lock
+	collab_commands_suspended, disable $view.xy_lock
 
 	* mainwin.tcl : enclose "source latency.tcl" in test of
-        thirdtech_ui instead of commenting it out.
+	thirdtech_ui instead of commenting it out.
 
 	* latency.tcl : get rid of dependence on $fc and $bc
 
@@ -650,7 +659,7 @@
 
 2000-09-26  Tom Hudson <hudson@cs.unc.edu>
 
-        * modify.tcl : more support for feelahead tool
+	* modify.tcl : more support for feelahead tool
 
 2000-09-23  Adam Seeger <seeger@cs.unc.edu>
 
@@ -661,17 +670,17 @@
 
 2000-09-21  Tom Hudson <hudson@cs.unc.edu>
 
-        * modify.tcl: added feelahead modify tool
+	* modify.tcl: added feelahead modify tool
 
 2000-09-07  Adam Seeger <seeger@cs.unc.edu>
 
-        * modify.tcl: uncommented code that was probably added 8-18 for fixing
-        the same thing
+	* modify.tcl: uncommented code that was probably added 8-18 for fixing
+	the same thing
 
 2000-08-31  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* modify.tcl: added slowline 3d and constr. freehand xyz controls to device_only_controls list.
-        * all : merged merge-2000-summer-thirdtech code with trunk.
+	* all : merged merge-2000-summer-thirdtech code with trunk.
 	
 2000-08-27  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
