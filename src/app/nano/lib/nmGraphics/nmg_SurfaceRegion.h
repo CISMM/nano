@@ -162,6 +162,8 @@ private:
     int d_scanDirection;
     /// Last strips updated;
     nmb_Interval d_last_nonempty_update;
+    /// These strips should be cleared, to avoid displaying invalid data.
+    nmb_Interval d_mark_clear;
 
     /// Strips of surface to update color this frame.
     nmb_Interval d_color_update;

@@ -729,8 +729,11 @@ determineInterval(nmb_Dataset *dataset,
 
   if (dataset->inputGrid->numX() > 99) {
     nmb_Interval mark;
-
     bool emptyUpdate = false;
+
+    // Assume no strips need to be cleared this time. 
+    d_mark_clear.clear();
+
     // Check for empty or full range of change, don't change direction if so. 
     if (high_row >= low_row && !d_needsFullRebuild) {
         // Avoid changing direction if we have nothing to compare. 
@@ -798,16 +801,23 @@ determineInterval(nmb_Dataset *dataset,
         // We have a large number of strips to render, >10 strips at 300x300
         // resolution, let's not do them all at once, possibly leaving some
         // gaps in the surface until we get enough idle time to catch up.
+        nmb_Interval skipped;
         if (d_scanDirection > 0) {
             d_update = nmb_Interval (max(0, low_strip - 2), 
                                      max(0, low_strip - 2));
-            mark = nmb_Interval (d_update.low()+1, 
+            skipped = nmb_Interval (d_update.low()+1, 
                                  min(max_strip, high_strip + 1));
         } else {
             d_update = nmb_Interval (min(max_strip, high_strip + 1), 
                                      min(max_strip, high_strip + 1));
-            mark = nmb_Interval (max(0, low_strip - 2), d_update.low()-1);
+            skipped = nmb_Interval (max(0, low_strip - 2), d_update.low()-1);
         }
+        // We need to clear the strips we are skipping,
+        // so we don't confuse old data with new data. 
+        d_mark_clear = skipped;
+        // Add missed strips to "todo" so they don't interfere with
+        // d_last_marked after we jump times in a stream file.
+        d_todo += skipped;
       }
         //Debug
         if (spm_graphics_verbosity >= 9 && !d_last_marked.empty() && d_regionID==0) 
@@ -1194,19 +1204,19 @@ int nmg_SurfaceRegion::build_list_set (
     if (spm_graphics_verbosity >= 15) { 
         fprintf(stderr, "  updating %d - %d", d_update.low(), d_update.high());
     } 
-    // Store state->just_color
-//      vrpn_bool just_color_was_on = state->just_color;
-    // If we are re-doing the whole surface, we don't need to then
-    // re-do the color, so turn flag off.
-//      if ( (d_update.low() == 0) && (d_update.high() == d_num_lists -1) ) {
-//          just_color_was_on = 0;
-//      }
 
-    // turn state->just_color off so only geometry gets re-generated
-//      state->just_color = 0;
     bool all_strips_masked = true;
     int j=0;
     while (all_strips_masked ) {
+      // Clear any strips that may need it. Should be disjoint
+      // with d_update
+      if (!d_mark_clear.empty()) {
+          glDeleteLists(d_list_base + d_mark_clear.low(), 
+                        d_mark_clear.high() - d_mark_clear.low() + 1);
+          //I believe there is no need to call glNewList, because calling
+          // glCallList or glDeleteLists on a list that has been deleted is
+          // a no-op. 
+      }
       for (i = d_update.low(); i <= d_update.high(); i++) {
         
         if (spm_graphics_verbosity >= 10) {

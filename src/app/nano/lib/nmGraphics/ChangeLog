@@ -1,3 +1,12 @@
+2002-04-04  Aron Helser  <helser@cs.unc.edu>
+
+	* nmg_SurfaceRegion.C (determineInterval): Changed behavior when
+	jumping in time replaying stream file, so entire surface gets
+	rebuilt in timely manner. Setup to clear strips which don't
+	contain current data. 
+	(build_list_set): Clear strips which don't contain current
+	data. Avoids user confusion. 
+
 2002-04-01  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_SurfaceMask.C (setControlPlane): added idempotency check,
