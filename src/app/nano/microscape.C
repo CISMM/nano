@@ -6131,7 +6131,7 @@ int main(int argc, char* argv[])
 	   logmode,
 	   istate.writingRemoteStream ? istate.remoteOutputStreamName
                                       : (char *) NULL);
-      if (!microscope_connection) {
+      if (!microscope_connection || !(microscope_connection->doing_okay()) {
 	display_fatal_error_dialog( "   Couldn't open connection to %s.\n",
 		istate.afm.deviceName);
 	exit(0);

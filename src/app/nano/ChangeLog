@@ -1,3 +1,9 @@
+2000-09-01  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c (main) : added check of 
+	microscope_connection->doing_okay() to fix problem of trying to open
+	an invalid file on the command line
+
 2000-08-31  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
         * all : merged merge-2000-summer-thirdtech code with trunk.
