@@ -588,7 +588,7 @@ struct AFMState {
     // when ignoring new points
 
   // for jump to scanline feature (after a modification)
-  Tclvar_int numLinesToJumpBack;
+  TclNet_int numLinesToJumpBack;
 
 };
 
