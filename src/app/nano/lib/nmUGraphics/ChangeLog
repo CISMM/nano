@@ -1,3 +1,13 @@
+2002-05-23  David Borland <borland@cs.unc.edu>
+
+        * SpiderGenerator.C : code for individual manipulation of legs
+
+        * URPolygon.C : preliminary changes for getting projective textures
+        to show up correctly on objects when the texture is projected from an
+        angle
+
+        * URender.h : code for individual manipulation of spider legs
+
 2002-05-20  David Borland <borland@cs.unc.edu>
 
         * URender.h : added variable and access functions for number of

@@ -104,24 +104,32 @@ void BuildList(URender *Pobject, GLuint dl) {
 	q_vec_type n;
 	q_type q;
 
-	int tess = Pobject->GetSpiderTess();
-	double x = Pobject->GetSpiderLength();
-	double y = Pobject->GetSpiderWidth() / 2;
-	double z = Pobject->GetSpiderThick() / 2;
 	int legs = Pobject->GetSpiderLegs();
+	int tess;
+	double x;
+	double y;
+	double z;
 
 	double rot_step = 2 * Q_PI / legs;
 	double rot;
 
-/**********************************************************************************/
-	
-	// special case for curve == 0.0
-	// don't want to divide by zero, and can calculate much more easily
-	if (Pobject->GetSpiderCurve() == 0.0) {
-		glNewList(dl, GL_COMPILE);
-		rot = 0.0;
-		for (i = 0; i < legs; i++) {
-			glBegin(GL_QUADS);
+	double curve;
+	double radius;
+
+	double cur_curve;
+
+	glNewList(dl, GL_COMPILE);	// init display list
+	rot = 0.0;
+	for (i = 0; i < legs; i++) {
+		tess = Pobject->GetSpiderTess(i);
+		x = Pobject->GetSpiderLength(i);
+		y = Pobject->GetSpiderWidth(i) / 2;
+		z = Pobject->GetSpiderThick(i) / 2;
+
+		glBegin(GL_QUADS);
+
+		if (Pobject->GetSpiderCurve(i) == 0.0) {
+			// don't want to divide by zero, and can calculate much more easily
 
 			// set up middle points
 			q_from_euler(q, rot, 0, 0);
@@ -212,127 +220,123 @@ void BuildList(URender *Pobject, GLuint dl) {
 			rot += rot_step;
 			glEnd();
 		}
-		glEndList();
-		return;
-	}
+		else {
+			curve = Pobject->GetSpiderCurve(i) / tess;
+			radius = x / Pobject->GetSpiderCurve(i);
 
-/**********************************************************************************/
+			// set up middle points
+			q_from_euler(q, rot, 0, 0);
 
+			q_vec_set(p[0], 0, y, radius - z);
+			q_vec_set(p[1], 0, -y, radius - z);
+			q_vec_set(p[2], 0, -y, radius + z);
+			q_vec_set(p[3], 0, y, radius + z);
 
-	// curve not equal to zero
-
-
-	double curve = Pobject->GetSpiderCurve() / tess;
-	double radius = x / Pobject->GetSpiderCurve();
-
-	double cur_curve;
-
-	glNewList(dl, GL_COMPILE);	// init display list
-	rot = 0.0;
-	for (i = 0; i < legs; i++) {
-		glBegin(GL_QUADS);
-
-		// set up middle points
-		q_from_euler(q, rot, 0, 0);
-
-		q_vec_set(p[0], 0, y, radius - z);
-		q_vec_set(p[1], 0, -y, radius - z);
-		q_vec_set(p[2], 0, -y, radius + z);
-		q_vec_set(p[3], 0, y, radius + z);
-
-		for (k = 0; k < 4; k++) {
-			q_xform(p[k], q, p[k]);
-		}
-
-		for (k = 0; k < 4; k++) {
-			p[k][2] -= radius;
-		}
-
-		cur_curve = curve;	
-		for (j = 0; j < tess; j++) {
-			q_from_euler(q, rot, cur_curve, 0);
-
-			q_vec_set(p[4], 0, y, radius - z);
-			q_vec_set(p[5], 0, -y, radius - z);
-			q_vec_set(p[6], 0, -y, radius + z);
-			q_vec_set(p[7], 0, y, radius + z);
-
-			for (k = 4; k < 8; k++) {
+			for (k = 0; k < 4; k++) {
 				q_xform(p[k], q, p[k]);
 			}
 
-			for (k = 4; k < 8; k++) {
+			for (k = 0; k < 4; k++) {
 				p[k][2] -= radius;
 			}
 
-			// bottom
-			q_vec_set(n, 0, 0, -1);
+			// end1
+			q_vec_set(n, -1, 0, 0);
 			q_xform(n, q, n);
 			q_vec_normalize(n, n);
 			glNormal3f(n[0], n[1], n[2]);
 
 			glVertex3f(p[0][0], p[0][1], p[0][2]);
 			glVertex3f(p[1][0], p[1][1], p[1][2]);
-			glVertex3f(p[5][0], p[5][1], p[5][2]);
-			glVertex3f(p[4][0], p[4][1], p[4][2]);
-
-			// side 
-			q_vec_set(n, 0, -1, 0);
-			q_xform(n, q, n);
-			q_vec_normalize(n, n);
-			glNormal3f(n[0], n[1], n[2]);
-
-			glVertex3f(p[1][0], p[1][1], p[1][2]);
-			glVertex3f(p[5][0], p[5][1], p[5][2]);
-			glVertex3f(p[6][0], p[6][1], p[6][2]);
 			glVertex3f(p[2][0], p[2][1], p[2][2]);
-
-			// top 
-			q_vec_set(n, 0, 0, 1);
-			q_xform(n, q, n);
-			q_vec_normalize(n, n);
-			glNormal3f(n[0], n[1], n[2]);
-
 			glVertex3f(p[3][0], p[3][1], p[3][2]);
-			glVertex3f(p[2][0], p[2][1], p[2][2]);
-			glVertex3f(p[6][0], p[6][1], p[6][2]);
-			glVertex3f(p[7][0], p[7][1], p[7][2]);
 
-			// side 
-			q_vec_set(n, 0, 1, 0);
+			cur_curve = curve;	
+			for (j = 0; j < tess; j++) {
+				q_from_euler(q, rot, cur_curve, 0);
+
+				q_vec_set(p[4], 0, y, radius - z);
+				q_vec_set(p[5], 0, -y, radius - z);
+				q_vec_set(p[6], 0, -y, radius + z);
+				q_vec_set(p[7], 0, y, radius + z);
+
+				for (k = 4; k < 8; k++) {
+					q_xform(p[k], q, p[k]);
+				}
+
+				for (k = 4; k < 8; k++) {
+					p[k][2] -= radius;
+				}
+
+				// bottom
+				q_vec_set(n, 0, 0, -1);
+				q_xform(n, q, n);
+				q_vec_normalize(n, n);
+				glNormal3f(n[0], n[1], n[2]);
+
+				glVertex3f(p[0][0], p[0][1], p[0][2]);
+				glVertex3f(p[1][0], p[1][1], p[1][2]);
+				glVertex3f(p[5][0], p[5][1], p[5][2]);
+				glVertex3f(p[4][0], p[4][1], p[4][2]);
+
+				// side 
+				q_vec_set(n, 0, -1, 0);
+				q_xform(n, q, n);
+				q_vec_normalize(n, n);
+				glNormal3f(n[0], n[1], n[2]);
+
+				glVertex3f(p[1][0], p[1][1], p[1][2]);
+				glVertex3f(p[5][0], p[5][1], p[5][2]);
+				glVertex3f(p[6][0], p[6][1], p[6][2]);
+				glVertex3f(p[2][0], p[2][1], p[2][2]);
+
+				// top 
+				q_vec_set(n, 0, 0, 1);
+				q_xform(n, q, n);
+				q_vec_normalize(n, n);
+				glNormal3f(n[0], n[1], n[2]);
+
+				glVertex3f(p[3][0], p[3][1], p[3][2]);
+				glVertex3f(p[2][0], p[2][1], p[2][2]);
+				glVertex3f(p[6][0], p[6][1], p[6][2]);
+				glVertex3f(p[7][0], p[7][1], p[7][2]);
+
+				// side 
+				q_vec_set(n, 0, 1, 0);
+				q_xform(n, q, n);
+				q_vec_normalize(n, n);
+				glNormal3f(n[0], n[1], n[2]);
+
+				glVertex3f(p[0][0], p[0][1], p[0][2]);
+				glVertex3f(p[3][0], p[3][1], p[3][2]);
+				glVertex3f(p[7][0], p[7][1], p[7][2]);
+				glVertex3f(p[4][0], p[4][1], p[4][2]);
+
+				// set up for next segment
+				for (k = 0; k < 4; k++) {
+					q_vec_copy(p[k], p[k + 4]);
+				}
+
+				cur_curve += curve;
+			}
+			// end2
+			q_vec_set(n, 1, 0, 0);
 			q_xform(n, q, n);
 			q_vec_normalize(n, n);
 			glNormal3f(n[0], n[1], n[2]);
 
 			glVertex3f(p[0][0], p[0][1], p[0][2]);
 			glVertex3f(p[3][0], p[3][1], p[3][2]);
-			glVertex3f(p[7][0], p[7][1], p[7][2]);
-			glVertex3f(p[4][0], p[4][1], p[4][2]);
+			glVertex3f(p[2][0], p[2][1], p[2][2]);
+			glVertex3f(p[1][0], p[1][1], p[1][2]);
 
-			// set up for next segment
 			for (k = 0; k < 4; k++) {
-				q_vec_copy(p[k], p[k + 4]);
+				Pobject->UpdateBoundsWithPoint(p[k][0], p[k][1], p[k][2]);
 			}
 
-			cur_curve += curve;
+			rot += rot_step;
+			glEnd();
 		}
-		// end
-		q_vec_set(n, 1, 0, 0);
-		q_xform(n, q, n);
-		q_vec_normalize(n, n);
-		glNormal3f(n[0], n[1], n[2]);
-
-		glVertex3f(p[0][0], p[0][1], p[0][2]);
-		glVertex3f(p[3][0], p[3][1], p[3][2]);
-		glVertex3f(p[2][0], p[2][1], p[2][2]);
-		glVertex3f(p[1][0], p[1][1], p[1][2]);
-
-		for (k = 0; k < 4; k++) {
-			Pobject->UpdateBoundsWithPoint(p[k][0], p[k][1], p[k][2]);
-		}
-
-		rot += rot_step;
-		glEnd();
 	}
 	glEndList();
 

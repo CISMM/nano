@@ -324,11 +324,45 @@ int URPolygon::Render(void * userdata){
 				glEnable(GL_TEXTURE_GEN_T);
 				glEnable(GL_TEXTURE_GEN_R);
 				glEnable(GL_TEXTURE_GEN_Q);
+
+
+				qogl_matrix_type text_mat;
+				glGetDoublev(GL_TEXTURE_MATRIX, text_mat);
+				qogl_print_matrix(text_mat);
+				printf("\n");
+
 				glPushMatrix();
+
+				glGetDoublev(GL_TEXTURE_MATRIX, text_mat);
+				qogl_print_matrix(text_mat);
+				printf("\n");
+				
 
 				if (!this->GetClamp()) {
 					// don't clamp texture to object
-					this->GetLocalXform().Push_As_OGL();
+//					this->GetLocalXform().Push_As_OGL();
+
+					glGetDoublev(GL_TEXTURE_MATRIX, text_mat);
+					qogl_print_matrix(text_mat);
+					printf("\n");
+
+					qogl_matrix_type rot;
+					q_vec_type trans;
+					double scale;
+					
+					q_to_ogl_matrix(rot, this->GetLocalXform().GetRot());
+					q_vec_copy(trans, this->GetLocalXform().GetTrans());
+					scale = this->GetLocalXform().GetScale();
+
+
+					
+					glTranslated(trans[0], trans[1], trans[2]);
+//					qogl_matrix_mult(rot, text_mat, rot);
+//					glLoadMatrixd(rot);
+					glMultMatrixd(rot);
+					glScaled(scale, scale, scale);
+					
+					
 
 					// save the current Xform
 					this->GetSavedXform() = this->GetLocalXform();

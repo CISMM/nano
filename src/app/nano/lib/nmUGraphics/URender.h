@@ -92,12 +92,12 @@ protected:
 	int lock_roty;
 	int lock_rotz;
 
-	// stuff for spiders
-	double spider_length;
-	double spider_width;
-	double spider_thick;
-	int spider_tess;
-	double spider_curve;
+	// stuff for spiders -- changed to store per leg
+	double spider_length[8];
+	double spider_width[8];
+	double spider_thick[8];
+	int spider_tess[8];
+	double spider_curve[8];
 	int spider_legs;
 
 	//bounding box
@@ -157,11 +157,11 @@ public:
 	void SetLockRoty(int l) { lock_roty = l; }
 	void SetLockRotz(int l) { lock_rotz = l; }
 
-	void SetSpiderLength(double l) { spider_length = l; }
-	void SetSpiderWidth(double w) { spider_width = w; }
-	void SetSpiderThick(double t) { spider_thick = t; }
-	void SetSpiderTess(int t) { spider_tess = t; }
-	void SetSpiderCurve(double c) { spider_curve = c; }
+	void SetSpiderLength(int i, double l) { spider_length[i] = l; }
+	void SetSpiderWidth(int i, double w) { spider_width[i] = w; }
+	void SetSpiderThick(int i, double t) { spider_thick[i] = t; }
+	void SetSpiderTess(int i, int t) { spider_tess[i] = t; }
+	void SetSpiderCurve(int i, double c) { spider_curve[i] = c; }
 	void SetSpiderLegs(int l) { spider_legs = l; }
 
 	int GetVisibility(){return visible;}
@@ -181,11 +181,11 @@ public:
 	int GetLockRoty() { return lock_roty; }
 	int GetLockRotz() { return lock_rotz; }
 
-	double GetSpiderLength() { return spider_length; }
-	double GetSpiderWidth() { return spider_width; }
-	double GetSpiderThick() { return spider_thick; }
-	int GetSpiderTess() { return spider_tess; }
-	double GetSpiderCurve() { return spider_curve; }
+	double GetSpiderLength(int i) { return spider_length[i]; }
+	double GetSpiderWidth(int i) { return spider_width[i]; }
+	double GetSpiderThick(int i) { return spider_thick[i]; }
+	int GetSpiderTess(int i) { return spider_tess[i]; }
+	double GetSpiderCurve(int i) { return spider_curve[i]; }
 	int GetSpiderLegs() { return spider_legs; }
 
 	void SetTexture(URender *t);
