@@ -5650,6 +5650,50 @@ void teardownSynchronization( CollaborationManager *cm,
 
   }
 
+  // Analysis -> Registeration
+  nmui_Component * viewRegister = ui_Root->find("Register");
+  viewRegister->remove(&(alignerUI->d_registrationImageName3D));
+  viewRegister->remove(&(alignerUI->d_registrationImageName2D));
+  viewRegister->remove(&(alignerUI->d_newResampleImageName));
+  viewRegister->remove(&(alignerUI->d_newResamplePlaneName));
+  viewRegister->remove(&(alignerUI->d_registrationEnabled));
+  viewRegister->remove(&(alignerUI->d_constrainToTopography));
+  viewRegister->remove(&(alignerUI->d_invertWarp));
+  viewRegister->remove(&(alignerUI->d_textureDisplayEnabled));
+  viewRegister->remove(&(alignerUI->d_resampleResolutionX));
+  viewRegister->remove(&(alignerUI->d_resampleResolutionY));
+  viewRegister->remove(&(alignerUI->d_resampleRatio));
+  viewRegister->remove(&(alignerUI->d_registrationColorMap3D));
+  //viewRegister->remove(&(alignerUI->d_registrationColorMap2D));//
+  viewRegister->remove(&(alignerUI->d_autoAlignRequested));
+  viewRegister->remove(&(alignerUI->d_numIterations));
+  viewRegister->remove(&(alignerUI->d_stepSize));
+  viewRegister->remove(&(alignerUI->d_resolutionLevel));
+  viewRegister->remove(&(alignerUI->d_scaleX));
+  viewRegister->remove(&(alignerUI->d_scaleY));
+  viewRegister->remove(&(alignerUI->d_translateX));
+  viewRegister->remove(&(alignerUI->d_translateY));
+  viewRegister->remove(&(alignerUI->d_translateZ));
+  viewRegister->remove(&(alignerUI->d_rotate3D_X));
+  viewRegister->remove(&(alignerUI->d_rotate3D_Z));
+  viewRegister->remove(&(alignerUI->d_rotate2D_Z));
+  viewRegister->remove(&(alignerUI->d_shearZ));
+  viewRegister->remove(&(alignerUI->d_autoAlignMode));
+  viewRegister->remove(&(alignerUI->d_transformationSource));
+  viewRegister->remove(&(alignerUI->d_flipProjectionImageInX));
+
+  
+  // Analysis -> Cross Section
+  nmui_Component * viewCross = ui_Root->find("Cross");
+  viewCross->remove(&(cross->d_snap_to_45));
+  viewCross->remove(&(cross->d_vary_width));
+  viewCross->remove(&(cross->d_max_points));
+  viewCross->remove(&(cross->d_clear_zero));
+  viewCross->remove(&(cross->d_clear_one));
+  viewCross->remove(&(cross->d_data_update));
+
+
+
   /* */
   nmui_Component * frenchOhmmeterControls = ui_Root->find("Ohmmeter");
   if(frenchOhmmeterControls) {
