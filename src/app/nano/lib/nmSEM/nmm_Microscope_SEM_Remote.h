@@ -147,29 +147,29 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     void clearImageBuffers();
 
   protected:
-    static int RcvReportResolution (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportPixelIntegrationTime
+    static int VRPN_CALLBACK RcvReportResolution (void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportPixelIntegrationTime
                 (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportInterPixelDelayTime
+    static int VRPN_CALLBACK RcvReportInterPixelDelayTime
                 (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvScanlineData
+    static int VRPN_CALLBACK RcvScanlineData
 		(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportPointDwellTime(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportBeamBlankEnable(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportMaxScanSpan
+    static int VRPN_CALLBACK RcvReportPointDwellTime(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportBeamBlankEnable(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportMaxScanSpan
                 (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportBeamLocation(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportRetraceDelays(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportDACParams(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportExternalScanControlEnable(void *_userdata,
+    static int VRPN_CALLBACK RcvReportBeamLocation(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportRetraceDelays(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportDACParams(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportExternalScanControlEnable(void *_userdata,
                                                   vrpn_HANDLERPARAM _p);
-    static int RcvReportMagnification(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportExposureStatus(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportTimingStatus(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportMagnification(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportExposureStatus(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportTimingStatus(void *_userdata, vrpn_HANDLERPARAM _p);
 
-    static int RcvReportPointReportEnable(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportDotSpacing(void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvReportLineSpacing(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportPointReportEnable(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportDotSpacing(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int VRPN_CALLBACK RcvReportLineSpacing(void *_userdata, vrpn_HANDLERPARAM _p);
 
     int notifyMessageHandlers(nmm_Microscope_SEM::msg_t type, const struct timeval &msg_time);
 
