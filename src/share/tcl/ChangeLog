@@ -1,9 +1,15 @@
-2002-01-31  David Borland <borland@cs.unc.edu>
+2003-02-07  David Borland <borland@cs.unc.edu>
+
+        * import.tcl: Added .crv files to the import files list.  These 
+        files will be the ouput of the tube-tracing code on images of
+        TAMS spider devices.
+
+2003-01-31  David Borland <borland@cs.unc.edu>
 
         * import.tcl: Added sliders to rotate and translate spider legs
         individually.
 
-2002-01-20  David Borland <borland@cs.unc.edu>
+2003-01-20  David Borland <borland@cs.unc.edu>
 
         * import.tcl: Added sliders to the spider object gui to control
         curvature at the beginning and end of each leg.

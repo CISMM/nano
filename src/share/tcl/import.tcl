@@ -314,7 +314,8 @@ proc open_import_file {} {
     set types { {"Wave Front files" ".obj" } 
                 {"MSI files" ".msi" } 
 		{"Text files" ".txt" }
-	{"NAMS spider files" ".spi" }
+		{"TAMS spider files" ".spi" }
+		{"Spider curve files" ".crv" }
                 {"All files" *} }
     set filename [tk_getOpenFile -filetypes $types \
             -initialdir $import_dir \
