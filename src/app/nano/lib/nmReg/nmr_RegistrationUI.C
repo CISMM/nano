@@ -535,9 +535,6 @@ void nmr_RegistrationUI::handle_registrationMinMax2D_change(vrpn_float64, void *
                                 me->d_registrationImageName2D.string());
 
     if (me->d_imageDisplay) {
-      // set up texture in graphics
-      // me->d_imageDisplay->setRealignTexturesConversionMap(
-      // me->d_2DImageCMap->getColorMapName(), "");
       me->d_imageDisplay->setDisplayColorMapRange(im, dmin, dmax, cmin, cmax);
 	  if(im) me->d_imageDisplay->updateImage(im);
     }
