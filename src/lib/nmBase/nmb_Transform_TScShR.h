@@ -18,7 +18,7 @@
   M = T_center_inv*T*Sc*Sh*R*T_center
 
   T = translation
-  R = rotation
+  R = rotation constructed from Euler angles using the x-convention
   Sh = shear
   Sc = scale
   T_center = translation of a center (pivot) point to the origin
@@ -39,14 +39,26 @@
                       0 0 1 center_z
                       0 0 0 1
 
-           cx, sx = cos and sin of angle about x axis
-           cy, sy = cos and sin of angle about y axis
-           cz, sz = cos and sin of angle about z axis
+           cphi, sphi = cos and sin of angle about z axis
+           ctheta, stheta = cos and sin of angle about x axis
+           cpsi, spsi = cos and sin of angle about z axis
 
-                    cy*cz    sx*sy*cz-cx*sz   cx*sy*cz+sx*sz  0
-       R = RzRyRx = cy*sz    sx*sy*sz-cx*cz   cx*sy*sz-sx*cz  0
-                    -sy      sx*cy            cx*cy           0
-                    0        0                0               1
+            cphi  sphi 0 0
+       D =  -sphi cphi 0 0
+            0     0    1 0
+            0     0    0 1
+
+           1 0       0      0
+       C = 0 ctheta  stheta 0 
+           0 -stheta ctheta 0
+           0 0       0      1
+
+           cpsi  spsi 0 0
+       B = -spsi cpsi 0 0
+           0     0    1 0
+           0     0    0 1
+
+       R = B*C*D 
 
             1        shz           0   0
        Sh = shx*shy  1+shx*shy*shz shx 0
@@ -70,7 +82,7 @@
   derivatives with respect to each of the 12 intuitive parameters
 */
 
-typedef enum {NMB_ROTATE_X, NMB_ROTATE_Y, NMB_ROTATE_Z,
+typedef enum {NMB_ROTATE_2D_Z, NMB_ROTATE_3D_X, NMB_ROTATE_3D_Z,
    NMB_TRANSLATE_X, NMB_TRANSLATE_Y, NMB_TRANSLATE_Z,
    NMB_SCALE_X, NMB_SCALE_Y, NMB_SCALE_Z,
    NMB_SHEAR_X, NMB_SHEAR_Y, NMB_SHEAR_Z} nmb_TransformParameter;
@@ -79,6 +91,31 @@ extern const int nmb_numTransformParameters;
 extern const nmb_TransformParameter nmb_transformParameterOrder[];
 
 typedef enum {NMB_X, NMB_Y, NMB_Z} nmb_Axis;
+typedef enum {NMB_PSI, NMB_THETA, NMB_PHI} nmb_EulerAngle;
+
+/*
+
+  The following enum values refer to the same things:
+
+  NMB_PSI ~ NMB_ROTATE_2D_Z
+  NMB_THETA ~ NMB_ROTATE_3D_X
+  NMB_PHI ~ NMB_ROTATE_3D_Z
+
+  The 2D-3D distinction comes from the fact that we can decompose the
+  full transformation into a 2D affine transformation in the X-Y plane
+  (with a rotation about Z) multiplied with a rotation about X and a 
+  rotation about Z which can
+  be used to select a 2D projection direction (Rz from azimuth angle and
+  Rx from altitude angle):
+
+  M = A*R
+
+  A = T_center_inv*T*Sc*Sh*Rz(psi)*T_center 
+  ('A' may specify a 2D affine transform in X-Y plane)
+  R = T_center_inv*Rx(theta)*Rz(phi)*T_center
+  ('R' rotates z axis - the projection direction)
+
+*/
 
 class nmb_Transform_TScShR {
   public:
@@ -90,9 +127,9 @@ class nmb_Transform_TScShR {
     void setParameter(nmb_TransformParameter type, double value);
     double getParameter(nmb_TransformParameter type);
 
-    void setRotation(nmb_Axis axis, double angle_radians);
-    double getRotation(nmb_Axis axis);
-    void rotate(nmb_Axis axis, double delta_radians);
+    void setRotation(nmb_EulerAngle ea, double angle_radians);
+    double getRotation(nmb_EulerAngle ea);
+    void rotate(nmb_EulerAngle ea, double delta_radians);
 
     void setTranslation(nmb_Axis axis, double translation);
     double getTranslation(nmb_Axis axis);

@@ -300,7 +300,7 @@ vrpn_bool nmb_TransformMatrix44::is2D() {
 vrpn_bool nmb_TransformMatrix44::getTScShR_2DParameters(
                         double centerX, double centerY,
                         double &tx, double &ty,
-                        double &phi, double &shz,
+                        double &psi, double &shz,
                         double &scx, double &scy)
 {
   if (!is2D()) return vrpn_FALSE;
@@ -308,8 +308,8 @@ vrpn_bool nmb_TransformMatrix44::getTScShR_2DParameters(
    is as follows:
 
 (this is mathematica notation since I used it to help me calculate some of this)
-R = {{Cos[phi], -Sin[phi], 0, 0},
-      {Sin[phi], Cos[phi], 0, 0},
+R = {{Cos[psi], Sin[psi], 0, 0},
+      {-Sin[psi], Cos[psi], 0, 0},
       {0, 0, 1, 0},
       {0, 0, 0, 1}};
 
@@ -329,13 +329,13 @@ Tpivot = {{1, 0, 0, Pivot[[1]]}, {0, 1, 0, Pivot[[2]]},
 
 M = T.Tpivot.Sc.Sh.R.TinvPivot;
 
-M = {{scx*Cos[phi] + scx*shz*Sin[phi], scx*shz*Cos[phi] - scx*Sin[phi], 0,
-      centerX + tx + (-centerY - ty)*(scx*shz*Cos[phi] - scx*Sin[phi]) +
-       ty*(scx*shz*Cos[phi] - scx*Sin[phi]) + (-centerX - tx)*
-        (scx*Cos[phi] + scx*shz*Sin[phi]) +
-       tx*(scx*Cos[phi] + scx*shz*Sin[phi])}, {scy*Sin[phi], scy*Cos[phi], 0,
-      centerY + ty + scy*(-centerY - ty)*Cos[phi] + scy*ty*Cos[phi] +
-       scy*(-centerX - tx)*Sin[phi] + scy*tx*Sin[phi]}, {0, 0, 1, 0},
+M = {{scx*Cos[psi] - scx*shz*Sin[psi], scx*shz*Cos[psi] + scx*Sin[psi], 0,
+      centerX + tx + (-centerY - ty)*(scx*shz*Cos[psi] + scx*Sin[psi]) +
+       ty*(scx*shz*Cos[psi] + scx*Sin[psi]) + (-centerX - tx)*
+        (scx*Cos[psi] - scx*shz*Sin[psi]) +
+       tx*(scx*Cos[psi] - scx*shz*Sin[psi])}, {-scy*Sin[psi], scy*Cos[psi], 0,
+      centerY + ty + scy*(-centerY - ty)*Cos[psi] + scy*ty*Cos[psi] +
+       scy*(centerX + tx)*Sin[psi] - scy*tx*Sin[psi]}, {0, 0, 1, 0},
      {0, 0, 0, 1}}
 
 eqns={xform00==M[[1,1]], xform01==M[[1,2]], xform03==M[[1,4]],
@@ -357,12 +357,12 @@ Save["transform2D.txt", {R, Sh, Sc, T, M, Solution}];
   scx = det*y_mag_inv;
   scy = y_mag;
   shz = (xform[0][0]*xform[1][0] + xform[0][1]*xform[1][1])*det_inv;
-  double cos_phi = xform[1][1]*y_mag_inv;
-  double sin_phi = xform[1][0]*y_mag_inv;
-  if (sin_phi > 0) {
-    phi = acos(cos_phi);
+  double cos_psi = xform[1][1]*y_mag_inv;
+  double sin_psi = xform[1][0]*y_mag_inv;
+  if (sin_psi > 0) {
+    psi = acos(cos_psi);
   } else {
-    phi = 2.0*M_PI-acos(cos_phi);
+    psi = 2.0*M_PI-acos(cos_psi);
   }
 
   return vrpn_TRUE;

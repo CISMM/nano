@@ -6,7 +6,7 @@
 const int nmb_numTransformParameters = 12;
 const nmb_TransformParameter 
       nmb_transformParameterOrder[nmb_numTransformParameters] =
-            {NMB_ROTATE_X, NMB_ROTATE_Y, NMB_ROTATE_Z,
+            {NMB_ROTATE_2D_Z, NMB_ROTATE_3D_X, NMB_ROTATE_3D_Z,
              NMB_TRANSLATE_X, NMB_TRANSLATE_Y, NMB_TRANSLATE_Z,
              NMB_SCALE_X, NMB_SCALE_Y, NMB_SCALE_Z,
              NMB_SHEAR_X, NMB_SHEAR_Y, NMB_SHEAR_Z};
@@ -64,14 +64,14 @@ void nmb_Transform_TScShR::setParameter(nmb_TransformParameter type,
                                         double value)
 {
   switch (type) {
-    case NMB_ROTATE_X:
-      setRotation(NMB_X, value);
+    case NMB_ROTATE_2D_Z:
+      setRotation(NMB_PSI, value);
       break;
-    case NMB_ROTATE_Y:
-      setRotation(NMB_Y, value);
+    case NMB_ROTATE_3D_X:
+      setRotation(NMB_THETA, value);
       break;
-    case NMB_ROTATE_Z:
-      setRotation(NMB_Z, value);
+    case NMB_ROTATE_3D_Z:
+      setRotation(NMB_PHI, value);
       break;
     case NMB_TRANSLATE_X:
       d_translation[0] = value;
@@ -111,14 +111,14 @@ double nmb_Transform_TScShR::getParameter(nmb_TransformParameter type)
 {
   double result = 0;
   switch (type) {
-    case NMB_ROTATE_X:
-      result = d_rotation[0];
+    case NMB_ROTATE_2D_Z:
+      result = getRotation(NMB_PSI);
       break;
-    case NMB_ROTATE_Y:
-      result = d_rotation[1];
+    case NMB_ROTATE_3D_X:
+      result = getRotation(NMB_THETA);
       break;
-    case NMB_ROTATE_Z:
-      result = d_rotation[2];
+    case NMB_ROTATE_3D_Z:
+      result = getRotation(NMB_PHI);
       break;
     case NMB_TRANSLATE_X:
       result = d_translation[0];
@@ -154,65 +154,74 @@ double nmb_Transform_TScShR::getParameter(nmb_TransformParameter type)
   return result;
 }
 
-void nmb_Transform_TScShR::setRotation(nmb_Axis axis, 
+void nmb_Transform_TScShR::setRotation(nmb_EulerAngle ea, 
                                          double angle_radians)
 {
-  switch (axis) {
-    case NMB_X:
+  switch (ea) {
+    case NMB_PSI:
      d_rotation[0] = angle_radians;
      d_cosAngle[0] = cos(angle_radians);
      d_sinAngle[0] = sin(angle_radians);
      break;
-    case NMB_Y:
+    case NMB_THETA:
      d_rotation[1] = angle_radians;
      d_cosAngle[1] = cos(angle_radians);
      d_sinAngle[1] = sin(angle_radians);
      break;
-    default:
+    case NMB_PHI:
      d_rotation[2] = angle_radians;
      d_cosAngle[2] = cos(angle_radians);
      d_sinAngle[2] = sin(angle_radians);
      break;
+    default:
+     printf("nmb_Transform_TScShR::setRotation: This shouldn't happen\n");
+     return;
   }
   d_matrixNeedsUpdate = vrpn_TRUE;
 }
 
-double nmb_Transform_TScShR::getRotation(nmb_Axis axis)
+double nmb_Transform_TScShR::getRotation(nmb_EulerAngle ea)
 {
   double result = 0;
-  switch (axis) {
-    case NMB_X:
+  switch (ea) {
+    case NMB_PSI:
      result = d_rotation[0];
      break;
-    case NMB_Y:
+    case NMB_THETA:
      result = d_rotation[1];
      break;
-    default:
+    case NMB_PHI:
      result = d_rotation[2];
      break;
+    default:
+     printf("nmb_Transform_TScShR::getRotation: This shouldn't happen\n");
+     return 0;
   }
   return result;
 }
 
-void nmb_Transform_TScShR::rotate(nmb_Axis axis, 
+void nmb_Transform_TScShR::rotate(nmb_EulerAngle ea, 
                                                 double delta_radians)
 {
-  switch (axis) {
-    case NMB_X:
+  switch (ea) {
+    case NMB_PSI:
      d_rotation[0] += delta_radians;
      d_cosAngle[0] = cos(d_rotation[0]);
      d_sinAngle[0] = sin(d_rotation[0]);
      break;
-    case NMB_Y:
+    case NMB_THETA:
      d_rotation[1] += delta_radians;
      d_cosAngle[1] = cos(d_rotation[1]);
      d_sinAngle[1] = sin(d_rotation[1]);
      break;
-    default:
+    case NMB_PHI:
      d_rotation[2] += delta_radians;
      d_cosAngle[2] = cos(d_rotation[2]);
      d_sinAngle[2] = sin(d_rotation[2]);
      break;
+    default:
+     printf("nmb_Transform_TScShR::rotate: This shouldn't happen\n");
+     return;
   }
   d_matrixNeedsUpdate = vrpn_TRUE;
 }
@@ -455,22 +464,29 @@ void nmb_Transform_TScShR::getMatrix(double *m)
 
 Here is some useful mathematica code for computing these formulas:
 
-Rx = {{1, 0, 0, 0}, {0, Cos[psi], -Sin[psi], 0}, {0, Sin[psi], Cos[psi], 0},
+R1 = {{Cos[phi], -Sin[phi], 0, 0}, 
+     {Sin[phi], Cos[phi], 0, 0}, 
+     {0, 0, 1, 0},
      {0, 0, 0, 1}};
 
-Ry = {{Cos[theta], 0, Sin[theta], 0}, {0, 1, 0, 0},
-     {-Sin[theta], 0, Cos[theta], 0}, {0, 0, 0, 1}};
-
-Rz = {{Cos[phi], -Sin[phi], 0, 0}, {Sin[phi], Cos[phi], 0, 0}, {0, 0, 1, 0},
+R2 = {{1, 0, 0, 0}, 
+     {0, Cos[theta], -Sin[theta], 0}, 
+     {0, Sin[theta], Cos[theta], 0},
      {0, 0, 0, 1}};
 
-R = Rz.Ry.Rx;
+R3 = {{Cos[psi], -Sin[psi], 0, 0}, 
+     {Sin[psi], Cos[psi], 0, 0}, 
+     {0, 0, 1, 0},
+     {0, 0, 0, 1}};
 
-R = {{Cos[phi]*Cos[theta], -(Cos[psi]*Sin[phi]) + Cos[phi]*Sin[psi]*
-        Sin[theta], Sin[phi]*Sin[psi] + Cos[phi]*Cos[psi]*Sin[theta], 0},
-     {Cos[theta]*Sin[phi], Cos[phi]*Cos[psi] + Sin[phi]*Sin[psi]*Sin[theta],
-      -(Cos[phi]*Sin[psi]) + Cos[psi]*Sin[phi]*Sin[theta], 0},
-     {-Sin[theta], Cos[theta]*Sin[psi], Cos[psi]*Cos[theta], 0}, {0, 0, 0, 1}};
+R = R3.R2.R1;
+
+R = {{Cos[phi] Cos[psi] - Cos[theta] Sin[phi] Sin[psi], 
+     -(Cos[psi] Sin[phi]) - Cos[phi] Cos[theta] Sin[psi], 
+     Sin[psi] Sin[theta], 0}, {Cos[psi] Cos[theta] Sin[phi] + 
+      Cos[phi] Sin[psi], Cos[phi] Cos[psi] Cos[theta] - Sin[phi] Sin[psi], 
+     -(Cos[psi] Sin[theta]), 0}, 
+    {Sin[phi] Sin[theta], Cos[phi] Sin[theta], Cos[theta], 0}, {0, 0, 0, 1}}
 
 T = {{1, 0, 0, tx}, {0, 1, 0, ty}, {0, 0, 1, tz}, {0, 0, 0, 1}};
 Sh = {{1, shz, 0, 0}, {shx*shy, 1 + shx*shy*shz, shx, 0},
@@ -559,48 +575,44 @@ void nmb_Transform_TScShR::updateMatrix()
   // possible
 
   double temp[4][4] = 
-{{scx*Cos_theta*(Cos_phi + shz*Sin_phi),
-      scx*(Cos_phi*(shz*Cos_psi + Sin_psi*Sin_theta) +
-        Sin_phi*(-Cos_psi + shz*Sin_psi*Sin_theta)),
-      scx*(Cos_phi*(-(shz*Sin_psi) + Cos_psi*Sin_theta) +
-        Sin_phi*(Sin_psi + shz*Cos_psi*Sin_theta)),
-      PivotX + tx - PivotX*scx*shz*Cos_theta*Sin_phi -
-       PivotZ*scx*Sin_phi*Sin_psi - PivotY*scx*shz*Sin_phi*Sin_psi*
-        Sin_theta + scx*Cos_psi*Sin_phi*(PivotY - PivotZ*shz*Sin_theta) -
-       scx*Cos_phi*(PivotX*Cos_theta - PivotZ*shz*Sin_psi +
-         PivotY*Sin_psi*Sin_theta + Cos_psi*(PivotY*shz +
-           PivotZ*Sin_theta))}, {scy*(shx*shy*Cos_phi*Cos_theta +
-        (1 + shx*shy*shz)*Cos_theta*Sin_phi - shx*Sin_theta),
-      scy*(shx*Cos_theta*Sin_psi + shx*shy*(-(Cos_psi*Sin_phi) +
-          Cos_phi*Sin_psi*Sin_theta) + (1 + shx*shy*shz)*
-         (Cos_phi*Cos_psi + Sin_phi*Sin_psi*Sin_theta)),
-      scy*(shx*Cos_psi*Cos_theta + shx*shy*(Sin_phi*Sin_psi +
-          Cos_phi*Cos_psi*Sin_theta) + (1 + shx*shy*shz)*
-         (-(Cos_phi*Sin_psi) + Cos_psi*Sin_phi*Sin_theta)),
-      PivotY + ty - PivotX*scy*Cos_theta*Sin_phi - PivotX*scy*shx*shy*shz*
-        Cos_theta*Sin_phi - PivotY*scy*shx*Cos_theta*Sin_psi -
-       PivotZ*scy*shx*shy*Sin_phi*Sin_psi + PivotX*scy*shx*Sin_theta -
-       PivotY*scy*Sin_phi*Sin_psi*Sin_theta - PivotY*scy*shx*shy*shz*
-        Sin_phi*Sin_psi*Sin_theta - scy*Cos_phi*
-        (PivotX*shx*shy*Cos_theta - Sin_psi*(PivotZ + PivotZ*shx*shy*shz -
-           PivotY*shx*shy*Sin_theta) + Cos_psi*(PivotY +
-           PivotY*shx*shy*shz + PivotZ*shx*shy*Sin_theta)) -
-       scy*Cos_psi*(PivotZ*shx*Cos_theta + Sin_phi*(-(PivotY*shx*shy) +
-           PivotZ*(1 + shx*shy*shz)*Sin_theta))},
-     {scz*(shy*Cos_phi*Cos_theta + shy*shz*Cos_theta*Sin_phi -
-        Sin_theta), scz*(-(shy*Cos_psi*Sin_phi) +
-        Sin_psi*(Cos_theta + shy*shz*Sin_phi*Sin_theta) +
-        shy*Cos_phi*(shz*Cos_psi + Sin_psi*Sin_theta)),
-      scz*(shy*(-(shz*Cos_phi) + Sin_phi)*Sin_psi +
-        Cos_psi*(Cos_theta + shy*(Cos_phi + shz*Sin_phi)*Sin_theta)),
-      PivotZ + tz - PivotX*scz*shy*shz*Cos_theta*Sin_phi -
-       PivotY*scz*Cos_theta*Sin_psi - PivotZ*scz*shy*Sin_phi*Sin_psi +
-       PivotX*scz*Sin_theta - PivotY*scz*shy*shz*Sin_phi*Sin_psi*
-        Sin_theta - scz*shy*Cos_phi*(PivotX*Cos_theta -
-         PivotZ*shz*Sin_psi + PivotY*Sin_psi*Sin_theta +
-         Cos_psi*(PivotY*shz + PivotZ*Sin_theta)) -
-       scz*Cos_psi*(PivotZ*Cos_theta + shy*Sin_phi*
-          (-PivotY + PivotZ*shz*Sin_theta))}, {0, 0, 0, 1}};
+{{scx*(Cos_theta*Sin_phi*(shz*Cos_psi - Sin_psi) +
+        Cos_phi*(Cos_psi + shz*Sin_psi)),
+      scx*(Cos_phi*Cos_theta*(shz*Cos_psi - Sin_psi) -
+        Sin_phi*(Cos_psi + shz*Sin_psi)), scx*(-(shz*Cos_psi) + Sin_psi)*
+       Sin_theta, PivotX + tx + PivotY*scx*shz*Sin_phi*Sin_psi +
+       PivotX*scx*Cos_theta*Sin_phi*Sin_psi - scx*Cos_phi*
+        (Cos_psi*(PivotX + PivotY*shz*Cos_theta) +
+         (PivotX*shz - PivotY*Cos_theta)*Sin_psi) -
+       PivotZ*scx*Sin_psi*Sin_theta + scx*Cos_psi*
+        ((PivotY - PivotX*shz*Cos_theta)*Sin_phi + PivotZ*shz*Sin_theta)},
+     {scy*((1 + shx*shy*shz)*(Cos_psi*Cos_theta*Sin_phi +
+          Cos_phi*Sin_psi) + shx*shy*(Cos_phi*Cos_psi -
+          Cos_theta*Sin_phi*Sin_psi) + shx*Sin_phi*Sin_theta),
+      scy*(-(shx*shy*(Cos_psi*Sin_phi + Cos_phi*Cos_theta*Sin_psi)) +
+        (1 + shx*shy*shz)*(Cos_phi*Cos_psi*Cos_theta -
+          Sin_phi*Sin_psi) + shx*Cos_phi*Sin_theta),
+      scy*(shx*Cos_theta - (1 + shx*shy*shz)*Cos_psi*Sin_theta +
+        shx*shy*Sin_psi*Sin_theta), PivotY + ty -
+       PivotY*scy*(-(shx*shy*(Cos_psi*Sin_phi + Cos_phi*Cos_theta*
+             Sin_psi)) + (1 + shx*shy*shz)*(Cos_phi*Cos_psi*Cos_theta -
+           Sin_phi*Sin_psi) + shx*Cos_phi*Sin_theta) -
+       PivotX*scy*((1 + shx*shy*shz)*(Cos_psi*Cos_theta*Sin_phi +
+           Cos_phi*Sin_psi) + shx*shy*(Cos_phi*Cos_psi -
+           Cos_theta*Sin_phi*Sin_psi) + shx*Sin_phi*Sin_theta) -
+       PivotZ*scy*(shx*Cos_theta - (1 + shx*shy*shz)*Cos_psi*Sin_theta +
+         shx*shy*Sin_psi*Sin_theta)},
+     {scz*(shy*Cos_phi*(Cos_psi + shz*Sin_psi) +
+        Sin_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+          Sin_theta)), scz*(-(shy*Sin_phi*(Cos_psi + shz*Sin_psi)) +
+        Cos_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+          Sin_theta)), scz*(Cos_theta + shy*(-(shz*Cos_psi) + Sin_psi)*
+         Sin_theta), PivotZ + tz - PivotZ*scz*(Cos_theta +
+         shy*(-(shz*Cos_psi) + Sin_psi)*Sin_theta) +
+       PivotY*scz*(shy*Sin_phi*(Cos_psi + shz*Sin_psi) -
+         Cos_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+           Sin_theta)) - PivotX*scz*(shy*Cos_phi*(Cos_psi +
+           shz*Sin_psi) + Sin_phi*(shy*shz*Cos_psi*Cos_theta -
+           shy*Cos_theta*Sin_psi + Sin_theta))}, {0, 0, 0, 1}};
 
   int i,j;
   for (i = 0; i < 4; i++) {
@@ -675,17 +687,18 @@ void nmb_Transform_TScShR::getMatrixDerivative(double *m,
     case NMB_SCALE_X:
       {
       double temp[4][4] =
-             {{Cos_theta*(Cos_phi + shz*Sin_phi),
-      Cos_phi*(shz*Cos_psi + Sin_psi*Sin_theta) +
-       Sin_phi*(-Cos_psi + shz*Sin_psi*Sin_theta),
-      Cos_phi*(-(shz*Sin_psi) + Cos_psi*Sin_theta) +
-       Sin_phi*(Sin_psi + shz*Cos_psi*Sin_theta),
-      -(Cos_phi*(PivotX*Cos_theta + Sin_psi*(-(PivotZ*shz) +
-            PivotY*Sin_theta) + Cos_psi*(PivotY*shz +
-            PivotZ*Sin_theta))) - Sin_phi*(PivotX*shz*Cos_theta +
-         Sin_psi*(PivotZ + PivotY*shz*Sin_theta) +
-         Cos_psi*(-PivotY + PivotZ*shz*Sin_theta))}, {0, 0, 0, 0},
-     {0, 0, 0, 0}, {0, 0, 0, 0}};
+
+{{Cos_theta*Sin_phi*(shz*Cos_psi - Sin_psi) +
+       Cos_phi*(Cos_psi + shz*Sin_psi),
+      Cos_phi*Cos_theta*(shz*Cos_psi - Sin_psi) -
+       Sin_phi*(Cos_psi + shz*Sin_psi), (-(shz*Cos_psi) + Sin_psi)*
+       Sin_theta, -(Cos_phi*(Cos_psi*(PivotX + PivotY*shz*Cos_theta) +
+          (PivotX*shz - PivotY*Cos_theta)*Sin_psi)) +
+       Sin_psi*((PivotY*shz + PivotX*Cos_theta)*Sin_phi -
+         PivotZ*Sin_theta) + Cos_psi*((PivotY - PivotX*shz*Cos_theta)*
+          Sin_phi + PivotZ*shz*Sin_theta)}, {0, 0, 0, 0}, {0, 0, 0, 0},
+     {0, 0, 0, 0}};
+
       for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
           m[4*j + i] = temp[i][j];
@@ -696,24 +709,22 @@ void nmb_Transform_TScShR::getMatrixDerivative(double *m,
     case NMB_SCALE_Y:
       {
       double temp[4][4] =
-             {{0, 0, 0, 0}, {shx*shy*Cos_phi*Cos_theta +
-       (1 + shx*shy*shz)*Cos_theta*Sin_phi - shx*Sin_theta,
-      shx*Cos_theta*Sin_psi + shx*shy*(-(Cos_psi*Sin_phi) +
-         Cos_phi*Sin_psi*Sin_theta) + (1 + shx*shy*shz)*
-        (Cos_phi*Cos_psi + Sin_phi*Sin_psi*Sin_theta),
-      shx*Cos_psi*Cos_theta + shx*shy*(Sin_phi*Sin_psi +
-         Cos_phi*Cos_psi*Sin_theta) + (1 + shx*shy*shz)*
-        (-(Cos_phi*Sin_psi) + Cos_psi*Sin_phi*Sin_theta),
-      -(PivotX*Cos_theta*Sin_phi) - PivotX*shx*shy*shz*Cos_theta*
-        Sin_phi - PivotY*shx*Cos_theta*Sin_psi - PivotZ*shx*shy*Sin_phi*
-        Sin_psi + PivotX*shx*Sin_theta - PivotY*Sin_phi*Sin_psi*
-        Sin_theta - PivotY*shx*shy*shz*Sin_phi*Sin_psi*Sin_theta -
-       Cos_phi*(PivotX*shx*shy*Cos_theta - Sin_psi*
-          (PivotZ + PivotZ*shx*shy*shz - PivotY*shx*shy*Sin_theta) +
-         Cos_psi*(PivotY + PivotY*shx*shy*shz + PivotZ*shx*shy*
-            Sin_theta)) - Cos_psi*(PivotZ*shx*Cos_theta +
-         Sin_phi*(-(PivotY*shx*shy) + PivotZ*(1 + shx*shy*shz)*
-            Sin_theta))}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+{{0, 0, 0, 0}, {(1 + shx*shy*shz)*(Cos_psi*Cos_theta*Sin_phi +
+         Cos_phi*Sin_psi) + shx*shy*(Cos_phi*Cos_psi -
+         Cos_theta*Sin_phi*Sin_psi) + shx*Sin_phi*Sin_theta,
+      -(shx*shy*(Cos_psi*Sin_phi + Cos_phi*Cos_theta*Sin_psi)) +
+       (1 + shx*shy*shz)*(Cos_phi*Cos_psi*Cos_theta - Sin_phi*Sin_psi) +
+       shx*Cos_phi*Sin_theta, shx*Cos_theta - (1 + shx*shy*shz)*Cos_psi*
+        Sin_theta + shx*shy*Sin_psi*Sin_theta,
+      -(PivotY*(-(shx*shy*(Cos_psi*Sin_phi + Cos_phi*Cos_theta*
+              Sin_psi)) + (1 + shx*shy*shz)*(Cos_phi*Cos_psi*Cos_theta -
+            Sin_phi*Sin_psi) + shx*Cos_phi*Sin_theta)) -
+       PivotX*((1 + shx*shy*shz)*(Cos_psi*Cos_theta*Sin_phi +
+           Cos_phi*Sin_psi) + shx*shy*(Cos_phi*Cos_psi -
+           Cos_theta*Sin_phi*Sin_psi) + shx*Sin_phi*Sin_theta) -
+       PivotZ*(shx*Cos_theta - (1 + shx*shy*shz)*Cos_psi*Sin_theta +
+         shx*shy*Sin_psi*Sin_theta)}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+
       for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
           m[4*j + i] = temp[i][j];
@@ -724,19 +735,19 @@ void nmb_Transform_TScShR::getMatrixDerivative(double *m,
     case NMB_SCALE_Z:
       {
       double temp[4][4] =
-             {{0, 0, 0, 0}, {0, 0, 0, 0}, {shy*Cos_phi*Cos_theta +
-       shy*shz*Cos_theta*Sin_phi - Sin_theta, -(shy*Cos_psi*Sin_phi) +
-       Sin_psi*(Cos_theta + shy*shz*Sin_phi*Sin_theta) +
-       shy*Cos_phi*(shz*Cos_psi + Sin_psi*Sin_theta),
-      shy*(-(shz*Cos_phi) + Sin_phi)*Sin_psi +
-       Cos_psi*(Cos_theta + shy*(Cos_phi + shz*Sin_phi)*Sin_theta),
-      -(PivotX*shy*shz*Cos_theta*Sin_phi) - PivotY*Cos_theta*Sin_psi -
-       PivotZ*shy*Sin_phi*Sin_psi + PivotX*Sin_theta -
-       PivotY*shy*shz*Sin_phi*Sin_psi*Sin_theta -
-       shy*Cos_phi*(PivotX*Cos_theta - PivotZ*shz*Sin_psi +
-         PivotY*Sin_psi*Sin_theta + Cos_psi*(PivotY*shz +
-           PivotZ*Sin_theta)) - Cos_psi*(PivotZ*Cos_theta +
-         shy*Sin_phi*(-PivotY + PivotZ*shz*Sin_theta))}, {0, 0, 0, 0}};
+{{0, 0, 0, 0}, {0, 0, 0, 0},
+     {shy*Cos_phi*(Cos_psi + shz*Sin_psi) +
+       Sin_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+         Sin_theta), -(shy*Sin_phi*(Cos_psi + shz*Sin_psi)) +
+       Cos_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+         Sin_theta), Cos_theta + shy*(-(shz*Cos_psi) + Sin_psi)*
+        Sin_theta, -(PivotZ*(Cos_theta + shy*(-(shz*Cos_psi) + Sin_psi)*
+           Sin_theta)) + PivotY*(shy*Sin_phi*(Cos_psi + shz*Sin_psi) -
+         Cos_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+           Sin_theta)) - PivotX*(shy*Cos_phi*(Cos_psi + shz*Sin_psi) +
+         Sin_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+           Sin_theta))}, {0, 0, 0, 0}};
+
       for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
           m[4*j + i] = temp[i][j];
@@ -747,20 +758,19 @@ void nmb_Transform_TScShR::getMatrixDerivative(double *m,
     case NMB_SHEAR_X:
       {
       double temp[4][4] =
-             {{0, 0, 0, 0}, {scy*(shy*Cos_phi*Cos_theta +
-        shy*shz*Cos_theta*Sin_phi - Sin_theta),
-      scy*(-(shy*Cos_psi*Sin_phi) + Sin_psi*(Cos_theta +
-          shy*shz*Sin_phi*Sin_theta) + shy*Cos_phi*(shz*Cos_psi +
-          Sin_psi*Sin_theta)), scy*(shy*(-(shz*Cos_phi) + Sin_phi)*
-         Sin_psi + Cos_psi*(Cos_theta + shy*(Cos_phi + shz*Sin_phi)*
-           Sin_theta)), -(scy*(PivotX*shy*shz*Cos_theta*Sin_phi +
-         PivotY*Cos_theta*Sin_psi + PivotZ*shy*Sin_phi*Sin_psi -
-         PivotX*Sin_theta + PivotY*shy*shz*Sin_phi*Sin_psi*Sin_theta +
-         shy*Cos_phi*(PivotX*Cos_theta - PivotZ*shz*Sin_psi +
-           PivotY*Sin_psi*Sin_theta + Cos_psi*(PivotY*shz +
-             PivotZ*Sin_theta)) + Cos_psi*(PivotZ*Cos_theta +
-           shy*Sin_phi*(-PivotY + PivotZ*shz*Sin_theta))))}, {0, 0, 0, 0},
-     {0, 0, 0, 0}};
+{{0, 0, 0, 0}, {scy*(shy*Cos_phi*(Cos_psi + shz*Sin_psi) +
+        Sin_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+          Sin_theta)), scy*(-(shy*Sin_phi*(Cos_psi + shz*Sin_psi)) +
+        Cos_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+          Sin_theta)), scy*(Cos_theta + shy*(-(shz*Cos_psi) + Sin_psi)*
+         Sin_theta),
+      scy*(-(PivotZ*(Cos_theta + shy*(-(shz*Cos_psi) + Sin_psi)*
+            Sin_theta)) + PivotY*(shy*Sin_phi*(Cos_psi + shz*Sin_psi) -
+          Cos_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+            Sin_theta)) - PivotX*(shy*Cos_phi*(Cos_psi + shz*Sin_psi) +
+          Sin_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+            Sin_theta)))}, {0, 0, 0, 0}, {0, 0, 0, 0}};
+
       for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
           m[4*j + i] = temp[i][j];
@@ -771,26 +781,28 @@ void nmb_Transform_TScShR::getMatrixDerivative(double *m,
     case NMB_SHEAR_Y:
       {
       double temp[4][4] = 
-             {{0, 0, 0, 0}, {scy*shx*Cos_theta*(Cos_phi + shz*Sin_phi),
-      scy*shx*(Cos_phi*(shz*Cos_psi + Sin_psi*Sin_theta) +
-        Sin_phi*(-Cos_psi + shz*Sin_psi*Sin_theta)),
-      scy*shx*(Cos_phi*(-(shz*Sin_psi) + Cos_psi*Sin_theta) +
-        Sin_phi*(Sin_psi + shz*Cos_psi*Sin_theta)),
-      -(scy*shx*(Cos_phi*(PivotX*Cos_theta + Sin_psi*(-(PivotZ*shz) +
-             PivotY*Sin_theta) + Cos_psi*(PivotY*shz +
-             PivotZ*Sin_theta)) + Sin_phi*(PivotX*shz*Cos_theta +
-           Sin_psi*(PivotZ + PivotY*shz*Sin_theta) +
-           Cos_psi*(-PivotY + PivotZ*shz*Sin_theta))))},
-     {scz*Cos_theta*(Cos_phi + shz*Sin_phi),
-      scz*(Cos_phi*(shz*Cos_psi + Sin_psi*Sin_theta) +
-        Sin_phi*(-Cos_psi + shz*Sin_psi*Sin_theta)),
-      scz*(Cos_phi*(-(shz*Sin_psi) + Cos_psi*Sin_theta) +
-        Sin_phi*(Sin_psi + shz*Cos_psi*Sin_theta)),
-      -(scz*(Cos_phi*(PivotX*Cos_theta + Sin_psi*(-(PivotZ*shz) +
-             PivotY*Sin_theta) + Cos_psi*(PivotY*shz +
-             PivotZ*Sin_theta)) + Sin_phi*(PivotX*shz*Cos_theta +
-           Sin_psi*(PivotZ + PivotY*shz*Sin_theta) +
-           Cos_psi*(-PivotY + PivotZ*shz*Sin_theta))))}, {0, 0, 0, 0}};
+{{0, 0, 0, 0},
+     {scy*shx*(Cos_theta*Sin_phi*(shz*Cos_psi - Sin_psi) +
+        Cos_phi*(Cos_psi + shz*Sin_psi)),
+      -(scy*shx*(-(Cos_phi*Cos_theta*(shz*Cos_psi - Sin_psi)) +
+         Sin_phi*(Cos_psi + shz*Sin_psi))),
+      -(scy*shx*(shz*Cos_psi - Sin_psi)*Sin_theta),
+      scy*shx*(-(Cos_phi*(Cos_psi*(PivotX + PivotY*shz*Cos_theta) +
+           (PivotX*shz - PivotY*Cos_theta)*Sin_psi)) +
+        Sin_psi*((PivotY*shz + PivotX*Cos_theta)*Sin_phi -
+          PivotZ*Sin_theta) + Cos_psi*((PivotY - PivotX*shz*Cos_theta)*
+           Sin_phi + PivotZ*shz*Sin_theta))},
+     {scz*(Cos_theta*Sin_phi*(shz*Cos_psi - Sin_psi) +
+        Cos_phi*(Cos_psi + shz*Sin_psi)),
+      scz*(Cos_phi*Cos_theta*(shz*Cos_psi - Sin_psi) -
+        Sin_phi*(Cos_psi + shz*Sin_psi)), scz*(-(shz*Cos_psi) + Sin_psi)*
+       Sin_theta,
+      scz*(-(Cos_phi*(Cos_psi*(PivotX + PivotY*shz*Cos_theta) +
+           (PivotX*shz - PivotY*Cos_theta)*Sin_psi)) +
+        Sin_psi*((PivotY*shz + PivotX*Cos_theta)*Sin_phi -
+          PivotZ*Sin_theta) + Cos_psi*((PivotY - PivotX*shz*Cos_theta)*
+           Sin_phi + PivotZ*shz*Sin_theta))}, {0, 0, 0, 0}};
+
       for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
           m[4*j + i] = temp[i][j];
@@ -801,22 +813,24 @@ void nmb_Transform_TScShR::getMatrixDerivative(double *m,
     case NMB_SHEAR_Z:
       {
       double temp[4][4] =
-           {{scx*Cos_theta*Sin_phi, scx*(Cos_phi*Cos_psi +
-        Sin_phi*Sin_psi*Sin_theta), scx*(-(Cos_phi*Sin_psi) +
-        Cos_psi*Sin_phi*Sin_theta),
-      -(scx*(Cos_phi*(PivotY*Cos_psi - PivotZ*Sin_psi) +
-         Sin_phi*(PivotX*Cos_theta + (PivotZ*Cos_psi + PivotY*Sin_psi)*
-            Sin_theta)))}, {scy*shx*shy*Cos_theta*Sin_phi,
-      scy*shx*shy*(Cos_phi*Cos_psi + Sin_phi*Sin_psi*Sin_theta),
-      scy*shx*shy*(-(Cos_phi*Sin_psi) + Cos_psi*Sin_phi*Sin_theta),
-      -(scy*shx*shy*(Cos_phi*(PivotY*Cos_psi - PivotZ*Sin_psi) +
-         Sin_phi*(PivotX*Cos_theta + (PivotZ*Cos_psi + PivotY*Sin_psi)*
-            Sin_theta)))}, {scz*shy*Cos_theta*Sin_phi,
-      scz*shy*(Cos_phi*Cos_psi + Sin_phi*Sin_psi*Sin_theta),
-      scz*shy*(-(Cos_phi*Sin_psi) + Cos_psi*Sin_phi*Sin_theta),
-      -(scz*shy*(Cos_phi*(PivotY*Cos_psi - PivotZ*Sin_psi) +
-         Sin_phi*(PivotX*Cos_theta + (PivotZ*Cos_psi + PivotY*Sin_psi)*
-            Sin_theta)))}, {0, 0, 0, 0}};
+{{scx*(Cos_psi*Cos_theta*Sin_phi + Cos_phi*Sin_psi),
+      scx*(Cos_phi*Cos_psi*Cos_theta - Sin_phi*Sin_psi),
+      -(scx*Cos_psi*Sin_theta), scx*(PivotY*Sin_phi*Sin_psi -
+        Cos_phi*(PivotY*Cos_psi*Cos_theta + PivotX*Sin_psi) +
+        Cos_psi*(-(PivotX*Cos_theta*Sin_phi) + PivotZ*Sin_theta))},
+     {scy*shx*shy*(Cos_psi*Cos_theta*Sin_phi + Cos_phi*Sin_psi),
+      scy*shx*shy*(Cos_phi*Cos_psi*Cos_theta - Sin_phi*Sin_psi),
+      -(scy*shx*shy*Cos_psi*Sin_theta), scy*shx*shy*
+       (PivotY*Sin_phi*Sin_psi - Cos_phi*(PivotY*Cos_psi*Cos_theta +
+          PivotX*Sin_psi) + Cos_psi*(-(PivotX*Cos_theta*Sin_phi) +
+          PivotZ*Sin_theta))}, {scz*shy*(Cos_psi*Cos_theta*Sin_phi +
+        Cos_phi*Sin_psi), scz*shy*(Cos_phi*Cos_psi*Cos_theta -
+        Sin_phi*Sin_psi), -(scz*shy*Cos_psi*Sin_theta),
+      scz*shy*(PivotY*Sin_phi*Sin_psi - Cos_phi*
+         (PivotY*Cos_psi*Cos_theta + PivotX*Sin_psi) +
+        Cos_psi*(-(PivotX*Cos_theta*Sin_phi) + PivotZ*Sin_theta))},
+     {0, 0, 0, 0}};
+
       for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
           m[4*j + i] = temp[i][j];
@@ -824,40 +838,42 @@ void nmb_Transform_TScShR::getMatrixDerivative(double *m,
       }
       }
       break;
-    case NMB_ROTATE_X:
+    case NMB_ROTATE_3D_Z: // (dM/dpsi)
       {
       double temp[4][4] =
-       {{0, scx*(Cos_phi*(-(shz*Sin_psi) + Cos_psi*Sin_theta) +
-        Sin_phi*(Sin_psi + shz*Cos_psi*Sin_theta)),
-      -(scx*(Cos_phi*(shz*Cos_psi + Sin_psi*Sin_theta) +
-         Sin_phi*(-Cos_psi + shz*Sin_psi*Sin_theta))),
-      scx*(Cos_phi*(Cos_psi*(PivotZ*shz - PivotY*Sin_theta) +
-          Sin_psi*(PivotY*shz + PivotZ*Sin_theta)) -
-        Sin_phi*(Cos_psi*(PivotZ + PivotY*shz*Sin_theta) +
-          Sin_psi*(PivotY - PivotZ*shz*Sin_theta)))},
-     {0, scy*(shx*Cos_psi*Cos_theta + shx*shy*(Sin_phi*Sin_psi +
-          Cos_phi*Cos_psi*Sin_theta) + (1 + shx*shy*shz)*
-         (-(Cos_phi*Sin_psi) + Cos_psi*Sin_phi*Sin_theta)),
-      scy*(-(shx*Cos_theta*Sin_psi) + shx*shy*(Cos_psi*Sin_phi -
-          Cos_phi*Sin_psi*Sin_theta) - (1 + shx*shy*shz)*
-         (Cos_phi*Cos_psi + Sin_phi*Sin_psi*Sin_theta)),
-      scy*(Cos_phi*(Cos_psi*(PivotZ + PivotZ*shx*shy*shz -
-            PivotY*shx*shy*Sin_theta) + Sin_psi*(PivotY +
-            PivotY*shx*shy*shz + PivotZ*shx*shy*Sin_theta)) -
-        Cos_psi*(PivotY*shx*Cos_theta + Sin_phi*(PivotZ*shx*shy +
-            PivotY*(1 + shx*shy*shz)*Sin_theta)) +
-        Sin_psi*(PivotZ*shx*Cos_theta + Sin_phi*(-(PivotY*shx*shy) +
-            PivotZ*(1 + shx*shy*shz)*Sin_theta)))},
-     {0, scz*(shy*(-(shz*Cos_phi) + Sin_phi)*Sin_psi +
-        Cos_psi*(Cos_theta + shy*(Cos_phi + shz*Sin_phi)*Sin_theta)),
-      -(scz*(-(shy*Cos_psi*Sin_phi) + Sin_psi*(Cos_theta +
-           shy*shz*Sin_phi*Sin_theta) + shy*Cos_phi*(shz*Cos_psi +
-           Sin_psi*Sin_theta))),
-      scz*(shy*Cos_phi*(Cos_psi*(PivotZ*shz - PivotY*Sin_theta) +
-          Sin_psi*(PivotY*shz + PivotZ*Sin_theta)) -
-        Cos_psi*(PivotY*Cos_theta + shy*Sin_phi*(PivotZ +
-            PivotY*shz*Sin_theta)) + Sin_psi*(PivotZ*Cos_theta +
-          shy*Sin_phi*(-PivotY + PivotZ*shz*Sin_theta)))}, {0, 0, 0, 0}};
+{{scx*(Cos_phi*(shz*Cos_psi - Sin_psi) - Cos_theta*Sin_phi*
+         (Cos_psi + shz*Sin_psi)),
+      -(scx*(Sin_phi*(shz*Cos_psi - Sin_psi) + Cos_phi*Cos_theta*
+          (Cos_psi + shz*Sin_psi))), scx*(Cos_psi + shz*Sin_psi)*
+       Sin_theta, scx*(Cos_phi*(Cos_psi*(-(PivotX*shz) +
+            PivotY*Cos_theta) + (PivotX + PivotY*shz*Cos_theta)*Sin_psi) +
+        Cos_psi*((PivotY*shz + PivotX*Cos_theta)*Sin_phi -
+          PivotZ*Sin_theta) - Sin_psi*((PivotY - PivotX*shz*Cos_theta)*
+           Sin_phi + PivotZ*shz*Sin_theta))},
+     {scy*(Cos_phi*(Cos_psi + shx*shy*shz*Cos_psi - shx*shy*Sin_psi) -
+        Cos_theta*Sin_phi*(shx*shy*Cos_psi + Sin_psi +
+          shx*shy*shz*Sin_psi)),
+      scy*(-((1 + shx*shy*shz)*(Cos_psi*Sin_phi + Cos_phi*Cos_theta*
+            Sin_psi)) + shx*shy*(-(Cos_phi*Cos_psi*Cos_theta) +
+          Sin_phi*Sin_psi)), scy*(shx*shy*Cos_psi + Sin_psi +
+        shx*shy*shz*Sin_psi)*Sin_theta,
+      scy*(Cos_phi*(-(Cos_psi*(PivotX + PivotX*shx*shy*shz -
+             PivotY*shx*shy*Cos_theta)) + (PivotX*shx*shy +
+            PivotY*(1 + shx*shy*shz)*Cos_theta)*Sin_psi) +
+        Cos_psi*((PivotY + PivotY*shx*shy*shz + PivotX*shx*shy*Cos_theta)*
+           Sin_phi - PivotZ*shx*shy*Sin_theta) -
+        Sin_psi*((PivotY*shx*shy - PivotX*(1 + shx*shy*shz)*Cos_theta)*
+           Sin_phi + PivotZ*(1 + shx*shy*shz)*Sin_theta))},
+     {scz*shy*(Cos_phi*(shz*Cos_psi - Sin_psi) - Cos_theta*Sin_phi*
+         (Cos_psi + shz*Sin_psi)),
+      -(scz*shy*(Sin_phi*(shz*Cos_psi - Sin_psi) + Cos_phi*Cos_theta*
+          (Cos_psi + shz*Sin_psi))), scz*shy*(Cos_psi + shz*Sin_psi)*
+       Sin_theta, scz*shy*(Cos_phi*(Cos_psi*(-(PivotX*shz) +
+            PivotY*Cos_theta) + (PivotX + PivotY*shz*Cos_theta)*Sin_psi) +
+        Cos_psi*((PivotY*shz + PivotX*Cos_theta)*Sin_phi -
+          PivotZ*Sin_theta) - Sin_psi*((PivotY - PivotX*shz*Cos_theta)*
+           Sin_phi + PivotZ*shz*Sin_theta))}, {0, 0, 0, 0}};
+
       for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
           m[4*j + i] = temp[i][j];
@@ -865,33 +881,35 @@ void nmb_Transform_TScShR::getMatrixDerivative(double *m,
       }
       }
       break;
-    case NMB_ROTATE_Y:
+    case NMB_ROTATE_3D_X: // (dM/dtheta)
       {
       double temp[4][4] = 
-      {{-(scx*(Cos_phi + shz*Sin_phi)*Sin_theta),
-      scx*Cos_theta*(Cos_phi + shz*Sin_phi)*Sin_psi,
-      scx*Cos_psi*Cos_theta*(Cos_phi + shz*Sin_phi),
-      -(scx*(Cos_phi + shz*Sin_phi)*(PivotZ*Cos_psi*Cos_theta +
-         PivotY*Cos_theta*Sin_psi - PivotX*Sin_theta))},
-     {-(scy*(shx*Cos_theta + (shx*shy*Cos_phi + Sin_phi +
-           shx*shy*shz*Sin_phi)*Sin_theta)), scy*Sin_psi*
-       (shx*shy*Cos_phi*Cos_theta + (1 + shx*shy*shz)*Cos_theta*Sin_phi -
-        shx*Sin_theta), scy*Cos_psi*(shx*shy*Cos_phi*Cos_theta +
-        (1 + shx*shy*shz)*Cos_theta*Sin_phi - shx*Sin_theta),
-      scy*(Cos_theta*(PivotX*shx - PivotZ*(1 + shx*shy*shz)*Cos_psi*
-           Sin_phi - PivotY*Sin_phi*Sin_psi - PivotY*shx*shy*shz*Sin_phi*
-           Sin_psi - shx*shy*Cos_phi*(PivotZ*Cos_psi + PivotY*Sin_psi)) +
-        (PivotX*shx*shy*Cos_phi + PivotZ*shx*Cos_psi + PivotX*Sin_phi +
-          PivotX*shx*shy*shz*Sin_phi + PivotY*shx*Sin_psi)*Sin_theta)},
-     {-(scz*(Cos_theta + shy*(Cos_phi + shz*Sin_phi)*Sin_theta)),
-      scz*Sin_psi*(shy*Cos_phi*Cos_theta + shy*shz*Cos_theta*Sin_phi -
-        Sin_theta), scz*Cos_psi*(shy*Cos_phi*Cos_theta +
-        shy*shz*Cos_theta*Sin_phi - Sin_theta),
-      scz*(Cos_theta*(PivotX - PivotZ*shy*shz*Cos_psi*Sin_phi -
-          PivotY*shy*shz*Sin_phi*Sin_psi - shy*Cos_phi*(PivotZ*Cos_psi +
-            PivotY*Sin_psi)) + (PivotX*shy*Cos_phi + PivotZ*Cos_psi +
-          PivotX*shy*shz*Sin_phi + PivotY*Sin_psi)*Sin_theta)},
-     {0, 0, 0, 0}};
+{{-(scx*Sin_phi*(shz*Cos_psi - Sin_psi)*Sin_theta),
+      -(scx*Cos_phi*(shz*Cos_psi - Sin_psi)*Sin_theta),
+      scx*Cos_theta*(-(shz*Cos_psi) + Sin_psi),
+      scx*(shz*Cos_psi - Sin_psi)*(PivotZ*Cos_theta +
+        (PivotY*Cos_phi + PivotX*Sin_phi)*Sin_theta)},
+     {scy*Sin_phi*(shx*Cos_theta - (1 + shx*shy*shz)*Cos_psi*Sin_theta +
+        shx*shy*Sin_psi*Sin_theta), scy*Cos_phi*(shx*Cos_theta -
+        (1 + shx*shy*shz)*Cos_psi*Sin_theta + shx*shy*Sin_psi*Sin_theta),
+      scy*(-((1 + shx*shy*shz)*Cos_psi*Cos_theta) + shx*shy*Cos_theta*
+         Sin_psi - shx*Sin_theta),
+      scy*((1 + shx*shy*shz)*Cos_psi*(PivotZ*Cos_theta +
+          PivotX*Sin_phi*Sin_theta) - shx*(PivotX*Cos_theta*Sin_phi +
+          PivotZ*shy*Cos_theta*Sin_psi - PivotZ*Sin_theta +
+          PivotX*shy*Sin_phi*Sin_psi*Sin_theta) + PivotY*Cos_phi*
+         (-(shx*Cos_theta) + (Cos_psi + shx*shy*shz*Cos_psi -
+            shx*shy*Sin_psi)*Sin_theta))},
+     {scz*Sin_phi*(Cos_theta + shy*(-(shz*Cos_psi) + Sin_psi)*
+         Sin_theta), scz*Cos_phi*(Cos_theta +
+        shy*(-(shz*Cos_psi) + Sin_psi)*Sin_theta),
+      scz*(shy*Cos_theta*(-(shz*Cos_psi) + Sin_psi) - Sin_theta),
+      scz*(PivotZ*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+          Sin_theta) - PivotY*Cos_phi*(Cos_theta +
+          shy*(-(shz*Cos_psi) + Sin_psi)*Sin_theta) -
+        PivotX*Sin_phi*(Cos_theta + shy*(-(shz*Cos_psi) + Sin_psi)*
+           Sin_theta))}, {0, 0, 0, 0}};
+
       for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
           m[4*j + i] = temp[i][j];
@@ -899,42 +917,40 @@ void nmb_Transform_TScShR::getMatrixDerivative(double *m,
       }
       }
       break;
-    case NMB_ROTATE_Z:
+    case NMB_ROTATE_2D_Z: // (dM/dphi)
       {
       double temp[4][4] =
-       {{scx*Cos_theta*(shz*Cos_phi - Sin_phi),
-      -(scx*(Sin_phi*(shz*Cos_psi + Sin_psi*Sin_theta) +
-         Cos_phi*(Cos_psi - shz*Sin_psi*Sin_theta))),
-      scx*(Sin_phi*(shz*Sin_psi - Cos_psi*Sin_theta) +
-        Cos_phi*(Sin_psi + shz*Cos_psi*Sin_theta)),
-      scx*(Sin_phi*(PivotX*Cos_theta + Sin_psi*(-(PivotZ*shz) +
-            PivotY*Sin_theta) + Cos_psi*(PivotY*shz + PivotZ*Sin_theta)) -
-        Cos_phi*(PivotX*shz*Cos_theta + Sin_psi*(PivotZ +
-            PivotY*shz*Sin_theta) + Cos_psi*(-PivotY +
-            PivotZ*shz*Sin_theta)))},
-     {scy*Cos_theta*(Cos_phi + shx*shy*shz*Cos_phi - shx*shy*Sin_phi),
-      scy*(1 + shx*shy*shz)*(-(Cos_psi*Sin_phi) + Cos_phi*Sin_psi*
-          Sin_theta) - scy*shx*shy*(Cos_phi*Cos_psi +
-         Sin_phi*Sin_psi*Sin_theta),
-      scy*(1 + shx*shy*shz)*(Sin_phi*Sin_psi + Cos_phi*Cos_psi*
-          Sin_theta) + scy*shx*shy*(Cos_phi*Sin_psi -
-         Cos_psi*Sin_phi*Sin_theta),
-      scy*(Sin_phi*(PivotX*shx*shy*Cos_theta - Sin_psi*
-           (PivotZ + PivotZ*shx*shy*shz - PivotY*shx*shy*Sin_theta) +
-          Cos_psi*(PivotY + PivotY*shx*shy*shz + PivotZ*shx*shy*
-             Sin_theta)) - Cos_phi*(PivotX*(1 + shx*shy*shz)*Cos_theta +
-          Sin_psi*(PivotZ*shx*shy + PivotY*(1 + shx*shy*shz)*Sin_theta) +
-          Cos_psi*(-(PivotY*shx*shy) + PivotZ*(1 + shx*shy*shz)*
-             Sin_theta)))}, {scz*shy*Cos_theta*(shz*Cos_phi - Sin_phi),
-      -(scz*shy*(Sin_phi*(shz*Cos_psi + Sin_psi*Sin_theta) +
-         Cos_phi*(Cos_psi - shz*Sin_psi*Sin_theta))),
-      scz*shy*(Sin_phi*(shz*Sin_psi - Cos_psi*Sin_theta) +
-        Cos_phi*(Sin_psi + shz*Cos_psi*Sin_theta)),
-      scz*shy*(Sin_phi*(PivotX*Cos_theta + Sin_psi*(-(PivotZ*shz) +
-            PivotY*Sin_theta) + Cos_psi*(PivotY*shz + PivotZ*Sin_theta)) -
-        Cos_phi*(PivotX*shz*Cos_theta + Sin_psi*(PivotZ +
-            PivotY*shz*Sin_theta) + Cos_psi*(-PivotY +
-            PivotZ*shz*Sin_theta)))}, {0, 0, 0, 0}};
+{{scx*(Cos_phi*Cos_theta*(shz*Cos_psi - Sin_psi) -
+        Sin_phi*(Cos_psi + shz*Sin_psi)),
+      scx*(Cos_theta*Sin_phi*(-(shz*Cos_psi) + Sin_psi) -
+        Cos_phi*(Cos_psi + shz*Sin_psi)), 0,
+      scx*(Cos_phi*(Cos_psi*(PivotY - PivotX*shz*Cos_theta) +
+          (PivotY*shz + PivotX*Cos_theta)*Sin_psi) +
+        Sin_phi*(Cos_psi*(PivotX + PivotY*shz*Cos_theta) +
+          (PivotX*shz - PivotY*Cos_theta)*Sin_psi))},
+     {scy*(-(shx*shy*(Cos_psi*Sin_phi + Cos_phi*Cos_theta*Sin_psi)) +
+        (1 + shx*shy*shz)*(Cos_phi*Cos_psi*Cos_theta -
+          Sin_phi*Sin_psi) + shx*Cos_phi*Sin_theta),
+      scy*(-((1 + shx*shy*shz)*(Cos_psi*Cos_theta*Sin_phi +
+           Cos_phi*Sin_psi)) + shx*shy*(-(Cos_phi*Cos_psi) +
+          Cos_theta*Sin_phi*Sin_psi) - shx*Sin_phi*Sin_theta), 0,
+      scy*Cos_phi*(Cos_psi*(PivotY*shx*shy - PivotX*(1 + shx*shy*shz)*
+            Cos_theta) + (PivotY + PivotY*shx*shy*shz + PivotX*shx*shy*
+            Cos_theta)*Sin_psi - PivotX*shx*Sin_theta) +
+       scy*Sin_phi*(Cos_psi*(PivotX*shx*shy + PivotY*(1 + shx*shy*shz)*
+            Cos_theta) + (PivotX + PivotX*shx*shy*shz - PivotY*shx*shy*
+            Cos_theta)*Sin_psi + PivotY*shx*Sin_theta)},
+     {scz*(-(shy*Sin_phi*(Cos_psi + shz*Sin_psi)) +
+        Cos_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+          Sin_theta)), scz*(-(shy*Cos_phi*(Cos_psi + shz*Sin_psi)) -
+        Sin_phi*(shy*shz*Cos_psi*Cos_theta - shy*Cos_theta*Sin_psi +
+          Sin_theta)), 0,
+      scz*Cos_phi*(shy*Cos_psi*(PivotY - PivotX*shz*Cos_theta) +
+         shy*(PivotY*shz + PivotX*Cos_theta)*Sin_psi - PivotX*Sin_theta) +
+       scz*Sin_phi*(shy*Cos_psi*(PivotX + PivotY*shz*Cos_theta) +
+         shy*(PivotX*shz - PivotY*Cos_theta)*Sin_psi + PivotY*Sin_theta)},
+     {0, 0, 0, 0}};
+
       for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
           m[4*j + i] = temp[i][j];

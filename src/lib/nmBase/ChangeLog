@@ -1,3 +1,14 @@
+2002-07-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_TransformMatrix44.C (getTScShR_2DParameters): changed name for
+	rotation angle - thought the sign of the angle should change but
+	when I tried that it was backwards so the math is the same (!)
+	* nmb_Transform_TScShR.C : changed parametrization of rotation part
+	so lots of formulas and variable names related to rotation have
+	been changed including most formulas for calculating derivatives
+	The rotation part now matches one of the more common Euler
+	angle conventions
+
 2002-07-01  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_Decoration.h (totalStreamTime): Stores length of stream file.
