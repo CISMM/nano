@@ -623,14 +623,23 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM){
   // any area not filled by the PPM file.
   for (x = 0; x < texture_size; x++) {
     for (y = 0; y < texture_size; y++) {
-        texture[ texel( y, x, 0) ] = 0;
-        texture[ texel( y, x, 1) ] = 0;
-        texture[ texel( y, x, 2) ] = 0;
-        if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_MODULATE ||
-            g_tex_blend_func[RULERGRID_TEX_ID] == GL_BLEND) {
+        if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_MODULATE) {
+          texture[ texel( y, x, 0) ] = 255;
+          texture[ texel( y, x, 1) ] = 255;
+          texture[ texel( y, x, 2) ] = 255;
           texture[ texel( y, x, 3) ] = 255;
-        } else {
+        } else if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_BLEND) {
+          texture[ texel( y, x, 0) ] = 0;
+          texture[ texel( y, x, 1) ] = 0;
+          texture[ texel( y, x, 2) ] = 0;
+          texture[ texel( y, x, 3) ] = 255;
+        } else if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_DECAL){
           texture[ texel( y, x, 3) ] = 0;
+        } else {
+          texture[ texel( y, x, 0) ] = 255;
+          texture[ texel( y, x, 1) ] = 255;
+          texture[ texel( y, x, 2) ] = 255;
+          texture[ texel( y, x, 3) ] = 255;
         }
     }
   }
@@ -644,16 +653,23 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM){
 //printf("XXX Filling %3d,%3d (%ld)\n", x, (myPPM->ny-1)-y,
 //              (long)texel((myPPM->ny-1)-y,x,0));
         myPPM->Tellppm(x,y, &r, &g, &b);
-        if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_MODULATE ||
-            g_tex_blend_func[RULERGRID_TEX_ID] == GL_BLEND) {
-          texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte) 255;
+        if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_BLEND) {
           texture[ texel( (myPPM->ny-1)-y, x, 0) ] = 
 		(GLubyte)((float)r*g_ruler_opacity/255.0);
           texture[ texel( (myPPM->ny-1)-y, x, 1) ] = 
 		(GLubyte)((float)g*g_ruler_opacity/255.0);
           texture[ texel( (myPPM->ny-1)-y, x, 2) ] = 
 		(GLubyte)((float)b*g_ruler_opacity/255.0);
-        } else {
+          texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte) 255;
+        } else if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_MODULATE) {
+          texture[ texel( (myPPM->ny-1)-y, x, 0) ] =
+                (GLubyte)((float)r*g_ruler_opacity/255.0);
+          texture[ texel( (myPPM->ny-1)-y, x, 1) ] =
+                (GLubyte)((float)g*g_ruler_opacity/255.0);
+          texture[ texel( (myPPM->ny-1)-y, x, 2) ] =
+                (GLubyte)((float)b*g_ruler_opacity/255.0);
+          texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte) 255;
+        } else { //if (g_tex_blend_func[RULERGRID_TEX_ID] == GL_DECAL){
           texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte)g_ruler_opacity;
           texture[ texel( (myPPM->ny-1)-y, x, 0) ] = r;
           texture[ texel( (myPPM->ny-1)-y, x, 1) ] = g;
@@ -1233,14 +1249,14 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   int border = 1;
   int nc = 4;// num channels
   for ( int j = border,j_im= border*stride_y; 
-        j < g_tex_installed_height[COLORMAP_TEX_ID]-1-border; 
+        j < g_tex_installed_height[COLORMAP_TEX_ID]-border; 
         j++,j_im+=stride_y ) {
     red_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 0 + border*nc;
     grn_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 1 + border*nc;
     blu_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 2 + border*nc;
     alph_index = j*g_tex_installed_width[COLORMAP_TEX_ID]*nc + 3 + border*nc;
     for (int k = border,k_im= border*stride_x;
-         k < g_tex_installed_width[COLORMAP_TEX_ID]-1-border; 
+         k < g_tex_installed_width[COLORMAP_TEX_ID]-border; 
          k++, k_im+=stride_x, 
          red_index+=nc, grn_index+=nc, blu_index+=nc, alph_index+=nc ) {
       // this condition actually chops off a pixel on each side of the 
@@ -1250,9 +1266,8 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
       // lose anything but that would introduce a translation which
       // we'd need to compensate for when using the registration result
       // and I don't feel like figuring that out at the moment
-      if ((j < g_tex_image_height[COLORMAP_TEX_ID]-1) && 
-          (k < g_tex_image_width[COLORMAP_TEX_ID]-1) && 
-	  (j > 0) && (k > 0)) {
+      if ((j < g_tex_image_height[COLORMAP_TEX_ID]) && 
+          (k < g_tex_image_width[COLORMAP_TEX_ID])) {
         // if we're inside the image region
 
          if (g_realign_textures_curColorMap) {
@@ -1288,6 +1303,12 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
              realign_data[blu_index] += 
 		(1.0- realign_data[blu_index])*
 		(255.0 - (float)g_ruler_opacity)/255.0;
+             realign_data[alph_index] = 1.0;
+         } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_BLEND) {
+             realign_data[red_index] *= (float)g_ruler_opacity/255.0;
+             realign_data[grn_index] *= (float)g_ruler_opacity/255.0;
+             realign_data[blu_index] *= (float)g_ruler_opacity/255.0;
+             realign_data[alph_index] = 1.0;
          } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_DECAL) {
              realign_data[alph_index]  = (float)g_ruler_opacity/255.0;
          }
@@ -1295,9 +1316,15 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
       }
       else { // handles parts of texture that extend beyond image
         if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_MODULATE) {
+            realign_data[red_index] = 1.0;
+            realign_data[grn_index] = 1.0;
+            realign_data[blu_index] = 1.0;
+            realign_data[alph_index] = 1.0;
+        } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_BLEND) {
 	    realign_data[red_index] = 0.0;
 	    realign_data[grn_index] = 0.0;
 	    realign_data[blu_index] = 0.0;
+            realign_data[alph_index] = 1.0;
         } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_DECAL) {
             realign_data[alph_index] = 0.0;
         }
@@ -1318,24 +1345,44 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-  
-#if defined(sgi) || defined(__CYGWIN__)
+ 
+  float bord_col[4] = {0.0, 0.0, 0.0, 1.0};
+  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
 
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, 
-                   g_tex_installed_width[COLORMAP_TEX_ID], 
+#if defined(sgi)
+  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
+                   g_tex_installed_width[COLORMAP_TEX_ID],
                    g_tex_installed_height[COLORMAP_TEX_ID],
-                   GL_RGBA, GL_FLOAT, realign_data) != 0) { 
+                   GL_RGBA, GL_FLOAT, realign_data) != 0) {
     printf(" Error making mipmaps, using texture instead.\n");
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
-                   g_tex_installed_width[COLORMAP_TEX_ID], 
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                   g_tex_installed_width[COLORMAP_TEX_ID],
                    g_tex_installed_height[COLORMAP_TEX_ID],
-		0, GL_RGBA, GL_FLOAT, realign_data);
+                0, GL_RGBA, GL_FLOAT, realign_data);
     if (glGetError()!=GL_NO_ERROR) {
       printf(" Error making realign texture.\n");
     }
 
   }
+#elseif defined(__CYGWIN__)
+
+/*
+  if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 
+                   g_tex_installed_width[COLORMAP_TEX_ID], 
+                   g_tex_installed_height[COLORMAP_TEX_ID],
+                   GL_RGBA, GL_FLOAT, realign_data) != 0) { 
+    printf(" Error making mipmaps, using texture instead.\n");
+*/
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
+                   g_tex_installed_width[COLORMAP_TEX_ID], 
+                   g_tex_installed_height[COLORMAP_TEX_ID],
+		   0, GL_RGBA, GL_FLOAT, realign_data);
+    if (glGetError()!=GL_NO_ERROR) {
+      printf(" Error making realign texture.\n");
+    }
+
+//  }
 
 #else
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
@@ -1722,10 +1769,16 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   }
   g_tex_blend_func[GENETIC_TEX_ID] = GL_MODULATE;
   g_tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
-  g_tex_env_color[SEM_DATA_TEX_ID][0] = 0.5;
+
+  g_tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
   g_tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
   g_tex_env_color[SEM_DATA_TEX_ID][2] = 1.0;
-  g_tex_env_color[SEM_DATA_TEX_ID][4] = 1.0;
+  g_tex_env_color[SEM_DATA_TEX_ID][3] = 1.0;
+
+  g_tex_env_color[COLORMAP_TEX_ID][0] = 1.0;
+  g_tex_env_color[COLORMAP_TEX_ID][1] = 1.0;
+  g_tex_env_color[COLORMAP_TEX_ID][2] = 1.0;
+  g_tex_env_color[COLORMAP_TEX_ID][3] = 1.0;
 
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
@@ -1837,20 +1890,53 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   int realign_tex_size = 4*g_tex_installed_width[COLORMAP_TEX_ID] *
                              g_tex_installed_height[COLORMAP_TEX_ID];
   realign_data = new float [realign_tex_size];
-  for (i = 0; i < realign_tex_size; i++){
-    realign_data[i] = 0.0;
-  }
   glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
-  
+  int ri,gi,bi,ai;
+  if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_BLEND) {
+    for (ri=0,gi=1,bi=2,ai=3; ai < realign_tex_size; ri+=4,gi+=4,bi+=4,ai+=4){
+      realign_data[ri] = 0.0;
+      realign_data[gi] = 0.0;
+      realign_data[bi] = 0.0;
+      realign_data[ai] = 1.0;
+    }
+    float bord_col[4] = {0.0, 0.0, 0.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
+  } else if (g_tex_blend_func[COLORMAP_TEX_ID] == GL_MODULATE) {
+    for (ri=0,gi=1,bi=2,ai=3; ai < realign_tex_size; ri+=4,gi+=4,bi+=4,ai+=4){
+      realign_data[ri] = 1.0;
+      realign_data[gi] = 1.0;
+      realign_data[bi] = 1.0;
+      realign_data[ai] = 1.0;
+    }
+    float bord_col[4] = {1.0, 1.0, 1.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
+  } else {
+    for (ri=0,gi=1,bi=2,ai=3; ai < realign_tex_size; ri+=4,gi+=4,bi+=4,ai+=4){
+      realign_data[ri] = 0.0;
+      realign_data[gi] = 0.0;
+      realign_data[bi] = 0.0;
+      realign_data[ai] = 0.0;
+    }
+    float bord_col[4] = {0.0, 0.0, 0.0, 0.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bord_col);
+  }
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+
+#ifdef __CYGWIN__
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
        g_tex_installed_width[COLORMAP_TEX_ID],
        g_tex_installed_height[COLORMAP_TEX_ID],
        0, GL_RGBA, GL_FLOAT, realign_data);
+#else
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+       g_tex_installed_width[COLORMAP_TEX_ID],
+       g_tex_installed_height[COLORMAP_TEX_ID],
+       0, GL_RGBA, GL_FLOAT, realign_data);
+#endif
 
   if (report_gl_errors()) {
      fprintf(stderr, "Error initializing realign texture\n");
   }
-
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );

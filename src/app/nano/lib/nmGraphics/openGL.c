@@ -785,6 +785,8 @@ int draw_world (int) {
       glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
                          g_tex_blend_func[COLORMAP_TEX_ID]);
+      glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR,
+                         g_tex_env_color[COLORMAP_TEX_ID]);
       break;
     case nmg_Graphics::SEM_DATA:
       glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);

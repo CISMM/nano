@@ -31,7 +31,7 @@ void setLightDirection (const q_vec_type &);
 void getLightDirection (q_vec_type *);
 void resetLightDirection (void);
 
-#define CYGWIN_TEXTURE_FUNCTION GL_BLEND 
+#define CYGWIN_TEXTURE_FUNCTION GL_BLEND
 // This seems to be a reasonable choice on a pc that doesn't handle alpha
 // correctly (on my pc, GL_DECAL becomes GL_REPLACE) (AAS), 
 // I changed some of the details of the way textures are generated so that
