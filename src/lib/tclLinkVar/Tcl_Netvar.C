@@ -64,11 +64,15 @@ Tcl_Netvar::Tcl_Netvar (void) :
   d_replica = new vrpn_SharedObject * [STARTING_NUM_REPLICAS];
   d_replicaSource = new vrpn_Connection * [STARTING_NUM_REPLICAS];
   if (!d_replica || !d_replicaSource) {
-    fprintf(stderr, "Tcl_Netvar::TclNet_int:  Out of memory.\n");
+    fprintf(stderr, "Tcl_Netvar::TclNet_var:  Out of memory.\n");
     return;
   }
 
   d_numReplicasAllocated = STARTING_NUM_REPLICAS;
+  for (int i = 0; i < d_numReplicasAllocated; i++) {
+      d_replica[i] = NULL;
+      d_replicaSource[i] = NULL;
+  }
 }
 
 // virtual
