@@ -24,6 +24,8 @@ void linkMicroscopeToInterface (nmm_Microscope_Remote *);
 int clear_polyline( void * userdata );
 
 
+void updateMicroscopeRTTEstimate (double time);
+
 // NANOX
 /** Send our new proposed world_from_room transform
 (v_world.users[whichUser].xforms[0]) out into the net to be

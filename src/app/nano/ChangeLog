@@ -1,4 +1,8 @@
-2000-10-15  Tom Hudson  <hudson@cs.unc.edu>
+2000-10-16  Tom Hudson  <hudson@cs.unc.edu>
+
+	* interaction.c (updateMicroscopeRTTEstimate) : new function
+
+2000-10-16  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c :  add colorplane, colormap, heightplane to istate
 	(ParseArgs) : handle new arguments

@@ -38,6 +38,8 @@
 
 #include <quat.h>
 
+#include <vrpn_RedundantTransmission.h>
+
 #include <BCPlane.h>
 #include <nmb_Dataset.h>
 #include <nmb_Decoration.h>
@@ -56,6 +58,7 @@
 #include <nmm_MicroscopeRemote.h>
 #endif
 #include <nmm_Types.h>  // for point_result, enums
+#include <nmm_Sample.h>
 
 #include <nmg_GraphicsImpl.h>
 #include <nmg_Globals.h>
@@ -380,6 +383,96 @@ void FDOnOffMonitor::stopForceField (void) {
     forceDevice->stopForceField();
     forceFieldGoing = vrpn_FALSE;
   }
+}
+
+class Adaptor {
+
+  public:
+
+    Adaptor (void);
+
+    ~Adaptor (void);
+
+    // MANIPULATORS
+
+    void updateSampleAlgorithm (nmm_Microscope_Remote *);
+    void setMicroscopeRTTEstimate (double);
+
+  private:
+
+    nmm_Sample d_sampleAlgorithm;
+    double d_rttEstimate;
+};
+
+Adaptor::Adaptor (void) :
+    d_rttEstimate (0.0) {
+
+  d_sampleAlgorithm.numx = 5;
+  d_sampleAlgorithm.numy = 5;
+  d_sampleAlgorithm.dx = 5.0;
+  d_sampleAlgorithm.dy = 5.0;
+  d_sampleAlgorithm.orientation = 0.0;
+}
+
+Adaptor::~Adaptor (void) {
+
+}
+
+void Adaptor::updateSampleAlgorithm (nmm_Microscope_Remote * m) {
+  static nmm_Sample sampleAlgorithm;
+  BCGrid * grid;
+  double targetsize;
+
+  if (!m) {
+    return;
+  }
+
+  if (d_rttEstimate < 0.015) {
+     // BUG:  For less than 20ms we'd like to go to freehand,
+     // but there isn't any way to do that.
+
+    d_sampleAlgorithm.numx = 2;
+    d_sampleAlgorithm.numy = 2;
+
+  } else {
+
+    // HACK:  Assume the microscope could take 300 samples per second.
+    // Figure out what it could take in a time == RTT & have it take a
+    // rectangular patch with a size approximately sqrt that.
+
+    targetsize = d_rttEstimate * 300;
+    d_sampleAlgorithm.numy = floor(sqrt(targetsize));
+    d_sampleAlgorithm.numx = floor(targetsize / d_sampleAlgorithm.numy);
+  }
+
+  // HACK:  arbitrarily feel over 1/20th x 1/20th the area
+  // Should this instead be with a resolution = or 1/2 the grid interval?
+
+  grid = m->Data()->inputGrid;
+  targetsize = grid->maxX() - grid->minX();
+  d_sampleAlgorithm.dx = targetsize / 10;
+  targetsize = grid->maxY() - grid->minY();
+  d_sampleAlgorithm.dy = targetsize / 10;
+
+  d_sampleAlgorithm.orientation = 0.0;
+
+  collabVerbose(3, "Adaptor::updateSampleAlgorithm:  "
+                "Estimate %.5f seconds of RTT;\n"
+                "sample grid is %d x %d points at %.2f x %.2f nm spacing.\n",
+                d_rttEstimate, d_sampleAlgorithm.numx, d_sampleAlgorithm.numy,
+                d_sampleAlgorithm.dx, d_sampleAlgorithm.dy);
+
+  m->SetSampleMode(&d_sampleAlgorithm);
+}
+
+void Adaptor::setMicroscopeRTTEstimate (double rtt) {
+  d_rttEstimate = rtt;
+}
+
+static Adaptor adaptor;
+
+void updateMicroscopeRTTEstimate (double time) {
+  adaptor.setMicroscopeRTTEstimate(time);
 }
 
 
@@ -2455,6 +2548,12 @@ int doFeelLive (int whichUser, int userEvent)  {
       }
 #endif
 
+      if (microscopeRedundancyController) {
+        // Instead of using TCP to transmit reliably,
+        // send everything via UDP 3 times at 25 ms intervals.
+        microscopeRedundancyController->set(2, 0.025);
+      }
+
       /* Request a reading from the current location,
        * and wait till tip gets there */
 
@@ -2470,6 +2569,8 @@ int doFeelLive (int whichUser, int userEvent)  {
         // leaves image mode.
 
 fprintf(stderr, "Feeling to %.2f, %.2f.\n", clipPos[0], clipPos[1]);
+
+        adaptor.updateSampleAlgorithm(microscope);
 
         microscope->TakeSampleSet(clipPos[0], clipPos[1]);
 
@@ -2574,6 +2675,11 @@ fprintf(stderr, "Feeling to %.2f, %.2f.\n", clipPos[0], clipPos[1]);
           }
         }
       }
+
+      if (microscopeRedundancyController) {
+        microscopeRedundancyController->set(0, 0.0);
+      }
+
       /* Start image mode and resume previous scan pattern */
       microscope->ResumeScan();
 
@@ -2908,5 +3014,6 @@ int clear_polyline( void * userdata ) {
   g->emptyPolyline();
   return 0;
 }
+
 
 
