@@ -584,9 +584,6 @@ imported_obj_list::imported_obj_list() { //default constructor
 void imported_obj_list::import_new_obj(char* filename,UTree *World) {
     GeometryGenerator *gen = FileGenerator::CreateFileGenerator(filename);
     //Empty linked list
-
-
-cout << "in import_new_obj" << endl;
     if(imported_obj_list_head==NULL){
         imported_obj_list_head = new imported_obj;
         imported_obj_list_tail = imported_obj_list_head;
