@@ -272,12 +272,11 @@ static void handle_import_file_change (const char *, void *) {
 				// create as a wavefront object
 				obj = new URWaveFront;
 			}
-			else if (import_type == "spi") {
+			else if (strcmp(import_type, "spi") == 0) {
 				// create as a spider object
-			printf("spi\n");
 				obj = new URSpider;
 			}
-			else if (strstr(modelFile.string(), "txt") != 0) {
+			else if (strcmp(import_type, "txt") == 0) {
 				// create as a tube file object
 				obj = new URTubeFile;
 			}

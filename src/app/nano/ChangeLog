@@ -1,4 +1,9 @@
 2002-07-08 David Borland <borland@cs.unc.edu>
+
+        * import.C : fixed a bug that was causing spider object to be loaded
+        as regular URPolygon objects.
+
+2002-07-08 David Borland <borland@cs.unc.edu>
  
         * import.C : minor change to the callback that didn't get
         committed last time.
