@@ -3024,8 +3024,7 @@ getImageHeightAtXYLoc( float x, float y, float* z )
 
 		// calculate distance d from imaging point P to tube axis
 		SPHERE_AND_TUBE_DATA cxTest;
-		cxTest = distSphereToCylinder( vP, vA, vB, 
-							  0., 0. );
+		cxTest = distSphereToCylinder( vP, vA, vB, 0., 0. );
 		Vec2d vM = cxTest.vM;
 		float d = distance( vM, vP );
 
@@ -3044,7 +3043,11 @@ getImageHeightAtXYLoc( float x, float y, float* z )
 	}
 
 	// return the maximum z-height for all tubes.
-	*z = maxZ + (x - scanXMin);
+#ifdef AFMSIM_MAKE_SLOPE
+	*z = maxZ + (y - scanYMin);
+#else
+	*z = maxZ;
+#endif
 
 	return 0;
 }

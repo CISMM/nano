@@ -6,16 +6,20 @@ endif
 
 include ../Makefile.share
 
-surface:
+ifeq ($(MAKELEVEL),0)
+.PHONY: surface
+surface: $(OBJECT_DIR)/surface
+
+$(OBJECT_DIR)/surface:
 	$(MAKE) APP_NAME=surface \
                 EXCLUDE_SRC="warrencntsim.C vec2d.C" \
                 MAKECMDGOALS=""
 
-afmcntsim:
+.PHONY: afmcntsim
+afmcntsim: $(OBJECT_DIR)/afmcntsim
+
+$(OBJECT_DIR)/afmcntsim:
 	$(MAKE) APP_NAME=afmcntsim \
                 EXCLUDE_SRC=surface.C \
                 MAKECMDGOALS=""
-
-all:
-	$(MAKE) surface
-	$(MAKE) afmcntsim
+endif
