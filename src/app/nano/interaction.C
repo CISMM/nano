@@ -207,7 +207,7 @@ static RegMode select_drag_mode = REG_NULL;
 
 /// Region mode state
 static RegMode prep_region_drag_mode = REG_NULL;
-static RegMode region_drag_mode = REG_NULL;
+static RegMode region_drag_mode = REG_DEL;
 static float region_center_x = 0;
 static float region_center_y = 0;
 static float region_width = 0;

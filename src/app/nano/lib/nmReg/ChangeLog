@@ -1,3 +1,9 @@
+2001-08-21  Aron Helser  <helser@cs.unc.edu>
+
+	* nmr_RegistrationUI.Ch (handle_registrationImage3D_change): Add
+	idempotency check really speeds up loading static files. 
+	(handle_registrationImage2D_change): same
+
 2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
 
 	* README.txt: added a nice ASCII diagram to document how the different

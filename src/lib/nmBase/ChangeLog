@@ -1,3 +1,8 @@
+2001-08-21  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_Dataset.C (loadFile): printout formatting.
+	* nmb_Image.C: remove useless #include. 
+
 2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_Device.hC : moved buffering code from nmb_Device_Client into

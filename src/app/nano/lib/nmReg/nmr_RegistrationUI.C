@@ -36,7 +36,9 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_dataset(d),
    d_aligner(aligner),
    d_3DImageCMap(NULL),
-   d_2DImageCMap(NULL)
+   d_2DImageCMap(NULL),
+   d_last2DImage(NULL),
+   d_last3DImage(NULL)
 {
 //      d_newResampleImageName = "";
 //      d_resampleResolutionX = 100;
@@ -295,52 +297,63 @@ void nmr_RegistrationUI::handle_resamplePlaneName_change(const char *name,
 void nmr_RegistrationUI::handle_registrationImage3D_change(const char *name,
                                                            void *ud)
 {
+    //printf("nmr_RegistrationUI::handle_registrationImage3D_change\n");
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
     nmb_Image *im = me->d_imageList->getImageByName(name);
     if (!im) {
         fprintf(stderr, "nmr_RegistrationUI::image not found: %s\n", name);
         return;
     }
-    // send image off to the proxy
-    me->d_aligner->setImage(NMR_SOURCE, im, vrpn_FALSE, vrpn_FALSE);
-    // We have a choice, and I'm not sure which is right. Either
-    // Set the new image to use the existing colormap params:
-    double dmin,dmax,cmin,cmax;
-    me->d_3DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
-    me->d_3DImageCMap->setColorMinMaxLimit(0,1);
-    me->d_aligner->setColorMinMax(NMR_SOURCE, dmin, dmax, cmin, cmax);
-    // Or reset the colormap params to their default:
-    //me->d_3DImageCMap->setColorMinMaxLimit(0,1);
+    // If different, send changes. 
+    if ( me->d_last3DImage != im) {
+
+        // send image off to the proxy
+        me->d_aligner->setImage(NMR_SOURCE, im, vrpn_FALSE, vrpn_FALSE);
+        // We have a choice, and I'm not sure which is right. Either
+        // Set the new image to use the existing colormap params:
+        double dmin,dmax,cmin,cmax;
+        me->d_3DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
+        me->d_3DImageCMap->setColorMinMaxLimit(0,1);
+        me->d_aligner->setColorMinMax(NMR_SOURCE, dmin, dmax, cmin, cmax);
+        // Or reset the colormap params to their default:
+        //me->d_3DImageCMap->setColorMinMaxLimit(0,1);
+        me->d_last3DImage = im;
+    }
 }
 
 // static
 void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
                                                            void *ud)
 {
+    //printf("nmr_RegistrationUI::handle_registrationImage2D_change\n");
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
     nmb_Image *im = me->d_imageList->getImageByName(name);
     if (!im) {
         fprintf(stderr, "nmr_RegistrationUI::image not found: %s\n", name);
         return;
     }
-    // send image off to the proxy
-    me->d_aligner->setImage(NMR_TARGET, im, vrpn_FALSE, vrpn_FALSE);
-
-    // We have a choice, and I'm not sure which is right. Either
-    // Set the new image to use the existing colormap params:
-    double dmin,dmax,cmin,cmax;
-    me->d_2DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
-    me->d_2DImageCMap->setColorMinMaxLimit(0,1);
-    me->d_aligner->setColorMinMax(NMR_TARGET, dmin, dmax, cmin, cmax);
-    // Or reset the colormap params to their default:
-    //me->d_2DImageCMap->setColorMinMaxLimit(0,1);
-
-    // set up texture in graphics
-    me->d_graphicsDisplay->setRealignTexturesConversionMap(
-        me->d_2DImageCMap->getColorMapName(), "");
-    me->d_graphicsDisplay->setRealignTextureSliderRange(dmin, dmax, cmin,cmax);
-    //printf("creating realign texture for %s\n", name);
-    me->d_graphicsDisplay->createRealignTextures(name);
+    // If different, send changes. 
+    if ( me->d_last2DImage != im) {
+        // send image off to the proxy
+        me->d_aligner->setImage(NMR_TARGET, im, vrpn_FALSE, vrpn_FALSE);
+        
+        // We have a choice, and I'm not sure which is right. Either
+        // Set the new image to use the existing colormap params:
+        double dmin,dmax,cmin,cmax;
+        me->d_2DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
+        me->d_2DImageCMap->setColorMinMaxLimit(0,1);
+        me->d_aligner->setColorMinMax(NMR_TARGET, dmin, dmax, cmin, cmax);
+        // Or reset the colormap params to their default:
+        //me->d_2DImageCMap->setColorMinMaxLimit(0,1);
+        
+        // set up texture in graphics
+        me->d_graphicsDisplay->setRealignTexturesConversionMap(
+            me->d_2DImageCMap->getColorMapName(), "");
+        me->d_graphicsDisplay->setRealignTextureSliderRange(dmin, dmax, cmin,cmax);
+        //printf("creating realign texture for %s\n", name);
+        me->d_graphicsDisplay->createRealignTextures(name);
+        me->d_last2DImage = im;
+    }
 }
 
 // static

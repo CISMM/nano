@@ -109,6 +109,9 @@ class nmr_RegistrationUI {
     nmui_ColorMap * d_3DImageCMap;
     nmui_ColorMap * d_2DImageCMap;
 
+    nmb_Image * d_last2DImage;
+    nmb_Image * d_last3DImage;
+
     nmb_TransformMatrix44 d_ProjWorldFromTopoWorldTransform;
     nmb_TransformMatrix44 d_ProjImageFromTopoImageTransform;
     nmb_TransformMatrix44 d_ProjImageFromTopoWorldTransform;

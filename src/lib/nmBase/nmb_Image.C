@@ -8,7 +8,6 @@
 #include "Topo.h" // for TopoFile
 #include "nmb_Image.h"
 #include "nmb_TransformMatrix44.h"
-#include "AbstractImage.h"
 #include "nmb_ImgMagick.h"
 
 #include <limits.h>

@@ -2582,8 +2582,8 @@ static int forget_modification_data ()
  back to "". If there are any errors, report them and leave name alone.  */
 static void handle_openStaticFilename_change (const char *, void *)
 {
-    fprintf(stderr,"HANDLE_OPENSTATIC_FILE\n");
-    fprintf(stderr,"FILE: %s\n", (const char*)openStaticFilename);
+    //fprintf(stderr,"HANDLE_OPENSTATIC_FILE\n");
+    //fprintf(stderr,"FILE: %s\n", (const char*)openStaticFilename);
     //if collaborative session don't allow
     // changing staticfiles/streamfiles/SPM devices
     //if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
@@ -2607,6 +2607,7 @@ static void handle_openStaticFilename_change (const char *, void *)
                          "Choose Analysis .. Data Registration to align.",
                          (const char *)openStaticFilename);
     }
+    //fprintf(stderr,"HANDLE_OPENSTATIC_FILE done loading\n");
     for (BCPlane *p = dataset->inputGrid->head(); p != NULL; p = p->next()) {
         //printf("Found plane %s\n", (p->name())->Characters());
         // Add it to the list if it's not there already.
@@ -2639,8 +2640,8 @@ static void handle_openStaticFilename_change (const char *, void *)
 */
 static void handle_openStreamFilename_change (const char *, void * userdata)
 {
-    fprintf(stderr,"HANDLE_OPENSTREAMFILE CHANGE\n");
-    fprintf(stderr,"Filename length: %d\n",strlen(openStreamFilename));
+    //fprintf(stderr,"HANDLE_OPENSTREAMFILE CHANGE\n");
+    //fprintf(stderr,"Filename length: %d\n",strlen(openStreamFilename));
     //if collaborative session don't allow
     // changing staticfiles/streamfiles/SPM devices
     //if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
@@ -2760,8 +2761,8 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
 	//display_error_dialog("Error: Cannot change SPM Device in collaborative session");
 	//return;
     //}
-    fprintf(stderr,"HANDLE_OPENSPMDEVICE\n");
-    fprintf(stderr,"namelength: %d\n",strlen(openSPMDeviceName));
+    //fprintf(stderr,"HANDLE_OPENSPMDEVICE\n");
+    //fprintf(stderr,"namelength: %d\n",strlen(openSPMDeviceName));
 
     istate = (MicroscapeInitializationState *)userdata;
     logmode = vrpn_LOG_NONE;
@@ -2867,7 +2868,7 @@ static void handle_closeMicroscope_change (vrpn_int32, void * )
      display_error_dialog("Error: Cannot close in collaborative session");
      return;
   }
-  fprintf(stderr,"HANDLE_CLOSE_MICROSCOPE\n");
+  //fprintf(stderr,"HANDLE_CLOSE_MICROSCOPE\n");
     openDefaultMicroscope();
 }
 

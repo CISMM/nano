@@ -87,8 +87,8 @@ nmb_Dataset::nmb_Dataset
               // file successfully loaded into primary grid
           } else {
               // File successfully load, conflict with primary grid
-              printf("Warning: %s is not the same size or region\n"
-                     "as previous files. Use Analysis .. Data Registration\n"
+              printf("Warning: %s\nis not the same size or region "
+                     "as previous files.\nUse Analysis .. Data Registration "
                      "to align for use.\n", gridFileNames[i] );
               // Add to the list of images. 
               nmb_Image *im = new nmb_ImageGrid(tmpgrid->head());
@@ -204,6 +204,7 @@ nmb_Dataset::loadFile(const char* file_name, TopoFile &topoFile)
   }
   // Remove EMPTY_HEIGHT_PLANE from our image list - 
   // it has been deleted from grid already
+  // This statement executes VERY SLOWLY 5+ seconds. Tcl updates?!?
   if ((im = dataImages->removeImageByName(EMPTY_PLANE_NAME)) != NULL) {
       //XXXX What's the right way? delete im;
       // The empty plane should be at the head of BCGrid's list. 
