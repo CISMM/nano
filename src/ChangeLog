@@ -1,3 +1,7 @@
+2002-03-13  David Marshburn <marshbur@cs.unc.edu>
+
+	* nano.dsw:  removed 3d-afmsim to its own workspace.
+
 2001-12-20    <marshbur@cs.unc.edu>
 
 	* nano.dsp:  removed references to ImgFormat
