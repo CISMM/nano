@@ -650,7 +650,7 @@ radiobutton $nmInfo(ml_slow_line).slow_line_forward -text "Forward" \
 radiobutton $nmInfo(ml_slow_line).slow_line_reverse -text "Reverse" \
 	-variable slow_line_direction -value 1 
 
-generic_entry $nmInfo(ml_slow_line).step-size newmodifyp_step_size \
+generic_entry $nmInfo(ml_slow_line).step-size modifyp_step_size \
 	"Step Size (0,5 nm)" real 
 
 pack $nmInfo(ml_slow_line).slow_line_play \
