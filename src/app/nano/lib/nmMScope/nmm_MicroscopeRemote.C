@@ -2362,6 +2362,8 @@ int nmm_Microscope_Remote::handle_WindowLineData (void * userdata,
 
   ms->decode_WindowLineDataHeader(&param.buffer, &x, &y, &dx, &dy,
                                   &lineCount, &fieldCount, &sec, &usec);
+
+
   for (i = 0; i < lineCount; i++) {
     ms->decode_WindowLineDataField(&param.buffer, fieldCount, fields);
     ms->RcvWindowLineData(x + i * dx, y + i * dy, sec, usec,
@@ -2851,10 +2853,11 @@ int nmm_Microscope_Remote::handle_ScanlineData (void *userdata,
   float max_force_setting, max_z_step, max_xy_step;
   float fields [MAX_CHANNELS];
 
-
   ms->decode_ScanlineDataHeader(&param.buffer, &x, &y, &z, &angle,
 	&slope, &width, &resolution, &feedback_enabled, &checking_forcelimit, 
 	&max_force_setting, &max_z_step, &max_xy_step, &sec, &usec, &num_channels);
+
+
   ms->RcvScanlineDataHeader(x, y, z, angle, slope, width, resolution,
 	feedback_enabled, checking_forcelimit, max_force_setting, 
 	max_z_step, max_xy_step, sec, usec, num_channels);
@@ -3387,6 +3390,7 @@ long nmm_Microscope_Remote::RcvWindowLineData (const long _x, const long _y,
                                     const long _fieldCount,
                                     const float * _fields) {
   // HACK HACK HACK
+
   if (state.data.scan_channels->Handle_report(_x, _y, _sec, _usec,
                                          (float *) _fields, _fieldCount)) {
     fprintf(stderr, "Error handling window line data\n");
@@ -3739,7 +3743,9 @@ void nmm_Microscope_Remote::RcvResistance2(const long _chan, const long /* _sec 
 }
 
 void nmm_Microscope_Remote::RcvReportSlowScan (const long _enable) {
-  state.slowScanEnabled = _enable;
+  if (state.slowScanEnabled != _enable) {
+     state.slowScanEnabled = _enable;
+  }
 }
 
 void nmm_Microscope_Remote::RcvScanParameters (const char **) {
