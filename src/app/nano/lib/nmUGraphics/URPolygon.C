@@ -125,9 +125,7 @@ int URPolygon::ChangeHeightPlane(void* userdata) {
 
 	q_vec_copy(q2, q1);
 
-
 	this->GetLocalXform().SetZOffset(z);
-
 
 	this->GetLocalXform().SetTranslate(q2);
 
@@ -212,13 +210,12 @@ int URPolygon::SetRotAll(void* userdata) {
 	double rotx = array[0];
 	double roty = array[1];
 	double rotz = array[2];
-	printf("x: %lf,y: %lf, z: %lf\n",rotx,roty,rotz);
 
 	q_vec_type euler;
 
-	euler[0] = rotx;
+	euler[2] = rotx;
 	euler[1] = roty;
-	euler[2] = rotz;
+	euler[0] = rotz;
 
 	q_type rot;
 	q_from_euler(rot, euler[0], euler[1], euler[2]);
