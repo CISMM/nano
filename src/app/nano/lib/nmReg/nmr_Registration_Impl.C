@@ -510,9 +510,9 @@ void nmr_Registration_Impl::sendResult(int whichTransform,
                               x_atMaxOffset, y_atMaxOffset);
     meanOffset = nmr_Util::approxMeanOffset2D(transform,
                               minX, maxX, minY, maxY);
-    printf("sending (tx,ty,phi,shz,scx,scy, cx, cy, maxOffset, meanOffset) = "
-           "%g, %g, %g, %g, %g, %g, %g, %g, %g, %g\n",
-           tx, ty, phi, shz, scx, scy, centerX, centerY, maxOffset, meanOffset);
+//    printf("sending (tx,ty,phi,shz,scx,scy, cx, cy, maxOffset, meanOffset) = "
+//           "%g, %g, %g, %g, %g, %g, %g, %g, %g, %g\n",
+//           tx, ty, phi, shz, scx, scy, centerX, centerY, maxOffset, meanOffset);
 
 }
 

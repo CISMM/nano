@@ -245,7 +245,7 @@ void nmr_RegistrationUI::handleRegistrationChange
       d_aligner->getTransformationOptions(xform_type);
       break;
     case NMR_REG_RESULT:
-      printf("got transformation");
+      //printf("got transformation");
       /* *******************************************************************
          Store the raw result from the registration code and update graphics
          if necessary
@@ -260,8 +260,8 @@ void nmr_RegistrationUI::handleRegistrationChange
       d_scaledProjImFromScaledTopoIm[sentTransformIndex].setMatrix(
               scaledProjImFromScaledTopoIm_matrix);
      
-      printf(", type=%d\n", whichTransform);
-      d_scaledProjImFromScaledTopoIm[sentTransformIndex].print(); 
+      //printf(", type=%d\n", whichTransform);
+      //d_scaledProjImFromScaledTopoIm[sentTransformIndex].print(); 
       if (displayedTransformIndex == sentTransformIndex) {
         // compose the new transformation with some others and send the
         // result off to the graphics code
@@ -775,7 +775,7 @@ void nmr_RegistrationUI::handle_registrationEnabled_change(
 
 void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
 {
-    printf("nmr_RegistrationUI::createResampleImage\n");
+    //printf("nmr_RegistrationUI::createResampleImage\n");
     nmb_Image *new_image;
     if (!d_dataset) return;
     nmb_Image *im_3D = d_dataset->dataImages()->getImageByName
@@ -897,18 +897,18 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
             min_i, min_j, max_i, max_j);
         int res_x = max_i - min_i;
         int res_y = max_j - min_j;
-        printf("got extents: %d x %d\n", res_x, res_y);
+        //printf("got extents: %d x %d\n", res_x, res_y);
 
         new_image = new nmb_ImageGrid(
                 (const char *)(d_newResampleImageName.string()),
                 (const char *)(im_2D->unitsValue()),
                 res_x, res_y);
         d_newResampleImageName = (const char *) "";
-        printf("allocated image\n");
+        //printf("allocated image\n");
         TopoFile tf;
         im_3D->getTopoFileInfo(tf);
         new_image->setTopoFileInfo(tf);
-        printf("%d, %d, %d, %d\n", min_i, min_j, max_i, max_j);
+        //printf("%d, %d, %d, %d\n", min_i, min_j, max_i, max_j);
         nmr_Util::setRegionRelative((*im_3D), (*new_image),
                  min_i, min_j, max_i, max_j);
         nmr_Util::createResampledImageWithImageSpaceTransformation((*im_2D), 
@@ -923,14 +923,14 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
 
       }
     }
-    printf("finished resampling image\n");
+    //printf("finished resampling image\n");
     // now make it available elsewhere:
     d_dataset->dataImages()->addImage(new_image);
 }
 
 void nmr_RegistrationUI::createResamplePlane(const char * /*imageName */)
 {
-    printf("nmr_RegistrationUI::createResamplePlane\n");
+    //printf("nmr_RegistrationUI::createResamplePlane\n");
     int displayedTransformIndex = getDisplayedTransformIndex();
     nmb_ImageGrid *new_image;
     if (!d_dataset) return;
@@ -978,7 +978,7 @@ void nmr_RegistrationUI::createResamplePlane(const char * /*imageName */)
                  (*im_2D),
                  projImageFromTopoImage, (*new_image));
 
-    printf("finished resampling image\n");
+    //printf("finished resampling image\n");
     // now make it available elsewhere:
     // this is the code from nmb_Dataset::addImageToGrid(new_image) which
     // had to be copied here now that I've removed dependence on nmb_Dataset
