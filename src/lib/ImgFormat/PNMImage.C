@@ -243,6 +243,29 @@ bool PNMImage::Read(const char *filename)
    return image->Valid();
 }
 
+bool PNMImage::Read(FILE *file)
+{
+   if (image && image->Valid())
+      Die();
+
+   ifstream pnm(fileno(file));
+
+   if (!pnm)
+   {
+      cerr << "Could not open file for reading." << endl;
+      Die();
+      return false;
+   }
+
+   if (readPNM(pnm))
+   {
+      cerr << "Could not open file for reading." << endl;
+      Die();
+   }
+
+   return image->Valid();
+}
+
 bool PNMImage::Write(const char *filename)
 {
    if (!image || !image->Valid())
@@ -283,6 +306,44 @@ bool PNMImage::Write(const char *filename)
    }
 
    pnm.close();
+
+   return ret;
+}
+
+bool PNMImage::Write(FILE *file)
+{
+   if (!image || !image->Valid())
+   {
+      cerr << "This is not a valid PNM." << endl;
+      return false;
+   }
+
+
+   ofstream pnm(fileno(file));
+
+
+   if (!pnm)
+   {
+      cerr << "Could not open file for writing." << endl;
+      return false;
+   }
+
+
+   bool ret;
+
+
+   switch (image->Colors())
+   {
+      case 1:
+      case 3:
+         ret = writeRAW(pnm);
+         break;
+
+      default:
+         cerr << "Do not know how to write a " << image->Colors()
+              << "-color PNM image." << endl;
+         ret = false;
+   }
 
    return ret;
 }

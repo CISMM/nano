@@ -6,7 +6,6 @@
 
 #include "AbstractImage.h"
 
-
 class TIFFImage : public AbstractImage
 {
    private:
@@ -35,7 +34,11 @@ class TIFFImage : public AbstractImage
 
       bool Read(const char *filename);
 
+      bool Read(FILE *file);
+
       bool Write(const char *filename);
+  
+      bool Write(FILE *file);
 };
 
 

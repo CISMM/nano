@@ -6,7 +6,6 @@
 
 #include "AbstractImage.h"
 
-
 class PNMImage : public AbstractImage
 {
    private:
@@ -56,7 +55,11 @@ class PNMImage : public AbstractImage
 
       bool Read(const char *filename);
 
+      bool Read(FILE *file);
+
       bool Write(const char *filename);
+
+      bool Write(FILE *file);
 
 };
 

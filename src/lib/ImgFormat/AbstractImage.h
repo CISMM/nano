@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h> // for FILE
 
 #include "PixelBuffer.h"
 
@@ -116,7 +117,11 @@ class AbstractImage
 
       virtual bool Read(const char *filename) = 0;
 
+      virtual bool Read(FILE *file) = 0;
+
       virtual bool Write(const char *filename) = 0;
+
+      virtual bool Write(FILE *file) = 0;
 };
 
 

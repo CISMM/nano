@@ -196,6 +196,13 @@ bool TIFFImage::Read(const char * /*filename*/ )
    return false;
 }
 
+bool TIFFImage::Read(FILE *file)
+{
+   cerr << "TIFF reading is not implemented!" << endl;
+
+   return false;
+}
+
 bool TIFFImage::Write(const char *filename)
 {
    if (!image || !image->Valid())
@@ -243,6 +250,40 @@ bool TIFFImage::Write(const char *filename)
    }
 
    tiff.close();
+
+   return true;
+}
+
+bool TIFFImage::Write(FILE *file)
+{
+
+   if (!image || !image->Valid())
+   {
+      cerr << "Invalid image contents!" << endl;
+      return false;
+   }
+
+   if (3 != image->Colors() && 1 != image->Colors())
+   {
+      cerr << "Do not know how to write " << image->Colors()
+           << "-color TIFF image." << endl;
+      return false;
+   }
+
+   ofstream tiff(fileno(file));
+
+   if (!tiff)
+   {
+      return false;
+   }
+
+   if (!writeHeader(tiff))
+   {
+      cerr << "Error writing header." << endl;
+      return false;
+   }
+
+   tiff.write(&(image->Pixel()),image->Rows()*image->Columns()*image->Colors());
 
    return true;
 }

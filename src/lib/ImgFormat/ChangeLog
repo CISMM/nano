@@ -1,3 +1,10 @@
+2001-05-14  Adam Seeger  <seeger@cs.unc.edu>
+
+	* AbstractImage.h (Read/Write): added overloaded versions of these
+	to take FILE * argument
+	* PNMImage.hC (Read/Write): added FILE * versions of these
+	* TIFFImage.hC (Read/Write): added FILE * versions of these
+
 2000-12-20  Aron Helser  <helser@cs.unc.edu>
 
 	* all: 3rdtech merge into main trunk. 
