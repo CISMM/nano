@@ -1107,9 +1107,12 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName, BCGrid * grid
             */
 
 	    
-	    ListofNames[t] = currentPlane->name()->nonconst_characters();//deal with list of names
+	    ListofNames[t] = new char[ strlen(currentPlane->name()->Characters()) + 1 ];
+	    strcpy(currentPlane->name()->Characters, ListofNames[t]);
 
-	    ListofUnits[t] = currentPlane->units()->nonconst_characters();
+	    ListofUnits[t] = new char[ strlen(currentPlane->units()->Characters()) + 1 ];
+	    strcpy(currentPlane->name()->Characters, ListofNames[t]);
+
 	    //ListofPlanes[t] = currentPlane;//deal with list of planes
 	    CNT_List[t] = new CNT_IA();
 	    //end of stuff that goes if switch to g++
@@ -1437,6 +1440,12 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName, BCGrid * grid
 	  //delete ListofPlanes[t];
 	  if(CNT_List[t] != NULL){
 	    delete CNT_List[t];
+	  }
+	  if(ListofNames[t] != NULL){
+	    delete ListofNames[t];
+	  }
+	  if(ListofUnits[t] != NULL){
+	    delete ListofUnits[t];
 	  }
 	}
 
