@@ -1732,14 +1732,14 @@ void nmg_Graphics_Implementation::setRubberLineStart (float p0, float p1) {
       fprintf(stderr, "Error in setRubberLineStart: could not get plane!\n");
       return ;
   }
-  plane->valueAt(&state->rubberPt[3], p0, p1);
-  state->rubberPt[3] *= plane->scale();
+  plane->valueAt(&state->rubberPt[2], p0, p1);
+  state->rubberPt[2] *= plane->scale();
 }
 
 void nmg_Graphics_Implementation::setRubberLineEnd (float p2, float p3 ) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
-  state->rubberPt[4] = p2;
-  state->rubberPt[5] = p3;
+  state->rubberPt[3] = p2;
+  state->rubberPt[4] = p3;
   // Now we find the corresponding z value.
   BCPlane* plane = state->inputGrid->getPlaneByName
                     (state->heightPlaneName);
@@ -1747,8 +1747,8 @@ void nmg_Graphics_Implementation::setRubberLineEnd (float p2, float p3 ) {
       fprintf(stderr, "Error in setRubberLineEnd: could not get plane!\n");
       return ;
   }
-  plane->valueAt(&state->rubberPt[6], p2, p3);
-  state->rubberPt[6] *= plane->scale();
+  plane->valueAt(&state->rubberPt[5], p2, p3);
+  state->rubberPt[5] *= plane->scale();
 }
 
 void nmg_Graphics_Implementation::setRubberLineStart (const float p [2]) {
@@ -1762,14 +1762,14 @@ void nmg_Graphics_Implementation::setRubberLineStart (const float p [2]) {
       fprintf(stderr, "Error in setRubberLineStart: could not get plane!\n");
       return ;
   }
-  plane->valueAt(&state->rubberPt[3], p[0], p[1]);
-  state->rubberPt[3] *= plane->scale();
+  plane->valueAt(&state->rubberPt[2], p[0], p[1]);
+  state->rubberPt[2] *= plane->scale();
 }
 
 void nmg_Graphics_Implementation::setRubberLineEnd (const float p [2]) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setRubberLineEnd().\n");
-  state->rubberPt[4] = p[0];
-  state->rubberPt[5] = p[1];
+  state->rubberPt[3] = p[0];
+  state->rubberPt[4] = p[1];
   // Now we find the corresponding z value.
   BCPlane* plane = state->inputGrid->getPlaneByName
                     (state->heightPlaneName);
@@ -1777,8 +1777,8 @@ void nmg_Graphics_Implementation::setRubberLineEnd (const float p [2]) {
       fprintf(stderr, "Error in setRubberLineEnd: could not get plane!\n");
       return ;
   }
-  plane->valueAt(&state->rubberPt[6], p[0], p[1]);
-  state->rubberPt[6] *= plane->scale();
+  plane->valueAt(&state->rubberPt[5], p[0], p[1]);
+  state->rubberPt[5] *= plane->scale();
 }
 
 void nmg_Graphics_Implementation::setRubberSweepLineStart (const PointType Left,
