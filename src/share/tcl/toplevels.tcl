@@ -21,6 +21,8 @@ set nav_win [create_closing_toplevel nav_win "Navigate Tool"]
 
 basicjoys_create $nav_win.joy "Translate" "Rotate"
 
+# -------
+# Phantom controls 
 set phantom_win [create_closing_toplevel phantom_win "Phantom Settings"]
 button $phantom_win.phantom_reset -text "Reset Phantom" -command "set reset_phantom 1"
 
@@ -33,12 +35,7 @@ generic_radiobox $phantom_win.phantom_button_mode \
 	phantom_button_mode \
 	"Phantom Button" $rb_list
 
-#################################
-#
-# This part of the script brings up a min/max slider to control the
-# mapping of values into the spring constant, assuming the compliance
-# plane button is set to 'none'
-#
+# Phantom spring constant, 
 set spring_slider_min_limit 0.01
 set spring_slider_max_limit 1
 set spring_k_slider 0
@@ -48,3 +45,9 @@ floatscale $phantom_win.spring_k $spring_slider_min_limit $spring_slider_max_lim
 
 pack $phantom_win.phantom_reset $phantom_win.phantom_button_mode $phantom_win.spring_k \
 	-side top -fill x
+
+# --------
+# Magellan controls
+set magellan_win [create_closing_toplevel magellan_win "Magellan Settings"]
+button $magellan_win.magellan_reset -text "Reconnect to Magellan" -command "set reconnect_magellan 1"
+pack $magellan_win.magellan_reset -side top -fill x

@@ -537,6 +537,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
 
     static int handle_GotConnection2 (void *, vrpn_HANDLERPARAM);
+    static int handle_DroppedConnection2 (void *, vrpn_HANDLERPARAM);
     static int handle_InTappingMode (void *, vrpn_HANDLERPARAM);
     static int handle_InOscillatingMode (void *, vrpn_HANDLERPARAM);
     static int handle_InContactMode (void *, vrpn_HANDLERPARAM);

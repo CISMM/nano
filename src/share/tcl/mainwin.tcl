@@ -153,7 +153,8 @@ frame .menubar -relief raised -bd 4
 frame .main 
 
 # w1 is for stuff that stay on the screen all the time
-frame .main.w1 
+frame .main.w1 -relief raised -bd 2
+
 # w2 is for stuff that changes depending on what you are doing - 
 #   see procedure flip_w2
 frame .main.w2 
@@ -161,7 +162,8 @@ frame .main.w2
 #set up window
 pack .menubar .main -side top -fill x 
 
-pack .main.w1 .main.w2 -side top -fill x
+pack .main.w1 -side top -fill x
+pack .main.w2 -side bottom -fill x
 
 #initialize frame names
 set w1 .main.w1
@@ -187,9 +189,9 @@ $filemenu add command -label "Open Stream File..." -underline 0 \
 	-command "open_stream_file"
 $filemenu add command -label "Open SPM Connection..." -underline 9 \
 	-command "open_spm_connection"
-#        $filemenu add command -label "Close..." -underline 0 -command \
-#		{.message_dialog activate}
-#        $filemenu add separator
+$filemenu add command -label "Close..." -underline 0 -command \
+        "set close_microscope 1"
+$filemenu add separator
 $filemenu add command -label "Save Screen..." -underline 0 -command \
 	"save_screenImage"
 $filemenu add command -label "Save Plane Data..." -underline 5 -command \
@@ -271,9 +273,23 @@ $analysismenu add command -label "Data Registration..." -underline 0 \
 set toolmenu .menu.tool
 menu $toolmenu -tearoff 0
 .menu add cascade -label "Tools" -menu $toolmenu -underline 1
-        
+
+set show_mode_buttons 1
+$toolmenu add checkbutton -label "Show Mode Buttons" -underline 5 \
+        -variable show_mode_buttons \
+        -command {
+    if { $show_mode_buttons } {
+        pack $view -side top -fill both
+    } else {
+        pack forget $view
+    }
+}
+
 $toolmenu add command -label "Phantom" -underline 0 \
     -command "show.phantom_win"
+
+$toolmenu add command -label "Magellan" -underline 0 \
+    -command "show.magellan_win"
 
 $toolmenu add command -label "Navigate" -underline 0 \
     -command "show.nav_win"
@@ -326,7 +342,7 @@ wm protocol . WM_DELETE_WINDOW {$filemenu invoke "Exit"}
 # variable "view" determines what frame the View control
 #     box will appear in.
 #     It will stay all the time so it's in w1
-set view $w1.view
+set view $w1
 
 source [file join ${tcl_script_dir} view.tcl]
 
@@ -725,6 +741,8 @@ after idle {
 
 #source [file join ${tcl_script_dir} latency.tcl]
 
+# Prevent changes in size of the main window by user.
+wm resizable . 0 0 
 # puts the focus on the main window, instead of any other windows 
 # which have been created. 
 wm deiconify .

@@ -37,7 +37,7 @@
 #include "nmm_Sample.h"
 
 #include "vrpn_FileConnection.h"	// for vrpn_File_Connection class
-
+#include "error_display.h"
 //#include <microscape.h>  // for spm_verbosity
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -340,6 +340,9 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
 				 handle_ScanlineData,
 				 this);
 
+  d_connection->register_handler(d_DroppedConnection_type,
+                                 handle_DroppedConnection2,
+                                   this);
   registerSynchHandler(handle_barrierSynch, this);
   registerGotMutexCallback(this, handle_GotMicroscopeControl);
 }
@@ -368,6 +371,12 @@ nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
   }
 
   // TODO:  clean up callback lists on d_connection
+  if (!d_connection) {
+    return;
+  }
+  d_connection->unregister_handler(d_DroppedConnection_type,
+                                 handle_DroppedConnection2,
+                                   this);
 }
 
 
@@ -2190,6 +2199,18 @@ int nmm_Microscope_Remote::handle_GotConnection2 (void * userdata,
                                       vrpn_HANDLERPARAM ) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   return (ms->RcvGotConnection2());
+}
+
+//static
+int nmm_Microscope_Remote::handle_DroppedConnection2 (void * userdata,
+                                      vrpn_HANDLERPARAM ) {
+    nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+    if (!ms->d_dataset->done) {
+      display_warning_dialog("Communication with ThermoMicroscopes AFM has stopped.\n"
+                             "No more data will be collected until ThermoMicroscopes\n"
+                             "software is re-started and communication is re-established.");
+    }
+    return 0;
 }
 
 //static

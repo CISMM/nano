@@ -214,6 +214,19 @@ proc draw_rectangle { x y1 y2 } {
 	    [expr $y1 + ($y2 - $y1)/2 + $box_height] \
 	    ]
 }
+### Line - drawn first so it is below box and tris
+eval $nmInfo(colorscale).canvas create line [draw_line $data_x $data_y_low $data_y_high ] \
+	-width 3 -fill blue4 -tags data_line
+###
+### The box to drag both Data selectors.
+### Drawn first so triangles get dragged if there is overlap. 
+###
+eval $nmInfo(colorscale).canvas create rectangle \
+	[draw_rectangle $data_x $data_y_low $data_y_high]\
+	-fill blue4 -outline blue4 -tags data_line_box
+$nmInfo(colorscale).canvas bind data_line_box <B1-Motion>\
+	"colormap_set_data_line $nmInfo(colorscale) %y"
+
 ###
 ### The triangle and entry widget for the Data Min selector
 ### the motion of the triangle is restricted to up/down.
@@ -240,15 +253,20 @@ trace variable cmData(max_value) w "adjust_data_max $nmInfo(colorscale)"
 $nmInfo(colorscale).canvas create window [expr $data_x - $triangle_width] $data_y_high\
 	-anchor e -window $nmInfo(colorscale).data_max_entry -tags data_max_entry
 
-eval $nmInfo(colorscale).canvas create line [draw_line $data_x $data_y_low $data_y_high ] \
-	-width 3 -fill blue4 -tags data_line
 
+### Line - drawn first so it is below box and tris
+eval $nmInfo(colorscale).canvas create line [draw_line $color_x $color_y_low $color_y_high]\
+	-width 3 -fill blue4 -tags color_line
+
+###
+### The box to drag both Color selectors.
+### Drawn first so triangles get dragged if there is overlap. 
+###
 eval $nmInfo(colorscale).canvas create rectangle \
-	[draw_rectangle $data_x $data_y_low $data_y_high]\
-	-fill blue4 -outline blue4 -tags data_line_box
-$nmInfo(colorscale).canvas bind data_line_box <B1-Motion>\
-	"colormap_set_data_line $nmInfo(colorscale) %y"
-
+	[draw_rectangle $color_x $color_y_low $color_y_high] \
+	-fill blue4 -outline blue4 -tags color_line_box
+$nmInfo(colorscale).canvas bind color_line_box <B1-Motion> \
+	"colormap_set_color_line $nmInfo(colorscale) %y"
 ###
 ### The triangle and entry widget for the Color Min selector
 ### the motion of the triangle is restricted to up/down.
@@ -274,15 +292,6 @@ generic_entry $nmInfo(colorscale).color_max_entry cmColor(max_value) "Color Max"
 trace variable cmColor(max_value) w "adjust_color_max $nmInfo(colorscale)"
 $nmInfo(colorscale).canvas create window [expr $color_x + $triangle_width] $color_y_high\
 	-anchor w -window $nmInfo(colorscale).color_max_entry -tags color_max_entry
-
-eval $nmInfo(colorscale).canvas create line [draw_line $color_x $color_y_low $color_y_high]\
-	-width 3 -fill blue4 -tags color_line
-
-eval $nmInfo(colorscale).canvas create rectangle \
-	[draw_rectangle $color_x $color_y_low $color_y_high] \
-	-fill blue4 -outline blue4 -tags color_line_box
-$nmInfo(colorscale).canvas bind color_line_box <B1-Motion> \
-	"colormap_set_color_line $nmInfo(colorscale) %y"
 
 set imh [image create photo "colormap_image" -height $image_height -width $image_width]
 $nmInfo(colorscale).canvas create image $image_x $image_y -anchor se -image $imh

@@ -102,17 +102,17 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
 		    _min_y, _max_y, READ_FILE, file_names[i], topoFile);
 
 	if (!(grid.empty())) {
-	    // 		if ( (grid._num_x != _num_x) ||
-	    // 		     (grid._num_y != _num_y) ||
-	    // 		     (grid._min_x != _min_x) ||
-	    // 		     (grid._max_x != _max_x) ||
-	    // 		     (grid._min_y != _min_y) ||
-	    // 		     (grid._max_y != _max_y) ) {
-	    // Only compare the grid sizes, so that we can load
-	    // datasets of different scan areas, and re-align them!
-	    if ( (grid._num_x != _num_x) ||
-		 (grid._num_y != _num_y) ) {
-		fprintf(stderr,"Error! BCGrid::BCGrid: Grid size mismatch"
+            if ( (grid._num_x != _num_x) ||
+                 (grid._num_y != _num_y) ||
+                 (grid._min_x != _min_x) ||
+                 (grid._max_x != _max_x) ||
+                 (grid._min_y != _min_y) ||
+                 (grid._max_y != _max_y) ) {
+                // Only compare the grid sizes, so that we can load
+                // datasets of different scan areas, and re-align them!
+                //  	    if ( (grid._num_x != _num_x) ||
+                //  		 (grid._num_y != _num_y) ) {
+		fprintf(stderr,"Error! BCGrid::BCGrid: Grid size or region mismatch"
 			" in file \"%s\", ignoring the file\n",
 			file_names[i]);
                 return -1;

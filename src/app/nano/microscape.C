@@ -205,6 +205,8 @@ static  void    handle_x_dataset_change(const char *new_value, void *userdata);
 
 static  void    handle_surface_color_change(vrpn_int32 new_value, void *userdata);
 static	void    handle_colormap_change(const char *new_value, void *userdata);
+static void handle_openStaticFilename_change (const char *, void * userdata);
+static void handle_closeMicroscope_change (vrpn_int32, void * );
 static	void	handle_exportFileName_change(const char *new_value, void *userdata);
 static  void    handle_exportPlaneName_change(const char *new_value, void *userdata);
 static  void    handle_sumPlaneName_change(const char *new_value, void *userdata);
@@ -469,7 +471,8 @@ ColorMap	*curColorMap = NULL;	///< Pointer to the current color map
 
 /// Filename to get data from. Setting this variable in tcl triggers
 /// the open file process.
-Tclvar_string openStaticFilename("open_static_filename", "");
+Tclvar_string openStaticFilename("open_static_filename", "",
+                                 handle_openStaticFilename_change, NULL);
 
 /// Stream Filename. Setting this variable in tcl triggers
 /// the open stream process.
@@ -492,6 +495,10 @@ Tclvar_string	exportFileType("export_filetype","");
 /// Filename to save the data in. Setting this variable in tcl triggers
 /// the save process.
 Tclvar_string newExportFileName("export_filename", "");
+
+/// Flag to close any open files or connections.
+Tclvar_int closeMicroscope("close_microscope", 0,
+                           handle_closeMicroscope_change, NULL);
 
 //-----------------------------------------------------------------------
 // This section deals with selecting the color to apply to the surface.
@@ -2638,7 +2645,9 @@ static	void	handle_openStaticFilename_change (const char *, void *)
     files[0] = (const char *)openStaticFilename;
     
     if (dataset->loadFiles(files, 1,microscope->d_topoFile)) {
-	display_error_dialog( "Couldn't open %s as a data file.",
+	display_error_dialog("Couldn't open %s as a data file.\n"
+                             "It may conflict with a stream or SPM connection already open.\n"
+                             "Choose File .. Close and try opening the file again.",
 		files[0]);
         return;
     }
@@ -2690,6 +2699,13 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
         openDefaultMicroscope();
         return ;
     }
+    if (new_microscope_connection == microscope_connection) {
+        // The user asked to connect to the same file they have
+        // already opened. Rewind.
+        if (vrpnLogFile)
+            vrpnLogFile->reset();
+        return;
+    }
     
     // Decide whether reading vrpn log file or doing live.
     vrpn_File_Connection * new_vrpnLogFile = new_microscope_connection->get_File_Connection();
@@ -2708,9 +2724,8 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
         return ;
     }
 
-    // new and old microscope_connection can be equal if we open
-    // the same stream file twice!!
-    if (microscope_connection && (microscope_connection!=new_microscope_connection)) {
+    // Get rid of all callbacks registered on a previous connection. 
+    if (microscope_connection) {
       delete microscope_connection;
     }
     microscope_connection = new_microscope_connection;
@@ -2728,6 +2743,10 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
         openDefaultMicroscope();
     }
     
+    // Clear mod markers
+    decoration->clearPulses();
+    decoration->clearScrapes();
+
     openStreamFilename = "";
 }
 
@@ -2772,6 +2791,11 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
         openDefaultMicroscope();
         return ;
     }
+    if (new_microscope_connection == microscope_connection) {
+        // The user asked to connect to the same SPM they are already
+        // connected to. What to do? For now, do nothing
+        return;
+    }
     
     // We are trying to read a device - should we make sure it's not a logfile?
     /*
@@ -2788,16 +2812,26 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
         return ;
     }
 
-    // new and old microscope_connection can be equal if we open
-    // the same stream file twice!!
-    if (microscope_connection && (microscope_connection!=new_microscope_connection)) {
-      delete microscope_connection;
+    // Destroy any callbacks registered on the old connection
+    if (microscope_connection) {
+        delete microscope_connection;
     }
     microscope_connection = new_microscope_connection;
     vrpnLogFile = NULL;
 
+    // Clear mod markers
+    decoration->clearPulses();
+    decoration->clearScrapes();
+
     openSPMDeviceName = "";
     openSPMLogName = "";
+}
+
+/** Close any open files or connections, at the user's request
+ */
+static void handle_closeMicroscope_change (vrpn_int32, void * )
+{
+    openDefaultMicroscope();
 }
 
 /** Error recovery mechanism. Open a microscope like the program 
@@ -2822,6 +2856,9 @@ static void openDefaultMicroscope()
     microscope_connection = NULL;
     vrpnLogFile = NULL;
 
+    // Clear mod markers
+    decoration->clearPulses();
+    decoration->clearScrapes();
 }
 
 /** See if the user has given a name to the export plane other
@@ -3940,9 +3977,6 @@ void setupCallbacks (nmb_Dataset *d) {
   // sets up callbacks that have to do with data as opposed to callbacks
   // that affect or refer to some device which produces data
 
-    // When openStaticFilename changes, we try to open a file.
-    openStaticFilename.addCallback
-	(handle_openStaticFilename_change, NULL);
 
     //exportPlaneName.bindList(d->dataImages->imageNameList());
   exportPlaneName = "none";
@@ -3972,9 +4006,6 @@ void setupCallbacks (nmb_Dataset *d) {
 
 
 void teardownCallbacks (nmb_Dataset *d) {
-
-  openStaticFilename.removeCallback
-	(handle_openStaticFilename_change, NULL);
 
   exportPlaneName.removeCallback
 	(handle_exportPlaneName_change, d);
