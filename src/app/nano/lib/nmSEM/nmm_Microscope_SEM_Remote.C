@@ -298,6 +298,7 @@ int nmm_Microscope_SEM_Remote::addPolygon(
 }
 
 int nmm_Microscope_SEM_Remote::addPolyline(
+                    vrpn_float32 exposure_pCoul_per_cm,
                     vrpn_float32 exposure_uCoul_per_cm2,
                     vrpn_float32 lineWidth_nm, vrpn_int32 numPoints,
                     vrpn_float32 *x_nm, vrpn_float32 *y_nm)
@@ -305,9 +306,9 @@ int nmm_Microscope_SEM_Remote::addPolyline(
   char *msgbuf;
   vrpn_int32 len;
 
-  msgbuf = encode_AddPolyline(&len, exposure_uCoul_per_cm2, lineWidth_nm,
-                             numPoints,
-                             x_nm, y_nm);
+  msgbuf = encode_AddPolyline(&len, exposure_pCoul_per_cm,
+                              exposure_uCoul_per_cm2, lineWidth_nm,
+                              numPoints, x_nm, y_nm);
   if (!msgbuf){
     return -1;
   }
@@ -337,6 +338,14 @@ int nmm_Microscope_SEM_Remote::exposePattern()
   return dispatchMessage(len, msgbuf, d_ExposePattern_type);
 }
 
+int nmm_Microscope_SEM_Remote::exposureTimingTest()
+{
+  char *msgbuf = NULL;
+  vrpn_int32 len = 0;
+
+  return dispatchMessage(len, msgbuf, d_ExposureTimingTest_type);
+}
+
 int nmm_Microscope_SEM_Remote::setBeamCurrent(vrpn_float32 current_picoAmps)
 {
   char *msgbuf;
@@ -361,6 +370,84 @@ int nmm_Microscope_SEM_Remote::setBeamWidth(vrpn_float32 beamWidth_nm)
   }
 
   return dispatchMessage(len, msgbuf, d_SetBeamWidth_type);
+}
+
+int nmm_Microscope_SEM_Remote::setPointReportEnable(vrpn_int32 enable)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetPointReportEnable(&len, enable);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetPointReportEnable_type);
+}
+
+int nmm_Microscope_SEM_Remote::setDotSpacing(vrpn_float32 spacing_nm)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetDotSpacing(&len, spacing_nm);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetDotSpacing_type);
+}
+
+int nmm_Microscope_SEM_Remote::setLineSpacing(vrpn_float32 spacing_nm)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetLineSpacing(&len, spacing_nm);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetLineSpacing_type);
+}
+
+int nmm_Microscope_SEM_Remote::setLinearExposure(vrpn_float32 pCoul_per_cm)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetLinearExposure(&len, pCoul_per_cm);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetLinearExposure_type);
+}
+
+int nmm_Microscope_SEM_Remote::setAreaExposure(vrpn_float32 uCoul_per_sq_cm)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetAreaExposure(&len, uCoul_per_sq_cm);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetAreaExposure_type);
+}
+
+int nmm_Microscope_SEM_Remote::setMagnification(vrpn_float32 mag)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetMagnification(&len, mag);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetMagnification_type);
 }
 
 int nmm_Microscope_SEM_Remote::registerChangeHandler(void *userdata,
@@ -515,6 +602,26 @@ void nmm_Microscope_SEM_Remote::getExposureStatus(vrpn_int32 &numPointsTotal,
   numPointsDone = d_numPointsDone;
   timeTotal_sec = d_timeTotal_sec;
   timeDone_sec = d_timeDone_sec;
+}
+
+void nmm_Microscope_SEM_Remote::convert_nm_to_DAC(const double x_nm, 
+                           const double y_nm,
+                           int &xDAC, int &yDAC)
+{
+  nmm_Microscope_SEM::convert_nm_to_DAC((double)d_magnification,
+                   d_resolutionX, d_resolutionY,
+                   d_maxScanX, d_maxScanY,
+                   x_nm, y_nm, xDAC, yDAC);
+}
+
+void nmm_Microscope_SEM_Remote::convert_DAC_to_nm(const int xDAC, 
+                                                  const int yDAC,
+                           double &x_nm, double &y_nm)
+{
+  nmm_Microscope_SEM::convert_DAC_to_nm((double)d_magnification,
+                   d_resolutionX, d_resolutionY,
+                   d_maxScanX, d_maxScanY,
+                   xDAC, yDAC, x_nm, y_nm);
 }
 
 //static

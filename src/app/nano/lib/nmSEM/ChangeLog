@@ -1,3 +1,16 @@
+2001-09-01  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_EDAX.h : added constant EDAX_MIN_POINT_DWELL_SEC
+	* nmm_Microscope_SEM.hC : added messages for timing test, 
+        point reporting, dot spacing, line spacing, linear exposure, area
+        exposure, setting magnification
+        changed addPolyline message to include linear exposure parameter which
+        gets used instead of the area exposure if the line width is 0
+        (convert_DAC_to_nm): new function
+        (convert_nm_to_DAC): new function
+	* nmm_Microscope_SEM_Remote.hC (convert_DAC_to_nm): new function
+        (convert_nm_to_DAC): new function
+
 2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_Microscope_SEM.hC : added new message type to report the exposure
@@ -10,7 +23,7 @@
 
 2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
 
-	* nmm_Edax.h : reorder #includes, fix braces.
+	* nmm_EDAX.h : reorder #includes, fix braces.
 	* nmm_Microscope_SEM_Remote.h : reorder #includes, fix braces.
 	* nmui_SEM.h : reorder #includes, fix braces.
 

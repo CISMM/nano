@@ -1,6 +1,7 @@
 #ifndef NMM_MICROSCOPE_SEM_H
 #define NMM_MICROSCOPE_SEM_H
 
+#include <math.h>
 #include <vrpn_Connection.h>
 #include <vrpn_FileController.h>
 #include <vrpn_Types.h>
@@ -13,6 +14,11 @@
    Perhaps this can serve as a guide for factoring out what should be
    shared.
 */
+
+// by convention for an SEM, magnification refers to the scale when the image
+// is displayed on a 10 centimeter wide display - this is just that width in nm
+#define SEM_STANDARD_DISPLAY_WIDTH_NM (1e8) // (10 cm)*(nm/cm)
+#define SEM_INV_STANDARD_DISPLAY_WIDTH_NM (1e-8)
 
 class nmm_Microscope_SEM {
   public:
@@ -27,6 +33,7 @@ class nmm_Microscope_SEM {
                 SET_PIXEL_INTEGRATION_TIME,
                 SET_INTERPIXEL_DELAY_TIME,
                 ENABLE_SCAN,
+                ENABLE_POINT_REPORTING,
                 REPORT_RESOLUTION,
                 REPORT_PIXEL_INTEGRATION_TIME,
                 REPORT_INTERPIXEL_DELAY_TIME,
@@ -41,13 +48,17 @@ class nmm_Microscope_SEM {
                 EXTERNAL_SCAN_CONTROL_ENABLE,
                 REPORT_MAGNIFICATION,
                 CLEAR_EXPOSE_PATTERN,
+                SET_LINE_EXPOSURE,
+                SET_AREA_EXPOSURE,
                 ADD_POLYLINE,
                 ADD_POLYGON,
                 ADD_DUMP_POINT,
                 EXPOSE_PATTERN,
+                EXPOSURE_TIMING_TEST,
                 BEAM_CURRENT,
                 BEAM_WIDTH,
-                REPORT_EXPOSURE_STATUS} msg_t;
+                REPORT_EXPOSURE_STATUS
+                } msg_t;
   protected:
 //    vrpn_Connection * d_connection;
 //    vrpn_File_Controller * d_fileController;
@@ -70,8 +81,17 @@ class nmm_Microscope_SEM {
     vrpn_int32 d_AddPolyline_type;
     vrpn_int32 d_AddDumpPoint_type;
     vrpn_int32 d_ExposePattern_type;
+    vrpn_int32 d_ExposureTimingTest_type;
     vrpn_int32 d_SetBeamCurrent_type;
     vrpn_int32 d_SetBeamWidth_type;
+    vrpn_int32 d_SetPointReportEnable_type;
+
+    vrpn_int32 d_SetDotSpacing_type;
+    vrpn_int32 d_SetLineSpacing_type;
+    vrpn_int32 d_SetLinearExposure_type;
+    vrpn_int32 d_SetAreaExposure_type;
+
+    vrpn_int32 d_SetMagnification_type;
 
     // (server-->client) messages
 
@@ -163,12 +183,14 @@ class nmm_Microscope_SEM {
          vrpn_float32 *x_nm, vrpn_float32 *y_nm);
      
     static char * encode_AddPolyline (vrpn_int32 *len,
+         vrpn_float32 exposure_pCoul_per_cm,
          vrpn_float32 exposure_uCoul_per_cm2,
          vrpn_float32 lineWidth_nm,
          vrpn_int32 numPoints,
          vrpn_float32 *x_nm, vrpn_float32 *y_nm);
 
     static vrpn_int32 decode_AddPolylineHeader (const char **buf,
+         vrpn_float32 *exposure_pCoul_per_cm,
          vrpn_float32 *exposure_uCoul_per_cm2,
          vrpn_float32 *lineWidth_nm,
          vrpn_int32 *numPoints);
@@ -192,6 +214,36 @@ class nmm_Microscope_SEM {
                                             vrpn_float32 beamWidth_nm);
     static vrpn_int32 decode_SetBeamWidth (const char **buf,
                                             vrpn_float32 *beamWidth_nm);
+
+    static char * encode_SetPointReportEnable (vrpn_int32 *len,
+                                               vrpn_int32 enable);
+    static vrpn_int32 decode_SetPointReportEnable (const char **buf,
+                                                vrpn_int32 *enable);
+
+    static char * encode_SetDotSpacing (vrpn_int32 *len,
+                           vrpn_float32 dotSpacing_nm);
+    static vrpn_int32 decode_SetDotSpacing (const char **buf, 
+                           vrpn_float32 *dotSpacing_nm);
+
+    static char * encode_SetLineSpacing (vrpn_int32 *len,
+                           vrpn_float32 lineSpacing_nm);
+    static vrpn_int32 decode_SetLineSpacing (const char **buf,
+                           vrpn_float32 *lineSpacing_nm);
+
+    static char * encode_SetLinearExposure (vrpn_int32 *len,
+                           vrpn_float32 exposure_pCoul_per_cm);
+    static vrpn_int32 decode_SetLinearExposure (const char **buf,
+                           vrpn_float32 *exposure_pCoul_per_cm);
+
+    static char * encode_SetAreaExposure (vrpn_int32 *len,
+                           vrpn_float32 exposure_uCoul_per_sq_cm);
+    static vrpn_int32 decode_SetAreaExposure (const char **buf,
+                           vrpn_float32 *exposure_uCoul_per_sq_cm);
+
+    static char * encode_SetMagnification (vrpn_int32 *len,
+                                              vrpn_float32 mag);
+    static vrpn_int32 decode_SetMagnification (const char **buf,
+                                              vrpn_float32 *mag);
 
     // (server-->client)
     static char * encode_ReportResolution (vrpn_int32 *len, 
@@ -292,6 +344,32 @@ class nmm_Microscope_SEM {
                                                vrpn_int32 *numPointsDone,
                                                vrpn_float32 *timeTotal_sec,
                                                vrpn_float32 *timeDone_sec);
+
+    static void convert_nm_to_DAC(const double mag,
+                                const int res_x, const int res_y,
+                                const int xDACspan, const int yDACspan,
+                                const double x_nm, const double y_nm,
+                                int &x_DAC, int &y_DAC)
+    {
+      x_DAC = (int)floor(x_nm*(double)xDACspan*mag*
+                         SEM_INV_STANDARD_DISPLAY_WIDTH_NM);
+      y_DAC = yDACspan - 1 -
+              (int)floor(y_nm*(double)yDACspan*(double)res_x*mag*
+                         SEM_INV_STANDARD_DISPLAY_WIDTH_NM/
+                         (double)res_y);
+    }
+    static void convert_DAC_to_nm(const double mag,
+                                const int res_x, const int res_y,
+                                const int xDACspan, const int yDACspan,
+                                const int x_DAC, const int y_DAC,
+                                double &x_nm, double &y_nm)
+    {
+      x_nm = (double)x_DAC*SEM_STANDARD_DISPLAY_WIDTH_NM/
+         ((double)xDACspan*mag);
+      y_nm = (double)(yDACspan - y_DAC - 1)*
+         (double)res_y*SEM_STANDARD_DISPLAY_WIDTH_NM/
+         ((double)yDACspan*(double)res_x*mag);
+    }
 
 //    packs the message reliably and then deletes [] buf
 //    int dispatchMessage (vrpn_int32 len, const char *buf, 

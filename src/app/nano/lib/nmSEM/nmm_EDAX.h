@@ -3,19 +3,6 @@
 
 #include <vrpn_Types.h>
 
-class nmm_EDAX {
- public:
-  static int resolutionToIndex(const int res_x, const int res_y);
-  static int indexToResolution(const int id, int &res_x, int &res_y);
-  /// finds the nearest valid integration time
-  static void snapIntegrationTime_nsec(int &time_nsec, vrpn_bool preferLarger);
-  /// finds the nearest valid interpixel delay time
-  static void snapInterPixelDelayTime_nsec(int &time_nsec,
-                                           vrpn_bool preferLarger);
-  /// finds the nearest valid resolution
-  static void snapResolution(int &res_x, int &res_y, vrpn_bool preferLarger);
-};
-
 const int EDAX_ERROR = -1;
 const int EDAX_OK = 0;
 
@@ -105,4 +92,22 @@ const int EDAX_SPOT_MODE =(5);
 
 // other
 const int EDAX_DEFAULT_BLANK_MODE=(1); // blank between points enabled
+
+// this is based on experiment: approximate time to execute SpMoveEx() as 
+// observed on an oscilloscope
+const double EDAX_MIN_POINT_DWELL_SEC=(100e-6);
+
+class nmm_EDAX {
+ public:
+  static int resolutionToIndex(const int res_x, const int res_y);
+  static int indexToResolution(const int id, int &res_x, int &res_y);
+  /// finds the nearest valid integration time
+  static void snapIntegrationTime_nsec(int &time_nsec, vrpn_bool preferLarger);
+  /// finds the nearest valid interpixel delay time
+  static void snapInterPixelDelayTime_nsec(int &time_nsec,
+                                           vrpn_bool preferLarger);
+  /// finds the nearest valid resolution
+  static void snapResolution(int &res_x, int &res_y, vrpn_bool preferLarger);
+};
+
 #endif

@@ -66,7 +66,8 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     int addPolygon(vrpn_float32 exposure_uCoul_per_cm2, vrpn_int32 numPoints,
                    vrpn_float32 *x_nm, vrpn_float32 *y_nm);
     // add a polyline shape to the pattern
-    int addPolyline(vrpn_float32 exposure_uCoul_per_cm2,
+    int addPolyline(vrpn_float32 exposure_pCoul_per_cm,
+                    vrpn_float32 exposure_uCoul_per_cm2,
                     vrpn_float32 lineWidth_nm, vrpn_int32 numPoints,
                     vrpn_float32 *x_nm, vrpn_float32 *y_nm);
     // set a point to which the beam can go when the program must pause
@@ -74,10 +75,24 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     int addDumpPoint(vrpn_float32 x_nm, vrpn_float32 y_nm);
     // draw the pattern with the electron beam
     int exposePattern();
+    // do a timing test for the pattern
+    int exposureTimingTest();
     // set the beam current
     int setBeamCurrent(vrpn_float32 current_picoAmps);
     // set the beam width
     int setBeamWidth(vrpn_float32 width_nm);
+    // set point reporting enable/disable
+    int setPointReportEnable(vrpn_int32 enable);
+    // set dot spacing
+    int setDotSpacing(vrpn_float32 spacing_nm);
+    // set line spacing
+    int setLineSpacing(vrpn_float32 spacing_nm);
+    // set linear exposure
+    int setLinearExposure(vrpn_float32 exposure_pCoul_per_cm);
+    // set area exposure
+    int setAreaExposure(vrpn_float32 exposure_uCoul_per_sq_cm);
+    // set magnification
+    int setMagnification(vrpn_float32 mag);
 
     // message callback registration
     int registerChangeHandler(void *userdata,
@@ -108,6 +123,11 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     void getExposureStatus(vrpn_int32 &numPointsTotal, 
        vrpn_int32 &numPointsDone, vrpn_float32 &timeTotal_sec, 
        vrpn_float32 &timeDone_sec);
+
+    void convert_nm_to_DAC(const double x_nm, const double y_nm,
+                           int &xDAC, int &yDAC);
+    void convert_DAC_to_nm(const int xDAC, const int yDAC,
+                           double &x_nm, double &y_nm);
 
 
     // other
