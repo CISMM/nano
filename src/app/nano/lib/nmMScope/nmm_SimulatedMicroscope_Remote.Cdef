@@ -34,7 +34,7 @@ CLASSNAME nmm_SimulatedMicroscope_Remote
 
 nmm_SimulatedMicroscope_Remote::nmm_SimulatedMicroscope_Remote
   (const char * name, vrpn_Connection * connection, const char * planename, 
-  nmb_Dataset * dataset, URender * testobject) : nmm_AFMSIM_Report(connection), nmm_AFMSIMSERVER_Report(connection),
+  nmb_Dataset * dataset, URender * testobject = NULL) : nmm_AFMSIM_Report(connection), nmm_AFMSIMSERVER_Report(connection),
   nmb_SharedDevice_Remote(name,connection), d_dataset(dataset), 
   RealAFMPlaneName(d_dataset->heightPlaneName->string()),
   RealAFMPlane(d_dataset->inputGrid->getPlaneByName(RealAFMPlaneName)), 
@@ -79,22 +79,86 @@ int nmm_SimulatedMicroscope_Remote::handle_gotConnection (void * userdata, vrpn_
   grpc_me->encode_and_sendGridandScanInfo(grpc_me->d_dataset->inputGrid->numX(), grpc_me->d_dataset->inputGrid->numY(),
 			grpc_me->d_dataset->inputGrid->minX(),grpc_me->d_dataset->inputGrid->minY(),0,
 			grpc_me->d_dataset->inputGrid->maxX(),grpc_me->d_dataset->inputGrid->maxY(),128);
-    
+//
+  //model-triangles stuff    
   int num_vertices = (grpc_me->myURenderObject->num_triangles * 3);
   cout << "num triangles: " << grpc_me->myURenderObject->num_triangles << "\tnum vertices: " << num_vertices << endl;
-  //send triangles
-  if (num_vertices != 0){
-	grpc_me->encode_and_sendTriangleScale(grpc_me->myURenderObject->scale_triangles);
+//
+  if(grpc_me->myURenderObject != NULL){
+		q_vec_type p1, p2, p3;
+
+		//send triangle scale
+		if (num_vertices != 0){
+//			grpc_me->encode_and_sendTriangleScale(grpc_me->myURenderObject->GetLocalXform().GetScale());
+			grpc_me->encode_and_sendTriangleScale(1.0);
+		}
+//
+		//send triangles
+		for(int i = 0; i < num_vertices;i += 3){//only sends triangles if they have been filled in in URender 
+                                          //(i.e. num_triangles != 0), so safe to keep have this for loop here
+			// rotate and translate points
+
+			q_vec_set(p1, grpc_me->myURenderObject->triangles[i][0],
+							grpc_me->myURenderObject->triangles[i][1],
+							grpc_me->myURenderObject->triangles[i][2]);
+
+			q_vec_set(p2, grpc_me->myURenderObject->triangles[i + 1][0],
+							grpc_me->myURenderObject->triangles[i + 1][1],
+							grpc_me->myURenderObject->triangles[i + 1][2]);
+
+			q_vec_set(p3, grpc_me->myURenderObject->triangles[i + 2][0],
+							grpc_me->myURenderObject->triangles[i + 2][1],
+							grpc_me->myURenderObject->triangles[i + 2][2]);
+
+			// rotate
+			q_xform(p1, grpc_me->myURenderObject->GetLocalXform().GetRot(), p1);
+			q_xform(p2, grpc_me->myURenderObject->GetLocalXform().GetRot(), p2);
+			q_xform(p3, grpc_me->myURenderObject->GetLocalXform().GetRot(), p3);
+
+			// translate
+			q_vec_add(p1, grpc_me->myURenderObject->GetLocalXform().GetTrans(), p1);
+			q_vec_add(p2, grpc_me->myURenderObject->GetLocalXform().GetTrans(), p2);
+			q_vec_add(p3, grpc_me->myURenderObject->GetLocalXform().GetTrans(), p3);
+
+			// scale
+//			q_vec_scale(p1, grpc_me->myURenderObject->GetLocalXform().GetScale(), p1);
+//			q_vec_scale(p2, grpc_me->myURenderObject->GetLocalXform().GetScale(), p2);
+//			q_vec_scale(p3, grpc_me->myURenderObject->GetLocalXform().GetScale(), p3);
+
+			q_vec_scale(p1, 2, p1);
+			q_vec_scale(p2, 2, p2);
+			q_vec_scale(p3, 2, p3);
+
+
+			grpc_me->encode_and_sendTriangle(
+				p1[0], p1[1], p1[2],
+				p2[0], p2[1], p2[2],
+				p3[0], p3[1], p3[2]);  
+		}
+//
+		//for debugging puposes
+		FILE * file;
+		if ( (file = fopen("triangles_sent.txt", "w")) == NULL) {
+				fprintf(stderr,"Could not open triangles.txt for write\n");
+				return -1;
+		}
+//
+		for(i = 0; i < num_vertices;i++){
+
+			fprintf(file,"%g,%g,%g\n\n",
+				grpc_me->myURenderObject->triangles[i][0],
+				grpc_me->myURenderObject->triangles[i][1],
+				grpc_me->myURenderObject->triangles[i][2]/*,
+				grpc_me->myURenderObject->triangles[++i][0],
+				grpc_me->myURenderObject->triangles[i][1],
+				grpc_me->myURenderObject->triangles[i][2],
+				grpc_me->myURenderObject->triangles[++i][0],
+				grpc_me->myURenderObject->triangles[i][1],
+				grpc_me->myURenderObject->triangles[i][2]*/);
+		}
+		fclose(file);
   }
-  for(int i = 0; i < num_vertices;i++){//only sends triangles if they have been filled in in URender 
-                                       //(i.e. num_triangles != 0), so safe to keep have this for loop here
-	grpc_me->encode_and_sendTriangle(
-		grpc_me->myURenderObject->triangles[i][0],  grpc_me->myURenderObject->triangles[i][1],grpc_me->myURenderObject->triangles[i][2],
-		grpc_me->myURenderObject->triangles[++i][0],grpc_me->myURenderObject->triangles[i][1],grpc_me->myURenderObject->triangles[i][2],
-		grpc_me->myURenderObject->triangles[++i][0],grpc_me->myURenderObject->triangles[i][1],grpc_me->myURenderObject->triangles[i][2]);
-  }
-  
-  return 0;
+		return 0;
 }
 //
 RECEIVE_MSG WindowLineData {

@@ -1,3 +1,8 @@
+2002-03-27  David Borland  <borland@cs.unc.edu>
+
+        * nmm_SimulatedMicroscope_Remote.Cdef: added code for sending 
+        translated and rotated triangles to the AFM simulator
+
 2002-03-21  Aron Helser  <helser@cs.unc.edu>
 
 	* AFMState.C: Handle replacement BCString ->
