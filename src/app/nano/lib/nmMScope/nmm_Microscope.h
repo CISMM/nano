@@ -584,7 +584,9 @@ class nmm_Microscope {
 					vrpn_float32 fNormalY,
 					vrpn_float32 fNormalZ,
 					vrpn_float32 fPlaneD,
-					vrpn_float32 fGuardDepth
+					vrpn_float32 fGuardDepth,
+					vrpn_int32 nChannel,
+					vrpn_int32 bDirection
 					);
     int decode_EnterGuardedScanMode (
 				     const char ** buffer,
@@ -596,7 +598,9 @@ class nmm_Microscope {
 				     vrpn_float32 (*fNormalY),
 				     vrpn_float32 (*fNormalZ),
 				     vrpn_float32 (*fPlaneD),
-				     vrpn_float32 (*fGuardDepth)
+				     vrpn_float32 (*fGuardDepth),
+				     vrpn_int32 (*nChannel),
+				     vrpn_int32 (*bDirection)
 				     );
     
     char * encode_EnterDirectZControl (long * len, float, float, float,
@@ -655,7 +659,9 @@ class nmm_Microscope {
 				     vrpn_float32 fNormalY,
 				     vrpn_float32 fNormalZ,
 				     vrpn_float32 fPlaneD,
-				     vrpn_float32 fGuardDepth
+				     vrpn_float32 fGuardDepth,
+				     vrpn_int32 nChannel,
+				     vrpn_int32 bDirection
 				     );
     
     int decode_InGuardedScanMode (
@@ -668,7 +674,9 @@ class nmm_Microscope {
 				  vrpn_float32 (*fNormalY),
 				  vrpn_float32 (*fNormalZ),
 				  vrpn_float32 (*fPlaneD),
-				  vrpn_float32 (*fGuardDepth)
+				  vrpn_float32 (*fGuardDepth),
+				  vrpn_int32 (*nChannel),
+				  vrpn_int32 (*nDirection)
 				  );
     
     char * encode_InDirectZControl (long * len, float, float, float,

@@ -415,7 +415,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long EnterContactMode (float p, float i, float d, float set);
     long EnterGuardedScanMode (float a_fP, float a_fI, float a_fD, float a_fSetpoint, 
 						  float a_fNormalX, float a_fNormalY, float a_fNormalZ,
-						  float a_fPlaneD, float a_fGuardDepth);
+						  float a_fPlaneD, float a_fGuardDepth, int a_nChannel, int a_bDirection);
     long EnterDirectZControl (float _max_z_step, float _max_xy_step, 
 			      float _min_setpoint, float _max_setpoint, 
 			      float _max_lateral_force);

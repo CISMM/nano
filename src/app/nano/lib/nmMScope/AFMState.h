@@ -444,6 +444,8 @@ struct AFMGuardedScanState {
   float fNormalZ;
   float fPlaneD;
   float fGuardDepth;
+  int nChannel;
+  int bDirection;
 };
 
 struct AFMInitializationState {

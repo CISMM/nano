@@ -43,6 +43,8 @@ VRPN_MESSAGE EnterGuardedScanMode {
   float32 fNormalZ
   float32 fPlaneD
   float32 fGuardDepth
+  int32 nChannel
+  int32 bDirection
 }
 VRPN_MESSAGE EnterDirectZControl {
   float32 max_z_step

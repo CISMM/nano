@@ -1,3 +1,7 @@
+2001-08-23    <dwyer@BISMUTH-CS>
+
+	* nmm_Microscope.C: Add channel/direction selector for guardedscan
+
 2000-12-05  Russ Taylor  <taylorr@cs.unc.edu>
 
 	nmm_MicroscopeRemote.Cdef : See if the "autoscan" feature is on

@@ -3038,14 +3038,16 @@ char * nmm_Microscope::encode_EnterGuardedScanMode (
       vrpn_float32 fNormalY,
       vrpn_float32 fNormalZ,
       vrpn_float32 fPlaneD,
-      vrpn_float32 fGuardDepth
+      vrpn_float32 fGuardDepth,
+      vrpn_int32 nChannel,
+      vrpn_int32 bDirection
 ) {
   char * msgbuf = NULL;
   char *mptr[1];
   int temp; int* mlen = &temp;
   if (!len) return NULL;
   *len =
-     (sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32));
+     (sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_int32) + sizeof(vrpn_int32));
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "encode_EnterGuardedScanMode: Out of memory.\n");
@@ -3062,6 +3064,8 @@ char * nmm_Microscope::encode_EnterGuardedScanMode (
     vrpn_buffer(mptr, mlen, fNormalZ);
     vrpn_buffer(mptr, mlen, fPlaneD);
     vrpn_buffer(mptr, mlen, fGuardDepth);
+    vrpn_buffer(mptr, mlen, nChannel);
+    vrpn_buffer(mptr, mlen, bDirection);
   }
   return msgbuf;
 }
@@ -3076,7 +3080,9 @@ int nmm_Microscope::decode_EnterGuardedScanMode (
       vrpn_float32 (*fNormalY),
       vrpn_float32 (*fNormalZ),
       vrpn_float32 (*fPlaneD),
-      vrpn_float32 (*fGuardDepth)
+      vrpn_float32 (*fGuardDepth),
+      vrpn_int32 (*nChannel),
+      vrpn_int32 (*bDirection)
 ) {
   if (!buffer
    || !P
@@ -3087,7 +3093,9 @@ int nmm_Microscope::decode_EnterGuardedScanMode (
    || !fNormalY
    || !fNormalZ
    || !fPlaneD
-   || !fGuardDepth) return -1;
+   || !fGuardDepth
+   || !nChannel
+   || !bDirection) return -1;
   if (vrpn_unbuffer(buffer, P)) return -1;
   if (vrpn_unbuffer(buffer, I)) return -1;
   if (vrpn_unbuffer(buffer, D)) return -1;
@@ -3097,6 +3105,8 @@ int nmm_Microscope::decode_EnterGuardedScanMode (
   if (vrpn_unbuffer(buffer, fNormalZ)) return -1;
   if (vrpn_unbuffer(buffer, fPlaneD)) return -1;
   if (vrpn_unbuffer(buffer, fGuardDepth)) return -1;
+  if (vrpn_unbuffer(buffer, nChannel)) return -1;
+  if (vrpn_unbuffer(buffer, bDirection)) return -1;
   return 0;
 }
 
@@ -3463,14 +3473,16 @@ char * nmm_Microscope::encode_InGuardedScanMode (
       vrpn_float32 fNormalY,
       vrpn_float32 fNormalZ,
       vrpn_float32 fPlaneD,
-      vrpn_float32 fGuardDepth
+      vrpn_float32 fGuardDepth,
+      vrpn_int32 nChannel,
+      vrpn_int32 bDirection
 ) {
   char * msgbuf = NULL;
   char *mptr[1];
   int temp; int* mlen = &temp;
   if (!len) return NULL;
   *len =
-     (sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32));
+     (sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_float32) + sizeof(vrpn_int32) + sizeof(vrpn_int32));
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "encode_InGuardedScanMode: Out of memory.\n");
@@ -3487,6 +3499,8 @@ char * nmm_Microscope::encode_InGuardedScanMode (
     vrpn_buffer(mptr, mlen, fNormalZ);
     vrpn_buffer(mptr, mlen, fPlaneD);
     vrpn_buffer(mptr, mlen, fGuardDepth);
+    vrpn_buffer(mptr, mlen, nChannel);
+    vrpn_buffer(mptr, mlen, bDirection);
   }
   return msgbuf;
 }
@@ -3501,7 +3515,9 @@ int nmm_Microscope::decode_InGuardedScanMode (
       vrpn_float32 (*fNormalY),
       vrpn_float32 (*fNormalZ),
       vrpn_float32 (*fPlaneD),
-      vrpn_float32 (*fGuardDepth)
+      vrpn_float32 (*fGuardDepth),
+      vrpn_int32 (*nChannel),
+      vrpn_int32 (*bDirection)
 ) {
   if (!buffer
    || !P
@@ -3512,7 +3528,9 @@ int nmm_Microscope::decode_InGuardedScanMode (
    || !fNormalY
    || !fNormalZ
    || !fPlaneD
-   || !fGuardDepth) return -1;
+   || !fGuardDepth
+   || !nChannel
+   || !bDirection) return -1;
   if (vrpn_unbuffer(buffer, P)) return -1;
   if (vrpn_unbuffer(buffer, I)) return -1;
   if (vrpn_unbuffer(buffer, D)) return -1;
@@ -3522,6 +3540,8 @@ int nmm_Microscope::decode_InGuardedScanMode (
   if (vrpn_unbuffer(buffer, fNormalZ)) return -1;
   if (vrpn_unbuffer(buffer, fPlaneD)) return -1;
   if (vrpn_unbuffer(buffer, fGuardDepth)) return -1;
+  if (vrpn_unbuffer(buffer, nChannel)) return -1;
+  if (vrpn_unbuffer(buffer, bDirection)) return -1;
   return 0;
 }
 

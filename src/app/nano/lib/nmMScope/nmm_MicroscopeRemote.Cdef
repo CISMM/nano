@@ -472,11 +472,13 @@ long nmm_Microscope_Remote::ModifyMode (void) {
                               state.modify.i_gain,
                               state.modify.d_gain,
                               state.modify.setpoint,
-							  state.guardedscan.fNormalX,
-							  state.guardedscan.fNormalY,
-							  state.guardedscan.fNormalZ,
-							  state.guardedscan.fPlaneD,
-							  state.guardedscan.fGuardDepth);
+			      state.guardedscan.fNormalX,
+			      state.guardedscan.fNormalY,
+			      state.guardedscan.fNormalZ,
+			      state.guardedscan.fPlaneD,
+			      state.guardedscan.fGuardDepth,
+			     	state.guardedscan.nChannel,
+				state.guardedscan.bDirection);
 	case CONTACT:
 	   return EnterContactMode(state.modify.p_gain, state.modify.i_gain,
                                 state.modify.d_gain, state.modify.setpoint);
@@ -572,7 +574,9 @@ long nmm_Microscope_Remote::ImageMode (void) {
 							  state.guardedscan.fNormalY,
 							  state.guardedscan.fNormalZ,
 							  state.guardedscan.fPlaneD,
-							  state.guardedscan.fGuardDepth);
+							  state.guardedscan.fGuardDepth,
+							state.guardedscan.nChannel,
+							state.guardedscan.bDirection);
   }
   return 0;
 }
@@ -1126,13 +1130,13 @@ long nmm_Microscope_Remote::EnterContactMode (float p,
 long nmm_Microscope_Remote::EnterGuardedScanMode (float a_fP, 
 					      float a_fI, float a_fD, float a_fSetpoint, 
 						  float a_fNormalX, float a_fNormalY, float a_fNormalZ,
-						  float a_fPlaneD, float a_fGuardDepth) {
+						  float a_fPlaneD, float a_fGuardDepth, int a_nChannel, int a_bDirection) {
   char * msgbuf;
   vrpn_int32 len;
 
   msgbuf = encode_EnterGuardedScanMode(&len, a_fP, a_fI, a_fD, a_fSetpoint,
 											a_fNormalX, a_fNormalY, a_fNormalZ,
-											a_fPlaneD, a_fGuardDepth);
+											a_fPlaneD, a_fGuardDepth, a_nChannel, a_bDirection);
   if (!msgbuf)
     return -1;
 
@@ -1335,7 +1339,9 @@ long nmm_Microscope_Remote::SetModForce () {
                                    state.guardedscan.fNormalY,
                                    state.guardedscan.fNormalZ,
                                    state.guardedscan.fPlaneD,
-                                   state.guardedscan.fGuardDepth);
+                                   state.guardedscan.fGuardDepth,
+				   state.guardedscan.nChannel,
+				   state.guardedscan.bDirection);
 	  case CONTACT:
         return EnterContactMode(state.modify.p_gain, state.modify.i_gain,
                                    state.modify.d_gain, state.modify.setpoint);
@@ -1381,7 +1387,9 @@ long nmm_Microscope_Remote::SetModForce () {
 							  state.guardedscan.fNormalY,
 							  state.guardedscan.fNormalZ,
 							  state.guardedscan.fPlaneD,
-							  state.guardedscan.fGuardDepth)) {
+							  state.guardedscan.fGuardDepth,
+							state.guardedscan.nChannel,
+							state.guardedscan.bDirection)) {
 			fprintf(stderr, "Error, can't enter guarded scan mode\n");
 			return -1;
 		}
@@ -1548,7 +1556,7 @@ long nmm_Microscope_Remote::SetScanlineModeParameters(){
 	return EnterGuardedScanMode(state.scanline.p_gain, state.scanline.i_gain,
 			state.scanline.d_gain, state.scanline.setpoint,
 			state.guardedscan.fNormalX, state.guardedscan.fNormalY, state.guardedscan.fNormalZ,
-			state.guardedscan.fPlaneD, state.guardedscan.fGuardDepth);
+			state.guardedscan.fPlaneD, state.guardedscan.fGuardDepth, state.guardedscan.nChannel, state.guardedscan.bDirection);
 
     default:
 	return 0;
@@ -2219,6 +2227,8 @@ RECEIVE_MSG InGuardedScanMode {
 //    float32 fNormalZ
 //    float32 fPlaneD
 //    float32 fGuardDepth
+//    int32 nChannel
+//    int32 bDirection
 
   // Update the guardedscan parameters (common to all modes)...
   state.guardedscan.fNormalX = fNormalX;
@@ -2226,6 +2236,8 @@ RECEIVE_MSG InGuardedScanMode {
   state.guardedscan.fNormalZ = fNormalZ;
   state.guardedscan.fPlaneD = fPlaneD;
   state.guardedscan.fGuardDepth = fGuardDepth;
+  state.guardedscan.nChannel = nChannel;
+  state.guardedscan.bDirection = bDirection;
 
   if(state.acquisitionMode == MODIFY) {
     printf("Matching modify parameters (GuardedScan).\n");
@@ -2518,6 +2530,8 @@ RECEIVE_MSG WindowLineData {
   // Handle guarded scan differently...
   if(state.image.mode == GUARDED_SCAN) {
      BCPlane* pPlane = d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string());
+  
+     // Set the value...
      pPlane->setValue(x, y, data[0][0]);
      d_dataset->range_of_change.AddPoint(x, y);
 

@@ -40,6 +40,8 @@ class CGuardedScanClient {
   q_vec_type   m_vPlaneNormal; // Normal of Most Recently Acquired plane
   double       m_fPlaneDistance; // Distance of the "MRA" plane to origin
   double       m_fGuardDepth; // Depth of guard under acquired plane
+  int          m_nChannel; // Specifies a channel indicator (0=topography, 1=z-piezo)
+  int          m_bDirection; // Specifies a direction. (0=forward, 1=reverse)
 };
 
 #endif

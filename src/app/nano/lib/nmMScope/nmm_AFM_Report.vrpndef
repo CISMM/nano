@@ -25,6 +25,8 @@ VRPN_MESSAGE InGuardedScanMode {
   float32 fNormalZ
   float32 fPlaneD
   float32 fGuardDepth
+  int32 nChannel
+  int32 bDirection
 }
 
 VRPN_MESSAGE InTappingMode {
