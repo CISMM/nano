@@ -2769,6 +2769,7 @@ int doFeelLive (int whichUser, int userEvent)
 	double height;
 	plane -> valueAt(&height,clipPos[0],clipPos[1]);
 	clipPos[2] = height;
+	z_pos = height;
       } 
       else {
 	// Direct_STEP_3D
