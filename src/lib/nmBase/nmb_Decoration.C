@@ -17,7 +17,7 @@ nmb_Decoration::nmb_Decoration (void) :
   rateOfTime (1),
   user_mode (0),
   //std_dev_color_scale (1.0f),
-  num_markers_shown (2000),
+  num_markers_shown (1000),
   trueTipLocation_changed (0),
   modSetpoint(0), modSetpointMin(0), modSetpointMax(0),
   imageSetpoint(0), imageSetpointMin(0), imageSetpointMax(0),
@@ -137,12 +137,13 @@ void nmb_Decoration::initScanline(long _lineCount) {
   scan_line = new PointType[scanLineCount];
 }
 
-void nmb_Decoration::addScrapeMark (PointType Top, PointType Bottom) {
+void nmb_Decoration::addScrapeMark (PointType Top, PointType Bottom,
+				    double surface_z) {
   nmb_LocationInfo * temp;
   callbackEntry * nce;
 
   // The top does not take into account the height of the scrapeHeight
-  Top[2] += marker_height;
+  Top[2] += marker_height + surface_z;
 
   // Grow virtual memory if needed
   if (num_scrapes >= max_num_scrapes) {

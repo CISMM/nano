@@ -2061,7 +2061,8 @@ void nmm_Microscope_Remote::DisplayModResult (const float _x, const float _y,
         bottom[2] = _height * heightPlane->scale();
     
       //if (glenable)
-      d_decoration->addScrapeMark(top, bottom);
+      //      d_decoration->addScrapeMark(top, bottom);
+      d_decoration->addScrapeMark(top, bottom, heightPlane->scaledValue(x, y));
 
     }
   }

@@ -94,7 +94,7 @@ class nmb_Decoration {
 
     // MANIPULATORS
 
-    void addScrapeMark (PointType Top, PointType Bottom);
+    void addScrapeMark (PointType Top, PointType Bottom, double surface_z);
     void addPulseMark (PointType Top, PointType Bottom);
       ///< Appends a marker to the end of the appropriate list.
       ///< Invokes all registered callbacks in undefined order.
