@@ -68,6 +68,9 @@ static  void handle_set_ds_axis(vrpn_int32,void*);
 static  void handle_msi_bond_mode (vrpn_int32, void *);
 static  void handle_msi_atom_radius(vrpn_float64, void *);
 
+// parse a .crv file
+void parse_crv_file(const char*);
+
 //-----------------------------------------------------------------
 ///These variables are for controlling importing of objects
 Tclvar_string	modelFile("modelFile", "", handle_import_file_change);
@@ -149,6 +152,11 @@ extern int setting_axis;
 static void handle_current_object_new(const char*, void*) {
 	nmb_ListOfStrings temp;
 	int i;
+
+    // don't add if .crv file
+    if (strstr(current_object_new.string(), ".crv") != 0) {
+        return;
+    }
 
 	// return NONE if user cancels open
 	if (strcmp(current_object_new.string(), "NONE") != 0) {
@@ -240,13 +248,7 @@ static void handle_current_object(const char*, void*) {
 				if (current_leg == -1) {	// all
 
 					// don't do anything--we don't want all legs set to the same value inadvertently
-					/*
-					spider_length = spi->GetSpiderLength(0);
-					spider_width = spi->GetSpiderWidth(0);
-					spider_thick = spi->GetSpiderThick(0);
-					spider_tess = spi->GetSpiderTess(0);
-					spider_curve = Q_RAD_TO_DEG(spi->GetSpiderCurve(0));
-					*/
+
 				}
 				else {
 					spider_length = spi->GetSpiderLength(current_leg);
@@ -280,6 +282,13 @@ static void handle_import_file_change (const char *, void *) {
     if (modelFile.string()) {  
         if (strcmp(modelFile.string(),"") != 0) {	// open the file
             //Only try to create the object if there is a file specified.
+
+            // Check for spi_curve file.  Don't want to generate a new object for this,
+            // just change the spider curve values
+            if (strstr(modelFile.string(), ".crv") != 0) {
+                parse_crv_file(modelFile.string());
+                return;
+            }
 
 			FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
             import_type = gen->GetExtension();
@@ -418,6 +427,52 @@ when loading
 			}
         }
     }
+}
+
+void parse_crv_file(const char* fname) {
+    char buffer[512];
+	char* token;
+	ifstream readfile;
+
+    // Check to make sure the current object is a spider
+    if (strcmp(*World.current_object, "spider.spi") != 0) {
+        printf("Error.  Current object is not a spider object.\n");
+        return;
+    }
+		
+    UTree *node = World.TGetNodeByName("spider.spi");
+	URSpider &obj = (URSpider&)node->TGetContents();
+
+    readfile.open(fname);
+    assert(readfile);
+
+    if(readfile.bad()) {
+		cerr << "Unable to open input file" << endl;
+        return;
+    }
+
+    int i = 0;
+    while(!readfile.eof()) {
+		readfile.getline(buffer, 512);
+
+        // skip Leg column
+		token = strtok(buffer, " \t\n");
+
+		if (token != NULL) {
+            // get beginning curvature
+			token = strtok(NULL, " \t\n");
+            obj.SetSpiderBegCurve(i, Q_DEG_TO_RAD(atof(token)));
+
+            // get ending curvature
+			token = strtok(NULL, " \t\n");
+            obj.SetSpiderEndCurve(i, Q_DEG_TO_RAD(atof(token)));
+		}
+        i++;
+	}
+    
+    obj.ReloadGeometry();
+
+    readfile.close();
 }
 
 static  void handle_import_visibility (vrpn_int32, void *)
@@ -976,6 +1031,13 @@ static void handle_spider_current_leg(const char*, void*)
 			spider_tess = obj.GetSpiderTess(current_leg);
 			spider_beg_curve = Q_RAD_TO_DEG(obj.GetSpiderBegCurve(current_leg));
             spider_end_curve = Q_RAD_TO_DEG(obj.GetSpiderEndCurve(current_leg));
+            if (spider_trans_leg_xy == 1) {
+                spider_trans_leg = obj.GetSpiderLegX(current_leg);
+            }
+            else {
+                spider_trans_leg = obj.GetSpiderLegY(current_leg);
+            }
+            spider_rot_leg = obj.GetSpiderLegRot(current_leg);
 		}
 	}
 }
