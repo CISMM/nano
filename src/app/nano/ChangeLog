@@ -1,3 +1,8 @@
+2002-07-25 Woojin Seok <seok@cs.unc.edu>
+
+        * microscape.C <setupSynchronization> : added variables of 
+	nmr_RegistrationUI class to be collaborated.
+
 2002-07-18 David Borland <borland@cs.unc.edu>
 
         * microscape.c : added client code for connecting to Gatan's 

@@ -5922,6 +5922,43 @@ void setupSynchronization( CollaborationManager * cm,
   rootUIControl->add(tclUIControls);
   /* */
 
+
+  // Analysis -> Registeration
+  nmui_Component * viewRegister;
+  viewRegister = new nmui_Component("Register");
+  viewRegister->add(&(alignerUI->d_registrationImageName3D));
+  viewRegister->add(&(alignerUI->d_registrationImageName2D));
+  viewRegister->add(&(alignerUI->d_newResampleImageName));
+  viewRegister->add(&(alignerUI->d_newResamplePlaneName));
+  viewRegister->add(&(alignerUI->d_registrationEnabled));
+  viewRegister->add(&(alignerUI->d_constrainToTopography));
+  viewRegister->add(&(alignerUI->d_invertWarp));
+  viewRegister->add(&(alignerUI->d_textureDisplayEnabled));
+  viewRegister->add(&(alignerUI->d_resampleResolutionX));
+  viewRegister->add(&(alignerUI->d_resampleResolutionY));
+  viewRegister->add(&(alignerUI->d_resampleRatio));
+  viewRegister->add(&(alignerUI->d_registrationColorMap3D));
+  //viewRegister->add(&(alignerUI->d_registrationColorMap2D));
+  viewRegister->add(&(alignerUI->d_autoAlignRequested));
+  viewRegister->add(&(alignerUI->d_numIterations));
+  viewRegister->add(&(alignerUI->d_stepSize));
+  viewRegister->add(&(alignerUI->d_resolutionLevel));
+  viewRegister->add(&(alignerUI->d_scaleX));
+  viewRegister->add(&(alignerUI->d_scaleY));
+  viewRegister->add(&(alignerUI->d_translateX));
+  viewRegister->add(&(alignerUI->d_translateY));
+  viewRegister->add(&(alignerUI->d_translateZ));
+  viewRegister->add(&(alignerUI->d_rotate3D_X));
+  viewRegister->add(&(alignerUI->d_rotate3D_Z));
+  viewRegister->add(&(alignerUI->d_rotate2D_Z));
+  viewRegister->add(&(alignerUI->d_shearZ));
+  viewRegister->add(&(alignerUI->d_autoAlignMode));
+  viewRegister->add(&(alignerUI->d_transformationSource));
+  viewRegister->add(&(alignerUI->d_flipProjectionImageInX));
+
+  rootUIControl->add(viewRegister);
+  
+
   /* */
   if(the_french_ohmmeter_ui) {
 
