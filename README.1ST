@@ -1,3 +1,5 @@
+Makefile info is in ./src/share/README-Makefiles
+
 Variables you may want set in your shell:
 
    MY_NANO_SRC_DIR -- the directory containing your checked-out copy of
@@ -9,8 +11,9 @@ Variables you may want set in your shell:
                       this is to cd to the parent (where nano is
                       checked-out) and set this to `pwd -P`.
 
-   MY_NANO_OBJ_DIR -- where to put object files (if not the detault:
-                      /afs/cs.unc.edu/project/stm/src/not_backed_up).
+   MY_NANO_OBJ_DIR -- where to put object files (if not the default:
+                      /afs/cs.unc.edu/project/stm/src/not_backed_up in
+                      unix and /tmp in cygwin).
 
    NM_TLC_DIR      -- this checks-out to ./nano/src/share/tcl/. The new
                       user interface has been committed (03/07/00) so you
@@ -23,12 +26,20 @@ Variables you may want set in your shell:
 Note, MY_NANO_???_DIR is no longer required under cygwin.
 
 
-How to compile nano (most archs):
-   gmake in ./src/lib
-   gmake in ./src/app/nano/lib
-   gmake in ./src/app/nano
+How to compile nano (most archs, see below for cygwin-specific info):
 
-   The executable is ./obj/$(HW_OS)/app/nano/nano
+ o This method is now outdated)
+     gmake in ./src/lib
+     gmake in ./src/app/nano/lib
+     gmake in ./src/app/nano
+
+ o The easier way is to:
+     gmake in ./src
+
+ o The executable is ./obj/$(HW_OS)/app/nano/nano
+
+ o More info pertaining to compiling can be found in
+   ./src/share/README-Makefiles
 
 
 How to get the non-vrpn version (no longer the default):
@@ -36,15 +47,24 @@ How to get the non-vrpn version (no longer the default):
 
 
 How to compile nano on pc_cygwin:
-   1) Get sdi, quat, vogl (was vlib-openGL), and vrpn as per usual.
+   1) Get sdi, quat, vogl (was vlib-openGL), and vrpn as per usual
+      and build them.
    2) Get nano.
-   3) make in ./src/lib
-      make in ./src/app/nano/lib
-      make in ./src/app/nano
+   3) Make as per unix, but there is no `gmake':
 
-      The executable is /tmp/pc_cygwin/app/nano/nano
+        make in ./src
 
-Note, MY_NANO_???_DIR is no longer required under cygwin.
+      or
+
+        make in ./src/lib
+        make in ./src/app/nano/lib
+        make in ./src/app/nano
+
+   The executable is /tmp/pc_cygwin/app/nano/nano.  If you set
+   MY_NANO_OBJ_DIR, the executable replace /tmp/pc_cygwin by that.
+
+   Note, MY_NANO_???_DIR is no longer required under cygwin.
+   (Note, juliano thinks he still needs to set MY_NANO_OBJ_DIR.)
 
 
 Some things that have moved:
@@ -68,5 +88,5 @@ How to link to a particular library (as opposed to a default):
    For instance, to force use of stm/src/vrpn instead of your own copy
    (which would normally be found first):
 
-      export MY_ALT_LIB_DIR=
-             "-I/afs/unc/proj/stm/src/vrpn -L/afs/unc/proj/stm/src/vrpn/$HW_OS"
+      export MY_ALT_LIB_DIR=\
+      "-I/afs/unc/proj/stm/src/vrpn -L/afs/unc/proj/stm/src/vrpn/$HW_OS"
