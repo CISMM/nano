@@ -1,3 +1,10 @@
+2003-04-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* patternShape.C (~PatternShapeListElement): fixed memory bug here
+	(CompositePatternShape constructor): now duplicates shapes instead of
+	just copying pointers to shapes
+	(CompositePatternShape operator =): "
+
 2003-04-11  Adam Seeger  <seeger@cs.unc.edu>
 
 	* patternEditor.C (addFocusTest): changed default canvasToWorld transform

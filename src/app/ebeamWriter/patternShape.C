@@ -100,10 +100,10 @@ void PatternShapeColorMap::draw(double x, double y,
 int PatternShape::s_nextID = 1;
 
 PatternShape::PatternShape(ShapeType type):
+  d_numReferences(1),
   d_parent(NULL),
   d_ID(s_nextID),
   d_shapeType(type),
-  d_numReferences(1),
   d_selected(vrpn_FALSE)
 {
   s_nextID++;
@@ -120,22 +120,23 @@ PatternShape::PatternShape(ShapeType type):
 PatternShapeListElement::PatternShapeListElement(PatternShape *ps): 
   d_shape(ps)
 {
-  d_shape->d_numReferences++;
+	d_shape->d_numReferences++;
 }
 
 PatternShapeListElement::PatternShapeListElement(
   const PatternShapeListElement &psle):
   d_shape(psle.d_shape)
 {
-  d_shape->d_numReferences++;
+	d_shape->d_numReferences++;
 }
 
 PatternShapeListElement::~PatternShapeListElement()
 {
-  if (d_shape->d_numReferences == 1) {
-    delete d_shape;
-  }
-  d_shape->d_numReferences--;
+	if (d_shape->d_numReferences == 1) {
+		delete d_shape;
+	} else {
+		d_shape->d_numReferences--;
+	}
 }
 
 int PatternShapeListElement::operator== 
@@ -1683,28 +1684,34 @@ CompositePatternShape::CompositePatternShape():
 {
 }
 
-CompositePatternShape::CompositePatternShape(const CompositePatternShape &cps):
-  PatternShape(PS_COMPOSITE),
-  d_subShapes(cps.d_subShapes)
+CompositePatternShape::CompositePatternShape(CompositePatternShape &cps):
+  PatternShape(PS_COMPOSITE)
 {
+  list<PatternShapeListElement>::iterator shape;
+  for (shape = cps.d_subShapes.begin(); shape != cps.d_subShapes.end(); shape++) {
+	addSubShape((*shape).d_shape->duplicate());
+  }
   int i;
   for (i = 0; i < 16; i++) {
 	d_parentFromObject[i] = cps.d_parentFromObject[i];
   }
-  list<PatternShapeListElement>::iterator shape;
+  
   for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
 	(*shape).d_shape->setParent(this);
   }
 }
 
-CompositePatternShape  &CompositePatternShape::operator = (const CompositePatternShape &cps)
+CompositePatternShape  &CompositePatternShape::operator = (CompositePatternShape &cps)
 {
-  d_subShapes = cps.d_subShapes;
+  clear();
+  list<PatternShapeListElement>::iterator shape;
+  for (shape = cps.d_subShapes.begin(); shape != cps.d_subShapes.end(); shape++) {
+	addSubShape((*shape).d_shape->duplicate());
+  }
   int i;
   for (i = 0; i < 16; i++) {
 	d_parentFromObject[i] = cps.d_parentFromObject[i];
   }
-  list<PatternShapeListElement>::iterator shape;
   for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
 	(*shape).d_shape->setParent(this);
   }
@@ -1966,6 +1973,13 @@ void CompositePatternShape::handleWorldFromObjectChange()
   for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
 	(*shape).d_shape->handleWorldFromObjectChange();
   }
+}
+
+void CompositePatternShape::addSubShape(PatternShape *shape)
+{
+	shape->setParent(this);
+	printf("CompositePatternShape::addSubShape: this=%d\n", this);
+	d_subShapes.push_back(PatternShapeListElement(shape));
 }
 
 void CompositePatternShape::removeSelectedShapes()

@@ -203,12 +203,12 @@ class PatternShape {
 	inline static void transformVect(double *transform, float x_src, float y_src, 
 		float &x_dest, float &y_dest);
   protected:
+	int d_numReferences;
 	PatternShape *d_parent;
 	double d_parentFromObject[16];
     int d_ID;
     ShapeType d_shapeType;
     static int s_nextID;
-    int d_numReferences;
     
 	// is this shape selected?
     vrpn_bool d_selected;
@@ -495,11 +495,11 @@ class PolygonPatternShape : public PatternShape {
 class CompositePatternShape : public PatternShape {
   friend class PatternFile;
   public:
-    CompositePatternShape(const CompositePatternShape &cps);
+    CompositePatternShape(CompositePatternShape &cps);
     CompositePatternShape();
     ~CompositePatternShape() {};
 
-	CompositePatternShape &operator = (const CompositePatternShape &cps);
+	CompositePatternShape &operator = (CompositePatternShape &cps);
 
     virtual PatternShape *duplicate()
         {return (PatternShape *)new CompositePatternShape(*this);}
@@ -553,9 +553,8 @@ class CompositePatternShape : public PatternShape {
        { d_subShapes = shapes;}
     list<PatternShapeListElement> &getSubShapes() {return d_subShapes;}
 
-    void addSubShape(PatternShape *shape)
-       {shape->setParent(this); 
-		d_subShapes.push_back(PatternShapeListElement(shape));}
+    void addSubShape(PatternShape *shape);
+       
     void removeSubShape() {d_subShapes.pop_back();}
 	void removeSelectedShapes();
     list<PatternShapeListElement>::iterator shapeListBegin()
