@@ -80,7 +80,8 @@ vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
     delete [] data;
   } else {
     printf("nmr_Registration_Proxy::setImage: "
-           "sending image parameters to remote\n");
+           "sending image parameters to remote: (%dx%d)\n",
+           im->width(), im->height());
     d_remote_impl->setImageParameters(whichImage, im->width(), im->height(),
                          treatAsHeightField);
     d_remote_impl->mainloop();
