@@ -82,7 +82,7 @@ encode_and_sendData(double ** Data, const int num_cols){
   retval = Send((long)len, d_WindowLineData_type, msgbuf);
 //
   //clean up before next iteration
-  for(i = 0; i < num_cols; ++i){
+  for(int i = 0; i < num_cols; ++i){
    delete line[i];
   }
   delete line;
