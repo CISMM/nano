@@ -7920,7 +7920,11 @@ int main (int argc, char* argv[])
     // DEBUG pause program to attach debugger. 
     //cin.get();
 
-    // image magick library expects this:
+    // image magick library expects this: in fact, it seems to ignore the
+    // path and only work if the modules.mgk file is located in the same
+    // directory as the batch file that ran the executable (or the executable
+    // itself) is located.  The DLLs also have to be in this directory, not
+    // just on the path!
     nmb_ImgMagick::initMagick(argv[0]);
     // For Tcl, also used in initialize_environment - it expects this:
     Tcl_FindExecutable(argv[0]);
@@ -8029,7 +8033,7 @@ int main (int argc, char* argv[])
     if(temp==NULL){cerr << "Memory fault\n"; 
     //kill(getpid(),SIGINT);
     return -1; }
-    temp->SetVisibility(0);    
+    temp->SetVisibility(0);
     World.TSetContents(temp);
     
     CenterUbergraphics();

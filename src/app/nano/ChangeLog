@@ -1,3 +1,11 @@
+2004-10-01  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* microscape.C : Comment changes.
+	* microscape.h : New version number.
+	* minit.c : Accepts different capitalizations of "null" for the
+		head tracker.
+	* nano.bat : Changed to run from my directory for debugging.
+
 2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* CollaborationManager.C : Uses new VRPN_CALLBACK definition.

@@ -977,7 +977,9 @@ peripheral_init
 	forceDevice = NULL;
     }
 
-    if (strcmp(headTrackerName, "null") != 0) {
+    if ( (strcmp(headTrackerName, "null") != 0) &&
+	 (strcmp(headTrackerName, "NULL") != 0) &&
+	 (strcmp(headTrackerName, "Null") != 0)) {
 	vrpnHeadTracker = new vrpn_Tracker_Remote (headTrackerName);
 	headSensor = 0;
     } else {

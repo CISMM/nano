@@ -70,8 +70,8 @@ class vrpn_Tracker_AnalogFly;
 class nm_MouseInteractor;
 class nmg_haptic_graphics;
 
-#define	MICROSCAPE_MAJOR_VERSION	(10)
-#define	MICROSCAPE_MINOR_VERSION	(0)
+#define	MICROSCAPE_MAJOR_VERSION	(11)
+#define	MICROSCAPE_MINOR_VERSION	(4)
 
 
 #define HEAD	0
