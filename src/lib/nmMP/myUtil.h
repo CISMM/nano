@@ -134,15 +134,6 @@ extern "C" { void *          __cdecl _alloca(size_t);}
 #endif
 
 enum { R=0, G=1, B=2, A=3 };
-// get rid of annoying windows macros -- i use min/max as member functions
-#ifdef _WIN32
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
-#endif
 
 /*-----------------------------*/
 /*****       Macros        *****/

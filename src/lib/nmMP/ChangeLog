@@ -1,3 +1,8 @@
+2001-09-05  David Marshburn  <marshbur@cs.unc.edu>
+
+	* myUtil.h: removed #undef's of min/max (Windows only).  This
+	was conflicting with topo.
+
 2001-3-2  Tom Hudson  <hudson@cs.unc.edu>
 
 	* thread.C (Semaphore::p) : removed a line that shouldn't have been
