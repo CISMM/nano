@@ -58,7 +58,7 @@ int vrpn_GPIBDeviceServer::rcv_Device(int board_index, int primary_address, int 
          board_index,              // Board Index (GPIB0 = 0, GPIB1 = 1, ...) 
          primary_address,          // Device primary address                  
          secondary_address,        // Device secondary address                
-         T10s,                    // Timeout setting (T10s = 10 seconds)     
+         T1000s,                    // Timeout setting (T10s = 10 seconds, T1000s = 1000 seconds)
          1,                       // Assert EOI line at end of write         
          0);                      // EOS termination mode                    
 	d_primary_address[d_num_devices] = primary_address;
@@ -163,15 +163,20 @@ int vrpn_GPIBDeviceServer::rcv_ReadData(vrpn_int32 pad, vrpn_int32 sad, int data
 	// Add 2 bytes for the standard header of "#0" and 
 	// one byte for the terminal end-of-data character
 	int index = get_device_id_index(pad, sad);
-	if ( index == -1 )
+	if ( index == -1 ) {
+	    fprintf(stderr,"vrpn_GPIBDeviceServer::rcv_ReadData: Bad device index\n");
 	    return -1;
+	}
 	ibrd(d_device_id[index], buffer, buf_len);   
 	if (ibsta & ERR) {
 	    GpibError( d_primary_address[index], d_secondary_address[index], "ibrd Error"); 
+	    fprintf(stderr,"vrpn_GPIBDeviceServer::rcv_ReadData: Error flag set in GPIB call\n");
+	    return -1;
 	}
 	// Check the standard header
 	if ((buffer[0] != '#') || (buffer[1] != '0')) {
 		fprintf(stderr,"vrpn_GPIBDeviceServer::rcv_ReadData: Standard header not received, data may be corrupt.\n");
+		return -1;
 	}
 
 	// ibcntl tells us the actual number of bytes read. Subract two for header and one for the 
@@ -179,6 +184,7 @@ int vrpn_GPIBDeviceServer::rcv_ReadData(vrpn_int32 pad, vrpn_int32 sad, int data
 	long data_read_len = ibcntl - 3;
 	if (data_read_len % sizeof(vrpn_float32) != 0) {
 		fprintf(stderr,"vrpn_GPIBDeviceServer::rcv_ReadData: Data not terminated correctly, may be truncated.\n");
+		return -1;
 	}
 	// Translate length into number of floats, rounding down if there's extra bytes in the buffer.
 	data_read_len /= sizeof(vrpn_float32);
@@ -194,7 +200,7 @@ int vrpn_GPIBDeviceServer::rcv_ReadData(vrpn_int32 pad, vrpn_int32 sad, int data
 	vrpn_int32 len;
 	char * msgbuf = encode_ResultData(&len, pad, sad, data_buf, data_read_len);
 	if (msgbuf == NULL) {
-		fprintf(stderr, "vrpn_GPIBDeviceServer::rcv_ReadData: out of memory.\n");
+		fprintf(stderr, "vrpn_GPIBDeviceServer::rcv_ReadData: Error in encode_ResultData.\n");
 		return -1;
 	}
 	if(Send(len, d_ResultData_type, msgbuf)) {
