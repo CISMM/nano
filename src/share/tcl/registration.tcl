@@ -108,41 +108,41 @@ pack $nmInfo(registration).mode_selector -anchor nw
 frame $nmInfo(registration).transformParameters -bd 3 -relief groove
 pack $nmInfo(registration).transformParameters -anchor nw
 
-generic_entry $nmInfo(registration).transformParameters.scaleX \
-        reg_scaleX "scale X" real
-pack $nmInfo(registration).transformParameters.scaleX -anchor nw
+#generic_entry $nmInfo(registration).transformParameters.scaleX \
+#        reg_scaleX "scale X" real
+#pack $nmInfo(registration).transformParameters.scaleX -anchor nw
 
-generic_entry $nmInfo(registration).transformParameters.scaleY \
-        reg_scaleY "scale Y" real
-pack $nmInfo(registration).transformParameters.scaleY -anchor nw
+#generic_entry $nmInfo(registration).transformParameters.scaleY \
+#        reg_scaleY "scale Y" real
+#pack $nmInfo(registration).transformParameters.scaleY -anchor nw
 
-generic_entry $nmInfo(registration).transformParameters.translateX \
-        reg_translateX "translate X" real
-pack $nmInfo(registration).transformParameters.translateX -anchor nw
+#generic_entry $nmInfo(registration).transformParameters.translateX \
+#        reg_translateX "translate X" real
+#pack $nmInfo(registration).transformParameters.translateX -anchor nw
 
-generic_entry $nmInfo(registration).transformParameters.translateY \
-        reg_translateY "translate Y" real
-pack $nmInfo(registration).transformParameters.translateY -anchor nw
+#generic_entry $nmInfo(registration).transformParameters.translateY \
+#        reg_translateY "translate Y" real
+#pack $nmInfo(registration).transformParameters.translateY -anchor nw
 
-generic_entry $nmInfo(registration).transformParameters.translateZ \
-        reg_translateZ "translate Z" real
-pack $nmInfo(registration).transformParameters.translateZ -anchor nw
+#generic_entry $nmInfo(registration).transformParameters.translateZ \
+#        reg_translateZ "translate Z" real
+#pack $nmInfo(registration).transformParameters.translateZ -anchor nw
 
-generic_entry $nmInfo(registration).transformParameters.rotateX \
-        reg_rotateX "rotate X" real
-pack $nmInfo(registration).transformParameters.rotateX -anchor nw
+#generic_entry $nmInfo(registration).transformParameters.rotate2D_Z \
+#        reg_rotate2D_Z "rotate Z (2D)" real
+#pack $nmInfo(registration).transformParameters.rotate2D_Z -anchor nw
 
-generic_entry $nmInfo(registration).transformParameters.rotateY \
-        reg_rotateY "rotate Y" real
-pack $nmInfo(registration).transformParameters.rotateY -anchor nw
+generic_entry $nmInfo(registration).transformParameters.rotate3D_X \
+        reg_rotate3D_X "altitude angle (degrees)" real
+pack $nmInfo(registration).transformParameters.rotate3D_X -anchor nw
 
-generic_entry $nmInfo(registration).transformParameters.rotateZ \
-        reg_rotateZ "rotate Z" real
-pack $nmInfo(registration).transformParameters.rotateZ -anchor nw
+generic_entry $nmInfo(registration).transformParameters.rotate3D_Z \
+        reg_rotate3D_Z "azimuth angle (degrees)" real
+pack $nmInfo(registration).transformParameters.rotate3D_Z -anchor nw
 
-generic_entry $nmInfo(registration).transformParameters.shearZ \
-        reg_shearZ "shear Z" real
-pack $nmInfo(registration).transformParameters.shearZ -anchor nw
+#generic_entry $nmInfo(registration).transformParameters.shearZ \
+#        reg_shearZ "shear Z" real
+#pack $nmInfo(registration).transformParameters.shearZ -anchor nw
 
 #################################################################
 set reg_transformation_source_list {none}

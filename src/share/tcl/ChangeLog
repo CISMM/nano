@@ -1,3 +1,9 @@
+2002-07-02  Adam Seeger  <seeger@cs.unc.edu>
+
+        * registration.tcl: commented out entry boxes for transformation
+        parameters except the two rotation parameters that are needed
+        for setting the direction of projection
+
 2002-07-01  Aron Helser  <helser@cs.unc.edu>
 
 	* mainwin.tcl: Display name of stream file in title bar, when one
@@ -8,7 +14,7 @@
 	* import.tcl : fixed a bug that was causing the spider control to 
 	pop-up for all objects, not just spider objects.
 
-2003-06-30  Woojin Seok  <seok@cs.unc.edu>
+2002-06-30  Woojin Seok  <seok@cs.unc.edu>
 
 	* mainwin.tcl (proc nano_warning): replaced tk_messageBox by
 	combination of button and lable not to stall program to get user's
