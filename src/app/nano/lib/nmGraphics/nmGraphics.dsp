@@ -37,11 +37,11 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "Release"
-# PROP Intermediate_Dir "Release"
+# PROP Output_Dir "../../../../../objRel/pc_win32/app/nano/lib/nmGraphics"
+# PROP Intermediate_Dir "../../../../../objRel/pc_win32/app/nano/lib/nmGraphics"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /Zi /O2 /I "." /I "..\..\..\..\..\..\quat" /I "..\..\..\..\..\..\vogl" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\ImgFormat" /I "..\nmUGraphics" /I "..\.." /I "..\nmMScope" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\lib\tcllinkvar" /I "..\nmUI" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
