@@ -6063,6 +6063,10 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
       alignerUI->setupCallbacks();
     }
 
+    if (ConvTip) {
+      ConvTip->changeDataset(new_dataset->dataImages);
+    }
+
     linkMicroscopeToInterface(microscope);
 
   // There is no turning back. If any operations fail, the 

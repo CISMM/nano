@@ -1,3 +1,8 @@
+2000-12-15  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c (createNewMicroscope) : 
+        added call to TipConv->changeDataset
+
 2000-12-14  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c (shutdown_connections) : delete
