@@ -1,5 +1,10 @@
 2002-03-13  David Marshburn  <marshbur@cs.unc.edu>
 
+	* nmMScope.dsp:  removed two generated files from this project's
+	file listing.
+
+2002-03-13  David Marshburn  <marshbur@cs.unc.edu>
+
 	* nmMScopeGenerate.dsp:  changed the custom build rules so that 
 	this project can be built as a part of any workspace.
 

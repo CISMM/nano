@@ -133,44 +133,6 @@ SOURCE=.\nmm_MicroscopeRemoteGen.C
 # End Source File
 # Begin Source File
 
-SOURCE=.\nmm_MicroscopeRemoteGen.Cdef
-
-!IF  "$(CFG)" == "nmMScope - Win32 Debug"
-
-# PROP Ignore_Default_Tool 1
-# Begin Custom Build
-InputDir=.
-WkspDir=.
-ProjDir=.
-InputPath=.\nmm_MicroscopeRemoteGen.Cdef
-InputName=nmm_MicroscopeRemoteGen
-
-"$(ProjDir)\$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)$(InputDir)\app\nano\lib\nmMScope'; ../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl $(InputName).Cdef"
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "nmMScope - Win32 Release"
-
-# PROP BASE Ignore_Default_Tool 1
-# PROP Ignore_Default_Tool 1
-# Begin Custom Build
-InputDir=.
-WkspDir=.
-ProjDir=.
-InputPath=.\nmm_MicroscopeRemoteGen.Cdef
-InputName=nmm_MicroscopeRemoteGen
-
-"$(ProjDir)\$(InputName).C" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)$(InputDir)\app\nano\lib\nmMScope'; ../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl $(InputName).Cdef"
-
-# End Custom Build
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
 SOURCE=.\nmm_MicroscopeTranslator.C
 # End Source File
 # Begin Source File
@@ -268,39 +230,6 @@ SOURCE=.\nmm_Microscope.h
 # Begin Source File
 
 SOURCE=.\nmm_MicroscopeRemote.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\nmm_MicroscopeRemote.hdef
-
-!IF  "$(CFG)" == "nmMScope - Win32 Debug"
-
-# Begin Custom Build
-InputDir=.
-WkspDir=.
-InputPath=.\nmm_MicroscopeRemote.hdef
-InputName=nmm_MicroscopeRemote
-
-"$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)$(InputDir)\app\nano\lib\nmMScope'; ../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl $(InputName).Hdef"
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "nmMScope - Win32 Release"
-
-# Begin Custom Build
-InputDir=.
-WkspDir=.
-InputPath=.\nmm_MicroscopeRemote.hdef
-InputName=nmm_MicroscopeRemote
-
-"$(InputName).h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	C:\cygwin\bin\bash --login -c "cd '$(WkspDir)$(InputDir)\app\nano\lib\nmMScope'; ../../../../../../vrpn/util/gen_rpc/gen_vrpn_rpc.pl $(InputName).Hdef"
-
-# End Custom Build
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
