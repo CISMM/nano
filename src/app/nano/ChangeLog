@@ -1,3 +1,13 @@
+2002-07-18 David Borland <borland@cs.unc.edu>
+
+        * microscape.c : added client code for connecting to Gatan's 
+        Digital Micrograph software for reading images from a CCD.  
+        Still in rough form.  Will encapsulate it all better, but 
+        putting it here for now for testing purposes.
+
+        * import.C : added check for type of projective texture data
+        in the call back for switching from surface to model mode
+
 2002-07-18 Jameson Miller <millerj@cs.unc.edu>
 	* interaction.c (h): tcl variables for handling displaying axes for
 	direct step handled here.

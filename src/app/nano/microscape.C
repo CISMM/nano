@@ -908,6 +908,151 @@ nmm_Microscope_Remote * microscope = NULL;
 
 nmg_Graphics * graphics = NULL;
 
+// XXX
+// Stuff for testing TEM stuff -- should be put into some sort of TEM object after testing
+vrpn_Connection* tem_connection = NULL;
+
+// tem handler definitions
+static  void handle_tem_acquire_image(vrpn_int32, void *);
+
+vrpn_int32 GotPixels(void*, vrpn_HANDLERPARAM);
+
+// tcl variables
+Tclvar_int      tem_acquire_image("tem_acquire_image", 0, handle_tem_acquire_image);
+
+// vrpn variables
+vrpn_int32 GetPixels_type;
+vrpn_int32 GotPixels_type;
+vrpn_int32 DM_Client_id;
+
+
+// handler bodies
+static void handle_tem_acquire_image(vrpn_int32, void *) {
+    struct timeval now;
+
+    if (!tem_connection) {
+        tem_connection = vrpn_get_connection_by_name("DM_Image_Server@magnesium-cs");
+
+        // register message types
+        GetPixels_type = tem_connection->register_message_type("GetPixels");
+        GotPixels_type = tem_connection->register_message_type("GotPixels");
+
+        // register sender
+        DM_Client_id = tem_connection->register_sender("DM_Client");
+
+        // register handlers
+        tem_connection->register_handler(GotPixels_type, GotPixels, NULL);
+    }
+
+    gettimeofday(&now, NULL);
+    tem_connection->pack_message(0, now, GetPixels_type, DM_Client_id, NULL, vrpn_CONNECTION_RELIABLE);
+}
+
+vrpn_int32 GotPixels(void *_userdata, vrpn_HANDLERPARAM _p) {
+    const char* bufptr = (char*)_p.buffer;
+
+    static nmb_ImageArray* image_uint8 = NULL;
+    static nmb_ImageArray* image_uint16 = NULL;
+    static nmb_ImageArray* image_float32 = NULL;
+
+    vrpn_int32 x, y, pixel_size;
+    int image_size = _p.payload_len - 3 * sizeof(vrpn_int32);
+
+    vrpn_unbuffer(&bufptr, &x);
+    vrpn_unbuffer(&bufptr, &y);
+    vrpn_unbuffer(&bufptr, &pixel_size);
+
+    char* image = new char[image_size];
+
+    vrpn_unbuffer(&bufptr, image, image_size);
+
+/*
+    printf("x = %d\n", x);
+    printf("y = %d\n", y);
+    printf("pixel_size = %d\n", pixel_size);
+
+    printf("current texture mode : %d\n", graphics->getTextureMode());
+*/
+    // only checks size now
+    // should have a typedef for different types of the same size--Imager class should have this when it's done
+/*
+    for (int i = 0; i < x*y; i++) {
+        if (pixel_size == sizeof(bool)) {
+            printf("%d ", ((bool*)image)[i]);
+        }
+        else if (pixel_size == sizeof(vrpn_uint8)) {
+            printf("%d ", ((vrpn_int8*)image)[i]);
+        }
+        else if (pixel_size == sizeof(vrpn_uint16)) {
+            printf("%d ", ((vrpn_int16*)image)[i]);
+        }
+        else if (pixel_size == sizeof(vrpn_float32)) {
+            printf("%f ", ((vrpn_float32*)image)[i]);
+        }
+        else if (pixel_size == sizeof(vrpn_float64)) {
+            printf("%f ", ((vrpn_float64*)image)[i]);
+        }
+        if ((i + 1) % x == 0) printf("\n");
+    }
+    printf("\n");
+*/
+    if (pixel_size == sizeof(vrpn_uint8)) {
+        if (!image_uint8) {
+            printf("Creating new uint8 image\n");
+            image_uint8 = new nmb_ImageArray("TEM image", "ADC", x, y, NMB_UINT8);
+            dataset->dataImages->addImage(image_uint8);
+        }
+        image_uint8->setImage((vrpn_uint8*)image);
+    }
+    else if (pixel_size == sizeof(vrpn_uint16)) {
+        if (!image_uint16) {
+            printf("Creating new uint16 image\n");
+            image_uint16 = new nmb_ImageArray("TEM image", "ADC", x, y, NMB_UINT16);
+            dataset->dataImages->addImage(image_uint16);
+        }
+        image_uint16->setImage((vrpn_uint16*)image);
+    }
+    else if (pixel_size == sizeof(vrpn_float32)) {
+        if (!image_float32) {
+            printf("Creating new float32 image\n");
+            image_float32 = new nmb_ImageArray("TEM image", "ADC", x, y, NMB_FLOAT32);
+            dataset->dataImages->addImage(image_float32);
+        }
+        image_float32->setImage((vrpn_float32*)image);
+    }
+    else {
+        printf("Can't display this type of data\n");
+    }
+
+    graphics->updateTexture(nmg_Graphics::SEM_DATA, "TEM image", 0, 0, x, y);
+    graphics->setTextureMode(nmg_Graphics::SEM_DATA, nmg_Graphics::SURFACE_REGISTRATION_COORD);
+
+    return 0;
+}
+
+void tem_mainloop() {
+//    struct timeval timeout, now;
+//    timeout.tv_sec = 0;
+//    timeout.tv_usec = 10000;
+
+//    while (1) {
+//    if (tem_connection->connected()) printf("Connected\n");
+//    else printf("wtf?\n");
+
+//    gettimeofday(&now, NULL);
+//    tem_connection->pack_message(0, now, GetPixels_type, DM_Client_id, NULL, vrpn_CONNECTION_RELIABLE);
+
+    tem_connection->mainloop();
+
+//        vrpn_SleepMsecs(5000);
+//    }
+}
+
+// XXX
+
+
+
+
 static int LOOP_NUM;
 
 // used in interaction.c
@@ -8371,6 +8516,10 @@ vrpn_Connection* c;
 	if(Eroder){
 		if(Eroder->mainloop() == -1) cout << "connection mainloop not working properly" << endl;
 	}
+
+// XXX
+// call tem mainloop
+    if (tem_connection) tem_mainloop();
 
 #ifdef TIMING_TEST
 #define	TIM_LN	(7)

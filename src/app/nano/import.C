@@ -433,17 +433,27 @@ static  void handle_import_proj_text (vrpn_int32, void *)
 }
 
 static void handle_import_text_image_mode_change (vrpn_int32, void*) {
-    static Tclvar_int reg_textureDisplayEnabled("reg_display_texture");
-
-    reg_textureDisplayEnabled = 1;
-
     if (import_text_image_mode == 1) {
-        graphics->setTextureMode(nmg_Graphics::COLORMAP, 
-                                    nmg_Graphics::SURFACE_REGISTRATION_COORD);
+        // SURFACE
+        if (graphics->getTextureMode() == nmg_Graphics::COLORMAP) {
+            graphics->setTextureMode(nmg_Graphics::COLORMAP, 
+                                        nmg_Graphics::SURFACE_REGISTRATION_COORD);
+        }
+        else {
+            graphics->setTextureMode(nmg_Graphics::SEM_DATA,
+                                        nmg_Graphics::SURFACE_REGISTRATION_COORD);
+        }
     }
     else {
-        graphics->setTextureMode(nmg_Graphics::COLORMAP,
-                                    nmg_Graphics::MODEL_REGISTRATION_COORD);
+        // MODEL
+        if (graphics->getTextureMode() == nmg_Graphics::COLORMAP) {
+            graphics->setTextureMode(nmg_Graphics::COLORMAP, 
+                                        nmg_Graphics::MODEL_REGISTRATION_COORD);
+        }
+        else {
+            graphics->setTextureMode(nmg_Graphics::SEM_DATA,
+                                        nmg_Graphics::MODEL_REGISTRATION_COORD);
+        }
 
         // set tcl callbacks to create an object for the texture
 		if (World.TGetNodeByName("projtextobj.ptx") == NULL) {
