@@ -1,3 +1,8 @@
+2003-02-26  Adam Seeger  <seeger@cs.unc.edu>
+
+   * nmb_ImgMagick.C (writeFileMagick): adds more informative printout
+   in case of error
+
 2002-11-13 Jameson Miller <millerj@cs.unc.edu>
 	*nmb_SummedPlane.C: fixed backwards test in dependsOnPlane function.
 

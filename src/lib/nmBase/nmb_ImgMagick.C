@@ -130,6 +130,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     //SetImageInfo(image_info,true,&exception);
     strcpy(flip_image->filename,filename);
     if(!WriteImage(image_info, flip_image)) {
+		fprintf(stderr, "%s: %s\n", flip_image->exception.reason, flip_image->exception.description);
         return -1;
     }
     DestroyImageInfo(image_info);
@@ -207,6 +208,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     image_info->compression=NoCompression;
 
     if(!WriteImage(image_info, image)) {
+		fprintf(stderr, "%s: %s\n", image->exception.reason, image->exception.description);
         return -1;
     }
     DestroyImageInfo(image_info);
