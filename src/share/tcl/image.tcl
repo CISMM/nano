@@ -235,7 +235,7 @@ generic_entry $nmInfo(imagefull).modeparam.i-gain newimagep_i_gain \
 generic_entry $nmInfo(imagefull).modeparam.d-gain newimagep_d_gain \
         "D-Gain (0,5)" real 
 generic_entry $nmInfo(imagefull).modeparam.rate newimagep_rate \
-        "Rate (1,50 uM/sec)" real 
+        "Rate (1,50 um/sec)" real 
 generic_entry $nmInfo(imagefull).modeparam.amplitude newimagep_amplitude \
 	"Amplitude (0,2)" real 
 generic_entry $nmInfo(imagefull).modeparam.frequency newimagep_frequency \

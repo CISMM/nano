@@ -160,6 +160,7 @@ PPM * g_rulerPPM = NULL;
 //Tclvar_int g_shiny("shiny", 55);  
 int g_shiny = 55;
      // specular shininess
+vrpn_bool g_local_viewer = vrpn_TRUE;
 float g_diffuse = .50;
 //Tclvar_float g_specular_color("specular_color", 1.0);    
 float g_specular_color = 1.0;

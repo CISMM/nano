@@ -324,7 +324,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-   SYS_INCLUDE := $(MY_NANO_SRC_DIR)/external/pc_win32/include $(MY_NANO_SRC_DIR)/external/pc_win32/include/ghost3.0 $(MY_NANO_SRC_DIR)/external/pc_win32/include/stl $(MY_NANO_SRC_DIR)/vrpn/server_src
+   SYS_INCLUDE := $(MY_NANO_SRC_DIR)/external/pc_win32/include $(MY_NANO_SRC_DIR)/external/pc_win32/include/ghost3.1 $(MY_NANO_SRC_DIR)/external/pc_win32/include/stl $(MY_NANO_SRC_DIR)/vrpn/server_src
 endif
 
 ifeq ($(HW_OS),pc_linux)
@@ -449,7 +449,7 @@ endif
 
 ifeq ($(HW_OS),pc_win32)
    ARCH_LIBS := $(addprefix -l,glut32_UNC wsock32 user32 gdi32 comdlg32 glu32 \
-                               opengl32 ghost30)
+                               opengl32)
 endif
 
 ##########################
@@ -537,7 +537,17 @@ endif
 
 # Allows compilation of viewer-only version of Nano on all platforms. 
 ifdef VIEWER
-     BAREDEFINES += VIEWER
+NO_PHANTOM := 1
+NO_MSCOPE_CONNECTION := 1
+endif
+
+# Selective disable of Phantom
+ifdef NO_PHANTOM
+      BAREDEFINES += NO_PHANTOM 
+endif
+# Selective disable of microscope connections
+ifdef NO_MSCOPE_CONNECTION
+      BAREDEFINES += NO_MSCOPE_CONNECTION 
 endif
 
 BAREDEFINES += PROJECTIVE_TEXTURE
@@ -601,5 +611,8 @@ export LIBS
 
 export DEFINES
 export CFLAGS
+
+export NO_PHANTOM
+export NO_MSCOPE_CONNECTION
 
 endif

@@ -120,6 +120,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void setSpecularity (int);
     virtual void setSpecularColor (float);
+    virtual void setLocalViewer (vrpn_bool);
     virtual void setDiffusePercent (float);
     virtual void setSurfaceAlpha (float, int region = 0);
     virtual void setSphereScale (float);

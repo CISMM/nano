@@ -1,3 +1,17 @@
+2001-05-12  Aron Helser  <helser@cs.unc.edu>
+
+	* filemenu.tcl (save_plane_data): added writing TIFF files. 
+
+	* image.tcl : Label units typo
+	* modify.tcl : Label units typo
+
+	* mainwin.tcl: VIEWER changed to NO_MSCOPE_CONNECTION or
+	NO_PHANTOM, fix menu color
+
+	* setupmenu.tcl: Phase as scan data, local viewer controls
+
+	* toplevels.tcl: helpful info about magellan displayed. 
+	
 2001-05-11  Aron Helser  <helser@cs.unc.edu>
 
 	* view.tcl: New USER_REGION_MODE button

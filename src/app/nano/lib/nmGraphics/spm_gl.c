@@ -1366,6 +1366,9 @@ int spm_render_mark (const nmb_LocationInfo & p, void *) {
     LowerThanBottom[2] = Bottom[2] - (Top[2] - Bottom[2]);
     
     
+    // Partially transparent to make it easier to see surface. 
+    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+
     glLineWidth(1.0);
     glDisable(GL_LINE_STIPPLE);
     glBegin(GL_LINES);
@@ -1373,17 +1376,16 @@ int spm_render_mark (const nmb_LocationInfo & p, void *) {
     glVertex3fv(Bottom);
     glVertex3fv(Top);
     VERBOSE(20, "          glEnd()");
-    glEnd();
+    //glEnd();
     
     
-    GLfloat oldColor[4];
-    glGetFloatv(GL_CURRENT_COLOR, oldColor);
-    glBegin(GL_LINES);
-    glColor3f(1.0, 0.0, 0.5);
+    // Partially transparent to make it easier to see surface. 
+    glColor4f(1.0f, 0.0f, 0.5f, 0.5f);
+
+    //glBegin(GL_LINES);
     glVertex3fv(Bottom);
     glVertex3fv(LowerThanBottom);
     glEnd();
-    glColor3fv(oldColor);
     
     return 0;
 }

@@ -51,7 +51,13 @@ pack $phantom_win.phantom_reset $phantom_win.phantom_button_mode $phantom_win.sp
 set magellan_win [create_closing_toplevel magellan_win "Magellan Settings"]
 button $magellan_win.magellan_reset -text "Reconnect to Magellan" -command "set reconnect_magellan 1"
 pack $magellan_win.magellan_reset -side top -fill x
-
+image create photo view_b0 \
+	-file [file join ${tcl_script_dir} images b0.gif] \
+	-format GIF 
+pack [label $magellan_win.instr1 -text "Toggle"]
+pack [label $magellan_win.instr2 -image view_b0]
+pack [label $magellan_win.instr3 -text "to move and rotate 
+the surface with the puck."] 
 # -------
 # Mouse Phantom controls - let the mouse emulate a phantom tracker and button
 # (but not forces, of course...)

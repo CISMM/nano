@@ -184,6 +184,7 @@ extern PPM * g_rulerPPM;
 //extern Tclvar_int g_shiny;
 //extern Tclvar_float g_specular_color;
 extern int g_shiny;
+extern vrpn_bool g_local_viewer;
 extern float g_specular_color;
 extern float g_surface_alpha;
 extern float g_diffuse;

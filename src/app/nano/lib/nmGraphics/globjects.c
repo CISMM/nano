@@ -597,6 +597,7 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max,
 
 	v_gl_set_context_to_vlib_window(); 
 	glNewList(rubber_corner,GL_COMPILE);
+
         if ((highlight_mask & REG_SIZE)||(highlight_mask & REG_SIZE_HEIGHT)) {
             glColor4fv(highlight_color);
         } else {

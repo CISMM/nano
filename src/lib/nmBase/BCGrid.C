@@ -29,7 +29,7 @@ int close( int filedes );
 #include "BCPlane.h"
 #include "Topo.h"
 #include "PPM.h"	// used in readPPMorPGMFileNew()
-
+#include <ImageMaker.h> // used in writeTIFFile
 
 #include "readNanoscopeFile.C" // <------------ reading a .C file!
 
@@ -1051,6 +1051,60 @@ BCGrid::writePPMFile(FILE* file, BCPlane* plane)
     
 } // writePPMFile
 
+int 
+BCGrid::writeTIFFile(FILE* file, BCPlane* plane, const char * filename)
+{
+    int file_descriptor;
+    if ( (file_descriptor = fileno(file)) == -1) {
+      perror("BCGrid::writeTIFFile: Could not get descriptor!");
+      return -1;
+    }
+    // We are going to re-open using iostreams below. 
+    fclose(file);
+
+  int w = plane->numX(), h =plane->numY();
+  unsigned char * pixels = new unsigned char[3*w*h];
+
+  if (!pixels) {
+    return -1;
+  }
+    double scale = 254.0 / (plane->maxNonZeroValue() - plane->minNonZeroValue());
+
+    unsigned int val;
+    int x, y;
+
+    //printf("%f %f %f\n", minValue(), maxValue(), scale);
+    // Reverse Y traversal so image is not flipped vertically.
+    for(y = h -1; y >=0; y-- ) {
+	for(x = 0; x < w; x++ ) {
+            if (plane->value(x,y) < plane->minNonZeroValue()) {
+               val = 0;
+            } else {
+               val = 1 + 
+                     (unsigned)((plane->value(x, y) - plane->minNonZeroValue()) * scale);
+            }
+            pixels[3*y*w + 3*x] = 
+            pixels[3*y*w + 3*x + 1] = 
+            pixels[3*y*w + 3*x + 2] = val;
+        }
+    }
+  AbstractImage *ai = ImageMaker(TIFFImageType, h, w, 3, pixels, true);
+
+  delete [] pixels;
+
+  if (ai)
+  {
+      if (!ai->Write(filename)) {
+        fprintf(stderr, "Failed to write data to '%s'!\n", filename);
+        delete ai;
+        return -1;
+      }
+     delete ai;
+  }
+  return 0;
+    
+} // writeTIFFile
+
 
 /**
 writeRawVolFile
@@ -1297,17 +1351,33 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
 	return -1;
     }
 
+    //Strip the directory name from the filename
+    // Allow for Win or Unix path name, / or \ dividers. 
+    const char * name = NULL;
+    if (((name = strrchr(filename, '/')) == NULL) &&
+        ((name = strrchr(filename, '\\')) == NULL)) {
+        // We didn't find any path dividers - use the filename as passed in.
+        name = filename;
+    } else {
+        // We found a divider, advance past it. 
+        name +=1;
+        // Make sure we still have a string
+        if (strlen(name) <1) {
+            name = filename;
+        }           
+    }
+
     if (strncmp(magic,"DSBB",4) == 0) 
     {
-	return readBinaryFile(file, filename);
+	return readBinaryFile(file, name);
     } 
     else if (strncmp(magic,"DSAA",4) == 0) 
     {
-	return readTextFile(file, filename);
+	return readTextFile(file, name);
     } 
     else if (strncmp(magic,"UNCA",4) == 0) 
     {
-	return readUNCAFile(file, filename);
+	return readUNCAFile(file, name);
     } 
     else if (strncmp(magic,"file",4) == 0) 
     {   
@@ -1317,49 +1387,49 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
 	    return -1;
 	}
 	if (strncmp(magic, "form", 4) == 0)  // "fileformat..."
-	    return readSPIPFile(file, filename);
+	    return readSPIPFile(file, name);
 	else // "file ..."
-	    return readAsciiRHKFile(topoFile, file, filename);
+	    return readAsciiRHKFile(topoFile, file, name);
     } 
 
     else if (strncmp(magic,"UNCB",4) == 0) 
     {
-	return readUNCBFile(file, filename);
+	return readUNCBFile(file, name);
     } 
     else if (strncmp(magic,"Data",4) == 0) 
     {
-	return readNanoscopeFileWithoutHeader(file, filename);
+	return readNanoscopeFileWithoutHeader(file, name);
     } 
     else if (strncmp(magic,"\\*Fi",4) == 0) 
     {
-	return readBinaryNanoscopeFile(file, filename); 
+	return readBinaryNanoscopeFile(file, name); 
     } 
     else if (strncmp(magic,"?*Fi",4) == 0) 
     {
-        return readAsciiNanoscopeFile(file, filename);
+        return readAsciiNanoscopeFile(file, name);
     } 
     else if (strncmp(magic,"#R3.0",4) == 0)   // Topo file, v 3.0x
     {
-        return readTopometrixFile(topoFile,filename);
+        return readTopometrixFile(topoFile, file, name);
     } 
     else if (strncmp(magic,"#R4.0",4) == 0)   // Topo file, v 4.0x
     {
-        return readTopometrixFile(topoFile, filename);
+        return readTopometrixFile(topoFile, file, name);
     } 
     else if (strncmp(magic,"#R5.0",4) == 0)   // Topo file, v 5.0x
     {
-        return readTopometrixFile(topoFile, filename);
+        return readTopometrixFile(topoFile, file, name);
     } 
     else if (strncmp(magic,"P6",2) == 0) 
     {
-	return readPPMorPGMFile(file, filename);
+	return readPPMorPGMFile(file, name);
     } 
     else if ((strncmp(magic,"P2",2) == 0) || 
 	     (strncmp(magic,"P3",2) == 0) ||
 	     (strncmp(magic,"P5",2) == 0))
     {
         rewind(file);
-	return readPPMorPGMFileNew(file, filename);
+	return readPPMorPGMFileNew(file, name);
     } 
     else 
     {
@@ -1779,6 +1849,8 @@ BCGrid::readPPMorPGMFileNew(FILE *file, const char *filename)
 	for (i = 0; i < _num_x; i++) {
 		for (j = 0; j < _num_y; j++) {
 			ppm_file.Tellppm(i,j,&r,&g,&b);
+                        // data is oriented correctly without flipping y values
+			//plane->setValue(i,(_num_y -1) -j,(float)r);
 			plane->setValue(i,j,(float)r);
 			if (r < min) min = r;
 			if (r > max) max = r;

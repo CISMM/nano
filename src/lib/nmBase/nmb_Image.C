@@ -306,15 +306,17 @@ double nmb_Image::areaInWorld()
 
 const int nmb_ImageGrid::num_export_formats = 5;
 const char *nmb_ImageGrid::export_formats_list[] = {	"ThermoMicroscopes",
-                                 		"Text(MathCAD)",
                                  		"PPM Image",
+                                 		"TIFF Image",
+                                 		"Text(MathCAD)",
                                  		"SPIP",
                                  		"UNCA Image" };
 const nmb_ImageGrid::FileExportingFunction 
 	nmb_ImageGrid::file_exporting_function[] = 
 				{nmb_ImageGrid::writeTopoFile,
-                                 nmb_ImageGrid::writeTextFile,
                                  nmb_ImageGrid::writePPMFile,
+                                 nmb_ImageGrid::writeTIFFile,
+                                 nmb_ImageGrid::writeTextFile,
                                  nmb_ImageGrid::writeSPIPFile,
                                  nmb_ImageGrid::writeUNCAFile};
 
@@ -445,6 +447,8 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
     d_imagePosition.setY(nmb_ImageBounds::MIN_X_MAX_Y, plane->maxY());
     d_imagePosition.setY(nmb_ImageBounds::MAX_X_MIN_Y, plane->minY());
     d_imagePosition.setY(nmb_ImageBounds::MAX_X_MAX_Y, plane->maxY());
+    tm_scale = p->tm_scale;
+    tm_offset = p->tm_offset;
 }
 
 nmb_ImageGrid::nmb_ImageGrid(BCGrid *g):nmb_Image(),
@@ -783,7 +787,8 @@ nmb_ListOfStrings *nmb_ImageGrid::exportFormatNames()
 const char *nmb_ImageGrid::exportFormatType(int type)
             {return (const char *)(export_formats_list[type]);}
 
-int nmb_ImageGrid::exportToFile(FILE *f, const char *export_type){
+int nmb_ImageGrid::exportToFile(FILE *f, const char *export_type,
+                                const char * filename){
 
     int my_export_type;
     for (my_export_type = 0; my_export_type < numExportFormats(); 
@@ -798,7 +803,7 @@ int nmb_ImageGrid::exportToFile(FILE *f, const char *export_type){
 	return -1;
     }
     else {  // we have a function for exporting this type
-	if (file_exporting_function[my_export_type](f, this)) {
+	if (file_exporting_function[my_export_type](f, this, filename)) {
 	    fprintf(stderr, "nmb_ImageGrid::Error writing file of type %s\n",
 		export_type);
 	    return -1;
@@ -808,7 +813,7 @@ int nmb_ImageGrid::exportToFile(FILE *f, const char *export_type){
 }
 
 //static 
-int nmb_ImageGrid::writeTopoFile(FILE *file, nmb_ImageGrid *im)
+int nmb_ImageGrid::writeTopoFile(FILE *file, nmb_ImageGrid *im, const char * )
 {
  //what about microscope->d_topoFile? - should somehow be using this info here
     TopoFile tf = im->d_topoFileDefaults;
@@ -821,7 +826,7 @@ int nmb_ImageGrid::writeTopoFile(FILE *file, nmb_ImageGrid *im)
 }
 
 //static
-int nmb_ImageGrid::writeTextFile(FILE *file, nmb_ImageGrid *im)
+int nmb_ImageGrid::writeTextFile(FILE *file, nmb_ImageGrid *im, const char * )
 {
     if (im->plane->_grid->writeTextFile(file, im->plane)) {
 	return -1;
@@ -830,7 +835,7 @@ int nmb_ImageGrid::writeTextFile(FILE *file, nmb_ImageGrid *im)
 }
 
 //static 
-int nmb_ImageGrid::writePPMFile(FILE *file, nmb_ImageGrid *im)
+int nmb_ImageGrid::writePPMFile(FILE *file, nmb_ImageGrid *im, const char * )
 {
     if (im->plane->_grid->writePPMFile(file, im->plane)) {
 	return -1;
@@ -839,7 +844,16 @@ int nmb_ImageGrid::writePPMFile(FILE *file, nmb_ImageGrid *im)
 }
 
 //static 
-int nmb_ImageGrid::writeSPIPFile(FILE *file, nmb_ImageGrid *im)
+int nmb_ImageGrid::writeTIFFile(FILE *file, nmb_ImageGrid *im, const char * filename)
+{
+    if (im->plane->_grid->writeTIFFile(file, im->plane, filename)) {
+	return -1;
+    }
+    return 0;
+}
+
+//static 
+int nmb_ImageGrid::writeSPIPFile(FILE *file, nmb_ImageGrid *im, const char * )
 {
     if (im->plane->_grid->writeSPIPFile(file, im->plane)) {
 	return -1;
@@ -848,7 +862,7 @@ int nmb_ImageGrid::writeSPIPFile(FILE *file, nmb_ImageGrid *im)
 }
 
 //static 
-int nmb_ImageGrid::writeUNCAFile(FILE *file, nmb_ImageGrid *im)
+int nmb_ImageGrid::writeUNCAFile(FILE *file, nmb_ImageGrid *im, const char * )
 {
     if (im->plane->_grid->writeUNCAFile(file, im->plane)) {
 	return -1;
@@ -1350,7 +1364,8 @@ nmb_ListOfStrings *nmb_ImageArray::exportFormatNames()
 {return NULL;}
 const char *nmb_ImageArray::exportFormatType(int) {return NULL;}
 
-int nmb_ImageArray::exportToFile(FILE *f, const char *export_type){
+int nmb_ImageArray::exportToFile(FILE *f, const char *export_type, 
+                                const char * filename){
 
     int my_export_type;
     for (my_export_type = 0; my_export_type < numExportFormats();
@@ -1365,7 +1380,7 @@ int nmb_ImageArray::exportToFile(FILE *f, const char *export_type){
         return -1;
     }
     else {  // we have a function for exporting this type
-        if (file_exporting_function[my_export_type](f, this)) {
+        if (file_exporting_function[my_export_type](f, this, filename)) {
             fprintf(stderr, "nmb_ImageArray::Error writing file of type %s\n",
                 export_type);
             return -1;

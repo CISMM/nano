@@ -2354,6 +2354,12 @@ void nmg_Graphics_Implementation::setSpecularity (int s) {
   causeGridRedraw();
 }
 
+void nmg_Graphics_Implementation::setLocalViewer (vrpn_bool lv) {
+//fprintf(stderr, "nmg_Graphics_Implementation::setLocalViewer().\n");
+  g_local_viewer = lv;
+  causeGridRedraw();
+}
+
 
 void nmg_Graphics_Implementation::setDiffusePercent (float d) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setDiffusePercent().\n");

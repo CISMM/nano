@@ -521,8 +521,8 @@ int connect_Magellan() {
         }
         // Analog won't be used for anything, unless we need to get
         // direct analog output from the puck. 
-        if ((magellanPuckAnalog = new vrpn_Analog_Remote(MAGELLAN_NAME,
-                                       magellan_connection)) == NULL) return -1;
+//          if ((magellanPuckAnalog = new vrpn_Analog_Remote(MAGELLAN_NAME,
+//                                         magellan_connection)) == NULL) return -1;
         if ((magellanPuckTracker = new vrpn_Tracker_Remote(MAGELLAN_NAME,
                                        magellan_connection)) == NULL) return -1;
         // Special handling. If it's been created, don't re-create.
@@ -540,7 +540,7 @@ int connect_Magellan() {
         if ((magellanButtonBox = new vrpn_Button_Remote(magellan_name)) == NULL) return -1;
         // Analog won't be used for anything, unless we need to get
         // direct analog output from the puck. 
-        if ((magellanPuckAnalog = new vrpn_Analog_Remote(magellan_name)) == NULL) return -1;
+//          if ((magellanPuckAnalog = new vrpn_Analog_Remote(magellan_name)) == NULL) return -1;
         if ((magellanPuckTracker = new vrpn_Tracker_Remote(magellan_name)) == NULL) return -1;
         // Special handling. If it's been created, don't re-create.
         if (magellanTextRcvr == NULL) {
@@ -577,10 +577,10 @@ void shutdown_Magellan() {
             delete magellanPuckTracker;
             magellanPuckTracker = NULL;
         }
-        if (magellanPuckAnalog) {
-            delete magellanPuckAnalog;
-            magellanPuckAnalog = NULL;
-        }
+//          if (magellanPuckAnalog) {
+//              delete magellanPuckAnalog;
+//              magellanPuckAnalog = NULL;
+//          }
         if (magellanButtonBox) {
             delete magellanButtonBox;
             magellanButtonBox = NULL;

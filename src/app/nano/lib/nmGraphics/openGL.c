@@ -873,7 +873,6 @@ int draw_world (int) {
     glColor3f(1.0f, 0.3f, 0.3f);
     decoration->traverseVisiblePulses(spm_render_mark, NULL);
     /* Draw the scrape indicators */
-    glColor3f(1.0f, 1.0f, 1.0f);
     decoration->traverseVisibleScrapes(spm_render_mark, NULL);
     
     // Set the lighting model for the icons in the world, then draw it

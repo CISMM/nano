@@ -1,3 +1,19 @@
+2001-05-12  Aron Helser  <helser@cs.unc.edu>
+
+	* spm_gl.c (spm_render_mark): Partially transparent mod markers.
+	(spm_set_icon_materials): Allow transparency, enable GL_BLEND
+	(spm_set_measure_materials): same
+
+	* graphics.c (setup_lighting): Choose local or infinite viewer. 
+	One sided lighting- faster, doesn't mess up NVidia Quadro2 Pro
+
+	* graphics_globals.ch (g_local_viewer): new flag
+
+	* nmg_Graphics.h (setLocalViewer): Choose local or infinite viewer
+	* nmg_Graphics_Implementation.Ch (setLocalViewer): same
+	* nmg_GraphicsRemote.h (setLocalViewer): same
+	* nmg_GraphicsTimer.Ch (setLocalViewer): same
+
 2001-05-12  Jason Clark  <jclark@cs.unc.edu>
 
 	* spm_gl.c: Use new SurfaceMask class instead of a plane in the

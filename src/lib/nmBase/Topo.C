@@ -469,6 +469,9 @@ int TopoFile::getGridInfoFromHeader (const char * temp) {
       
       iLayers = sSwap(doc->sInfo.iLayers);
 
+      // Data type affects how Thermo displays the data. 
+      iDataType = sSwap(doc->sScanParam.iDataType);
+      iDataDir = sSwap(doc->sScanParam.iDataDir);
       //bHasBkStrip = iSwap(doc->sInfo.bHasBkStrip);
   } else if (iRelease >=301) {
       if (iRelease <400) {
@@ -540,10 +543,11 @@ int TopoFile::getGridInfoFromHeader (const char * temp) {
 
 int TopoFile::printGridInfoFromHeader()
 {
-     if(!valid_header){
+    if(!valid_header){
 	fprintf(stderr, "No valid header read, no info printed\n"); 
 	return -1;
     }
+    printf("Data Type: %d, Dir %d\n", iDataType, iDataDir);
     printf("Binary Release: %ld, Header Offset: %ld\n",
 	   (long)iRelease, (long)iOffset);
     printf("Text release string: %s\n",szRelease);
@@ -579,7 +583,7 @@ have their byte order swapped from that of the PC. (*Swap
 procedures don't do anything on a PC).
 */
 int TopoFile::putGridInfoIntoHeader (char * temp) {
-    //    unsigned int i;
+    unsigned int i;
 
     // Some code to modify the text header.
   // This code is inspired by topofile.c:iWriteTopoBuffer
@@ -617,15 +621,16 @@ int TopoFile::putGridInfoIntoHeader (char * temp) {
       doc->sInfo.fXmax = dSwap(fXmax);
       doc->sInfo.fYmin = dSwap(fYmin);
       doc->sInfo.fYmax = dSwap(fYmax);
-      // These data fields are never changed by anyone, so 
-      // no need to change them in the header. 
-//        doc->sInfo.fDACtoWorld = dSwap(fDACtoWorld);
-//        doc->sInfo.fDACtoWorldZero = dSwap(fDACtoWorldZero);
-//        doc->sInfo.iWorldUnitType = sSwap(iWorldUnitType);
-//        doc->sInfo.iXYUnitType = sSwap(iXYUnitType);
+      // These data fields are different for each plane, so need fixing
+      doc->sInfo.fDACtoWorld = dSwap(fDACtoWorld);
+      doc->sInfo.fDACtoWorldZero = dSwap(fDACtoWorldZero);
+      doc->sInfo.iWorldUnitType = sSwap(iWorldUnitType);
+      //This should always stay the same. 
+      //        doc->sInfo.iXYUnitType = sSwap(iXYUnitType);
 
-//        for (i = 0; i < sizeof(szWorldUnit); i++)
-//  	  doc->sInfo.szWorldUnit[i] = szWorldUnit[i];
+      for ( i = 0; i < sizeof(szWorldUnit); i++) {
+  	  doc->sInfo.szWorldUnit[i] = szWorldUnit[i];
+      }
 //        for(i = 0; i < sizeof(szXYUnit); i++)
 //  	  doc->sInfo.szXYUnit[i] = szXYUnit[i];
       
@@ -643,6 +648,9 @@ int TopoFile::putGridInfoIntoHeader (char * temp) {
       doc->sInfo.rRoi.bottom = iSwap((vrpn_int32)(iCols -1 -rRoi.bottom));
       doc->sInfo.rRoi.right = iSwap((vrpn_int32)rRoi.right);
 
+      // Data type affects how Thermo displays the data. 
+      doc->sScanParam.iDataType = sSwap((vrpn_int16)iDataType);
+      doc->sScanParam.iDataDir = sSwap((vrpn_int16)iDataDir);
   } else if (iRelease >=301) {
       if (iRelease <400) {
 	  fprintf(stderr, "Topo.C:: WARNING - parsing a Topo file "
@@ -885,17 +893,15 @@ int TopoFile::parseData(int handle){
 }
 
 
-int TopoFile::readTopoFile(const char* filename){
-	FILE * handle;
+int TopoFile::readTopoFile(FILE* handle, const char* filename){
 	int in_descriptor;
-	handle = fopen(filename,"rb");
         if (handle == NULL){
-        	printf("TopoFile:: readTopoFile Error in opening file %s\n",filename);
-		exit(-1);
+            printf("TopoFile:: readTopoFile Error in opening file %s\n",filename);
+            exit(-1);
         }
         if ( (in_descriptor = fileno(handle)) == -1) {
-                fprintf(stderr,"TopoHeader::readTopoFile(): Can't get descriptor");
-                return(-1);
+            fprintf(stderr,"TopoHeader::readTopoFile(): Can't get descriptor");
+            return(-1);
         }
     // XXX DEBUG find out how big structures are.
 //  printf("**DOC Info:\n" );
@@ -1263,7 +1269,7 @@ int TopoFile::topoDataToGrid(BCGrid* G, const char* filename){
                         break;
                   case TF_FORCE_MODULATION_DATA:
                         G->findUniquePlaneName(filename, &name);
-                        plane = G->addNewPlane(name, "nA/Angstrom", NOT_TIMED);
+                        plane = G->addNewPlane(name, "nA/A", NOT_TIMED);
                         break;
                   default:
                         fprintf(stderr,"Unknown data type for Topo data (%d)\n",
@@ -1303,18 +1309,15 @@ int TopoFile::topoDataToGrid(BCGrid* G, const char* filename){
                 plane->setMinAttainableValue(min_z);
                 plane->setMaxAttainableValue(max_z);
         }
-	/* Printf duplicates info printed from read of header. 
-        printf("  min_z %f max_z %f\n",min_z,max_z);
-	*/
         return(0);
 }
 
 int TopoFile::imageToTopoData(nmb_Image *I) {
 	int     row, col;
         double  Zscale, Zoffset;
-        double  Zunits2nm;
-        double  XYunits2nm;
-        int     data_type;
+        double  Zunits2nm = 1.0;
+        double  XYunits2nm = 1.0;
+        //int     data_type;
 
         if(valid_header == 0) {
             fprintf(stderr, "TopoFile::imageToTopoData:"
@@ -1346,35 +1349,6 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
                 return(-1);
         }
 
-        switch (iWorldUnitType) {
-
-            case 1: /* Nanometers */
-                Zunits2nm = 1.0;
-                data_type = TF_HEIGHT;
-                break;
-
-            case 6: /* Measuring Volts, not Nanometers at all */
-                Zunits2nm = 1.0;
-                data_type = TF_AUX;
-                break;
-
-            case 7: /* Measuring NanoAmps, not Nanometers at all */
-                Zunits2nm = 1.0;
-                data_type = TF_DEFLECTION;
-                break;
-
-            case 8: // Measuring force modulation data
-                Zunits2nm = 1.0;
-                data_type = TF_FORCE_MODULATION_DATA;
-                break;
-
-            default:
-                fprintf(stderr,"Unrecognized Z units, type %ld (%s)\n",
-                        (long)iWorldUnitType, szWorldUnit);
-                return(-1);
-        }
-        // Satisfy compiler
-        data_type = data_type;
         
         /*
          * Fill in the parameters we can before seeing the data
@@ -1388,6 +1362,13 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
         fYmin = I->boundY(nmb_ImageBounds::MIN_X_MIN_Y)/ XYunits2nm;
         fYmax = I->boundY(nmb_ImageBounds::MAX_X_MAX_Y)/ XYunits2nm;
 
+        // Thermo always moves bounds so fXmin and fYmin to zero, so we'll do
+        // the same.
+        fXmax = fXmax -fXmin;
+        fXmin = 0.0;
+        fYmax = fYmax - fYmin;
+        fYmin = 0.0;
+        
         iLayers = 1;
 
         short top,left, bottom,right;
@@ -1403,10 +1384,9 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
             rRoi.right = right;
         }
 
-        Zscale = fDACtoWorld;
-        Zoffset = fDACtoWorldZero;
-
-
+        // Get scale and offset from the plane, not from Topo header
+        Zscale = I->tm_scale;
+        Zoffset = I->tm_offset;
 //          printf("  Units in X/Y: %s (type %ld)\n",szXYUnit,
 //                  (long)iXYUnitType);
 //          printf("  Units in Z: %s (type %ld)\n",szWorldUnit,
@@ -1441,14 +1421,12 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
         return(0);
 }
 
-int TopoFile::gridToTopoData(BCGrid* G, BCPlane *P){
+int TopoFile::gridToTopoData(BCGrid* G, BCPlane *plane){
         int     row, col;
         double  Zscale, Zoffset;
-        double  Zunits2nm;
-        double  XYunits2nm;
-        int     data_type;
-        BCPlane* plane;         // A new plane of data to be filled
-        BCString name;          // Name assigned to the new plane
+        double  Zunits2nm = 1.0;
+        double  XYunits2nm = 1.0;
+        //int     data_type;
 
 	if(valid_header == 0) return -1;
 	if(griddata != NULL) delete [] griddata;
@@ -1473,20 +1451,20 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *P){
                         (long)iXYUnitType, szXYUnit);
                 return(-1);
         }
-
+        /* This info isn't used, but might be useful later....
         switch (iWorldUnitType) {
 
-            case 1: /* Nanometers */
+            case 1: // Nanometers 
                 Zunits2nm = 1.0;
                 data_type = TF_HEIGHT;
                 break;
 
-            case 6: /* Measuring Volts, not Nanometers at all */
+            case 6: // Measuring Volts
                 Zunits2nm = 1.0;
                 data_type = TF_AUX;
                 break;
 
-            case 7: /* Measuring NanoAmps, not Nanometers at all */
+            case 7: // Measuring NanoAmps
                 Zunits2nm = 1.0;
                 data_type = TF_DEFLECTION;
                 break;
@@ -1501,8 +1479,7 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *P){
                         (long)iWorldUnitType, szWorldUnit);
                 return(-1);
         }
-        // Satisfy compiler
-        data_type = data_type;
+        */
 
         /*
          * Fill in the parameters we can before seeing the data
@@ -1515,12 +1492,18 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *P){
         fXmax = G->_max_x/ XYunits2nm;
         fYmin = G->_min_y / XYunits2nm;
         fYmax = G->_max_y / XYunits2nm;
+        // Thermo always moves bounds so fXmin and fYmin to zero, so we'll do
+        // the same.
+        fXmax = fXmax -fXmin;
+        fXmin = 0.0;
+        fYmax = fYmax - fYmin;
+        fYmin = 0.0;
+
        	iLayers = 1;
-	plane = P;
 
 	short top,left, bottom,right;
-	if(P->findValidDataRange(&top,&left,&bottom,&right) < 0) {
-	    printf("No valid data to export - abort\n");
+	if(plane->findValidDataRange(&top,&left,&bottom,&right) < 0) {
+	    fprintf(stderr,"No valid data to export - abort\n");
 	    return -1;
 	} else {
 //  	    printf("  Valid data range discovered: t %d, l %d, b %d, r %d\n",
@@ -1531,9 +1514,9 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *P){
 	    rRoi.right = right;
 	}
 
-        Zscale = fDACtoWorld;
-        Zoffset = fDACtoWorldZero;
-
+        // Get scale and offset from the plane, not from Topo header
+        Zscale = plane->tm_scale;
+        Zoffset = plane->tm_offset;
 
 //          printf("  Units in X/Y: %s (type %ld)\n",szXYUnit,
 //                  (long)iXYUnitType);
@@ -1573,11 +1556,10 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *P){
 int TopoFile::gridToTopoData(BCGrid* G){
         int     row, col, layer;
         double  Zscale, Zoffset;
-        double  Zunits2nm;
-        double  XYunits2nm;
-        int     data_type;
-        BCPlane* plane;         // A new plane of data to be filled
-        BCString name;          // Name assigned to the new plane
+        double  Zunits2nm = 1.0;
+        double  XYunits2nm = 1.0;
+        //int     data_type;
+        BCPlane* plane;         // plane of data to be read from
 
 	if(valid_header == 0) return -1;
 	if(griddata != NULL) delete [] griddata;
@@ -1603,36 +1585,6 @@ int TopoFile::gridToTopoData(BCGrid* G){
                 return(-1);
         }
 
-        switch (iWorldUnitType) {
-
-            case 1: /* Nanometers */
-                Zunits2nm = 1.0;
-                data_type = TF_HEIGHT;
-                break;
-
-            case 6: /* Measuring Volts, not Nanometers at all */
-                Zunits2nm = 1.0;
-                data_type = TF_AUX;
-                break;
-
-            case 7: /* Measuring NanoAmps, not Nanometers at all */
-                Zunits2nm = 1.0;
-                data_type = TF_DEFLECTION;
-                break;
-
-            case 8: // Measuring force modulation data
-                Zunits2nm = 1.0;
-                data_type = TF_FORCE_MODULATION_DATA;
-                break;
-
-            default:
-                fprintf(stderr,"Unrecognized Z units, type %ld (%s)\n",
-                        (long)iWorldUnitType, szWorldUnit);
-                return(-1);
-        }
-        // Satisfy compiler
-        data_type = data_type;
-
         /*
          * Fill in the parameters we can before seeing the data
          */
@@ -1652,6 +1604,8 @@ int TopoFile::gridToTopoData(BCGrid* G){
 //          printf("  Units in Z: %s (type %ld)\n",szWorldUnit,
 //                  (long)iWorldUnitType);
 	
+        // Scale and offset must be consistent for whole grid, 
+        // so read from Topo header. 
                 Zscale = fDACtoWorld;
                 Zoffset = fDACtoWorldZero;
 
@@ -1735,14 +1689,16 @@ int TopoFile::initForConversionToTopo(double z_scale_nm, double z_offset_nm) {
     sInfo->iLayers = 1;
     iLayers = 1;
     valid_header = 1;
+    iDataType = ZDATA_HEIGHT;
+    iDataDir = DIR_FWD;
     return 0;
 }
 
 
-int BCGrid::readTopometrixFile(TopoFile &TGF, const char *filename){
+int BCGrid::readTopometrixFile(TopoFile &TGF, FILE* file, const char *name){
 
-	TGF.readTopoFile(filename);
-	TGF.topoDataToGrid(this,filename);	
+	TGF.readTopoFile(file, name);
+	TGF.topoDataToGrid(this,name);	
 	return 1;	
 	
 }
@@ -1934,6 +1890,8 @@ TopoFile::TopoFile()
     iHeaderLength = 0;
     iGridDataLength = 0;
     initForConversionToTopo(1.0, 0.0);
+    iDataType = ZDATA_HEIGHT;
+    iDataDir = DIR_FWD;
 }
 
 TopoFile::TopoFile(const TopoFile &t)
@@ -1957,6 +1915,9 @@ TopoFile::TopoFile(const TopoFile &t)
     memcpy(szXYUnit, t.szXYUnit, 10);
     iLayers = t.iLayers;
     rRoi = t.rRoi;
+    iDataType = t.iDataType;
+    iDataDir = t.iDataDir;
+
     valid_grid = vrpn_FALSE;
     iGridDataLength = 0;
     griddata = NULL;
@@ -1995,6 +1956,9 @@ TopoFile &TopoFile::operator = (const TopoFile &t)
     memcpy(szXYUnit, t.szXYUnit, 10);
     iLayers = t.iLayers;
     rRoi = t.rRoi;
+    iDataType = t.iDataType;
+    iDataDir = t.iDataDir;
+
     valid_grid = vrpn_FALSE;
     iGridDataLength = 0;
     griddata = NULL;

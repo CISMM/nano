@@ -148,6 +148,7 @@ class BCGrid
     int writeUNCAFile(FILE* file, BCPlane* grid);
     int writeSPIPFile(FILE* file, BCPlane* grid);
     int writePPMFile(FILE* file, BCPlane* grid);
+    int writeTIFFile(FILE* file, BCPlane* grid, const char * filename);
     int writeRawVolFile(const char* file_name);
     int writeNCFile(FILE* file, BCPlane* grid,
 	double sizex = 1, double sizey = 1, double sizez = 1,
@@ -205,7 +206,7 @@ class BCGrid
     int parseNanoscopeFileHeader(FILE* file);
       ///< defined in readNanoscopeFile.C
 
-    int readTopometrixFile(TopoFile& TF, const char *name);
+    int readTopometrixFile(TopoFile& TF, FILE* file, const char *name);
       ///< in Topo.C
 
     int readComment(FILE *file, char *buffer, double* max_value);

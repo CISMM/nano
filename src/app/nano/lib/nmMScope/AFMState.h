@@ -494,6 +494,10 @@ struct AFMState {
   vrpn_int32 fc_sec;
   vrpn_int32 fc_usec;
 
+    /// tracks when PID received from AFM/stream, so we can set
+    /// modify PID to match.
+  vrpn_bool first_PID_message_pending;
+
     //OBSOLETE
     //vrpn_bool dlistchange;
     // if true triggers update of X display

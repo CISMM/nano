@@ -10,7 +10,7 @@ ifdef VC
 EXCLUDE_SRC += termio.c x_util.c
 # vrpn_phantom isn't really external but we specify the path explicitly
 # as being in vrpn/server_src/pc_win32_MTd unlike we do for other internal libs
-USES_EXTERNAL_LIBS := vrpn_phantom ghost30
+USES_EXTERNAL_LIBS := vrpn_phantom ghost31
 else
 USES_EXTERNAL_LIBS := RhinoIO
 endif
@@ -19,8 +19,12 @@ ifdef NANO_WITH_ROBOT
    EXTRA_CFLAGS += -DNANO_WITH_ROBOT 
 endif
 
-# new name for a viewer-only app.
 ifdef VIEWER
+NO_MSCOPE_CONNECTION := 1
+endif
+
+# new name for a viewer-only app.
+ifdef NO_MSCOPE_CONNECTION
 ifdef VC
    APP_NAME := nano_view.exe
 else
@@ -34,7 +38,7 @@ include ../Makefile.share
 install:
 	cp $(APP_EXEC) $(NANO_ROOT)/bin
 #	cp -R -u -f $(TOP_LEVEL_SRC_DIR)/share/tcl $(NANO_ROOT)/share
-ifdef VIEWER
+ifdef NO_MSCOPE_CONNECTION
 	cp -R -u -f $(TOP_LEVEL_SRC_DIR)/share/tcl/images $(NANO_ROOT)/share/tcl_view
 	$(TOP_LEVEL_SRC_DIR)/util/tcl_filters/strip_unc.tcl \
 	$(TOP_LEVEL_SRC_DIR)/share/tcl $(NANO_ROOT)/share/tcl_view \

@@ -1,3 +1,16 @@
+2001-05-12  Aron Helser  <helser@cs.unc.edu>
+
+	* AFMState.Ch (first_PID_message_pending): Change from static to
+	member var so modify PID & params get initialized from image
+	params on connection
+	(Scan_channel_selector): added Phase as scan plane. 
+
+	* nmm_Microscope.C (encode_ForceCurveData): Message was 2 bytes short
+	caused dropped data. 
+
+	* nmm_MicroscopeRemote.Cdef (ReportScanAngle): added tolerance of
+	0.01 degrees, prevents callback loops.
+	
 2001-05-11  Aron Helser  <helser@cs.unc.edu>
 
 	* Makefile: call "make generate" before "make" or "make depend"

@@ -2669,7 +2669,8 @@ RECEIVE_MSG ReportScanAngle {
 
   // HACK to break loops
   newangle = Q_RAD_TO_DEG(angle);
-  if (newangle != (float)(state.image.scan_angle)) {
+  // Check within 0.01 degrees. 
+  if (fabs(newangle - (float)(state.image.scan_angle)) > 0.01) {
     state.image.scan_angle = newangle;
     printf( "New scan angle = %g\n", (float)(state.image.scan_angle) );
   }

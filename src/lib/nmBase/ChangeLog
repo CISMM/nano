@@ -1,3 +1,17 @@
+2001-05-12  Aron Helser  <helser@cs.unc.edu>
+
+	* BCGrid.hC (writeTIFFile): new
+	(readFile): Strip the directory name from new plane names. 
+	New filename param when reading/writing files.
+	* BCPlane.hC : added tm_offset and tm_scale to make ThermoMicro
+	files easier to write. 
+	* Topo.C : tweaks to reading/writing topo file, take advantage of
+	more headers sent for non-heightplanes from Thermo server. All
+	header info should be consistent/usable for any saved Thermo
+	file. 
+	* nmb_Image.hC : added tm_offset and tm_scale, added TIFF file
+	writing. 
+
 2001-05-11  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_Dataset.C (computeFlattenedPlane): Enable code to add "from

@@ -44,6 +44,8 @@ set scandatalist [list \
         "IN 1-Reverse" \
         "IN 2-Forward" \
         "IN 2-Reverse" \
+        "Phase-Forward" \
+        "Phase-Reverse" \
         "FastTrack-Forward" \
         "FastTrack-Reverse" \
         "Z Piezo-Forward" \
@@ -794,11 +796,15 @@ generic_entry $nmInfo(pref_surf_shading).diffuse diffuse \
 generic_radiobox $nmInfo(pref_surf_shading).smooth \
 	smooth_shading \
 	"Shading" { "Flat" "Smooth" }
+generic_radiobox $nmInfo(pref_surf_shading).local_viewer \
+	local_viewer \
+	"Light source" { "Large light, uniform" "Small light, highlight" }
 pack $nmInfo(display_settings).surf_shading -fill both
 pack $nmInfo(pref_surf_shading).shiny \
 	$nmInfo(pref_surf_shading).specular_color \
 	$nmInfo(pref_surf_shading).diffuse \
-	$nmInfo(pref_surf_shading).smooth -fill x
+	$nmInfo(pref_surf_shading).smooth \
+        $nmInfo(pref_surf_shading).local_viewer -fill x
 	
 #
 # Surface tesselation

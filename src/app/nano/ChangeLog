@@ -1,3 +1,26 @@
+2001-05-12  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.c (handle_local_viewer_change): Send command to
+	graphics to choose infinite/local viewer.
+	(local_viewer) : new TclNet_int.
+	(set_stream_time): Should be int until we handle correctly in
+	callback.
+
+	VIEWER changed to NO_MSCOPE_CONNECTION or NO_PHANTOM
+
+	(handle_exportPlaneName_change): Set exportFileType correctly.
+	(initialize_environment): Calculate Surface view window size from
+	screen size
+	
+	* minit.c: comment out magellanPuckAnalog, since it's not
+	used. Might be useful in the future.
+	VIEWER changed to NO_MSCOPE_CONNECTION or NO_PHANTOM
+
+	* tcl_tk.C: VIEWER changed to NO_MSCOPE_CONNECTION or NO_PHANTOM
+	
+	* Makefile : Flags to selectively allow compilation without
+	phantom or without microscope connections.
+
 2001-05-12  Jason Clark  <jclark@cs.unc.edu>
 
 	* microscape.c: Switch the example visualization methods over to
@@ -51,7 +74,8 @@
 2001-04-30  Jason Clark  <jclark@cs.unc.edu>
 
 	* import.C: Moved header file info into here to be consistent with
-	only putting info in the headers that need to be accessed by other libraries.
+	only putting info in the headers that need to be accessed by other
+	libraries.
 
 2001-04-24  Adam Seeger  <seeger@cs.unc.edu>
 

@@ -88,7 +88,8 @@ class nmb_Image {
 	nmb_Image():is_height_field(VRPN_FALSE), num_referencing_lists(0),
                 d_worldToImageMatrixSet(VRPN_FALSE),
                 d_imagePosition(0.0, 0.0, 1.0, 1.0),
-                d_units_scale(1.0), d_units_offset(0.0)
+                d_units_scale(1.0), d_units_offset(0.0),
+                tm_scale(1), tm_offset(0)
         {
            for (int i = 0; i < 4; i++){
               for (int j = 0; j < 4; j++) {
@@ -182,8 +183,11 @@ class nmb_Image {
 	virtual int numExportFormats() = 0;
 	virtual const char *exportFormatType(int type) = 0;
 	virtual nmb_ListOfStrings *exportFormatNames() = 0;
-	virtual int exportToFile(FILE *f, const char *export_type) = 0;
+	virtual int exportToFile(FILE *f, const char *export_type,
+                                 const char * filename) = 0;
 
+    float tm_scale;     ///< Scale used by ThermoMicroscopes to acquire data
+    float tm_offset;    ///< Offset used by ThermoMicroscopes to acquire data
   protected:
 	vrpn_bool is_height_field;
         int num_referencing_lists;
@@ -250,9 +254,10 @@ class nmb_ImageGrid : public nmb_Image{
         virtual int numExportFormats();
 	virtual nmb_ListOfStrings *exportFormatNames();
         virtual const char *exportFormatType(int type); 
-        virtual int exportToFile(FILE *f, const char *export_type);
+        virtual int exportToFile(FILE *f, const char *export_type, 
+                                 const char * filename);
 
-	typedef int (*FileExportingFunction) (FILE *file, nmb_ImageGrid *im);
+	typedef int (*FileExportingFunction) (FILE *file, nmb_ImageGrid *im, const char * filename);
 
         /// functions for reading one or more images out of a file
         /// these are in this class so we can leverage the code in BCGrid
@@ -265,11 +270,12 @@ class nmb_ImageGrid : public nmb_Image{
         static const char    *export_formats_list[];
 	nmb_ListOfStrings formatNames;
 	static const FileExportingFunction file_exporting_function[];
-        static int writeTopoFile(FILE *file, nmb_ImageGrid *im);
-	static int writeTextFile(FILE *file, nmb_ImageGrid *im);
-        static int writePPMFile(FILE *file, nmb_ImageGrid *im);
-        static int writeSPIPFile(FILE *file, nmb_ImageGrid *im);
-	static int writeUNCAFile(FILE *file, nmb_ImageGrid *im);
+        static int writeTopoFile(FILE *file, nmb_ImageGrid *im, const char * filename);
+	static int writeTextFile(FILE *file, nmb_ImageGrid *im, const char * filename);
+        static int writePPMFile(FILE *file, nmb_ImageGrid *im, const char * filename);
+        static int writeTIFFile(FILE *file, nmb_ImageGrid *im, const char * filename);
+        static int writeSPIPFile(FILE *file, nmb_ImageGrid *im, const char * filename);
+	static int writeUNCAFile(FILE *file, nmb_ImageGrid *im, const char * filename);
 
 	BCPlane *plane;
 	BCGrid *grid;  ///< this is NULL if we are not the allocator of
@@ -360,14 +366,13 @@ class nmb_ImageArray : public nmb_Image {
     virtual int numExportFormats();
     virtual const char *exportFormatType(int type);
     virtual nmb_ListOfStrings *exportFormatNames();
-    virtual int exportToFile(FILE *f, const char *export_type);
-
+    virtual int exportToFile(FILE *f, const char *export_type, 
+                             const char * filename);
 
     virtual void setLine(int line, void *line_data);
     virtual void setImage(void *newdata);
 
-    typedef int (*FileExportingFunction) 
-            (FILE *file, nmb_ImageArray *im);
+    typedef int (*FileExportingFunction) (FILE *file, nmb_ImageArray *im, const char * filename);
   protected:
     int arrIndex(int i, int j) const
       { return (i+d_borderXMin+(j+d_borderYMin)*

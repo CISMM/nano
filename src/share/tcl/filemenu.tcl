@@ -93,7 +93,7 @@ proc choose_logfile { } {
                 {"Lab Notebook files" ".nm" } 
                 {"All files" *} }
     set filename [tk_getSaveFile -filetypes $types \
-            -initialfile "log.nms" -initialdir $fileinfo(save_dir)\
+            -initialfile "log_[clock format [clock seconds] -format %d-%b-%y].nms" -initialdir $fileinfo(save_dir)\
             -title "Choose a lab notebook file"]
     if {$filename != ""} {
         # No error checking here - do that below 
@@ -196,8 +196,9 @@ proc save_plane_data {} {
     if { [.save_plane_dialog activate] } {
 	set types { {"All files" *} 
         { "ThermoMicroscopes" ".tfr" }
-        { "Text(MathCAD)" ".txt" }
+        { "TIFF Image" ".tif" }
         { "PPM Image" ".ppm" }
+        { "Text(MathCAD)" ".txt" }
         { "SPIP" ".spip" }
         { "UNCA Image" ".ima" } }
 
