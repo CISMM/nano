@@ -174,6 +174,8 @@ void BuildListSpider(URSpider *Pobject, GLuint dl) {
 	double x;
 	double y;
 	double z;
+    q_vec_type leg_offset;
+    q_type leg_rot;
 
 	double rot_step = 2 * Q_PI / legs;
 	double rot;
@@ -185,12 +187,38 @@ void BuildListSpider(URSpider *Pobject, GLuint dl) {
 	double cur_curve;
 
 	glNewList(dl, GL_COMPILE);	// init display list
+
+    // draw center marker
+    double marker_height = 0;
+    for (i = 0; i < legs; i++) {
+        if (marker_height < Pobject->GetSpiderThick(i)) {
+            marker_height = Pobject->GetSpiderThick(i);
+        }
+    }
+    marker_height /= 2;
+    marker_height += 0.01;
+
+    glLineWidth(3);
+    glBegin(GL_LINES);
+
+    glVertex3f(-0.1, -0.1, marker_height);
+    glVertex3f(0.1, 0.1, marker_height);
+
+    glVertex3f(-0.1, 0.1, marker_height);
+    glVertex3f(0.1, -0.1, marker_height);
+
+    glEnd();
+    glLineWidth(1);
+
 	rot = 0.0;
 	for (i = 0; i < legs; i++) {
 		tess = Pobject->GetSpiderTess(i);
 		x = Pobject->GetSpiderLength(i) / tess;
 		y = Pobject->GetSpiderWidth(i) / 2;
 		z = Pobject->GetSpiderThick(i) / 2;
+
+        q_vec_set(leg_offset, Pobject->GetSpiderLegX(i), Pobject->GetSpiderLegY(i), 0);
+        q_from_euler(leg_rot, Q_DEG_TO_RAD(Pobject->GetSpiderLegRot(i)), 0, 0);
 
 		glBegin(GL_QUADS);
 
@@ -216,10 +244,10 @@ void BuildListSpider(URSpider *Pobject, GLuint dl) {
 		q_vec_normalize(n, n);
 		glNormal3f(n[0], n[1], n[2]);
 
-		glVertex3f(p[0][0], p[0][1], p[0][2]);
-		glVertex3f(p[1][0], p[1][1], p[1][2]);
-		glVertex3f(p[2][0], p[2][1], p[2][2]);
-		glVertex3f(p[3][0], p[3][1], p[3][2]);
+        for (k = 0; k < 4; k++) {
+            q_xform(p[k], leg_rot, p[k]);
+            q_vec_add(p[k], p[k], leg_offset);
+        }
 
 		cur_curve = beg_curve;	
         q_vec_set(trans, 0, 0, 0);
@@ -233,10 +261,14 @@ void BuildListSpider(URSpider *Pobject, GLuint dl) {
 
 			for (k = 4; k < 8; k++) {
 				q_xform(p[k], q, p[k]);
+                q_xform(p[k], leg_rot, p[k]);
+                q_vec_add(p[k], p[k], trans);
 			}
 
-            for (k = 4; k < 8; k++) {
-                q_vec_add(p[k], p[k], trans);
+            if (j == 0) {
+                for (k = 4; k < 8; k++) {
+                    q_vec_add(p[k], p[k], leg_offset);
+                }
             }
 
 			// bottom
