@@ -1,3 +1,29 @@
+2000-08-17  Adam Seeger <seeger@cs.unc.edu>
+	* correspondence.C (Correspondence): switched malloc to new
+	* correspondence.C (init): switched malloc to new
+	* correspondenceEditor.C (eventHandler): handles errors from getPoint
+		better
+	* correspondenceEditor.C (setImage): uses minNonZeroValue instead of
+		minValue
+	* nmr_Registration_Impl.C (nmr_Registration_Impl): adds some
+		data member initialization that was missing
+	* nmr_Registration_Impl.C (registerImages): adds stuff to handle
+		fewer constraints and switches the transformation type
+		accordingly in call to transformSolver
+	* nmr_Registration_ImplUI.C (newScanline): creates a temporary
+		image so we can do some contrast adjustment for 
+		display purposes but doesn't do this yet
+	* nmr_Registration_Interface.h : adds enum values to 
+		nmr_TransformationType
+	* transformSolve.C (transformSolver): cleaned up this function
+		quite a bit, making it simpler and easier to use - some
+		functionality was removed but I decided it wasn't going to
+		be useful; made it easier to use the things that are in fact
+		useful but weren't be used like the transformations with fewer
+		parameters
+	* transformSolve.h : removed a bunch of headers for old code from
+		transformSolve.C and the enum xform_solution_t
+
 2000-08-11  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* all: Merge thirdtech_branch code to trunk.

@@ -17,28 +17,41 @@ Correspondence::Correspondence(int num_im, int max_pnts)
     max_points = max_pnts;
     num_spaces = num_im;
 
-    pnts = (corr_point_t **)malloc(num_im*sizeof(corr_point_t *));
+    pnts = new corr_point_t*[num_im];
     int i;
     for (i = 0; i < num_im; i++)
         pnts[i] = new corr_point_t[max_pnts];
 }
 
+/* This function will always change the number of images
+   that the correspondence but will only change the maximum
+   number of points if the specified value max_pnts is greater
+   than the current value for the maximum number
+
+   The reason for doing it this way is that we may want three points
+   where two of the points are duplicates and so only two points are
+   specified. When we copy the specified correspondence into the
+   one used for registration we just have to duplicate the last one to
+   get the required three points to use in finding the solution.
+*/
 void Correspondence::init(int num_im, int max_pnts)
 {
     int i;
     if (pnts){
         for (i = 0; i < num_im; i++)
 	    delete [] pnts[i];
-        delete pnts;
+        delete [] pnts;
     }
 
     num_points = 0;
-    max_points = max_pnts;
+    if (max_pnts > max_points) {
+        max_points = max_pnts;
+    }
     num_spaces = num_im;
 
-    pnts = (corr_point_t **)malloc(num_im*sizeof(corr_point_t *));
+    pnts = new corr_point_t*[num_im];
     for (i = 0; i < num_im; i++)
-        pnts[i] = new corr_point_t[max_pnts];
+        pnts[i] = new corr_point_t[max_points];
 }
 
 Correspondence &Correspondence::operator = (const Correspondence &c) {

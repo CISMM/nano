@@ -87,10 +87,14 @@ int CorrespondenceEditor::eventHandler(
             if (me->correspondence->findNearestPoint(spaceIndex, x_im, y_im,
                 max_x_grab_dist, max_y_grab_dist,
                 &(me->grabbedPointIndex))){
-                me->draggingPoint = VRPN_TRUE;
                 corr_point_t grabbed_pnt;
-                me->correspondence->getPoint(spaceIndex, me->grabbedPointIndex,
-                        &grabbed_pnt);
+                if (me->correspondence->getPoint(spaceIndex, 
+                    me->grabbedPointIndex, &grabbed_pnt)) {
+                    fprintf(stderr, "CorrespondenceEditor::eventHandler: "
+                                    "getPoint failed\n");
+                    return -1;
+                }
+                me->draggingPoint = VRPN_TRUE;
                 me->viewer->toPixels(event.winID, &(grabbed_pnt.x),
 			&(grabbed_pnt.y));
                 me->grab_offset_x = (int)(grabbed_pnt.x - event.mouse_x);
@@ -172,10 +176,6 @@ int CorrespondenceEditor::displayHandler(
     // draw the image for this window:
     me->viewer->drawImage(data.winID);
 
-    // figure out which image is displayed in this window
-    int spaceIndex = me->getSpaceIndex(data.winID);
-
-    int num_pnts = me->correspondence->numPoints();
     int i;
     glViewport(0,0,data.winWidth, data.winHeight);
     glMatrixMode(GL_PROJECTION);
@@ -192,7 +192,9 @@ int CorrespondenceEditor::displayHandler(
 
     char num_str[16];
 
-    
+    // figure out which image is displayed in this window
+    int spaceIndex = me->getSpaceIndex(data.winID);
+    int num_pnts = me->correspondence->numPoints();
     for (i = 0; i < num_pnts; i++){
         me->correspondence->getPoint(spaceIndex, i, &image_pnt);
         // convert point to the right location in the window by scaling it
@@ -312,9 +314,9 @@ int CorrespondenceEditor::setImage(int spaceIndex, nmb_Image *im) {
     im_w = im->width();
     im_h = im->height();
     viewer->setWindowImageSize(win_ids[spaceIndex], im_w, im_h);
-    //printf("CorrespondenceEditor::setImage: \n");
-    viewer->setValueRange(win_ids[spaceIndex], im->minValue(), im->maxValue());
-//	printf(" min,max = %f, %f\n", im->minValue(), im->maxValue());
+    // printf("CorrespondenceEditor::setImage: \n");
+    viewer->setValueRange(win_ids[spaceIndex], im->minNonZeroValue(), im->maxValue());
+    // printf(" min,max = %f, %f\n", im->minNonZeroValue(), im->maxValue());
     for (i = 0; i < im_w; i++){
         for (j = 0; j < im_h; j++){
             val = im->getValue(i,im_h -j -1);   // we need to flip y
@@ -415,11 +417,11 @@ void CorrespondenceEditor::getCorrespondence(Correspondence &corr){
     int i,j;
     corr_point_t p;
     for (j = 0; j < correspondence->numPoints(); j++){
-	    corr.addPoint(p);
-    	for (i = 0; i < correspondence->numSpaces(); i++){
-	    correspondence->getPoint(i, j, &p);
-	    corr.setPoint(i,j, p);
-	}
+        corr.addPoint(p);
+        for (i = 0; i < correspondence->numSpaces(); i++){
+            correspondence->getPoint(i, j, &p);
+            corr.setPoint(i,j, p);
+        }
     }
 }
 

@@ -111,7 +111,12 @@ enum nmr_ImageType {NMR_SOURCE, NMR_TARGET};
 
 /// these options will likely change in the future but NMR_2D2D_AFFINE
 /// is a safe choice
-enum nmr_TransformationType {NMR_2D2D_AFFINE, NMR_2D2D_PERSPECTIVE, NMR_3D2D};
+// TRANSLATION = translation (in 2D) only
+// TRANSLATION_ROTATION_SCALE = translation, rotation, uniform scale (all in 2D)
+// AFFINE = translation, rotation/shear, non-uniform scale (all in 2D)
+
+enum nmr_TransformationType {NMR_TRANSLATION, NMR_TRANSLATION_ROTATION_SCALE,
+                NMR_2D2D_AFFINE, NMR_2D2D_PERSPECTIVE, NMR_3D2D};
 
 /// these represent types of updates you can expect from the registration
 /// server

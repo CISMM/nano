@@ -2,7 +2,9 @@
 #include "transformSolve.h"
 
 nmr_Registration_Impl::nmr_Registration_Impl(nmr_Registration_Server *server):
-  d_server(server)
+  d_alignerUI(NULL),
+  d_server(server),
+  d_transformType(NMR_2D2D_AFFINE)
 {
     // set up things so we do stuff when server gets messages
   if (d_server) {
@@ -96,7 +98,8 @@ nmb_Image *nmr_Registration_Impl::getImage(nmr_ImageType type)
 int nmr_Registration_Impl::setRegistrationEnable(vrpn_bool enable)
 {
     if (enable) {
-        Correspondence c;
+        // 2 images, 3 correspondence points
+        Correspondence c(2,3);
         int corrSourceIndex, corrTargetIndex;
         d_alignerUI->getCorrespondence(c, corrSourceIndex, corrTargetIndex);
         registerImages(c, corrSourceIndex, corrTargetIndex);
@@ -182,7 +185,7 @@ int nmr_Registration_Impl::setTransformationOptions(
 
 int nmr_Registration_Impl::registerImages(double *xform)
 {
-   Correspondence c;
+   Correspondence c(2,3);
    int corrSourceIndex, corrTargetIndex;
    d_alignerUI->getCorrespondence(c, corrSourceIndex, corrTargetIndex);
    c.print();
@@ -202,8 +205,25 @@ int nmr_Registration_Impl::registerImages(Correspondence &c,
     double xform_matrix[16];
     double error;
 
-    transformSolver(xform_matrix, &error, c, corrSourceIndex, corrTargetIndex,
-           getImage(NMR_SOURCE)->isHeightField());
+    // default to what the user specified but if only 1 or 2 points are
+    // given then default to the largest subset of affine 
+    // transformations possibly defined by that number of points as long
+    nmr_TransformationType transformType = d_transformType;
+    if (c.numPoints() == 1 && 
+        (transformType == NMR_2D2D_AFFINE || 
+         transformType == NMR_TRANSLATION_ROTATION_SCALE)) {
+        transformType = NMR_TRANSLATION;
+    } else if (c.numPoints() == 2 && 
+               (transformType == NMR_2D2D_AFFINE)) {
+        transformType = NMR_TRANSLATION_ROTATION_SCALE;
+    }
+
+    int result = transformSolver(xform_matrix, &error, c, 
+	corrSourceIndex, corrTargetIndex,
+        transformType);
+    if (result == -1)
+	return -1;
+
     if (xform) {
         for (int i = 0; i < 16; i++){
             xform[i] = xform_matrix[i];

@@ -65,6 +65,7 @@ int nmr_Util::computeResampleExtents(const nmb_Image &src,
     corner_pnt[3][1] = ib.getY(nmb_ImageBounds::MAX_X_MAX_Y);
 
     int i;
+    printf("nmr_Util::computeResampleExtents corners:\n");
     for (i = 0; i < 4; i++){
        printf("(%g,%g)\n", corner_pnt[i][0], corner_pnt[i][1]);
     }

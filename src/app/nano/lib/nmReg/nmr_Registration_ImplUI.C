@@ -47,11 +47,14 @@ void nmr_Registration_ImplUI::newScanline(nmr_ImageType whichImage,
                                 vrpn_int32 row, nmb_Image *im)
 {
    if (im->height() == row+1) {
+       nmb_ImageGrid *adjustedIm = new nmb_ImageGrid(im);
+       // we may want to do some histogram eq. here
        if (whichImage == NMR_SOURCE) {
-           d_ce->setImage(s_sourceImageIndex, im);
+           d_ce->setImage(s_sourceImageIndex, (nmb_Image *)adjustedIm);
        } else if (whichImage == NMR_TARGET) {
-           d_ce->setImage(s_targetImageIndex, im);
+           d_ce->setImage(s_targetImageIndex, (nmb_Image *)adjustedIm);
        }
+       delete adjustedIm;
    }
 }
 
