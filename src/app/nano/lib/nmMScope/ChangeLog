@@ -1,5 +1,9 @@
 2000-12-8  Tom Hudson  <hudson@cs.unc.edu>
 
+	* nmm_QueueMonitor.C (deleteQueueHead) : set d_queueTail if needed
+
+2000-12-8  Tom Hudson  <hudson@cs.unc.edu>
+
 	* nmm_MicroscopeRemote.C (drawLine) : add call to d_monitor->mainloop
 	(DrawArc) : same
 	(TakeFeelStep) : same

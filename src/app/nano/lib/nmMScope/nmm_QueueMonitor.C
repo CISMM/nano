@@ -226,6 +226,10 @@ void nmm_QueueMonitor::deleteQueueHead (void) {
   d_queueHead = qm->next;
   d_queueLength--;
 
+  if (!d_queueLength) {
+    d_queueTail = NULL;
+  }
+
   delete qm;
 }
 
