@@ -1,3 +1,9 @@
+2003-03-31  Adam Seeger  <seeger@cs.unc.edu>
+
+	* controlPanels.C (handleSEMChange): moved setting of image magnification
+	from when image gets created to where image is finished getting acquired
+	so if it changes then the image magnification will get changed properly
+
 2003-02-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* patternEditor.C (saveImageBuffer): update to match change in 

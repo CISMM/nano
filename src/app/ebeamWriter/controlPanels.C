@@ -824,12 +824,7 @@ void ControlPanels::handleSEMChange(
 			d_patternEditor->setLiveImage(currentImage);
             d_imageList->addImage(currentImage);
 			d_patternEditor->setImageOpacity(currentImage, 0.5);
-			info.sem->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
-			currentImage->setAcquisitionDimensions(imageRegionWidth, 
-												   imageRegionHeight);
 
-			worldToImage.scale(1.0/imageRegionWidth, 1.0/imageRegionHeight, 1.0);
-			currentImage->setWorldToImageTransform(worldToImage);
             d_semBufferImageNames->addEntry(currentImageName);
 			d_currentImage.Set(currentImageName);
 			handle_currentImage_change(currentImageName, this);
@@ -921,6 +916,13 @@ void ControlPanels::handleSEMChange(
                 info.sem->requestScan(0);
                 info.sem->setExternalScanControlEnable(0);
             }
+			// set the magnification of the image
+			info.sem->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
+			currentImage->setAcquisitionDimensions(imageRegionWidth, 
+													imageRegionHeight);
+
+			worldToImage.scale(1.0/imageRegionWidth, 1.0/imageRegionHeight, 1.0);
+			currentImage->setWorldToImageTransform(worldToImage);
         }
       break;
     case nmm_Microscope_SEM::POINT_DWELL_TIME:
