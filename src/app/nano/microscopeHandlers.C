@@ -687,39 +687,39 @@ void    handle_color_dataset_change(const char *, void * /*_mptr*/)
 	//color_slider_max_limit = plane->maxAttainableValue();
 	// So, only use these if they are within a reasonable distance
 	// of the data range.
-      //float range = plane->maxNonZeroValue() - plane->minNonZeroValue();
-      float range = plane->maxValue() - plane->minValue();
+        // Use plane->m*NonZeroValue(), as opposed to plane->m*Value(), so
+        // that we get reasonable values before the 1st scan of the surface
+        // finishes.
+      float range = plane->maxNonZeroValue() - plane->minNonZeroValue();
       printf("Colormap Min %f max %f range %f\n", plane->minNonZeroValue(),
 	     plane->maxNonZeroValue(), range);
-        // I think what we want is min = max_value - range and
-        // max = min_value + range.
-      //if ( plane->minAttainableValue() > (plane->minNonZeroValue() - range)){
-      if ( plane->minAttainableValue() > (plane->maxValue() - range)){ 
+      // We set min_limit = min_value - range and max_limit = max_value +
+      // range to account for drifting.  Yes, we know this is a kluge.
+
+      printf("minAttainable = %f, maxAttainable = %f\n",
+             plane->minAttainableValue(), plane->maxAttainableValue());
+
+      if ( plane->minAttainableValue() > (plane->minNonZeroValue() - range)){
 	    color_slider_min_limit = plane->minAttainableValue();
       } else {
-	//color_slider_min_limit = (plane->minNonZeroValue() -range);
-	color_slider_min_limit = (plane->maxValue() - range);
+	color_slider_min_limit = (plane->minNonZeroValue() - range);
       }
-      //if ( plane->maxAttainableValue() < (plane->maxNonZeroValue() + range)){
-      if (plane->maxAttainableValue() < (plane->minValue() + range)){
+      if ( plane->maxAttainableValue() < (plane->maxNonZeroValue() + range)){
 	color_slider_max_limit = plane->maxAttainableValue();
       } else {
-	//color_slider_max_limit = (plane->maxNonZeroValue() +range);
-	color_slider_max_limit = (plane->minValue()+ range);
+	color_slider_max_limit = (plane->maxNonZeroValue() + range);
       }
-	
-      //color_slider_min = plane->minNonZeroValue();
-      //color_slider_max = plane->maxNonZeroValue();
-      color_slider_min = plane->minValue();
-      color_slider_max = plane->maxValue();
+
+      color_slider_min = plane->minNonZeroValue();
+      color_slider_max = plane->maxNonZeroValue();
     }
-    else {
-      color_slider_min_limit = 0;
-      color_slider_max_limit = 1;
-      color_slider_min = 0;
-      color_slider_max = 1;
+    else {  // so selected data set is "none"
+        color_slider_min_limit = 0;
+        color_slider_max_limit = 1;
+        color_slider_min = 0;
+        color_slider_max = 1;
     }
-    
+
     //cause_grid_redraw(0.0, _mptr);
     graphics->setColorPlaneName(dataset->colorPlaneName->string());
     graphics->causeGridRedraw();

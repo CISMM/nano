@@ -2961,6 +2961,16 @@ fprintf(stderr, "Couldn't find plane for contour mode;  "
   g->causeGridRedraw();
 }
 
+//callbacks for when the datasets for the haptic stimuli change
+// For all of these, we use plane->m*NonZeroValue() instead of
+// plane->m*Value() in order to set min and max to reasonable values
+// before the 1st scan of the surface is completed.
+// Also, we are intentionally doing the following:
+//    range = max_value - min_value
+//    min_limit = min_value - range
+//    max_limit = max_value + range
+// in order to account for drifting (in stream files or running live).
+
 void    handle_adhesion_dataset_change(const char *, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
@@ -2969,20 +2979,20 @@ void    handle_adhesion_dataset_change(const char *, void * userdata)
   float range;
 
   if (plane != NULL) {
-      range = plane->maxValue() - plane->minValue();
-      if (plane->minAttainableValue() > (plane->maxValue() - range)) {
+      range = plane->maxNonZeroValue() - plane->minNonZeroValue();
+      if (plane->minAttainableValue() > (plane->minNonZeroValue() - range)) {
           adhesion_slider_min_limit = plane->minAttainableValue();
       }
       else {
-          adhesion_slider_min_limit = (plane->maxValue() - range);
+          adhesion_slider_min_limit = (plane->minNonZeroValue() - range);
       }
-      if ( plane->maxAttainableValue() < (plane->minValue() + range)) {
+      if ( plane->maxAttainableValue() < (plane->maxNonZeroValue() + range)) {
           adhesion_slider_max_limit = plane->maxAttainableValue();
       } else {
-          adhesion_slider_max_limit = (plane->minValue() + range);
+          adhesion_slider_max_limit = (plane->maxNonZeroValue() + range);
       }
-      adhesion_slider_min = plane->minValue();
-      adhesion_slider_max = plane->maxValue();
+      adhesion_slider_min = plane->minNonZeroValue();
+      adhesion_slider_max = plane->maxNonZeroValue();
       g->setAdhesionSliderRange(adhesion_slider_min, adhesion_slider_max);
   }
   else {
@@ -3003,20 +3013,20 @@ void    handle_friction_dataset_change(const char *, void * userdata)
   float range;
 
   if (plane != NULL) {
-      range = plane->maxValue() - plane->minValue();
+      range = plane->maxNonZeroValue() - plane->minNonZeroValue();
 
-      if ( plane->minAttainableValue() > (plane->maxValue() - range)) {
+      if ( plane->minAttainableValue() > (plane->minNonZeroValue() - range)) {
           friction_slider_min_limit = plane->minAttainableValue();
       } else {
-          friction_slider_min_limit = (plane->maxValue() - range);
+          friction_slider_min_limit = (plane->minNonZeroValue() - range);
       }
-      if ( plane->maxAttainableValue() < (plane->minValue() + range)) {
+      if ( plane->maxAttainableValue() < (plane->maxNonZeroValue() + range)) {
           friction_slider_max_limit = plane->maxAttainableValue();
       } else {
-          friction_slider_max_limit = (plane->minValue() + range);
+          friction_slider_max_limit = (plane->maxNonZeroValue() + range);
       }
-      friction_slider_min = plane->minValue();
-      friction_slider_max = plane->maxValue();
+      friction_slider_min = plane->minNonZeroValue();
+      friction_slider_max = plane->maxNonZeroValue();
       g->setFrictionSliderRange(friction_slider_min,
                                 friction_slider_max);
   }
@@ -3039,24 +3049,23 @@ void    handle_bump_dataset_change(const char *, void * userdata)
   float range;
 
   if (plane != NULL) {
-      range = plane->maxValue() - plane->minValue();
+      range = plane->maxNonZeroValue() - plane->minNonZeroValue();
       if ( plane->minAttainableValue() > 
-           (plane->maxValue() - range)) {
+           (plane->minNonZeroValue() - range)) {
           bump_slider_min_limit = plane->minAttainableValue();
       }
       else {
-          bump_slider_min_limit = (plane->maxValue() - range);
+          bump_slider_min_limit = (plane->minNonZeroValue() - range);
       }
-      if ( plane->maxAttainableValue() < (plane->minValue() + range)) {
+      if ( plane->maxAttainableValue() < (plane->maxNonZeroValue() + range)) {
           bump_slider_max_limit = plane->maxAttainableValue();
       }
       else {
-          bump_slider_max_limit = (plane->minValue() + range);
+          bump_slider_max_limit = (plane->maxNonZeroValue() + range);
       }
-      bump_slider_min = plane->minValue();
-      bump_slider_max = plane->maxValue();
-      g->setBumpSliderRange(bump_slider_min,
-                            bump_slider_max);
+      bump_slider_min = plane->minNonZeroValue();
+      bump_slider_max = plane->maxNonZeroValue();
+      g->setBumpSliderRange(bump_slider_min, bump_slider_max);
   }
   else {
       bump_slider_min_limit = 0;
@@ -3075,21 +3084,21 @@ void    handle_buzz_dataset_change(const char *, void * userdata)
   float range;
 
   if (plane != NULL) {
-      range = plane->maxValue() - plane->minValue();
-      if ( plane->minAttainableValue() > (plane->maxValue() - range)) {
+      range = plane->maxNonZeroValue() - plane->minNonZeroValue();
+      if ( plane->minAttainableValue() > (plane->minNonZeroValue() - range)) {
           buzz_slider_min_limit = plane->minAttainableValue();
       }
       else {
-          buzz_slider_min_limit = (plane->maxValue() - range);
+          buzz_slider_min_limit = (plane->minNonZeroValue() - range);
       }
-      if (plane->maxAttainableValue() < (plane->minValue() + range)) {
+      if (plane->maxAttainableValue() < (plane->maxNonZeroValue() + range)) {
           buzz_slider_max_limit = plane->maxAttainableValue();
       }
       else {
-          buzz_slider_max_limit = (plane->minValue() + range);
+          buzz_slider_max_limit = (plane->maxNonZeroValue() + range);
       }
-      buzz_slider_min = plane->minValue();
-      buzz_slider_max = plane->maxValue();
+      buzz_slider_min = plane->minNonZeroValue();
+      buzz_slider_max = plane->maxNonZeroValue();
       g->setBuzzSliderRange(buzz_slider_min, buzz_slider_max);
   }
   else {
@@ -3108,21 +3117,21 @@ void    handle_compliance_dataset_change(const char *, void * userdata)
   float range;
 
   if (plane != NULL) {
-      range = plane->maxValue() - plane->minValue();
-      if ( plane->minAttainableValue() > (plane->maxValue() - range)) {
+      range = plane->maxNonZeroValue() - plane->minNonZeroValue();
+      if ( plane->minAttainableValue() > (plane->minNonZeroValue() - range)) {
           compliance_slider_min_limit = plane->minAttainableValue();
       }
       else {
-          compliance_slider_min_limit = (plane->maxValue() - range);
+          compliance_slider_min_limit = (plane->minNonZeroValue() - range);
       }
-      if ( plane->maxAttainableValue() < (plane->minValue() + range)) {
+      if ( plane->maxAttainableValue() < (plane->maxNonZeroValue() + range)) {
           compliance_slider_max_limit = plane->maxAttainableValue();
       }
       else {
-          compliance_slider_max_limit = (plane->minValue() + range);
+          compliance_slider_max_limit = (plane->maxNonZeroValue() + range);
       }
-      compliance_slider_min = plane->minValue();
-      compliance_slider_max = plane->maxValue();
+      compliance_slider_min = plane->minNonZeroValue();
+      compliance_slider_max = plane->maxNonZeroValue();
       g->setComplianceSliderRange(compliance_slider_min,
                                   compliance_slider_max);
   }
