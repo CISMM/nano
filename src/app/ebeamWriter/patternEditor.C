@@ -6,7 +6,8 @@
 #define M_PI           3.14159265358979323846
 #endif
 
-PatternEditor::PatternEditor(int startX, int startY)
+PatternEditor::PatternEditor(int startX, int startY):
+   d_segmentLength_nm("segment_length", "0 nm")
 {
    d_canvasImage = NULL;
 
@@ -164,6 +165,7 @@ void PatternEditor::setImageEnable(nmb_Image *im, vrpn_bool displayEnable)
   {
      if ((*imIter).d_image == im) {
           (*imIter).d_enabled = displayEnable;
+
      }
   }
   d_viewer->dirtyWindow(d_mainWinID);
@@ -732,83 +734,12 @@ int PatternEditor::handleMainWinEvent(
 void PatternEditor::zoomBy(double centerX_nm, double centerY_nm,
                            double magFactor)
 {
-    double desired_width, desired_height;
-    double clamped_width, clamped_height;
-    double xmin,xmax,ymin,ymax;
-
-    if (magFactor == 0) {
-       fprintf(stderr, "PatternEditor::zoomBy: Error, can't zoom by 0\n");
-       return;
-    }
-
-    desired_width = (d_mainWinMaxX_nm - d_mainWinMinX_nm)/magFactor;
-    desired_height = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/magFactor;
-
-    double worldWidth = d_worldMaxX_nm - d_worldMinX_nm;
-    double worldHeight = d_worldMaxY_nm - d_worldMinY_nm;
-
-    if (desired_width > worldWidth || 
-        desired_height > worldHeight) {
-       // then we must clamp
-       if (desired_width/worldWidth > desired_height/worldHeight) {
-         clamped_height = desired_height*worldWidth/desired_width;
-         clamped_width = worldWidth;
-       } else {
-         clamped_height = worldHeight;
-         clamped_width = desired_width*worldHeight/desired_height;
-       }
-       xmin = centerX_nm - 0.5*clamped_width;
-       xmax = centerX_nm + 0.5*clamped_width;
-       ymin = centerY_nm - 0.5*clamped_height;
-       ymax = centerY_nm + 0.5*clamped_height;
-    } else {
-       xmin = centerX_nm - 0.5*desired_width;
-       xmax = centerX_nm + 0.5*desired_width;
-       ymin = centerY_nm - 0.5*desired_height;
-       ymax = centerY_nm + 0.5*desired_height;
-    }
-
-    // now we can fix everything by shifting: 
-    double x_shift = 0.0, y_shift = 0.0;
-
-    if (xmin < d_worldMinX_nm) {
-       x_shift = d_worldMinX_nm - xmin;
-       xmin += x_shift;
-       xmax += x_shift;
-    }
-    if (ymin < d_worldMinY_nm) {
-       y_shift = d_worldMinY_nm - ymin;
-       ymin += y_shift;
-       ymax += y_shift;
-    }
-    if (xmax > d_worldMaxX_nm) {
-       x_shift = d_worldMaxX_nm - xmax;
-       xmin += x_shift;
-       xmax += x_shift;
-    }
-    if (ymax > d_worldMaxY_nm) {
-       y_shift = d_worldMaxY_nm - ymax;
-       ymin += y_shift;
-       ymax += y_shift;
-    }
-
-
-    double temp;
-    if ((xmin > xmax) || 
-        (ymin > ymax)) {
-       printf("zoomBy: min/max swapped: this shouldn't happen\n");
-       if (xmin > xmax) {
-           temp = xmin;
-           xmin = xmax;
-           xmax = temp;
-       }
-       if (ymin > ymax) {
-           temp = ymin;
-           ymin = ymax;
-           ymax = temp;
-       }
-    }
-    setViewport(xmin, ymin, xmax, ymax);
+	double xmin,xmax,ymin,ymax;
+	xmin = centerX_nm + (d_mainWinMinX_nm - centerX_nm)/magFactor;
+	xmax = centerX_nm + (d_mainWinMaxX_nm - centerX_nm)/magFactor;
+	ymin = centerY_nm + (d_mainWinMinY_nm - centerY_nm)/magFactor;
+	ymax = centerY_nm + (d_mainWinMaxY_nm - centerY_nm)/magFactor;
+	setViewport(xmin, ymin, xmax, ymax);
 }
 
 void PatternEditor::clampMainWinRectangle(double &xmin, double &ymin,
@@ -923,7 +854,7 @@ int PatternEditor::mainWinDisplayHandler(
 
   double matrix[16];
   glGetDoublev(GL_MODELVIEW_MATRIX, matrix);
-  printf("%g,%g\n", matrix[0], matrix[5]);
+//  printf("%g,%g\n", matrix[0], matrix[5]);
   me->drawScale();
 
   me->drawExposureLevels();
@@ -979,7 +910,7 @@ void PatternEditor::drawPattern()
                       (double)d_mainWinWidth;
   units_per_pixel_y = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/
                       (double)d_mainWinHeight;
-  double worldFromPattern[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+  double worldFromPattern[16] = {10000.0,0,0,0,0,7812.5,0,0,0,0,1,0,0,0,0,1};
   if (d_canvasImage) {
 	nmb_TransformMatrix44 worldFromPattern44;
 	d_canvasImage->getWorldToImageTransform(worldFromPattern44);
@@ -988,9 +919,10 @@ void PatternEditor::drawPattern()
   }
 
   if (d_currShape) {
+	  double currColor[3] = {1.0, 1.0, 1.0};
 	d_currShape->setParentFromObject(worldFromPattern);
     d_currShape->drawToDisplay(units_per_pixel_x, units_per_pixel_y,
-                           d_patternColorMap);
+                           currColor[0], currColor[1], currColor[2]);
   }
   d_pattern.setParentFromObject(worldFromPattern);
   d_pattern.drawToDisplay(units_per_pixel_x, units_per_pixel_y, 
@@ -1530,14 +1462,39 @@ int PatternEditor::startPoint(const double x_nm, const double y_nm)
 
 int PatternEditor::updatePoint(const double x_nm, const double y_nm)
 {
+  char lengthIndicatorStr[128];
+  sprintf(lengthIndicatorStr, "N/A");
+  int numPoints;
+  double x_nm_last, y_nm_last;
+  double dx, dy, length;
   if (d_pointInProgress) {
     if (d_shapeInProgress) {
       if (d_currShape->type() == PS_POLYGON) {
-        ((PolygonPatternShape *)d_currShape)->removePoint();
-        ((PolygonPatternShape *)d_currShape)->addPoint(x_nm, y_nm);
+		PolygonPatternShape *pps = (PolygonPatternShape *)d_currShape;
+        pps->removePoint();
+        pps->addPoint(x_nm, y_nm);
+		numPoints = pps->numPoints();
+		if (numPoints > 1) {
+			pps->getPointInWorld(numPoints-2, x_nm_last, y_nm_last);
+			dx = x_nm - x_nm_last;
+			dy = y_nm - y_nm_last;
+			length = sqrt(dx*dx + dy*dy);
+			sprintf(lengthIndicatorStr, "%7g nm", length);
+		}
+		d_segmentLength_nm.Set(lengthIndicatorStr);
       } else if (d_currShape->type() == PS_POLYLINE) {
-        ((PolylinePatternShape *)d_currShape)->removePoint();
-        ((PolylinePatternShape *)d_currShape)->addPoint(x_nm, y_nm);
+		PolylinePatternShape *pps = (PolylinePatternShape *)d_currShape;
+		       pps->removePoint();
+        pps->addPoint(x_nm, y_nm);
+		numPoints = pps->numPoints();
+		if (numPoints > 1) {
+			pps->getPointInWorld(numPoints-2, x_nm_last, y_nm_last);
+			dx = x_nm - x_nm_last;
+			dy = y_nm - y_nm_last;
+			length = sqrt(dx*dx + dy*dy);
+			sprintf(lengthIndicatorStr, "%7g nm", length);
+		}
+		d_segmentLength_nm.Set(lengthIndicatorStr);
       } else if (d_currShape->type() == PS_DUMP) {
         ((DumpPointPatternShape *)d_currShape)->setLocation(x_nm, y_nm);
       }

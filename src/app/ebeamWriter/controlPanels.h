@@ -45,6 +45,7 @@ class ControlPanels {
 
    static void handle_imageColorChanged_change(int new_value, void *ud);
    static void handle_imageOpacity_change(double new_value, void *ud);
+   static void handle_imageMagnification_change(double new_value, void *ud);
    static void handle_hideOtherImages_change(int new_value, void *ud);
    static void handle_enableImageDisplay_change(int new_value, void *ud);
    static void handle_currentImage_change(const char *new_value, void *ud);
@@ -78,8 +79,6 @@ class ControlPanels {
                         const nmm_Microscope_SEM_ChangeHandlerData &info);
    void handleSEMChange(const nmm_Microscope_SEM_ChangeHandlerData &info);
 
-   void autoAlignImages();
-
    // list of all images available for display
    Tclvar_list_of_strings *d_imageNames;
 
@@ -111,6 +110,7 @@ class ControlPanels {
    Tclvar_int d_imageGreen;
    Tclvar_int d_imageBlue;
    Tclvar_float d_imageOpacity;
+   Tclvar_float d_imageMagnification;
    Tclvar_int d_hideOtherImages;
    Tclvar_int d_enableImageDisplay;
    Tclvar_string d_currentImage;

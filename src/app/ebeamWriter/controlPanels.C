@@ -40,6 +40,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_imageGreen("image_g", 255),
    d_imageBlue("image_b", 120),
    d_imageOpacity("image_opacity", 50.0),
+   d_imageMagnification("image_magnification", 1000),
    d_hideOtherImages("hide_other_images", 0),
    d_enableImageDisplay("enable_image_display", 0),
    d_currentImage("current_image", "none"),
@@ -192,6 +193,7 @@ void ControlPanels::setupCallbacks()
 
   d_imageColorChanged.addCallback(handle_imageColorChanged_change, this);
   d_imageOpacity.addCallback(handle_imageOpacity_change, this);
+  d_imageMagnification.addCallback(handle_imageMagnification_change, this);
   d_hideOtherImages.addCallback(handle_hideOtherImages_change, this);
   d_enableImageDisplay.addCallback(handle_enableImageDisplay_change, this);
   d_currentImage.addCallback(handle_currentImage_change, this);
@@ -245,16 +247,15 @@ void ControlPanels::setupCallbacks()
 void ControlPanels::handle_openImageFileName_change(const char * /*new_value*/,
                                               void *ud)
 {
-  double default_matrix[16] = {0.001, 0.0, 0.0, 0.0,
-                               0.0, 0.001, 0.0, 0.0,
-                               0.0, 0.0, 1.0, 0.0,
-                               0.0, 0.0, 0.0, 1.0};
+  nmb_TransformMatrix44 defaultWorldToImage;
   ControlPanels *me = (ControlPanels *)ud;
   double imageRegionWidth, imageRegionHeight;
   me->d_SEM->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
   if (imageRegionWidth != 0 && imageRegionHeight != 0) {
-    default_matrix[0] = 2.0/imageRegionWidth;
-    default_matrix[5] = 2.0/imageRegionHeight;
+	defaultWorldToImage.scale(2.0/imageRegionWidth, 
+		2.0/imageRegionHeight, 1.0);
+  } else {
+	defaultWorldToImage.scale(0.001, 0.001, 1.0);
   }
   printf("open file %s\n", (const char *)me->d_openImageFileName);
   if (strlen((const char *)me->d_openImageFileName) <= 0) return;
@@ -266,7 +267,7 @@ void ControlPanels::handle_openImageFileName_change(const char * /*new_value*/,
   while (im) {
     // add im to the list
     im->normalize();
-    im->setWorldToImageTransform(default_matrix);
+    im->setWorldToImageTransform(defaultWorldToImage);
 
     me->d_patternEditor->addImage(im);
     me->d_imageList->addImage(im);
@@ -548,6 +549,27 @@ void ControlPanels::handle_imageOpacity_change(double new_value, void *ud)
   me->d_patternEditor->setImageOpacity(im, new_value);
 }
 
+// static
+void ControlPanels::handle_imageMagnification_change(double new_value, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  printf("magnification: %g\n", (double)me->d_imageMagnification);
+  nmb_Image *im = me->d_imageList->getImageByName(
+                string((const char *)(me->d_currentImage)));
+  if (!im) {
+    fprintf(stderr, "handle_imageMagnification: Error, could not find image\n");
+    return;
+  }
+  nmb_TransformMatrix44 worldToImage;
+
+  double width_nm = 10.0e7/new_value;
+  double height_nm = width_nm*(double)(im->height())/
+	  (double)(im->width());
+  worldToImage.scale(1.0/width_nm, 1.0/height_nm, 1.0);
+  im->setWorldToImageTransform(worldToImage);
+  me->d_patternEditor->updateDisplayTransform(im, NULL);
+}
+
 // static 
 void ControlPanels::handle_hideOtherImages_change(int new_value, void *ud)
 {
@@ -627,6 +649,7 @@ void ControlPanels::updateCurrentImageControls()
   d_imageBlue = (int)(255*ie->d_blue);
   d_imageColorChanged = 1;
   d_imageOpacity = ie->d_opacity;
+  d_imageMagnification = 10.0e7/(ie->d_image->widthWorld());
   d_enableImageDisplay = ie->d_enabled;
   if (d_hideOtherImages) {
     d_patternEditor->showSingleImage(im);
@@ -670,10 +693,9 @@ void ControlPanels::handleSEMChange(
   double percentDone = 0.0;
   ImageViewer *image_viewer = ImageViewer::getImageViewer();
 
+  nmb_TransformMatrix44 worldToImage;
   double imageRegionWidth = 1000;
   double imageRegionHeight = 1000;
-
-  nmb_ImageBounds ib;
 
   switch(info.msg_type) {
     case nmm_Microscope_SEM::REPORT_RESOLUTION:
@@ -724,34 +746,15 @@ void ControlPanels::handleSEMChange(
             d_imageList->addImage(currentImage);
             d_patternEditor->addImage(currentImage);
             d_semBufferImageNames->addEntry(currentImageName);
-            // in case this was the first image created, the following is
-            // necessary
-	    updateCurrentImageControls();
-        }
-        // make sure this is visible in the pattern editor window
-        if (d_autoEnabledImageName) {
-          nmb_Image *prevAEImage = 
-               d_imageList->getImageByName(d_autoEnabledImageName);
-          if (prevAEImage) {
-            d_patternEditor->setImageEnable(prevAEImage, vrpn_FALSE);
-          } else {
-            fprintf(stderr, "autoenable image not found\n");
-          }
-          delete [] d_autoEnabledImageName;
-          d_autoEnabledImageName = NULL;
         }
 
-        if (!(d_patternEditor->getImageEnable(currentImage))) {
-          d_autoEnabledImageName = new char[strlen(currentImageName)+1];
-          strcpy(d_autoEnabledImageName, currentImageName);
-          d_patternEditor->setImageEnable(currentImage, vrpn_TRUE);
-        }
 
         info.sem->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
         currentImage->setAcquisitionDimensions(imageRegionWidth, 
                                                imageRegionHeight);
-        ib = nmb_ImageBounds(0.0, 0.0, imageRegionWidth, imageRegionHeight);
-        currentImage->setBounds(ib);
+
+		worldToImage.scale(1.0/imageRegionWidth, 1.0/imageRegionHeight, 1.0);
+        currentImage->setWorldToImageTransform(worldToImage);
         d_patternEditor->updateDisplayTransform(currentImage, NULL);
         d_semDataBuffer.Set(currentImageName);
         if (start_y + num_lines*dy > res_y || line_length*dx != res_x) {
@@ -760,6 +763,24 @@ void ControlPanels::handleSEMChange(
                               line_length*dx, start_y, start_y + dy*(num_lines),
                                 res_x, res_y);
            break;
+        }
+		// make sure the image is visible in the pattern editor window
+        if (!(d_patternEditor->getImageEnable(currentImage))) {
+          if (d_autoEnabledImageName) {
+			  nmb_Image *prevAEImage = 
+				   d_imageList->getImageByName(d_autoEnabledImageName);
+			  if (prevAEImage) {
+				d_patternEditor->setImageEnable(prevAEImage, vrpn_FALSE);
+			  } else {
+				fprintf(stderr, "autoenable image not found\n");
+			  }
+			  delete [] d_autoEnabledImageName;
+			  d_autoEnabledImageName = NULL;
+		  }
+          d_autoEnabledImageName = new char[strlen(currentImageName)+1];
+          strcpy(d_autoEnabledImageName, currentImageName);
+          d_patternEditor->setImageEnable(currentImage, vrpn_TRUE);
+		  d_currentImage.Set(currentImageName);
         }
         x = start_x;
         y = start_y;
@@ -816,6 +837,7 @@ void ControlPanels::handleSEMChange(
                 info.sem->requestScan(0);
                 info.sem->setExternalScanControlEnable(0);
             }
+		
         }
       break;
     case nmm_Microscope_SEM::POINT_DWELL_TIME:
@@ -882,9 +904,13 @@ void ControlPanels::handleSEMChange(
                                   timeTotal_sec, timeDone_sec);
 //      printf("REPORT_EXPOSURE_STATUS: (%d, %d, %g, %g)\n",
 //              numPointsTotal, numPointsDone, timeTotal_sec, timeDone_sec);
-      percentDone = 100.0*(double)numPointsDone/(double)numPointsTotal;
-      sprintf(status, "(%3.1lf sec) %3.2lf%% done", timeTotal_sec,percentDone);
-      d_semExposureStatus = status;
+	  if (numPointsTotal != 0) {
+		  percentDone = 100.0*(double)numPointsDone/(double)numPointsTotal;
+	     sprintf(status, "(%3.1lf sec) %3.2lf%% done", timeTotal_sec,percentDone);
+	  } else {
+		 sprintf(status, "0 exposure points");
+	  }
+	  d_semExposureStatus = status;
       break;
     default:
       printf("unknown message type: %d\n", info.msg_type);

@@ -240,6 +240,7 @@ class PatternEditor : public nmb_ImageDisplay {
 
    nmb_Image *d_canvasImage;
 
+   Tclvar_string d_segmentLength_nm;
 };
 
 #endif

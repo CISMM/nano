@@ -183,11 +183,27 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
                                PatternShapeColorMap &map)
 {
   if (d_numPoints == 0) return;
+  double color[3];
+  if (d_lineWidth_nm == 0) {
+	map.linearExposureColor(d_exposure_pCoulombs_per_cm, color);
+  } else {
+	map.areaExposureColor(d_exposure_uCoulombs_per_square_cm, color);
+  }
+  drawToDisplay(units_per_pixel_x, units_per_pixel_y,
+	  color[0], color[1], color[2]);
+
+}
+
+void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
+                               double units_per_pixel_y,
+                               double r, double g, double b)
+{
+  if (d_numPoints == 0) return;
 
   if (d_lineWidth_nm == 0) {
     drawToDisplayZeroWidth(units_per_pixel_x,
                                             units_per_pixel_y,
-                                            map);
+                                            r,g,b);
   } else {
 
 	  // we ignore this flag and update every display update because
@@ -197,11 +213,8 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
       computeSidePoints();
 //    }
 
-    double color[3];
-    map.areaExposureColor(d_exposure_uCoulombs_per_square_cm, color);
-
     glLineWidth(1);
-    glColor4f(color[0], color[1], color[2], 1.0);
+    glColor4f(r, g, b, 1.0);
 
 	glPushAttrib(GL_TRANSFORM_BIT);
 	glMatrixMode(GL_MODELVIEW);
@@ -649,6 +662,16 @@ void PolylinePatternShape::addPoint(double x, double y)
   d_sidePointsNeedUpdate = vrpn_TRUE;
 }
 
+void PolylinePatternShape::getPointInWorld(int index, double &x, double &y)
+{
+  double x_obj, y_obj;
+  getPoint(index, x_obj, y_obj);
+
+  double worldFromObjectM[16];
+  getWorldFromObject(worldFromObjectM);
+  transform(worldFromObjectM, x_obj, y_obj, x, y);
+}
+
 void PolylinePatternShape::removePoint()
 {
   d_points.pop_back();
@@ -797,17 +820,14 @@ void PolylinePatternShape::computeSidePoints()
 
 void PolylinePatternShape::drawToDisplayZeroWidth(double units_per_pixel_x,
                                double units_per_pixel_y,
-                               PatternShapeColorMap &map)
+                               double r, double g, double b)
 {
   if (d_points.empty()) return;
-
-  double color[3];
-  map.linearExposureColor(d_exposure_pCoulombs_per_cm, color);
 
   double x, y;
   double x_max, y_min;
   glLineWidth(1);
-  glColor4f(color[0], color[1], color[2], 1.0);
+  glColor4f(r,g,b, 1.0);
 
   glPushAttrib(GL_TRANSFORM_BIT);
   glMatrixMode(GL_MODELVIEW);
@@ -1037,9 +1057,20 @@ void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
 
   double color[3];
   map.areaExposureColor(d_exposure_uCoulombs_per_square_cm, color);
+
+  drawToDisplay(units_per_pixel_x, units_per_pixel_y,
+	  color[0], color[1], color[2]);
+}
+
+void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
+                               double units_per_pixel_y,
+                               double r, double g, double b)
+{
+  if (d_points.empty()) return;
+
   float x, y;
   glLineWidth(1);
-  glColor4f(color[0], color[1], color[2], 1.0);
+  glColor4f(r,g,b, 1.0);
 
   glPushAttrib(GL_TRANSFORM_BIT);
   glMatrixMode(GL_MODELVIEW);
@@ -1437,6 +1468,16 @@ void PolygonPatternShape::addPoint(double x, double y)
   d_numPoints++;
 }
 
+void PolygonPatternShape::getPointInWorld(int index, double &x, double &y)
+{
+  double x_obj, y_obj;
+  getPoint(index, x_obj, y_obj);
+
+  double worldFromObjectM[16];
+  getWorldFromObject(worldFromObjectM);
+  transform(worldFromObjectM, x_obj, y_obj, x, y);
+}
+
 void PolygonPatternShape::removePoint() {
   d_points.pop_back();
   d_numPoints--;
@@ -1474,6 +1515,24 @@ void CompositePatternShape::drawToDisplay(double units_per_pixel_x,
   glMultMatrixd(d_parentFromObject);
   for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
     (*shape).drawToDisplay(units_per_pixel_x, units_per_pixel_y, color);
+  }
+  glPopMatrix();
+  glPopAttrib();
+}
+
+void CompositePatternShape::drawToDisplay(double units_per_pixel_x,
+                               double units_per_pixel_y,
+                               double r, double g, double b)
+{
+  list<PatternShapeListElement>::iterator shape;
+
+  glPushAttrib(GL_TRANSFORM_BIT);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glMultMatrixd(d_parentFromObject);
+  for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
+    (*shape).drawToDisplay(units_per_pixel_x, units_per_pixel_y, 
+		r, g, b);
   }
   glPopMatrix();
   glPopAttrib();
@@ -1693,7 +1752,15 @@ void DumpPointPatternShape::drawToDisplay(double units_per_pixel_x,
                                double units_per_pixel_y,
                                PatternShapeColorMap &color)
 {
-  glColor4f(1.0, 1.0, 0.0, 1.0);
+  drawToDisplay(units_per_pixel_x, units_per_pixel_y,
+	  1.0, 1.0, 0.0);
+}
+
+void DumpPointPatternShape::drawToDisplay(double units_per_pixel_x,
+                               double units_per_pixel_y,
+                               double r, double g, double b)
+{
+  glColor4f(r,g,b, 1.0);
 
   double size = 1.5;
   float xmin, xmax, ymin, ymax;

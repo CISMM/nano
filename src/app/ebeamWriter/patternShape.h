@@ -109,6 +109,10 @@ class PatternShape {
                                double /*units_per_pixel_y*/,
                                PatternShapeColorMap &/*color*/) {}
 
+    virtual void drawToDisplay(double /*units_per_pixel_x*/, 
+                               double /*units_per_pixel_y*/,
+                               double /*r*/, double /*g*/, double /*b*/) {}
+
     /// send high level shape description over the network
     virtual void drawToSEM(nmm_Microscope_SEM_Remote * /*sem*/) {};
 
@@ -238,6 +242,12 @@ class PatternShapeListElement {
     {
       d_shape->drawToDisplay(units_per_pixel_x, units_per_pixel_y, color);
     }
+	void drawToDisplay(double units_per_pixel_x, 
+                               double units_per_pixel_y,
+                               double r, double g, double b)
+	{
+		d_shape->drawToDisplay(units_per_pixel_x, units_per_pixel_y, r,g,b);
+	}
 
     /// send high level shape description over the network
     void drawToSEM(nmm_Microscope_SEM_Remote *sem) {d_shape->drawToSEM(sem);}
@@ -295,6 +305,10 @@ class PolylinePatternShape : public PatternShape {
                                double units_per_pixel_y,
                                PatternShapeColorMap &color);
 
+	virtual void drawToDisplay(double units_per_pixel_x,
+                               double units_per_pixel_y,
+							   double r, double g, double b);
+
     /// send high level shape description over the network
     virtual void drawToSEM(nmm_Microscope_SEM_Remote *sem);
 
@@ -329,8 +343,10 @@ class PolylinePatternShape : public PatternShape {
 
     void setPoints(list<PatternPoint> &points);
     void getPoint(int index, double &x, double &y);
+	void getPointInWorld(int index, double &x, double &y);
     void setPoint(int index, double x, double y);
     void addPoint(double x, double y);
+	int numPoints() {return d_numPoints;}
     void removePoint();
     void clearPoints();
 
@@ -343,7 +359,7 @@ class PolylinePatternShape : public PatternShape {
     // for the special case of 0 line width we use these functions
     void drawToDisplayZeroWidth(double units_per_pixel_x,
                                double units_per_pixel_y,
-                               PatternShapeColorMap &color);
+                               double r, double g, double b);
     
     void generateExposurePoints(nmm_Microscope_SEM_EDAX *sem,
          double current, double dotSpacing, double lineSpacing,
@@ -383,6 +399,10 @@ class PolygonPatternShape : public PatternShape {
                                double units_per_pixel_y,
                                PatternShapeColorMap &color);
 
+	virtual void drawToDisplay(double units_per_pixel_x,
+                               double units_per_pixel_y,
+							   double r, double g, double b);
+
     /// send high level shape description over the network
     virtual void drawToSEM(nmm_Microscope_SEM_Remote *sem);
 
@@ -417,8 +437,10 @@ class PolygonPatternShape : public PatternShape {
 
     void setPoints(list<PatternPoint> &points);
     void getPoint(int index, double &x, double &y);
+	void getPointInWorld(int index, double &x, double &y);
     void setPoint(int index, double x, double y);
     void addPoint(double x, double y);
+	int numPoints() {return d_numPoints;}
     void removePoint();
     void clearPoints();
 
@@ -446,6 +468,10 @@ class CompositePatternShape : public PatternShape {
     virtual void drawToDisplay(double units_per_pixel_x,
                                double units_per_pixel_y,
                                PatternShapeColorMap &color);
+
+	virtual void drawToDisplay(double units_per_pixel_x,
+                               double units_per_pixel_y,
+							   double r, double g, double b);
 
     /// send high level shape description over the network
     virtual void drawToSEM(nmm_Microscope_SEM_Remote *sem);
@@ -517,6 +543,10 @@ class DumpPointPatternShape : public PatternShape {
     virtual void drawToDisplay(double units_per_pixel_x,
                                double units_per_pixel_y,
                                PatternShapeColorMap &color);
+
+	virtual void drawToDisplay(double units_per_pixel_x,
+                               double units_per_pixel_y,
+							   double r, double g, double b);
 
     /// send high level shape description over the network
     virtual void drawToSEM(nmm_Microscope_SEM_Remote *sem);

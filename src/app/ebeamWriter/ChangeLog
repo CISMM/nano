@@ -1,3 +1,24 @@
+2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	Added a few changes to fix some problems encountered during 
+	testing - simple features needed and minor bugs
+
+	* controlPanels.C: added control to set magnification of an image
+	(handleSEMChange): fixed autoenable feature when acquiring 
+    SEM images so it updates the display parameter controls
+    * patternEditor.C: added display of current segment length for the
+	current shape being drawn
+	(zoomBy): fixed zooming so it keeps the center of zooming at the mouse
+	instead of translating it to the center of the image
+	(drawPattern): changed default pattern transformation to use when
+	drawing without a canvas image
+	* patternShape.C (drawToDisplay): changed the various versions of this
+	to provide one that lets you give a specific color instead of
+	a color map so that the current object being drawn can be given a 
+    special color not related to its exposure
+	(getPointInWorld): new function used to compute line segment lengths
+	(numPoints): new function
+
 2002-09-07  Adam Seeger  <seeger@cs.unc.edu>
 
     This version has a new feature that lets patterns be linked to a 
