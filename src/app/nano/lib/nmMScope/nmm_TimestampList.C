@@ -130,6 +130,9 @@ void nmm_TimestampList::clear (void) {
   d_tp = NULL;
   d_tpEnd = NULL;
 
+  d_numSends = 0;
+  d_numReceives = 0;
+
   gettimeofday(&d_start, NULL);
 }
 
