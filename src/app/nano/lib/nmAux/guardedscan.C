@@ -9,7 +9,7 @@
 #include "math.h"
 #include "microscape.h"
 #include "nmm_MicroscopeRemote.h"
-#include "point.h"
+#include "Point.h"
 
 extern nmm_Microscope_Remote* microscope;
 extern nmb_Dataset* dataset;
