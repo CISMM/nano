@@ -1,3 +1,11 @@
+2002-05-30  David Borland <borland@cs.unc.edu>
+
+        * nmr_RegistrationUI.C : code for the user interface for the new
+	SURFACE_REGISTRATION_COORD and MODEL_REGISTRATION_COORD graphics
+	modes.
+
+	* nmr_RegistrationUI.h : same
+
 2002-05-10  David Marshburn & Adam Seeger  <marshbur@cs.unc.edu>
 
 	* nmr_RegistrationUI.C (handleRegistrationChange):  update the 

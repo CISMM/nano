@@ -13,6 +13,10 @@
 #include <nmr_AlignerMI.h>
 #include <nmb_Transform_TScShR.h>
 
+#include <nmg_Graphics.h>
+
+extern nmg_Graphics* graphics;
+
 /*
 this is annoying because it takes too long to calculate the image pyramid
 vrpn_int32 nmr_RegistrationUI::s_defaultNumResolutionLevels = 15;
@@ -50,6 +54,7 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_constrainToTopography("reg_constrain_to_topography", 0),
    d_invertWarp("reg_invert_warp", 0),
    d_textureDisplayEnabled("reg_display_texture", 0),
+   d_textureImageMode("reg_image_mode", 1),
    d_resampleResolutionX("resample_resolution_x", 100),
    d_resampleResolutionY("resample_resolution_y", 100),
    d_resampleRatio("reg_resample_ratio", 0),
@@ -147,6 +152,8 @@ void nmr_RegistrationUI::setupCallbacks()
          (handle_registrationEnabled_change, (void *)this);
     d_textureDisplayEnabled.addCallback
          (handle_textureDisplayEnabled_change, (void *)this);
+	d_textureImageMode.addCallback
+		 (handle_textureImageMode_change, (void*)this);
     d_newResampleImageName.addCallback
          (handle_resampleImageName_change, (void *)this);
     d_newResamplePlaneName.addCallback
@@ -186,6 +193,8 @@ void nmr_RegistrationUI::teardownCallbacks()
          (handle_registrationEnabled_change, (void *)this);
     d_textureDisplayEnabled.removeCallback
          (handle_textureDisplayEnabled_change, (void *)this);
+	d_textureImageMode.removeCallback
+		 (handle_textureImageMode_change, (void *)this);
     d_newResampleImageName.removeCallback
          (handle_resampleImageName_change, (void *)this);
     d_newResamplePlaneName.removeCallback
@@ -554,6 +563,25 @@ void nmr_RegistrationUI::handle_textureDisplayEnabled_change(
     else {
       me->d_imageDisplay->removeImageFromDisplay(im);
     }
+}
+
+// static
+void nmr_RegistrationUI::handle_textureImageMode_change(
+	vrpn_int32 value, void *ud)
+{
+	nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+	if (!(me->d_imageDisplay)) return;
+
+	if (!(me->d_dataset)) return;
+
+	if (value == 1) {
+		graphics->setTextureMode(nmg_Graphics::COLORMAP,
+                                 nmg_Graphics::SURFACE_REGISTRATION_COORD);
+	}
+	else {
+		graphics->setTextureMode(nmg_Graphics::COLORMAP,
+								 nmg_Graphics::MODEL_REGISTRATION_COORD);
+	}
 }
 
 void nmr_RegistrationUI::autoAlignImages()
