@@ -1,3 +1,11 @@
+2004-04-08  Adam Seeger  <seeger@cs.unc.edu>
+
+   * patternEditor.C (handleMainWinEvent): for delete key, deletes points
+      in current shape and then shapes when the current shape has been
+      completely deleted
+   * patternShape.C (PolylinePatternShape::drawToDisplay): changed how 
+      color is calculated when shape is selected
+
 2003-04-07  Adam Seeger  <seeger@cs.unc.edu>
 
 	* controlPanels.[Ch]: added addFocusTest button and handler

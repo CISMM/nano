@@ -204,9 +204,14 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
   if (d_numPoints == 0) return;
 
   if (d_lineWidth_nm == 0) {
+    double r_s = r, g_s = g, b_s = b;
+    if (d_selected) {
+      g_s = 0.5*g;
+      b_s = b+0.5*(1.0-b);
+    }
     drawToDisplayZeroWidth(units_per_pixel_x,
                                             units_per_pixel_y,
-                                            r,g,b);
+                                            r_s,g_s,b_s);
   } else {
 
 	  // we ignore this flag and update every display update because
@@ -218,7 +223,7 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
 
     glLineWidth(1);
     if(d_selected) {
-      glColor4f(0.5*r, 0.5*g, 0.5*b, 1.0);
+      glColor4f(r, 0.5*g, b+0.5*(1.0-b), 1.0);
     } else {
       glColor4f(r,g,b, 1.0);
     }

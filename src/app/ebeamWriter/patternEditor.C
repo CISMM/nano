@@ -927,7 +927,11 @@ int PatternEditor::handleMainWinEvent(
             break;
 		   case 127:	// 127 for delete key. Delete key needs glut 3.7 or greater.
 		   case 8:		// 8 is for backspace, ^H. 
-			 undoPoint();
+			   if (d_shapeInProgress){
+				 undoPoint();
+			   } else {
+				 undoShape();
+			   }
 			 break;
            default:
 			 //printf("got key %d\n", event.keycode); 
