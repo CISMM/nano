@@ -414,6 +414,9 @@ $toolmenu add command -label  "Import Objects..." -underline 0 \
 
 $toolmenu add command -label  "AFM Tip" -underline 4 \
     -command "show.tip_win"
+
+$toolmenu add command -label  "AFM-SEM" -underline 1 \
+    -command "show.afm_sem_win"
 }
 
 lappend stream_only_controls [list $toolmenu entryconfigure "Replay Control"]
@@ -607,6 +610,8 @@ source [file join ${tcl_script_dir} tem.tcl]
 source [file join ${tcl_script_dir} french_ohmmeter.tcl]
 # AFM Tip display control panel
 source [file join ${tcl_script_dir} tip.tcl]
+# AFM SEM calibration
+source [file join ${tcl_script_dir} afm_sem.tcl]
 }
 
 #----------------
