@@ -1,5 +1,5 @@
 /*===3rdtech===
-  Copyright (c) 2000 by 3rdTech, Inc.
+  Copyright (c) 2000-2002 by 3rdTech, Inc.
   All Rights Reserved.
 
   This file may not be distributed without the permission of 
@@ -1069,7 +1069,7 @@ Tclvar_int phantom_button_mode("phantom_button_mode", 0);
 
 /// Allow interface to display frame rate, if desired. 
 Tclvar_float frame_rate("frame_rate", 0);
-
+double cum_time_for_frame_rate = 0;
 
 // END tcl declarations
 //----------------------------------------------------------------------
@@ -1771,9 +1771,6 @@ void handle_z_dataset_change(const char *, void * ds)
   // is not recognized yet. Use the plane's name explicitly instead.
   //graphics->setHeightPlaneName(dataset->heightPlaneName->string());
   graphics->setHeightPlaneName(plane->name()->Characters());
-  graphics->causeGridRebuild();
-  // XXX we probably don't need both
-  graphics->causeGridRedraw();
   
   if ( Index_mode::isInitialized() ) {
     // update index mode's idea of what the plane is
@@ -1800,8 +1797,8 @@ void handle_z_scale_change (vrpn_float64 /*_value*/, void *ds) {
       }
     plane->setScale(stm_z_scale);
     decoration->setScrapeHeightScale(stm_z_scale);
+    //Lame -> notify some other way. 
     graphics->causeGridRedraw();
-    //graphics->causeGridRebuild();
   }
   // update display of scanline to show true relative (yet scaled) height of
   // scanline with respect to the surface
@@ -2117,8 +2114,7 @@ static void handle_markers_shown_change (vrpn_int32 new_value, void * /*userdata
   v = (int) new_value;
   //  numMarkersShown = v;
   decoration->num_markers_shown = v;
-  //cause_grid_redraw(0.0, NULL);
-  graphics->causeGridRedraw();
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 /// Change the height of all (future?) scrape markers drawn.
@@ -2642,8 +2638,6 @@ static void handle_surface_color_change (vrpn_int32, void * userdata) {
     nmg_Graphics * g = (nmg_Graphics *) userdata;
     colorMapUI->getSurfaceColor(&surfC[0], &surfC[1], &surfC[2]); 
     g->setSurfaceColor( surfC );
-
-    //g->causeGridReColor();
 }
 
 static void handle_color_minmax_change (vrpn_float64, void * userdata) {
@@ -2679,7 +2673,6 @@ static void handle_color_dataset_change(const char *, void * userdata)
     }
 
     g->setColorPlaneName(colorMapUI->getColorImageName());
-    g->causeGridReColor();
 }
 //-----------------------------------------------------------------------
 
@@ -3490,7 +3483,6 @@ void handle_contour_dataset_change (const char *, void * userdata)
         g->setTextureMode(nmg_Graphics::CONTOUR,
                           nmg_Graphics::RULERGRID_COORD);
         g->setContourPlaneName(dataset->contourPlaneName->string());
-        g->causeGridRedraw();
     } else {        // No plane
         if (strcmp(dataset->contourPlaneName->string(), "none") != 0) {
             display_error_dialog( "Couldn't find plane for contours; \n"
@@ -3510,7 +3502,6 @@ void handle_opacitymap_dataset_change (const char*, void * userdata) {
 	  dataset->opacityPlaneName->string());
 
   g->setOpacityPlaneName(dataset->opacityPlaneName->string());
-  g->causeGridRedraw();
 }
 
 
@@ -4048,6 +4039,8 @@ static void handle_screenImageFileName_change (const char *, void *userdata)
 	  }
 	}
 #endif
+        // This means the green scanline indicator never appears
+        // in screenshots. 
 	decoration->drawScanLine = 0;
 	graphics->mainloop();
 	decoration->drawScanLine = 1;
@@ -6993,6 +6986,10 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
     decoration->clearPulses();
     decoration->clearScrapes();
 
+    // Clear green scan line indicator. Re-created if we receive
+    // scan data. 
+    decoration->clearScanline();
+
     // Initialize the display of the size of the grid.
     decoration->selectedRegionMinX = dataset->inputGrid->minX();
     decoration->selectedRegionMinY = dataset->inputGrid->minY();
@@ -8163,8 +8160,12 @@ vrpn_Connection* c;
       if (updt_display(displayPeriod, d_time, stm_new_frame)) {
         n_displays++;
         if(print_performance) {
-            frame_rate = 1.0/ ((d_time.tv_sec-d_last_time.tv_sec)
-                               + (d_time.tv_usec-d_last_time.tv_usec)/1000000.0); 
+            cum_time_for_frame_rate +=(d_time.tv_sec-d_last_time.tv_sec)
+                + (d_time.tv_usec-d_last_time.tv_usec)/1000000.0;
+            if (n_displays % 10 == 0) {
+                frame_rate = 10.0/cum_time_for_frame_rate;
+                cum_time_for_frame_rate = 0;
+            }
             d_last_time.tv_usec = d_time.tv_usec;
             d_last_time.tv_sec = d_time.tv_sec;
         }

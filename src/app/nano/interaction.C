@@ -3006,10 +3006,9 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	    
 	    break;
 	  
-	  case RELEASE_EVENT:	/* Go back to scanning upon release */
+	  case RELEASE_EVENT:
 	    
-	    /* ArmLib doesn't like a stop surface when it's not surfacing 
-	    **/
+              // Stop applying forces. 
             monitor.stopSurface();
 	    
 	    break;
@@ -3291,13 +3290,11 @@ int doFeelLive (int whichUser, int userEvent)
 
 	// Start using the forcefield to apply a constant force.
 	// Apply force to the user based on current measured force 
-	// XXX needs new test with new nmm_relaxComp object
           specify_directZ_force(whichUser);
           monitor.startForceField();
       } else {
         setupHaptics(USER_PLANEL_MODE);
 	// Apply force to the user based on current sample points
-	// XXX needs new test with new nmm_relaxComp object
 	if (!microscope->d_relax_comp.is_ignoring_points() ) {
           touch_surface(whichUser, clipPos);
           monitor.startSurface();

@@ -1,3 +1,14 @@
+2002-03-11  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.c (handle_z_dataset_change): Removal of unnecessary
+	causeGridRebuild commands 
+	(handle_markers_shown_change): same
+	(handle_color_dataset_change): same
+	(createNewDatasetOrMicroscope): clean up green scanline indicator
+	(main): -perf shows framerate averaged over 10 frames. 
+
+	* interaction.c: Comment changes
+
 2002-03-06  David Borland <borland@cs.unc.edu>
 
         * import.C : Added a callback for user controll of the amount

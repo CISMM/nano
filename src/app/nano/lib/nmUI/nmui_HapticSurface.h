@@ -81,7 +81,7 @@ class nmui_HapticSurface {
     q_vec_type d_handPosMS;
       ///< Position of the user's hand in microscope coordinates.
 
-    // Phantom-space coordintes
+    // Phantom-space coordinates
 
     q_vec_type d_planePosPH;
       ///< Projection of d_handPosMS onto the surface being felt
