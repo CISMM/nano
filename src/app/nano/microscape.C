@@ -1154,6 +1154,7 @@ struct MicroscapeInitializationState {
 
   int packetlimit;
 
+  vrpn_bool timeGraphics;
   vrpn_bool do_magellan;
 };
 
@@ -1185,6 +1186,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   phantomRate (60.0),  // standard default
   tesselation (1),
   packetlimit (0),
+  timeGraphics (vrpn_FALSE),
   do_magellan(1)
 {
     graphicsHost[0] = '\0';
@@ -5063,6 +5065,8 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage (argv[0]);
         istate->SPMport = atoi (argv[i]);
         printf ("SPMport: %d\n", istate->SPMport);
+      } else if (!strcmp(argv[i], "-timegraphics")) {
+        istate->timeGraphics = VRPN_TRUE;
       } else if (strcmp(argv[i], "-timeframe") == 0) {
         if (++i >= argc) Usage(argv[0]);
         time_frame = atoi(argv[i]);
@@ -5138,7 +5142,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-draw_when_centered] [-rulerimage file.ppm]\n");
   fprintf(stderr, "       [-rulercolor r g b]");
   fprintf(stderr, "       [-scrapeheight h] [-verbosity n] [-allowdup]\n");
-  fprintf(stderr, "       [-timerverbosity n] [-timeframe n]\n");
+  fprintf(stderr, "       [-timerverbosity n] [-timeframe n] [-timegraphics]\n");
   fprintf(stderr, "       [-SPMhost host port] [-UDPport port]\n");
   fprintf(stderr, "       [-MIXport port] [-recv] [-alphacolor r g b]\n");
   fprintf(stderr, "       [-marshalltest] [-multithread] \n");
@@ -5193,6 +5197,7 @@ void Usage(char* s)
   fprintf(stderr, "       -timerverbosity: How much timer info to print "
                          "(default 0)\n");
   fprintf(stderr, "       -timeframe: How many frames to time (default 0)\n");
+  fprintf(stderr, "       -timeGraphics: Time graphics code\n");
   fprintf(stderr, "       -allowdup: Allow streamfile duplication over net\n");
   fprintf(stderr, "       -SPMhost: host and TCP port of mscope "
                          "(udp = tcp+1)\n");
@@ -5452,7 +5457,9 @@ void createGraphics (MicroscapeInitializationState & istate) {
       graphics = new nmg_Graphics_Implementation(
           dataset, minC, maxC, rulerPPMName,
           NULL, wellKnownPorts->remote_gaEngine);
-      graphics = new nmg_Graphics_Timer(graphics, &graphicsTimer);
+      if (istate.timeGraphics) {
+        graphics = new nmg_Graphics_Timer(graphics, &graphicsTimer);
+      }
       break;
 
     case SHMEM_GRAPHICS:
@@ -5474,7 +5481,9 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
         shmem_connection = vrpn_get_connection_by_name (qualifiedName);
         graphics = new nmg_Graphics_Remote (shmem_connection);
-        graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+        if (istate.timeGraphics) {
+          graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+        }
       }
       break; 
 
@@ -5612,7 +5621,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
             100, 100,
             renderServerControlConnection, &graphicsTimer);
 
-      graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+      ((nmg_Graphics_RenderClient *) graphics)->setGraphicsTiming
+                 (istate.timeGraphics);
+
+      if (istate.timeGraphics) {
+        graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+      }
 
       break;
 
@@ -5645,7 +5659,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
             nmg_Graphics::ORTHO_PROJECTION,
             512, 512, renderServerControlConnection, &graphicsTimer);
 
-      graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+      ((nmg_Graphics_RenderClient *) graphics)->setGraphicsTiming
+                 (istate.timeGraphics);
+
+      if (istate.timeGraphics) {
+        graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+      }
 
       break;
 
@@ -5678,9 +5697,14 @@ void createGraphics (MicroscapeInitializationState & istate) {
             nmg_Graphics::PERSPECTIVE_PROJECTION,
             512, 512, renderServerControlConnection, &graphicsTimer);
 
-      graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+      ((nmg_Graphics_RenderClient *) graphics)->setGraphicsTiming
+                 (istate.timeGraphics);
 
-      ((nmg_Graphics_Timer *) graphics)->timeViewpointChanges(VRPN_TRUE);
+      if (istate.timeGraphics) {
+        graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+
+        ((nmg_Graphics_Timer *) graphics)->timeViewpointChanges(VRPN_TRUE);
+      }
 
       break;
 
