@@ -33,41 +33,44 @@ set nmInfo(sem) [create_closing_toplevel_with_notify \
 iwidgets::labeledframe $nmInfo(sem).acquisition -labeltext "SEM acquisition"
 pack $nmInfo(sem).acquisition -anchor nw -padx 3 -pady 3
 
+set nmInfo(sem_acq) [$nmInfo(sem).acquisition childsite]
 # Button to start the scan
-button $nmInfo(sem).acquisition.acquire_image -text "Acquire Image" \
+button $nmInfo(sem_acq).acquire_image -text "Acquire Image" \
 	-command { set sem_acquire_image 1 }
-pack $nmInfo(sem).acquisition.acquire_image -anchor w
+pack $nmInfo(sem_acq).acquire_image -anchor w
 
 # Controls whether to scan continuously or not
-checkbutton $nmInfo(sem).acquisition.acquire_continuous \
+checkbutton $nmInfo(sem_acq).acquire_continuous \
         -text "Acquire Continuously" \
 	-variable sem_acquire_continuous 
-pack $nmInfo(sem).acquisition.acquire_continuous -anchor w
+pack $nmInfo(sem_acq).acquire_continuous -anchor w
 
-generic_radiobox $nmInfo(sem).acquisition.resolution \
+generic_radiobox $nmInfo(sem_acq).resolution \
     sem_resolution \
     "Resolution" \
     {"50 x 64" "100 x 128" "200 x 256" "400 x 512" "800 x 1024" "1600 x 2048" "3200 x 4096"}
-pack $nmInfo(sem).acquisition.resolution
+pack $nmInfo(sem_acq).resolution
 
-generic_entry $nmInfo(sem).acquisition.pixel_integration_time_nsec \
+generic_entry $nmInfo(sem_acq).pixel_integration_time_nsec \
     sem_pixel_integration_time_nsec \
     "Pixel Integration (nsec)" integer
-pack $nmInfo(sem).acquisition.pixel_integration_time_nsec
-generic_entry $nmInfo(sem).acquisition.inter_pixel_delay_time_nsec \
+pack $nmInfo(sem_acq).pixel_integration_time_nsec
+generic_entry $nmInfo(sem_acq).inter_pixel_delay_time_nsec \
     sem_inter_pixel_delay_time_nsec \
     "Inter Pixel Delay (nsec)" integer
-pack $nmInfo(sem).acquisition.inter_pixel_delay_time_nsec
+pack $nmInfo(sem_acq).inter_pixel_delay_time_nsec
 
 iwidgets::labeledframe $nmInfo(sem).display -labeltext "SEM display"
 pack $nmInfo(sem).display -anchor nw -padx 3 -pady 3
 
+set nmInfo(sem_display) [$nmInfo(sem).display childsite]
+
 # Controls whether or not image is displayed as a surface texture
-checkbutton $nmInfo(sem).display.display_texture \
+checkbutton $nmInfo(sem_display).display_texture \
       -text "Display Texture" -variable sem_display_texture
-pack $nmInfo(sem).display.display_texture -anchor w
+pack $nmInfo(sem_display).display_texture -anchor w
 
 # Controls whether to update image data and displays
-checkbutton $nmInfo(sem).display.no_update \
+checkbutton $nmInfo(sem_display).no_update \
         -text "Do not update images" -variable sem_no_graphics_update
-pack $nmInfo(sem).display.no_update -anchor w
+pack $nmInfo(sem_display).no_update -anchor w
