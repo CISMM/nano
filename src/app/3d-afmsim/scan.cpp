@@ -69,9 +69,7 @@ void get_z_buffer_values() {
   for(int j=0; j<scanResolution; j++ ) {
     for(int i=0; i<scanResolution; i++ ) {
       float zNormalized = zBuffer[ j*pixelGridSize + i ];
-      if(zNormalized < .8){
-	//printf("%E,",zNormalized);
-      }
+      
       // -scanNear and -scanFar are the real depth values in the viewing 
       // volume (see definition of glOrtho)
       double zDepth = -scanFar + (1-(double)zNormalized)*(-scanNear + scanFar);
@@ -90,10 +88,6 @@ double find_volume(){
   //get_z_buffer_values();
   for(int j= 0; j<scanResolution; j++){
     for(int i=0; i<scanResolution; i++){
-      if(zDistance[j][i] > 0.0001){
-	cout << "zbuffer:  " << zBuffer[ j*DEPTHSIZE + i] << "\n" << flush;
-	cout << "zdistance:  " << zDistance[j][i] << "\n" << flush;
-      }
       Volume += (zDistance[j][i] * onePixelArea);
     }
   }

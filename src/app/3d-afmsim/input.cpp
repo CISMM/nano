@@ -48,7 +48,8 @@ void initObs( int numtoDraw )
 /* Give me the unit in terms of nm. So if the unit assumed in the file is 
  * Angstrom, give me 0.1 (since 1 A = 0.1 nm)
  */
-void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit) {
+void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit, 
+			 bool rad_exists) {
   double x,y,z;
   int stop;
   double minx=0.,miny=0.,minz=0., maxx=0., maxy=0., maxz=0.;
@@ -67,9 +68,15 @@ void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit) {
       x *= no_of_nm_in_one_unit;
       y *= no_of_nm_in_one_unit;
       z *= no_of_nm_in_one_unit;
-      // assume a radius of 1.5 A
-      double rad = 5*1.5*no_of_nm_in_one_unit;//I just made bigger
-                                               //by mult. by a number
+      double rad;
+      if(rad_exists){
+	fscanf(file, "%lf", &rad);
+      }
+      else{
+	// assume a radius of 1.5 A
+	rad = 5*1.5*no_of_nm_in_one_unit;//I just made bigger
+                                               //by mult. by a number (5)
+      }
       // need to do some profiling for later.
       minx = ((!minx) || (x < minx)) ? x : minx;
       miny = ((!miny) || (z < miny)) ? y : miny;
@@ -77,13 +84,13 @@ void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit) {
       maxx = ((!maxx) || (x > maxx)) ? x : maxx;
       maxy = ((!maxy) || (y > maxy)) ? y : maxy;
       maxz = ((!maxz) || (z > maxz)) ? z : maxz;
-      addNtube( SPHERE,  Vec3d( x, y, z), 0., 0., 0., 1., rad);
+      addNtube( SPHERE,  Vec3d( x, y, z), 0., 0., 0., 0., rad*2);
     }
     else
       stop=1;
   }
 
-  cout << "Done no of spheres = " << (numObs-1) << endl;
+  //cout << "Done no of spheres = " << (numObs-1) << endl;
 
 
   /* now use the profiled data to translate and scale the values to lie in

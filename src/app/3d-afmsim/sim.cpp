@@ -8,6 +8,7 @@
 #include <stdlib.h>		//stdlib.h vs cstdlib
 #include <stdio.h>		//stdio.h vs cstdio
 #include <iostream.h>
+#include <fstream.h>
 #include <vector>
 #include <math.h>		//math.h vs cmath
 #include <GL/glut.h>
@@ -44,6 +45,8 @@ int uncertainty_mode=0;
 #define NO_AFM 0
 #define SEMI_SOLID_AFM 1
 #define SOLID_AFM 2
+
+ofstream fout;
 
 int afm_scan=SEMI_SOLID_AFM;
 //int afm_scan=NO_AFM;
@@ -108,10 +111,14 @@ int main(int argc, char *argv[])
 {
   strcpy(units,argv[1]);
   adjustOrthoProjectionParams();
+  bool radius = true;//for protein/spheres files--false means use default
+                     //true means the file contains radii
+  //double volume;
+  //bool find_volume = false;
 
   if (argc > 2) {// load from a file
     if (0==strcmp(argv[2],"-p")) {//ntube file
-      addSpheresFromFile(argv[3],atof(argv[4]));
+      addSpheresFromFile(argv[3],atof(argv[4]),!radius);
     }
     else if (0==strcmp(argv[2],"-t")) {//triangles file
       addTrianglesFromFile(argv[3],atof(argv[4]));
@@ -120,11 +127,16 @@ int main(int argc, char *argv[])
       init_dna(argv[3]);
     }
     else if(0==strcmp(argv[2],"-dp")){//dna and protein file
-      addSpheresFromFile(argv[4],atof(argv[5]));//dna first then protein in argv[]
+      addSpheresFromFile(argv[4],atof(argv[5]), !radius);
+      //dna first then protein in argv[]
       init_dna(argv[3]);
     }
-    else if(0==strcmp(argv[2],"-s")){
-      initObs(1);
+    else if(0==strcmp(argv[2],"-s")){//add spheres with radii from file, find volume, and quit
+      fout.open("sphere_output.txt", fstream::out | fstream::app);//append to end each time
+
+      addSpheresFromFile(argv[3],atof(argv[4]),radius);
+      fout << argv[3] << ":  ";
+      //find_volume = true;//take care of volume finding below
     }
     else {
       cout << "\nUsage : ./sim [-p filename unit for proteins\n";
@@ -226,6 +238,16 @@ int main(int argc, char *argv[])
     printf("Found error %d\n",e);
   }
 
+  /*if(find_volume){
+    volume = find_volume();
+    fout << argv[3] << ":  Volume of all objects on plane is " << volume << " " 
+	 << units << "^3.\n" << flush;
+
+    
+    }*/
+
+  fout.close();
+
   // app's main loop, from which callbacks to above routines occur
   glutMainLoop();
 
@@ -235,13 +257,13 @@ int main(int argc, char *argv[])
 
 void write_to_unca(char *filename) {
   
-  // Everythinghere is in Angstroms. Unca takes care of this.
+  // Everything here is in Angstroms. Unca takes care of this.
   Unca u = Unca(DEPTHSIZE, DEPTHSIZE, orthoFrustumLeftEdge,(orthoFrustumLeftEdge + orthoFrustumWidth),orthoFrustumBottomEdge,(orthoFrustumBottomEdge + orthoFrustumHeight), -scanFar, -scanNear, (double *)zHeight);
   u.writeUnca(filename);
 }
 
 void write_to_uncertw(char *filename) {
-  // Everythinghere is in Angstroms. Unca takes care of this.
+  // Everything here is in Angstroms. Unca takes care of this.
   Uncertw u = Uncertw(DEPTHSIZE, DEPTHSIZE, orthoFrustumLeftEdge,(orthoFrustumLeftEdge + orthoFrustumWidth),orthoFrustumBottomEdge,(orthoFrustumBottomEdge + orthoFrustumHeight), 0, 1., colorBuffer);
   u.writeUncertw(filename);
 }
@@ -428,8 +450,8 @@ void remake_cone_sphere(InvConeSphereTip ics) {
 
 // Keyboard callback for main window.
 void commonKeyboardFunc(unsigned char key, int x, int y) {
-  //cout << "getting here\n" << flush;
-
+    ofstream fout2;
+    fout2.open("sphere_output.txt", fstream::out | fstream::app);
     char c;
     float radius = 0;
     float decimal = 0;
@@ -486,7 +508,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       cout << "Enter a radius: " << flush;
       done = false;
       c = getchar();
-      while(int(c) != 10){//carriage return ascii value is 13
+      while(int(c) != 10){//carriage return ascii value is 10
 	if(c != '.'){//handle numbers to the left first
 	  radius = radius*10 + int(c - '0');
 	  //cout << int(c) << flush;
@@ -511,7 +533,9 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       break;
     case 'f' ://find volume
       volume = find_volume();
-      cout << "Volume of all objects on plane is " << volume << " " << units << "^3.\n" << flush;
+      fout2 << "Volume of all objects on plane is " << volume << " " 
+	 << units << "^3.\n" << flush;
+      fout2.close();
       break;
     case 't' :
       addTriangle(Vec3d(0.,0.,DEFAULT_TRIANGLE_SIDE/3.),Vec3d(DEFAULT_TRIANGLE_SIDE,0.,DEFAULT_TRIANGLE_SIDE/2.),
