@@ -42,7 +42,7 @@
   #undef MIN
 #endif
 #define MIN(a,b) ((a < b) ? (a) : (b))
-#define      NEAR(x0,x1)     (fabs(x0-x1) < 0.001)
+#define      NMB_NEAR(x0,x1)     (fabs(x0-x1) < 0.001)
 
 #include <vrpn_Connection.h>
 
@@ -70,18 +70,18 @@
 
 nmm_Microscope_Remote::nmm_Microscope_Remote
   (const AFMInitializationState & i,
-   vrpn_Connection * c) :
-    state(i),
-    d_relax_comp(this),
-    nmm_Microscope ("nmm_Microscope@lysine", c),
-    d_dataset (NULL),
-    d_decoration (NULL),
-    d_pointDataHandlers (NULL),
-    d_modifyModeHandlers (NULL),
-    d_imageModeHandlers (NULL),
-    d_scanlineModeHandlers (NULL),
-    d_scanlineDataHandlers (NULL),
-    readMode (READ_FILE)	// differentiates between Live and Replay
+   vrpn_Connection * c)
+      : nmm_Microscope ("nmm_Microscope@lysine", c),
+        state(i),
+        d_relax_comp(this),
+        d_dataset (NULL),
+        d_decoration (NULL),
+        readMode (READ_FILE),	// differentiates between Live and Replay
+        d_pointDataHandlers (NULL),
+        d_modifyModeHandlers (NULL),
+        d_imageModeHandlers (NULL),
+        d_scanlineModeHandlers (NULL),
+        d_scanlineDataHandlers (NULL)
 {
   gettimeofday(&d_nowtime, &d_nowzone);
   d_next_time.tv_sec = 0L;
@@ -737,8 +737,8 @@ long nmm_Microscope_Remote::DrawLine (const double _startx, const double _starty
       //	used by Live and Replay mode
       getTimeSinceConnected();
       VERBOSE(5, "  Waiting for result in line mode");
-    } while (!NEAR(_endx, _point->results()->x()) ||
-             !NEAR(_endy, _point->results()->y()));
+    } while (!NMB_NEAR(_endx, _point->results()->x()) ||
+             !NMB_NEAR(_endy, _point->results()->y()));
   }
 
   return retval;
@@ -797,8 +797,8 @@ long nmm_Microscope_Remote::DrawArc (const double _x, const double _y,
       //        used by Live and Replay mode
       getTimeSinceConnected();
       VERBOSE(5, "  Waiting for result in line mode");
-    } while (!NEAR(_x, _point->results()->x()) ||
-             !NEAR(_y, _point->results()->y()));
+    } while (!NMB_NEAR(_x, _point->results()->x()) ||
+             !NMB_NEAR(_y, _point->results()->y()));
   }
 
   return retval;
@@ -856,8 +856,8 @@ long nmm_Microscope_Remote::TakeFeelStep (const float _x, const float _y,
       //        used by Live and Replay mode
       getTimeSinceConnected();
       VERBOSE(5, "  Waiting for result in line mode");
-    } while (NEAR(-1.0, _point->results()->x()) &&
-             NEAR(-1.0, _point->results()->y()));
+    } while (NMB_NEAR(-1.0, _point->results()->x()) &&
+             NMB_NEAR(-1.0, _point->results()->y()));
   }
 
   return 0;
@@ -902,8 +902,8 @@ long nmm_Microscope_Remote::TakeModStep (const float _x, const float _y,
       //        used by Live and Replay mode
       getTimeSinceConnected();
       VERBOSE(5, "  Waiting for result in TakeModStep");
-    } while (!NEAR(_x, _point->results()->x()) ||
-             !NEAR(_y, _point->results()->y()));
+    } while (!NMB_NEAR(_x, _point->results()->x()) ||
+             !NMB_NEAR(_y, _point->results()->y()));
   }
 
   return 0;
@@ -932,9 +932,9 @@ int nmm_Microscope_Remote::TakeDirectZStep (const float _x, const float _y, cons
       //        used by Live and Replay mode
       getTimeSinceConnected();
       VERBOSE(5, "  Waiting for result in TakeDirectZStep()");
-    } while (!NEAR(_x, _point->results()->x()) ||
-             !NEAR(_y, _point->results()->y()) ||
-             !NEAR(_z, _point->results()->z()));
+    } while (!NMB_NEAR(_x, _point->results()->x()) ||
+             !NMB_NEAR(_y, _point->results()->y()) ||
+             !NMB_NEAR(_z, _point->results()->z()));
   }
   return 0;
 }

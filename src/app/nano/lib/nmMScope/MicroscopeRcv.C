@@ -36,7 +36,7 @@ extern Ohmmeter *the_french_ohmmeter_ui;
   #undef MIN
 #endif
 #define MIN(a,b) ((a < b) ? (a) : (b))
-#define NEAR(x0,x1) (fabs((x0) - (x1)) < 0.001)
+#define NMB_NEAR(x0,x1) (fabs((x0) - (x1)) < 0.001)
 
 //#include "globjects.h"  // make_selected_region_marker
 

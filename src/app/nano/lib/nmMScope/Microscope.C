@@ -29,7 +29,7 @@
   #undef MIN
 #endif
 #define MIN(a,b) ((a < b) ? (a) : (b))
-#define      NEAR(x0,x1)     (fabs(x0-x1) < 0.001)
+#define      NMB_NEAR(x0,x1)     (fabs(x0-x1) < 0.001)
 
 #ifndef M_PI
 #define M_PI 3.141592653589793238
@@ -524,8 +524,8 @@ int Microscope::DrawLine (const double _startx, const double _starty,
         return -1;
       }
       VERBOSE(5, "  Waiting for result in line mode");
-    } while (!NEAR(_endx, _point->results()->x()) ||
-             !NEAR(_endy, _point->results()->y()));
+    } while (!NMB_NEAR(_endx, _point->results()->x()) ||
+             !NMB_NEAR(_endy, _point->results()->y()));
   }
 
   return 0;
@@ -562,8 +562,8 @@ int Microscope::DrawArc (const double _x, const double _y,
         return -1;
       }
       VERBOSE(5, "  Waiting for result in DrawArc");
-    } while (!NEAR(_x, _point->results()->x()) ||
-             !NEAR(_y, _point->results()->y()));
+    } while (!NMB_NEAR(_x, _point->results()->x()) ||
+             !NMB_NEAR(_y, _point->results()->y()));
   }
 
   return 0;
@@ -598,8 +598,8 @@ int Microscope::TakeFeelStep (const float _x, const float _y,
         return -1;
       }
       VERBOSE(5, "  Waiting for result in TakeFeelStep");
-    } while (NEAR(-1.0, _point->results()->x()) &&
-             NEAR(-1.0, _point->results()->y()));
+    } while (NMB_NEAR(-1.0, _point->results()->x()) &&
+             NMB_NEAR(-1.0, _point->results()->y()));
   }
 
   return 0;
@@ -638,8 +638,8 @@ int Microscope::TakeModStep (const float _x, const float _y,
         return -1;
       }
       VERBOSE(5, "  Waiting for result in TakeModeStep");
-    } while (!NEAR(_x, _point->results()->x()) ||
-             !NEAR(_y, _point->results()->y()));
+    } while (!NMB_NEAR(_x, _point->results()->x()) ||
+             !NMB_NEAR(_y, _point->results()->y()));
   }
 
   return 0;
@@ -663,9 +663,9 @@ int Microscope::TakeDirectZStep (const float _x, const float _y, const float _z,
         return -1;
       }
       VERBOSE(5, "  Waiting for result in TakeDirectZStep()");
-    } while (!NEAR(_x, _point->results()->x()) ||
-             !NEAR(_y, _point->results()->y()) ||
-             !NEAR(_z, _point->results()->z()));
+    } while (!NMB_NEAR(_x, _point->results()->x()) ||
+             !NMB_NEAR(_y, _point->results()->y()) ||
+             !NMB_NEAR(_z, _point->results()->z()));
   }
 
   return 0;

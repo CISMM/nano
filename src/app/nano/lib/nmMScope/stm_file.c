@@ -43,6 +43,9 @@
 		 fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
      extern "C" int sdi_noint_block_write(int outfile, char buffer[], int length);
      extern "C" int sdi_noint_block_read(int infile, char buffer[], int length);
+     #ifdef _WIN32
+        extern "C" int sdi_noint_block_file_read(int infile, char buffer[], int length);
+     #endif
   #endif
 #endif
 
