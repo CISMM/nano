@@ -1,5 +1,0 @@
-all : pdb
-
-pdb : pdb.l
-	flex pdb.l
-	gcc -o pdb lex.yy.c -ll
