@@ -201,24 +201,13 @@ pack $sharedptr(sp).mutex.release_mutex_button -side bottom
 
 pack $sharedptr(sp).mutex -side bottom
 
-# Disable one button.
-# Currently assumes we're coming up with the lock.
-# Should instead probably just trigger this in the GotMutex callback
-# from C++, so that if we solve the initial races in the distributed
-# code we'll also be correct here.
-# XXX
-
-#$sharedptr(sp).mutex.request_mutex_button configure -state disabled
+# Initialize with both buttons disabled.  when nano attempts to connect
+# to a microscope, one of the mutex_*_callback callbacks will be called,
+# which set the mutex request & release buttons to appropriate values.
+$sharedptr(sp).mutex.request_mutex_button configure -state disabled
 $sharedptr(sp).mutex.release_mutex_button configure -state disabled
 
 
-
-# (Some of) the effects of request button have to come through C++
-# because they can't take place until we get a GrantRequest/DenyRequest.
-# We COULD disable request, and just not enable either button until we
-# got one of the two callbacks.
-
-#--------- implement release button ------------
 
 # If the user hits "release":
 #   have the C++ code release the mutex
@@ -230,9 +219,9 @@ proc mutex_release_command {} {
   global sharedptr
 
   set release_mutex 1
-#  Don't disable it here;  let the callback do that.
-#  $sharedptr(sp).mutex.release_mutex_button configure \
-         #-state disabled
+    #  Don't disable it here;  let the callback do that.
+    #  $sharedptr(sp).mutex.release_mutex_button configure \
+      #-state disabled
 
 }
 
@@ -244,8 +233,6 @@ proc mutex_request_command {} {
   global request_mutex
   global sharedptr
 
-#puts "We requested the mutex"
-
   set request_mutex 1
   $sharedptr(sp).mutex.request_mutex_button configure \
           -state disabled
@@ -253,12 +240,11 @@ proc mutex_request_command {} {
           -state disabled
 }
 
+# we asked for the mutex and got it
 proc mutex_gotRequest_callback {} {
   global sharedptr
   global collab_commands_suspended
   global view
-
-#puts "We got the mutex"
 
   $sharedptr(sp).mutex.request_mutex_button configure \
           -state disabled
@@ -270,47 +256,39 @@ proc mutex_gotRequest_callback {} {
 
 }
 
+# we asked for the mutex, and someone said, "no."
 proc mutex_deniedRequest_callback {} {
   global sharedptr
   global collab_commands_suspended
   global view
 
-#puts "We were denied the mutex"
-
   $sharedptr(sp).mutex.request_mutex_button configure \
-          -state normal
+          -state disabled
   $sharedptr(sp).mutex.release_mutex_button configure \
           -state disabled
 
   # trigger a trace function in mainwin.tcl
   set collab_commands_suspended 1
-
 }
 
+# someone (possibly us) acquired the mutex
 proc mutex_taken_callback {} {
   global sharedptr
   global collab_commands_suspended
   global view
-
-#puts "Somebody took the mutex"
 
   $sharedptr(sp).mutex.request_mutex_button configure \
           -state disabled
 
   # Don't set collab_commands_suspended, or disable anything else,
   # since we get this message when WE get the mutex
-  # trigger a trace function in mainwin.tcl
-  # set collab_commands_suspended 1
-  #$sharedptr(sp).mutex.release_mutex_button configure \
-          #-state disabled
 }
 
+# someone (possibly us) released the mutex
 proc mutex_release_callback {} {
   global sharedptr
   global collab_commands_suspended
   global view
-
-#puts "Somebody released the mutex"
 
   $sharedptr(sp).mutex.request_mutex_button configure \
           -state normal

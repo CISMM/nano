@@ -1,3 +1,7 @@
+2001-10-02  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.c: code clean-up in the handle_mutex* functions.
+
 2001-09-30  David Marshburn  <marshbur@cs.unc.edu>
 
 	* minit.c: (handle_magellan_button_change) handle both

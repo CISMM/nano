@@ -1769,12 +1769,8 @@ void handle_finegrained_changed (vrpn_int32 value, void *) {
 
 
 // NANOX
-
-
 void handle_mutex_request (vrpn_int32 value, void * userdata) {
   nmm_Microscope_Remote * microscope = (nmm_Microscope_Remote *) userdata;
-
-//fprintf(stderr, "handle_mutex_request (%d)\n", value);
 
   if (value) {
     microscope->requestMutex();
@@ -1784,8 +1780,6 @@ void handle_mutex_request (vrpn_int32 value, void * userdata) {
 
 void handle_mutex_release (vrpn_int32 value, void * userdata) {
   nmm_Microscope_Remote * microscope = (nmm_Microscope_Remote *) userdata;
-
-//fprintf(stderr, "handle_mutex_release (%d)\n", value);
 
   if (value) {
     microscope->releaseMutex();
@@ -1799,13 +1793,12 @@ void handle_mutexRequestGranted (void *, nmb_SharedDevice_Remote *) {
   char command [1000];
   int retval;
 
-//fprintf(stderr, "handle_mutexRequestGranted\n");
-
   sprintf(command, "mutex_gotRequest_callback");
   retval = Tcl_Eval(tk_control_interp, command);
   if (retval != TCL_OK) {
-    display_error_dialog( "Internal: Tcl_Eval failed in handle_mutexRequestGranted:  %s.\n",
-            tk_control_interp->result);
+    display_error_dialog( "Internal: Tcl_Eval failed in "
+			  "handle_mutexRequestGranted:  %s.\n",
+			  tk_control_interp->result);
   }
 }
 
@@ -1815,13 +1808,12 @@ void handle_mutexRequestDenied (void *, nmb_SharedDevice_Remote *) {
   char command [1000];
   int retval;
 
-//fprintf(stderr, "handle_mutexRequestDenied\n");
-
   sprintf(command, "mutex_deniedRequest_callback");
   retval = Tcl_Eval(tk_control_interp, command);
   if (retval != TCL_OK) {
-    display_error_dialog( "Internal: Tcl_Eval failed in handle_mutexRequestDenied:  %s.\n",
-            tk_control_interp->result);
+    display_error_dialog( "Internal: Tcl_Eval failed in "
+			  "handle_mutexRequestDenied:  %s.\n",
+			  tk_control_interp->result);
   }
 }
 
@@ -1831,13 +1823,12 @@ void handle_mutexTaken (void *, nmb_SharedDevice_Remote *) {
   char command [1000];
   int retval;
 
-//fprintf(stderr, "handle_mutexTaken\n");
-
   sprintf(command, "mutex_taken_callback");
   retval = Tcl_Eval(tk_control_interp, command);
   if (retval != TCL_OK) {
-    display_error_dialog( "Internal: Tcl_Eval failed in handle_mutexTaken:  %s.\n",
-            tk_control_interp->result);
+    display_error_dialog( "Internal: Tcl_Eval failed in "
+			  "handle_mutexTaken:  %s.\n",
+			  tk_control_interp->result);
   }
 }
 
@@ -1847,15 +1838,15 @@ void handle_mutexReleased (void *, nmb_SharedDevice_Remote *) {
   char command [1000];
   int retval;
 
-//fprintf(stderr, "handle_mutexReleased\n");
-
   sprintf(command, "mutex_release_callback");
   retval = Tcl_Eval(tk_control_interp, command);
   if (retval != TCL_OK) {
-    display_error_dialog( "Internal: Tcl_Eval failed in handle_mutexReleased:  %s.\n",
-            tk_control_interp->result);
+    display_error_dialog( "Internal: Tcl_Eval failed in "
+			  "handle_mutexReleased:  %s.\n",
+			  tk_control_interp->result);
   }
 }
+
 
 //-----------------------------------------------------------------------
 /// Handle the color change of the rulergrid

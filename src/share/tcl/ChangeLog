@@ -1,3 +1,9 @@
+2001-10-02  David Marshburn  <marshbur@cs.unc.edu>
+
+	* shared_ptr.tcl: "Request microscope lock" and "Release
+	microscope lock" buttons are now both initialized as disabled
+	and are enabled only as required after connecting to a microscope.
+
 2001-09-30  David Marshburn  <marshbur@cs.unc.edu>
 
 	* view.tcl: added z_lock and z_lock pressed variable.
