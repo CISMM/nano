@@ -317,10 +317,10 @@ void   startRobot( void );
 void   popFrontPathQ( void );
 void   pushBackPathQ( Vec2d vPathPoint );
 Vec2d   frontPathQ( void );
-bool   emptyPathQ( void );
+vrpn_bool   emptyPathQ( void );
 void   clearPathQ( void );
 void   moveTipToRotateTube( void );
-bool   rotatedEnoughTest( void );
+vrpn_bool   rotatedEnoughTest( void );
 void   moveTipToTranslateTube( void );
 void   showBox( OB tube, int color );
 void   calcTubePointsAndVectors( 
@@ -329,8 +329,8 @@ void   calcTubePointsAndVectors(
 Vec2d   normalizeVec( Vec2d v );
 void   showSphere( Vec2d vPoint, int color, float radius, float z );
 void   addPointToTipPath( Vec2d vPathPoint );
-bool   translatedEnoughTest( void );
-bool   rotatedEnoughTest2( void );
+vrpn_bool   translatedEnoughTest( void );
+vrpn_bool   rotatedEnoughTest2( void );
 
 void buildScan1Path(void);
 void analizeScan1Path(void);
@@ -374,10 +374,10 @@ float scanStep = 1.0;
 SIM_STATE prevState;   // state of sim before previous simulation-step
 SIM_STATE saveState;   // state of all objects in the simulation (used in undo)
 int simType = SIM_SLIDING;
-bool simRunning = true;
+vrpn_bool simRunning = vrpn_true;
 
 // robot stuff
-bool robotRunning = false;
+vrpn_bool robotRunning = vrpn_false;
 int robotModPhase = 0;
 int robotImgPhase = 0;
 float tipSpeed = 4.;
@@ -400,12 +400,13 @@ int gridStyle   = GRID_NONE;
 int imageScanType = IMAGE_SCAN_APPROX;
 GLenum drawStyle = GL_FILL;       
 GLenum shadingModel = GL_FLAT;   // GL_FLAT or GL_SMOOTH
-bool lightOn[8] = { true, true, false, false, false, false, false, false };
-bool namesOn = false;
-bool displayCollisionsOn  = true;
-bool displayPivotPointsOn = true;
-bool linesOn = false;
-bool displayConeOn = false;
+vrpn_bool lightOn[8] = { vrpn_true, vrpn_true, vrpn_false, vrpn_false, 
+        vrpn_false, vrpn_false, vrpn_false, vrpn_false };
+vrpn_bool namesOn = vrpn_false;
+vrpn_bool displayCollisionsOn  = vrpn_true;
+vrpn_bool displayPivotPointsOn = vrpn_true;
+vrpn_bool linesOn = vrpn_false;
+vrpn_bool displayConeOn = vrpn_false;
 int frameCount = 0;
 float framesPerSecond = 0.;
 
@@ -992,7 +993,7 @@ commonKeyboardFunc(unsigned char key, int x, int y)
       {
          g_microscope->ResumeScan();
          g_activeMode = SCAN_MODE;
-         g_activeControl = false;
+         g_activeControl = vrpn_false;
       }
       break;
    case 'g':   // set goal
@@ -1005,11 +1006,11 @@ commonKeyboardFunc(unsigned char key, int x, int y)
    case 'k':
       clearPathQ();
       scanPathIdx = 0;
-      robotRunning = false;
+      robotRunning = vrpn_false;
       robotModPhase = robotImgPhase = 0;
       g_microscope->ResumeScan();
       g_activeMode = SCAN_MODE;
-      g_activeControl = false;
+      g_activeControl = vrpn_false;
       break;
 #ifndef NMRC_LIB
    case 'f':   tipSpeed *= 2.;      break;
@@ -1601,7 +1602,7 @@ robotExecutive( void )
    else
    {
       simRunning = 1;
-      bool testResult(false);
+      vrpn_bool testResult(vrpn_false);
       switch( robotModPhase ) {
          case 1:
             testResult = rotatedEnoughTest();
@@ -1625,7 +1626,7 @@ robotExecutive( void )
 #ifdef NMRC_LIB
             g_microscope->ResumeScan();
             g_activeMode = SCAN_MODE;
-            g_activeControl = false;
+            g_activeControl = vrpn_false;
 #endif
          }
 
@@ -1705,7 +1706,7 @@ float angleDelta(float angle1, float angle2)
 }
 
 /**************************************************************************************/
-bool
+vrpn_bool
 rotatedEnoughTest2( void )
 {
    float deltaAngle = angleDelta(currentGoal.angle,ob[currentGoalTube].angle);
@@ -1716,7 +1717,7 @@ rotatedEnoughTest2( void )
 
 
 /**************************************************************************************/
-bool
+vrpn_bool
 translatedEnoughTest( void )
 {
    // if tube being moved is within threshold distance
@@ -1732,7 +1733,7 @@ translatedEnoughTest( void )
 
 
 /**************************************************************************************/
-bool
+vrpn_bool
 rotatedEnoughTest( void )
 {
    // Compare goal orientation with current tube orientation
@@ -2224,7 +2225,7 @@ popFrontPathQ( void )
 
 /**************************************************************************************/
 // check if queue empty
-bool
+vrpn_bool
 emptyPathQ( void )
 {
    return pathQSize == 0;   

@@ -19,6 +19,8 @@
 #include "imageViewer.h"
 #endif
 
+#include <vrpn_Types.h>
+
 class Vec2d {
 public:
 	double x;
@@ -62,9 +64,9 @@ Vec2d	operator-( double s, Vec2d b);
 Vec2d	operator*( Vec2d a, double s);
 Vec2d	operator/( Vec2d a, double s);
 
-bool	operator==( Vec2d a, Vec2d b);
-bool	operator!=( Vec2d a, Vec2d b);
-bool	operator<(  Vec2d a, Vec2d b);
+vrpn_bool	operator==( Vec2d a, Vec2d b);
+vrpn_bool	operator!=( Vec2d a, Vec2d b);
+vrpn_bool	operator<(  Vec2d a, Vec2d b);
 
 double	dotProduct( Vec2d a, Vec2d b);
 

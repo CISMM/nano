@@ -31,12 +31,12 @@ Vec2d	operator-( double s, Vec2d b)	{Vec2d v = - b;  return v += s;}
 Vec2d	operator*( Vec2d a, double s)	{Vec2d v = a;    return v *= s;}
 Vec2d	operator/( Vec2d a, double s)	{Vec2d v = a;    return v /= s;}
 
-bool	operator==( Vec2d a, Vec2d b)	{return a.x == b.x  &&  a.y == b.y;}
-bool	operator!=( Vec2d a, Vec2d b)	{return ! (a == b);}
-bool	operator<(  Vec2d a, Vec2d b)	{
+vrpn_bool	operator==( Vec2d a, Vec2d b)	{return a.x == b.x  &&  a.y == b.y;}
+vrpn_bool	operator!=( Vec2d a, Vec2d b)	{return ! (a == b);}
+vrpn_bool	operator<(  Vec2d a, Vec2d b)	{
 	if(      a.x == b.x )  return a.y < b.y;
-	else if( a.x <  b.x )  return true;
-	else                   return false;
+	else if( a.x <  b.x )  return vrpn_true;
+	else                   return vrpn_false;
 }
 	// Why define < for 2D points, you ask?  Because vector<Vec2d> won't work without it.
 	// operator< required to use type as element of container.

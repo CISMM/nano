@@ -12,8 +12,8 @@ ImageViewer *g_iViewer(NULL);
 
 int g_iViewerWin(-1);
 
-bool g_activeControl(false),
-     g_displayPlan(true);
+vrpn_bool g_activeControl(vrpn_false),
+     g_displayPlan(vrpn_true);
 
 typedef enum { SCAN_MODE, IMAGE_MODE, MODIFY_MODE } ScopeMode;
 
