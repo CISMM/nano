@@ -331,7 +331,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
 
           // when we get the end of an image restart the scan
           // and redraw the window
-          if (start_y+num_lines == res_y) {
+          if (info.sem->lastScanMessageCompletesImage()) {
             me->image_viewer->dirtyWindow(me->image_window_id);
           }
           // this function creates plane data so it would probably be more
@@ -340,7 +340,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
                num_fields, num_lines, pix_type, scanlineData);
 
         } // end if !no_graphics_update
-        if (start_y+num_lines == res_y) {
+        if (info.sem->lastScanMessageCompletesImage()) {
             if (me->sem_acquire_continuous){
                 info.sem->requestScan(1);
             } else {

@@ -1,3 +1,10 @@
+2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM_Remote.h (lastScanMessageCompletesImage): 
+        new function
+	* nmui_SEM.C (handle_device_change): now uses the function
+	lastScanMessageCompletesImage 
+
 2002-05-30  David Borland <borland@cs.unc.edu>
 
         * nmui_SEM.C : made changes for the new SURFACE_REGISTRATION_COORD

@@ -124,6 +124,10 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
        vrpn_int32 &numPointsDone, vrpn_float32 &timeTotal_sec, 
        vrpn_float32 &timeDone_sec);
 
+    int lastScanMessageCompletesImage() {
+      return d_startY + d_numLines == d_resolutionY;
+    }
+
     void convert_nm_to_DAC(const double x_nm, const double y_nm,
                            int &xDAC, int &yDAC);
     void convert_DAC_to_nm(const int xDAC, const int yDAC,
