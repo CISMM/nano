@@ -56,6 +56,7 @@ extern int	do_raster;	      /* Raster (vs. Boustrophedonic) scan? */
 
 //JM TEMP
 extern int config_feelPlane_temp;
+extern int config_feelGrid_temp;
 
 // default position of the light:  overhead, at infinity
 static GLfloat l0_position [4] = { 0.0, 1.0, 0.1, 0.0 };
@@ -307,6 +308,10 @@ int draw_world (int, void * data)
     //if(haptic_graphics->get_show_feel_plane() ) {
     if(config_feelPlane_temp) {
            make_feelPlane(state);
+    }
+
+    if(config_feelGrid_temp) {
+        make_feelGrid(state);
     }
 
 

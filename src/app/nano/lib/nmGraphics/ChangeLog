@@ -1,3 +1,11 @@
+2003-1-13 Jameson Miller<millerj@cs.unc.edu>
+	* nmg_haptic_graphics.c (.h) - added ability to show grid to be sent to
+		phantom on screen
+	* opengl.c - calls to  display the haptic grid on screen
+	*globject.c (.h) - code for drawing haptic grid
+
+
+
 2002-12-02 Jameson Miller<millerj@cs.unc.edu>
 	* nmg_haptic_graphics.c (.h) - new files to handle graphics for displaying haptic plane and the patch
             being sent to the phantom (soon...not yet)
@@ -1380,4 +1388,5 @@
 	Dereference pointer once, cache result in a reference.
 
 	* graphics.h: include just quat.h instead of all of v.h
+
 

@@ -106,6 +106,9 @@ static int ds_sphere_axis_struct_id;
 static GLint feelPlane_struct;
 static int feelPlane_struct_id;
 
+static GLint feelGrid_struct;
+static int feelGrid_struct_id;
+
 static GLint collab_hand_struct;
 
 static marker_type * marker_list; // linked list of markers for selected area 
@@ -136,7 +139,6 @@ static int collabHand_id;
 //JM additions from TCH branch for showing plane
 static int FeelGrid (void *);
 static int feelGrid_id;
-static GLint feelGrid_id_struct;
 
 // nonzero if we're using a CRT and should play with the definition of
 // screen space
@@ -191,6 +193,7 @@ void position_sphere (nmg_State * state,float, float, float);
 static float sphere_x, sphere_y, sphere_z;
 q_vec_type fp_origin_j, fp_normal_j;
 int config_feelPlane_temp;
+int config_feelGrid_temp;
 
 /* When the user changes modes, clear the world of any 
  * icons dependent on that mode. */
@@ -331,10 +334,12 @@ int init_world_modechange(nmg_State * state,
       trueTip_id = addFunctionToFunclist(&vir_world, TrueTip, state, "true tip");
     }
 	//JM - addition from TCH branch , pass in state data also
+    /*
 	if (state->config_feelGrid) {
        feelGrid_id = addFunctionToFunclist(&vir_world, FeelGrid, state,
 	     "feel grid");
     }
+    */
 
     break;
   case USER_SCALE_UP_MODE:
@@ -501,6 +506,9 @@ void myobjects(nmg_State * state)
   glEndList();
   
   glNewList(feelPlane_struct, GL_COMPILE);
+  glEndList();
+
+  glNewList(feelGrid_struct, GL_COMPILE);
   glEndList();
 
 
@@ -2270,10 +2278,19 @@ int FeelGrid (void *data) {
       glBegin(GL_TRIANGLE_STRIP);
 
       for (j = 0; j < state->fg_yside; j++) {
-        vp = state->fg_vertices[i * state->fg_xside + j];
-        glVertex3d(vp[0], vp[1], vp[2]);
-        vp = state->fg_vertices[(i + 1) * state->fg_xside + j];
-        glVertex3d(vp[0], vp[1], vp[2]);
+      /*
+      vp = state->fg_vertices[i * state->fg_xside + j];
+      glVertex3d(vp[0], vp[1], vp[2]);
+      vp = state->fg_vertices[(i + 1) * state->fg_xside + j];
+      glVertex3d(vp[0], vp[1], vp[2]);
+          */
+          
+          vp = &state->fg_vertices[i] [j];
+          glVertex3d(vp[0], vp[1], vp[2]);
+
+          vp = &state->fg_vertices[i+1] [j];
+          glVertex3d(vp[0], vp[1], vp[2]);
+
       }
       glEnd();
    }
@@ -2281,14 +2298,51 @@ int FeelGrid (void *data) {
    //HACK
    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-   glPopAttrib();
-   glPopMatrix();
+   //glPopAttrib();
+   //glPopMatrix();
+
 
    return 0;
    /* FeelGrid */
 }
 
 //JM from TCH branch
+
+int make_feelGrid (void *data) {
+   int i, j;
+   double * vp;  // UGLY HACK!
+
+   //glPushMatrix();
+   //glPushAttrib(GL_CURRENT_BIT);
+
+   v_gl_set_context_to_vlib_window();
+   glDeleteLists(feelGrid_struct,1);
+   feelGrid_struct = glGenLists(1);
+   glNewList(feelGrid_struct,GL_COMPILE);
+
+   glColor3f(1.0f, 1.0f, 1.0f);
+   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+   for (i = 0; i < fg_xside - 1; i++) {
+      glBegin(GL_TRIANGLE_STRIP);
+
+      for (j = 0; j < fg_yside; j++) {
+        vp = fg_vertices[i * fg_xside + j];
+        glVertex3d(vp[0], vp[1], (vp[2]+40) );
+        vp = fg_vertices[(i + 1) * fg_xside + j];
+        glVertex3d(vp[0], vp[1], (vp[2] + 40) );
+      }
+      glEnd();
+   }
+
+   //glPopAttrib();
+   //glPopMatrix();
+   
+   glEndList();
+
+   return feelGrid_struct;
+   /* FeelGrid */
+}
 
 int make_feelPlane (void *data) {
 
@@ -2843,6 +2897,7 @@ int replaceDefaultObjects(nmg_State * state)
 
   //Haptic graphics JM 
   feelPlane_struct =   glGenLists(1);
+  feelGrid_struct = glGenLists(1);
 
   marker_list = (marker_type *)malloc(sizeof(marker_type));
   marker_list->id = glGenLists(1);
@@ -2890,7 +2945,6 @@ int initialize_globjects ( nmg_State * /*state*/, const char * fontName) {
   return 0;
 }
 
-
 void enable_ds_sphere_axis() {
 ds_sphere_axis_struct_id = addFunctionToFunclist(&vir_world, draw_list, &ds_sphere_axis_struct,
 					       "draw_list(ds_sphere_axis_struct)"); 
@@ -2901,14 +2955,17 @@ void disable_ds_sphere_axis() {
 
 }
 
-
 //JM - addition from TCH branch 11/02
-void enableFeelGrid (nmg_State * state,int on) {
+void enableFeelGrid (int on) {
 
-        feelGrid_id = addFunctionToFunclist(&vir_world, draw_list, &feelGrid_id_struct,
-	     "draw_list(feelGrid_id_struct)");
+    if(on) {
+
+        feelGrid_struct_id = addFunctionToFunclist(&vir_world, draw_list, &feelGrid_struct,
+	     "draw_list(feelGrid_struct)");
+    } else {
+        removeFunctionFromFunclist(&vir_world,feelGrid_struct_id);
+    }
 }
-
 
 //JM - addition from TCH branch 11/02
 void enableFeelPlane (nmg_haptic_graphics * haptic_graphics, int on) {
@@ -2916,5 +2973,8 @@ void enableFeelPlane (nmg_haptic_graphics * haptic_graphics, int on) {
     if(on) {
         feelPlane_struct_id = addFunctionToFunclist(&vir_world, draw_list, &feelPlane_struct,
 	     "draw_list(feelPlane_struct)");
+    } else {
+        removeFunctionFromFunclist(&vir_world,feelPlane_struct);
     }
+
 }

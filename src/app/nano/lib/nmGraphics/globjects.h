@@ -24,9 +24,18 @@ extern int make_blue_line (nmg_State * state,
 
 extern int make_ds_sphere_axis(nmg_State * state, const q_type rot);
 extern int make_feelPlane(void *data);
+extern int make_feelGrid(void *data);
 
 extern q_vec_type fp_origin_j, fp_normal_j;
 extern int config_feelPlane_temp;
+extern int config_feelGrid_temp;
+
+
+//FeelGrid
+extern int fg_xside;
+extern int fg_yside;
+extern q_vec_type * vertices;
+
 
 //   Called in nmg_GraphicsImpl.c
 extern int make_aim (const float a [], const float b []);
@@ -70,7 +79,7 @@ extern int initialize_globjects ( nmg_State * state, const char * fontName = NUL
 
 
 //JM from TCH branch 11/02
-extern void enableFeelGrid (nmg_State * state,int on);
+extern void enableFeelGrid (int on);
 extern void enableFeelPlane (nmg_haptic_graphics * haptic_graphics, int on);
 
 #endif  // GLOBJECTS_H

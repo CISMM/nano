@@ -64,7 +64,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "../../../../../obj/pc_win32/debug/app/nano/lib/nmGraphics"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /I "." /I "..\..\..\..\..\..\quat" /I "..\..\..\..\..\..\vogl" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\..\..\vrpn" /I "..\nmUGraphics" /I "..\.." /I "..\nmMScope" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\lib\tcllinkvar" /I "..\nmUI" /I "..\nmAnalyze" /D "_LIB" /D "_DEBUG" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /D "_MBCS" /D "VRPN_NO_STREAMS" /FR /YX /FD /GZ /TP /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /I "." /I "..\..\..\..\..\..\quat" /I "..\..\..\..\..\..\vogl" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\..\..\vrpn" /I "..\nmUGraphics" /I "..\.." /I "..\nmMScope" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\lib\tcllinkvar" /I "..\nmUI" /I "..\nmAnalyze" /D "_LIB" /D "_DEBUG" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /D "_MBCS" /FR /YX /FD /GZ /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
