@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <BCPlane.h>
 #include <nmb_Types.h>
 #include <nmb_Decoration.h>
@@ -197,6 +204,177 @@ void setupStateCallbacks (Microscope * ms) {
             (handle_linescan_position, ms);
 
   ms->state.scanline.showing_position.addCallback
+	    (handle_scanline_position_display_change, ms);
+}
+
+#ifdef USE_VRPN_MICROSCOPE
+
+void teardownStateCallbacks (nmm_Microscope_Remote * ms) {
+
+#else
+
+void teardownStateCallbacks (Microscope * ms) {
+
+#endif
+
+  ms->state.doRelaxComp.removeCallback
+      (handle_doRelaxComp_change, ms);
+
+  ms->state.modify.mode.removeCallback
+    (handle_Mmode_change, ms);
+  ms->state.modify.style.removeCallback
+    (handle_Mstyle_change, ms);
+  ms->state.modify.tool.removeCallback
+    (handle_Mtool_change, ms);
+
+  ms->state.modify.setpoint.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.p_gain.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.i_gain.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.d_gain.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.amplitude.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.scan_rate_microns.removeCallback
+    (handle_Mmode_p_change, ms);
+
+  ms->state.modify.sweep_width.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.bot_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.top_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.z_pull.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.punch_dist.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.watchdog.removeCallback
+    (handle_Mstyle_p_change, ms);
+
+  ms->state.modify.step_size.removeCallback
+    (handle_Mtool_p_change, ms);
+
+  ms->state.modify.slow_line_playing.removeCallback
+    (handle_slow_line_playing_change, ms);
+  ms->state.modify.slow_line_step.removeCallback
+    (handle_slow_line_step_change, ms);
+  ms->state.modify.slow_line_direction.removeCallback
+    (handle_slow_line_direction_change, ms);
+
+  ms->state.modify.blunt_size.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.blunt_speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+
+  ms->state.modify.fc_start_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_z_start.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_z_end.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_z_pullback.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_force_limit.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_movedist.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_num_points.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_num_halfcycles.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_sample_speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_pullback_speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_start_speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_feedback_speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_avg_num.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_sample_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_pullback_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_feedback_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+
+  ms->state.image.mode.removeCallback
+    (handle_Imode_change, ms);
+  ms->state.image.style.removeCallback
+    (handle_Istyle_change, ms);
+
+  ms->state.image.setpoint.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.p_gain.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.i_gain.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.d_gain.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.amplitude.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.scan_rate_microns.removeCallback
+    (handle_Imode_p_change, ms);
+
+  ms->state.image.blunt_size.removeCallback
+    (handle_Istyle_p_change, ms);
+  ms->state.image.blunt_speed.removeCallback
+    (handle_Istyle_p_change, ms);
+
+  ms->state.stm_z_scale.removeCallback
+    (handle_z_scale_change, ms);
+  ms->state.slowScanEnabled.removeCallback
+    (handle_tcl_scanEnable_change, ms);
+
+  // Scanline parameters:
+  ms->state.scanline.mode.removeCallback
+    (handle_SLmode_change, ms);
+  ms->state.scanline.forcelimit_enabled.removeCallback
+    (handle_SLforcelimit_change, ms);
+
+  ms->state.scanline.setpoint.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.p_gain.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.i_gain.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.d_gain.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.width.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.amplitude.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.scan_rate_microns_per_sec.removeCallback
+    (handle_SLmode_p_change, ms);
+
+  ms->state.scanline.forcelimit.removeCallback
+    (handle_SLforcelimit_p_change, ms);
+  ms->state.scanline.max_z_step.removeCallback
+    (handle_SLforcelimit_p_change, ms);
+  ms->state.scanline.max_xy_step.removeCallback
+    (handle_SLforcelimit_p_change, ms);
+  ms->state.scanline.feedback_enabled.removeCallback
+    (handle_SLforcelimit_change, ms);
+
+  ms->state.scanline.start_linescan.removeCallback
+            (handle_linescan_start, ms);
+  ms->state.scanline.width.removeCallback
+	    (handle_linescan_position, ms);
+  ms->state.scanline.x_end.removeCallback
+            (handle_linescan_position, ms);
+  ms->state.scanline.y_end.removeCallback
+            (handle_linescan_position, ms);
+  ms->state.scanline.z_end.removeCallback
+            (handle_linescan_position, ms);
+  ms->state.scanline.angle.removeCallback
+            (handle_linescan_position, ms);
+
+  ms->state.scanline.showing_position.removeCallback
 	    (handle_scanline_position_display_change, ms);
 }
 

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMM_MICROSCOPE_REMOTE_H
 #define NMM_MICROSCOPE_REMOTE_H
 
@@ -92,21 +99,9 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     char * encode_GetNewPointDatasets (long * len, const Tclvar_checklist *);
     char * encode_GetNewScanDatasets (long * len, const Tclvar_checklist *);
 
-    long Initialize (const vrpn_bool setRegion,
-                    const vrpn_bool setMode,
-                    int (*) (stm_stream *),
-                    const long socketType, const char * SPMhost,
-                    const long SPMport, const long UDPport);
-      /**< Set up to read from a live scope.
-       * Function parameter writes any necessary cookies on
-       * an output stream, returning nonzero on failure
-       * Last 4 parameters are for Michele Clark's experiments.  OBSOLETE?
-       */
-
-    long Initialize (int (*) (stm_stream *));
-      /**< Set up to read from a streamfile (or static files)
-       * Function parameter writes any necessary cookies on
-       * an output stream, returning nonzero on failure  OBSOLETE?
+    long Initialize () ;
+      /**< Set up to read from a stream file or a live scope, 
+       * depending on d_dataset->inputgrid->readMode()
        */
 
     long NewEpoch (void);
@@ -315,6 +310,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     nmb_Dataset * d_dataset;
     nmb_Decoration * d_decoration;
 
+    char * d_tcl_script_dir;
+
     // to keep track of region to be sent using SetScanWindow():
     // this basically just accumulates a bounding box for all points
     // received during the latest modification
@@ -354,15 +351,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
 
   private:
-
-
-    // initialization
-    long InitDevice (const vrpn_bool, const vrpn_bool,
-                    const long, const char *, const long, const long);
-    long InitStream (const char *);
-    long Init (int (*) (stm_stream *));
-
-
+    // Utility fcn to rotate scan coords.
+    long rotateScanCoords (const double _x, const double _y,
+			   const double _scanAngle, 
+			   double * out_x, double * out_y);
 
     // Commands only sent by member functions
 /* OBSOLETE
@@ -482,6 +474,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     void RcvPulseFailureNM (const float, const float);
     void RcvScanRange (const float, const float, const float, const float,
                        const float, const float);
+    void RcvSetScanAngle (const float);
     void RcvSetRegionC (const long,
                         const float, const float, const float, const float);
     void RcvResistanceFailure (const long);
@@ -566,6 +559,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     static int handle_PulseCompletedNM (void *, vrpn_HANDLERPARAM);
     static int handle_PulseFailureNM (void *, vrpn_HANDLERPARAM);
     static int handle_ScanRange (void *, vrpn_HANDLERPARAM);
+    static int handle_SetScanAngle (void *, vrpn_HANDLERPARAM);
     static int handle_SetRegionCompleted (void *, vrpn_HANDLERPARAM);
     static int handle_SetRegionClipped (void *, vrpn_HANDLERPARAM);
     static int handle_ResistanceFailure (void *, vrpn_HANDLERPARAM);
@@ -613,6 +607,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
                            const vrpn_bool = VRPN_FALSE);
       // sets state.rasterX and state.rasterY
 
+    // Has resistance channel been added to point results?
+    vrpn_bool d_res_channel_added;
 
     // replacing things in microscape
     struct timeval d_nowtime;

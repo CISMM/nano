@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <stdio.h>
 #include <string.h>
 #if !defined (_WIN32) || defined (__CYGWIN__)
@@ -121,9 +128,7 @@ VectorType	lightpos,lightdir;
 int 
 x_init(char* argv[])
 {
-#ifdef __CYGWIN__
-
-#else
+#ifndef NO_XWINDOWS
     if (createWindow(0,argv)) 
 	return(-1);
     clearWindow();
@@ -321,6 +326,7 @@ peripheral_init()
 
 // int pgl_init() is obsolete
 
+#ifndef USE_VRPN_MICROSCOPE
 int     describe_version_to_stream(stm_stream *s)
 {
         int     response = SPM_CLIENT_HELLO;
@@ -354,38 +360,4 @@ int     describe_version_to_stream(stm_stream *s)
         return 0;
 }
 
-/*****************************************************************************
- *
-   stm_init - initialize stm
- *
- *****************************************************************************/
-int stm_init (const vrpn_bool set_region,
-              const vrpn_bool set_mode, const int socketType,
-              const char * SPMhost,
-              const int SPMport, const int UDPport) {
-    int retval;
-
-    /* Open the STM connection and tell it to start scanning */
-    if (dataset->inputGrid->readMode() == READ_DEVICE) {
-      retval = microscope->Initialize(set_region, set_mode,
-                                      describe_version_to_stream,
-                                      socketType, SPMhost, SPMport, UDPport);
-      if (retval == -1) {
-        fprintf(stderr, "Microscope constructor failed in stm_init().\n");
-        exit(-1);
-      }
-    }
-
-    /* Open the stream input if we are using one */
-    if (dataset->inputGrid->readMode() == READ_STREAM) {
-      retval = microscope->Initialize(describe_version_to_stream);
-      if ((!microscope)||( retval == -1)){
-        fprintf(stderr, "Microscope constructor failed in stm_init().\n");
-        exit(-1);
-      }
-    }
-
-    return(0);
-
-}	/* stm_init */
-
+#endif

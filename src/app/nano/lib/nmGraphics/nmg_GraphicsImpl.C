@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmg_GraphicsImpl.h"
 
 #include <GL/gl.h>
@@ -50,75 +57,83 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     d_displayIndexList (new v_index [NUM_USERS]),
     d_textureTransformMode(RULERGRID_COORD)
 {
-  grid_size_x = d_dataset->inputGrid->numX();
-  grid_size_y = d_dataset->inputGrid->numX();
+    if (d_dataset == NULL) {
+        grid_size_x = 12;
+        grid_size_y = 12;
+    } else {
+        grid_size_x = d_dataset->inputGrid->numX();
+        grid_size_y = d_dataset->inputGrid->numX();
+    }
 
     //fprintf(stderr,
     //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
 
-  nmb_PlaneSelection planes; planes.lookup(data);
-  int i;
+    int i;
 
-  g_inputGrid = data->inputGrid;
-  strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
-  strcpy(g_colorPlaneName, data->colorPlaneName->string());
-  strcpy(g_contourPlaneName, data->contourPlaneName->string());
-  strcpy(g_heightPlaneName, data->heightPlaneName->string());
-
-  // do pgl_init() stuff
+    if (d_dataset == NULL) {
+        g_inputGrid = NULL;
+        strcpy(g_alphaPlaneName, "none");
+        strcpy(g_colorPlaneName, "none");
+        strcpy(g_contourPlaneName, "none");
+        strcpy(g_heightPlaneName, "none");
+    } else {
+        g_inputGrid = data->inputGrid;
+        strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
+        strcpy(g_colorPlaneName, data->colorPlaneName->string());
+        strcpy(g_contourPlaneName, data->contourPlaneName->string());
+        strcpy(g_heightPlaneName, data->heightPlaneName->string());
+    }
 
 #ifdef FLOW
-  g_data_tex_size = max(data->inputGrid->numX(),
-                        data->inputGrid->numY());
-  g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
+    g_data_tex_size = max(grid_size_x, grid_size_y);
+    g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
 #endif
 
-  /* initialize graphics  */
-  printf("Initializing graphics...\n");
+    /* initialize graphics  */
+    //printf("Initializing graphics...\n");
 
-  if ( v_open() != V_OK )
-      exit(V_ERROR);
+    if ( v_open() != V_OK ) {
+        exit(V_ERROR);
+    }
 
-  fprintf(stderr, "Done.\n");
+    initDisplays();
 
-  initDisplays();
-
-  // make sure everything is going into the right gl context
-  v_gl_set_context_to_vlib_window();
-
-  /* Set up the viewing info */
+    // make sure everything is going into the right gl context
+    v_gl_set_context_to_vlib_window();
+    
+    /* Set up the viewing info */
   
-  /* Set initial user mode */
-  for (i = 0; i < NUM_USERS; i++)
-    g_user_mode[i] = USER_GRAB_MODE;
+    /* Set initial user mode */
+    for (i = 0; i < NUM_USERS; i++) {
+        g_user_mode[i] = USER_GRAB_MODE;
+    }
+    /* set up user and object trees     */
+    //printf("Creating the world...\n");
+    v_create_world(NUM_USERS, d_displayIndexList);
 
-  /* set up user and object trees     */
-  printf("Creating the world...\n");
-  v_create_world(NUM_USERS, d_displayIndexList);
-
-  /* Set the background color to light blue */
-  glClearColor(0.3, 0.3, 0.7,  0.0);
-
-  setMinColor(minColor);
-  setMaxColor(maxColor);
-
-  initialize_globjects(NULL);  // load default font
-
-  /* user routine to define user objects and override default objects */
-  replaceDefaultObjects();
-
-  v_replace_drawfunc(i, V_WORLD, draw_world);
-  v_replace_lightingfunc(i, setup_lighting);
-
-  /********************************************************************/
-  /* Build the display lists we'll need to draw the data, etc */
-  /********************************************************************/
-
-  fprintf(stderr,"Building display lists...\n");
-
-  /* added by qliu for texture mapping*/
-  /*initialize the texture mapping*/
-  // Texture mapping is not enabled here, but when a data set is mapped*/
+    /* Set the background color to light blue */
+    glClearColor(0.3, 0.3, 0.7,  0.0);
+    
+    setMinColor(minColor);
+    setMaxColor(maxColor);
+    
+    initialize_globjects(NULL);  // load default font
+    
+    /* user routine to define user objects and override default objects */
+    replaceDefaultObjects();
+    
+    v_replace_drawfunc(i, V_WORLD, draw_world);
+    v_replace_lightingfunc(i, setup_lighting);
+    
+    /********************************************************************/
+    /* Build the display lists we'll need to draw the data, etc */
+    /********************************************************************/
+    
+    //fprintf(stderr,"Building display lists...\n");
+    
+    /* added by qliu for texture mapping*/
+    /*initialize the texture mapping*/
+    // Texture mapping is not enabled here, but when a data set is mapped*/
 
   if (rulergridName) {
     FILE *infile = fopen(rulergridName, "rb");
@@ -149,13 +164,13 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
    * There is one list for each row of data points except for
    * the last.  Since these are for rows scanning in X fastest,
    * we have one per Y index. */
+  nmb_PlaneSelection planes; planes.lookup(data);
   if (build_grid_display_lists(planes, 1, &grid_list_base,
-                               &num_grid_lists, g_minColor, g_maxColor)) {
-    fprintf(stderr,"ERROR: Could not build grid display lists\n");
-    d_dataset->done = 1;
-  }
+                                &num_grid_lists, g_minColor, g_maxColor)) {
+     fprintf(stderr,"ERROR: Could not build grid display lists\n");
+     d_dataset->done = 1;
+   }
 
-  // other (non-pgl_init()) setup
 
   const GLubyte * exten;
   exten = glGetString(GL_EXTENSIONS);
@@ -175,11 +190,11 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
      fprintf(stderr,"Vertex Array extension not supported.\n");
 
   if (g_VERTEX_ARRAY)
-    if (!init_vertexArray(data->inputGrid->numX(),
-                          data->inputGrid->numY()) ) {
-          fprintf(stderr," init_vertexArray: out of memory.\n");
-          exit(0);
-     }
+    if (!init_vertexArray(grid_size_x,
+			  grid_size_y) ) {
+      fprintf(stderr," init_vertexArray: out of memory.\n");
+      exit(0);
+    }
 
   g_positionList = new Position_list;
   g_positionListL = new Position_list;
@@ -255,8 +270,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
                                handle_setFrictionSliderRange,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setBumpSliderRange_type,
-							   handle_setBumpSliderRange,
-							   this, vrpn_ANY_SENDER);
+                               handle_setBumpSliderRange,
+                               this, vrpn_ANY_SENDER);
   connection->register_handler(d_setBuzzSliderRange_type,
                                handle_setBuzzSliderRange,
                                this, vrpn_ANY_SENDER);
@@ -466,7 +481,6 @@ nmg_Graphics_Implementation::~nmg_Graphics_Implementation (void) {
 
   int i;
 
-  /*XXX should be fixed for non-PxFl also, maybe... (C.Chang 9/96)*/
   for (i = 0; i < NUM_USERS; i++)
     v_close_display(d_displayIndexList[i]);
 
@@ -541,6 +555,30 @@ void nmg_Graphics_Implementation::mainloop (void) {
   if ( gaRemote )
     gaRemote->mainloop();
 
+}
+
+/** If we load a different stream file or connect to a new AFM,
+ * graphics needs to start watching a new dataset.
+ */
+void nmg_Graphics_Implementation::changeDataset( nmb_Dataset * data)
+{
+  d_dataset = data;
+  grid_size_x = d_dataset->inputGrid->numX();
+  grid_size_y = d_dataset->inputGrid->numX();
+
+  g_inputGrid = data->inputGrid;
+  strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
+  strcpy(g_colorPlaneName, data->colorPlaneName->string());
+  strcpy(g_contourPlaneName, data->contourPlaneName->string());
+  strcpy(g_heightPlaneName, data->heightPlaneName->string());
+
+#ifdef FLOW
+    g_data_tex_size = max(grid_size_x, grid_size_y);
+    g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
+#endif
+
+    causeGridRebuild();
+ 
 }
 
 // functions to replace code in microscape.c - AAS
@@ -737,7 +775,7 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
 //fprintf(stderr, "nmg_Graphics_Implementation::causeGridRebuild().\n");
 
   // Rebuilds the texture coordinate array:
-  nmb_PlaneSelection planes;  planes.lookup(dataset);
+  nmb_PlaneSelection planes;  planes.lookup(d_dataset);
 
   if (g_VERTEX_ARRAY) {
     if (!init_vertexArray(d_dataset->inputGrid->numX(),
@@ -2538,7 +2576,7 @@ void nmg_Graphics_Implementation::initDisplays (void) {
     if (d_displayIndexList[i] == V_NULL_DISPLAY) {
       exit(V_ERROR);
     }
-    printf("display = '%s'\n", v_display_name(d_displayIndexList[i]));
+    //printf("display = '%s'\n", v_display_name(d_displayIndexList[i]));
   }
 }
 

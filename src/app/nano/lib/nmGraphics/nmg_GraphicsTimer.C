@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include  "nmg_GraphicsTimer.h"
 
 nmg_Graphics_Timer::nmg_Graphics_Timer (nmg_Graphics * imp,
@@ -34,6 +41,10 @@ void nmg_Graphics_Timer::mainloop (void) {
 
   d_imp->mainloop();
   
+}
+
+void nmg_Graphics_Timer::changeDataset( nmb_Dataset * data) {
+  d_imp->changeDataset(data);
 }
 
 void nmg_Graphics_Timer::resizeViewport (int width, int height) {

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /** \file interaction.c
  *
     interaction.c - handles all interaction for user program
@@ -2302,7 +2309,7 @@ int doFeelLive(int whichUser, int userEvent)
 
 	    /* Apply force to the user based on current sample points */
 	    // XXX needs new test with new nmm_relaxComp object
-	  //if( microscope->state.relaxComp >= 0 ) {
+	  if( !microscope->d_relax_comp.is_ignoring_points() ) {
               touch_surface(whichUser, clipPos);
               if (forceDevice  && config_haptic_enable) {
                 if (!SurfaceGoing) {
@@ -2312,7 +2319,7 @@ int doFeelLive(int whichUser, int userEvent)
                   forceDevice->sendSurface();
                 }
               }
-	      //}
+          }
 	}
 	break;
 	

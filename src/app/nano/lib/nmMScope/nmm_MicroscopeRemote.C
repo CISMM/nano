@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmm_MicroscopeRemote.h"
 
 #include <stdlib.h>
@@ -6,6 +13,7 @@
 //#if !defined(_WIN32) || defined(__CYGWIN__)
 #if !defined(_WIN32)
 #include <sys/time.h> // for RecordResistance()
+#include <unistd.h>  // for sleep()
 #endif
 
 #include <Topo.h>
@@ -76,20 +84,21 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
     d_relax_comp(this),
     d_dataset (NULL),
     d_decoration (NULL),
+    d_tcl_script_dir (NULL),
     d_mod_window_initialized (vrpn_FALSE),
     d_mod_window_min_x (0),
     d_mod_window_min_y (0),
     d_mod_window_max_x (0),
     d_mod_window_max_y (0),
     d_mod_window_pad (10),
-    readMode (READ_FILE),   // differentiates between Live and Replay
+    d_res_channel_added(vrpn_FALSE),
     d_pointDataHandlers (NULL),
     d_modifyModeHandlers (NULL),
     d_imageModeHandlers (NULL),
     d_scanlineModeHandlers (NULL),
     d_scanlineDataHandlers (NULL),
     d_sampleAlgorithm (NULL),
-    d_accumulatePointResults (vrpn_false)
+    d_accumulatePointResults (vrpn_FALSE)
 {
   gettimeofday(&d_nowtime, &d_nowzone);
   d_next_time.tv_sec = 0L;
@@ -167,6 +176,9 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
 				 this);
   d_connection->register_handler(d_ScanRange_type,
                                  handle_ScanRange,
+                                 this);
+  d_connection->register_handler(d_SetScanAngle_type,
+                                 handle_SetScanAngle,
                                  this);
   d_connection->register_handler(d_SetRegionCompleted_type,
                                  handle_SetRegionCompleted,
@@ -317,20 +329,23 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
 
 nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
   // Shut the server down nicely
-  // TODO:  make sure we're talking to a live microscope and not using
-  //   canned data.  Previous version checked a global variable.  Does
-  //   checking IsMicroscopeOpen() work?
-
-  if (d_connection && d_connection->doing_okay()) {
-    if (Shutdown() == -1) {
-      fprintf(stderr, "nmm_Microscope_Remote::~Microscope():  "
-                      "could not send quit command to STM server\n");
+  // Check to make sure we are talking to live microscope.
+  if (d_dataset && (d_dataset->inputGrid->readMode() == READ_DEVICE)) {
+    if (d_connection && d_connection->doing_okay()) {
+      if (Shutdown() == -1) {
+	fprintf(stderr, "nmm_Microscope_Remote::~Microscope():  "
+		"could not send quit command to STM server\n");
+      }
+      // Wait to give the server a chance to receive the message before it
+      // gets a connection-closed exception
+      sleep(3);
+      // TODO:  verify that destructors of members get called after
+      //   this destructor;  otherwise we've got a mess to handle
     }
-    // Wait to give the server a chance to receive the message before it
-    // gets a connection-closed exception
-    sleep(3);
-    // TODO:  verify that destructors of members get called after
-    //   this destructor;  otherwise we've got a mess to handle
+  }
+
+  if (d_tcl_script_dir) {
+    delete [] d_tcl_script_dir;
   }
 
   // TODO:  clean up callback lists on d_connection
@@ -389,7 +404,7 @@ char * nmm_Microscope_Remote::encode_GetNewPointDatasets
   long i;
 
 // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets(): Entering...\n");
+  //fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets(): Entering...\n");
 // NANO END
 
   if (!len) return NULL;
@@ -407,7 +422,7 @@ char * nmm_Microscope_Remote::encode_GetNewPointDatasets
     mptr = msgbuf;
     mlen = *len;
 // NANO BEGIN
-    fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets(): numSets = %d\n", numSets);
+    //fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets(): numSets = %d\n", numSets);
 // NANO END
     vrpn_buffer(&mptr, &mlen, numSets);
     for (i = 0; i < list->Num_checkboxes(); i++)
@@ -441,7 +456,7 @@ char * nmm_Microscope_Remote::encode_GetNewScanDatasets
     if (1 == list->Is_set(i)) numSets++;
 
 // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets: numSets = %d\n", numSets);
+  //fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets: numSets = %d\n", numSets);
 // NANO END
   *len = (long)(sizeof(long) + STM_NAME_LENGTH * numSets);
   msgbuf = new char [*len];
@@ -456,7 +471,7 @@ char * nmm_Microscope_Remote::encode_GetNewScanDatasets
     for (i = 0; i < list->Num_checkboxes(); i++) {
        if (1 == list->Is_set(i)) {
 	  vrpn_buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
-	  fprintf(stderr, "     name: %s\n",list->Checkbox_name(i));
+	  //fprintf(stderr, "     name: %s\n",list->Checkbox_name(i));
        }
     }
   }
@@ -475,6 +490,12 @@ long nmm_Microscope_Remote::InitializeDataset (nmb_Dataset * ds) {
   state.SetDefaultScanlineForRegion(ds);
     // safest to SetDefaultScanlineForRegion after ensureHeightPlane(),
     // since it assumes a height plane exists.
+
+  state.modify.region_diag =
+      sqrt(((d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX()) *
+            (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())) +
+           ((d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY()) *
+            (d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY())));
 
   return 0;
 }
@@ -497,29 +518,42 @@ long nmm_Microscope_Remote::InitializeTcl (const char * dir) {
   return 0;
 }
 
-long nmm_Microscope_Remote::Initialize (const vrpn_bool _setRegion,
-                            const vrpn_bool _setMode,
-                            int (* f) (stm_stream *),
-                            const long _socketType,
-                            const char * _SPMhost,
-                            const long _SPMport,
-                            const long _UDPport) { 
+long nmm_Microscope_Remote::Initialize ( ) {
 
-  CHECK(InitDevice(_setRegion, _setMode,
-                   _socketType, _SPMhost, _SPMport, _UDPport));
-  return Init(f);
+  if (d_dataset->inputGrid->readMode() == READ_DEVICE) {
+    // XXX Bug in VRPN. If we're already connected before we register the
+    // handle_GotConnection handlers, they never get executed. So we'll call
+    // them explicitly, if needed.
+    if (d_connection->connected()) {
+      vrpn_HANDLERPARAM p;
+      handle_GotConnection2(this, p);
+    } 
+    // Register this callback here because it segfaults if I execute the handler
+    // in the constructor, and I need to register at the same place it is
+    // conditionally executed.
+    d_connection->register_handler(d_GotConnection_type,
+				   handle_GotConnection2,
+				   this);
+  } else if (d_dataset->inputGrid->readMode() == READ_STREAM) {
+    if (!d_connection->get_File_Connection()) {
+      fprintf(stderr,"nmm_Microscope_Remote::InitStream():  "
+	      "could not open input log file %c\n", 0x08);
+      return -1;
+    }
+    
+  }  
+// Initialization code common to both live and canned data
+  // used for sweep mode
+  // Moved to InitializeDataset, because this is also initialized
+  // when we get the SetRegionC message
+//    state.modify.region_diag =
+//      sqrt(((d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX()) *
+//            (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())) +
+//           ((d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY()) *
+//            (d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY())));
+
+  return 0;
 }
-
-
-
-
-long nmm_Microscope_Remote::Initialize (int (* f) (stm_stream *)) {
-
-  CHECK(InitStream(state.inputStreamName));
-  return Init(f);
-}
-
-
 
 
 
@@ -722,6 +756,31 @@ long nmm_Microscope_Remote::ResumeWindowScan (void) {
 
 
 
+long nmm_Microscope_Remote::rotateScanCoords (const double _x, const double _y,
+					      const double _scanAngle, 
+					      double * out_x, double * out_y) 
+{
+
+  // Rotate about the center of the scan region -- same as
+  // the Thermo software rotates it's scan when we send it a 
+  // particular scan angle. 
+    double sin_angle = sinf( _scanAngle );
+    double cos_angle = cosf( _scanAngle );
+
+    double centerx = state.xMin + (state.xMax - state.xMin)/2.0 ;
+    double centery = state.yMin + (state.yMax - state.yMin)/2.0 ;
+
+    double x = _x - centerx; // translate points to center
+    double y = _y - centery;
+
+    *out_x = ( cos_angle * x ) + ( -sin_angle * y );  // rotate
+    *out_y = ( sin_angle * x ) + (  cos_angle * y );
+
+    *out_x += centerx;  // translate points back
+    *out_y += centery;  // translate points back
+
+  return 0;
+}
 
 long nmm_Microscope_Remote::DrawLine (const double _startx, const double _starty,
                           const double _endx, const double _endy,
@@ -731,20 +790,25 @@ long nmm_Microscope_Remote::DrawLine (const double _startx, const double _starty
   long type;
   long retval;
 
+  double startx, starty;
+  rotateScanCoords(_startx, _starty, state.scanAngle, &startx, &starty);
+  double endx, endy;
+  rotateScanCoords(_endx, _endy, state.scanAngle, &endx, &endy);
+
   switch (state.modify.style) {
     case SHARP:
     case SEWING:
     case FORCECURVE:
       msgbuf = encode_DrawSharpLine
-                 (&len, _startx, _starty, _endx, _endy,
+                 (&len, startx, starty, endx, endy,
                   state.modify.step_size);
       type = d_DrawSharpLine_type;
       break;
     case SWEEP:
       msgbuf = encode_DrawSweepLine
-                 (&len, _startx, _starty,
+                 (&len, startx, starty,
                   state.modify.yaw, state.modify.sweep_width,
-                  _endx, _endy,
+                  endx, endy,
                   state.modify.yaw, state.modify.sweep_width,
                   state.modify.step_size);
       type = d_DrawSweepLineCenter_type;
@@ -795,6 +859,10 @@ long nmm_Microscope_Remote::DrawArc (const double _x, const double _y,
   long len;
   long retval;
 
+  double x,y;
+  rotateScanCoords(_x, _y, state.scanAngle, &x, &y);
+  // XXX Need to rotate start and end angle as well???
+
   switch (state.modify.style) {
     case SHARP:
     case SEWING:
@@ -802,7 +870,7 @@ long nmm_Microscope_Remote::DrawArc (const double _x, const double _y,
       return 0;
     case SWEEP:
       msgbuf = encode_DrawSweepArc
-                 (&len, _x, _y, _startAngle,
+                 (&len, x, y, _startAngle,
                   state.modify.sweep_width,
                   _endAngle,
                   state.modify.sweep_width,
@@ -851,7 +919,10 @@ long nmm_Microscope_Remote::ScanTo (const float _x, const float _y) {
   char * msgbuf;
   long len;
 
-  msgbuf = encode_ScanTo(&len, _x, _y);
+  double x,y;
+  rotateScanCoords(_x, _y, state.scanAngle, &x, &y);
+
+  msgbuf = encode_ScanTo(&len, x, y);
   if (!msgbuf)
     return -1;
 
@@ -862,14 +933,20 @@ long nmm_Microscope_Remote::ScanTo (const float _x, const float _y, const float 
   char * msgbuf;
   long len;
 
-  msgbuf = encode_ScanTo(&len, _x, _y, _z);
+  double x,y;
+  rotateScanCoords(_x, _y, state.scanAngle, &x, &y);
+
+  msgbuf = encode_ScanTo(&len, x, y, _z);
   if (!msgbuf)
     return -1;
 
   return dispatchMessage(len, msgbuf, d_ScanToZ_type);
 }
 
-int nmm_Microscope_Remote::TakeSampleSet (float x, float y) {
+int nmm_Microscope_Remote::TakeSampleSet (float _x, float _y) {
+
+  double x,y;
+  rotateScanCoords(_x, _y, state.scanAngle, &x, &y);
 
   if (!d_sampleAlgorithm) {
     return -1;
@@ -883,6 +960,8 @@ int nmm_Microscope_Remote::TakeSampleSet (float x, float y) {
 long nmm_Microscope_Remote::TakeFeelStep (const float _x, const float _y,
                               Point_value * _point,
                               const vrpn_bool _awaitResult) {
+
+  // Don't rotate coords, because ScanTo/ZagTo do it. 
   CHECK(ScanTo(_x, _y));
 
   if (_awaitResult && _point) {
@@ -896,7 +975,7 @@ long nmm_Microscope_Remote::TakeFeelStep (const float _x, const float _y,
       d_connection->mainloop();
       if ( ! d_connection->doing_okay()) {
 
-        fprintf(stderr, "nmm_Microscope_Remote::DrawLine():  "
+        fprintf(stderr, "nmm_Microscope_Remote::TakeFeelStep():  "
                         "can't read from microscope.\n");
         return -1;
       }
@@ -918,6 +997,7 @@ long nmm_Microscope_Remote::TakeModStep (const float _x, const float _y,
                              Point_value * _point,
                              const vrpn_bool _awaitResult) {
 
+  // Don't rotate coords, because ScanTo/ZagTo do it. 
   switch (state.modify.style) {
     case SHARP:
     case SEWING:
@@ -960,6 +1040,8 @@ long nmm_Microscope_Remote::TakeModStep (const float _x, const float _y,
 int nmm_Microscope_Remote::TakeDirectZStep (const float _x, const float _y, const float _z,
                              Point_value * _point,
                              const vrpn_bool _awaitResult) {
+
+  // Don't rotate coords, because ScanTo rotates.
    CHECK(ScanTo(_x, _y, _z));
 
   if (_awaitResult && _point) {
@@ -1193,10 +1275,14 @@ long nmm_Microscope_Remote::EnterForceCurveStyle
 }
 
 long nmm_Microscope_Remote::ZagTo
-        (float x, float y, float yaw, float sweepWidth, float regionDiag) {
+        (float _x, float _y, float yaw, float sweepWidth, float regionDiag) {
   char * msgbuf;
   long len;
 
+  double x,y;
+  rotateScanCoords(_x, _y, state.scanAngle, &x, &y);
+
+  // XXX Need to rotate yaw as well???
   msgbuf = encode_ZagTo(&len, x, y, yaw, sweepWidth, regionDiag);
   if (!msgbuf)
     return -1;
@@ -1536,7 +1622,7 @@ int nmm_Microscope_Remote::getTimeSinceConnected(void) {
 
   struct timeval elapsedTime;
 
-  switch (readMode) {
+  switch (d_dataset->inputGrid->readMode()) {
     case READ_DEVICE:
       d_connection->time_since_connection_open(&elapsedTime);
       d_decoration->elapsedTime = elapsedTime.tv_sec;
@@ -1951,71 +2037,6 @@ void nmm_Microscope_Remote::accumulatePointResults (vrpn_bool on) {
 }
 
 
-long nmm_Microscope_Remote::InitDevice (const vrpn_bool _setRegion,
-                            const vrpn_bool _setMode,
-                            const long /* _socketType */,
-                            const char * _SPMhost,
-                            const long /* _SPMport */,
-                            const long /* _UDPport */) {
-  readMode = READ_DEVICE;	//  to differentiate Live and Replay
-
-  // XXX Bug in VRPN. If we're already connected before we register the
-  // handle_GotConnection handlers, they never get executed. So we'll call
-  // them explicitly, if needed.
-
-  if (d_connection->connected()) {
-      vrpn_HANDLERPARAM p;
-      handle_GotConnection2(this, p);
-  } 
-
-  // Register this callback here because it segfaults if I execute the handler
-  // in the constructor, and I need to register at the same place it is
-  // conditionally executed.
-
-  d_connection->register_handler(d_GotConnection_type,
-                                 handle_GotConnection2,
-                                 this);
-  
-
-  return 0;
-}
-
-
-
-
-long nmm_Microscope_Remote::InitStream (const char * /* _inputStreamName */) {
-
-  readMode = READ_STREAM; 	// to differentiate Live and Replay
-  if (!d_connection->get_File_Connection()) {
-     fprintf(stderr,"nmm_Microscope_Remote::InitStream():  "
-		    "could not open input log file %c\n", 0x08);
-     return -1;
-  }
-
-  return 0;
-}
-
-
-
-
-// Initialization code common to both live and canned data
-
-long nmm_Microscope_Remote::Init (int (* /* f */) (stm_stream *)) {
-
-  // used for sweep mode
-  state.modify.region_diag =
-    sqrt(((d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX()) *
-          (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())) +
-         ((d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY()) *
-          (d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY())));
-
-
-  return 0;
-}
-
-
-
-
 
 // Common code from by RcvPointResultNM and RcvResultNM, and,
 // with a little stretching (_z and _checkZ), RcvResultData
@@ -2030,13 +2051,16 @@ void nmm_Microscope_Remote::DisplayModResult (const float _x, const float _y,
   long x, y;
   BCPlane * heightPlane;
 
+  double xr,yr;
+  rotateScanCoords(_x, _y, -state.scanAngle, &xr, &yr);
+
   heightPlane = d_dataset->inputGrid->getPlaneByName
             (d_dataset->heightPlaneName->string());
 
-  top[0] = bottom[0] = _x;
-  top[1] = bottom[1] = _y;
+  top[0] = bottom[0] = xr;
+  top[1] = bottom[1] = yr;
 
-  d_dataset->inputGrid->worldToGrid((double)_x, (double)_y, fx, fy);
+  d_dataset->inputGrid->worldToGrid((double)xr, (double)yr, fx, fy);
   x = (long)fx;
   y = (long)fy;
 
@@ -2055,9 +2079,9 @@ void nmm_Microscope_Remote::DisplayModResult (const float _x, const float _y,
           bottom[2] = _z->value() * heightPlane->scale();
         else
           bottom[2] = top[2];
-      } else
+      } else {
         bottom[2] = _height * heightPlane->scale();
-
+      }
       //if (glenable)
       d_decoration->addScrapeMark(top, bottom);
 
@@ -2670,6 +2694,18 @@ int nmm_Microscope_Remote::handle_ScanRange (void * userdata,
 
   ms->decode_ScanRange(&param.buffer, &minX, &maxX, &minY, &maxY, &minZ, &maxZ);
   ms->RcvScanRange(minX, maxX, minY, maxY, minZ, maxZ);
+
+  return 0;
+}
+
+//static
+int nmm_Microscope_Remote::handle_SetScanAngle (void * userdata,
+                                           vrpn_HANDLERPARAM param) {
+  nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+  float angle;
+
+  ms->decode_SetScanAngle(&param.buffer, &angle);
+  ms->RcvSetScanAngle(angle);
 
   return 0;
 }
@@ -3608,8 +3644,8 @@ long nmm_Microscope_Remote::RcvWindowLineData(const long _x, const long _y,
   nmb_Image *image;
   
   // need to convert from a nmb_string to a BCString
-  BCString o = BCString( (char *)(d_dataset->heightPlaneName) );
-  image = d_dataset->dataImages->getImageByName( o );
+  //BCString o = BCString( (char *)(d_dataset->heightPlaneName) );
+  image = d_dataset->dataImages->getImageByName(d_dataset->heightPlaneName->string() );
 
   xf = _x + (_lineCount - 1) * _dx;
   yf = _y + (_lineCount - 1) * _dy;
@@ -3620,11 +3656,11 @@ long nmm_Microscope_Remote::RcvWindowLineData(const long _x, const long _y,
   d_decoration->sl_left[0] = (float)xi_2;
   d_decoration->sl_left[1] = (float)yi_2;
   d_decoration->sl_left[2] = 
-    d_dataset->inputGrid->getPlaneByName( o )->scaledValue(_x,_y);
+    d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string() )->scaledValue(_x,_y);
   d_decoration->sl_right[0] = (float)xf_2;
   d_decoration->sl_right[1] = (float)yf_2;
   d_decoration->sl_right[2] = 
-    d_dataset->inputGrid->getPlaneByName( o )->scaledValue(xf,yf);
+    d_dataset->inputGrid->getPlaneByName(d_dataset->heightPlaneName->string() )->scaledValue(xf,yf);
 
   return 0;
 }
@@ -3756,22 +3792,27 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
 
   // if it's a modification result, display it
   if ((state.acquisitionMode == MODIFY || state.cannedLineVisible) &&
-      (!d_relax_comp.is_ignoring_points()))
+      (!d_relax_comp.is_ignoring_points())) {
+    // Causes the white tick marks/modify markers to show up.
     DisplayModResult(state.data.inputPoint->x(),
                      state.data.inputPoint->y(),
                      0.0f, z_value, VRPN_TRUE);
-
+  }
   if (state.modify.style != FORCECURVE)	{// XXX HACK - we need point results
      // HACK - to get ohmmeter data in point results
-     static int channel_added = 0;
      char *res_channel_name = "Resistance";
      char *res_channel_unit = "Ohms";
-     if (!channel_added) {
+     if (!d_res_channel_added) {
         state.data.inputPoint->addNewValue(res_channel_name, res_channel_unit);
-        channel_added = 1;
+        d_res_channel_added = vrpn_TRUE;
      }
      Point_value *pv = state.data.inputPoint->getValueByName(res_channel_name);
-     pv->setValue(lastResistanceReceived);
+     if (!pv) {
+       fprintf(stderr, "nmm_Microscope_Remote::RcvResultData: "
+	       "Unable to get ohmmeter channel\n");
+     } else {
+       pv->setValue(lastResistanceReceived);
+     }
      // END HACK
 
      
@@ -3880,6 +3921,12 @@ void nmm_Microscope_Remote::RcvScanRange (const float _minX, const float _maxX,
     driftZDirty();
 }
 
+void nmm_Microscope_Remote::RcvSetScanAngle (const float angle ) {
+  printf( "nmm_Microscope_Remote::RcvSetScanAngle: angle = %f\n", angle );
+  state.scanAngle = angle;
+}
+
+
 // case STM_SET_REGION_COMPLETED:
 // case STM_SET_REGION_CLIPPED:
 void nmm_Microscope_Remote::RcvSetRegionC (const long /* _type */,
@@ -3904,6 +3951,8 @@ void nmm_Microscope_Remote::RcvSetRegionC (const long /* _type */,
   d_dataset->inputGrid->setMinY(_minY);
   d_dataset->inputGrid->setMaxX(_maxX);
   d_dataset->inputGrid->setMaxY(_maxY);
+  printf( "            nmm_Microscope_Remote::RcvSetRegionC minX %f minY %f maxX %f maxY %f\n", 
+          _minX, _minY, _maxX, _maxY );
 
   state.modify.region_diag =
      sqrt((d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX()) *
@@ -3926,13 +3975,10 @@ void nmm_Microscope_Remote::RcvSetRegionC (const long /* _type */,
 
   d_decoration->selectedRegion_changed = 1;
 
-  fprintf(stderr, "mm_Microscope_Remote::RcvSetRegionC\n\
-    new region (%g, %g) to (%g, %g)\n",
+  fprintf(stderr, "mm_Microscope_Remote::RcvSetRegionC\n"
+	  "    new region (%g, %g) to (%g, %g)\n",
          heightPlane->minX(), heightPlane->minY(),
          heightPlane->maxX(), heightPlane->maxY());
-
-  // red_top et al. are globals from interaction.c
-  VERBOSE(5,"        Making tops in region change");
 
   d_decoration->red.doCallbacks(heightPlane->minX(), heightPlane->minY(),
                             heightPlane);

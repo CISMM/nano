@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmb_Dataset.h"
 
 #include "BCGrid.h"
@@ -54,12 +61,15 @@ nmb_Dataset::nmb_Dataset
                const char ** imageFileNames, int numImageFiles,
 	       const char * hostname,
                nmb_String * (* string_allocator) (const char *),
-               nmb_ListOfStrings *imageNameList, TopoFile &topoFile):
+	       nmb_ListOfStrings * (* list_of_strings_allocator) (),
+               TopoFile &topoFile):
 
   inputGrid (new BCGrid (xSize, ySize, xMin, xMax, yMin, yMax,
                          readMode, gridFileNames, numGridFiles,
                          topoFile)),
-  dataImages (new nmb_ImageList(imageNameList,imageFileNames, numImageFiles,
+  imageNames(list_of_strings_allocator()),
+  dataImages (new nmb_ImageList(imageNames,
+				imageFileNames, numImageFiles,
                                 topoFile)),
   range_of_change (inputGrid),   // reference to pointer!
 
@@ -130,12 +140,26 @@ nmb_Dataset::nmb_Dataset
 }
 
 nmb_Dataset::~nmb_Dataset (void) {
-  if (inputGrid)
-    delete inputGrid;
   if (dataImages)
     delete dataImages;
+  if (imageNames)
+    delete imageNames;
+  if (inputGrid)
+    delete inputGrid;
   if (d_hostname)
       delete [] d_hostname;
+
+  if (alphaPlaneName)
+    delete alphaPlaneName;
+  if (colorPlaneName)
+    delete colorPlaneName;
+  if (colorMapName)
+    delete colorMapName;
+  if (contourPlaneName)
+    delete contourPlaneName;
+  if (heightPlaneName)
+    delete heightPlaneName;
+
 }
 
 /**

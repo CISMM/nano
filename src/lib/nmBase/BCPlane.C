@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <stdlib.h> // for exit()
 #include <malloc.h> // for calloc() and free()
 #include <errno.h> // for perror()
@@ -10,11 +17,12 @@ extern "C" {
 int write( int fildes, const void *buf, size_t nbyte );
 }
 #endif
+#else
+#include <unistd.h>   // for write()
 #endif
 
 #include "BCPlane.h"
 #include "BCGrid.h"
-#include "BCDebug.h"
 
 #ifndef	min
 #define min(x,y) ( (x) < (y) ? (x) : (y) )
@@ -343,9 +351,6 @@ level
 void
 BCPlane::level()
 {	
-    BCDebug debug("BCPlane::level", PLANE_CODE);
-
-    debug.warn("collecting statistics on grid" );
 
     int x, y;
 
@@ -367,15 +372,10 @@ BCPlane::level()
     dy /= temp;
     mean /= temp;
 
-    debug.watch("dx", dx);
-    debug.watch("dy", dy);
-    debug.watch("mean", mean);
-
     // compute the base (the height of the point (0,0))
     double base = mean - dx * (numX() - 1)/2.0 - dy * (numY() - 1)/2.0;
 
     // subtract the plane
-    debug.warn("correcting grid");
     for (x = 0; x < numX(); x++)
 	for (y= 0; y < numY(); y++)
 	    setValue(x,y,  this->value(x,y) - (base + dx*x + dy*y) );
@@ -1358,8 +1358,6 @@ readBinaryNanoscopeFile
 int
 BCPlane::readBinaryNanoscopeFile(FILE* file)
 {
-    BCDebug debug("BCPlane::readBinaryNanoscopeFile", PLANE_CODE);
-
     int	first_value_read = 1;
     int x, y;
 	int ret;
@@ -1574,8 +1572,6 @@ CPlane --> constructor
 CPlane::CPlane(BCString name, BCString units, int nx, int ny) :
 	BCPlane(name, units, nx, ny)
 {
-   //BCDebug debug("CPlane::CPlane", PLANE_CODE);
-
     _timed = NOT_TIMED;
 
     _sec = NULL;
@@ -1597,8 +1593,6 @@ CPlane --> constructor
 */
 CPlane::CPlane(CPlane* plane) : BCPlane(plane)
 {
-   //BCDebug debug("CPlane::CPlane", PLANE_CODE);
-
     _timed = NOT_TIMED;
 
     _sec = NULL;
@@ -1643,7 +1637,6 @@ CPlane::CPlane (CPlane * plane, int newX, int newY) :
 */
 CPlane::~CPlane() 
 {
-   //BCDebug debug("CPlane::~CPlane", PLANE_CODE);
 }
 
 
@@ -1697,8 +1690,6 @@ CTimedPlane --> constructor
 CTimedPlane::CTimedPlane(BCString name, BCString units, int nx, int ny) :
 	BCPlane(name, units, nx, ny)
 {
-   //BCDebug debug("CTimedPlane::CTimedPlane", PLANE_CODE);
-
     _timed = TIMED;
 
     _sec = new long*[_num_x];
@@ -1729,8 +1720,6 @@ CTimedPlane --> constructor
 */
 CTimedPlane::CTimedPlane(CTimedPlane* plane) : BCPlane(plane)
 {
-   //BCDebug debug("CTimedPlane::CTimedPlane", PLANE_CODE);
-    
     _timed = TIMED;
 
     _sec = new long*[_num_x];
@@ -1766,8 +1755,6 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane) : BCPlane(plane)
 CTimedPlane::CTimedPlane(CTimedPlane* plane, int newX, int newY) :
    BCPlane(plane, newX, newY)
 {
-   //BCDebug debug("CTimedPlane::CTimedPlane", PLANE_CODE);
-    
     _timed = TIMED;
 
     _sec = new long*[newX];
@@ -1808,8 +1795,6 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane, int newX, int newY) :
 */
 CTimedPlane::~CTimedPlane()
 {
-   //BCDebug debug("CTimedPlane::~CTimedPlane", PLANE_CODE);
-
     int x;
     
     for (x = _num_x; x > 0; --x) {

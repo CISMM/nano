@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 // If you wanna see what changes made by Tiger, just search for 'Tiger'
 #include "nmm_Microscope.h"
 
@@ -25,10 +32,10 @@
 
 nmm_Microscope::nmm_Microscope (
     const char * /*name*/,
-    vrpn_Connection * connection) :
+    vrpn_Connection * connection)
 //  d_connection (connection),             moved to nmb_Device
 //  d_fileController (new vrpn_File_Controller (connection)),moved to nmb_Device
-  d_tcl_script_dir (NULL) {
+  {
 
 //  char * servicename;           // Tiger HACK probably need to do that
 //  servicename = vrpn_copy_service_name(name);   // to get the right name.
@@ -47,6 +54,8 @@ nmm_Microscope::nmm_Microscope (
 
     d_SetRegionNM_type = connection->register_message_type
          ("nmm Microscope SetRegionNM");
+    d_SetScanAngle_type = connection->register_message_type
+         ("nmm Microscope SetScanAngle");
     d_ScanTo_type = connection->register_message_type
          ("nmm Microscope ScanTo");
     d_ScanToZ_type = connection->register_message_type
@@ -319,9 +328,6 @@ nmm_Microscope::nmm_Microscope (
 
 nmm_Microscope::~nmm_Microscope (void) {
 
-  if (d_tcl_script_dir)
-    delete [] d_tcl_script_dir;
-
 }
 
 /*
@@ -523,43 +529,6 @@ char * nmm_Microscope::d_inputMessageName [] = {
          "nmm Microscope STM ApproachComplete",
 };
 
-/* Tiger	move it to nmm_MicroscopeRemote.C
-long nmm_Microscope::InitializeDataset (nmb_Dataset * ds) {
-  BCPlane * plane;
-
-  d_dataset = ds;
-
-  state.data.Initialize(ds);
-  plane = ds->ensureHeightPlane();
-  plane->setScale(state.stm_z_scale);
-
-  return 0;
-}
-*/
-
-/* Tiger	move it to nmm_MicroscopeRemote.C
-long nmm_Microscope::tInitializeDecoration (nmb_Decoration * dec) {
-  d_decoration = dec;
-
-  return 0;
-}
-*/
-
-/* Tiger	move it to nmm_MicroscopeRemote.C
-long nmm_Microscope::InitializeTcl (const char * dir) {
-  if (!dir)
-    return -1;
-
-  d_tcl_script_dir = new char [1 + strlen(dir)];
-  if (!d_tcl_script_dir)
-    return -1;
-
-  strcpy(d_tcl_script_dir, dir);
-  return 0;
-}
-*/
-
-
 char * nmm_Microscope::encode_SetRegionNM (long * len,
                  vrpn_float32 minx, vrpn_float32 miny, 
                  vrpn_float32 maxx, vrpn_float32 maxy) {
@@ -594,6 +563,36 @@ long nmm_Microscope::decode_SetRegionNM (const char ** buf,
   CHECK(vrpn_unbuffer(buf, miny));
   CHECK(vrpn_unbuffer(buf, maxx));
   CHECK(vrpn_unbuffer(buf, maxy));
+
+  return 0;
+}
+
+char * nmm_Microscope::encode_SetScanAngle (long * len,
+					    vrpn_float32 angle) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_SetScanAngle:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, angle);
+  }
+
+  return msgbuf;
+}
+
+long nmm_Microscope::decode_SetScanAngle (const char ** buf,
+        vrpn_float32 * angle) {
+  CHECK(vrpn_unbuffer(buf, angle));
 
   return 0;
 }

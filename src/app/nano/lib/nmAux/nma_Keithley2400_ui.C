@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 // Important note: When printing the value of a Tclvar_int or Tclvar_float
 // using *printf, make sure to cast it to the proper type, otherwise you 
 // will get a printout of the pointer value!
@@ -12,8 +19,8 @@
 extern "C" {
 #include	<tcl.h>
 #include	<tk.h>
-#include	<itcl.h>
-#include	<itk.h>
+  //#include	<itcl.h>
+  //#include	<itk.h>
 #include        <blt.h>
 }
 #include	<Tcl_Linkvar.h>

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /* 
    code that implement the functionalities of microscape in openGL 
    created by Qiang Liu 08/10/95
@@ -1371,10 +1378,9 @@ void position_sphere(float x,float y, float z)
   sphere_z=z+g_sphere_scale;	
 }
 
-int mysphere(void * data)
+int mysphere(void * /*data*/ )
 {
 	//float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
-	data = data;	// Keep the compiler happy
 
        	glPushMatrix();
 #ifndef FLOW

@@ -1,3 +1,10 @@
+#/*===3rdtech===
+#  Copyright (c) 2000 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
 # Provide a toplevel widget to allow
 # control over which data sets are enabled in scan and touch
 # mode.  
@@ -329,12 +336,12 @@ proc toggle_color {} {
 ############################
 # Contour lines
 #set these so we can see do " wish mainwin.tcl" and test interface
-set contour_r 100
-set contour_g 100
-set contour_b 100
+if {![info exists contour_r] } { set contour_r 255 }
+if {![info exists contour_g] } { set contour_g 55 }
+if {![info exists contour_b] } { set contour_b 55 }
 
-set contour_width 1
-set texture_spacing 10
+if {![info exists contour_width] } { set contour_width 1 }
+if {![info exists texture_spacing] } { set texture_spacing 10 }
 
 proc set_contour_color {} {
     global contour_r contour_g contour_b contour_changed contour_color
@@ -343,7 +350,7 @@ proc set_contour_color {} {
     # and save into contour_r g b
     scan $contour_color #%02x%02x%02x contour_r contour_g contour_b
     set contour_changed 1
-    puts "Contour color $contour_r $contour_g $contour_b"
+    #puts "Contour color $contour_r $contour_g $contour_b"
 }
 
 #

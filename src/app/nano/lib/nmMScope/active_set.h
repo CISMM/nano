@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef	ACTIVE_SET_H
 #define	ACTIVE_SET_H
 
@@ -43,7 +50,8 @@ class	Channel_selector
 	int	Set(const char *channel);
 	int	Unset(const char *channel);
 
-    int    Is_set(const char *channel) { return (checklist->Is_set(channel)); }
+    //    int    Is_set(const char *channel) { return (checklist->Is_set(channel)); }
+    int    Is_set(const char *channel) { return 1; }
 	// If changes, request new list
 	// Changed to allow instantiation of this as a generic
         // channel selector that doesn't contain references to data; 

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,8 +25,7 @@
 
 #include <blt.h>
 
-#define _USE_ITCL
-#ifdef _USE_ITCL
+#ifndef NO_ITCL
 #include <itcl.h>
 #include <itk.h>
 #endif
@@ -262,7 +268,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	}
 	Tcl_StaticPackage(tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
 
-#ifdef _USE_ITCL
+#ifndef NO_ITCL
 	if (Itcl_Init(tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
 			"Package_Init failed: %s\n",tk_control_interp->result);

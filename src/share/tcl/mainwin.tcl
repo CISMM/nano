@@ -1,3 +1,10 @@
+#/*===3rdtech===
+#  Copyright (c) 2000 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
 #!/bin/sh
 # the next line restarts using wishx (see man wish) \
 	exec wish "$0" ${1+"$@"}
@@ -121,6 +128,8 @@ menu $filemenu -tearoff 0
 
 $filemenu add command -label "Open static file..." -underline 0 \
 	-command "open_static_file"
+$filemenu add command -label "Open stream file..." \
+	-command "open_stream_file"
 #        $filemenu add command -label "Close..." -underline 0 -command \
 #		{.message_dialog activate}
 #        $filemenu add separator
@@ -298,16 +307,11 @@ source [file join ${tcl_script_dir} analysismenu.tcl]
 
 #
 ###############
-# The toolbar window fits along the left side of the screen, next to
-# the graphics window.
-# source first so we can place other windows (streamfile) around it.
-source [file join ${tcl_script_dir} toolbar.tcl]
-
 #Tools menu commands - split among several files:
 
 # The stripchart, for graphing the results of modifications
 source [file join ${tcl_script_dir} stripchart.tcl]
-# Streamfile replay controls. Position depends on toolbar window. 
+# Streamfile replay controls. Position depends on image window. 
 source [file join ${tcl_script_dir} streamfile.tcl]
 #Shared resource controls. Synchronize two copies of nM running
 # on different machines. Position depends on streamfile window.
@@ -340,8 +344,8 @@ iwidgets::messagedialog .message_dialog -title "Not implemented" \
 # the relationship between window positions.
 after idle {
 
-    # First, the toolbar window
-    #Make the window appear on the left edge below the main window
+    # First, the modify window
+    # Make the window appear on the left edge below the main window
     update idletasks
     # the root window, ".", seems to need special handling.
     #set width [winfo reqwidth .] Doesn't include borders.
@@ -352,12 +356,12 @@ after idle {
     set main_width [expr $width + 2* ([winfo rootx .] - $main_xpos) ]
     set main_height [expr $height + ([winfo rooty .] - $main_ypos) + \
 	   ([winfo rootx .] - $main_xpos) ]
-    puts " mainwin $width $height $main_xpos $main_ypos [wm geometry .]"
+#    puts " mainwin $width $height $main_xpos $main_ypos [wm geometry .]"
 
-    set toolbar_req_width  [winfo reqwidth .toolbar] 
-    set toolbar_req_height [winfo reqheight .toolbar] 
+    set toolbar_req_width  [winfo reqwidth .image] 
+    set toolbar_req_height [winfo reqheight .image] 
 
-    wm geometry .toolbar +${main_xpos}+[expr $main_ypos +$main_height]
+    wm geometry .image +${main_xpos}+[expr $main_ypos +$main_height]
 
     # The stripchart window.
     #Make the window appear on the top next to the main window
@@ -366,11 +370,11 @@ after idle {
     # Next, the stream file window
     # Make the window appear on the left edge below the toolbar window
     update idletasks
-    set width [winfo reqwidth .toolbar]
-    set height [winfo reqheight .toolbar]
-    set xpos [winfo rootx .toolbar]
-    set ypos [winfo rooty .toolbar]
-    puts " toolbar $width $height $xpos $ypos [wm geometry .toolbar]"
+    set width [winfo reqwidth .image]
+    set height [winfo reqheight .image]
+    set xpos [winfo rootx .image]
+    set ypos [winfo rooty .image]
+#    puts " toolbar $width $height $xpos $ypos [wm geometry .image]"
     # check to make sure we aren't off the bottom of the screen. 
     set my_ypos [expr $ypos +$height]
     # wm maxsize . gives us the size of the available space. 
@@ -389,7 +393,7 @@ after idle {
     set height [winfo reqheight .streamfile]
     set xpos [winfo rootx .streamfile]
     set ypos [winfo rooty .streamfile]
-        puts " streamfile $width $height $xpos $ypos [wm geometry .streamfile]"
+#    puts " streamfile $width $height $xpos $ypos [wm geometry .streamfile]"
     # .streamfile is the window we want to relate our position to. 
     #scan [wm geometry .streamfile] %dx%d+%d+%d width height xpos ypos
     set my_ypos [expr $ypos +$height]

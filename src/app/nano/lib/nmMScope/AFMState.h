@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef AFM_STATE_H
 #define AFM_STATE_H
 
@@ -438,6 +445,7 @@ struct AFMState {
         yMin, yMax,              
         zMin, zMax;
     ///< maximum scan range of which the spm is capable
+  float scanAngle; // the scan angle from topo
 
   // optional system components
   vrpn_bool doDriftComp;           ///< compensate for drift

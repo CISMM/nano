@@ -1,17 +1,45 @@
+#  ===3rdtech===
+#  Copyright (c) 2000 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===
+# Globals for remembering where the user opens and saves files.
+set fileinfo(open_dir) ""
+set fileinfo(save_dir) ""
+
 #
 ################################
 #
 # Open a static file. 
 # It should open any type of file handled by BCGrid
-# Eventually, it should allow opening of stream files. 
 proc open_static_file {} {
-    global open_static_filename
+    global open_static_filename fileinfo
     set types { {"All files" *} }
-    set file [tk_getOpenFile -filetypes $types -initialfile plane.tfr ]    
+    set file [tk_getOpenFile -filetypes $types -initialdir $fileinfo(open_dir)]
     if {$file != ""} {
 	# setting this variable triggers a callback in C code
 	# which saves the file. 
 	set open_static_filename $file
+	set fileinfo(open_dir) [file dirname $file]
+    } 
+    # otherwise do nothing.
+}
+
+#
+################################
+#
+# Open a stream file (vrpn log file). 
+proc open_stream_file {} {
+    global open_stream_filename fileinfo
+    set types { {"All files" *} }
+    set file [tk_getOpenFile -filetypes $types -initialdir $fileinfo(open_dir)]
+    if {$file != ""} {
+	# setting this variable triggers a callback in C code
+	# which saves the file. 
+	set open_stream_filename $file
+	set fileinfo(open_dir) [file dirname $file]
     } 
     # otherwise do nothing.
 }
@@ -46,16 +74,17 @@ pack $win.export_filetype -anchor nw
 
 # Allow the user to save 
 proc save_plane_data {} {
-    global export_plane export_filetype export_filename
+    global export_plane export_filetype export_filename fileinfo
     if { [.save_plane_dialog activate] } {
 	set types { {"All files" *} }
 	set file [tk_getSaveFile -filetypes $types \
-		-initialfile "$export_plane.tfr" ]    
+		-initialfile "$export_plane.tfr" -initialdir $fileinfo(save_dir)]    
 	if {$file != ""} {
 	    puts "Save plane data: $file $export_plane $export_filetype"
 	    # setting this variable triggers a callback in C code
 	    # which saves the file. 
 	    set export_filename $file
+	    set fileinfo(save_dir) [file dirname $file]
 	} 
 	# otherwise do nothing - user pressed cancel or didn't enter file name
     } else {
@@ -71,10 +100,11 @@ iwidgets::dialog .save_screen_dialog -title "Save screen image"
 .save_screen_dialog hide Help
 .save_screen_dialog hide Apply
 .save_screen_dialog buttonconfigure OK -text "Save" -command {
-	.save_screen_dialog deactivate 1
+    global fileinfo
+    .save_screen_dialog deactivate 1
     set types { {"All files" *} }
     set file [tk_getSaveFile -filetypes $types \
-		-initialfile screenimage.tif ] 
+		-initialfile screenimage.tif -initialdir $fileinfo(save_dir)] 
     if {$file != ""} {
 	puts "Save screenshot: $file $screenImage_format"
 	update idletasks
@@ -84,7 +114,7 @@ iwidgets::dialog .save_screen_dialog -title "Save screen image"
 	# Turn the screen information back on whatever happens
 	set chart_junk 1
 	}
-
+	set fileinfo(save_dir) [file dirname $file]
     } else {
 	# otherwise do nothing - user pressed cancel or didn't enter file name
 	# Turn the screen information back on whatever happens
@@ -155,20 +185,21 @@ proc remember_mod_data { time_stamp} {
 # Allow the user to save 
 proc save_mod_dialog {} {
     global  nmInfo mod_data which_mod_to_save mod_data_time_list 
-    global tcl_platform
+    global tcl_platform fileinfo
 
     set mod_data_time_list [array names mod_data]
 
     if { [.save_mod_dialog activate] } {
 	set types { {"All files" *} }
 	set file [tk_getSaveFile -filetypes $types \
-		-initialfile $which_mod_to_save.mod ]
+		-initialfile $which_mod_to_save.mod -initialdir $fileinfo(save_dir)]
 	if {$file != ""} {
 	    puts $file
 	    set modfile [open $file w]
 	    puts -nonewline $modfile $mod_data($which_mod_to_save)
 	    flush $modfile
 	    close $modfile
+	    set fileinfo(save_dir) [file dirname $file]
 	    if {$tcl_platform(platform) == "unix"} {
 		exec unix_to_dos $file
 	    }

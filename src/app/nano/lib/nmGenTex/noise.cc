@@ -1,10 +1,21 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "noise.h"
+#include <stdio.h>
 
 static int        P[256];
 static double     G[256][3];
 
+#ifdef _WIN32
+double drand48() { printf("XXX drand48 not on _WIN32\n"); return 0.0; }
+#else
 extern "C" double drand48(void);
-
+#endif
 
 double bias( double b, double t ) {
   if ( t < 0 )

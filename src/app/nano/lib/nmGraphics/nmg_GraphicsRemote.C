@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <string.h>
 #include "nmg_GraphicsRemote.h"
 
@@ -21,6 +28,11 @@ void nmg_Graphics_Remote::mainloop (void) {
 
   nmg_Graphics::mainloop();
 
+}
+
+void nmg_Graphics_Remote::changeDataset( nmb_Dataset * /*data*/) {
+  fprintf(stderr, "WARNING: nmg_Graphics_Remote::changeDataset \n"
+	  "      Attempting to send pointer over the network DOESN'T WORK.\n");
 }
 
 void nmg_Graphics_Remote::resizeViewport (int width , int height ) {

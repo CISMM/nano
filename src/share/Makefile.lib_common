@@ -41,9 +41,10 @@ ifndef LIBRARY_SRC
 endif
 
 ifndef LIBRARY_OBJ
-ifeq ($(HW_OS),pc_win32)
+ifdef VC
    LIBRARY_OBJ := $(addprefix $(OBJECT_DIR)/, \
                               $(addsuffix .obj,$(basename $(LIBRARY_SRC))))
+   LIB_OBJ_LINK := $(foreach myobj,$(LIBRARY_OBJ),"$(shell cygpath -w $(myobj))" )
 else 
    LIBRARY_OBJ := $(addprefix $(OBJECT_DIR)/, \
                               $(addsuffix .o,$(basename $(LIBRARY_SRC))))
@@ -51,7 +52,7 @@ endif
 endif
 
 ifndef LIBRARY_NAME
-ifeq ($(HW_OS),pc_win32)
+ifdef VC
    LIBRARY_NAME := $(notdir $(CWD)).lib
 else
    LIBRARY_NAME := lib$(notdir $(CWD)).a
@@ -107,18 +108,25 @@ $(OBJECT_DIR)/%.o: %.cc
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(OBJECT_DIR)/%.obj: %.c
-	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
-# /Fd"$(OBJECT_DIR)" /Fp"$(OBJECT_DIR)"
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
+	 /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
+
 $(OBJECT_DIR)/%.obj: %.C
-	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
+	 /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 
 $(OBJECT_DIR)/%.obj: %.cc
-	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
+	 /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 
 $(LIBRARY_ARCHIVE): $(LIBRARY_OBJ)
+ifdef VC
+	link -lib /NOLOGO /OUT:"$(LIBRARY_ARCHIVE)" $(LIB_OBJ_LINK)
+else
 	$(AR) ruv $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
 # $(OBJECT_DIR)/*.o $(OBJECT_DIR)/*.obj
 	-ranlib $(LIBRARY_ARCHIVE)
+endif
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
    ifneq ($(findstring clobber,$(MAKECMDGOALS)),clobber)

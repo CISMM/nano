@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,8 +93,10 @@ pid_t getpid();
 #include "RobotControl.h"
 #endif
 
+#ifndef NO_XWINDOWS
 #include "x_util.h" /* qliu */
 #include "x_aux.h"
+#endif
 
 #include "stm_file.h"
 #include "vrml.h"
@@ -96,7 +105,9 @@ pid_t getpid();
 #include "active_set.h"
 #include "stm_cmd.h"
 #include "relax.h"
+#ifndef NO_RAW_TERM
 #include "termio.h"
+#endif
 #include "updt_display.h"
 #include "tcl_tk.h"
 #include <Tcl_Linkvar.h>
@@ -289,8 +300,7 @@ static void handle_mutex_release (vrpn_int32, void *);
  * Global variables
  *******************/
 
-// used where???
-char * tcl_script_dir;
+char * tcl_script_dir = NULL;
 
 static BCPlane * oldxPlane= NULL;
 
@@ -303,20 +313,20 @@ int     framelog = 0;           // Flag to see if frame time log is on
 static vrpn_bool    head_tracked = VRPN_FALSE;              
     ///< Flag set when head tracking is active
 
-nmb_Dataset * dataset;
-nmb_Decoration * decoration;
+nmb_Dataset * dataset = NULL;
+nmb_Decoration * decoration = NULL;
 
 #ifdef USE_VRPN_MICROSCOPE
 
-nmm_Microscope_Remote * microscope;
+nmm_Microscope_Remote * microscope = NULL;
 
 #else
 
-Microscope * microscope;
+Microscope * microscope = NULL;
 
 #endif
 
-nmg_Graphics * graphics;
+nmg_Graphics * graphics = NULL;
 
 static int LOOP_NUM;
 //TopoFile GTF; - replaced by microscope->d_topoFile
@@ -329,7 +339,7 @@ static float	alpha_red = 0.0;		///< Color of the alpha pattern
 static float	alpha_green = 1.0;
 static float	alpha_blue = 0.0;
 
-#ifndef _WIN32
+#ifndef NO_XWINDOWS
 /// only used in the unix version of microscape.
 static	void	update_xdisp_on_plane_change (BCPlane * p,
                                               int x, int y, void *) {
@@ -363,11 +373,11 @@ CollaborationManager * collaborationManager = NULL;
 
 ///These are used in tracking a remote user's hand position.
 vrpn_Tracker_Remote *vrpnHandTracker_collab[NUM_USERS];
-nM_coord_change *nM_coord_change_server;
+nM_coord_change *nM_coord_change_server = NULL;
 
 /// These are used to track a remote user's mode.
 vrpn_Analog_Remote *vrpnMode_collab[NUM_USERS];
-vrpn_Analog_Server *vrpnMode_Local;
+vrpn_Analog_Server *vrpnMode_Local = NULL;
 
 /// These are used for synchronizing with a remote user's streamfile playback.
 static vrpn_bool isSynchronized;
@@ -434,7 +444,7 @@ static Tclvar_list_of_strings	colorMapNames("colorMapNames");
 /// This is a string that lets the user choose a color map to use.
 
 static	char	defaultColormapDirectory[] = "/afs/unc/proj/stm/etc/colormaps";
-static	char	*colorMapDir;
+static	char	*colorMapDir = NULL;
 
 static ColorMap	colorMap;		///< Color map currently loaded
 ColorMap	*curColorMap = NULL;	///< Pointer to the current color map
@@ -445,6 +455,10 @@ ColorMap	*curColorMap = NULL;	///< Pointer to the current color map
 /// Filename to get data from. Setting this variable in tcl triggers
 /// the open file process.
 Tclvar_string openStaticFilename("open_static_filename", "");
+
+/// Stream Filename. Setting this variable in tcl triggers
+/// the open stream process.
+Tclvar_string openStreamFilename("open_stream_filename", "");
 
 /// When you choose a plane of data to save, this list is set
 /// to the possible formats.
@@ -605,9 +619,9 @@ TclNet_float ruler_opacity ("ruler_opacity", 128);
 
 
 //The quoted parameters are the variable names in tcl-space
-TclNet_int ruler_r ("ruler_r", 255, NULL, NULL);
-TclNet_int ruler_g ("ruler_g", 255, NULL, NULL);
-TclNet_int ruler_b ("ruler_b", 55, NULL, NULL);
+TclNet_int ruler_r ("ruler_r", 255);
+TclNet_int ruler_g ("ruler_g", 255);
+TclNet_int ruler_b ("ruler_b", 55);
 TclNet_int   rulergrid_changed ("rulergrid_changed", 0);
 TclNet_int	rulergrid_enabled ("rulergrid_enabled",0);
 
@@ -624,10 +638,10 @@ TclNet_int	rulergrid_enabled ("rulergrid_enabled",0);
 Tclvar_checklist *genetic_checklist = NULL;      
 
 /// Activates call-back to send data on-demand...
-Tclvar_int gen_send_data( "gen_send_data", 0, NULL, NULL );
+Tclvar_int gen_send_data( "gen_send_data", 0 );
 
 /// Activates the call-back to display the GA texture...
-Tclvar_int gen_tex_activate( "gen_tex_activate", 0, NULL, NULL );
+Tclvar_int gen_tex_activate( "gen_tex_activate", 0 );
 
 /// Enables the GA textues... (toggle button on main tcl window)
 Tclvar_int genetic_textures_enabled ("genetic_textures_enabled", 0);
@@ -641,8 +655,8 @@ Tclvar_int display_realign_textures ("display_dataset", 0);
 Tclvar_int realign_textures_enabled ("realign_dataset", 0);
 Tclvar_int set_realign_center ("set_center", 0);
 
-Tclvar_string texturePlaneName ("none" );
-Tclvar_string textureConversionMapName("CUSTOM" );
+Tclvar_string texturePlaneName ("texture_comes_from" ,"none" );
+Tclvar_string textureConversionMapName( "texture_conversion_map","CUSTOM" );
 
 Tclvar_float realign_textures_slider_min_limit("realign_textures_slider_min_limit",0);
 Tclvar_float realign_textures_slider_max_limit("realign_textures_slider_max_limit", 1.0);
@@ -916,16 +930,10 @@ static int ttyFD;			///< File desc for TTY device
 
 static int xmode = 0;             ///< default not draw any graph 
 
+#ifndef NO_XWINDOWS
 static TwoDLineStrip * teststrip = NULL;
+#endif
 
-static int gwi = 400;	///< Width of the graphical window
-static int ghi = 400;	///< Height of the graphical window
-
-static float xscale;	///< Scale to map window pixels to nM
-static float yscale;	///< Scale to map window pixels to the Y axis
-static float yoffset;	///< Offset to add to Y-axis values (already scaled)
-
-static float testarray [1000];
 
 static char tcl_default_dir [] = "/afs/cs.unc.edu/project/stm/bin/";
 
@@ -1040,10 +1048,104 @@ static vrpn_Connection * collab_forwarder_connection = NULL;
 static vrpn_Connection * rtt_server_connection = NULL;
 static vrpn_Analog_Server * rtt_server = NULL;
 
+struct MicroscapeInitializationState {
+
+  MicroscapeInitializationState (void);
+
+  AFMInitializationState afm;
+  OhmmeterInitializationState ohm;
+  nma_Keithley2400_ui_InitializationState vicurve;
+  SEMInitializationState sem;
+  char *alignerName;
+
+  vrpn_bool use_file_resolution;
+  int num_x;
+  int num_y;
+  int graphics_mode;
+  char graphicsHost [256];
+
+  int num_stm_files;
+  char * stm_file_names [MAXFILES];
+
+  int num_image_files;
+  char * image_file_names [MAXFILES];
+
+  char SPMhost [STM_NAME_LENGTH];
+  char * SPMhostptr;
+  int SPMport;
+  int UDPport;
+  int socketType;
+
+  int monitorPort;
+  int collabPort;
+  int basePort;
+
+  float x_min;
+  float x_max;
+  float y_min;
+  float y_max;
+
+  char remoteOutputStreamName [256];
+  int writingRemoteStream;
+
+  vrpn_bool openPeer;
+  char peerName [256];
+  vrpn_bool logInterface;
+  char logPath [256];
+  timeval logTimestamp;
+  vrpn_bool replayInterface;
+
+  // control synchronization method for collaboration
+  vrpn_bool useOptimism;
+
+  float phantomRate;
+  int tesselation;
+
+  int packetlimit;
+};
+
+MicroscapeInitializationState::MicroscapeInitializationState (void) :
+  alignerName(NULL),
+  use_file_resolution(vrpn_TRUE),
+  num_x (DATA_SIZE),
+  num_y (DATA_SIZE),
+  graphics_mode (LOCAL_GRAPHICS),  // changed from NO_GRAPHICS
+  num_stm_files (0),
+  num_image_files(0),
+  SPMhostptr (NULL),
+  SPMport (-1),
+  UDPport (-1),
+  socketType (SOCKET_TCP),
+  monitorPort (-1),
+  collabPort (-1),
+  basePort (WellKnownPorts::defaultBasePort),
+  x_min (afm.xMin),
+  x_max (afm.xMax),
+  y_min (afm.yMin),
+  y_max (afm.yMax),
+  writingRemoteStream (0),
+  openPeer (VRPN_FALSE),
+  logInterface (VRPN_FALSE),
+  replayInterface (VRPN_FALSE),
+  useOptimism (VRPN_FALSE),
+  phantomRate (60.0),  // standard default
+  tesselation (1),
+  packetlimit (0)
+{
+    graphicsHost[0] = '\0';
+    SPMhost[0] = '\0';
+    remoteOutputStreamName[0] = '\0';
+    peerName[0] = '\0';
+    logPath[0] = '\0';
+}
+
+
 /*********
  * Functions defined in this file (added by KPJ to satisfy g++)...
  *********/
 
+int createNewMicroscope( MicroscapeInitializationState &istate,
+                         vrpn_Connection * c);
 void Usage (char * s);
 int main (int argc, char * argv []);
 void handleTermInput (int ttyFD, vrpn_bool * donePtr);
@@ -1055,7 +1157,7 @@ void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
 
 int vec_cmp (const q_vec_type a, const q_vec_type b);
 
-void guessAdhesionNames (void);
+void guessAdhesionNames (nmb_Dataset * dset);
 
 #ifdef FLOW
    extern int sdi_disconnect_from_device(int);
@@ -1240,7 +1342,9 @@ void	handle_cntl_c(int which_signal)
 	if (do_keybd == 1)
 	  {
 	    /* Reset the raw terminal input to standard */
+#ifndef NO_RAW_TERM
 	    reset_raw_term(ttyFD);
+#endif
 	  }
 
 	shutdown_connections();
@@ -1313,7 +1417,9 @@ static void handle_rulergrid_scale_change (vrpn_float64, void * userdata) {
 
 static void handle_x_value_change (vrpn_float64, void *) {
 //fprintf(stderr, "In handle_x_value_change()\n");
+#ifndef NO_XWINDOWS
   x_set_scale(x_min_value, x_max_value);
+#endif
 }
 
 // NANOX
@@ -2421,12 +2527,8 @@ static	void	handle_rulergrid_angle_change (vrpn_float64 value, void * userdata) 
 
 static void handle_replay_rate_change (vrpn_int32 value, void *) {
 
-//  instream_rate = (int) value;
-//  decoration->rateOfTime = instream_rate;
-//  printf("Read rate: %d times original\n",instream_rate);
-
   decoration->rateOfTime = (int) value;
-  printf("Read rate: %d times original\n", decoration->rateOfTime);
+  //printf("Read rate: %d times original\n", decoration->rateOfTime);
 
 #ifdef USE_VRPN_MICROSCOPE
 
@@ -2588,8 +2690,6 @@ static	void	handle_openStaticFilename_change (const char *, void *)
 
     if (strlen(openStaticFilename) <= 0) return;
 
-    printf("I really want to open this file: %s\n", 
-           (const char *)openStaticFilename);
     const char	*files[1];
     files[0] = (const char *)openStaticFilename;
     
@@ -2604,6 +2704,64 @@ static	void	handle_openStaticFilename_change (const char *, void *)
     }
     
     openStaticFilename = "";
+}
+
+/** See if the user has given a name to the open stream filename other
+ than "".  If so, we should open a stream and set the value
+ back to "". If there are any errors, report them and leave name alone. 
+*/
+static void handle_openStreamFilename_change (const char *, void * userdata)
+{
+    MicroscapeInitializationState * istate = (MicroscapeInitializationState *)userdata;
+
+    if (strlen(openStreamFilename) <= 0) return;
+    long logmode = vrpn_LOG_NONE;
+
+    istate->afm.writingStreamFile = VRPN_FALSE;
+
+    // The user has specified a stream file: try
+    // to open it as a VRPN stream file. 
+    istate->afm.readingStreamFile = VRPN_TRUE;
+    read_mode = READ_STREAM;
+    
+    //AFMState.c limits length of stream filenames to 255
+    strncpy(istate->afm.inputStreamName, openStreamFilename, 255);
+    sprintf(istate->afm.deviceName, "file:%s", istate->afm.inputStreamName);
+
+    vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name        (istate->afm.deviceName,
+	   (char *) NULL,
+	   logmode,
+	   (char *) NULL);
+    if (!new_microscope_connection) {
+	fprintf(stderr, "ERROR couldn't find %s.\n",
+		istate->afm.deviceName);
+        return ;
+    }
+    
+    // Decide whether reading vrpn log file or doing live.
+    vrpn_File_Connection * new_vrpnLogFile = new_microscope_connection->get_File_Connection();
+    if (!new_vrpnLogFile) {
+	fprintf(stderr, "ERROR failed to open stream file: %s\n", 
+                istate->afm.inputStreamName);
+        return ;
+    }
+
+    if (createNewMicroscope(*istate, new_microscope_connection)) {
+	fprintf(stderr, "ERROR failed to create microscope with stream file: %s\n", 
+                istate->afm.inputStreamName);
+        return ;
+    }
+    if (microscope_connection) {
+      delete microscope_connection;
+    }
+    microscope_connection = new_microscope_connection;
+    vrpnLogFile = new_vrpnLogFile;
+
+    // Change a few things for consistency with old interface
+    vrpnLogFile->set_replay_rate(decoration->rateOfTime);
+
+
+    openStreamFilename = "";
 }
 
 /** See if the user has given a name to the export plane other
@@ -3424,10 +3582,10 @@ int register_vrpn_phantom_callbacks(void)
 }
 
 
-void handle_phantom_reconnect (void *, vrpn_HANDLERPARAM) {
+int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM) {
 
   handle_phantom_connect(vrpnHandTracker[0]);
-
+  return 0;
 }
 
 /// Handles call back for setting the name for the file to write screen
@@ -3657,6 +3815,9 @@ void setupCallbacks (nmb_Dataset * d, Microscope * m) {
 
   if (!d || !m) return;
 
+  ((Tclvar_list_of_strings *) d->imageNames)->
+        initializeTcl("imageNames");
+
   ((Tclvar_string *) d->alphaPlaneName)->
         initializeTcl("alpha_comes_from");
   //d->alphaPlaneName->bindList(&m->state.data.inputPlaneNames);
@@ -3682,6 +3843,22 @@ void setupCallbacks (nmb_Dataset * d, Microscope * m) {
             (handle_z_dataset_change, m);
 }
 
+#ifdef USE_VRPN_MICROSCOPE
+
+void teardownCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
+
+#else
+
+void teardownCallbacks (nmb_Dataset * d, Microscope * m) {
+
+#endif
+
+  if (!d || !m) return;
+
+   ((Tclvar_string *) d->heightPlaneName)->removeCallback
+             (handle_z_dataset_change, m);
+}
+
 void setupCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
 
   if (!d || !g) return;
@@ -3691,6 +3868,18 @@ void setupCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
   ((Tclvar_string *) d->colorMapName)->addCallback
             (handle_colormap_change, g);
   ((Tclvar_string *) d->contourPlaneName)->addCallback
+            (handle_contour_dataset_change, g);
+}
+
+void teardownCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
+
+  if (!d || !g) return;
+
+  ((Tclvar_string *) d->alphaPlaneName)->removeCallback
+            (handle_alpha_dataset_change, g);
+  ((Tclvar_string *) d->colorMapName)->removeCallback
+            (handle_colormap_change, g);
+  ((Tclvar_string *) d->contourPlaneName)->removeCallback
             (handle_contour_dataset_change, g);
 }
 
@@ -3724,18 +3913,25 @@ void setupCallbacks (nmb_Dataset *d) {
   realign_textures_enabled.addCallback
     (handle_realign_textures_selected_change, NULL);
 
-  texturePlaneName.initializeTcl("texture_comes_from");
-  //texturePlaneName.bindList(d->dataImages->imageNameList());
-
-  textureConversionMapName.initializeTcl("texture_conversion_map");
-  //textureConversionMapName.bindList(&colorMapNames);
-  // BUG BUG BUG 
-  // handle_texture_conversion_map_change takes a nmg_Graphics pointer,
-  // not an nmm_Microscope!
-  //textureConversionMapName.addCallback
-  //  (handle_texture_conversion_map_change, m);
-
   // DONE REALIGN TEXTURES
+
+}
+
+
+void teardownCallbacks (nmb_Dataset *d) {
+
+  openStaticFilename.removeCallback
+	(handle_openStaticFilename_change, NULL);
+
+  exportPlaneName.removeCallback
+	(handle_exportPlaneName_change, d);
+
+  newExportFileName.removeCallback
+            (handle_exportFileName_change, NULL);
+
+  realign_textures_enabled.removeCallback
+    (handle_realign_textures_selected_change, NULL);
+
 
 }
 
@@ -3832,6 +4028,75 @@ void setupCallbacks (Microscope * m) {
 
 }
 
+#ifdef USE_VRPN_MICROSCOPE
+
+void teardownCallbacks (nmm_Microscope_Remote * m) {
+
+#else
+
+void teardownCallbacks (Microscope * m) {
+
+#endif
+
+  if (!m) return;
+
+  soundPlaneName.removeCallback
+            (handle_sound_dataset_change, m);
+
+  // GENETIC TEXTURES -- Alexandra Bokinsky
+  //
+
+  gen_tex_activate.removeCallback
+    (handle_genetic_textures_set_parameters, m);
+
+  // DONE GENETIC TEXTURES
+
+  xPlaneName.removeCallback
+            (handle_x_dataset_change, NULL);
+
+  newFilterPlaneName.removeCallback
+            (handle_filterPlaneName_change, NULL);
+
+  newFlatPlaneName.removeCallback
+            (handle_flatPlaneName_change, NULL);
+
+  newLBLFlatPlaneName.removeCallback
+	    (handle_lblflatPlaneName_change, NULL); 
+
+  newSumPlaneName.removeCallback
+            (handle_sumPlaneName_change, NULL);
+
+  newAdhPlaneName.removeCallback
+            (handle_adhPlaneName_change, m);
+
+  adhNumToAvg.removeCallback
+            (handle_adhesion_average_change, m);
+
+  numMarkersShown.removeCallback
+            (handle_markers_shown_change, m);
+  markerHeight.removeCallback
+            (handle_markers_height_change, m);
+
+  changed_image_params.removeCallback
+            (handle_image_accept, m);
+  changed_modify_params.removeCallback
+            (handle_modify_accept, m);
+  changed_scanline_params.removeCallback
+	    (handle_scanline_accept, m);
+
+  x_min_value.removeCallback(handle_x_value_change, NULL);
+  x_max_value.removeCallback(handle_x_value_change, NULL);
+
+  request_mutex.removeCallback(handle_mutex_request, m);
+  release_mutex.removeCallback(handle_mutex_release, m);
+
+//    m->registerGotMutexCallback(NULL, handle_mutexRequestGranted);
+//    m->registerDeniedMutexCallback(NULL, handle_mutexRequestDenied);
+//    m->registerMutexTakenCallback(NULL, handle_mutexTaken);
+//    m->registerMutexReleasedCallback(NULL, handle_mutexReleased);
+
+}
+
 void setupCallbacks (nmg_Graphics * g) {
 
   if (!g) return;
@@ -3923,6 +4188,7 @@ void setupCallbacks (nmg_Graphics * g) {
 
   texturePlaneName.addCallback
     (handle_texture_dataset_change, g);
+
   textureConversionMapName.addCallback
     (handle_texture_conversion_map_change, g);
 
@@ -4204,99 +4470,6 @@ void setupSynchronization (CollaborationManager * cm,
 	(handle_collab_machine_name_change, cm);
 
 }
-
-struct MicroscapeInitializationState {
-
-  MicroscapeInitializationState (void);
-
-  AFMInitializationState afm;
-  OhmmeterInitializationState ohm;
-  nma_Keithley2400_ui_InitializationState vicurve;
-  SEMInitializationState sem;
-  char *alignerName;
-
-  vrpn_bool use_file_resolution;
-  int num_x;
-  int num_y;
-  int graphics_mode;
-  char graphicsHost [256];
-
-  int num_stm_files;
-  char * stm_file_names [MAXFILES];
-
-  int num_image_files;
-  char * image_file_names [MAXFILES];
-
-  char SPMhost [STM_NAME_LENGTH];
-  char * SPMhostptr;
-  int SPMport;
-  int UDPport;
-  int socketType;
-
-  int monitorPort;
-  int collabPort;
-  int basePort;
-
-  float x_min;
-  float x_max;
-  float y_min;
-  float y_max;
-
-  char remoteOutputStreamName [256];
-  int writingRemoteStream;
-
-  vrpn_bool openPeer;
-  char peerName [256];
-  vrpn_bool logInterface;
-  char logPath [256];
-  timeval logTimestamp;
-  vrpn_bool replayInterface;
-
-  // control synchronization method for collaboration
-  vrpn_bool useOptimism;
-
-  float phantomRate;
-  int tesselation;
-
-  int packetlimit;
-};
-
-MicroscapeInitializationState::MicroscapeInitializationState (void) :
-  alignerName(NULL),
-  use_file_resolution(vrpn_TRUE),
-  num_x (DATA_SIZE),
-  num_y (DATA_SIZE),
-  graphics_mode (LOCAL_GRAPHICS),  // changed from NO_GRAPHICS
-  num_stm_files (0),
-  num_image_files(0),
-  SPMhostptr (NULL),
-  SPMport (-1),
-  UDPport (-1),
-  socketType (SOCKET_TCP),
-  monitorPort (-1),
-  collabPort (-1),
-  basePort (WellKnownPorts::defaultBasePort),
-  x_min (afm.xMin),
-  x_max (afm.xMax),
-  y_min (afm.yMin),
-  y_max (afm.yMax),
-  writingRemoteStream (0),
-  openPeer (VRPN_FALSE),
-  logInterface (VRPN_FALSE),
-  replayInterface (VRPN_FALSE),
-  useOptimism (VRPN_FALSE),
-  phantomRate (60.0),  // standard default
-  tesselation (1),
-  packetlimit (0)
-{
-    sprintf(graphicsHost, "\0");
-    sprintf(SPMhost, "\0");
-    sprintf(remoteOutputStreamName, "\0");
-    sprintf(peerName, "\0");
-    sprintf(logPath,"\0");
-}
-
-
 
 void ParseArgs (int argc, char ** argv,
                 MicroscapeInitializationState * istate) {
@@ -5404,6 +5577,155 @@ void update_rtt (void) {
   lasttime = now;
 }
 
+int createNewMicroscope( MicroscapeInitializationState &istate,
+   vrpn_Connection * c) 
+{
+  // Callbacks can do strange things, because re-creating
+  // tclvars can cause changes to be propagated through tcl to
+  // the new objects. I was getting a segfault in the microscope 
+  // constructor.
+  if (microscope && dataset) {
+    teardownStateCallbacks(microscope);
+    teardownCallbacks(dataset, microscope);
+    teardownCallbacks(dataset);
+    teardownCallbacks(microscope);
+  }
+  if (graphics && dataset) {
+    teardownCallbacks(dataset, graphics);
+  }
+  if (alignerUI) {
+    alignerUI->teardownCallbacks();
+  }
+
+
+  nmm_Microscope_Remote *
+    new_microscope = new nmm_Microscope_Remote (istate.afm, c);
+    if (!new_microscope) {
+      fprintf(stderr, "Couldn't create Microscope Remote.\n");
+      return -1;
+    }
+
+    nmb_Dataset *
+    new_dataset = new nmb_Dataset (istate.use_file_resolution,
+                               istate.num_x, istate.num_y,
+                               istate.x_min, istate.x_max,
+                               istate.y_min, istate.y_max, read_mode,
+                               (const char **) istate.stm_file_names,
+                               istate.num_stm_files, 
+                               (const char **) istate.image_file_names,
+                               istate.num_image_files,
+			       (const char *)my_hostname,
+                               allocate_TclNet_string,
+                               allocate_Tclvar_list_of_strings,
+                               new_microscope->d_topoFile);
+
+    if (!new_dataset) {
+      fprintf(stderr, "Cannot initialize dataset.\n");
+      return -1;
+    }
+
+    if (graphics) {
+      // First time through graphics will be NULL. 
+      graphics->changeDataset(new_dataset);
+    }
+
+    if (read_mode == READ_FILE)
+      guessAdhesionNames(new_dataset);
+
+    VERBOSE(2, "Guessed adhesion names.");
+
+    new_microscope->InitializeDataset(new_dataset);
+    VERBOSE(1, "Initialized dataset");
+    new_microscope->InitializeDecoration(decoration);
+    VERBOSE(1, "Initialized decoration");
+    new_microscope->InitializeTcl(tcl_script_dir);
+    VERBOSE(1, "Initialized tcl");
+
+    setupStateCallbacks(new_microscope);
+    VERBOSE(1, "Setup state callbacks");
+
+    setupCallbacks(new_dataset, new_microscope);
+    VERBOSE(1, "Setup dataset+microscope callbacks");
+    setupCallbacks(new_dataset);
+    VERBOSE(1, "Setup dataset callbacks");
+    setupCallbacks(new_microscope);
+    VERBOSE(1, "Setup microscope callbacks");
+
+    if (graphics) {
+      // First time through graphics will be NULL. 
+      // In that case these callbacks are setup in main() 
+      // after graphics is constructed
+      setupCallbacks(new_dataset, graphics);
+    }
+
+    ModFile * modfile = new ModFile;
+    new_microscope->registerPointDataHandler(ModFile::ReceiveNewPoint, modfile);
+    new_microscope->registerModifyModeHandler(ModFile::EnterModifyMode, modfile);
+    new_microscope->registerImageModeHandler(ModFile::EnterImageMode, modfile);
+    VERBOSE(1, "Created new mod file");
+
+    // display modifications on a strip chart
+
+    GraphMod * graphmod = new GraphMod;
+
+    new_microscope->registerPointDataHandler(GraphMod::ReceiveNewPoint, graphmod);
+    new_microscope->registerModifyModeHandler(GraphMod::EnterModifyMode, graphmod);
+    new_microscope->registerImageModeHandler(GraphMod::EnterImageMode, graphmod);
+    new_microscope->registerScanlineModeHandler(GraphMod::EnterScanlineMode,
+						graphmod);
+    new_microscope->registerScanlineDataHandler(GraphMod::ReceiveNewScanline,
+						graphmod);
+
+    VERBOSE(1, "Created new GraphMod");
+
+    new_microscope->registerImageModeHandler(invalidate_directz_forces, new_microscope);
+    // Allow another result to be requested when the last is received
+    // when using the Slow Line tool. 
+    new_microscope->registerPointDataHandler(slow_line_ReceiveNewPoint, new_microscope);
+
+    //draw measure lines
+    VERBOSE(1, "Initializing measure lines");
+
+    BCPlane *height_plane = new_dataset->inputGrid->getPlaneByName(new_dataset->heightPlaneName->string());
+    if (height_plane == NULL) { 
+       height_plane = new_dataset->ensureHeightPlane(); 
+    }
+
+    decoration->red.moveTo(height_plane->minX(), height_plane->minY(),
+                           height_plane);
+    decoration->green.moveTo(height_plane->maxX(), height_plane->minY(),
+                             height_plane);
+    decoration->blue.moveTo(height_plane->maxX(), height_plane->maxY(),
+                            height_plane);
+    // DO NOT doCallbacks()?
+
+    VERBOSE(1, "Before SPM initialization");
+    if (new_microscope->Initialize()) {
+	fprintf(stderr, "Cannot initialize the spm\n");
+	return(-1);
+    }
+
+    if(alignerUI) {
+      alignerUI->changeDataset(new_dataset->dataImages);
+      alignerUI->setupCallbacks();
+    }
+
+  // There is no turning back. If any operations fail, the 
+  // calling function will have to recover by calling again with a 
+  // simpler istate. 
+    if (microscope) {
+      delete microscope;
+    }
+    if (dataset) {
+      delete dataset;
+    }
+    // Start using the new structures!
+    microscope = new_microscope;
+    dataset = new_dataset;
+
+    return 0;
+}
+
 int main(int argc, char* argv[])
 {
     /* Things needed for the timing information */
@@ -5527,7 +5849,7 @@ int main(int argc, char* argv[])
     if (istate.afm.writingStreamFile)
       remote_logmode |= vrpn_LOG_INCOMING;
 
-    fprintf(stderr, "About to init microscope\n");
+    //fprintf(stderr, "About to init microscope\n");
 
     // If user has specified a stream file with -i option, try
     // to open it as a VRPN stream file. 
@@ -5545,7 +5867,7 @@ int main(int argc, char* argv[])
     if (strcmp(istate.afm.deviceName, "null")) {
 
       // otherwise, open the device specified. 
-      fprintf(stderr, "   The connection name is %s\n", istate.afm.deviceName);
+      //fprintf(stderr, "   The connection name is %s\n", istate.afm.deviceName);
       microscope_connection = vrpn_get_connection_by_name
 	  (istate.afm.deviceName,
 	   istate.afm.writingStreamFile ? istate.afm.outputStreamName
@@ -5562,7 +5884,7 @@ int main(int argc, char* argv[])
       // Decide whether reading vrpn log file or doing live.
       vrpnLogFile = microscope_connection->get_File_Connection();
       if (!vrpnLogFile) {
-	fprintf(stderr, "   microscape.c:: in Live mode\n");
+	//fprintf(stderr, "   microscape.c:: in Live mode\n");
       } else {
 	// Allow the user to open a stream file with "-d file:..." 
 	// Set the read_mode. 
@@ -5571,7 +5893,7 @@ int main(int argc, char* argv[])
 	read_mode = READ_STREAM;
 	istate.afm.readingStreamFile = 1;
 	//decoration->rateOfTime = 3;	// use 3 for rate default
-	fprintf(stderr, "   microscape.c:: in Replay mode\n");
+	//fprintf(stderr, "   microscape.c:: in Replay mode\n");
       }
 
       // BEFORE we call mainloop on our connection to the microscope,
@@ -5579,14 +5901,16 @@ int main(int argc, char* argv[])
       createForwarders(istate);
 
     }
-
-    microscope = new nmm_Microscope_Remote (istate.afm, microscope_connection);
-    if (!microscope) {
+    if(createNewMicroscope(istate, microscope_connection)) {
       fprintf(stderr, "Couldn't create Microscope Remote.\n");
       exit(0);
     }
+    // When openStreamFilename changes, we try to open a stream,
+    // which will call createNewMicroscope
+    openStreamFilename.addCallback
+	(handle_openStreamFilename_change, &istate);
 
-    fprintf(stderr, "Microscope initialized\n");
+    //fprintf(stderr, "Microscope initialized\n");
 
 
     if (vrpnLogFile) {
@@ -5601,12 +5925,6 @@ int main(int argc, char* argv[])
 
     microscope->setPlaybackLimit(istate.packetlimit);  // HACK TCH 15 Feb 2000
 
-#endif
-
-#ifdef  linux
-    BCDebug     debug("createGrids");
-    debug.turnOff();
-    fprintf(stderr, "XXX -- TURNING OFF DEBUGGING INFO!!!!\n");
 #endif
 
     // Must get hostname before initializing nmb_Dataset, but
@@ -5626,90 +5944,11 @@ int main(int argc, char* argv[])
 	delete [] hnbuf;
     }
 
-    VERBOSE(1, "Creating grids");
-    char wtl_buffer[1000];
-    sprintf(wtl_buffer, "num_x = %d, num_y = %d, read_mode = %d\n", 
-             istate.num_x, istate.num_y, read_mode);
-    VERBOSE(2, wtl_buffer);
-
-    Tclvar_list_of_strings imageNameList("imageNames");
-
-    dataset = new nmb_Dataset (istate.use_file_resolution,
-                               istate.num_x, istate.num_y,
-                               istate.x_min, istate.x_max,
-                               istate.y_min, istate.y_max, read_mode,
-                               (const char **) istate.stm_file_names,
-                               istate.num_stm_files, 
-                               (const char **) istate.image_file_names,
-                               istate.num_image_files,
-			       (const char *)my_hostname,
-                               allocate_TclNet_string,
-                               (nmb_ListOfStrings *)(&imageNameList),
-                               microscope->d_topoFile);
-
-    VERBOSE(1, "Created dataset");
-
-    if (!dataset) {
-      fprintf(stderr, "Cannot initialize dataset.\n");
-      return -1;
-    }
-    if (read_mode == READ_FILE) {
-      guessAdhesionNames();
-    }
-
-    VERBOSE(2, "Guessed adhesion names.");
-
-
-    microscope->InitializeDataset(dataset);
-    VERBOSE(1, "Initialized dataset");
-    microscope->InitializeDecoration(decoration);
-    VERBOSE(1, "Initialized decoration");
-    microscope->InitializeTcl(tcl_script_dir);
-    VERBOSE(1, "Initialized tcl");
-    setupStateCallbacks(microscope);
-    VERBOSE(1, "Setup state callbacks");
-
-    setupCallbacks(dataset, microscope);
-    VERBOSE(1, "Setup dataset+microscope callbacks");
-    setupCallbacks(dataset);
-    VERBOSE(1, "Setup dataset callbacks");
-    setupCallbacks(microscope);
-    VERBOSE(1, "Setup microscope callbacks");
-    setupCallbacks(decoration);
-    // log modifications into a file
-
-    ModFile * modfile = new ModFile;
-    microscope->registerPointDataHandler(ModFile::ReceiveNewPoint, modfile);
-    microscope->registerModifyModeHandler(ModFile::EnterModifyMode, modfile);
-    microscope->registerImageModeHandler(ModFile::EnterImageMode, modfile);
-    VERBOSE(1, "Created new mod file");
-
-    // display modifications on a strip chart
-
-    GraphMod * graphmod = new GraphMod;
-
-    microscope->registerPointDataHandler(GraphMod::ReceiveNewPoint, graphmod);
-    microscope->registerModifyModeHandler(GraphMod::EnterModifyMode, graphmod);
-    microscope->registerImageModeHandler(GraphMod::EnterImageMode, graphmod);
-    microscope->registerScanlineModeHandler(GraphMod::EnterScanlineMode,
-						graphmod);
-    microscope->registerScanlineDataHandler(GraphMod::ReceiveNewScanline,
-						graphmod);
-
-    VERBOSE(1, "Created new GraphMod");
-
-    // Allow another result to be requested when the last is received
-    // when using the Slow Line tool. 
-    microscope->registerPointDataHandler(slow_line_ReceiveNewPoint, microscope);
 
     createGraphics(istate);
 
-    // delete polyline markers (after graphics pointer initialized):
-    microscope->registerImageModeHandler(clear_polyline, graphics);
+    setupCallbacks(decoration);
 
-    microscope->registerImageModeHandler(invalidate_directz_forces, microscope);
-
-    setupCallbacks(dataset, graphics);
     setupCallbacks(graphics);
 
     graphics->setColorMapDirectory(colorMapDir);
@@ -5718,6 +5957,14 @@ int main(int argc, char* argv[])
 
     if (rulerPPMName)
       graphics->loadRulergridImage(rulerPPMName);
+
+    // delete polyline markers (after graphics pointer initialized):
+    microscope->registerImageModeHandler(clear_polyline, graphics);
+
+    // This call is duplicated in createNewMicroscope, 
+    // but we do it here because createNewMicroscope is called above
+    // when graphics is NULL.
+    setupCallbacks(dataset, graphics);
 
     // initialize graphics
     VERBOSE(1, "Before X display initialization");
@@ -5757,35 +6004,18 @@ int main(int argc, char* argv[])
 
 #if !defined(FLOW) && !defined(V_GLUT)
 	if( (VLIB_dpy == NULL) || ((void*)VLIB_win == NULL) ) {
-		printf("VLIB display vars=NULL no virtual arm\n");	
+	  //printf("VLIB display vars=NULL no virtual arm\n");	
 	}
 	else{ 
-		printf("VLIB_win == INITIALIZED\n");
-		printf("VLIB_dpy == INITIALIZED\n");
+            //printf("VLIB_win == INITIALIZED\n");
+            //printf("VLIB_dpy == INITIALIZED\n");
 		XSelectInput(VLIB_dpy,VLIB_win,StructureNotifyMask | 
 		    ButtonPressMask | ButtonReleaseMask  | PointerMotionMask );
-		printf("Activating Virtual XArm\n");
+		//printf("Activating Virtual XArm\n");
 	}
 #endif
 	
     } // end if (glenable)
-
-  //draw measure lines
-    VERBOSE(1, "Initializing measure lines");
-
-    BCPlane *height_plane = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
-    if (height_plane == NULL) { 
-       height_plane = dataset->ensureHeightPlane(); 
-    }
-
-  decoration->red.moveTo(height_plane->minX(), height_plane->minY(),
-                          height_plane);
-  decoration->green.moveTo(height_plane->maxX(), height_plane->minY(),
-                            height_plane);
-  decoration->blue.moveTo(height_plane->maxX(), height_plane->maxY(),
-                           height_plane);
- // DO NOT doCallbacks()?
-
 
     // XXX - setting up vrpn callbacks for tracker should happen after
     // v_create_world() has been called (by new nmg_Graphics) because
@@ -5819,6 +6049,7 @@ int main(int argc, char* argv[])
   collaborationManager->initialize(vrpnHandTracker[0], NULL,
                                    handle_peer_sync_change);
 
+  // XXX ATH redo when new stream file opened. 
   setupSynchronization(collaborationManager, dataset, microscope);
 
   setupCallbacks(forceDevice);
@@ -5832,14 +6063,6 @@ int main(int argc, char* argv[])
     set_Tk_command_handler(handleCharacterCommand);
     VERBOSE(1, "done initialising the control panels\n");
   }
-
-    VERBOSE(1, "Before SPM initialization");
-    if (stm_init(set_region, set_mode,
-                 istate.socketType, istate.SPMhostptr,
-                 istate.SPMport, istate.UDPport)) {
-	fprintf(stderr, "Cannot initialize the spm\n");
-	return(-1);
-    }
 
 
     VERBOSE(1, "Before french ohmmeter initialization");
@@ -6014,15 +6237,16 @@ int main(int argc, char* argv[])
     robotControl->show();
   #endif
 
-
+#ifndef NO_RAW_TERM
   /* open raw terminal with echo if keyboard isn't off  */
   if (do_keybd == 1){
     VERBOSE(1,"Opening raw terminal");
     if ((ttyFD = open_raw_term(1)) < 0)
       fprintf(stderr, "open_raw_term(): error opening terminal.\n");
   }
-  /* Prepare signal handler for ^C,so we save the stream file and exit cleanly*/
+#endif
 
+  //Prepare signal handler for ^C,so we save the stream file and exit cleanly
   VERBOSE(1,"Setting ^C Handle");
   signal(SIGINT, handle_cntl_c);
 
@@ -6031,7 +6255,7 @@ int main(int argc, char* argv[])
     KeyboardUsage();
   }
 
-VERBOSE(1, "Creating Ugraphics");
+  VERBOSE(1, "Creating Ugraphics");
   World.TSetName("World");
   Textures.TSetName("Texture Store\n");  
 
@@ -6063,13 +6287,14 @@ VERBOSE(1, "Creating Ugraphics");
   aligner = new nmr_Registration_Proxy(istate.alignerName);
   alignerUI = new nmr_RegistrationUI(graphics, dataset->dataImages,
       aligner);
+  alignerUI->setupCallbacks();
 
   // This should be activated by setupCallbacks(graphics), but doesn't
   // seem to be?
   tclstride = istate.tesselation;
 
-/* Center the image first thing */
-center();
+  /* Center the image first thing */
+  center();
 
   Tcl_Interp * interp = get_the_interpreter();
 
@@ -6090,7 +6315,6 @@ VERBOSE(1, "Starting timing");
 gettimeofday(&time1,&zone1);
 gettimeofday(&d_time,&zone1);
 microscope->ResetClock();
-//gettimeofday(&nowtime, &nowzone);
 
 
 /* 
@@ -6098,7 +6322,6 @@ microscope->ResetClock();
  */
 VERBOSE(1, "Entering main loop");
 
-//while ( ! dataset->done ) {
   while( n<LOOP_NUM || !dataset->done ) {
 
 #ifdef TIMING_TEST
@@ -6291,8 +6514,10 @@ VERBOSE(1, "Entering main loop");
       }
 
       if ( (read_mode == READ_DEVICE) || (read_mode == READ_STREAM) ) {
+#ifndef NO_XWINDOWS
 	if (xenable)
 	  synchronize_xwin(False);
+#endif
 
 #ifdef USE_VRPN_MICROSCOPE
 
@@ -6315,10 +6540,12 @@ VERBOSE(1, "Entering main loop");
 
 #endif
 
+#ifndef NO_XWINDOWS
 	if (xenable) {
 	  flush_xwin();
 	  synchronize_xwin(True);
 	}
+#endif
       }
    
       ttest0(t_avg_r, "reports");
@@ -6349,10 +6576,12 @@ VERBOSE(1, "Entering main loop");
     // input type.  We don't know why it was originally limited
     // only to static images.
     // New argument is a polyline to draw.
+#ifndef NO_XWINDOWS
     if (xenable) {
       VERBOSE(4, "  Checking for exposure of X window");
       restore_window(teststrip);
     }
+#endif
     
     /* Check for mouse events in the X window display */
     handleMouseEvents(&graphicsTimer);
@@ -6483,9 +6712,11 @@ VERBOSE(1, "Entering main loop");
     graphicsServerThread->kill();  // NOT PORTABLE TO NT!
   shutdown_connections();
 
-  if (do_keybd == 1)
+  if (do_keybd == 1) {
+#ifndef NO_RAW_TERM
     reset_raw_term(ttyFD);
-
+#endif
+  }
   return(0);
     
 }   /* main */
@@ -6532,6 +6763,7 @@ void handleTermInput(int ttyFD, vrpn_bool* donePtr)
     else
 	numTimesCalled = 0;
 
+#ifndef NO_RAW_TERM
     /* nonblocking read: is there anything to read at the keyboard?	*/
     if ( (nread = read_raw_term(ttyFD, buffer) ) < 1 )
 	/* no   */
@@ -6539,7 +6771,7 @@ void handleTermInput(int ttyFD, vrpn_bool* donePtr)
 
     /* yes-  see what was typed and handle it   */
     handleCharacterCommand(buffer, donePtr, nread);
-
+#endif
 }	/* handleTermInput */
 
 
@@ -6964,6 +7196,16 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 
 int handleMouseEvents (nmb_TimerList * timer)
 {
+#ifndef NO_XWINDOWS
+static int gwi = 400;	///< Width of the graphical window
+static int ghi = 400;	///< Height of the graphical window
+
+static float xscale;	///< Scale to map window pixels to nM
+static float yscale;	///< Scale to map window pixels to the Y axis
+static float yoffset;	///< Offset to add to Y-axis values (already scaled)
+
+static float testarray [1000];
+
   static int prev_x,prev_y; 	
   static double wanted_x = -2;
   static double wanted_y = -1;
@@ -7543,6 +7785,7 @@ int handleMouseEvents (nmb_TimerList * timer)
 	}
       
     }
+#endif // #ifndef NO_XWINDOWS
     return(0);
 }
   
@@ -7619,10 +7862,10 @@ void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
         vec_cmp(screenUL_v, NULL_SCREEN_UPPER_LEFT) &&
         vec_cmp(screenUR_v, NULL_SCREEN_UPPER_RIGHT) )
     {
-       printf("Center: screen has 0 extent, which means null head tracker\n");
+      //printf("Center: screen has 0 extent, which means null head tracker\n");
        null_head_tracker = 1;
     } else {
-       printf("Center: screen has extent, which means head tracker\n");
+      //printf("Center: screen has extent, which means head tracker\n");
        q_vec_copy(screenLL, screenLL_v);
        q_vec_copy(screenUL, screenUL_v);
        q_vec_copy(screenUR, screenUR_v);
@@ -7751,13 +7994,13 @@ void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
   // user's head are need to be in the same space to be registered.
     if (head_tracked==VRPN_FALSE)
       {
-	fprintf(stderr,"DEBUG: non headtracked mode - scaling down user by 5.0 to let phantom reach entire surface and so that surface takes up the whole screen.\n");
+	//fprintf(stderr,"DEBUG: non headtracked mode - scaling down user by 5.0 to let phantom reach entire surface and so that surface takes up the whole screen.\n");
 
 	*lock_userscale *= 5.0;
       }
     else
       {
-	fprintf(stderr,"DEBUG: head tracked mode - surface will not take up entire screen by default, so that phantom and viewer's head are to the same scale.\n");
+	//fprintf(stderr,"DEBUG: head tracked mode - surface will not take up entire screen by default, so that phantom and viewer's head are to the same scale.\n");
       }
 }
 
@@ -7772,18 +8015,18 @@ void center (void) {
   find_center_xforms(&lock.xlate, &lock.rotate, &lock.scale);
   
   /* Copy the new values to the world xform for user 0 */
-  printf("Setting head xlate to (%f, %f, %f)\n",
-        lock.xlate[V_X], lock.xlate[V_Y], lock.xlate[V_Z]);
+//    printf("Setting head xlate to (%f, %f, %f)\n",
+//          lock.xlate[V_X], lock.xlate[V_Y], lock.xlate[V_Z]);
 
 /*XXX Center causes seg fault on nWC after the resize has happened
   if the rotation sets are done under Linux.  It does not fail if they
   are not done.  If you go into grab mode to clear the resize lines
   before centering, then all works well. */
-  printf("Setting head rotate to (%f, %f, %f: %f)\n",
-        lock.rotate[V_X], lock.rotate[V_Y], lock.rotate[V_Z],
-        lock.rotate[V_W]);
+//    printf("Setting head rotate to (%f, %f, %f: %f)\n",
+//          lock.rotate[V_X], lock.rotate[V_Y], lock.rotate[V_Z],
+//          lock.rotate[V_W]);
 
-  printf("Setting head scale to %f\n", lock.scale);
+//    printf("Setting head scale to %f\n", lock.scale);
 
   updateWorldFromRoom(&lock);
 }
@@ -7811,7 +8054,7 @@ void get_Plane_Extents(float* offsetx, float *offsety, float* offsetz){
 /** Look for planes named ".ffl" or ".FFL".  If there are any, find the last
  one;  fill in the names of the adhesion planes with the halfway and last
  such planes. */
-void guessAdhesionNames (void) {
+void guessAdhesionNames (nmb_Dataset * dset) {
         int     max_ffl = 0;
         char    max_name[1000];
         BCPlane * p;
@@ -7820,7 +8063,7 @@ void guessAdhesionNames (void) {
         // Pass through the planes.  For each one, see if it has the string
         // .ffl or .FFL in it.  Keep track of the highest number in
         // any of these.  The number will be 0 if there are not any.
-        p = dataset->inputGrid->head();
+        p = dset->inputGrid->head();
         while (p != NULL) {
                 char    *ffl_loc;
                 char    testname[1000];

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <math.h>
 #include <blt.h>  // for BLT vector class and functions.
 #if defined (__CYGWIN__) || (linux) || (_WIN32)
@@ -58,8 +65,8 @@ int GraphMod::EnterModifyMode (void * userdata) {
     return 0;
   }
 
+  me->d_interp = get_the_interpreter();
   if (!graphmod_hasWindow) {
-    me->d_interp = get_the_interpreter();
     me->ShowStripchart(NULL);
     graphmod_hasWindow = 1;
   }
@@ -100,8 +107,8 @@ int GraphMod::EnterScanlineMode (void *userdata) {
     return -1;
   }
 
+  me->d_interp = get_the_interpreter();
   if (!graphmod_hasWindow) {
-    me->d_interp = get_the_interpreter();
     me->ShowStripchart(NULL);
     graphmod_hasWindow = 1;
   }
@@ -128,6 +135,8 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
 
       if (me->d_currentmode != SCANLINEMODE)
       	return 0;
+
+      me->d_interp = get_the_interpreter();
 
       int channels_changed = 0;
       if (me->d_numscanline_channels != sr->num_values())
@@ -363,6 +372,8 @@ static   long	first_sec,first_usec;
    if (me->d_currentmode != MODMODE)
      return 0;
 
+   me->d_interp = get_the_interpreter();
+
    if (me->d_total_num_points == 0) {
       // Find out how many values are in the first point.  Used for
       // comparison later.  Also find the starting location and time
@@ -581,6 +592,7 @@ static   long	first_sec,first_usec;
 
 void GraphMod::ShowStripchart (const char * ) {
    char command [100];
+   d_interp = get_the_interpreter();
    sprintf(command, "show.stripchart");
    if (Tcl_Eval(d_interp, command) != TCL_OK) {
       fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,

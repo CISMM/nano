@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMR_REGISTRATIONUI_H
 #define NMR_REGISTRATIONUI_H
 
@@ -21,6 +28,10 @@ class nmr_RegistrationUI {
                        nmr_Registration_Proxy *aligner);
 
     ~nmr_RegistrationUI();
+
+    void setupCallbacks();
+    void teardownCallbacks();
+    void changeDataset(nmb_ImageList *im);
     void handleRegistrationChange(const nmr_ProxyChangeHandlerData &info);
     static void handle_registrationChange(void *ud,
                   const nmr_ProxyChangeHandlerData &info);

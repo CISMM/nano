@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmr_RegistrationUI.h"
 #include "nmr_Util.h"
 #include <microscape.h> // for disableOtherTextures
@@ -22,22 +29,9 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_aligner(aligner),
    d_imageTransform(4,4)
 {
-    d_registrationRequested.addCallback
-         (handle_registrationRequest_change, (void *)this);
-    d_registrationEnabled.addCallback
-         (handle_registrationEnabled_change, (void *)this);
-    d_textureDisplayEnabled.addCallback
-         (handle_textureDisplayEnabled_change, (void *)this);
     d_newResampleImageName = "";
-    d_newResampleImageName.addCallback
-         (handle_resampleImageName_change, (void *)this);
     d_resampleResolutionX = 100;
     d_resampleResolutionY = 100;
-
-    d_registrationImageName3D.addCallback
-       (handle_registrationImage3D_change, (void *)this);
-    d_registrationImageName2D.addCallback
-       (handle_registrationImage2D_change, (void *)this);
 
     int i;
     vrpn_bool set3D = vrpn_FALSE, set2D = vrpn_FALSE; 
@@ -68,6 +62,47 @@ nmr_RegistrationUI::nmr_RegistrationUI
 
 nmr_RegistrationUI::~nmr_RegistrationUI()
 {
+}
+
+void nmr_RegistrationUI::setupCallbacks() 
+{
+    d_registrationRequested.addCallback
+         (handle_registrationRequest_change, (void *)this);
+    d_registrationEnabled.addCallback
+         (handle_registrationEnabled_change, (void *)this);
+    d_textureDisplayEnabled.addCallback
+         (handle_textureDisplayEnabled_change, (void *)this);
+    d_newResampleImageName.addCallback
+         (handle_resampleImageName_change, (void *)this);
+
+    d_registrationImageName3D.addCallback
+       (handle_registrationImage3D_change, (void *)this);
+    d_registrationImageName2D.addCallback
+       (handle_registrationImage2D_change, (void *)this);
+
+}
+
+void nmr_RegistrationUI::teardownCallbacks() 
+{
+    d_registrationRequested.removeCallback
+         (handle_registrationRequest_change, (void *)this);
+    d_registrationEnabled.removeCallback
+         (handle_registrationEnabled_change, (void *)this);
+    d_textureDisplayEnabled.removeCallback
+         (handle_textureDisplayEnabled_change, (void *)this);
+    d_newResampleImageName.removeCallback
+         (handle_resampleImageName_change, (void *)this);
+
+    d_registrationImageName3D.removeCallback
+       (handle_registrationImage3D_change, (void *)this);
+    d_registrationImageName2D.removeCallback
+       (handle_registrationImage2D_change, (void *)this);
+
+}
+
+void nmr_RegistrationUI::changeDataset(nmb_ImageList *im)
+{
+  d_imageList=im;
 }
 
 void nmr_RegistrationUI::handleRegistrationChange

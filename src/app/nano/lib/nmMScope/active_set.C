@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include	<stdlib.h>
 #include	<stdio.h>
 #include	<string.h>
@@ -65,14 +72,14 @@ int	Channel_selector::Set(const char *channel)
 	// Set the channel in the checklist.  If this fails, add a new
 	// checkbox in (Set_checkbox returns -1 if it can't find the
 	// checkbox).
-	if (checklist->Set_checkbox(channel)) {
-		if (checklist->Add_checkbox(channel,1)) {
-			fprintf(stderr,
-			  "Channel_selector::Set(): Can't add %s\n",
-			  channel);
-			return -1;
-		}
-	}
+//  	if (checklist->Set_checkbox(channel)) {
+//  		if (checklist->Add_checkbox(channel,1)) {
+//  			fprintf(stderr,
+//  			  "Channel_selector::Set(): Can't add %s\n",
+//  			  channel);
+//  			return -1;
+//  		}
+//  	}
     return 0;
 }
 
@@ -81,14 +88,14 @@ int	Channel_selector::Unset(const char *channel)
 	// Unset the channel in the checklist.  If this fails, add a new
 	// checkbox in (Set_checkbox returns -1 if it can't find the
 	// checkbox).
-	if (checklist->Unset_checkbox(channel)) {
-		if (checklist->Add_checkbox(channel,0)) {
-			fprintf(stderr,
-			  "Channel_selector::Unset(): Can't add %s\n",
-			  channel);
-			return -1;
-		}
-	}
+//  	if (checklist->Unset_checkbox(channel)) {
+//  		if (checklist->Add_checkbox(channel,0)) {
+//  			fprintf(stderr,
+//  			  "Channel_selector::Unset(): Can't add %s\n",
+//  			  channel);
+//  			return -1;
+//  		}
+//  	}
     return 0;
 }
 
@@ -121,14 +128,14 @@ int	Channel_selector::Clear_channels(void)
 	numchannels = 0;
 
 	// Clear all of the checkboxes
-	for (i = 0; i < checklist->Num_checkboxes(); i++) {
-	  if (checklist->Unset_checkbox(checklist->Checkbox_name(i))) {
-	    fprintf(stderr,
-	      "Channel_selector::Clear_channels(): Can't unset checkbox %s\n",
-		channels[i].name);
-	    ret = -1;
-	  }
-	}
+//  	for (i = 0; i < checklist->Num_checkboxes(); i++) {
+//  	  if (checklist->Unset_checkbox(checklist->Checkbox_name(i))) {
+//  	    fprintf(stderr,
+//  	      "Channel_selector::Clear_channels(): Can't unset checkbox %s\n",
+//  		channels[i].name);
+//  	    ret = -1;
+//  	  }
+//  	}
 	return ret;
 }
 
@@ -142,12 +149,12 @@ int	Channel_selector::Add_channel(char *name, char *units,
 	}
 
 	// See if we can set this checkbox in the checklist.  If not, add it
-	if (checklist->Set_checkbox(name)) {
-	    if (checklist->Add_checkbox(name,1)) {
-		fprintf(stderr,"Channel_selector::Add_channel(): Can't add %s to checklist\n",name);
-		return -1;
-	    }
-	}
+//  	if (checklist->Set_checkbox(name)) {
+//  	    if (checklist->Add_checkbox(name,1)) {
+//  		fprintf(stderr,"Channel_selector::Add_channel(): Can't add %s to checklist\n",name);
+//  		return -1;
+//  	    }
+//  	}
 
 	// Fill in the rest and increment the count
 	strncpy(channels[numchannels].units,units,
@@ -172,14 +179,14 @@ int	Channel_selector::Add_channel(char *name, char *units,
 	}
 
 	// See if we can set this checkbox in the checklist.  If not, add it
-	if (checklist->Set_checkbox(name)) {
-	    if (checklist->Add_checkbox_entry(name,1, num_samples)) {
-		fprintf(stderr,"Channel_selector::Add_channel(): Can't add %s to checklist\n",name);
-		return -1;
-	    }
-	} else { // if set succeeds, make sure we set entry field, too.
-	   checklist->Set_checkbox_entry(name, num_samples);
-	}
+//  	if (checklist->Set_checkbox(name)) {
+//  	    if (checklist->Add_checkbox_entry(name,1, num_samples)) {
+//  		fprintf(stderr,"Channel_selector::Add_channel(): Can't add %s to checklist\n",name);
+//  		return -1;
+//  	    }
+//  	} else { // if set succeeds, make sure we set entry field, too.
+//  	   checklist->Set_checkbox_entry(name, num_samples);
+//  	}
 
 	// Fill in the rest and increment the count
 	strncpy(channels[numchannels].units,units,
@@ -207,33 +214,33 @@ Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
 	mygrid = grid_to_track;
 
 	// Get a new checklist.
-	checklist = new Tclvar_checklist_with_entry(".data_sets.scan");
-	if (checklist == NULL) {
-	    fprintf(stderr,"Scan_channel_selector(): Can't make checklist\n");
-	    return;
-	}
+//  	Checklist = new Tclvar_checklist_with_entry(".data_sets.scan");
+//  	if (checklist == NULL) {
+//  	    fprintf(stderr,"Scan_channel_selector(): Can't make checklist\n");
+//  	    return;
+//  	}
 
-	// Put the known types into the checklist, but don't require planes for
-	// them.
-	checklist->Add_checkbox("Topography-Forward",1);
-	checklist->Add_checkbox("Topography-Reverse",0);
-	checklist->Add_checkbox("Internal Sensor-Forward",0);
-	checklist->Add_checkbox("Internal Sensor-Reverse",0);
-	checklist->Add_checkbox("Z Modulation-Forward",0);
-	checklist->Add_checkbox("Z Modulation-Reverse",0);
-	checklist->Add_checkbox("Lateral Force-Forward",0);
-	checklist->Add_checkbox("Lateral Force-Reverse",0);
-	checklist->Add_checkbox("IN 1-Forward",0);
-	checklist->Add_checkbox("IN 1-Reverse",0);
-	checklist->Add_checkbox("IN 2-Forward",0);
-	checklist->Add_checkbox("IN 2-Reverse",0);
-	checklist->Add_checkbox("FastTrack-Forward",0);
-	checklist->Add_checkbox("FastTrack-Reverse",0);
-	checklist->Add_checkbox("Z Piezo-Forward",0);
-	checklist->Add_checkbox("Z Piezo-Reverse",0);
+//  	// Put the known types into the checklist, but don't require planes for
+//  	// them.
+//  	checklist->Add_checkbox("Topography-Forward",1);
+//  	checklist->Add_checkbox("Topography-Reverse",0);
+//  	checklist->Add_checkbox("Internal Sensor-Forward",0);
+//  	checklist->Add_checkbox("Internal Sensor-Reverse",0);
+//  	checklist->Add_checkbox("Z Modulation-Forward",0);
+//  	checklist->Add_checkbox("Z Modulation-Reverse",0);
+//  	checklist->Add_checkbox("Lateral Force-Forward",0);
+//  	checklist->Add_checkbox("Lateral Force-Reverse",0);
+//  	checklist->Add_checkbox("IN 1-Forward",0);
+//  	checklist->Add_checkbox("IN 1-Reverse",0);
+//  	checklist->Add_checkbox("IN 2-Forward",0);
+//  	checklist->Add_checkbox("IN 2-Reverse",0);
+//  	checklist->Add_checkbox("FastTrack-Forward",0);
+//  	checklist->Add_checkbox("FastTrack-Reverse",0);
+//  	checklist->Add_checkbox("Z Piezo-Forward",0);
+//  	checklist->Add_checkbox("Z Piezo-Reverse",0);
 
-	// Set up a callback from the checklist
-	checklist->addCallback(tcl_update_callback,this);
+//  	// Set up a callback from the checklist
+//  	checklist->addCallback(tcl_update_callback,this);
 
 	// Set up for old default, which was Topography and standard deviation
 	if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
@@ -264,7 +271,7 @@ int     Scan_channel_selector::Update_microscope (nmm_Microscope_Remote * micros
 	    //fprintf(stderr, "Update_microscope Scan: ignoring update req.\n");
 	    return 0;
 	} else {
-	    if (microscope->GetNewScanDatasets(checklist) == -1)
+	  //if (microscope->GetNewScanDatasets(checklist) == -1)
 		return -1;
 	}
     }
@@ -321,19 +328,19 @@ int     Scan_channel_selector::Handle_old_report(
 	// Update the height and standard deviation planes.
 	// This assumes that they are the first two, which was the case
 	// in the old stream files which won't set this up
-	if (numchannels>0) {
-		planes[0]->setValue(x, y,
-			channels[0].offset + channels[0].scale*value);
-		planes[0]->setTime(x, y, sec, usec);
-	}
-	if (numchannels>1) {
-		planes[1]->setValue(x, y, 
-			channels[1].offset + channels[1].scale*std_dev);
-		planes[1]->setTime(x, y, sec, usec);
-	}
+//  	if (numchannels>0) {
+//  		planes[0]->setValue(x, y,
+//  			channels[0].offset + channels[0].scale*value);
+//  		planes[0]->setTime(x, y, sec, usec);
+//  	}
+//  	if (numchannels>1) {
+//  		planes[1]->setValue(x, y, 
+//  			channels[1].offset + channels[1].scale*std_dev);
+//  		planes[1]->setTime(x, y, sec, usec);
+//  	}
 
-	// Tell the display to update the subgrid.
-	d_dataset->range_of_change.AddPoint(x, y);
+//  	// Tell the display to update the subgrid.
+//  	d_dataset->range_of_change.AddPoint(x, y);
 
 	return 0;
 }
@@ -385,25 +392,25 @@ Point_channel_selector::Point_channel_selector
 	myresult = point;	// Where to store values
 
 	// Get a new checklist.
-	checklist = new Tclvar_checklist_with_entry(".data_sets.touch");
-	if (checklist == NULL) {
-	    fprintf(stderr,"Point_channel_selector(): Can't make checklist\n");
-	    return;
-	}
+//  	checklist = new Tclvar_checklist_with_entry(".data_sets.touch");
+//  	if (checklist == NULL) {
+//  	    fprintf(stderr,"Point_channel_selector(): Can't make checklist\n");
+//  	    return;
+//  	}
 
-	// Put the known types into the checklist.
-   // Turned more of these "on" -CCWeigle 8/6/99
-	checklist->Add_checkbox_entry("Topography",1, 90);
-	checklist->Add_checkbox_entry("Internal Sensor",1, 10);
-	checklist->Add_checkbox_entry("Z Modulation",0, 10);
-	checklist->Add_checkbox_entry("Lateral Force",1, 10);
-	checklist->Add_checkbox_entry("IN 1",0, 10);
-	checklist->Add_checkbox_entry("IN 2",0, 10);
-	checklist->Add_checkbox_entry("FastTrack",0, 10);
-	checklist->Add_checkbox_entry("Z Piezo",1, 10);
+//  	// Put the known types into the checklist.
+//     // Turned more of these "on" -CCWeigle 8/6/99
+//  	checklist->Add_checkbox_entry("Topography",1, 90);
+//  	checklist->Add_checkbox_entry("Internal Sensor",1, 10);
+//  	checklist->Add_checkbox_entry("Z Modulation",0, 10);
+//  	checklist->Add_checkbox_entry("Lateral Force",1, 10);
+//  	checklist->Add_checkbox_entry("IN 1",0, 10);
+//  	checklist->Add_checkbox_entry("IN 2",0, 10);
+//  	checklist->Add_checkbox_entry("FastTrack",0, 10);
+//  	checklist->Add_checkbox_entry("Z Piezo",1, 10);
 
-	// Set up a callback from the checklist
-	checklist->addCallback(tcl_update_callback,this);
+//  	// Set up a callback from the checklist
+//  	checklist->addCallback(tcl_update_callback,this);
 
 	// Set up for old default, which was Topography and standard deviation
 	if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
@@ -435,7 +442,7 @@ int     Point_channel_selector::Update_microscope (nmm_Microscope_Remote * micro
 	    //fprintf(stderr, "Update_microscope Point: ignoring update req.\n");
 	    return 0;
 	} else {
-	  if (microscope->GetNewPointDatasets(checklist) == -1)
+//  	  if (microscope->GetNewPointDatasets(checklist) == -1)
 		return -1;
 	}
     }
@@ -451,7 +458,7 @@ int	Point_channel_selector::Add_channel(char *name, char *units,
 	// information.
 	// The base class method returns the index of the new channel
 	// or -1.  Derived class method returns 0 on success, -1 on failure.
-	which = Channel_selector::Add_channel(name, units, offset, scale, num_samples);
+  	which = Channel_selector::Add_channel(name, units, offset, scale, num_samples);
 	if (which == -1) {
 	    fprintf(stderr,"Point_channel_selector::Add_channel(): Failed\n");
 	    return -1;
@@ -478,22 +485,22 @@ int     Point_channel_selector::Handle_old_report( float x, float y,
 		long sec, long usec, float value, float std_dev)
 {
 	// Set location and time in the point results class
-	if (myresult) {
-		myresult->setPosition(x, y);
-		myresult->setTime(sec, usec);
-	}
+//  	if (myresult) {
+//  		myresult->setPosition(x, y);
+//  		myresult->setTime(sec, usec);
+//  	}
 
-	// Update the height and standard deviation planes.
-	// This assumes that they are the first two, which was the case
-	// in the old stream files which won't set this up
-	if (numchannels>0) {
-		values[0]->setValue(
-			channels[0].offset + channels[0].scale*value);
-	}
-	if (numchannels>1) {
-		values[1]->setValue( 
-			channels[1].offset + channels[1].scale*std_dev);
-	}
+//  	// Update the height and standard deviation planes.
+//  	// This assumes that they are the first two, which was the case
+//  	// in the old stream files which won't set this up
+//  	if (numchannels>0) {
+//  		values[0]->setValue(
+//  			channels[0].offset + channels[0].scale*value);
+//  	}
+//  	if (numchannels>1) {
+//  		values[1]->setValue( 
+//  			channels[1].offset + channels[1].scale*std_dev);
+//  	}
 
 	return 0;
 }
@@ -524,7 +531,7 @@ int     Point_channel_selector::Handle_report( float x, float y,
 	}
 
         // Are we stashing a copy of this data in a point list?
-        if (accumulatePoints) {
+        if (accumulatePoints && (d_pointList != NULL)) {
           d_pointList->addEntry(*myresult);
         }
 
@@ -541,17 +548,17 @@ ForceCurve_channel_selector::ForceCurve_channel_selector
     myresult = point;	// Where to store values
 
     // Get a new checklist.
-    checklist = new Tclvar_checklist_with_entry(".data_sets.forcecurve");
-    if (checklist == NULL) {
-	fprintf(stderr,"ForceCurve_channel_selector(): Can't make checklist\n");
-	return;
-    }
+//      checklist = new Tclvar_checklist_with_entry(".data_sets.forcecurve");
+//      if (checklist == NULL) {
+//  	fprintf(stderr,"ForceCurve_channel_selector(): Can't make checklist\n");
+//  	return;
+//      }
 
-    // Put the known types into the checklist.
-    // spmlab allows two out of three including the following and
-    // the two auxiliary channels, but selection of other than the default
-    // hasn't been implemented yet
-    checklist->Add_checkbox("Internal Sensor",1);
+//      // Put the known types into the checklist.
+//      // spmlab allows two out of three including the following and
+//      // the two auxiliary channels, but selection of other than the default
+//      // hasn't been implemented yet
+//      checklist->Add_checkbox("Internal Sensor",1);
     if (Add_channel("Internal Sensor", "nA", 0.0, 1.0))
 	fprintf(stderr,"ForceCurve_channel_selector(): Can't get h&d\n");
 }
@@ -576,7 +583,7 @@ int     ForceCurve_channel_selector::Update_microscope (nmm_Microscope_Remote * 
 	    //fprintf(stderr, "Update_microscope FC: ignoring update req.\n");
 	    return 0;
 	} else {
-	  if (microscope->GetNewPointDatasets(checklist) == -1)
+//  	  if (microscope->GetNewPointDatasets(checklist) == -1)
 		return -1;
 	}
     }

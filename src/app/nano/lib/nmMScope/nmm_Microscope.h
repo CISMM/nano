@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMM_MICROSCOPE_H
 #define NMM_MICROSCOPE_H
 
@@ -65,8 +72,6 @@ class nmm_Microscope {
 //    vrpn_Connection * d_connection; moved to nmb_Device
 //    vrpn_File_Controller * d_fileController; moved to nmb_Device
 
-    char * d_tcl_script_dir;
-
     // VRPN stuff
 
 //    long d_myId; moved to nmb_Device
@@ -79,6 +84,7 @@ class nmm_Microscope {
     // general messages
 
     long d_SetRegionNM_type;  // client ==> server
+    long d_SetScanAngle_type;
     long d_ScanTo_type;
     long d_ScanToZ_type;
     long d_ZagTo_type;
@@ -250,6 +256,10 @@ class nmm_Microscope {
                   float minx, float miny, float maxx, float maxy);
     long decode_SetRegionNM (const char ** buf,
                float * minx, float * miny, float * maxx, float * maxy);
+    char * encode_SetScanAngle (long * len,
+				float angle);
+    long decode_SetScanAngle (const char ** buf,
+			      float * angle);
     char * encode_ScanTo (long * len, float x, float y);
     long decode_ScanTo (const char ** buf, float * x, float * y);
     char * encode_ScanTo (long * len, float x, float y, float z);

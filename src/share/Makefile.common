@@ -273,7 +273,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-   SYS_INCLUDE := /progra~1/tcl/include
+   SYS_INCLUDE := /nsrc/external/include
 endif
 
 ifeq ($(HW_OS),pc_linux)
@@ -314,7 +314,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-  LOAD_FLAGS = -L/progra~1/tcl/lib
+  LOAD_FLAGS = -L/nsrc/external/lib/pc_win32
 endif
 
 ifeq ($(HW_OS),sgi_irix)
@@ -392,7 +392,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-   ARCH_LIBS := $(addprefix -l,glut wsock32 user32 gdi32 comdlg32 glu32 \
+   ARCH_LIBS := $(addprefix -l,glut32 wsock32 user32 gdi32 comdlg32 glu32 \
                                opengl32)
 endif
 
@@ -441,7 +441,7 @@ ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
 endif
 
 ifdef VC
-   LIBS := $(GRAPHICS_LIBS) $(TCL_LIBS) $(ARCH_LIBS) -lm
+   LIBS := $(GRAPHICS_LIBS) $(TCL_LIBS) $(ARCH_LIBS)
 endif
 
 LIBS += $(LATE_LIBRARIES)
@@ -459,11 +459,11 @@ ifndef OLD_MICROSCOPE
 endif
 
 ifeq ($(HW_OS),pc_cygwin)
-  BAREDEFINES += V_GLUT
+  BAREDEFINES += V_GLUT NO_XWINDOWS
 endif
 
 ifeq ($(HW_OS),pc_win32)
-  BAREDEFINES += V_GLUT
+  BAREDEFINES += V_GLUT NO_RAW_TERM NO_XWINDOWS NO_ITCL
 endif
 
 ifeq ($(HW_OS),pc_linux)
@@ -481,7 +481,7 @@ endif
 CFLAGS += -g
 
 ifeq ($(HW_OS),pc_win32)
-  CFLAGS = /nologo /MTd /W3 /GX /Z7 /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /TP 
+  CFLAGS = /nologo /MTd /W3 /GX /Gm /Zi /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /TP 
 # /MTd multi-threaded, debug lib - not DLL.
 # /W3 warning level 3
 # /Gm enable minimal rebuild - requires /Zi or /ZI

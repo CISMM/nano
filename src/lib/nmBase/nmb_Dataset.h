@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMB_DATASET_H
 #define NMB_DATASET_H
 
@@ -47,7 +54,8 @@ class nmb_Dataset {
 		 const char ** imageFileNames, int numImageFiles,
 		 const char * hostname, 
                  nmb_String * (* string_allocator) (const char *),
-                 nmb_ListOfStrings *imageNameList, TopoFile &topoFile);
+                 nmb_ListOfStrings * (* list_of_strings_allocator) (),
+                 TopoFile &topoFile);
       // Constructor.
 
     ~nmb_Dataset (void);
@@ -56,6 +64,8 @@ class nmb_Dataset {
     BCGrid * inputGrid;
         ///< incoming data from microscope (data may be changed 
 	///< during acquisition)
+    nmb_ListOfStrings * imageNames;
+        ///< List of names of image in dataImages list.
     nmb_ImageList * dataImages;
 	///< static data plus data currently being acquired or
 	///< overwritten (i.e., including inputGrid)

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include	<stdlib.h>
 #include	<stdio.h>
 
@@ -135,7 +142,6 @@ int
 BCGrid::readBinaryNanoscopeFile(FILE* file, const char *filename)
 {
     char *units_name;
-    BCDebug debug("BCGrid::readBinaryNanoscopeFile", GRID_CODE);
 
     _num_x = NANOSCOPE_GRID_X;
     _num_y = NANOSCOPE_GRID_Y;
@@ -314,8 +320,6 @@ parseNanoscopeFileHeader
 int
 BCGrid::parseNanoscopeFileHeader(FILE* file)
 {
-    BCDebug debug("BCGrid::parseNanoscopeFileHeader", GRID_CODE);
-
     char image_type[BUFSIZ];
     int	ngot = 1;
     int	pastline;

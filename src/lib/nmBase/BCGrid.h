@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef _BCGRID_
 #define _BCGRID_
 
@@ -14,7 +21,7 @@ extern const char * EMPTY_PLANE_NAME;
 
 #include <ctype.h> 
 #include <stdio.h> // for FILE
-#include "BCDebug.h"
+#include "BCString.h"
 
 class BCPlane;
 

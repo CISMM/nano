@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "AFMState.h"
 
 #include "nmm_Types.h"
@@ -42,10 +49,6 @@ the code into a single hierarchy
 The default parameters given here are, or were once, "reasonable",
 according to the physicists.
 
-Flaws:
-  We'd like to make this code part of a Microscope library someday.
-  To do that, we need to get rid of the compile-time dependancy on
-callbacks, which means using set_tcl_change_callback extensively.
 */
 
 // juliano 9/19/99 added conditional around this defn to supress warning
@@ -429,6 +432,7 @@ AFMState::AFMState (const AFMInitializationState & i) :
     yMax (i.yMax),
     zMin (-5000.0f),
     zMax ( 5000.0f),
+    scanAngle(0),
 
     doDriftComp    (i.doDriftComp),
     doRelaxComp    ("doRelaxComp", i.doRelaxComp),

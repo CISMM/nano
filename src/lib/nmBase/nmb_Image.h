@@ -1,10 +1,17 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMB_IMAGE_H
 #define NMB_IMAGE_H
 
+#include <vrpn_Shared.h>
 #include "BCString.h"
 #include "BCPlane.h"
 #include "BCGrid.h"
-#include <vrpn_Types.h>
 #include "nmb_String.h"
 #include <math.h>
 #include "Topo.h"
@@ -12,11 +19,12 @@
 #if !((defined __CYGWIN__) || (_WIN32))
 #include <values.h>	// for MAXSHORT - probably different on windows
 #else
-#include <limits.h>
-#ifndef MAXSHORT
-#define MAXSHORT SHRT_MAX
+// MAXSHORT taken care of by vrpn_Shared.h above - it's in a windows header.
+//#include <limits.h>
+//#ifndef MAXSHORT
+//#define MAXSHORT SHRT_MAX
 
-#endif
+//#endif
 #endif
 
 // min and max also in Topo.h

@@ -1,20 +1,92 @@
-# This file sets up the $image frame, and must be sourced from a
-# specific location inside tools.tcl
+#/*===3rdtech===
+#  Copyright (c) 2000 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
 # 
 # for widgets that change behavior of image mode
 #
  
-set image [create_closing_toplevel image "Image Parameters"]
+set nmInfo(image) [create_closing_toplevel image "Image Parameters"]
+set nmInfo(imagequick) [frame $nmInfo(image).quick]
+set nmInfo(imagefull) [frame $nmInfo(image).full]
 
-frame $image.mode 
-frame $image.modeparam 
-frame $image.style 
-frame $image.styleparam 
-frame $image.tool 
-frame $image.toolparam 
+# Button swaps between quick and full param frames.  
+set image_quick_or_full "quick"
+button $nmInfo(image).quick_or_full -text "Full params" -command {
+    global image_quick_or_full nmInfo
+    if {$image_quick_or_full == "quick"} {
+        pack forget $nmInfo(imagequick)
+        pack $nmInfo(imagefull) -side top -expand yes -fill both
+        set image_quick_or_full "full"
+        $nmInfo(image).quick_or_full configure -text "Quick params"
+    } else {
+        pack forget $nmInfo(imagefull)
+        pack $nmInfo(imagequick) -side top -expand yes -fill both
+        set image_quick_or_full "quick"
+        $nmInfo(image).quick_or_full configure -text "Full params"
+    }
+}
+pack $nmInfo(image).quick_or_full -side top -anchor nw
+
+pack $nmInfo(imagequick) -side top -expand yes -fill both
+
+#------------------
+# Quick image controls. Changes to these controls take effect 
+# immediately, but can't change modes. 
+iwidgets::Labeledframe $nmInfo(imagequick).imagestate -labeltext "Image state" \
+	-labelpos nw
+set nmInfo(imagepage) [frame $nmInfo(imagequick).imagepage]
+pack $nmInfo(imagequick).imagestate $nmInfo(imagequick).imagepage -side top \
+	-fill x
+
+
+set nmInfo(imagestate) [$nmInfo(imagequick).imagestate childsite]
+
+label $nmInfo(imagestate).image_mode -text "Oscillate" -anchor nw
+pack $nmInfo(imagestate).image_mode -side top -fill x 
+
+# Callback procedures set a variable to tell C code that
+# it's time to send new values to AFM. 
+generic_entry $nmInfo(imagepage).setpoint imagep_setpoint \
+	"Setpoint (0,100%)" real \
+        { set accepted_image_params 1 }
+generic_entry $nmInfo(imagepage).p-gain imagep_p_gain "P-Gain (0,5)" real \
+        { set accepted_image_params 1 }
+generic_entry $nmInfo(imagepage).i-gain imagep_i_gain "I-Gain (0,5)" real\
+        { set accepted_image_params 1 }
+generic_entry $nmInfo(imagepage).d-gain imagep_d_gain "D-Gain (0,5)" real\
+        { set accepted_image_params 1 }
+generic_entry $nmInfo(imagepage).rate imagep_rate "Rate (um/sec)" real\
+        { set accepted_image_params 1 }
+
+pack    $nmInfo(imagepage).setpoint $nmInfo(imagepage).p-gain \
+	$nmInfo(imagepage).i-gain $nmInfo(imagepage).d-gain \
+	$nmInfo(imagepage).rate \
+	-side top -anchor nw
+
+iwidgets::Labeledwidget::alignlabels \
+	$nmInfo(imagepage).setpoint $nmInfo(imagepage).p-gain \
+	$nmInfo(imagepage).i-gain $nmInfo(imagepage).d-gain \
+	$nmInfo(imagepage).rate 
+
+
+
+#------------------
+# Full image controls, allow switch between any mode using 
+# Accept and Revert buttons.
+
+frame $nmInfo(imagefull).mode 
+frame $nmInfo(imagefull).modeparam 
+frame $nmInfo(imagefull).style 
+frame $nmInfo(imagefull).styleparam 
+frame $nmInfo(imagefull).tool 
+frame $nmInfo(imagefull).toolparam 
 
 # dummy entry widget to force focus to move away from real entry widgets.
-entry $image.dummy_entry
+entry $nmInfo(imagefull).dummy_entry
 
 # Tool variable initialization
 # in the real thing these will be inherited from microscope - i think
@@ -55,8 +127,7 @@ set newimagep_rate $imagep_rate
 trace variable newimagep_mode w flip_im_mode
 
 proc updateFromC {realname name element op} {
-    global image
-    global modify
+    global nmInfo
     global scanline
     global save_bg
     
@@ -65,10 +136,10 @@ proc updateFromC {realname name element op} {
     set new$realname $oldimvar
 #    puts "Update from C: new$realname $oldimvar"
 
-    $image.mode.accept configure -background $save_bg
-    $image.mode.cancel configure -background $save_bg
-    $modify.mode.accept configure -background $save_bg
-    $modify.mode.cancel configure -background $save_bg
+    $nmInfo(imagefull).mode.accept configure -background $save_bg
+    $nmInfo(imagefull).mode.cancel configure -background $save_bg
+    $nmInfo(modifyfull).mode.accept configure -background $save_bg
+    $nmInfo(modifyfull).mode.cancel configure -background $save_bg
 #    $scanline.mode.accept configure -background $save_bg
 #    $scanline.mode.cancel configure -background $save_bg
 
@@ -101,74 +172,74 @@ trace variable newimagep_rate    w imBackgChReal
 #
 #setup Image box
 #
-pack $image.mode $image.modeparam $image.style $image.styleparam $image.tool \
-	$image.toolparam -side left -padx 4 -fill both
+pack $nmInfo(imagefull).mode $nmInfo(imagefull).modeparam $nmInfo(imagefull).style $nmInfo(imagefull).styleparam $nmInfo(imagefull).tool \
+	$nmInfo(imagefull).toolparam -side left -padx 4 -fill both
 
 #setup Image mode box
-label $image.mode.label -text "Image Mode" 
-pack $image.mode.label -side top -anchor nw
-radiobutton $image.mode.oscillating -text "Oscillating" -variable newimagep_mode -value 0 
-radiobutton $image.mode.contact -text "Contact" -variable newimagep_mode -value 1 
-button $image.mode.accept -text "Accept" -command "acceptImageVars $imageplist"
-button $image.mode.cancel -text "Revert" -command "cancelImageVars $imageplist"
-pack $image.mode.oscillating $image.mode.contact -side top -anchor nw -fill x
-pack $image.mode.cancel $image.mode.accept -side bottom -fill x
+label $nmInfo(imagefull).mode.label -text "Image Mode" 
+pack $nmInfo(imagefull).mode.label -side top -anchor nw
+radiobutton $nmInfo(imagefull).mode.oscillating -text "Oscillating" -variable newimagep_mode -value 0 
+radiobutton $nmInfo(imagefull).mode.contact -text "Contact" -variable newimagep_mode -value 1 
+button $nmInfo(imagefull).mode.accept -text "Accept" -command "acceptImageVars $imageplist"
+button $nmInfo(imagefull).mode.cancel -text "Revert" -command "cancelImageVars $imageplist"
+pack $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact -side top -anchor nw -fill x
+pack $nmInfo(imagefull).mode.cancel $nmInfo(imagefull).mode.accept -side bottom -fill x
 
 # save the background color we use for "accept" and "revert" buttons
-set save_bg [$image.mode.accept cget -background]
+set save_bg [$nmInfo(imagefull).mode.accept cget -background]
 
 #setup Image modeparam box
-label $image.modeparam.label -text "Mode parameters" 
-pack $image.modeparam.label -side top -anchor nw 
+label $nmInfo(imagefull).modeparam.label -text "Mode parameters" 
+pack $nmInfo(imagefull).modeparam.label -side top -anchor nw 
 
-generic_entry $image.modeparam.setpoint newimagep_setpoint \
+generic_entry $nmInfo(imagefull).modeparam.setpoint newimagep_setpoint \
 	"Set Point (0,100)" real 
-generic_entry $image.modeparam.p-gain newimagep_p_gain "P-Gain (0,5)" real 
-generic_entry $image.modeparam.i-gain newimagep_i_gain "I-Gain (0,5)" real 
-generic_entry $image.modeparam.d-gain newimagep_d_gain "D-Gain (0,5)" real 
-generic_entry $image.modeparam.amplitude newimagep_amplitude \
+generic_entry $nmInfo(imagefull).modeparam.p-gain newimagep_p_gain "P-Gain (0,5)" real 
+generic_entry $nmInfo(imagefull).modeparam.i-gain newimagep_i_gain "I-Gain (0,5)" real 
+generic_entry $nmInfo(imagefull).modeparam.d-gain newimagep_d_gain "D-Gain (0,5)" real 
+generic_entry $nmInfo(imagefull).modeparam.amplitude newimagep_amplitude \
 	"Amplitude (0,2)" real 
-generic_entry $image.modeparam.rate newimagep_rate "Rate (1,50 uM/sec)" real 
+generic_entry $nmInfo(imagefull).modeparam.rate newimagep_rate "Rate (1,50 uM/sec)" real 
 
-pack    $image.modeparam.setpoint  $image.modeparam.p-gain \
-	$image.modeparam.i-gain $image.modeparam.d-gain \
-        $image.modeparam.rate \
+pack    $nmInfo(imagefull).modeparam.setpoint  $nmInfo(imagefull).modeparam.p-gain \
+	$nmInfo(imagefull).modeparam.i-gain $nmInfo(imagefull).modeparam.d-gain \
+        $nmInfo(imagefull).modeparam.rate \
 	-side top -fill x -pady $fspady
 
 iwidgets::Labeledwidget::alignlabels \
-    $image.modeparam.setpoint  $image.modeparam.p-gain \
-	$image.modeparam.i-gain $image.modeparam.d-gain \
-	$image.modeparam.amplitude $image.modeparam.rate 
+    $nmInfo(imagefull).modeparam.setpoint  $nmInfo(imagefull).modeparam.p-gain \
+	$nmInfo(imagefull).modeparam.i-gain $nmInfo(imagefull).modeparam.d-gain \
+	$nmInfo(imagefull).modeparam.amplitude $nmInfo(imagefull).modeparam.rate 
 	
 if {$newimagep_mode==0} {
-  pack $image.modeparam.amplitude  -side top -fill x -pady $fspady
+  pack $nmInfo(imagefull).modeparam.amplitude  -side top -fill x -pady $fspady
 }
 
-set im_oscillating_list "$image.modeparam.amplitude"
+set im_oscillating_list "$nmInfo(imagefull).modeparam.amplitude"
 
 #setup Image style box
-label $image.style.label -text "Style" 
-pack $image.style.label -side top -anchor nw
-radiobutton $image.style.sharp -text "Sharp" -variable newimagep_style -value 0
-pack $image.style.sharp -side top -fill x 
+label $nmInfo(imagefull).style.label -text "Style" 
+pack $nmInfo(imagefull).style.label -side top -anchor nw
+radiobutton $nmInfo(imagefull).style.sharp -text "Sharp" -variable newimagep_style -value 0
+pack $nmInfo(imagefull).style.sharp -side top -fill x 
 
 
 #setup Image styleparam box
-label $image.styleparam.label -text "Style parameters" 
-pack $image.styleparam.label -side top 
+label $nmInfo(imagefull).styleparam.label -text "Style parameters" 
+pack $nmInfo(imagefull).styleparam.label -side top 
 
 
 #setup Image tool box
-label $image.tool.label -text "Tool" 
-pack $image.tool.label -side top 
+label $nmInfo(imagefull).tool.label -text "Tool" 
+pack $nmInfo(imagefull).tool.label -side top 
 
-radiobutton $image.tool.freehand -text "Freehand" -variable newimagep_tool -value 0  
+radiobutton $nmInfo(imagefull).tool.freehand -text "Freehand" -variable newimagep_tool -value 0  
 
-pack $image.tool.freehand  -side top -fill x
+pack $nmInfo(imagefull).tool.freehand  -side top -fill x
 
 #setup Image toolparam box
-label $image.toolparam.label -text "Tool parameters" 
-pack $image.toolparam.label -side top -anchor nw
+label $nmInfo(imagefull).toolparam.label -text "Tool parameters" 
+pack $nmInfo(imagefull).toolparam.label -side top -anchor nw
 
 
 #
@@ -179,9 +250,9 @@ pack $image.toolparam.label -side top -anchor nw
 # value of a global variable, i.e. which radiobutton is pressed.
 # They are called by "trace variable"
 
-# flip $image.modeparam widgets
+# flip $nmInfo(imagefull).modeparam widgets
 proc flip_im_mode {im_mode element op} {
-    global image
+    global nmInfo
     global im_oscillating_list
     global fspady
 
@@ -190,13 +261,13 @@ proc flip_im_mode {im_mode element op} {
     if {$k==0} {
         # selected oscillating
 	# 6 is magic number - number of widgets to leave alone + 1
-	set plist [lrange [pack slaves $image.modeparam] 6 end] 
+	set plist [lrange [pack slaves $nmInfo(imagefull).modeparam] 6 end] 
 	foreach widg $plist {pack forget $widg} 
 	foreach widg $im_oscillating_list {pack $widg -side top -fill x -pady $fspady}
     } elseif {$k==1} {
 	# selected contact
 	# magic number 6 again
-	set plist [lrange [pack slaves $image.modeparam] 6 end] 
+	set plist [lrange [pack slaves $nmInfo(imagefull).modeparam] 6 end] 
 	foreach widg $plist {pack forget $widg}
     }
 }
@@ -211,21 +282,21 @@ proc flip_im_mode {im_mode element op} {
 set num_im_new_changed 0
 
 proc imBackgChReal {fooa element op} {
-    global image
+    global nmInfo
 
-	$image.mode.accept configure -background LightPink1
-	$image.mode.cancel configure -background LightPink1
+	$nmInfo(imagefull).mode.accept configure -background LightPink1
+	$nmInfo(imagefull).mode.cancel configure -background LightPink1
 }
 
 proc acceptImageVars {varlist} {
     global accepted_image_params
-    global image
+    global nmInfo
     global save_bg
 
     # Entry widgets commit their value when they loose focus. 
     # Change the focus to force them to commit their values. 
     # We're going to close the window later anyway...
-    focus $image.dummy_entry
+    focus $nmInfo(imagefull).dummy_entry
     foreach val $varlist {
 	global imagep_$val
 	global newimagep_$val
@@ -237,8 +308,8 @@ proc acceptImageVars {varlist} {
     }
     set accepted_image_params 1
     # None of the newimage_* vars are now changed
-	$image.mode.accept configure -background $save_bg
-	$image.mode.cancel configure -background $save_bg
+	$nmInfo(imagefull).mode.accept configure -background $save_bg
+	$nmInfo(imagefull).mode.cancel configure -background $save_bg
 
     #close the window when the Accept Button is pressed
     #wm withdraw $image
@@ -246,7 +317,7 @@ proc acceptImageVars {varlist} {
 
 
 proc cancelImageVars {varlist} {
-    global image
+    global nmInfo
     global save_bg
 
     foreach val $varlist {
@@ -257,7 +328,7 @@ proc cancelImageVars {varlist} {
 	}
     }
     # None of the newimage_* vars are now changed
-	$image.mode.accept configure -background $save_bg
-	$image.mode.cancel configure -background $save_bg
+	$nmInfo(imagefull).mode.accept configure -background $save_bg
+	$nmInfo(imagefull).mode.cancel configure -background $save_bg
 }
 

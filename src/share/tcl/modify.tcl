@@ -1,16 +1,187 @@
+#/*===3rdtech===
+#  Copyright (c) 2000 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
 #
 # for widgets that change behavior of modify mode
 #
-set modify [create_closing_toplevel modify "Modify parameters"]
+set nmInfo(modify) [create_closing_toplevel modify "Modify parameters"]
+set nmInfo(modifyquick) [frame $nmInfo(modify).quick]
+set nmInfo(modifyfull) [frame $nmInfo(modify).full]
 
-frame $modify.mode 
-frame $modify.modeparam 
-frame $modify.style 
-frame $modify.styleparam 
-frame $modify.tool 
-frame $modify.toolparam 
-frame $modify.control 
-frame $modify.controlparam 
+# Button swaps between quick and full param frames.  
+set modify_quick_or_full "quick"
+button $nmInfo(modify).quick_or_full -text "Full params" -command {
+    global modify_quick_or_full nmInfo
+    if {$modify_quick_or_full == "quick"} {
+        pack forget $nmInfo(modifyquick)
+        pack $nmInfo(modifyfull) -side top -expand yes -fill both
+        set modify_quick_or_full "full"
+        $nmInfo(modify).quick_or_full configure -text "Quick params"
+    } else {
+        pack forget $nmInfo(modifyfull)
+        pack $nmInfo(modifyquick) -side top -expand yes -fill both
+        set modify_quick_or_full "quick"
+        $nmInfo(modify).quick_or_full configure -text "Full params"
+    }
+}
+pack $nmInfo(modify).quick_or_full -side top -anchor nw
+
+pack $nmInfo(modifyquick) -side top -expand yes -fill both
+
+set nmInfo(modifydisplay) [frame $nmInfo(modify).bottom]
+pack $nmInfo(modifydisplay) -side bottom -fill x
+#------------------
+# Quick modify controls. Changes to these controls take effect 
+# immediately, but can't change modes. 
+set nmInfo(modifypage) [frame $nmInfo(modifyquick).middle]
+iwidgets::Labeledframe $nmInfo(modifyquick).modifystate -labeltext "Modify state" \
+	-labelpos nw
+pack $nmInfo(modifyquick).modifystate $nmInfo(modifypage) \
+        -side top -fill x 
+
+set nmInfo(modifystate) [$nmInfo(modifyquick).modifystate childsite]
+generic_entry $nmInfo(modifypage).setpoint modifyp_setpoint \
+	"Setpoint (0,100%)" real \
+        { set accepted_modify_params 1 }
+generic_entry $nmInfo(modifypage).p-gain modifyp_p_gain "P-Gain (0,5)" real \
+        { set accepted_modify_params 1 }
+generic_entry $nmInfo(modifypage).i-gain modifyp_i_gain "I-Gain (0,5)" real \
+        { set accepted_modify_params 1 }
+generic_entry $nmInfo(modifypage).d-gain modifyp_d_gain "D-Gain (0,5)" real \
+        { set accepted_modify_params 1 }
+generic_entry $nmInfo(modifypage).rate modifyp_rate "Rate (um/sec)" real \
+        { set accepted_modify_params 1 }
+
+	
+pack    $nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
+	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
+	$nmInfo(modifypage).rate \
+	-side top -anchor nw
+
+iwidgets::Labeledwidget::alignlabels \
+	$nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
+	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
+	$nmInfo(modifypage).rate 
+
+label $nmInfo(modifystate).mod_mode -text "Contact"
+label $nmInfo(modifystate).mod_style -text "Sharp"
+label $nmInfo(modifystate).mod_tool -text "Freehand"
+label $nmInfo(modifystate).mod_control -text "Feedback"
+
+proc show_mode {name path nm element op} {
+    upvar #0 $name mode
+    if { $mode == 0 } {
+	#oscillating mode
+	$path configure -text "Oscillate"
+    } elseif { $mode == 1 } {
+	#contact mode
+	$path configure -text "Contact"
+    } 
+}
+
+proc show_style {name path nm element op} {
+    upvar #0 $name style
+    if { $style == 0 } {
+	#Sharp style
+	$path configure -text "Sharp"
+	#  elseif  $style == 1 
+	#blunt style Obsolete
+    } elseif { $style == 2 } {
+	#sweep style
+	$path configure -text "Sweep"
+    } elseif { $style == 3 } {
+	#Sewing style
+	$path configure -text "Sewing"
+    } elseif { $style == 4 } {
+	# force curvestyle
+	$path configure -text "Force Curve"
+    }
+}
+
+proc show_tool {name path nm element op} {
+    upvar #0 $name tool
+    if { $tool == 0 } {
+	#Freehand tool
+	$path configure -text "Freehand"
+    } elseif { $tool == 1 } {
+	#line tool
+	$path configure -text "Line"
+    } elseif { $tool == 2 } {
+	#Constrained freehand tool
+	$path configure -text "Constr. Free"
+    } elseif { $tool == 3 } {
+	# Slow line tool
+	$path configure -text "Slow Line"
+    }
+}
+
+proc show_control {name path nm element op} {
+    upvar #0 $name control
+    if { $control == 0 } {
+	#oscillating control
+	$path configure -text "Feedback"
+    } elseif { $control == 1 } {
+	#contact control
+	$path configure -text "Direct Z"
+    } 
+}
+
+trace variable imagep_mode w \
+	"show_mode imagep_mode $nmInfo(imagestate).image_mode"
+
+trace variable modifyp_mode w \
+	"show_mode modifyp_mode $nmInfo(modifystate).mod_mode"
+trace variable modifyp_style w \
+	"show_style modifyp_style $nmInfo(modifystate).mod_style"
+trace variable modifyp_tool w \
+	"show_tool modifyp_tool $nmInfo(modifystate).mod_tool"
+trace variable modifyp_control w \
+	"show_control modifyp_control $nmInfo(modifystate).mod_control"
+
+pack $nmInfo(modifystate).mod_control -side bottom -anchor nw
+pack $nmInfo(modifystate).mod_mode $nmInfo(modifystate).mod_style \
+	$nmInfo(modifystate).mod_tool \
+	-side left -anchor nw
+
+label $nmInfo(modifydisplay).mod_mode -text "Modify Display"
+pack $nmInfo(modifydisplay).mod_mode -side top -anchor nw -pady 4
+
+set number_of_markers_shown 500
+set marker_height 100
+generic_entry $nmInfo(modifydisplay).num_mod_markers number_of_markers_shown \
+	"Num. Markers" real
+generic_entry $nmInfo(modifydisplay).mod_marker_height marker_height \
+	"Marker Height (nm)" real
+
+iwidgets::Labeledwidget::alignlabels \
+	$nmInfo(modifydisplay).num_mod_markers \
+	$nmInfo(modifydisplay).mod_marker_height
+	
+
+button $nmInfo(modifydisplay).modmarkclr -text "Clear Markers" \
+	-command "set term_input C"
+
+pack $nmInfo(modifydisplay).num_mod_markers \
+	$nmInfo(modifydisplay).mod_marker_height \
+	$nmInfo(modifydisplay).modmarkclr \
+	-side top -anchor nw
+
+#------------------
+# Full modify controls, allow switch between any mode using 
+# Accept and Revert buttons.
+
+frame $nmInfo(modifyfull).mode 
+frame $nmInfo(modifyfull).modeparam 
+frame $nmInfo(modifyfull).style 
+frame $nmInfo(modifyfull).styleparam 
+frame $nmInfo(modifyfull).tool 
+frame $nmInfo(modifyfull).toolparam 
+frame $nmInfo(modifyfull).control 
+frame $nmInfo(modifyfull).controlparam 
 
 # Tool variable initialization
 # in the real thing these will be inherited from microscope - i think
@@ -245,190 +416,190 @@ trace variable newmodifyp_max_lat_setpoint w modBackgChReal
 #
 #setup Modify box
 #
-pack $modify.mode $modify.modeparam $modify.style $modify.styleparam \
-    $modify.tool $modify.toolparam $modify.control $modify.controlparam \
+pack $nmInfo(modifyfull).mode $nmInfo(modifyfull).modeparam $nmInfo(modifyfull).style $nmInfo(modifyfull).styleparam \
+    $nmInfo(modifyfull).tool $nmInfo(modifyfull).toolparam $nmInfo(modifyfull).control $nmInfo(modifyfull).controlparam \
     -side left -padx 4 -fill both
 
 #setup Modify mode box
-label $modify.mode.label -text "Modify Mode" 
-pack $modify.mode.label -side top -anchor nw
-radiobutton $modify.mode.oscillating -text "Oscillating" -variable newmodifyp_mode -value 0 -anchor nw
-radiobutton $modify.mode.contact -text "Contact" -variable newmodifyp_mode -value 1 -anchor nw
-button $modify.mode.accept -text "Accept"  \
+label $nmInfo(modifyfull).mode.label -text "Modify Mode" 
+pack $nmInfo(modifyfull).mode.label -side top -anchor nw
+radiobutton $nmInfo(modifyfull).mode.oscillating -text "Oscillating" -variable newmodifyp_mode -value 0 -anchor nw
+radiobutton $nmInfo(modifyfull).mode.contact -text "Contact" -variable newmodifyp_mode -value 1 -anchor nw
+button $nmInfo(modifyfull).mode.accept -text "Accept"  \
 	-command "acceptModifyVars $modifyplist"
-button $modify.mode.cancel -text "Revert"  \
+button $nmInfo(modifyfull).mode.cancel -text "Revert"  \
 	-command "cancelModifyVars $modifyplist"
 
-checkbutton $modify.mode.relaxcomp -text "Relax Comp on" -variable doRelaxComp \
+checkbutton $nmInfo(modifyfull).mode.relaxcomp -text "Relax Comp on" -variable doRelaxComp \
 	
 
-pack $modify.mode.oscillating $modify.mode.contact -side top -fill x
-pack $modify.mode.relaxcomp -side top -fill x -pady 20
+pack $nmInfo(modifyfull).mode.oscillating $nmInfo(modifyfull).mode.contact -side top -fill x
+pack $nmInfo(modifyfull).mode.relaxcomp -side top -fill x -pady 20
 
-pack $modify.mode.cancel $modify.mode.accept -side bottom -fill x
+pack $nmInfo(modifyfull).mode.cancel $nmInfo(modifyfull).mode.accept -side bottom -fill x
 
 
 #setup Modify modeparam box
-label $modify.modeparam.label -text "Mode parameters" 
-pack $modify.modeparam.label -side top -anchor nw
+label $nmInfo(modifyfull).modeparam.label -text "Mode parameters" 
+pack $nmInfo(modifyfull).modeparam.label -side top -anchor nw
 
-generic_entry $modify.modeparam.setpoint newmodifyp_setpoint \
+generic_entry $nmInfo(modifyfull).modeparam.setpoint newmodifyp_setpoint \
 	"Setpoint(-70 70)" real
-generic_entry $modify.modeparam.p-gain newmodifyp_p_gain "P-Gain (0,5)" real 
-generic_entry $modify.modeparam.i-gain newmodifyp_i_gain "I-Gain (0,2)" real 
-generic_entry $modify.modeparam.d-gain newmodifyp_d_gain "D-Gain (0,5)" real 
-generic_entry $modify.modeparam.rate newmodifyp_rate "Rate (0.1,50.0 uM/sec)" real 
-generic_entry $modify.modeparam.amplitude newmodifyp_amplitude \
+generic_entry $nmInfo(modifyfull).modeparam.p-gain newmodifyp_p_gain "P-Gain (0,5)" real 
+generic_entry $nmInfo(modifyfull).modeparam.i-gain newmodifyp_i_gain "I-Gain (0,2)" real 
+generic_entry $nmInfo(modifyfull).modeparam.d-gain newmodifyp_d_gain "D-Gain (0,5)" real 
+generic_entry $nmInfo(modifyfull).modeparam.rate newmodifyp_rate "Rate (0.1,50.0 uM/sec)" real 
+generic_entry $nmInfo(modifyfull).modeparam.amplitude newmodifyp_amplitude \
 	"Amplitude (0,1)" real 
 
 iwidgets::Labeledwidget::alignlabels \
-    $modify.modeparam.setpoint $modify.modeparam.p-gain \
-    $modify.modeparam.i-gain $modify.modeparam.d-gain \
-    $modify.modeparam.rate \
-    $modify.modeparam.amplitude 
+    $nmInfo(modifyfull).modeparam.setpoint $nmInfo(modifyfull).modeparam.p-gain \
+    $nmInfo(modifyfull).modeparam.i-gain $nmInfo(modifyfull).modeparam.d-gain \
+    $nmInfo(modifyfull).modeparam.rate \
+    $nmInfo(modifyfull).modeparam.amplitude 
 
-pack    $modify.modeparam.setpoint $modify.modeparam.p-gain \
-	$modify.modeparam.i-gain $modify.modeparam.d-gain \
-        $modify.modeparam.rate \
+pack    $nmInfo(modifyfull).modeparam.setpoint $nmInfo(modifyfull).modeparam.p-gain \
+	$nmInfo(modifyfull).modeparam.i-gain $nmInfo(modifyfull).modeparam.d-gain \
+        $nmInfo(modifyfull).modeparam.rate \
 	-side top -fill x -pady $fspady
 if {$newmodifyp_mode == 0} {
-  pack $modify.modeparam.amplitude -side top -fill x 
+  pack $nmInfo(modifyfull).modeparam.amplitude -side top -fill x 
 }
-set mod_oscillating_list "$modify.modeparam.amplitude"
+set mod_oscillating_list "$nmInfo(modifyfull).modeparam.amplitude"
 
 #setup Modify style box
-label $modify.style.label -text "Style" 
-pack $modify.style.label -side top -anchor nw
-radiobutton $modify.style.sharp -text "Sharp" -variable newmodifyp_style \
+label $nmInfo(modifyfull).style.label -text "Style" 
+pack $nmInfo(modifyfull).style.label -side top -anchor nw
+radiobutton $nmInfo(modifyfull).style.sharp -text "Sharp" -variable newmodifyp_style \
 	-value 0 -anchor nw
-#radiobutton $modify.style.blunt -text "Blunt" -variable newmodifyp_style \
+#radiobutton $nmInfo(modifyfull).style.blunt -text "Blunt" -variable newmodifyp_style \
 #	-value 1 -anchor nw
 
-radiobutton $modify.style.sweep -text "Sweep" -variable newmodifyp_style \
+radiobutton $nmInfo(modifyfull).style.sweep -text "Sweep" -variable newmodifyp_style \
 	-value 2 -anchor nw
-radiobutton $modify.style.sewing -text "Sewing" -variable newmodifyp_style \
+radiobutton $nmInfo(modifyfull).style.sewing -text "Sewing" -variable newmodifyp_style \
 	-value 3 -anchor nw
-radiobutton $modify.style.forcecurve -text "ForceCurve" \
+radiobutton $nmInfo(modifyfull).style.forcecurve -text "ForceCurve" \
 	-variable newmodifyp_style -value 4  -anchor nw
-pack $modify.style.sharp $modify.style.sweep $modify.style.sewing \
-	$modify.style.forcecurve -side top -fill x
+pack $nmInfo(modifyfull).style.sharp $nmInfo(modifyfull).style.sweep $nmInfo(modifyfull).style.sewing \
+	$nmInfo(modifyfull).style.forcecurve -side top -fill x
 
 #setup Modify styleparam box
-label $modify.styleparam.label -text "Style parameters" 
-pack $modify.styleparam.label -side top -anchor nw
+label $nmInfo(modifyfull).styleparam.label -text "Style parameters" 
+pack $nmInfo(modifyfull).styleparam.label -side top -anchor nw
 
-#generic_entry $modify.styleparam.tri-size newmodifyp_tri_size "Tri Size" real 
-#generic_entry $modify.styleparam.tri-speed newmodifyp_tri_speed "Tri Speed" real 
+#generic_entry $nmInfo(modifyfull).styleparam.tri-size newmodifyp_tri_size "Tri Size" real 
+#generic_entry $nmInfo(modifyfull).styleparam.tri-speed newmodifyp_tri_speed "Tri Speed" real 
 
-generic_entry $modify.styleparam.sweepwidth newmodifyp_sweep_width\
+generic_entry $nmInfo(modifyfull).styleparam.sweepwidth newmodifyp_sweep_width\
 	"Sweep Width (0,1000 nm)" real 
 
-generic_entry $modify.styleparam.bot-delay newmodifyp_bot_delay \
+generic_entry $nmInfo(modifyfull).styleparam.bot-delay newmodifyp_bot_delay \
 	"Bottom Delay (0,10)" real 
-generic_entry $modify.styleparam.top-delay newmodifyp_top_delay \
+generic_entry $nmInfo(modifyfull).styleparam.top-delay newmodifyp_top_delay \
 	"Top Delay (0,10)" real 
-generic_entry $modify.styleparam.z-pull newmodifyp_z_pull \
+generic_entry $nmInfo(modifyfull).styleparam.z-pull newmodifyp_z_pull \
 	"Pullout Height (10,1000 nm)" real 
-generic_entry $modify.styleparam.punchdist newmodifyp_punchdist \
+generic_entry $nmInfo(modifyfull).styleparam.punchdist newmodifyp_punchdist \
 	"Punch Dist. (0,100 nm)" real 
-generic_entry $modify.styleparam.speed newmodifyp_speed \
+generic_entry $nmInfo(modifyfull).styleparam.speed newmodifyp_speed \
 	"Speed (0,1000)" real 
-generic_entry $modify.styleparam.watchdog newmodifyp_watchdog \
+generic_entry $nmInfo(modifyfull).styleparam.watchdog newmodifyp_watchdog \
 	"Watchdog Dist. (50,500 nm)" real 
 
-#generic_entry $modify.styleparam.start-delay newmodifyp_start_delay \
+#generic_entry $nmInfo(modifyfull).styleparam.start-delay newmodifyp_start_delay \
 #	"Start Delay (0,200 us)" real 
-generic_entry $modify.styleparam.z-start newmodifyp_z_start \
+generic_entry $nmInfo(modifyfull).styleparam.z-start newmodifyp_z_start \
 	"Start Height (-1000,1000 nm)" real 
-generic_entry $modify.styleparam.z-end newmodifyp_z_end \
+generic_entry $nmInfo(modifyfull).styleparam.z-end newmodifyp_z_end \
 	"End Height (-1000,1000 nm)" real 
-generic_entry $modify.styleparam.z-pullback newmodifyp_z_pullback \
+generic_entry $nmInfo(modifyfull).styleparam.z-pullback newmodifyp_z_pullback \
 	"Pullout Height (-1000,0 nm)" real 
-generic_entry $modify.styleparam.force-limit newmodifyp_force_limit\
+generic_entry $nmInfo(modifyfull).styleparam.force-limit newmodifyp_force_limit\
 	 "Force limit (0,1000 nA)" real 
-generic_entry $modify.styleparam.forcecurvedist newmodifyp_fcdist \
+generic_entry $nmInfo(modifyfull).styleparam.forcecurvedist newmodifyp_fcdist \
 	"F.C. Dist. (0,500 nm)" real 
-generic_entry $modify.styleparam.num-layers newmodifyp_num_layers \
+generic_entry $nmInfo(modifyfull).styleparam.num-layers newmodifyp_num_layers \
 	"# samples (1,100)" real 
-generic_entry $modify.styleparam.num-halfcycles newmodifyp_num_hcycles \
+generic_entry $nmInfo(modifyfull).styleparam.num-halfcycles newmodifyp_num_hcycles \
 	"# half cycles (1,4)" real 
-generic_entry $modify.styleparam.sample-speed newmodifyp_sample_speed "sample speed (0,10 um/s)" real 
-generic_entry $modify.styleparam.pullback-speed	newmodifyp_pullback_speed "pullback speed (0,100 um/s)" real 
-generic_entry $modify.styleparam.start-speed newmodifyp_start_speed "start speed (0,10 um/s)" real 
-generic_entry $modify.styleparam.fdback-speed newmodifyp_feedback_speed "feedback speed (0,100 um/s)" real 
-generic_entry $modify.styleparam.avg-num newmodifyp_avg_num "averaging (1,10)" real 
-#generic_entry $modify.styleparam.sample-delay newmodifyp_sample_delay "sample delay (0,1000 us)" real 
-#generic_entry $modify.styleparam.pullback-delay newmodifyp_pullback_delay "pullback delay (0,1000 us)" real 
-#generic_entry $modify.styleparam.feedback-delay newmodifyp_feedback_delay "feedback delay (0,1000 us)" real 
+generic_entry $nmInfo(modifyfull).styleparam.sample-speed newmodifyp_sample_speed "sample speed (0,10 um/s)" real 
+generic_entry $nmInfo(modifyfull).styleparam.pullback-speed	newmodifyp_pullback_speed "pullback speed (0,100 um/s)" real 
+generic_entry $nmInfo(modifyfull).styleparam.start-speed newmodifyp_start_speed "start speed (0,10 um/s)" real 
+generic_entry $nmInfo(modifyfull).styleparam.fdback-speed newmodifyp_feedback_speed "feedback speed (0,100 um/s)" real 
+generic_entry $nmInfo(modifyfull).styleparam.avg-num newmodifyp_avg_num "averaging (1,10)" real 
+#generic_entry $nmInfo(modifyfull).styleparam.sample-delay newmodifyp_sample_delay "sample delay (0,1000 us)" real 
+#generic_entry $nmInfo(modifyfull).styleparam.pullback-delay newmodifyp_pullback_delay "pullback delay (0,1000 us)" real 
+#generic_entry $nmInfo(modifyfull).styleparam.feedback-delay newmodifyp_feedback_delay "feedback delay (0,1000 us)" real 
 
-#set mod_blunt_list "$modify.styleparam.tri-size $modify.styleparam.tri-speed"
-set mod_sweep_list "$modify.styleparam.sweepwidth"
-set mod_sewing_list "$modify.styleparam.bot-delay \
-	$modify.styleparam.top-delay $modify.styleparam.z-pull \
-        $modify.styleparam.punchdist $modify.styleparam.speed \
-	$modify.styleparam.watchdog"
+#set mod_blunt_list "$nmInfo(modifyfull).styleparam.tri-size $nmInfo(modifyfull).styleparam.tri-speed"
+set mod_sweep_list "$nmInfo(modifyfull).styleparam.sweepwidth"
+set mod_sewing_list "$nmInfo(modifyfull).styleparam.bot-delay \
+	$nmInfo(modifyfull).styleparam.top-delay $nmInfo(modifyfull).styleparam.z-pull \
+        $nmInfo(modifyfull).styleparam.punchdist $nmInfo(modifyfull).styleparam.speed \
+	$nmInfo(modifyfull).styleparam.watchdog"
 eval [concat iwidgets::Labeledwidget::alignlabels $mod_sewing_list]
 set mod_forcecurve_list " \
-	$modify.styleparam.z-start $modify.styleparam.z-end \
-	$modify.styleparam.z-pullback $modify.styleparam.force-limit \
-	$modify.styleparam.forcecurvedist $modify.styleparam.num-layers \
-	$modify.styleparam.num-halfcycles \
-	$modify.styleparam.sample-speed $modify.styleparam.pullback-speed \
-	$modify.styleparam.start-speed $modify.styleparam.fdback-speed \
-	$modify.styleparam.avg-num "
-#	$modify.styleparam.start-delay \
-#	$modify.styleparam.sample-delay \
-#	$modify.styleparam.pullback-delay $modify.styleparam.feedback-delay"
+	$nmInfo(modifyfull).styleparam.z-start $nmInfo(modifyfull).styleparam.z-end \
+	$nmInfo(modifyfull).styleparam.z-pullback $nmInfo(modifyfull).styleparam.force-limit \
+	$nmInfo(modifyfull).styleparam.forcecurvedist $nmInfo(modifyfull).styleparam.num-layers \
+	$nmInfo(modifyfull).styleparam.num-halfcycles \
+	$nmInfo(modifyfull).styleparam.sample-speed $nmInfo(modifyfull).styleparam.pullback-speed \
+	$nmInfo(modifyfull).styleparam.start-speed $nmInfo(modifyfull).styleparam.fdback-speed \
+	$nmInfo(modifyfull).styleparam.avg-num "
+#	$nmInfo(modifyfull).styleparam.start-delay \
+#	$nmInfo(modifyfull).styleparam.sample-delay \
+#	$nmInfo(modifyfull).styleparam.pullback-delay $nmInfo(modifyfull).styleparam.feedback-delay"
 eval [concat iwidgets::Labeledwidget::alignlabels $mod_forcecurve_list]
 
 #setup Modify tool box
-label $modify.tool.label -text "Tool" 
-pack $modify.tool.label -side top -anchor nw
-radiobutton $modify.tool.freehand -text "Freehand" -variable newmodifyp_tool \
+label $nmInfo(modifyfull).tool.label -text "Tool" 
+pack $nmInfo(modifyfull).tool.label -side top -anchor nw
+radiobutton $nmInfo(modifyfull).tool.freehand -text "Freehand" -variable newmodifyp_tool \
 	-value 0   -anchor nw
-radiobutton $modify.tool.line -text "Line" -variable newmodifyp_tool \
+radiobutton $nmInfo(modifyfull).tool.line -text "Line" -variable newmodifyp_tool \
 	-value 1   -anchor nw
-radiobutton $modify.tool.constrfree -text "Constr. Free" -variable newmodifyp_tool \
+radiobutton $nmInfo(modifyfull).tool.constrfree -text "Constr. Free" -variable newmodifyp_tool \
 	-value 2   -anchor nw
-radiobutton $modify.tool.slow_line -text "Slow Line" -variable newmodifyp_tool\
+radiobutton $nmInfo(modifyfull).tool.slow_line -text "Slow Line" -variable newmodifyp_tool\
 	-value 3   -anchor nw
-pack $modify.tool.freehand $modify.tool.line $modify.tool.constrfree \
-	$modify.tool.slow_line -side top -fill x 
+pack $nmInfo(modifyfull).tool.freehand $nmInfo(modifyfull).tool.line $nmInfo(modifyfull).tool.constrfree \
+	$nmInfo(modifyfull).tool.slow_line -side top -fill x 
 
 #setup Modify toolparam box
-label $modify.toolparam.label -text "Tool parameters" 
-pack $modify.toolparam.label -side top -anchor nw
+label $nmInfo(modifyfull).toolparam.label -text "Tool parameters" 
+pack $nmInfo(modifyfull).toolparam.label -side top -anchor nw
 
-generic_entry $modify.toolparam.step-size newmodifyp_step_size \
+generic_entry $nmInfo(modifyfull).toolparam.step-size newmodifyp_step_size \
 	"Step Size (0,5 nm)" real 
-set mod_line_list  "$modify.toolparam.step-size"
-set mod_slow_line_list "$modify.toolparam.step-size"
+set mod_line_list  "$nmInfo(modifyfull).toolparam.step-size"
+set mod_slow_line_list "$nmInfo(modifyfull).toolparam.step-size"
 
 #setup Modify control box
-label $modify.control.label -text "Control" 
-pack $modify.control.label -side top -anchor nw
-radiobutton $modify.control.feedback -text "Feedback" \
+label $nmInfo(modifyfull).control.label -text "Control" 
+pack $nmInfo(modifyfull).control.label -side top -anchor nw
+radiobutton $nmInfo(modifyfull).control.feedback -text "Feedback" \
     -variable newmodifyp_control -value 0  -anchor nw
-radiobutton $modify.control.directz -text "Direct Z" \
+radiobutton $nmInfo(modifyfull).control.directz -text "Direct Z" \
     -variable newmodifyp_control -value 1   -anchor nw
-pack $modify.control.feedback $modify.control.directz -side top -fill x 
+pack $nmInfo(modifyfull).control.feedback $nmInfo(modifyfull).control.directz -side top -fill x 
 
 #setup Modify controlparam box
-label $modify.controlparam.label -text "Control parameters" 
-pack $modify.controlparam.label -side top -anchor nw
+label $nmInfo(modifyfull).controlparam.label -text "Control parameters" 
+pack $nmInfo(modifyfull).controlparam.label -side top -anchor nw
 
-generic_entry $modify.controlparam.max_z_step newmodifyp_max_z_step \
+generic_entry $nmInfo(modifyfull).controlparam.max_z_step newmodifyp_max_z_step \
 	"max_z_step (0,5 nm)" real 
-generic_entry $modify.controlparam.max_xy_step newmodifyp_max_xy_step \
+generic_entry $nmInfo(modifyfull).controlparam.max_xy_step newmodifyp_max_xy_step \
 	"max_xy_step (0,5 nm)" real 
-generic_entry $modify.controlparam.min_z_setpoint newmodifyp_min_z_setpoint \
+generic_entry $nmInfo(modifyfull).controlparam.min_z_setpoint newmodifyp_min_z_setpoint \
 	"min_z_setpoint (-70,70 nA)" real 
-generic_entry $modify.controlparam.max_z_setpoint newmodifyp_max_z_setpoint \
+generic_entry $nmInfo(modifyfull).controlparam.max_z_setpoint newmodifyp_max_z_setpoint \
 	"max_z_setpoint (0,70 nA)" real 
-generic_entry $modify.controlparam.max_lat_setpoint newmodifyp_max_lat_setpoint \
+generic_entry $nmInfo(modifyfull).controlparam.max_lat_setpoint newmodifyp_max_lat_setpoint \
 	"max_lat_setpoint (0,70 nA)" real 
 
-set mod_directz_list  "$modify.controlparam.max_z_step $modify.controlparam.max_xy_step $modify.controlparam.min_z_setpoint $modify.controlparam.max_z_setpoint $modify.controlparam.max_lat_setpoint"
+set mod_directz_list  "$nmInfo(modifyfull).controlparam.max_z_step $nmInfo(modifyfull).controlparam.max_xy_step $nmInfo(modifyfull).controlparam.min_z_setpoint $nmInfo(modifyfull).controlparam.max_z_setpoint $nmInfo(modifyfull).controlparam.max_lat_setpoint"
 eval [concat iwidgets::Labeledwidget::alignlabels $mod_directz_list]
 
 #
@@ -439,9 +610,9 @@ eval [concat iwidgets::Labeledwidget::alignlabels $mod_directz_list]
 # value of a global variable, i.e. which radiobutton is pressed.
 #
 
-# flips $modify.modeparam widgets
+# flips $nmInfo(modifyfull).modeparam widgets
 proc flip_mod_mode {mod_mode element op} {
-    global modify
+    global nmInfo
     global mod_oscillating_list
     global fspady
 
@@ -450,19 +621,19 @@ proc flip_mod_mode {mod_mode element op} {
     if {$k==0} {
         # selected oscillating
 	# Magic number 6 = number of widgets to leave alone + 1
-	set plist [lrange [pack slaves $modify.modeparam] 6 end] 
+	set plist [lrange [pack slaves $nmInfo(modifyfull).modeparam] 6 end] 
 	foreach widg $plist {pack forget $widg} 
 	foreach widg $mod_oscillating_list {pack $widg -side top -fill x -pady $fspady}
     } elseif {$k==1} {
 	# selected contact
-	set plist [lrange [pack slaves $modify.modeparam] 6 end] 
+	set plist [lrange [pack slaves $nmInfo(modifyfull).modeparam] 6 end] 
 	foreach widg $plist {pack forget $widg}
     }
 }
 
-# flips $modify.styleparam widgets
+# flips $nmInfo(modifyfull).styleparam widgets
 proc flip_mod_style {mod_style element op} {
-    global modify
+    global nmInfo
 #    global mod_blunt_list
     global mod_sweep_list
     global mod_sewing_list
@@ -473,34 +644,34 @@ proc flip_mod_style {mod_style element op} {
 
     if {$k==0} {
         # selected sharp
-	set plist [lrange [pack slaves $modify.styleparam] 1 end] 
+	set plist [lrange [pack slaves $nmInfo(modifyfull).styleparam] 1 end] 
 	foreach widg $plist {pack forget $widg} 
 #    } elseif {$k==1} {
 #	# selected blunt
-#	set plist [lrange [pack slaves $modify.styleparam] 1 end] 
+#	set plist [lrange [pack slaves $nmInfo(modifyfull).styleparam] 1 end] 
 #	foreach widg $plist {pack forget $widg}
 #	foreach widg $mod_blunt_list {pack $widg -side top -fill x -pady $fspady}
     } elseif {$k==2} {
 	# selected sweep
-	set plist [lrange [pack slaves $modify.styleparam] 1 end] 
+	set plist [lrange [pack slaves $nmInfo(modifyfull).styleparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_sweep_list {pack $widg -side top -fill x -pady $fspady}
     } elseif {$k==3} {
 	# selected sewing
-	set plist [lrange [pack slaves $modify.styleparam] 1 end] 
+	set plist [lrange [pack slaves $nmInfo(modifyfull).styleparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_sewing_list {pack $widg -side top -fill x -pady $fspady}
     } elseif {$k==4} {
 	# selected force curve
-	set plist [lrange [pack slaves $modify.styleparam] 1 end]
+	set plist [lrange [pack slaves $nmInfo(modifyfull).styleparam] 1 end]
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_forcecurve_list {pack $widg -side top -fill x -pady $fspady}
     }
 }
 
-# flips $modify.toolparam widgets
+# flips $nmInfo(modifyfull).toolparam widgets
 proc flip_mod_tool {mod_tool element op} {
-    global modify
+    global nmInfo
     global mod_line_list mod_slow_line_list
     global fspady
 
@@ -508,28 +679,28 @@ proc flip_mod_tool {mod_tool element op} {
 
     if {$k==0} {
         # selected freehand
-	set plist [lrange [pack slaves $modify.toolparam] 1 end] 
+	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg} 
     } elseif {$k==1} {
 	# selected line
-	set plist [lrange [pack slaves $modify.toolparam] 1 end] 
+	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_line_list {pack $widg -side top -fill x -pady $fspady}
     } elseif {$k==2} {
 	# selected constrained freehand
-	set plist [lrange [pack slaves $modify.toolparam] 1 end] 
+	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
     } elseif {$k==3} {
 	# selected slow line
-	set plist [lrange [pack slaves $modify.toolparam] 1 end] 
+	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_slow_line_list {pack $widg -side top -fill x -pady $fspady}
     }
 }
 
-# flips $modify.controlparam widgets
+# flips $nmInfo(modifyfull).controlparam widgets
 proc flip_mod_control {mod_control element op} {
-    global modify
+    global nmInfo
     global mod_directz_list
     global fspady
 
@@ -537,11 +708,11 @@ proc flip_mod_control {mod_control element op} {
 
     if {$k==0} {
         # selected feedback
-	set plist [lrange [pack slaves $modify.controlparam] 1 end] 
+	set plist [lrange [pack slaves $nmInfo(modifyfull).controlparam] 1 end] 
 	foreach widg $plist {pack forget $widg} 
     } elseif {$k==1} {
 	# selected contact
-	set plist [lrange [pack slaves $modify.controlparam] 1 end] 
+	set plist [lrange [pack slaves $nmInfo(modifyfull).controlparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_directz_list {pack $widg -side top -fill x -pady $fspady}
     }
@@ -553,10 +724,10 @@ proc flip_mod_control {mod_control element op} {
 #
 
 proc modBackgChReal {fooa element op} {
-    global modify
+    global nmInfo
 
-    $modify.mode.accept configure -background LightPink1
-    $modify.mode.cancel configure -background LightPink1
+    $nmInfo(modifyfull).mode.accept configure -background LightPink1
+    $nmInfo(modifyfull).mode.cancel configure -background LightPink1
 }
 
 #
@@ -564,7 +735,7 @@ proc modBackgChReal {fooa element op} {
 #
 proc acceptModifyVars {varlist} {
     global accepted_modify_params
-    global modify
+    global nmInfo
     global save_bg
 
     foreach val $varlist {
@@ -578,8 +749,8 @@ proc acceptModifyVars {varlist} {
     # this is linked so C code will do something with new parameters
     set accepted_modify_params 1
     # None of the newmodify_* vars are now changed
-    $modify.mode.accept configure -background $save_bg
-    $modify.mode.cancel configure -background $save_bg
+    $nmInfo(modifyfull).mode.accept configure -background $save_bg
+    $nmInfo(modifyfull).mode.cancel configure -background $save_bg
 
     #close the window when the Accept Button is pressed
     #wm withdraw $modify
@@ -588,7 +759,7 @@ proc acceptModifyVars {varlist} {
 
 proc cancelModifyVars {varlist} {
 
-    global modify
+    global nmInfo
     global save_bg
 
     foreach val $varlist {
@@ -599,8 +770,8 @@ proc cancelModifyVars {varlist} {
 	}
     }
     # None of the newmodify_* vars are now changed
-    $modify.mode.accept configure -background $save_bg
-    $modify.mode.cancel configure -background $save_bg
+    $nmInfo(modifyfull).mode.accept configure -background $save_bg
+    $nmInfo(modifyfull).mode.cancel configure -background $save_bg
 }
 
 

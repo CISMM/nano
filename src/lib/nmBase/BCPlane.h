@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef _BCPLANE_
 #define _BCPLANE_
 
@@ -8,7 +15,6 @@ const double DEFAULT_MIN_ATTAINABLE_VALUE = -10;
 const double DEFAULT_MAX_ATTAINABLE_VALUE = 10;
 
 
-#include "BCDebug.h"
 #include "BCGrid.h"
 
 

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifdef	_WIN32
 #include <io.h>
 #endif
@@ -21,7 +28,6 @@ int close( int filedes );
 #include "BCGrid.h"
 #include "BCPlane.h"
 #include "Topo.h"
-#include "BCDebug.h"
 #include "PPM.h"	// used in readPPMorPGMFileNew()
 
 
@@ -139,8 +145,6 @@ BCGrid::BCGridFill(short num_x, short num_y,
 		       int read_mode, const char** file_names, int num_files,
                        TopoFile &topoFile)
 {
-   //BCDebug debug("BCGrid::BCGridFill", GRID_CODE);
-
     d_minMaxCB = NULL;
 
     _num_x = num_x;
@@ -223,7 +227,6 @@ BCGrid::BCGrid(short num_x, short num_y,
                        TopoFile &topoFile)
 {    
 	const char	*files[1];
-	//BCDebug debug("BCGrid::BCGrid", GRID_CODE);
 
 	files[0] = file_name;
 	BCGridFill(num_x,num_y, min_x,max_x, min_y,max_y, read_mode,
@@ -265,7 +268,6 @@ BCGrid::BCGrid(short num_x, short num_y,
     _input_2_max(1.0),
     _modified(1)
 {    
-   //BCDebug debug("BCGrid::BCGrid", GRID_CODE);
 
 }
 
@@ -294,7 +296,6 @@ BCGrid::BCGrid() :
     _input_2_max(1.0),
     _modified(1)
 {    
-   //BCDebug debug("BCGrid::BCGrid", GRID_CODE);
 }
 
 
@@ -400,8 +401,6 @@ addNewPlane
 BCPlane*
 BCGrid::addNewPlane(BCString dataset, BCString units, int timed)
 {
-   //BCDebug debug("BCGrid::addNewPlane", GRID_CODE);
-    
     if (timed)
     {
 	CTimedPlane* plane = new CTimedPlane(dataset, units, _num_x, _num_y);
@@ -427,8 +426,6 @@ addPlaneCopy
 BCPlane* 
 BCGrid::addPlaneCopy(BCPlane* plane)
 {
-   //BCDebug debug("BCGrid::addPlaneCopy", GRID_CODE);
-    
     if (plane->_timed)
     {
 	CTimedPlane* copy = new CTimedPlane((CTimedPlane*) plane);
@@ -548,8 +545,6 @@ decimate
 void
 BCGrid::decimate(short num_x, short num_y)
 {
-   //BCDebug debug("BCGrid::decimate", GRID_CODE);
-    
     double x0 = ((double) _num_x - 1.0) * 0.5 / (double) num_x;
     double y0 = ((double) _num_y - 1.0) * 0.5 / (double) num_y;
 
@@ -1020,8 +1015,6 @@ writePPMFile
 int 
 BCGrid::writePPMFile(FILE* file, BCPlane* plane)
 {
-    BCDebug debug("BCGrid::writePPMFile", GRID_CODE);
-
     int file_descriptor;
     if ( (file_descriptor = fileno(file)) == -1) {
       perror("BCGrid::writePPMFile: Could not get descriptor!");
@@ -1057,8 +1050,6 @@ writeRawVolFile
 int 
 BCGrid::writeRawVolFile(const char* file_name)
 {
-    BCDebug debug("BCGrid::writeRawVolFile", GRID_CODE);
-
     char buffer[127];
 
     strcpy(buffer, file_name);
@@ -1128,8 +1119,6 @@ BCGrid::writeNCFile(FILE* file, BCPlane* plane,
 	double sizex, double sizey, double sizez,
 	double maxcut, double zoff, int roughskip)
 {
-    BCDebug debug("BCGrid::writeNCFile", GRID_CODE);
-    
     //Put the header
     if (fprintf(file, "(SURFACEMAKING TOOL)\n(TURN OFF DRILLING CYCLE)\nG80\n(CANCEL TOOL LENGTH COMP)\nG49\n(RADIUS OFFSET CANCEL)\nG40\n(ABSOLUTE POSITION MODE)\nG90\n(GO A LITTLE ABOVE THE ORIGIN)\nG00 X 0.0 Y 0.0 Z 0.2\n(GO ABOVE THE ORIGIN AND SET FEED RATE)\nG01 X 0 Y 0 Z 0.1 F 10.0\n(ACTIVATE THE SPINDLE)\nS5000 M03\n") == EOF) {
 	perror("BCGrid::writeNCFile: Could not write header!");
@@ -1167,9 +1156,6 @@ addPlane
 void
 BCGrid::addPlane(BCPlane* plane)
 {
-    BCString msg = "BCGrid::addPlane(" + plane->_dataset + ")";
-    BCDebug debug(msg, GRID_CODE);
-
     _num_planes++;
 
     BCPlane* last = NULL;
@@ -1202,8 +1188,6 @@ makeMask
 double**
 BCGrid::makeMask (short xExtent, short yExtent)
 {
-   //BCDebug debug("BCGrid::makeMask", GRID_CODE);
-
     double  ** mask = new double * [2 * xExtent + 1] + xExtent;    
 
     double  x_scale = -(xExtent * xExtent)/(2 * STANDARD_DEVIATIONS);
@@ -1647,12 +1631,8 @@ BCGrid::readComment(FILE *file, char *buffer, double* max_value)
     double max_x, max_y, max_z;
     int	 values_read;
 
-    BCDebug debug("BCGrid::readPPMComment", GRID_CODE);
-
     // get the next line of the file 
     fgets(buffer, 70, file);
-
-    debug.watch("buffer", buffer);
 
     // if it doesn't start with a '#', it's not a comment so return 0
     if ('#' != *buffer) 
@@ -1667,7 +1647,6 @@ BCGrid::readComment(FILE *file, char *buffer, double* max_value)
     }
     else if (values_read == 1) 
     {
-        debug.watch("max z", max_z);
         *max_value = max_z;
     }
 
@@ -1697,8 +1676,6 @@ readPPMorPGMFile
 int 
 BCGrid::readPPMorPGMFile(FILE *file, const char *name)
 {
-    BCDebug debug("BCGrid::readPPMFile", GRID_CODE);
-
     // initialize the scaling parameters.
 
     _min_x = _min_y = 0.0;
@@ -1707,8 +1684,6 @@ BCGrid::readPPMorPGMFile(FILE *file, const char *name)
     //  rewind the file pointer (we went too far when getting the
     //  magic number in readFile (4B for a 2B magic #))
     rewind(file);
-
-    //debug.warn("file rewound");
 
     char buffer[80];
     double max_value = 400.0;

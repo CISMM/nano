@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef _H_MICROSCOPE_HANDLERS
 #define _H_MICROSCOPE_HANDLERS
 
@@ -11,11 +18,15 @@
 
 class nmm_Microscope_Remote;
 void setupStateCallbacks (nmm_Microscope_Remote *);
+class nmm_Microscope_Remote;
+void teardownStateCallbacks (nmm_Microscope_Remote *);
 
 #else
 
 class Microscope;
 void setupStateCallbacks (Microscope *);
+class Microscope;
+void teardownStateCallbacks (Microscope *);
 
 #endif
 

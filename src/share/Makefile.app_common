@@ -27,24 +27,36 @@ endif
 
 ###############################################################################
 #
-# Specifics for a library
+# Specifics for an application
 #
 
 ifndef SRC_SUFFIXES
    SRC_SUFFIXES := .C .c .cc
 endif
 
+ifdef VC
+   RES_SUFFIXES := .rc
+endif
+
 ifndef APP_SRC
    APP_SRC := $(foreach suffix,$(SRC_SUFFIXES),$(wildcard *$(suffix)))
    APP_SRC := $(filter-out $(EXCLUDE_SRC),$(APP_SRC))
+
+ifdef VC
+   APP_RES := $(foreach suffix,$(RES_SUFFIXES),$(wildcard *$(suffix)))
+endif
 endif
 
 ifndef APP_OBJ
 ifdef VC
    APP_OBJ := $(addprefix $(OBJECT_DIR)/, \
                           $(addsuffix .obj, $(strip $(basename $(APP_SRC)))))
-   # HACK - which drive do files live on?
-   APP_OBJ_LINK := $(addprefix c:, $(APP_OBJ))
+   # VC++ requires a more dos-like path. 
+   APP_OBJ_LINK := $(foreach myobj,$(APP_OBJ),"$(shell cygpath -w $(myobj))" )
+
+   APP_RES := $(addprefix $(OBJECT_DIR)/, \
+                          $(addsuffix .res, $(strip $(basename $(APP_RES)))))
+   APP_RES_LINK := $(foreach myobj,$(APP_RES),"$(shell cygpath -w $(myobj))" )
 else 
    APP_OBJ := $(addprefix $(OBJECT_DIR)/, \
                           $(addsuffix .o, $(strip $(basename $(APP_SRC)))))
@@ -61,20 +73,18 @@ ifndef APP_EXEC
 endif
 
 ifdef VC
-  OUTPUT_CMD := /OUT:"c:$(APP_EXEC).exe"
+  OUTPUT_CMD := /OUT:"$(shell cygpath -w $(APP_EXEC).exe)"
+  LINK_FLAGS =  /DEBUG /PDB:none /NOLOGO /NODEFAULTLIB:LIBCMT
+# /MTd /Z7 /link
+
   # Must be =, not :=, because DEP_LIBS_LIB isn't defined yet.
   # Strip the -l prefix, add a .lib suffix.
   DPL = $(addsuffix .lib,$(subst -l,,$(DEP_LIBS_LIB)))
-  LINK_FLAGS =  /DEBUG /PDB:none /NOLOGO
-# /MTd /Z7 /link
-# Path to libraries. Default stored in LIB env var. Our additions should
-# be in semi-colon separated list, no spaces! Replace -L with ;, remove spaces
-# ;; shows up at the end of LIB, get rid of it
-# HACK Add C: to the front of every path.
-#  DLD = $(subst ;,;C:,$(subst ;;,;,\
-#      /LIBPATH:C:$(LIB)$(subst $(SPACE),,$(subst -L,;,$(strip $(DEP_LIBS_LD))))))
-  DLD = /LIBPATH:$(LIB)
-  LIBS := $(addsuffix .lib,$(filterout -l,$(LIBS)))
+  VC_LIBS = $(addsuffix .lib,$(subst -l,,$(LIBS)))
+# Path to libraries. Default stored in LIB env var. 
+# Replace -L with /LIBPATH seems to do it. 
+  DLD = $(subst -L,/LIBPATH:,$(strip $(DEP_LIBS_LD)))
+  VC_LOAD_FLAGS = $(subst -L,/LIBPATH:,$(strip $(LOAD_FLAGS)))
 else
   OUTPUT_CMD := -o $(APP_EXEC)
   # Must be =, not :=, because DEP_LIBS_LIB isn't defined yet.
@@ -127,19 +137,30 @@ $(OBJECT_DIR)/%.o: %.C
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) -o $@ -c $<
 
 $(OBJECT_DIR)/%.obj: %.c
-	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
-# /Fd"$(OBJECT_DIR)" /Fp"$(OBJECT_DIR)"
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
+	 /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
+
 $(OBJECT_DIR)/%.obj: %.C
-	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
+	 /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 
 $(OBJECT_DIR)/%.obj: %.cc
-	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
+	 /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 
-$(APP_EXEC): $(APP_OBJ)
 ifdef VC
-	link $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(DLD) $(DPL) $(LIBS)
+$(OBJECT_DIR)/%.res: %.rc
+	rc /Fo"$@" $<
+endif
+
+ifdef VC
+$(APP_EXEC): $(APP_OBJ) $(APP_RES)
+	link $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(APP_RES_LINK) \
+	$(DLD) $(VC_LOAD_FLAGS) $(DPL) $(VC_LIBS)
 else
-	$(CC) $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(DEP_LIBS_LD) $(LOAD_FLAGS) $(DPL) $(LIBS)
+$(APP_EXEC): $(APP_OBJ)
+	$(CC) $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(DEP_LIBS_LD) \
+	$(LOAD_FLAGS) $(DPL) $(LIBS)
 endif
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)

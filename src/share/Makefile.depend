@@ -37,8 +37,12 @@ endif
 
 SRC_LIST := $(APP_SRC) $(LIBRARY_SRC)
 
+ifdef VC
+  SRC_LIST += $(APP_RES)
+endif
+
 ifdef APP_EXEC
-   ifeq ($(HW_OS),pc_win32)
+   ifdef VC
      # libraries are named foo.lib with VC++
      APP_LIST := "$(APP_EXEC): $(join $(patsubst -L%,%,$(USES_LIBS_LD)),$(addprefix /,$(addsuffix .lib,$(SEARCH_LIBS))))"
    else 

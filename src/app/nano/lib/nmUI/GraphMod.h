@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef GRAPH_MOD_H
 #define GRAPH_MOD_H
 
@@ -18,7 +25,7 @@
 
 #define MAX_DATA_VECTORS (32)
 
-class Tcl_Interp;  // from <tcl.h>
+struct Tcl_Interp;  // from <tcl.h>
 
 class GraphMod {
 

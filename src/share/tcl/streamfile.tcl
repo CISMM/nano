@@ -1,3 +1,10 @@
+#/*===3rdtech===
+#  Copyright (c) 2000 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
 # Controls for replaying a stream file
 # Includes changing replay speed,
 # pausing replay, and jumping to a new time.
@@ -50,7 +57,7 @@ generic_entry $streamplay(sf).set_stream_time set_stream_time \
 # that time. In a more normal widget we would ignore the change. 
 proc handle_set_stream_time_change { name el op } {
 global set_stream_time_now
-    puts "TCL: stream time"
+#    puts "TCL: stream time"
     set set_stream_time_now 1
 }
 trace variable set_stream_time w handle_set_stream_time_change

@@ -1,16 +1,16 @@
 #
 # Root of Visual Developer Studio Common files.
-export VSCommonDir=/c/PROGRA~1/MICROS~3/COMMON
+export VSCommonDir=/e/PROGRA~1/MICROS~3/COMMON
 
 #
 # Root of Visual Developer Studio installed files.
 #
-export MSDevDir=/c/PROGRA~1/MICROS~3/COMMON/msdev98
+export MSDevDir=/e/PROGRA~1/MICROS~1/COMMON/msdev98
 
 #
 # Root of Visual C++ installed files.
 #
-export MSVCDir=/PROGRA~1/MICROS~3/VC98
+export MSVCDir=/PROGRA~1/MICROS~1/VC98
 
 #
 # VcOsDir is used to help create either a Windows 95 or Windows NT specific path.
@@ -24,10 +24,10 @@ echo Setting environment for using Microsoft Visual C++ tools.
 #
 
 #if ("$OS" == "Windows_NT") 
-#	export PATH=$MSDevDir/BIN:$MSVCDir/BIN:$VSCommonDir/TOOLS/$VcOsDir:$VSCommonDir/TOOLS:$PATH
+#	export PATH=$MSDevDir/BIN:/e$MSVCDir/BIN:$VSCommonDir/TOOLS/$VcOsDir:$VSCommonDir/TOOLS:$PATH
 #endif
 #if ("$OS" == "") 
-	export PATH="$MSDevDir/BIN":/c"$MSVCDir/BIN":"$VSCommonDir/TOOLS/$VcOsDir":"$VSCommonDir/TOOLS":"$windir/SYSTEM":"$PATH"
+	export PATH="$MSDevDir/BIN":/e"$MSVCDir/BIN":"$VSCommonDir/TOOLS/$VcOsDir":"$VSCommonDir/TOOLS":"$PATH"
 #endif
 
 export INCLUDE="$MSVCDir/ATL/INCLUDE;$MSVCDir/INCLUDE;$MSVCDir/MFC/INCLUDE;$INCLUDE"

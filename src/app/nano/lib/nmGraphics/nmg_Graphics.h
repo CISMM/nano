@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMG_GRAPHICS_H
 #define NMG_GRAPHICS_H
 
@@ -108,6 +115,8 @@ class nmg_Graphics {
     // MANIPULATORS
 
     //  ALL MANIPULATORS MUST NOT BE IMPLEMENTED IN THIS CLASS!
+
+    virtual void changeDataset( nmb_Dataset * data) = 0;
 
     virtual void resizeViewport(int width, int height) = 0;
       // changes the size of the display window (actually this only

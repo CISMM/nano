@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMG_GRAPHICS_IMPL_H
 #define NMG_GRAPHICS_IMPL_H
 
@@ -23,6 +30,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void mainloop (void);
 
+    virtual void changeDataset( nmb_Dataset * data);
     virtual void resizeViewport(int width, int height);
 
 
