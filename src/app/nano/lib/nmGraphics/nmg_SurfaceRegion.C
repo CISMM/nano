@@ -447,9 +447,6 @@ setTexture(nmg_State * state, nmb_Dataset *data)
                 break;
             }
 
-			// undo the scaling that fits to the surface
-			x_scale_factor *= x_scale_factor / y_scale_factor;
-
 			UTree *node;
 			node = World.TGetNodeByName("projtextobj.ptx");
 			if (node != NULL) {
@@ -469,6 +466,14 @@ setTexture(nmg_State * state, nmb_Dataset *data)
 				q_invert(q, q);
 
                 if (state->texture_displayed == nmg_Graphics::SEM_DATA) {
+                    // undo the scaling that fits to the surface
+                    if (x_scale_factor < y_scale_factor) {
+    			        x_scale_factor = y_scale_factor;
+                    }
+                    else {
+                        y_scale_factor = x_scale_factor;
+                    }
+
                     glTranslated(x_translate, y_translate, 0.0);
 	    		    glScaled(x_scale_factor, y_scale_factor, 1.0);
 
@@ -480,6 +485,14 @@ setTexture(nmg_State * state, nmb_Dataset *data)
                     glScaled(0.0002, 0.0002, 1.0);
                 }
                 else {
+                    // undo the scaling that fits to the surface
+                    if (x_scale_factor > y_scale_factor) {
+                        x_scale_factor *= x_scale_factor / y_scale_factor;
+                    }
+                    else {
+                        y_scale_factor *= y_scale_factor / x_scale_factor;
+                    }
+
                     glTranslated(state->tex_coord_center_x, state->tex_coord_center_y, 0.0);
 
 				    glScaled(state->texture_transform[0], state->texture_transform[0], state->texture_transform[0]);

@@ -1,3 +1,9 @@
+2002-07-25 David Borland <borland@cs.unc.edu>
+
+        * nmg_SurfaceRegion.C : fixed the scaling of textures so that 
+        non-square textures sent from the Digital Micrograph appear 
+        correct.
+
 2002-07-25 Jameson Miller <millerj@cs.unc.edu>
 	*globjects.c : tick marks that are spaced a step size apart are
 	now drawn on the direct step axis. added a Make_Line function that
