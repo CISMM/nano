@@ -97,7 +97,6 @@ set fspady 3
 # List of the available planes of data in the input grid. Should be set from C.
 set inputPlaneNames {none }
 
-puts "cp0"
 
 # List of the available external filters found in the NM_FILTER_DIR env. 
 # variable directory
@@ -171,7 +170,6 @@ proc bgerror {msg} {
 }
 ######################
 
-puts "cp1"
 
 # frames - overall layout of the screen
 frame .menubar -relief raised -bd 4 
@@ -189,30 +187,25 @@ frame .main.w2
 #set up window
 pack .menubar .main -side top -fill x 
 
-puts "cp1.25"
 
 pack .main.w1 -side top -fill x
 pack .main.w2 -side bottom -fill x
 
-puts "cp1.27"
 
 #initialize frame names
 set w1 .main.w1
 set w2 .main.w2
 
-puts "cp1.29"
 
 # menu bar
 menu .menu -tearoff 0
 
-puts "cp1.3"
 # Array to allow controls to be enabled and disabled 
 # based on spm_read_mode - reading a file, a streamfile, or a device?
 set device_only_controls ""
 set stream_only_controls ""
 set stream_and_device_only_controls ""
 
-puts "cp1.5"
 
 #### FILE menu #############################
 set filemenu .menu.file
@@ -252,7 +245,6 @@ $filemenu add command -label "Exit" -underline 1 -command {
 lappend stream_and_device_only_controls \
         [list $filemenu entryconfigure "Save Modification Data..."]
 
-puts "cp2"
 
 #### SETUP menu #############################
 set setupmenu .menu.setup
@@ -304,7 +296,6 @@ $tipcontrolmenu add command -label "Guarded Scan..." -underline 0 -command {
     show.guarded_win
 }
 
-puts "cp2.1"
 
 #### ANALYSIS menu #############################
 set analysismenu .menu.analysis
@@ -326,7 +317,6 @@ $analysismenu add command -label "Tip Convolution..." \
     -command "show.tip_conv"
 }
 
-puts "cp2.2"
 
 #### TOOLS menu #############################
 set toolmenu .menu.tool
@@ -344,7 +334,6 @@ $toolmenu add checkbutton -label "Show Mode Buttons" -underline 10 \
     }
 }
 
-puts "cp2.3"
 
 #Only use the Mouse Phantom if the hand-tracker is null
 if {(![info exist env(TRACKER)]) \
@@ -361,7 +350,6 @@ if { !$viewer_only } {
 }
 }
 
-puts "cp2.35"
 
 $toolmenu add command -label "Magellan" -underline 0 \
     -command "show.magellan_win"
@@ -397,7 +385,6 @@ $toolmenu add command -label  "Import Objects..." -underline 0 \
 
 lappend stream_only_controls [list $toolmenu entryconfigure "Replay Control"]
 
-puts "cp2.4"
 
 #### HELP menu #############################
 #set helpmenu .menu.help
@@ -423,11 +410,9 @@ wm protocol . WM_DELETE_WINDOW {$filemenu invoke "Exit"}
 #     It will stay all the time so it's in w1
 set view $w1
 
-puts "cp2.45"
 
 source [file join ${tcl_script_dir} view.tcl]
 
-puts "cp2.5"
 
 #
 # Show the w1 frame
@@ -736,7 +721,6 @@ trace variable spm_commands_suspended w disable_widgets_for_commands_suspended
 trace variable readmode_device_commands_suspended w \
                     disable_widgets_for_commands_suspended
 
-puts "cp3"
 
 #----------------
 # Setup window positions and geometries to be convenient and pleasant!
