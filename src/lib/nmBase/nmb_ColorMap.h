@@ -35,6 +35,7 @@ class nmb_ColorMap {
         nmb_ColorMap (int r1, int g1, int b1, int a1, int r2, int g2, int b2, int a2);
         /// Color map obtained from a file. 
 	nmb_ColorMap (const char * filename = NULL, const char * dir = ".");
+	nmb_ColorMap(const nmb_ColorMap &map);
 	~nmb_ColorMap();
 
         /// Change to Two color map, color 1 at zero, color 2 at 1.0

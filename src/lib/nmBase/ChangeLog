@@ -1,3 +1,8 @@
+2002-11-06  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_ImageDisplay.h : removed functions that weren't being used
+	* nmb_ColorMap.hC : added copy constructor
+
 2002-11-04  David Borland <borland@cs.unc.edu>
  
         * nmb_ImageDisplay.h : added function declarations for use in setting

@@ -78,6 +78,19 @@ nmb_ColorMap::nmb_ColorMap (const char * filename, const char * dir) :
 	}
 }
 
+nmb_ColorMap::nmb_ColorMap(const nmb_ColorMap &map):
+	table(NULL),
+	num_entries(map.num_entries),
+	num_allocated(map.num_allocated),
+	interp(map.interp)
+{
+	table = new Colormap_Table_Entry[num_allocated];
+	int i;
+	for (i = 0; i < num_allocated; i++) {
+		table[i] = map.table[i];
+	}
+}
+
 nmb_ColorMap::~nmb_ColorMap()
 {
 	if (table) {
