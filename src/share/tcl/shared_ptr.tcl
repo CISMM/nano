@@ -224,7 +224,7 @@ proc mutex_release_command {} {
   set release_mutex 1
 #  Don't disable it here;  let the callback do that.
 #  $sharedptr(sp).mutex.release_mutex_button configure \
-          -state disabled
+         #-state disabled
 
 }
 
