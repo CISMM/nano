@@ -1,3 +1,8 @@
+2000-09-26  Tom Hudson  <hudson@cs.unc.edu>
+
+	* simulator_server.C (jakeMain) : remove hacked latency
+        surface.C (main) : construct vrpn_DelayedConnection if needed
+
 2000-09-25  Tom Hudson  <hudson@cs.unc.edu>
 
 	* Makefile : add default setting for surface  (maybe to no effect?)
@@ -12,9 +17,6 @@
         (moveTipToXYLoc) : got rid of compiler warnings
 
         * warrencntsim.C (moveTipToXYLoc) : added parameter so it'd compile
-
-
-
 
 
 2000-09-21  Tom Hudson  <hudson@cs.unc.edu>

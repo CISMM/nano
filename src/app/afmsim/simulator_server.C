@@ -23,10 +23,6 @@ TopoFile GTF; // added 4/19/99
 int currentline;
 
 static int num_x, num_y;
-//static int g_isWaiting = 0;
-//static float g_waitTime = 0.0f;
-  // How long to pause before each call to connection->mainloop(),
-  // in seconds.  Gives us a cheap approximation of network latency.
 static int g_isRude = 0;
 
 struct timeval t_scanStart, t_scopeStart, t_now;
@@ -83,16 +79,6 @@ int initJake (int x, int y, int port) {
 
 int jakeMain (float scan_time_diff, vrpn_bool isWaiting, float waitTime) 
 {
-  //float scan_time_diff = .0050000;  	// Time between scanning new line
-
-#if 0
-  if (isWaiting) {
-    //fprintf(stderr, "Waiting...\n");
-    latency.tv_sec = waitTime;
-    latency.tv_usec = (waitTime - latency.tv_sec) * 1000000;
-    select(0, NULL, NULL, NULL, &latency);
-  }
-#endif
 
   if (g_isRude) {
     mainloopDelay.tv_sec = 0L;
@@ -102,20 +88,7 @@ int jakeMain (float scan_time_diff, vrpn_bool isWaiting, float waitTime)
     mainloopDelay.tv_usec = 2000L;
   }
 
-  // Hackish form of latency  (while we're waiting for vrpn_DelayedConnection):
-  // only check the microscope once every N seconds
-
-  if (!isWaiting) {
-    connection->mainloop(&mainloopDelay);
-  } else {
-    gettimeofday(&t_now, NULL);
-    diff_time = (t_now.tv_sec - t_scopeStart.tv_sec)
-              + (t_now.tv_usec - t_scopeStart.tv_usec) / 1000000.0;
-    if (diff_time >= waitTime) {
-      connection->mainloop(&mainloopDelay);
-      gettimeofday(&t_scopeStart, NULL);
-    }
-  }
+  connection->mainloop(&mainloopDelay);
 
   gettimeofday(&t_now, NULL);
   diff_time = (t_now.tv_sec - t_scanStart.tv_sec)

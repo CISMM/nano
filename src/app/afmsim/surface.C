@@ -9,12 +9,15 @@
 #include <math.h>
 
 #include <vrpn_Connection.h>
+#include <vrpn_DelayedConnection.h>
 
 #include <BCGrid.h>
 #include <BCPlane.h>
 #include <Topo.h>
 
 #include "simulator_server.h"
+
+#include "nmm_Microscope_Simulator.h"  // for connection
 
 static TopoFile GTF;
 
@@ -350,6 +353,19 @@ int main (int argc, char ** argv) {
           }
       } 
   }
+
+  if (isWaiting) {
+    // Create the connection here before initJake()
+    // so it's a DelayedConnection instead
+    // of just a plain SynchronizedConnection.
+
+fprintf(stderr, "Initializing simulated network latency to %.5f sec.\n",
+waitTime);
+    struct timeval delay;
+    delay = vrpn_MsecsTimeval(waitTime);
+    connection = new vrpn_DelayedConnection(delay, port);
+  }
+
   retval = initJake(num_x, num_y, port);
   while (!retval) {
     jakeMain(.1, isWaiting, waitTime);
