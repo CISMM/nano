@@ -12,11 +12,11 @@ set import_transz 0
 set import_lock_transz 0
 set import_scale 1
 set import_rotx 0
-set import_lock_transx 0
+set import_lock_rotx 0
 set import_roty 0
-set import_lock_transy 0
+set import_lock_roty 0
 set import_rotz 0
-set import_lock_transz 0
+set import_lock_rotz 0
 set import_type ""
 set import_visibility 1
 set import_proj_text 1
@@ -90,6 +90,8 @@ floatscale $nmInfo(basic_options).f1.import_transz_slide -1000.0 6000.0 100 1 1 
 	import_transz "Z Translation"
 checkbutton $nmInfo(basic_options).f1.import_lock_transz_button \
     -text "Lock Z Translation" -variable import_lock_transz
+button $nmInfo(basic_options).f1.import_lock_transall_button \
+    -text "Lock All Translations" -command lock_transall
 
 
 checkbutton $nmInfo(basic_options).f1.import_update_AFM \
@@ -116,6 +118,9 @@ floatscale $nmInfo(basic_options).f2.import_rotz_slide -360 360 1000 1 1 \
 	import_rotz "Z Rotation"
 checkbutton $nmInfo(basic_options).f2.import_lock_rotz_button \
     -text "Lock Z Rotation" -variable import_lock_rotz
+button $nmInfo(basic_options).f2.import_lock_rotall_button \
+    -text "Lock All Rotations" -command lock_rotall
+
 
 
 button $nmInfo(basic_options).f2.import_reset_object -text "Reset Object" -command reset_object
@@ -199,6 +204,7 @@ pack $nmInfo(basic_options).f1.import_lock_transy_button -anchor nw -padx 1m -pa
 #pack $nmInfo(basic_options).f1.import_transz -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f1.import_transz_slide -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f1.import_lock_transz_button -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f1.import_lock_transall_button -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f1.import_update_AFM -anchor sw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f1.import_grab_object -anchor sw -padx 1m -pady 1m -fill x
 
@@ -211,6 +217,7 @@ pack $nmInfo(basic_options).f2.import_lock_roty_button -anchor nw -padx 1m -pady
 #pack $nmInfo(basic_options).f2.import_rotz -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_rotz_slide -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_lock_rotz_button -anchor nw -padx 1m -pady 1m
+pack $nmInfo(basic_options).f2.import_lock_rotall_button -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_reset_object -anchor sw -padx 1m -pady 1m -fill x
 
 pack $nmInfo(basic_options).f3.import_tess -padx 1m -pady 1m -anchor nw
@@ -316,6 +323,29 @@ proc reset_object {} {
 	set import_roty 0
 	set import_rotz 0
 }
+
+proc lock_transall {} {
+	global import_lock_transx
+	global import_lock_transy
+	global import_lock_transz
+
+	set import_lock_transx 1
+	set import_lock_transy 1
+	set import_lock_transz 1
+}
+
+proc lock_rotall {} {
+	global import_lock_rotx
+	global import_lock_roty
+	global import_lock_rotz
+
+	set import_lock_rotx 1
+	set import_lock_roty 1
+	set import_lock_rotz 1
+}
+
+
+
 
 proc set_import_color {} {
     global import_r import_g import_b import_color_changed import_color

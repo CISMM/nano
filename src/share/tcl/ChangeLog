@@ -1,3 +1,6 @@
+2002-05-22 David Borland <borland@cs.unc.edu>
+        * import.tcl : added buttons to lock all translationa and all rotations
+
 2002-05-21 Jameson Miller <millerj@cs.unc.edu>
 	*modify.tcl : edited functions :
 		set_enabling - only enable modify widgets if you
