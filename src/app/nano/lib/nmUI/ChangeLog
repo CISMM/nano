@@ -1,3 +1,15 @@
+2000-09-20  Tom Hudson  <hudson@cs.unc.edu>
+
+        * nmuiHapticSurface.C (nmui_HapticSurface::sendForceUpdate) :
+        take vrpn_ForceDevice_Remote instead of vrpn_ForceDevice.
+        (nmui_HSFeelAhead::sendForceUpdate) : same
+        (nmui_HSDirectZ::sendForceUpdate) : same
+        (nmui_HSFeelAhead::sendForceUpdate) : wrote implementation
+        (nmui_HSFeelAhead::update) : same
+        (nmui_HSFeelAhead::updateModel) : same
+        (nmui_HSFeelAhead::distanceFromPlane) : new function
+        (nmui_HSFeelAhdead) d_device, d_microscope : new data members
+
 2000-08-11  Kwan Torrich Skinner <skinner@cs.unc.edu>
 
 	* nmui_HapticSurface.h: fixed a problem that broke the source tree

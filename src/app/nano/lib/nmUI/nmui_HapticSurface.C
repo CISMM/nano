@@ -77,7 +77,7 @@ void nmui_HapticSurface::setLocation (double x, double y, double z) {
 }
 
 // virtual
-void nmui_HapticSurface::sendForceUpdate (vrpn_ForceDevice * device) {
+void nmui_HapticSurface::sendForceUpdate (vrpn_ForceDevice_Remote * device) {
   if (device) {
     device->set_plane(d_currentPlaneNormal[0],
                       d_currentPlaneNormal[1],
@@ -472,22 +472,95 @@ nmui_HSFeelAhead::~nmui_HSFeelAhead (void) {
 
 }
 
+/** @function nmui_HSFeelAhead::distanceFromSurface
+ * Returns distance from "surface", in this case from the
+ * nearest point on the trimesh constructed from the last
+ * complete set of samples.
+ * TODO - currently returns 0.
+ */
+
 // virtual
-void nmui_HSFeelAhead::update (nmm_Microscope_Remote * scope) {
+double nmui_HSFeelAhead::distanceFromSurface (void) const {
 
-  // TODO
+  return 0.0;
+}
 
+/** @function nmui_HSFeelAhead::update
+ * Instead of sending control to the Phantom every frame,
+ * we send a new trimesh every time we get a complete set of samples
+ * back from the microscope - qv updateModel().
+ */
+
+// virtual
+void nmui_HSFeelAhead::update (nmm_Microscope_Remote * m) {
+
+  d_microscope = m;
+}
+
+/** @function nmui_HSFeelAhead::sendForceUpdate
+ * Instead of sending control to the Phantom every frame,
+ * we send a new trimesh every time we get a complete set of samples
+ * back from the microscope - qv updateModel().
+ */
+
+// virtual
+void nmui_HSFeelAhead::sendForceUpdate (vrpn_ForceDevice_Remote * d) {
+
+  d_device = d;
 }
 
 
-void nmui_HSFeelAhead::updateModel ( ) {
 
-  // TODO
-  // Send a trimesh up to the microscope
+void nmui_HSFeelAhead::updateModel (void) {
+  Point_list * l;
+  const Point_results * p;
+  vrpn_int32 side, start;
+  vrpn_int32 i, j, k;
+
+  if (!d_microscope || !d_device) {
+    // TODO
+    // Mark this update as pending and submit it in update()/sendForceUpdate()
+    // once we have all the data we need.
+    return;
+  }
+
+  // Send a trimesh up to the Phantom
   // For now hackishly assumes we've got a sample grid.
   // Probably the nmm_Sample subclass should be responsible for
   // converting the Point_list into some sort of mesh, but we
   // probably don't want to use a BCGrid to hold it...
+
+  // Send the vertices
+
+  l = d_microscope->state.data.receivedPointList;
+  for (i = 0; i < l->numEntries(); i++) {
+    p = l->entry(i);
+    d_device->setVertex(i, p->x(), p->y(), p->z());
+  }
+
+  // Assume those vertices are in a square.  Find out the side length.
+
+  side = sqrt(l->numEntries());
+
+  // Triangulate.
+  // 0 - 1 - 2 - 3 - 4
+  // | / | / | / | / |  triangles 0 / 1 | 2 / 3 | 4 / 5 | 6 / 7
+  // 5 - 6 - 7 - 8 - 9
+  // ...
+
+  k = 0;
+  for (i = 0; i < side - 1; i++) {
+    start = i * side;
+    for (j = 0; j < side - 1; j++) {
+      d_device->setTriangle(k++, start + j, start + j + 1, start + j + side);
+      d_device->setTriangle(k++, start + j + 1, start + j + side + 1,
+                            start + j + side);
+    }
+  }
+
+  // Make the Phantom pay attention to what we've just done.
+
+  d_device->updateTrimeshChanges();
 
 }
 
@@ -577,7 +650,7 @@ void nmui_HSDirectZ::update (nmm_Microscope_Remote * scope) {
 }
 
 // virtual
-void nmui_HSDirectZ::sendForceUpdate (vrpn_ForceDevice * device) {
+void nmui_HSDirectZ::sendForceUpdate (vrpn_ForceDevice_Remote * device) {
 
 // The force should be a force-field, proportional to the difference between
 // the free-space internal sensor and the current internal-sensor, scaled by

@@ -4,7 +4,7 @@
 #include <quat.h>
 #include <vrpn_Types.h>
 
-class vrpn_ForceDevice;  // from <vrpn_ForceDevice.h>
+class vrpn_ForceDevice_Remote;  // from <vrpn_ForceDevice.h>
 
 class nmb_Dataset;  // from <nmb_Dataset.h>
 class nmb_Decoration;  // from <nmb_Decoration.h>
@@ -55,7 +55,7 @@ class nmui_HapticSurface {
       ///< we can't assume that nothing's changed since the last call
       ///< to setLocation() if we've serviced any devices since then.
 
-    virtual void sendForceUpdate (vrpn_ForceDevice * device);
+    virtual void sendForceUpdate (vrpn_ForceDevice_Remote * device);
       ///< Sets up a force update for the indicated force device.
       ///< Default implementation calls device->set_plane() with
       ///< (d_currentPlaneNormal, d_currentPlaneParameter).  The caller
@@ -197,17 +197,33 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
 
     virtual ~nmui_HSFeelAhead (void);
 
+    virtual double distanceFromSurface (void) const;
+      ///< Return distance from last sampled surface area.
+      ///< TODO - currently returns 0.
+
     // MANIPULATORS
 
     virtual void update (nmm_Microscope_Remote *);
+      ///< Do nothing - handled asynchronously by updateModel().
+
+    virtual void sendForceUpdate (vrpn_ForceDevice_Remote *);
+      ///< Do nothing - handled asynchronously by updateModel().
 
 
 
   protected:
 
-    void updateModel ();
+    void updateModel (void);
     static void newPointListReceivedCallback (void *);
     ///< Registered on the microscope.
+
+    vrpn_ForceDevice_Remote * d_device;
+#ifndef USE_VRPN_MICROSCOPE
+    Microscope * d_microscope;
+#else
+    nmm_Microscope_Remote * d_microscope;
+#endif
+
 
 };
 
@@ -227,7 +243,7 @@ class nmui_HSDirectZ : public nmui_HapticSurface {
     // MANIPULATORS
 
     virtual void update (nmm_Microscope_Remote *);
-    virtual void sendForceUpdate (vrpn_ForceDevice * device);
+    virtual void sendForceUpdate (vrpn_ForceDevice_Remote * device);
 
   protected:
 
