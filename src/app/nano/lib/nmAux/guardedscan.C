@@ -68,10 +68,6 @@ void CGuardedScan::mainloop()
   // Grab current setpoint
   float fSetpoint = microscope->state.image.setpoint;
 
-  // Calculate the minimum error value (1% of setpoint)
-  // The feedback implemented here is a fixed-step proportional loop.
-  float fErrorMin = 0.01f * fSetpoint;
-
   // Prepare point value... (current input point)
   Point_value* pPoint = microscope->state.data.inputPoint->getValueByPlaneName(dataset->heightPlaneName->string());
 
@@ -94,9 +90,8 @@ void CGuardedScan::mainloop()
 
     // DEBUG
     printf("Scanning to (%0.3lf, %0.3lf, %0.3lf) plane=%0.3lf\n", fX, fY, fZ, fPlaneZ);
-    Sleep(100);
 
-    // Move to (fX, fY, fZ)... loop until the value is within fErrorMin of the 
+    // Move to (fX, fY, fZ)... loop until the value is within the 
     // setpoint OR until the fZ value (height) drops below the guard plane 
     // (or until bailout)
     int nBailout = 100;
@@ -190,6 +185,7 @@ void CGuardedScan::mainloop()
 /// Handle TCL button for starting the guarded scan mode
 void CGuardedScan::HandleScanStart(vrpn_int32 a_nVal, void* a_pObject)
 {
+  a_nVal;
   CGuardedScan* pMe = (CGuardedScan*)a_pObject;
   if(pMe == NULL) {
     // No object pointer... bail...
@@ -212,6 +208,7 @@ void CGuardedScan::HandleScanStart(vrpn_int32 a_nVal, void* a_pObject)
 /// Handle TCL button for stopping the guarded scan mode
 void CGuardedScan::HandleScanStop(vrpn_int32 a_nVal, void* a_pObject)
 {
+  a_nVal;
   CGuardedScan* pMe = (CGuardedScan*)a_pObject;
   if(pMe == NULL) {
     // No object pointer... bail...
@@ -229,6 +226,7 @@ void CGuardedScan::HandleScanStop(vrpn_int32 a_nVal, void* a_pObject)
 /// Handle TCL button for acquiring the guard plane
 void CGuardedScan::HandlePlaneAcquire(vrpn_int32 a_nVal, void* a_pObject)
 {
+  a_nVal;
   CGuardedScan* pMe = (CGuardedScan*)a_pObject;
   if(pMe == NULL) {
     // No object pointer... bail...
