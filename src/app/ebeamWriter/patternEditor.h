@@ -35,6 +35,8 @@ class PatternShape {
     void drawPolygon(double units_per_pixel_x, double units_per_pixel_y);
     list<PatternPoint>::iterator pointListBegin();
     list<PatternPoint>::iterator pointListEnd();
+    double minY();
+    double maxY();
 
     int d_ID;
     static int s_nextID;

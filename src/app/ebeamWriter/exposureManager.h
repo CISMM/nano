@@ -4,6 +4,30 @@
 #include "patternEditor.h"
 #include "nmm_Microscope_SEM_Remote.h"
 
+class EdgeTableEntry {
+ public:
+  EdgeTableEntry(int ymax = 0, double xmin = 0.0, double deltaX = 1.0):
+        d_yMax(ymax), d_xMin(xmin), d_deltaX(deltaX) {}
+  EdgeTableEntry(const EdgeTableEntry &ete):
+        d_yMax(ete.d_yMax), d_xMin(ete.d_xMin), d_deltaX(ete.d_deltaX){}
+  
+  int operator== (const EdgeTableEntry &ete) {
+    return (d_yMax == ete.d_yMax && 
+            d_xMin == ete.d_xMin && 
+            d_deltaX == ete.d_deltaX);
+  }
+    
+  int operator< (const EdgeTableEntry &ete) {
+    if (d_xMin == ete.d_xMin) {
+      return (d_deltaX < ete.d_deltaX);
+    }
+    return (d_xMin < ete.d_xMin);
+  }
+  int d_yMax;  // in units of d_area_inter_dot_dist_nm
+  double d_xMin; // in nm
+  double d_deltaX; // in nm per d_area_inter_dot_dist_nm
+};
+
 class ExposureManager {
  public:
   ExposureManager();
@@ -24,6 +48,7 @@ class ExposureManager {
   // helper function for initShape and getNextPoint
   void initThickLineSegment(vrpn_bool firstSegment);
   void initThinLineSegment();
+  int initPolygon();
 
   // exposure-dependent parameters
   double d_exposure_uCoul_per_cm2;
@@ -60,7 +85,16 @@ class ExposureManager {
   double d_segmentEndFirstRowX, d_segmentEndFirstRowY;
   double d_segmentEndLastRowX, d_segmentEndLastRowY;
   double d_halfWidth;
-  double d_os_x0, d_os_y0, d_os_x1, d_os_y1;
+
+  // additional state for doing polygons
+  int d_currPolygonScanline;
+  int d_numPolygonScanlines;
+  double d_polygonMinYScan;
+  list<EdgeTableEntry> *d_edgeTable; // ith element corresponds to the scanline
+                  // at y= d_polygonMinY + i*d_area_inter_dot_dist_nm
+
+  list<EdgeTableEntry> d_activeEdgeTable;
+  list<EdgeTableEntry>::iterator d_activeEdgeBegin, d_activeEdgeEnd;
 };
 
 #endif

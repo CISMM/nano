@@ -1,3 +1,12 @@
+2001-03-06  Adam Seeger  <seeger@cs.unc.edu>
+
+        I think this version draws polygons at least approximately right
+        The parts near y-max for the polygon seem a bit truncated so
+        maybe its stopping too early
+        * exposureManager.C (initPolygon): new function
+                            (getNextPoint): handles polygon scan conversion
+                            going from y-min to y-max
+
 2001-03-05  Adam Seeger  <seeger@cs.unc.edu>
 
         I think this version draws lines with width correctly

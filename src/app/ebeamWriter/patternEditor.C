@@ -250,6 +250,36 @@ list<PatternPoint>::iterator PatternShape::pointListEnd()
   return d_points.end();
 }
 
+double PatternShape::minY()
+{
+  double result;
+  list<PatternPoint>::iterator pnt = d_points.begin();
+  result = (*pnt).d_y;
+  pnt++;
+  while (pnt != d_points.end()){
+    if ((*pnt).d_y < result) {
+      result = (*pnt).d_y;
+    }
+    pnt++;
+  }
+  return result;
+}
+
+double PatternShape::maxY()
+{
+  double result;
+  list<PatternPoint>::iterator pnt = d_points.begin();
+  result = (*pnt).d_y;
+  pnt++;
+  while (pnt != d_points.end()){
+    if ((*pnt).d_y > result) {
+      result = (*pnt).d_y;
+    }
+    pnt++;
+  }
+  return result;
+}
+
 PatternEditor::PatternEditor()
 {
    d_viewer = ImageViewer::getImageViewer();

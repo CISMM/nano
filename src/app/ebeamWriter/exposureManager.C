@@ -220,11 +220,86 @@ int ExposureManager::initShape(PatternShape &shape)
     }
     d_pointListPtr++;
   } else if (shape.d_type == PS_POLYGON) {
-    //initPolygon();
-    return -1;
+    d_currShape = new PatternShape(shape);
+    if (initPolygon()) {
+      delete d_currShape;
+      d_currShape = NULL;
+      return -1;
+    }
   } else {
     return -1;
   }
+  return 0;
+}
+
+
+int ExposureManager::initPolygon()
+{
+  vrpn_bool swapOrder;
+  double fymin, fymax;
+  int ymin, ymax;
+  double xmin;
+  double deltaX;
+  EdgeTableEntry ete;
+
+  double deltaYTotal = d_currShape->maxY() - d_currShape->minY();
+
+  d_numPolygonScanlines = (int)ceil(deltaYTotal/d_area_inter_dot_dist_nm)+1;
+  d_polygonMinYScan = d_currShape->minY();
+  d_edgeTable = new list<EdgeTableEntry>[d_numPolygonScanlines];
+
+  list<PatternPoint>::iterator p0 = d_currShape->pointListBegin();
+  list<PatternPoint>::iterator p1 = p0;
+
+  p1++;
+  if (p0 == d_currShape->pointListEnd() ||
+      p1 == d_currShape->pointListEnd()) {
+    return -1;
+  }
+  while (p0 != d_currShape->pointListEnd()) {
+    if (p1 == d_currShape->pointListEnd()) {
+      p1 = d_currShape->pointListBegin();
+    }
+    if ((*p0).d_y < (*p1).d_y) {
+      fymin = (*p0).d_y;
+      fymax = (*p1).d_y;
+      xmin = (*p0).d_x;
+      swapOrder = vrpn_FALSE;
+    } else {
+      fymin = (*p1).d_y;
+      fymax = (*p0).d_y;
+      xmin = (*p1).d_x;
+      swapOrder = vrpn_TRUE;
+    }
+    ymin = (int)floor((fymin-d_polygonMinYScan)/d_area_inter_dot_dist_nm);
+    ymax = (int)floor((fymax-d_polygonMinYScan)/d_area_inter_dot_dist_nm);
+    if (ymax == ymin) {
+      // horizontal line, don't do anything
+    } else {
+      deltaX = d_area_inter_dot_dist_nm*((*p1).d_x-(*p0).d_x)/(fymax-fymin);
+      if (swapOrder) {
+         deltaX *= -1;
+      }
+      ete = EdgeTableEntry(ymax, xmin, deltaX);
+      // insert this at ymin
+      assert(ymin <= d_numPolygonScanlines);
+      d_edgeTable[ymin].push_back(ete);
+    }
+    p0++;
+    p1++;
+  }
+  int i;
+  for (i = 0; i < d_numPolygonScanlines; i++) {
+     d_edgeTable[i].sort();
+  }
+  d_currPolygonScanline = 0;
+  d_activeEdgeTable = d_edgeTable[0];
+  d_activeEdgeBegin = d_activeEdgeTable.begin();
+  d_activeEdgeEnd = d_activeEdgeBegin;
+  d_activeEdgeEnd++;
+  d_nextExposePoint = 
+         PatternPoint((*d_activeEdgeBegin).d_xMin+d_area_inter_dot_dist_nm, 
+                      d_polygonMinYScan);
   return 0;
 }
 
@@ -382,9 +457,64 @@ vrpn_bool ExposureManager::getNextPoint(PatternPoint &point, double &time)
         d_nextExposePoint.d_y += d_area_inter_dot_dist_nm*dy/distToEnd;
       }
     }
-  }
-  else {
-    return vrpn_FALSE;
+  } else {
+    point = d_nextExposePoint;
+    time = d_area_dwell_time_sec;
+    if ((d_currPolygonScanline == (d_numPolygonScanlines-1) &&
+        d_activeEdgeBegin == d_activeEdgeTable.end()) ||
+        d_activeEdgeTable.empty()){
+      delete d_currShape;
+      d_activeEdgeTable.clear();
+      delete [] d_edgeTable;
+      return vrpn_FALSE;
+    } else if (d_nextExposePoint.d_x > (*d_activeEdgeEnd).d_xMin){
+      // step to the next segment in this scanline
+      d_activeEdgeBegin = d_activeEdgeEnd;
+      d_activeEdgeBegin++;
+      d_activeEdgeEnd = d_activeEdgeBegin;
+      d_activeEdgeEnd++;
+      // if we're done with the scanline, increment to the next scanline
+      if (d_activeEdgeBegin == d_activeEdgeTable.end()) {
+        d_currPolygonScanline++;
+        // remove edges with yMax == d_currPolygonScanline
+        list<EdgeTableEntry>::iterator test = d_activeEdgeTable.begin();
+        list<EdgeTableEntry>::iterator victim;
+        while (test != d_activeEdgeTable.end()) {
+          if ((*test).d_yMax == d_currPolygonScanline) {
+              victim = test;
+              test++;
+              d_activeEdgeTable.remove(*victim);
+          } else {
+              (*test).d_xMin += (*test).d_deltaX;
+              test++;
+          }
+        }
+        // add edges in d_edgeTable[d_currPolygonScanline] to the active edge
+        // table
+        d_activeEdgeTable.merge(d_edgeTable[d_currPolygonScanline]);
+        d_activeEdgeBegin = d_activeEdgeTable.begin();
+        d_activeEdgeEnd = d_activeEdgeBegin;
+        d_activeEdgeEnd++;
+
+        printf("%d: active edges:", d_currPolygonScanline);
+        for (list<EdgeTableEntry>::iterator edge = d_activeEdgeTable.begin();
+             edge != d_activeEdgeTable.end(); edge++) {
+           printf("%g, ", (*edge).d_xMin);
+        }
+        printf("\n");
+
+      } 
+      // init d_nextExposePoint to ((d_activeEdgeBegin).d_xMin, 
+      // d_currPolygonScanline*d_area_inter_dot_dist_nm + d_polygonMinYScan)
+      if (!d_activeEdgeTable.empty()){
+        d_nextExposePoint.d_x = (*d_activeEdgeBegin).d_xMin;
+        d_nextExposePoint.d_y = d_polygonMinYScan +
+           d_currPolygonScanline*d_area_inter_dot_dist_nm;
+      }
+    } else {
+      // increment d_nextExposePoint.d_x
+      d_nextExposePoint.d_x += d_area_inter_dot_dist_nm;
+    }
   }
   return vrpn_TRUE; // shape is in progress
 }
