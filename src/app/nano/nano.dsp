@@ -653,7 +653,7 @@ SOURCE=..\..\..\..\quat\pc_win32\Debug\quat.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\vogl\pc_win32\Debug\vogl.lib
+SOURCE=..\..\..\..\vogl\pc_win32\vlib\Debug\vogl.lib
 # End Source File
 # End Group
 # End Target
