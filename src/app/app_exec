@@ -17,7 +17,10 @@ if [ "$HW_OS" == "sgi_irix" ]; then
    if [ -z "$SGI_ABI" ]; then
       SGI_ABI=n32;
    fi
-   HW_OS=$HW_OS.$SGI_ABI;
+   if [ -z "$SGI_ARCH" ]; then
+      SGI_ARCH=mips3;
+   fi
+   HW_OS=$HW_OS.$SGI_ABI.$SGI_ARCH;
 fi
 
 if [ -n "$MY_NANO_OBJ_DIR" ]; then
