@@ -14,9 +14,13 @@
 
 # Change these to match your setup
 
+export MY_NANO_OBJ_DIR=/nsrc/obj
+export TCL_LIBRARY=`cygtclpath /c/Progra~1/Tcl/lib/tcl8.2`
+export NM_COLORMAP_DIR=/nsrc/colormaps
+
 # Root of MS Visual Studio. 
 # Use ls with paths of this form to determine which numbers to use. 
-export MSVSDir=/e/PROGRA~1/MICROS~1
+export MSVSDir=/c/PROGRA~1/MICROS~1
 
 #
 # VcOsDir is used to help create either a Windows 95 or Windows NT specific path.
@@ -58,4 +62,3 @@ export LIB="`cygtclpath $MSVCDir/LIB`;`cygtclpath $MSVCDir/MFC/LIB`;$LIB"
 #export VSCommonDir=
 
 # export PATH MSDevDir MSVCDir INCLUDE LIB
-
