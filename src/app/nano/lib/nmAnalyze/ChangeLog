@@ -1,3 +1,15 @@
+2001-06-14  Andrea Hilchey  <hilchey@cs.unc.edu>
+
+	* nma_ShapeAnalyze.C:  initial creation of class nma_ShapeIdentified.  
+		This class displays the nanotubes that have been identified 
+		in the original plane in a separate height plane that can be 
+		overlaid on the original plane.
+
+	* nma_ShapeAnalyze.h:  creation of header file for nma_ShapeIdentified.
+
+	* Makefile:  added vrpn to USES LIBS
+	
+
 2001-01-14  Jason Clark  <jclark@cs.unc.edu>
 
 	* ppm.h: Initial Creation

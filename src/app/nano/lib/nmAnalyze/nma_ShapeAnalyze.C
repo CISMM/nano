@@ -221,8 +221,7 @@ create_ShapeIdentifiedPlane()
     {
       for( int x = 0; x <= rowlength - 1; x++) 
   	{
-	  d_outputPlane->setValue(x, (columnheight - y),
-				(float)d_cntMask[y*rowlength + x]/255);  
+	  d_outputPlane->setValue(x, (columnheight - y),(float)d_cntMask[y*rowlength + x]);  
 	  //the array d_cntMask fills from the top down when you "chunk" the array
 	  //into pieces of length rowlength.  However, traditional y values used
 	  //in setValue treat lower valued y's as at the bottom of the image, and
