@@ -889,11 +889,13 @@ phantom_init (vrpn_Connection * local_device_connection,
         }
     }
 
+#ifndef	NO_JOYSTICK_SERVER
 	// if we're using a joystick, mark this to let everyone know
 	if( strstr(handTrackerName, "Joystick") != NULL )
 	{
 		usingJoystick = true;
 	}
+#endif
 
 	// If we get here, some phantom server has been created or contacted.
 	forceDevice = new vrpn_ForceDevice_Remote((char *) handTrackerName, 

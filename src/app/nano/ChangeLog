@@ -1,3 +1,7 @@
+2004-04-13  David Marshburn  <marshbur@cs.unc.edu>
+
+	* minit.c:  guard joystick code with NO_JOYSTICK_SERVER
+
 2003-03-17  David Borland  <borland@cs.unc.edu>
         * microscape .C: Removed callbacks for old eroder connection.  
         Added callbacs for  Mathematical Morhphology code.  The user can 
