@@ -160,7 +160,8 @@ BCPlane::minNonZeroValue()
 	    }
 	}
 	
-	if (_max_nonzero_value == _min_nonzero_value) // no real data has been stored in the grid
+	if (_max_nonzero_value == _min_nonzero_value &&
+            _max_nonzero_value == 0) // no real data has been stored in the grid
 	{
 	    _max_nonzero_value = -1.0e33;
 	    _min_nonzero_value = 1.0e33;
@@ -208,7 +209,8 @@ BCPlane::maxNonZeroValue()
 	    }
 	}
 
-	if (_max_nonzero_value == _min_nonzero_value) // no real data has been stored in the grid
+	if (_max_nonzero_value == _min_nonzero_value &&
+            _max_nonzero_value == 0) // no real data has been stored in the grid
 	{
 	    _max_nonzero_value = -1.0e33;
 	    _min_nonzero_value = 1.0e33;

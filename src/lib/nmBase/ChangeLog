@@ -1,3 +1,14 @@
+2000-10-11  Adam Seeger  <seeger@cs.unc.edu>
+
+	* BCPlane.C (minNonZeroValue, maxNonZeroValue) : In the rare case
+	that all the data is the same non-zero value, these two functions
+	were concluding that there was no data and this fixes the code
+        so that only the conventional stronger yet still not completely right
+        assumption is used
+        (that there is no data only if both min and max are 0)
+	The offending stream file was:
+        /afs/unc/proj/stm/data/snider/2000/Aug/nm/081800/4-probe-test.nm
+
 2000-10-08  Adam Seeger  <seeger@cs.unc.edu>
 
         * nmb_Image.C (normalize) : new function that normalizes an image to
