@@ -1,3 +1,11 @@
+2003-03-31  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_AlignerMI.C (printJointHistograms): changed format from
+	"TIFF Image" to "TIFF" to match change in nmb_Image
+	* nmr_RegistrationUI.C (handle_registrationImage3D_change): commented
+	out call to updateTextureTransform() to make it possible to resample
+    to a different image than what was used for alignment
+
 2003-03-19  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_AlignerMI.hC (printJointHistograms): new function that is helpful for

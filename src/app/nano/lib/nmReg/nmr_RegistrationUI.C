@@ -436,7 +436,7 @@ void nmr_RegistrationUI::handle_registrationImage3D_change(const char *name,
         //me->d_3DImageCMap->setColorMinMaxLimit(0,1);
         me->d_last3DImage = im;
         if (me->d_last2DImage && me->d_lastTransformTypeSent != NMR_DEFAULT) {
-          me->updateTextureTransform();
+          //me->updateTextureTransform();
         }
     }
 }
