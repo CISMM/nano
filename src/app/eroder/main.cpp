@@ -165,7 +165,10 @@ int main(int argc, char *argv[])
     for (int i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-connection")) {
             connection_to_nano = true;
-            char * newName = "Eroder";
+            char * newName = "Eroder";//do not change this name without changing check for name
+									  //in nmm_SimulatedMicroscope_Remote and nmm_SimulatedMicroscope
+									  //files--certain functionalities are only triggered by a server
+									  //(device) name of "Eroder"
             EroderConnection.change_machineName(newName);
         }//need to take care of -connection argument first so that ratios are set before
 		 //any objects are drawn
