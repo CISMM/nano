@@ -1,3 +1,9 @@
+2004-07-08  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* URText.h : Class to display text objects.
+	* URText.C : Same.
+	* nmUGraphics.dsp : Added in the above.
+
 2004-05-05  David Marshburn  <marshbur@cs.unc.edu>
 
 	* URProjectiveTexture.C (UpdateTextureNoMipmap):  comments about a
