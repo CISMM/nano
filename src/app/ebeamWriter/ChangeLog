@@ -1,3 +1,18 @@
+2001-03-05  Adam Seeger  <seeger@cs.unc.edu>
+
+        I think this version draws lines with width correctly
+        * controlPanels.C (handleSEMChange): doesn't print out dwell time
+        unless its changed
+        * exposureManager.C : changed thin line exposure to use the
+        initShape(), getNextPoint() interface
+        Added code to send point commands for polylines with non-zero width
+        as well - builtin to the same interface and designed to match what
+        the graphics display for polylines with width - this tests area
+        exposure calculations
+        * patternEditor.C : flips y axis in several places to make 
+        coordinates consistent (I think)
+         
+
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 	
  	This is the first version that draws lines correctly

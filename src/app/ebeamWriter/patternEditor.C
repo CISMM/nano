@@ -1002,6 +1002,7 @@ void PatternEditor::drawImage(const ImageElement &ie)
        glPixelTransferf(GL_RED_SCALE, (float)ie.d_red);// *(float)ie.d_opacity);
        glPixelTransferf(GL_GREEN_SCALE, (float)ie.d_green);// *(float)ie.d_opacity);
        glPixelTransferf(GL_BLUE_SCALE, (float)ie.d_blue);// *(float)ie.d_opacity);
+       printf("change this to not do mipmapping\n");
        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, texwidth, texheight, 
               GL_LUMINANCE,
               pixType, texture);
@@ -1365,14 +1366,14 @@ void PatternEditor::navWinPositionToWorld(double x, double y,
                                        double &x_nm, double &y_nm)
 {
   x_nm = d_worldMinX_nm + x*(d_worldMaxX_nm - d_worldMinX_nm);
-  y_nm = d_worldMaxY_nm + y*(d_worldMinY_nm - d_worldMaxY_nm);
+  y_nm = d_worldMaxY_nm - y*(d_worldMaxY_nm - d_worldMinY_nm);
 }
 
 void PatternEditor::mainWinPositionToWorld(double x, double y,
                                        double &x_nm, double &y_nm)
 {
   x_nm = d_mainWinMinX_nm + x*(d_mainWinMaxX_nm - d_mainWinMinX_nm);
-  y_nm = d_mainWinMaxY_nm + y*(d_mainWinMinY_nm - d_mainWinMaxY_nm);
+  y_nm = d_mainWinMaxY_nm - y*(d_mainWinMaxY_nm - d_mainWinMinY_nm);
 }
 
 void PatternEditor::worldToMainWinPosition(const double x_nm,
@@ -1380,14 +1381,14 @@ void PatternEditor::worldToMainWinPosition(const double x_nm,
                              double &x_norm, double &y_norm)
 {
   double delX = d_mainWinMaxX_nm - d_mainWinMinX_nm;
-  double delY = d_mainWinMinY_nm - d_mainWinMaxY_nm;
+  double delY = d_mainWinMaxY_nm - d_mainWinMinY_nm;
   if (delX != 0) {
     x_norm = (x_nm - d_mainWinMinX_nm)/delX;
   } else {
     fprintf(stderr, "Warning, x range is 0\n");
   }
   if (delY != 0) {
-    y_norm = (y_nm - d_mainWinMaxY_nm)/delY;
+    y_norm = 1.0 - (y_nm - d_mainWinMinY_nm)/delY;
   } else {
     fprintf(stderr, "Warning, y range is 0\n");
   }

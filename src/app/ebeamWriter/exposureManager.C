@@ -4,11 +4,13 @@
 #define M_PI           3.14159265358979323846
 #endif
 
+#define MAX_DWELL_TIME_SEC (2.14) // since we encode it in vrpn_int32/nsec
+
 ExposureManager::ExposureManager():
   d_exposure_uCoul_per_cm2(0),
-  d_fill_dwell_time_sec(0.000005),
+  d_area_dwell_time_sec(0.000005),
   d_line_dwell_time_sec(0.000005),
-  d_fill_inter_dot_dist_nm(50),
+  d_area_inter_dot_dist_nm(50),
   d_line_inter_dot_dist_nm(50),
 
   d_min_exposure_per_point_uCoul_per_cm2(0),
@@ -39,7 +41,7 @@ void ExposureManager::exposePattern(list<PatternShape> shapes,
   list<PatternShape>::iterator shape;
   PatternPoint pnt_nm;
   double dwell_time_sec;
-  double dwell_time_nsec;
+  vrpn_int32 dwell_time_nsec;
   int x_DAC, y_DAC;
 
   sem->getScanRegion_nm(d_xSpan_nm, d_ySpan_nm);
@@ -47,6 +49,7 @@ void ExposureManager::exposePattern(list<PatternShape> shapes,
 
   for (shape = shapes.begin();
        shape != shapes.end(); shape++) {
+    printf("Starting shape\n");
     initShape(*shape);
     while (getNextPoint(pnt_nm, dwell_time_sec)) {
       dwell_time_nsec = (vrpn_int32)floor(d_line_dwell_time_sec*1e9);
@@ -54,6 +57,7 @@ void ExposureManager::exposePattern(list<PatternShape> shapes,
       convert_nm_to_DAC(pnt_nm.d_x, pnt_nm.d_y, x_DAC, y_DAC);
       sem->goToPoint(x_DAC, y_DAC);
     }
+    printf("Finished with shape\n");
   }
 }
 
@@ -133,36 +137,39 @@ void ExposureManager::setExposure(double uCoul_per_cm2)
 {
   d_exposure_uCoul_per_cm2 = uCoul_per_cm2;
 
-  double exposure_number = 
-                   (d_exposure_uCoul_per_cm2/
-                    d_min_exposure_per_point_uCoul_per_cm2);
   double beam_area_nm2 = 0.25*M_PI*d_beam_width_nm*d_beam_width_nm;
   double beam_area_cm2 = beam_area_nm2*(1e-14);
 
-  // assuming we overlap the dots by some factor, 
-  // how long should dwell time be?
-
-  // use a one-dimensional overlap factor for lines 
-  d_line_inter_dot_dist_nm = d_beam_width_nm/d_line_overlap_factor;
-  // and a two-dimensional overlap factor for areas
-  d_fill_inter_dot_dist_nm = beam_area_nm2/d_area_overlap_factor;
-  d_fill_inter_dot_dist_nm = sqrt(d_fill_inter_dot_dist_nm);
-
-  double line_time_factor = exposure_number/d_line_overlap_factor;
-  double area_time_factor = exposure_number/d_area_overlap_factor;
-
-/*
-  d_line_dwell_time_sec = beam_area_cm2*line_time_factor*d_min_dwell_time_sec/
-                          (d_beam_current_picoAmps*1e-6);
-*/
   d_line_dwell_time_sec = d_exposure_uCoul_per_cm2*beam_area_cm2/
                           (d_line_overlap_factor*d_beam_current_picoAmps*1e-6);
 
-  d_fill_dwell_time_sec = area_time_factor*d_min_dwell_time_sec;
-  
+  d_area_dwell_time_sec = d_exposure_uCoul_per_cm2*beam_area_cm2/
+                          (d_area_overlap_factor*d_beam_current_picoAmps*1e-6);
+ 
+  if (d_line_dwell_time_sec > MAX_DWELL_TIME_SEC) {
+    double line_overlap_factor_to_use = 
+          d_line_overlap_factor*(d_line_dwell_time_sec)/MAX_DWELL_TIME_SEC;
+    d_line_inter_dot_dist_nm = d_beam_width_nm/line_overlap_factor_to_use;
+    d_line_dwell_time_sec = MAX_DWELL_TIME_SEC;
+  } else {
+    d_line_inter_dot_dist_nm = d_beam_width_nm/d_line_overlap_factor;
+  }
+  if (d_area_dwell_time_sec > MAX_DWELL_TIME_SEC) {
+    double area_overlap_factor_to_use = 
+          d_area_overlap_factor*(d_area_dwell_time_sec)/MAX_DWELL_TIME_SEC;
+    d_area_inter_dot_dist_nm = beam_area_nm2/area_overlap_factor_to_use;
+    d_area_inter_dot_dist_nm = sqrt(d_area_inter_dot_dist_nm);
+    d_area_dwell_time_sec = MAX_DWELL_TIME_SEC;
+  } else {
+    d_area_inter_dot_dist_nm = beam_area_nm2/d_area_overlap_factor;
+    d_area_inter_dot_dist_nm = sqrt(d_area_inter_dot_dist_nm);
+  }
+ 
   // now we know the dwell time and the dot spacing 
   printf("line dwell time=%g sec\nline interdot dist=%g nm\n",
          d_line_dwell_time_sec, d_line_inter_dot_dist_nm); 
+  printf("area dwell time=%g sec\narea interdot dist=%g nm\n",
+         d_area_dwell_time_sec, d_area_inter_dot_dist_nm);
 
 }
 
@@ -182,23 +189,120 @@ void ExposureManager::setColumnParameters(double minDwellTime_sec,
 // setup for exposure of the specified shape
 int ExposureManager::initShape(PatternShape &shape)
 {
-  if (shape.d_type != PS_POLYLINE || shape.d_lineWidth_nm > d_beam_width_nm){
-    printf("polygons and thick polylines not implemented so don't\n"
-           "expect to see anything\n");
+  setExposure(shape.d_exposure_uCoulombs_per_square_cm);
+
+
+  if (shape.d_type == PS_POLYLINE){
+    d_currShape = new PatternShape(shape);
+    d_pointListPtr = d_currShape->pointListBegin();
+    d_numThickLineRows = (int)floor(d_currShape->d_lineWidth_nm/
+                                    d_area_inter_dot_dist_nm);
+    if (d_numThickLineRows == 0) {
+       d_halfWidth = 0;
+    } else {
+       d_halfWidth = 0.5*(double)(d_numThickLineRows-1)*
+                                 d_area_inter_dot_dist_nm;
+    }
+
+    if (d_halfWidth > 0) {
+      list<PatternPoint>::iterator nextPnt = d_pointListPtr;
+      nextPnt++;
+      if (nextPnt != d_currShape->pointListEnd()) {
+        initThickLineSegment(vrpn_TRUE);
+      } else {
+        fprintf(stderr, "Warning: only one point found in thick polyline\n");
+        delete d_currShape;
+        d_currShape = NULL;
+        return -1;
+      }
+    } else {
+      initThinLineSegment();
+    }
+    d_pointListPtr++;
+  } else if (shape.d_type == PS_POLYGON) {
+    //initPolygon();
+    return -1;
+  } else {
     return -1;
   }
-  d_currShape = new PatternShape(shape);
-  double start_x, start_y;
-  
-  setExposure(d_currShape->d_exposure_uCoulombs_per_square_cm);
-  
-  d_pointListPtr = d_currShape->pointListBegin();
-  start_x = (*d_pointListPtr).d_x;
-  start_y = (*d_pointListPtr).d_y;
-  d_pointListPtr++;
-
-  d_nextExposePoint = PatternPoint(start_x, start_y);
   return 0;
+}
+
+void ExposureManager::initThinLineSegment()
+{
+  d_nextExposePoint = (*d_pointListPtr);
+}
+
+void ExposureManager::initThickLineSegment(vrpn_bool firstSegment)
+{
+  double start_x, start_y, end_x, end_y;
+  double dxA, dyA, dxB, dyB, dist, dx_avg, dy_avg;
+  double cprod, widthCorrection;
+  double os_x0, os_x1, os_y0, os_y1;
+
+  list<PatternPoint>::iterator pnt0 = d_pointListPtr;
+  list<PatternPoint>::iterator pnt1 = pnt0;
+  pnt1++;
+  list<PatternPoint>::iterator pnt2 = pnt1;
+  pnt2++;
+
+  // assertion: pnt0,pnt1 != d_currShape->pointListEnd()
+  end_x = (*pnt1).d_x;
+  end_y = (*pnt1).d_y;
+  start_x = (*pnt0).d_x;
+  start_y = (*pnt0).d_y;
+  dxA = end_x - start_x;
+  dyA = end_y - start_y;
+  dist = sqrt(dxA*dxA + dyA*dyA);
+  dxA /= dist;
+  dyA /= dist;
+
+  if (firstSegment) {
+    os_x0 = -d_halfWidth*dyA;
+    os_y0 = d_halfWidth*dxA;
+  } else {
+    os_x0 = 0.5*(d_segmentEndLastRowX - d_segmentEndFirstRowX);
+    os_y0 = 0.5*(d_segmentEndLastRowY - d_segmentEndFirstRowY);
+  }
+
+  if (pnt2 != d_currShape->pointListEnd()){
+    dxB = (*pnt2).d_x - end_x;
+    dyB = (*pnt2).d_y - end_y;
+    dist = sqrt(dxB*dxB + dyB*dyB);
+    dxB /= dist;
+    dyB /= dist;
+    dx_avg = 0.5*(dxA + dxB);
+    dy_avg = 0.5*(dyA + dyB);
+    os_x1 = -d_halfWidth*dy_avg;
+    os_y1 = d_halfWidth*dx_avg;
+    cprod = dxA*os_y1 - dyA*os_x1;
+    if (cprod < 0) {
+      os_x1 = -os_x1;
+      os_y1 = -os_y1;
+    }
+    // project onto segment perpendicular - should get something equal to
+    // d_halfWidth
+    widthCorrection = (d_halfWidth)/(os_x1*(-dyA) + os_y1*dxA);
+    if (widthCorrection > 2.0) widthCorrection = 2.0;
+    os_x1 *= widthCorrection;
+    os_y1 *= widthCorrection;
+  } else { // the last segment
+    os_x1 = -d_halfWidth*dyA;
+    os_y1 = d_halfWidth*dxA;
+  }
+
+  d_segmentStartFirstRowX = start_x-os_x0;
+  d_segmentStartFirstRowY = start_y-os_y0;
+  d_segmentStartLastRowX = start_x+os_x0;
+  d_segmentStartLastRowY = start_y+os_y0;
+  d_segmentEndFirstRowX = end_x-os_x1;
+  d_segmentEndFirstRowY = end_y-os_y1;
+  d_segmentEndLastRowX = end_x+os_x1;
+  d_segmentEndLastRowY = end_y+os_y1;
+
+  d_currThickLineRow = 0;
+  d_nextExposePoint = PatternPoint(d_segmentStartFirstRowX,
+                                   d_segmentStartFirstRowY);
 }
 
 // get the next exposure point for the current shape
@@ -206,28 +310,81 @@ vrpn_bool ExposureManager::getNextPoint(PatternPoint &point, double &time)
 {
   if (d_currShape == NULL) return vrpn_FALSE; // error, no shape being drawn
 
-  point = d_nextExposePoint;
-  time = d_line_dwell_time_sec;
+  if (d_currShape->d_type == PS_POLYLINE) {
+    double end_x, end_y, dx, dy, distToEnd;
 
-  if (d_pointListPtr == d_currShape->pointListEnd()) {
-    delete d_currShape;
-    d_currShape = NULL;
-    return vrpn_TRUE;
+
+    if (d_halfWidth == 0) {
+      point = d_nextExposePoint;
+      time = d_line_dwell_time_sec;
+
+      if (d_pointListPtr == d_currShape->pointListEnd()) {
+        delete d_currShape;
+        d_currShape = NULL;
+        // we're done with the shape after this (returning the last point)
+        return vrpn_TRUE;
+      }
+
+      end_x = (*d_pointListPtr).d_x;
+      end_y = (*d_pointListPtr).d_y;
+      dx = end_x - d_nextExposePoint.d_x;
+      dy = end_y - d_nextExposePoint.d_y;
+      distToEnd = sqrt(dx*dx + dy*dy);
+
+      if (distToEnd < d_line_inter_dot_dist_nm) {
+        // a little extra exposure at the corner but I don't think it will
+        // be significant
+        d_nextExposePoint = PatternPoint(end_x, end_y);
+        d_pointListPtr++;
+      } else {
+        d_nextExposePoint.d_x += d_line_inter_dot_dist_nm*dx/distToEnd;
+        d_nextExposePoint.d_y += d_line_inter_dot_dist_nm*dy/distToEnd;
+      }
+    } else {
+      point = d_nextExposePoint;
+      time = d_area_dwell_time_sec;
+
+      if (d_pointListPtr == d_currShape->pointListEnd()) {
+        delete d_currShape;
+        d_currShape = NULL;
+        // we're done with the shape after this (returning the last point)
+        return vrpn_TRUE;
+      }
+
+      end_x = d_segmentEndFirstRowX + 
+              (d_segmentEndLastRowX - d_segmentEndFirstRowX)*
+              (double)d_currThickLineRow/(double)(d_numThickLineRows-1);
+      end_y = d_segmentEndFirstRowY +
+              (d_segmentEndLastRowY - d_segmentEndFirstRowY)*
+              (double)d_currThickLineRow/(double)(d_numThickLineRows-1);
+      dx = end_x - d_nextExposePoint.d_x;
+      dy = end_y - d_nextExposePoint.d_y;
+      distToEnd = sqrt(dx*dx + dy*dy);
+      if (distToEnd < d_area_inter_dot_dist_nm) {
+        d_currThickLineRow++;
+        if (d_currThickLineRow < d_numThickLineRows) {
+          d_nextExposePoint.d_x = d_segmentStartFirstRowX +
+                     (d_segmentStartLastRowX - d_segmentStartFirstRowX)*
+                     (double)d_currThickLineRow/(double)(d_numThickLineRows-1);
+          d_nextExposePoint.d_y = d_segmentStartFirstRowY +
+                     (d_segmentStartLastRowY - d_segmentStartFirstRowY)*
+                     (double)d_currThickLineRow/(double)(d_numThickLineRows-1);
+        } else {
+          list<PatternPoint>::iterator nextPnt = d_pointListPtr;
+          nextPnt++;
+          if (nextPnt != d_currShape->pointListEnd()) {
+             initThickLineSegment(vrpn_FALSE);
+          }
+          d_pointListPtr++;
+        }
+      } else {
+        d_nextExposePoint.d_x += d_area_inter_dot_dist_nm*dx/distToEnd;
+        d_nextExposePoint.d_y += d_area_inter_dot_dist_nm*dy/distToEnd;
+      }
+    }
   }
-
-  double end_x = (*d_pointListPtr).d_x;
-  double end_y = (*d_pointListPtr).d_y;
-  double dx = end_x - d_nextExposePoint.d_x;
-  double dy = end_y - d_nextExposePoint.d_y;
-  double distToEnd = sqrt(dx*dx + dy*dy);
-  if (distToEnd < d_line_inter_dot_dist_nm) {
-    // a little extra exposure at the corner but I don't think it will
-    // be significant
-    d_nextExposePoint = PatternPoint(end_x, end_y);
-    d_pointListPtr++;
-  } else {
-    d_nextExposePoint.d_x += d_line_inter_dot_dist_nm*dx/distToEnd;
-    d_nextExposePoint.d_y += d_line_inter_dot_dist_nm*dy/distToEnd;
+  else {
+    return vrpn_FALSE;
   }
   return vrpn_TRUE; // shape is in progress
 }

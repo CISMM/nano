@@ -517,6 +517,7 @@ void ControlPanels::handle_sem_change(void *ud,
 void ControlPanels::handleSEMChange(
                         const nmm_Microscope_SEM_ChangeHandlerData &info)
 {
+  static vrpn_int32 last_dwell_time = 0;
   static int point_count = 0;
   vrpn_int32 res_x, res_y;
   vrpn_int32 time_nsec = 0;
@@ -690,7 +691,10 @@ void ControlPanels::handleSEMChange(
       break;
     case nmm_Microscope_SEM::POINT_DWELL_TIME:
       info.sem->getPointDwellTime(time_nsec);
-      printf("POINT_DWELL_TIME: %d nsec\n", time_nsec);
+      if (last_dwell_time != time_nsec) {
+        printf("POINT_DWELL_TIME: %d nsec\n", time_nsec);
+        last_dwell_time = time_nsec;
+      }
       break;
     case nmm_Microscope_SEM::BEAM_BLANK_ENABLE:
       info.sem->getBeamBlankEnabled(enabled);

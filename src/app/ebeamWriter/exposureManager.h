@@ -21,11 +21,15 @@ class ExposureManager {
                          int &xDAC, int &yDAC);
 
  private:
+  // helper function for initShape and getNextPoint
+  void initThickLineSegment(vrpn_bool firstSegment);
+  void initThinLineSegment();
+
   // exposure-dependent parameters
   double d_exposure_uCoul_per_cm2;
-  double d_fill_dwell_time_sec;
+  double d_area_dwell_time_sec;
   double d_line_dwell_time_sec;
-  double d_fill_inter_dot_dist_nm;
+  double d_area_inter_dot_dist_nm;
   double d_line_inter_dot_dist_nm;
 
   // exposure-independent parameters
@@ -47,6 +51,16 @@ class ExposureManager {
   PatternShape *d_currShape;
   list<PatternPoint>::iterator d_pointListPtr; 
   PatternPoint d_nextExposePoint;
+
+  // additional state for doing thick polylines
+  int d_currThickLineRow;
+  int d_numThickLineRows;
+  double d_segmentStartFirstRowX, d_segmentStartFirstRowY;
+  double d_segmentStartLastRowX, d_segmentStartLastRowY;
+  double d_segmentEndFirstRowX, d_segmentEndFirstRowY;
+  double d_segmentEndLastRowX, d_segmentEndLastRowY;
+  double d_halfWidth;
+  double d_os_x0, d_os_y0, d_os_x1, d_os_y1;
 };
 
 #endif
