@@ -213,12 +213,12 @@ void nmg_Graphics_Null::setRegionMaskHeight (float, float, int) {}
 void nmg_Graphics_Null::createRegion (){}
 void nmg_Graphics_Null::destroyRegion (int){}
 
-void nmg_Graphics_Null::lockAlpha(vrpn_bool lock, int region){}
-void nmg_Graphics_Null::lockFilledPolygons(vrpn_bool lock, int region){}
-void nmg_Graphics_Null::lockTextureDisplayed(vrpn_bool lock, int region){}
-void nmg_Graphics_Null::lockTextureMode(vrpn_bool lock, int region){}
-void nmg_Graphics_Null::lockTextureTransformMode(vrpn_bool lock, int region){}
-void nmg_Graphics_Null::lockStride(vrpn_bool lock, int region){}
+void nmg_Graphics_Null::associateAlpha(vrpn_bool associate, int region){}
+void nmg_Graphics_Null::associateFilledPolygons(vrpn_bool associate, int region){}
+void nmg_Graphics_Null::associateTextureDisplayed(vrpn_bool associate, int region){}
+void nmg_Graphics_Null::associateTextureMode(vrpn_bool associate, int region){}
+void nmg_Graphics_Null::associateTextureTransformMode(vrpn_bool associate, int region){}
+void nmg_Graphics_Null::associateStride(vrpn_bool associate, int region){}
 
 void nmg_Graphics_Null::getLightDirection (q_vec_type *) const {}
 

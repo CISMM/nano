@@ -4183,54 +4183,54 @@ void setup_region()
     switch(viz_choice) {
     case 0:
         //Set the rest of the region to a lower stride;
-        graphics->lockStride(VRPN_TRUE, viz_region);
+        graphics->associateStride(VRPN_FALSE, viz_region);
 
-        //Unlock everything else
-        graphics->lockAlpha(VRPN_FALSE, viz_region);
-        graphics->lockFilledPolygons(VRPN_FALSE, viz_region);        
-        graphics->lockTextureDisplayed(VRPN_FALSE, viz_region);
-        graphics->lockTextureMode(VRPN_FALSE, viz_region);
-        graphics->lockTextureTransformMode(VRPN_FALSE, viz_region);
+        //Re-associate everything else
+        graphics->associateAlpha(VRPN_TRUE, viz_region);
+        graphics->associateFilledPolygons(VRPN_TRUE, viz_region);        
+        graphics->associateTextureDisplayed(VRPN_TRUE, viz_region);
+        graphics->associateTextureMode(VRPN_TRUE, viz_region);
+        graphics->associateTextureTransformMode(VRPN_TRUE, viz_region);
 
         graphics->setTesselationStride(5, viz_region);
         break;
     case 1:
-        //Transparency case, so lock alpha
-        graphics->lockAlpha(VRPN_TRUE, viz_region);
+        //Transparency case, so unassociate alpha
+        graphics->associateAlpha(VRPN_FALSE, viz_region);
 
-        //Unlock everything else
-        graphics->lockFilledPolygons(VRPN_FALSE, viz_region);
-        graphics->lockStride(VRPN_FALSE, viz_region);
-        graphics->lockTextureDisplayed(VRPN_FALSE, viz_region);
-        graphics->lockTextureMode(VRPN_FALSE, viz_region);
-        graphics->lockTextureTransformMode(VRPN_FALSE, viz_region);
+        //Re-associate everything else
+        graphics->associateFilledPolygons(VRPN_TRUE, viz_region);
+        graphics->associateStride(VRPN_TRUE, viz_region);
+        graphics->associateTextureDisplayed(VRPN_TRUE, viz_region);
+        graphics->associateTextureMode(VRPN_TRUE, viz_region);
+        graphics->associateTextureTransformMode(VRPN_TRUE, viz_region);
         
         graphics->setSurfaceAlpha(viz_alpha, viz_region);
         break;
     case 2:
-        //Wireframe, so lock the stride and polygon filling
-        graphics->lockFilledPolygons(VRPN_TRUE, viz_region);
-        graphics->lockStride(VRPN_TRUE, viz_region);
+        //Wireframe, so unassociate the stride and polygon filling
+        graphics->associateFilledPolygons(VRPN_FALSE, viz_region);
+        graphics->associateStride(VRPN_FALSE, viz_region);
         
-        //Unlock everything else
-        graphics->lockAlpha(VRPN_FALSE, viz_region);
-        graphics->lockTextureDisplayed(VRPN_FALSE, viz_region);
-        graphics->lockTextureMode(VRPN_FALSE, viz_region);
-        graphics->lockTextureTransformMode(VRPN_FALSE, viz_region);
+        //Re-associate everything else
+        graphics->associateAlpha(VRPN_TRUE, viz_region);
+        graphics->associateTextureDisplayed(VRPN_TRUE, viz_region);
+        graphics->associateTextureMode(VRPN_TRUE, viz_region);
+        graphics->associateTextureTransformMode(VRPN_TRUE, viz_region);
         
         graphics->enableFilledPolygons(VRPN_FALSE, viz_region);
         graphics->setTesselationStride(5, viz_region);
         break;
     case 3:
-        //Texture case, so lock all texture control variables
-        graphics->lockTextureDisplayed(VRPN_TRUE, viz_region);
-        graphics->lockTextureMode(VRPN_TRUE, viz_region);
-        graphics->lockTextureTransformMode(VRPN_TRUE, viz_region);
+        //Texture case, so unassociate all texture control variables
+        graphics->associateTextureDisplayed(VRPN_FALSE, viz_region);
+        graphics->associateTextureMode(VRPN_FALSE, viz_region);
+        graphics->associateTextureTransformMode(VRPN_FALSE, viz_region);
 
-        //Unlock everything else
-        graphics->lockAlpha(VRPN_FALSE, viz_region);
-        graphics->lockFilledPolygons(VRPN_FALSE, viz_region);
-        graphics->lockStride(VRPN_FALSE, viz_region);
+        //Re-associate everything else
+        graphics->associateAlpha(VRPN_TRUE, viz_region);
+        graphics->associateFilledPolygons(VRPN_TRUE, viz_region);
+        graphics->associateStride(VRPN_TRUE, viz_region);
         
         graphics->setTextureMode(nmg_Graphics::VISUALIZATION,
                                  nmg_Graphics::VIZTEX_COORD,
@@ -5004,7 +5004,6 @@ void teardownSynchronization(CollaborationManager *cm,
     paramControls->remove(&(m->state.modify.new_mode));
     paramControls->remove(&(m->state.modify.new_control));
     paramControls->remove(&(m->state.modify.new_style));
-    paramControls->remove(&(m->state.modify.new_tool));
     paramControls->remove(&m->state.modify.new_constr_xyz_param);
     paramControls->remove(&m->state.modify.new_optimize_now_param);
     paramControls->remove(&(m->state.modify.new_setpoint));
@@ -5272,7 +5271,6 @@ void setupSynchronization (CollaborationManager * cm,
   paramControls->add(&m->state.modify.new_mode);
   paramControls->add(&m->state.modify.new_control);
   paramControls->add(&m->state.modify.new_style);
-  paramControls->add(&m->state.modify.new_tool);
   paramControls->add(&m->state.modify.new_constr_xyz_param);
   paramControls->add(&m->state.modify.new_optimize_now_param);
   paramControls->add(&m->state.modify.new_setpoint);
@@ -7122,9 +7120,7 @@ int main (int argc, char* argv[])
       vrpnLogFile->limit_messages_played_back(istate.packetlimit);
     }
 
-    // This causes a unitialized memory read if we don't actually have
-    // a connection, moved this to nmm_Microscope_Remote::RcvGotConnection2
-    //microscope->EnableUpdatableQueue(VRPN_TRUE);
+    microscope->EnableUpdatableQueue(VRPN_TRUE);
 
     createGraphics(istate);
 

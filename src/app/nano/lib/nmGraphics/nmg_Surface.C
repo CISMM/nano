@@ -409,9 +409,9 @@ renderSurface()
 //    Function: nmg_Surface::setAlpha
 //      Access: Public
 // Description: As with all the graphics mutator functions,
-//              a region value of -1 means apply to all regions
-//              that aren't locked.  And a normal value will
-//              override a lock
+//              a region value of 0 means apply to all regions
+//              that aren't unassociate.  And a normal value will
+//              override this
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
 setAlpha(float alpha, int region)
@@ -434,9 +434,9 @@ setAlpha(float alpha, int region)
 //    Function: nmg_Surface::enableFilledPolygons
 //      Access: Public
 // Description: As with all the graphics mutator functions,
-//              a region value of -1 means apply to all regions
-//              that aren't locked.  And a normal value will
-//              override a lock
+//              a region value of 0 means apply to all regions
+//              that aren't unassociate.  And a normal value will
+//              override this
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
 enableFilledPolygons(int enable, int region)
@@ -459,9 +459,9 @@ enableFilledPolygons(int enable, int region)
 //    Function: nmg_Surface::setTextureDisplayed
 //      Access: Public
 // Description: As with all the graphics mutator functions,
-//              a region value of -1 means apply to all regions
-//              that aren't locked.  And a normal value will
-//              override a lock
+//              a region value of 0 means apply to all regions
+//              that aren't unassociate.  And a normal value will
+//              override this
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
 setTextureDisplayed(int display, int region)
@@ -484,9 +484,9 @@ setTextureDisplayed(int display, int region)
 //    Function: nmg_Surface::setTextureMode
 //      Access: Public
 // Description: As with all the graphics mutator functions,
-//              a region value of -1 means apply to all regions
-//              that aren't locked.  And a normal value will
-//              override a lock
+//              a region value of 0 means apply to all regions
+//              that aren't unassociate.  And a normal value will
+//              override this
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
 setTextureMode(int mode, int region)
@@ -509,9 +509,9 @@ setTextureMode(int mode, int region)
 //    Function: nmg_Surface::setTextureTransformMode
 //      Access: Public
 // Description: As with all the graphics mutator functions,
-//              a region value of -1 means apply to all regions
-//              that aren't locked.  And a normal value will
-//              override a lock
+//              a region value of 0 means apply to all regions
+//              that aren't unassociate.  And a normal value will
+//              override this
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
 setTextureTransformMode(int mode, int region)
@@ -534,9 +534,9 @@ setTextureTransformMode(int mode, int region)
 //    Function: nmg_Surface::setStride
 //      Access: Public
 // Description: As with all the graphics mutator functions,
-//              a region value of -1 means apply to all regions
-//              that aren't locked.  And a normal value will
-//              override a lock
+//              a region value of 0 means apply to all regions
+//              that aren't unassociate.  And a normal value will
+//              override this
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
 setStride(unsigned int stride, int region)
@@ -556,108 +556,108 @@ setStride(unsigned int stride, int region)
 }
 
 ////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::lockAlpha
+//    Function: nmg_Surface::associateAlpha
 //      Access: Public
 // Description: 
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
-lockAlpha(vrpn_bool lock, int region)
+associateAlpha(vrpn_bool associate, int region)
 {
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->lockAlpha(lock);
+        d_subRegions[region]->associateAlpha(associate);
         //Reassociate with the surface
-        if (lock == VRPN_FALSE) {
+        if (associate == VRPN_FALSE) {
             d_subRegions[region]->setAlpha(d_defaultRegion->getAlpha(), VRPN_TRUE);
         }
     }
 }
 
 ////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::lockFilledPolygons
+//    Function: nmg_Surface::associateFilledPolygons
 //      Access: Public
 // Description: 
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
-lockFilledPolygons(vrpn_bool lock, int region)
+associateFilledPolygons(vrpn_bool associate, int region)
 {
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->lockFilledPolygons(lock);
+        d_subRegions[region]->associateFilledPolygons(associate);
         //Reassociate with the surface
-        if (lock == VRPN_FALSE) {
+        if (associate == VRPN_FALSE) {
             d_subRegions[region]->enableFilledPolygons(d_defaultRegion->getFilledPolygonsEnabled(), VRPN_TRUE);
         }
     }
 }
 
 ////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::lockTextureDisplayed
+//    Function: nmg_Surface::associateTextureDisplayed
 //      Access: Public
 // Description: 
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
-lockTextureDisplayed(vrpn_bool lock, int region)
+associateTextureDisplayed(vrpn_bool associate, int region)
 {
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->lockTextureDisplayed(lock);
+        d_subRegions[region]->associateTextureDisplayed(associate);
         //Reassociate with the surface
-        if (lock == VRPN_FALSE) {
+        if (associate == VRPN_FALSE) {
             d_subRegions[region]->setTextureDisplayed(d_defaultRegion->getTextureDisplayed(), VRPN_TRUE);
         }
     }
 }
 
 ////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::lockTextureMode
+//    Function: nmg_Surface::associateTextureMode
 //      Access: Public
 // Description: 
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
-lockTextureMode(vrpn_bool lock, int region)
+associateTextureMode(vrpn_bool associate, int region)
 {
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->lockTextureMode(lock);
+        d_subRegions[region]->associateTextureMode(associate);
         //Reassociate with the surface
-        if (lock == VRPN_FALSE) {
+        if (associate == VRPN_FALSE) {
             d_subRegions[region]->setTextureMode(d_defaultRegion->getTextureMode(), VRPN_TRUE);
         }
     }
 }
 
 ////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::lockTextureTransformMode
+//    Function: nmg_Surface::associateTextureTransformMode
 //      Access: Public
 // Description: 
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
-lockTextureTransformMode(vrpn_bool lock, int region)
+associateTextureTransformMode(vrpn_bool associate, int region)
 {
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->lockTextureTransformMode(lock);
+        d_subRegions[region]->associateTextureTransformMode(associate);
         //Reassociate with the surface
-        if (lock == VRPN_FALSE) {
+        if (associate == VRPN_FALSE) {
             d_subRegions[region]->setTextureTransformMode(d_defaultRegion->getTextureTransformMode(), VRPN_TRUE);
         }
     }
 }
 
 ////////////////////////////////////////////////////////////
-//    Function: nmg_Surface::lockStride
+//    Function: nmg_Surface::associateStride
 //      Access: Public
 // Description: 
 ////////////////////////////////////////////////////////////
 void nmg_Surface::
-lockStride(vrpn_bool lock, int region)
+associateStride(vrpn_bool associate, int region)
 {
     if (region > 0 && region <= d_numSubRegions) {
         region--;
-        d_subRegions[region]->lockStride(lock);
+        d_subRegions[region]->associateStride(associate);
         //Reassociate with the surface
-        if (lock == VRPN_FALSE) {
+        if (associate == VRPN_FALSE) {
             d_subRegions[region]->setStride(d_defaultRegion->getStride(), VRPN_TRUE);
         }
     }

@@ -1,3 +1,8 @@
+2001-05-18  Jason Clark  <jclark@cs.unc.edu>
+
+	* microscape.c (setup_region): Use new terminology for
+	surface-regions.
+
 2001-05-15  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (main): moved call of

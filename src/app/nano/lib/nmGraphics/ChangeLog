@@ -1,5 +1,21 @@
 2001-05-18  Jason Clark  <jclark@cs.unc.edu>
 
+	* nmg_Surface.hC: Changed terminology from locking, to associating
+	for graphics properties.  This more closely represents the concept
+	of what is happening.
+
+	* nmg_SurfaceRegion.hC: Same
+
+	* nmg_GraphicsImpl.hC: Same
+
+	* nmg_GraphicsNull.hC: Same
+
+	* nmg_GraphicsTimer.hC: Same
+
+	* nmg_GraphicsRemote.hC: Same
+
+	* nmg_Graphics.hC: Same
+	
 	* nmg_SurfaceRegion.Ch (deriveMaskPlane): New function to derive based on
 	a specified "region" box
 
@@ -10,8 +26,6 @@
 	nmg_SurfaceMask that represents only the mask created from the
 	last automatic derivation.  This is to ensure that we can
 	acurrately undo ONLY that mask portion when we re-derive.
-
-	
 
 	* nmg_Surface.Ch (deriveMaskPlane): New function to derive based on
 	a specified "region" box

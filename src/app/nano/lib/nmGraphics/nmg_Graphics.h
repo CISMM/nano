@@ -387,12 +387,12 @@ class nmg_Graphics {
 
     //These functions are related to controlling what changes affect the
     //entire surface and what don't.
-    virtual void lockAlpha(vrpn_bool lock, int region) = 0;
-    virtual void lockFilledPolygons(vrpn_bool lock, int region) = 0;
-    virtual void lockTextureDisplayed(vrpn_bool lock, int region) = 0;
-    virtual void lockTextureMode(vrpn_bool lock, int region) = 0;
-    virtual void lockTextureTransformMode(vrpn_bool lock, int region) = 0;
-    virtual void lockStride(vrpn_bool lock, int region) = 0;
+    virtual void associateAlpha(vrpn_bool associate, int region) = 0;
+    virtual void associateFilledPolygons(vrpn_bool associate, int region) = 0;
+    virtual void associateTextureDisplayed(vrpn_bool associate, int region) = 0;
+    virtual void associateTextureMode(vrpn_bool associate, int region) = 0;
+    virtual void associateTextureTransformMode(vrpn_bool associate, int region) = 0;
+    virtual void associateStride(vrpn_bool associate, int region) = 0;
 
     // ACCESSORS
     virtual void getLightDirection (q_vec_type *) const = 0;
@@ -520,12 +520,12 @@ class nmg_Graphics {
     vrpn_int32 d_setRegionControlPlaneName_type;
     vrpn_int32 d_createRegion_type;
     vrpn_int32 d_destroyRegion_type;
-    vrpn_int32 d_lockAlpha_type;
-    vrpn_int32 d_lockFilledPolygons_type;
-    vrpn_int32 d_lockStride_type;
-    vrpn_int32 d_lockTextureDisplayed_type;
-    vrpn_int32 d_lockTextureMode_type;
-    vrpn_int32 d_lockTextureTransformMode_type;
+    vrpn_int32 d_associateAlpha_type;
+    vrpn_int32 d_associateFilledPolygons_type;
+    vrpn_int32 d_associateStride_type;
+    vrpn_int32 d_associateTextureDisplayed_type;
+    vrpn_int32 d_associateTextureMode_type;
+    vrpn_int32 d_associateTextureTransformMode_type;
 
     // Each encode_ routine will allocate a new char [] to hold
     // the appropriate encoding of its arguments, and write the
@@ -762,8 +762,8 @@ class nmg_Graphics {
     char * encode_destroyRegion (int * len, int region);
     int decode_destroyRegion (const char * buf, int * region);
 
-    char * encode_lock (int * len, vrpn_bool lock, int region);
-    int decode_lock (const char * buf, vrpn_bool *lock, int *region);
+    char * encode_associate (int * len, vrpn_bool associate, int region);
+    int decode_associate (const char * buf, vrpn_bool *associate, int *region);
 };
 
 #endif  // NMG_GRAPHICS_H

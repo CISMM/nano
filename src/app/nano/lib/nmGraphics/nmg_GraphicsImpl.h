@@ -187,12 +187,12 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     //These functions are related to controlling what changes affect the
     //entire surface and what don't.
-    virtual void lockAlpha(vrpn_bool lock, int region);
-    virtual void lockFilledPolygons(vrpn_bool lock, int region);
-    virtual void lockTextureDisplayed(vrpn_bool lock, int region);
-    virtual void lockTextureMode(vrpn_bool lock, int region);
-    virtual void lockTextureTransformMode(vrpn_bool lock, int region);
-    virtual void lockStride(vrpn_bool lock, int region);
+    virtual void associateAlpha(vrpn_bool associate, int region);
+    virtual void associateFilledPolygons(vrpn_bool associate, int region);
+    virtual void associateTextureDisplayed(vrpn_bool associate, int region);
+    virtual void associateTextureMode(vrpn_bool associate, int region);
+    virtual void associateTextureTransformMode(vrpn_bool associate, int region);
+    virtual void associateStride(vrpn_bool associate, int region);
 
     // ACCESSORS
 
@@ -341,12 +341,12 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
   static int handle_createRegion (void *, vrpn_HANDLERPARAM);
   static int handle_destroyRegion(void *, vrpn_HANDLERPARAM);
   
-  static int handle_lockAlpha(void *, vrpn_HANDLERPARAM);
-  static int handle_lockFilledPolygons(void *, vrpn_HANDLERPARAM);
-  static int handle_lockStride(void *, vrpn_HANDLERPARAM);
-  static int handle_lockTextureDisplayed(void *, vrpn_HANDLERPARAM);
-  static int handle_lockTextureMode(void *, vrpn_HANDLERPARAM);
-  static int handle_lockTextureTransformMode(void *, vrpn_HANDLERPARAM);
+  static int handle_associateAlpha(void *, vrpn_HANDLERPARAM);
+  static int handle_associateFilledPolygons(void *, vrpn_HANDLERPARAM);
+  static int handle_associateStride(void *, vrpn_HANDLERPARAM);
+  static int handle_associateTextureDisplayed(void *, vrpn_HANDLERPARAM);
+  static int handle_associateTextureMode(void *, vrpn_HANDLERPARAM);
+  static int handle_associateTextureTransformMode(void *, vrpn_HANDLERPARAM);
 };
 
 #endif  // NMG_GRAPHICS_IMPL_H

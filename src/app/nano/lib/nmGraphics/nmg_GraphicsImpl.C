@@ -511,24 +511,24 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_destroyRegion_type,
                                handle_destroyRegion,
+                               this, vrpn_ANY_SENDER); 
+  connection->register_handler(d_associateAlpha_type,
+                               handle_associateAlpha,
                                this, vrpn_ANY_SENDER);
-  connection->register_handler(d_lockAlpha_type,
-                               handle_lockAlpha,
+  connection->register_handler(d_associateFilledPolygons_type,
+                               handle_associateFilledPolygons,
                                this, vrpn_ANY_SENDER);
-  connection->register_handler(d_lockFilledPolygons_type,
-                               handle_lockFilledPolygons,
+  connection->register_handler(d_associateStride_type,
+                               handle_associateStride,
                                this, vrpn_ANY_SENDER);
-  connection->register_handler(d_lockStride_type,
-                               handle_lockStride,
+  connection->register_handler(d_associateTextureDisplayed_type,
+                               handle_associateTextureDisplayed,
                                this, vrpn_ANY_SENDER);
-  connection->register_handler(d_lockTextureDisplayed_type,
-                               handle_lockTextureDisplayed,
+  connection->register_handler(d_associateTextureMode_type,
+                               handle_associateTextureMode,
                                this, vrpn_ANY_SENDER);
-  connection->register_handler(d_lockTextureMode_type,
-                               handle_lockTextureMode,
-                               this, vrpn_ANY_SENDER);
-  connection->register_handler(d_lockTextureTransformMode_type,
-                               handle_lockTextureTransformMode,
+  connection->register_handler(d_associateTextureTransformMode_type,
+                               handle_associateTextureTransformMode,
                                this, vrpn_ANY_SENDER);
 
 }
@@ -2684,7 +2684,7 @@ void nmg_Graphics_Implementation::positionRegionBox
 
     if (region == -1) {
         region = g_surface->createNewRegion();
-        g_surface->lockStride(VRPN_TRUE, region);
+        g_surface->associateStride(VRPN_FALSE, region);
         setTesselationStride(5, 1);
     }
 
@@ -2782,34 +2782,34 @@ void nmg_Graphics_Implementation::destroyRegion(int region)
     g_surface->destroyRegion(region);
 }
 
-void nmg_Graphics_Implementation::lockAlpha(vrpn_bool lock, int region)
+void nmg_Graphics_Implementation::associateAlpha(vrpn_bool associate, int region)
 {
-    g_surface->lockAlpha(lock, region);
+    g_surface->associateAlpha(associate, region);
 }
 
-void nmg_Graphics_Implementation::lockFilledPolygons(vrpn_bool lock, int region)
+void nmg_Graphics_Implementation::associateFilledPolygons(vrpn_bool associate, int region)
 {
-    g_surface->lockFilledPolygons(lock, region);
+    g_surface->associateFilledPolygons(associate, region);
 }
 
-void nmg_Graphics_Implementation::lockTextureDisplayed(vrpn_bool lock, int region)
+void nmg_Graphics_Implementation::associateTextureDisplayed(vrpn_bool associate, int region)
 {
-    g_surface->lockTextureDisplayed(lock, region);
+    g_surface->associateTextureDisplayed(associate, region);
 }
 
-void nmg_Graphics_Implementation::lockTextureMode(vrpn_bool lock, int region)
+void nmg_Graphics_Implementation::associateTextureMode(vrpn_bool associate, int region)
 {
-    g_surface->lockTextureMode(lock, region);
+    g_surface->associateTextureMode(associate, region);
 }
 
-void nmg_Graphics_Implementation::lockTextureTransformMode(vrpn_bool lock, int region)
+void nmg_Graphics_Implementation::associateTextureTransformMode(vrpn_bool associate, int region)
 {
-    g_surface->lockTextureTransformMode(lock, region);
+    g_surface->associateTextureTransformMode(associate, region);
 }
 
-void nmg_Graphics_Implementation::lockStride(vrpn_bool lock, int region)
+void nmg_Graphics_Implementation::associateStride(vrpn_bool associate, int region)
 {
-    g_surface->lockStride(lock, region);
+    g_surface->associateStride(associate, region);
 }
 
 
@@ -4187,74 +4187,74 @@ int nmg_Graphics_Implementation::handle_destroyRegion
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_lockAlpha(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::handle_associateAlpha(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  vrpn_bool lock;
+  vrpn_bool associate;
   int region;
 
-  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
-      "handle_lockAlpha");
-  it->lockAlpha(lock, region);
+  CHECKF(it->decode_associate(p.buffer, &associate, &region), 
+      "handle_associateAlpha");
+  it->associateAlpha(associate, region);
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_lockFilledPolygons(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::handle_associateFilledPolygons(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  vrpn_bool lock;
+  vrpn_bool associate;
   int region;
 
-  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
-      "handle_lockFilledPolygons");
-  it->lockFilledPolygons(lock, region);
+  CHECKF(it->decode_associate(p.buffer, &associate, &region), 
+      "handle_associateFilledPolygons");
+  it->associateFilledPolygons(associate, region);
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_lockStride(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::handle_associateStride(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  vrpn_bool lock;
+  vrpn_bool associate;
   int region;
 
-  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
-      "handle_lockStride");
-  it->lockStride(lock, region);
+  CHECKF(it->decode_associate(p.buffer, &associate, &region), 
+      "handle_associateStride");
+  it->associateStride(associate, region);
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_lockTextureDisplayed(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::handle_associateTextureDisplayed(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  vrpn_bool lock;
+  vrpn_bool associate;
   int region;
 
-  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
-      "handle_lockTextureDisplayed");
-  it->lockTextureDisplayed(lock, region);
+  CHECKF(it->decode_associate(p.buffer, &associate, &region), 
+      "handle_associateTextureDisplayed");
+  it->associateTextureDisplayed(associate, region);
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_lockTextureMode(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::handle_associateTextureMode(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  vrpn_bool lock;
+  vrpn_bool associate;
   int region;
 
-  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
-      "handle_lockTextureMode");
-  it->lockTextureMode(lock, region);
+  CHECKF(it->decode_associate(p.buffer, &associate, &region), 
+      "handle_associateTextureMode");
+  it->associateTextureMode(associate, region);
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_lockTextureTransformMode(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::handle_associateTextureTransformMode(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  vrpn_bool lock;
+  vrpn_bool associate;
   int region;
 
-  CHECKF(it->decode_lock(p.buffer, &lock, &region), 
-      "handle_lockTextureTransformMode");
-  it->lockTextureTransformMode(lock, region);
+  CHECKF(it->decode_associate(p.buffer, &associate, &region), 
+      "handle_associateTextureTransformMode");
+  it->associateTextureTransformMode(associate, region);
   return 0;
 }

@@ -135,40 +135,40 @@ void nmg_Graphics_Timer::destroyRegion(int region)
     d_imp->destroyRegion(region);
 }
 
-void nmg_Graphics_Timer::lockAlpha(vrpn_bool lock, int region)
+void nmg_Graphics_Timer::associateAlpha(vrpn_bool associate, int region)
 {
     activateTimer();
-    d_imp->lockAlpha(lock, region);
+    d_imp->associateAlpha(associate, region);
 }
 
-void nmg_Graphics_Timer::lockFilledPolygons(vrpn_bool lock, int region)
+void nmg_Graphics_Timer::associateFilledPolygons(vrpn_bool associate, int region)
 {
     activateTimer();
-    d_imp->lockFilledPolygons(lock, region);
+    d_imp->associateFilledPolygons(associate, region);
 }
 
-void nmg_Graphics_Timer::lockTextureDisplayed(vrpn_bool lock, int region)
+void nmg_Graphics_Timer::associateTextureDisplayed(vrpn_bool associate, int region)
 {
     activateTimer();
-    d_imp->lockTextureDisplayed(lock, region);
+    d_imp->associateTextureDisplayed(associate, region);
 }
 
-void nmg_Graphics_Timer::lockTextureMode(vrpn_bool lock, int region)
+void nmg_Graphics_Timer::associateTextureMode(vrpn_bool associate, int region)
 {
     activateTimer();
-    d_imp->lockTextureMode(lock, region);
+    d_imp->associateTextureMode(associate, region);
 }
 
-void nmg_Graphics_Timer::lockTextureTransformMode(vrpn_bool lock, int region)
+void nmg_Graphics_Timer::associateTextureTransformMode(vrpn_bool associate, int region)
 {
     activateTimer();
-    d_imp->lockTextureTransformMode(lock, region);
+    d_imp->associateTextureTransformMode(associate, region);
 }
 
-void nmg_Graphics_Timer::lockStride(vrpn_bool lock, int region)
+void nmg_Graphics_Timer::associateStride(vrpn_bool associate, int region)
 {
     activateTimer();
-    d_imp->lockStride(lock, region);;
+    d_imp->associateStride(associate, region);;
 }
 
 void nmg_Graphics_Timer::setAdhesionSliderRange (float low,

@@ -174,12 +174,12 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     
     //These functions are related to controlling what changes affect the
     //entire surface and what don't.
-    virtual void lockAlpha(vrpn_bool lock, int region);
-    virtual void lockFilledPolygons(vrpn_bool lock, int region);
-    virtual void lockTextureDisplayed(vrpn_bool lock, int region);
-    virtual void lockTextureMode(vrpn_bool lock, int region);
-    virtual void lockTextureTransformMode(vrpn_bool lock, int region);
-    virtual void lockStride(vrpn_bool lock, int region);
+    virtual void associateAlpha(vrpn_bool associate, int region);
+    virtual void associateFilledPolygons(vrpn_bool associate, int region);
+    virtual void associateTextureDisplayed(vrpn_bool associate, int region);
+    virtual void associateTextureMode(vrpn_bool associate, int region);
+    virtual void associateTextureTransformMode(vrpn_bool associate, int region);
+    virtual void associateStride(vrpn_bool associate, int region);
 
     // ACCESSORS
     virtual void getLightDirection (q_vec_type *) const;

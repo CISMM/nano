@@ -26,7 +26,7 @@ typedef struct _GraphicsState
 
 } GraphicsState;
 
-typedef struct _BehaviorLocks
+typedef struct _BehaviorAssociations
 {
     vrpn_bool stride;
     vrpn_bool justColor;
@@ -70,12 +70,12 @@ public:
     nmg_SurfaceMask* getMaskPlane() {return d_regionalMask;}
 
     //Appearance mutator functions
-    void setAlpha(float alpha, vrpn_bool respect_lock);
-    void enableFilledPolygons(int enable, vrpn_bool respect_lock);
-    void setTextureDisplayed(int display, vrpn_bool respect_lock);
-    void setTextureMode(int mode, vrpn_bool respect_lock);
-    void setTextureTransformMode(int mode, vrpn_bool respect_lock);
-    void setStride(int stride, vrpn_bool respect_lock);
+    void setAlpha(float alpha, vrpn_bool respect_unassociate);
+    void enableFilledPolygons(int enable, vrpn_bool respect_unassociate);
+    void setTextureDisplayed(int display, vrpn_bool respect_unassociate);
+    void setTextureMode(int mode, vrpn_bool respect_unassociate);
+    void setTextureTransformMode(int mode, vrpn_bool respect_unassociate);
+    void setStride(int stride, vrpn_bool respect_unassociate);
 
     //Accessor functions
     float getAlpha() const {return d_currentState.alpha;}
@@ -85,16 +85,20 @@ public:
     int getTextureTransformMode() const {return d_currentState.textureTransformMode;}
     int getStride() const {return d_currentState.stride;}
 
-    //Behavior locks
-    //Lock is probably a bad word for these functions.  What they effectively control is
-    //whether particular settings in question are tied to the default region of the surface
-    //or not.
-    void lockAlpha(vrpn_bool lock) {d_currentLocks.alpha = lock;}
-    void lockFilledPolygons(vrpn_bool lock) {d_currentLocks.filledPolygonsEnabled = lock;}
-    void lockTextureDisplayed(vrpn_bool lock) {d_currentLocks.textureDisplayed = lock;}
-    void lockTextureMode(vrpn_bool lock) {d_currentLocks.textureMode = lock;}
-    void lockTextureTransformMode(vrpn_bool lock) {d_currentLocks.textureTransformMode = lock;}
-    void lockStride(vrpn_bool lock) {d_currentLocks.stride = lock;}
+    //Behavior associations
+    
+    void associateAlpha(vrpn_bool associate) 
+            {d_currentAssociations.alpha = associate;}
+    void associateFilledPolygons(vrpn_bool associate) 
+            {d_currentAssociations.filledPolygonsEnabled = associate;}
+    void associateTextureDisplayed(vrpn_bool associate)
+            {d_currentAssociations.textureDisplayed = associate;}
+    void associateTextureMode(vrpn_bool associate)
+            {d_currentAssociations.textureMode = associate;}
+    void associateTextureTransformMode(vrpn_bool associate)
+            {d_currentAssociations.textureTransformMode = associate;}
+    void associateStride(vrpn_bool associate)
+            {d_currentAssociations.stride = associate;}
     
     //Rendering functions
     int rebuildRegion(nmb_Dataset *dataset, vrpn_bool force = VRPN_FALSE);
@@ -123,7 +127,7 @@ private:
     
     //Region's Graphics State
     GraphicsState d_currentState;
-    BehaviorLocks d_currentLocks;
+    BehaviorLocks d_currentAssociations;
 
     //Need to be able to save all that graphics state due to
     //the persnickety globals

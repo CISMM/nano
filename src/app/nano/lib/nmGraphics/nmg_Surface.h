@@ -42,13 +42,13 @@ public:
     void setTextureTransformMode(int mode, int region);
     void setStride(unsigned int stride, int region);
 
-    //Behavior locks
-    void lockAlpha(vrpn_bool lock, int region);
-    void lockFilledPolygons(vrpn_bool lock, int region);
-    void lockTextureDisplayed(vrpn_bool lock, int region);
-    void lockTextureMode(vrpn_bool lock, int region);
-    void lockTextureTransformMode(vrpn_bool lock, int region);
-    void lockStride(vrpn_bool lock, int region);
+    //Behavior associates
+    void associateAlpha(vrpn_bool associate, int region);
+    void associateFilledPolygons(vrpn_bool associate, int region);
+    void associateTextureDisplayed(vrpn_bool associate, int region);
+    void associateTextureMode(vrpn_bool associate, int region);
+    void associateTextureTransformMode(vrpn_bool associate, int region);
+    void associateStride(vrpn_bool associate, int region);
 
 private:
     nmb_Dataset *d_dataset;

@@ -47,16 +47,16 @@ nmg_SurfaceRegion(nmg_Surface *parent, int region_id)
     d_currentState.alpha = 1.0f;
     d_currentState.filledPolygonsEnabled = 1;
     d_currentState.textureDisplayed = nmg_Graphics::NO_TEXTURES;
-    d_currentState.textureTransformMode = nmg_Graphics::RULERGRID_COORD;;
+    d_currentState.textureTransformMode = nmg_Graphics::RULERGRID_COORD;
     d_currentState.textureMode = GL_FALSE;
 
-    d_currentLocks.stride = false;
-    d_currentLocks.justColor = false;
-    d_currentLocks.alpha = false;
-    d_currentLocks.filledPolygonsEnabled = false;
-    d_currentLocks.textureDisplayed = false;
-    d_currentLocks.textureTransformMode = false;
-    d_currentLocks.textureMode = false;
+    d_currentAssociations.stride = true;
+    d_currentAssociations.justColor = true;
+    d_currentAssociations.alpha = true;
+    d_currentAssociations.filledPolygonsEnabled = true;
+    d_currentAssociations.textureDisplayed = true;
+    d_currentAssociations.textureTransformMode = true;
+    d_currentAssociations.textureMode = true;
 }
 
 ////////////////////////////////////////////////////////////
@@ -532,9 +532,9 @@ deriveMaskPlane(float center_x, float center_y, float width,float height,
 // Description: Set the alpha value to use
 ////////////////////////////////////////////////////////////
 void nmg_SurfaceRegion::
-setAlpha(float alpha, vrpn_bool respect_lock)
+setAlpha(float alpha, vrpn_bool respect_unassociate)
 {
-    if (!d_currentLocks.alpha || !respect_lock) {
+    if (d_currentAssociations.alpha || !respect_unassociate) {
         d_currentState.alpha = alpha;
         d_needsFullRebuild = VRPN_TRUE;
     }
@@ -547,9 +547,9 @@ setAlpha(float alpha, vrpn_bool respect_lock)
 //				this region
 ////////////////////////////////////////////////////////////
 void nmg_SurfaceRegion::
-enableFilledPolygons(int enable, vrpn_bool respect_lock)
+enableFilledPolygons(int enable, vrpn_bool respect_unassociate)
 {
-    if (!d_currentLocks.filledPolygonsEnabled || !respect_lock) {
+    if (d_currentAssociations.filledPolygonsEnabled || !respect_unassociate) {
         d_currentState.filledPolygonsEnabled = enable;
     }
 }
@@ -561,9 +561,9 @@ enableFilledPolygons(int enable, vrpn_bool respect_lock)
 //				region
 ////////////////////////////////////////////////////////////
 void nmg_SurfaceRegion::
-setStride(int stride, vrpn_bool respect_lock)
+setStride(int stride, vrpn_bool respect_unassociate)
 {
-    if (!d_currentLocks.stride || !respect_lock) {
+    if (d_currentAssociations.stride || !respect_unassociate) {
         d_currentState.stride = stride;
         d_needsFullRebuild = VRPN_TRUE;
     }
@@ -576,9 +576,9 @@ setStride(int stride, vrpn_bool respect_lock)
 //              region
 ////////////////////////////////////////////////////////////
 void nmg_SurfaceRegion::
-setTextureDisplayed(int display, vrpn_bool respect_lock)
+setTextureDisplayed(int display, vrpn_bool respect_unassociate)
 {
-    if (!d_currentLocks.textureDisplayed || !respect_lock) {
+    if (d_currentAssociations.textureDisplayed || !respect_unassociate) {
         d_currentState.textureDisplayed = display;
         d_needsFullRebuild = VRPN_TRUE;
     }
@@ -590,9 +590,9 @@ setTextureDisplayed(int display, vrpn_bool respect_lock)
 // Description: 
 ////////////////////////////////////////////////////////////
 void nmg_SurfaceRegion::
-setTextureMode(int mode, vrpn_bool respect_lock)
+setTextureMode(int mode, vrpn_bool respect_unassociate)
 {
-    if (!d_currentLocks.textureMode || !respect_lock) {
+    if (d_currentAssociations.textureMode || !respect_unassociate) {
         d_currentState.textureMode = mode;
         d_needsFullRebuild = VRPN_TRUE;
     }
@@ -604,9 +604,9 @@ setTextureMode(int mode, vrpn_bool respect_lock)
 // Description: 
 ////////////////////////////////////////////////////////////
 void nmg_SurfaceRegion::
-setTextureTransformMode(int mode, vrpn_bool respect_lock)
+setTextureTransformMode(int mode, vrpn_bool respect_unassociate)
 {
-    if (!d_currentLocks.textureTransformMode || !respect_lock) {
+    if (d_currentAssociations.textureTransformMode || !respect_unassociate) {
         d_currentState.textureTransformMode = mode;
         d_needsFullRebuild = VRPN_TRUE;
     }

@@ -235,18 +235,18 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics createRegion");
   d_destroyRegion_type =
     c->register_message_type("nmg Graphics destroyRegion");
-  d_lockAlpha_type =
-    c->register_message_type("nmg Graphics lockAlpha");
-  d_lockFilledPolygons_type =
-    c->register_message_type("nmg Graphics lockFilledPolygons");
-  d_lockStride_type =
-    c->register_message_type("nmg Graphics lockStride");
-  d_lockTextureDisplayed_type =
-    c->register_message_type("nmg Graphics lockTextureDisplayed");
-  d_lockTextureMode_type =
-    c->register_message_type("nmg Graphics lockTextureMode");
-  d_lockTextureTransformMode_type =
-    c->register_message_type("nmg Graphics lockTextureTransformMode");
+  d_associateAlpha_type =
+    c->register_message_type("nmg Graphics associateAlpha");
+  d_associateFilledPolygons_type =
+    c->register_message_type("nmg Graphics associateFilledPolygons");
+  d_associateStride_type =
+    c->register_message_type("nmg Graphics associateStride");
+  d_associateTextureDisplayed_type =
+    c->register_message_type("nmg Graphics associateTextureDisplayed");
+  d_associateTextureMode_type =
+    c->register_message_type("nmg Graphics associateTextureMode");
+  d_associateTextureTransformMode_type =
+    c->register_message_type("nmg Graphics associateTextureTransformMode");
   //For visualization
   d_setViztexScale_type =
     c->register_message_type("nmg Graphics setViztexScale");
@@ -2910,7 +2910,7 @@ int nmg_Graphics::decode_destroyRegion
   return 0;
 }
 
-char * nmg_Graphics::encode_lock (int * len, vrpn_bool lock, int region)
+char * nmg_Graphics::encode_associate (int * len, vrpn_bool associate, int region)
 {
  char * msgbuf = NULL;
   char * mptr;
@@ -2921,23 +2921,23 @@ char * nmg_Graphics::encode_lock (int * len, vrpn_bool lock, int region)
   *len = sizeof(vrpn_bool) + sizeof(int);
   msgbuf = new char [*len];
   if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_lockAlpha:  "
+    fprintf(stderr, "nmg_Graphics::encode_associate:  "
                     "Out of memory.\n");
     *len = 0;
   } else {
     mptr = msgbuf;
     mlen = *len;
-    vrpn_buffer(&mptr, &mlen, lock);
+    vrpn_buffer(&mptr, &mlen, associate);
     vrpn_buffer(&mptr, &mlen, region);
   }
 
   return msgbuf;
 }
 
-int nmg_Graphics::decode_lock (const char * buf, vrpn_bool *lock, int *region)
+int nmg_Graphics::decode_associate (const char * buf, vrpn_bool *associate, int *region)
 {
-  if (!buf || !lock || !region) return -1;
-  CHECK(vrpn_unbuffer(&buf, lock));
+  if (!buf || !associate || !region) return -1;
+  CHECK(vrpn_unbuffer(&buf, associate));
   CHECK(vrpn_unbuffer(&buf, region));
   return 0;
 }
