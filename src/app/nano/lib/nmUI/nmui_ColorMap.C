@@ -322,6 +322,10 @@ void nmui_ColorMap::setupSynchronization(nmui_Component * c) {
     c->add((TclNet_float *)color_max);
     c->add((TclNet_float *)data_min);
     c->add((TclNet_float *)data_max);
+    c->add( ( TclNet_int* ) surface_r );
+    c->add( ( TclNet_int* ) surface_g );
+    c->add( ( TclNet_int* ) surface_b );
+    c->add( ( TclNet_int* ) surface_color_changed );
   }
 }
 
@@ -332,6 +336,10 @@ void nmui_ColorMap::shutdownConnections() {
     ((TclNet_float *)color_max)->bindConnection(NULL);
     ((TclNet_float *)data_min)->bindConnection(NULL);
     ((TclNet_float *)data_max)->bindConnection(NULL);
+    ((TclNet_int* ) surface_r )->bindConnection( NULL );
+    ((TclNet_int* ) surface_g )->bindConnection( NULL );
+    ((TclNet_int* ) surface_b )->bindConnection( NULL );
+    ((TclNet_int* ) surface_color_changed )->bindConnection( NULL );
   }
 }
 
