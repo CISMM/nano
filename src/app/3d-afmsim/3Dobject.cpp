@@ -1445,16 +1445,26 @@ void saveAllGroups(){
 	char c;
 	int i = 0;
 
-	cout << "Enter filename to save to: ";
+	cout << "Enter filename to save to (do not include extension): ";
 	
 	c = getchar();
-	while(int(c) != 10){ 
+	while(  (int(c) != 10) && (c != '.') ){ 
 		filename[i] = c;
 		i++;
 		c = getchar();
 	}
+	if(int(c) != 10){
+		while(int(c) != 10){
+			c = getchar();
+		}
+	}
+	filename[i++] = '.';
+	filename[i++] = 'a';
+	filename[i++] = 'f';
+	filename[i++] = 'm';
 	filename[i] = '\0';
-	cout << "The filename you entered is: " << filename << endl;
+	cout << "The filename is: " << filename << endl
+		 << "All files are saved as type '*.afm'" << endl;;
 
 	outfile.open(filename, fstream::out | fstream::app);
 	
@@ -1540,7 +1550,7 @@ void retrieveAllGroups(){
 				break;
 			case SPHERE :		
 				infile >> diam >> pos.x >> pos.y >> pos.z;
-				cout << "position : " << pos << endl;
+				
 				if (j==0){
 					GroupToAddTo = addNtube(type,pos,0,0,0,0,diam);
 				}
