@@ -800,6 +800,7 @@ proc flip_mod_tool {mod_tool element op} {
         # Hide the controls for slow_line tool
         hide.modify_live
         # enable styles that might have been disabled. 
+        $nmInfo(modifyfull).style.sweep configure -state normal
         $nmInfo(modifyfull).style.sewing configure -state normal
         $nmInfo(modifyfull).style.forcecurve configure -state normal
     } elseif {$k==1} {
