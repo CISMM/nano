@@ -225,6 +225,7 @@ char g_vizPlaneName [128];
 
 int g_mask = DISABLE_MASK;
 int g_transparent = 0;
+float g_viztex_scale = 500.0f;
 
 nmg_Visualization *visualization;
 

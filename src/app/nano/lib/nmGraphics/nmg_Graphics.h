@@ -94,7 +94,7 @@ class nmg_Graphics {
                         REMOTE_DATA, VISUALIZATION };
 
     // how texture coordinates are computed:
-    enum TextureTransformMode {RULERGRID_COORD, REGISTRATION_COORD, 
+    enum TextureTransformMode {RULERGRID_COORD, VIZTEX_COORD, REGISTRATION_COORD, 
 		MANUAL_REALIGN_COORD, REMOTE_COORD, PER_QUAD_COORD};
 
     // enums for Remote Rendering
@@ -133,6 +133,7 @@ class nmg_Graphics {
       // Specifies the name of a PPM file to display as the rulergrid.
 
 	virtual void loadVizImage (const char * name) = 0;
+    virtual void setViztexScale (float) = 0;
 
     virtual void causeGridReColor (void) = 0;
     virtual void causeGridRedraw (void) = 0;
@@ -515,6 +516,7 @@ class nmg_Graphics {
 	vrpn_int32 d_setVisualizationMinHeight_type;
 	vrpn_int32 d_setVisualizationMaxHeight_type;
 	vrpn_int32 d_setVisualizationAlpha_type;
+    vrpn_int32 d_setViztexScale_type;
 
 
     // Each encode_ routine will allocate a new char [] to hold
@@ -748,6 +750,9 @@ class nmg_Graphics {
 
 	char *encode_setVisualizationAlpha(int *len, float);
 	int decode_setVisualizationAlpha(const char *buf, float *);
+
+    char * encode_setViztexScale (int * len, float);
+    int decode_setViztexScale (const char * buf, float *);
 };
 
 #endif  // NMG_GRAPHICS_H

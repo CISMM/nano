@@ -156,6 +156,7 @@ set viz_max 1
 set viz_min_limit 0
 set viz_max_limit 1
 set viz_alpha 0.5
+set viztex_scale 500
 
 #Viz choices plane
 iwidgets::Labeledframe $nmInfo(visualizations).viz \
@@ -208,6 +209,7 @@ label $nmInfo(viz_controls).alphalabel -justify left -text \
 	"Alpha value to use for visualization"
 
 generic_entry $nmInfo(viz_controls).viz_alpha viz_alpha "Alpha:" real
+generic_entry $nmInfo(viz_controls).viztex_scale viztex_scale "Texture Scale:" real
 
 pack $nmInfo(viz_controls).viz_dataset -side top -anchor w
 pack $nmInfo(viz_controls).slidelabel -side top -anchor w
@@ -216,7 +218,8 @@ pack $nmInfo(viz_controls).viz_min -side top -anchor w -padx 1m
 pack $nmInfo(viz_controls).planemax -side top -anchor w
 pack $nmInfo(viz_controls).viz_max -side top -anchor w
 pack $nmInfo(viz_controls).alphalabel -side top -anchor w
-pack $nmInfo(viz_controls).viz_alpha -side top -anchor w -padx 9m
+pack $nmInfo(viz_controls).viz_alpha -side top -anchor w -padx 1m
+pack $nmInfo(viz_controls).viztex_scale -side top -anchor w -padx 1m
 trace variable viz_min_limit w update_minmax_label
 trace variable viz_max_limit w update_minmax_label
 

@@ -135,6 +135,7 @@ class nmg_Graphics_Null : public nmg_Graphics {
 	virtual void setVisualizationMinHeight(float);
 	virtual void setVisualizationMaxHeight(float);
 	virtual void setVisualizationAlpha(float);
+    virtual void setViztexScale (float);
     // ACCESSORS
 
 

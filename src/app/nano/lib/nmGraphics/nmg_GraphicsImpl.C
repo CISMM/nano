@@ -526,6 +526,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler( d_setVisualizationAlpha_type,
 				handle_setVisualizationAlpha,
 				this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setViztexScale_type,
+                               handle_setViztexScale,
+                               this, vrpn_ANY_SENDER);
 
 }
 
@@ -2728,6 +2731,12 @@ void nmg_Graphics_Implementation::setVisualizationAlpha(float viz_alpha)
 	causeGridRebuild();
 }
 
+void nmg_Graphics_Implementation::setViztexScale (float s) {
+  //fprintf(stderr, "nmg_Graphics_Implementation::setViztexScale().\n");
+  g_viztex_scale = s;
+  //causeGridRedraw();
+}
+
 void nmg_Graphics_Implementation::getLightDirection (q_vec_type * v) const {
 //fprintf(stderr, "nmg_Graphics_Implementation::getLightDirection().\n");
   ::getLightDirection(v);
@@ -4103,4 +4112,19 @@ int nmg_Graphics_Implementation::handle_setVisualizationAlpha
    it->setVisualizationMaxHeight(viz_alpha);
 
    return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setViztexScale
+(
+    void * userdata, 
+    vrpn_HANDLERPARAM p
+) 
+{
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float scale;
+
+  CHECKF(it->decode_setViztexScale(p.buffer, &scale), "handle_setViztexScale");
+  it->setViztexScale(scale);
+  return 0;
 }

@@ -1,3 +1,33 @@
+2001-03-13  Jason Clark  <jclark@cs.unc.edu>
+
+	* nmg_Visualization.C: See below
+
+	* nmg_GraphicsTimer.h: See below
+
+	* nmg_GraphicsTimer.C: See below
+	
+	* nmg_GraphicsRemote.h: See below
+
+	* nmg_GraphicsRemote.C: See below
+
+	* nmg_GraphicsNull.h: See below
+
+	* nmg_GraphicsNull.C: See below
+
+	* nmg_GraphicsImpl.h: See below
+
+	* nmg_GraphicsImpl.C: See below
+
+	* graphics_globals.h: See below
+
+	* graphics_globals.c: See below
+
+	* nmg_Graphics.C: See below
+	
+	* nmg_Graphics.h: Visualization texture used to use Rulergrid
+	scaling variable, for speed of testing and I just am now getting
+	aroundt to changing it.  Broke that so that it is scaled seperately.
+	
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 
 	* Makefile : added glut as external lib

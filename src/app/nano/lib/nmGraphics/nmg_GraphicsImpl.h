@@ -182,6 +182,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 	virtual void setVisualizationMinHeight(float);
 	virtual void setVisualizationMaxHeight(float);
 	virtual void setVisualizationAlpha(float);
+    virtual void setViztexScale (float);
 
     // ACCESSORS
 
@@ -330,6 +331,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
   static int handle_setVisualizationMinHeight(void *, vrpn_HANDLERPARAM);
   static int handle_setVisualizationMaxHeight(void *, vrpn_HANDLERPARAM);
   static int handle_setVisualizationAlpha(void *, vrpn_HANDLERPARAM);
+  static int handle_setViztexScale (void *, vrpn_HANDLERPARAM);
 };
 
 #endif  // NMG_GRAPHICS_IMPL_H

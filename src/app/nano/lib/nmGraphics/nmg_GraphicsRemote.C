@@ -2142,6 +2142,26 @@ void nmg_Graphics_Remote::setVisualizationAlpha(float viz_alpha)
       delete [] msgbuf;
 }
  
+void nmg_Graphics_Remote::setViztexScale (float scale) {
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_setViztexScale(&len, scale);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_setViztexScale_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setViztexScale:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
 // ACCESSORS
 void nmg_Graphics_Remote::getLightDirection (q_vec_type * v) const {
   q_vec_copy(*v, (double *) d_lightDirection);

@@ -151,6 +151,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
 	virtual void setVisualizationMinHeight(float);
 	virtual void setVisualizationMaxHeight(float);
 	virtual void setVisualizationAlpha(float);
+    virtual void setViztexScale (float);
 
 
     virtual void getLightDirection (q_vec_type *) const;

@@ -420,6 +420,10 @@ setTexture()
         glRotated(theta*180.0/M_PI, 0.0, 0.0, 1.0);              // -ROTATION
         glTranslatef(-g_rulergrid_xoffset, -g_rulergrid_yoffset, 0.0);// -TRANS.
         break;
+      case nmg_Graphics::VIZTEX_COORD:
+        // use values from the older rulergrid adjustment interface
+        glScalef(1.0/g_viztex_scale,1.0/g_viztex_scale,1.0); // 1.0/SCALE
+        break;
       case nmg_Graphics::MANUAL_REALIGN_COORD:
         compute_texture_matrix(g_translate_tex_x, g_translate_tex_y,
 		g_tex_theta_cumulative, g_scale_tex_x,
@@ -1269,7 +1273,7 @@ renderSurface()
 	int old_texture_displayed = g_texture_displayed;
 	int old_texture_mode = g_texture_mode;
 
-	g_texture_transform_mode = nmg_Graphics::RULERGRID_COORD;
+	g_texture_transform_mode = nmg_Graphics::VIZTEX_COORD;
 	g_texture_displayed = nmg_Graphics::VISUALIZATION;
 	g_texture_mode = GL_TEXTURE_2D;
 

@@ -328,6 +328,7 @@ static void handle_viz_dataset_change(const char *, void *);
 static void handle_viz_max_change(vrpn_float64 , void *);
 static void handle_viz_min_change(vrpn_float64 , void *);
 static void handle_viz_alpha_change(vrpn_float64 , void *);
+static void handle_viztex_scale_change (vrpn_float64, void * userdata);
 
 static vrpn_bool g_syncPending = VRPN_FALSE;
 
@@ -755,6 +756,9 @@ Tclvar_float	viz_min_limit("viz_min_limit",0);
 Tclvar_float	viz_max("viz_max",1, handle_viz_max_change);
 Tclvar_float	viz_min("viz_min",0, handle_viz_min_change);
 Tclvar_float	viz_alpha("viz_alpha",0.5, handle_viz_alpha_change);
+
+//Probably should make all of these TclNet's
+TclNet_float    viztex_scale ("viztex_scale", 500);
 
 //-----------------------------------------------------------------
 /// These variables are for controlling shape analysis
@@ -1389,6 +1393,8 @@ void shutdown_connections (void) {
   ruler_b.bindConnection(NULL);
   rulergrid_changed.bindConnection(NULL);
   rulergrid_enabled.bindConnection(NULL);
+
+  viztex_scale.bindConnection(NULL);
 
   toggle_null_data_alpha.bindConnection(NULL);
 
@@ -4100,6 +4106,12 @@ static void handle_viz_dataset_change(const char *, void *)
   graphics->causeGridRedraw();
 }
 
+static void handle_viztex_scale_change (vrpn_float64, void * userdata) {
+  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  g->setViztexScale(viztex_scale);
+  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
+}
+
 // This is an ImageMode handler. Makes sure the next time we enter
 // directZ mode we don't get surprised by wierd forces.
 int invalidate_directz_forces(void * userdata) {
@@ -4617,6 +4629,8 @@ void setupCallbacks (nmg_Graphics * g) {
   rulergrid_angle.addCallback
             (handle_rulergrid_angle_change, g);
 
+  viztex_scale.addCallback
+            (handle_viztex_scale_change, g);
 
   shiny.addCallback
             (handle_shiny_change, g);

@@ -590,6 +590,11 @@ void nmg_Graphics_Timer::setVisualizationMinHeight(float viz_min)
   d_imp->setVisualizationMinHeight(viz_min);
 }
 
+void nmg_Graphics_Timer::setViztexScale (float s) {
+  activateTimer();
+  d_imp->setViztexScale(s);
+}
+
 void nmg_Graphics_Timer::setViewTransform (v_xform_type x) {
   if (d_timingViewpointChanges) {
     activateTimer();

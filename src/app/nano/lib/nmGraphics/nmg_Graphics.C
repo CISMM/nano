@@ -239,6 +239,8 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setVisualizationMaxHeight");
   d_setVisualizationAlpha_type =
     c->register_message_type("nmg Graphics setVisualizationAlpha");
+  d_setViztexScale_type =
+    c->register_message_type("nmg Graphics setViztexScale");
 }
 
 nmg_Graphics::~nmg_Graphics (void) {
@@ -2917,4 +2919,34 @@ int nmg_Graphics::decode_setVisualizationAlpha(const char  *buf, float *viz_alph
 
    *viz_alpha = (float)(temp);
    return 0;
+}
+
+char * nmg_Graphics::encode_setViztexScale
+                     (int * len, float scale) {
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(float);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_setViztexScale:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, scale);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_setViztexScale
+                   (const char * buf, float * scale) {
+  if (!buf || !scale) return -1;
+  CHECK(vrpn_unbuffer(&buf, scale));
+  return 0;
 }
