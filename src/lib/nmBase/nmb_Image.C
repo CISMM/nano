@@ -414,8 +414,8 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
 
     plane = p;
     grid = NULL;
-    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
-     max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+    min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
+     max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
 
     int i,j;
     for (i = 0; i < plane->numX(); i++){
@@ -456,8 +456,8 @@ nmb_ImageGrid::nmb_ImageGrid(BCGrid *g):nmb_Image(),
 
     plane = g->head();
     grid = g;
-    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
-     max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+    min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
+     max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
 
     int i,j;
     for (i = 0; i < plane->numX(); i++){
@@ -496,8 +496,8 @@ nmb_ImageGrid::nmb_ImageGrid(nmb_Image *im):
   int i,j;
   grid = new BCGrid(im->width(), im->height(), 0.0, 1.0, 0.0, 1.0);
   plane = grid->addNewPlane(*(im->name()), *(im->unitsValue()), 0);
-  min_x_set = MAXSHORT; min_y_set = MAXSHORT;
-  max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+  min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
+  max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
   for (i = 0; i < numExportFormats(); i++){
       BCString name = exportFormatType(i);
       formatNames.addEntry(name);
@@ -885,8 +885,8 @@ nmb_ImageArray::nmb_ImageArray(const char *name,
         d_maxValidValue(0),
         d_pixelType(pixType)
 {
-    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
-    max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+    min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
+    max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
     int array_size = 0;
     // pick a border that preserves 32-bit-alignment of rows
     // and pads the size up to a power of 2

@@ -1,3 +1,8 @@
+2001-04-30  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Image.C : replaced MAXSHORT with SHRT_MAX so it would compile
+	on all pc installations instead of just some of them
+
 2001-04-19  Adam Seeger  <seeger@cs.unc.edu>
 
 	* BCPlane.Ch - took out changes from yesterday to reduce complexity
