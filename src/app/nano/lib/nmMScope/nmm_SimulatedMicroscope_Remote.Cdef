@@ -75,6 +75,9 @@ sendCylinders(URender * obj){
 	myURenderObject = obj;
 
 	encode_and_sendScale(myURenderObject->GetLocalXform().GetScale());
+	encode_and_sendTrans(myURenderObject->GetLocalXform().GetTrans()[0],
+						myURenderObject->GetLocalXform().GetTrans()[1],
+						myURenderObject->GetLocalXform().GetTrans()[2]);
 
 	for(int i = 0; i < myURenderObject->num_cylinders; ++i){
 	//only sends cylinders if they have been filled in in URender 
@@ -153,7 +156,9 @@ handle_gotConnection (void * userdata, vrpn_HANDLERPARAM grpc_p) {
 
 */
 		grpc_me->encode_and_sendScale(grpc_me->myURenderObject->GetLocalXform().GetScale());
-
+		grpc_me->encode_and_sendTrans(grpc_me->myURenderObject->GetLocalXform().GetTrans()[0],
+										grpc_me->myURenderObject->GetLocalXform().GetTrans()[1],
+										grpc_me->myURenderObject->GetLocalXform().GetTrans()[2]);
 		for(int i = 0; i < grpc_me->myURenderObject->num_cylinders; ++i){
 		//only sends cylinders if they have been filled in in URender 
         //(i.e. num_cylinders != 0), so safe to keep have this for loop here

@@ -1,3 +1,8 @@
+2002-04-26 David Borland <borland@cs.unc.edu>
+
+        * nmm_SimulatedMicroscope_Remote.Cdef : send translation when
+        sending cylinders
+
 2002-04-05 Andrea HIlchey <hilchey@cs.unc.edu>
 
 	* nmm_SimulatedMicroscope_Remote.Cdef : filled in 
