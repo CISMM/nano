@@ -435,8 +435,14 @@ class Adaptor {
 
     // MANIPULATORS
 
-    void updateSampleAlgorithm (nmm_Microscope_Remote *);
     void setMicroscopeRTTEstimate (double);
+
+    void updateSampleAlgorithm (nmm_Microscope_Remote *);
+      ///< This ought to be done with callbacks (as well as manually
+      ///< when the user switches into feelahead).
+
+    void updateWarpedPlane (nmui_HSWarpedPlane *);
+      ///< This ought to be done with callbacks.
 
   private:
 
@@ -466,42 +472,54 @@ void Adaptor::updateSampleAlgorithm (nmm_Microscope_Remote * m) {
     return;
   }
 
-  if (d_rttEstimate < 0.015) {
-     // BUG:  For less than 20ms we'd like to go to freehand,
-     // but there isn't any way to do that.
+  if (microscope->state.modify.feelahead_auto) {
+    if (d_rttEstimate < 0.015) {
+      // BUG:  For less than 20ms we'd like to go to freehand,
+      // but there isn't any way to do that.
 
-    d_sampleAlgorithm.numx = 2;
-    d_sampleAlgorithm.numy = 2;
+      d_sampleAlgorithm.numx = 2;
+      d_sampleAlgorithm.numy = 2;
 
+    } else {
+
+      // HACK:  Assume the microscope could take 300 samples per second.
+      // Figure out what it could take in a time == RTT & have it take a
+      // rectangular patch with a size approximately sqrt that.
+
+      targetsize = d_rttEstimate * 300;
+      d_sampleAlgorithm.numy = floor(sqrt(targetsize));
+      d_sampleAlgorithm.numx = floor(targetsize / d_sampleAlgorithm.numy);
+    }
+
+    // HACK:  arbitrarily feel over 1/20th x 1/20th the area
+    // Should this instead be with a resolution = or 1/2 the grid interval?
+
+    grid = m->Data()->inputGrid;
+    targetsize = grid->maxX() - grid->minX();
+    d_sampleAlgorithm.dx = targetsize / 10;
+    targetsize = grid->maxY() - grid->minY();
+    d_sampleAlgorithm.dy = targetsize / 10;
+
+    d_sampleAlgorithm.orientation = 0.0;
+
+    fprintf(stderr, "Adaptor::updateSampleAlgorithm:  "
+                  "Estimate %.5f seconds of RTT;\n"
+                  "sample grid is %d x %d points at %.2f x %.2f nm spacing.\n",
+                  d_rttEstimate, d_sampleAlgorithm.numx, d_sampleAlgorithm.numy,
+                  d_sampleAlgorithm.dx, d_sampleAlgorithm.dy);
   } else {
-
-    // HACK:  Assume the microscope could take 300 samples per second.
-    // Figure out what it could take in a time == RTT & have it take a
-    // rectangular patch with a size approximately sqrt that.
-
-    targetsize = d_rttEstimate * 300;
-    d_sampleAlgorithm.numy = floor(sqrt(targetsize));
-    d_sampleAlgorithm.numx = floor(targetsize / d_sampleAlgorithm.numy);
+    d_sampleAlgorithm.numx = microscope->state.modify.feelahead_numX;
+    d_sampleAlgorithm.numx = microscope->state.modify.feelahead_distY;
+    d_sampleAlgorithm.dx = microscope->state.modify.feelahead_numX;
+    d_sampleAlgorithm.dy = microscope->state.modify.feelahead_distY;
+    d_sampleAlgorithm.orientation = 0.0;
   }
 
-  // HACK:  arbitrarily feel over 1/20th x 1/20th the area
-  // Should this instead be with a resolution = or 1/2 the grid interval?
-
-  grid = m->Data()->inputGrid;
-  targetsize = grid->maxX() - grid->minX();
-  d_sampleAlgorithm.dx = targetsize / 10;
-  targetsize = grid->maxY() - grid->minY();
-  d_sampleAlgorithm.dy = targetsize / 10;
-
-  d_sampleAlgorithm.orientation = 0.0;
-
-  collabVerbose(3, "Adaptor::updateSampleAlgorithm:  "
-                "Estimate %.5f seconds of RTT;\n"
-                "sample grid is %d x %d points at %.2f x %.2f nm spacing.\n",
-                d_rttEstimate, d_sampleAlgorithm.numx, d_sampleAlgorithm.numy,
-                d_sampleAlgorithm.dx, d_sampleAlgorithm.dy);
-
   m->SetSampleMode(&d_sampleAlgorithm);
+}
+
+void Adaptor::updateWarpedPlane (nmui_HSWarpedPlane * wp) {
+  wp->setMicroscopeRTTEstimate(d_rttEstimate);
 }
 
 void Adaptor::setMicroscopeRTTEstimate (double rtt) {
@@ -512,6 +530,7 @@ static Adaptor adaptor;
 
 void updateMicroscopeRTTEstimate (double time) {
   adaptor.setMicroscopeRTTEstimate(time);
+  adaptor.updateWarpedPlane(haptic_manager.d_warpedPlane);
 }
 
 
@@ -1103,7 +1122,11 @@ void setupHaptics (int mode) {
 
     case USER_LINE_MODE:
 
-      haptic_manager.setSurface(haptic_manager.d_livePlane);
+      if (microscope->state.image.tool == WARPED_PLANE) {
+        haptic_manager.setSurface(haptic_manager.d_warpedPlane);
+      } else {
+        haptic_manager.setSurface(haptic_manager.d_livePlane);
+      }
       haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy
                                (haptic_manager.d_pointFeatures);
       break;
@@ -1885,6 +1908,16 @@ void specify_sound(int x, int y)
  * defines the auxiliary haptic channels (buzzing, bumping, &c).
  * nmui_SurfaceFeatures should have been passed to the global
  * haptic_manager.surfaceFeatures() last time the mode was changed.
+ *
+ * There's some oddness here - for some surface modes (live plane,
+ * warped plane), surface()->update() ought to be callback-driven,
+ * but for others (canned) it makes more sense to have it polling.
+ * How do we handle that dichotomy?
+ * Stupid idea:  do both;  some modes will have the callback be
+ * a noop, others will have the poll be a noop and do all the work
+ * in the callback.  This might be hard to grok, although having
+ * it all in one place will help (although we're already heading
+ * towards too many haptic modes to keep together).
  */
 
 // BUG must sendSurface sometimes?
@@ -3461,6 +3494,7 @@ collabVerbose(5, "initializeInteraction:  updateWorldFromRoom().\n");
   haptic_manager.d_livePlane = new nmui_HSLivePlane;
   haptic_manager.d_feelAhead = new nmui_HSFeelAhead;
   haptic_manager.d_directZ = new nmui_HSDirectZ (dataset, microscope);
+  haptic_manager.d_warpedPlane = new nmui_HSWarpedPlane;
 
   haptic_manager.d_gridFeatures = new nmui_GridFeatures
                                        (haptic_manager.d_canned);

@@ -1288,6 +1288,8 @@ struct MicroscapeInitializationState {
   char logPath [256];
   vrpn_bool logPhantom;
   char phantomLogPath [256];
+  vrpn_bool replayPhantom;
+  char phantomLog [256];
   timeval logTimestamp;
   vrpn_bool replayInterface;
 
@@ -1346,6 +1348,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   openPeer (VRPN_FALSE),
   logInterface (VRPN_FALSE),
   logPhantom (VRPN_FALSE),
+  replayPhantom (VRPN_FALSE),
   replayInterface (VRPN_FALSE),
   collabMode (2),
   phantomRate (60.0),  // standard default
@@ -1368,6 +1371,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   peerName[0] = '\0';
   logPath[0] = '\0';
   phantomLogPath[0] = '\0';
+  phantomLog[0] = '\0';
   logTimestamp.tv_sec = 0;
   logTimestamp.tv_usec = 0;
   colorplane[0] = '\0';
@@ -5677,6 +5681,10 @@ void ParseArgs (int argc, char ** argv,
         istate->logPhantom = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->phantomLogPath, argv[i]);
+      } else if (!strcmp(argv[i], "-replayphantom")) {
+        istate->replayPhantom = VRPN_TRUE;
+        if (++i >= argc) Usage(argv[0]);
+        strcpy(istate->phantomLog, argv[i]);
       } else if (!strcmp(argv[i], "-packetlimit")) {
         if (++i >= argc) Usage(argv[0]);
         istate->packetlimit = atoi(argv[i]);
@@ -7103,29 +7111,40 @@ int main (int argc, char* argv[])
 	
     } // end if (glenable)
 
-    // XXX - setting up vrpn callbacks for tracker should happen after
-    // v_create_world() has been called (by new nmg_Graphics) because
-    // otherwise there is no place to store the tracker reports
-    // (this space is allocated in v_create_world())
-    // Initialize force, tracker, a/d device, sound
+  // XXX - setting up vrpn callbacks for tracker should happen after
+  // v_create_world() has been called (by new nmg_Graphics) because
+  // otherwise there is no place to store the tracker reports
+  // (this space is allocated in v_create_world())
+  // Initialize force, tracker, a/d device, sound
 
-    VERBOSE(1,"Before tracker enable");
+  VERBOSE(1,"Before tracker enable");
+
+  if (istate.replayPhantom) {
+
+    internal_device_connection =
+      new vrpn_File_Connection (istate.phantomLog);
+
+  } else {
 
     char phantomlog [256];
-    sprintf(phantomlog, "%s/phantom-%d.log", istate.phantomLogPath,
+
+    sprintf(phantomlog, "%s-phantom-%d.log", istate.phantomLogPath,
             istate.logTimestamp.tv_sec);
 
     internal_device_connection = new vrpn_Synchronized_Connection 
            (wellKnownPorts->localDevice,
             istate.logPhantom ? phantomlog : NULL);
-    if (peripheral_init(internal_device_connection, handTrackerName,
-                        headTrackerName, bdboxName, istate.magellanName)){
-        display_fatal_error_dialog("Memory fault, cannot initialize peripheral devices\n");
-        return(-1);
-    } else if (register_vrpn_callbacks()) {
-        display_fatal_error_dialog("Cannot setup tracker callbacks\n");
-        return(-1);
-    }
+  }
+
+  if (peripheral_init(internal_device_connection, handTrackerName,
+                      headTrackerName, bdboxName, istate.magellanName)){
+      display_fatal_error_dialog("Memory fault, cannot initialize "
+                                 "peripheral devices\n");
+      return(-1);
+  } else if (register_vrpn_callbacks()) {
+      display_fatal_error_dialog("Cannot setup tracker callbacks\n");
+      return(-1);
+  }
 
   setupCallbacks(forceDevice);
   handTracker_update_rate = istate.phantomRate;

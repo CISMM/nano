@@ -1,3 +1,27 @@
+2001-07-17  Tom Hudson  <hudson@cs.unc.edu>
+
+	Lots of stuff from a private copy of the code I made long ago.
+
+	* interaction.c (Adaptor::updateWarpedPlane) : New function.
+	(Adaptor::updateSampleAlgorithm) : Support either for automatic or
+	manual specification of feelahead parameters.
+	(updateMicroscopeRTTEstimate) : Call Adaptor::updateWarpedPlane().
+	(setupHaptics) : Support for warped plane.
+	(initializeInteraction) : Same.
+
+	* microscape.c (MicroscopeInitializationState::replayPhantom,
+	phantomLog) : New data members.
+	(MicroscopeInitializationState constructor) : Initialize new members.
+	(ParseArgs) : Handle new -replayphantom argument.
+	(main) : Set up internal_device_connection to replay phantom.
+
+	* microscopeHandlers.C (handle_feelahead_numX_change) : New function.
+	(handle_feelahead_numY_change) : Same.
+	(handle_feelahead_distX_change) : Same.
+	(handle_feelahead_distY_change) : Same.
+	* microscopeHandlers.h : Declare new handlers.  Tweak other
+	declarations.
+
 2001-07-06 Jameson Miller <millerj@cs.unc.edu>
 	* microscape.c - registered a new pointdatahandler so dataset will be u
 	updated when in optimize now mode and new points are recieved

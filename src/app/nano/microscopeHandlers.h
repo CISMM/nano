@@ -10,13 +10,13 @@
 
 #include <vrpn_Types.h>
 
+class nmm_Microscope_Remote;
+
 // These handlers take a pointer to a Microscope as their userdata.
 // Thus, they need not access the global 'microscope'.
 // This helps us prepare for multiple simultaneous Microscopes.
 
-class nmm_Microscope_Remote;
 void setupStateCallbacks (nmm_Microscope_Remote *);
-class nmm_Microscope_Remote;
 void teardownStateCallbacks (nmm_Microscope_Remote *);
 
 void handle_doRelaxComp_change (vrpn_int32 val, void * _mptr);
@@ -67,9 +67,10 @@ void handle_slow_line_step_change (vrpn_int32 new_value, void * _mptr);
 void handle_slow_line_direction_change (vrpn_int32 new_value, void * _mptr);
 int slow_line_ReceiveNewPoint (void * _mptr, const Point_results * p);
 
-
-//void handle_mutex_request (vrpn_int32, void *);
-//void handle_mutex_release (vrpn_int32, void *);
+int handle_feelahead_numX_change (vrpn_int32, void *);
+int handle_feelahead_numY_change (vrpn_int32, void *);
+int handle_feelahead_distX_change (vrpn_int32, void *);
+int handle_feelahead_distY_change (vrpn_int32, void *);
 
 #endif  // _H_MICROSCOPE_HANDLERS
 

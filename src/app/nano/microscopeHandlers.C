@@ -18,6 +18,7 @@
 #include <nmm_Types.h>
 #include <nmm_Globals.h>
 #include <nmm_MicroscopeRemote.h>
+#include <nmm_Sample.h>
 
 #include <nmg_Graphics.h>
 #include <nmg_Globals.h>
@@ -837,6 +838,9 @@ void handle_modify_accept (vrpn_int32, void * _mptr) {
       case FEELAHEAD:
 fprintf(stderr, "Feelahead mode!\n");
         break;
+      case WARPED_PLANE:
+fprintf(stderr, "Warped plane mode!\n");
+        break;
       default:
         printf("  Unknown modify tool!!!\n");
       }
@@ -1181,4 +1185,35 @@ int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
  // }
   return 0;
 }
+
+
+
+int handle_feelahead_numX_change (vrpn_int32 value, void * _mptr) {
+  nmm_Sample * sample = microscope->SampleMode();
+
+  sample->numx = value;
+  return 0;
+}
+
+int handle_feelahead_numY_change (vrpn_int32 value, void * _mptr) {
+  nmm_Sample * sample = microscope->SampleMode();
+
+  sample->numy = value;
+  return 0;
+}
+
+int handle_feelahead_distX_change (vrpn_int32 value, void * _mptr) {
+  nmm_Sample * sample = microscope->SampleMode();
+
+  sample->dx = value;
+  return 0;
+}
+
+int handle_feelahead_distY_change (vrpn_int32 value, void * _mptr) {
+  nmm_Sample * sample = microscope->SampleMode();
+
+  sample->dy = value;
+  return 0;
+}
+
 
