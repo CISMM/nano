@@ -42,15 +42,17 @@ setValue
  @date modified 7/2/96 by Russ Taylor
 */
 void
-BCPlane::setValue(int x, int y, float value)
+BCPlane::setValue(int x, int y, float value, vrpn_bool notifyCallbacks)
 {
     _value[x + _borderXMin + (y + _borderYMin)*
                              (_borderXMin + _num_x + _borderXMax)] = value;
     _modified = 1;
     _modified_nz = 1;
 
-    for (int i = 0; i < _numcallbacks; i++)
-	_callbacks[i].callback(this, x,y, _callbacks[i].userdata);
+    if (notifyCallbacks) {
+      for (int i = 0; i < _numcallbacks; i++)
+          _callbacks[i].callback(this, x,y, _callbacks[i].userdata);
+    }
 }
 
 /**

@@ -17,6 +17,7 @@ const double DEFAULT_MAX_ATTAINABLE_VALUE = 10;
 const int BCPLANE_OPTIMIZE_LINE = 0;
 const int BCPLANE_OPTIMIZE_AREA = 1;
 
+#include <vrpn_Types.h>
 #include "BCGrid.h"
 
 
@@ -106,7 +107,8 @@ class BCPlane
 	return value(x,y) * (double) _scale;
     }
 
-    virtual void setValue(int x, int y, float value);
+    virtual void setValue(int x, int y, float value,
+                          vrpn_bool notifyCallbacks = vrpn_TRUE);
 
     inline double xInWorld(int x, double scale = 1.0) const {
 	return scale*( minX() + (maxX()-minX()) * ((double)x/(numX()-1)) );

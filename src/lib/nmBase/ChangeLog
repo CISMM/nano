@@ -1,4 +1,12 @@
-2001-04_18  Adam Seeger  <seeger@cs.unc.edu>
+2001-04-18  Adam Seeger  <seeger@cs.unc.edu>
+
+	* BCPlane.C (setValue): added an optional boolean argument to this 
+	that controls whether or not callbacks for the plane are called 
+	This way we don't have to do line-by-line flattening once for every
+	point in the image - instead we can just do it once per line and
+	increase efficiency
+
+2001-04-18  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_Dataset.C (computeLBLFlattenedPlane): fixed a bug involving 
 	passing the wrong pointer to BCPlane::remove_callback in the case
