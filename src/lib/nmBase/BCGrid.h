@@ -75,8 +75,15 @@ class BCGrid
 
     void decimate(short num_x, short num_y);
 
+    /// Return the number of samples along the X-axis
     inline short numX() const { return _num_x; }
+
+    /// Return the number of samples along the Y-axis
     inline short numY() const { return _num_y; }
+
+    // These tell you where the grid is located in the microscope space.
+    // (minX(), minY()) is the location of the grid origin.
+    // (maxX(), maxY()) is the location of the opposite corner of the grid.
     double minX() const { return _min_x; }
     double maxX() const { return _max_x; }
     double minY() const { return _min_y; }

@@ -1,5 +1,7 @@
 2000-08-10  Jeffrey Juliano  <juliano@cs.unc.edu>
 
+	* BCGrid.h (class BCGrid): Add comments to some members.
+
 	* ChangeLog: New file.
 
 2000-08-07  Jeffrey Juliano  <juliano@cs.unc.edu>
