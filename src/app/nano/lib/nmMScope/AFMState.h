@@ -218,14 +218,14 @@ struct AFMModifyState {
   ///< pressed - then the user has to press PLAY or STEP to make the tip
   ///< move. This flag marks that change.
 
-  Tclvar_int slow_line_playing;
+  TclNet_int slow_line_playing;
   ///< SLOW_LINE tool, set to true when use has hit PLAY and tool takes
   ///< a step each time the data from the previous step is received.
 
-  Tclvar_int slow_line_step;
+  TclNet_int slow_line_step;
   ///< Set to 1 when the user hits the "step" button.
 
-  Tclvar_int slow_line_direction;
+  TclNet_int slow_line_direction;
   ///< forward or reverse
 
   float slow_line_position_param;
