@@ -130,11 +130,21 @@ int ImageViewer::init(char *display) {
 }
 
 #ifndef V_GLUT
-static Bool WaitForMapNotify(Display *d, XEvent *e, char *arg) {
-      return (e->type == MapNotify) && (e->xmap.window == (Window)arg); }
+static Bool WaitForMapNotify(
+    Display * /*d*/,
+    XEvent *  e,
+    char *    arg)
+{
+      return (e->type == MapNotify) && (e->xmap.window == (Window)arg);
+}
 
-static Bool WaitForUnmapNotify(Display *d, XEvent *e, char *arg) {
-      return (e->type == UnmapNotify) && (e->xmap.window == (Window)arg); }
+static Bool WaitForUnmapNotify(
+    Display * /*d*/,
+    XEvent *  e,
+    char *    arg)
+{
+      return (e->type == UnmapNotify) && (e->xmap.window == (Window)arg);
+}
 #endif
 
 // returns window id or 0 if error occurred

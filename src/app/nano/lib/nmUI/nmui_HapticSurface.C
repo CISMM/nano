@@ -140,7 +140,7 @@ void nmui_HapticSurface::computeDistanceFromPlane (void) {
 //fprintf(stderr, "nmui_HapticSurface::computeDistanceFromPlane() "
 //"set to %.5lf\n", d_distanceFromPlane);
 
-};
+}
 
 
 
@@ -267,7 +267,7 @@ void nmui_HSCanned::update (void) {
                                                 d_planePosPH);
 
   computeDistanceFromPlane();
-};
+}
 
 
 

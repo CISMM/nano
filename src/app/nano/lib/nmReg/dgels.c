@@ -5466,8 +5466,10 @@ typedef doublereal E_f;	/* real function with -R not specified */
 #endif
 #include "f2c.h"
 
-integer ilaenv_(integer *ispec, char *name, char *opts, integer *n1, integer *
-	n2, integer *n3, integer *n4, ftnlen name_len, ftnlen opts_len)
+integer ilaenv_(
+    integer *ispec, char *name, char * /*opts*/,
+    integer *n1, integer * n2, integer * /*n3*/, integer *n4,
+    ftnlen name_len, ftnlen /*opts_len*/)
 {
 /*  -- LAPACK auxiliary routine (version 2.0) --   
        Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,   

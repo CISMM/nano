@@ -758,7 +758,8 @@ void nmg_Graphics_Implementation::setAlphaSliderRange (float low, float high) {
   causeGridRedraw();
 }
 
-void nmg_Graphics_Implementation::setBumpMapName (const char * name) {
+void nmg_Graphics_Implementation::setBumpMapName (const char * /*name*/)
+{
 //fprintf(stderr, "nmg_Graphics_Implementation::setBumpMapName().\n");
 
 #ifdef FLOW
@@ -942,7 +943,8 @@ void nmg_Graphics_Implementation::setCollabMode(int mode)
   g_collabMode = mode;
 }
 
-void nmg_Graphics_Implementation::setHatchMapName (const char * name) {
+void nmg_Graphics_Implementation::setHatchMapName (const char * /*name*/)
+{
 //fprintf(stderr, "nmg_Graphics_Implementation::setHatchMapName().\n");
 
 #ifdef FLOW
@@ -1058,7 +1060,8 @@ void nmg_Graphics_Implementation::setMaxColor (const int c [4]) {
   g_maxColor[3] = g_surface_alpha;
 }
 
-void nmg_Graphics_Implementation::setPatternMapName (const char * name) {
+void nmg_Graphics_Implementation::setPatternMapName (const char * /*name*/)
+{
 //fprintf(stderr, "nmg_Graphics_Implementation::setPatternMapName().\n");
 
 #ifdef FLOW

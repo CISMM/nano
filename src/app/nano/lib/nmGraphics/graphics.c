@@ -233,7 +233,15 @@ void makeCheckImage (void)
 
     for (i = 0; i < checkImageHeight; i++) {
         for (j = 0; j < checkImageWidth; j++) {
+
+            // [juliano 2/2000]: the next line is correct.  It's taken out of
+            // the OpenGL red book.  It relies on bool being represented as
+            // the nubmer one, which is guaranteed by the C and C++ standards.
+            // equivalent (untested) would be:
+            //    !(((i&4)^(j&4))>>2)
+            // which wouldn't generate a warning.
             c = (((i & 0x4) == 0) ^ ((j & 0x4)) == 0);
+
             checkImage[0][i][j][0] = (GLubyte) (c * g_alpha_r * 255);
             checkImage[0][i][j][1] = (GLubyte) (c * g_alpha_g * 255);
             checkImage[0][i][j][2] = (GLubyte) (c * g_alpha_b * 255);

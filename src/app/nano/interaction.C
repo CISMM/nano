@@ -1416,7 +1416,7 @@ double touch_canned_from_plane (int whichUser, q_vec_type handpos) {
 	      - Handle differences in scale between user and world
 	      - Handle differences in orientation between user and world
 */
-double touch_flat_from_measurelines(int whichUser, q_vec_type handpos)
+double touch_flat_from_measurelines(int /*whichUser*/, q_vec_type handpos)
 {
   //---------------------------------------------------------------------
   // Get the height plane, which we'll use to find the height at the

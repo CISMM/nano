@@ -19,7 +19,7 @@ class MSISphere{
     void Subdivide(float*,float*,float*,int);
     GLuint DisplayList();
     ~MSISphere();
-    friend MSIFile;
+    friend class MSIFile;
 };
 
 //This class handles all loading of a geometry contained in a .msi file into a display list, which is stored in an uberGraphics tree

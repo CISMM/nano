@@ -99,7 +99,7 @@ char	*handle_int_value_change(ClientData clientData,
 	} 
 
 	return NULL;
-};
+}
 
 /**	Update the float variable in the handler that is pointed to
  when the variables changes.
@@ -171,7 +171,7 @@ char	*handle_string_value_change(ClientData clientData,
 	    stringvar->resetString();
 	}
 	return NULL;
-};
+}
 
 /**	Update the list_of_strings variable in the handler that is pointed to
  when the variables changes.
@@ -200,7 +200,7 @@ char	*handle_list_of_strings_value_change(ClientData clientData,
 	    //list_of_stringsvar->SetFromTcl(cvalue);
 	}
 	return NULL;
-};
+}
 
 //	Set the interpreter to be used by the integers and floats.
 //	Put together links for all of the variables that have been created
@@ -874,7 +874,7 @@ Tclvar_int_with_button::~Tclvar_int_with_button (void)
 
 	// Reduce the number in the list
 	num_ib--;
-};
+}
 
 
 // Add and pack a checkbutton if there is an interpreter and a widget
@@ -1328,7 +1328,7 @@ Tclvar_int_with_entry::Tclvar_int_with_entry(const char *tcl_varname,
 	if ( (interpreter != NULL) && (tcl_widget_name != NULL) ) {
 		initialize(interpreter);
 	}
-};
+}
 
 //	Remove the entry from the list of active int Tcl variables.
 //	Base class destructor handles the rest.
@@ -1375,7 +1375,7 @@ Tclvar_int_with_entry::~Tclvar_int_with_entry (void)
 
 	// Reduce the number in the list
 	num_intentry--;
-};
+}
 
 // Add and pack a intentry if there is an interpreter and a widget
 // for each intentry variable.  Note that the change callback will
@@ -1923,7 +1923,7 @@ Tclvar_checklist::Tclvar_checklist (const char * parent_name) :
 	} else {
 		tcl_parent_name = NULL;
 	}
-};
+}
 
 Tclvar_checklist::~Tclvar_checklist (void) {
 	int	i = 0;
@@ -2071,7 +2071,7 @@ int	Tclvar_checklist::Add_checkbox (const char * checkbox_name, int value)
                          addCallback(checklist_callback, parm);
 
 	return 0;
-};
+}
 
 int	Tclvar_checklist::Remove_checkbox (const char * checkbox_name)
 {
@@ -2087,7 +2087,7 @@ int	Tclvar_checklist::Remove_checkbox (const char * checkbox_name)
 	num_checkboxes--;
 
 	return 0;
-};
+}
 
 int	Tclvar_checklist::Set_checkbox (const char * checkbox_name)
 {
@@ -2170,7 +2170,7 @@ Tclvar_checklist_with_entry::Tclvar_checklist_with_entry
 	} else {
 		tcl_parent_name = NULL;
 	}
-};
+}
 
 Tclvar_checklist_with_entry::~Tclvar_checklist_with_entry (void)
 {
@@ -2353,7 +2353,7 @@ int	Tclvar_checklist_with_entry::Add_checkbox_entry (const char * checkbox_name,
                         addCallback(checklist_callback, parm);
 	delete [] my_checkbox_name;
 	return 0;
-};
+}
 
 int	Tclvar_checklist_with_entry::Remove_checkbox (const char * checkbox_name)
 {
@@ -2370,7 +2370,7 @@ int	Tclvar_checklist_with_entry::Remove_checkbox (const char * checkbox_name)
 	num_checkboxes--;
 
 	return 0;
-};
+}
 
 int	Tclvar_checklist_with_entry::Set_checkbox_entry (const char * checkbox_name, int entryval)
 {

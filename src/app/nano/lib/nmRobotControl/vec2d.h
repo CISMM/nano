@@ -71,4 +71,4 @@ vrpn_bool	operator<(  Vec2d a, Vec2d b);
 double	dotProduct( Vec2d a, Vec2d b);
 
 
-#endif VEC2D_INCLUDED
+#endif // VEC2D_INCLUDED

@@ -23,9 +23,9 @@
 
 #define CHECK(a) if ((a) == -1) return -1
 
-nmm_Microscope::nmm_Microscope
-    (const char * name,
-     vrpn_Connection * connection) :
+nmm_Microscope::nmm_Microscope (
+    const char * /*name*/,
+    vrpn_Connection * connection) :
 //  d_connection (connection),             moved to nmb_Device
 //  d_fileController (new vrpn_File_Controller (connection)),moved to nmb_Device
   d_tcl_script_dir (NULL) {

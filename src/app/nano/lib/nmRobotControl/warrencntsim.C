@@ -552,13 +552,20 @@ main(int argc, char *argv[])
 /**************************************************************************************/
 // dummy (stub) routines for window callback routines
 void displayFuncDummy( void ) {}
-void keyboardFuncDummy(unsigned char key, int x, int y)   {commonKeyboardFunc(key,x,y);}
+void keyboardFuncDummy(unsigned char key, int x, int y) {
+    commonKeyboardFunc(key,x,y);
+}
 #ifndef NMRC_LIB
 void idleFuncDummy( void ) {commonIdleFunc();}
 #endif
-void mouseFuncDummy( int button, int state, int x, int y ) {}
-void mouseMotionFuncDummy( int x, int y ) {}
-void reshapeWindowFuncDummy( int newWindowWidth, int newWindowHeight ) {}
+void mouseFuncDummy( int /*button*/, int /*state*/,
+                     int /*x*/, int /*y*/ ) {
+}
+void mouseMotionFuncDummy( int /*x*/, int /*y*/ ) {
+}
+void reshapeWindowFuncDummy( int /*newWindowWidth*/,
+                             int /*newWindowHeight*/ ) {
+}
 
 #if 0
    // pass pointers to callback routines for window
@@ -2618,7 +2625,7 @@ showPoint( Vec2d vPoint, int color, float size /* = 1. */, float zHeight /* = 0.
 
 /**************************************************************************************/
 void
-showSphere( Vec2d vPoint, int color, float radius, float z )
+showSphere( Vec2d vPoint, int color, float radius, float /*z*/ )
 {
    glPushMatrix();
 
@@ -3690,7 +3697,8 @@ translateJustOutOfContact( SPHERE_AND_TUBE_DATA cxTest )
 /**************************************************************************************/
 // translate the tube away from the tip with no rotation of the tube.
 void
-translateCollisionResponse(  Vec2d vPushPt, int tube, SPHERE_AND_TUBE_DATA cxTest  )
+translateCollisionResponse( Vec2d /*vPushPt*/,
+                            int tube, SPHERE_AND_TUBE_DATA cxTest )
 {
    // Translate the tube away from pushing sphere center.
    Vec2d vStep = translateJustOutOfContact( cxTest );
@@ -3775,7 +3783,8 @@ calcTubeEndpoints( int tube, Vec2d* pvEndA, Vec2d* pvEndB )
 // slide the tube across the surface with no rolling, and rotating the
 // tube axis at the pivot point given by the equation from the Nature paper.
 void
-slidingCollisionResponse( Vec2d vPushPt, int tube, SPHERE_AND_TUBE_DATA cxTest )
+slidingCollisionResponse( Vec2d /*vPushPt*/,
+                          int tube, SPHERE_AND_TUBE_DATA cxTest )
 {
    // mark the tube as moved to allow it to move other tubes
    ob[tube].moved = 1;
@@ -4145,7 +4154,8 @@ markAllTubesMovable( void )
 /**************************************************************************************/
 // roll tube along the surface without changing the angle of the tube axis.
 void
-rollingCollisionResponse(  Vec2d vPushPt, int tube, SPHERE_AND_TUBE_DATA cxTest  )
+rollingCollisionResponse( Vec2d /*vPushPt*/,
+                          int tube, SPHERE_AND_TUBE_DATA cxTest )
 {
    // Translate the tube away from pushing sphere center.
    Vec2d vStep = translateJustOutOfContact( cxTest );

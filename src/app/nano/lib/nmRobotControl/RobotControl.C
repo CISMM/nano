@@ -36,7 +36,9 @@ nmm_Microscope_Remote *g_microscope(NULL);
 #include "warrencntsim.C"
 
 
-int RobotControl::eventHandler(const ImageViewerWindowEvent &event, void *ud)
+int RobotControl::eventHandler(
+    const ImageViewerWindowEvent &event,
+    void * /*ud*/)
 {
    switch(event.type)
    {
@@ -67,7 +69,9 @@ int RobotControl::eventHandler(const ImageViewerWindowEvent &event, void *ud)
    return 0;
 }
 
-int RobotControl::displayHandler(const ImageViewerDisplayData &data, void *ud)
+int RobotControl::displayHandler(
+    const ImageViewerDisplayData & /*data*/,
+    void * /*ud*/)
 {
    if (g_displayPlan)
       displayFuncMain();

@@ -14,7 +14,7 @@
 
 #define ASSERT(x)	assert(x)
 
-vrpn_Ohmmeter::vrpn_Ohmmeter(char *name, vrpn_Connection *c)
+vrpn_Ohmmeter::vrpn_Ohmmeter(char * /*name*/, vrpn_Connection *c)
 {
     // Set our connection to the one passed in 
   //char * servicename;

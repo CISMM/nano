@@ -378,11 +378,11 @@ void Aligner::resampleImageToDepthImage(
          want to have square pixels)
     */
 void Aligner::computeMaxRequiredResampleResolution(
-                            const nmb_Image &projection_image,
-                            const nmb_Image &depth_image,
-                            const ImageTransform &xform,
-                            double &x_factor,
-                            double &y_factor)
+    const nmb_Image &      /*projection_image*/,
+    const nmb_Image &      /*depth_image*/,
+    const ImageTransform & /*xform*/,
+    double                 &x_factor,
+    double                 &y_factor)
 {
 	// temporary :
 	x_factor = 1.0;

@@ -188,23 +188,23 @@ void nmg_RCIStrategy::initializeTextures (void) {
 }
 
 // virtual
-void nmg_RCIStrategy::handlePixelData (vrpn_int32 x, vrpn_int32 y,
-                                  vrpn_int32 dx, vrpn_int32 dy,
-                                  vrpn_int32 pixelCount,
-                                  const char * buffer) {
-
+void nmg_RCIStrategy::handlePixelData (
+    vrpn_int32 /*x*/, vrpn_int32 /*y*/,
+    vrpn_int32 /*dx*/, vrpn_int32 /*dy*/,
+    vrpn_int32 /*pixelCount*/,
+    const char * /*buffer*/)
+{
       // Default implementation does nothing. 
-
 }
 
 // virtual
-void nmg_RCIStrategy::handleDepthData (vrpn_int32 x, vrpn_int32 y,
-                                  vrpn_int32 dx, vrpn_int32 dy,
-                                  vrpn_int32 pixelCount,
-                                  const vrpn_float64 * buffer) {
-
+void nmg_RCIStrategy::handleDepthData (
+    vrpn_int32 /*x*/, vrpn_int32 /*y*/,
+    vrpn_int32 /*dx*/, vrpn_int32 /*dy*/,
+    vrpn_int32 /*pixelCount*/,
+    const vrpn_float64 * /*buffer*/)
+{
       // Default implementation does nothing.
-
 }
 
 
@@ -309,10 +309,12 @@ void nmg_RCIS_TextureBase::initializeTextures (void) {
 }
 
 // virtual
-void nmg_RCIS_TextureBase::handlePixelData (vrpn_int32 x, vrpn_int32 y,
-                                  vrpn_int32 dx, vrpn_int32 dy,
-                                  vrpn_int32 pixelCount,
-                                  const char * buffer) {
+void nmg_RCIS_TextureBase::handlePixelData (
+    vrpn_int32 x, vrpn_int32 y,
+    vrpn_int32 /*dx*/, vrpn_int32 /*dy*/,
+    vrpn_int32 pixelCount,
+    const char * buffer)
+{
 
   // BUG - assumes dx 1, dy 0 or vice-versa or something
 

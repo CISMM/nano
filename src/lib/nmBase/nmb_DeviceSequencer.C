@@ -330,7 +330,8 @@ int nmb_DeviceSequencer::addDataMessage(nmb_Device_Client *device,
 
 
 // static
-int nmb_DeviceSequencer::dataMessageHandler(void *ud, vrpn_HANDLERPARAM p)
+int nmb_DeviceSequencer::dataMessageHandler(void *ud,
+                                            vrpn_HANDLERPARAM /*p*/)
 {
     nmb_DeviceSequencer::dataHandlerInfo *info = 
           (nmb_DeviceSequencer::dataHandlerInfo *)ud;
@@ -360,7 +361,9 @@ int nmb_DeviceSequencer::dataMessageHandler(void *ud, vrpn_HANDLERPARAM p)
 }
 
 // static
-int nmb_DeviceSequencer::deviceSynchHandler(void *ud, const nmb_SynchMessage *sm)
+int nmb_DeviceSequencer::deviceSynchHandler(
+    void *ud,
+    const nmb_SynchMessage * /*sm*/)
 {
     nmb_DeviceSequencer::synchHandlerInfo *info = 
           (nmb_DeviceSequencer::synchHandlerInfo *)ud;

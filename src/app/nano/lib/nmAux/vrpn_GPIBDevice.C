@@ -6,9 +6,9 @@
 
 #define CHECK(a) if ((a) == -1) return -1
 
-vrpn_GPIBDevice::vrpn_GPIBDevice
-    (const char * name,
-     vrpn_Connection * connection) 
+vrpn_GPIBDevice::vrpn_GPIBDevice (
+    const char * /*name*/,
+    vrpn_Connection * connection) 
 //: d_connection (connection)
 {
 //  char * servicename;           //Helps get the right name for the sender.

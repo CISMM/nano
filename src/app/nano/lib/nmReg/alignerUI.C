@@ -6,28 +6,29 @@
 // realign_textures and registration are mutually exclusive
 extern Tclvar_string texturePlaneName;
 
-AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
-    Tcl_Interp *tcl_interp, const char *tcl_script_dir,
+AlignerUI::AlignerUI(
+    nmg_Graphics *g, nmb_ImageList *im,
+    Tcl_Interp * /*tcl_interp*/, const char * /*tcl_script_dir*/,
     nmb_String * (* string_allocator) (const char *)):
-	datasetRegistrationPlaneName3D(string_allocator("none")),
-	datasetRegistrationPlaneName2D(string_allocator("none")),
-	newResamplePlaneName("resample_plane_name", ""),
-	datasetRegistrationEnabled("reg_window_open", 0),
-	datasetRegistrationNeeded("registration_needed", 0),
-	datasetRegistrationRotate3DEnabled("reg_rotate3D_enable", 0),
-        constrainToTopography("reg_constrain_to_topography", 0),
-        textureDisplayEnabled("reg_display_texture", 0),
-	resampleResolutionX("resample_resolution_x", 100),
-	resampleResolutionY("resample_resolution_y", 100),
-        resampleRatio("reg_resample_ratio", 0),
-	num_image_windows(2),
-	height_image(0),
-        texture_image(1),
-        registration_valid(vrpn_FALSE),
-	ce(NULL),
-	aligner(NULL),
-	images(im),
-	graphics_display(g)
+    datasetRegistrationPlaneName3D(string_allocator("none")),
+    datasetRegistrationPlaneName2D(string_allocator("none")),
+    newResamplePlaneName("resample_plane_name", ""),
+    datasetRegistrationEnabled("reg_window_open", 0),
+    datasetRegistrationNeeded("registration_needed", 0),
+    datasetRegistrationRotate3DEnabled("reg_rotate3D_enable", 0),
+    constrainToTopography("reg_constrain_to_topography", 0),
+    textureDisplayEnabled("reg_display_texture", 0),
+    resampleResolutionX("resample_resolution_x", 100),
+    resampleResolutionY("resample_resolution_y", 100),
+    resampleRatio("reg_resample_ratio", 0),
+    num_image_windows(2),
+    height_image(0),
+    texture_image(1),
+    registration_valid(vrpn_FALSE),
+    ce(NULL),
+    aligner(NULL),
+    images(im),
+    graphics_display(g)
 {
 
     //char command[256];
@@ -378,14 +379,18 @@ be here; will take out after testing
 */
 }
 
-void    AlignerUI::handle_registration_type_change(vrpn_int32 val, void *ud)
+void AlignerUI::handle_registration_type_change(
+    vrpn_int32 /*val*/,
+    void *ud)
 {
   AlignerUI *aui = ((AlignerUI *)ud);
   printf("change in registration type\n");
   aui->registration_valid = vrpn_FALSE;
 }
 
-void    AlignerUI::handle_texture_display_change(vrpn_int32 val, void *ud)
+void AlignerUI::handle_texture_display_change(
+    vrpn_int32 val,
+    void *ud)
 {
     AlignerUI *aui = ((AlignerUI *)ud);
     if (val) {

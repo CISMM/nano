@@ -20,7 +20,7 @@
 #include "nmm_MicroscopeRemote.h"
 #endif
 
-void tcl_update_callback(const char *name, int val, void *udata)
+void tcl_update_callback(const char */*name*/, int /*val*/, void *udata)
 {
 	Channel_selector	*me = (Channel_selector*)(udata);
 
@@ -241,7 +241,7 @@ Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
 		fprintf(stderr,"Scan_channel_selector(): Can't get h&d\n");
 	  }
 	}
-};
+}
 
 Scan_channel_selector::~Scan_channel_selector (void) {
 
@@ -412,7 +412,7 @@ Point_channel_selector::Point_channel_selector
 		fprintf(stderr,"Point_channel_selector(): Can't get h&d\n");
 	  }
 	}
-};
+}
 
 Point_channel_selector::~Point_channel_selector (void) {
 

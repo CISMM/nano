@@ -403,8 +403,12 @@ void TclNet_int::syncReplica (int whichReplica) {
 // static
 // Callback registered on the active Remote replica.
 // Executes (*(NetTcl_int *)userdata = newValue).
-int TclNet_int::propagateReceivedUpdate (void * userdata, vrpn_int32 newValue,
-                                         timeval when, vrpn_bool isLocal) {
+int TclNet_int::propagateReceivedUpdate (
+    void * userdata,
+    vrpn_int32 newValue,
+    timeval when,
+    vrpn_bool /*isLocal*/)
+{
   TclNet_int * nti;
 
   if (!userdata) {
@@ -639,10 +643,12 @@ void TclNet_float::syncReplica (int whichReplica) {
 // static
 // Callback registered on the active Remote replica.
 // Executes (*(NetTcl_float *)userdata = newValue).
-int TclNet_float::propagateReceivedUpdate (void * userdata,
-                                           vrpn_float64 newValue,
-                                           timeval when,
-                                           vrpn_bool isLocal) {
+int TclNet_float::propagateReceivedUpdate (
+    void * userdata,
+    vrpn_float64 newValue,
+    timeval when,
+    vrpn_bool /*isLocal*/)
+{
   TclNet_float * ntf;
 
   if (!userdata) {
@@ -913,10 +919,12 @@ void TclNet_string::syncReplica (int whichReplica) {
 // static
 // Callback registered on the active Remote replica.
 // Executes (*(NetTcl_float *)userdata = newValue).
-int TclNet_string::propagateReceivedUpdate (void * userdata,
-                                              const char * newValue,
-                                              timeval when,
-                                              vrpn_bool isLocal) {
+int TclNet_string::propagateReceivedUpdate (
+    void * userdata,
+    const char * newValue,
+    timeval when,
+    vrpn_bool /*isLocal*/)
+{
   TclNet_string * nts;
 
   if (!userdata) {

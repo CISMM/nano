@@ -208,7 +208,7 @@ void Ohmmeter::handle_measurement (void *userdata,
 
 // static 
 void nmui_ORPXChannelParameters::handle_param_change(
-       vrpn_int32 new_value, void *ud)
+    vrpn_int32 /*new_value*/, void *ud)
 {
     nmui_ORPXChannelParameters *me =
         (nmui_ORPXChannelParameters *)ud;
@@ -315,7 +315,7 @@ char *Ohmmeter::s_filter_strings[NUM_SELECTION_VALUES] =
       {"0.1", "0.3", "1.0", "3", "10", "30"};
 
 Ohmmeter::Ohmmeter (Tcl_Interp * the_tcl_interp,
-                    const char * tcl_script_dir,
+                    const char * /*tcl_script_dir*/,
                     vrpn_Ohmmeter_Remote * device):
     d_windowOpen("french_ohmmeter_open", 0),
     d_voltages("french_ohmmeter_voltages"),

@@ -5,8 +5,9 @@
 /* nmm_Microscope_SEM
 */
 
-nmm_Microscope_SEM::nmm_Microscope_SEM (const char * name,
-			vrpn_Connection *c)
+nmm_Microscope_SEM::nmm_Microscope_SEM (
+    const char * /*name*/,
+    vrpn_Connection *c)
 //  d_connection (c),
 //  d_fileController (new vrpn_File_Controller (c))
 {

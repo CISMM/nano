@@ -278,12 +278,12 @@ int build_list_set
   return 0;
 }
 
-int build_list_set
-    (nmb_Interval insubset,
-     nmb_PlaneSelection planes,
-     int (* stripfn)
-       (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *),
-     int strips_in_x)
+int build_list_set (
+    nmb_Interval insubset,
+    nmb_PlaneSelection planes,
+    int (* stripfn) (nmb_PlaneSelection, GLdouble [3],
+                     GLdouble [3], int, Vertex_Struct *),
+    int /*strips_in_x*/)
 {
 
   v_gl_set_context_to_vlib_window(); 

@@ -32,7 +32,7 @@ class nms_SEM_ui {
                vrpn_Connection *c = NULL);
     virtual ~nms_SEM_ui (void);
 
-    void displayTexture(int enable) {display_texture = 0;};
+    void displayTexture(int /*enable*/) {display_texture = 0;};
     int updateDisplays (void);
 
 

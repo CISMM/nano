@@ -26,7 +26,7 @@ extern UTree World;
 enum URender_Type {URENDER, URAXIS, URTEXTURE, URPOLYGON};
 
 class URender{
-friend UTree;
+friend class UTree;
 protected:
 	//no runtime type checking so keep my own
 	URender_Type obj_type;

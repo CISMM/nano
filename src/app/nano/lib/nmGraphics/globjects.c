@@ -1964,8 +1964,10 @@ int make_rubber_line_point (const float point [2][3], Position_list * p) {
 
 static int draw_rubber_line[2] = {0,0};
 static int draw_rubber_corner_line[2] = {0,0};
-int make_rubber_line_point (const PointType top, const PointType bot,
-                            Position_list * p, int index) {
+int make_rubber_line_point (
+    const PointType /*top*/, const PointType /*bot*/,
+    Position_list * p, int index)
+{
     //static float rep [4];
     int list_id;
 

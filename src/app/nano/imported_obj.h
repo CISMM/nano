@@ -102,7 +102,7 @@ class imported_obj {
     static void handle_sphere_colorR_change(vrpn_float64,void*);
     static void handle_sphere_colorG_change(vrpn_float64,void*);
     static void handle_sphere_colorB_change(vrpn_float64,void*);
-    friend imported_obj_list; ///<allow imported_obj_list access to private variables
+    friend class imported_obj_list; ///<allow imported_obj_list access to private variables
 };
 
 ///imported_obj_list is a linked list of imported_obj objects

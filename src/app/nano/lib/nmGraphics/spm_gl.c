@@ -244,7 +244,7 @@ int init_vertexArray(int x, int y)
    return 1;
 }
 
-void specify_vertexArray(nmb_PlaneSelection planes, int i, int count)
+void specify_vertexArray(nmb_PlaneSelection /*planes*/, int i, int count)
 {
 #if defined(sgi)  // These functions aren't available in CYGWIN:
   if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {

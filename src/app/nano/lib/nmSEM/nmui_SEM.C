@@ -19,7 +19,7 @@ SEMInitializationState::SEMInitializationState():
     strcpy(deviceName, "null");
 }
 
-nms_SEM_ui::nms_SEM_ui(Tcl_Interp *interp, const char *tcl_script_dir,
+nms_SEM_ui::nms_SEM_ui(Tcl_Interp *interp, const char * /*tcl_script_dir*/,
                const char *name,
                vrpn_Connection *c):
     tcl_interp(interp),
@@ -32,7 +32,7 @@ nms_SEM_ui::nms_SEM_ui(Tcl_Interp *interp, const char *tcl_script_dir,
     inter_pixel_delay_time_nsec("sem_inter_pixel_delay_time_nsec", 0),
     sem_window_open("sem_window_open", 0)
 {
-    char command[256];
+    //    char command[256];
     printf("creating the sem\n");
     sem = new nmm_Microscope_SEM_Remote(name, c);
     sem->registerChangeHandler(this, handle_device_change);
@@ -85,7 +85,7 @@ nms_SEM_ui::~nms_SEM_ui (void)
 }
 
 // static
-int nms_SEM_ui::drawGreyscaleWindow(const ImageViewerDisplayData &data, 
+int nms_SEM_ui::drawGreyscaleWindow(const ImageViewerDisplayData & /*data*/, 
       void *ud)
 {
     nms_SEM_ui *me = (nms_SEM_ui *)ud;
@@ -99,7 +99,7 @@ int nms_SEM_ui::updateDisplays()
     return 0;
 }
 
-int nms_SEM_ui::mainloop(const struct timeval * timeout)
+int nms_SEM_ui::mainloop(const struct timeval * /*timeout*/)
 {
     sem->mainloop();
     updateDisplays(); // if displayed data changed in the previous line
@@ -323,8 +323,13 @@ void nms_SEM_ui::handle_device_change(void *ud,
   }
 }
 
-int nms_SEM_ui::updateSurfaceTexture(int start_x, int start_y, int dx, int dy,
-     int line_length, int num_fields, int num_lines, vrpn_uint8 *data)
+int nms_SEM_ui::updateSurfaceTexture(
+    int /*start_x*/, int start_y,
+    int /*dx*/, int dy,
+    int /*line_length*/,
+    int /*num_fields*/,
+    int num_lines,
+    vrpn_uint8 * data)
 {
   // first look to see if we have already created an image for the current
   // resolution

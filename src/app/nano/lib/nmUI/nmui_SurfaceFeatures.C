@@ -412,7 +412,7 @@ double nmui_PointFeatures::magicBumpSize (double wavelength) {
 
 
 // virtual
-double nmui_PointFeatures::dynamicFrictionKspring (double kS) {
+double nmui_PointFeatures::dynamicFrictionKspring (double /*kS*/) {
   return nmui_SurfaceFeatureStrategy::pointFrictionValue();
 }
 

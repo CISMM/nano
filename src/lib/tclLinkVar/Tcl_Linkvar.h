@@ -330,7 +330,7 @@ typedef	struct {
 class	Tclvar_checklist {
     public:
 	Tclvar_checklist (const char * parent_name);
-	~Tclvar_checklist (void);
+	virtual ~Tclvar_checklist (void);
 
         void addCallback (Linkvar_Checkcall, void * userdata);
 

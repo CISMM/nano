@@ -310,7 +310,7 @@ void nmui_Component::registerSyncCompleteHandler
 
 
 // static
-int nmui_Component::handle_reconnect (void * userdata, vrpn_HANDLERPARAM) {
+int nmui_Component::handle_reconnect (void * /*userdata*/, vrpn_HANDLERPARAM) {
     //nmui_Component * c;
     //c = (nmui_Component *) userdata;
   // XXX  Which connection is that, again?  HACK
@@ -370,7 +370,10 @@ void nmui_Component::do_handle_syncRequest (void) {
 }
 
 // static
-int nmui_Component::handle_syncRequest (void * userdata, vrpn_HANDLERPARAM p) {
+int nmui_Component::handle_syncRequest (
+    void * userdata,
+    vrpn_HANDLERPARAM /*p*/)
+{
   nmui_Component * c;
   timeval now;
 

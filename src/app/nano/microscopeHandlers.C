@@ -364,7 +364,7 @@ void handle_scanline_position_display_change (vrpn_int32 _value,
 
 /// Update the grid scale and rebuild the display lists
 /// whenever the Z scale changes.
-void handle_z_scale_change (vrpn_float64 _value, void * _mptr) {
+ void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
   BCPlane * plane =
     dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
   // If user is feeling from data at the same time that she is changing
@@ -668,7 +668,7 @@ void    handle_z_dataset_change(const char *, void * _mptr)
 
 
 
-void    handle_color_dataset_change(const char *, void * _mptr)
+void    handle_color_dataset_change(const char *, void * /*_mptr*/)
 {
     BCPlane * plane = dataset->inputGrid->getPlaneByName
                           (dataset->colorPlaneName->string());

@@ -177,7 +177,7 @@ vrpn_bool nmb_Device::connected()
 
 // static
 int nmb_Device::handle_GotFirstConnection(void *userdata,
-                                           vrpn_HANDLERPARAM param)
+                                          vrpn_HANDLERPARAM /*param*/)
 {
   nmb_Device *me = (nmb_Device *) userdata;
   me->d_connected = vrpn_TRUE;
@@ -186,7 +186,7 @@ int nmb_Device::handle_GotFirstConnection(void *userdata,
 
 // static
 int nmb_Device::handle_GotConnection(void *userdata,
-                                           vrpn_HANDLERPARAM param)
+                                     vrpn_HANDLERPARAM /*param*/)
 {
   nmb_Device *me = (nmb_Device *) userdata;
   me->d_connected = vrpn_TRUE;
@@ -195,7 +195,7 @@ int nmb_Device::handle_GotConnection(void *userdata,
 
 // static
 int nmb_Device::handle_DroppedConnection(void *userdata,
-                                           vrpn_HANDLERPARAM param)
+                                         vrpn_HANDLERPARAM /*param*/)
 {
   nmb_Device *me = (nmb_Device *) userdata;
   me->d_connected = vrpn_FALSE;
@@ -205,7 +205,7 @@ int nmb_Device::handle_DroppedConnection(void *userdata,
 
 // static
 int nmb_Device::handle_DroppedLastConnection(void *userdata,
-                                           vrpn_HANDLERPARAM param)
+                                             vrpn_HANDLERPARAM /*param*/)
 {
   nmb_Device *me = (nmb_Device *) userdata;
   me->d_connected = vrpn_FALSE;
