@@ -206,6 +206,7 @@ nmb_Dataset::loadFile(const char* file_name)
       im = new nmb_ImageGrid(p);
       im->setTopoFileInfo(*d_topoFile);
       dataImages->addImage(im);
+	  im->setAcquisitionDimensions(inputGrid->maxX()-inputGrid->minX(), inputGrid->maxY()-inputGrid->minY());
     }
   }
   // Remove EMPTY_HEIGHT_PLANE from our image list - 

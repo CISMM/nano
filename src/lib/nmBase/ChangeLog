@@ -1,3 +1,10 @@
+2002-05-29  David Borland <borland@cs.unc.edu>
+
+        * nmb_Dataset.C (loadFile) : when the loaded image is either the
+	first static file loaded or is put into the input grid because its 
+	resolution matching the input grid, we set the acquisition 
+	dimensions for the corresponding nmb_Image in the dataImages list.
+
 2002-05-13  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_Image.Ch : changed so nmb_ImageArray uses ImgMagick now and
