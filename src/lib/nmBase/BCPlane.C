@@ -353,6 +353,11 @@ int BCPlane::valueAt (float * result, double x, double y) {
   return 0;
 }
 
+float * BCPlane::rowbeginning(int y){
+	//return _value + ( _borderXMin + (y + _borderYMin)*(_borderXMin + _num_x + _borderXMax) )*sizeof(float);
+	return &(_value[_borderXMin + (y + _borderYMin)*(_borderXMin + _num_x + _borderXMax)]);
+
+}
 
 float BCPlane::interpolatedValue(double x, double y) {
     int ix = (int)x;

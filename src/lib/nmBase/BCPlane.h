@@ -139,6 +139,8 @@ class BCPlane
 	return scale * scaledValue(x,y);
     }
 
+	float * rowbeginning(int y);//returns pointer to beginning of row y
+
     /** Register and remove callbacks to be called when a value in the Plane
 	changes.  Return 0 on success and -1 on failure. */
     int add_callback(Plane_Valuecall cb, void *userdata);
