@@ -1,5 +1,6 @@
 #include "nmui_PlaneSync.h"
 #include <microscape.h>
+#include <nmb_Debug.h>
 
 // static class members
 const char nmui_PlaneSync::
@@ -106,6 +107,11 @@ handleCalculatedPlaneSync( void * userdata, vrpn_HANDLERPARAM p )
 	  fprintf( stderr, "nmui_PlaneSync::Unable to create "
 		   "plane from remote.\n" );
 	}
+      else
+      {
+        collabVerbose( 1, "nmui_PlaneSync::handleCalculatedPlaneSync:  received "
+          "new plane of name:  %s\n", newPlane->getName( )->Characters( ) );
+      }
     } 
   else // not accepting updates
     {
@@ -133,6 +139,8 @@ handleCalculatedPlaneSync( void * userdata, vrpn_HANDLERPARAM p )
 	       last->next != NULL; last = last->next );
 	  last->next = newNode;
 	}
+      collabVerbose( 1, "nmui_PlaneSync::handleCalculatedPlaneSync:  queued "
+        "new calculated plane for creation later.\n" );
     }
   return 0;
 } // end handleCalculatedPlaneSynch
