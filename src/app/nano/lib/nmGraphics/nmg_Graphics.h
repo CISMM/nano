@@ -23,8 +23,15 @@ class nmg_Graphics {
 
   public:
 
-    enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA, GENETIC, REALIGN,
-			REGISTRATION };
+    // indicates which texture is displayed:
+    enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA,
+			GENETIC, COLORMAP,
+			SEM_DATA, 
+			BUMPMAP, HATCHMAP, PATTERNMAP};
+
+    // how texture coordinates are computed:
+    enum TextureTransformMode {RULERGRID_COORD, REGISTRATION_COORD, 
+		MANUAL_REALIGN_COORD};
 
     nmg_Graphics (vrpn_Connection *, const char * name);
 
@@ -32,7 +39,6 @@ class nmg_Graphics {
 
 
     virtual void mainloop (void) = 0;
-
 
     // MANIPULATORS
     virtual void resizeViewport(int width, int height) = 0;
@@ -46,6 +52,9 @@ class nmg_Graphics {
 
     virtual void loadRulergridImage (const char * name) = 0;
       // Specifies the name of a PPM file to display as the rulergrid.
+
+    virtual void causeGridRedraw (void) = 0;
+      // Forces the entire set of display lists to be regenerated.
 
     virtual void enableChartjunk (int on) = 0;
       // Controls display of chartjunk (text in screenspace).
@@ -119,6 +128,11 @@ class nmg_Graphics {
       // Specifies the name of the data plane to use to drive hatch
       // maps on PxFl.
 
+    virtual void setAlphaPlaneName (const char *) = 0;
+    virtual void setColorPlaneName (const char *) = 0;
+    virtual void setContourPlaneName (const char *) = 0;
+    virtual void setHeightPlaneName (const char *) = 0;
+
     virtual void setIconScale (float) = 0;
       // Scale the 3D icons.
 
@@ -142,7 +156,10 @@ class nmg_Graphics {
       // maps on PxFl.
 
     // Genetic Textures
-    virtual void enableGeneticTextures (int) = 0;
+
+// functionality moved to setTextureMode()
+//    virtual void enableGeneticTextures (int) = 0;
+
     virtual void sendGeneticTexturesData (int, char **) = 0;
 
     // Realigning Textures:
@@ -151,17 +168,27 @@ class nmg_Graphics {
     virtual void setRealignTexturesConversionMap
                     (const char *, const char *) = 0;
     virtual void computeRealignPlane( const char *, const char * ) = 0;
-    virtual void enableRealignTextures (int on) = 0;
+
+// functionality moved to setTextureMode()
+//    virtual void enableRealignTextures (int on) = 0;
+
     virtual void translateTextures ( int on, float dx, float dy ) = 0;
     virtual void scaleTextures ( int on, float dx, float dy ) = 0;
     virtual void shearTextures ( int on, float dx, float dy ) = 0;
     virtual void rotateTextures ( int on, float theta ) = 0;
     virtual void setTextureCenter( float dx, float dy ) = 0;
 
-    virtual void enableRegistration(int on) = 0;
+    virtual void updateTexture(int which, const char *image_name,
+       int start_x, int start_y, 
+       int end_x, int end_y) = 0;
+
+// functionality moved to setTextureMode()
+//    virtual void enableRegistration(int on) = 0;
+
     virtual void setTextureTransform(double *xform) = 0;
 
-    virtual void enableRulergrid (int on) = 0;
+// functionality moved to setTextureMode()
+//    virtual void enableRulergrid (int on) = 0;
       // Controls display of the rulergrid.
 
     virtual void setRulergridAngle (float) = 0;
@@ -191,9 +218,10 @@ class nmg_Graphics {
     virtual void setTesselationStride (int) = 0;
       // Sets the stride with which the data grid is tesselated.
 
-    virtual void setTextureMode (TextureMode) = 0;
+    virtual void setTextureMode (TextureMode,TextureTransformMode) = 0;
       // Determines which texture to display currently.
       // q.v. enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA };
+
     virtual void setTextureScale (float) = 0;
       // Interval between contour lines.
 
@@ -267,6 +295,7 @@ class nmg_Graphics {
 
     vrpn_int32 d_resizeViewport_type;
     vrpn_int32 d_loadRulergridImage_type;
+    vrpn_int32 d_causeGridRedraw_type;
     vrpn_int32 d_enableChartjunk_type;
     vrpn_int32 d_enableFilledPolygons_type;
     vrpn_int32 d_enableSmoothShading_type;
@@ -283,10 +312,14 @@ class nmg_Graphics {
     vrpn_int32 d_setContourColor_type;
     vrpn_int32 d_setContourWidth_type;
     vrpn_int32 d_setFrictionSliderRange_type;
-	vrpn_int32 d_setBumpSliderRange_type;
-	vrpn_int32 d_setBuzzSliderRange_type;
+    vrpn_int32 d_setBumpSliderRange_type;
+    vrpn_int32 d_setBuzzSliderRange_type;
     vrpn_int32 d_setHandColor_type;
     vrpn_int32 d_setHatchMapName_type;
+    vrpn_int32 d_setAlphaPlaneName_type;
+    vrpn_int32 d_setColorPlaneName_type;
+    vrpn_int32 d_setContourPlaneName_type;
+    vrpn_int32 d_setHeightPlaneName_type;
     vrpn_int32 d_setIconScale_type;
     vrpn_int32 d_setMinColor_type;
     vrpn_int32 d_setMaxColor_type;
@@ -328,22 +361,23 @@ class nmg_Graphics {
     vrpn_int32 d_sendGeneticTexturesData_type;
 
     // Realign Textures Network Types:
-    long d_createRealignTextures_type;
-    long d_setRealignTexturesConversionMap_type;
-    long d_setRealignTextureSliderRange_type;
-    long d_computeRealignPlane_type;
-    long d_enableRealignTextures_type;
-    long d_translateTextures_type;
-    long d_scaleTextures_type;
-    long d_shearTextures_type;
-    long d_rotateTextures_type;
-    long d_setTextureCenter_type;
+    vrpn_int32 d_createRealignTextures_type;
+    vrpn_int32 d_setRealignTexturesConversionMap_type;
+    vrpn_int32 d_setRealignTextureSliderRange_type;
+    vrpn_int32 d_computeRealignPlane_type;
+    vrpn_int32 d_enableRealignTextures_type;
+    vrpn_int32 d_translateTextures_type;
+    vrpn_int32 d_scaleTextures_type;
+    vrpn_int32 d_shearTextures_type;
+    vrpn_int32 d_rotateTextures_type;
+    vrpn_int32 d_setTextureCenter_type;
 
-    long d_enableRegistration_type;
-    long d_setTextureTransform_type;
+    vrpn_int32 d_updateTexture_type;
+    vrpn_int32 d_enableRegistration_type;
+    vrpn_int32 d_setTextureTransform_type;
 
-    long d_setScanlineEndpoints_type;
-    long d_displayScanlinePosition_type;
+    vrpn_int32 d_setScanlineEndpoints_type;
+    vrpn_int32 d_displayScanlinePosition_type;
 
     //Screen capture
     vrpn_int32 d_createScreenImage_type;
@@ -369,6 +403,9 @@ class nmg_Graphics {
 
     char * encode_resizeViewport (int * len, int, int);
     int decode_resizeViewport (const char * buf, int *, int *);
+
+    char * encode_causeGridRedraw (int * len);
+    int decode_causeGridRedraw (const char * buf);
 
     char * encode_enableChartjunk (int * len, int);
     int decode_enableChartjunk (const char * buf, int *);
@@ -408,6 +445,14 @@ class nmg_Graphics {
                                         float * low, float * hi);
     char * encode_setHandColor (int * len, int);
     int decode_setHandColor (const char * buf, int *);
+    //char * encode_setAlphaPlaneName (int * len, const char *);
+    //int decode_setAlphaPlaneName (const char * buf, const char *);
+    //char * encode_setColorPlaneName (int * len, const char *);
+    //int decode_setColorPlaneName (const char * buf, const char *);
+    //char * encode_setContourPlaneName (int * len, const char *);
+    //int decode_setContourPlaneName (const char * buf, const char *);
+    //char * encode_setHeightPlaneName (int * len, const char *);
+    //int decode_setHeightPlaneName (const char * buf, const char *);
     char * encode_setIconScale (int * len, float);
     int decode_setIconScale (const char * buf, float *);
     char * encode_setMinColor (int * len, const double [3]);
@@ -444,8 +489,8 @@ class nmg_Graphics {
     int decode_setSphereScale (const char * buf, float *);
     char * encode_setTesselationStride (int * len, int);
     int decode_setTesselationStride (const char * buf, int *);
-    char * encode_setTextureMode (int * len, TextureMode);
-    int decode_setTextureMode (const char * buf, TextureMode *);
+    char * encode_setTextureMode (int * len, TextureMode, TextureTransformMode);
+    int decode_setTextureMode (const char * buf, TextureMode *, TextureTransformMode *);
     char * encode_setTextureScale (int * len, float);
     int decode_setTextureScale (const char * buf, float *);
     char * encode_setTrueTipScale (int * len, float);
@@ -507,6 +552,11 @@ class nmg_Graphics {
     
     char *encode_rotateTextures ( int *len, float theta );
     int decode_rotateTextures ( const char *buf, float *theta );
+
+    char *encode_updateTexture(int *len, int, const char *, int, int,
+         int, int);
+    int decode_updateTexture(const char *buf,int *,
+	char **,int *,int *,int *,int *);
 
     char * encode_enableRegistration (int * len, int);
     int decode_enableRegistration (const char * buf, int *);

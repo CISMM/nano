@@ -1,4 +1,4 @@
-USES_LIBS := nmAux nmUGraphics nmUI nmGraphics nmGenTex nmMScope nmReg \
+USES_LIBS := nmAux nmUGraphics nmSEM nmUI nmGraphics nmGenTex nmMScope nmReg \
              nmMP tclLinkVar nmBase ImgFormat \
              vrpn vogl quat sdi
 

@@ -247,23 +247,26 @@ int init_vertexArray(int x, int y)
 void specify_vertexArray(nmb_PlaneSelection planes, int i, int count)
 {
 #if defined(sgi)  // These functions aren't available in CYGWIN:
+  if (!g_PRERENDERED_COLORS) {
     glNormalPointerEXT(GL_SHORT, sizeof(Vertex_Struct),
 	                        count, vertexptr[i][0].Normal );
+  }
     glColorPointerEXT(4,GL_UNSIGNED_BYTE,sizeof(Vertex_Struct),
 	                        count, vertexptr[i][0].Color);
     glVertexPointerEXT(3,GL_FLOAT,sizeof(Vertex_Struct),
 				count,vertexptr[i][0].Vertex);
 
-    if(planes.contour)
+    if (g_texture_mode == GL_TEXTURE_1D) // (planes.contour)
  	glTexCoordPointerEXT(1,GL_FLOAT,sizeof(Vertex_Struct),
 	                   count,&(vertexptr[i][0].Texcoord[2]));
-    else if( planes.alpha)
+    else if (g_texture_mode == GL_TEXTURE_3D) // (planes.alpha)
         glTexCoordPointerEXT(3,GL_FLOAT,sizeof(Vertex_Struct),
                                    count,vertexptr[i][0].Texcoord);
 
-// only do projective texture with 2D textures
+// if using projective texture then we still do 1D and 3D textures as above
+// but 2D texture coordinates should not be specified here
 #ifndef PROJECTIVE_TEXTURE
-    else if (g_rulergrid_enabled)
+    else if (g_texture_mode == GL_TEXTURE_2D)
         glTexCoordPointerEXT(2,GL_FLOAT,sizeof(Vertex_Struct),
                                   count,&(vertexptr[i][0].Texcoord[1]));
 
@@ -274,9 +277,32 @@ void specify_vertexArray(nmb_PlaneSelection planes, int i, int count)
 
     glDrawArraysEXT( GL_TRIANGLE_STRIP,0,count);
 #else
-	planes = planes;	// Keep the compiler happy
-	i = i;
-	count = count;
+    planes = planes;	// Keep the compiler happy
+    i = i;
+    count = count;
+
+
+    int vert;
+    glBegin(GL_TRIANGLE_STRIP);
+    for (vert = 0; vert < count; vert++) {
+        if (!g_PRERENDERED_COLORS) {
+	    glNormal3s(	vertexptr[i][vert].Normal[0],
+			vertexptr[i][vert].Normal[1],
+                        vertexptr[i][vert].Normal[2]);
+        }
+        glColor4b( 	vertexptr[i][vert].Color[0],
+			vertexptr[i][vert].Color[1],
+			vertexptr[i][vert].Color[2],
+			vertexptr[i][vert].Color[3]);
+	if (g_texture_mode == GL_TEXTURE_1D) {// (planes.contour)
+	    glTexCoord1f(vertexptr[i][vert].Texcoord[0]);
+        }
+        glVertex3f(vertexptr[i][vert].Vertex[0],
+		   vertexptr[i][vert].Vertex[1],
+		   vertexptr[i][vert].Vertex[2]);
+    }
+    glEnd();
+
 #endif
 
 }
@@ -515,7 +541,7 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
 #endif
 
 #ifndef PROJECTIVE_TEXTURE
-  if (g_rulergrid_enabled) {
+  if (g_texture_transform_mode == RULERGRID_COORD) {
     GLfloat rulercoord [2];
 
     /*
@@ -552,11 +578,8 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
     else {
       glTexCoord2fv(rulercoord);
     }
-  }
-#endif
-
-#ifndef PROJECTIVE_TEXTURE
-  if ( g_genetic_textures_enabled || g_realign_textures_enabled ) {
+  } 
+  else if (g_texture_transform_mode == MANUAL_REALIGN_COORD) {
     GLfloat genetic_coord[2];
     
     if ( (x == (num_x -1)) && (y == (num_y -1))) {
@@ -749,6 +772,8 @@ void    spm_set_surface_materials(void)
 	GLfloat	dark[4] = { 0.0, 0.0, 0.0, 1.0 };
 
 
+//fprintf(stderr, "In spm_set_surface_materials with texture mode %d.\n",
+//g_texture_mode);
 	TIMERVERBOSE(5, mytimer, "begin spm_set_surface_materials");
 
 	/* Use local vertex color for ambient and diffuse */

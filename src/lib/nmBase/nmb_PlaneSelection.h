@@ -25,7 +25,10 @@ class nmb_PlaneSelection {
     ~nmb_PlaneSelection (void);
 
     void lookup (nmb_Dataset *);
-      // Fills in the data members with current data from nmb_Datset
+      // Fills in the data members with current data from nmb_Dataset
+    void lookup (BCGrid *,
+                 const char * heightName, const char * colorName,
+                 const char * contourName, const char * alphaName);
     void lookupPrerendered (BCGrid *);
 
     BCPlane * height;

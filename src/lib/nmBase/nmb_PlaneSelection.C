@@ -24,14 +24,22 @@ nmb_PlaneSelection::~nmb_PlaneSelection (void) {
 }
 
 void nmb_PlaneSelection::lookup (nmb_Dataset * data) {
-  height = data->inputGrid->getPlaneByName
-                    (data->heightPlaneName->string());
-  color = data->inputGrid->getPlaneByName
-                    (data->colorPlaneName->string());
-  contour = data->inputGrid->getPlaneByName
-                    (data->contourPlaneName->string());
-  alpha = data->inputGrid->getPlaneByName
-                    (data->alphaPlaneName->string());
+  lookup(data->inputGrid,
+         data->heightPlaneName->string(),
+         data->colorPlaneName->string(),
+         data->contourPlaneName->string(),
+         data->alphaPlaneName->string());
+}
+
+void nmb_PlaneSelection::lookup (BCGrid * inputGrid,
+                                 const char * heightName,
+                                 const char * colorName,
+                                 const char * contourName,
+                                 const char * alphaName) {
+  height = inputGrid->getPlaneByName (heightName);
+  color = inputGrid->getPlaneByName (colorName);
+  contour = inputGrid->getPlaneByName (contourName);
+  alpha = inputGrid->getPlaneByName (alphaName);
 }
 
 void nmb_PlaneSelection::lookupPrerendered (BCGrid * grid) {

@@ -234,109 +234,6 @@ void makeCheckImage (void)
     }
 }
 
-void makeAndInstallRulerImage (PPM * myPPM) {
-
-  int texture_size;
-  int x,y;
-  int r,g,b;
-  GLubyte texture[512*512*4];	// Maximum size for the image texture
-
-// Tell how to index a given element.  Parameters are y,x,color
-#define texel(j,i,c) ( (c) + 4 * ( (i) + (j) * texture_size))
-
-  // Find out the smallest power-of-2 texture region we can use
-  // Make sure it is not too big.
-  texture_size = max(myPPM->nx, myPPM->ny);
-  texture_size = (int)pow( 2, ceil( log(texture_size)/log(2)  ) );
-  if (texture_size > 512) {
-	fprintf(stderr,"Not enough space for %dx%d ruler texture\n",
-		texture_size, texture_size);
-	return;
-  }
-
-  // Fill the whole texture with black.  This will make a border around
-  // any area not filled by the PPM file.
-  for (x = 0; x < texture_size; x++) {
-    for (y = 0; y < texture_size; y++) {
-	texture[ texel( y, x, 0) ] = 0;
-	texture[ texel( y, x, 1) ] = 0;
-	texture[ texel( y, x, 2) ] = 0;
-#ifdef __CYGWIN__	// assume we're using BLEND texture function
-	texture[ texel( y, x, 3) ] = 255; 
-#else
-	texture[ texel( y, x, 3) ] = 0;
-#endif
-    }
-  }
-
-  // Fill in the part of the texture that the PPM file covers
-  // Invert Y because the coordinate system in the PPM file starts
-  // in the upper left corner, and our coordinate system in the lower
-  // left.
-  for (x = 0; x < myPPM->nx; x++) {
-    for (y = 0; y < myPPM->ny; y++) {
-//printf("XXX Filling %3d,%3d (%ld)\n", x, (myPPM->ny-1)-y,
-//		(long)texel((myPPM->ny-1)-y,x,0));
-	myPPM->Tellppm(x,y, &r, &g, &b);
-	// was Alpha half way on
-	//texture[ texel( (myPPM->ny-1)-y, x, 3) ] = 128;
-#ifdef __CYGWIN__	// assume we're using BLEND texture function
-	texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte) 255;
-        texture[ texel( (myPPM->ny-1)-y, x, 0) ] = (GLubyte)((float)r*g_ruler_opacity/255.0);
-        texture[ texel( (myPPM->ny-1)-y, x, 1) ] = (GLubyte)((float)g*g_ruler_opacity/255.0);
-        texture[ texel( (myPPM->ny-1)-y, x, 2) ] = (GLubyte)((float)b*g_ruler_opacity/255.0); 
-#else
-	texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte)g_ruler_opacity;
-        texture[ texel( (myPPM->ny-1)-y, x, 0) ] = r;
-        texture[ texel( (myPPM->ny-1)-y, x, 1) ] = g;
-        texture[ texel( (myPPM->ny-1)-y, x, 2) ] = b;
-#endif
-    }
-  }
-
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-#ifdef __CYGWIN__
-  glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,CYGWIN_TEXTURE_FUNCTION);
-#else
-  glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
-#endif
-  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-
-#ifdef  FLOW
-  /**********************-_________________________
-    glTexImage2D(GL_TEXTURE_2D, 0, 4,
-                 texture_size, texture_size,
-		 0, GL_RGBA, GL_UNSIGNED_BYTE,
-		 (const GLvoid*)texture);
-    if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error making ruler texture.\n");
-    }
-_______________________________********************/
-#endif
-
-#if defined(sgi) || defined(__CYGWIN__)
-  // Build the texture map and set the mode for 2D textures
-  if (gluBuild2DMipmaps(GL_TEXTURE_2D,4, texture_size, texture_size,
-                        GL_RGBA, GL_UNSIGNED_BYTE, texture) != 0) { 
-	   printf(" Error making mipmaps, using texture instead.\n");
-	   glTexImage2D(GL_TEXTURE_2D, 0, 4,
-			texture_size, texture_size,
-			0, GL_RGBA, GL_UNSIGNED_BYTE,
-			texture);
-	   if (glGetError()!=GL_NO_ERROR) {
-		printf(" Error making ruler texture.\n");
-	   }
-  }
-#endif
-  g_tex_installed_width = texture_size;
-  g_tex_installed_height = texture_size;
-  g_tex_image_width = myPPM->nx;
-  g_tex_image_height = myPPM->ny;
-}
-
 // globals:
 //  g_ruler_[rgb]
 //  g_ruler_width_[xy]
@@ -350,7 +247,7 @@ void makeRulerImage (void) {
 
   int rwidth_x, rwidth_y;
   int i, j;
-
+  
 #ifndef __CYGWIN__
   // Colors are OK at this point
   //printf("mkRulerImage %d %d %d\n", g_ruler_r, g_ruler_g, g_ruler_b);
@@ -422,10 +319,6 @@ void makeRulerImage (void) {
 }
 
 
-
-
-
-
 void buildContourTexture (void) {
 
   makeTexture();
@@ -436,6 +329,8 @@ void buildContourTexture (void) {
 #else
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL); 
 #endif
+  glBindTexture(GL_TEXTURE_1D, tex_ids[CONTOUR_1D_TEX_ID]);
+
   glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -465,6 +360,9 @@ _______________________________________*/
 
 
 void buildRulergridTexture (void) {
+  printf("building rulergrid texture\n");
+  glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
+
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 #ifdef __CYGWIN__
   float tex_color[4] = {1.0, 1.0, 1.0, 1.0};
@@ -473,6 +371,7 @@ void buildRulergridTexture (void) {
 #else
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 #endif
+
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -510,6 +409,7 @@ ___________________**********************/
 }
 
 void buildAlphaTexture (void) {
+
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 #ifdef __CYGWIN__
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
@@ -518,6 +418,8 @@ void buildAlphaTexture (void) {
 #endif 
   /* GL_TEXTURE_3D_EXT is not available on other platforms... i.e. WIN32 */
 #if defined(sgi)
+  glBindTexture(GL_TEXTURE_3D, tex_ids[ALPHA_3D_TEX_ID]);
+
   glTexParameterf(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_R_EXT, GL_CLAMP);
@@ -603,70 +505,12 @@ void setupMaterials (void) {
             GL_MATERIAL_EXT);
     glEndShaderEXT();
 
-    glGenTextures(NTEX, tex_ids);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-
-    PPMImageRec *image = new PPMImageRec;
-
-
-    // initialize pattern texture
-    glBindTexture(GL_TEXTURE_2D, tex_ids[PATTERN_TEX_ID]);
-    // Load textures from the specified directory. 
-    sprintf(filename,"%schecker", g_textureDir);
-    PPMImageLoad(image, filename);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, image->width, image->height, 0,
-                 GL_RGB, GL_BYTE, (const GLvoid *)image->data);
-
-    // initialize bump texture
-    glBindTexture(GL_TEXTURE_2D, tex_ids[BUMP_TEX_ID]);
-    sprintf(filename,"%sstripes-bump", g_textureDir);
-    PPMImageLoad(image, filename);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, image->width, image->height, 0,
-                 GL_RGB, GL_BYTE, (const GLvoid *)image->data);
-
-    glBindTexture(GL_TEXTURE_2D, tex_ids[HATCH_NOISE_TEX_ID]);
-    sprintf(filename,"%suniform_noise2", g_textureDir);
-    PPMImageLoad(image, filename);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, image->width, image->height, 0,
-                 GL_RGB, GL_BYTE, (const GLvoid *)image->data);
-    spotnoise_tex_size = min(image->width, image->height);
-
-    PPMImageDelete(image);
-
-    // initiailize bump data
-    //bump_data = new GLuint [g_data_tex_size * g_data_tex_size * 3];
-    bump_data = new GLubyte [g_data_tex_size * g_data_tex_size * 3];
-    for (l = 0; l < g_data_tex_size * g_data_tex_size * 3; l++)
-      bump_data[l] = 0;
-    glBindTexture(GL_TEXTURE_2D, tex_ids[BUMP_DATA_TEX_ID]);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
-                 GL_RGB, GL_BYTE, (const GLvoid *)bump_data);
-
-    // initialize pattern data
-    //pattern_data = new GLuint [g_data_tex_size * g_data_tex_size * 3];
-    pattern_data = new GLubyte [g_data_tex_size * g_data_tex_size * 3];
-    for (l = 0; l < g_data_tex_size * g_data_tex_size * 3; l++)
-      pattern_data[l] = 0;
-    glBindTexture(GL_TEXTURE_2D, tex_ids[PATTERN_DATA_TEX_ID]);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
-                 GL_RGB, GL_BYTE, (const GLvoid *)pattern_data);
-
-    // initialize hatch data
-    //hatch_data = new GLuint [g_data_tex_size * g_data_tex_size * 3];
-    hatch_data = new GLubyte [g_data_tex_size * g_data_tex_size * 3];
-    for (l = 0; l < g_data_tex_size * g_data_tex_size * 3; l++)
-      hatch_data[l] = 0;
-    glBindTexture(GL_TEXTURE_2D, tex_ids[HATCH_DATA_TEX_ID]);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, g_data_tex_size, g_data_tex_size, 0,
-                 GL_RGB, GL_BYTE, (const GLvoid *)hatch_data);
-
-		
     // ********** Set the uniform parameters of the shader ***************
 
     // texture ids. you have to pass floats
-    float j[NTEX];
-    for (l = 0; l < NTEX; l++)
-      j[l] = tex_ids[l];
+    float j[N_SHADER_TEX];
+    for (l = 0; l < N_SHADER_TEX; l++)
+      j[l] = shader_tex_ids[l];
     glBoundMaterialfvEXT(nM_shader,
                          glGetMaterialParameterNameEXT("tex_id"),
                          j);
@@ -748,37 +592,6 @@ void setupMaterials (void) {
 
 }
 
-
-// globals:
-//  g_rulerPPM
-
-void buildAllTextures (void) {
-
-  fprintf(stderr, "initialize the texture mapping\n");
-  buildContourTexture();
-
-#if defined(sgi_or_flow) || defined(__CYGWIN__)
-
-  fprintf(stderr, "Initializing checkerboard texture.\n");
-  makeCheckImage();
-  buildAlphaTexture();
-
-  fprintf(stderr, "Initializing ruler texture.");
-  if (!g_rulerPPM) {
-    makeRulerImage();
-    buildRulergridTexture();
-    fprintf(stderr, " Using default grid.\n");
-  } else {
-    makeAndInstallRulerImage(g_rulerPPM);
-    fprintf(stderr, " Using image texture.\n");
-  }
-  if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error making ruler texture.\n");
-  }
-
-#endif
-}
-
 // rotation is in degrees
 void compute_texture_matrix(double translate_x, double translate_y,
 		double rotation, double scale_x, double scale_y,
@@ -855,11 +668,9 @@ void compute_texture_matrix(double translate_x, double translate_y,
 // Some effort should be made to bring all of the material parameters
 // together here.
 
-int setup_lighting(int nothing)
+int setup_lighting (int)
 {
     static	int	was_smooth_shading = -1;
-
-    nothing = nothing;  // keep compiler happy
 
     GLfloat l0_ambient[4] = { 0.2, 0.2, 0.2, 1.0 };
 //    GLfloat l0_diffuse[4] = { 0.4, 0.4, 0.4, 1.0 };
@@ -898,17 +709,23 @@ int setup_lighting(int nothing)
     }
 #endif
 
+  if (!g_PRERENDERED_COLORS) {
+    // With prerendered colors we don't have any normals;  this REALLY
+    // slows us down, since GL_NORMALIZE special-cases that.
     glEnable(GL_NORMALIZE);                 /* Re-Normalize normals */
-    // No default ambient lighting other than specified in the light
-    {       
+  }
+
+  // No default ambient lighting other than specified in the light
+  {       
 	GLfloat global_ambient[4] = { 0.0, 0.0, 0.0, 1.0 };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
-    }
-    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+  }
+  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-    glEnable(GL_LIGHT0);
+  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  glEnable(GL_LIGHT0);
 
+  // Is this reasonable?  TCH 10 Jan 99
   if (g_PRERENDERED_COLORS) {
     glDisable(GL_LIGHTING);
   } else {

@@ -14,7 +14,6 @@ struct nmui_Util {
 					 Position_list & p);
   static int moveAimLine (q_vec_type position);  // OBSOLETE
   static int moveSphere (q_vec_type position);
-
 };
 
 

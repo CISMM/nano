@@ -84,7 +84,6 @@ static	char	*handle_int_value_change(ClientData clientData,
 //fprintf(stderr, "handle_int_value_change (%s, %d):  ignoring the change.\n",
 //intvar->my_tcl_varname, value);
 
-          //intvar->doCallbacks();
         } else { //no errors: update the variable
           // Need to invoke operator = since it might be redefined
           // by derived class.  (?)
@@ -92,9 +91,9 @@ static	char	*handle_int_value_change(ClientData clientData,
 //fprintf(stderr, "handle_int_value_change (%s, %d).\n",
 //intvar->my_tcl_varname, value);
 
-          *intvar = value;
+          //*intvar = value;
+          intvar->SetFromTcl(value);
           intvar->mylastint = value;
-          //intvar->doCallbacks();
 	} 
 
 	return NULL;
@@ -124,15 +123,14 @@ static	char	*handle_float_value_change(ClientData clientData,
 		floatvar->d_dirty = VRPN_TRUE;
         } else if (floatvar->d_ignoreChange) {
           floatvar->d_ignoreChange = VRPN_FALSE;
-          //floatvar->doCallbacks();
 	} else { // no errors: update the variable
 //  fprintf(stderr, "handle_float_value_change: %s %s old %f new %f\n", 
 //         floatvar->my_tcl_varname, cvalue, floatvar->mylastfloat, value);
            // Need to invoke operator = since it might be redefined
            // by derived class.  (?)
-	   *floatvar = value;
+	   //*floatvar = value;
+           floatvar->SetFromTcl(value);
 	   floatvar->mylastfloat = value;
-           //floatvar->doCallbacks();
 	}
 	return NULL;
 };
@@ -156,13 +154,11 @@ static	char	*handle_string_value_change(ClientData clientData,
 	} else if (selvar->d_ignoreChange) {
 //fprintf(stderr, "handle_string_value_change:  ignoring.\n");
           selvar->d_ignoreChange = VRPN_FALSE;
-          //selvar->doCallbacks();
         } else { // no errors: update the variable
 //fprintf(stderr, "handle_string_value_change:  changing %s to %s.\n",
 //selvar->d_myTclVarname, cvalue);
            // BUG BUG BUG - doesn't use operator =?
-           selvar->Set(cvalue);
-           //selvar->doCallbacks();
+           selvar->SetFromTcl(cvalue);
 	}
 	return NULL;
 };
@@ -440,7 +436,6 @@ vrpn_int32 Tclvar_int::operator = (vrpn_int32 v) {
   vrpn_int32 retval;
   retval = (d_myint = v);
   updateTcl();
-  doCallbacks();
   return retval;
 }
 
@@ -449,7 +444,6 @@ vrpn_int32 Tclvar_int::operator ++ (void) {
   vrpn_int32 retval;
   retval = ++d_myint;
   updateTcl();
-  doCallbacks();
   return retval;
 }
 
@@ -458,8 +452,14 @@ vrpn_int32 Tclvar_int::operator ++ (int) {
   vrpn_int32 retval;
   retval = d_myint++;
   updateTcl();
-  doCallbacks();
   return retval;
+}
+
+// virtual
+void Tclvar_int::SetFromTcl (vrpn_int32 v) {
+  vrpn_int32 retval;
+  retval = (d_myint = v);
+  doCallbacks();
 }
 
 void Tclvar_int::updateTcl (void) {
@@ -617,10 +617,19 @@ vrpn_float64 Tclvar_float::operator = (vrpn_float64 v) {
     sprintf(cvalue, "%f", d_myfloat);
     Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
   }
-  doCallbacks();
 
   return retval;
 }
+
+// virtual
+void Tclvar_float::SetFromTcl (vrpn_float64 v) {
+  vrpn_float64 retval;
+
+  retval = (d_myfloat = v);
+
+  doCallbacks();
+}
+
 
 
 
@@ -1396,7 +1405,6 @@ void Tclvar_selector::doCallbacks (void) {
 const char * Tclvar_selector::operator = (const char * v) {
   nmb_Selector::operator = (v);
   updateTcl();
-  doCallbacks();
   return string();
 }
 
@@ -1404,7 +1412,6 @@ const char * Tclvar_selector::operator = (const char * v) {
 const char * Tclvar_selector::operator = (char * v) {
   nmb_Selector::operator = (v);
   updateTcl();
-  doCallbacks();
   return string();
 }
 
@@ -1412,9 +1419,14 @@ const char * Tclvar_selector::operator = (char * v) {
 void Tclvar_selector::Set (const char * v) {
   nmb_Selector::Set(v);
   // nmb_Selector::Set() will call Tclvar_selector::operator =(),
-  // which will trigger updateTcl() and doCallbacks().
-  //updateTcl();
-  //doCallbacks();
+  // which will call updateTcl(), which will trigger SetFromTcl(),
+  // which will call doCallbacks().
+}
+
+//virtual
+void Tclvar_selector::SetFromTcl (const char * v) {
+  nmb_Selector::operator = (v);
+  doCallbacks();
 }
 
 //

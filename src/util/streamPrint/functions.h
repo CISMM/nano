@@ -31,7 +31,9 @@ int     noint_block_write(int outfile, char buffer[], int length);
 int     noint_block_read(int infile, char buffer[], int length);
 int stm_retry_save(char* name);
 int     stm_close_stream(stm_stream *s);
-stm_stream      *stm_open_datastream_for_read(char* filename);
+stm_stream * stm_open_datastream_for_read (char * filename);
+stm_stream * stm_open_datastream_for_write (const char *);
+
 
 // stevens.c
 int readn (register int fd, register char *ptr, register int nbytes);
@@ -39,6 +41,10 @@ int writen(register int fd, register char *ptr, register int nbytes);
 int readline(register int fd, register char* ptr, register int maxlen);
 
 
+void stm_buffer_int (BUFPTR * bufptr, int value);
+void stm_buffer_float (BUFPTR * bufptr, float value);
+void stm_buffer_long (BUFPTR * bufptr, long value);
+void stm_buffer_chars (BUFPTR * bufptr, char * value, int len);
 
 
 

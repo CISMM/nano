@@ -79,11 +79,7 @@ class BCPlane
     virtual	void setTime(int x, int y, long sec, long usec) = 0;
 
     inline float value(int x, int y) const { return _value[x * _num_y + y]; }
-    inline float valueAt(double x, double y) {
-	int ix = (int) (derangeX() * (x - minX()));
-	int iy = (int) (derangeY() * (y - minY()));
-	return _value[ix * _num_y + iy];
-    };
+    float valueAt (double x, double y);
 
     float interpolatedValue(double x, double y);
     float interpolatedValueAt(double x, double y);

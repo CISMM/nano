@@ -1,6 +1,8 @@
 #include "graphics_globals.h"
+#include "nmg_Graphics.h" // for enums
 
 class BCGrid;  // from BCGrid.h
+class nmb_Subgrid;  // from nmb_Subgrid.h
 
 float g_adhesion_slider_min = 0.0f;
 float g_adhesion_slider_max = 1.0f;
@@ -20,6 +22,8 @@ float g_color_slider_max = 1.0f;
 char * g_textureDir = NULL;
 
 int g_config_chartjunk = 1;
+int g_config_measurelines = 1;
+int g_config_planeonly = 0;
 int g_config_filled_polygons = 1;
 int g_config_smooth_shading = 1;
 int g_config_trueTip = 0;
@@ -56,8 +60,11 @@ double g_minColor [4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 //initially set alpha value to 1.0
 double g_maxColor [4] = { 1.0f, 0.88f, 0.04f, 1.0f };
 
-// Genetic Textures
-int g_genetic_textures_enabled = 0;
+int g_minChangedX;
+int g_maxChangedX;
+int g_minChangedY;
+int g_maxChangedY;
+
 
 // Realigning Textures:
 ColorMap *g_realign_textures_curColorMap = NULL;
@@ -65,8 +72,8 @@ float g_realign_textures_slider_min = 0;
 float g_realign_textures_slider_max = 1.0;
 
 BCGrid * g_prerendered_grid = NULL;
+nmb_Subgrid * g_prerenderedChange = NULL;
 
-int g_realign_textures_enabled = 0;
 int g_translate_textures = 0;
 int g_scale_textures = 0;
 int g_shear_textures = 0;
@@ -93,17 +100,19 @@ float g_shear_tex_dx = 0;
 float g_shear_tex_dy = 0;
 float g_rotate_tex_theta = 0;
 
-int g_registration_enabled = 0;
+// Registration
 double g_texture_transform[16] = {0.001,0,0,0,0,0.001,0,0,0,0,1,0,0,0,0,1};
 int g_tex_image_width = 512;
 int g_tex_image_height = 512;
 int g_tex_installed_width = 512;
 int g_tex_installed_height = 512;
+int g_tex_sem_installed_width = 512;
+int g_tex_sem_installed_height = 512;
 
 float g_rubberPt [4];
 float g_scanlinePt [6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 int g_scanline_display_enabled = 0;
-int g_rulergrid_enabled = 0;
+
 float g_rulergrid_xoffset = 0.0f;
 float g_rulergrid_yoffset = 0.0f;
 float g_rulergrid_scale = 500.0f;
@@ -134,7 +143,14 @@ float g_surface_alpha = 1.0;
 
 float g_sphere_scale = 12.5f;
 int g_stride = 1;
+
+int g_texture_displayed = nmg_Graphics::NO_TEXTURES;
+int g_texture_transform_mode = nmg_Graphics::RULERGRID_COORD;
+
 GLenum g_texture_mode = GL_TEXTURE_2D;
+GLuint tex_ids[N_TEX];
+GLubyte *sem_data = NULL;
+
 float g_texture_scale = 10.0f;
 float g_trueTipLocation [3];
 float g_trueTipScale = 1.0f;
@@ -146,6 +162,13 @@ int g_PRERENDERED_COLORS = 0;  // only used by remote rendering clients
 
 Position_list * g_positionList;
 
+BCGrid * g_inputGrid = NULL;
+
+char g_alphaPlaneName [128];
+char g_colorPlaneName [128];
+char g_contourPlaneName [128];
+char g_heightPlaneName [128];
+
 #ifdef FLOW
 
 int g_data_tex_size;
@@ -155,7 +178,7 @@ int g_data_tex_size;
   GLuint nM_diffuse;     // just shows the diffuse color shader
 
   // texture id for shaders
-  GLuint tex_ids[NTEX];
+  GLuint shader_tex_ids[N_SHADER_TEX];
 
   // data set values
   GLubyte *pattern_data;  // g_data_tex_size * g_data_tex_size * 3

@@ -8,11 +8,14 @@
 #include "correspondenceEditor.h"
 #include "aligner.h"
 
+#define ALIGNER_TCL_FILE "registration.tcl"
+
 class AlignerUI {
   public:
-    AlignerUI(nmg_Graphics *g, nmb_ImageList *im);
+    AlignerUI(nmg_Graphics *g, nmb_ImageList *im,Tcl_Interp *interp, 
+					const char *tcl_script_dir);
 	int addImage(nmb_Image *im);
-
+        void displayTexture(int enable) {textureDisplayEnabled = enable;};
 	void mainloop() {ce->mainloop();};
 
 	// user interface callback routines:
@@ -22,7 +25,7 @@ class AlignerUI {
 	static void handle_registration_change(vrpn_int32, void *);
 	static void handle_registration_type_change(vrpn_int32, void *);
 	static void handle_resamplePlaneName_change(const char *, void *);
-
+        static void handle_texture_display_change(vrpn_int32, void *);
   private:
 
 	// control panel variables
@@ -31,7 +34,8 @@ class AlignerUI {
 	Tclvar_selector newResamplePlaneName;
 	Tclvar_int datasetRegistrationEnabled;
 	Tclvar_int datasetRegistrationNeeded;
-	Tclvar_int_with_button datasetRegistrationRotate3DEnabled;
+	Tclvar_int datasetRegistrationRotate3DEnabled;
+        Tclvar_int textureDisplayEnabled;
 	Tclvar_int resampleResolutionX;
 	Tclvar_int resampleResolutionY;
 

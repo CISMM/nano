@@ -14,20 +14,20 @@ class	PPM {
 	int	Tellppm(int x, int y, int *red, int *green, int *blue);
 	int	Putppm(int x, int y,  int red, int green, int blue);
 
-	PPM (const char * filename = NULL);
-	PPM (FILE *file);
+	PPM (FILE *file = NULL);
+        PPM (const char *filename = NULL);
 
 	int	Value_at_normalized(double nx, double ny, int *red,
 			int *green, int *blue);
-	int	Write_to(char *filename = NULL);
+	int	Write_to(FILE *file);
 
     protected:
 
     private:
-	int	read_P6_body(int infile);
-	int	read_P3_body(int infile, int maxc);
-	int	read_P5_body(int infile);
-	int	read_P2_body(int infile, int maxc);
+	int	read_P6_body(FILE *infile);
+	int	read_P3_body(FILE *infile, int maxc);
+	int	read_P5_body(FILE *infile);
+	int	read_P2_body(FILE *infile, int maxc);
 };
 
 #endif

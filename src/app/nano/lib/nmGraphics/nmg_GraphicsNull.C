@@ -161,7 +161,7 @@ void nmg_Graphics_Null::setRulergridWidths (float , float ) {}
 void nmg_Graphics_Null::setSpecularity (int ) {}
 void nmg_Graphics_Null::setSphereScale (float ) {}
 void nmg_Graphics_Null::setTesselationStride (int ) {}
-void nmg_Graphics_Null::setTextureMode (TextureMode ) {}
+void nmg_Graphics_Null::setTextureMode (TextureMode, TextureTransformMode ) {}
 void nmg_Graphics_Null::setTextureScale (float ) {}
 void nmg_Graphics_Null::setUserMode (int , int , int) {}
 void nmg_Graphics_Null::setLightDirection (q_vec_type & ) {}

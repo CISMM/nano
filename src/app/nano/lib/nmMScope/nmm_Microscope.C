@@ -96,7 +96,6 @@ nmm_Microscope::nmm_Microscope
          ("nmm Microscope GetNewScanDatasets");
     d_Echo_type = connection->register_message_type
          ("nmm Microscope Echo");
-	// Tiger	HACK HACK HACK 	added two new message: d_MarkModify_type and d_MarkImage_type
     d_MarkModify_type = connection->register_message_type
 	("nmm Microscope MarkModify");
     d_MarkImage_type = connection->register_message_type

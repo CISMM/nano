@@ -41,6 +41,24 @@ void nmb_Line::normalize (BCPlane * plane) {
 }
 
 void nmb_Line::moveTo (float x, float y, BCPlane * plane) {
+  // Bounds check
+  if (!plane) {
+    fprintf(stderr, "nmb_Line::moveTo:  NULL plane!\n");
+    return;
+  }
+  if (x < plane->minX()) {
+    x = plane->minX();
+  }
+  if (x > plane->maxX()) {
+    x = plane->maxX();
+  }
+  if (y < plane->minY()) {
+    y = plane->minY();
+  }
+  if (y > plane->maxY()) {
+    y = plane->maxY();
+  }
+
   d_top[0] = x;
   d_top[1] = y;
 

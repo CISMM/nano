@@ -18,22 +18,24 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
    d_myId (-1)  // TODO
 {
 
-fprintf(stderr, "In nmg_Graphics::nmg_Graphics()\n");
+//fprintf(stderr, "In nmg_Graphics::nmg_Graphics()\n");
 
   if (!c) return;
 
   // Initialize for remote operation:
 
-fprintf(stderr, "nmg_Graphics:  registering sender\n");
+//fprintf(stderr, "nmg_Graphics:  registering sender\n");
 
   d_myId = c->register_sender(id);
 
-fprintf(stderr, "nmg_Graphics:  registering message types\n");
+//fprintf(stderr, "nmg_Graphics:  registering message types\n");
 
- d_resizeViewport_type =
+  d_resizeViewport_type =
     c->register_message_type("nmg Graphics resizeViewport");
   d_loadRulergridImage_type =
     c->register_message_type("nmg Graphics loadRulergridImage");
+  d_causeGridRedraw_type =
+    c->register_message_type("nmg Graphics causeGridRedraw");
   d_enableChartjunk_type =
     c->register_message_type("nmg Graphics enableChartjunk");
   d_enableFilledPolygons_type =
@@ -80,6 +82,14 @@ fprintf(stderr, "nmg_Graphics:  registering message types\n");
     c->register_message_type("nmg Graphics setCollabHandPos");
   d_setCollabMode_type =
     c->register_message_type("nmg Graphics setCollabMode");
+  d_setAlphaPlaneName_type =
+    c->register_message_type("nmg Graphics setAlphaPlaneName");
+  d_setColorPlaneName_type =
+    c->register_message_type("nmg Graphics setColorPlaneName");
+  d_setContourPlaneName_type =
+    c->register_message_type("nmg Graphics setContourPlaneName");
+  d_setHeightPlaneName_type =
+    c->register_message_type("nmg Graphics setHeightPlaneName");
   d_setMinColor_type =
     c->register_message_type("nmg Graphics setMinColor");
   d_setMaxColor_type =
@@ -188,6 +198,8 @@ fprintf(stderr, "nmg_Graphics:  registering message types\n");
   d_createScreenImage_type =
     c->register_message_type("nmg Graphics createScreenImage");
 
+  d_updateTexture_type =
+    c->register_message_type("nmg Graphics updateTexture");
 }
 
 nmg_Graphics::~nmg_Graphics (void) {
@@ -230,6 +242,14 @@ int nmg_Graphics::decode_resizeViewport (const char * buf,
   if (!buf || !width || !height) return -1;
   CHECK(nmb_Util::Unbuffer(&buf, width));
   CHECK(nmb_Util::Unbuffer(&buf, height));
+  return 0;
+}
+
+char * nmg_Graphics::encode_causeGridRedraw (int * len) {
+  return NULL;
+}
+
+int nmg_Graphics::decode_causeGridRedraw (const char * buf) {
   return 0;
 }
 
@@ -706,6 +726,46 @@ int nmg_Graphics::decode_setHandColor
   CHECK(nmb_Util::Unbuffer(&buf, color));
   return 0;
 }
+
+#if 0
+char * nmg_Graphics::encode_setAlphaPlaneName (int * len, const char * n) {
+
+}
+
+int nmg_Graphics::decode_setAlphaPlaneName (const char * buf, const char * n) {
+  
+}
+
+char * nmg_Graphics::encode_setColorPlaneName (int * len, const char * n) {
+
+}
+
+int nmg_Graphics::decode_setColorPlaneName (const char * buf, const char * n) {
+
+}
+
+char * nmg_Graphics::encode_setContourPlaneName (int * len, const char * n) {
+
+}
+
+int nmg_Graphics::decode_setContourPlaneName (const char * buf,
+                                              const char * n) {
+  if (!buf || !color) return -1;
+  CHECK(nmb_Util::Unbuffer(&buf, n, 128));
+  return 0;
+
+}
+
+char * nmg_Graphics::encode_setHeightPlaneName (int * len, const char * n) {
+
+}
+
+int nmg_Graphics::decode_setHeightPlaneName (const char * buf, const char * n) {
+
+}
+#endif
+
+
 
 char * nmg_Graphics::encode_setIconScale
                      (int * len, float scale) {
@@ -1377,14 +1437,14 @@ int nmg_Graphics::decode_setTesselationStride
 }
 
 char * nmg_Graphics::encode_setTextureMode
-                     (int * len, TextureMode m) {
+                     (int * len, TextureMode m, TextureTransformMode xm) {
   char * msgbuf = NULL;
   char * mptr;
   int mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(int);
+  *len = 2*sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmg_Graphics::encode_setTextureMode:  "
@@ -1393,6 +1453,7 @@ char * nmg_Graphics::encode_setTextureMode
   } else {
     mptr = msgbuf;
     mlen = *len;
+
     switch (m) {
       case CONTOUR:  
         nmb_Util::Buffer(&mptr, &mlen, 1); break;
@@ -1400,7 +1461,18 @@ char * nmg_Graphics::encode_setTextureMode
         nmb_Util::Buffer(&mptr, &mlen, 2); break;
       case ALPHA:  
         nmb_Util::Buffer(&mptr, &mlen, 3); break;
-
+      case GENETIC:
+        nmb_Util::Buffer(&mptr, &mlen, 4); break;
+      case COLORMAP:
+	nmb_Util::Buffer(&mptr, &mlen, 5); break;
+      case SEM_DATA:
+	nmb_Util::Buffer(&mptr, &mlen, 6); break;
+      case BUMPMAP:
+	nmb_Util::Buffer(&mptr, &mlen, 7); break;
+      case HATCHMAP:
+	nmb_Util::Buffer(&mptr, &mlen, 8); break;
+      case PATTERNMAP:
+	nmb_Util::Buffer(&mptr, &mlen, 9); break;
       default:
         fprintf(stderr, "nmg_Graphics::encode_setTextureMode:  "
                         "Got illegal texture mode %d.  "
@@ -1411,22 +1483,44 @@ char * nmg_Graphics::encode_setTextureMode
       case NO_TEXTURES:
         nmb_Util::Buffer(&mptr, &mlen, 0); break;
     }
+    switch (xm) {
+      case RULERGRID_COORD:
+	nmb_Util::Buffer(&mptr, &mlen, 0); break;
+      case REGISTRATION_COORD:
+	nmb_Util::Buffer(&mptr, &mlen, 1); break;
+      case MANUAL_REALIGN_COORD:
+	nmb_Util::Buffer(&mptr, &mlen, 2); break;
+      default:
+	fprintf(stderr, "nmg_Graphics::encode_setTextureMode:  "
+			"Got illegal texture transform mode %d.  "
+			"Sending RULERGRID_COORD instead.\n", xm);
+	nmb_Util::Buffer(&mptr, &mlen, 0); break;
+	break;
+    }
   }
 
   return msgbuf;
 }
 
 int nmg_Graphics::decode_setTextureMode
-                   (const char * buf, TextureMode * m) {
+                   (const char * buf, TextureMode * m,
+			TextureTransformMode * xm) {
   int i;
 
   if (!buf || !m) return -1;
   CHECK(nmb_Util::Unbuffer(&buf, &i));
 
   switch (i) {
+    case 0:  *m = NO_TEXTURES; break;
     case 1:  *m = CONTOUR; break;
     case 2:  *m = RULERGRID; break;
     case 3:  *m = ALPHA; break;
+    case 4:  *m = GENETIC; break;
+    case 5:  *m = COLORMAP; break;
+    case 6:  *m = SEM_DATA; break;
+    case 7:  *m = BUMPMAP; break;
+    case 8:  *m = HATCHMAP; break;
+    case 9:  *m = PATTERNMAP; break;
 
     default:
       fprintf(stderr, "nmg_Graphics::decode_setTextureMode:  "
@@ -1435,9 +1529,25 @@ int nmg_Graphics::decode_setTextureMode
 
 
       // fall through
-
-    case 0:  *m = NO_TEXTURES; break;
+      *m = NO_TEXTURES; break;
   }
+
+  CHECK(nmb_Util::Unbuffer(&buf, &i));
+  
+  switch (i) {
+    case 0:  *xm = RULERGRID_COORD; break;
+    case 1:  *xm = REGISTRATION_COORD; break;
+    case 2:  *xm = MANUAL_REALIGN_COORD; break;
+    default:
+      fprintf(stderr, "nmg_Graphics::decode_setTextureMode:  "
+                      "Got illegal texture transform mode %d.  "
+                      "Sending RULERGRID_COORD instead.\n", i);
+
+
+      // fall through
+      *xm = RULERGRID_COORD; break;
+  }
+
   return 0;
 }
 
@@ -2139,6 +2249,54 @@ int nmg_Graphics::decode_rotateTextures ( const char *buf, float * theta) {
 }
 
 // End Realign Texture Network Transmission Code.
+
+char *nmg_Graphics::encode_updateTexture ( int *len, int whichTexture,
+  const char *name, int start_x, int start_y, int end_x, int end_y) {
+
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = 6*sizeof(int) + strlen(name);
+  int name_len = strlen(name);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_updateTexture_type:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    nmb_Util::Buffer(&mptr, &mlen, whichTexture);
+    nmb_Util::Buffer(&mptr, &mlen, name_len);
+    nmb_Util::Buffer(&mptr, &mlen, name, strlen(name));
+    nmb_Util::Buffer(&mptr, &mlen, start_x);
+    nmb_Util::Buffer(&mptr, &mlen, start_y);
+    nmb_Util::Buffer(&mptr, &mlen, end_x);
+    nmb_Util::Buffer(&mptr, &mlen, end_y);
+  }
+
+  return msgbuf;
+}
+
+int nmg_Graphics::decode_updateTexture ( const char *buf, int *whichTexture,
+   char **name, int *start_x, int *start_y, int *end_x, int *end_y) {
+  int name_len;
+
+  if (!buf || !whichTexture || !name || !start_x || !start_y ||
+	!end_x || !end_y) return -1;
+  CHECK(nmb_Util::Unbuffer(&buf, whichTexture));
+  CHECK(nmb_Util::Unbuffer(&buf, &name_len));
+  *name = new char [name_len];
+  CHECK(nmb_Util::Unbuffer(&buf, *name, name_len));
+  CHECK(nmb_Util::Unbuffer(&buf, start_x));
+  CHECK(nmb_Util::Unbuffer(&buf, start_y));
+  CHECK(nmb_Util::Unbuffer(&buf, end_x));
+  CHECK(nmb_Util::Unbuffer(&buf, end_y));
+  return 0;
+}
 
 // Encodes one int for network transmission
 char *nmg_Graphics::encode_enableRegistration ( int *len, int on) {

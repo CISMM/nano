@@ -164,38 +164,38 @@ void Aligner::resampleImageToDepthImage(
                         const ImageTransform &xform,
                         nmb_Image &orthogonal_projection_image)
 {
-	int i,j;
-	int w,h;
-	w = orthogonal_projection_image.width();
-	h = orthogonal_projection_image.height();
-	double i_center, j_center;
-	double p_world[4] = {0,0,0,1}, p_projection[4];
-	double i_depth, j_depth, i_proj, j_proj;
-	double value;
+    int i,j;
+    int w,h;
+    w = orthogonal_projection_image.width();
+    h = orthogonal_projection_image.height();
+    double i_center, j_center;
+    double p_world[4] = {0,0,0,1}, p_projection[4];
+    double i_depth, j_depth, i_proj, j_proj;
+    double value;
 
-	for (i = 0, i_center = 0.5; i < w; i++, i_center += 1.0){
-	  for (j = 0, j_center = 0.5; j < h; j++, j_center += 1.0){
-		// find corresponding location in the depth image which may be
-		// at a different resolution and offset
-		orthogonal_projection_image.pixelToWorld(i_center, j_center,
-			p_world[0],p_world[1]);
-		depth_image.worldToPixel(p_world[0], p_world[1], i_depth, j_depth);
-		// i_depth, j_depth give the location in the depth image
-		if (i_depth > 0 && i_depth < depth_image.width() &&
-			j_depth > 0 && j_depth < depth_image.height()) {
-		
-			p_world[2] = depth_image.getValueInterpolated(i_depth, j_depth);
-			// now we transform p_world into the projection image
-			xform.transform(p_world, p_projection);
-			projection_image.worldToPixel(p_projection[0], p_projection[1],
-										i_proj, j_proj);
-			value = projection_image.getValueInterpolated(i_proj, j_proj);
-		} else {
-			value = 0.0;
-		}
-		orthogonal_projection_image.setValue(i,j, value);
-	  }
-	}
+    for (i = 0, i_center = 0.5; i < w; i++, i_center += 1.0){
+        for (j = 0, j_center = 0.5; j < h; j++, j_center += 1.0){
+            // find corresponding location in the depth image which may be
+            // at a different resolution and offset
+	    orthogonal_projection_image.pixelToWorld(i_center, j_center,
+		p_world[0],p_world[1]);
+	    depth_image.worldToPixel(p_world[0], p_world[1], i_depth, j_depth);
+	    // i_depth, j_depth give the location in the depth image
+	    if (i_depth > 0 && i_depth < depth_image.width() &&
+		j_depth > 0 && j_depth < depth_image.height()) {
+
+		p_world[2] = depth_image.getValueInterpolated(i_depth, j_depth);
+		// now we transform p_world into the projection image
+		xform.transform(p_world, p_projection);
+		projection_image.worldToPixel(p_projection[0], p_projection[1],
+			i_proj, j_proj);
+		value = projection_image.getValueInterpolated(i_proj, j_proj);
+	    } else {
+		value = 0.0;
+	    }
+	    orthogonal_projection_image.setValue(i,j, value);
+        }
+    }
 }
 
 /* Aligner::computeMaxRequiredResampleResolution

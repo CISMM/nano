@@ -21,9 +21,6 @@
 #include <vrpn_Analog.h>
 #include <vrpn_Clock.h>  // for round-trip-time routines (foo_rtt())
 
-// shared memory threading libraries
-#include <thread.h>
-
 // base
 #include <BCPlane.h>
 #include <colormap.h>
@@ -80,6 +77,7 @@
 #include <Tcl_Netvar.h>
 #include "ohmmeter.h"	/* French ohmmeter */
 #include "nma_Keithley2400_ui.h"  // VI Curve generator - Keithley 2400
+#include "nmui_SEM.h" // EDAX SEM
 #include <Topo.h>
 #include "Timer.h"
 #include "microscopeHandlers.h"
@@ -100,12 +98,7 @@
 
 // shared memory threading libraries
 //  [juliano 12/99] this *must* be included after v.h, or gcc craps out
-//#include <thread.h>
-//
-// [Chris Weigle 1/4/00]
-// I found I had to put it back where it was or I couldn't compile under
-// CYGWIN. Is Jeff using the new version of CYGWIN that no one else (well,
-// maybe Tanner) has yet?
+#include <thread.h>
 
 UTree World;
 UTree Textures;
@@ -133,6 +126,10 @@ static imported_obj_list* object_list = NULL; //a linked list of imported_objs
 #define	X	(0)
 #define	Y	(1)
 #define	Z	(2)
+#endif
+
+#ifndef MAX
+#define MAX(a,b) ((a)<(b)?(b):(a))
 #endif
 
 //-------------------------------------------------------------------------
@@ -320,6 +317,8 @@ static vrpn_Connection *
                 collaboratingPeerServerConnection = NULL;
 static vrpn_Connection *
                 collaboratingPeerRemoteConnection = NULL;
+static vrpn_Connection *
+                interfaceLogConnection = NULL;
 // This should eventually be generalized to a set of collaborating
 // remote peers.
 
@@ -352,24 +351,23 @@ ColorMap	*curColorMap = NULL;	// Pointer to the current color map
   // used in vrml.C
 
 
-//-----------------------------------------------------------------------
-// This section deals with selecting the data set to export to a text
-// file (for MathCAD).
-/* 
-============================
-moved to nmb_ImageGrid.h
-============================
-#define NUM_EXPORT_FORMATS 5
-static const char    *export_formats_list[] = {
-                                          "Topometrix",
-					  "Text(MathCAD)",
-					  "PPM Image", 
-					  "SPIP",
-					  "UNCA Image" };
+// static can't be decalred for this struct?
+struct WellKnownPorts {
 
-*/
+  // server ports on this machine
 
-//static nmb_ListOfStrings export_formats;
+  const int interfaceLog = 4501;
+  const int graphicsControl = 4507;      // nmg_Graphics::defaultPort;
+  const int remoteRenderingData = 4508;  // nmg_Graphics::defaultPort + 1;
+  const int collaboratingPeerServer = 4510;
+  const int roundTripTime = 4581;
+
+
+};
+
+
+
+
 
 Tclvar_selector	exportPlaneName("export_plane",".export.planechoice");
 Tclvar_selector	exportFileType("export_filetype",".export.filetypechoice");
@@ -769,13 +767,33 @@ Ohmmeter *the_french_ohmmeter_ui = NULL;
 nma_Keithley2400_ui * keithley2400_ui = NULL;
 
 
+//Controls for the SEM
+nms_SEM_ui *sem_ui = NULL;
+
+//controls for registration
+AlignerUI *aligner_ui = NULL;
+
 // Scales how much normal force is felt when using Direct Z Control
 Tclvar_float_with_scale	directz_force_scale("directz_force_scale",".sliders", 0,1, 0.1);
 
 
 // NANOX
-Tclvar_int share_sync_state ("share_sync_state", 0);
-Tclvar_int copy_inactive_state ("copy_inactive_state", 0);
+// TCH 19 Jan 00 - Turned these into netvars that were logged on
+// interfaceLogConnection but were NOT part of rootUIControl so that
+// they wouldn't be shared but that while replaying logs we could
+// determine which state to use.
+TclNet_int share_sync_state ("share_sync_state", 0);
+TclNet_int copy_inactive_state ("copy_inactive_state", 0);
+
+//to get the name of the machine where the collaborator is whose hand
+//position we want to track
+TclNet_selector collab_machine_name ("collab_machine_name", NULL);
+
+
+static vrpn_bool loggingInterface = VRPN_FALSE;
+static vrpn_bool replayingInterface = VRPN_FALSE;
+static char loggingPath [256];
+static timeval loggingTimestamp;
 
 
 Tclvar_int tcl_center_pressed ("center_pressed", 0, handle_center_pressed);
@@ -846,14 +864,14 @@ static char tcl_default_dir [] = "/afs/cs.unc.edu/project/stm/bin/";
  * Variables to turn on/off optional parts of the system
  ************/
 
-static int perf_mode = 0;			/* No perfmeter by default */
-static int do_menus = 1;			/* Menus on by default */
+//static int perf_mode = 0;			/* No perfmeter by default */
+//static int do_menus = 1;			/* Menus on by default */
 static int do_keybd = 1;                   /* Keyboard on by default */
-static int do_ad_device = 1;               /* A/D devices on by default */
-static int show_cpanels = 0;		/* Control panels hidden by default */
-static int show_grid = 0;		/* Measuring grid hidden by default */
+//static int do_ad_device = 1;               /* A/D devices on by default */
+//static int show_cpanels = 0;		/* Control panels hidden by default */
+//static int show_grid = 0;		/* Measuring grid hidden by default */
 int using_phantom_button = 0;
-static int ubergraphics_enabled = 0;
+//static int ubergraphics_enabled = 0;
 
 static vrpn_bool set_region = VRPN_FALSE; // Should we set the region at start?
 static vrpn_bool set_mode = VRPN_FALSE; // Should we set tap/con at startup?
@@ -935,6 +953,8 @@ static vrpn_File_Connection * ohmmeterLogFile;
 // connection for the Keithley 2400 vi curve generator
 static vrpn_Connection *vicurve_connection = NULL;
 static vrpn_File_Connection * vicurveLogFile;
+static vrpn_Connection *sem_connection = NULL;
+static vrpn_File_Connection *semLogFile;
 
 static nmg_Graphics * gi = NULL;
 
@@ -1062,6 +1082,7 @@ void shutdown_connections (void) {
     rulergrid_changed.bindConnection(NULL);
     rulergrid_enabled.bindConnection(NULL);
 
+    display_realign_textures.bindConnection(NULL);
 
 
   // output stream should be closed by microscope destructor,
@@ -1094,6 +1115,13 @@ void shutdown_connections (void) {
     delete ohmmeter_connection;
   if (vicurve_connection)
     delete vicurve_connection;
+
+  if (collaboratingPeerServerConnection)
+    delete collaboratingPeerServerConnection;
+  if (collaboratingPeerRemoteConnection)
+    delete collaboratingPeerRemoteConnection;
+  if (interfaceLogConnection)
+    delete interfaceLogConnection;
 
 }
 
@@ -1134,7 +1162,7 @@ void    handle_stride_change (vrpn_int32 newval, void * userdata) {
 
         // Make sure that the value is an integer and in range.  Then
         // assign it to the stride.
-        stride = (int)max(1.0, newval);
+        stride = MAX(1, newval);
 	tclstride = stride;
 	g->setTesselationStride(stride);
 }
@@ -1150,38 +1178,34 @@ Tclvar_selector import_filename ("import_filename", NULL);
 Tclvar_int load_import_file ("load_import_file",0);
 Tclvar_int load_button_press ("load_button_press", 0);
 
-//to get the name of the machine where the collaborator is whose hand
-//position we want to track
-Tclvar_selector collab_machine_name("collab_machine_name", NULL);
-
 static void handle_alpha_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setAlphaSliderRange(alpha_slider_min, alpha_slider_max);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_color_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setColorSliderRange(color_slider_min, color_slider_max);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_texture_scale_change (vrpn_float64 value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setTextureScale(value);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_rulergrid_offset_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setRulergridOffset(rulergrid_xoffset, rulergrid_yoffset);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_rulergrid_scale_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setRulergridScale(rulergrid_scale);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_x_value_change (vrpn_float64, void *) {
@@ -1213,21 +1237,21 @@ static void handle_friction_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setFrictionSliderRange(friction_slider_min, friction_slider_max);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_bump_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setBumpSliderRange(bump_slider_min, bump_slider_max);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_buzz_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setBuzzSliderRange(buzz_slider_min, buzz_slider_max);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 
@@ -1236,7 +1260,7 @@ static void handle_compliance_slider_change (vrpn_float64, void * userdata) {
 
   g->setComplianceSliderRange(compliance_slider_min,
                                      compliance_slider_max);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_recovery_time_change (vrpn_float64 value, void * userdata)
@@ -1284,7 +1308,8 @@ static void handle_markers_shown_change (vrpn_int32 new_value, void * /*userdata
   v = (int) new_value;
   //  numMarkersShown = v;
   decoration->num_markers_shown = v;
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
+  graphics->causeGridRedraw();
 }
 
 
@@ -1326,9 +1351,32 @@ static void handle_collab_machine_name_change
                    (const char * new_value,
                     void * /*userdata*/ )
 {
+  char buf [256];
+  char sfbuf [1024];
+
   // Open the remote tracker object to follow the collaborator's hand
-  sprintf(collab_handTrackerName, "ccs0@%s:4510", new_value);
-  fprintf(stderr, "collab_handTrackerName: %s\n", collab_handTrackerName);
+  sprintf(sfbuf, "%s/SharedIFRemLog-%d.stream", loggingPath,
+          loggingTimestamp.tv_sec);
+  if (replayingInterface) {
+    sprintf(collab_handTrackerName, "ccs0@file:%s", sfbuf);
+    sprintf(collab_ModeName, "Cmode0@file:%s", sfbuf);
+  } else {
+    sprintf(collab_handTrackerName, "ccs0@%s:%d", new_value,
+            WellKnownPorts::collaboratingPeerServer);
+    sprintf(collab_ModeName, "Cmode0@%s:%d", new_value,
+            WellKnownPorts::collaboratingPeerServer);
+
+    if (loggingInterface) {
+      sprintf(buf, "%s:%d", new_value,
+              WellKnownPorts::collaboratingPeerServer);
+      vrpn_get_connection_by_name (buf, sfbuf,
+                                   vrpn_LOG_INCOMING);
+    }
+  }
+
+fprintf(stderr, "peer machine name: %s\n", new_value);
+fprintf(stderr, "collab_ModeName: %s\n", collab_ModeName);
+
   vrpnHandTracker_collab[0] = new vrpn_Tracker_Remote(collab_handTrackerName);
   if (vrpnHandTracker_collab[0] != NULL) {
     vrpnHandTracker_collab[0]->register_change_handler
@@ -1337,8 +1385,6 @@ static void handle_collab_machine_name_change
   }
 
   // Open the remote analog object to track the collaborator's mode
-  sprintf(collab_ModeName, "Cmode0@%s:4510", new_value);
-  fprintf(stderr, "collab_ModeName: %s\n", collab_ModeName);
   vrpnMode_collab[0] = new vrpn_Analog_Remote(collab_ModeName);
   if (vrpnMode_collab[0] != NULL) {
     vrpnMode_collab[0]->register_change_handler
@@ -1351,13 +1397,27 @@ static void handle_collab_machine_name_change2
                     void * userdata)
 {
   nmui_Component * uic = (nmui_Component *) userdata;
-  char hnbuff [256];
-  char buff [256];
+  char sfbuf [1024];
+  char hnbuf [256];
+  char buf [256];
   vrpn_int32 newConnection_type;
   vrpn_bool should_synchronize;
 
-  sprintf(buff, "%s:4510", new_value);
-  collaboratingPeerRemoteConnection = vrpn_get_connection_by_name (buff);
+  sprintf(buf, "%s:%d", new_value, WellKnownPorts::collaboratingPeerServer);
+  if (replayingInterface) {
+    sprintf(sfbuf, "file:%s/SharedIFRemLog-%d.stream", loggingPath,
+            loggingTimestamp.tv_sec);
+    collaboratingPeerRemoteConnection =
+      vrpn_get_connection_by_name (sfbuf);
+  } else {
+    sprintf(sfbuf, "%s/SharedIFRemLog-%d.stream", loggingPath,
+            loggingTimestamp.tv_sec);
+    collaboratingPeerRemoteConnection = vrpn_get_connection_by_name (buf,
+             loggingInterface ? sfbuf : NULL,
+             loggingInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
+                        vrpn_LOG_NONE);
+  }
+
   if (collaboratingPeerRemoteConnection &&
       collaboratingPeerRemoteConnection->doing_okay()) {
 
@@ -1366,9 +1426,9 @@ static void handle_collab_machine_name_change2
     // complete list of participating hosts at the beginning or need to
     // finish implementing serializer migration protocol.
 
-    gethostname(hnbuff, 256);
-fprintf(stderr, "## My name is %s, new peer is %s:  ", hnbuff, buff);
-    if (strcmp(hnbuff, buff) < 0) {
+    gethostname(hnbuf, 256);
+fprintf(stderr, "## My name is %s, new peer is %s:  ", hnbuf, buf);
+    if (strcmp(hnbuf, buf) < 0) {
 fprintf(stderr, "serializer.\n");
       should_synchronize = VRPN_TRUE;
     } else {
@@ -1384,10 +1444,10 @@ fprintf(stderr, "client.\n");
         uic->addPeer(collaboratingPeerRemoteConnection, should_synchronize);
         break;
     }
-//fprintf(stderr, "Called addPeer() on component for %s.\n", buff);
+//fprintf(stderr, "Called addPeer() on component for %s.\n", buf);
     uic->initializeConnection(collaboratingPeerRemoteConnection);
-//fprintf(stderr, "Called initializeConnection(%ld) on component for %s.\n",
-//collaboratingPeerRemoteConnection, buff);
+fprintf(stderr, "## Called initializeConnection(%ld) on component for %s.\n",
+collaboratingPeerRemoteConnection, buf);
 
 
     // register callbacks if need be - HACK assume necessary
@@ -1509,21 +1569,34 @@ static void handle_get_sync (vrpn_int32, void * userdata) {
 //fprintf(stderr, "++ Copied inactive replica (#%d).\n", c);
 }
 
+static int handle_timed_sync_request (void *);
+
 static void handle_synchronize_timed_change (vrpn_int32 value,
                                              void * userdata) {
   nmui_Component * sync = (nmui_Component *) userdata;
 
-//fprintf(stderr, "++ In handle_synchronized_timed_change()\n");
+fprintf(stderr, "++ In handle_synchronized_timed_change() to %d\n", value);
+
+  // First write out the current values of any volatile variables.
+  // There is some risk of this doing the wrong thing, since we're
+  // likely to be slightly out of sync with our replica and they may
+  // get this as an update message, causing their stream to jump
+  // backwards - HACK XXX.  Correct behavior may need to be implemented
+  // at a lower level that knows whether or not we're the synchronizer.
+  // ALL of the sync code was written for optimism, and requires some
+  // tougher semantics to use centralized serialization and
+  // single-shared-state.
+  handle_timed_sync_request(NULL);
 
   switch (value) {
     case 0:
       // stop synchronizing;  use local state (#0)
-//fprintf(stderr, "++   ... stopped synchronizing.\n");
+fprintf(stderr, "++   ... stopped synchronizing.\n");
       sync->syncReplica(0);
       break;
     default:
       // use shared state (#1)
-//fprintf(stderr, "++   ... sent synch request to peer.\n");
+fprintf(stderr, "++   ... sent synch request to peer.\n");
       sync->requestSync();
       sync->d_maintain = VRPN_TRUE;
       // We defer the syncReplica until after the requestSync() completes.
@@ -1536,20 +1609,36 @@ static void handle_synchronize_timed_change (vrpn_int32 value,
 // (If synchronize_stream is checked, this is meaningless.)
 // Currently assumes that only the most recently added peer is
 //   "valid";  others are a (small?) memory/network leak.
-static void handle_timed_sync (vrpn_int32, void * userdata) {
+static void handle_timed_sync (vrpn_int32 value, void * userdata) {
   nmui_Component * sync = (nmui_Component *) userdata;
+  int copyFrom = !sync->synchronizedTo();
 
-  sync->requestSync();
-  sync->d_maintain = VRPN_FALSE;
+  //// only run once
+  //if (!value) {
+    //return;
+  //}
 
-  // a copyReplica needs to be deferred until the new data arrives
-  // The right way to do this is probably to have a Component's
-  // sync handler pack a "syncComplete" message AFTER all the
-  // callbacks have been triggered (=> the sync messages are marshalled
-  // for VRPN), so when that arrives we know the sync is complete and
-  // we can issue a copyReplica()
+  if (copyFrom) {
 
-//fprintf(stderr, "++ In handle_timed_sync() sent synch request to peer.\n");
+    // a copyReplica needs to be deferred until the new data arrives
+    // The right way to do this is probably to have a Component's
+    // sync handler pack a "syncComplete" message AFTER all the
+    // callbacks have been triggered (=> the sync messages are marshalled
+    // for VRPN), so when that arrives we know the sync is complete and
+    // we can issue a copyReplica()
+
+    sync->requestSync();
+    sync->d_maintain = VRPN_FALSE;
+fprintf(stderr, "++ In handle_timed_sync() to %d;  "
+"sent synch request to peer.\n", copyFrom);
+  } else {
+
+    sync->copyReplica(copyFrom);
+fprintf(stderr, "++ In handle_timed_sync() to %d;  copied immediately.\n",
+copyFrom);
+
+  }
+
 
 }
 
@@ -1560,25 +1649,37 @@ static int handle_timed_sync_request (void *) {
 
   set_stream_time = decoration->elapsedTime;
 
-//fprintf(stderr, "In handle_timed_sync_request() at %d seconds.\n",
-//decoration->elapsedTime);
+fprintf(stderr, "++ In handle_timed_sync_request() at %d seconds;  "
+"wrote data into replica.\n", decoration->elapsedTime);
 
   return 0;
 }
 
 static int handle_timed_sync_complete (void * userdata) {
   nmui_Component * sync = (nmui_Component *) userdata;
-  
-//fprintf(stderr, "++ In handle_timed_sync_complete().\n");
+
+  //int useReplica = !sync->synchronizedTo();
+  // requestSync() is only called, and so this will only be generated,
+  // when we are going to the shared replica.
+  int useReplica = 1;
+
+fprintf(stderr, "++ In handle_timed_sync_complete();  "
+"getting data from replica %d.\n", useReplica);
 
   // Once we have the *latest* state of time-depenedent values,
   // update with that.
 
   if (sync->d_maintain) {
-    sync->syncReplica(1);
+
+    // Make sure we save the state of any volatile variables -
+    // if latency is high the previous save will be off by a few
+    // seconds (which we could forget).
+    handle_timed_sync_request(NULL);
+
+    sync->syncReplica(useReplica);
 //fprintf(stderr, "++   ... synched.\n");
   } else {
-    sync->copyReplica(1);
+    sync->copyReplica(useReplica);
 //fprintf(stderr, "++   ... copied.\n");
   }
 
@@ -1617,6 +1718,9 @@ static void handle_shiny_change (vrpn_int32 new_value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setSpecularity(new_value);
+  // Not strictly necessary for standalone operation but doesn't cost much,
+  // and *is* necessary for operation as a RenderServer
+  //cause_grid_redraw(0.0, NULL);
 }
 
 
@@ -1624,19 +1728,25 @@ static void handle_diffuse_change (vrpn_float64 new_value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setDiffusePercent(new_value);
+  // Not strictly necessary for standalone operation but doesn't cost much,
+  // and *is* necessary for operation as a RenderServer
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_surface_alpha_change (vrpn_float64 new_value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setSurfaceAlpha(new_value);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_specular_color_change (vrpn_float64 new_value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   g->setSpecularColor(new_value);
+  // Not strictly necessary for standalone operation but doesn't cost much,
+  // and *is* necessary for operation as a RenderServer
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_sphere_scale_change (vrpn_float64 new_value, void * userdata) {
@@ -1654,7 +1764,14 @@ static void handle_sphere_scale_change (vrpn_float64 new_value, void * userdata)
 static void handle_genetic_textures_selected_change(vrpn_int32 value, void *userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-  g->enableGeneticTextures(value);
+  if (value) {
+    disableOtherTextures(GENETIC);
+    g->setTextureMode(nmg_Graphics::GENETIC, 
+		      nmg_Graphics::MANUAL_REALIGN_COORD);
+  } else {
+    g->setTextureMode(nmg_Graphics::NO_TEXTURES,
+                      nmg_Graphics::MANUAL_REALIGN_COORD);
+  }
   cause_grid_redraw(0.0, NULL);
 }
 
@@ -1761,7 +1878,7 @@ static void handle_genetic_send_data (vrpn_int32 , void * userdata)
     }
 
     g->sendGeneticTexturesData( number_of_variables, variable_list );
-    cause_grid_redraw(0.0, NULL);
+    //cause_grid_redraw(0.0, NULL);
   }
 }
 
@@ -1772,15 +1889,27 @@ static void handle_genetic_send_data (vrpn_int32 , void * userdata)
 static void handle_display_textures_selected_change(vrpn_int32 value, void *userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-  g->enableRealignTextures(value);
-  cause_grid_redraw(0.0, NULL);
+//  printf("handle_display_textures_selected_change, %d\n", value);
+  if (value){
+    disableOtherTextures(MANUAL_REALIGN);
+    g->setTextureMode(nmg_Graphics::COLORMAP,
+		      nmg_Graphics::MANUAL_REALIGN_COORD);
+  } else {
+    g->setTextureMode(nmg_Graphics::NO_TEXTURES,
+		      nmg_Graphics::MANUAL_REALIGN_COORD);
+  }
+  //cause_grid_redraw(0.0, NULL);
   realign_textures_enabled = 0;
   set_realign_center = 0;
 }
 
 static void handle_realign_textures_selected_change(vrpn_int32 value, void *)
 {
-  realign_textures_enabled = value;
+//  printf("handle_realign_textures_selected_change, %d\n", value);
+  if (realign_textures_enabled != value)
+	realign_textures_enabled = value;
+  else
+	return;
   if ( (value == 0) && set_realign_center ) {
     mode_change = 1;
     user_mode[0] = USER_GRAB_MODE;
@@ -1790,11 +1919,14 @@ static void handle_realign_textures_selected_change(vrpn_int32 value, void *)
 
 static void handle_set_realign_center_change (vrpn_int32 value, void * userdata)
 {
+//  printf("handle_set_realign_center_change, %d\n", value);
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-  if ( !realign_textures_enabled ) {
-    set_realign_center = 0;
+  if ( set_realign_center != value) {
+    set_realign_center = value;
+  } else {
     return;
   }
+  
   mode_change = 1;	/* Will make icon change */
   if ( value == 1 ) {
     user_mode[0] = USER_CENTER_TEXTURE_MODE;
@@ -1830,6 +1962,17 @@ static void handle_texture_dataset_change (const char *, void * userdata)
 
   g->setRealignTextureSliderRange( realign_textures_slider_min,
 					  realign_textures_slider_max );
+  /* XXXXXXX - NASTY HACK:
+    this hack is related to a problem with how we link C variables with
+    user interface variables:
+     Sometimes we want to change the user interface variable but not
+        allow the user interface callback to be called (for example, when
+        we want to change a bunch of variables in the user interface as
+        an initialization before taking some action such as generating
+        a texture
+  */
+
+  printf("creating texture: %s\n", texturePlaneName.string());
   g->createRealignTextures( texturePlaneName.string() );
 }
 
@@ -1868,8 +2011,16 @@ static void handle_realign_plane_name_change (const char *, void * userdata) {
 static	void	handle_rulergrid_selected_change(vrpn_int32 value, void *userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-	g->enableRulergrid(value);
-	cause_grid_redraw(0.0, NULL);
+  if (value) {
+    disableOtherTextures(RULERGRID);
+    g->setTextureMode(nmg_Graphics::RULERGRID,
+		      nmg_Graphics::RULERGRID_COORD);
+  } else {
+    g->setTextureMode(nmg_Graphics::NO_TEXTURES,
+		      nmg_Graphics::RULERGRID_COORD);
+  }
+//  g->enableRulergrid(value);
+//  cause_grid_redraw(0.0, NULL);
 }
 
 // Handle rulergrid angle change -- recompute sin() and cos() of angle
@@ -1877,7 +2028,7 @@ static	void	handle_rulergrid_angle_change (vrpn_float64 value, void * userdata) 
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setRulergridAngle(value);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void handle_replay_rate_change (vrpn_int32 value, void *) {
@@ -1918,14 +2069,14 @@ static void handle_contour_color_change (vrpn_int32, void * userdata) {
 
 //fprintf(stderr, "Contour color now %d, %d, %d.\n",
 //(int) contour_r, (int) contour_g, (int) contour_b);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static void     handle_contour_width_change (vrpn_float64, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setContourWidth(contour_width);
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static	void	handle_alpha_dataset_change (const char *, void * userdata)
@@ -1934,6 +2085,7 @@ static	void	handle_alpha_dataset_change (const char *, void * userdata)
 	BCPlane	* plane = dataset->inputGrid->getPlaneByName
                              (dataset->alphaPlaneName->string());
 
+        printf("handle_alpha_dataset_change\n");
 	if (plane != NULL) {
 		alpha_slider_min_limit = plane->minAttainableValue();
 		alpha_slider_min = plane->minValue();
@@ -1941,13 +2093,23 @@ static	void	handle_alpha_dataset_change (const char *, void * userdata)
 		alpha_slider_max = plane->maxValue();
 		g->setAlphaSliderRange(alpha_slider_min,
                                               alpha_slider_max);
-	}
-	g->setTextureMode(nmg_Graphics::ALPHA);
+	
+	        g->setTextureMode(nmg_Graphics::ALPHA,
+			  nmg_Graphics::RULERGRID_COORD);
 //fprintf(stderr, "Setting pattern map name to %s\n",
 //dataset->alphaPlaneName->string());
-	g->setPatternMapName(dataset->alphaPlaneName->string());
+  // XXX REDUNDANT
+                g->setPatternMapName(dataset->alphaPlaneName->string());
+                g->setAlphaPlaneName(dataset->alphaPlaneName->string());
 
-	cause_grid_redraw(0.0, NULL);
+//		cause_grid_redraw(0.0, NULL);
+        } else {
+	    fprintf(stderr, "Warning, couldn't find alpha plane: %s\n",
+		dataset->alphaPlaneName->string());
+	    fprintf(stderr, "  turning alpha texture off\n");
+            g->setTextureMode(nmg_Graphics::NO_TEXTURES,
+                                  nmg_Graphics::RULERGRID_COORD);
+        }
 }
 
 
@@ -2026,7 +2188,7 @@ static	void	handle_colormap_change (const char *, void * userdata) {
           curColorMap = &colorMap;
   }
 
-  cause_grid_redraw(0.0, NULL);
+  //cause_grid_redraw(0.0, NULL);
 }
 
 static	void	handle_exportFileName_change (const char *, void *)
@@ -2320,19 +2482,26 @@ void handle_contour_dataset_change (const char *, void * userdata)
         BCPlane * plane = dataset->inputGrid->getPlaneByName
                                (dataset->contourPlaneName->string());
 
-// fprintf(stderr, "In handle_contour_dataset_change with name %s\n",
-// dataset->contourPlaneName.string());
+ fprintf(stderr, "In handle_contour_dataset_change with name %s\n",
+ dataset->contourPlaneName->string());
 
         if (plane != NULL) {
                 texture_scale = (plane->maxValue() -
                                  plane->minValue()) / 10;
                 g->setTextureScale(texture_scale);
-                g->setTextureMode(nmg_Graphics::CONTOUR);
+                g->setTextureMode(nmg_Graphics::CONTOUR,
+				  nmg_Graphics::RULERGRID_COORD);
         } else {        // No plane
-                g->setTextureMode(nmg_Graphics::NO_TEXTURES);
+fprintf(stderr, "Couldn't find plane for contour mode;  "
+"turning contours off.\n");
+                g->setTextureMode(nmg_Graphics::NO_TEXTURES,
+				  nmg_Graphics::RULERGRID_COORD);
         }
 
-        cause_grid_redraw(0.0, NULL);
+  g->setContourPlaneName(dataset->contourPlaneName->string());
+  g->causeGridRedraw();
+
+        //cause_grid_redraw(0.0, NULL);
 }
 
 void    handle_adhesion_dataset_change(const char *, void * userdata)
@@ -3248,7 +3417,10 @@ void setupCallbacks (vrpn_ForceDevice_Remote * p) {
 // Tom Hudson, September 1999
 // Sets up synchronization callbacks and nmui_Component/ComponentSync
 
-void setupSynchronization (vrpn_Connection * c,
+//#define MIN_SYNC
+
+void setupSynchronization (vrpn_Connection * serverConnection,
+                           vrpn_Connection * logConnection,
                            nmb_Dataset * dset,
 #ifdef USE_VRPN_MICROSCOPE
                            nmm_Microscope_Remote * m) {
@@ -3290,6 +3462,8 @@ void setupSynchronization (vrpn_Connection * c,
   nmui_Component * viewPlaneControls;
   viewPlaneControls = new nmui_Component ("View Plane");
 
+#ifndef MIN_SYNC
+
   viewPlaneControls->add(&m->state.stm_z_scale);
   viewPlaneControls->add((TclNet_selector *) dset->heightPlaneName);
   viewPlaneControls->add(&tcl_wfr_xlate_X);
@@ -3301,17 +3475,24 @@ void setupSynchronization (vrpn_Connection * c,
   viewPlaneControls->add(&tcl_wfr_rot_3);
   viewPlaneControls->add(&tcl_wfr_scale);
 
+#endif
 
   nmui_Component * viewColorControls;
   viewColorControls = new nmui_Component ("View Color");
+
+#ifndef MIN_SYNC
 
   viewColorControls->add((TclNet_selector *) dset->colorPlaneName);
   viewColorControls->add((TclNet_selector *) dset->colorMapName);
   viewColorControls->add(&color_slider_min);
   viewColorControls->add(&color_slider_max);
 
+#endif
+
   nmui_Component * viewMeasureControls;
   viewMeasureControls = new nmui_Component ("View Measure");
+
+#ifndef MIN_SYNC
 
   viewMeasureControls->add(&measureRedX);
   viewMeasureControls->add(&measureRedY);
@@ -3320,8 +3501,12 @@ void setupSynchronization (vrpn_Connection * c,
   viewMeasureControls->add(&measureBlueX);
   viewMeasureControls->add(&measureBlueY);
 
+#endif
+
   nmui_Component * viewLightingControls;
   viewLightingControls = new nmui_Component ("View Lighting");
+
+#ifndef MIN_SYNC
 
   viewPlaneControls->add(&tcl_lightDirX);
   viewPlaneControls->add(&tcl_lightDirY);
@@ -3331,8 +3516,12 @@ void setupSynchronization (vrpn_Connection * c,
   viewColorControls->add(&surface_alpha);
   viewColorControls->add(&specular_color);
 
+#endif
+
   nmui_Component * viewContourControls;
   viewContourControls = new nmui_Component ("View Contour");
+
+#ifndef MIN_SYNC
 
   viewContourControls->add(&texture_scale);
   viewContourControls->add(&contour_width);
@@ -3342,8 +3531,12 @@ void setupSynchronization (vrpn_Connection * c,
   viewContourControls->add(&contour_changed);
   viewContourControls->add((TclNet_selector *) dset->contourPlaneName);
 
+#endif
+
   nmui_Component * viewGridControls;
   viewGridControls = new nmui_Component ("View Grid");
+
+#ifndef MIN_SYNC
 
   viewGridControls->add(&rulergrid_position_line);
   viewGridControls->add(&rulergrid_orient_line);
@@ -3360,6 +3553,15 @@ void setupSynchronization (vrpn_Connection * c,
   viewGridControls->add(&rulergrid_changed);
   viewGridControls->add(&rulergrid_enabled);
 
+  // AAS - these controls won't work unless inserted here:
+  viewGridControls->add(&display_realign_textures);
+  viewGridControls->add(&realign_textures_enabled);
+  viewGridControls->add(&set_realign_center);
+  viewGridControls->add(&genetic_textures_enabled);
+  
+  viewGridControls->add((TclNet_selector *) dset->alphaPlaneName);
+#endif
+
   viewControls->add(viewPlaneControls);
   viewControls->add(viewColorControls);
   viewControls->add(viewMeasureControls);
@@ -3375,7 +3577,18 @@ void setupSynchronization (vrpn_Connection * c,
   rootUIControl->add(viewControls);
   rootUIControl->add(streamfileControls);
 
-  rootUIControl->bindConnection(c);
+  rootUIControl->bindConnection(serverConnection);
+
+  if (logConnection) {
+    rootUIControl->bindLogConnection(logConnection);
+
+    // these should be logged but not shared;  we declare them as
+    // TclNet objects but don't make them part of the UI Components.
+
+    share_sync_state.bindLogConnection(logConnection);
+    copy_inactive_state.bindLogConnection(logConnection);
+    collab_machine_name.bindLogConnection(logConnection);
+  }
 
   // User Interface to synchronization
   // Since streamfileControls are timed, the toplevel MUST use
@@ -3414,6 +3627,7 @@ struct MicroscapeInitializationState {
   AFMInitializationState afm;
   OhmmeterInitializationState ohm;
   nma_Keithley2400_ui_InitializationState vicurve;
+  SEMInitializationState sem;
 
   vrpn_bool use_file_resolution;
   int num_x;
@@ -3446,6 +3660,10 @@ struct MicroscapeInitializationState {
 
   vrpn_bool openPeer;
   char peerName [256];
+  vrpn_bool logInterface;
+  char logPath [256];
+  timeval logTimestamp;
+  vrpn_bool replayInterface;
 };
 
 MicroscapeInitializationState::MicroscapeInitializationState (void) :
@@ -3466,7 +3684,9 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   y_min (afm.yMin),
   y_max (afm.yMax),
   writingRemoteStream (0),
-  openPeer (VRPN_FALSE)
+  openPeer (VRPN_FALSE),
+  logInterface (VRPN_FALSE),
+  replayInterface (VRPN_FALSE)
 {
 
 }
@@ -3549,6 +3769,9 @@ void ParseArgs (int argc, char ** argv,
 	  if (++i >= argc) Usage(argv[0]);
 	  strcpy(istate->vicurve.deviceName, argv[i]);
 	  //fprintf(stderr, "IV curve device is not available\n");
+      } else if (strcmp(argv[i], "-dsem") == 0) {
+          if (++i >= argc) Usage(argv[0]);
+          strcpy(istate->sem.deviceName, argv[i]);
       } else if (strcmp(argv[i], "-drift") == 0) {
         istate->afm.doDriftComp = 1;
       } else if (strcmp(argv[i], "-f") == 0) {
@@ -3623,11 +3846,11 @@ void ParseArgs (int argc, char ** argv,
       } else if (strcmp(argv[i], "-nocpanels") == 0) {
         do_cpanels = 0;
       } else if (strcmp(argv[i], "-nodevice") == 0) {
-        do_ad_device = 0;
+        //do_ad_device = 0;
       } else if (strcmp(argv[i], "-nokeybd") == 0) {
         do_keybd = 0;
       } else if (strcmp(argv[i], "-nomenus") == 0) {
-        do_menus = 0;
+        //do_menus = 0;
       } else if (strcmp(argv[i], "-o") == 0) {
         istate->afm.writingStreamFile = 1;
         if (++i >= argc) Usage(argv[0]);
@@ -3642,8 +3865,18 @@ void ParseArgs (int argc, char ** argv,
         istate->openPeer = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
         strcpy(istate->peerName, argv[i]);
+      } else if (!strcmp(argv[i], "-logif")) {
+        istate->logInterface = VRPN_TRUE;
+        if (++i >= argc) Usage(argv[0]);
+        strcpy(istate->logPath, argv[i]);
+      } else if (!strcmp(argv[i], "-replayif")) {
+        istate->replayInterface = VRPN_TRUE;
+        if (++i >= argc) Usage(argv[0]);
+        strcpy(istate->logPath, argv[i]);
+        if (++i >= argc) Usage(argv[0]);
+        istate->logTimestamp.tv_sec = atoi(argv[i]);
       } else if (strcmp(argv[i], "-perf") == 0) {
-        perf_mode = 1;
+        //perf_mode = 1;
       } else if (strcmp (argv[i], "-recv") == 0) {
         // clark -- use NANO_RECV_TIMESTAMPs for playback times
         istate->afm.useRecvTime = VRPN_TRUE;
@@ -3653,9 +3886,9 @@ void ParseArgs (int argc, char ** argv,
 	  printf("Warning: -relax_up_also obsolete in nM\n");
         istate->afm.doRelaxUp = 1;
       } else if (strcmp(argv[i], "-showcps") == 0) {
-        show_cpanels = 1;
+        //show_cpanels = 1;
       } else if (strcmp(argv[i], "-showgrid") == 0) {
-        show_grid = 1;
+        //show_grid = 1;
       } else if (strcmp(argv[i], "-splat") == 0) {
         istate->afm.doSplat = 1;
       } else if (strcmp(argv[i], "-std") == 0) {
@@ -3670,7 +3903,7 @@ void ParseArgs (int argc, char ** argv,
         //std_dev_color_scale = atof(argv[i]);
         //decoration->std_dev_color_scale = std_dev_color_scale;
       } else if (strcmp(argv[i], "-ugraphics") == 0) {
-        ubergraphics_enabled = 1;
+        //ubergraphics_enabled = 1;
       } else if (strcmp(argv[i], "-verbosity") == 0) {
         if (++i >= argc) Usage(argv[0]);
         spm_verbosity = atoi(argv[i]);
@@ -3823,7 +4056,7 @@ void ParseArgs (int argc, char ** argv,
         istate->UDPport = atoi (argv[i]);
         printf ("UDPport: %d\n", istate->UDPport);
         istate->socketType = SOCKET_UDP;
-
+ 
 
 #ifdef FLOW
       } else if ( (strcmp(argv[i], "-b") == 0) ||
@@ -3867,6 +4100,7 @@ void Usage(char* s)
 {
   fprintf(stderr, "Usage: %s [-sphere] [-poly] [-dot] [-hole]\n",s);
   fprintf(stderr, "       [-d device] [-do device] [-div device]\n");
+  fprintf(stderr, "       [-dsem device]\n");
   fprintf(stderr, "       [-f infile] [-z scale] [-rate rate]\n");
   fprintf(stderr, "       [-call/nocall] [-grid x y] [-perf]\n");
   fprintf(stderr, "       [-i streamfile rate][-o streamfile]\n");
@@ -3889,7 +4123,8 @@ void Usage(char* s)
   fprintf(stderr, "       [-MIXport port] [-recv] [-alphacolor r g b]\n");
   fprintf(stderr, "       [-marshalltest] [-multithread] [-ugraphics]\n");
   fprintf(stderr, "       [-monitor port] [-collaborate port] [-peer name]\n");
-  fprintf(stderr, "       [-renderserver] [-renderclient host]\n");
+  fprintf(stderr, "       [-renderserver] [-renderclient host] [-logif path]\n");
+  fprintf(stderr, "       [-replayif path]\n");
   fprintf(stderr, "       \n");
   //fprintf(stderr, "       -poly: Display poligonal surface (default)\n");
   //fprintf(stderr, "       -sphere: Display as spheres\n");
@@ -3898,6 +4133,7 @@ void Usage(char* s)
   fprintf(stderr, "       -d: Use given spm device (default sdi_stm0)\n");
   fprintf(stderr, "       -do: Use given ohmmeter device (default none)\n");
   fprintf(stderr, "       -div: Use given iv-curve device (default none)\n");
+  fprintf(stderr, "       -dsem: Use given SEM device (default none)\n");
   fprintf(stderr, "       -f: Read from given file, not device\n");
   fprintf(stderr, "           Multiple -f options will read multiple files\n");
   fprintf(stderr, "           All must have same grid resolution and range\n");
@@ -3979,6 +4215,12 @@ void Usage(char* s)
   fprintf(stderr, "       -renderclient:  start up as a client for "
                           "remote rendering,\n");
   fprintf(stderr, "       connected to the named host.\n");
+  fprintf(stderr, "       -logif path:  open up stream files in specified "
+                          "directory to log all use of\n"
+                  "       (collaborative) interface.\n");
+  fprintf(stderr, "       -replayif path:  replay the interface (\"movie "
+                          "mode\") from stream files in the\n"
+                  "       specified directory.\n");
 
   exit(-1);
 }
@@ -4066,7 +4308,7 @@ void sharedGraphicsServer (void * data) {
 
   // start a server connection
 //fprintf(stderr, "g>Graphics thread starting vrpn server\n");
-  c = new vrpn_Synchronized_Connection (nmg_Graphics::defaultPort);
+  c = new vrpn_Synchronized_Connection (WellKnownPorts::graphicsControl);
 
   // start a graphics implementation
 //fprintf(stderr, "g>Graphics thread starting graphics implementation\n");
@@ -4133,13 +4375,14 @@ void spawnSharedGraphics (void) {
 
 void initialize_rtt (void) {
 
-  rtt_server_connection = new vrpn_Synchronized_Connection (4581);
+  rtt_server_connection = new vrpn_Synchronized_Connection
+           (WellKnownPorts::roundTripTime);
   rtt_server = new vrpn_Analog_Server ("microscope_rtt",
                                        rtt_server_connection);
   rtt_server->setNumChannels(1);
 
   fprintf(stderr, "Service named microscope_rtt is now listening "
-                  "on port 4581.\n");
+                  "on port %d.\n", WellKnownPorts::roundTripTime);
 
 }
 
@@ -4568,7 +4811,8 @@ int main(int argc, char* argv[])
                             "can't start up shared memory!\n");
             exit(0);
           }
-          sprintf(qualifiedName, "nmg@%s:%d", name, nmg_Graphics::defaultPort);
+          sprintf(qualifiedName, "nmg@%s:%d", name,
+                  WellKnownPorts::graphicsControl);
 
 	  range_ps = new Semaphore (1);
 
@@ -4582,7 +4826,7 @@ int main(int argc, char* argv[])
                 "nmg_Graphics_Remote\n    and VRPN as a message handler.\n"
                 "    THIS MODE IS FOR TESTING ONLY.\n");
         shmem_connection = new vrpn_Synchronized_Connection
-                              (nmg_Graphics::defaultPort);
+                              (WellKnownPorts::graphicsControl);
         gi = new nmg_Graphics_Implementation
                  (dataset,
                   minC, maxC, rulerPPMName, shmem_connection);
@@ -4595,11 +4839,17 @@ int main(int argc, char* argv[])
                 "    THIS MODE IS FOR TESTING ONLY.\n");
 
         renderServerOutputConnection =
-                new vrpn_Synchronized_Connection (nmg_Graphics::defaultPort);
-        renderServerControlConnection = renderServerOutputConnection;
+                new vrpn_Synchronized_Connection
+                          (WellKnownPorts::remoteRenderingData);
+
+        //renderServerControlConnection = renderServerOutputConnection;
+        renderServerControlConnection = 
+                new vrpn_Synchronized_Connection
+                            (WellKnownPorts::graphicsControl);
+
         graphics = new nmg_Graphics_RenderServer
                    (dataset, minC, maxC, renderServerOutputConnection,
-                    300, 300, rulerPPMName, renderServerControlConnection);
+                    100, 100, rulerPPMName, renderServerControlConnection);
 
         break;
 
@@ -4610,11 +4860,15 @@ int main(int argc, char* argv[])
 
         sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
                 istate.graphicsHost,
-                nmg_Graphics::defaultPort);
-
+                WellKnownPorts::remoteRenderingData);
         renderClientInputConnection = vrpn_get_connection_by_name
                              (qualifiedName);
-        renderServerControlConnection = renderClientInputConnection;
+
+        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+                istate.graphicsHost,
+                WellKnownPorts::graphicsControl);
+        renderServerControlConnection = vrpn_get_connection_by_name
+                             (qualifiedName);
 
         // By having graphics send on renderServerControlConnection
         // and gi listen on it, graphics effectively sends commands
@@ -4624,7 +4878,7 @@ int main(int argc, char* argv[])
         graphics = new nmg_Graphics_Remote (renderServerControlConnection);
         gi = new nmg_Graphics_RenderClient
              (dataset, minC, maxC, renderClientInputConnection,
-              300, 300, rulerPPMName, renderServerControlConnection);
+              100, 100, renderServerControlConnection);
 
         break;
 
@@ -4694,17 +4948,13 @@ int main(int argc, char* argv[])
 	
     } // end if (glenable)
 
-#ifdef	PROJECTIVE_TEXTURE
-    // Registration - displays images with glX or GLUT depending on V_GLUT
-    // flag
-    AlignerUI *aligner = new AlignerUI(graphics, dataset->dataImages);
-#endif
-
   //draw measure lines
     VERBOSE(1, "Initializing measure lines");
 
     BCPlane *height_plane = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
-    if (height_plane == NULL) { height_plane = dataset->ensureHeightPlane(); }
+    if (height_plane == NULL) { 
+       height_plane = dataset->ensureHeightPlane(); 
+    }
 
     //decoration->red_top[X] = decoration->red_bot[X] = height_plane->minX();
     //decoration->red_top[Y] = decoration->red_bot[Y] = height_plane->minY();
@@ -4747,8 +4997,50 @@ int main(int argc, char* argv[])
     }
 
   // NANOX
-  collaboratingPeerServerConnection = 
-  	new vrpn_Synchronized_Connection (4510);
+
+  char sfbuf [1024];
+
+  if (istate.replayInterface) {
+    sprintf(sfbuf, "file:%s/SharedIFSvrLog-%d.stream", istate.logPath,
+            istate.logTimestamp.tv_sec);
+    collaboratingPeerServerConnection = 
+      vrpn_get_connection_by_name (sfbuf);
+  } else {
+
+    // All interface log files opened by this session have the same
+    // timestamp, taken right here.
+    gettimeofday(&loggingTimestamp, NULL);
+
+    sprintf(sfbuf, "%s/SharedIFSvrLog-%d.stream", istate.logPath,
+            istate.logTimestamp.tv_sec);
+    collaboratingPeerServerConnection = 
+  	new vrpn_Synchronized_Connection
+          (WellKnownPorts::collaboratingPeerServer,
+           istate.logInterface ? sfbuf : NULL,
+           istate.logInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
+                              vrpn_LOG_NONE);
+  }
+
+  replayingInterface = istate.replayInterface;
+  loggingInterface = istate.logInterface;
+  if (loggingInterface) {
+    strcpy(loggingPath, istate.logPath);
+  }
+  if (replayingInterface) {
+    strcpy(loggingPath, istate.logPath);
+    loggingTimestamp = istate.logTimestamp;
+  }
+
+  if (replayingInterface) {
+    sprintf(sfbuf, "file:%s/PrivateIFLog-%d.stream", loggingPath,
+            loggingTimestamp.tv_sec);
+    interfaceLogConnection = vrpn_get_connection_by_name (sfbuf);
+  } else if (loggingInterface) {
+    sprintf(sfbuf, "%s/PrivateIFLog-%d.stream", loggingPath,
+            loggingTimestamp.tv_sec);
+    interfaceLogConnection = new vrpn_Synchronized_Connection
+            (4501, sfbuf, vrpn_LOG_OUTGOING);
+  }
 
   if (collaboratingPeerServerConnection) {
 printf("got collaboratingPeerServerConnection\n");
@@ -4772,7 +5064,7 @@ printf("nM_coord_change_server initialized\n");
 
     // NANOX
     setupSynchronization(collaboratingPeerServerConnection,
-                         dataset, microscope);
+                         interfaceLogConnection, dataset, microscope);
   }
 
     setupCallbacks(forceDevice);
@@ -4921,7 +5213,57 @@ printf("nM_coord_change_server initialized\n");
 	    }
 	}
     }
-    
+
+
+    VERBOSE(1, "Before SEM initialization");
+//     if ( tkenable && (dataset->inputGrid->readMode() == READ_DEVICE) ) {
+    if ( tkenable ) {
+        // Specification of sem device: first look at command line arg
+        // and then check environment variable
+        if (strcmp(istate.sem.deviceName, "null") == 0){
+            char *sem_device = getenv("NM_SEM");
+            if (sem_device != NULL)
+                strcpy(istate.sem.deviceName, sem_device);
+        }
+        // Make a connection
+        if (strcmp(istate.sem.deviceName, "null") != 0) {
+            printf("main: attempting to connect to sem: %s\n",
+                   istate.sem.deviceName);
+            sem_connection = vrpn_get_connection_by_name
+                (istate.sem.deviceName,
+                 istate.sem.writingLogFile ? istate.sem.outputLogName
+                 : (char *) NULL,
+                 vrpn_LOG_INCOMING);
+            if (!sem_connection) {
+                fprintf(stderr, "Couldn't open connection to %s.\n",
+                        istate.sem.deviceName);
+                //exit(0);
+            } else {
+              // Decide whether reading vrpn log file or a real device
+              fprintf(stderr, "Got connection\n");
+              semLogFile = sem_connection->get_File_Connection();
+              if (semLogFile){
+                istate.sem.readingLogFile = 1;
+                // But the file name is hidden inside istate.sem.deviceName and
+                // only vrpn_Connection knows how to parse this
+              }
+              // If we got to here, we have a connection to sem -
+              // create the beast.
+              sem_ui = new nms_SEM_ui(get_the_interpreter(),
+                                                      tcl_script_dir,
+                                                      "SEM@dummyname.com",
+                                                      sem_connection);
+            }
+        }
+    }
+
+#ifdef  PROJECTIVE_TEXTURE
+    // Registration - displays images with glX or GLUT depending on V_GLUT
+    // flag
+    aligner_ui = new AlignerUI(graphics, dataset->dataImages,
+        get_the_interpreter(), tcl_script_dir);
+#endif
+
 
   /* open raw terminal with echo if keyboard isn't off  */
   if (do_keybd == 1){
@@ -5024,6 +5366,9 @@ VERBOSE(1, "Entering main loop");
       if (keithley2400_ui) {
 	keithley2400_ui->mainloop();
       }
+      if (sem_ui) {
+        sem_ui->mainloop();
+      }
       if (phantButton) {
 	phantButton->mainloop();
       }
@@ -5071,6 +5416,12 @@ VERBOSE(1, "Entering main loop");
 
       if (collaboratingPeerServerConnection) {
         collaboratingPeerServerConnection->mainloop();
+      }
+
+      // Not necessary for recording, but necessary for playback.
+      // TCH 19 Jan 00
+      if (interfaceLogConnection) {
+        interfaceLogConnection->mainloop();
       }
 
       // NANOX
@@ -5221,7 +5572,7 @@ VERBOSE(1, "Entering main loop");
     handleMouseEvents();
 
 #ifdef	PROJECTIVE_TEXTURE
-    aligner->mainloop();
+    aligner_ui->mainloop();
 #endif
 
     /* Run the Tk control panel checker if we are using them */
@@ -6232,7 +6583,7 @@ int handleMouseEvents()
 		
 		/* Find the index of this point in the grid */
 		points_per_pixel = WINSIZE /
-		  max(dataset->inputGrid->numX(), dataset->inputGrid->numY());
+		  MAX(dataset->inputGrid->numX(), dataset->inputGrid->numY());
 		index_x = x/points_per_pixel;
 		index_y = y/points_per_pixel;
 		if ( (index_x >= dataset->inputGrid->numX()) ||
@@ -6728,12 +7079,12 @@ void guessAdhesionNames (void) {
                 int     baselen;
 
                 strncpy(testname, p->name()->Characters(), sizeof(testname));
-                ffl_loc = max(strstr(testname,".ffl"), strstr(testname,".FFL"));
+                ffl_loc = MAX(strstr(testname,".ffl"), strstr(testname,".FFL"));
                 baselen = (ffl_loc - testname) + 4;
                 if (ffl_loc != NULL) {
                         strncpy(max_name, testname, baselen);
                         max_name[baselen] = '\0';
-                        max_ffl = max(max_ffl, atoi(ffl_loc+4));
+                        max_ffl = MAX(max_ffl, atoi(ffl_loc+4));
                 }
 
                 p = p->next();
@@ -6748,3 +7099,26 @@ void guessAdhesionNames (void) {
                 adhPlane2Name = name;
         }
 }
+
+// The purpose of this is to just enforce mutual exclusion in the gui
+// alternative would be to use a radio button group but since these are
+// in separate parts of the gui we can't do this
+int disableOtherTextures (TextureMode m) {
+  if (m != RULERGRID){
+    rulergrid_enabled = 0;
+  }
+  if (m != SEM){
+    sem_ui->displayTexture(0);
+  }
+  if (m != REGISTRATION){
+    aligner_ui->displayTexture(0);
+  }
+  if (m != MANUAL_REALIGN){
+    display_realign_textures = 0;
+  }
+  if (m != GENETIC){
+    genetic_textures_enabled = 0;
+  }
+  return 0;
+}
+

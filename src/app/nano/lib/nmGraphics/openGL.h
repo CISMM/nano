@@ -17,6 +17,7 @@ extern int display_lists_in_x;
 extern GLuint grid_list_base;
 extern GLsizei num_grid_lists;
 
+extern int report_gl_errors(void);
 
 #if defined(FLOW) || defined (sgi) || defined(linux)
 	extern int draw_world (int);

@@ -70,6 +70,14 @@ ImageViewer::ImageViewer():
 }
 
 int ImageViewer::init(char *display) {
+    // avoid duplication of display entries
+    for (int dpy_index = 0; dpy_index < num_displays; dpy_index++){
+         if (display == NULL){
+             if (dpy[dpy_index].dpy_name == NULL) return 0;
+         }
+         else if (strcmp(display, dpy[dpy_index].dpy_name) == 0) return 0;
+    }
+
 #ifdef V_GLUT
 #else
     static int attributeList[] = { GLX_RGBA,GLX_DOUBLEBUFFER,

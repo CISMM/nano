@@ -20,6 +20,7 @@
 #include "nmg_Funclist.h"
 
 class BCGrid;  // from BCGrid.h
+class nmb_Subgrid;  // from nmb_Subgrid.h
 
 extern  int     spm_graphics_verbosity;
 #define VERBOSE(level,msg) if (spm_graphics_verbosity >= level) fprintf(stderr,"%s\n",msg);
@@ -62,6 +63,8 @@ extern float g_compliance_slider_min;
 extern float g_compliance_slider_max;
 
 extern int g_config_chartjunk;
+extern int g_config_measurelines;
+extern int g_config_planeonly;
 extern int g_config_filled_polygons;
 extern int g_config_smooth_shading;
 extern int g_config_trueTip;
@@ -87,6 +90,11 @@ extern float g_icon_scale;
 extern double g_minColor [4];
 extern double g_maxColor [4];
 
+extern int g_minChangedX;
+extern int g_maxChangedX;
+extern int g_minChangedY;
+extern int g_maxChangedY;
+
 //to keep track of position and orientation of collaborator's hand
 extern double g_collabHandPos[3];
 extern double g_collabHandQuat[4];
@@ -94,15 +102,11 @@ extern int g_draw_collab_hand;
 extern int make_collab_hand_icon(double pos[], double quat[], vrpn_int32 mode);
 extern vrpn_int32 g_collabMode;
 
-// Genetic Textures
-extern int g_genetic_textures_enabled;
-
 // Realigning Textures:
 extern ColorMap *g_realign_textures_curColorMap;
 extern float g_realign_textures_slider_min;
 extern float g_realign_textures_slider_max;
 
-extern int g_realign_textures_enabled;
 extern int g_translate_textures;
 extern int g_scale_textures;
 extern int g_shear_textures;
@@ -129,17 +133,18 @@ extern float g_shear_tex_dy;
 extern float g_rotate_tex_theta;
 
 // Registration:
-extern int g_registration_enabled;
 extern double g_texture_transform[16];
 extern int g_tex_image_width;
 extern int g_tex_image_height;
 extern int g_tex_installed_width;
 extern int g_tex_installed_height;
+extern int g_tex_sem_installed_width;
+extern int g_tex_sem_installed_height;
 
 extern float g_rubberPt [4];
 extern float g_scanlinePt[6];
 extern int g_scanline_display_enabled;
-extern int g_rulergrid_enabled;
+
 extern float g_rulergrid_xoffset;
 extern float g_rulergrid_yoffset;
 extern float g_rulergrid_scale;
@@ -161,9 +166,14 @@ extern float g_surface_alpha;
 extern float g_diffuse;
 
 extern BCGrid * g_prerendered_grid;
+extern nmb_Subgrid * g_prerenderedChange;
 
 extern float g_sphere_scale;
 extern int g_stride;
+
+extern int g_texture_displayed;
+extern int g_texture_transform_mode;
+
 extern GLenum g_texture_mode;
 extern float g_texture_scale;
 extern float g_trueTipLocation [3];
@@ -176,16 +186,34 @@ extern int g_PRERENDERED_COLORS;
 
 extern Position_list * g_positionList;
 
+#define N_TEX 6
+#define CONTOUR_1D_TEX_ID       0
+#define ALPHA_3D_TEX_ID         1
+#define RULERGRID_TEX_ID        2
+#define GENETIC_TEX_ID          3
+#define COLORMAP_TEX_ID         4
+#define SEM_DATA_TEX_ID         5
+extern GLuint tex_ids[N_TEX];
+extern GLubyte *sem_data;
+// note: shader textures managed separately below
+
+extern char g_alphaPlaneName [128];
+extern char g_colorPlaneName [128];
+extern char g_contourPlaneName [128];
+extern char g_heightPlaneName [128];
+
+extern BCGrid * g_inputGrid;
+
 #ifdef FLOW
 
 /*****************************************************************
  This part should be the same as nM_global.h.
- It will match which shader to turn on and which texture_id is 
+ It will match which shader to turn on and which texture_id is
  mapped to where.
  *****************************************************************/
 
-// total number of textures
-#define NTEX 7
+// total number of textures used by shaders
+#define N_SHADER_TEX 7
 
 // texture id num
 #define BUMP_TEX_ID          0
@@ -224,7 +252,7 @@ extern Position_list * g_positionList;
   extern GLuint nM_diffuse;     // just shows the diffuse color shader
 
   // texture id for shaders
-  extern GLuint tex_ids[NTEX];
+  extern GLuint shader_tex_ids[N_SHADER_TEX];
 
   // data set values
   extern GLubyte *pattern_data;  // data_tex_size*data_tex_size*3

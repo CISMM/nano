@@ -94,7 +94,8 @@ class nmg_Graphics_Null : public nmg_Graphics {
 
     virtual void setTesselationStride (int);
 
-    virtual void setTextureMode (TextureMode);
+    virtual void setTextureMode (TextureMode, 
+	TextureTransformMode = RULERGRID_COORD);
     virtual void setTextureScale (float);
 
     virtual void setUserMode (int oldMode, int newMode, int style);  // TODO

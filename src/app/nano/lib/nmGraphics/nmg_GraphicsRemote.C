@@ -81,6 +81,21 @@ void nmg_Graphics_Remote::loadRulergridImage (const char * name) {
   }
 }
 
+void nmg_Graphics_Remote::causeGridRedraw (void) {
+  struct timeval now;
+  int retval;
+
+  gettimeofday(&now, NULL);
+  if (d_connection) {
+    retval = d_connection->pack_message(0, now, d_causeGridRedraw_type,
+                           d_myId, NULL, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::causeGridRedraw:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+}
+
 void nmg_Graphics_Remote::enableChartjunk (int value) {
   struct timeval now;
   char * msgbuf;
@@ -508,6 +523,84 @@ void nmg_Graphics_Remote::setHatchMapName (const char * name) {
   }
 }
 
+// virtual
+void nmg_Graphics_Remote::setAlphaPlaneName (const char * name) {
+  int len = 0;
+  struct timeval now;
+  int retval;
+
+  if (name)
+    len = 1 + strlen(name);
+  gettimeofday(&now, NULL);
+  if (d_connection) {
+    retval = d_connection->pack_message(len, now, d_setAlphaPlaneName_type,
+                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setAlphaPlaneName:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+}
+
+// virtual
+void nmg_Graphics_Remote::setColorPlaneName (const char * name) {
+  int len = 0;
+  struct timeval now;
+  int retval;
+
+  if (name)
+    len = 1 + strlen(name);
+  gettimeofday(&now, NULL);
+  if (d_connection) {
+    retval = d_connection->pack_message(len, now, d_setColorPlaneName_type,
+                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setColorPlaneName:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+}
+
+// virtual
+void nmg_Graphics_Remote::setContourPlaneName (const char * name) {
+  int len = 0;
+  struct timeval now;
+  int retval;
+
+  if (name)
+    len = 1 + strlen(name);
+  gettimeofday(&now, NULL);
+  if (d_connection) {
+    retval = d_connection->pack_message(len, now, d_setContourPlaneName_type,
+                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setContourPlaneName:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+}
+
+// virtual
+void nmg_Graphics_Remote::setHeightPlaneName (const char * name) {
+  int len = 0;
+  struct timeval now;
+  int retval;
+
+  if (name)
+    len = 1 + strlen(name);
+  gettimeofday(&now, NULL);
+  if (d_connection) {
+    retval = d_connection->pack_message(len, now, d_setHeightPlaneName_type,
+                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setHeightPlaneName:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+}
+
+
+
 void nmg_Graphics_Remote::setIconScale (float scale) {
   struct timeval now;
   char * msgbuf;
@@ -695,6 +788,7 @@ void nmg_Graphics_Remote::setPatternMapName (const char * name) {
 // Enables the genetic textures algorithm.
 // Sends a message to the nmg_Graphics_Implementation
 //
+/*
 void nmg_Graphics_Remote::enableGeneticTextures (int value) {
   struct timeval now;
   char * msgbuf;
@@ -714,6 +808,7 @@ void nmg_Graphics_Remote::enableGeneticTextures (int value) {
   if (msgbuf)
     delete [] msgbuf;
 }
+*/
 
 // Sends the list of variables to used in the genetic textures algorithm.
 // This list is set by the user the pop-up window created by the
@@ -838,6 +933,7 @@ void nmg_Graphics_Remote::computeRealignPlane( const char *name,
     delete [] msgbuf;
 }
 
+/*
 void nmg_Graphics_Remote::enableRealignTextures (int on) {
   struct timeval now;
   char * msgbuf;
@@ -859,6 +955,7 @@ void nmg_Graphics_Remote::enableRealignTextures (int on) {
   if (msgbuf)
     delete [] msgbuf;
 }
+*/
 
 void nmg_Graphics_Remote::translateTextures ( int , float dx, float dy ) {
   struct timeval now;
@@ -973,6 +1070,34 @@ void nmg_Graphics_Remote::setTextureCenter( float dx, float dy ) {
 // End Realign Textures Remote Code:
 //
 
+void nmg_Graphics_Remote::updateTexture(int which,
+       const char *image_name,
+       int start_x, int start_y,
+       int end_x, int end_y)
+{
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  msgbuf = encode_updateTexture(&len, which, image_name, start_x, start_y,
+	end_x, end_y);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now,
+                                        d_updateTexture_type,
+                                        d_myId, msgbuf,
+                                        vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::updateTexture:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+/*
 void nmg_Graphics_Remote::enableRegistration (int on) {
   struct timeval now;
   char * msgbuf;
@@ -994,6 +1119,7 @@ void nmg_Graphics_Remote::enableRegistration (int on) {
   if (msgbuf)
     delete [] msgbuf;
 }
+*/
 
 void nmg_Graphics_Remote::setTextureTransform(double *xform) {
   struct timeval now;
@@ -1017,6 +1143,7 @@ void nmg_Graphics_Remote::setTextureTransform(double *xform) {
     delete [] msgbuf;
 }
 
+/*
 void nmg_Graphics_Remote::enableRulergrid (int value) {
   struct timeval now;
   char * msgbuf;
@@ -1036,6 +1163,7 @@ void nmg_Graphics_Remote::enableRulergrid (int value) {
   if (msgbuf)
     delete [] msgbuf;
 }
+*/
 
 void nmg_Graphics_Remote::setRulergridAngle (float angle) {
   struct timeval now;
@@ -1284,13 +1412,14 @@ void nmg_Graphics_Remote::setTesselationStride (int stride) {
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setTextureMode (TextureMode m) {
+void nmg_Graphics_Remote::setTextureMode (TextureMode m,
+	TextureTransformMode xm) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  msgbuf = encode_setTextureMode(&len, m);
+  msgbuf = encode_setTextureMode(&len, m, xm);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now, d_setTextureMode_type,

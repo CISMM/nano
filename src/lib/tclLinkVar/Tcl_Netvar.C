@@ -105,6 +105,11 @@ vrpn_bool TclNet_int::isLocked (void) const {
 
 // MANIPULATORS
 
+// If no replica has been allocated,
+//   assume we're running disconnected or not collaborative or
+//   in some other mode where we should act just like a Linkvar.
+
+
 // virtual
 vrpn_int32 TclNet_int::operator = (vrpn_int32 newValue) {
   timeval now;
@@ -118,10 +123,19 @@ vrpn_int32 TclNet_int::operator = (vrpn_int32 newValue) {
 //my_tcl_varname, newValue, d_writeReplica,
 //now.tv_sec, now.tv_usec);
 
-    d_replica[d_writeReplica]->set(newValue, now);
+    if (d_replica[d_writeReplica]) {
+      d_replica[d_writeReplica]->set(newValue, now);
+    } else {
+      Tclvar_int::operator = (newValue);
+    }
   }
 
   return d_myint;
+}
+
+// virtual
+void TclNet_int::SetFromTcl (vrpn_int32 newValue) {
+  /*Tclvar_int::*/operator = (newValue);
 }
 
 
@@ -142,9 +156,6 @@ void TclNet_int::bindConnection (vrpn_Connection * c) {
   }
 
   d_replicaSource[0] = c;
-  // Christmas sync
-  // replica[0] is local, private state
-  //d_replica[0]->bindConnection(c);
 
 #ifndef USE_OPTIMISTIC_CONNECTIONS
   d_replica[0]->register_handler
@@ -152,6 +163,10 @@ void TclNet_int::bindConnection (vrpn_Connection * c) {
 #endif
 
 //fprintf(stderr, "## TclNet_int::bindConnection\n");
+}
+
+void TclNet_int::bindLogConnection (vrpn_Connection * c) {
+  d_replica[0]->bindConnection(c);
 }
 
 
@@ -312,7 +327,8 @@ vrpn_int32 TclNet_int::conditionalEquals (vrpn_int32 newValue, timeval when,
   }
 
   setLocally(newValue, when);
-  doCallbacks();
+  //doCallbacks();
+  Tclvar_int::SetFromTcl(newValue);
 
   return d_myint;
 }
@@ -434,6 +450,11 @@ vrpn_bool TclNet_float::isLocked (void) const {
 
 // MANIPULATORS
 
+// If no replica has been allocated,
+//   assume we're running disconnected or not collaborative or
+//   in some other mode where we should act just like a Linkvar.
+
+
 // virtual
 vrpn_float64 TclNet_float::operator = (vrpn_float64 newValue) {
   timeval now;
@@ -444,10 +465,19 @@ vrpn_float64 TclNet_float::operator = (vrpn_float64 newValue) {
 //fprintf(stderr, "TclNet_float (%s)::operator = (%.5f) "
 //"into d_replica[%d] at %ld:%ld.\n",
 //my_tcl_varname, newValue, d_writeReplica, now.tv_sec, now.tv_usec);
-    d_replica[d_writeReplica]->set(newValue, now);
+    if (d_replica[d_writeReplica]) {
+      d_replica[d_writeReplica]->set(newValue, now);
+    } else {
+      Tclvar_float::operator = (newValue);
+    }
   }
 
   return d_myfloat;
+}
+
+// virtual
+void TclNet_float::SetFromTcl (vrpn_float64 newValue) {
+  /*Tclvar_float::*/operator = (newValue);
 }
 
 
@@ -476,6 +506,10 @@ void TclNet_float::bindConnection (vrpn_Connection * c) {
 #endif
 
 //fprintf(stderr, "## TclNet_float::bindConnection\n");
+}
+
+void TclNet_float::bindLogConnection (vrpn_Connection * c) {
+  d_replica[0]->bindConnection(c);
 }
 
 
@@ -634,7 +668,8 @@ vrpn_float64 TclNet_float::conditionalEquals (vrpn_float64 newValue,
     }
   }
 
-    setLocally(newValue, when);
+  //setLocally(newValue, when);
+  Tclvar_float::SetFromTcl(newValue);
 
   return d_myfloat;
 }
@@ -761,9 +796,12 @@ vrpn_bool TclNet_selector::isLocked (void) const {
 }
 
 
-
-
 // MANIPULATORS
+
+// If no replica has been allocated,
+//   assume we're running disconnected or not collaborative or
+//   in some other mode where we should act just like a Linkvar.
+
 
 // virtual
 const char * TclNet_selector::operator = (const char * newValue) {
@@ -772,6 +810,8 @@ const char * TclNet_selector::operator = (const char * newValue) {
   gettimeofday(&now, NULL);
   if (d_replica[d_writeReplica]) {
     d_replica[d_writeReplica]->set(newValue, now);
+  } else {
+    Tclvar_selector::operator = (newValue);
   }
   return string();
 }
@@ -783,6 +823,8 @@ const char * TclNet_selector::operator = (char * newValue) {
   gettimeofday(&now, NULL);
   if (d_replica[d_writeReplica]) {
     d_replica[d_writeReplica]->set(newValue, now);
+  } else {
+    Tclvar_selector::operator = (newValue);
   }
   return string();
 }
@@ -794,7 +836,14 @@ void TclNet_selector::Set (const char * newValue) {
   gettimeofday(&now, NULL);
   if (d_replica[d_writeReplica]) {
     d_replica[d_writeReplica]->set(newValue, now);
+  } else {
+    Tclvar_selector::Set(newValue);
   }
+}
+
+// virtual
+void TclNet_selector::SetFromTcl (const char * newValue) {
+  /*Tclvar_selector::*/operator = (newValue);
 }
 
 
@@ -854,6 +903,9 @@ void TclNet_selector::bindConnection (vrpn_Connection * c) {
 //fprintf(stderr, "## TclNet_selector::bindConnection\n");
 }
 
+void TclNet_selector::bindLogConnection (vrpn_Connection * c) {
+  d_replica[0]->bindConnection(c);
+}
 
 // Add a new peer connection, add a replica, and start
 // tracking changes.
@@ -1009,6 +1061,7 @@ const char * TclNet_selector::conditionalEquals (const char * newValue,
   }
 
   setLocally(newValue, when);
+  Tclvar_selector::SetFromTcl(newValue);
 
   return string();
 }

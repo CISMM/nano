@@ -31,17 +31,8 @@
 
 class nmb_ImageBounds {
   public:
-	nmb_ImageBounds() {
-		for (int i = 0; i < 4; i++){
-			x[i] = 0.0; y[i] = 0.0;
-		}
-	}
-	nmb_ImageBounds(double x0,double y0,double x1,double y1){
-		x[MIN_X_MIN_Y] = x0; x[MIN_X_MAX_Y] = x0;
-		y[MIN_X_MIN_Y] = y0; y[MAX_X_MIN_Y] = y0;
-		x[MAX_X_MIN_Y] = x1; x[MAX_X_MAX_Y] = x1;
-                y[MIN_X_MAX_Y] = y1; y[MAX_X_MAX_Y] = y1;
-	}
+	nmb_ImageBounds();
+	nmb_ImageBounds(double x0,double y0,double x1,double y1);
 	// the MIN/MAX distinction is based on how the pixels in the image
 	// are indexed (e.g.,the corner at the pixel with index (0,0) is
 	// referenced by MIN_X_MIN_Y; particular values are assigned so that
@@ -70,7 +61,7 @@ class nmb_Image {
   public:
 	nmb_Image():is_height_field(VRPN_FALSE)
             {};
-	virtual ~nmb_Image() {};
+	~nmb_Image() {};
 	virtual int width() const = 0;
 	virtual int height() const = 0;
 	virtual float getValue(int i, int j) const = 0;
@@ -119,8 +110,11 @@ class nmb_Image {
 	vrpn_bool isHeightField() const {return is_height_field;}
 	void setHeightField(vrpn_bool flag) {is_height_field = flag;}
 
+	// gives address of an array of unsigned chars
+	virtual vrpn_uint8 *rawDataUnsignedByte() = 0;
+
 	virtual int numExportFormats() = 0;
-	virtual char *exportFormatType(int type) = 0;
+	virtual const char *exportFormatType(int type) = 0;
 	virtual nmb_ListOfStrings *exportFormatNames() = 0;
 	virtual int exportToFile(FILE *f, const char *export_type) = 0;
 
@@ -131,154 +125,39 @@ class nmb_Image {
 // container class for BCGrid/BCPlane-based images
 class nmb_ImageGrid : public nmb_Image{
   public:
-	nmb_ImageGrid(const char *name, const char *units, short x, short y):
-	    nmb_Image(),
-	    units_x("nm"), units_y("nm")
-        {
-		BCString name_str(name), units_str(units);
-		grid = new BCGrid(x, y, 0.0, 1.0, 0.0, 1.0);
-		plane = grid->addNewPlane(name_str, units_str, 0);
-                min_x_set = MAXSHORT; min_y_set = MAXSHORT;
-                max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
-		for (int i = 0; i < numExportFormats(); i++){
-		    BCString name = exportFormatType(i);
-		    formatNames.addEntry(name);
-		}
-	}
-	nmb_ImageGrid(BCPlane *p):nmb_Image()
-	{
-            // WARNING: assumes (non-zero value <==> value was set) as
-            // did BCPlane::findValidDataRange()
-	    
-	    plane = p;
-	    grid = NULL;
-	    int i,j;
-            for (i = 0; i < plane->numX(); i++){
-		for (j = 0; j < plane->numY(); j++){
- 		    if (plane->value(i,j) != 0.0){
-			min_x_set = MIN(min_x_set, i);
-                        max_x_set = MAX(max_x_set, i);
-                        min_y_set = MIN(min_y_set, j);
-                        max_y_set = MAX(max_y_set, j);
-                    }
-                }
-            }
-	    for (i = 0; i < numExportFormats(); i++){
-                BCString name = exportFormatType(i);
-                formatNames.addEntry(name);
-            }
-	}
-	virtual ~nmb_ImageGrid() {if (grid) delete grid;}
-	virtual int width() const {return plane->numX();}
-	virtual int height() const {return plane->numY();}
-	virtual float getValue(int i, int j) const 
-             {return plane->value(i,j);}
-	virtual void setValue(int i, int j, float val)
-        {
-             plane->setValue(i,j,val);
-             min_x_set = MIN(min_x_set, i);
-             max_x_set = MAX(max_x_set, i);
-             min_y_set = MIN(min_y_set, j);
-             max_y_set = MAX(max_y_set, j);
-	}
+	nmb_ImageGrid(const char *name, const char *units, short x, short y);
+	nmb_ImageGrid(BCPlane *p);
+	virtual ~nmb_ImageGrid();
+	virtual int width() const;
+	virtual int height() const;
+	virtual float getValue(int i, int j) const;
+	virtual void setValue(int i, int j, float val);
         virtual int validDataRange(short* o_top, short* o_left,
-                                   short* o_bottom, short*o_right){
-	     // if no valid data:
-             if (min_y_set > max_y_set || min_x_set > max_x_set)
-		return -1;
-             // otherwise at least one valid data point:
-             *o_bottom = min_y_set; *o_top = max_y_set;
-             *o_left = min_x_set; *o_right = max_x_set;
-	     return 0;
-        }
-	virtual float maxValue() const {return plane->maxValue();}
-	virtual float minValue() const {return plane->minValue();}
-        virtual float minAttainableValue() const {
-           return plane->minAttainableValue();}
-        virtual float maxAttainableValue() const {
-           return plane->maxAttainableValue();}
-	virtual double boundX(nmb_ImageBounds::ImageBoundPoint ibp) const
-	{
-		if (ibp == nmb_ImageBounds::MIN_X_MIN_Y || 
-			ibp == nmb_ImageBounds::MIN_X_MAX_Y){
-			return plane->minX();
-		} else {
-			return plane->maxX();
-                }
-	}
-	virtual double boundY(nmb_ImageBounds::ImageBoundPoint ibp) const 
-	{
-		if (ibp == nmb_ImageBounds::MIN_X_MIN_Y || 
-            		ibp == nmb_ImageBounds::MAX_X_MIN_Y) {
-            		return plane->minY();
-        	} else {
-            		return plane->maxY();
-		}
-	}
-	virtual void setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x)
-	{
-            // WARNING: this might not do what you think because
-            // BCGrid has a less general notion of the image extents
-            if (grid == NULL) {
-            	fprintf(stderr, 
-                	"Warning: nmb_ImageGrid::setBoundX failed\n");
-		    return;
-            }
-	    if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
-            	ibp == nmb_ImageBounds::MIN_X_MAX_Y) {
-            	grid->setMinX(x);
-            } else {
-            	grid->setMaxX(x);
-	    }
-	}
-	virtual void setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y)
-	{
-            // WARNING: this might not do what you think because
-            // BCGrid has a less general notion of the image extents
-            if (grid == NULL) {
-            	fprintf(stderr, 
-                	"Warning: nmb_ImageGrid::setBoundY failed\n");
-		return;
-            }
-            if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
-            	ibp == nmb_ImageBounds::MAX_X_MIN_Y) {
-            	grid->setMinY(y);
-            } else {
-            	grid->setMaxY(y);
-	    }
-	}
-	virtual void getBounds(nmb_ImageBounds &ib)  const
-	{
-	    ib = nmb_ImageBounds(plane->minX(), plane->minY(),
-				plane->maxX(), plane->maxY());
-	}
-	virtual void setBounds(const nmb_ImageBounds &ib)
-	{
-            // WARNING: this might not do what you think because
-            // BCGrid has a less general notion of the image extents
-	    if (grid == NULL) {
-		fprintf(stderr, 
-			"Warning: nmb_ImageGrid::setBounds failed\n");
-	    }
-	    grid->setMinX(ib.getX(nmb_ImageBounds::MIN_X_MIN_Y));
-	    grid->setMinY(ib.getY(nmb_ImageBounds::MIN_X_MIN_Y));
-	    grid->setMaxX(ib.getX(nmb_ImageBounds::MAX_X_MAX_Y));
-	    grid->setMaxY(ib.getY(nmb_ImageBounds::MAX_X_MAX_Y));
-	}
-	virtual BCString *name() {return plane->name();}
-	virtual BCString *unitsValue() {return plane->units();}
-	virtual BCString *unitsX() {return &units_x;}
-	virtual BCString *unitsY() {return &units_y;}
+                                   short* o_bottom, short*o_right);
+	virtual float maxValue() const;
+	virtual float minValue() const;
+        virtual float minAttainableValue() const;
+        virtual float maxAttainableValue() const;
+	virtual double boundX(nmb_ImageBounds::ImageBoundPoint ibp) const;
+	virtual double boundY(nmb_ImageBounds::ImageBoundPoint ibp) const;
+	virtual void setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x);
+	virtual void setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y);
+	virtual void getBounds(nmb_ImageBounds &ib)  const;
+	virtual void setBounds(const nmb_ImageBounds &ib);
+	virtual BCString *name();
+	virtual BCString *unitsValue();
+	virtual BCString *unitsX();
+	virtual BCString *unitsY();
 
-        virtual int numExportFormats() {return num_export_formats;};
-	virtual nmb_ListOfStrings *exportFormatNames() 
-		{return &formatNames;}
-        virtual char *exportFormatType(int type) 
-	    {return (char *)export_formats_list[type];}
+	virtual vrpn_uint8 *rawDataUnsignedByte();
+
+        virtual int numExportFormats();
+	virtual nmb_ListOfStrings *exportFormatNames();
+        virtual const char *exportFormatType(int type); 
         virtual int exportToFile(FILE *f, const char *export_type);
 
 	typedef int (*FileExportingFunction) (FILE *file, nmb_ImageGrid *im);
-  private:
+  protected:
 	static const int     num_export_formats;
         static const char    *export_formats_list[];
 	nmb_ListOfStrings formatNames;
@@ -295,6 +174,53 @@ class nmb_ImageGrid : public nmb_Image{
 	BCString units_x;
 	BCString units_y;
         short min_x_set, min_y_set, max_x_set, max_y_set;
+
+};
+
+class nmb_Image8bit : public nmb_Image {
+  public:
+    nmb_Image8bit(const char *name, const char *units, short x, short y);
+    virtual ~nmb_Image8bit();
+    virtual int width() const;
+    virtual int height() const;
+    virtual vrpn_uint8 *rawDataUnsignedByte();
+    virtual float getValue(int i, int j) const;
+    virtual void setValue(int i, int j, float val);
+    virtual void setLine(int line, vrpn_uint8 *line_data);
+    virtual void setImage(vrpn_uint8 *newdata);
+    virtual int validDataRange(short* o_top, short* o_left,
+                                   short* o_bottom, short*o_right);
+    virtual float maxValue() const;
+    virtual float minValue() const;
+    virtual float maxAttainableValue() const;
+    virtual float minAttainableValue() const;
+    virtual double boundX(nmb_ImageBounds::ImageBoundPoint ibp) const;
+    virtual double boundY(nmb_ImageBounds::ImageBoundPoint ibp) const;
+    virtual void setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x);
+    virtual void setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y);
+    virtual void getBounds(nmb_ImageBounds &ib) const;
+    virtual void setBounds(const nmb_ImageBounds &ib);
+    virtual BCString *name();
+    virtual BCString *unitsValue();
+    virtual BCString *unitsX();
+    virtual BCString *unitsY();
+     
+    virtual int numExportFormats();
+    virtual nmb_ListOfStrings *exportFormatNames();
+    virtual const char *exportFormatType(int type);
+    virtual int exportToFile(FILE *f, const char *export_type);
+
+    typedef int (*FileExportingFunction) (FILE *file, nmb_Image8bit *im);
+  protected:
+    vrpn_uint8 *data;
+    short num_x, num_y;
+    BCString units_x, units_y, units, my_name;
+    short min_x_set, min_y_set, max_x_set, max_y_set;
+
+        static const int     num_export_formats;
+        static const char    *export_formats_list[];
+        nmb_ListOfStrings formatNames;
+        static const FileExportingFunction file_exporting_function[];
 };
 
 #define NMB_MAX_IMAGELIST_LENGTH 100
@@ -310,27 +236,10 @@ class nmb_ImageList {
 		int i;
 		return getImageByName(name, i);
 	}
-	nmb_Image *removeImageByName(BCString name) {
-		int i;
-		nmb_Image *im = getImageByName(name, i);
-		if (im == NULL) return NULL;
-		// getImageByName() succeeds ==> num_images >= 1
-		images[i] = images[num_images-1];
-		imageNames.deleteEntry((const char *)(*(im->name())));
-		num_images--;
-		return im;
-	}
+	nmb_Image *removeImageByName(BCString name);
 
   private:
-	nmb_Image *getImageByName(BCString name, int &index) {
-	  for (int i = 0; i < num_images; i++) {
-            if (*(images[i]->name()) == name){
-		index = i;
-                return images[i];
-	    }
-          }
-          return NULL;
-	}
+	nmb_Image *getImageByName(BCString name, int &index);
 
 	int num_images;
         nmb_Image *images[NMB_MAX_IMAGELIST_LENGTH];

@@ -38,6 +38,7 @@ class TclNet_int : public Tclvar_int {
     void bindConnection (vrpn_Connection *);
       // Don't insist that the vrpn_Connection be available in
       // the constructor, or we can't have globals.
+    void bindLogConnection (vrpn_Connection *);
     void addPeer (vrpn_Connection *, vrpn_bool serialize);
       // Add a new peer connection, add a replica, and start
       // tracking changes.
@@ -56,6 +57,8 @@ class TclNet_int : public Tclvar_int {
       // or operator ++.
 
   protected:
+
+    virtual void SetFromTcl (vrpn_int32);
 
     vrpn_bool d_isLocked;
 
@@ -115,6 +118,7 @@ class TclNet_float : public Tclvar_float {
     void bindConnection (vrpn_Connection *);
       // Don't insist that the vrpn_Connection be available in
       // the constructor, or we can't have globals.
+    void bindLogConnection (vrpn_Connection *);
     void addPeer (vrpn_Connection *, vrpn_bool serialize);
       // Add a new peer connection, add a replica, and start
       // tracking changes.
@@ -133,6 +137,8 @@ class TclNet_float : public Tclvar_float {
       // or operator ++.
 
   protected:
+
+    virtual void SetFromTcl (vrpn_float64);
 
     vrpn_bool d_isLocked;
 
@@ -198,6 +204,7 @@ class TclNet_selector : public Tclvar_selector {
     void bindConnection (vrpn_Connection *);
       // Don't insist that the vrpn_Connection be available in
       // the constructor, or we can't have globals.
+    void bindLogConnection (vrpn_Connection *);
     void addPeer (vrpn_Connection *, vrpn_bool serialize);
       // Add a new peer connection, add a replica, and start
       // tracking changes.
@@ -216,6 +223,8 @@ class TclNet_selector : public Tclvar_selector {
       // or operator ++.
 
   protected:
+
+    virtual void SetFromTcl (const char *);
 
     vrpn_bool d_isLocked;
 

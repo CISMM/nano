@@ -15,8 +15,8 @@
 # A redesign might use half-a-dozen RDParsers instead of two.
 
 use Parse::RecDescent;
-#$::RD_HINT = 1;     # turn on verbose debugging
-#$::RD_TRACE = 1;     # turn on verbose debugging
+$::RD_HINT = 1;     # turn on verbose debugging
+$::RD_TRACE = 1;     # turn on verbose debugging
 
 local (%messageDefinitionArray) = ();
 local ($numDefinitions) = 0;

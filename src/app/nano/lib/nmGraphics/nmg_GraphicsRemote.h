@@ -19,6 +19,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void loadRulergridImage (const char *);
 
+    virtual void causeGridRedraw (void);
+
     virtual void enableChartjunk (int);
     virtual void enableFilledPolygons (int);
     virtual void enableSmoothShading (int);
@@ -49,6 +51,12 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setHandColor (int);
     virtual void setHatchMapName (const char *);  // RENAME?
 
+    virtual void setAlphaPlaneName (const char *);
+    virtual void setColorPlaneName (const char *);
+    virtual void setContourPlaneName (const char *);
+    virtual void setHeightPlaneName (const char *);
+
+
     virtual void setIconScale (float);
 
     virtual void setCollabHandPos (double [3], double [4]);
@@ -64,7 +72,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setPatternMapName (const char *);  // RENAME?
 
     // Genetic Textures
-    virtual void enableGeneticTextures (int);
+//    virtual void enableGeneticTextures (int);
     virtual void sendGeneticTexturesData (int, char **);
 
     // Realigning Textures:
@@ -72,17 +80,20 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setRealignTextureSliderRange (float, float);
     virtual void setRealignTexturesConversionMap( const char *, const char * );
     virtual void computeRealignPlane( const char *, const char * );
-    virtual void enableRealignTextures (int on);
+//    virtual void enableRealignTextures (int on);
     virtual void translateTextures ( int on, float dx, float dy );
     virtual void scaleTextures ( int on, float dx, float dy );
     virtual void shearTextures ( int on, float dx, float dy );
     virtual void rotateTextures ( int on, float theta );
     virtual void setTextureCenter( float dx, float dy );
 
-    virtual void enableRegistration(int on);
+    virtual void updateTexture(int which, const char *image_name,
+       int start_x, int start_y,
+       int end_x, int end_y);
+//    virtual void enableRegistration(int on);
     virtual void setTextureTransform(double *xform);
 
-    virtual void enableRulergrid (int);
+//    virtual void enableRulergrid (int);
     virtual void setRulergridAngle (float);
     virtual void setRulergridColor (int r, int g, int b);
     virtual void setRulergridOffset (float x, float y);
@@ -98,7 +109,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void setTesselationStride (int);
 
-    virtual void setTextureMode (TextureMode);
+    virtual void setTextureMode (TextureMode, 
+	TextureTransformMode = RULERGRID_COORD);
     virtual void setTextureScale (float);
     virtual void setTrueTipScale (float);
 

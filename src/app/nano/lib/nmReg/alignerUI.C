@@ -1,3 +1,4 @@
+#include <microscape.h> // for disableOtherTextures
 #include "alignerUI.h"
 
 // from microscape.c - It doesn't make sense to replicate the tcl and c code
@@ -5,16 +6,17 @@
 // realign_textures and registration are mutually exclusive
 extern Tclvar_selector texturePlaneName;
 
-AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im):
+AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
+    Tcl_Interp *tcl_interp, const char *tcl_script_dir):
 	datasetRegistrationPlaneName3D("none"),
 	datasetRegistrationPlaneName2D("none"),
-	newResamplePlaneName("resample_plane_name", NULL),
-	datasetRegistrationEnabled("registration_enabled", 0),
-	datasetRegistrationNeeded("registration_needed", 0),
-	datasetRegistrationRotate3DEnabled("3D Rotation", 
-			".registration.rotate3D_enable", 0),
-	resampleResolutionX("resample_resolution_x", 100),
-	resampleResolutionY("resample_resolution_y", 100),
+	newResamplePlaneName("reg(resample_plane_name", NULL),
+	datasetRegistrationEnabled("reg_window_open", 0),
+	datasetRegistrationNeeded("reg(registration_needed)", 0),
+	datasetRegistrationRotate3DEnabled("reg(rotate3D_enable)", 0),
+        textureDisplayEnabled("reg(display_texture)", 0),
+	resampleResolutionX("reg(resample_resolution_x)", 100),
+	resampleResolutionY("reg(resample_resolution_y)", 100),
 	num_image_windows(2),
 	height_image(0),
         texture_image(1),
@@ -24,16 +26,25 @@ AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im):
 	graphics_display(g)
 {
 
+    char command[256];
+    printf("creating the aligner\n");
+
+    /* Load the Tcl script that handles main interface window */
+    sprintf(command, "source %s/%s",tcl_script_dir, ALIGNER_TCL_FILE);
+    printf("evaluating %s\n", command);
+    TCLEVALCHECK2(tcl_interp, command);
+    fprintf(stderr, "done evaluating\n");
+
 	char *reg_win_names[2] = {"registration:topography",
 				"registration:texture"};
 	ce = new CorrespondenceEditor(num_image_windows, reg_win_names);
 	aligner = new Aligner(num_image_windows);
 
 	datasetRegistrationPlaneName3D.initializeTcl
-		("topography_data", ".registration.selection3D");
+		("topography_data", "$reg_widgets(selection3D)");
 	datasetRegistrationPlaneName3D.bindList(images->imageNameList());
 	datasetRegistrationPlaneName2D.initializeTcl
-		("texture_data", ".registration.selection2D");
+		("texture_data", "$reg_widgets(selection2D)");
 	datasetRegistrationPlaneName2D.bindList(images->imageNameList());
 
 
@@ -47,11 +58,16 @@ AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im):
 		(handle_registration_change, (void *)this);
 	datasetRegistrationRotate3DEnabled.addCallback
 		(handle_registration_type_change, (void *)this);
+        textureDisplayEnabled.addCallback
+		(handle_texture_display_change, (void *)this);
 
 	newResamplePlaneName.bindList(images->imageNameList());
 	newResamplePlaneName = "";
 	newResamplePlaneName.addCallback
 		(handle_resamplePlaneName_change, (void *)this);
+        resampleResolutionX = 100;
+        resampleResolutionY = 100;
+
 }
 
 int AlignerUI::addImage(nmb_Image *im) {
@@ -106,14 +122,17 @@ void     AlignerUI::handle_resamplePlaneName_change(const char *, void *ud)
 void    AlignerUI::handle_registration_enabled_change(vrpn_int32 new_value, 
 				void *userdata) {
   AlignerUI *aui = (AlignerUI *)userdata;
-
+  nmb_Image *im = aui->images->getImageByName
+                        (aui->datasetRegistrationPlaneName2D.string());
   if (new_value){
     aui->ce->show();
-    aui->graphics_display->enableRegistration(VRPN_TRUE);
+    if (im) {
+        aui->graphics_display->createRealignTextures(
+	    aui->datasetRegistrationPlaneName2D.string());
+    }
   }
   else {
     aui->ce->hide();
-    aui->graphics_display->enableRegistration(VRPN_FALSE);
   }
 }
 
@@ -131,21 +150,23 @@ void    AlignerUI::handle_registration_dataset3D_change(const char *,
   }
 }
 
-void    AlignerUI::handle_registration_dataset2D_change(const char *, 
+void    AlignerUI::handle_registration_dataset2D_change(const char *name, 
 			void * userdata)
 {
 	AlignerUI *aui = ((AlignerUI *)userdata);
-	nmb_Image *im = aui->images->getImageByName
-			(aui->datasetRegistrationPlaneName2D.string());
+	nmb_Image *im = aui->images->getImageByName(name);
+		//	(aui->datasetRegistrationPlaneName2D.string());
 
 	printf("in handle_registration_dataset2D_change\n");
 	if (im != NULL) {
 		// set UI state
+                // NOTE: call to createRealignTextures is generated in the
+                // callback for the variable "texturePlaneName"
 		texturePlaneName = 
 			(aui->datasetRegistrationPlaneName2D.string());
 		aui->ce->setImage(aui->texture_image, im);
-		aui->graphics_display->createRealignTextures(
-			aui->datasetRegistrationPlaneName2D.string());
+		aui->graphics_display->createRealignTextures(name);
+		//	aui->datasetRegistrationPlaneName2D.string());
 	} else {
 	    fprintf(stderr, "AlignerUI::handle_registration_dataset2D_change:"
 		" Error, couldn't find image\n");
@@ -300,7 +321,21 @@ be here; will take out after testing
 */
 }
 
-void    AlignerUI::handle_registration_type_change(vrpn_int32 val, void *userdata){
+void    AlignerUI::handle_registration_type_change(vrpn_int32 val, void *ud)
+{
   printf("change in registration type\n");
 }
 
+void    AlignerUI::handle_texture_display_change(vrpn_int32 val, void *ud)
+{
+    AlignerUI *aui = ((AlignerUI *)ud);
+    if (val) {
+      disableOtherTextures(REGISTRATION);
+      aui->graphics_display->setTextureMode(nmg_Graphics::COLORMAP,
+                                          nmg_Graphics::REGISTRATION_COORD);
+    }
+    else {
+      aui->graphics_display->setTextureMode(nmg_Graphics::NO_TEXTURES,
+                                          nmg_Graphics::RULERGRID_COORD);
+    }
+}

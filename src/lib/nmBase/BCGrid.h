@@ -16,6 +16,10 @@ const int READ_STREAM = 2;
 
 class BCPlane;
 
+typedef void (* BCGrid_MinMaxCallback) (void * userdata,
+                                        double minX, double maxX,
+                                        double minY, double maxY);
+
 class BCGrid
 {
   friend class TopoFile;
@@ -79,10 +83,12 @@ class BCGrid
 	return _derange_y;
     }
     
-    void setMinX(double min_x) { _min_x = min_x; _modified = 1; }
-    void setMaxX(double max_x) { _max_x = max_x; _modified = 1; }
-    void setMinY(double min_y) { _min_y = min_y; _modified = 1; }
-    void setMaxY(double max_y) { _max_y = max_y; _modified = 1; }
+    void setMinX (double min_x);
+    void setMaxX (double max_x);
+    void setMinY (double min_y);
+    void setMaxY (double max_y);
+
+    void registerMinMaxCallback (BCGrid_MinMaxCallback cb, void * userdata);
 
     double transform(short* datum, int image_mode, double scale); // defined in readNanoscopeFile.C
 
@@ -110,6 +116,15 @@ class BCGrid
       // decimates a subset of <source> into the region [minx, maxx] x
       // [miny, maxy] of <dest>, which is <destNumX> x <destNumY> in size,
       // using <mask>
+
+    void doMinMaxCallbacks (void);
+
+    struct MinMaxCB {
+      BCGrid_MinMaxCallback cb;
+      void * userdata;
+      MinMaxCB * next;
+    };
+    MinMaxCB * d_minMaxCB;
 
   private:
 

@@ -19,7 +19,8 @@
 #include <nmb_Selector.h>
 #include <nmb_Types.h>  // for vrpn_bool
 
-struct Tcl_Interp;  // from tcl.h
+//struct Tcl_Interp;  // from tcl.h
+#include <tcl.h>  // for Client_Data, Tcl_Interp
 
 extern	int	Tclvar_init(Tcl_Interp *tcl_interp);
 extern	int	Tclvar_mainloop(void);
@@ -72,6 +73,10 @@ struct tclCheckCallbackEntry {
 
 
 class	Tclvar_int {
+
+    friend char * handle_int_value_change (ClientData clientData,
+        Tcl_Interp *, char *, char *, int);
+
     public:
 	Tclvar_int(const char * tcl_varname, vrpn_int32 default_value = 0,
 		   Linkvar_Intcall c = NULL, void * ud = NULL);
@@ -99,6 +104,8 @@ class	Tclvar_int {
 
     protected:
 
+      virtual void SetFromTcl (vrpn_int32);
+
 	vrpn_int32	d_myint;
 
         tclIntCallbackEntry * d_callbacks;
@@ -107,6 +114,10 @@ class	Tclvar_int {
 };
 
 class	Tclvar_float {
+
+    friend char * handle_float_value_change (ClientData clientData,
+        Tcl_Interp *, char *, char *, int);
+
     public:
 	Tclvar_float(const char * tcl_varname, vrpn_float64 default_value = 0.0,
 		Linkvar_Floatcall c = NULL, void * ud = NULL);
@@ -131,6 +142,8 @@ class	Tclvar_float {
 
     protected:
 
+      virtual void SetFromTcl (vrpn_float64);
+
 	vrpn_float64	d_myfloat;
 
         tclFloatCallbackEntry * d_callbacks;
@@ -141,9 +154,10 @@ class	Tclvar_float {
 
 class	Tclvar_selector : public nmb_Selector {
 
-  public:
+    friend char * handle_string_value_change (ClientData clientData,
+        Tcl_Interp *, char *, char *, int);
 
-    friend int Tclvar_mainloop (void);
+  public:
 
     Tclvar_selector (const char * initial_value = "");
 
@@ -184,6 +198,8 @@ class	Tclvar_selector : public nmb_Selector {
     vrpn_bool d_permitIdempotentChanges;
 
   protected:
+
+    virtual void SetFromTcl (const char *);
 
     virtual int clearList ();
     virtual int addEntry (const char *);

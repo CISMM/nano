@@ -2,6 +2,7 @@
 #define NMG_GRAPHICS_IMPL_H
 
 #include "nmg_Graphics.h"
+#include "PPM.h"
 
 #include "gaEngine_Remote.h"
 
@@ -23,7 +24,10 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void resizeViewport(int width, int height);
 
+
     virtual void loadRulergridImage (const char *);
+
+    virtual void causeGridRedraw (void);
 
     virtual void enableChartjunk (int);
     virtual void enableFilledPolygons (int);
@@ -55,6 +59,11 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setHandColor (int);
     virtual void setHatchMapName (const char *);  // RENAME?
 
+    virtual void setAlphaPlaneName (const char *);
+    virtual void setColorPlaneName (const char *);
+    virtual void setContourPlaneName (const char *);
+    virtual void setHeightPlaneName (const char *);
+
     virtual void setIconScale (float);
 
     virtual void setCollabHandPos (double [3], double [4]);
@@ -70,7 +79,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setPatternMapName (const char *);  // RENAME?
 
   // Genetic Textures
-    virtual void enableGeneticTextures (int);
+//    virtual void enableGeneticTextures (int);
     virtual void sendGeneticTexturesData (int, char **);
 
     // Realigning Textures:
@@ -79,17 +88,25 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setRealignTexturesConversionMap( const char *, const char * );
     virtual void computeRealignPlane( const char *, const char * );
 
-    virtual void enableRealignTextures (int on);
+//    virtual void enableRealignTextures (int on);
     virtual void translateTextures ( int on, float dx, float dy );
     virtual void scaleTextures ( int on, float dx, float dy );
     virtual void shearTextures ( int on, float dx, float dy );
     virtual void rotateTextures ( int on, float theta );
     virtual void setTextureCenter( float dx, float dy );
 
-    virtual void enableRegistration (int on);
+    virtual void updateTexture(int which, const char *image_name,
+       int start_x, int start_y,
+       int end_x, int end_y);
+ 
+    // helper for updateTexture
+    virtual void loadRawDataTexture(const int which, const char *image_name,
+	const int start_x, const int start_y);
+
+//    virtual void enableRegistration (int on);
     virtual void setTextureTransform(double *xform);
 
-    virtual void enableRulergrid (int);
+//    virtual void enableRulergrid (int);
     virtual void setRulergridAngle (float);
     virtual void setRulergridColor (int r, int g, int b);
     virtual void setRulergridOffset (float x, float y);
@@ -105,7 +122,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void setTesselationStride (int);
 
-    virtual void setTextureMode (TextureMode);
+    virtual void setTextureMode (TextureMode, 
+		TextureTransformMode = RULERGRID_COORD);
     virtual void setTextureScale (float);
     virtual void setTrueTipScale (float);
 
@@ -150,6 +168,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
   protected:
 
+    TextureMode getTextureMode (void) const;
+
     virtual void initDisplays (void);
       // Making constructor more flexible:  calls v_open_display()
       // for all users (in [0, NUM_USERS)).  Default behavior is to
@@ -159,20 +179,35 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
       // of graphics implementations redefine the relevant environment
       // variable?
 
-    void screenCapture (int * w, int * h, unsigned char ** pixels);
-    void depthCapture (int * w, int * h, float ** depths);
+    virtual void initializeTextures (void);
+    virtual void makeAndInstallRulerImage(PPM *myPPM);
+
+    // initializes all texture objects
+
+    void screenCapture (int * w, int * h, unsigned char ** pixels,
+                        vrpn_bool captureBack = VRPN_TRUE);
+    void depthCapture (int * w, int * h, float ** depths,
+                        vrpn_bool captureBack = VRPN_TRUE);
       // If (*pxiels) or (*depths) is non-NULL, assumes it is a
       // properly-sized array and writes into it;  otherwise news
       // a w*h*3 or w*h array respectively.
+      // By default captures from the back buffer, but can be set to
+      // capture from the front buffer instead.
 
     nmb_Dataset * d_dataset;
+
+    void getLatestChange (int * minX, int * maxX, int * minY, int * maxY);
 
   private:
 
     v_index * d_displayIndexList;
 
+    TextureMode d_textureMode;
+    TextureTransformMode d_textureTransformMode;
+
     static int handle_resizeViewport (void *, vrpn_HANDLERPARAM);
     static int handle_loadRulergridImage (void *, vrpn_HANDLERPARAM);
+    static int handle_causeGridRedraw (void *, vrpn_HANDLERPARAM);
     static int handle_enableChartjunk (void *, vrpn_HANDLERPARAM);
     static int handle_enableFilledPolygons (void *, vrpn_HANDLERPARAM);
     static int handle_enableSmoothShading (void *, vrpn_HANDLERPARAM);
@@ -189,14 +224,18 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setContourColor (void *, vrpn_HANDLERPARAM);
     static int handle_setContourWidth (void *, vrpn_HANDLERPARAM);
     static int handle_setFrictionSliderRange (void *, vrpn_HANDLERPARAM);
-	static int handle_setBumpSliderRange (void *, vrpn_HANDLERPARAM);
-	static int handle_setBuzzSliderRange (void *, vrpn_HANDLERPARAM);
+    static int handle_setBumpSliderRange (void *, vrpn_HANDLERPARAM);
+    static int handle_setBuzzSliderRange (void *, vrpn_HANDLERPARAM);
     static int handle_setHandColor (void *, vrpn_HANDLERPARAM);
     static int handle_setHatchMapName (void *, vrpn_HANDLERPARAM);
+    static int handle_setAlphaPlaneName (void *, vrpn_HANDLERPARAM);
+    static int handle_setColorPlaneName (void *, vrpn_HANDLERPARAM);
+    static int handle_setContourPlaneName (void *, vrpn_HANDLERPARAM);
+    static int handle_setHeightPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setMinColor (void *, vrpn_HANDLERPARAM);
     static int handle_setMaxColor (void *, vrpn_HANDLERPARAM);
     static int handle_setPatternMapName (void *, vrpn_HANDLERPARAM);
-    static int handle_enableRulergrid (void *, vrpn_HANDLERPARAM);
+//    static int handle_enableRulergrid (void *, vrpn_HANDLERPARAM);
     static int handle_setRulergridAngle (void *, vrpn_HANDLERPARAM);
     static int handle_setRulergridColor (void *, vrpn_HANDLERPARAM);
     static int handle_setRulergridOffset (void *, vrpn_HANDLERPARAM);
@@ -232,14 +271,14 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
   static int genetic_textures_ready( void * );
   static int send_genetic_texture_data( void * );
   // genetic handlers:
-  static int handle_enableGeneticTextures (void *, vrpn_HANDLERPARAM);
+//  static int handle_enableGeneticTextures (void *, vrpn_HANDLERPARAM);
   static int handle_sendGeneticTexturesData (void *, vrpn_HANDLERPARAM);
 
   // realign texture handlers:
   static int handle_createRealignTextures (void *, vrpn_HANDLERPARAM);
   static int handle_setRealignTextureSliderRange (void *, vrpn_HANDLERPARAM);
   static int handle_computeRealignPlane (void *, vrpn_HANDLERPARAM);
-  static int handle_enableRealignTextures (void *, vrpn_HANDLERPARAM);
+//  static int handle_enableRealignTextures (void *, vrpn_HANDLERPARAM);
   static int handle_translateTextures (void *, vrpn_HANDLERPARAM);
   static int handle_scaleTextures (void *, vrpn_HANDLERPARAM);
   static int handle_shearTextures (void *, vrpn_HANDLERPARAM);
@@ -247,7 +286,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
   static int handle_setTextureCenter (void *, vrpn_HANDLERPARAM);
   static int handle_setRealignTexturesConversionMap(void *,vrpn_HANDLERPARAM);
 
-  static int handle_enableRegistration(void *, vrpn_HANDLERPARAM);
+  static int handle_updateTexture(void *, vrpn_HANDLERPARAM);
+//  static int handle_enableRegistration(void *, vrpn_HANDLERPARAM);
   static int handle_setTextureTransform (void *, vrpn_HANDLERPARAM);
 
   static int handle_createScreenImage(void *, vrpn_HANDLERPARAM);

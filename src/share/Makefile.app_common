@@ -73,7 +73,7 @@ endif
 default: $(OBJECT_DIR) $(APP_EXEC)
 
 .PHONY: all
-all: $(OBJECT_DIR) $(APP_OBJ) $(APP_EXEC)
+#all: $(OBJECT_DIR) $(APP_OBJ) $(APP_EXEC)
 
 .PHONY: clean
 clean: 

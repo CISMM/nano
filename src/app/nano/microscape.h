@@ -227,7 +227,6 @@ extern  TclNet_float rulergrid_yoffset;
 extern  TclNet_float rulergrid_angle;
 extern	Tclvar_int_with_button rulergrid_enabled;
 
-
 //---------------------------------------------------------------------------
 // These select the plane to map alpha from and the scale of the mapping. 
 extern  Tclvar_float            alpha_slider_min_limit;
@@ -259,6 +258,11 @@ extern void get_Plane_Extents(float*,float*,float*);
 extern void set_channel_for_ohmeter(char* channel_name);
 extern void cause_grid_redraw(float new_value, void *userdata);
 extern int register_vrpn_phantom_callbacks(void);
+
+// XXX - this has to do with the user interface but there isn't
+// a global user interface object so I put it here temporarily (AAS)
+enum TextureMode {RULERGRID, SEM, REGISTRATION, MANUAL_REALIGN, GENETIC};
+extern int disableOtherTextures (TextureMode m);
 
 /* defined in minit.c */
 int x_init(char* argv[]);

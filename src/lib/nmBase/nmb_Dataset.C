@@ -141,6 +141,8 @@ BCPlane * nmb_Dataset::ensureHeightPlane (void) {
   while (plane) {
     if (!strcmp(*plane->units(),"nm")) {
       heightPlaneName->Set(plane->name()->Characters());
+      // This line is EVIL - TCH 14 Jan 00
+      //*heightPlaneName = nmb_Selector(NULL, (plane->name()->Characters()));
       break;  // Found one!
     }
     plane = plane->next();

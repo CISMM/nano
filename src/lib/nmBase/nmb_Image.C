@@ -3,19 +3,19 @@
 
 extern TopoFile GTF;
 
-const int nmb_ImageGrid::num_export_formats = 5;
-const char *nmb_ImageGrid::export_formats_list[] = {	"Topometrix",
-                                 		"Text(MathCAD)",
-                                 		"PPM Image",
-                                 		"SPIP",
-                                 		"UNCA Image" };
-const nmb_ImageGrid::FileExportingFunction 
-	nmb_ImageGrid::file_exporting_function[] = 
-				{nmb_ImageGrid::writeTopoFile,
-                                 nmb_ImageGrid::writeTextFile,
-                                 nmb_ImageGrid::writePPMFile,
-                                 nmb_ImageGrid::writeSPIPFile,
-                                 nmb_ImageGrid::writeUNCAFile};
+nmb_ImageBounds::nmb_ImageBounds() 
+{
+    for (int i = 0; i < 4; i++){
+        x[i] = 0.0; y[i] = 0.0;
+    }
+}
+
+nmb_ImageBounds::nmb_ImageBounds(double x0,double y0,double x1,double y1){
+    x[MIN_X_MIN_Y] = x0; x[MIN_X_MAX_Y] = x0;
+    y[MIN_X_MIN_Y] = y0; y[MAX_X_MIN_Y] = y0;
+    x[MAX_X_MIN_Y] = x1; x[MAX_X_MAX_Y] = x1;
+    y[MIN_X_MAX_Y] = y1; y[MAX_X_MAX_Y] = y1;
+}
 
 float nmb_Image::getValueInterpolated(double i, double j) const {
 	int i_ip, j_ip;
@@ -120,10 +120,199 @@ void nmb_Image::worldToPixel(const double x, const double y,
         j = y_frac*(double)height();
 }
 
+const int nmb_ImageGrid::num_export_formats = 5;
+const char *nmb_ImageGrid::export_formats_list[] = {	"Topometrix",
+                                 		"Text(MathCAD)",
+                                 		"PPM Image",
+                                 		"SPIP",
+                                 		"UNCA Image" };
+const nmb_ImageGrid::FileExportingFunction 
+	nmb_ImageGrid::file_exporting_function[] = 
+				{nmb_ImageGrid::writeTopoFile,
+                                 nmb_ImageGrid::writeTextFile,
+                                 nmb_ImageGrid::writePPMFile,
+                                 nmb_ImageGrid::writeSPIPFile,
+                                 nmb_ImageGrid::writeUNCAFile};
+
+
+nmb_ImageGrid::nmb_ImageGrid(const char *name, const char *units, 
+	short x, short y):
+            nmb_Image(),
+            units_x("nm"), units_y("nm")
+{
+    BCString name_str(name), units_str(units);
+    grid = new BCGrid(x, y, 0.0, 1.0, 0.0, 1.0);
+    plane = grid->addNewPlane(name_str, units_str, 0);
+    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
+    max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+    for (int i = 0; i < numExportFormats(); i++){
+        BCString name = exportFormatType(i);
+        formatNames.addEntry(name);
+    }
+}
+
+nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image()
+{
+    // WARNING: assumes (non-zero value <==> value was set) as
+    // did BCPlane::findValidDataRange()
+
+    plane = p;
+    grid = NULL;
+    int i,j;
+    for (i = 0; i < plane->numX(); i++){
+        for (j = 0; j < plane->numY(); j++){
+            if (plane->value(i,j) != 0.0){
+                min_x_set = MIN(min_x_set, i);
+                max_x_set = MAX(max_x_set, i);
+                min_y_set = MIN(min_y_set, j);
+                max_y_set = MAX(max_y_set, j);
+            }
+        }
+    }
+    for (i = 0; i < numExportFormats(); i++){
+        BCString name = exportFormatType(i);
+        formatNames.addEntry(name);
+    }
+}
+
+nmb_ImageGrid::~nmb_ImageGrid()
+{   
+    if (grid) {
+        delete grid;
+    }
+}
+
+int nmb_ImageGrid::width() const {return plane->numX();}
+
+int nmb_ImageGrid::height() const {return plane->numY();}
+
+float nmb_ImageGrid::getValue(int i, int j) const
+             {return plane->value(i,j);}
+
+float nmb_ImageGrid::maxValue() const {return plane->maxValue();}
+
+float nmb_ImageGrid::minValue() const {return plane->minValue();}
+
+void nmb_ImageGrid::setValue(int i, int j, float val)
+{
+     plane->setValue(i,j,val);
+     min_x_set = MIN(min_x_set, i);
+     max_x_set = MAX(max_x_set, i);
+     min_y_set = MIN(min_y_set, j);
+     max_y_set = MAX(max_y_set, j);
+}
+
+int nmb_ImageGrid::validDataRange(short* o_top, short* o_left,
+                                   short* o_bottom, short*o_right){
+     // if no valid data:
+     if (min_y_set > max_y_set || min_x_set > max_x_set)
+        return -1;
+     // otherwise at least one valid data point:
+     *o_bottom = min_y_set; *o_top = max_y_set;
+     *o_left = min_x_set; *o_right = max_x_set;
+     return 0;
+}
+
+float nmb_ImageGrid::minAttainableValue() const {
+           return plane->minAttainableValue();}
+
+float nmb_ImageGrid::maxAttainableValue() const {
+           return plane->maxAttainableValue();}
+
+double nmb_ImageGrid::boundX(nmb_ImageBounds::ImageBoundPoint ibp) const
+{
+    if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
+        ibp == nmb_ImageBounds::MIN_X_MAX_Y){
+          return plane->minX();
+    } else {
+         return plane->maxX();
+    }
+}
+
+double nmb_ImageGrid::boundY(nmb_ImageBounds::ImageBoundPoint ibp) const
+{
+    if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
+        ibp == nmb_ImageBounds::MAX_X_MIN_Y) {
+        return plane->minY();
+    } else {
+        return plane->maxY();
+    }
+}
+
+void nmb_ImageGrid::setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x)
+{
+    // WARNING: this might not do what you think because
+    // BCGrid has a less general notion of the image extents
+    if (grid == NULL) {
+        fprintf(stderr,
+                "Warning: nmb_ImageGrid::setBoundX failed\n");
+            return;
+    }
+    if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
+        ibp == nmb_ImageBounds::MIN_X_MAX_Y) {
+        grid->setMinX(x);
+    } else {
+        grid->setMaxX(x);
+    }
+}
+
+void nmb_ImageGrid::setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y)
+{
+    // WARNING: this might not do what you think because
+    // BCGrid has a less general notion of the image extents
+    if (grid == NULL) {
+        fprintf(stderr,
+                "Warning: nmb_ImageGrid::setBoundY failed\n");
+        return;
+    }
+    if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
+        ibp == nmb_ImageBounds::MAX_X_MIN_Y) {
+        grid->setMinY(y);
+    } else {
+        grid->setMaxY(y);
+    }
+}
+
+void nmb_ImageGrid::getBounds(nmb_ImageBounds &ib)  const
+{
+    ib = nmb_ImageBounds(plane->minX(), plane->minY(),
+                        plane->maxX(), plane->maxY());
+}
+
+void nmb_ImageGrid::setBounds(const nmb_ImageBounds &ib)
+{
+    // WARNING: this might not do what you think because
+    // BCGrid has a less general notion of the image extents
+    if (grid == NULL) {
+        fprintf(stderr,
+                "Warning: nmb_ImageGrid::setBounds failed\n");
+    }
+    grid->setMinX(ib.getX(nmb_ImageBounds::MIN_X_MIN_Y));
+    grid->setMinY(ib.getY(nmb_ImageBounds::MIN_X_MIN_Y));
+    grid->setMaxX(ib.getX(nmb_ImageBounds::MAX_X_MAX_Y));
+    grid->setMaxY(ib.getY(nmb_ImageBounds::MAX_X_MAX_Y));
+}
+
+BCString *nmb_ImageGrid::name() {return plane->name();}
+BCString *nmb_ImageGrid::unitsValue() {return plane->units();}
+BCString *nmb_ImageGrid::unitsX() {return &units_x;}
+BCString *nmb_ImageGrid::unitsY() {return &units_y;}
+
+vrpn_uint8 *nmb_ImageGrid::rawDataUnsignedByte() { return NULL;}
+
+int nmb_ImageGrid::numExportFormats() {return num_export_formats;}
+
+nmb_ListOfStrings *nmb_ImageGrid::exportFormatNames()
+                {return &formatNames;}
+
+const char *nmb_ImageGrid::exportFormatType(int type)
+            {return (const char *)(export_formats_list[type]);}
+
 int nmb_ImageGrid::exportToFile(FILE *f, const char *export_type){
 
     int my_export_type;
-    for (my_export_type = 0; my_export_type < numExportFormats(); my_export_type++){
+    for (my_export_type = 0; my_export_type < numExportFormats(); 
+         my_export_type++){
 	if (strcmp(export_type, exportFormatType(my_export_type)) == 0)
 	    break;
     }
@@ -191,6 +380,142 @@ int nmb_ImageGrid::writeUNCAFile(FILE *file, nmb_ImageGrid *im)
 }
 
 
+const int nmb_Image8bit::num_export_formats = 0;
+const char *nmb_Image8bit::export_formats_list[] = {"none"};
+const nmb_Image8bit::FileExportingFunction
+        nmb_Image8bit::file_exporting_function[] = {NULL};
+
+
+nmb_Image8bit::nmb_Image8bit(const char *name, const char *units, 
+	short x, short y):
+        nmb_Image(), num_x(x), num_y(y),
+        units_x("none"), units_y("none"), units("ADC"),
+        my_name(name)
+{
+    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
+    max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
+    data = new vrpn_uint8[x*y];
+    if (!data) {
+	fprintf(stderr, "nmb_Image8bit::nmb_Image8bit: Error, out of memory\n");
+    }
+    for (int i = 0; i < numExportFormats(); i++){
+        BCString name = exportFormatType(i);
+        formatNames.addEntry(name);
+    }
+}
+
+nmb_Image8bit::~nmb_Image8bit() {if (data) delete [] data;}
+
+int nmb_Image8bit::width() const {return num_x;}
+
+int nmb_Image8bit::height() const {return num_y;}
+
+vrpn_uint8 *nmb_Image8bit::rawDataUnsignedByte() {return data;}
+
+float nmb_Image8bit::getValue(int i, int j) const
+        {return (float)data[i+j*num_x];}
+
+void nmb_Image8bit::setValue(int i, int j, float val)
+{
+    if (val > 255)
+        data[i+j*num_x] = 255;
+    else if (val < 0)
+        data[i+j*num_x] = 0;
+    else
+        data[i+j*num_x] = (vrpn_uint8)val;
+}
+
+void nmb_Image8bit::setLine(int line, vrpn_uint8 *line_data) {
+    memcpy(&(data[line*num_x]), line_data, num_x);
+}
+
+void nmb_Image8bit::setImage(vrpn_uint8 *newdata) {
+    memcpy(data, newdata, num_x*num_y);
+}
+
+int nmb_Image8bit::validDataRange(short* o_top, short* o_left,
+                                   short* o_bottom, short*o_right){
+     // if no valid data:
+     if (min_y_set > max_y_set || min_x_set > max_x_set)
+        return -1;
+     // otherwise at least one valid data point:
+     *o_bottom = min_y_set; *o_top = max_y_set;
+     *o_left = min_x_set; *o_right = max_x_set;
+     return 0;
+}
+
+float nmb_Image8bit::maxValue() const {return 255.0;}
+
+float nmb_Image8bit::minValue() const {return 0.0;}
+
+float nmb_Image8bit::maxAttainableValue() const {return 255.0;}
+
+float nmb_Image8bit::minAttainableValue() const {return 0.0;}
+
+double nmb_Image8bit::boundX(nmb_ImageBounds::ImageBoundPoint ibp) const
+{
+    if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
+        ibp == nmb_ImageBounds::MIN_X_MAX_Y){
+          return 0.0;
+    } else {
+          return (double)num_x;
+    }
+}
+
+double nmb_Image8bit::boundY(nmb_ImageBounds::ImageBoundPoint ibp) const
+{
+    if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
+        ibp == nmb_ImageBounds::MAX_X_MIN_Y) {
+          return 0.0;
+    } else {
+          return (double)num_y;
+    }
+}
+
+void nmb_Image8bit::setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x){}
+void nmb_Image8bit::setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y){}
+
+void nmb_Image8bit::setBounds(const nmb_ImageBounds &ib) {}
+
+void nmb_Image8bit::getBounds(nmb_ImageBounds &ib)  const
+{
+    ib = nmb_ImageBounds(0.0, 0.0, (double)num_x, (double)num_y);
+}
+
+BCString *nmb_Image8bit::name() {return &my_name;}
+BCString *nmb_Image8bit::unitsValue() {return &units;}
+BCString *nmb_Image8bit::unitsX() {return &units_x;}
+BCString *nmb_Image8bit::unitsY() {return &units_y;}
+
+int nmb_Image8bit::numExportFormats() {return 0;}
+nmb_ListOfStrings *nmb_Image8bit::exportFormatNames() {return NULL;}
+const char *nmb_Image8bit::exportFormatType(int type)
+         {return NULL;}
+
+int nmb_Image8bit::exportToFile(FILE *f, const char *export_type){
+
+    int my_export_type;
+    for (my_export_type = 0; my_export_type < numExportFormats();
+         my_export_type++){
+        if (strcmp(export_type, exportFormatType(my_export_type)) == 0)
+            break;
+    }
+    // if didn't find a match to export_type
+    if (my_export_type == numExportFormats()) {
+        fprintf(stderr, "nmb_Image8bit::Error, unknown file type: %s\n",
+            export_type);
+        return -1;
+    }
+    else {  // we have a function for exporting this type
+        if (file_exporting_function[my_export_type](f, this)) {
+            fprintf(stderr, "nmb_Image8bit::Error writing file of type %s\n",
+                export_type);
+            return -1;
+        }
+        return 0;
+    }
+}
+
 nmb_ImageList::nmb_ImageList(const char **file_names, int num_files)
 {
     printf("nmb_ImageList::nmb_ImageList building list\n");
@@ -232,4 +557,25 @@ int nmb_ImageList::addImage(nmb_Image *im)
 	images[num_images] = im;
 	num_images++;
 	return 0;
+}
+
+nmb_Image *nmb_ImageList::removeImageByName(BCString name) {
+    int i;
+    nmb_Image *im = getImageByName(name, i);
+    if (im == NULL) return NULL;
+    // getImageByName() succeeds ==> num_images >= 1
+    images[i] = images[num_images-1];
+    imageNames.deleteEntry((const char *)(*(im->name())));
+    num_images--;
+    return im;
+}
+
+nmb_Image *nmb_ImageList::getImageByName(BCString name, int &index) {
+    for (int i = 0; i < num_images; i++) {
+        if (*(images[i]->name()) == name){
+             index = i;
+             return images[i];
+        }
+    }
+    return NULL;
 }

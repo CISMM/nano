@@ -28,6 +28,7 @@
 #include <nmb_Interval.h>
 #include <nmb_Line.h>
 
+#include	"nmg_Graphics.h" // for enums
 #include	"openGL.h"
 #include	"globjects.h"  // for myworld()
 #include	"graphics_globals.h"
@@ -68,12 +69,14 @@ int	display_lists_in_x = 1;	/* Are display lists strips in X? */
 
 // #define EXPENSIVE_DISPLAY_LISTS
 
-static void report_gl_errors(void)
+int report_gl_errors(void)
 {
  v_gl_set_context_to_vlib_window(); 
 // Calling glGetError() on PixelFlow has horrible performance
  GLenum errcode;
+  int n_errors = 0;
   while ( (errcode = glGetError()) != GL_NO_ERROR) {
+    n_errors++;
     switch (errcode) {
         case GL_INVALID_ENUM:
             fprintf(stderr,"Warning: GL error GL_INVALID_ENUM occurred\n");
@@ -96,7 +99,8 @@ static void report_gl_errors(void)
         default:
             fprintf(stderr,"Warning: GL error (code 0x%x) occurred\n", errcode);
     }
-  } 
+  }
+  return n_errors;
 }
 
 
@@ -167,11 +171,12 @@ int build_list_set
   if (subset.empty()) return 0;
 
 #if defined(sgi) || defined(__CYGWIN__)
-  if (g_VERTEX_ARRAY){// same extension is for COLOR_ARRAY
-    if(planes.color)
+  if (g_VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
+    if (planes.color || g_PRERENDERED_COLORS) {
       glEnable(GL_COLOR_ARRAY_EXT);
-    else
+    } else {
       glDisable(GL_COLOR_ARRAY_EXT);
+    }
     if (glGetError()!=GL_NO_ERROR) {
       printf(" Error setting GL_COLOR_ARRAY_EXT.\n");
     }
@@ -198,7 +203,7 @@ int build_list_set
 
   glTexGeni(GL_Q, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
   glTexGenfv(GL_Q, GL_OBJECT_PLANE, eyePlaneQ);
-  if (glGetError()!=GL_NO_ERROR) {
+  if (report_gl_errors()) {
       printf(" Error calling glTexGen.\n");
   } 
 
@@ -206,9 +211,7 @@ int build_list_set
 
   if (g_VERTEX_ARRAY){// same extension is for TEXTURE_COORD_ARRAY
 #ifndef PROJECTIVE_TEXTURE
-    if ( planes.contour || planes.alpha || 
-       g_rulergrid_enabled || g_genetic_textures_enabled || 
-       g_realign_textures_enabled )
+    if ( g_texture_displayed != nmg_Graphics::NO_TEXTURES) 
      glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
     else
      glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
@@ -335,6 +338,9 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
  
         /* set material parameters */
         spm_set_surface_materials();
+        if (report_gl_errors()) {
+	   printf("spm_set_surface_materials: generated gl error\n");
+	}
 
 	// Figure out how many strips we will need.  Recall that we are
 	// skipping along by stride gridpoints each time.
@@ -358,9 +364,15 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
 
 #if defined(sgi) || defined(__CYGWIN__)
 	// use vertex array extension
-	if(g_VERTEX_ARRAY) {
+	if (g_VERTEX_ARRAY) {
 	  glEnable(GL_VERTEX_ARRAY_EXT);
-	  glEnable(GL_NORMAL_ARRAY_EXT);
+          // Color arrays are enabled/disabled dynamically depending
+          // on whether or not planes.color or g_PRERENDERED_COLORS are
+          // valid.
+	  //glEnable(GL_COLOR_ARRAY_EXT);  // TCH 8 Jan 00
+          if (!g_PRERENDERED_COLORS) {
+	    glEnable(GL_NORMAL_ARRAY_EXT);
+          }
 	}
 #endif
 
@@ -381,7 +393,7 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
 #include "UTree.h"
 #include "URender.h"
 extern UTree World;
-int draw_world (int whichUser) {
+int draw_world (int) {
 
   int i;
 
@@ -398,8 +410,6 @@ int draw_world (int whichUser) {
   // End Ubergraphics
   /********************************************************************/
 
-  whichUser = whichUser; /* make compiler happy */
-
   TIMERVERBOSE(3, mytimer, "begin draw_world");
 
   // Look up the planes we're mapping to various data sets this time.
@@ -412,11 +422,19 @@ int draw_world (int whichUser) {
   if (g_PRERENDERED_COLORS) {
     planes.lookupPrerendered(g_prerendered_grid);
   } else {
-    planes.lookup(dataset);
+    planes.lookup(g_inputGrid, g_heightPlaneName,
+                  g_colorPlaneName, g_contourPlaneName, g_alphaPlaneName);
   }
   if (planes.height == NULL) {	
       return -1;
   }
+
+
+//fprintf(stderr, "Corners of grid:  (%.2f, %.2f), (%.2f, %.2f).\n",
+//planes.height->xInWorld(0), planes.height->yInWorld(0),
+//planes.height->xInWorld(planes.height->numX() - 1),
+//planes.height->yInWorld(planes.height->numX() - 1));
+
 
   /********************************************************************/
   // Set up surface materials parameters for the surface, then draw it
@@ -434,6 +452,8 @@ int draw_world (int whichUser) {
    * If the region has changed, we need to rebuild the display
    * lists for the surface.
    ************************************************************/
+
+  // TODO  - add special cases for g_PRERENDERED_COLORS
 
   if (decoration->selectedRegion_changed) {
     
@@ -553,21 +573,32 @@ int draw_world (int whichUser) {
   int low_strip;
   int high_strip;
 
+  if (g_PRERENDERED_COLORS) {
+    g_prerenderedChange->GetBoundsAndClear
+      (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
+  } else {
+    dataset->range_of_change.GetBoundsAndClear
+      (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
+  }
 
   if (display_lists_in_x) {
 
     // Get the data (low and high Y vales changed) atomically
     // so we have bulletproof synchronization.
-    dataset->range_of_change.GetBoundsAndClear
-      (NULL, NULL, &low_row, &high_row);
+    //dataset->range_of_change.GetBoundsAndClear
+      //(NULL, NULL, &low_row, &high_row);
+    low_row = g_minChangedY;
+    high_row = g_maxChangedY;
     stripfn = spm_x_strip;
 
   } else {
 
     // Get the data (low and high X vales changed) atomically
     // so we have bulletproof synchronization.
-    dataset->range_of_change.GetBoundsAndClear
-      (&low_row, &high_row, NULL, NULL);
+    //dataset->range_of_change.GetBoundsAndClear
+      //(&low_row, &high_row, NULL, NULL);
+    low_row = g_minChangedX;
+    high_row = g_maxChangedX;
     stripfn = spm_y_strip;
 
   }
@@ -674,10 +705,69 @@ int draw_world (int whichUser) {
   VERBOSE(4,"    Drawing the grid");
   TIMERVERBOSE(5, mytimer, "draw_world:Drawing the grid");
 
+  if (g_texture_mode == GL_TEXTURE_2D) {
+#ifdef __CYGWIN__
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
+#else
+      if (g_texture_displayed == nmg_Graphics::RULERGRID)
+          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+      else
+	  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+#endif
+  }
+#ifndef __CYGWIN__
+  if (g_texture_mode == GL_TEXTURE_1D || g_texture_mode == GL_TEXTURE_3D_EXT){
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+  }
+#endif
+
+
+  switch (g_texture_displayed) {
+    case nmg_Graphics::NO_TEXTURES:
+      // nothing to do here
+      break;
+    case nmg_Graphics::CONTOUR:
+      glBindTexture(GL_TEXTURE_1D, tex_ids[CONTOUR_1D_TEX_ID]);
+      break;
+    case nmg_Graphics::ALPHA:
+#ifndef __CYGWIN__
+      glBindTexture(GL_TEXTURE_3D, tex_ids[ALPHA_3D_TEX_ID]);
+#endif
+    case nmg_Graphics::BUMPMAP:
+#ifdef FLOW
+      glBindTexture(GL_TEXTURE_2D, shader_tex_ids[BUMP_DATA_TEX_ID]);
+#endif
+      break;
+    case nmg_Graphics::HATCHMAP:
+#ifdef FLOW
+      glBindTexture(GL_TEXTURE_2D, shader_tex_ids[HATCH_DATA_TEX_ID]);
+#endif
+      break;
+    case nmg_Graphics::PATTERNMAP:
+#ifdef FLOW
+      glBindTexture(GL_TEXTURE_2D, shader_tex_ids[PATTERN_DATA_TEX_ID]);
+#endif
+      break;
+    case nmg_Graphics::RULERGRID:
+      glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
+      break;
+    case nmg_Graphics::GENETIC:
+      glBindTexture(GL_TEXTURE_2D, tex_ids[GENETIC_TEX_ID]);
+      break;
+    case nmg_Graphics::COLORMAP:
+      glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
+      break;
+    case nmg_Graphics::SEM_DATA:
+      glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
+      break;
+    default:
+      fprintf(stderr, "Error, unknown texture set for display\n");
+      break;
+  }
+
 #ifdef PROJECTIVE_TEXTURE
 
-  if (g_realign_textures_enabled || g_rulergrid_enabled ||
-	g_genetic_textures_enabled || g_registration_enabled) {
+  if (g_texture_mode == GL_TEXTURE_2D) {
     glPushAttrib(GL_TRANSFORM_BIT | GL_TEXTURE_BIT);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_TEXTURE_GEN_S);
@@ -688,60 +778,60 @@ int draw_world (int whichUser) {
     glMatrixMode(GL_TEXTURE);
     glPushMatrix();
     glLoadIdentity();
-  }
 
-  if (!g_realign_textures_enabled){
-    // reinitialize for when we go back into align texture mode
-    g_shear_tex_x = 0.0;
-    g_shear_tex_y = 0.0;
-    g_tex_coord_center_x = 0.0;
-    g_tex_coord_center_y = 0.0;
-    g_scale_tex_x = 2500.0;
-    g_scale_tex_y = 2500.0;
-    g_tex_theta_cumulative = 0.0;
-    g_translate_tex_x = 0.0;
-    g_translate_tex_y = 0.0;
-  }
-
-  if (g_rulergrid_enabled){
-    // use values from the older rulergrid adjustment interface
-    glScalef(1.0/g_rulergrid_scale,1.0/g_rulergrid_scale,1.0);    // 1.0/SCALE
-    double theta = asin(g_rulergrid_sin);
-    if (g_rulergrid_cos < 0)
-        theta = M_PI - theta;
-    glRotated(theta*180.0/M_PI, 0.0, 0.0, 1.0);              // -ROTATION
-    glTranslatef(-g_rulergrid_xoffset, -g_rulergrid_yoffset, 0.0);// -TRANS.
-  }
-  else if (g_realign_textures_enabled ||
-	g_genetic_textures_enabled){ // use values from Alexandra's interface
-    GLdouble texture_matrix[16];
-    compute_texture_matrix(g_translate_tex_x, g_translate_tex_y,
+    double theta = 0.0;
+    switch (g_texture_transform_mode) {
+      case nmg_Graphics::RULERGRID_COORD:
+        // use values from the older rulergrid adjustment interface
+        glScalef(1.0/g_rulergrid_scale,1.0/g_rulergrid_scale,1.0); // 1.0/SCALE
+        theta = asin(g_rulergrid_sin);
+        if (g_rulergrid_cos < 0)
+          theta = M_PI - theta;
+        glRotated(theta*180.0/M_PI, 0.0, 0.0, 1.0);              // -ROTATION
+        glTranslatef(-g_rulergrid_xoffset, -g_rulergrid_yoffset, 0.0);// -TRANS.
+        break;
+      case nmg_Graphics::MANUAL_REALIGN_COORD:
+        GLdouble texture_matrix[16];
+        compute_texture_matrix(g_translate_tex_x, g_translate_tex_y,
 		g_tex_theta_cumulative, g_scale_tex_x,
 		g_scale_tex_y, g_shear_tex_x, g_shear_tex_y,
 		g_tex_coord_center_x, g_tex_coord_center_y,
 		texture_matrix);
-    glLoadMatrixd(texture_matrix);
-  }
-  else if (g_registration_enabled) {
-    glLoadIdentity();
-    // scale by actual texture image given divided by texture image used
-    // (i.e. the one actually in texture memory is a power of 2 but the
-    // one we were given had some smaller size)
-    glScaled((double)g_tex_image_width/(double)g_tex_installed_width,        
+        glLoadMatrixd(texture_matrix);
+        break;
+      case nmg_Graphics::REGISTRATION_COORD:
+        glLoadIdentity();
+        // scale by actual texture image given divided by texture image used
+        // (i.e. the one actually in texture memory is a power of 2 but the
+        // one we were given had some smaller size)
+        glScaled((double)g_tex_image_width/(double)g_tex_installed_width,
                 (double)g_tex_image_height/(double)g_tex_installed_height,
                 1.0);
-    glMultMatrixd(g_texture_transform);
+        glMultMatrixd(g_texture_transform);
+	break;
+      default:
+        fprintf(stderr, "Error, unknown texture coordinate mode\n");
+        break;
+    }
   }
 #endif
   
+  if (g_texture_mode == GL_TEXTURE_1D) {
+     glEnable(GL_TEXTURE_1D);
+  }
+
   for (i = 0; i < num_grid_lists; i++) {
     glCallList(grid_list_base + i);
   }
 
+  if (g_texture_mode == GL_TEXTURE_1D) {
+     glDisable(GL_TEXTURE_1D);
+  }
+
+
 #ifdef PROJECTIVE_TEXTURE
 
-  if (g_realign_textures_enabled || g_rulergrid_enabled ||
-	g_genetic_textures_enabled || g_registration_enabled) {
+  if (g_texture_mode == GL_TEXTURE_2D){
     glMatrixMode(GL_TEXTURE);
     glPopMatrix();
 

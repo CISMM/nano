@@ -471,6 +471,15 @@ void AFMState::SetDefaultScanlineForRegion(nmb_Dataset * dataset){
         scanline.width = 100.0;
     }
     BCPlane *p = g->getPlaneByName(dataset->heightPlaneName->string());
+    if (!p) {
+        fprintf(stderr, "AFMState::SetDefaultScanlineForRegion - "
+           "Error: tried to get height plane but couldn't\n");
+        // this value is just a default so its not really critical
+	// user should check it anyway before running without feedback
+        // enabled
+        scanline.z_end = 100.0;
+        return;
+    }
     // Add a safety margin of 100.0 nM
 	float x, y, z;
 	scanline.getFinishPoint(p, &x, &y, &z);

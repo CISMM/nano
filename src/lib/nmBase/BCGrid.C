@@ -49,6 +49,8 @@ BCGrid::BCGridFill(short num_x, short num_y,
    //BCDebug debug("BCGrid::BCGridFill", GRID_CODE);
     int i;
 
+    d_minMaxCB = NULL;
+
     _num_x = num_x;
     _num_y = num_y;
     _min_x = min_x;
@@ -212,6 +214,8 @@ BCGrid::BCGrid(short num_x, short num_y,
 {    
    //BCDebug debug("BCGrid::BCGrid", GRID_CODE);
 
+    d_minMaxCB = NULL;
+
     _num_x = num_x;
     _num_y = num_y;
     _min_x = min_x;
@@ -240,6 +244,7 @@ BCGrid::BCGrid(short num_x, short num_y,
 
 BCGrid::BCGrid (const BCGrid * grid) :
   _next (NULL),
+  d_minMaxCB ( NULL),
   _num_x (grid->_num_x),
   _num_y (grid->_num_y),
   _min_x (grid->_min_x),
@@ -292,6 +297,13 @@ BCGrid::~BCGrid()
 	
 	current = next;
     } 
+
+    MinMaxCB * cbp;
+    while (d_minMaxCB) {
+      cbp = d_minMaxCB;
+      d_minMaxCB = d_minMaxCB->next;
+      delete cbp;
+    }
 } // ~BCGrid
 
 /******************************************************************************\
@@ -529,6 +541,57 @@ BCGrid::decimate(short num_x, short num_y)
     _modified = 1;
     
 } // decimate
+
+
+
+
+void BCGrid::setMinX (double min_x) {
+  _min_x = min_x;
+  _modified = 1;
+  doMinMaxCallbacks();
+}
+void BCGrid::setMaxX (double max_x) {
+  _max_x = max_x;
+  _modified = 1;
+  doMinMaxCallbacks();
+}
+void BCGrid::setMinY (double min_y) {
+  _min_y = min_y;
+  _modified = 1;
+  doMinMaxCallbacks();
+}
+void BCGrid::setMaxY (double max_y) {
+  _max_y = max_y;
+  _modified = 1;
+  doMinMaxCallbacks();
+}
+
+void BCGrid::registerMinMaxCallback (BCGrid_MinMaxCallback cb,
+                                     void * userdata) {
+  MinMaxCB * st;
+
+  st = new MinMaxCB;
+  if (!st) {
+    fprintf(stderr, "BCGrid::registerMinMaxCallback():  Out of memory.\n");
+    return;
+  }
+
+  st->cb = cb;
+  st->userdata = userdata;
+  st->next = d_minMaxCB;
+
+  d_minMaxCB = st;
+}
+
+void BCGrid::doMinMaxCallbacks (void) {
+  MinMaxCB * st;
+
+  for (st = d_minMaxCB; st; st = st->next) {
+    (*st->cb)(st->userdata, _min_x, _max_x, _min_y, _max_y);
+  }
+}
+
+
 
 
 /******************************************************************************\
@@ -1237,6 +1300,7 @@ BCGrid::readFile(FILE* file, const char *filename)
 	     (strncmp(magic,"P3",2) == 0) ||
 	     (strncmp(magic,"P5",2) == 0))
     {
+        rewind(file);
 	return readPPMorPGMFileNew(file, filename);
     } 
     else 
@@ -1634,8 +1698,8 @@ BCGrid::readPPMorPGMFile(FILE *file, const char *name)
 int
 BCGrid::readPPMorPGMFileNew(FILE *file, const char *filename)
 {
-	fclose(file);
-	PPM ppm_file(filename);
+	//fclose(file);
+	PPM ppm_file(file);
 	
 	if (!(ppm_file.valid)) {
 		fprintf(stderr, "Error! BCGrid::readPPMorPGMFileNew"

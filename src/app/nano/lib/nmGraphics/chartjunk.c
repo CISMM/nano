@@ -118,17 +118,16 @@ int scale_display (void * data) {
 
   double scale = 1.0;
 
-//fprintf(stderr, "scale_display:  hpn %s.\n",
-// dataset->heightPlaneName->string());
+//fprintf(stderr, "scale_display:  height plane %s.\n", g_heightPlaneName);
 
-  BCPlane * plane = dataset->inputGrid->getPlaneByName
-              (dataset->heightPlaneName->string());
+  BCPlane * plane = g_inputGrid->getPlaneByName
+              (g_heightPlaneName);
   if (plane == NULL)
       fprintf(stderr, "Error in scale_display: could not get plane!\n");
   else
       scale = plane->scale();
   sprintf(message,"Z is from %s (%s), scale is %g",
-        dataset->heightPlaneName->string(),
+        g_heightPlaneName,
         plane->units()->Characters(), scale);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
 #ifndef FLOW
@@ -147,8 +146,8 @@ int x_y_width_display (void *) {
   char message[1000];
 
   sprintf(message,"Grid dX is %gnm, dY is %gnm",
-        dataset->inputGrid->maxX() - dataset->inputGrid->minX(),
-        dataset->inputGrid->maxY() - dataset->inputGrid->minY());
+        g_inputGrid->maxX() - g_inputGrid->minX(),
+        g_inputGrid->maxY() - g_inputGrid->minY());
 
   // Print the message at the appropriate location on the screen
 #ifndef FLOW
@@ -198,8 +197,8 @@ int height_at_hand_display (void *) {
 	}
   } else {
 	// Find out where the hand is in x and y right now
-	BCPlane* plane = dataset->inputGrid->getPlaneByName
-                      (dataset->heightPlaneName->string());
+	BCPlane* plane = g_inputGrid->getPlaneByName
+                      (g_heightPlaneName);
 	v_get_world_from_hand(whichUser, &worldFromHand);
 	x_loc = worldFromHand.xlate[X];
 	y_loc = worldFromHand.xlate[Y];
@@ -249,7 +248,7 @@ int rate_display (void *) {
 #endif
   glPushMatrix();
 
-  switch (dataset->inputGrid->readMode()) {
+  switch (g_inputGrid->readMode()) {
     case READ_DEVICE:
       sprintf(message, "Live at (%5d)", decoration->elapsedTime);
       break;
@@ -428,8 +427,8 @@ int measure_display (void *) {
 
    char message[1000];
 
-   BCPlane* plane = dataset->inputGrid->getPlaneByName
-                      (dataset->heightPlaneName->string());
+   BCPlane* plane = g_inputGrid->getPlaneByName
+                      (g_heightPlaneName);
    if (plane == NULL)
    {
        fprintf(stderr, "Error in doMeasure: could not get plane!\n");
@@ -439,6 +438,12 @@ int measure_display (void *) {
    measure_data = calculate(decoration->red.top(),
                             decoration->green.top(),
                             decoration->blue.top());
+
+   // WARNING
+   // plane->valueAt() doesn't do bounds checking, so if a decoration
+   // line has been moved outside the bounds of a plane it'll crash
+   // mysteriously here.
+
    measure_data.rgDz =
          plane->valueAt(decoration->red.x(), decoration->red.y()) -
          plane->valueAt(decoration->green.x(), decoration->green.y());

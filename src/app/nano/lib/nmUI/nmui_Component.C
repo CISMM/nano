@@ -164,6 +164,25 @@ void nmui_Component::bindConnection (vrpn_Connection * c) {
 //c, d_name);
 }
 
+void nmui_Component::bindLogConnection (vrpn_Connection * c) {
+  char namebuf [60];
+  int i;
+
+  for (i = 0; i < d_numInts; i++) {
+    d_ints[i]->bindLogConnection(c);
+  }
+  for (i = 0; i < d_numFloats; i++) {
+    d_floats[i]->bindLogConnection(c);
+  }
+  for (i = 0; i < d_numSelectors; i++) {
+    d_selectors[i]->bindLogConnection(c);
+  }
+  for (i = 0; i < d_numComponents; i++) {
+    d_components[i]->bindLogConnection(c);
+  }
+
+}
+
 void nmui_Component::addPeer (vrpn_Connection * c, vrpn_bool serialize) {
   int i;
 
@@ -301,6 +320,11 @@ void nmui_Component::initializeConnection (vrpn_Connection * c) {
       c->register_message_type("nmui Component request sync");
   syncComplete_type =
       c->register_message_type("nmui Component sync complete");
+  // MAKE SURE THERE'S ONLY ONE COPY OF THE HANDLER - HACK
+  c->unregister_handler(syncRequest_type, handle_syncRequest,
+                      this, myId);
+  c->unregister_handler(syncComplete_type, handle_syncComplete,
+                      this, myId);
   c->register_handler(syncRequest_type, handle_syncRequest,
                       this, myId);
   c->register_handler(syncComplete_type, handle_syncComplete,
@@ -334,7 +358,13 @@ int nmui_Component::handle_syncRequest (void * userdata, vrpn_HANDLERPARAM p) {
 
 //fprintf(stderr, "++ In component %s handle_syncRequest\n", c->name());
 
-  c->do_handle_syncRequest();
+  // HACK
+  // Call handlers iff we are synchronized to a remote (non-0) replica.
+  // This keeps state consistent between replicas using centralized
+  // serialization and shared replicas.
+  if (c->synchronizedTo()) {
+    c->do_handle_syncRequest();
+  }
 
   gettimeofday(&now, NULL);
   c->d_connection->pack_message(0, now, c->d_syncComplete_type,

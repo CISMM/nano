@@ -34,53 +34,53 @@ class Aligner {
 		return xform[src + dest*num_images];}
 
 	/* projection_image - this is assumed to be a projection of some scalar
-			value from the surface represented by depth_image
+		value from the surface represented by depth_image
 	   depth_image - this is a height field
 	   xform - this transforms points from the depth_image into points in
-			the projection_image
+		the projection_image
 	   orthogonal_projection_image - this should typically have the same
-			world dimensions as the depth_image but may have a different
-			resolution
+		world dimensions as the depth_image but may have a different
+		resolution
 	   desired algorithm: Each pixel in the orthogonal_projection_image is 
-			converted into a patch of the surface from depth_image based
-			on the x,y values at the pixel corners. The region formed by
-			projecting this piece of the surface onto the projection_image
-			(using xform) is computed and then a sample value is computed
-			by integrating over this region.
+		converted into a patch of the surface from depth_image based
+		on the x,y values at the pixel corners. The region formed by
+		projecting this piece of the surface onto the projection_image
+		(using xform) is computed and then a sample value is computed
+		by integrating over this region.
 	   cheap algorithm (implemented): The center of each pixel in the 
-			orthogonal_projection_image is converted into a surface point
-			using depth_image. This point is transformed into the 
-			projection_image and the sample value is computed using
-			bilinear interpolation.
+		orthogonal_projection_image is converted into a surface point
+		using depth_image. This point is transformed into the 
+		projection_image and the sample value is computed using
+		bilinear interpolation.
 	*/
 	void resampleImageToDepthImage(
-						const nmb_Image &projection_image,
-						const nmb_Image &depth_image,
-						const ImageTransform &xform, 
-						nmb_Image &orthogonal_projection_image);
+				const nmb_Image &projection_image,
+				const nmb_Image &depth_image,
+				const ImageTransform &xform, 
+				nmb_Image &orthogonal_projection_image);
 
 	/* projects corners of each pixel in projection image onto depth
-		image and computes the size of the pixel in the orthogonal
-		projection image; the dimensions of the smallest such transformed
-		pixel are returned as a ratio to the size of pixels in
-		the depth_image
-		(to preserve nearly as much information as possible when using 
-		 resampleImageToDepthImage(),
-		 you should multiply the x and y resolution of the depth image
-		 by the given factors or by the maximum of the two factors if you
-		 want to have square pixels)
+	   image and computes the size of the pixel in the orthogonal
+	   projection image; the dimensions of the smallest such transformed
+	   pixel are returned as a ratio to the size of pixels in
+	   the depth_image
+	   (to preserve nearly as much information as possible when using 
+	   resampleImageToDepthImage(),
+	   you should multiply the x and y resolution of the depth image
+	   by the given factors or by the maximum of the two factors if you
+	   want to have square pixels)
 	*/
 	void computeMaxRequiredResampleResolution( 
-							const nmb_Image &projection_image,
-							const nmb_Image &depth_image,
-							const ImageTransform &xform,
-							double &x_factor,
-							double &y_factor);
+				const nmb_Image &projection_image,
+				const nmb_Image &depth_image,
+				const ImageTransform &xform,
+				double &x_factor,
+				double &y_factor);
 
   private:
     void setTransform(int src, int dest, ImageTransform *x) {
-		if (xform[src + dest*num_images]) delete xform[src + dest*num_images];
-		xform[src + dest*num_images] = x->duplicate();}
+	if (xform[src + dest*num_images]) delete xform[src + dest*num_images];
+	xform[src + dest*num_images] = x->duplicate();}
 
     vrpn_bool *is_surface;
     double *height_scale;

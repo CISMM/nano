@@ -3395,14 +3395,14 @@ void initializeInteraction (void) {
 
   updateWorldFromRoom();
 
-fprintf(stderr, "Starting world xlate is:  (%.5f %.5f %.5f)\n",
-(vrpn_float64) tcl_wfr_xlate_X, (vrpn_float64) tcl_wfr_xlate_Y,
-(vrpn_float64) tcl_wfr_xlate_Z);
-fprintf(stderr, "Starting world rot is:  (%.5f %.5f %.5f %.5f)\n",
-(vrpn_float64) tcl_wfr_rot_0, (vrpn_float64) tcl_wfr_rot_1,
-(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
-fprintf(stderr, "Starting world scale is %.5f\n",
-(vrpn_float64) tcl_wfr_scale);
+//fprintf(stderr, "Starting world xlate is:  (%.5f %.5f %.5f)\n",
+//(vrpn_float64) tcl_wfr_xlate_X, (vrpn_float64) tcl_wfr_xlate_Y,
+//(vrpn_float64) tcl_wfr_xlate_Z);
+//fprintf(stderr, "Starting world rot is:  (%.5f %.5f %.5f %.5f)\n",
+//(vrpn_float64) tcl_wfr_rot_0, (vrpn_float64) tcl_wfr_rot_1,
+//(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
+//fprintf(stderr, "Starting world scale is %.5f\n",
+//(vrpn_float64) tcl_wfr_scale);
 }
 
 static int lock_xform = 0;
@@ -3420,14 +3420,14 @@ void updateWorldFromRoom (void) {
   tcl_wfr_rot_3 = v_world.users.xforms[0].rotate[3];
   tcl_wfr_scale = v_world.users.xforms[0].scale;
 
-fprintf(stderr, "Set TCL world xlate to:  (%.5f %.5f %.5f)\n",
-(vrpn_float64) tcl_wfr_xlate_X, (vrpn_float64) tcl_wfr_xlate_Y,
-(vrpn_float64) tcl_wfr_xlate_Z);
-fprintf(stderr, "Set TCL world rot to:  (%.5f %.5f %.5f %.5f)\n",
-(vrpn_float64) tcl_wfr_rot_0, (vrpn_float64) tcl_wfr_rot_1,
-(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
-fprintf(stderr, "Set TCL world scale to %.5f\n",
-(vrpn_float64) tcl_wfr_scale);
+//fprintf(stderr, "Set TCL world xlate to:  (%.5f %.5f %.5f)\n",
+//(vrpn_float64) tcl_wfr_xlate_X, (vrpn_float64) tcl_wfr_xlate_Y,
+//(vrpn_float64) tcl_wfr_xlate_Z);
+//fprintf(stderr, "Set TCL world rot to:  (%.5f %.5f %.5f %.5f)\n",
+//(vrpn_float64) tcl_wfr_rot_0, (vrpn_float64) tcl_wfr_rot_1,
+//(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
+//fprintf(stderr, "Set TCL world scale to %.5f\n",
+//(vrpn_float64) tcl_wfr_scale);
   lock_xform = 0;
 }
 
@@ -3448,14 +3448,14 @@ void handle_worldFromRoom_change (vrpn_float64, void *) {
   v_world.users.xforms[0].rotate[3] = tcl_wfr_rot_3;
   v_world.users.xforms[0].scale = tcl_wfr_scale;
 //#endif
-fprintf(stderr, "Set VLIB world xlate to:  (%.5f %.5f %.5f)\n",
-(vrpn_float64) tcl_wfr_xlate_X, (vrpn_float64) tcl_wfr_xlate_Y,
-(vrpn_float64) tcl_wfr_xlate_Z);
-fprintf(stderr, "Set VLIB world rot to:  (%.5f %.5f %.5f %.5f)\n",
-(vrpn_float64) tcl_wfr_rot_0, (vrpn_float64) tcl_wfr_rot_1,
-(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
-fprintf(stderr, "Set VLIB world scale to %.5f\n",
-(vrpn_float64) tcl_wfr_scale);
+//fprintf(stderr, "Set VLIB world xlate to:  (%.5f %.5f %.5f)\n",
+//(vrpn_float64) tcl_wfr_xlate_X, (vrpn_float64) tcl_wfr_xlate_Y,
+//(vrpn_float64) tcl_wfr_xlate_Z);
+//fprintf(stderr, "Set VLIB world rot to:  (%.5f %.5f %.5f %.5f)\n",
+//(vrpn_float64) tcl_wfr_rot_0, (vrpn_float64) tcl_wfr_rot_1,
+//(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
+//fprintf(stderr, "Set VLIB world scale to %.5f\n",
+//(vrpn_float64) tcl_wfr_scale);
 }
 
 /*============================================================================

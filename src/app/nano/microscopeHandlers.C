@@ -376,7 +376,8 @@ void handle_z_scale_change (vrpn_float64 _value, void * _mptr) {
     if ((user_mode[0] == USER_PLANE_MODE) || (user_mode[0] == USER_PLANEL_MODE))
       handleCharacterCommand("G", &dataset->done, 1);
     plane->setScale(microscope->state.stm_z_scale);
-    cause_grid_redraw(_value, _mptr);
+    //cause_grid_redraw(_value, _mptr);
+    graphics->causeGridRedraw();
   }
   // update display of scanline to show true relative (yet scaled) height of
   // scanline with respect to the surface
@@ -572,6 +573,13 @@ void handle_scanline_accept (vrpn_int32, void * _mptr) {
 // Tcl_Linkvar callback, which requires them.
 
 void cause_grid_redraw (vrpn_float64, void *) {
+
+#if 1
+
+  graphics->causeGridRedraw();
+
+#else
+
   BCPlane * plane = dataset->inputGrid->getPlaneByName
                                 (dataset->heightPlaneName->string());
 
@@ -599,6 +607,9 @@ void cause_grid_redraw (vrpn_float64, void *) {
             decoration->green.normalize(plane);
             decoration->blue.normalize(plane);
         }
+
+#endif
+
 }
 
 // Export a new .txt file whenever the user selects a new data set
@@ -647,12 +658,16 @@ void    handle_z_dataset_change(const char *, void * _mptr)
 
         // If the plane cannot be found, look for another one instead.
         // We NEED to have a height plane.
-        if (plane == NULL) { plane = dataset->ensureHeightPlane(); }
+        if (plane == NULL) { 
+           plane = dataset->ensureHeightPlane(); 
+        }
 
         // Set the scale to that of the one we just selected.
         microscope->state.stm_z_scale = plane->scale();
 
-        cause_grid_redraw(0.0, _mptr);
+        //cause_grid_redraw(0.0, _mptr);
+  graphics->setHeightPlaneName(dataset->heightPlaneName->string());
+  graphics->causeGridRedraw();
 }
 
 
@@ -688,8 +703,11 @@ void    handle_color_dataset_change(const char *, void * _mptr)
 	color_slider_max = plane->maxNonZeroValue();
     }
     
-    cause_grid_redraw(0.0, _mptr);
+    //cause_grid_redraw(0.0, _mptr);
+  graphics->setColorPlaneName(dataset->colorPlaneName->string());
+  graphics->causeGridRedraw();
 }
+
 
 
 void     handle_sound_dataset_change(const char *, void * )

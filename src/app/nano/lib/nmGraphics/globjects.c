@@ -231,16 +231,21 @@ int clear_world_modechange(int mode)
  */
 int init_world_modechange(int mode, int style)
 {
+
+  if (g_config_planeonly) {
+    // display NOTHING but the plane - used by nmg_RenderServer
+    return 0;
+  }
   switch(mode) {
   case USER_LIGHT_MODE:
-    hand_id=addFunctionToFunclist(&v_hand,lighthand,hand_scale, "hand_scale");
+    hand_id = addFunctionToFunclist(&v_hand,lighthand,hand_scale, "hand_scale");
     break;
   case USER_FLY_MODE:
     hand_id = addFunctionToFunclist(&v_hand, Tip, NULL, "Tip");
     sphere_id = addFunctionToFunclist(&vir_world,mysphere,NULL, "mysphere"); 
     break;
   case USER_MEASURE_MODE:
-    hand_id=addFunctionToFunclist(&v_hand,measure_hand, &g_hand_color,
+    hand_id = addFunctionToFunclist(&v_hand,measure_hand, &g_hand_color,
                                                 "measure_hand"); 
     break;
   case USER_PLANE_MODE:
@@ -283,15 +288,15 @@ int init_world_modechange(int mode, int style)
                                           "draw_list(aim_struct)");
     break;
   case USER_GRAB_MODE:
-    hand_id=addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");   
+    hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");   
     break;
   case USER_SCANLINE_MODE:
-    hand_id=addFunctionToFunclist(&v_hand, selecthand, NULL, "selecthand");
+    hand_id = addFunctionToFunclist(&v_hand, selecthand, NULL, "selecthand");
     break;
   case USER_MEAS_MOVE_MODE:
     break;
   case USER_CENTER_TEXTURE_MODE:
-    sphere_id=addFunctionToFunclist(&vir_world,mysphere,NULL,"mysphere"); 
+    sphere_id = addFunctionToFunclist(&vir_world,mysphere,NULL,"mysphere"); 
     fprintf( stderr, "Sphere added to functionlist\n" );
     break;
   default:
@@ -302,16 +307,18 @@ int init_world_modechange(int mode, int style)
    * entering */
   addFunctionToFunclist(&vir_world,draw_north_pointing_arrow, NULL,
                         "draw_north_pointing_arrow");  /* dim */
-  addFunctionToFunclist(&vir_world,draw_list,&red_line_struct,
-                                                "draw_list(red_line_struct)"); 
-  addFunctionToFunclist(&vir_world,draw_list,&green_line_struct,
-                                                "draw_list(green_line_struct)"); 
-  addFunctionToFunclist(&vir_world,draw_list,&blue_line_struct,
-                                                "draw_list(blue_line_struct)"); 
-  if (g_scanline_display_enabled)
-	scanline_id=addFunctionToFunclist(&vir_world,my_scanline_indicator,
+  if (g_config_measurelines) {
+    addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
+                                      "draw_list(red_line_struct)"); 
+    addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
+                                      "draw_list(green_line_struct)"); 
+    addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
+                                      "draw_list(blue_line_struct)"); 
+  }
+  if (g_scanline_display_enabled) {
+	scanline_id = addFunctionToFunclist(&vir_world, my_scanline_indicator,
 		(void *)g_scanlinePt, "scanline_indicator");
-
+  }
 
   addFunctionToFunclist(&vir_world, draw_list, &collab_hand_struct,
 				"draw_list(collab_hand_struct)");
@@ -324,7 +331,7 @@ void enableScanlinePositionDisplay(const int enable) {
 
     g_scanline_display_enabled = enable;
     if (enable){
-	scanline_id=addFunctionToFunclist(&vir_world,my_scanline_indicator,
+	scanline_id = addFunctionToFunclist(&vir_world,my_scanline_indicator,
                                 (void *)g_scanlinePt, "scanline_indicator");
     } else {
 	removeFunctionFromFunclist(&vir_world, scanline_id);
@@ -463,11 +470,11 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max)
 	float z_min,z_max;
 	int i,j;
 
-	int num_x = dataset->inputGrid->numX() - 1;
-	int num_y = dataset->inputGrid->numY() - 1;
+	int num_x = g_inputGrid->numX() - 1;
+	int num_y = g_inputGrid->numY() - 1;
 
-	BCPlane* plane = dataset->inputGrid->getPlaneByName
-                    (dataset->heightPlaneName->string());
+	BCPlane* plane = g_inputGrid->getPlaneByName
+                    (g_heightPlaneName);
 	if (plane == NULL)
 	{
 	    fprintf(stderr, "Error in Replace_Rubber_Corner: could not get plane!\n");
@@ -609,7 +616,7 @@ int make_aim (const float a [], const float b [])
 {
   v_gl_set_context_to_vlib_window();
   glDeleteLists(aim_struct,1);
-  aim_struct=glGenLists(1);
+  aim_struct = glGenLists(1);
   glNewList(aim_struct,GL_COMPILE);
   glColor3f(0.0,1.0,0.0);
   make_line(a,b);
@@ -658,7 +665,7 @@ static char     *MODE_NAMES[] = {
                         "center texture",
                         "Line scan" };
 
-int make_collab_hand_icon(double pos[], double rotate[], vrpn_int32 mode) {
+int make_collab_hand_icon (double pos[], double rotate[], vrpn_int32 mode) {
   double rot_mat[16];
 
   q_to_ogl_matrix(rot_mat, rotate);
@@ -679,16 +686,16 @@ int make_collab_hand_icon(double pos[], double rotate[], vrpn_int32 mode) {
   return (collab_hand_struct); 
 }
 
-int make_selected_region_marker(float x_min, float y_min, float x_max, float y_max)
+int make_selected_region_marker (float x_min, float y_min, float x_max, float y_max)
 {       VertexType Points[5];
         int num_x,num_y;
         int i;
 
-        num_x = dataset->inputGrid->numX() - 1;
-        num_y = dataset->inputGrid->numY() - 1;
+        num_x = g_inputGrid->numX() - 1;
+        num_y = g_inputGrid->numY() - 1;
 
-        BCPlane* plane = dataset->inputGrid->getPlaneByName
-                    (dataset->heightPlaneName->string());
+        BCPlane* plane = g_inputGrid->getPlaneByName
+                    (g_heightPlaneName);
         if (plane == NULL) {
           fprintf(stderr, "Error in Add_Region_Marker: could not get plane!\n");
           return -1;
@@ -714,7 +721,7 @@ int make_selected_region_marker(float x_min, float y_min, float x_max, float y_m
         Points[4][X] = x_min;
         Points[4][Y] = y_min;
 	
-	marker_type * marker_node=(marker_type *) malloc(sizeof(marker_type));
+	marker_type * marker_node = (marker_type *) malloc(sizeof(marker_type));
 	if (marker_node == NULL) {
 		fprintf(stderr,"Out of memory looking for marker node\n");
 		exit(-1);
@@ -746,11 +753,11 @@ int make_selected_region_marker(float x_min, float y_min, float x_max, float y_m
 }
 
 
-int make_red_line(const float a[], const float b[])
+int make_red_line (const float a[], const float b[])
 {  
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(red_line_struct,1);
-   red_line_struct=glGenLists(1);
+   red_line_struct = glGenLists(1);
    glNewList(red_line_struct,GL_COMPILE);
    glColor3f(1.0,0.2,0.2);
    glLineWidth(2.0);
@@ -760,11 +767,11 @@ int make_red_line(const float a[], const float b[])
    return(red_line_struct);
 } 
 
-int make_green_line(const float a[], const float b[])
+int make_green_line (const float a[], const float b[])
 {  
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(green_line_struct,1);
-   green_line_struct=glGenLists(1);
+   green_line_struct = glGenLists(1);
    glNewList(green_line_struct,GL_COMPILE);
    glColor3f(0.2,1.0,0.2);
    glLineWidth(2.0);
@@ -774,11 +781,11 @@ int make_green_line(const float a[], const float b[])
    return(green_line_struct);
 } 
 
-int make_blue_line(const float a[], const float b[])
+int make_blue_line (const float a[], const float b[])
 {  
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(blue_line_struct,1);
-   blue_line_struct=glGenLists(1);
+   blue_line_struct = glGenLists(1);
    glNewList(blue_line_struct,GL_COMPILE);
    glColor3f(0.2,0.2,1.0);
    glLineWidth(2.0);
@@ -793,7 +800,7 @@ int make_sweep (const float a [], const float b [])
 {
   v_gl_set_context_to_vlib_window(); 
   glDeleteLists(sweep_struct,1);
-  sweep_struct=glGenLists(1);
+  sweep_struct = glGenLists(1);
   glNewList(sweep_struct,GL_COMPILE);
   glColor3f(0.0,1.0,0.0);
   make_line(a,b);
@@ -801,10 +808,10 @@ int make_sweep (const float a [], const float b [])
   return(sweep_struct);
 }
 
-int draw_list(void *data)
+int draw_list (void * data)
 {
   GLint *listnum;
-  listnum=(GLint *) data;
+  listnum = (GLint *) data;
   glPushMatrix();
 #ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
@@ -819,12 +826,10 @@ int draw_list(void *data)
   return(0);
 }
 
-int myroom(int nothing)
+int myroom (int)
 {
   nmg_Funclist *head;
-  head=v_room;
-
-  nothing = nothing;  /* keep the compiler happy */
+  head = v_room;
 
   // Don't draw anything if chart junk is off
   if (!g_config_chartjunk) {
@@ -840,7 +845,7 @@ int myroom(int nothing)
 
   TIMERVERBOSE(5, mytimer, "globjects.c:myroom:end spm_set_measure_materials");
 
-  while(head!=NULL) {
+  while(head != NULL) {
       if (spm_graphics_verbosity >= 12)
         fprintf(stderr,"            Drawing %s\n", head->name);
       head->function(head->data);
@@ -849,12 +854,10 @@ int myroom(int nothing)
   return(0);
 }
 
-int myhead(int nothing)
+int myhead (int)
 {
   nmg_Funclist *head;
-  head=v_head;
-
-  nothing = nothing;  /* keep the compiler happy */
+  head = v_head;
 
   // Don't draw anything if chart junk is off
   if (!g_config_chartjunk) {
@@ -864,7 +867,7 @@ int myhead(int nothing)
   // Set material parameters for the space, then draw things in head space.
   // Since all in head space is text or lines, set measure materials.
   spm_set_measure_materials();
-  while(head!=NULL) {
+  while(head != NULL) {
       if (spm_graphics_verbosity >= 12)
         fprintf(stderr,"            Drawing %s\n", head->name);
       head->function(head->data);
@@ -876,7 +879,7 @@ int myhead(int nothing)
 int myhand (int)
 {
   nmg_Funclist *head;
-  head=v_hand;
+  head = v_hand;
 
   // Don't draw anything if chart junk is off
   if (!g_config_chartjunk) {
@@ -885,7 +888,7 @@ int myhand (int)
 
   // Set material parameters for the space, which holds the icon 
   spm_set_icon_materials(); 
-  while(head!=NULL) {
+  while(head != NULL) {
       if (spm_graphics_verbosity >= 12)
         fprintf(stderr,"            Drawing %s\n", head->name);
       head->function(head->data);
@@ -965,7 +968,7 @@ int myworld (void)
   nmg_Funclist *head;
   head=vir_world;
   
-  while(head!=NULL)
+  while(head != NULL)
     {
       if (spm_graphics_verbosity >= 12)
         fprintf(stderr,"            Drawing %s\n", head->name);
@@ -980,7 +983,7 @@ int myworld (void)
 int grabhand(void *data)
 {
   float *size;
-  size=(float *)data;
+  size = (float *)data;
 
   glPushMatrix();
 #ifndef FLOW
@@ -1003,7 +1006,7 @@ int lighthand(void *data)
 {
   float *size;
 
-  size=(float *)data;
+  size = (float *)data;
 
   glPushMatrix();
 
@@ -1322,7 +1325,7 @@ void position_sphere(float x,float y, float z)
 
 int mysphere(void * data)
 {
-	//float x_wide = dataset->inputGrid->maxX() - dataset->inputGrid->minX();
+	//float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
 	data = data;	// Keep the compiler happy
 
        	glPushMatrix();
@@ -1607,18 +1610,18 @@ int vx_up_icon(void *data)
 /* dim */
 int draw_north_pointing_arrow (void *)
 {
-	float x_wide = dataset->inputGrid->maxX() - dataset->inputGrid->minX();
-	float y_wide = dataset->inputGrid->maxY() - dataset->inputGrid->minY();
+	float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
+	float y_wide = g_inputGrid->maxY() - g_inputGrid->minY();
 	float z_value;
 
 	float scale  = 0.25f * x_wide;
 
-	BCPlane *height = dataset->inputGrid->getPlaneByName
-                    (dataset->heightPlaneName->string());
+	BCPlane *height = g_inputGrid->getPlaneByName
+                    (g_heightPlaneName);
 
 	if (height) {
-		z_value = height->scaledValue(dataset->inputGrid->numX() / 2,
-                                              dataset->inputGrid->numY() - 1);
+		z_value = height->scaledValue(g_inputGrid->numX() / 2,
+                                              g_inputGrid->numY() - 1);
 	} else {
 		z_value = 0.0f;
 	}
@@ -1628,8 +1631,8 @@ int draw_north_pointing_arrow (void *)
 #endif
 	glPushMatrix();
 	glColor3f(1.0,0.0,0.0);
-	glTranslatef( dataset->inputGrid->minX() + x_wide/2.0,
-		      dataset->inputGrid->minY() + 1.02 * y_wide,
+	glTranslatef( g_inputGrid->minX() + x_wide/2.0,
+		      g_inputGrid->minY() + 1.02 * y_wide,
 		      z_value);  
 	glScalef(scale, scale, scale);
 	big_flat_arrow(); 
@@ -1675,8 +1678,8 @@ int my_rubber_line(void * data)
     b[1] = temp[3];
 
     // Now we find the range of z values.
-    BCPlane* plane = dataset->inputGrid->getPlaneByName
-                    (dataset->heightPlaneName->string());
+    BCPlane* plane = g_inputGrid->getPlaneByName
+                    (g_heightPlaneName);
     if (plane == NULL) {
 	fprintf(stderr, "Error in my_rubber_line: could not get plane!\n");
 	return -1;
@@ -1695,8 +1698,8 @@ int my_rubber_line(void * data)
 
     // Make limits 10% bigger (+ const) so lines are visible above min and max. 
     float z_range = z_max - z_min;
-    z_min=(z_min-(z_range * 0.1 + 500));
-    z_max=(z_max+(z_range * 0.1 + 500));
+    z_min = (z_min-(z_range * 0.1 + 500));
+    z_max = (z_max+(z_range * 0.1 + 500));
     z_range = z_max - z_min;
 
     // Now we draw some lines - 7 horizontal lines.
@@ -1750,8 +1753,7 @@ int my_scanline_indicator(void *data) {
     p1[1] = temp[4];
     p1[2] = temp[5];
     int i;
-    BCPlane* plane = dataset->inputGrid->getPlaneByName(
-			(char*)dataset->heightPlaneName);
+    BCPlane* plane = g_inputGrid->getPlaneByName(g_heightPlaneName);
     if (plane == NULL) {
         fprintf(stderr, "Error in my_scanline_indicator:can't get plane!\n");
         return -1;
@@ -1810,48 +1812,48 @@ int my_scanline_indicator(void *data) {
 int replaceDefaultObjects(void)
 {
   /*init various data struct set list pointer to NULL or empty*/
-  v_room=NULL;
-  v_head=NULL;
-  v_hand=NULL;
-  //v_tracker=NULL;
-  v_screen=NULL;
-  vir_world=NULL;
+  v_room = NULL;
+  v_head = NULL;
+  v_hand = NULL;
+  //v_tracker = NULL;
+  v_screen = NULL;
+  vir_world = NULL;
 
   /*allocate Lists id's for display lists and save in GLint variables */ 
-  vx_quarter_down=glGenLists(1);
-  vx_half_down=glGenLists(1);
-  vx_quarter_up=glGenLists(1);
-  vx_half_up=glGenLists(1);
-  rubber_corner=glGenLists(1);
-  region_marker=glGenLists(1);
-  aim_struct=glGenLists(1);
-  red_line_struct=glGenLists(1);
-  green_line_struct=glGenLists(1);
-  blue_line_struct=glGenLists(1);
-  collab_hand_struct=glGenLists(1); 
+  vx_quarter_down = glGenLists(1);
+  vx_half_down = glGenLists(1);
+  vx_quarter_up = glGenLists(1);
+  vx_half_up = glGenLists(1);
+  rubber_corner = glGenLists(1);
+  region_marker = glGenLists(1);
+  aim_struct = glGenLists(1);
+  red_line_struct = glGenLists(1);
+  green_line_struct = glGenLists(1);
+  blue_line_struct = glGenLists(1);
+  collab_hand_struct = glGenLists(1); 
 
-  marker_list= (marker_type *)malloc(sizeof(marker_type));
+  marker_list = (marker_type *)malloc(sizeof(marker_type));
   marker_list->id = glGenLists(1);
   marker_list->next = NULL;
 
-  sweep_struct=glGenLists(1);
-  sphere=glGenLists(1);
+  sweep_struct = glGenLists(1);
+  sphere = glGenLists(1);
 
   /* init world objects */
   myobjects();
   /* create subdivided sphere display list */
   init_sphere();
 
-  hand_scale=(float *)malloc(sizeof(float));
-  *hand_scale=0.02;
-  hand_id=addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");
+  hand_scale = (float *)malloc(sizeof(float));
+  *hand_scale = 0.02;
+  hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");
 
   /* Moving text feedback displays from head space to screen space to make them
    * stationary in head tracked mode.
    */
-  room_scale=(float *)malloc(sizeof(float));
-  *room_scale= 1.0;
-  screen_scale=(float *)malloc(sizeof(float));
+  room_scale = (float *) malloc(sizeof(float));
+  *room_scale = 1.0;
+  screen_scale = (float *) malloc(sizeof(float));
   *screen_scale = 1.0;
 
   // MOVED to chartjunk.c
@@ -1863,17 +1865,20 @@ int replaceDefaultObjects(void)
 
   addFunctionToFunclist(&vir_world, draw_north_pointing_arrow, NULL,
 	"draw_north_pointing_arrow");
-  addFunctionToFunclist(&vir_world,draw_list,&red_line_struct,
-                        "draw_list(red_line_struct)"); 
-  addFunctionToFunclist(&vir_world,draw_list,&green_line_struct,
-                        "draw_list(green_line_struct)");
-  addFunctionToFunclist(&vir_world,draw_list,&blue_line_struct,
-                        "draw_list(blue_line_struct)");
-  addFunctionToFunclist(&vir_world,draw_list,&collab_hand_struct,
+
+  if (g_config_measurelines) {
+    addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
+                          "draw_list(red_line_struct)"); 
+    addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
+                          "draw_list(green_line_struct)");
+    addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
+                          "draw_list(blue_line_struct)");
+  }
+  addFunctionToFunclist(&vir_world, draw_list, &collab_hand_struct,
 			"draw_list(collab_hand_struct)");
 
   marker_type *marker_node = marker_list;
-  while(marker_node!= NULL) {
+  while (marker_node != NULL) {
     addFunctionToFunclist(&vir_world,draw_list, &(marker_node->id),
                                                 "draw_list(marker_node->id)");
     marker_node= marker_node->next;

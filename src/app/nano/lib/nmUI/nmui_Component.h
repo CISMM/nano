@@ -62,7 +62,13 @@ class nmui_Component {
     void add (nmui_Component *);
 
     void bindConnection (vrpn_Connection *);
+      // specifies the vrpn_Connection which is our SERVER
+      // to be connected to by our peer
+    void bindLogConnection (vrpn_Connection *);
+      // specifies a vrpn_Connection to log private events to
     void addPeer (vrpn_Connection *, vrpn_bool serialize);
+      // specifies the vrpn_Connection which is our REMOTE
+      // which is connected to our peer's server
 
     void copyReplica (int whichReplica);
     void syncReplica (int whichReplica);

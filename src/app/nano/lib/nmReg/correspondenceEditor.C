@@ -40,7 +40,7 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
 		display_name = strdup(display_name);
 
     char win_name[64];
-	printf("CorrespondenceEditor: opening display %s\n", display_name);
+    printf("CorrespondenceEditor: opening display %s\n", display_name);
     viewer->init(display_name);
     num_images = num_im;
     win_ids = new int[num_images];
@@ -282,6 +282,7 @@ void CorrespondenceEditor::show() {
     for (i = 0; i < num_images; i++){
         viewer->showWindow(win_ids[i]);
     }
+    printf("CorrespondenceEditor: finished opening windows\n");
 }
 
 void CorrespondenceEditor::hide() {

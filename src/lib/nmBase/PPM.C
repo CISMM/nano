@@ -1,16 +1,6 @@
 #include	<stdio.h>
 #include	<sys/types.h>
 
-#ifdef __CYGWIN__
-// [juliano 9/19/99]
-//   added these decl so can compile BCPlane.C on my PC in cygwin.
-extern "C" {
-int read( int fildes, void *buf, size_t nbyte );
-int close( int fildes);
-int lseek( int fildes, int offset, int whence);
-}
-#endif
-
 #ifdef  _WIN32
 #	include        <io.h>
 #else
@@ -32,7 +22,7 @@ int lseek( int fildes, int offset, int whence);
  * a comment in the ppm file.
  *	This routine returns 0 on success and -1 on failure. */
 
-static	int	read_int(int des, int *i)
+static	int	read_int(FILE *infile, int *i)
 {
 	int	temp = 0;
 	char	c;
@@ -41,13 +31,13 @@ static	int	read_int(int des, int *i)
 	/* Look for the first character, skipping any white space or comments */
 	do {
 		do {
-			read(des, &c, 1);
+			fread(&c, 1, 1, infile);
 		} while ( isspace(c) );
 
 		/* If this is the comment character, skip to the end of line */
 		if (c == '#') {	/* Comment - skip this line and start on next */
 			do {
-				if (read(des, &c, 1) != 1) {
+				if (fread(&c, 1, 1, infile) != 1) {
 					return(-1);
 				}
 			} while (c != '\n');
@@ -60,34 +50,34 @@ static	int	read_int(int des, int *i)
 	/* Read the characters in and make the integer */
 	while (isdigit(c)) {
 		temp = temp*10 + (c - '0');
-		read(des,&c,1);
+		fread(&c,1, 1, infile);
 	}
 
 	*i = temp;
 	return(0);
 }
 
+PPM::PPM (const char *filename)
+{
+    FILE *infile = fopen(filename, "rb");
+    if (!infile) {
+	fprintf(stderr, "PPM::PPM(%s): file not found\n", filename);
+	valid = 0;
+	return;
+    }
+    PPM((FILE *)infile);
+}
+
 /*	This routine will read a ppm file from the file whose descriptor
  * is passed to it into an internal structure. */
 
-PPM::PPM (const char * filename)
+PPM::PPM (FILE * infile)
 {
-	int		infile;
-
 	char		magic[10];
 	int		maxc;		/* Maximum color value */
 
-	/* Open the file for reading, or assign to stdin */
-	if (filename == NULL) {
-		infile = 0;
-	} else if ( (infile = open(filename,O_RDONLY)) == -1) {
-		perror("Could not open ppm file");
-		valid = 0;
-		return;
-	}
-
 	/* Scan the header information from the ppm file */
-	if (read(infile,magic, 2) != 2) {
+	if (fread(magic, 2, 1, infile) != 1) {
 		perror("Could not read magic number from ppm file");
 		perror("Could not open ppm file");
 		valid = 0;
@@ -154,11 +144,10 @@ PPM::PPM (const char * filename)
 		return;
 	}
 
-	close(infile);
 	valid = 1;
 } // end of PPM::PPM()
 
-int	PPM::read_P5_body(int infile)
+int	PPM::read_P5_body(FILE *infile)
 {
 	unsigned char	*pgmrow;		/* One row from the pgm file */
 	int		x,y;
@@ -186,37 +175,7 @@ int	PPM::read_P5_body(int infile)
 	for (y = 0; y < ny; y++) {
 
 	  /* Read one row of values from the file */
-	  n_values_read = read(infile, (char*)pgmrow, nx);
-#ifdef __CYGWIN__
-          while (n_values_read > 0 && n_values_read != nx) {
-		fprintf(stderr, "PPM::read_P5_body: Warning, "
-			"read failed on line %d, element %d\n", y,
-			n_values_read);
-		// HAAAAAAAAACK !!!!!!!!!!!!!!!!
-		fprintf(stderr, " assuming value is 26 because this value"
-			" causes this to happen in CYGWIN WIN32\n");
-		// skip over the offensive value:
-                if (lseek(infile, 1, SEEK_CUR) < 0){
-		    perror("PPM::read_P5_body lseek error:");
-		    fprintf(stderr, "tried to move to next value despite"
-				" failure of read but lseek failed\n");
-		    return -1;
-		}
-                pgmrow[n_values_read] = 26;
-		n_values_read++;
-                n_values_read += read(infile, 
-				&(((char *)pgmrow)[n_values_read]),
-				nx-n_values_read);
-          }
-	  if (n_values_read <= 0) {
-		perror("PPM::read_P5_body read error:");
-		fprintf(stderr, "Cannot read line %d of pixels from pgm file\n",
-			y);
-		fprintf(stderr, "read %d values, expected %d of them\n",
-			n_values_read, nx);
-		return -1;
-	  }
-#else
+	  n_values_read = fread((char*)pgmrow, 1, nx, infile);
           if (n_values_read != nx) {
                 perror("PPM::read_P5_body read error:");
                 fprintf(stderr, "Cannot read line %d of pixels from pgm file\n",
@@ -225,7 +184,6 @@ int	PPM::read_P5_body(int infile)
                         n_values_read, nx);
                 return -1;
           }
-#endif
 
 	  // Copy the values into the texture pixels
 	  // This is a graymap -- copy same color into R,G and B
@@ -243,7 +201,7 @@ int	PPM::read_P5_body(int infile)
 
 } // End of PPM::read_P5_body()
 
-int	PPM::read_P6_body(int infile)
+int	PPM::read_P6_body(FILE *infile)
 {
 	PPMROW		ppmrow;		/* One row from the ppm file */
 	int		x,y;
@@ -270,7 +228,7 @@ int	PPM::read_P6_body(int infile)
 	for (y = 0; y < ny; y++) {
 
 	  /* Read one row of values from the file */
-	  if (read(infile, (char*)ppmrow, nx*sizeof(P_COLOR)) !=
+	  if (fread((char*)ppmrow, 1, nx*sizeof(P_COLOR), infile) !=
 	      (signed)(nx*sizeof(P_COLOR))) {
 		perror("Cannot read line of pixels from ppm file");
 		return -1;
@@ -291,7 +249,7 @@ int	PPM::read_P6_body(int infile)
 
 } // End of PPM::read_P6_body()
 
-int	PPM::read_P2_body(int infile, int maxc)
+int	PPM::read_P2_body(FILE *infile, int maxc)
 {
 	double	scale = 256.0/( ((double)maxc)+1);
 	int	x,y;
@@ -331,7 +289,7 @@ int	PPM::read_P2_body(int infile, int maxc)
 
 } // End of PPM::read_P2_body()
 
-int	PPM::read_P3_body(int infile, int maxc)
+int	PPM::read_P3_body(FILE *infile, int maxc)
 {
 	double	scale = 256.0/( ((double)maxc)+1);
 	int	x,y;
@@ -471,18 +429,9 @@ int	PPM::Value_at_normalized(double normx,double normy, int *red,int *green,int 
 	return(0);
 }
 
-int	PPM::Write_to(char *filename)
+int	PPM::Write_to(FILE *outfile)
 {
-	FILE	*outfile;
 	int	y;
-
-	/* Open the file for writing, or assign to stdout */
-	if (filename == NULL) {
-		outfile = stdout;
-	} else if ( (outfile = fopen(filename,"w")) == NULL) {
-		perror("PPM:Write_to(): Could not open ppm file");
-		return(-1);
-	}
 
 	/* Write the header information to the ppm file */
 	if (fprintf(outfile,"P6\n%d %d\n255\n",nx,ny) <= 0) {
@@ -508,4 +457,3 @@ int	PPM::Write_to(char *filename)
 
 	return(0);
 }
-

@@ -112,4 +112,3 @@ int nmui_Util::moveSphere (q_vec_type position) {
 
   return 0;
 }
-

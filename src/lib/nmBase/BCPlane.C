@@ -272,6 +272,21 @@ BCPlane::findValidDataRange(short* o_top, short* o_left, short* o_bottom, short*
 } // findValidDataRange
 
 
+float BCPlane::valueAt (double x, double y) {
+  int ix;
+  int iy;
+
+  ix = (int) (derangeX() * (x - minX()));
+  iy = (int) (derangeY() * (y - minY()));
+
+  if ((ix < 0) || (iy < 0) ||
+      (ix >= _num_x) || (iy >= _num_y)) {
+    fprintf(stderr, "BCPlane::valueAt:  Out of bounds!.\n");
+    return 0.0f;
+  }
+  return _value [ix * _num_y + iy];
+}
+
 
 float BCPlane::interpolatedValue(double x, double y) {
     int ix = (int)x;

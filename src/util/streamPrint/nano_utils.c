@@ -2,6 +2,12 @@
 // Utility functions taken from the nano code 
 // -- most come from stm_file.c
 
+#define STREAM_DUP_STATE_BROKEN         (-1)
+#define STREAM_DUP_STATE_NONE           (0)
+#define STREAM_DUP_STATE_LISTENING      (1)
+#define STREAM_DUP_STATE_CONNECTED      (2)
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -61,6 +67,31 @@ void stm_unbuffer_chars(BUFPTR* bufptr, char *c, int len) {
   memcpy(c, *bufptr, len);
   *bufptr += len;
 }
+
+
+// TCH 11 Jan 00
+
+void stm_buffer_int (BUFPTR * bufptr, int value) {
+  memcpy(*bufptr, &value, sizeof(value));
+  *bufptr += sizeof(value);
+}
+
+void stm_buffer_float (BUFPTR * bufptr, float value) {
+  memcpy(*bufptr, &value, sizeof(value));
+  *bufptr += sizeof(value);
+}
+
+void stm_buffer_long (BUFPTR * bufptr, long value) {
+  memcpy(*bufptr, &value, sizeof(value));
+  *bufptr += sizeof(value);
+}
+
+void stm_buffer_chars (BUFPTR * bufptr, char * value, int len) {
+  memcpy(*bufptr, value, len * sizeof(char));
+  *bufptr += (len * sizeof(char));
+}
+
+
 
 
 /****************
@@ -508,3 +539,57 @@ stm_stream	*stm_open_datastream_for_read(char* filename)
 	/* Return the stream to the user */
 	return(s);
 }
+
+/*      This routine creates a stream for writing and returns a pointer
+ * to it.  Don't allow overwriting of an existing streamfile.
+ * It returns NULL on failure. */
+
+stm_stream      *stm_open_datastream_for_write (const char * filename)
+{
+        stm_stream      *s;
+
+        /* Allocate the stream structure. */
+        if ( (s=(stm_stream*)malloc(sizeof(stm_stream))) == NULL) {
+                fprintf(stderr,
+                    "stm_open_datastream_for_write(): can't malloc stream\n");
+                return(NULL);
+        }
+
+        /* Attempt to open the file for writing. */
+        /* Do not allow overwriting of an existing file. */
+#ifndef _WIN32
+        if ( (s->descriptor = open(filename, O_WRONLY | (O_CREAT | O_EXCL),
+             0644))<0) {
+#else
+        if ( (s->descriptor = open(filename, O_WRONLY | (O_CREAT | O_EXCL) | O_B
+INARY,
+             0644))<0) {
+#endif
+
+                free((char*)s);
+                perror("stm_open_datastream_for_write(): can't open");
+                fprintf(stderr,"  (file %s)\n",filename);
+                return(NULL);
+        }
+
+        /* Attempt to malloc() the buffer area for the stream. */
+        if ( (s->buffer = (char*)malloc(STM_STREAM_BUFSIZE)) == NULL) {
+                close(s->descriptor);
+                free((char*)s);
+                fprintf(stderr,
+                    "stm_open_datastream_for_write(): can't malloc buffer\n");
+                return(NULL);
+        }
+
+        /* Initialize the stream. */
+        strcpy(s->filename, filename);
+        s->cur = s->buffer;
+        s->in_len = -1;                         /* output, not input */
+        s->fullcheck = 1;
+        s->multibuf = 0;                        /* No multiple buffers yet */
+        s->dup_state = STREAM_DUP_STATE_NONE;   /* Not allowing dup yet */
+
+        /* Return the stream to the user */
+        return(s);
+}
+
