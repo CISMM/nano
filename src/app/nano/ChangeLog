@@ -1,3 +1,8 @@
+2000-09-14  Kwan Torrich Skinner <skinner@cs.unc.edu>
+
+	* nM_coord_change.C (mainloop) : made a call to server_mainloop, killed
+	a compiler warning.
+
 2000-09-14  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c : textureConversionMapName initialized to "none"

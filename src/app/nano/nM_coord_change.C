@@ -56,6 +56,7 @@ vrpn_bool nM_coord_change::peerIsSynchronized (void) const {
 void nM_coord_change::mainloop (void) {
   if (d_connection) {
     d_connection->mainloop();
+    server_mainloop();
   }
 }
 
@@ -145,7 +146,6 @@ void nM_coord_change::handle_tracker_pos_change(void *userdata,
   nM_coord_change *me = (nM_coord_change *)userdata;
   vrpn_float64	floatbuf[128];	// Aligns properly
   char * msgbuf = (char*)(void*)(floatbuf);
-  int retval;
 
   v_get_world_from_hand(0, &worldFromHandPtr);
 
