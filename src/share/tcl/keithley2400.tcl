@@ -33,8 +33,11 @@ option add *Graph.height 300
 option add *Graph.*Smooth linear
 option add *Graph.plotBackground black
 
-
-
+# see if we are running as a standalone application
+if { [info exist vi_standalone] } {
+    source [file join ${tcl_script_dir} Tcl_Linkvar_widgets.tcl]
+    source [file join ${tcl_script_dir} streamfile.tcl]
+}
 
 # When the entry value has not been finalized by hitting "Enter", 
 # the entry background will be red. 
@@ -97,10 +100,11 @@ proc my_entry { name var label validation} {
 # If set to 1, the C code will quit the application
 set vi_quit 0
 
+# If set to 1, will behave as if running as a stand-alone app.
+set vi_standalone 0
+
 # Default padding around the entry widgets, in pixels. 
 set def_pad 1
-
-
 
 # widgets is a global array for containing widget paths and names.
 # vi is a global array for containing control variables, 
