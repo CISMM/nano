@@ -466,7 +466,7 @@ endif
 # Tcl/Tk
 #
 
-TCL_LIBS := $(addprefix -l,itk itcl BLT tk tcl)
+TCL_LIBS := $(addprefix -l,itk3.2 itcl3.2 BLT2.4 tk8.3 tcl8.3)
 
 ifeq ($(HW_OS),pc_cygwin)
    TCL_LIBS := $(addprefix -l,BLT24 tk80 tcl80 itk30 itcl30)

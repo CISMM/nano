@@ -1,3 +1,8 @@
+2001-08-06  David Marshburn  <marshbur@cs.unc.edu>
+
+	* Makefile.common:  (TCL_LIBS) changed SGI-used TCL_LIBS to include
+	tcl version number
+
 2001-07-30  David Marshburn  <marshbur@cs.unc.edu>
 
 	* Makefile.common: (TCL_LIBS)  increment tcl, etc. version numbers for
