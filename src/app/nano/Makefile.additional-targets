@@ -1,0 +1,23 @@
+### This makefile defines some common targets Include it AFTER your
+### default target has been given.  You do not want your default
+### target to come from this makefile.
+###
+### As with the other makefiles in this project, you must use GNU make.
+
+.PHONY: bogus_target nano-all
+
+bogus_target:
+	@echo You have reached a bogus target.
+	@echo If this is your default target, your makefile is ill-formed.
+	@echo Your makefile should include Makefile.additional-targets AFTER
+	@echo the default target has already been given, and AFTER the
+	@echo path variables have already been set up.
+
+nano-app:
+	@echo 'Making nano and libs, but not src/libs...'
+	$(MAKE) -C $(TOP_LEVEL_SRC_DIR)/app/nano/lib
+	$(MAKE) -C $(TOP_LEVEL_SRC_DIR)/app/nano
+
+nano-all:
+	@echo 'Making nano and libs, including src/libs...'
+	$(MAKE) -C $(TOP_LEVEL_SRC_DIR) nano-all

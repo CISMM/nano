@@ -22,3 +22,6 @@ ifdef NANO_WITH_ROBOT
 endif
 
 include ../Makefile.share
+
+### Put this at the END of the Makefile
+include Makefile.additional-targets

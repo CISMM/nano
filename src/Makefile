@@ -7,9 +7,9 @@ TAGS_FILENAME=TAGS
 TAGS_FLAGS=-C -I -a
 TAGS_CMD_LINE=xargs -0 -e ${TAGS_CMD} ${TAGS_FLAGS}
 
-.PHONY: all lib app/nano/lib app/nano
+.PHONY: nano-all lib app/nano/lib app/nano
 
-all: lib app/nano/lib app/nano
+nano-all: lib app/nano/lib app/nano
 
 lib:
 	$(MAKE) -C lib

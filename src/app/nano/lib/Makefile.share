@@ -1,2 +1,5 @@
 include ../../../../share/Makefile.common
 include ../../../../share/Makefile.lib_common
+
+### Put this at the END of the Makefile
+include ../../Makefile.additional-targets

@@ -1,0 +1,4 @@
+2000-08-15  Jeffrey Juliano  <juliano@cs.unc.edu>
+
+	* Makefile: Rename default target from top to nano-all.
+
