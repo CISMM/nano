@@ -331,8 +331,10 @@ void buildRemoteRenderedTexture (nmg_State * state,
 //fprintf(stderr, "Building remotely rendered texture.\n");
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
+    
+  state->remoteDataTexture.setWrapMode(GL_CLAMP);
   state->remoteDataTexture.installTexture(width, height, tex, GL_RGBA, GL_RGBA,
-	  GL_UNSIGNED_BYTE, GL_CLAMP);
+	  GL_UNSIGNED_BYTE);
 }
 
 
@@ -370,16 +372,18 @@ void buildVisualizationTexture(nmg_State * state, int width, int height, unsigne
 // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
+  state->visualizationTexture.setWrapMode(GL_REPEAT);
   state->visualizationTexture.installTexture(width, height, texture, 4, GL_RGB, 
-	  GL_UNSIGNED_BYTE, GL_REPEAT);
+	  GL_UNSIGNED_BYTE);
 }
 
 void buildRulergridTexture (nmg_State * state) {
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
+  state->rulergridTexture.setWrapMode(GL_REPEAT);
   state->rulergridTexture.installTexture(rulerImageWidth, rulerImageHeight, rulerImage,
-	  4, GL_RGBA, GL_UNSIGNED_BYTE, GL_REPEAT);
+	  4, GL_RGBA, GL_UNSIGNED_BYTE);
 }
 
 void buildAlphaTexture (nmg_State * state) {

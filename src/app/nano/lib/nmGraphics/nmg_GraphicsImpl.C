@@ -1295,6 +1295,7 @@ void nmg_Graphics_Implementation::createColormapTexture( const char *name ) {
   }
 
   v_gl_set_context_to_vlib_window();
+  state->colormapTexture.setWrapMode(GL_CLAMP);
   state->colormapTexture.setImage(im);
   state->colormapTexture.setUpdateColorMap(true);
   state->colormapTexture.createTexture(false);
@@ -1432,6 +1433,7 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
 
     // make sure gl calls are directed to the right context
     v_gl_set_context_to_vlib_window();
+	state->videoTexture.setWrapMode(GL_CLAMP);
 	state->videoTexture.setImage(im);
 	state->videoTexture.doFastUpdates(true);
 }

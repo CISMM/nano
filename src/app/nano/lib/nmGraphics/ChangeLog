@@ -1,3 +1,14 @@
+2003-03-19  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C (createColormapTexture): added call to setWrapMode
+    to make colormapTexture clamp texture coordinates
+	(loadRawDataTexture): changed to clamp texture coordinates for videoTexture
+	* surface_util.c (buildRemoteRenderedTexture): changed the way clamping 
+    of texture coordinates was set (shouldn't affect appearance of this texture)
+	(buildVisualizationTexture): changed the way wrapping of texture coordinates
+	was set (shouldn't affect appearance of this texture)
+	(buildRulergridTexture): "
+
 2003-02-27  Adam Seeger  <seeger@cs.unc.edu>
 
     * nmg_GraphicsImpl.C (createScreenImage): passes type argument to 
