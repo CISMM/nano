@@ -3846,7 +3846,7 @@ static void handle_analyze_shape(vrpn_int32, void *)
 
 
     
-    shape_analysis.imageAnalyze(planes, dataset);
+    shape_analysis.imageAnalyze(planes);
     analyze_shape = 0;
 }
 
