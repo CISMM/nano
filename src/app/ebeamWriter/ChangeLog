@@ -1,3 +1,13 @@
+2003-04-03  David Jack  <jackd@cs.unc.edu>
+	* controlPanels.[Ch] - it's now possible to specify two widths for the
+	thick polyline and toggle between them
+	
+	* patternEditor.[Ch] - now keeps track of a pointer to the ControlPanels 
+	object and toggles between the two possible line widths when the spacebar
+	is pressed
+
+	* main.C - added call to set the ControlPanels pointer in the pattern editor
+	
 2003-04-01  David Jack  <jackd@cs.unc.edu>
 
 	* controlPanels.[Ch] - added tclvar and handlers for clear pattern

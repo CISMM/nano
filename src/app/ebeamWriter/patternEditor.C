@@ -2,6 +2,7 @@
 #include "GL/gl.h"
 #include "nmb_ImgMagick.h"
 #include <float.h> // for FLT_MAX
+#include "controlPanels.h"
 
 #ifndef M_PI
 #define M_PI           3.14159265358979323846
@@ -49,6 +50,7 @@ PatternEditor::PatternEditor(int startX, int startY):
       display_name = "unix:0";
    }
    d_viewer->init(display_name);
+   d_controlPanels = NULL;
    d_mainWinID = d_viewer->createWindow(display_name, 
          startX, startY, 300, 300, "Pattern Editor");
    d_viewer->setWindowEventHandler(d_mainWinID, 
@@ -837,6 +839,11 @@ int PatternEditor::handleMainWinEvent(
              d_viewer->dirtyWindow(d_navWinID);
              d_viewer->dirtyWindow(event.winID);
              break;
+           case ' ':
+             if(d_controlPanels) {
+                d_controlPanels->toggleWidthValue();
+             }
+            break;
 		   case 127:	// 127 for delete key. Delete key needs glut 3.7 or greater.
 		   case 8:		// 8 is for backspace, ^H. 
 			 undoPoint();

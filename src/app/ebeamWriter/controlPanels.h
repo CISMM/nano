@@ -22,6 +22,7 @@ class ControlPanels {
    nmb_ListOfStrings *imageNameList();
 
    void updateMinimumDoses();
+   void toggleWidthValue();
  protected:
    // callback stuff
    void setupCallbacks();
@@ -37,7 +38,9 @@ class ControlPanels {
    static void handle_savePatternFileName_change(const char *new_value,
                                                  void *ud);
 
-   static void handle_lineWidth_nm_change(double new_value, void *ud);
+   static void handle_lineWidth1_nm_change(double new_value, void *ud);
+   static void handle_lineWidth2_nm_change(double new_value, void *ud);
+   static void handle_widthValue_change(int new_value, void *ud);
    static void handle_line_exposure_change(double new_value, void *ud);
    static void handle_area_exposure_change(double new_value, void *ud);
    static void handle_drawingTool_change(int new_value, void *ud);
@@ -105,7 +108,9 @@ class ControlPanels {
 
    // Tcl variables linked to control panels
    // drawing parameters:
-   Tclvar_float d_lineWidth_nm;
+   Tclvar_float d_lineWidth1_nm;
+   Tclvar_float d_lineWidth2_nm;
+   Tclvar_int d_widthValue;
    Tclvar_float d_line_exposure_pCoulombs_per_cm;
    Tclvar_float d_area_exposure_uCoulombs_per_square_cm;
    Tclvar_int d_drawingTool;

@@ -20,6 +20,8 @@ coordinates (basically a function of the SEM magnification)
 #include "exposurePattern.h"
 #include "nmb_ImageDisplay.h"
 
+class ControlPanels;
+
 class ImageElement {
   public:
    ImageElement():d_red(1.0), d_green(1.0), d_blue(1.0),
@@ -84,6 +86,7 @@ class PatternEditor : public nmb_ImageDisplay {
                     double maxX_nm, double maxY_nm);
    void getViewport(double &minX_nm, double &minY_nm,
                     double &maxX_nm, double &maxY_nm);
+   void setControlPanels(ControlPanels *cp) { d_controlPanels = cp; }
    void setScanRange(double minX_nm, double minY_nm, 
                     double maxX_nm, double maxY_nm);
    ExposurePattern &getPattern() {return d_pattern;}
@@ -191,6 +194,7 @@ class PatternEditor : public nmb_ImageDisplay {
    int d_navWinWidth, d_navWinHeight;
 
    ImageViewer *d_viewer;
+   ControlPanels *d_controlPanels;
    int d_mainWinID;
    int d_navWinID;
    

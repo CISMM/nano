@@ -221,7 +221,8 @@ int main(int argc, char **argv)
 	alignerUI->d_flipProjectionImageInX = 0;
 
 	controls = new ControlPanels(patternEditor, sem, alignerUI);
-
+    
+    patternEditor->setControlPanels(controls);
     // load the images specified on the command line
     TopoFile defaultTopoFileSettings;
     imageData = new nmb_ImageList(controls->imageNameList());
