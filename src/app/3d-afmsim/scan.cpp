@@ -6,6 +6,7 @@
 #include <stdlib.h>		//stdlib.h vs cstdlib
 #include <stdio.h>		//stdio.h vs cstdio
 #include <iostream.h>
+#include <fstream.h>
 #include <vector>
 #include <math.h>		//math.h vs cmath
 #include <GL/glut_UNC.h>
@@ -29,6 +30,7 @@ float colorBuffer[ DEPTHSIZE*DEPTHSIZE ];
 // array of heights: image scan data
 double zHeight        [MAX_GRID][MAX_GRID];	
 double** zDistance;
+double** zDistanceScaled;
 
 // scan grid resolution
 int    scanResolution = DEPTHSIZE;	
@@ -50,6 +52,8 @@ double Volume;
 int numberUnits_onedim = DEPTHSIZE;
 int numberPixels_onedim = DEPTHSIZE;
 
+
+
 void get_z_buffer_values() {
 
   GLint PackAlignment;
@@ -68,10 +72,14 @@ void get_z_buffer_values() {
   glReadBuffer(GL_BACK);
 
   zDistance = new double*[MAX_GRID];
+  zDistanceScaled = new double*[MAX_GRID];
   
   glReadPixels( 0, 0, pixelGridSize, pixelGridSize, GL_DEPTH_COMPONENT, GL_FLOAT, zBufferPtr );
+
   for(int j=0; j<scanResolution; j++ ) {
     zDistance[j] = new double[MAX_GRID];
+	zDistanceScaled[j] = new double[MAX_GRID];
+
     for(int i=0; i<scanResolution; i++ ) {
       float zNormalized = zBuffer[ j*pixelGridSize + i ];
       
@@ -81,6 +89,7 @@ void get_z_buffer_values() {
       // Open GL convention
       zHeight[j][i] = zDepth;
       zDistance[j][i] = (1-zNormalized)*(-scanNear + scanFar);
+	  zDistanceScaled[j][i] = 10*zDistance[j][i];
       //I *think* it should be '+ scanFar'
     }
   }
@@ -135,7 +144,7 @@ void get_color_buffer_values() {
   glReadPixels(0,0,pixelGridSize,pixelGridSize,GL_GREEN,GL_FLOAT,colorBuffer);
 }
 
-double ** /*void */ doImageScanApprox(int& row_col_length) 
+double ** doImageScanApprox(int& row_col_length) 
 {
   // Render tube images (enlarged to account for tip radius)
   // into window.  
@@ -150,7 +159,8 @@ double ** /*void */ doImageScanApprox(int& row_col_length)
 
   row_col_length = scanResolution;
 
-  return zDistance;
+  return zDistanceScaled;
+
 }
 
 /* This is the most critical part of the afmsim. This is the one which 

@@ -9,6 +9,9 @@
 /*$Id$*/
 #include <stdlib.h>		//stdlib.h vs cstdlib
 #include <stdio.h>		//stdio.h vs cstdio
+//#include <unistd.h>
+//#include <sys/types.h>
+//#include <sys/time.h>
 #include <iostream.h>
 #include <fstream.h>
 #include <vector>
@@ -31,7 +34,18 @@
 #include "sim.h"
 #include <vrpn_Connection.h>
 #include <nmm_SimulatedMicroscope.h>
-//ANDREA
+#include <Tcl_Linkvar.h>
+#include <tcl.h>
+#include <tk.h>
+#include <Tcl_Interpreter.h>
+#include "../nano/tcl_tk.h"
+
+#if !defined(_WIN32) || defined(__CYGWIN__)
+#include <sys/time.h>
+#else
+#include <vrpn_Shared.h>  // get timeval some other way
+#endif
+
 
 GLuint list_sphere;
 GLuint list_cylinder;
@@ -99,6 +113,7 @@ char units[100];
 char* VolumeFilename;
 float TipSize;
 
+static void handle_cname_change(const char *, void *);
 void write_to_unca(char *filename);
 void displayFuncMain( void );
 void displayFuncView( void );
@@ -121,14 +136,22 @@ void findNearestTriangleSideToMouse( void );
 void select_triangle_side();
 void Usage(char *progname);
 
+
 //has to be put out here so variable that can be accessed later...
 char * machineName = "dummy_name";
 vrpn_Synchronized_Connection *connection = new vrpn_Synchronized_Connection();
 nmm_SimulatedMicroscope AFM_Simulator(machineName, connection);
-
+int counter = 0;
+timeval oldtime, currenttime;
+bool first = true;
+Tclvar_string cname("tclname","");
+char * tcl_script_dir = NULL;
 
 int main(int argc, char *argv[])
 {
+	//tcl stuff
+	// Initialize TCL/TK so that TclLinkvar variables link up properly
+	//opengl stuff
 	adjustOrthoProjectionParams();
 	bool radius = true;	//for protein/spheres files--false means use default
 						//true means the file contains radii
@@ -349,6 +372,15 @@ int main(int argc, char *argv[])
   return 0;               /* ANSI C requires main to return int. */
 }
 
+static void handle_cname_change(const char *, void *)
+{
+	if( strlen(cname.string() ) <= 0 )
+		return;
+  
+	cout << "tcl works" << endl;
+
+	cname = (const char *) "";
+} 
 
 void write_to_unca(char *filename) {
     // Everything here is in Angstroms. Unca takes care of this.
@@ -409,17 +441,29 @@ void displayFuncView( void ) {
 // This is the callback for rendering into the depth buffer window,
 // as required by "doImageScanApprox".  
 void  displayFuncDepth( void ) {
+	
+  if(first){
+	gettimeofday(&oldtime,NULL);
+	first = false;
+  }
+
   if (!stopAFM) {
     glutSetWindow( depthWindowID );
     // in Z-buffer of Depth Window using graphics hardware.
 	//HeightData is a double array 
 	int length = 0;
 	//will be filled in by doImageScanApprox
-	//is the size of both rows and columns in the height array (double array)
+	//length is the size of both rows and columns in the height array 
+	//(double array)
     HeightData = doImageScanApprox(length);
 	if(connection_to_nano){
-		//ANDREA
-		AFM_Simulator.encode_and_sendData(HeightData,length);
+		gettimeofday(&currenttime,NULL);//current time
+		int x = 1;
+		if((vrpn_TimevalDiff(currenttime,oldtime)).tv_sec >= x){//send every x sec. for now
+			AFM_Simulator.encode_and_sendData(HeightData,length);
+			gettimeofday(&oldtime,NULL);//give oldtime a new value to reflect that data 
+			//just sent
+		}
 	}
 
     // end of display frame, so flip buffers
@@ -561,9 +605,7 @@ void remake_cone_sphere(InvConeSphereTip ics) {
 
 // Keyboard callback for main window.
 void commonKeyboardFunc(unsigned char key, int x, int y) {
-    int nTest;
-	int nTest2;
-	int nTest3;
+
 	ofstream fout2;
     fout2.open("sphere_output.txt", fstream::out | fstream::app);
     char c;
