@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     }
 #endif
   
-    atexit(handleQuit);
+//    atexit(handleQuit);
 
     vrpn_Synchronized_Connection connection;
     sem = new nmm_Microscope_SEM_EDAX("SEM", &connection);

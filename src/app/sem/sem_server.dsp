@@ -85,7 +85,15 @@ LINK32=link.exe
 # Name "sem_server - Win32 Debug"
 # Begin Source File
 
+SOURCE=.\clmctrl.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\edax_server.C
+# End Source File
+# Begin Source File
+
+SOURCE=.\imgboard.h
 # End Source File
 # Begin Source File
 
@@ -94,6 +102,10 @@ SOURCE=..\..\lib\nmBase\nmb_Device.C
 # Begin Source File
 
 SOURCE=..\..\lib\nmBase\nmb_Device.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\nano\lib\nmSEM\nmm_EDAX.C
 # End Source File
 # Begin Source File
 
@@ -117,6 +129,18 @@ SOURCE=.\nmm_Microscope_SEM_EDAX.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\semmsgid.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\srchfld.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\stgctrl.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\edaxfi32.lib
 # End Source File
 # Begin Source File
@@ -126,6 +150,14 @@ SOURCE=.\Pwedam32.lib
 # Begin Source File
 
 SOURCE=.\pwimg32.lib
+# End Source File
+# Begin Source File
+
+SOURCE=.\stgctl32.lib
+# End Source File
+# Begin Source File
+
+SOURCE=.\clmctl32.lib
 # End Source File
 # End Target
 # End Project

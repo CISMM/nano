@@ -103,7 +103,7 @@ extern "C" {
 	//
 	//			scan type: normal/fast (0,1)
 	//			DataTransfer: off/on (0,1)
-	//			PixelDataSize: byte/work (0,1)
+	//			PixelDataSize: byte/word (0,1)
 
 	int EDXCALL	  SgSetScanParams(LONG ScanType, LONG DataTransfer);
 	int EDXCALL	  SgGetScanParams(PLONG ScanType, PLONG DataTransfer);

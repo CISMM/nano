@@ -96,6 +96,10 @@ SOURCE=..\..\lib\nmBase\nmb_Device.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\nano\lib\nmSEM\nmm_EDAX.C
+# End Source File
+# Begin Source File
+
 SOURCE=..\nano\lib\nmSEM\nmm_EDAX.h
 # End Source File
 # Begin Source File

@@ -1,3 +1,18 @@
+2001-02-05  Adam Seeger  <seeger@cs.unc.edu>
+
+	* edax_server.C : commented-out call to atexit()
+	* nmm_Microscope_SEM_EDAX.[Ch] : added stuff to handle new message types
+	SetPointDwellTime, SetBeamBlankEnable, GoToPoint, SetRetraceDelays,
+	and SetDACParams
+        (nmm_Microscope_SEM_EDAX) : added test of stage and column control
+	libraries - these might be useful despite the inadequate Hitachi
+	interface that constrains them
+        (setHardwareConfiguration) : changed name to configureSharedSettings
+	(configureScan) : changed name to configureForImageMode
+	(configureForPointMode) : new function
+	various changes to use utility functions in nmm_EDAX
+	* sem_server.dsp : added library files for state and column control
+
 2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_Microscope_SEM_EDAX.C : added automatic relinquishing of external

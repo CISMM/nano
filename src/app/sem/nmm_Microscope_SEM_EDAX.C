@@ -13,15 +13,14 @@ extern "C" {
 #include "imgboard.h"
 #include "semdef.h"
 
-extern short int EDXCALL read_sem_params(char binary, char *fileName, PEDI32_SEM_REC edi32SgCfg);
+extern short int EDXCALL read_sem_params(char binary, 
+                      char *fileName, PEDI32_SEM_REC edi32SgCfg);
+
+#include "clmctrl.h"
+#include "stgctrl.h"
 
 }
 #endif
-
-int nmm_Microscope_SEM_EDAX::d_matrixSizeX[EDAX_NUM_SCAN_MATRICES] = 
-						EDAX_SCAN_MATRIX_X;
-int nmm_Microscope_SEM_EDAX::d_matrixSizeY[EDAX_NUM_SCAN_MATRICES] = 
-						EDAX_SCAN_MATRIX_Y;
 
 nmm_Microscope_SEM_EDAX::nmm_Microscope_SEM_EDAX 
     (const char * name, vrpn_Connection * c) :
@@ -43,6 +42,19 @@ nmm_Microscope_SEM_EDAX::nmm_Microscope_SEM_EDAX
                 RcvSetInterPixelDelayTime, this);
   d_connection->register_handler(d_RequestScan_type,
                 RcvRequestScan, this);
+  d_connection->register_handler(d_SetPointDwellTime_type,
+                RcvSetPointDwellTime, this);
+  d_connection->register_handler(d_SetBeamBlankEnable_type,
+                RcvSetBeamBlankEnable, this);
+  d_connection->register_handler(d_GoToPoint_type,
+                RcvGoToPoint, this);
+  d_connection->register_handler(d_SetRetraceDelays_type,
+                RcvSetRetraceDelays, this);
+  d_connection->register_handler(d_SetDACParams_type,
+                RcvSetDACParams, this);
+  d_connection->register_handler(d_SetExternalScanControlEnable_type,
+                RcvSetExternalScanControlEnable, this);
+
   int connect_id = d_connection->register_message_type(vrpn_got_connection);
   int disconnect_id = 
 	d_connection->register_message_type(vrpn_dropped_connection);
@@ -64,7 +76,147 @@ nmm_Microscope_SEM_EDAX::nmm_Microscope_SEM_EDAX
 	exit(-1);
   }
   openEDAXHardware();
-  setHardwareConfiguration();
+
+  // The following is a test of column/stage control
+#ifndef VIRTUAL_SEM
+  int result;
+  result = OpenColumn();
+  printf("OpenColumn returned %d\n", result);
+  long magVal;
+
+  // ***************
+  // column controls
+  // ***************
+  result = GetMag(magVal);
+  printf("GetMag returned %d\n", result);
+  printf("magnification: %lu\n", magVal);
+  result = SetMag(magVal);
+  printf("SetMag returned %d\n", result);
+
+  float fval;
+  int ival;
+  result = GetBright(fval);
+  printf("GetBright returned %d\n", result);
+  printf("brightness: %g\n", fval);
+  result = GetCon(fval);
+  printf("GetCon returned %d\n", result);
+  printf("contrast: %g\n", fval);
+  
+  result = GetAccKv(fval);
+  printf("GetAccKv returned %d\n", result);
+  printf("AccKv: %g\n", fval);
+  result = SetAccKv(fval);
+  printf("SetAccKv returned %d\n", result);
+
+  result = GetAccOnOff(ival);
+  printf("GetAccOnOff returned %d\n", result);
+  printf("AccOnOff: %d\n", ival);
+  result = SetAccOnOff(ival);
+  printf("SetAccOnOff returned %d\n", result);
+
+  result = GetSpotSize(fval);
+  printf("GetSpotSize returned %d\n", result);
+  printf("Spot size: %g\n", fval);
+  result = SetSpotSize(fval);
+  printf("GetSpotSize returned %d\n", result);
+
+  result = GetWorkDist(fval);
+  printf("GetWorkDist returned %d\n", result);
+  printf("Working distance: %g mm\n", fval);
+  result = SetWorkDist(fval);
+  printf("SetWorkDist returned %d\n", result);
+
+//  result = DisplayColumnError
+// result = GetClmDef
+
+  CLMVECT minLim, maxLim;
+  result = GetClmLimits(minLim, maxLim);
+  printf("GetClmLimits returned %d\n", result);
+  printf("Limits:\n");
+  printf("  kv: (%g, %g)\n", minLim.kv, maxLim.kv);
+  printf("  mag: (%ld, %ld)\n", minLim.mag, maxLim.mag);
+  printf("  spot: (%g, %g)\n", minLim.spot, maxLim.spot);
+  printf("  wd: (%g, %g)\n", minLim.wd, maxLim.wd);
+  printf("  contr: (%g, %g)\n", minLim.contr, maxLim.contr);
+  printf("  bright: (%g, %g)\n", minLim.bright, maxLim.bright);
+  printf("  scanType: (%d, %d)\n", minLim.scanType, maxLim.scanType);
+  printf("  scanLines: (%d, %d)\n", minLim.scanLines, maxLim.scanLines);
+  printf("  scanTime: (%d, %d)\n", minLim.scanTime, maxLim.scanTime);
+  printf("  beamOnOf: (%d, %d)\n", minLim.beamOnOf, maxLim.beamOnOf);
+  printf("  kvOnOf: (%d, %d)\n", minLim.kvOnOf, maxLim.kvOnOf);
+  printf("  detIndex: (%d, %d)\n", minLim.detIndex, maxLim.detIndex);
+
+/*
+  // auto brightness and contrast
+  result = AutoBC();
+  printf("AutoBC returned %d\n", result);
+  result = AutoFocusC();
+  printf("AutoFocusC returned %d\n", result);
+  result = AutoFocusF();
+  printf("AutoFocusF returned %d\n", result);
+  result = AutoFocusStig();
+  printf("AutoFocusStig returned %d\n", result);
+*/
+  result = CloseColumn();
+  printf("CloseColumn returned %d\n", result);
+
+  // **************
+  // stage controls
+  // **************
+  result = OpenStage();
+  printf("OpenStage returned %d\n", result);
+
+//  GetStgDef
+//  SetStgDef
+
+  STGLOCA stg;
+  result = ReadStageLoca(0, stg);
+  printf("ReadStageLoca returned %d\n", result);
+  printf("Stage position: X=%ld um, Y=%ld um, Z=%ld um\n"
+         "                R=%ld, T=%ld, W=%ld\n",
+                              stg.x, stg.y, stg.z, stg.r, stg.t, stg.w);
+  stg.w = 2L;
+  result = MoveStageLoca(0, stg);
+  printf("MoveStageLoca returned %d\n", result);
+
+  STGLOCA status;
+  vrpn_bool stageIsMoving = vrpn_TRUE;
+  int pollCount = 0;
+  do {
+    vrpn_SleepMsecs(100.0);
+    result = ReadStageError(0, status);
+    if (status.x == 0L) {
+      stageIsMoving = vrpn_FALSE;
+    } else {
+      stageIsMoving = vrpn_TRUE;
+    }
+    pollCount++;
+  } while (stageIsMoving && pollCount < 100);
+
+  if (stageIsMoving) {
+    printf("stage move test: >= 100 iterations\n");
+  } else {
+    printf("stage move test: %d iterations\n", (pollCount-1));
+  }
+ 
+  STGLOCA minStg, maxStg;
+  result = GetLimits(0, minStg, maxStg);
+  printf("GetLimits returned %d\n", result);
+  printf("stage limits:\n");
+  printf("  x: (%ld, %ld)\n", minStg.x, maxStg.x);
+  printf("  y: (%ld, %ld)\n", minStg.y, maxStg.y);
+  printf("  z: (%ld, %ld)\n", minStg.z, maxStg.z);
+  printf("  r: (%ld, %ld)\n", minStg.r, maxStg.r);
+  printf("  t: (%ld, %ld)\n", minStg.t, maxStg.t);
+  printf("  w: (%ld, %ld)\n", minStg.w, maxStg.w);
+
+//  GetStageReply
+//  DisplayStageError
+
+  result = CloseStage();
+  printf("CloseStage returned %d\n", result);
+#endif
+
 }
 
 nmm_Microscope_SEM_EDAX::~nmm_Microscope_SEM_EDAX (void)
@@ -78,12 +230,13 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::mainloop(void)
   if (!d_connection || !(d_connection->connected())) {
     return 0;
   }
+
   if (d_scans_to_do > 0) {
-    openScanControlInterface(); // make sure we're on external control
+//    openScanControlInterface(); // make sure we're on external control
     acquireImage();
     d_scans_to_do--;
   } else {
-    closeScanControlInterface(); // release external control
+//    closeScanControlInterface(); // release external control
   }
   return 0;
 }
@@ -97,8 +250,8 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::initializeParameterDefaults()
   // either read in defaults from a file or, if file doesn't exist, 
   // set to hard-coded values
   EDI32_SEM_REC	SemCfg;
-  Ierror = read_sem_params(				// read the scan generator parameters saved
-		1,									// by the EDAM3 Shell
+  Ierror = read_sem_params(	// read the scan generator parameters saved
+		1,		// by the EDAM3 Shell
 		"C:\\EDAX32\\IMG\\EDI32S1.cfg", 
 		&SemCfg);
   if (Ierror != EDAX_ERROR){
@@ -145,9 +298,9 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::initializeParameterDefaults()
 	d_interpixel_delay_nsec = 200;
     d_pix_integrate_nsec = 100;
     d_resolution_index = EDAX_DEFAULT_SCAN_MATRIX;
-    d_resolution_x = d_matrixSizeX[d_resolution_index];
-    d_resolution_y = d_matrixSizeY[d_resolution_index];
-	printf("max x,y dac spans: %d, %d\n", d_xScanSpan, d_yScanSpan);
+    nmm_EDAX::indexToResolution(d_resolution_index, d_resolution_x,
+                                d_resolution_y);
+    printf("max x,y dac spans: %d, %d\n", d_xScanSpan, d_yScanSpan);
 
 #endif
   } else {
@@ -170,15 +323,24 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::initializeParameterDefaults()
     d_yScanSpan = EDAX_DEFAULT_MAX_Y_SPAN;
 
     d_resolution_index = EDAX_DEFAULT_SCAN_MATRIX;
-    d_resolution_x = d_matrixSizeX[d_resolution_index];
-    d_resolution_y = d_matrixSizeY[d_resolution_index];
+    nmm_EDAX::indexToResolution(d_resolution_index, d_resolution_x,
+                            d_resolution_y);
     d_interpixel_delay_nsec = 200;
     d_pix_integrate_nsec = 100;
   }
 #ifdef VIRTUAL_SEM
 	printf("Warning: you are using the VIRTUAL SEM\n");
 #endif
-  d_settings_changed_since_last_scan = vrpn_TRUE;
+  d_point_dwell_time_nsec = 1000;
+  d_blankMode = EDAX_DEFAULT_BLANK_MODE;
+  d_beam_location_x = 0;
+  d_beam_location_y = 0;
+
+  d_external_scan_control_enabled = 0;
+
+  d_image_mode_settings_changed = vrpn_TRUE;
+  d_point_mode_settings_changed = vrpn_TRUE;
+  d_shared_settings_changed = vrpn_TRUE;
   return 0;
 }
 
@@ -213,7 +375,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::closeEDAXHardware()
 vrpn_int32 nmm_Microscope_SEM_EDAX::openScanControlInterface()
 {
     int result = 0, enable = EDAX_TRUE;
-   // printf("EDAX is taking control of SEM scanning\n");
+    printf("EDAX is taking control of SEM scanning\n");
 #ifndef VIRTUAL_SEM
     result = SgEmia(EDAX_WRITE, &enable);
     if (result == EDAX_ERROR) {
@@ -223,13 +385,14 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::openScanControlInterface()
 #else
     //printf("not\n");
 #endif
+    d_external_scan_control_enabled = vrpn_TRUE;
     return 0;
 }
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::closeScanControlInterface()
 {
     int result = 0, enable = EDAX_FALSE;
-//    printf("EDAX is relinquishing control of SEM scanning\n");
+    printf("EDAX is relinquishing control of SEM scanning\n");
 #ifndef VIRTUAL_SEM
     result = SgEmia(EDAX_WRITE, &enable);
 #else
@@ -239,13 +402,14 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::closeScanControlInterface()
         fprintf(stderr, "closeHardware: SgEmia failure\n");
         return -1;
     }
+    d_external_scan_control_enabled = vrpn_FALSE;
     return 0;
 }
 
-vrpn_int32 nmm_Microscope_SEM_EDAX::setHardwareConfiguration()
+vrpn_int32 nmm_Microscope_SEM_EDAX::configureSharedSettings()
 {
-    int result;
 #ifndef VIRTUAL_SEM
+    int result;
     result = SetupDACParams(d_gainParams, d_offsetParams);
     if (result == EDAX_ERROR) {
       fprintf(stderr, "setHardwareConfiguration: SetupDACParams failure\n");
@@ -271,18 +435,24 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::setHardwareConfiguration()
         fprintf(stderr, "setHardwareConfiguration: SgSetMaxSpan failure\n");
         return -1;
     }
+    result = SgBeamBlank(d_blankMode);
+    if (result == EDAX_ERROR) {
+        fprintf(stderr, "setHardwareConfiguration: SgBeamBlank failure\n");
+        return -1;
+    }
 #endif
-    d_resolution_index = EDAX_DEFAULT_SCAN_MATRIX;
-    d_resolution_x = d_matrixSizeX[d_resolution_index];
-    d_resolution_y = d_matrixSizeY[d_resolution_index];
     
-    configureScan();
-	return 0;
+    d_shared_settings_changed = vrpn_FALSE;
+    return 0;
 }
 
-vrpn_int32 nmm_Microscope_SEM_EDAX::configureScan()
+vrpn_int32 nmm_Microscope_SEM_EDAX::configureForImageMode()
 {
-    d_settings_changed_since_last_scan = vrpn_TRUE;
+    configureSharedSettings();
+    // this changes some of the settings used in point mode so we need to
+    // set this flag to make them get changed back when we get a gotoPoint cmd
+    d_point_mode_settings_changed = vrpn_TRUE;
+
     // pixel delay specified in usec, integration time is in 100 ns units
     // this call is really only to set the inter-pixel delay, the next two
     // functions are responsible for setting the pixel integration time and
@@ -290,12 +460,12 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::configureScan()
     // not before
 #ifndef VIRTUAL_SEM
 
-	int result;
+    int result;
     result = SpDwel(d_interpixel_delay_nsec/1000, 0, d_pix_integrate_nsec/100);
-	if (result == EDAX_ERROR) {
-		fprintf(stderr, "configureScan: SpDwel failed\n");
-		return -1;
-	}
+    if (result == EDAX_ERROR) {
+	fprintf(stderr, "configureForImageMode: SpDwel failed\n");
+	return -1;
+    }
 
     // estimate ignoring integration time
     double msec_per_frame = d_resolution_y*0.5 + 
@@ -303,24 +473,61 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::configureScan()
     double msec_integration_per_frame = 
                  0.000001*d_resolution_x*d_resolution_y*d_pix_integrate_nsec;
 
+/*
     printf("configureScan: estimated duration of image acquisition is ");
     printf("%g msec;\n  actual integration time is %g msec\n", 
            msec_per_frame, msec_integration_per_frame);
+*/
+
     // division by 100 is to specify integration time in 100 ns units
     // integration time = 0 has special meaning - only gives us most
     // significant byte from ADC
     result = SetupSgScan(0, d_xScanSpan-1, 0, d_yScanSpan-1,
         d_pix_integrate_nsec/100, d_xScanSpan/d_resolution_x, 
-		d_yScanSpan/d_resolution_y);
+	d_yScanSpan/d_resolution_y);
 
 
-	if (result == EDAX_ERROR) {
-		fprintf(stderr, "configureScan: SetupSgScan failed\n");
+    if (result == EDAX_ERROR) {
+		fprintf(stderr, "configureForImageMode: SetupSgScan failed\n");
 		return -1;
-	}
+    }
 	
 #endif
-	return 0;
+
+    d_image_mode_settings_changed = vrpn_FALSE;
+    return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::configureForPointMode()
+{
+    configureSharedSettings();
+    // this changes some of the settings used in image mode so we need to
+    // set this flag to make them get changed back when we start acquiring an
+    // image
+    d_image_mode_settings_changed = vrpn_TRUE;
+
+#ifndef VIRTUAL_SEM
+
+    int result;
+    result = SpDwel(0, 0, d_point_dwell_time_nsec/100);
+    if (result == EDAX_ERROR) {
+        fprintf(stderr, "configureForPointMode: SpDwel failed\n");
+        return -1;
+    }
+
+    // set both x and y DAC increments to 1 so we get maximum resolution
+    result = SetupSgScan(0, d_xScanSpan-1, 0, d_yScanSpan-1,
+        d_point_dwell_time_nsec/100, 1, 1);
+
+    if (result == EDAX_ERROR) {
+                fprintf(stderr, "configureForPointMode: SetupSgScan failed\n");
+                return -1;
+    }
+
+#endif
+
+    d_point_mode_settings_changed = vrpn_FALSE;
+    return 0;
 }
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::setResolution
@@ -330,12 +537,10 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::setResolution
   // the new setting
   int i;
   vrpn_bool res_valid = vrpn_false;
-  for (i = 0; i < EDAX_NUM_SCAN_MATRICES; i++) {
-    if (d_matrixSizeX[i] == res_x && d_matrixSizeY[i] == res_y){
-      d_resolution_index = i;
-      res_valid = vrpn_true;
-      break;
-    }
+  i = nmm_EDAX::resolutionToIndex(res_x, res_y);
+  if (i != -1) {
+    res_valid = vrpn_TRUE;
+    d_resolution_index = i;
   }
   if (res_valid){
     d_resolution_x = res_x;
@@ -346,7 +551,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::setResolution
 #else
     d_scanBuffer = new vrpn_uint8[2*d_resolution_x*d_resolution_y];
 #endif
-    configureScan();
+    d_image_mode_settings_changed = vrpn_TRUE;
   } else {
     fprintf(stderr, "setResolution: Warning, invalid resolution: %d, %d\n",
 	res_x, res_y);
@@ -368,35 +573,13 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::reportResolution()
   return dispatchMessage(len, msgbuf, d_ReportResolution_type);
 }
 
-/* **********************************************************************
-   text of an email from Mike Lupu (software guy at EDAX) with regard to 
-   delays in scanning:
-
-The hardware speed limitation comes from:
- 
- (1) Moving the beam and allowing time at each location for the beam to
-settle - dependent on microscope performance.
-        Range: ~2-4 microsecs for the locations on the same scan line, ~500
-microsecs for a new line.
-
- (2) Reading/digitizing one signal is ~100 nanoseconds. The integration
-factor selectable in the user interface defines how many ADC reads per pixel
-are used in averaging. Selecting 0 has a special meaning: data are buffered
-and transferred as one byte (the most significant) per pixel, instead of
-two.
-
- (3) Data transfer to the host.
-
-*************************************************************************/
-
-
 vrpn_int32 nmm_Microscope_SEM_EDAX::setPixelIntegrationTime
 				(vrpn_int32 time_nsec)
 {
     vrpn_int32 num_reads = (time_nsec)/100;
     if (num_reads == 0) num_reads = 1;
     d_pix_integrate_nsec = num_reads*100;
-    configureScan();
+    d_image_mode_settings_changed = vrpn_TRUE;
     return reportPixelIntegrationTime();
 }
 
@@ -422,7 +605,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::setInterPixelDelayTime(vrpn_int32 time_nsec)
     }
     d_interpixel_delay_nsec = num_usecs*1000;
 
-    configureScan();
+    d_image_mode_settings_changed = vrpn_TRUE;
     return reportInterPixelDelayTime();
 }
 
@@ -477,13 +660,85 @@ vrpn_bool nmm_Microscope_SEM_EDAX::scanEnabled()
   return d_scan_enabled;
 }
 
+vrpn_int32 nmm_Microscope_SEM_EDAX::getPointDwellTime_nsec()
+{
+  return d_point_dwell_time_nsec;
+}
+
+vrpn_bool nmm_Microscope_SEM_EDAX::beamBlankEnabled()
+{
+  if (d_blankMode == EDAX_BLANK_ON){
+    return vrpn_TRUE;
+  } else {
+    return vrpn_FALSE;
+  }
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::getBeamLocation
+                              (vrpn_int32 &x, vrpn_int32 &y)
+{
+  x = d_beam_location_x;
+  y = d_beam_location_y;
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::getRetraceDelays
+                              (vrpn_int32 &htime_usec, vrpn_int32 &vtime_usec)
+{
+  htime_usec = d_horzRetrace_usec;
+  vtime_usec = d_vertRetrace_usec;
+  d_shared_settings_changed = vrpn_TRUE;
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::getDACParams
+                       (vrpn_int32 &xGain, vrpn_int32 &xOffset,
+                        vrpn_int32 &yGain, vrpn_int32 &yOffset,
+                        vrpn_int32 &zGain, vrpn_int32 &zOffset)
+{
+  xGain = d_gainParams[0];
+  xOffset = d_offsetParams[0];
+  yGain = d_gainParams[1];
+  yOffset = d_offsetParams[1];
+  zGain = d_gainParams[2];
+  zOffset = d_offsetParams[2];
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::getExternalScanControlEnable
+                                    (vrpn_int32 &enable) 
+{
+#ifndef VIRTUAL_SEM
+  // we set d_external_scan_control_enabled before based on the user request
+  // but here we set it to whats in the hardware
+  int read_result;
+  int call_result;
+  call_result = SgEmia(EDAX_READ, &read_result);
+  if (call_result == EDAX_ERROR) {
+    fprintf(stderr, "getExternalScanControlEnable: Error calling SgEmia\n");
+    return -1;
+  }
+  d_external_scan_control_enabled = call_result;
+#endif
+
+  enable = d_external_scan_control_enabled;
+  return 0;
+}
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
 {
   int i;
-  double t_SetSgScan, t_SetupSgColl, t_CollectSgLine, t_reportScanlineData;
+
+  if (d_shared_settings_changed) {
+    configureSharedSettings();
+  }
+  if (d_image_mode_settings_changed) {
+    configureForImageMode();
+  }
 
 #ifndef VIRTUAL_SEM
+  // variables used for timing
+  double t_SetSgScan, t_SetupSgColl, t_CollectSgLine, t_reportScanlineData;
   int result;
   struct timeval t0, t1, t2, t3;
   
@@ -562,13 +817,13 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
 #else		// ifdef VIRTUAL_SEM
   // make some fake data:
   static int count = 0;
-  int j;
 
   for (i = 0; i < d_resolution_y; i++){
 #ifdef UCHAR_PIXEL
     memset(&(d_scanBuffer[i*d_resolution_x]),
         ((i+((int)(count)))%d_resolution_y)*255/d_resolution_y, d_resolution_x);
 #else
+    int j;
     for (j = 0; j < d_resolution_x; j++){
         ((vrpn_uint16 *)d_scanBuffer)[i*d_resolution_x + j] = 
             ((i+(int)count)%d_resolution_y)*64000/d_resolution_y;
@@ -581,17 +836,16 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
   count++;
 #endif
 
-  if (d_settings_changed_since_last_scan) {
-     printf("acquireImage - measured times for acquisition operations:\n");
-     printf("  SetSgScan x 1 : %g msec\n", t_SetSgScan);
-     printf("  SetupSgColl x 1 : %g msec\n", t_SetupSgColl);
-     printf("  CollectSgLine x %d : %g msec\n", d_resolution_y,
-               t_CollectSgLine);
-     printf("  reportScanlineData x %d : %g msec\n", d_resolution_y,
-               t_reportScanlineData);
-  }
+/*
+  printf("acquireImage - measured times for acquisition operations:\n");
+  printf("  SetSgScan x 1 : %g msec\n", t_SetSgScan);
+  printf("  SetupSgColl x 1 : %g msec\n", t_SetupSgColl);
+  printf("  CollectSgLine x %d : %g msec\n", d_resolution_y,
+            t_CollectSgLine);
+  printf("  reportScanlineData x %d : %g msec\n", d_resolution_y,
+            t_reportScanlineData);
+*/
 
-  d_settings_changed_since_last_scan = vrpn_FALSE;
   return 0;
 }
 
@@ -626,6 +880,197 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::reportScanlineData(int line_num)
     return -1;
   }
   return dispatchMessage(len, msgbuf, d_ScanlineData_type);
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::setPointDwellTime(vrpn_int32 time_nsec)
+{
+    d_point_dwell_time_nsec = time_nsec;
+    d_point_mode_settings_changed = vrpn_TRUE;
+    return reportPointDwellTime();
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::reportPointDwellTime()
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportPointDwellTime(&len, d_point_dwell_time_nsec);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportPointDwellTime_type);
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::setBeamBlankEnable(vrpn_int32 enable)
+{
+  if (enable) {
+    d_blankMode = EDAX_BLANK_ON;
+  } else {
+    d_blankMode = EDAX_BLANK_OFF;
+  }
+  d_shared_settings_changed = vrpn_TRUE;
+  return reportBeamBlankEnable();
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::reportBeamBlankEnable()
+{
+  vrpn_int32 enable;
+  if (beamBlankEnabled()) {
+    enable = 1;
+  } else {
+    enable = 0;
+  }
+
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportBeamBlankEnable(&len, enable);
+  if (!msgbuf){
+    return -1;
+  }
+  
+  return dispatchMessage(len, msgbuf, d_ReportBeamBlankEnable_type);
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::reportMaxScanSpan()
+{
+  vrpn_int32 x, y;
+  x = d_xScanSpan;
+  y = d_yScanSpan;
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportMaxScanSpan(&len, x, y);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportMaxScanSpan_type);
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::goToPoint(vrpn_int32 xDAC, vrpn_int32 yDAC)
+{
+  if (d_shared_settings_changed) {
+    configureSharedSettings();
+  }
+  if (d_point_mode_settings_changed) {
+    configureForPointMode();
+  }
+
+  LONG x = xDAC;
+  LONG y = yDAC;
+  LONG obsolete_parameter = 0;
+
+#ifndef VIRTUAL_SEM
+  LONG result = SpMove(x, y, obsolete_parameter);
+
+  if (result != EDAX_OK) {
+     fprintf(stderr, "Error calling SpMove(%ld, %ld)\n", x, y);
+  }
+#endif
+
+  d_beam_location_x = x;
+  d_beam_location_y = y;
+  return reportBeamLocation();
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::reportBeamLocation()
+{
+  vrpn_int32 x, y;
+  x = d_beam_location_x;
+  y = d_beam_location_y;
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportBeamLocation(&len, x, y);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportBeamLocation_type);
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::setRetraceDelays(
+                    vrpn_int32 htime_usec, vrpn_int32 vtime_usec)
+{
+  d_horzRetrace_usec = htime_usec;
+  d_vertRetrace_usec = vtime_usec;
+  d_shared_settings_changed = vrpn_TRUE;
+  return reportRetraceDelays();
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::reportRetraceDelays()
+{
+  vrpn_int32 htime_nsec, vtime_nsec;
+  char *msgbuf;
+  vrpn_int32 len;
+  htime_nsec = d_horzRetrace_usec*1000;
+  vtime_nsec = d_vertRetrace_usec*1000;
+
+  msgbuf = encode_ReportRetraceDelays(&len, htime_nsec, vtime_nsec);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportRetraceDelays_type);
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::setDACParams(
+                        vrpn_int32 xGain, vrpn_int32 xOffset,
+                        vrpn_int32 yGain, vrpn_int32 yOffset,
+                        vrpn_int32 zGain, vrpn_int32 zOffset)
+{
+  d_gainParams[0] = xGain;
+  d_offsetParams[0] = xOffset;
+  d_gainParams[1] = yGain;
+  d_offsetParams[1] = yOffset;
+  d_gainParams[2] = zGain;
+  d_offsetParams[2] = zOffset;
+
+  d_shared_settings_changed = vrpn_TRUE;
+  return reportDACParams();
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::reportDACParams()
+{
+  vrpn_int32 xg, xo, yg, yo, zg, zo;
+  char *msgbuf;
+  vrpn_int32 len;
+  getDACParams(xg, xo, yg, yo, zg, zo);
+
+  msgbuf = encode_ReportDACParams(&len, xg, xo, yg, yo, zg, zo);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportDACParams_type);
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::setExternalScanControlEnable(
+                                    vrpn_int32 enable)
+{
+  if (enable) {
+    openScanControlInterface();
+  } else {
+    closeScanControlInterface();
+  }
+  return reportExternalScanControlEnable();
+}
+
+vrpn_int32 nmm_Microscope_SEM_EDAX::reportExternalScanControlEnable()
+{
+  vrpn_int32 enable;
+  char *msgbuf;
+  vrpn_int32 len;
+  getExternalScanControlEnable(enable);
+ 
+  msgbuf = encode_ReportExternalScanControlEnable(&len, enable);
+  if (!msgbuf){
+    return -1;
+  }
+  
+  return dispatchMessage(len, msgbuf, d_ReportExternalScanControlEnable_type);
 }
 
 //static 
@@ -710,6 +1155,132 @@ int nmm_Microscope_SEM_EDAX::RcvRequestScan
   return 0;
 }
 
+//static 
+int nmm_Microscope_SEM_EDAX::RcvSetPointDwellTime
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 time_nsec;
+
+  if (decode_SetPointDwellTime(&bufptr, &time_nsec) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvSetPointDwellTime: decode failed\n");
+    return -1;
+  }
+  if (me->setPointDwellTime(time_nsec) == -1) {
+    fprintf(stderr, 
+          "nmm_Microscope_SEM_EDAX::RcvSetPointDwellTime: set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
+//static 
+int nmm_Microscope_SEM_EDAX::RcvSetBeamBlankEnable
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 enable;
+
+  if (decode_SetBeamBlankEnable(&bufptr, &enable) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvSetBeamBlankEnable: decode failed\n");
+    return -1;
+  }
+  if (me->setBeamBlankEnable(enable) == -1) {
+    fprintf(stderr, 
+         "nmm_Microscope_SEM_EDAX::RcvSetBeamBlankEnable: set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
+//static 
+int nmm_Microscope_SEM_EDAX::RcvGoToPoint
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 x, y;
+
+  if (decode_GoToPoint(&bufptr, &x, &y) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvGoToPoint: decode failed\n");
+    return -1;
+  }
+  if (me->goToPoint(x,y) == -1) {
+    fprintf(stderr, "nmm_Microscope_SEM_EDAX::RcvGoToPoint: set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
+//static 
+int nmm_Microscope_SEM_EDAX::RcvSetRetraceDelays
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 hdelay, vdelay;
+
+  if (decode_SetRetraceDelays(&bufptr, &hdelay, &vdelay) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvSetRetraceDelays: decode failed\n");
+    return -1;
+  }
+  if (me->setRetraceDelays(hdelay, vdelay) == -1) {
+    fprintf(stderr, 
+            "nmm_Microscope_SEM_EDAX::RcvSetRetraceDelays: set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
+//static 
+int nmm_Microscope_SEM_EDAX::RcvSetDACParams
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 xg, xo, yg, yo, zg, zo;
+
+  if (decode_SetDACParams(&bufptr, &xg, &xo, &yg, &yo, &zg, &zo) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvSetDACParams: decode failed\n");
+    return -1;
+  }
+  if (me->setDACParams(xg, xo, yg, yo, zg, zo) == -1) {
+    fprintf(stderr, "nmm_Microscope_SEM_EDAX::RcvSetDACParams: set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
+//static
+int nmm_Microscope_SEM_EDAX::RcvSetExternalScanControlEnable
+                (void *_userdata, vrpn_HANDLERPARAM _p)
+{
+  nmm_Microscope_SEM_EDAX *me = (nmm_Microscope_SEM_EDAX *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 enable;
+
+  if (decode_SetExternalScanControlEnable(&bufptr, &enable) == -1) {
+    fprintf(stderr,
+        "nmm_Microscope_SEM_EDAX::RcvSetExternalScanControlEnable:"
+        " decode failed\n");
+    return -1;
+  }
+  if (me->setExternalScanControlEnable(enable) == -1) {
+    fprintf(stderr,
+         "nmm_Microscope_SEM_EDAX::RcvSetExternalScanControlEnable:"
+         " set failed\n");
+    return -1;
+  }
+  return 0;
+}
+
 //static
 int nmm_Microscope_SEM_EDAX::RcvGotConnection
 		(void *_userdata, vrpn_HANDLERPARAM _p)
@@ -720,6 +1291,12 @@ int nmm_Microscope_SEM_EDAX::RcvGotConnection
     me->reportResolution();
     me->reportPixelIntegrationTime();
     me->reportInterPixelDelayTime();
+    me->reportMaxScanSpan();
+    me->reportBeamBlankEnable();
+    me->reportPointDwellTime();
+    me->reportRetraceDelays();
+    me->reportDACParams();
+    me->reportExternalScanControlEnable();
     //me->openScanControlInterface();
     me->d_scans_to_do = 0;
     me->d_scan_enabled = 0;
