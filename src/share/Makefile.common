@@ -448,7 +448,6 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-# ImageMagick library. 
    ARCH_LIBS := $(addprefix -l,glut32_UNC wsock32 user32 gdi32 comdlg32 glu32 \
                                opengl32 \
 	CORE_RL_lcms_ CORE_RL_magick_ CORE_RL_ttf_ CORE_RL_xlib_ CORE_RL_libxml_)
@@ -457,7 +456,7 @@ endif
 ##########################
 # ImageMagick library. 
 ifeq ($(HW_OS),sgi_irix)
-   ARCH_LIBS := $(addprefix -l,CORE_DB_lcms_ CORE_DB_magick_ CORE_DB_ttf_ CORE_DB_xlib_ CORE_DB_libxml_)
+   ARCH_LIBS := $(addprefix -l,Magick bz2 jpeg xml2 tiff png z )
 endif
 
 ##########################
