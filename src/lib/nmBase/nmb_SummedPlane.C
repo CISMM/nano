@@ -89,6 +89,7 @@ nmb_SummedPlane( const char* inputPlaneName1,
 
   // add ourselves to the dataset
   dataset->addNewCalculatedPlane( this );
+  dataset->inputPlaneNames->addEntry( newOutputPlaneName );
   
   // register ourselves to receive plane updates
   sourcePlane1->add_callback( sourcePlaneChangeCallback, this );

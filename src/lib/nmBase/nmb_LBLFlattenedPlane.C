@@ -70,6 +70,7 @@ nmb_LBLFlattenedPlane( const char* inputPlaneName,
 
   // add ourselves to the dataset
   dataset->addNewCalculatedPlane( this );
+  dataset->inputPlaneNames->addEntry( newOutputPlaneName );
   
   // register ourselves to receive plane updates
   sourcePlane->add_callback( sourcePlaneChangeCallback, this );

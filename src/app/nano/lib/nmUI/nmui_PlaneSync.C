@@ -100,10 +100,6 @@ handleCalculatedPlaneSync( void * userdata, vrpn_HANDLERPARAM p )
 	  fprintf( stderr, "nmui_PlaneSync::Unable to create "
 		   "plane from remote.\n" );
 	}
-      
-      const char* newPlaneName
-	= newPlane->getName( )->Characters( );
-      it->d_dataset->inputPlaneNames->addEntry( newPlaneName );
     } 
   else // not accepting updates
     {
