@@ -5,6 +5,12 @@
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-NANO                     ICON    DISCARDABLE     "NANO.ICO"
-GLUT_ICON                ICON                    "NANO.ICO"
-tk                       ICON    DISCARDABLE     "NANO.ICO"
+#ifdef THIRDTECH
+#define ICON_FILE "nano_3rd.ico"
+#else
+#define ICON_FILE "nano_unc.ico"
+#endif
+
+NANO                     ICON    DISCARDABLE     ICON_FILE
+GLUT_ICON                ICON                    ICON_FILE
+tk                       ICON    DISCARDABLE     ICON_FILE

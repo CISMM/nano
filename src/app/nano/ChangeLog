@@ -1,3 +1,9 @@
+2001-10-12  Nathan Conrad  <conrad@cs.unc.edu>
+
+	* nano.rc: Added an #ifdef statement to determine which icon should
+	be compiled into the nano binary. nano_3rd.ico and nano_unc.ico are
+	the two icon files.
+
 2001-10-12  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.c: Get rid of remnants of min/max color in favor of

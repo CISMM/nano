@@ -1,3 +1,13 @@
+2001-10-12  Nathan Conrad  <conrad@cs.unc.edu>
+
+	* Makefile.app_common (THIRDTECH): Added a RCFLAGS variable so that
+	THIRDTECH can be defined in the nano resource file. This is usefull
+	to determine which icon to decorate the binary with.
+
+	* Makefile.common (THIRDTECH):  added a "THIRDTECH variable, which
+	is set to 0 for UNC builds, and 1 for 3rd Tech builds. If the
+	variable is set to 1, THIRDTECH is added to the list of C defines.
+
 2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
 
 	* Makefile.common (LOAD_FLAGS): added nodefaultlib:"glut32.lib" because

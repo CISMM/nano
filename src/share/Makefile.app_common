@@ -103,6 +103,11 @@ ifdef VC
   DLD = $(subst -L,/LIBPATH:,$(strip $(DEP_LIBS_LD)))
   VC_LOAD_FLAGS = $(subst -L,/LIBPATH:,$(strip $(LOAD_FLAGS)))
   DLD += $(VC_LOAD_FLAGS)
+ifeq ($(THIRDTECH),1)
+RCFLAGS+="/DTHIRDTECH"
+else
+RCFLAGS+=/dUNC
+endif
 else
   OUTPUT_CMD := -o $(APP_EXEC)
   # Must be =, not :=, because DEP_LIBS_LIB isn't defined yet.
@@ -135,10 +140,21 @@ clobber: thisclean
 
 #############################################################################
 #
+# implicit rule for compiling resource files
+#
+ifdef VC
+$(OBJECT_DIR)/%.res: %.rc
+	rc $(RCFLAGS) $<
+	mv nano.RES $(addsuffix .res, $(strip $(basename $@)))
+endif
+
+#############################################################################
+#
 # implicit rule for all .c files
 #
 
-.SUFFIXES: .c .C .cc .o .a .obj
+.SUFFIXES: .c .C .cc .o .a .obj .rc
+
 
 $(OBJECT_DIR)/%.o: %.c
 ifdef NM_VERBOSE_MAKEFILE
@@ -200,13 +216,13 @@ else
 	       /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
 endif
 
-$(APP_EXEC): $(APP_OBJ)
+$(APP_EXEC): $(APP_OBJ) $(APP_RES)
 ifdef VC
   ifdef NM_VERBOSE_MAKEFILE
-	link $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(DLD) $(DPL) $(VC_LIBS)
+	link $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(APP_RES_LINK) $(DLD) $(DPL) $(VC_LIBS)
   else
 	@echo link ... -o $(@F) ...
-	@link $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(DLD) $(DPL) $(VC_LIBS)
+	@link $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(APP_RES_LINK) $(DLD) $(DPL) $(VC_LIBS)
   endif
 else
   ifdef NM_VERBOSE_MAKEFILE

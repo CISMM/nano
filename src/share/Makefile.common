@@ -1,4 +1,4 @@
-#b############################################################################
+#############################################################################
 #	Makefile for the nanoManipulator client application.  Needs to be
 # built using 'gmake'.  Should run on any architecture that is currently
 # supported.  It should be possible to build simultaneously on multiple
@@ -63,6 +63,13 @@ SPACE := $(EMPTY) $(EMPTY)
 # foo := a b c
 # bar:= $(subst $(SPACE),$(COMMA),$(foo))
 # bar is now `a,b,c'.
+
+##########################
+#
+# Is this a 3rd Tech build?
+# (0 is no; 1 is yes)
+
+THIRDTECH = 0
 
 ##########################
 #
@@ -565,6 +572,9 @@ DEFINES = $(addprefix -D,$(BAREDEFINES))
 
 CFLAGS += -g
 
+ifeq ($(THIRDTECH),1)
+CFLAGS += -DTHIRDTECH
+endif
 ifeq ($(HW_OS),pc_win32)
   CFLAGS = /nologo /MTd /W3 /GX /Gm /Zi /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /TP 
 # /MTd multi-threaded, debug lib - not DLL.
@@ -581,6 +591,9 @@ ifeq ($(HW_OS),pc_win32)
 # /GZ catch bugs cause by optimizations when using debug code
 # /TP compile everything C++
 # /c suppresses link.
+ifeq ($(THIRDTECH),1)
+CFLAGS += /D "THIRDTECH"
+endif
 endif
 
 #ifeq ($(HW_OS),pc_cygwin)
@@ -625,3 +638,10 @@ export NO_PHANTOM
 export NO_MSCOPE_CONNECTION
 
 endif
+
+
+
+
+
+
+
