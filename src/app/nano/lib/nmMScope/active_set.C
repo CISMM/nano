@@ -260,14 +260,18 @@ Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
         active_list[10] = new Tclvar_int("data_sets(scan10)",0,tcl_update_callback,this);
   	channel_list.addEntry("IN 2-Reverse");
         active_list[11] = new Tclvar_int("data_sets(scan11)",0,tcl_update_callback,this);
-  	channel_list.addEntry("FastTrack-Forward");
+  	channel_list.addEntry("Phase-Forward");
         active_list[12] = new Tclvar_int("data_sets(scan12)",0,tcl_update_callback,this);
-  	channel_list.addEntry("FastTrack-Reverse");
+  	channel_list.addEntry("Phase-Reverse");
         active_list[13] = new Tclvar_int("data_sets(scan13)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Z Piezo-Forward");
+  	channel_list.addEntry("FastTrack-Forward");
         active_list[14] = new Tclvar_int("data_sets(scan14)",0,tcl_update_callback,this);
-  	channel_list.addEntry("Z Piezo-Reverse");
+  	channel_list.addEntry("FastTrack-Reverse");
         active_list[15] = new Tclvar_int("data_sets(scan15)",0,tcl_update_callback,this);
+  	channel_list.addEntry("Z Piezo-Forward");
+        active_list[16] = new Tclvar_int("data_sets(scan16)",0,tcl_update_callback,this);
+  	channel_list.addEntry("Z Piezo-Reverse");
+        active_list[17] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
 
 	// Set up for old default, which was Topography and standard deviation
 	if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
@@ -333,6 +337,10 @@ int	Scan_channel_selector::Add_channel(char *name, char *units,
 	    return -1;
 	  }
 	}
+        // Save the scale and offset used to acquire the data with the plane.
+        // Useful if we save the data to a Topo file
+        planes[which]->tm_scale = scale;
+        planes[which]->tm_offset = offset;
 
 	// see if we can lookup the image corresponding to this plane. If
  	// not, we add it to the image list

@@ -449,7 +449,9 @@ BCPlane --> constructor
         @author Kimberly Passarella Jones
  @date modified 9-10-95 by Kimberly Passarella Jones
 */
-BCPlane::BCPlane(BCString name, BCString units, int nx, int ny)
+BCPlane::BCPlane(BCString name, BCString units, int nx, int ny):
+         tm_scale(1),
+         tm_offset(0)
 {
     //int x;
 
@@ -497,7 +499,9 @@ BCPlane --> constructor
         @author Kimberly Passarella Jones
  @date modified 9-10-95 by Kimberly Passarella Jones
 */
-BCPlane::BCPlane(BCPlane* plane)
+BCPlane::BCPlane(BCPlane* plane):
+         tm_scale(1),
+         tm_offset(0)
 {
     //int x;
 
@@ -526,7 +530,9 @@ BCPlane::BCPlane(BCPlane* plane)
     }
 }
 
-BCPlane::BCPlane(BCPlane* plane, int newX, int newY)
+BCPlane::BCPlane(BCPlane* plane, int newX, int newY):
+         tm_scale(1),
+         tm_offset(0)
 {
     //int x;
 

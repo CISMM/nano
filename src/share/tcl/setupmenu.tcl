@@ -44,6 +44,8 @@ set scandatalist [list \
         "IN 1-Reverse" \
         "IN 2-Forward" \
         "IN 2-Reverse" \
+        "Phase-Forward" \
+        "Phase-Reverse" \
         "FastTrack-Forward" \
         "FastTrack-Reverse" \
         "Z Piezo-Forward" \

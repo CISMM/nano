@@ -2,7 +2,7 @@
 #define __AFMSTM_H__
 
 
-#define ZDATA_USER_DEFINED 15
+//#define ZDATA_USER_DEFINED 15
 #define ZUNIT_USER_DEFINED 15
 #define SCAN_OFF -1
 #define SCAN_NOSCAN 0

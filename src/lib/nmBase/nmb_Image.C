@@ -229,7 +229,8 @@ nmb_ImageGrid::nmb_ImageGrid(const char *name, const char *units,
     }
 }
 
-nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
+nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):
+    nmb_Image(),
     units_x("nm"), units_y("nm")
 {
     // WARNING: assumes (non-zero value <==> value was set) as
@@ -260,6 +261,8 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
     } else {
         is_height_field = vrpn_FALSE;
     }
+    tm_scale = p->tm_scale;
+    tm_offset = p->tm_offset;
 }
 
 nmb_ImageGrid::~nmb_ImageGrid()

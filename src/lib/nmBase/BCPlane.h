@@ -143,6 +143,9 @@ class BCPlane
     const float * flatValueArray (void) const
       { return _value; }
 
+    float tm_scale;     ///< Scale used by ThermoMicroscopes to acquire data
+    float tm_offset;    ///< Offset used by ThermoMicroscopes to acquire data
+
   protected: 
 
     int setGridSize(int x, int y);
@@ -199,10 +202,10 @@ class BCPlane
     double _scale;		
     BCPlane * _next;	///< the next BCPlane in the list maintained by _grid
 
-    float * _value;
-    int _num_x, _num_y;
+    float * _value;     ///< The data
+    int _num_x, _num_y; ///< The size of the 2D _value array
 
-    long** _sec;
+    long** _sec;        ///< Times for each data point
     long** _usec;
 
     int _modified;	///< true if _value has been changed

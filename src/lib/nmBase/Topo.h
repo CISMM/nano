@@ -26,14 +26,20 @@ class nmb_Image;
 #define TF_DO_SWAP                 (10)
 
 /* for iDataType member of _tScanParams (also used by DSP) */
+/* ADC0, ADC1 and ADC2 are used to connect to sensor, IN1 and IN2 respectively
+   so what ZDATA_ADC1 really mean was ZDATA_IN1 and so on. 
+   It is rather confusing. Starting from SPMLab 5.01 we are changing 
+   ZDATA_ADC0 to ZDATA_SENSOR
+   ZDATA_ADC1 to ZDATA_IN1
+   ZDATA_ADC2 to ZDATA_IN2    */
 #define ZDATA_NONE          -1
 #define ZDATA_HEIGHT        0
-#define ZDATA_ADC0          1       /* was ZDATA_CURRENT */
+#define ZDATA_SENSOR        1       /* was ZDATA_ADC0 see comment above */
 #define ZDATA_FFM           2
 #define ZDATA_SPECT         3
 #define ZDATA_SPECTV        4
-#define ZDATA_ADC1          5
-#define ZDATA_ADC2          6
+#define ZDATA_IN1           5		/* was ZDATA_ADC1 see comment above */
+#define ZDATA_IN2           6		/* was ZDATA_ADC2 see comment above */
 #define ZDATA_TIPV          7       /* oScope, monitor of tip V */
 #define ZDATA_DAC1          8       /* oScope, Spare DAC 1 */
 #define ZDATA_DAC2          9       /* oScope, Spare DAC 2 */
@@ -43,7 +49,13 @@ class nmb_Image;
 #define ZDATA_FEEDBACK      13      /* either ADC0,ADC1, or ADC2, as defined in setup acquire */
 #define ZDATA_IOMODAMP      15
 #define ZDATA_IOMODPHASE    16
-//#define ZDATA_USER_DEFINED 17    Conflict with define in microscape. 
+#define ZDATA_USER_DEFINED  17		/* 8 spaces for 8 different type of user defined channels */
+#define ZDATA_COUNTER1		25
+#define ZDATA_COUNTER2		26
+#define ZDATA_IN3			27		/* IN3 and IN4 are for future expension */
+#define ZDATA_IN4			28
+#define ZDATA_IN5			29
+#define ZDATA_ADC			30		/* ADC channel, can be IN1 or IN2
 
 /* for iDataMode member of _tScanParams (also used by DSP) */
 #define D2_IMAGE                    0
@@ -431,6 +443,9 @@ public:
 	griddata = NULL; valid_grid=0;}
     vrpn_int32 Rows(){ return iRows;}
     vrpn_int32 Cols(){ return iCols;}
+    vrpn_int16   iDataType;    
+        /*  raw data source (Z, sensor, external #1,...) */
+    vrpn_int16   iDataDir;               /*  direction data collected */
 };
 #define VERNUMBER 500
 //#define NOFFSET   3144

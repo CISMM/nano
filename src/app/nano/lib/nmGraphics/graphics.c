@@ -827,7 +827,9 @@ int setup_lighting (int)
   }
   glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 
-  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  // 2 sided lighting causes black lines to show through the surface on Nvidia
+  // Quadro2Pro, and it's probably slower, anyway.
+  //glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   glEnable(GL_LIGHT0);
 
   // Is this reasonable?  TCH 10 Jan 99

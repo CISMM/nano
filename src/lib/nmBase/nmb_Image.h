@@ -68,7 +68,8 @@ class nmb_ImageList;
 class nmb_Image {
         friend class nmb_ImageList;
   public:
-	nmb_Image():is_height_field(VRPN_FALSE), num_referencing_lists(0)
+       nmb_Image():is_height_field(VRPN_FALSE), num_referencing_lists(0),
+       tm_scale(1), tm_offset(0)
             {};
 	virtual ~nmb_Image (void);
 	virtual int width() const = 0;
@@ -133,6 +134,8 @@ class nmb_Image {
 	virtual int exportToFile(FILE *f, const char *export_type,
                                  const char * filename) = 0;
 
+    float tm_scale;     ///< Scale used by ThermoMicroscopes to acquire data
+    float tm_offset;    ///< Offset used by ThermoMicroscopes to acquire data
   protected:
 	vrpn_bool is_height_field;
         int num_referencing_lists;

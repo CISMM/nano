@@ -4248,9 +4248,11 @@ void nmm_Microscope_Remote::RcvScanDataset (const char * _name,
   if (state.acquisitionMode == SCANLINE) {
       RcvScanlineDataset(_name, _units, _offset, _scale);
   } else {
-      fprintf(stderr, "  %s (%s), offset:  %g, scale:  %g\n",
-              _name, _units, _offset, _scale);
+       fprintf(stderr, "  %s (%s), offset:  %g, scale:  %g\n",
+               _name, _units, _offset, _scale);
       // HACK HACK HACK
+      // Note: units are copied directly from pImg->szWorldUnit
+      // on the Thermo side of things. 
       if (state.data.scan_channels->Add_channel((char *) _name,
                                  (char *) _units,_offset, _scale)) {
           fprintf(stderr, "Can't add scan dataset\n");
@@ -4349,22 +4351,62 @@ void nmm_Microscope_Remote::RcvTopoFileHeader (const long _length, const char *h
     //printf("********** RCV'D TOPO FILE HEADER **********\n");
   if(_length < 1536){
 	printf("Unexpected Header length %ld need at least 1536\n",_length);
-  }else{
-	d_topoFile.parseHeader(header,_length);
-  	//printf("********** Got Topometrix file header, length %ld\n", _length);
+  } else {
+      d_topoFile.parseHeader(header,_length);
+      //printf("********** Got Topometrix file header, length %ld\n", _length);
 
-        nmb_ImageList *images = d_dataset->dataImages;
-        int i;
-        for (i = 0; i < images->numImages(); i++) {
-             images->getImage(i)->setTopoFileInfo(d_topoFile);
-        }
-
-/*	handle=fopen("temp.tfr","w");
-	if(handle == NULL){printf("ERROR WRITING TEMP.TFR");}
-	fHdl=fileno(handle);
-	write(fHdl,header,_length*sizeof(char));	
-	fclose(handle);
-*/
+      nmb_ImageList *images = d_dataset->dataImages;
+      nmb_Image* img;
+      // Find the data type based on the plane name. 
+      // Based on table in topo/fileinfo.c, switch (doc.sScanParam.iDataType) 
+      switch (d_topoFile.iDataType) {
+      case ZDATA_LINEARIZED_Z:
+          if(d_topoFile.iDataDir == DIR_FWD) img = images->getImageByName( "Topography-Forward");
+          else img = images->getImageByName( "Topography-Reverse");
+          break;
+      case ZDATA_SENSOR:
+          if(d_topoFile.iDataDir == DIR_FWD) img = images->getImageByName( "Internal Sensor-Forward") ;
+          else img = images->getImageByName( "Internal Sensor-Reverse") ;
+          break;
+      case ZDATA_SPECT:
+          if(d_topoFile.iDataDir == DIR_FWD) img = images->getImageByName( "Z Modulation-Forward");
+          else img = images->getImageByName( "Z Modulation-Reverse");
+          break;
+      case ZDATA_FFM:
+          if(d_topoFile.iDataDir == DIR_FWD) img = images->getImageByName( "Lateral Force-Forward");
+          else img = images->getImageByName( "Lateral Force-Reverse");
+          break;
+      case ZDATA_IN1:
+          if(d_topoFile.iDataDir == DIR_FWD) img = images->getImageByName( "IN 1-Forward");
+          else img = images->getImageByName( "IN 1-Reverse");
+          break;
+      case ZDATA_IN2:
+          if(d_topoFile.iDataDir == DIR_FWD) img = images->getImageByName( "IN 2-Forward");
+          else img = images->getImageByName( "IN 2-Reverse");
+          if (!img) {
+              if(d_topoFile.iDataDir == DIR_FWD) img = images->getImageByName( "Phase-Forward");
+              else img = images->getImageByName( "Phase-Reverse");
+          }
+          break;
+      case ZDATA_HEIGHT_ERROR:
+          if(d_topoFile.iDataDir == DIR_FWD) img = images->getImageByName( "FastTrack-Forward");
+          else img = images->getImageByName( "FastTrack-Reverse");
+          break;
+      case ZDATA_HEIGHT:
+          if(d_topoFile.iDataDir == DIR_FWD) img = images->getImageByName( "Z Piezo-Forward");
+          else img = images->getImageByName( "Z Piezo-Reverse");
+          break;
+      default:
+          printf("Warning: unrecognized data type in ThermoMicro file header message.\n");
+      }       
+      if (img) img->setTopoFileInfo(d_topoFile);
+      else printf("Warning: unable to match ThermoMicro file header to data plane, discarding.\n");
+      /*	handle=fopen("temp.tfr","w");
+                if(handle == NULL){printf("ERROR WRITING TEMP.TFR");}
+                fHdl=fileno(handle);
+                write(fHdl,header,_length*sizeof(char));	
+                fclose(handle);
+      */
   }
 }
 

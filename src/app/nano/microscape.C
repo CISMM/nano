@@ -3039,7 +3039,7 @@ static  void    handle_exportPlaneName_change (const char *, void *ud)
     export_formats.copyList(formatList);
     // check if its okay to leave exportFileType as it was
     // (i.e., if exportFileType is present in the new list)
-    /* optionmenu widget should take care of this...
+    /* optionmenu widget should take care of this, but it doesn't */
     for (int i = 0; i < formatList->numEntries(); i++) {
 	if (strcmp((const char *)exportFileType, formatList->entry(i)) == 0) {
 	    return;
@@ -3051,7 +3051,6 @@ static  void    handle_exportPlaneName_change (const char *, void *ud)
     } else {
 	exportFileType = "none";
     }
-    */
 }
 
 /** See if the user has given a name to the filtered plane other
@@ -4122,7 +4121,7 @@ void setupCallbacks (nmb_Dataset *d) {
   // can be exported as, since some format might be appropriate for certain
   // images but not for others depending on the type of data they contain
   //exportFileType.bindList(NULL); // the list is bound when an image is selected
-  exportFileType = "none";
+  //exportFileType = "none";
 
   // When newExportFileName is changed, we actually save a file.
   newExportFileName  = "";
