@@ -488,7 +488,7 @@ source [file join ${tcl_script_dir} streamfile.tcl]
 source [file join ${tcl_script_dir} shared_ptr.tcl]
 
 if { !$thirdtech_ui } {
-source [file join ${tcl_script_dir} shared_ptr.tcl]
+#source [file join ${tcl_script_dir} shared_ptr.tcl]
 #Registration tool. Align two data sets with each other
 source [file join ${tcl_script_dir} registration.tcl]
 source [file join ${tcl_script_dir} tip_conv.tcl]

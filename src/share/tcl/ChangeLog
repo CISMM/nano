@@ -1,5 +1,11 @@
 2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
 
+        * mainwin.tcl: removed an extra call to 
+        source [file join ${tcl_script_dir} shared_ptr.tcl] that caused
+        nano to crash
+
+2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
+
 	* litho_main.tcl: added some parameters for the ebeamWriter program
 
 2001-03-02  Aron Helser  <helser@cs.unc.edu>
