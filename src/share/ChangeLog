@@ -1,3 +1,8 @@
+2001-07-30  David Marshburn  <marshbur@cs.unc.edu>
+
+	* Makefile.common: (TCL_LIBS)  increment tcl, etc. version numbers for
+	tcl/tk 8.3.
+
 2001-07-29  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* Makefile.common (ARCH_LIBS): set ARCH_LIBS for ImageMagick on SGI
