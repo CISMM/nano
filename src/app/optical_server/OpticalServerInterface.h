@@ -21,8 +21,10 @@ public:
 
 	int getBinning( ) { return binning; };
 	int getResolutionIndex( ) { return resolutionIndex; };
+	int getContrast( ) { return contrast; };
 	void setBinning( int bin );
 	void setResolutionIndex( int idx );
+	void setContrast( int contrast );
 
 protected:
 
@@ -37,10 +39,13 @@ protected:
 
 	Tclvar_list_of_strings  *d_binningList;
 	Tclvar_list_of_strings  *d_resolutionList;
+	Tclvar_list_of_strings  *d_contrastList;
 	Tclvar_selector	*d_binningSelector;
 	Tclvar_selector *d_resolutionSelector;
+	Tclvar_selector *d_contrastSelector;
 	int binning;
 	int resolutionIndex;
+	int contrast;
 
 private:
 	OpticalServerInterface( );
@@ -57,6 +62,7 @@ private:
 
 	static void handle_binning_changed(char *new_value, void *userdata);
 	static void handle_resolution_changed(char *new_value, void *userdata);
+	static void handle_contrast_changed(char *new_value, void *userdata);
 
 	bool threadReady;
 };

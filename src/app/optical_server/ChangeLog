@@ -1,5 +1,17 @@
 2003-11-22  David Marshburn  <marshbur@cs.unc.edu>
 
+	* OpticalServerInterface.h/cpp:  adds double buffering and controls
+	for image "contrast".  checks to prevent callback loops between
+	c and tcl code.
+	* nmm_Microscope_SEM_diaginc.h/cpp:  adds contrast controls and
+	changes camera to give 12 bit, 8 bits of which are displayed and
+	sent to nano with the help of the contrast controls.  adds a
+	setResolutionByIndex function.  changes getBinning to take no 
+	arguement and just return the bin size.
+	* opticalServer.cpp:  changes to match the above changes.
+
+2003-11-22  David Marshburn  <marshbur@cs.unc.edu>
+
 	* OpticalServerInterface.h: removed implementation of setBinning
 	and setResolutionIndex
 	* OpticalServerInterface.cpp:  implementation of setBinning and

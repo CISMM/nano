@@ -21,9 +21,7 @@ int main( int argc, char* argv[] )
     nmm_Microscope_SEM_diaginc m( "SEM", &connection, vrpn_TRUE );
 
     iface->setMicroscope( &m );
-	int bin = 0;
-	m.getBinning( bin );
-	iface->setBinning( bin );
+	iface->setBinning( m.getBinning( ) );
 	iface->setResolutionIndex( m.getResolutionIndex( ) );
 
     struct timeval timeout;

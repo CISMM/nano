@@ -31,7 +31,7 @@ void OpticalServerInterface_myGlutRedisplay( )
 					  GL_LUMINANCE, GL_UNSIGNED_BYTE, 
 					  iface->lastImage );
 	}
-
+	glutSwapBuffers( );
 }
 
 
@@ -39,13 +39,33 @@ void OpticalServerInterface_myGlutKeyboard( unsigned char key, int x, int y )
 {
 	printf( "glut keyboard func\n" );
 	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+	if( key == '+' )
+	{
+		int idx = iface->microscope->getResolutionIndex( );
+		if( idx < EDAX_NUM_SCAN_MATRICES - 1 ) iface->microscope->setResolutionByIndex( ++idx );
+	}
+	else if( key == '-' )
+	{
+		int idx = iface->microscope->getResolutionIndex( );
+		if( idx > 0 ) iface->microscope->setResolutionByIndex( --idx );
+	}
+	else if( key == '*' )
+	{
+		int bin = iface->getBinning( );
+		if( bin < 4 ) iface->setBinning( ++bin );
+	}
+	else if( key =='/' )
+	{
+		int bin = iface->getBinning( );
+		if( bin > 1 ) iface->setBinning( --bin );
+	}
 
 }
 
 
 void OpticalServerInterface_myGlutSpecial( int, int, int )
 {
-	printf( "glut special func\n" );
+	//printf( "glut special func\n" );
 	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
 
 }
@@ -53,7 +73,7 @@ void OpticalServerInterface_myGlutSpecial( int, int, int )
 
 void OpticalServerInterface_myGlutMouse( int button, int state, int x, int y )
 {
-	printf( "glut mouse func\n" );
+	//printf( "glut mouse func\n" );
 	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
 
 }
@@ -61,7 +81,7 @@ void OpticalServerInterface_myGlutMouse( int button, int state, int x, int y )
 
 void OpticalServerInterface_myGlutMotion( int x, int y )
 {
-	printf( "glut motion func\n" );
+	//printf( "glut motion func\n" );
 	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
 
 }
@@ -69,7 +89,7 @@ void OpticalServerInterface_myGlutMotion( int x, int y )
 
 void OpticalServerInterface_myGlutReshape( int w, int h )
 {
-	printf( "glut reshape func\n" );
+	//printf( "glut reshape func\n" );
 	OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
 	GLUI_Master.auto_set_viewport( );
 
@@ -102,8 +122,10 @@ void OpticalServerInterface_myGlutIdle( )
 void OpticalServerInterface::handle_binning_changed(char *new_value, void *userdata)
 {
   OpticalServerInterface *me = (OpticalServerInterface *)userdata;
-  if( me->microscope != NULL && me->threadReady ) {
-    me->microscope->setBinning( atoi(new_value) );
+  if( me->microscope != NULL && me->threadReady ) 
+  {
+	  if( me->microscope->getBinning( ) != atoi( new_value ) )
+		  me->microscope->setBinning( atoi(new_value) );
   }
 }
 
@@ -113,7 +135,19 @@ void OpticalServerInterface::handle_resolution_changed(char *new_value, void *us
   if( me->microscope != NULL && me->threadReady ) {
     int i, x, y;
     sscanf(new_value, "%d %dx%d", &i, &x, &y);
- 	me->microscope->setResolution( x, y );
+	if( me->microscope->getResolutionIndex( ) != i )
+		me->microscope->setResolution( x, y );
+  }
+}
+
+
+void OpticalServerInterface::handle_contrast_changed(char *new_value, void *userdata)
+{
+  OpticalServerInterface *me = (OpticalServerInterface *)userdata;
+  if( me->microscope != NULL && me->threadReady ) 
+  {
+	  if( me->microscope->getContrastLevel( ) != atoi( new_value ) )
+		  me->microscope->setContrastLevel( atoi(new_value) );
   }
 }
 
@@ -122,6 +156,7 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
 {
   printf( "OpticalServerInterface_mainloop\n" );
   OpticalServerInterface* iface = OpticalServerInterface::getInterface( );
+  glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGBA );
   iface->image_window = glutCreateWindow( "Optical Microscope Server" );
   printf( " graphics window id:  %d\n", iface->image_window );
   glutDisplayFunc( OpticalServerInterface_myGlutRedisplay );
@@ -131,6 +166,12 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
   glutMouseFunc( OpticalServerInterface_myGlutMouse );
   glutReshapeFunc( OpticalServerInterface_myGlutReshape );
   glutIdleFunc( OpticalServerInterface_myGlutIdle );
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluOrtho2D( 0.0, 1.0, 0.0, 1.0 );
+  glClearColor( 0.4, 0.0, 0.4, 0.0 );
+
 
   //------------------------------------------------------------------
   // Generic Tcl startup.  Getting and interpreter and mainwindow.
@@ -193,6 +234,7 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
   //------------------------------------------------------------------
   // Add the controls that we need.
 
+  // binning
   iface->d_binningList = new Tclvar_list_of_strings();
   iface->d_binningList->Add_entry("1");
   iface->d_binningList->Add_entry("2");
@@ -200,6 +242,7 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
   iface->d_binningList->Add_entry("4");
   iface->d_binningSelector = new Tclvar_selector("binning", "", iface->d_binningList, "1", iface->handle_binning_changed, iface);
 
+  // resolution
   iface->d_resolutionList = new Tclvar_list_of_strings();
   char s[512];
   for( int i = 0; i <= EDAX_NUM_SCAN_MATRICES - 1; i++ ) {
@@ -209,10 +252,18 @@ DWORD WINAPI OpticalServerInterface_mainloop( LPVOID lpParameter )
   sprintf( s, "%dx%d", EDAX_SCAN_MATRIX_X[EDAX_DEFAULT_SCAN_MATRIX], EDAX_SCAN_MATRIX_Y[EDAX_DEFAULT_SCAN_MATRIX] );
   iface->d_resolutionSelector = new Tclvar_selector("resolution", "", iface->d_resolutionList, s, iface->handle_resolution_changed, iface);
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluOrtho2D( 0.0, 1.0, 0.0, 1.0 );
-  glClearColor( 0.0, 0.0, 0.0, 0.0 );
+  // contrast
+  iface->d_contrastList = new Tclvar_list_of_strings();
+  iface->d_contrastList->Add_entry( "0" );
+  iface->d_contrastList->Add_entry( "1" );
+  iface->d_contrastList->Add_entry( "2" );
+  iface->d_contrastList->Add_entry( "3" );
+  iface->d_contrastList->Add_entry( "4" );
+  iface->d_contrastList->Add_entry( "5" );
+  iface->d_contrastList->Add_entry( "6" );
+  iface->d_contrastList->Add_entry( "7" );
+  iface->d_contrastList->Add_entry( "8" );
+  iface->d_contrastSelector = new Tclvar_selector("contrast", "", iface->d_contrastList, "0", iface->handle_contrast_changed, iface );
 
   //------------------------------------------------------------------
   // This routine must be called in order to initialize all of the
@@ -243,7 +294,8 @@ OpticalServerInterface( )
   image_window( -1 ),
   microscope( NULL ),
   binning( 2 ),
-  resolutionIndex( EDAX_DEFAULT_SCAN_MATRIX )
+  resolutionIndex( EDAX_DEFAULT_SCAN_MATRIX ),
+  contrast( 0 )
 {
     LPDWORD lpThreadID = NULL;
     ifaceThread = CreateThread( NULL, 0, OpticalServerInterface_mainloop, NULL, 0, lpThreadID );
@@ -295,9 +347,7 @@ setMicroscope( nmm_Microscope_SEM_diaginc* m )
 	this->microscope = m;
 	if( m != NULL )
 	{
-		int ret;
-		m->getBinning( ret );
-		this->setBinning( ret );
+		this->setBinning( m->getBinning( ) );
 		this->setResolutionIndex( m->getResolutionIndex( ) );
 	}
 }
@@ -309,7 +359,7 @@ setBinning( int bin )
 	binning = bin;
 	char binStr[512];
 	sprintf( binStr, "%d", bin );
-	d_binningSelector->Set( binStr );
+	*d_binningSelector = binStr;
 }
 
 
@@ -318,13 +368,23 @@ setResolutionIndex( int idx )
 { 
 	resolutionIndex = idx;
 	char idxStr[512];
-	if( idx > 0 && idx <= EDAX_NUM_SCAN_MATRICES - 1 )
+	if( idx >= 0 && idx <= EDAX_NUM_SCAN_MATRICES - 1 )
 	{
-		sprintf( idxStr, "%i %dx%d", idx, EDAX_SCAN_MATRIX_X[idx], EDAX_SCAN_MATRIX_Y[idx] );
+		sprintf( idxStr, "%d %dx%d", idx, EDAX_SCAN_MATRIX_X[idx], EDAX_SCAN_MATRIX_Y[idx] );
 	}
 	else
 	{
-		sprintf( idxStr, "%i ?x?", idx );
+		sprintf( idxStr, "%d ?x?", idx );
 	}
-	d_resolutionSelector->Set( idxStr );
+	*d_resolutionSelector = idxStr;
+}
+
+void OpticalServerInterface::
+setContrast( int contrast )
+{
+	if( contrast < 0 || contrast > 8 ) return;
+	this->contrast = contrast;
+	char str[512];
+	sprintf( str, "%d", contrast );
+	*d_contrastSelector = str;
 }
