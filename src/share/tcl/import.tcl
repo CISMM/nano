@@ -22,6 +22,7 @@ set import_tune_rot 0
 set import_type ""
 set import_visibility 1
 set import_proj_text 1
+set import_text_image_mode 1
 set import_CCW 1
 set import_tess 10
 set import_axis_step 10
@@ -56,6 +57,7 @@ frame $nmInfo(basic_options).file
 frame $nmInfo(basic_options).file.buttons -bd 3 -relief groove
 frame $nmInfo(basic_options).file.buttons.f1
 frame $nmInfo(basic_options).file.buttons.f1.f1
+frame $nmInfo(basic_options).f1.f2 -bd 3 -relief groove 
 
 generic_optionmenu $nmInfo(basic_options).file.buttons.imported_files current_object\
 	"Current Object" imported_objects
@@ -194,6 +196,14 @@ button $nmInfo(basic_options).f1.f1.colorsample \
         -relief groove -bd 2 -bg $import_color \
         -command { $nmInfo(basic_options).f1.f1.set_color invoke}
 
+# radio button for projective texture mode
+label $nmInfo(basic_options).f1.f2.image_mode_label \
+    -text "Projective Texture\nTransform Generation Mode"
+radiobutton $nmInfo(basic_options).f1.f2.image_mode_surface \
+    -text "Surface Mode" -variable import_text_image_mode -value 1
+radiobutton $nmInfo(basic_options).f1.f2.image_mode_model \
+    -text "Model Mode" -variable import_text_image_mode -value 0 
+
 
 #pack $nmInfo(basic_options).modelFile -side top -anchor w -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).file -anchor w -fill x
@@ -247,6 +257,10 @@ pack $nmInfo(basic_options).f1.f1.lock_texture_button -anchor sw -padx 1m -pady 
 pack $nmInfo(basic_options).f1.f1.set_color -anchor nw -side left -fill x
 pack $nmInfo(basic_options).f1.f1.colorsample -anchor nw -side left -fill x -expand yes
 
+pack $nmInfo(basic_options).f1.f2 -anchor nw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f1.f2.image_mode_label -side top
+pack $nmInfo(basic_options).f1.f2.image_mode_surface -anchor nw
+pack $nmInfo(basic_options).f1.f2.image_mode_model -anchor nw
 
 #pack $nmInfo(basic_options).f2.import_rotx -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_rotx_slide -anchor nw -padx 1m -pady 1m

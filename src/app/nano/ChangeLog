@@ -1,3 +1,10 @@
+2002-07-10  David Marshburn  <marshbur@cs.unc.edu>
+
+	* import.C:  code for registering projected texture with imported
+	objects moved here from nmReg library.
+	* nano.dsp:  removed THIRDTECH symbol definition from release
+	configuration
+
 2002--6-26  David Borland <borland@cs.unc.edu>
 
         * import.C : added callback for saving spider data

@@ -94,7 +94,6 @@ class nmr_RegistrationUI {
        handle_registrationImage2D_change(imageName, (void *)this);
     }
     void displayTexture(int enable) {d_textureDisplayEnabled = enable;};
-	void setImageMode(int mode) {d_textureImageMode = mode;};
 
     void autoAlignImages();
     // set a function to be called whenever the worldToImage transformation
@@ -117,7 +116,6 @@ class nmr_RegistrationUI {
     Tclvar_int d_constrainToTopography;
     Tclvar_int d_invertWarp;
     Tclvar_int d_textureDisplayEnabled;
-	Tclvar_int d_textureImageMode;
     Tclvar_int d_resampleResolutionX;
     Tclvar_int d_resampleResolutionY;
     Tclvar_float d_resampleRatio;

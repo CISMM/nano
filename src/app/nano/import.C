@@ -7,6 +7,7 @@
 #include <URTexture.h>
 #include <FileGenerator.h>
 #include <MSIFileGenerator.h>
+#include <nmg_Graphics.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -35,6 +36,7 @@ static  void handle_import_visibility (vrpn_int32, void *);
 static  void handle_import_color_change (vrpn_int32, void *);
 static  void handle_import_alpha (vrpn_float64, void *);
 static  void handle_import_proj_text (vrpn_int32, void *);
+static  void handle_import_text_image_mode_change(vrpn_int32, void*);
 static	void handle_import_lock_object (vrpn_int32, void *);
 static	void handle_import_lock_texture (vrpn_int32, void *);
 static	void handle_import_CCW (vrpn_int32, void *);
@@ -80,6 +82,7 @@ Tclvar_int		import_lock_roty("import_lock_roty",0, handle_import_lock_roty_chang
 Tclvar_int		import_lock_rotz("import_lock_rotz",0, handle_import_lock_rotz_change);
 Tclvar_int      import_visibility("import_visibility", 1, handle_import_visibility);
 Tclvar_int      import_proj_text("import_proj_text", 1, handle_import_proj_text);
+Tclvar_int      import_text_image_mode("import_text_image_mode", 1, handle_import_text_image_mode_change);
 Tclvar_int		import_lock_object("import_lock_object", 0, handle_import_lock_object);
 Tclvar_int		import_lock_texture("import_lock_texture", 0, handle_import_lock_texture);
 Tclvar_int		import_CCW("import_CCW", 1, handle_import_CCW);
@@ -111,6 +114,10 @@ int				current_leg = -1;		// integer value of the current leg
 //-----------------------------------------------------------------
 ///SimulatedMicroscope object
 extern nmm_SimulatedMicroscope_Remote* SimulatedMicroscope;
+
+//-----------------------------------------------------------------
+///nmg_Graphics object
+extern nmg_Graphics* graphics;
 
 //-----------------------------------------------------------------
 ///MSI File specific variables
@@ -365,6 +372,28 @@ static  void handle_import_proj_text (vrpn_int32, void *)
 			obj.SetProjText(import_proj_text);
 		}
 	}
+}
+
+
+static void handle_import_text_image_mode_change (vrpn_int32, void*) {
+    static Tclvar_int reg_textureDisplayEnabled("reg_display_texture");
+
+    reg_textureDisplayEnabled = 1;
+
+    if (import_text_image_mode == 1) {
+        graphics->setTextureMode(nmg_Graphics::COLORMAP, 
+                                    nmg_Graphics::SURFACE_REGISTRATION_COORD);
+    }
+    else {
+        graphics->setTextureMode(nmg_Graphics::COLORMAP,
+                                    nmg_Graphics::MODEL_REGISTRATION_COORD);
+
+        // set tcl callbacks to create an object for the texture
+		if (World.TGetNodeByName("projtextobj.ptx") == NULL) {
+	        modelFile = "/projtextobj.ptx";
+			current_object_new = "projtextobj.ptx";
+		}
+    }
 }
 
 static  void handle_import_lock_object (vrpn_int32, void *)
