@@ -565,15 +565,20 @@ pack $nmInfo(frictionscale) -fill both
 
 minmaxscale $nmInfo(frictionscale).scale $friction_slider_min_limit \
 	$friction_slider_max_limit 50 friction_slider_min friction_slider_max
+
+generic_optionmenu $nmInfo(frictionscale).friction_dataset \
+        friction_comes_from "Friction plane" inputPlaneNames
+
 # Make a frame to hold the pull-down menu that selects from the list
 frame $nmInfo(frictionscale).pickframe
 pack $nmInfo(frictionscale).pickframe -side left -fill y
+pack $nmInfo(frictionscale).friction_dataset
 pack $nmInfo(frictionscale).scale -fill x -side top
 trace variable friction_slider_min_limit w friction_scale_newscale
 trace variable friction_slider_max_limit w friction_scale_newscale
 
 button $nmInfo(frictionscale).pickframe.setfriction -text "Set Friction Parameters" -command adjust_friction
-pack $nmInfo(frictionscale).pickframe.setfriction 
+pack $nmInfo(frictionscale).pickframe.setfriction
 
 #
 # Helper routine for the friction scale that destroys and then recreates the
@@ -620,10 +625,12 @@ pack $nmInfo(bumpscale) -fill both
 if {$bump_slider_min_limit != $bump_slider_max_limit} {
     minmaxscale $nmInfo(bumpscale).scale $bump_slider_min_limit \
         $bump_slider_max_limit 50 bump_slider_min bump_slider_max
+    generic_optionmenu $nmInfo(bumpscale).bump_dataset bumpsize_comes_from \
+            "Bump plane" inputPlaneNames
     # Make a frame to hold the pull-down menu that selects from the list
     frame $nmInfo(bumpscale).pickframe
     pack $nmInfo(bumpscale).pickframe -side left -fill y
-    pack $nmInfo(bumpscale).scale -fill x -side top
+    pack $nmInfo(bumpscale).bump_dataset $nmInfo(bumpscale).scale -fill x -side left
     trace variable bump_slider_min_limit w bump_scale_newscale
     trace variable bump_slider_max_limit w bump_scale_newscale
 }
@@ -676,10 +683,13 @@ pack $nmInfo(buzzscale) -fill both
 if {$buzz_slider_min_limit != $buzz_slider_max_limit} {
     minmaxscale $nmInfo(buzzscale).scale $buzz_slider_min_limit \
         $buzz_slider_max_limit 50 buzz_slider_min buzz_slider_max
+    generic_optionmenu $nmInfo(buzzscale).buzz_dataset buzzing_comes_from \
+            "Buzzing plane" inputPlaneNames
     # Make a frame to hold the pull-down menu that selects from the list
     frame $nmInfo(buzzscale).pickframe
     pack $nmInfo(buzzscale).pickframe -side left -fill y
-    pack $nmInfo(buzzscale).scale -fill x -side top
+    pack $nmInfo(buzzscale).buzz_dataset $nmInfo(buzzscale).scale -fill x \
+            -side left
     trace variable buzz_slider_min_limit w buzz_scale_newscale
     trace variable buzz_slider_max_limit w buzz_scale_newscale
 }
@@ -724,10 +734,13 @@ generic_entry $nmInfo(adhesionscale).num_to_avg adhesion_average \
 if {$adhesion_slider_min_limit != $adhesion_slider_max_limit} {
         minmaxscale $nmInfo(adhesionscale).scale $adhesion_slider_min_limit \
                 $adhesion_slider_max_limit 50 adhesion_slider_min adhesion_slider_max
+    generic_optionmenu $nmInfo(adhesionscale).adhesion_dataset \
+            adhesion_comes_from "Adhesion plane" inputPlaneNames
         # Make a frame to hold the pull-down menu that selects from the list
         frame $nmInfo(adhesionscale).pickframe
         pack $nmInfo(adhesionscale).pickframe -side left -fill y
-        pack $nmInfo(adhesionscale).scale -fill x -side top
+    pack $nmInfo(adhesionscale).adhesion_dataset
+        pack $nmInfo(adhesionscale).scale -fill x -side left
         trace variable adhesion_slider_min_limit w adhesion_scale_newscale
         trace variable adhesion_slider_max_limit w adhesion_scale_newscale
 }
@@ -778,10 +791,12 @@ pack $nmInfo(compliancescale) -fill both
 if {$compliance_slider_min_limit != $compliance_slider_max_limit} {
 	minmaxscale $nmInfo(compliancescale).scale $compliance_slider_min_limit \
 		$compliance_slider_max_limit 50 compliance_slider_min compliance_slider_max
+    generic_optionmenu $nmInfo(compliancescale).compliance_dataset \
+            compliance_comes_from "Compliance plane" inputPlaneNames
 	# Make a frame to hold the pull-down menu that selects from the list
 	frame $nmInfo(compliancescale).pickframe
 	pack $nmInfo(compliancescale).pickframe -side left -fill y
-	pack $nmInfo(compliancescale).scale -fill x -side top
+	pack $nmInfo(compliancescale).compliance_dataset $nmInfo(compliancescale).scale -fill x -side left
 	trace variable compliance_slider_min_limit w compliance_scale_newscale
 	trace variable compliance_slider_max_limit w compliance_scale_newscale
 }
