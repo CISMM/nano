@@ -1,5 +1,13 @@
 2002-01-25 Andrea Hilchey <hilchey@cs.unc.edu>
 
+	* 3d_afm.dsp : deleted .dat files (not needed) and changed Debug
+	configuration settings so that they match the Release settings,
+	also changed linking with vrpn.lib so that looking in correct
+	location
+
+
+2002-01-25 Andrea Hilchey <hilchey@cs.unc.edu>
+
 	* sim.cpp : added code to check for triangles stored in list in
 	nmm_SimulatedMicroscope object (SimMicroscopeServer), and draws 
 	the triangles that are there

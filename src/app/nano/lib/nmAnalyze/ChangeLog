@@ -1,3 +1,19 @@
+2002-02-25 Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* 3d_afm.dsp : deleted unnecessary .dat files and changed Debug
+	configuration settings so that they match the Release settings,
+	also changed linking with vrpn.lib so that looking in correct
+	location
+
+2002-02-25 Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nma_ShapeAnalyze.Ch : reversed array in storage for display of 
+	shape analysis results
+
+	* cnt_ia.h : made cnat_image_x and cnt_image_y public so could
+	use them in nma_ShapeAnalyze (gives dimensions of data array)
+
+
 2002-02-18 Andrea Hilchey <hilchey@cs.unc.edu> David Borland <borland@cs.unc.edu>
 	* nma_ShapeAnalyze.Ch : changed nma_ShapeIdentifiedPlane object
 	shapePlane from being a local variable to data member of class

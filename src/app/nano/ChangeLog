@@ -1,3 +1,8 @@
+2002-02-25 Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* microscape.C : deleted call to encode_and_sendScanandGridInfo
+	(moved into nmm_SimulatedMicroscope_Remote)
+
 2002-02-21  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c 
