@@ -58,7 +58,7 @@ int vrpn_GPIBDeviceServer::rcv_Device(int board_index, int primary_address, int 
          board_index,              // Board Index (GPIB0 = 0, GPIB1 = 1, ...) 
          primary_address,          // Device primary address                  
          secondary_address,        // Device secondary address                
-         T1000s,                    // Timeout setting (T10s = 10 seconds, T1000s = 1000 seconds)
+         TNONE,                    // Timeout setting (T10s = 10 seconds, T1000s = 1000 seconds, TNONE = never timeout)
          1,                       // Assert EOI line at end of write         
          0);                      // EOS termination mode                    
 	d_primary_address[d_num_devices] = primary_address;
