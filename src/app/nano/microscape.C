@@ -1469,6 +1469,10 @@ void shutdown_connections (void) {
     delete vicurve_connection;
     vicurve_connection = NULL;
   }
+  if (sem_connection) {
+    delete sem_connection;
+    sem_connection = NULL;
+  }
 
   if (collaborationManager) {
     delete collaborationManager;
@@ -2127,6 +2131,8 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
 	ohmmeterLogFile->reset();
     if (vicurveLogFile)
 	vicurveLogFile->reset();
+    if (semLogFile)
+        semLogFile->reset();
 
 //fprintf(stderr, "Handle_rewind_stream_change setting to 0.\n");
     rewind_stream = 0;  // necessary
@@ -2435,6 +2441,15 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
   if (vrpnLogFile) {
     vrpnLogFile->play_to_time(newStreamTime);
   }
+  if (ohmmeterLogFile) {
+    ohmmeterLogFile->play_to_time(newStreamTime);
+  }
+  if (vicurveLogFile) {
+    vicurveLogFile->play_to_time(newStreamTime);
+  }
+  if (semLogFile) {
+    semLogFile->play_to_time(newStreamTime);
+  }
 //fprintf(stderr, "Set stream time to %d.\n", time);
   set_stream_time_now = 0; 
 }
@@ -2649,12 +2664,14 @@ static void handle_replay_rate_change (vrpn_int32 value, void *) {
   if (vrpnLogFile) {
      vrpnLogFile->set_replay_rate(decoration->rateOfTime);
   }
-
   if (ohmmeterLogFile) {
      ohmmeterLogFile->set_replay_rate(decoration->rateOfTime);
   }
   if (vicurveLogFile) {
      vicurveLogFile->set_replay_rate(decoration->rateOfTime);
+  }
+  if (semLogFile) {
+     semLogFile->set_replay_rate(decoration->rateOfTime);
   }
 
 }	
@@ -3015,7 +3032,9 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name(
           istate->afm.deviceName,
           istate->afm.writingStreamFile ? istate->afm.outputStreamName
-                                        : (char *) NULL);
+                                        : (char *) NULL,
+          istate->afm.writingStreamFile ? vrpn_LOG_INCOMING
+                                        : vrpn_LOG_NONE);
     if (!new_microscope_connection) {
 	display_error_dialog( "Couldn't find SPM device: %s.",
 		istate->afm.deviceName);
@@ -6698,9 +6717,12 @@ int main (int argc, char* argv[])
 	  (istate.afm.deviceName,
 	   istate.afm.writingStreamFile ? istate.afm.outputStreamName
                                         : (char *) NULL,
-	   NULL,
+	   istate.afm.writingStreamFile ? vrpn_LOG_INCOMING
+                                        : vrpn_LOG_NONE,
 	   istate.writingRemoteStream ? istate.remoteOutputStreamName
-                                      : (char *) NULL);
+                                      : (char *) NULL,
+           istate.writingRemoteStream ? vrpn_LOG_INCOMING
+                                      : vrpn_LOG_NONE);
       if (!microscope_connection || !(microscope_connection->doing_okay())) {
 	display_fatal_error_dialog( "   Couldn't open connection to %s.\n",
 		istate.afm.deviceName);
@@ -6933,7 +6955,8 @@ int main (int argc, char* argv[])
 	(istate.ohm.deviceName,
 	 istate.ohm.writingLogFile ? istate.ohm.outputLogName
 	 : (char *) NULL,
-	 NULL);
+	 istate.ohm.writingLogFile ? vrpn_LOG_INCOMING
+         : vrpn_LOG_NONE);
       if (!ohmmeter_connection) {
 	display_error_dialog( "Couldn't open connection to %s.\n",
 			      istate.ohm.deviceName);
@@ -6990,7 +7013,8 @@ int main (int argc, char* argv[])
 	(istate.vicurve.deviceName,
 	 istate.vicurve.writingLogFile ? istate.vicurve.outputLogName
 	 : (char *) NULL,
-	 NULL);
+	 istate.vicurve.writingLogFile ? vrpn_LOG_INCOMING
+         : vrpn_LOG_NONE);
       if (!vicurve_connection) {
 	display_error_dialog( "Couldn't open connection to %s.\n",
 			      istate.vicurve.deviceName);
@@ -7050,7 +7074,8 @@ int main (int argc, char* argv[])
                 (istate.sem.deviceName,
                  istate.sem.writingLogFile ? istate.sem.outputLogName
                  : (char *) NULL,
-                 NULL);
+                 istate.sem.writingLogFile ? vrpn_LOG_INCOMING
+                 : vrpn_LOG_NONE);
       if (!sem_connection) {
 	display_error_dialog( "Couldn't open connection to %s.\n",
 			      istate.sem.deviceName);
@@ -7442,6 +7467,9 @@ VERBOSE(1, "Entering main loop");
 	if (vicurveLogFile) {
 	   vicurveLogFile->set_replay_rate(decoration->rateOfTime);
 	}
+        if (semLogFile) {
+           semLogFile->set_replay_rate(decoration->rateOfTime);
+        }
         printf("Replay:  %d times faster\n", decoration->rateOfTime);
         old_value_of_rate_knob = new_value_of_rate_knob;
       }

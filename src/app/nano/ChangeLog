@@ -1,5 +1,13 @@
 2001-04-17  Adam Seeger  <seeger@cs.unc.edu>
 
+	* microscape.c (shutdown_connections) : added delete of sem_connection
+        made logFile manipulations (reset, set time...) mostly uniform among
+        afm, ohmmeter, vicurve, and sem
+        changed usage of vrpn_get_connection_by_name so it correctly sets
+	the logging mode 
+
+2001-04-17  Adam Seeger  <seeger@cs.unc.edu>
+        
 	* microscape.c (register_vrpn_callbacks) : added hard-coded 
 	room from head tracker transform for workbench (Phillips 101 setup) only
 
