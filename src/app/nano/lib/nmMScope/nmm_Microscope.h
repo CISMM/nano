@@ -586,8 +586,11 @@ class nmm_Microscope {
 		float *, float *, float *, float *,
 		vrpn_int32 *, float *, float *, float *);
 
-    char * encode_FeelTo (long * len, float, float);
-    long decode_FeelTo (const char ** buf, float *, float *);
+    char * encode_FeelTo (long * len, vrpn_float32, vrpn_float32,
+            vrpn_int32, vrpn_int32, vrpn_float32, vrpn_float32, vrpn_float32);
+    long decode_FeelTo (const char ** buf, vrpn_float32 *, vrpn_float32 *,
+            vrpn_int32 *, vrpn_int32 *, vrpn_float32 *, vrpn_float32 *,
+            vrpn_float32 *);
 
 
     char * encode_InTappingMode (long * len, float, float, float,

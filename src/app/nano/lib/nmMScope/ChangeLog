@@ -1,3 +1,15 @@
+2000-10-03  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmm_Microscope.C (encode_FeelTo) : add parameters
+        (decode_FeelTo) : same
+
+	* nmm_Sample.C : get rid of obsolete class
+	* nmm_Sample.h : replac obsolete class with simple struct
+	* nmm_MicroscopeRemote.C (TakeSampleSet) : use new definition
+        of nmm_Sample and extra parameters for FeelTo
+        (RcvEndFeelTo) : fix function call - was decode_FeelTo,
+        should be decode_EndFeelTo
+
 2000-09-28  Tom Hudson  <hudson@cs.unc.edu>
 
 	* active_set.C (Channel_selector constructor) :  Uncomment

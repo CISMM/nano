@@ -3162,14 +3162,17 @@ char * nmm_Microscope::encode_EnterSpectroscopyMode (long * len, vrpn_float32 se
 }
 
 char * nmm_Microscope::encode_FeelTo (long * len,
-                                      vrpn_float32 x, vrpn_float32 y) {
+               vrpn_float32 x, vrpn_float32 y,
+               vrpn_int32 numx, vrpn_int32 numy,
+               vrpn_float32 dx, vrpn_float32 dy,
+               vrpn_float32 orientation) {
   char * msgbuf = NULL;
   char * mptr;
   vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(vrpn_float32);
+  *len = 5 * sizeof(vrpn_float32) + 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_FeelTo:  "
@@ -3180,15 +3183,28 @@ char * nmm_Microscope::encode_FeelTo (long * len,
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, x);
     vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, numx);
+    vrpn_buffer(&mptr, &mlen, numy);
+    vrpn_buffer(&mptr, &mlen, dx);
+    vrpn_buffer(&mptr, &mlen, dy);
+    vrpn_buffer(&mptr, &mlen, orientation);
   }
 
   return msgbuf;
 }
   
 long nmm_Microscope::decode_FeelTo (const char ** buf,
-                                    vrpn_float32 * x, vrpn_float32 * y) {
+             vrpn_float32 * x, vrpn_float32 * y,
+             vrpn_int32 * numx, vrpn_int32 * numy,
+             vrpn_float32 * dx, vrpn_float32 * dy,
+             vrpn_float32 * orientation) {
   CHECK(vrpn_unbuffer(buf, x));
   CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, numx));
+  CHECK(vrpn_unbuffer(buf, numy));
+  CHECK(vrpn_unbuffer(buf, dx));
+  CHECK(vrpn_unbuffer(buf, dy));
+  CHECK(vrpn_unbuffer(buf, orientation));
 
   return 0;
 }

@@ -862,7 +862,7 @@ long nmm_Microscope_Remote::NewEpoch (void) {
 
 
 void nmm_Microscope_Remote::SetSampleMode (nmm_Sample * s) {
-  s->setMicroscope(this);
+  //s->setMicroscope(this);
   d_sampleAlgorithm = s;
 }
 
@@ -1229,10 +1229,29 @@ int nmm_Microscope_Remote::TakeSampleSet (float _x, float _y) {
   char * msgbuf;
   long len;
   double x, y;
+  int nx, ny;
+  double dx, dy;
+  double ori;
+
+  if (!d_sampleAlgorithm) {
+    fprintf(stderr, "nmm_Microscope_Remote::TakeSampleSet:  "
+            "unspecified sample algorithm, defaulting to 1x1.\n");
+    nx = 1;
+    ny = 1;
+    dx = 0.0;
+    dy = 0.0;
+    ori = 0.0;
+  } else {
+    nx = d_sampleAlgorithm->numx;
+    ny = d_sampleAlgorithm->numy;
+    dx = d_sampleAlgorithm->dx;
+    dy = d_sampleAlgorithm->dy;
+    ori = d_sampleAlgorithm->orientation;
+  }
 
   rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
 
-  msgbuf = encode_FeelTo(&len, x, y);
+  msgbuf = encode_FeelTo(&len, x, y, nx, ny, dx, dy, ori);
   if (!msgbuf) {
     return -1;
   }
@@ -3436,7 +3455,7 @@ int nmm_Microscope_Remote::handle_EndFeelTo (void * userdata,
   const char * bufptr = p.buffer;
   vrpn_float32 x, y;
 
-  ms->decode_FeelTo(&bufptr, &x, &y);
+  ms->decode_EndFeelTo(&bufptr, &x, &y);
 
 fprintf(stderr, "Completed feel to %.2f, %.2f.\n", x, y);
 

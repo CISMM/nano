@@ -318,14 +318,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long unregisterFeeltoHandler (int (* handler) (void *),
                                   void *userdata);
 
-    vrpn_int32 pointResultType (void) const;
-      ///< Returns the vrpn type of a point result message;
-      ///< used with nmb_DeviceSequencer/nmm_Sample.
-
-    void accumulatePointResults (vrpn_bool);
-      ///< If true, in addition to exposing point results on
-      ///< state.data.inputPoint we put them on state.data.pointList.
-
   protected:
 
     nmb_Dataset * d_dataset;
@@ -347,6 +339,16 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     vrpn_int32 d_mod_window_max_x;
     vrpn_int32 d_mod_window_max_y;
     vrpn_int32 d_mod_window_pad; // some padding on the boundary
+
+    vrpn_int32 pointResultType (void) const;
+      ///< Returns the vrpn type of a point result message;
+      ///< used with nmb_DeviceSequencer/nmm_Sample.
+
+    void accumulatePointResults (vrpn_bool on);
+      ///< If true, in addition to exposing point results on
+      ///< state.data.inputPoint we put them on state.data.pointList.
+
+
 
   private: // OBSOLETE
 
@@ -668,8 +670,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     void doScanlineDataCallbacks (const Scanline_results *);
     void doFeeltoCallbacks (void);
 
-    nmm_Sample * d_sampleAlgorithm;  // OBSOLETE
-    vrpn_bool d_accumulatePointResults;  // OBSOLETE
+    nmm_Sample * d_sampleAlgorithm;
+    vrpn_bool d_accumulatePointResults;
 
     void swapPointList (void);
       ///< Replaces state.data.receivedPointList with
