@@ -231,24 +231,30 @@ void BCPlane::computeOptimizeMinMax(int type, int x0, int y0, int x1, int y1,
   short top, right, bottom, left;
   int temp, x, y;
   _max_value = -1.0e33;
- 
-  // sort so that x0 = xmin, x1 = xmax, y0 = ymin and y1 = ymax;
-  if (y0 > y1) { temp = y0; y0 = y1; y1 = temp; }
-  if (x0 > x1) { temp = x0; x0 = x1; x1 = temp; }
-  
-  if (findValidDataRange( &top, &right, &bottom, &left ) != -1) {
+
+   if (findValidDataRange( &top, &left, &bottom, &right ) != -1) {
     // if the selected area is smaller than the valid area, change the 
-     // boundaries accordingly
-    
-    if (y0 > bottom) { bottom = y0; }
-    if (y1 < top) { top = y1; }
-    if (x0 > left) { left = x0; }
-    if (x1 < right) { right = x1; } 
+     // boundaries accordingly (only for Optimize_area)
     
     if (type == BCPLANE_OPTIMIZE_AREA) {
       printf("optimizing area\n");
+
+      //do this sort if we are not going to use BCPLANE_Optimize_Line
+      //can cause endpoints of a line to get mixed up, but this is ok for how
+      //the square is being defined.
+
+      //sort so that x0 = xmin, x1 = xmax, y0 = ymin and y1 = ymax;
+      if (y0 > y1) { temp = y0; y0 = y1; y1 = temp; }
+      if (x0 > x1) { temp = x0; x0 = x1; x1 = temp; }
+
+      //set area to be searched to a valid data area
+    if (y0 > bottom) { bottom = y0; }
+    if (y1 < top) { top = y1; }
+    if (x0 > left) { left = x0; }
+    if (x1 < right) { right = x1; }
+
       for (y = bottom; y < top; y++) {
-	for (x = right; x < left; x++) {
+	for (x = left; x < right; x++) {
 	  double value = this->value(x, y);
 	  if (value > _max_value) { 
 	    if (_sec[x][y] && _usec[x][y]) {
@@ -264,16 +270,21 @@ void BCPlane::computeOptimizeMinMax(int type, int x0, int y0, int x1, int y1,
        // 45-45-90 triangle, longest side is hypotnuse
        // so anything shorter falls within this range
        float step_size = 1 / (1.41421 * numX());
-       
+
        while (line_position_param < 1.0) {
-	 x = right * line_position_param + left * (1.0 - line_position_param);
-	 y = bottom * line_position_param + top * (1.0 - line_position_param);
-	 double value = this->value(x, y);
-	 if (value > _max_value) { 
-	   if (_sec[x][y] && _usec[x][y]) {
-	     _max_value = value; 
-	     _max_value_x_coord = x;
-	     _max_value_y_coord = y;
+	 x = x1 * line_position_param + x0 * (1.0 - line_position_param);
+	 y = y1 * line_position_param + y0 * (1.0 - line_position_param);
+
+	 //test and make sure data point is in range, if it is, optimize,
+	 //if not, go to next point
+	 if((y >bottom) && (y <top) && (x > left) && (x< right)){
+	   double value = this->value(x, y);
+	   if (value > _max_value) { 
+	     if (_sec[x][y] && _usec[x][y]) {
+	       _max_value = value; 
+	       _max_value_x_coord = x;
+	       _max_value_y_coord = y;
+	     }
 	   }
 	 }
 	 line_position_param += step_size;
