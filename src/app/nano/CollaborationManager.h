@@ -62,6 +62,8 @@ class CollaborationManager {
       ///< before initialize().
     void setPlaneSync (nmui_PlaneSync *);
 
+    void setUserMode (int);
+
     void setPeerName (const char * newName,
                       void * handChangeData,
                       void (* handChangeCB) (void *, const vrpn_TRACKERCB),
@@ -108,6 +110,7 @@ class CollaborationManager {
     vrpn_bool d_log;
     char * d_NIC_IP;
     vrpn_bool d_replay;
+    int d_userMode;
 
     char * d_handServerName;
     char * d_modeServerName;

@@ -362,14 +362,6 @@ int handSensor [NUM_USERS];
 CollaborationManager * collaborationManager = NULL;
 
 
-///These are used in tracking a remote user's hand position.
-vrpn_Tracker_Remote *vrpnHandTracker_collab[NUM_USERS];
-nM_coord_change *nM_coord_change_server;
-
-/// These are used to track a remote user's mode.
-vrpn_Analog_Remote *vrpnMode_collab[NUM_USERS];
-vrpn_Analog_Server *vrpnMode_Local;
-
 /// These are used for synchronizing with a remote user's streamfile playback.
 static vrpn_bool isSynchronized;
 
@@ -1052,7 +1044,7 @@ void Usage (char * s);
 int main (int argc, char * argv []);
 void handleTermInput (int ttyFD, vrpn_bool * donePtr);
 int handleMouseEvents (nmb_TimerList *);
-void get_Plane_Extents (float *,float *,float *);
+void get_Plane_Centers (float *, float *, float *);
 void center (void);
 void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
  double * lock_userscale);
@@ -1587,7 +1579,7 @@ static void handle_collab_machine_name_change
                    (const char * new_value,
                     void * userdata)
 {
-  //char hnbuf [256];
+  char hnbuf [256];
 
   if (!new_value || !strlen(new_value)) {
     // transitory excitement during startup
@@ -3193,13 +3185,13 @@ static void handle_joymove(vrpn_float64 , void *userdata)
 // 		(float)joy0y,(float)joy0z,(float)joy1x,(float)joy1y,
 // 		(float)joy1z);
     
-    switch(((char*)userdata)[0]){
+    switch (((char *) userdata)[0]){
 	case 'r':
-	    switch((int)(float)joy1b){		
+	    switch ((int)( float) joy1b) {		
 	    case -1: // this is a button press
-		    get_Plane_Extents(&offsetx,&offsety,&offsetz);
-		    v_x_invert(&shadowxform,&v_world.users.xforms[0]);
-		    v_x_copy(&modxform,&shadowxform);
+		    get_Plane_Centers(&offsetx, &offsety, &offsetz);
+		    v_x_invert(&shadowxform, &v_world.users.xforms[0]);
+		    v_x_copy(&modxform, &shadowxform);
 		    /*there is deliberately no break here so that any
 			press will update the xform */
 	    case 1: // this is a button move. 
@@ -3238,10 +3230,10 @@ static void handle_joymove(vrpn_float64 , void *userdata)
     	    }
 	    break;
 	case 't':
-	    switch((int)(float)joy0b){
+	    switch ((int) (float) joy0b) {
 	    case -1: // button press
-		T[0]=T[1]=T[2]=0;
-                get_Plane_Extents(&offsetx,&offsety,&offsetz);
+		T[0] = T[1] = T[2] = 0;
+                get_Plane_Centers(&offsetx, &offsety, &offsetz);
                 v_x_invert(&shadowxform,&v_world.users.xforms[0]);
                 v_x_copy(&modxform,&shadowxform);
 		// again, no break intentionally, so xforms alway updated.
@@ -4257,6 +4249,8 @@ struct MicroscapeInitializationState {
   int UDPport;
   int socketType;
 
+  char * NIC_IP;
+
   int monitorPort;
   int collabPort;
   int basePort;
@@ -4297,6 +4291,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   SPMport (-1),
   UDPport (-1),
   socketType (SOCKET_TCP),
+  NIC_IP (NULL),
   monitorPort (-1),
   collabPort (-1),
   basePort (WellKnownPorts::defaultBasePort),
@@ -4308,7 +4303,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   openPeer (VRPN_FALSE),
   logInterface (VRPN_FALSE),
   replayInterface (VRPN_FALSE),
-  useOptimism (VRPN_FALSE),
+  useOptimism (VRPN_TRUE),
   phantomRate (60.0),  // standard default
   tesselation (1),
   packetlimit (0)
@@ -4372,6 +4367,9 @@ void ParseArgs (int argc, char ** argv,
         istate->collabPort = atoi(argv[i]);
         printf("Will open a collaborator on port %d and "
                "BLOCK UNTIL CONNECTED.\n", istate->collabPort);
+      } else if (strcmp(argv[i], "-NIC") == 0) {
+        if (++i >= argc) Usage(argv[0]);
+        istate->NIC_IP = argv[i];
       } else if (strcmp(argv[i], "-color") == 0) {
         if (++i >= argc) Usage(argv[0]);
         maxC[0] = atoi(argv[i]);
@@ -4539,6 +4537,8 @@ void ParseArgs (int argc, char ** argv,
         istate->packetlimit = atoi(argv[i]);
       } else if (!strcmp(argv[i], "-optimistic")) {
         istate->useOptimism = VRPN_TRUE;
+      } else if (!strcmp(argv[i], "-pessimistic")) {
+        istate->useOptimism = VRPN_FALSE;
       } else if (!strcmp(argv[i], "-replayif")) {
         istate->replayInterface = VRPN_TRUE;
         if (++i >= argc) Usage(argv[0]);
@@ -4799,8 +4799,8 @@ void Usage(char* s)
   fprintf(stderr, "       [-trenderserver] [-trenderclient host]\n");
   fprintf(stderr, "       [-vrenderserver] [-vrenderclient host]\n");
   fprintf(stderr, "       [-logif path] [-replayif path] [-packetlimit n]\n");
-  fprintf(stderr, "       [-optimistic] [-phantomrate rate]\n");
-  fprintf(stderr, "       [-tesselation stride]\n");
+  fprintf(stderr, "       [-optimistic] [-pessimistic] [-phantomrate rate]\n");
+  fprintf(stderr, "       [-tesselation stride] [-NIC IPaddress]\n");
   fprintf(stderr, "       \n");
 
   fprintf(stderr, "       -d: Use given spm device (default sdi_stm0)\n");
@@ -4888,7 +4888,10 @@ void Usage(char* s)
   fprintf(stderr, "       -packetlimit n:  while replaying stream files "
                           "play no more than n packets\n"
                   "       before refreshing graphics (0 to disable).\n");
-  fprintf(stderr, "       -optimistic:  use optimistic concurrency control.\n");
+  fprintf(stderr, "       -optimistic:  optimistic concurrency control.\n");
+  fprintf(stderr, "       -pessimistic:  centralized concurrency control.\n");
+  fprintf(stderr, "       -NIC IPaddress:  use network interface with given\n"
+                  "       IP address.\n");
   fprintf(stderr, "   OBSOLETE (ignored)\n");
   fprintf(stderr, "       -call: Use callbacks (default)\n");
   fprintf(stderr, "       -nocall: Do not use callbacks\n");
@@ -5198,7 +5201,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
     case RENDER_CLIENT:
       fprintf(stderr, "Starting up as a rendering client "
-              "(expecting peer rendering server %p to supply images).\n",
+              "(expecting peer rendering server %s to supply images).\n",
               istate.graphicsHost);
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
@@ -5495,8 +5498,9 @@ int main(int argc, char* argv[])
   }
 
   /* Check to see if a tracker is being used for head tracking */
-  if (strcmp("null", headTrackerName) != 0)
+  if (strcmp("null", headTrackerName) != 0) {
     head_tracked = VRPN_TRUE;
+  }
   envir = getenv("BDBOX");
   if (envir == NULL)
     {
@@ -5524,7 +5528,6 @@ int main(int argc, char* argv[])
     {
     tcl_script_dir=tcl_default_dir;
     }
-
   // if tcl_script_dir is not empty, copy to it
   else 
     {
@@ -5848,7 +5851,7 @@ int main(int argc, char* argv[])
 
   collaborationManager = new CollaborationManager (istate.replayInterface);
 
-  //collaborationManager->setNIC(istate.NIC_IP);
+  collaborationManager->setNIC(istate.NIC_IP);
 
   collaborationManager->setHandServerName(nM_coord_change_server_name);
   collaborationManager->setModeServerName(local_ModeName);
@@ -6206,37 +6209,6 @@ VERBOSE(1, "Entering main loop");
 	vrpnHandTracker[0]->mainloop();
       }
 
-//nM_coord_change_server sends hand coordinates in world space from one copy
-//of microscape to another; vrpnHandTracker_collab[0] takes these messages
-//and uses the coordinates/orientation it is sent to draw the icon for the
-//collaborator's hand position.
-//The mode is used to determine the text string that follows the user's
-//hand around.
-      if (nM_coord_change_server) nM_coord_change_server->mainloop();
-      if (vrpnHandTracker_collab[0]) vrpnHandTracker_collab[0]->mainloop();
-      if (vrpnMode_Local) {
-	// Set the mode to the current one and send if changed
-	vrpnMode_Local->channels()[0] = user_mode[0];
-	vrpnMode_Local->report_changes(vrpn_CONNECTION_RELIABLE);
-
-	// Send every couple seconds even if it hasn't changed, so that when
-	// the other side connects they will have the correct mode
-	// within a couple of seconds.
-	// These are send unreliably, since they will come again if lost.
-	{	static	unsigned long last = 0;
-		struct timeval now;
-
-		gettimeofday(&now, NULL);
-		if (now.tv_sec - last >= 2) {
-			last = now.tv_sec;
-			vrpnMode_Local->report();
-		}
-	}
-	vrpnMode_Local->mainloop();
-      }
-      if (vrpnMode_collab[0]) {
-        vrpnMode_collab[0]->mainloop();
-      }
       if (buttonBox) {
         buttonBox->mainloop();
       }
@@ -6245,6 +6217,7 @@ VERBOSE(1, "Entering main loop");
       }
 
       if (collaborationManager) {
+        collaborationManager->setUserMode(user_mode[0]);
         collaborationManager->mainloop();
       }
 
@@ -7067,14 +7040,14 @@ int handleMouseEvents (nmb_TimerList * timer)
 	//Button2 && Button3 && texrealign == Texture Shear?
 	//Button1 && Button3 && texrealign == Texture Rotate?
 
-	if (event.xbutton.button == Button3 &&  ( realign_textures_enabled ) ) {
-	  if ( mode == M_NULL ) 
+	if ((event.xbutton.button == Button3) && realign_textures_enabled) {
+	  if (mode == M_NULL) {
 	    mode = M_SCALE;
-	  else if ( mode == M_TRANSLATE )
+          } else if (mode == M_TRANSLATE) {
 	    mode = M_SHEAR;
+          }
 	  mouse3button = 1;
-	}
-	else if(event.xbutton.button== Button3){
+	} else if (event.xbutton.button == Button3) {
 		//THIS IS HACKED TOGETHER FOR THE CRT VERSION -- YOU NEED TO WORK ON THIS
 		//FOR A MORE GENERAL WORKING MODEL -- I HAVE NO IDEA WHERE TO FIND 
 		//ALL THE DATA TO DO THIS -- ITS BURIED IN VLIB YOU'LL HAVE TO TRACK THROUGH
@@ -7099,20 +7072,27 @@ int handleMouseEvents (nmb_TimerList * timer)
 		//that is added to the mouse coordinates but not otherwise represented in 
 		//the matrix stack kept by GL -- see GLViewport for info on this.
 		//this will only work for the crt mode because of assumptions -- see note above
-		n[0]=f[0]=event.xbutton.x*2.0/(double)ScreenWidthPixelsX-1.0;
-		n[1]=f[1]=event.xbutton.y*2.0/(double)ScreenWidthPixelsY-1.0;
-		n[2]=-1; f[2]=1;	//near and far planes in normalized coords
+		n[0] = f[0] = event.xbutton.x * 2.0 /
+                           (double) ScreenWidthPixelsX - 1.0;
+		n[1] = f[1] = event.xbutton.y * 2.0 /
+                           (double) ScreenWidthPixelsY - 1.0;
+		n[2] = -1;
+                f[2] = 1;	//near and far planes in normalized coords
 
-		x.apply(n,result1);
-		x.apply(f,result2);
+		x.apply(n, result1);
+		x.apply(f, result2);
 		SelectionSet *s=new SelectionSet();
 
-		s->p1[0]=result1[0]; s->p1[1]=result1[1]; s->p1[2]=result1[2];
-		s->p2[0]=result2[0]; s->p2[1]=result2[1]; s->p2[2]=result2[2];
+		s->p1[0] = result1[0];
+                s->p1[1] = result1[1];
+                s->p1[2] = result1[2];
+		s->p2[0] = result2[0];
+                s->p2[1] = result2[1];
+                s->p2[2] = result2[2];
 
 		//this doesn't work and I think its because the coordinates of the line
 		//are not transformed into object space and are only so far as world at this point
-		World.Do(&URender::IntersectLine,(void*)s);
+		World.Do(&URender::IntersectLine, (void *) s);
 
 		cerr << "Selection Set: " << s->numselected << "\n";
 		
@@ -7127,22 +7107,21 @@ int handleMouseEvents (nmb_TimerList * timer)
 	  if(mode==M_ROTATE) mode=M_ZOOM;
 	}
 
-	if(user_mode[0]==USER_GRAB_MODE){
-	  startx=event.xbutton.x;
-	  starty=event.xbutton.y;
-	  T[0]=T[1]=T[2]=0; 
-	  get_Plane_Extents(&offsetx,&offsety,&offsetz);
-	  v_x_invert(&shadowxform,&v_world.users.xforms[0]);
-	  v_x_copy(&modxform,&shadowxform);
-	}
-	else if(user_mode[0]==USER_LIGHT_MODE){
-	  startx=event.xbutton.x;
-	  starty=event.xbutton.y;
+	if (user_mode[0] == USER_GRAB_MODE){
+	  startx = event.xbutton.x;
+	  starty = event.xbutton.y;
+	  T[0] = T[1] = T[2] = 0; 
+	  get_Plane_Centers(&offsetx, &offsety, &offsetz);
+	  v_x_invert(&shadowxform, &v_world.users.xforms[0]);
+	  v_x_copy(&modxform, &shadowxform);
+	} else if (user_mode[0] == USER_LIGHT_MODE){
+	  startx = event.xbutton.x;
+	  starty = event.xbutton.y;
 	  graphics->getLightDirection(&T);
-	  v_x_invert(&shadowxform,&v_world.users.xforms[0]);
-	  v_x_copy(&modxform,&v_world.users.xforms[0]);
-	  v_x_xform_vector(T,&modxform,T);
-	  v_x_xform_vector(L,&shadowxform,L);
+	  v_x_invert(&shadowxform, &v_world.users.xforms[0]);
+	  v_x_copy(&modxform, &v_world.users.xforms[0]);
+	  v_x_xform_vector(T, &modxform, T);
+	  v_x_xform_vector(L, &shadowxform, L);
 	}
       
 	break;
@@ -7677,24 +7656,29 @@ void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
        screen_mid[1] = (screenLL[1] + screen_mid[1]) / 2.0;
        screen_mid[2] = (screenLL[2] + screen_mid[2]) / 2.0;
 
-       /* Now find the rotation of the screen.  First find the outward
-          pointing normal. */
+       // Now find the rotation of the screen.  First find the outward
+       // pointing normal.  (Used to find the INWARD pointing normal,
+       // if cross-product is right-handed.  TCH Jul 00)
        q_vec_subtract(left_side_vec, screenUL, screenLL);
        q_vec_subtract(diagonal_vec,  screenUR, screenLL);
-       q_vec_cross_product(outward_normal, left_side_vec, diagonal_vec);
+       //q_vec_cross_product(outward_normal, left_side_vec, diagonal_vec);
+       q_vec_cross_product(outward_normal, diagonal_vec, left_side_vec);
 
-       /* Now subtract a little of the outward pointing normal so that
-        * the image floats above the screen.  */
-       screen_mid[0] -= 0.02*outward_normal[0];
-       screen_mid[1] -= 0.02*outward_normal[1];
-       screen_mid[2] -= 0.02*outward_normal[2];
+       // Now ADD a little of the outward pointing normal so that
+       // the image floats above the screen.  (Previously subtracted the
+       // inward normal.  TCH Jul 00)
+       screen_mid[0] += 0.02 * outward_normal[0];
+       screen_mid[1] += 0.02 * outward_normal[1];
+       screen_mid[2] += 0.02 * outward_normal[2];
 
        q_vec_normalize(outward_normal, outward_normal);
        q_vec_normalize(left_side_vec, left_side_vec);
 
-       /* Now rotate the outward screen normal to the positive z-axis
-          of world space */
-       q_set_vec(pos_z, 0.0, 0.0, -1.0);
+       // Now rotate the outward screen normal to the positive z-axis
+       // of world space.  (Used to find NEGATIVE Z, since we had an
+       // inward-pointing normal.  TCH Jul 00)
+       //q_set_vec(pos_z, 0.0, 0.0, -1.0);
+       q_set_vec(pos_z, 0.0, 0.0, +1.0);
        q_from_two_vecs(screenz_to_worldz, outward_normal, pos_z);
 
        /* Now line up the sides of the screens with the y-axis. */
@@ -7712,31 +7696,32 @@ void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
        *lock_userscale *= 0.75;
 
        q_xform(screen_mid, *lock_userrot, screen_mid);
-    } 
-    else
-    { //null_head_tracker is true
+    } else {
+      //null_head_tracker is true
+
+      // What do these numbers mean??
+
       screen_mid[0] = 0.0;
       screen_mid[1] = 1.0;
       screen_mid[2] = -1.0;
 
-      /* No rotation needed if we have a null tracker */
+      // 45 degree rotation about a point outside the plane.
+
       q_make(*lock_userrot, 1.0, 0.0, 0.0, M_PI/4.0);
 
-      /* Determine the scale up factor */
-      /* MODIFIED DANIEL ROHRER */
-//      if(ScreenWidthMetersY > ScreenWidthMetersX){
-                *lock_userscale = len_y / ScreenWidthMetersY * 0.7 / 1.0;
-//      }
-//      else{
-//              *lock_userscale = len_x / ScreenWidthMetersX * 0.7 / 1.0;
-//      }
+      // Determine the scale up factor.
+      // Apparently makes the plane fill 70% of the width of the screen?
+
+      *lock_userscale = len_y / ScreenWidthMetersY * 0.7 / 1.0;
+
     } // end if (!null_head_tracker)
   
+#if 0
+    //  All of this is overwritten by get_Plane_Centers.
+
     /* The middle of the screen will be the middle of the grid in X and Y    */
     /* and Z will be the height at the center of the plane (if it is nonzero)*/
     /* or else the average of the non-zero elements in the plane.            */
-//     mid_x = ( plane->maxX() + plane->minX() )/2.0;
-//     mid_y = ( plane->maxY() + plane->minY() )/2.0;
      mid_z = plane->scaledValue((plane->numX())/2, (plane->numY())/2);
      float minz = mid_z;
      if (mid_z == 0.0) {
@@ -7760,7 +7745,9 @@ void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
          mid_z = avg;
      }
      //printf("center mid_z avg %f  min %f\n", mid_z, minz);
-    get_Plane_Extents(&mid_x, &mid_y, &mid_z);
+#endif
+
+    get_Plane_Centers(&mid_x, &mid_y, &mid_z);
     //printf("center mid_z mm %f\n", mid_z);
 
     (*lock_userpos)[X] = -screen_mid[0];
@@ -7786,16 +7773,15 @@ void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
    // (like when the user hits the center button). This can't be
    // done in the head tracked workbench, because the phantom and
   // user's head are need to be in the same space to be registered.
-    if (head_tracked==VRPN_FALSE)
-      {
-	fprintf(stderr,"DEBUG: non headtracked mode - scaling down user by 5.0 to let phantom reach entire surface and so that surface takes up the whole screen.\n");
+
+    if (head_tracked == VRPN_FALSE) {
+//fprintf(stderr,"DEBUG: non headtracked mode - scaling down user by 5.0 to let phantom reach entire surface and so that surface takes up the whole screen.\n");
 
 	*lock_userscale *= 5.0;
-      }
-    else
-      {
-	fprintf(stderr,"DEBUG: head tracked mode - surface will not take up entire screen by default, so that phantom and viewer's head are to the same scale.\n");
-      }
+
+    } else {
+//fprintf(stderr,"DEBUG: head tracked mode - surface will not take up entire screen by default, so that phantom and viewer's head are to the same scale.\n");
+    }
 }
 
 
@@ -7827,7 +7813,7 @@ void center (void) {
 
 
 
-void get_Plane_Extents(float* offsetx, float *offsety, float* offsetz){
+void get_Plane_Centers (float * offsetx, float * offsety, float * offsetz) {
     BCPlane* plane;
 
     *offsetx=(dataset->inputGrid->minX()+

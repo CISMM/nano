@@ -111,6 +111,7 @@ CollaborationManager::CollaborationManager (vrpn_bool replay) :
     d_log (VRPN_FALSE),
     d_NIC_IP (NULL),
     d_replay (replay),
+    d_userMode (0),
     d_handServerName (NULL),
     d_modeServerName (NULL),
     d_uiController (NULL)
@@ -190,6 +191,7 @@ void CollaborationManager::mainloop (void) {
   // Tell them what our mode is.
   if (d_modeServer) {
 
+    d_modeServer->channels()[0] = d_userMode;
     d_modeServer->report_changes(vrpn_CONNECTION_RELIABLE);
 
     // Send an update every couple of seconds, even if it hasn't changed -
@@ -319,6 +321,11 @@ void CollaborationManager::setUI (nmui_Component * ui) {
 void CollaborationManager::setPlaneSync (nmui_PlaneSync * ps) {
   d_planeSync = ps;
 }
+
+void CollaborationManager::setUserMode (int mode) {
+  d_userMode = mode;
+}
+
 
 
 void CollaborationManager::setPeerName
