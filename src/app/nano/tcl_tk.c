@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,8 +25,7 @@
 
 #include <blt.h>
 
-#define _USE_ITCL
-#ifdef _USE_ITCL
+#ifndef NO_ITCL
 #include <itcl.h>
 #include <itk.h>
 #endif
@@ -31,7 +37,7 @@ extern "C" int Blt_Init (Tcl_Interp *interp);
 extern "C" int Blt_SafeInit(Tcl_Interp *interp);
 
 //#include "x_util.h"  // for x_set_scale()
-//#include "microscape.h"  // for user_mode, mode_change, tcl_offsets,
+#include "microscape.h"  // for user_mode, mode_change, tcl_offsets,
                          // Arm_knobs, ...
 #include "globals.h"
 #include "tcl_tk.h"
@@ -55,6 +61,13 @@ static	int	old_user_mode;
 static	int	controls_on = 0;
 static  int  old_knobs[8];
 static  int  knobs_set_from_c;
+
+// Global variables for the colormap widget:
+static Tk_PhotoImageBlock colormap;
+static unsigned char *colormap_pixels;
+static int colormap_width = 32, colormap_height = 256;
+static Tk_PhotoHandle image;
+
 
 static void (* command_handler) (char *, vrpn_bool *, int);
 
@@ -237,6 +250,12 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 
 	printf("init_Tk_control_panels(): just created the tcl/tk interpreter\n");
 
+#if defined (_WIN32) && !defined (__CYGWIN__)
+        if (Tcl_InitStubs(tk_control_interp, TCL_VERSION, 1) == NULL) {
+            fprintf(stderr, "Non matching version of tcl and tk\n");
+            return -1;
+        }
+#endif
 	/* Start a Tcl interpreter */
 	VERBOSE(4, "  Starting Tcl interpreter");
 	if (Tcl_Init(tk_control_interp) == TCL_ERROR) {
@@ -254,6 +273,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	}
 	Tcl_StaticPackage(tk_control_interp, "Tk", Tk_Init, Tk_SafeInit);
 
+#ifndef NO_ITCL
 	/* Initialize Tcl packages */
 	if (Blt_Init(tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
@@ -262,7 +282,6 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	}
 	Tcl_StaticPackage(tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
 
-#ifdef _USE_ITCL
 	if (Itcl_Init(tk_control_interp) == TCL_ERROR) {
 		fprintf(stderr,
 			"Package_Init failed: %s\n",tk_control_interp->result);
@@ -276,11 +295,11 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	Tcl_StaticPackage(tk_control_interp, "Itcl", Itcl_Init, Itcl_SafeInit);
 	Tcl_StaticPackage(tk_control_interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
 #endif	
-	/* Start a Tk mainwindow to hold the widgets */
-	VERBOSE(4, "  Starting Tk mainwindow");
+        // Check to see if we have a Tk main window.
+	VERBOSE(4, "  Checking Tk mainwindow");
 	tk_control_window = Tk_MainWindow(tk_control_interp);
 	if (tk_control_window == NULL) {
-		fprintf(stderr,"Tk can't make window: %s\n",
+		fprintf(stderr,"Tk can't get main window: %s\n",
 			tk_control_interp->result);
 		return(-1);
 	}
@@ -383,7 +402,21 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 		return(-1);
 	}
 
-	
+	// This code sets up the colormap bar displayed in the colormap
+	// tcl window.
+	colormap_pixels = new unsigned char[ colormap_height * colormap_width * 3];
+	for (i= 0; i < colormap_height*colormap_width*3; i++)
+	  colormap_pixels[i] = 128;
+	colormap.pixelPtr = colormap_pixels;
+	colormap.width = colormap_width;
+	colormap.height = colormap_height;
+	colormap.pixelSize = 3;
+	colormap.pitch = colormap_width * 3;
+	colormap.offset[0] = 0;	colormap.offset[1] = 1;	colormap.offset[2] = 2;
+	image = Tk_FindPhoto( tk_control_interp, "colormap_image" );
+	Tk_PhotoPutBlock( image, &colormap, 0, 0, colormap_width, colormap_height );
+	// end of colormap setup
+
 	return(0);
 }
 
@@ -434,3 +467,37 @@ int	poll_Tk_control_panels(void)
 
 
 
+void tcl_colormapRedraw() {
+    
+  delete [] colormap_pixels;
+  colormap_pixels = new unsigned char[colormap_height * colormap_width * 3];
+  if (curColorMap) {
+    float ci, r, g, b, a;
+    for ( int i= 0; i < colormap_height; i++) {
+      for ( int j = 0; j < colormap_width; j++ ) {
+	ci = 1.0 - float(i)/colormap_height;
+	if ( ci <  color_min ) ci = 0;
+	else if ( ci > color_max ) ci = 1.0;
+	else ci = (ci - color_min)/(color_max - color_min);
+	
+	curColorMap->lookup( ci, &r, &g, &b, &a);
+	
+	colormap_pixels[ i*colormap_width*3 + j*3 + 0] = (unsigned char)( r * 255 );
+	colormap_pixels[ i*colormap_width*3 + j*3 + 1] = (unsigned char)( g * 255 );
+	colormap_pixels[ i*colormap_width*3 + j*3 + 2] = (unsigned char)( b * 255 );
+      }
+    }
+  }
+  else {
+    for ( int i= 0; i < colormap_height; i++) {
+      for ( int j = 0; j < colormap_width; j++ ) {
+	colormap_pixels[ i*colormap_width*3 + j*3 + 0] = (unsigned char)( surface_r );
+	colormap_pixels[ i*colormap_width*3 + j*3 + 1] = (unsigned char)( surface_g );
+	colormap_pixels[ i*colormap_width*3 + j*3 + 2] = (unsigned char)( surface_b );
+      }
+    }
+  }
+  colormap.pixelPtr = colormap_pixels;
+  Tk_PhotoPutBlock( image, &colormap, 0, 0, colormap_width, colormap_height );
+  
+}

@@ -3,6 +3,75 @@
 
 #
 ##############
+# Calculate Planes
+#
+set nmInfo(calc_planes) [create_closing_toplevel calc_planes \
+        "Calculate Data Planes"]
+
+
+#Flat plane
+iwidgets::Labeledframe $nmInfo(calc_planes).flat \
+	-labeltext "Create a flattened plane" \
+	-labelpos nw
+set nmInfo(flatplane) [$nmInfo(calc_planes).flat childsite]
+
+pack $nmInfo(calc_planes).flat -side top -fill x
+
+# Allow the user to create a flattened plane from the height plane:
+label $nmInfo(flatplane).flatlabel -justify left -text \
+	"Position measure lines then\nenter a plane name:"
+generic_entry $nmInfo(flatplane).flatplane flatplane_name \
+	"Flatten plane" ""
+pack $nmInfo(flatplane).flatlabel $nmInfo(flatplane).flatplane \
+	-side top -anchor nw
+
+
+#Line-by-Line Flat plane
+iwidgets::Labeledframe $nmInfo(calc_planes).lblflat \
+	-labeltext "Create a line-by-line flattened plane" \
+	-labelpos nw
+set nmInfo(lblflatplane) [$nmInfo(calc_planes).lblflat childsite]
+
+pack $nmInfo(calc_planes).lblflat -side top -fill x
+
+# Allow the user to create a flattened plane from the height plane:
+label $nmInfo(lblflatplane).lblflatlabel -justify left -text \
+	"Enter a plane name:"
+generic_entry $nmInfo(lblflatplane).lblflatplane lblflatplane_name \
+	"Line-by-line flatten plane" ""
+pack $nmInfo(lblflatplane).lblflatlabel $nmInfo(lblflatplane).lblflatplane \
+	-side top -anchor nw
+
+
+#Sum plane - algebraically combine data from two planes
+iwidgets::Labeledframe $nmInfo(calc_planes).sum \
+	-labeltext "Create a sum plane" \
+	-labelpos nw
+set nmInfo(sumplane) [$nmInfo(calc_planes).sum childsite]
+
+pack $nmInfo(calc_planes).sum -side top -fill x
+
+# Allow the user to create a sum plane from two other planes:
+label $nmInfo(sumplane).sumlabel -justify left -text \
+	"Choose which planes to sum\nand a scale factor for the second plane"
+generic_optionmenu $nmInfo(sumplane).sumplane1 sum_first_plane \
+	"First plane" inputPlaneNames
+generic_entry $nmInfo(sumplane).sum_scale sum_scale \
+	"Scale factor" real
+generic_optionmenu $nmInfo(sumplane).sumplane2 sum_second_plane \
+	"Second plane" inputPlaneNames
+generic_entry $nmInfo(sumplane).sumplane sumplane_name \
+	"Sum plane" ""
+pack $nmInfo(sumplane).sumlabel $nmInfo(sumplane).sumplane1 \
+        $nmInfo(sumplane).sum_scale $nmInfo(sumplane).sumplane2 \
+        $nmInfo(sumplane).sumplane \
+	-side top -anchor nw
+
+
+
+
+#
+##############
 # Ruler grid
 #
 
@@ -93,10 +162,10 @@ generic_entry $nmInfo(rulergrid).left.rulergrid_yoffset rulergrid_y \
 	"Grid Y offset" real
 
 generic_entry $nmInfo(rulergrid).left.rulergrid_scale rulergrid_scale \
-	"Grid spacing" real
+	"Grid spacing (nm)" real
 
 checkbutton $nmInfo(rulergrid).left.rulergrid_orient_line \
-	-text "Set angle to green line" -variable rulergrid_orient_line \
+	-text "Set angle to yellow line" -variable rulergrid_orient_line \
 	-command set_orient_choice -anchor nw
 
 generic_entry $nmInfo(rulergrid).left.rulergrid_angle rulergrid_angle \
@@ -109,7 +178,7 @@ generic_entry $nmInfo(rulergrid).left.linewidthy ruler_width_y \
 
 set ruler_opacity 255
 generic_entry $nmInfo(rulergrid).left.opacity ruler_opacity \
-	"Opacity (0,255)" numeric
+	"Opacity (0,100%)" numeric
 
 set_position_choice
 

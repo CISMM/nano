@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef TCL_NET_VAR_H
 #define TCL_NET_VAR_H
 
@@ -15,7 +22,7 @@ class vrpn_Shared_int32;
 class vrpn_Shared_float64;
 class vrpn_Shared_String;
 
-class Tcl_Interp;  // from tcl.h
+struct Tcl_Interp;  // from tcl.h
 
 void Tclnet_init (Tcl_Interp *, vrpn_bool useOptimisim = VRPN_FALSE);
 /**<

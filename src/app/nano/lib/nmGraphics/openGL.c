@@ -174,7 +174,8 @@ int build_list_set
 
   if (subset.empty()) return 0;
 
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
+//#if defined(sgi)
   if (g_VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
     if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE ||
         g_null_data_alpha_toggle) {
@@ -367,6 +368,11 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
     printf("spm_set_surface_materials: generated gl error\n");
   }
   
+  // If we have a very small grid size, make sure g_stride doesn't tell us
+  // to skip any.
+  if ((planes.height->numY() < 10) || (planes.height->numX() < 10)) {
+      g_stride = 1;
+  }
   // Figure out how many strips we will need.  Recall that we are
   // skipping along by stride gridpoints each time.
   if (strips_in_x) {
@@ -389,7 +395,7 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
     fprintf(stderr, "    allocated display lists from %d for %d.\n",
 	    *base, *num);
   
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
 //#if defined(sgi)
   // use vertex array extension
   if (g_VERTEX_ARRAY) {
@@ -777,11 +783,6 @@ int draw_world (int) {
       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
                          g_tex_blend_func[RULERGRID_TEX_ID]);
       break;
-    case nmg_Graphics::GENETIC:
-      glBindTexture(GL_TEXTURE_2D, tex_ids[GENETIC_TEX_ID]);
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                         g_tex_blend_func[GENETIC_TEX_ID]);
-      break;
     case nmg_Graphics::COLORMAP:
       glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
       glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
@@ -869,12 +870,14 @@ int draw_world (int) {
             y_scale_factor = (double)g_tex_image_height[RULERGRID_TEX_ID]/
                              (double)g_tex_installed_height[RULERGRID_TEX_ID];
             break;
+	    /*
           case nmg_Graphics::GENETIC:
             x_scale_factor = (double)g_tex_image_width[GENETIC_TEX_ID]/
                              (double)g_tex_installed_width[GENETIC_TEX_ID];
             y_scale_factor = (double)g_tex_image_height[GENETIC_TEX_ID]/
                              (double)g_tex_installed_height[GENETIC_TEX_ID];
             break;
+	    */
           case nmg_Graphics::COLORMAP:
             x_scale_factor = (double)g_tex_image_width[COLORMAP_TEX_ID]/
                              (double)g_tex_installed_width[COLORMAP_TEX_ID];

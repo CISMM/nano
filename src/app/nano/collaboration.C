@@ -78,7 +78,7 @@ Tclvar_int finegrained_coupling ("finegrained_coupling", 0,
 void handle_mutex_request (vrpn_int32 value, void * userdata) {
   nmm_Microscope_Remote * microscope = (nmm_Microscope_Remote *) userdata;
 
-fprintf(stderr, "handle_mutex_request (%d)\n", value);
+//fprintf(stderr, "handle_mutex_request (%d)\n", value);
 
   if (value) {
     microscope->requestMutex();
@@ -89,7 +89,7 @@ fprintf(stderr, "handle_mutex_request (%d)\n", value);
 void handle_mutex_release (vrpn_int32 value, void * userdata) {
   nmm_Microscope_Remote * microscope = (nmm_Microscope_Remote *) userdata;
 
-fprintf(stderr, "handle_mutex_release (%d)\n", value);
+//fprintf(stderr, "handle_mutex_release (%d)\n", value);
 
   if (value) {
     microscope->releaseMutex();
@@ -103,7 +103,7 @@ void handle_mutexRequestGranted (void *, nmb_SharedDevice *) {
   char command [1000];
   int retval;
 
-fprintf(stderr, "handle_mutexRequestGranted\n");
+//fprintf(stderr, "handle_mutexRequestGranted\n");
 
   sprintf(command, "mutex_gotRequest_callback");
   retval = Tcl_Eval(tk_control_interp, command);
@@ -119,7 +119,7 @@ void handle_mutexRequestDenied (void *, nmb_SharedDevice *) {
   char command [1000];
   int retval;
 
-fprintf(stderr, "handle_mutexRequestDenied\n");
+//fprintf(stderr, "handle_mutexRequestDenied\n");
 
   sprintf(command, "mutex_deniedRequest_callback");
   retval = Tcl_Eval(tk_control_interp, command);
@@ -135,7 +135,7 @@ void handle_mutexTaken (void *, nmb_SharedDevice *) {
   char command [1000];
   int retval;
 
-fprintf(stderr, "handle_mutexTaken\n");
+//fprintf(stderr, "handle_mutexTaken\n");
 
   sprintf(command, "mutex_taken_callback");
   retval = Tcl_Eval(tk_control_interp, command);
@@ -151,7 +151,7 @@ void handle_mutexReleased (void *, nmb_SharedDevice *) {
   char command [1000];
   int retval;
 
-fprintf(stderr, "handle_mutexReleased\n");
+//fprintf(stderr, "handle_mutexReleased\n");
 
   sprintf(command, "mutex_release_callback");
   retval = Tcl_Eval(tk_control_interp, command);

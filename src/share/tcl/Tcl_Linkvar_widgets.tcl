@@ -1,3 +1,10 @@
+#/*===3rdtech===
+#  Copyright (c) 2000 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
 #
 # Helper procedure that will bring up a dialogue box to edit a value.
 # It assumes that the variable whose name is passed to it is the one it
@@ -353,9 +360,19 @@ proc updateEntry {entry var name element op} {
     upvar #0 $entry.textbg mybg
     upvar #0 $var varval 
 #    puts "updateEntry $var $varval"
-      $entry delete 0 end 
-      $entry insert 0 $varval 
+
+    # the entry text won't change unless it is in "normal" state. 
+    set was_disabled 0
+    if { [$entry cget -state] == "disabled" } {
+        set was_disabled 1
+        $entry configure -state normal
+    }
+    $entry delete 0 end 
+    $entry insert 0 $varval 
     $entry configure -textbackground $mybg
+    if { $was_disabled } {
+        $entry configure -state disabled
+    }
 }
 
 # Called when the user hits "enter" in the entry widget
@@ -470,8 +487,9 @@ set optionmenu_setting_list 0
 set optionmenu_selecting_default 0
 
 # called when the C code sets the global value variable
-proc updateOptionmenu {menu var name element op} { 
+proc updateOptionmenu {menu entry_list_name var name element op} { 
     global optionmenu_setting_list
+    upvar #0 $entry_list_name entry_list
     upvar #0 $var varval 
 
     # If this callback results from the entry_list being changed
@@ -484,14 +502,20 @@ proc updateOptionmenu {menu var name element op} {
     # use the old selection
     if { "$varval" != "$old_menu_val" } {
 	# Check to see if menu item exists using a list search
-	set menu_list [$menu get 0 end]
-	if {[lsearch -exact $menu_list "$varval"] == -1} {
+        set menu_item [lsearch -exact $entry_list "$varval"]
+	if {$menu_item == -1} {
 	    # We force this menu to contain the value the 
 	    # global variable was set to. Programmer knows best :)
-	    $menu insert end "$varval"
-	    $menu select "$varval"
+	    #$menu insert end "$varval"
+	    #$menu select end
+
+            # BZZT - that's weird behavior - let's select item 0 instead.
+            $menu select 0
 	} else {
-	    $menu select "$varval"
+            # avoid using $menu select "$varval" because this
+            # will fail if $varval is a numeric value. 
+            # Numeric index has precedence, and should always work. 
+	    $menu select $menu_item
 	}
     }
 }
@@ -523,7 +547,8 @@ proc updateOptionmenuEntries {menu entry_list_name var name element op} {
     # Try to select the same entry as before the menu entries changed
     # Check to see if the item is in the new menu entries.
     # Menu entries must be in quotes to handle values with spaces!
-    if {[lsearch -exact $entry_list "$old_menu_val"] == -1} {
+    set menu_item [lsearch -exact $entry_list "$old_menu_val"]
+    if {$menu_item == -1} {
 	#puts "    TCL: optionmenu search if $var"
 	# The old menu item doesn't exist, so just choose the first item
 	$menu select 0
@@ -537,7 +562,10 @@ proc updateOptionmenuEntries {menu entry_list_name var name element op} {
 	# so guard the "select" command so it won't re-set the 
 	# global variable. 
 	set optionmenu_selecting_default 1
-	$menu select "$old_menu_val"
+            # avoid using $menu select "$varval" because this
+            # will fail if $varval is a numeric value. 
+            # Numeric index has precedence, and should always work. 
+	$menu select $menu_item
 	set optionmenu_selecting_default 0
     }
 }
@@ -559,17 +587,22 @@ proc generic_optionmenu { name var label entry_list_name } {
 
     if { $entry_list != "" } {
 	# Use "eval" so the list members are treated as individual args.
-	eval $name insert end $entry_list
+	eval $name insert 0 $entry_list
     } else {
-	$name insert end "none"
+	$name insert 0 "none"
     }
 
-    # Force the global variable to be set to the initial menu entry.
-    set varval "[ $name get ]"
-    
+    # If global variable already exists, make the menu show it's value
+    if {[info exists varval]} {
+        updateOptionmenu $name $entry_list_name $var 0 0 0
+    } else {
+        # Force the global variable to be set to the initial menu entry.
+        set varval "[ $name get ]"
+    }
+
     # Find out when the global variable connected with the entry
     # gets set by someone else.
-    trace variable varval w "updateOptionmenu $name $var "
+    trace variable varval w "updateOptionmenu $name $entry_list_name $var "
 
     # Find out when the global variable connected with the menu entries
     # gets set by someone else.
@@ -588,6 +621,7 @@ proc updateOptionmenuWithIndex {menu var name element op} {
 
     set optionmenu_setting_list 1
 
+    # Sets the menu according to the numeric index in the global var. 
     $menu select $varval
 
     set optionmenu_setting_list 0
@@ -616,8 +650,13 @@ proc generic_optionmenu_with_index { name var label entry_list_name } {
         $name insert end "none"
     }
 
-    # Force the global variable to be set to the initial menu entry.
-    set varval "[ $name index select ]"
+    # If global variable already exists, make the menu show it's value
+    if {[info exists varval]} {
+        updateOptionmenuWithIndex $name $var 0 0 0
+    } else {
+        # Force the global variable to be set to the initial menu entry.
+        set varval "[ $name index select ]"
+    }
 
     # Find out when the global variable connected with the entry
     # gets set by someone else.
@@ -652,6 +691,9 @@ proc create_closing_toplevel { win_name {title "" } } {
     proc show.${win_name} {} "
 	wm deiconify .$win_name
 	raise .$win_name
+    "
+    proc hide.${win_name} {} "
+        .$win_name.close invoke
     "
     return .$win_name
 }
@@ -699,6 +741,10 @@ proc create_closing_toplevel_with_notify { win_name signal_var_name {title "" } 
         set signal_var 1
     "
 
+    proc hide.${win_name} {} "
+        .$win_name.close invoke
+    "
+
     return .$win_name
 }
 
@@ -723,9 +769,18 @@ proc updateRadiobox {boxname var name element op} {
     # Make sure new value of variable is inside legal limits for 
     # the radiobox.
     if { ($varval >= 0) && ($varval <= [$boxname index end]) } {
+        # The radiobox won't change unless its state is "normal"
+        set was_disabled 0
+        if { [lindex [$boxname buttonconfigure $varval -state] end] == "disabled" } {
+            set was_disabled 1
+            $boxname buttonconfigure $varval -state normal
+        }
 	$boxname select $varval
+        if { $was_disabled } {
+            $boxname buttonconfigure $varval -state disabled
+        }
     } else {
-	# Illegal value !
+	#puts " Illegal value ! $var $varval [$boxname get]"
 	# Return to whatever value the radiobox used to have.
 	set varval [$boxname get]
     }

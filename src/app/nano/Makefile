@@ -1,7 +1,7 @@
-USES_LIBS := nmTipConvolution nmAux nmUGraphics nmSEM nmUI nmGraphics nmGenTex nmMScope \
-             nmRobotControl nmReg nmImageViewer \
+USES_LIBS := nmAux nmUGraphics nmSEM nmUI nmGraphics nmMScope \
+             nmRobotControl nmReg nmImageViewer nmTipConvolution \
              nmMP tclLinkVar nmBase ImgFormat \
-             vrpn vogl quat sdi
+             vrpn vogl quat
 
 USES_EXTERNAL_LIBS := RhinoIO
 
@@ -10,6 +10,11 @@ EXCLUDE_SRC = renderer.C server_talk.c test_speech.c \
 
 ifdef VC
 EXCLUDE_SRC += termio.c x_util.c
+USES_LIBS += vrpn_phantom
+endif
+
+ifeq ($(HW_OS),sgi_irix)
+USES_LIBS += sdi
 endif
 
 ifdef NANO_WITH_ROBOT

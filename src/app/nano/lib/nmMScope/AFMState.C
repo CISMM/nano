@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "AFMState.h"
 
 #include "nmm_Types.h"
@@ -7,6 +14,10 @@
 #ifndef M_PI
 #define M_PI 3.141592653589793238
 #endif
+
+/// Default grid size on startup. Kept to a minimum size.
+/// 12 because that allows a tesselation_stride of up to 6 without crashing.
+#define DATA_SIZE 12
 
 
 // Some defaults (from active_set.C)
@@ -42,10 +53,6 @@ the code into a single hierarchy
 The default parameters given here are, or were once, "reasonable",
 according to the physicists.
 
-Flaws:
-  We'd like to make this code part of a Microscope library someday.
-  To do that, we need to get rid of the compile-time dependancy on
-callbacks, which means using set_tcl_change_callback extensively.
 */
 
 // juliano 9/19/99 added conditional around this defn to supress warning
@@ -103,10 +110,10 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     amplitude ("modifyp_amplitude", i.amplitude ),
     amplitude_min (i.amplitude_min ),
     amplitude_max (i.amplitude_max ),
-    frequency("modifyp_frequency", 1.0e5),
+    frequency("modifyp_frequency", 100.0),
     input_gain("modifyp_input_gain", 1),
-    ampl_or_phase("modifyp_ampl_or_phase", 0),   // 0 for ampl, 1 for phase
-    drive_attenutation("modifyp_drive_attenuation", 1),
+    ampl_or_phase("modifyp_ampl_or_phase", 1),   // 1 for ampl, 0 for phase
+    drive_attenuation("modifyp_drive_attenuation", 1),
     phase("modifyp_phase", 0.0),
     scan_rate_microns ("modifyp_rate", 20.0),
 
@@ -180,6 +187,7 @@ AFMModifyState::~AFMModifyState (void) {
 
 AFMImageInitializationState::AFMImageInitializationState (void) :
   mode (TAPPING),
+  grid_resolution(DATA_SIZE),
   setpoint (50.0),
   setpoint_max (0.0),
   setpoint_min (50.0),
@@ -206,6 +214,8 @@ AFMImageState::AFMImageState (const AFMImageInitializationState & i) :
     style ("imagep_style", SHARP),
     tool ("imagep_tool", FREEHAND),
 
+    grid_resolution("imagep_grid_resolution", i.grid_resolution),
+
     setpoint ("imagep_setpoint", i.setpoint ),
     setpoint_min (i.setpoint_min ),
     setpoint_max (i.setpoint_max ),
@@ -215,10 +225,10 @@ AFMImageState::AFMImageState (const AFMImageInitializationState & i) :
     amplitude ("imagep_amplitude", i.amplitude ),
     amplitude_min (i.amplitude_min ),
     amplitude_max (i.amplitude_max ),
-    frequency("imagep_frequency", 1.0e5),
+    frequency("imagep_frequency", 100.0),
     input_gain("imagep_input_gain", 1),
-    ampl_or_phase("imagep_ampl_or_phase", 0),   // 0 for ampl, 1 for phase
-    drive_attenutation("imagep_drive_attenuation", 1),
+    ampl_or_phase("imagep_ampl_or_phase", 1),   // 1 for ampl, 0 for phase
+    drive_attenuation("imagep_drive_attenuation", 1),
     phase("imagep_phase", 0.0),
     scan_rate_microns ("imagep_rate", 1.0),
 
@@ -273,10 +283,10 @@ AFMScanlineState::AFMScanlineState(const AFMScanlineInitializationState &i) :
     amplitude ("scanlinep_amplitude", i.amplitude ),
     amplitude_min (i.amplitude_min ),
     amplitude_max (i.amplitude_max ),
-    frequency("scanlinep_frequency", 1.0e5),
+    frequency("scanlinep_frequency", 100.0),
     input_gain("scanlinep_input_gain", 1),
-    ampl_or_phase("scanlinep_ampl_or_phase", 0),   // 0 for ampl, 1 for phase
-    drive_attenutation("scanlinep_drive_attenuation", 1),
+    ampl_or_phase("scanlinep_ampl_or_phase", 1),   // 1 for ampl, 0 for phase
+    drive_attenuation("scanlinep_drive_attenuation", 1),
     phase("scanlinep_phase", 0.0),
     scan_rate_microns_per_sec ("scanlinep_rate", 20.0),
     forcelimit("scanlinep_forcelimit", 10),
@@ -415,6 +425,7 @@ AFMState::AFMState (const AFMInitializationState & i) :
     //done (VRPN_FALSE),
     acquisitionMode(IMAGE),
 
+    scanning ("spm_scanning", 1),
     slowScanEnabled ("slowScan", 1),
     cannedLineVisible (VRPN_FALSE),
     cannedLineToggle (0),
@@ -430,12 +441,17 @@ AFMState::AFMState (const AFMInitializationState & i) :
     yMax (i.yMax),
     zMin (-5000.0f),
     zMax ( 5000.0f),
+    scanAngle(0),
 
     doDriftComp    (i.doDriftComp),
     doRelaxComp    ("doRelaxComp", i.doRelaxComp),
     doRelaxUp      (i.doRelaxUp),
     doSplat        (i.doSplat),
     snapPlaneFit   (VRPN_TRUE),
+
+    read_mode("spm_read_mode", READ_FILE),
+
+    commands_suspended("spm_commands_suspended", 0),
 
     writingStreamFile    (i.writingStreamFile),
     writingNetworkStream (VRPN_FALSE),
@@ -462,11 +478,18 @@ AFMState::AFMState (const AFMInitializationState & i) :
     numLinesToJumpBack("num_lines_to_jump_back", 1000)
 
 {
+    // We should be able to tell where we are getting data
+    // Default is READ_FILE, so check flags and such for STREAM or DEVICE
   strcpy(deviceName, i.deviceName);
-  if (writingStreamFile)
+  if (writingStreamFile) {
     strcpy(outputStreamName, i.outputStreamName);
-  if (readingStreamFile)
+  }
+  if (readingStreamFile) {
     strcpy(inputStreamName, i.inputStreamName);
+    read_mode = READ_STREAM;
+  } else if ( strcmp(deviceName, "null") != 0) {
+    read_mode = READ_DEVICE;
+  }
 }
 
 AFMState::~AFMState (void) {

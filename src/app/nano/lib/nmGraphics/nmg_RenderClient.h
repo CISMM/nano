@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMG_GRAPHICS_RENDER_CLIENT_H
 #define NMG_GRAPHICS_RENDER_CLIENT_H
 
@@ -39,7 +46,8 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
 
     virtual void setAlphaSliderRange (float, float);
     virtual void setColorMapName (const char *);
-    virtual void setColorSliderRange (float, float);
+    virtual void setColorMinMax (float, float);
+    virtual void setDataColorMinMax (float, float);
     virtual void setOpacitySliderRange (float, float);
     virtual void setComplianceSliderRange (float, float);
     virtual void setContourColor (int, int, int);
@@ -65,7 +73,6 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     virtual void setTesselationStride (int);
     virtual void setTextureMode (TextureMode, TextureTransformMode);
     virtual void setTextureScale (float);
-    virtual void sendGeneticTexturesData (int, char **);
 
     virtual void setViewTransform (v_xform_type);
 

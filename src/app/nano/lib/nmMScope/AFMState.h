@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef AFM_STATE_H
 #define AFM_STATE_H
 
@@ -13,7 +20,7 @@
 #include <Tcl_Netvar.h>
 #include <active_set.h>  // Scan_channel_selector
 
-// Forces normally range from -64 to 60 nanoAmps  
+// Forces normally range from -64 to 64 nanoAmps  
 #define BOGUS_FORCE -100
 
 /** \file AFMState.h
@@ -33,6 +40,8 @@ struct AFMModifyInitializationState {
 
   int mode;
   int style;
+
+  int grid_resolution;
 
   float setpoint;
   float setpoint_min;
@@ -85,7 +94,7 @@ struct AFMModifyState {
   Tclvar_float frequency;
   Tclvar_int   input_gain;
   Tclvar_int   ampl_or_phase;
-  Tclvar_int   drive_attenutation;
+  Tclvar_int   drive_attenuation;
   Tclvar_float phase;
 
   Tclvar_float scan_rate_microns;
@@ -124,7 +133,6 @@ struct AFMModifyState {
 
   // parameter for Poly-line tool
   Tclvar_float step_size;
-    // NOTE:  once initialized cannot be changed !?
 
    // parameters for Direct Z control
   Tclvar_float max_z_step;
@@ -188,6 +196,8 @@ struct AFMImageInitializationState {
 
   int mode;
 
+  int grid_resolution;  
+
   float setpoint;
   float setpoint_max;
   float setpoint_min;
@@ -214,6 +224,8 @@ struct AFMImageState {
   Tclvar_int tool;
     ///< the current mode of the microscope
 
+  Tclvar_int grid_resolution;
+
   Tclvar_float setpoint;
   float        setpoint_min,   ///< control range of the "image force" knob
                setpoint_max;
@@ -226,7 +238,7 @@ struct AFMImageState {
   Tclvar_float frequency;
   Tclvar_int   input_gain;
   Tclvar_int   ampl_or_phase;
-  Tclvar_int   drive_attenutation;
+  Tclvar_int   drive_attenuation;
   Tclvar_float phase;
   Tclvar_float scan_rate_microns;
 
@@ -292,7 +304,7 @@ struct AFMScanlineState {
   Tclvar_float frequency;
   Tclvar_int   input_gain;
   Tclvar_int   ampl_or_phase;
-  Tclvar_int   drive_attenutation;
+  Tclvar_int   drive_attenuation;
   Tclvar_float phase;
   Tclvar_float scan_rate_microns_per_sec;
   
@@ -358,7 +370,8 @@ struct AFMInitializationState {
 
   AFMInitializationState (void);
 
-  char deviceName [100];
+    // device should be at least "file:" + inputstreamname
+  char deviceName [261];
   char inputStreamName [256];
   char outputStreamName [256];
 
@@ -399,16 +412,17 @@ struct AFMState {
   void SetDefaultScanlineForRegion(nmb_Dataset * dataset);
   ~AFMState (void);
 
-  int StdDelay,                  // wait time for stability
-      StPtDelay;                 // delay after setting parameters
+  int StdDelay,                  // wait time for stability. Obsolete
+      StPtDelay;                 // delay after setting parameters. Obsolete
 
+    // Used in relaxation compenstation. Should be obsolete, now inside d_relaxComp.
   int stmRxTmin,                 // wait time before accepting data (ms)
       stmRxTsep;                 // time between points for comp (ms)
 
   float MaxSafeMove;             // fastest speed (nm/ms) that feedback
-                                 //   can keep up with
+                                 //   can keep up with. Obsolete
 
-  TclNet_float stm_z_scale;
+  TclNet_float stm_z_scale;      // exageration factor for height of surface
 
   // parameters for direction of scan
   vrpn_bool do_raster;
@@ -426,6 +440,7 @@ struct AFMState {
 
   int acquisitionMode;///< replaces inModifyMode which replaced doing_modify_mode
 
+  Tclvar_int scanning;  ///< is the SPM scanning right now?
   Tclvar_int slowScanEnabled;
   vrpn_bool cannedLineVisible;
   int cannedLineToggle;
@@ -439,17 +454,22 @@ struct AFMState {
         yMin, yMax,              
         zMin, zMax;
     ///< maximum scan range of which the spm is capable
+  float scanAngle; // the scan angle from topo
 
   // optional system components
-  vrpn_bool doDriftComp;           ///< compensate for drift
+  vrpn_bool doDriftComp;           ///< compensate for drift. Always FALSE
   Tclvar_int doRelaxComp;           ///< compensate for relaxation -can change in Tcl.
-  vrpn_bool doRelaxUp;             ///< do relaxation even if in imagemode
-  vrpn_bool doSplat;               ///< splat incoming data into grid
+  vrpn_bool doRelaxUp;             ///< do relaxation even if in imagemode. Always FALSE
+  vrpn_bool doSplat;               ///< splat incoming data into grid. Always FALSE
   vrpn_bool snapPlaneFit;
+
+  Tclvar_int read_mode;          // Are we reading device, stream, or files?
+
+  Tclvar_int commands_suspended; // Does Thermo want us to stop sending commands?
 
   vrpn_bool writingStreamFile;     // was DO_OUTPUT_STREAM
   vrpn_bool writingNetworkStream;  // was DO_NETOUT_STREAM
-  vrpn_bool readingStreamFile;     // BUG - is this redundant?
+  vrpn_bool readingStreamFile;     // Getting data from stream file?
   vrpn_bool saveStream;            // BUG - should be state on IO (!)
   vrpn_bool allowdup;
   vrpn_bool useRecvTime;           // Michele Clark's experiments

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "graphics_globals.h"
 #include "nmg_Graphics.h" // for enums
 
@@ -16,8 +23,12 @@ float g_alpha_slider_max = 1.0f;
 ColorMap g_colorMap;
 char * g_colorMapDir = NULL;
 ColorMap * g_curColorMap = NULL;
-float g_color_slider_min = 0.0f;
-float g_color_slider_max = 1.0f;
+
+float g_color_min = 0; // ColorMap lower and upper bounds for color
+float g_color_max = 1.0;
+
+float g_data_min = 0; // ColorMap lower and upper bounds for data
+float g_data_max = 1.0;
 
 float g_opacity_slider_min = 0.0f;
 float g_opacity_slider_max = 1.0f;
@@ -127,8 +138,8 @@ int g_ruler_r = 255;
 int g_ruler_g = 255;
 int g_ruler_b = 55;
 
-//set default rulergrid opacity to 128 (50%) instead of 255 (100%)
-float g_ruler_opacity = 128.0f;
+//set default rulergrid opacity to 178 (70%) instead of 255 (100%)
+float g_ruler_opacity = 178.0f;
 //float g_ruler_opacity = 255.0f;
 float g_ruler_width_x = 1.0f;
 float g_ruler_width_y = 1.0f;

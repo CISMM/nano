@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMB_DATASET_H
 #define NMB_DATASET_H
 
@@ -29,6 +36,8 @@ struct flatten_node {
     flatten_data * data;
     flatten_node * next;
 };
+struct lblflatten_node;
+struct sum_node;
 
 /**
    Contains a (pointer to a) BCGrid with all known data from microscopes,
@@ -47,7 +56,8 @@ class nmb_Dataset {
 		 const char ** imageFileNames, int numImageFiles,
 		 const char * hostname, 
                  nmb_String * (* string_allocator) (const char *),
-                 nmb_ListOfStrings *imageNameList, TopoFile &topoFile);
+                 nmb_ListOfStrings * (* list_of_strings_allocator) (),
+                 TopoFile &topoFile);
       // Constructor.
 
     ~nmb_Dataset (void);
@@ -56,6 +66,8 @@ class nmb_Dataset {
     BCGrid * inputGrid;
         ///< incoming data from microscope (data may be changed 
 	///< during acquisition)
+    nmb_ListOfStrings * imageNames;
+        ///< List of names of image in dataImages list.
     nmb_ImageList * dataImages;
 	///< static data plus data currently being acquired or
 	///< overwritten (i.e., including inputGrid)
@@ -83,7 +95,7 @@ class nmb_Dataset {
 
     // MANIPULATORS
 
-    void loadFiles(const char** file_names, int num_files, TopoFile &topoFile);
+    int loadFiles(const char** file_names, int num_files, TopoFile &topoFile);
       ///< Load files with the same grid size into this grid.
       ///< Load files with any grid size if no meaningful data has 
       ///< yet been loaded.
@@ -157,6 +169,10 @@ class nmb_Dataset {
     static void updateLBLFlattenOnPlaneChange (BCPlane *, int x, int y,
 					       void * userdata);
 
+
+    flatten_node * d_flat_list_head;
+    lblflatten_node * d_lblflat_list_head;
+    sum_node * d_sum_list_head;
     struct newFlatPlaneCB {
       void * userdata;
       void (* cb) (void *, const flatten_data *);

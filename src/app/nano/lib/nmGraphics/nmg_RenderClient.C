@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <string.h>
 #include "nmg_RenderClient.h"
 
@@ -109,9 +116,15 @@ void nmg_Graphics_RenderClient::setColorMapName (const char * a) {
 }
 
 // virtual
-void nmg_Graphics_RenderClient::setColorSliderRange (float a, float b) {
+void nmg_Graphics_RenderClient::setColorMinMax (float a, float b) {
   blockTimer();
-  nmg_Graphics_Remote::setColorSliderRange (a, b);
+  nmg_Graphics_Remote::setColorMinMax (a, b);
+}
+
+// virtual
+void nmg_Graphics_RenderClient::setDataColorMinMax (float a, float b) {
+  blockTimer();
+  nmg_Graphics_Remote::setDataColorMinMax (a, b);
 }
 
 // virtual
@@ -263,12 +276,6 @@ void nmg_Graphics_RenderClient::setTextureMode (TextureMode a,
 void nmg_Graphics_RenderClient::setTextureScale (float a) {
   blockTimer();
   nmg_Graphics_Remote::setTextureScale (a);
-}
-
-// virtual
-void nmg_Graphics_RenderClient::sendGeneticTexturesData (int a, char ** b) {
-  blockTimer();
-  nmg_Graphics_Remote::sendGeneticTexturesData (a, b);
 }
 
 // virtual

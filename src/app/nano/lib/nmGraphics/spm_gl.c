@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /*
  *				spm_gl.c
  *
@@ -267,7 +274,7 @@ void specify_vertexArray(nmb_PlaneSelection /*planes*/, int i, int count)
         glTexCoordPointerEXT(2,GL_FLOAT,sizeof(Vertex_Struct),
                                   count,&(vertexptr[i][0].Texcoord[1]));
 
-    else if ( g_genetic_textures_enabled || g_realign_textures_enabled )
+    else if ( g_realign_textures_enabled )
       glTexCoordPointerEXT( 2, GL_FLOAT, sizeof(Vertex_Struct), count,
 			    &(vertexptr[i][0].Texcoord[1]));
 #endif  // PROJECTIVE_TEXTURE
@@ -393,28 +400,35 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     }
       // XXX why do the other implementations cast this to a GLubyte
       // before writing it into a float?
-  } 
-  else if (planes.color) {
-    double scale = (planes.color->value(x, y) - g_color_slider_min) /
-      (g_color_slider_max - g_color_slider_min);
-    scale = min(1.0, scale);
-    scale = max(0.0, scale);
+  } else if (planes.color) {
+    // stretch/shrink data based on data_min/max colors:
+    float data_value = planes.color->value(x, y);
+    data_value = (data_value - planes.color->minNonZeroValue())/
+      (planes.color->maxNonZeroValue() - planes.color->minNonZeroValue());
+    
+    data_value = data_value * (g_data_max - g_data_min) + g_data_min;
+    
+    // clamp data based on the stretched/shrunk colormap:
+    if ( data_value <  g_color_min ) data_value = 0;
+    else if ( data_value > g_color_max ) data_value = 1.0;
+    else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
+    
     if (g_curColorMap) {    // Use the color map loaded from file
       float r, g, b, a;
-      g_curColorMap->lookup(scale, &r, &g, &b, &a);
-      Color[0] = r; Color[1] = g; Color[2] = b; 
-      
-      if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+      g_curColorMap->lookup(data_value, &r, &g, &b, &a);
+      Color[0] = r;
+      Color[1] = g;
+      Color[2] = b;
+      Color[3] = (GLubyte) (g_surface_alpha * 255);
+    }
+    else if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
 	Color[3] = (GLubyte) 0;
-      }
-      else {
-        Color[3] = (GLubyte) (g_surface_alpha * 255);
-      }
-    } 
+    }
+    
     else {      // Use the CUSTOM color mapping tool
       for (i = 0; i < 3; i++) {
 	double  color_diff = (maxColor[i] - minColor[i]);
-	Color[i] = minColor[i] + (color_diff * scale);
+	Color[i] = minColor[i] + (color_diff * data_value);
       }
       if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
 	  Color[3] = (GLubyte) 0;
@@ -656,7 +670,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
     }
   } 
   else if (g_texture_transform_mode == MANUAL_REALIGN_COORD) {
-    GLfloat genetic_coord[2];
+    GLfloat man_realign_coord[2];
     
     if ( (x == (num_x -1)) && (y == (num_y -1))) {
       g_tex_coord_center_x = (num_x / 512.0) / 2.0;
@@ -665,20 +679,20 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
       g_tex_range_y = 1000.0;
       g_tex_theta_cumulative = 0.0;
     }
-    genetic_coord[0]= (float) (x/512.0);
-    genetic_coord[1]= (float) (y/512.0);         
+    man_realign_coord[0]= (float) (x/512.0);
+    man_realign_coord[1]= (float) (y/512.0);         
     if(g_VERTEX_ARRAY) {
-      vertexArray.Texcoord[1]=  genetic_coord[0];
-      vertexArray.Texcoord[2]=  genetic_coord[1];
+      vertexArrayPtr->Texcoord[1]=  man_realign_coord[0];
+      vertexArrayPtr->Texcoord[2]=  man_realign_coord[1];
     }
     else {
-      glTexCoord2fv(genetic_coord);
+      glTexCoord2fv(man_realign_coord);
     }		
   }
 #endif
 
 
-#if defined(sgi) || defined(__CYGWIN__) || defined(FLOW)
+#if defined(sgi) || defined(_WIN32) || defined(FLOW)
 
   if (g_PRERENDERED_TEXTURE) {
     GLfloat tc [2];
@@ -1080,7 +1094,4 @@ int spm_render_mark (const nmb_LocationInfo & p, void *) {
   return 0;
 }
 
-
-// Local Variables:
-// mode:c++
-// End:
+

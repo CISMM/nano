@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMG_GRAPHICS_H
 #define NMG_GRAPHICS_H
 
@@ -81,7 +88,7 @@ class nmg_Graphics {
 
     // indicates which texture is displayed:
     enum TextureMode { NO_TEXTURES, CONTOUR, RULERGRID, ALPHA,
-			GENETIC, COLORMAP,
+			 COLORMAP,
 			SEM_DATA, 
 			BUMPMAP, HATCHMAP, PATTERNMAP,
                         REMOTE_DATA };
@@ -109,10 +116,14 @@ class nmg_Graphics {
 
     //  ALL MANIPULATORS MUST NOT BE IMPLEMENTED IN THIS CLASS!
 
+    virtual void changeDataset( nmb_Dataset * data) = 0;
+
     virtual void resizeViewport(int width, int height) = 0;
       // changes the size of the display window (actually this only
       // handles changing the way the world is drawn into the display
       // window and the actual resizing may be done by the window system)
+    virtual void getViewportSize(int *width, int * height)=0;
+
     virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
                                                         q_vec_type &ur) = 0;
       // gets position of lower left, upper left and upper right corners
@@ -159,9 +170,8 @@ class nmg_Graphics {
       // Specifies the path in which to search for color maps.
     virtual void setColorMapName (const char *) = 0;
       // Specifies the name of the color map to use.
-    virtual void setColorSliderRange (float low, float hi) = 0;
-      // Specifies the range of values over which to interpolate
-      // the color map.
+    virtual void setColorMinMax (float low, float hi) = 0;
+    virtual void setDataColorMinMax (float low, float hi) = 0;
     virtual void setOpacitySliderRange (float low, float hi) = 0;
       // Specifies the range of values over which to interpolate
       // the opacity map.
@@ -229,13 +239,6 @@ class nmg_Graphics {
     virtual void setPatternMapName (const char *) = 0;  // RENAME?
       // Specifies the name of the data plane to use to drive pattern
       // maps on PxFl.
-
-    // Genetic Textures
-
-// functionality moved to setTextureMode()
-//    virtual void enableGeneticTextures (int) = 0;
-
-    virtual void sendGeneticTexturesData (int, char **) = 0;
 
     // Realigning Textures:
     virtual void createRealignTextures( const char * ) = 0;
@@ -309,7 +312,7 @@ class nmg_Graphics {
       // Size at which true tip indicator is drawn
       // FOR DEBUGGING ONLY
 
-    virtual void setUserMode (int oldMode, int newMode, int style) = 0;
+    virtual void setUserMode (int oldMode, int oldStyle, int newMode, int style) = 0;
       // Specifies the mode of interaction currently being used.
       // Controls which widgets are displayed.
 
@@ -405,7 +408,8 @@ class nmg_Graphics {
     vrpn_int32 d_setBumpMapName_type;
     vrpn_int32 d_setColorMapDirectory_type;
     vrpn_int32 d_setColorMapName_type;
-    vrpn_int32 d_setColorSliderRange_type;
+    vrpn_int32 d_setColorMinMax_type;
+    vrpn_int32 d_setDataColorMinMax_type;
     vrpn_int32 d_setOpacitySliderRange_type;
     vrpn_int32 d_setTextureDirectory_type;
     vrpn_int32 d_setComplianceSliderRange_type;
@@ -461,10 +465,6 @@ class nmg_Graphics {
     vrpn_int32 d_enableCollabHand_type;
     vrpn_int32 d_setCollabHandPos_type;
     vrpn_int32 d_setCollabMode_type;
-
-    // Genetic Textures Network Types:
-    vrpn_int32 d_enableGeneticTextures_type;
-    vrpn_int32 d_sendGeneticTexturesData_type;
 
     // Realign Textures Network Types:
     vrpn_int32 d_createRealignTextures_type;
@@ -528,9 +528,10 @@ class nmg_Graphics {
     char * encode_setAlphaSliderRange (int * len, float low, float hi);
     int decode_setAlphaSliderRange (const char * buf,
                                      float * low, float * hi);
-    char * encode_setColorSliderRange (int * len, float low, float hi);
-    int decode_setColorSliderRange (const char * buf,
-                                     float * low, float * hi);
+    char * encode_setColorMinMax (int * len, float low, float hi);
+    int decode_setColorMinMax (const char * buf, float * low, float * hi);
+    char * encode_setDataColorMinMax (int * len, float low, float hi);
+    int decode_setDataColorMinMax (const char * buf, float * low, float * hi);
     char * encode_setOpacitySliderRange (int * len, float low, float hi);
     int decode_setOpacitySliderRange (const char * buf,
 				      float * low, float * hi);
@@ -604,8 +605,8 @@ class nmg_Graphics {
     int decode_setTextureScale (const char * buf, float *);
     char * encode_setTrueTipScale (int * len, float);
     int decode_setTrueTipScale (const char * buf, float *);
-    char * encode_setUserMode (int * len, int oldMode, int newMode, int style);
-    int decode_setUserMode (const char * buf, int * oldMode, int * newMode,
+    char * encode_setUserMode (int * len, int oldMode, int oldStyle, int newMode, int style);
+    int decode_setUserMode (const char * buf, int * oldMode, int * oldStyle, int * newMode,
                              int * style);
     char * encode_setLightDirection (int * len, const q_vec_type &);
     int decode_setLightDirection (const char * buf, q_vec_type &);
@@ -662,12 +663,6 @@ class nmg_Graphics {
     int decode_setCollabHandPos (const char *buf, double [3], double [4]);
     char * encode_setCollabMode (int * len, int);
     int decode_setCollabMode (const char *buf, int *);
-
-    // Genetic Textures Network Transmission Functions:
-    char * encode_enableGeneticTextures (int * len, int);
-    int decode_enableGeneticTextures (const char * buf, int *);
-    char * encode_sendGeneticTexturesData (int * len, int, char **);
-    int decode_sendGeneticTexturesData (const char * buf, int *, char ***);
 
     // Realign Textures Network Transmission Functions:
     char *encode_setRealignTextureSliderRange ( int *len, float, float );

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <BCPlane.h>
 #include <nmb_Types.h>
 #include <nmb_Decoration.h>
@@ -6,12 +13,7 @@
 
 #include <nmm_Types.h>
 #include <nmm_Globals.h>
-#ifndef USE_VRPN_MICROSCOPE	// Added by Tiger, and changed the order of
-				// this header file and nmm_Globals.h
-#include <Microscope.h>
-#else
 #include <nmm_MicroscopeRemote.h>
-#endif
 
 #include <nmg_Graphics.h>
 #include <nmg_Globals.h>
@@ -29,18 +31,12 @@
 #endif
 
 
-#ifdef USE_VRPN_MICROSCOPE
-
 void setupStateCallbacks (nmm_Microscope_Remote * ms) {
-
-#else
-
-void setupStateCallbacks (Microscope * ms) {
-
-#endif
 
   ms->state.doRelaxComp.addCallback
       (handle_doRelaxComp_change, ms);
+  ms->state.scanning.addCallback
+      (handle_scanning_change, ms);
 
   ms->state.modify.mode.addCallback
     (handle_Mmode_change, ms);
@@ -58,6 +54,16 @@ void setupStateCallbacks (Microscope * ms) {
   ms->state.modify.d_gain.addCallback
     (handle_Mmode_p_change, ms);
   ms->state.modify.amplitude.addCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.frequency.addCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.input_gain.addCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.ampl_or_phase.addCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.drive_attenuation.addCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.phase.addCallback
     (handle_Mmode_p_change, ms);
   ms->state.modify.scan_rate_microns.addCallback
     (handle_Mmode_p_change, ms);
@@ -130,6 +136,9 @@ void setupStateCallbacks (Microscope * ms) {
   ms->state.image.style.addCallback
     (handle_Istyle_change, ms);
 
+  ms->state.image.grid_resolution.addCallback
+    (handle_grid_resolution_change, ms);
+
   ms->state.image.setpoint.addCallback
     (handle_Imode_p_change, ms);
   ms->state.image.p_gain.addCallback
@@ -139,6 +148,16 @@ void setupStateCallbacks (Microscope * ms) {
   ms->state.image.d_gain.addCallback
     (handle_Imode_p_change, ms);
   ms->state.image.amplitude.addCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.frequency.addCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.input_gain.addCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.ampl_or_phase.addCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.drive_attenuation.addCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.phase.addCallback
     (handle_Imode_p_change, ms);
   ms->state.image.scan_rate_microns.addCallback
     (handle_Imode_p_change, ms);
@@ -171,6 +190,16 @@ void setupStateCallbacks (Microscope * ms) {
     (handle_SLmode_p_change, ms);
   ms->state.scanline.amplitude.addCallback
     (handle_SLmode_p_change, ms);
+  ms->state.scanline.frequency.addCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.input_gain.addCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.ampl_or_phase.addCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.drive_attenuation.addCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.phase.addCallback
+    (handle_SLmode_p_change, ms);
   ms->state.scanline.scan_rate_microns_per_sec.addCallback
     (handle_SLmode_p_change, ms);
 
@@ -200,16 +229,207 @@ void setupStateCallbacks (Microscope * ms) {
 	    (handle_scanline_position_display_change, ms);
 }
 
-//extern Microscope * microscope;
-#ifndef USE_VRPN_MICROSCOPE
-#define microscope ((Microscope *) _mptr)
-#else
-	// Tiger	HACK: since we use nmm_Microscope_Remote class now
+void teardownStateCallbacks (nmm_Microscope_Remote * ms) {
+
+  ms->state.doRelaxComp.removeCallback
+      (handle_doRelaxComp_change, ms);
+  ms->state.scanning.removeCallback
+      (handle_scanning_change, ms);
+
+  ms->state.modify.mode.removeCallback
+    (handle_Mmode_change, ms);
+  ms->state.modify.style.removeCallback
+    (handle_Mstyle_change, ms);
+  ms->state.modify.tool.removeCallback
+    (handle_Mtool_change, ms);
+
+  ms->state.modify.setpoint.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.p_gain.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.i_gain.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.d_gain.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.amplitude.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.frequency.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.input_gain.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.ampl_or_phase.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.drive_attenuation.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.phase.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.scan_rate_microns.removeCallback
+    (handle_Mmode_p_change, ms);
+
+  ms->state.modify.sweep_width.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.bot_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.top_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.z_pull.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.punch_dist.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.watchdog.removeCallback
+    (handle_Mstyle_p_change, ms);
+
+  ms->state.modify.step_size.removeCallback
+    (handle_Mtool_p_change, ms);
+
+  ms->state.modify.slow_line_playing.removeCallback
+    (handle_slow_line_playing_change, ms);
+  ms->state.modify.slow_line_step.removeCallback
+    (handle_slow_line_step_change, ms);
+  ms->state.modify.slow_line_direction.removeCallback
+    (handle_slow_line_direction_change, ms);
+
+  ms->state.modify.blunt_size.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.blunt_speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+
+  ms->state.modify.fc_start_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_z_start.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_z_end.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_z_pullback.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_force_limit.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_movedist.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_num_points.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_num_halfcycles.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_sample_speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_pullback_speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_start_speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_feedback_speed.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_avg_num.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_sample_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_pullback_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+  ms->state.modify.fc_feedback_delay.removeCallback
+    (handle_Mstyle_p_change, ms);
+
+  ms->state.image.mode.removeCallback
+    (handle_Imode_change, ms);
+  ms->state.image.style.removeCallback
+    (handle_Istyle_change, ms);
+
+  ms->state.image.grid_resolution.removeCallback
+    (handle_grid_resolution_change, ms);
+
+  ms->state.image.setpoint.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.p_gain.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.i_gain.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.d_gain.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.amplitude.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.frequency.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.input_gain.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.ampl_or_phase.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.drive_attenuation.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.phase.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.scan_rate_microns.removeCallback
+    (handle_Imode_p_change, ms);
+
+  ms->state.image.blunt_size.removeCallback
+    (handle_Istyle_p_change, ms);
+  ms->state.image.blunt_speed.removeCallback
+    (handle_Istyle_p_change, ms);
+
+  ms->state.stm_z_scale.removeCallback
+    (handle_z_scale_change, ms);
+  ms->state.slowScanEnabled.removeCallback
+    (handle_tcl_scanEnable_change, ms);
+
+  // Scanline parameters:
+  ms->state.scanline.mode.removeCallback
+    (handle_SLmode_change, ms);
+  ms->state.scanline.forcelimit_enabled.removeCallback
+    (handle_SLforcelimit_change, ms);
+
+  ms->state.scanline.setpoint.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.p_gain.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.i_gain.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.d_gain.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.width.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.amplitude.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.frequency.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.input_gain.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.ampl_or_phase.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.drive_attenuation.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.phase.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.scan_rate_microns_per_sec.removeCallback
+    (handle_SLmode_p_change, ms);
+
+  ms->state.scanline.forcelimit.removeCallback
+    (handle_SLforcelimit_p_change, ms);
+  ms->state.scanline.max_z_step.removeCallback
+    (handle_SLforcelimit_p_change, ms);
+  ms->state.scanline.max_xy_step.removeCallback
+    (handle_SLforcelimit_p_change, ms);
+  ms->state.scanline.feedback_enabled.removeCallback
+    (handle_SLforcelimit_change, ms);
+
+  ms->state.scanline.start_linescan.removeCallback
+            (handle_linescan_start, ms);
+  ms->state.scanline.width.removeCallback
+	    (handle_linescan_position, ms);
+  ms->state.scanline.x_end.removeCallback
+            (handle_linescan_position, ms);
+  ms->state.scanline.y_end.removeCallback
+            (handle_linescan_position, ms);
+  ms->state.scanline.z_end.removeCallback
+            (handle_linescan_position, ms);
+  ms->state.scanline.angle.removeCallback
+            (handle_linescan_position, ms);
+
+  ms->state.scanline.showing_position.removeCallback
+	    (handle_scanline_position_display_change, ms);
+}
+
 #define microscope ((nmm_Microscope_Remote *) _mptr)
-#endif
 
 void handle_doRelaxComp_change (vrpn_int32 val, void * _mptr) {
-#ifdef USE_VRPN_MICROSCOPE
     if (val == VRPN_TRUE) {
 	microscope->d_relax_comp.enable(nmm_RelaxComp::DECAY);
     } else if (val == VRPN_FALSE) {
@@ -218,7 +438,33 @@ void handle_doRelaxComp_change (vrpn_int32 val, void * _mptr) {
 	fprintf(stderr, "Unexpected value for doRelaxComp, %d,"
 		" should be 1 or 0", val);
     }
-#endif
+    return;
+}
+
+void handle_scanning_change (vrpn_int32 , void * _mptr) {
+    // Only allow this button to do something when we are already scanning. 
+    if (microscope->state.acquisitionMode !=IMAGE) return;
+    // Pause or resume the scan. 
+    if(microscope->state.scanning) {
+        microscope->ResumeFullScan();
+    } else {
+        microscope->PauseScan();
+    }
+    
+}
+
+void handle_grid_resolution_change (vrpn_int32, void * _mptr) {
+    // Do some bounds checking to make sure the user's specified
+    // grid resolution is reasonable. 
+
+    // Thermo can handle minimum grid resolution of 2, max of 1000
+    if (microscope->state.image.grid_resolution < 2) {
+        microscope->state.image.grid_resolution = 2;
+    } else if (microscope->state.image.grid_resolution > 1000) {
+        microscope->state.image.grid_resolution = 1000;
+    }
+    microscope->SetGridSize(microscope->state.image.grid_resolution,
+                            microscope->state.image.grid_resolution);
     return;
 }
 
@@ -241,6 +487,10 @@ void handle_Mmode_p_change (vrpn_float64, void * _mptr) {
   microscope->state.modify.mode_p_changed = VRPN_TRUE;
 }
 
+void handle_Mmode_p_change (vrpn_int32, void * _mptr) {
+  microscope->state.modify.mode_p_changed = VRPN_TRUE;
+}
+
 void handle_Mstyle_p_change (vrpn_float64, void * _mptr) {
   microscope->state.modify.style_p_changed = VRPN_TRUE;
 }
@@ -259,6 +509,9 @@ void handle_Istyle_change (vrpn_int32, void * _mptr) {
 }
 
 void handle_Imode_p_change (vrpn_float64, void * _mptr) {
+  microscope->state.image.mode_p_changed = VRPN_TRUE;
+}
+void handle_Imode_p_change (vrpn_int32, void * _mptr) {
   microscope->state.image.mode_p_changed = VRPN_TRUE;
 }
 
@@ -286,6 +539,10 @@ void handle_SLmode_p_change (vrpn_float64, void * _mptr) {
   //printf("handle_SLmode_p_change\n");
   microscope->state.scanline.mode_p_changed = VRPN_TRUE;
 }
+void handle_SLmode_p_change (vrpn_int32, void * _mptr) {
+  //printf("handle_SLmode_p_change\n");
+  microscope->state.scanline.mode_p_changed = VRPN_TRUE;
+}
 
 void handle_SLforcelimit_p_change (vrpn_float64, void * _mptr) {
   microscope->state.scanline.forcelimit_p_changed = VRPN_TRUE;
@@ -301,8 +558,8 @@ void handle_linescan_start (vrpn_int32 val, void *_mptr) {
   if (val == 0) return;
 
   Point_value *value =
-	microscope->state.data.inputPoint->getValueByPlaneName
-			((char *) dataset->heightPlaneName);
+      microscope->state.data.inputPoint->getValueByPlaneName(
+                            dataset->heightPlaneName->string());
   if (value == NULL) {
       fprintf(stderr, "handle_linescan_start():  "
                       "could not get input point!\n");
@@ -310,7 +567,7 @@ void handle_linescan_start (vrpn_int32 val, void *_mptr) {
   }
 
   BCPlane *p = dataset->inputGrid->getPlaneByName(
-					(char*)dataset->heightPlaneName);
+                            dataset->heightPlaneName->string());
   if (p == NULL) {
 	fprintf(stderr, "Error in handle_linescan_start:"
 		" could not get plane!\n");
@@ -340,7 +597,7 @@ void handle_linescan_position (vrpn_float64, void *_mptr) {
   float p0[3], p1[3];
 
   BCPlane* plane = dataset->inputGrid->getPlaneByName(
-        (char*)dataset->heightPlaneName);
+                            dataset->heightPlaneName->string());
   if (plane == NULL)
   {
         fprintf(stderr, "Error in handle_linescan_position:"
@@ -367,15 +624,16 @@ void handle_scanline_position_display_change (vrpn_int32 _value,
 
 /// Update the grid scale and rebuild the display lists
 /// whenever the Z scale changes.
- void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
+void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
   BCPlane * plane =
     dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
   // If user is feeling from data at the same time that she is changing
   // the zscale, she could get a strong jerk from the phantom, so put her
   // into grab mode first
   if (plane) {
-    if ((user_mode[0] == USER_PLANE_MODE) || (user_mode[0] == USER_PLANEL_MODE))
-      handleCharacterCommand("G", &dataset->done, 1);
+      if ((user_mode[0] == USER_PLANE_MODE) || (user_mode[0] == USER_PLANEL_MODE)) {
+          handleCharacterCommand("G", &dataset->done, 1);
+      }
     plane->setScale(microscope->state.stm_z_scale);
     //cause_grid_redraw(_value, _mptr);
     graphics->causeGridRedraw();
@@ -383,6 +641,9 @@ void handle_scanline_position_display_change (vrpn_int32 _value,
   // update display of scanline to show true relative (yet scaled) height of
   // scanline with respect to the surface
   handle_linescan_position(0.0, _mptr);
+  
+  // Bring the surface in view
+  center();
 }
 
 // Called when the user clicks "accept" in the Image frame
@@ -685,44 +946,40 @@ void    handle_color_dataset_change(const char *, void * /*_mptr*/)
 	// Try to set this to a useful value for a stream file
 	// minAttainableValue is much too small to be useful, except
 	// for Topo files.
-	//color_slider_min_limit = plane->minAttainableValue();
-	//color_slider_max_limit = plane->maxAttainableValue();
 	// So, only use these if they are within a reasonable distance
 	// of the data range.
         // Use plane->m*NonZeroValue(), as opposed to plane->m*Value(), so
         // that we get reasonable values before the 1st scan of the surface
         // finishes.
       float range = plane->maxNonZeroValue() - plane->minNonZeroValue();
-      printf("Colormap Min %f max %f range %f\n", plane->minNonZeroValue(),
-	     plane->maxNonZeroValue(), range);
+//        printf("Colormap Min %f max %f range %f\n", plane->minNonZeroValue(),
+//  	     plane->maxNonZeroValue(), range);
       // We set min_limit = min_value - range and max_limit = max_value +
       // range to account for drifting.  Yes, we know this is a kluge.
 
+      /*
       printf("minAttainable = %f, maxAttainable = %f\n",
              plane->minAttainableValue(), plane->maxAttainableValue());
 
       if ( plane->minAttainableValue() > (plane->minNonZeroValue() - range)){
-	    color_slider_min_limit = plane->minAttainableValue();
+	    color_min_limit = plane->minAttainableValue();
       } else {
-	color_slider_min_limit = (plane->minNonZeroValue() - range);
+	color_min_limit = (plane->minNonZeroValue() - range);
       }
       if ( plane->maxAttainableValue() < (plane->maxNonZeroValue() + range)){
-	color_slider_max_limit = plane->maxAttainableValue();
+	color_max_limit = plane->maxAttainableValue();
       } else {
-	color_slider_max_limit = (plane->maxNonZeroValue() + range);
+	color_max_limit = (plane->maxNonZeroValue() + range);
       }
-
-      color_slider_min = plane->minNonZeroValue();
-      color_slider_max = plane->maxNonZeroValue();
+      */
+      color_min_limit = plane->minNonZeroValue();
+      color_max_limit = plane->maxNonZeroValue();
     }
     else {  // so selected data set is "none"
-        color_slider_min_limit = 0;
-        color_slider_max_limit = 1;
-        color_slider_min = 0;
-        color_slider_max = 1;
+        color_min_limit = 0;
+        color_max_limit = 1;
     }
 
-    //cause_grid_redraw(0.0, _mptr);
     graphics->setColorPlaneName(dataset->colorPlaneName->string());
     graphics->causeGridRedraw();
 }
@@ -824,21 +1081,33 @@ void	handle_slow_line_step_change (vrpn_int32, void * _mptr)
 
   float param_step = microscope->state.modify.step_size / line_length;
   
+  Position_list & p = microscope->state.modify.stored_points;
   if (microscope->state.modify.slow_line_direction == FORWARD) {
-    if ( microscope->state.modify.slow_line_position_param >= 1.0) {
-      // don't step off the end of the segment
-      // Turn off "play" if it was on. 
-      microscope->state.modify.slow_line_playing = VRPN_FALSE;
-      // XXX set up for next segment, if any. 
+    if ( microscope->state.modify.slow_line_position_param == 1.0) {
+        if ( !p.peekNext() ) {
+            microscope->state.modify.slow_line_playing = VRPN_FALSE;
+        }
+        else {
+            p.next();
+            microscope->state.modify.slow_line_currPt = p.curr();
+            microscope->state.modify.slow_line_prevPt = p.peekPrev();
+            microscope->state.modify.slow_line_position_param = 0;
+        }
     } else {
       microscope->state.modify.slow_line_position_param += param_step;
     }
   } else if (microscope->state.modify.slow_line_direction == REVERSE) {
-    if ( microscope->state.modify.slow_line_position_param <= 0.0){
-      // don't step off the end of the segment
-      // Turn off "play" if it was on. 
-       microscope->state.modify.slow_line_playing = VRPN_FALSE;
-      // XXX set up for next segment, if any. 
+    if ( microscope->state.modify.slow_line_position_param == 0.0){
+        p.prev();
+        if ( !p.peekPrev() ) {
+            microscope->state.modify.slow_line_playing = VRPN_FALSE;
+            p.next();
+        }
+        else {
+            microscope->state.modify.slow_line_prevPt = p.peekPrev();
+            microscope->state.modify.slow_line_currPt = p.curr();
+            microscope->state.modify.slow_line_position_param = 1.0;
+        }
     } else {
       microscope->state.modify.slow_line_position_param -= param_step;
     }

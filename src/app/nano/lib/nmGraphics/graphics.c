@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "graphics.h"
 
 #include <math.h>  // fabs()
@@ -43,7 +50,7 @@
 #define rulerImageWidth  64
 
 // default position of the light:  overhead, at infinity
-static GLfloat l0_position [4] = { 0.0, 1.0, 1.0, 0.0 };
+static GLfloat l0_position [4] = { 0.0, 1.0, 0.1, 0.0 };
 
 static GLubyte contourImage [contourImageWidth][4];
 static GLubyte checkImage [checkImageDepth][checkImageWidth]
@@ -117,16 +124,22 @@ static void createPyramid (float center, float width, int white_flag)
       //to the ImageWidth, so we "wrap around" the texture map
       if (translation < 0)
 	translation = contourImageWidth + translation;
-#ifndef __CYGWIN__
+#ifndef _WIN32
       contourImage[(int) translation][3] = (int) opacity;
 #else
       contourImage[(int) translation][3] = 255;
       contourImage[(int)(translation)][0] = (int)
-	((float)contourImage[(int)(translation)][0]*(float)opacity/255.0);
+	(g_contour_r*(float)opacity/255.0);
       contourImage[(int)(translation)][1] = (int)
-	((float)contourImage[(int)(translation)][1]*(float)opacity/255.0);
+	(g_contour_g*(float)opacity/255.0);
       contourImage[(int)(translation)][2] = (int)
-	((float)contourImage[(int)(translation)][2]*(float)opacity/255.0);
+	(g_contour_b*(float)opacity/255.0);
+//        contourImage[(int)(translation)][0] = (int)
+//  	((float)contourImage[(int)(translation)][0]*(float)opacity/255.0);
+//        contourImage[(int)(translation)][1] = (int)
+//  	((float)contourImage[(int)(translation)][1]*(float)opacity/255.0);
+//        contourImage[(int)(translation)][2] = (int)
+//  	((float)contourImage[(int)(translation)][2]*(float)opacity/255.0);
 #endif
       //if this is the white line, overwrite the white color
       if (white_flag == 1)
@@ -168,12 +181,15 @@ static void makeTexture (void) {
 
   // Fill the image with unsaturated red and completely transparent
   for(i = 0; i < contourImageWidth; i++) {
+#ifndef _WIN32
      contourImage[i][0] = g_contour_r;
      contourImage[i][1] = g_contour_g;
      contourImage[i][2] = g_contour_b;
-#ifndef __CYGWIN__
      contourImage[i][3] = 0;
 #else
+     contourImage[i][0] = 0;
+     contourImage[i][1] = 0;
+     contourImage[i][2] = 0;
      contourImage[i][3] = 255;
 #endif
   }
@@ -247,7 +263,7 @@ void makeRulerImage (void) {
   int rwidth_x, rwidth_y;
   int i, j;
   
-#ifndef __CYGWIN__
+#ifndef _WIN32
   // Colors are OK at this point
   //printf("mkRulerImage %d %d %d\n", g_ruler_r, g_ruler_g, g_ruler_b);
   for (i = 0;i < rulerImageHeight; i++) {
@@ -302,7 +318,8 @@ void makeRulerImage (void) {
   for (i = 0; i < rulerImageHeight; i++)
     for (j = 0; j < rulerImageWidth; j++)
       if ((j < rwidth_x) ||
-          (rwidth_x > (rulerImageWidth - 1 - j)) || (i < rwidth_y)){
+          (rwidth_x > (rulerImageWidth - 1 - j)) || (i < rwidth_y)||
+          (rwidth_y > (rulerImageHeight - 1 - i)) ){
 	rulerImage[i][j][0] = (GLubyte)((float)g_ruler_r*g_ruler_opacity/255.0);
 	rulerImage[i][j][1] = (GLubyte)((float)g_ruler_g*g_ruler_opacity/255.0);
 	rulerImage[i][j][2] = (GLubyte)((float)g_ruler_b*g_ruler_opacity/255.0);
@@ -327,7 +344,7 @@ void buildRemoteRenderedTexture (int width, int height, void * tex) {
   glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-#ifdef __CYGWIN__
+#ifdef _WIN32
   float tex_color[4] = {1.0, 1.0, 1.0, 1.0};
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
   glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, tex_color);
@@ -340,7 +357,7 @@ void buildRemoteRenderedTexture (int width, int height, void * tex) {
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
   //retval = gluBuild2DMipmaps(GL_TEXTURE_2D, 4, width,
                              //height, GL_RGBA,
                              //GL_UNSIGNED_BYTE, tex);
@@ -375,7 +392,7 @@ void buildContourTexture (void) {
   makeTexture();
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-#ifdef __CYGWIN__
+#ifdef _WIN32
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
 #else
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL); 
@@ -385,7 +402,7 @@ void buildContourTexture (void) {
   glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
   if (gluBuild1DMipmaps(GL_TEXTURE_1D, 4, contourImageWidth,
                         GL_RGBA, GL_UNSIGNED_BYTE, contourImage)!=0) {
       fprintf(stderr, "There is error in constructing the mipmaps.  "
@@ -394,7 +411,7 @@ void buildContourTexture (void) {
                    GL_RGBA, GL_UNSIGNED_BYTE, contourImage);
   }
   if (glGetError()!=GL_NO_ERROR) {
-    fprintf(stderr, "what a mess, man\n");
+    fprintf(stderr, "Error creating contour texture image\n");
   }
 #endif
         /********************88888888888_____________________
@@ -414,11 +431,11 @@ void buildRulergridTexture (void) {
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  printf("building rulergrid texture\n");
+  //printf("building rulergrid texture\n");
   glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-#ifdef __CYGWIN__
+#ifdef _WIN32
   float tex_color[4] = {1.0, 1.0, 1.0, 1.0};
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
   glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, tex_color);
@@ -431,11 +448,11 @@ void buildRulergridTexture (void) {
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
   if (gluBuild2DMipmaps(GL_TEXTURE_2D, 4, rulerImageWidth,
                        rulerImageHeight, GL_RGBA,
                        GL_UNSIGNED_BYTE, rulerImage)!=0) { 
-    fprintf(stderr, " Didn't make mipmaps, using texture instead.\n");
+      //fprintf(stderr, " Didn't make mipmaps, using texture instead.\n");
     glTexImage2D(GL_TEXTURE_2D, 0, 4,
                  rulerImageWidth, rulerImageHeight,
                  0, GL_RGBA, GL_UNSIGNED_BYTE,
@@ -465,7 +482,7 @@ void buildAlphaTexture (void) {
   v_gl_set_context_to_vlib_window();
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-#ifdef __CYGWIN__
+#ifdef _WIN32
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
 #else
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
@@ -812,7 +829,7 @@ void getLightDirection (q_vec_type * v) {
 void resetLightDirection (void) {
   l0_position[0] = 0.0;
   l0_position[1] = 1.0;
-  l0_position[2] = 0.5;
+  l0_position[2] = 0.1;
   l0_position[3] = 0.0;
 }
 

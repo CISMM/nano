@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmg_GraphicsNull.h"
 
 #include <GL/gl.h>
@@ -117,7 +124,8 @@ void nmg_Graphics_Null::setAlphaSliderRange (float , float ) {}
 void nmg_Graphics_Null::setBumpMapName (const char * ) {}
 void nmg_Graphics_Null::setColorMapDirectory (const char * ) {}
 void nmg_Graphics_Null::setColorMapName (const char * ) {}
-void nmg_Graphics_Null::setColorSliderRange (float , float ) {}
+void nmg_Graphics_Null::setColorMinMax (float , float ) {}
+void nmg_Graphics_Null::setDataColorMinMax (float , float ) {}
 void nmg_Graphics_Null::setOpacitySliderRange (float, float ) {}
 void nmg_Graphics_Null::setTextureDirectory (const char * ) {}
 void nmg_Graphics_Null::setComplianceSliderRange (float , float ) {}

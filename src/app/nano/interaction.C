@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /** \file interaction.c
  *
     interaction.c - handles all interaction for user program
@@ -90,13 +97,9 @@
 #define PITCH	Y
 #define ROLL	Z
 
-#define MAX_MV_KNOB 	(3)
-#define MIN_MV_KNOB	(4)
-#define MAX_MAX_MV	(200.0)
-
-/// a scale to slow down the change in sweep width when
-/// phantom pen is rotated.
-#define SWEEP_WIDTH_SCALE (0.05)
+//  #define MAX_MV_KNOB 	(3)
+//  #define MIN_MV_KNOB	(4)
+//  #define MAX_MAX_MV	(200.0)
 
 /** IS_AIM_MODE is true for modification modes (show aiming structure) */
 #define	IS_AIM_MODE(m)	( 			\
@@ -136,8 +139,8 @@ actual data set being displayed. These are to be used when we take the
 system to Orange High School to enable us to determine how much the
 actual feeling helps the students understand the surface.
 */
-Tclvar_int_with_button	config_haptic_enable("Enable Haptic", ".sliders", 1);
-Tclvar_int_with_button	config_haptic_plane("Haptic from flat", ".sliders", 0);
+Tclvar_int	config_haptic_enable("enable_haptic", 1);
+Tclvar_int	config_haptic_plane("haptic_from_flat", 0);
 
 //static nmui_SurfaceFeatures haptic_features;
 static nmui_HapticsManager haptic_manager;
@@ -153,6 +156,7 @@ extern Tcl_Interp * get_the_interpreter (void);
 // moved user_mode to globals.c
 
 int	last_mode[NUM_USERS];		/**< Previous mode of operation */
+int	last_style[NUM_USERS];		/**< Previous style of operation */
 
 char    *user_hand_icons[] = {  (char *)"v_arrow",
 				(char *)"myRoboHand",
@@ -217,12 +221,12 @@ Tclvar_int	tcl_trigger_pressed("trigger_pressed",0, handle_trigger_change);
 /**
  * callback function for Commit button in tcl interface.
  **********/
-static void handle_commit_change( vrpn_int32 val, void *userdata);
+//void handle_commit_change( vrpn_int32 val, void *userdata);
 
 /**
  * callback function for Cancel commit button in tcl interface.
  **********/
-static void handle_commit_cancel( vrpn_int32 val, void *userdata);
+//void handle_commit_cancel( vrpn_int32 val, void *userdata);
 
 /**
  * callback function for PHANToM reset button in tcl interface.
@@ -310,12 +314,13 @@ Tclvar_float adhesion_decrease_per("adhesion_decrease_per", .03, NULL, NULL);
 
 void handle_lightDir_change (vrpn_float64, void *);
 
+// These defaults match those set in nmGraphics/graphics.c:resetLightDir()
 TclNet_float tcl_lightDirX
      ("tcl_lightDirX", 0.0, handle_lightDir_change, NULL);
 TclNet_float tcl_lightDirY
      ("tcl_lightDirY", 1.0, handle_lightDir_change, NULL);
 TclNet_float tcl_lightDirZ
-     ("tcl_lightDirZ", 0.5, handle_lightDir_change, NULL);
+     ("tcl_lightDirZ", 0.1, handle_lightDir_change, NULL);
 
 void handle_worldFromRoom_change (vrpn_float64, void *);
 
@@ -378,7 +383,7 @@ static void handle_trigger_change( vrpn_int32 val, void * )
  * but that is taken care of in doFeelLive().
  */
 
-static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
+void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 {
     // This handles double callbacks, when we set tcl_commit_pressed to
     // zero below.
@@ -470,6 +475,7 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 	      init_slow_line(microscope);
 	      return;
 	    }
+
 	    p.next();
 	    // Draw the first line 
 	    currPt = p.curr();
@@ -590,7 +596,7 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
  * In polyline mode - it clears any saved points. 
  * In select mode - it sets the region invalid, and clears its icon.
  */
-static void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
+void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 {
     printf("handle_commit_cancel called, cancel: %d\n", (int)tcl_commit_canceled);
     // This handles double callbacks, when we set tcl_commit_canceled to
@@ -676,12 +682,12 @@ static void handle_phantom_reset( vrpn_int32, void *) // don't use val, userdata
 }
 
 void setupHaptics (int mode) {
-  static nmui_HSCanned cannedHaptics (dataset);
-  static nmui_HSMeasurePlane measureHaptics (dataset, decoration);
-  static nmui_HSLivePlane liveHaptics (dataset, microscope);
+  static nmui_HSCanned cannedHaptics;
+  static nmui_HSMeasurePlane measureHaptics(decoration);
+  static nmui_HSLivePlane liveHaptics;
 
-  static nmui_GridFeatures gridStrategy (&cannedHaptics, dataset);
-  static nmui_PointFeatures pointStrategy (microscope);
+  static nmui_GridFeatures gridStrategy (&cannedHaptics);
+  static nmui_PointFeatures pointStrategy;
 
 
   if (config_haptic_plane) {
@@ -714,6 +720,10 @@ void setupHaptics (int mode) {
 void dispatch_event(int user, int mode, int event, nmb_TimerList * /*timer*/)
 {
     int ret = 0;
+
+    // If no hand tracker this function shouldn't do anything
+    if ( vrpnHandTracker[user] == NULL )
+        return;
 
     switch(mode) {
 	case USER_LIGHT_MODE:
@@ -823,6 +833,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
   static float old_mod_con_force = -1;
   static float old_img_tap_force = -1;
   static float old_img_con_force = -1;
+  static int first_mode = 1;
   
   if(startup==0){
     for (i = 0; i < BDBOX_NUMBUTTONS; i++) lastButtonsPressed[i]=0;
@@ -831,6 +842,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
   
   // NULL_EVENT=0, PRESS_EVENT=1, RELEASE_EVENT=2, HOLD_EVENT=3 in microscape.h
   // compute events for button box buttons
+  // XXX doesn't fit vrpn model, should be rewritten to match Magellan in minit.c
   if (buttonBox){
     for (i = 0; i < BDBOX_NUMBUTTONS; i++){
       if (!lastButtonsPressed[i]){
@@ -860,7 +872,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     // get value for trigger button event
     // first check phantom button, then mouse button, then button box 
     // trigger, tcl_trigger
-    if (phantButton && using_phantom_button) {
+    if (phantButton && (phantom_button_mode!=2)) {
       triggerButtonPressed = phantButtonPressed;
     } else if (using_mouse3button) {
       triggerButtonPressed = mouse3button;
@@ -1014,6 +1026,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     **
     ** Center command is a special case
     **/
+  // XXX doesn't fit vrpn model, should be rewritten to match Magellan in minit.c
     if( PRESS_EVENT == eventList[CENTER_BT] ) {
       if (timer) { timer->activate(timer->getListHead()); }
       center();
@@ -1038,26 +1051,22 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
 	 * the real button box by causing a callback to
 	 * the tcl routines */
     if( PRESS_EVENT == eventList[COMMIT_BT] ) {
-      // causes "handle_commit_change" to be called
       tcl_commit_pressed  = !tcl_commit_pressed; 
       if (tcl_commit_pressed) {
          printf("Commit from button box, now ON\n");
       } else {
          printf("Commit from button box, now OFF\n");
       }
-      printf("tcl_commit_pressed now set to %d\n", (int)tcl_commit_pressed);
-      /* Above it's noted that the center command is a special case
-      ** Cancel, Commit, and Reset also seem to be special cases...
-      ** the callback isn't triggered if you set the c variable to a value,
-      ** but it's triggered if you set the tcl variable.(!)
-      */
-      handle_commit_change( (vrpn_int32)-1, NULL);
+      // we must call "handle_commit_change" explicitly, 
+      // because tclvars are set to ignore changes from C.
+      handle_commit_change(tcl_commit_pressed, NULL);
     }
     if( PRESS_EVENT == eventList[CANCEL_BT] ) {
       //printf("Cancel from button box.\n");
-      // causes "handle_commit_cancel" to be called
       tcl_commit_canceled = !tcl_commit_canceled; 
-      handle_commit_cancel( (vrpn_int32)-1, NULL );
+      // we must call "handle_commit_cancel" explicitly, 
+      // because tclvars are set to ignore changes from C.
+      handle_commit_cancel(tcl_commit_canceled, NULL);
     }
 
     // see if the user changed modes using a button
@@ -1097,9 +1106,12 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       VERBOSE(6, "    Calling graphics->setUserMode().");
 
       // Change icons to ones for this new mode.
-      graphics->setUserMode(last_mode[user],
-			    user_mode[user],
-			    microscope->state.modify.style);
+      graphics->setUserMode(last_mode[user], last_style[user],
+			    user_mode[user], microscope->state.modify.style);
+
+      /* Last mode next time around is the current mode this time around */
+      last_style[user] = microscope->state.modify.style;
+      last_mode[user] = user_mode[user];
 
       /* Make the associated sound */
       // Taken out for now
@@ -1107,6 +1119,11 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       /* Clear the mode change flag */
       mode_change = 0;
       microscope->state.modify.style_changed = 0;
+    }
+    else if ( first_mode == 1 ) {
+      first_mode = 0;
+      last_style[user] = microscope->state.modify.style;
+      last_mode[user] = user_mode[user];
     }
 
     // quick approximation
@@ -1130,8 +1147,6 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     lastTriggerEvent = eventList[0];
 
 
-    /* Last mode next time around is the current mode this time around */
-    last_mode[user] = user_mode[user];
   }
   // TCH - HACK but it works
   decoration->user_mode = user_mode[0];
@@ -1208,7 +1223,7 @@ doLight(int whichUser, int userEvent)
   //VectorType		lightpos; //, lightdir;
   q_vec_type            lightdir;
   q_vec_type		q_tmp;
-  v_xform_type	worldFromPart, worldFromHand;
+  v_xform_type	worldFromPart;
   //v_xform_type	PartFromWorld;
   q_type		q_room;
   static v_xform_type	oldWorldFromHand;
@@ -1240,14 +1255,7 @@ doLight(int whichUser, int userEvent)
 
   switch ( userEvent ) {
     case PRESS_EVENT:
-	// get snapshot of hand in world space == w_from_h 
-	v_get_world_from_hand(whichUser, &oldWorldFromHand);
-	// Save the old light direction
-        //  [juliano 20000406] oldLightDir is currently unused, so I'm
-        //  commenting it out.  Uncomment it if you need it again.
-        //oldLightDir[X] = tcl_lightDirX;
-        //oldLightDir[Y] = tcl_lightDirY;
-        //oldLightDir[Z] = tcl_lightDirZ;
+
 	break;
 
     case HOLD_EVENT:
@@ -1255,18 +1263,8 @@ doLight(int whichUser, int userEvent)
 	// Any rotation that the hand undergoes, we 
 	// will apply the same rotation to the light direction.
 	
-	// First find the rotation of the hand in the world.
-	// Get current hand in world space.
-	v_get_world_from_hand(whichUser, &worldFromHand);
-	
-	// now get the rotation from one to the other. 
-	
-	// Apply to the light direction.
-
 	/* Rotate light from world space to room space */
         v_get_world_from_head(whichUser, &worldFromPart);
-	// doesn't do anything.
-	//v_x_invert( &PartFromWorld, &worldFromPart );
 
 	q_copy(q_room, worldFromPart.rotate);
 	q_invert(q_room, q_room);
@@ -1308,7 +1306,7 @@ void handle_lightDir_change (vrpn_float64, void *) {
   lightdir[X] = tcl_lightDirX;
   lightdir[Y] = tcl_lightDirY;
   lightdir[Z] = tcl_lightDirZ;
-
+  //printf("New light dir %f %f %f\n",lightdir[X] , lightdir[Y], lightdir[Z]); 
   graphics->setLightDirection(lightdir);
 }
 
@@ -1323,7 +1321,7 @@ int
 doFly(int whichUser, int userEvent)
 {
 
-switch ( userEvent )
+    switch ( userEvent )
     {
 
     case HOLD_EVENT:
@@ -1338,27 +1336,66 @@ switch ( userEvent )
 	break;
     }
 
-return 0;
+    return 0;
 }	/* doFly */
 
 /**
  *
    doScale - scale the world when button is pressed
  *
+ * Scale around the intersection of the aim line with the height plane.
+ * Hopefully this will keep the surface from moving out of reach.
  */
 int
 doScale(int whichUser, int userEvent, double scale_factor)
 {
+    v_xform_type            scaleXform = V_ID_XFORM; 
+    v_xform_type    	    handFromObject;
+    v_xform_type    	    scaledWorldFromHand;
+    v_xform_type    	    handFromWorld;
+    v_xform_type    	    worldFromHand = V_ID_XFORM;
+
+    BCPlane* plane = dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
+    if (plane == NULL) {
+      fprintf(stderr, "Error in doScale: could not get plane!\n");
+      return -1;
+    }     
+    v_get_world_from_hand(whichUser, &worldFromHand);
+    decoration->aimLine.moveTo(worldFromHand.xlate[0],
+			       worldFromHand.xlate[1], plane);
+    
     switch ( userEvent )
-    {
+      {
       case HOLD_EVENT:
         v_xform_type temp;
         v_x_copy(&temp, &v_world.users.xforms[whichUser]);
+	
 
-	v_scale_about_hand(whichUser, &temp, scale_factor);
+        // Very similar operatin to v_scale_about_hand, 
+        // but we scale around the intersection of the aim line with
+        // the height plane. 
+
+        // get spot to scale from in world space. 
+        decoration->aimLine.getIntercept(worldFromHand.xlate, plane);
+     
+        // now scale by scale amount	
+        scaleXform.scale = scale_factor;
+    
+        // scaled_w_f_ha = w_f_h * scale   
+        v_x_compose(&scaledWorldFromHand, &worldFromHand, &scaleXform);
+    
+        //scaling's done, so get back into object space 
+        v_x_invert(&handFromWorld, &worldFromHand);
+    
+        // ha_f_o = ha_f_w * w_f_o  
+        v_x_compose(&handFromObject, &handFromWorld, &temp);
+    
+        // scaled_w_f_o = scaled_w_f_h * h_f_o	
+        v_x_compose(&temp, &scaledWorldFromHand, &handFromObject);
+
         updateWorldFromRoom(&temp);
 	break;
-
+	
       case PRESS_EVENT:
       case RELEASE_EVENT:
       default:
@@ -1419,12 +1456,12 @@ double touch_surface (int, q_vec_type handpos) {
   // Set up the approximating plane or force field...
 
   haptic_manager.surface()->setLocation(handpos);
-  haptic_manager.surface()->update();
+  haptic_manager.surface()->update(microscope);
   haptic_manager.surface()->sendForceUpdate(forceDevice);
 
   // Set up buzzing, bumps, friction, compliance, ...
 
-  haptic_manager.surfaceFeatures().update();
+  haptic_manager.surfaceFeatures().update(microscope);
 
   return haptic_manager.surface()->distanceFromSurface();
 }
@@ -2118,10 +2155,10 @@ int doFeelFromGrid(int whichUser, int userEvent)
         decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
         nmui_Util::moveSphere(clipPos, graphics);
 
-    static nmui_HSCanned cannedHaptics (dataset);
-    static nmui_HSMeasurePlane measureHaptics (dataset, decoration);
+    static nmui_HSCanned cannedHaptics;
+    static nmui_HSMeasurePlane measureHaptics (decoration);
 
-    static nmui_GridFeatures strategy (&cannedHaptics, dataset);
+    static nmui_GridFeatures strategy (&cannedHaptics);
 
     if (config_haptic_plane) {
       haptic_manager.setSurface(&measureHaptics);
@@ -2240,10 +2277,10 @@ int doFeelLive(int whichUser, int userEvent)
    char fullname[100];
 
    fullname[sizeof(fullname)-1] = '\0';
-   strncpy(fullname, (char*)dataset->heightPlaneName, sizeof(fullname)-1);
+   strncpy(fullname, dataset->heightPlaneName->string(), sizeof(fullname)-1);
    if (NULL == strrchr(fullname, '-'))
    {
-      fprintf(stderr, "doFeelLive(): problem with plane name %s\n", (char*)dataset->heightPlaneName);
+      fprintf(stderr, "doFeelLive(): problem with plane name %s\n", (char*)dataset->heightPlaneName->string());
       return -1;
    }
    *strrchr(fullname, '-') = '\0';
@@ -2442,7 +2479,7 @@ int doFeelLive(int whichUser, int userEvent)
 
 	    /* Apply force to the user based on current sample points */
 	    // XXX needs new test with new nmm_relaxComp object
-	  //if( microscope->state.relaxComp >= 0 ) {
+	  if( !microscope->d_relax_comp.is_ignoring_points() ) {
               touch_surface(whichUser, clipPos);
               if (forceDevice  && config_haptic_enable) {
                 if (!SurfaceGoing) {
@@ -2452,7 +2489,7 @@ int doFeelLive(int whichUser, int userEvent)
                   forceDevice->sendSurface();
                 }
               }
-	      //}
+          }
 	}
 	break;
 	
@@ -2629,15 +2666,14 @@ doWorldGrab(int whichUser, int userEvent)
     v_xform_type            roomFromHand, roomFromSensor, handFromRoom;
     static v_xform_type     oldWorldFromHand;
 
-  BCPlane* plane = dataset->inputGrid->getPlaneByName
+    BCPlane* plane = dataset->inputGrid->getPlaneByName
                      (dataset->heightPlaneName->string());
-  if (plane == NULL)
-  {
-      fprintf(stderr, "Error in doWorldGrab: could not get plane!\n");
-      return -1;
-  }     
-    /* Move the aiming line to the users hand location 
-     XXX The aim line is only show in Touch modes. Why move it here? */
+    if (plane == NULL)
+    {
+        fprintf(stderr, "Error in doWorldGrab: could not get plane!\n");
+        return -1;
+    }     
+    // Move the aiming line to the users hand location 
     v_get_world_from_hand(whichUser, &worldFromHand);
     //nmui_Util::moveAimLine(worldFromHand.xlate);
     decoration->aimLine.moveTo(worldFromHand.xlate[0],
@@ -2645,7 +2681,7 @@ doWorldGrab(int whichUser, int userEvent)
 
   v_xform_type temp;
 
-switch ( userEvent )
+  switch ( userEvent )
     {
 
     case PRESS_EVENT:

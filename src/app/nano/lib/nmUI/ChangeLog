@@ -1,3 +1,7 @@
+2000-08-11  Kwan Torrich Skinner  <skinner@cs.unc.edu>
+
+	* all: Merge thirdtech_branch code to trunk.
+
 2000-08-10  Tom Hudson  <hudson@cs.unc.edu>
 
         * nmui_HapticSurface.h (nmui_HSDirectZ):  new data member.

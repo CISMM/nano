@@ -117,10 +117,10 @@ int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
     if (whichImage == NMR_SOURCE) {
         if ((d_images[SOURCE_IMAGE_INDEX]->width() != res_x) ||
             (d_images[SOURCE_IMAGE_INDEX]->height() != res_y)) {
-                 printf("changing source resolution: (%d, %d) --> (%d, %d)\n",
-                    d_images[SOURCE_IMAGE_INDEX]->width(),
-                    d_images[SOURCE_IMAGE_INDEX]->height(),
-                    res_x, res_y);
+//              printf("changing source resolution: (%d, %d) --> (%d, %d)\n",
+//                      d_images[SOURCE_IMAGE_INDEX]->width(),
+//                      d_images[SOURCE_IMAGE_INDEX]->height(),
+//                      res_x, res_y);
                  delete d_images[SOURCE_IMAGE_INDEX];
                  d_images[SOURCE_IMAGE_INDEX] =
                       new nmb_ImageGrid("sourceImage",
@@ -131,10 +131,10 @@ int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
     } else if (whichImage == NMR_TARGET) {
         if ((d_images[TARGET_IMAGE_INDEX]->width() != res_x) ||
             (d_images[TARGET_IMAGE_INDEX]->height() != res_y)) {
-                 printf("changing target resolution: (%d, %d) --> (%d, %d)\n",
-                    d_images[TARGET_IMAGE_INDEX]->width(),
-                    d_images[TARGET_IMAGE_INDEX]->height(),
-                    res_x, res_y);
+//              printf("changing target resolution: (%d, %d) --> (%d, %d)\n",
+//                      d_images[TARGET_IMAGE_INDEX]->width(),
+//                      d_images[TARGET_IMAGE_INDEX]->height(),
+//                      res_x, res_y);
                  delete d_images[TARGET_IMAGE_INDEX];
                  d_images[TARGET_IMAGE_INDEX] = new nmb_ImageGrid("targetImage",
                                         "unknown_units",

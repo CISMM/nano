@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMM_MICROSCOPE_REMOTE_H
 #define NMM_MICROSCOPE_REMOTE_H
 
@@ -89,25 +96,29 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     nmb_Decoration * Decor (void)
       { return d_decoration; }
 
-    char * encode_GetNewPointDatasets (long * len, const Tclvar_checklist *);
-    char * encode_GetNewScanDatasets (long * len, const Tclvar_checklist *);
+    char * encode_GetNewPointDatasets (vrpn_int32 * len, const Tclvar_list_of_strings *,
+                                        Tclvar_int*[], Tclvar_int*[]);
+   char * encode_GetNewScanDatasets (vrpn_int32 * len, const Tclvar_list_of_strings *, 
+                                       Tclvar_int*[]);
 
-    long Initialize (const vrpn_bool setRegion,
-                    const vrpn_bool setMode,
-                    int (*) (stm_stream *),
-                    const long socketType, const char * SPMhost,
-                    const long SPMport, const long UDPport);
-      /**< Set up to read from a live scope.
-       * Function parameter writes any necessary cookies on
-       * an output stream, returning nonzero on failure
-       * Last 4 parameters are for Michele Clark's experiments.  OBSOLETE?
+   long Initialize () ;
+      /**< Set up to read from a stream file or a live scope, 
+       * depending on d_dataset->inputgrid->readMode()
        */
 
-    long Initialize (int (*) (stm_stream *));
-      /**< Set up to read from a streamfile (or static files)
-       * Function parameter writes any necessary cookies on
-       * an output stream, returning nonzero on failure  OBSOLETE?
-       */
+   /*
+   long Initialize (const vrpn_bool _setRegion,
+					   const vrpn_bool _setMode,
+					   int (* f) (stm_stream *),
+					   const long _socketType,
+					   const char * _SPMhost,
+					   const long _SPMport,
+					   const long _UDPport);
+
+
+
+   long Initialize (int (* f) (stm_stream *));
+   */
 
     long NewEpoch (void);
       /**< Forces refresh of grid (?) */
@@ -131,10 +142,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
        * delay, z_pull, punch distance, speed, watchdog)
        */
 
-    //long GetNewSetOfDataChannels (const long mode,
-                                 //const Tclvar_checklist * dataTypes);
-    long GetNewPointDatasets (const Tclvar_checklist * dataTypes);
-    long GetNewScanDatasets (const Tclvar_checklist * dataTypes);
+    long GetNewPointDatasets (const Tclvar_list_of_strings *, 
+                                       Tclvar_int*[],Tclvar_int*[]);
+    long GetNewScanDatasets (const Tclvar_list_of_strings *, 
+                                       Tclvar_int*[]);
       /**<   Sets the list of datasets to be scanned by the microscope.
        * Microscope will respond with the list that it is actually scanning,
        * which may not match.
@@ -151,12 +162,18 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
        */
 
     long ResumeFullScan (void);
-
-    long ResumeWindowScan (void);
       /**<   Causes the microscope to scan over the entire grid.
        * SetScanWindow() may be called to limit scanning to a smaller
        * portion of the grid;  this function undoes that operation.
        */
+
+    long ResumeWindowScan (void);
+
+    long PauseScan(void);
+    /**< Pauses the scan. */
+
+    long WithdrawTip(void);
+    /**< Withdraws the tip from the surface. */
 
     long SetScanStyle (void);
       /**<   Sets the microscope to scan in X or Y first, and in a raster or
@@ -239,6 +256,16 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long DisableVoltsource (long which);
       // Enables one of the voltage sources.
 
+    long InitDevice (const vrpn_bool _setRegion,
+                            const vrpn_bool _setMode,
+                            const long /* _socketType */,
+                            const char * _SPMhost,
+                            const long /* _SPMport */,
+		     const long /* _UDPport */);
+
+    long InitStream (const char * /* _inputStreamName */);
+
+    long Init (int (* /* f */) (stm_stream *));
 
     long RecordResistance(long channel, struct timeval t, float r,
 			float voltage, float range, float filter); 
@@ -262,15 +289,21 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     // set which line to start scanning in image mode
     long JumpToScanLine(long line);
 
+    long SetGridSize (const long _x, const long _y);
+      // Set the size of the grid:  # data points to collect in each dimension.
+
     // ODDS AND ENDS
 
     void ResetClock (void);
 
     void SetStreamToTime (struct timeval time);
 
-
-    Blunt_result * getBluntResult (void)
-      { return &d_bluntResult; }
+    // Query and set the read mode, READ_DEVICE, READ_FILE or READ_STREAM
+    int ReadMode();
+    void ReadMode(int);
+    
+//      Blunt_result * getBluntResult (void)
+//        { return &d_bluntResult; }
 
 
     // Register callbacks from the user interface so we can decouple some
@@ -315,6 +348,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     nmb_Dataset * d_dataset;
     nmb_Decoration * d_decoration;
 
+    char * d_tcl_script_dir;
+
     // to keep track of region to be sent using SetScanWindow():
     // this basically just accumulates a bounding box for all points
     // received during the latest modification
@@ -354,15 +389,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
 
   private:
-
-
-    // initialization
-    long InitDevice (const vrpn_bool, const vrpn_bool,
-                    const long, const char *, const long, const long);
-    long InitStream (const char *);
-    long Init (int (*) (stm_stream *));
-
-
+    // Utility fcn to rotate scan coords.
+    long rotateScanCoords (const double _x, const double _y,
+			   const double _scanAngle, 
+			   double * out_x, double * out_y);
 
     // Commands only sent by member functions
 /* OBSOLETE
@@ -375,8 +405,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long QueryStdDevParams (void);
 */
     long QueryScanRange (void);
-    long SetGridSize (const long _x, const long _y);
-      // Set the size of the grid:  # data points to collect in each dimension.
 
     long SetScanWindow (const long _minx, const long _miny,
                        const long _maxx, const long _maxy);
@@ -447,6 +475,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     void RcvVoltsourceDisabled (const long);
     void RcvAmpEnabled (const long, const float, const float, const long);
     void RcvAmpDisabled (const long);
+    void RcvSuspendCommands();
+    void RcvResumeCommands();
     void RcvStartingToRelax (const long, const long);
     void RcvInModModeT (const long, const long);
     void RcvInModMode (void);
@@ -480,8 +510,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
                       const float, const float, const float, const float);
     void RcvPulseCompletedNM (const float, const float);
     void RcvPulseFailureNM (const float, const float);
+    void RcvScanning (const vrpn_int32);
     void RcvScanRange (const float, const float, const float, const float,
                        const float, const float);
+    void RcvSetScanAngle (const float);
     void RcvSetRegionC (const long,
                         const float, const float, const float, const float);
     void RcvResistanceFailure (const long);
@@ -540,6 +572,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     static int handle_VoltsourceDisabled (void *, vrpn_HANDLERPARAM);
     static int handle_AmpEnabled (void *, vrpn_HANDLERPARAM);
     static int handle_AmpDisabled (void *, vrpn_HANDLERPARAM);
+    static int handle_SuspendCommands (void *, vrpn_HANDLERPARAM);
+    static int handle_ResumeCommands (void *, vrpn_HANDLERPARAM);
     static int handle_StartingToRelax (void *, vrpn_HANDLERPARAM);
     static int handle_InModModeT (void *, vrpn_HANDLERPARAM);
     static int handle_InModMode (void *, vrpn_HANDLERPARAM);
@@ -565,7 +599,9 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     static int handle_ForceCurveData (void *, vrpn_HANDLERPARAM);
     static int handle_PulseCompletedNM (void *, vrpn_HANDLERPARAM);
     static int handle_PulseFailureNM (void *, vrpn_HANDLERPARAM);
+    static int handle_Scanning (void *, vrpn_HANDLERPARAM);
     static int handle_ScanRange (void *, vrpn_HANDLERPARAM);
+    static int handle_SetScanAngle (void *, vrpn_HANDLERPARAM);
     static int handle_SetRegionCompleted (void *, vrpn_HANDLERPARAM);
     static int handle_SetRegionClipped (void *, vrpn_HANDLERPARAM);
     static int handle_ResistanceFailure (void *, vrpn_HANDLERPARAM);
@@ -613,6 +649,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
                            const vrpn_bool = VRPN_FALSE);
       // sets state.rasterX and state.rasterY
 
+    // Has resistance channel been added to point results?
+    vrpn_bool d_res_channel_added;
 
     // replacing things in microscape
     struct timeval d_nowtime;

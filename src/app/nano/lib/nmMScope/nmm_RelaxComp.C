@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /*********
  * nmm_RelaxComp
  * Purpose: encapsulate relaxation compensation
@@ -102,7 +109,7 @@ int nmm_RelaxComp::set_ignore_time_ms (int tignore)
     // If we are disabled, AFM will send us 0, we want
     // to ignore that update.
     if (is_enabled()) {
-	printf("Relax ignore time set at %d\n", tignore);
+      //printf("Relax ignore time set at %d\n", tignore);
 	TIgnore = tignore;
     }
 
@@ -119,7 +126,7 @@ int nmm_RelaxComp::set_separation_time_ms (int tsep)
     // If we are disabled, AFM will send us 0, we want
     // to ignore that update.
     if (is_enabled()) {
-	printf("Relax separation time set at %d\n", tsep);
+      //printf("Relax separation time set at %d\n", tsep);
 	TSep = tsep;
 
 	// I have no idea why we add one ms to TAvg. Make sure it's not zero?

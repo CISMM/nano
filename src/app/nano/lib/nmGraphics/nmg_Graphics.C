@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmg_Graphics.h"
 
 #include <string.h> // for strlen, strtok, strcpy...
@@ -55,8 +62,10 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setColorMapDirectory");
   d_setColorMapName_type =
     c->register_message_type("nmg Graphics setColorMapName");
-  d_setColorSliderRange_type =
-    c->register_message_type("nmg Graphics setColorSliderRange");
+  d_setColorMinMax_type =
+    c->register_message_type("nmg Graphics setColorMinMax");
+  d_setDataColorMinMax_type =
+    c->register_message_type("nmg Graphics setDataColorMinMax");
   d_setOpacitySliderRange_type =
     c->register_message_type("nmg Graphics setOpacitySliderRange");
   d_setTextureDirectory_type =
@@ -174,12 +183,6 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
   d_positionSphere_type =
     c->register_message_type("nmg Graphics positionSphere");
 
-  // Genetic Textures Network Types:
-  d_enableGeneticTextures_type =
-    c->register_message_type("nmg Graphics enableGeneticTextures");
-  d_sendGeneticTexturesData_type =
-    c->register_message_type("nmg Graphics sendGeneticTexturesData");
-  
   // Realign Textures Network Types:
   d_createRealignTextures_type = 
     c->register_message_type("nmg Graphics createRealignTextures");
@@ -485,7 +488,7 @@ int nmg_Graphics::decode_setAlphaSliderRange
   return 0;
 }
 
-char * nmg_Graphics::encode_setColorSliderRange
+char * nmg_Graphics::encode_setColorMinMax
                      (int * len, float low, float hi) {
   char * msgbuf = NULL;
   char * mptr;
@@ -496,7 +499,7 @@ char * nmg_Graphics::encode_setColorSliderRange
   *len = 2 * sizeof(float);
   msgbuf = new char [*len];
   if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_setColorSliderRange:  "
+    fprintf(stderr, "nmg_Graphics::encode_setColorMinMax:  "
                     "Out of memory.\n");
     *len = 0;
   } else {
@@ -509,7 +512,7 @@ char * nmg_Graphics::encode_setColorSliderRange
   return msgbuf;
 }
 
-int nmg_Graphics::decode_setColorSliderRange
+int nmg_Graphics::decode_setColorMinMax
                    (const char * buf, float * low, float * hi) {
   if (!buf || !low || !hi) return -1;
   CHECK(vrpn_unbuffer(&buf, low));
@@ -517,7 +520,31 @@ int nmg_Graphics::decode_setColorSliderRange
   return 0;
 }
 
-char * nmg_Graphics::encode_setOpacitySliderRange( int * len, float low, float hi) {
+char * nmg_Graphics::encode_setDataColorMinMax
+                     (int * len, float low, float hi) {
+  char * msgbuf = NULL;
+  char * mptr;
+  int mlen;
+
+  if (!len) return NULL;
+
+  *len = 2 * sizeof(float);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmg_Graphics::encode_setDataColorMinMax:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, hi);
+  }
+
+  return msgbuf;  
+}
+
+char * nmg_Graphics::encode_setOpacitySliderRange( int * len, float low, float hi ) {
   char * msgbuf = NULL;
   char * mptr;
   int mlen;
@@ -533,12 +560,22 @@ char * nmg_Graphics::encode_setOpacitySliderRange( int * len, float low, float h
   } else {
     mptr = msgbuf;
     mlen = *len;
-    vrpn_buffer(&mptr, &mlen, low);
+    vrpn_buffer(&mptr, &mlen, low);  
     vrpn_buffer(&mptr, &mlen, hi);
   }
 
-  return msgbuf;  
+  return msgbuf;
 }
+
+int nmg_Graphics::decode_setDataColorMinMax
+                   (const char * buf, float * low, float * hi) {
+  if (!buf || !low || !hi) return -1;
+  CHECK(vrpn_unbuffer(&buf, low));
+  CHECK(vrpn_unbuffer(&buf, hi));
+  return 0;
+}
+
+
 
 int nmg_Graphics::decode_setOpacitySliderRange
                          (const char * buf, float * low, float * hi) {
@@ -1566,18 +1603,16 @@ char * nmg_Graphics::encode_setTextureMode
         vrpn_buffer(&mptr, &mlen, 2); break;
       case ALPHA:  
         vrpn_buffer(&mptr, &mlen, 3); break;
-      case GENETIC:
-        vrpn_buffer(&mptr, &mlen, 4); break;
       case COLORMAP:
-	vrpn_buffer(&mptr, &mlen, 5); break;
+	vrpn_buffer(&mptr, &mlen, 4); break;
       case SEM_DATA:
-	vrpn_buffer(&mptr, &mlen, 6); break;
+	vrpn_buffer(&mptr, &mlen, 5); break;
       case BUMPMAP:
-	vrpn_buffer(&mptr, &mlen, 7); break;
+	vrpn_buffer(&mptr, &mlen, 6); break;
       case HATCHMAP:
-	vrpn_buffer(&mptr, &mlen, 8); break;
+	vrpn_buffer(&mptr, &mlen, 7); break;
       case PATTERNMAP:
-	vrpn_buffer(&mptr, &mlen, 9); break;
+	vrpn_buffer(&mptr, &mlen, 8); break;
       default:
         fprintf(stderr, "nmg_Graphics::encode_setTextureMode:  "
                         "Got illegal texture mode %d.  "
@@ -1619,12 +1654,11 @@ int nmg_Graphics::decode_setTextureMode
     case 1:  *m = CONTOUR; break;
     case 2:  *m = RULERGRID; break;
     case 3:  *m = ALPHA; break;
-    case 4:  *m = GENETIC; break;
-    case 5:  *m = COLORMAP; break;
-    case 6:  *m = SEM_DATA; break;
-    case 7:  *m = BUMPMAP; break;
-    case 8:  *m = HATCHMAP; break;
-    case 9:  *m = PATTERNMAP; break;
+    case 4:  *m = COLORMAP; break;
+    case 5:  *m = SEM_DATA; break;
+    case 6:  *m = BUMPMAP; break;
+    case 7:  *m = HATCHMAP; break;
+    case 8:  *m = PATTERNMAP; break;
 
     default:
       fprintf(stderr, "nmg_Graphics::decode_setTextureMode:  "
@@ -1716,14 +1750,14 @@ int nmg_Graphics::decode_setTrueTipScale
 }
 
 char * nmg_Graphics::encode_setUserMode
-                     (int * len, int oldMode, int newMode, int style) {
+                     (int * len, int oldMode, int oldStyle, int newMode, int style) {
   char * msgbuf = NULL;
   char * mptr;
   int mlen;
 
   if (!len) return NULL;
 
-  *len = 3 * sizeof(int);
+  *len = 4 * sizeof(int);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmg_Graphics::encode_setUserMode:  "
@@ -1733,6 +1767,7 @@ char * nmg_Graphics::encode_setUserMode
     mptr = msgbuf;
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, oldMode);
+    vrpn_buffer(&mptr, &mlen, oldStyle);
     vrpn_buffer(&mptr, &mlen, newMode);
     vrpn_buffer(&mptr, &mlen, style);
   }
@@ -1741,10 +1776,11 @@ char * nmg_Graphics::encode_setUserMode
 }
 
 int nmg_Graphics::decode_setUserMode
-                   (const char * buf, int * oldMode, int * newMode,
+                   (const char * buf, int * oldMode, int * oldStyle, int * newMode,
                              int * style) {
-  if (!buf || !oldMode || !newMode || !style) return -1;
+  if (!buf || !oldMode || !oldStyle || !newMode || !style) return -1;
   CHECK(vrpn_unbuffer(&buf, oldMode));
+  CHECK(vrpn_unbuffer(&buf, oldStyle));
   CHECK(vrpn_unbuffer(&buf, newMode));
   CHECK(vrpn_unbuffer(&buf, style));
   return 0;
@@ -2279,99 +2315,6 @@ int nmg_Graphics::decode_positionSphere
   CHECK(vrpn_unbuffer(&buf, z));
   return 0;
 }
-
-//
-// Genetic Texture Network Transmission Code:
-//
-
-// Encodes the state of the Gentic Texture toggle button, value,
-// into a buffer for network transmision... 
-char * nmg_Graphics::encode_enableGeneticTextures (int * len, int value) {
-  char * msgbuf = NULL;
-  char * mptr;
-  int mlen;
-
-  if (!len) return NULL;
-
-  *len = sizeof(int);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_enableGeneticTextures:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, value);
-  }
-
-  return msgbuf;
-}
-
-// Decodes the state of the Gentic Texture toggle button, value,
-// from buf into * value. 
-int nmg_Graphics::decode_enableGeneticTextures (const char * buf, int *value) {
-  if (!buf || !value) return -1;
-  CHECK(vrpn_unbuffer(&buf, value));
-  return 0;
-}
-
-// Encodes the 2D array vl (for variable_list) into a
-// 1D array for network transmission. The length of the
-// new array is returned in the argument len.
-// the array itself is the return value of the function.
-char * nmg_Graphics::encode_sendGeneticTexturesData (int * len, int num,
-						     char **vl) {
-
-  char *msgbuf = NULL;
-
-  *len = 0;
-  int i;
-  for ( i = 0; i < num; i++ )
-    *len += strlen( vl[i] ) + 1;
-  msgbuf = new char[*len];
-
-  *len = 0;
-  for ( i = 0; i < num; i++ ) {
-    sprintf( msgbuf + *len, "%s ", vl[i] );
-    *len += strlen( vl[i] ) + 1;
-  }
-  return msgbuf;
-}
-
-// Horribly ugly code. The idea is that the list of variable names is
-// sent over as a string of names with spaces between.
-// The first loop counts the number of names, so the array vl
-// can be allocated, the second loop copies into vl. Ugh.
-int nmg_Graphics::decode_sendGeneticTexturesData (const char *buf, int *num,
-						  char ***vl) {
-
-  *num = 0;
-  char *save_buf = new char [strlen( buf ) + 1 ];
-  strcpy( save_buf, buf );
-  char *save_buf1 = new char [strlen( buf ) + 1 ];
-  strcpy( save_buf1, buf );
-  char *a;
-  for ( a = strtok( save_buf1, " " ); a; a = strtok( NULL, " " ) ) {
-    *num = *num + 1;
-  }
-
-  *vl = new char*[ *num ];
-  *num = 0;
-  for ( a = strtok( save_buf, " " ); a; a = strtok( NULL, " " ) ) {
-    (*vl)[ *num ] = new char[ strlen( a ) + 1];
-    strcpy( (*vl)[*num], a );
-    *num = *num + 1;
-  }
-
-  delete [] save_buf;
-  delete [] save_buf1;
-  return 0;
-}
-
-//
-// End Genetic Texture Network Transmission Code.
-//
 
 //
 // Realign Texture Network Transmission Code:

@@ -22,6 +22,8 @@
 #include <nmm_MicroscopeRemote.h>
 #endif
 
+#include "nmg_GraphicsImpl.h"
+#include "nmg_Globals.h" // for graphics pointer.
 #include "graphics_globals.h"  // for VERBOSE
 #include "font.h"  // drawStringInFont()
 #include "nmg_Funclist.h"
@@ -37,6 +39,18 @@
 #ifndef M_PI
 #define M_PI		3.14159265358979323846
 #endif
+
+// Margin that moves text out from the edge of the screen. 
+const float MARGIN = 0.02f;
+// Spacing of one line to the next.
+const float LINE_SPACE = 0.027f; 
+// Back-off from the screen in Z to avoid clipping
+const float Z_SLIVER = -0.00001f;
+
+// Top edge of the screen is scaled to be .75 in vlib somewhere
+const float TOP_EDGE = 0.75f;
+// right edge is scaled to 1.0
+const float RIGHT_EDGE = 1.0f;
 
 #include <v.h>  // to define GLfloat
 typedef GLfloat VertexType[3];
@@ -109,7 +123,7 @@ int scale_display (void * data) {
   float * size;
   size = (float *) data;
 
-  char message[1000];
+  char message[100];
 #ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
 #endif
@@ -117,7 +131,7 @@ int scale_display (void * data) {
 
   glColor3f(1.0f, 1.0f, 1.0f);
   glScalef(*size, *size, *size);
-  glTranslatef(0.053f, 0.107f, -0.00001f);
+  glTranslatef(MARGIN, 2*LINE_SPACE + MARGIN, Z_SLIVER);
 
   double scale = 1.0;
 
@@ -129,7 +143,7 @@ int scale_display (void * data) {
       fprintf(stderr, "Error in scale_display: could not get plane!\n");
   } else {
       scale = plane->scale();
-    sprintf(message,"Z is from %s (%s), scale is %g",
+    sprintf(message,"Displaying %s (%s), scale x%g",
           g_heightPlaneName,
           plane->units()->Characters(), scale);
   }
@@ -147,9 +161,10 @@ int scale_display (void * data) {
 
 int x_y_width_display (void *) {
 
-  char message[1000];
+  char message[100];
 
-  sprintf(message,"Grid dX is %gnm, dY is %gnm",
+  sprintf(message,"%dx%d grid, %g by %g nm",
+          g_inputGrid->numX(), g_inputGrid->numY(), 
         g_inputGrid->maxX() - g_inputGrid->minX(),
         g_inputGrid->maxY() - g_inputGrid->minY());
 
@@ -159,7 +174,7 @@ int x_y_width_display (void *) {
 #endif
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
-  glTranslatef(0.053f, 0.08f,-0.00001f);
+  glTranslatef(MARGIN, LINE_SPACE + MARGIN,Z_SLIVER);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
 #ifndef FLOW
   drawStringInFont(myfont, message);
@@ -215,12 +230,12 @@ int height_at_hand_display (void *) {
 	// Find the height of the surface at the current hand location
 	if (plane == NULL) {
 		sprintf(message,
-		"Closest grid height to current hand location is unknown");
+		"Height under hand is unknown");
 	} else {
             double result;
             plane->valueAt(&result, x_loc,y_loc);
 		sprintf(message,
-			"Closest grid height to current hand location is %g",
+			"Height under hand is %g",
                         result);
         }
   }
@@ -231,7 +246,7 @@ int height_at_hand_display (void *) {
 #endif
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
-  glTranslatef(0.053f, 0.053f, -0.00001f);
+  glTranslatef(MARGIN, MARGIN, Z_SLIVER);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
 #ifndef FLOW
   drawStringInFont(myfont, message);
@@ -247,7 +262,7 @@ int height_at_hand_display (void *) {
 
 int rate_display (void *) {
 
-  char message[1000];
+  char message[100];
 
 #ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
@@ -277,7 +292,7 @@ int rate_display (void *) {
       break;
   }
   glColor3f(1.0f, 1.0f, 1.0f);
-  glTranslatef(0.053f, 0.706f, -0.00001f);
+  glTranslatef(MARGIN, TOP_EDGE - MARGIN , Z_SLIVER);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
 #ifndef	FLOW
   drawStringInFont(myfont, message);
@@ -330,38 +345,40 @@ int screenaxis_display (void *) {
 
 int control_display (void *) {
 
-  char message[1000];
-
+  char message[100];
+  int w,h;
+  graphics->getViewportSize(&w, &h);
+  // Total screen is 1.0f across, but font width is in pixels. Convert. 
+  float char_width = RIGHT_EDGE * getFontWidth()/ w;
 #ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
 #endif
   glPushMatrix();
   glColor3f(1.0f, 1.0f, 1.0f);
 
-  // Translate accidentally deleted some time ago;
-  // restored 29 June 98 by TCH
-
-  glTranslatef(0.599f, 0.053f, -0.001f);
-  glRasterPos3f(0.0f, 0.0f, 0.0f);
 
   sprintf(message, 
-	  "FmodMax: %g  FmodMin: %g  FmodCur:  %g",
-          decoration->modSetpointMax,
-          decoration->modSetpointMin,
+	  "Modify setpoint: %.3g",
           decoration->modSetpoint);
-  glTranslatef(0.0f, 0.027f, 0.0f);
+  // Find out length of message:
+  float msg_width = char_width * strlen(message);
+  // Need a bit bigger margin on the right edge. 
+  glTranslatef(RIGHT_EDGE - (3*MARGIN + msg_width), MARGIN, Z_SLIVER);
+  //printf ("CD %f %f\n", char_width, msg_width);
+  // Leave space for the Point result display to spill over 
+  // to right side of screen.
+  glTranslatef(0.0f, LINE_SPACE, 0.0f);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
 #ifndef	FLOW
   drawStringInFont(myfont, message);
 #endif
   
   // Used to be amplitude, but we think it should be setpoint
+  // Added extra space so it's the same length as modify message above.
   sprintf(message, 
-	  "FimgMax: %g  FimgMin: %g  FimgCur:  %g",
-          decoration->imageSetpointMax,
-          decoration->imageSetpointMin,
+	  "Image setpoint : %.3g",
           decoration->imageSetpoint);
-  glTranslatef(0.0f, 0.026f, 0.0f);
+  glTranslatef(0.0f, LINE_SPACE, 0.0f);
   glRasterPos3f(0.0f, 0.0f, 0.0f);
 #ifndef	FLOW
   drawStringInFont(myfont, message);
@@ -390,7 +407,7 @@ int mode_display (void *) {
       * removed from the code. When I commented out "comb mode", 
       * I got a seg-fault, even though the code was supposed to safely 
       * bypass this unused mode. */
-  case USER_LIGHT_MODE:       message = (char *)"Light Mode";          break;
+  case USER_LIGHT_MODE:       message = (char *)"Position Light Mode"; break;
   case USER_FLY_MODE:         message = (char *)"Fly Mode";            break;
   case USER_MEASURE_MODE:     message = (char *)"Measure Mode";        break;
      //case USER_PULSE_MODE:       message = (char *)"Pulse Mode";          break;
@@ -398,7 +415,7 @@ int mode_display (void *) {
      //case USER_SWEEP_MODE:       message = (char *)"Sweep Mode";          break;
      //case USER_BLUNT_TIP_MODE:   message = (char *)"Blunt Tip Mode";      break;
      //case USER_COMB_MODE:        message = (char *)"Comb Mode";           break;
-  case USER_PLANE_MODE:       message = (char *)"Touch Grid Mode"; break;
+  case USER_PLANE_MODE:       message = (char *)"Touch Stored Mode"; break;
   case USER_PLANEL_MODE:      message = (char *)"Touch & Prepare to Modify Mode"; break;
   case USER_SCALE_UP_MODE:    message = (char *)"Scale Up Mode";       break;
   case USER_SCALE_DOWN_MODE:  message = (char *)"Scale Down Mode";     break;
@@ -411,7 +428,8 @@ int mode_display (void *) {
   default:                    message = (char *)"Unknown Mode"; break;
   }
 
-  glTranslatef(0.530f, 0.706f, -0.00001f);
+  // display in center top.
+  glTranslatef(0.5f*RIGHT_EDGE, TOP_EDGE - MARGIN, Z_SLIVER);
 
   glRasterPos3f(0.0f, 0.0f, 0.0f);
 #ifndef	FLOW
@@ -431,7 +449,7 @@ int mode_display (void *) {
 
 int measure_display (void *) {
 
-   char message[1000];
+   char message[100];
 
    BCPlane* plane = g_inputGrid->getPlaneByName
                       (g_heightPlaneName);
@@ -466,7 +484,7 @@ int measure_display (void *) {
    glPushMatrix();
  
 
-   glTranslatef(0.575f, 0.695f, -0.00001f);
+   glTranslatef(0.575f, TOP_EDGE - (MARGIN + 0.5*LINE_SPACE), Z_SLIVER);
    glRasterPos3f(0.0f, 0.0f, 0.0f);
 
    glLineWidth(3.0);
@@ -498,7 +516,8 @@ int measure_display (void *) {
    glRasterPos3f(0.0f, 0.0f, 0.0f);
    glBegin(GL_LINES);
    VERBOSE(20, "          glBegin(GL_LINES)");
-     glColor3f(0.0f, 1.0f, 0.0f);
+   // It's yellow, not green, to avoid red-green colorblind problems.
+     glColor3f(0.7f, 0.7f, 0.0f);
      glVertex3f(0.0f, 0.0f, 0.0f);
      glVertex3f(0.0f, -0.037f, 0.0f);
    VERBOSE(20, "          glEnd()");
@@ -561,12 +580,12 @@ int measure_display (void *) {
    glColor3f(1.0f,1.0f,1.0f);
    glTranslatef(-0.321f,-0.059f,0.0f);
    glRasterPos3f(0.0f,0.0f,0.0f);
-   sprintf(message,"Angle: %.4g",measure_data.rgbAngle);
+   sprintf(message,"Angle:  %.4g",measure_data.rgbAngle);
 #ifndef FLOW
    drawStringInFont(myfont,message);
 #endif
 
-   glTranslatef(0.190f,0.0f,0.0f);
+   glTranslatef(0.192f,0.0f,0.0f);
    glRasterPos3f(0.0f,0.0f,0.0f);
    sprintf(message,"%.4g",measure_data.gbrAngle);
 #ifndef FLOW
@@ -584,10 +603,10 @@ int measure_display (void *) {
 
 int addChartjunk (nmg_Funclist ** v_screen, float * screen_scale) {
 
-  fprintf(stderr, "Adding chartjunk to screen\n");
+    //fprintf(stderr, "Adding chartjunk to screen\n");
 
-  addFunctionToFunclist(v_screen, screenaxis_display, NULL,
-                        "screenaxis_display");
+//    addFunctionToFunclist(v_screen, screenaxis_display, NULL,
+//                          "screenaxis_display");
   // rate_id =
   addFunctionToFunclist(v_screen, rate_display, NULL, "rate_display");
   // mode_id =

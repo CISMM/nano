@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 // If you wanna see what changes made by Tiger, just search for 'Tiger'
 #include "nmm_Microscope.h"
 
@@ -25,10 +32,10 @@
 
 nmm_Microscope::nmm_Microscope (
     const char * /*name*/,
-    vrpn_Connection * connection) :
+    vrpn_Connection * connection)
 //  d_connection (connection),             moved to nmb_Device
 //  d_fileController (new vrpn_File_Controller (connection)),moved to nmb_Device
-  d_tcl_script_dir (NULL) {
+  {
 
 //  char * servicename;           // Tiger HACK probably need to do that
 //  servicename = vrpn_copy_service_name(name);   // to get the right name.
@@ -47,6 +54,8 @@ nmm_Microscope::nmm_Microscope (
 
     d_SetRegionNM_type = connection->register_message_type
          ("nmm Microscope SetRegionNM");
+    d_SetScanAngle_type = connection->register_message_type
+         ("nmm Microscope SetScanAngle");
     d_ScanTo_type = connection->register_message_type
          ("nmm Microscope ScanTo");
     d_ScanToZ_type = connection->register_message_type
@@ -75,6 +84,8 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope SetScanWindow");
     d_ResumeWindowScan_type = connection->register_message_type
          ("nmm Microscope ResumeWindowScan");
+    d_PauseScanning_type = connection->register_message_type
+         ("nmm Microscope PauseScanning");
     d_SetGridSize_type = connection->register_message_type
          ("nmm Microscope SetGridSize");
     d_SetOhmmeterSampleRate_type = connection->register_message_type
@@ -107,12 +118,15 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope GetNewPointDatasets");
     d_GetNewScanDatasets_type = connection->register_message_type
          ("nmm Microscope GetNewScanDatasets");
+    d_WithdrawTip_type = connection->register_message_type
+	("nmm Microscope WithdrawTip");
     d_MarkModify_type = connection->register_message_type
 	("nmm Microscope MarkModify");
     d_MarkImage_type = connection->register_message_type
         ("nmm Microscope MarkImage");
-    d_Shutdown_type = connection->register_message_type
-         ("nmm Microscope Shutdown");
+    // Used for the vrpn_dropped_connection type. 
+//      d_Shutdown_type = connection->register_message_type
+//           ("nmm Microscope Shutdown");
     d_QueryScanRange_type = connection->register_message_type
          ("nmm Microscope QueryScanRange");
     /* OBSOLETE */
@@ -128,6 +142,10 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope AmpEnabled");
     d_AmpDisabled_type = connection->register_message_type
          ("nmm Microscope AmpDisabled");
+    d_SuspendCommands_type = connection->register_message_type
+        ("nmm Microscope SuspendCommands");
+    d_ResumeCommands_type = connection->register_message_type
+        ("nmm Microscope ResumeCommands");
     d_StartingToRelax_type = connection->register_message_type
          ("nmm Microscope StartingToRelax");
     d_RelaxSet_type = connection->register_message_type
@@ -156,6 +174,8 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope BluntResultNM");
     d_ScanRange_type = connection->register_message_type
          ("nmm Microscope ScanRange");
+    d_Scanning_type = connection->register_message_type
+         ("nmm Microscope Scanning");
     d_SetRegionCompleted_type = connection->register_message_type
          ("nmm Microscope SetRegionCompleted");
     d_SetRegionClipped_type = connection->register_message_type
@@ -318,9 +338,6 @@ nmm_Microscope::nmm_Microscope (
 
 
 nmm_Microscope::~nmm_Microscope (void) {
-
-  if (d_tcl_script_dir)
-    delete [] d_tcl_script_dir;
 
 }
 
@@ -523,43 +540,6 @@ char * nmm_Microscope::d_inputMessageName [] = {
          "nmm Microscope STM ApproachComplete",
 };
 
-/* Tiger	move it to nmm_MicroscopeRemote.C
-long nmm_Microscope::InitializeDataset (nmb_Dataset * ds) {
-  BCPlane * plane;
-
-  d_dataset = ds;
-
-  state.data.Initialize(ds);
-  plane = ds->ensureHeightPlane();
-  plane->setScale(state.stm_z_scale);
-
-  return 0;
-}
-*/
-
-/* Tiger	move it to nmm_MicroscopeRemote.C
-long nmm_Microscope::tInitializeDecoration (nmb_Decoration * dec) {
-  d_decoration = dec;
-
-  return 0;
-}
-*/
-
-/* Tiger	move it to nmm_MicroscopeRemote.C
-long nmm_Microscope::InitializeTcl (const char * dir) {
-  if (!dir)
-    return -1;
-
-  d_tcl_script_dir = new char [1 + strlen(dir)];
-  if (!d_tcl_script_dir)
-    return -1;
-
-  strcpy(d_tcl_script_dir, dir);
-  return 0;
-}
-*/
-
-
 char * nmm_Microscope::encode_SetRegionNM (long * len,
                  vrpn_float32 minx, vrpn_float32 miny, 
                  vrpn_float32 maxx, vrpn_float32 maxy) {
@@ -594,6 +574,36 @@ long nmm_Microscope::decode_SetRegionNM (const char ** buf,
   CHECK(vrpn_unbuffer(buf, miny));
   CHECK(vrpn_unbuffer(buf, maxx));
   CHECK(vrpn_unbuffer(buf, maxy));
+
+  return 0;
+}
+
+char * nmm_Microscope::encode_SetScanAngle (long * len,
+					    vrpn_float32 angle) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_SetScanAngle:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, angle);
+  }
+
+  return msgbuf;
+}
+
+long nmm_Microscope::decode_SetScanAngle (const char ** buf,
+        vrpn_float32 * angle) {
+  CHECK(vrpn_unbuffer(buf, angle));
 
   return 0;
 }
@@ -2136,6 +2146,36 @@ long nmm_Microscope::decode_ResultNM (const char ** buf,
   return 0;
 }
 
+char * nmm_Microscope::encode_Scanning (long * len,
+                  vrpn_int32 on_off) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_Scanning:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen,  on_off);
+  }
+
+  return msgbuf;
+}
+long nmm_Microscope::decode_Scanning (const char ** buf,
+         vrpn_int32 *  on_off) {
+  CHECK(vrpn_unbuffer(buf,  on_off));
+
+  return 0;
+}
+
+
 char * nmm_Microscope::encode_ScanRange (long * len,
            vrpn_float32 minX, vrpn_float32 maxX, vrpn_float32 minY, vrpn_float32 maxY,
            vrpn_float32 minZ, vrpn_float32 maxZ) {
@@ -2960,6 +3000,9 @@ char * nmm_Microscope::encode_EnterOscillatingMode (long * len,
                     "Out of memory.\n");
     *len = 0;
   } else {
+      // NOTE change in order. on SGI, 4 byte types must be aligned for
+      // unbuffer to work (i.e. not give a bus error). So the two byte
+      // vrpn_bool must come in pairs, or must come last!
     mptr = msgbuf;
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, p);
@@ -2969,9 +3012,9 @@ char * nmm_Microscope::encode_EnterOscillatingMode (long * len,
     vrpn_buffer(&mptr, &mlen, amplitude);
     vrpn_buffer(&mptr, &mlen, frequency);
     vrpn_buffer(&mptr, &mlen, input_gain);
-    vrpn_buffer(&mptr, &mlen, ampl_or_phase);
     vrpn_buffer(&mptr, &mlen, drive_attenuation);
     vrpn_buffer(&mptr, &mlen, phase);
+    vrpn_buffer(&mptr, &mlen, ampl_or_phase);
   }
 
   return msgbuf;
@@ -2983,6 +3026,9 @@ long nmm_Microscope::decode_EnterOscillatingMode (const char ** buf,
            vrpn_float32 * frequency, vrpn_int32 * input_gain,
            vrpn_bool * ampl_or_phase, vrpn_int32 * drive_attenuation,
            vrpn_float32 * phase) {
+      // NOTE change in order. on SGI, 4 byte types must be aligned for
+      // unbuffer to work (i.e. not give a bus error). So the two byte
+      // vrpn_bool must come in pairs, or must come last!
   CHECK(vrpn_unbuffer(buf, p));
   CHECK(vrpn_unbuffer(buf, i));
   CHECK(vrpn_unbuffer(buf, d));
@@ -2990,9 +3036,9 @@ long nmm_Microscope::decode_EnterOscillatingMode (const char ** buf,
   CHECK(vrpn_unbuffer(buf, amplitude));
   CHECK(vrpn_unbuffer(buf, frequency));
   CHECK(vrpn_unbuffer(buf, input_gain));
-  CHECK(vrpn_unbuffer(buf, ampl_or_phase));
   CHECK(vrpn_unbuffer(buf, drive_attenuation));
   CHECK(vrpn_unbuffer(buf, phase));
+  CHECK(vrpn_unbuffer(buf, ampl_or_phase));
 
   return 0;
 }
@@ -3264,6 +3310,9 @@ char * nmm_Microscope::encode_InOscillatingMode (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
+      // NOTE change in order. on SGI, 4 byte types must be aligned for
+      // unbuffer to work (i.e. not give a bus error). So the two byte
+      // vrpn_bool must come in pairs, or must come last!
     vrpn_buffer(&mptr, &mlen, p);
     vrpn_buffer(&mptr, &mlen, i);
     vrpn_buffer(&mptr, &mlen, d);
@@ -3271,9 +3320,9 @@ char * nmm_Microscope::encode_InOscillatingMode (long * len,
     vrpn_buffer(&mptr, &mlen, amplitude);
     vrpn_buffer(&mptr, &mlen, frequency);
     vrpn_buffer(&mptr, &mlen, input_gain);
-    vrpn_buffer(&mptr, &mlen, ampl_or_phase);
     vrpn_buffer(&mptr, &mlen, drive_attenuation);
     vrpn_buffer(&mptr, &mlen, phase);
+    vrpn_buffer(&mptr, &mlen, ampl_or_phase);
   }
 
   return msgbuf;
@@ -3285,6 +3334,9 @@ long nmm_Microscope::decode_InOscillatingMode (const char ** buf,
            vrpn_float32 * frequency, vrpn_int32 * input_gain,
            vrpn_bool * ampl_or_phase, vrpn_int32 * drive_attenuation,
            vrpn_float32 * phase) {
+      // NOTE change in order. on SGI, 4 byte types must be aligned for
+      // unbuffer to work (i.e. not give a bus error). So the two byte
+      // vrpn_bool must come in pairs, or must come last!
   CHECK(vrpn_unbuffer(buf, p));
   CHECK(vrpn_unbuffer(buf, i));
   CHECK(vrpn_unbuffer(buf, d));
@@ -3292,9 +3344,9 @@ long nmm_Microscope::decode_InOscillatingMode (const char ** buf,
   CHECK(vrpn_unbuffer(buf, amplitude));
   CHECK(vrpn_unbuffer(buf, frequency));
   CHECK(vrpn_unbuffer(buf, input_gain));
-  CHECK(vrpn_unbuffer(buf, ampl_or_phase));
   CHECK(vrpn_unbuffer(buf, drive_attenuation));
   CHECK(vrpn_unbuffer(buf, phase));
+  CHECK(vrpn_unbuffer(buf, ampl_or_phase));
 
   return 0;
 }

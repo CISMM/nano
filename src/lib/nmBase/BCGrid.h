@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef _BCGRID_
 #define _BCGRID_
 
@@ -14,7 +21,13 @@ extern const char * EMPTY_PLANE_NAME;
 
 #include <ctype.h> 
 #include <stdio.h> // for FILE
-#include "BCDebug.h"
+#include "BCString.h"
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+// bogus double to float conversion warning.
+#pragma warning(disable:4244)
+#pragma warning(disable:4305)
+#endif
 
 class BCPlane;
 
@@ -59,7 +72,7 @@ class BCGrid
     BCPlane* addNewPlane(BCString dataset, BCString units, int timed);
     BCPlane* addPlaneCopy(BCPlane* grid);
 
-    void loadFiles(const char** file_names, int num_files, TopoFile &topoFile);
+    int loadFiles(const char** file_names, int num_files, TopoFile &topoFile);
       ///< Load files with the same grid size into this grid.
       ///< Load files with any grid size if no meaningful data has 
       ///< yet been loaded.
@@ -220,7 +233,7 @@ class BCGrid
    
     int _modified; ///< true if _min_x, _max_x, _min_y, or _max_y have been altered
 
-    static int _read_mode;
+    int _read_mode;
 
     static int _times_invoked;
 };

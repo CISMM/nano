@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMM_MICROSCOPE_H
 #define NMM_MICROSCOPE_H
 
@@ -65,8 +72,6 @@ class nmm_Microscope {
 //    vrpn_Connection * d_connection; moved to nmb_Device
 //    vrpn_File_Controller * d_fileController; moved to nmb_Device
 
-    char * d_tcl_script_dir;
-
     // VRPN stuff
 
 //    long d_myId; moved to nmb_Device
@@ -79,6 +84,7 @@ class nmm_Microscope {
     // general messages
 
     long d_SetRegionNM_type;  // client ==> server
+    long d_SetScanAngle_type;
     long d_ScanTo_type;
     long d_ScanToZ_type;
     long d_ZagTo_type;
@@ -92,6 +98,7 @@ class nmm_Microscope {
     long d_SetStdDevParams_type;
     long d_SetScanWindow_type;
     long d_ResumeWindowScan_type;
+    long d_PauseScanning_type;
     long d_SetGridSize_type;
     long d_SetOhmmeterSampleRate_type;
     long d_EnableAmp_type;
@@ -108,6 +115,7 @@ class nmm_Microscope {
     long d_DrawSweepArcCenter_type;
     long d_GetNewPointDatasets_type;
     long d_GetNewScanDatasets_type;
+    long d_WithdrawTip_type;
     long d_Echo_type;
     long d_MarkModify_type;
     long d_MarkImage_type;
@@ -127,6 +135,8 @@ class nmm_Microscope {
     long d_VoltsourceDisabled_type;
     long d_AmpEnabled_type;
     long d_AmpDisabled_type;
+    long d_SuspendCommands_type;
+    long d_ResumeCommands_type;
     long d_StartingToRelax_type;
     long d_RelaxSet_type;
     long d_StdDevParameters_type;
@@ -143,6 +153,7 @@ class nmm_Microscope {
     long d_BluntResultNM_type;
       // ZigResultNM and BluntResultNM are both handled
       // by encode_ResultNM() and decode_ResultNM()
+    long d_Scanning_type;
     long d_ScanRange_type;
     long d_SetRegionCompleted_type;
     long d_SetRegionClipped_type;
@@ -250,6 +261,10 @@ class nmm_Microscope {
                   float minx, float miny, float maxx, float maxy);
     long decode_SetRegionNM (const char ** buf,
                float * minx, float * miny, float * maxx, float * maxy);
+    char * encode_SetScanAngle (long * len,
+				float angle);
+    long decode_SetScanAngle (const char ** buf,
+			      float * angle);
     char * encode_ScanTo (long * len, float x, float y);
     long decode_ScanTo (const char ** buf, float * x, float * y);
     char * encode_ScanTo (long * len, float x, float y, float z);
@@ -398,6 +413,8 @@ class nmm_Microscope {
                             float, float, float, float);
     long decode_ResultNM (const char ** buf, float *, float *, vrpn_int32 *, 
                       vrpn_int32 *, float *, float *, float *, float *);
+    char * encode_Scanning (long * len, vrpn_int32 value);
+    long decode_Scanning (const char ** buf, vrpn_int32 * value);
     char * encode_ScanRange (long * len, float, float, float, float, float,
                              float);
     long decode_ScanRange (const char ** buf, float *, float *, float *,

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /** \file nM_coord_change.C
 	last modified by Tom Hudson on 23 Feb 2000.
 	This is the server that takes the position/orientation messages from
@@ -154,13 +161,10 @@ void nM_coord_change::handle_tracker_pos_change(void *userdata,
 
   if (me->d_connection) {
     len = me->encode_to(msgbuf);
-    retval = me->d_connection->pack_message(len,
-                        me->timestamp, me->position_m_id,
-			me->d_sender_id, msgbuf, 
-			vrpn_CONNECTION_LOW_LATENCY);
-    if (retval) {
-      fprintf(stderr, "nM_coord_change::handle_tracker_pos_change:  "
-                      "cannot write message.\n");
+    if (me->d_connection->pack_message(len, me->timestamp, me->position_m_id,
+				     me->d_sender_id, msgbuf, 
+				     vrpn_CONNECTION_LOW_LATENCY)) {
+      fprintf(stderr, "nM_coord_change: cannot write message: tossing\n");
     }
   }
 }

@@ -1,10 +1,15 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMG_GRAPHICS_IMPL_H
 #define NMG_GRAPHICS_IMPL_H
 
 #include "nmg_Graphics.h"
 #include "PPM.h"
-
-#include "gaEngine_Remote.h"
 
 #include <vrpn_Connection.h>  // for vrpn_HANDLERPARAM
 
@@ -23,8 +28,9 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void mainloop (void);
 
+    virtual void changeDataset( nmb_Dataset * data);
     virtual void resizeViewport(int width, int height);
-
+    virtual void getViewportSize(int *width, int * height);
 
     virtual void loadRulergridImage (const char *);
 
@@ -45,7 +51,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void setColorMapDirectory (const char *);
     virtual void setColorMapName (const char *);
-    virtual void setColorSliderRange (float low, float hi);
+    virtual void setColorMinMax (float low, float hi);
+    virtual void setDataColorMinMax (float low, float hi);
 
     virtual void setOpacitySliderRange (float low, float hi);
 
@@ -83,10 +90,6 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setMaxColor (const int [3]);
 
     virtual void setPatternMapName (const char *);  // RENAME?
-
-  // Genetic Textures
-//    virtual void enableGeneticTextures (int);
-    virtual void sendGeneticTexturesData (int, char **);
 
     // Realigning Textures:
     virtual void createRealignTextures( const char * );
@@ -134,7 +137,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setTextureScale (float);
     virtual void setTrueTipScale (float);
 
-    virtual void setUserMode (int oldMode, int newMode, int style);  // TODO
+    virtual void setUserMode (int oldMode, int oldStyle, int newMode, int style);
 
     virtual void setLightDirection (q_vec_type &);
     virtual void resetLightDirection (void);
@@ -176,9 +179,6 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 //  virtual float getDiffusePercent (void) const;
     virtual const double * getMinColor (void) const;
     virtual const double * getMaxColor (void) const;
-
-     // genetic textures
-    gaEngine_Remote *gaRemote;
 
   protected:
 
@@ -232,7 +232,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setBumpMapName (void *, vrpn_HANDLERPARAM);
     static int handle_setColorMapDirectory (void *, vrpn_HANDLERPARAM);
     static int handle_setColorMapName (void *, vrpn_HANDLERPARAM);
-    static int handle_setColorSliderRange (void *, vrpn_HANDLERPARAM);
+    static int handle_setColorMinMax (void *, vrpn_HANDLERPARAM);
+    static int handle_setDataColorMinMax (void *, vrpn_HANDLERPARAM);
     static int handle_setOpacitySliderRange (void *, vrpn_HANDLERPARAM);
     static int handle_setTextureDirectory (void *, vrpn_HANDLERPARAM);
     static int handle_setComplianceSliderRange (void *, vrpn_HANDLERPARAM);
@@ -287,13 +288,6 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_enableCollabHand (void *, vrpn_HANDLERPARAM);
     static int handle_setCollabHandPos (void *, vrpn_HANDLERPARAM);
     static int handle_setCollabMode (void *, vrpn_HANDLERPARAM);
-
-  // genetic textures:
-  static int genetic_textures_ready( void * );
-  static int send_genetic_texture_data( void * );
-  // genetic handlers:
-//  static int handle_enableGeneticTextures (void *, vrpn_HANDLERPARAM);
-  static int handle_sendGeneticTexturesData (void *, vrpn_HANDLERPARAM);
 
   // realign texture handlers:
   static int handle_createRealignTextures (void *, vrpn_HANDLERPARAM);

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /* 
    code that implement the functionalities of microscape in openGL 
    created by Qiang Liu 08/10/95
@@ -79,6 +86,10 @@ static GLint red_line_struct;
 static GLint green_line_struct;
 static GLint blue_line_struct;
 
+static int red_line_struct_id;
+static int green_line_struct_id;
+static int blue_line_struct_id;
+
 static GLint collab_hand_struct;
 
 static marker_type * marker_list; // linked list of markers for selected area 
@@ -107,9 +118,9 @@ static int collabHand_id;
 // screen space
 static int g_CRT_correction = 0;
 
-static float * hand_scale;
-static float * room_scale;
-static float * screen_scale;
+static float hand_scale[1];
+static float room_scale[1];
+static float screen_scale[1];
 
 /*functions prototypes*/
 /* remember that v_dlist_ptr_type is a int func_name(int) */
@@ -164,63 +175,75 @@ static float sphere_x, sphere_y, sphere_z;
 
 /* When the user changes modes, clear the world of any 
  * icons dependent on that mode. */
-int clear_world_modechange(int mode)
+int clear_world_modechange(int mode, int style)
 {
   switch(mode) {
   case USER_LIGHT_MODE:
+    removeFunctionFromFunclist(&vir_world,hand_id);
     break;
   case USER_FLY_MODE:
-    removeFunctionFromFunclist(&vir_world,sphere_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
+    //removeFunctionFromFunclist(&vir_world,sphere_id);
     break;
   case USER_MEASURE_MODE:
+    removeFunctionFromFunclist(&v_hand,hand_id);
+    if ( !g_config_chartjunk ) {
+      removeFunctionFromFunclist(&vir_world, red_line_struct_id);
+      removeFunctionFromFunclist(&vir_world, green_line_struct_id);
+      removeFunctionFromFunclist(&vir_world, blue_line_struct_id);
+    }
     break;
-  case USER_PULSE_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    //  case USER_PULSE_MODE:
+    //    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    //    removeFunctionFromFunclist(&vir_world,sphere_id);
+    //    break;
+  case USER_PLANE_MODE:
     removeFunctionFromFunclist(&vir_world,sphere_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
     break;
   case USER_LINE_MODE:
-    removeFunctionFromFunclist(&vir_world, aim_struct_id);
-    removeFunctionFromFunclist(&vir_world, sweep_struct_id);
-    removeFunctionFromFunclist(&vir_world, poly_rubber_line_id);
-    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[0]);
-    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[1]);
-    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[2]);
-    removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[3]);
-    removeFunctionFromFunclist(&vir_world, trueTip_id);
-    removeFunctionFromFunclist(&vir_world,sphere_id);
-    break;
-  case USER_SWEEP_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
-    removeFunctionFromFunclist(&vir_world,sweep_struct_id);
-    break;
-  case USER_BLUNT_TIP_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
-    break;
-  case USER_COMB_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
-    removeFunctionFromFunclist(&vir_world,sweep_struct_id);
-    break;
-  case USER_PLANE_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
-    removeFunctionFromFunclist(&vir_world,sphere_id);
-    break;
   case USER_PLANEL_MODE:
-    removeFunctionFromFunclist(&vir_world, aim_struct_id);
-    removeFunctionFromFunclist(&vir_world, sweep_struct_id);
-    removeFunctionFromFunclist(&vir_world, trueTip_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
     removeFunctionFromFunclist(&vir_world,sphere_id);
+    removeFunctionFromFunclist(&vir_world, aim_struct_id);
+    if (g_config_trueTip) {
+      removeFunctionFromFunclist(&vir_world, trueTip_id);
+    }
+    if (style == SWEEP) {
+      removeFunctionFromFunclist(&vir_world,sweep_struct_id);
+    }
     break;
+    //  case USER_SWEEP_MODE:
+    //    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    //    removeFunctionFromFunclist(&vir_world,sweep_struct_id);
+    //    break;
+    //  case USER_BLUNT_TIP_MODE:
+    //    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    //    break;
+    //  case USER_COMB_MODE:
+    //    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    //    removeFunctionFromFunclist(&vir_world,sweep_struct_id);
+    //    break;
   case USER_SCALE_UP_MODE:
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
     break;
   case USER_SCALE_DOWN_MODE:
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
     break;
   case USER_SCANLINE_MODE:
+    removeFunctionFromFunclist(&v_hand,hand_id);
     break;
   case USER_SERVO_MODE:
-    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    removeFunctionFromFunclist(&v_hand,hand_id);
     removeFunctionFromFunclist(&vir_world,rubber_corner_id);
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
     break;
   case USER_GRAB_MODE:
+    removeFunctionFromFunclist(&v_hand,hand_id);
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
     break;
   case USER_MEAS_MOVE_MODE:
     break;
@@ -230,8 +253,6 @@ int clear_world_modechange(int mode)
   default:
     break;
   }
-  /* some icons get removed from every mode */
-  removeFunctionFromFunclist(&v_hand,hand_id);
 
   /* The other user's hand doesn't depend on what your hand is doing,
      but we seem to need this anyway... */
@@ -253,18 +274,17 @@ int clear_world_modechange(int mode)
  */
 int init_world_modechange(int mode, int style)
 {
-
   if (g_config_planeonly) {
     // display NOTHING but the plane - used by nmg_RenderServer
     return 0;
   }
   switch(mode) {
   case USER_LIGHT_MODE:
-    hand_id = addFunctionToFunclist(&v_hand,lighthand,hand_scale, "hand_scale");
+    hand_id = addFunctionToFunclist(&vir_world,lighthand,hand_scale, "hand_scale");
     break;
   case USER_FLY_MODE:
     hand_id = addFunctionToFunclist(&v_hand, Tip, NULL, "Tip");
-    sphere_id = addFunctionToFunclist(&vir_world,mysphere,NULL, "mysphere"); 
+    //sphere_id = addFunctionToFunclist(&vir_world,mysphere,NULL, "mysphere"); 
     break;
   case USER_MEASURE_MODE:
     hand_id = addFunctionToFunclist(&v_hand,measure_hand, &g_hand_color,
@@ -278,26 +298,26 @@ int init_world_modechange(int mode, int style)
     break;
   case USER_LINE_MODE:
   case USER_PLANEL_MODE:
-	hand_id = addFunctionToFunclist(&v_hand, Tip, NULL, "Tip"); 
-	sphere_id = addFunctionToFunclist(&vir_world,
-                                          mysphere, NULL, "mysphere");
-	aim_struct_id = addFunctionToFunclist(&vir_world, draw_list,
-						&aim_struct,
-                                                "draw_list(aim_struct)");
-        if (g_config_trueTip) {
-          trueTip_id = addFunctionToFunclist(&vir_world, TrueTip, NULL,
-                                             "true tip");
-        }
-      if (style == SWEEP) {
-	  sweep_struct_id = addFunctionToFunclist(&vir_world, draw_list,
-						  &sweep_struct,
-                                                  "draw_list(sweep_struct)");
-      }
+    hand_id = addFunctionToFunclist(&v_hand, Tip, NULL, "Tip"); 
+    sphere_id = addFunctionToFunclist(&vir_world, mysphere, NULL, "mysphere");
+    aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
+					  "draw_list(aim_struct)");
+    if (g_config_trueTip) {
+      trueTip_id = addFunctionToFunclist(&vir_world, TrueTip, NULL, "true tip");
+    }
+    if (style == SWEEP) {
+      sweep_struct_id = addFunctionToFunclist(&vir_world, draw_list, &sweep_struct,
+					      "draw_list(sweep_struct)");
+    }
     break;
   case USER_SCALE_UP_MODE:
+    aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
+					  "draw_list(aim_struct)");
     hand_id = addFunctionToFunclist(&v_hand, vx_up_icon, NULL, "vx_up_icon");
     break;
   case USER_SCALE_DOWN_MODE:
+    aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
+					  "draw_list(aim_struct)");
     hand_id = addFunctionToFunclist(&v_hand, vx_down_icon, NULL,
                                     "vx_down_icon");
     break;
@@ -310,6 +330,8 @@ int init_world_modechange(int mode, int style)
                                           "draw_list(aim_struct)");
     break;
   case USER_GRAB_MODE:
+    aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
+					  "draw_list(aim_struct)");
     hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");   
     break;
   case USER_SCANLINE_MODE:
@@ -330,12 +352,12 @@ int init_world_modechange(int mode, int style)
   addFunctionToFunclist(&vir_world,draw_north_pointing_arrow, NULL,
                         "draw_north_pointing_arrow");  /* dim */
   if (g_config_measurelines) {
-    addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
-                                      "draw_list(red_line_struct)"); 
-    addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
-                                      "draw_list(green_line_struct)"); 
-    addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
-                                      "draw_list(blue_line_struct)"); 
+    red_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
+					       "draw_list(red_line_struct)"); 
+    green_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
+					       "draw_list(green_line_struct)"); 
+    blue_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
+					       "draw_list(blue_line_struct)"); 
   }
   if (g_scanline_display_enabled) {
 	scanline_id = addFunctionToFunclist(&vir_world, my_scanline_indicator,
@@ -799,6 +821,8 @@ int make_selected_region_marker (float x_min, float y_min, float x_max, float y_
 
 int make_red_line (const float a[], const float b[])
 {  
+  if ( !g_config_chartjunk ) 
+    return 0;
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(red_line_struct,1);
    red_line_struct = glGenLists(1);
@@ -813,11 +837,15 @@ int make_red_line (const float a[], const float b[])
 
 int make_green_line (const float a[], const float b[])
 {  
+  if ( !g_config_chartjunk ) 
+    return 0;
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(green_line_struct,1);
    green_line_struct = glGenLists(1);
    glNewList(green_line_struct,GL_COMPILE);
-   glColor3f(0.2,1.0,0.2);
+   // No it's not green - it's yellow!
+   // To avoid red-green colorblindness conflicts. 
+   glColor3f(0.9,0.9,0.2);
    glLineWidth(2.0);
    make_line(a,b);
    glLineWidth(1.0);
@@ -827,6 +855,8 @@ int make_green_line (const float a[], const float b[])
 
 int make_blue_line (const float a[], const float b[])
 {  
+  if ( !g_config_chartjunk ) 
+    return 0;
    v_gl_set_context_to_vlib_window(); 
    glDeleteLists(blue_line_struct,1);
    blue_line_struct = glGenLists(1);
@@ -1050,37 +1080,109 @@ int grabhand(void *data)
 
 int lighthand(void *data)
 {
-  float *size;
+    float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
+    float y_wide = g_inputGrid->maxY() - g_inputGrid->minY();
+    float z_value;
 
-  size = (float *)data;
+    float size = 0.15*x_wide;
+    v_xform_type	worldFromHand;
+    q_matrix_type hand_mat;
+    q_type q_world_from_hand;
 
-  glPushMatrix();
+    //size = *((float *)data);
+
+    glPushMatrix();
+
+    BCPlane *height = g_inputGrid->getPlaneByName
+        (g_heightPlaneName);
+  
+    if (height) {
+        z_value = height->scaledValue(g_inputGrid->numX() / 2,
+                                      g_inputGrid->numY() / 2);
+    } else {
+        z_value = 0.0f;
+    }
+    
+    // Approximate center of the surface. 
+    glTranslatef( g_inputGrid->minX() + x_wide/2.0,
+                  g_inputGrid->minY() + y_wide/2.0,
+                  z_value*1.05);  
+
+  // Make it correspond to hand rotation
+  v_get_world_from_hand(0, &worldFromHand);
+  q_copy(q_world_from_hand, worldFromHand.rotate);
+
+  // Apply hand rotation directly to the light icon. 
+  q_to_row_matrix(hand_mat, q_world_from_hand);
+  glMultMatrixd((double *)hand_mat);
+
+  // back away from the surface so icon "orbits" the center of the surface.
+  glTranslatef(0.0, x_wide/2.0, 0.0);
 
   // rotate so light ray sticks out in -y direction in hand space
   glRotatef(-90, 1.0, 0.0, 0.0);
+
+  glScalef(size * g_icon_scale, size * g_icon_scale, size * g_icon_scale);
 
 #ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
 #endif
 
-  glColor3f(0.0,0.0,0.0); 
-  glScalef(*size * g_icon_scale, *size * g_icon_scale, *size * g_icon_scale);
+  glColor3f(0.5,0.0,0.9); 
 
-  /* outside */
+  // The base of the light (cube, with -z open)
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(0.0,0.0,1.0);
-      glVertex3f(-1.0,1.0,1.0);
-      glVertex3f(-1.0,-1.0,1.0);
-      glVertex3f(1.0,-1.0,1.0);
-      glVertex3f(1.0,1.0,1.0);
+      glVertex3f(-0.5,0.5,1.0);
+      glVertex3f(-0.5,-0.5,1.0);
+      glVertex3f(0.5,-0.5,1.0);
+      glVertex3f(0.5,0.5,1.0);
       VERBOSE(20, "          glEnd()");
   glEnd();
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(0.0,-1.0,0.0);
-      glVertex3f(1.0,-1.0,1.0);
-      glVertex3f(-1.0,-1.0,1.0);
+      glVertex3f(0.5,-0.5,1.0);
+      glVertex3f(-0.5,-0.5,1.0);
+      glVertex3f(-0.5,-0.5,0.0); 
+      glVertex3f(0.5,-0.5,0.0);
+      VERBOSE(20, "          glEnd()");
+  glEnd();
+  glBegin(GL_POLYGON);
+      VERBOSE(20, "          glBegin(GL_POLYGON)");
+      glNormal3f(0.0,1.0,0.0);
+      glVertex3f(0.5,0.5,1.0);
+      glVertex3f(0.5,0.5,0.0);
+      glVertex3f(-0.5,0.5,0.0);
+      glVertex3f(-0.5,0.5,1.0);
+      VERBOSE(20, "          glEnd()");
+  glEnd();
+  glBegin(GL_POLYGON);
+      VERBOSE(20, "          glBegin(GL_POLYGON)");
+      glNormal3f(-1.0,0.0,0.0);
+      glVertex3f(-0.5,0.5,1.0);
+      glVertex3f(-0.5,0.5,0.0);
+      glVertex3f(-0.5,-0.5,0.0);
+      glVertex3f(-0.5,-0.5,1.0);
+      VERBOSE(20, "          glEnd()");
+  glEnd();
+  glBegin(GL_POLYGON);
+      VERBOSE(20, "          glBegin(GL_POLYGON)");
+      glNormal3f(1.0,0.0,0.0);
+      glVertex3f(0.5,-0.5,1.0);
+      glVertex3f(0.5,-0.5,0.0);
+      glVertex3f(0.5,0.5,0.0);
+      glVertex3f(0.5,0.5,1.0);
+      VERBOSE(20, "          glEnd()");
+  glEnd();
+
+  // The shade of the light
+  glBegin(GL_POLYGON);
+      VERBOSE(20, "          glBegin(GL_POLYGON)");
+      glNormal3f(0.0,-1.0,0.0);
+      glVertex3f(0.5,-0.5,0.0);
+      glVertex3f(-0.5,-0.5,0.0);
       glVertex3f(-1.0,-1.0,-1.0); 
       glVertex3f(1.0,-1.0,-1.0);
       VERBOSE(20, "          glEnd()");
@@ -1088,59 +1190,57 @@ int lighthand(void *data)
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(0.0,1.0,0.0);
-      glVertex3f(1.0,1.0,1.0);
+      glVertex3f(0.5,0.5,0.0);
       glVertex3f(1.0,1.0,-1.0);
       glVertex3f(-1.0,1.0,-1.0);
-      glVertex3f(-1.0,1.0,1.0);
+      glVertex3f(-0.5,0.5,0.0);
       VERBOSE(20, "          glEnd()");
   glEnd();
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(-1.0,0.0,0.0);
-      glVertex3f(-1.0,1.0,1.0);
+      glVertex3f(-0.5,0.5,0.0);
       glVertex3f(-1.0,1.0,-1.0);
       glVertex3f(-1.0,-1.0,-1.0);
-      glVertex3f(-1.0,-1.0,1.0);
+      glVertex3f(-0.5,-0.5,0.0);
       VERBOSE(20, "          glEnd()");
   glEnd();
   glBegin(GL_POLYGON);
       VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(1.0,0.0,0.0);
-      glVertex3f(1.0,-1.0,1.0);
+      glVertex3f(0.5,-0.5,0.0);
       glVertex3f(1.0,-1.0,-1.0);
       glVertex3f(1.0,1.0,-1.0);
-      glVertex3f(1.0,1.0,1.0);
+      glVertex3f(0.5,0.5,0.0);
       VERBOSE(20, "          glEnd()");
   glEnd();
-
-  /* inside */
+  // inside 
+  // yellow square so inside of light looks lit. 
   glColor3f(1.0,1.0,0.0);
-  glBegin(GL_TRIANGLES);
-      VERBOSE(20, "          glBegin(GL_TRIANGLES)");
+  glBegin(GL_POLYGON);
+      VERBOSE(20, "          glBegin(GL_POLYGON)");
       glNormal3f(0.0,0.0,1.0);
-      glVertex3f(1.0,1.0,-1.0);
-      glVertex3f(-1.0,1.0,-1.0);
-      glVertex3f(0.0,0.0,1.0);
-
-      glVertex3f(-1.0,1.0,-1.0);
-      glVertex3f(-1.0,-1.0,-1.0);
-      glVertex3f(0.0,0.0,1.0);
-
-      glVertex3f(-1.0,-1.0,-1.0);
-      glVertex3f(1.0,-1.0,-1.0);
-      glVertex3f(0.0,0.0,1.0);
-
-      glVertex3f(1.0,-1.0,-1.0);
-      glVertex3f(1.0,1.0,-1.0);
-      glVertex3f(0.0,0.0,1.0);
+      glVertex3f(-0.45,0.45,0.9);
+      glVertex3f(-0.45,-0.45,0.9);
+      glVertex3f(0.45,-0.45,0.9);
+      glVertex3f(0.45,0.45,0.9);
       VERBOSE(20, "          glEnd()");
   glEnd();
 
+  // Light ray from center.
   glBegin(GL_LINES);
     VERBOSE(20, "          glBegin(GL_LINES)");
     glColor3f(1.0,1.0,0.0);
-    glVertex3f(0.0,0.0,-10.0);
+    glVertex3f(0.0,0.0,-7.0);
     glVertex3f(0.0,0.0,0.0);
+    glVertex3f(0.8,0.8,-5.0);
+    glVertex3f(0.8,0.8,-0.8);
+    glVertex3f(-0.8,0.8,-5.0);
+    glVertex3f(-0.8,0.8,-0.8);
+    glVertex3f(-0.8,-0.8,-5.0);
+    glVertex3f(-0.8,-0.8,-0.8);
+    glVertex3f(0.8,-0.8,-5.0);
+    glVertex3f(0.8,-0.8,-0.8);
     VERBOSE(20, "          glEnd()");
   glEnd();
   
@@ -1153,10 +1253,8 @@ int lighthand(void *data)
 }
 
 
-int selecthand(void *data)
+int selecthand(void *)
 {
-	data = data;	// Keep the compiler happy
-
   static float size=0.02;
 
   glPushMatrix();
@@ -1369,10 +1467,9 @@ void position_sphere(float x,float y, float z)
   sphere_z=z+g_sphere_scale;	
 }
 
-int mysphere(void * data)
+int mysphere(void * /*data*/ )
 {
-	//float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
-	data = data;	// Keep the compiler happy
+  //float x_wide = g_inputGrid->maxX() - g_inputGrid->minX();
 
        	glPushMatrix();
 #ifndef FLOW
@@ -1529,13 +1626,15 @@ int measure_hand(void *data)
   glPushAttrib(GL_CURRENT_BIT);
 #endif
  
-  if( *color==RED)
+  if( *color==RED) {
     glColor3f(1.0,0.2,0.2);   //red
-  else if(*color==GREEN)
-    glColor3f(0.2,1.0,0.2);   //green
-  else
+  } else if(*color==GREEN) {
+   // No it's not green - it's yellow!
+   // To avoid red-green colorblindness conflicts. 
+   glColor3f(0.9,0.9,0.2);
+  } else {
      glColor3f(0.2,0.2,1.0);   //blue
-
+  }
   glScalef(handlescale * g_icon_scale,
            handlescale * g_icon_scale,
            handlescale * g_icon_scale);
@@ -1913,16 +2012,13 @@ int replaceDefaultObjects(void)
   /* create subdivided sphere display list */
   init_sphere();
 
-  hand_scale = (float *)malloc(sizeof(float));
   *hand_scale = 0.02;
-  hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");
+  //hand_id = addFunctionToFunclist(&v_hand,grabhand,hand_scale, "grabhand");
 
   /* Moving text feedback displays from head space to screen space to make them
    * stationary in head tracked mode.
    */
-  room_scale = (float *) malloc(sizeof(float));
   *room_scale = 1.0;
-  screen_scale = (float *) malloc(sizeof(float));
   *screen_scale = 1.0;
 
   // MOVED to chartjunk.c
@@ -1935,14 +2031,16 @@ int replaceDefaultObjects(void)
   addFunctionToFunclist(&vir_world, draw_north_pointing_arrow, NULL,
 	"draw_north_pointing_arrow");
 
-  if (g_config_measurelines) {
-    addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
-                          "draw_list(red_line_struct)"); 
-    addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
-                          "draw_list(green_line_struct)");
-    addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
-                          "draw_list(blue_line_struct)");
-  }
+  // THis is commented out as we now call init_world_modechange on graphics startup, so
+  // it should be unnessary
+  //  if (g_config_measurelines) {
+  //    red_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &red_line_struct,
+  //                          "draw_list(red_line_struct)"); 
+  //    green_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &green_line_struct,
+  //                          "draw_list(green_line_struct)");
+  //    blue_line_struct_id = addFunctionToFunclist(&vir_world, draw_list, &blue_line_struct,
+  //                          "draw_list(blue_line_struct)");
+  //  }
 
   marker_type *marker_node = marker_list;
   while (marker_node != NULL) {

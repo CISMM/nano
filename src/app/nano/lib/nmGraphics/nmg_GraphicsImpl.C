@@ -1,7 +1,14 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmg_GraphicsImpl.h"
 
 #include <GL/gl.h>
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
 #include <GL/glu.h>
 #endif
 #include <v.h>
@@ -51,79 +58,86 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     d_displayIndexList (new v_index [NUM_USERS]),
     d_textureTransformMode(RULERGRID_COORD)
 {
-  if (d_dataset == NULL) {
-      grid_size_x = 12;
-      grid_size_y = 12;
-  } else {
-      grid_size_x = d_dataset->inputGrid->numX();
-      grid_size_y = d_dataset->inputGrid->numX();
-  }
-  
-  //fprintf(stderr,
-  //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
-  
-  g_inputGrid = data->inputGrid;
-  strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
-  strcpy(g_colorPlaneName, data->colorPlaneName->string());
-  strcpy(g_contourPlaneName, data->contourPlaneName->string());
-  strcpy(g_heightPlaneName, data->heightPlaneName->string());
-  strcpy(g_opacityPlaneName, data->opacityPlaneName->string());
+    if (d_dataset == NULL) {
+        grid_size_x = 12;
+        grid_size_y = 12;
+    } else {
+        grid_size_x = d_dataset->inputGrid->numX();
+        grid_size_y = d_dataset->inputGrid->numX();
+    }
 
-  // do pgl_init() stuff
+    //fprintf(stderr,
+    //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
+
+    int i;
+
+    g_inputGrid = data->inputGrid;
+    strcpy(g_opacityPlaneName, data->opacityPlaneName->string());
+
+    if (d_dataset == NULL) {
+        g_inputGrid = NULL;
+        strcpy(g_alphaPlaneName, "none");
+        strcpy(g_colorPlaneName, "none");
+        strcpy(g_contourPlaneName, "none");
+        strcpy(g_heightPlaneName, "none");
+    } else {
+        g_inputGrid = data->inputGrid;
+        strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
+        strcpy(g_colorPlaneName, data->colorPlaneName->string());
+        strcpy(g_contourPlaneName, data->contourPlaneName->string());
+        strcpy(g_heightPlaneName, data->heightPlaneName->string());
+    }
 
 #ifdef FLOW
     g_data_tex_size = max(grid_size_x, grid_size_y);
     g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
 #endif
 
-  /* initialize graphics  */
-  printf("Initializing graphics...\n");
+    /* initialize graphics  */
+    //printf("Initializing graphics...\n");
 
-  if ( v_open() != V_OK ) {
-      exit(V_ERROR);
-  }
+    if ( v_open() != V_OK ) {
+        exit(V_ERROR);
+    }
+
+    initDisplays();
+
+    // make sure everything is going into the right gl context
+    v_gl_set_context_to_vlib_window();
+    
+    /* Set up the viewing info */
   
-  fprintf(stderr, "Done.\n");
+    /* Set initial user mode */
+    for (i = 0; i < NUM_USERS; i++) {
+        g_user_mode[i] = USER_GRAB_MODE;
+    }
+    /* set up user and object trees     */
+    //printf("Creating the world...\n");
+    v_create_world(NUM_USERS, d_displayIndexList);
 
-  initDisplays();
-
-  // make sure everything is going into the right gl context
-  v_gl_set_context_to_vlib_window();
-
-  /* Set up the viewing info */
-  
-  /* Set initial user mode */
-  int i;
-  for (i = 0; i < NUM_USERS; i++) {
-      g_user_mode[i] = USER_GRAB_MODE;
-  }
-  /* set up user and object trees     */
-  printf("Creating the world...\n");
-  v_create_world(NUM_USERS, d_displayIndexList);
-
-  /* Set the background color to light blue */
-  glClearColor(0.3, 0.3, 0.7,  0.0);
-
-  setMinColor(minColor);
-  setMaxColor(maxColor);
-
-  initialize_globjects(NULL);  // load default font
-
-  /* user routine to define user objects and override default objects */
-  replaceDefaultObjects();
-
-  v_replace_drawfunc(i, V_WORLD, draw_world);
-  v_replace_lightingfunc(i, setup_lighting);
-
-  /********************************************************************/
-  /* Build the display lists we'll need to draw the data, etc */
-  /********************************************************************/
-
-  fprintf(stderr,"Building display lists...\n");
-
-  /* added by qliu for texture mapping*/
-  /*initialize the texture mapping*/
-  // Texture mapping is not enabled here, but when a data set is mapped*/
+    /* Set the background color to light blue */
+    glClearColor(0.3, 0.3, 0.7,  0.0);
+    
+    setMinColor(minColor);
+    setMaxColor(maxColor);
+    
+    initialize_globjects(NULL);  // load default font
+    
+    /* user routine to define user objects and override default objects */
+    replaceDefaultObjects();
+    
+    v_replace_drawfunc(i, V_WORLD, draw_world);
+    v_replace_lightingfunc(i, setup_lighting);
+    
+    /********************************************************************/
+    /* Build the display lists we'll need to draw the data, etc */
+    /********************************************************************/
+    
+    //fprintf(stderr,"Building display lists...\n");
+    
+    /* added by qliu for texture mapping*/
+    /*initialize the texture mapping*/
+    // Texture mapping is not enabled here, but when a data set is mapped*/
 
   if (rulergridName) {
     FILE *infile = fopen(rulergridName, "rb");
@@ -156,12 +170,11 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
    * we have one per Y index. */
   nmb_PlaneSelection planes; planes.lookup(data);
   if (build_grid_display_lists(planes, 1, &grid_list_base,
-                               &num_grid_lists, g_minColor, g_maxColor)) {
-    fprintf(stderr,"ERROR: Could not build grid display lists\n");
-    d_dataset->done = 1;
-  }
+                                &num_grid_lists, g_minColor, g_maxColor)) {
+     fprintf(stderr,"ERROR: Could not build grid display lists\n");
+     d_dataset->done = 1;
+   }
 
-  // other (non-pgl_init()) setup
 
   const GLubyte * exten;
   exten = glGetString(GL_EXTENSIONS);
@@ -175,31 +188,29 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   g_VERTEX_ARRAY = check_extension(exten); //"EXT_vertex_array"
 #endif
 
+//    if (g_VERTEX_ARRAY) {
+//      fprintf(stderr,"Vertex Array extension used.\n");
+//    } else {
+//       fprintf(stderr,"Vertex Array extension not supported.\n");
+//    }
   if (g_VERTEX_ARRAY) {
-      fprintf(stderr,"Vertex Array extension used.\n");
-  } else {
-      fprintf(stderr,"Vertex Array extension not supported.\n");
-  }
-  if (g_VERTEX_ARRAY) {
-      if (!init_vertexArray(grid_size_x,
-                            grid_size_y) ) {
-          fprintf(stderr," init_vertexArray: out of memory.\n");
-          exit(0);
-      }
+    if (!init_vertexArray(grid_size_x,
+			  grid_size_y) ) {
+      fprintf(stderr," init_vertexArray: out of memory.\n");
+      exit(0);
+    }
   }
   g_positionList = new Position_list;
   g_positionListL = new Position_list;
   g_positionListR = new Position_list;
 
-  // genetic textures:
-  fprintf( stderr, "Genetic Texture: initializing remote\n" );
+  // This section initializes the user mode to GRAB and sets an initial
+  // position for the aimLine...
+  BCPlane* plane = dataset->inputGrid->getPlaneByName
+    (dataset->heightPlaneName->string());
+  decoration->aimLine.moveTo(plane->minX(), plane->maxY(), plane);
+  init_world_modechange( USER_GRAB_MODE, 0 );
 
-  vrpn_Connection * gac;
-
-  gac = new vrpn_Synchronized_Connection( portNum );
-  gaRemote = new gaEngine_Remote (gac);
-  gaRemote->registerEvaluationCompleteHandler( genetic_textures_ready, this );
-  gaRemote->registerConnectionCompleteHandler(send_genetic_texture_data,this );
 
   if (!connection) return;
 
@@ -245,8 +256,11 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler(d_setColorMapName_type,
                                handle_setColorMapName,
                                this, vrpn_ANY_SENDER);
-  connection->register_handler(d_setColorSliderRange_type,
-                               handle_setColorSliderRange,
+  connection->register_handler(d_setColorMinMax_type,
+                               handle_setColorMinMax,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setDataColorMinMax_type,
+                               handle_setDataColorMinMax,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setOpacitySliderRange_type,
 			       handle_setOpacitySliderRange,
@@ -264,8 +278,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
                                handle_setFrictionSliderRange,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setBumpSliderRange_type,
-			       handle_setBumpSliderRange,
-			       this, vrpn_ANY_SENDER);
+                               handle_setBumpSliderRange,
+                               this, vrpn_ANY_SENDER);
   connection->register_handler(d_setBuzzSliderRange_type,
                                handle_setBuzzSliderRange,
                                this, vrpn_ANY_SENDER);
@@ -414,16 +428,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 			       handle_setCollabMode,
 			       this, vrpn_ANY_SENDER);
 
-  // Genetic Textures Handlers:
-/*
-  connection->register_handler(d_enableGeneticTextures_type,
-                               handle_enableGeneticTextures,
-                               this, vrpn_ANY_SENDER);
-*/
-
-  connection->register_handler(d_sendGeneticTexturesData_type,
-                               handle_sendGeneticTexturesData,
-                               this, vrpn_ANY_SENDER);
   // Realign Textures Handlers:
   connection->register_handler( d_createRealignTextures_type,
 				handle_createRealignTextures,
@@ -481,7 +485,6 @@ nmg_Graphics_Implementation::~nmg_Graphics_Implementation (void) {
 
   int i;
 
-  /*XXX should be fixed for non-PxFl also, maybe... (C.Chang 9/96)*/
   for (i = 0; i < NUM_USERS; i++)
     v_close_display(d_displayIndexList[i]);
 
@@ -552,10 +555,30 @@ void nmg_Graphics_Implementation::mainloop (void) {
 
   TIMERVERBOSE(5, mytimer, "GImainloop: end v_update_displays");
 
-  // genetic textures:
-  if ( gaRemote )
-    gaRemote->mainloop();
+}
 
+/** If we load a different stream file or connect to a new AFM,
+ * graphics needs to start watching a new dataset.
+ */
+void nmg_Graphics_Implementation::changeDataset( nmb_Dataset * data)
+{
+  d_dataset = data;
+  grid_size_x = d_dataset->inputGrid->numX();
+  grid_size_y = d_dataset->inputGrid->numX();
+
+  g_inputGrid = data->inputGrid;
+  strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
+  strcpy(g_colorPlaneName, data->colorPlaneName->string());
+  strcpy(g_contourPlaneName, data->contourPlaneName->string());
+  strcpy(g_heightPlaneName, data->heightPlaneName->string());
+
+#ifdef FLOW
+    g_data_tex_size = max(grid_size_x, grid_size_y);
+    g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
+#endif
+
+    causeGridRebuild();
+ 
 }
 
 // functions to replace code in microscape.c - AAS
@@ -572,6 +595,11 @@ void nmg_Graphics_Implementation::resizeViewport(int width, int height) {
   windowPtr->fbExtents[0] = width;
   windowPtr->fbExtents[1] = height;
 
+}
+
+void nmg_Graphics_Implementation::getViewportSize(int *width, int *height) {
+   *width  = v_display_table[d_displayIndexList[0]].viewports[0].fbExtents[0];
+   *height = v_display_table[d_displayIndexList[0]].viewports[0].fbExtents[1];
 }
 
 void nmg_Graphics_Implementation::getDisplayPosition (q_vec_type &ll,
@@ -729,7 +757,7 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
 _______________________________********************/
 #endif
 
-#if defined(sgi) || defined(__CYGWIN__)
+#if defined(sgi) || defined(_WIN32)
   // Build the texture map and set the mode for 2D textures
   if (gluBuild2DMipmaps(GL_TEXTURE_2D,4, texture_size, texture_size,
                         GL_RGBA, GL_UNSIGNED_BYTE, texture) != 0) {
@@ -755,8 +783,7 @@ _______________________________********************/
 
 
 void nmg_Graphics_Implementation::causeGridRedraw (void) {
-//fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
-
+  //fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
   BCPlane * plane = g_inputGrid->getPlaneByName(g_heightPlaneName);
 
   d_dataset->range_of_change.ChangeAll();
@@ -764,6 +791,7 @@ void nmg_Graphics_Implementation::causeGridRedraw (void) {
     decoration->red.normalize(plane);
     decoration->green.normalize(plane);
     decoration->blue.normalize(plane);
+    decoration->aimLine.normalize(plane);
   }
 }
 
@@ -771,7 +799,7 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
 //fprintf(stderr, "nmg_Graphics_Implementation::causeGridRebuild().\n");
 
   // Rebuilds the texture coordinate array:
-  nmb_PlaneSelection planes;  planes.lookup(dataset);
+  nmb_PlaneSelection planes;  planes.lookup(d_dataset);
 
   if (g_VERTEX_ARRAY) {
     if (!init_vertexArray(d_dataset->inputGrid->numX(),
@@ -796,7 +824,16 @@ void nmg_Graphics_Implementation::causeGridRebuild (void) {
 
 void nmg_Graphics_Implementation::enableChartjunk (int on) {
 //fprintf(stderr, "nmg_Graphics_Implementation::enableChartjunk().\n");
+  if ( g_config_chartjunk == on )
+    return;
   g_config_chartjunk = on;
+  if ( on == 1 ) {
+    init_world_modechange( USER_GRAB_MODE, 0);
+  }
+  else if ( on == 0 ) {
+    clear_world_modechange( USER_MEASURE_MODE, 0);
+    clear_world_modechange( USER_GRAB_MODE, 0);
+  }
 }
 
 void nmg_Graphics_Implementation::enableFilledPolygons (int on) {
@@ -934,25 +971,31 @@ void nmg_Graphics_Implementation::setTextureDirectory (const char * dir) {
 void nmg_Graphics_Implementation::setColorMapName (const char * name) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setColorMapName().\n");
 
-  // If CUSTOM is selected, set the color map pointer to
-  // NULL so that the gl code will go back to using the old
-  // method of computing color.  XXX Integrate this better,
-  // so that we always use a color map but that it is set to
-  // the min/max colors when we are using CUSTOM.
-  if (strcmp(name, "CUSTOM") == 0) {
-          g_curColorMap = NULL;
+  if (strcmp(name, "none") == 0) {
+    g_curColorMap = NULL;
   } else {
-          g_colorMap.load_from_file(name, g_colorMapDir);
-          g_curColorMap = &g_colorMap;
+    g_colorMap.load_from_file(name, g_colorMapDir);
+    g_curColorMap = &g_colorMap;
   }
   causeGridRedraw();
 }
 
-void nmg_Graphics_Implementation::setColorSliderRange (float low, float high) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setColorSliderRange().\n");
-  g_color_slider_min = low;
-  g_color_slider_max = high;
-  causeGridRedraw();
+void nmg_Graphics_Implementation::setColorMinMax (float low, float high) {
+//fprintf(stderr, "nmg_Graphics_Implementation::setColorMinMax().\n");
+  if ( (g_color_min != low) || (g_color_max != high) ) {
+    g_color_min = low;
+    g_color_max = high;
+    causeGridRedraw();
+  }
+}
+
+void nmg_Graphics_Implementation::setDataColorMinMax (float low, float high) {
+//fprintf(stderr, "nmg_Graphics_Implementation::setDataColorMinMax().\n");
+  if ( (g_data_min != low) || (g_data_max != high) ) {
+    g_data_min = low;
+    g_data_max = high;
+    causeGridRedraw();
+  }
 }
 
 void nmg_Graphics_Implementation::setOpacitySliderRange (float low, float high) {
@@ -1413,7 +1456,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   }
 #else
 
-#if defined(__CYGWIN__)
+#if defined(_WIN32)
 
 /*
   if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, 
@@ -1802,20 +1845,19 @@ void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
 void nmg_Graphics_Implementation::initializeTextures(void)
 {
   int i,j, k;
-  fprintf(stderr, "initializing textures\n");
+  //fprintf(stderr, "initializing textures\n");
 
   for (i = 0; i < N_TEX; i++) {
      g_tex_image_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
      g_tex_image_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
      g_tex_installed_width[i] = NMG_DEFAULT_IMAGE_WIDTH;
      g_tex_installed_height[i] = NMG_DEFAULT_IMAGE_HEIGHT;
-#ifdef __CYGWIN__
+#ifdef _WIN32
      g_tex_blend_func[i] = CYGWIN_TEXTURE_FUNCTION;
 #else
      g_tex_blend_func[i] = GL_DECAL;
 #endif
   }
-  g_tex_blend_func[GENETIC_TEX_ID] = GL_MODULATE;
   g_tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
 
   g_tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
@@ -1892,18 +1934,18 @@ void nmg_Graphics_Implementation::initializeTextures(void)
 
   buildContourTexture();
 
-#if defined(sgi) || defined(FLOW) || defined(__CYGWIN__)
-  fprintf(stderr, "Initializing checkerboard texture.\n");
+#if defined(sgi) || defined(FLOW) || defined(_WIN32)
+  //fprintf(stderr, "Initializing checkerboard texture.\n");
   makeCheckImage();
   buildAlphaTexture();
 
-  fprintf(stderr, "Initializing ruler texture.");
+  //fprintf(stderr, "Initializing ruler texture.");
   if (g_rulerPPM) {
     makeAndInstallRulerImage(g_rulerPPM);
   } else {
     makeRulerImage();
     buildRulergridTexture();
-    fprintf(stderr, " Using default grid.\n");
+    //fprintf(stderr, " Using default grid.\n");
   }
   if (glGetError()!=GL_NO_ERROR) {
       printf(" Error making ruler texture.\n");
@@ -1970,7 +2012,7 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   }
   glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
-#ifdef __CYGWIN__
+#ifdef _WIN32
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
        g_tex_installed_width[COLORMAP_TEX_ID],
        g_tex_installed_height[COLORMAP_TEX_ID],
@@ -2202,7 +2244,7 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
 // This mode is possible if we can reimplement contour texture stuff
 // not using glXXXPointerEXT() and glDrawArraysEXT()
 //#ifndef _WIN32
-      fprintf(stderr, "nmg_Graphics_Implementation:  entering CONTOUR mode.\n");
+        //fprintf(stderr, "nmg_Graphics_Implementation:  entering CONTOUR mode.\n");
       g_texture_mode = GL_TEXTURE_1D;
 /*#else
       fprintf(stderr, "nmg_Graphics_Implementation: " 
@@ -2212,37 +2254,33 @@ void nmg_Graphics_Implementation::setTextureMode (TextureMode m,
 */
       break;
     case BUMPMAP:
-      fprintf(stderr,
-        "nmg_Graphics_Implementation: entering BUMPMAP mode.\n");
+//        fprintf(stderr,
+//          "nmg_Graphics_Implementation: entering BUMPMAP mode.\n");
       g_texture_mode = GL_TEXTURE_2D;
       break;
     case HATCHMAP:
-      fprintf(stderr,
-        "nmg_Graphics_Implementation: entering HATCHMAP mode.\n");
+//        fprintf(stderr,
+//          "nmg_Graphics_Implementation: entering HATCHMAP mode.\n");
       g_texture_mode = GL_TEXTURE_2D;
       break;
     case PATTERNMAP:
-      fprintf(stderr,
-	"nmg_Graphics_Implementation: entering PATTERNMAP mode.\n");
+//        fprintf(stderr,
+//  	"nmg_Graphics_Implementation: entering PATTERNMAP mode.\n");
       g_texture_mode = GL_TEXTURE_2D;
       break;
     case RULERGRID:
-      fprintf(stderr,"nmg_Graphics_Implementation: entering RULERGRID mode.\n");
+//        fprintf(stderr,"nmg_Graphics_Implementation: entering RULERGRID mode.\n");
       g_texture_mode = GL_TEXTURE_2D;
       break;
     case ALPHA:
 #ifndef _WIN32
-      fprintf(stderr, "nmg_Graphics_Implementation:  entering ALPHA mode.\n");
+//        fprintf(stderr, "nmg_Graphics_Implementation:  entering ALPHA mode.\n");
       g_texture_mode = GL_TEXTURE_3D_EXT;
 #else
       fprintf(stderr, "nmg_Graphics_Implementation:"
 		" ALPHA mode not available under WIN32\n");
       g_texture_mode = GL_FALSE;
 #endif
-      break;
-    case GENETIC:
-//    fprintf(stderr, "nmg_Graphics_Implementation:  entering GENETIC mode.\n");
-      g_texture_mode = GL_TEXTURE_2D;
       break;
     case COLORMAP:
 //    fprintf(stderr, "nmg_Graphics_Implementation: entering COLORMAP mode.\n");
@@ -2315,10 +2353,10 @@ void nmg_Graphics_Implementation::setTrueTipScale (float f) {
 }
 
 
-void nmg_Graphics_Implementation::setUserMode (int oldMode, int newMode,
-                                               int style) {
+void nmg_Graphics_Implementation::setUserMode (int oldMode, int oldStyle,
+					       int newMode, int style) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setUserMode().\n");
-  clear_world_modechange(oldMode);
+  clear_world_modechange(oldMode, oldStyle);
   init_world_modechange(newMode, style);
 }
 
@@ -2510,7 +2548,7 @@ void nmg_Graphics_Implementation::createScreenImage
    const ImageType  type
 )
 {
-   fprintf(stderr, "DEBUG nmg_Graphics_Impl::createScreenImage '%s' '%s'\n", filename, ImageType_names[type]);
+//   fprintf(stderr, "DEBUG nmg_Graphics_Impl::createScreenImage '%s' '%s'\n", filename, ImageType_names[type]);
   int w, h;
   unsigned char * pixels = NULL;
 
@@ -2590,7 +2628,7 @@ void nmg_Graphics_Implementation::initDisplays (void) {
     if (d_displayIndexList[i] == V_NULL_DISPLAY) {
       exit(V_ERROR);
     }
-    printf("display = '%s'\n", v_display_name(d_displayIndexList[i]));
+    //printf("display = '%s'\n", v_display_name(d_displayIndexList[i]));
   }
 }
 
@@ -2850,13 +2888,24 @@ int nmg_Graphics_Implementation::handle_setColorMapName
 }
 
 // static
-int nmg_Graphics_Implementation::handle_setColorSliderRange
+int nmg_Graphics_Implementation::handle_setColorMinMax
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float low, hi;
 
-  CHECKF(it->decode_setColorSliderRange(p.buffer, &low, &hi), "handle_setColorSliderRange");
-  it->setColorSliderRange(low, hi);
+  CHECK(it->decode_setColorMinMax(p.buffer, &low, &hi));
+  it->setColorMinMax(low, hi);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setDataColorMinMax
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  float low, hi;
+
+  CHECK(it->decode_setDataColorMinMax(p.buffer, &low, &hi));
+  it->setDataColorMinMax(low, hi);
   return 0;
 }
 
@@ -2870,6 +2919,7 @@ int nmg_Graphics_Implementation::handle_setOpacitySliderRange
   it->setOpacitySliderRange(low, hi);
   return 0;
 }
+
 
 // static
 int nmg_Graphics_Implementation::handle_setComplianceSliderRange
@@ -3262,10 +3312,10 @@ int nmg_Graphics_Implementation::handle_setTrueTipScale
 int nmg_Graphics_Implementation::handle_setUserMode
                                  (void * userdata, vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
-  int oldMode, newMode, style;
+  int oldMode, oldStyle, newMode, style;
 
-  CHECKF(it->decode_setUserMode(p.buffer, &oldMode, &newMode, &style), "handle_setUserMode");
-  it->setUserMode(oldMode, newMode, style);
+  CHECK(it->decode_setUserMode(p.buffer, &oldMode, &oldStyle, &newMode, &style));
+  it->setUserMode(oldMode, oldStyle, newMode, style);
   return 0;
 }
 
@@ -3431,7 +3481,7 @@ int nmg_Graphics_Implementation::handle_positionSphere
   return 0;
 }
 
-
+/*
 // genetic textures:
 // Call back function called when the gaEngine_Remote gets an
 // evaluation_complete message. This occurs when the selected texture
@@ -3576,7 +3626,7 @@ int nmg_Graphics_Implementation::send_genetic_texture_data( void *userdata ) {
 
   return 0;
 }
-
+*/
 // static
 /*
 int nmg_Graphics_Implementation::handle_enableGeneticTextures (void *userdata,
@@ -3588,7 +3638,7 @@ int nmg_Graphics_Implementation::handle_enableGeneticTextures (void *userdata,
   return 0;
 }
 */
-
+/*
 // static
 int nmg_Graphics_Implementation::handle_sendGeneticTexturesData(void *userdata,
 						      vrpn_HANDLERPARAM p) {
@@ -3608,7 +3658,7 @@ int nmg_Graphics_Implementation::handle_sendGeneticTexturesData(void *userdata,
   }
   return 0;
 }
-
+*/
 
 //
 // Realign Textures Handlers

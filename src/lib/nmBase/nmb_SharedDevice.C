@@ -41,8 +41,7 @@ nmb_SharedDevice_Remote::nmb_SharedDevice_Remote (const char * name,
   d_mutex.addTakeCallback(this, handle_mutexTaken);
   d_mutex.addReleaseCallback(this, handle_mutexReleased);
 
-fprintf(stderr, "nmb_SharedDevice_Remote::nmb_SharedDevice_Remote:  requesting the lock on %s.\n",
-d_myName);
+//fprintf(stderr, "nmb_SharedDevice_Remote::nmb_SharedDevice_Remote:  requesting the lock on %s.\n", d_myName);
 
   // If we're currently running standalone grab the mutex.
   d_mutex.request();
@@ -97,8 +96,7 @@ int nmb_SharedDevice_Remote::mainloop (void) {
 
 void nmb_SharedDevice_Remote::requestMutex (void) {
 
-fprintf(stderr, "nmb_SharedDevice_Remote::requestMutex:  requesting the lock on %s.\n",
-d_myName);
+//fprintf(stderr, "nmb_SharedDevice_Remote::requestMutex:  requesting the lock on %s.\n",d_myName);
 
   d_mutex.request();
 
@@ -106,8 +104,7 @@ d_myName);
 
 void nmb_SharedDevice_Remote::releaseMutex (void) {
 
-fprintf(stderr, "nmb_SharedDevice_Remote:  releasing the lock on %s.\n",
-d_myName);
+//fprintf(stderr, "nmb_SharedDevice_Remote:  releasing the lock on %s.\n", d_myName);
 
   d_mutex.release();
 
@@ -152,8 +149,8 @@ long nmb_SharedDevice_Remote::dispatchMessage (long len, const char * buf,
     return nmb_Device_Client::dispatchMessage(len, buf, type);
   }
 
-fprintf(stderr, "nmb_SharedDevice_Remote:  throwing out a message\n"
-"  (type %d, to %s) since we don't have the lock.\n", type, d_myName);
+//fprintf(stderr, "nmb_SharedDevice_Remote:  throwing out a message\n"
+//"  (type %d, to %s) since we don't have the lock.\n", type, d_myName);
 
   return 0;
 }
@@ -258,8 +255,7 @@ int nmb_SharedDevice_Remote::handle_gotMutex (void * userdata) {
   nmb_SharedDevice_Remote * me = (nmb_SharedDevice_Remote *) userdata;
   sharedDeviceCallback * cb;
 
-fprintf(stderr, "nmb_SharedDevice_Remote:  got the lock on %s.\n",
-me->d_myName);
+//fprintf(stderr, "nmb_SharedDevice_Remote:  got the lock on %s.\n",me->d_myName);
 
   for (cb = me->d_gotMutexCallbacks;  cb;  cb = cb->next) {
     (cb->f)(cb->userdata, me);
@@ -274,8 +270,7 @@ int nmb_SharedDevice_Remote::handle_deniedMutex (void * userdata) {
   nmb_SharedDevice_Remote * me = (nmb_SharedDevice_Remote *) userdata;
   sharedDeviceCallback * cb;
 
-fprintf(stderr, "nmb_SharedDevice_Remote:  denied the lock on %s.\n",
-me->d_myName);
+//fprintf(stderr, "nmb_SharedDevice_Remote:  denied the lock on %s.\n",me->d_myName);
 
   for (cb = me->d_deniedMutexCallbacks;  cb;  cb = cb->next) {
     (cb->f)(cb->userdata, me);
@@ -290,7 +285,7 @@ int nmb_SharedDevice_Remote::handle_mutexTaken (void * userdata) {
   nmb_SharedDevice_Remote * me = (nmb_SharedDevice_Remote *) userdata;
   sharedDeviceCallback * cb;
 
-fprintf(stderr, "nmb_SharedDevice_Remote:  somebody got %s.\n", me->d_myName);
+//fprintf(stderr, "nmb_SharedDevice_Remote:  somebody got %s.\n", me->d_myName);
 
   for (cb = me->d_mutexTakenCallbacks;  cb;  cb = cb->next) {
     (cb->f)(cb->userdata, me);
@@ -305,8 +300,7 @@ int nmb_SharedDevice_Remote::handle_mutexReleased (void * userdata) {
   nmb_SharedDevice_Remote * me = (nmb_SharedDevice_Remote *) userdata;
   sharedDeviceCallback * cb;
 
-fprintf(stderr, "nmb_SharedDevice_Remote:  somebody released %s.\n",
-me->d_myName);
+//fprintf(stderr, "nmb_SharedDevice_Remote:  somebody released %s.\n",me->d_myName);
 
   for (cb = me->d_mutexReleasedCallbacks;  cb;  cb = cb->next) {
     (cb->f)(cb->userdata, me);

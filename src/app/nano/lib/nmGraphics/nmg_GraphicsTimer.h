@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMG_GRAPHICS_TIMER_H
 #define NMG_GRAPHICS_TIMER_H
 
@@ -30,7 +37,9 @@ class nmg_Graphics_Timer : public nmg_Graphics {
 
     virtual void mainloop (void);
 
+    virtual void changeDataset( nmb_Dataset * data);
     virtual void resizeViewport(int width, int height);
+    virtual void getViewportSize(int *width, int * height);
     virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
                                                      q_vec_type &ur);
     virtual void loadRulergridImage (const char * name);
@@ -46,7 +55,8 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setBumpMapName (const char *);
     virtual void setColorMapDirectory (const char *);
     virtual void setColorMapName (const char *);
-    virtual void setColorSliderRange (float low, float hi);
+    virtual void setColorMinMax (float low, float hi);
+    virtual void setDataColorMinMax (float low, float hi);
     virtual void setOpacitySliderRange (float low, float hi);
     virtual void setTextureDirectory (const char *);
     virtual void setComplianceSliderRange (float low, float hi);
@@ -71,7 +81,6 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setMinColor (const int [3]);
     virtual void setMaxColor (const int [3]);
     virtual void setPatternMapName (const char *);
-    virtual void sendGeneticTexturesData (int, char **);
     virtual void createRealignTextures( const char * );
     virtual void setRealignTextureSliderRange (float, float);
     virtual void setRealignTexturesConversionMap
@@ -104,7 +113,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setTextureMode (TextureMode,TextureTransformMode);
     virtual void setTextureScale (float);
     virtual void setTrueTipScale (float);
-    virtual void setUserMode (int oldMode, int newMode, int style);
+    virtual void setUserMode (int oldMode, int oldStyle, int newMode, int style);
     virtual void setLightDirection (q_vec_type &);
     virtual void resetLightDirection (void);
     //    virtual int addPolylinePoint (const float [2][3]);

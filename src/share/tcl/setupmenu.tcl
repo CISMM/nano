@@ -1,3 +1,10 @@
+#/*===3rdtech===
+#  Copyright (c) 2000 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
 # Provide a toplevel widget to allow
 # control over which data sets are enabled in scan and touch
 # mode.  
@@ -11,7 +18,7 @@ frame $nmInfo(data_sets).touch -relief sunken -bd 2
 label $nmInfo(data_sets).touch.label -text Touch
 label $nmInfo(data_sets).touch.instr -text "Hit Enter to change no. of samples"
 frame $nmInfo(data_sets).forcecurve -relief sunken -bd 2
-label $nmInfo(data_sets).forcecurve.label -text ForceCurve
+label $nmInfo(data_sets).forcecurve.label -text "Force Curve"
 #frame $nmInfo(data_sets).scanline -relief sunken -bd 2
 #label $nmInfo(data_sets).scanline.label -text "Line Scan"
 
@@ -22,7 +29,73 @@ pack $nmInfo(data_sets).touch -side left -anchor n
 pack $nmInfo(data_sets).forcecurve.label -side top
 pack $nmInfo(data_sets).forcecurve -side left -anchor n
 #pack $nmInfo(data_sets).scanline.label -side top
-#pack $nmInfo(data_sets).scanline -side left -anchor n
+#pack $nmInfo(data_sets).scanline -side left -anchor n 
+
+set scandatalist [list \
+        "Topography-Forward" \
+        "Topography-Reverse" \
+        "Internal Sensor-Forward" \
+        "Internal Sensor-Reverse" \
+        "Z Modulation-Forward" \
+        "Z Modulation-Reverse" \
+        "Lateral Force-Forward" \
+        "Lateral Force-Reverse" \
+        "IN 1-Forward" \
+        "IN 1-Reverse" \
+        "IN 2-Forward" \
+        "IN 2-Reverse" \
+        "FastTrack-Forward" \
+        "FastTrack-Reverse" \
+        "Z Piezo-Forward" \
+        "Z Piezo-Reverse" ]
+
+set i 0
+foreach name $scandatalist {
+    checkbutton $nmInfo(data_sets).scan.scanbutton$i -text "$name" \
+            -variable data_sets(scan$i)
+    pack $nmInfo(data_sets).scan.scanbutton$i -side top -anchor nw
+    incr i
+}
+#set num_scandata [expr $i -1]
+
+set touchdatalist [list \
+        "Topography" \
+        "Internal Sensor" \
+        "Z Modulation" \
+        "Lateral Force" \
+        "IN 1" \
+        "IN 2" \
+        "FastTrack" \
+        "Z Piezo" ]
+
+set i 0
+foreach name $touchdatalist {
+    frame $nmInfo(data_sets).touch.f$i
+    checkbutton $nmInfo(data_sets).touch.f$i.touchbutton$i -text "$name" \
+            -variable data_sets(touch$i)
+    generic_entry $nmInfo(data_sets).touch.f$i.touchentry$i \
+            data_sets(touch_samples$i) "" integer
+    pack $nmInfo(data_sets).touch.f$i -side top -fill x -expand yes
+    pack $nmInfo(data_sets).touch.f$i.touchbutton$i \
+            -side left -anchor nw
+    pack $nmInfo(data_sets).touch.f$i.touchentry$i \
+            -side right -anchor ne
+    incr i
+}
+#set num_touchdata [expr $i -1]
+
+# spmlab allows two out of three including the following and
+# the two auxiliary channels, but selection of other than the default
+# hasn't been implemented yet
+set forcecurvedatalist [list "Internal Sensor" ]
+set i 0
+foreach name $forcecurvedatalist {
+    checkbutton $nmInfo(data_sets).forcecurve.forcecurvebutton$i -text "$name"\
+            -variable data_sets(forcecurve$i)
+    pack $nmInfo(data_sets).forcecurve.forcecurvebutton$i -side top -anchor nw
+    incr i
+}
+#set num_forcecurvedata [expr $i -1]
 
 #
 ################################
@@ -43,358 +116,21 @@ pack $nmInfo(z_mapping).z_dataset -anchor nw -padx 3 -pady 3
 set z_scale 1
 generic_entry $nmInfo(z_mapping).scale z_scale "Z scale" real
 pack $nmInfo(z_mapping).scale -anchor nw -padx 3 -pady 3
+
 #
 #################################    
-#
-# This part of the script brings up sliders to control the
-# mapping of values into colors on the surface.
-# First, we create a toplevel widget to serve as a control panel.
-# Then, we pack center and range sliders into the control panel
-#
-
-set nmInfo(colorscale) [create_closing_toplevel colorscale "Color Map Setup" ]
-
-# Make a frame to hold and group the color map widgets
-iwidgets::Labeledframe $nmInfo(colorscale).colormap \
-	-labeltext "Color map parameters" \
-	-labelpos nw
-set nmInfo(colormap) [$nmInfo(colorscale).colormap childsite]
-pack $nmInfo(colorscale).colormap -side top -fill x
-
-
-set opacity_slider_min_limit 0
-set opacity_slider_max_limit 1
-
-set opacity_slider_min 0
-set opacity_slider_max 1
-
-# Make a frame to hold and group the opactiy map widgets
-iwidgets::Labeledframe $nmInfo(colorscale).opacitymap \
-	-labeltext "Opacity map parameters" \
-	-labelpos nw
-set nmInfo(opacitymap) [$nmInfo(colorscale).opacitymap childsite]
-pack $nmInfo(colorscale).opacitymap -fill x
-
-# Make a frame to hold the pull-down menu that selects from the list
-frame $nmInfo(colormap).scales
-frame $nmInfo(colormap).pickframe
-iwidgets::Labeledframe $nmInfo(colorscale).flat \
-	-labeltext "Create a flattened plane" \
-	-labelpos nw
-set nmInfo(flatplane) [$nmInfo(colorscale).flat childsite]
-
-#
-# A button to bring up the control panel for min/max color
-# and other parameters of the CUSTOM color map. 
-#
-button $nmInfo(colormap).pickframe.setcolor -text "Adjust Custom Colormap" -command adjust_color
-
-pack  $nmInfo(colormap).pickframe $nmInfo(colormap).scales -side left -fill both
-pack  $nmInfo(colormap).pickframe.setcolor -side bottom
-pack  $nmInfo(colorscale).flat -side bottom -fill x
-
-# Pop-up menu to choose which plane is displayed as a color map.
-generic_optionmenu $nmInfo(colormap).pickframe.colormap_plane \
-	color_comes_from \
-	"Colormap plane" inputPlaneNames
-
-set colorMapNames {custom}
-generic_optionmenu $nmInfo(colormap).pickframe.colormap \
-	color_map \
-	"Colormap" colorMapNames
-
-
-# Pop-up menu to choose which plane is displayed as an opacity map.
-generic_optionmenu $nmInfo(opacitymap).opacityplane \
-	opacity_comes_from \
-	"Opacitymap dataset" inputPlaneNames
-pack $nmInfo(opacitymap).opacityplane -side left -anchor w
-
-iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(colormap).pickframe.colormap_plane \
-	$nmInfo(colormap).pickframe.colormap
-
-pack $nmInfo(colormap).pickframe.colormap_plane \
-	$nmInfo(colormap).pickframe.colormap  -anchor nw -fill x
-
-
-# Corresponding min-max sliders that go along with the opacity map stuff
-if {$opacity_slider_min_limit != $opacity_slider_max_limit} {
-    minmaxscale $nmInfo(opacitymap).scale $opacity_slider_min_limit \
-        $opacity_slider_max_limit 50 opacity_slider_min opacity_slider_max
-    pack $nmInfo(opacitymap).scale -fill x -side top
-    trace variable opacity_slider_min_limit w opacity_scale_newscale
-    trace variable opacity_slider_max_limit w opacity_scale_newscale
-}
-
-#
-# Helper routine for the opacity scale that destroys and then recreates the
-# slider with new values if the endpoints change.
-#
-
-proc opacity_scale_newscale {name element op} {
-    global  opacity_slider_min_limit opacity_slider_max_limit
-    global nmInfo
-    destroy $nmInfo(opacity).scale
-    minmaxscale $nmInfo(opacity).scale $opacity_slider_min_limit \
-	    $opacity_slider_max_limit 50 \
-	    opacity_slider_min opacity_slider_max
-    pack $nmInfo(opacity).scale -fill x -side top
-}
-
-
-
-
-
-
-
-#
-# It requires the the russ_widgets scripts have been executed to define
-# the floatscale procedure.
-# Also the color_slider_min_limit and color_slider_max_limit variables
-# must have been set to the proper values for initialization.
-# Set traces on the max_limit and min_limit variables.  If they
-# change, destroy the old sliders and set up new ones within the old
-# frame.
-#
-
-set color_slider_min 0
-set color_slider_max 1
-
-set color_slider_min_limit 0
-set color_slider_max_limit 1
-
-set color_slider_center [expr ($color_slider_min_limit+$color_slider_max_limit)/2.0]
-set color_slider_range [expr $color_slider_max-$color_slider_min]
-
-generic_entry $nmInfo(colormap).scales.center color_slider_center \
-	"Center ($color_slider_min_limit $color_slider_max_limit)" real
-generic_entry $nmInfo(colormap).scales.range color_slider_range \
-	"Width (0 [expr $color_slider_max_limit -$color_slider_min_limit ])" \
-	real
-
-iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(colormap).scales.center \
-	$nmInfo(colormap).scales.range
-
-pack  $nmInfo(colormap).scales.center \
-	$nmInfo(colormap).scales.range -side top -anchor nw
-
-# Autoscales the color map, by setting color_comes_from to it's
-# current value, which prompts the C code to do it.
-button $nmInfo(colormap).scales.autoscale -text "Autoscale now" \
-	-command {
-    set color_comes_from [$nmInfo(colormap).pickframe.colormap_plane get]
-}
-pack $nmInfo(colormap).scales.autoscale -side top -anchor nw
-
-# Allow the user to create a flattened plane from the height plane:
-label $nmInfo(flatplane).flatlabel -justify left -text \
-	"Position measure lines then\nenter a plane name:"
-generic_entry $nmInfo(flatplane).flatplane flatplane_name \
-	"Flatten plane" ""
-pack $nmInfo(flatplane).flatplane $nmInfo(flatplane).flatlabel \
-	-side bottom -anchor nw
-
-
-# these are semaphores, to prevent recursive callbacks from
-# screwing things up. "Trace" can be very annoying!
-set setting_minmax 0
-set setting_cr 0
-
-#
-# Helper routine for the color scale that destroys and then recreates the
-# slider with new values if the endpoints change.
-# Checks for the scales existence before destroying so it is safe to 
-# call the first time to create the scales. (see below)
-#
-
-proc color_scale_newscale {name element op} {
-    global  color_slider_min_limit color_slider_max_limit
-    global  color_slider_min color_slider_max
-    global  color_slider_center color_slider_range
-    global setting_cr
-    global nmInfo
-
-    # check for absurd conditions
-    if {$color_slider_min > $color_slider_max} then return
-    if {$color_slider_min_limit > $color_slider_max_limit} then return
-    
-    # Change titles to reflect new range
-    # format statements keep the labels from getting really long. 
-    set newtext [format "%.0f %.0f" $color_slider_min_limit $color_slider_max_limit]
-    $nmInfo(colormap).scales.center config -labeltext \
-	"Center ($newtext)"
-    set newtext [format "%.0f" [expr $color_slider_max_limit -$color_slider_min_limit ]]
-    $nmInfo(colormap).scales.range config -labeltext \
-	"Width (0 $newtext)"
-
-    iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(colormap).scales.center \
-	$nmInfo(colormap).scales.range
-
-    # new scale, so reset params to the default values 
-    set setting_cr 1
-    set color_slider_center [expr ($color_slider_max_limit+$color_slider_min_limit)/2.0]
-    # decided not to expand the width of color maps above 
-    # current data range - that's just annoying. But min/max of slider
-    # are still wider than current data range. 
-    set color_slider_range [expr ($color_slider_max_limit -$color_slider_min_limit)]
-    set setting_cr 0
-}
-
-# 
-# Helper routine so we can change the sliders representing the
-# center and range of the color map into the min and max values
-# of the color map used in the C code.
-proc color_scale_change {name element op} {
-    global color_slider_center color_slider_range 
-    global color_slider_max color_slider_min
-    global setting_minmax setting_cr
-
-# check the semaphore to prevent recursive callbacks
-    if { $setting_cr } then return
-
-    set setting_minmax 1
-    set color_slider_max [expr $color_slider_center + $color_slider_range/2.0]
-    set color_slider_min [expr $color_slider_center - $color_slider_range/2.0]
-    set setting_minmax 0
-    #puts "csc min max $color_slider_min $color_slider_max"
-}
-
-# 
-# Helper routine so if min and max get set from C, 
-# we can update center and range
-proc color_scale_change_from_c {name element op} {
-    global color_slider_center color_slider_range 
-    global color_slider_max color_slider_min
-    global setting_minmax setting_cr
-
-# check the semaphore to prevent recursive callbacks
-    if { $setting_minmax } then return
-
-    #puts "from c minmax $color_slider_min $color_slider_max"
-
-    set setting_cr 1
-    
-    set color_slider_center [expr ($color_slider_min + $color_slider_max)/2.0]
-    set color_slider_range [expr $color_slider_max-$color_slider_min]
-    set setting_cr 0
-
-    #puts "from c center range $color_slider_center $color_slider_range"
-}
-
-#
-#Finally, create some controls for the color map.
-#
-# call procedure to create the scales for the first time
-color_scale_newscale "" "" ""
-
-# set up traces on variables using the procedures above. 
-trace variable color_slider_min_limit w color_scale_newscale
-trace variable color_slider_max_limit w color_scale_newscale
-trace variable color_slider_center w color_scale_change
-trace variable color_slider_range w color_scale_change
-trace variable color_slider_min w color_scale_change_from_c
-trace variable color_slider_max w color_scale_change_from_c
-
-
-#set these so we can see do " wishx <mainwin.tcl" and test interface
-set minR 0
-set minG 0
-set minB 0
-set maxR 255
-set maxG 255
-set maxB 255
-
-proc adjust_color {} {
-    global minR minG minB maxR maxG maxB color_flag surface_changed
-    toplevel .c 
-
-    set pwidth 3c
-
-    frame .c.menubar -relief raised -bd 4
-    frame .c.label
-    frame .c.samplemax -height 3c -width 3c -relief groove -bd 5
-    frame .c.colorbutts
-
-    label .c.label.a -textvariable color_flag
-    label .c.label.b -text "Color Setting"
-    scale .c.red -label Red -from 0 -to 255 -orient horizontal \
-           -command new_color -bg tan -length $pwidth -relief raised -bd 3
-    scale .c.green -label Green -from 0 -to 255 -orient horizontal \
-           -command new_color -bg tan -length $pwidth -relief raised -bd 3
-    scale .c.blue -label Blue -from 0 -to 255 -orient horizontal \
-           -command new_color -bg tan -length $pwidth -relief raised -bd 3
-
-    pack .c.menubar -side top -fill both
-    pack .c.label.a .c.label.b -side left
-    pack .c.label -side top -anchor n
-    pack .c.red .c.green .c.blue -side top -anchor w -fill x -pady 1m -padx 3m
-    pack .c.samplemax -side top -anchor e -padx 3m -fill x
-    pack .c.colorbutts -side top 
- 
-    button .c.menubar.exitwin -bg red -text "Close Color Panel" -command "destroy .c"
-    radiobutton .c.colorbutts.min -text "set min"  -variable color_flag \
-	    -value "Minimum" -bg SteelBlue -command toggle_color 
-    radiobutton .c.colorbutts.max -text "set max"  -variable color_flag \
-            -value "Maximum" -bg SteelBlue -command toggle_color
-    button .c.colorbutts.go -bg yellow -text "OK" -command set_color
-
-    pack .c.colorbutts.min .c.colorbutts.max  .c.colorbutts.go -side left -pady 3m \
-	     -padx 3m -ipadx 1m -ipady 1m -fill both
- 
-    pack .c.menubar.exitwin -side top -anchor e -ipadx 3m
-
-    toggle_color
-}
-
-proc new_color {value} {
-    set color [format #%02x%02x%02x [.c.red get] [.c.green get] [.c.blue get]]
-    .c.samplemax configure -bg $color
-}
-proc set_color {} {
-    global minR minG minB maxR maxG maxB color_flag surface_changed 
-    if {$color_flag=="Minimum"} {
-	set minR [.c.red get]
-	set minG [.c.green get]
-	set minB [.c.blue get]
-    }
-    if {$color_flag=="Maximum"} { 
-	set maxR [.c.red get]
-	set maxG [.c.green get]
-	set maxB [.c.blue get]
-    }
-    set surface_changed 1
-}
-
-proc toggle_color {} {
-    global minR minG minB maxR maxG maxB color_flag
-    if {$color_flag=="Minimum"} {
-	.c.red set $minR
-	.c.green set $minG
-	.c.blue set $minB
-    }
-    if {$color_flag=="Maximum"} { 
-	.c.red set $maxR
-	.c.green set $maxG
-	.c.blue set $maxB
-    }
-    new_color 0
-}
-
-##########
-# end ColorMap section.
+# Controls for the colormap are in a separate file (colormap.tcl)
+# sourced from mainwin.tcl.
 
 ############################
 # Contour lines
 #set these so we can see do " wish mainwin.tcl" and test interface
-set contour_r 100
-set contour_g 100
-set contour_b 100
+if {![info exists contour_r] } { set contour_r 255 }
+if {![info exists contour_g] } { set contour_g 55 }
+if {![info exists contour_b] } { set contour_b 55 }
 
-set contour_width 1
-set texture_spacing 10
+if {![info exists contour_width] } { set contour_width 1 }
+if {![info exists texture_spacing] } { set texture_spacing 10 }
 
 proc set_contour_color {} {
     global contour_r contour_g contour_b contour_changed contour_color
@@ -403,7 +139,7 @@ proc set_contour_color {} {
     # and save into contour_r g b
     scan $contour_color #%02x%02x%02x contour_r contour_g contour_b
     set contour_changed 1
-    puts "Contour color $contour_r $contour_g $contour_b"
+    #puts "Contour color $contour_r $contour_g $contour_b"
 }
 
 #
@@ -414,33 +150,18 @@ proc set_contour_color {} {
 # for mapping to contour lines and the inter-line spacing.  
 #
 
-iwidgets::dialog .contour_line_dialog -title "Adjust Contour Lines" 
-
-.contour_line_dialog hide Help
-.contour_line_dialog buttonconfigure OK -command {
-    set_contour_color
-    .contour_line_dialog deactivate 1
-}
-.contour_line_dialog buttonconfigure Apply -command {
-    set_contour_color
-}
-# "Cancel" button is already set up correctly
-
-proc show.contour_lines {} {
-    .contour_line_dialog activate
-}
-
-set nmInfo(contour_lines) [.contour_line_dialog childsite]
+set nmInfo(contour_lines) [create_closing_toplevel contour_lines \
+        "Contour Lines Setup" ]
 
 generic_optionmenu $nmInfo(contour_lines).contour_dataset contour_comes_from \
-	"Contour dataset" inputPlaneNames
+	"Contour plane" inputPlaneNames
 pack $nmInfo(contour_lines).contour_dataset -anchor nw
     
 button $nmInfo(contour_lines).set_color -text "Set contour color" -command {
     choose_color contour_color "Choose contour color"
     $nmInfo(contour_lines).colorsample configure -bg $contour_color
+    set_contour_color
 }
-
 
 # this sets the color of the sample frame to the color of the scales
 set contour_color [format #%02x%02x%02x $contour_r $contour_g $contour_b]
@@ -448,17 +169,30 @@ frame $nmInfo(contour_lines).colorsample -height 32 -width 32 -relief groove -bd
 
 #Choose the width of the lines that make up the contour display
 frame $nmInfo(contour_lines).lineslider
-floatscale $nmInfo(contour_lines).lineslider.linespacing 1 100 101 1 1 texture_spacing "Line spacing"
-floatscale $nmInfo(contour_lines).lineslider.linewidth 1 100 101 1 1 contour_width "Line width"
-#floatscale $nmInfo(contour_lines).lineslider.opacity 0 255 256 1 1 contour_opacity "opacity"
+generic_entry $nmInfo(contour_lines).lineslider.linespacing \
+        texture_spacing "Line spacing" real
+generic_entry $nmInfo(contour_lines).lineslider.linewidth \
+        contour_width "Line width" real
+#generic_entry $nmInfo(contour_lines).lineslider.opacity contour_opacity "opacity" integer
 # this triggers the callback to actually set the c variables
 
-pack $nmInfo(contour_lines).set_color $nmInfo(contour_lines).colorsample -side top -anchor e -pady 1m -padx 3m -fill x
-pack $nmInfo(contour_lines).lineslider -side top -anchor w -fill x -pady 1m -padx 3m
+pack $nmInfo(contour_lines).set_color $nmInfo(contour_lines).colorsample \
+        -side top -anchor e -pady 1m -padx 3m -fill x
+pack $nmInfo(contour_lines).lineslider \
+        -side top -anchor w -fill x -pady 1m -padx 3m
 pack $nmInfo(contour_lines).lineslider.linewidth \
 	$nmInfo(contour_lines).lineslider.linespacing \
-	-side top -fill x -pady $fspady
+	-side top -anchor nw -pady $fspady
 #pack $nmInfo(contour_lines).lineslider.opacity -side top -fill x -pady $fspady
+
+iwidgets::Labeledwidget::alignlabels \
+        $nmInfo(contour_lines).lineslider.linewidth \
+	$nmInfo(contour_lines).lineslider.linespacing 
+
+# Make it easy to create a flat plane to use for contours.
+button $nmInfo(contour_lines).calc_planes -text "Calculate Data Planes..."  \
+    -command "show.calc_planes"
+pack $nmInfo(contour_lines).calc_planes -side bottom -anchor nw
 
 #######
 # end contour line section
@@ -913,21 +647,20 @@ if {$spring_slider_min_limit != $spring_slider_max_limit} {
 
 
 ############################
-# Preferences
+# display_settings
 
 # This is for anything the user won't want to change very often, but
 # which affects the general appearance of the screen and
-# application. Should be saved in a preferences file, but it won't be
-# right now.
-set nmInfo(preferences) [create_closing_toplevel preferences "Preferences" ]
+# application. 
+set nmInfo(display_settings) [create_closing_toplevel display_settings "Display Settings..." ]
 
 #
 # Surface shading parameters
 #
-iwidgets::Labeledframe $nmInfo(preferences).surf_shading \
+iwidgets::Labeledframe $nmInfo(display_settings).surf_shading \
 	-labeltext "Surface Shading" \
 	-labelpos nw
-set nmInfo(pref_surf_shading) [$nmInfo(preferences).surf_shading childsite]
+set nmInfo(pref_surf_shading) [$nmInfo(display_settings).surf_shading childsite]
 # Spec Color, Spec highlight sharpness, diffuse color, opacity of surface. 
 generic_entry $nmInfo(pref_surf_shading).shiny shiny \
 	"Highlight sharpness (1,128)" integer
@@ -938,7 +671,7 @@ generic_entry $nmInfo(pref_surf_shading).diffuse diffuse \
 generic_radiobox $nmInfo(pref_surf_shading).smooth \
 	smooth_shading \
 	"Shading" { "Flat" "Smooth" }
-pack $nmInfo(preferences).surf_shading -fill both
+pack $nmInfo(display_settings).surf_shading -fill both
 pack $nmInfo(pref_surf_shading).shiny \
 	$nmInfo(pref_surf_shading).specular_color \
 	$nmInfo(pref_surf_shading).diffuse \
@@ -947,17 +680,17 @@ pack $nmInfo(pref_surf_shading).shiny \
 #
 # Surface tesselation
 #
-iwidgets::Labeledframe $nmInfo(preferences).surf_tris \
+iwidgets::Labeledframe $nmInfo(display_settings).surf_tris \
 	-labeltext "Surface Tesselation" \
 	-labelpos nw
-set nmInfo(pref_surf_tris) [$nmInfo(preferences).surf_tris childsite]
+set nmInfo(pref_surf_tris) [$nmInfo(display_settings).surf_tris childsite]
 generic_radiobox $nmInfo(pref_surf_tris).filled \
 	filled_triangles \
 	"Surface triangles" { "Wireframe" "Filled" }
 generic_entry $nmInfo(pref_surf_tris).surface_alpha surface_alpha \
 	"Surface opacity (0,1)" real
 
-pack $nmInfo(preferences).surf_tris -fill both
+pack $nmInfo(display_settings).surf_tris -fill both
 pack $nmInfo(pref_surf_tris).filled \
 	$nmInfo(pref_surf_tris).surface_alpha -fill x
 
@@ -965,27 +698,27 @@ pack $nmInfo(pref_surf_tris).filled \
 #
 # Icons
 #
-iwidgets::Labeledframe $nmInfo(preferences).icons \
+iwidgets::Labeledframe $nmInfo(display_settings).icons \
 	-labeltext "Icons" \
 	-labelpos nw
-set nmInfo(pref_icons) [$nmInfo(preferences).icons childsite]
+set nmInfo(pref_icons) [$nmInfo(display_settings).icons childsite]
 
 set sphere_scale 12.5
 generic_entry $nmInfo(pref_icons).icon_scale global_icon_scale \
-	"Icon scale (1,100)" real
+	"Icon scale (0.1,10)" real
 generic_entry $nmInfo(pref_icons).sphere_scale sphere_scale \
-	"Sphere scale (1,100)" real
+	"Sphere scale (1,100nm)" real
 
-pack $nmInfo(preferences).icons -fill both
+pack $nmInfo(display_settings).icons -fill both
 pack $nmInfo(pref_icons).icon_scale $nmInfo(pref_icons).sphere_scale \
 	-side top -fill x
 #
 # Acquisition Parameters
 #
-iwidgets::Labeledframe $nmInfo(preferences).acquisition \
+iwidgets::Labeledframe $nmInfo(display_settings).acquisition \
 	-labeltext "Acquisition Parameters" \
 	-labelpos nw
-set nmInfo(pref_acq) [$nmInfo(preferences).acquisition childsite]
+set nmInfo(pref_acq) [$nmInfo(display_settings).acquisition childsite]
 
 set num_lines_to_jump_back 1000
 generic_entry $nmInfo(pref_acq).jump_back num_lines_to_jump_back \
@@ -994,10 +727,11 @@ checkbutton $nmInfo(pref_acq).null_data_alpha \
 	-text "Alpha blend null data" \
 	-variable null_data_alpha_pressed
 
-pack $nmInfo(preferences).acquisition -fill both
+if { !$thirdtech_ui } {
+pack $nmInfo(display_settings).acquisition -fill both
 pack $nmInfo(pref_acq).jump_back -side top -fill x
 pack $nmInfo(pref_acq).null_data_alpha -fill x -side left
-
+}
 iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(pref_surf_shading).shiny \
 	$nmInfo(pref_surf_shading).specular_color \
@@ -1011,18 +745,15 @@ iwidgets::Labeledwidget::alignlabels \
 #
 # Coupling
 #
-iwidgets::Labeledframe $nmInfo(preferences).coupling \
+if { !$thirdtech_ui } {
+iwidgets::Labeledframe $nmInfo(display_settings).coupling \
         -labeltext "Coupling" \
         -labelpos nw
-set nmInfo(pref_coupling) [$nmInfo(preferences).coupling childsite]
+set nmInfo(pref_coupling) [$nmInfo(display_settings).coupling childsite]
 
 checkbutton $nmInfo(pref_coupling).finegrained_coupling \
         -text "fine-grained coupling" -variable finegrained_coupling
 
-pack $nmInfo(preferences).coupling -fill both
+pack $nmInfo(display_settings).coupling -fill both
 pack $nmInfo(pref_coupling).finegrained_coupling -side top -fill x
-
-
-
-
-
+}

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMG_GRAPHICS_NULL_H
 #define NMG_GRAPHICS_NULL_H
 
@@ -38,7 +45,8 @@ class nmg_Graphics_Null : public nmg_Graphics {
 
     virtual void setColorMapDirectory (const char *);
     virtual void setColorMapName (const char *);
-    virtual void setColorSliderRange (float low, float hi);
+    virtual void setColorMinMax (float low, float hi);
+    virtual void setDataColorMinMax (float low, float hi);
 
     virtual void setOpacitySliderRange (float low, float hi);
 

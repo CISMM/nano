@@ -10,6 +10,11 @@ int interaction (int bdbox_buttons [], double bdbox_dials [],
                  int phantomButton, nmb_TimerList * timer);
 int set_aim_line_color (float);
 
+extern Tclvar_int tcl_commit_pressed;
+extern Tclvar_int tcl_commit_canceled;
+void handle_commit_change( vrpn_int32, void *);
+void handle_commit_cancel( vrpn_int32, void *);
+
 // NANOX
 /// Set up synchronization variables with meaningful values.
 
@@ -41,5 +46,6 @@ extern TclNet_float tcl_wfr_scale;
 
 extern Tclvar_float handTracker_update_rate;
 
+extern Tclvar_int xy_lock;
 #endif  // INTERACTION_H
 

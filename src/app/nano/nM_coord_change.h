@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /** \class nM_coord_change
 This is a server to take the tracker position and orientation coming in from 
 the phantom and pass it to a collaborator in a different coordinate system 
@@ -31,7 +38,7 @@ class nM_coord_change : public vrpn_Tracker {
 
     vrpn_bool peerIsSynchronized (void) const;
 
-    void mainloop (void);
+    void mainloop ();
 
     void bindConnection (vrpn_Connection * remoteC);
       /**< Late binding of remote connection (connection to listen

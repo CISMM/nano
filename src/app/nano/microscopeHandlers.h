@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef _H_MICROSCOPE_HANDLERS
 #define _H_MICROSCOPE_HANDLERS
 
@@ -11,25 +18,33 @@
 
 class nmm_Microscope_Remote;
 void setupStateCallbacks (nmm_Microscope_Remote *);
+class nmm_Microscope_Remote;
+void teardownStateCallbacks (nmm_Microscope_Remote *);
 
 #else
 
 class Microscope;
 void setupStateCallbacks (Microscope *);
+class Microscope;
+void teardownStateCallbacks (Microscope *);
 
 #endif
 
 void handle_doRelaxComp_change (vrpn_int32 val, void * _mptr);
+void handle_grid_resolution_change (vrpn_int32, void * _mptr);
+void handle_scanning_change (vrpn_int32, void * _mptr);
 
 void handle_Mmode_change (vrpn_int32, void * _mptr);
 void handle_Mstyle_change (vrpn_int32, void * _mptr);
 void handle_Mtool_change (vrpn_int32, void * _mptr);
 void handle_Mmode_p_change (vrpn_float64, void * _mptr);
+void handle_Mmode_p_change (vrpn_int32, void * _mptr);
 void handle_Mstyle_p_change (vrpn_float64, void * _mptr);
 void handle_Mtool_p_change (vrpn_float64, void * _mptr);
 void handle_Imode_change (vrpn_int32, void * _mptr);
 void handle_Istyle_change (vrpn_int32, void * _mptr);
 void handle_Imode_p_change (vrpn_float64, void * _mptr);
+void handle_Imode_p_change (vrpn_int32, void * _mptr);
 void handle_Istyle_p_change (vrpn_float64, void * _mptr);
 
 void handle_tcl_scanEnable_change (vrpn_int32, void * _mptr);
@@ -37,6 +52,7 @@ void handle_tcl_scanEnable_change (vrpn_int32, void * _mptr);
 void handle_SLmode_change (vrpn_int32, void * _mptr);
 void handle_SLforcelimit_change (vrpn_int32, void * _mptr);
 void handle_SLmode_p_change (vrpn_float64, void * _mptr);
+void handle_SLmode_p_change (vrpn_int32, void * _mptr);
 void handle_SLforcelimit_p_change (vrpn_float64, void * _mptr);
 void handle_linescan_start (vrpn_int32, void *_mptr);
 void handle_linescan_position (vrpn_float64 , void *_mptr);

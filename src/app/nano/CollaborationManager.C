@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "CollaborationManager.h"
 
 #ifndef _WIN32
@@ -56,8 +63,8 @@ vrpn_Connection * getServer (int port,
 
   sprintf(sfbuf, "%s/SharedIFSvrLog-%ld.stream", loggingPath, timestamp); 
 
-fprintf(stderr, "Opening peer server on port %d, NIC %s.\n",
-port, NIC_IP);
+//  fprintf(stderr, "Opening peer server on port %d, NIC %s.\n",
+//  port, NIC_IP);
 
   return new vrpn_Synchronized_Connection
         (port,
@@ -249,7 +256,7 @@ void CollaborationManager::setServerPort (int port) {
 
 void CollaborationManager::setLogging (char * path, int timestamp) {
   setString(&d_logPath, path);
-fprintf(stderr, "Logging to path \"%s\".\n", d_logPath);
+//fprintf(stderr, "Logging to path \"%s\".\n", d_logPath);
   d_logTime = timestamp;
 }
 

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 /////////////////////////////////////////////////////////////////////////////
 //	Defines classes of variables that will link themselves with Tcl
 // variables.  They are meant to make it easy to create new variables and
@@ -89,6 +96,7 @@ class	Tclvar_int {
 	virtual	~Tclvar_int (void);
 
         void addCallback (Linkvar_Intcall callback, void * userdata);
+        void removeCallback (Linkvar_Intcall callback, void * userdata);
         void doCallbacks (void);
 
 	inline operator vrpn_int32 (void) {return d_myint;}
@@ -140,6 +148,7 @@ class	Tclvar_float {
 	virtual	~Tclvar_float (void);
 
         void addCallback (Linkvar_Floatcall callback, void * userdata);
+        void removeCallback (Linkvar_Floatcall callback, void * userdata);
         void doCallbacks (void);
 
 	inline operator vrpn_float64 () {return d_myfloat;}
@@ -196,6 +205,7 @@ class	Tclvar_string : public nmb_String {
     virtual ~Tclvar_string (void);
 
     void addCallback (Linkvar_Stringcall callback, void * userdata);
+    void removeCallback (Linkvar_Stringcall callback, void * userdata);
     void doCallbacks (void);
 
     virtual const char * operator = (const char *);
@@ -267,6 +277,7 @@ class	Tclvar_list_of_strings : public nmb_ListOfStrings {
     //    virtual void Set (const char *);
 
     void addCallback (Linkvar_ListOfStringscall callback, void * userdata);
+    void removeCallback (Linkvar_ListOfStringscall callback, void * userdata);
     void doCallbacks (void);
 
     virtual void initializeTcl (const char * tcl_varname);

@@ -295,13 +295,9 @@ struct timezone {
     int     tz_dsttime;     /* type of dst correction */
 };
 #endif
-// name set up so that i have to explicitly call my_gettimeofday
-// to use mine -- otherwise i use vrpn's version (since i don't
-// want to change vrpn code and i need all stamps in the same
-// time frame).  Any calls to gettimeofday will use vrpn,
-// any to my_gettimeofday will use my util lib version.
-//#define my_gettimeofday win95_gettimeofday
-extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
+// Always use VRPN version
+//extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
+
 // CYGWIN defines gettimeofday, but it uses C style linkage.
 // If we define it here, the compiler thinks it has C++ style 
 // linkage and can't find it later.
@@ -310,7 +306,7 @@ extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
 #else
 // unix time headers
 #include <sys/time.h>
-//#define my_gettimeofday gettimeofday
+
 #endif
 
 
@@ -366,6 +362,41 @@ int nonblockingGetch(char *, int fEcho=1);
 
 /*****************************************************************************\
   $Log$
+  Revision 1.2.2.1  2000/07/04 00:38:41  helser
+  Removed many more printfs. Most on startup are now from vrpn.
+
+  Removed Genetic Textures.
+
+  WARNING: Tclvar_string can't be cast to a char * on VC++ - instead you
+  must use the ->string() method. Fixed bug caused by this in
+  interaction.c, possible bug in nmm_MicroscopeRemote.c
+
+  Fixed active_set.C and the channel selector classes. The tcl has now
+  been re-written so the channel selectors can be destroyed and
+  re-created without repercussions for the tcl interface.
+
+  Fixed bug when hitting accept in modify window.
+
+  Added Magellan button box. Buttons are the same as on the main window,
+  but leave out scale-up and scale-down. Uses Russ' vrpn_Magellan
+  class.
+
+  Grid_size widget added to image controls. Segfault caused by using
+  tesselation_stride with a small gridsize fixed. Error when topo failed
+  to report new grid size fixed.
+
+  Added messages, message types and methods to handle a PauseScan
+  message, a WithdrawTip message from nano to Thermo, and a Scanning
+  message from Thermo to nano. These implement the functions of two
+  buttons on the main nano window which were already added.
+
+  Revision 1.2  2000/04/07 19:00:13  helser
+  Changes to allow nano to compile with MS Visual C++. It doesn't link yet,
+  but it compiles. Issues still to be resolved:
+  directory operations, termio.c raw terminal operations.
+  Changes compile, link and run with g++ on cygwin,
+  compile and link on SGI (haven't tested running...)
+
   Revision 1.1.1.1  1999/12/14 20:40:08  weigle
   This is the new directory structure.  More documentation will be forth
   coming, but there is a README.1ST which should get you compiling. 

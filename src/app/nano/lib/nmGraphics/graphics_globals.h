@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef GRAPHICS_GLOBALS_H
 #define GRAPHICS_GLOBALS_H
 
@@ -18,6 +25,12 @@
 
 #include <colormap.h>
 #include "nmg_Funclist.h"
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+// bogus double to float conversion warning.
+#pragma warning(disable:4244)
+#pragma warning(disable:4305)
+#endif
 
 class BCGrid;  // from BCGrid.h
 class nmb_Subgrid;  // from nmb_Subgrid.h
@@ -54,8 +67,12 @@ extern float g_alpha_slider_max;
 extern ColorMap g_colorMap;
 extern char * g_colorMapDir;
 extern ColorMap * g_curColorMap;
-extern float g_color_slider_min;
-extern float g_color_slider_max;
+
+extern float g_color_min; // ColorMap lower and upper bounds for color
+extern float g_color_max;
+
+extern float g_data_min; // ColorMap lower and upper bounds for data
+extern float g_data_max;
 
 extern float g_opacity_slider_min;
 extern float g_opacity_slider_max;

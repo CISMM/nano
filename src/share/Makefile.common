@@ -334,7 +334,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-   SYS_INCLUDE := /progra~1/tcl/include
+   SYS_INCLUDE := /nsrc/external/include
 endif
 
 ifeq ($(HW_OS),pc_linux)
@@ -377,7 +377,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-  LOAD_FLAGS = -L/progra~1/tcl/lib
+  LOAD_FLAGS = -L/nsrc/external/lib/pc_win32
 endif
 
 ifeq ($(HW_OS),sgi_irix)
@@ -455,8 +455,8 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-   ARCH_LIBS := $(addprefix -l,glut wsock32 user32 gdi32 comdlg32 glu32 \
-                               opengl32)
+   ARCH_LIBS := $(addprefix -l,glut32 wsock32 user32 gdi32 comdlg32 glu32 \
+                               opengl32 ghost30)
 endif
 
 ##########################
@@ -524,30 +524,32 @@ ifndef OLD_MICROSCOPE
    BAREDEFINES += USE_VRPN_MICROSCOPE
 endif
 
+ifeq ($(HW_OS),sgi_irix) 
+  BAREDEFINES += NO_MAGELLAN NO_PHANTOM_SERVER
+endif
+
 ifeq ($(HW_OS),pc_cygwin)
-  BAREDEFINES += V_GLUT
+  BAREDEFINES += V_GLUT NO_XWINDOWS NO_EXT_TEXTURES NO_MAGELLAN \
+  NO_PHANTOM_SERVER
 endif
 
 ifeq ($(HW_OS),pc_win32)
-  BAREDEFINES += V_GLUT
+  BAREDEFINES += V_GLUT NO_RAW_TERM NO_XWINDOWS NO_ITCL NO_FILTERS \
+  NO_EXT_TEXTURES
 endif
 
 ifeq ($(HW_OS),pc_linux)
-  BAREDEFINES += V_GLUT
+  BAREDEFINES += V_GLUT NO_EXT_TEXTURES NO_MAGELLAN NO_PHANTOM_SERVER
 endif
 
 BAREDEFINES += PROJECTIVE_TEXTURE
 
-ifeq ($(HW_OS),pc_win32)
-  DEFINES = $(addprefix /D,$(BAREDEFINES))
-else
-  DEFINES = $(addprefix -D,$(BAREDEFINES))
-endif
+DEFINES = $(addprefix -D,$(BAREDEFINES))
 
 CFLAGS += -g
 
 ifeq ($(HW_OS),pc_win32)
-  CFLAGS = /nologo /MTd /W3 /GX /Z7 /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /TP 
+  CFLAGS = /nologo /MTd /W3 /GX /Gm /Zi /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /TP 
 # /MTd multi-threaded, debug lib - not DLL.
 # /W3 warning level 3
 # /Gm enable minimal rebuild - requires /Zi or /ZI

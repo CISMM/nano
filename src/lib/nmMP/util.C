@@ -67,6 +67,9 @@
   $Revision$
 \*****************************************************************************/
 
+// As per directions above. 
+#define USE_VRPN_CLOCK
+
 #include "myUtil.h"
 #include <math.h>
 #if !defined(_WIN32) || defined(__CYGWIN__)
@@ -368,7 +371,7 @@ static int adjustFrequency(void)
   const int tPerLoop = 400; // the longer the better -- 4000 seems good
   cerr.precision(4);
   cerr.setf(ios::fixed);
-  cerr << "gettimeofday: determining clock frequency ...";
+  //cerr << "gettimeofday: determining clock frequency ...";
 
   LARGE_INTEGER startperf, endperf;
   LARGE_INTEGER perffreq;
@@ -397,8 +400,8 @@ static int adjustFrequency(void)
 
   if (fabs(perffreq.QuadPart - freq) < 0.05*freq) {
     FREQUENCY = perffreq.QuadPart;
-    cerr << "\ngettimeofday: perf clock is tsc -- using perf clock freq (" 
-	 << perffreq.QuadPart/1e6 << " MHz)" << endl;
+//      cerr << "\ngettimeofday: perf clock is tsc -- using perf clock freq (" 
+//  	 << perffreq.QuadPart/1e6 << " MHz)" << endl;
     SetPriorityClass( GetCurrentProcess() , dwPriorityClass );
     SetThreadPriority( GetCurrentThread(), iThreadPriority );
     return 0;
@@ -408,8 +411,8 @@ static int adjustFrequency(void)
   // tell accurately enough with the short test. either way we now
   // need an accurate frequency measure, so ...
 
-  cerr << " (this will take " << setprecision(0) << loops*tPerLoop/1000.0 
-       << " seconds) ... " << endl;
+//    cerr << " (this will take " << setprecision(0) << loops*tPerLoop/1000.0 
+//         << " seconds) ... " << endl;
   cerr.precision(4);
 
   for (int j = 0; j < loops; j++) {
@@ -452,11 +455,11 @@ static int adjustFrequency(void)
   // perf clock freq)
   if (fabs(perffreq.QuadPart - freq) < 0.05*freq) {
     FREQUENCY = perffreq.QuadPart;
-    cerr << "gettimeofday: perf clock is tsc -- using perf clock freq (" 
-	 << perffreq.QuadPart/1e6 << " MHz)" << endl;
+//      cerr << "gettimeofday: perf clock is tsc -- using perf clock freq (" 
+//  	 << perffreq.QuadPart/1e6 << " MHz)" << endl;
   } else {
-    cerr << "gettimeofday: adjusted clock freq to measured freq (" 
-	 << freq/1e6 << " MHz)" << endl;
+//      cerr << "gettimeofday: adjusted clock freq to measured freq (" 
+//  	 << freq/1e6 << " MHz)" << endl;
   }
   FREQUENCY = (__int64) freq;
   return 0;
@@ -497,15 +500,15 @@ int gettimeofday(struct timeval *tp, struct timezone *tzp)
 
     // check that hi-perf clock is available
     if ( !(fHasPerfCounter = QueryPerformanceFrequency( &liTemp )) ) {
-      cerr << "\ngettimeofday: no hi performance clock available. " 
-	   << "Defaulting to _ftime (~6 ms resolution) ..." << endl;
+//        cerr << "\ngettimeofday: no hi performance clock available. " 
+//  	   << "Defaulting to _ftime (~6 ms resolution) ..." << endl;
       gettimeofday( tp, tzp );
       return 0;
     }
     
     if (adjustFrequency()<0) {
-      cerr << "\ngettimeofday: can't verify clock frequency. " 
-	   << "Defaulting to _ftime (~6 ms resolution) ..." << endl;
+//        cerr << "\ngettimeofday: can't verify clock frequency. " 
+//  	   << "Defaulting to _ftime (~6 ms resolution) ..." << endl;
       fHasPerfCounter=0;
       gettimeofday( tp, tzp );
       return 0;
@@ -546,6 +549,15 @@ static struct timeval __tv;
 static int __itv = gettimeofday(&__tv, NULL);
 
 #endif // if defined(_WIN32) && !defined(__CYGWIN__)
+
+void sleepMsecs( double dMsecs ) {
+  struct timeval tvStart, tvNow;
+  gettimeofday(&tvStart, NULL);
+  do {
+    gettimeofday(&tvNow, NULL);
+  } while (timevalToMsecs(tvNow-tvStart)<dMsecs);
+}
+
 #endif // ifndef USE_VRPN_CLOCK
 
 
@@ -577,15 +589,6 @@ public:
 static __BeforeMain __bm;
 
 
-void sleepMsecs( double dMsecs ) {
-  struct timeval tvStart, tvNow;
-  gettimeofday(&tvStart, NULL);
-  do {
-    gettimeofday(&tvNow, NULL);
-  } while (timevalToMsecs(tvNow-tvStart)<dMsecs);
-}
-
-
 // need to init and shutdown socket dll -- 0 is success
 // (windows socket dll keeps track of number of open/close for us,
 // we just need to call the same number of closes as opens)
@@ -612,7 +615,7 @@ static int initSockets() {
 	   << " returned)." NL;
       return status;
     }
-    cerr << "initSockets: WSAStartup succeeded." NL;
+//      cerr << "initSockets: WSAStartup succeeded." NL;
     gfSocketsInited=1;
   } else {
     // cerr << "initSockets: WSA already started up." NL;
@@ -628,7 +631,7 @@ static int shutDownSockets() {
 	   << " returned)." NL;
       return status;
     } 
-    cerr << "shutDownSockets: WSACleanup succeeded." NL;
+//      cerr << "shutDownSockets: WSACleanup succeeded." NL;
     gfSocketsInited = 0;
     return 0;
   } else {
@@ -757,6 +760,41 @@ int nonblockingGetch( char *, int ) {
 
 /*****************************************************************************\
   $Log$
+  Revision 1.2.2.1  2000/07/04 00:38:41  helser
+  Removed many more printfs. Most on startup are now from vrpn.
+
+  Removed Genetic Textures.
+
+  WARNING: Tclvar_string can't be cast to a char * on VC++ - instead you
+  must use the ->string() method. Fixed bug caused by this in
+  interaction.c, possible bug in nmm_MicroscopeRemote.c
+
+  Fixed active_set.C and the channel selector classes. The tcl has now
+  been re-written so the channel selectors can be destroyed and
+  re-created without repercussions for the tcl interface.
+
+  Fixed bug when hitting accept in modify window.
+
+  Added Magellan button box. Buttons are the same as on the main window,
+  but leave out scale-up and scale-down. Uses Russ' vrpn_Magellan
+  class.
+
+  Grid_size widget added to image controls. Segfault caused by using
+  tesselation_stride with a small gridsize fixed. Error when topo failed
+  to report new grid size fixed.
+
+  Added messages, message types and methods to handle a PauseScan
+  message, a WithdrawTip message from nano to Thermo, and a Scanning
+  message from Thermo to nano. These implement the functions of two
+  buttons on the main nano window which were already added.
+
+  Revision 1.2  2000/04/07 19:00:13  helser
+  Changes to allow nano to compile with MS Visual C++. It doesn't link yet,
+  but it compiles. Issues still to be resolved:
+  directory operations, termio.c raw terminal operations.
+  Changes compile, link and run with g++ on cygwin,
+  compile and link on SGI (haven't tested running...)
+
   Revision 1.1.1.1  1999/12/14 20:40:09  weigle
   This is the new directory structure.  More documentation will be forth
   coming, but there is a README.1ST which should get you compiling. 

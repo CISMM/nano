@@ -73,7 +73,13 @@ class UTree{
 							//traverse the tree between
 							//two nodes and build the matrix
 		URender& TGetContents(){return *contents;}
-		UTree& TGetChild(int i){if(i < num_children); return *children[i];}
+		UTree * TGetChild(int i){
+                    if(( i>=0) && (i < num_children) ) {
+                        return children[i];
+                    } else {
+                        return NULL;
+                    }
+                }
 };
 
 

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef NMG_GRAPHICS_REMOTE
 #define NMG_GRAPHICS_REMOTE
 
@@ -13,7 +20,10 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void mainloop (void);
 
+    virtual void changeDataset( nmb_Dataset * data);
+
     virtual void resizeViewport(int width, int height);
+    virtual void getViewportSize(int *width, int * height);
     virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
                                                 q_vec_type &ur);
 
@@ -36,7 +46,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void setColorMapDirectory (const char *);
     virtual void setColorMapName (const char *);
-    virtual void setColorSliderRange (float low, float hi);
+    virtual void setColorMinMax (float low, float hi);
+    virtual void setDataColorMinMax (float low, float hi);
 
     virtual void setOpacitySliderRange (float low, float hi);
 
@@ -75,10 +86,6 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setMaxColor (const int [3]);
 
     virtual void setPatternMapName (const char *);  // RENAME?
-
-    // Genetic Textures
-//    virtual void enableGeneticTextures (int);
-    virtual void sendGeneticTexturesData (int, char **);
 
     // Realigning Textures:
     virtual void createRealignTextures( const char * );
@@ -122,7 +129,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setTextureScale (float);
     virtual void setTrueTipScale (float);
 
-    virtual void setUserMode (int oldMode, int newMode, int style);  // TODO
+    virtual void setUserMode (int oldMode, int oldStyle, int newMode, int style);
 
     virtual void setLightDirection (q_vec_type &);
     virtual void resetLightDirection (void);
@@ -189,8 +196,10 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     double d_minAlpha;
     double d_maxAlpha;
-    double d_color_slider_min;
-    double d_color_slider_max;
+    double d_color_min;
+    double d_color_max;
+    double d_data_min;
+    double d_data_max;
 
     double d_opacity_slider_min;
     double d_opacity_slider_max;

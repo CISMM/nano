@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmb_Line.h"
 
 #include "BCPlane.h"
@@ -31,6 +38,8 @@ float nmb_Line::y (void) const {
 /**
  * Computes the point at which this line intercepts the given plane
  * and returns the Z value at that point.
+ * Note this is the Z value in real-world units; it is not scaled by
+ * the plane's scale value.  
  * Uses BCPlane::valueAt(), which will actually give the Z value
  * of a nearby grid point rather than interpolating to the "exact"
  * plane value at (x, y).
@@ -49,7 +58,8 @@ double nmb_Line::getIntercept (BCPlane * plane) {
                 
         plane->valueAt(&result, d_top[0], d_top[1]);
     }
-    result *=plane->scale();
+    // Return the unscaled value - the data value in real-world units
+    //result *=plane->scale();
 
     return result;
 }
@@ -59,9 +69,10 @@ double nmb_Line::getIntercept (BCPlane * plane) {
  @overload double nmb_Line::getIntercept (BCPlane * plane)
  */
 void nmb_Line::getIntercept (q_vec_type p, BCPlane * plane) {
+    // z first, because call to getIntercept(plane) clips to plane boundaries.
+  p[2] = getIntercept(plane);
   p[0] = d_top[0];
   p[1] = d_top[1];
-  p[2] = getIntercept(plane);
 }
 
 

@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include	<stdlib.h>
 #include	<stdio.h>
 #include	<string.h>
@@ -79,7 +86,7 @@ char	*handle_int_value_change(ClientData clientData,
 		intvar->d_dirty = VRPN_TRUE;
 	} else if (intvar->d_ignoreChange) {
           intvar->d_ignoreChange = VRPN_FALSE;
-
+//if (strcmp(intvar->d_myTclVarname, "commit_pressed") == 0) 
 //fprintf(stderr, "handle_int_value_change (%s, %d):  ignoring the change.\n",
 //intvar->d_myTclVarname, value);
 
@@ -87,6 +94,7 @@ char	*handle_int_value_change(ClientData clientData,
           // Need to invoke operator = since it might be redefined
           // by derived class.  (?)
 
+//if (strcmp(intvar->d_myTclVarname, "commit_pressed") == 0) 
 //fprintf(stderr, "handle_int_value_change (%s, %d).\n",
 //intvar->d_myTclVarname, value);
 
@@ -160,10 +168,11 @@ char	*handle_string_value_change(ClientData clientData,
 			stringvar->d_myTclVarname);
 		stringvar->d_dirty = VRPN_TRUE;
 	} else if (stringvar->d_ignoreChange) {
-//fprintf(stderr, "handle_string_value_change:  ignoring.\n");
+//fprintf(stderr, "handle_string_value_change:  (%s to %s) Ignoring change.\n",
+//stringvar->d_myTclVarname, cvalue);
           stringvar->d_ignoreChange = VRPN_FALSE;
         } else { // no errors: update the variable
-//fprintf(stderr, "handle_string_value_change:  changing %s to %s.\n",
+//fprintf(stderr, "handle_string_value_change:  (%s to %s).\n",
 //stringvar->d_myTclVarname, cvalue);
 	    stringvar->d_updateFromTcl = VRPN_TRUE;
 	    stringvar->SetFromTcl(cvalue);
@@ -450,6 +459,15 @@ Tclvar_int::~Tclvar_int (void)
 	    d_myTclVarname = NULL;
 	}
 
+	// Free callback list
+	tclIntCallbackEntry * entry;
+
+	while (d_callbacks) {
+	  entry = d_callbacks->next;
+	  delete d_callbacks;
+	  d_callbacks = entry;
+	}
+
 	// Find this entry in the list of variables
 	while ( (i < num_ints) && (int_list[i] != this) ) { i++; };
 	if (i >= num_ints) {
@@ -502,6 +520,42 @@ void Tclvar_int::addCallback (Linkvar_Intcall cb, void * userdata) {
   newEntry->next = d_callbacks;
 
   d_callbacks = newEntry;
+}
+
+/**
+   remove a callback. Parameter must be identical to those
+   passed to the addCallback method previously.
+   @param cb Callback function
+   @param userdata a pointer useful to the callback
+*/
+void Tclvar_int::removeCallback (Linkvar_Intcall cb, void * userdata) {
+  tclIntCallbackEntry * entry, * prev_entry;
+
+   if ((!cb)|| (!d_callbacks)) {
+     return;
+   }
+
+   entry = d_callbacks;
+   // special case for head of list
+   if ((entry->handler == cb) && (entry->userdata == userdata)) {
+     d_callbacks = entry->next;
+     delete entry;
+     return;
+   } else {
+     prev_entry = entry;
+     entry = entry->next;
+   }
+   // normal list entry
+   while (entry) {
+     if ((entry->handler == cb) && (entry->userdata == userdata)) {
+       prev_entry->next = entry->next;
+       delete entry;
+       return;
+     } else {
+       prev_entry = entry;
+       entry = entry->next;
+     }
+   }
 }
 
 void Tclvar_int::doCallbacks (void) {
@@ -582,11 +636,13 @@ void Tclvar_int::updateTcl (void) {
 //      d_ignoreChange = VRPN_FALSE;
 //      return;
 //    }
-
   mylastint = d_myint;
   d_dirty = VRPN_FALSE;
-  sprintf(cvalue, "%d", d_myint);
-  Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
+  if (d_myTclVarname) {
+    sprintf(cvalue, "%d", d_myint);
+    Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
+  }
+  d_ignoreChange = VRPN_FALSE;
 
 }
 
@@ -668,6 +724,14 @@ Tclvar_float::~Tclvar_float (void)
 	    d_myTclVarname = NULL;
 	}
 
+	// Free callback list
+	tclFloatCallbackEntry * entry;
+
+	while (d_callbacks) {
+	  entry = d_callbacks->next;
+	  delete d_callbacks;
+	  d_callbacks = entry;
+	}
 	// Find this entry in the list of variables
 	while ( (i < num_floats) && (float_list[i] != this) ) { i++; };
 	if (i >= num_floats) {
@@ -706,6 +770,42 @@ void Tclvar_float::addCallback (Linkvar_Floatcall cb, void * userdata) {
   newEntry->next = d_callbacks;
 
   d_callbacks = newEntry;
+}
+
+/**
+   remove a callback. Parameter must be identical to those
+   passed to the addCallback method previously.
+   @param cb Callback function
+   @param userdata a pointer useful to the callback
+*/
+void Tclvar_float::removeCallback (Linkvar_Floatcall cb, void * userdata) {
+  tclFloatCallbackEntry * entry, * prev_entry;
+
+   if ((!cb)|| (!d_callbacks)) {
+     return;
+   }
+
+   entry = d_callbacks;
+   // special case for head of list
+   if ((entry->handler == cb) && (entry->userdata == userdata)) {
+     d_callbacks = entry->next;
+     delete entry;
+     return;
+   } else {
+     prev_entry = entry;
+     entry = entry->next;
+   }
+   // normal list entry
+   while (entry) {
+     if ((entry->handler == cb) && (entry->userdata == userdata)) {
+       prev_entry->next = entry->next;
+       delete entry;
+       return;
+     } else {
+       prev_entry = entry;
+       entry = entry->next;
+     }
+   }
 }
 
 void Tclvar_float::doCallbacks (void) {
@@ -772,8 +872,11 @@ void Tclvar_float::updateTcl (void) {
 
   mylastfloat = d_myfloat;
   d_dirty = VRPN_FALSE;
-  sprintf(cvalue, "%g", d_myfloat);
-  Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
+  if (d_myTclVarname) {
+    sprintf(cvalue, "%g", d_myfloat);
+    Tcl_SetVar(interpreter, d_myTclVarname, cvalue, TCL_GLOBAL_ONLY);
+  }
+  d_ignoreChange = VRPN_FALSE;
 
 }
 
@@ -1493,6 +1596,15 @@ Tclvar_string::~Tclvar_string (void) {
     d_myTclVarname = NULL;
   }
 
+  // Free callback list
+  tclStringCallbackEntry * entry;
+  
+  while (d_callbacks) {
+    entry = d_callbacks->next;
+    delete d_callbacks;
+    d_callbacks = entry;
+  }
+
   for (i = 0; (i < num_strings) && (string_list[i] != this); i++) ;
   if (i >= num_strings) {
     fprintf(stderr, "~Tclvar_string:  Internal error.\n");
@@ -1527,6 +1639,42 @@ void Tclvar_string::addCallback (Linkvar_Stringcall cb, void * userdata) {
   newEntry->next = d_callbacks;
 
   d_callbacks = newEntry;
+}
+
+/**
+   remove a callback. Parameter must be identical to those
+   passed to the addCallback method previously.
+   @param cb Callback function
+   @param userdata a pointer useful to the callback
+*/
+void Tclvar_string::removeCallback (Linkvar_Stringcall cb, void * userdata) {
+  tclStringCallbackEntry * entry, * prev_entry;
+
+   if ((!cb)|| (!d_callbacks)) {
+     return;
+   }
+
+   entry = d_callbacks;
+   // special case for head of list
+   if ((entry->handler == cb) && (entry->userdata == userdata)) {
+     d_callbacks = entry->next;
+     delete entry;
+     return;
+   } else {
+     prev_entry = entry;
+     entry = entry->next;
+   }
+   // normal list entry
+   while (entry) {
+     if ((entry->handler == cb) && (entry->userdata == userdata)) {
+       prev_entry->next = entry->next;
+       delete entry;
+       return;
+     } else {
+       prev_entry = entry;
+       entry = entry->next;
+     }
+   }
 }
 
 void Tclvar_string::doCallbacks (void) {
@@ -1639,7 +1787,10 @@ void Tclvar_string::updateTcl (void) {
   //string(), d_myLastString);
   resetString();
   d_dirty = VRPN_FALSE;
-  Tcl_SetVar(interpreter, d_myTclVarname, (char *) string(), TCL_GLOBAL_ONLY);
+  if (d_myTclVarname) {
+    Tcl_SetVar(interpreter, d_myTclVarname, (char *) string(), TCL_GLOBAL_ONLY);
+  }
+  d_ignoreChange = VRPN_FALSE;
 }
 
 int Tclvar_string::compareStrings (void) {
@@ -1730,6 +1881,14 @@ Tclvar_list_of_strings::~Tclvar_list_of_strings (void) {
     delete [] d_myTclVarname;
     d_myTclVarname = NULL;
   }
+  // Free callback list
+  tclListOfStringsCallbackEntry * entry;
+  
+  while (d_callbacks) {
+    entry = d_callbacks->next;
+    delete d_callbacks;
+    d_callbacks = entry;
+  }
 
   for (i = 0; (i < num_list_of_strings) && (list_of_strings_list[i] != this); i++) ;
   if (i >= num_list_of_strings) {
@@ -1765,6 +1924,42 @@ void Tclvar_list_of_strings::addCallback (Linkvar_ListOfStringscall cb, void * u
   newEntry->next = d_callbacks;
 
   d_callbacks = newEntry;
+}
+
+/**
+   remove a callback. Parameter must be identical to those
+   passed to the addCallback method previously.
+   @param cb Callback function
+   @param userdata a pointer useful to the callback
+*/
+void Tclvar_list_of_strings::removeCallback (Linkvar_ListOfStringscall cb, void * userdata) {
+  tclListOfStringsCallbackEntry * entry, * prev_entry;
+
+   if ((!cb)|| (!d_callbacks)) {
+     return;
+   }
+
+   entry = d_callbacks;
+   // special case for head of list
+   if ((entry->handler == cb) && (entry->userdata == userdata)) {
+     d_callbacks = entry->next;
+     delete entry;
+     return;
+   } else {
+     prev_entry = entry;
+     entry = entry->next;
+   }
+   // normal list entry
+   while (entry) {
+     if ((entry->handler == cb) && (entry->userdata == userdata)) {
+       prev_entry->next = entry->next;
+       delete entry;
+       return;
+     } else {
+       prev_entry = entry;
+       entry = entry->next;
+     }
+   }
 }
 
 void Tclvar_list_of_strings::doCallbacks (void) {
@@ -1826,7 +2021,9 @@ void Tclvar_list_of_strings::updateTcl (void) {
   d_myString = Tcl_Merge(d_numEntries, d_entries);
 //fprintf(stderr, "%s:  Tcl returned  d_myString at %d.\n",
 //d_myTclVarname, d_myString);
-  Tcl_SetVar(interpreter, d_myTclVarname, d_myString, TCL_GLOBAL_ONLY);
+  if (d_myTclVarname) {
+    Tcl_SetVar(interpreter, d_myTclVarname, d_myString, TCL_GLOBAL_ONLY);
+  }
     
 }
 
@@ -1939,6 +2136,15 @@ Tclvar_checklist::~Tclvar_checklist (void) {
 		delete checkboxes[i].button;
 		checkboxes[i].button = NULL;
 	}
+	// Free callback list
+	tclCheckCallbackEntry * entry;
+
+	while (d_callbacks) {
+	  entry = d_callbacks->next;
+	  delete d_callbacks;
+	  d_callbacks = entry;
+	}
+
 }
 
 

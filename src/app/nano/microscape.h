@@ -46,8 +46,13 @@ class ColorMap;
 class PPM;
 class nmb_Dataset;
 class nmb_Decoration;
-class Microscope;
+//class Microscope;
 class Xform;		//added from ugraphics
+#ifndef NO_MAGELLAN
+class vrpn_Magellan;
+class vrpn_Tracker_AnalogFly;
+#endif
+class vrpn_Phantom;
 
 #define	MICROSCAPE_MAJOR_VERSION	(9)
 #define	MICROSCAPE_MINOR_VERSION	(0)
@@ -114,12 +119,17 @@ extern	float		MAX_K;  /* for each device		  */
 #define BDBOX_NUMBUTTONS 32
 #define BDBOX_NUMDIALS 8
 
+#ifndef NO_MAGELLAN
+#define MAGELLAN_NUMBUTTONS 9
+#endif
+
 // button events - set by interaction
 #define NULL_EVENT	0	///< button not pressed at least twice in a row
 #define PRESS_EVENT	1	///< button just pressed
 #define RELEASE_EVENT	2	///< button just released
 #define HOLD_EVENT	3	///< button pressed at least twice in a row
 
+extern  vrpn_Phantom * phantServer;
 extern  vrpn_ForceDevice_Remote *forceDevice;
 extern  vrpn_Tracker_Remote *vrpnHeadTracker[NUM_USERS];
 extern  vrpn_Tracker_Remote *vrpnHandTracker[NUM_USERS];
@@ -131,6 +141,16 @@ extern  vrpn_Button_Remote *buttonBox;
 extern  vrpn_Analog_Remote *dialBox;
 extern  int bdboxButtonState[BDBOX_NUMBUTTONS];
 extern  double bdboxDialValues[BDBOX_NUMDIALS];
+#ifndef NO_MAGELLAN
+extern  vrpn_Magellan *magellanButtonBoxServer;
+extern  vrpn_Tracker_AnalogFly *magellanTrackerServer;
+
+extern  vrpn_Button_Remote *magellanButtonBox;
+extern  int magellanButtonState[MAGELLAN_NUMBUTTONS];
+extern  vrpn_Analog_Remote *magellanPuckAnalog;
+extern  vrpn_Tracker_Remote *magellanPuckTracker;
+extern  vrpn_bool magellanPuckActive;
+#endif
 /* end vrpn stuff */
 
 extern  char                    *headTrackerName;
@@ -150,16 +170,18 @@ extern int do_cpanels;
 
 // Only list things here if they need to be shared with other files!
 
-extern	Tclvar_int using_phantom_button;	// microscape.c
+extern	Tclvar_int phantom_button_mode;	// microscape.c
 
 //---------------------------------------------------------------------------
 /// These select the plane to map color from and the scale of the mapping. 
-/// Also handles the runtime alpha selection values
-extern  Tclvar_float            color_slider_min_limit;
-extern  Tclvar_float            color_slider_max_limit;
-extern  TclNet_float            color_slider_min, color_slider_max;
+extern  Tclvar_float            color_min_limit;
+extern  Tclvar_float            color_max_limit;
+extern  TclNet_float            color_min, color_max;
+extern  TclNet_float            data_min, data_max;
 extern int noDataAlpha;
-
+extern TclNet_int surface_r;
+extern TclNet_int surface_g;
+extern TclNet_int surface_b;
 
 //--------------------------------------------------------------------------
 ///These select the plane to map compliance from and teh scale of the mapping.
@@ -268,7 +290,7 @@ extern int disableOtherTextures (TextureMode m);
 /* defined in minit.c */
 int x_init(char* argv[]);
 int reset_phantom();
-int peripheral_init();
+int peripheral_init(vrpn_Connection *, vrpn_bool do_magellan);
 int stm_init (const vrpn_bool set_region,
               const vrpn_bool set_mode, const int, const char *,
               const int, const int);

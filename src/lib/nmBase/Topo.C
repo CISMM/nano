@@ -68,7 +68,7 @@ int TopoFile::parseHeader(int in_descriptor){
 	char     s[N_RELEASE + 1];
 	vrpn_int32 verNumber, nOffset;
 
-	printf("TopoFile::ParseHeader: Parsing data file\n");
+	//printf("TopoFile::ParseHeader: Parsing data file\n");
         if(lseek(in_descriptor, 0, SEEK_SET) == -1) {   /* Error */
                 fprintf(stderr,"TopoHeader::ParseHeader(): Can't seek to zero");
                 return -1;
@@ -152,7 +152,7 @@ int TopoFile::parseHeader(const char *buf, vrpn_int32 length){
 	    return -1;
 	}
 	this->valid_header = 1;
-	printGridInfoFromHeader();
+	//printGridInfoFromHeader();
 	return(0);	
 }
 
@@ -439,8 +439,8 @@ int TopoFile::getGridInfoFromHeader (const char * temp) {
 
       for (i = 0; i < sizeof(szRelease); i++)
 	  szRelease[i] = doc->sInfo.szRelease[i];
-      fprintf(stderr, "TopoFile::getInfo got szRelease \"%s\"\n",
-	      szRelease);
+//        fprintf(stderr, "TopoFile::getInfo got szRelease \"%s\"\n",
+//  	      szRelease);
       for (i = 0; i < sizeof(szDatetime); i++)
 	  szDatetime[i] = doc->sInfo.szDatetime[i];
       //fprintf(stderr, "TopoFile::ParseDocInfo got szDatetime \"%s\"\n",
@@ -496,8 +496,8 @@ int TopoFile::getGridInfoFromHeader (const char * temp) {
 
       for (i = 0; i < sizeof(szRelease); i++)
 	  szRelease[i] = *(const char *)(w + 9 + i);
-      fprintf(stderr, "TopoFile::getInfo got szRelease \"%s\"\n",
-	      szRelease);
+//        fprintf(stderr, "TopoFile::getInfo got szRelease \"%s\"\n",
+//  	      szRelease);
       for (i = 0; i < sizeof(szDatetime); i++)
 	  szDatetime[i] = *(const char *)(w + 25 + i);
       //fprintf(stderr, "TopoFile::ParseDocInfo got szDatetime \"%s\"\n",
@@ -846,7 +846,7 @@ int TopoFile::parseData(int handle){
 
 	/* Seeking to where the data should start - this was not done in the
          * code from Topometrix. */
-        printf("TopoFile::ParseData: Reading data starting at byte %ld\n",(long)iOffset);
+//          printf("TopoFile::ParseData: Reading data starting at byte %ld\n",(long)iOffset);
 	if( lseek( handle, iOffset, SEEK_SET) == -1) { /* Error */
                 return -1;
         }
@@ -1395,8 +1395,8 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
             printf("No valid data to export - abort\n");
             return -1;
         } else {
-            printf("  Valid data range discovered: t %d, l %d, b %d, r %d\n",
-                   top, left, bottom, right);
+//              printf("  Valid data range discovered: t %d, l %d, b %d, r %d\n",
+//                     top, left, bottom, right);
             rRoi.top = top;
             rRoi.left = left;
             rRoi.bottom = bottom;
@@ -1407,10 +1407,10 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
         Zoffset = fDACtoWorldZero;
 
 
-        printf("  Units in X/Y: %s (type %ld)\n",szXYUnit,
-                (long)iXYUnitType);
-        printf("  Units in Z: %s (type %ld)\n",szWorldUnit,
-                (long)iWorldUnitType);
+//          printf("  Units in X/Y: %s (type %ld)\n",szXYUnit,
+//                  (long)iXYUnitType);
+//          printf("  Units in Z: %s (type %ld)\n",szWorldUnit,
+//                  (long)iWorldUnitType);
 
         griddata=new vrpn_uint16[iCols*iRows];
         if(griddata == NULL){
@@ -1523,8 +1523,8 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *P){
 	    printf("No valid data to export - abort\n");
 	    return -1;
 	} else {
-	    printf("  Valid data range discovered: t %d, l %d, b %d, r %d\n",
-		   top, left, bottom, right);
+//  	    printf("  Valid data range discovered: t %d, l %d, b %d, r %d\n",
+//  		   top, left, bottom, right);
 	    rRoi.top = top;
 	    rRoi.left = left;
 	    rRoi.bottom = bottom;
@@ -1535,10 +1535,10 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *P){
         Zoffset = fDACtoWorldZero;
 
 
-        printf("  Units in X/Y: %s (type %ld)\n",szXYUnit,
-                (long)iXYUnitType);
-        printf("  Units in Z: %s (type %ld)\n",szWorldUnit,
-                (long)iWorldUnitType);
+//          printf("  Units in X/Y: %s (type %ld)\n",szXYUnit,
+//                  (long)iXYUnitType);
+//          printf("  Units in Z: %s (type %ld)\n",szWorldUnit,
+//                  (long)iWorldUnitType);
 	
 	griddata=new vrpn_uint16[iCols*iRows];
 	if(griddata == NULL){
@@ -1647,10 +1647,10 @@ int TopoFile::gridToTopoData(BCGrid* G){
        	iLayers=G->numPlanes();
 	plane=G->head();
 
-        printf("  Units in X/Y: %s (type %ld)\n",szXYUnit,
-                (long)iXYUnitType);
-        printf("  Units in Z: %s (type %ld)\n",szWorldUnit,
-                (long)iWorldUnitType);
+//          printf("  Units in X/Y: %s (type %ld)\n",szXYUnit,
+//                  (long)iXYUnitType);
+//          printf("  Units in Z: %s (type %ld)\n",szWorldUnit,
+//                  (long)iWorldUnitType);
 	
                 Zscale = fDACtoWorld;
                 Zoffset = fDACtoWorldZero;
@@ -1700,7 +1700,7 @@ int TopoFile::initForConversionToTopo(double z_scale_nm, double z_offset_nm) {
 	fprintf(stderr, "Error: TopoFile::initForConversionToTopo "
 		"- cannot overwrite loaded topo file\n");
     }
-    printf("TopoFile::initForConversionToTopo scale %f offset %f\n", z_scale_nm, z_offset_nm);
+    //printf("TopoFile::initForConversionToTopo scale %f offset %f\n", z_scale_nm, z_offset_nm);
     iRelease = 400;
     iOffset = 2112;
     header = new char[iOffset];

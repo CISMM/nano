@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include  "nmg_GraphicsTimer.h"
 
 nmg_Graphics_Timer::nmg_Graphics_Timer (nmg_Graphics * imp,
@@ -36,9 +43,17 @@ void nmg_Graphics_Timer::mainloop (void) {
   
 }
 
+void nmg_Graphics_Timer::changeDataset( nmb_Dataset * data) {
+  d_imp->changeDataset(data);
+}
+
 void nmg_Graphics_Timer::resizeViewport (int width, int height) {
   activateTimer();
   d_imp->resizeViewport(width, height);
+}
+
+void nmg_Graphics_Timer::getViewportSize(int *width, int * height) {
+    d_imp->getViewportSize(width, height);
 }
 
 void nmg_Graphics_Timer::getDisplayPosition (q_vec_type &ll,
@@ -123,9 +138,14 @@ void nmg_Graphics_Timer::setColorMapName (const char * name) {
   d_imp->setColorMapName(name);
 }
 
-void nmg_Graphics_Timer::setColorSliderRange (float low, float high) {
+void nmg_Graphics_Timer::setColorMinMax (float low, float high) {
   activateTimer();
-  d_imp->setColorSliderRange(low, high);
+  d_imp->setColorMinMax(low, high);
+}
+
+void nmg_Graphics_Timer::setDataColorMinMax (float low, float high) {
+  activateTimer();
+  d_imp->setDataColorMinMax(low, high);
 }
 
 void nmg_Graphics_Timer::setOpacitySliderRange (float low, float high) {
@@ -245,13 +265,6 @@ void nmg_Graphics_Timer::setMaxColor (const int c [4]) {
 void nmg_Graphics_Timer::setPatternMapName (const char * name) {
   activateTimer();
   d_imp->setPatternMapName(name);
-}
-
-void nmg_Graphics_Timer::sendGeneticTexturesData (
-                           int number_of_variables,
-                           char **variable_list ) {
-  activateTimer();
-  d_imp->sendGeneticTexturesData(number_of_variables, variable_list);
 }
 
 void nmg_Graphics_Timer::createRealignTextures( const char *name ) {
@@ -416,10 +429,10 @@ void nmg_Graphics_Timer::setTrueTipScale (float f) {
 }
 
 
-void nmg_Graphics_Timer::setUserMode (int oldMode, int newMode,
+void nmg_Graphics_Timer::setUserMode (int oldMode, int oldStyle, int newMode,
                                                int style) {
   activateTimer();
-  d_imp->setUserMode(oldMode, newMode, style);
+  d_imp->setUserMode(oldMode, oldStyle, newMode, style);
 }
 
 

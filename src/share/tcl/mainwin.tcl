@@ -1,3 +1,10 @@
+#/*===3rdtech===
+#  Copyright (c) 2000 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
 #!/bin/sh
 # the next line restarts using wishx (see man wish) \
 	exec wish "$0" ${1+"$@"}
@@ -39,7 +46,7 @@ namespace import -force blt::tile::*
 #option add *highlightBackground blanchedAlmond startupFile
 option add *background LemonChiffon1 startupFile
 option add *highlightBackground LemonChiffon1 startupFile
-option add *menu*background grey80 startupFile
+option add *menu*background grey75 startupFile
 
 # This needs to be made dependent on how big the font is on the screen.
 catch { option add *font {helvetica -15 } startupFile}
@@ -52,11 +59,28 @@ catch { option add *Font {helvetica -15 } startupFile}
 
 # where do I find supporting files?
 # If the environment variable NM_TCL_DIR is not set, 
+# check for NANO_ROOT. If that is not set, 
 # assume files are in the current directory. Allows
 # "wish mainwin.tcl" to bring up the interface.
-if {[catch {set tcl_script_dir $env(NM_TCL_DIR) }] } {
+if {[info exists env(NM_TCL_DIR)] } {
+    set tcl_script_dir $env(NM_TCL_DIR)
+} elseif {[info exists env(NANO_ROOT)]} {
+    set tcl_script_dir [file join $env(NANO_ROOT) share tcl]
+} else {
     set tcl_script_dir .
 }
+### ks
+#if {[string match -nocase "*wish*" [info nameofexecutable]] } {
+if {[string match "*wish*" [info nameofexecutable]] } {
+    set tcl_script_dir .
+}
+
+#
+# 3rdTech modifications:
+#   There are several parts of the interface we don't expose in the
+#   commercial version. This flag turns them off.
+#
+ set thirdtech_ui 0
 
 #appearance variables
     # vertical padding between floatscales - image and modify windows
@@ -78,16 +102,44 @@ wm geometry . +0+0
 
 # Give it a title
 wm title . "NanoManipulator"
-
-# Make the main graphics window appear in the lower right corner
-# XXX assume a 1280x1024 screen with a 1024x768 vlib window
-# XXX doesn't seem to work properly. Not communicated to vlib. 
-#set env(V_SCREEN_OFFSET) "252 224"
-
+wm iconbitmap . error
 # contains definition of useful widgets for the 
 # Tcl_Linkvar library.
 source [file join ${tcl_script_dir} Tcl_Linkvar_widgets.tcl]
 source [file join ${tcl_script_dir} panel_tools.tcl]
+
+################ Error Handling #############################
+### Message dialog for warnings and errors. 
+# Designed to be called from C code, as well. 
+iwidgets::messagedialog .error_dialog -title "NanoManipulator Error" \
+    -bitmap error -text "Error" -modality application
+
+.error_dialog hide Help
+#.message_dialog buttonconfigure OK -text "Yes"
+.error_dialog hide Cancel 
+proc nano_fatal_error {msg } {
+    global term_input
+    .error_dialog config -text "$msg" -title "NanoManipulator Fatal Error" \
+            -bitmap error 
+    .error_dialog buttonconfigure OK -command "set term_input q ; .error_dialog deactivate 1"
+    .error_dialog activate
+}
+proc nano_error {msg } {
+    global term_input
+    .error_dialog config -text "$msg" -title "NanoManipulator Error" \
+            -bitmap error 
+    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
+    .error_dialog activate
+}
+proc nano_warning {msg } {
+    global term_input
+    .error_dialog config -text "$msg" -title "NanoManipulator Warning" \
+            -bitmap warning
+    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
+    .error_dialog activate
+}
+######################
+
 
 # frames - overall layout of the screen
 frame .menubar -relief raised -bd 4 
@@ -113,62 +165,83 @@ set w2 .main.w2
 # menu bar
 menu .menu -tearoff 0
 
+# Array to allow controls to be enabled and disabled 
+# based on spm_read_mode - reading a file, a streamfile, or a device?
+set device_only_controls ""
+set stream_only_controls ""
+set stream_and_device_only_controls ""
 
 #### FILE menu #############################
 set filemenu .menu.file
 menu $filemenu -tearoff 0
 .menu add cascade -label "File" -menu $filemenu -underline 0
 
-$filemenu add command -label "Open static file..." -underline 0 \
+$filemenu add command -label "Open Static File..." -underline 12 \
 	-command "open_static_file"
+$filemenu add command -label "Open Stream File..." -underline 0 \
+	-command "open_stream_file"
+$filemenu add command -label "Open SPM Connection..." -underline 9 \
+	-command "open_spm_connection"
 #        $filemenu add command -label "Close..." -underline 0 -command \
 #		{.message_dialog activate}
 #        $filemenu add separator
-$filemenu add command -label "Save Screen..." -command \
+$filemenu add command -label "Save Screen..." -underline 0 -command \
 	"save_screenImage"
-$filemenu add command -label "Save Plane Data..." -command \
+$filemenu add command -label "Save Plane Data..." -underline 5 -command \
 	"save_plane_data"
-$filemenu add command -label "Save Modification Data..." -command \
-	"save_mod_dialog"
+$filemenu add command -label "Save Modification Data..." -underline 5 \
+         -command "save_mod_dialog"
 $filemenu add command -label "Export Scene..." -command \
 	"export_scene"
 $filemenu add separator
-$filemenu add command -label "Exit" -underline 1 -command \
-	"set term_input q"
+$filemenu add command -label "Exit" -underline 1 -command {
+    if {[string match "*wish*" [info nameofexecutable]] } {
+        # we ran the file using wish, for testing. Kill app.
+        exit 0
+    } else {
+        # we ran using NanoManipulator. Tell main app to exit. 
+        set term_input q
+    }
+}
+
+lappend stream_and_device_only_controls \
+        [list $filemenu entryconfigure "Save Modification Data..."]
 
 #### SETUP menu #############################
 set setupmenu .menu.setup
 menu $setupmenu -tearoff 0
 .menu add cascade -label "Setup" -menu $setupmenu -underline 0
 
-$setupmenu add command -label "Data Sets..." \
+$setupmenu add command -label "Data Sets..." -underline 0 \
 	-command "show.data_sets"
-$setupmenu add command -label "Height Plane..." -command \
+$setupmenu add command -label "Height Plane..." -underline 0 -command \
 	"show.z_mapping"
-$setupmenu add command -label "Color Map..." -command \
+$setupmenu add command -label "Color Map..." -underline 0 -command \
 	"show.colorscale"
-$setupmenu add command -label "Contour Lines..." -command \
+$setupmenu add command -label "Contour Lines..." -underline 8 -command \
 	"show.contour_lines"
-$setupmenu add command -label "Texture Blend..." -command \
+if { !$thirdtech_ui } {
+$setupmenu add command -label "Texture Blend..." -underline 0 -command \
 	"show.alphascale"
-$setupmenu add command -label "Haptic..." -command \
+$setupmenu add command -label "Haptic..." -underline 2 -command \
 	"show.haptic"
-$setupmenu add command -label "Preferences..." -command \
-		"show.preferences"
-#	{.message_dialog activate}
+}
+$setupmenu add command -label "Display Settings..." -underline 8 -command \
+		"show.display_settings"
 
-
+lappend device_only_controls \
+        [list $setupmenu entryconfigure "Data Sets..."]
 
 #### TIPCONTROL menu #############################
 set tipcontrolmenu .menu.tipcontrol
 menu $tipcontrolmenu -tearoff 0
 .menu add cascade -label "Tipcontrol" -menu $tipcontrolmenu -underline 0
 
-$tipcontrolmenu add command -label "Image Params..." \
+$tipcontrolmenu add command -label "Image Params..." -underline 0 \
 	-command "show.image"
-$tipcontrolmenu add command -label "Modify Params..." \
+$tipcontrolmenu add command -label "Modify Params..." -underline 0 \
 	-command "show.modify"
-$tipcontrolmenu add command -label "Modify Live Controls..." \
+$tipcontrolmenu add command -label "Modify Live Controls..." -underline 7 \
 	-command "show.modify_live"
 
 
@@ -177,21 +250,20 @@ set analysismenu .menu.analysis
 menu $analysismenu -tearoff 0
 .menu add cascade -label "Analysis" -menu $analysismenu -underline 0
 
-$analysismenu add command -label  "Rulergrid..."  \
+$analysismenu add command -label  "Calculate Data Planes..." -underline 0 \
+    -command "show.calc_planes"
+$analysismenu add command -label  "Rulergrid..." -underline 0  \
     -command "show.rulergrid"
-$analysismenu add radiobutton -label "Measure Lines" \
+$analysismenu add radiobutton -label "Measure Lines" -underline 0 \
     -variable user_0_mode -value 9 
-$analysismenu add command -label "Data Registration..." \
+if { !$thirdtech_ui } {
+$analysismenu add command -label "Data Registration..." -underline 0 \
     -command "show.registration"
 $analysismenu add command -label "Tip Convolution..." \
     -command "show.tip_conv"
+}
 #        $analysismenu add command -label  "Import Objects..." -command \
 #		{.message_dialog activate}
-#        $analysismenu add command -label  "Filter a plane..." -command \
-#		{.message_dialog activate}
-#        $analysismenu add command -label  "Sum Plane..." -command \
-#		{.message_dialog activate}
-
 
 
 #### TOOLS menu #############################
@@ -199,34 +271,37 @@ set toolmenu .menu.tool
 menu $toolmenu -tearoff 0
 .menu add cascade -label "Tools" -menu $toolmenu -underline 1
         
-$toolmenu add command -label "Phantom" \
+$toolmenu add command -label "Phantom" -underline 0 \
     -command "show.phantom_win"
 
-$toolmenu add command -label "Navigate" \
+$toolmenu add command -label "Navigate" -underline 0 \
     -command "show.nav_win"
 
-$toolmenu add command -label "Stripchart" \
+$toolmenu add command -label "Stripchart" -underline 0 \
 	-command "show.stripchart"
 
-$toolmenu add command -label "Replay Control" \
+$toolmenu add command -label "Replay Control" -underline 0 \
 	-command "show.streamfile"
 
-$toolmenu add command -label "Collaboration" \
+if { !$thirdtech_ui } {
+$toolmenu add command -label "Collaboration" -underline 0 \
 	-command "show.sharedptr"
 
-$toolmenu add command -label  "Ohmmeter"  \
+$toolmenu add command -label  "Ohmmeter" -underline 0  \
     -command "show.french_ohmmeter"
 
-$toolmenu add command -label "VI Curve" \
+$toolmenu add command -label "VI Curve" -underline 0 \
     -command "show.vi_win"
 
-$toolmenu add command -label "Latency Adaptation" \
+$toolmenu add command -label "Latency Adaptation" -underline 0 \
     -command "show.latency"
 
 
-$toolmenu add command -label "SEM" \
+$toolmenu add command -label "SEM" -underline 1 \
     -command "show.sem_win"
+}
 
+lappend stream_only_controls [list $toolmenu entryconfigure "Replay Control"]
 
 #### HELP menu #############################
 #set helpmenu .menu.help
@@ -240,8 +315,8 @@ $toolmenu add command -label "SEM" \
 . config -menu .menu
 
 
-# Uncomment when done debugging...
-#wm protocol . WM_DELETE_WINDOW {$filemenu invoke "Exit"}
+# Invoke File.. Exit when destroying window for clean exit. 
+wm protocol . WM_DELETE_WINDOW {$filemenu invoke "Exit"}
 
 
 #
@@ -283,15 +358,39 @@ pack $w2.toolbar.detail $w2.toolbar.speed_detail1 $w2.toolbar.speed_detail2 \
 	$w2.toolbar.speed_detail5 $w2.toolbar.speed \
 	-side left 
 
-radiobutton $w2.toolbar.demotouch -text "Touch Surface" \
-	-variable user_0_mode -value 11 
-pack $w2.toolbar.demotouch -side left -padx 5
+
+set spm_scanning 1
+# toggle scanning flag. 
+button $w2.toolbar.pause_scan -text "Stop\nScan" \
+	-command { set spm_scanning [expr !$spm_scanning] }
+
+# keep button label consistent with value of global variable.
+# After all, it may be set from C code. 
+proc scan_button_label { name el op } {
+    global spm_scanning w2
+    if {$spm_scanning} {
+        $w2.toolbar.pause_scan configure -text "Stop\nScan"
+    } else {
+        $w2.toolbar.pause_scan configure -text "Start\nScan"
+    }
+}
+trace variable spm_scanning w scan_button_label
+
+button $w2.toolbar.withdraw_tip -text "Withdraw\nTip" \
+        -command "set withdraw_tip 1"
+pack $w2.toolbar.pause_scan $w2.toolbar.withdraw_tip -side left -padx 5
+
+# These two button should only be available when reading a DEVICE
+lappend device_only_controls $w2.toolbar.pause_scan $w2.toolbar.withdraw_tip
 
 #File menu commands
 source [file join ${tcl_script_dir} filemenu.tcl]
 
 #Setup menu commands
 source [file join ${tcl_script_dir} setupmenu.tcl]
+
+# Colormap widget and window.
+source [file join ${tcl_script_dir} colormap.tcl]
 
 # tipcontrol menu commands
 source [file join ${tcl_script_dir} image.tcl]
@@ -302,16 +401,11 @@ source [file join ${tcl_script_dir} analysismenu.tcl]
 
 #
 ###############
-# The toolbar window fits along the left side of the screen, next to
-# the graphics window.
-# source first so we can place other windows (streamfile) around it.
-source [file join ${tcl_script_dir} toolbar.tcl]
-
 #Tools menu commands - split among several files:
 
 # The stripchart, for graphing the results of modifications
 source [file join ${tcl_script_dir} stripchart.tcl]
-# Streamfile replay controls. Position depends on toolbar window. 
+# Streamfile replay controls. Position depends on image window. 
 source [file join ${tcl_script_dir} streamfile.tcl]
 #Shared resource controls. Synchronize two copies of nM running
 # on different machines. Position depends on streamfile window.
@@ -322,19 +416,195 @@ source [file join ${tcl_script_dir} tip_conv.tcl]
 # Dialogs accessed from the menus, like  vi_win, 
 # and nav_win.
 source [file join ${tcl_script_dir} toplevels.tcl]
+
+if { !$thirdtech_ui } {
 # SEM control panel
 source [file join ${tcl_script_dir} sem.tcl]
 # French Ohmmeter control panel
 source [file join ${tcl_script_dir} french_ohmmeter.tcl]
+}
 
-### Message dialog for any simple messages generated by menu items
-# The only one so far is "not implemented"
-iwidgets::messagedialog .message_dialog -title "Not implemented" \
-    -bitmap info -text "This menu item is not yet implemented."
+#----------------
+# Try and make widgets active based on what we are doing.
+# We only want to be able to operate widgets if they are appropriate 
+# for the current activity. 
+# For now, based totally on whether we are reading files, a stream, or a device. 
+set READ_DEVICE 0
+set READ_FILE 1
+set READ_STREAM 2
+if {![info exists spm_read_mode] } { set spm_read_mode $READ_FILE }
 
-.message_dialog hide Help
-#.message_dialog buttonconfigure OK -text "Yes"
-.message_dialog hide Cancel 
+proc diable_widgets_for_readmode { name el op } {
+    global device_only_controls stream_only_controls stream_and_device_only_controls 
+    global spm_read_mode toolmenu
+
+    # Note: $ substitution for the patterns won't work because
+    # the switch body is in brackets. 
+    switch $spm_read_mode {
+        0 {
+            # READ_DEVICE
+            hide.streamfile
+            show.image
+            show.modify
+            #show.modify_live
+            foreach widget $device_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state normal
+                } else {
+                    $widget configure -state normal
+                }
+            }
+            foreach widget $stream_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state disabled
+                } else {
+                    $widget configure -state disabled
+                }
+            }
+            foreach widget $stream_and_device_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state normal
+                } else {
+                    $widget configure -state normal
+                }
+            }
+        }
+        1 {
+            # READ_FILE
+            hide.streamfile
+            #hide.image
+            #hide.modify
+            #hide.modify_live
+            foreach widget $device_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state disabled
+                } else {
+                    $widget configure -state disabled
+                }
+            }
+            foreach widget $stream_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state disabled
+                } else {
+                    $widget configure -state disabled
+                }
+            }
+            foreach widget $stream_and_device_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state disabled
+                } else {
+                    $widget configure -state disabled
+                }
+            }
+        }
+        2 {
+            # READ_STREAM
+            show.streamfile
+            show.image
+            show.modify
+            hide.modify_live
+            foreach widget $device_only_controls {
+                if { ([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state disabled
+                } else {
+                    $widget configure -state disabled
+                }
+            }
+            foreach widget $stream_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state normal
+                } else {
+                    $widget configure -state normal
+                }
+            }
+            foreach widget $stream_and_device_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state normal
+                } else {
+                    $widget configure -state normal
+                }
+            }
+        }
+        default {
+            nano_error "Internal tcl: unknown read mode"
+        }
+    }
+}
+trace variable spm_read_mode w diable_widgets_for_readmode
+
+# Helps with Thermo Image Analysis mode. When in this mode, most of 
+# the widgets/dialogs that Nano needs to control the SPM aren't available
+# So we avoid issuing any commands to Thermo, by disabling all device 
+# controls. 
+if {![info exists spm_commands_suspended] } { set spm_commands_suspended 0 }
+proc diable_widgets_for_commands_suspended { name el op } {
+    global device_only_controls  
+    global spm_commands_suspended
+    global spm_read_mode READ_DEVICE
+
+    # Don't do anything if we aren't talking to a device
+    if { $spm_read_mode != $READ_DEVICE } { return; }
+
+    # Note: $ substitution for the patterns won't work because
+    # the switch body is in brackets. 
+    switch $spm_commands_suspended {
+        0 {
+            # Commands aren't suspended, enable controls
+            foreach widget $device_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state normal
+                } else {
+                    $widget configure -state normal
+                }
+            }
+        }
+        1 {
+            # Commands are suspended, disable controls
+            foreach widget $device_only_controls {
+                if { ([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state disabled
+                } else {
+                    $widget configure -state disabled
+                }
+            }
+        }
+    }
+}
+trace variable spm_commands_suspended w diable_widgets_for_commands_suspended
+
 
 #----------------
 # Setup window positions and geometries to be convenient and pleasant!
@@ -345,8 +615,7 @@ iwidgets::messagedialog .message_dialog -title "Not implemented" \
 # the relationship between window positions.
 after idle {
 
-    # First, the toolbar window
-    #Make the window appear on the left edge below the main window
+    # Find out about the main window geometry.
     update idletasks
     # the root window, ".", seems to need special handling.
     #set width [winfo reqwidth .] Doesn't include borders.
@@ -354,95 +623,109 @@ after idle {
 
     scan [wm geometry .] %dx%d+%d+%d width height main_xpos main_ypos
     # wm rootx seems to tell us how big the border of the window is.
-    set main_width [expr $width + 2* ([winfo rootx .] - $main_xpos) ]
+    set winborder [expr [winfo rootx .] - $main_xpos]
+    set main_width [expr $width + 2* $winborder ]
     set main_height [expr $height + ([winfo rooty .] - $main_ypos) + \
-	   ([winfo rootx .] - $main_xpos) ]
-    puts " mainwin $width $height $main_xpos $main_ypos [wm geometry .]"
-
-    set toolbar_req_width  [winfo reqwidth .toolbar] 
-    set toolbar_req_height [winfo reqheight .toolbar] 
-
-    wm geometry .toolbar +${main_xpos}+[expr $main_ypos +$main_height]
+	   $winborder ]
+#    puts " mainwin $width $height $main_xpos $main_ypos [wm geometry .]"
 
     # The stripchart window.
     #Make the window appear on the top next to the main window
-    wm geometry $graphmod(sc) +[expr $main_xpos + $width ]+$main_ypos
+    wm geometry $graphmod(sc) +[expr $main_xpos + $width + 2*$winborder]+$main_ypos
+
+    # The colormap window - about the same as the stripchart window.
+    wm geometry $nmInfo(colorscale) +[expr $main_xpos + $width \
+            + 2*$winborder + 10]+[expr $main_ypos + 10]
+
+    # The image window
+    # Make the window appear on the left edge below the main window
+    
+    # Make the left strip all the same width - same as the image windows.
+    set left_strip_width  [winfo reqwidth .image] 
+
+    # Keep track of where the next window should appear
+    set next_left_pos [expr $main_ypos +$main_height]
+
+    wm geometry .image +${main_xpos}+$next_left_pos
+
+    
+    # Next, the modify window
+    # Make the window appear on the left edge below the image window
+    update idletasks
+
+    # find out how big the title bar is. 
+    scan [wm geometry .image] %dx%d+%d+%d width height xpos ypos
+    #puts "image geometry $width $height $xpos $ypos"
+    set titleborder [expr [winfo rooty .image] - $ypos]
+    #puts "image root pos [winfo rootx .image] [winfo rooty .image]"
+    # check to make sure we aren't off the bottom of the screen. 
+    set next_left_pos [expr $next_left_pos  +[winfo reqheight .image] \
+            + $winborder + $titleborder]
+    # wm maxsize . gives us the size of the available space. 
+    # Make sure the window doesn't appear off the bottom of the screen.
+    set req_height [winfo reqheight .modify] 
+    if { $next_left_pos > [lindex [wm maxsize .] 1] } {
+	set next_left_pos [expr $main_ypos +$main_height]
+    }
+
+    wm geometry .modify +${main_xpos}+$next_left_pos
 
     # Next, the stream file window
-    # Make the window appear on the left edge below the toolbar window
+    # Make the window appear on the left edge below the image window
     update idletasks
-    set width [winfo reqwidth .toolbar]
-    set height [winfo reqheight .toolbar]
-    set xpos [winfo rootx .toolbar]
-    set ypos [winfo rooty .toolbar]
-    puts " toolbar $width $height $xpos $ypos [wm geometry .toolbar]"
+
     # check to make sure we aren't off the bottom of the screen. 
-    set my_ypos [expr $ypos +$height]
+    set next_left_pos [expr $next_left_pos  +[winfo reqheight .modify] \
+            + $winborder + $titleborder]
     # wm maxsize . gives us the size of the available space. 
     # Make sure the window doesn't appear off the bottom of the screen.
     set req_height [winfo reqheight .streamfile] 
-    if { $my_ypos > [lindex [wm maxsize .] 1] } {
-	set my_ypos [expr [lindex [wm maxsize .] 1] - $req_height - 50]
+    if { $next_left_pos > [lindex [wm maxsize .] 1] } {
+	set next_left_pos [expr $main_ypos +$main_height]
     }
 
-    wm geometry .streamfile ${toolbar_req_width}x${req_height}+${main_xpos}+$my_ypos
+    wm geometry .streamfile ${left_strip_width}x${req_height}+${main_xpos}+$next_left_pos
 
     # Finally the shared_ptr window, for collaboration.
     #Make the window appear on the left edge below the streamfile window
     update idletasks
-    set width [winfo reqwidth .streamfile]
-    set height [winfo reqheight .streamfile]
-    set xpos [winfo rootx .streamfile]
-    set ypos [winfo rooty .streamfile]
-        puts " streamfile $width $height $xpos $ypos [wm geometry .streamfile]"
-    # .streamfile is the window we want to relate our position to. 
-    #scan [wm geometry .streamfile] %dx%d+%d+%d width height xpos ypos
-    set my_ypos [expr $ypos +$height]
+    # check to make sure we aren't off the bottom of the screen. 
+    set next_left_pos [expr $next_left_pos  +[winfo reqheight .streamfile] \
+            + $winborder + $titleborder]
     # wm maxsize . gives us the size of the available space. 
     # Make sure the window doesn't appear off the bottom of the screen.
     set req_height [winfo reqheight .sharedptr] 
-    if { $my_ypos > [lindex [wm maxsize .] 1] } {
-	set my_ypos [expr [lindex [wm maxsize .] 1] - $req_height]
+    if { $next_left_pos > [lindex [wm maxsize .] 1] } {
+	set next_left_pos [expr $main_ypos +$main_height]
     }
 
 #  Can't specify the window size because we want it to change when we pack
 # the finegrained coupling controls.
-#    wm geometry .sharedptr ${toolbar_req_width}x${req_height}+${main_xpos}+$my_ypos
-    wm geometry .sharedptr +${main_xpos}+$my_ypos
+    wm geometry .sharedptr +${main_xpos}+$next_left_pos
 
 
-    # Make the modify live window appear at the same position as the toolbar
+    # Make the modify live window appear at the same position as the image
     wm geometry .modify_live +${main_xpos}+[expr $main_ypos +$main_height + 20]
 
 }
 
 
 # Hack to allow microscape to run!
-frame .sliders
+#frame .sliders
 
-set bc tan
-set fc tan
+#set bc tan
+#set fc tan
 
-set dataset1 $w2.dataset1
-set dataset2 $w2.dataset2
-set dataset3 $w2.dataset3
-source [file join ${tcl_script_dir} dataset.tcl]
+#set dataset1 $w2.dataset1
+#set dataset2 $w2.dataset2
+#set dataset3 $w2.dataset3
+#source [file join ${tcl_script_dir} dataset.tcl]
 
 #source [file join ${tcl_script_dir} modfile.tcl]
 
-source [file join ${tcl_script_dir} latency.tcl]
+#source [file join ${tcl_script_dir} latency.tcl]
 
 # puts the focus on the main window, instead of any other windows 
 # which have been created. 
 wm deiconify .
 
-#Debugging printouts:
-#set collab_machine_name "a"
-#button $w2.toolbar.testprint -text "printstuff" -command {
-#puts "TCL: z dataset: $z_comes_from"
-#puts "TCL: replay rate: $stream_replay_rate"
-#puts "TCL: collab machine: $collab_machine_name"
-#}
-
-#pack $w2.toolbar.testprint
-#$w2.toolbar.testprint invoke

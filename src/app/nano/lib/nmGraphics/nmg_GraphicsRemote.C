@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <string.h>
 #include "nmg_GraphicsRemote.h"
 
@@ -23,6 +30,11 @@ void nmg_Graphics_Remote::mainloop (void) {
 
 }
 
+void nmg_Graphics_Remote::changeDataset( nmb_Dataset * /*data*/) {
+  fprintf(stderr, "WARNING: nmg_Graphics_Remote::changeDataset \n"
+	  "      Attempting to send pointer over the network DOESN'T WORK.\n");
+}
+
 void nmg_Graphics_Remote::resizeViewport (int width , int height ) {
    //	printf("nmg_Graphics_Remote::resizeViewport not implemented\n");
   struct timeval now;
@@ -43,6 +55,11 @@ void nmg_Graphics_Remote::resizeViewport (int width , int height ) {
   if (msgbuf)
     delete [] msgbuf;
 
+}
+void nmg_Graphics_Remote::getViewportSize(int *width, int * height) {
+    fprintf(stderr, "WARNING: nmg_Graphics_Remote::getViewportSize unimplemented!\n");
+    *width = 1024;
+    *height = 768;
 }
 
 void nmg_Graphics_Remote::getDisplayPosition (q_vec_type &  ll ,
@@ -353,22 +370,45 @@ void nmg_Graphics_Remote::setColorMapName (const char * name) {
   }
 }
 
-void nmg_Graphics_Remote::setColorSliderRange (float low, float hi) {
+void nmg_Graphics_Remote::setColorMinMax (float low, float hi) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  d_color_slider_min = low;
-  d_color_slider_max = hi;
+  d_color_min = low;
+  d_color_max = hi;
 
-  msgbuf = encode_setColorSliderRange(&len, low, hi);
+  msgbuf = encode_setColorMinMax(&len, low, hi);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now, d_setColorSliderRange_type,
+    retval = d_connection->pack_message(len, now, d_setColorMinMax_type,
                            d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
     if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::setColorSliderRange:  "
+      fprintf(stderr, "nmg_Graphics_Remote::setColorMinMax:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+  if (msgbuf)
+    delete [] msgbuf;
+}
+
+void nmg_Graphics_Remote::setDataColorMinMax (float low, float hi) {
+  struct timeval now;
+  char * msgbuf;
+  int len;
+  int retval;
+
+  d_data_min = low;
+  d_data_max = hi;
+
+  msgbuf = encode_setDataColorMinMax(&len, low, hi);
+  gettimeofday(&now, NULL);
+  if (d_connection && msgbuf) {
+    retval = d_connection->pack_message(len, now, d_setDataColorMinMax_type,
+                           d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setDataColorMinMax:  "
                       "Couldn't pack message to send to server.\n");
     }
   }
@@ -858,66 +898,6 @@ void nmg_Graphics_Remote::setPatternMapName (const char * name) {
     }
   }
 }
-
-//
-// Genetic Textures Remote Code:
-//
-
-// Enables the genetic textures algorithm.
-// Sends a message to the nmg_Graphics_Implementation
-//
-/*
-void nmg_Graphics_Remote::enableGeneticTextures (int value) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_enableGeneticTextures(&len, value);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now, d_enableGeneticTextures_type,
-				d_myId, msgbuf, vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::enableGeneticTextures:  "
-                      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-*/
-
-// Sends the list of variables to used in the genetic textures algorithm.
-// This list is set by the user the pop-up window created by the
-// Set Genetic Textures Parameters button on the microscape tcl interface...
-//
-void nmg_Graphics_Remote::sendGeneticTexturesData (int number_of_variables,
-						   char **variable_list) {
-  struct timeval now;
-  char * msgbuf;
-  int len;
-  int retval;
-
-  msgbuf = encode_sendGeneticTexturesData(&len,
-					  number_of_variables, variable_list);
-  gettimeofday(&now, NULL);
-  if (d_connection && msgbuf) {
-    retval = d_connection->pack_message(len, now,
-					d_sendGeneticTexturesData_type,
-					d_myId, msgbuf,
-					vrpn_CONNECTION_RELIABLE);
-    if (retval) {
-      fprintf(stderr, "nmg_Graphics_Remote::sendGeneticTexturesData:  "
-	      "Couldn't pack message to send to server.\n");
-    }
-  }
-  if (msgbuf)
-    delete [] msgbuf;
-}
-//
-// End Genetic Textures Remote Code.
-//
 
 //
 // Realign Textures Remote Code:
@@ -1580,13 +1560,13 @@ void nmg_Graphics_Remote::setTrueTipScale (float scale) {
     delete [] msgbuf;
 }
 
-void nmg_Graphics_Remote::setUserMode (int oldMode, int newMode, int style) {
+void nmg_Graphics_Remote::setUserMode (int oldMode, int oldStyle, int newMode, int style) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  msgbuf = encode_setUserMode(&len, oldMode, newMode, style);
+  msgbuf = encode_setUserMode(&len, oldMode, oldStyle, newMode, style);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now, d_setUserMode_type,

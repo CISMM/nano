@@ -160,10 +160,9 @@ void nmui_HapticSurface::computeDistanceFromPlane (void) {
 
 
 
-nmui_HSCanned::nmui_HSCanned (nmb_Dataset * dset) :
-    nmui_HapticSurface (),
-    d_dataset (dset) {
-
+nmui_HSCanned::nmui_HSCanned () :
+    nmui_HapticSurface () 
+{
 
 }
 
@@ -183,10 +182,10 @@ int nmui_HSCanned::getGridY (void) const {
 
 
 // virtual
-void nmui_HSCanned::update (void) {
+void nmui_HSCanned::update (nmm_Microscope_Remote * scope) {
 
-  BCPlane * plane = d_dataset->inputGrid->getPlaneByName
-                     (d_dataset->heightPlaneName->string());
+  BCPlane * plane = scope->Data()->inputGrid->getPlaneByName
+                     (scope->Data()->heightPlaneName->string());
   if (!plane) {
       fprintf(stderr, "nmui_HSCanned::getOutputPlane:  "
                       "could not get plane!\n");
@@ -285,10 +284,8 @@ void nmui_HSCanned::update (void) {
 
 
 
-nmui_HSMeasurePlane::nmui_HSMeasurePlane (nmb_Dataset * dset,
-                                          nmb_Decoration * dec) :
+nmui_HSMeasurePlane::nmui_HSMeasurePlane (nmb_Decoration * dec) :
     nmui_HapticSurface (),
-    d_dataset (dset),
     d_decoration (dec) {
 
 }
@@ -299,14 +296,14 @@ nmui_HSMeasurePlane::~nmui_HSMeasurePlane (void) {
 }
 
 // virtual
-void nmui_HSMeasurePlane::update (void) {
+void nmui_HSMeasurePlane::update (nmm_Microscope_Remote * scope) {
 
   //---------------------------------------------------------------------
   // Get the height plane, which we'll use to find the height at the
   // locations of the measure lines
 
-  BCPlane * plane = d_dataset->inputGrid->getPlaneByName
-                     (d_dataset->heightPlaneName->string());
+  BCPlane * plane = scope->Data()->inputGrid->getPlaneByName
+                     (scope->Data()->heightPlaneName->string());
   if (!plane) {
       fprintf(stderr, "nmui_HSMeasurePlane::update:  could not get plane!\n");
       return;
@@ -321,6 +318,11 @@ void nmui_HSMeasurePlane::update (void) {
   d_decoration->red.getIntercept(red, plane);
   d_decoration->green.getIntercept(green, plane);
   d_decoration->blue.getIntercept(blue, plane);
+
+  // Scale the z value into world coordinates:
+  red[2] *= plane->scale();
+  green[2] *= plane->scale();
+  blue[2] *= plane->scale();
 
   //---------------------------------------------------------------------
   // Pick one of the points (red) as the plane origin, then find the
@@ -367,17 +369,9 @@ void nmui_HSMeasurePlane::update (void) {
 
 
 
-nmui_HSLivePlane::nmui_HSLivePlane (nmb_Dataset * dset,
-
-#ifndef USE_VRPN_MICROSCOPE
-                                    Microscope * scope) :
-#else
-                                    nmm_Microscope_Remote * scope) :
-#endif
-
-    nmui_HapticSurface (),
-    d_dataset (dset),
-    d_microscope (scope) {
+nmui_HSLivePlane::nmui_HSLivePlane () :
+    nmui_HapticSurface ()
+{
 
   // Default normal is up.
   d_UP[0] = 0.0;
@@ -395,28 +389,28 @@ nmui_HSLivePlane::~nmui_HSLivePlane (void) {
 
 
 // virtual
-void nmui_HSLivePlane::update (void) {
+void nmui_HSLivePlane::update (nmm_Microscope_Remote * scope) {
 
   q_vec_type                 at;
 
-  d_planePosPH[0] = d_microscope->state.data.inputPoint->x();
-  d_planePosPH[1] = d_microscope->state.data.inputPoint->y();
+  d_planePosPH[0] = scope->state.data.inputPoint->x();
+  d_planePosPH[1] = scope->state.data.inputPoint->y();
 
   // Scale the Z value by the scale factor of the currently-displayed
   // data set.  XXX This assumes that the one mapped to height display is
   // also mapped in touch mode, and that mapping for this has been
   // set up.
 
-  BCPlane * plane = d_dataset->inputGrid->getPlaneByName
-                  (d_dataset->heightPlaneName->string());
+  BCPlane * plane = scope->Data()->inputGrid->getPlaneByName
+                  (scope->Data()->heightPlaneName->string());
   if (!plane) {
       fprintf(stderr, "nmui_HSLivePlane::update:  could not get plane!\n");
       return;
   }
 
   Point_value * value =
-     d_microscope->state.data.inputPoint->getValueByPlaneName
-                  (d_dataset->heightPlaneName->string());
+     scope->state.data.inputPoint->getValueByPlaneName
+                  (scope->Data()->heightPlaneName->string());
 
   if (!value) {
       fprintf(stderr, "nmui_HSLivePlane::update:  could not get value!\n");
@@ -469,14 +463,7 @@ void nmui_HSLivePlane::update (void) {
 
 
 
-nmui_HSFeelAhead::nmui_HSFeelAhead (nmb_Dataset * dataset,
-#ifndef USE_VRPN_MICROSCOPE
-                                    Microscope * scope) :
-#else
-                                    nmm_Microscope_Remote * scope) :
-#endif
-    d_dataset (dataset),
-    d_microscope (scope) {
+nmui_HSFeelAhead::nmui_HSFeelAhead () {
 
 }
 
@@ -486,14 +473,14 @@ nmui_HSFeelAhead::~nmui_HSFeelAhead (void) {
 }
 
 // virtual
-void nmui_HSFeelAhead::update (void) {
+void nmui_HSFeelAhead::update (nmm_Microscope_Remote * scope) {
 
   // TODO
 
 }
 
 
-void nmui_HSFeelAhead::updateModel (void) {
+void nmui_HSFeelAhead::updateModel ( ) {
 
   // TODO
   // Send a trimesh up to the microscope
@@ -543,17 +530,17 @@ nmui_HSDirectZ::~nmui_HSDirectZ (void) {
     // MANIPULATORS
 
 // virtual
-void nmui_HSDirectZ::update (void) {
+void nmui_HSDirectZ::update (nmm_Microscope_Remote * scope) {
   BCPlane * plane;
   Point_value * value;
   Point_value * forcevalue;
   double currentForce;
 
-  plane = d_dataset->inputGrid->getPlaneByName
-               (d_dataset->heightPlaneName->string());
+  plane = scope->Data()->inputGrid->getPlaneByName
+               (scope->Data()->heightPlaneName->string());
 
-  value = d_microscope->state.data.inputPoint->getValueByPlaneName
-               (d_dataset->heightPlaneName->string());
+  value = scope->state.data.inputPoint->getValueByPlaneName
+               (scope->Data()->heightPlaneName->string());
 
   if (!plane || !value) {
     fprintf(stderr, "nmui_HSDirectZ::update():  NULL value.\n");
@@ -567,7 +554,7 @@ void nmui_HSDirectZ::update (void) {
   // Get the current value of the internal sensor, which tells us
   // the force the tip is experiencing.
 
-  forcevalue = d_microscope->state.data.inputPoint->getValueByName
+  forcevalue = scope->state.data.inputPoint->getValueByName
                        ("Internal Sensor");
 
   if (!forcevalue) {
@@ -580,7 +567,7 @@ void nmui_HSDirectZ::update (void) {
   // Calculate the difference from the free-space value of
   // internal sensor recorded when we entered direct-z control
   d_force = currentForce
-             - d_microscope->state.modify.freespace_normal_force;
+             - scope->state.modify.freespace_normal_force;
 
 
   // Got (x,y,z) and an up vector in microscope space;  XForm into ARM space.
