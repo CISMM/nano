@@ -20,8 +20,9 @@
 
 #include <nmg_Graphics.h>  // for FeelGrid diagnostics
 
-nmui_HapticSurface::nmui_HapticSurface (void) :
-    d_distanceFromPlane (0.0) {
+nmui_HapticSurface::nmui_HapticSurface (nmg_Graphics * g) :
+    d_distanceFromPlane (0.0),
+    d_graphics (g) {
 
 }
 
@@ -38,9 +39,10 @@ void nmui_HapticSurface::getLocation (q_vec_type x) const {
 // virtual
 void nmui_HapticSurface::getOutputPlane (q_vec_type n, double * d) const {
 
-  n[0] = d_currentPlaneNormal[0];
-  n[1] = d_currentPlaneNormal[1];
-  n[2] = d_currentPlaneNormal[2];
+  //n[0] = d_currentPlaneNormal[0];
+  //n[1] = d_currentPlaneNormal[1];
+  //n[2] = d_currentPlaneNormal[2];
+  q_vec_copy(n, (double *) d_currentPlaneNormal);
   *d = d_currentPlaneParameter;
 
 }
@@ -54,21 +56,30 @@ double nmui_HapticSurface::distanceFromSurface (void) const {
 // virtual
 void nmui_HapticSurface::setLocation (q_vec_type x) {
 
-  d_handPosMS[0] = x[0];
-  d_handPosMS[1] = x[1];
-  d_handPosMS[2] = x[2];
+  //d_handPosMS[0] = x[0];
+  //d_handPosMS[1] = x[1];
+  //d_handPosMS[2] = x[2];
+  q_vec_copy(d_handPosMS, x);
 
 //fprintf(stderr, "nmui_HapticSurface::setLocation() to <%.5f, %.5f, %.5f>\n",
 //x[0], x[1], x[2]);
 
+  if (d_graphics) {
+    d_graphics->setFeelPlane(d_handPosMS, d_currentPlaneNormal);
+  }
 }
 
 // virtual
 void nmui_HapticSurface::setLocation (double x, double y, double z) {
 
-  d_handPosMS[0] = x;
-  d_handPosMS[1] = y;
-  d_handPosMS[2] = z;
+  //d_handPosMS[0] = x;
+  //d_handPosMS[1] = y;
+  //d_handPosMS[2] = z;
+  q_vec_set(d_handPosMS, x, y, z);
+
+  if (d_graphics) {
+    d_graphics->setFeelPlane(d_handPosMS, d_currentPlaneNormal);
+  }
 
 //fprintf(stderr, "nmui_HapticSurface::setLocation() to <%.5f, %.5f, %.5f>\n",
 //d_handPosMS[0], d_handPosMS[1], d_handPosMS[2]);
@@ -81,6 +92,9 @@ void nmui_HapticSurface::sendForceUpdate (vrpn_ForceDevice_Remote * device) {
                       d_currentPlaneNormal[1],
                       d_currentPlaneNormal[2],
                       d_currentPlaneParameter);
+  }
+  if (d_graphics) {
+    d_graphics->setFeelPlane(d_handPosMS, d_currentPlaneNormal);
   }
 }
 
@@ -158,8 +172,8 @@ void nmui_HapticSurface::computeDistanceFromPlane (void) {
 
 
 
-nmui_HSCanned::nmui_HSCanned (void) :
-    nmui_HapticSurface () 
+nmui_HSCanned::nmui_HSCanned (nmg_Graphics * g) :
+    nmui_HapticSurface (g) 
 {
 
 }
@@ -282,8 +296,9 @@ void nmui_HSCanned::update (nmm_Microscope_Remote * scope) {
 
 
 
-nmui_HSMeasurePlane::nmui_HSMeasurePlane (nmb_Decoration * dec) :
-    nmui_HapticSurface (),
+nmui_HSMeasurePlane::nmui_HSMeasurePlane (nmb_Decoration * dec,
+                                          nmg_Graphics * g) :
+    nmui_HapticSurface (g),
     d_decoration (dec) {
 
 }
@@ -328,9 +343,10 @@ void nmui_HSMeasurePlane::update (nmm_Microscope_Remote * scope) {
   // points. Make sure we get the up-pointing normal.
 
   q_vec_type    r_to_g, r_to_b;
-  d_planePosPH[0] = red[0];
-  d_planePosPH[1] = red[1];
-  d_planePosPH[2] = red[2];
+  //d_planePosPH[0] = red[0];
+  //d_planePosPH[1] = red[1];
+  //d_planePosPH[2] = red[2];
+  q_vec_copy(d_planePosPH, red);
 
   q_vec_subtract(r_to_g, green, red);
   q_vec_subtract(r_to_b, blue, red);
@@ -367,14 +383,15 @@ void nmui_HSMeasurePlane::update (nmm_Microscope_Remote * scope) {
 
 
 
-nmui_HSLivePlane::nmui_HSLivePlane (void) :
-    nmui_HapticSurface ()
+nmui_HSLivePlane::nmui_HSLivePlane (nmg_Graphics * g) :
+    nmui_HapticSurface (g)
 {
 
   // Default normal is up.
-  d_UP[0] = 0.0;
-  d_UP[1] = 0.0;
-  d_UP[2] = 1.0;
+  //d_UP[0] = 0.0;
+  //d_UP[1] = 0.0;
+  //d_UP[2] = 1.0;
+  q_vec_set(d_UP, 0.0, 0.0, 1.0);
   q_vec_copy(d_lastNormalMS, d_UP);
 
 }
@@ -484,8 +501,8 @@ fprintf(stderr, "SamplePosPH is %.3f %.3f %.3f\n",
 
 
 
-nmui_HSWarpedPlane::nmui_HSWarpedPlane (void) :
-    nmui_HSLivePlane (),
+nmui_HSWarpedPlane::nmui_HSWarpedPlane (nmg_Graphics * g) :
+    nmui_HSLivePlane (g),
     d_rttEstimate (0.0) {
 
 }
@@ -554,9 +571,9 @@ void nmui_HSWarpedPlane::setMicroscopeRTTEstimate (double t) {
 
 
 nmui_HSFeelAhead::nmui_HSFeelAhead (nmg_Graphics * g) :
+    nmui_HapticSurface (g),
     d_device (NULL),
-    d_microscope (NULL),
-    d_graphics (g) {
+    d_microscope (NULL) {
 
   // Set up default sampling algorithm
   d_sampleAlgorithm.numx = 5;
@@ -751,8 +768,8 @@ int nmui_HSFeelAhead::newPointListReceivedCallback (void * userdata) {
 
 
 
-nmui_HSPseudoFA::nmui_HSPseudoFA (nmg_Graphics * graphics) :
-    d_graphics (graphics) {
+nmui_HSPseudoFA::nmui_HSPseudoFA (nmg_Graphics * g) :
+    nmui_HapticSurface (g) {
 
 }
 
@@ -963,7 +980,9 @@ vrpn_bool nmui_HSPseudoFA::testEdge (int l, int m, vrpn_bool in) {
 
 
 nmui_HSDirectZ::nmui_HSDirectZ (nmb_Dataset * dataset,
-                                nmm_Microscope_Remote * scope) :
+                                nmm_Microscope_Remote * scope,
+                                nmg_Graphics * g) :
+    nmui_HapticSurface (g),
     d_dataset (dataset),
     d_microscope (scope),
     d_force (0.0),

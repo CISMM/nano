@@ -18,7 +18,7 @@ class nmui_HapticSurface {
 
   public:
 
-    nmui_HapticSurface (void);
+    nmui_HapticSurface (nmg_Graphics *);
     virtual ~nmui_HapticSurface (void) = 0;
 
 
@@ -98,7 +98,11 @@ class nmui_HapticSurface {
       ///< (or other surface representation).
 
     vrpn_bool d_enabled;
+      ///< Hello?  Is this on?  One two three...
 
+    nmg_Graphics * d_graphics;
+      ///< Used for visual confirmation of the location of the haptic
+      ///< plane/grid.
 };
 
 /** \class nmui_HSCanned
@@ -111,7 +115,7 @@ class nmui_HSCanned : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSCanned (void);
+    nmui_HSCanned (nmg_Graphics * = NULL);
     virtual ~nmui_HSCanned (void);
 
     // ACCESSORS
@@ -141,7 +145,7 @@ class nmui_HSMeasurePlane : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSMeasurePlane ( nmb_Decoration *);
+    nmui_HSMeasurePlane (nmb_Decoration *, nmg_Graphics * = NULL);
     virtual ~nmui_HSMeasurePlane (void);
 
     // MANIPULATORS
@@ -166,7 +170,7 @@ class nmui_HSLivePlane : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSLivePlane (void);
+    nmui_HSLivePlane (nmg_Graphics * = NULL);
 
     virtual ~nmui_HSLivePlane (void);
 
@@ -212,7 +216,7 @@ class nmui_HSWarpedPlane : public nmui_HSLivePlane {
 
   public:
 
-    nmui_HSWarpedPlane (void);
+    nmui_HSWarpedPlane (nmg_Graphics * = NULL);
 
     virtual ~nmui_HSWarpedPlane (void);
 
@@ -271,7 +275,6 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
 
     vrpn_ForceDevice_Remote * d_device;
     nmm_Microscope_Remote * d_microscope;
-    nmg_Graphics * d_graphics;
 
     nmm_Sample d_sampleAlgorithm;
 
@@ -305,7 +308,6 @@ class nmui_HSPseudoFA : public nmui_HapticSurface {
 
     vrpn_ForceDevice_Remote * d_device;
     nmm_Microscope_Remote * d_microscope;
-    nmg_Graphics * d_graphics;
 
     nmm_Sample d_sampleAlgorithm;
 
@@ -315,7 +317,8 @@ class nmui_HSDirectZ : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSDirectZ (nmb_Dataset *, nmm_Microscope_Remote *);
+    nmui_HSDirectZ (nmb_Dataset *, nmm_Microscope_Remote *,
+                    nmg_Graphics * = NULL);
 
     virtual ~nmui_HSDirectZ (void);
 

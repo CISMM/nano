@@ -1,3 +1,9 @@
+2002-2-14  Tom Hudson  <hudsont@uncwil.edu>
+
+	* nmui_HapticSurface.C : Move d_graphics to base class.
+	Call d_graphics->setFeelPlane() where appropriate in base
+	class.
+
 2001-12-14  Tom Hudson  <hudsont@uncwil.edu>
 
    * nmui_HapticSurface.C (nmui_HSLivePlane::update) : Temporary
