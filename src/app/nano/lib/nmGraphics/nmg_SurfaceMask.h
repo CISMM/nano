@@ -15,22 +15,19 @@ public:
     void init(int width, int height);
     void setControlPlane(BCPlane *control);
 
-    bool valid() {return d_derivationMode != NONE;}
-    //Valid mask in this sense means one that isn't the 
-    //default values
-
     void setDrawPartialMask(vrpn_bool draw);
     bool quadMasked(int x, int y, int stride);
 
     int value(int x, int y) {return d_maskData[x + y * d_width];}
     void addValue(int x, int y, int value) {d_maskData[x + y * d_width] += value;}
 
-    void deriveMask(float min_height, float max_height);
-    void deriveMask(float center_x, float center_y, float width,float height, 
-                    float angle, nmb_Dataset *dataset);
+    int deriveMask(float min_height, float max_height);
+    int deriveMask(float center_x, float center_y, float width,float height, 
+                    float angle);
     //If data is changing we may need to recompute the mask
     //plane if we are using certain derivation schemes
-    void rederive(vrpn_bool force = VRPN_FALSE);
+    int rederive(nmb_Dataset *dataset);
+    int needsDerivation();
 
     void invertAdd(nmg_SurfaceMask *other);
     ///This sets as masked in this mask, the unmasked portions
@@ -60,7 +57,16 @@ private:
     //For undoing automatic derivations after someone might have
     //peformed an invertAdd or invertSubtract.
 
+    bool d_needsDerivation;
+
     float d_minHeight, d_maxHeight;
+
+    float d_centerX, d_centerY;
+    float d_boxWidth, d_boxHeight;
+    float d_boxAngle;
+
+    void deriveHeight();
+    void deriveBox(nmb_Dataset *dataset);
 };
 
 #endif

@@ -21,10 +21,19 @@ nmg_SurfaceMask::
 nmg_SurfaceMask()
 {
     d_maskData = (int*)NULL;
+
     d_height = 0;
     d_width = 0;
+    
+    d_centerX = 0;
+    d_centerY = 0;
+    d_boxWidth = 0;
+    d_boxHeight = 0;
+    d_boxAngle = 0;
+    
     d_control = (BCPlane*)NULL;
     d_derivationMode = NONE;
+    d_needsDerivation = false;
     d_drawPartialMask = false;
     d_oldDerivation = (nmg_SurfaceMask*)NULL;
 }
@@ -106,8 +115,6 @@ setControlPlane(BCPlane *control)
             }            
         }
     }
-    
-    rederive(true);
 }
 
 ////////////////////////////////////////////////////////////
@@ -223,17 +230,35 @@ clear()
 // Description: Create a masking plane, using a range of
 //              height values
 ////////////////////////////////////////////////////////////
-void nmg_SurfaceMask::
+int nmg_SurfaceMask::
 deriveMask(float min_height, float max_height)
+{
+    if (d_minHeight != min_height ||
+        d_maxHeight != max_height) 
+    {
+        d_minHeight = min_height;
+        d_maxHeight = max_height;
+        d_derivationMode = HEIGHT;
+
+        d_needsDerivation = true;
+        return 1;
+    }
+    return 0;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::deriveHeight
+//      Access: Private
+// Description: Create a masking plane, using a range of
+//              height values
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+deriveHeight()
 {   
     if (d_control == (BCPlane*)NULL) {
 		//If there is no control plane, then bail		
 		return;
 	}
-
-    d_minHeight = min_height;
-    d_maxHeight = max_height;
-    d_derivationMode = HEIGHT;
 
     subtract(d_oldDerivation);
     d_oldDerivation->clear();
@@ -243,7 +268,7 @@ deriveMask(float min_height, float max_height)
 	for(int y = 0; y < d_control->numY(); y++) {
         for(int x = 0; x < d_control->numX(); x++) {
             z = d_control->value(x,y);
-            maskVal = ((z < min_height) || (z > max_height));
+            maskVal = ((z < d_minHeight) || (z > d_maxHeight));
             d_oldDerivation->addValue(x, y, maskVal);
         }
     }
@@ -252,6 +277,12 @@ deriveMask(float min_height, float max_height)
     add(d_oldDerivation);
 }
 
+////////////////////////////////////////////////////////////
+//    Function: xform_width && xform_height
+//      Access: Public
+// Description: Helper function for deriveBox that together
+//              return if the point is inside the rotated box
+////////////////////////////////////////////////////////////
 static float xform_width(float x, float y, float angle) {
     return fabs(cos(angle)*(x) + sin(angle)*(y));
 }
@@ -265,17 +296,40 @@ static float xform_height(float x, float y, float angle) {
 // Description: Create a masking plane, using a rotated box based
 //              method
 ////////////////////////////////////////////////////////////
-void nmg_SurfaceMask::
+int nmg_SurfaceMask::
 deriveMask(float center_x, float center_y, float width,float height, 
-           float angle, nmb_Dataset *dataset)
+           float angle)
 {
-    d_derivationMode = BOX;
+    if (d_centerX != center_x || d_centerY != center_y ||
+        d_boxWidth != width || d_boxHeight != height ||
+        d_boxAngle != angle) 
+    {   
+        d_derivationMode = BOX;
+        d_centerX = center_x;
+        d_centerY = center_y;
+        d_boxWidth = width;
+        d_boxHeight = height;
+        d_boxAngle = angle;
 
+        d_needsDerivation = true;
+        return 1;
+    }
+    return 0;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::deriveMask
+//      Access: Public
+// Description: Create a masking plane, using a rotated box based
+//              method
+////////////////////////////////////////////////////////////
+void nmg_SurfaceMask::
+deriveBox(nmb_Dataset *dataset)
+{
     subtract(d_oldDerivation);
     d_oldDerivation->clear();
 
     double w_x, w_y;
-
 
     for(int y = 0; y < dataset->inputGrid->numY(); y++) {
         for(int x = 0; x < dataset->inputGrid->numX(); x++) {
@@ -283,10 +337,10 @@ deriveMask(float center_x, float center_y, float width,float height,
             dataset->inputGrid->gridToWorld(x,y,w_x,w_y);
             // Find out if that coord is within width/height of 
             // region box. Helper functions handle rotation.
-            if ((xform_width(w_x-center_x, w_y-center_y, 
-                             Q_DEG_TO_RAD(angle)) < width)&&
-                (xform_height(w_x-center_x, w_y-center_y, 
-                              Q_DEG_TO_RAD(angle)) < height)){
+            if ((xform_width(w_x-d_centerX, w_y-d_centerY, 
+                             Q_DEG_TO_RAD(d_boxAngle)) < d_boxWidth)&&
+                (xform_height(w_x-d_centerX, w_y-d_centerY, 
+                              Q_DEG_TO_RAD(d_boxAngle)) < d_boxHeight)){
                 d_oldDerivation->addValue(x,y,1);
             }                    
         }
@@ -300,16 +354,45 @@ deriveMask(float center_x, float center_y, float width,float height,
 // Description: Check the plane derivation method that is being
 //              used and rederive if necessary.
 ////////////////////////////////////////////////////////////
-void nmg_SurfaceMask::
-rederive(vrpn_bool force)
+int nmg_SurfaceMask::
+rederive(nmb_Dataset *dataset)
+{
+    int derived = 0;
+    switch(d_derivationMode) {
+    case HEIGHT:
+        deriveHeight();
+        derived = 1;
+        break;
+    case BOX:
+        if (d_needsDerivation) {
+            deriveBox(dataset);
+            derived = 1;
+        }
+        break;
+    default:
+        break;
+    }
+
+    d_needsDerivation = false;
+    return derived;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceMask::needsDerivation
+//      Access: Public
+// Description: Check the plane derivation method that is being
+//              used and return whether derivation is needed
+////////////////////////////////////////////////////////////
+int nmg_SurfaceMask::
+needsDerivation()
 {
     switch(d_derivationMode) {
     case HEIGHT:
-        deriveMask(d_minHeight, d_maxHeight);
-        break;
+        return 1;
+    case BOX:
+        return d_needsDerivation;
     default:
-        //BOX method does not require rederivation
-        break;
+        return 0;
     }
 }
 

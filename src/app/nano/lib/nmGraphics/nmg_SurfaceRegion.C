@@ -481,7 +481,6 @@ void nmg_SurfaceRegion::
 setRegionControl(BCPlane *control)
 {
     d_regionalMask->setControlPlane(control);
-    d_needsFullRebuild = VRPN_TRUE;
 }
 
 ////////////////////////////////////////////////////////////
@@ -505,11 +504,11 @@ setMaskPlane(nmg_SurfaceMask *mask)
 // Description: Create a masking plane, using a range of
 //              height values
 ////////////////////////////////////////////////////////////
-void nmg_SurfaceRegion::
+int nmg_SurfaceRegion::
 deriveMaskPlane(float min_height, float max_height)
-{
-    d_regionalMask->deriveMask(min_height, max_height);
-    d_needsFullRebuild = VRPN_TRUE;
+{   
+    return d_regionalMask->deriveMask(min_height, max_height);
+            
 }
 
 ////////////////////////////////////////////////////////////
@@ -518,12 +517,35 @@ deriveMaskPlane(float min_height, float max_height)
 // Description: Create a masking plane, using a range of
 //              height values
 ////////////////////////////////////////////////////////////
-void nmg_SurfaceRegion::
+int nmg_SurfaceRegion::
 deriveMaskPlane(float center_x, float center_y, float width,float height, 
-                float angle, nmb_Dataset *dataset)
+                float angle)
 {
-    d_regionalMask->deriveMask(center_x, center_y, width, height, angle, dataset);
-    d_needsFullRebuild = VRPN_TRUE;
+    return d_regionalMask->deriveMask(center_x, center_y, width, height, angle);
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceRegion::rederiveMaskPlane
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+void nmg_SurfaceRegion::
+rederiveMaskPlane(nmb_Dataset *dataset) 
+{
+    if (d_regionalMask->rederive(dataset)) {
+        d_needsFullRebuild = true;
+    }
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_SurfaceRegion::needsDerivation
+//      Access: Public
+// Description: 
+////////////////////////////////////////////////////////////
+int nmg_SurfaceRegion::
+needsDerivation() 
+{
+    return d_regionalMask->needsDerivation();
 }
 
 ////////////////////////////////////////////////////////////
@@ -697,6 +719,8 @@ RestoreRenderState()
 int nmg_SurfaceRegion::
 rebuildRegion(nmb_Dataset *dataset, vrpn_bool force)
 {  
+    //Make sure we have a valid mask before we rebuild the display lists
+    d_parent->rederive(d_regionID);
     if (!d_needsFullRebuild && !force) {
         return 1;
     }
@@ -710,9 +734,7 @@ rebuildRegion(nmb_Dataset *dataset, vrpn_bool force)
 
     g_stride = d_currentState.stride;
     g_surface_alpha = d_currentState.alpha;
-    
-    //Make sure we have a valid mask before we rebuild the display lists
-    d_parent->rederive(d_regionID);
+        
     if (build_grid_display_lists(planes, d_regionalMask, display_lists_in_x, &d_list_base, 
                                  &d_num_lists, d_num_lists, g_minColor,
                                  g_maxColor, d_vertexPtr)) {

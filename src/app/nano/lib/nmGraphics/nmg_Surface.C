@@ -166,20 +166,7 @@ setRegionControl(BCPlane *control, int region)
     if (region >= 0 && region <= d_numSubRegions) {
         if (region != 0) {
             region--;
-            nmg_SurfaceMask *mask;
-            
-            mask = d_subRegions[region]->getMaskPlane();
-            if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->invertSubtract(mask);
-            }
-            
             d_subRegions[region]->setRegionControl(control);
-            
-            mask = d_subRegions[region]->getMaskPlane();
-            if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->invertAdd(mask);
-                d_defaultRegion->forceRebuildCondition();
-            }
         }
         else {
             d_defaultRegion->setRegionControl(control);
@@ -197,21 +184,8 @@ setMaskPlane(nmg_SurfaceMask *mask, int region)
 {
     if (region >= 0 && region <= d_numSubRegions) {
         if (region != 0) {
-            region--;
-            nmg_SurfaceMask *mask;
-            
-            mask = d_subRegions[region]->getMaskPlane();
-            if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->invertSubtract(mask);
-            }
-            
+            region--;            
             d_subRegions[region]->setMaskPlane(mask);
-            
-            mask = d_subRegions[region]->getMaskPlane();
-            if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->invertAdd(mask);
-                d_defaultRegion->forceRebuildCondition();
-            }
         }
         else {
             d_defaultRegion->setMaskPlane(mask);
@@ -231,20 +205,7 @@ deriveMaskPlane(float min_height, float max_height, int region)
     if (region >= 0 && region <= d_numSubRegions) {
         if (region != 0) {
             region--;
-            nmg_SurfaceMask *mask;
-            
-            mask = d_subRegions[region]->getMaskPlane();
-            if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->invertSubtract(mask);
-            }
-            
             d_subRegions[region]->deriveMaskPlane(min_height, max_height);
-            
-            mask = d_subRegions[region]->getMaskPlane();
-            if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->invertAdd(mask);
-                d_defaultRegion->forceRebuildCondition();
-            }
         }
         else {
             d_defaultRegion->deriveMaskPlane(min_height, max_height);
@@ -263,26 +224,13 @@ deriveMaskPlane(float center_x, float center_y, float width,float height,
 {
     if (region >= 0 && region <= d_numSubRegions) {
         if (region != 0) {
-            region--;
-            nmg_SurfaceMask *mask;
-            
-            mask = d_subRegions[region]->getMaskPlane();
-            if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->invertSubtract(mask);
-            }
-            
+            region--;            
             d_subRegions[region]->deriveMaskPlane(center_x, center_y, width, 
-                                                  height, angle, d_dataset);
-            
-            mask = d_subRegions[region]->getMaskPlane();
-            if (mask->valid()) {
-                d_defaultRegion->getMaskPlane()->invertAdd(mask);
-                d_defaultRegion->forceRebuildCondition();
-            }
+                                                  height, angle);
         }
         else {
             d_defaultRegion->deriveMaskPlane(center_x, center_y, width, 
-                                             height, angle, d_dataset);
+                                             height, angle);
         }
     }
 }
@@ -298,23 +246,21 @@ rederive(int region)
     if (region >= 0 && region <= d_numSubRegions) {
         if (region != 0) {
             region--;
-            nmg_SurfaceMask *mask;
+            if (d_subRegions[region]->needsDerivation()) {                
+                nmg_SurfaceMask *mask;
 
-            mask = d_subRegions[region]->getMaskPlane();
-            if (mask->valid()) {
+                mask = d_subRegions[region]->getMaskPlane();                
                 d_defaultRegion->getMaskPlane()->invertSubtract(mask);
-            }
             
-            d_subRegions[region]->getMaskPlane()->rederive();
+                d_subRegions[region]->rederiveMaskPlane(d_dataset);
             
-            mask = d_subRegions[region]->getMaskPlane();
-            if (mask->valid()) {
+                mask = d_subRegions[region]->getMaskPlane();
                 d_defaultRegion->getMaskPlane()->invertAdd(mask);
                 d_defaultRegion->forceRebuildCondition();
             }
         }
         else {
-            d_defaultRegion->getMaskPlane()->rederive();
+            d_defaultRegion->rederiveMaskPlane(d_dataset);
         }
     }
 }
@@ -350,14 +296,14 @@ int nmg_Surface::
 rebuildSurface(vrpn_bool force)
 {
     if (d_dataset != (nmb_Dataset*)NULL) {
-        if (!d_defaultRegion->rebuildRegion(d_dataset, force)) {
-            return 0;
-        }
-                
         for(int i = 0; i < d_numSubRegions; i++) {
             if (!d_subRegions[i]->rebuildRegion(d_dataset, force)) {
                 return 0;
             }
+        }
+
+        if (!d_defaultRegion->rebuildRegion(d_dataset, force)) {
+            return 0;
         }
     }
 
@@ -374,16 +320,16 @@ int nmg_Surface::
 rebuildInterval(int low_row, int high_row, int strips_in_x)
 {
     if (d_dataset != (nmb_Dataset*)NULL) {
-        if (!d_defaultRegion->rebuildInterval(d_dataset, low_row, 
-                                              high_row, strips_in_x)) {
-            return 0;
-        }
-
         for(int i = 0; i < d_numSubRegions; i++) {
             if (!d_subRegions[i]->rebuildInterval(d_dataset, low_row, 
                                                   high_row, strips_in_x)) {
                 return 0;
             }
+        }
+
+        if (!d_defaultRegion->rebuildInterval(d_dataset, low_row, 
+                                              high_row, strips_in_x)) {
+            return 0;
         }
     }
     return 1;
