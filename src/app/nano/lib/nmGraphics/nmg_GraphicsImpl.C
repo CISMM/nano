@@ -543,11 +543,10 @@ void nmg_Graphics_Implementation::mainloop (void) {
       break;
   }
 
-
-  if ( (grid_size_x != d_dataset->inputGrid->numX()) ||
-       (grid_size_y != d_dataset->inputGrid->numY())    ) {
-    causeGridRebuild();
-  }
+  // Make sure that our vertex array matches the dimension of the
+  // BCGrid we're getting our data from.  For some subclasses this
+  // isn't d_dataset->inputGrid, so we make it virtual.
+  checkGridSize();
 
   TIMERVERBOSE(5, mytimer, "GImainloop: nmg_Graphics::mainloop");
 
@@ -2750,6 +2749,18 @@ void nmg_Graphics_Implementation::getLatestGridChange (int * minX, int * maxX,
 
 }
 
+
+
+
+// virtual
+void nmg_Graphics_Implementation::checkGridSize (void) {
+
+  if ( (grid_size_x != d_dataset->inputGrid->numX()) ||
+       (grid_size_y != d_dataset->inputGrid->numY())    ) {
+    causeGridRebuild();
+  }
+
+}
 
 
 // PRIVATE

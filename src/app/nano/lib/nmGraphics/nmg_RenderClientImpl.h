@@ -71,6 +71,11 @@ class nmg_Graphics_RenderClient_Implementation :
        * the microscope is writing into.
        */
 
+    virtual void checkGridSize (void);
+      ///< Redefines behavior from nmg_Graphics_Implementation to make
+      ///< sure we're checking against the *correct* grid:  d_renderingGrid,
+      ///< not d_inputGrid.
+
     //unsigned char * d_pixelBuffer;
     //float * d_depthBuffer;
 

@@ -199,16 +199,16 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     void screenCapture (int * w, int * h, unsigned char ** pixels,
                         vrpn_bool captureBack = VRPN_TRUE);
-      ///< If (*pxiels) or (*depths) is non-NULL, assumes it is a
+      ///< If (*pixels) is non-NULL, assumes it is a
       ///< properly-sized array and writes into it;  otherwise news
-      ///< a w*h*3 or w*h array respectively.
+      ///< a w*h*3 array.
       ///< By default captures from the back buffer, but can be set to
       ///< capture from the front buffer instead.
     void depthCapture (int * w, int * h, float ** depths,
                         vrpn_bool captureBack = VRPN_TRUE);
-      ///< If (*pxiels) or (*depths) is non-NULL, assumes it is a
+      ///< If (*depths) is non-NULL, assumes it is a
       ///< properly-sized array and writes into it;  otherwise news
-      ///< a w*h*3 or w*h array respectively.
+      ///< a w*h array.
       ///< By default captures from the back buffer, but can be set to
       ///< capture from the front buffer instead.
       ///< OpenGL returns depth in the range [0, 1] = [near, far]
@@ -217,9 +217,17 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     void getLatestGridChange (int * minX, int * maxX, int * minY, int * maxY);
 
-  private:
+    virtual void checkGridSize (void);
+      ///< Makes sure that the vertex array size matches the correct grid.
+      ///< Virtual because some of the remote rendering client subclasses
+      ///< want to match the size of a grid other than inputGrid.
+
     int grid_size_x;
+      ///< X-size of the vertex array.
     int grid_size_y;
+      ///< Y-size of the vertex array.
+
+  private:
 
     v_index * d_displayIndexList;
 

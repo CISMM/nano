@@ -748,6 +748,19 @@ void nmg_Graphics_RenderClient_Implementation::getNewBounds
   gp->d_renderingGrid->setMaxY(maxY);
 }
 
+// virtual
+void nmg_Graphics_RenderClient_Implementation::checkGridSize (void) {
+
+  if ( (grid_size_x != d_renderingGrid->numX()) ||
+       (grid_size_y != d_renderingGrid->numY())    ) {
+    causeGridRebuild();
+  }
+
+}
+
+
+
+
 // static
 int nmg_Graphics_RenderClient_Implementation::handle_timerSN
                                              (void * userdata,
