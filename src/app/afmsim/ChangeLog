@@ -1,3 +1,8 @@
+2002-3-6  Tom Hudson <hudsont@uncwil.edu>
+
+   * surface.C (getImageHeightAtXYLoc) : fix error in clamping code
+   from last December.
+
 2002-2-16  Tom Hudson <hudsont@uncwil.edu>
 
    * nmm_Microscope_Simulator.C (scan_point_nm) : Pass reqTime to

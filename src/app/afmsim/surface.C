@@ -152,11 +152,13 @@ int parse (int argc, char ** argv) {
 int getImageHeightAtXYLoc (float x, float y, float * z) {
   double zz;
 
+//fprintf(stderr, "Point request at %.5f, %.5f\n", x, y);
+
   // TCH Dec 2001
   // Clamp to bounds
   if (x > g_myZPlane->maxX()) x = g_myZPlane->maxX();
-  if (x < g_myZPlane->minY()) x = g_myZPlane->minX();
-  if (y > g_myZPlane->maxX()) y = g_myZPlane->maxY();
+  if (x < g_myZPlane->minX()) x = g_myZPlane->minX();
+  if (y > g_myZPlane->maxY()) y = g_myZPlane->maxY();
   if (y < g_myZPlane->minY()) y = g_myZPlane->minY();
 
   g_myZPlane->valueAt(&zz, x, y);
@@ -171,6 +173,7 @@ int getImageHeightAtXYLoc (float x, float y, float * z) {
   //gettimeofday(&later, NULL);
   //fprintf(stderr, "Point took %06d us.\n", later.tv_usec - now.tv_usec);
 
+//fprintf(stderr, "Reporting %.5f at %.5f, %.5f.\n", zz, x, y);
 
   return 1;
 }
@@ -178,6 +181,7 @@ int getImageHeightAtXYLoc (float x, float y, float * z) {
 int getImageHeightAtIJLoc (int x, int y, float * z) {
   double zz;
   *z = g_myZPlane->value(x, y);
+//fprintf(stderr, "Reporting %.5f at %d, %d.\n", *z, x, y);
   return 1;
 }
 
