@@ -1,6 +1,7 @@
 #ifndef _NMA_KEITHLEY2400_H
 #define _NMA_KEITHLEY2400_H
 
+#include "nmb_Device.h"
 #include "vrpn_Connection.h"
 #include "vrpn_GPIBDevice.h"
 
@@ -20,7 +21,7 @@ typedef struct {
 typedef void (*vrpn_VIERRORHANDLER)(void *userdata, 
 					const vrpn_VIERRORCB &info);
 
-class nma_Keithley2400 : public vrpn_GPIBDevice 
+class nma_Keithley2400 : public nmb_Device_Client, public vrpn_GPIBDevice 
 {
 public:
     nma_Keithley2400(const char *name, vrpn_Connection *c = NULL);
@@ -106,8 +107,8 @@ public:
     float d_sweep_delay;            // Delay before a measurement is taken. Can be zero. 
 
 
-	enum { VOLTAGE, CURRENT };
-	enum { LINEAR, LOG };
+	enum Channel { VOLTAGE, CURRENT };
+	enum Scale { LINEAR, LOG };
 
 protected:
     typedef struct vrpn_RESULTDATALIST_STRUCT {

@@ -8,14 +8,14 @@
 
 vrpn_GPIBDevice::vrpn_GPIBDevice
     (const char * name,
-     vrpn_Connection * connection) :
-d_connection (connection) 
+     vrpn_Connection * connection) 
+//: d_connection (connection)
 {
-  char * servicename;           //Helps get the right name for the sender.
-  servicename = vrpn_copy_service_name(name); 
+//  char * servicename;           //Helps get the right name for the sender.
+//  servicename = vrpn_copy_service_name(name); 
 
   if (connection) {
-    d_myId = connection->register_sender(servicename);
+//    d_myId = connection->register_sender(servicename);
 
     d_Device_type = connection->register_message_type
          ("gpib_Device");
@@ -41,15 +41,15 @@ d_connection (connection)
     d_Error_type = connection->register_message_type
          ("gpib_Error");
 
-	d_Shutdown_type = d_connection->register_message_type
-		(vrpn_dropped_last_connection);
+    d_Shutdown_type = connection->register_message_type
+         (vrpn_dropped_last_connection);
 
   }
 
-  if (servicename) {
-    delete [] servicename;
-    servicename = NULL;
-  }
+//  if (servicename) {
+//    delete [] servicename;
+//    servicename = NULL;
+//  }
 
 }
 

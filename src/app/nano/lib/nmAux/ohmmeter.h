@@ -7,6 +7,12 @@
 #include "vrpn_Ohmmeter.h"
 #include "nmb_Types.h"	// for vrpn_bool
 
+#ifndef USE_VRPN_MICROSCOPE
+#include <Microscope.h>
+#else
+#include <nmm_MicroscopeRemote.h>
+#endif
+
 #define NUM_SELECTION_VALUES (6)
 #define AUTORANGE_WAIT (2)
 #define NUM_OHMMETER_CHANNELS (4)
@@ -51,6 +57,38 @@ class OhmmeterChannelParams {
     float avrgtime;
 };
 
+class nmui_ORPXChannelParameters {
+  public:
+    nmui_ORPXChannelParameters(const char *channel_name,
+                               int c_id, vrpn_Ohmmeter_Remote *d);
+    ~nmui_ORPXChannelParameters();
+
+    Tclvar_int *enable;
+    Tclvar_int *autorange;
+    Tclvar_int *voltage;
+    Tclvar_int *range;
+    Tclvar_int *filter;
+    Tclvar_string *resistance;
+    Tclvar_string *status;
+    Tclvar_int *error;
+
+    int autorange_num_over;
+    int autorange_num_under;
+    int channel_id;
+    vrpn_Ohmmeter_Remote *device;
+
+    static char *enable_var_base_name,
+                *autorange_var_base_name,
+                *voltage_var_base_name,
+                *range_var_base_name,
+                *filter_var_base_name,
+                *resistance_var_base_name,
+                *status_var_base_name,
+                *error_var_base_name;
+
+    static void handle_param_change(vrpn_int32 new_value, void *ud);
+};
+
 class Ohmmeter {
   public:
     Ohmmeter (Tcl_Interp * the_tcl_interp,
@@ -58,25 +96,41 @@ class Ohmmeter {
               vrpn_Ohmmeter_Remote * device);
     ~Ohmmeter(void);
 
-    // controls for entire ohmmeter
-    Tclvar_checklist *ohmmeter_enable_checkbox;
-    Tclvar_checklist *channel_enable_checklist;
-    Tclvar_checklist *auto_range_checklist;
-    Tclvar_string *channel_select;
-    nmb_ListOfStrings *list_of_channel_names;
+    vrpn_bool windowOpen();
+    void openWindow();
 
-    // controls for each ohmmeter channel
-    nmb_ListOfStrings *list_of_voltages, *list_of_ranges, *list_of_filters;
-    Tclvar_string *voltage_select, *range_select, *filter_select;
-    Tclvar_float *avrgtime_slider;
-
-    // displays of data:
-    char ohm_status_message[128];
-    char ohm_channel_msg[128];
-    char ohm_value_msg[128];
+#ifdef USE_VRPN_MICROSCOPE
+    void setMicroscope(nmm_Microscope_Remote *m);
+#else
+    void setMicroscope(Microscope *m);
+#endif
 
     void updateDisplay(int chnum, float resistance, int status,
-	float voltage, float range, float filter);
+        float voltage, float range, float filter);
+
+  protected:
+
+    Tcl_Interp *tk_control_interp;
+    Tclvar_int d_windowOpen;
+    Tclvar_list_of_strings d_voltages;
+    Tclvar_list_of_strings d_ranges;
+    Tclvar_list_of_strings d_filters;
+
+    vrpn_Ohmmeter_Remote *ohmmeterDevice;
+
+    #ifdef USE_VRPN_MICROSCOPE
+    nmm_Microscope_Remote * microscope_ptr;
+    #else
+    Microscope * microscope_ptr;
+    #endif
+
+    nmui_ORPXChannelParameters 
+                        *d_channelParams[NUM_OHMMETER_CHANNELS];
+
+    static char *s_channel_names[NUM_OHMMETER_CHANNELS];
+    static char *s_voltage_strings[NUM_SELECTION_VALUES];
+    static char *s_range_strings[NUM_SELECTION_VALUES];
+    static char *s_filter_strings[NUM_SELECTION_VALUES];
 
     // functions for trying to match up a particular float value with
     // one of the discrete values available
@@ -84,22 +138,8 @@ class Ohmmeter {
     int lookupRangeIndex(float range);
     int lookupFilterIndex(float filter);
 
-    OhmmeterChannelParams c_params[NUM_OHMMETER_CHANNELS];
-
-    int ohmmeter_enabled;		// has ohmmeter been enabled?
-    int current_channel;	// channel for which settings are currently
-				// being viewed on control panel
-    int autorange_enabled;
-    int num_over;
-    int num_under;
-
-    vrpn_Ohmmeter_Remote *ohmmeterDevice;
-    
-    char *voltage_strings[NUM_SELECTION_VALUES];
-    char *range_strings[NUM_SELECTION_VALUES];
-    char *filter_strings[NUM_SELECTION_VALUES];
-    char *channel_strings[NUM_OHMMETER_CHANNELS];
-
+    static void handle_measurement (void *userdata, 
+                                    const vrpn_OHMMEASUREMENTCB &info);
 };
 
 #endif

@@ -12,12 +12,12 @@ class vrpn_GPIBDevice {
   public:
     vrpn_GPIBDevice(const char *name, vrpn_Connection *c = NULL);
 	// Handle getting any reports
-    virtual int mainloop(const struct timeval * timeout = NULL) = 0;
+//    virtual int mainloop(const struct timeval * timeout = NULL) = 0;
     virtual ~vrpn_GPIBDevice() {};
 
   protected:
-    vrpn_Connection *d_connection;	
-    vrpn_int32 d_myId;		//connection ID for device
+//    vrpn_Connection *d_connection;	
+//    vrpn_int32 d_myId;		//connection ID for device
 
 	// Sent by client
     vrpn_int32 d_Device_type;   // sends an ibdev GPIB command	

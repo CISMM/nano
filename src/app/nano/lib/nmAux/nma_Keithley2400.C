@@ -20,7 +20,8 @@
 
 
 nma_Keithley2400::nma_Keithley2400(const char *name, vrpn_Connection *c) :
-	vrpn_GPIBDevice(name, c),
+        nmb_Device_Client(name, c),
+	vrpn_GPIBDevice(name, d_connection),
 	d_board_index(0),
 	d_primary_address(24),
 	d_secondary_address(0),
