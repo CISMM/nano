@@ -2044,6 +2044,8 @@ void nmm_Microscope_Remote::DisplayModResult (const float _x, const float _y,
   state.rasterX = x;
   state.rasterY = y;
 
+  //  printf("currentz: %d\n", state.modify.slow_line_currPt->z());
+
   // modification markers
   if (state.acquisitionMode == MODIFY) {
     if (((unsigned) x < (unsigned) d_dataset->inputGrid->numX()) &&
@@ -2057,7 +2059,7 @@ void nmm_Microscope_Remote::DisplayModResult (const float _x, const float _y,
           bottom[2] = top[2];
       } else
         bottom[2] = _height * heightPlane->scale();
-
+    
       //if (glenable)
       d_decoration->addScrapeMark(top, bottom);
 
@@ -3768,10 +3770,20 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
 
   // if it's a modification result, display it
   if ((state.acquisitionMode == MODIFY || state.cannedLineVisible) &&
-      (!d_relax_comp.is_ignoring_points()))
+      (!d_relax_comp.is_ignoring_points())) {
+
+    if (state.modify.tool == SLOW_LINE_3D) {
+
+      float z1 =  state.modify.slow_line_prevPt->z();
+      float z2 =  state.modify.slow_line_currPt->z();
+      z_value->setValue( z2*(state.modify.slow_line_position_param) +
+              z1*(1.0-state.modify.slow_line_position_param));
+    }
+      
     DisplayModResult(state.data.inputPoint->x(),
                      state.data.inputPoint->y(),
                      0.0f, z_value, VRPN_TRUE);
+  }
 
   if (state.modify.style != FORCECURVE)	{// XXX HACK - we need point results
      // HACK - to get ohmmeter data in point results

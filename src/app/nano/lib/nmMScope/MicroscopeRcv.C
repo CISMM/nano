@@ -1,4 +1,3 @@
-
 #include "Microscope.h"
 
 #include <stdlib.h>
@@ -815,6 +814,8 @@ void Microscope::RcvPulseCompletedNM (const float _xRes, const float _yRes) {
   top[Y] = bottom[Y] = _yRes;
   top[Z] = heightPlane->maxAttainableValue();
   bottom[Z] = heightPlane->minAttainableValue();
+
+  printf("Pulse Received!");
 
   // MOVED code to nmb_Decoration
   d_decoration->addPulseMark(top, bottom);
