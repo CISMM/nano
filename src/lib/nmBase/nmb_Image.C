@@ -1333,6 +1333,10 @@ void nmb_ImageArray::setValue(int i, int j, float val)
   d_minNonZeroValueComputed = VRPN_FALSE;
   d_minValidValueComputed = VRPN_FALSE;
   d_maxValidValueComputed = VRPN_FALSE;
+  min_x_set = MIN(min_x_set, i);
+  max_x_set = MAX(max_x_set, i);
+  min_y_set = MIN(min_y_set, j);
+  max_y_set = MAX(max_y_set, j);
 } 
 
 void nmb_ImageArray::setLine(int line, void *line_data) {
@@ -1356,6 +1360,10 @@ void nmb_ImageArray::setLine(int line, void *line_data) {
            " Error, unknown type\n");
       break;
   }
+  min_x_set = 0;
+  max_x_set = num_x-1;
+  min_y_set = MIN(min_y_set, line);
+  max_y_set = MAX(max_y_set, line);
 }
 
 void nmb_ImageArray::setImage(void *newdata) {
@@ -1381,6 +1389,10 @@ void nmb_ImageArray::setImage(void *newdata) {
            " Error, unknown type\n");
       break;
   }
+  min_x_set = 0;
+  max_x_set = num_x-1;
+  min_y_set = 0;
+  max_y_set = num_y-1;
 }
 
 int nmb_ImageArray::validDataRange(short* o_top, short* o_left,
@@ -1524,7 +1536,7 @@ float nmb_ImageArray::minValidValue() {
     if ((top == height()-1) && (bottom == 0) &&
         (right == width()-1) && (left == 0)) {
         return minValue();
-    } else if (!d_maxValidValueComputed) {
+    } else if (!d_minValidValueComputed) {
         int i,j;
         d_minValidValue = getValue(left, bottom);
         float val;
@@ -1550,7 +1562,7 @@ float nmb_ImageArray::minNonZeroValue() {
       for (i = 0; i < width(); i++) {
         for (j = 0; j < height(); j++) {
           val = getValue(i,j);
-          if (val != 0 && val < d_minNonZeroValue) {
+          if (val != 0 && (val < d_minNonZeroValue || d_minNonZeroValue == 0)) {
             d_minNonZeroValue = val;
           }
         }
@@ -1642,14 +1654,22 @@ int nmb_ImageArray::exportToFile(FILE *f, const char *export_type,
 }
 
 // static
-int nmb_ImageArray::exportToTIFF(FILE *file, nmb_ImageArray *im, const char * filename)
+int nmb_ImageArray::exportToTIFF(FILE *file, nmb_ImageArray *im, 
+                                 const char * filename)
 {
+  if(nmb_ImgMagick::writeFileMagick(filename,"TIF",(nmb_Image *)im)) {
+      fprintf(stderr, "Failed to write data to '%s'!\n", filename);
+      return -1;
+  }
+
+/*
   if (im->pixelType() != NMB_UINT8) {
     printf("error, can't write images that aren't 8 bits per pixel\n");
     return 0;
   }
   int w = im->width();
   int h = im->height();
+
   // use color image because greyscale export is broken
   unsigned char *pixels = new unsigned char [w*h*3];
 
@@ -1663,11 +1683,13 @@ int nmb_ImageArray::exportToTIFF(FILE *file, nmb_ImageArray *im, const char * fi
        pixels[(i+j*w)*3+2] = byteval;
     }
   }
-
-  if(nmb_ImgMagick::writeFileMagick(filename, NULL, w, h, 3, pixels)) {
+// This doesn't work for some reason:
+  if (nmb_ImgMagick::writeFileMagick(filename, "TIF", w, h, 3, pixels)) {
       fprintf(stderr, "Failed to write image to file\n");
   }
+
   delete [] pixels;
+*/
   return 0;
 }
 

@@ -8,6 +8,7 @@
   3rdTech, Inc. 
   ===3rdtech===*/
 class BCGrid;
+class nmb_Image;
 
 class nmb_ImgMagick {
 public:
@@ -26,6 +27,12 @@ public:
     static int writeFileMagick(const char * filename, 
                                const char * mgk_filetype, 
                                BCPlane * plane);
+
+    /// Write an image file using the ImageMagick library's routines, from /
+    /// data in an nmb_Image object
+    static int writeFileMagick(const char * filename,
+                               const char * mgk_filetype,
+                               nmb_Image * image);
 private:
     ///Static object, should never be constructed
     nmb_ImgMagick ();

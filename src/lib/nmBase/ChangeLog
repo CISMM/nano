@@ -1,3 +1,14 @@
+2001-09-04  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Image.C (nmb_ImageArray::setValue),
+                      (nmb_ImageArray::setLine),
+                      (nmb_ImageArray::setImage): added an update here of
+                      min/max_x/y_set so that min/maxValidValue() works right
+        (nmb_ImageArray::exportToTIFF): moved code from here into 
+        nmb_ImgMagick::writeFileMagick(..., nmb_Image *, ...)
+	* nmb_ImgMagick.C (writeFileMagick): added a new version of this
+        function that takes a pointer to an nmb_Image *
+
 2001-08-21  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_Dataset.C (loadFile): printout formatting.
