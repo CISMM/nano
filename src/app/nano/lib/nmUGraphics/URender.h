@@ -92,6 +92,11 @@ protected:
 	int lock_roty;
 	int lock_rotz;
 
+	// fine tune booleans for translations and rotations -- only applied when using the phantom/mouse phantom
+	// used for fine-tuning transformations
+	int tune_trans;
+	int tune_rot;
+
 	// stuff for spiders -- changed to store per leg
 	double spider_length[8];
 	double spider_width[8];
@@ -156,6 +161,8 @@ public:
 	void SetLockRotx(int l) { lock_rotx = l; }
 	void SetLockRoty(int l) { lock_roty = l; }
 	void SetLockRotz(int l) { lock_rotz = l; }
+	void SetTuneTrans(int t) { tune_trans = t; }
+	void SetTuneRot(int t) { tune_rot = t; }
 
 	void SetSpiderLength(int i, double l) { spider_length[i] = l; }
 	void SetSpiderWidth(int i, double w) { spider_width[i] = w; }
@@ -180,6 +187,8 @@ public:
 	int GetLockRotx() { return lock_rotx; }
 	int GetLockRoty() { return lock_roty; }
 	int GetLockRotz() { return lock_rotz; }
+	int GetTuneTrans() { return tune_trans; }
+	int GetTuneRot() { return tune_rot; }
 
 	double GetSpiderLength(int i) { return spider_length[i]; }
 	double GetSpiderWidth(int i) { return spider_width[i]; }

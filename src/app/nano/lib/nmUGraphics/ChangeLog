@@ -1,5 +1,12 @@
 2002-05-23  David Borland <borland@cs.unc.edu>
 
+        * URPolygon.C : fixed code for displaying projective textures at an
+	angle onto objects correctly
+
+	* URender.h : code for fine-tuning translations and rotations
+
+2002-05-23  David Borland <borland@cs.unc.edu>
+
         * SpiderGenerator.C : code for individual manipulation of legs
 
         * URPolygon.C : preliminary changes for getting projective textures
