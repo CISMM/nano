@@ -39,6 +39,7 @@ static int g_planeShape;
 #define PSHAPE_STEP 1
 #define PSHAPE_RAMP 2
 #define PSHAPE_HEMISPHERES 3
+#define PSHAPE_WAVES 4
 
 static vrpn_bool g_isWaiting = vrpn_FALSE;
 static float g_waitTime = 0.0f;
@@ -53,7 +54,7 @@ void usage (const char * argv0) {
     "    -grid:  Take x by y samples for the grid (default 300 x 300).\n"
     "    -port:  Port number for VRPN server to use (default 4500).\n"
     "    -surface:  Use given surface function:  0 = sinusoidal (default),\n"
-    "      1 = step functions, 2 = ramp, 3 = hemispheres.\n");
+	  "      1 = step functions, 2 = ramp, 3 = hemispheres, 4 = waves.\n");
 
   exit(0);
 }
@@ -275,13 +276,13 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
       break;
     case PSHAPE_HEMISPHERES :
       // flat surface with hemispheres of radius 40 nm every 100 nm
-      fprintf(stderr, "Setting up regular-hemisphere surface.\n");
-      targetradius = 40.0f;
+      fprintf(stderr, "sortof Setting up regular-hemisphere surface.\n");
+      targetradius = 20.0f;
       for (x = 0; x < g_numX; x++) {
-        rx = ((x + 50) % 100) - 50;
+        rx = ((x + 50) % 50);
         for (y = 0; y < g_numY; y++) {
-          ry = ((y + 50) % 100) - 50;
-          radius = sqrt(x * x + y * y);
+          ry = ((y + 50) % 50);
+          radius = sqrt(rx * rx + ry * ry);
           if (radius < targetradius) {
             point = targetradius - radius;
           } else {
@@ -291,6 +292,16 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
         }
       }
       break;
+  case PSHAPE_WAVES:
+    //waves maybe??
+    fprintf(stderr, "setting up waves rv 1.\n");
+    for(x = 0;x< g_numX; x++){
+      for(y = 0; y < g_numY; y++){
+	point = 50.0f * ((sin((x/ 20.0f))*sin((x/20.0f)))+(cos((y/20.0f))*cos((y/20.0f))));
+	zPlane-> setValue(x,y,point);
+      }
+    }
+    break;		 
     default:
       fprintf(stderr, "Unimplemented plane shape %d\n", planeShape);
       exit(0);
