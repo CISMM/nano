@@ -471,7 +471,7 @@ DEFINES = $(addprefix -D,$(BAREDEFINES))
 CFLAGS += -g
 
 ifeq ($(HW_OS),sgi_irix)
-  CFLAGS += -LANG:std -W l,-v
+  CFLAGS += -LANG:std 
 
   # prevents warnings in stream libraries
   ifndef ALL_WARNINGS_ON

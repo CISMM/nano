@@ -1,6 +1,10 @@
 2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
 
-	* Makefile.comm:  moved the definition of VRPN_NO_STREAMS again
+	* Makefile.common:  removed linker verbosity
+
+2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* Makefile.common:  moved the definition of VRPN_NO_STREAMS again
 
 2002-03-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
