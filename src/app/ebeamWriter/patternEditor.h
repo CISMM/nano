@@ -164,17 +164,26 @@ class PatternEditor : public nmb_ImageDisplay {
    void updateLengthIndicator();
 
    // stuff for manipulating a pattern
+
+   // translate currently selected shape to the specified world coordinates
    int updateGrab(const double x_nm, const double y_nm);
+
+   // rotate currently selected shape
+   int updateRotation(const double x_nm, const double y_nm);
+
+   // select the shape to which the point nearest the cursor belongs
    vrpn_bool selectPoint(const double x_nm, const double y_nm);
-/*
-   int findNearestShapePoint(const double x, const double y, 
-       list<PatternShapeListElement>::iterator &nearestShape,
-       list<PatternPoint>::iterator &nearestPoint,
-       double &minDist);
-   int findNearestPoint(list<PatternPoint> points,
-             const double x, const double y, 
-             list<PatternPoint>::iterator &nearestPoint, double &minDist);
-*/
+
+   // do the actual finding of nearest point
+   int findNearestShapePoint(const double x_nm, const double y_nm,
+     PatternShape* &nearestShape,
+     PatternPoint* &nearestPoint,
+     double &minDist);
+   int findNearestPoint(list<PatternPoint*> &points,
+     const double x_obj, const double y_obj,
+     PatternPoint* &nearestPoint,
+     double &minDist);
+
    void setUserMode(PE_UserMode mode);
    PE_UserMode getUserMode();
 
@@ -230,19 +239,28 @@ class PatternEditor : public nmb_ImageDisplay {
    double d_mainDragEndX_nm;
    double d_mainDragEndY_nm;
 
-   double d_grabOffsetX;
-   double d_grabOffsetY;
-
    vrpn_bool d_shapeInProgress;
    vrpn_bool d_pointInProgress;
    PatternShape *d_currShape;
 
-   vrpn_bool d_grabInProgress;
-   
+   vrpn_bool d_shapeSelected;
+
+   // for grabs: represents the grab offset
+   // for rotations: defines the center of rotation
+   double d_objectCenterX;
+   double d_objectCenterY;
+
+   // the previous rotation values
+   double d_objectRotateCos;
+   double d_objectRotateSin;
+
+   // should be obvious
+   // TODO: probably remove selectedPoint, make selectedShape a list of pointers
+   PatternPoint *d_selectedPoint;
+   PatternShape *d_selectedShape;
+
    list<ImageElement> d_images;
    ExposurePattern d_pattern;
-   list<PatternPoint>::iterator d_selectedPoint;
-   list<PatternShape>::iterator d_selectedShape;
 
    list<PatternPoint> d_exposurePoints;
 

@@ -103,7 +103,8 @@ PatternShape::PatternShape(ShapeType type):
   d_parent(NULL),
   d_ID(s_nextID),
   d_shapeType(type),
-  d_numReferences(1)
+  d_numReferences(1),
+  d_selected(vrpn_FALSE)
 {
   s_nextID++;
   int i;
@@ -216,16 +217,20 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
 //    }
 
     glLineWidth(1);
-    glColor4f(r, g, b, 1.0);
+    if(d_selected) {
+      glColor4f(0.5*r, 0.5*g, 0.5*b, 1.0);
+    } else {
+      glColor4f(r,g,b, 1.0);
+    }
 
-	glPushAttrib(GL_TRANSFORM_BIT);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glMultMatrixd(d_parentFromObject);
+	  glPushAttrib(GL_TRANSFORM_BIT);
+	  glMatrixMode(GL_MODELVIEW);
+	  glPushMatrix();
+	  glMultMatrixd(d_parentFromObject);
 
 
-	double textOffsetX = 0;
-	double textOffsetY = 0;
+	  double textOffsetX = 0;
+	  double textOffsetY = 0;
 
     double worldFromObjM[16];
     getWorldFromObject(worldFromObjM);
@@ -680,6 +685,16 @@ void PolylinePatternShape::getExposureLevels(list<double> &linearLevels,
   }
 }
 
+void PolylinePatternShape::getPoints(list<PatternPoint*> &pointList)
+{
+  pointList.clear();
+  list<PatternPoint>::iterator points;
+  for(points = d_points.begin(); 
+  points != d_points.end(); points++) {
+    pointList.push_back(&(*points));
+  }
+}
+
 void PolylinePatternShape::handleWorldFromObjectChange()
 {
 	if (d_lineWidth_nm != 0) {
@@ -909,7 +924,11 @@ void PolylinePatternShape::drawToDisplayZeroWidth(double units_per_pixel_x,
   double x, y;
   double x_xMax, y_xMax;
   glLineWidth(1);
-  glColor4f(r,g,b, 1.0);
+  if(d_selected) {
+    glColor4f(0.5*r, 0.5*g, 0.5*b, 1.0);
+  } else {
+    glColor4f(r,g,b, 1.0);
+  }
 
   glPushAttrib(GL_TRANSFORM_BIT);
   glMatrixMode(GL_MODELVIEW);
@@ -1181,7 +1200,11 @@ void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
 
   float x, y;
   glLineWidth(1);
-  glColor4f(r,g,b, 1.0);
+  if(d_selected) {
+    glColor4f(0.5*r, 0.5*g, 0.5*b, 1.0);
+  } else {
+    glColor4f(r,g,b, 1.0);
+  }
 
   glPushAttrib(GL_TRANSFORM_BIT);
   glMatrixMode(GL_MODELVIEW);
@@ -1578,6 +1601,16 @@ void PolygonPatternShape::getExposureLevels(list<double> &linearLevels,
   areaLevels.push_back(d_exposure_uCoulombs_per_square_cm);
 }
 
+void PolygonPatternShape::getPoints(list<PatternPoint*> &pointList)
+{
+  pointList.clear();
+  list<PatternPoint>::iterator points;
+  for(points = d_points.begin(); 
+  points != d_points.end(); points++) {
+    pointList.push_back(&(*points));
+  }
+}
+
 void PolygonPatternShape::setPoints(list<PatternPoint> &points)
 {
   d_points = points;
@@ -1897,6 +1930,23 @@ void CompositePatternShape::getExposureLevels(list<double> &linearLevels,
   }
 }
 
+void CompositePatternShape::getPoints(list<PatternPoint*> &pointList)
+{
+  pointList.clear();
+
+  list<PatternPoint*> shapePoints;
+  list<PatternPoint*>::iterator shapePointsIter;
+  list<PatternShapeListElement>::iterator shape;
+  for(shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
+    (*shape).getPoints(shapePoints);
+    for(shapePointsIter = shapePoints.begin(); 
+    shapePointsIter != shapePoints.end(); 
+    shapePointsIter++) {
+      pointList.push_back((*shapePointsIter));
+    }
+  }
+}
+
 void CompositePatternShape::handleWorldFromObjectChange()
 {
   list<PatternShapeListElement>::iterator shape;
@@ -1938,7 +1988,11 @@ void DumpPointPatternShape::drawToDisplay(double units_per_pixel_x,
                                double units_per_pixel_y,
                                double r, double g, double b)
 {
-  glColor4f(r,g,b, 1.0);
+  if(d_selected) {
+    glColor4f(0.5*r, 0.5*g, 0.5*b, 1.0);
+  } else {
+    glColor4f(r,g,b, 1.0);
+  }
 
   double size = 1.5;
   float xmin, xmax, ymin, ymax;

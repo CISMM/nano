@@ -1,6 +1,7 @@
 #include "patternEditor.h"
 #include "GL/gl.h"
 #include "nmb_ImgMagick.h"
+#include <float.h> // for FLT_MAX
 
 #ifndef M_PI
 #define M_PI           3.14159265358979323846
@@ -115,14 +116,21 @@ PatternEditor::PatternEditor(int startX, int startY):
    d_mainDragEndX_nm = 0.0;
    d_mainDragEndY_nm = 0.0;
 
-   d_grabOffsetX = 0.0;
-   d_grabOffsetY = 0.0;
-
    d_shapeInProgress = vrpn_FALSE;
    d_pointInProgress = vrpn_FALSE;
    d_currShape = NULL;
 
-   d_grabInProgress = vrpn_FALSE;
+   d_shapeSelected = vrpn_FALSE;
+
+   d_objectCenterX = 0.0;
+   d_objectCenterY = 0.0;
+
+   d_objectRotateCos = 0.0;
+   d_objectRotateSin = 0.0;
+
+   d_selectedPoint = NULL;
+   d_selectedShape = NULL;
+
    d_viewportSet = vrpn_FALSE;
  
    d_numExposurePointsRecorded = 0;
@@ -468,66 +476,6 @@ void PatternEditor::addTestGrid(double minX_nm, double minY_nm,
   addShape(grid);
 }
 
-/*
-int PatternEditor::findNearestShapePoint(double x, double y, 
-                    list<PatternShapeListElement>::iterator &nearestShape,
-                    list<PatternPoint>::iterator &nearestPoint,
-                    double &minDist)
-{
-  // search all shape and dump points for the closest one
-  // and return it
-  if (d_pattern.empty()) return -1;
- 
-  list<PatternShapeListElement>::iterator currShape;
-  list<PatternPoint>::iterator pointRef;
-  currShape = d_pattern.getSubShapes().begin();
-  double currDist;
-
-  nearestShape = currShape;
-  findNearestPoint((*currShape).d_points, x, y, nearestPoint, minDist);
-  
-  currShape++;
-  while (currShape != d_pattern.getSubShapes().end()) {
-    findNearestPoint((*currShape).d_points, x, y, pointRef, currDist);
-    if (currDist < minDist) {
-      minDist = currDist;
-      nearestShape = currShape;
-      nearestPoint = pointRef;
-    }
-    currShape++;
-  }
-  return 0;
-}
-
-int PatternEditor::findNearestPoint(list<PatternPoint> points, 
-                                     const double x, const double y, 
-                                     list<PatternPoint>::iterator &nearestPoint,
-                                     double &minDist)
-{
-  if (points.empty()) return -1;
-
-  list<PatternPoint>::iterator currPnt;
-  currPnt = points.begin();
-  double dx, dy, currDist;
-  dx = x-(*currPnt).d_x;
-  dy = y-(*currPnt).d_y;
-  minDist = dx*dx + dy*dy;
-  nearestPoint = currPnt;
-  currPnt++;
-  while (currPnt != points.end()) {
-    dx = x-(*currPnt).d_x;
-    dy = y-(*currPnt).d_y;
-    currDist = dx*dx + dy*dy;
-    if (currDist < minDist) {
-      minDist = currDist;
-      nearestPoint = currPnt;
-    }
-  }
-  minDist = sqrt(minDist);
-  return 0;
-}
-*/
-
 void PatternEditor::saveImageBuffer(const char *filename, 
                                     const char *filetype)
 {
@@ -787,21 +735,19 @@ int PatternEditor::handleMainWinEvent(
          break;
       case MOTION_EVENT:
          x = event.mouse_x; y = event.mouse_y;
-         //if (event.state & IV_LEFT_BUTTON_MASK) {
-             // adjust current line being drawn
-             if (getUserMode() == PE_DRAWMODE && 
-                 (event.state & IV_LEFT_BUTTON_MASK)) {
+           // adjust current line being drawn
+           if (getUserMode() == PE_DRAWMODE && 
+              (event.state & IV_LEFT_BUTTON_MASK)) {
+             mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
+             updatePoint(x_world_nm, y_world_nm);
+             d_viewer->dirtyWindow(event.winID);
+           }
+           // move the currently grabbed object if there is one
+           else if (getUserMode() == PE_GRABMODE) {
                mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
-               updatePoint(x_world_nm, y_world_nm);
+               updateGrab(x_world_nm, y_world_nm);
                d_viewer->dirtyWindow(event.winID);
-             }
-         //} else if (event.state & IV_RIGHT_BUTTON_MASK) {
-             // move the currently grabbed object if there is one
-             else if (getUserMode() == PE_GRABMODE) {
-                 mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
-                 updateGrab(x_world_nm, y_world_nm);
-             }
-         //}
+           }
          break;
       case BUTTON_PRESS_EVENT:
          x = event.mouse_x; y = event.mouse_y;
@@ -824,7 +770,7 @@ int PatternEditor::handleMainWinEvent(
              }
              mainWinPositionToWorld(x, y, x_world_nm, y_world_nm);
              startPoint(x_world_nm, y_world_nm);
-			 updateExposureLevels();
+			       updateExposureLevels();
              d_viewer->dirtyWindow(event.winID);
              break;
            case IV_RIGHT_BUTTON:
@@ -833,15 +779,15 @@ int PatternEditor::handleMainWinEvent(
                endShape();
                setUserMode(PE_IDLE);
              }
-/*
+
              // otherwise, look for something close by to select
              else {
                mainWinPositionToWorld(x, y, x_world_nm, y_world_nm);
-               if (grab(x_world_nm, y_world_nm)) {
+               if (selectPoint(x_world_nm, y_world_nm)) {
                   setUserMode(PE_GRABMODE);
                }
              }
-*/
+
              break;
            default:
              break;
@@ -863,13 +809,14 @@ int PatternEditor::handleMainWinEvent(
              d_viewer->dirtyWindow(event.winID);
              break;
            case IV_RIGHT_BUTTON:
-/*
+
              // release the currently grabbed object
              if (getUserMode() == PE_GRABMODE) {
                mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
                updateGrab(x_world_nm, y_world_nm);
+               setUserMode(PE_IDLE);
              }
-*/
+             d_viewer->dirtyWindow(event.winID);
              break;
            default:
              break;
@@ -1661,38 +1608,186 @@ int PatternEditor::startShape(ShapeType type)
   return 0;
 }
 
+int PatternEditor::updateGrab(const double x_nm, const double y_nm)
+{
+  double transform[16];
+  double x_obj, y_obj, x_trans, y_trans;
+  nmb_TransformMatrix44 objectFromWorld;
+
+  (*d_selectedShape).getWorldFromObject(transform);
+  objectFromWorld.setMatrix(transform);
+  objectFromWorld.invert();
+  objectFromWorld.getMatrix(transform);
+  x_obj = transform[0]*x_nm + transform[4]*y_nm + transform[12];
+  y_obj = transform[1]*x_nm + transform[5]*y_nm + transform[13];
+
+  x_trans = x_obj - d_objectCenterX;
+  y_trans = y_obj - d_objectCenterY;
+  d_objectCenterX = x_obj;
+  d_objectCenterY = y_obj;
+  
+  list<PatternPoint*> points;
+  list<PatternPoint*>::iterator pointsIter;
+  d_selectedShape->getPoints(points);
+  for(pointsIter = points.begin(); pointsIter != points.end(); pointsIter++) {
+    (*pointsIter)->d_x += x_trans;
+    (*pointsIter)->d_y += y_trans;
+  }
+
+  return 0;
+}
+
+int PatternEditor::updateRotation(const double x_nm, const double y_nm)
+{
+  double transform[16];
+  double x_obj, y_obj, x_rotate, y_rotate, h, cos_t, sin_t;
+  nmb_TransformMatrix44 objectFromWorld;
+
+  (*d_selectedShape).getWorldFromObject(transform);
+  objectFromWorld.setMatrix(transform);
+  objectFromWorld.invert();
+  objectFromWorld.getMatrix(transform);
+  x_obj = transform[0]*x_nm + transform[4]*y_nm + transform[12];
+  y_obj = transform[1]*x_nm + transform[5]*y_nm + transform[13];
+
+  //printf("Updating grab at: [%lf, %lf]\n", x_obj, y_obj);
+  // translate (x, y) to origin
+  x_rotate = x_obj - d_objectCenterX;
+  y_rotate = y_obj - d_objectCenterY;
+
+  // normalize (x, y)
+  h = sqrt(x_rotate*x_rotate + y_rotate*y_rotate);
+  sin_t = - y_rotate / h;
+  cos_t = x_rotate / h;
+
+  //printf("cos: %lf :: sin: %lf\n", cos_t, sin_t);
+
+  list<PatternPoint*> points;
+  list<PatternPoint*>::iterator pointsIter;
+  d_selectedShape->getPoints(points);
+  for(pointsIter = points.begin(); pointsIter != points.end(); pointsIter++) {
+    x_obj = (*pointsIter)->d_x - d_objectCenterX;
+    y_obj = (*pointsIter)->d_y - d_objectCenterY;
+    (*pointsIter)->d_x = (x_obj * (cos_t * d_objectRotateCos + sin_t * d_objectRotateSin) 
+                       +  y_obj * (sin_t * d_objectRotateCos - cos_t * d_objectRotateSin)) 
+                       +  d_objectCenterX;
+    (*pointsIter)->d_y = (x_obj * (cos_t * d_objectRotateSin - sin_t * d_objectRotateCos) 
+                       +  y_obj * (sin_t * d_objectRotateSin + cos_t * d_objectRotateCos)) 
+                       +  d_objectCenterY;
+  }
+  d_objectRotateSin = sin_t;
+  d_objectRotateCos = cos_t;
+
+  return 0;
+}
+
 vrpn_bool PatternEditor::selectPoint(const double x_nm, const double y_nm)
 {
-  list<PatternShapeListElement>::iterator shapeRef;
-  list<PatternPoint>::iterator pntRef;
-
-  double minDist, minDistPixels;
-  double x_pnt, y_pnt;
-  //double x_offset, y_offset;
+  PatternShape *nearestShape;
+  PatternPoint *nearestPoint;
+  double minDist = FLT_MAX;
+  double minDistPixels;
   vrpn_bool selectedSomething = vrpn_FALSE;
-/*
-  if (findNearestShapePoint(x_nm, y_nm, shapeRef, pntRef, minDist)) {
+  double transform[16];
+  double x_obj, y_obj;
+  nmb_TransformMatrix44 objectFromWorld;
+
+  if (findNearestShapePoint(x_nm, y_nm, nearestShape, nearestPoint, minDist)) {
       return vrpn_FALSE;
   }
+
   mainWinNMToPixels(minDist, minDistPixels);
   if (minDistPixels < PE_SELECT_DIST) {
-      d_selectedShape = shapeRef;
-      d_selectedPoint = pntRef;
-      x_pnt = (*d_selectedPoint).d_x;
-      y_pnt = (*d_selectedPoint).d_y;
-      d_grabOffsetX = x_nm - x_pnt;
-      d_grabOffsetY = y_nm - y_pnt;
-      d_grabInProgress = vrpn_TRUE;
+    if(d_selectedShape) {
+      d_selectedShape->d_selected = vrpn_FALSE;
+    }
+      d_selectedShape = nearestShape;
+      d_selectedShape->d_selected = vrpn_TRUE;
+      d_selectedShape->getWorldFromObject(transform);
+      objectFromWorld.setMatrix(transform);
+      objectFromWorld.invert();
+      objectFromWorld.getMatrix(transform);
+      x_obj = transform[0]*x_nm + transform[4]*y_nm + transform[12];
+      y_obj = transform[1]*x_nm + transform[5]*y_nm + transform[13];
+
+      d_selectedPoint = nearestPoint;
+      d_objectCenterX = x_obj;
+      d_objectCenterY = y_obj;
+      d_objectRotateCos = 1.0;
+      d_objectRotateSin = 0.0;
+      d_shapeSelected = vrpn_TRUE;
       selectedSomething = vrpn_TRUE;
   }
-*/
+
   return selectedSomething;
 }
 
-int PatternEditor::updateGrab(const double x_nm, const double y_nm)
+int PatternEditor::findNearestShapePoint(const double x_nm, const double y_nm, 
+                                         PatternShape* &nearestShape,
+                                         PatternPoint* &nearestPoint,
+                                         double &minDist)
 {
-  (*d_selectedPoint).d_x = x_nm - d_grabOffsetX;
-  (*d_selectedPoint).d_y = y_nm - d_grabOffsetY;
+  // search all shape and dump points for the closest one
+  // and return it
+  if (d_pattern.empty()) return -1;
+ 
+  list<PatternShapeListElement>::iterator currShape;
+  list<PatternPoint*> currPoints;
+  PatternPoint* currShapeNearestPoint;
+  double currDist;
+  
+  currShape = d_pattern.getSubShapes().begin();
+  nearestShape = (*currShape).d_shape;
+  double transform[16];
+  double x_obj, y_obj;
+  nmb_TransformMatrix44 objectFromWorld;
+
+  while (currShape != d_pattern.getSubShapes().end()) {
+    (*currShape).getPoints(currPoints);
+    (*currShape).getWorldFromObject(transform);  
+    objectFromWorld.setMatrix(transform);
+    objectFromWorld.invert();
+    objectFromWorld.getMatrix(transform);
+    x_obj = transform[0]*x_nm + transform[4]*y_nm + transform[12];
+    y_obj = transform[1]*x_nm + transform[5]*y_nm + transform[13];
+
+    findNearestPoint(currPoints, x_obj, y_obj, currShapeNearestPoint, currDist);
+    if (currDist < minDist) {
+      minDist = currDist;
+      nearestShape = (*currShape).d_shape;
+      nearestPoint = currShapeNearestPoint;
+    }
+    currShape++;
+  }
+  return 0;
+}
+
+int PatternEditor::findNearestPoint(list<PatternPoint*> &points,
+                                    const double x_obj, const double y_obj,
+                                    PatternPoint* &nearestPoint,
+                                    double &minDist)
+{
+  if (points.empty()) return -1;
+
+  list<PatternPoint*>::iterator currPnt;
+  currPnt = points.begin();
+  double dx, dy, currDist;
+  dx = x_obj-(*currPnt)->d_x;
+  dy = y_obj-(*currPnt)->d_y;
+  minDist = dx*dx + dy*dy;
+  nearestPoint = (*currPnt);
+  currPnt++;
+  while (currPnt != points.end()) {
+    dx = x_obj-(*currPnt)->d_x;
+    dy = y_obj-(*currPnt)->d_y;
+    currDist = dx*dx + dy*dy;
+    if (currDist < minDist) {
+      minDist = currDist;
+      nearestPoint = (*currPnt);
+    }
+    currPnt++;
+  }
+  minDist = sqrt(minDist);
   return 0;
 }
 
@@ -1771,9 +1866,7 @@ int PatternEditor::updatePoint(const double x_nm, const double y_nm)
       } else if (d_currShape->type() == PS_DUMP) {
         ((DumpPointPatternShape *)d_currShape)->setLocation(x_nm, y_nm);
       }
-    } else if (d_drawingTool == PE_SELECT && d_grabInProgress){
-      updateGrab(x_nm, y_nm);
-    }
+    } 
   } else {
     printf("Error, updatePoint called when not setting point\n");
     result = -1;
@@ -1787,7 +1880,6 @@ int PatternEditor::finishPoint(const double x_nm, const double y_nm)
   int result = updatePoint(x_nm, y_nm);
 //  printf("finishPoint\n");
   d_pointInProgress = vrpn_FALSE;
-  d_grabInProgress = vrpn_FALSE;
   return result;
 }
 

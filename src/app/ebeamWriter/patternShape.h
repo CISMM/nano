@@ -94,6 +94,7 @@ typedef enum {PS_POLYLINE = 0, PS_POLYGON = 1,
 
 // base class
 class PatternShape {
+  friend class PatternEditor;
   friend class PatternFile;
   friend class PatternShapeListElement;
   public:
@@ -152,6 +153,8 @@ class PatternShape {
     virtual void getExposureLevels(list<double> &/*linearLevels*/,
                                    list<double> &/*areaLevels*/) {}
 
+    virtual void getPoints(list<PatternPoint*> &/*pointList*/) {}
+
 	/// set parent (for shapes composing composite shapes)
 	virtual void setParent(PatternShape *parent) {d_parent = parent;}
 
@@ -189,6 +192,8 @@ class PatternShape {
 
 	virtual void handleWorldFromObjectChange() {}
 
+
+
   protected:
 	inline void transform(double *transform, double x_src, double y_src, 
 		double &x_dest, double &y_dest);
@@ -204,6 +209,9 @@ class PatternShape {
     ShapeType d_shapeType;
     static int s_nextID;
     int d_numReferences;
+  // is this shape selected?
+  vrpn_bool d_selected;
+
 };
 
 void PatternShape::transform(double *transform, double x_src, double y_src, 
@@ -240,6 +248,7 @@ void PatternShape::transformVect(double *transform, float x_src, float y_src,
 
 /* this is basically a wrapper for a PatternShape pointer */
 class PatternShapeListElement {
+  friend class PatternEditor; 
   friend class PatternFile;
   friend class CompositePatternShape;
   public:
@@ -293,6 +302,14 @@ class PatternShapeListElement {
     void getExposureLevels(list<double> &linearLevels,
                                    list<double> &areaLevels)
     { d_shape->getExposureLevels(linearLevels, areaLevels);}
+
+    void getPoints(list<PatternPoint*> &pointList)
+    { d_shape->getPoints(pointList); }
+
+    // needed for selection code
+    void getWorldFromObject(double *transform)
+    { d_shape->getWorldFromObject(transform); }
+
 
   protected:
     PatternShape *d_shape;
@@ -352,6 +369,9 @@ class PolylinePatternShape : public PatternShape {
     /// get all exposure levels in the shape
     virtual void getExposureLevels(list<double> &linearLevels,
                                    list<double> &areaLevels);
+
+    virtual void getPoints(list<PatternPoint*> &pointList);
+
 
 	virtual void handleWorldFromObjectChange();
 
@@ -449,6 +469,9 @@ class PolygonPatternShape : public PatternShape {
     virtual void getExposureLevels(list<double> &linearLevels,
                                    list<double> &areaLevels);
 
+    virtual void getPoints(list<PatternPoint*> &pointList);
+
+
     void setPoints(list<PatternPoint> &points);
     void getPoint(int index, double &x, double &y);
 	void getPointInWorld(int index, double &x, double &y);
@@ -520,6 +543,8 @@ class CompositePatternShape : public PatternShape {
     /// get all exposure levels in the shape
     virtual void getExposureLevels(list<double> &linearLevels,
                                    list<double> &areaLevels);
+
+    virtual void getPoints(list<PatternPoint*> &pointList);
 
     virtual void handleWorldFromObjectChange();
 
@@ -601,6 +626,9 @@ class DumpPointPatternShape : public PatternShape {
     virtual void getExposureLevels(list<double> &linearLevels,
                                    list<double> &areaLevels) 
             { linearLevels.clear(); areaLevels.clear(); }
+    virtual void getPoints(list<PatternPoint*> &pointList)
+    { pointList.clear(); pointList.push_back(&d_location); }
+
     void setLocation(double x_nm, double y_nm);
 
   protected:

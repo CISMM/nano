@@ -44,6 +44,7 @@ class ControlPanels {
    static void handle_undoPoint_change(int new_value, void *ud);
    static void handle_undoShape_change(int new_value, void *ud);
    static void handle_clearPattern_change(int new_value, void *ud);
+   static void handle_clearPatternConfirm_change(int new_value, void *ud);
    static void handle_addTestGrid_change(int new_value, void *ud);
    static void handle_canvasImage_change(const char *new_value, void *ud);
    static void handle_patternColorChanged_change(int new_value, void *ud);
@@ -109,6 +110,7 @@ class ControlPanels {
    Tclvar_float d_area_exposure_uCoulombs_per_square_cm;
    Tclvar_int d_drawingTool;
    Tclvar_int d_clearPattern;
+   Tclvar_int d_clearPatternConfirm;
    Tclvar_int d_undoShape;
    Tclvar_int d_undoPoint;
    Tclvar_int d_addTestGrid;

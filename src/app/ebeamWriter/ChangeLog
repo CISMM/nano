@@ -1,3 +1,29 @@
+2003-04-01  David Jack  <jackd@cs.unc.edu>
+
+	* controlPanels.[Ch] - added tclvar and handlers for clear pattern
+	confirmation checkbutton
+
+	* patternShape.[Ch] (getPoints):  new function to get a list of 
+	pointers to the shape's points
+	(d_selected): true iff the shape is selected
+	(drawToDisplay): if the shape is selected, draws it in a different
+	color
+
+	* patternEditor.[Ch] - lots of changes to add ability to select, move
+	and rotate shapes
+	(selectPoint): finds the nearest point to the mouse cursor, returns
+	true iff it selected something
+	(findNearestShapePoint): searches all shapes in the pattern and finds
+	the shape and point nearest to the specified coordinates (nearest shape
+	is defined to be the shape containing the nearest point)
+	(findNearestPoint): searches a list of PatternPoint pointers and finds
+	the nearest to the specified coordinates
+	(updateGrab): translates the selected shape by the specified amount
+	(updateRotation): rotates the selected shape about the object center
+	by the specified amount
+	(handleMainWinEvent): incorporated selecting and grabbing (still have
+	rotation to incorporate)
+
 2003-03-31  Adam Seeger  <seeger@cs.unc.edu>
 
 	* controlPanels.C (handleSEMChange): moved setting of image magnification

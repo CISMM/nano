@@ -34,6 +34,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
                  "area_exposure_uCoulombs_per_square_cm", 500),
    d_drawingTool("drawing_tool", 1),
    d_clearPattern("clear_pattern", 0),
+   d_clearPatternConfirm("clear_pattern_confirm", 0),
    d_undoShape("undo_shape", 0),
    d_undoPoint("undo_point", 0),
    d_addTestGrid("add_test_grid", 0),
@@ -205,6 +206,7 @@ void ControlPanels::setupCallbacks()
   d_undoShape.addCallback(handle_undoShape_change, this);
   d_undoPoint.addCallback(handle_undoPoint_change, this);
   d_clearPattern.addCallback(handle_clearPattern_change, this);
+  d_clearPatternConfirm.addCallback(handle_clearPatternConfirm_change, this);
   d_addTestGrid.addCallback(handle_addTestGrid_change, this);
   d_canvasImage.addCallback(handle_canvasImage_change, this);
   d_patternColorChanged.addCallback(handle_patternColorChanged_change, this);
@@ -508,7 +510,21 @@ void ControlPanels::handle_clearPattern_change(int new_value,
 {
   ControlPanels *me = (ControlPanels *)ud;
 
-  me->d_patternEditor->clearPattern();
+  if(me->d_clearPatternConfirm) {
+    me->d_patternEditor->clearPattern();
+    me->d_clearPatternConfirm = 0;
+  } else {
+    display_warning_dialog("Are you sure?");
+  }
+}
+
+//static 
+void ControlPanels::handle_clearPatternConfirm_change(int new_value, 
+											   void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+
+  me->d_clearPatternConfirm = new_value;
 }
 
 // static
