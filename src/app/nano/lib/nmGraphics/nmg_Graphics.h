@@ -87,6 +87,10 @@ class vrpn_Connection;  // from vrpn_Connection.h
  */
 
 
+#ifdef sgi
+#pragma set woff 3201
+#endif
+
 class nmg_Graphics {
 
   public:
@@ -755,6 +759,10 @@ class nmg_Graphics {
     char * encode_associate (int * len, vrpn_bool associate, int region);
     int decode_associate (const char * buf, vrpn_bool *associate, int *region);
 };
+
+#ifdef sgi
+#pragma reset woff 3201
+#endif
 
 #endif  // NMG_GRAPHICS_H
 
