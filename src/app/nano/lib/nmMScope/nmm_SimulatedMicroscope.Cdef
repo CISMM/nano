@@ -186,13 +186,13 @@ RECEIVE_MSG Trans {
 }
 
 RECEIVE_MSG Rot {
-//  float32 yaw
-//  float32 pitch
-//  float32 roll
+//  float32 z
+//  float32 y
+//  float32 x
 
-	yaw = (float)yaw;
-	pitch = (float)pitch;
-	roll = (float)roll;
+	rot_x = (float)x;
+	rot_y = (float)y;
+	rot_z = (float)z;
 
 	rotRcv = true;
 

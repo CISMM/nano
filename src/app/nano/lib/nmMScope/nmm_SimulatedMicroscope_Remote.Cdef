@@ -91,6 +91,8 @@ sendCylinders(URender * obj){
 			myURenderObject->cylinders[i].az,
 			myURenderObject->cylinders[i].length,
 			myURenderObject->cylinders[i].radius);
+			cout << "sendCylinders: alt: " << myURenderObject->cylinders[i].alt << "\taz:  " 
+				 << myURenderObject->cylinders[i].az << endl;
 	}
 }
 //
@@ -171,6 +173,8 @@ handle_gotConnection (void * userdata, vrpn_HANDLERPARAM grpc_p) {
 				grpc_me->myURenderObject->cylinders[i].az,
 				grpc_me->myURenderObject->cylinders[i].length,
 				grpc_me->myURenderObject->cylinders[i].radius);
+				cout << "handle_gotConnection: alt: " << grpc_me->myURenderObject->cylinders[i].alt << "\taz:  " 
+					 << grpc_me->myURenderObject->cylinders[i].az << endl;
 		}
 		
 	}//end if(grpc_me->myURenderObject != NULL)
@@ -377,11 +381,11 @@ encode_and_sendTrans(vrpn_float32 x, vrpn_float32 y, vrpn_float32 z){
 }
 //
 void nmm_SimulatedMicroscope_Remote::
-encode_and_sendRot(vrpn_float32 yaw, vrpn_float32 pitch, vrpn_float32 roll){
+encode_and_sendRot(vrpn_float32 z, vrpn_float32 y, vrpn_float32 x){
 //variables for encoding in msgbuf
   int len = 0;
   //
-  char * msgbuf = encode_Rot(&len,yaw,pitch,roll);//encode msgbuf
+  char * msgbuf = encode_Rot(&len,z,y,x);//encode msgbuf
   int retval = -1;
   if((retval = Send((long)len, d_Rot_type, msgbuf)) == -1){
 	cout << "problem sending Rotation" << endl;
@@ -412,7 +416,7 @@ encode_and_sendCylinder(
   //variables for encoding in msgbuf
   int len = 0;
   //
-  char * msgbuf = encode_Cylinder(&len,x,y,z,altitude,azimuth,length,radius);//encode msgbuf
+  char * msgbuf = encode_Cylinder(&len,x,y,z,azimuth,altitude,length,radius);//encode msgbuf
   int retval = -1;
   if((retval = Send((long)len, d_Cylinder_type, msgbuf)) == -1){
 	cout << "problem sending Cylinder" << endl;

@@ -1,3 +1,19 @@
+2002-05-07 Andrea HIlchey <hilchey@cs.unc.edu>
+
+	* nmm_SimulatedMicroscope.hdef,Cdef : changed data members
+	yaw,pitch, and roll to rot_x, rot_y, rot_z to reflect change
+	from rotations in terms of the former to the latter, changed
+	RcvRot function to use new variable names
+
+	* nmm_AFMSIMSERVER_Report.vrpndef : changed Rot message type
+	to have x,y,z values
+
+	* nmm_SimulatedMicroscope_Remote.Cdef : changed order of 
+	parameters to encode_Cylinder function in
+	encode_and_sendCylinder to fix azimuth/altitude switched
+	problem, also changed parameter names to encode_and_sendRot
+	function (yaw,pitch,roll -> x,y,z)
+
 2002-04-26 David Borland <borland@cs.unc.edu>
 
         * nmm_SimulatedMicroscope_Remote.Cdef : send translation when

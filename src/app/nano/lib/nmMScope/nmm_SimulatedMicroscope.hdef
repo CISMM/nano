@@ -62,14 +62,14 @@ public:
 	bool rotRcv;
 	Node * head;			//head of list of triangles
 	Node * holder;			//temp Node to hold head of list before deletion without simulator needing 
-							//knowledgeof Node class
+							//knowledge of Node class
 	CylNode * cylHead;		//head of list of cylinders
 	CylNode * cylHolder;	//temp CylNode
 	double get_x_offset(){return d_xmin;};
 	double get_y_offset(){return d_ymin;};
     float _scale;
 	float trans_x,trans_y,trans_z;
-	float yaw,pitch,roll;
+	float rot_x,rot_y,rot_z;
 
 private:
     RECEIVERS_DECL nmm_AFMSIM_Report;

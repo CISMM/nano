@@ -43,7 +43,7 @@ public:
 		vrpn_float32 _3v1, vrpn_float32 _3v2,vrpn_float32 _3v3);
 	void encode_and_sendScale(vrpn_float32 scale);
 	void encode_and_sendTrans(vrpn_float32 x, vrpn_float32 y, vrpn_float32 z);
-	void encode_and_sendRot(vrpn_float32 yaw, vrpn_float32 pitch, vrpn_float32 roll);
+	void encode_and_sendRot(vrpn_float32 z, vrpn_float32 y, vrpn_float32 x);
 	void encode_and_sendCylinder(
 		vrpn_float32 x, vrpn_float32 y,vrpn_float32 z,
 		vrpn_float32 altitude, vrpn_float32 azimuth,
