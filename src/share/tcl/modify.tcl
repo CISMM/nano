@@ -565,7 +565,7 @@ proc modBackgChReal {fooa element op} {
 proc acceptModifyVars {varlist} {
     global accepted_modify_params
     global modify
-    global fc
+    global save_bg
 
     foreach val $varlist {
 	global modifyp_$val
@@ -578,18 +578,18 @@ proc acceptModifyVars {varlist} {
     # this is linked so C code will do something with new parameters
     set accepted_modify_params 1
     # None of the newmodify_* vars are now changed
-    $modify.mode.accept configure -background $fc
-    $modify.mode.cancel configure -background $fc
+    $modify.mode.accept configure -background $save_bg
+    $modify.mode.cancel configure -background $save_bg
 
     #close the window when the Accept Button is pressed
-    wm withdraw $modify
+    #wm withdraw $modify
 }
 
 
 proc cancelModifyVars {varlist} {
 
     global modify
-    global fc
+    global save_bg
 
     foreach val $varlist {
 	global modifyp_$val
@@ -599,8 +599,8 @@ proc cancelModifyVars {varlist} {
 	}
     }
     # None of the newmodify_* vars are now changed
-    $modify.mode.accept configure -background $fc
-    $modify.mode.cancel configure -background $fc
+    $modify.mode.accept configure -background $save_bg
+    $modify.mode.cancel configure -background $save_bg
 }
 
 

@@ -20,12 +20,19 @@ set nmInfo(imagestate) [$nmInfo(toolbar).imagestate childsite]
 label $nmInfo(imagestate).image_mode -text "Oscillate" -anchor nw
 pack $nmInfo(imagestate).image_mode -side top -fill x 
 
+# Callback procedures set a variable to tell C code that
+# it's time to send new values to AFM. 
 generic_entry $nmInfo(imagepage).setpoint imagep_setpoint \
-	"Setpoint (0,100%)" real
-generic_entry $nmInfo(imagepage).p-gain imagep_p_gain "P-Gain (0,5)" real
-generic_entry $nmInfo(imagepage).i-gain imagep_i_gain "I-Gain (0,5)" real
-generic_entry $nmInfo(imagepage).d-gain imagep_d_gain "D-Gain (0,5)" real
-generic_entry $nmInfo(imagepage).rate imagep_rate "Rate (um/sec)" real
+	"Setpoint (0,100%)" real \
+        { set accepted_image_params 1 }
+generic_entry $nmInfo(imagepage).p-gain imagep_p_gain "P-Gain (0,5)" real \
+        { set accepted_image_params 1 }
+generic_entry $nmInfo(imagepage).i-gain imagep_i_gain "I-Gain (0,5)" real\
+        { set accepted_image_params 1 }
+generic_entry $nmInfo(imagepage).d-gain imagep_d_gain "D-Gain (0,5)" real\
+        { set accepted_image_params 1 }
+generic_entry $nmInfo(imagepage).rate imagep_rate "Rate (um/sec)" real\
+        { set accepted_image_params 1 }
 
 pack    $nmInfo(imagepage).setpoint $nmInfo(imagepage).p-gain \
 	$nmInfo(imagepage).i-gain $nmInfo(imagepage).d-gain \
@@ -60,11 +67,16 @@ pack $nmInfo(modifypage).right $nmInfo(modifypage).left -side top \
 
 set nmInfo(modifypageright) [$nmInfo(modifypage).right childsite]
 generic_entry $nmInfo(modifypage).left.setpoint modifyp_setpoint \
-	"Setpoint (0,100%)" real 
-generic_entry $nmInfo(modifypage).left.p-gain modifyp_p_gain "P-Gain (0,5)" real
-generic_entry $nmInfo(modifypage).left.i-gain modifyp_i_gain "I-Gain (0,5)" real
-generic_entry $nmInfo(modifypage).left.d-gain modifyp_d_gain "D-Gain (0,5)" real
-generic_entry $nmInfo(modifypage).left.rate modifyp_rate "Rate (um/sec)" real
+	"Setpoint (0,100%)" real \
+        { set accepted_modify_params 1 }
+generic_entry $nmInfo(modifypage).left.p-gain modifyp_p_gain "P-Gain (0,5)" real \
+        { set accepted_modify_params 1 }
+generic_entry $nmInfo(modifypage).left.i-gain modifyp_i_gain "I-Gain (0,5)" real \
+        { set accepted_modify_params 1 }
+generic_entry $nmInfo(modifypage).left.d-gain modifyp_d_gain "D-Gain (0,5)" real \
+        { set accepted_modify_params 1 }
+generic_entry $nmInfo(modifypage).left.rate modifyp_rate "Rate (um/sec)" real \
+        { set accepted_modify_params 1 }
 
 	
 pack    $nmInfo(modifypage).left.setpoint $nmInfo(modifypage).left.p-gain \
@@ -81,7 +93,7 @@ proc show_mode {name path nm element op} {
     upvar #0 $name mode
     if { $mode == 0 } {
 	#oscillating mode
-	$path configure -text "Oscillating"
+	$path configure -text "Oscillate"
     } elseif { $mode == 1 } {
 	#contact mode
 	$path configure -text "Contact"
@@ -136,7 +148,7 @@ proc show_control {name path nm element op} {
 }
 
 trace variable imagep_mode w \
-	"show_mode imagep_mode $nmInfo(imagepage).image_mode"
+	"show_mode imagep_mode $nmInfo(imagestate).image_mode"
 
 trace variable modifyp_mode w \
 	"show_mode modifyp_mode $nmInfo(modifypageright).mod_mode"
@@ -147,10 +159,10 @@ trace variable modifyp_tool w \
 trace variable modifyp_control w \
 	"show_control modifyp_control $nmInfo(modifypageright).mod_control"
 
+pack $nmInfo(modifypageright).mod_control -side bottom -anchor nw
 pack $nmInfo(modifypageright).mod_mode $nmInfo(modifypageright).mod_style \
 	$nmInfo(modifypageright).mod_tool \
 	-side left -anchor nw
-#$nmInfo(modifypageright).mod_control 
 
 pack [frame $nmInfo(modifypage).left.spacer -height 5 -width 5] -side top -fill x -pady 2
 

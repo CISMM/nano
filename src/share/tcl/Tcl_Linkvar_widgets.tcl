@@ -359,12 +359,35 @@ proc updateEntry {entry var name element op} {
 }
 
 # Called when the user hits "enter" in the entry widget
-proc setEntry {entry var } {
+# Also invokes a callback command, if there is one.
+proc setEntry {entry var {my_command ""} } {
     upvar #0 $entry.textbg mybg
     upvar #0 $var varval 
 #    puts "setEntry $var $varval"
       set varval [$entry get]
     $entry configure -textbackground $mybg
+    if {$my_command != "" } {
+        uplevel #0 $my_command
+    }
+}
+# Called when the entry widget looses focus. 
+# Very similar to the setEntry procedure, but we only want 
+# to set the global variable and yank the callback if the
+# value has changed. Why? Because this procedure gets called
+# every time focus leaves the entry, and we don't want to generate
+# that many callbacks.
+proc focus_setEntry {entry var {my_command ""} } {
+    upvar #0 $entry.textbg mybg
+    upvar #0 $var varval 
+#    puts "focus_setEntry $var $varval"
+    $entry configure -textbackground $mybg
+    set curr_entry_val [$entry get]
+    if { $varval != $curr_entry_val } {
+        set varval $curr_entry_val
+        if {$my_command != "" } {
+            uplevel #0 $my_command
+        }
+    }
 }
 
 # Called when the user hits "Esc" in the entry widget
@@ -385,12 +408,17 @@ proc setWarnBackground { entry name element op } {
 
 # Create an entry field. Validation determines what kind of
 # numbers/letters can be entered.
-# The global variable passed in as "var" must exist
-# and have a valid initial value.
-proc generic_entry { name var label validation} {
+# If the global variable passed in as "var" exists
+# the entry shows it's initial value.
+# A callback function can be passed in, which gets executed anytime
+#   the global variable is set. 
+# Note: this is inspired by "Effective Tcl/Tk programming", Harrison, 
+# and we could add percent substitution so we could automatically
+# pass additional information into the callback. See sect 8.2.3 pg 338.
+proc generic_entry { name var label validation {my_command "" }} {
     upvar #0 $var varval
     iwidgets::entryfield "$name" \
-	-command "setEntry $name $var" \
+	-command [list setEntry $name $var $my_command] \
 	-validate $validation \
 	-textvariable "$name.gvar" \
 	-labeltext "$label" \
@@ -413,8 +441,12 @@ proc generic_entry { name var label validation} {
     trace variable varval w "updateEntry $name $var "
 
     # Allow the user to hit "Esc" to go back to the old value
-    bind [$name component entry] <Escape> "revertEntry $name $var"
+    bind [$name component entry] <Escape> [list revertEntry $name $var]
 
+    # Change the global variable when the entry looses focus, not
+    # just when the user hits Enter
+    bind [$name component entry] <FocusOut> [list focus_setEntry $name $var $my_command]
+    
     return $name
 }
 

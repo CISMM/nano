@@ -236,9 +236,8 @@ Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
 	// Set up for old default, which was Topography and standard deviation
 	if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
             (d_dataset->inputGrid->readMode() == READ_STREAM)) {
-	  if (Add_channel("Topography-Forward","nm",0,1) ||
-	      Add_channel("std_dev","nm",0,1)){
-		fprintf(stderr,"Scan_channel_selector(): Can't get h&d\n");
+            if (Add_channel("Topography-Forward","nm",0,1)) {
+		fprintf(stderr,"Scan_channel_selector(): Can't get height\n");
 	  }
 	}
 }
@@ -407,9 +406,8 @@ Point_channel_selector::Point_channel_selector
 	// Set up for old default, which was Topography and standard deviation
 	if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
             (d_dataset->inputGrid->readMode() == READ_STREAM)) {
-	  if (Add_channel("Topography","nm",0,1, 90) ||
-	    Add_channel("std_dev","nm",0,1, 10)){
-		fprintf(stderr,"Point_channel_selector(): Can't get h&d\n");
+            if (Add_channel("Topography","nm",0,1, 90) ) {
+		fprintf(stderr,"Point_channel_selector(): Can't get height\n");
 	  }
 	}
 }

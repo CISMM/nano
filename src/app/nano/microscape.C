@@ -817,7 +817,7 @@ Tclvar_float	joy1b("joy1(b)",0.0, NULL, NULL);
 
 // Change the number of pulse or scrape markers to show
 
-Tclvar_int numMarkersShown ("number_of_markers_shown", 100);
+Tclvar_int numMarkersShown ("number_of_markers_shown", 1000);
 
 Tclvar_int markerHeight ("marker_height", 100);
 
@@ -4426,6 +4426,8 @@ void ParseArgs (int argc, char ** argv,
         fprintf(stderr, "Warning: -nodevice obsolete.\n");
       } else if (strcmp(argv[i], "-keybd") == 0) {
         do_keybd = 1;
+      } else if (strcmp(argv[i], "-nokeybd") == 0) {
+        fprintf(stderr, "Warning: -nokeybd obsolete.\n");
       } else if (strcmp(argv[i], "-nomenus") == 0) {
         //do_menus = 0;
         fprintf(stderr, "Warning: -nomenus obsolete.\n");

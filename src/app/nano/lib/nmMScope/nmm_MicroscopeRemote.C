@@ -348,7 +348,7 @@ long nmm_Microscope_Remote::mainloop (void) {
     d_connection->mainloop();
 
   if (d_connection && !d_connection->doing_okay()) {
-    fprintf(stderr, "nmm_Microscope_Remote::HandleReports():  "
+    fprintf(stderr, "nmm_Microscope_Remote::mainloop():  "
                     "lost connection.\n");
     d_dataset->done = VRPN_TRUE;
     return -1;

@@ -222,6 +222,9 @@ void handle_doRelaxComp_change (vrpn_int32 val, void * _mptr) {
     return;
 }
 
+// M stands for modify 
+// I stands for image
+// _p_ stands for parameters
 void handle_Mmode_change (vrpn_int32, void * _mptr) {
   microscope->state.modify.mode_changed = VRPN_TRUE;
 }

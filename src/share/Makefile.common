@@ -54,9 +54,15 @@
 ifndef ($(PWD_COMMAND))
 
 ##########################
-# }}}
-# {{{ common definitions
-#
+# Convenience Variables
+# Taken straight from the make info page, section "Syntax of Functions"
+COMMA :=,
+EMPTY :=
+SPACE := $(EMPTY) $(EMPTY)
+
+# foo := a b c
+# bar:= $(subst $(SPACE),$(COMMA),$(foo))
+# bar is now `a,b,c'.
 
 ##########################
 #
@@ -296,6 +302,10 @@ ifeq ($(HW_OS),pc_cygwin)
   LOAD_FLAGS += -L/usr/X11R6.4/lib
 endif
 
+ifeq ($(HW_OS),pc_win32)
+  LOAD_FLAGS = -L/progra~1/tcl/lib
+endif
+
 ifeq ($(HW_OS),sgi_irix)
   LOAD_FLAGS += -L/usr/lib/internal
 endif
@@ -360,6 +370,11 @@ ifeq ($(HW_OS),pc_cygwin)
                                opengl32)
 endif
 
+ifeq ($(HW_OS),pc_win32)
+   ARCH_LIBS := $(addprefix -l,glut wsock32 user32 gdi32 comdlg32 glu32 \
+                               opengl32)
+endif
+
 ##########################
 #
 # Tcl/Tk
@@ -369,6 +384,10 @@ TCL_LIBS := $(addprefix -l,itk itcl BLT tk tcl)
 
 ifeq ($(HW_OS),pc_cygwin)
    TCL_LIBS := $(addprefix -l,BLT24 tk80 tcl80 itk30 itcl30)
+endif
+
+ifeq ($(HW_OS),pc_win32)
+   TCL_LIBS := $(addprefix -l,BLT24 tk82 tcl82)
 endif
 
 ifeq ($(HW_OS),sgi_irix)            # Tcl must load statically on Irix
@@ -396,6 +415,10 @@ endif
 
 ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
    LIBS := -lPW $(GRAPHICS_LIBS) $(TCL_LIBS) -lXext -lX11 $(ARCH_LIBS) -lm
+endif
+
+ifdef VC
+   LIBS := $(GRAPHICS_LIBS) $(TCL_LIBS) $(ARCH_LIBS) -lm
 endif
 
 ##########################
@@ -458,6 +481,9 @@ endif
 #
 # }}}
 # {{{ exports
+
+export SPACE
+export COMMA
 
 export HW_OS
 export WHOAMI

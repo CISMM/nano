@@ -50,7 +50,11 @@ radiobutton $view.c4.live -text "Touch" \
 
 radiobutton $view.c4.select -text "Select" \
 	-variable user_0_mode -value 4 
-pack $view.c4.live $view.c4.select -side top -padx $pad_x -pady 2 -anchor w
+
+checkbutton $view.c4.xy_lock -text "XY Lock" \
+	-variable xy_lock_pressed
+pack $view.c4.live $view.c4.select $view.c4.xy_lock \
+        -side top -padx $pad_x -pady 2 -anchor w
 
 # Commit to an operation, like starting to use modification force, or
 # accepting the new scan region

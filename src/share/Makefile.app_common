@@ -40,12 +40,15 @@ ifndef APP_SRC
 endif
 
 ifndef APP_OBJ
-ifeq ($(HW_OS),pc_win32)
+ifdef VC
    APP_OBJ := $(addprefix $(OBJECT_DIR)/, \
-                              $(addsuffix .obj,$(basename $(APP_SRC))))
+                          $(addsuffix .obj, $(strip $(basename $(APP_SRC)))))
+   # HACK - which drive do files live on?
+   APP_OBJ_LINK := $(addprefix c:, $(APP_OBJ))
 else 
    APP_OBJ := $(addprefix $(OBJECT_DIR)/, \
-                          $(addsuffix .o,$(strip $(basename $(APP_SRC)))))
+                          $(addsuffix .o, $(strip $(basename $(APP_SRC)))))
+   APP_OBJ_LINK := $(APP_OBJ)
 endif
 endif
 
@@ -55,6 +58,28 @@ endif
 
 ifndef APP_EXEC
    APP_EXEC := $(OBJECT_DIR)/$(APP_NAME)
+endif
+
+ifdef VC
+  OUTPUT_CMD := /OUT:"c:$(APP_EXEC).exe"
+  # Must be =, not :=, because DEP_LIBS_LIB isn't defined yet.
+  # Strip the -l prefix, add a .lib suffix.
+  DPL = $(addsuffix .lib,$(subst -l,,$(DEP_LIBS_LIB)))
+  LINK_FLAGS =  /DEBUG /PDB:none /NOLOGO
+# /MTd /Z7 /link
+# Path to libraries. Default stored in LIB env var. Our additions should
+# be in semi-colon separated list, no spaces! Replace -L with ;, remove spaces
+# ;; shows up at the end of LIB, get rid of it
+# HACK Add C: to the front of every path.
+#  DLD = $(subst ;,;C:,$(subst ;;,;,\
+#      /LIBPATH:C:$(LIB)$(subst $(SPACE),,$(subst -L,;,$(strip $(DEP_LIBS_LD))))))
+  DLD = /LIBPATH:$(LIB)
+  LIBS := $(addsuffix .lib,$(filterout -l,$(LIBS)))
+else
+  OUTPUT_CMD := -o $(APP_EXEC)
+  # Must be =, not :=, because DEP_LIBS_LIB isn't defined yet.
+  DPL = $(DEP_LIBS_LIB)
+  LINK_FLAGS = $(CFLAGS) $(DEFINES)
 endif
 
 ###############################################################################
@@ -111,7 +136,11 @@ $(OBJECT_DIR)/%.obj: %.cc
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) /Fo"$@" /c $<
 
 $(APP_EXEC): $(APP_OBJ)
-	$(CC) $(CFLAGS) $(DEFINES) -o $@ $(APP_OBJ) $(DEP_LIBS_LD) $(LOAD_FLAGS) $(DEP_LIBS_LIB) $(LIBS)
+ifdef VC
+	link $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(DLD) $(DPL) $(LIBS)
+else
+	$(CC) $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(DEP_LIBS_LD) $(LOAD_FLAGS) $(DPL) $(LIBS)
+endif
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
    ifneq ($(findstring clobber,$(MAKECMDGOALS)),clobber)

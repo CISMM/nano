@@ -31,7 +31,7 @@
 
 #include <nmb_Dataset.h>
 #include <nmb_Decoration.h>
-#include <nmb_Selector.h>
+#include <nmb_String.h>
 
 #include <nmm_MicroscopeRemote.h>
 
@@ -486,14 +486,14 @@ void main (int argc, char ** argv) {
     // istate.readingStreamFile may not matter any more but being sure
     //   would take a bunch of work.
     // No files are specified to read.
-    // allocate_nmb_Selector keeps us from trying to construct Tcl
+    // allocate_nmb_String keeps us from trying to construct Tcl
     //   controllers.
 
     g_datasets[g_numMicroscopes] =
         new nmb_Dataset (vrpn_FALSE, 300, 300,
                          istate.xMin, istate.xMax, istate.yMin, istate.yMax,
                          istate.readingStreamFile ? READ_STREAM : READ_DEVICE,
-                         NULL, 0, allocate_nmb_Selector);
+                         NULL, 0, allocate_nmb_String);
 
     g_decorations[g_numMicroscopes] = new nmb_Decoration;
 

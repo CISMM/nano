@@ -13,6 +13,9 @@ frame $image.styleparam
 frame $image.tool 
 frame $image.toolparam 
 
+# dummy entry widget to force focus to move away from real entry widgets.
+entry $image.dummy_entry
+
 # Tool variable initialization
 # in the real thing these will be inherited from microscope - i think
 
@@ -55,19 +58,19 @@ proc updateFromC {realname name element op} {
     global image
     global modify
     global scanline
-    global fc
+    global save_bg
     
     upvar #0 $realname oldimvar
     global new$realname
     set new$realname $oldimvar
 #    puts "Update from C: new$realname $oldimvar"
 
-    $image.mode.accept configure -background $fc
-    $image.mode.cancel configure -background $fc
-    $modify.mode.accept configure -background $fc
-    $modify.mode.cancel configure -background $fc
-#    $scanline.mode.accept configure -background $fc
-#    $scanline.mode.cancel configure -background $fc
+    $image.mode.accept configure -background $save_bg
+    $image.mode.cancel configure -background $save_bg
+    $modify.mode.accept configure -background $save_bg
+    $modify.mode.cancel configure -background $save_bg
+#    $scanline.mode.accept configure -background $save_bg
+#    $scanline.mode.cancel configure -background $save_bg
 
 }
 
@@ -110,6 +113,9 @@ button $image.mode.accept -text "Accept" -command "acceptImageVars $imageplist"
 button $image.mode.cancel -text "Revert" -command "cancelImageVars $imageplist"
 pack $image.mode.oscillating $image.mode.contact -side top -anchor nw -fill x
 pack $image.mode.cancel $image.mode.accept -side bottom -fill x
+
+# save the background color we use for "accept" and "revert" buttons
+set save_bg [$image.mode.accept cget -background]
 
 #setup Image modeparam box
 label $image.modeparam.label -text "Mode parameters" 
@@ -214,8 +220,12 @@ proc imBackgChReal {fooa element op} {
 proc acceptImageVars {varlist} {
     global accepted_image_params
     global image
-    global fc
+    global save_bg
 
+    # Entry widgets commit their value when they loose focus. 
+    # Change the focus to force them to commit their values. 
+    # We're going to close the window later anyway...
+    focus $image.dummy_entry
     foreach val $varlist {
 	global imagep_$val
 	global newimagep_$val
@@ -227,17 +237,17 @@ proc acceptImageVars {varlist} {
     }
     set accepted_image_params 1
     # None of the newimage_* vars are now changed
-	$image.mode.accept configure -background $fc
-	$image.mode.cancel configure -background $fc
+	$image.mode.accept configure -background $save_bg
+	$image.mode.cancel configure -background $save_bg
 
     #close the window when the Accept Button is pressed
-    wm withdraw $image
+    #wm withdraw $image
 }
 
 
 proc cancelImageVars {varlist} {
     global image
-    global fc
+    global save_bg
 
     foreach val $varlist {
 	global imagep_$val
@@ -247,7 +257,7 @@ proc cancelImageVars {varlist} {
 	}
     }
     # None of the newimage_* vars are now changed
-	$image.mode.accept configure -background $fc
-	$image.mode.cancel configure -background $fc
+	$image.mode.accept configure -background $save_bg
+	$image.mode.cancel configure -background $save_bg
 }
 
