@@ -1,3 +1,9 @@
+2002-03-18  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* Makefile.common: moves definition of  VRPN_NO_STREAMS to be
+	for the all builds.  Also, adds the -LANG:std option for the SGI.
+	Turns one compiler warning off if ALL_WARNINGS_ON is not defined.
+
 2002-03-13  Aron Helser  <helser@cs.unc.edu>
 
 	* Makefile.common (BAREBAREDEFINES): added VRPN_NO_STREAMS 

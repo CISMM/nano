@@ -435,7 +435,7 @@ LIBS += $(LATE_LIBRARIES)
 # {{{ Defines for the compilation, CFLAGS
 #
 
-BAREBAREDEFINES := INCLUDE_CALLBACK_CODE
+BAREBAREDEFINES := INCLUDE_CALLBACK_CODE VRPN_NO_STREAMS
 
 ifeq ($(HW_OS),sgi_irix) 
   BAREDEFINES += V_GLUT NO_MAGELLAN NO_PHANTOM_SERVER
@@ -443,7 +443,7 @@ endif
 
 ifeq ($(HW_OS),pc_win32)
   BAREDEFINES += V_GLUT NO_RAW_TERM NO_XWINDOWS NO_ITCL NO_FILTERS \
-  NO_EXT_TEXTURES VRPN_NO_STREAMS
+  NO_EXT_TEXTURES
 endif
 
 # Allows compilation of viewer-only version of Nano on all platforms. 
@@ -467,6 +467,15 @@ BAREDEFINES += PROJECTIVE_TEXTURE
 DEFINES = $(addprefix -D,$(BAREDEFINES))
 
 CFLAGS += -g
+
+ifeq ($(HW_OS),sgi_irix)
+  CFLAGS += -LANG:std -W l,-v
+
+  # prevents warnings in stream libraries
+  ifndef ALL_WARNINGS_ON
+    CFLAGS += -woff 1209
+  endif
+endif
 
 ifeq ($(THIRDTECH),1)
 CFLAGS += -DTHIRDTECH
