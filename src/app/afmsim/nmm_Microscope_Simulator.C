@@ -281,6 +281,16 @@ nmm_Microscope_Simulator( const char * _name,
 				RcvResumeWindowScan,
 				this);
   //RcvEcho
+  /*************************************************************/
+  // Added in place of Echo to relay what mode "microscope is in"
+  d_connection->register_handler(d_MarkModify_type,
+                                RcvMarkModify,
+                                this);
+
+  d_connection->register_handler(d_MarkImage_type,
+                                RcvMarkImage,
+                                this);
+  /*************************************************************/
 
   d_Shutdown_type = d_connection->register_message_type
 	  (vrpn_dropped_last_connection);
@@ -1059,6 +1069,37 @@ RcvEcho( void *_userdata, vrpn_HANDLERPARAM _p )
 
   return 0;
 }
+
+        // Tiger        HACK HACK HACK  handling new message type for echo Modify Mode.
+int nmm_Microscope_Simulator::
+RcvMarkModify( void *_userdata, vrpn_HANDLERPARAM _p )
+{
+  nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
+  const char * bufptr = _p.buffer;
+
+  if ( tmp->spm_echo_ModifyMode( bufptr ) ) {
+     ServerError( "nmm_Microscope_Simulator::RcvMarkModify: spm_echo_ModifyMode failed" );
+     return -1;
+  }
+
+  return 0;
+}
+
+        // Tiger        HACK HACK HACK  handling new message type for echo Image Mode.
+int nmm_Microscope_Simulator::
+RcvMarkImage( void *_userdata, vrpn_HANDLERPARAM _p )
+{
+  nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
+  const char * bufptr = _p.buffer;
+
+  if ( tmp->spm_echo_ImageMode( bufptr ) ) {
+     ServerError( "nmm_Microscope_Simulator::RcvMarkImage: spm_echo_ImageMode failed" );
+     return -1;
+  }
+
+  return 0;
+}
+
 
 // This message handled by real Topo AFM
 int nmm_Microscope_Simulator::
@@ -2263,6 +2304,87 @@ spm_echo( const char */*bufptr*/ )
   return 0;
 }
 
+// Tiger        XXX HACK        We had spm_echo before, but now using following
+//                                              two functions, one for Modify Mode, one for
+//                                              Image Mode.
+int nmm_Microscope_Simulator::
+spm_echo_ModifyMode( const char *bufptr )
+{
+  long len = 0;
+  char * msgbuf = NULL;
+  int retval;
+
+  // This message doesn't need to contain any info, but VRPN won't send
+  // an empty message...
+/*
+  if (decode_MarkModify(&bufptr) == -1) {
+     ServerOutputAdd(2, "nmm_Microscope_Topometrix::spm_echo_ModifyMode: bad parameters passed to spm_enable_voltsource");
+     return -1;
+  }
+  msgbuf = encode_MarkModify(&len);
+  if ( !msgbuf ) {
+    ServerOutputAdd( 2, "nmm_Microscope_Topometrix::spm_echo_ModifyMode:  Buffer overflow!!" );
+    return -1;
+  } else {
+*/
+    printf("sending InModMode message\n");
+    retval = Send( len, d_InModMode_type, msgbuf );
+    if ( retval ) {
+      ServerOutputAdd( 2, "nmm_Microscope_Topometrix::spm_echo_ModifyMode:  Couldn't pack message to send to client." );
+      return -1;
+        }
+ // }
+
+  return 0;
+}
+
+// Tiger        XXX HACK        We had spm_echo before, but now using following
+//                                              two functions, one for Modify Mode, one for
+//                                              Image Mode.
+int nmm_Microscope_Simulator::
+spm_echo_ImageMode( const char *bufptr )
+{
+  long len = 0;
+  char * msgbuf = NULL;
+  int retval;
+
+  // NANO BEGIN         DEBUGGING
+  ServerOutputAdd(2, "nmm_Microscope_Simulator::spm_echo_ImageMode(): Client want to go into Image mode!!!");
+  // NANO END
+
+/*
+  // This message doesn't need to contain any info, but VRPN won't send
+  // an empty message...
+  if (decode_MarkImage(&bufptr) == -1) {
+     ServerOutputAdd(2, "nmm_Microscope_Simulator::spm_echo_ImageMode: bad parameters passed to spm_enable_voltsource");
+     return -1;
+  }
+*/
+  // If we were just in Forcecurve Style or Sewing Style,
+  // we will get this message before we have re-enabled
+  // param_reporting. So I am going to comment this out. 9/22/99
+  // I did a test, and it doesn't seem to affect line mode...
+  //if (!UpdateFeedbackParamsNow) {  // HACK HACK HACK  don't want to interrupt line mode
+  //ServerOutputAdd(2, "nmm_Microscope_Topometrix::spm_echo_ImageMode: Line mode is reporting, cannot interrupt!!!");
+  //} else {
+  /*      msgbuf = encode_MarkImage(&len);
+        if ( !msgbuf ) {
+                ServerOutputAdd( 2, "nmm_Microscope_Simulator::spm_echo_ImageMode: Buffer overflow!!" );
+                return -1;
+        } else {
+*/
+                retval = Send( len, d_InImgMode_type, msgbuf );
+                if ( retval ) {
+                        ServerOutputAdd( 2, "nmm_Microscope_Simulator::spm_echo_ImageMode:  Couldn't pack message to send to client." );
+                        return -1;
+                }
+ //       }
+        //}
+
+  return 0;
+}
+
+
 // This function called by real Topo AFM, indirectly
 int nmm_Microscope_Simulator::
 spm_enable_voltsource( const char *bufptr )
@@ -3463,10 +3585,8 @@ Send( long len, long msg_type, char * buf )
   int retval;
 
   gettimeofday(&now, NULL);
-  if (ServerOn && buf) {
-    retval = connection->pack_message(len, now, msg_type, d_myId,
+  retval = connection->pack_message(len, now, msg_type, d_myId,
 					buf, vrpn_CONNECTION_RELIABLE);
-  }
   if ( buf ) {
     delete [] buf;
   }
