@@ -24,6 +24,10 @@
 
 #include "imageViewer.h"
 
+#ifndef M_PI
+#define M_PI           3.14159265358979323846
+#endif
+
 ImageViewer *ImageViewer::theViewer = NULL;	// pointer to singleton
 
 ImageWindow::ImageWindow():
@@ -260,9 +264,8 @@ int ImageViewer::createWindow(char *display_name,
 
 int ImageViewer::destroyWindow(int winID)
 {
-    assert(winID > 0 && winID <= num_windows);
-
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
 
 #ifdef V_GLUT
     glutSetWindow(window[win_index].win_id);
@@ -289,9 +292,8 @@ int ImageViewer::destroyWindow(int winID)
 
 int ImageViewer::setWindowSize(int winID, int w, int h)
 {
-    assert(winID > 0 && winID <= num_windows);
-
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
 
 #ifdef V_GLUT
     glutSetWindow(window[win_index].win_id);
@@ -314,10 +316,23 @@ int ImageViewer::get_window_index_from_glut_id(int glut_id) {
 }
 #endif
 
-int ImageViewer::showWindow(int winID){
-    assert(winID > 0 && winID <= num_windows);
+int ImageViewer::validWinID(int winID)
+{
+  return (winID > 0 && winID <= num_windows);
+}
 
-    int win_index = winID-1;
+int ImageViewer::get_window_index_from_winID(int winID) {
+    return winID-1;
+}
+
+int ImageViewer::get_winID_from_window_index(int win_index) {
+    return win_index+1;
+}
+
+int ImageViewer::showWindow(int winID){
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     int x_loc, y_loc;
 
     if (window[win_index].visible) {
@@ -401,9 +416,9 @@ int ImageViewer::showWindow(int winID){
 }
 
 int ImageViewer::hideWindow(int winID){
-    assert(winID > 0 && winID <= num_windows);
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
 
-    int win_index = winID-1;
     if (!(window[win_index].visible)) {
 	fprintf(stderr, "Warning: window wasn't visible\n");
 	return 0;
@@ -424,9 +439,9 @@ int ImageViewer::hideWindow(int winID){
 }
 
 int ImageViewer::dirtyWindow(int winID) {
-    assert(winID > 0 && winID <= num_windows);
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
 
-    int win_index = winID-1;
     window[win_index].needs_redisplay = VRPN_TRUE;
 
 #ifdef V_GLUT
@@ -466,14 +481,14 @@ void ImageViewer::mainloop() {
 		    ivw_event.type = RESIZE_EVENT;
 		    ivw_event.width = window[i].win_width;
 		    ivw_event.height = window[i].win_height;
-		    ivw_event.winID = i+1;
+		    ivw_event.winID = get_winID_from_window_index(i);
 		    if (window[i].event_handler)
 			window[i].event_handler(ivw_event, 
 				window[i].event_handler_ud);
 		    break;
 		case ButtonPress:
 		    ivw_event.type = BUTTON_PRESS_EVENT;
-		    ivw_event.winID = i+1;
+		    ivw_event.winID = get_winID_from_window_index(i);
 		    ivw_event.mouse_x = event.xbutton.x;
 		    ivw_event.mouse_y = event.xbutton.y;
 		    switch(event.xbutton.button) {
@@ -502,7 +517,7 @@ void ImageViewer::mainloop() {
 		    break;
 		case ButtonRelease:
 		    ivw_event.type = BUTTON_RELEASE_EVENT;
-		    ivw_event.winID = i+1;
+		    ivw_event.winID = get_winID_from_window_index(i);
 		    ivw_event.mouse_x = event.xbutton.x;
                     ivw_event.mouse_y = event.xbutton.y;
 		    switch(event.xbutton.button) {
@@ -532,7 +547,7 @@ void ImageViewer::mainloop() {
                     break;
 		case MotionNotify:
 		    ivw_event.type = MOTION_EVENT;
-                    ivw_event.winID = i+1;
+                    ivw_event.winID = get_winID_from_window_index(i);
                     ivw_event.mouse_x = event.xmotion.x;
                     ivw_event.mouse_y = event.xmotion.y;
                     ivw_event.state = event.xmotion.state;
@@ -551,7 +566,7 @@ void ImageViewer::mainloop() {
 		    break;
 		case KeyPress:
 		    ivw_event.type = KEY_PRESS_EVENT;
-                    ivw_event.winID = i+1;
+                    ivw_event.winID = get_winID_from_window_index(i);
 		    ivw_event.mouse_x = event.xkey.x;
                     ivw_event.mouse_y = event.xkey.y;
 
@@ -594,7 +609,7 @@ void ImageViewer::mainloop() {
 	    glClearColor(0.0, 0.0, 0.0,0.0);
 
 	    ImageViewerDisplayData ivdd;
-	    ivdd.winID = i+1;
+	    ivdd.winID = get_winID_from_window_index(i);
 	    ivdd.winWidth = window[i].win_width;
 	    ivdd.winHeight = window[i].win_height;
 	    ivdd.imWidth = window[i].im_width;
@@ -630,7 +645,7 @@ void ImageViewer::displayCallbackForGLUT() {
     glDrawBuffer(GL_BACK_LEFT);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     ImageViewerDisplayData ivdd;
-    ivdd.winID = i+1;
+    ivdd.winID = v->get_winID_from_window_index(i);
     ivdd.winWidth = v->window[i].win_width;
     ivdd.winHeight = v->window[i].win_height;
     ivdd.imWidth = v->window[i].im_width;
@@ -685,7 +700,7 @@ void ImageViewer::reshapeCallbackForGLUT(int w, int h) {
     ivw_event.type = RESIZE_EVENT;
     ivw_event.width = w;
     ivw_event.height = h;
-    ivw_event.winID = i+1;
+    ivw_event.winID = v->get_winID_from_window_index(i);
     if (v->window[i].event_handler)
 	v->window[i].event_handler(ivw_event, v->window[i].event_handler_ud);
     return;
@@ -703,7 +718,7 @@ void ImageViewer::motionCallbackForGLUT(int x, int y) {
     }
     ImageViewerWindowEvent ivw_event;
     ivw_event.type = MOTION_EVENT;
-    ivw_event.winID = i+1;
+    ivw_event.winID = v->get_winID_from_window_index(i);
     ivw_event.mouse_x = x;
     ivw_event.mouse_y = y;
     ivw_event.state = 0;
@@ -753,7 +768,7 @@ void ImageViewer::mouseCallbackForGLUT(int button, int state, int x, int y) {
 	    v->window[i].right_button_down = !v->window[i].right_button_down;
 	    break;
     }
-    ivw_event.winID = i+1;
+    ivw_event.winID = v->get_winID_from_window_index(i);
     ivw_event.mouse_x = x;
     ivw_event.mouse_y = y;
     ivw_event.state = 0;
@@ -780,7 +795,7 @@ void ImageViewer::keyboardCallbackForGLUT(unsigned char key, int x, int y) {
         return;
     }
     ImageViewerWindowEvent ivw_event;
-    ivw_event.winID = i+1;
+    ivw_event.winID = v->get_winID_from_window_index(i);
     ivw_event.mouse_x = x;
     ivw_event.mouse_y = y;
     ivw_event.state = 0;
@@ -796,7 +811,9 @@ void ImageViewer::keyboardCallbackForGLUT(unsigned char key, int x, int y) {
 int ImageViewer::setWindowEventHandler(int winID,
 					ImageViewerWindowEventHandler f, 
 						void *ud) {
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     window[win_index].event_handler = f;
     window[win_index].event_handler_ud = ud;
     return 0;
@@ -805,14 +822,18 @@ int ImageViewer::setWindowEventHandler(int winID,
 int ImageViewer::setWindowDisplayHandler(int winID,
 			ImageViewerDisplayHandler f, void *ud)
 {
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     window[win_index].display_handler = f;
     window[win_index].display_handler_ud = ud;
     return 0;
 }
 
 int ImageViewer::setWindowImageSize(int winID, int im_w, int im_h) {
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     int i;
     // don't do anything if the resolution isn't changing
     if (window[win_index].im_width == im_w && 
@@ -860,24 +881,32 @@ int ImageViewer::setWindowImageSize(int winID, int im_w, int im_h) {
 }
 
 int ImageViewer::imageWidth(int winID) {
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     return window[win_index].im_width;
 }
 
 int ImageViewer::imageHeight(int winID) {
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     return window[win_index].im_height;
 }
 
 int ImageViewer::setValueRange(int winID, double min, double max) {
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     window[win_index].min_value = min;
     window[win_index].max_value = max;
     return 0;
 }
 
 int ImageViewer::setValue(int winID, int x, int y, double value) {
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     double actual_value = value;
     double scaled_value;
     if (value > window[win_index].max_value)
@@ -901,7 +930,9 @@ int ImageViewer::setValue(int winID, int x, int y, double value) {
 }
 
 int ImageViewer::setScanline(int winID, int y, vrpn_uint8 *line){
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     if (window[win_index].d_pixelMode != GL_UNSIGNED_BYTE){
         fprintf(stderr, "setScanline: wrong pixel size\n");
         return -1;
@@ -917,8 +948,9 @@ int ImageViewer::setScanline(int winID, int y, vrpn_uint8 *line){
 
 // draw into a window the current image for that window
 int ImageViewer::drawImage(int winID) {
-    int win_index = winID-1;
-    
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
 #ifdef V_GLUT
     int curr_win = glutGetWindow();
     if (curr_win != window[win_index].win_id){
@@ -949,6 +981,388 @@ int ImageViewer::drawImage(int winID) {
 		return -1;
     }
     return 0;
+}
+
+// draw any image into a window
+int ImageViewer::drawImage(int winID, nmb_Image *image, 
+              double red, double green, double blue, double alpha,
+              double *left, double *right, double *bottom, double *top, 
+              nmb_TransformMatrix44 *worldToImage)
+{
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
+#ifdef V_GLUT
+    int curr_win_save = glutGetWindow();
+    if (curr_win_save != window[win_index].win_id){
+      glutSetWindow(window[win_index].win_id);
+    }
+#endif
+
+    // default values for optional parameters depend on the image so 
+    // we set them here
+    nmb_TransformMatrix44 W2I;
+    double l, r, b, t;
+    if (left == NULL || right == NULL || bottom == NULL || top == NULL) {
+      l = 0;
+      r = 1;
+      b = 0;
+      t = 1;
+    } else {
+      l = *left;
+      r = *right;
+      b = *bottom;
+      t = *top;
+    }
+    if (worldToImage != NULL) {
+      W2I = *worldToImage;
+    }
+    // done with setting values for optional parameters
+
+    double scx, scy, shz, phi, tx, ty;
+    W2I.getTScShR_2DParameters(0.0, 0.0, tx, ty, phi, shz, scx, scy);
+
+    double shMag = fabs(shz);
+    double phiMag = fmod(phi, 2.0*M_PI);
+    if (phiMag > M_PI) {
+      phiMag = fabs(2.0*M_PI - phiMag);
+    } else {
+      phiMag = fabs(phiMag);
+    }
+
+    glViewport(0,0,window[win_index].win_width,
+                   window[win_index].win_height);
+
+    if (shMag > 0.0001 || phiMag > 0.0001) {
+      drawImageAsTexture(image, red, green, blue, alpha, l, r, b, t, W2I);
+    } else { // try using glDrawPixels instead of texture-mapping
+      drawImageAsPixels(image, red, green, blue, alpha, 
+             l, r, b, t, tx, ty, scx, scy, 
+             window[win_index].win_width, window[win_index].win_height);
+    }
+
+#ifdef V_GLUT
+    glutSetWindow(curr_win_save);
+#endif
+
+    return 0;
+}
+
+int ImageViewer::drawImageAsTexture(nmb_Image *image, 
+      double red, double green, double blue, double alpha, 
+      double l, double r, double b, double t, nmb_TransformMatrix44 &W2I)
+{
+  void *texture;
+  int texwidth, texheight;
+  vrpn_bool textureOkay = VRPN_TRUE;
+  texture = image->pixelData();
+  int pixType;
+  switch (image->pixelType()) {
+    case NMB_UINT8:
+      pixType = GL_UNSIGNED_BYTE;
+      break;
+    case NMB_UINT16:
+      pixType = GL_UNSIGNED_SHORT;
+      break;
+    case NMB_FLOAT32:
+      pixType = GL_FLOAT;
+      break;
+    default:
+      textureOkay = VRPN_FALSE;
+      fprintf(stderr, "mainWinDisplayHandler::"
+                      "Error, unrecognized pixel type\n");
+      break;
+  }
+  if (!texture) {
+    textureOkay = VRPN_FALSE;
+  }
+
+  if (textureOkay) {
+    texwidth = image->width() +
+               image->borderXMin()+image->borderXMax();
+    texheight = image->height() +
+                image->borderYMin()+image->borderYMax();
+    float scaleFactorX = (float)(image->width())/(float)texwidth;
+    float scaleFactorY = (float)(image->height())/(float)texheight;
+
+    int bordSizeXPixels = image->borderXMin();
+    int bordSizeYPixels = image->borderYMin();
+    // in texture coordinates
+    float bordSizeX = (float)bordSizeXPixels/(float)texwidth;
+    float bordSizeY = (float)bordSizeYPixels/(float)texheight;
+
+//    printf("begin draw texture for %s\n", image->name()->Characters());
+
+/*    printf("Loading texture %s with type %d\n",
+           image->name()->Characters(), image->pixelType());
+    printf("width=%d,height=%d,border = (%d,%d)(%d,%d)\n",
+      texwidth, texheight, image->borderXMin(),
+      image->borderXMax(), image->borderYMin(),
+      image->borderYMax());
+*/
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_TEXTURE_GEN_S);
+    glEnable(GL_TEXTURE_GEN_T);
+    glEnable(GL_TEXTURE_GEN_R);
+    glEnable(GL_TEXTURE_GEN_Q);
+
+    glPixelTransferf(GL_RED_SCALE, (float)red);
+    glPixelTransferf(GL_GREEN_SCALE, (float)green);
+    glPixelTransferf(GL_BLUE_SCALE, (float)blue);
+    glPixelTransferf(GL_ALPHA_SCALE, (float)alpha);
+
+/*
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+              GL_LINEAR_MIPMAP_LINEAR);
+
+    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, texwidth, texheight,
+           GL_LUMINANCE,
+           pixType, texture);
+*/
+    //glTexImage2D(GL_PROXY_TEXTURE_2D, ...
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, texwidth);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+             texwidth, texheight, 0, GL_LUMINANCE,
+             pixType, texture);
+
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glOrtho(l, r, b, t, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+    glLoadIdentity();
+
+    double regionVertex[4][4] = 
+             {{0, 0, 0, 1}, {1, 0, 0, 1}, {1, 1, 0, 1},{0, 1, 0, 1}};
+
+    W2I.invTransform(regionVertex[0]);
+    W2I.invTransform(regionVertex[1]);
+    W2I.invTransform(regionVertex[2]);
+    W2I.invTransform(regionVertex[3]);
+
+    // compensation for the border:
+    glTranslatef(bordSizeX, bordSizeY, 0.0);
+    glScalef(scaleFactorX, scaleFactorY, 1.0);
+    // now we can use the xform defined for the actual image part of the
+    // texture
+    double worldToImage[16];
+    W2I.getMatrix(worldToImage);
+    glMultMatrixd(worldToImage);
+
+    glBegin(GL_POLYGON);
+      glNormal3f(0.0, 0.0, 1.0);
+      glColor4f(1.0, 1.0, 1.0, (float)alpha);
+      // draw a parallelogram fit to the image
+      glVertex2f(regionVertex[0][0], regionVertex[0][1]);
+      glVertex2f(regionVertex[1][0], regionVertex[1][1]);
+      glVertex2f(regionVertex[2][0], regionVertex[2][1]);
+      glVertex2f(regionVertex[3][0], regionVertex[3][1]);
+    glEnd();
+
+    glPixelTransferf(GL_RED_SCALE, 1.0);
+    glPixelTransferf(GL_GREEN_SCALE, 1.0);
+    glPixelTransferf(GL_BLUE_SCALE, 1.0);
+    glPixelTransferf(GL_ALPHA_SCALE, 1.0);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_GEN_S);
+    glDisable(GL_TEXTURE_GEN_T);
+    glDisable(GL_TEXTURE_GEN_R);
+    glDisable(GL_TEXTURE_GEN_Q);
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    glMatrixMode(GL_TEXTURE);
+    glPopMatrix();
+    
+    glFinish();
+//    printf("end draw texture\n");
+  }
+  return 0;
+}
+
+int ImageViewer::drawImageAsPixels(nmb_Image *image,
+      double red, double green, double blue, double alpha,
+      double l, double r, double b, double t, 
+      double tx, double ty, double scx, double scy, 
+      int winWidth, int winHeight)
+{
+  void *texture;
+  int texwidth, texheight;
+  vrpn_bool textureOkay = VRPN_TRUE;
+  texture = image->pixelData();
+  int pixType;
+  switch (image->pixelType()) {
+    case NMB_UINT8:
+      pixType = GL_UNSIGNED_BYTE;
+      break;
+    case NMB_UINT16:
+      pixType = GL_UNSIGNED_SHORT;
+      break;
+    case NMB_FLOAT32:
+      pixType = GL_FLOAT;
+      break;
+    default:
+      textureOkay = VRPN_FALSE;
+      fprintf(stderr, "mainWinDisplayHandler::"
+                      "Error, unrecognized pixel type\n");
+      break;
+  }
+  if (!texture) {
+    textureOkay = VRPN_FALSE;
+  }
+
+  if (textureOkay) {
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glOrtho(l, r, b, t, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    texwidth = image->width() +
+               image->borderXMin()+image->borderXMax();
+    texheight = image->height() +
+               image->borderYMin()+image->borderYMax();
+
+    int bordSizeXPixels = image->borderXMin();
+    int bordSizeYPixels = image->borderYMin();
+
+//    printf("begin drawPixels for %s\n", image->name()->Characters());
+
+    int imageWidth = image->width();
+    int imageHeight = image->height();
+
+    double nmPerWindowPixelX = fabs(r - l)/(double)winWidth;
+    double nmPerWindowPixelY = fabs(t - b)/(double)winHeight;
+    double nmPerImagePixelX = 1.0/(fabs(scx)*imageWidth);
+    double nmPerImagePixelY = 1.0/(fabs(scy)*imageHeight);
+
+    double windowPixelPerImagePixelX = nmPerImagePixelX/nmPerWindowPixelX;
+    double windowPixelPerImagePixelY = nmPerImagePixelY/nmPerWindowPixelY;
+
+    int skipRows = bordSizeYPixels;
+    int skipPixels = bordSizeXPixels;
+    GLfloat transX_nm = -tx/scx; // convert from image units to world units
+    GLfloat transY_nm = -ty/scy;
+    
+    /* XXX - the following two conditional statements are a bit nasty 
+	but it seems to work - if one follows the signs carefully I think
+        it might be possible to write this a lot more concisely but I don't
+	have time to figure it out right now */
+    int skipIncX, skipIncY;
+    if (scx > 0) {
+      double minX;
+      if ((r-l) < 0) {
+        minX = r;
+      } else {
+        minX = l;
+      }
+      if (transX_nm < minX) {
+        skipIncX = (int)ceil((minX - transX_nm)/nmPerImagePixelX);
+        skipPixels += skipIncX;
+        // add a little extra to make sure that roundoff error doesn't lead to
+        // a negative and invalid raster position
+        transX_nm += skipIncX*nmPerImagePixelX + 0.01;
+      }
+    } else {
+      double maxX;
+      if ((r-l) < 0) {
+        maxX = l;
+      } else {
+        maxX = r;
+      }
+      if (transX_nm > maxX) {
+        skipIncX = (int)ceil((transX_nm - maxX)/nmPerImagePixelX);
+        skipPixels += skipIncX;
+        // add a little extra to make sure that roundoff error doesn't lead to
+        // a negative and invalid raster position
+        transX_nm -= skipIncX*nmPerImagePixelX + 0.01;
+      }
+    }
+    if (scy > 0) {
+      double minY;
+      if ((t-b) < 0) {
+        minY = t;
+      } else {
+        minY = b;
+      }
+      if (transY_nm < minY) {
+        skipIncY = (int)ceil((minY - transY_nm)/nmPerImagePixelY);
+        skipRows += skipIncY;
+        // add a little extra to make sure that roundoff error doesn't lead to
+        // a negative and invalid raster position
+        transY_nm += skipIncY*nmPerImagePixelY + 0.01;
+      }
+    } else {
+      double maxY;
+      if ((t-b) < 0) {
+        maxY = t;
+      } else {
+        maxY = b;
+      }
+      if (transY_nm > maxY) {
+        skipIncY = (int)ceil((transY_nm - maxY)/nmPerImagePixelY);
+        skipPixels += skipIncY;
+        // add a little extra to make sure that roundoff error doesn't lead to
+        // a negative and invalid raster position
+        transY_nm -= skipIncY*nmPerImagePixelY + 0.01;
+      }
+    }
+
+    int totalRowBorder = image->borderXMax() + skipPixels;
+    int rowWidth = texwidth - totalRowBorder;
+    int totalColBorder = image->borderYMax() + skipRows;
+    int colHeight = texheight - totalColBorder;
+
+    glRasterPos2f(transX_nm, transY_nm);
+    GLfloat pos[4];
+    glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+    GLboolean valid[1];
+    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, valid);
+    if (valid[0] != GL_TRUE) {
+      printf("raster pos not valid\n");
+    }
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, skipRows);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, skipPixels);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, texwidth);
+    if ((r-l)*scx < 0) {
+      windowPixelPerImagePixelX *= -1;
+    }
+    if ((t-b)*scy < 0) {
+      windowPixelPerImagePixelY *= -1;
+    }
+    glPixelZoom(windowPixelPerImagePixelX, windowPixelPerImagePixelY);
+
+    glPixelTransferf(GL_RED_SCALE, (float)red);
+    glPixelTransferf(GL_GREEN_SCALE, (float)green);
+    glPixelTransferf(GL_BLUE_SCALE, (float)blue);
+    glPixelTransferf(GL_ALPHA_SCALE, (float)alpha);
+
+    glDrawPixels(rowWidth, colHeight, GL_LUMINANCE, pixType, texture);
+
+    glPixelTransferf(GL_RED_SCALE, 1.0);
+    glPixelTransferf(GL_GREEN_SCALE, 1.0);
+    glPixelTransferf(GL_BLUE_SCALE, 1.0);
+    glPixelTransferf(GL_ALPHA_SCALE, 1.0);
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    glFinish();
+    //printf("end draw pixels\n");
+  }
+  return 0;
 }
 
 int ImageViewer::drawString(int x, int y, char *str) {
@@ -1007,7 +1421,9 @@ int ImageViewer::drawString(int x, int y, char *str) {
 }
 
 int ImageViewer::toImage(int winID, double *x, double *y){
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     *x /= (double)window[win_index].win_width;
     *x = 1.0-*x;
     *y /= (double)window[win_index].win_height;
@@ -1016,7 +1432,9 @@ int ImageViewer::toImage(int winID, double *x, double *y){
 }
 
 int ImageViewer::toPixels(int winID, double *x, double *y){
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     *x = 1.0-*x;
     *y = 1.0-*y;
     *x *= (double)window[win_index].win_width;
@@ -1025,7 +1443,9 @@ int ImageViewer::toPixels(int winID, double *x, double *y){
 }
 
 int ImageViewer::clampToWindow(int winID, double *x, double *y) {
-    int win_index = winID-1;
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
     if (*x > window[win_index].win_width)
 	*x = window[win_index].win_width;
     else if (*x < 0)

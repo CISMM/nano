@@ -1,3 +1,11 @@
+2001-07-23  Adam Seeger  <seeger@cs.unc.edu>
+
+	* imageViewer.C (drawImage): added an overloaded version of this
+	function that is a more general version of the code used in the
+	seegerizer program for drawing an image - this can easily be used to 
+	make a zoomable image viewer that automatically switches between
+        using projective textures and glDrawPixels()
+
 2001-07-22  Adam Seeger  <seeger@cs.unc.edu>
 
 	imageViewer.C (drawImage): flipped image in X

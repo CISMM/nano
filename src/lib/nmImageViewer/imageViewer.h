@@ -34,7 +34,7 @@ into windows and to convert from window to image coordinates and vice versa.
 //#include "PNMImage.h"
 //#include "PPM.h"
 #include "vrpn_Types.h"
-
+#include "nmb_Image.h"
 
 #define MAX_WIN (10)
 #define MAX_DISPLAYS (4)
@@ -174,6 +174,15 @@ class ImageViewer {
     /// the image into the window scaled to the dimensions of the window 
     /// whatever they may be
     int drawImage(int winID);
+    /// utility function that draws the specified part of an image into a window
+    /// (left, right, bottom, top) specifies what rectangle in world 
+    /// coordinates should be displayed in the window
+    /// worldToImage specifies
+    int drawImage(int winID, nmb_Image *image, 
+              double red, double green, double blue, double alpha,
+              double *left = NULL, double *right = NULL, 
+              double *bottom = NULL, double *top = NULL,
+              nmb_TransformMatrix44 *worldToImage = NULL);
     /// utility function that draws a string in some default font at a given
     /// location in the image
     int drawString(int x, int y, char *str);
@@ -201,10 +210,22 @@ class ImageViewer {
     ImageViewer();
     static ImageViewer *theViewer; // singleton pointer
 
-  private:
 #ifdef V_GLUT
     int get_window_index_from_glut_id(int glut_id);
 #endif
+    int validWinID(int winID);
+    int get_window_index_from_winID(int winID);
+    int get_winID_from_window_index(int win_index);
+
+    int drawImageAsTexture(nmb_Image *image,
+      double red, double green, double blue, double alpha,
+      double l, double r, double b, double t, nmb_TransformMatrix44 &W2I);
+    int drawImageAsPixels(nmb_Image *image,
+      double red, double green, double blue, double alpha,
+      double l, double r, double b, double t,
+      double tx, double ty, double scx, double scy, 
+      int winWidth, int winHeight);
+
     int num_displays;
     long event_mask;
     ImageDisplay dpy[MAX_DISPLAYS];
