@@ -836,7 +836,7 @@ Tclvar_int tcl_center_pressed ("center_pressed", 0, handle_center_pressed);
 // Deal with the stride between rows on the grid for tesselation.  This is
 // the step size between one row/column of the display list and the next.
 
-TclNet_int tclstride("tesselation_stride", 1);
+TclNet_int tclstride ("tesselation_stride", 1);
 
 
 // END tcl declarations
@@ -4132,6 +4132,7 @@ struct MicroscapeInitializationState {
   vrpn_bool useOptimism;
 
   float phantomRate;
+  int tesselation;
 
   int packetlimit;
 };
@@ -4159,6 +4160,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   replayInterface (VRPN_FALSE),
   useOptimism (VRPN_FALSE),
   phantomRate (60.0),  // standard default
+  tesselation (1),
   packetlimit (0)
 {
 
@@ -4315,6 +4317,9 @@ void ParseArgs (int argc, char ** argv,
       } else if (!strcmp(argv[i], "-phantomrate")) {
         if (++i >= argc) Usage(argv[0]);
         istate->phantomRate = atof(argv[i]);
+      } else if (!strcmp(argv[i], "-tesselation")) {
+        if (++i >= argc) Usage(argv[0]);
+        istate->tesselation = atof(argv[i]);
       } else if (strcmp(argv[i], "-minsep") == 0) {
         if (++i >= argc) Usage(argv[0]);
         istate->afm.stmRxTmin = atoi(argv[i]);
@@ -4619,7 +4624,8 @@ void Usage(char* s)
   fprintf(stderr, "       [-trenderserver] [-trenderclient host]\n");
   fprintf(stderr, "       [-vrenderserver] [-vrenderclient host]\n");
   fprintf(stderr, "       [-logif path] [-replayif path] [-packetlimit n]\n");
-  fprintf(stderr, "       [-optimistic]\n");
+  fprintf(stderr, "       [-optimistic] [-phantomrate rate]\n");
+  fprintf(stderr, "       [-tesselation stride]\n");
   fprintf(stderr, "       \n");
   //fprintf(stderr, "       -poly: Display poligonal surface (default)\n");
   //fprintf(stderr, "       -sphere: Display as spheres\n");
@@ -4808,7 +4814,6 @@ void KeyboardUsage (void) {
 
 }
 
-
 void sharedGraphicsServer (void * data) {
   vrpn_Connection * c;
   nmg_Graphics * g;
@@ -4886,6 +4891,248 @@ void spawnSharedGraphics (void) {
   td.ps->v();
 }
 
+// T. Hudson 8 Mar 2000
+// Would like to replace createGraphics() with a proper Abstract Factory
+// some day.
+
+void createGraphics (MicroscapeInitializationState & istate) {
+
+  char name [50], qualifiedName [50];
+  int retval;
+
+  switch (istate.graphics_mode) {
+
+    case NO_GRAPHICS:
+      fprintf(stderr, "NO GRAPHICS disabled for ease of development.\n");
+      fprintf(stderr, "To reenable, update nmg_Graphics_Null, add to the\n"
+                      "server_microscape/ and graphics/ makefile, and\n"
+                      "change this code (in microscape.c)\n");
+      exit(0);
+
+      //fprintf(stderr, "Using NO GRAPHICS.\n");
+      //graphics = new nmg_Graphics_Null(dataset, minC, maxC);
+      break;
+
+    case LOCAL_GRAPHICS:
+      fprintf(stderr, "Using local GL graphics implementation.\n");
+      graphics = new nmg_Graphics_Implementation(dataset,minC, maxC, 
+                                                      rulerPPMName);
+      graphics = new nmg_Graphics_Timer(graphics, &graphicsTimer);
+      break;
+
+    case SHMEM_GRAPHICS:
+      {
+        fprintf(stderr, "Starting up shared memory implementation.\n");
+
+        spawnSharedGraphics();  // blocks until coprocess sets up
+
+        retval = gethostname(name, 45);
+        if (retval) {
+          fprintf(stderr, "gethostname() failed;  "
+                          "can't start up shared memory!\n");
+          exit(0);
+        }
+        sprintf(qualifiedName, "nmg@%s:%d", name,
+                WellKnownPorts::graphicsControl);
+
+        range_ps = new Semaphore (1);
+
+        shmem_connection = vrpn_get_connection_by_name (qualifiedName);
+        graphics = new nmg_Graphics_Remote (shmem_connection);
+        graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+      }
+      break; 
+
+    case TEST_GRAPHICS_MARSHALLING:
+      fprintf(stderr, "Running local GL graphics implementation PLUS "
+              "nmg_Graphics_Remote\n    and VRPN as a message handler.\n"
+              "    THIS MODE IS FOR TESTING ONLY.\n");
+      shmem_connection = new vrpn_Synchronized_Connection
+                            (WellKnownPorts::graphicsControl);
+      gi = new nmg_Graphics_Implementation
+               (dataset,
+                minC, maxC, rulerPPMName, shmem_connection);
+      graphics = new nmg_Graphics_Remote (shmem_connection);
+      break;
+
+    case RENDER_SERVER:
+      fprintf(stderr, "Starting up as a rendering server "
+              "(orthographic projection).\n"
+              "    THIS MODE IS FOR TESTING ONLY.\n");
+
+      renderServerOutputConnection =
+              new vrpn_Synchronized_Connection
+                        (WellKnownPorts::remoteRenderingData);
+
+      //renderServerControlConnection = renderServerOutputConnection;
+      renderServerControlConnection = 
+              new vrpn_Synchronized_Connection
+                          (WellKnownPorts::graphicsControl);
+
+      graphics = new nmg_Graphics_RenderServer
+                 (dataset, minC, maxC, renderServerOutputConnection,
+                  nmg_Graphics::VERTEX_COLORS,
+                  nmg_Graphics::VERTEX_DEPTH,
+                  nmg_Graphics::ORTHO_PROJECTION,
+                  100, 100, rulerPPMName, renderServerControlConnection);
+
+      break;
+
+    case TEXTURE_SERVER:
+      fprintf(stderr, "Starting up as a texture rendering server "
+              "(orthographic projection).\n"
+              "    THIS MODE IS FOR TESTING ONLY.\n");
+
+      renderServerOutputConnection =
+              new vrpn_Synchronized_Connection
+                        (WellKnownPorts::remoteRenderingData);
+
+      //renderServerControlConnection = renderServerOutputConnection;
+      renderServerControlConnection = 
+              new vrpn_Synchronized_Connection
+                          (WellKnownPorts::graphicsControl);
+
+      graphics = new nmg_Graphics_RenderServer
+                 (dataset, minC, maxC, renderServerOutputConnection,
+                  nmg_Graphics::SUPERSAMPLED_COLORS,
+                  nmg_Graphics::NO_DEPTH,
+                  nmg_Graphics::ORTHO_PROJECTION,
+                  512, 512, rulerPPMName, renderServerControlConnection);
+
+      break;
+
+    case VIDEO_SERVER:
+      fprintf(stderr, "Starting up as a video rendering server "
+              "(perspective projection).\n"
+              "    THIS MODE IS FOR TESTING ONLY.\n");
+
+      renderServerOutputConnection =
+              new vrpn_Synchronized_Connection
+                        (WellKnownPorts::remoteRenderingData);
+
+      //renderServerControlConnection = renderServerOutputConnection;
+      renderServerControlConnection = 
+              new vrpn_Synchronized_Connection
+                          (WellKnownPorts::graphicsControl);
+
+      graphics = new nmg_Graphics_RenderServer
+               (dataset, minC, maxC, renderServerOutputConnection,
+                nmg_Graphics::SUPERSAMPLED_COLORS,
+                nmg_Graphics::NO_DEPTH,
+                nmg_Graphics::PERSPECTIVE_PROJECTION,
+                512, 512, rulerPPMName, renderServerControlConnection);
+
+      break;
+
+    case RENDER_CLIENT:
+      fprintf(stderr, "Starting up as a rendering client "
+              "(expecting peer rendering server %d to supply images).\n",
+              istate.graphicsHost);
+
+      sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+              istate.graphicsHost,
+              WellKnownPorts::remoteRenderingData);
+      renderClientInputConnection = vrpn_get_connection_by_name
+                           (qualifiedName);
+
+      sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+              istate.graphicsHost,
+              WellKnownPorts::graphicsControl);
+      renderServerControlConnection = vrpn_get_connection_by_name
+                           (qualifiedName);
+
+      // By having graphics send on renderServerControlConnection
+      // and gi listen on it, graphics effectively sends commands
+      // to BOTH the RenderClient and the RenderServer;
+      // each will execute those it needs to.
+
+      //graphics = new nmg_Graphics_Remote (renderServerControlConnection);
+      graphics = new nmg_Graphics_RenderClient
+           (dataset, minC, maxC, renderClientInputConnection,
+            nmg_Graphics::VERTEX_COLORS, nmg_Graphics::VERTEX_DEPTH,
+            nmg_Graphics::ORTHO_PROJECTION,
+            100, 100,
+            renderServerControlConnection, &graphicsTimer);
+
+      graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+
+      break;
+
+    case TEXTURE_CLIENT:
+      fprintf(stderr, "Starting up as a texture rendering client "
+              "(expecting peer rendering server %d to supply images).\n",
+              istate.graphicsHost);
+
+      sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+              istate.graphicsHost,
+              WellKnownPorts::remoteRenderingData);
+      renderClientInputConnection = vrpn_get_connection_by_name
+                           (qualifiedName);
+
+      sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+              istate.graphicsHost,
+              WellKnownPorts::graphicsControl);
+      renderServerControlConnection = vrpn_get_connection_by_name
+                           (qualifiedName);
+
+      // By having graphics send on renderServerControlConnection
+      // and gi listen on it, graphics effectively sends commands
+      // to BOTH the RenderClient and the RenderServer;
+      // each will execute those it needs to.
+
+      //graphics = new nmg_Graphics_Remote (renderServerControlConnection);
+      graphics = new nmg_Graphics_RenderClient
+           (dataset, minC, maxC, renderClientInputConnection,
+            nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
+            nmg_Graphics::ORTHO_PROJECTION,
+            512, 512, renderServerControlConnection, &graphicsTimer);
+
+      graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+
+      break;
+
+    case VIDEO_CLIENT:
+      fprintf(stderr, "Starting up as a video rendering client "
+              "(expecting peer rendering server %d to supply images).\n",
+              istate.graphicsHost);
+
+      sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+              istate.graphicsHost,
+              WellKnownPorts::remoteRenderingData);
+      renderClientInputConnection = vrpn_get_connection_by_name
+                           (qualifiedName);
+
+      sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
+              istate.graphicsHost,
+              WellKnownPorts::graphicsControl);
+      renderServerControlConnection = vrpn_get_connection_by_name
+                           (qualifiedName);
+
+      // By having graphics send on renderServerControlConnection
+      // and gi listen on it, graphics effectively sends commands
+      // to BOTH the RenderClient and the RenderServer;
+      // each will execute those it needs to.
+
+      // TODO
+      graphics = new nmg_Graphics_RenderClient
+           (dataset, minC, maxC, renderClientInputConnection,
+            nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
+            nmg_Graphics::PERSPECTIVE_PROJECTION,
+            512, 512, renderServerControlConnection, &graphicsTimer);
+
+      graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
+
+      ((nmg_Graphics_Timer *) graphics)->timeViewpointChanges(VRPN_TRUE);
+
+      break;
+
+    default:
+      fprintf(stderr, "Unimplemented graphics mode!\n");
+      exit(0);
+  }// end switch (istate.graphics_mode)
+
+}
+
 void initialize_rtt (void) {
 
   rtt_server_connection = new vrpn_Synchronized_Connection
@@ -4948,7 +5195,6 @@ int main(int argc, char* argv[])
     long	    n_displays = 0L;
 
     int		i;
-    int retval;
 
     //    int	real_params = 0;		/* Non-flag parameters */
 
@@ -5321,237 +5567,7 @@ int main(int argc, char* argv[])
     // when using the Slow Line tool. 
     microscope->registerPointDataHandler(slow_line_ReceiveNewPoint, microscope);
 
-    char name [50], qualifiedName [50];
-    switch (istate.graphics_mode) {
-
-      case NO_GRAPHICS:
-        fprintf(stderr, "NO GRAPHICS disabled for ease of development.\n");
-        fprintf(stderr, "To reenable, update nmg_Graphics_Null, add to the\n"
-                        "server_microscape/ and graphics/ makefile, and\n"
-                        "change this code (in microscape.c)\n");
-        exit(0);
-
-        //fprintf(stderr, "Using NO GRAPHICS.\n");
-        //graphics = new nmg_Graphics_Null(dataset, minC, maxC);
-        break;
-
-      case LOCAL_GRAPHICS:
-        fprintf(stderr, "Using local GL graphics implementation.\n");
-        graphics = new nmg_Graphics_Implementation(dataset,minC, maxC, 
-							rulerPPMName);
-        graphics = new nmg_Graphics_Timer(graphics, &graphicsTimer);
-        break;
-
-      case SHMEM_GRAPHICS:
-        {
-          fprintf(stderr, "Starting up shared memory implementation.\n");
-
-          spawnSharedGraphics();  // blocks until coprocess sets up
-
-          retval = gethostname(name, 45);
-          if (retval) {
-            fprintf(stderr, "gethostname() failed;  "
-                            "can't start up shared memory!\n");
-            exit(0);
-          }
-          sprintf(qualifiedName, "nmg@%s:%d", name,
-                  WellKnownPorts::graphicsControl);
-
-	  range_ps = new Semaphore (1);
-
-          shmem_connection = vrpn_get_connection_by_name (qualifiedName);
-          graphics = new nmg_Graphics_Remote (shmem_connection);
-          graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
-        }
-        break; 
-
-      case TEST_GRAPHICS_MARSHALLING:
-        fprintf(stderr, "Running local GL graphics implementation PLUS "
-                "nmg_Graphics_Remote\n    and VRPN as a message handler.\n"
-                "    THIS MODE IS FOR TESTING ONLY.\n");
-        shmem_connection = new vrpn_Synchronized_Connection
-                              (WellKnownPorts::graphicsControl);
-        gi = new nmg_Graphics_Implementation
-                 (dataset,
-                  minC, maxC, rulerPPMName, shmem_connection);
-        graphics = new nmg_Graphics_Remote (shmem_connection);
-        break;
-
-      case RENDER_SERVER:
-        fprintf(stderr, "Starting up as a rendering server "
-                "(orthographic projection).\n"
-                "    THIS MODE IS FOR TESTING ONLY.\n");
-
-        renderServerOutputConnection =
-                new vrpn_Synchronized_Connection
-                          (WellKnownPorts::remoteRenderingData);
-
-        //renderServerControlConnection = renderServerOutputConnection;
-        renderServerControlConnection = 
-                new vrpn_Synchronized_Connection
-                            (WellKnownPorts::graphicsControl);
-
-        graphics = new nmg_Graphics_RenderServer
-                   (dataset, minC, maxC, renderServerOutputConnection,
-                    nmg_Graphics::VERTEX_COLORS,
-                    nmg_Graphics::VERTEX_DEPTH,
-                    nmg_Graphics::ORTHO_PROJECTION,
-                    100, 100, rulerPPMName, renderServerControlConnection);
-
-        break;
-
-      case TEXTURE_SERVER:
-        fprintf(stderr, "Starting up as a texture rendering server "
-                "(orthographic projection).\n"
-                "    THIS MODE IS FOR TESTING ONLY.\n");
-
-        renderServerOutputConnection =
-                new vrpn_Synchronized_Connection
-                          (WellKnownPorts::remoteRenderingData);
-
-        //renderServerControlConnection = renderServerOutputConnection;
-        renderServerControlConnection = 
-                new vrpn_Synchronized_Connection
-                            (WellKnownPorts::graphicsControl);
-
-        graphics = new nmg_Graphics_RenderServer
-                   (dataset, minC, maxC, renderServerOutputConnection,
-                    nmg_Graphics::SUPERSAMPLED_COLORS,
-                    nmg_Graphics::NO_DEPTH,
-                    nmg_Graphics::ORTHO_PROJECTION,
-                    512, 512, rulerPPMName, renderServerControlConnection);
-
-        break;
-
-      case VIDEO_SERVER:
-        fprintf(stderr, "Starting up as a video rendering server "
-                "(perspective projection).\n"
-                "    THIS MODE IS FOR TESTING ONLY.\n");
-
-        renderServerOutputConnection =
-                new vrpn_Synchronized_Connection
-                          (WellKnownPorts::remoteRenderingData);
-
-        //renderServerControlConnection = renderServerOutputConnection;
-        renderServerControlConnection = 
-                new vrpn_Synchronized_Connection
-                            (WellKnownPorts::graphicsControl);
-
-        graphics = new nmg_Graphics_RenderServer
-                   (dataset, minC, maxC, renderServerOutputConnection,
-                    nmg_Graphics::SUPERSAMPLED_COLORS,
-                    nmg_Graphics::NO_DEPTH,
-                    nmg_Graphics::PERSPECTIVE_PROJECTION,
-                    512, 512, rulerPPMName, renderServerControlConnection);
-
-        break;
-
-      case RENDER_CLIENT:
-        fprintf(stderr, "Starting up as a rendering client "
-                "(expecting peer rendering server %d to supply images).\n",
-                istate.graphicsHost);
-
-        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
-                istate.graphicsHost,
-                WellKnownPorts::remoteRenderingData);
-        renderClientInputConnection = vrpn_get_connection_by_name
-                             (qualifiedName);
-
-        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
-                istate.graphicsHost,
-                WellKnownPorts::graphicsControl);
-        renderServerControlConnection = vrpn_get_connection_by_name
-                             (qualifiedName);
-
-        // By having graphics send on renderServerControlConnection
-        // and gi listen on it, graphics effectively sends commands
-        // to BOTH the RenderClient and the RenderServer;
-        // each will execute those it needs to.
-
-        //graphics = new nmg_Graphics_Remote (renderServerControlConnection);
-        graphics = new nmg_Graphics_RenderClient
-             (dataset, minC, maxC, renderClientInputConnection,
-              nmg_Graphics::VERTEX_COLORS, nmg_Graphics::VERTEX_DEPTH,
-              nmg_Graphics::ORTHO_PROJECTION,
-              100, 100,
-              renderServerControlConnection, &graphicsTimer);
-
-        graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
-
-        break;
-
-      case TEXTURE_CLIENT:
-        fprintf(stderr, "Starting up as a texture rendering client "
-                "(expecting peer rendering server %d to supply images).\n",
-                istate.graphicsHost);
-
-        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
-                istate.graphicsHost,
-                WellKnownPorts::remoteRenderingData);
-        renderClientInputConnection = vrpn_get_connection_by_name
-                             (qualifiedName);
-
-        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
-                istate.graphicsHost,
-                WellKnownPorts::graphicsControl);
-        renderServerControlConnection = vrpn_get_connection_by_name
-                             (qualifiedName);
-
-        // By having graphics send on renderServerControlConnection
-        // and gi listen on it, graphics effectively sends commands
-        // to BOTH the RenderClient and the RenderServer;
-        // each will execute those it needs to.
-
-        //graphics = new nmg_Graphics_Remote (renderServerControlConnection);
-        graphics = new nmg_Graphics_RenderClient
-             (dataset, minC, maxC, renderClientInputConnection,
-              nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
-              nmg_Graphics::ORTHO_PROJECTION,
-              512, 512, renderServerControlConnection, &graphicsTimer);
-
-        graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
-
-        break;
-
-      case VIDEO_CLIENT:
-        fprintf(stderr, "Starting up as a video rendering client "
-                "(expecting peer rendering server %d to supply images).\n",
-                istate.graphicsHost);
-
-        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
-                istate.graphicsHost,
-                WellKnownPorts::remoteRenderingData);
-        renderClientInputConnection = vrpn_get_connection_by_name
-                             (qualifiedName);
-
-        sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
-                istate.graphicsHost,
-                WellKnownPorts::graphicsControl);
-        renderServerControlConnection = vrpn_get_connection_by_name
-                             (qualifiedName);
-
-        // By having graphics send on renderServerControlConnection
-        // and gi listen on it, graphics effectively sends commands
-        // to BOTH the RenderClient and the RenderServer;
-        // each will execute those it needs to.
-
-        // TODO
-        graphics = new nmg_Graphics_RenderClient
-             (dataset, minC, maxC, renderClientInputConnection,
-              nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
-              nmg_Graphics::PERSPECTIVE_PROJECTION,
-              512, 512, renderServerControlConnection, &graphicsTimer);
-
-        graphics = new nmg_Graphics_Timer (graphics, &graphicsTimer);
-
-        ((nmg_Graphics_Timer *) graphics)->timeViewpointChanges(VRPN_TRUE);
-
-        break;
-
-      default:
-        fprintf(stderr, "Unimplemented graphics mode!\n");
-        exit(0);
-    }// end switch (istate.graphics_mode)
+    createGraphics(istate);
 
     setupCallbacks(dataset, graphics);
     setupCallbacks(graphics);
@@ -5975,6 +5991,10 @@ VERBOSE(1, "Creating Ugraphics");
   World.TSetContents(temp);
   
   initializeInteraction();
+
+  // This should be activated by setupCallbacks(graphics), but doesn't
+  // seem to be?
+  tclstride = istate.tesselation;
 
 /* Center the image first thing */
 center();
