@@ -625,6 +625,11 @@ static void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata
 	    // waiting for the user - we're about to resume the scan.
 	    microscope->state.modify.slow_line_committed = VRPN_FALSE;
 
+	    // For SLOW_LINE_3D tool: clear the markers along the rubber-band lines
+	    if (microscope->state.modify.tool == SLOW_LINE_3D) {
+	      decoration->num_slow_line_3d_markers = 0;
+	    }
+
 	    fprintf(stderr, "handle_commit_cancel: Aborting modify, resuming scan.\n");
 	}
 	// I think we should always resume scan - if the user hits "cancel"
@@ -1800,7 +1805,6 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		  microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1],
 					    clipPosNM[2], value, 0);
 		}
-		//microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
 	      }
 	      else{    
 		microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
@@ -1821,9 +1825,6 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	    /* Request a reading from the current location */
 	  
 	    if (microscope->state.modify.tool == SLOW_LINE_3D) {
-	      //		microscope->TakeDirectZStep(clipPos[0], clipPos[1],
-	      //					    clipPos[2]);
-	      
 	      if(!tcl_commit_pressed) {
 		if (valid_Direct_Z_Point) {
 		  microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1], 
@@ -1834,15 +1835,13 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	    else{
 	      if(!tcl_commit_pressed) {
 		// which one was here initially???
-		//   microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
-		microscope->TakeFeelStep(clipPos[0], clipPos[1]);
+	        microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
 	      }
 	    }
 
 	    // update the position of the rubber-band line
 	    graphics->setRubberLineEnd(clipPos[0], clipPos[1]);
 	    graphics->setRubberSweepLineEnd(TopL, TopR);
-	    
 	    if ( (microscope->state.modify.tool == SLOW_LINE_3D) &&
 		(tcl_commit_pressed) ) {
 	      // Stop using the plane to apply force (?)
@@ -1930,10 +1929,12 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		   if (microscope->state.modify.tool == SLOW_LINE_3D) {
 		     // Insert points in reverse order so we start
 		     // modifying from the last point we add. 
-		     pos_list.insertPrev(clipPos[0], clipPos[1], 
-				     clipPos[2], list_id);
-		     // microscope->ImageMode();
-		     //microscope->ResumeScan(); //???
+		     pos_list.insertPrev(clipPosNM[0], clipPosNM[1],
+				     clipPosNM[2], list_id);
+		     // add a visual marker to the decorations already present
+		     // on screen
+		     decoration->addSlowLine3dMarker( clipPos[0], clipPos[1],
+						      clipPos[2]);
 		   }
 		   else {
 		     pos_list.insert(clipPos[0], clipPos[1], list_id);
@@ -1960,7 +1961,7 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	      break;
 
 	    default:
-			break;
+		break;
 	    }
 
 	return(0);

@@ -105,7 +105,8 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setUserMode (int oldMode, int newMode, int style);
     virtual void setLightDirection (q_vec_type &);
     virtual void resetLightDirection (void);
-    virtual int addPolylinePoint (const float [2][3]);
+    //    virtual int addPolylinePoint (const float [2][3]);
+    virtual int addPolylinePoint(const PointType[2]);
     virtual void emptyPolyline (void);
     virtual void setRubberLineStart (float, float);
     virtual void setRubberLineEnd (float, float);

@@ -950,15 +950,24 @@ int draw_world (int) {
     glGetFloatv(GL_CURRENT_COLOR, oldColor);
     glGetFloatv(GL_LINE_WIDTH, oldLineWidth);
     glColor4f(0.1, 1.0, 0.1, 1.0);
-    glLineWidth(1.0);  // should probably keep the old value around too
+    glLineWidth(1.0);
     glBegin(GL_LINE_STRIP);
       for (int p = 0; p < decoration->scanLineCount; p++) {
         glVertex3f(decoration->scan_line[p][0], decoration->scan_line[p][1],
-		   decoration->scan_line[p][2] + 0.8);
+		   decoration->scan_line[p][2] + 5.0);
     }
     glEnd();
     glLineWidth(oldLineWidth[0]);
     glColor4fv(oldColor);
+  }
+
+  if (decoration->num_slow_line_3d_markers > 0) {
+    for (int i=0; i < decoration->num_slow_line_3d_markers; i++) {
+      position_sphere( decoration->slowLine3dMarkers[i][0],
+		       decoration->slowLine3dMarkers[i][1],
+		       decoration->slowLine3dMarkers[i][2] );
+      mysphere(NULL);
+    }
   }
 
   // TCH 8 April 98 don't know where these go best

@@ -154,7 +154,7 @@ int make_rubber_corner (float, float, float, float);
 static int selecthand (void *);
 static int mycube (void);
 static int big_flat_arrow (void); /* dim */
-static int mysphere (void *);
+//static int mysphere (void *);
 static void init_sphere (void); /* dim */
 
 void position_sphere (float, float, float);
@@ -644,7 +644,6 @@ int make_rubber_corner(float x_min,float y_min, float x_max,float y_max)
 	glEndList();
 	return(0);
 }
-
 
 int make_line (const float a [], const float b [])
 {
@@ -1710,6 +1709,25 @@ int my_line_mark(void *data)
     return(0);
 }
 
+int my_3d_point_marker(void *data) {
+
+  data = data;
+  glPushMatrix();
+#ifndef FLOW
+  glPushAttrib(GL_CURRENT_BIT);
+#endif
+  glColor3f(0.0,1.0,0.0);
+  glTranslatef(sphere_x,sphere_y,sphere_z);
+  //the scaling is obtained from a tcl slider
+  glScalef(g_sphere_scale, g_sphere_scale, g_sphere_scale);
+  glCallList(sphere);
+#ifndef FLOW
+  glPopAttrib();
+#endif
+  glPopMatrix();
+  return(0);
+}
+
 /* draws 7 lines, parallel to the surface, from the most
  * recent point in a polyline to the user's hand. 
  */
@@ -1941,7 +1959,8 @@ int replaceDefaultObjects(void)
   return 0;
 }
 
-int make_rubber_line_point (const float point [2][3], Position_list * p) {
+int make_rubber_line_point (const PointType point[2], Position_list * p) {
+//int make_rubber_line_point (const float point [2][3], Position_list * p) {
   //static float rep [4];
   int list_id;
 

@@ -111,6 +111,7 @@ double g_texture_transform[16] = {0.001,0,0,0,0,0.001,0,0,0,0,1,0,0,0,0,1};
   // goes from 0 to 1 in u or v texture coordinate
 
 float g_rubberPt [4];
+float g_slowLine3dPt [6];
 float g_rubberSweepPts[2][4];
 float g_rubberSweepPtsSave[2][4];
 float g_scanlinePt [6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};

@@ -1603,7 +1603,8 @@ void nmg_Graphics_Remote::resetLightDirection (void) {
   q_set_vec(d_lightDirection, 0.0, 0.0, 1.0);
 }
 
-int nmg_Graphics_Remote::addPolylinePoint (const float point [2][3]) {
+int nmg_Graphics_Remote::addPolylinePoint(const PointType point[2]) {
+//int nmg_Graphics_Remote::addPolylinePoint (const float point [2][3]) {
   struct timeval now;
   char * msgbuf;
   int len;

@@ -1742,7 +1742,8 @@ int nmg_Graphics::decode_setLightDirection
 }
 
 char * nmg_Graphics::encode_addPolylinePoint
-                     (int * len, const float point [2][3]) {
+//                     (int * len, const float point [2][3]) {
+                       (int *len, const PointType point[2]) {
   char * msgbuf = NULL;
   char * mptr;
   int mlen;
@@ -1769,8 +1770,9 @@ char * nmg_Graphics::encode_addPolylinePoint
   return msgbuf;
 }
 
-int nmg_Graphics::decode_addPolylinePoint
-                   (const char * buf, float point [2][3]) {
+int nmg_Graphics::decode_addPolylinePoint(const char * buf, PointType point[2]){
+//                   (const char * buf, float point [2][3]) {
+
   CHECK(vrpn_unbuffer(&buf, &point[0][0]));
   CHECK(vrpn_unbuffer(&buf, &point[0][1]));
   CHECK(vrpn_unbuffer(&buf, &point[0][2]));
@@ -1794,7 +1796,7 @@ char * nmg_Graphics::encode_addPolySweepPoints(int * len,
   *len = 12 * sizeof(float);
   msgbuf = new char [*len];
   if (!msgbuf) {
-    fprintf(stderr, "nmg_Graphics::encode_addPolylinePoint:  "
+    fprintf(stderr, "nmg_Graphics::encode_addPolySweepPoints:  "
                     "Out of memory.\n");
     *len = 0;
   } else {
@@ -2090,7 +2092,8 @@ char * nmg_Graphics::encode_positionAimLine
 
 int nmg_Graphics::decode_positionAimLine
                    (const char * buf, PointType lo, PointType hi) {
-  if (!buf || !lo || !hi) return -1;
+  //  if (!buf || !lo || !hi) return -1;  !lo and !hi aren't valid statements...
+  if (!buf) return -1;
   CHECK(vrpn_unbuffer(&buf, &lo[0]));
   CHECK(vrpn_unbuffer(&buf, &lo[1]));
   CHECK(vrpn_unbuffer(&buf, &lo[2]));
@@ -2180,7 +2183,8 @@ char * nmg_Graphics::encode_positionSweepLine(int * len,
 int nmg_Graphics::decode_positionSweepLine
                    (const char * buf, PointType loL, PointType hiL,
 		    PointType loR, PointType hiR) {
-  if (!buf || !loL || !hiL || !loR || !hiR) return -1;
+  //  if (!buf || !loL || !hiL || !loR || !hiR) return -1; // !loL...!hiR aren't valid statements
+  if (!buf) return -1;
   CHECK(vrpn_unbuffer(&buf, &loL[0]));
   CHECK(vrpn_unbuffer(&buf, &loL[1]));
   CHECK(vrpn_unbuffer(&buf, &loL[2]));

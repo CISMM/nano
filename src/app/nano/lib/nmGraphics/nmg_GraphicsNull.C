@@ -169,7 +169,12 @@ void nmg_Graphics_Null::setUserMode (int , int , int) {}
 void nmg_Graphics_Null::setLightDirection (q_vec_type & ) {}
 void nmg_Graphics_Null::resetLightDirection (void) {}
 
-int nmg_Graphics_Null::addPolylinePoint (const float [2][3]) {
+//int nmg_Graphics_Null::addPolylinePoint (const float [2][3]) {
+int nmg_Graphics_Null::addPolylinePoint (const PointType[2]) {
+  return 0;
+}
+
+int nmg_Graphics_Null::addSlowLine3dMarker (const float[3]) {
   return 0;
 }
 

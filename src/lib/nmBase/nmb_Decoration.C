@@ -32,7 +32,10 @@ nmb_Decoration::nmb_Decoration (void) :
   pulseCallbacks (NULL),
   scan_line (NULL),
   scanLineCount (0),
-  drawScanLine (1)
+  drawScanLine (1),
+  num_slow_line_3d_markers (0),
+  max_num_slow_line_3d_markers (2),  
+  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
 {
   if (!pulses)
     max_num_pulses = 0;
@@ -65,7 +68,9 @@ nmb_Decoration::nmb_Decoration (int markerHeight, int numMarkers) :
   pulseCallbacks (NULL),
   scan_line (NULL),
   scanLineCount (0),
-  drawScanLine (1)
+  drawScanLine (1),
+  max_num_slow_line_3d_markers (2), 
+  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
 {
   marker_height = markerHeight;
   num_markers_shown = numMarkers;
@@ -101,6 +106,27 @@ nmb_Decoration::~nmb_Decoration (void) {
     t1 = t0->next;
     delete t0;
     t0 = t1;
+  }
+  // Okay, for some reason, if I delete this object when the program is shutting down
+  // it causes a seg fault.  However, if I just leave it alone, everything's just fine
+  // and dandy.  In other words, something is killing this besides me and I have
+  // no idea what it is.  Maybe the PointType class?
+  
+  if (slowLine3dMarkers) {
+    // printf("Deleting memory.\n"); // This fixes the seg. fault problem :)
+    delete [] slowLine3dMarkers;
+    printf("Cleared memory.\n");
+    slowLine3dMarkers = NULL;
+  }
+  
+}
+
+void nmb_Decoration::addSlowLine3dMarker(float x, float y, float z) {
+  if (num_slow_line_3d_markers < max_num_slow_line_3d_markers) {
+    slowLine3dMarkers[num_slow_line_3d_markers][0] = x;
+    slowLine3dMarkers[num_slow_line_3d_markers][1] = y;
+    slowLine3dMarkers[num_slow_line_3d_markers][2] = z;
+    num_slow_line_3d_markers++;
   }
 }
 

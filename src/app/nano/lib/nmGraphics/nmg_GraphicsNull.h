@@ -104,7 +104,8 @@ class nmg_Graphics_Null : public nmg_Graphics {
     virtual void setLightDirection (q_vec_type &);
     virtual void resetLightDirection (void);
 
-    virtual int addPolylinePoint (const float [2][3]);
+    //    virtual int addPolylinePoint (const float [2][3]);
+    virtual int addPolylinePoint (const PointType[2]);
     virtual void emptyPolyline (void);
 
     virtual void setRubberLineStart (float, float);

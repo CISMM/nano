@@ -56,6 +56,11 @@ class nmb_Decoration {
     long scanLineCount;
     int drawScanLine;
 
+    // slowline 3d markers
+    PointType *slowLine3dMarkers;
+    int num_slow_line_3d_markers;
+    void addSlowLine3dMarker(float, float, float);
+
     nmb_Line aimLine;
 
     /// mode of interaction
@@ -120,6 +125,7 @@ class nmb_Decoration {
     int num_scrapes;
     int max_num_scrapes;
     nmb_LocationInfo * scrapes;
+    int max_num_slow_line_3d_markers;
 
     struct callbackEntry {
       nmb_SURFACE_MARKER_CALLBACK f;

@@ -3,8 +3,23 @@
 
 // MOVED from microscape.h
 
-typedef float PointType [3];
+// typedef float PointType [3];
 
+class PointType {
+  float data[3];
+ public:
+  float& operator [] (int i) { return data[i]; }
+  float operator [] (int i) const { return data[i]; }
+  //  const float operator [] (int i) const { return data[i]; }
+  operator const float * () const {
+    float a[3] = {data[0], data[1], data[2]};
+    return a;
+  }/*
+  operator const float * () {
+    float a[3] = {data[0], data[1], data[2]};
+    return a;
+    }*/
+};
 
 
 enum UserMode {

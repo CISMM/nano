@@ -424,7 +424,8 @@ void nmg_Graphics_Timer::resetLightDirection (void) {
 }
 
 
-int nmg_Graphics_Timer::addPolylinePoint (const float point [2][3]) {
+//int nmg_Graphics_Timer::addPolylinePoint (const float point [2][3]) {
+int nmg_Graphics_Timer::addPolylinePoint (const PointType point[2]) {
   activateTimer();
   return d_imp->addPolylinePoint(point);
 }
@@ -449,11 +450,10 @@ void nmg_Graphics_Timer::setRubberLineStart (const float p [2]) {
   d_imp->setRubberLineStart(p);
 }
 
-void nmg_Graphics_Timer::setRubberLineEnd (const float p [2]) {
+void nmg_Graphics_Timer::setRubberLineEnd (const float p [2] ) {
   activateTimer();
   d_imp->setRubberLineEnd(p);
 }
-
 
 void nmg_Graphics_Timer::setScanlineEndpoints(const float p0[3],
 		const float p1[3]){

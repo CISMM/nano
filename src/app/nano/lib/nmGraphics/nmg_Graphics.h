@@ -318,7 +318,8 @@ class nmg_Graphics {
     // WARNING:  This code assumes there is only one polyline being
     // maintained (by the server).  If you need more, rewrite it.
 
-    virtual int addPolylinePoint (const float [2][3]) = 0;
+    virtual int addPolylinePoint( const PointType [2] ) = 0;
+    //    virtual int addPolylinePoint (const float [2][3]) = 0;
       // Adds a point to the active polyline.
     virtual void emptyPolyline (void) = 0;
       // Throws away all the points in the active polyline.
@@ -599,8 +600,10 @@ class nmg_Graphics {
                              int * style);
     char * encode_setLightDirection (int * len, const q_vec_type &);
     int decode_setLightDirection (const char * buf, q_vec_type &);
-    char * encode_addPolylinePoint (int * len, const float [2][3]);
-    int decode_addPolylinePoint (const char * buf, float [2][3]);
+    //    char * encode_addPolylinePoint (int * len, const float [2][3]);
+    char * encode_addPolylinePoint (int * len, const PointType[2]);
+    // int decode_addPolylinePoint (const char * buf, float [2][3]);
+    int decode_addPolylinePoint (const char *buf, PointType[2]);
 
     char * encode_addPolySweepPoints (int * len,
 				      const PointType, const PointType,
@@ -613,7 +616,7 @@ class nmg_Graphics {
     int decode_setRubberLineStart (const char * buf, float [2]);
     char * encode_setRubberLineEnd (int * len, const float [2]);
     int decode_setRubberLineEnd (const char * buf, float [2]);
-
+    
     char * encode_setRubberSweepLineStart (int * len,
 					   const PointType, const PointType );
     int decode_setRubberSweepLineStart (const char * buf,

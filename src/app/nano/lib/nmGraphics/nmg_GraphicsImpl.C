@@ -256,8 +256,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
                                handle_setFrictionSliderRange,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setBumpSliderRange_type,
-							   handle_setBumpSliderRange,
-							   this, vrpn_ANY_SENDER);
+			       handle_setBumpSliderRange,
+			       this, vrpn_ANY_SENDER);
   connection->register_handler(d_setBuzzSliderRange_type,
                                handle_setBuzzSliderRange,
                                this, vrpn_ANY_SENDER);
@@ -2292,7 +2292,8 @@ void nmg_Graphics_Implementation::resetLightDirection (void) {
 }
 
 
-int nmg_Graphics_Implementation::addPolylinePoint (const float point [2][3]) {
+int nmg_Graphics_Implementation::addPolylinePoint( const PointType point[2] ) {
+//int nmg_Graphics_Implementation::addPolylinePoint (const float point [2][3]) {
 //fprintf(stderr, "nmg_Graphics_Implementation::addPolylinePoint().\n");
 
   return make_rubber_line_point(point, g_positionList);
@@ -3734,4 +3735,5 @@ int nmg_Graphics_Implementation::handle_createScreenImage
 
    return 0;
 }
+
 

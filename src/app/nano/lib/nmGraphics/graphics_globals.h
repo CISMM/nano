@@ -138,6 +138,7 @@ extern float g_rotate_tex_theta;
 extern double g_texture_transform[16];
 
 extern float g_rubberPt [4];
+extern float g_slowLine3dPt [6];
 extern float g_rubberSweepPts[2][4];
 extern float g_rubberSweepPtsSave[2][4];
 extern float g_scanlinePt[6];

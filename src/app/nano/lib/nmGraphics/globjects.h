@@ -23,13 +23,17 @@ extern int make_sweep (const float a [], const float b [],
 		const float c [], const float d [] );
 extern int make_rubber_corner ( float, float, float, float);
 extern void position_sphere (float, float, float);
+extern int mysphere(void * data);
 extern void enableCollabHand (int);
 extern void enableScanlinePositionDisplay(const int);
 
-extern int make_rubber_line_point (const float [2][3],
+//extern int make_rubber_line_point (const float [2][3],
+extern int make_rubber_line_point (const PointType[2],
                                    Position_list *);
 extern int make_rubber_line_point (const PointType top, const PointType bot,
 				   Position_list * p, int index);
+extern int make_slow_line_3d_marker(const float point[2][3], Position_list * p);
+// extern int make_slow_line_3d_marker(const float point[3]);
   // First parameter is the top and bottom of the marker line
   // (at the endpoint of the most recent segment?),
   // second parameter are the global endpoints of the rubber line,
