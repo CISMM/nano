@@ -298,6 +298,9 @@ nmm_Microscope_Simulator (const char * _name,
                                 this);
   /*************************************************************/
 
+  d_connection->register_handler(d_MarkFinishFreehand_type,
+	  RcvMarkFinishFreehand, this);
+
   d_Shutdown_type = d_connection->register_message_type
 	  (vrpn_dropped_last_connection);
 
@@ -1106,6 +1109,20 @@ RcvMarkImage( void *_userdata, vrpn_HANDLERPARAM _p )
   return 0;
 }
 
+
+int nmm_Microscope_Simulator::
+RcvMarkFinishFreehand( void *_userdata, vrpn_HANDLERPARAM _p )
+{
+  nmm_Microscope_Simulator *tmp = (nmm_Microscope_Simulator *) _userdata;
+  const char * bufptr = _p.buffer;
+
+  if ( tmp->spm_echo_FinishFreehand( bufptr ) ) {
+     ServerError( "nmm_Microscope_Simulator::RcvMarkFinishFreehand: spm_echo_FinishFreehand failed" );
+     return -1;
+  }
+
+  return 0;
+}
 
 // This message handled by real Topo AFM
 int nmm_Microscope_Simulator::
@@ -2424,6 +2441,22 @@ spm_echo_ImageMode( const char * /* bufptr */ )
   return 0;
 }
 
+int nmm_Microscope_Simulator::
+spm_echo_FinishFreehand( const char * /* bufptr */ )
+{
+  long len = 0;
+  char * msgbuf = NULL;
+  int retval;
+
+  ServerOutputAdd(2, "nmm_Microscope_Simulator::spm_echo_FinishFreehand()");
+
+  retval = Send( len, d_InImgMode_type, msgbuf );
+  if ( retval ) {
+        ServerOutputAdd( 2, "nmm_Microscope_Simulator::spm_echo_FinishFreehand:  Couldn't pack message to send to client." );
+        return -1;
+  }
+  return 0;
+}
 
 // This function called by real Topo AFM, indirectly
 int nmm_Microscope_Simulator::

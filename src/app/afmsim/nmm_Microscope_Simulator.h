@@ -418,6 +418,8 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
 
      int spm_echo_ImageMode( const char *bufptr );      // Tiger new
 
+     int spm_echo_FinishFreehand( const char *bufptr );
+
      int spm_enable_voltsource( const char *bufptr );
 
      int spm_disable_voltsource( const char *bufptr );
@@ -530,6 +532,7 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
      static int RcvEcho( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvMarkModify( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvMarkImage( void *_userdata, vrpn_HANDLERPARAM _p );
+	 static int RcvMarkFinishFreehand( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvZagPointNM( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvSetMaxMove( void *_userdata, vrpn_HANDLERPARAM _p );
      static int RcvSetStdDelay( void *_userdata, vrpn_HANDLERPARAM _p );

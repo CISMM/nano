@@ -1,3 +1,8 @@
+2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_Simulator.C (RcvMarkFinishFreehand, 
+    spm_echo_FinishFreehand): new functions to handle this new message
+
 2001-11-06  Russell M. Taylor II <taylorr@cs.unc.edu>
 
 	* Makefile : Bringing it up to date so that it will compile the
