@@ -51,9 +51,12 @@ ifndef LIBRARY_OBJ
 ifeq ($(HW_OS),pc_win32)
    LIBRARY_OBJ := $(addprefix $(OBJECT_DIR)/, \
                               $(addsuffix .obj,$(basename $(LIBRARY_SRC))))
+   OBJECT_SUFFIX := .obj
+
 else 
    LIBRARY_OBJ := $(addprefix $(OBJECT_DIR)/, \
                               $(addsuffix .o,$(basename $(LIBRARY_SRC))))
+   OBJECT_SUFFIX := .o
 endif
 endif
 

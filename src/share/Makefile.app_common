@@ -59,6 +59,7 @@ ifndef APP_OBJ
 ifdef VC
    APP_OBJ := $(addprefix $(OBJECT_DIR)/, \
                           $(addsuffix .obj, $(strip $(basename $(APP_SRC)))))
+   OBJECT_SUFFIX := .obj
    # VC++ requires a more dos-like path. 
    APP_OBJ_LINK := $(foreach myobj,$(APP_OBJ),"$(shell cygpath -w $(myobj))" )
 
@@ -68,6 +69,7 @@ ifdef VC
 else 
    APP_OBJ := $(addprefix $(OBJECT_DIR)/, \
                           $(addsuffix .o, $(strip $(basename $(APP_SRC)))))
+   OBJECT_SUFFIX := .o
    APP_OBJ_LINK := $(APP_OBJ)
 endif
 endif
