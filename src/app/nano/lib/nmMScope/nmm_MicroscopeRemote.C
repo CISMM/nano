@@ -72,7 +72,7 @@
 nmm_Microscope_Remote::nmm_Microscope_Remote
   (const AFMInitializationState & i,
    vrpn_Connection * c) :
-    nmb_Device_Client("nmm_Microscope@lysine", c),
+    nmb_SharedDevice ("nmm_Microscope@lysine", i.mutexPort, c),
     nmm_Microscope ("nmm_Microscope@lysine", c),
     state(i),
     d_relax_comp(this),
@@ -326,11 +326,12 @@ nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
 
 
 // virtual
-long nmm_Microscope_Remote::mainloop (void) {
+int nmm_Microscope_Remote::mainloop (void) {
 
   struct timeval skiptime;
   struct timeval last_time;
 
+  nmb_SharedDevice::mainloop();
 
   // Read in the changes
   VERBOSE(5, "   setup");
@@ -343,8 +344,9 @@ long nmm_Microscope_Remote::mainloop (void) {
   time_multiply(skiptime, d_decoration->rateOfTime, &skiptime);
   time_add(d_next_time, skiptime, &d_next_time);
 
-  if (d_connection)
+  if (d_connection) {
     d_connection->mainloop();
+  }
 
   if (d_connection && !d_connection->doing_okay()) {
     fprintf(stderr, "nmm_Microscope_Remote::mainloop():  "

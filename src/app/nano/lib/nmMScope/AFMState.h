@@ -366,6 +366,7 @@ struct AFMInitializationState {
   float yMin;
   float yMax;
 
+  int mutexPort;
 };
 
 

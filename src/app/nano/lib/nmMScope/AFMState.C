@@ -360,7 +360,9 @@ AFMInitializationState::AFMInitializationState (void) :
   xMin (-2500.0f),
   xMax ( 2500.0f),
   yMin (-2500.0f),
-  yMax ( 2500.0f)
+  yMax ( 2500.0f),
+
+  mutexPort (-1)
 
 {
   strcpy (deviceName, "null");

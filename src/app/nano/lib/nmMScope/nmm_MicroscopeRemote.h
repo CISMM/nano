@@ -2,7 +2,7 @@
 #define NMM_MICROSCOPE_REMOTE_H
 
 #include "nmm_Microscope.h"
-#include "nmb_Device.h"
+#include <nmb_SharedDevice.h>
 
 #include "AFMState.h"
 
@@ -53,8 +53,11 @@ class nmm_Sample;  // from nmm_Sample.h
 // someday.
 
 
-class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
-    friend class nmm_RelaxComp;
+class nmm_Microscope_Remote : public nmb_SharedDevice,
+                              public nmm_Microscope {
+
+  friend class nmm_RelaxComp;
+
   public:
 
     nmm_Microscope_Remote (const AFMInitializationState &,
@@ -64,7 +67,7 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
     ~nmm_Microscope_Remote (void);
       // Destructor.
 
-    virtual long mainloop (void);
+    virtual int mainloop (void);
 
     AFMState state;
 
@@ -504,6 +507,7 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
     void RcvRecvTimestamp (const struct timeval);
     void RcvFakeSendTimestamp (const struct timeval);
     void RcvUdpSeqNum (const long);
+
 
 
 

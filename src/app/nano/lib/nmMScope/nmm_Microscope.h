@@ -36,8 +36,6 @@ class nmm_Microscope {
     virtual ~nmm_Microscope (void);
       // Destructor. HP compiler doesn't like this declared with "= 0;"
 
-//    virtual long mainloop (void);
-
     enum Direction { Forward, Backward };
 
     // MANIPULATORS
@@ -227,8 +225,6 @@ class nmm_Microscope {
     long d_PulseParameters_type;
     long d_PulseCompletedNM_type;
     long d_PulseFailureNM_type;
-
-    
 
 
     // encode_ functions take as parameters all the data carried in
