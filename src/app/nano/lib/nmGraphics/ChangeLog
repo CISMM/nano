@@ -1,3 +1,37 @@
+2002-03-28  Aron Helser  <helser@cs.unc.edu>
+
+	* nmg_SurfaceRegion.Ch (forceRebuildCondition): Removed class
+	member d_needsFullRebuild, instead use flag in our
+	SurfaceMask. Makes sure rebuilds caused by mask or region are
+	handled consistently. 
+	(determineInterval): Changes to incremental rebuild of the
+	surface. One strip is rebuilt per loop, and others that need to be
+	rebuilt are put on a "todo" list. Similar strategy for strips that
+	need to be recolored. 
+	(rebuildInterval): Handle changes to determineInterval,
+	build_list_set. 
+	(build_list_set): Merged two successive functions into one, call
+	mask->stripMasked to skip to strips that need to be drawn. Handle
+	changes to param list. 
+	(build_nulldata_polygon): Move polygon from zero to
+	minNonZeroValue().
+	
+	* nmg_SurfaceMask.Ch (init): Remove "oldDerivation", which is
+	unused and just allocates memory. 
+	(forceUpdate): new, sets rebuild flag, used by SurfaceRegion
+	(deriveMask): BOX, keep track of maximum Y extent of box.
+	(stripMasked): New, tells whether parts of a strip are masked in
+	this region. 
+	
+	* nmg_Surface.C (createNewRegion): Change arguments to
+	SurfaceRegion constructor. 
+
+	* nmg_GraphicsImpl.C (setHeightPlaneName): Fix intermittent crash
+	when loading first static file. When grid size changes, we should
+	do a rebuild, but otherwise do a redraw. 
+
+	* openGL.C: remove RENDERMAN define.
+	
 2002-03-21  Aron Helser  <helser@cs.unc.edu>
 
 	* chartjunk.c: Handle replacement BCString ->

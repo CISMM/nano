@@ -80,25 +80,6 @@ init(int width, int height)
         d_width = width;
         d_height = height;
 
-        if (!d_oldDerivation) {
-            d_oldDerivation = new nmg_SurfaceMask;
-        }
-        if (!d_oldDerivation) return -1;
-        //Can't manually call the init function for d_oldDerivation
-        //or we will get infinite recursion
-        if (d_oldDerivation->d_maskData) {
-            delete [] d_oldDerivation->d_maskData;
-        }
-
-        d_oldDerivation->d_width = width;
-        d_oldDerivation->d_height = height;
-        d_oldDerivation->d_maskData = new char[width * height];
-        if (!d_oldDerivation->d_maskData) return -1;
-        for(y = 0; y < height; y++) {
-            for(x = 0; x < width; x++) {
-                d_oldDerivation->d_maskData[x+y*width] = 0;
-            }
-        }
     }
     return 0;
 }
@@ -114,7 +95,7 @@ static float xform_height(float x, float y, float angle) {
     return fabs(cos(angle)*(y) - sin(angle)*(x));
 }
 
-/** Is this pixel masked? */
+/** Is this pixel masked? Masked means don't draw here. */
 int nmg_SurfaceMask::value(int x, int y) 
 {
     switch(d_derivationMode) {
@@ -127,11 +108,11 @@ int nmg_SurfaceMask::value(int x, int y)
             d_dataset->inputGrid->gridToWorld(x,y,w_x,w_y);
             // Find out if that coord is within width/height of 
             // region box. Helper functions handle rotation.
-            // What a simple, slow method. Should rasterize!
             if ((xform_width(w_x-d_centerX, w_y-d_centerY, 
-                             Q_DEG_TO_RAD(d_boxAngle)) < d_boxWidth)&&
+                             d_boxAngle) < d_boxWidth)&&
                 (xform_height(w_x-d_centerX, w_y-d_centerY, 
-                              Q_DEG_TO_RAD(d_boxAngle)) < d_boxHeight)){
+                              d_boxAngle) < d_boxHeight)){
+                // Don't draw inside the region box. 
                 return 1;
                 //d_empty = false;
             } else {
@@ -142,6 +123,7 @@ int nmg_SurfaceMask::value(int x, int y)
         {
             // If y coord is between our bounds,pixel is masked. 
             if ( y>= d_minValid && y<=d_maxValid ) {
+                //Don't draw where there is valid data.
                 return 1;
             } else {
                 return 0;
@@ -151,6 +133,7 @@ int nmg_SurfaceMask::value(int x, int y)
         {
             int ret = 1;
             // if pixel is masked in all other masks, we're not masked. 
+            // We draw if everyone else doesn't draw. 
             for (int i = 0; i < d_numInvertMasks; i++) {
                 ret &= d_invertMaskList[i]->value(x,y);
             }
@@ -159,6 +142,13 @@ int nmg_SurfaceMask::value(int x, int y)
     default:
         return 0;
     }
+}
+
+/** Set flag that says region linked to this mask should be rebuilt */
+void nmg_SurfaceMask::
+forceUpdate() 
+{
+    d_needsUpdate = true;
 }
 
 /**
@@ -390,15 +380,30 @@ deriveMask(float center_x, float center_y, float width,float height,
     if (d_derivationMode != BOX ||
         d_centerX != center_x || d_centerY != center_y ||
         d_boxWidth != width || d_boxHeight != height ||
-        d_boxAngle != angle) 
+        fabs(d_boxAngle -Q_DEG_TO_RAD(angle)) > 0.001) 
     {
         d_derivationMode = BOX;
         d_centerX = center_x;
         d_centerY = center_y;
         d_boxWidth = width;
         d_boxHeight = height;
-        d_boxAngle = angle;
+        d_boxAngle = Q_DEG_TO_RAD(angle);
 
+        // Keep track of the maximum extent of the box. 
+        d_boxMinY = d_boxMaxY = center_y;
+        float y = center_y + cos(d_boxAngle)*(height) - sin(d_boxAngle)*(width);
+        if (y > d_boxMaxY) d_boxMaxY = y;
+        if (y < d_boxMinY) d_boxMinY = y;
+        y = center_y + cos(d_boxAngle)*(height) + sin(d_boxAngle)*(width);
+        if (y > d_boxMaxY) d_boxMaxY = y;
+        if (y < d_boxMinY) d_boxMinY = y;
+        y = center_y - cos(d_boxAngle)*(height) - sin(d_boxAngle)*(width);
+        if (y > d_boxMaxY) d_boxMaxY = y;
+        if (y < d_boxMinY) d_boxMinY = y;
+        y = center_y - cos(d_boxAngle)*(height) + sin(d_boxAngle)*(width);
+        if (y > d_boxMaxY) d_boxMaxY = y;
+        if (y < d_boxMinY) d_boxMinY = y;
+        //printf("Box %f %f\n", d_boxMinY , d_boxMaxY);
         d_needsUpdate = true;
         return 1;
     }
@@ -418,30 +423,6 @@ deriveBox(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x)
 {
     d_dataset = dataset;
     return d_needsUpdate;
-    /*
-    subtract(d_oldDerivation);
-    d_oldDerivation->clear();
-
-    double w_x, w_y;
-    //d_empty = true;
-    for(int y = 0; y < dataset->inputGrid->numY(); y++) {
-        for(int x = 0; x < dataset->inputGrid->numX(); x++) {
-            //Transform row,col in grid into world coordinates
-            dataset->inputGrid->gridToWorld(x,y,w_x,w_y);
-            // Find out if that coord is within width/height of 
-            // region box. Helper functions handle rotation.
-            // What a simple, slow method. Should rasterize!
-            if ((xform_width(w_x-d_centerX, w_y-d_centerY, 
-                             Q_DEG_TO_RAD(d_boxAngle)) < d_boxWidth)&&
-                (xform_height(w_x-d_centerX, w_y-d_centerY, 
-                              Q_DEG_TO_RAD(d_boxAngle)) < d_boxHeight)){
-                d_oldDerivation->addValue(x,y,1);
-                //d_empty = false;
-            }                    
-        }
-    }
-    add(d_oldDerivation);
-    */
 }
 
 /**
@@ -462,25 +443,7 @@ deriveMask()
     // Look at that. We don't need to do anything here, it's all in rederive
     return 0;
 }
-/*
-static void deriveNullDataLoop(nmg_SurfaceMask * sm, 
-                               short ymin, short ymax, short numx, 
-                               short top, short left, 
-                               short bottom, short right) {
-    short y;
-    for(y = ymin; y <= ymax; y++) {
-        for(short x = 0; x < numx; x++) {
-            if ( (y <= top) && (y >=bottom) &&
-                 (x <= right) && (x >= left)) {
-                // Inside valid region.
-                if (!sm->value(x,y)) sm->addValue(x,y,1);
-            } else {
-                if (sm->value(x,y)) sm->addValue(x,y,-sm->value(x,y));
-            }
-        }
-    }
-}
-*/
+
 /**
  Create a masking plane, using invalid data in the control plane
     Access: Private
@@ -496,9 +459,9 @@ deriveNullData(int stride, int low_row, int high_row, int strips_in_x)
         return 0;
     }
 
-    // XXX Should do more intelligent checking to see if
+    // Might need to do more intelligent checking to see if
     // valid data range and low_row, high_row correspond. 
-    // For now assume we never need to force extra rebuilds. 
+    // Initial use shows we never need to force extra rebuilds. 
     short top, left, bottom, right;
     if (d_control->findValidDataRange(&left,&right,&bottom,&top)) {
         if ( d_minValid != -1 || d_maxValid !=-1) {
@@ -513,13 +476,13 @@ deriveNullData(int stride, int low_row, int high_row, int strips_in_x)
         // Expand "bottom" and "top" so we get connection with one null row,
         // make it prettier to be connected to 0 plane with fence. 
         if (strips_in_x) {
-            bottom = max (0, bottom-stride);
-            top = min(d_control->numY()-1, top+stride);
+            //bottom = max (0, bottom-stride);
+            //top = min(d_control->numY()-1, top+stride);
             d_minValid = bottom; 
             d_maxValid = top;
         } else {
-            left = max (0, left-stride);
-            right = min(d_control->numX()-1, right+stride);
+            //left = max (0, left-stride);
+            //right = min(d_control->numX()-1, right+stride);
             d_minValid = left; 
             d_maxValid = right;
         }
@@ -654,6 +617,65 @@ quadMasked(int x, int y, int stride)
                 value(x+stride,y) > 0 &&
                 value(x,y-stride) > 0 &&
                 value(x+stride,y-stride) > 0 );
+    }
+}
+
+/** Is this strip masked? Masked means don't draw. 
+@return -1 if not masked, 0 if partially masked, 1 if totally masked.  
+*/
+int nmg_SurfaceMask::
+stripMasked(int r, int stride, int strips_in_x) 
+{
+    if (!strips_in_x) {
+        fprintf(stderr,"nmg_SurfaceMask::stripMasked Hey this hasn't been implemented yet, fix it!\n");
+        return 0;
+    }
+    switch(d_derivationMode) {
+    case HEIGHT:
+        // We can't tell easily, so assume partial. 
+        return 0;
+    case BOX:
+        {
+            double g_minY, g_maxY, scrap;
+            //Transform row in world into grid coordinates
+            d_dataset->inputGrid->worldToGrid(0,d_boxMinY,scrap,g_minY);
+            d_dataset->inputGrid->worldToGrid(0,d_boxMaxY,scrap,g_maxY);
+            if ( r*stride>= g_minY && r*stride<=g_maxY ) {
+                // We probably only draw part of this row
+                return 0;
+            } else {
+                // We draw this whole row. 
+                return -1;
+            }
+        }
+    case NULLDATA:
+        {
+            // If y coord is between our bounds. 
+            if ( r*stride>= d_minValid && r*stride<=d_maxValid ) {
+                //Don't draw where there is valid data
+                return 1;
+            } else {
+                // We draw this whole row, as part of the single nulldata
+                // polygon
+                return -1;
+            }
+        }
+    case INVERTMASKS:
+        {
+            // Assume no one else draws, find out if anyone does draw. 
+            int ret = 1;
+            for (int i = 0; i < d_numInvertMasks; i++) {
+                ret = min(ret, d_invertMaskList[i]->
+                                   stripMasked(r,stride,strips_in_x));
+            }
+            // We draw if everyone else doesn't draw. 
+            // This means we invert combined results from other masks. 
+            if (ret ==1) ret = -1;
+            else if (ret == -1) ret = 1;
+            return ret;
+        }
+    default:
+        return 0;
     }
 }
 

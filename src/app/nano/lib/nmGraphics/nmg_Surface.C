@@ -28,7 +28,7 @@ nmg_Surface()
     d_numSubRegions = 0;
     d_maxNumRegions = 2;
     d_subRegions = new nmg_SurfaceRegion*[d_maxNumRegions];
-    d_defaultRegion = new nmg_SurfaceRegion(this, 0);
+    d_defaultRegion = new nmg_SurfaceRegion(0);
     d_dataset = (nmb_Dataset*)NULL;
 
     d_defaultRegion->getMaskPlane()->setDrawPartialMask(VRPN_TRUE);
@@ -111,7 +111,7 @@ createNewRegion()
 {
     //I really wish we could use STL vectors....
     int region_id = d_numSubRegions+1;
-    nmg_SurfaceRegion *new_region = new nmg_SurfaceRegion(this, region_id);
+    nmg_SurfaceRegion *new_region = new nmg_SurfaceRegion(region_id);
     if (new_region->init(d_initWidth, d_initHeight)) {
         return -1;
     }

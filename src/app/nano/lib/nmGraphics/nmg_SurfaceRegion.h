@@ -56,7 +56,7 @@ typedef struct _BehaviorAssociations
 class nmg_SurfaceRegion
 {
 public:
-    nmg_SurfaceRegion(nmg_Surface *parent, int region_id);
+    nmg_SurfaceRegion(int region_id);
     ~nmg_SurfaceRegion();
     
     ///This function is to ensure that things start off in 
@@ -122,7 +122,8 @@ public:
     
     //Rendering functions
     int determineInterval(nmb_Dataset *dataset, 
-                          int low_row, int high_row, int strips_in_x);
+                          int low_row, int high_row, int strips_in_x,
+                          bool do_update_mask = true);
     ///< Set what strips we're going to work on. 
 
     int rebuildRegion(nmb_Dataset *dataset, nmg_State * state, 
@@ -138,9 +139,8 @@ public:
     Vertex_Struct ** getRegionData();
     
 private:
-    nmg_Surface *d_parent;
     int d_regionID;
-    vrpn_bool d_needsFullRebuild;
+
     nmg_SurfaceMask *d_regionalMask;
     
     ///Display list variables
@@ -152,12 +152,22 @@ private:
     ///The surface region
     unsigned int d_VertexArrayDim;
     
-    ///Variables to control partial surface rebuilding
-    nmb_Interval last_marked;
-    ///Variables to control partial surface rebuilding
-    nmb_Interval update;
-    ///Variables to control partial surface rebuilding
-    nmb_Interval todo;	
+    /// Strips that need recomputed, but may be overwritten with new data.
+    nmb_Interval d_last_marked;
+    /// Strips of surface to update this frame.
+    nmb_Interval d_update;
+    /// Strips of surface still left to recompute after full rebuild.
+    nmb_Interval d_todo;	
+    /// Apparent direction of the scan
+    int d_scanDirection;
+    /// Last strips updated;
+    nmb_Interval d_last_nonempty_update;
+
+    /// Strips of surface to update color this frame.
+    nmb_Interval d_color_update;
+    /// Strips of surface still left to recolor. 
+    nmb_Interval d_color_todo;	
+
     
     ///Region's Graphics State
     GraphicsState d_currentState;
@@ -180,18 +190,7 @@ private:
     void cleanUp();
 
     /// Build display lists!
-    int build_list_set(
-        const nmb_Interval &subset,
-        const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
-        nmg_State * state,
-        GLuint base,
-        GLsizei num_lists,
-        GLdouble * surfaceColor,
-        int (* stripfn)
-        (nmg_State * state, const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], int, Vertex_Struct *),
-        Vertex_Struct **surface);
-    /// Build display lists!
-    int build_list_set (const nmb_Interval &insubset,
+    int build_list_set (nmb_Dataset *data,
                         const nmb_PlaneSelection &planes, 
                         nmg_SurfaceMask *mask,
                         nmg_State * state,

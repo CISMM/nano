@@ -17,8 +17,12 @@ public:
 
     void setDrawPartialMask(vrpn_bool draw);
     bool quadMasked(int x, int y, int stride);
+    int stripMasked(int r, int stride, int strips_in_x);
 
     int value(int x, int y);
+
+    /// Associated region should be rebuilt. 
+    void forceUpdate();
 
     /// Derive a mask for the Height method
     int deriveMask(float min_height, float max_height);
@@ -86,6 +90,7 @@ private:
     float d_centerX, d_centerY;
     float d_boxWidth, d_boxHeight;
     float d_boxAngle;
+    float d_boxMinY, d_boxMaxY;
 
     short d_minValid, d_maxValid;
 

@@ -1224,7 +1224,7 @@ void nmg_Graphics_Implementation::setContourPlaneName (const char * n) {
 // virtual
 void nmg_Graphics_Implementation::setHeightPlaneName (const char * n) {
   strcpy(state->heightPlaneName, n);
-  BCPlane * plane = dataset->inputGrid->getPlaneByName(n);
+  BCPlane * plane = d_dataset->inputGrid->getPlaneByName(n);
   if (!plane) return;
   // EXPERIMENTAL. Mask out null data on default surface region
   if (d_nulldata_region == -1) {
@@ -1232,7 +1232,13 @@ void nmg_Graphics_Implementation::setHeightPlaneName (const char * n) {
   }
   state->surface->setRegionControl(plane, d_nulldata_region);
   state->surface->deriveMaskPlane(d_nulldata_region);
-   causeGridRedraw();
+  // Grid size can change if we are replacing the empty height plane. 
+  if ( (grid_size_x != d_dataset->inputGrid->numX()) ||
+       (grid_size_y != d_dataset->inputGrid->numY())    ) {
+    causeGridRebuild();
+  } else {
+    causeGridRedraw();
+  }
  
 }
 

@@ -150,12 +150,6 @@ int	font_array[MAXFONTS];
 char	message[1000];		/* Message to display on screen */
 
 
-#ifdef RENDERMAN
-GLfloat cur_projection_matrix[16];
-GLfloat cur_modelview_matrix[16];
-#endif
-
-
 int draw_world (int, void * data)
 {
   nmg_State * state = (nmg_State *) data;

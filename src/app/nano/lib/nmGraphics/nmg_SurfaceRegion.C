@@ -40,11 +40,9 @@ extern UTree World;
  * Access: Public
  */
 nmg_SurfaceRegion::
-nmg_SurfaceRegion(nmg_Surface * /*parent*/, int region_id)
+nmg_SurfaceRegion(int region_id)
 {
-    //d_parent = parent;
     d_regionID = region_id;
-    d_needsFullRebuild = VRPN_FALSE;
     d_regionalMask = new nmg_SurfaceMask;
     d_vertexPtr = (Vertex_Struct **)NULL;
     d_VertexArrayDim = 0;
@@ -68,6 +66,7 @@ nmg_SurfaceRegion(nmg_Surface * /*parent*/, int region_id)
     d_list_base = 0;
     d_num_lists = 0;
 
+    d_scanDirection = 0;
 }
 
 /**
@@ -125,7 +124,6 @@ init(int width, int height)
     
     d_VertexArrayDim = dim;
 
-    //d_vertexPtr = (Vertex_Struct **)malloc(d_VertexArrayDim * sizeof(Vertex_Struct **));
     d_vertexPtr = new Vertex_Struct*[d_VertexArrayDim];
     
     if (d_vertexPtr == NULL) {
@@ -158,13 +156,13 @@ copy(nmg_SurfaceRegion *other)
 }
 
 /**
+ * This region should be completely rebuilt. 
  * Access: Public
- * 
  */
 void nmg_SurfaceRegion::
 forceRebuildCondition()
 {
-    d_needsFullRebuild = VRPN_TRUE;
+    if (d_regionalMask) d_regionalMask->forceUpdate();
 }
 
 
@@ -424,12 +422,6 @@ cleanUp()
     
 #endif
 
-    
-#ifdef RENDERMAN
-    // Save the viewing/modeling matrix to be used in RenderMan.c
-    glGetFloatv(GL_PROJECTION_MATRIX, cur_projection_matrix);
-    glGetFloatv(GL_MODELVIEW_MATRIX,  cur_modelview_matrix);
-#endif
 }
 
 /**
@@ -456,7 +448,7 @@ setMaskPlane(nmg_SurfaceMask *mask)
         delete d_regionalMask;
     }
     d_regionalMask = mask;
-    d_needsFullRebuild = VRPN_TRUE;
+    forceRebuildCondition();
 }
 
 /**
@@ -467,10 +459,7 @@ setMaskPlane(nmg_SurfaceMask *mask)
 int nmg_SurfaceRegion::
 deriveMaskPlane(float min_height, float max_height)
 {   
-    int ret = d_regionalMask->deriveMask(min_height, max_height);
-    if (ret) d_needsFullRebuild = true;
-    return ret;
-            
+    return (d_regionalMask->deriveMask(min_height, max_height));
 }
 
 /**
@@ -481,9 +470,7 @@ int nmg_SurfaceRegion::
 deriveMaskPlane(float center_x, float center_y, float width,float height, 
                 float angle)
 {
-     int ret = d_regionalMask->deriveMask(center_x, center_y, width, height, angle);
-    if (ret) d_needsFullRebuild = true;
-    return ret;
+    return(d_regionalMask->deriveMask(center_x, center_y, width, height, angle));
 }
 
 /**
@@ -493,9 +480,7 @@ deriveMaskPlane(float center_x, float center_y, float width,float height,
 int nmg_SurfaceRegion::
 deriveMaskPlane()
 {   
-    int ret = d_regionalMask->deriveMask();
-    if (ret) d_needsFullRebuild = true;
-    return ret;
+    return(d_regionalMask->deriveMask());
 }
 
 /**
@@ -528,7 +513,7 @@ setAlpha(float alpha, vrpn_bool respect_unassociate)
 {
     if (d_currentAssociations.alpha || !respect_unassociate) {
         d_currentState.alpha = alpha;
-        d_needsFullRebuild = VRPN_TRUE;
+        forceRebuildCondition();
     }
 }
 
@@ -555,7 +540,7 @@ setStride(int stride, vrpn_bool respect_unassociate)
 {
     if (d_currentAssociations.stride || !respect_unassociate) {
         d_currentState.stride = stride;
-        d_needsFullRebuild = VRPN_TRUE;
+        forceRebuildCondition();
     }
 }
 
@@ -569,7 +554,7 @@ setTextureDisplayed(int display, vrpn_bool respect_unassociate)
 {
     if (d_currentAssociations.textureDisplayed || !respect_unassociate) {
         d_currentState.textureDisplayed = display;
-        d_needsFullRebuild = VRPN_TRUE;
+        forceRebuildCondition();
     }
 }
 
@@ -582,7 +567,7 @@ setTextureMode(int mode, vrpn_bool respect_unassociate)
 {
     if (d_currentAssociations.textureMode || !respect_unassociate) {
         d_currentState.textureMode = mode;
-        d_needsFullRebuild = VRPN_TRUE;
+        forceRebuildCondition();
     }
 }
 
@@ -595,7 +580,7 @@ setTextureTransformMode(int mode, vrpn_bool respect_unassociate)
 {
     if (d_currentAssociations.textureTransformMode || !respect_unassociate) {
         d_currentState.textureTransformMode = mode;
-        d_needsFullRebuild = VRPN_TRUE;
+        forceRebuildCondition();
     }
 }
 
@@ -685,128 +670,234 @@ RestoreRenderState(nmg_State * state)
 }
 
 
-// Define EXPENSIVE_DISPLAY_LISTS if recomputing display lists is very
-// expensive on the current architecture (but you still want to use them).
-// It recomputes only those lists which are not likely to have to be
-// recomputed in the near future as more data comes in from the scope.
-
-// This feature has not been used in any of our releases (since 2000?)
-// #define EXPENSIVE_DISPLAY_LISTS
-
 /**
  * Access: Public
  * Determine what strips we are going to work on.
- * @return true if there are any strips to work on, i.e.
- * either todo or update is not empty. 
+ * It recomputes only those lists which are not likely to have to be
+ * recomputed in the near future as more data comes in from the scope.
+ * @return true if there are any strips to work on, i.e. either 
+ * d_update or d_color_update is not empty. 
  */
 int nmg_SurfaceRegion::
 determineInterval(nmb_Dataset *dataset, 
-                  int low_row, int high_row, int strips_in_x) 
+                  int low_row, int high_row, int strips_in_x, 
+                  bool do_update_mask) 
 {
+    bool d_needsFullRebuild = false;
     // Update our mask, and maybe rebuild entire region. 
-    if (updateMaskPlane(dataset, low_row, high_row, strips_in_x) ||
-        d_needsFullRebuild) {
+    if (do_update_mask) {
+      if (updateMaskPlane(dataset, low_row, high_row, strips_in_x)) {
         // Yup, the whole region needs to be rebuilt. 
+        d_needsFullRebuild = true;
         low_row = 0;
+        // for 100x100 grid, strips are numbered 0-98
         if (strips_in_x) {
-            high_row = dataset->inputGrid->numY() -1;
+            high_row = dataset->inputGrid->numY() -2;
         } else {
-            high_row = dataset->inputGrid->numX() -1;
+            high_row = dataset->inputGrid->numX() -2;
         }
-        // The whole region will now be rebuilt, so clear flag
-        d_needsFullRebuild = VRPN_FALSE;
-    } else {
-        // Check for empty range of change
-        if (low_row > high_row) {
-
-        }
+      } 
     }
-    int low_strip =  low_row / d_currentState.stride;
-    int high_strip = high_row / d_currentState.stride;
 
-    // Let's make it a run-time decision, based on grid resolution.
-    //#ifdef EXPENSIVE_DISPLAY_LISTS
-    //if (dataset->inputGrid->numX() > 499) {
-    // Ah, well. I currently believe it doesn't work, but has the
-    // potential to work, valuable for large grids. (11 Mar 2002)
-    if (0) {
+    // for 100x100 grid, strips are numbered 0-98
+    int max_strip = (strips_in_x ? 
+                     dataset->inputGrid->numY() -1 :
+                     dataset->inputGrid->numX() -1 )/ d_currentState.stride -1;
+    int low_strip =  low_row / d_currentState.stride;
+    int high_strip = min(max_strip, high_row / d_currentState.stride);
+
+  // Let's make it a run-time decision, based on grid resolution.  Using this
+  // method, some vertical "tears" will _temporarily_ be left in the rendered
+  // image.
+
+  if (dataset->inputGrid->numX() > 99) {
     nmb_Interval mark;
 
-    // Figure out what direction the scan has apparently progressed
-    // since the last time.  Heuristic, error-prone, but safe.  
-    
-    int direction = 0;
-    if (low_strip >= last_marked.low()) direction++;
-    if (high_strip <= last_marked.high()) direction--;
-    
-    if (spm_graphics_verbosity >= 6)
-        fprintf(stderr, "  Drawing in direction %d (from %d to %d).\n",
-		direction, low_strip, high_strip);
-        
-    // Recompute as few display lists as necessary.  The rest will
-    // be recomputed on the next screen refresh, unless more data
-    // comes in from the scope.  Some vertical "tears" will be left
-    // in the rendered image.
-    switch (direction) {
-        case 1:
-            update = nmb_Interval (low_strip - 2, high_strip - 1);
-            mark = nmb_Interval (high_strip, high_strip + 2);
-            break;
-        case 0:
-            // leave update empty!
-            update = nmb_Interval ();
-            // XXX safer (but more work for the graphics pipe,
-            //     and probably unnecessary) might be
-            //     update = nmb_Interval (low_strip, high_strip);
-            mark = nmb_Interval (low_strip - 2, high_strip + 2);
-            break;
-        case -1:
-            update = nmb_Interval (low_strip - 1, high_strip + 2);
-            mark = nmb_Interval (low_strip - 2, low_strip - 2);
-            break;
+    bool emptyUpdate = false;
+    // Check for empty or full range of change, don't change direction if so. 
+    if (high_row >= low_row && !d_needsFullRebuild) {
+        // Avoid changing direction if we have nothing to compare. 
+        if(!d_last_nonempty_update.empty()) {
+            // Figure out what direction the scan has apparently progressed
+            // since the last time.  Heuristic. d_scanDirection will grow
+            // big over time, and that's OK, it won't get big enough to wrap. 
+            if (low_row >= d_last_nonempty_update.low()) d_scanDirection++;
+            if (high_row <= d_last_nonempty_update.high()) d_scanDirection--;
+        } 
+        d_last_nonempty_update = nmb_Interval (low_row, high_row);
+        if (spm_graphics_verbosity >= 9 && d_regionID==0) 
+            fprintf(stderr, "Dir %d Data %d, %d ", d_scanDirection, low_row, high_row);
+    } else {
+        emptyUpdate = true;
     }
-    if (spm_graphics_verbosity >= 6)
-        fprintf(stderr, "   Update set is %d - %d, last_marked is %d - %d, "
-		"mark is %d - %d.\n",
-		update.low(), update.high(), last_marked.low(),
-		last_marked.high(), mark.low(), mark.high());
-    VERBOSECHECK(6);
-        
-    // Draw this time what we have to update due to the most recent
-    // changes, plus what we delayed updating last time expecting them
-    // to overlap with the most recent changes, minus what we're delaying
-    // another frame expecting it to overlap with the next set of changes.
-    // NOTE:  this is not a correct implementation of interval subtraction.
-    
-    todo = last_marked - mark;
-    
-    last_marked = mark;
 
+    if (d_needsFullRebuild) {
+        // If we have a full rebuild, we will only create one strip at a time
+        // each time through this function, to maintain interactivity in the
+        // program while the surface is being rebuilt.
+        if (d_scanDirection > 0) {
+            d_update = nmb_Interval(low_strip, low_strip);
+            d_todo = nmb_Interval(low_strip+1, high_strip);
+        } else {
+            d_update = nmb_Interval(high_strip, high_strip);
+            d_todo = nmb_Interval(low_strip, high_strip-1);
+        }
+        // Leave mark empty. 
+        d_last_marked.clear();
+    } else if (!emptyUpdate) {
+        // Recompute as few display lists as necessary. Delay any til the next
+        // screen refresh, if more data coming in from the scope will cause
+        // them to be recomputed, or maybe no data will come in and we'll have
+        // extra time to recompute strips. But render all strips possible from
+        // new data, rather than just one strip, to avoid leaving gaps in the
+        // surface.
+        // See comment for rebuildInterval for explanation of range of strips!
+        if (d_scanDirection > 0) {
+            // Avoid d_last_marked from sucking up the whole surface
+            // when the scan restarts. 
+            if (high_strip == max_strip) {
+                d_update = nmb_Interval (max(0, low_strip - 2), high_strip);
+                mark.clear();
+            } else {
+                d_update = nmb_Interval (max(0, low_strip - 2), 
+                                         max(0, high_strip - 2));
+                mark = nmb_Interval (d_update.high()+1, 
+                                     min(max_strip, high_strip + 1));
+            }
+        } else {
+            // Avoid d_last_marked from sucking up the whole surface
+            // when the scan restarts. 
+            if (low_strip == 0) {
+                d_update = nmb_Interval (low_strip, min(max_strip, high_strip + 1));
+                mark.clear();
+            } else {
+                d_update = nmb_Interval (min(max_strip, low_strip +1), 
+                                         min(max_strip, high_strip + 1));
+                mark = nmb_Interval (max(0, low_strip - 2), d_update.low()-1);
+            }
+        }
+
+        //Debug
+        if (spm_graphics_verbosity >= 9 && !d_last_marked.empty() && d_regionID==0) 
+            fprintf(stderr, "LM %d - %d, ",
+                    d_last_marked.low(), d_last_marked.high());
+        if (d_last_marked.empty()) {
+            d_last_marked = mark;
+        } else {
+            if (!mark.empty()) d_last_marked += mark;
+            // If update is handling something from last time, remove it. 
+            if (d_last_marked.low() == d_update.low() ||
+                d_last_marked.high() == d_update.high()) {
+                d_last_marked -= d_update;
+            }
+        }
+    } else {
+        // Nothing new to do this frame! 
+        // Check and see if there are any strips left from last time, and
+        // update one on the trailing edge. d_todo takes precedence over
+        // d_last_marked, because new data will likely overwrite
+        if (!d_todo.empty()) {
+            // Avoid duplicating work
+            if (d_todo.includes(d_last_marked)) d_last_marked.clear();
+
+            if (d_scanDirection > 0) {
+                d_update = nmb_Interval(d_todo.low(), 
+                                        min(max_strip, d_todo.low()+1));
+            } else {
+                d_update = nmb_Interval(max(0, d_todo.high()-1), d_todo.high());
+            }
+            d_todo -= d_update;
+
+        } else if (!d_last_marked.empty()) {
+            if (d_scanDirection > 0) {
+                d_update = nmb_Interval(d_last_marked.low(), 
+                                        d_last_marked.low());
+            } else {
+                d_update = nmb_Interval(d_last_marked.high(), 
+                                        d_last_marked.high());
+            }
+            d_last_marked -= d_update;
+            //Debug
+            if (spm_graphics_verbosity >= 9 && !d_last_marked.empty() && d_regionID==0) 
+                fprintf(stderr, "LM %d - %d, ",
+                        d_last_marked.low(), d_last_marked.high());
+        } else {
+            // Nothing to do at all this frame. 
+            d_update.clear();
+        }
+    }
+    //Debug
+    if (spm_graphics_verbosity >= 9 && !d_update.empty() && d_regionID==0)
+        fprintf(stderr, "update %d - %d, todo %d - %d, "
+		"mark %d - %d.\n",
+		d_update.low(), d_update.high(), d_todo.low(),
+		d_todo.high(), mark.low(), mark.high());
+
+    // Look for parts of the surface to recolor. 
+    int color_update_size = 5; // Must be less than max res/max stride.
+    if (d_currentState.justColor) {
+        // Recolor from the top. 
+        if (d_scanDirection > 0) {
+            d_color_update = nmb_Interval(0,color_update_size);
+            d_color_todo = nmb_Interval(color_update_size+1, max_strip);
+        } else {
+            d_color_update = nmb_Interval(max_strip-color_update_size, 
+                                          max_strip);
+            d_color_todo = nmb_Interval(0, max_strip -(color_update_size+1));
+        }
+        d_currentState.justColor = vrpn_FALSE;
+    } else if (!d_color_todo.empty()) {
+        // We haven't finished recoloring from last time. 
+        if (d_scanDirection > 0) {
+            d_color_update = nmb_Interval(d_color_todo.low(),
+                      min(max_strip, d_color_todo.low()+color_update_size));
+        } else {
+            d_color_update = nmb_Interval(
+                max(0, d_color_todo.high()-color_update_size),
+                d_color_todo.high());
+        }
+        d_color_todo -= d_color_update;
+    } else {
+        d_color_update.clear();
+    }
+    if (spm_graphics_verbosity >= 9 && !d_color_update.empty() && d_regionID==0)
+        fprintf(stderr, "Cupdate %d - %d, Ctodo %d - %d \n",
+            d_color_update.low(), d_color_update.high(), d_color_todo.low(),
+    		d_color_todo.high());
   } else {
+    // See comment for rebuildInterval for explanation of range of strips!
+
     // Recompute every display list that needs to be modified
     // to reflect this change.  If we're in the middle of the
     // scan many of these may have to be recomputed after the
     // next set of data is received.
-    update = nmb_Interval ( low_strip-2, high_strip+1);
-    // Yes, this can go outside the surface! Clamped later...
+    d_update = nmb_Interval ( max(0,low_strip-2), 
+                              min(max_strip, high_strip+1));
+    // Clamp now.
 
     // leave mark empty!
+
+    // Recolor the whole surface at once. 
+    if (d_currentState.justColor) {
+        d_color_update = nmb_Interval(0,max_strip);
+        d_currentState.justColor = vrpn_FALSE;
+    } 
   }
-    
-    return (!update.empty() || !todo.empty());
+
+    return (!d_update.empty() || !d_color_update.empty());
 }
 
 /**
- *  Replace the display lists that have had points changed.
- * This includes those that are in the region of changed
- * points and also those that are past the edge of this
- * region, as these points will have had their normals
- * adjusted (in the picture below, '+' represents a point
- * that is on the stride, '.' indicates a point off stride,
- * and the lists that need to be redrawn because of a point
- * change is shown).  The normal of the two on-stride points
- * around the changed point is changed, requiring the redraw
- * of all strips that include these points.
+ *  Replace the display lists that have had points changed.  This includes
+ * those that are in the region of changed points and also those that are past
+ * the edge of this region, as these points will have had their normals
+ * adjusted (in the picture below, '+' represents a point that is on the
+ * stride, '.' indicates a point off stride, and the lists that need to be
+ * redrawn because of a point change is shown).  The normal of the two
+ * on-stride points around the changed point is changed, requiring the redraw
+ * of all strips that include these points. However, determineInterval may
+ * tell us to delay the building of some of these strips until the next
+ * iteration.
  *
  * If the "changed" row is r, then the index of 
  * "list" is r/stride (integer division)
@@ -817,27 +908,22 @@ determineInterval(nmb_Dataset *dataset,
  *       list-2  list-1  list    list+1
  * @endcode
  * @return -1 on error, 0 on success. 
- * Access: Public
- */
+ * Access: Public */
 int nmg_SurfaceRegion::
-rebuildInterval(nmb_Dataset *dataset, nmg_State * state, int low_row, int high_row, int strips_in_x)
+rebuildInterval(nmb_Dataset *dataset, nmg_State * state, 
+                int low_row, int high_row, int strips_in_x)
 {
     // First determine if we need rebuild anything. 
-    if (!determineInterval(dataset, low_row, high_row, strips_in_x) && !d_currentState.justColor) {
+    if (!determineInterval(dataset, low_row, high_row, strips_in_x) ) {
         // Nothing to do. 
         return 0;
     }
-    // Debug
-//      printf("update %d %d\ttodo %d %d\t last mrk %d %d\n",
-//             update.low(), update.high(), todo.low(), todo.high(), 
-//             last_marked.low(), last_marked.high());
 
     nmb_PlaneSelection planes;
     planes.lookup(dataset);
     
     SaveBuildState(state);
 
-    state->just_color = d_currentState.justColor;
     state->stride = d_currentState.stride;
     state->surface_alpha = d_currentState.alpha;
 
@@ -845,25 +931,14 @@ rebuildInterval(nmb_Dataset *dataset, nmg_State * state, int low_row, int high_r
         // For a null data region, only render one polygon. 
         if (build_nulldata_polygon(planes, d_regionalMask, state,
                                strips_in_x, d_vertexPtr)) return -1;
-    
-    } else if (update.overlaps(todo) || update.adjacent(todo)) {
-        // If update and todo are contiguous, combine them and do them
-        // as a single interval...
-        if (build_list_set(update + todo, planes, d_regionalMask, state,
+    } else {
+        if (build_list_set(dataset, planes, 
+                           d_regionalMask, state, 
                            strips_in_x, d_vertexPtr)) return -1;
-    } 
-    else {
-        if (build_list_set(update, planes, d_regionalMask, state, 
-                           strips_in_x, d_vertexPtr)) return -1;
-        // Note: "todo" is only used with a seldom(never) used #define above.
-        if (!todo.empty()) {
-            if (build_list_set(todo, planes, d_regionalMask, state, 
-                               strips_in_x, d_vertexPtr)) return -1;
-        }
     }
+    VERBOSECHECK(6);
     
     RestoreBuildState(state);
-    d_currentState.justColor = VRPN_FALSE;
 
     return 0;
 }
@@ -875,7 +950,6 @@ rebuildInterval(nmb_Dataset *dataset, nmg_State * state, int low_row, int high_r
 void nmg_SurfaceRegion::
 renderRegion(nmg_State * state, nmb_Dataset *dataset)
 {
-    //	static bool set = false;
     int i;
     
     SaveRenderState(state);
@@ -895,11 +969,11 @@ renderRegion(nmg_State * state, nmb_Dataset *dataset)
         glCallList(d_list_base + i);
     }
 
-	// Drawing Objects...
-//	if (state->config_enableUber) {
+    // Drawing Objects...
     int proj_text = (d_currentState.textureMode == GL_TEXTURE_2D) ? 1 : 0;
     World.Do(&URender::Render, &proj_text);
-//	}
+
+    VERBOSECHECK(6);
  
     cleanUp();
     RestoreRenderState(state);
@@ -907,12 +981,14 @@ renderRegion(nmg_State * state, nmb_Dataset *dataset)
 
 /**
 * Called by rebuildInterval, calls the other build_list_set.
-* It's useful to not have to pass in the strip function to this
-* procedure.  It makes the Visualization classes simpler.
+* This routine creates display lists for the grid.
+* It relies on an external routine to determine the set of lists to
+* make, the direction (whether x or y is faster), and other important
+* variables.
 * @return -1 on error, 0 on success. 
 */
 int nmg_SurfaceRegion::build_list_set (
-    const nmb_Interval &insubset,
+    nmb_Dataset *dataset, 
     const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
     nmg_State * state,
     int strips_in_x, Vertex_Struct **surface)
@@ -968,45 +1044,26 @@ int nmg_SurfaceRegion::build_list_set (
         }
 #endif
         d_num_lists = new_num_lists;
+
         
     }
+    if (d_VertexArrayDim < d_num_lists) {
+        // I got this problem when the height plane changed resolutions
+        // without calling graphics->causeGridRebuild. I fixed it there,
+        // but this will catch anyplace else...
+        fprintf(stderr, "Internal: Insufficient vertex array size");
+        return -1;
+    }
     
-    nmb_Interval subset (MAX(0, insubset.low()),
-        MIN(d_num_lists - 1, insubset.high()));
+    // This clamping should have been done correctly in determineInterval
+//      nmb_Interval subset (MAX(0, d_update.low()),
+//          MIN(d_num_lists - 1, d_update.high()));
     
-    return build_list_set(subset, planes, mask, state, 
-                          d_list_base, d_num_lists,
-                          state->surfaceColor, stripfn, surface);
-}
-
-/**
-* This routine creates display lists for the grid.
-* It relies on an external routine to determine the set of lists to
-* make, the direction (whether x or y is faster), and other important
-* variables.
-* @return -1 on error, 0 on success. 
-*/
-
-int nmg_SurfaceRegion::build_list_set(
-    const nmb_Interval &subset,
-    const nmb_PlaneSelection &planes, nmg_SurfaceMask *mask,
-    nmg_State * state,
-    GLuint base,
-    GLsizei num_lists,
-    GLdouble * surfaceColor,
-    int (* stripfn)
-    (nmg_State * state, const nmb_PlaneSelection&, nmg_SurfaceMask *, GLdouble [3], int, Vertex_Struct *),
-    Vertex_Struct **surface)
-{
-    
-    v_gl_set_context_to_vlib_window(); 
-    // globals:
-    // surface
-    // min/maxColor
+    GLdouble * surfaceColor = state->surfaceColor;
     
     int i;
     
-    if (!state->just_color && subset.empty()) return 0;
+    if (d_update.empty() && d_color_update.empty() ) return 0;
     
 #if defined(sgi) || defined(_WIN32)
     //#if defined(sgi)
@@ -1092,90 +1149,115 @@ int nmg_SurfaceRegion::build_list_set(
 #endif // sgi or win32
     
     if (spm_graphics_verbosity >= 15) { 
-        fprintf(stderr, "  updating %d - %d", subset.low(), subset.high());
+        fprintf(stderr, "  updating %d - %d", d_update.low(), d_update.high());
     } 
     // Store state->just_color
-    vrpn_bool just_color_was_on = state->just_color;
+//      vrpn_bool just_color_was_on = state->just_color;
     // If we are re-doing the whole surface, we don't need to then
     // re-do the color, so turn flag off.
-    if ( (subset.low() == 0) && (subset.high() == num_lists -1) ) {
-        just_color_was_on = 0;
-    }
+//      if ( (d_update.low() == 0) && (d_update.high() == d_num_lists -1) ) {
+//          just_color_was_on = 0;
+//      }
 
     // turn state->just_color off so only geometry gets re-generated
-    state->just_color = 0;
-    for (i = subset.low(); i <= subset.high(); i++) {
+//      state->just_color = 0;
+    bool all_strips_masked = true;
+    int j=0;
+    while (all_strips_masked ) {
+      for (i = d_update.low(); i <= d_update.high(); i++) {
         
         if (spm_graphics_verbosity >= 10) {
-            fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
+            fprintf(stderr, "    newing list %d for strip %d.\n", d_list_base + i, i);
         }
         
         // Delete lists we are going to create. Frees memory for new lists. 
-        glDeleteLists(base + i, 1);
+        glDeleteLists(d_list_base + i, 1);
         // Create or replace existing list with new strip. 
-        glNewList(base + i, GL_COMPILE);
+        glNewList(d_list_base + i, GL_COMPILE);
 
         
         VERBOSECHECK(10);
-        
-        if ((*stripfn)(state, planes, mask, surfaceColor, i*state->stride, surface[i])) {
-            if (state->VERTEX_ARRAY) {
-                fprintf(stderr, "build_list_set():  "
-                    "Internal error - bad strip(vertex array)\n");
+        if (mask->stripMasked(i, state->stride, strips_in_x)<=0) {
+            // We found something to draw, mark it. 
+            all_strips_masked = false;
+            if ((*stripfn)(state, planes, mask, surfaceColor, 
+                           i*state->stride, surface[i])) {
+                if (state->VERTEX_ARRAY) {
+                    fprintf(stderr, "build_list_set():  "
+                            "Internal error - bad strip(vertex array)\n");
+                }
+                else {
+                    fprintf(stderr, "build_list_set():  "
+                            "Internal error - bad strip\n");
+                }
+                return -1;
             }
-            else {
-                fprintf(stderr, "build_list_set():  "
-                    "Internal error - bad strip\n");
-            }
-            return -1;
         }
-        
         if (spm_graphics_verbosity >= 10) {
             fprintf(stderr, "    updated %d.\n", i);
         }
         VERBOSECHECK(10);
         
         glEndList();
-    }
-    if ( just_color_was_on ) {
-        // Flag tells stripfn to only regenerate color, and use cached normals 
-        // and vertices. 
-        state->just_color = 1;
-        // Delete lists we are going to create. Frees memory for new lists. 
-        glDeleteLists(base, num_lists);
-        // re-color the whole surface
-        for (i = 0; i < num_lists; i++) {
-            
-            if (spm_graphics_verbosity >= 10) {
-                fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
-            }
-            
-            glNewList(base + i, GL_COMPILE);
+      }
 
-            VERBOSECHECK(10);
-            
-            if ((*stripfn)(state, planes, mask, surfaceColor, i*state->stride, surface[i])) {
+      // Recolor those strips we need to. 
+      for (i = d_color_update.low(); i <= d_color_update.high(); i++) {
+        // Don't redo a strip which has just been done above. 
+        if (d_update.includes(i)) continue;
+
+        if (spm_graphics_verbosity >= 10) {
+            fprintf(stderr, "    newing list %d for strip %d.\n", d_list_base + i, i);
+        }
+        
+        // Delete lists we are going to create. Frees memory for new lists. 
+        glDeleteLists(d_list_base + i, 1);
+        glNewList(d_list_base + i, GL_COMPILE);
+
+        VERBOSECHECK(10);
+
+        state->just_color = 1;
+        if (mask->stripMasked(i, state->stride, strips_in_x)<=0) {
+            // We found something to draw, mark it. 
+            all_strips_masked = false;
+            if ((*stripfn)(state, planes, mask, surfaceColor, 
+                           i*state->stride, surface[i])) {
                 if (state->VERTEX_ARRAY) {
                     fprintf(stderr, "build_list_set():  "
-                        "Internal error - bad strip(vertex array)\n");
+                            "Internal error - bad strip(vertex array)\n");
                 }
                 else {
                     fprintf(stderr, "build_list_set():  "
-                        "Internal error - bad strip\n");
+                            "Internal error - bad strip\n");
                 }
                 return -1;
             }          
-            
-            if (spm_graphics_verbosity >= 10) {
-                fprintf(stderr, "    updated %d.\n", i);
-            }
-            VERBOSECHECK(10);
-            
-            glEndList();
         }
-    }
+        state->just_color = 0;        
 
-    state->just_color = 0;
+        if (spm_graphics_verbosity >= 10) {
+            fprintf(stderr, "    updated %d.\n", i);
+        }
+        VERBOSECHECK(10);
+        
+        glEndList();
+      }
+      //Check to see whether we drew anything at all
+      // If not, we want to skip ahead to where we can draw something.
+      if (all_strips_masked) {
+          //We didn't. So let's find something to draw, using
+          // an empty interval. Pass in a "false" to indicate
+          // we don't need to rebuild the region's masks, since we did
+          // that above. 
+          if (!determineInterval(dataset, d_num_lists, 0, strips_in_x, false) ) {
+              // Really, there's nothing to do. 
+              return 0;
+          }
+          // Hey, we found something, now saved in d_update and 
+          // d_color_update, handled on next loop iteration
+      }
+    } // while 
+
     return 0;
 }
 
@@ -1219,9 +1301,8 @@ int nmg_SurfaceRegion::build_nulldata_polygon (
     Normal[2] = 1;
 
     GLfloat Vertex [3];
-    // Plane at 0 in Z coordinate, but put just below
-    // to avoid co-planar polygons during region mode.  
-    Vertex[2]= -1;
+    // Polygon just below valid values.  
+    Vertex[2]= planes.height->minNonZeroValue();
 
     glNewList(d_list_base, GL_COMPILE);
 
