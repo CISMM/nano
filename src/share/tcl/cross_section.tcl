@@ -54,10 +54,6 @@ $xswidget(stripchart) marker bind meas <B1-Motion> {
     show_xs_values [%W marker get current]
 }
 
-set xswidget(data0) [frame $xswidget(display_data).f0]
-set xswidget(data1) [frame $xswidget(display_data).f1]
-pack $xswidget(data0) $xswidget(data1) \
-        -side top -expand yes -fill both
 set xsect(data0_init) 0
 set xsect(data1_init) 0
 
@@ -86,11 +82,21 @@ proc show_xs_values { marker {name ""} {el ""} {op ""} } {
     
     set coords [$xswidget(stripchart) marker cget meas3 -coords]
     set index3 [expr [lindex $coords 0] * $factor ]
-    
+
+    upvar ${vecname}_Path dvec
+    # Show XY distances between marker lines. 
+    $xswidget(xy$id).d1 configure -text \
+            "[format %.3f [expr abs($dvec($index1) - $dvec($index2))]]"
+    $xswidget(xy$id).d2 configure -text \
+            "[format %.3f [expr abs($dvec($index2) - $dvec($index3))]]"
+    $xswidget(xy$id).d3 configure -text \
+            "[format %.3f [expr abs($dvec($index3) - $dvec($index1))]]"
+        
     #puts  "$marker $index1"
     foreach datavec [xs_get_sorted_names $id] {
-        if { $datavec != "${vecname}_Path" } {
-            upvar $datavec dvec
+        upvar $datavec dvec
+        #if { $datavec != "${vecname}_Path" } {
+            # Show Z data from marker lines. 
             $xswidget(data$id).data_m1_$gridrow configure -text \
                     "[format %.3f $dvec($index1)]"
             $xswidget(data$id).data_m2_$gridrow configure -text \
@@ -102,7 +108,7 @@ proc show_xs_values { marker {name ""} {el ""} {op ""} } {
             $xswidget(data$id).diff23_$gridrow configure -text \
                     "[format %.3f [expr $dvec($index2) - $dvec($index3)]]"
             incr gridrow
-        }
+        #} 
     }
   }
 }
@@ -111,6 +117,16 @@ proc show_xs_values { marker {name ""} {el ""} {op ""} } {
 trace variable xs_data_update w [list show_xs_values 0]
 
 # ----------------------------------------------------------------------
+set xswidget(xy0) [frame $xswidget(display_data).xy0]
+set xswidget(data0) [frame $xswidget(display_data).data0]
+# add a horizontal divider
+frame $xswidget(display_data).divider -relief raised -height 4 -borderwidth 2
+set xswidget(xy1) [frame $xswidget(display_data).xy1]
+set xswidget(data1) [frame $xswidget(display_data).data1]
+pack $xswidget(xy0) $xswidget(data0) $xswidget(display_data).divider \
+        $xswidget(xy1) $xswidget(data1) \
+        -side top -expand yes -fill both
+
 frame $xswidget(cntrl).point_frame
 pack $xswidget(cntrl).point_frame -side right -expand yes -fill both
 
@@ -160,6 +176,16 @@ for { set index 0 } { $index <2 } { incr index } {
             [label $xswidget(data$index).l4 -text "Diff"] \
             [label $xswidget(data$index).l5 -text "Blue"] 
     grid columnconfigure $xswidget(data$index) [list 2 3 4 5 6] -minsize 50
+
+    grid x [label $xswidget(xy$index).l1 -text "Red->Yellow"] \
+            [label $xswidget(xy$index).l2 -text "Yellow->Blue"] \
+            [label $xswidget(xy$index).l3 -text "Blue->Red"] -padx 5
+    grid  [label $xswidget(xy$index).d0 -text "XY distance [expr $index +1]"] \
+            [label $xswidget(xy$index).d1 ] \
+            [label $xswidget(xy$index).d2 ] \
+            [label $xswidget(xy$index).d3 ] -sticky e
+    grid columnconfigure $xswidget(xy$index) [list 1 2 3] -minsize 50
+
 }
 
 # Make the min/max entries change axis display.
