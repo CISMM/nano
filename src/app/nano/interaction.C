@@ -875,6 +875,15 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 		   (pos_list.peekNext())->y(),
 		   &coord_x, &coord_y);
 	    pos_list.goToTail();
+
+	    pos_list.start();
+	    while(pos_list.notDone()) {
+		//printf("cancel - remove func: %d\n", (p.curr())->iconID());
+		// get rid of the icons marking the line endpoints
+ 		pos_list.del();  //this moves the pointer forward to the next point.
+ 	    }
+
+		graphics->emptyPolyline();
 	    }else {
 	      fprintf (stderr, "ERROR: NEED 2 POINTS TO OPTIMIZE\n");
 	      tcl_commit_pressed = 0;
@@ -889,7 +898,9 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	    return;
 	  }
 	  microscope->ScanTo( coord_x, coord_y );
-	  position_sphere( coord_x, coord_y,plane->valueInWorld(coord_x, coord_y) );
+	    double grid_x,grid_y;
+	dataset->inputGrid->worldToGrid(coord_x,coord_y,grid_x, grid_y);
+	  position_sphere( coord_x, coord_y,plane->valueInWorld(grid_x, grid_y) );
 
 	}
 	//if we aren't using line tool, don't change commit button's value,
@@ -929,7 +940,11 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 	      return;
 	  }
 	  microscope->ScanTo( coord_x, coord_y );
-	  position_sphere( coord_x, coord_y, plane->valueInWorld(coord_x, coord_y) );
+
+	double height;
+	plane -> valueAt(&height,coord_x,coord_y);
+
+	  position_sphere( coord_x, coord_y,height );
 	  printf("Moved tip location to %.2f, %.2f\n", coord_x, coord_y);
 	}
 	// if not in optimize_now mode, use the select tool as it was originally
