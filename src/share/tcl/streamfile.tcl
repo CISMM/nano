@@ -50,7 +50,7 @@ generic_entry $streamplay(sf).replay_rate new_replay_rate \
 set set_stream_time 0
 set set_stream_time_now 0
 generic_entry $streamplay(sf).set_stream_time set_stream_time \
-    "Go to time:" numeric
+    "Go to time:" real
 
 # Handle an idempotent change in the stream time. If the user sets
 # the stream time to the same value, we want the stream to go back to 

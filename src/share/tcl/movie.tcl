@@ -105,7 +105,7 @@ proc save_an_image {} {
 
     set time_so_far [expr $time_so_far + $time_step]
     set set_stream_time $time_so_far
-    set set_stream_time_now 1
+    #set set_stream_time_now 1
 
     incr num_images_so_far
     after 500 save_an_image 

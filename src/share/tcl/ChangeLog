@@ -1,5 +1,11 @@
-2002-12-06 Jameson Miller <millerj@cs.unc.ed>
-	*mainwin.tcl - fixed bug where the modify window would not
+2002-06-14  Aron Helser  <helser@cs.unc.edu>
+
+	* mainwin.tcl: Command order changes. 
+	* movie.tcl: Allow fractional seconds for jump-time. Smoother movies.
+	* streamfile.tcl: same
+
+2002-12-06  Jameson Miller  <millerj@cs.unc.ed>
+	* mainwin.tcl: fixed bug where the modify window would not
 	be set to the correct size when x-terming into another machine.
 	cleaned up the process where the window size was set.
 	modified functions: set_view - now only place where window size is sent

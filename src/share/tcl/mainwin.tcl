@@ -446,8 +446,6 @@ set view $w1
 
 source [file join ${tcl_script_dir} view.tcl]
 
-source [file join ${tcl_script_dir} directStep.tcl]
-
 
 #
 # Show the w1 frame
@@ -535,8 +533,11 @@ source [file join ${tcl_script_dir} colormap.tcl]
 source [file join ${tcl_script_dir} setupmenu.tcl]
 
 # tipcontrol menu commands
+source [file join ${tcl_script_dir} directStep.tcl]
+
 source [file join ${tcl_script_dir} image.tcl]
 source [file join ${tcl_script_dir} modify.tcl]
+
 
 # Analysis menu commands.
 source [file join ${tcl_script_dir} analysismenu.tcl]
@@ -856,7 +857,7 @@ proc handle_texture_mode_change {mode name element op} {
 	if {$rulergrid_enabled != 0 } {
 	    set rulergrid_enabled 0
 	}
-  } else { }
+  }
 
   if {[string compare $mode "REGISTRATION"] != 0 } {
 	if {$reg_display_texture != 0 } {
