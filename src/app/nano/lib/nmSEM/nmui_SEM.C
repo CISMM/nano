@@ -190,6 +190,7 @@ void nms_SEM_ui::handle_colormap_change(const char* name, void* _ud)
     graphics->setTextureColormapConversionMap(nmg_Graphics::VIDEO, name, NULL);
 
     me->image_viewer->setColorMap(me->image_window_id, cmap);
+	me->image_viewer->dirtyWindow(me->image_window_id);
 }
 
 // static
@@ -205,6 +206,7 @@ printf("handle_colormap_minmax_change\n");
     graphics->setTextureColormapSliderRange(nmg_Graphics::VIDEO, dmin, dmax, cmin, cmax);
 
     me->image_viewer->setColorMinMax(me->image_window_id, dmin, dmax, cmin, cmax);
+	me->image_viewer->dirtyWindow(me->image_window_id);
 }
 
 // static
