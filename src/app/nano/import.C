@@ -52,7 +52,8 @@ static	void handle_spider_length_change(vrpn_float64, void*);
 static	void handle_spider_width_change(vrpn_float64, void*);
 static	void handle_spider_thick_change(vrpn_float64, void*);
 static	void handle_spider_tess_change(vrpn_int32, void*);
-static	void handle_spider_curve_change(vrpn_float64, void*);
+static	void handle_spider_beg_curve_change(vrpn_float64, void*);
+static  void handle_spider_end_curve_change(vrpn_float64, void*);
 static	void handle_spider_legs_change(vrpn_int32, void*);
 static	void handle_spider_filename_change(const char*, void*);
 
@@ -110,7 +111,8 @@ Tclvar_float    spider_length("spider_length", 5, handle_spider_length_change);
 Tclvar_float    spider_width("spider_width", 2, handle_spider_width_change);
 Tclvar_float    spider_thick("spider_thick", 0.1, handle_spider_thick_change);
 Tclvar_int		spider_tess("spider_tess", 10, handle_spider_tess_change);
-Tclvar_float    spider_curve("spider_curve", 0, handle_spider_curve_change);
+Tclvar_float    spider_beg_curve("spider_beg_curve", 0, handle_spider_beg_curve_change);
+Tclvar_float    spider_end_curve("spider_end_curve", 0, handle_spider_end_curve_change);
 Tclvar_int		spider_legs("spider_legs", 8, handle_spider_legs_change);
 Tclvar_string	spider_filename("spider_filename", "", handle_spider_filename_change);
 
@@ -245,7 +247,8 @@ static void handle_current_object(const char*, void*) {
 					spider_width = spi->GetSpiderWidth(current_leg);
 					spider_thick = spi->GetSpiderThick(current_leg);
 					spider_tess = spi->GetSpiderTess(current_leg);
-					spider_curve = Q_RAD_TO_DEG(spi->GetSpiderCurve(current_leg));
+					spider_beg_curve = Q_RAD_TO_DEG(spi->GetSpiderBegCurve(current_leg));
+                    spider_end_curve = Q_RAD_TO_DEG(spi->GetSpiderEndCurve(current_leg));
 				}
 			}
 		}
@@ -299,7 +302,8 @@ static void handle_import_file_change (const char *, void *) {
 					spi->SetSpiderWidth(i, spider_width);
 					spi->SetSpiderThick(i, spider_thick);
 					spi->SetSpiderTess(i, spider_tess);
-					spi->SetSpiderCurve(i, Q_DEG_TO_RAD(spider_curve));
+					spi->SetSpiderBegCurve(i, Q_DEG_TO_RAD(spider_beg_curve));
+                    spi->SetSpiderEndCurve(i, Q_DEG_TO_RAD(spider_end_curve));
 				}
 				spi->SetSpiderLegs(spider_legs);
 			}
@@ -954,7 +958,8 @@ static void handle_spider_current_leg(const char*, void*)
 			spider_width = obj.GetSpiderWidth(current_leg);
 			spider_thick = obj.GetSpiderThick(current_leg);
 			spider_tess = obj.GetSpiderTess(current_leg);
-			spider_curve = Q_RAD_TO_DEG(obj.GetSpiderCurve(current_leg));
+			spider_beg_curve = Q_RAD_TO_DEG(obj.GetSpiderBegCurve(current_leg));
+            spider_end_curve = Q_RAD_TO_DEG(obj.GetSpiderEndCurve(current_leg));
 		}
 	}
 }
@@ -1035,7 +1040,7 @@ static  void handle_spider_tess_change (vrpn_int32, void *)
 	}
 }
 
-static  void handle_spider_curve_change (vrpn_float64, void *)
+static  void handle_spider_beg_curve_change (vrpn_float64, void *)
 {
 	if (strcmp(*World.current_object, "spider.spi") == 0) {
 		UTree *node = World.TGetNodeByName("spider.spi");
@@ -1044,11 +1049,30 @@ static  void handle_spider_curve_change (vrpn_float64, void *)
 		if (current_leg == -1) {
 			// do for all
 			for (int i = 0; i < obj.GetSpiderLegs(); i++) {
-				obj.SetSpiderCurve(i, Q_DEG_TO_RAD(spider_curve));
+				obj.SetSpiderBegCurve(i, Q_DEG_TO_RAD(spider_beg_curve));
 			}
 		}
 		else {
-			obj.SetSpiderCurve(current_leg, Q_DEG_TO_RAD(spider_curve));
+			obj.SetSpiderBegCurve(current_leg, Q_DEG_TO_RAD(spider_beg_curve));
+		}
+		obj.ReloadGeometry();
+	}
+}
+
+static  void handle_spider_end_curve_change (vrpn_float64, void *)
+{
+	if (strcmp(*World.current_object, "spider.spi") == 0) {
+		UTree *node = World.TGetNodeByName("spider.spi");
+		URSpider &obj = (URSpider&)node->TGetContents();
+		
+		if (current_leg == -1) {
+			// do for all
+			for (int i = 0; i < obj.GetSpiderLegs(); i++) {
+				obj.SetSpiderEndCurve(i, Q_DEG_TO_RAD(spider_end_curve));
+			}
+		}
+		else {
+			obj.SetSpiderEndCurve(current_leg, Q_DEG_TO_RAD(spider_end_curve));
 		}
 		obj.ReloadGeometry();
 	}

@@ -1,3 +1,8 @@
+2002-01-20  David Borland <borland@cs.unc.edu>
+
+        * import.C: added code to hook up to the new curvature sliders for
+        spider objects.
+
 2003-01-16  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nano.dsp:  undoes the commit of yesterday, which somehow (unknown)
