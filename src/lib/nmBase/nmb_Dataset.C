@@ -35,8 +35,8 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
 	     int readMode, const char ** gridFileNames, int numGridFiles,
 	     const char ** imageFileNames, int numImageFiles,
 	     nmb_String * (* string_allocator) (const char *),
-	     nmb_ListOfStrings * (* list_of_strings_allocator) (),
-	     TopoFile &topoFile ) :
+	     nmb_ListOfStrings * (* list_of_strings_allocator) ()
+	     ) :
   
   inputGrid (new BCGrid (xSize, ySize, xMin, xMax, yMin, yMax,
                          readMode)),
@@ -56,12 +56,12 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
   maskPlaneName (string_allocator("none")),
   vizPlaneName (string_allocator("none")),
 
-  done (0)
+  done (0),
+  d_topoFile(new TopoFile)
 {
     //variables to save the command line args for heightplane and colorplane
     initHeight[0] = '\0';
     initColorPlane[0] = '\0';
-    
     int i;
 
   // Load any static images from our args. 
@@ -77,7 +77,7 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
       {	  
         for (i = 0; i < numGridFiles; i++) {
           BCGrid* tmpgrid = 
-              inputGrid->loadFile(gridFileNames[i], topoFile);
+              inputGrid->loadFile(gridFileNames[i], *d_topoFile);
           if (tmpgrid == NULL) {
               // Error loading the file, BCGrid prints error
           } else if (tmpgrid == inputGrid) {
@@ -89,7 +89,7 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
                      "to align for use.\n", gridFileNames[i] );
               // Add to the list of images. 
               nmb_Image *im = new nmb_ImageGrid(tmpgrid->head());
-              im->setTopoFileInfo(topoFile);
+              im->setTopoFileInfo(*d_topoFile);
               dataImages->addImage(im);
           }
         }
@@ -132,7 +132,7 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
   ensureHeightPlane();
 
   // add static images to dataImages list
-  dataImages->addFileImages(imageFileNames, numImageFiles, topoFile);
+  dataImages->addFileImages(imageFileNames, numImageFiles, *d_topoFile);
 
   // in addition to static images, 
   // dataImages should include data from all microscopes so here we
@@ -141,7 +141,7 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
   for (p = inputGrid->head(); p != NULL; p = p->next()) {
     if (dataImages->getImageByName(*(p->name())) == NULL){
     	nmb_Image *im = new nmb_ImageGrid(p);
-        im->setTopoFileInfo(topoFile);
+        im->setTopoFileInfo(*d_topoFile);
     	dataImages->addImage(im);
     }
   }
@@ -179,19 +179,19 @@ nmb_Dataset::~nmb_Dataset (void) {
    @author Aron Helser
    @date modified 1-25-02 Aron Helser */
 int
-nmb_Dataset::loadFile(const char* file_name, TopoFile &topoFile)
+nmb_Dataset::loadFile(const char* file_name)
 {
   // Load the files
     BCGrid * tmpgrid;
     nmb_Image *im ;
-    if ((tmpgrid = inputGrid->loadFile(file_name, topoFile)) == NULL) {
+    if ((tmpgrid = inputGrid->loadFile(file_name, *d_topoFile)) == NULL) {
         return -1;
     } else if (tmpgrid != inputGrid) {
         //Add file to image list only, doesn't match current region/gridsize.
         // Need to handle multi-layer files, like DI files. 
         for (BCPlane *p = tmpgrid->head(); p != NULL; p = p->next()) {
             im = new nmb_ImageGrid(p);
-            im->setTopoFileInfo(topoFile);
+            im->setTopoFileInfo(*d_topoFile);
             dataImages->addImage(im);
         }
         //??XX delete tmpgrid;
@@ -201,7 +201,7 @@ nmb_Dataset::loadFile(const char* file_name, TopoFile &topoFile)
   for (BCPlane *p = inputGrid->head(); p != NULL; p = p->next()) {
     if (dataImages->getImageByName(*(p->name())) == NULL){
       im = new nmb_ImageGrid(p);
-      im->setTopoFileInfo(topoFile);
+      im->setTopoFileInfo(*d_topoFile);
       dataImages->addImage(im);
     }
   }

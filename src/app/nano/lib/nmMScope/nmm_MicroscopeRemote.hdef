@@ -22,7 +22,6 @@ OUTPUT_FILENAME nmm_MicroscopeRemote.h
 
 #include <nmb_SharedDevice.h>
 #include <Scanline.h>
-#include <Topo.h>
 
 class Tclvar_checklist;  // from <Tcl_Linkvar.h>
 class nmb_Dataset;  // from <nmb_Dataset.h>
@@ -84,8 +83,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     virtual int mainloop (void);
 
     AFMState state;
-
-    TopoFile d_topoFile;
 
     nmm_RelaxComp d_relax_comp;
 
@@ -286,10 +283,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
     void SetStreamToTime (timeval time);
 
-    /// Query and set the read mode, READ_DEVICE, READ_FILE or READ_STREAM
-    int ReadMode();
-    void ReadMode(int);
-    
     long EnableUpdatableQueue (vrpn_bool);
       ///< If TRUE, only the most recent ScanTo/ScanToZ/ZagTo request
       ///< is obeyed at the microscope;  older requests are thrown away.

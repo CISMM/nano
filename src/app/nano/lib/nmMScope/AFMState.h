@@ -463,8 +463,6 @@ struct AFMInitializationState {
   char inputStreamName [256];
   char outputStreamName [256];
 
-  float stm_z_scale;
-
   vrpn_bool doRelaxComp;
   vrpn_bool doRelaxUp;
   vrpn_bool doDriftComp;
@@ -503,19 +501,18 @@ struct AFMState {
   void SetDefaultScanlineForRegion(nmb_Dataset * dataset);
   ~AFMState (void);
 
-  int StdDelay,                  // wait time for stability. Obsolete
-      StPtDelay;                 // delay after setting parameters. Obsolete
+  int StdDelay,                  ///< wait time for stability. Obsolete
+      StPtDelay;                 ///< delay after setting parameters. Obsolete
 
-    // Used in relaxation compenstation. Should be obsolete, now inside d_relaxComp.
+    /// Used in relaxation compenstation. Should be obsolete, now inside d_relaxComp.
   int stmRxTmin,                 // wait time before accepting data (ms)
       stmRxTsep;                 // time between points for comp (ms)
 
+    /// Obsolete
   float MaxSafeMove;             // fastest speed (nm/ms) that feedback
                                  //   can keep up with. Obsolete
 
-  TclNet_float stm_z_scale;      // exageration factor for height of surface
-
-  // parameters for direction of scan
+  /// parameters for direction of scan
   vrpn_bool do_raster;
   vrpn_bool do_y_fastest;
   vrpn_bool raster_scan_backwards;
@@ -557,22 +554,20 @@ struct AFMState {
   vrpn_bool doSplat;               ///< splat incoming data into grid. Always FALSE
   vrpn_bool snapPlaneFit;
 
-  Tclvar_int read_mode;          // Are we reading device, stream, or files?
+  Tclvar_int commands_suspended; ///< Does Thermo want us to stop sending commands?
 
-  Tclvar_int commands_suspended; // Does Thermo want us to stop sending commands?
-
-  vrpn_bool writingStreamFile;     // was DO_OUTPUT_STREAM
-  vrpn_bool writingNetworkStream;  // was DO_NETOUT_STREAM
-  vrpn_bool readingStreamFile;     // Getting data from stream file?
+  vrpn_bool writingStreamFile;     ///< was DO_OUTPUT_STREAM
+  vrpn_bool writingNetworkStream;  ///< was DO_NETOUT_STREAM
+  vrpn_bool readingStreamFile;     ///< Getting data from stream file?
   vrpn_bool saveStream;            // 
   vrpn_bool allowdup;
-  vrpn_bool useRecvTime;           // Michele Clark's experiments
+  vrpn_bool useRecvTime;           ///< Michele Clark's experiments
 
-  int rasterX,                     // used to be x, y in animate.c
+  int rasterX,                     ///< used to be x, y in animate.c
       rasterY;
 
-    // Saved values from header of ForceCurveData message, so
-    // body can be interpreted correctly. 
+    /// Saved values from header of ForceCurveData message, so
+    /// body can be interpreted correctly. 
   vrpn_float32 fc_x;
   vrpn_float32 fc_y;
   vrpn_int32 fc_numSamples;
@@ -606,11 +601,11 @@ struct AFMState {
   // not fully grokked
 
   float lastZ;
-    // last height read by the microscope (?)
-    // used to call relax_init() and as the Z value to use
-    // when ignoring new points
+    ///< last height read by the microscope (?)
+    ///< used to call relax_init() and as the Z value to use
+    ///< when ignoring new points
 
-  // for jump to scanline feature (after a modification)
+  /// for jump to scanline feature (after a modification)
   TclNet_int numLinesToJumpBack;
 
 };

@@ -182,8 +182,6 @@ void setupStateCallbacks (nmm_Microscope_Remote * ms) {
   ms->state.image.blunt_speed.addCallback
     (handle_Istyle_p_change, ms);
 
-  ms->state.stm_z_scale.addCallback
-    (handle_z_scale_change, ms);
   ms->state.slowScanEnabled.addCallback
     (handle_tcl_scanEnable_change, ms);
 
@@ -384,8 +382,6 @@ void teardownStateCallbacks (nmm_Microscope_Remote * ms) {
   ms->state.image.blunt_speed.removeCallback
     (handle_Istyle_p_change, ms);
 
-  ms->state.stm_z_scale.removeCallback
-    (handle_z_scale_change, ms);
   ms->state.slowScanEnabled.removeCallback
     (handle_tcl_scanEnable_change, ms);
 
@@ -666,34 +662,6 @@ void handle_scanline_position_display_change (vrpn_int32 _value,
   graphics->displayScanlinePosition(_value);
 }
 
-/// Update the grid scale and rebuild the display lists
-/// whenever the Z scale changes.
-void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
-  BCPlane * plane =
-    dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
-
-  collabVerbose(5, "handle_z_scale_change\n");
-
-  // If user is feeling from data at the same time that she is changing
-  // the zscale, she could get a strong jerk from the phantom, so put her
-  // into grab mode first
-  if (plane) {
-      if ((user_0_mode == USER_PLANE_MODE) || (user_0_mode == USER_PLANEL_MODE)) {
-          user_0_mode = USER_GRAB_MODE;
-      }
-    plane->setScale(microscope->state.stm_z_scale);
-    decoration->setScrapeHeightScale(microscope->state.stm_z_scale);
-    //cause_grid_redraw(_value, _mptr);
-    graphics->causeGridRedraw();
-    //graphics->causeGridRebuild();
-  }
-  // update display of scanline to show true relative (yet scaled) height of
-  // scanline with respect to the surface
-  handle_linescan_position(0.0, _mptr);
-  
-  // Bring the surface in view
-  center();
-}
 
 // Called when the user clicks "accept" in the Image frame
 // in the main TCL window
@@ -924,45 +892,6 @@ void    handle_export_dataset_change(const char *new_value, void * )
         }
         // Close the file
         fclose(f);
-}
-
-void handle_z_dataset_change(const char *, void * _mptr)
-{
-  BCPlane * plane = dataset->inputGrid->getPlaneByName
-    (dataset->heightPlaneName->string());
-  
-  /* if user is feeling from data at the same time she is changing the
-     grid dataset, could get a strong jerk from the phantom, so put her
-     into grab mode first */
-  if ((user_0_mode == USER_PLANE_MODE) || (user_0_mode == USER_PLANEL_MODE))
-    {
-      user_0_mode = USER_GRAB_MODE;
-    }
-  
-  // If the plane cannot be found, look for another one instead.
-  // We NEED to have a height plane.
-  if (plane == NULL) { 
-    plane = dataset->ensureHeightPlane(); 
-  }
-  
-  // Set the scale to that of the one we just selected.
-  collabVerbose(5, "handle_z_dataset_change:  stm_z_scale = %.5f\n",
-                plane->scale());
-  microscope->state.stm_z_scale = plane->scale();
-  
-  // For some reason, heightPlaneName gets set in ensureHeightPlane above, but
-  // is not recognized yet. Use the plane's name explicitly instead.
-  //graphics->setHeightPlaneName(dataset->heightPlaneName->string());
-  graphics->setHeightPlaneName(plane->name()->Characters());
-  graphics->causeGridRebuild();
-  // XXX we probably don't need both
-  graphics->causeGridRedraw();
-  
-  if ( Index_mode::isInitialized() ) {
-    // update index mode's idea of what the plane is
-    Index_mode::newPlane( dataset->inputGrid->getPlaneByName
-                          (plane->name()->Characters() ) );
-  }
 }
 
 

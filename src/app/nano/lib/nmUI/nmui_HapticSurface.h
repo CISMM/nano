@@ -50,7 +50,7 @@ class nmui_HapticSurface {
       ///< Specify current location of the user's hand,
       ///< in microscope coordinates (?!).
 
-    virtual void update (nmm_Microscope_Remote *) =0;
+    virtual void update (nmb_Dataset *, nmm_Microscope_Remote *) =0;
       ///< Recompute all output values based on current state.
       ///< Necessary because we assume things are dynamic and volatile;
       ///< we can't assume that nothing's changed since the last call
@@ -119,7 +119,7 @@ class nmui_HSCanned : public nmui_HapticSurface {
 
     // MANIPULATORS
 
-    virtual void update (nmm_Microscope_Remote *);
+    virtual void update (nmb_Dataset *, nmm_Microscope_Remote *);
 
   protected:
 
@@ -144,7 +144,7 @@ class nmui_HSMeasurePlane : public nmui_HapticSurface {
 
     // MANIPULATORS
 
-    virtual void update (nmm_Microscope_Remote *);
+    virtual void update (nmb_Dataset *, nmm_Microscope_Remote *);
 
   protected:
 
@@ -170,7 +170,7 @@ class nmui_HSLivePlane : public nmui_HapticSurface {
 
     // MANIPULATORS
 
-    virtual void update (nmm_Microscope_Remote *);
+    virtual void update (nmb_Dataset *, nmm_Microscope_Remote *);
 
   protected:
 
@@ -204,7 +204,7 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
 
     // MANIPULATORS
 
-    virtual void update (nmm_Microscope_Remote *);
+    virtual void update (nmb_Dataset *, nmm_Microscope_Remote *);
       ///< Do nothing - handled asynchronously by updateModel().
 
     virtual void sendForceUpdate (vrpn_ForceDevice_Remote *);
@@ -236,7 +236,7 @@ class nmui_HSDirectZ : public nmui_HapticSurface {
 
     // MANIPULATORS
 
-    virtual void update (nmm_Microscope_Remote *);
+    virtual void update (nmb_Dataset *, nmm_Microscope_Remote *);
     virtual void sendForceUpdate (vrpn_ForceDevice_Remote * device);
 
   protected:

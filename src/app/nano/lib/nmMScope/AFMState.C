@@ -428,8 +428,6 @@ AFMGuardedScanState::~AFMGuardedScanState()
 
 AFMInitializationState::AFMInitializationState (void) :
 
-  stm_z_scale (1.0f),
-
   doRelaxComp (VRPN_TRUE),
   doRelaxUp (VRPN_FALSE),
   doDriftComp (VRPN_FALSE),
@@ -470,8 +468,6 @@ AFMState::AFMState (const AFMInitializationState & i) :
 
     MaxSafeMove (i.MaxSafeMove),
 
-    stm_z_scale ("z_scale", i.stm_z_scale),
-
     do_raster    (VRPN_TRUE),
     do_y_fastest (VRPN_FALSE),
     raster_scan_backwards (VRPN_FALSE),
@@ -510,8 +506,6 @@ AFMState::AFMState (const AFMInitializationState & i) :
     doSplat        (i.doSplat),
     snapPlaneFit   (VRPN_TRUE),
 
-    read_mode("spm_read_mode", READ_FILE),
-
     commands_suspended("spm_commands_suspended", 0),
 
     writingStreamFile    (i.writingStreamFile),
@@ -542,17 +536,13 @@ AFMState::AFMState (const AFMInitializationState & i) :
 
 {
     // We should be able to tell where we are getting data
-    // Default is READ_FILE, so check flags and such for STREAM or DEVICE
   strcpy(deviceName, i.deviceName);
   if (writingStreamFile) {
     strcpy(outputStreamName, i.outputStreamName);
   }
   if (readingStreamFile) {
     strcpy(inputStreamName, i.inputStreamName);
-    read_mode = READ_STREAM;
-  } else if ( strcmp(deviceName, "null") != 0) {
-    read_mode = READ_DEVICE;
-  }
+  } 
 }
 
 AFMState::~AFMState (void) {

@@ -257,7 +257,7 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        break;
        
    case 3:
-       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
+       if ((dataset) && (dataset->readMode() != READ_DEVICE)) return;
        if ((microscope) && (microscope->state.commands_suspended)) return;
        // Cycling button -cycles through Touch Live and Select
        if (user_0_mode == USER_PLANEL_MODE) {
@@ -267,7 +267,7 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        }
        break;
    case 4:              /* Commit button */
-       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
+       if ((dataset) && (dataset->readMode() != READ_DEVICE)) return;
        if ((microscope) && (microscope->state.commands_suspended)) return;
        tcl_commit_pressed = 1;
       // we must call "handle_commit_change" explicitly, 
@@ -287,7 +287,7 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
 
        break;
    case 7: 		/* XY & Z lock */
-       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
+       if ((dataset) && (dataset->readMode() != READ_DEVICE)) return;
        if ((microscope) && (microscope->state.commands_suspended)) return;
 #if 1
        if( !xy_lock && !z_lock )
@@ -304,7 +304,7 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
 #endif
        break;
    case 8:              /* Cancel button */
-       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
+       if ((dataset) && (dataset->readMode() != READ_DEVICE)) return;
        if ((microscope) && (microscope->state.commands_suspended)) return;
        tcl_commit_canceled = 1;
       // we must call "handle_commit_cancel" explicitly, 

@@ -548,6 +548,7 @@ void handle_user_mode_change(vrpn_int32, void *)
 
 void handle_xyLock (vrpn_int32, void *) 
 {
+  if (!microscope) return;
   if (!microscope->haveMutex()) {
     xy_lock = 0;
   }
@@ -570,6 +571,7 @@ void handle_xyLock (vrpn_int32, void *)
 
 void handle_zLock( vrpn_int32, void* )
 {
+  if (!microscope) return;
   if( !microscope->haveMutex() )
     { z_lock = 0; }
   cout << "z_lock pressed" << endl;
@@ -617,6 +619,7 @@ static void handle_handTracker_update_rate (vrpn_float64 v, void *) {
 
 // static
 void handle_useRedundant_change (vrpn_int32 on, void *) {
+  if (!microscope) return;
 
 fprintf(stderr, "Turning FEC %s.\n", on ? "on" : "off");
 
@@ -634,6 +637,7 @@ fprintf(stderr, "Turning FEC %s.\n", on ? "on" : "off");
 
 // static
 void handle_numRedundant_change (vrpn_int32 val, void *) {
+  if (!microscope) return;
 
 fprintf(stderr, "Sending %d redundant copies at %.5f sec intervals.\n",
 val, (float) feel_redundantInterval);
@@ -650,6 +654,7 @@ val, (float) feel_redundantInterval);
 
 // static
 void handle_redundantInterval_change (vrpn_float64, void *) {
+  if (!microscope) return;
 
   if (microscopeRedundancyController) {
     microscopeRedundancyController->set
@@ -665,6 +670,7 @@ void handle_redundantInterval_change (vrpn_float64, void *) {
 
 // static
 void handle_useMonitor_change (vrpn_int32 on, void *) {
+  if (!microscope) return;
 
 fprintf(stderr, "Turning QM %s.\n", on ? "on" : "off");
 
@@ -678,6 +684,7 @@ fprintf(stderr, "Turning QM %s.\n", on ? "on" : "off");
 
 // static
 void handle_monitorThreshold_change (vrpn_int32 n, void *) {
+  if (!microscope) return;
 
 fprintf(stderr, "New length-2 threshold is %d.\n", n);
 
@@ -690,6 +697,7 @@ fprintf(stderr, "New length-2 threshold is %d.\n", n);
 
 // static
 void handle_monitorDecay_change (vrpn_float64 n, void *) {
+  if (!microscope) return;
 
 fprintf(stderr, "New threshold decay is %.5f.\n", n);
 
@@ -716,6 +724,7 @@ static void handle_trigger_change( vrpn_int32 val, void * )
  */
 
 static void drawLineStep (Position * prevPt, Position * currPt) {
+  if (!microscope) return;
   double x, y;
 
   x = prevPt->x();
@@ -752,6 +761,7 @@ static void drawLineStep (Position * prevPt, Position * currPt) {
 }
 
 static void drawLine (void) {
+  if (!microscope) return;
 
     // set up a reference for convenience
     Position_list & p = 
@@ -874,6 +884,7 @@ static void drawLine (void) {
 
 void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 {
+  if (!microscope) return;
 
     // This handles double callbacks, when we set tcl_commit_pressed to
     // zero below.
@@ -1037,6 +1048,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
  */
 void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 {
+  if (!microscope) return;
     BCPlane * plane;
     // This handles double callbacks, when we set tcl_commit_canceled to
     // zero below.
@@ -1144,7 +1156,7 @@ void setupHaptics (int mode) {
       break;
 
     case USER_PLANEL_MODE:
-      if (microscope->state.image.tool == FEELAHEAD) {
+      if (microscope && (microscope->state.image.tool == FEELAHEAD)) {
         haptic_manager.setSurface(haptic_manager.d_feelAhead);
         haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
         // TODO:  invent a surface feature strategy!
@@ -1194,6 +1206,7 @@ void dispatch_event(int mode, int event, nmb_TimerList * /*timer*/)
 		ret = doFeelFromGrid(user,event);
 		break;
 	case USER_PLANEL_MODE:
+            if (!microscope) return;
 	   // CONSTR_FREEHAND tool uses doLine first, then doFeelLive
 	   // after it's constraint line is specified.
 	   if (microscope->state.modify.tool == LINE) {
@@ -1433,6 +1446,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     ** AND whether we are imaging or modifying.
     **/
     force = Arm_knobs[MOD_FORCE_KNOB];
+  if (microscope) {
     if( microscope->state.modify.mode == CONTACT ) {
       if( force != old_mod_con_force ) {
 	microscope->state.modify.setpoint = 
@@ -1470,7 +1484,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
 		old_img_tap_force = force;
       }
     }
-
+  }
     /* Check for immediate action button presses
     **
     ** Center command is a special case
@@ -1484,6 +1498,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
 
     /* code dealing with locking the tip in sharp tip mode */
     /* locks the tip in one place so you can take repeated measurements */
+  if (microscope) {
     if ((PRESS_EVENT == eventList[XY_LOCK_BT]) && microscope->haveMutex()) 
       { xy_lock = 1; }
     if (RELEASE_EVENT == eventList[XY_LOCK_BT]) 
@@ -1493,7 +1508,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       { z_lock = 1; }
     if( RELEASE_EVENT == eventList[Z_LOCK_BT] )
       { z_lock = 0; }
-	
+  }
 
     /* Handle a "commit" or "cancel" button press/release on
 	 * the real button box by causing a callback to
@@ -1528,7 +1543,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     }
     // also check to see if the modify style has changed -
     // can affect hand icon as well.
-    if (user_0_mode == USER_PLANEL_MODE) {
+    if (microscope && (user_0_mode == USER_PLANEL_MODE)) {
       mode_change |= microscope->state.modify.style_changed;
     }
 
@@ -1560,21 +1575,27 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       VERBOSE(6, "    Calling graphics->setUserMode().");
 
       // Change icons to ones for this new mode.
+    if (microscope) {
       graphics->setUserMode(last_mode, last_style,
 			    user_0_mode, microscope->state.modify.style,
 			    microscope->state.modify.optimize_now_param);
 
       /* Last mode next time around is the current mode this time around */
       last_style = microscope->state.modify.style;
+    } else {
+      graphics->setUserMode(last_mode, last_style,
+			    user_0_mode, 0, 0);
+
+    }
       last_mode = user_0_mode;
 
       /* Clear the mode change flag */
       mode_change = 0;
-      microscope->state.modify.style_changed = 0;
+      if (microscope) microscope->state.modify.style_changed = 0;
     }
     else if ( first_mode == 1 ) {
       first_mode = 0;
-      last_style = microscope->state.modify.style;
+      if (microscope) last_style = microscope->state.modify.style;
       last_mode = user_0_mode;
     }
 
@@ -1935,11 +1956,11 @@ double touch_surface (int, q_vec_type handpos) {
 
   // Set up the approximating plane or force field...
   haptic_manager.surface()->setLocation(handpos);
-  haptic_manager.surface()->update(microscope);
+  haptic_manager.surface()->update(dataset, microscope);
   haptic_manager.surface()->sendForceUpdate(forceDevice);
 
   // Set up buzzing, bumps, friction, compliance, ...
-  haptic_manager.surfaceFeatures().update(microscope);
+  haptic_manager.surfaceFeatures().update(dataset, microscope);
 
   return haptic_manager.surface()->distanceFromSurface();
 }
@@ -1951,6 +1972,7 @@ double touch_surface (int, q_vec_type handpos) {
  */
 int specify_directZ_force(int whichUser) 
 {
+  if (!microscope) return 0;
      q_vec_type		        point;
      q_vec_type		up = { 0.0, 0.0, 1.0 };
      v_xform_type               WorldFromTracker, TrackerFromWorld;
@@ -2598,7 +2620,7 @@ int doLine(int whichUser, int userEvent)
   
   /* if we are not running live, you should not be able
      to do this, so put the user into grab mode -- Renee */
-  if (dataset->inputGrid->readMode() != READ_DEVICE)
+  if (!microscope || (dataset->inputGrid->readMode() != READ_DEVICE))
     {
       user_0_mode = USER_GRAB_MODE;
       printf("Line mode available only on live data!!!\n");
@@ -2875,6 +2897,7 @@ int doPositionScanline(int whichUser, int userEvent)
 {
     if ((userEvent != PRESS_EVENT) && (userEvent != HOLD_EVENT)) return 0;
 
+    if (!microscope) return 0;
     v_xform_type worldFromHand;
 
     BCPlane* plane = dataset->inputGrid->getPlaneByName(
@@ -3001,6 +3024,7 @@ int doFeelFromGrid(int whichUser, int userEvent)
 
 static void setupSweepIcon (int whichUser, q_vec_type clipPos,
                             BCPlane * plane) {
+  if (!microscope) return;
   PointType TopL, BottomL, TopR, BottomR;
   v_xform_type worldFromHand;
   q_matrix_type	hand_mat;
@@ -3065,7 +3089,7 @@ int doFeelLive (int whichUser, int userEvent)
 
   /* if we are not running live, you should not be able
      to do this, so put the user into grab mode */
-  if (dataset->inputGrid->readMode() != READ_DEVICE) {
+  if (!microscope || (dataset->inputGrid->readMode() != READ_DEVICE)) {
     user_0_mode = USER_GRAB_MODE;
     printf("SharpTip mode available only on live data!!!\n");
     return 0;
@@ -3342,7 +3366,7 @@ doSelect(int whichUser, int userEvent)
 
     /* if we are not running live, you should not be able
 	   to do this, so put the user into grab mode */
-    if (dataset->inputGrid->readMode() != READ_DEVICE)
+    if (!microscope || (dataset->inputGrid->readMode() != READ_DEVICE)) 
     {
         user_0_mode = USER_GRAB_MODE;
         printf("Select mode available only on live data!!!\n");
@@ -3919,7 +3943,7 @@ void updateWorldFromRoom (v_xform_type * t) {
   tcl_wfr_xlate_Z = t->xlate[2];
   tcl_wfr_rot_0 = t->rotate[0];
   tcl_wfr_rot_1 = t->rotate[1];
-  tcl_wfr_rot_2 = t->rotate[2];
+  tcl_wfr_rot_2 = t->rotate[2]; 
   tcl_wfr_rot_3 = t->rotate[3];
 
   tcl_wfr_scale = t->scale;

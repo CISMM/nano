@@ -179,10 +179,10 @@ int nmui_HSCanned::getGridY (void) const {
 
 
 // virtual
-void nmui_HSCanned::update (nmm_Microscope_Remote * scope) {
+void nmui_HSCanned::update (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
 
-  BCPlane * plane = scope->Data()->inputGrid->getPlaneByName
-                     (scope->Data()->heightPlaneName->string());
+  BCPlane * plane = dataset->inputGrid->getPlaneByName
+                     (dataset->heightPlaneName->string());
   if (!plane) {
       fprintf(stderr, "nmui_HSCanned::getOutputPlane:  "
                       "could not get plane!\n");
@@ -293,14 +293,14 @@ nmui_HSMeasurePlane::~nmui_HSMeasurePlane (void) {
 }
 
 // virtual
-void nmui_HSMeasurePlane::update (nmm_Microscope_Remote * scope) {
+void nmui_HSMeasurePlane::update (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
 
   //---------------------------------------------------------------------
   // Get the height plane, which we'll use to find the height at the
   // locations of the measure lines
 
-  BCPlane * plane = scope->Data()->inputGrid->getPlaneByName
-                     (scope->Data()->heightPlaneName->string());
+  BCPlane * plane = dataset->inputGrid->getPlaneByName
+                     (dataset->heightPlaneName->string());
   if (!plane) {
       fprintf(stderr, "nmui_HSMeasurePlane::update:  could not get plane!\n");
       return;
@@ -386,7 +386,7 @@ nmui_HSLivePlane::~nmui_HSLivePlane (void) {
 
 
 // virtual
-void nmui_HSLivePlane::update (nmm_Microscope_Remote * scope) {
+void nmui_HSLivePlane::update (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
 
   q_vec_type                 at;
 
@@ -398,8 +398,8 @@ void nmui_HSLivePlane::update (nmm_Microscope_Remote * scope) {
   // also mapped in touch mode, and that mapping for this has been
   // set up.
 
-  BCPlane * plane = scope->Data()->inputGrid->getPlaneByName
-                  (scope->Data()->heightPlaneName->string());
+  BCPlane * plane = dataset->inputGrid->getPlaneByName
+                  (dataset->heightPlaneName->string());
   if (!plane) {
       fprintf(stderr, "nmui_HSLivePlane::update:  could not get plane!\n");
       return;
@@ -407,7 +407,7 @@ void nmui_HSLivePlane::update (nmm_Microscope_Remote * scope) {
 
   Point_value * value =
      scope->state.data.inputPoint->getValueByPlaneName
-                  (scope->Data()->heightPlaneName->string());
+                  (dataset->heightPlaneName->string());
 
   if (!value) {
       fprintf(stderr, "nmui_HSLivePlane::update:  could not get value!\n");
@@ -497,7 +497,7 @@ double nmui_HSFeelAhead::distanceFromSurface (void) const {
  */
 
 // virtual
-void nmui_HSFeelAhead::update (nmm_Microscope_Remote * m) {
+void nmui_HSFeelAhead::update (nmb_Dataset * dataset, nmm_Microscope_Remote * m) {
 
   d_microscope = m;
 
@@ -620,17 +620,17 @@ nmui_HSDirectZ::~nmui_HSDirectZ (void) {
     // MANIPULATORS
 
 // virtual
-void nmui_HSDirectZ::update (nmm_Microscope_Remote * scope) {
+void nmui_HSDirectZ::update (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
   BCPlane * plane;
   Point_value * value;
   Point_value * forcevalue;
   double currentForce;
 
-  plane = scope->Data()->inputGrid->getPlaneByName
-               (scope->Data()->heightPlaneName->string());
+  plane = dataset->inputGrid->getPlaneByName
+               (dataset->heightPlaneName->string());
 
   value = scope->state.data.inputPoint->getValueByPlaneName
-               (scope->Data()->heightPlaneName->string());
+               (dataset->heightPlaneName->string());
 
   if (!plane || !value) {
     fprintf(stderr, "nmui_HSDirectZ::update():  NULL value.\n");

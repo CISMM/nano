@@ -209,6 +209,14 @@ static imported_obj_list* object_list = NULL;
 //-------------------------------------------------------------------------
 // Callback functions used by the Tcl variables.
 
+/// Change the heightplane. 
+static void handle_z_dataset_change(const char *, void * ds);
+
+TclNet_float stm_z_scale ("z_scale", 1);
+    ///< exageration factor for height of surface
+/// Change the heightplane scale. 
+static void handle_z_scale_change(const char *, void * ds);
+
 /// Quit the program from Tcl
 static void handle_tcl_quit(vrpn_int32 new_value, void *userdata);
 /// Signal from Tcl to quit the program
@@ -875,7 +883,6 @@ nmm_Microscope_Remote * microscope = NULL;
 nmg_Graphics * graphics = NULL;
 
 static int LOOP_NUM;
-//TopoFile GTF; - replaced by microscope->d_topoFile
 
 // used in interaction.c
 int	using_mouse3button = 0;	///< Using Mouse3 button as trigger?
@@ -1246,9 +1253,17 @@ static void startSimulatedMicroscope();
 
 //end Sim Scan stuff
 
-struct MicroscapeInitializationState {
+/// Are we reading device, stream, or files?
+static Tclvar_int read_mode("spm_read_mode", READ_FILE);
 
+/// Initialization information for when we startup, open files or devices. 
+class MicroscapeInitializationState {
+public:
   MicroscapeInitializationState (void);
+
+    /// Tells whether we are reading a stream, connected live, 
+    /// or reading a static file. 
+  int ReadMode();
 
   AFMInitializationState afm;
   OhmmeterInitializationState ohm;
@@ -1276,6 +1291,8 @@ struct MicroscapeInitializationState {
   int collabPort;
   int basePort;
   int peerBasePort;
+
+  float stm_z_scale;
 
   float x_min;
   float x_max;
@@ -1342,6 +1359,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   collabPort (-1),
   basePort (WellKnownPorts::defaultBasePort),
   peerBasePort (WellKnownPorts::defaultBasePort),
+  stm_z_scale(1),
   x_min (afm.xMin),
   x_max (afm.xMax),
   y_min (afm.yMin),
@@ -1383,11 +1401,18 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   initTime = 0;
 }
 
+int MicroscapeInitializationState::ReadMode (void) 
+{
+    if (afm.readingStreamFile) return READ_STREAM;
+    if (strcmp(afm.deviceName, "null") != 0) return READ_DEVICE;
+    return READ_FILE;
+}
+
 /*********
  * Functions defined in this file (added by KPJ to satisfy g++)...
  *********/
 
-static int createNewMicroscope( MicroscapeInitializationState &istate,
+static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
                          vrpn_Connection * c);
 int main (int argc, char * argv []);
 
@@ -1443,8 +1468,8 @@ void shutdown_connections (void) {
   openStreamFilename.bindConnection(NULL);
   openSPMDeviceName.bindConnection(NULL);
 
+  stm_z_scale.bindConnection(NULL);
   if (microscope) {
-    microscope->state.stm_z_scale.bindConnection(NULL);
     microscope->state.numLinesToJumpBack.bindConnection(NULL);
   }
 
@@ -1714,6 +1739,75 @@ void handle_tcl_quit(vrpn_int32 , void *)
 //---------------------------------------------------------------------------
 // TCL CALLBACKS.
 //---------------------------------------------------------------------------
+
+void handle_z_dataset_change(const char *, void * ds)
+{
+    nmb_Dataset * dataset = (nmb_Dataset *)ds;
+  BCPlane * plane = dataset->inputGrid->getPlaneByName
+    (dataset->heightPlaneName->string());
+  
+  /* if user is feeling from data at the same time she is changing the
+     grid dataset, could get a strong jerk from the phantom, so put her
+     into grab mode first */
+  if ((user_0_mode == USER_PLANE_MODE) || (user_0_mode == USER_PLANEL_MODE))
+    {
+      user_0_mode = USER_GRAB_MODE;
+    }
+  
+  // If the plane cannot be found, look for another one instead.
+  // We NEED to have a height plane.
+  if (plane == NULL) { 
+    plane = dataset->ensureHeightPlane(); 
+  }
+  
+  // Set the scale to that of the one we just selected.
+  collabVerbose(5, "handle_z_dataset_change:  stm_z_scale = %.5f\n",
+                plane->scale());
+  stm_z_scale = plane->scale();
+  
+  // For some reason, heightPlaneName gets set in ensureHeightPlane above, but
+  // is not recognized yet. Use the plane's name explicitly instead.
+  //graphics->setHeightPlaneName(dataset->heightPlaneName->string());
+  graphics->setHeightPlaneName(plane->name()->Characters());
+  graphics->causeGridRebuild();
+  // XXX we probably don't need both
+  graphics->causeGridRedraw();
+  
+  if ( Index_mode::isInitialized() ) {
+    // update index mode's idea of what the plane is
+    Index_mode::newPlane( dataset->inputGrid->getPlaneByName
+                          (plane->name()->Characters() ) );
+  }
+}
+
+/// Update the grid scale and rebuild the display lists
+/// whenever the Z scale changes.
+void handle_z_scale_change (vrpn_float64 /*_value*/, void *ds) {
+    nmb_Dataset * dataset = (nmb_Dataset *)ds;
+  BCPlane * plane =
+    dataset->inputGrid->getPlaneByName(dataset->heightPlaneName->string());
+
+  collabVerbose(5, "handle_z_scale_change\n");
+
+  // If user is feeling from data at the same time that she is changing
+  // the zscale, she could get a strong jerk from the phantom, so put her
+  // into grab mode first
+  if (plane) {
+      if ((user_0_mode == USER_PLANE_MODE) || (user_0_mode == USER_PLANEL_MODE)) {
+          user_0_mode = USER_GRAB_MODE;
+      }
+    plane->setScale(stm_z_scale);
+    decoration->setScrapeHeightScale(stm_z_scale);
+    graphics->causeGridRedraw();
+    //graphics->causeGridRebuild();
+  }
+  // update display of scanline to show true relative (yet scaled) height of
+  // scanline with respect to the surface
+  if (microscope) handle_linescan_position(0.0, microscope);
+  
+  // Bring the surface in view
+  center();
+}
 
 /** Deal with changes in the stride between rows on the grid for tesselation. */
 void    handle_stride_change (vrpn_int32 newval, void * userdata) {
@@ -2643,8 +2737,7 @@ static void handle_openStaticFilename_change (const char *, void *)
 
     if (strlen(openStaticFilename) <= 0) return;
 
-    int ret = dataset->loadFile((const char *)openStaticFilename, 
-                                microscope->d_topoFile);
+    int ret = dataset->loadFile((const char *)openStaticFilename);
     if (ret == -1) {
 	display_error_dialog("Couldn't open %s as a data file.\n"
                              "It is not a valid static data file.",
@@ -2750,7 +2843,7 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
         return ;
     }
 
-    if (createNewMicroscope(*istate, new_microscope_connection)) {
+    if (createNewDatasetOrMicroscope(*istate, new_microscope_connection)) {
 	display_error_dialog("Failed to create microscope with stream file: %s\n",
                 istate->afm.inputStreamName);
         openDefaultMicroscope();
@@ -2871,7 +2964,7 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
                 istate->afm.inputStreamName);
     }
     */
-    if (createNewMicroscope(*istate, new_microscope_connection)) {
+    if (createNewDatasetOrMicroscope(*istate, new_microscope_connection)) {
 	display_error_dialog( "Failed to connect to microscope device: %s", 
                 istate->afm.deviceName);
         openDefaultMicroscope();
@@ -2932,7 +3025,7 @@ static void openDefaultMicroscope()
     MicroscapeInitializationState * istate = new MicroscapeInitializationState;
 
     // Default microscope has NULL vrpn_connection
-    if (createNewMicroscope(*istate, NULL)) {
+    if (createNewDatasetOrMicroscope(*istate, NULL)) {
 	display_fatal_error_dialog("Failed to create default microscope");
         return ;
     }
@@ -4308,33 +4401,6 @@ int	loadPPMTextures(void)
 }
 
 
-/// Internal order dependence, must be called before setupCallbacks(d,g)
-void setupCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
-
-  if (!d || !m) return;
-
-  // Must be called before any tclvars that use this list to choose
-  // from, like heightPlaneName, colorPlaneName, etc. 
-  ((Tclvar_list_of_strings *) d->imageNames)->
-        initializeTcl("imageNames");
-  ((Tclvar_list_of_strings *) d->inputPlaneNames)->
-        initializeTcl("inputPlaneNames");
-
-  ((Tclvar_string *) d->heightPlaneName)->
-        initializeTcl("z_comes_from");
-  ((Tclvar_string *) d->heightPlaneName)->addCallback
-            (handle_z_dataset_change, m);
-
-}
-
-void teardownCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
-
-  if (!d || !m) return;
-
-   ((Tclvar_string *) d->heightPlaneName)->removeCallback
-             (handle_z_dataset_change, m);
-}
-
 void setupCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
 
   if (!d || !g) return;
@@ -4398,10 +4464,24 @@ void teardownCallbacks (nmui_ColorMap *cm, nmb_Dataset * d, nmg_Graphics * g) {
   cm->removeSurfaceColorCallback(handle_surface_color_change, g);
 }
 
+/// Internal order dependence, must be called before setupCallbacks(d,g)
 void setupCallbacks (nmb_Dataset *d) {
   // sets up callbacks that have to do with data as opposed to callbacks
   // that affect or refer to some device which produces data
 
+  // Must be called before any tclvars that use this list to choose
+  // from, like heightPlaneName, colorPlaneName, etc. 
+  ((Tclvar_list_of_strings *) d->imageNames)->
+        initializeTcl("imageNames");
+  ((Tclvar_list_of_strings *) d->inputPlaneNames)->
+        initializeTcl("inputPlaneNames");
+
+  ((Tclvar_string *) d->heightPlaneName)->
+        initializeTcl("z_comes_from");
+  ((Tclvar_string *) d->heightPlaneName)->addCallback
+            (handle_z_dataset_change, d);
+  stm_z_scale.addCallback
+            (handle_z_scale_change, d);
 
   //exportPlaneName.bindList(d->dataImages->imageNameList());
   exportPlaneName = "none";
@@ -4451,42 +4531,6 @@ void setupCallbacks (nmb_Dataset *d) {
   measureBlueY.addCallback
 	(handle_collab_blue_measure_change, d);
 
-}
-
-
-void teardownCallbacks (nmb_Dataset *d) {
-  if (!d ) return;
-  exportPlaneName.removeCallback
-	(handle_exportPlaneName_change, d);
-
-  newExportFileName.removeCallback
-            (handle_exportFileName_change, NULL);
-
-  realign_textures_enabled.removeCallback
-    (handle_realign_textures_selected_change, NULL);
-
-  measureRedX.removeCallback
-	(handle_collab_red_measure_change, d);
-  measureRedY.removeCallback
-	(handle_collab_red_measure_change, d);
-  measureGreenX.removeCallback
-	(handle_collab_green_measure_change, d);
-  measureGreenY.removeCallback
-	(handle_collab_green_measure_change, d);
-  measureBlueX.removeCallback
-	(handle_collab_blue_measure_change, d);
-  measureBlueY.removeCallback
-	(handle_collab_blue_measure_change, d);
-
-}
-
-void setupCallbacks (nmm_Microscope_Remote * m) {
-
-  if (!m) return;
-
-  // Microscope isn't defined at load time,
-  // so we can't declare all these things statically.
-
   compliancePlaneName = "none";
   frictionPlaneName = "none";
   bumpPlaneName = "none";
@@ -4508,7 +4552,6 @@ void setupCallbacks (nmm_Microscope_Remote * m) {
   newFilterPlaneName.addCallback
             (handle_filterPlaneName_change, NULL);
 #endif
-
   newSimScanPlaneName = "";
   newSimScanPlaneName.addCallback
             (handle_SimScanPlaneName_change, NULL);
@@ -4530,6 +4573,67 @@ void setupCallbacks (nmm_Microscope_Remote * m) {
   newSumPlaneName = "";
   newSumPlaneName.addCallback
             (handle_sumPlaneName_change, NULL);
+
+}
+
+
+void teardownCallbacks (nmb_Dataset *d) {
+  if (!d ) return;
+   ((Tclvar_string *) d->heightPlaneName)->removeCallback
+             (handle_z_dataset_change, d);
+  stm_z_scale.removeCallback
+            (handle_z_scale_change, d);
+  exportPlaneName.removeCallback
+	(handle_exportPlaneName_change, d);
+
+  newExportFileName.removeCallback
+            (handle_exportFileName_change, NULL);
+
+  realign_textures_enabled.removeCallback
+    (handle_realign_textures_selected_change, NULL);
+
+  measureRedX.removeCallback
+	(handle_collab_red_measure_change, d);
+  measureRedY.removeCallback
+	(handle_collab_red_measure_change, d);
+  measureGreenX.removeCallback
+	(handle_collab_green_measure_change, d);
+  measureGreenY.removeCallback
+	(handle_collab_green_measure_change, d);
+  measureBlueX.removeCallback
+	(handle_collab_blue_measure_change, d);
+  measureBlueY.removeCallback
+	(handle_collab_blue_measure_change, d);
+  soundPlaneName.removeCallback
+            (handle_sound_dataset_change, NULL);
+
+  xPlaneName.removeCallback
+            (handle_x_dataset_change, NULL);
+
+#ifndef NO_FILTERS
+  newFilterPlaneName.removeCallback
+            (handle_filterPlaneName_change, NULL);
+#endif
+
+  newFlatPlaneName.removeCallback
+            (handle_flatPlaneName_change, NULL);
+
+  newLBLFlatPlaneName.removeCallback
+	    (handle_lblflatPlaneName_change, NULL); 
+
+  newSumPlaneName.removeCallback
+            (handle_sumPlaneName_change, NULL);
+
+}
+
+void setupCallbacks (nmm_Microscope_Remote * m) {
+
+  if (!m) return;
+
+  // Microscope isn't defined at load time,
+  // so we can't declare all these things statically.
+
+
 
   adhPlane1Name  = "none";
   adhPlane2Name  = "none";
@@ -4568,25 +4672,6 @@ void teardownCallbacks (nmm_Microscope_Remote * m) {
 
   if (!m) return;
 
-  soundPlaneName.removeCallback
-            (handle_sound_dataset_change, NULL);
-
-  xPlaneName.removeCallback
-            (handle_x_dataset_change, NULL);
-
-#ifndef NO_FILTERS
-  newFilterPlaneName.removeCallback
-            (handle_filterPlaneName_change, NULL);
-#endif
-
-  newFlatPlaneName.removeCallback
-            (handle_flatPlaneName_change, NULL);
-
-  newLBLFlatPlaneName.removeCallback
-	    (handle_lblflatPlaneName_change, NULL); 
-
-  newSumPlaneName.removeCallback
-            (handle_sumPlaneName_change, NULL);
 
   newAdhPlaneName.removeCallback
             (handle_adhPlaneName_change, m);
@@ -5000,7 +5085,7 @@ void teardownSynchronization(CollaborationManager *cm,
     }
     nmui_Component * viewPlaneControls = viewControls->find("View Plane");
     if (viewPlaneControls) {
-      viewPlaneControls->remove(&m->state.stm_z_scale);
+      viewPlaneControls->remove(&stm_z_scale);
       viewPlaneControls->remove((TclNet_string *) dset->heightPlaneName);
     }
 
@@ -5245,7 +5330,7 @@ void setupSynchronization (CollaborationManager * cm,
   nmui_Component * viewPlaneControls;
   viewPlaneControls = new nmui_Component ("View Plane");
 
-  viewPlaneControls->add(&m->state.stm_z_scale);
+  viewPlaneControls->add(&stm_z_scale);
   viewPlaneControls->add((TclNet_string *) dset->heightPlaneName);
   viewPlaneControls->add(&tcl_wfr_xlate_X);
   viewPlaneControls->add(&tcl_wfr_xlate_Y);
@@ -5836,7 +5921,7 @@ void ParseArgs (int argc, char ** argv,
         spm_verbosity = atoi(argv[i]);
       } else if (strcmp(argv[i], "-z") == 0) {
         if (++i >= argc) Usage(argv[0]);
-        istate->afm.stm_z_scale = atof(argv[i]);
+        istate->stm_z_scale = atof(argv[i]);
 
       } else if (strcmp(argv[i], "-fmods") == 0) {
         if (++i >= argc) Usage(argv[0]);
@@ -6661,7 +6746,7 @@ void update_rtt (void) {
   struct timeval rtt;
   struct timezone tz;
   double val = 0.0;
-  if ((!microscope_connection)||(microscope->ReadMode() == READ_STREAM)) return;
+  if ((!microscope_connection)||(read_mode == READ_STREAM)) return;
 
   /* gettimeofday takes two arguments */
   gettimeofday(&now,&tz);
@@ -6691,20 +6776,21 @@ void update_rtt (void) {
   lasttime = now;
 }
 
-static int createNewMicroscope( MicroscapeInitializationState &istate,
+/** Somewhat misnamed, currently. Only creates a microscope if we
+ * are reading a stream or connecting live - for a static file, just
+ * creates a data set. 
+ */
+static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
    vrpn_Connection * c) 
 {
-    VERBOSE(1, "Creating a new microscope");
+  VERBOSE(1, "Creating a new microscope");
 
   // First tear down callbacks & collaboration state to avoid
   // triggering unwanted calls.
+  if (microscope)  teardownStateCallbacks(microscope);
+  if (dataset) teardownCallbacks(dataset);
+  if (microscope) teardownCallbacks(microscope);
 
-  if (microscope && dataset) {
-    teardownStateCallbacks(microscope);
-    teardownCallbacks(dataset, microscope);
-    teardownCallbacks(dataset);
-    teardownCallbacks(microscope);
-  }
   if (graphics && dataset) {
     teardownCallbacks(dataset, graphics);
     teardownCallbacks(colorMapUI, dataset, graphics);
@@ -6727,28 +6813,29 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
           delete [] hnbuf;
       }
   }
-
-  nmm_Microscope_Remote *
-    new_microscope = new nmm_Microscope_Remote (istate.afm, c);
-    if (!new_microscope) {
-        //display_error_dialog( "Couldn't create Microscope Remote.\n");
-      return -1;
-    }
-
-    nmb_Dataset *
+  nmm_Microscope_Remote * new_microscope = NULL;
+  // Only create a new microscope if we are reading a stream, or live. 
+  if (istate.ReadMode() != READ_FILE) {
+      new_microscope = new nmm_Microscope_Remote (istate.afm, c);
+      if (!new_microscope) {
+          //display_error_dialog( "Couldn't create Microscope Remote.\n");
+          return -1;
+      }
+  }
+  read_mode = istate.ReadMode();
+  nmb_Dataset *
     new_dataset = new nmb_Dataset( istate.use_file_resolution,
 				   istate.afm.image.grid_resolution, 
 				   istate.afm.image.grid_resolution,
 				   istate.x_min, istate.x_max,
 				   istate.y_min, istate.y_max, 
-				   new_microscope->ReadMode(),
+				   read_mode,
 				   (const char **) istate.stm_file_names,
 				   istate.num_stm_files, 
 				   (const char **) istate.image_file_names,
 				   istate.num_image_files,
 				   allocate_TclNet_string,
-				   allocate_Tclvar_list_of_strings,
-				   new_microscope->d_topoFile );
+				   allocate_Tclvar_list_of_strings);
     
     if (!new_dataset) {
         //display_error_dialog( "Cannot initialize dataset.\n");
@@ -6760,76 +6847,77 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
         graphics->changeDataset(new_dataset);
     }
 
-    if (new_microscope->ReadMode() == READ_FILE)
+    if (read_mode == READ_FILE)
       guessAdhesionNames(new_dataset);
 
     VERBOSE(2, "Guessed adhesion names.");
 
-    new_microscope->InitializeDataset(new_dataset);
-    VERBOSE(1, "Initialized dataset");
-    new_microscope->InitializeDecoration(decoration);
-    VERBOSE(1, "Initialized decoration");
-    new_microscope->InitializeTcl(tcl_script_dir);
-    VERBOSE(1, "Initialized tcl");
+    if (new_microscope) {
+        new_microscope->InitializeDataset(new_dataset);
+        VERBOSE(1, "Initialized dataset");
+        new_microscope->InitializeDecoration(decoration);
+        VERBOSE(1, "Initialized decoration");
+        new_microscope->InitializeTcl(tcl_script_dir);
+        VERBOSE(1, "Initialized tcl");
 
-    setupStateCallbacks(new_microscope);
-    VERBOSE(1, "Setup state callbacks");
+        setupStateCallbacks(new_microscope);
+        VERBOSE(1, "Setup state callbacks");
 
+    }
     // Internal order dependence, must be called before setupCallbacks(d,g)
-    setupCallbacks(new_dataset, new_microscope);
-    VERBOSE(1, "Setup dataset+microscope callbacks");
     setupCallbacks(new_dataset);
     VERBOSE(1, "Setup dataset callbacks");
-    setupCallbacks(new_microscope);
+    if (new_microscope) setupCallbacks(new_microscope);
     VERBOSE(1, "Setup microscope callbacks");
 
     if (graphics) {
       // First time through graphics will be NULL. 
       // In that case these callbacks are setup in main() 
       // after graphics is constructed
-      new_microscope->registerImageModeHandler(clear_polyline, graphics);
+      if (new_microscope) new_microscope->registerImageModeHandler(clear_polyline, graphics);
       setupCallbacks(new_dataset, graphics);
       setupCallbacks(colorMapUI, new_dataset, graphics);
     }
 
     if (collaborationManager) {
-      setupSynchronization(collaborationManager, new_dataset, new_microscope);
+      if (new_microscope) setupSynchronization(collaborationManager, new_dataset, new_microscope);
     }
 
-    // XXX ATH memory leak
-    ModFile * modfile = new ModFile;
+    if (new_microscope) {
+        // XXX ATH memory leak
+        ModFile * modfile = new ModFile;
 
-    new_microscope->registerPointDataHandler(ModFile::ReceiveNewPoint, 
+        new_microscope->registerPointDataHandler(ModFile::ReceiveNewPoint, 
 					     modfile);
-    new_microscope->registerModifyModeHandler(ModFile::EnterModifyMode, 
+        new_microscope->registerModifyModeHandler(ModFile::EnterModifyMode, 
 					      modfile);
-    new_microscope->registerImageModeHandler(ModFile::EnterImageMode, modfile);
-    VERBOSE(1, "Created new mod file");
+        new_microscope->registerImageModeHandler(ModFile::EnterImageMode, modfile);
+        VERBOSE(1, "Created new mod file");
 
-    // display modifications on a strip chart
+        // display modifications on a strip chart
 
-    new_microscope->registerPointDataHandler(GraphMod::ReceiveNewPoint, 
+        new_microscope->registerPointDataHandler(GraphMod::ReceiveNewPoint, 
 					     new_microscope->graphmod);
-    new_microscope->registerModifyModeHandler(GraphMod::EnterModifyMode, 
+        new_microscope->registerModifyModeHandler(GraphMod::EnterModifyMode, 
 					      new_microscope->graphmod);
-    new_microscope->registerImageModeHandler(GraphMod::EnterImageMode, 
+        new_microscope->registerImageModeHandler(GraphMod::EnterImageMode, 
 					     new_microscope->graphmod);
-    new_microscope->registerScanlineModeHandler(GraphMod::EnterScanlineMode,
+        new_microscope->registerScanlineModeHandler(GraphMod::EnterScanlineMode,
 						new_microscope->graphmod);
-    new_microscope->registerScanlineDataHandler(GraphMod::ReceiveNewScanline,
+        new_microscope->registerScanlineDataHandler(GraphMod::ReceiveNewScanline,
 						new_microscope->graphmod);
 
-    VERBOSE(1, "Created new GraphMod");
+        VERBOSE(1, "Created new GraphMod");
 
-    new_microscope->registerImageModeHandler(invalidate_directz_forces, 
+        new_microscope->registerImageModeHandler(invalidate_directz_forces, 
 					     new_microscope);
-    // Allow another result to be requested when the last is received
-    // when using the Slow Line tool. 
-    new_microscope->registerPointDataHandler(slow_line_ReceiveNewPoint, 
+        // Allow another result to be requested when the last is received
+        // when using the Slow Line tool. 
+        new_microscope->registerPointDataHandler(slow_line_ReceiveNewPoint, 
 					     new_microscope);
-    new_microscope->registerPointDataHandler(optimize_now_ReceiveNewPoint, 
+        new_microscope->registerPointDataHandler(optimize_now_ReceiveNewPoint, 
 					     new_microscope);
-
+    }
     //draw measure lines
     VERBOSE(1, "Initializing measure lines");
 
@@ -6837,17 +6925,21 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     if (height_plane == NULL) { 
        height_plane = new_dataset->ensureHeightPlane(); 
     }
+    height_plane->setScale(istate.stm_z_scale);
+
     resetMeasureLines(new_dataset, decoration);
     decoration->aimLine.moveTo(height_plane->minX(), height_plane->maxY(),
                             height_plane);
 
     VERBOSE(1, "Before SPM initialization");
-    if (new_microscope->Initialize()) {
-	//display_error_dialog( "Cannot initialize the spm\n");
-	return(-1);
+    if (new_microscope) {
+        if (new_microscope->Initialize()) {
+            //display_error_dialog( "Cannot initialize the spm\n");
+            return(-1);
+        }
     }
 
-    linkMicroscopeToInterface(new_microscope);
+    if (new_microscope) linkMicroscopeToInterface(new_microscope);
 
     if(alignerUI) {
       if (imageManager) {
@@ -6891,7 +6983,7 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     // Clear any remembered modifications
     forget_modification_data();
 
-    microscope->requestMutex();
+    if (microscope) microscope->requestMutex();
 
     return 0;
 }
@@ -7213,6 +7305,8 @@ int main (int argc, char* argv[])
     /* Parse the command line */
     ParseArgs(argc, argv, &istate);
 
+    stm_z_scale = istate.stm_z_scale;
+
     /* Check set-up for indexing mode */
     if( istate.index_mode == VRPN_TRUE ){
         if( ! ( istate.afm.readingStreamFile || istate.num_stm_files > 0 ) ){
@@ -7261,12 +7355,11 @@ int main (int argc, char* argv[])
 
     VERBOSE(1,"Default microscope initialization");
     openDefaultMicroscope();
-//      if (createNewMicroscope(istate, microscope_connection)) {
+//      if (createNewDatasetOrMicroscope(istate, microscope_connection)) {
 //        display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
 //        exit(0);
 //      }
     //fprintf(stderr, "Microscope initialized\n");
-
     createGraphics(istate);
 
     setupCallbacks(decoration);
@@ -7301,10 +7394,10 @@ int main (int argc, char* argv[])
     
     CenterUbergraphics();
 
-    // These calls are duplicated in createNewMicroscope, 
-    // but we do it here too because createNewMicroscope is called above
+    // These calls are duplicated in createNewDatasetOrMicroscope, 
+    // but we do it here too because createNewDatasetOrMicroscope is called above
     // when graphics is NULL.
-    microscope->registerImageModeHandler(clear_polyline, graphics);
+    if (microscope) microscope->registerImageModeHandler(clear_polyline, graphics);
     setupCallbacks(dataset, graphics);
 
     // initialize graphics
@@ -7425,12 +7518,12 @@ int main (int argc, char* argv[])
 
   initializeInteraction();
 
-  // did these in createNewMicroscope() but things were NULL then.
-  linkMicroscopeToInterface(microscope);
+  // did these in createNewDatasetOrMicroscope() but things were NULL then.
+  if (microscope) linkMicroscopeToInterface(microscope);
     // This call is duplicated in the nmb_SharedDevice constructor,
     // but Tcl isn't initialized then so all the user interface stuff
     // doesn't happen.
-  microscope->requestMutex();
+  if (microscope) microscope->requestMutex();
 
   // TCH 19 Feb 01 HACK - don't open graphics windows in this thread!
   // We could *probably* get away with it by just calling glutInit();
@@ -7519,21 +7612,21 @@ int main (int argc, char* argv[])
 
         // Handle other command line arguments which might have 
         // been passed to the microscope, like -f or -fi
-        createNewMicroscope(istate, NULL);
+        createNewDatasetOrMicroscope(istate, NULL);
 
     }
 
 
-//      if (createNewMicroscope(istate, microscope_connection)) {
+//      if (createNewDatasetOrMicroscope(istate, microscope_connection)) {
 //        display_fatal_error_dialog( "Couldn't create Microscope Remote.\n");
 //        exit(0);
 //      }
     // When openStreamFilename changes, we try to open a stream,
-    // which will call createNewMicroscope
+    // which will call createNewDatasetOrMicroscope
     openStreamFilename.addCallback
 	(handle_openStreamFilename_change, &istate);
     // When openSPMDevicName changes, we try to open an SPM connection,
-    // which will call createNewMicroscope
+    // which will call createNewDatasetOrMicroscope
     openSPMDeviceName.addCallback
 	(handle_openSPMDeviceName_change, &istate);
 
@@ -7558,7 +7651,7 @@ int main (int argc, char* argv[])
   collaborationManager->initialize(vrpnHandTracker, NULL,
                                    handle_peer_sync_change);
 
-  setupSynchronization(collaborationManager, dataset, microscope);
+  if (microscope) setupSynchronization(collaborationManager, dataset, microscope);
 
   // ----------------------
   // Auxiliary device initialization. 
@@ -7626,7 +7719,7 @@ int main (int argc, char* argv[])
     if (ohmmeter != NULL) {
       the_french_ohmmeter_ui = new Ohmmeter (Tcl_Interpreter::getInterpreter(),
                                              tcl_script_dir, ohmmeter);
-      the_french_ohmmeter_ui->setMicroscope(microscope);
+      if (microscope) the_french_ohmmeter_ui->setMicroscope(microscope);
     }
   }
   
@@ -7756,9 +7849,9 @@ int main (int argc, char* argv[])
   handle_replay_rate_change (decoration->rateOfTime, NULL);
   
 
-  // did these in createNewMicroscope() but things were NULL then.
-  linkMicroscopeToInterface(microscope);
-  microscope->requestMutex();
+  // did these in createNewDatasetOrMicroscope() but things were NULL then.
+  if (microscope) linkMicroscopeToInterface(microscope);
+  if (microscope) microscope->requestMutex();
 
   // This should be activated by setupCallbacks(graphics), but doesn't
   // seem to be?
@@ -7821,7 +7914,7 @@ VERBOSE(1, "Starting timing");
 gettimeofday(&time1,&zone1);
 gettimeofday(&d_time,&zone1);
 gettimeofday(&d_last_time,&zone1);
-microscope->ResetClock();
+if (microscope) microscope->ResetClock();
 
   graphicsTimer.start();
   collaborationTimer.start();
@@ -8100,8 +8193,8 @@ vrpn_Connection* c;
         old_value_of_rate_knob = new_value_of_rate_knob;
       }
 
-      if ((microscope->ReadMode() == READ_DEVICE) ||
-          (microscope->ReadMode() == READ_STREAM)) {
+      if (microscope && ((read_mode == READ_DEVICE) ||
+          (read_mode == READ_STREAM))) {
 
 #ifndef NO_XWINDOWS
 	if (xenable)
@@ -8154,7 +8247,7 @@ vrpn_Connection* c;
       }
 
     /* Check for exposure event of the window */
-    //if((microscope->ReadMode()==READ_FILE) && (xenable)) { }
+    //if((read_mode==READ_FILE) && (xenable)) { }
     // Changed TCH 6 May 98 to allow redraws regardless of
     // input type.  We don't know why it was originally limited
     // only to static images.
@@ -8184,7 +8277,7 @@ vrpn_Connection* c;
 
     // Have the active sets update the microscape data sets
     VERBOSE(4, "  Updating scan and point sets");
-    if (microscope->haveMutex()) {
+    if (microscope && microscope->haveMutex()) {
       microscope->state.data.scan_channels->Update_microscope(microscope);
       microscope->state.data.point_channels->Update_microscope(microscope);
       // XXX What? No forcecurve channels ? - no, they are
@@ -8509,9 +8602,9 @@ void handleCharacterCommand (char* character, vrpn_bool* /* donePtr */,
 	    case 'B': {		/* Boustrophedonic scan */
 
 			/* Tell it scan style */
-			microscope->state.do_raster = VRPN_FALSE;
+			if (microscope) microscope->state.do_raster = VRPN_FALSE;
 			/* Send the commands to the server */
-			if (microscope->SetScanStyle() == -1) {
+			if (microscope && (microscope->SetScanStyle() == -1)) {
 				perror("Could not write to server");
 				dataset->done = VRPN_TRUE;
 			}
@@ -8524,8 +8617,8 @@ void handleCharacterCommand (char* character, vrpn_bool* /* donePtr */,
 	    case 'R': {		/* Raster scan */
 
 			/* Tell it scan style */
-			microscope->state.do_raster = VRPN_TRUE;
-                        if (microscope->SetScanStyle() == -1) {
+			if (microscope) microscope->state.do_raster = VRPN_TRUE;
+                        if (microscope && (microscope->SetScanStyle() == -1)) {
 				perror("Could not write to server");
 				dataset->done = VRPN_TRUE;
 			}
@@ -8536,43 +8629,47 @@ void handleCharacterCommand (char* character, vrpn_bool* /* donePtr */,
 		break;
 
 	    case '+':		/* Take forward raster information */
-		microscope->state.raster_scan_backwards = VRPN_FALSE;
+		if (microscope) microscope->state.raster_scan_backwards = VRPN_FALSE;
 		printf("Take forward raster scan information\n");
 		break;
 
 	    case '-':		/* Take backwards raster information */
-		microscope->state.raster_scan_backwards = VRPN_TRUE;
+		if (microscope) microscope->state.raster_scan_backwards = VRPN_TRUE;
 		printf("Take backwards raster scan information\n");
 		break;
 
 	    case 0177:		/* ^8 Splat data into grid */
-		microscope->state.doSplat = (!microscope->state.doSplat);
-		printf("%s into grid\n", 
+		if (microscope) {
+                    microscope->state.doSplat = (!microscope->state.doSplat);
+                    printf("%s into grid\n", 
 			(microscope->state.doSplat ? "Splatting" : "Not splatting" ) );
+                }
 		break;
 
 	    case '~':		/* Drift compensation */
-		microscope->state.doDriftComp = (!microscope->state.doDriftComp);
-		printf("Drift compensation %s\n", 
+		if (microscope) {
+                    microscope->state.doDriftComp = (!microscope->state.doDriftComp);
+                    printf("Drift compensation %s\n", 
 			(microscope->state.doDriftComp ? "on" : "off" ) );
+                }
 		break;
 
 		// scanline nudge controls:
 		case 'f':
 			printf("nudging scanline left\n");
-			microscope->state.scanline.moveScanlineRelative(0, -1);
+			if (microscope) microscope->state.scanline.moveScanlineRelative(0, -1);
 		break;
 		case 'g':
 			printf("nudging scanline backward\n");
-			microscope->state.scanline.moveScanlineRelative(-1, 0);
+			if (microscope) microscope->state.scanline.moveScanlineRelative(-1, 0);
 		break;
 		case 'h':
 			printf("nudging scanline forward\n");
-			microscope->state.scanline.moveScanlineRelative(+1, 0);
+			if (microscope) microscope->state.scanline.moveScanlineRelative(+1, 0);
 		break;
 		case 'j':
 			printf("nudging scanline right\n");
-			microscope->state.scanline.moveScanlineRelative(0, +1);
+			if (microscope) microscope->state.scanline.moveScanlineRelative(0, +1);
 		break;
 
 	    default:
@@ -8978,6 +9075,7 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
       
       /* See if the last result point was one we asked for.  If so, print
        * it. */
+      if (microscope) {
       if ( NM_NEAR(wanted_x, microscope->state.data.inputPoint->x()) && 
 	   NM_NEAR(wanted_y, microscope->state.data.inputPoint->y()) ) {
 	Point_value *val = microscope->state.data.inputPoint->head();
@@ -8993,7 +9091,7 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 	printf("\n");
 	wanted_x = -2;
       }
-      
+      }
       /* Respond to mouse button pressed in the window */
       xbutton_flag=button_pressed_in_window(&x,&y);
       
@@ -9065,7 +9163,7 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 	    // xmode is set/cleared by pressing w/W
 	    
 	    if(xmode==0) {
-	      if(microscope->ReadMode()!=READ_DEVICE){
+	      if(!microscope || read_mode!=READ_DEVICE){
 		printf("Button two can only be used in read device mode\n");
 		return(-1);
 	      }
@@ -9108,7 +9206,7 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 	    
 	  case 3:	/* Request point scan and print it for button 3 */
 	    
-	    if(microscope->ReadMode()!=READ_DEVICE){
+	    if(!microscope || read_mode!=READ_DEVICE){
 	      printf("Button three can only be used in read device mode\n");
 	      return(-1);
 	    }
@@ -9137,7 +9235,7 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 	** press event, now just beef up the force and go there.
 	*/
 	
-	if(microscope->ReadMode()!=READ_DEVICE){
+	if(!microscope ||read_mode!=READ_DEVICE){
 	  printf("Button two can only be used in read device mode\n");
 	  return(-1);
 	}
@@ -9155,7 +9253,7 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 	  switch (button_released_in_window(&x,&y)) {
 	    
 	  case 2:
-	    if(microscope->ReadMode()!=READ_DEVICE){
+	    if(!microscope ||read_mode!=READ_DEVICE){
 	      printf("Button two can only be used in read device mode\n");
 	      return(-1);
 	    }
@@ -9168,7 +9266,7 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 	    break;
 	    
 	  case 3:	   
-	    if(microscope->ReadMode()!=READ_DEVICE){
+	    if(!microscope ||read_mode!=READ_DEVICE){
 	      printf("Button three can only be used in read device mode\n");
 	      return(-1);}
 	    

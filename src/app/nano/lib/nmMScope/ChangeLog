@@ -1,3 +1,12 @@
+2002-02-15  Aron Helser  <helser@cs.unc.edu>
+
+	* AFMState.Ch: Removed stm_z_scale, read_mode. These don't depend
+	on microscope object. Moved to microscape.c. Some comment changes.
+	* nmm_MicroscopeRemote.C: handle move of ReadMode, stm_z_scale to
+	nmb_Dataset.  
+	* nmm_MicroscopeRemote.hdef: same
+	* nmm_MicroscopeRemoteGen.Cdef: same
+
 2002-01-31  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmMScope.dsp:  builds with non-static run-time libraries.

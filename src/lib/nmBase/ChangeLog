@@ -1,3 +1,9 @@
+2002-02-15  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_Dataset.Ch (nmb_Dataset): Added d_topoFile data member,
+	ReadMode method, as these belong here. 
+	(loadFile): use d_topoFile data member.
+
 2002-02-13  Aron Helser  <helser@cs.unc.edu>
 
 	* Topo.C (imageToTopoData): Fixed rounding error. Written and read

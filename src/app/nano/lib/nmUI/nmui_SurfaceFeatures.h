@@ -26,25 +26,25 @@ class nmui_SurfaceFeatureStrategy {
 
     // ACCESSORS
 
-    virtual vrpn_bool buzzingEnabled (nmm_Microscope_Remote *) const;
+    virtual vrpn_bool buzzingEnabled (nmb_Dataset *, nmm_Microscope_Remote *) const;
       ///< Default implementation returns vrpn_false;
-    virtual vrpn_bool bumpsEnabled (nmm_Microscope_Remote *) const;
+    virtual vrpn_bool bumpsEnabled (nmb_Dataset *, nmm_Microscope_Remote *) const;
       ///< Default implementation returns vrpn_false;
 
     // MANIPULATORS
     // These could be declared const, but I don't want to constrain
     // future implementations.
 
-    virtual double pointAdhesionValue (nmm_Microscope_Remote * scope);
+    virtual double pointAdhesionValue (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Default implementation returns 0.
-    virtual double scaledPointBuzzAmplitude (nmm_Microscope_Remote * scope);
+    virtual double scaledPointBuzzAmplitude (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Default implementation returns 0.
-    virtual double scaledPointBumpSizeValue (nmm_Microscope_Remote * scope);
+    virtual double scaledPointBumpSizeValue (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Default implementation returns 0.
-    virtual double pointComplianceValue (nmm_Microscope_Remote * scope);
+    virtual double pointComplianceValue (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Default implementation returns the conventional default/error value:
       ///< max(0.0, Arm_knobs[FORCE_KNOB]).
-    virtual double pointFrictionValue (nmm_Microscope_Remote * scope);
+    virtual double pointFrictionValue (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Default implementation returns the conventional default/error value:
       ///< max(0.0, Arm_knobs[FRICTION_KNOB]).
 
@@ -53,7 +53,7 @@ class nmui_SurfaceFeatureStrategy {
     virtual double magicBumpSize (double) = 0;
       ///< Scale bump wavelength by context-dependent magic numbers.
 
-    virtual double dynamicFrictionKspring (double staticFrictionKspring, nmm_Microscope_Remote * scope);
+    virtual double dynamicFrictionKspring (double staticFrictionKspring, nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Default implementation returns 0.5 * kSpring.
 
 
@@ -75,7 +75,7 @@ class nmui_SurfaceFeatures {
 
     // MANIPULATORS
 
-    void update (nmm_Microscope_Remote * scope);
+    void update (nmb_Dataset *, nmm_Microscope_Remote * scope);
 
     void setSurfaceFeatureStrategy (nmui_SurfaceFeatureStrategy *);
 
@@ -94,11 +94,11 @@ class nmui_SurfaceFeatures {
 
   protected:
 
-    void specifyAdhesion (nmm_Microscope_Remote * scope);
-    void specifyBuzzAmplitude (nmm_Microscope_Remote * scope);
-    void specifyBumpSize (nmm_Microscope_Remote * scope);
-    void specifyCompliance (nmm_Microscope_Remote * scope);
-    void specifyFriction (nmm_Microscope_Remote * scope);
+    void specifyAdhesion (nmb_Dataset *, nmm_Microscope_Remote * scope);
+    void specifyBuzzAmplitude (nmb_Dataset *, nmm_Microscope_Remote * scope);
+    void specifyBumpSize (nmb_Dataset *, nmm_Microscope_Remote * scope);
+    void specifyCompliance (nmb_Dataset *, nmm_Microscope_Remote * scope);
+    void specifyFriction (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Takes the local value of friction, scales it with respect
       ///< to friction_slider, linearizes it if necessary, and passes
       ///< the result to setStaticFriction() and setDynamicFriction().
@@ -143,20 +143,20 @@ class nmui_PointFeatures : public nmui_SurfaceFeatureStrategy {
 
     // ACCESSORS
 
-    virtual vrpn_bool buzzingEnabled (nmm_Microscope_Remote *) const;
-    virtual vrpn_bool bumpsEnabled (nmm_Microscope_Remote *) const;
+    virtual vrpn_bool buzzingEnabled (nmb_Dataset *, nmm_Microscope_Remote *) const;
+    virtual vrpn_bool bumpsEnabled (nmb_Dataset *, nmm_Microscope_Remote *) const;
 
     // MANIPULATORS
 
-    virtual double pointAdhesionValue (nmm_Microscope_Remote * scope);
+    virtual double pointAdhesionValue (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Looks up the adhesion in microscope->state.data.inputPoint.
-    virtual double scaledPointBuzzAmplitude (nmm_Microscope_Remote * scope);
+    virtual double scaledPointBuzzAmplitude (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Looks up the buzz size in microscope->state.data.inputPoint
       ///< and scales by (buzz_slider_max - buzz_slider_min).
-    virtual double scaledPointBumpSizeValue (nmm_Microscope_Remote * scope);
+    virtual double scaledPointBumpSizeValue (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Looks up the bump size in microscope->state.data.inputPoint
       ///< and scales by (bump_slider_max - bump_slider_min).
-    virtual double pointFrictionValue (nmm_Microscope_Remote * scope);
+    virtual double pointFrictionValue (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Looks up the friction value in microscope->state.data.inputPoint.
 
 
@@ -167,7 +167,7 @@ class nmui_PointFeatures : public nmui_SurfaceFeatureStrategy {
       ///< Returns 0.01 * wavelength to scale from centimeters to meters.
 
 
-    virtual double dynamicFrictionKspring (double kS, nmm_Microscope_Remote * scope);
+    virtual double dynamicFrictionKspring (double kS, nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Dynamic friction at points on the grid is fixed to the value of
       ///< max(0.0, Arm_knobs[FRICTION_KNOB]), so we ignore kS and use
       ///< nmui_SurfaceFeatureStrategy::pointFrictionValue() instead.
@@ -189,20 +189,20 @@ class nmui_GridFeatures : public nmui_SurfaceFeatureStrategy {
 
     // ACCESSORS
 
-    virtual vrpn_bool buzzingEnabled (nmm_Microscope_Remote *) const;
-    virtual vrpn_bool bumpsEnabled (nmm_Microscope_Remote *) const;
+    virtual vrpn_bool buzzingEnabled (nmb_Dataset *, nmm_Microscope_Remote *) const;
+    virtual vrpn_bool bumpsEnabled (nmb_Dataset *, nmm_Microscope_Remote *) const;
 
     // MANIPULATORS
 
-    virtual double pointAdhesionValue (nmm_Microscope_Remote * scope);
+    virtual double pointAdhesionValue (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Looks up plane->value(x, y).
-    virtual double scaledPointBumpSizeValue (nmm_Microscope_Remote * scope);
+    virtual double scaledPointBumpSizeValue (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Looks up plane->value(x, y) and scales by
       ///< (plane->maxValue() - plane->minValue()).
-    virtual double scaledPointBuzzAmplitude (nmm_Microscope_Remote * scope);
-    virtual double pointComplianceValue (nmm_Microscope_Remote * scope);
+    virtual double scaledPointBuzzAmplitude (nmb_Dataset *, nmm_Microscope_Remote * scope);
+    virtual double pointComplianceValue (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Looks up plane->value(x, y).
-    virtual double pointFrictionValue (nmm_Microscope_Remote * scope);
+    virtual double pointFrictionValue (nmb_Dataset *, nmm_Microscope_Remote * scope);
       ///< Looks up plane->value(x, y).
 
 

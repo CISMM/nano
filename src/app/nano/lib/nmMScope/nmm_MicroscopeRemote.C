@@ -253,7 +253,6 @@ long nmm_Microscope_Remote::InitializeDataset (nmb_Dataset * ds) {
 
   state.data.Initialize(ds);
   plane = ds->ensureHeightPlane();
-  plane->setScale(state.stm_z_scale);
   state.SetDefaultScanlineForRegion(ds);
     // safest to SetDefaultScanlineForRegion after ensureHeightPlane(),
     // since it assumes a height plane exists.
@@ -288,7 +287,7 @@ long nmm_Microscope_Remote::InitializeTcl (const char * dir) {
 // Thirdtech Initialize Routine
 long nmm_Microscope_Remote::Initialize (void) {
 
-  if (ReadMode() == READ_DEVICE) {
+  if (d_dataset->readMode() == READ_DEVICE) {
     // XXX Bug in VRPN. If we're already connected before we register the
     // handle_GotConnection handlers, they never get executed. So we'll call
     // them explicitly, if needed.
@@ -303,7 +302,7 @@ long nmm_Microscope_Remote::Initialize (void) {
     d_connection->register_handler(d_GotConnection_type,
                                    handle_GotConnection2,
                                    this);
-  } else if (ReadMode() == READ_STREAM) {
+  } else if (d_dataset->readMode() == READ_STREAM) {
     if (!d_connection->get_File_Connection()) {
       fprintf(stderr,"nmm_Microscope_Remote::InitStream():  "
               "could not open input log file %c\n", 0x08);
@@ -1363,7 +1362,7 @@ int nmm_Microscope_Remote::getTimeSinceConnected(void) {
   timeval elapsedTime;
 
   if( !d_connection ) return 0; // we're not really connected
-  switch (ReadMode()) {
+  switch (d_dataset->readMode()) {
     case READ_DEVICE:
       d_connection->time_since_connection_open(&elapsedTime);
       d_decoration->elapsedTime = elapsedTime.tv_sec;
@@ -1489,7 +1488,7 @@ long nmm_Microscope_Remote::QueryScanRange (void) {
 }
 
 
-
+/* Moved to nmb_Dataset
 int nmm_Microscope_Remote::ReadMode()
 {
     return state.read_mode;
@@ -1504,7 +1503,7 @@ void nmm_Microscope_Remote::ReadMode(int rm)
         fprintf(stderr, "nmm_Microscope_Remote Invalid Read Mode.\n");
     }
 }
-
+*/
 
 
 

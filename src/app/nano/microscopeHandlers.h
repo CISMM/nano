@@ -49,8 +49,6 @@ void handle_linescan_start (vrpn_int32, void *_mptr);
 void handle_linescan_position (vrpn_float64 , void *_mptr);
 void handle_scanline_position_display_change(vrpn_int32, void *_mptr);
 
-void handle_z_scale_change (vrpn_float64, void * _mptr);
-
 void handle_image_accept (vrpn_int32, void * _mptr);
 void handle_modify_accept (vrpn_int32, void * _mptr);
 void handle_scanline_accept (vrpn_int32, void * _mptr);

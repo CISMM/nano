@@ -222,16 +222,16 @@ int height_at_hand_display (void * data) {
 	x_loc = worldFromHand.xlate[X];
 	y_loc = worldFromHand.xlate[Y];
 // 	printf("%f %f\n", x_loc, y_loc);
-	if (x_loc < plane->minX()) x_loc = plane->minX();
-	if (x_loc > plane->maxX()) x_loc = plane->maxX();
-	if (y_loc < plane->minY()) y_loc = plane->minY();
-	if (y_loc > plane->maxY()) y_loc = plane->maxY();
-
 	// Find the height of the surface at the current hand location
 	if (plane == NULL) {
 		sprintf(message,
 		"Height under hand is unknown");
 	} else {
+		if (x_loc < plane->minX()) x_loc = plane->minX();
+		if (x_loc > plane->maxX()) x_loc = plane->maxX();
+		if (y_loc < plane->minY()) y_loc = plane->minY();
+		if (y_loc > plane->maxY()) y_loc = plane->maxY();
+
             double result;
             plane->valueAt(&result, x_loc,y_loc);
 		sprintf(message,

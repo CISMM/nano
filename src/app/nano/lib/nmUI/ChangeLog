@@ -1,3 +1,11 @@
+2002-02-15  Aron Helser  <helser@cs.unc.edu>
+
+	* nmui_HapticSurface.Ch: All functions taking microscope point
+	changed to also take nmb_Dataset pointer, so if microscope is
+	null, touching static grid will still work. 
+
+	* nmui_SurfaceFeatures.Ch: same
+
 2002-01-31  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmUI.dsp:  builds with non-static run-time libraries.

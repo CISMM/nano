@@ -1,3 +1,27 @@
+2002-02-15  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.c (createNewDatasetOrMicroscope): Changed so it
+	doesn't create a microscope object when reading static files. All
+	other changes were required by this lack of a microscope
+	object. Several confused dependencies were cleared up. 
+
+	(handle_z_dataset_change): moved here , doesn't depend on
+	microscope object.
+	(stm_z_scale): same
+	(handle_z_scale_change): same
+	(MicroscapeInitializationState): Added ReadMode method.
+	(setupCallbacks): Moved some contents to handle null microscope. 
+	(teardownCallbacks): same
+	Changes to handle move of ReadMode() into nmb_Dataset.
+
+	* microscopeHandlers.C (handle_z_scale_change): removed.
+	(stm_z_scale): removed.
+	(handle_z_dataset_change): removed
+	
+	* interaction.c: Added check for null microscope object, in
+	several functions. handle move of ReadMode() into nmb_Dataset.
+	* minit.c: handle move of ReadMode() into nmb_Dataset.
+	
 2002-02-08  Aron Helser  <helser@cs.unc.edu>
 
 	* Makefile (USES_EXTERNAL_LIBS): Add shell32 to support microscape.c

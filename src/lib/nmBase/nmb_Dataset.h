@@ -11,6 +11,7 @@
 class BCGrid;  // from BCGrid.h
 class BCPlane;  // from BCPlane.h
 class nmb_String;  // from nmb_String.h
+class TopoFile; // from Topo.h
 
 #include "nmb_Types.h"  // for PointType
 #include "nmb_Image.h"  // for nmb_ImageLIst
@@ -20,7 +21,6 @@ class nmb_String;  // from nmb_String.h
 #include "nmb_Subgrid.h"  // for range_of_change
 #endif
 
-#include "Topo.h"
 #include "nmb_CalculatedPlane.h"
 
 // class nmb_Dataset
@@ -43,8 +43,7 @@ class nmb_Dataset {
                  int readMode, const char ** fileNames, int numFiles,
 		 const char ** imageFileNames, int numImageFiles,
                  nmb_String * (* string_allocator) (const char *),
-                 nmb_ListOfStrings * (* list_of_strings_allocator) (),
-                 TopoFile &topoFile);
+                 nmb_ListOfStrings * (* list_of_strings_allocator) ());
 
     // Destructor.
     ~nmb_Dataset (void);
@@ -96,10 +95,15 @@ class nmb_Dataset {
     vrpn_bool done;
       ///< 1 if a subroutine has failed and directs us to exit
 
+    TopoFile * d_topoFile;
+    ///< helps write out topo files, Read out of stream or AFM conn. 
 
+    int readMode() const { return inputGrid->readMode(); }
+      ///< Query the read mode, READ_DEVICE, READ_FILE or READ_STREAM
+    
 
     // MANIPULATORS
-    int loadFile(const char* file_name, TopoFile &topoFile);
+    int loadFile(const char* file_name);
       ///< Load file with the same grid size/region into this grid.
       ///< Load file with any grid size/region into image list. 
     int addImageToGrid(nmb_ImageGrid * new_image) ;

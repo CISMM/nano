@@ -35,43 +35,43 @@ nmui_SurfaceFeatureStrategy::~nmui_SurfaceFeatureStrategy (void) {
 }
 
 //virtual
-vrpn_bool nmui_SurfaceFeatureStrategy::buzzingEnabled (nmm_Microscope_Remote *) const {
+vrpn_bool nmui_SurfaceFeatureStrategy::buzzingEnabled (nmb_Dataset *, nmm_Microscope_Remote *) const {
   return vrpn_false;
 }
 
 //virtual
-vrpn_bool nmui_SurfaceFeatureStrategy::bumpsEnabled (nmm_Microscope_Remote *) const {
+vrpn_bool nmui_SurfaceFeatureStrategy::bumpsEnabled (nmb_Dataset *, nmm_Microscope_Remote *) const {
   return vrpn_false;
 }
 
 // virtual
-double nmui_SurfaceFeatureStrategy::pointAdhesionValue (nmm_Microscope_Remote * ) {
+double nmui_SurfaceFeatureStrategy::pointAdhesionValue (nmb_Dataset *, nmm_Microscope_Remote * ) {
   return 0.0;
 }
 
 // virtual
-double nmui_SurfaceFeatureStrategy::scaledPointBuzzAmplitude (nmm_Microscope_Remote * ) {
+double nmui_SurfaceFeatureStrategy::scaledPointBuzzAmplitude (nmb_Dataset *, nmm_Microscope_Remote * ) {
   return 0.0;
 }
 
 // virtual
-double nmui_SurfaceFeatureStrategy::scaledPointBumpSizeValue (nmm_Microscope_Remote * ) {
+double nmui_SurfaceFeatureStrategy::scaledPointBumpSizeValue (nmb_Dataset *, nmm_Microscope_Remote * ) {
   return 0.0;
 }
 
 // virtual
-double nmui_SurfaceFeatureStrategy::pointComplianceValue (nmm_Microscope_Remote * ) {
+double nmui_SurfaceFeatureStrategy::pointComplianceValue (nmb_Dataset *, nmm_Microscope_Remote * ) {
   return max( 0.01, min(1.0, (double)default_spring_k) );
 }
 
 // virtual
-double nmui_SurfaceFeatureStrategy::pointFrictionValue (nmm_Microscope_Remote * ) {
+double nmui_SurfaceFeatureStrategy::pointFrictionValue (nmb_Dataset *, nmm_Microscope_Remote * ) {
   return max(0.0, Arm_knobs[FRICTION_KNOB]);
 }
 
 // virtual
 double nmui_SurfaceFeatureStrategy::dynamicFrictionKspring
-        (double staticFrictionKspring, nmm_Microscope_Remote *) {
+        (double staticFrictionKspring, nmb_Dataset *, nmm_Microscope_Remote *) {
   return 0.5 * staticFrictionKspring;
 }
 
@@ -92,15 +92,15 @@ nmui_SurfaceFeatures::~nmui_SurfaceFeatures (void) {
 
 }
 
-void nmui_SurfaceFeatures::update (nmm_Microscope_Remote * scope) {
+void nmui_SurfaceFeatures::update (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
 
   if (d_strategy) {
 
-    specifyAdhesion(scope);
-    specifyBuzzAmplitude(scope);
-    specifyBumpSize(scope);
-    specifyCompliance(scope);
-    specifyFriction(scope);
+    specifyAdhesion(dataset, scope);
+    specifyBuzzAmplitude(dataset, scope);
+    specifyBumpSize(dataset, scope);
+    specifyCompliance(dataset, scope);
+    specifyFriction(dataset, scope);
 
   }
 
@@ -142,11 +142,11 @@ void nmui_SurfaceFeatures::setAdhesionConstant (double kAdh) {
 
 
 
-void nmui_SurfaceFeatures::specifyAdhesion (nmm_Microscope_Remote * scope) {
+void nmui_SurfaceFeatures::specifyAdhesion (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
   double adhesion_range;
   double adh;
 
-  adh = d_strategy->pointAdhesionValue(scope);
+  adh = d_strategy->pointAdhesionValue(dataset, scope);
 
   if (adhesion_slider_min != adhesion_slider_max) {
     adhesion_range = adhesion_slider_max - adhesion_slider_min;
@@ -161,15 +161,15 @@ void nmui_SurfaceFeatures::specifyAdhesion (nmm_Microscope_Remote * scope) {
   // do nothing
 }
 
-void nmui_SurfaceFeatures::specifyBuzzAmplitude (nmm_Microscope_Remote * scope) {
+void nmui_SurfaceFeatures::specifyBuzzAmplitude (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
   double amp;
 
-  if (!d_strategy->buzzingEnabled(scope)) {
+  if (!d_strategy->buzzingEnabled(dataset, scope)) {
     setBuzzing(0.0);
     return;
   }
 
-  amp = d_strategy->scaledPointBuzzAmplitude(scope);
+  amp = d_strategy->scaledPointBuzzAmplitude(dataset, scope);
 
   // Percieved magnitude of buzzing is proportional to x^0.95
   if (d_useLinearBuzzing) {
@@ -186,15 +186,15 @@ void nmui_SurfaceFeatures::specifyBuzzAmplitude (nmm_Microscope_Remote * scope) 
   setBuzzing(amp);
 }
 
-void nmui_SurfaceFeatures::specifyBumpSize (nmm_Microscope_Remote * scope) {
+void nmui_SurfaceFeatures::specifyBumpSize (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
   double wavelength;
 
-  if (!d_strategy->bumpsEnabled(scope)) {
+  if (!d_strategy->bumpsEnabled(dataset, scope)) {
     setSurfaceTexture(0.0);
     return;
   }
 
-  wavelength = d_strategy->scaledPointBumpSizeValue(scope);
+  wavelength = d_strategy->scaledPointBumpSizeValue(dataset, scope);
 
   // Percieved magnitude of bumps is proportional to lambda^0.86
   if (d_useLinearBumps) {
@@ -212,11 +212,11 @@ void nmui_SurfaceFeatures::specifyBumpSize (nmm_Microscope_Remote * scope) {
 
 }
 
-void nmui_SurfaceFeatures::specifyCompliance (nmm_Microscope_Remote * scope) {
+void nmui_SurfaceFeatures::specifyCompliance (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
   double compliance_range;
   double kS;
 
-  kS = d_strategy->pointComplianceValue(scope);
+  kS = d_strategy->pointComplianceValue(dataset, scope);
 
   if (compliance_slider_max != compliance_slider_min) {
     compliance_range = compliance_slider_max - compliance_slider_min;
@@ -239,13 +239,13 @@ void nmui_SurfaceFeatures::specifyCompliance (nmm_Microscope_Remote * scope) {
   setCompliance(kS);
 }
 
-void nmui_SurfaceFeatures::specifyFriction (nmm_Microscope_Remote * scope) {
+void nmui_SurfaceFeatures::specifyFriction (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
   double friction_range;
   double localValue;
   double kS;
   double dynamic_kS;
 
-  localValue = d_strategy->pointFrictionValue(scope);
+  localValue = d_strategy->pointFrictionValue(dataset, scope);
 
   if (friction_slider_max != friction_slider_min) {
     friction_range = friction_slider_max - friction_slider_min;
@@ -266,7 +266,7 @@ void nmui_SurfaceFeatures::specifyFriction (nmm_Microscope_Remote * scope) {
 
   }
 
-  dynamic_kS = d_strategy->dynamicFrictionKspring(kS, scope);
+  dynamic_kS = d_strategy->dynamicFrictionKspring(kS, dataset, scope);
   setFriction(kS, dynamic_kS);
 }
 
@@ -322,7 +322,11 @@ nmui_PointFeatures::~nmui_PointFeatures (void) {
 
 
 // virtual
-vrpn_bool nmui_PointFeatures::buzzingEnabled (nmm_Microscope_Remote * scope) const {
+vrpn_bool nmui_PointFeatures::buzzingEnabled (nmb_Dataset *, nmm_Microscope_Remote * scope) const {
+    if (!scope) { 
+        fprintf(stderr,"nmui_PointFeatures Error! no scope!\n"); 
+        return vrpn_false; 
+    }
   Point_value * value =
     scope->state.data.inputPoint->getValueByPlaneName
          (buzzPlaneName.string());
@@ -335,7 +339,11 @@ vrpn_bool nmui_PointFeatures::buzzingEnabled (nmm_Microscope_Remote * scope) con
 }
 
 // virtual
-vrpn_bool nmui_PointFeatures::bumpsEnabled (nmm_Microscope_Remote * scope) const {
+vrpn_bool nmui_PointFeatures::bumpsEnabled (nmb_Dataset *, nmm_Microscope_Remote * scope) const {
+    if (!scope) { 
+        fprintf(stderr,"nmui_PointFeatures Error! no scope!\n"); 
+        return vrpn_false; 
+    }
   Point_value * value =
     scope->state.data.inputPoint->getValueByPlaneName
          (bumpPlaneName.string());
@@ -349,20 +357,28 @@ vrpn_bool nmui_PointFeatures::bumpsEnabled (nmm_Microscope_Remote * scope) const
 
 
 // virtual
-double nmui_PointFeatures::pointAdhesionValue (nmm_Microscope_Remote * scope) {
+double nmui_PointFeatures::pointAdhesionValue (nmb_Dataset *, nmm_Microscope_Remote * scope) {
+    if (!scope) { 
+        fprintf(stderr,"nmui_PointFeatures Error! no scope!\n"); 
+        return nmui_SurfaceFeatureStrategy::pointAdhesionValue(dataset, scope);
+    }
   Point_value * value =
     scope->state.data.inputPoint->getValueByPlaneName
          (adhesionPlaneName.string());
 
   if (!value) {
-    return nmui_SurfaceFeatureStrategy::pointAdhesionValue(scope);
+    return nmui_SurfaceFeatureStrategy::pointAdhesionValue(dataset, scope);
   }
 
   return value->value();
 }
 
 // virtual
-double nmui_PointFeatures::scaledPointBuzzAmplitude (nmm_Microscope_Remote * scope) {
+double nmui_PointFeatures::scaledPointBuzzAmplitude (nmb_Dataset *, nmm_Microscope_Remote * scope) {
+    if (!scope) { 
+        fprintf(stderr,"nmui_PointFeatures Error! no scope!\n"); 
+        return 0.0;
+    }
   Point_value * value =
     scope->state.data.inputPoint->getValueByPlaneName
          (buzzPlaneName.string());
@@ -372,20 +388,28 @@ double nmui_PointFeatures::scaledPointBuzzAmplitude (nmm_Microscope_Remote * sco
 }
 
 // virtual
-double nmui_PointFeatures::pointFrictionValue (nmm_Microscope_Remote * scope) {
+double nmui_PointFeatures::pointFrictionValue (nmb_Dataset *, nmm_Microscope_Remote * scope) {
+    if (!scope) { 
+        fprintf(stderr,"nmui_PointFeatures Error! no scope!\n"); 
+        return nmui_SurfaceFeatureStrategy::pointFrictionValue(dataset, scope);
+    }
   Point_value * value =
     scope->state.data.inputPoint->getValueByPlaneName
          (frictionPlaneName.string());
 
   if (!value) {
-    return nmui_SurfaceFeatureStrategy::pointFrictionValue(scope);
+    return nmui_SurfaceFeatureStrategy::pointFrictionValue(dataset, scope);
   }
 
   return value->value();
 }
 
 // virtual
-double nmui_PointFeatures::scaledPointBumpSizeValue (nmm_Microscope_Remote * scope) {
+double nmui_PointFeatures::scaledPointBumpSizeValue (nmb_Dataset *, nmm_Microscope_Remote * scope) {
+    if (!scope) { 
+        fprintf(stderr,"nmui_PointFeatures Error! no scope!\n"); 
+        return 0.0; 
+    }
   Point_value * value =
     scope->state.data.inputPoint->getValueByPlaneName
          (bumpPlaneName.string());
@@ -412,8 +436,8 @@ double nmui_PointFeatures::magicBumpSize (double wavelength) {
 
 
 // virtual
-double nmui_PointFeatures::dynamicFrictionKspring (double /*kS*/, nmm_Microscope_Remote * scope) {
-  return nmui_SurfaceFeatureStrategy::pointFrictionValue(scope);
+double nmui_PointFeatures::dynamicFrictionKspring (double /*kS*/, nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
+  return nmui_SurfaceFeatureStrategy::pointFrictionValue(dataset, scope);
 }
 
 
@@ -435,9 +459,9 @@ nmui_GridFeatures::~nmui_GridFeatures (void) {
 
 
 // virtual
-vrpn_bool nmui_GridFeatures::buzzingEnabled (nmm_Microscope_Remote * scope) const {
+vrpn_bool nmui_GridFeatures::buzzingEnabled (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) const {
   BCPlane * plane =
-    scope->Data()->inputGrid->getPlaneByName(buzzPlaneName.string());
+    dataset->inputGrid->getPlaneByName(buzzPlaneName.string());
 
   if (!plane || (buzz_slider_max == buzz_slider_min)) {
     return vrpn_false;
@@ -447,9 +471,9 @@ vrpn_bool nmui_GridFeatures::buzzingEnabled (nmm_Microscope_Remote * scope) cons
 }
 
 // virtual
-vrpn_bool nmui_GridFeatures::bumpsEnabled (nmm_Microscope_Remote * scope) const {
+vrpn_bool nmui_GridFeatures::bumpsEnabled (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) const {
   BCPlane * plane =
-    scope->Data()->inputGrid->getPlaneByName(bumpPlaneName.string());
+    dataset->inputGrid->getPlaneByName(bumpPlaneName.string());
 
   if ((bump_slider_max == bump_slider_min) || !plane) {
     return vrpn_false;
@@ -459,12 +483,12 @@ vrpn_bool nmui_GridFeatures::bumpsEnabled (nmm_Microscope_Remote * scope) const 
 }
 
 // virtual
-double nmui_GridFeatures::pointAdhesionValue (nmm_Microscope_Remote * scope) {
+double nmui_GridFeatures::pointAdhesionValue (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
   BCPlane * plane =
-    scope->Data()->inputGrid->getPlaneByName(adhesionPlaneName.string());
+    dataset->inputGrid->getPlaneByName(adhesionPlaneName.string());
 
   if (!plane) {
-    return nmui_SurfaceFeatureStrategy::pointAdhesionValue(scope);
+    return nmui_SurfaceFeatureStrategy::pointAdhesionValue(dataset, scope);
   }
 
   return plane->value(d_hapticSurface->getGridX(),
@@ -472,9 +496,9 @@ double nmui_GridFeatures::pointAdhesionValue (nmm_Microscope_Remote * scope) {
 }
 
 // virtual
-double nmui_GridFeatures::scaledPointBuzzAmplitude (nmm_Microscope_Remote * scope) {
+double nmui_GridFeatures::scaledPointBuzzAmplitude (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
   BCPlane * plane =
-    scope->Data()->inputGrid->getPlaneByName(buzzPlaneName.string());
+    dataset->inputGrid->getPlaneByName(buzzPlaneName.string());
   double val;
 
   val = plane->value(d_hapticSurface->getGridX(),
@@ -484,12 +508,12 @@ double nmui_GridFeatures::scaledPointBuzzAmplitude (nmm_Microscope_Remote * scop
 }
 
 // virtual
-double nmui_GridFeatures::pointComplianceValue (nmm_Microscope_Remote * scope) {
+double nmui_GridFeatures::pointComplianceValue (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
   BCPlane * plane =
-    scope->Data()->inputGrid->getPlaneByName(compliancePlaneName.string());
+    dataset->inputGrid->getPlaneByName(compliancePlaneName.string());
 
   if (!plane) {
-    return nmui_SurfaceFeatureStrategy::pointComplianceValue(scope);
+    return nmui_SurfaceFeatureStrategy::pointComplianceValue(dataset, scope);
   }
 
   return plane->value(d_hapticSurface->getGridX(),
@@ -497,12 +521,12 @@ double nmui_GridFeatures::pointComplianceValue (nmm_Microscope_Remote * scope) {
 }
 
 // virtual
-double nmui_GridFeatures::pointFrictionValue (nmm_Microscope_Remote * scope) {
+double nmui_GridFeatures::pointFrictionValue (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
   BCPlane * plane = 
-    scope->Data()->inputGrid->getPlaneByName(frictionPlaneName.string());
+    dataset->inputGrid->getPlaneByName(frictionPlaneName.string());
 
   if (!plane) {
-    return nmui_SurfaceFeatureStrategy::pointFrictionValue(scope);
+    return nmui_SurfaceFeatureStrategy::pointFrictionValue(dataset, scope);
   }
 
   return plane->value(d_hapticSurface->getGridX(),
@@ -510,9 +534,9 @@ double nmui_GridFeatures::pointFrictionValue (nmm_Microscope_Remote * scope) {
 }
 
 // virtual
-double nmui_GridFeatures::scaledPointBumpSizeValue (nmm_Microscope_Remote * scope) {
+double nmui_GridFeatures::scaledPointBumpSizeValue (nmb_Dataset * dataset, nmm_Microscope_Remote * scope) {
   BCPlane * plane =
-    scope->Data()->inputGrid->getPlaneByName(bumpPlaneName.string());
+    dataset->inputGrid->getPlaneByName(bumpPlaneName.string());
   double val;
 
   val = plane->value(d_hapticSurface->getGridX(),

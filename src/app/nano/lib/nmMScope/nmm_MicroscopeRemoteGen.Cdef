@@ -188,7 +188,7 @@ int nmm_Microscope_Remote::handle_DroppedConnection2 (void * userdata,
     nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
     // Only display warning if we aren't quitting the program, and
     // if we are connected to a live AFM - no streamfiles!
-    if ((!ms->d_dataset->done) && (ms->ReadMode() == READ_DEVICE)) {
+    if ((!ms->d_dataset->done) && (ms->d_dataset->readMode() == READ_DEVICE)) {
       display_warning_dialog("Communication with ThermoMicroscopes AFM has stopped.\n"
                              "No more data will be collected until ThermoMicroscopes\n"
                              "software is re-started and communication is re-established.");
@@ -623,12 +623,12 @@ RECEIVE_MSG InImgMode {
  controls. 
 */
 RECEIVE_MSG SuspendCommands nmm_SPM_Report {
-    if (ReadMode() != READ_DEVICE) return;
+    if (d_dataset->readMode() != READ_DEVICE) return;
     state.commands_suspended = 1;
 }
 
 RECEIVE_MSG ResumeCommands {
-    if (ReadMode() != READ_DEVICE) return;
+    if (d_dataset->readMode() != READ_DEVICE) return;
     state.commands_suspended = 0;
 }
 
@@ -1183,7 +1183,7 @@ RECEIVE_MSG_BODY ScanDataset {
           d_dataset->done = VRPN_TRUE;
       }
       nmb_Image *new_image = d_dataset->dataImages->getImageByName(name);
-      new_image->setTopoFileInfo(d_topoFile);
+      new_image->setTopoFileInfo(*d_dataset->d_topoFile);
 
 if(d_dataset->doInitHeight == true){
 	d_dataset->heightPlaneName -> Set(d_dataset->initHeight);
@@ -1301,13 +1301,13 @@ RECEIVE_MSG TopoFileHeader {
   if(length < 1536){
 	printf("Unexpected Header length %ld need at least 1536\n", length);
   }else{
-	d_topoFile.parseHeader(header, length);
+	d_dataset->d_topoFile->parseHeader(header, length);
   	//printf("********** Got Topometrix file header, length %ld\n", length);
 
         nmb_ImageList *images = d_dataset->dataImages;
         int i;
         for (i = 0; i < images->numImages(); i++) {
-             images->getImage(i)->setTopoFileInfo(d_topoFile);
+             images->getImage(i)->setTopoFileInfo(*d_dataset->d_topoFile);
         }
 
 /*	handle=fopen("temp.tfr","w");
@@ -1522,7 +1522,7 @@ int nmm_Microscope_Remote::handle_barrierSynch (void *ud,
    nmm_Microscope_Remote *me = (nmm_Microscope_Remote *)ud;
 //   printf("got barrier synch message for slow line(?)\n");
 
-   if (me->ReadMode() != READ_DEVICE) {
+   if (me->d_dataset->readMode() != READ_DEVICE) {
        // we have nothing to do in this case (this message is only for
        // control over a live microscope)
        return 0;
