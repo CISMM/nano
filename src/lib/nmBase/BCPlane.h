@@ -223,6 +223,8 @@ class BCPlane
     int readAsciiNanoscopeFile(FILE* file, nmb_diImageInfo * file_info);
     int readBinaryNanoscopeFile(FILE* file, nmb_diImageInfo * file_info);
 
+    int readHamburgFile(FILE* file, nmb_hhImageInfo * file_info);
+
     int readNanotecFile(FILE* file, nmb_NanotecImageInfo * file_info);
 
     int readAsciiRHKFile(FILE* file, double z_offset_nm, double z_scale_pm);

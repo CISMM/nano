@@ -1293,8 +1293,19 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
     } 
     else if (strncmp(magic,"\\*Fi",4) == 0) 
     {
-        // 0 means binary
+      // This could be either a Hamburg-format file or
+      // a Digital Instruments binary file.  The two formats
+      // are almost identical.  Try reading it as a Hamburg
+      // format and then if that fails read it as a binary
+      // Nanoscope file.
+      if (readHamburgFile(file, name) == 0) {
+	return 0;
+      } else {
+	// Go back to the start of the file
+	fseek(file, 0, SEEK_SET);
+        // The last parameter=0 means binary
 	return readNanoscopeFile(file, name, 0); 
+      }
     } 
     else if (strncmp(magic,"?*Fi",4) == 0) 
     {

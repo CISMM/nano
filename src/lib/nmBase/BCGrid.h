@@ -43,6 +43,7 @@ using namespace std;
 
 class BCPlane;
 class nmb_diImageInfo;
+class nmb_hhImageInfo;
 class nmb_NanotecImageInfo;
 
 #ifdef	_WIN32
@@ -157,6 +158,8 @@ class BCGrid
 
     double transform(short* datum, nmb_diImageInfo * file_info, int do_swap);
     ///< defined in readNanoscopeFile.C, called in BCPlane
+    double transformHamburg(short* datum, nmb_hhImageInfo * file_info, int do_swap);
+    ///< defined in readHamburgFile.C, called in BCPlane
 
     int writeTextFile(FILE* file, BCPlane* grid);
     int writeBinaryFile(FILE* file, BCPlane* grid);
@@ -229,6 +232,9 @@ class BCGrid
 
     int readTopometrixFile(TopoFile& TF, FILE* file, const char *name);
       ///< in Topo.C
+
+    int readHamburgFile(FILE* file, const char *name);
+      ///< readHamburgFile.C 
 
     int readComment(FILE *file, char *buffer, double* max_value);
     int readPPMorPGMFile(FILE* file, const char *name);

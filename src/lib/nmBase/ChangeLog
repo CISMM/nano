@@ -1,3 +1,19 @@
+2004-04-26  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* readHamburgFile.h : Data and routines needed to parse and
+		read the STM format in use at the University of Hamburg
+		Physics department (Weisendanger group).  This format
+		turns out to be very very similar to DI format, but
+		not quite the same.
+	* readHamburgFile.C : Same.
+	* BCGrid.C : Changed it to try and read Hamburg format for the
+		shared magic cookie between that and the DI file format.
+		If Hamburg fails, then try to load as DI.  Tested it
+		loading both Hamburg and DI and bogus files.
+	* BCPlane.C : Same.
+	* BCPlane.h : Same.
+	nmBase.dsp : Adding in the above files.
+
 2004-03-17  David Borland  <borland@cs.unc.edu>
 
         * nmb_CalculatedPlane.Ch : Added MorphologyPlane type.

@@ -1707,6 +1707,66 @@ BCPlane::readNanotecFile(FILE* pSourceFile, nmb_NanotecImageInfo * pHeader)
 
 
 /**
+readHamburgFile
+Read the file format used by the Hamburg Physics croup. This just reads
+the binary/data portion of the file.
+@author Russell M. Taylor II
+@date modified 4-26-2004
+*/
+int BCPlane::readHamburgFile(FILE *file, nmb_hhImageInfo *file_info)
+{
+    int	first_value_read = 1;
+    int x, y;
+    int ret;
+    
+    // if Endian_tst is false, you will need swap bytes
+    int	Endian_int = 1;
+    char *Endian_tst = ( char * )(&Endian_int);
+    bool do_swap = (!*Endian_tst);
+
+    // Allocate space for one line of values, then read in a
+    // line at a time and convert the values to the proper format.
+    short* value = (short*) calloc(numX(), sizeof(short));
+    for (y = 0; y < numY(); y++) {
+
+	ret = fread(value, sizeof(short), numX(), file);
+	if (numX() != ret) {
+	    perror("BCPlane::readHamburgFile: could not read line!");
+	    fprintf(stderr,"   x: 0-%d  y: %d,  ret=%d\n", numX(), y, ret);
+	    return -1;
+	}
+
+	for (x = 0; x < numX(); x++) {
+	    setValue(x,y, _grid->transformHamburg(&value[x], file_info, do_swap) );
+
+	    if (first_value_read) {
+		_min_value = this->value(x, y);
+		_max_value = this->value(x, y);
+		first_value_read = 0;
+	    }
+	        
+	    if (this->value(x, y) < _min_value) { _min_value = this->value(x, y); }
+	    if (this->value(x, y) > _max_value) { _max_value = this->value(x, y); }
+
+	    if (_timed) {
+		_sec[x][y] = 0;
+		_usec[x][y] = 0;
+	    }
+	}
+
+    }
+    free (value);
+    setMinAttainableValue(_min_value);
+    setMaxAttainableValue(_max_value);
+
+    // Set scale to reasonable value. 
+    tweakScale();
+    return 0;
+    
+} // readHamburgFile
+
+  
+/**
 writeNCFile
     Writes a Numerically-controlled machine tool file that will
 	mill out the surface.  It assumes that the grid has the header
