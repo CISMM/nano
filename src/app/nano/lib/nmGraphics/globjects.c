@@ -31,6 +31,14 @@
 #include "font.h"
 #include "chartjunk.h"
 
+#include "AFMState.h"
+
+// microscope
+#include <nmm_Globals.h>	
+#include <nmm_MicroscopeRemote.h>
+#include <nmm_SimulatedMicroscope_Remote.h>
+#include <nmm_Types.h>
+
 #include "Timer.h"
 #include "nmg_Globals.h"  // for RegMode enum
 
@@ -152,6 +160,7 @@ static int vx_up_icon (void *);
 static int draw_north_pointing_arrow (void *);
 
 static int make_line (const float a [], const float b []);
+static int make_line (const double a [], const double b []);
 int my_line_mark (void *);
 int my_rubber_line (void *);
 int my_scanline_indicator (void *);
@@ -1231,6 +1240,17 @@ int make_line (const float a [], const float b [])
   return 0;
 }
 
+int make_line(const double a[], const double b[])
+{
+  glBegin(GL_LINES);
+  VERBOSE(20, "          glBegin(GL_LINES)");
+  glVertex3dv(a);
+  glVertex3dv(b);
+  VERBOSE(20, "          glEnd()");
+  glEnd();
+  return 0;
+}
+
 int make_aim (const float a [], const float b [])
 {
   v_gl_set_context_to_vlib_window();
@@ -1366,60 +1386,155 @@ int make_blue_line (nmg_State * state, const float a[], const float b[])
 //will be created
 int make_ds_sphere_axis (nmg_State *state, const q_type rot )
 {
+	
+	//int scale = state->inputGrid->getPlaneByName(state->heightPlaneName)->maxX
+	BCPlane *plane = state->inputGrid->getPlaneByName(state->heightPlaneName);
+	int size = plane->maxX() - plane->minY();
 
+	//factor to scale axis by
+	int axis_scale = size * .05;
+
+	//size of tick mark
+	//the tick size will be double this number, in NM (reletive to everything else on the screen) i think
+	int tick_size = axis_scale *.12;
+
+	//these are the axes vectors when they are not rotated
 	q_vec_type red_axis = {1,0,0};
     q_vec_type green_axis = {0,1,0};
     q_vec_type blue_axis  = {0,0,1};
 
-	float a[] = {sphere_x, sphere_y, sphere_z};
+	//end points of the axes
+	q_vec_type red_axis_end, green_axis_end, blue_axis_end;
 
-q_xform(red_axis,rot,red_axis);
-q_xform(green_axis,rot,green_axis);
-q_xform(blue_axis,rot,blue_axis);
+	q_vec_type axis_step, temp_vec, top_tick, bottom_tick, top_tick_start, bottom_tick_start;
+	q_vec_type axis_end;
+	
+	//step size along each axis. Set in directstep.tcl
+	int step_size_red = microscope->state.modify.step_x_size;
+	int step_size_green = microscope->state.modify.step_y_size;
+	int step_size_blue = microscope->state.modify.step_z_size;
+	
+	//position of the sphere
+	q_vec_type sphere ={sphere_x, sphere_y, sphere_z};
+	
+	//rotate axis vectors
+	q_xform(red_axis,rot,red_axis);
+	q_xform(green_axis,rot,green_axis);
+	q_xform(blue_axis,rot,blue_axis);
 
-q_vec_scale(red_axis, 350, red_axis);
-q_vec_scale(green_axis, 350, green_axis);
-q_vec_scale(blue_axis, 350, blue_axis);
+	//scale axis vectors to get the end points
+	q_vec_scale(red_axis_end, axis_scale, red_axis);
+	q_vec_scale(green_axis_end, axis_scale, green_axis);
+	q_vec_scale(blue_axis_end, axis_scale, blue_axis);
+	
+	v_gl_set_context_to_vlib_window(); 
+	glDeleteLists(ds_sphere_axis_struct,1);
+	ds_sphere_axis_struct = glGenLists(1);
+	glNewList(ds_sphere_axis_struct,GL_COMPILE);
+
+	//positive lines, solid
+	//red axis
+	glColor3f(1.0,0.0,0.0);
+	q_vec_add(axis_end, sphere, red_axis_end);
+	make_line(sphere,axis_end);
+
+	//green axis
+	glColor3f(0.0,1.0,0.0);
+	q_vec_add(axis_end, sphere, green_axis_end);
+	make_line(sphere,axis_end);
+
+	//blue axis
+	glColor3f(0.0,0.0,1.0);
+	q_vec_add(axis_end, sphere, blue_axis_end);
+	make_line(sphere,axis_end);
+	
+	//negative lines, dotted
+	glLineStipple(1, 0x00FF);
+	glEnable(GL_LINE_STIPPLE);
+
+	//red axis
+	glColor3f(1.0,0.0,0.0);
+	q_vec_subtract(axis_end, sphere, red_axis_end);
+	make_line(sphere,axis_end);
+
+	//green axis
+	glColor3f(0.0,1.0,0.0);
+	q_vec_subtract(axis_end, sphere, green_axis_end);
+	make_line(sphere,axis_end);
+
+	//blue axis
+	glColor3f(0.0,0.0,1.0);
+	q_vec_subtract(axis_end, sphere, blue_axis_end);
+	make_line(sphere,axis_end);
+	
+	glDisable(GL_LINE_STIPPLE);
 
 
-float r_axis_p [] = {red_axis[0]   + a[0],  red_axis[1]   + a[1],  red_axis[2]   + a[2] };
-float g_axis_p [] = {green_axis[0] + a[0],  green_axis[1] + a[1],  green_axis[2] + a[2] };
-float b_axis_p [] = {blue_axis[0]  + a[0],  blue_axis[1]  + a[1],  blue_axis[2]  + a[2] };
-
-float r_axis_n [] = {a[0] - red_axis[0],    a[1] - red_axis[1],   a[2] -  red_axis[2]   };
-float g_axis_n [] = {a[0] - green_axis[0],  a[1] - green_axis[1], a[2] -  green_axis[2] };
-float b_axis_n [] = {a[0] - blue_axis[0] ,  a[1] - blue_axis[1],  a[2] -  blue_axis[2]  };
-
- v_gl_set_context_to_vlib_window(); 
-  glDeleteLists(ds_sphere_axis_struct,1);
-  ds_sphere_axis_struct = glGenLists(1);
-  glNewList(ds_sphere_axis_struct,GL_COMPILE);
-  //positive lines, solid
-  glColor3f(1.0,0.0,0.0);
-  make_line(a,r_axis_p);
-  glColor3f(0.0,1.0,0.0);
-  make_line(a,g_axis_p);
-   glColor3f(0.0,0.0,1.0);
-  make_line(a,b_axis_p);
-
-  //negative lines, dotted
-  glLineStipple(1, 0x00FF);
-  glEnable(GL_LINE_STIPPLE);
-    glColor3f(1.0,0.0,0.0);
-  make_line(a,r_axis_n);
-  glColor3f(0.0,1.0,0.0);
-  make_line(a,g_axis_n);
-   glColor3f(0.0,0.0,1.0);
-  make_line(a,b_axis_n);
-
-  glDisable(GL_LINE_STIPPLE);
-
-
-  glEndList();
-  return(ds_sphere_axis_struct);
-
-return 0;
+	//draw white tick marks, 2 along each axis, spaced a step-size apart
+	int i;
+	glColor3f(1.0, 1.0, 1.0);
+	//red axis
+	q_vec_scale(temp_vec, tick_size, blue_axis);
+	q_vec_add(top_tick_start, sphere, temp_vec);
+	q_vec_subtract(bottom_tick_start, sphere, temp_vec);
+	
+	for(i = -2; i <= 2; i++) {
+		if(i != 0) {
+			//when i = 0, we are drawing and the origin of the axis.
+			//skip over.
+			
+			//distance along red axis to place tick
+			q_vec_scale(axis_step, i * step_size_red, red_axis);
+			
+			q_vec_add(top_tick, top_tick_start, axis_step);
+			q_vec_add(bottom_tick, bottom_tick_start, axis_step);
+			
+			make_line(top_tick, bottom_tick);
+		}
+	}
+	
+	//green axis
+	//q_vec_scale(temp_vec, 50, blue_axis);
+	q_vec_add(top_tick_start, sphere, temp_vec);
+	q_vec_subtract(bottom_tick_start, sphere, temp_vec);
+	
+	for(i = -2; i <= 2; i++) {
+		if(i != 0) {
+			//distance along red axis to place tick
+			q_vec_scale(axis_step, i * step_size_green, green_axis);
+			
+			q_vec_add(top_tick, top_tick_start, axis_step);
+			q_vec_add(bottom_tick, bottom_tick_start, axis_step);
+			
+			make_line(top_tick, bottom_tick);
+		}
+	}
+	if(microscope->state.modify.direct_step_param == DIRECT_STEP_3D) {
+		//blue axis step tick marks, if we are in 3D mode
+		q_vec_scale(temp_vec, tick_size, red_axis);
+		q_vec_add(top_tick_start, sphere, temp_vec);
+		q_vec_subtract(bottom_tick_start, sphere, temp_vec);
+		
+		for(i = -2; i <= 2; i++) {
+			if(i != 0) {
+				//distance along red axis to place tick
+				q_vec_scale(axis_step, i * step_size_blue, blue_axis);
+				
+				q_vec_add(top_tick, top_tick_start, axis_step);
+				q_vec_add(bottom_tick, bottom_tick_start, axis_step);
+				
+				make_line(top_tick, bottom_tick);
+			}
+		}
+	}
+	
+	
+	glEndList();
+	return(ds_sphere_axis_struct);
+	
+	return 0;
 }
+
 
 
 

@@ -1,3 +1,19 @@
+2002-07-25 Jameson Miller <millerj@cs.unc.edu>
+	*globjects.c : tick marks that are spaced a step size apart are
+	now drawn on the direct step axis. added a Make_Line function that
+	takes doubles as arguments (instead of just floats).
+
+	the size of the axis that follows the microscope tip and the tick
+	are now relative to the region being displayed. (they should always
+	be the same size no matter what the size of the scan area is).
+
+	*globjects.h : includes the microscope class so that we can get 
+	the step size. new function declaration.
+
+	*Makefile : include nmAnalyze library so that everything will compile
+	*nmGraphics.dsp : include nmAnalyze directory in list of includes
+	 so that everything will compile.
+
 2002-07-18 David Borland <borland@cs.unc.edu>
 
         * nmg_SurfaceRegion.C : added check for type of data for 

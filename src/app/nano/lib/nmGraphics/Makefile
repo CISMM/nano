@@ -1,5 +1,5 @@
 USES_LIBS := nmMP nmBase nmMScope nmUI tclLinkVar nmUGraphics vrpn \
-             vogl quat
+             vogl quat nmAnalyze
 
 USES_EXTERNAL_LIBS := RhinoIO glut
 
