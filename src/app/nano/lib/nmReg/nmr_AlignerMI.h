@@ -2,7 +2,7 @@
 #define NMR_ALIGNERMI_H
 
 #include "nmb_Image.h"
-#include "nmr_MultiResObjectiveMI.h"
+#include "nmr_MultiResObjectiveMI_direct.h"
 #include "nmb_Transform_TScShR.h"
 
 class nmr_AlignerMI {
@@ -15,7 +15,7 @@ class nmr_AlignerMI {
     void initImages(nmb_Image *ref, nmb_Image *test, 
                     int numLevels, float *stddev, 
                     nmb_Image *ref_z = NULL, nmb_ImageList *monitorList = NULL);
-    void optimizeVarianceParameters();
+//    void optimizeVarianceParameters();
     void optimizeTransform();
     void takeGradientSteps(int resolutionIndex, int numSteps, float stepSize);
     void patternSearch(int resolutionIndex, 
@@ -27,10 +27,10 @@ class nmr_AlignerMI {
     void plotObjective(FILE *outf);
     int getNumLevels();
     void getBlurStdDev(float *stddev);
-    void setRefFeaturePoints(int numPnts, double *x, double *y);
+//    void setRefFeaturePoints(int numPnts, double *x, double *y);
 
   protected:
-    nmr_MultiResObjectiveMI *d_objective;
+    nmr_MultiResObjectiveMI_direct *d_objective;
     nmb_Transform_TScShR d_transform;
     int d_refWidth, d_refHeight;
     int d_testWidth, d_testHeight;

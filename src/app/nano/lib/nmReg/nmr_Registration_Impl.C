@@ -235,7 +235,7 @@ int nmr_Registration_Impl::autoAlign(vrpn_int32 mode)
             feature_x[i] = pnt.x;
             feature_y[i] = pnt.y;
           }
-          d_mutInfoAligner.setRefFeaturePoints(numPnts, feature_x, feature_y);
+          //d_mutInfoAligner.setRefFeaturePoints(numPnts, feature_x, feature_y);
           delete [] feature_x;
           delete [] feature_y;
 
@@ -437,25 +437,22 @@ int nmr_Registration_Impl::registerImagesUsingMutualInformation(
                            d_images[TARGET_IMAGE_INDEX],
                            d_numLevels, d_stddev);
         d_mutInfoAligner.setTransform(identity);
-//        d_mutInfoAligner.optimizeVarianceParameters();
+//      d_mutInfoAligner.optimizeVarianceParameters();
         // some useful output if you want to visualize whats going on 
-//        FILE *outputFile = fopen("objectivePlot.txt", "w");
-//        d_mutInfoAligner.plotObjective(outputFile);
-//        fclose(outputFile);
+/*
+        FILE *outputFile = fopen("objectivePlot.txt", "w");
+        d_mutInfoAligner.plotObjective(outputFile);
+        fclose(outputFile);
+*/
         d_imageChangeSinceLastRegistration = vrpn_FALSE;
     }
 
     d_mutInfoAligner.setTransform(xform);
-    // here we go:
+
 //    d_mutInfoAligner.takeGradientSteps(d_resolutionIndex,
 //                                       d_maxIterations, d_stepSize);
     d_mutInfoAligner.patternSearch(d_resolutionIndex, 
-                                         d_maxIterations, d_stepSize);
-/*
-    FILE *outputFile = fopen("objectivePlot.txt", "w");
-    d_mutInfoAligner.plotObjective(outputFile);
-    fclose(outputFile);
-*/
+                                   d_maxIterations, d_stepSize);
     d_mutInfoAligner.getTransform(xform);
 
     return 0;
@@ -494,8 +491,8 @@ void nmr_Registration_Impl::sendResult(int whichTransform,
   if (d_server){
     d_server->sendRegistrationResult(whichTransform, xform_matrix);
   }
-}
-/*
+
+
     nmb_TransformMatrix44 transform;
     transform.setMatrix(xform_matrix);
     double centerX, centerY, tx, ty, phi, shz, scx, scy;
@@ -517,7 +514,8 @@ void nmr_Registration_Impl::sendResult(int whichTransform,
     printf("sending (tx,ty,phi,shz,scx,scy, cx, cy, maxOffset, meanOffset) = "
            "%g, %g, %g, %g, %g, %g, %g, %g, %g, %g\n",
            tx, ty, phi, shz, scx, scy, centerX, centerY, maxOffset, meanOffset);
-*/
+
+}
 
 //static
 void nmr_Registration_Impl::handle_CorrespondenceChange(Correspondence &c,

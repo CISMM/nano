@@ -1,11 +1,11 @@
-#include "nmr_ObjectiveMI.h"
+#include "nmr_ObjectiveMI_EMMA.h"
 #include "nmr_Gaussian.h"
 #include "nmr_Util.h"
 
 // #define DEBUG_FILE_OUTPUT
 #define PARZEN_VARIANCE_ESTIMATION_FACTOR (0.10)
 
-nmr_ObjectiveMI::nmr_ObjectiveMI():
+nmr_ObjectiveMI_EMMA::nmr_ObjectiveMI_EMMA():
   d_workspace(NULL),
   d_sampleA_acquired(VRPN_FALSE),
   d_sizeA(0),
@@ -36,7 +36,7 @@ nmr_ObjectiveMI::nmr_ObjectiveMI():
 {
 }
 
-nmr_ObjectiveMI::~nmr_ObjectiveMI()
+nmr_ObjectiveMI_EMMA::~nmr_ObjectiveMI_EMMA()
 {
   if (d_workspace) {
     delete [] d_workspace;
@@ -58,23 +58,23 @@ nmr_ObjectiveMI::~nmr_ObjectiveMI()
     deleteFailed = deleteFailed && nmb_Image::deleteImage(d_refZ);
   }
   if (deleteFailed) {
-    fprintf(stderr, "nmr_ObjectiveMI: Warning: possible memory leak\n");
+    fprintf(stderr, "nmr_ObjectiveMI_EMMA: Warning: possible memory leak\n");
   }
   if (d_xFeature) delete [] d_xFeature;
   if (d_yFeature) delete [] d_yFeature;
 }
 
-void nmr_ObjectiveMI::setDimensionMode(nmr_DimensionMode mode)
+void nmr_ObjectiveMI_EMMA::setDimensionMode(nmr_DimensionMode mode)
 {
   d_dimensionMode = mode;
 }
 
-nmr_DimensionMode nmr_ObjectiveMI::getDimensionMode()
+nmr_DimensionMode nmr_ObjectiveMI_EMMA::getDimensionMode()
 {
   return d_dimensionMode;
 }
 
-int nmr_ObjectiveMI::setSampleSizes(int sizeA, int sizeB)
+int nmr_ObjectiveMI_EMMA::setSampleSizes(int sizeA, int sizeB)
 {
   if (d_workspace) {
     delete [] d_workspace;
@@ -84,7 +84,7 @@ int nmr_ObjectiveMI::setSampleSizes(int sizeA, int sizeB)
   d_workspace = new double[9*(sizeA+sizeB)];
 
   if (d_workspace == NULL) {
-    fprintf(stderr, "nmr_ObjectiveMI::setSampleSizes: out of memory\n");
+    fprintf(stderr, "nmr_ObjectiveMI_EMMA::setSampleSizes: out of memory\n");
     return -1;
   }
 
@@ -115,29 +115,29 @@ int nmr_ObjectiveMI::setSampleSizes(int sizeA, int sizeB)
   return 0;
 }
 
-void nmr_ObjectiveMI::getSampleSizes(int &sizeA, int &sizeB)
+void nmr_ObjectiveMI_EMMA::getSampleSizes(int &sizeA, int &sizeB)
 {
   sizeA = d_sizeA;
   sizeB = d_sizeB;
 }
 
-void nmr_ObjectiveMI::setSamplePositionMode(nmr_SamplePositionMode mode)
+void nmr_ObjectiveMI_EMMA::setSamplePositionMode(nmr_SamplePositionMode mode)
 {
   d_samplePositionMode = mode;
 }
 
-void nmr_ObjectiveMI::setSampleRejectionCriterion(
+void nmr_ObjectiveMI_EMMA::setSampleRejectionCriterion(
                          nmr_SampleRejectionCriterion crit)
 {
   d_sampleRejectionCriterion = crit;
 }
 
-void nmr_ObjectiveMI::setMinSampleSqrGradientMagnitude(double mag)
+void nmr_ObjectiveMI_EMMA::setMinSampleSqrGradientMagnitude(double mag)
 {
   d_minSampleSqrGradientMagnitude = mag;
 }
 
-void nmr_ObjectiveMI::setRefFeaturePoints(int numPnts, double *x, double *y)
+void nmr_ObjectiveMI_EMMA::setRefFeaturePoints(int numPnts, double *x, double *y)
 {
   int i;
   d_numRefFeaturePoints = numPnts;
@@ -151,39 +151,39 @@ void nmr_ObjectiveMI::setRefFeaturePoints(int numPnts, double *x, double *y)
   }
 }
 
-void nmr_ObjectiveMI::setCovariance(double sigmaRefRef, double sigmaTestTest)
+void nmr_ObjectiveMI_EMMA::setCovariance(double sigmaRefRef, double sigmaTestTest)
 {
   d_sigmaRefRef = sigmaRefRef;
   d_sigmaTestTest = sigmaTestTest;
 }
 
-void nmr_ObjectiveMI::getCovariance(double &sigmaRefRef, double &sigmaTestTest)
+void nmr_ObjectiveMI_EMMA::getCovariance(double &sigmaRefRef, double &sigmaTestTest)
 {
   sigmaRefRef = d_sigmaRefRef;
   sigmaTestTest = d_sigmaTestTest;
 }
 
-void nmr_ObjectiveMI::setTestVariance(double sigma)
+void nmr_ObjectiveMI_EMMA::setTestVariance(double sigma)
 {
   d_sigmaTest = sigma;
 }
 
-void nmr_ObjectiveMI::getTestVariance(double &sigma)
+void nmr_ObjectiveMI_EMMA::getTestVariance(double &sigma)
 {
   sigma = d_sigmaTest;
 }
 
-void nmr_ObjectiveMI::setRefVariance(double sigma)
+void nmr_ObjectiveMI_EMMA::setRefVariance(double sigma)
 {
   d_sigmaRef = sigma;
 }
 
-void nmr_ObjectiveMI::getRefVariance(double &sigma)
+void nmr_ObjectiveMI_EMMA::getRefVariance(double &sigma)
 {
   sigma = d_sigmaRef;
 }
 
-void nmr_ObjectiveMI::setReferenceValueImage(nmb_Image *ref) 
+void nmr_ObjectiveMI_EMMA::setReferenceValueImage(nmb_Image *ref) 
 {
   d_refValue = ref;
   d_refValue->normalize();
@@ -198,7 +198,7 @@ void nmr_ObjectiveMI::setReferenceValueImage(nmb_Image *ref)
   }
 }
 
-void nmr_ObjectiveMI::setTestValueImage(nmb_Image *test)
+void nmr_ObjectiveMI_EMMA::setTestValueImage(nmb_Image *test)
 {
   if (d_gradX_test) {
     nmb_Image::deleteImage(d_gradX_test);
@@ -250,12 +250,12 @@ void nmr_ObjectiveMI::setTestValueImage(nmb_Image *test)
   }
 }
 
-void nmr_ObjectiveMI::setReferenceZImage(nmb_Image *ref_z)
+void nmr_ObjectiveMI_EMMA::setReferenceZImage(nmb_Image *ref_z)
 {
   d_refZ = ref_z;
 }
 
-double nmr_ObjectiveMI::value(double *testFromReferenceTransform)
+double nmr_ObjectiveMI_EMMA::value(double *testFromReferenceTransform)
 {
   double transformPixelUnits[16];
   
@@ -268,7 +268,7 @@ double nmr_ObjectiveMI::value(double *testFromReferenceTransform)
                d_minSampleSqrGradientMagnitude,
                d_refZ);
   if (error) {
-    fprintf(stderr, "nmr_ObjectiveMI::value: error: cannot acquire sample A\n");
+    fprintf(stderr, "nmr_ObjectiveMI_EMMA::value: error: cannot acquire sample A\n");
   }
   error = buildSampleB(d_refValue, d_testValue, d_gradX_test, d_gradY_test,
                transformPixelUnits, d_samplePositionMode, 
@@ -276,7 +276,7 @@ double nmr_ObjectiveMI::value(double *testFromReferenceTransform)
                d_minSampleSqrGradientMagnitude,
                d_refZ);
   if (error) {
-    fprintf(stderr, "nmr_ObjectiveMI::value: error: cannot acquire sample B\n");
+    fprintf(stderr, "nmr_ObjectiveMI_EMMA::value: error: cannot acquire sample B\n");
   }
   double result = 0;
   if (!error) {
@@ -285,7 +285,7 @@ double nmr_ObjectiveMI::value(double *testFromReferenceTransform)
   return result;
 }
 
-void nmr_ObjectiveMI::gradient(double *testFromReferenceTransform, 
+void nmr_ObjectiveMI_EMMA::gradient(double *testFromReferenceTransform, 
                                double *gradMI)
 {
   double transformPixelUnits[16];
@@ -298,7 +298,7 @@ void nmr_ObjectiveMI::gradient(double *testFromReferenceTransform,
                d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude, d_refZ);
   if (error) {
-    fprintf(stderr, "nmr_ObjectiveMI::gradient:"
+    fprintf(stderr, "nmr_ObjectiveMI_EMMA::gradient:"
                     " error: cannot acquire sample A\n");
   }
   error = buildSampleB(d_refValue, d_testValue, d_gradX_test, d_gradY_test,
@@ -306,7 +306,7 @@ void nmr_ObjectiveMI::gradient(double *testFromReferenceTransform,
                d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude, d_refZ);
   if (error) {
-    fprintf(stderr, "nmr_ObjectiveMI::gradient:" 
+    fprintf(stderr, "nmr_ObjectiveMI_EMMA::gradient:" 
                     " error: cannot acquire sample B\n");
   }
   // we need to convert between formats for the transformation matrices
@@ -329,7 +329,7 @@ void nmr_ObjectiveMI::gradient(double *testFromReferenceTransform,
 }
 
 
-void nmr_ObjectiveMI::valueAndGradient(double *testFromReferenceTransform,
+void nmr_ObjectiveMI_EMMA::valueAndGradient(double *testFromReferenceTransform,
                 double &valueMI, double *gradMI)
 {
   double transformPixelUnits[16];
@@ -342,7 +342,7 @@ void nmr_ObjectiveMI::valueAndGradient(double *testFromReferenceTransform,
                d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude, d_refZ);
   if (error) {
-    fprintf(stderr, "nmr_ObjectiveMI::gradient:" 
+    fprintf(stderr, "nmr_ObjectiveMI_EMMA::gradient:" 
                     " error: cannot acquire sample A\n");
   }
 
@@ -351,7 +351,7 @@ void nmr_ObjectiveMI::valueAndGradient(double *testFromReferenceTransform,
                d_sampleRejectionCriterion,
                d_minSampleSqrGradientMagnitude, d_refZ);
   if (error) {
-    fprintf(stderr, "nmr_ObjectiveMI::gradient:"
+    fprintf(stderr, "nmr_ObjectiveMI_EMMA::gradient:"
                     " error: cannot acquire sample B\n");
   }
 
@@ -378,7 +378,7 @@ void nmr_ObjectiveMI::valueAndGradient(double *testFromReferenceTransform,
 
 }
 
-int nmr_ObjectiveMI::buildSampleSets(double *user_transform)
+int nmr_ObjectiveMI_EMMA::buildSampleSets(double *user_transform)
 {
   if (!d_refValue || !d_testValue) return -1;
   double default_transform[16] = {1.0, 0.0, 0.0, 0.0,
@@ -430,7 +430,7 @@ int nmr_ObjectiveMI::buildSampleSets(double *user_transform)
    location in the test image is determined by the current transformation
    setting) then the test value and its gradient are assumed to be 0
 */
-int nmr_ObjectiveMI::buildSampleHelper(nmb_Image *ref, nmb_Image *test,
+int nmr_ObjectiveMI_EMMA::buildSampleHelper(nmb_Image *ref, nmb_Image *test,
                      nmb_Image *grad_x_test,
                      nmb_Image *grad_y_test,
                      double *transform,
@@ -586,7 +586,7 @@ int nmr_ObjectiveMI::buildSampleHelper(nmb_Image *ref, nmb_Image *test,
   }
 }
 
-int nmr_ObjectiveMI::buildSampleA(nmb_Image *ref, nmb_Image *test, 
+int nmr_ObjectiveMI_EMMA::buildSampleA(nmb_Image *ref, nmb_Image *test, 
                      nmb_Image *grad_x_test, 
                      nmb_Image *grad_y_test,
                      double *transform,
@@ -608,7 +608,7 @@ int nmr_ObjectiveMI::buildSampleA(nmb_Image *ref, nmb_Image *test,
 }
 
 
-int nmr_ObjectiveMI::buildSampleB(nmb_Image *ref, nmb_Image *test, 
+int nmr_ObjectiveMI_EMMA::buildSampleB(nmb_Image *ref, nmb_Image *test, 
                      nmb_Image *grad_x_test,       
                      nmb_Image *grad_y_test,
                      double *transform,
@@ -628,7 +628,7 @@ int nmr_ObjectiveMI::buildSampleB(nmb_Image *ref, nmb_Image *test,
   return result;
 }
 
-int nmr_ObjectiveMI::getJointHistogram(nmb_Image *histogram,
+int nmr_ObjectiveMI_EMMA::getJointHistogram(nmb_Image *histogram,
                            double *transform, vrpn_bool blur,
                            vrpn_bool setRefScale,
                            float min_ref, float max_ref,
@@ -665,7 +665,7 @@ int nmr_ObjectiveMI::getJointHistogram(nmb_Image *histogram,
 
 */
 
-int nmr_ObjectiveMI::buildJointHistogram(nmb_Image *ref, nmb_Image *test,
+int nmr_ObjectiveMI_EMMA::buildJointHistogram(nmb_Image *ref, nmb_Image *test,
                             nmb_Image *ref_z,
                             nmb_Image *histogram, double *transform,
                             vrpn_bool blur,
@@ -846,7 +846,7 @@ int nmr_ObjectiveMI::buildJointHistogram(nmb_Image *ref, nmb_Image *test,
 
 // the best choice for sigma is the one that minimizes h* so we
 // will use this derivative in a gradient descent algorithm
-int nmr_ObjectiveMI::computeCrossEntropyGradient(double &dHc_dsigma_ref, 
+int nmr_ObjectiveMI_EMMA::computeCrossEntropyGradient(double &dHc_dsigma_ref, 
                                              double &dHc_dsigma_test)
 {
   // it is possible that we have acquired samples A and B but changed
@@ -914,7 +914,7 @@ int nmr_ObjectiveMI::computeCrossEntropyGradient(double &dHc_dsigma_ref,
   return 0;
 }
 
-int nmr_ObjectiveMI::crossEntropy(double &entropy)
+int nmr_ObjectiveMI_EMMA::crossEntropy(double &entropy)
 {
   // it is possible that we have acquired samples A and B but changed
   // the transformation since then so we could still compute the
@@ -957,7 +957,7 @@ int nmr_ObjectiveMI::crossEntropy(double &entropy)
   return 0;
 }
 
-int nmr_ObjectiveMI::computeTestEntropyGradient(double &dH_dsigma_test)
+int nmr_ObjectiveMI_EMMA::computeTestEntropyGradient(double &dH_dsigma_test)
 {
   // it is possible that we have acquired samples A and B but changed
   // the transformation since then so we could still compute the
@@ -1020,7 +1020,7 @@ int nmr_ObjectiveMI::computeTestEntropyGradient(double &dH_dsigma_test)
   return 0;
 }
 
-int nmr_ObjectiveMI::testEntropy(double &entropy)
+int nmr_ObjectiveMI_EMMA::testEntropy(double &entropy)
 {
   // it is possible that we have acquired samples A and B but changed
   // the transformation since then so we could still compute the
@@ -1055,7 +1055,7 @@ int nmr_ObjectiveMI::testEntropy(double &entropy)
   return 0;
 }
 
-int nmr_ObjectiveMI::computeRefEntropyGradient(double &dH_dsigma_ref)
+int nmr_ObjectiveMI_EMMA::computeRefEntropyGradient(double &dH_dsigma_ref)
 {
   // it is possible that we have acquired samples A and B but changed
   // the transformation since then so we could still compute the
@@ -1115,7 +1115,7 @@ int nmr_ObjectiveMI::computeRefEntropyGradient(double &dH_dsigma_ref)
   return 0;
 }
 
-int nmr_ObjectiveMI::refEntropy(double &entropy)
+int nmr_ObjectiveMI_EMMA::refEntropy(double &entropy)
 {
   // it is possible that we have acquired samples A and B but changed
   // the transformation since then so we could still compute the
@@ -1150,7 +1150,7 @@ int nmr_ObjectiveMI::refEntropy(double &entropy)
   return 0;
 }
 
-int nmr_ObjectiveMI::computeTransformationGradient(double *dIdT)
+int nmr_ObjectiveMI_EMMA::computeTransformationGradient(double *dIdT)
 {
   // it is possible that we have acquired samples A and B but changed
   // the transformation since then so we could still compute the
@@ -1178,7 +1178,7 @@ int nmr_ObjectiveMI::computeTransformationGradient(double *dIdT)
 */
 }
 
-int nmr_ObjectiveMI::computeTransformationGradient_HeightfieldRef(double *dIdT)
+int nmr_ObjectiveMI_EMMA::computeTransformationGradient_HeightfieldRef(double *dIdT)
 {
   // it is possible that we have acquired samples A and B but changed
   // the transformation since then so we could still compute the
@@ -1302,7 +1302,7 @@ int nmr_ObjectiveMI::computeTransformationGradient_HeightfieldRef(double *dIdT)
   return 0;
 }
 
-int nmr_ObjectiveMI::computeMutualInformation(double &mutualInfo)
+int nmr_ObjectiveMI_EMMA::computeMutualInformation(double &mutualInfo)
 {
   double test_entropy, ref_entropy, cross_entropy;
 
@@ -1314,7 +1314,7 @@ int nmr_ObjectiveMI::computeMutualInformation(double &mutualInfo)
   return 0;
 }
 
-void nmr_ObjectiveMI::convertTransformToPixelUnits(double *T1, double *T2)
+void nmr_ObjectiveMI_EMMA::convertTransformToPixelUnits(double *T1, double *T2)
 {
   // initialize transformation to the transform in image units
   int i;
@@ -1358,7 +1358,7 @@ void nmr_ObjectiveMI::convertTransformToPixelUnits(double *T1, double *T2)
   return;
 }
 
-void nmr_ObjectiveMI::convertTransformToImageUnits(double *T1, double *T2)
+void nmr_ObjectiveMI_EMMA::convertTransformToImageUnits(double *T1, double *T2)
 {
   // initialize transformation to the transform in pixel units
   int i;
@@ -1403,7 +1403,7 @@ void nmr_ObjectiveMI::convertTransformToImageUnits(double *T1, double *T2)
   return;
 }
 
-double nmr_ObjectiveMI::distanceToNearestFeaturePoint(double x, double y)
+double nmr_ObjectiveMI_EMMA::distanceToNearestFeaturePoint(double x, double y)
 {
   double minDist;
   double testDist;

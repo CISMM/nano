@@ -253,6 +253,20 @@ void nmr_RegistrationUI::handleRegistrationChange
         // result off to the graphics code
         updateTextureTransform();
       }
+      switch (whichTransform) {
+        case NMR_MANUAL:
+          setAutoAlignMode(NMR_AUTOALIGN_FROM_MANUAL);
+          setTransformationSource(NMR_MANUAL);
+          break;
+        case NMR_DEFAULT:
+          setAutoAlignMode(NMR_AUTOALIGN_FROM_DEFAULT);
+          setTransformationSource(NMR_DEFAULT);
+          break;
+        case NMR_AUTOMATIC:
+          setTransformationSource(NMR_AUTOMATIC);
+          setAutoAlignMode(NMR_AUTOALIGN_FROM_AUTO);
+          break;
+      }
       break;
   }
 }
@@ -558,7 +572,6 @@ void nmr_RegistrationUI::autoAlignImages()
   d_aligner->setStepSize((vrpn_float32)d_stepSize);
   d_aligner->setCurrentResolution(levelIndex);
   d_aligner->autoAlignImages(mode);
-  setTransformationSource(NMR_AUTOMATIC);
 }
 
 void nmr_RegistrationUI::setTransformationSource(nmr_RegistrationType source) 
@@ -567,6 +580,16 @@ void nmr_RegistrationUI::setTransformationSource(nmr_RegistrationType source)
   for (i = 0; i < s_numTransformationSources; i++) {
     if (source == s_transformationSources[i]) {
       d_transformationSource = s_transformationSourceNames[i];
+    }
+  }
+}
+
+void nmr_RegistrationUI::setAutoAlignMode(nmr_AutoAlignMode mode)
+{
+  int i;
+  for (i = 0; i < s_numAutoAlignModes; i++) {
+    if (mode == s_autoAlignModes[i]) {
+      d_autoAlignMode = s_autoAlignModeNames[i];
     }
   }
 }

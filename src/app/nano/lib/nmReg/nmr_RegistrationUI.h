@@ -104,6 +104,7 @@ class nmr_RegistrationUI {
     int convertTransformSourceTypeToTransformIndex(int type);
     void updateTextureTransform();
     void setTransformationSource(nmr_RegistrationType source);
+    void setAutoAlignMode(nmr_AutoAlignMode mode);
 
     Tclvar_string d_registrationImageName3D;
     Tclvar_string d_registrationImageName2D;

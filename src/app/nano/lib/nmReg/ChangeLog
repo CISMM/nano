@@ -1,3 +1,28 @@
+2001-12-05  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_AlignerMI.Ch : made this use nmr_MultiResObjectiveMI_direct
+	instead of nmr_MultiResObjectiveMI_EMMA; removed a bit of 
+	unnecessary code in the process - mostly stuff to use
+	gradients in patternSearch() (that code was ugly anyway)
+	* nmr_RegistrationUI.C : added some convenience features - when
+	a transformation of a particular type is received, the interface	
+	automatically switches to display the texture using that transform.
+	and it automatically switches to initialize the auto-alignment from
+	that transform.
+	* nmr_Registration_Impl.C : removed or commented out calls to 
+	the mutual information alignment that isn't supported/required in
+	order to use nmr_MultiResObjectiveMI_direct
+	* nmr_ObjectiveMI.Ch : moved to 
+	* nmr_ObjectiveMI_EMMA.Ch: new file
+	* nmr_MultiResObjectiveMI.Ch: moved to
+	* nmr_MultiResObjectiveMI_EMMA.Ch: new file
+	* nmr_ObjectiveMI_direct.Ch: new file implementing mutual information
+	calculations that aren't random (unlike EMMA version)
+	* nmr_MultiResObjectiveMI_direct.Ch: multi-resolution version of
+	nmr_ObjectiveMI_direct.Ch
+	* nmr_Histogram.Ch : histogram utility used by nmr_ObjectiveMI_direct
+	to calculate distribution statistics
+	
 2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
 	
 	* nmr_RegistrationUI.hC : replaced nmb_Dataset with nmb_ImageManager

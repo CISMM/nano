@@ -1,12 +1,12 @@
-#include "nmr_MultiResObjectiveMI.h"
+#include "nmr_MultiResObjectiveMI_EMMA.h"
 #include "nmr_Util.h"
 #include <math.h>
 
 // #define DEBUG_FILE_OUTPUT
 
 // static data members:
-int nmr_MultiResObjectiveMI::s_defaultNumResolutionLevels = 7;
-float nmr_MultiResObjectiveMI::s_defaultStdDev[] =
+int nmr_MultiResObjectiveMI_EMMA::s_defaultNumResolutionLevels = 7;
+float nmr_MultiResObjectiveMI_EMMA::s_defaultStdDev[] =
               {0.0, 0.5, 1.0, 2.0, 3.0, 4.0, 8.0};
 
 const int defaultSampleSize = 64;
@@ -15,11 +15,11 @@ const int defaultSampleSize = 64;
 #define M_PI 3.14159265358979323846
 #endif
 
-nmr_MultiResObjectiveMI::nmr_MultiResObjectiveMI()
+nmr_MultiResObjectiveMI_EMMA::nmr_MultiResObjectiveMI_EMMA()
 {
   d_numResolutionLevels = s_defaultNumResolutionLevels;
   d_stddev = new float[d_numResolutionLevels];
-  d_objectiveMI = new nmr_ObjectiveMI[d_numResolutionLevels];
+  d_objectiveMI = new nmr_ObjectiveMI_EMMA[d_numResolutionLevels];
   int i;
   for (i = 0; i < d_numResolutionLevels; i++) {
     d_stddev[i] = s_defaultStdDev[i];
@@ -32,11 +32,11 @@ nmr_MultiResObjectiveMI::nmr_MultiResObjectiveMI()
   }
 }
 
-nmr_MultiResObjectiveMI::nmr_MultiResObjectiveMI(int numLevels, float *stddev):
+nmr_MultiResObjectiveMI_EMMA::nmr_MultiResObjectiveMI_EMMA(int numLevels, float *stddev):
   d_numResolutionLevels(numLevels)
 {
   d_stddev = new float[d_numResolutionLevels];
-  d_objectiveMI = new nmr_ObjectiveMI[d_numResolutionLevels];
+  d_objectiveMI = new nmr_ObjectiveMI_EMMA[d_numResolutionLevels];
   int i;
   for (i = 0; i < d_numResolutionLevels; i++) {
     d_stddev[i] = stddev[i];
@@ -49,13 +49,13 @@ nmr_MultiResObjectiveMI::nmr_MultiResObjectiveMI(int numLevels, float *stddev):
   }
 }
 
-nmr_MultiResObjectiveMI::~nmr_MultiResObjectiveMI()
+nmr_MultiResObjectiveMI_EMMA::~nmr_MultiResObjectiveMI_EMMA()
 {
   delete [] d_stddev;
   delete [] d_objectiveMI;
 }
 
-void nmr_MultiResObjectiveMI::getBlurStdDev(float *stddev)
+void nmr_MultiResObjectiveMI_EMMA::getBlurStdDev(float *stddev)
 {
   int i; 
   for (i = 0; i < d_numResolutionLevels; i++) {
@@ -63,7 +63,7 @@ void nmr_MultiResObjectiveMI::getBlurStdDev(float *stddev)
   }
 }
 
-void nmr_MultiResObjectiveMI::setDimensionMode(nmr_DimensionMode mode)
+void nmr_MultiResObjectiveMI_EMMA::setDimensionMode(nmr_DimensionMode mode)
 {
   int i;
   for (i = 0; i < d_numResolutionLevels; i++) {
@@ -71,12 +71,12 @@ void nmr_MultiResObjectiveMI::setDimensionMode(nmr_DimensionMode mode)
   }
 }
 
-nmr_DimensionMode nmr_MultiResObjectiveMI::getDimensionMode()
+nmr_DimensionMode nmr_MultiResObjectiveMI_EMMA::getDimensionMode()
 {
   return d_objectiveMI[0].getDimensionMode();
 }
 
-int nmr_MultiResObjectiveMI::setSampleSizes(int sizeA, int sizeB)
+int nmr_MultiResObjectiveMI_EMMA::setSampleSizes(int sizeA, int sizeB)
 {
   int i;
   int result = 0;
@@ -89,12 +89,12 @@ int nmr_MultiResObjectiveMI::setSampleSizes(int sizeA, int sizeB)
   return result;
 }
 
-void nmr_MultiResObjectiveMI::getSampleSizes(int &sizeA, int &sizeB)
+void nmr_MultiResObjectiveMI_EMMA::getSampleSizes(int &sizeA, int &sizeB)
 {
   d_objectiveMI[0].getSampleSizes(sizeA, sizeB);
 }
 
-void nmr_MultiResObjectiveMI::setSamplePositionMode(nmr_SamplePositionMode mode)
+void nmr_MultiResObjectiveMI_EMMA::setSamplePositionMode(nmr_SamplePositionMode mode)
 {
   int i;
   for (i = 0; i < d_numResolutionLevels; i++) {
@@ -102,7 +102,7 @@ void nmr_MultiResObjectiveMI::setSamplePositionMode(nmr_SamplePositionMode mode)
   }
 }
 
-void nmr_MultiResObjectiveMI::setSampleRejectionCriterion
+void nmr_MultiResObjectiveMI_EMMA::setSampleRejectionCriterion
          (nmr_SampleRejectionCriterion crit)
 {
   int i;
@@ -111,7 +111,7 @@ void nmr_MultiResObjectiveMI::setSampleRejectionCriterion
   }
 }
 
-void nmr_MultiResObjectiveMI::setMinSampleSqrGradientMagnitude(double mag)
+void nmr_MultiResObjectiveMI_EMMA::setMinSampleSqrGradientMagnitude(double mag)
 {
   int i;
   for (i = 0; i < d_numResolutionLevels; i++) {
@@ -119,7 +119,7 @@ void nmr_MultiResObjectiveMI::setMinSampleSqrGradientMagnitude(double mag)
   }
 }
 
-void nmr_MultiResObjectiveMI::setRefFeaturePoints(int numPnts, 
+void nmr_MultiResObjectiveMI_EMMA::setRefFeaturePoints(int numPnts, 
                                           double *x, double *y)
 {
   int i;
@@ -128,7 +128,7 @@ void nmr_MultiResObjectiveMI::setRefFeaturePoints(int numPnts,
   }
 }
 
-void nmr_MultiResObjectiveMI::setReferenceValueImage(nmb_Image *ref,
+void nmr_MultiResObjectiveMI_EMMA::setReferenceValueImage(nmb_Image *ref,
                                                nmb_ImageList *monitorList)
 {
   int i;
@@ -154,7 +154,7 @@ void nmr_MultiResObjectiveMI::setReferenceValueImage(nmb_Image *ref,
   delete [] pyramid;
 }
 
-void nmr_MultiResObjectiveMI::setTestValueImage(nmb_Image *test,
+void nmr_MultiResObjectiveMI_EMMA::setTestValueImage(nmb_Image *test,
                                                nmb_ImageList *monitorList)
 {
   int i;
@@ -180,7 +180,7 @@ void nmr_MultiResObjectiveMI::setTestValueImage(nmb_Image *test,
   delete [] pyramid;
 }
 
-void nmr_MultiResObjectiveMI::setReferenceZImage(nmb_Image *ref_z,
+void nmr_MultiResObjectiveMI_EMMA::setReferenceZImage(nmb_Image *ref_z,
                                                nmb_ImageList *monitorList)
 {
   int i;
@@ -196,20 +196,20 @@ void nmr_MultiResObjectiveMI::setReferenceZImage(nmb_Image *ref_z,
   }
 }
 
-double nmr_MultiResObjectiveMI::value(int level, 
+double nmr_MultiResObjectiveMI_EMMA::value(int level, 
                                       double *testFromReferenceTransform)
 {
   return d_objectiveMI[level].value(testFromReferenceTransform);
 }
 
-void nmr_MultiResObjectiveMI::gradient(int level, 
+void nmr_MultiResObjectiveMI_EMMA::gradient(int level, 
                   double *testFromReferenceTransform,
                   double *gradMI)
 {
   d_objectiveMI[level].gradient(testFromReferenceTransform, gradMI);
 }
 
-void nmr_MultiResObjectiveMI::valueAndGradient(int level, 
+void nmr_MultiResObjectiveMI_EMMA::valueAndGradient(int level, 
                 double *testFromReferenceTransform,
                 double &valueMI, double *gradMI)
 {
@@ -217,7 +217,7 @@ void nmr_MultiResObjectiveMI::valueAndGradient(int level,
                                    valueMI, gradMI);
 }
 
-int nmr_MultiResObjectiveMI::getJointHistogram(int level,
+int nmr_MultiResObjectiveMI_EMMA::getJointHistogram(int level,
                            nmb_Image *histogram, 
                            double *transform, vrpn_bool blur,
                            vrpn_bool setRefScale,
@@ -232,25 +232,25 @@ int nmr_MultiResObjectiveMI::getJointHistogram(int level,
              setRefScale, min_ref, max_ref, setTestScale, min_test, max_test);
 }
 
-void nmr_MultiResObjectiveMI::setCovariance(int level, double sigmaRefRef, 
+void nmr_MultiResObjectiveMI_EMMA::setCovariance(int level, double sigmaRefRef, 
                                                        double sigmaTestTest)
 {
   d_objectiveMI[level].setCovariance(sigmaRefRef, sigmaTestTest);
 }
 
-void nmr_MultiResObjectiveMI::getCovariance(int level, 
+void nmr_MultiResObjectiveMI_EMMA::getCovariance(int level, 
                               double &sigmaRefRef, double &sigmaTestTest)
 {
   d_objectiveMI[level].getCovariance(sigmaRefRef, sigmaTestTest);
 }
 
-void nmr_MultiResObjectiveMI::crossEntropyGradient(int level, 
+void nmr_MultiResObjectiveMI_EMMA::crossEntropyGradient(int level, 
                                          double &dHc_dsigma_ref,
                                          double &dHc_dsigma_test)
 {
   if (d_objectiveMI[level].computeCrossEntropyGradient(dHc_dsigma_ref,
                                                        dHc_dsigma_test)) {
-    fprintf(stderr, "nmr_MultiResObjectiveMI::crossEntropyGradient: "
+    fprintf(stderr, "nmr_MultiResObjectiveMI_EMMA::crossEntropyGradient: "
             "Warning, samples not yet acquired, will do this automatically\n");
     d_objectiveMI[level].buildSampleSets();
     d_objectiveMI[level].computeCrossEntropyGradient(dHc_dsigma_ref,
@@ -258,72 +258,72 @@ void nmr_MultiResObjectiveMI::crossEntropyGradient(int level,
   }
 }
 
-void nmr_MultiResObjectiveMI::crossEntropy(int level, double &entropy)
+void nmr_MultiResObjectiveMI_EMMA::crossEntropy(int level, double &entropy)
 {
   if (d_objectiveMI[level].crossEntropy(entropy)) {
-    fprintf(stderr, "nmr_MultiResObjectiveMI::crossEntropy: "
+    fprintf(stderr, "nmr_MultiResObjectiveMI_EMMA::crossEntropy: "
             "Warning, samples not yet acquired, will do this automatically\n");
     d_objectiveMI[level].buildSampleSets();
     d_objectiveMI[level].crossEntropy(entropy);
   }
 }
 
-void nmr_MultiResObjectiveMI::setTestVariance(int level, double sigma)
+void nmr_MultiResObjectiveMI_EMMA::setTestVariance(int level, double sigma)
 {
   d_objectiveMI[level].setTestVariance(sigma);
 }
 
-void nmr_MultiResObjectiveMI::getTestVariance(int level, double &sigma)
+void nmr_MultiResObjectiveMI_EMMA::getTestVariance(int level, double &sigma)
 {
   d_objectiveMI[level].getTestVariance(sigma);
 }
 
-void nmr_MultiResObjectiveMI::testEntropyGradient(int level, 
+void nmr_MultiResObjectiveMI_EMMA::testEntropyGradient(int level, 
                                                   double &dH_dsigma_test)
 {
   if (d_objectiveMI[level].computeTestEntropyGradient(dH_dsigma_test)) {
-    fprintf(stderr, "nmr_MultiResObjectiveMI::testEntropyGradient: "
+    fprintf(stderr, "nmr_MultiResObjectiveMI_EMMA::testEntropyGradient: "
             "Warning, samples not yet acquired, will do this automatically\n");
     d_objectiveMI[level].buildSampleSets();
     d_objectiveMI[level].computeTestEntropyGradient(dH_dsigma_test);
   }
 }
 
-void nmr_MultiResObjectiveMI::testEntropy(int level, double &entropy)
+void nmr_MultiResObjectiveMI_EMMA::testEntropy(int level, double &entropy)
 {
   if (d_objectiveMI[level].testEntropy(entropy)) {
-    fprintf(stderr, "nmr_MultiResObjectiveMI::testEntropy: "
+    fprintf(stderr, "nmr_MultiResObjectiveMI_EMMA::testEntropy: "
             "Warning, samples not yet acquired, will do this automatically\n");
     d_objectiveMI[level].buildSampleSets();
     d_objectiveMI[level].testEntropy(entropy);
   }
 }
 
-void nmr_MultiResObjectiveMI::setRefVariance(int level, double sigma)
+void nmr_MultiResObjectiveMI_EMMA::setRefVariance(int level, double sigma)
 {
   d_objectiveMI[level].setRefVariance(sigma);
 }
 
-void nmr_MultiResObjectiveMI::getRefVariance(int level, double &sigma)
+void nmr_MultiResObjectiveMI_EMMA::getRefVariance(int level, double &sigma)
 {
   d_objectiveMI[level].getRefVariance(sigma);
 }
 
-void nmr_MultiResObjectiveMI::refEntropyGradient(int level, 
+void nmr_MultiResObjectiveMI_EMMA::refEntropyGradient(int level, 
                                              double &dH_dsigma_ref)
 {
   if (d_objectiveMI[level].computeRefEntropyGradient(dH_dsigma_ref)) {
-    fprintf(stderr, "nmr_MultiResObjectiveMI::refEntropyGradient: "
+    fprintf(stderr, "nmr_MultiResObjectiveMI_EMMA::refEntropyGradient: "
             "Warning, samples not yet acquired, will do this automatically\n");
     d_objectiveMI[level].buildSampleSets();
     d_objectiveMI[level].computeRefEntropyGradient(dH_dsigma_ref);
   }
 }
 
-void nmr_MultiResObjectiveMI::refEntropy(int level, double &entropy)
+void nmr_MultiResObjectiveMI_EMMA::refEntropy(int level, double &entropy)
 {
   if (d_objectiveMI[level].refEntropy(entropy)) {
-    fprintf(stderr, "nmr_MultiResObjectiveMI::refEntropy: "
+    fprintf(stderr, "nmr_MultiResObjectiveMI_EMMA::refEntropy: "
             "Warning, samples not yet acquired, will do this automatically\n");
     d_objectiveMI[level].buildSampleSets();
     d_objectiveMI[level].refEntropy(entropy);

@@ -1,11 +1,8 @@
-#ifndef NMR_OBJECTIVEMI_H
-#define NMR_OBJECTIVEMI_H
+#ifndef NMR_OBJECTIVEMI_EMMA_H
+#define NMR_OBJECTIVEMI_EMMA_H
 
 #include "nmb_Image.h"
-
-typedef enum {REF_2D,        // treat reference image as a simple 2D image
-              REF_HEIGHTFIELD // treat reference image as a 2.5D image
-} nmr_DimensionMode;
+#include "nmr_Objective.h"
 
 typedef enum {NMR_RANDOM, NMR_REGULAR, NMR_JITTERED}
               nmr_SamplePositionMode;
@@ -13,10 +10,10 @@ typedef enum {NMR_NO_SELECT, NMR_GRADIENT_SELECT,
               NMR_REF_FEATURE_DISTANCE_SELECT}
               nmr_SampleRejectionCriterion;
 
-class nmr_ObjectiveMI {
+class nmr_ObjectiveMI_EMMA : public nmr_Objective{
   public:
-    nmr_ObjectiveMI();
-    ~nmr_ObjectiveMI();
+    nmr_ObjectiveMI_EMMA();
+    ~nmr_ObjectiveMI_EMMA();
 
     /* ************** 
     functions that affect the number and meaning of parameters of the
@@ -24,8 +21,8 @@ class nmr_ObjectiveMI {
     ***************** */
 
     /// choose between 2D reference or 2.5D reference image
-    void setDimensionMode(nmr_DimensionMode mode);
-    nmr_DimensionMode getDimensionMode();
+    virtual void setDimensionMode(nmr_DimensionMode mode);
+    virtual nmr_DimensionMode getDimensionMode();
 
     /* **************
     functions that affect the value of the objective function and its gradient
@@ -56,9 +53,9 @@ class nmr_ObjectiveMI {
     void getRefVariance(double &sigma);
 
     /// set images 
-    void setReferenceValueImage(nmb_Image *ref);
-    void setTestValueImage(nmb_Image *test);
-    void setReferenceZImage(nmb_Image *ref_z);
+    virtual void setReferenceValueImage(nmb_Image *ref);
+    virtual void setTestValueImage(nmb_Image *test);
+    virtual void setReferenceZImage(nmb_Image *ref_z);
 
     /* **************
     objective function value and gradient
@@ -72,15 +69,15 @@ class nmr_ObjectiveMI {
     /// this transformation should be in terms of pixels
 
     /// objective function value
-    double value(double *testFromReferenceTransform);
+    virtual double value(double *testFromReferenceTransform);
 
     /// get gradient vector
-    void gradient(double *testFromReferenceTransform, double *gradMI);
+    virtual void gradient(double *testFromReferenceTransform, double *gradMI);
 
     /// since we can share some of the computation between value and
     /// gradient computations, if you need both you should call this 
     /// function
-    void valueAndGradient(double *testFromReferenceTransform, 
+    virtual void valueAndGradient(double *testFromReferenceTransform, 
                 double &valueMI, double *gradMI);
 
     /* *************

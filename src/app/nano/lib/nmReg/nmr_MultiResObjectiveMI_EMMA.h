@@ -1,16 +1,16 @@
-#ifndef NMR_MULTIRESOBJECTIVEMI_H
-#define NMR_MULTIRESOBJECTIVEMI_H
+#ifndef NMR_MULTIRESOBJECTIVEMI_EMMA_H
+#define NMR_MULTIRESOBJECTIVEMI_EMMA_H
 
-#include "nmr_ObjectiveMI.h"
+#include "nmr_ObjectiveMI_EMMA.h"
 
-/* nmr_MultiResObjectiveMI
-  This class is a multiresolution version of nmr_ObjectiveMI
+/* nmr_MultiResObjectiveMI_EMMA
+  This class is a multiresolution version of nmr_ObjectiveMI_EMMA
 */
-class nmr_MultiResObjectiveMI {
+class nmr_MultiResObjectiveMI_EMMA {
   public:
-    nmr_MultiResObjectiveMI();
-    nmr_MultiResObjectiveMI(int numLevels, float *stddev);
-    ~nmr_MultiResObjectiveMI();
+    nmr_MultiResObjectiveMI_EMMA();
+    nmr_MultiResObjectiveMI_EMMA(int numLevels, float *stddev);
+    ~nmr_MultiResObjectiveMI_EMMA();
 
     int numLevels() {return d_numResolutionLevels;}
     void getBlurStdDev(float *stddev);
@@ -101,7 +101,7 @@ class nmr_MultiResObjectiveMI {
   protected:
     int d_numResolutionLevels;
     float *d_stddev;
-    nmr_ObjectiveMI *d_objectiveMI;
+    nmr_ObjectiveMI_EMMA *d_objectiveMI;
     static int s_defaultNumResolutionLevels;
     static float s_defaultStdDev[];
 };

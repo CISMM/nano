@@ -20,7 +20,7 @@ void nmr_AlignerMI::initImages(nmb_Image *ref, nmb_Image *test,
   if (d_objective) {
     delete d_objective;
   }
-  d_objective = new nmr_MultiResObjectiveMI();
+  d_objective = new nmr_MultiResObjectiveMI_direct();
 
   d_objective->setReferenceValueImage(ref, monitorList);
   d_objective->setTestValueImage(test, monitorList);
@@ -42,7 +42,7 @@ void nmr_AlignerMI::initImages(nmb_Image *ref, nmb_Image *test,
   if (d_objective) {
     delete d_objective;
   }
-  d_objective = new nmr_MultiResObjectiveMI(numLevels, stddev);
+  d_objective = new nmr_MultiResObjectiveMI_direct(numLevels, stddev);
 
   d_objective->setReferenceValueImage(ref, monitorList);
   d_objective->setTestValueImage(test, monitorList);
@@ -57,6 +57,7 @@ void nmr_AlignerMI::initImages(nmb_Image *ref, nmb_Image *test,
   }
 }
 
+/*
 void nmr_AlignerMI::optimizeVarianceParameters()
 {
  int level;
@@ -118,6 +119,7 @@ void nmr_AlignerMI::optimizeVarianceParameters()
   }
  }
 }
+*/
 
 void nmr_AlignerMI::takeGradientSteps(int resolutionIndex, int numSteps,
                                       float stepSize)
@@ -297,7 +299,6 @@ void nmr_AlignerMI::getTransform(nmb_Transform_TScShR &xform)
   xform = d_transform;
 }
 
-#define GRADIENTPATTERNSEARCH
 void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
                                   float translationStepSize)
 {
@@ -331,20 +332,6 @@ void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
   double maxObjective = d_objective->value(resolutionIndex, xform_matrix);
   double testObjective;
 
-#ifdef GRADIENTPATTERNSEARCH
-  // the MI code computes the mutual information and its gradient in
-  // terms of 4x4 matrix elements
-  double gradMI[16];
-
-  // we want to work with the gradient in the coordinates of translation,
-  // rotation, scale, or shear
-  double dMI_dParam[numParameters];
-
-  // derivatives for transforming the gradient from being in terms of matrix
-  // elements to being in terms of rotation, translation, scale, or shear
-  double dTransform_dParam[numParameters][16];
-#endif
-
   int i, j, k;
   double paramVal;
   testTransform = d_transform;
@@ -354,19 +341,8 @@ void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
       paramVal += stepSize[j];
       testTransform.setParameter(parameterTypes[j], paramVal);
       testTransform.getMatrix(xform_matrix);
-#ifdef GRADIENTPATTERNSEARCH
-      d_objective->gradient(resolutionIndex, xform_matrix, gradMI);
-      testTransform.getMatrixDerivative(dTransform_dParam[j], 
-                                        parameterTypes[j]);
-      dMI_dParam[j] = 0;
-      for (k = 0; k < 16; k++) {
-        dMI_dParam[j] += dTransform_dParam[j][k]*gradMI[k];
-      }
-      if (dMI_dParam > 0) {
-#else
       testObjective = d_objective->value(resolutionIndex, xform_matrix);     
       if (testObjective > maxObjective) {
-#endif
         maxObjective = testObjective;
         d_transform = testTransform;
         exploreVector[j] = 1.0;
@@ -376,19 +352,8 @@ void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
       paramVal -= 2*stepSize[j];
       testTransform.setParameter(parameterTypes[j], paramVal);
       testTransform.getMatrix(xform_matrix);
-#ifdef GRADIENTPATTERNSEARCH
-      d_objective->gradient(resolutionIndex, xform_matrix, gradMI);
-      testTransform.getMatrixDerivative(dTransform_dParam[j], 
-                                        parameterTypes[j]);
-      dMI_dParam[j] = 0;
-      for (k = 0; k < 16; k++) {
-        dMI_dParam[j] += dTransform_dParam[j][k]*gradMI[k];
-      }
-      if (dMI_dParam[j] < 0) {
-#else 
       testObjective = d_objective->value(resolutionIndex, xform_matrix);
       if (testObjective > maxObjective) {
-#endif
         maxObjective = testObjective;
         d_transform = testTransform;
         exploreVector[j] = -1.0;
@@ -410,7 +375,10 @@ void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
     printf(")\n");
 
     if (zeroExploreVector) {
-      printf("zero explore vector found\n");
+      printf("zero explore vector found, reducing step size\n");
+      for (j = 0; j < numParameters; j++) {
+        stepSize[j] *= 0.25;
+      }
     }
 
     // pattern move
@@ -420,27 +388,6 @@ void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
       testTransform.setParameter(parameterTypes[j], paramVal);
     }
     testTransform.getMatrix(xform_matrix);
-#ifdef GRADIENTPATTERNSEARCH
-    d_objective->gradient(resolutionIndex, xform_matrix, gradMI);
-    double dotProd = 0;
-    for (j = 0; j < numParameters; j++) {
-      dMI_dParam[j] = 0;
-      for (k = 0; k < 16; k++) {
-        dMI_dParam[j] += dTransform_dParam[j][k]*gradMI[k];
-      }
-      dotProd += patternVector[j]*dMI_dParam[j];
-    }
-    if (dotProd > 0) {
-      printf("pattern move succeeded\n");
-      d_transform = testTransform;
-    } else {
-      printf("pattern move failed\n");
-      for (j = 0; j < numParameters; j++) {
-        //patternVector[j] = 0.0;
-        patternVector[j] *= 0.9;
-      }
-    }
-#else
     testObjective = d_objective->value(resolutionIndex, xform_matrix);
     if (testObjective > maxObjective) {
       printf("pattern move succeeded\n");
@@ -452,7 +399,6 @@ void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
         patternVector[j] = 0.0;
       }
     }
-#endif
     printf("patternVector: (");
     for (j = 0; j < numParameters; j++) {
       printf("%g,", patternVector[j]);
@@ -582,9 +528,11 @@ void nmr_AlignerMI::getBlurStdDev(float *stddev)
   }
 }
 
+/*
 void nmr_AlignerMI::setRefFeaturePoints(int numPnts, double *x, double *y)
 {
   if (d_objective) {
     d_objective->setRefFeaturePoints(numPnts, x, y);
   }
 }
+*/
