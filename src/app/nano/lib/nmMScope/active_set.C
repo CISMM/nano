@@ -524,20 +524,29 @@ int     Point_channel_selector::Handle_report( float x, float y,
 	    return -1;
 	}
 
-	// Set location and time in the point results class
-	if (myresult) {
-		myresult->setPosition(x, y);
-		myresult->setTime(sec, usec);
-	}
-
 	// Update each of the values with the new values.
 	for (i = 0; i < numchannels; i++) {
+                //fprintf(stderr, "Value %d is %.5f (%.5f + %.5f x %.5f)\n", i, 
+			//channels[i].offset + channels[i].scale * vals[i],
+			//channels[i].offset, channels[i].scale, vals[i]);
 		values[i]->setValue(
 			channels[i].offset + channels[i].scale*vals[i]);
 	}
 
+	// Set location and time in the point results class
+	if (myresult) {
+	  myresult->setTime(sec, usec);
+          // TCH Dissertation July 2001
+          // Need a z value!  HACK HACK HACK
+	  myresult->setPosition(x, y, values[0]->value());
+            //(myresult->getValueByName
+              //(d_dataset->heightPlaneName->string()))->value());
+//fprintf(stderr, "Added point %.5f %.5f %.5f\n",
+//x, y, values[0]->value());
+	}
+
         // Are we stashing a copy of this data in a point list?
-        if (accumulatePoints && (d_pointList != NULL)) {
+        if (accumulatePoints && myresult && d_pointList) {
           d_pointList->addEntry(*myresult);
         }
 

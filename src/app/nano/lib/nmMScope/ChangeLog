@@ -1,3 +1,13 @@
+2001-07-29  Tom Hudson  <hudson@cs.unc.edu>
+
+        * active_set.C (Point_channel_selector::Handle_report) : Ugly
+        hack to get a valid Z value in the inputPoint.
+        Add safety check.
+
+        * nmm_MicroscopeRemote.C (TakeFeelStep) : Abort awaitResult
+        if it takes more than a minute to hear from the microscope.
+        (TakeModStep) : Same.
+
 2001-07-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* AFMState.h (AFMModifyState::feelahead_numX, feelahead_numY,
