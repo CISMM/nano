@@ -8,7 +8,7 @@
 #include "vrpn_Types.h"
 
 #ifdef V_GLUT
-#	include <GL/glut.h>
+#	include <GL/glut_UNC.h>
 #else
 #	include <GL/glx.h> 
 #	include <GL/gl.h>
