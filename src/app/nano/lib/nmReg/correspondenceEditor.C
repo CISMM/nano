@@ -485,6 +485,10 @@ void CorrespondenceEditor::addFiducial(float *x, float *y, float *z)
          correspondence->setPoint(i, pntIndex, p);
       }
     }
+
+    for (i = 0; i < num_images; i++) {
+      viewer->dirtyWindow((winParam)[i].winID);
+    }
 }
 
 int CorrespondenceEditor::setImage(int spaceIndex, nmb_Image *im) {

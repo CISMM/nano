@@ -4,7 +4,8 @@
  	by clicking in the window) and 3D points (where z has been specified
 	somehow - like when a sendFiducial message is sent)
         * correspondenceEditor.C (addFiducial): allows z to be NULL if
-	the fiducial point is only 2D in both images
+	the fiducial point is only 2D in both images; fixed this so 
+	it causes the windows to be redrawn 
 	* nmr_Registration_Client.h : changed a comment
 	* nmr_Registraiton_Impl.C (convertTo3DSpace): this used to augment
 	all points with a z-value taken from the corresponding image
