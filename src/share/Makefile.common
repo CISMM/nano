@@ -231,12 +231,9 @@ endif
 
 FULL_OBJECT_DIR := $(MY_NANO_OBJ_DIR)/$(HW_OS)$(OBJECT_DIR_SUFFIX)
 
-TCL_INC_DIR := /afs/unc/proj/stm/src/tcltk.sgi_irix/include \
-               /net/nano/nano3/tcltk.$(HW_OS)/include
-TCL_LIB_DIR := /afs/unc/proj/stm/src/tcltk.$(HW_OS)$(OBJECT_DIR_SUFFIX)/lib \
-               /net/nano/nano3/tcltk.$(HW_OS)$(OBJECT_DIR_SUFFIX)/lib \
-               /afs/unc/proj/stm/src/tcltk.$(HW_OS)/lib \
-               /net/nano/nano3/tcltk.$(HW_OS)/lib
+TCL_INC_DIR := /afs/unc/proj/stm/src/tcltk.$(HW_OS)$(OBJECT_DIR_SUFFIX)/include
+
+TCL_LIB_DIR := /afs/unc/proj/stm/src/tcltk.$(HW_OS)$(OBJECT_DIR_SUFFIX)/lib
 
 ###############################################################################
 #
