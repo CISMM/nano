@@ -1,0 +1,10 @@
+2002-04-02  Aron Helser  <helser@cs.unc.edu>
+
+	* pseudoStream.Ch: new. This class and application read in a
+	series of data files, with sequential numbers in their filenames,
+	and outputs a stream file that pretends to "scan" through that
+	data in succession. "pseudoStream -f dna.000 -o d.nms" will read
+	dna.000, dna.001, etc and output the stream d.nms. 
+	* pseudoStream.[dsp,dsw]: project files
+	* Makefile: compile with cygwin and cl. 
+

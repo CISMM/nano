@@ -1,0 +1,364 @@
+/*===3rdtech===
+  Copyright (c) 2002 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
+
+//  #include	<stdlib.h>
+//  #include	<stdio.h>
+//  #include	<string.h>
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+// bogus debug info warning.
+#pragma warning(disable:4786)
+#endif
+// STL
+#include <string>
+#include <list>
+#include <algorithm>
+using namespace std;
+
+#if !defined (_WIN32) || defined (__CYGWIN__)
+#include <dirent.h>
+#else
+// Special file in the nmBase directory because VC++ doesn't have it's own. 
+#include <vc_dirent.h>
+#endif
+
+#include <BCGrid.h>
+#include <BCPlane.h>
+
+#include <Topo.h>
+
+#include "PseudoStream.h"
+
+
+static void parseArguments(int argc, char **argv);
+
+
+static 	vrpn_Connection * connection = NULL;
+
+// 0.5 second time between messages. 
+static const timeval time_incr = {0 , 500000};
+
+PseudoStream::PseudoStream(vrpn_Connection * connection, char * sender_name) :
+    nmm_AFM_Report(connection), 
+    nmm_SPM_Report(connection),
+    d_default_sender_id(-1),
+    d_connection(connection),
+    d_numX(0), d_numY(0),
+    d_minX(-1), d_maxX(-1), d_minY(-1), d_maxY(-1),
+    d_forceScanDatasetMsg(1),
+    d_rawData(NULL)
+{
+    gettimeofday(&d_last_message_time, NULL);
+    d_time_offset.tv_sec = 0;
+    d_time_offset.tv_usec = 0;
+    d_default_sender_id = d_connection->register_sender(sender_name);
+}
+
+// Send a message to our connection. 
+long PseudoStream::dispatchMessage (long len, const char * buf,
+                                      vrpn_int32 type)
+{
+  struct timeval adj_time;
+  long retval = 0;
+
+  // More time before non- data messages
+  // Allows you to easily pause stream before this message is received. 
+  if (type != d_WindowLineData_type) {
+      d_last_message_time  = vrpn_TimevalSum(d_last_message_time, time_incr );
+      d_last_message_time  = vrpn_TimevalSum(d_last_message_time, time_incr );
+  }
+  if (d_connection) {
+      retval = d_connection->pack_message(len, d_last_message_time, type, 
+                                        d_default_sender_id,
+                                      (char *) buf, vrpn_CONNECTION_RELIABLE);
+  } else {
+      retval = 0;
+  }
+  if (len > 0) {
+      delete [] ((char *) buf);
+  }
+
+  // Increment the time for each message we send. 
+  adj_time = vrpn_TimevalSum(d_last_message_time, time_incr );
+  d_last_message_time = adj_time;
+
+  // Tell vrpn that time has moved ahead for any of it's control message,
+  // especially dropped connection. 
+  d_time_offset = vrpn_TimevalSum(d_time_offset, time_incr );
+  d_connection->setControlMsgTimeOffset(&d_time_offset);
+  return retval;
+}
+
+void PrintIt (string& StringToPrint) { cout << StringToPrint << " ";}
+
+// create a class fit for use as a functor
+class MyRemover
+{
+public:
+    MyRemover(string &base_str) :
+        d_BaseString(base_str) { cout << d_BaseString << endl; }
+    // Remove if string doesn't start with my BaseString
+    bool operator()(string &s)
+    {
+        if( s.compare(0,d_BaseString.length(), d_BaseString) == 0) {
+            // Remove if the next letter isn't a number. 
+            if (s.find_first_of("0123456789", d_BaseString.length()) != 
+                d_BaseString.length()) {
+                return 1;
+            }
+            return 0;
+        }
+        return 1;
+    }
+private:
+    string d_BaseString;
+};
+
+
+
+int PseudoStream::FileToStream(char * fileName) 
+{
+    // Make the base file name into a list of file names to load. 
+    DIR	*directory;
+    struct	dirent *entry;
+    list<string> temp_file_list;
+    
+    // Strip out directory name
+    string fileNameStr(fileName);
+    int pos = fileNameStr.find_last_of("/\\");
+    string dirNameStr, baseFileNameStr;
+    if (pos > fileNameStr.size()) {
+        dirNameStr = ".";
+        baseFileNameStr = fileNameStr;
+    } else {
+        dirNameStr = fileNameStr.substr(0, pos);
+        baseFileNameStr = fileNameStr.substr(pos+1, fileNameStr.size());
+    }
+    cout << fileNameStr <<" Found dir " << dirNameStr << endl;
+    // Load the directory
+    if ( (directory = vc_opendir(dirNameStr.c_str())) == NULL) {
+        cout << "Failed to open directory\n";
+        return -1;
+    }
+    while ( (entry = vc_readdir(directory)) != NULL) {
+        if (entry->d_namlen && entry->d_name[0] != '.') {
+            // Include this file only if it matches the pattern 
+            // of the base file
+            temp_file_list.push_back(entry->d_name);            
+        }
+    }
+    
+    //for_each(temp_file_list.begin(), temp_file_list.end(), PrintIt);
+    //cout << endl;
+    // Find last number in the filename. 
+    pos = baseFileNameStr.find_last_of("0123456789");
+    if (pos > baseFileNameStr.size()) {
+        cout << "No number sequence in filename\n";
+        return -1;
+    }
+    // Find the first character before that number which is not a number. 
+    // See? pos points to "1", and it finds the "." in 20nm_ap.001
+    pos = baseFileNameStr.find_last_not_of("0123456789", pos);
+    // Include the character just found, which is not a number, so pos+1. 
+    MyRemover mr(baseFileNameStr.substr(0,pos+1));
+    list<string>::iterator tfl_iter;
+    for(tfl_iter = temp_file_list.begin(); tfl_iter != temp_file_list.end();) {
+        //cout << "Process " << *tfl_iter << endl;
+        if (mr(*tfl_iter)) {
+            //cout << "Erase " << *tfl_iter << endl;
+            tfl_iter = temp_file_list.erase(tfl_iter);
+        } else {
+            ++tfl_iter;
+        }  
+    }
+    temp_file_list.sort();
+    for_each(temp_file_list.begin(), temp_file_list.end(), PrintIt);
+    cout << endl;
+
+    gettimeofday(&d_last_message_time, NULL);
+   // Cool! We have a list of names of files to load.
+    TopoFile tf;
+    for(tfl_iter = temp_file_list.begin(); tfl_iter != temp_file_list.end();
+        ++tfl_iter) { 
+        BCGrid tmpgrid(12, 12, 0,1,0,1,READ_FILE);
+        if (tmpgrid.loadFile((*tfl_iter).c_str(), tf) == NULL) {
+            cout << *tfl_iter << " is not a valid input file. Skipping...\n";
+            continue;
+        }
+        EmitScanMessagesFromGrid(&tmpgrid);
+    }
+    return 0;
+}
+
+int PseudoStream::EmitScanMessagesFromGrid(BCGrid * grid) 
+{
+    vrpn_int32 len, mlen;
+    char * msgbuf;
+    char * mptr;
+    int retval = -1;
+    int i;
+    // Check for changes in data sets. 
+    // XXX Changes not implemented in first version
+    if (d_forceScanDatasetMsg) {
+        d_forceScanDatasetMsg = 0;
+        // Only handle single layer, for now. 
+        msgbuf = encode_ScanDataset_header(&len, &mptr, &mlen, 1);
+        if ( !msgbuf ) {
+            cout << "Buffer overflow!\n";
+            return -1;
+        }
+        //string name(grid->head()->name()->c_str());
+        string name("Topography-Forward");
+        name.resize(64);
+        string units(grid->head()->units()->c_str());
+        units.resize(64);
+        msgbuf = encode_ScanDataset_body(&len, msgbuf, &mptr, &mlen, 
+                                         (char *)name.c_str(), 
+                                         (char *)units.c_str(),
+                                         0, 1);
+        if ( !msgbuf ) {
+            cout << "Buffer overflow!\n";
+            return -1;
+        }
+        if (dispatchMessage(len, msgbuf, d_ScanDataset_type)) {
+            cout << "Unable to pack and send message\n";
+            return -1;
+        }
+    }
+
+    // Check grid size. If it's different from last time, send
+    // message
+    if (d_numX != grid->numX() || d_numY != grid->numY() ) {
+        d_numX = grid->numX();
+        d_numY = grid->numY();
+        msgbuf = encode_ReportGridSize( &len, d_numX, d_numY );
+        if ( !msgbuf ) {
+            cout << "Buffer overflow!\n";
+            return -1;
+        }
+        cout << "New gridsize " << d_numX << " " << d_numY << endl;
+        if (dispatchMessage(len, msgbuf, d_ReportGridSize_type)) {
+            cout << "Unable to pack and send message\n";
+            return -1;
+        }
+        d_rawData = new float *[grid->numX()];
+        for (i = 0; i < grid->numY(); i++) {
+            d_rawData[i] = new float;
+        }
+        
+    }
+    // Check scan region.
+    if (d_minX != grid->minX() || d_maxX != grid->maxX() ||
+        d_minY != grid->minY() || d_maxY != grid->maxY() ) {
+        d_minX = grid->minX();
+        d_maxX = grid->maxX();
+        d_minY = grid->minY();
+        d_maxY = grid->maxY();
+        // Mins come first, then Max
+        msgbuf = encode_SetRegionClipped( &len, d_minX, d_minY, d_maxX, 
+                                    d_maxY);
+        if ( !msgbuf ) {
+            cout << "Buffer overflow!\n";
+            return -1;
+        }
+        cout << "New region " << d_minX << " " << d_maxX << " " 
+             << d_minY << " " << d_maxY << endl;
+        if (dispatchMessage(len, msgbuf, d_SetRegionClipped_type)) {
+            cout << "Unable to pack and send message\n";
+            return -1;
+        }
+    }
+
+    // Emit grid data one line at a time. 
+    for ( i = grid->numY()-1; i >=0; i--) {
+        for (int j = 0; j < grid->numX(); j++) {
+            d_rawData[j][0] = grid->head()->value(j,i);
+        }
+        msgbuf = encode_WindowLineData( &len, 0, i, 1, 0, 
+                                         grid->numX(), 1, 
+                                         d_last_message_time.tv_sec, 
+                                         d_last_message_time.tv_usec,
+                                         d_rawData );
+        if ( !msgbuf ) {
+            cout << "Buffer overflow!\n";
+            return -1;
+        }
+         if (dispatchMessage(len, msgbuf, d_WindowLineData_type)) {
+            cout << "Unable to pack and send message\n";
+            return -1;
+        }
+      
+    }
+    return 0;
+}
+
+// Argument handling
+void usage(char *program_name){
+	fprintf(stderr, "Error: bad arguments.\n");
+	fprintf(stderr, "usage: %s -o streamfile -f basefile\n",program_name);
+	exit(-1);
+}
+
+static char * outputStreamName = NULL;
+static int isWritingStreamFile = 0;
+static char * baseFileName = NULL;
+void parseArguments(int argc, char **argv){
+    int i;
+    for (i = 1; i < argc; i++){
+        if (!strcmp(argv[i], "-o")){
+            if (++i >= argc) usage(argv[0]);
+            isWritingStreamFile = 1;
+            outputStreamName = strdup(argv[i]);
+        }
+        else if (!strcmp(argv[i], "-f")){
+            if (++i >= argc) usage(argv[0]);
+            baseFileName = strdup(argv[i]);
+        }
+        else {
+            usage(argv[0]);
+        }
+    }
+}
+
+int	main(unsigned argc, char *argv[])
+{
+
+    parseArguments(argc, argv);
+    // DEBUG pause program to attach debugger. 
+    //cin.get();
+
+    // Initialize our connections to the things we are going to control.
+    if (baseFileName == NULL ||outputStreamName == NULL) {
+	return -1;
+    } 
+    // don't connect to anything, just log
+//      connection = new vrpn_Synchronized_Connection
+//          ("localhost", 4710, NULL, outputStreamName);
+        //    (4710, NULL, outputStreamName);
+    connection = vrpn_get_connection_by_name("nmm_Microscope@localhost", 
+                                NULL, outputStreamName);
+    if (!connection) {
+        cout << "Unable to get connection./n";
+        return -1;
+    }
+    if (isWritingStreamFile) {
+        cout << "Stream file " << outputStreamName << endl;
+    }
+
+
+    PseudoStream * pstream = new PseudoStream(connection, "pseudoStream");
+
+    pstream->FileToStream(baseFileName);
+
+    delete pstream;
+    //delete connection; // needed to make stream file write out
+     
+    return 0;
+}
+
+
