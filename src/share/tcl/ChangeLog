@@ -1,6 +1,7 @@
 2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
 
 	* tip.tcl: added button for sending the tip location as a fiducial
+	added controls for tip model
 
 2002-07-02  Adam Seeger  <seeger@cs.unc.edu>
 
