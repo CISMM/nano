@@ -9,6 +9,7 @@ class ExposureManager {
   ExposureManager();
 
   void exposePattern(list<PatternShape> shapes, 
+                     list<PatternPoint> dump_points,
                      nmm_Microscope_SEM_Remote *sem, int mag);
   void setExposure(double uCoul_per_cm);
   void setMinDwellTime(double t);

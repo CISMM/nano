@@ -45,6 +45,9 @@ class ControlPanels {
    static void handle_alignmentNeeded_change(int new_value, void *ud);
    static void handle_sourceImageName_change(const char *new_value, void *ud);
    static void handle_targetImageName_change(const char *new_value, void *ud);
+   static void handle_resampleImageName_change(const char *new_value,
+                                                  void *ud);
+
    static void handle_alignWindowOpen_change(int new_value, void *ud);
    static void handle_semWindowOpen_change(int new_value, void *ud);
    static void handle_semAcquireImagePushed_change(int new_value, void *ud);
@@ -109,6 +112,9 @@ class ControlPanels {
    Tclvar_int d_alignmentNeeded;
    Tclvar_string d_sourceImageName;
    Tclvar_string d_targetImageName;
+   Tclvar_int d_resampleResolutionX;
+   Tclvar_int d_resampleResolutionY;
+   Tclvar_string d_resampleImageName;
    Tclvar_int d_alignWindowOpen;
 
    // SEM

@@ -1,3 +1,31 @@
+2001-02-14  Adam Seeger  <seeger@cs.unc.edu>
+
+	* this version compiles with glut on sgi (this port was motivated 
+	by the need to check for memory bugs)
+	* Makefile - changed the order of libraries and added V_GLUT flag to
+	get the program to compile on sgi
+        * controlPanels.C (handle_openImageFileName_change): sets worldToImage
+ 	transformation to a reasonable default value when loading new images
+	and reads them in using recently added functions 
+        nmb_ImageGrid::openFile and nmb_ImageGrid::getNextImage
+	* controlPanels.C : added new tool modes for setting dump points and 
+	selecting/grabbing
+	* controlPanels.C (handleSEMChange): fixed problem with creating a new
+	image for sem data and adding its name to the list of image names 
+     	before adding the image to the list of images (tcl callbacks got called
+	at the wrong time)
+	* main.C (init_Tk) : added stuff for Itcl and Itk static loading
+	(needed for sgi but not for pc_win32)
+	* patternEditor.C (addDumpPoint): new function
+	 (updateDumpPoint): new function
+	 (findNearestShapePoint): new function
+	 (findNearestPoint): new function
+	 (drawImage): uses opacity value now for alpha
+	 (worldToMainWinPosition): new function
+	 (mainWinNMToPixels): new function
+	 (selectPoint): new function
+	 (updateGrab): new function
+
 2001-02-05  Adam Seeger  <seeger@cs.unc.edu>
 
 	* this is the first version of the seegerizer program that contains

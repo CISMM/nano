@@ -1,0 +1,7 @@
+APP_EXE=seegerizer;
+APP_DIR=app/ebeamWriter;
+
+FULL_EXE=`../app_exec $APP_DIR $APP_EXE`;
+
+echo $FULL_EXE $*
+exec $FULL_EXE $*

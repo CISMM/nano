@@ -2,11 +2,18 @@
 #include <tcl.h>
 #include <tk.h>
 #include <blt.h>
+
+#ifndef NO_ITCL
+#include <itcl.h>
+#include <itk.h>
+#endif
+
 #include <Tcl_Linkvar.h>
 
 #include <stdio.h>
 
 #include "GL/glut.h"
+
 #include "patternEditor.h"
 #include "nmb_ImageTransform.h"
 #include "transformFile.h"
@@ -47,6 +54,7 @@ static int init_Tk();
 // I copied this prototype from bltUnixMain.c, but I had to add
 // the "C" so it would link with the library.
 extern "C" int Blt_Init (Tcl_Interp *interp);
+extern "C" int Blt_SafeInit(Tcl_Interp *interp);
 
 #define MAX_PLANNING_IMAGES 10
 static char **planningImageNames;
@@ -70,6 +78,11 @@ nmm_Microscope_SEM_Remote *sem = NULL;
 ControlPanels *controls = NULL;
 
 static Tcl_Interp *tk_control_interp;
+
+#ifdef V_GLUT
+void nullDisplayFunc() { ; }
+void nullIdleFunc() { ; }
+#endif
 
 int main(int argc, char **argv)
 {
@@ -119,6 +132,9 @@ int main(int argc, char **argv)
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+    glutCreateWindow("the program crashes without this window");
+    glutDisplayFunc(nullDisplayFunc);
+    glutIdleFunc(nullIdleFunc);
 
     // this must come after we initialize graphics
     patternEditor = new PatternEditor();
@@ -186,13 +202,16 @@ int main(int argc, char **argv)
           fprintf(stderr, "main: Tclvar_mainloop error\n");
           return -1;
       }
+
       if (sem) {
           sem->mainloop();
       }
       if (aligner) {
           aligner->mainloop();
       }
+
       image_viewer->mainloop();
+
     }
 
     return 0;
@@ -207,6 +226,7 @@ static int usage(char *programName)
   fprintf(stderr, "Hit enter to quit\n");
   scanf("%c", &dummy);
   exit(0);
+  return 0;
 }
 
 
@@ -262,5 +282,22 @@ int init_Tk(){
                 tk_control_interp->result);
                 return -1;
         }
+#ifndef NO_ITCL
+
+  Tcl_StaticPackage(tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
+  if (Itcl_Init(tk_control_interp) == TCL_ERROR) {
+    fprintf(stderr, "Package_Init failed: %s\n",
+          tk_control_interp->result);
+    return -1;
+  }
+  if (Itk_Init(tk_control_interp) == TCL_ERROR) {
+    fprintf(stderr, "Package_Init failed: %s\n",
+          tk_control_interp->result);
+    return -1;
+  }
+  Tcl_StaticPackage(tk_control_interp, "Itcl", Itcl_Init, Itcl_SafeInit);
+  Tcl_StaticPackage(tk_control_interp, "Itk", Itk_Init, 
+                    (Tcl_PackageInitProc *) NULL);
+#endif
         return 0;
 }

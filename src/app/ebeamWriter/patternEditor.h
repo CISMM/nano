@@ -10,7 +10,7 @@
 class PatternPoint {
   public:
    PatternPoint(double x=0, double y=0 ): d_x(x), d_y(y) {};
-   operator== (const PatternPoint &ppt) {
+   int operator== (const PatternPoint &ppt) {
         return (d_x == ppt.d_x && d_y == ppt.d_y);}
    void translate(double x, double y)
    { d_x += x; d_y += y;}
@@ -24,7 +24,7 @@ class PatternShape {
   public:
     PatternShape(double lw = 0, double exp = 0, ShapeType type=PS_POLYLINE);
     PatternShape(const PatternShape &sh);
-    operator== (const PatternShape &sh) {return (d_ID == sh.d_ID);}
+    int operator== (const PatternShape &sh) {return (d_ID == sh.d_ID);}
     void addPoint(double x, double y);
     void removePoint();
     void translate(double x, double y)
@@ -54,7 +54,7 @@ class ImageElement {
                 double o=1.0, vrpn_bool e=vrpn_FALSE):
             d_red(r), d_green(g), d_blue(b), d_opacity(o), 
             d_enabled(e), d_image(im) {}
-   operator== (const ImageElement& ie) {return (d_image == ie.d_image);}
+   int operator== (const ImageElement& ie) {return (d_image == ie.d_image);}
    
    double d_red;
    double d_green;
@@ -66,7 +66,9 @@ class ImageElement {
 
 typedef enum {PE_IDLE, PE_SET_REGION, PE_SET_TRANSLATE,
                  PE_DRAWMODE, PE_GRABMODE} PE_UserMode;
-typedef enum {PE_POLYLINE, PE_POLYGON} PE_DrawTool;
+typedef enum {PE_POLYLINE, PE_POLYGON, PE_DUMP_POINT, PE_SELECT} PE_DrawTool;
+
+const int PE_SELECT_DIST = 10;
 
 class PatternEditor {
   public:
@@ -92,6 +94,8 @@ class PatternEditor {
    void setViewport(double minX_nm, double minY_nm, 
                     double maxX_nm, double maxY_nm);
    list<PatternShape> shapeList();
+   list<PatternPoint> dumpPointList();
+
   protected:
    static int mainWinEventHandler(const ImageViewerWindowEvent &event, 
                                   void *ud);
@@ -111,6 +115,11 @@ class PatternEditor {
                                        double &x_nm, double &y_nm);
    void mainWinPositionToWorld(double x, double y,
                                        double &x_nm, double &y_nm);
+   void worldToMainWinPosition(const double x_nm, const double y_nm,
+                               double &x_norm, double &y_norm);
+   void mainWinNMToPixels(const double x_nm, const double y_nm,
+                          double &x_pixels, double &y_pixels);
+   void mainWinNMToPixels(const double dist_nm,double &dist_pixels);
    void zoomBy(double centerX_nm, double centerY_nm,
                            double magFactor);
 
@@ -121,10 +130,19 @@ class PatternEditor {
    int finishPoint(const double x_nm, const double y_nm);
    int endShape();
    void clearDrawingState();
+   void addDumpPoint(const double x, const double y);
+   void updateDumpPoint(const double x, const double y);
 
    // stuff for manipulating a pattern
-   vrpn_bool grab(const double x_nm, const double y_nm);
-   void updateGrab(const double x_nm, const double y_nm);
+   int updateGrab(const double x_nm, const double y_nm);
+   vrpn_bool selectPoint(const double x_nm, const double y_nm);
+   int findNearestShapePoint(const double x, const double y, 
+       list<PatternShape>::iterator &nearestShape,
+       list<PatternPoint>::iterator &nearestPoint,
+       double &minDist);
+   int findNearestPoint(list<PatternPoint> points,
+             const double x, const double y, 
+             list<PatternPoint>::iterator &nearestPoint, double &minDist);
 
    void setUserMode(PE_UserMode mode);
    PE_UserMode getUserMode();
@@ -175,18 +193,20 @@ class PatternEditor {
    double d_mainDragEndX_nm;
    double d_mainDragEndY_nm;
 
-   double d_grabX_nm;
-   double d_grabY_nm;
+   double d_grabOffsetX;
+   double d_grabOffsetY;
 
    vrpn_bool d_shapeInProgress;
    vrpn_bool d_pointInProgress;
    PatternShape *d_currShape;
 
-   PatternShape *d_grabShape;
-   PatternPoint *d_grabPoint;
-
+   vrpn_bool d_grabInProgress;
+   
    list<ImageElement> d_images;
    list<PatternShape> d_pattern;
+   list<PatternPoint> d_dumpPoints;
+   list<PatternPoint>::iterator d_selectedPoint;
+   list<PatternShape>::iterator d_selectedShape;
 
 };
 

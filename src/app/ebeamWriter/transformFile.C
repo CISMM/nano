@@ -34,6 +34,7 @@ int TransformFile::load(char *filename)
   const int maxLineLength = 512;
   char line[maxLineLength];
   double matrix[16];
+  float f0, f1, f2, f3;
   fgets(line, maxLineLength, inFile);
   if (!line) {
     fprintf(stderr, "Error reading first line of transformation file\n");
@@ -64,12 +65,12 @@ int TransformFile::load(char *filename)
     for (i = 0; i < 4; i++) {
       fgets(line, maxLineLength, inFile);
       if (!line ||
-          sscanf(line, "%g %g %g %g",
-             &matrix[i], &matrix[i+4], &matrix[i+8], &matrix[i+12]) != 4){
+          sscanf(line, "%g %g %g %g", &f0, &f1, &f2, &f3) != 4){
          fprintf(stderr, "Error while reading transformation\n");
          entryOkay = vrpn_FALSE;
          break;
       }
+      matrix[i] = f0; matrix[i+4] = f1; matrix[i+8] = f2; matrix[i+12] = f3;
     }
     if (entryOkay) {
       // add it to the list

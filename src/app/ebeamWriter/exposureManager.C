@@ -24,6 +24,7 @@ ExposureManager::ExposureManager():
 }
 
 void ExposureManager::exposePattern(list<PatternShape> shapes,
+                     list<PatternPoint> /*dump_points*/,
                      nmm_Microscope_SEM_Remote *sem, int mag)
 {
   list<PatternShape>::iterator shape;

@@ -277,10 +277,10 @@ PatternEditor::PatternEditor()
    d_navWinWidth = 0;
    d_navWinHeight = 0;
 
-   d_nearDistX_pix;
-   d_nearDistY_pix;
-   d_nearDistX_nm;
-   d_nearDistY_nm;
+   d_nearDistX_pix = 10;
+   d_nearDistY_pix = 10;
+   d_nearDistX_nm = 100;
+   d_nearDistY_nm = 100;
 
    d_drawingTool = PE_POLYLINE;
    d_userMode = PE_IDLE;
@@ -300,16 +300,14 @@ PatternEditor::PatternEditor()
    d_mainDragEndX_nm = 0.0;
    d_mainDragEndY_nm = 0.0;
 
-   d_grabX_nm = 0.0;
-   d_grabY_nm = 0.0;
+   d_grabOffsetX = 0.0;
+   d_grabOffsetY = 0.0;
 
    d_shapeInProgress = vrpn_FALSE;
    d_pointInProgress = vrpn_FALSE;
    d_currShape = NULL;
 
-   d_grabShape = NULL;
-   d_grabPoint = NULL;
-
+   d_grabInProgress = vrpn_FALSE;
 }
 
 PatternEditor::~PatternEditor()
@@ -430,7 +428,7 @@ void PatternEditor::show()
    d_viewer->showWindow(d_navWinID);
 }
 
-void PatternEditor::newPosition(nmb_Image *im)
+void PatternEditor::newPosition(nmb_Image * /*im*/)
 {
   // really this is only necessary if the image is currently displayed
   d_viewer->dirtyWindow(d_mainWinID);
@@ -464,6 +462,80 @@ void PatternEditor::clearShape()
     d_viewer->dirtyWindow(d_mainWinID);
   }
   return;
+}
+
+void PatternEditor::addDumpPoint(const double x, const double y)
+{
+  d_dumpPoints.push_back(PatternPoint(x, y));
+}
+
+void PatternEditor::updateDumpPoint(double const x, double const y)
+{
+  if (!d_dumpPoints.empty()) {
+    d_dumpPoints.pop_back();
+    d_dumpPoints.push_back(PatternPoint(x, y));
+  } else {
+    fprintf(stderr, "Error, can't update dump point: none in list\n");
+  }
+  return;
+}
+
+int PatternEditor::findNearestShapePoint(double x, double y, 
+                    list<PatternShape>::iterator &nearestShape,
+                    list<PatternPoint>::iterator &nearestPoint,
+                    double &minDist)
+{
+  // search all shape and dump points for the closest one
+  // and return it
+  if (d_pattern.empty()) return -1;
+ 
+  list<PatternShape>::iterator currShape;
+  list<PatternPoint>::iterator pointRef;
+  currShape = d_pattern.begin();
+  double currDist;
+
+  nearestShape = currShape;
+  findNearestPoint((*currShape).d_points, x, y, nearestPoint, minDist);
+  
+  currShape++;
+  while (currShape != d_pattern.end()) {
+    findNearestPoint((*currShape).d_points, x, y, pointRef, currDist);
+    if (currDist < minDist) {
+      minDist = currDist;
+      nearestShape = currShape;
+      nearestPoint = pointRef;
+    }
+    currShape++;
+  }
+  return 0;
+}
+
+int PatternEditor::findNearestPoint(list<PatternPoint> points, 
+                                     const double x, const double y, 
+                                     list<PatternPoint>::iterator &nearestPoint,
+                                     double &minDist)
+{
+  if (points.empty()) return -1;
+
+  list<PatternPoint>::iterator currPnt;
+  currPnt = points.begin();
+  double dx, dy, currDist;
+  dx = x-(*currPnt).d_x;
+  dy = y-(*currPnt).d_y;
+  minDist = dx*dx + dy*dy;
+  nearestPoint = currPnt;
+  currPnt++;
+  while (currPnt != points.end()) {
+    dx = x-(*currPnt).d_x;
+    dy = y-(*currPnt).d_y;
+    currDist = dx*dx + dy*dy;
+    if (currDist < minDist) {
+      minDist = currDist;
+      nearestPoint = currPnt;
+    }
+  }
+  minDist = sqrt(minDist);
+  return 0;
 }
 
 void PatternEditor::saveImageBuffer(const char *filename, 
@@ -508,6 +580,11 @@ list<PatternShape> PatternEditor::shapeList()
   return d_pattern;
 }
 
+list<PatternPoint> PatternEditor::dumpPointList()
+{
+  return d_dumpPoints;
+}
+
 int PatternEditor::mainWinEventHandler(
                    const ImageViewerWindowEvent &event, void *ud)
 {
@@ -531,7 +608,8 @@ int PatternEditor::handleMainWinEvent(
       case MOTION_EVENT:
          //if (event.state & IV_LEFT_BUTTON_MASK) {
              // adjust current line being drawn
-             if (getUserMode() == PE_DRAWMODE) {
+             if (getUserMode() == PE_DRAWMODE && 
+                 (event.state & IV_LEFT_BUTTON_MASK)) {
                d_viewer->toImage(event.winID, &x, &y);
                mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
                updatePoint(x_world_nm, y_world_nm);
@@ -570,6 +648,7 @@ int PatternEditor::handleMainWinEvent(
                endShape();
                setUserMode(PE_IDLE);
              }
+/*
              // otherwise, look for something close by to select
              else {
                d_viewer->toImage(event.winID, &x, &y);
@@ -579,6 +658,7 @@ int PatternEditor::handleMainWinEvent(
                   setUserMode(PE_GRABMODE);
                }
              }
+*/
              break;
            default:
              break;
@@ -597,12 +677,14 @@ int PatternEditor::handleMainWinEvent(
              d_viewer->dirtyWindow(event.winID);
              break;
            case IV_RIGHT_BUTTON:
+/*
              // release the currently grabbed object
              if (getUserMode() == PE_GRABMODE) {
                d_viewer->toImage(event.winID, &x, &y);
                mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
                updateGrab(x_world_nm, y_world_nm);
              }
+*/
              break;
            default:
              break;
@@ -664,6 +746,21 @@ void PatternEditor::zoomBy(double centerX_nm, double centerY_nm,
     }
     if (d_mainWinMaxY_nm > d_worldMaxY_nm) {
        d_mainWinMaxY_nm = d_worldMaxY_nm;
+    }
+    double temp;
+    if ((d_mainWinMinX_nm > d_mainWinMaxX_nm) || 
+        (d_mainWinMinY_nm > d_mainWinMaxY_nm)) {
+       printf("zoomBy: min/max swapped: this shouldn't happen\n");
+       if (d_mainWinMinX_nm > d_mainWinMaxX_nm) {
+           temp = d_mainWinMinX_nm;
+           d_mainWinMinX_nm = d_mainWinMaxX_nm;
+           d_mainWinMaxX_nm = temp;
+       }
+       if (d_mainWinMinY_nm > d_mainWinMaxY_nm) {
+           temp = d_mainWinMinY_nm;
+           d_mainWinMinY_nm = d_mainWinMaxY_nm;
+           d_mainWinMaxY_nm = temp;
+       }
     }
 }
 
@@ -820,9 +917,9 @@ void PatternEditor::drawImage(const ImageElement &ie)
        printf("width=%d,height=%d,border = %d\n", 
          texwidth, texheight, ie.d_image->border());
 */
-       glPixelTransferf(GL_RED_SCALE, (float)ie.d_red);
-       glPixelTransferf(GL_GREEN_SCALE, (float)ie.d_green);
-       glPixelTransferf(GL_BLUE_SCALE, (float)ie.d_blue);
+       glPixelTransferf(GL_RED_SCALE, (float)ie.d_red);// *(float)ie.d_opacity);
+       glPixelTransferf(GL_GREEN_SCALE, (float)ie.d_green);// *(float)ie.d_opacity);
+       glPixelTransferf(GL_BLUE_SCALE, (float)ie.d_blue);// *(float)ie.d_opacity);
        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, texwidth, texheight, 
               GL_LUMINANCE,
               pixType, texture);
@@ -860,7 +957,7 @@ void PatternEditor::drawImage(const ImageElement &ie)
        glMultMatrixd(worldToImage);
        glBegin(GL_POLYGON);
        glNormal3f(0.0, 0.0, 1.0);
-       glColor4f(1.0, 1.0, 1.0, 0.5);
+       glColor4f(1.0, 1.0, 1.0, (float)ie.d_opacity);
        PE_UserMode currMode = getUserMode();
        if (currMode == PE_SET_REGION || currMode == PE_SET_TRANSLATE) {
          glVertex3f(d_mainWinMinXadjust_nm, d_mainWinMinYadjust_nm, 0);
@@ -1163,6 +1260,40 @@ void PatternEditor::mainWinPositionToWorld(double x, double y,
   y_nm = d_mainWinMaxY_nm + (1.0-y)*(d_mainWinMinY_nm - d_mainWinMaxY_nm);
 }
 
+void PatternEditor::worldToMainWinPosition(const double x_nm,
+                                     const double y_nm, 
+                             double &x_norm, double &y_norm)
+{
+  double delX = d_mainWinMaxX_nm - d_mainWinMinX_nm;
+  double delY = d_mainWinMinY_nm - d_mainWinMaxY_nm;
+  if (delX != 0) {
+    x_norm = (x_nm - d_mainWinMinX_nm)/delX;
+  } else {
+    fprintf(stderr, "Warning, x range is 0\n");
+  }
+  if (delY != 0) {
+    y_norm = 1.0-(y_nm - d_mainWinMaxY_nm)/delY;
+  } else {
+    fprintf(stderr, "Warning, y range is 0\n");
+  }
+}
+
+void PatternEditor::mainWinNMToPixels(const double x_nm, const double y_nm,
+                                      double &x_pixels, double &y_pixels)
+{
+  worldToMainWinPosition(x_nm, y_nm, x_pixels, y_pixels);
+  d_viewer->toPixels(d_mainWinID, &x_pixels, &y_pixels);
+}
+
+void PatternEditor::mainWinNMToPixels(const double dist_nm,
+                                      double &dist_pixels)
+{
+  double d0 = 0, d1 = 0;
+  worldToMainWinPosition(dist_nm, d0, dist_pixels, d1);
+  d_viewer->toPixels(d_mainWinID, &dist_pixels, &d1);
+}
+
+
 PE_UserMode PatternEditor::getUserMode()
 {
   return d_userMode;
@@ -1236,29 +1367,92 @@ int PatternEditor::startShape(ShapeType type)
   return 0;
 }
 
+vrpn_bool PatternEditor::selectPoint(const double x_nm, const double y_nm)
+{
+  list<PatternShape>::iterator shapeRef;
+  list<PatternPoint>::iterator pntRef;
+  list<PatternPoint>::iterator dumpPntRef;
+
+  double minDist, minDistPixels, dumpMinDist;
+  double x_pnt, y_pnt;
+  //double x_offset, y_offset;
+  vrpn_bool selectedSomething = vrpn_FALSE;
+  if (findNearestShapePoint(x_nm, y_nm, shapeRef, pntRef, minDist) &&
+      findNearestPoint(d_dumpPoints, x_nm, y_nm, dumpPntRef, dumpMinDist)) {
+      return vrpn_FALSE;
+  }
+  if (minDist > dumpMinDist) {
+    mainWinNMToPixels(dumpMinDist, minDistPixels);
+    if (minDistPixels < PE_SELECT_DIST) {
+      d_selectedPoint = dumpPntRef;
+      x_pnt = (*d_selectedPoint).d_x;
+      y_pnt = (*d_selectedPoint).d_y;
+      d_grabOffsetX = x_nm - x_pnt;
+      d_grabOffsetY = y_nm - y_pnt;
+      d_grabInProgress = vrpn_TRUE;
+      selectedSomething = vrpn_TRUE;
+    }
+  } else {
+    mainWinNMToPixels(minDist, minDistPixels);
+    if (minDistPixels < PE_SELECT_DIST) {
+      d_selectedShape = shapeRef;
+      d_selectedPoint = pntRef;
+      x_pnt = (*d_selectedPoint).d_x;
+      y_pnt = (*d_selectedPoint).d_y;
+      d_grabOffsetX = x_nm - x_pnt;
+      d_grabOffsetY = y_nm - y_pnt;
+      d_grabInProgress = vrpn_TRUE;
+      selectedSomething = vrpn_TRUE;
+    }
+  }
+  return selectedSomething;
+}
+
+int PatternEditor::updateGrab(const double x_nm, const double y_nm)
+{
+  (*d_selectedPoint).d_x = x_nm - d_grabOffsetX;
+  (*d_selectedPoint).d_y = y_nm - d_grabOffsetY;
+  return 0;
+}
+
 int PatternEditor::startPoint(const double x_nm, const double y_nm)
 {
+  d_pointInProgress = vrpn_TRUE;
   if (d_shapeInProgress) {
     printf("adding point to current shape\n");
-    d_pointInProgress = vrpn_TRUE;
     d_currShape->addPoint(x_nm, y_nm);
     return 0;
+  } else if (d_drawingTool == PE_DUMP_POINT){
+    addDumpPoint(x_nm, y_nm);
+  } else if (d_drawingTool == PE_SELECT){
+    selectPoint(x_nm, y_nm);
   } else {
+    d_pointInProgress = vrpn_FALSE;
     printf("Error, startPoint called when not drawing shape\n");
     return -1;
   }
+  return 0;
 }
 
 int PatternEditor::updatePoint(const double x_nm, const double y_nm)
 {
-  if (d_shapeInProgress && d_pointInProgress) {
-    d_currShape->removePoint();
-    d_currShape->addPoint(x_nm, y_nm);
-    return 0;
+  if (d_pointInProgress) {
+    if (d_shapeInProgress) {
+      d_currShape->removePoint();
+      d_currShape->addPoint(x_nm, y_nm);
+      return 0;
+    } else if (d_drawingTool == PE_DUMP_POINT){
+      updateDumpPoint(x_nm, y_nm);
+      return 0;
+    } else if (d_drawingTool == PE_SELECT && d_grabInProgress){
+      updateGrab(x_nm, y_nm);
+      return 0;
+    }
   } else {
     printf("Error, updatePoint called when not setting point\n");
     return -1;
   }
+  return 0;
 }
 
 int PatternEditor::finishPoint(const double x_nm, const double y_nm)
@@ -1266,6 +1460,7 @@ int PatternEditor::finishPoint(const double x_nm, const double y_nm)
   int result = updatePoint(x_nm, y_nm);
 //  printf("finishPoint\n");
   d_pointInProgress = vrpn_FALSE;
+  d_grabInProgress = vrpn_FALSE;
   return result;
 }
 
@@ -1276,27 +1471,4 @@ int PatternEditor::endShape()
   d_pattern.push_back(*d_currShape);
   clearDrawingState();
   return 0;
-}
-
-vrpn_bool PatternEditor::grab(const double x_nm, const double y_nm)
-{
-  d_grabX_nm = x_nm;
-  d_grabY_nm = y_nm;
-  return vrpn_FALSE;
-}
-
-void PatternEditor::updateGrab(const double x_nm, const double y_nm)
-{
-  double delX_nm = x_nm - d_grabX_nm;
-  double delY_nm = y_nm - d_grabY_nm;
-
-  d_grabX_nm = x_nm;
-  d_grabY_nm = y_nm;
-
-  if (d_grabShape) {
-    d_grabShape->translate(delX_nm, delY_nm);
-  }
-  if (d_grabPoint) {
-    d_grabPoint->translate(delX_nm, delY_nm);
-  }
 }

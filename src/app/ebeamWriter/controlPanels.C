@@ -29,6 +29,9 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_alignmentNeeded("alignment_needed", 0),
    d_sourceImageName("source_image_name", "none"),
    d_targetImageName("target_image_name", "none"),
+   d_resampleResolutionX("resample_resolution_x", 640),
+   d_resampleResolutionY("resample_resolution_y", 480),
+   d_resampleImageName("resample_image_name", "none"),
    d_alignWindowOpen("align_window_open", 0),
 
    d_semWindowOpen("sem_window_open", 0),
@@ -144,6 +147,7 @@ void ControlPanels::setupCallbacks()
   d_alignmentNeeded.addCallback(handle_alignmentNeeded_change, this);
   d_sourceImageName.addCallback(handle_sourceImageName_change, this);
   d_targetImageName.addCallback(handle_targetImageName_change, this);
+  d_resampleImageName.addCallback(handle_resampleImageName_change, this);
   d_alignWindowOpen.addCallback(handle_alignWindowOpen_change, this);
 
   d_semWindowOpen.addCallback(handle_semWindowOpen_change, this);
@@ -190,15 +194,35 @@ void ControlPanels::setupCallbacks()
 }
 
 //static
-void ControlPanels::handle_openImageFileName_change(const char *new_value,
+void ControlPanels::handle_openImageFileName_change(const char * /*new_value*/,
                                               void *ud)
 {
+  double default_matrix[16] = {0.001, 0.0, 0.0, 0.0,
+                                 0.0, 0.001, 0.0, 0.0,
+                                 0.0, 0.0, 1.0, 0.0,
+                                 0.0, 0.0, 0.0, 1.0};
   ControlPanels *me = (ControlPanels *)ud;
   printf("open file %s\n", (const char *)me->d_openImageFileName);
+  if (strlen((const char *)me->d_openImageFileName) <= 0) return;
+
+  if (nmb_ImageGrid::openFile((const char *)me->d_openImageFileName)) {
+    return;
+  }
+  nmb_ImageGrid *im = nmb_ImageGrid::getNextImage();
+  while (im) {
+    // add im to the list
+    im->normalize();
+    im->setWorldToImageTransform(default_matrix);
+	
+    me->d_patternEditor->addImage(im);
+    me->d_imageList->addImage(im);
+	
+    im = nmb_ImageGrid::getNextImage();
+  }
 }
 
 //static 
-void ControlPanels::handle_bufferImageFileName_change(const char *new_value,
+void ControlPanels::handle_bufferImageFileName_change(const char */*new_value*/,
                                               void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
@@ -220,7 +244,7 @@ void ControlPanels::handle_bufferImageFileName_change(const char *new_value,
 }
 
 // static
-void ControlPanels::handle_lineWidth_nm_change(double new_value, void *ud)
+void ControlPanels::handle_lineWidth_nm_change(double /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("lineWidth: %g\n", (double)(me->d_lineWidth_nm));
@@ -229,7 +253,7 @@ void ControlPanels::handle_lineWidth_nm_change(double new_value, void *ud)
 }
 
 // static 
-void ControlPanels::handle_exposure_change(double new_value, void *ud)
+void ControlPanels::handle_exposure_change(double /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("exposure: %g\n", (double)(me->d_exposure_uCoulombs_per_square_cm));
@@ -246,15 +270,19 @@ void ControlPanels::handle_drawingTool_change(int new_value, void *ud)
   if (new_value == 1) {
     // polyline
     tool = PE_POLYLINE;
-  } else {
+  } else if (new_value == 2){
     // polygon
     tool = PE_POLYGON;
+  } else if (new_value == 3){
+    tool = PE_DUMP_POINT;
+  } else {
+    tool = PE_SELECT;
   }
   me->d_patternEditor->setDrawingTool(tool);
 }
 
 // static
-void ControlPanels::handle_clearDrawing_change(int new_value, void *ud)
+void ControlPanels::handle_clearDrawing_change(int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("clear drawing: %d\n", (int)(me->d_clearDrawing));
@@ -262,7 +290,7 @@ void ControlPanels::handle_clearDrawing_change(int new_value, void *ud)
 }
 
 // static
-void ControlPanels::handle_imageColorChanged_change(int new_value, void *ud)
+void ControlPanels::handle_imageColorChanged_change(int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("color: %d,%d,%d\n", 
@@ -270,6 +298,10 @@ void ControlPanels::handle_imageColorChanged_change(int new_value, void *ud)
 
   nmb_Image *im = me->d_imageList->getImageByName(
               BCString((const char *)(me->d_currentImage)));
+  if (!im) {
+    fprintf(stderr, "handle_imageColor: Error, could not find image\n");
+    return;
+  }
   double r, g, b;
   r = (double)((int)(me->d_imageRed))/255.0;
   g = (double)((int)(me->d_imageGreen))/255.0;
@@ -284,6 +316,10 @@ void ControlPanels::handle_imageOpacity_change(double new_value, void *ud)
   printf("opacity: %g\n", (double)me->d_imageOpacity);
   nmb_Image *im = me->d_imageList->getImageByName(
                 BCString((const char *)(me->d_currentImage)));
+  if (!im) {
+    fprintf(stderr, "handle_imageOpacity: Error, could not find image\n");
+    return;
+  }
   me->d_patternEditor->setImageOpacity(im, new_value);
 }
 
@@ -295,6 +331,10 @@ void ControlPanels::handle_hideOtherImages_change(int new_value, void *ud)
   if (new_value) {
     nmb_Image *im = me->d_imageList->getImageByName(
                 BCString((const char *)(me->d_currentImage)));
+    if (!im) {
+      fprintf(stderr, "handle_hideOtherImages: Error, could not find image\n");
+      return;
+    }
     me->d_patternEditor->showSingleImage(im);
   } else {
     me->d_patternEditor->showSingleImage(NULL);
@@ -302,7 +342,8 @@ void ControlPanels::handle_hideOtherImages_change(int new_value, void *ud)
 }
 
 // static
-void ControlPanels::handle_enableImageDisplay_change(int new_value, void *ud)
+void ControlPanels::handle_enableImageDisplay_change(int /*new_value*/, 
+                                                     void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("enabled: %d\n", (int)me->d_enableImageDisplay);
@@ -328,7 +369,8 @@ void ControlPanels::handle_enableImageDisplay_change(int new_value, void *ud)
 }
 
 // static
-void ControlPanels::handle_currentImage_change(const char *new_value, void *ud)
+void ControlPanels::handle_currentImage_change(const char * /*new_value*/, 
+                                               void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   me->updateCurrentImageControls();
@@ -341,7 +383,14 @@ void ControlPanels::updateCurrentImageControls()
   printf("current image: %s\n", (const char *)d_currentImage);
   nmb_Image *im = d_imageList->getImageByName(
                   BCString((const char *)(d_currentImage)));
+  if (!im) {
+    fprintf(stderr, "handle_currentImage_change: Error, couldn't find image\n");
+  }
   ImageElement *ie = d_patternEditor->getImageParameters(im);
+  if (!ie) {
+	fprintf(stderr, "Error, couldn't update current image\n");
+	return;
+  }
   d_imageRed = (int)(255*ie->d_red);
   d_imageGreen = (int)(255*ie->d_green);
   d_imageBlue = (int)(255*ie->d_blue);
@@ -444,7 +493,8 @@ void ControlPanels::handleRegistrationChange
 }
 
 // static
-int ControlPanels::handle_semWindowRedraw(const ImageViewerDisplayData &data,
+int ControlPanels::handle_semWindowRedraw(
+        const ImageViewerDisplayData & /*data*/,
         void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
@@ -467,7 +517,7 @@ void ControlPanels::handleSEMChange(
   vrpn_int32 res_x, res_y;
   vrpn_int32 time_nsec = 0;
   vrpn_int32 enabled;
-  vrpn_int32 x = 0, y = 0;
+  //vrpn_int32 x = 0, y = 0;
   vrpn_int32 h_time_nsec, v_time_nsec;
   vrpn_int32 xg, xo, yg, yo, zg, zo;
   void *scanlineData;
@@ -541,6 +591,9 @@ void ControlPanels::handleSEMChange(
             d_imageList->addImage(currentImage);
             d_patternEditor->addImage(currentImage);
             d_semBufferImageNames->addEntry(currentImageName);
+            // in case this was the first image created, the following is
+            // necessary
+	    updateCurrentImageControls();
         }
         // assuming square pixels and a display size of 12.8 cm, 
         // come up with a reasonable estimate of
@@ -713,6 +766,41 @@ void ControlPanels::handle_targetImageName_change(const char *new_value, void *u
 }
 
 // static
+void ControlPanels::handle_resampleImageName_change(
+                              const char */*new_value*/, void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  printf("new resampled image: %s\n",(const char *)me->d_resampleImageName);
+  printf("this feature is disabled\n");
+/*
+  if (me->d_imageList == NULL){
+      return;
+  }
+  nmb_Image *srcIm = me->d_imageList->getImageByName(
+                              (const char *)me->d_sourceImageName);
+  nmb_Image *tgtIm = me->d_imageList->getImageByName(
+                              (const char *)me->d_targetImageName);
+  if (!srcIm || !tgtIm || (strlen(d_resampleImageName.string()) == 0)){
+    return;
+  }
+  nmb_Image *new_image = new nmb_ImageGrid(
+                      (const char *)(d_resampleImageName.string()),
+                      (const char *)(tgtIm->unitsValue()),
+                      d_resampleResolutionX, d_resampleResolutionY);
+  nmb_ImageBounds srcIm_bounds;
+  srcIm->getBounds(srcIm_bounds);
+  new_image->setBounds(srcIm_bounds);
+  TopoFile tf;
+  srcIm->getTopoFileInfo(tf);
+  new_image->setTopoFileInfo(tf);
+  d_resampleImageName = (const char *) "";
+  nmr_Util::createResampledImage((*tgtIm), (*srcIm),
+        d_TargetFromSourceTransform, (*new_image));
+add the image to the list
+*/
+}
+
+// static
 void ControlPanels::handle_alignWindowOpen_change(int new_value, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
@@ -740,7 +828,8 @@ void ControlPanels::handle_semWindowOpen_change(int new_value, void *ud)
 }
 
 // static
-void ControlPanels::handle_semAcquireImagePushed_change(int new_value, void *ud)
+void ControlPanels::handle_semAcquireImagePushed_change(int /*new_value*/, 
+                                                        void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem acquire image pushed: %d\n",(int)me->d_semAcquireImagePushed);
@@ -752,7 +841,7 @@ void ControlPanels::handle_semAcquireImagePushed_change(int new_value, void *ud)
 
 // static
 void ControlPanels::handle_semAcquireContinuousChecked_change(
-                         int new_value, void *ud)
+                         int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem acquire continuous: %d\n",
@@ -870,7 +959,7 @@ void ControlPanels::handle_semVertRetraceDelay_change(
 
 
 // static
-void ControlPanels::handle_semDACParams_change(int new_value, void *ud)
+void ControlPanels::handle_semDACParams_change(int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   if (me->d_SEM) {
@@ -909,14 +998,14 @@ void ControlPanels::handle_semExternalScanControlEnable_change(
 // EXPOSURE settings:
 // static
 void ControlPanels::handle_semExposureMagnification_change(
-             int new_value, void *ud)
+             int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem exposure mag: %d\n",(int)me->d_semExposureMagnification);
 }
 
 // static
-void ControlPanels::handle_semBeamWidth_change(double new_value, void *ud)
+void ControlPanels::handle_semBeamWidth_change(double /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem beam width: %g\n",(double)me->d_semBeamWidth_nm);
@@ -924,18 +1013,20 @@ void ControlPanels::handle_semBeamWidth_change(double new_value, void *ud)
 
 
 // static
-void ControlPanels::handle_semBeamCurrent_change(double new_value, void *ud)
+void ControlPanels::handle_semBeamCurrent_change(double /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem beam current: %g\n",(double)me->d_semBeamCurrent_picoAmps);
 }
 
 // static
-void ControlPanels::handle_semBeamExposePushed_change(int new_value, void *ud)
+void ControlPanels::handle_semBeamExposePushed_change(int /*new_value*/, 
+                                                      void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   printf("sem beam expose: %d\n",(int)me->d_semBeamExposePushed);
   me->d_exposureManager->exposePattern(me->d_patternEditor->shapeList(),
+                                       me->d_patternEditor->dumpPointList(),
                                      me->d_SEM, me->d_semExposureMagnification);
 }
 
