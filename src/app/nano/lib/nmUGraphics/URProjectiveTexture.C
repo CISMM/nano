@@ -4,7 +4,6 @@
 URProjectiveTexture::URProjectiveTexture():
   d_textureCreated(false),
   d_imageChangedSinceTextureInstalled(false),
-  d_imageDataChanged(false),
   d_enabled(false),
   d_doingFastUpdates(false),
   d_textureID(0),
@@ -14,7 +13,12 @@ URProjectiveTexture::URProjectiveTexture():
   d_textureMatrixNumY(0),
   d_textureBlendFunction(GL_DECAL),
   d_opacity(1),
-  d_updateOpacity(true)
+  d_colormap_data_min(0),
+  d_colormap_data_max(1),
+  d_colormap_color_min(0),
+  d_colormap_color_max(1),
+  d_colormap(NULL),
+  d_update_colormap(false)
 {
 
 }
@@ -52,7 +56,6 @@ int URProjectiveTexture::setImage(nmb_Image *image)
         d_imageChangedSinceTextureInstalled = true;
     }
     d_greyscaleImage = image;
-    d_imageDataChanged = true;
 
 	return 0;
 }
@@ -117,10 +120,7 @@ int URProjectiveTexture::installTexture(int width, int height, void *data,
 	return 0;
 }
 
-int URProjectiveTexture::createTexture(bool doFastUpdates,
-									   nmb_ColorMap *colormap,
-			float data_min, float data_max, 
-			float color_min, float color_max)
+int URProjectiveTexture::createTexture(bool doFastUpdates)
 {
 	if (d_greyscaleImage) {
 		if (!d_textureCreated){
@@ -141,11 +141,9 @@ int URProjectiveTexture::createTexture(bool doFastUpdates,
 
 		if (doFastUpdates) {
 			initTextureMatrixNoMipmap();
-			updateTextureNoMipmap(colormap, data_min, data_max, 
-                color_min, color_max);
+			updateTextureNoMipmap();
 		} else {
-			updateTextureMipmap(colormap, data_min, data_max, 
-				color_min, color_max);
+			updateTextureMipmap();
 		}
 		d_doingFastUpdates = doFastUpdates;
 		d_imageChangedSinceTextureInstalled = false;
@@ -182,7 +180,7 @@ int URProjectiveTexture::enable(double *textureTransform,
 		if (d_imageChangedSinceTextureInstalled) {
 			createTexture(d_doingFastUpdates);
 		}
-        else if (d_imageDataChanged && d_doingFastUpdates) {
+        else if (d_doingFastUpdates) {
             updateTextureNoMipmap();
         }
 		if (d_greyscaleImage) {
@@ -320,9 +318,22 @@ int URProjectiveTexture::height() {
     return 0;
 }
 
-int URProjectiveTexture::updateTextureNoMipmap(nmb_ColorMap *colormap,
-			float data_min, float data_max, 
-			float color_min, float color_max)
+void URProjectiveTexture::setColorMap(nmb_ColorMap* colormap) {
+    d_colormap = colormap;
+}
+
+void URProjectiveTexture::setColorMapMinMax(float data_min, float data_max, float color_min, float color_max) {
+    d_colormap_data_min = data_min;
+    d_colormap_data_max = data_max;
+    d_colormap_color_min = color_min;
+    d_colormap_color_max = color_max;
+}
+
+void URProjectiveTexture::setUpdateColorMap(bool value) {
+    d_update_colormap = value;
+}
+
+int URProjectiveTexture::updateTextureNoMipmap()
 {
 	if (!d_greyscaleImage) {
 		return -1;
@@ -362,103 +373,46 @@ int URProjectiveTexture::updateTextureNoMipmap(nmb_ColorMap *colormap,
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
-    if (colormap) {
-		const int CMAP_SIZE_GL = 512;
-		float dummy;
-		float rmap[CMAP_SIZE_GL], gmap[CMAP_SIZE_GL],bmap[CMAP_SIZE_GL],amap[CMAP_SIZE_GL];
-		for (int i = 0; i < CMAP_SIZE_GL; i++) {
-			colormap->lookup(i, 0, CMAP_SIZE_GL,
-                data_min, data_max, color_min, color_max,
-                &rmap[i], &gmap[i], &bmap[i], &dummy);
-            amap[i] = (i + 1) * (1.0 / CMAP_SIZE_GL);
+    if (d_update_colormap && d_colormap) {
+        float dummy;
+		for (int i = 0; i < GL_CMAP_SIZE; i++) {
+			d_colormap->lookup(i, 0, GL_CMAP_SIZE,
+              d_colormap_data_min, d_colormap_data_max, d_colormap_color_min, d_colormap_color_max,
+              &d_rmap[i], &d_gmap[i], &d_bmap[i], &dummy);
+            d_amap[i] = (i + 1) * (1.0 / GL_CMAP_SIZE);
 		}
-        amap[0] = 0;
+        d_amap[0] = 0;
+
+        d_update_colormap = false;
+    }
+    if (d_colormap) {
 		// gl first converts the luminance pixels to RGBA, then
 		// applies the maps we specify. These are created from our
 		// color maps above. We're letting GL do the work for us. 
 		glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
-		glPixelMapfv(GL_PIXEL_MAP_R_TO_R, CMAP_SIZE_GL, &rmap[0]);
-		glPixelMapfv(GL_PIXEL_MAP_G_TO_G, CMAP_SIZE_GL, &gmap[0]);
-		glPixelMapfv(GL_PIXEL_MAP_B_TO_B, CMAP_SIZE_GL, &bmap[0]);
-        glPixelMapfv(GL_PIXEL_MAP_A_TO_A, CMAP_SIZE_GL, &amap[0]);
+		glPixelMapfv(GL_PIXEL_MAP_R_TO_R, GL_CMAP_SIZE, &d_rmap[0]);
+		glPixelMapfv(GL_PIXEL_MAP_G_TO_G, GL_CMAP_SIZE, &d_gmap[0]);
+		glPixelMapfv(GL_PIXEL_MAP_B_TO_B, GL_CMAP_SIZE, &d_bmap[0]);
+        glPixelMapfv(GL_PIXEL_MAP_A_TO_A, GL_CMAP_SIZE, &d_amap[0]);
 	}
-
-    if (d_updateOpacity) {
-        void *imageDataAlpha;
-        int i, j, k = 0;
-        if (pixelType == GL_UNSIGNED_BYTE) {
-            imageDataAlpha= new GLubyte[2 * imageBufferNumX * imageBufferNumY];
-            for (j = 0; j < imageBufferNumY; j++) {
-                for (i = 0; i < imageBufferNumX; i++) {
-                    ((GLubyte*)imageDataAlpha)[2 * k] = ((GLubyte*)imageData)[k];
-                    if (j < YMin || j >= height + YMax || i < XMin || i >= width + XMax) {
-                        ((GLubyte*)imageDataAlpha)[2 * k + 1] = 0;    // zero alpha for border
-                    }
-                    else {
-                        ((GLubyte*)imageDataAlpha)[2 * k + 1] = d_opacity * 255;
-                    }
-                    k++;
-                }
-            }
-        } 
-        else if (pixelType == GL_UNSIGNED_SHORT) {
-            imageDataAlpha= new GLushort[2 * imageBufferNumX * imageBufferNumY];
-            for (j = 0; j < imageBufferNumY; j++) {
-                for (i = 0; i < imageBufferNumX; i++) {
-                    ((GLushort*)imageDataAlpha)[2 * k] = ((GLushort*)imageData)[k];
-                    if (j < YMin || j >= height + YMax || i < XMin || i >= width + XMax) {
-                        ((GLushort*)imageDataAlpha)[2 * k + 1] = 0;    // zero alpha for border
-                    }
-                    else {
-                        ((GLushort*)imageDataAlpha)[2 * k + 1] = d_opacity * 65535;
-                    }
-                    k++;
-                }
-            }
-        } 
-        else if (pixelType == GL_FLOAT) {
-            imageDataAlpha= new GLfloat[2 * imageBufferNumX * imageBufferNumY];
-            for (j = 0; j < imageBufferNumY; j++) {
-                for (i = 0; i < imageBufferNumX; i++) {
-                    ((GLfloat*)imageDataAlpha)[2 * k] = ((GLfloat*)imageData)[k];
-                    if (j < YMin || j >= height + YMax || i < XMin || i >= width + XMax) {
-                        ((GLfloat*)imageDataAlpha)[2 * k + 1] = 0;    // zero alpha for border
-                    }
-                    else {
-                        ((GLfloat*)imageDataAlpha)[2 * k + 1] = d_opacity;
-                    }
-                    k++;
-                }
-            }
-        } 
-
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-                        imageBufferNumX, imageBufferNumY,
-                        GL_LUMINANCE_ALPHA, pixelType, imageDataAlpha);
-
-        delete [] imageDataAlpha;
-
-        d_updateOpacity = false;
-    }
     else {
-        glPushAttrib(GL_ALL_ATTRIB_BITS);
-
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glPixelStorei(GL_UNPACK_SKIP_ROWS, YMin);
-        glPixelStorei(GL_UNPACK_SKIP_PIXELS, XMin);
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, imageBufferNumX);
-
-        glPixelTransferf(GL_ALPHA_SCALE, d_opacity);
-
-        glTexSubImage2D(GL_TEXTURE_2D, 0, XMin, YMin,
-                        width, height,
-                        GL_LUMINANCE, pixelType, imageData);
-
-        
-        glPopAttrib();
+        glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
     }
 
-    d_imageDataChanged = false;
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, YMin);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, XMin);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, imageBufferNumX);
+
+    glPixelTransferf(GL_ALPHA_SCALE, d_opacity);
+
+    glTexSubImage2D(GL_TEXTURE_2D, 0, XMin, YMin,
+                    width, height,
+                    GL_LUMINANCE, pixelType, imageData);
+
+    glPopAttrib();
 
     return 0;
 }
@@ -470,58 +424,164 @@ int URProjectiveTexture::initTextureMatrixNoMipmap()
     return -1;
   }
 
-  int array_size = 4*d_textureMatrixNumX*d_textureMatrixNumY;
-  GLubyte *clearData = new GLubyte [array_size];
-  if (!clearData) {
-    fprintf(stderr, 
-        "URProjectiveTexture::clearTexture: Error, out of memory\n");
-    return -1;
+  int pixelType;
+  if (d_greyscaleImage->pixelType() == NMB_UINT8){
+      pixelType = GL_UNSIGNED_BYTE;
+  } 
+  else if (d_greyscaleImage->pixelType() == NMB_UINT16){
+      pixelType = GL_UNSIGNED_SHORT;
+  } 
+  else if (d_greyscaleImage->pixelType() == NMB_FLOAT32){
+      pixelType = GL_FLOAT;
+  } 
+  else {
+      fprintf(stderr, "URProjectiveTexture::updateTexture:"
+           "can't handle pixel type\n"); 
+      return -1;      
   }
 
-  int i,j,k=0;
-  GLubyte value, alpha;
-  for (i = 0; i < d_textureMatrixNumX; i++){
-    for (j = 0; j < d_textureMatrixNumY; j++){
-      switch(d_textureBlendFunction) {
-      case GL_BLEND:
-         value = 20*((i/30+j/30)%2);
-         alpha = 255;
-         break;
-      case GL_MODULATE:
-         value = 200 + 55*((i/30+j/30)%2);
-         alpha = 255;//200 + 55*((i/60+j/60)%2);
-         break;
-      case GL_DECAL:
-         value = 0;
-         alpha = 0;
-		 break;
-	  default:
-		 break;
+  int array_size = 2*d_textureMatrixNumX*d_textureMatrixNumY;
+  void* clearData; 
+  
+  if (pixelType == GL_UNSIGNED_BYTE) {
+      clearData = new GLubyte [array_size];
+
+      if (!clearData) {
+        fprintf(stderr, 
+            "URProjectiveTexture::clearTexture: Error, out of memory\n");
+        return -1;
       }
-      clearData[4*k] = value;
-      clearData[4*k+1] = value;
-      clearData[4*k+2] = value;
-      clearData[4*k+3] = alpha;
-      k++;
-    }
+
+      int i , j , k = 0;
+      GLubyte value, alpha;
+      for (i = 0; i < d_textureMatrixNumX; i++){
+        for (j = 0; j < d_textureMatrixNumY; j++){
+          switch(d_textureBlendFunction) {
+          case GL_BLEND:
+             value = 20*((i/30+j/30)%2);
+             alpha = 255;
+             break;
+          case GL_MODULATE:
+             value = 200 + 55*((i/30+j/30)%2);
+             alpha = 255;//200 + 55*((i/60+j/60)%2);
+             break;
+          case GL_DECAL:
+             value = 0;
+             alpha = 0;
+		     break;
+	      default:
+		     break;
+          }
+          ((GLubyte*)clearData)[2 * k] = value;
+          ((GLubyte*)clearData)[2 * k + 1] = alpha;
+          k++;
+        }
+      }
+      
+      glPushAttrib(GL_TEXTURE_BIT);
+      glBindTexture(GL_TEXTURE_2D, d_textureID);
+
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+            d_textureMatrixNumX, d_textureMatrixNumY, 0, 
+            GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, clearData);
+
+      glPopAttrib();
   }
+  else if (pixelType == GL_UNSIGNED_SHORT) {
+      clearData = new GLushort [array_size];
 
-  glPushAttrib(GL_TEXTURE_BIT);
-  glBindTexture(GL_TEXTURE_2D, d_textureID);
+      if (!clearData) {
+        fprintf(stderr, 
+            "URProjectiveTexture::clearTexture: Error, out of memory\n");
+        return -1;
+      }
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-        d_textureMatrixNumX, d_textureMatrixNumY,
-        0, GL_RGBA, GL_UNSIGNED_BYTE, clearData);
+      int i , j , k = 0;
+      GLubyte value, alpha;
+      for (i = 0; i < d_textureMatrixNumX; i++){
+        for (j = 0; j < d_textureMatrixNumY; j++){
+          switch(d_textureBlendFunction) {
+          case GL_BLEND:
+             value = 20*((i/30+j/30)%2);
+             alpha = 255;
+             break;
+          case GL_MODULATE:
+             value = 200 + 55*((i/30+j/30)%2);
+             alpha = 255;//200 + 55*((i/60+j/60)%2);
+             break;
+          case GL_DECAL:
+             value = 0;
+             alpha = 0;
+		     break;
+	      default:
+		     break;
+          }
+          ((GLushort*)clearData)[2 * k] = value;
+          ((GLushort*)clearData)[2 * k + 1] = alpha;
+          k++;
+        }
+      }
 
-  glPopAttrib();
+      glPushAttrib(GL_TEXTURE_BIT);
+      glBindTexture(GL_TEXTURE_2D, d_textureID);
+
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+            d_textureMatrixNumX, d_textureMatrixNumY, 0, 
+            GL_LUMINANCE_ALPHA, GL_UNSIGNED_SHORT, clearData);
+
+      glPopAttrib();
+  }
+  else if (pixelType == GL_FLOAT) {
+      clearData = new GLfloat [array_size];
+
+      if (!clearData) {
+        fprintf(stderr, 
+            "URProjectiveTexture::clearTexture: Error, out of memory\n");
+        return -1;
+      }
+
+      int i , j , k = 0;
+      GLubyte value, alpha;
+      for (i = 0; i < d_textureMatrixNumX; i++){
+        for (j = 0; j < d_textureMatrixNumY; j++){
+          switch(d_textureBlendFunction) {
+          case GL_BLEND:
+             value = 20*((i/30+j/30)%2);
+             alpha = 255;
+             break;
+          case GL_MODULATE:
+             value = 200 + 55*((i/30+j/30)%2);
+             alpha = 255;//200 + 55*((i/60+j/60)%2);
+             break;
+          case GL_DECAL:
+             value = 0;
+             alpha = 0;
+		     break;
+	      default:
+		     break;
+          }
+          ((GLfloat*)clearData)[2 * k] = value;
+          ((GLfloat*)clearData)[2 * k + 1] = alpha;
+          k++;
+        }
+      }
+
+      glPushAttrib(GL_TEXTURE_BIT);
+ //     glEnable(GL_TEXTURE_2D);
+      glBindTexture(GL_TEXTURE_2D, d_textureID);
+
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+            d_textureMatrixNumX, d_textureMatrixNumY, 0, 
+            GL_LUMINANCE_ALPHA, GL_FLOAT, clearData);
+
+      glPopAttrib();
+  }
 
   delete [] clearData;
   return 0;
 }
 
-int URProjectiveTexture::updateTextureMipmap(nmb_ColorMap *colormap,
-			float data_min, float data_max, 
-			float color_min, float color_max)
+int URProjectiveTexture::updateTextureMipmap()
 {
 	if (!d_greyscaleImage) {
 		return -1;
@@ -563,27 +623,27 @@ int URProjectiveTexture::updateTextureMipmap(nmb_ColorMap *colormap,
 
 	GLint internalFormat = GL_RGBA;
 
-	if (colormap) {
-		const int CMAP_SIZE_GL = 512;
-		float dummy;
-		float rmap[CMAP_SIZE_GL], gmap[CMAP_SIZE_GL],bmap[CMAP_SIZE_GL],amap[CMAP_SIZE_GL];
-		for (int i = 0; i < CMAP_SIZE_GL; i++) {
-			colormap->lookup(i, 0, CMAP_SIZE_GL,
-              data_min, data_max, color_min, color_max,
-              &rmap[i], &gmap[i], &bmap[i], &dummy);
-            amap[i] = d_opacity;
+	if (d_update_colormap && d_colormap) {
+        float dummy;
+		for (int i = 0; i < GL_CMAP_SIZE; i++) {
+			d_colormap->lookup(i, 0, GL_CMAP_SIZE,
+              d_colormap_data_min, d_colormap_data_max, d_colormap_color_min, d_colormap_color_max,
+              &d_rmap[i], &d_gmap[i], &d_bmap[i], &dummy);
+            d_amap[i] = (i + 1) * (1.0 / GL_CMAP_SIZE);
 		}
-        amap[0] = 0;
+        d_amap[0] = 0;
+
+        d_update_colormap = false;
+    }
+    if (d_colormap) {
 		// gl first converts the luminance pixels to RGBA, then
 		// applies the maps we specify. These are created from our
 		// color maps above. We're letting GL do the work for us. 
 		glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
-		glPixelMapfv(GL_PIXEL_MAP_R_TO_R, CMAP_SIZE_GL, &rmap[0]);
-		glPixelMapfv(GL_PIXEL_MAP_G_TO_G, CMAP_SIZE_GL, &gmap[0]);
-		glPixelMapfv(GL_PIXEL_MAP_B_TO_B, CMAP_SIZE_GL, &bmap[0]);
-        glPixelMapfv(GL_PIXEL_MAP_A_TO_A, CMAP_SIZE_GL, &amap[0]);
-
-        d_updateOpacity = false;
+		glPixelMapfv(GL_PIXEL_MAP_R_TO_R, GL_CMAP_SIZE, &d_rmap[0]);
+		glPixelMapfv(GL_PIXEL_MAP_G_TO_G, GL_CMAP_SIZE, &d_gmap[0]);
+		glPixelMapfv(GL_PIXEL_MAP_B_TO_B, GL_CMAP_SIZE, &d_bmap[0]);
+        glPixelMapfv(GL_PIXEL_MAP_A_TO_A, GL_CMAP_SIZE, &d_amap[0]);
 	}
 
 	void* imageDataAlpha;
@@ -637,7 +697,7 @@ int URProjectiveTexture::updateTextureMipmap(nmb_ColorMap *colormap,
             }
         }
 	    nmb_Image::deleteImage(im_copy);
-	} 
+	}
    
     gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
 	    imageBufferNumX, imageBufferNumY,

@@ -23,6 +23,8 @@ easily be added if needed.
 #include "PPM.h"
 #include <GL/gl.h>
 
+const int GL_CMAP_SIZE = 512;
+
 class URProjectiveTexture {
  public:
   URProjectiveTexture();
@@ -32,9 +34,7 @@ class URProjectiveTexture {
   int setImage(PPM *image);
 
   int setTextureBlendFunction(GLuint blendFunc);
-  int createTexture(bool doFastUpdates, nmb_ColorMap *colormap=NULL,
-			float data_min=0, float data_max=0, 
-			float color_min=0, float color_max=0);
+  int createTexture(bool doFastUpdates);
 
   int installTexture(int width, int height, void *data,
 					GLuint internalFormat, GLuint dataFormat, 
@@ -53,18 +53,17 @@ class URProjectiveTexture {
   int width();      // width of the Image
   int height();     // height of the Image
 
+  void setColorMap(nmb_ColorMap* colormap);
+  void setColorMapMinMax(float data_min, float data_max, float color_min, float color_max);
+  void setUpdateColorMap(bool value);
+
  private:
-  int updateTextureNoMipmap(nmb_ColorMap *colormap = NULL,
-			float data_min = 0, float data_max = 0, 
-			float color_min = 0, float color_max = 0);
+  int updateTextureNoMipmap();
   int initTextureMatrixNoMipmap();
-  int updateTextureMipmap(nmb_ColorMap *colormap,
-			float data_min, float data_max, 
-			float color_min, float color_max);
+  int updateTextureMipmap();
   void loadColorImageMipmap();
   bool d_textureCreated;
   bool d_imageChangedSinceTextureInstalled;
-  bool d_imageDataChanged;
   bool d_enabled;
   bool d_doingFastUpdates;
 
@@ -82,7 +81,13 @@ class URProjectiveTexture {
   GLuint d_textureBlendFunction;
   double d_opacity;
 
-  bool d_updateOpacity;       // true if we need to update the opacity for the texture
+  // colormap stuff
+
+  float d_colormap_data_min, d_colormap_data_max, d_colormap_color_min, d_colormap_color_max;
+  float d_rmap[GL_CMAP_SIZE], d_gmap[GL_CMAP_SIZE], d_bmap[GL_CMAP_SIZE], d_amap[GL_CMAP_SIZE];
+  nmb_ColorMap* d_colormap;
+
+  bool d_update_colormap;
 };
 
 #endif
