@@ -193,6 +193,10 @@ floatscale $display_settings.texture_opacity 0 1 1000 1 1 \
     afm_sem_texture_opacity "texture opacity"
 pack $display_settings.texture_opacity
 
+generic_entry $display_settings.z_scale \
+    afm_sem_z_scale "Z Scale" real
+pack $display_settings.z_scale
+
 # Colormap control
 button $display_settings.texture_colormap -text "Colormap..." \
     -command "show.afm_sem_colormap"

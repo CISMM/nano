@@ -315,7 +315,7 @@ Press Cancel to resolve yourself." ]
             }
             cancel {
                 # User backed out, set Control back to feedback. 
-                set newmodifyp_control 0
+                #set newmodifyp_control 0
                 return
             }
         }
@@ -374,7 +374,7 @@ Press Cancel to resolve yourself." ]
                 }
                 cancel {
                     # User backed out, set Control back to feedback. 
-                    set newmodifyp_control 0
+                    #set newmodifyp_control 0
                     return
                 }
             }

@@ -35,6 +35,7 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
 	d_drawSurfaceTexture("afm_sem_draw_surface_texture", 0),
 	d_liveSEMTexture("afm_sem_live_sem_texture", 0),
 	d_textureOpacity("afm_sem_texture_opacity", 0.5),
+	d_ZScale("afm_sem_z_scale", 1.0),
     d_semColormapImageName("afm_sem_cm(color_comes_from)", "none"),
     d_semColormap("afm_sem_cm(color_map)", "none"),
 	d_generateTestData("afm_sem_generate_test_data", 0),
@@ -103,6 +104,7 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
   d_drawSurfaceTexture.addCallback(handle_drawSurfaceTexture_change, this);
   d_liveSEMTexture.addCallback(handle_liveSEMTexture_change, this);
   d_textureOpacity.addCallback(handle_textureOpacity_change, this);
+  d_ZScale.addCallback(handle_ZScale_change, this);
 
   d_semColormap.addCallback(handle_colormap_change, this);
   d_colorMapUI->addMinMaxCallback(handle_colormap_minmax_change, this);
@@ -168,9 +170,19 @@ void nmui_AFM_SEM_CalibrationUI::changeDataset(nmb_ImageManager *dataset)
 		ymax -= ymin;
 		xmin = 0.0;
 		ymin = 0.0;
-		d_surfaceModelRenderer.setSurface(d_modelToSEM_modelImage, 
+		nmb_Image *scaledImage = new nmb_ImageGrid(d_modelToSEM_modelImage);
+		scaledImage->normalize();
+		int i,j;
+		for (i = 0; i < scaledImage->width(); i++) {
+			for (j = 0; j < scaledImage->height(); j++) {
+				scaledImage->setValue(i, j, scaledImage->getValue(i,j)*d_ZScale);
+			}
+		}
+		d_surfaceModelRenderer.setSurface(scaledImage, 
 			xmin, ymin, xmax, ymax,
 			d_surfaceStride);
+		nmb_Image::deleteImage(scaledImage);
+
 		d_modelToSEM_SEMImage = 
 			d_dataset->dataImages()->getImageByName(
                             d_modelToSEM_SEMImageName.string());
@@ -740,9 +752,20 @@ void nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_model_change(
 		modelMaxY -= modelMinY;
 		modelMinX = 0.0;
 		modelMinY = 0.0;
-		me->d_surfaceModelRenderer.setSurface(me->d_modelToSEM_modelImage,
+
+		nmb_Image *scaledImage = new nmb_ImageGrid(me->d_modelToSEM_modelImage);
+		scaledImage->normalize();
+		int i,j;
+		for (i = 0; i < scaledImage->width(); i++) {
+			for (j = 0; j < scaledImage->height(); j++) {
+				scaledImage->setValue(i, j, scaledImage->getValue(i,j)*me->d_ZScale);
+			}
+		}
+		
+		me->d_surfaceModelRenderer.setSurface(scaledImage,
 			modelMinX, modelMinY, modelMaxX, modelMaxY,
 			me->d_surfaceStride);
+		nmb_Image::deleteImage(scaledImage);
 		// find out where the surface model renderer will put the surface
 		// and scale and translate this so it fits where the AFM thinks the
 		// scan range is and store this transformation in d_AFMfromModel
@@ -792,9 +815,20 @@ void nmui_AFM_SEM_CalibrationUI::handle_updateModel_change(
 		modelMaxY -= modelMinY;
 		modelMinX = 0;
 		modelMinY = 0;
-		me->d_surfaceModelRenderer.setSurface(me->d_modelToSEM_modelImage,
+		nmb_Image *scaledImage = new nmb_ImageGrid(me->d_modelToSEM_modelImage);
+		scaledImage->normalize();
+		int i,j;
+		for (i = 0; i < scaledImage->width(); i++) {
+			for (j = 0; j < scaledImage->height(); j++) {
+				scaledImage->setValue(i, j, scaledImage->getValue(i,j)*me->d_ZScale);
+			}
+		}
+
+		me->d_surfaceModelRenderer.setSurface(scaledImage,
 			modelMinX, modelMinY, modelMaxX, modelMaxY,
 			me->d_surfaceStride);
+		nmb_Image::deleteImage(scaledImage);
+
 		// find out where the surface model renderer will put the surface
 		// and scale and translate this so it fits where the AFM thinks the
 		// scan range is and store this transformation in d_AFMfromModel
@@ -1098,7 +1132,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_drawSurfaceTexture_change(
 	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
 	bool enable = (value != 0);
 	me->d_surfaceModelRenderer.setTextureEnable(enable);
-	if ((int)(me->d_liveSEMTexture)) {
+	if ((int)(me->d_liveSEMTexture) && me->d_SEM) {
 		me->d_SEMTexture.doFastUpdates(true);
 		nmb_ImageArray *image;
 		me->d_SEM->getImageData(&image);
@@ -1116,16 +1150,18 @@ void nmui_AFM_SEM_CalibrationUI::handle_liveSEMTexture_change(
 {
 	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
 	bool enable = (value != 0);
-	if (enable) {
-		me->d_SEMTexture.doFastUpdates(true);
-		nmb_ImageArray *image;
-		me->d_SEM->getImageData(&image);
-		if (image) {
-			me->d_SEMTexture.setImage(image);
+	if(me->d_SEM) {
+		if (enable) {
+			me->d_SEMTexture.doFastUpdates(true);
+			nmb_ImageArray *image;
+			me->d_SEM->getImageData(&image);
+			if (image) {
+				me->d_SEMTexture.setImage(image);
+			}
+		} else {
+			me->d_SEMTexture.doFastUpdates(false);
+			me->d_SEMTexture.setImage(me->d_modelToSEM_SEMImage);
 		}
-	} else {
-		me->d_SEMTexture.doFastUpdates(false);
-		me->d_SEMTexture.setImage(me->d_modelToSEM_SEMImage);
 	}
 }
 
@@ -1138,6 +1174,16 @@ void nmui_AFM_SEM_CalibrationUI::handle_textureOpacity_change(
 	if (alpha > 1.0) alpha = 1.0;
 	if (alpha < 0.0) alpha = 0.0;
 	me->d_SEMTexture.setOpacity(alpha);
+}
+
+void nmui_AFM_SEM_CalibrationUI::handle_ZScale_change(
+		vrpn_float64 value, void *ud)
+{
+	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
+	handle_updateModel_change(1, me);
+	me->d_heightFieldNeedsUpdate = true;
+	me->updateSolution();
+	
 }
 
 // static
@@ -1350,7 +1396,7 @@ void nmui_AFM_SEM_CalibrationUI::updateSolution()
 			minX = 0.0;
 			minY = 0.0;
 			d_heightField = new nmr_SurfaceModelHeightField(
-				d_modelToSEM_modelImage, minX, minY, maxX, maxY);
+				d_modelToSEM_modelImage, minX, minY, maxX, maxY, d_ZScale);
 			d_heightFieldNeedsUpdate = vrpn_FALSE;
 			if (!d_heightField) {
 				printf("Error, out of memory\n");
@@ -1394,6 +1440,7 @@ void nmui_AFM_SEM_CalibrationUI::updateSolution()
 
 		d_calibration->setSurfaceFeatureCorrespondence(d_modelToSEM_modelPoints,
 			d_modelToSEM_SEMPoints, (int)d_numModelSEMPoints);
+
 		fprintf(stderr, "Done\n");
 		fprintf(stderr, "Computing calibration solution...");
 		d_calibration->updateSolution();

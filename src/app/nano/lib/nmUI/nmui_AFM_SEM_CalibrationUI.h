@@ -76,6 +76,7 @@ class nmui_AFM_SEM_CalibrationUI {
 	static void handle_drawSurfaceTexture_change(vrpn_int32 value, void *ud);
 	static void handle_liveSEMTexture_change(vrpn_int32 value, void *ud);
 	static void handle_textureOpacity_change(vrpn_float64 value, void *ud);
+	static void handle_ZScale_change(vrpn_float64 value, void *ud);
 	    //   for colormap
     static void handle_colormap_change(const char *name, void *_ud);
     //   for colormap minmax
@@ -125,6 +126,7 @@ class nmui_AFM_SEM_CalibrationUI {
 	Tclvar_int d_liveSEMTexture;
 
 	Tclvar_float d_textureOpacity;
+	Tclvar_float d_ZScale;
 
 	Tclvar_string d_semColormapImageName;
     Tclvar_string d_semColormap;

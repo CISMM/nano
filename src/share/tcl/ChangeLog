@@ -1,3 +1,8 @@
+2003-05-13  David Jack  <jackd@cs.unc.edu>
+    * afm_sem.tcl: added Z Scale entry
+	* modify.tcl: hacked to allow the user to use Direct Z mode without
+	setting the heightfield to Z Piezo
+
 2003-04-08  David Jack  <jackd@cs.unc.edu>
 	* litho_main.tcl: added added third line width box/radio button
 
