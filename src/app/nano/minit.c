@@ -46,6 +46,7 @@
 #include "x_util.h" /* qliu */
 #include "relax.h"
 #include "microscape.h"  // for #defines
+#include "butt_mode.h"   // for button defines
 
 // MOVED #ifdef FLOW includes and declarations to graphics.C
 
@@ -303,10 +304,8 @@ peripheral_init()
 	if (dialBox->register_change_handler(bdboxDialValues,
 		handle_bdbox_dial_change))
 		fprintf(stderr, "Error: can't register vrpn_Analog handler\n");
-	buttonBox->set_toggle(0,vrpn_BUTTON_TOGGLE_OFF); // Trigger
-	buttonBox->set_toggle(2,vrpn_BUTTON_TOGGLE_OFF); // Modify
-	buttonBox->set_toggle(14,vrpn_BUTTON_TOGGLE_OFF); // Sweep lock
-	buttonBox->set_toggle(20,vrpn_BUTTON_TOGGLE_OFF); // XY lock
+	buttonBox->set_toggle(TRIGGER_BT,vrpn_BUTTON_TOGGLE_OFF); // Trigger
+	buttonBox->set_toggle(XY_LOCK_BT,vrpn_BUTTON_TOGGLE_OFF); // XY lock
     }
     else {
 	buttonBox = NULL;
