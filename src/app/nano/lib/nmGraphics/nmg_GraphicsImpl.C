@@ -727,7 +727,8 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
   // Remember that float->int conversion truncates, so add 0.5 for rounding
   // Make sure it is not too big.
   int ts_orig_ = max(myPPM->nx, myPPM->ny);
-  const int texture_size = int (0.5 + pow (2, ceil(log(ts_orig_)/log(2))));
+  const int texture_size 
+    = int (0.5 + pow( (float) 2, ceil(log( (float) ts_orig_) / log(2.0f))));
 
   if (texture_size > 512) {
       fprintf (stderr,
@@ -853,7 +854,8 @@ void nmg_Graphics_Implementation::makeAndInstallVizImage(PPM *myPPM)
   // Remember that float->int conversion truncates, so add 0.5 for rounding
   // Make sure it is not too big.
   int ts_orig_ = max(myPPM->nx, myPPM->ny);
-  const int texture_size = int (0.5 + pow (2, ceil(log(ts_orig_)/log(2))));
+  const int texture_size 
+    = int (0.5 + pow( (float) 2, ceil( log( (float) ts_orig_) / log(2.0f))));
   
   if (texture_size > 512) {
       fprintf (stderr,
