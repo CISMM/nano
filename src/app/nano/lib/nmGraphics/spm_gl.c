@@ -243,7 +243,7 @@ int init_vertexArray(int x, int y)
 
 void specify_vertexArray(nmb_PlaneSelection /*planes*/, int i, int count)
 {
-#if defined(sgi)  // These functions aren't available in CYGWIN:
+#if defined(sgi)  // These functions aren't available in wGL:
   if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
     glNormalPointerEXT(GL_SHORT, sizeof(Vertex_Struct),
 	                        count, vertexptr[i][0].Normal );
