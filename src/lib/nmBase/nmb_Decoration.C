@@ -40,7 +40,10 @@ nmb_Decoration::nmb_Decoration (void) :
   scrapeMaxDepth(0),
   scrapeCallbacks (NULL),
   pulseCallbacks (NULL),
-  ds_sphere_axis(0)
+  ds_sphere_axis(0),
+  ds_red_ss(1),
+  ds_green_ss(1),
+  ds_blue_ss(1)
   //  max_num_slow_line_3d_markers (2)
   //  slowLine3dMarkers ( new PointType [max_num_slow_line_3d_markers] )
 {

@@ -1,3 +1,8 @@
+2002-10-01 Jameson Miller <millerj@cs.unc.edu>
+       *microscape.c - added handler functions that copy the values
+          of TCL variables into nmb_decoration whenever they are 
+          changed. (ie: handle_ds_red_ss_change)
+
 2002-09-30  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c : added TclNetvar stuff for new registration controls

@@ -1,3 +1,7 @@
+2002-10-01 Jameson Miller <millerj@cs.unc.edu>
+	* nmb_decoration.c (.h) - added variables to keep track of the
+        step size for the graphics of direct step (ds_AXIS_COLOR_ss)
+
 2002-09-30  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_ImageDisplay.h (updateDisplayTransform): added parameter

@@ -890,7 +890,35 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
 //-----------------------------------------------------------------------
 ///Ubergraphics centering
 static void CenterUbergraphics(void);
+//------------------------------------------------------------
+/// TCL variables for handling step size for the graphics 
+/// with direct step.
+void handle_ds_red_ss_change(vrpn_float64, void *);
+void handle_ds_green_ss_change(vrpn_float64, void *);
+void handle_ds_blue_ss_change(vrpn_float64, void *);
 
+Tclvar_float ds_r_axis_ss("ds_red_axis_ss", 0,
+						  handle_ds_red_ss_change);
+Tclvar_float ds_g_axis_ss("ds_green_axis_ss", 0,
+						  handle_ds_green_ss_change);
+Tclvar_float ds_b_axis_ss("ds_blue_axis_ss", 0,
+						   handle_ds_blue_ss_change);
+
+// handler functions to copy the value of the TCL
+// variable into the decoration object
+// for direct step. JM
+void handle_ds_red_ss_change(vrpn_float64 x, void *) {
+	decoration->ds_red_ss = x;
+}
+
+void handle_ds_green_ss_change(vrpn_float64 x, void *) {
+	decoration->ds_green_ss = x;
+}
+
+void handle_ds_blue_ss_change(vrpn_float64 x, void *) {
+	decoration->ds_blue_ss = x;
+}
+//----------------------------------------------------------------------
 /*******************
  * Global variables
  *******************/

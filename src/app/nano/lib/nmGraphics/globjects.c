@@ -31,14 +31,6 @@
 #include "font.h"
 #include "chartjunk.h"
 
-#include "AFMState.h"
-
-// microscope
-#include <nmm_Globals.h>	
-#include <nmm_MicroscopeRemote.h>
-#include <nmm_SimulatedMicroscope_Remote.h>
-#include <nmm_Types.h>
-
 #include "Timer.h"
 #include "nmg_Globals.h"  // for RegMode enum
 
@@ -1411,10 +1403,9 @@ int make_ds_sphere_axis (nmg_State *state, const q_type rot )
 	q_vec_type axis_step, temp_vec, top_tick, bottom_tick, top_tick_start, bottom_tick_start;
 	q_vec_type axis_end;
 	
-	//step size along each axis. Set in directstep.tcl
-	int step_size_red = microscope->state.modify.step_x_size;
-	int step_size_green = microscope->state.modify.step_y_size;
-	int step_size_blue = microscope->state.modify.step_z_size;
+	int step_size_red = decoration->ds_red_ss;
+	int step_size_green = decoration->ds_green_ss;
+	int step_size_blue = decoration->ds_blue_ss;
 	
 	//position of the sphere
 	q_vec_type sphere ={sphere_x, sphere_y, sphere_z};
@@ -1511,22 +1502,20 @@ int make_ds_sphere_axis (nmg_State *state, const q_type rot )
 			make_line(top_tick, bottom_tick);
 		}
 	}
-	if(microscope->state.modify.direct_step_param == DIRECT_STEP_3D) {
-		//blue axis step tick marks, if we are in 3D mode
-		q_vec_scale(temp_vec, tick_size, red_axis);
-		q_vec_add(top_tick_start, sphere, temp_vec);
-		q_vec_subtract(bottom_tick_start, sphere, temp_vec);
-		
-		for(i = -2; i <= 2; i++) {
-			if(i != 0) {
-				//distance along red axis to place tick
-				q_vec_scale(axis_step, i * step_size_blue, blue_axis);
-				
-				q_vec_add(top_tick, top_tick_start, axis_step);
-				q_vec_add(bottom_tick, bottom_tick_start, axis_step);
-				
-				make_line(top_tick, bottom_tick);
-			}
+	//blue axis step tick marks, if we are in 3D mode
+	q_vec_scale(temp_vec, tick_size, red_axis);
+	q_vec_add(top_tick_start, sphere, temp_vec);
+	q_vec_subtract(bottom_tick_start, sphere, temp_vec);
+	
+	for(i = -2; i <= 2; i++) {
+		if(i != 0) {
+			//distance along red axis to place tick
+			q_vec_scale(axis_step, i * step_size_blue, blue_axis);
+			
+			q_vec_add(top_tick, top_tick_start, axis_step);
+			q_vec_add(bottom_tick, bottom_tick_start, axis_step);
+			
+			make_line(top_tick, bottom_tick);
 		}
 	}
 	

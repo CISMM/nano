@@ -639,6 +639,25 @@ trace variable newmodifyp_control w show_direct_step_controls
 trace variable setting_direct_step_axis w set_ds_axis
 trace variable setting_direct_step_axis w show_direct_step_controls
 
+trace variable step_x_size w set_graphics_x_step
+trace variable step_y_size w set_graphics_y_step
+trace variable step_z_size w set_graphics_z_step
+
+proc set_graphics_x_step {nm el op} {
+global ds_red_axis_ss step_x_size
+set ds_red_axis_ss $step_x_size
+}
+
+proc set_graphics_y_step {nm el op} {
+global ds_green_axis_ss step_y_size
+set ds_green_axis_ss $step_y_size
+}
+
+proc set_graphics_z_step {nm el op} {
+global ds_blue_axis_ss step_z_size
+set ds_blue_axis_ss $step_z_size
+}
+
 #enables and disables direct step controls.
 #if we are not in touch mode, disable the stepping buttons
 #and the go to buttons.
@@ -760,9 +779,10 @@ global takestep
 proc show_direct_step_controls {nm el op} {
     global newmodifyp_control newmodifyp_tool takestep
     global setting_direct_step_axis
-
+    global import_lock_rotx import_lock_roty
+    global import_rotx import_roty
 # ---------------------------------------------------------------- #
-# ever time we are possibly changing the window, we are going to   #
+# every time we are possibly changing the window, we are going to   #
 # get rid of all the frames and rebuild from scratch               #
 # pack_forget_all gets rid of all the frames. If we are in the     #
 # regular axis mode, we then check to see if we are in Direct_z    #
@@ -828,11 +848,25 @@ proc show_direct_step_controls {nm el op} {
 	    pack $takestep(color_axis).current_pos_c -anchor nw
 	    pack $takestep(color_axis).goto_c	-anchor nw
 
-	    # pack [frame $takestep(ds).divider -relief raised -height 4 -borderwidth 2] \
-		# -fill x -side top -pady 4
-
 	    pack $takestep(ds).axis_controls -side left -anchor nw
 
+	    #we must set x,y rotations to 0, lock them, and remove their controls from the window
+
+	    #setx, y rotations to 0
+	    set import_rotx 0
+	    set import_roty 0
+
+	    #lock x and y rotations,
+	    set import_lock_rotx 1
+	    set import_lock_roty 1
+
+	    #  and remove sliders from the screen.
+	    pack forget $takestep(axis_controls_3).import_rotx_slide
+	    pack forget $takestep(axis_controls_3).import_roty_slide
+	    
+	    pack forget $takestep(axis_controls_4).import_lock_rotx_button
+	    pack forget $takestep(axis_controls_4).import_lock_roty_button
+	    
 
 	} else {
 	    
@@ -848,8 +882,20 @@ proc show_direct_step_controls {nm el op} {
 	    pack $takestep(pos_c).z_pos_c -side left
 	    pack $takestep(current_pos_c).cur_z_c $takestep(current_pos_c).value_cur_z_c -side left
 
-	    pack forget $takestep(axis_controls_2).import_tune_trans_button
+	    #lock the z rotation
 	    pack forget $takestep(axis_controls_4).import_tune_rot_button
+	    pack forget $takestep(axis_controls_3).import_rotz_slide
+	    pack forget $takestep(axis_controls_4).import_lock_rotz_button
+
+	    pack $takestep(axis_controls_3).import_rotx_slide -side left
+	    pack $takestep(axis_controls_3).import_roty_slide -side left
+	    pack $takestep(axis_controls_3).import_rotz_slide -side left
+
+	    pack $takestep(axis_controls_4).import_lock_rotx_button -side left
+	    pack $takestep(axis_controls_4).import_lock_roty_button -side left
+	    pack $takestep(axis_controls_4).import_lock_rotz_button -side left
+
+
 
 	    pack $takestep(ds).axis_controls -anchor nw
 	}

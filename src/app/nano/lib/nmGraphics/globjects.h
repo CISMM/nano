@@ -7,7 +7,7 @@
 
 class Position_list;  // from Position.h
 class nmg_State;
-class nmm_Microscope_Remote;
+//class nmm_Microscope_Remote;
 
 // Function Prototypes
 
@@ -21,7 +21,7 @@ extern int make_blue_line (nmg_State * state,
                            const float a [], const float b []);
 
 extern int make_ds_sphere_axis(nmg_State * state, const q_type rot);
-extern nmm_Microscope_Remote* microscope;
+//extern nmm_Microscope_Remote* microscope;
 
 //   Called in nmg_GraphicsImpl.c
 extern int make_aim (const float a [], const float b []);
