@@ -1,3 +1,9 @@
+2000-10-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C (loadRawDataTexture): this is only used
+	for SEM data at the moment; this generalizes it to handle data
+	with different types (float and short in addition to byte)
+
 2000-10-02  Jason Clark  <jclark@cs.unc.edu>
 
 	* nmg_RenderServerStrategies.C (render): Call base strategy class

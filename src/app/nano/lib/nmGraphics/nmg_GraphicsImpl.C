@@ -2059,10 +2059,12 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
                         " Error, couldn't find image: %s\n", image_name);
         return;
     }
-    vrpn_uint8 *data = im->rawDataUnsignedByte();
+    void *data = NULL;
+    data = im->pixelData();
     if (!data) {
         fprintf(stderr, "nmg_GraphImp::loadRawDataTexture:"
-                        " Error, image exists but raw data isn't available\n");
+                   " Error, image exists but pixel array isn't available\n");
+        return;
     }
 /*    printf("loadRawDataTexture: start=(%d,%d), size=(%d,%d)\n",
            start_x, start_y, im->width(), im->height());
@@ -2071,12 +2073,24 @@ void nmg_Graphics_Implementation::loadRawDataTexture(const int /*which*/,
     // make sure gl calls are directed to the right context
     v_gl_set_context_to_vlib_window();
 
-    glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
     if (im->width() <= g_tex_installed_width[SEM_DATA_TEX_ID] && 
 	im->height() <= g_tex_installed_height[SEM_DATA_TEX_ID]) {
+        int pixelType;
+        if (im->pixelType() == NMB_UINT8){
+            pixelType = GL_UNSIGNED_BYTE;
+        } else if (im->pixelType() == NMB_UINT16){
+            pixelType = GL_UNSIGNED_SHORT;
+        } else if (im->pixelType() == NMB_FLOAT32){
+            pixelType = GL_FLOAT;
+        } else {
+            fprintf(stderr, "nmb_GraphicsImp::loadRawDataTexture:"
+                 "can't handle pixel type\n"); 
+            return;      
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, start_x, start_y,
-               im->width(), im->height(), GL_LUMINANCE, GL_UNSIGNED_BYTE, 
-	       (void *)data);
+               im->width(), im->height(), GL_LUMINANCE, pixelType, 
+	       data);
         g_tex_image_width[SEM_DATA_TEX_ID] = im->width();
         g_tex_image_height[SEM_DATA_TEX_ID] = im->height();
 	if (report_gl_errors()) {
