@@ -157,6 +157,10 @@ SOURCE=.\nmb_Line.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\nmb_MorphologyPlane.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmb_PlaneSelection.C
 # End Source File
 # Begin Source File
@@ -314,6 +318,10 @@ SOURCE=.\nmb_LBLFlattenedPlane.h
 # Begin Source File
 
 SOURCE=.\nmb_Line.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmb_MorphologyPlane.h
 # End Source File
 # Begin Source File
 

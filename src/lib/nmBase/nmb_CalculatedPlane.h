@@ -125,6 +125,7 @@ protected:
   static const int FLATTENED_PLANE_TYPE;
   static const int LBL_FLATTENED_PLANE_TYPE;
   static const int SUMMED_PLANE_TYPE;
+  static const int MORPHOLOGY_PLANE_TYPE;
 
 
   //////////////

@@ -11,6 +11,7 @@
 #include "nmb_FlattenedPlane.h"
 #include "nmb_LBLFlattenedPlane.h"
 #include "nmb_SummedPlane.h"
+#include "nmb_MorphologyPlane.h"
 #include "nmb_Debug.h"
 
 #ifdef _WIN32
@@ -31,6 +32,10 @@ LBL_FLATTENED_PLANE_TYPE = 2;
 /* static */
 const int nmb_CalculatedPlane::
 SUMMED_PLANE_TYPE = 3;
+
+/* static */
+const int nmb_CalculatedPlane::
+MORPHOLOGY_PLANE_TYPE = 4;
 
 /* static */
 nmb_CalculatedPlane::NewCalculatedPlaneCallbackNode* nmb_CalculatedPlane::
@@ -245,6 +250,9 @@ receiveCalculatedPlane( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
       break;
     case SUMMED_PLANE_TYPE:
       newPlane = nmb_SummedPlane::_handle_PlaneSynch( p, dataset );
+      break;
+    case MORPHOLOGY_PLANE_TYPE:
+      newPlane = nmb_MorphologyPlane::_handle_PlaneSynch( p, dataset );
       break;
     default:
       newPlane = NULL;

@@ -1,3 +1,9 @@
+2004-03-17  David Borland  <borland@cs.unc.edu>
+
+        * nmb_CalculatedPlane.Ch : Added MorphologyPlane type.
+        * nmb_MorphologyPlane.Ch : New class for creating a dilation, erosion,
+        opening, or closing of a heightfield with a tip image.
+
 2004-03-04  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nmb_ImgMagick.C : Modified so that it will compile both with the
