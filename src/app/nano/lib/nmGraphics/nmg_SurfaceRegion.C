@@ -462,23 +462,34 @@ setTexture(nmg_State * state, nmb_Dataset *data)
 				q_type q;
 				qogl_matrix_type mat;
 
-				q_vec_copy(v, obj.GetLocalXform().GetTrans());
-
+                q_vec_copy(v, obj.GetLocalXform().GetTrans());
 				q_vec_scale(v, -1.0, v);
 
 				q_copy(q, obj.GetLocalXform().GetRot());
 				q_invert(q, q);
 
-				glTranslated(state->tex_coord_center_x, state->tex_coord_center_y, 0.0);
+                if (state->texture_displayed == nmg_Graphics::SEM_DATA) {
+                    glTranslated(x_translate, y_translate, 0.0);
+	    		    glScaled(x_scale_factor, y_scale_factor, 1.0);
 
-				glScaled(state->texture_transform[0], state->texture_transform[0], state->texture_transform[0]);
-				glScaled(x_scale_factor, y_scale_factor, 1.0);
-				
-				q_to_ogl_matrix(mat, q);
-				glMultMatrixd(mat);
-				
-				glTranslated(v[0], v[1], v[2]);
-				glTranslated(x_translate, y_translate, 0.0);
+                    // center of textue in texture coordinates
+                    glTranslated(0.5, 0.5, 0.0);
+
+                    // should be 1 / the size of the scan range...hard coded to assume a 5000 nm range for now
+                    // should change this to a variable
+                    glScaled(0.0002, 0.0002, 1.0);
+                }
+                else {
+                    glTranslated(state->tex_coord_center_x, state->tex_coord_center_y, 0.0);
+
+				    glScaled(state->texture_transform[0], state->texture_transform[0], state->texture_transform[0]);
+				    glScaled(x_scale_factor, y_scale_factor, 1.0);
+                }
+
+                q_to_ogl_matrix(mat, q);
+                glMultMatrixd(mat);
+
+                glTranslated(v[0], v[1], v[2]);
 			}
 
 			break;
@@ -487,6 +498,7 @@ setTexture(nmg_State * state, nmb_Dataset *data)
             fprintf(stderr, "Error, unknown texture coordinate mode\n");
             break;
         }
+
     }
 #endif
     

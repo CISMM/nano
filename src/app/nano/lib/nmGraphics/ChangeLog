@@ -1,3 +1,8 @@
+2002-07-18 David Borland <borland@cs.unc.edu>
+
+        * nmg_SurfaceRegion.C : added check for type of data for 
+        model projective texture control
+
 2002-07-18 Jameson Miller <millerj@cs.unc.edu>
 	* openGl.c : draw the direct step sphere axes.
 	in the draw world function
