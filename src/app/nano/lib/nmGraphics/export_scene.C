@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <rhinoio.h>
 #include "nmg_Graphics.h"
 #include "graphics_globals.h"
@@ -201,21 +203,20 @@ void build_mesh (
 static
 void build_viewport (CRhinoViewport & out_v,
                      const v_viewport_type & viewport,
-                     const int user_num, const int viewport_num)
+                     const int viewport_num)
 {
     /////////
     // Set the viewport name
     {
-        static const char * user_base_name = "user";
+        // XXX better to use stringstream from iostream library
         static const char * viewport_base_name = "viewport";
         int str_size
             = (10  /* overestimate of overhead */
-               + strlen(user_base_name) + (1 + (user_num / 10))
                + strlen(viewport_base_name) + (1 + (viewport_num / 10)));
         char * viewport_name = new char [1+str_size];
         sprintf (viewport_name,
-                 "%s %d, %s %d",
-                 user_base_name, user_num, viewport_base_name, user_num);
+                 "%s %d",
+                 viewport_base_name, viewport_num);
         out_v.SetViewName (viewport_name);
     }
 
@@ -229,7 +230,7 @@ void build_viewport (CRhinoViewport & out_v,
         // Really, we need to mimmic v_gl_draw_world (vogl/gl.c)
         v_xform_type xform_World_from_LeftEye;
         v_xform_type xform_World_from_RightEye;
-        my_v_gl_calculate_inverse_view_xform (user_num,
+        my_v_gl_calculate_inverse_view_xform (0 /*user_num*/,
                                               viewport_num,
                                               xform_World_from_LeftEye,
                                               xform_World_from_RightEye);
@@ -351,7 +352,7 @@ void build_viewport (CRhinoViewport & out_v,
  */
 void export_scene_to_openNURBS (
     const char * const         filename,
-    const nmg_Graphics * const graphics,
+    const nmg_Graphics * const /*graphics*/,
     const BCGrid * const       grid,
     const nmb_PlaneSelection & plane_selection)
 {
@@ -367,29 +368,15 @@ void export_scene_to_openNURBS (
     // Let's find out how many viewports there are, among all users
     // Also, we hardcode the display index to be zero.
     const v_index display_index = 0;
-    const v_display_type & d = v_display_table[display_index];
-    const int total_num_viewports = d.numViewports;
+    const v_display_type & display = v_display_table[display_index];
+    const int total_num_viewports = display.numViewports;
 
     
     // Now, build the viewport objects
-    CRhinoViewport my_viewports [total_num_viewports];
-    int count = 0;
-    for (int user_num=0;  user_num < NUM_USERS;  ++user_num) {
-
-        v_index display_index = 0;
-        if (graphics->getDisplayIndexForUser (display_index, user_num)) {
-
-            const v_display_type & d = v_display_table[display_index];
-            const int num_viewports_for_this_user = d.numViewports;
-            for (int viewport_num=0;
-                 viewport_num < num_viewports_for_this_user;
-                 ++viewport_num)
-            {
-                const v_viewport_type & v = d.viewports[viewport_num];
-                build_viewport (my_viewports[count++],
-                                v, user_num, viewport_num);
-            }
-        }
+    std::vector<CRhinoViewport> my_viewports (total_num_viewports);
+    for (int vn=0;  vn < total_num_viewports;  ++vn) {
+        const v_viewport_type & v = display.viewports [vn];
+        build_viewport (my_viewports[vn], v, vn);
     }
     
 
@@ -399,8 +386,7 @@ void export_scene_to_openNURBS (
 
     cout << "exporting scene to \"" << filename << "\"..." << flush;
     
-    FILE * pfile;
-    pfile = fopen (filename, "wb");
+    FILE * pfile = fopen (filename, "wb");
     // XXX error checking
     
     {
