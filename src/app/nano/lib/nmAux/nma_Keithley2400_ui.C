@@ -22,7 +22,7 @@ extern "C" {
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
 #include <BCGrid.h>
-#include "../../error_display.h"
+#include <error_display.h>
 
 #include "nma_Keithley2400_ui.h"
 
@@ -121,9 +121,15 @@ void nma_Keithley2400_ui::reset( )
 }
 
 
-int nma_Keithley2400_ui::mainloop(const struct timeval * timeout)
+void nma_Keithley2400_ui::setTimeFromStream( )
 {
   vi_stream_time = keithley2400->getTimeSinceConnected( );
+}
+
+
+int nma_Keithley2400_ui::mainloop(const struct timeval * timeout)
+{
+  setTimeFromStream();
   return keithley2400->mainloop(timeout);
 }
 
@@ -370,8 +376,9 @@ receive_ResultData(void *_userdata, const vrpn_VIRESULTDATACB &info)
   char x_vec_name[30];
   char y_vec_name[30];
   
-  sprintf(x_vec_name,"vi_volt_vec%d", me->num_data_vecs);
-  sprintf(y_vec_name,"vi_curr_vec%d", me->num_data_vecs);
+  me->setTimeFromStream( );  // make sure time is updated
+  sprintf(x_vec_name,"vi_volt_vec%d", (int) me->vi_stream_time );
+  sprintf(y_vec_name,"vi_curr_vec%d", (int) me->vi_stream_time );
   
   // I'm pretty sure we need to use Tcl_Alloc rather than
   // new or malloc to get the memory.
@@ -431,8 +438,8 @@ receive_ResultData(void *_userdata, const vrpn_VIRESULTDATACB &info)
   // Graph this data vector.
   // This procedure is defined in the tcl file.
   char command[100];
-  sprintf(command, "vi_add_chart_element %s %s %d", 
-    x_vec_name, y_vec_name, me->num_data_vecs);
+  sprintf(command, "vi_add_chart_element %s %s %d %d", 
+    x_vec_name, y_vec_name, me->num_data_vecs, (int) (me->vi_stream_time) );
   TCLEVALCHECK2(interp, command);
   
   // We've successfully processed another data vector.

@@ -1,3 +1,13 @@
+2001-12-12    <marshbur@cs.unc.edu>
+
+	* nma_Keithley2400.C (getTimeSinceConnected): changed the return
+	value in the case where we're not really connected
+	* nma_Keithley2400_ui.C (setTimeFromStream):  new function
+	(receive_ResultData): changes to label curves by time
+	(mainloop):  same
+	* nma_Keithley2400_ui.h (setTimeFromStream):  new function
+	* nmAux.dsp:  include paths
+	
 2001-11-12    <marshbur@TUNGSTEN-CS>
 
 	* nma_Keithley2400_ui.[h,C]: added Tcl var vi_stream_time

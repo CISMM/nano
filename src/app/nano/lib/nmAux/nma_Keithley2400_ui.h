@@ -38,6 +38,8 @@ public:
 
   // Handle getting any reports
   virtual int mainloop(const struct timeval * timeout = NULL);
+
+  virtual void setTimeFromStream( );
   
   nma_Keithley2400 * keithley2400;
   Tcl_Interp	*tcl_interp;

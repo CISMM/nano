@@ -88,7 +88,7 @@ int nma_Keithley2400::getTimeSinceConnected( void )
 {
   timeval elapsedTime;
 
-  if( d_connection == NULL ) return 0; // we're not really connected
+  if( d_connection == NULL ) return -1; // we're not really connected
   if( isReadingStreamFile( ) ) 
   {
     vrpn_File_Connection * logFile;

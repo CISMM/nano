@@ -1,3 +1,8 @@
+2001-12-12    <marshbur@cs.unc.edu>
+
+	* microscape.c (handle_rewind_stream_change): tell the keithley
+	ui to rewind as well.
+
 2001-12-11  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c (default_spring_k):  changed the default

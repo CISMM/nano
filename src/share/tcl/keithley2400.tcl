@@ -139,8 +139,9 @@ pack $vi_win.left.source_frame $vi_win.left.measure_frame -side top -fill both
 # show the time we've been connected, or the time in the stream
 set vi(stream_time) 0
 label $vi_win.right.timelabel -text "Time:  "
-label $vi_win.right.time -textvariable $vi(stream_time)
-pack $vi_win.right.timelabel $vi_win.right.time -side right
+label $vi_win.right.time -textvariable vi(stream_time)
+label $vi_win.right.seconds -text "sec"
+pack $vi_win.right.seconds $vi_win.right.time $vi_win.right.timelabel -side right -anchor ne
 
 # Button to connect, clear, and completely initialize the Keithley
 set widgets(connect_and_init) [button $vi_win.left.connect_and_init -text "Connect and Init" \
@@ -293,6 +294,7 @@ pack $vi(chart)  -expand yes -fill both
 
 # Hide the legend - it takes up space and doesn't tell us anything.
 #$vi(chart) legend configure -hide yes
+$vi(chart) legend configure -background black -foreground white
 
 # We are always going to chart voltage vs. current, so use the two default axis
 $vi(chart) xaxis configure -title "Voltage"
@@ -483,18 +485,24 @@ set vi(save_curves_now) 0
 trace variable vi(save_curves_now) w "vi_save_curve"
 
 
-
+set array name_time_pairs
 # Graphs the data in vectors name_x and name_y
-proc vi_add_chart_element { name_x name_y id } {
-    global vi 
-    if { [$vi(chart) element exists $name_y] } { return ; }
+proc vi_add_chart_element { name_x name_y id time } {
+    global vi
+    global name_time_pairs
+    if { [$vi(chart) element exists $time] } { 
+	puts "vi curve:  ignoring chart element named $time; it already exists."
+	return ; 
+    }
 
-    $vi(chart) element create $id \
+    $vi(chart) element create $time \
 	-xdata $name_x -ydata $name_y -color [vi_unique_color $id]
-# Limit the number of chart elements displayed to 9
+    array set name_time_pairs "$id $time"
+    # Limit the number of chart elements displayed to 9
     if { $id >= 9 } {
-	if { [$vi(chart) element exists [expr $id -9]] } {
-	    $vi(chart) element delete [expr $id -9]
+	if { [$vi(chart) element exists [expr $name_time_pairs([expr $id - 9 ]) ]] } {
+	    $vi(chart) element delete $name_time_pairs([expr $id - 9])
+	    # array unset name_time_pairs $id $name_time_pairs([expr ($id - 9)])
 	}
     }
 }
@@ -505,7 +513,6 @@ proc clear_curves_now  {} {
     foreach id $elem_list {
 	$vi(chart) element delete $id
     }
-
 }
 
 proc change_source {} {

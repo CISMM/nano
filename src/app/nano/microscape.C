@@ -2131,6 +2131,8 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
 	ohmmeterLogFile->reset();
     if (vicurveLogFile)
 	vicurveLogFile->reset();
+    if( keithley2400_ui )
+        keithley2400_ui->reset( );
     if (semLogFile)
         semLogFile->reset();
     rewind_stream = 0;  // necessary

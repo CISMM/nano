@@ -1,3 +1,8 @@
+2001-12-12    <marshbur@cs.unc.edu>
+
+	* keithley2400.tcl: changes to label curves by time.  
+	display tweaks, too.
+
 2001-11-30  Adam Seeger  <seeger@cs.unc.edu>
 
 	* litho_main.tcl: sources registration.tcl in place of reimplementing
