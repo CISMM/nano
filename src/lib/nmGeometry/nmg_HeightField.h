@@ -337,7 +337,7 @@ bool nmg_HeightField::mayIntersectRaySegment(nmg_Point start, nmg_Point end)
 
   int startTri = computeTriangleIndex(start.x, start.y, x0, y0);
   int endTri = computeTriangleIndex(end.x, end.y, x1, y1);
-  if (startTri == endTri) {
+  if (startTri == endTri && startTri != -1) {
     double safety = 0.1*fabs(end.z - start.z);
     // we add in 0.1*length to be a little cautious so we don't reject
     // something that would have been considered an intersection by the

@@ -1,3 +1,7 @@
+2003-07-18  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_HeightField.[Ch]: fixes some initialization problems
+
 2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmg_HeightField.[Ch]: replaced single pixel size parameter with

@@ -106,6 +106,10 @@ nmg_HeightField::nmg_HeightField(nmg_HeightField *surface,
 
 nmg_HeightField::nmg_HeightField(const nmg_HeightField &s)
 {
+  d_minX = s.d_minX;
+  d_maxX = s.d_maxX;
+  d_minY = s.d_minY;
+  d_maxY = s.d_maxY;
   d_numX = s.d_numX;
   d_numY = s.d_numY;
   d_sizeX = s.d_sizeX;
