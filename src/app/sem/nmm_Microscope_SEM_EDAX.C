@@ -995,11 +995,11 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
     memset(&(d_scanBuffer[i*d_resolution_x]),
         ((i+((int)(count)))%d_resolution_y)*255/d_resolution_y, d_resolution_x);
 */
-    dy = i-d_resolution_y/2;
+    dy = i-d_resolution_y/4;
     if (dy < 0) dy = -dy;
     int j;
     for (j = 0; j < d_resolution_x; j++){
-        dx = j-d_resolution_x/2;
+        dx = j-d_resolution_x/3;
         if (dx < 0) dx = -dx;
         ((vrpn_uint8 *)d_scanBuffer)[i*d_resolution_x + j] =
              ((dx+dy+count)%(d_resolution_y/4))*255/

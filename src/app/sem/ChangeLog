@@ -1,3 +1,9 @@
+2001-07-22  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM_EDAX.C (acquireImage): for fake data, offsets the
+	center of the pattern so its not so symmetric (to facilitate debugging
+	image flipping problems)
+
 2001-07-17  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_Microscope_SEM_EDAX.C (nmm_Microscope_SEM_EDAX): 
