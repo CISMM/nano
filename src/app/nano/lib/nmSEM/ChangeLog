@@ -1,3 +1,7 @@
+2003-02-11  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_EDAX.h : changed default resolution from 256x200 to 1024x800
+
 2002-11-06  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmui_SEM.C : added some calls to image_viewer->dirtyWindow() when
