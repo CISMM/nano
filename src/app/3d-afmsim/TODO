@@ -2,4 +2,3 @@
 
 - Is uncertainty map working correctly ? Why does it appear discontinuous near the edges ? Is it because of limited precision of the z & color buffers ?
 
-- Need to change some DNA force calculations.
