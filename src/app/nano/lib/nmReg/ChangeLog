@@ -1,3 +1,8 @@
+2003-05-19  David Jack <jackd@cs.unc.edu>
+
+	* nmr_AFM_SEM_Calibration.C (updateSEMfromModel_3D): was fitting to
+	the wrong type of transform, fixed.
+
 2003-04-04    <marshbur@cs.unc.edu>
 
 	* nmReg.dsp:  fixed include directories for release build
