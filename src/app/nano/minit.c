@@ -297,16 +297,17 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
                q_copy ( old_puck_transform.quat, (double *)tr.quat);
                q_xyz_quat_invert( &old_puck_transform, &old_puck_transform);
 
+           } else {
                // Save the center of the plane, basis for rotations. 
                get_Plane_Extents(&offsetx,&offsety,&offsetz);
 //                 printf("offsets %g %g %g\n", offsetx, offsety, offsetz);
-//                 printf("old wfr ");
-//                 v_x_print( &old_world_from_room);
-           } else {
+
                // Save the old world_from_room transform as a basis for puck
                // action. Move to activate section above if we aren't doing
                // incremental xforms.
                v_get_world_from_head(0, &old_world_from_room);
+//                 printf("old wfr ");
+//                 v_x_print( &old_world_from_room);
 
                // We are active, and changing the surface position
                v_init_xform(&new_world_from_room);

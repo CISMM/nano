@@ -1099,8 +1099,10 @@ int lighthand(void *data)
         (g_heightPlaneName);
   
     if (height) {
-        z_value = height->scaledValue(g_inputGrid->numX() / 2,
-                                      g_inputGrid->numY() / 2);
+        z_value = height->scale() * 0.5 * (height->maxNonZeroValue() + 
+                                           height->minNonZeroValue());
+//            z_value = height->scaledValue(g_inputGrid->numX() / 2,
+//                                          g_inputGrid->numY() -1);
     } else {
         z_value = 0.0f;
     }
@@ -1108,7 +1110,7 @@ int lighthand(void *data)
     // Approximate center of the surface. 
     glTranslatef( g_inputGrid->minX() + x_wide/2.0,
                   g_inputGrid->minY() + y_wide/2.0,
-                  z_value*1.05);  
+                  z_value);  
 
   // Make it correspond to hand rotation
   v_get_world_from_hand(0, &worldFromHand);

@@ -224,6 +224,8 @@ struct AFMImageState {
     ///< the current mode of the microscope
 
   Tclvar_int grid_resolution;
+  Tclvar_float scan_angle; ///< the angle for the scan region. 
+    ///< Rotated about the center, in degrees. 
 
   Tclvar_float setpoint;
   float        setpoint_min,   ///< control range of the "image force" knob
@@ -453,7 +455,6 @@ struct AFMState {
         yMin, yMax,              
         zMin, zMax;
     ///< maximum scan range of which the spm is capable
-  float scanAngle; // the scan angle from topo
 
   // optional system components
   vrpn_bool doDriftComp;           ///< compensate for drift. Always FALSE

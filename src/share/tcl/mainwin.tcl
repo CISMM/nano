@@ -722,3 +722,5 @@ after idle {
 # which have been created. 
 wm deiconify .
 
+# Just for fun - total number of commands invoked so far
+#puts "Command count: [info cmdcount]"

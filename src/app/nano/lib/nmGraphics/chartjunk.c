@@ -123,7 +123,7 @@ int scale_display (void * data) {
   float * size;
   size = (float *) data;
 
-  char message[100];
+  char message[200];
 #ifndef FLOW
   glPushAttrib(GL_CURRENT_BIT);
 #endif

@@ -8,7 +8,7 @@ EXCLUDE_SRC = renderer.C server_talk.c test_speech.c \
 
 ifdef VC
 EXCLUDE_SRC += termio.c x_util.c
-#USES_LIBS += vrpn_phantom
+USES_LIBS += vrpn_phantom
 endif
 
 ifeq ($(HW_OS),sgi_irix)

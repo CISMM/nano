@@ -194,8 +194,8 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
   d_connection->register_handler(d_ScanRange_type,
                                  handle_ScanRange,
                                  this);
-  d_connection->register_handler(d_SetScanAngle_type,
-                                 handle_SetScanAngle,
+  d_connection->register_handler(d_ReportScanAngle_type,
+                                 handle_ReportScanAngle,
                                  this);
   d_connection->register_handler(d_SetRegionCompleted_type,
                                  handle_SetRegionCompleted,
@@ -818,13 +818,13 @@ long nmm_Microscope_Remote::DrawLine (const double _startx, const double _starty
   long retval;
 
   double startx, starty;
-  rotateScanCoords(_startx, _starty, state.scanAngle, &startx, &starty);
+  rotateScanCoords(_startx, _starty, state.image.scan_angle, &startx, &starty);
   double endx, endy;
-  rotateScanCoords(_endx, _endy, state.scanAngle, &endx, &endy);
-  double yaw = state.modify.yaw - state.scanAngle;
+  rotateScanCoords(_endx, _endy, state.image.scan_angle, &endx, &endy);
+  double yaw = state.modify.yaw - state.image.scan_angle;
 
   printf( "DrawLine ::  angle = %f xMin = %f xMax = %f yMin = %f yMax = %f\n",
-	  state.scanAngle, 
+	  state.image.scan_angle, 
 	  d_dataset->inputGrid->minX(), d_dataset->inputGrid->maxX(),
 	  d_dataset->inputGrid->minY(), d_dataset->inputGrid->maxY() );
   printf( "             startx = %f starty = %f rotated x = %f rotated y = %f\n",
@@ -897,10 +897,10 @@ long nmm_Microscope_Remote::DrawArc (const double _x, const double _y,
   long retval;
 
   double x,y;
-  rotateScanCoords(_x, _y, state.scanAngle, &x, &y);
+  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
   // XXX Need to rotate start and end angle as well???
-  double startAngle = _startAngle - state.scanAngle;
-  double endAngle = _endAngle - state.scanAngle;
+  double startAngle = _startAngle - state.image.scan_angle;
+  double endAngle = _endAngle - state.image.scan_angle;
 
   switch (state.modify.style) {
     case SHARP:
@@ -959,7 +959,7 @@ long nmm_Microscope_Remote::ScanTo (const float _x, const float _y) {
   long len;
 
   double x,y;
-  rotateScanCoords(_x, _y, state.scanAngle, &x, &y);
+  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
 
   msgbuf = encode_ScanTo(&len, x, y);
   if (!msgbuf)
@@ -973,7 +973,7 @@ long nmm_Microscope_Remote::ScanTo (const float _x, const float _y, const float 
   long len;
 
   double x,y;
-  rotateScanCoords(_x, _y, state.scanAngle, &x, &y);
+  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
 
   msgbuf = encode_ScanTo(&len, x, y, _z);
   if (!msgbuf)
@@ -985,7 +985,7 @@ long nmm_Microscope_Remote::ScanTo (const float _x, const float _y, const float 
 int nmm_Microscope_Remote::TakeSampleSet (float _x, float _y) {
 
   double x,y;
-  rotateScanCoords(_x, _y, state.scanAngle, &x, &y);
+  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
 
   if (!d_sampleAlgorithm) {
     return -1;
@@ -1318,10 +1318,10 @@ long nmm_Microscope_Remote::ZagTo
   long len;
 
   double x,y;
-  rotateScanCoords(_x, _y, state.scanAngle, &x, &y);
+  rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
 
-  // XXX Need to rotate yaw as well???
-  msgbuf = encode_ZagTo(&len, x, y, yaw, sweepWidth, regionDiag);
+  // Need to rotate yaw as well! Subtract the scan angle.
+  msgbuf = encode_ZagTo(&len, x, y, yaw-state.image.scan_angle, sweepWidth, regionDiag);
   if (!msgbuf)
     return -1;
 
@@ -1400,6 +1400,29 @@ long nmm_Microscope_Remote::SetGridSize (const long _x, const long _y) {
     return -1;
 
   return dispatchMessage(len, msgbuf, d_SetGridSize_type);
+}
+
+long nmm_Microscope_Remote::SetScanAngle (const float _angle) {
+  char * msgbuf;
+  long len;
+
+  float angle = _angle;
+  while (angle >= 360.0) {
+      angle -= 360.0;
+  }
+  while (angle <= -360.0) {
+      angle += 360.0;
+  }
+  
+  float ang_radians = Q_DEG_TO_RAD(angle);
+
+  printf("Setting scan angle %g\n", ang_radians);
+
+  msgbuf = encode_SetScanAngle(&len, ang_radians);
+  if (!msgbuf)
+    return -1;
+
+  return dispatchMessage(len, msgbuf, d_SetScanAngle_type);
 }
 
 
@@ -2104,7 +2127,7 @@ void nmm_Microscope_Remote::DisplayModResult (const float _x, const float _y,
   BCPlane * heightPlane;
 
   double xr,yr;
-  rotateScanCoords(_x, _y, -state.scanAngle, &xr, &yr);
+  rotateScanCoords(_x, _y, -state.image.scan_angle, &xr, &yr);
 
   heightPlane = d_dataset->inputGrid->getPlaneByName
             (d_dataset->heightPlaneName->string());
@@ -2783,13 +2806,13 @@ int nmm_Microscope_Remote::handle_ScanRange (void * userdata,
 }
 
 //static
-int nmm_Microscope_Remote::handle_SetScanAngle (void * userdata,
+int nmm_Microscope_Remote::handle_ReportScanAngle (void * userdata,
                                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   float angle;
 
-  ms->decode_SetScanAngle(&param.buffer, &angle);
-  ms->RcvSetScanAngle(angle);
+  ms->decode_ReportScanAngle(&param.buffer, &angle);
+  ms->RcvReportScanAngle(angle);
 
   return 0;
 }
@@ -2935,6 +2958,7 @@ int nmm_Microscope_Remote::handle_ScanDataset (void * userdata,
   vrpn_int32 numDatasets;
   long i;
 
+  fprintf(stderr, "New Scan Datasets:\n");
   ms->decode_ScanDatasetHeader(&param.buffer, &numDatasets);
   ms->RcvClearScanChannels();
   for (i = 0; i < numDatasets; i++) {
@@ -4027,9 +4051,9 @@ void nmm_Microscope_Remote::RcvScanRange (const float _minX, const float _maxX,
     driftZDirty();
 }
 
-void nmm_Microscope_Remote::RcvSetScanAngle (const float angle ) {
-  printf( "nmm_Microscope_Remote::RcvSetScanAngle: angle = %g\n", angle );
-  state.scanAngle = angle;
+void nmm_Microscope_Remote::RcvReportScanAngle (const float angle ) {
+    state.image.scan_angle = Q_RAD_TO_DEG(angle);
+    printf( "New scan angle = %g\n", (float)state.image.scan_angle );
 }
 
 
@@ -4186,8 +4210,7 @@ void nmm_Microscope_Remote::RcvScanDataset (const char * _name,
   if (state.acquisitionMode == SCANLINE) {
       RcvScanlineDataset(_name, _units, _offset, _scale);
   } else {
-      fprintf(stderr, "New Scan Dataset: "
-              "%s (%s), offset:  %g, scale:  %g\n",
+      fprintf(stderr, "  %s (%s), offset:  %g, scale:  %g\n",
               _name, _units, _offset, _scale);
       // HACK HACK HACK
       if (state.data.scan_channels->Add_channel((char *) _name,
@@ -4497,6 +4520,9 @@ void nmm_Microscope_Remote::doImageModeCallbacks (void) {
 
   //fprintf(stderr, "nmm_Microscope_Remote::doImageModeCallbacks\n");  // Tiger
 
+  // Force decoration->elapsedTime to be updated, so callbacks
+  // can use it. 
+  getTimeSinceConnected();
   l = d_imageModeHandlers;
   while (l) {
     if ((l->handler)(l->userdata)) {
@@ -4514,6 +4540,9 @@ void nmm_Microscope_Remote::doModifyModeCallbacks (void) {
 
   //fprintf(stderr, "nmm_Microscope_Remote::doModifyModeCallbacks\n");
 
+  // Force decoration->elapsedTime to be updated, so ModFile callback
+  // can use it. 
+  getTimeSinceConnected();
   l = d_modifyModeHandlers;
   while (l) {
     if ((l->handler)(l->userdata)) {
@@ -4530,6 +4559,9 @@ void nmm_Microscope_Remote::doModifyModeCallbacks (void) {
 void nmm_Microscope_Remote::doPointDataCallbacks (const Point_results * p) {
   pointDataHandlerEntry * l;
 
+  // Force decoration->elapsedTime to be updated, so callbacks
+  // can use it. 
+  getTimeSinceConnected();
   l = d_pointDataHandlers;
   while (l) {
     if ((l->handler)(l->userdata, p)) {
@@ -4548,6 +4580,9 @@ void nmm_Microscope_Remote::doScanlineModeCallbacks (){
 
   //fprintf(stderr, "Microscope::doScanlineModeCallbacks\n");
 
+  // Force decoration->elapsedTime to be updated, so callbacks
+  // can use it. 
+  getTimeSinceConnected();
   l = d_scanlineModeHandlers;
   while (l) {
     if ((l->handler)(l->userdata)) {
@@ -4563,6 +4598,9 @@ void nmm_Microscope_Remote::doScanlineDataCallbacks (const Scanline_results *s)
 {
   scanlineDataHandlerEntry * l;
 
+  // Force decoration->elapsedTime to be updated, so ModFile callback
+  // can use it. 
+  getTimeSinceConnected();
   l = d_scanlineDataHandlers;
   while (l) {
     if ((l->handler)(l->userdata, s)) {

@@ -26,6 +26,8 @@ proc open_static_file {} {
         # dialog check whether file exists.
         set open_static_filename $filename
         set fileinfo(open_dir) [file dirname $filename]
+        # Pop up the height-plane setup dialog. 
+        show.z_mapping
     } 
     # otherwise do nothing.
 }
@@ -79,7 +81,8 @@ pack $win.device_name -anchor nw -side top
 
 proc choose_logfile { } {
     global fileinfo open_spm_log_name
-    set types { {"Lab Notebook files" ".nms" } \
+    set types { {"Lab Notebook files" ".nms" } 
+                {"Lab Notebook files" ".nm" } 
                 {"All files" *} }
     set filename [tk_getSaveFile -filetypes $types \
             -initialfile "log.nms" -initialdir $fileinfo(save_dir)\
@@ -166,9 +169,26 @@ proc save_plane_data {} {
     # the default selected export_plane.
     set export_plane [lindex $imageNames 0]
     if { [.save_plane_dialog activate] } {
-	set types { {"All files" *} }
+	set types { {"All files" *} 
+        { "ThermoMicroscopes" ".tfr" }
+        { "Text(MathCAD)" ".txt" }
+        { "PPM Image" ".ppm" }
+        { "SPIP" ".spip" }
+        { "UNCA Image" ".ima" } }
+
+        # Set the file extension correctly
+        set def_file_exten ".tfr"
+        puts $export_filetype
+        foreach item $types {
+            puts "[lindex $item 0] [lindex $item 1]"
+            if { [string compare $export_filetype [lindex $item 0]] == 0} {
+                set def_file_exten [lindex $item 1]
+            }
+        }
+
+        # Let the user choose a file to save the data in. 
 	set filename [tk_getSaveFile -filetypes $types \
-		-initialfile "$export_plane.tfr" \
+		-initialfile "${export_plane}$def_file_exten" \
                 -initialdir $fileinfo(save_dir)\
                 -title "Save plane data"]
 	if {$filename != ""} {
@@ -195,14 +215,26 @@ iwidgets::dialog .save_screen_dialog -title "Save screen image"
 .save_screen_dialog hide Help
 .save_screen_dialog hide Apply
 .save_screen_dialog buttonconfigure OK -text "Save" -command {
-    global fileinfo
+    global fileinfo screenImage_format
     .save_screen_dialog deactivate 1
-    set types { {"All files" *} }
+    set types { {"All files" *} 
+    {"TIFF" ".tif" }
+    {"PNM" ".pnm" } }
+
+        # Set the file extension correctly
+        set def_file_exten ".tif"
+        foreach item $types {
+            if { [string compare $screenImage_format [lindex $item 0]] == 0} {
+                set def_file_exten [lindex $item 1]
+            }
+        }
+
     set filename [tk_getSaveFile -filetypes $types \
-		-initialfile screenimage.tif -initialdir $fileinfo(save_dir)\
+		-initialfile screenimage$def_file_exten \
+                -initialdir $fileinfo(save_dir) \
                 -title "Save screen image"] 
     if {$filename != ""} {
-	puts "Save screenshot: $filename $screenImage_format"
+	#puts "Save screen image: $filename $screenImage_format"
 	update idletasks
 	after idle {
 	# Setting this variable triggers a callback which saves the file.
@@ -280,14 +312,28 @@ proc remember_mod_data { time_stamp} {
 
 }
 
+proc forget_mod_data { } {
+    global mod_data
+    unset mod_data
+}
+
 # Allow the user to save 
 proc save_mod_dialog {} {
     global  nmInfo mod_data which_mod_to_save mod_data_time_list 
     global tcl_platform fileinfo
 
-    set mod_data_time_list [array names mod_data]
-
+    if { [info exists mod_data] } {
+        set mod_data_time_list [lsort [array names mod_data]]
+    } else {
+        nano_warning "No modification data exists to save at this time"
+        return;
+    }
     if { [.save_mod_dialog activate] } {
+        # If data doesn't exist, display an error
+        if { ![info exists mod_data($which_mod_to_save)] } {
+            nano_error "Data from modification at time $which_mod_to_save is not accessible. \nPlease replay stream file to try again"
+            return;
+        }
 	set types { {"All files" *} }
 	set filename [tk_getSaveFile -filetypes $types \
 		-initialfile $which_mod_to_save.mod \

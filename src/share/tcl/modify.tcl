@@ -43,7 +43,7 @@ pack $nmInfo(modifyquick).modifystate $nmInfo(modifypage) \
 
 set nmInfo(modifystate) [$nmInfo(modifyquick).modifystate childsite]
 generic_entry $nmInfo(modifypage).setpoint modifyp_setpoint \
-	"Setpoint (0,100%)" real \
+	"Setpoint (-64,64)" real \
         { set accepted_modify_params 1 }
 generic_entry $nmInfo(modifypage).p-gain modifyp_p_gain "P-Gain (0,5)" real \
         { set accepted_modify_params 1 }
@@ -60,10 +60,15 @@ pack    $nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
 	$nmInfo(modifypage).rate \
 	-side top -anchor nw
 
-iwidgets::Labeledwidget::alignlabels \
+proc align_mq_labels {} {
+    global nmInfo
+
+    iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
 	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
 	$nmInfo(modifypage).rate 
+}
+align_mq_labels
 
 lappend device_only_controls \
 	$nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
@@ -355,7 +360,7 @@ label $nmInfo(modifyfull).modeparam.label -text "Mode parameters"
 pack $nmInfo(modifyfull).modeparam.label -side top -anchor nw
 
 generic_entry $nmInfo(modifyfull).modeparam.setpoint newmodifyp_setpoint \
-	"Setpoint(-70 70)" real
+	"Setpoint(-64,64)" real
 generic_entry $nmInfo(modifyfull).modeparam.p-gain newmodifyp_p_gain "P-Gain (0,5)" real 
 generic_entry $nmInfo(modifyfull).modeparam.i-gain newmodifyp_i_gain "I-Gain (0,2)" real 
 generic_entry $nmInfo(modifyfull).modeparam.d-gain newmodifyp_d_gain "D-Gain (0,5)" real 
@@ -384,7 +389,9 @@ pack    $nmInfo(modifyfull).modeparam.setpoint \
         $nmInfo(modifyfull).modeparam.rate \
 	-side top -fill x -pady $fspady
 
-iwidgets::Labeledwidget::alignlabels \
+proc align_mf_labels {} {
+    global nmInfo
+  iwidgets::Labeledwidget::alignlabels \
     $nmInfo(modifyfull).modeparam.setpoint \
     $nmInfo(modifyfull).modeparam.p-gain \
     $nmInfo(modifyfull).modeparam.i-gain \
@@ -395,6 +402,8 @@ iwidgets::Labeledwidget::alignlabels \
     $nmInfo(modifyfull).modeparam.input_gain \
     $nmInfo(modifyfull).modeparam.drive_attenuation \
     $nmInfo(modifyfull).modeparam.phase
+}
+align_mf_labels
 
 if {$newmodifyp_mode==0} {
     pack $nmInfo(modifyfull).modeparam.amplitude \
@@ -588,6 +597,21 @@ eval iwidgets::Labeledwidget::alignlabels $mod_directz_list
 eval lappend device_only_controls $mod_directz_list
 
 }
+
+# puts the correct label on setpoint, both full and quick controls
+# Procedure change_setpoint_label defined in image.tcl
+trace variable newmodifyp_mode w "change_setpoint_label \
+        newmodifyp_mode newmodifyp_ampl_or_phase \
+        $nmInfo(modifyfull).modeparam.setpoint align_mf_labels"
+trace variable newmodifyp_ampl_or_phase w "change_setpoint_label \
+        newmodifyp_mode newmodifyp_ampl_or_phase \
+        $nmInfo(modifyfull).modeparam.setpoint align_mf_labels"
+trace variable modifyp_mode w "change_setpoint_label \
+        modifyp_mode modifyp_ampl_or_phase \
+        $nmInfo(modifypage).setpoint align_mq_labels"
+trace variable modifyp_ampl_or_phase w "change_setpoint_label \
+        modifyp_mode modifyp_ampl_or_phase \
+        $nmInfo(modifypage).setpoint align_mq_labels"
 
 #
 #

@@ -155,6 +155,7 @@ class nmm_Microscope {
       // by encode_ResultNM() and decode_ResultNM()
     long d_Scanning_type;
     long d_ScanRange_type;
+    long d_ReportScanAngle_type;
     long d_SetRegionCompleted_type;
     long d_SetRegionClipped_type;
     long d_ResistanceFailure_type;
@@ -419,6 +420,10 @@ class nmm_Microscope {
                              float);
     long decode_ScanRange (const char ** buf, float *, float *, float *,
                            float *, float *, float *);
+    char * encode_ReportScanAngle (long * len,
+				float angle);
+    long decode_ReportScanAngle (const char ** buf,
+			      float * angle);
     char * encode_SetRegionC (long * len, float, float, float, float);
     long decode_SetRegionC (const char ** buf, float *, float *,
                             float *, float *);

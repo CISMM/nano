@@ -127,6 +127,7 @@ nmb_Device::nmb_Device(const char * name,
     // them explicitly
     if (d_connected) {
         vrpn_HANDLERPARAM p;
+        p.buffer=NULL;
         handle_GotFirstConnection(this, p);
         handle_GotConnection(this, p);
     }

@@ -71,10 +71,14 @@ pack    $nmInfo(imagepage).setpoint $nmInfo(imagepage).p-gain \
 	$nmInfo(imagepage).rate \
 	-side top -anchor nw
 
-iwidgets::Labeledwidget::alignlabels \
+proc align_iq_labels {} {
+    global nmInfo
+    iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(imagepage).setpoint $nmInfo(imagepage).p-gain \
 	$nmInfo(imagepage).i-gain $nmInfo(imagepage).d-gain \
 	$nmInfo(imagepage).rate 
+}
+align_iq_labels
 
 lappend device_only_controls \
 	$nmInfo(imagepage).setpoint $nmInfo(imagepage).p-gain \
@@ -104,6 +108,7 @@ set imagep_style 0
 set imagep_tool 0
 
 set imagep_grid_resolution 200
+set imagep_scan_angle 0
 set imagep_setpoint 50.0
 set imagep_p_gain 1.0
 set imagep_i_gain 0.3
@@ -119,7 +124,7 @@ set imagep_phase 0.0
 set imagep_rate 1.0
 
 # list of all the variables above, imagep_*
-set imageplist [list mode style tool grid_resolution setpoint \
+set imageplist [list mode style tool grid_resolution scan_angle setpoint \
         p_gain i_gain d_gain amplitude \
         frequency input_gain ampl_or_phase drive_attenuation phase rate]
 
@@ -182,9 +187,14 @@ generic_optionmenu $nmInfo(imagefull).mode.grid_resolution \
         newimagep_grid_resolution \
 	"Grid Resolution" grid_resolution_list
 
+generic_entry $nmInfo(imagefull).mode.scan_angle \
+        newimagep_scan_angle \
+	"Scan Angle (deg)" real
+
 pack $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact -side top -anchor nw -fill x
 
-pack $nmInfo(imagefull).mode.grid_resolution -side top -fill x -pady 20
+pack $nmInfo(imagefull).mode.grid_resolution \
+        $nmInfo(imagefull).mode.scan_angle -side top -fill x -pady 20
 
 
 pack $nmInfo(imagefull).mode.cancel $nmInfo(imagefull).mode.accept -side bottom -fill x
@@ -199,14 +209,15 @@ set save_bg [$nmInfo(imagefull).mode.accept cget -background]
 lappend device_only_controls \
         $nmInfo(imagefull).mode.oscillating $nmInfo(imagefull).mode.contact \
         $nmInfo(imagefull).mode.accept $nmInfo(imagefull).mode.cancel \
-        $nmInfo(imagefull).mode.grid_resolution 
+        $nmInfo(imagefull).mode.grid_resolution \
+        $nmInfo(imagefull).mode.scan_angle 
 
 #setup Image modeparam box
 label $nmInfo(imagefull).modeparam.label -text "Mode parameters" 
 pack $nmInfo(imagefull).modeparam.label -side top -anchor nw 
 
 generic_entry $nmInfo(imagefull).modeparam.setpoint newimagep_setpoint \
-	"Set Point (0,100)" real 
+	"Set Point  (0,100%)" real 
 generic_entry $nmInfo(imagefull).modeparam.p-gain newimagep_p_gain \
         "P-Gain (0,5)" real 
 generic_entry $nmInfo(imagefull).modeparam.i-gain newimagep_i_gain \
@@ -247,7 +258,9 @@ pack    $nmInfo(imagefull).modeparam.setpoint \
         $nmInfo(imagefull).modeparam.rate \
 	-side top -fill x -pady $fspady
 
-iwidgets::Labeledwidget::alignlabels \
+proc align_if_labels {} {
+    global nmInfo
+  iwidgets::Labeledwidget::alignlabels \
     $nmInfo(imagefull).modeparam.setpoint \
     $nmInfo(imagefull).modeparam.p-gain \
     $nmInfo(imagefull).modeparam.i-gain \
@@ -258,6 +271,8 @@ iwidgets::Labeledwidget::alignlabels \
     $nmInfo(imagefull).modeparam.input_gain \
     $nmInfo(imagefull).modeparam.drive_attenuation \
     $nmInfo(imagefull).modeparam.phase
+}
+align_if_labels
 
 if {$newimagep_mode==0} {
     pack $nmInfo(imagefull).modeparam.amplitude \
@@ -329,7 +344,7 @@ pack $nmInfo(imagefull).toolparam.label -side top -anchor nw
 proc flip_im_mode {im_mode element op} {
     global nmInfo
     global im_oscillating_list
-    global fspady
+    global fspady newimagep_ampl_or_phase
 
     upvar $im_mode k
 
@@ -347,6 +362,44 @@ proc flip_im_mode {im_mode element op} {
     }
 }
 
+# Change the label on setpoint widgets
+# takes the name of vars that tell whether it's oscillating or contact
+# and ampl or phase, and name of widget which needs the change in label.
+# Also the name of a procedure to align labels.
+# last three are bogus arguments so this can be used as trace proc. 
+proc change_setpoint_label {osc_con phase_ampl widg algn_proc name element op } {
+    upvar #0 $osc_con osc_con_var
+    upvar #0 $phase_ampl phase_ampl_var
+    # Change the label on the Setpoint widget
+    if { $osc_con_var == 0 } {
+        # oscillating
+        if { $phase_ampl_var == 0 } {
+            # If using phase imaging, setpoint is nA
+            $widg configure -labeltext "Set Point (-64,64nA)" 
+        } else {
+            # If using amplitude imaging, setpoint is %
+            $widg configure -labeltext "Set Point  (0,100%)" 
+        }
+    } else {
+        #contact
+        $widg configure -labeltext "Set Point (-64,64nA)" 
+    }
+    #align some labels.
+    $algn_proc
+}
+# puts the correct label on setpoint, both full and quick controls
+trace variable newimagep_mode w "change_setpoint_label \
+        newimagep_mode newimagep_ampl_or_phase \
+        $nmInfo(imagefull).modeparam.setpoint align_if_labels"
+trace variable newimagep_ampl_or_phase w "change_setpoint_label \
+        newimagep_mode newimagep_ampl_or_phase \
+        $nmInfo(imagefull).modeparam.setpoint align_if_labels"
+trace variable imagep_mode w "change_setpoint_label \
+        imagep_mode imagep_ampl_or_phase \
+        $nmInfo(imagepage).setpoint align_iq_labels"
+trace variable imagep_ampl_or_phase w "change_setpoint_label \
+        imagep_mode imagep_ampl_or_phase \
+        $nmInfo(imagepage).setpoint align_iq_labels"
 
 #
 # Change the background of Accept and Cancel buttons
@@ -355,7 +408,7 @@ proc flip_im_mode {im_mode element op} {
 
 # variable tracks how many of newimagep_* have been changed
 set num_im_new_changed 0
-
+# Image Background Change Real - change background of Accept and Revert buttons
 proc imBackgChReal {fooa element op} {
     global nmInfo
 
@@ -363,17 +416,12 @@ proc imBackgChReal {fooa element op} {
 	$nmInfo(imagefull).mode.cancel configure -background LightPink1
 }
 
+# Accept the image parameters.
 proc acceptImageVars {varlist} {
     global accepted_image_params
     global nmInfo
     global save_bg $varlist
 
-    # Entry widgets commit their value when they loose focus. 
-    # Move the focus to next entry to force them to commit their values. 
-    # We're going to close the window later anyway...
-    # XXX Doesn't work! focus moves after this procedure...
-    #focus [tk_focusNext [focus]]
-    #update idletasks
     # we pass in the name of a list, so this gets us the elements in the list.
     foreach val [set $varlist] {
 	global imagep_$val

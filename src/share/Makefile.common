@@ -393,8 +393,7 @@ endif
 
 ifeq ($(HW_OS),pc_win32)
    ARCH_LIBS := $(addprefix -l,glut32 wsock32 user32 gdi32 comdlg32 glu32 \
-                               opengl32)
-# ghost30
+                               opengl32 ghost30)
 endif
 
 ##########################
@@ -470,7 +469,7 @@ endif
 
 ifeq ($(HW_OS),pc_win32)
   BAREDEFINES += V_GLUT NO_RAW_TERM NO_XWINDOWS NO_ITCL NO_FILTERS \
-  NO_EXT_TEXTURES NO_PHANTOM_SERVER
+  NO_EXT_TEXTURES
 endif
 
 ifeq ($(HW_OS),pc_linux)

@@ -142,7 +142,7 @@ label $nmInfo(rulergrid).label -text "Rulergrid Parameters"
 
 frame $nmInfo(rulergrid).c
 button $nmInfo(rulergrid).c.set_color -text "Set rulergrid color" -command {
-    choose_color ruler_color "Choose rulergrid color"
+    choose_color ruler_color "Choose rulergrid color" $nmInfo(rulergrid)
     $nmInfo(rulergrid).c.colorsample configure -bg $ruler_color
     set_rulergrid_color
 }
@@ -171,9 +171,9 @@ generic_entry $nmInfo(rulergrid).rulergrid_angle rulergrid_angle \
 	"Grid angle (degrees)" real
 
 generic_entry $nmInfo(rulergrid).linewidthx ruler_width_x \
-	"X line width (0,100%)" numeric
+	"X line width (0,100%)" real
 generic_entry $nmInfo(rulergrid).linewidthy ruler_width_y \
-	"Y line width (0,100%)" numeric
+	"Y line width (0,100%)" real
 
 set ruler_opacity 255
 generic_entry $nmInfo(rulergrid).opacity ruler_opacity \

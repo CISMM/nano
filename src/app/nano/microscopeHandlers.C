@@ -138,6 +138,8 @@ void setupStateCallbacks (nmm_Microscope_Remote * ms) {
 
   ms->state.image.grid_resolution.addCallback
     (handle_grid_resolution_change, ms);
+  ms->state.image.scan_angle.addCallback
+    (handle_scan_angle_change, ms);
 
   ms->state.image.setpoint.addCallback
     (handle_Imode_p_change, ms);
@@ -336,6 +338,8 @@ void teardownStateCallbacks (nmm_Microscope_Remote * ms) {
 
   ms->state.image.grid_resolution.removeCallback
     (handle_grid_resolution_change, ms);
+  ms->state.image.scan_angle.removeCallback
+    (handle_scan_angle_change, ms);
 
   ms->state.image.setpoint.removeCallback
     (handle_Imode_p_change, ms);
@@ -468,6 +472,20 @@ void handle_grid_resolution_change (vrpn_int32, void * _mptr) {
     return;
 }
 
+// Change by the user interface - angle in degrees. 
+void handle_scan_angle_change (vrpn_float64, void * _mptr) {
+    // Boundary check - clamp to inside range -360 to 360
+    while (microscope->state.image.scan_angle >= 360.0) {
+        microscope->state.image.scan_angle = 
+            microscope->state.image.scan_angle - 360.0;
+    }
+    while (microscope->state.image.scan_angle <= -360.0) {
+        microscope->state.image.scan_angle = 
+           microscope->state.image.scan_angle + 360.0;
+    }
+    microscope->SetScanAngle(microscope->state.image.scan_angle);
+
+}
 // M stands for modify 
 // I stands for image
 // _p_ stands for parameters

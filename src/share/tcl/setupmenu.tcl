@@ -161,7 +161,7 @@ pack $nmInfo(contour_lines).contour_dataset -anchor nw
 frame $nmInfo(contour_lines).c
     
 button $nmInfo(contour_lines).c.set_color -text "Set contour color" -command {
-    choose_color contour_color "Choose contour color"
+    choose_color contour_color "Choose contour color" $nmInfo(contour_lines)
     $nmInfo(contour_lines).c.colorsample configure -bg $contour_color
     set_contour_color
 }

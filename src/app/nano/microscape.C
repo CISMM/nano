@@ -2646,6 +2646,11 @@ static	void	handle_openStaticFilename_change (const char *, void *)
         if (microscope->state.data.inputPlaneNames.getIndex(*(p->name())) == -1) {
             //printf("Add entry\n");
             microscope->state.data.inputPlaneNames.addEntry(*(p->name()));
+            // This is the new plane we just added, so switch the heightplane
+            // to display it, if we are displaying nothing...
+            if ( strcmp(dataset->heightPlaneName->string(), EMPTY_PLANE_NAME) == 0) {
+                *(dataset->heightPlaneName) = *(p->name());
+            }
         }
     }
     
@@ -2734,6 +2739,10 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     long logmode = vrpn_LOG_NONE;
 
     if (strlen(openSPMDeviceName) <= 0) return;
+    // If we are re-opening the same device, close the old connection first.
+    if (strcmp(openSPMDeviceName.string(), istate->afm.deviceName) == 0) {
+        openDefaultMicroscope();
+    }
     if ((openSPMLogName.string() == NULL) || 
         (strcmp(openSPMLogName.string(),"") == 0) || 
         (strcmp(openSPMLogName.string(),"none") == 0)) {
@@ -4970,6 +4979,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-SPMhost host port] [-UDPport port]\n");
   fprintf(stderr, "       [-MIXport port] [-recv] [-alphacolor r g b]\n");
   fprintf(stderr, "       [-marshalltest] [-multithread] \n");
+  fprintf(stderr, "       [-nomagellan] \n");
   fprintf(stderr, "       [-baseport port] [-monitor port]\n");
   fprintf(stderr, "       [-collaborator port] [-peer name]\n");
   fprintf(stderr, "       [-renderserver] [-renderclient host]\n");
@@ -5029,8 +5039,9 @@ void Usage(char* s)
                          "(default 0.0 1.0 0.0)\n");
   fprintf(stderr, "       -marshalltest: Test remote/server graphics pair "
                          "in single process\n");
-  fprintf(stderr, "       -multithread: Spawn a second thread for the graphics "
-                         "and run multithreaded\n");
+  fprintf(stderr, "       -multithread: Spawn a second thread for the graphics"
+                         " and run multithreaded\n");
+  fprintf(stderr, "       -nomagellan: PC only. Don't try to a Magellan on COM1");
   fprintf(stderr, "       -monitor:  open a VRPN Forwarder from the "
                          "microscope on this port. OBSOLETE.\n");
   fprintf(stderr, "       -collaborator:  open VRPN Forwarders both to and "
@@ -5066,6 +5077,7 @@ void Usage(char* s)
                           "play no more than n packets\n"
                   "       before refreshing graphics (0 to disable).\n");
   fprintf(stderr, "       -optimistic:  use optimistic concurrency control.\n");
+  /*
   fprintf(stderr, "   OBSOLETE (ignored)\n");
   fprintf(stderr, "       -call: Use callbacks (default)\n");
   fprintf(stderr, "       -nocall: Do not use callbacks\n");
@@ -5082,13 +5094,13 @@ void Usage(char* s)
   fprintf(stderr, "       -sub: Scan a square numXnum around mods (def 24)\n");
   fprintf(stderr, "       -showcps: Start the control panels invisible\n");
   fprintf(stderr, "       -showgrid: Start the measuring grid invisible\n");
-					/* mod 03/15/94 mf per SW req.	*/
+					// mod 03/15/94 mf per SW req.	
   fprintf(stderr, "       -relax_up_also: Relax when back in image mode\n");
   fprintf(stderr, "       -notk: to turn off tcl/tk interface\n");
   fprintf(stderr, "       -ugraphics: Run with ubergraphics\n");
   fprintf(stderr, "       -x: Use the x window display\n");
   fprintf(stderr, "       -xc: Use the x window to display the contour map\n");
-
+*/
   exit(-1);
 }
 

@@ -64,9 +64,10 @@ frame $nmInfo(colorscale).pickframe.buttons.c
 # Set the basic surface color:
 button $nmInfo(colorscale).pickframe.buttons.c.set_color \
         -text "Set surface color" -command {
-    if {[choose_color surface_color "Choose surface color"] } {
+    if {[choose_color surface_color "Choose surface color" $nmInfo(colorscale)] } {
         $nmInfo(colorscale).pickframe.buttons.c.colorsample configure -bg $surface_color 
         set_surface_color
+        # Turn off the color map, if it is on. 
         set color_comes_from "none"
     }
 }
