@@ -1215,7 +1215,7 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
 
 				        int prevId, nextId;
 				        int prevX, prevY, nextX, nextY;
-					double dx, dy, theta;
+					double dx, dy /*, theta*/;
         				double prevZ, nextZ, dz, norm_alt, mag;
         				double *az = new double [count];
         				double *alt = new double [count];
