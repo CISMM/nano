@@ -13,9 +13,9 @@
 catch { set auto_path [lappend auto_path $env(ITCL_LIBRARY)] }
 
 package require Itcl 
-namespace import itcl::*
+catch {namespace import itcl::*}
 package require Itk 
-namespace import itk::*
+catch {namespace import itk::*}
 package require Iwidgets
 
 # Include the BLT package, which provides vectors, stripchart and
@@ -220,7 +220,7 @@ set drawing_parameters_win \
          [create_closing_toplevel drawing_parameters "Drawing Parameters"]
 
 set line_width_nm 0
-set exposure_uCoulombs_per_square_cm 0
+set exposure_uCoulombs_per_square_cm 300
 set drawing_tool 1
 set clear_drawing 0
 
@@ -238,11 +238,17 @@ radiobutton $drawing_parameters_win.tool.polyline -variable drawing_tool \
       -value 1 -text "polyline" -justify left
 radiobutton $drawing_parameters_win.tool.polygon -variable drawing_tool \
       -value 2 -text "polygon" -justify left
+radiobutton $drawing_parameters_win.tool.dump_point -variable drawing_tool \
+      -value 3 -text "dump point" -justify left
+radiobutton $drawing_parameters_win.tool.select -variable drawing_tool \
+      -value 4 -text "select" -justify left
 
 pack $drawing_parameters_win.tool -side left
 
 pack $drawing_parameters_win.tool.polyline \
-     $drawing_parameters_win.tool.polygon -side top
+     $drawing_parameters_win.tool.polygon \
+     $drawing_parameters_win.tool.dump_point \
+     $drawing_parameters_win.tool.select -side top
 
 button $drawing_parameters_win.clear_drawing -text "Clear" -command \
     { set clear_drawing 1 }
@@ -322,7 +328,6 @@ checkbutton $display_parameters_win.hide_others_check \
    
 pack $display_parameters_win.hide_others_check -anchor nw -padx 3 -pady 3
 
-
 checkbutton $display_parameters_win.enable_display_check \
    -text "Enabled" -variable enable_image_display
 
@@ -334,7 +339,11 @@ pack $display_parameters_win.enable_display_check -anchor nw -padx 3 -pady 3
 set alignment_needed 0
 set source_image_name "none"
 set target_image_name "none"
+set resample_resolution_x 640
+set resample_resolution_y 480
+set resample_image_name ""
 set align_window_open 0
+set enable_auto_align_update 0
 
 set align_win \
         [create_closing_toplevel_with_notify alignment_parameters \
@@ -352,10 +361,16 @@ button $align_win.align_now -text "Align Now" -command \
     { set alignment_needed 1 }
 pack $align_win.align_now
 
+checkbutton $align_win.auto_align_check \
+   -text "Auto update" -variable enable_auto_align_update
+pack $align_win.auto_align_check -anchor nw -padx 3 -pady 3
 
 #button $align_win.clear_points -text "Clear Points" -command \
 #    { set clear_align_points 1 }
 #pack $align_win.clear_points
+
+#frame $align_win.resampling
+#pack $align_win.resampling
 
 ######### End Alignment ##############################################
 
