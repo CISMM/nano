@@ -189,7 +189,7 @@ nmb_Dataset::loadFile(const char* file_name, TopoFile &topoFile)
         return -1;
     } else if (tmpgrid != inputGrid) {
         //Add file to image list only. 
-        nmb_Image *im = new nmb_ImageGrid(tmpgrid->head());
+        im = new nmb_ImageGrid(tmpgrid->head());
         im->setTopoFileInfo(topoFile);
         dataImages->addImage(im);
         //??XX delete tmpgrid;
@@ -198,7 +198,7 @@ nmb_Dataset::loadFile(const char* file_name, TopoFile &topoFile)
     // Add new plane to our list. 
   for (BCPlane *p = inputGrid->head(); p != NULL; p = p->next()) {
     if (dataImages->getImageByName(*(p->name())) == NULL){
-      nmb_Image *im = new nmb_ImageGrid(p);
+      im = new nmb_ImageGrid(p);
       im->setTopoFileInfo(topoFile);
       dataImages->addImage(im);
     }

@@ -162,12 +162,44 @@ class nmb_Image {
 	void worldToPixel(const double x, const double y,
 			double &i, double &j) const;
 
+        /**
+         We have four different coordinate systems for an image:
+         1) world coordinates - an external coordinate system used for 
+              alignment between images
+         2) image coordinates - a coordinate system with axes aligned to the
+              image axes such that the accessible part of the image spans 
+              exactly the unit square in x and y
+         3) scaled image coordinates - like image coordinates but with the
+              x and y axes scaled up to some measure of the real world distance
+              spanned in x and y by the image - these distances are independent
+              of the distances spanned by the image in "world" coordinates
+              because they are independent of any alignment procedure
+              This represents our knowledge of magnification and pixel
+              aspect ratios which we have independent of any alignment
+              procedure (based on get/setAcquisitionDimensions).
+         4) texture coordinates - a coordinate system very similar to 
+              image coordinates but with an additional scale and translation
+              such that the full array used to store the image data
+              spans exactly the unit square in x and y (the array used to
+              store the image data actually has a non-accessible border
+              on all four sides of the image to make the array 
+              dimensions powers of 2)
+        */
+
         void getWorldToImageTransform(double *matrix44);
         void getWorldToImageTransform(nmb_TransformMatrix44 &xform);
         void getImageToTextureTransform(double *matrix44);
         void getImageToTextureTransform(nmb_TransformMatrix44 &xform);
         void setWorldToImageTransform(double *matrix44);
         void setWorldToImageTransform(nmb_TransformMatrix44 &xform);
+
+        void getWorldToScaledImageTransform(double *matrix44);
+        void getWorldToScaledImageTransform(nmb_TransformMatrix44 &xform);
+
+        void getScaledImageToImageTransform(double *matrix44);
+        void getScaledImageToImageTransform(nmb_TransformMatrix44 &xform);
+        void getImageToScaledImageTransform(double *matrix44);
+        void getImageToScaledImageTransform(nmb_TransformMatrix44 &xform);
 
         double areaInWorld();
 
@@ -226,10 +258,17 @@ class nmb_Image {
         double d_worldToImageMatrix[16];
         /// position of the corners of the image in the world
         nmb_ImageBounds d_imagePosition;
+
         /// dimensions of the image in the coordinate system in which it was 
         /// acquired regardless of what transformation or world position has
         /// been set (the main reason this was introduced was so that rotations 
         /// would be performed in a reasonably-scaled space)
+        /// ----
+        /// At the least, these distances should be proportional to the 
+        /// actual distances spanned in x and y (so if the aspect ratio for
+        /// pixels is 1:1 then they may be equal to the resolution of the image)
+        /// but in the future we may want to assume they are in nanometers or
+        /// some real units like that
         double d_acquisitionDistX;
         double d_acquisitionDistY;
         
@@ -298,6 +337,7 @@ class nmb_ImageGrid : public nmb_Image{
         virtual const char *exportFormatType(int type); 
         virtual int exportToFile(FILE *f, const char *export_type, 
                                  const char * filename);
+        BCPlane *getPlane();
 
 	typedef int (*FileExportingFunction) (FILE *file, nmb_ImageGrid *im, const char * filename);
 

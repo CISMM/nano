@@ -1,3 +1,13 @@
+2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Dataset.C (nmb_Dataset::loadFile): changed a variable's scope
+	* nmb_Image.C (getWorldToScaledImageTransform): new function
+	(getScaledImageToImageTransform): new function
+	(getImageToScaledImageTransform): new function
+	* nmb_ImageDisplay.h : new file specifying a common interface for
+	modules that display images (for example, as a texture, a surface, or
+	any other projection)
+
 2001-11-04    <marshbur@MUSHROOM-CS>
 
 	* nmb_CalculatedPlane.h, .C:  moved a lot of common functionality

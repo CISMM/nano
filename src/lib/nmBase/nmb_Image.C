@@ -512,6 +512,107 @@ void nmb_Image::setWorldToImageTransform(nmb_TransformMatrix44 &xform)
   setWorldToImageTransform(matrix);
 }
 
+void nmb_Image::getWorldToScaledImageTransform(double *matrix44)
+{
+  getWorldToImageTransform(matrix44);
+  double distX, distY;
+  getAcquisitionDimensions(distX, distY);
+  matrix44[0] *= distX;
+  matrix44[4] *= distX;
+  matrix44[8] *= distX;
+  matrix44[12] *= distX;
+
+  matrix44[1] *= distY;
+  matrix44[5] *= distY;
+  matrix44[9] *= distY;
+  matrix44[13] *= distY;
+}
+
+void nmb_Image::getWorldToScaledImageTransform(nmb_TransformMatrix44 &xform)
+{
+  double matrix[16];
+  getWorldToScaledImageTransform(matrix);
+  xform.setMatrix(matrix);
+}
+
+void nmb_Image::getScaledImageToImageTransform(double *matrix44)
+{
+  // based on AcquisitionDimensions
+  double distX, distY;
+  getAcquisitionDimensions(distX, distY);
+  double scaleFactorX, scaleFactorY;
+
+  scaleFactorX = 1.0/distX;
+  scaleFactorY = 1.0/distY;
+
+  matrix44[0] = scaleFactorX;
+  matrix44[4] = 0.0;
+  matrix44[8] = 0.0;
+  matrix44[12] = 0.0;
+
+  matrix44[1] = 0.0;
+  matrix44[5] = scaleFactorY;
+  matrix44[9] = 0.0;
+  matrix44[13] = 0.0;
+
+  matrix44[2] = 0.0;
+  matrix44[6] = 0.0;
+  matrix44[10] = 1.0;
+  matrix44[14] = 0.0;
+
+  matrix44[3] = 0.0;
+  matrix44[7] = 0.0;
+  matrix44[11] = 0.0;
+  matrix44[15] = 1.0;
+
+}
+
+void nmb_Image::getScaledImageToImageTransform(nmb_TransformMatrix44 &xform)
+{
+  double matrix[16];
+  getScaledImageToImageTransform(matrix);
+  xform.setMatrix(matrix);
+}
+
+void nmb_Image::getImageToScaledImageTransform(double *matrix44)
+{
+  // based on AcquisitionDimensions
+  double distX, distY;
+  getAcquisitionDimensions(distX, distY);
+  double scaleFactorX, scaleFactorY;
+
+  scaleFactorX = distX;
+  scaleFactorY = distY;
+
+  matrix44[0] = scaleFactorX;
+  matrix44[4] = 0.0;
+  matrix44[8] = 0.0;
+  matrix44[12] = 0.0;
+
+  matrix44[1] = 0.0;
+  matrix44[5] = scaleFactorY;
+  matrix44[9] = 0.0;
+  matrix44[13] = 0.0;
+
+  matrix44[2] = 0.0;
+  matrix44[6] = 0.0;
+  matrix44[10] = 1.0;
+  matrix44[14] = 0.0;
+
+  matrix44[3] = 0.0;
+  matrix44[7] = 0.0;
+  matrix44[11] = 0.0;
+  matrix44[15] = 1.0;
+
+}
+
+void nmb_Image::getImageToScaledImageTransform(nmb_TransformMatrix44 &xform)
+{
+  double matrix[16];
+  getImageToScaledImageTransform(matrix);
+  xform.setMatrix(matrix);
+}
+
 double nmb_Image::areaInWorld()
 {
   getBounds(d_imagePosition);
@@ -1042,6 +1143,8 @@ int nmb_ImageGrid::exportToFile(FILE *f, const char *export_type,
 	return 0;
     }
 }
+
+BCPlane *nmb_ImageGrid::getPlane() {return plane;} 
 
 //static 
 int nmb_ImageGrid::writeTopoFile(FILE *file, nmb_ImageGrid *im, const char * )

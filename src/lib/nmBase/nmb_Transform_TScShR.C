@@ -2,6 +2,14 @@
 #include <stdio.h>
 #include "nmb_Transform_TScShR.h"
 
+const int nmb_numTransformParameters = 12;
+const nmb_TransformParameter 
+      nmb_transformParameterOrder[nmb_numTransformParameters] =
+            {NMB_ROTATE_X, NMB_ROTATE_Y, NMB_ROTATE_Z,
+             NMB_TRANSLATE_X, NMB_TRANSLATE_Y, NMB_TRANSLATE_Z,
+             NMB_SCALE_X, NMB_SCALE_Y, NMB_SCALE_Z,
+             NMB_SHEAR_X, NMB_SHEAR_Y, NMB_SHEAR_Z};
+
 nmb_Transform_TScShR::nmb_Transform_TScShR():
   d_matrixNeedsUpdate(vrpn_FALSE)
 {
