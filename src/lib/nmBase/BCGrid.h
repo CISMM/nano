@@ -43,6 +43,12 @@ using namespace std;
 
 class BCPlane;
 class nmb_diImageInfo;
+class nmb_NanotecImageInfo;
+
+#ifdef	_WIN32
+// Windows doesn't have the strncasecmp function.
+int	strncasecmp(const char *s1, const char *s2, size_t n);
+#endif
 
 typedef void (* BCGrid_MinMaxCallback) (void * userdata,
                                         double minX, double maxX,
@@ -217,6 +223,9 @@ class BCGrid
       ///< defined in readNanoscopeFile.C
     int parseNSv4_3(nmb_diImageInfo * file_info, char * header_text);
       ///< defined in readNanoscopeFile.C
+
+    int readNanotecFile(const char* filename, const char *name, int ascii_flag);
+      ///< readNanotecFile.C 
 
     int readTopometrixFile(TopoFile& TF, FILE* file, const char *name);
       ///< in Topo.C

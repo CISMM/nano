@@ -22,29 +22,6 @@
 
 #define SWAP(a,b)       {((a)^=(b));((b)^=(a));((a)^=(b));}
 
-#ifdef	_WIN32
-// Windows doesn't have the strncasecmp function.
-int	strncasecmp(const char *s1, const char *s2, size_t n)
-{
-	unsigned i = 0;	// Index passing through the characters
-
-	for (i = 0; i < n; i++) {
-		// See if we've reached the end of one or both strings
-		if ( s1[i] == 0 ) {
-			if ( s2[i] == 0 ) return 0;
-			else return -1;
-		} else if ( s2[i] == 0 ) {
-			return 1;
-		}
-
-		// See if this character breaks the tie
-		if ( tolower(s1[i]) < tolower(s2[i]) ) return -1;
-		if ( tolower(s1[i]) > tolower(s2[i]) ) return 1;
-	}
-	return 0;	// Got to the end of the characters to test
-}
-#endif
-
 /** Reads Version 2 of a DI NanoScope file */
 int 
 BCGrid::readNanoscopeFileWithoutHeader(FILE* file, const char *filename)

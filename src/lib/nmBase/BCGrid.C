@@ -46,7 +46,28 @@ const double STANDARD_DEVIATIONS = 3.0;
 
 int BCGrid::_times_invoked = 0;
 
+#ifdef	_WIN32
+// Windows doesn't have the strncasecmp function.
+int	strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	unsigned i = 0;	// Index passing through the characters
 
+	for (i = 0; i < n; i++) {
+		// See if we've reached the end of one or both strings
+		if ( s1[i] == 0 ) {
+			if ( s2[i] == 0 ) return 0;
+			else return -1;
+		} else if ( s2[i] == 0 ) {
+			return 1;
+		}
+
+		// See if this character breaks the tie
+		if ( tolower(s1[i]) < tolower(s2[i]) ) return -1;
+		if ( tolower(s1[i]) > tolower(s2[i]) ) return 1;
+	}
+	return 0;	// Got to the end of the characters to test
+}
+#endif
 
 
 /**
@@ -1291,6 +1312,18 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
     else if (strncmp(magic,"#R5.0",4) == 0)   // Topo file, v 5.0x
     {
         return readTopometrixFile(topoFile, file, name);
+    } 
+    else if (strncmp(magic,"WSxM",4) == 0) 
+    {
+        // 0 means new format, text header
+       fclose(file);
+        return readNanotecFile(filename, name, 0);
+    } 
+    else if (strncmp(magic,"STM_",4) == 0) 
+    {
+        // 1 means old format, binary header
+       fclose(file);
+        return readNanotecFile(filename, name, 1);
     } 
 //      else if (strncmp(magic,"P6",2) == 0) 
 //      {

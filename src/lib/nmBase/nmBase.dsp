@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "../../../obj/pc_win32/debug/lib/nmBase"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GR /GX /Zi /Od /I "." /I "../../app/image/protvol" /I "../nmMP" /I "..\..\..\..\vrpn" /I "..\..\..\..\quat" /I "..\..\..\..\external\pc_win32\include" /D "_LIB" /D "_DEBUG" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /D "_MBCS" /FR /YX /FD /GZ /TP /c
+# ADD CPP /nologo /MDd /W3 /Gm /GR /GX /Zi /Od /I "." /I "../../app/image/protvol" /I "../nmMP" /I "..\..\..\..\vrpn" /I "..\..\..\..\quat" /I "..\..\..\..\external\pc_win32\include" /D "_DEBUG" /D "_LIB" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /FR /YX /FD /GZ /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -209,6 +209,10 @@ SOURCE=.\readNanoscopeFile.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\readNanotecFile.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\Scanline.C
 # End Source File
 # Begin Source File
@@ -218,6 +222,10 @@ SOURCE=.\Topo.C
 # Begin Source File
 
 SOURCE=.\vc_dirent.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\wsxmHeader.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -365,6 +373,10 @@ SOURCE=.\readNanoscopeFile.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\readNanotecFile.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Scanline.h
 # End Source File
 # Begin Source File
@@ -374,6 +386,10 @@ SOURCE=.\Topo.h
 # Begin Source File
 
 SOURCE=.\vc_dirent.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\wsxmHeader.h
 # End Source File
 # End Group
 # End Target

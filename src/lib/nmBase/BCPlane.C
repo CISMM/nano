@@ -24,7 +24,7 @@ int write( int fildes, const void *buf, size_t nbyte );
 
 #include "BCPlane.h"
 #include "BCGrid.h"
-
+#include "wsxmHeader.h"
 
 #ifndef	min
 #define min(x,y) ( (x) < (y) ? (x) : (y) )
@@ -1587,6 +1587,123 @@ BCPlane::readBinaryNanoscopeFile(FILE* file, nmb_diImageInfo * file_info)
     return 0;
     
 } // readBinaryNanoscopeFile
+
+/**
+readNanotecFile
+Read the file format of WSxM, from Nanotec Electronica. This just reads
+the binary/data portion of the file.
+@author Aron Helser
+@date modified 2-21-2003
+*/
+int
+BCPlane::readNanotecFile(FILE* pSourceFile, nmb_NanotecImageInfo * pHeader)
+{
+    int	first_value_read = 1;
+    int ret;
+    int iCol, iRow, iNumRows, iNumCols;
+    short **arrShortImageData;
+    short sMinimum=SHRT_MAX, sMaximum=SHRT_MIN;
+    char szBuffer[50] = "";
+    double lfFactor;
+
+    // Unfortunately, rows and columns are swapped between 
+    // WSxM and NM - so we take care of swap here.
+    iNumRows = numY();
+    iNumCols = numX();
+
+    // Checks that the data matrix is stored with short data type      
+    // If the image data type is not found in the header it means that 
+    //the image was stored with short data type                        
+    ret = HeaderGetAsString (pHeader, IMAGE_HEADER_GENERAL_INFO, IMAGE_HEADER_GENERAL_INFO_IMAGE_DATA_TYPE, szBuffer);
+    if ((strcmp (szBuffer, IMAGE_DATA_TYPE_DOUBLE) != 0) && (ret == -1))
+    {
+        // The data are stored with short data type in the file 
+        // Reads the data into a short array 
+        // allocates memory for that array 
+        arrShortImageData = (short **) calloc (iNumCols, sizeof (short *));
+        for (iCol=0; iCol<iNumCols; iCol++) 
+        {
+            arrShortImageData[iCol] = (short *) calloc (iNumRows, sizeof (short));
+        }
+        
+        // Reads the data from the file and calculates the maximum and the
+        // minimum
+        for (iCol=0; iCol<iNumCols; iCol++)
+        {
+            for (iRow=0; iRow<iNumRows; iRow++)
+            {
+                fread (&arrShortImageData[iCol][iRow], sizeof (short), 1, pSourceFile);
+                
+                if (arrShortImageData[iCol][iRow] > sMaximum) sMaximum = arrShortImageData[iCol][iRow];
+                if (arrShortImageData[iCol][iRow] < sMinimum) sMinimum = arrShortImageData[iCol][iRow];
+            }
+        }
+        
+        // Stores the data in real values with the same unit as the z amplitude
+        // Calculates the factor to convert to real values 
+        
+        lfFactor = pHeader->z_amplitude / (sMaximum - sMinimum);
+        if (strcmp(pHeader->z_units, "\265m") == 0) {
+            // microns, translate to nm
+            lfFactor *= 1000.0;
+            _units = "nm";
+        } else if (strcmp(pHeader->z_units, "\305") == 0) {
+            // Angstroms, translate to nm
+            lfFactor *= 0.1;
+            _units = "nm";
+        }
+        // Copy the values 
+        for (iCol=0; iCol<iNumCols; iCol++)
+        {
+            for (iRow=0; iRow<iNumRows; iRow++)
+            {
+                // X and Y are swapped, X reversed in Nanotec files
+                setValue(iNumRows - iRow -1,iCol, 
+                         lfFactor * arrShortImageData[iCol][iRow]);
+            }
+        }	
+        // Free the memory. 
+        for (iCol=0; iCol<iNumCols; iCol++) {
+            free (arrShortImageData[iCol]);
+        }
+        free (arrShortImageData);
+        
+    }
+    else
+    {
+        lfFactor = 1;
+        if (strcmp(pHeader->z_units, "\265m") == 0) {
+            // microns, translate to nm
+            lfFactor *= 1000.0;
+            _units = "nm";
+        } else if (strcmp(pHeader->z_units, "\305") == 0) {
+            // Angstroms, translate to nm
+            lfFactor *= 0.1;
+            _units = "nm";
+        }
+        // The data are stored with double data type in the file 
+        for (iCol=0; iCol<iNumCols; iCol++)
+        {
+            for (iRow=0; iRow<iNumRows; iRow++)
+            {
+                double val;
+                fread (&val, sizeof (double), 1, pSourceFile);
+                // X and Y are swapped, X reversed in Nanotec files
+                setValue(iNumRows - iRow -1,iCol, lfFactor*val);
+            }
+        }
+        
+    }
+    
+    computeMinMax();
+    setMinAttainableValue(_min_value);
+    setMaxAttainableValue(_max_value);
+
+    // Set scale to reasonable value. 
+    tweakScale();
+    return 0;
+    
+} // readNanotecFile
 
 
 /**
