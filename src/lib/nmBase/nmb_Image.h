@@ -13,6 +13,7 @@
 #include "BCPlane.h"
 #include "BCGrid.h"
 #include "nmb_String.h"
+#include "nmb_TransformMatrix44.h"
 #include <math.h>
 #include "Topo.h"
 #include <assert.h>
@@ -146,8 +147,11 @@ class nmb_Image {
 	double widthWorld() const;
 	double heightWorld() const;
 
-        void setWidthWorld(double width);
-        void setHeightWorld(double height);
+        //void setWidthWorld(double width, double originX = 0.5);
+        //void setHeightWorld(double height, double originY = 0.5);
+
+        void setAcquisitionDimensions(double distX, double distY);
+        void getAcquisitionDimensions(double &distX, double &distY);
 
 	/// convert a position in an image given as a pixel location into a
 	/// position in the world coordinate system for the image
@@ -159,7 +163,9 @@ class nmb_Image {
 			double &i, double &j) const;
 
         void getWorldToImageTransform(double *matrix44);
+        void getWorldToImageTransform(nmb_TransformMatrix44 &xform);
         void setWorldToImageTransform(double *matrix44);
+        void setWorldToImageTransform(nmb_TransformMatrix44 &xform);
 
         double areaInWorld();
 
@@ -218,6 +224,13 @@ class nmb_Image {
         double d_worldToImageMatrix[16];
         /// position of the corners of the image in the world
         nmb_ImageBounds d_imagePosition;
+        /// dimensions of the image in the coordinate system in which it was 
+        /// acquired regardless of what transformation or world position has
+        /// been set (the main reason this was introduced was so that rotations 
+        /// would be performed in a reasonably-scaled space)
+        double d_acquisitionDistX;
+        double d_acquisitionDistY;
+        
         /// (value in specified units) = 
         ///               (array value)*d_units_scale+d_units_offset
         double d_units_scale;

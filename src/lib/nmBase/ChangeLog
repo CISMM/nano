@@ -1,3 +1,23 @@
+2001-07-17  Adam Seeger  <seeger@cs.unc.edu>
+	* BCGrid.C (readPPMorPGMFileNew): changed intensity units from "nm"
+	"unknown_units" since we don't have any way to know what the units are
+	in this case
+	* nmb_Image.hC (get/setAcquisitionDimensions):
+	added these to get and set the dimensions of the image if we
+	have any idea what those dimensions might be (according to the 
+	instrument calibration); these affect
+	the space in which rotations are applied to an image but are completely
+	independent from what the values set for the world position or 
+	world to image transformation
+        (setWidthWorld, setHeightWorld): improved and then
+	commented-out these functions because they are complicated and
+ 	now unnecessary with my new design for how to keep track of image
+	dimensions
+        (get/setWorldToImageTransform): changed the concept of what image
+	coordinates are back to what it was before the last commit since
+	things got too complicated with the new semantics
+	* nmb_TransformMatrix44 (= operator): added this
+
 2001-07-12  Adam Seeger  <seeger@cs.unc.edu>
 	* nmb_ImageTransform.hC: removed
 	* nmb_TransformMatrix44.hC: new class to replace nmb_ImageTransform

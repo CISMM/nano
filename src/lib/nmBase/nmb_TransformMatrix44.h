@@ -6,6 +6,8 @@
 class nmb_TransformMatrix44 {
   public:
     nmb_TransformMatrix44();
+    nmb_TransformMatrix44 & operator = (const nmb_TransformMatrix44 &);
+
     void set(int i_dest, int i_src, double value);
     void setMatrix(double *matrix);
     void getMatrix(double *matrix);

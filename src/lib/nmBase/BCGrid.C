@@ -1839,7 +1839,7 @@ BCGrid::readPPMorPGMFileNew(FILE *file, const char *filename)
 	// We know the file size, set our own grid size.
 	setGridSize(_num_x, _num_y);
 	
-	BCPlane* plane = addNewPlane(filename, "nm", NOT_TIMED);
+	BCPlane* plane = addNewPlane(filename, "unknown_units", NOT_TIMED);
 
 	float min, max;
 	int r,g,b;

@@ -14,6 +14,21 @@ nmb_TransformMatrix44::nmb_TransformMatrix44()
     inverse_needs_to_be_computed = vrpn_FALSE;
 }
 
+nmb_TransformMatrix44 & nmb_TransformMatrix44::operator = (
+                              const nmb_TransformMatrix44 & t) {
+  int i,j;
+  for (i = 0; i < 4; i++) {
+    for (j = 0; j < 4; j++) {
+      xform[i][j] = t.xform[i][j];
+      inverse_xform[i][j] = t.xform[i][j];
+    }
+  }
+  inverse_needs_to_be_computed = t.inverse_needs_to_be_computed;
+  inverse_valid = t.inverse_valid;
+
+  return *this;
+}
+
 void nmb_TransformMatrix44::print()
 {
     int i,j;
