@@ -1,3 +1,6 @@
+2002-07-03 Jameson Miller <millerj@cs.unc.edu>
+	*directstep.tcl - button to let user set axis to step along. new colored arrow icons.
+
 2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
 
 	* tip.tcl: added button for sending the tip location as a fiducial
