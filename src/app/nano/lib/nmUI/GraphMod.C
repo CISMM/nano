@@ -235,7 +235,7 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
       TCLEVALCHECK(me->d_interp, command);
 
       //set up the surface x vector.
-      sprintf(str, "gm_xsurfvec");
+      sprintf(str, "gm_Surface_X_Axis");
       if (!Blt_VectorExists(me->d_interp, str))  {
          //create the vector
          if (Blt_CreateVector(me->d_interp, str,0,&vecPtr) != TCL_OK) {
@@ -245,11 +245,11 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
          }
       }
       // chop it off to one element
-      sprintf(command, "gm_xsurfvec set {%f}", x);
+      sprintf(command, "gm_Surface_X_Axis set {%f}", x);
       TCLEVALCHECK(me->d_interp, command);
 
       //set up the y surface vector.
-      sprintf(str, "gm_ysurfvec");
+      sprintf(str, "gm_Surface_Y_Axis");
       if (!Blt_VectorExists(me->d_interp, str))  {
          //create the vector
          if (Blt_CreateVector(me->d_interp, str,0,&vecPtr) != TCL_OK) {
@@ -259,7 +259,7 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
          }
       }
       // chop it off to one element
-      sprintf(command, "gm_ysurfvec set {%f}", y);
+      sprintf(command, "gm_Surface_Y_Axis set {%f}", y);
       TCLEVALCHECK(me->d_interp, command);
 
 
@@ -275,9 +275,9 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
 	TCLEVALCHECK(me->d_interp, command);
 	sprintf(command, "gm_svec append %f", s);
 	TCLEVALCHECK(me->d_interp, command);
-	sprintf(command, "gm_xsurfvec append %f", x);
+	sprintf(command, "gm_Surface_X_Axis append %f", x);
 	TCLEVALCHECK(me->d_interp, command);
-	sprintf(command, "gm_ysurfvec append %f", y);
+	sprintf(command, "gm_Surface_Y_Axis append %f", y);
 	TCLEVALCHECK(me->d_interp, command);
       }
 
@@ -416,7 +416,7 @@ static   long	first_sec,first_usec;
       TCLEVALCHECK(me->d_interp, command);
 
       //set up the surface x vector.
-      sprintf(str, "gm_xsurfvec");
+      sprintf(str, "gm_Surface_X_Axis");
       if (!Blt_VectorExists(me->d_interp, str))  {
 	 //create the vector
 	 if (Blt_CreateVector(me->d_interp, str,0,&vecPtr) != TCL_OK) {
@@ -426,11 +426,11 @@ static   long	first_sec,first_usec;
 	 }
       }
       // chop it off to one element
-      sprintf(command, "gm_xsurfvec set {%f}", p->x());
+      sprintf(command, "gm_Surface_X_Axis set {%f}", p->x());
       TCLEVALCHECK(me->d_interp, command);
 
       //set up the y surface vector.
-      sprintf(str, "gm_ysurfvec");
+      sprintf(str, "gm_Surface_Y_Axis");
       if (!Blt_VectorExists(me->d_interp, str))  {
 	 //create the vector
 	 if (Blt_CreateVector(me->d_interp, str,0,&vecPtr) != TCL_OK) {
@@ -440,18 +440,18 @@ static   long	first_sec,first_usec;
 	 }
       }
       // chop it off to one element
-      sprintf(command, "gm_ysurfvec set {%f}", p->y());
+      sprintf(command, "gm_Surface_Y_Axis set {%f}", p->y());
       TCLEVALCHECK(me->d_interp, command);
 
       int j = 0;
       // Attach the X and Y surface elements to the y axis of the
       // stripchart. 
       sprintf(command, "add_stripchart_element \"%s\" %d 1.0 0.0 0.0",
-		"gm_xsurfvec", j);
+		"gm_Surface_X_Axis", j);
       TCLEVALCHECK(me->d_interp, command);
       j++;
       sprintf(command, "add_stripchart_element \"%s\" %d 1.0 0.0 0.0",
-		"gm_ysurfvec", j);
+		"gm_Surface_Y_Axis", j);
       TCLEVALCHECK(me->d_interp, command);
       j++;
 
@@ -523,11 +523,11 @@ static   long	first_sec,first_usec;
       TCLEVALCHECK(me->d_interp, command);
 
       // update the x surface vector
-      sprintf(command, "gm_xsurfvec append %f", p->x());
+      sprintf(command, "gm_Surface_X_Axis append %f", p->x());
       TCLEVALCHECK(me->d_interp, command);
 
       // update the y surface vector
-      sprintf(command, "gm_ysurfvec append %f", p->y());
+      sprintf(command, "gm_Surface_Y_Axis append %f", p->y());
       TCLEVALCHECK(me->d_interp, command);
 
       // sanity check on d_max_points
@@ -541,9 +541,9 @@ static   long	first_sec,first_usec;
 	  TCLEVALCHECK(me->d_interp, command);
 	  sprintf(command, "gm_svec delete 0");
 	  TCLEVALCHECK(me->d_interp, command);
-	  sprintf(command, "gm_xsurfvec delete 0");
+	  sprintf(command, "gm_Surface_X_Axis delete 0");
 	  TCLEVALCHECK(me->d_interp, command);
-	  sprintf(command, "gm_ysurfvec delete 0");
+	  sprintf(command, "gm_Surface_Y_Axis delete 0");
 	  TCLEVALCHECK(me->d_interp, command);
       }
       // plot the next point for each data value
@@ -613,9 +613,9 @@ void GraphMod::handle_MaxPointsChange(vrpn_int32 new_value, void * userdata)
       TCLEVALCHECK2(me->d_interp, command);
       sprintf(command, "gm_svec delete 0:%d", num_extra_points-1);
       TCLEVALCHECK2(me->d_interp, command);
-      sprintf(command, "gm_xsurfvec delete 0:%d", num_extra_points-1);
+      sprintf(command, "gm_Surface_X_Axis delete 0:%d", num_extra_points-1);
       TCLEVALCHECK2(me->d_interp, command);
-      sprintf(command, "gm_ysurfvec delete 0:%d", num_extra_points-1);
+      sprintf(command, "gm_Surface_Y_Axis delete 0:%d", num_extra_points-1);
       TCLEVALCHECK2(me->d_interp, command);
       for (i = 0; i < me->d_numDataVectors; i++) {
          sprintf(command, "%s delete 0:%d", me->d_dataVectorNames[i], num_extra_points-1);

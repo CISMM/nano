@@ -29,7 +29,9 @@ int g_just_color = 0;
 float g_color_min = 0; // ColorMap lower and upper bounds for color
 float g_color_max = 1.0;
 
-float g_data_min = 0; // ColorMap lower and upper bounds for data
+float g_data_min_norm = 0; // ColorMap lower and upper bounds for data, normalized
+float g_data_max_norm = 1.0;
+float g_data_min = 0; // data min/max, real units.
 float g_data_max = 1.0;
 
 char * g_textureDir = NULL;

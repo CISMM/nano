@@ -109,32 +109,43 @@ source [file join ${tcl_script_dir} panel_tools.tcl]
 ################ Error Handling #############################
 ### Message dialog for warnings and errors. 
 # Designed to be called from C code, as well. 
-iwidgets::messagedialog .error_dialog -title "NanoManipulator Error" \
-    -bitmap error -text "Error" -modality application
 
-.error_dialog hide Help
+# The iwidgets message box had a problem when reporting Phantom errors,
+# for some reason - Tcl_Eval failed in that situation.
+# Switched to tk_messageBox procedure, and things work fine. 
+#iwidgets::messagedialog .error_dialog -title "NanoManipulator Error" \
+#    -bitmap error -text "Error" -modality application
+
+#.error_dialog hide Help
 #.message_dialog buttonconfigure OK -text "Yes"
-.error_dialog hide Cancel 
+#.error_dialog hide Cancel 
 proc nano_fatal_error {msg } {
     global term_input
-    .error_dialog config -text "$msg" -title "NanoManipulator Fatal Error" \
-            -bitmap error 
-    .error_dialog buttonconfigure OK -command "set term_input q ; .error_dialog deactivate 1"
-    .error_dialog activate
+    tk_messageBox -message "$msg" -title "NanoManipulator Fatal Error" \
+            -type ok -icon error 
+    set term_input q 
+#    .error_dialog config -text "$msg" -title "NanoManipulator Fatal Error" \
+#            -bitmap error 
+#    .error_dialog buttonconfigure OK -command "set term_input q ; .error_dialog deactivate 1"
+#    .error_dialog activate
 }
 proc nano_error {msg } {
     global term_input
-    .error_dialog config -text "$msg" -title "NanoManipulator Error" \
-            -bitmap error 
-    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
-    .error_dialog activate
+    tk_messageBox -message "$msg" -title "NanoManipulator Error" \
+            -type ok -icon error 
+#    .error_dialog config -text "$msg" -title "NanoManipulator Error" \
+#            -bitmap error 
+#    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
+#    .error_dialog activate
 }
 proc nano_warning {msg } {
     global term_input
-    .error_dialog config -text "$msg" -title "NanoManipulator Warning" \
-            -bitmap warning
-    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
-    .error_dialog activate
+    tk_messageBox -message "$msg" -title "NanoManipulator Warning" \
+            -type ok -icon warning 
+#    .error_dialog config -text "$msg" -title "NanoManipulator Warning" \
+#            -bitmap warning
+#    .error_dialog buttonconfigure OK -command ".error_dialog deactivate 1"
+#    .error_dialog activate
 }
 
 # bgerror is a special name, provided by tcl/tk, called if there
@@ -653,12 +664,14 @@ after idle {
 
     # The stripchart window.
     #Make the window appear on the top next to the main window
-    wm geometry $graphmod(sc) +[expr $main_xpos + $width + 2*$winborder]+$main_ypos
+    #wm geometry $graphmod(sc) +[expr $main_xpos + $width + 2*$winborder]+$main_ypos
+    # Nah. Top right corner.
+    wm geometry $graphmod(sc) -0+0
 
     # The colormap window - about the same as the stripchart window.
-    wm geometry $nmInfo(colorscale) +[expr $main_xpos + $width \
-            + 2*$winborder + 10]+[expr $main_ypos + 10]
-
+#    wm geometry $nmInfo(colorscale) +[expr $main_xpos + $width \
+#            + 2*$winborder + 10]+[expr $main_ypos + 10]
+    wm geometry $nmInfo(colorscale) -0+[expr $main_ypos + 10]
     # The image window
     # Make the window appear on the left edge below the main window
     

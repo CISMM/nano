@@ -249,7 +249,8 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        }
        break;
        
-   case 3: 		
+   case 3:
+       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
        mode_change = 1;	
        // Cycling button -cycles through Touch Live and Select
        if (user_mode[0] == USER_PLANEL_MODE) {
@@ -259,6 +260,7 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        }
        break;
    case 4:              /* Commit button */
+       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
        tcl_commit_pressed = 1;
       // we must call "handle_commit_change" explicitly, 
       // because tclvars are set to ignore changes from C.
@@ -272,9 +274,11 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        user_mode[0] = USER_PLANE_MODE;
        break;
    case 7: 		/* XY lock */
+       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
        xy_lock = !xy_lock;
        break;
    case 8:              /* Cancel button */
+       if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
        tcl_commit_canceled = 1;
       // we must call "handle_commit_cancel" explicitly, 
       // because tclvars are set to ignore changes from C.

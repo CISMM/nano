@@ -356,10 +356,13 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
     if (planes.color) {
       // stretch/shrink data based on data_min/max colors:
       float data_value = planes.color->value(x, y);
-      data_value = (data_value - planes.color->minNonZeroValue())/
-	(planes.color->maxNonZeroValue() - planes.color->minNonZeroValue());
-      
-      data_value = data_value * (g_data_max - g_data_min) + g_data_min;
+      // normalize the data to a zero to one scale - but data doesn't
+      // have to fall in this range.
+      data_value = (data_value - g_data_min)/(g_data_max - g_data_min);
+    
+      // Scale data again based on color map widget controls
+      data_value = data_value * (g_data_max_norm - g_data_min_norm) 
+          + g_data_min_norm;
       
       // clamp data based on the stretched/shrunk colormap:
       if ( data_value <  g_color_min ) data_value = 0;
@@ -442,10 +445,13 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
   else if (planes.color) {
     // stretch/shrink data based on data_min/max colors:
     float data_value = planes.color->value(x, y);
-    data_value = (data_value - planes.color->minNonZeroValue())/
-      (planes.color->maxNonZeroValue() - planes.color->minNonZeroValue());
+    // normalize the data to a zero to one scale - but data doesn't
+    // have to fall in this range.
+    data_value = (data_value - g_data_min)/(g_data_max - g_data_min);
     
-    data_value = data_value * (g_data_max - g_data_min) + g_data_min;
+    // Scale data again based on color map widget controls
+    data_value = data_value * (g_data_max_norm - g_data_min_norm) 
+          + g_data_min_norm;
     
     // clamp data based on the stretched/shrunk colormap:
     if ( data_value <  g_color_min ) data_value = 0;

@@ -8,10 +8,6 @@ set sharedptr(sp) [create_closing_toplevel sharedptr "Collaboration Tools"]
 # Changed TCH 31 Oct 99 to a generic_entry so that if the name
 # is set with command-line parameters it shows up in the tcl interface
 
-# iwidgets::entryfield $sharedptr(sp).collab_machine_name \
-# 	-labeltext "Machine to connect to:" \
-# 	-command { set collab_machine_name \
-# 		[$sharedptr(sp).collab_machine_name get]}
 #set collab_machine_name ""
 generic_entry $sharedptr(sp).collab_machine_name \
               collab_machine_name \

@@ -72,8 +72,11 @@ extern int g_just_color;
 extern float g_color_min; // ColorMap lower and upper bounds for color
 extern float g_color_max;
 
-extern float g_data_min; // ColorMap lower and upper bounds for data
-extern float g_data_max;
+extern float g_data_min_norm; // ColorMap lower and upper bounds for data
+extern float g_data_max_norm; // normalized zero to one, set by user
+
+extern float g_data_min; // lower and upper bounds for data
+extern float g_data_max; // real data units (nm, for example), measured from data. 
 
 extern char * g_textureDir;
 

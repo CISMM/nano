@@ -967,9 +967,9 @@ void nmg_Graphics_Implementation::setColorMinMax (float low, float high) {
 
 void nmg_Graphics_Implementation::setDataColorMinMax (float low, float high) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setDataColorMinMax().\n");
-  if ( (g_data_min != low) || (g_data_max != high) ) {
-    g_data_min = low;
-    g_data_max = high;
+  if ( (g_data_min_norm != low) || (g_data_max_norm != high) ) {
+    g_data_min_norm = low;
+    g_data_max_norm = high;
     causeGridReColor();
   }
 }
@@ -1120,6 +1120,16 @@ void nmg_Graphics_Implementation::setAlphaPlaneName (const char * n) {
 // virtual
 void nmg_Graphics_Implementation::setColorPlaneName (const char * n) {
   strcpy(g_colorPlaneName, n);
+
+  // This function is called when the user chooses a new colormap plane,
+  // or when the use hits the button "Autoscale". These are the
+  // only times we want to change what "0" and "1" mean for
+  // the g_data_min_norm and g_data_max_norm variables. So we set
+  // g_data_m* here. 
+  nmb_PlaneSelection planes;  planes.lookup(d_dataset);
+
+  g_data_min = planes.color->minNonZeroValue();
+  g_data_max = planes.color->maxNonZeroValue();
 }
 
 // virtual

@@ -5906,11 +5906,11 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
     }
     if (getenv("V_SCREEN_DIM_PXFL") == NULL) {
         // default for Nano for 1280x1024 screen
-        _putenv("V_SCREEN_DIM_PXFL=1068 760");
+        _putenv("V_SCREEN_DIM_PXFL=1056 772");
     }
     if (getenv("V_SCREEN_OFFSET") == NULL) {
         // default for Nano for 1280x1024 screen
-        _putenv("V_SCREEN_OFFSET=208 232");
+        _putenv("V_SCREEN_OFFSET=220 220");
     }
 #endif
 

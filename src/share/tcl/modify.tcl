@@ -42,8 +42,11 @@ pack $nmInfo(modifyquick).modifystate $nmInfo(modifypage) \
         -side top -fill x 
 
 set nmInfo(modifystate) [$nmInfo(modifyquick).modifystate childsite]
-generic_entry $nmInfo(modifypage).setpoint modifyp_setpoint \
-	"Setpoint (-64,64)" real \
+generic_entry $nmInfo(modifypage).setpoint_nA modifyp_setpoint \
+	"Setpoint (-64,64 nA)" real \
+        { set accepted_modify_params 1 }
+generic_entry $nmInfo(modifypage).setpoint_pcnt modifyp_setpoint \
+	"Setpoint (0,100 %)" real \
         { set accepted_modify_params 1 }
 generic_entry $nmInfo(modifypage).p-gain modifyp_p_gain "P-Gain (0,5)" real \
         { set accepted_modify_params 1 }
@@ -55,23 +58,25 @@ generic_entry $nmInfo(modifypage).rate modifyp_rate "Rate (um/sec)" real \
         { set accepted_modify_params 1 }
 
 	
-pack    $nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
+pack    $nmInfo(modifypage).setpoint_nA $nmInfo(modifypage).p-gain \
 	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
 	$nmInfo(modifypage).rate \
-	-side top -anchor nw
+	-side top -anchor nw -fill x
 
 proc align_mq_labels {} {
     global nmInfo
 
     iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
+	$nmInfo(modifypage).setpoint_nA $nmInfo(modifypage).setpoint_pcnt \
+        $nmInfo(modifypage).p-gain \
 	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
 	$nmInfo(modifypage).rate 
 }
 align_mq_labels
 
 lappend device_only_controls \
-	$nmInfo(modifypage).setpoint $nmInfo(modifypage).p-gain \
+	$nmInfo(modifypage).setpoint_nA $nmInfo(modifypage).setpoint_pcnt \
+        $nmInfo(modifypage).p-gain \
 	$nmInfo(modifypage).i-gain $nmInfo(modifypage).d-gain \
 	$nmInfo(modifypage).rate 
 
@@ -359,8 +364,10 @@ lappend device_only_controls \
 label $nmInfo(modifyfull).modeparam.label -text "Mode parameters" 
 pack $nmInfo(modifyfull).modeparam.label -side top -anchor nw
 
-generic_entry $nmInfo(modifyfull).modeparam.setpoint newmodifyp_setpoint \
-	"Setpoint(-64,64)" real
+generic_entry $nmInfo(modifyfull).modeparam.setpoint_nA newmodifyp_setpoint \
+	"Setpoint(-64,64 nA)" real
+generic_entry $nmInfo(modifyfull).modeparam.setpoint_pcnt newmodifyp_setpoint \
+	"Setpoint(0,100 %)" real
 generic_entry $nmInfo(modifyfull).modeparam.p-gain newmodifyp_p_gain "P-Gain (0,5)" real 
 generic_entry $nmInfo(modifyfull).modeparam.i-gain newmodifyp_i_gain "I-Gain (0,2)" real 
 generic_entry $nmInfo(modifyfull).modeparam.d-gain newmodifyp_d_gain "D-Gain (0,5)" real 
@@ -382,7 +389,7 @@ generic_optionmenu $nmInfo(modifyfull).modeparam.drive_attenuation \
 generic_entry $nmInfo(modifyfull).modeparam.phase newmodifyp_phase \
 	"Phase (0 360)" real 
 
-pack    $nmInfo(modifyfull).modeparam.setpoint \
+pack    $nmInfo(modifyfull).modeparam.setpoint_nA \
         $nmInfo(modifyfull).modeparam.p-gain \
 	$nmInfo(modifyfull).modeparam.i-gain \
         $nmInfo(modifyfull).modeparam.d-gain \
@@ -392,7 +399,8 @@ pack    $nmInfo(modifyfull).modeparam.setpoint \
 proc align_mf_labels {} {
     global nmInfo
   iwidgets::Labeledwidget::alignlabels \
-    $nmInfo(modifyfull).modeparam.setpoint \
+    $nmInfo(modifyfull).modeparam.setpoint_nA \
+    $nmInfo(modifyfull).modeparam.setpoint_pcnt \
     $nmInfo(modifyfull).modeparam.p-gain \
     $nmInfo(modifyfull).modeparam.i-gain \
     $nmInfo(modifyfull).modeparam.d-gain \
@@ -423,7 +431,8 @@ set mod_oscillating_list [list $nmInfo(modifyfull).modeparam.amplitude \
     $nmInfo(modifyfull).modeparam.phase ]
 
 lappend device_only_controls \
-    $nmInfo(modifyfull).modeparam.setpoint \
+    $nmInfo(modifyfull).modeparam.setpoint_nA \
+    $nmInfo(modifyfull).modeparam.setpoint_pcnt \
     $nmInfo(modifyfull).modeparam.p-gain \
     $nmInfo(modifyfull).modeparam.i-gain \
     $nmInfo(modifyfull).modeparam.d-gain \
@@ -602,16 +611,24 @@ eval lappend device_only_controls $mod_directz_list
 # Procedure change_setpoint_label defined in image.tcl
 trace variable newmodifyp_mode w "change_setpoint_label \
         newmodifyp_mode newmodifyp_ampl_or_phase \
-        $nmInfo(modifyfull).modeparam.setpoint align_mf_labels"
+        $nmInfo(modifyfull).modeparam.setpoint_nA \
+        $nmInfo(modifyfull).modeparam.setpoint_pcnt \
+        $nmInfo(modifyfull).modeparam.p-gain $fspady"
 trace variable newmodifyp_ampl_or_phase w "change_setpoint_label \
         newmodifyp_mode newmodifyp_ampl_or_phase \
-        $nmInfo(modifyfull).modeparam.setpoint align_mf_labels"
+        $nmInfo(modifyfull).modeparam.setpoint_nA \
+        $nmInfo(modifyfull).modeparam.setpoint_pcnt \
+        $nmInfo(modifyfull).modeparam.p-gain $fspady"
 trace variable modifyp_mode w "change_setpoint_label \
         modifyp_mode modifyp_ampl_or_phase \
-        $nmInfo(modifypage).setpoint align_mq_labels"
+        $nmInfo(modifypage).setpoint_nA \
+        $nmInfo(modifypage).setpoint_pcnt \
+        $nmInfo(modifypage).p-gain 0"
 trace variable modifyp_ampl_or_phase w "change_setpoint_label \
         modifyp_mode modifyp_ampl_or_phase \
-        $nmInfo(modifypage).setpoint align_mq_labels"
+        $nmInfo(modifypage).setpoint_nA \
+        $nmInfo(modifypage).setpoint_pcnt \
+        $nmInfo(modifypage).p-gain 0"
 
 #
 #
