@@ -22,8 +22,10 @@ Tcl_Interp *Tcl_Interpreter::getInterpreter()
 {
   if (!tk_control_interp) {
     if (initTclTk()) {
-      Tcl_DeleteInterp(tk_control_interp);
-      tk_control_interp = NULL;
+      if (tk_control_interp) {
+          Tcl_DeleteInterp(tk_control_interp);
+        tk_control_interp = NULL;
+      }
     }
   }
   return tk_control_interp; 
