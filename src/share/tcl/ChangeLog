@@ -1,3 +1,6 @@
+2002-04-03  David Borland <borland@cs.unc.edu>
+        * import.tcl:  Added ability to close loaded object files
+
 2002-04-01  Aron Helser  <helser@cs.unc.edu>
 
 	* filemenu.tcl (remember_mod_data): Use new global set by

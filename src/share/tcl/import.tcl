@@ -45,6 +45,7 @@ button $nmInfo(basic_options).file.buttons.import_button -text "Import File" -co
 radiobutton $nmInfo(basic_options).file.buttons.ccw -text "CCW" -variable import_CCW -value 1
 radiobutton $nmInfo(basic_options).file.buttons.cw -text "CW" -variable import_CCW -value 0
 button $nmInfo(basic_options).file.buttons.close_button -text "Close File" -command close_import_file
+#button $nmInfo(basic_options).file.buttons.close_button -text "Close File" import_close_file 
 
 #generic_entry $nmInfo(basic_options).modelFile modelFile "Enter the file to import:" ""
 
@@ -74,7 +75,7 @@ button $nmInfo(basic_options).f3.visibility_button -text "Hide" -command change_
 checkbutton $nmInfo(basic_options).f3.proj_text_button \
     -text "Show Projective Texture" -variable import_proj_text
 checkbutton $nmInfo(basic_options).f3.clamp_button \
-    -text "Clamp Projective Texture" -variable import_clamp
+    -text "Lock Projective Texture" -variable import_clamp
 
 
 button $nmInfo(basic_options).f3.set_color \
@@ -159,12 +160,12 @@ proc close_import_file {} {
     global modelFile nmInfo import_file_label
 
     set modelFile ""
-    set import_file_label "NONE"
+    set import_file_label "all"
 
-    $nmInfo(basic_options).file.import_file_label configure -text \
-	"Current Imported file: $import_file_label"
+#    $nmInfo(basic_options).file.import_file_label configure -text \
+#	"Current Imported file: $import_file_label"
 
-    destroy $nmInfo(import_objects).options
+#    destroy $nmInfo(import_objects).options
 }
 
 proc set_import_color {} {
