@@ -761,8 +761,6 @@ SOURCE=..\..\..\..\external\pc_win32\lib\glut32_UNC.lib
 
 SOURCE=..\..\..\..\external\pc_win32\lib\GHOST31.lib
 # End Source File
-# Begin Source File
-
 # End Group
 # End Target
 # End Project

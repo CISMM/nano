@@ -1,3 +1,8 @@
+2003-01-16  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nano.dsp:  undoes the commit of yesterday, which somehow (unknown)
+	corrupted the files.
+
 2003-01-15  Alexandra Bokinsky  <bokinsky@cs.unc.edu>
 
 	* microscape.C (find_top_view_xforms): New button and function for
