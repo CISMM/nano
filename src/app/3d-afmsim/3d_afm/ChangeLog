@@ -1,0 +1,5 @@
+2002-03-18  Aron Helser  <helser@cs.unc.edu>
+
+	* 3d_afm.dsp: Updated so it compiles with STL, quat, vogl
+	changes. 
+
