@@ -1,3 +1,8 @@
+2003-06-20  Russell M. Taylor II <taylorr@cs.unc.edu> 
+
+	* 3d_afm.dsw : Modified to compile debug and release in the current
+		build environment for nano.
+
 2002-07-08  David Borland <borland@cs.unc.edu> 
 
         * sim.cpp : fixed the rotation code so that rotations 

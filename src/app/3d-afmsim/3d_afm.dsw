@@ -29,6 +29,15 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name nmMScopeGenerate
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmUI
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nmImageViewer
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tclLinkVar
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -64,6 +73,18 @@ Package=<4>
 ###############################################################################
 
 Project: "nmBase"="..\..\lib\nmBase\nmBase.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nmImageViewer"="..\..\lib\nmImageViewer\nmImageViewer.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -113,6 +134,30 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name nmMScopeGenerate
     End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "nmUI"="..\nano\lib\nmUI\nmUI.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "tclLinkVar"="..\..\lib\tclLinkVar\tclLinkVar.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
 }}}
 
 ###############################################################################
