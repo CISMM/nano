@@ -2,6 +2,9 @@
 #ifdef sgi
 #include <unistd.h>  // for gethostname
 #endif
+#ifdef _WIN32
+#include <winsock2.h>  // for gethostname
+#endif
 
 #include "nmb_LBLFlattenedPlane.h"
 
