@@ -206,7 +206,11 @@ bool PNMImage::Read(const char *filename)
       Die();
 
 
+#ifdef  _WIN32
+   ifstream pnm(filename, ios::binary | ios::in);
+#else
    ifstream pnm(filename);
+#endif
 
 
    if (!pnm)
@@ -236,7 +240,11 @@ bool PNMImage::Write(const char *filename)
    }
 
 
+#ifdef _WIN32
+   ofstream pnm(filename, ios::binary | ios::out);
+#else
    ofstream pnm(filename);
+#endif
 
 
    if (!pnm)

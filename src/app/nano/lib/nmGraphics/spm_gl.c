@@ -329,6 +329,7 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
   /* Make sure it is a legal vertex */
   if ( (x < 0) || (x > planes.height->numX() - 1) ||
        (y < 0) || (y > planes.height->numY() - 1) ) {
+    fprintf(stderr, "describe_gl_vertex:  %d, %d outside grid.\n", x, y);
     return -1;
   }
   
@@ -694,9 +695,13 @@ int spm_y_strip( nmb_PlaneSelection planes,
         }
 
         // Make sure they asked for a legal strip (in range and on stride)
-        if ( (which < 0) || (which >= planes.height->numX()) ||
-             (which % g_stride)) {
+        if ((which < 0) || (which >= planes.height->numX())) {
+          fprintf(stderr, "Strip %d is outside the plane.\n", which);
                 return(-1);
+        }
+        if (which % g_stride) {
+          fprintf(stderr, "Strip %d is off stride.\n", which);
+          return -1;
         }
 
         /* Fill in the vertices for the triangle strip */
@@ -707,6 +712,7 @@ int spm_y_strip( nmb_PlaneSelection planes,
          for (x = which+g_stride; x >= which; x -= g_stride) {     // top->bottom
             if (describe_gl_vertex(planes, minColor,maxColor,x,y,
                                    &(vertexArray[i]))) {
+              fprintf(stderr, "spm_y_strip:  describe_gl_vertex() failed.\n");
                 return(-1);
             }
             i++;
@@ -746,8 +752,12 @@ int spm_x_strip( nmb_PlaneSelection planes,
         }
 
         // Make sure they asked for a legal strip (in range and on stride)
-        if ( (which < 0) || (which >= planes.height->numY()-1) ||
-             (which % g_stride)) {
+        if ((which < 0) || (which >= planes.height->numY() - 1)) {
+          fprintf(stderr, "Strip %d is outside plane.\n", which);
+                return(-1);
+        }
+        if (which % g_stride) {
+          fprintf(stderr, "Strip %d is off stride.\n", which);
                 return(-1);
         }
 
@@ -759,6 +769,7 @@ int spm_x_strip( nmb_PlaneSelection planes,
          for (y = which+g_stride; y >= which; y -= g_stride) {     // top->bottom
             if (describe_gl_vertex(planes, minColor,maxColor,x,y,
                                    &(vertexArray[i]))) {
+              fprintf(stderr, "spm_x_strip:  describe_gl_vertex() failed.\n");
                 return(-1);
             }
             i++;

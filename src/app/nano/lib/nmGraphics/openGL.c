@@ -280,10 +280,23 @@ int build_list_set
     (nmb_Interval insubset,
      nmb_PlaneSelection planes,
      int (* stripfn)
-       (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *))
+       (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *),
+     int strips_in_x)
 {
 
   v_gl_set_context_to_vlib_window(); 
+
+  // TCH 27 Jan 00
+  // Quick hacking to fix bug?
+  //int maxStrip;
+  //if (strips_in_x) {
+      //maxStrip = (planes.height->numY() - 1) / g_stride;
+  //} else {
+      //maxStrip = (planes.height->numX() - 1) / g_stride;
+  //}
+//fprintf(stderr, "Max strip is %d;  input max was %d.\n", maxStrip, insubset.high());
+  //nmb_Interval subset (MAX(0, insubset.low()),
+                       //MIN(maxStrip - 1, insubset.high()));
   nmb_Interval subset (MAX(0, insubset.low()),
                        MIN(num_grid_lists - 1, insubset.high()));
 
@@ -356,6 +369,8 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
 		*num = (planes.height->numX() - 1) / g_stride;
 		stripfn = spm_y_strip;
 	}
+
+//fprintf(stderr, "Generating %d lists.\n", *num);
 
 	// Generate a new set of display list indices
 	if ( (*base = glGenLists(*num)) == 0) {
@@ -583,6 +598,7 @@ int draw_world (int) {
   dataset->range_of_change.GetBoundsAndClear
     (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
   if (g_PRERENDERED_COLORS || g_PRERENDERED_DEPTH) {
+//fprintf(stderr, "Using prerendered grid for bounds of change.\n");
     g_prerenderedChange->GetBoundsAndClear
       (&g_minChangedX, &g_maxChangedX, &g_minChangedY, &g_maxChangedY);
   }
@@ -597,6 +613,8 @@ int draw_world (int) {
     high_row = g_maxChangedY;
     stripfn = spm_x_strip;
 
+//fprintf(stderr, "X row from %d to %d.\n", low_row, high_row);
+
   } else {
 
     // Get the data (low and high X vales changed) atomically
@@ -607,12 +625,16 @@ int draw_world (int) {
     high_row = g_maxChangedX;
     stripfn = spm_y_strip;
 
+//fprintf(stderr, "Y row from %d to %d.\n", low_row, high_row);
+
   }
 
   // Convert from rows to strips:  divide through by the tesselation stride
 
   low_strip = MAX(0, low_row / g_stride);
   high_strip = MIN(num_grid_lists, high_row / g_stride);
+
+//fprintf(stderr, "Strips from %d to %d.\n", low_strip, high_strip);
 
   // Figure out what direction the scan has apparently progressed
   // since the last time.  Heuristic, error-prone, but safe.  XXX
@@ -693,10 +715,10 @@ int draw_world (int) {
 
   if (update.overlaps(todo) ||
       update.adjacent(todo)) {
-    if (build_list_set(update + todo, planes, stripfn)) return -1;
+    if (build_list_set(update + todo, planes, stripfn, display_lists_in_x)) return -1;
   } else {
-    if (build_list_set(update, planes, stripfn)) return -1;
-    if (build_list_set(todo, planes, stripfn)) return -1;
+    if (build_list_set(update, planes, stripfn, display_lists_in_x)) return -1;
+    if (build_list_set(todo, planes, stripfn, display_lists_in_x)) return -1;
   }
 
   if (spm_graphics_verbosity >= 15)

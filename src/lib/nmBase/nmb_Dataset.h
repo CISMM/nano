@@ -23,6 +23,13 @@ class nmb_Selector;  // from nmb_Selector.h
 //    Contains the names of BCPlanes in the BCGrid that are mapped
 //  to specific visualization techniques or parameters.
 
+struct flatten_data {
+    BCPlane * flat_plane;
+    BCPlane * from_plane;
+    double dx, dy, offset;
+};
+
+
 class nmb_Dataset {
 
   public:
@@ -106,6 +113,16 @@ class nmb_Dataset {
       // solves for the transformation that moves the corresponding points
       // into a flat plane, and creates outputPlane from inputPlane via that
       // transformation.  Output plane is updated as input plane changes.
+      // Tells collaborative host, if any, to create the same plane.
+
+    void registerFlatPlaneCallback (void * userdata,
+                                    void (*) (void *, const flatten_data *));
+    int computeFlattenedPlane (const char * outputPlane,
+                               const char * inputPlane,
+                               double dx, double dy, double offset);
+      // This version should be protected but needs to be visible to
+      // nmui_PlaneSync, which starts to suggest that maybe the plane
+      // computation code should be escalated.
 
     int computeLBLFlattenedPlane (const char * outputPlane,
 				  const char * inputPlane);
@@ -122,6 +139,13 @@ class nmb_Dataset {
                                         void * userdata);
     static void updateLBLFlattenOnPlaneChange (BCPlane *, int x, int y,
 					       void * userdata);
+
+    struct newFlatPlaneCB {
+      void * userdata;
+      void (* cb) (void *, const flatten_data *);
+      newFlatPlaneCB * next;
+    };
+    newFlatPlaneCB * d_flatPlaneCB;
 
 };
 

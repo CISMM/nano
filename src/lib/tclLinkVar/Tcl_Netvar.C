@@ -8,7 +8,7 @@
 #include <vrpn_SharedObject.h>  // for vrpn_Shared_int32 and the like
 
 //Uncomment this to use a distributed serialization protocol
-#define USE_OPTIMISTIC_CONNECTIONS
+//#define USE_OPTIMISTIC_CONNECTIONS
 
 // If we're using centralized serialization,
 //  * start up all vrpn_SharedObjects as VRPN_SO_DEFER_UPDATES

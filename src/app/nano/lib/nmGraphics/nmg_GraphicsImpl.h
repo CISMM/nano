@@ -28,6 +28,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void loadRulergridImage (const char *);
 
     virtual void causeGridRedraw (void);
+    virtual void causeGridRebuild (void);
 
     virtual void enableChartjunk (int);
     virtual void enableFilledPolygons (int);

@@ -36,7 +36,18 @@ vrpn_bool nmb_Line::changed (void) const {
 void nmb_Line::normalize (BCPlane * plane) {
   d_top[2] = plane->maxAttainableValue() * plane->scale();
   d_bottom[2] = plane->minAttainableValue() * plane->scale();
-
+  // Above works fine for stream files, where m**AttainableValues is
+  // determined by the scanner range. But for static files, it is the
+  // range of the data, which can be very small, resulting in short lines. 
+  //So let's make the line height about twice the
+  // xy extent of the surface
+  // NOTE: this totally ignores units - the plane might not be in 
+  // of nm like the xy range is. 
+  float range = plane->maxX() - plane->minX();
+  if (( d_top[2] - d_bottom[2] ) < range) {
+      d_top[2] += range;
+      d_bottom[2] -= range;
+  }
   d_changed = VRPN_TRUE;
 }
 

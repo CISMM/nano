@@ -15,11 +15,6 @@
 #endif
 
 
-struct flatten_data {
-    BCPlane * flat_plane;
-    BCPlane * from_plane;
-    float dx, dy, offset;
-};
 
 struct flatten_node {
     flatten_data * data;
@@ -73,7 +68,9 @@ nmb_Dataset::nmb_Dataset
   contourPlaneName (allocator("none")),
   heightPlaneName (allocator("Topography-Forward")),
 
-  done (0)
+  done (0),
+
+  d_flatPlaneCB (NULL)
 
 {
   //BCPlane * std_dev_plane;
@@ -455,12 +452,10 @@ int nmb_Dataset::computeFlattenedPlane
                          float redY, float greenY, float blueY) {
 
   BCPlane * outplane;      // Output plane
-  int     x, y;
   double  offset, dx, dy;
   double  z1, z2, z3;
   double  x1, x2, x3, y1, y2, y3;
-  static  flatten_node * list_head = NULL;
-  flatten_node * flat_ptr, * pre;
+  flatten_data flatten_struct;
 
   if(strcmp(outputPlane, inputPlane)==0) {
      fprintf(stderr,
@@ -474,36 +469,6 @@ int nmb_Dataset::computeFlattenedPlane
       fprintf(stderr,
              "compute_flattened_plane(): could not get height plane!\n");
       return -1;
-  }
-
-  // Create output plane, if it does not yet exist
-  outplane = inputGrid->getPlaneByName(outputPlane);
-  if (outplane == NULL) {
-      char        newunits [1000];
-      sprintf(newunits, "%s_flat", plane->units()->Characters());
-      outplane = inputGrid->addNewPlane(outputPlane, newunits, NOT_TIMED);
-      if (outplane == NULL) {
-          fprintf(stderr,
-            "compute_flattened_plane(): Can't make plane %s\n",outputPlane);
-          return -1;
-      }
-      dataImages->addImage(new nmb_ImageGrid(outplane));
-  } else {         //the output plane already exist
-      pre = flat_ptr = list_head;
-      while (flat_ptr) {
-         if ( flat_ptr->data->flat_plane == outplane ) {
-            flat_ptr->data->from_plane->remove_callback
-              (updateFlattenOnPlaneChange, (void *) flat_ptr);
-            pre->next = flat_ptr->next;
-            free(flat_ptr->data);
-            free(flat_ptr);
-            break;
-         }
-         else {
-            pre = flat_ptr;
-            flat_ptr = flat_ptr->next;
-         }
-     }
   }
 
   x1 = plane->xInGrid(redX);
@@ -540,6 +505,80 @@ int nmb_Dataset::computeFlattenedPlane
   dx = (z3 - z1 - dy * (y3 - y1)) / (x3 - x1);
   offset = dx * inputGrid->numX() / 2 + dy * inputGrid->numY() / 2;
 
+  computeFlattenedPlane(outputPlane, inputPlane, dx, dy, offset);
+
+  outplane = inputGrid->getPlaneByName(outputPlane);
+
+  flatten_struct.dx = dx;
+  flatten_struct.dy = dy;
+  flatten_struct.offset = offset;
+  flatten_struct.from_plane = plane;
+  flatten_struct.flat_plane = outplane;
+
+  newFlatPlaneCB * st;
+
+  for (st = d_flatPlaneCB; st; st = st->next) {
+    (*st->cb)(st->userdata, &flatten_struct);
+  }
+
+  return 0;
+}
+
+int nmb_Dataset::computeFlattenedPlane
+                        (const char * outputPlane,
+                         const char * inputPlane,
+                         double dx, double dy, double offset) {
+
+  BCPlane * outplane;      // Output plane
+  int     x, y;
+  static  flatten_node * list_head = NULL;
+  flatten_node * flat_ptr, * pre;
+
+  if(strcmp(outputPlane, inputPlane)==0) {
+     fprintf(stderr,
+            "compute_flattened_plane(): can not flatten from itself\n");
+     return -1;
+  }
+
+  BCPlane * plane = inputGrid->getPlaneByName(inputPlane);
+  if (plane == NULL)
+  {
+      fprintf(stderr,
+             "compute_flattened_plane(): could not get height plane!\n");
+      return -1;
+  }
+
+
+  // Create output plane, if it does not yet exist
+  outplane = inputGrid->getPlaneByName(outputPlane);
+  if (outplane == NULL) {
+      char        newunits [1000];
+      sprintf(newunits, "%s_flat", plane->units()->Characters());
+      outplane = inputGrid->addNewPlane(outputPlane, newunits, NOT_TIMED);
+      if (outplane == NULL) {
+          fprintf(stderr,
+            "compute_flattened_plane(): Can't make plane %s\n",outputPlane);
+          return -1;
+      }
+      dataImages->addImage(new nmb_ImageGrid(outplane));
+  } else {         //the output plane already exist
+      pre = flat_ptr = list_head;
+      while (flat_ptr) {
+         if ( flat_ptr->data->flat_plane == outplane ) {
+            flat_ptr->data->from_plane->remove_callback
+              (updateFlattenOnPlaneChange, (void *) flat_ptr);
+            pre->next = flat_ptr->next;
+            free(flat_ptr->data);
+            free(flat_ptr);
+            break;
+         }
+         else {
+            pre = flat_ptr;
+            flat_ptr = flat_ptr->next;
+         }
+     }
+  }
+
   //
   // Fill the output plane with the flattened plane (shear applied
   // at each point).
@@ -554,6 +593,7 @@ int nmb_Dataset::computeFlattenedPlane
   fprintf(stderr, "Flattening: dx=%g, dy=%g, offset=%g\n", dx, dy, offset);
   outplane->setMinAttainableValue(plane->minAttainableValue());
   outplane->setMaxAttainableValue(plane->maxAttainableValue());
+  // BUG - isn't this wrong?
 
   flatten_data  *flatten_struct = new flatten_data;
   if (flatten_struct == NULL) {
@@ -580,7 +620,23 @@ int nmb_Dataset::computeFlattenedPlane
   list_head = ptr;
 
   plane->add_callback(updateFlattenOnPlaneChange, flatten_struct);
+
   return 0;
+}
+
+void nmb_Dataset::registerFlatPlaneCallback (void * userdata,
+                  void (* cb) (void *, const flatten_data *)) {
+  newFlatPlaneCB * st = new newFlatPlaneCB;
+
+  if (!st) {
+    fprintf(stderr, "nmb_Dataset::registerFlatPlaneCallback:  "
+                    "Out of memory.\n");
+    return;
+  }
+  st->userdata = userdata;
+  st->cb = cb;
+  st->next = d_flatPlaneCB;
+  d_flatPlaneCB = st;
 }
 
 

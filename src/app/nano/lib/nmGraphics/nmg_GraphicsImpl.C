@@ -664,6 +664,21 @@ fprintf(stderr, "nmg_Graphics_Implementation::causeGridRedraw().\n");
   }
 }
 
+void nmg_Graphics_Implementation::causeGridRebuild (void) {
+fprintf(stderr, "nmg_Graphics_Implementation::causeGridRebuild().\n");
+
+  // Rebuilds the texture coordinate array:
+  nmb_PlaneSelection planes;  planes.lookup(dataset);
+  if (build_grid_display_lists(planes,
+                             display_lists_in_x, &grid_list_base,
+                             &num_grid_lists, g_minColor, g_maxColor)) {
+    fprintf(stderr,
+          "nmg_Graphics_Implementation::causeGridRebuild():  "
+          "Couldn't build grid display lists\n");
+    d_dataset->done = V_TRUE;
+  }
+}
+
 void nmg_Graphics_Implementation::enableChartjunk (int on) {
 fprintf(stderr, "nmg_Graphics_Implementation::enableChartjunk().\n");
   g_config_chartjunk = on;
@@ -1402,7 +1417,7 @@ void nmg_Graphics_Implementation::translateTextures ( int on,
 #endif
 
   // Rebuilds the texture coordinate array:
-  causeGridRedraw();
+  causeGridRebuild();
 }
 
 //
@@ -1439,7 +1454,7 @@ void nmg_Graphics_Implementation::scaleTextures ( int on,
 #endif
 
   // Rebuilds the texture coordinate array:
-  causeGridRedraw();
+  causeGridRebuild();
 }
 
 //
@@ -1473,7 +1488,7 @@ void nmg_Graphics_Implementation::shearTextures ( int on,
 #endif
 
   // Rebuilds the texture coordinate array:
-  causeGridRedraw();
+  causeGridRebuild();
 }
 
 //
@@ -1489,7 +1504,7 @@ void nmg_Graphics_Implementation::rotateTextures ( int on, float theta ) {
   g_tex_theta_cumulative += g_rotate_tex_theta;
 
   // Rebuilds the texture coordinate array:
-  causeGridRedraw();
+  causeGridRebuild();
 }
 
 //
@@ -1872,13 +1887,13 @@ fprintf(stderr, "nmg_Graphics_Implementation::setSphereScale().\n");
 }
 
 void nmg_Graphics_Implementation::setTesselationStride (int s) {
-fprintf(stderr, "nmg_Graphics_Implementation::setTesselationStride().\n");
+fprintf(stderr, "nmg_Graphics_Implementation::setTesselationStride(%d).\n", s);
 
   g_stride = s;
 
   // Destroy the old triangle strips, then rebuilt the correct number
   // of new ones.
-  causeGridRedraw();
+  causeGridRebuild();
 }
 
 void nmg_Graphics_Implementation::setTextureMode (TextureMode m,

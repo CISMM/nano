@@ -46,7 +46,6 @@
 #include <nmg_GraphicsImpl.h>
 #include <nmg_GraphicsRemote.h>
 //#include <nmg_GraphicsNull.h>  // for timing tests
-//#include <graphics/globjects.h>
 #include <nmg_RenderServer.h>
 #include <nmg_RenderClient.h>
 
@@ -54,7 +53,7 @@
 #include <ModFile.h>
 #include <GraphMod.h>
 #include <nmui_Component.h>
-//#include <nmui_ComponentSync.h>
+#include <nmui_PlaneSync.h>
 
 #ifdef	PROJECTIVE_TEXTURE
 // Registration
@@ -1491,8 +1490,8 @@ fprintf(stderr, "client.\n");
     }
 //fprintf(stderr, "Called addPeer() on component for %s.\n", buf);
     uic->initializeConnection(collaboratingPeerRemoteConnection);
-fprintf(stderr, "## Called initializeConnection(%ld) on component for %s.\n",
-collaboratingPeerRemoteConnection, buf);
+//fprintf(stderr, "## Called initializeConnection(%ld) on component for %s.\n",
+//collaboratingPeerRemoteConnection, buf);
 
 
     // register callbacks if need be - HACK assume necessary
@@ -1505,6 +1504,41 @@ collaboratingPeerRemoteConnection, buf);
   }
 }
 
+static void handle_collab_machine_name_change3
+                   (const char * new_value,
+                    void * userdata)
+{
+  char sfbuf [1024];
+  char buf [256];
+  nmui_PlaneSync * ps;
+
+  ps = (nmui_PlaneSync *) userdata;
+
+//fprintf(stderr, "In handle_collab_machine_name_change3 to %s.\n", new_value);
+
+  if (!new_value || !strlen(new_value)) {
+    // transitory excitement during startup
+    return;
+  }
+
+  sprintf(buf, "%s:%d", new_value, WellKnownPorts::collaboratingPeerServer);
+  if (replayingInterface) {
+    sprintf(sfbuf, "file:%s/SharedIFRemLog-%d.stream", loggingPath,
+            loggingTimestamp.tv_sec);
+    collaboratingPeerRemoteConnection =
+      vrpn_get_connection_by_name (sfbuf);
+  } else {
+    sprintf(sfbuf, "%s/SharedIFRemLog-%d.stream", loggingPath,
+            loggingTimestamp.tv_sec);
+    collaboratingPeerRemoteConnection = vrpn_get_connection_by_name (buf,
+             loggingInterface ? sfbuf : NULL,
+             loggingInterface ? vrpn_LOG_INCOMING | vrpn_LOG_OUTGOING :
+                        vrpn_LOG_NONE);
+  }
+
+  ps->addPeer(collaboratingPeerRemoteConnection);
+}
+
 
 // NANOX
 static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
@@ -1514,17 +1548,17 @@ static void handle_collab_measure_change (vrpn_float64 /*newValue*/,
   int whichLine = (int) userdata;   // hack to get the data here
   switch (whichLine) {
     case 0:
-fprintf(stderr, "Moving RED line due to Tcl change.\n");
+//fprintf(stderr, "Moving RED line due to Tcl change.\n");
      decoration->red.moveTo(measureRedX, measureRedY, heightPlane);
      // DO NOT doCallbacks()
      break;
     case 1:
-fprintf(stderr, "Moving GREEN line due to Tcl change.\n");
+//fprintf(stderr, "Moving GREEN line due to Tcl change.\n");
      decoration->green.moveTo(measureGreenX, measureGreenY, heightPlane);
      // DO NOT doCallbacks()
      break;
     case 2:
-fprintf(stderr, "Moving BLUE line due to Tcl change.\n");
+//fprintf(stderr, "Moving BLUE line due to Tcl change.\n");
      decoration->blue.moveTo(measureBlueX, measureBlueY, heightPlane);
      // DO NOT doCallbacks()
      break;
@@ -3522,8 +3556,6 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   nmui_Component * viewPlaneControls;
   viewPlaneControls = new nmui_Component ("View Plane");
 
-#ifndef MIN_SYNC
-
   viewPlaneControls->add(&m->state.stm_z_scale);
   viewPlaneControls->add((TclNet_selector *) dset->heightPlaneName);
   viewPlaneControls->add(&tcl_wfr_xlate_X);
@@ -3535,24 +3567,16 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewPlaneControls->add(&tcl_wfr_rot_3);
   viewPlaneControls->add(&tcl_wfr_scale);
 
-#endif
-
   nmui_Component * viewColorControls;
   viewColorControls = new nmui_Component ("View Color");
-
-#ifndef MIN_SYNC
 
   viewColorControls->add((TclNet_selector *) dset->colorPlaneName);
   viewColorControls->add((TclNet_selector *) dset->colorMapName);
   viewColorControls->add(&color_slider_min);
   viewColorControls->add(&color_slider_max);
 
-#endif
-
   nmui_Component * viewMeasureControls;
   viewMeasureControls = new nmui_Component ("View Measure");
-
-#ifndef MIN_SYNC
 
   viewMeasureControls->add(&measureRedX);
   viewMeasureControls->add(&measureRedY);
@@ -3561,12 +3585,8 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewMeasureControls->add(&measureBlueX);
   viewMeasureControls->add(&measureBlueY);
 
-#endif
-
   nmui_Component * viewLightingControls;
   viewLightingControls = new nmui_Component ("View Lighting");
-
-#ifndef MIN_SYNC
 
   viewPlaneControls->add(&tcl_lightDirX);
   viewPlaneControls->add(&tcl_lightDirY);
@@ -3576,12 +3596,8 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewColorControls->add(&surface_alpha);
   viewColorControls->add(&specular_color);
 
-#endif
-
   nmui_Component * viewContourControls;
   viewContourControls = new nmui_Component ("View Contour");
-
-#ifndef MIN_SYNC
 
   viewContourControls->add(&texture_scale);
   viewContourControls->add(&contour_width);
@@ -3591,12 +3607,8 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewContourControls->add(&contour_changed);
   viewContourControls->add((TclNet_selector *) dset->contourPlaneName);
 
-#endif
-
   nmui_Component * viewGridControls;
   viewGridControls = new nmui_Component ("View Grid");
-
-#ifndef MIN_SYNC
 
   viewGridControls->add(&rulergrid_position_line);
   viewGridControls->add(&rulergrid_orient_line);
@@ -3612,7 +3624,6 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewGridControls->add(&ruler_b);
   viewGridControls->add(&rulergrid_changed);
   viewGridControls->add(&rulergrid_enabled);
-#endif
 
   viewControls->add(viewPlaneControls);
   viewControls->add(viewColorControls);
@@ -3621,17 +3632,17 @@ void setupSynchronization (vrpn_Connection * serverConnection,
   viewControls->add(viewContourControls);
   viewControls->add(viewGridControls);
 
-  nmui_Component * derivedPlaneControls;
-  derivedPlaneControls = new nmui_Component ("DerivedPlanes");
+  //nmui_Component * derivedPlaneControls;
+  //derivedPlaneControls = new nmui_Component ("DerivedPlanes");
 
-  derivedPlaneControls->add(&newFlatPlaneName);
+  //derivedPlaneControls->add(&newFlatPlaneName);
 
   // Christmas sync
 
   nmui_Component * rootUIControl;
   rootUIControl = new nmui_Component ("ROOT");
 
-  rootUIControl->add(derivedPlaneControls);
+  //rootUIControl->add(derivedPlaneControls);
   rootUIControl->add(viewControls);
   rootUIControl->add(streamfileControls);
 
@@ -3675,6 +3686,18 @@ void setupSynchronization (vrpn_Connection * serverConnection,
 
   collab_machine_name.addCallback
 	(handle_collab_machine_name_change2, rootUIControl);
+
+
+  // NANOX FLAT
+  // Set up a utility class to make sure derived planes are synchronized
+  // between all replicas.
+
+  nmui_PlaneSync * ps;
+
+  ps = new nmui_PlaneSync (dset, serverConnection);
+
+  collab_machine_name.addCallback
+        (handle_collab_machine_name_change3, ps);
 
 }
 
@@ -5695,7 +5718,9 @@ VERBOSE(1, "Entering main loop");
     handleMouseEvents();
 
 #ifdef	PROJECTIVE_TEXTURE
-    aligner_ui->mainloop();
+    if (aligner_ui) {
+      aligner_ui->mainloop();
+    }
 #endif
 
     /* Run the Tk control panel checker if we are using them */

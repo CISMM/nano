@@ -202,7 +202,12 @@ bool TIFFImage::Write(const char *filename)
    }
 
 
-   ofstream tiff(filename);
+#ifdef _WIN32
+   // Marked BINARY to try to fix problem on PCs
+   ofstream tiff (filename, ios::binary | ios::out);
+#else
+   ofstream tiff (filename);
+#endif
 
 
    if (!tiff)
