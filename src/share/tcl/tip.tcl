@@ -27,6 +27,9 @@ global tip_window_open tip_display_enable tip_display_texture_enable \
 
 set nmInfo(tip) [create_closing_toplevel_with_notify \
                             tip_win tip_window_open]
+
+wm title $nmInfo(tip) "Tip Visualization Settings"
+
 set tip_model_mode_image 1
 set tip_model_mode_conesphere 2
 set tip_model_mode 2

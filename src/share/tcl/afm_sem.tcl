@@ -26,6 +26,8 @@ global afm_sem_window_open
 set nmInfo(afm_sem) [create_closing_toplevel_with_notify \
                             afm_sem_win afm_sem_window_open]
 
+wm title $nmInfo(afm_sem) "AFM-SEM-Model Calibrator"
+
 set afm_sem_registration_mode_model_SEM 1
 set afm_sem_registration_mode_AFM_SEM_contact 2
 set afm_sem_registration_mode_AFM_SEM_free 3
@@ -99,9 +101,17 @@ generic_optionmenu \
   $model_sem.model_selector afm_sem_model "model" imageNames
 pack $model_sem.model_selector
 
+button $model_sem.update_model_button -text "Update Model" \
+    -command {set afm_sem_update_model 1}
+pack $model_sem.update_model_button
+
 generic_optionmenu \
   $model_sem.sem_image_selector afm_sem_sem_image "SEM image" imageNames
 pack $model_sem.sem_image_selector
+
+button $model_sem.update_sem_image_button -text "Update SEM" \
+    -command {set afm_sem_update_sem_image 1}
+pack $model_sem.update_sem_image_button
 
 frame $model_sem.status
 label $model_sem.status.title -text "Status: "

@@ -1,3 +1,8 @@
+2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
+
+	* afm_sem.tcl : added "Update Model" and "Update SEM" buttons
+	* tip.tcl: changed window title
+
 2002-10-01 Jameson Miller <millerj@cs.unc.edu>
 	* directStep.tcl: added variable for tcl so that
         the step size can be shown on the screen for direct step.
