@@ -1,3 +1,8 @@
+2001-12-15  Tom Hudson  <hudsont@uncwil.edu>
+
+   * globjects.c (FeelPlane) : Display a plane rather than a sphere
+   so we get orientation as well as position.
+   
 2001-12-14  Tom Hudson  <hudsont@uncwil.edu>
 
    * nmg_GraphicsImpl.C (nmg_Graphics_Implementation constructor) :

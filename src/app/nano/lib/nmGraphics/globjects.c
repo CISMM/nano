@@ -1983,34 +1983,56 @@ int FeelGrid (void *) {
 
 int FeelPlane (void *) {
    int i, j;
-   double * vp;  // UGLY HACK!
+   q_vec_type parallel;
+   q_vec_type span1, span2;
+   q_vec_type mspan1, mspan2;
+   double vp [4][3];
+   double scalescale = 3.0;
 
    glPushMatrix();
    glPushAttrib(GL_CURRENT_BIT);
    glColor3f(1.0f, 1.0f, 1.0f);
    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-/* TODO
-   for (i = 0; i < g_fg_xside - 1; i++) {
 
-      glBegin(GL_TRIANGLE_STRIP);
+  // HACK  - display a ball, ignores orientation, but gives us position,
+  // which is what is critical for warped-plane
+  //glTranslatef(g_fp_origin[0], g_fp_origin[1], g_fp_origin[2]);
+  //glScalef(g_sphere_scale / 2.0, g_sphere_scale / 2.0, g_sphere_scale / 2.0);
+  //glCallList(sphere);
 
-      for (j = 0; j < g_fg_yside; j++) {
-        vp = g_fg_vertices[i * g_fg_xside + j];
-        glVertex3d(vp[0], vp[1], vp[2]);
-        vp = g_fg_vertices[(i + 1) * g_fg_xside + j];
-        glVertex3d(vp[0], vp[1], vp[2]);
-      }
-      glEnd();
-   }
-*/
-
-// HACK  - display a ball, ignores orientation, but gives us position,
-// which is what is critical for warped-plane
 
   glTranslatef(g_fp_origin[0], g_fp_origin[1], g_fp_origin[2]);
-  glScalef(g_sphere_scale / 2.0, g_sphere_scale / 2.0, g_sphere_scale / 2.0);
-  glCallList(sphere);
+  glScalef(g_sphere_scale * scalescale,
+           g_sphere_scale * scalescale,
+           g_sphere_scale * scalescale);
+
+  // find vectors describing the sides
+
+  q_vec_set(parallel, 1.0, 0.0, 0.0);
+  q_vec_cross_product(span1, g_fp_normal, parallel);
+  q_vec_cross_product(span2, g_fp_normal, span1);
+
+  q_vec_normalize(span1, span1);
+  q_vec_normalize(span2, span2);
+  q_vec_scale(mspan1, -1.0, span1);
+  q_vec_scale(mspan2, -1.0, span2);
+
+  // set up vertices
+
+  q_vec_add(vp[0], span1, span2);
+  q_vec_add(vp[1], mspan1, span2);
+  q_vec_add(vp[2], mspan1, mspan2);
+  q_vec_add(vp[3], span1, mspan2);
+
+
+
+  glBegin(GL_TRIANGLE_STRIP);
+  glVertex3d(vp[0][0], vp[0][1], vp[0][2]);
+  glVertex3d(vp[1][0], vp[1][1], vp[1][2]);
+  glVertex3d(vp[3][0], vp[3][1], vp[3][2]);
+  glVertex3d(vp[2][0], vp[2][1], vp[2][2]);
+  glEnd();
 
    glPopAttrib();
    glPopMatrix();
