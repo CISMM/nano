@@ -434,7 +434,11 @@ source [file join ${tcl_script_dir} french_ohmmeter.tcl]
 # Try and make widgets active based on what we are doing.
 # We only want to be able to operate widgets if they are appropriate 
 # for the current activity. 
-# For now, based totally on whether we are reading files, a stream, or a device. 
+# First version based totally on whether we are reading files, a stream,
+# or a device.  Ran into race conditions with
+# diable_device_widgets_for_commands_suspended when we tried to generalize that
+# to non-device contexts.
+
 set READ_DEVICE 0
 set READ_FILE 1
 set READ_STREAM 2
@@ -443,6 +447,7 @@ if {![info exists spm_read_mode] } { set spm_read_mode $READ_FILE }
 proc diable_widgets_for_readmode { name el op } {
     global device_only_controls stream_only_controls stream_and_device_only_controls 
     global spm_read_mode toolmenu
+    global readmode_device_commands_suspended
 
     # Note: $ substitution for the patterns won't work because
     # the switch body is in brackets. 
@@ -453,16 +458,9 @@ proc diable_widgets_for_readmode { name el op } {
             show.image
             show.modify
             #show.modify_live
-            foreach widget $device_only_controls {
-                if {([llength $widget] > 1) } {
-                    # some widget have a special "configure" command 
-                    # saved in the list with the widget name, like 
-                    # ".a.rb buttonconfigure 0 -state normal"
-                    eval $widget -state normal
-                } else {
-                    $widget configure -state normal
-                }
-            }
+
+            set readmode_device_commands_suspended 0
+
             foreach widget $stream_only_controls {
                 if {([llength $widget] > 1) } {
                     # some widget have a special "configure" command 
@@ -490,16 +488,9 @@ proc diable_widgets_for_readmode { name el op } {
             #hide.image
             #hide.modify
             #hide.modify_live
-            foreach widget $device_only_controls {
-                if {([llength $widget] > 1) } {
-                    # some widget have a special "configure" command 
-                    # saved in the list with the widget name, like 
-                    # ".a.rb buttonconfigure 0 -state normal"
-                    eval $widget -state disabled
-                } else {
-                    $widget configure -state disabled
-                }
-            }
+
+            set readmode_device_commands_suspended 1
+
             foreach widget $stream_only_controls {
                 if {([llength $widget] > 1) } {
                     # some widget have a special "configure" command 
@@ -527,16 +518,9 @@ proc diable_widgets_for_readmode { name el op } {
             show.image
             show.modify
             hide.modify_live
-            foreach widget $device_only_controls {
-                if { ([llength $widget] > 1) } {
-                    # some widget have a special "configure" command 
-                    # saved in the list with the widget name, like 
-                    # ".a.rb buttonconfigure 0 -state normal"
-                    eval $widget -state disabled
-                } else {
-                    $widget configure -state disabled
-                }
-            }
+
+            set readmode_device_commands_suspended 1
+
             foreach widget $stream_only_controls {
                 if {([llength $widget] > 1) } {
                     # some widget have a special "configure" command 
@@ -565,23 +549,28 @@ proc diable_widgets_for_readmode { name el op } {
 }
 trace variable spm_read_mode w diable_widgets_for_readmode
 
-proc diable_widgets_for_commands_suspended { variable name el op } {
+proc diable_device_widgets_for_commands_suspended { variable name el op } {
     global device_only_controls  
     global spm_commands_suspended
     global collab_commands_suspended
+    global readmode_device_commands_suspended
     global spm_read_mode READ_DEVICE
 
     # Don't do anything if we aren't talking to a device
-    if { $spm_read_mode != $READ_DEVICE } { return; }
+    # if { $spm_read_mode != $READ_DEVICE } { return; }
 
     set commands_suspended 0
     if $spm_commands_suspended {set commands_suspended 1}
     if $collab_commands_suspended {set commands_suspended 1}
+    if $readmode_device_commands_suspended {set commands_suspended 1}
+
+#puts "commands_suspended $commands_suspended"
 
     # Note: $ substitution for the patterns won't work because
     # the switch body is in brackets. 
     switch $commands_suspended {
         0 {
+#puts "Enabling controls"
             # Commands aren't suspended, enable controls
             foreach widget $device_only_controls {
                 if {([llength $widget] > 1) } {
@@ -595,6 +584,7 @@ proc diable_widgets_for_commands_suspended { variable name el op } {
             }
         }
         1 {
+#puts "Disabling controls"
             # Commands are suspended, disable controls
             foreach widget $device_only_controls {
                 if { ([llength $widget] > 1) } {
@@ -615,8 +605,12 @@ proc diable_widgets_for_commands_suspended { variable name el op } {
 # So we avoid issuing any commands to Thermo, by disabling all device 
 # controls. 
 if {![info exists spm_commands_suspended] } { set spm_commands_suspended 0 }
-trace variable spm_commands_suspended w diable_widgets_for_commands_suspended
+trace variable spm_commands_suspended w diable_device_widgets_for_commands_suspended
 
+if {![info exists readmode_device_commands_suspended] } \
+                    { set readmode_device_commands_suspended 0 }
+trace variable readmode_device_commands_suspended w \
+                    diable_device_widgets_for_commands_suspended
 
 #----------------
 # Setup window positions and geometries to be convenient and pleasant!
@@ -751,7 +745,7 @@ wm deiconify .
 
 if {![info exists collab_commands_suspended] } \
                  { set collab_commands_suspended 1; \
-                   disable_widgets_for_commands_suspended }
+                   diable_device_widgets_for_commands_suspended 0 0 0 0 }
 
-trace variable collab_commands_suspended w diable_widgets_for_commands_suspended
+trace variable collab_commands_suspended w diable_device_widgets_for_commands_suspended
 

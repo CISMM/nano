@@ -169,6 +169,11 @@ proc mutex_taken_callback {} {
 
   $sharedptr(sp).mutex.request_mutex_button configure \
           -state disabled
+
+  # trigger a trace function in mainwin.tcl
+  set collab_commands_suspended 1
+
+  $view.xy_lock configure -state disabled
 }
 
 proc mutex_release_callback {} {
@@ -176,6 +181,11 @@ proc mutex_release_callback {} {
 
   $sharedptr(sp).mutex.request_mutex_button configure \
           -state normal
+
+  # trigger a trace function in mainwin.tcl
+  set collab_commands_suspended 1
+
+  $view.xy_lock configure -state disabled
 }
 
 
