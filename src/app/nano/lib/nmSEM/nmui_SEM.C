@@ -249,8 +249,13 @@ void nms_SEM_ui::handle_device_change(void *ud,
         i = me->computeResolutionIndex(res_x, res_y);
         if (i < 0) {
 	   fprintf(stderr, "Error, resolution unexpected\n");
+// this will possibly cause an infinite loop so I won't do it but we might
+// want to make it try this at least once
+//           info.sem->setResolution(me->d_matrixSizeX[me->sem_resolution],
+//                                  me->d_matrixSizeY[me->sem_resolution])
 	   break;
         }
+        me->sem_resolution = i;
         frame_count = 0;
       break;
     case nmm_Microscope_SEM::REPORT_PIXEL_INTEGRATION_TIME:
