@@ -297,6 +297,8 @@ ifeq ($(HW_OS),hp700_hpux10)
    INCLUDE_FLAGS += +a1 -Dhpux
 endif
 
+INCLUDE_FLAGS += $(LATE_INCLUDE_PATH)
+
 ##########################
 #
 # }}}
@@ -346,6 +348,8 @@ ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
    LOAD_FLAGS := $(LOAD_FLAGS) $(APDEBUG) $(APCCFLAGS) $(APCFLAGS) \
                  $(APLFLAGS) $(V_OPENGL_LIB_DIRS) -L/usr/lib/X11R5
 endif
+
+LOAD_FLAGS += $(LATE_LOAD_PATH)
 
 ##########################
 # }}}
@@ -424,7 +428,9 @@ endif
 # All together now
 #
 
-LIBS := $(GRAPHICS_LIBS) $(TCL_LIBS) -lXext -lX11 $(ARCH_LIBS) -lm
+# Hacks by TCH 1 May 00 to get afmcntsim (and multiscope) to compile -
+# added glut to EVERYBODY
+LIBS := -lglut $(GRAPHICS_LIBS) $(TCL_LIBS) -lXmu -lXext -lX11 $(ARCH_LIBS) -lm
 
 ifeq ($(HW_OS), hp700_hpux10)
    LIBS := -lPW $(GRAPHICS_LIBS) $(TCL_LIBS) -lXext -lX11 $(ARCH_LIBS) -lm
@@ -437,6 +443,8 @@ endif
 ifdef VC
    LIBS := $(GRAPHICS_LIBS) $(TCL_LIBS) $(ARCH_LIBS) -lm
 endif
+
+LIBS += $(LATE_LIBRARIES)
 
 ##########################
 #
