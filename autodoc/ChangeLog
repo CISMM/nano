@@ -1,0 +1,6 @@
+2001-06-05  Aron Helser  <helser@cs.unc.edu>
+
+	* nano-doc.dox: Turned off warnings, turned off JAVADOC_AUTOBRIEF,
+	which keeps the first line of the detail comment from being
+	overwritten by the brief comment. 
+
