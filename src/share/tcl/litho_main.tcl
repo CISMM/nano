@@ -3,8 +3,6 @@
 	exec wish "$0" ${1+"$@"}
 # This is a tcl/tk script to create the user interface to the
 # ebeam lithography system.  
-# It sets up:
-#      a menu bar
 #
 
 # Import Itcl and Iwidgets, for the tabnotebook widget and others we
@@ -109,7 +107,7 @@ generic_optionmenu $win.save_image_filetype save_image_filetype \
 pack $win.save_image_filetype -anchor nw
 
 # Allow the user to save
-proc save_plane_data {} {
+proc save_image_file {} {
     global export_plane save_image_filetype save_image_filename \
            fileinfo imageNames
     # Trigger the export_filetype widget to display formats for
@@ -118,6 +116,8 @@ proc save_plane_data {} {
     if { [.save_plane_dialog activate] } {
         set types { {"All files" *}
         { "ThermoMicroscopes" ".tfr" }
+        { "TIFF Image" ".tif" }
+        { "JPEG" ".jpg" }
         { "Text(MathCAD)" ".txt" }
         { "PPM Image" ".ppm" }
         { "SPIP" ".spip" }
@@ -169,7 +169,10 @@ iwidgets::dialog .save_buffer_dialog -title "Save buffer image"
     global fileinfo bufferImage_format
     .save_buffer_dialog deactivate 1
     set types { {"All files" *}
-    {"TIFF" ".tif" }
+    {"TIF" ".tif" }
+    {"JPG" ".jpg" }
+    {"BMP" ".bmp" }
+    {"PGM" ".pgm" }
     {"PPM" ".ppm" }}
 
     # Set the file extension correctly
@@ -211,7 +214,7 @@ generic_optionmenu $win.bufferImage_format bufferImage_format \
 pack $win.bufferImage_format -anchor nw
 
 # Allow the user to open a file
-proc open_file {} {
+proc open_image_file {} {
     global open_image_filename fileinfo
     set types { {"All files" *} }
     set filename [tk_getOpenFile -filetypes $types \
@@ -228,10 +231,46 @@ proc open_file {} {
 }
 
 # Allow the user to save
-proc save_buffer {} {
+proc save_editor_window {} {
     global  bufferImage_format bufferImage_filename
     # All activity is done in the button commands defined above.
     .save_buffer_dialog activate
+}
+
+proc open_pattern_file {} {
+    global open_pattern_filename fileinfo
+    set types { {"Pattern Files" ".spf"} }
+    set filename [tk_getOpenFile -filetypes $types \
+            -initialdir $fileinfo(open_dir) \
+            -title "Open a pattern file"]
+    if {$filename != ""} {
+        # setting this variable triggers a callback in C code
+        # which saves the file.
+        # dialog checks whether file exists.
+        set open_pattern_filename $filename
+        set fileinfo(open_dir) [file dirname $filename]
+    }
+    # otherwise do nothing.
+}
+
+proc save_pattern_file {} {
+    global save_pattern_filename fileinfo
+    set types { {"Pattern Files" ".spf"} }
+    # Let the user choose a file to save the data in.
+    set filename [tk_getSaveFile -filetypes $types \
+                -initialfile "pattern.spf" \
+                -initialdir $fileinfo(save_dir)\
+                -title "Save pattern"]
+    if {$filename != ""} {
+        # setting this variable triggers a callback in C code
+        # which saves the file.
+
+        # Dialog checks for writeable directory, and asks about
+        # replacing existing files.
+        set save_pattern_filename $filename
+        set fileinfo(save_dir) [file dirname $save_pattern_filename]
+    }
+    # otherwise do nothing - user pressed cancel or didn't enter file name
 }
 
 #### FILE menu commands ####################
@@ -240,14 +279,20 @@ set filemenu .menu.file
 menu $filemenu -tearoff 0
 .menu add cascade -label "File" -menu $filemenu -underline 0
 
-$filemenu add command -label "Open File..." -underline 0 \
-    -command "open_file"
+$filemenu add command -label "Open Image File..." -underline 0 \
+    -command "open_image_file"
 
-$filemenu add command -label "Save Buffer..." -underline 0 \
-    -command "save_buffer"
+$filemenu add command -label "Open Pattern File..." -underline 0 \
+    -command "open_pattern_file"
 
-$filemenu add command -label "Save Plane Data..." -underline 5 -command \
-    "save_plane_data"
+$filemenu add command -label "Save Editor Window..." -underline 0 \
+    -command "save_editor_window"
+
+$filemenu add command -label "Save Image File..." -underline 5 -command \
+    "save_image_file"
+
+$filemenu add command -label "Save Pattern File..." -underline 5 -command \
+    "save_pattern_file"
 
 $filemenu add command -label "Quit" -underline 1 -command {
     if {[string match "*wish*" [info nameofexecutable]] } {
@@ -293,6 +338,12 @@ $SEM_menu add command -label "Expose Pattern" -underline 0 \
 # Invoke File.. Exit when destroying window for clean exit.
 wm protocol . WM_DELETE_WINDOW {$filemenu invoke "Quit"}
 
+#################################################
+# keeps track of how many controls are in an array we will use to
+# store which controls should be disabled during long operations
+set numProtectedControls 0
+
+
 ######### Drawing Parameters Control Panel ###########################
 set drawing_parameters_win \
          [create_closing_toplevel drawing_parameters "Drawing Parameters"]
@@ -331,6 +382,10 @@ pack $drawing_parameters_win.tool.polyline \
 button $drawing_parameters_win.clear_drawing -text "Clear" -command \
     { set clear_drawing 1 }
 pack $drawing_parameters_win.clear_drawing -side top
+
+button $drawing_parameters_win.add_test_grid -text "Add Test Grid" -command \
+    { set add_test_grid 1 }
+pack $drawing_parameters_win.add_test_grid -side top
 
 #generic_optionmenu $drawing_parameters_win.coordinate_system \
 #     drawing_coordinate_system "Coordinate System" imageNames
@@ -495,6 +550,9 @@ button $sem_win.acquire_image -text "Acquire Image" \
         -command { set sem_acquire_image 1 }
 pack $sem_win.acquire_image -anchor w -padx 3 -pady 3
 
+set protectedControls($numProtectedControls) $sem_win.acquire_image
+incr numProtectedControls
+
 # Controls whether to scan continuously or not
 checkbutton $sem_win.acquire_continuous \
         -text "Acquire Continuously" \
@@ -584,6 +642,19 @@ pack $sem_win.dac_settings.x_gain \
      $sem_win.dac_settings.z_gain \
      $sem_win.dac_settings.z_offset -fill x
 
+set protectedControls($numProtectedControls) $sem_win.dac_settings.x_gain
+incr numProtectedControls
+set protectedControls($numProtectedControls) $sem_win.dac_settings.x_offset
+incr numProtectedControls
+set protectedControls($numProtectedControls) $sem_win.dac_settings.y_gain
+incr numProtectedControls
+set protectedControls($numProtectedControls) $sem_win.dac_settings.y_offset
+incr numProtectedControls
+set protectedControls($numProtectedControls) $sem_win.dac_settings.z_gain
+incr numProtectedControls
+set protectedControls($numProtectedControls) $sem_win.dac_settings.z_offset
+incr numProtectedControls
+
 ######### End Image Acquisition ###########################
 
 ######### Beam Control Panel ##############################
@@ -593,39 +664,102 @@ global sem_exposure_magnification sem_beam_width_nm sem_beam_current_picoAmps \
 set sem_exposure_magnification 10000
 set sem_beam_width_nm 200
 set sem_beam_current_picoAmps 1
+set sem_beam_expose_enabled 0
 set sem_beam_expose_now 0
+set sem_do_timing_test 0
 
-set sem_win \
+set sem_beam_win \
    [create_closing_toplevel sem_beam_expose_control "SEM Control"]
 
-frame $sem_win.calibration -relief raised -bd 3
+frame $sem_beam_win.calibration -relief raised -bd 3
 
-pack $sem_win.calibration -anchor w -padx 3 -pady 3
+pack $sem_beam_win.calibration -anchor w -padx 3 -pady 3
 
-label $sem_win.calibration.calibration_label -text "Calibration Parameters"
-pack $sem_win.calibration.calibration_label \
+label $sem_beam_win.calibration.calibration_label -text "Calibration Parameters"
+pack $sem_beam_win.calibration.calibration_label \
          -padx 3 -pady 3
 
-generic_entry $sem_win.calibration.magnification \
+generic_entry $sem_beam_win.calibration.magnification \
     sem_exposure_magnification \
     "Magnification (for 12.8 cm wide display)" integer
-pack $sem_win.calibration.magnification -anchor w -padx 3 -pady 3
+pack $sem_beam_win.calibration.magnification -anchor w -padx 3 -pady 3
 
-generic_entry $sem_win.calibration.beam_width \
+generic_entry $sem_beam_win.calibration.beam_width \
     sem_beam_width_nm \
     "Beam Width (nm)" real
-pack $sem_win.calibration.beam_width -anchor w -padx 3 -pady 3
+pack $sem_beam_win.calibration.beam_width -anchor w -padx 3 -pady 3
 
-generic_entry $sem_win.calibration.beam_current \
+generic_entry $sem_beam_win.calibration.beam_current \
     sem_beam_current_picoAmps \
     "Beam Current (picoAmps)" real
-pack $sem_win.calibration.beam_current -anchor w -padx 3 -pady 3
+pack $sem_beam_win.calibration.beam_current -anchor w -padx 3 -pady 3
 
-button $sem_win.expose_now -text "EXPOSE" \
-    -command { set sem_beam_expose_now 1 } -fg White -bg Red
-pack $sem_win.expose_now -padx 3 -pady 3
+button $sem_beam_win.do_timing_test -text "Timing Test" \
+    -command "set sem_do_timing_test 1" 
+pack $sem_beam_win.do_timing_test -padx 3 -pady 3
+
+set protectedControls($numProtectedControls) $sem_beam_win.do_timing_test
+incr numProtectedControls
+
+button $sem_beam_win.expose_now -text "EXPOSE" \
+    -command { set sem_beam_expose_now 1 }
+pack $sem_beam_win.expose_now -padx 3 -pady 3
+
+$sem_beam_win.expose_now configure -state disabled
+
+set sem_exposure_status "N/A"
+
+frame $sem_beam_win.expose_progress -relief solid -borderwidth 2
+pack $sem_beam_win.expose_progress -padx 3 -pady 3
+label $sem_beam_win.expose_progress.label -text "exposure status:"
+label $sem_beam_win.expose_progress.value \
+      -textvariable sem_exposure_status
+
+pack $sem_beam_win.expose_progress.label -side left
+pack $sem_beam_win.expose_progress.value -side left
+
+# allow C code to control whether expose button is enabled:
+proc handle_expose_enable { nm el op } {
+  global sem_beam_expose_enabled
+  global sem_beam_win
+  if { $sem_beam_expose_enabled != 0 } {
+    $sem_beam_win.expose_now configure -state normal -fg White -bg Red
+  } else {
+    $sem_beam_win.expose_now configure -state disabled -fg Black -bg LemonChiffon1
+  }
+}
+trace variable sem_beam_expose_enabled w handle_expose_enable
 
 ######### End Beam ########################################
+
+set sem_controls_enabled 1
+
+proc handle_sem_controls_enable { nm el op } {
+  global sem_controls_enabled
+  global sem_beam_expose_enabled
+  global sem_beam_win
+  global numProtectedControls
+  global protectedControls
+  puts "sem_controls_enabled"
+  if { $sem_controls_enabled == 0 } {
+    # do this one specially
+    $sem_beam_win.expose_now configure -state disabled
+    # now do all the normal cases
+    for {set i 0} {$i < $numProtectedControls} {incr i} {
+      $protectedControls($i) configure -state disabled
+    }
+  } else {
+    # do this one specially 
+    if { $sem_beam_expose_enabled != 0 } {
+      $sem_beam_win.expose_now configure -state normal
+    }
+    for {set i 0} {$i < $numProtectedControls} {incr i} {
+      $protectedControls($i) configure -state normal
+    }
+  }
+}
+
+trace variable sem_controls_enabled w handle_sem_controls_enable
 
 ##----------------
 # Setup window positions and geometries to be convenient and pleasant!
