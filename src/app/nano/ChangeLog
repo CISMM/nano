@@ -1,3 +1,7 @@
+2002-07-08 David Borland <borland@cs.unc.edu>
+
+        * import.C : removed some debugging statements
+
 2002-07-03 Jameson Miller <millerj@cs.unc.edu>
 	*import.c : in function handle_import_rot_changed, now 
 	sends the rotation of the axis object to direct step to set stepping axis.

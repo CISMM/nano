@@ -485,8 +485,6 @@ static  void handle_import_update_AFM (vrpn_int32, void *)
 					q_vec_type q;
 					q_to_euler(q, tube.GetLocalXform().GetRot());
 					SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
-					cout << "rot Sent: " << "x: " << q[2] << "\ty: " << q[1] << "\tz: " << q[0] << endl;
-					
 				}
 				return;
 			}
@@ -704,7 +702,6 @@ static  void handle_import_rot_change (vrpn_float64, void *)
 				URTubeFile* tube = (URTubeFile*)&obj;
 				if (tube->GetUpdateAFM()) {
 					SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
-					cout << "rot Sent: " << "x: " << euler[2] << "\ty: " << euler[1] << "\tz: " << euler[0] << endl;
 				}
 			}
 		}
