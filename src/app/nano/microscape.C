@@ -8533,7 +8533,7 @@ int main (int argc, char* argv[])
 
   if (istate.colorplane[0]) {
     dataset->doInitColorPlane = true;
-    strcpy(dataset->initColorPlane,istate.colorplane);
+	strcpy(dataset->initColorPlane,istate.colorplane);
     }
   if (istate.colormap[0]) {
     dataset->colorMapName->Set(istate.colormap);
@@ -8614,20 +8614,21 @@ if (microscope) microscope->ResetClock();
   }
   
 
-/* 
- * main interactive loop
- */
-VERBOSE(1, "Entering main loop");
+	/* 
+	 * main interactive loop
+	 */
+	VERBOSE(1, "Entering main loop");
 
-bool first = true;
-vrpn_Connection* c;
+	// is this our first time through?
+	bool first = true;
+
+	vrpn_Connection* c;
   while( n<LOOP_NUM || !dataset->done ) 
     {
 	if(SimulatedMicroscope){
 		if(first){			
 			c = vrpn_get_connection_by_name(SimScanIPAddress);
 			vrpn_int32 temp = c->register_message_type("nmm SimulatedMicroscope WindowLineData");
-			first = false;
 		}
 		if(SimulatedMicroscope->mainloop() == -1) cout << "connection mainloop not working properly" << endl;
 	}
@@ -9051,6 +9052,15 @@ vrpn_Connection* c;
         set_stream_clip_time = t.tv_sec;
     }
 
+	// if we have jumped to a time in the stream file, and this is 
+	// our first time through, center the view
+	if( first && (istate.initTime !=0) )
+	{
+		center( );
+	}
+
+	// we're done with the first time through
+	first = false;
   }  // end of mainloop
 
   dataset->done = VRPN_TRUE; //XXXX
