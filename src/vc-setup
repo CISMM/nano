@@ -25,8 +25,10 @@ export MSVSDir=/e/PROGRA~1/MICROS~1
 export VcOsDir=WINNT
 
 # Some additional setup so we can run:
-# Path to the nano executable and path to the Tcl dlls. 
-export PATH="$MY_NANO_OBJ_DIR/pc_win32/app/nano:`cygpath -u $NANO_ROOT/bin`:$PATH"
+# Path to the nano executable. Path to the Tcl dlls must be set by Windows. 
+export PATH="$MY_NANO_OBJ_DIR/pc_win32/app/nano:$PATH"
+# New tcl files
+export NM_TCL_DIR=`cygtclpath /nsrc/nano/src/share/tcl/`
 
 # Shouldn't have to change variable below this point, assuming 
 # you did a standard install of VC++ 6.0

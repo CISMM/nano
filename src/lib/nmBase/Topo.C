@@ -885,17 +885,15 @@ int TopoFile::parseData(int handle){
 }
 
 
-int TopoFile::readTopoFile(const char* filename){
-	FILE * handle;
+int TopoFile::readTopoFile(FILE* handle, const char* filename){
 	int in_descriptor;
-	handle = fopen(filename,"rb");
         if (handle == NULL){
-        	printf("TopoFile:: readTopoFile Error in opening file %s\n",filename);
-		exit(-1);
+            printf("TopoFile:: readTopoFile Error in opening file %s\n",filename);
+            exit(-1);
         }
         if ( (in_descriptor = fileno(handle)) == -1) {
-                fprintf(stderr,"TopoHeader::readTopoFile(): Can't get descriptor");
-                return(-1);
+            fprintf(stderr,"TopoHeader::readTopoFile(): Can't get descriptor");
+            return(-1);
         }
     // XXX DEBUG find out how big structures are.
 //  printf("**DOC Info:\n" );
@@ -1739,10 +1737,10 @@ int TopoFile::initForConversionToTopo(double z_scale_nm, double z_offset_nm) {
 }
 
 
-int BCGrid::readTopometrixFile(TopoFile &TGF, const char *filename){
+int BCGrid::readTopometrixFile(TopoFile &TGF, FILE* file, const char *name){
 
-	TGF.readTopoFile(filename);
-	TGF.topoDataToGrid(this,filename);	
+	TGF.readTopoFile(file, name);
+	TGF.topoDataToGrid(this,name);	
 	return 1;	
 	
 }

@@ -351,13 +351,6 @@ typedef struct _tTopoDocument {
         SCANPARAMS      sScanParam;     /* [1545..2888] scan parameters */
 } TOPODOC, *PTOPODOC;
 
-// Apparently there are two entry points into this class
-// used by microscape (as of 5 Aug 99):
-//   BCGrid::readTopometrixFile (TopoFile &, const char *);
-//   BCGrid::readTopometrixFile (FILE *, const char *);
-// All calls to the latter have been commented out, but the code is
-// still here.  Of course, it's that code that we found and fixed first.
-
 class TopoFile{
 private:
     // We want to extract _only_ the info we are interested in.
@@ -424,7 +417,7 @@ public:
     int printScanParams();
     int printScanLayers();
     int printData();
-    int readTopoFile(const char *);
+    int readTopoFile(FILE*, const char *);
     int writeTopoFile(const char * filename);
     int writeTopoFile(FILE* handle);
     int parseHeader(const char *header,vrpn_int32 length);	      

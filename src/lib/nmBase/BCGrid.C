@@ -1297,17 +1297,33 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
 	return -1;
     }
 
+    //Strip the directory name from the filename
+    // Allow for Win or Unix path name, / or \ dividers. 
+    const char * name = NULL;
+    if (((name = strrchr(filename, '/')) == NULL) &&
+        ((name = strrchr(filename, '\\')) == NULL)) {
+        // We didn't find any path dividers - use the filename as passed in.
+        name = filename;
+    } else {
+        // We found a divider, advance past it. 
+        name +=1;
+        // Make sure we still have a string
+        if (strlen(name) <1) {
+            name = filename;
+        }           
+    }
+
     if (strncmp(magic,"DSBB",4) == 0) 
     {
-	return readBinaryFile(file, filename);
+	return readBinaryFile(file, name);
     } 
     else if (strncmp(magic,"DSAA",4) == 0) 
     {
-	return readTextFile(file, filename);
+	return readTextFile(file, name);
     } 
     else if (strncmp(magic,"UNCA",4) == 0) 
     {
-	return readUNCAFile(file, filename);
+	return readUNCAFile(file, name);
     } 
     else if (strncmp(magic,"file",4) == 0) 
     {   
@@ -1317,49 +1333,49 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
 	    return -1;
 	}
 	if (strncmp(magic, "form", 4) == 0)  // "fileformat..."
-	    return readSPIPFile(file, filename);
+	    return readSPIPFile(file, name);
 	else // "file ..."
-	    return readAsciiRHKFile(topoFile, file, filename);
+	    return readAsciiRHKFile(topoFile, file, name);
     } 
 
     else if (strncmp(magic,"UNCB",4) == 0) 
     {
-	return readUNCBFile(file, filename);
+	return readUNCBFile(file, name);
     } 
     else if (strncmp(magic,"Data",4) == 0) 
     {
-	return readNanoscopeFileWithoutHeader(file, filename);
+	return readNanoscopeFileWithoutHeader(file, name);
     } 
     else if (strncmp(magic,"\\*Fi",4) == 0) 
     {
-	return readBinaryNanoscopeFile(file, filename); 
+	return readBinaryNanoscopeFile(file, name); 
     } 
     else if (strncmp(magic,"?*Fi",4) == 0) 
     {
-        return readAsciiNanoscopeFile(file, filename);
+        return readAsciiNanoscopeFile(file, name);
     } 
     else if (strncmp(magic,"#R3.0",4) == 0)   // Topo file, v 3.0x
     {
-        return readTopometrixFile(topoFile,filename);
+        return readTopometrixFile(topoFile, file, name);
     } 
     else if (strncmp(magic,"#R4.0",4) == 0)   // Topo file, v 4.0x
     {
-        return readTopometrixFile(topoFile, filename);
+        return readTopometrixFile(topoFile, file, name);
     } 
     else if (strncmp(magic,"#R5.0",4) == 0)   // Topo file, v 5.0x
     {
-        return readTopometrixFile(topoFile, filename);
+        return readTopometrixFile(topoFile, file, name);
     } 
     else if (strncmp(magic,"P6",2) == 0) 
     {
-	return readPPMorPGMFile(file, filename);
+	return readPPMorPGMFile(file, name);
     } 
     else if ((strncmp(magic,"P2",2) == 0) || 
 	     (strncmp(magic,"P3",2) == 0) ||
 	     (strncmp(magic,"P5",2) == 0))
     {
         rewind(file);
-	return readPPMorPGMFileNew(file, filename);
+	return readPPMorPGMFileNew(file, name);
     } 
     else 
     {

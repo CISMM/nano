@@ -198,7 +198,7 @@ class BCGrid
     int parseNanoscopeFileHeader(FILE* file);
       ///< defined in readNanoscopeFile.C
 
-    int readTopometrixFile(TopoFile& TF, const char *name);
+    int readTopometrixFile(TopoFile& TF, FILE* file, const char *name);
       ///< in Topo.C
 
     int readComment(FILE *file, char *buffer, double* max_value);

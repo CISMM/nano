@@ -352,7 +352,6 @@ $toolmenu add command -label "VI Curve" -underline 0 \
 $toolmenu add command -label "Latency Adaptation" -underline 0 \
     -command "show.latency"
 
-
 $toolmenu add command -label "SEM" -underline 1 \
     -command "show.sem_win"
 }
@@ -469,11 +468,16 @@ source [file join ${tcl_script_dir} analysismenu.tcl]
 source [file join ${tcl_script_dir} stripchart.tcl]
 # Streamfile replay controls. Position depends on image window. 
 source [file join ${tcl_script_dir} streamfile.tcl]
+
 #Shared resource controls. Synchronize two copies of nM running
 # on different machines. Position depends on streamfile window.
+# Always sourced so mutex messages handled without error. 
 source [file join ${tcl_script_dir} shared_ptr.tcl]
+
+if { !$thirdtech_ui } {
 #Registration tool. Align two data sets with each other
 source [file join ${tcl_script_dir} registration.tcl]
+}
 # Dialogs accessed from the menus, like  vi_win, 
 # and nav_win.
 source [file join ${tcl_script_dir} toplevels.tcl]
@@ -749,6 +753,7 @@ after idle {
 
     wm geometry .streamfile ${left_strip_width}x${req_height}+${main_xpos}+$next_left_pos
 
+if { !$thirdtech_ui } {
     # Finally the shared_ptr window, for collaboration.
     #Make the window appear on the left edge below the streamfile window
     update idletasks
@@ -765,7 +770,7 @@ after idle {
 #  Can't specify the window size because we want it to change when we pack
 # the finegrained coupling controls.
     wm geometry .sharedptr +${main_xpos}+$next_left_pos
-
+}
 
     # Make the modify live window appear at the same position as the image
     wm geometry .modify_live +${main_xpos}+[expr $main_ypos +$main_height + 20]
