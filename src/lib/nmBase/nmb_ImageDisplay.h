@@ -25,13 +25,23 @@ class nmb_ImageDisplay {
   /// remove or disable the display of an image to the user
   virtual void removeImageFromDisplay(nmb_Image *image) = 0;
 
+  /// updateDisplayTransform:
   /// tell the display to change the coordinates of the image
   /// (e.g. by changing texture coordinates)
   /// transform argument is a 4x4 matrix in column-major order (as in openGL)
   /// If the transform argument is NULL, the display should
   /// use transformation information from the image structure
+
+  /// transformIsSelfReferential: if true it means you should avoid storing
+  /// the transform in the worldToImage transform of the image object
+  /// because the transform was computed using that value and you can get
+  /// into some feedback behavior if you store it in there
+  /// In the seegerizer (patternEditor.C) we normally store the transform in
+  /// the image so we need to be careful about this but in nano we store it
+  /// separate from the image so this isn't an issue
   virtual void updateDisplayTransform(nmb_Image *image, 
-                                      double *transform=NULL) = 0;
+                                      double *transform=NULL,
+									  bool transformIsSelfReferential=false) = 0;
 
   /// tell the display what mapping to use for translating values in the 
   /// image into the colors seen by the user
