@@ -1,4 +1,4 @@
-#############################################################################
+#b############################################################################
 #	Makefile for the nanoManipulator client application.  Needs to be
 # built using 'gmake'.  Should run on any architecture that is currently
 # supported.  It should be possible to build simultaneously on multiple
@@ -165,7 +165,7 @@ else
          CC := CC +w
       else
 	ifeq ($(HW_OS),pc_win32)
-      CC := cl
+            CC := cl
          else                          # default case
             CC := g++ -Wall
          endif
@@ -286,11 +286,7 @@ ifneq ($(USES_EXTERNAL_LIBS),)
    EXTERNAL_INC_DIR := $(EXTERNAL_PRE)/include
    EXTERNAL_LIB_DIR := $(EXTERNAL_PRE)/lib
 
-   ifdef VC
-      Aron???
-   else
-      EXTERNAL_LIBS := $(addprefix -l, $(USES_EXTERNAL_LIBS))
-   endif
+   EXTERNAL_LIBS := $(addprefix -l, $(USES_EXTERNAL_LIBS))
 
 endif
 
@@ -328,7 +324,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-   SYS_INCLUDE := /nsrc/external/include
+   SYS_INCLUDE := $(MY_NANO_SRC_DIR)/external/pc_win32/include $(MY_NANO_SRC_DIR)/external/pc_win32/include/ghost3.0 $(MY_NANO_SRC_DIR)/external/pc_win32/include/stl $(MY_NANO_SRC_DIR)/vrpn/server_src
 endif
 
 ifeq ($(HW_OS),pc_linux)
@@ -370,7 +366,10 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-  LOAD_FLAGS = -L/nsrc/external/lib/pc_win32
+  LOAD_FLAGS = -L$(MY_NANO_SRC_DIR)/external/pc_win32/lib -L$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32_MTd
+
+#/LIBPATH:$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32_MTd /LIBPATH:$(MY_NANO_SRC_DIR)/vrpn/pc_win32_MTd /LIBPATH:$(MY_NANO_SRC_DIR)/quat/pc_win32_MTd /LIBPATH:$(MY_NANO_SRC_DIR)/vogl/pc_win32_MTd
+
 endif
 
 ifeq ($(HW_OS),sgi_irix)
@@ -500,7 +499,7 @@ ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
 endif
 
 ifdef VC
-   LIBS := $(EXTERNAL_LIBS) $(GRAPHICS_LIBS) $(TCL_LIBS) $(ARCH_LIBS) -lm
+   LIBS := $(EXTERNAL_LIBS) $(GRAPHICS_LIBS) $(TCL_LIBS) $(ARCH_LIBS)
 endif
 
 LIBS += $(LATE_LIBRARIES)

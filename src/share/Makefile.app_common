@@ -85,6 +85,7 @@ ifdef VC
 # Replace -L with /LIBPATH seems to do it. 
   DLD = $(subst -L,/LIBPATH:,$(strip $(DEP_LIBS_LD)))
   VC_LOAD_FLAGS = $(subst -L,/LIBPATH:,$(strip $(LOAD_FLAGS)))
+  DLD += $(VC_LOAD_FLAGS)
 else
   OUTPUT_CMD := -o $(APP_EXEC)
   # Must be =, not :=, because DEP_LIBS_LIB isn't defined yet.
@@ -191,10 +192,10 @@ endif
 $(APP_EXEC): $(APP_OBJ)
 ifdef VC
   ifdef NM_VERBOSE_MAKEFILE
-	link $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(DLD) $(DPL) $(LIBS)
+	link $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(DLD) $(DPL) $(VC_LIBS)
   else
 	@echo link ... -o $(@F) ...
-	@link $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(DLD) $(DPL) $(LIBS)
+	@link $(LINK_FLAGS) $(OUTPUT_CMD) $(APP_OBJ_LINK) $(DLD) $(DPL) $(VC_LIBS)
   endif
 else
   ifdef NM_VERBOSE_MAKEFILE

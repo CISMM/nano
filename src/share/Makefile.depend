@@ -19,7 +19,11 @@ ifneq ($(DEPEND_EXISTS),true)
    ifdef USES_LIBS
       ALT_LIBS := $(foreach lib,$(USES_LIBS),$(findstring $(lib),$(filter-out -L/%,$(MY_ALT_LIB_DIR))))
       SEARCH_LIBS := $(filter-out $(ALT_LIBS),$(USES_LIBS))
-      USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) $(HW_OS)$(OBJECT_DIR_SUFFIX) $(lib) $(SEARCH_PATH)))
+      ifdef VC
+         USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) pc_win32_MTd$(OBJECT_DIR_SUFFIX) $(lib) $(SEARCH_PATH)))
+      else
+         USES_LIBS_TMP := $(foreach lib,$(SEARCH_LIBS),$(shell $(SEARCH_PROG) $(HW_OS)$(OBJECT_DIR_SUFFIX) $(lib) $(SEARCH_PATH)))
+      endif
       USES_LIBS_INC := $(filter-out -L%,$(USES_LIBS_TMP))
       USES_LIBS_LD  := $(filter-out -I%,$(USES_LIBS_TMP))
       USES_LIBS_LIB := $(addprefix -l,$(USES_LIBS))

@@ -1,3 +1,12 @@
+2000-08-30  Adam Seeger  <seeger@cs.unc.edu>
+
+        * Makefile.depend: if VC is defined then the library search paths for
+        things like vrpn, quat, vogl, vrpn_phantom have platform directory
+        pc_win32_MTd (Multi-Thread Debug with non DLL runtime library)
+        instead of just plain pc_win32
+        * Makefile.common: for VC, adds some stuff to SYS_INCLUDE, LOAD_FLAGS
+        * Makefile.app-common: for VC, uses VC_LOAD_FLAGS and VC_LIBS
+
 2000-08-11  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* all: Merge thirdtech_branch code to trunk.
