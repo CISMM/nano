@@ -44,7 +44,7 @@ class BCPlane
     inline double maxY() const { return _grid->maxY(); }
 
     inline int convertToColor(int x, int y) {
-	return (int) (254 * (_value[x + y * _num_x] - minAttainableValue()) /
+	return (int) (254 * (value(x,y) - minAttainableValue()) /
 		      (maxAttainableValue() - minAttainableValue()));
     }
       ///< Only valid for files, not streams or live devices
@@ -88,14 +88,15 @@ class BCPlane
 
     virtual	void setTime(int x, int y, long sec, long usec) = 0;
 
-    inline float value(int x, int y) const { return _value[x + y * _num_x]; }
+    inline float value(int x, int y) const 
+       { return _value[x + _border + (y + _border)* (_num_x+2*_border)]; }
     int valueAt (double * result, double x, double y);
     
     float interpolatedValue(double x, double y);
     float interpolatedValueAt(double x, double y);
 
     inline double scaledValue(int x, int y) const {
-	return _value[x + y * _num_x] * (double) _scale;
+	return value(x,y) * (double) _scale;
     }
 
     virtual void setValue(int x, int y, float value);
@@ -202,6 +203,7 @@ class BCPlane
 
     float * _value;
     int _num_x, _num_y;
+    int _border;
 
     long** _sec;
     long** _usec;

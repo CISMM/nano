@@ -15,6 +15,7 @@
 #include "nmb_String.h"
 #include <math.h>
 #include "Topo.h"
+#include <assert.h>
 
 #if !(defined(__CYGWIN__) || defined(_WIN32))
 #include <values.h>	// for MAXSHORT - probably different on windows
@@ -36,7 +37,7 @@
 #endif
 #define MIN(x,y)        (((x)<=(y))?(x):(y))
 
-typedef enum {NMB_FLOAT32, NMB_UINT8, NMB_UINT16, NMB_NONE}  nmb_PixelType;
+typedef enum {NMB_FLOAT32, NMB_UINT8, NMB_UINT16}  nmb_PixelType;
 
 class nmb_ImageBounds {
   public:
@@ -144,6 +145,12 @@ class nmb_Image {
         /// row0, row1, row2, ... row<height-1>
 	virtual void *pixelData() = 0;
 
+        /// gives the border width for data returned by pixelData
+        virtual int border() = 0;
+
+        /// tells you the size of the array returned by pixelData()
+        virtual int arrayLength() = 0;
+
         /// tells you what type of data is returned by pixelData
         virtual nmb_PixelType pixelType() = 0;
 
@@ -198,6 +205,8 @@ class nmb_ImageGrid : public nmb_Image{
         virtual void setTopoFileInfo(TopoFile &tf);
         virtual void getTopoFileInfo(TopoFile &tf);
         virtual void *pixelData();
+        virtual int border();
+        virtual int arrayLength();
 	virtual nmb_PixelType pixelType();
         virtual int numExportFormats();
 	virtual nmb_ListOfStrings *exportFormatNames();
@@ -226,67 +235,113 @@ class nmb_ImageGrid : public nmb_Image{
         static TopoFile s_topoFileDefaults;
 };
 
-template <class PixelType>
+/* This was originally written as a template with variable type for the pixel
+   data but something about this mixture of templates and inheritance seems
+   to cause the sgi CC to do something really nasty. -- AAS
+*/
+
 class nmb_ImageArray : public nmb_Image {
   public:
-    nmb_ImageArray(const char *name, const char *units, short x, short y);
+    nmb_ImageArray(const char *name, const char *units, short x, short y,
+        nmb_PixelType pixType = NMB_FLOAT32);
     nmb_ImageArray(nmb_Image *);
     virtual ~nmb_ImageArray();
     virtual int width() const;
     virtual int height() const;
-    virtual void *pixelData(); 
-    virtual nmb_PixelType pixelType();
+
     virtual float getValue(int i, int j) const;
     virtual void setValue(int i, int j, float val);
-    virtual void setLine(int line, void *line_data);
-    virtual void setImage(void *newdata);
-    virtual int validDataRange(short* o_top, short* o_left,
-                                   short* o_bottom, short*o_right);
+    /// min and max of values actually in the image:
     virtual float maxValue();
     virtual float minValue();
     virtual int normalize();
+    // min and max of values that have been set
     virtual float maxValidValue();
     virtual float minValidValue();
     virtual float maxNonZeroValue();
     virtual float minNonZeroValue();
-    virtual float maxAttainableValue() const;
+    /// min and max representable values:
     virtual float minAttainableValue() const;
+    virtual float maxAttainableValue() const;
+    virtual int validDataRange(short* o_top, short* o_left,
+                               short* o_bottom, short*o_right);
+
     virtual double boundX(nmb_ImageBounds::ImageBoundPoint ibp) const;
     virtual double boundY(nmb_ImageBounds::ImageBoundPoint ibp) const;
     virtual void setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x);
     virtual void setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y);
     virtual void getBounds(nmb_ImageBounds &ib) const;
     virtual void setBounds(const nmb_ImageBounds &ib);
-    virtual BCString *name();
-    virtual BCString *unitsValue();
-    virtual BCString *unitsX();
-    virtual BCString *unitsY();
- 
+
     virtual void setTopoFileInfo(TopoFile &) {
-      fprintf(stderr, 
+      fprintf(stderr,
           "Warning: nmb_ImageArray::setTopoFileInfo not implemented\n");
     }
     virtual void getTopoFileInfo(TopoFile &) {
-      fprintf(stderr, 
+      fprintf(stderr,
           "Warning: nmb_ImageArray::getTopoFileInfo not implemented\n");
     }
+
+    virtual BCString *name();
+    virtual BCString *unitsX();
+    virtual BCString *unitsY();
+    virtual BCString *unitsValue();
+
+    /// gives address of an array of pixels in the order
+    /// row0, row1, row2, ... row<height-1>
+    virtual void *pixelData();
+
+    /// gives the border width for data returned by pixelData
+    virtual int border();
+
+    /// tells you the size of the array returned by pixelData()
+    virtual int arrayLength();
+
+    /// tells you what type of data is returned by pixelData
+    virtual nmb_PixelType pixelType();
+
     virtual int numExportFormats();
-    virtual nmb_ListOfStrings *exportFormatNames();
     virtual const char *exportFormatType(int type);
+    virtual nmb_ListOfStrings *exportFormatNames();
     virtual int exportToFile(FILE *f, const char *export_type);
 
+
+    virtual void setLine(int line, void *line_data);
+    virtual void setImage(void *newdata);
+
     typedef int (*FileExportingFunction) 
-            (FILE *file, nmb_ImageArray<PixelType> *im);
+            (FILE *file, nmb_ImageArray *im);
   protected:
-    PixelType *data;
+    int arrIndex(int i, int j) const
+      { return (i+d_border+(j+d_border)*(num_x+2*d_border));}
+    int pixelSize() 
+    {
+      switch(d_pixelType) {
+        case NMB_FLOAT32:
+          return sizeof(vrpn_float32);
+        case NMB_UINT8:
+          return sizeof(vrpn_uint8);
+        case NMB_UINT16:
+          return sizeof(vrpn_uint16);
+        default:
+          return 0;
+      }
+    }
+
+    vrpn_float32 *fData;
+    vrpn_uint8 *ucData;
+    vrpn_uint16 *usData;
+
+    void *data;
     short num_x, num_y;
+    short d_border;
     BCString units_x, units_y, units, my_name;
     short min_x_set, min_y_set, max_x_set, max_y_set;
 
-        static const int     num_export_formats;
-        static const char    *export_formats_list[];
-        nmb_ListOfStrings formatNames;
-        static const FileExportingFunction file_exporting_function[];
+    static const int     num_export_formats;
+    static const char    *export_formats_list[];
+    nmb_ListOfStrings formatNames;
+    static const FileExportingFunction file_exporting_function[];
 
     vrpn_bool d_minNonZeroValueComputed;
     float d_minNonZeroValue;
@@ -300,7 +355,7 @@ class nmb_ImageArray : public nmb_Image {
     float d_minValidValue;
 
     nmb_ImageBounds d_imagePosition; // position in the world
-
+    nmb_PixelType d_pixelType;
 };
 
 #define NMB_MAX_IMAGELIST_LENGTH 100

@@ -40,7 +40,7 @@ setValue
 void
 BCPlane::setValue(int x, int y, float value)
 {
-    _value[x + y * _num_x] = value;
+    _value[x + _border + (y + _border)* (_num_x + 2*_border)] = value;
     _modified = 1;
     _modified_nz = 1;
 
@@ -306,7 +306,7 @@ int BCPlane::valueAt (double * result, double x, double y) {
       //fprintf(stderr, "BCPlane::valueAt %d %d:  Out of bounds!.\n", ix, iy);
     return -1;
   }
-  *result = _value [ix + iy * _num_x];
+  *result = _value[ix + _border + (iy + _border)* (_num_x + 2*_border)];
   return 0;
 }
 
@@ -459,6 +459,7 @@ BCPlane::BCPlane(BCString name, BCString units, int nx, int ny)
     _units = units;
     _num_x = nx;
     _num_y = ny;
+    _border = 1;
     _grid = (BCGrid*) NULL;
 
     _min_value = 0.0;
@@ -484,7 +485,7 @@ BCPlane::BCPlane(BCString name, BCString units, int nx, int ny)
 		//exit(-1);
 	//}
     //}
-    _value = new float [_num_x * _num_y];
+    _value = new float [(_num_x+2*_border) * (_num_y+2*_border)];
     if (!_value) {
       fprintf(stderr,"BCPlane::BCPlane(): new failed!\n");
       exit(-1);
@@ -507,6 +508,7 @@ BCPlane::BCPlane(BCPlane* plane)
     _units = plane->_units;
     _num_x = plane->_num_x;
     _num_y = plane->_num_y;
+    _border = plane->_border;
     _grid = plane->_grid;
 
     _min_value = plane->_min_value;
@@ -521,7 +523,7 @@ BCPlane::BCPlane(BCPlane* plane)
 
     _next = NULL;
 
-    _value = new float [_num_x * _num_y];
+    _value = new float [(_num_x+2*_border) * (_num_y+2*_border)];
     if (!_value) {
       fprintf(stderr,"BCPlane::BCPlane(): new failed!\n");
       exit(-1);
@@ -536,6 +538,7 @@ BCPlane::BCPlane(BCPlane* plane, int newX, int newY)
     _units = plane->_units;
     _num_x = newX;
     _num_y = newY;
+    _border = plane->_border;
     _grid = plane->_grid;
 
     _min_value = plane->_min_value;
@@ -550,7 +553,7 @@ BCPlane::BCPlane(BCPlane* plane, int newX, int newY)
 
     _next = NULL;
 
-    _value = new float [newX * newY];
+    _value = new float [(newX+2*_border) * (newY+2*_border)];
     if (!_value) {
       fprintf(stderr,"BCPlane::BCPlane(): new failed!\n");
       exit(-1);
@@ -594,14 +597,14 @@ int BCPlane::setGridSize(int x, int y)
   // Grid resolution has changed. Re-allocate and initialize plane to zero.
     delete [] _value;
     _value = NULL;
-    _value = new float [x * y];
+    _value = new float [(x + 2*_border) * (y + 2*_border)];
     if (!_value) {
 	fprintf(stderr, "BCPlane::setGridSize, out of memory.\n");
 	_num_x = _num_y = 0;
 	return -1;
     }
     // Set plane values to zero - indicates that no data has arrived in the plane. 
-    memset(_value, 0, x*y*sizeof(float));
+    memset(_value, 0, (x+2*_border)*(y+2*_border)*sizeof(float));
 
     if (_timed == TIMED) {
 	int i;
@@ -1590,9 +1593,9 @@ CPlane::CPlane(BCString name, BCString units, int nx, int ny) :
 
     int x, y;
 
-    for (x = 0; x < _num_x; x++) 
-	for (y = 0; y < _num_y; y++)
-	    _value[x + y * _num_x] = 0.0;
+    for (x = 0; x < _num_x+2*_border; x++) 
+	for (y = 0; y < _num_y+2*_border; y++)
+	    _value[x + y*(_num_x+2*_border)] = 0.0;
 }
 
 
@@ -1613,11 +1616,11 @@ CPlane::CPlane(CPlane* plane) : BCPlane(plane)
     
     for (x = 0; x < _num_x; x++) 
 	for (y = 0; y < _num_y; y++)
-	    _value[x + y * _num_x] = 0.0;
+	    _value[x + y*(_num_x+2*_border)] = 0.0;
 
     for (x = 0; x < plane->numX(); x++) 
 	for (y = 0; y < plane->numY(); y++) 
-	    _value[x + y * _num_x] =  plane->value(x, y);
+	    setValue(x,y,plane->value(x, y));
 }
 
 CPlane::CPlane (CPlane * plane, int newX, int newY) :
@@ -1630,13 +1633,13 @@ CPlane::CPlane (CPlane * plane, int newX, int newY) :
 
     int x, y;
     
-    for (x = 0; x < newX; x++) 
-	for (y = 0; y < newY; y++)
-	    _value[x * newY + y] = 0.0;
+    for (x = 0; x < newX+2*_border; x++) 
+	for (y = 0; y < newY+2*_border; y++)
+	    _value[x + y*(newY+2*_border)] = 0.0;
 
     for (x = 0; x < newX; x++) 
 	for (y = 0; y < newY; y++) 
-	    _value[x * newY + y] =  plane->value(x, y);
+	    setValue(x,y,plane->value(x, y));
 }
 
 
@@ -1715,7 +1718,7 @@ CTimedPlane::CTimedPlane(BCString name, BCString units, int nx, int ny) :
 
 	for (y = 0; y < _num_y; y++) 
 	{
-	    _value[x + y * _num_x] =  0.0;
+	    setValue(x,y,0.0);
 	    _sec[x][y] = 0;
 	    _usec[x][y] = 0;
 	}
@@ -1745,7 +1748,7 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane) : BCPlane(plane)
 
 	for (y = 0; y < _num_y; y++)
 	{
-	    _value[x + y * _num_x] =  0.0;
+            setValue(x,y,0.0);
 	    _sec[x][y] = 0;
 	    _usec[x][y] = 0; 
 	}
@@ -1755,7 +1758,7 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane) : BCPlane(plane)
     {
 	for (y = 0; y < plane->numY(); y++) 
 	{
-	    _value[x + y * _num_x] = plane->value(x, y);
+	    setValue(x,y,plane->value(x, y));
 	    _sec[x][y] = plane->_sec[x][y];
 	    _usec[x][y] = plane->_usec[x][y];
 	}
@@ -1780,7 +1783,7 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane, int newX, int newY) :
 
 	for (y = 0; y < newY; y++)
 	{
-	    _value[x * newY + y] =  0.0;
+	    setValue(x,y,0.0);
 	    _sec[x][y] = 0;
 	    _usec[x][y] = 0; 
 	}
@@ -1790,7 +1793,7 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane, int newX, int newY) :
     {
 	for (y = 0; y < newY; y++) 
 	{
-	    _value[x * newY + y] = plane->value(x, y);
+	    setValue(x,y,plane->value(x, y));
 	    _sec[x][y] = plane->_sec[x][y];
 	    _usec[x][y] = plane->_usec[x][y];
 	}

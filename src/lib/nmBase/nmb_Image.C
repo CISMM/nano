@@ -639,6 +639,15 @@ void nmb_ImageGrid::getTopoFileInfo(TopoFile &tf)
 
 void *nmb_ImageGrid::pixelData() { return (void *)(plane->flatValueArray());}
 
+int nmb_ImageGrid::border() { return plane->_border;}
+
+
+int nmb_ImageGrid::arrayLength() 
+{ 
+   return ((2*border()+width())*(2*border()+height()));
+}
+
+
 nmb_PixelType nmb_ImageGrid::pixelType() {return NMB_FLOAT32;}
 
 int nmb_ImageGrid::numExportFormats() {return num_export_formats;}
@@ -722,20 +731,20 @@ int nmb_ImageGrid::writeUNCAFile(FILE *file, nmb_ImageGrid *im)
     return 0;
 }
 
-template <class PixelType>
-const int nmb_ImageArray<PixelType>::num_export_formats = 0;
+const int nmb_ImageArray::num_export_formats = 0;
 
-template <class PixelType>
-const char *nmb_ImageArray<PixelType>::export_formats_list[] = {"none"};
+const char *nmb_ImageArray::export_formats_list[] = {"none"};
 
-template <class PixelType>
-const nmb_ImageArray<PixelType>::FileExportingFunction
-        nmb_ImageArray<PixelType>::file_exporting_function[] = {NULL};
+const nmb_ImageArray::FileExportingFunction
+        nmb_ImageArray::file_exporting_function[] = {NULL};
 
-nmb_ImageArray<vrpn_uint8>::nmb_ImageArray(const char *name,
+nmb_ImageArray::nmb_ImageArray(const char *name,
                                           const char * /*units*/,
-                                          short x, short y):
-        nmb_Image(), num_x(x), num_y(y),
+                                          short x, short y,
+                                          nmb_PixelType pixType):
+        nmb_Image(), 
+        fData(NULL),ucData(NULL), usData(NULL), data(NULL),
+        num_x(x), num_y(y), d_border(1),
         units_x("none"), units_y("none"), units("ADC"),
         my_name(name),
         d_minNonZeroValueComputed(VRPN_FALSE),
@@ -748,89 +757,71 @@ nmb_ImageArray<vrpn_uint8>::nmb_ImageArray(const char *name,
         d_minValidValue(0),
         d_maxValidValueComputed(VRPN_FALSE),
         d_maxValidValue(0),
-        d_imagePosition(0.0, 0.0, 1.0, 1.0)
+        d_imagePosition(0.0, 0.0, 1.0, 1.0),
+        d_pixelType(pixType)
 {
     min_x_set = MAXSHORT; min_y_set = MAXSHORT;
     max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
-    data = new vrpn_uint8[x*y];
+    int array_size = arrayLength();
+    switch (d_pixelType) {
+      case NMB_FLOAT32:
+        data = new vrpn_float32[array_size];
+        break;
+      case NMB_UINT8:
+        data = new vrpn_uint8[array_size];
+        break;
+      case NMB_UINT16:
+        data = new vrpn_uint16[array_size];
+        break;
+      default:
+        fprintf(stderr, "nmb_ImageArray::nmb_ImageArray:"
+           " Error, unknown type\n");
+        break;
+    }
     if (!data) {
         fprintf(stderr, "nmb_ImageArray::nmb_ImageArray:"
                         " Error, out of memory\n");
+        return;
     }
+
+    fData = (vrpn_float32 *)data;
+    ucData = (vrpn_uint8 *)data;
+    usData = (vrpn_uint16 *)data;
+
+    int j;
+    switch (d_pixelType) {
+      case NMB_FLOAT32:
+        for (j = 0; j < array_size; j++) {
+           fData[j] = 0;
+        }
+        break;
+      case NMB_UINT8:
+        for (j = 0; j < array_size; j++) {
+           ucData[j] = 0;
+        }
+        break;
+      case NMB_UINT16:
+        for (j = 0; j < array_size; j++) {
+           usData[j] = 0;
+        }
+        break;
+      default:
+        fprintf(stderr, "nmb_ImageArray::nmb_ImageArray:"
+           " Error, unknown type\n");
+        break;
+    }
+
     for (int i = 0; i < numExportFormats(); i++){
         BCString name = exportFormatType(i);
         formatNames.addEntry(name);
     }
 }
 
-nmb_ImageArray<vrpn_uint16>::nmb_ImageArray(const char *name,
-                                          const char * /*units*/,
-                                          short x, short y):
-        nmb_Image(), num_x(x), num_y(y),
-        units_x("none"), units_y("none"), units("ADC"),
-        my_name(name),
-        d_minNonZeroValueComputed(VRPN_FALSE),
-        d_minNonZeroValue(0),
-        d_minValueComputed(VRPN_FALSE),
-        d_minValue(0),
-        d_maxValueComputed(VRPN_FALSE),
-        d_maxValue(0),
-        d_minValidValueComputed(VRPN_FALSE),
-        d_minValidValue(0),
-        d_maxValidValueComputed(VRPN_FALSE),
-        d_maxValidValue(0),
-        d_imagePosition(0.0, 0.0, 1.0, 1.0)
+nmb_ImageArray::nmb_ImageArray(nmb_Image *im)
 {
-    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
-    max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
-    data = new vrpn_uint16[x*y];
-    if (!data) {
-        fprintf(stderr, "nmb_ImageArray::nmb_ImageArray:"
-                        " Error, out of memory\n");
-    }
-    for (int i = 0; i < numExportFormats(); i++){
-        BCString name = exportFormatType(i);
-        formatNames.addEntry(name);
-    }
-}
-
-nmb_ImageArray<vrpn_float32>::nmb_ImageArray(const char *name,
-                                          const char * /*units*/,
-                                          short x, short y):
-        nmb_Image(), num_x(x), num_y(y),
-        units_x("none"), units_y("none"), units("ADC"),
-        my_name(name),
-        d_minNonZeroValueComputed(VRPN_FALSE),
-        d_minNonZeroValue(0),
-        d_minValueComputed(VRPN_FALSE),
-        d_minValue(0),
-        d_maxValueComputed(VRPN_FALSE),
-        d_maxValue(0),
-        d_minValidValueComputed(VRPN_FALSE),
-        d_minValidValue(0),
-        d_maxValidValueComputed(VRPN_FALSE),
-        d_maxValidValue(0),
-        d_imagePosition(0.0, 0.0, 1.0, 1.0)
-{
-    min_x_set = MAXSHORT; min_y_set = MAXSHORT;
-    max_x_set = -MAXSHORT; max_y_set = -MAXSHORT;
-    data = new vrpn_float32[x*y];
-    if (!data) {
-        fprintf(stderr, "nmb_ImageArray::nmb_ImageArray:"
-                        " Error, out of memory\n");
-    }
-    for (int i = 0; i < numExportFormats(); i++){
-        BCString name = exportFormatType(i);
-        formatNames.addEntry(name);
-    }
-}
-
-template <class PixelType>
-nmb_ImageArray<PixelType>::nmb_ImageArray(nmb_Image *im)
-{
-  nmb_ImageArray<PixelType>(im->name()->Characters(),
+  nmb_ImageArray(im->name()->Characters(),
                   im->unitsValue()->Characters(),
-                  im->width(), im->height());
+                  im->width(), im->height(), im->pixelType());
   units_x = *(im->unitsX());
   units_y = *(im->unitsY());
   int i,j;
@@ -842,72 +833,129 @@ nmb_ImageArray<PixelType>::nmb_ImageArray(nmb_Image *im)
   im->validDataRange(&max_y_set, &min_x_set, &min_y_set, &max_x_set);
 }
 
-template <class PixelType>
-nmb_ImageArray<PixelType>::~nmb_ImageArray() {if (data) delete [] data;}
+nmb_ImageArray::~nmb_ImageArray() {
+  if (data) {
+    delete [] data;
+    data = NULL;
+    fData = NULL;
+    ucData = NULL;
+    usData = NULL;
+  }
+}
 
-template <class PixelType>
-int nmb_ImageArray<PixelType>::width() const {return num_x;}
+int nmb_ImageArray::width() const {return num_x;}
 
-template <class PixelType>
-int nmb_ImageArray<PixelType>::height() const {return num_y;}
+int nmb_ImageArray::height() const {return num_y;}
 
-// I don't think its possible to write a default function to return the
-// right type for pixelType() so I disabled this feature by default and
-// made some special ones for the types we will use
-template <class PixelType>
-void *nmb_ImageArray<PixelType>::pixelData() {return NULL;}
+int nmb_ImageArray::border() {return d_border;}
 
-template <class PixelType>
-nmb_PixelType nmb_ImageArray<PixelType>::pixelType() {return NMB_NONE;}
-
-void *nmb_ImageArray<vrpn_uint8>::pixelData() {return data;}
-
-nmb_PixelType nmb_ImageArray<vrpn_uint8>::pixelType() 
-	{return NMB_UINT8;}
-
-void *nmb_ImageArray<vrpn_uint16>::pixelData() {return data;}
-
-nmb_PixelType nmb_ImageArray<vrpn_uint16>::pixelType() 
-        {return NMB_UINT16;}
-
-void *nmb_ImageArray<vrpn_float32>::pixelData() {return data;}
-
-nmb_PixelType nmb_ImageArray<vrpn_float32>::pixelType() 
-        {return NMB_FLOAT32;}
-
-template <class PixelType>
-float nmb_ImageArray<PixelType>::getValue(int i, int j) const
-        {return (float)(data[i+j*num_x]);}
-
-template <class PixelType>
-void nmb_ImageArray<PixelType>::setValue(int i, int j, float val)
+int nmb_ImageArray::arrayLength() 
 {
-    if (val > maxAttainableValue()) {
-        data[i+j*num_x] = (PixelType) maxAttainableValue();
-    } else if (val < minAttainableValue()) {
-        data[i+j*num_x] = (PixelType) minAttainableValue();
-    } else {
-        data[i+j*num_x] = (PixelType)val;
-    }
-    d_minValueComputed = VRPN_FALSE;
-    d_maxValueComputed = VRPN_FALSE;
-    d_minNonZeroValueComputed = VRPN_FALSE;
-    d_minValidValueComputed = VRPN_FALSE;
-    d_maxValidValueComputed = VRPN_FALSE;
+   return ((2*d_border+num_x)*(2*d_border+num_y));
+}
+
+nmb_PixelType nmb_ImageArray::pixelType() {return d_pixelType;}
+
+void *nmb_ImageArray::pixelData() {return data;}
+
+float nmb_ImageArray::getValue(int i, int j) const
+{
+  int index = arrIndex(i,j);
+  switch (d_pixelType) {
+    case NMB_FLOAT32:
+      return (float)fData[index];
+    case NMB_UINT8:
+      return (float)ucData[index];
+    case NMB_UINT16:
+      return (float)usData[index];
+    default:
+      fprintf(stderr, "nmb_ImageArray::getValue:"
+           " Error, unknown type\n");
+      break;
+  }
+  return 0.0;
+}
+
+void nmb_ImageArray::setValue(int i, int j, float val)
+{
+  float clampedValue;
+  if (val > maxAttainableValue()) {
+      clampedValue = maxAttainableValue(); 
+  } else if (val < minAttainableValue()) {
+      clampedValue = minAttainableValue();
+  } else {
+      clampedValue = val;
+  }
+  switch (d_pixelType) {
+    case NMB_FLOAT32:
+      fData[arrIndex(i,j)] = (float)clampedValue;
+      break;
+    case NMB_UINT8:
+      ucData[arrIndex(i,j)] = (vrpn_uint8)clampedValue;
+      break;
+    case NMB_UINT16:
+      usData[arrIndex(i,j)] = (vrpn_uint16)clampedValue;
+      break;
+    default:
+      fprintf(stderr, "nmb_ImageArray::setValue:"
+           " Error, unknown type\n");
+      break;
+  }
+
+  d_minValueComputed = VRPN_FALSE;
+  d_maxValueComputed = VRPN_FALSE;
+  d_minNonZeroValueComputed = VRPN_FALSE;
+  d_minValidValueComputed = VRPN_FALSE;
+  d_maxValidValueComputed = VRPN_FALSE;
 } 
 
-template <class PixelType>
-void nmb_ImageArray<PixelType>::setLine(int line, void *line_data) {
-    memcpy(&(data[line*num_x]), line_data, num_x*sizeof(PixelType));
+void nmb_ImageArray::setLine(int line, void *line_data) {
+  switch(d_pixelType) {
+    case NMB_FLOAT32:
+      memcpy(&(fData[(line+d_border)*(num_x+2*d_border)+d_border]),
+               line_data, num_x*sizeof(vrpn_float32));
+      break;
+    case NMB_UINT8:
+      memcpy(&(ucData[(line+d_border)*(num_x+2*d_border)+d_border]),
+               line_data, num_x*sizeof(vrpn_uint8));
+      break;
+    case NMB_UINT16:
+      memcpy(&(usData[(line+d_border)*(num_x+2*d_border)+d_border]),
+               line_data, num_x*sizeof(vrpn_uint16));
+      break;
+    default:
+      fprintf(stderr, "nmb_ImageArray::getLine:"
+           " Error, unknown type\n");
+      break;
+  }
 }
 
-template <class PixelType>
-void nmb_ImageArray<PixelType>::setImage(void *newdata) {
-    memcpy(data, newdata, num_x*num_y*sizeof(PixelType));
+void nmb_ImageArray::setImage(void *newdata) {
+  int i;
+  switch(d_pixelType) {
+    case NMB_FLOAT32:
+      for (i = 0; i < num_y; i++){
+        setLine(i, &(((vrpn_float32*)newdata)[num_x*i]));
+      }
+      break;
+    case NMB_UINT8:
+      for (i = 0; i < num_y; i++){
+        setLine(i, &(((vrpn_uint8*)newdata)[num_x*i]));
+      }
+      break;
+    case NMB_UINT16:
+      for (i = 0; i < num_y; i++){
+        setLine(i, &(((vrpn_uint16*)newdata)[num_x*i]));
+      }
+      break;
+    default:
+      fprintf(stderr, "nmb_ImageArray::setImage:"
+           " Error, unknown type\n");
+      break;
+  }
 }
 
-template <class PixelType>
-int nmb_ImageArray<PixelType>::validDataRange(short* o_top, short* o_left,
+int nmb_ImageArray::validDataRange(short* o_top, short* o_left,
                                    short* o_bottom, short*o_right){
      // if no valid data:
      if (min_y_set > max_y_set || min_x_set > max_x_set)
@@ -918,28 +966,48 @@ int nmb_ImageArray<PixelType>::validDataRange(short* o_top, short* o_left,
      return 0;
 }
 
-template <class PixelType>
-float nmb_ImageArray<PixelType>::maxAttainableValue() const {return 0.0;}
-template <class PixelType>
-float nmb_ImageArray<PixelType>::minAttainableValue() const {return 0.0;}
+float nmb_ImageArray::maxAttainableValue() const 
+{
+  switch(d_pixelType) {
+    case NMB_FLOAT32:
+      return FLT_MAX;
+    case NMB_UINT8:
+      return 255.0f;
+    case NMB_UINT16:
+      return 65535.0f;
+    default:
+      fprintf(stderr, "nmb_ImageArray::maxAttainableValue:"
+           " Error, unknown type\n");
+      return 0.0;
+  }
+}
 
-float nmb_ImageArray<vrpn_uint8>::maxAttainableValue() const {return 255.0f;}
-float nmb_ImageArray<vrpn_uint8>::minAttainableValue() const {return 0.0f;}
+float nmb_ImageArray::minAttainableValue() const
+{
+  switch(d_pixelType) {
+    case NMB_FLOAT32:
+      return -FLT_MAX;
+    case NMB_UINT8:
+      return 0.0f;
+    case NMB_UINT16:
+      return 0.0f;
+    default:
+      fprintf(stderr, "nmb_ImageArray::minAttainableValue:"
+           " Error, unknown type\n");
+      return 0.0;
+  }
+}
 
-float nmb_ImageArray<vrpn_uint16>::maxAttainableValue() const {return 65535.0f;}
-float nmb_ImageArray<vrpn_uint16>::minAttainableValue() const {return 0.0f;}
-
-float nmb_ImageArray<vrpn_float32>::maxAttainableValue() const {return FLT_MAX;}
-float nmb_ImageArray<vrpn_float32>::minAttainableValue() const {return -FLT_MAX;}
-
-template <class PixelType>
-float nmb_ImageArray<PixelType>::maxValue()
+float nmb_ImageArray::maxValue()
 {
     if (!d_maxValueComputed) {
-        d_maxValue = (float)data[0];
-        for (int i = 1; i < num_x*num_y; i++){
-            if (data[i] > d_maxValue) {
-		d_maxValue = data[i];
+        d_maxValue = getValue(0,0);
+        for (int i = 0; i < num_x; i++){
+            for (int j = 0; j < num_y; j++){
+                float val = getValue(i,j);
+                if (val > d_maxValue) {
+		    d_maxValue = val;
+                }
             }
         }
         d_maxValueComputed = VRPN_TRUE;
@@ -947,14 +1015,16 @@ float nmb_ImageArray<PixelType>::maxValue()
     return d_maxValue;
 }
 
-template <class PixelType>
-float nmb_ImageArray<PixelType>::minValue() 
+float nmb_ImageArray::minValue() 
 {
     if (!d_minValueComputed) {
-        d_minValue = (float)data[0];
-        for (int i = 1; i < num_x*num_y; i++){
-            if (data[i] < d_maxValue) {
-                d_minValue = data[i];
+        d_minValue = getValue(0,0);
+        for (int i = 0; i < num_x; i++){
+            for (int j = 0; j < num_y; j++){
+                float val = getValue(i,j);
+                if (val < d_minValue) {
+                    d_minValue = val;
+                }
             }
         }
         d_minValueComputed = VRPN_TRUE;
@@ -962,34 +1032,37 @@ float nmb_ImageArray<PixelType>::minValue()
     return d_minValue;
 }
 
-template <class PixelType>
-int nmb_ImageArray<PixelType>::normalize() {
-  assert(minAttainableValue() == 0.0);
+int nmb_ImageArray::normalize() {
   float min = minValue();
   float range = (maxValue() - min);
-  if (range == 0) return -1;
-  float inv_range = 1.0/range;
-  for (int i = 0; i < num_x*num_y; i++) {
-     data[i] = (PixelType)(inv_range * (data[i] - min) * maxAttainableValue());
+  float inv_range;
+  if (range == 0) {
+     inv_range = 0;
+  } else {
+     inv_range = 1.0/range;
+  }
+
+  // special case for floats - normalize to the range 0..1
+  if (d_pixelType == NMB_FLOAT32) {
+    for (int i = 0; i < num_x; i++) {
+      for (int j = 0; j < num_y; j++) {
+        setValue(i,j, (inv_range*(getValue(i,j)-min)));
+      }
+    }
+  } else {
+    assert(minAttainableValue() == 0.0);
+    for (int i = 0; i < num_x; i++) {
+      for (int j = 0; j < num_y; j++) {
+        setValue(i,j,
+            (inv_range * (getValue(i,j) - min) * maxAttainableValue()));
+      }
+    }
   }
 
   return 0;
 }
 
-int nmb_ImageArray<vrpn_float32>::normalize() {
-  float min = minValue();
-  float range = (maxValue() - min);
-  if (range == 0) return -1;
-  float inv_range = 1.0/range;
-  for (int i = 0; i < num_x*num_y; i++) {
-     data[i] = (inv_range * (data[i] - min));
-  }
-
-  return 0;
-}
-
-template <class PixelType>
-float nmb_ImageArray<PixelType>::maxValidValue() {
+float nmb_ImageArray::maxValidValue() {
     short top, left, bottom, right;
     if (validDataRange(&top, &left, &bottom, &right)) {
         return 0;
@@ -1012,8 +1085,7 @@ float nmb_ImageArray<PixelType>::maxValidValue() {
     return d_maxValidValue;
 }
 
-template <class PixelType>
-float nmb_ImageArray<PixelType>::minValidValue() {
+float nmb_ImageArray::minValidValue() {
     short top, left, bottom, right;
     if (validDataRange(&top, &left, &bottom, &right)) {
         return 0;
@@ -1036,13 +1108,11 @@ float nmb_ImageArray<PixelType>::minValidValue() {
     return d_minValidValue;
 }
 
-template <class PixelType>
-float nmb_ImageArray<PixelType>::maxNonZeroValue() {
+float nmb_ImageArray::maxNonZeroValue() {
     return maxValidValue();
 }
 
-template <class PixelType>
-float nmb_ImageArray<PixelType>::minNonZeroValue() {
+float nmb_ImageArray::minNonZeroValue() {
     if (!d_minNonZeroValueComputed) {
       int i,j;
       float val = 0, d_minNonZeroValue = 0;
@@ -1059,74 +1129,53 @@ float nmb_ImageArray<PixelType>::minNonZeroValue() {
     return d_minNonZeroValue;
 }
 
-template <class PixelType>
-double nmb_ImageArray<PixelType>::boundX(
+double nmb_ImageArray::boundX(
                     nmb_ImageBounds::ImageBoundPoint ibp) const
 {
     return d_imagePosition.getX(ibp);
 }
 
-template <class PixelType>
-double nmb_ImageArray<PixelType>::boundY(
+double nmb_ImageArray::boundY(
                    nmb_ImageBounds::ImageBoundPoint ibp) const
 {
     return d_imagePosition.getY(ibp);
 }
 
-template <class PixelType>
-void nmb_ImageArray<PixelType>::setBoundX(
+void nmb_ImageArray::setBoundX(
     nmb_ImageBounds::ImageBoundPoint ibp,
     double x)
 {
     d_imagePosition.setX(ibp, x);
 }
 
-template <class PixelType>
-void nmb_ImageArray<PixelType>::setBoundY(
+void nmb_ImageArray::setBoundY(
     nmb_ImageBounds::ImageBoundPoint ibp,
     double y)
 {
     d_imagePosition.setY(ibp, y);
 }
 
-template <class PixelType>
-void nmb_ImageArray<PixelType>::setBounds(const nmb_ImageBounds & ib) 
+void nmb_ImageArray::setBounds(const nmb_ImageBounds & ib) 
 {
     d_imagePosition = ib;
 }
 
-template <class PixelType>
-void nmb_ImageArray<PixelType>::getBounds(nmb_ImageBounds &ib)  const
+void nmb_ImageArray::getBounds(nmb_ImageBounds &ib)  const
 {
     ib = d_imagePosition;
 }
 
-template <class PixelType>
-BCString *nmb_ImageArray<PixelType>::name() {return &my_name;}
-template <class PixelType>
-BCString *nmb_ImageArray<PixelType>::unitsValue() {return &units;}
-template <class PixelType>
-BCString *nmb_ImageArray<PixelType>::unitsX() {return &units_x;}
-template <class PixelType>
-BCString *nmb_ImageArray<PixelType>::unitsY() {return &units_y;}
+BCString *nmb_ImageArray::name() {return &my_name;}
+BCString *nmb_ImageArray::unitsValue() {return &units;}
+BCString *nmb_ImageArray::unitsX() {return &units_x;}
+BCString *nmb_ImageArray::unitsY() {return &units_y;}
 
-int nmb_ImageArray<vrpn_uint8>::numExportFormats() {return 0;}
-nmb_ListOfStrings *nmb_ImageArray<vrpn_uint8>::exportFormatNames() 
+int nmb_ImageArray::numExportFormats() {return 0;}
+nmb_ListOfStrings *nmb_ImageArray::exportFormatNames() 
 {return NULL;}
-const char *nmb_ImageArray<vrpn_uint8>::exportFormatType(int) {return NULL;}
+const char *nmb_ImageArray::exportFormatType(int) {return NULL;}
 
-int nmb_ImageArray<vrpn_uint16>::numExportFormats() {return 0;}
-nmb_ListOfStrings *nmb_ImageArray<vrpn_uint16>::exportFormatNames() 
-{return NULL;}
-const char *nmb_ImageArray<vrpn_uint16>::exportFormatType(int) {return NULL;}
-
-int nmb_ImageArray<vrpn_float32>::numExportFormats() {return 0;}
-nmb_ListOfStrings *nmb_ImageArray<vrpn_float32>::exportFormatNames() 
-{return NULL;}
-const char *nmb_ImageArray<vrpn_float32>::exportFormatType(int) {return NULL;}
-
-template <class PixelType>
-int nmb_ImageArray<PixelType>::exportToFile(FILE *f, const char *export_type){
+int nmb_ImageArray::exportToFile(FILE *f, const char *export_type){
 
     int my_export_type;
     for (my_export_type = 0; my_export_type < numExportFormats();

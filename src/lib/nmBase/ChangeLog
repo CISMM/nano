@@ -1,3 +1,13 @@
+2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
+
+	* BCPlane.[Ch] : changes to allow a border to be put in the data array
+        The default border width is now 1 and a value of 0 should do the same
+	thing as before.
+	* nmb_Image.[Ch] : removed template usage from this code and replaced
+	with a bunch of different code to dynamically handle different
+        pixel types. Also added border code and normalize routine
+        to nmb_ImageArray class for texture mapping purposes 
+
 2000-10-17  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_Image.C (nmb_ImageGrid::setBounds) : now modifies plane->_grid
