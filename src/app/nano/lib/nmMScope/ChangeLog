@@ -1,3 +1,11 @@
+2002-11-13 Jameson Miller <millerj@cs.unc.edu>
+	* active_set.c (.h) : added in new functions to remove channels 
+	and their derived planes from the height plane list 
+	when they are removed from the list of active channels.
+	new functions: 	update_dataset_list()
+			check_for_derived_planes(..)
+
+
 2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_AFM_Report.vrpndef : new message type: FinishedFreehand - an echo in

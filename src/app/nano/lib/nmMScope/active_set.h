@@ -12,6 +12,7 @@
 
 class BCGrid;  // from BCGrid.h
 class BCPlane;  // from BCPlane.h
+class nmb_CalculatedPlane;
 class Point_results;  // from Point.h
 class Point_value;
 class Point_list;
@@ -115,6 +116,14 @@ class	Scan_channel_selector : public Channel_selector
 
 	int	Handle_report(int x, int y, long sec, long usec, float *values,
 			int numvalues);
+
+	//JM functions for keeping planes current
+	void update_dataset_list();
+	void check_for_derived_planes(int plane_index);
+
+	//a list that shadows the active_list, to determine what channels
+	//to remove from the height plane list.
+	int shadow_active_list[MAX_CHANNELS];
 
     protected:
         BCGrid * mygrid;

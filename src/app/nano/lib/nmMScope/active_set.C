@@ -225,6 +225,7 @@ Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
     nmb_ListOfStrings * namelist, nmb_Dataset * dataset) :
 		Channel_selector (namelist, dataset)
 {
+
 	change_from_tcl = 0;		
 	change_from_microscope = 1;   // Get current datasets from MScope
 
@@ -273,6 +274,16 @@ Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
   	channel_list.addEntry("Z Piezo-Reverse");
         active_list[17] = new Tclvar_int("data_sets(scan17)",0,tcl_update_callback,this);
 
+		//init the shadow list, which will let us know what channels
+		//have been activated or deactivated when recieving channels from the 
+		//microscope
+		for(int i = 0; i < MAX_CHANNELS; i++) {
+			if(active_list[i] != NULL) {
+				shadow_active_list[i] = *active_list[i];
+			}
+		}
+
+
 	// Set up for old default, which was Topography and standard deviation
 	if ((d_dataset->inputGrid->readMode() == READ_DEVICE) ||
             (d_dataset->inputGrid->readMode() == READ_STREAM)) {
@@ -293,8 +304,16 @@ int     Scan_channel_selector::Update_microscope (nmm_Microscope_Remote * micros
 	// channels.
     if (change_from_tcl) {
 	change_from_tcl = 0;
+
   	if (change_from_microscope) {
   	    change_from_microscope = 0;
+
+		//value changed from microscope, compare the active list to the 
+		// old active list (shadow list)
+		// and if there are changes, remove the channel from the height plane
+		// or add it the list of current active channels
+		// JM
+		update_dataset_list();
   	    fprintf(stderr, "Update_microscope Scan: ignoring update req.\n");
   	    return 0;
   	} else {
@@ -390,6 +409,102 @@ int     Scan_channel_selector::Handle_report( int x, int y,
 
 	return 0;
 }
+
+/*
+* this function compares the new active list to the old active list
+* if a scan channel has been added, it adds this channel to the
+* shadow list also. If a scan channel has been removed, this function 
+* removes that dataset object.
+* Jameson Miller 10/02
+*/
+void Scan_channel_selector::update_dataset_list() {
+	
+	int is_channel_enabled; //variable to hold value of whether the channel is enabled
+	int test_debug;
+	for(int i = 0; i < MAX_CHANNELS; i++) {
+		if(active_list[i] != NULL) {
+			is_channel_enabled = *active_list[i]; //Is this channel enabled?
+			if(shadow_active_list[i] != is_channel_enabled) {
+				//a discrepency... do we need to add channel to shadow list
+				//or remove it from the datasets
+				
+				//synchronize shadow_list
+				shadow_active_list[i] = is_channel_enabled;
+				if(is_channel_enabled == 1) {
+					//What??
+				}
+				else {
+					//Remove from list.
+					//first check for derived planes to remove
+					check_for_derived_planes(i);
+					//name of plane to be deleted
+					const char* plane_name = channel_list.entry(i);
+					//delete plane from list of heightplanes
+					test_debug = d_dataset->inputPlaneNames->deleteEntry(plane_name);
+					
+					if(test_debug != 0) {
+						fprintf(stderr,"Scan_channel_selector::update_list delete inputPlaneName: Failed\n");
+					}
+
+					//lets never delete topography forward, causes nano to close.
+					if(i != 0) {
+						d_dataset->dataImages->removeImageByName(plane_name);
+						mygrid->removePlane(plane_name);
+					}
+				}
+			}
+		}
+		
+	}
+	
+	return;
+}
+
+
+/*This function checks all planes in the height plane list against the plane being deleted to see
+ * if it derived from the plane being deleted. If so, it calls the destructor function of the
+ * derived plane, and then continues checking.
+ * Jameson Miller 10/02
+*/
+void Scan_channel_selector::check_for_derived_planes(int plane_index) {
+	
+	//get the name of the plane being deleted
+	const char * plane_name = channel_list.entry(plane_index);
+
+	BCPlane * current_plane = mygrid->getPlaneByName(plane_name); //and the BCPlane
+	
+	//calculated plane, to see if it is derived from plane being deleted.
+	nmb_CalculatedPlane * compare_plane; 
+	char * compare_plane_name; //name of derived plane
+	
+
+	//loop through names in inputPlaneNames list to see if any of them are derived.
+	for(int i = 0; i < d_dataset->inputPlaneNames->numEntries(); i++) {
+
+		//name of the plane that will be checked to see if it is derived from
+		//plane being deleted
+		compare_plane_name = const_cast<char *> (d_dataset->inputPlaneNames->entry(i));
+		compare_plane = compare_plane->getCalculatedPlane(compare_plane_name);
+
+		if(compare_plane != NULL) {
+			//This is a calculated plane, check to see if it is derived from base plane
+			//being deleted
+			if(compare_plane->dependsOnPlane(plane_name)) {
+				//this calculated plane depends on plane being deleted
+
+				compare_plane->~nmb_CalculatedPlane(); //destructor
+
+				//decrement i, as a different plane is possibly in entry(i)
+				i--;
+				
+			} //end if(compare_plane->dependsOnPlane(plane_name))
+		} //end if(compare_plane != null)
+		
+	}//end for(int i = 0; i < input...
+	d_dataset->inputPlaneNames->deleteEntry(plane_name);
+
+	
+} //end check_for_derived_plans
 
 Point_channel_selector::Point_channel_selector
              (Point_results * point,
