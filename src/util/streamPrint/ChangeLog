@@ -1,3 +1,14 @@
+2001-03-02  Aron Helser  <helser@cs.unc.edu>
+
+	* nmsPrint.Cdef: new - a print utility for ".nms" vrpn streams,
+	automatically generated from messages lists using
+	vrpn/util/gen_rpc/gen_vrpn_rpc.pl 
+	* Makefile: compile nmsPrint.exe
+
+	* .cvsignore: new - ignore generated file
+
+	* nano_utils.c: Fixes to compile under VC++
+
 2000-09-21  Adam Seeger  <seeger@cs.unc.edu>
 
         * streamToVrpn.C: made some major changes to this because most of

@@ -43,3 +43,9 @@ print_resist:
 	information from the newer stream print programs. 
 
 
+nmsPrint: 
+          This app is compiled from nmsPrint.C, which is generated
+          from nmsPrint.Cdef using a utility from VRPN - gen_vrpn_rpc
+          perl script. It prints the contents of all the messages in a
+          nano vrpn stream file, vrpn version 5.x, nano version 10.x
+          (3/2/01, Aron Helser)

@@ -11,13 +11,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if !(defined _WIN32) || (defined __CYGWIN__)
 #include <sys/time.h>
+#else
+#include <vrpn_Shared.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#if !(defined _WIN32)
 #include <unistd.h>
 #include <netinet/in.h>
+#endif
 
 //#include "inet.h"
 
@@ -163,7 +169,7 @@ void	time_add(struct timeval t1, struct timeval t2, struct timeval *res)
   }
 }
 
-
+#if !(defined _WIN32)
 /*      This routine will write a block to a file descriptor.  It acts just
  * like the write() system call does on files, but it will keep sending to
  * a socket until an error or all of the data has gone.
@@ -594,3 +600,4 @@ INARY,
         return(s);
 }
 
+#endif

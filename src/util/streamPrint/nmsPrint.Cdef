@@ -1,0 +1,111 @@
+OUTPUT_FILENAME nmsPrint.C
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
+#include <stdio.h>
+#include <vrpn_Connection.h>
+#include <vrpn_FileConnection.h>
+
+USE_MSG_GROUP ../../app/nano/lib/nmMScope/nmm_SPM_Report.vrpndef
+
+DEFINES nmm_SPM_Report;
+RECEIVERS_DECL;
+HANDLERS_DECL;
+ENDECODERS_DECL; 
+MSG_TYPE_DECL;
+
+ENDECODERS;
+RECEIVERS;
+HANDLERS;
+
+USE_MSG_GROUP ../../app/nano/lib/nmMScope/nmm_AFM_Report.vrpndef
+
+DEFINES nmm_AFM_Report;
+RECEIVERS_DECL;
+HANDLERS_DECL;
+ENDECODERS_DECL; 
+MSG_TYPE_DECL;
+
+ENDECODERS;
+RECEIVERS;
+HANDLERS;
+
+// Argument handling
+void usage(char *program_name){
+	fprintf(stderr, "Error: bad arguments.\n");
+	fprintf(stderr, "usage: %s [-i streamfile]",program_name);
+	fprintf(stderr, " [-d device]\n");
+	exit(-1);
+}
+
+static vrpn_Connection * connection = NULL;
+static vrpn_File_Connection *fcon = NULL;
+static int isReadingStreamFile = 0;
+static char * device_name = NULL;
+void parseArguments(int argc, char **argv){
+	int i;
+	for (i = 1; i < argc; i++){
+	    if (!strcmp(argv[i], "-d")){
+			if (++i >= argc) usage(argv[0]);
+			device_name = strdup(argv[i]);
+		}
+		else if (!strcmp(argv[i], "-i")){
+			if (++i >= argc) usage(argv[0]);
+			isReadingStreamFile = 1;
+			device_name = new char[14 + strlen(argv[i])+1];
+			sprintf(device_name,"file:%s", argv[i]);
+		}
+		else
+			usage(argv[0]);
+	}
+	printf( "Device_name is %s\n", device_name);
+}
+
+int main (int argc, char ** argv) {
+
+    parseArguments(argc, argv);
+    
+    // Initialize our connections to the things we are going to control.
+    if (device_name == NULL) {
+        return -1;
+    } 
+    if( (connection = vrpn_get_connection_by_name(device_name)) == NULL) {
+       // connection failed. VRPN prints error message.
+      return -1;
+    }
+
+   if (isReadingStreamFile){
+       fcon = connection->get_File_Connection();
+       if (fcon==NULL) {
+          fprintf(stderr, "Error: expected but didn't get file connection\n");
+          exit(-1);
+       }
+       fcon->set_replay_rate(1000.0);
+   }
+
+  MSG_TYPE nmm_SPM_Report;
+  MSG_TYPE nmm_AFM_Report;
+  REGISTER nmm_SPM_Report;
+  REGISTER nmm_AFM_Report;
+
+  int done = 0;
+  while (!done) {
+      sleep(0.01);
+      
+      //------------------------------------------------------------
+      // Send/receive message from our vrpn connections.
+      connection->mainloop();
+      if (fcon) {
+          if (fcon->eof())
+              done = 1;
+      }
+  }
+  if (connection) 
+      delete connection; // needed to make stream file write out
+  return 0;
+}
+
