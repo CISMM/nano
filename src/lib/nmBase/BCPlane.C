@@ -73,7 +73,7 @@ void BCPlane::computeMinMax (void) {
       if (value > _max_value) { _max_value = value; }
     }
   }
-
+  //  printf("_min_value = %f, _max_value = %f\n", _min_value, _max_value);
 }
 	
 
@@ -86,14 +86,15 @@ minValue
 double
 BCPlane::minValue()
 {
-    if (!_modified)
+  if (!_modified) {
 	return minValueComputedLast();
-    else
-    {
-        computeMinMax();
-	_modified = 0;
-	return _min_value;
-    }
+  }
+  else {
+    BCPlane::computeMinMax();  //have to tell it which computeMinMax to use
+    _modified = 0;
+    //    printf("_min_value = %f\n", _min_value);
+    return _min_value;
+  }
 } // minValue
 
 
@@ -104,15 +105,15 @@ maxValue
  @date modified 9-10-95 by Kimberly Passarella Jones
 */
 double
-BCPlane::maxValue()
-{
-    if (!_modified)
-	return maxValueComputedLast();
-    else
+BCPlane::maxValue() {
+
+  if (!_modified)
+    return maxValueComputedLast();
+  else
     {
-        computeMinMax();
-	_modified = 0;
-	return _max_value;
+      BCPlane::computeMinMax();  //have to tell it which computeMinMax to use
+      _modified = 0;
+      return _max_value;
     }
 } // maxValue
 
@@ -283,6 +284,7 @@ BCPlane::findValidDataRange(short* o_top, short* o_left, short* o_bottom, short*
    @return 0 on success, -1 on failure (value out of bounds)
 */
 int BCPlane::valueAt (double * result, double x, double y) {
+//int BCPlane::valueAt (double x, double y) {
   int ix;
   int iy;
 
