@@ -1,3 +1,7 @@
+2001-12-07    <marshbur@TUNGSTEN-CS>
+
+	* nmReg.dsp:  adds new files and removes old files.
+
 2001-12-06  Adam Seeger  <seeger@cs.unc.edu>
 
 	* This version has auto-alignment working pretty well on my test

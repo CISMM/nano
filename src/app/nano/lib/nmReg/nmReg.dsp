@@ -121,11 +121,23 @@ SOURCE=.\nmr_Gaussian.C
 # End Source File
 # Begin Source File
 
-SOURCE=.\nmr_MultiResObjectiveMI.C
+SOURCE=.\nmr_Histogram.C
 # End Source File
 # Begin Source File
 
-SOURCE=.\nmr_ObjectiveMI.C
+SOURCE=.\nmr_MultiResObjectiveMI_direct.C
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmr_MultiResObjectiveMI_EMMA.C
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmr_ObjectiveMI_direct.C
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmr_ObjectiveMI_EMMA.C
 # End Source File
 # Begin Source File
 
@@ -193,11 +205,27 @@ SOURCE=.\nmr_Gaussian.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\nmr_MultiResObjectiveMI.h
+SOURCE=.\nmr_Histogram.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\nmr_ObjectiveMI.h
+SOURCE=.\nmr_MultiResObjectiveMI_direct.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmr_MultiResObjectiveMI_EMMA.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmr_Objective.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmr_ObjectiveMI_direct.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmr_ObjectiveMI_EMMA.h
 # End Source File
 # Begin Source File
 
