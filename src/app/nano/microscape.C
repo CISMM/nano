@@ -346,7 +346,7 @@ TclNet_string ruler_color ("ruler_color","#ffff64");
 TclNet_int   rulergrid_changed ("rulergrid_changed", 0);
 TclNet_int	rulergrid_enabled ("rulergrid_enabled",0);
 
-//PPM	*rulerPPM = NULL;	///< Image to use for the ruler
+
 static char * rulerPPMName = NULL;   ///< Name of image to use for the ruler
 
 //-----------------------------------------------------------------------
@@ -1077,7 +1077,7 @@ vrpn_int32 GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) {       // chang
                 ((vrpn_uint8*)image2)[x * y - i - 1] = ((vrpn_uint8*)image)[i];
             }
             image_uint8->setImage((vrpn_uint8*)image2);
-            graphics->updateTexture(nmg_Graphics::SEM_DATA, "TEM uint8 image", 0, 0, x, y);
+            graphics->updateTexture(nmg_Graphics::VIDEO, "TEM uint8 image", 0, 0, x, y);
         }
         else if (pixel_size == sizeof(vrpn_uint16)) {
             if (!image_uint16) {
@@ -1092,7 +1092,7 @@ vrpn_int32 GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) {       // chang
                 ((vrpn_uint16*)image2)[x * y - i - 1] = ((vrpn_uint16*)image)[i];
             }
             image_uint16->setImage((vrpn_uint16*)image2);
-            graphics->updateTexture(nmg_Graphics::SEM_DATA, "TEM_DATA16_128x128", 0, 0, x, y);
+            graphics->updateTexture(nmg_Graphics::VIDEO, "TEM_DATA16_128x128", 0, 0, x, y);
         }
         else if (pixel_size == sizeof(vrpn_float32)) {
             if (!image_float32) {
@@ -1107,7 +1107,7 @@ vrpn_int32 GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) {       // chang
                 ((vrpn_uint32*)image2)[x * y - i - 1] = ((vrpn_uint32*)image)[i];
             }
             image_float32->setImage((vrpn_float32*)image2);
-            graphics->updateTexture(nmg_Graphics::SEM_DATA, "TEM float32 image", 0, 0, x, y);
+            graphics->updateTexture(nmg_Graphics::VIDEO, "TEM float32 image", 0, 0, x, y);
         }
         else {
             printf("Can't display this type of data\n");
@@ -1123,7 +1123,7 @@ vrpn_int32 GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) {       // chang
 	    }
         
         //graphics->setTextureMode(nmg_Graphics::SEM_DATA, nmg_Graphics::SURFACE_REGISTRATION_COORD);
-        graphics->setTextureMode(nmg_Graphics::SEM_DATA, nmg_Graphics::MODEL_REGISTRATION_COORD);
+        graphics->setTextureMode(nmg_Graphics::VIDEO, nmg_Graphics::MODEL_REGISTRATION_COORD);
 
         delete [] image;
         image = NULL;
@@ -1267,39 +1267,6 @@ static Tclvar_string msTimestampsName
 
 /// Host where the user interface of microscape is running.
 static Tclvar_string my_hostname("my_hostname", "localhost");
-
-//-----------------------------------------------------------------
-// Enables the realigning textues... (toggle button on main tcl window)
-// XXX This function is not included in the one screen tcl interface.
-static void handle_display_textures_selected_change(vrpn_int32, void *);
-static void handle_realign_textures_selected_change(vrpn_int32 value, void *);
-static void handle_set_realign_center_change (vrpn_int32 value, void * userdata);
-static void handle_texture_dataset_change (const char *, void * userdata);
-static void handle_texture_conversion_map_change(const char *, void * userdata);
-static void handle_realign_textures_slider_change (vrpn_float64, void * userdata);
-static void handle_realign_plane_name_change (const char *, void * userdata);
-
-Tclvar_int display_realign_textures ("display_dataset", 0);
-Tclvar_int realign_textures_enabled ("realign_dataset", 0);
-Tclvar_int set_realign_center ("set_center", 0);
-
-Tclvar_string texturePlaneName ("texture_comes_from" ,"none" );
-Tclvar_string textureConversionMapName( "texture_conversion_map","none" );
-
-Tclvar_float realign_textures_slider_min_limit("realign_textures_slider_min_limit",0);
-Tclvar_float realign_textures_slider_max_limit("realign_textures_slider_max_limit", 1.0);
-Tclvar_float realign_textures_slider_min("realign_textures_slider_min", 0);
-Tclvar_float realign_textures_slider_max("realign_textures_slider_max", 1.0);
-
-Tclvar_string	newRealignPlaneName("realignplane_name","");
-
-
-//-----------------------------------------------------------------
-
-// Obsolete. Pxfl. 
-static PPM * alphaPPM = NULL;	///< Image to use for the alpha blending
-static PPM * bumpPPM = NULL;	///< Image to use for the bump mapping
-static PPM * noisePPM = NULL;   ///< Uniform noise image for spot noise shader 
 
 //-----------------------------------------------------------------------
 // Obsolete? Only used for Pxfl????
@@ -1864,8 +1831,6 @@ void shutdown_connections (void) {
   viztex_scale.bindConnection(NULL);
 
   toggle_null_data_alpha.bindConnection(NULL);
-
-  //display_realign_textures.bindConnection(NULL);
 
   share_sync_state.bindConnection(NULL);
   copy_to_private_state.bindConnection(NULL);
@@ -2655,141 +2620,6 @@ void handle_config_ss_change (vrpn_int32, void *) {
 void handle_config_cj_change (vrpn_int32, void *) {
   graphics->enableChartjunk(config_chartjunk);
 }
-
-
-
-
-/// Realigning Textures Interactively:
-/// Called when the realign_textures_enabled toggle switch on the main
-/// miscroscape tcl window is pressed, either on or off.
-static void handle_display_textures_selected_change(vrpn_int32 value, void *userdata)
-{
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
-//  printf("handle_display_textures_selected_change, %d\n", value);
-  if (value){
-    //disableOtherTextures(MANUAL_REALIGN);
-    g->setTextureMode(nmg_Graphics::COLORMAP,
-		      nmg_Graphics::MANUAL_REALIGN_COORD);
-  } else {
-    if (g->getTextureMode() == nmg_Graphics::COLORMAP) {
-      g->setTextureMode(nmg_Graphics::NO_TEXTURES,
-		        nmg_Graphics::MANUAL_REALIGN_COORD);
-    }
-  }
-  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
-  realign_textures_enabled = 0;
-  set_realign_center = 0;
-}
-
-static void handle_realign_textures_selected_change(vrpn_int32 value, void *)
-{
-//  printf("handle_realign_textures_selected_change, %d\n", value);
-  if (realign_textures_enabled != value)
-	realign_textures_enabled = value;
-  else
-	return;
-  if ( (value == 0) && set_realign_center ) {
-    user_0_mode = USER_GRAB_MODE;
-    set_realign_center = 0;
-  }
-}
-
-static void handle_set_realign_center_change (vrpn_int32 value, void * userdata)
-{
-//  printf("handle_set_realign_center_change, %d\n", value);
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
-  if ( set_realign_center != value) {
-    set_realign_center = value;
-  } else {
-    return;
-  }
-  
-  if ( value == 1 ) {
-    user_0_mode = USER_CENTER_TEXTURE_MODE;
-    g->setSphereScale( ( dataset->inputGrid->maxX() -
-				dataset->inputGrid->minX()    ) / 100.0 );
-    g->setTextureCenter( 0, 0 );
-  }
-  else {
-    user_0_mode = USER_GRAB_MODE;
-  }
-}
-
-static void handle_texture_dataset_change (const char *, void * userdata)
-{
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
-  nmb_Image *im = dataset->dataImages->getImageByName
-                            (texturePlaneName.string());
-
-  if (im != NULL) {
-    float range = im->maxValue() - im->minNonZeroValue();
-    if ( im->minAttainableValue() > ( im->minNonZeroValue() -range)) 
-      realign_textures_slider_min_limit = im->minAttainableValue();
-    else 
-      realign_textures_slider_min_limit = (im->minNonZeroValue() -range);
-    if ( im->maxAttainableValue() < ( im->maxValue() +range)) 
-      realign_textures_slider_max_limit = im->maxAttainableValue();
-    else 
-      realign_textures_slider_max_limit = (im->maxValue() +range);
-    
-    realign_textures_slider_min = im->minNonZeroValue();
-    realign_textures_slider_max = im->maxValue();
-
-    g->setRealignTextureSliderRange( 0,1, realign_textures_slider_min,
-					  realign_textures_slider_max );
-
-  /* XXXXXXX - NASTY HACK:
-    this hack is related to a problem with how we link C variables with
-    user interface variables:
-     Sometimes we want to change the user interface variable but not
-        allow the user interface callback to be called (for example, when
-        we want to change a bunch of variables in the user interface as
-        an initialization before taking some action such as generating
-        a texture
-??? What nasty hack? I don't see it!
-  */
-    // If im != NULL, this name won't be "none"
-      printf("creating texture: %s\n", texturePlaneName.string());
-      g->createRealignTextures( texturePlaneName.string() );
-  }
-}
-
-static void handle_texture_conversion_map_change(const char *, void * userdata)
-{
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
-  if (strcmp(textureConversionMapName.string(), "none")) {
-      g->setRealignTexturesConversionMap(textureConversionMapName.string(),
-					     colorMapDir );
-  }
-  if (strcmp(texturePlaneName.string(), "none")) {
-      g->createRealignTextures( texturePlaneName.string() );
-  }
-}
-
-static void handle_realign_textures_slider_change (vrpn_float64, void * userdata) {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
-
-  g->setRealignTextureSliderRange( 0,1,realign_textures_slider_min,
-					  realign_textures_slider_max );
-  if (strcmp(texturePlaneName.string(), "none")) {
-      g->createRealignTextures( texturePlaneName.string() );
-  }
-}
-
-static void handle_realign_plane_name_change (const char *, void * userdata) {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
-   if (strlen(newRealignPlaneName.string()) > 0) {
-
-     g->computeRealignPlane( texturePlaneName.string(),
-				    newRealignPlaneName.string() );
-     
-     dataset->inputPlaneNames->addEntry(newRealignPlaneName);
-     
-     newRealignPlaneName = "";
-   }
-}
-
-
 
 /// Handle setting or clearing of ruler selected
 static void handle_rulergrid_selected_change(vrpn_int32 value, void *userdata)
@@ -5030,23 +4860,6 @@ void setupCallbacks (nmb_Dataset *d) {
   exportScene_Filename = "";
   exportScene_Filename.addCallback (handle_exportScene_Filename_change, d);
 
-  // REALIGN TEXTURES:
-  // handler for enabling/disabling the Realignment of Textures
-  realign_textures_enabled.addCallback
-    (handle_realign_textures_selected_change, NULL);
-
-  texturePlaneName.initializeTcl("texture_comes_from");
-  //texturePlaneName.bindList(d->dataImages->imageNameList());
-
-  textureConversionMapName.initializeTcl("texture_conversion_map");
-  //textureConversionMapName.bindList(&colorMapNames);
-  // BUG BUG BUG 
-  // handle_texture_conversion_map_change takes a nmg_Graphics pointer,
-  // not an nmm_Microscope!
-  //textureConversionMapName.addCallback
-  //  (handle_texture_conversion_map_change, m);
-
-  // DONE REALIGN TEXTURES
   measureRedX.addCallback
 	(handle_collab_red_measure_change, d);
   measureRedY.addCallback
@@ -5125,9 +4938,6 @@ void teardownCallbacks (nmb_Dataset *d) {
 
   newExportFileName.removeCallback
             (handle_exportFileName_change, NULL);
-
-  realign_textures_enabled.removeCallback
-    (handle_realign_textures_selected_change, NULL);
 
   measureRedX.removeCallback
 	(handle_collab_red_measure_change, d);
@@ -5321,27 +5131,6 @@ void setupCallbacks (nmg_Graphics * g) {
             (handle_specular_color_change, g);
   sphere_scale.addCallback
             (handle_sphere_scale_change, g);
-
-  // Texture realignment
-
-  display_realign_textures.addCallback
-    (handle_display_textures_selected_change, g);
-  set_realign_center.addCallback
-    (handle_set_realign_center_change, g);
-
-  texturePlaneName.addCallback
-    (handle_texture_dataset_change, g);
-
-  textureConversionMapName.addCallback
-    (handle_texture_conversion_map_change, g);
-
-  realign_textures_slider_min.addCallback
-    (handle_realign_textures_slider_change, g);
-  realign_textures_slider_max.addCallback
-    (handle_realign_textures_slider_change, g);
-
-  newRealignPlaneName.addCallback
-    (handle_realign_plane_name_change, g);
 
   rulergrid_enabled.addCallback
             (handle_rulergrid_selected_change, g);
@@ -6326,14 +6115,6 @@ void ParseArgs (int argc, char ** argv,
         alpha_green = atof(argv[i]);
         if (++i >= argc) Usage(argv[0]);
         alpha_blue = atof(argv[i]);
-      } else if (strcmp(argv[i], "-alphaimage") == 0) {
-        if (++i >= argc) Usage(argv[0]);
-        alphaPPM = new PPM(argv[i]);
-        if (!alphaPPM->valid) {
-          display_error_dialog( "Couldn't read ppm file %s for alpha",argv[i]);
-          delete alphaPPM;
-          alphaPPM = NULL;
-        }
       } else if (strcmp(argv[i], "-b") == 0) {
         fprintf(stderr, "Warning: -b obsolete.\n");
       } else if (strcmp(argv[i], "-baseport") == 0) {
@@ -6699,14 +6480,6 @@ void ParseArgs (int argc, char ** argv,
 	  //xc_enable();
 	  //xenable=1;
 	  fprintf(stderr, "Warning: -xc obsolete.\n");
-      } else if (strcmp(argv[i], "-bumpimage") == 0) {
-        if (++i >= argc) Usage(argv[0]);
-        bumpPPM = new PPM(argv[i]);
-        if (!bumpPPM->valid) {
-          display_error_dialog( "Cannot read ppm file %s",argv[i]);
-          delete bumpPPM;
-          bumpPPM = NULL;
-        }
       } else if (strcmp(argv[i], "-gverbosity") == 0) {
         if (++i >= argc) Usage(argv[0]);
         spm_graphics_verbosity = atoi(argv[i]);
@@ -6719,14 +6492,6 @@ void ParseArgs (int argc, char ** argv,
         istate->UDPport = atoi (argv[i]);
         printf ("UDPport for mix: %d\n", istate->UDPport);
         istate->socketType = SOCKET_MIX;
-      } else if (strcmp(argv[i], "-noiseimage") == 0) {
-        if (++i >= argc) Usage(argv[0]);
-        noisePPM = new PPM(argv[i]);
-        if (!noisePPM->valid) {
-          display_error_dialog( "Cannot read ppm file %s", argv[i]);
-          delete noisePPM;
-          noisePPM = NULL;
-        }
       } else if (strcmp(argv[i], "-rulercolor") == 0) {
         if (++i >= argc) Usage(argv[0]);
         int ruler_r = (GLubyte)atoi(argv[i]);
@@ -7548,6 +7313,7 @@ static int createNewDatasetOrMicroscope( MicroscapeInitializationState &istate,
         // First time through graphics will be NULL. 
         graphics->changeDataset(new_dataset);
     }
+	World.Do(&(URender::ChangeDataset), new_dataset);
 
     if (read_mode == READ_FILE)
       guessAdhesionNames(new_dataset);
@@ -8621,7 +8387,7 @@ int main (int argc, char* argv[])
 				"SEM@dummyname.com",
 				sem_connection);
 	afm_sem_calibrationUI->setSEM(sem_ui->semClient());
-
+    afm_sem_calibrationUI->setTipRenderer(tipDisplayUI->getRenderer());
       }
     }
   }
@@ -9526,9 +9292,6 @@ static float testarray [1000];
   static float offsetx, offsety, offsetz;
   static q_vec_type T,L;
   
-  // Variables for realigning textures:
-  static float realign_x1, realign_x2, realign_y1, realign_y2;
-  
   XEvent event;
   if(!xenable){
     float deltax, deltay;
@@ -9564,31 +9327,12 @@ static float testarray [1000];
 	  //	printf("qvtemp %f,%f,%f\n",qvtemp[Q_X],qvtemp[Q_Y],qvtemp[Q_Z]);
 	  // 	printf("qvtemp2 %f,%f,%f\n",qvtemp2[Q_X],qvtemp2[Q_Y],qvtemp2[Q_Z]);
 
-	// Realign Textures:
-	realign_x1 = event.xbutton.x;
-	realign_y1 = event.xbutton.y;
-
 	//Button1 = Rotate
 	//Button2 = Translate
 	//Button1 && Button2 == Zoom
+	//Button3 == Pick
 
-	//UGRAPHICS HACK --
-	//THESE ARE SET TO WORK ONLY WHEN TEXTURE REALIGN IS ENABLED OTHERWISE
-	//BUTTON3 is bound to the picking operation
-
-	//Button3 			   == Pick
-	//Button3 && texrealign            == Texture Scale?
-	//Button2 && Button3 && texrealign == Texture Shear?
-	//Button1 && Button3 && texrealign == Texture Rotate?
-
-	if ((event.xbutton.button == Button3) && realign_textures_enabled) {
-	  if (mode == M_NULL) {
-	    mode = M_SCALE;
-          } else if (mode == M_TRANSLATE) {
-	    mode = M_SHEAR;
-          }
-	  mouse3button = 1;
-	} else if (event.xbutton.button == Button3) {
+	if (event.xbutton.button == Button3) {
 		//THIS IS HACKED TOGETHER FOR THE CRT VERSION -- YOU NEED TO WORK ON THIS
 		//FOR A MORE GENERAL WORKING MODEL -- I HAVE NO IDEA WHERE TO FIND 
 		//ALL THE DATA TO DO THIS -- ITS BURIED IN VLIB YOU'LL HAVE TO TRACK THROUGH
@@ -9684,48 +9428,19 @@ static float testarray [1000];
 	  deltax = event.xmotion.x - startx;
 	  deltay = event.xmotion.y - starty;
 	  
-	  // Calculations for Realigning Textures:
-	  // realign_* variables are used to calculate texture realignment
-	  int realign_start = 1;
-	  realign_x2 = event.xmotion.x;
-	  realign_y2 = event.xmotion.y;
-	  
 	  while (XCheckWindowEvent(VLIB_dpy, VLIB_win,
 				   PointerMotionMask, &event)) {
-
 	    // surface transformations:
 	    deltax = event.xmotion.x - startx;
 	    deltay = event.xmotion.y - starty;
-	    
-	    // texture realignment
-	    if ( realign_start ) {
-	      realign_start = 0;
-	      realign_x1 = event.xmotion.x;
-	      realign_y1 = event.xmotion.y;
-	    }
-	    realign_x2 = event.xmotion.x;
-	    realign_y2 = event.xmotion.y;
 	  }
-	  // texture realignment
-	  float realign_dx = realign_x2 - realign_x1;
-	  float realign_dy = realign_y2 - realign_y1;
-	  realign_x1 = realign_x2;
-	  realign_y1 = realign_y2;
-
 
 	  if ( mode == M_ROTATE ){
 
 //fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
           timer->activate(timer->getListHead());
 
-	    // Texture Realignment
-	    if ( realign_textures_enabled ) {
-	      float theta = realign_dx * 0.017453293;
-	      graphics->rotateTextures( 1, theta );
-	    }
-
 	    // Surface Transformations
-	    else {
 	      /*calculate rotations	*/
 	      q_make(qtemp,0,1,0,2*M_PI/360*deltax);
 	      q_make(qtemp2,1,0,0,2*M_PI/360*deltay);
@@ -9752,24 +9467,13 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 
               // HACK?
               updateWorldFromRoom(&modxform);
-
-	    }
-
 	  }
 
 	  else if ( mode == M_ZOOM ){
 
 //fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
           timer->activate(timer->getListHead());
-
-	    // Texture Realignment
-	    if ( realign_textures_enabled ) {
-	      float scale = (realign_dx + ( -realign_dy ) )/2.0;
-	      graphics->scaleTextures( 1, scale, scale );
-	    }
-
 	    // Surface Transformations
-	    else {
 	      v_x_copy(&modxform,&shadowxform);
 	      modxform.xlate[2]=shadowxform.xlate[2]+deltay/500;
 	      /*recalculate world to room xform and save*/
@@ -9779,24 +9483,13 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
               // HACK?
               updateWorldFromRoom(&modxform);
-	    }
 	  }
 
 	  else if ( mode == M_TRANSLATE ) {
 
 //fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
           timer->activate(timer->getListHead());
-
-	    // Texture Realignment
-	    if ( realign_textures_enabled ) {
-	      if ( set_realign_center )
-		graphics->setTextureCenter( realign_dx, -realign_dy );
-	      else
-		graphics->translateTextures( 1, -realign_dx, realign_dy );
-	    }
-	    
 	    // Surface Transformations
-	    else {
 	      v_x_copy(&modxform,&shadowxform);
 	      modxform.xlate[0]=shadowxform.xlate[0]+deltax/1000;
 	      modxform.xlate[1]=shadowxform.xlate[1]-deltay/1000;
@@ -9806,29 +9499,18 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
               // HACK?
               updateWorldFromRoom(&modxform);
-	    }
 	  }
 	  
 	  else if ( mode == M_SCALE ){
 
 //fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
           timer->activate(timer->getListHead());
-
-	    // Texture Realignment
-	    if ( realign_textures_enabled ) {
-	      graphics->scaleTextures( 1, realign_dx, -realign_dy );
-	    }
 	  }
 	  
 	  else if ( mode == M_SHEAR ) {
 
 //fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
           timer->activate(timer->getListHead());
-
-	    // Texture Realignment
-	    if ( realign_textures_enabled ) {
-	      graphics->shearTextures( 1, realign_dx, -realign_dy );
-	    }
 	  }
 	  
 	  else {
@@ -10419,43 +10101,3 @@ void guessAdhesionNames (nmb_Dataset * dset) {
                 adhPlane2Name = name;
         }
 }
-
-/** The purpose of this is to just enforce mutual exclusion in the gui
- alternative would be to use a radio button group but since these are
- in separate parts of the gui we can't do this
-*/
-/*
-int disableOtherTextures (TextureMode m) {
-
-  // Not compatible with collaboration.
-  // #if'd out by TCH 22 Jan 00 because collaboration experiment is
-  // critical path;  hope to rewrite properly soon.
-
-//#if 0
-  if (m != RULERGRID){
-    rulergrid_enabled = 0;
-  }
-  if (m != SEM){
-    if (sem_ui) {
-      sem_ui->displayTexture(0);
-    }
-  }
-  if (m != REGISTRATION){
-    if (alignerUI) {
-      alignerUI->displayTexture(0);
-    }
-  }
-  if (m != MANUAL_REALIGN){
-    display_realign_textures = 0;
-  }
-  if (m != CONTOUR) {
-      if (dataset) *(dataset->contourPlaneName) = "none";
-  }
-  if (m != ALPHA) {
-      if (dataset) *(dataset->alphaPlaneName) = "none";
-  }
-//#endif
-
-  return 0;
-}
-*/

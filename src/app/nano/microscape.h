@@ -284,13 +284,6 @@ extern int register_vrpn_phantom_callbacks(void);
 extern void updateRulergridOffset(void);
 extern void updateRulergridAngle(void);
 
-
-// XXX - this has to do with the user interface but there isn't
-// a global user interface object so I put it here temporarily (AAS)
-enum TextureMode {RULERGRID, CONTOUR, ALPHA, SEM, REGISTRATION, MANUAL_REALIGN};
-//extern int disableOtherTextures (TextureMode m);
-
-
 // things defined in global.h:  spm_graphics_verbosity, timer_verbosity,
 // mytimer, frametimer, stm_new_frame, mode_change, tcl_offsets, user_mode,
 // justCentered, ohmmeter_enabled, xenable, xg_start

@@ -200,7 +200,7 @@ static void handle_current_object(const char*, void*) {
 
 			import_visibility = obj.GetVisibility();
 
-			import_proj_text = obj.ShowProjText();
+			import_proj_text = obj.GetProjTextEnable();
 			import_lock_object = obj.GetLockObject();
 			import_lock_texture = obj.GetLockTexture();
 
@@ -322,8 +322,8 @@ static void handle_import_file_change (const char *, void *) {
 
 			// set up various variables
             obj->SetVisibility(import_visibility);
-			obj->SetProjText(import_proj_text);
-			obj->SetLockObject(import_lock_object);
+			obj->SetProjTextEnable(import_proj_text);
+			obj->SetLockObject((import_lock_object!=0));
 			obj->SetLockTexture(import_lock_texture);
 
 			// only allow update_AFM for .txt files
@@ -421,13 +421,13 @@ static  void handle_import_proj_text (vrpn_int32, void *)
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
 		int i = import_proj_text;
-		World.Do(&URender::SetProjTextAll, &i);
+		World.Do(&URender::SetProjTextEnableAll, &i);
 	}
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 			URender &obj = node->TGetContents();
-			obj.SetProjText(import_proj_text);
+			obj.SetProjTextEnable(import_proj_text);
 		}
 	}
 }
@@ -440,7 +440,7 @@ static void handle_import_text_image_mode_change (vrpn_int32, void*) {
                                         nmg_Graphics::SURFACE_REGISTRATION_COORD);
         }
         else {
-            graphics->setTextureMode(nmg_Graphics::SEM_DATA,
+            graphics->setTextureMode(nmg_Graphics::VIDEO,
                                         nmg_Graphics::SURFACE_REGISTRATION_COORD);
         }
     }
@@ -451,7 +451,7 @@ static void handle_import_text_image_mode_change (vrpn_int32, void*) {
                                         nmg_Graphics::MODEL_REGISTRATION_COORD);
         }
         else {
-            graphics->setTextureMode(nmg_Graphics::SEM_DATA,
+            graphics->setTextureMode(nmg_Graphics::VIDEO,
                                         nmg_Graphics::MODEL_REGISTRATION_COORD);
         }
 
@@ -474,23 +474,23 @@ static  void handle_import_lock_object (vrpn_int32, void *)
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 			URender &obj = node->TGetContents();
-			obj.SetLockObject(import_lock_object);
+			obj.SetLockObject(import_lock_object!=0);
 		}
 	}
 }
 
 static  void handle_import_lock_texture (vrpn_int32, void *)
 {
+	int lock = (int)import_lock_texture;
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
-		int i = import_lock_texture;
-		World.Do(&URender::SetLockTextureAll, &i);
+		World.Do(&URender::SetLockTextureAll, &lock);
 	}
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 			URender &obj = node->TGetContents();
-			obj.SetLockTexture(import_lock_texture);
+			obj.SetLockTexture(lock);
 		}
 	}
 }

@@ -77,6 +77,8 @@ class nm_TipRenderer : public URender {
   virtual int Render(void *userdata);
 
   void setTextureEnable(bool enable);
+  int SetProjTextureAll(void *userdata=NULL);
+  int SetTextureTransformAll(void *userdata=NULL);
 
  private:
   bool d_drawConeSphere;
@@ -104,6 +106,7 @@ class nm_TipDisplayControls {
   void setDisplayEnable(int enable);
   void setTextureEnable(int enable);
   void sendFiducial();
+  URender *getRenderer() {return &d_tipRenderer;};
 
  private:
   int pointDataHandler(const Point_results *pr);

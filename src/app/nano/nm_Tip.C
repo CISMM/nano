@@ -225,6 +225,20 @@ void nm_TipRenderer::setTextureEnable(bool enable)
   d_drawTexture = enable;
 }
 
+int nm_TipRenderer::SetProjTextureAll(void *userdata)
+{
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int nm_TipRenderer::SetTextureTransformAll(void *userdata)
+{
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
 void nm_TipRenderer::buildDisplayList()
 {
   v_gl_set_context_to_vlib_window();
@@ -247,19 +261,44 @@ void nm_TipRenderer::buildDisplayList()
     fprintf(stderr, "nm_TipRenderer::buildDisplayList: glGenLists failed\n");
     return;
   }
+  GLfloat translate_z;
   glNewList(d_displayListID, GL_COMPILE);
 
+  glPushAttrib(GL_TRANSFORM_BIT);
+
+  translate_z = radius;
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
-  glTranslatef(0.0, 0.0, radius);
+  glTranslatef(0.0, 0.0, translate_z);
+  glMatrixMode(GL_TEXTURE);
+  glPushMatrix();
+  glTranslatef(0.0, 0.0, translate_z);
+
   glColor3f(1.0, 0.0, 0.0);
   gluSphere(d_quadric, radius, 30, 30);
-  glTranslatef(0, 0, -radius*sinTheta);
+
+  translate_z = -radius*sinTheta;
+  glMatrixMode(GL_MODELVIEW);
+  glTranslatef(0, 0, translate_z);
+  glMatrixMode(GL_TEXTURE);
+  glTranslatef(0, 0, translate_z);
+
   gluCylinder(d_quadric, coneBottomRadius, coneTopRadius, coneTopZ-coneBottomZ,
               30, 30);
-  glTranslatef(0.0, 0.0, coneTopZ-coneBottomZ);
+
+  translate_z = coneTopZ-coneBottomZ;
+  glMatrixMode(GL_MODELVIEW);
+  glTranslatef(0.0, 0.0, translate_z);
+  glMatrixMode(GL_TEXTURE);
+  glTranslatef(0.0, 0.0, translate_z);
+
   gluDisk(d_quadric, 0.0, coneTopRadius, 30, 1);
+
   glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
+  glPopMatrix();
+  glPopAttrib();
+
   glEndList();
 }
 
@@ -267,35 +306,31 @@ void nm_TipRenderer::buildDisplayList()
 int nm_TipRenderer::Render(void * /*userdata*/)
 {
   if (visible) {
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    GetLocalXform().Push_As_OGL();
     double tx, ty, tz;
     d_tipModel->getPosition(tx, ty, tz);
-    glTranslatef(tx, ty, tz);
-    glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
-    if (d_drawTexture) {
-      glEnable(GL_TEXTURE_2D);
-      glEnable(GL_TEXTURE_GEN_S);
-      glEnable(GL_TEXTURE_GEN_T);
-      glEnable(GL_TEXTURE_GEN_R);
-      glEnable(GL_TEXTURE_GEN_Q);
-    } else {
-      glDisable(GL_TEXTURE_2D);
-      glDisable(GL_TEXTURE_GEN_S);
-      glDisable(GL_TEXTURE_GEN_T);
-      glDisable(GL_TEXTURE_GEN_R);
-      glDisable(GL_TEXTURE_GEN_Q);
+    if (d_drawTexture && texture) {
+		double objectToWorld[16] = {1,0,0,0,0,1,0,0,0,0,1,0,tx,ty,tz,1};
+		texture->enable(textureTransform, objectToWorld, true);
     }
+
+    glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glTranslatef(tx, ty, tz);
+
     if (d_drawConeSphere) {
       if (d_displayListID != 0) {
         glCallList(d_displayListID);
       }
     }
-    glPopAttrib();
+
+    if (d_drawTexture && texture) {
+      texture->disable();
+    }
+
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-
+	glPopAttrib();
   }
   if (recursion) {
     return ITER_CONTINUE;
@@ -303,3 +338,5 @@ int nm_TipRenderer::Render(void * /*userdata*/)
     return ITER_STOP;
   }
 }
+
+
