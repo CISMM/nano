@@ -47,13 +47,14 @@ class nmui_CrossSection {
     TclNet_int d_vary_width; 
     int d_hide[2];
     int d_first_call[2];
-    private:
+
+    //private:
     TclNet_int d_max_points; 
       /**< maximum number of points to graph per channel. */
     TclNet_int d_clear_zero; ///< clear cross section graph 
     TclNet_int d_clear_one; ///< clear cross section graph 
     
-    Tclvar_int d_data_update; ///< trigger data update. 
+	TclNet_int d_data_update; ///< trigger data update. 
 
     int d_length; ///< number of data points per xs. 
 
