@@ -1,3 +1,4 @@
+
 2001-07-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* Point.C (Point_results::d_time) : Glom together _sec and _usec.
@@ -20,16 +21,16 @@
 2001-06-25  Andrea Hilchey  <hilchey@cs.unc.edu>
 
 	* BCString.h: removed function listed below because found way
-		to work around already existant functions
+	to work around already existant functions
 
 2001-06-25  Andrea Hilchey  <hilchey@cs.unc.edu>
 
 	* BCString.h: added new function:  nonconst_characters(), which
-		returns a char * but otherwise acts just like Characters(),
-		which returns a const char *.  This was necessary so that
-		I could load char * values from BCString objects into an 
-		array in a for loop (can't make it a const char * array
-		unless fill it in at declaration...)
+	returns a char * but otherwise acts just like Characters(),
+	which returns a const char *.  This was necessary so that
+	I could load char * values from BCString objects into an 
+	array in a for loop (can't make it a const char * array
+	unless fill it in at declaration...)
 
 
 2001-06-21  Aron Helser  <helser@cs.unc.edu>
@@ -50,9 +51,9 @@
 2001-06-15  Andrea Hilchey  <hilchey@cs.unc.edu>
 
 	* BCPlane.h: added function GetGrid() to BCPlane to access private data
- 		member _grid so that didn't have to make nma_ShapeAnalyze a friend
-		class to BCPlane.  changed line of code in nma_ShapeAnalyze
- 		from ...->_grid to ...->GetGrid()
+	member _grid so that didn't have to make nma_ShapeAnalyze a friend
+	class to BCPlane.  changed line of code in nma_ShapeAnalyze
+ 	from ...->_grid to ...->GetGrid()
 
 2001-06-14  Andrea Hilchey  <hilchey@cs.unc.edu>
 
