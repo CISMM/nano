@@ -81,8 +81,7 @@ void handle_take_x_step(vrpn_float64, void * _mptr)
 	y = _point->results()->y();
 
 	//bounds checking:
-	if(min_x > x + step_x || max_x < x + step_x ||
-	   min_y > y + step_x || max_y < x + step_x ) {
+	if(min_x > x + step_x || max_x < x + step_x) {
 	  printf("out of bounds, no step taken");
 	  return;
 	}
@@ -99,8 +98,6 @@ void handle_take_x_step(vrpn_float64, void * _mptr)
 	//if we want only to step in x/y
 	if(microscope->state.modify.direct_step_param == DIRECT_STEP_PLANE ) 
 	{
-		printf("Plane  %f %f\n",x,y);
-		
 		microscope->TakeModStep(x,y);
 	} else if(microscope->state.modify.direct_step_param == DIRECT_STEP_3D) {   //3D step
 		microscope->TakeDirectZStep(x,y,z_pos);
@@ -147,8 +144,7 @@ void handle_take_y_step(vrpn_float64, void * _mptr)
 	}
 
 	//test to make sure that taking a step does not put us out of bounds
-	if(min_x > x + step_x || max_x < x + step_x ||
-	   min_y > y + step_x || max_y < x + step_x ) {
+	if(min_y > y + step_y || max_y < y + step_y) {
 	  printf("out of bounds, no step taken");
 	  return;
 	}
@@ -204,7 +200,6 @@ void handle_step_go_to_pos(vrpn_int32, void *mptr)
   double min_x, max_x, min_y, max_y;
   double x_scale,y_scale,x_pos,y_pos;
 
-	printf("go to pos ");
 	BCPlane * plane = dataset->inputGrid->getPlaneByName
 		(dataset->heightPlaneName->string());
 
