@@ -30,7 +30,8 @@ class nmm_Microscope_SEM_EDAX :
                          vrpn_bool report=vrpn_TRUE);
     vrpn_int32 setBeamBlankEnable(vrpn_int32 enable);
     vrpn_int32 goToPoint(vrpn_int32 xDAC, vrpn_int32 yDAC, 
-                         vrpn_bool report=vrpn_TRUE);
+                         vrpn_bool report=vrpn_TRUE, 
+                         double delay_overhead_msec = 0);
     vrpn_int32 setRetraceDelays(vrpn_int32 htime_usec, vrpn_int32 vtime_usec);
     vrpn_int32 setDACParams(vrpn_int32 xGain, vrpn_int32 xOffset,
                             vrpn_int32 yGain, vrpn_int32 yOffset,
@@ -92,6 +93,9 @@ class nmm_Microscope_SEM_EDAX :
     vrpn_int32 reportDACParams();
     vrpn_int32 reportExternalScanControlEnable();
     vrpn_int32 reportMagnification();
+    vrpn_int32 reportExposureStatus(
+            vrpn_int32 numPointsTotal, vrpn_int32 numPointsDone,
+            vrpn_float32 timeTotal_sec, vrpn_float32 timeDone_sec);
 
   private:
     void checkForParameterChanges(void);
@@ -205,7 +209,6 @@ class nmm_Microscope_SEM_EDAX :
     vrpn_float32 d_beamCurrent_picoAmps;
     vrpn_float32 d_beamWidth_nm;
     list<PatternShape> d_patternShapes;
-    list<PatternPoint> d_dumpPoints;
     ExposureManager *d_exposureManager;
 };
 

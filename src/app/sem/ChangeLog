@@ -1,3 +1,10 @@
+2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM_EDAX.C(goToPoint): added a more precise 
+	delay here to dwell for the requested time
+	(reportExposureStatus): new function
+	* delay.Ch: a utility class to add a busywait delay
+
 2001-07-22  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_Microscope_SEM_EDAX.C (acquireImage): for fake data, offsets the

@@ -1,5 +1,6 @@
 #include <vrpn_Connection.h>
 #include "nmm_Microscope_SEM_EDAX.h"
+#include "delay.h"
 #include "nmm_EDAX.h"
 #include "nmb_Image.h"
 #include <stdlib.h>
@@ -242,6 +243,12 @@ nmm_Microscope_SEM_EDAX::nmm_Microscope_SEM_EDAX
 
 #endif
   
+#endif
+
+#ifdef USE_BUSYWAIT_DELAY
+
+  Delay::init();
+
 #endif
 
 }
@@ -1138,8 +1145,9 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::reportMaxScanSpan()
   return dispatchMessage(len, msgbuf, d_ReportMaxScanSpan_type);
 }
 
+#pragma optimize("",off)
 vrpn_int32 nmm_Microscope_SEM_EDAX::goToPoint(vrpn_int32 xDAC, vrpn_int32 yDAC,
-               vrpn_bool report)
+               vrpn_bool report, double delay_overhead_msec)
 {
   static int point_count = 0;
   static double cumulative_dwell_msec = 0;
@@ -1189,15 +1197,31 @@ if (!d_virtualAcquisition) {
   }
 #endif
 
-  gettimeofday(&t_end, NULL);
-  double delta_t = vrpn_TimevalMsecs(t_end) - vrpn_TimevalMsecs(t0);
-
 #ifdef USE_BUSYWAIT_DELAY
-  while (delta_t < 0.000001*d_point_dwell_time_nsec) {
+
+  double dwell_time_msec = (1e-6)*(double)d_point_dwell_time_nsec;
+/*
+  int numIterations = 0;
+  while (delta_t < dwell_time_msec) {
     gettimeofday(&t_end, NULL);
     delta_t = vrpn_TimevalMsecs(t_end) - vrpn_TimevalMsecs(t0);
+    numIterations++;
   }
+*/
+  double delay_time_msec = dwell_time_msec - delay_overhead_msec;
+#ifndef VIRTUAL_SEM
+  delay_time_msec -= 0.1; // subtract out time to execute SpMoveEx()
 #endif
+  if (delay_time_msec > 0) {
+    Delay::busyWaitSleep(delay_time_msec);
+  }
+  // XXX otherwise we fall straight through to go as fast as we can
+  // although we should probably consider this an error that should have been
+  // caught earlier
+
+#endif
+  gettimeofday(&t_end, NULL);
+  double delta_t = vrpn_TimevalMsecs(t_end) - vrpn_TimevalMsecs(t0);
   cumulative_dwell_msec += delta_t;
 
 /*
@@ -1217,6 +1241,7 @@ if (!d_virtualAcquisition) {
     return 0;
   }
 }
+#pragma optimize("",on)
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::reportBeamLocation()
 {
@@ -1331,11 +1356,25 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::reportMagnification()
   return dispatchMessage(len, msgbuf, d_ReportMagnification_type);
 }
 
+vrpn_int32 nmm_Microscope_SEM_EDAX::reportExposureStatus(
+                vrpn_int32 numPointsTotal, vrpn_int32 numPointsDone,
+                vrpn_float32 timeTotal_sec, vrpn_float32 timeDone_sec)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_ReportExposureStatus(&len, numPointsTotal, numPointsDone,
+                                    timeTotal_sec, timeDone_sec);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_ReportExposureStatus_type);
+}
 
 vrpn_int32 nmm_Microscope_SEM_EDAX::clearExposePattern()
 {
   d_patternShapes.clear();
-  d_dumpPoints.clear();
   return 0;
 }
 
@@ -1373,7 +1412,9 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::addDumpPoint(
                     vrpn_float32 x_nm, vrpn_float32 y_nm)
 {
   PatternPoint point((double)x_nm, (double)y_nm);
-  d_dumpPoints.push_back(point);
+  PatternShape shape(0, 0, PS_DUMP);
+  shape.addPoint(x_nm, y_nm);
+  d_patternShapes.push_back(shape);
   return 0;
 }
 
@@ -1384,7 +1425,10 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::exposePattern()
 
   d_exposureManager->setColumnParameters(1e-6,
                 d_beamWidth_nm, d_beamCurrent_picoAmps);
-  d_exposureManager->exposePattern(d_patternShapes, d_dumpPoints, this, mag);
+  int numPointsGenerated;
+  double totalExposureTimeSec;
+  d_exposureManager->exposePattern(d_patternShapes, this, mag,
+                                   numPointsGenerated, totalExposureTimeSec);
   return 0;
 }
 
