@@ -292,6 +292,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
           vrpn_float32 *float32_data = (vrpn_float32 *)scanlineData;
           switch(pix_type) {
             case NMB_UINT8:
+	      me->image_viewer->setValueRange(me->image_window_id, 0.0, 255.0);
               for (i = 0; i < num_lines; i++) {
                 x = start_x;
                 for (j = 0; j < line_length; j++) {
@@ -304,6 +305,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
               }
               break;
             case NMB_UINT16:
+              me->image_viewer->setValueRange(me->image_window_id,0.0,65535.0);
               for (i = 0; i < num_lines; i++) {
                 x = start_x;
                 for (j = 0; j < line_length; j++) {
@@ -391,9 +393,9 @@ int nms_SEM_ui::updateSurfaceTexture(
   if (pix_type == NMB_UINT8) {
     sprintf(image_name, "SEM_DATA08_%dx%d", res_x, res_y);
     if (!image_uint8[res_index]) {
-       image_uint8[res_index] = new nmb_ImageArray<vrpn_uint8>(image_name,
-                                "ADC", res_x, res_y);
-       dataset->dataImages->addImage((nmb_Image *)image_uint8[res_index]);
+       image_uint8[res_index] = new nmb_ImageArray(image_name,
+                                "ADC", res_x, res_y, NMB_UINT8);
+       dataset->dataImages->addImage(image_uint8[res_index]);
     }
     for (i = 0; i < num_lines; i++){
       image_uint8[res_index]->setLine(y, data);
@@ -402,9 +404,9 @@ int nms_SEM_ui::updateSurfaceTexture(
   } else if (pix_type == NMB_UINT16) {
     sprintf(image_name, "SEM_DATA16_%dx%d", res_x, res_y);
     if (!image_uint16[res_index]) {
-       image_uint16[res_index] = new nmb_ImageArray<vrpn_uint16>(image_name,
-                                "ADC", res_x, res_y);
-       dataset->dataImages->addImage((nmb_Image *)image_uint16[res_index]);
+       image_uint16[res_index] = new nmb_ImageArray(image_name,
+                                "ADC", res_x, res_y, NMB_UINT16);
+       dataset->dataImages->addImage(image_uint16[res_index]);
     }
     for (i = 0; i < num_lines; i++){   
       image_uint16[res_index]->setLine(y, data);

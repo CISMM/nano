@@ -328,7 +328,7 @@ char *nmm_Microscope_SEM::encode_ScanlineData (vrpn_int32 * len,
   } else if (pixelType == NMB_FLOAT32) {
       pixelSize = sizeof(vrpn_float32);
   }
-  *len = 9 * sizeof(vrpn_int32) + 
+  *len = 10 * sizeof(vrpn_int32) + 
          lineLength * numFields * numLines * pixelSize;
   msgbuf = new char [*len];
   if (!(msgbuf)) {

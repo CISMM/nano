@@ -8,7 +8,7 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
     d_pixelIntegrationTime_nsec(0), 
     d_interpixelDelayTime_nsec(0),
     d_startX(0), d_startY(0), d_dX(0), d_dY(0),
-    d_lineLength(0), d_numFields(0), d_numLines(0), d_pixelType(NMB_NONE),
+    d_lineLength(0), d_numFields(0), d_numLines(0), d_pixelType(NMB_UINT8),
     d_dataBuffer(NULL),
     d_dataBufferSize(0),
     d_messageHandlerList(NULL)

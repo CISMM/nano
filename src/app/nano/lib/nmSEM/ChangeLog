@@ -1,3 +1,11 @@
+2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM.C (encode_ScanlineData) : fixed incorrect message
+	length calculation
+	* nmui_SEM.C (handle_device_change) : added change of value range in
+	image viewer window when pixel type changes
+	replaced use of template nmb_ImageArray with non-template nmb_ImageArray
+
 2000-10-02  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_Microscope_SEM.Ch (encode_ScanlineData,

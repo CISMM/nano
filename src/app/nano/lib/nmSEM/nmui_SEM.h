@@ -44,8 +44,8 @@ class nms_SEM_ui {
     nmm_Microscope_SEM_Remote *sem;
 
     // image data buffers (one for each image size collected):
-    nmb_ImageArray<vrpn_uint8> *image_uint8[EDAX_NUM_SCAN_MATRICES];
-    nmb_ImageArray<vrpn_uint16> *image_uint16[EDAX_NUM_SCAN_MATRICES];
+    nmb_ImageArray *image_uint8[EDAX_NUM_SCAN_MATRICES];
+    nmb_ImageArray *image_uint16[EDAX_NUM_SCAN_MATRICES];
 
     Tcl_Interp *tcl_interp;
 
