@@ -7,6 +7,15 @@
 	(setupMicroscopeSynchronization):  new
 	(teardownMicroscopeSynchronization):  new
 
+2002-02-18  David Borland <borland@cs.unc.edu>
+
+        * microscape.c : Added code so that objects are scaled accordingly
+        when new static files are loaded
+
+        * import.C : TCL stuff for projective textures onto loaded objects
+
+        * imported_obj.C : same
+        
 2002-02-15  Aron Helser  <helser@cs.unc.edu>
 
 	* microscape.c (createNewDatasetOrMicroscope): Changed so it
