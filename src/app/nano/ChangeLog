@@ -1,3 +1,8 @@
+2000-09-04  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscopeHandlers.C (handle_doRelaxComp_change): Changed to make
+	this consistent with how things are done in nmm_MicroscopeRemote.C
+
 2000-09-01  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (main) : added check of 
