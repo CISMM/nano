@@ -1069,6 +1069,7 @@ long nmm_Microscope_Remote::MarkImageMode (void) {
   return dispatchMessage(len, msgbuf, d_MarkImage_type);       // Tiger
 }
 
+
 long nmm_Microscope_Remote::EnterOscillatingMode
         (float p, float i, float d, float set, float amp,
          vrpn_float32 frequency, vrpn_int32 input_gain,
@@ -1077,13 +1078,16 @@ long nmm_Microscope_Remote::EnterOscillatingMode
   char * msgbuf;
   long len;
 
-  msgbuf = encode_EnterOscillatingMode(&len, p, i, d, set, amp,
-                                       frequency, input_gain, ampl_or_phase,
-                                       drive_attenuation, phase);
+  // XXX TODO make Thermo code aware of this new message type:
+//    msgbuf = encode_EnterOscillatingMode(&len, p, i, d, set, amp,
+//                                         frequency, input_gain, ampl_or_phase,
+// 
+  msgbuf = encode_EnterTappingMode(&len, p, i, d, set, amp);           
   if (!msgbuf)
     return -1;
 
-  return dispatchMessage(len, msgbuf, d_EnterOscillatingMode_type);
+//  return dispatchMessage(len, msgbuf, d_EnterOscillatingMode_type);
+  return dispatchMessage(len, msgbuf, d_EnterTappingMode_type);
 }
 
 long nmm_Microscope_Remote::EnterContactMode (float p, 
