@@ -1,3 +1,8 @@
+2001-12-14  Nathan Conrad  <conrad@cs.unc.edu>
+
+	* Makefile.depend (DEPEND_EXISTS): Moved the setting of DEPEND_EXISTS
+	up a few lines, and included the depend file _only_ if it existed.
+
 2001-12-05  Nathan Conrad  <conrad@cs.unc.edu>
 
 	* Makefile.*_common (clean): Add a 'clean_hook' target and

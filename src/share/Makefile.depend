@@ -3,18 +3,20 @@ ifdef APP_NAME
    MAKEFILE_DEPEND := $(MAKEFILE_DEPEND)-$(APP_NAME)
 endif
 
-ifeq ($(findstring depend,$(MAKECMDGOALS)),depend)
-   DUMMY := $(shell mv -f $(MAKEFILE_DEPEND) $(MAKEFILE_DEPEND)-old)
-else
-   -include $(MAKEFILE_DEPEND)
-endif
+DEPEND_EXISTS := $(shell test -r $(MAKEFILE_DEPEND) && echo "true")
 
+ifeq ($(DEPEND_EXISTS),true)
+	ifeq ($(findstring depend,$(MAKECMDGOALS)),depend)
+	   DUMMY := $(shell mv -f $(MAKEFILE_DEPEND) $(MAKEFILE_DEPEND)-old)
+	else
+	   -include $(MAKEFILE_DEPEND)
+	endif
+endif
 ##############################################################################
 #
 # Expand the uses libs stuff
 #
 
-DEPEND_EXISTS := $(shell test -r $(MAKEFILE_DEPEND) && echo "true")
 ifneq ($(DEPEND_EXISTS),true)
    ifdef USES_LIBS
       ALT_LIBS := $(foreach lib,$(USES_LIBS),$(findstring $(lib),$(filter-out -L/%,$(MY_ALT_LIB_DIR))))
