@@ -12,9 +12,10 @@
 
 class AlignerUI {
   public:
-    AlignerUI(nmg_Graphics *g, nmb_ImageList *im,Tcl_Interp *interp, 
+	AlignerUI(nmg_Graphics *g, nmb_ImageList *im,Tcl_Interp *interp, 
 					const char *tcl_script_dir);
-	int addImage(nmb_Image *im);
+	~AlignerUI();
+    	int addImage(nmb_Image *im);
         void displayTexture(int enable) {textureDisplayEnabled = enable;};
 	void mainloop (void) { if (ce) ce->mainloop(); }
 

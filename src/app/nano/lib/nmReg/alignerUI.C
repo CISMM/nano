@@ -70,6 +70,12 @@ AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
 
 }
 
+AlignerUI::~AlignerUI()
+{
+   delete aligner;
+   delete ce;
+}
+
 int AlignerUI::addImage(nmb_Image *im) {
 	// adds image to nmb_ImageList --> adds entry to nmb_ListOfStrings -->
 	// updates selectors which were bound to this list in constructor

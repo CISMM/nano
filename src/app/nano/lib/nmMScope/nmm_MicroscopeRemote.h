@@ -49,7 +49,6 @@ struct stm_stream;  // from stm_file.h
 // someday.
 
 
-
 class nmm_Microscope_Remote : public nmm_Microscope {
     friend nmm_RelaxComp;
   public:
@@ -266,6 +265,7 @@ class nmm_Microscope_Remote : public nmm_Microscope {
     long unregisterScanlineDataHandler (int (* handler) (void *,
 					const Scanline_results *),
                                   void *userdata);
+
   protected:
 
     nmb_Dataset * d_dataset;
@@ -579,5 +579,3 @@ class nmm_Microscope_Remote : public nmm_Microscope {
 };
 
 #endif  // NMM_MICROSCOPE_REMOTE_H
-
-

@@ -761,7 +761,7 @@ int draw_world (int) {
       glBindTexture(GL_TEXTURE_1D, tex_ids[CONTOUR_1D_TEX_ID]);
       break;
     case nmg_Graphics::ALPHA:
-#ifndef __CYGWIN__
+#if !(defined(__CYGWIN__) || defined(hpux))
       glBindTexture(GL_TEXTURE_3D, tex_ids[ALPHA_3D_TEX_ID]);
 #endif
     case nmg_Graphics::BUMPMAP:
@@ -814,6 +814,7 @@ int draw_world (int) {
     glLoadIdentity();
 
     double theta = 0.0;
+    GLdouble texture_matrix[16];
     switch (g_texture_transform_mode) {
       case nmg_Graphics::RULERGRID_COORD:
         // use values from the older rulergrid adjustment interface
@@ -825,7 +826,6 @@ int draw_world (int) {
         glTranslatef(-g_rulergrid_xoffset, -g_rulergrid_yoffset, 0.0);// -TRANS.
         break;
       case nmg_Graphics::MANUAL_REALIGN_COORD:
-        GLdouble texture_matrix[16];
         compute_texture_matrix(g_translate_tex_x, g_translate_tex_y,
 		g_tex_theta_cumulative, g_scale_tex_x,
 		g_scale_tex_y, g_shear_tex_x, g_shear_tex_y,

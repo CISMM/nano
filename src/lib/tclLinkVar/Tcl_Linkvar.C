@@ -57,7 +57,7 @@ static	Tcl_Interp	*interpreter = NULL;	// Tcl interpreter used
 //	Update the integer variable in the handler that is pointed to
 // when the variables changes.
 
-/*static*/	char	*handle_int_value_change(ClientData clientData,
+static	char	*handle_int_value_change(ClientData clientData,
 	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
 {
         char    *cvalue;
@@ -103,7 +103,7 @@ static	Tcl_Interp	*interpreter = NULL;	// Tcl interpreter used
 //	Update the float variable in the handler that is pointed to
 // when the variables changes.
 
-/*static*/	char	*handle_float_value_change(ClientData clientData,
+static	char	*handle_float_value_change(ClientData clientData,
 	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
 {
         char    *cvalue;
@@ -140,7 +140,7 @@ static	Tcl_Interp	*interpreter = NULL;	// Tcl interpreter used
 //	Update the string variable in the handler that is pointed to
 // when the variables changes.
 
-/*static*/	char	*handle_string_value_change(ClientData clientData,
+static	char	*handle_string_value_change(ClientData clientData,
 	Tcl_Interp *interp, char */*name1*/, char */*name2*/, int /*flags*/)
 {
         char    *cvalue;
@@ -484,8 +484,8 @@ void Tclvar_int::updateTcl (void) {
   if (!interpreter) {
     return;
   }
-  //if ((d_myint != mylastint) ||
-      //(d_permitIdempotentChanges)) {
+  if ((d_myint != mylastint) ||
+      (d_permitIdempotentChanges)) {
   d_ignoreChange = VRPN_TRUE;
     mylastint = d_myint;
     d_dirty = VRPN_FALSE;
@@ -493,7 +493,7 @@ void Tclvar_int::updateTcl (void) {
     Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
 //fprintf(stderr, "Tclvar_int::updateTcl(%d) - was %d.\n",
 //d_myint, mylastint);
-  //}
+  }
 }
 
 
@@ -636,14 +636,14 @@ vrpn_float64 Tclvar_float::operator = (vrpn_float64 v) {
   if (!interpreter) {
     return retval;
   }
-  //if ((d_myfloat != mylastfloat) ||
-      //(d_permitIdempotentChanges)) {
+  if ((d_myfloat != mylastfloat) ||
+      (d_permitIdempotentChanges)) {
     d_ignoreChange = VRPN_TRUE;
     mylastfloat = d_myfloat;
     d_dirty = VRPN_FALSE;
     sprintf(cvalue, "%f", d_myfloat);
     Tcl_SetVar(interpreter, my_tcl_varname, cvalue, TCL_GLOBAL_ONLY);
-  //}
+  }
 
   return retval;
 }
@@ -1476,15 +1476,15 @@ void Tclvar_selector::updateTcl (void) {
   }
 
   // Idempotent check.
-  //if (compareStrings() ||
-      //d_permitIdempotentChanges) {
+  if (compareStrings() ||
+      d_permitIdempotentChanges) {
     d_ignoreChange = VRPN_TRUE;
     resetString();
     d_dirty = VRPN_FALSE;
     Tcl_SetVar(interpreter, d_myTclVarname, (char *) string(), TCL_GLOBAL_ONLY);
 //fprintf(stderr, "Tclvar_int::updateTcl(%s) - was %s.\n",
 //string(), d_myLastString);
-  //}
+  }
 }
 
 void Tclvar_selector::initializeTcl (const char * tcl_varname,
@@ -1665,9 +1665,25 @@ int Tclvar_selector::addEntry (const char * entry) {
 
   if (!interpreter) return 0;
   if (!d_tclWidgetName) return 0;
-
 //fprintf(stderr, "Adding %s to menu %s.\n", entry,
 //d_tclWidgetName);
+  int i;
+  if (d_tclWidgetName[0] == '$') {
+    printf("Tclvar_selector::addEntry: Warning: assuming global var in path and declaring it as such\n");
+    sprintf(command, "global %s", &(d_tclWidgetName[1]));
+    for (i = 7; i < strlen(d_tclWidgetName) + 7; i++){
+      if (command[i] == '(' || command[i] == '.'){
+        command[i] = '\0';
+        break;
+      }
+    }
+    if (Tcl_Eval(interpreter, command) != TCL_OK) {
+      fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
+            interpreter->result);
+      return -1;
+    }
+  }
+
   sprintf(command, "%s.menu add command -label {%s} -underline 0 "
                    "-command \"set %s {%s}\"",
           d_tclWidgetName, entry, d_myTclVarname, entry);
@@ -1690,6 +1706,23 @@ int Tclvar_selector::deleteEntry (const char * entry) {
 
 //fprintf(stderr, "In deleteEntry for %s, %s.\n",
 //d_tclWidgetName, entry);
+  int i;
+  if (d_tclWidgetName[0] == '$') {
+    printf("Tclvar_selector::addEntry: Warning: assuming global var in path and"
+		"declaring it as such\n");
+    sprintf(command, "global %s", &(d_tclWidgetName[1]));
+    for (i = 7; i < strlen(d_tclWidgetName) + 7; i++){
+      if (command[i] == '(' || command[i] == '.'){
+        command[i] = '\0';
+        break;
+      }
+    }
+    if (Tcl_Eval(interpreter, command) != TCL_OK) {
+      fprintf(stderr, "Tcl_Eval(%s) failed:  %s\n", command,
+            interpreter->result);
+      return -1;
+    }
+  }
 
   sprintf(command, "%s.menu delete {%s}",
           d_tclWidgetName, entry);

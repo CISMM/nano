@@ -1,10 +1,7 @@
 #ifndef INTERACTION_H
 #define INTERACTION_H
 
-//This causes a redefinition of v_xform_type, which causes trouble on CYGWIN
-//where "trouble" = "crashes the compiler"
-// - CCW 02/17/00
-//
+#include <v.h>
 //struct v_xform_type;  // from <v.h>
 
 // defined in interaction.c

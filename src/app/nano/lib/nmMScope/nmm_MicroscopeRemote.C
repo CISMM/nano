@@ -1019,12 +1019,8 @@ long nmm_Microscope_Remote::SetRateNM (double rate) {
 }
 
 long nmm_Microscope_Remote::MarkModifyMode (void) {
-  char * msgbuf;
-  long len;
-
-  msgbuf = encode_MarkModify(&len);
-  if (!msgbuf)
-    return -1;
+  char * msgbuf = NULL;
+  long len = 0;
 
   //return dispatchMessage(len, msgbuf, d_Echo_type);
 	// HACK HACK HACK	added a new message type d_MarkModify_type
@@ -1032,12 +1028,8 @@ long nmm_Microscope_Remote::MarkModifyMode (void) {
 }
 
 long nmm_Microscope_Remote::MarkImageMode (void) {
-  char * msgbuf;
-  long len;
-
-  msgbuf = encode_MarkImage(&len);
-  if (!msgbuf)
-    return -1;
+  char * msgbuf = NULL;
+  long len = 0;
 
   //return dispatchMessage(len, msgbuf, d_Echo_type);
         // HACK HACK HACK       added a new message type d_MarkImage_type
@@ -1237,7 +1229,18 @@ long nmm_Microscope_Remote::SetSlowScan (const long _value) {
   long len;
   
   // If state is identical, don't send message. 
-  //if (  state.slowScanEnabled == _value) return 0;
+  // XXX I found that this was commented out and when it was
+  // commented out it was causing the function to get called when
+  // the microscope reported back which was bad because then it just
+  // kept on getting called resulting in the scan getting restarted
+  // repeatedly - AAS - 
+  // since this I have changed Tcl_Linkvar.C updateTcl() routines so they
+  // don't do idempotent updates
+  if (  state.slowScanEnabled == _value) {
+     fprintf(stderr, "nmm_MicRemote::SetSlowScan: Warning, variable is already"
+             " set to this value; you may experience infinite loop behavior\n");
+     return 0;
+  }
 
   msgbuf = encode_SetSlowScan(&len, _value);
   if (!msgbuf)
@@ -1826,8 +1829,6 @@ long nmm_Microscope_Remote::unregisterScanlineDataHandler
   return 0;
 }
 
-
-
 long nmm_Microscope_Remote::InitDevice (const vrpn_bool _setRegion,
                             const vrpn_bool _setMode,
                             const long /* _socketType */,
@@ -2072,9 +2073,9 @@ int nmm_Microscope_Remote::handle_InSpectroscopyMode (void * userdata,
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   float setpoint;
   float startDelay, zStart, zEnd, zPullback, forceLimit, distBetweenFC;
-  long numPoints, numHalfcycles;        // Tiger changed int to long
+  vrpn_int32 numPoints, numHalfcycles;        // Tiger changed int to long
   float sampleSpeed, pullbackSpeed, startSpeed, feedbackSpeed;
-  long avgNum;  // Tiger changed int to long
+  vrpn_int32 avgNum;  // Tiger changed int to long
   float sampleDelay, pullbackDelay, feedbackDelay;
 
   ms->decode_InSpectroscopyMode(&param.buffer, &setpoint,
@@ -2094,7 +2095,7 @@ int nmm_Microscope_Remote::handle_InSpectroscopyMode (void * userdata,
 int nmm_Microscope_Remote::handle_ForceParameters (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long modifyEnable;
+  vrpn_int32 modifyEnable;
   float scrap;
 
   ms->decode_ForceParameters(&param.buffer, &modifyEnable, &scrap);
@@ -2131,7 +2132,7 @@ int nmm_Microscope_Remote::handle_ForceSettings (void * userdata,
 int nmm_Microscope_Remote::handle_VoltsourceEnabled (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long which;
+  vrpn_int32 which;
   float voltage;
 
   ms->decode_VoltsourceEnabled(&param.buffer, &which, &voltage);
@@ -2144,7 +2145,7 @@ int nmm_Microscope_Remote::handle_VoltsourceEnabled (void * userdata,
 int nmm_Microscope_Remote::handle_VoltsourceDisabled (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long which;
+  vrpn_int32 which;
 
   ms->decode_VoltsourceDisabled(&param.buffer, &which);
   ms->RcvVoltsourceDisabled(which);
@@ -2156,7 +2157,7 @@ int nmm_Microscope_Remote::handle_VoltsourceDisabled (void * userdata,
 int nmm_Microscope_Remote::handle_AmpEnabled (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long which, gain;
+  vrpn_int32 which, gain;
   float offset, percentOffset;
 
   ms->decode_AmpEnabled(&param.buffer, &which, &offset, &percentOffset, &gain);
@@ -2169,7 +2170,7 @@ int nmm_Microscope_Remote::handle_AmpEnabled (void * userdata,
 int nmm_Microscope_Remote::handle_AmpDisabled (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long which;
+  vrpn_int32 which;
 
   ms->decode_AmpDisabled(&param.buffer, &which);
   ms->RcvAmpDisabled(which);
@@ -2181,7 +2182,7 @@ int nmm_Microscope_Remote::handle_AmpDisabled (void * userdata,
 int nmm_Microscope_Remote::handle_StartingToRelax (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long sec, usec;
+  vrpn_int32 sec, usec;
 
   ms->decode_StartingToRelax(&param.buffer, &sec, &usec);
   ms->RcvStartingToRelax(sec, usec);
@@ -2193,7 +2194,7 @@ int nmm_Microscope_Remote::handle_StartingToRelax (void * userdata,
 int nmm_Microscope_Remote::handle_InModModeT (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long sec, usec;
+  vrpn_int32 sec, usec;
 
   ms->decode_InModModeT(&param.buffer, &sec, &usec);
   ms->RcvInModModeT(sec, usec);
@@ -2206,9 +2207,8 @@ int nmm_Microscope_Remote::handle_InModMode
                           (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long i, j;	// Tiger	HACK HACK HACK 	dumb variables
-
-  ms->decode_InModModeT(&param.buffer, &i, &j);	// Tiger	HACK HACK HACK
+  vrpn_int32 sec, usec;	// Tiger  
+  ms->decode_InModModeT(&param.buffer, &sec, &usec);
   ms->RcvInModMode();
 
   return 0;
@@ -2218,7 +2218,7 @@ int nmm_Microscope_Remote::handle_InModMode
 int nmm_Microscope_Remote::handle_InImgModeT (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long sec, usec;
+  vrpn_int32 sec, usec;
 
   ms->decode_InImgModeT(&param.buffer, &sec, &usec);
   ms->RcvInImgModeT(sec, usec);
@@ -2231,9 +2231,9 @@ int nmm_Microscope_Remote::handle_InImgMode
                           (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long i,j;		// Tiger	HACK HACK HACK 	dumb variables
+  vrpn_int32 sec,usec;
 
-  ms->decode_InImgModeT(&param.buffer, &i, &j);	// Tiger HACK HACK HACK
+  ms->decode_InImgModeT(&param.buffer, &sec, &usec);
   ms->RcvInImgMode();
 
   return 0;
@@ -2267,7 +2267,7 @@ int nmm_Microscope_Remote::handle_ImgForceSet (void * userdata,
 int nmm_Microscope_Remote::handle_ModSet (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long modifyEnable;
+  vrpn_int32 modifyEnable;
   float max, min, value;
 
   ms->decode_ModSet(&param.buffer, &modifyEnable, &max, &min, &value);
@@ -2280,7 +2280,7 @@ int nmm_Microscope_Remote::handle_ModSet (void * userdata,
 int nmm_Microscope_Remote::handle_ImgSet (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long modifyEnable;
+  vrpn_int32 modifyEnable;
   float max, min, value;
 
   ms->decode_ImgSet(&param.buffer, &modifyEnable, &max, &min, &value);
@@ -2293,7 +2293,7 @@ int nmm_Microscope_Remote::handle_ImgSet (void * userdata,
 int nmm_Microscope_Remote::handle_RelaxSet (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long min, sep;
+  vrpn_int32 min, sep;
 
   ms->decode_RelaxSet(&param.buffer, &min, &sep);
   ms->RcvRelaxSet(min, sep);
@@ -2329,7 +2329,7 @@ int nmm_Microscope_Remote::handle_ForceSetFailure (void * userdata,
 int nmm_Microscope_Remote::handle_PulseParameters (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long pulseEnabled;
+  vrpn_int32 pulseEnabled;
   float biasVoltage, peakVoltage, width;
 
   ms->decode_PulseParameters(&param.buffer, &pulseEnabled, &biasVoltage,
@@ -2343,7 +2343,7 @@ int nmm_Microscope_Remote::handle_PulseParameters (void * userdata,
 int nmm_Microscope_Remote::handle_StdDevParameters (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long samples;
+  vrpn_int32 samples;
   float freq;
 
   ms->decode_StdDevParameters(&param.buffer, &samples, &freq);
@@ -2357,7 +2357,7 @@ int nmm_Microscope_Remote::handle_WindowLineData (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   float fields [MAX_CHANNELS];
-  long x, y, dx, dy, sec, usec, lineCount, fieldCount;
+  vrpn_int32 x, y, dx, dy, sec, usec, lineCount, fieldCount;
   long i;
 
   ms->decode_WindowLineDataHeader(&param.buffer, &x, &y, &dx, &dy,
@@ -2376,7 +2376,7 @@ int nmm_Microscope_Remote::handle_WindowLineData (void * userdata,
 int nmm_Microscope_Remote::handle_WindowScanNM (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long x, y, sec, usec;
+  vrpn_int32 x, y, sec, usec;
   float value, deviation;
 
   ms->decode_WindowScanNM(&param.buffer, &x, &y, &sec, &usec,
@@ -2390,7 +2390,7 @@ int nmm_Microscope_Remote::handle_WindowScanNM (void * userdata,
 int nmm_Microscope_Remote::handle_WindowBackscanNM (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long x, y, sec, usec;
+  vrpn_int32 x, y, sec, usec;
   float value, deviation;
 
   ms->decode_WindowBackscanNM(&param.buffer, &x, &y, &sec, &usec,
@@ -2405,7 +2405,7 @@ int nmm_Microscope_Remote::handle_PointResultNM (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   float x, y, height, deviation;
-  long sec, usec;
+  vrpn_int32 sec, usec;
 
   ms->decode_PointResultNM(&param.buffer, &x, &y, &sec, &usec,
                            &height, &deviation);
@@ -2418,7 +2418,7 @@ int nmm_Microscope_Remote::handle_PointResultNM (void * userdata,
 int nmm_Microscope_Remote::handle_PointResultData (void * userdata,
                                         vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long sec, usec, fieldCount;
+  vrpn_int32 sec, usec, fieldCount;
   float x, y, fields [MAX_CHANNELS];
 
   ms->decode_ResultData(&param.buffer, &x, &y, &sec, &usec,
@@ -2433,7 +2433,7 @@ int nmm_Microscope_Remote::handle_PointResultData (void * userdata,
 int nmm_Microscope_Remote::handle_BottomPunchResultData (void * userdata,
                                          vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long sec, usec, fieldCount;
+  vrpn_int32 sec, usec, fieldCount;
   float x, y, fields [MAX_CHANNELS];
 
   ms->decode_ResultData(&param.buffer, &x, &y, &sec, &usec,
@@ -2448,7 +2448,7 @@ int nmm_Microscope_Remote::handle_BottomPunchResultData (void * userdata,
 int nmm_Microscope_Remote::handle_TopPunchResultData (void * userdata,
                                       vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long sec, usec, fieldCount;
+  vrpn_int32 sec, usec, fieldCount;
   float x, y, fields [MAX_CHANNELS];
 
   ms->decode_ResultData(&param.buffer, &x, &y, &sec, &usec,
@@ -2463,7 +2463,7 @@ int nmm_Microscope_Remote::handle_TopPunchResultData (void * userdata,
 int nmm_Microscope_Remote::handle_ResultNM (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long sec, usec;
+  vrpn_int32 sec, usec;
   float x, y, height, normX, normY, normZ;
 
   ms->decode_ResultNM(&param.buffer, &x, &y, &sec, &usec,
@@ -2478,7 +2478,7 @@ int nmm_Microscope_Remote::handle_ForceCurveData (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   float x, y;
-  long num_points, num_halfcycles, sec, usec, i, j;     // changed int to long
+  vrpn_int32 num_points, num_halfcycles, sec, usec, i, j;     // changed int to long
   float ** curves = NULL;       // one for each halfcycle
   float * z_values;             // one for each point
   float z;
@@ -2596,7 +2596,7 @@ int nmm_Microscope_Remote::handle_SetRegionClipped (void * userdata,
 int nmm_Microscope_Remote::handle_ResistanceFailure (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long which;
+  vrpn_int32 which;
 
   ms->decode_ResistanceFailure(&param.buffer, &which);
   ms->RcvResistanceFailure(which);
@@ -2608,7 +2608,7 @@ int nmm_Microscope_Remote::handle_ResistanceFailure (void * userdata,
 int nmm_Microscope_Remote::handle_Resistance (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long which, sec, usec;
+  vrpn_int32 which, sec, usec;
   float resistance;
 
   ms->decode_Resistance(&param.buffer, &which, &sec, &usec, &resistance);
@@ -2621,7 +2621,7 @@ int nmm_Microscope_Remote::handle_Resistance (void * userdata,
 int nmm_Microscope_Remote::handle_Resistance2(void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long which, sec, usec;
+  vrpn_int32 which, sec, usec;
   float resistance;
   float voltage, range, filter;
 
@@ -2636,7 +2636,7 @@ int nmm_Microscope_Remote::handle_Resistance2(void * userdata,
 int nmm_Microscope_Remote::handle_ReportSlowScan (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long enable;
+  vrpn_int32 enable;
 
   ms->decode_ReportSlowScan(&param.buffer, &enable);
   ms->RcvReportSlowScan(enable);
@@ -2649,7 +2649,7 @@ int nmm_Microscope_Remote::handle_ScanParameters (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   char * buffer;
-  long length;
+  vrpn_int32 length;
 
   ms->decode_ScanParameters(&param.buffer, &length, &buffer);
   ms->RcvScanParameters((const char **)&buffer);
@@ -2663,7 +2663,7 @@ int nmm_Microscope_Remote::handle_HelloMessage (void * userdata,
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   char magic [4];
   char name [STM_NAME_LENGTH];
-  long majorVersion, minorVersion;
+  vrpn_int32 majorVersion, minorVersion;
 
   ms->decode_HelloMessage(&param.buffer, magic, name,
                           &majorVersion, &minorVersion);
@@ -2678,7 +2678,7 @@ int nmm_Microscope_Remote::handle_ClientHello (void * userdata,
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   char magic [4];
   char name [STM_NAME_LENGTH];
-  long majorVersion, minorVersion;
+  vrpn_int32 majorVersion, minorVersion;
 
   ms->decode_ClientHello(&param.buffer, magic, name,
                          &majorVersion, &minorVersion);
@@ -2705,7 +2705,7 @@ int nmm_Microscope_Remote::handle_ScanDataset (void * userdata,
   char units [STM_NAME_LENGTH];
   float offset;
   float scale;
-  long numDatasets;
+  vrpn_int32 numDatasets;
   long i;
 
   ms->decode_ScanDatasetHeader(&param.buffer, &numDatasets);
@@ -2739,8 +2739,8 @@ int nmm_Microscope_Remote::handle_PointDataset (void * userdata,
   char units [STM_NAME_LENGTH];
   float offset;
   float scale;
-  long numDatasets;
-  long numSamples;
+  vrpn_int32 numDatasets;
+  vrpn_int32 numSamples;
   long i;
 
   ms->decode_PointDatasetHeader(&param.buffer, &numDatasets);
@@ -2785,7 +2785,7 @@ int nmm_Microscope_Remote::handle_ScanrateParameter (void * userdata,
 int nmm_Microscope_Remote::handle_ReportGridSize (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long x, y;
+  vrpn_int32 x, y;
 
   ms->decode_ReportGridSize(&param.buffer, &x, &y);
   ms->RcvReportGridSize(x, y);
@@ -2797,7 +2797,7 @@ int nmm_Microscope_Remote::handle_ReportGridSize (void * userdata,
 int nmm_Microscope_Remote::handle_ServerPacketTimestamp (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long sec, usec;
+  vrpn_int32 sec, usec;
 
   ms->decode_ServerPacketTimestamp(&param.buffer, &sec, &usec);
   ms->RcvServerPacketTimestamp(sec, usec);
@@ -2810,7 +2810,7 @@ int nmm_Microscope_Remote::handle_TopoFileHeader (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   char * buffer;
-  long length;
+  vrpn_int32 length;
 
   ms->decode_TopoFileHeader(&param.buffer, &length, &buffer);
   ms->RcvTopoFileHeader(length, buffer);
@@ -2832,7 +2832,7 @@ int nmm_Microscope_Remote::handle_MaxSetpointExceeded (void *userdata,
 int nmm_Microscope_Remote::handle_InScanlineMode (void *userdata, 
 					vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long enabled;
+  vrpn_int32 enabled;
   
   ms->decode_InScanlineMode(&param.buffer, &enabled);
   ms->RcvInScanlineMode(enabled);
@@ -2845,9 +2845,9 @@ int nmm_Microscope_Remote::handle_ScanlineData (void *userdata,
 					vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   long i;
-  long sec, usec;
+  vrpn_int32 sec, usec;
   float x, y, z, angle, slope, width;
-  long resolution, feedback_enabled, checking_forcelimit, num_channels;
+  vrpn_int32 resolution, feedback_enabled, checking_forcelimit, num_channels;
   float max_force_setting, max_z_step, max_xy_step;
   float fields [MAX_CHANNELS];
 
@@ -2895,7 +2895,7 @@ int nmm_Microscope_Remote::handle_FakeSendTimestamp (void * userdata,
 int nmm_Microscope_Remote::handle_UdpSeqNum (void * userdata,
                            vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-  long seqnum;
+  vrpn_int32 seqnum;
 
   ms->decode_UdpSeqNum(&param.buffer, &seqnum);
   ms->RcvUdpSeqNum(seqnum);
@@ -3825,11 +3825,10 @@ void nmm_Microscope_Remote::RcvClearPointChannels (void) {
     fprintf(stderr, "nmm_Microscope_Remote::RcvClearPointChannels: Can't clear point datasets\n");
     d_dataset->done = VRPN_TRUE;
   }
-  // NANO BEGIN
   else {
-    fprintf(stderr, "nmm_Microscope_Remote::RcvClearPointChannels: Cleared Point channels.\n");
+    fprintf(stderr, "nmm_Microscope_Remote::RcvClearPointChannels:"
+           " Cleared Point channels.\n");
   }
-  // NANO END
 }
 
 void nmm_Microscope_Remote::RcvPointDataset (const char * _name, const char * _units,
@@ -4182,5 +4181,3 @@ void nmm_Microscope_Remote::doScanlineDataCallbacks (const Scanline_results *s)
     l = l->next;
   }
 }
-
-

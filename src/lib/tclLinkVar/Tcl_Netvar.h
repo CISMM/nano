@@ -159,7 +159,7 @@ class TclNet_selector : public Tclvar_selector {
     TclNet_selector (const char * initial_value = NULL);
     TclNet_selector (const char * tcl_varname,
                      const char * parent_name,
-                     const char * default_value = NULL,
+                     const char * default_value = "",
                      Linkvar_Selectcall c = NULL, void * userdata = NULL);
     virtual ~TclNet_selector (void);
 

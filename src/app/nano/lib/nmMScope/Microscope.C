@@ -1481,7 +1481,7 @@ int Microscope::handle_InSewingStyle (void * userdata,
 int Microscope::handle_ForceParameters (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long modifyEnable;	// Tiger change int to long
+  vrpn_int32 modifyEnable;	// Tiger change int to long
   float scrap;
 
   ms->decode_ForceParameters(&param.buffer, &modifyEnable, &scrap);
@@ -1519,7 +1519,7 @@ int Microscope::handle_ForceSettings (void * userdata,
 int Microscope::handle_VoltsourceEnabled (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long which;	// Tiger change int to long
+  vrpn_int32 which;	// Tiger change int to long
   float voltage;
 
   ms->decode_VoltsourceEnabled(&param.buffer, &which, &voltage);
@@ -1532,7 +1532,7 @@ int Microscope::handle_VoltsourceEnabled (void * userdata,
 int Microscope::handle_VoltsourceDisabled (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long which;	// Tiger change int to long
+  vrpn_int32 which;	// Tiger change int to long
 
   ms->decode_VoltsourceDisabled(&param.buffer, &which);
   ms->RcvVoltsourceDisabled(which);
@@ -1543,7 +1543,7 @@ int Microscope::handle_VoltsourceDisabled (void * userdata,
 //static
 int Microscope::handle_AmpEnabled (void * userdata, vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long which, gain; 	// Tiger change int to long
+  vrpn_int32 which, gain; 	// Tiger change int to long
   float offset, percentOffset;
 
   ms->decode_AmpEnabled(&param.buffer, &which, &offset, &percentOffset, &gain);
@@ -1555,7 +1555,7 @@ int Microscope::handle_AmpEnabled (void * userdata, vrpn_HANDLERPARAM param) {
 //static
 int Microscope::handle_AmpDisabled (void * userdata, vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long which;	// Tiger change int to long
+  vrpn_int32 which;	// Tiger change int to long
 
   ms->decode_AmpDisabled(&param.buffer, &which);
   ms->RcvAmpDisabled(which);
@@ -1567,7 +1567,7 @@ int Microscope::handle_AmpDisabled (void * userdata, vrpn_HANDLERPARAM param) {
 int Microscope::handle_StartingToRelax (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long sec, usec;	// Tiger change int to long
+  vrpn_int32 sec, usec;	// Tiger change int to long
 
   ms->decode_StartingToRelax(&param.buffer, &sec, &usec);
   ms->RcvStartingToRelax(sec, usec);
@@ -1578,7 +1578,7 @@ int Microscope::handle_StartingToRelax (void * userdata,
 //static
 int Microscope::handle_InModModeT (void * userdata, vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long sec, usec;	// Tiger change int to long
+  vrpn_int32 sec, usec;	// Tiger change int to long
 
   ms->decode_InModModeT(&param.buffer, &sec, &usec);
   ms->RcvInModModeT(sec, usec);
@@ -1599,7 +1599,7 @@ int Microscope::handle_InModMode (void * userdata,
 //static
 int Microscope::handle_InImgModeT (void * userdata, vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long sec, usec;	// Tiger change int to long
+  vrpn_int32 sec, usec;	// Tiger change int to long
 
   ms->decode_InImgModeT(&param.buffer, &sec, &usec);
   ms->RcvInImgModeT(sec, usec);
@@ -1642,7 +1642,7 @@ int Microscope::handle_ImgForceSet (void * userdata, vrpn_HANDLERPARAM param) {
 //static
 int Microscope::handle_ModSet (void * userdata, vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long modifyEnable; 	// Tiger change int to long
+  vrpn_int32 modifyEnable; 	// Tiger change int to long
   float max, min, value;
 
   ms->decode_ModSet(&param.buffer, &modifyEnable, &max, &min, &value);
@@ -1654,7 +1654,7 @@ int Microscope::handle_ModSet (void * userdata, vrpn_HANDLERPARAM param) {
 //static
 int Microscope::handle_ImgSet (void * userdata, vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long modifyEnable;	// Tiger change int to long
+  vrpn_int32 modifyEnable;	// Tiger change int to long
   float max, min, value;
 
   ms->decode_ImgSet(&param.buffer, &modifyEnable, &max, &min, &value);
@@ -1666,7 +1666,7 @@ int Microscope::handle_ImgSet (void * userdata, vrpn_HANDLERPARAM param) {
 //static
 int Microscope::handle_RelaxSet (void * userdata, vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long min, sep;	// Tiger change int to long
+  vrpn_int32 min, sep;	// Tiger change int to long
 
   ms->decode_RelaxSet(&param.buffer, &min, &sep);
   ms->RcvRelaxSet(min, sep);
@@ -1701,7 +1701,7 @@ int Microscope::handle_ForceSetFailure (void * userdata,
 int Microscope::handle_PulseParameters (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long pulseEnabled; 	// Tiger change int to long
+  vrpn_int32 pulseEnabled; 	// Tiger change int to long
   float biasVoltage, peakVoltage, width;
 
   ms->decode_PulseParameters(&param.buffer, &pulseEnabled, &biasVoltage,
@@ -1715,7 +1715,7 @@ int Microscope::handle_PulseParameters (void * userdata,
 int Microscope::handle_StdDevParameters (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long samples; 	// Tiger change int to long
+  vrpn_int32 samples; 	// Tiger change int to long
   float freq;
 
   ms->decode_StdDevParameters(&param.buffer, &samples, &freq);
@@ -1729,7 +1729,7 @@ int Microscope::handle_WindowLineData (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
   float fields [MAX_CHANNELS];
-  long x, y, dx, dy, sec, usec, lineCount, fieldCount;	// Tiger change int to long
+  vrpn_int32 x, y, dx, dy, sec, usec, lineCount, fieldCount;	// Tiger change int to long
 
   int i;
 
@@ -1749,7 +1749,7 @@ int Microscope::handle_WindowLineData (void * userdata,
 int Microscope::handle_WindowScanNM (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long x, y, sec, usec;	// Tiger change int to long
+  vrpn_int32 x, y, sec, usec;	// Tiger change int to long
   float value, deviation;
 
   ms->decode_WindowScanNM(&param.buffer, &x, &y, &sec, &usec,
@@ -1763,7 +1763,7 @@ int Microscope::handle_WindowScanNM (void * userdata,
 int Microscope::handle_WindowBackscanNM (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long x, y, sec, usec;	// Tiger change int to long
+  vrpn_int32 x, y, sec, usec;	// Tiger change int to long
   float value, deviation;
 
   ms->decode_WindowBackscanNM(&param.buffer, &x, &y, &sec, &usec,
@@ -1778,7 +1778,7 @@ int Microscope::handle_PointResultNM (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
   float x, y, height, deviation;
-  long sec, usec;	// Tiger change int to long
+  vrpn_int32 sec, usec;	// Tiger change int to long
 
   ms->decode_PointResultNM(&param.buffer, &x, &y, &sec, &usec,
                            &height, &deviation);
@@ -1791,7 +1791,7 @@ int Microscope::handle_PointResultNM (void * userdata,
 int Microscope::handle_PointResultData (void * userdata,
                                         vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long sec, usec, fieldCount;	// Tiger change int to long
+  vrpn_int32 sec, usec, fieldCount;	// Tiger change int to long
   float x, y, fields [MAX_CHANNELS];
 
   ms->decode_ResultData(&param.buffer, &x, &y, &sec, &usec,
@@ -1806,7 +1806,7 @@ int Microscope::handle_PointResultData (void * userdata,
 int Microscope::handle_BottomPunchResultData (void * userdata,
                                          vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long sec, usec, fieldCount;	// Tiger change int to long
+  vrpn_int32 sec, usec, fieldCount;	// Tiger change int to long
   float x, y, fields [MAX_CHANNELS];
 
   ms->decode_ResultData(&param.buffer, &x, &y, &sec, &usec,
@@ -1821,7 +1821,7 @@ int Microscope::handle_BottomPunchResultData (void * userdata,
 int Microscope::handle_TopPunchResultData (void * userdata,
                                       vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long sec, usec, fieldCount;	// Tiger change int to long
+  vrpn_int32 sec, usec, fieldCount;	// Tiger change int to long
   float x, y, fields [MAX_CHANNELS];
 
   ms->decode_ResultData(&param.buffer, &x, &y, &sec, &usec,
@@ -1835,7 +1835,7 @@ int Microscope::handle_TopPunchResultData (void * userdata,
 //static
 int Microscope::handle_ResultNM (void * userdata, vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long sec, usec;	// Tiger change int to long
+  vrpn_int32 sec, usec;	// Tiger change int to long
   float x, y, height, normX, normY, normZ;
 
   ms->decode_ResultNM(&param.buffer, &x, &y, &sec, &usec,
@@ -1908,7 +1908,7 @@ int Microscope::handle_SetRegionClipped (void * userdata,
 int Microscope::handle_ResistanceFailure (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long which;	// Tiger change int to long
+  vrpn_int32 which;	// Tiger change int to long
 
   ms->decode_ResistanceFailure(&param.buffer, &which);
   ms->RcvResistanceFailure(which);
@@ -1919,7 +1919,7 @@ int Microscope::handle_ResistanceFailure (void * userdata,
 //static
 int Microscope::handle_Resistance (void * userdata, vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long which, sec, usec;	// Tiger change int to long
+  vrpn_int32 which, sec, usec;	// Tiger change int to long
   float resistance;
 
   ms->decode_Resistance(&param.buffer, &which, &sec, &usec, &resistance);
@@ -1931,7 +1931,7 @@ int Microscope::handle_Resistance (void * userdata, vrpn_HANDLERPARAM param) {
 //static
 int Microscope::handle_Resistance2(void * userdata, vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long which, sec, usec;	// Tiger change int to long
+  vrpn_int32 which, sec, usec;	// Tiger change int to long
   float resistance;
   float voltage, range, filter;
 
@@ -1946,7 +1946,7 @@ int Microscope::handle_Resistance2(void * userdata, vrpn_HANDLERPARAM param) {
 int Microscope::handle_ReportSlowScan (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long enable;	// Tiger change int to long
+  vrpn_int32 enable;	// Tiger change int to long
 
   ms->decode_ReportSlowScan(&param.buffer, &enable);
   ms->RcvReportSlowScan(enable);
@@ -1959,7 +1959,7 @@ int Microscope::handle_ScanParameters (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
   char * buffer;
-  long length;	// Tiger change int to long
+  vrpn_int32 length;	// Tiger change int to long
 
   ms->decode_ScanParameters(&param.buffer, &length, &buffer);
   ms->RcvScanParameters((const char **)&buffer);
@@ -1973,7 +1973,7 @@ int Microscope::handle_HelloMessage (void * userdata,
   Microscope * ms = (Microscope *) userdata;
   char magic [4];
   char name [STM_NAME_LENGTH];
-  long majorVersion, minorVersion;	// Tiger change int to long
+  vrpn_int32 majorVersion, minorVersion;	// Tiger change int to long
 
 
   ms->decode_HelloMessage(&param.buffer, magic, name,
@@ -1989,7 +1989,7 @@ int Microscope::handle_ClientHello (void * userdata,
   Microscope * ms = (Microscope *) userdata;
   char magic [4];
   char name [STM_NAME_LENGTH];
-  long majorVersion, minorVersion;	// Tiger change int to long
+  vrpn_int32 majorVersion, minorVersion;	// Tiger change int to long
 
   ms->decode_ClientHello(&param.buffer, magic, name,
                          &majorVersion, &minorVersion);
@@ -2015,7 +2015,7 @@ int Microscope::handle_ScanDataset (void * userdata, vrpn_HANDLERPARAM param) {
   char units [STM_NAME_LENGTH];
   float offset;
   float scale;
-  long numDatasets;	// Tiger change int to long
+  vrpn_int32 numDatasets;	// Tiger change int to long
   int i;
 
   ms->decode_ScanDatasetHeader(&param.buffer, &numDatasets);
@@ -2045,8 +2045,8 @@ int Microscope::handle_PointDataset (void * userdata,
   char units [STM_NAME_LENGTH];
   float offset;
   float scale;
-  long numDatasets;	// Tiger change int to long
-  long numSamples;	// Tiger change int to long
+  vrpn_int32 numDatasets;	// Tiger change int to long
+  vrpn_int32 numSamples;	// Tiger change int to long
   int i;
 
   ms->decode_PointDatasetHeader(&param.buffer, &numDatasets);
@@ -2087,7 +2087,7 @@ int Microscope::handle_ScanrateParameter (void * userdata,
 int Microscope::handle_ReportGridSize (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long x, y;	// Tiger change int to long
+  vrpn_int32 x, y;	// Tiger change int to long
 
   ms->decode_ReportGridSize(&param.buffer, &x, &y);
   ms->RcvReportGridSize(x, y);
@@ -2099,7 +2099,7 @@ int Microscope::handle_ReportGridSize (void * userdata,
 int Microscope::handle_ServerPacketTimestamp (void * userdata,
                                               vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long sec, usec;	// Tiger change int to long
+  vrpn_int32 sec, usec;	// Tiger change int to long
 
   ms->decode_ServerPacketTimestamp(&param.buffer, &sec, &usec);
   ms->RcvServerPacketTimestamp(sec, usec);
@@ -2112,7 +2112,7 @@ int Microscope::handle_TopoFileHeader (void * userdata,
                                              vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
   char * buffer;
-  long length;	// Tiger change int to long
+  vrpn_int32 length;	// Tiger change int to long
 
   ms->decode_TopoFileHeader(&param.buffer, &length, &buffer);
   ms->RcvTopoFileHeader(length, buffer);
@@ -2149,7 +2149,7 @@ int Microscope::handle_FakeSendTimestamp (void * userdata,
 //static
 int Microscope::handle_UdpSeqNum (void * userdata, vrpn_HANDLERPARAM param) {
   Microscope * ms = (Microscope *) userdata;
-  long seqnum;	// Tiger change int to long
+  vrpn_int32 seqnum;	// Tiger change int to long
 
   ms->decode_UdpSeqNum(&param.buffer, &seqnum);
   ms->RcvUdpSeqNum(seqnum);

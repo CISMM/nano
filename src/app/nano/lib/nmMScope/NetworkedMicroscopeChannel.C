@@ -3,11 +3,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef sgi
-#include <strings.h>  // bcopy(), bzero() ON SGI
-#endif
-#ifdef hpux
-#include <strings.h>  // bcopy(), bzero() ON hpux
+#if defined(sgi) || defined(hpux)
+#include <strings.h>  // bcopy(), bzero() ON SGI and HP
 #endif
 #include <stdlib.h>  // bcopy(), bzero() ON SOLARIS - unsupported
 

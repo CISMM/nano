@@ -1316,9 +1316,9 @@ void MicroscopeIO::RcvInSewingStyle (char ** _bufptr) {
 void MicroscopeIO::RcvInSpectroscopyMode (char ** _bufptr) {
   float setpoint;
   float startDelay, zStart, zEnd, zPullback, forceLimit, distBetweenFC;
-  long numPoints, numHalfcycles;	// Tiger changed int to long
+  vrpn_int32 numPoints, numHalfcycles;	// Tiger changed int to long
   float sampleSpeed, pullbackSpeed, startSpeed, feedbackSpeed;
-  long avgNum;	// Tiger changed int to long
+  vrpn_int32 avgNum;	// Tiger changed int to long
   float sampleDelay, pullbackDelay, feedbackDelay;
 
   microscope->decode_InSpectroscopyMode(UGLYCAST _bufptr, &setpoint, 
@@ -1333,7 +1333,7 @@ void MicroscopeIO::RcvInSpectroscopyMode (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvForceParameters (char ** _bufptr) {
-  long enableModify;	// Tiger changed int to long
+  vrpn_int32 enableModify;	// Tiger changed int to long
   float fscrap;
 
   microscope->decode_ForceParameters(UGLYCAST _bufptr, &enableModify, &fscrap);
@@ -1355,7 +1355,7 @@ void MicroscopeIO::RcvForceSettings (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvVoltsourceEnabled (char ** _bufptr) {
-  long vmNum;	// Tiger changed int to long
+  vrpn_int32 vmNum;	// Tiger changed int to long
   float voltage;
 
   microscope->decode_VoltsourceEnabled(UGLYCAST _bufptr, &vmNum, &voltage);
@@ -1363,14 +1363,14 @@ void MicroscopeIO::RcvVoltsourceEnabled (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvVoltsourceDisabled (char ** _bufptr) {
-  long vmNum;	// Tiger changed int to long
+  vrpn_int32 vmNum;	// Tiger changed int to long
 
   microscope->decode_VoltsourceDisabled(UGLYCAST _bufptr, &vmNum);
   microscope->RcvVoltsourceDisabled(vmNum);
 }
 
 void MicroscopeIO::RcvAmpEnabled (char ** _bufptr) {
-  long aNum, gainMode;	// Tiger changed int to long
+  vrpn_int32 aNum, gainMode;	// Tiger changed int to long
   float offset, percentOffset;
 
   microscope->decode_AmpEnabled(UGLYCAST _bufptr, &aNum, &offset, &percentOffset, &gainMode);
@@ -1378,14 +1378,14 @@ void MicroscopeIO::RcvAmpEnabled (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvAmpDisabled (char ** _bufptr) {
-  long aNum;	// Tiger changed int to long
+  vrpn_int32 aNum;	// Tiger changed int to long
 
   microscope->decode_AmpDisabled(UGLYCAST _bufptr, &aNum);
   microscope->RcvAmpDisabled(aNum);
 }
 
 void MicroscopeIO::RcvStartingToRelax (char ** _bufptr) {
-  long sec, usec;	// Tiger changed int to long
+  vrpn_int32 sec, usec;	// Tiger changed int to long
 
   microscope->decode_StartingToRelax(UGLYCAST _bufptr, &sec, &usec);
   this->sec = sec;
@@ -1394,7 +1394,7 @@ void MicroscopeIO::RcvStartingToRelax (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvInModModeT (char ** _bufptr) {
-  long sec, usec;	// Tiger changed int to long
+  vrpn_int32 sec, usec;	// Tiger changed int to long
 
   microscope->decode_InModModeT(UGLYCAST _bufptr, &sec, &usec);
   this->sec = sec;
@@ -1409,7 +1409,7 @@ void MicroscopeIO::RcvInModMode (char **) {
 }
 
 void MicroscopeIO::RcvInImgModeT (char ** _bufptr) {
-  long sec, usec;	// Tiger changed int to long
+  vrpn_int32 sec, usec;	// Tiger changed int to long
 
   microscope->decode_InImgModeT(UGLYCAST _bufptr, &sec, &usec);
   this->sec = sec;
@@ -1438,7 +1438,7 @@ void MicroscopeIO::RcvImgForceSet (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvModSet (char ** _bufptr) {
-  long enableModify;	// Tiger changed int to long
+  vrpn_int32 enableModify;	// Tiger changed int to long
   float min, max, setpoint;
 
   microscope->decode_ModSet(UGLYCAST _bufptr, &enableModify, &max, &min, &setpoint);
@@ -1446,7 +1446,7 @@ void MicroscopeIO::RcvModSet (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvImgSet (char ** _bufptr) {
-  long enableModify;	// Tiger changed int to long
+  vrpn_int32 enableModify;	// Tiger changed int to long
   float min, max, setpoint;
 
   microscope->decode_ImgSet(UGLYCAST _bufptr, &enableModify, &max, &min, &setpoint);
@@ -1454,7 +1454,7 @@ void MicroscopeIO::RcvImgSet (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvRelaxSet (char ** _bufptr) {
-  long min, sep;	// Tiger changed int to long
+  vrpn_int32 min, sep;	// Tiger changed int to long
 
   microscope->decode_RelaxSet(UGLYCAST _bufptr, &min, &sep);
   microscope->RcvRelaxSet(min, sep);
@@ -1478,7 +1478,7 @@ void MicroscopeIO::RcvForceSetFailure (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvPulseParameters (char ** _bufptr) {
-  long enablePulse;	// Tiger changed int to long
+  vrpn_int32 enablePulse;	// Tiger changed int to long
   float bias, peak, width;
 
   microscope->decode_PulseParameters(UGLYCAST _bufptr, &enablePulse, &bias, &peak, &width);
@@ -1486,7 +1486,7 @@ void MicroscopeIO::RcvPulseParameters (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvStdDevParameters (char ** _bufptr) {
-  long samples;	// Tiger changed int to long
+  vrpn_int32 samples;	// Tiger changed int to long
   float frequency;
 
   microscope->decode_StdDevParameters(UGLYCAST _bufptr, &samples, &frequency);
@@ -1494,7 +1494,7 @@ void MicroscopeIO::RcvStdDevParameters (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvWindowLineData (char ** _bufptr) {
-  long x, y, dx, dy, lineCount, fieldCount, sec, usec, i;	// Tiger changed int to long
+  vrpn_int32 x, y, dx, dy, lineCount, fieldCount, sec, usec, i;	// Tiger changed int to long
   float fields [MAX_CHANNELS];
 
   microscope->decode_WindowLineDataHeader(UGLYCAST _bufptr, &x, &y, &dx, &dy, &lineCount, &fieldCount, &sec, &usec);
@@ -1512,7 +1512,7 @@ void MicroscopeIO::RcvWindowLineData (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvWindowScanNM (char ** _bufptr) {
-  long x, y, sec, usec;	// Tiger changed int to long
+  vrpn_int32 x, y, sec, usec;	// Tiger changed int to long
   float value, deviation;
 
   microscope->decode_WindowScanNM(UGLYCAST _bufptr, &x, &y, &sec, &usec, &value, &deviation);
@@ -1523,7 +1523,7 @@ void MicroscopeIO::RcvWindowScanNM (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvWindowBackscanNM (char ** _bufptr) {
-  long x, y, sec, usec;	// Tiger changed int to long
+  vrpn_int32 x, y, sec, usec;	// Tiger changed int to long
   float value, deviation;
 
   microscope->decode_WindowBackscanNM(UGLYCAST _bufptr, &x, &y, &sec, &usec, &value, &deviation);
@@ -1535,7 +1535,7 @@ void MicroscopeIO::RcvWindowBackscanNM (char ** _bufptr) {
 
 void MicroscopeIO::RcvPointResultNM (char ** _bufptr) {
   float x, y, height, deviation;
-  long sec, usec;	// Tiger changed int to long
+  vrpn_int32 sec, usec;	// Tiger changed int to long
 
   microscope->decode_PointResultNM(UGLYCAST _bufptr, &x, &y, &sec, &usec, &height, &deviation);
   this->sec = sec;
@@ -1548,7 +1548,7 @@ void MicroscopeIO::RcvPointResultNM (char ** _bufptr) {
 // case SPM_TOP_PUNCH_RESULT_DATA: {
 void MicroscopeIO::RcvResultData (const int _type, char ** _bufptr) {
   float x, y, fields [MAX_CHANNELS];
-  long sec, usec, fieldCount;	// Tiger changed int to long
+  vrpn_int32 sec, usec, fieldCount;	// Tiger changed int to long
 
   microscope->decode_ResultData(UGLYCAST _bufptr, &x, &y, &sec, &usec, &fieldCount, fields);
   this->sec = sec;
@@ -1560,7 +1560,7 @@ void MicroscopeIO::RcvResultData (const int _type, char ** _bufptr) {
 // case SPM_BLUNT_RESULT_NM:
 void MicroscopeIO::RcvResultNM (char ** _bufptr) {
   float x, y, height, normX, normY, normZ;
-  long sec, usec;	// Tiger changed int to long
+  vrpn_int32 sec, usec;	// Tiger changed int to long
 
   microscope->decode_ResultNM(UGLYCAST _bufptr, &x, &y, &sec, &usec, &height, &normX, &normY, &normZ);
   this->sec = sec;
@@ -1597,14 +1597,14 @@ void MicroscopeIO::RcvSetRegionC (const int _type, char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvResistanceFailure (char ** _bufptr) {
-  long which;	// Tiger changed int to long
+  vrpn_int32 which;	// Tiger changed int to long
 
   microscope->decode_ResistanceFailure(UGLYCAST _bufptr, &which);
   microscope->RcvResistanceFailure(which);
 }
 
 void MicroscopeIO::RcvResistance (char ** _bufptr) {
-  long which, sec, usec;	// Tiger changed int to long
+  vrpn_int32 which, sec, usec;	// Tiger changed int to long
   float resistance;
 
   microscope->decode_Resistance(UGLYCAST _bufptr, &which, &sec, &usec, &resistance);
@@ -1614,7 +1614,7 @@ void MicroscopeIO::RcvResistance (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvResistance2 (char ** _bufptr) {
-  long which, sec, usec;	// Tiger changed int to long
+  vrpn_int32 which, sec, usec;	// Tiger changed int to long
   float resistance;
   float voltage, range, filter;
 
@@ -1629,10 +1629,10 @@ void MicroscopeIO::RcvResistance2 (char ** _bufptr) {
 
 
 void MicroscopeIO::RcvResistanceWithStatus (char ** _bufptr) {
-  long which, sec, usec;    // Tiger changed int to long
+  vrpn_int32 which, sec, usec;    // Tiger changed int to long
   float resistance;
   float voltage, range, filter;
-  long status;
+  vrpn_int32 status;
 
   microscope->decode_ResistanceWithStatus(UGLYCAST _bufptr, &which, 
 	&sec, &usec, &resistance, &voltage, &range, &filter, &status);
@@ -1643,7 +1643,7 @@ void MicroscopeIO::RcvResistanceWithStatus (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvReportSlowScan (char ** _bufptr) {
-  long isEnabled;	// Tiger changed int to long
+  vrpn_int32 isEnabled;	// Tiger changed int to long
 
   microscope->decode_ReportSlowScan(UGLYCAST _bufptr, &isEnabled);
   microscope->RcvReportSlowScan(isEnabled);
@@ -1653,7 +1653,7 @@ void MicroscopeIO::RcvReportSlowScan (char ** _bufptr) {
 // to make sure _bufptr is advanced correctly
 
 void MicroscopeIO::RcvScanParameters (char ** _bufptr) {
-  long length, i;	// Tiger changed int to long
+  vrpn_int32 length, i;	// Tiger changed int to long
   char * buffer, * bp;
 
   microscope->decode_ScanParameters(UGLYCAST _bufptr, &length, &buffer);
@@ -1678,8 +1678,8 @@ void MicroscopeIO::RcvScanParameters (char ** _bufptr) {
 void MicroscopeIO::RcvHelloMessage (char ** _bufptr) {
   char magic [4];
   char name [STM_NAME_LENGTH];
-  long minorVersion;	// Tiger changed int to long
-  long majorVersion;	// Tiger changed int to long
+  vrpn_int32 minorVersion;	// Tiger changed int to long
+  vrpn_int32 majorVersion;	// Tiger changed int to long
 
   microscope->decode_HelloMessage(UGLYCAST _bufptr, magic, name,
                                   &minorVersion, &majorVersion);
@@ -1689,8 +1689,8 @@ void MicroscopeIO::RcvHelloMessage (char ** _bufptr) {
 void MicroscopeIO::RcvClientHello (char ** _bufptr) {
   char magic [4];
   char name [STM_NAME_LENGTH];
-  long minorVersion;	// Tiger changed int to long
-  long majorVersion;	// Tiger changed int to long
+  vrpn_int32 minorVersion;	// Tiger changed int to long
+  vrpn_int32 majorVersion;	// Tiger changed int to long
 
   microscope->decode_ClientHello(UGLYCAST _bufptr, magic, name,
                                   &minorVersion, &majorVersion);
@@ -1698,7 +1698,7 @@ void MicroscopeIO::RcvClientHello (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvScanDatasets (char ** _bufptr) {
-  long count, i;	// Tiger changed int to long
+  vrpn_int32 count, i;	// Tiger changed int to long
   char name [STM_NAME_LENGTH];
   char units [STM_NAME_LENGTH];
   float offset;
@@ -1718,10 +1718,10 @@ void MicroscopeIO::RcvScanDatasets (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvPointDatasets (char ** _bufptr) {
-  long count, i;	// Tiger changed int to long
+  vrpn_int32 count, i;	// Tiger changed int to long
   char name [STM_NAME_LENGTH];
   char units [STM_NAME_LENGTH];
-  long numSamples;	// Tiger changed int to long
+  vrpn_int32 numSamples;	// Tiger changed int to long
   float offset;
   float scale;
 
@@ -1737,7 +1737,7 @@ void MicroscopeIO::RcvPointDatasets (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvInScanlineMode (char ** _bufptr) {
-  long enable;
+  vrpn_int32 enable;
 
   microscope->decode_InScanlineMode(UGLYCAST _bufptr,
         &enable);
@@ -1747,13 +1747,13 @@ void MicroscopeIO::RcvInScanlineMode (char ** _bufptr) {
 
 void MicroscopeIO::RcvScanlineData (char ** _bufptr) {
   long i;
-  long sec, usec;
+  vrpn_int32 sec, usec;
   float x, y, z, angle, slope;
   float width;
-  long resolution;
-  long feedback_enabled, checking_forcelimit;
+  vrpn_int32 resolution;
+  vrpn_int32 feedback_enabled, checking_forcelimit;
   float max_force_setting, max_z_step, max_xy_step;
-  long num_channels;
+  vrpn_int32 num_channels;
   float fields [MAX_CHANNELS];
 
   microscope->decode_ScanlineDataHeader(UGLYCAST _bufptr, &x, &y, &z, &angle,
@@ -1790,14 +1790,14 @@ void MicroscopeIO::RcvScanrateParameter (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvReportGridSize (char ** _bufptr) {
-  long x, y;	// Tiger changed int to long
+  vrpn_int32 x, y;	// Tiger changed int to long
 
   microscope->decode_ReportGridSize(UGLYCAST _bufptr, &x, &y);
   microscope->RcvReportGridSize(x, y);
 }
 
 void MicroscopeIO::RcvServerPacketTimestamp (char ** _bufptr) {
-  long sec, usec;	// Tiger changed int to long
+  vrpn_int32 sec, usec;	// Tiger changed int to long
 
   microscope->decode_ServerPacketTimestamp(UGLYCAST _bufptr, &sec, &usec);
   this->sec = sec;
@@ -1806,7 +1806,7 @@ void MicroscopeIO::RcvServerPacketTimestamp (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvTopoFileHeader (char ** _bufptr) {
-  long length;	// Tiger changed int to long
+  vrpn_int32 length;	// Tiger changed int to long
   //static char * header = NULL;
   char * buffer;
 
@@ -1823,7 +1823,7 @@ void MicroscopeIO::RcvTopoFileHeader (char ** _bufptr) {
 // a problem,
 void MicroscopeIO::RcvForceCurveData (char ** _bufptr) {
   float x, y;
-  long num_points, num_halfcycles, sec, usec, i, j;	// Tiger changed int to long
+  vrpn_int32 num_points, num_halfcycles, sec, usec, i, j;	// Tiger changed int to long
   float ** curves = NULL;	// one for each halfcycle
   float * z_values;		// one for each point
   float z;
@@ -1894,7 +1894,7 @@ void MicroscopeIO::RcvFakeSendTimestamp (char ** _bufptr) {
 }
 
 void MicroscopeIO::RcvUdpSeqNum (char ** _bufptr) {
-  long sn;	// Tiger changed int to long
+  vrpn_int32 sn;	// Tiger changed int to long
 
   microscope->decode_UdpSeqNum(UGLYCAST _bufptr, &sn);
   microscope->RcvUdpSeqNum(sn);

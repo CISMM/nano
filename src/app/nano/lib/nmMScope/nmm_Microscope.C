@@ -1,4 +1,4 @@
-	// If you wanna see what changes made by Tiger, just search for 'Tiger'
+// If you wanna see what changes made by Tiger, just search for 'Tiger'
 #include "nmm_Microscope.h"
 
 #include <vrpn_FileController.h>
@@ -16,14 +16,12 @@
 #include <stm_file.h>
 */
 
-#include <nmb_Util.h>
-
 /* Tiger	seems I don't need these two header files either
 #include "MicroscopeIO.h"
 #include "ModFile.h"
 */
 
-#define CHECK(a) if (a == -1) return -1
+#define CHECK(a) if ((a) == -1) return -1
 
 nmm_Microscope::nmm_Microscope
     (const char * name,
@@ -39,6 +37,15 @@ nmm_Microscope::nmm_Microscope
   if (connection) {
     d_myId = connection->register_sender(servicename);	// Tiger changed name
 							// to servicename
+
+/* ****************************************************************
+   Can't do echo, because if you sent a message containing a message
+   type then it wouldn't get translated correctly when sent back since that
+   message id number may correspond to a different message on the client side
+
+   This is why we have MarkModify and MarkImage messages but no echo message
+   the way we did before vrpn.
+**************************************************************** */
 
     d_SetRegionNM_type = connection->register_message_type
          ("nmm Microscope SetRegionNM");
@@ -94,8 +101,6 @@ nmm_Microscope::nmm_Microscope
          ("nmm Microscope GetNewPointDatasets");
     d_GetNewScanDatasets_type = connection->register_message_type
          ("nmm Microscope GetNewScanDatasets");
-    d_Echo_type = connection->register_message_type
-         ("nmm Microscope Echo");
     d_MarkModify_type = connection->register_message_type
 	("nmm Microscope MarkModify");
     d_MarkImage_type = connection->register_message_type
@@ -279,7 +284,7 @@ nmm_Microscope::nmm_Microscope
 
     // Scanline mode (client-->server)
     d_EnterScanlineMode_type = connection->register_message_type
-	("nmm Microscope EnterScanlineMode");
+        ("nmm Microscope EnterScanlineMode");
     d_RequestScanLine_type = connection->register_message_type
         ("nmm Microscope RequestScanLine");
 
@@ -534,19 +539,16 @@ long nmm_Microscope::InitializeTcl (const char * dir) {
 */
 
 
-
-
-
-
 char * nmm_Microscope::encode_SetRegionNM (long * len,
-                 float minx, float miny, float maxx, float maxy) {
+                 vrpn_float32 minx, vrpn_float32 miny, 
+                 vrpn_float32 maxx, vrpn_float32 maxy) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 4 * sizeof(float);
+  *len = 4 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetRegionNM:  "
@@ -555,21 +557,22 @@ char * nmm_Microscope::encode_SetRegionNM (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, minx);
-    nmb_Util::Buffer(&mptr, &mlen, miny);
-    nmb_Util::Buffer(&mptr, &mlen, maxx);
-    nmb_Util::Buffer(&mptr, &mlen, maxy);
+    vrpn_buffer(&mptr, &mlen, minx);
+    vrpn_buffer(&mptr, &mlen, miny);
+    vrpn_buffer(&mptr, &mlen, maxx);
+    vrpn_buffer(&mptr, &mlen, maxy);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_SetRegionNM (const char ** buf,
-         float * minx, float * miny, float * maxx, float * maxy) {
-  CHECK(nmb_Util::Unbuffer(buf, minx));
-  CHECK(nmb_Util::Unbuffer(buf, miny));
-  CHECK(nmb_Util::Unbuffer(buf, maxx));
-  CHECK(nmb_Util::Unbuffer(buf, maxy));
+        vrpn_float32 * minx, vrpn_float32 * miny, 
+        vrpn_float32 * maxx, vrpn_float32 * maxy) {
+  CHECK(vrpn_unbuffer(buf, minx));
+  CHECK(vrpn_unbuffer(buf, miny));
+  CHECK(vrpn_unbuffer(buf, maxx));
+  CHECK(vrpn_unbuffer(buf, maxy));
 
   return 0;
 }
@@ -577,14 +580,14 @@ long nmm_Microscope::decode_SetRegionNM (const char ** buf,
 
 
 char * nmm_Microscope::encode_ScanTo (long * len,
-                 float x, float y) {
+                 vrpn_float32 x, vrpn_float32 y) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(float);
+  *len = 2 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ScanTo:  "
@@ -593,29 +596,29 @@ char * nmm_Microscope::encode_ScanTo (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_ScanTo (const char ** buf,
-         float * x, float * y) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
+         vrpn_float32 * x, vrpn_float32 * y) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ScanTo (long * len,
-                 float x, float y, float z) {
+                 vrpn_float32 x, vrpn_float32 y, vrpn_float32 z) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 3 * sizeof(float);
+  *len = 3 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ScanTo:  "
@@ -624,18 +627,18 @@ char * nmm_Microscope::encode_ScanTo (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, z);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, z);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_ScanTo (const char ** buf,
-         float * x, float * y, float * z) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, z));
+         vrpn_float32 * x, vrpn_float32 * y, vrpn_float32 * z) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, z));
 
   return 0;
 }
@@ -643,15 +646,15 @@ long nmm_Microscope::decode_ScanTo (const char ** buf,
 
 
 char * nmm_Microscope::encode_ZagTo (long * len,
-                 float x, float y, float yaw, float sweepWidth,
-                 float regionDiag) {
+                 vrpn_float32 x, vrpn_float32 y, vrpn_float32 yaw, 
+                 vrpn_float32 sweepWidth, vrpn_float32 regionDiag) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 5 * sizeof(float);
+  *len = 5 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ZagTo:  "
@@ -660,23 +663,23 @@ char * nmm_Microscope::encode_ZagTo (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, yaw);
-    nmb_Util::Buffer(&mptr, &mlen, sweepWidth);
-    nmb_Util::Buffer(&mptr, &mlen, regionDiag);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, yaw);
+    vrpn_buffer(&mptr, &mlen, sweepWidth);
+    vrpn_buffer(&mptr, &mlen, regionDiag);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_ZagTo (const char ** buf,
-         float * x, float * y, float * yaw, float * sweepWidth,
-         float * regionDiag) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, yaw));
-  CHECK(nmb_Util::Unbuffer(buf, sweepWidth));
-  CHECK(nmb_Util::Unbuffer(buf, regionDiag));
+         vrpn_float32 * x, vrpn_float32 * y, vrpn_float32 * yaw, vrpn_float32 * sweepWidth,
+         vrpn_float32 * regionDiag) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, yaw));
+  CHECK(vrpn_unbuffer(buf, sweepWidth));
+  CHECK(vrpn_unbuffer(buf, regionDiag));
 
   return 0;
 }
@@ -684,14 +687,14 @@ long nmm_Microscope::decode_ZagTo (const char ** buf,
 
 
 char * nmm_Microscope::encode_SetScanStyle (long * len,
-                  long style) {
+                  vrpn_int32 style) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long);
+  *len = sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetScanStyle:  "
@@ -700,14 +703,14 @@ char * nmm_Microscope::encode_SetScanStyle (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen,  style);
+    vrpn_buffer(&mptr, &mlen,  style);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_SetScanStyle (const char ** buf,
-         long *  style) {
-  CHECK(nmb_Util::Unbuffer(buf,  style));
+         vrpn_int32 *  style) {
+  CHECK(vrpn_unbuffer(buf,  style));
 
   return 0;
 }
@@ -715,14 +718,14 @@ long nmm_Microscope::decode_SetScanStyle (const char ** buf,
 
 
 char * nmm_Microscope::encode_SetSlowScan (long * len,
-                 long value) {
+                vrpn_int32 value) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long);
+  *len = sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetSlowScan:  "
@@ -731,14 +734,14 @@ char * nmm_Microscope::encode_SetSlowScan (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen,  value);
+    vrpn_buffer(&mptr, &mlen,  value);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_SetSlowScan (const char ** buf,
-         long *  value) {
-  CHECK(nmb_Util::Unbuffer(buf,  value));
+         vrpn_int32 *  value) {
+  CHECK(vrpn_unbuffer(buf,  value));
 
   return 0;
 }
@@ -746,18 +749,18 @@ long nmm_Microscope::decode_SetSlowScan (const char ** buf,
 
 
 char * nmm_Microscope::encode_SetStdDelay (long * len,
-                 long delay) {
+                 vrpn_int32 delay) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   // NANO BEGIN
-  //fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): Entering...\n");
+  fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): Entering...\n");
   // NANO END
 
   if (!len) return NULL;
 
-  *len = sizeof(long);
+  *len = sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetStdDelay:  "
@@ -766,20 +769,20 @@ char * nmm_Microscope::encode_SetStdDelay (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, delay);
+    vrpn_buffer(&mptr, &mlen, delay);
   }
 
   // NANO BEGIN
-  //fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): msg type = %d\n", d_SetStdDelay_type);
-  //fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): delay = %d\n", delay);
-  //fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): Leaving\n");
+  fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): msg type = %d\n", d_SetStdDelay_type);
+  fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): delay = %d\n", delay);
+  fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): Leaving\n");
   // NANO END
 
   return msgbuf;
 }
 long nmm_Microscope::decode_SetStdDelay (const char ** buf,
-         long * delay) {
-  CHECK(nmb_Util::Unbuffer(buf, delay));
+         vrpn_int32 * delay) {
+  CHECK(vrpn_unbuffer(buf, delay));
 
   return 0;
 }
@@ -787,18 +790,18 @@ long nmm_Microscope::decode_SetStdDelay (const char ** buf,
 
 
 char * nmm_Microscope::encode_SetStPtDelay (long * len,
-                 long delay) {
+                 vrpn_int32 delay) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   // NANO BEGIN
-  //fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): Entering...\n");
+  fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): Entering...\n");
   // NANO END
 
   if (!len) return NULL;
 
-  *len = sizeof(long);
+  *len = sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay:  "
@@ -807,21 +810,21 @@ char * nmm_Microscope::encode_SetStPtDelay (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, delay);
+    vrpn_buffer(&mptr, &mlen, delay);
   }
 
   // NANO BEGIN
-  //fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): msg type = %d\n", d_SetStPtDelay_type);
-  //fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): delay = %d\n", delay);
-  //fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): Leaving\n");
+  fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): msg type = %d\n", d_SetStPtDelay_type);
+  fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): delay = %d\n", delay);
+  fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): Leaving\n");
   // NANO END
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_SetStPtDelay (const char ** buf,
-         long * delay) {
-  CHECK(nmb_Util::Unbuffer(buf, delay));
+         vrpn_int32 * delay) {
+  CHECK(vrpn_unbuffer(buf, delay));
 
   return 0;
 }
@@ -829,17 +832,17 @@ long nmm_Microscope::decode_SetStPtDelay (const char ** buf,
 
 
 char * nmm_Microscope::encode_SetRelax (long * len,
-                 long min, long sep) {
+                 vrpn_int32 min, vrpn_int32 sep) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   // NANO BEGIN
-  //fprintf(stderr, "nmm_Microscope::encode_SetRelax(): Entering...\n");
+  fprintf(stderr, "nmm_Microscope::encode_SetRelax(): Entering...\n");
   // NANO END
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long);
+  *len = 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetRelax:  "
@@ -848,22 +851,22 @@ char * nmm_Microscope::encode_SetRelax (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, min);
-    nmb_Util::Buffer(&mptr, &mlen, sep);
+    vrpn_buffer(&mptr, &mlen, min);
+    vrpn_buffer(&mptr, &mlen, sep);
   }
 
   // NANO BEGIN
-  //fprintf(stderr, "nmm_Microscope::encode_SetRelax(): msg type = %d\n", d_SetRelax_type);
-  fprintf(stderr, "nmm_Microscope::encode_SetRelax(): min = %ld\t sep = %ld\n", (long)min, (long)sep);
-  //fprintf(stderr, "nmm_Microscope::encode_SetRelax(): Leaving\n");
+  fprintf(stderr, "nmm_Microscope::encode_SetRelax(): msg type = %d\n", d_SetRelax_type);
+  fprintf(stderr, "nmm_Microscope::encode_SetRelax(): min = %d\t sep = %d\n", min, sep);
+  fprintf(stderr, "nmm_Microscope::encode_SetRelax(): Leaving\n");
   // NANO END
 
   return msgbuf;
 }
 long nmm_Microscope::decode_SetRelax (const char ** buf,
-         long * min, long * sep) {
-  CHECK(nmb_Util::Unbuffer(buf, min));
-  CHECK(nmb_Util::Unbuffer(buf, sep));
+         vrpn_int32 * min, vrpn_int32 * sep) {
+  CHECK(vrpn_unbuffer(buf, min));
+  CHECK(vrpn_unbuffer(buf, sep));
 
   return 0;
 }
@@ -872,15 +875,15 @@ long nmm_Microscope::decode_SetRelax (const char ** buf,
 
 
 char * nmm_Microscope::encode_RecordResistance (long * len,
-                 long meter, struct timeval time, float resistance,
-                 float v, float r, float f) {
+                 vrpn_int32 meter, struct timeval time, vrpn_float32 resistance,
+                 vrpn_float32 v, vrpn_float32 r, vrpn_float32 f) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long) + sizeof (struct timeval) + 4 * sizeof(float);
+  *len = sizeof(vrpn_int32) + sizeof (struct timeval) + 4 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_RecordResistance:  "
@@ -889,25 +892,25 @@ char * nmm_Microscope::encode_RecordResistance (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, meter);
-    nmb_Util::Buffer(&mptr, &mlen, time);
-    nmb_Util::Buffer(&mptr, &mlen, resistance);
-    nmb_Util::Buffer(&mptr, &mlen, v);
-    nmb_Util::Buffer(&mptr, &mlen, r);
-    nmb_Util::Buffer(&mptr, &mlen, f);
+    vrpn_buffer(&mptr, &mlen, meter);
+    vrpn_buffer(&mptr, &mlen, time);
+    vrpn_buffer(&mptr, &mlen, resistance);
+    vrpn_buffer(&mptr, &mlen, v);
+    vrpn_buffer(&mptr, &mlen, r);
+    vrpn_buffer(&mptr, &mlen, f);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_RecordResistance (const char ** buf,
-         long * meter, struct timeval * time, float * resistance,
-         float * v, float * r, float * f) {
-  CHECK(nmb_Util::Unbuffer(buf, meter));
-  CHECK(nmb_Util::Unbuffer(buf, time));
-  CHECK(nmb_Util::Unbuffer(buf, resistance));
-  CHECK(nmb_Util::Unbuffer(buf, v));
-  CHECK(nmb_Util::Unbuffer(buf, r));
-  CHECK(nmb_Util::Unbuffer(buf, f));
+         vrpn_int32 * meter, struct timeval * time, vrpn_float32 * resistance,
+         vrpn_float32 * v, vrpn_float32 * r, vrpn_float32 * f) {
+  CHECK(vrpn_unbuffer(buf, meter));
+  CHECK(vrpn_unbuffer(buf, time));
+  CHECK(vrpn_unbuffer(buf, resistance));
+  CHECK(vrpn_unbuffer(buf, v));
+  CHECK(vrpn_unbuffer(buf, r));
+  CHECK(vrpn_unbuffer(buf, f));
 
   return 0;
 }
@@ -915,14 +918,14 @@ long nmm_Microscope::decode_RecordResistance (const char ** buf,
 
 
 char * nmm_Microscope::encode_SetStdDevParams (long * len,
-                 long samples, float freq) {
+                 vrpn_int32 samples, vrpn_float32 freq) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long) + sizeof(float);
+  *len = sizeof(vrpn_int32) + sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetStdDevParams:  "
@@ -931,16 +934,16 @@ char * nmm_Microscope::encode_SetStdDevParams (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, samples);
-    nmb_Util::Buffer(&mptr, &mlen, freq);
+    vrpn_buffer(&mptr, &mlen, samples);
+    vrpn_buffer(&mptr, &mlen, freq);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_SetStdDevParams (const char ** buf,
-         long * samples, float * freq) {
-  CHECK(nmb_Util::Unbuffer(buf, samples));
-  CHECK(nmb_Util::Unbuffer(buf, freq));
+         vrpn_int32 * samples, vrpn_float32 * freq) {
+  CHECK(vrpn_unbuffer(buf, samples));
+  CHECK(vrpn_unbuffer(buf, freq));
 
   return 0;
 }
@@ -948,14 +951,14 @@ long nmm_Microscope::decode_SetStdDevParams (const char ** buf,
 
 
 char * nmm_Microscope::encode_SetScanWindow (long * len,
-                 long minx, long miny, long maxx, long maxy) {
+                 vrpn_int32 minx, vrpn_int32 miny, vrpn_int32 maxx, vrpn_int32 maxy) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 4 * sizeof(long);
+  *len = 4 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetScanWindow:  "
@@ -964,20 +967,21 @@ char * nmm_Microscope::encode_SetScanWindow (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, minx);
-    nmb_Util::Buffer(&mptr, &mlen, miny);
-    nmb_Util::Buffer(&mptr, &mlen, maxx);
-    nmb_Util::Buffer(&mptr, &mlen, maxy);
+    vrpn_buffer(&mptr, &mlen, minx);
+    vrpn_buffer(&mptr, &mlen, miny);
+    vrpn_buffer(&mptr, &mlen, maxx);
+    vrpn_buffer(&mptr, &mlen, maxy);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_SetScanWindow (const char ** buf,
-         long * minx, long * miny, long * maxx, long * maxy) {
-  CHECK(nmb_Util::Unbuffer(buf, minx));
-  CHECK(nmb_Util::Unbuffer(buf, miny));
-  CHECK(nmb_Util::Unbuffer(buf, maxx));
-  CHECK(nmb_Util::Unbuffer(buf, maxy));
+         vrpn_int32 * minx, vrpn_int32 * miny, 
+         vrpn_int32 * maxx, vrpn_int32 * maxy) {
+  CHECK(vrpn_unbuffer(buf, minx));
+  CHECK(vrpn_unbuffer(buf, miny));
+  CHECK(vrpn_unbuffer(buf, maxx));
+  CHECK(vrpn_unbuffer(buf, maxy));
 
   return 0;
 }
@@ -985,14 +989,14 @@ long nmm_Microscope::decode_SetScanWindow (const char ** buf,
 
 
 char * nmm_Microscope::encode_SetGridSize (long * len,
-                 long x, long y) {
+                 vrpn_int32 x, vrpn_int32 y) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long);
+  *len = 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetGridSize:  "
@@ -1001,16 +1005,16 @@ char * nmm_Microscope::encode_SetGridSize (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_SetGridSize (const char ** buf,
-         long * x, long * y) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
+         vrpn_int32 * x, vrpn_int32 * y) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
 
   return 0;
 }
@@ -1018,14 +1022,14 @@ long nmm_Microscope::decode_SetGridSize (const char ** buf,
 
 
 char * nmm_Microscope::encode_SetOhmmeterSampleRate (long * len,
-                 long which, long rate) {
+                 vrpn_int32 which, vrpn_int32 rate) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long);
+  *len = 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetOhmmeterSampleRate:  "
@@ -1034,16 +1038,16 @@ char * nmm_Microscope::encode_SetOhmmeterSampleRate (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
-    nmb_Util::Buffer(&mptr, &mlen, rate);
+    vrpn_buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, rate);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_SetOhmmeterSampleRate (const char ** buf,
-         long * which, long * rate) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
-  CHECK(nmb_Util::Unbuffer(buf, rate));
+         vrpn_int32 * which, vrpn_int32 * rate) {
+  CHECK(vrpn_unbuffer(buf, which));
+  CHECK(vrpn_unbuffer(buf, rate));
 
   return 0;
 }
@@ -1051,15 +1055,15 @@ long nmm_Microscope::decode_SetOhmmeterSampleRate (const char ** buf,
 
 
 char * nmm_Microscope::encode_EnableAmp (long * len,
-                 long which, float offset, float percentOffset,
-		 long gain) {
+                 vrpn_int32 which, vrpn_float32 offset, vrpn_float32 percentOffset,
+		 vrpn_int32 gain) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long) + 2 * sizeof(float);
+  *len = 2 * sizeof(vrpn_int32) + 2 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_EnableAmp:  "
@@ -1068,21 +1072,21 @@ char * nmm_Microscope::encode_EnableAmp (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
-    nmb_Util::Buffer(&mptr, &mlen, offset);
-    nmb_Util::Buffer(&mptr, &mlen, percentOffset);
-    nmb_Util::Buffer(&mptr, &mlen, gain);
+    vrpn_buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, offset);
+    vrpn_buffer(&mptr, &mlen, percentOffset);
+    vrpn_buffer(&mptr, &mlen, gain);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_EnableAmp (const char ** buf,
-         long * which, float * offset, float * percentOffset,
-	 long * gain) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
-  CHECK(nmb_Util::Unbuffer(buf, offset));
-  CHECK(nmb_Util::Unbuffer(buf, percentOffset));
-  CHECK(nmb_Util::Unbuffer(buf, gain));
+         vrpn_int32 * which, vrpn_float32 * offset, vrpn_float32 * percentOffset,
+	 vrpn_int32 * gain) {
+  CHECK(vrpn_unbuffer(buf, which));
+  CHECK(vrpn_unbuffer(buf, offset));
+  CHECK(vrpn_unbuffer(buf, percentOffset));
+  CHECK(vrpn_unbuffer(buf, gain));
 
   return 0;
 }
@@ -1090,14 +1094,14 @@ long nmm_Microscope::decode_EnableAmp (const char ** buf,
 
 
 char * nmm_Microscope::encode_DisableAmp (long * len,
-                 long which) {
+                 vrpn_int32 which) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long);
+  *len = sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_DisableAmp:  "
@@ -1106,14 +1110,14 @@ char * nmm_Microscope::encode_DisableAmp (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, which);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_DisableAmp (const char ** buf,
-         long * which) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
+         vrpn_int32 * which) {
+  CHECK(vrpn_unbuffer(buf, which));
 
   return 0;
 }
@@ -1121,14 +1125,14 @@ long nmm_Microscope::decode_DisableAmp (const char ** buf,
 
 
 char * nmm_Microscope::encode_EnableVoltsource (long * len,
-                 long which, float voltage) {
+                 vrpn_int32 which, vrpn_float32 voltage) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long) + sizeof(float);
+  *len = sizeof(vrpn_int32) + sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_EnableVoltsource:  "
@@ -1137,16 +1141,16 @@ char * nmm_Microscope::encode_EnableVoltsource (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
-    nmb_Util::Buffer(&mptr, &mlen, voltage);
+    vrpn_buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, voltage);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_EnableVoltsource (const char ** buf,
-         long * which, float * voltage) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
-  CHECK(nmb_Util::Unbuffer(buf, voltage));
+         vrpn_int32 * which, vrpn_float32 * voltage) {
+  CHECK(vrpn_unbuffer(buf, which));
+  CHECK(vrpn_unbuffer(buf, voltage));
 
   return 0;
 }
@@ -1154,14 +1158,14 @@ long nmm_Microscope::decode_EnableVoltsource (const char ** buf,
 
 
 char * nmm_Microscope::encode_DisableVoltsource (long * len,
-                 long which) {
+                 vrpn_int32 which) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long);
+  *len = sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_DisableVoltsource:  "
@@ -1170,14 +1174,14 @@ char * nmm_Microscope::encode_DisableVoltsource (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, which);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_DisableVoltsource (const char ** buf,
-         long * which) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
+         vrpn_int32 * which) {
+  CHECK(vrpn_unbuffer(buf, which));
 
   return 0;
 }
@@ -1185,14 +1189,14 @@ long nmm_Microscope::decode_DisableVoltsource (const char ** buf,
 
 
 char * nmm_Microscope::encode_SetRateNM (long * len,
-                 float rate) {
+                 vrpn_float32 rate) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(float);
+  *len = sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetRateNM:  "
@@ -1201,14 +1205,14 @@ char * nmm_Microscope::encode_SetRateNM (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, rate);
+    vrpn_buffer(&mptr, &mlen, rate);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_SetRateNM (const char ** buf,
-         float * rate) {
-  CHECK(nmb_Util::Unbuffer(buf, rate));
+         vrpn_float32 * rate) {
+  CHECK(vrpn_unbuffer(buf, rate));
 
   return 0;
 }
@@ -1216,14 +1220,17 @@ long nmm_Microscope::decode_SetRateNM (const char ** buf,
 
 
 char * nmm_Microscope::encode_SetMaxMove (long * len,
-                 float distance) {
+                 vrpn_float32 distance) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
+  // NANO BEGIN
+  fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): Entering...\n");
+  // NANO END
   if (!len) return NULL;
 
-  *len = sizeof(float);
+  *len = sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetMaxMove:  "
@@ -1232,27 +1239,32 @@ char * nmm_Microscope::encode_SetMaxMove (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, distance);
+    vrpn_buffer(&mptr, &mlen, distance);
   }
 
+  // NANO BEGIN
+  fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): msg type = %d\n", d_SetMaxMove_type);
+  fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): distance = %f\n", distance);
+  fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): Leaving!\n");
+  // NANO END
   return msgbuf;
 }
 long nmm_Microscope::decode_SetMaxMove (const char ** buf,
-         float * distance) {
-  CHECK(nmb_Util::Unbuffer(buf, distance));
+         vrpn_float32 * distance) {
+  CHECK(vrpn_unbuffer(buf, distance));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_SetModForce (int * len,
-                 float newforce, float min, float max) {
+                 vrpn_float32 newforce, vrpn_float32 min, vrpn_float32 max) {
   char * msgbuf = NULL;
   char * mptr;
-  int mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(float);
+  *len = sizeof(vrpn_int32) + 3*sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetModForce:  "
@@ -1262,40 +1274,40 @@ char * nmm_Microscope::encode_SetModForce (int * len,
     mptr = msgbuf;
     mlen = *len;
     // There is an "enable" flag we put in automatically.
-    nmb_Util::Buffer(&mptr, &mlen, 1); 
-    nmb_Util::Buffer(&mptr, &mlen,min);
-    nmb_Util::Buffer(&mptr, &mlen,max);
-    nmb_Util::Buffer(&mptr, &mlen,newforce);
+    vrpn_buffer(&mptr, &mlen, (vrpn_int32)1); 
+    vrpn_buffer(&mptr, &mlen,min);
+    vrpn_buffer(&mptr, &mlen,max);
+    vrpn_buffer(&mptr, &mlen,newforce);
   }
 
   return msgbuf;
 }
 int nmm_Microscope::decode_SetModForce (const char ** buf,
-         float * newforce, float * min, float * max) {
+         vrpn_float32 * newforce, vrpn_float32 * min, vrpn_float32 * max) {
 /*	Tiger changed it
-   float * enable;
-  CHECK(nmb_Util::Unbuffer(buf, enable));
+   vrpn_float32 * enable;
+  CHECK(vrpn_unbuffer(buf, enable));
 */
-  float enable;
-  CHECK(nmb_Util::Unbuffer(buf, &enable));
-  CHECK(nmb_Util::Unbuffer(buf,min));
-  CHECK(nmb_Util::Unbuffer(buf,max));
-  CHECK(nmb_Util::Unbuffer(buf,newforce));
+  vrpn_int32 enable;
+  CHECK(vrpn_unbuffer(buf, &enable));
+  CHECK(vrpn_unbuffer(buf,min));
+  CHECK(vrpn_unbuffer(buf,max));
+  CHECK(vrpn_unbuffer(buf,newforce));
   return 0;
 }
 
 
 
 char * nmm_Microscope::encode_DrawSharpLine (long * len,
-                 float startx, float starty, float endx, float endy,
-                 float stepSize) {
+                 vrpn_float32 startx, vrpn_float32 starty, vrpn_float32 endx, vrpn_float32 endy,
+                 vrpn_float32 stepSize) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 5 * sizeof(float);
+  *len = 5 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_DrawSharpLine:  "
@@ -1304,23 +1316,23 @@ char * nmm_Microscope::encode_DrawSharpLine (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, startx);
-    nmb_Util::Buffer(&mptr, &mlen, starty);
-    nmb_Util::Buffer(&mptr, &mlen, endx);
-    nmb_Util::Buffer(&mptr, &mlen, endy);
-    nmb_Util::Buffer(&mptr, &mlen, stepSize);
+    vrpn_buffer(&mptr, &mlen, startx);
+    vrpn_buffer(&mptr, &mlen, starty);
+    vrpn_buffer(&mptr, &mlen, endx);
+    vrpn_buffer(&mptr, &mlen, endy);
+    vrpn_buffer(&mptr, &mlen, stepSize);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_DrawSharpLine (const char ** buf,
-         float * startx, float * starty, float * endx, float * endy,
-         float * stepSize) {
-  CHECK(nmb_Util::Unbuffer(buf, startx));
-  CHECK(nmb_Util::Unbuffer(buf, starty));
-  CHECK(nmb_Util::Unbuffer(buf, endx));
-  CHECK(nmb_Util::Unbuffer(buf, endy));
-  CHECK(nmb_Util::Unbuffer(buf, stepSize));
+         vrpn_float32 * startx, vrpn_float32 * starty, vrpn_float32 * endx, vrpn_float32 * endy,
+         vrpn_float32 * stepSize) {
+  CHECK(vrpn_unbuffer(buf, startx));
+  CHECK(vrpn_unbuffer(buf, starty));
+  CHECK(vrpn_unbuffer(buf, endx));
+  CHECK(vrpn_unbuffer(buf, endy));
+  CHECK(vrpn_unbuffer(buf, stepSize));
 
   return 0;
 }
@@ -1328,16 +1340,16 @@ long nmm_Microscope::decode_DrawSharpLine (const char ** buf,
 
 
 char * nmm_Microscope::encode_DrawSweepLine (long * len,
-                 float startx, float starty, float startYaw,
-                 float startSweepWidth, float endx, float endy,
-                 float endYaw, float endSweepWidth, float stepSize) {
+                 vrpn_float32 startx, vrpn_float32 starty, vrpn_float32 startYaw,
+                 vrpn_float32 startSweepWidth, vrpn_float32 endx, vrpn_float32 endy,
+                 vrpn_float32 endYaw, vrpn_float32 endSweepWidth, vrpn_float32 stepSize) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 9 * sizeof(float);
+  *len = 9 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_DrawSweepLine:  "
@@ -1346,32 +1358,32 @@ char * nmm_Microscope::encode_DrawSweepLine (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, startx);
-    nmb_Util::Buffer(&mptr, &mlen, starty);
-    nmb_Util::Buffer(&mptr, &mlen, startYaw);
-    nmb_Util::Buffer(&mptr, &mlen, startSweepWidth);
-    nmb_Util::Buffer(&mptr, &mlen, endx);
-    nmb_Util::Buffer(&mptr, &mlen, endy);
-    nmb_Util::Buffer(&mptr, &mlen, endYaw);
-    nmb_Util::Buffer(&mptr, &mlen, endSweepWidth);
-    nmb_Util::Buffer(&mptr, &mlen, stepSize);
+    vrpn_buffer(&mptr, &mlen, startx);
+    vrpn_buffer(&mptr, &mlen, starty);
+    vrpn_buffer(&mptr, &mlen, startYaw);
+    vrpn_buffer(&mptr, &mlen, startSweepWidth);
+    vrpn_buffer(&mptr, &mlen, endx);
+    vrpn_buffer(&mptr, &mlen, endy);
+    vrpn_buffer(&mptr, &mlen, endYaw);
+    vrpn_buffer(&mptr, &mlen, endSweepWidth);
+    vrpn_buffer(&mptr, &mlen, stepSize);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_DrawSweepLine (const char ** buf,
-         float * startx, float * starty, float * startYaw,
-         float * startSweepWidth, float * endx, float * endy,
-         float * endYaw, float * endSweepWidth, float * stepSize) {
-  CHECK(nmb_Util::Unbuffer(buf, startx));
-  CHECK(nmb_Util::Unbuffer(buf, starty));
-  CHECK(nmb_Util::Unbuffer(buf, startYaw));
-  CHECK(nmb_Util::Unbuffer(buf, startSweepWidth));
-  CHECK(nmb_Util::Unbuffer(buf, endx));
-  CHECK(nmb_Util::Unbuffer(buf, endy));
-  CHECK(nmb_Util::Unbuffer(buf, endYaw));
-  CHECK(nmb_Util::Unbuffer(buf, endSweepWidth));
-  CHECK(nmb_Util::Unbuffer(buf, stepSize));
+         vrpn_float32 * startx, vrpn_float32 * starty, vrpn_float32 * startYaw,
+         vrpn_float32 * startSweepWidth, vrpn_float32 * endx, vrpn_float32 * endy,
+         vrpn_float32 * endYaw, vrpn_float32 * endSweepWidth, vrpn_float32 * stepSize) {
+  CHECK(vrpn_unbuffer(buf, startx));
+  CHECK(vrpn_unbuffer(buf, starty));
+  CHECK(vrpn_unbuffer(buf, startYaw));
+  CHECK(vrpn_unbuffer(buf, startSweepWidth));
+  CHECK(vrpn_unbuffer(buf, endx));
+  CHECK(vrpn_unbuffer(buf, endy));
+  CHECK(vrpn_unbuffer(buf, endYaw));
+  CHECK(vrpn_unbuffer(buf, endSweepWidth));
+  CHECK(vrpn_unbuffer(buf, stepSize));
 
   return 0;
 }
@@ -1379,15 +1391,15 @@ long nmm_Microscope::decode_DrawSweepLine (const char ** buf,
 
 
 char * nmm_Microscope::encode_DrawSweepArc (long * len,
-                 float x, float y, float startAngle, float startSweepWidth,
-                 float endAngle, float endSweepWidth, float stepSize) {
+                 vrpn_float32 x, vrpn_float32 y, vrpn_float32 startAngle, vrpn_float32 startSweepWidth,
+                 vrpn_float32 endAngle, vrpn_float32 endSweepWidth, vrpn_float32 stepSize) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 7 * sizeof(float);
+  *len = 7 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_DrawSweepArc:  "
@@ -1396,28 +1408,28 @@ char * nmm_Microscope::encode_DrawSweepArc (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, startAngle);
-    nmb_Util::Buffer(&mptr, &mlen, startSweepWidth);
-    nmb_Util::Buffer(&mptr, &mlen, endAngle);
-    nmb_Util::Buffer(&mptr, &mlen, endSweepWidth);
-    nmb_Util::Buffer(&mptr, &mlen, stepSize);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, startAngle);
+    vrpn_buffer(&mptr, &mlen, startSweepWidth);
+    vrpn_buffer(&mptr, &mlen, endAngle);
+    vrpn_buffer(&mptr, &mlen, endSweepWidth);
+    vrpn_buffer(&mptr, &mlen, stepSize);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_DrawSweepArc (const char ** buf,
-         float * x, float * y, float * startAngle, float * startSweepWidth,
-         float * endAngle, float * endSweepWidth,
-	 float * stepSize) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, startAngle));
-  CHECK(nmb_Util::Unbuffer(buf, startSweepWidth));
-  CHECK(nmb_Util::Unbuffer(buf, endAngle));
-  CHECK(nmb_Util::Unbuffer(buf, endSweepWidth));
-  CHECK(nmb_Util::Unbuffer(buf, stepSize));
+         vrpn_float32 * x, vrpn_float32 * y, vrpn_float32 * startAngle, vrpn_float32 * startSweepWidth,
+         vrpn_float32 * endAngle, vrpn_float32 * endSweepWidth,
+	 vrpn_float32 * stepSize) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, startAngle));
+  CHECK(vrpn_unbuffer(buf, startSweepWidth));
+  CHECK(vrpn_unbuffer(buf, endAngle));
+  CHECK(vrpn_unbuffer(buf, endSweepWidth));
+  CHECK(vrpn_unbuffer(buf, stepSize));
 
   return 0;
 }
@@ -1430,7 +1442,7 @@ char * nmm_Microscope::encode_GetNewPointDatasets
                              const Tclvar_checklist * list) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
   long numSets = 0;
   long i;
 
@@ -1439,7 +1451,7 @@ char * nmm_Microscope::encode_GetNewPointDatasets
   for (i = 0; i < list->Num_checkboxes(); i++)
     if (list->Is_set(i)) numSets++;
 
-  *len = sizeof(long) + (STM_NAME_LENGTH + sizeof(long)) * numSets;
+  *len = sizeof(vrpn_int32) + (STM_NAME_LENGTH + sizeof(vrpn_int32)) * numSets;
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_GetNewPointDatasets:  "
@@ -1448,17 +1460,17 @@ char * nmm_Microscope::encode_GetNewPointDatasets
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, numSets);
+    vrpn_buffer(&mptr, &mlen, numSets);
     for (i = 0; i < list->Num_checkboxes(); i++)
       if (list->Is_set(i)) {
-        nmb_Util::Buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
+        vrpn_buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
 
         // Ask for 10 samples of each except Topography;
         // of that we want 90
         if (!strcmp("Topography", list->Checkbox_name(i)))
-          nmb_Util::Buffer(&mptr, &mlen, (long)90);
+          vrpn_buffer(&mptr, &mlen, (vrpn_int32)90);
         else
-          nmb_Util::Buffer(&mptr, &mlen, (long)10);
+          vrpn_buffer(&mptr, &mlen, (vrpn_int32)10);
       }
   }
 
@@ -1467,16 +1479,16 @@ char * nmm_Microscope::encode_GetNewPointDatasets
 */
 
 long nmm_Microscope::decode_GetNewPointDatasetHeader (const char ** buf,
-         long * numSets) {
-  CHECK(nmb_Util::Unbuffer(buf, numSets));
+         vrpn_int32 * numSets) {
+  CHECK(vrpn_unbuffer(buf, numSets));
 
   return 0;
 }
 
 long nmm_Microscope::decode_GetNewPointDataset (const char ** buf,
-         char * name, long * numSamples) {
-  CHECK(nmb_Util::Unbuffer(buf, name, STM_NAME_LENGTH));
-  CHECK(nmb_Util::Unbuffer(buf, numSamples));
+         char * name, vrpn_int32 * numSamples) {
+  CHECK(vrpn_unbuffer(buf, name, STM_NAME_LENGTH));
+  CHECK(vrpn_unbuffer(buf, numSamples));
 
   return 0;
 }
@@ -1489,7 +1501,7 @@ char * nmm_Microscope::encode_GetNewScanDatasets
                              const Tclvar_checklist * list) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
   long numSets = 0;
   long i;
 
@@ -1498,7 +1510,7 @@ char * nmm_Microscope::encode_GetNewScanDatasets
   for (i = 0; i < list->Num_checkboxes(); i++)
     if (list->Is_set(i)) numSets++;
 
-  *len = sizeof(long) + STM_NAME_LENGTH * numSets;
+  *len = sizeof(vrpn_int32) + STM_NAME_LENGTH * numSets;
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_GetNewScanDatasets:  "
@@ -1507,10 +1519,10 @@ char * nmm_Microscope::encode_GetNewScanDatasets
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, numSets);
+    vrpn_buffer(&mptr, &mlen, numSets);
     for (i = 0; i < list->Num_checkboxes(); i++)
       if (list->Is_set(i))
-        nmb_Util::Buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
+        vrpn_buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
   }
 
   return msgbuf;
@@ -1518,105 +1530,28 @@ char * nmm_Microscope::encode_GetNewScanDatasets
 */
 
 long nmm_Microscope::decode_GetNewScanDatasetHeader (const char ** buf,
-         long * numSets) {
-  CHECK(nmb_Util::Unbuffer(buf, numSets));
+         vrpn_int32 * numSets) {
+  CHECK(vrpn_unbuffer(buf, numSets));
 
   return 0;
 }
 
 long nmm_Microscope::decode_GetNewScanDataset (const char ** buf,
          char * name) {
-  CHECK(nmb_Util::Unbuffer(buf, name, STM_NAME_LENGTH));
+  CHECK(vrpn_unbuffer(buf, name, STM_NAME_LENGTH));
 
   return 0;
 }
-
-char * nmm_Microscope::encode_MarkModify (long * len) {
-  char * msgbuf = NULL;
-  char * mptr;
-  long mlen;
-
-  if (!len) return NULL;
-
-  *len = 2 * sizeof(long);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmm_Microscope::encode_MarkModify:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, (long)1);
-    nmb_Util::Buffer(&mptr, &mlen, (long)0);
-  }
-
-  // NO!  NO!  HACK HACK HACK
-  // Can't just use echo, because it needs to be xlated into
-  // the server's token and back...
-
-  return msgbuf;
-}
-
-// Tiger	HACK HACK HACK
-long nmm_Microscope::decode_MarkModify ( const char ** buf )
-{
-  long i, j;	// dumb variables
-
-  CHECK(nmb_Util::Unbuffer(buf, &i));
-  CHECK(nmb_Util::Unbuffer(buf, &j));
-
-  return 0;
-}
-
-char * nmm_Microscope::encode_MarkImage (long * len) {
-  char * msgbuf = NULL;
-  char * mptr;
-  long mlen;
-
-  if (!len) return NULL;
-
-  *len = 2 * sizeof(long);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmm_Microscope::encode_MarkImage:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, (long)1);
-    nmb_Util::Buffer(&mptr, &mlen, (long)0);
-  }
-
-  // NO!  NO!  HACK HACK HACK
-  // Can't just use echo, because it needs to be xlated longo
-  // the server's token and back...
-
-  return msgbuf;
-}
-
-// Tiger        HACK HACK HACK
-long nmm_Microscope::decode_MarkImage ( const char ** buf ) 
-{
-  long i, j;    // dumb variables
-
-  CHECK(nmb_Util::Unbuffer(buf, &i));
-  CHECK(nmb_Util::Unbuffer(buf, &j));
-
-  return 0;
-}
-
 
 char * nmm_Microscope::encode_VoltsourceEnabled (long * len,
-           long which, float voltage) {
+           vrpn_int32 which, vrpn_float32 voltage) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long) + sizeof(float);
+  *len = sizeof(vrpn_int32) + sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_VoltsourceEnabled:  "
@@ -1625,30 +1560,30 @@ char * nmm_Microscope::encode_VoltsourceEnabled (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
-    nmb_Util::Buffer(&mptr, &mlen, voltage);
+    vrpn_buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, voltage);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_VoltsourceEnabled (const char ** buf,
-         long * which, float * voltage) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
-  CHECK(nmb_Util::Unbuffer(buf, voltage));
+         vrpn_int32 * which, vrpn_float32 * voltage) {
+  CHECK(vrpn_unbuffer(buf, which));
+  CHECK(vrpn_unbuffer(buf, voltage));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_VoltsourceDisabled (long * len,
-           long which) {
+           vrpn_int32 which) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long);
+  *len = sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_VoltsourceDisabled:  "
@@ -1657,28 +1592,28 @@ char * nmm_Microscope::encode_VoltsourceDisabled (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, which);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_VoltsourceDisabled (const char ** buf,
-         long * which) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
+         vrpn_int32 * which) {
+  CHECK(vrpn_unbuffer(buf, which));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_AmpEnabled (long * len,
-           long which, float offset, float percentOffset, long gain) {
+           vrpn_int32 which, vrpn_float32 offset, vrpn_float32 percentOffset, vrpn_int32 gain) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long) + 2 * sizeof(float);
+  *len = 2 * sizeof(vrpn_int32) + 2 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_AmpEnabled:  "
@@ -1687,34 +1622,34 @@ char * nmm_Microscope::encode_AmpEnabled (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
-    nmb_Util::Buffer(&mptr, &mlen, offset);
-    nmb_Util::Buffer(&mptr, &mlen, percentOffset);
-    nmb_Util::Buffer(&mptr, &mlen, gain);
+    vrpn_buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, offset);
+    vrpn_buffer(&mptr, &mlen, percentOffset);
+    vrpn_buffer(&mptr, &mlen, gain);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_AmpEnabled (const char ** buf,
-         long * which, float * offset, float * percentOffset, long * gain) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
-  CHECK(nmb_Util::Unbuffer(buf, offset));
-  CHECK(nmb_Util::Unbuffer(buf, percentOffset));
-  CHECK(nmb_Util::Unbuffer(buf, gain));
+         vrpn_int32 * which, vrpn_float32 * offset, vrpn_float32 * percentOffset, vrpn_int32 * gain) {
+  CHECK(vrpn_unbuffer(buf, which));
+  CHECK(vrpn_unbuffer(buf, offset));
+  CHECK(vrpn_unbuffer(buf, percentOffset));
+  CHECK(vrpn_unbuffer(buf, gain));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_AmpDisabled (long * len,
-           long which) {
+           vrpn_int32 which) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long);
+  *len = sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_AmpDisabled:  "
@@ -1723,28 +1658,28 @@ char * nmm_Microscope::encode_AmpDisabled (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, which);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_AmpDisabled (const char ** buf,
-         long * which) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
+         vrpn_int32 * which) {
+  CHECK(vrpn_unbuffer(buf, which));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_StartingToRelax (long * len,
-           long sec, long usec) {
+           vrpn_int32 sec, vrpn_int32 usec) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long);
+  *len = 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_StartingToRelax:  "
@@ -1753,31 +1688,31 @@ char * nmm_Microscope::encode_StartingToRelax (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_StartingToRelax (const char ** buf,
-         long * sec, long * usec) {
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
+         vrpn_int32 * sec, vrpn_int32 * usec) {
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
 
   return 0;
 }
 
 
 char * nmm_Microscope::encode_RelaxSet (long * len,
-            long min, long sep) {
+            vrpn_int32 min, vrpn_int32 sep) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long);
+  *len = 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_RelaxSet:  "
@@ -1786,20 +1721,20 @@ char * nmm_Microscope::encode_RelaxSet (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, min);
-    nmb_Util::Buffer(&mptr, &mlen, sep);
+    vrpn_buffer(&mptr, &mlen, min);
+    vrpn_buffer(&mptr, &mlen, sep);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_RelaxSet (const char ** buf,
-         long * min, long * sep) {
+         vrpn_int32 * min, vrpn_int32 * sep) {
   // NANO BEGIN
    //fprintf(stderr, "nmm_Microscope::decode_RelaxSet(): Entering...\n");
   // NANO END
-  CHECK(nmb_Util::Unbuffer(buf, min));
-  CHECK(nmb_Util::Unbuffer(buf, sep));
+  CHECK(vrpn_unbuffer(buf, min));
+  CHECK(vrpn_unbuffer(buf, sep));
 
   // NANO BEGIN
   //fprintf(stderr, "nmm_Microscope::decode_RelaxSet(): msg type = %d\n", d_RelaxSet_type);
@@ -1811,14 +1746,14 @@ long nmm_Microscope::decode_RelaxSet (const char ** buf,
 
 
 char * nmm_Microscope::encode_StdDevParameters (long * len,
-           long samples, float frequency) {
+           vrpn_int32 samples, vrpn_float32 frequency) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long) + sizeof(float);
+  *len = sizeof(vrpn_int32) + sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_StdDevParameters:  "
@@ -1827,8 +1762,8 @@ char * nmm_Microscope::encode_StdDevParameters (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, samples);
-    nmb_Util::Buffer(&mptr, &mlen, frequency);
+    vrpn_buffer(&mptr, &mlen, samples);
+    vrpn_buffer(&mptr, &mlen, frequency);
 
 
   }
@@ -1839,26 +1774,69 @@ char * nmm_Microscope::encode_StdDevParameters (long * len,
 }
 
 long nmm_Microscope::decode_StdDevParameters (const char ** buf,
-         long * samples, float * frequency) {
-  CHECK(nmb_Util::Unbuffer(buf, samples));
-  CHECK(nmb_Util::Unbuffer(buf, frequency));
+         vrpn_int32 * samples, vrpn_float32 * frequency) {
+  CHECK(vrpn_unbuffer(buf, samples));
+  CHECK(vrpn_unbuffer(buf, frequency));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_WindowLineData (long * len,
-           long x, long y, long dx, long dy, long lineCount,
-           long fieldCount, long * offset, long sec, long usec, 
+           vrpn_int32 x, vrpn_int32 y, 
+           vrpn_int32 dx, vrpn_int32 dy, vrpn_int32 lineCount,
+           vrpn_int32 fieldCount, vrpn_int32 sec, vrpn_int32 usec,
+           vrpn_float32 ** data) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+  long i, j;
+
+  if (!len) return NULL;
+
+  *len = 8 * sizeof(vrpn_int32) + lineCount * fieldCount * sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_WindowLineData:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, dx);
+    vrpn_buffer(&mptr, &mlen, dy);
+    vrpn_buffer(&mptr, &mlen, lineCount);
+    vrpn_buffer(&mptr, &mlen, fieldCount);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
+    for (i = 0; i < lineCount; i++)
+      for (j = 0; j < fieldCount; j++) {
+        vrpn_buffer(&mptr, &mlen, data[j][i]);
+      }
+  }
+
+  return msgbuf;
+}
+
+/*
+   takes short data and buffers it as vrpn_float32 data
+*/
+char * nmm_Microscope::encode_WindowLineData (long * len,
+           vrpn_int32 x, vrpn_int32 y, 
+           vrpn_int32 dx, vrpn_int32 dy, vrpn_int32 lineCount,
+           vrpn_int32 fieldCount, vrpn_int32 * offset, 
+           vrpn_int32 sec, vrpn_int32 usec, 
 	   unsigned short ** data) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
   long i, j;
-  float val_hgt;
+  vrpn_float32 val_hgt;
 
   if (!len) return NULL;
 
-  *len = 8 * sizeof(long) + lineCount * fieldCount * sizeof(float);
+  *len = 8 * sizeof(vrpn_int32) + lineCount * fieldCount * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_WindowLineData:  "
@@ -1867,97 +1845,62 @@ char * nmm_Microscope::encode_WindowLineData (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, dx);
-    nmb_Util::Buffer(&mptr, &mlen, dy);
-    nmb_Util::Buffer(&mptr, &mlen, lineCount);
-    nmb_Util::Buffer(&mptr, &mlen, fieldCount);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, dx);
+    vrpn_buffer(&mptr, &mlen, dy);
+    vrpn_buffer(&mptr, &mlen, lineCount);
+    vrpn_buffer(&mptr, &mlen, fieldCount);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
     for (i = 0; i < lineCount; i++)
       for (j = 0; j < fieldCount; j++) {
- 	val_hgt = (float)(data[j][offset[j]+i]);
-        nmb_Util::Buffer(&mptr, &mlen, val_hgt);
+ 	val_hgt = (vrpn_float32)(data[j][offset[j]+i]);
+        vrpn_buffer(&mptr, &mlen, val_hgt);
       }
   }
 
   return msgbuf;
 }
 
-char * nmm_Microscope::encode_WindowLineData (long * len,
-           long x, long y, long dx, long dy, long lineCount,
-           long fieldCount, long sec, long usec, 
-	   float ** data) {
-  char * msgbuf = NULL;
-  char * mptr;
-  long mlen;
-  long i, j;
-
-  if (!len) return NULL;
-
-  *len = 8 * sizeof(long) + lineCount * fieldCount * sizeof(float);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmm_Microscope::encode_WindowLineData:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, dx);
-    nmb_Util::Buffer(&mptr, &mlen, dy);
-    nmb_Util::Buffer(&mptr, &mlen, lineCount);
-    nmb_Util::Buffer(&mptr, &mlen, fieldCount);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
-    for (i = 0; i < lineCount; i++)
-      for (j = 0; j < fieldCount; j++) {
-        nmb_Util::Buffer(&mptr, &mlen, data[j][i]);
-      }
-  }
-
-  return msgbuf;
-}
 
 long nmm_Microscope::decode_WindowLineDataHeader (const char ** buf,
-         long * x, long * y, long * dx, long * dy,
-         long * lineCount, long * fieldCount, long * sec, long * usec) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, dx));
-  CHECK(nmb_Util::Unbuffer(buf, dy));
-  CHECK(nmb_Util::Unbuffer(buf, lineCount));
-  CHECK(nmb_Util::Unbuffer(buf, fieldCount));
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
+         vrpn_int32 * x, vrpn_int32 * y, vrpn_int32 * dx, vrpn_int32 * dy,
+         vrpn_int32 * lineCount, vrpn_int32 * fieldCount, vrpn_int32 * sec, vrpn_int32 * usec) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, dx));
+  CHECK(vrpn_unbuffer(buf, dy));
+  CHECK(vrpn_unbuffer(buf, lineCount));
+  CHECK(vrpn_unbuffer(buf, fieldCount));
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
 
   return 0;
 }
 
+
 long nmm_Microscope::decode_WindowLineDataField (const char ** buf,
-         long fieldCount, float * data) {
+         vrpn_int32 fieldCount, vrpn_float32 * data) {
   long i;
 
   for (i = 0; i < fieldCount; i++) {
-      CHECK(nmb_Util::Unbuffer(buf, &data[i]));
+      CHECK(vrpn_unbuffer(buf, &data[i]));
   }
 
   return 0;
 }
 
 char * nmm_Microscope::encode_WindowScanNM (long * len,
-           long x, long y, long sec, long usec, float height,
-	   float deviation) {
+           vrpn_int32 x, vrpn_int32 y, vrpn_int32 sec, vrpn_int32 usec, vrpn_float32 height,
+	   vrpn_float32 deviation) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 4 * sizeof(long) + 2 * sizeof(float);
+  *len = 4 * sizeof(vrpn_int32) + 2 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_WindowScanNM:  "
@@ -1966,39 +1909,39 @@ char * nmm_Microscope::encode_WindowScanNM (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
-    nmb_Util::Buffer(&mptr, &mlen, height);
-    nmb_Util::Buffer(&mptr, &mlen, deviation);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, height);
+    vrpn_buffer(&mptr, &mlen, deviation);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_WindowScanNM (const char ** buf,
-         long * x, long * y, long * sec, long * usec,
-         float * value, float * deviation) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
-  CHECK(nmb_Util::Unbuffer(buf, value));
-  CHECK(nmb_Util::Unbuffer(buf, deviation));
+         vrpn_int32 * x, vrpn_int32 * y, vrpn_int32 * sec, vrpn_int32 * usec,
+         vrpn_float32 * value, vrpn_float32 * deviation) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
+  CHECK(vrpn_unbuffer(buf, value));
+  CHECK(vrpn_unbuffer(buf, deviation));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_WindowBackscanNM (long * len,
-           long x, long y, long sec, long usec, float value, float deviation) {
+           vrpn_int32 x, vrpn_int32 y, vrpn_int32 sec, vrpn_int32 usec, vrpn_float32 value, vrpn_float32 deviation) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 4 * sizeof(long) + 2 * sizeof(float);
+  *len = 4 * sizeof(vrpn_int32) + 2 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_WindowBackscanNM:  "
@@ -2007,40 +1950,40 @@ char * nmm_Microscope::encode_WindowBackscanNM (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
-    nmb_Util::Buffer(&mptr, &mlen, value);
-    nmb_Util::Buffer(&mptr, &mlen, deviation);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, value);
+    vrpn_buffer(&mptr, &mlen, deviation);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_WindowBackscanNM (const char ** buf,
-         long * x, long * y, long * sec, long * usec,
-         float * value, float * deviation) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
-  CHECK(nmb_Util::Unbuffer(buf, value));
-  CHECK(nmb_Util::Unbuffer(buf, deviation));
+         vrpn_int32 * x, vrpn_int32 * y, vrpn_int32 * sec, vrpn_int32 * usec,
+         vrpn_float32 * value, vrpn_float32 * deviation) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
+  CHECK(vrpn_unbuffer(buf, value));
+  CHECK(vrpn_unbuffer(buf, deviation));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_PointResultNM (long * len,
-           float x, float y, long sec, long usec, float height,
-           float deviation) {
+           vrpn_float32 x, vrpn_float32 y, vrpn_int32 sec, vrpn_int32 usec, vrpn_float32 height,
+           vrpn_float32 deviation) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long) + 4 * sizeof(float);
+  *len = 2 * sizeof(vrpn_int32) + 4 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_PointResultNM:  "
@@ -2049,44 +1992,44 @@ char * nmm_Microscope::encode_PointResultNM (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
-    nmb_Util::Buffer(&mptr, &mlen, height);
-    nmb_Util::Buffer(&mptr, &mlen, deviation);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, height);
+    vrpn_buffer(&mptr, &mlen, deviation);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_PointResultNM (const char ** buf,
-         float * x, float * y, long * sec, long * usec,
-         float * height, float * deviation) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
-  CHECK(nmb_Util::Unbuffer(buf, height));
-  CHECK(nmb_Util::Unbuffer(buf, deviation));
+         vrpn_float32 * x, vrpn_float32 * y, vrpn_int32 * sec, vrpn_int32 * usec,
+         vrpn_float32 * height, vrpn_float32 * deviation) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
+  CHECK(vrpn_unbuffer(buf, height));
+  CHECK(vrpn_unbuffer(buf, deviation));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ResultData (long * len,
-           float x, float y, long sec, long usec, long fieldCount,
-	   float * data) {
+           vrpn_float32 x, vrpn_float32 y, vrpn_int32 sec, vrpn_int32 usec, vrpn_int32 fieldCount,
+	   vrpn_float32 * data) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
   long i;
 
   if (!len) return NULL;
 
-/* Changed by Tiger	x and y are floats
-  *len = 5 * sizeof(long) + fieldCount * sizeof(float);
+/* Changed by Tiger	x and y are vrpn_float32s
+  *len = 5 * sizeof(vrpn_int32) + fieldCount * sizeof(vrpn_float32);
 */
-  *len = 3*sizeof(long) + 2*sizeof(float) + fieldCount * sizeof(float);
+  *len = 3*sizeof(vrpn_int32) + 2*sizeof(vrpn_float32) + fieldCount * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ResultData:  "
@@ -2095,45 +2038,45 @@ char * nmm_Microscope::encode_ResultData (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
-    nmb_Util::Buffer(&mptr, &mlen, fieldCount);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, fieldCount);
     for (i = 0; i < fieldCount; i++)
-      nmb_Util::Buffer(&mptr, &mlen, data[i]);
+      vrpn_buffer(&mptr, &mlen, data[i]);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ResultData (const char ** buf,
-         float * x, float * y, long * sec, long * usec, long * fieldCount,
-         float * data) {
+         vrpn_float32 * x, vrpn_float32 * y, vrpn_int32 * sec, vrpn_int32 * usec, vrpn_int32 * fieldCount,
+         vrpn_float32 * data) {
   long i;
 
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
-  CHECK(nmb_Util::Unbuffer(buf, fieldCount));
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
+  CHECK(vrpn_unbuffer(buf, fieldCount));
 
   for (i = 0; i < *fieldCount; i++)
-    CHECK(nmb_Util::Unbuffer(buf, &data[i]));
+    CHECK(vrpn_unbuffer(buf, &data[i]));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ResultNM (long * len,
-           float x, float y, long sec, long usec, float height,
-           float normX, float normY, float normZ) {
+           vrpn_float32 x, vrpn_float32 y, vrpn_int32 sec, vrpn_int32 usec, vrpn_float32 height,
+           vrpn_float32 normX, vrpn_float32 normY, vrpn_float32 normZ) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long) + 6 * sizeof(float);
+  *len = 2 * sizeof(vrpn_int32) + 6 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ResultNM:  "
@@ -2142,44 +2085,44 @@ char * nmm_Microscope::encode_ResultNM (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
-    nmb_Util::Buffer(&mptr, &mlen, height);
-    nmb_Util::Buffer(&mptr, &mlen, normX);
-    nmb_Util::Buffer(&mptr, &mlen, normY);
-    nmb_Util::Buffer(&mptr, &mlen, normZ);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, height);
+    vrpn_buffer(&mptr, &mlen, normX);
+    vrpn_buffer(&mptr, &mlen, normY);
+    vrpn_buffer(&mptr, &mlen, normZ);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ResultNM (const char ** buf,
-         float * x, float * y, long * sec, long * usec, float * height,
-         float * normX, float * normY, float * normZ) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
-  CHECK(nmb_Util::Unbuffer(buf, height));
-  CHECK(nmb_Util::Unbuffer(buf, normX));
-  CHECK(nmb_Util::Unbuffer(buf, normY));
-  CHECK(nmb_Util::Unbuffer(buf, normZ));
+         vrpn_float32 * x, vrpn_float32 * y, vrpn_int32 * sec, vrpn_int32 * usec, vrpn_float32 * height,
+         vrpn_float32 * normX, vrpn_float32 * normY, vrpn_float32 * normZ) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
+  CHECK(vrpn_unbuffer(buf, height));
+  CHECK(vrpn_unbuffer(buf, normX));
+  CHECK(vrpn_unbuffer(buf, normY));
+  CHECK(vrpn_unbuffer(buf, normZ));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ScanRange (long * len,
-           float minX, float maxX, float minY, float maxY,
-           float minZ, float maxZ) {
+           vrpn_float32 minX, vrpn_float32 maxX, vrpn_float32 minY, vrpn_float32 maxY,
+           vrpn_float32 minZ, vrpn_float32 maxZ) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 6 * sizeof(float);
+  *len = 6 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ScanRange:  "
@@ -2188,12 +2131,12 @@ char * nmm_Microscope::encode_ScanRange (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, minX);
-    nmb_Util::Buffer(&mptr, &mlen, maxX);
-    nmb_Util::Buffer(&mptr, &mlen, minY);
-    nmb_Util::Buffer(&mptr, &mlen, maxY);
-    nmb_Util::Buffer(&mptr, &mlen, minZ);
-    nmb_Util::Buffer(&mptr, &mlen, maxZ);
+    vrpn_buffer(&mptr, &mlen, minX);
+    vrpn_buffer(&mptr, &mlen, maxX);
+    vrpn_buffer(&mptr, &mlen, minY);
+    vrpn_buffer(&mptr, &mlen, maxY);
+    vrpn_buffer(&mptr, &mlen, minZ);
+    vrpn_buffer(&mptr, &mlen, maxZ);
 
 
   }
@@ -2204,30 +2147,30 @@ char * nmm_Microscope::encode_ScanRange (long * len,
 }
 
 long nmm_Microscope::decode_ScanRange (const char ** buf,
-         float * minX, float * maxX, float * minY,
-         float * maxY, float * minZ, float * maxZ) {
-  CHECK(nmb_Util::Unbuffer(buf, minX));
-  CHECK(nmb_Util::Unbuffer(buf, maxX));
-  CHECK(nmb_Util::Unbuffer(buf, minY));
-  CHECK(nmb_Util::Unbuffer(buf, maxY));
-  CHECK(nmb_Util::Unbuffer(buf, minZ));
-  CHECK(nmb_Util::Unbuffer(buf, maxZ));
+         vrpn_float32 * minX, vrpn_float32 * maxX, vrpn_float32 * minY,
+         vrpn_float32 * maxY, vrpn_float32 * minZ, vrpn_float32 * maxZ) {
+  CHECK(vrpn_unbuffer(buf, minX));
+  CHECK(vrpn_unbuffer(buf, maxX));
+  CHECK(vrpn_unbuffer(buf, minY));
+  CHECK(vrpn_unbuffer(buf, maxY));
+  CHECK(vrpn_unbuffer(buf, minZ));
+  CHECK(vrpn_unbuffer(buf, maxZ));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_SetRegionC (long * len,
-           float minX, float minY, float maxX, float maxY) {
+           vrpn_float32 minX, vrpn_float32 minY, vrpn_float32 maxX, vrpn_float32 maxY) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
 /* Changed by Tiger	there is not long buffered
-  *len = sizeof(long) + 4 * sizeof(float);
+  *len = sizeof(vrpn_int32) + 4 * sizeof(vrpn_float32);
 */
-  *len = 4 * sizeof(float);
+  *len = 4 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetRegionC:  "
@@ -2236,34 +2179,34 @@ char * nmm_Microscope::encode_SetRegionC (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, minX);
-    nmb_Util::Buffer(&mptr, &mlen, minY);
-    nmb_Util::Buffer(&mptr, &mlen, maxX);
-    nmb_Util::Buffer(&mptr, &mlen, maxY);
+    vrpn_buffer(&mptr, &mlen, minX);
+    vrpn_buffer(&mptr, &mlen, minY);
+    vrpn_buffer(&mptr, &mlen, maxX);
+    vrpn_buffer(&mptr, &mlen, maxY);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_SetRegionC (const char ** buf,
-         float * minX, float * minY, float * maxX, float * maxY) {
-  CHECK(nmb_Util::Unbuffer(buf, minX));
-  CHECK(nmb_Util::Unbuffer(buf, minY));
-  CHECK(nmb_Util::Unbuffer(buf, maxX));
-  CHECK(nmb_Util::Unbuffer(buf, maxY));
+         vrpn_float32 * minX, vrpn_float32 * minY, vrpn_float32 * maxX, vrpn_float32 * maxY) {
+  CHECK(vrpn_unbuffer(buf, minX));
+  CHECK(vrpn_unbuffer(buf, minY));
+  CHECK(vrpn_unbuffer(buf, maxX));
+  CHECK(vrpn_unbuffer(buf, maxY));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ResistanceFailure (long * len,
-           long which) {
+           vrpn_int32 which) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long);
+  *len = sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ResistanceFailure:  "
@@ -2272,28 +2215,28 @@ char * nmm_Microscope::encode_ResistanceFailure (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, which);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ResistanceFailure (const char ** buf,
-         long * which) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
+         vrpn_int32 * which) {
+  CHECK(vrpn_unbuffer(buf, which));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_Resistance (long * len,
-           long which, long sec, long usec, float resistance) {
+           vrpn_int32 which, vrpn_int32 sec, vrpn_int32 usec, vrpn_float32 resistance) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 3 * sizeof(long) + sizeof(float);
+  *len = 3 * sizeof(vrpn_int32) + sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_Resistance:  "
@@ -2302,35 +2245,35 @@ char * nmm_Microscope::encode_Resistance (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
-    nmb_Util::Buffer(&mptr, &mlen, resistance);
+    vrpn_buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, resistance);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_Resistance (const char ** buf,
-         long * which, long * sec, long * usec, float * resistance) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
-  CHECK(nmb_Util::Unbuffer(buf, resistance));
+         vrpn_int32 * which, vrpn_int32 * sec, vrpn_int32 * usec, vrpn_float32 * resistance) {
+  CHECK(vrpn_unbuffer(buf, which));
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
+  CHECK(vrpn_unbuffer(buf, resistance));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_Resistance2(long * len,
-           long which, long sec, long usec, float resistance,
-           float voltage, float range, float filter) {
+           vrpn_int32 which, vrpn_int32 sec, vrpn_int32 usec, vrpn_float32 resistance,
+           vrpn_float32 voltage, vrpn_float32 range, vrpn_float32 filter) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 3 * sizeof(long) + 4 * sizeof(float);
+  *len = 3 * sizeof(vrpn_int32) + 4 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_Resistance2:  "
@@ -2339,42 +2282,42 @@ char * nmm_Microscope::encode_Resistance2(long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
-    nmb_Util::Buffer(&mptr, &mlen, resistance);
-    nmb_Util::Buffer(&mptr, &mlen, voltage);
-    nmb_Util::Buffer(&mptr, &mlen, range);
-    nmb_Util::Buffer(&mptr, &mlen, filter);
+    vrpn_buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, resistance);
+    vrpn_buffer(&mptr, &mlen, voltage);
+    vrpn_buffer(&mptr, &mlen, range);
+    vrpn_buffer(&mptr, &mlen, filter);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_Resistance2(const char ** buf,
-         long * which, long * sec, long * usec, float * resistance,
-         float * voltage, float * range, float * filter) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
-  CHECK(nmb_Util::Unbuffer(buf, resistance));
-  CHECK(nmb_Util::Unbuffer(buf, voltage));
-  CHECK(nmb_Util::Unbuffer(buf, range));
-  CHECK(nmb_Util::Unbuffer(buf, filter));
+         vrpn_int32 * which, vrpn_int32 * sec, vrpn_int32 * usec, vrpn_float32 * resistance,
+         vrpn_float32 * voltage, vrpn_float32 * range, vrpn_float32 * filter) {
+  CHECK(vrpn_unbuffer(buf, which));
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
+  CHECK(vrpn_unbuffer(buf, resistance));
+  CHECK(vrpn_unbuffer(buf, voltage));
+  CHECK(vrpn_unbuffer(buf, range));
+  CHECK(vrpn_unbuffer(buf, filter));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ResistanceWithStatus(long * len,
-           long which, long sec, long usec, float resistance,
-           float voltage, float range, float filter, long status) {
+           vrpn_int32 which, vrpn_int32 sec, vrpn_int32 usec, vrpn_float32 resistance,
+           vrpn_float32 voltage, vrpn_float32 range, vrpn_float32 filter, vrpn_int32 status) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 4 * sizeof(long) + 4 * sizeof(float);
+  *len = 4 * sizeof(vrpn_int32) + 4 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ResistanceWithStatus:  "
@@ -2383,43 +2326,43 @@ char * nmm_Microscope::encode_ResistanceWithStatus(long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, which);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
-    nmb_Util::Buffer(&mptr, &mlen, resistance);
-    nmb_Util::Buffer(&mptr, &mlen, voltage);
-    nmb_Util::Buffer(&mptr, &mlen, range);
-    nmb_Util::Buffer(&mptr, &mlen, filter);
-	nmb_Util::Buffer(&mptr, &mlen, status);
+    vrpn_buffer(&mptr, &mlen, which);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, resistance);
+    vrpn_buffer(&mptr, &mlen, voltage);
+    vrpn_buffer(&mptr, &mlen, range);
+    vrpn_buffer(&mptr, &mlen, filter);
+	vrpn_buffer(&mptr, &mlen, status);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ResistanceWithStatus(const char ** buf,
-         long * which, long * sec, long * usec, float * resistance,
-         float * voltage, float * range, float * filter, long * status) {
-  CHECK(nmb_Util::Unbuffer(buf, which));
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
-  CHECK(nmb_Util::Unbuffer(buf, resistance));
-  CHECK(nmb_Util::Unbuffer(buf, voltage));
-  CHECK(nmb_Util::Unbuffer(buf, range));
-  CHECK(nmb_Util::Unbuffer(buf, filter));
-  CHECK(nmb_Util::Unbuffer(buf, status));
+         vrpn_int32 * which, vrpn_int32 * sec, vrpn_int32 * usec, vrpn_float32 * resistance,
+         vrpn_float32 * voltage, vrpn_float32 * range, vrpn_float32 * filter, vrpn_int32 * status) {
+  CHECK(vrpn_unbuffer(buf, which));
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
+  CHECK(vrpn_unbuffer(buf, resistance));
+  CHECK(vrpn_unbuffer(buf, voltage));
+  CHECK(vrpn_unbuffer(buf, range));
+  CHECK(vrpn_unbuffer(buf, filter));
+  CHECK(vrpn_unbuffer(buf, status));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ReportSlowScan (long * len,
-           long isEnabled) {
+           vrpn_int32 isEnabled) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long);
+  *len = sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ReportSlowScan:  "
@@ -2428,15 +2371,15 @@ char * nmm_Microscope::encode_ReportSlowScan (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, isEnabled);
+    vrpn_buffer(&mptr, &mlen, isEnabled);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ReportSlowScan (const char ** buf,
-         long * isEnabled) {
-  CHECK(nmb_Util::Unbuffer(buf, isEnabled));
+         vrpn_int32 * isEnabled) {
+  CHECK(vrpn_unbuffer(buf, isEnabled));
 
   return 0;
 }
@@ -2446,7 +2389,7 @@ char * nmm_Microscope::encode_ScanParameters (long * len,
            char * buffer) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
   long padding;
 
   if (!len) return NULL;
@@ -2465,7 +2408,7 @@ char * nmm_Microscope::encode_ScanParameters (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, , *len);  // TODO
+    vrpn_buffer(&mptr, &mlen, , *len);  // TODO
   }
 
   return msgbuf;
@@ -2473,10 +2416,10 @@ char * nmm_Microscope::encode_ScanParameters (long * len,
 #endif  // 0
 
 long nmm_Microscope::decode_ScanParameters (const char ** buf,
-         long * length, char ** buffer) {
+         vrpn_int32 * length, char ** buffer) {
   long padding;
 
-  CHECK(nmb_Util::Unbuffer(buf, length));
+  CHECK(vrpn_unbuffer(buf, length));
 
   *buffer = new char [*length];
   if (!*buffer) {
@@ -2485,7 +2428,7 @@ long nmm_Microscope::decode_ScanParameters (const char ** buf,
     return -1;
   }
 
-  CHECK(nmb_Util::Unbuffer(buf, *buffer, *length));
+  CHECK(vrpn_unbuffer(buf, *buffer, *length));
 
   // align to a 4-byte boundary
   padding = 4 - (*length % 4);
@@ -2495,14 +2438,14 @@ long nmm_Microscope::decode_ScanParameters (const char ** buf,
 }
 
 char * nmm_Microscope::encode_HelloMessage (long * len,
-           char * magic, char * name, long majorVersion, long minorVersion) {
+           char * magic, char * name, vrpn_int32 majorVersion, vrpn_int32 minorVersion) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = (4 + STM_NAME_LENGTH) * sizeof(char) + 2 * sizeof(long);
+  *len = (4 + STM_NAME_LENGTH) * sizeof(char) + 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_HelloMessage:  "
@@ -2511,34 +2454,34 @@ char * nmm_Microscope::encode_HelloMessage (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, magic, 4);
-    nmb_Util::Buffer(&mptr, &mlen, name, STM_NAME_LENGTH);
-    nmb_Util::Buffer(&mptr, &mlen, majorVersion);
-    nmb_Util::Buffer(&mptr, &mlen, minorVersion);
+    vrpn_buffer(&mptr, &mlen, magic, 4);
+    vrpn_buffer(&mptr, &mlen, name, STM_NAME_LENGTH);
+    vrpn_buffer(&mptr, &mlen, majorVersion);
+    vrpn_buffer(&mptr, &mlen, minorVersion);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_HelloMessage (const char ** buf,
-         char * magic, char * name, long * majorVersion, long * minorVersion) {
-  CHECK(nmb_Util::Unbuffer(buf, magic, 4));
-  CHECK(nmb_Util::Unbuffer(buf, name, STM_NAME_LENGTH));
-  CHECK(nmb_Util::Unbuffer(buf, majorVersion));
-  CHECK(nmb_Util::Unbuffer(buf, minorVersion));
+         char * magic, char * name, vrpn_int32 * majorVersion, vrpn_int32 * minorVersion) {
+  CHECK(vrpn_unbuffer(buf, magic, 4));
+  CHECK(vrpn_unbuffer(buf, name, STM_NAME_LENGTH));
+  CHECK(vrpn_unbuffer(buf, majorVersion));
+  CHECK(vrpn_unbuffer(buf, minorVersion));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ClientHello (long * len,
-           char * magic, char * name, long majorVersion, long minorVersion) {
+           char * magic, char * name, vrpn_int32 majorVersion, vrpn_int32 minorVersion) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = (4 + STM_NAME_LENGTH) * sizeof(char) + 2 * sizeof(long);
+  *len = (4 + STM_NAME_LENGTH) * sizeof(char) + 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ClientHello:  "
@@ -2547,29 +2490,29 @@ char * nmm_Microscope::encode_ClientHello (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, magic, 4);
-    nmb_Util::Buffer(&mptr, &mlen, name, STM_NAME_LENGTH);
-    nmb_Util::Buffer(&mptr, &mlen, majorVersion);
-    nmb_Util::Buffer(&mptr, &mlen, minorVersion);
+    vrpn_buffer(&mptr, &mlen, magic, 4);
+    vrpn_buffer(&mptr, &mlen, name, STM_NAME_LENGTH);
+    vrpn_buffer(&mptr, &mlen, majorVersion);
+    vrpn_buffer(&mptr, &mlen, minorVersion);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ClientHello (const char ** buf,
-         char * magic, char * name, long * majorVersion, long * minorVersion) {
-  CHECK(nmb_Util::Unbuffer(buf, magic, 4));
-  CHECK(nmb_Util::Unbuffer(buf, name, STM_NAME_LENGTH));
-  CHECK(nmb_Util::Unbuffer(buf, majorVersion));
-  CHECK(nmb_Util::Unbuffer(buf, minorVersion));
+         char * magic, char * name, vrpn_int32 * majorVersion, vrpn_int32 * minorVersion) {
+  CHECK(vrpn_unbuffer(buf, magic, 4));
+  CHECK(vrpn_unbuffer(buf, name, STM_NAME_LENGTH));
+  CHECK(vrpn_unbuffer(buf, majorVersion));
+  CHECK(vrpn_unbuffer(buf, minorVersion));
 
   return 0;
 }
 
 
 long nmm_Microscope::decode_ScanDatasetHeader (const char ** buf,
-         long * count) {
-  CHECK(nmb_Util::Unbuffer(buf, count));
+         vrpn_int32 * count) {
+  CHECK(vrpn_unbuffer(buf, count));
 // NANO BEGIN
   //  fprintf(stderr, "nmm_Microscope::decode_ScanDatasetHeader(): numDatasets = %ld\n", *count);
 // NANO END
@@ -2578,44 +2521,44 @@ long nmm_Microscope::decode_ScanDatasetHeader (const char ** buf,
 }
 
 long nmm_Microscope::decode_ScanDataset (const char ** buf,
-         char * name, char * units, float * offset,
-                               float * scale) {
-  CHECK(nmb_Util::Unbuffer(buf, name, STM_NAME_LENGTH));
-  CHECK(nmb_Util::Unbuffer(buf, units, STM_NAME_LENGTH));
-  CHECK(nmb_Util::Unbuffer(buf, offset));
-  CHECK(nmb_Util::Unbuffer(buf, scale));
+         char * name, char * units, vrpn_float32 * offset,
+                               vrpn_float32 * scale) {
+  CHECK(vrpn_unbuffer(buf, name, STM_NAME_LENGTH));
+  CHECK(vrpn_unbuffer(buf, units, STM_NAME_LENGTH));
+  CHECK(vrpn_unbuffer(buf, offset));
+  CHECK(vrpn_unbuffer(buf, scale));
 
   return 0;
 }
 
 long nmm_Microscope::decode_PointDatasetHeader (const char ** buf,
-         long * count) {
-  CHECK(nmb_Util::Unbuffer(buf, count));
+         vrpn_int32 * count) {
+  CHECK(vrpn_unbuffer(buf, count));
 
   return 0;
 }
 
 long nmm_Microscope::decode_PointDataset (const char ** buf,
-         char * name, char * units, long * numSamples,
-                               float * offset, float * scale) {
-  CHECK(nmb_Util::Unbuffer(buf, name, STM_NAME_LENGTH));
-  CHECK(nmb_Util::Unbuffer(buf, units, STM_NAME_LENGTH));
-  CHECK(nmb_Util::Unbuffer(buf, numSamples));
-  CHECK(nmb_Util::Unbuffer(buf, offset));
-  CHECK(nmb_Util::Unbuffer(buf, scale));
+         char * name, char * units, vrpn_int32 * numSamples,
+                               vrpn_float32 * offset, vrpn_float32 * scale) {
+  CHECK(vrpn_unbuffer(buf, name, STM_NAME_LENGTH));
+  CHECK(vrpn_unbuffer(buf, units, STM_NAME_LENGTH));
+  CHECK(vrpn_unbuffer(buf, numSamples));
+  CHECK(vrpn_unbuffer(buf, offset));
+  CHECK(vrpn_unbuffer(buf, scale));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_PidParameters (long * len,
-           float p, float i, float d) {
+           vrpn_float32 p, vrpn_float32 i, vrpn_float32 d) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 3 * sizeof(float);
+  *len = 3 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_PidParameters:  "
@@ -2624,32 +2567,32 @@ char * nmm_Microscope::encode_PidParameters (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, p);
-    nmb_Util::Buffer(&mptr, &mlen, i);
-    nmb_Util::Buffer(&mptr, &mlen, d);
+    vrpn_buffer(&mptr, &mlen, p);
+    vrpn_buffer(&mptr, &mlen, i);
+    vrpn_buffer(&mptr, &mlen, d);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_PidParameters (const char ** buf,
-         float * p, float * i, float * d) {
-  CHECK(nmb_Util::Unbuffer(buf, p));
-  CHECK(nmb_Util::Unbuffer(buf, i));
-  CHECK(nmb_Util::Unbuffer(buf, d));
+         vrpn_float32 * p, vrpn_float32 * i, vrpn_float32 * d) {
+  CHECK(vrpn_unbuffer(buf, p));
+  CHECK(vrpn_unbuffer(buf, i));
+  CHECK(vrpn_unbuffer(buf, d));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ScanrateParameter (long * len,
-           float rate) {
+           vrpn_float32 rate) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(float);
+  *len = sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ScanrateParameter:  "
@@ -2658,28 +2601,28 @@ char * nmm_Microscope::encode_ScanrateParameter (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, rate);
+    vrpn_buffer(&mptr, &mlen, rate);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ScanrateParameter (const char ** buf,
-         float * rate) {
-  CHECK(nmb_Util::Unbuffer(buf, rate));
+         vrpn_float32 * rate) {
+  CHECK(vrpn_unbuffer(buf, rate));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ReportGridSize (long * len,
-           long x, long y) {
+           vrpn_int32 x, vrpn_int32 y) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long);
+  *len = 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ReportGridSize:  "
@@ -2688,30 +2631,30 @@ char * nmm_Microscope::encode_ReportGridSize (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ReportGridSize (const char ** buf,
-         long * x, long * y) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
+         vrpn_int32 * x, vrpn_int32 * y) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ServerPacketTimestamp (long * len,
-           long sec, long usec) {
+           vrpn_int32 sec, vrpn_int32 usec) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long);
+  *len = 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ServerPacketTimestamp:  "
@@ -2720,31 +2663,31 @@ char * nmm_Microscope::encode_ServerPacketTimestamp (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ServerPacketTimestamp (const char ** buf,
-         long * sec, long * usec) {
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
+         vrpn_int32 * sec, vrpn_int32 * usec) {
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
 
   return 0;
 }
 
 // Tiger implemented it
 char * nmm_Microscope::encode_TopoFileHeader (long * len,
-           char * buf, long size ) {
+           char * buf, vrpn_int32 size ) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long)+size*sizeof(char);  // HACK XXX Tiger
+  *len = sizeof(vrpn_int32)+size*sizeof(char);  // HACK XXX Tiger
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_TopoFileHeader:  "
@@ -2753,8 +2696,8 @@ char * nmm_Microscope::encode_TopoFileHeader (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, size);  // HACK XXX Tiger
-    nmb_Util::Buffer(&mptr, &mlen, buf, (long)size);  // HACK XXX Tiger
+    vrpn_buffer(&mptr, &mlen, size);  // HACK XXX Tiger
+    vrpn_buffer(&mptr, &mlen, buf, (vrpn_int32)size);  // HACK XXX Tiger
   }
 
   return msgbuf;
@@ -2762,8 +2705,8 @@ char * nmm_Microscope::encode_TopoFileHeader (long * len,
 // Tiger
 
 long nmm_Microscope::decode_TopoFileHeader (const char ** buf,
-         long * length, char ** header) {
-  CHECK(nmb_Util::Unbuffer(buf, length));
+         vrpn_int32 * length, char ** header) {
+  CHECK(vrpn_unbuffer(buf, length));
 
   *header = new char [*length];
   if (!*header) {
@@ -2772,25 +2715,25 @@ long nmm_Microscope::decode_TopoFileHeader (const char ** buf,
     return -1;
   }
 
-  CHECK(nmb_Util::Unbuffer(buf, *header, *length));
+  CHECK(vrpn_unbuffer(buf, *header, *length));
 
   return 0;
 }
 
 
-char * nmm_Microscope::encode_ForceCurveData (long * len, float x, float y, 
-    long num_points, long num_halfcycles, long sec, long usec, 
-    float *z, float **data){
+char * nmm_Microscope::encode_ForceCurveData (long * len, vrpn_float32 x, vrpn_float32 y, 
+    vrpn_int32 num_points, vrpn_int32 num_halfcycles, vrpn_int32 sec, vrpn_int32 usec, 
+    vrpn_float32 *z, vrpn_float32 **data){
 
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
   long i, j;
 
   if (!len) return NULL;
 
-  *len = 2*sizeof(long) + 2*sizeof(float) + 
-		num_points*(num_halfcycles+1)*sizeof(float);
+  *len = 2*sizeof(vrpn_int32) + 2*sizeof(vrpn_float32) + 
+		num_points*(num_halfcycles+1)*sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ForceCurveData:  "
@@ -2799,16 +2742,16 @@ char * nmm_Microscope::encode_ForceCurveData (long * len, float x, float y,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, num_points);
-    nmb_Util::Buffer(&mptr, &mlen, num_halfcycles);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, num_points);
+    vrpn_buffer(&mptr, &mlen, num_halfcycles);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
     for (i = 0; i < num_points; i++){
-      nmb_Util::Buffer(&mptr, &mlen, z[i]);
+      vrpn_buffer(&mptr, &mlen, z[i]);
       for (j = 0; j < num_halfcycles; j++){
-        nmb_Util::Buffer(&mptr, &mlen, data[j][i]);
+        vrpn_buffer(&mptr, &mlen, data[j][i]);
       }
     }
   }
@@ -2818,25 +2761,25 @@ char * nmm_Microscope::encode_ForceCurveData (long * len, float x, float y,
 }
 
 long nmm_Microscope::decode_ForceCurveDataHeader (const char ** buf,
-	float *x, float *y, long *num_points, long *num_halfcycles, 
-	long *sec, long *usec){
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, num_points));
-  CHECK(nmb_Util::Unbuffer(buf, num_halfcycles));
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
+	vrpn_float32 *x, vrpn_float32 *y, vrpn_int32 *num_points, vrpn_int32 *num_halfcycles, 
+	vrpn_int32 *sec, vrpn_int32 *usec){
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, num_points));
+  CHECK(vrpn_unbuffer(buf, num_halfcycles));
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
 
   return 0;
 }
 
 long nmm_Microscope::decode_ForceCurveDataSingleLevel (const char ** buf,
-	long num_halfcycles, float *z, float * data){
+	vrpn_int32 num_halfcycles, vrpn_float32 *z, vrpn_float32 * data){
   long i;
 
-  CHECK(nmb_Util::Unbuffer(buf, z));
+  CHECK(vrpn_unbuffer(buf, z));
   for (i = 0; i < num_halfcycles; i++)
-    CHECK(nmb_Util::Unbuffer(buf, &(data[i])));
+    CHECK(vrpn_unbuffer(buf, &(data[i])));
 
   return 0;
 }
@@ -2847,7 +2790,7 @@ char * nmm_Microscope::encode_RecvTimestamp (long * len,
            struct timeval t) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
@@ -2860,7 +2803,7 @@ char * nmm_Microscope::encode_RecvTimestamp (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, t);
+    vrpn_buffer(&mptr, &mlen, t);
   }
 
   return msgbuf;
@@ -2868,7 +2811,7 @@ char * nmm_Microscope::encode_RecvTimestamp (long * len,
 
 long nmm_Microscope::decode_RecvTimestamp (const char ** buf,
          struct timeval * time) {
-  CHECK(nmb_Util::Unbuffer(buf, time));
+  CHECK(vrpn_unbuffer(buf, time));
 
   return 0;
 }
@@ -2877,7 +2820,7 @@ char * nmm_Microscope::encode_FakeSendTimestamp (long * len,
                                                struct timeval t) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
@@ -2890,7 +2833,7 @@ char * nmm_Microscope::encode_FakeSendTimestamp (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, t);
+    vrpn_buffer(&mptr, &mlen, t);
   }
 
   return msgbuf;
@@ -2898,20 +2841,20 @@ char * nmm_Microscope::encode_FakeSendTimestamp (long * len,
 
 long nmm_Microscope::decode_FakeSendTimestamp (const char ** buf,
          struct timeval * time) {
-  CHECK(nmb_Util::Unbuffer(buf, time));
+  CHECK(vrpn_unbuffer(buf, time));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_UdpSeqNum (long * len,
-           long sn) {
+           vrpn_int32 sn) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long);
+  *len = sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_UdpSeqNum:  "
@@ -2920,15 +2863,15 @@ char * nmm_Microscope::encode_UdpSeqNum (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, sn);
+    vrpn_buffer(&mptr, &mlen, sn);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_UdpSeqNum (const char ** buf,
-         long * number) {
-  CHECK(nmb_Util::Unbuffer(buf, number));
+         vrpn_int32 * number) {
+  CHECK(vrpn_unbuffer(buf, number));
 
   return 0;
 }
@@ -2937,14 +2880,14 @@ long nmm_Microscope::decode_UdpSeqNum (const char ** buf,
 
 
 char * nmm_Microscope::encode_EnterTappingMode (long * len,
-           float p, float i, float d, float setpoint, float amplitude) {
+           vrpn_float32 p, vrpn_float32 i, vrpn_float32 d, vrpn_float32 setpoint, vrpn_float32 amplitude) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 5 * sizeof(float);
+  *len = 5 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_EnterTappingMode:  "
@@ -2953,24 +2896,24 @@ char * nmm_Microscope::encode_EnterTappingMode (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, p);
-    nmb_Util::Buffer(&mptr, &mlen, i);
-    nmb_Util::Buffer(&mptr, &mlen, d);
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
-    nmb_Util::Buffer(&mptr, &mlen, amplitude);
+    vrpn_buffer(&mptr, &mlen, p);
+    vrpn_buffer(&mptr, &mlen, i);
+    vrpn_buffer(&mptr, &mlen, d);
+    vrpn_buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, amplitude);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_EnterTappingMode (const char ** buf,
-         float * p, float * i, float * d, float * setpoint,
-         float * amplitude) {
-  CHECK(nmb_Util::Unbuffer(buf, p));
-  CHECK(nmb_Util::Unbuffer(buf, i));
-  CHECK(nmb_Util::Unbuffer(buf, d));
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
-  CHECK(nmb_Util::Unbuffer(buf, amplitude));
+         vrpn_float32 * p, vrpn_float32 * i, vrpn_float32 * d, vrpn_float32 * setpoint,
+         vrpn_float32 * amplitude) {
+  CHECK(vrpn_unbuffer(buf, p));
+  CHECK(vrpn_unbuffer(buf, i));
+  CHECK(vrpn_unbuffer(buf, d));
+  CHECK(vrpn_unbuffer(buf, setpoint));
+  CHECK(vrpn_unbuffer(buf, amplitude));
 
   return 0;
 }
@@ -2978,14 +2921,14 @@ long nmm_Microscope::decode_EnterTappingMode (const char ** buf,
 
 
 char * nmm_Microscope::encode_EnterContactMode (long * len,
-           float p, float i, float d, float setpoint) {
+           vrpn_float32 p, vrpn_float32 i, vrpn_float32 d, vrpn_float32 setpoint) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 4 * sizeof(float);
+  *len = 4 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_EnterContactMode:  "
@@ -2994,35 +2937,35 @@ char * nmm_Microscope::encode_EnterContactMode (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, p);
-    nmb_Util::Buffer(&mptr, &mlen, i);
-    nmb_Util::Buffer(&mptr, &mlen, d);
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, p);
+    vrpn_buffer(&mptr, &mlen, i);
+    vrpn_buffer(&mptr, &mlen, d);
+    vrpn_buffer(&mptr, &mlen, setpoint);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_EnterContactMode (const char ** buf,
-         float * p, float * i, float * d, float * setpoint) {
-  CHECK(nmb_Util::Unbuffer(buf, p));
-  CHECK(nmb_Util::Unbuffer(buf, i));
-  CHECK(nmb_Util::Unbuffer(buf, d));
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
+         vrpn_float32 * p, vrpn_float32 * i, vrpn_float32 * d, vrpn_float32 * setpoint) {
+  CHECK(vrpn_unbuffer(buf, p));
+  CHECK(vrpn_unbuffer(buf, i));
+  CHECK(vrpn_unbuffer(buf, d));
+  CHECK(vrpn_unbuffer(buf, setpoint));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_EnterDirectZControl (long * len,
-           float max_z_step, float max_xy_step, float min_setpoint, 
-		 float max_setpoint, float max_lateral_force) {
+           vrpn_float32 max_z_step, vrpn_float32 max_xy_step, vrpn_float32 min_setpoint, 
+		 vrpn_float32 max_setpoint, vrpn_float32 max_lateral_force) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 5 * sizeof(float);
+  *len = 5 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_EnterDirectZControl:  "
@@ -3031,23 +2974,23 @@ char * nmm_Microscope::encode_EnterDirectZControl (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, max_z_step);
-    nmb_Util::Buffer(&mptr, &mlen, max_xy_step);
-    nmb_Util::Buffer(&mptr, &mlen, min_setpoint);
-    nmb_Util::Buffer(&mptr, &mlen, max_setpoint);
-    nmb_Util::Buffer(&mptr, &mlen, max_lateral_force);
+    vrpn_buffer(&mptr, &mlen, max_z_step);
+    vrpn_buffer(&mptr, &mlen, max_xy_step);
+    vrpn_buffer(&mptr, &mlen, min_setpoint);
+    vrpn_buffer(&mptr, &mlen, max_setpoint);
+    vrpn_buffer(&mptr, &mlen, max_lateral_force);
   }
 
   return msgbuf;
 }
 long nmm_Microscope::decode_EnterDirectZControl (const char ** buf,
-           float * max_z_step, float * max_xy_step, float * min_setpoint, 
-		 float * max_setpoint, float * max_lateral_force) {
-  CHECK(nmb_Util::Unbuffer(buf, max_z_step));
-  CHECK(nmb_Util::Unbuffer(buf, max_xy_step));
-  CHECK(nmb_Util::Unbuffer(buf, min_setpoint));
-  CHECK(nmb_Util::Unbuffer(buf, max_setpoint));
-  CHECK(nmb_Util::Unbuffer(buf, max_lateral_force));
+           vrpn_float32 * max_z_step, vrpn_float32 * max_xy_step, vrpn_float32 * min_setpoint, 
+		 vrpn_float32 * max_setpoint, vrpn_float32 * max_lateral_force) {
+  CHECK(vrpn_unbuffer(buf, max_z_step));
+  CHECK(vrpn_unbuffer(buf, max_xy_step));
+  CHECK(vrpn_unbuffer(buf, min_setpoint));
+  CHECK(vrpn_unbuffer(buf, max_setpoint));
+  CHECK(vrpn_unbuffer(buf, max_lateral_force));
 
   return 0;
 }
@@ -3055,16 +2998,16 @@ long nmm_Microscope::decode_EnterDirectZControl (const char ** buf,
 
 
 char * nmm_Microscope::encode_EnterSewingStyle (long * len,
-           float setpoint, float bottomDelay, float topDelay,
-           float pullBackDistance, float distanceBetweenPunches,
-           float speed, float limitOfDescent) {
+           vrpn_float32 setpoint, vrpn_float32 bottomDelay, vrpn_float32 topDelay,
+           vrpn_float32 pullBackDistance, vrpn_float32 distanceBetweenPunches,
+           vrpn_float32 speed, vrpn_float32 limitOfDescent) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 7 * sizeof(float);
+  *len = 7 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_EnterSewingStyle:  "
@@ -3073,29 +3016,29 @@ char * nmm_Microscope::encode_EnterSewingStyle (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
-    nmb_Util::Buffer(&mptr, &mlen, bottomDelay);
-    nmb_Util::Buffer(&mptr, &mlen, topDelay);
-    nmb_Util::Buffer(&mptr, &mlen, pullBackDistance);
-    nmb_Util::Buffer(&mptr, &mlen, distanceBetweenPunches);
-    nmb_Util::Buffer(&mptr, &mlen, speed);
-    nmb_Util::Buffer(&mptr, &mlen, limitOfDescent);
+    vrpn_buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, bottomDelay);
+    vrpn_buffer(&mptr, &mlen, topDelay);
+    vrpn_buffer(&mptr, &mlen, pullBackDistance);
+    vrpn_buffer(&mptr, &mlen, distanceBetweenPunches);
+    vrpn_buffer(&mptr, &mlen, speed);
+    vrpn_buffer(&mptr, &mlen, limitOfDescent);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_EnterSewingStyle (const char ** buf,
-         float * setpoint, float * bottomDelay, float * topDelay,
-         float * pullBackDistance, float * distanceBetweenPunches,
-         float * speed, float * limitOfDescent) {
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
-  CHECK(nmb_Util::Unbuffer(buf, bottomDelay));
-  CHECK(nmb_Util::Unbuffer(buf, topDelay));
-  CHECK(nmb_Util::Unbuffer(buf, pullBackDistance));
-  CHECK(nmb_Util::Unbuffer(buf, distanceBetweenPunches));
-  CHECK(nmb_Util::Unbuffer(buf, speed));
-  CHECK(nmb_Util::Unbuffer(buf, limitOfDescent));
+         vrpn_float32 * setpoint, vrpn_float32 * bottomDelay, vrpn_float32 * topDelay,
+         vrpn_float32 * pullBackDistance, vrpn_float32 * distanceBetweenPunches,
+         vrpn_float32 * speed, vrpn_float32 * limitOfDescent) {
+  CHECK(vrpn_unbuffer(buf, setpoint));
+  CHECK(vrpn_unbuffer(buf, bottomDelay));
+  CHECK(vrpn_unbuffer(buf, topDelay));
+  CHECK(vrpn_unbuffer(buf, pullBackDistance));
+  CHECK(vrpn_unbuffer(buf, distanceBetweenPunches));
+  CHECK(vrpn_unbuffer(buf, speed));
+  CHECK(vrpn_unbuffer(buf, limitOfDescent));
 
   return 0;
 }
@@ -3109,20 +3052,20 @@ long nmm_Microscope::decode_EnterSewingStyle (const char ** buf,
 // number of different z values to sample at
 // number of down-up curves to acquire per pnt
 
-char * nmm_Microscope::encode_EnterSpectroscopyMode (long * len, float setpoint,
-	float startDelay, float zStart, float zEnd, float zPullback,
-	float forceLimit, float distBetweenFC, long numPoints, 
-	long numHalfcycles, float sampleSpeed, float pullbackSpeed,
-	float startSpeed, float feedbackSpeed, long avgNum,
-	float sampleDelay, float pullbackDelay, float feedbackDelay) {
+char * nmm_Microscope::encode_EnterSpectroscopyMode (long * len, vrpn_float32 setpoint,
+	vrpn_float32 startDelay, vrpn_float32 zStart, vrpn_float32 zEnd, vrpn_float32 zPullback,
+	vrpn_float32 forceLimit, vrpn_float32 distBetweenFC, vrpn_int32 numPoints, 
+	vrpn_int32 numHalfcycles, vrpn_float32 sampleSpeed, vrpn_float32 pullbackSpeed,
+	vrpn_float32 startSpeed, vrpn_float32 feedbackSpeed, vrpn_int32 avgNum,
+	vrpn_float32 sampleDelay, vrpn_float32 pullbackDelay, vrpn_float32 feedbackDelay) {
 
   char *msgbuf = NULL;
   char *mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 17 * sizeof(float);
+  *len = 17 * sizeof(vrpn_float32);
   msgbuf = new char[*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_EnterSpectroscopyMode: "
@@ -3131,65 +3074,65 @@ char * nmm_Microscope::encode_EnterSpectroscopyMode (long * len, float setpoint,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
-    nmb_Util::Buffer(&mptr, &mlen, startDelay);
-    nmb_Util::Buffer(&mptr, &mlen, zStart);
-    nmb_Util::Buffer(&mptr, &mlen, zEnd);
-    nmb_Util::Buffer(&mptr, &mlen, zPullback);
-    nmb_Util::Buffer(&mptr, &mlen, forceLimit);
-    nmb_Util::Buffer(&mptr, &mlen, distBetweenFC);
-    nmb_Util::Buffer(&mptr, &mlen, numPoints);
-    nmb_Util::Buffer(&mptr, &mlen, numHalfcycles);
-    nmb_Util::Buffer(&mptr, &mlen, sampleSpeed);
-    nmb_Util::Buffer(&mptr, &mlen, pullbackSpeed);
-    nmb_Util::Buffer(&mptr, &mlen, startSpeed);
-    nmb_Util::Buffer(&mptr, &mlen, feedbackSpeed);
-    nmb_Util::Buffer(&mptr, &mlen, avgNum);
-    nmb_Util::Buffer(&mptr, &mlen, sampleDelay);
-    nmb_Util::Buffer(&mptr, &mlen, pullbackDelay);
-    nmb_Util::Buffer(&mptr, &mlen, feedbackDelay);
+    vrpn_buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, startDelay);
+    vrpn_buffer(&mptr, &mlen, zStart);
+    vrpn_buffer(&mptr, &mlen, zEnd);
+    vrpn_buffer(&mptr, &mlen, zPullback);
+    vrpn_buffer(&mptr, &mlen, forceLimit);
+    vrpn_buffer(&mptr, &mlen, distBetweenFC);
+    vrpn_buffer(&mptr, &mlen, numPoints);
+    vrpn_buffer(&mptr, &mlen, numHalfcycles);
+    vrpn_buffer(&mptr, &mlen, sampleSpeed);
+    vrpn_buffer(&mptr, &mlen, pullbackSpeed);
+    vrpn_buffer(&mptr, &mlen, startSpeed);
+    vrpn_buffer(&mptr, &mlen, feedbackSpeed);
+    vrpn_buffer(&mptr, &mlen, avgNum);
+    vrpn_buffer(&mptr, &mlen, sampleDelay);
+    vrpn_buffer(&mptr, &mlen, pullbackDelay);
+    vrpn_buffer(&mptr, &mlen, feedbackDelay);
   }
   return msgbuf;
 }
 
 long nmm_Microscope::decode_EnterSpectroscopyMode (const char ** buf,
-         float * setpoint, float * startDelay, float * zStart, float * zEnd,
-         float * zPullback, float * forceLimit,
-         float * distBetweenFC, long * numPoints, long * numHalfcycles,
-	 float * sampleSpeed, float * pullbackSpeed, float * startSpeed,
-	 float * feedbackSpeed, long *avgNum, 
-	 float * sampleDelay, float * pullbackDelay, float * feedbackDelay) {
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
-  CHECK(nmb_Util::Unbuffer(buf, startDelay));
-  CHECK(nmb_Util::Unbuffer(buf, zStart));
-  CHECK(nmb_Util::Unbuffer(buf, zEnd));
-  CHECK(nmb_Util::Unbuffer(buf, zPullback));
-  CHECK(nmb_Util::Unbuffer(buf, forceLimit));
-  CHECK(nmb_Util::Unbuffer(buf, distBetweenFC));
-  CHECK(nmb_Util::Unbuffer(buf, numPoints));
-  CHECK(nmb_Util::Unbuffer(buf, numHalfcycles));
-  CHECK(nmb_Util::Unbuffer(buf, sampleSpeed));
-  CHECK(nmb_Util::Unbuffer(buf, pullbackSpeed));
-  CHECK(nmb_Util::Unbuffer(buf, startSpeed));
-  CHECK(nmb_Util::Unbuffer(buf, feedbackSpeed));
-  CHECK(nmb_Util::Unbuffer(buf, avgNum));
-  CHECK(nmb_Util::Unbuffer(buf, sampleDelay));
-  CHECK(nmb_Util::Unbuffer(buf, pullbackDelay));
-  CHECK(nmb_Util::Unbuffer(buf, feedbackDelay));
+         vrpn_float32 * setpoint, vrpn_float32 * startDelay, vrpn_float32 * zStart, vrpn_float32 * zEnd,
+         vrpn_float32 * zPullback, vrpn_float32 * forceLimit,
+         vrpn_float32 * distBetweenFC, vrpn_int32 * numPoints, vrpn_int32 * numHalfcycles,
+	 vrpn_float32 * sampleSpeed, vrpn_float32 * pullbackSpeed, vrpn_float32 * startSpeed,
+	 vrpn_float32 * feedbackSpeed, vrpn_int32 *avgNum, 
+	 vrpn_float32 * sampleDelay, vrpn_float32 * pullbackDelay, vrpn_float32 * feedbackDelay) {
+  CHECK(vrpn_unbuffer(buf, setpoint));
+  CHECK(vrpn_unbuffer(buf, startDelay));
+  CHECK(vrpn_unbuffer(buf, zStart));
+  CHECK(vrpn_unbuffer(buf, zEnd));
+  CHECK(vrpn_unbuffer(buf, zPullback));
+  CHECK(vrpn_unbuffer(buf, forceLimit));
+  CHECK(vrpn_unbuffer(buf, distBetweenFC));
+  CHECK(vrpn_unbuffer(buf, numPoints));
+  CHECK(vrpn_unbuffer(buf, numHalfcycles));
+  CHECK(vrpn_unbuffer(buf, sampleSpeed));
+  CHECK(vrpn_unbuffer(buf, pullbackSpeed));
+  CHECK(vrpn_unbuffer(buf, startSpeed));
+  CHECK(vrpn_unbuffer(buf, feedbackSpeed));
+  CHECK(vrpn_unbuffer(buf, avgNum));
+  CHECK(vrpn_unbuffer(buf, sampleDelay));
+  CHECK(vrpn_unbuffer(buf, pullbackDelay));
+  CHECK(vrpn_unbuffer(buf, feedbackDelay));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_InTappingMode (long * len,
-           float p, float i, float d, float setpoint,
-	   float amplitude) {
+           vrpn_float32 p, vrpn_float32 i, vrpn_float32 d, vrpn_float32 setpoint,
+	   vrpn_float32 amplitude) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 5 * sizeof(float);
+  *len = 5 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_InTappingMode:  "
@@ -3198,37 +3141,37 @@ char * nmm_Microscope::encode_InTappingMode (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, p);
-    nmb_Util::Buffer(&mptr, &mlen, i);
-    nmb_Util::Buffer(&mptr, &mlen, d);
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
-    nmb_Util::Buffer(&mptr, &mlen, amplitude);
+    vrpn_buffer(&mptr, &mlen, p);
+    vrpn_buffer(&mptr, &mlen, i);
+    vrpn_buffer(&mptr, &mlen, d);
+    vrpn_buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, amplitude);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_InTappingMode (const char ** buf,
-         float * p, float * i, float * d, float * setpoint,
-         float * amplitude) {
-  CHECK(nmb_Util::Unbuffer(buf, p));
-  CHECK(nmb_Util::Unbuffer(buf, i));
-  CHECK(nmb_Util::Unbuffer(buf, d));
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
-  CHECK(nmb_Util::Unbuffer(buf, amplitude));
+         vrpn_float32 * p, vrpn_float32 * i, vrpn_float32 * d, vrpn_float32 * setpoint,
+         vrpn_float32 * amplitude) {
+  CHECK(vrpn_unbuffer(buf, p));
+  CHECK(vrpn_unbuffer(buf, i));
+  CHECK(vrpn_unbuffer(buf, d));
+  CHECK(vrpn_unbuffer(buf, setpoint));
+  CHECK(vrpn_unbuffer(buf, amplitude));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_InContactMode (long * len,
-           float p, float i, float d, float setpoint) {
+           vrpn_float32 p, vrpn_float32 i, vrpn_float32 d, vrpn_float32 setpoint) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 4 * sizeof(float);
+  *len = 4 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_InContactMode:  "
@@ -3237,38 +3180,38 @@ char * nmm_Microscope::encode_InContactMode (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, p);
-    nmb_Util::Buffer(&mptr, &mlen, i);
-    nmb_Util::Buffer(&mptr, &mlen, d);
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, p);
+    vrpn_buffer(&mptr, &mlen, i);
+    vrpn_buffer(&mptr, &mlen, d);
+    vrpn_buffer(&mptr, &mlen, setpoint);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_InContactMode (const char ** buf,
-         float * p, float * i, float * d, float * setpoint) {
-  CHECK(nmb_Util::Unbuffer(buf, p));
-  CHECK(nmb_Util::Unbuffer(buf, i));
-  CHECK(nmb_Util::Unbuffer(buf, d));
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
+         vrpn_float32 * p, vrpn_float32 * i, vrpn_float32 * d, vrpn_float32 * setpoint) {
+  CHECK(vrpn_unbuffer(buf, p));
+  CHECK(vrpn_unbuffer(buf, i));
+  CHECK(vrpn_unbuffer(buf, d));
+  CHECK(vrpn_unbuffer(buf, setpoint));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_InDirectZControl (long * len,
-				float max_z_step, float max_xy_step, 
-				float min_setpoint, float max_setpoint, 
-				float max_lateral_force,
-				float freespace_norm_force,
-				float freespace_lat_force) {
+				vrpn_float32 max_z_step, vrpn_float32 max_xy_step, 
+				vrpn_float32 min_setpoint, vrpn_float32 max_setpoint, 
+				vrpn_float32 max_lateral_force,
+				vrpn_float32 freespace_norm_force,
+				vrpn_float32 freespace_lat_force) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 7 * sizeof(float);
+  *len = 7 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_InDirectZControl:  "
@@ -3277,44 +3220,44 @@ char * nmm_Microscope::encode_InDirectZControl (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, max_z_step);
-    nmb_Util::Buffer(&mptr, &mlen, max_xy_step);
-    nmb_Util::Buffer(&mptr, &mlen, min_setpoint);
-    nmb_Util::Buffer(&mptr, &mlen, max_setpoint);
-    nmb_Util::Buffer(&mptr, &mlen, max_lateral_force);
-    nmb_Util::Buffer(&mptr, &mlen, freespace_norm_force);
-    nmb_Util::Buffer(&mptr, &mlen, freespace_lat_force);
+    vrpn_buffer(&mptr, &mlen, max_z_step);
+    vrpn_buffer(&mptr, &mlen, max_xy_step);
+    vrpn_buffer(&mptr, &mlen, min_setpoint);
+    vrpn_buffer(&mptr, &mlen, max_setpoint);
+    vrpn_buffer(&mptr, &mlen, max_lateral_force);
+    vrpn_buffer(&mptr, &mlen, freespace_norm_force);
+    vrpn_buffer(&mptr, &mlen, freespace_lat_force);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_InDirectZControl (const char ** buf,
-    float *max_z_step, float *max_xy_step, float *min_setpoint, 
-    float *max_setpoint, float *max_lateral_force, 
-    float *freespace_norm_force, float *freespace_lat_force) {
-  CHECK(nmb_Util::Unbuffer(buf, max_z_step));
-  CHECK(nmb_Util::Unbuffer(buf, max_xy_step));
-  CHECK(nmb_Util::Unbuffer(buf, min_setpoint));
-  CHECK(nmb_Util::Unbuffer(buf, max_setpoint));
-  CHECK(nmb_Util::Unbuffer(buf, max_lateral_force));
-  CHECK(nmb_Util::Unbuffer(buf, freespace_norm_force));
-  CHECK(nmb_Util::Unbuffer(buf, freespace_lat_force));
+    vrpn_float32 *max_z_step, vrpn_float32 *max_xy_step, vrpn_float32 *min_setpoint, 
+    vrpn_float32 *max_setpoint, vrpn_float32 *max_lateral_force, 
+    vrpn_float32 *freespace_norm_force, vrpn_float32 *freespace_lat_force) {
+  CHECK(vrpn_unbuffer(buf, max_z_step));
+  CHECK(vrpn_unbuffer(buf, max_xy_step));
+  CHECK(vrpn_unbuffer(buf, min_setpoint));
+  CHECK(vrpn_unbuffer(buf, max_setpoint));
+  CHECK(vrpn_unbuffer(buf, max_lateral_force));
+  CHECK(vrpn_unbuffer(buf, freespace_norm_force));
+  CHECK(vrpn_unbuffer(buf, freespace_lat_force));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_InSewingStyle (long * len,
-           float setpoint, float bottomDelay, float topDelay,
-           float pullBackDistance, float distanceBetweenPunches,
-           float speed, float limitOfDescent) {
+           vrpn_float32 setpoint, vrpn_float32 bottomDelay, vrpn_float32 topDelay,
+           vrpn_float32 pullBackDistance, vrpn_float32 distanceBetweenPunches,
+           vrpn_float32 speed, vrpn_float32 limitOfDescent) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 7 * sizeof(float);
+  *len = 7 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_InSewingStyle:  "
@@ -3323,48 +3266,48 @@ char * nmm_Microscope::encode_InSewingStyle (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
-    nmb_Util::Buffer(&mptr, &mlen, bottomDelay);
-    nmb_Util::Buffer(&mptr, &mlen, topDelay);
-    nmb_Util::Buffer(&mptr, &mlen, pullBackDistance);
-    nmb_Util::Buffer(&mptr, &mlen, distanceBetweenPunches);
-    nmb_Util::Buffer(&mptr, &mlen, speed);
-    nmb_Util::Buffer(&mptr, &mlen, limitOfDescent);
+    vrpn_buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, bottomDelay);
+    vrpn_buffer(&mptr, &mlen, topDelay);
+    vrpn_buffer(&mptr, &mlen, pullBackDistance);
+    vrpn_buffer(&mptr, &mlen, distanceBetweenPunches);
+    vrpn_buffer(&mptr, &mlen, speed);
+    vrpn_buffer(&mptr, &mlen, limitOfDescent);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_InSewingStyle (const char ** buf,
-         float * setpoint, float * bottomDelay, float * topDelay,
-         float * pullBackDistance, float * distanceBetweenPunches,
-         float * speed, float * limitOfDescent) {
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
-  CHECK(nmb_Util::Unbuffer(buf, bottomDelay));
-  CHECK(nmb_Util::Unbuffer(buf, topDelay));
-  CHECK(nmb_Util::Unbuffer(buf, pullBackDistance));
-  CHECK(nmb_Util::Unbuffer(buf, distanceBetweenPunches));
-  CHECK(nmb_Util::Unbuffer(buf, speed));
-  CHECK(nmb_Util::Unbuffer(buf, limitOfDescent));
+         vrpn_float32 * setpoint, vrpn_float32 * bottomDelay, vrpn_float32 * topDelay,
+         vrpn_float32 * pullBackDistance, vrpn_float32 * distanceBetweenPunches,
+         vrpn_float32 * speed, vrpn_float32 * limitOfDescent) {
+  CHECK(vrpn_unbuffer(buf, setpoint));
+  CHECK(vrpn_unbuffer(buf, bottomDelay));
+  CHECK(vrpn_unbuffer(buf, topDelay));
+  CHECK(vrpn_unbuffer(buf, pullBackDistance));
+  CHECK(vrpn_unbuffer(buf, distanceBetweenPunches));
+  CHECK(vrpn_unbuffer(buf, speed));
+  CHECK(vrpn_unbuffer(buf, limitOfDescent));
 
   return 0;
 }
 
-char * nmm_Microscope::encode_InSpectroscopyMode (long * len, float setpoint,
-	float startDelay,
-        float zStart, float zEnd, float zPullback,float forceLimit,
-        float distBetweenFC, long numPoints, long numHalfcycles,
-	float sampleSpeed, float pullbackSpeed, float startSpeed,
-	float feedbackSpeed, long avgNum, 
-	float sampleDelay, float pullbackDelay, float feedbackDelay) {
+char * nmm_Microscope::encode_InSpectroscopyMode (long * len, vrpn_float32 setpoint,
+	vrpn_float32 startDelay,
+        vrpn_float32 zStart, vrpn_float32 zEnd, vrpn_float32 zPullback,vrpn_float32 forceLimit,
+        vrpn_float32 distBetweenFC, vrpn_int32 numPoints, vrpn_int32 numHalfcycles,
+	vrpn_float32 sampleSpeed, vrpn_float32 pullbackSpeed, vrpn_float32 startSpeed,
+	vrpn_float32 feedbackSpeed, vrpn_int32 avgNum, 
+	vrpn_float32 sampleDelay, vrpn_float32 pullbackDelay, vrpn_float32 feedbackDelay) {
 
   char *msgbuf = NULL;
   char *mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 17 * sizeof(float);
+  *len = 17 * sizeof(vrpn_float32);
   msgbuf = new char[*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_InSpectroscopyMode: "
@@ -3373,64 +3316,64 @@ char * nmm_Microscope::encode_InSpectroscopyMode (long * len, float setpoint,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
-    nmb_Util::Buffer(&mptr, &mlen, startDelay);
-    nmb_Util::Buffer(&mptr, &mlen, zStart);
-    nmb_Util::Buffer(&mptr, &mlen, zEnd);
-    nmb_Util::Buffer(&mptr, &mlen, zPullback);
-    nmb_Util::Buffer(&mptr, &mlen, forceLimit);
-    nmb_Util::Buffer(&mptr, &mlen, distBetweenFC);
-    nmb_Util::Buffer(&mptr, &mlen, numPoints);
-    nmb_Util::Buffer(&mptr, &mlen, numHalfcycles);
-    nmb_Util::Buffer(&mptr, &mlen, sampleSpeed);
-    nmb_Util::Buffer(&mptr, &mlen, pullbackSpeed);
-    nmb_Util::Buffer(&mptr, &mlen, startSpeed);
-    nmb_Util::Buffer(&mptr, &mlen, feedbackSpeed);
-    nmb_Util::Buffer(&mptr, &mlen, avgNum);
-    nmb_Util::Buffer(&mptr, &mlen, sampleDelay);
-    nmb_Util::Buffer(&mptr, &mlen, pullbackDelay);
-    nmb_Util::Buffer(&mptr, &mlen, feedbackDelay);
+    vrpn_buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, startDelay);
+    vrpn_buffer(&mptr, &mlen, zStart);
+    vrpn_buffer(&mptr, &mlen, zEnd);
+    vrpn_buffer(&mptr, &mlen, zPullback);
+    vrpn_buffer(&mptr, &mlen, forceLimit);
+    vrpn_buffer(&mptr, &mlen, distBetweenFC);
+    vrpn_buffer(&mptr, &mlen, numPoints);
+    vrpn_buffer(&mptr, &mlen, numHalfcycles);
+    vrpn_buffer(&mptr, &mlen, sampleSpeed);
+    vrpn_buffer(&mptr, &mlen, pullbackSpeed);
+    vrpn_buffer(&mptr, &mlen, startSpeed);
+    vrpn_buffer(&mptr, &mlen, feedbackSpeed);
+    vrpn_buffer(&mptr, &mlen, avgNum);
+    vrpn_buffer(&mptr, &mlen, sampleDelay);
+    vrpn_buffer(&mptr, &mlen, pullbackDelay);
+    vrpn_buffer(&mptr, &mlen, feedbackDelay);
   }
   return msgbuf;
 }
 
 long nmm_Microscope::decode_InSpectroscopyMode (const char ** buf,
-         float *setpoint, float * startDelay, float * zStart, float * zEnd,
-         float * zPullback, float * forceLimit,
-         float * distBetweenFC, long * numPoints, long * numHalfcycles,
-	 float * sampleSpeed, float * pullbackSpeed, float * startSpeed,
-	 float * feedbackSpeed, long * avgNum,
-	 float * sampleDelay, float * pullbackDelay, float * feedbackDelay) {
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
-  CHECK(nmb_Util::Unbuffer(buf, startDelay));
-  CHECK(nmb_Util::Unbuffer(buf, zStart));
-  CHECK(nmb_Util::Unbuffer(buf, zEnd));
-  CHECK(nmb_Util::Unbuffer(buf, zPullback));
-  CHECK(nmb_Util::Unbuffer(buf, forceLimit));
-  CHECK(nmb_Util::Unbuffer(buf, distBetweenFC));
-  CHECK(nmb_Util::Unbuffer(buf, numPoints));
-  CHECK(nmb_Util::Unbuffer(buf, numHalfcycles));
-  CHECK(nmb_Util::Unbuffer(buf, sampleSpeed));
-  CHECK(nmb_Util::Unbuffer(buf, pullbackSpeed));
-  CHECK(nmb_Util::Unbuffer(buf, startSpeed));
-  CHECK(nmb_Util::Unbuffer(buf, feedbackSpeed));
-  CHECK(nmb_Util::Unbuffer(buf, avgNum));
-  CHECK(nmb_Util::Unbuffer(buf, sampleDelay));
-  CHECK(nmb_Util::Unbuffer(buf, pullbackDelay));
-  CHECK(nmb_Util::Unbuffer(buf, feedbackDelay));
+         vrpn_float32 *setpoint, vrpn_float32 * startDelay, vrpn_float32 * zStart, vrpn_float32 * zEnd,
+         vrpn_float32 * zPullback, vrpn_float32 * forceLimit,
+         vrpn_float32 * distBetweenFC, vrpn_int32 * numPoints, vrpn_int32 * numHalfcycles,
+	 vrpn_float32 * sampleSpeed, vrpn_float32 * pullbackSpeed, vrpn_float32 * startSpeed,
+	 vrpn_float32 * feedbackSpeed, vrpn_int32 * avgNum,
+	 vrpn_float32 * sampleDelay, vrpn_float32 * pullbackDelay, vrpn_float32 * feedbackDelay) {
+  CHECK(vrpn_unbuffer(buf, setpoint));
+  CHECK(vrpn_unbuffer(buf, startDelay));
+  CHECK(vrpn_unbuffer(buf, zStart));
+  CHECK(vrpn_unbuffer(buf, zEnd));
+  CHECK(vrpn_unbuffer(buf, zPullback));
+  CHECK(vrpn_unbuffer(buf, forceLimit));
+  CHECK(vrpn_unbuffer(buf, distBetweenFC));
+  CHECK(vrpn_unbuffer(buf, numPoints));
+  CHECK(vrpn_unbuffer(buf, numHalfcycles));
+  CHECK(vrpn_unbuffer(buf, sampleSpeed));
+  CHECK(vrpn_unbuffer(buf, pullbackSpeed));
+  CHECK(vrpn_unbuffer(buf, startSpeed));
+  CHECK(vrpn_unbuffer(buf, feedbackSpeed));
+  CHECK(vrpn_unbuffer(buf, avgNum));
+  CHECK(vrpn_unbuffer(buf, sampleDelay));
+  CHECK(vrpn_unbuffer(buf, pullbackDelay));
+  CHECK(vrpn_unbuffer(buf, feedbackDelay));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ForceParameters (long * len,
-       long enableModify, float scrap) {
+       vrpn_int32 enableModify, vrpn_float32 scrap) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long) + sizeof(float);
+  *len = sizeof(vrpn_int32) + sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ForceParameters:  "
@@ -3439,30 +3382,30 @@ char * nmm_Microscope::encode_ForceParameters (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, enableModify);
-    nmb_Util::Buffer(&mptr, &mlen, scrap);
+    vrpn_buffer(&mptr, &mlen, enableModify);
+    vrpn_buffer(&mptr, &mlen, scrap);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ForceParameters (const char ** buf,
-         long * enableModify, float * scrap) {
-  CHECK(nmb_Util::Unbuffer(buf, enableModify));
-  CHECK(nmb_Util::Unbuffer(buf, scrap));
+         vrpn_int32 * enableModify, vrpn_float32 * scrap) {
+  CHECK(vrpn_unbuffer(buf, enableModify));
+  CHECK(vrpn_unbuffer(buf, scrap));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_BaseModParameters (long * len,
-           float min, float max) {
+           vrpn_float32 min, vrpn_float32 max) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(float);
+  *len = 2 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_BaseModParameters:  "
@@ -3471,30 +3414,30 @@ char * nmm_Microscope::encode_BaseModParameters (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, min);
-    nmb_Util::Buffer(&mptr, &mlen, max);
+    vrpn_buffer(&mptr, &mlen, min);
+    vrpn_buffer(&mptr, &mlen, max);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_BaseModParameters (const char ** buf,
-         float * min, float * max) {
-  CHECK(nmb_Util::Unbuffer(buf, min));
-  CHECK(nmb_Util::Unbuffer(buf, max));
+         vrpn_float32 * min, vrpn_float32 * max) {
+  CHECK(vrpn_unbuffer(buf, min));
+  CHECK(vrpn_unbuffer(buf, max));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ForceSettings (long * len,
-           float min, float max, float setpoint) {
+           vrpn_float32 min, vrpn_float32 max, vrpn_float32 setpoint) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 3 * sizeof(float);
+  *len = 3 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ForceSettings:  "
@@ -3503,32 +3446,32 @@ char * nmm_Microscope::encode_ForceSettings (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, min);
-    nmb_Util::Buffer(&mptr, &mlen, max);
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, min);
+    vrpn_buffer(&mptr, &mlen, max);
+    vrpn_buffer(&mptr, &mlen, setpoint);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ForceSettings (const char ** buf,
-         float * min, float * max, float * setpoint) {
-  CHECK(nmb_Util::Unbuffer(buf, min));
-  CHECK(nmb_Util::Unbuffer(buf, max));
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
+         vrpn_float32 * min, vrpn_float32 * max, vrpn_float32 * setpoint) {
+  CHECK(vrpn_unbuffer(buf, min));
+  CHECK(vrpn_unbuffer(buf, max));
+  CHECK(vrpn_unbuffer(buf, setpoint));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_InModModeT (long * len,
-           long sec, long usec) {
+           vrpn_int32 sec, vrpn_int32 usec) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long);
+  *len = 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_InModModeT:  "
@@ -3537,30 +3480,30 @@ char * nmm_Microscope::encode_InModModeT (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_InModModeT (const char ** buf,
-         long * sec, long * usec) {
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
+         vrpn_int32 * sec, vrpn_int32 * usec) {
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_InImgModeT (long * len,
-           long sec, long usec) {
+           vrpn_int32 sec, vrpn_int32 usec) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(long);
+  *len = 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_InImgModeT:  "
@@ -3569,30 +3512,30 @@ char * nmm_Microscope::encode_InImgModeT (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-    nmb_Util::Buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_InImgModeT (const char ** buf,
-         long * sec, long * usec) {
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
+         vrpn_int32 * sec, vrpn_int32 * usec) {
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ModForceSet (long * len,
-           float setpoint) {
+           vrpn_float32 setpoint) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(float);
+  *len = sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ModForceSet:  "
@@ -3601,28 +3544,28 @@ char * nmm_Microscope::encode_ModForceSet (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, setpoint);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ModForceSet (const char ** buf,
-         float * setpoint) {
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
+         vrpn_float32 * setpoint) {
+  CHECK(vrpn_unbuffer(buf, setpoint));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ImgForceSet (long * len,
-           float setpoint) {
+           vrpn_float32 setpoint) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(float);
+  *len = sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ImgForceSet:  "
@@ -3631,28 +3574,28 @@ char * nmm_Microscope::encode_ImgForceSet (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, setpoint);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ImgForceSet (const char ** buf,
-         float * setpoint) {
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
+         vrpn_float32 * setpoint) {
+  CHECK(vrpn_unbuffer(buf, setpoint));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ModSet (long * len,
-           long enableModify, float min, float max, float setpoint) {
+           vrpn_int32 enableModify, vrpn_float32 min, vrpn_float32 max, vrpn_float32 setpoint) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long) + 3 * sizeof(float);
+  *len = sizeof(vrpn_int32) + 3 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ModSet:  "
@@ -3661,34 +3604,34 @@ char * nmm_Microscope::encode_ModSet (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, enableModify);
-    nmb_Util::Buffer(&mptr, &mlen, min);
-    nmb_Util::Buffer(&mptr, &mlen, max);
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, enableModify);
+    vrpn_buffer(&mptr, &mlen, min);
+    vrpn_buffer(&mptr, &mlen, max);
+    vrpn_buffer(&mptr, &mlen, setpoint);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ModSet (const char ** buf,
-         long * enableModify, float * min, float * max, float * setpoint) {
-  CHECK(nmb_Util::Unbuffer(buf, enableModify));
-  CHECK(nmb_Util::Unbuffer(buf, min));
-  CHECK(nmb_Util::Unbuffer(buf, max));
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
+         vrpn_int32 * enableModify, vrpn_float32 * min, vrpn_float32 * max, vrpn_float32 * setpoint) {
+  CHECK(vrpn_unbuffer(buf, enableModify));
+  CHECK(vrpn_unbuffer(buf, min));
+  CHECK(vrpn_unbuffer(buf, max));
+  CHECK(vrpn_unbuffer(buf, setpoint));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ImgSet (long * len,
-           long enableModify, float min, float max, float setpoint) {
+           vrpn_int32 enableModify, vrpn_float32 min, vrpn_float32 max, vrpn_float32 setpoint) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long) + 3 * sizeof(float);
+  *len = sizeof(vrpn_int32) + 3 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ImgSet:  "
@@ -3697,34 +3640,34 @@ char * nmm_Microscope::encode_ImgSet (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, enableModify);
-    nmb_Util::Buffer(&mptr, &mlen, max);  // NOTE REVERSAL OF MAX AND MIN
-    nmb_Util::Buffer(&mptr, &mlen, min);
-    nmb_Util::Buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, enableModify);
+    vrpn_buffer(&mptr, &mlen, max);  // NOTE REVERSAL OF MAX AND MIN
+    vrpn_buffer(&mptr, &mlen, min);
+    vrpn_buffer(&mptr, &mlen, setpoint);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ImgSet (const char ** buf,
-         long * enableModify, float * min, float * max, float * setpoint) {
-  CHECK(nmb_Util::Unbuffer(buf, enableModify));
-  CHECK(nmb_Util::Unbuffer(buf, min));
-  CHECK(nmb_Util::Unbuffer(buf, max));
-  CHECK(nmb_Util::Unbuffer(buf, setpoint));
+         vrpn_int32 * enableModify, vrpn_float32 * min, vrpn_float32 * max, vrpn_float32 * setpoint) {
+  CHECK(vrpn_unbuffer(buf, enableModify));
+  CHECK(vrpn_unbuffer(buf, min));
+  CHECK(vrpn_unbuffer(buf, max));
+  CHECK(vrpn_unbuffer(buf, setpoint));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ForceSet (long * len,
-           float scrap) {
+           vrpn_float32 scrap) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(float);
+  *len = sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ForceSet:  "
@@ -3733,28 +3676,28 @@ char * nmm_Microscope::encode_ForceSet (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, scrap);
+    vrpn_buffer(&mptr, &mlen, scrap);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ForceSet (const char ** buf,
-         float * scrap) {
-  CHECK(nmb_Util::Unbuffer(buf, scrap));
+         vrpn_float32 * scrap) {
+  CHECK(vrpn_unbuffer(buf, scrap));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_ForceSetFailure (long * len,
-           float scrap) {
+           vrpn_float32 scrap) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(float);
+  *len = sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ForceSetFailure:  "
@@ -3763,15 +3706,15 @@ char * nmm_Microscope::encode_ForceSetFailure (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, scrap);
+    vrpn_buffer(&mptr, &mlen, scrap);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_ForceSetFailure (const char ** buf,
-         float * scrap) {
-  CHECK(nmb_Util::Unbuffer(buf, scrap));
+         vrpn_float32 * scrap) {
+  CHECK(vrpn_unbuffer(buf, scrap));
 
   return 0;
 }
@@ -3781,14 +3724,14 @@ long nmm_Microscope::decode_ForceSetFailure (const char ** buf,
 
 
 char * nmm_Microscope::encode_PulseParameters (long * len,
-           long enabled, float biasVoltage, float peakVoltage, float width) {
+           vrpn_int32 enabled, vrpn_float32 biasVoltage, vrpn_float32 peakVoltage, vrpn_float32 width) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(long) + 3 * sizeof(float);
+  *len = sizeof(vrpn_int32) + 3 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_PulseParameters:  "
@@ -3797,35 +3740,35 @@ char * nmm_Microscope::encode_PulseParameters (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, enabled);
-    nmb_Util::Buffer(&mptr, &mlen, biasVoltage);
-    nmb_Util::Buffer(&mptr, &mlen, peakVoltage);
-    nmb_Util::Buffer(&mptr, &mlen, width);
+    vrpn_buffer(&mptr, &mlen, enabled);
+    vrpn_buffer(&mptr, &mlen, biasVoltage);
+    vrpn_buffer(&mptr, &mlen, peakVoltage);
+    vrpn_buffer(&mptr, &mlen, width);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_PulseParameters (const char ** buf,
-        long * enabled, float * biasVoltage, float * peakVoltage,
-        float * width) {
-  CHECK(nmb_Util::Unbuffer(buf, enabled));
-  CHECK(nmb_Util::Unbuffer(buf, biasVoltage));
-  CHECK(nmb_Util::Unbuffer(buf, peakVoltage));
-  CHECK(nmb_Util::Unbuffer(buf, width));
+        vrpn_int32 * enabled, vrpn_float32 * biasVoltage, vrpn_float32 * peakVoltage,
+        vrpn_float32 * width) {
+  CHECK(vrpn_unbuffer(buf, enabled));
+  CHECK(vrpn_unbuffer(buf, biasVoltage));
+  CHECK(vrpn_unbuffer(buf, peakVoltage));
+  CHECK(vrpn_unbuffer(buf, width));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_PulseCompletedNM (long * len,
-           float x, float y) {
+           vrpn_float32 x, vrpn_float32 y) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(float);
+  *len = 2 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_PulseCompletedNM:  "
@@ -3834,30 +3777,30 @@ char * nmm_Microscope::encode_PulseCompletedNM (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_PulseCompletedNM (const char ** buf,
-        float * x, float * y) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
+        vrpn_float32 * x, vrpn_float32 * y) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_PulseFailureNM (long * len,
-           float x, float y) {
+           vrpn_float32 x, vrpn_float32 y) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(float);
+  *len = 2 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_PulseFailureNM:  "
@@ -3866,29 +3809,29 @@ char * nmm_Microscope::encode_PulseFailureNM (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_PulseFailureNM (const char ** buf,
-        float * x, float * y) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
+        vrpn_float32 * x, vrpn_float32 * y) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
 
   return 0;
 }
 
-char * nmm_Microscope::encode_SetBias (long * len, float voltage) {
+char * nmm_Microscope::encode_SetBias (long * len, vrpn_float32 voltage) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(float);
+  *len = sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetBias:  "
@@ -3897,25 +3840,25 @@ char * nmm_Microscope::encode_SetBias (long * len, float voltage) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, voltage);
+    vrpn_buffer(&mptr, &mlen, voltage);
   }
   return msgbuf;
 }
 
-long nmm_Microscope::decode_SetBias (const char ** buf, float * voltage) {
-  CHECK(nmb_Util::Unbuffer(buf, voltage));
+long nmm_Microscope::decode_SetBias (const char ** buf, vrpn_float32 * voltage) {
+  CHECK(vrpn_unbuffer(buf, voltage));
 
   return 0;
 }
 
-char * nmm_Microscope::encode_SetPulsePeak (long * len, float voltage) {
+char * nmm_Microscope::encode_SetPulsePeak (long * len, vrpn_float32 voltage) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(float);
+  *len = sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetPulsePeak:  "
@@ -3924,25 +3867,25 @@ char * nmm_Microscope::encode_SetPulsePeak (long * len, float voltage) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, voltage);
+    vrpn_buffer(&mptr, &mlen, voltage);
   }
   return msgbuf;
 }
 
-long nmm_Microscope::decode_SetPulsePeak (const char ** buf, float * voltage) {
-  CHECK(nmb_Util::Unbuffer(buf, voltage));
+long nmm_Microscope::decode_SetPulsePeak (const char ** buf, vrpn_float32 * voltage) {
+  CHECK(vrpn_unbuffer(buf, voltage));
 
   return 0;
 }
 
-char * nmm_Microscope::encode_SetPulseDuration (long * len, float duration) {
+char * nmm_Microscope::encode_SetPulseDuration (long * len, vrpn_float32 duration) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = sizeof(float);
+  *len = sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_SetPulseDuration:  "
@@ -3951,27 +3894,27 @@ char * nmm_Microscope::encode_SetPulseDuration (long * len, float duration) {
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, duration);
+    vrpn_buffer(&mptr, &mlen, duration);
   }
   return msgbuf;
 }
 
 long nmm_Microscope::decode_SetPulseDuration (const char ** buf,
-                                              float * duration) {
-  CHECK(nmb_Util::Unbuffer(buf, duration));
+                                              vrpn_float32 * duration) {
+  CHECK(vrpn_unbuffer(buf, duration));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_EnterScanlineMode (long * len,
-           long enable) {
+           vrpn_int32 enable) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 1 * sizeof(long);
+  *len = 1 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_EnterScanlineMode:  "
@@ -3980,28 +3923,28 @@ char * nmm_Microscope::encode_EnterScanlineMode (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, enable);
+    vrpn_buffer(&mptr, &mlen, enable);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_EnterScanlineMode (const char ** buf,
-         long *enable) {
-  CHECK(nmb_Util::Unbuffer(buf, enable));
+         vrpn_int32 *enable) {
+  CHECK(vrpn_unbuffer(buf, enable));
 
   return 0;
 }
 
 char * nmm_Microscope::encode_InScanlineMode (long * len,
-           long enable) {
+           vrpn_int32 enable) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 1 * sizeof(long);
+  *len = 1 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_InScanlineMode:  "
@@ -4010,30 +3953,30 @@ char * nmm_Microscope::encode_InScanlineMode (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, enable);
+    vrpn_buffer(&mptr, &mlen, enable);
   }
 
   return msgbuf;
 }
 
 long nmm_Microscope::decode_InScanlineMode (const char ** buf,
-         long *enable) {
-  CHECK(nmb_Util::Unbuffer(buf, enable));
+         vrpn_int32 *enable) {
+  CHECK(vrpn_unbuffer(buf, enable));
 
   return 0;
 }
 
-char * nmm_Microscope::encode_RequestScanLine(long *len, float x, float y, 
-				float z, float angle, float slope, float width, long res,
-				long enable_feedback, long check_forcelimit,
-				float max_force, float max_z_step, float max_xy_step) {
+char * nmm_Microscope::encode_RequestScanLine(long *len, vrpn_float32 x, vrpn_float32 y,
+                vrpn_float32 z, vrpn_float32 angle, vrpn_float32 slope, vrpn_float32 width, vrpn_int32 res,
+                vrpn_int32 enable_feedback, vrpn_int32 check_forcelimit,
+                vrpn_float32 max_force, vrpn_float32 max_z_step, vrpn_float32 max_xy_step) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
 
   if (!len) return NULL;
 
-  *len = 9*sizeof(float) + 3*sizeof(long);
+  *len = 9*sizeof(vrpn_float32) + 3*sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ScanLine:  "
@@ -4042,62 +3985,62 @@ char * nmm_Microscope::encode_RequestScanLine(long *len, float x, float y,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, z);
-    nmb_Util::Buffer(&mptr, &mlen, angle);
-	nmb_Util::Buffer(&mptr, &mlen, slope);
-    nmb_Util::Buffer(&mptr, &mlen, width);
-    nmb_Util::Buffer(&mptr, &mlen, res);
-	nmb_Util::Buffer(&mptr, &mlen, enable_feedback);
-	nmb_Util::Buffer(&mptr, &mlen, check_forcelimit);
-	nmb_Util::Buffer(&mptr, &mlen, max_force);
-	nmb_Util::Buffer(&mptr, &mlen, max_z_step);
-	nmb_Util::Buffer(&mptr, &mlen, max_xy_step);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, z);
+    vrpn_buffer(&mptr, &mlen, angle);
+    vrpn_buffer(&mptr, &mlen, slope);
+    vrpn_buffer(&mptr, &mlen, width);
+    vrpn_buffer(&mptr, &mlen, res);
+    vrpn_buffer(&mptr, &mlen, enable_feedback);
+    vrpn_buffer(&mptr, &mlen, check_forcelimit);
+    vrpn_buffer(&mptr, &mlen, max_force);
+    vrpn_buffer(&mptr, &mlen, max_z_step);
+    vrpn_buffer(&mptr, &mlen, max_xy_step);
   }
   return msgbuf;
 }
 
-long nmm_Microscope::decode_RequestScanLine(const char ** buf, float *x, 
-	float *y, float *z, float *angle, float *slope, float *width, long *res,
-	long *enable_feedback, long *check_forcelimit, float *max_force, 
-	float *max_z_step, float *max_xy_step) {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, z));
-  CHECK(nmb_Util::Unbuffer(buf, angle));
-  CHECK(nmb_Util::Unbuffer(buf, slope));
-  CHECK(nmb_Util::Unbuffer(buf, width));
-  CHECK(nmb_Util::Unbuffer(buf, res));
-  CHECK(nmb_Util::Unbuffer(buf, enable_feedback));
-  CHECK(nmb_Util::Unbuffer(buf, check_forcelimit));
-  CHECK(nmb_Util::Unbuffer(buf, max_force));
-  CHECK(nmb_Util::Unbuffer(buf, max_z_step));
-  CHECK(nmb_Util::Unbuffer(buf, max_xy_step));
+long nmm_Microscope::decode_RequestScanLine(const char ** buf, vrpn_float32 *x,
+    vrpn_float32 *y, vrpn_float32 *z, vrpn_float32 *angle, vrpn_float32 *slope, vrpn_float32 *width, vrpn_int32 *res,
+    vrpn_int32 *enable_feedback, vrpn_int32 *check_forcelimit, vrpn_float32 *max_force,
+    vrpn_float32 *max_z_step, vrpn_float32 *max_xy_step) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, z));
+  CHECK(vrpn_unbuffer(buf, angle));
+  CHECK(vrpn_unbuffer(buf, slope));
+  CHECK(vrpn_unbuffer(buf, width));
+  CHECK(vrpn_unbuffer(buf, res));
+  CHECK(vrpn_unbuffer(buf, enable_feedback));
+  CHECK(vrpn_unbuffer(buf, check_forcelimit));
+  CHECK(vrpn_unbuffer(buf, max_force));
+  CHECK(vrpn_unbuffer(buf, max_z_step));
+  CHECK(vrpn_unbuffer(buf, max_xy_step));
 
   return 0;
 }
 
 // offset gives the location of the first element of each dataset in the
-// data array; successive elements for each dataset are expected to 
+// data array; successive elements for each dataset are expected to
 // immediately follow the first (i.e. the data for a given channel is one
 // contiguous block)
-char * nmm_Microscope::encode_ScanlineData(long *len, float x, 
-	float y, float z, float angle, float slope, float width, 
-	long resolution, long feedback_enabled, long checking_forcelimit,
-	float max_force_setting, float max_z_step, float max_xy_step,
-	long sec, long usec,
-	long num_channels, long * offset, float *data) {
+char * nmm_Microscope::encode_ScanlineData(long *len, vrpn_float32 x,
+    vrpn_float32 y, vrpn_float32 z, vrpn_float32 angle, vrpn_float32 slope, vrpn_float32 width,
+    vrpn_int32 resolution, vrpn_int32 feedback_enabled, vrpn_int32 checking_forcelimit,
+    vrpn_float32 max_force_setting, vrpn_float32 max_z_step, vrpn_float32 max_xy_step,
+    vrpn_int32 sec, vrpn_int32 usec,
+    vrpn_int32 num_channels, vrpn_int32 * offset, vrpn_float32 *data) {
   char * msgbuf = NULL;
   char * mptr;
-  long mlen;
+  vrpn_int32 mlen;
   long i,j;
-  float val;
+  vrpn_float32 val;
 
   if (!len) return NULL;
 
-  *len = 9*sizeof(float) + 6*sizeof(long) + 
-	num_channels*resolution*sizeof(float);
+  *len = 9*sizeof(vrpn_float32) + 6*sizeof(vrpn_int32) +
+    num_channels*resolution*sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope::encode_ScanlineData:  "
@@ -4106,78 +4049,80 @@ char * nmm_Microscope::encode_ScanlineData(long *len, float x,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    nmb_Util::Buffer(&mptr, &mlen, x);
-    nmb_Util::Buffer(&mptr, &mlen, y);
-    nmb_Util::Buffer(&mptr, &mlen, z);
-    nmb_Util::Buffer(&mptr, &mlen, angle);
-	nmb_Util::Buffer(&mptr, &mlen, slope);
-    nmb_Util::Buffer(&mptr, &mlen, width);
-	nmb_Util::Buffer(&mptr, &mlen, resolution);
-	nmb_Util::Buffer(&mptr, &mlen, feedback_enabled);
-	nmb_Util::Buffer(&mptr, &mlen, checking_forcelimit);
-	nmb_Util::Buffer(&mptr, &mlen, max_force_setting);
-	nmb_Util::Buffer(&mptr, &mlen, max_z_step);
-	nmb_Util::Buffer(&mptr, &mlen, max_xy_step);
-    nmb_Util::Buffer(&mptr, &mlen, sec);
-	nmb_Util::Buffer(&mptr, &mlen, usec);
-    nmb_Util::Buffer(&mptr, &mlen, num_channels);
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+    vrpn_buffer(&mptr, &mlen, z);
+    vrpn_buffer(&mptr, &mlen, angle);
+    vrpn_buffer(&mptr, &mlen, slope);
+    vrpn_buffer(&mptr, &mlen, width);
+    vrpn_buffer(&mptr, &mlen, resolution);
+    vrpn_buffer(&mptr, &mlen, feedback_enabled);
+    vrpn_buffer(&mptr, &mlen, checking_forcelimit);
+    vrpn_buffer(&mptr, &mlen, max_force_setting);
+    vrpn_buffer(&mptr, &mlen, max_z_step);
+    vrpn_buffer(&mptr, &mlen, max_xy_step);
+    vrpn_buffer(&mptr, &mlen, sec);
+    vrpn_buffer(&mptr, &mlen, usec);
+    vrpn_buffer(&mptr, &mlen, num_channels);
 
     for (i = 0; i < resolution; i++)
       for (j = 0; j < num_channels; j++) {
-	val = (float)(data[offset[j]+i]);
-        nmb_Util::Buffer(&mptr, &mlen, val);
+    val = (vrpn_float32)(data[offset[j]+i]);
+        vrpn_buffer(&mptr, &mlen, val);
       }
   }
   return msgbuf;
 }
 
-long nmm_Microscope::decode_ScanlineDataHeader(const char ** buf, 
-	float *x, float *y, float *z, float *angle, float *slope, float *width,
-        long *resolution, long *feedback_enabled, long *checking_forcelimit,
-		float *max_force_setting, float * max_z_step, float *max_xy_step,
-		long *sec, long *usec, long *num_channels)
+long nmm_Microscope::decode_ScanlineDataHeader(const char ** buf,
+    vrpn_float32 *x, vrpn_float32 *y, vrpn_float32 *z, vrpn_float32 *angle, vrpn_float32 *slope, vrpn_float32 *width,
+        vrpn_int32 *resolution, vrpn_int32 *feedback_enabled, vrpn_int32 *checking_forcelimit,
+        vrpn_float32 *max_force_setting, vrpn_float32 * max_z_step, vrpn_float32 *max_xy_step,
+        vrpn_int32 *sec, vrpn_int32 *usec, vrpn_int32 *num_channels)
 {
-  CHECK(nmb_Util::Unbuffer(buf, x));
-  CHECK(nmb_Util::Unbuffer(buf, y));
-  CHECK(nmb_Util::Unbuffer(buf, z));
-  CHECK(nmb_Util::Unbuffer(buf, angle));
-  CHECK(nmb_Util::Unbuffer(buf, slope));
-  CHECK(nmb_Util::Unbuffer(buf, width));
-  CHECK(nmb_Util::Unbuffer(buf, resolution));
-  CHECK(nmb_Util::Unbuffer(buf, feedback_enabled));
-  CHECK(nmb_Util::Unbuffer(buf, checking_forcelimit));
-  CHECK(nmb_Util::Unbuffer(buf, max_force_setting));
-  CHECK(nmb_Util::Unbuffer(buf, max_z_step));
-  CHECK(nmb_Util::Unbuffer(buf, max_xy_step));
-  CHECK(nmb_Util::Unbuffer(buf, sec));
-  CHECK(nmb_Util::Unbuffer(buf, usec));
-  CHECK(nmb_Util::Unbuffer(buf, num_channels));
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+  CHECK(vrpn_unbuffer(buf, z));
+  CHECK(vrpn_unbuffer(buf, angle));
+  CHECK(vrpn_unbuffer(buf, slope));
+  CHECK(vrpn_unbuffer(buf, width));
+  CHECK(vrpn_unbuffer(buf, resolution));
+  CHECK(vrpn_unbuffer(buf, feedback_enabled));
+  CHECK(vrpn_unbuffer(buf, checking_forcelimit));
+  CHECK(vrpn_unbuffer(buf, max_force_setting));
+  CHECK(vrpn_unbuffer(buf, max_z_step));
+  CHECK(vrpn_unbuffer(buf, max_xy_step));
+  CHECK(vrpn_unbuffer(buf, sec));
+  CHECK(vrpn_unbuffer(buf, usec));
+  CHECK(vrpn_unbuffer(buf, num_channels));
 
   return 0;
 }
 
-long nmm_Microscope::decode_ScanlineDataPoint(const char ** buf, 
-				long fieldCount, float *fieldValues){
+long nmm_Microscope::decode_ScanlineDataPoint(const char ** buf,
+                                vrpn_int32 fieldCount, vrpn_float32 *fieldValues){
   for (int i = 0; i < fieldCount; i++)
-    CHECK(nmb_Util::Unbuffer(buf, &(fieldValues[i])));
+    CHECK(vrpn_unbuffer(buf, &(fieldValues[i])));
 
   return 0;
 }
 
-long nmm_Microscope::dispatchMessage (long len, const char * buf, long type) {
+long nmm_Microscope::dispatchMessage (long len, const char * buf, vrpn_int32 type) {
   struct timeval now;
   long retval;
 
   gettimeofday(&now, NULL);
   // If we aren't connected to anything, just pretend we sent the message
   // Useful if we are viewing a file, like a Topo file.
-  if(d_connection) {
+  if (d_connection) {
       retval = d_connection->pack_message(len, now, type, d_myId, (char *) buf,
                                       vrpn_CONNECTION_RELIABLE);
   } else {
       retval = 0;
   }
-  delete [] (char *) buf;
-
+  if (len > 0) {
+      delete [] (char *) buf;
+  }
   return retval;
 }
+
