@@ -1,3 +1,8 @@
+2003-02-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* URProjectiveTexture.C - added additional flag to trigger updates when
+	opacity or colormap changes - it wasn't updating in all cases
+
 2003-02-07  David Borland <borland@cs.unc.edu>
 
         * File Generator.C : fixed a couple of comments

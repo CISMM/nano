@@ -20,6 +20,7 @@ URProjectiveTexture::URProjectiveTexture():
   d_colormap_color_max(1),
   d_colormap(NULL),
   d_update_colormap(false),
+  d_update_opacity(false),
   d_greyscaleImageTooBig(false),
   d_colorImageTooBig(false)
 {
@@ -42,6 +43,7 @@ int URProjectiveTexture::setOpacity(double opacity)
 	} else {
 		d_opacity = opacity;
 	}
+	d_update_opacity = true;
 	return 0;
 }
 
@@ -189,7 +191,10 @@ int URProjectiveTexture::enable(double *textureTransform,
 		}
         else if (d_doingFastUpdates) {
             updateTextureNoMipmap();
-        }
+        } else if (d_update_colormap || d_update_opacity) {
+			createTexture(d_doingFastUpdates);
+            d_update_opacity = false;
+		}
 		if (d_greyscaleImage) {
 			d_greyscaleImage->getImageToTextureTransform(imageToTexture,
 				d_textureMatrixNumX, d_textureMatrixNumY);

@@ -90,6 +90,7 @@ class URProjectiveTexture {
   nmb_ColorMap* d_colormap;
 
   bool d_update_colormap;
+  bool d_update_opacity;
 };
 
 #endif
