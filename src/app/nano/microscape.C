@@ -1059,11 +1059,6 @@ static	char	*textureDir;
 Tclvar_string newResamplePlaneName("resample_plane_name", "");
 
 
-//----------------------------------------------------------------------
-
-//----------------------------------------------------------------------
-
-
 
 /// Controls for the french Ohmmeter. Uses ohmmeter.tcl for widgets. 
 Ohmmeter *the_french_ohmmeter_ui = NULL;
@@ -2284,14 +2279,9 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
 
 // NANOX
 // synchronization UI handlers
-
 static int handle_timed_sync_request (void *);
 static int local_time_sync (void *);
 
-struct sync_plane_struct {
-    nmui_Component * component;
-    nmui_PlaneSync * planesync;
-};
 
 /**
  * Radio button controlling whether we're publically or privately synched.
@@ -2518,7 +2508,6 @@ static int handle_timed_sync_complete (void * userdata) {
 //fprintf(stderr, "++   ... copied.\n");
   }
 
-  g_syncPending = VRPN_FALSE;
   return 0;
 } // end handle_timed_sync_complete
 
