@@ -447,9 +447,9 @@ void CollaborationManager::setPeerName
 
     if (d_handServer) {
       d_handServer->bindConnection(d_peerRemote);
-      collabVerbose(2, "Bound handServer to peer.\n", d_handServerName);
+      collabVerbose(2, "Bound connection to handServer.\n");
     } else {
-      collabVerbose(2, "There was no handServer to bind.\n", d_handServerName);
+      collabVerbose(2, "handServer didn't exist for connection to be bound.\n");
     }
 
     // Plane sync object also needs to know the name of collaborator
