@@ -62,15 +62,17 @@ nmb_FlattenedPlane( const char* inputPlaneName,
   createCalculatedPlane( newunits, sourcePlane, dataset );
   
   // fill in the new plane.
-  for(int x = 0; x <= dataset->inputGrid->numX() - 1; x++) 
+  short xmin = 0, ymin = 0, xmax = 0, ymax = 0;
+  sourcePlane->findValidDataRange( &xmin, &xmax, &ymin, &ymax );
+  for(int x = xmin; x <= xmax; x++) 
+  {
+    for( int y = ymin; y <= ymax; y++) 
     {
-      for( int y = 0; y <= dataset->inputGrid->numY() - 1; y++) 
-	{
-	  calculatedPlane->setValue( x, y,
-				     (float) ( sourcePlane->value(x, y) 
-					       + offset - dx * x - dy * y ) );
-	}
+      calculatedPlane->setValue( x, y,
+        (float) ( sourcePlane->value(x, y) 
+        + offset - dx * x - dy * y ) );
     }
+  }
 
   // register ourselves to receive plane updates
   sourcePlane->add_callback( sourcePlaneChangeCallback, this );
@@ -344,17 +346,19 @@ _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
 	  newFlatPlane->sourcePlane->units()->c_str());
   newFlatPlane->createCalculatedPlane( newunits, 
 				       newFlatPlane->sourcePlane, dataset );
-  
+
   // fill in the new plane.
-  for(int x = 0; x <= dataset->inputGrid->numX() - 1; x++) 
+  short xmin = 0, ymin = 0, xmax = 0, ymax = 0;
+  newFlatPlane->sourcePlane->findValidDataRange( &xmin, &xmax, &ymin, &ymax );
+  for(int x = xmin; x <= xmax; x++) 
+  {
+    for( int y = ymin; y <= ymax; y++) 
     {
-      for( int y = 0; y <= dataset->inputGrid->numY() - 1; y++) 
-	{
-	  float value = (float) ( newFlatPlane->sourcePlane->value(x, y) 
-				  + offset - dx * x - dy * y );
-	  newFlatPlane->calculatedPlane->setValue( x, y, value );
-	}
+      newFlatPlane->calculatedPlane->setValue( x, y,
+                                               (float) ( newFlatPlane->sourcePlane->value(x, y) 
+                                               + offset - dx * x - dy * y ) );
     }
+  }
   
   // register new flattened plane to receive plane updates
   newFlatPlane->sourcePlane->add_callback( sourcePlaneChangeCallback, 

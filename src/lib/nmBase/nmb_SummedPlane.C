@@ -83,18 +83,31 @@ nmb_SummedPlane( const char* inputPlaneName1,
   sprintf(newunits, "%s_flat", sourcePlane1->units()->c_str());
   createCalculatedPlane( newunits, sourcePlane1, dataset );
   
+  // get the valid data region
+  short xmin1 = 0, ymin1 = 0, xmax1 = 0, ymax1 = 0;
+  sourcePlane1->findValidDataRange( &xmin1, &xmax1, &ymin1, &ymax1 );
+  short xmin2 = 0, ymin2 = 0, xmax2 = 0, ymax2 = 0;
+  sourcePlane2->findValidDataRange( &xmin2, &xmax2, &ymin2, &ymax2 );
+
+  short xmin = MIN( xmin1, xmin2 ), ymin = MIN( ymin1, ymin2 );
+  short xmax = MAX( xmax1, xmax2 ), ymax = MAX( ymax1, ymax2 );
+
+
   // fill in the new plane.
   for(int x = 0; x <= dataset->inputGrid->numX() - 1; x++) 
+  {
+    for( int y = 0; y <= dataset->inputGrid->numY() - 1; y++) 
     {
-      for( int y = 0; y <= dataset->inputGrid->numY() - 1; y++) 
-	{
-	  calculatedPlane->setValue( x, y,
-				 (float) ( sourcePlane1->value(x, y) 
-					   + scale 
-					   * sourcePlane2->value(x, y) ) );
-	}
+      if( x >= xmin && x <= xmax && y >= ymin && y <= ymax )
+        calculatedPlane->setValue( x, y,
+                                   (float) ( sourcePlane1->value(x, y) 
+					     + scale 
+                                             * sourcePlane2->value(x, y) ) );
+      else
+        calculatedPlane->setValue( x, y, 0 );
     }
-
+  }
+  
   // register ourselves to receive plane updates
   sourcePlane1->add_callback( sourcePlaneChangeCallback, this );
   sourcePlane2->add_callback( sourcePlaneChangeCallback, this );

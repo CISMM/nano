@@ -105,42 +105,38 @@ fillLBLFlattenedPlane( nmb_Dataset* dataset )
   int x = 0, y = 0;
   float avgVal = 0, diff = 0;
 
-  //First, find the average height value of the first 2 scan lines and copy
+  // get the valid data region
+  short xmin = 0, ymin = 0, xmax = 0, ymax = 0;
+  sourcePlane->findValidDataRange( &xmin, &xmax, &ymin, &ymax );
+
+  //First, find the average height value of the first scan line and copy
   //the first scan line (unchanged) to the output plane
-  for( x = 0; x <= dataset->inputGrid->numX() - 1; x++ ) 
+  for( x = xmin; x <= xmax; x++ ) 
     {
-      calculatedPlane->setValue(x, 0, sourcePlane->value(x, 0));
-      this->firstLineAvg += sourcePlane->value(x, 0);
-      avgVal += sourcePlane->value(x, 1);
+      calculatedPlane->setValue(x, ymin, sourcePlane->value(x, ymin));
+      this->firstLineAvg += sourcePlane->value(x, ymin);
     }
   
-  this->firstLineAvg /= (float) dataset->inputGrid->numX();
+  this->firstLineAvg /= (float) ( xmax - xmin );
+
+  
   avgVal /= (float) dataset->inputGrid->numX();
   diff = this->firstLineAvg - avgVal;
 
-  //Compute average height value of current line, and flatten the previous
-  //scan line before writing it (prev. line) to the output plane
-  for( y = 1; y <= dataset->inputGrid->numY() - 2; y++ ) 
-    {
+  // flatten each of the other lines...
+  for( y = ymin + 1; y <= ymax; y++ ) 
+  {
       avgVal = 0;
-      for (x = 0; x <= dataset->inputGrid->numX() - 1; x++) 
-	{
-	  calculatedPlane->setValue( x, y, 
-				sourcePlane->value(x, y - 1) + diff ); 
-	  avgVal += sourcePlane->value( x, y + 1 );
-	}
-      avgVal = avgVal / (float) dataset->inputGrid->numX();
+      for (x = xmin; x <= xmax; x++)
+      {  avgVal += sourcePlane->value( x, y );  }
+      avgVal = avgVal / (float) ( xmax - xmin );
       diff = this->firstLineAvg - avgVal;
+      for( x = xmin; x <= xmax; x++ )
+      {  
+        calculatedPlane->setValue( x, y, 
+                                   sourcePlane->value(x, y) + diff );
+      }
   }
-
-  //flatten and output the last scan line
-  for( x = 0; x <= dataset->inputGrid->numX() - 1; x++ ) 
-    {
-      float newVal = sourcePlane->value( x, dataset->inputGrid->numY() - 1) 
-	+ diff;
-      calculatedPlane->setValue( x, dataset->inputGrid->numY() - 1,
-			     newVal );
-    }
 
   calculatedPlane->setMinAttainableValue( sourcePlane->minAttainableValue() );
   calculatedPlane->setMaxAttainableValue( sourcePlane->maxAttainableValue() );
@@ -176,18 +172,24 @@ _handleSourcePlaneChange( int x, int y )
   float diff = 0;
   int   i;
 
-  // only recalculated at the end of a line.
-  if( x != sourcePlane->numX() - 1 ) return;
+  // get the valid data region
+  short xmin = 0, ymin = 0, xmax = 0, ymax = 0;
+  sourcePlane->findValidDataRange( &xmin, &xmax, &ymin, &ymax );
 
-  for( i = 0; i < sourcePlane->numX(); i++ ) {
-      avgVal += sourcePlane->value(i, y);
+  // only recalculated at the end of a line.
+  if( x != xmax ) return;
+
+  for( i = xmin; i <= xmax; i++ ) 
+  {
+    avgVal += sourcePlane->value(i, y);
   }
-  avgVal /= sourcePlane->numX();
+  avgVal /= ( xmax - xmin );
 
   // update the current line
   diff = firstLineAvg - avgVal; 
-  for( i = 0; i < sourcePlane->numX(); i++ ) {
-      calculatedPlane->setValue( i, y, sourcePlane->value( i, y ) + diff );
+  for( i = xmin; i <= xmax; i++ ) 
+  {
+    calculatedPlane->setValue( i, y, sourcePlane->value( i, y ) + diff );
   }
 } // end _handleSourcePlaneChange( ... )
 

@@ -1,3 +1,10 @@
+2002-04-11  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmb_FlattenedPlane.C:  only calculates data within the valid
+	data interval now.
+	* nmb_LBLFlattenedPlane.C:  same
+	* nmb_SummedPlane.C:  same
+
 2002-04-01  Aron Helser  <helser@cs.unc.edu>
 
 	* nmb_Dataset.C (nmb_Dataset): Removed ChangeAll call,
