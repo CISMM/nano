@@ -548,7 +548,7 @@ void commonKeyboardFunc(unsigned char key, int x, int y) {
       fout2 << "Volume of all objects on plane is " << volume << " " 
 			<< units << "^3.\n" << flush;
 	  cout	<< "Volume of all objects on plane is " << volume << " " 
-			<< units << "^3.\n" << flush;
+			<< units << "^3.\n\n" << flush;
       fout2.close();
       break;
     case 't' :

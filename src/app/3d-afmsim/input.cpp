@@ -57,6 +57,7 @@ void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit,
 	double rad;
 
 	ifstream infile;
+	infile.open(filename);
 
 /*this doesn't seem to work yet but keeping it in as a bookmark of intended change
 //so can open files created in unix on the pc
@@ -74,8 +75,7 @@ void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit,
 			infile >> x;
 
 			if (!infile.eof()) {
-				infile >> y;
-				infile >> z;
+				infile >> y >> z;
 				// unit conversion - everything will be in nm from now on.
 				x *= no_of_nm_in_one_unit;
 				y *= no_of_nm_in_one_unit;
