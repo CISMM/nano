@@ -1,5 +1,7 @@
 2000-10-02  Adam Seeger  <seeger@cs.unc.edu>
 
+        * nmb_Image.C (nmb_ImageArray::boundX, boundY) : fixed these
+	to return the right thing
 	* BCPlane.C (general change) : changed indexing of _value to
 	be row-major instead of column-major - this change should be
 	completely transparent except to those who use the function

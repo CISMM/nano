@@ -939,24 +939,14 @@ template <class PixelType>
 double nmb_ImageArray<PixelType>::boundX(
                     nmb_ImageBounds::ImageBoundPoint ibp) const
 {
-    if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
-        ibp == nmb_ImageBounds::MIN_X_MAX_Y){
-          return 0.0;
-    } else {
-          return (double)num_x;
-    }
+    return d_imagePosition.getX(ibp);
 }
 
 template <class PixelType>
 double nmb_ImageArray<PixelType>::boundY(
                    nmb_ImageBounds::ImageBoundPoint ibp) const
 {
-    if (ibp == nmb_ImageBounds::MIN_X_MIN_Y ||
-        ibp == nmb_ImageBounds::MAX_X_MIN_Y) {
-          return 0.0;
-    } else {
-          return (double)num_y;
-    }
+    return d_imagePosition.getY(ibp);
 }
 
 template <class PixelType>
