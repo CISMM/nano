@@ -7,14 +7,31 @@ HW_OS=$1
 shift
 TARGET=$1
 shift
+OBJECTS=$1
+shift
 
-SRC1=src/lib
-OBJ1=obj/$HW_OS/lib
+LIB1=lib/$TARGET
+LIB2=app/nano/lib/$TARGET
 
-SRC2=src/app/nano/lib
-OBJ2=obj/$HW_OS/app/nano/lib
+SRC1=src/$LIB1
+OBJ1=obj/$HW_OS/$LIB1
+
+SRC2=src/$LIB2
+OBJ2=obj/$HW_OS/$LIB2
 
 echo 1>&2 "Looking for lib$TARGET.a ..."
+
+if test -e "$OBJECTS/$LIB1/lib$TARGET.a"; then
+   echo 1>&2 "Found lib$TARGET.a in $OBJECTS/$LIB1";
+   echo "-I$1/$SRC1 -L$OBJECTS/$LIB1"
+   exit 0;
+fi
+
+if test -e "$OBJECTS/$LIB2/lib$TARGET.a"; then
+   echo 1>&2 "Found lib$TARGET.a in $OBJECTS/$LIB2";
+   echo "-I$1/$SRC2 -L$OBJECTS/$LIB2"
+   exit 0;
+fi
 
 for path in $* ; do
    if test -e "$path/$TARGET/$HW_OS/lib$TARGET.a" ; then
@@ -23,15 +40,15 @@ for path in $* ; do
       exit 0;
    fi
 
-   if test -e "$path/$OBJ1/$TARGET/lib$TARGET.a" ; then
-      echo 1>&2 "Found lib$TARGET.a in $path/$OBJ1/$TARGET";
-      echo "-I$path/$SRC1/$TARGET -L$path/$OBJ1/$TARGET"
+   if test -e "$path/$OBJ1/lib$TARGET.a" ; then
+      echo 1>&2 "Found lib$TARGET.a in $path/$OBJ1";
+      echo "-I$path/$SRC1 -L$path/$OBJ1"
       exit 0;
    fi
 
-   if test -e "$path/$OBJ2/$TARGET/lib$TARGET.a" ; then
-      echo 1>&2 "Found lib$TARGET.a in $path/$OBJ2/$TARGET";
-      echo "-I$path/$SRC2/$TARGET -L$path/$OBJ2/$TARGET"
+   if test -e "$path/$OBJ2/lib$TARGET.a" ; then
+      echo 1>&2 "Found lib$TARGET.a in $path/$OBJ2";
+      echo "-I$path/$SRC2 -L$path/$OBJ2"
       exit 0;
    fi
 done
@@ -47,15 +64,15 @@ for path in $* ; do
       exit 0;
    fi
 
-   if test -d "$path/$SRC1/$TARGET/" ; then
+   if test -d "$path/$SRC1/" ; then
       echo 1>&2 "Found $TARGET in $path/$SRC1";
-      echo "-I$path/$SRC1/$TARGET"
+      echo "-I$path/$SRC1"
       exit 0;
    fi
 
-   if test -d "$path/$SRC2/$TARGET/" ; then
+   if test -d "$path/$SRC2/" ; then
       echo 1>&2 "Found $TARGET in $path/$SRC2";
-      echo "-I$path/$SRC2/$TARGET"
+      echo "-I$path/$SRC2"
       exit 0;
    fi
 done
