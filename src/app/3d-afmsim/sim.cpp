@@ -614,12 +614,17 @@ void displayFuncDepth( void ) {
 		float new_scale = _scale/current_scale;	//"un-apply" old scaling and apply new one
 		current_scale = _scale;					//record what the current scale is so can change 
 												//in the same way next time
-		
+		float x, y, z;
+		x = ob[1]->pos.x + (ob[numObs - 1]->pos.x - ob[1]->pos.x) / 2;
+		y = ob[1]->pos.y + (ob[numObs - 1]->pos.y - ob[1]->pos.y) / 2;
+		z = ob[1]->pos.z + (ob[numObs - 1]->pos.z - ob[1]->pos.z) / 2;
+			
 		for(int i=0; i<numObs; i++ ) {
+			// need to reflect the fact that scaling now occurs at tube centers in nano
 			ob[i]->scale(new_scale);
-			ob[i]->setPos(Vec3d(ob[i]->pos.x*new_scale,
-						  ob[i]->pos.y*new_scale,
-						  ob[i]->pos.z*new_scale));
+			ob[i]->setPos(Vec3d((ob[i]->pos.x - x)*new_scale + x,
+								(ob[i]->pos.y - y)*new_scale + y,
+								(ob[i]->pos.z - z)*new_scale + z));
 		}
 		SimMicroscopeServer.scaleRcv = false;
 

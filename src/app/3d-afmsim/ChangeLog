@@ -1,4 +1,7 @@
 2002-04-15  David Borland <borland@cs.unc.edu>
+        * sim.cpp : sends translation whenever cylinders are sent
+
+2002-04-15  David Borland <borland@cs.unc.edu>
 
         * sim.cpp : made changes so that when the current static
         file is a .tfr, the correct info is sent to the AFM simulator
