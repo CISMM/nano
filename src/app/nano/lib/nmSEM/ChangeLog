@@ -8,8 +8,6 @@
 	status message)
 	* nmm_Microscope_SEM.h: "
     * nmm_Microscope_SEM_Remote.C: "
-	* nmm_Microscope_SEM_EDAX.C: changed default pixel integration time from
-	1000 to 10000 nsec
 
 2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
 
