@@ -338,7 +338,6 @@ ifeq ($(HW_OS),sgi_irix)
 endif
 
 INCLUDE_FLAGS := $(addprefix -I, . $(EXTERNAL_INC_DIR) \
-				$(EXTERNAL_INC_DIR)/magick/formats \
 				$(SYS_INCLUDE))
 
 ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
