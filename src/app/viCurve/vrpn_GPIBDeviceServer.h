@@ -2,6 +2,7 @@
 #define _VRPN_GPIBDEVICESERVER_H
 
 #include "vrpn_GPIBDevice.h"
+#include "nmb_Device.h"
 
 class vrpn_GPIBDeviceServer : public nmb_Device_Server, public vrpn_GPIBDevice 
 {

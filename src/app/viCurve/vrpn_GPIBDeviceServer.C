@@ -92,7 +92,7 @@ int vrpn_GPIBDeviceServer::rcv_Read(int bytes)
 {
 	// allow 1 extra character for null-termination
 	char * buffer = new char[bytes+1];
-	long len;
+	vrpn_int32 len;
 	if (buffer == NULL) {
 		fprintf(stderr, "vrpn_GPIBDeviceServer::rcv_Read: out of memory\n");
 		return -1;
@@ -162,7 +162,7 @@ int vrpn_GPIBDeviceServer::rcv_ReadData(int data_len)
 	//printf("\n");
 
 	// Send result of read to the client.
-	long len;
+	vrpn_int32 len;
 	char * msgbuf = encode_ResultData(&len, data_buf, data_read_len);
 	if (msgbuf == NULL) {
 		fprintf(stderr, "vrpn_GPIBDeviceServer::rcv_ReadData: out of memory.\n");
@@ -218,7 +218,7 @@ int vrpn_GPIBDeviceServer::rcv_Shutdown()
  */
 int vrpn_GPIBDeviceServer::GpibError(char *msg) {
 
- 	long len;
+ 	vrpn_int32 len;
 	printf ("%s\n", msg);
 	// Send error to the client.
 	// XXX Should pack the complete error info and send it.
@@ -284,7 +284,7 @@ int vrpn_GPIBDeviceServer::GpibError(char *msg) {
 int vrpn_GPIBDeviceServer::handle_Device( void *_userdata, vrpn_HANDLERPARAM _p )
 {
 	vrpn_GPIBDeviceServer * me = (vrpn_GPIBDeviceServer *)_userdata;
-	long board_index,primary_address,secondary_address;
+	vrpn_int32 board_index,primary_address,secondary_address;
 	
 	me->decode_Device(&_p.buffer, &board_index,&primary_address,&secondary_address);
 	return(me->rcv_Device(board_index,primary_address,secondary_address));
@@ -313,7 +313,7 @@ int vrpn_GPIBDeviceServer::handle_Write( void *_userdata, vrpn_HANDLERPARAM _p )
 int vrpn_GPIBDeviceServer::handle_Read( void *_userdata, vrpn_HANDLERPARAM _p )
 {
 	vrpn_GPIBDeviceServer * me = (vrpn_GPIBDeviceServer *)_userdata;
-	long max_len;
+	vrpn_int32 max_len;
 	
 	me->decode_Read(&_p.buffer, &max_len);
 	return(me->rcv_Read(max_len));
@@ -323,7 +323,7 @@ int vrpn_GPIBDeviceServer::handle_Read( void *_userdata, vrpn_HANDLERPARAM _p )
 int vrpn_GPIBDeviceServer::handle_ReadData( void *_userdata, vrpn_HANDLERPARAM _p )
 {
 	vrpn_GPIBDeviceServer * me = (vrpn_GPIBDeviceServer *)_userdata;
-	long max_len;
+	vrpn_int32 max_len;
 	
 	me->decode_ReadData(&_p.buffer, &max_len);
 	return(me->rcv_ReadData(max_len));
