@@ -78,6 +78,7 @@ int stopAFM=0;
 int done_drawing_objects=0;
 double thetax=0.,thetay=0.;
 int tesselation = 30;
+char units[100];
 
 
 void write_to_unca(char *filename);
@@ -101,21 +102,29 @@ int findNearestObToMouse(int xy_or_xz);
 void findNearestTriangleSideToMouse( void );
 void select_triangle_side();
 
-
+//command line format is ./sim <units> -<type of file> <filenames in alphabetical order> 
+//<protein unit ratio to nm>
 int main(int argc, char *argv[])
 {
-
+  strcpy(units,argv[1]);
   adjustOrthoProjectionParams();
 
-  if (argc > 1) {// load from a file
-    if (0==strcmp(argv[1],"-p")) {//ntube file
-      addSpheresFromFile(argv[2],atof(argv[3]));
+  if (argc > 2) {// load from a file
+    if (0==strcmp(argv[2],"-p")) {//ntube file
+      addSpheresFromFile(argv[3],atof(argv[4]));
     }
-    else if (0==strcmp(argv[1],"-t")) {//triangles file
-      addTrianglesFromFile(argv[2],atof(argv[3]));
+    else if (0==strcmp(argv[2],"-t")) {//triangles file
+      addTrianglesFromFile(argv[3],atof(argv[4]));
     }
-    else if (0==strcmp(argv[1],"-d")) {//dna file
-      init_dna(argv[2]);
+    else if (0==strcmp(argv[2],"-d")) {//dna file
+      init_dna(argv[3]);
+    }
+    else if(0==strcmp(argv[2],"-dp")){//dna and protein file
+      addSpheresFromFile(argv[4],atof(argv[5]));//dna first then protein in argv[]
+      init_dna(argv[3]);
+    }
+    else if(0==strcmp(argv[2],"-s")){
+      initObs(1);
     }
     else {
       cout << "\nUsage : ./sim [-p filename unit for proteins\n";
@@ -125,7 +134,7 @@ int main(int argc, char *argv[])
     }
   }
   else {
-    initObs();
+    initObs(0);
   }
 
 
@@ -419,173 +428,212 @@ void remake_cone_sphere(InvConeSphereTip ics) {
 
 // Keyboard callback for main window.
 void commonKeyboardFunc(unsigned char key, int x, int y) {
-  switch (key) {
-  case 'u' : /* want to see uncertainty map : 
-	      * use flat shading
-	      */
-    uncertainty_mode = !uncertainty_mode;
-    break;
-  case 'm' : // toggle shading model
-    if (shadingModel == GL_FLAT) {
-      shadingModel = GL_SMOOTH;
-      printf("Using smooth shading model\n");
-    }
-    else
-      if (shadingModel == GL_SMOOTH) {
-	shadingModel = GL_FLAT;
-	printf("Using flat shading model\n");
+  //cout << "getting here\n" << flush;
+
+    char c;
+    float radius = 0;
+    float decimal = 0;
+    bool done;
+    double volume;
+
+    switch (key) {
+    case 'u' : /* want to see uncertainty map : 
+		* use flat shading
+		*/
+      uncertainty_mode = !uncertainty_mode;
+      break;
+    case 'm' : // toggle shading model
+      if (shadingModel == GL_FLAT) {
+	shadingModel = GL_SMOOTH;
+	printf("Using smooth shading model\n");
       }
-    break;
-  case 'v' :/* rotation in view angle
-	     */
-    view_angle += 5.;
-    glutSetWindow( viewWindowID );
-    glutPostRedisplay();
-    break;
-  case 'V' :/* rotation in view angle
-	     */
-    view_angle -= 5.;
-    glutSetWindow( viewWindowID );
-    glutPostRedisplay();
-    break;
-  case KEY_DELETE :
-    if (selectedOb != NULLOB) {
-      ob[selectedOb] = UNUSED;
-    }
-    break;
-  case 'o' :
-    if (draw_objects) {
-      draw_objects = 0;
-    }
-    else {
-      draw_objects = 1;
-    }
-    break;
-  case 'n' :
-    addNtube( NTUBE,  Vec3d( 0., 0., (DEFAULT_DIAM/2.)), 0., 0., 0., DEFAULT_LENGTH, DEFAULT_DIAM);
-    selectedOb = numObs-1;
-    break;
-  case 's' :
-    addNtube( SPHERE,  Vec3d( 0., 0., (DEFAULT_DIAM/2.)), 0., 0., 0., 0., DEFAULT_DIAM);
-    selectedOb = numObs-1;
-    break;
-  case 't' :
-    addTriangle(Vec3d(0.,0.,DEFAULT_TRIANGLE_SIDE/3.),Vec3d(DEFAULT_TRIANGLE_SIDE,0.,DEFAULT_TRIANGLE_SIDE/2.),Vec3d(DEFAULT_TRIANGLE_SIDE/2.,DEFAULT_TRIANGLE_SIDE/2.,DEFAULT_TRIANGLE_SIDE/2.));
-    selectedOb = numObs-1;
-    break;
-    // dealing with tips
-  case 'p' : // changes tip model
-    tip.change_tip_model();
-    break;
-    /* In the foll cases, if the tip params are changed (for inv cone tip case)
+      else
+	if (shadingModel == GL_SMOOTH) {
+	  shadingModel = GL_FLAT;
+	  printf("Using flat shading model\n");
+	}
+      break;
+    case 'v' :/* rotation in view angle
+	       */
+      view_angle += 5.;
+      glutSetWindow( viewWindowID );
+      glutPostRedisplay();
+      break;
+    case 'V' :/* rotation in view angle
+	       */
+      view_angle -= 5.;
+      glutSetWindow( viewWindowID );
+      glutPostRedisplay();
+      break;
+    case KEY_DELETE :
+      if (selectedOb != NULLOB) {
+	ob[selectedOb] = UNUSED;
+      }
+      break;
+    case 'o' :
+      if (draw_objects) {
+	draw_objects = 0;
+      }
+      else {
+	draw_objects = 1;
+      }
+      break;
+    case 'n' :
+      addNtube( NTUBE,  Vec3d( 0., 0., (DEFAULT_DIAM/2.)), 0., 0., 0., DEFAULT_LENGTH, DEFAULT_DIAM);
+      selectedOb = numObs-1;
+      break;
+    case 's' :
+      cout << "Enter a radius: " << flush;
+      done = false;
+      c = getchar();
+      while(int(c) != 10){//carriage return ascii value is 13
+	if(c != '.'){//handle numbers to the left first
+	  radius = radius*10 + int(c - '0');
+	  //cout << int(c) << flush;
+	}
+	else{//numbers to the right of the dec. pt.
+	  //cout << c << flush;
+	  c = getchar();
+	  while(int(c) != 10){
+      	    //cout << int(c) << flush;
+	    decimal = decimal/10 + int(c - '0')/10;
+	    c = getchar();
+	  }	  
+	  done = true;
+	}
+	if (done) break;
+	c = getchar();
+      }
+      radius = radius + decimal;
+      addNtube( SPHERE,  Vec3d( 0., 0., radius), 0., 0., 0., 0., radius*2.0);
+      selectedOb = numObs-1;
+
+      break;
+    case 'f' ://find volume
+      volume = find_volume();
+      cout << "Volume of all objects on plane is " << volume << " " << units << "^3.\n" << flush;
+      break;
+    case 't' :
+      addTriangle(Vec3d(0.,0.,DEFAULT_TRIANGLE_SIDE/3.),Vec3d(DEFAULT_TRIANGLE_SIDE,0.,DEFAULT_TRIANGLE_SIDE/2.),
+		  Vec3d(DEFAULT_TRIANGLE_SIDE/2.,DEFAULT_TRIANGLE_SIDE/2.,DEFAULT_TRIANGLE_SIDE/2.));
+      selectedOb = numObs-1;
+      break;
+      // dealing with tips
+    case 'p' : // changes tip model
+      tip.change_tip_model();
+      break;
+      /* In the foll cases, if the tip params are changed (for inv cone tip case)
        * we need to do the precomputation again for all tubes
        */
       // radius of the tip
-  case 'r' :
-    tip.inc_r();
+    case 'r' :
+      tip.inc_r();
 #if DISP_LIST
-    remake_cone_sphere(*(tip.icsTip));
+      remake_cone_sphere(*(tip.icsTip));
 #endif
-    break;
-  case 'R' :
-    tip.dec_r();
+      break;
+    case 'R' :
+      tip.dec_r();
 #if DISP_LIST
-    remake_cone_sphere(*(tip.icsTip));
+      remake_cone_sphere(*(tip.icsTip));
 #endif
-    break;
-  case 'a' ://change angle, slant of the tip
-    tip.inc_theta();
+      break;
+    case 'a' ://change angle, slant of the tip
+      tip.inc_theta();
 #if DISP_LIST
-    remake_cone_sphere(*(tip.icsTip));
+      remake_cone_sphere(*(tip.icsTip));
 #endif
-    break;
-  case 'A' ://change angle, slant of the tip
-    tip.dec_theta();
+      break;
+    case 'A' ://change angle, slant of the tip
+      tip.dec_theta();
 #if DISP_LIST
-    remake_cone_sphere(*(tip.icsTip));
+      remake_cone_sphere(*(tip.icsTip));
 #endif
-    break;
-  case '*' ://increase tesselation
-    tesselation += 5;
-
-#if DISP_LIST
-    remake_sphere();
-    remake_cylinder();
-    remake_cone_sphere(*(tip.icsTip));
-    tip.icsTip->set(tip.icsTip->r, tip.icsTip->ch, tip.icsTip->theta, tesselation);
-#endif
-    printf("Tesselation %d\n", tesselation);
-    break;
-  case '/' ://decrease tesselation
-    if (tesselation > 5) { tesselation -= 5; }
-
-#if DISP_LIST
-    remake_sphere();
-    remake_cylinder();
-    remake_cone_sphere(*(tip.icsTip));
-
-    tip.icsTip->set(tip.icsTip->r, tip.icsTip->ch, tip.icsTip->theta, tesselation);
-#endif
-
-    printf("Tesselation %d\n", tesselation);
-    break;
-  case 'i':
-    if (afm_scan == NO_AFM) {
-      afm_scan = SEMI_SOLID_AFM;
-    }
-    else if (afm_scan == SEMI_SOLID_AFM) {
-      afm_scan = SOLID_AFM;
-    }
-    else
-      afm_scan = NO_AFM;
-    break;
-  case 'w':
-    stopAFM=1;
-
-    if (uncertainty_mode) {// write out uncert.map
-      char filename[40];
-      if (tip.type == SPHERE_TIP) {
-	sprintf(filename,"uncert_sptip_r_%.1lfnm.UNCERTW",tip.spTip->r);
-      }
-      else {
-	sprintf(filename,"uncert_icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCERTW",tip.icsTip->r,tip.icsTip->ch,RAD_TO_DEG*tip.icsTip->theta);
-      }
-      cout << "Writing to file " << filename << endl;
-      write_to_uncertw(filename);
-      cout << "Finished writing to file " << filename << endl;
+      break;
+    case '*' ://increase tesselation
+      tesselation += 5;
       
-    }
-    else {
-      {
-      // write output to a file.
+#if DISP_LIST
+      remake_sphere();
+      remake_cylinder();
+      remake_cone_sphere(*(tip.icsTip));
+      tip.icsTip->set(tip.icsTip->r, tip.icsTip->ch, tip.icsTip->theta, tesselation);
+#endif
+      printf("Tesselation %d\n", tesselation);
+      break;
+    case '/' ://decrease tesselation
+      if (tesselation > 5) { tesselation -= 5; }
+      
+#if DISP_LIST
+      remake_sphere();
+      remake_cylinder();
+      remake_cone_sphere(*(tip.icsTip));
+      
+      tip.icsTip->set(tip.icsTip->r, tip.icsTip->ch, tip.icsTip->theta, tesselation);
+#endif
+      
+      printf("Tesselation %d\n", tesselation);
+      break;
+    case 'i':
+      if (afm_scan == NO_AFM) {
+	afm_scan = SEMI_SOLID_AFM;
+      }
+      else if (afm_scan == SEMI_SOLID_AFM) {
+	afm_scan = SOLID_AFM;
+      }
+      else
+	afm_scan = NO_AFM;
+      break;
+    case 'w':
+      stopAFM=1;
+      
+      if (uncertainty_mode) {// write out uncert.map
 	char filename[40];
 	if (tip.type == SPHERE_TIP) {
-	  sprintf(filename,"sptip_r_%.1lfnm.UNCA",tip.spTip->r);
+	  sprintf(filename,"uncert_sptip_r_%.1lfnm.UNCERTW",tip.spTip->r);
 	}
 	else {
-	  sprintf(filename,"icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCA",tip.icsTip->r,tip.icsTip->ch,RAD_TO_DEG*tip.icsTip->theta);
+	  sprintf(filename,"uncert_icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCERTW",tip.icsTip->r,tip.icsTip->ch,
+		  RAD_TO_DEG*tip.icsTip->theta);
 	}
 	cout << "Writing to file " << filename << endl;
-	write_to_unca(filename);
+	write_to_uncertw(filename);
 	cout << "Finished writing to file " << filename << endl;
+	
       }
-    }
+      else {
+	{
+	  // write output to a file.
+	  char filename[40];
+	  if (tip.type == SPHERE_TIP) {
+	    sprintf(filename,"sptip_r_%.1lfnm.UNCA",tip.spTip->r);
+	  }
+	  else {
+	    sprintf(filename,"icstip_r_%.1lfnm_ch_%.1lfnm_theta_%.1lfdeg.UNCA",tip.icsTip->r,tip.icsTip->ch,
+		    RAD_TO_DEG*tip.icsTip->theta);
+	  }
+	  cout << "Writing to file " << filename << endl;
+	  write_to_unca(filename);
+	  cout << "Finished writing to file " << filename << endl;
+	}
+      }
 
-    stopAFM=0;
-    break;
-  case 'q' :
-    exit(0);
-    break;
-  default :
-    if (selectedOb != NULLOB) {
-      ob[selectedOb]->keyboardFunc(key,x,y);
+      stopAFM=0;
+      break;
+    case 'q' :
+      exit(0);
+      break;
+    default :
+      if (selectedOb != NULLOB) {
+	ob[selectedOb]->keyboardFunc(key,x,y);
+      }
+      else {
+	globalkeyboardFunc(key,x,y);
+      }
+      break;
     }
-    else {
-      globalkeyboardFunc(key,x,y);
-    }
-    break;
-  }
-  glutPostRedisplay();	// in case something was changed
+    glutPostRedisplay();	// in case something was changed
+
 }
 
 // Callback routine: called for mouse button events.

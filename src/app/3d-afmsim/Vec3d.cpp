@@ -22,6 +22,7 @@
 #include "Vec3d.h"
 #include <math.h>
 #include <iostream.h>
+#include <fstream.h>
 
 // definition of Vec3d helper functions
 
@@ -54,6 +55,11 @@ bool	operator<(  Vec3d a, Vec3d b)	{
     return true;
   else                   
     return false;
+}
+
+ostream & operator<<(ostream & out, Vec3d a){
+  out << "[" << a.x << ", " << a.y << ", " << a.z << "]" << endl;
+  return out;
 }
 
 Vec3d Vec3d::normalize() {

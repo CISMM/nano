@@ -350,6 +350,7 @@ void Dna :: calc_force_at_all_pts() {
  * newpos = curpos + (F/m)*dt*dt
  *
  */
+///check on this:  think the equation might by r = F/m * (t^2)/2
 void Dna :: compute_new_pos() {
   int i;
   for (i=0;i<(numSegments+1);i++) {
@@ -510,13 +511,23 @@ void Dna :: moveGrabbedOb(Vec3d vMouseWorld) {
   //  segs[0]->print();
 
   // first by how much are we moving the above segment
-  Vec3d offset = Vec3d(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, vMouseWorld.z + vGrabOffset.z) - segs[closestSeg]->pos;
+  Vec3d offset = Vec3d(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, vMouseWorld.z + vGrabOffset.z) 
+    - segs[closestSeg]->pos;
+  cout << "offset before = " << offset << endl;
+  /*int count = 0;
+  while(offset.magnitude() > 1 && (count < 100)){//cut it down to a reasonable size
+    Vec3d tempMouseWorld = vMouseWorld/10;
+    offset = tempMouseWorld + vGrabOffset - segs[closestSeg]->pos;
+    count++;
+  }
+  */
+  cout << "offset after = " << offset << endl;
   
   //  offset.print();
 
   // As vMouseWorld changes, move the object
   // update segment
-  segs[closestSeg]->setPos(Vec3d(vMouseWorld.x + vGrabOffset.x, vMouseWorld.y + vGrabOffset.y, vMouseWorld.z + vGrabOffset.z));
+  segs[closestSeg]->setPos( segs[closestSeg]->pos + offset );
   
   // update pos
   pos[closestSeg] = pos[closestSeg] + offset;
@@ -529,7 +540,6 @@ void Dna :: moveGrabbedOb(Vec3d vMouseWorld) {
     // left segment
     Vec3d leftendpt = segs[closestSeg-1]->pos - segs[closestSeg-1]->axis * ((segs[closestSeg-1]->leng)/2.);
     Vec3d rightendpt = segs[closestSeg-1]->pos + segs[closestSeg-1]->axis * ((segs[closestSeg-1]->leng)/2.);
-    
     Vec3d newrightendpt = rightendpt + offset;
 
     segs[closestSeg-1]->set(leftendpt, newrightendpt, segs[closestSeg-1]->diam);

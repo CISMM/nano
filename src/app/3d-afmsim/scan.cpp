@@ -27,6 +27,7 @@ float colorBuffer[ 128*128 ];
 
 // array of heights: image scan data
 double zHeight        [MAX_GRID][MAX_GRID];	
+double zDistance [MAX_GRID][MAX_GRID];
 
 // scan grid resolution
 int    scanResolution = 128;	
@@ -43,6 +44,10 @@ double scanYMin =  0.;
 double scanNear =  -128.;	// near end of Z-buffer range
 
 double scanFar  =   0.;	// far  end of Z-buffer range
+
+double Volume;
+int numberUnits_onedim = 100;
+int numberPixels_onedim = 128;
 
 void get_z_buffer_values() {
 
@@ -63,15 +68,39 @@ void get_z_buffer_values() {
   glReadPixels( 0, 0, pixelGridSize, pixelGridSize, GL_DEPTH_COMPONENT, GL_FLOAT, zBufferPtr );
   for(int j=0; j<scanResolution; j++ ) {
     for(int i=0; i<scanResolution; i++ ) {
-      double zNormalized = zBuffer[ j*pixelGridSize + i ];
+      float zNormalized = zBuffer[ j*pixelGridSize + i ];
+      if(zNormalized < .8){
+	//printf("%E,",zNormalized);
+      }
       // -scanNear and -scanFar are the real depth values in the viewing 
       // volume (see definition of glOrtho)
-      double zDepth = -scanFar + (1-zNormalized)*(-scanNear + scanFar);
+      double zDepth = -scanFar + (1-(double)zNormalized)*(-scanNear + scanFar);
       // Open GL convention
       zHeight[j][i] = zDepth;
+      zDistance[j][i] = (1-zNormalized)*(-scanNear + scanFar);//I *think* it should be '+ scanFar'
     }
   }
 }
+
+//returns the volume total for all the objects in the plane, in the units of the objects entered
+double find_volume(){
+  Volume = 0;
+  double onePixelArea = pow(((double)numberUnits_onedim/(double)numberPixels_onedim),2);
+
+  //get_z_buffer_values();
+  for(int j= 0; j<scanResolution; j++){
+    for(int i=0; i<scanResolution; i++){
+      if(zDistance[j][i] > 0.0001){
+	cout << "zbuffer:  " << zBuffer[ j*DEPTHSIZE + i] << "\n" << flush;
+	cout << "zdistance:  " << zDistance[j][i] << "\n" << flush;
+      }
+      Volume += (zDistance[j][i] * onePixelArea);
+    }
+  }
+  
+  return Volume;
+}
+
 
 void get_color_buffer_values() {
 

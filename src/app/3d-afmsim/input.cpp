@@ -35,15 +35,14 @@ Vec3d vertex[MAXVERTICES];
 /* Here are our object. Note we want our objects to be above the surface
  * i.e z >= 0
  */
-void initObs( void )
+void initObs( int numtoDraw )
 {
   // We start with no objects.
   numObs = 0;
-
-  // a nano tube
-  //addNtube( NTUBE,  Vec3d( 50., 60., 50.), 0., 0., 0., 20, 10.);
-  addNtube( SPHERE,  Vec3d( 50., 60., 50.), 0., 0., 0., 0., 10.);
-  //  addTriangle(Vec3d(60,20,20), Vec3d(80,50,35), Vec3d (40,50,35));
+  
+  if(numtoDraw > 0){
+    addNtube( SPHERE,  Vec3d( 50., 60., 50.), 0., 0., 0., 0., 10.);
+  }
 }
 
 /* Give me the unit in terms of nm. So if the unit assumed in the file is 
@@ -69,7 +68,8 @@ void addSpheresFromFile (char *filename, double no_of_nm_in_one_unit) {
       y *= no_of_nm_in_one_unit;
       z *= no_of_nm_in_one_unit;
       // assume a radius of 1.5 A
-      double rad = 1.5*no_of_nm_in_one_unit;
+      double rad = 5*1.5*no_of_nm_in_one_unit;//I just made bigger
+                                               //by mult. by a number
       // need to do some profiling for later.
       minx = ((!minx) || (x < minx)) ? x : minx;
       miny = ((!miny) || (z < miny)) ? y : miny;
