@@ -149,8 +149,7 @@ int scale_display (void * data) {
 		strlen(g_heightPlaneName) + 100;
       message = new char[mess_len];
       if (message != NULL) {
-	  // don't go past the end of the buffer!
-          snprintf(message,mess_len,"Displaying %s (%s), scale x%g",
+          sprintf(message,mess_len,"Displaying %s (%s), scale x%g",
                   g_heightPlaneName,
                   plane->units()->Characters(), scale);
       } else {

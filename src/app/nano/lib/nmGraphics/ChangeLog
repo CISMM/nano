@@ -1,13 +1,21 @@
-2000-08-24
-	* chartjunk.c (scale_display): changed to dynamically allocate 
-		the buffer for the message displayed on the screen 
-		containing the file name so that really long file names
-		don't get cut off. Also, changed sprintf to snprintf so
-		we don't print past the end of the buffer just in case.
+2000-08-27  Adam Seeger  <seeger@cs.unc.edu>
 
-2000-08-17
+	* chartjunk.c (scale_display): Changed snprintf back to 
+	sprintf to fix compile error on pc (its not as safe but its still
+	much better than before)
+
+2000-08-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* chartjunk.c (scale_display): changed to dynamically allocate 
+	the buffer for the message displayed on the screen 
+	containing the file name so that really long file names
+	don't get cut off. Also, changed sprintf to snprintf so
+	we don't print past the end of the buffer just in case.
+
+2000-08-17  Adam Seeger  <seeger@cs.unc.edu>
+
 	* nmg_GraphicsImpl.C (createRealignTextures): changed to look at
-		minNonZeroValue instead of minValue
+	minNonZeroValue instead of minValue
 
 2000-08-14  Jeffrey Juliano  <juliano@cs.unc.edu>
 
