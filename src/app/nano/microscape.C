@@ -1058,18 +1058,17 @@ static vrpn_Analog_Server * rtt_server = NULL;
  * Functions defined in this file (added by KPJ to satisfy g++)...
  *********/
 
-void Usage (char * s);
 int main (int argc, char * argv []);
-void handleTermInput (int ttyFD, vrpn_bool * donePtr);
-int handleMouseEvents (nmb_TimerList *);
-void get_Plane_Centers (float *, float *, float *);
-void center (void);
-void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
- double * lock_userscale);
 
-int vec_cmp (const q_vec_type a, const q_vec_type b);
-
-void guessAdhesionNames (void);
+static void Usage (char * s);
+static void handleTermInput (int ttyFD, vrpn_bool * donePtr);
+static int handleMouseEvents (nmb_TimerList *);
+static void get_Plane_Centers (float *, float *, float *);
+static void find_center_xforms (q_vec_type * lock_userpos,
+                                q_type * lock_userrot,
+                                double * lock_userscale);
+static int vec_cmp (const q_vec_type a, const q_vec_type b);
+static void guessAdhesionNames (void);
 
 #ifdef FLOW
    extern int sdi_disconnect_from_device(int);
@@ -6611,7 +6610,7 @@ VERBOSE(1, "Entering main loop");
 /* check keyboard every INPUT_CHECK_INTERVAL passes */
 #define INPUT_CHECK_INTERVAL	    10
 
-void handleTermInput(int ttyFD, vrpn_bool* donePtr)
+static void handleTermInput(int ttyFD, vrpn_bool* donePtr)
 {
     static int numTimesCalled = 0;
 
@@ -7063,7 +7062,7 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 #define M_SHEAR 7
 #define M_PICK 8
 
-int handleMouseEvents (nmb_TimerList * timer)
+static int handleMouseEvents (nmb_TimerList * timer)
 {
   static int prev_x,prev_y; 	
   static double wanted_x = -2;
@@ -7660,7 +7659,7 @@ int handleMouseEvents (nmb_TimerList * timer)
    * Probably should be added there.
    */
 
-int vec_cmp (const q_vec_type a, const q_vec_type b) {
+static int vec_cmp (const q_vec_type a, const q_vec_type b) {
   return ((a[0] == b[0]) && (a[1] == b[1]) && (a[2] == b[2]));
 }
 
@@ -7669,8 +7668,9 @@ int vec_cmp (const q_vec_type a, const q_vec_type b) {
 // globals used:
 //  dataset:  from microscape.c
 
-void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
- double * lock_userscale)
+static void find_center_xforms (q_vec_type * lock_userpos,
+                                q_type * lock_userrot,
+                                double * lock_userscale)
 {
   // This function doesn't make sense if we aren't doing graphics.
   if (!glenable) return;
@@ -7904,7 +7904,10 @@ void center (void) {
 
 
 
-void get_Plane_Centers (float * offsetx, float * offsety, float * offsetz) {
+static void get_Plane_Centers (float * offsetx,
+                               float * offsety,
+                               float * offsetz)
+{
     BCPlane* plane;
 
     *offsetx=(dataset->inputGrid->minX()+
@@ -7925,7 +7928,8 @@ void get_Plane_Centers (float * offsetx, float * offsety, float * offsetz) {
 /** Look for planes named ".ffl" or ".FFL".  If there are any, find the last
  one;  fill in the names of the adhesion planes with the halfway and last
  such planes. */
-void guessAdhesionNames (void) {
+static void guessAdhesionNames (void)
+{
         int     max_ffl = 0;
         char    max_name[1000];
         BCPlane * p;
