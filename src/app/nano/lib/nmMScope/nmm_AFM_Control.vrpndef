@@ -34,9 +34,9 @@ VRPN_MESSAGE EnterContactMode {
   float32 setpoint
 }
 VRPN_MESSAGE EnterGuardedScanMode {
-  float32 P
-  float32 I
-  float32 D
+  float32 p
+  float32 i
+  float32 d
   float32 setpoint
   float32 fNormalX
   float32 fNormalY

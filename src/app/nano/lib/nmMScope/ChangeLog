@@ -1,4 +1,20 @@
-2001-11-09    <marshbur@TUNGSTEN-CS>
+2001-11-19  Aron Helser  <helser@cs.unc.edu>
+
+	* nmm_AFM_Control.vrpndef: change variable capitalization 
+	* nmm_SPM_Report.vrpndef (BeginFeelTo): Added params mistakenly
+	left out. 
+
+	* nmm_MicroscopeRemoteGen.Cdef (nmm_Microscope_Remote): Change
+	back to default handling for PointResult message. Fixes bug where
+	point results were dropped upon receipt by
+	QueueMonitor/RedundantReceiver code. 
+
+	* Makefile: Removed some dependencies which were unnecessary
+
+	* active_set.C (Point_channel_selector): Bugfix, set flags to
+	expect default point sets from Topo. 
+
+2001-11-09  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.C (getTimeSinceConnected): added a check
 	for a null variable
@@ -7,7 +23,7 @@
 	* directstep.c: position of where the microscope was supposed to 
 	go was being calculated wrong, fixed it
 	
-2001-10-23  David Marshburn  <marshbur@evans.cs.unc.edu>
+2001-10-23  David Marshburn  <marshbur@cs.unc.edu>
 
 	* Makefile (clean-gen): added a new rule "clean-gen" to
 	remove the automatically generated files created by 

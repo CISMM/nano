@@ -144,15 +144,20 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
 
   MSG_TYPE nmm_Monitor;
   // Must come after monitor message types are declared. 
-  d_monitor = new nmm_QueueMonitor (this, d_redReceiver);
-  //REGISTER nmm_Monitor;
+  // XXX Disabled 11/01
+//    d_monitor = new nmm_QueueMonitor (this, d_redReceiver);
   // TCH network adaptations Nov 2000
   // If we're doing queue monitoring, d_monitor catches it.
   // Underneath that, if we're doing redudnant transmission,
   // d_redReceiver catches it.
-  d_monitor->registerResultDataHandler
-                        (handle_PointResultData,
-                         this);
+
+  // XXX Disabled 11/01 - when Topo had redundant sends disable, this code was
+  // dropping point results; it only saw one in 3-7 results.
+//    d_monitor->registerResultDataHandler
+//                          (handle_PointResultData,
+//                           this);
+  // Normal handling of point results. 
+  REGISTER nmm_Monitor;
 
   d_connection->register_handler(d_DroppedConnection_type,
                                  handle_DroppedConnection2,

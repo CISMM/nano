@@ -29,27 +29,29 @@ generate: nmm_SPM_Control.h nmm_SPM_Report.h nmm_AFM_Control.h \
 
 nmm_SPM_Control.h: nmm_SPM_Control.vrpndef
 	${GEN_RPC} -h nmm_SPM_Control.vrpndef
-nmm_SPM_Control.C: nmm_SPM_Control.vrpndef nmm_SPM_Control.h
+nmm_SPM_Control.C: nmm_SPM_Control.vrpndef
 	${GEN_RPC} -c nmm_SPM_Control.vrpndef
 
 nmm_SPM_Report.h: nmm_SPM_Report.vrpndef
 	${GEN_RPC} -h nmm_SPM_Report.vrpndef
-nmm_SPM_Report.C: nmm_SPM_Report.vrpndef nmm_SPM_Report.h
+nmm_SPM_Report.C: nmm_SPM_Report.vrpndef
 	${GEN_RPC} -c nmm_SPM_Report.vrpndef
 nmm_AFM_Control.h: nmm_AFM_Control.vrpndef
 	${GEN_RPC} -h nmm_AFM_Control.vrpndef
-nmm_AFM_Control.C: nmm_AFM_Control.vrpndef nmm_AFM_Control.h
+nmm_AFM_Control.C: nmm_AFM_Control.vrpndef
 	${GEN_RPC} -c nmm_AFM_Control.vrpndef
 nmm_AFM_Report.h: nmm_AFM_Report.vrpndef
 	${GEN_RPC} -h nmm_AFM_Report.vrpndef
-nmm_AFM_Report.C: nmm_AFM_Report.vrpndef nmm_AFM_Report.h
+nmm_AFM_Report.C: nmm_AFM_Report.vrpndef
 	${GEN_RPC} -c nmm_AFM_Report.vrpndef
 
-nmm_MicroscopeRemote.h: nmm_SPM_Control.h nmm_SPM_Report.h nmm_AFM_Control.h \
-	nmm_AFM_Report.h nmm_MicroscopeRemote.hdef
+nmm_MicroscopeRemote.h: nmm_SPM_Control.vrpndef nmm_SPM_Report.vrpndef \
+	nmm_AFM_Control.vrpndef \
+	nmm_AFM_Report.vrpndef nmm_MicroscopeRemote.hdef
 	${GEN_RPC} nmm_MicroscopeRemote.hdef
-nmm_MicroscopeRemoteGen.C: nmm_SPM_Control.h nmm_SPM_Report.h nmm_AFM_Control.h \
-	nmm_AFM_Report.h nmm_MicroscopeRemoteGen.Cdef
+nmm_MicroscopeRemoteGen.C: nmm_SPM_Control.vrpndef nmm_SPM_Report.vrpndef \
+	nmm_AFM_Control.vrpndef \
+	nmm_AFM_Report.vrpndef nmm_MicroscopeRemoteGen.Cdef
 	${GEN_RPC} nmm_MicroscopeRemoteGen.Cdef
 
 ${LIBRARY_ARCHIVE}: $(OBJECT_DIR)/nmm_MicroscopeRemoteGen$(OBJECT_SUFFIX) \

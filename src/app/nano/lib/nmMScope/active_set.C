@@ -399,7 +399,9 @@ Point_channel_selector::Point_channel_selector
     myresult (point),
     d_pointList (pointList)
 {
-	change_from_tcl = 1;		// Report to the microscope what we want
+	change_from_tcl = 0;		
+	change_from_microscope = 1;   // Get current datasets from MScope
+	//change_from_tcl = 1;		// Report to the microscope what we want
 	numchannels = 0;	// No channels mapped yet
 	myresult = point;	// Where to store values
 

@@ -172,6 +172,8 @@ VRPN_MESSAGE ScanlineData {
 }
 
 VRPN_MESSAGE BeginFeelTo {
+  float32 x
+  float32 y
 }
 VRPN_MESSAGE EndFeelTo {
   float32 x
