@@ -99,6 +99,11 @@ ifeq ($(HW_OS),sgi_irix)
       SGI_ABI := n32
    endif
    OBJECT_DIR_SUFFIX := .$(SGI_ABI)
+
+   UNAME := $(shell uname -m)
+   ifeq ($(UNAME),IP32)
+      NEED_SGI_O2_LIBS := 1
+   endif
 endif
 
 ##########################
@@ -157,10 +162,10 @@ else
          CC := CC +w
       else
 	ifeq ($(HW_OS),pc_win32)
-	   CC := cl
-        else                          # default case
-           CC := g++ -Wall
-        endif
+      CC := cl
+         else                          # default case
+            CC := g++ -Wall
+         endif
       endif
    endif
 endif
@@ -307,7 +312,15 @@ ifeq ($(HW_OS),pc_win32)
 endif
 
 ifeq ($(HW_OS),sgi_irix)
-  LOAD_FLAGS += -L/usr/lib/internal
+   TEMP_LOAD_FLAG := -L/usr/lib/internal
+
+   ifdef NEED_SGI_O2_LIBS
+      ifeq ($(SGI_ABI),n32)
+         TEMP_LOAD_FLAG := -L/usr/lib32/internal
+      endif
+   endif
+
+   LOAD_FLAGS += $(TEMP_LOAD_FLAG)
 endif
 
 ifeq ($(HW_OS),pc_linux)
