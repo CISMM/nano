@@ -588,7 +588,7 @@ void nmui_HSDirectZ::update (void) {
 }
 
 // virtual
-void nmui_HSDirectZ::sendForceUpdate (vrpn_ForceDevice * device) {
+void nmui_HSDirectZ::sendForceUpdate (vrpn_ForceDevice * /*device*/) {
 
 #if 0
 
