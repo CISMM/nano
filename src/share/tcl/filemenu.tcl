@@ -111,6 +111,8 @@ proc open_spm_connection {} {
     if { [.open_device_dialog activate] } {
         # Make sure the logfile is OK - MUST be able to write log before 
         # connection opens!
+        # Get name of logfile even if user didn't press Enter.
+        set open_spm_log_name [[.open_device_dialog childsite].open_logfile get]
 
         # directory must exist, must be writable. File must not exist.
         if {![file exists [file dirname $open_spm_log_name]]} {

@@ -1,3 +1,8 @@
+2000-11-13  Adam Seeger  <seeger@cs.unc.edu>
+
+	* filemenu.tcl : changed open_spm_connection to make it take
+	the stream file name without the user having to press enter
+
 2000-10-26  Adam Seeger  <seeger@cs.unc.edu>
 
 	* filemenu.tcl : sets spm connection list to
