@@ -1107,15 +1107,21 @@ if {$newmodifyp_control == 0 } {
 # Simply sets enabling and repacks.     #
 #########################################
 proc change_made {nm el op} {
-    global modify_quick_or_full nmInfo full_width 
+    global modify_quick_or_full nmInfo full_width full_height 
 
     #Don't do anything if Full Params window isn't open
     if { $modify_quick_or_full == "quick" || [winfo ismapped $nmInfo(modify)] == 0 } {
 	return
     } else {
-        set full_width [winfo width .modify]
+
+	# this is now set at the end, so window is automatically resized
+        # set full_width [winfo width .modify]
 	set_enabling
 	set_view
+
+	# reset window size, so everything fits
+        set full_width [expr [winfo reqwidth $nmInfo(modifyfull)]]
+	wm geometry .modify =[set full_width]x[set full_height]
     }
 }
 ##############################################

@@ -1,3 +1,10 @@
+2002-6-04 Jameson Miller <millerj@cs.unc.edu>
+	*modify.tcl - modify window resizes to fit all parameters
+	in the window when changing tools.
+
+	*directStep.tcl - changed variable names around to better reflect
+	connection with C variables and collaboration.
+
 2002--6-03 David Borland <borland@cs.unc.edu>
 
         * registration.tcl : user control for grabbing the projective 

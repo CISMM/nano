@@ -5,9 +5,9 @@
 
 
 
-set new_step_x_size 1.0
-set new_step_y_size 1.0
-set new_step_z_size 1.0
+set step_x_size 1.0
+set step_y_size 1.0
+set step_z_size 1.0
 set cur_x 0.0
 set cur_y 0.0
 set cur_z 0.0
@@ -114,13 +114,13 @@ button $takestep(goto).go_to_pos -text "Go To Position" \
 	 -command {go_to_pos} -padx 8
 
 
-generic_entry $takestep(stepSize).step_x_size new_step_x_size \
+generic_entry $takestep(stepSize).step_x_size step_x_size \
 	"X Step     " real
 
-generic_entry $takestep(stepSize).step_y_size new_step_y_size \
+generic_entry $takestep(stepSize).step_y_size step_y_size \
 	" Y Step " real
 
-generic_entry $takestep(stepSize).step_z_size new_step_z_size \
+generic_entry $takestep(stepSize).step_z_size step_z_size \
 	"            Z Step" real
 
 
@@ -183,41 +183,41 @@ pack $takestep(current_pos).cur_y $takestep(current_pos).value_cur_y -side left
 #X coord functions
 proc plus_x {} {
 	global take_x_step
-	global new_step_x_size
-	set take_x_step $new_step_x_size
+	global step_x_size
+	set take_x_step $step_x_size
  }
 
 proc minus_x {} {
 global take_x_step
-global new_step_x_size
-set take_x_step -$new_step_x_size
+global step_x_size
+set take_x_step -$step_x_size
 }
 
 
 #y coord functions
 proc plus_y {} {
 	global take_y_step
-	global new_step_y_size
-	set take_y_step $new_step_y_size
+	global step_y_size
+	set take_y_step $step_y_size
  }
 
 proc minus_y {} {
 global take_y_step
-global new_step_y_size
-set take_y_step -$new_step_y_size
+global step_y_size
+set take_y_step -$step_y_size
 }
 
 #Z coord functions
 proc plus_z {} {
 	global take_z_step
-	global new_step_z_size
-	set take_z_step $new_step_z_size
+	global step_z_size
+	set take_z_step $step_z_size
  }
 
 proc minus_z {} {
 global take_z_step
-global new_step_z_size
-set take_z_step -$new_step_z_size
+global step_z_size
+set take_z_step -$step_z_size
 }
 
 proc go_to_pos {} {
