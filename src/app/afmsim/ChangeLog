@@ -1,3 +1,22 @@
+2001-07-25  Tom Hudson <hudson@cs.unc.edu>
+
+        * nmm_Microscope_Simulator.C : #include "surface.h" instead of
+        declaring lots of extern functions.
+        (d_minx, d_miny, d_maxx, d_maxy) : New variables.
+        (spm_report_latest_region) : Get rid of halfbaked implementation.
+        (vReportNewScanRange) : Same.
+        (spm_query_scan_range) : Replace random numbers with slightly
+        less random numbers.
+        (setScanRegion) : New function.
+        * surface.C (main) : Call nmm_Microscope_Remote::setScanRegion().
+        
+        * surface.C (getImageHeightAtIJLoc) : New function.
+        * nmm_Microscope_Simulator.C (spm_report_window_line_data) :
+        Call getImageHeightAtIJLoc() instead of getImageHeightAtXYLoc().
+
+        * surface.C (initializePlane) : Mess with constants for planes
+        to get surfaces that won't cause Phantom failures.
+
 2001-07-24  Tom Hudson <hudson@cs.unc.edu>
 
 	* nmm_Microscope_Simulator.C (ConnectServer) : "interface" is

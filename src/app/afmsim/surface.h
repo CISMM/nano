@@ -14,6 +14,7 @@
 int moveTipToXYLoc( float, float, float = 1.0f);
 
 int getImageHeightAtXYLoc( float , float , float* );
+int getImageHeightAtIJLoc( int , int , float* );
 
 #endif
 

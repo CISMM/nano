@@ -206,6 +206,11 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
     void spm_stop_scan();
 
 
+
+    // TCH Dissertation July 2001
+ 
+     void setScanRegion (float xmin, float ymin, float xmax, float ymax);
+
 /***********************************************************************
  * PUBLIC DATA MEMBERS
  ***********************************************************************/
@@ -528,6 +533,10 @@ class nmm_Microscope_Simulator : public nmb_SharedDevice_Server,
      vrpn_RedundantController * d_rController;
      vrpn_RedundantReceiver * d_rReceiver;
 
+     float d_xmin;
+     float d_ymin;
+     float d_xmax;
+     float d_ymax;
 
   private:
 

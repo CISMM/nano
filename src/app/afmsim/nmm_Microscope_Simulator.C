@@ -22,8 +22,7 @@ static float set_point;
 static float last_point_x, last_point_y;  // last point modified
 static int num_x, num_y; // Declared for use by parser for variable grid size JakeK
 
-extern int moveTipToXYLoc (float, float, float = 1.0);
-extern int getImageHeightAtXYLoc (float, float, float *);
+#include "surface.h"
 
 typedef struct {
   long numsets;
@@ -775,7 +774,6 @@ spm_report_latest_region()
  * which is why spm_report_region_clipped gets called at the end.
  **************************************************************************/
 
-  float range, xmin, ymin, xmax, ymax, midx, midy;
 
     if (ServerOn) {
        //ServerOutputAdd (1, "REPORT_LATEST_REGION - Reporting in progress");
@@ -783,6 +781,10 @@ spm_report_latest_region()
 	
        	// This allows us to only use even number scan regions, it can cause
 	// problems if we try to use odd JakeK
+        //
+#if 0
+  float range, xmin, ymin, xmax, ymax, midx, midy;
+
        if(num_x%2==1)
 	{
 	  num_x--;
@@ -800,11 +802,12 @@ spm_report_latest_region()
        xmax = (float)(midx + range *0.5);
        ymin = (float)(midy - range *0.5);
        ymax = (float)(midy + range *0.5);
+#endif
 
 	// XXX when the unix side starts to accept the angle as well as the
 	// region, comment out the first return and uncomment out the
 	// second return.
-	return (spm_report_region_clipped(xmin, ymin, xmax, ymax));
+	return (spm_report_region_clipped(d_xmin, d_ymin, d_xmax, d_ymax));
 	// return (spm_report_angle(xmin, ymin, xmax, ymax));
 
     }
@@ -2039,12 +2042,13 @@ spm_query_scan_range( void )
 
   	// Get the range values
   val_xmin = val_ymin = val_zmin = 0;
-  val_xmax = val_ymax = val_zmax = 10000; // 10 microns - reasonable fake value.
+  val_xmax = val_ymax = val_zmax = 100000;
+    // 100 microns - reasonable fake value.
 
   // Fill in values....
 
-  msgbuf = encode_ScanRange( &len, val_xmin, val_xmax, val_ymin, val_ymax,
-					val_zmin, val_zmax );
+  msgbuf = encode_ScanRange( &len, val_xmin, val_ymin, val_zmin, val_xmax,
+					val_ymax, val_zmax );
   if ( !msgbuf ) {
     ServerOutputAdd( 2, "nmm_Microscope_Simulator::spm_query_scan_range:  Buffer overflow" );
     return -1;
@@ -3329,8 +3333,6 @@ report_point_set( float x, float y, timeval * reqTime )
   const int numsets = 1;
   if(set_point > 1)		// Checks to see if surface is to be modified
   {
-     //float point_value[numsets];
-     //moveTipToXYLoc( (x-(num_x/2)), (y-(num_y/2))); 
      moveTipToXYLoc(x, y); 
   }
 
@@ -3689,6 +3691,14 @@ spm_stop_scan(void)
   
 }
 
+void nmm_Microscope_Simulator::setScanRegion
+           (float xmin, float ymin, float xmax, float ymax) {
+  d_xmin = xmin;
+  d_ymin = ymin;
+  d_xmax = xmax;
+  d_ymax = ymax;
+}
+
 
 int nmm_Microscope_Simulator::
 Send( long len, long msg_type, char * buf )
@@ -3735,24 +3745,13 @@ get_current_xy(float *posx, float *posy)
 int nmm_Microscope_Simulator::
 vReportNewScanRange(float /*vleft*/, float /*vright*/, float /*vtop*/, float /*vbottom*/)
 {
-         float xmin=0, ymin=0, xmax=1, ymax=1;
 
+        // THIS CODE IS NEVER CALLED
 		 ServerOutputAdd(2, "nmm_Microscope_Simulator::vReportNewScanRange() executing ...");
-
-         /* Change Unit from whatever it is to nM */
-         xmin *= ScanUnitsToNm();
-         ymin *= ScanUnitsToNm();
-         xmax *= ScanUnitsToNm();
-         ymax *= ScanUnitsToNm();
-
-         stm_region_xmin_actual = stm_region_xmin = xmin;
-         stm_region_ymin_actual = stm_region_ymin = ymin;
-         stm_region_xmax_actual = stm_region_xmax = xmax;
-         stm_region_ymax_actual = stm_region_ymax = ymax;
 
 		 ServerOutputAdd(2, "nmm_Microscope_Simulator::vReportNewScanRange() finished execution!");
 
-         return( spm_report_region_clipped(xmin, ymin, xmax, ymax));
+         return( spm_report_region_clipped(d_xmin, d_ymin, d_xmax, d_ymax));
 }
 
 // point of insertion into SPMlab code for this function is in:
@@ -3843,8 +3842,10 @@ spm_report_window_line_data(int currentline){
 
   for (i = 0; i < lineCount; i++)	{
     for (j = 0; j < fieldCount; j++) {
-       //getImageHeightAtXYLoc( (i-(num_x/2)), (currentline-(num_y/2)), &z);
-       getImageHeightAtXYLoc(i, currentline, &z);
+       // TCH Dissertation July 2001
+       // Wrong coordinate space!  This needs to be in (nm), not grid coords.
+       //getImageHeightAtXYLoc(i, currentline, &z);
+       getImageHeightAtIJLoc(i, currentline, &z);
        data[j][i] = z;
     }
   }

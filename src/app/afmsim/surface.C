@@ -132,11 +132,20 @@ int parse (int argc, char ** argv) {
 
 
 
-
 int getImageHeightAtXYLoc (float x, float y, float * z) {
   double zz;
   g_myZPlane->valueAt(&zz, x, y);
   *z = zz;
+  //if (!fmod(x, 40) && !fmod(y, 40)) {
+    //fprintf(stderr, "%f %f: %.5f (zp %d) vs %f\n", x, y, *z, g_myZPlane,
+                //g_myZPlane->value(x, y));
+  //}
+  return 1;
+}
+
+int getImageHeightAtIJLoc (int x, int y, float * z) {
+  double zz;
+  *z = g_myZPlane->value(x, y);
   return 1;
 }
 
@@ -270,7 +279,8 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
       fprintf(stderr, "Setting up sinusoidal surface.\n");
       for (x = 0; x < g_numX; x++) {
         for (y = 0; y < g_numY; y++) {
-          point = fabs(50.0f * (sin((x + y) / 40.0f)));
+          //point = fabs(50.0f * (sin((x + y) / 40.0f)));
+          point = 20.0f * (sin((x + y) / 20.0f));
           zPlane->setValue(x, y, point);
         }
       } 
@@ -336,14 +346,16 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
 
       fprintf(stderr, "Setting up circular waves.\n");
       targetradius = 20.0;
-      interval = 150.0;
+      //interval = 150.0;
+      interval = 300.0;
       in2 = interval / 2.0;
-      tr2 = in2 * in2 * 0.1;
+      //tr2 = in2 / 16.0;
+      tr2 = in2 / 8.0;
       for (x = 0; x < g_numX; x++) {
          rx = fmod(x, interval) - in2;
          for (y = 0; y < g_numY; y++) {
             ry = fmod(y, interval) - in2;
-            point = targetradius * cos((rx * rx + ry * ry) / tr2);
+            point = targetradius * cos(sqrt(rx * rx + ry * ry) / tr2);
             zPlane->setValue(x, y, point);
          }
       }
@@ -382,6 +394,7 @@ int main (int argc, char ** argv) {
 
   int readmode;
   int retval;
+  double z;
 
   retval = parse(argc, argv);
   if (retval) {
@@ -401,7 +414,25 @@ int main (int argc, char ** argv) {
     g_myZPlane = mygrid->getPlaneByName("Topography-Forward");
 
     // Huh?
+    // This second one is necessary!
     g_myZPlane = mygrid->getPlaneByName(g_imageName);
+
+#if 0
+    printf("%.5f %.5f x %.5f %.5f\n",
+                    mygrid->minX(),
+                    mygrid->minY(),
+                    mygrid->maxX(),
+                    mygrid->maxY());
+    int i, j;
+    for (i = 0; i < 200; i += 40) {
+            for (j = 0; j < 200; j += 40) {
+                    g_myZPlane->valueAt(&z, i, j);
+                    printf("%.5f / %.5lf", g_myZPlane->value(i, j), z);
+            }
+            printf("\n");
+    }
+    printf("zp %d\n", g_myZPlane);
+#endif
 
   } else {			// CODE USED IF MATH SURFACE TO BE USED
 
@@ -413,10 +444,16 @@ int main (int argc, char ** argv) {
   }
 
   retval = initJake(g_numX, g_numY, g_port, g_ipString);
+
+  // AFMSimulator isn't created until initJake()
+  AFMSimulator->setScanRegion(mygrid->minX(), mygrid->minY(),
+                              mygrid->maxX(), mygrid->maxY());
+
   while (!retval) {
     jakeMain(.1 / g_speed, g_isWaiting, g_waitTime);
   }
 }
+
 
 
 
