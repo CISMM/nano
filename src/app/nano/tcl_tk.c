@@ -399,7 +399,7 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	// This code sets up the colormap bar displayed in the colormap
 	// tcl window.
 	colormap_pixels = new unsigned char[ colormap_height * colormap_width * 3];
-	for ( int i= 0; i < colormap_height*colormap_width*3; i++)
+	for (i= 0; i < colormap_height*colormap_width*3; i++)
 	  colormap_pixels[i] = 128;
 	colormap.pixelPtr = colormap_pixels;
 	colormap.width = colormap_width;

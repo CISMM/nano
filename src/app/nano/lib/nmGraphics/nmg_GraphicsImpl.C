@@ -600,6 +600,11 @@ void nmg_Graphics_Implementation::resizeViewport(int width, int height) {
 
 }
 
+void nmg_Graphics_Implementation::getViewportSize(int *width, int *height) {
+   *width  = v_display_table[d_displayIndexList[0]].viewports[0].fbExtents[0];
+   *height = v_display_table[d_displayIndexList[0]].viewports[0].fbExtents[1];
+}
+
 void nmg_Graphics_Implementation::getDisplayPosition (q_vec_type &ll,
         q_vec_type &ul, q_vec_type &ur)
 {

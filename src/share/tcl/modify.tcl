@@ -32,8 +32,6 @@ pack $nmInfo(modify).quick_or_full -side top -anchor nw
 
 pack $nmInfo(modifyquick) -side top -expand yes -fill both
 
-set nmInfo(modifydisplay) [frame $nmInfo(modify).bottom]
-pack $nmInfo(modifydisplay) -side bottom -fill x
 #------------------
 # Quick modify controls. Changes to these controls take effect 
 # immediately, but can't change modes. 
@@ -151,28 +149,12 @@ pack $nmInfo(modifystate).mod_mode $nmInfo(modifystate).mod_style \
 	$nmInfo(modifystate).mod_tool \
 	-side left -anchor nw
 
-label $nmInfo(modifydisplay).mod_mode -text "Modify Display"
-pack $nmInfo(modifydisplay).mod_mode -side top -anchor nw -pady 4
-
-set number_of_markers_shown 500
-set marker_height 100
-generic_entry $nmInfo(modifydisplay).num_mod_markers number_of_markers_shown \
-	"Num. Markers" real
-generic_entry $nmInfo(modifydisplay).mod_marker_height marker_height \
-	"Marker Height (nm)" real
-
-iwidgets::Labeledwidget::alignlabels \
-	$nmInfo(modifydisplay).num_mod_markers \
-	$nmInfo(modifydisplay).mod_marker_height
-	
-
-button $nmInfo(modifydisplay).modmarkclr -text "Clear Markers" \
-	-command "set term_input C"
-
-pack $nmInfo(modifydisplay).num_mod_markers \
-	$nmInfo(modifydisplay).mod_marker_height \
-	$nmInfo(modifydisplay).modmarkclr \
-	-side top -anchor nw
+#DEBUG
+#proc printvar {fooa element op} {
+#    global modifyp_amplitude
+#    puts "XXXX new mod amplitude $modifyp_amplitude"
+#}
+#trace variable modifyp_amplitude w printvar
 
 #------------------
 # Full modify controls, allow switch between any mode using 
@@ -204,15 +186,14 @@ set modifyp_i_gain 0.5
 set modifyp_d_gain 0.01
 set modifyp_rate 20.0
 set modifyp_amplitude 0.1
-
-#DEBUG
-#proc printvar {fooa element op} {
-#    global modifyp_amplitude
-#    puts "XXXX new mod amplitude $modifyp_amplitude"
-#}
-#trace variable modifyp_amplitude w printvar
-
-
+set modifyp_frequency 100
+set modifyp_input_gain 1.0
+# boolean, value of 1 is amplitude, 0 is phase
+set modifyp_ampl_or_phase 1
+set modifyp_drive_attenuation 1
+# this is the actual phase angle to use for feedback. 
+set modifyp_phase 0.0
+set modifyp_rate 1.0
 
 #set modifyp_tri_size 1
 #set modifyp_tri_speed 5000
@@ -250,64 +231,24 @@ set modifyp_min_z_setpoint -50
 set modifyp_max_z_setpoint 50
 set modifyp_max_lat_setpoint 50
 
-set modifyplist "{mode control style tool 
-  setpoint p_gain i_gain d_gain rate amplitude 
-  sweep_width 
-  bot_delay top_delay z_pull punchdist speed watchdog amplitude
-  step_size
-  start_delay z_start z_end z_pullback force_limit fcdist 
-  num_layers num_hcycles
-  sample_speed pullback_speed start_speed feedback_speed
-  avg_num sample_delay pullback_delay feedback_delay
-  max_z_step max_xy_step min_z_setpoint max_z_setpoint max_lat_setpoint}"
+set modifyplist [list mode control style tool \
+  setpoint p_gain i_gain d_gain rate amplitude \
+  frequency input_gain ampl_or_phase drive_attenuation phase rate \
+  sweep_width \
+  bot_delay top_delay z_pull punchdist speed watchdog amplitude \
+  step_size \
+  start_delay z_start z_end z_pullback force_limit fcdist \
+  num_layers num_hcycles \
+  sample_speed pullback_speed start_speed feedback_speed \
+  avg_num sample_delay pullback_delay feedback_delay \
+  max_z_step max_xy_step min_z_setpoint max_z_setpoint max_lat_setpoint]
 
-set newmodifyp_mode $modifyp_mode
-set newmodifyp_control $modifyp_control
-set newmodifyp_style $modifyp_style
-set newmodifyp_tool $modifyp_tool
-
-set newmodifyp_setpoint $modifyp_setpoint
-set newmodifyp_p_gain $modifyp_p_gain
-set newmodifyp_i_gain $modifyp_i_gain
-set newmodifyp_d_gain $modifyp_d_gain 
-set newmodifyp_amplitude $modifyp_amplitude
-set newmodifyp_rate $modifyp_rate
-
-#set newmodifyp_tri_size $modifyp_tri_size
-#set newmodifyp_tri_speed $modifyp_tri_speed 
-set newmodifyp_sweep_width $modifyp_sweep_width
-
-set newmodifyp_bot_delay $modifyp_bot_delay
-set newmodifyp_top_delay $modifyp_top_delay 
-set newmodifyp_z_pull $modifyp_z_pull
-set newmodifyp_punchdist $modifyp_punchdist
-set newmodifyp_speed $modifyp_speed 
-set newmodifyp_watchdog $modifyp_watchdog
-
-set newmodifyp_start_delay $modifyp_start_delay
-set newmodifyp_z_start $modifyp_z_start
-set newmodifyp_z_end $modifyp_z_end
-set newmodifyp_z_pullback $modifyp_z_pullback
-set newmodifyp_force_limit $modifyp_force_limit
-set newmodifyp_fcdist $modifyp_fcdist
-set newmodifyp_num_layers $modifyp_num_layers
-set newmodifyp_num_hcycles $modifyp_num_hcycles
-set newmodifyp_sample_speed $modifyp_sample_speed
-set newmodifyp_pullback_speed $modifyp_pullback_speed
-set newmodifyp_start_speed $modifyp_start_speed
-set newmodifyp_feedback_speed $modifyp_feedback_speed
-set newmodifyp_avg_num $modifyp_avg_num
-set newmodifyp_sample_delay $modifyp_sample_delay
-set newmodifyp_pullback_delay $modifyp_pullback_delay
-set newmodifyp_feedback_delay $modifyp_feedback_delay
-
-set newmodifyp_step_size $modifyp_step_size
-
-set newmodifyp_max_z_step $modifyp_max_z_step
-set newmodifyp_max_xy_step $modifyp_max_xy_step
-set newmodifyp_min_z_setpoint $modifyp_min_z_setpoint
-set newmodifyp_max_z_setpoint $modifyp_max_z_setpoint
-set newmodifyp_max_lat_setpoint $modifyp_max_lat_setpoint
+# These variables only exist in tcl - the user changes
+# them, and then the "accept" button copies them into the vars
+# above, so the C code sees them.
+foreach modifyvar $modifyplist {
+    set newmodifyp_$modifyvar [set modifyp_$modifyvar]
+}
 
 trace variable newmodifyp_mode w flip_mod_mode
 
@@ -319,109 +260,25 @@ if { !$thirdtech_ui } {
 trace variable newmodifyp_control w flip_mod_control
 }
 
-trace variable modifyp_mode w "updateFromC modifyp_mode "
-if { !$thirdtech_ui } {
-trace variable modifyp_control w "updateFromC modifyp_control "
+foreach modifyvar $modifyplist {
+    trace variable modifyp_$modifyvar w "updateFromC modifyp_$modifyvar "
 }
-trace variable modifyp_style w "updateFromC modifyp_style "
-trace variable modifyp_tool w "updateFromC modifyp_tool "
-
-trace variable modifyp_setpoint w "updateFromC modifyp_setpoint "
-trace variable modifyp_p_gain w "updateFromC modifyp_p_gain "
-trace variable modifyp_i_gain w "updateFromC modifyp_i_gain "
-trace variable modifyp_d_gain w "updateFromC modifyp_d_gain "
-trace variable modifyp_amplitude w "updateFromC modifyp_amplitude "
-trace variable modifyp_rate w "updateFromC modifyp_rate "
-
-#trace variable modifyp_tri_size w "updateFromC modifyp_tri_size "
-#trace variable modifyp_tri_speed w "updateFromC modifyp_tri_speed "
-trace variable modifyp_sweep_width w "updateFromC modifyp_sweep_width "
-
-trace variable modifyp_bot_delay w "updateFromC modifyp_bot_delay "
-trace variable modifyp_top_delay w "updateFromC modifyp_top_delay "
-trace variable modifyp_z_pull w "updateFromC modifyp_z_pull "
-trace variable modifyp_punchdist w "updateFromC modifyp_punchdist "
-trace variable modifyp_speed w "updateFromC modifyp_speed "
-trace variable modifyp_watchdog w "updateFromC modifyp_watchdog "
-
-trace variable modifyp_start_delay w "updateFromC modifyp_start_delay "
-trace variable modifyp_z_start w "updateFromC modifyp_z_start "
-trace variable modifyp_z_end w "updateFromC modifyp_z_end "
-trace variable modifyp_z_pullback w "updateFromC modifyp_z_pullback "
-trace variable modifyp_force_limit w "updateFromC modifyp_force_limit "
-trace variable modifyp_fcdist w "updateFromC modifyp_fcdist "
-trace variable modifyp_num_layers w "updateFromC modifyp_num_layers "
-trace variable modifyp_num_hcycles w "updateFromC modifyp_num_hcycles "
-trace variable modifyp_sample_speed w "updateFromC modifyp_sample_speed "
-trace variable modifyp_pullback_speed w "updateFromC modifyp_pullback_speed "
-trace variable modifyp_start_speed w "updateFromC modifyp_start_speed "
-trace variable modifyp_feedback_speed w "updateFromC modifyp_feedback_speed "
-trace variable modifyp_avg_num w "updateFromC modifyp_avg_num "
-trace variable modifyp_sample_delay w "updateFromC modifyp_sample_delay "
-trace variable modifyp_pullback_delay w "updateFromC modifyp_pullback_delay "
-trace variable modifyp_feedback_delay w "updateFromC modifyp_feedback_delay "
-
-trace variable modifyp_step_size w "updateFromC modifyp_step_size "
-
-if { !$thirdtech_ui } {
-trace variable modifyp_max_z_step w "updateFromC modifyp_max_z_step "
-trace variable modifyp_max_xy_step w "updateFromC modifyp_max_xy_step "
-trace variable modifyp_min_z_setpoint w "updateFromC modifyp_min_z_setpoint "
-trace variable modifyp_max_z_setpoint w "updateFromC modifyp_max_z_setpoint "
-trace variable modifyp_max_lat_setpoint w "updateFromC modifyp_max_lat_setpoint "
+if { $thirdtech_ui } {
+    trace vdelete modifyp_control w "updateFromC modifyp_control "
+    trace vdelete modifyp_max_z_step w "updateFromC modifyp_max_z_step "
+    trace vdelete modifyp_max_xy_step w "updateFromC modifyp_max_xy_step "
+    trace vdelete modifyp_min_z_setpoint w "updateFromC modifyp_min_z_setpoint "
+    trace vdelete modifyp_max_z_setpoint w "updateFromC modifyp_max_z_setpoint "
+    trace vdelete modifyp_max_lat_setpoint w "updateFromC modifyp_max_lat_setpoint "
 }
 
-# these traces change the color of Accept and Cancel when you haven't
-# pressed Accept yet.
-trace variable newmodifyp_mode w modBackgChReal
-trace variable newmodifyp_control w modBackgChReal
-trace variable newmodifyp_style w modBackgChReal
-trace variable newmodifyp_tool w modBackgChReal
+# forward declaration of the procedure, so radiobox doesn't get upset.
+proc modBackgChReal {fooa element op} {}
 
-trace variable newmodifyp_setpoint w modBackgChReal
-trace variable newmodifyp_p_gain w modBackgChReal
-trace variable newmodifyp_i_gain w modBackgChReal
-trace variable newmodifyp_d_gain w modBackgChReal
-trace variable newmodifyp_amplitude w modBackgChReal
-trace variable newmodifyp_rate w modBackgChReal
-
-#trace variable newmodifyp_tri_size w modBackgChReal
-#trace variable newmodifyp_tri_speed w modBackgChReal
-trace variable newmodifyp_sweep_width w modBackgChReal
-
-trace variable newmodifyp_bot_delay w modBackgChReal
-trace variable newmodifyp_top_delay w modBackgChReal
-trace variable newmodifyp_z_pull w modBackgChReal
-trace variable newmodifyp_punchdist w modBackgChReal
-trace variable newmodifyp_speed w modBackgChReal
-trace variable newmodifyp_watchdog w modBackgChReal
-
-trace variable newmodifyp_start_delay w modBackgChReal
-trace variable newmodifyp_z_start w modBackgChReal
-trace variable newmodifyp_z_end w modBackgChReal
-trace variable newmodifyp_z_pullback w modBackgChReal
-trace variable newmodifyp_force_limit w modBackgChReal
-trace variable newmodifyp_fcdist w modBackgChReal
-trace variable newmodifyp_num_layers w modBackgChReal
-trace variable newmodifyp_num_hcycles w modBackgChReal
-trace variable newmodifyp_sample_speed w modBackgChReal
-trace variable newmodifyp_pullback_speed w modBackgChReal
-trace variable newmodifyp_start_speed w modBackgChReal
-trace variable newmodifyp_feedback_speed w modBackgChReal
-trace variable newmodifyp_avg_num w modBackgChReal
-trace variable newmodifyp_sample_delay w modBackgChReal
-trace variable newmodifyp_pullback_delay w modBackgChReal 
-trace variable newmodifyp_feedback_delay w modBackgChReal
-
-
-trace variable newmodifyp_step_size w modBackgChReal
-
-if { !$thirdtech_ui } {
-trace variable newmodifyp_max_z_step w modBackgChReal
-trace variable newmodifyp_max_xy_step w modBackgChReal
-trace variable newmodifyp_min_z_setpoint w modBackgChReal
-trace variable newmodifyp_max_z_setpoint w modBackgChReal
-trace variable newmodifyp_max_lat_setpoint w modBackgChReal
+foreach modifyvar $modifyplist {
+    # these traces change the color of Accept and Cancel when you haven't
+    # pressed Accept yet.
+    trace variable newmodifyp_$modifyvar w modBackgChReal
 }
 
 #
@@ -437,9 +294,9 @@ pack $nmInfo(modifyfull).mode.label -side top -anchor nw
 radiobutton $nmInfo(modifyfull).mode.oscillating -text "Oscillating" -variable newmodifyp_mode -value 0 -anchor nw
 radiobutton $nmInfo(modifyfull).mode.contact -text "Contact" -variable newmodifyp_mode -value 1 -anchor nw
 button $nmInfo(modifyfull).mode.accept -text "Accept"  \
-	-command "acceptModifyVars $modifyplist"
+	-command "acceptModifyVars $modifyplist" -highlightthickness 0
 button $nmInfo(modifyfull).mode.cancel -text "Revert"  \
-	-command "cancelModifyVars $modifyplist"
+	-command "cancelModifyVars $modifyplist" -highlightthickness 0
 
 checkbutton $nmInfo(modifyfull).mode.relaxcomp -text "Relax Comp on" -variable doRelaxComp \
 	
@@ -449,6 +306,9 @@ pack $nmInfo(modifyfull).mode.relaxcomp -side top -fill x -pady 20
 
 pack $nmInfo(modifyfull).mode.cancel $nmInfo(modifyfull).mode.accept -side bottom -fill x
 
+# Special binding for accept button to make sure that all
+# entry widgets are finalized - happens when they loose focus.
+bind $nmInfo(modifyfull).mode.accept <Enter> "focus $nmInfo(modifyfull).mode.accept"
 
 #setup Modify modeparam box
 label $nmInfo(modifyfull).modeparam.label -text "Mode parameters" 
@@ -461,22 +321,58 @@ generic_entry $nmInfo(modifyfull).modeparam.i-gain newmodifyp_i_gain "I-Gain (0,
 generic_entry $nmInfo(modifyfull).modeparam.d-gain newmodifyp_d_gain "D-Gain (0,5)" real 
 generic_entry $nmInfo(modifyfull).modeparam.rate newmodifyp_rate "Rate (0.1,50.0 uM/sec)" real 
 generic_entry $nmInfo(modifyfull).modeparam.amplitude newmodifyp_amplitude \
-	"Amplitude (0,1)" real 
+	"Amplitude (0,2)" real 
+generic_entry $nmInfo(modifyfull).modeparam.frequency newmodifyp_frequency \
+	"Frequency (10,200 kHz)" real 
+# input_gain_list should already be defined in image.tcl
+generic_optionmenu $nmInfo(modifyfull).modeparam.input_gain \
+        newmodifyp_input_gain \
+	"Input Gain" input_gain_list
+generic_radiobox $nmInfo(modifyfull).modeparam.ampl_or_phase newmodifyp_ampl_or_phase \
+	"" { "Phase" "Amplitude" }
+# drive_attenuation_list should already be defined in image.tcl
+generic_optionmenu $nmInfo(modifyfull).modeparam.drive_attenuation \
+        newmodifyp_drive_attenuation \
+	"Drive Attenuation" drive_attenuation_list
+generic_entry $nmInfo(modifyfull).modeparam.phase newmodifyp_phase \
+	"Phase (0 360)" real 
 
-iwidgets::Labeledwidget::alignlabels \
-    $nmInfo(modifyfull).modeparam.setpoint $nmInfo(modifyfull).modeparam.p-gain \
-    $nmInfo(modifyfull).modeparam.i-gain $nmInfo(modifyfull).modeparam.d-gain \
-    $nmInfo(modifyfull).modeparam.rate \
-    $nmInfo(modifyfull).modeparam.amplitude 
-
-pack    $nmInfo(modifyfull).modeparam.setpoint $nmInfo(modifyfull).modeparam.p-gain \
-	$nmInfo(modifyfull).modeparam.i-gain $nmInfo(modifyfull).modeparam.d-gain \
+pack    $nmInfo(modifyfull).modeparam.setpoint \
+        $nmInfo(modifyfull).modeparam.p-gain \
+	$nmInfo(modifyfull).modeparam.i-gain \
+        $nmInfo(modifyfull).modeparam.d-gain \
         $nmInfo(modifyfull).modeparam.rate \
 	-side top -fill x -pady $fspady
-if {$newmodifyp_mode == 0} {
-  pack $nmInfo(modifyfull).modeparam.amplitude -side top -fill x 
+
+iwidgets::Labeledwidget::alignlabels \
+    $nmInfo(modifyfull).modeparam.setpoint \
+    $nmInfo(modifyfull).modeparam.p-gain \
+    $nmInfo(modifyfull).modeparam.i-gain \
+    $nmInfo(modifyfull).modeparam.d-gain \
+    $nmInfo(modifyfull).modeparam.rate \
+    $nmInfo(modifyfull).modeparam.amplitude \
+    $nmInfo(modifyfull).modeparam.frequency \
+    $nmInfo(modifyfull).modeparam.input_gain \
+    $nmInfo(modifyfull).modeparam.drive_attenuation \
+    $nmInfo(modifyfull).modeparam.phase
+
+if {$newmodifyp_mode==0} {
+    pack $nmInfo(modifyfull).modeparam.amplitude \
+    $nmInfo(modifyfull).modeparam.frequency \
+    $nmInfo(modifyfull).modeparam.input_gain \
+    $nmInfo(modifyfull).modeparam.drive_attenuation \
+    $nmInfo(modifyfull).modeparam.ampl_or_phase \
+    $nmInfo(modifyfull).modeparam.phase \
+    -side top -fill x -pady $fspady
 }
-set mod_oscillating_list "$nmInfo(modifyfull).modeparam.amplitude"
+
+set mod_oscillating_list [list $nmInfo(modifyfull).modeparam.amplitude \
+        $nmInfo(modifyfull).modeparam.frequency \
+    $nmInfo(modifyfull).modeparam.input_gain \
+    $nmInfo(modifyfull).modeparam.drive_attenuation \
+    $nmInfo(modifyfull).modeparam.ampl_or_phase \
+    $nmInfo(modifyfull).modeparam.phase ]
+
 
 #setup Modify style box
 label $nmInfo(modifyfull).style.label -text "Style" 
@@ -749,9 +645,9 @@ proc modBackgChReal {fooa element op} {
 proc acceptModifyVars {varlist} {
     global accepted_modify_params
     global nmInfo
-    global save_bg
+    global save_bg $varlist
 
-    foreach val $varlist {
+    foreach val [set $varlist] {
 	global modifyp_$val
 	global newmodifyp_$val
 	global accepted_modify_params
@@ -765,17 +661,17 @@ proc acceptModifyVars {varlist} {
     $nmInfo(modifyfull).mode.accept configure -background $save_bg
     $nmInfo(modifyfull).mode.cancel configure -background $save_bg
 
-    #close the window when the Accept Button is pressed
-    #wm withdraw $modify
+    #switch to quick params when the Accept Button is pressed
+    $nmInfo(modify).quick_or_full invoke
 }
 
 
 proc cancelModifyVars {varlist} {
 
     global nmInfo
-    global save_bg
+    global save_bg $varlist
 
-    foreach val $varlist {
+    foreach val [set $varlist] {
 	global modifyp_$val
 	global newmodifyp_$val
 	if {[set newmodifyp_$val] != [set modifyp_$val] } {
@@ -796,11 +692,36 @@ proc cancelModifyVars {varlist} {
 # Controls you need access to _during_ a modification.
 # The most important - slow line controls
 #
-set modify_live [create_closing_toplevel modify_live "Live modify controls"]
-iwidgets::Labeledframe $modify_live.slow_line -labeltext "Slow Line" \
+set nmInfo(modify_live) [create_closing_toplevel modify_live "Live modify controls"]
+set nmInfo(modifydisplay) [frame $nmInfo(modify_live).top]
+pack $nmInfo(modifydisplay) -side top -fill x
+label $nmInfo(modifydisplay).mod_mode -text "Modify Display"
+pack $nmInfo(modifydisplay).mod_mode -side top -anchor nw -pady 4
+
+set number_of_markers_shown 500
+set marker_height 100
+generic_entry $nmInfo(modifydisplay).num_mod_markers number_of_markers_shown \
+	"Num. Markers" real
+generic_entry $nmInfo(modifydisplay).mod_marker_height marker_height \
+	"Marker Hgt. (nm)" real
+
+iwidgets::Labeledwidget::alignlabels \
+	$nmInfo(modifydisplay).num_mod_markers \
+	$nmInfo(modifydisplay).mod_marker_height
+	
+
+button $nmInfo(modifydisplay).modmarkclr -text "Clear Markers" \
+	-command "set term_input C"
+
+pack $nmInfo(modifydisplay).num_mod_markers \
+	$nmInfo(modifydisplay).mod_marker_height \
+	$nmInfo(modifydisplay).modmarkclr \
+	-side top -anchor nw
+
+iwidgets::Labeledframe $nmInfo(modify_live).slow_line -labeltext "Slow Line" \
 	-labelpos nw
-set nmInfo(ml_slow_line) [$modify_live.slow_line childsite]
-pack $modify_live.slow_line -fill both -expand yes
+set nmInfo(ml_slow_line) [$nmInfo(modify_live).slow_line childsite]
+pack $nmInfo(modify_live).slow_line -fill both -expand yes
 
 set slow_line_playing 0
 button $nmInfo(ml_slow_line).slow_line_play -text "Play" -command {
@@ -844,10 +765,10 @@ pack $nmInfo(ml_slow_line).slow_line_play \
 	$nmInfo(ml_slow_line).step-size \
 	-side top -pady 2 -anchor nw
 
-iwidgets::Labeledframe $modify_live.directz -labeltext "Direct Z" \
+iwidgets::Labeledframe $nmInfo(modify_live).directz -labeltext "Direct Z" \
 	-labelpos nw
-set nmInfo(ml_directz) [$modify_live.directz childsite]
-pack $modify_live.directz -fill both -expand yes
+set nmInfo(ml_directz) [$nmInfo(modify_live).directz childsite]
+pack $nmInfo(modify_live).directz -fill both -expand yes
 
 generic_entry $nmInfo(ml_directz).directz_force_scale directz_force_scale\
 	"Force scale (0,3)" real

@@ -143,8 +143,8 @@ actual data set being displayed. These are to be used when we take the
 system to Orange High School to enable us to determine how much the
 actual feeling helps the students understand the surface.
 */
-Tclvar_int_with_button	config_haptic_enable("Enable Haptic", ".sliders", 1);
-Tclvar_int_with_button	config_haptic_plane("Haptic from flat", ".sliders", 0);
+Tclvar_int	config_haptic_enable("enable_haptic", 1);
+Tclvar_int	config_haptic_plane("haptic_from_flat", 0);
 
 //static nmui_SurfaceFeatures haptic_features;
 static nmui_HapticsManager haptic_manager;

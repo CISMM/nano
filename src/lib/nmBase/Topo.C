@@ -1700,7 +1700,7 @@ int TopoFile::initForConversionToTopo(double z_scale_nm, double z_offset_nm) {
 	fprintf(stderr, "Error: TopoFile::initForConversionToTopo "
 		"- cannot overwrite loaded topo file\n");
     }
-    printf("TopoFile::initForConversionToTopo scale %f offset %f\n", z_scale_nm, z_offset_nm);
+    //printf("TopoFile::initForConversionToTopo scale %f offset %f\n", z_scale_nm, z_offset_nm);
     iRelease = 400;
     iOffset = 2112;
     header = new char[iOffset];

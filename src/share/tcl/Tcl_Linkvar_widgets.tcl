@@ -470,8 +470,9 @@ set optionmenu_setting_list 0
 set optionmenu_selecting_default 0
 
 # called when the C code sets the global value variable
-proc updateOptionmenu {menu var name element op} { 
+proc updateOptionmenu {menu entry_list_name var name element op} { 
     global optionmenu_setting_list
+    upvar #0 $entry_list_name entry_list
     upvar #0 $var varval 
 
     # If this callback results from the entry_list being changed
@@ -484,14 +485,20 @@ proc updateOptionmenu {menu var name element op} {
     # use the old selection
     if { "$varval" != "$old_menu_val" } {
 	# Check to see if menu item exists using a list search
-	set menu_list [$menu get 0 end]
-	if {[lsearch -exact $menu_list "$varval"] == -1} {
+        set menu_item [lsearch -exact $entry_list "$varval"]
+	if {$menu_item == -1} {
 	    # We force this menu to contain the value the 
 	    # global variable was set to. Programmer knows best :)
-	    $menu insert end "$varval"
-	    $menu select "$varval"
+	    #$menu insert end "$varval"
+	    #$menu select end
+
+            # BZZT - that's weird behavior - let's select item 0 instead.
+            $menu select 0
 	} else {
-	    $menu select "$varval"
+            # avoid using $menu select "$varval" because this
+            # will fail if $varval is a numeric value. 
+            # Numeric index has precedence, and should always work. 
+	    $menu select $menu_item
 	}
     }
 }
@@ -523,7 +530,8 @@ proc updateOptionmenuEntries {menu entry_list_name var name element op} {
     # Try to select the same entry as before the menu entries changed
     # Check to see if the item is in the new menu entries.
     # Menu entries must be in quotes to handle values with spaces!
-    if {[lsearch -exact $entry_list "$old_menu_val"] == -1} {
+    set menu_item [lsearch -exact $entry_list "$old_menu_val"]
+    if {$menu_item == -1} {
 	#puts "    TCL: optionmenu search if $var"
 	# The old menu item doesn't exist, so just choose the first item
 	$menu select 0
@@ -537,7 +545,10 @@ proc updateOptionmenuEntries {menu entry_list_name var name element op} {
 	# so guard the "select" command so it won't re-set the 
 	# global variable. 
 	set optionmenu_selecting_default 1
-	$menu select "$old_menu_val"
+            # avoid using $menu select "$varval" because this
+            # will fail if $varval is a numeric value. 
+            # Numeric index has precedence, and should always work. 
+	$menu select $menu_item
 	set optionmenu_selecting_default 0
     }
 }
@@ -559,17 +570,22 @@ proc generic_optionmenu { name var label entry_list_name } {
 
     if { $entry_list != "" } {
 	# Use "eval" so the list members are treated as individual args.
-	eval $name insert end $entry_list
+	eval $name insert 0 $entry_list
     } else {
-	$name insert end "none"
+	$name insert 0 "none"
     }
 
-    # Force the global variable to be set to the initial menu entry.
-    set varval "[ $name get ]"
-    
+    # If global variable already exists, make the menu show it's value
+    if {[info exists varval]} {
+        updateOptionmenu $name $entry_list_name $var 0 0 0
+    } else {
+        # Force the global variable to be set to the initial menu entry.
+        set varval "[ $name get ]"
+    }
+
     # Find out when the global variable connected with the entry
     # gets set by someone else.
-    trace variable varval w "updateOptionmenu $name $var "
+    trace variable varval w "updateOptionmenu $name $entry_list_name $var "
 
     # Find out when the global variable connected with the menu entries
     # gets set by someone else.
@@ -588,6 +604,7 @@ proc updateOptionmenuWithIndex {menu var name element op} {
 
     set optionmenu_setting_list 1
 
+    # Sets the menu according to the numeric index in the global var. 
     $menu select $varval
 
     set optionmenu_setting_list 0
@@ -616,8 +633,13 @@ proc generic_optionmenu_with_index { name var label entry_list_name } {
         $name insert end "none"
     }
 
-    # Force the global variable to be set to the initial menu entry.
-    set varval "[ $name index select ]"
+    # If global variable already exists, make the menu show it's value
+    if {[info exists varval]} {
+        updateOptionmenuWithIndex $name $var 0 0 0
+    } else {
+        # Force the global variable to be set to the initial menu entry.
+        set varval "[ $name index select ]"
+    }
 
     # Find out when the global variable connected with the entry
     # gets set by someone else.

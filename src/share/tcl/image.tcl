@@ -105,10 +105,10 @@ set imagep_p_gain 1.0
 set imagep_i_gain 0.3
 set imagep_d_gain 0.0
 set imagep_amplitude 0.1
-set imagep_frequency 100000
+set imagep_frequency 100
 set imagep_input_gain 1.0
-# boolean, value of 0 is amplitude, 1 is phase
-set imagep_ampl_or_phase 0
+# boolean, value of 1 is amplitude, 0 is phase
+set imagep_ampl_or_phase 1
 set imagep_drive_attenuation 1
 # this is the actual phase angle to use for feedback. 
 set imagep_phase 0.0
@@ -187,20 +187,36 @@ pack $nmInfo(imagefull).modeparam.label -side top -anchor nw
 
 generic_entry $nmInfo(imagefull).modeparam.setpoint newimagep_setpoint \
 	"Set Point (0,100)" real 
-generic_entry $nmInfo(imagefull).modeparam.p-gain newimagep_p_gain "P-Gain (0,5)" real 
-generic_entry $nmInfo(imagefull).modeparam.i-gain newimagep_i_gain "I-Gain (0,5)" real 
-generic_entry $nmInfo(imagefull).modeparam.d-gain newimagep_d_gain "D-Gain (0,5)" real 
-generic_entry $nmInfo(imagefull).modeparam.rate newimagep_rate "Rate (1,50 uM/sec)" real 
+generic_entry $nmInfo(imagefull).modeparam.p-gain newimagep_p_gain \
+        "P-Gain (0,5)" real 
+generic_entry $nmInfo(imagefull).modeparam.i-gain newimagep_i_gain \
+        "I-Gain (0,5)" real 
+generic_entry $nmInfo(imagefull).modeparam.d-gain newimagep_d_gain \
+        "D-Gain (0,5)" real 
+generic_entry $nmInfo(imagefull).modeparam.rate newimagep_rate \
+        "Rate (1,50 uM/sec)" real 
 generic_entry $nmInfo(imagefull).modeparam.amplitude newimagep_amplitude \
 	"Amplitude (0,2)" real 
 generic_entry $nmInfo(imagefull).modeparam.frequency newimagep_frequency \
-	"Frequency (10k 200k)" real 
-generic_entry $nmInfo(imagefull).modeparam.input_gain newimagep_input_gain \
-	"Input Gain (1 100)" real 
-generic_radiobox $nmInfo(imagefull).modeparam.ampl_or_phase newimagep_ampl_or_phase \
-	"" { "Amplitude" "Phase" }
-generic_entry $nmInfo(imagefull).modeparam.drive_attenuation newimagep_drive_attenuation \
-	"Drive Attenuation (1 10 100)" integer
+	"Frequency (10,200 kHz)" real 
+
+# This gain list is taken from the thermo code, noncont.c
+set input_gain_list ""
+for { set i 0; set n 1} { $i < 4 } { incr i; set n [expr $n*10] } {
+    for {set j 0; set k 1} { $j < 4} { incr j; set k [expr $k* 2] } {
+        lappend input_gain_list [expr $k*$n]
+    }
+}
+generic_optionmenu $nmInfo(imagefull).modeparam.input_gain \
+        newimagep_input_gain \
+	"Input Gain" input_gain_list
+generic_radiobox $nmInfo(imagefull).modeparam.ampl_or_phase \
+        newimagep_ampl_or_phase \
+	"" { "Phase" "Amplitude" }
+set drive_attenuation_list { 1 10 100 }
+generic_optionmenu $nmInfo(imagefull).modeparam.drive_attenuation \
+        newimagep_drive_attenuation \
+	"Drive Attenuation" drive_attenuation_list
 generic_entry $nmInfo(imagefull).modeparam.phase newimagep_phase \
 	"Phase (0 360)" real 
 
@@ -337,8 +353,8 @@ proc acceptImageVars {varlist} {
 	$nmInfo(imagefull).mode.accept configure -background $save_bg
 	$nmInfo(imagefull).mode.cancel configure -background $save_bg
 
-    #close the window when the Accept Button is pressed
-    #wm withdraw $image
+    #switch to quick params when the Accept Button is pressed
+    $nmInfo(image).quick_or_full invoke
 }
 
 

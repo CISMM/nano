@@ -33,11 +33,7 @@ class nmb_Dataset;  // from nmb_Dataset.h
 
 #define	MAX_CHANNELS		(100)
 
-#ifndef USE_VRPN_MICROSCOPE
-class Microscope;
-#else
-class nmm_Microscope_Remote;	// Added by Tiger
-#endif
+class nmm_Microscope_Remote;
 
 class	Channel_selector
 {
@@ -52,14 +48,12 @@ class	Channel_selector
 
     //    int    Is_set(const char *channel) { return (checklist->Is_set(channel)); }
     int    Is_set(const char *channel) { return 1; }
+
 	// If changes, request new list
 	// Changed to allow instantiation of this as a generic
         // channel selector that doesn't contain references to data; 
-#ifndef USE_VRPN_MICROSCOPE
-	virtual int Update_microscope (Microscope *);
-#else
 	virtual int Update_microscope (nmm_Microscope_Remote *);
-#endif
+
 	void	Changed(int c) { change_from_tcl = c; }
 	int	Changed (void) const { return change_from_tcl; }
 
@@ -79,7 +73,6 @@ class	Channel_selector
 	    {return (value - channels[channel].offset)/channels[channel].scale;}
 
 	int	Num_channels (void) const { return numchannels; }
-	const Tclvar_checklist_with_entry * Checklist (void) const;
 
     protected:
 	struct {
@@ -94,7 +87,6 @@ class	Channel_selector
         int     change_from_microscope;    //change made by microscope, 
                                         // so we can ignore changes from tcl. 
 
-	Tclvar_checklist_with_entry	*checklist;
 	nmb_ListOfStrings	* namelist;
 
         nmb_Dataset * d_dataset;
@@ -110,18 +102,12 @@ class	Scan_channel_selector : public Channel_selector
 	virtual ~Scan_channel_selector (void);  // avoid compiler warnings
 
 	// User-interface side of things, response to changes by the user
-#ifndef USE_VRPN_MICROSCOPE
-	virtual	int Update_microscope (Microscope *);
-#else
-	virtual int Update_microscope (nmm_Microscope_Remote *);  // Tiger
-#endif
+	virtual int Update_microscope (nmm_Microscope_Remote *);
 
 	// Commands called in response to microscope reports
 	int Add_channel(char *name, char *units,
 		float offset, float scale);
 
-	int	Handle_old_report(int x, int y, long sec, long usec,
-			      float val, float std);
 	int	Handle_report(int x, int y, long sec, long usec, float *values,
 			int numvalues);
 

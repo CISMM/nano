@@ -10,24 +10,18 @@
 #include	<string.h>
 #include	<math.h>
 
-#include	"Tcl_Linkvar.h"
-#include	"Tcl_Netvar.h"
+#include	<Tcl_Linkvar.h>
+#include	<Tcl_Netvar.h>
 #include	"active_set.h"
 #include	<BCPlane.h>
 #include	<nmb_Globals.h>
 
-//#include	"stm_cmd.h"
-
-//#include <nmm_Globals.h>  // was for USE_VRPN_MICROSCOPE,
-                            // which is now controlled by the Makefile
-
-#ifndef USE_VRPN_MICROSCOPE
-#include "Microscope.h"
-#else
 #include "nmm_MicroscopeRemote.h"
-#endif
 
-void tcl_update_callback(const char */*name*/, int /*val*/, void *udata)
+/** Merely sets a flag, so the next time UpdateMicroscope gets called
+ new datasets are requested.
+*/
+void tcl_update_callback(const char * /*name*/, int /*val*/, void *udata)
 {
 	Channel_selector	*me = (Channel_selector*)(udata);
 
@@ -50,7 +44,6 @@ Channel_selector::Channel_selector (nmb_ListOfStrings * namelist,
     numchannels (0),
     change_from_tcl (0),
     change_from_microscope (0),
-    checklist (NULL),
     namelist (namelist),
     d_dataset (dataset) {
 
@@ -61,10 +54,6 @@ Channel_selector::Channel_selector (nmb_ListOfStrings * namelist,
 // some compilers - TCH 1 Oct 97
 
 Channel_selector::~Channel_selector (void) {
-  if (checklist) {
-    delete checklist;
-    checklist = NULL;
-  }
 }
 
 int	Channel_selector::Set(const char *channel)
@@ -99,27 +88,17 @@ int	Channel_selector::Unset(const char *channel)
     return 0;
 }
 
-#ifndef USE_VRPN_MICROSCOPE
-
-// virtual
-int Channel_selector::Update_microscope (Microscope *) {
-  return 0;
-}
-
-#else
-
 // virtual
 int Channel_selector::Update_microscope (nmm_Microscope_Remote *) {
   return 0;
 }
 
-#endif
 
 
 int	Channel_selector::Clear_channels(void)
 {
 	int	ret = 0;
-	int	i;
+	//int	i;
 
 	// Mark this a being a change from the microscope.
 	change_from_microscope = 1;
@@ -198,11 +177,6 @@ int	Channel_selector::Add_channel(char *name, char *units,
 	return numchannels-1;		// Tell which channel
 }
 
-const Tclvar_checklist_with_entry * Channel_selector::Checklist (void) const {
-  return checklist;
-}
-
-
 Scan_channel_selector::Scan_channel_selector(BCGrid *grid_to_track,
     nmb_ListOfStrings * namelist, nmb_Dataset * dataset) :
 		Channel_selector (namelist, dataset)
@@ -255,11 +229,7 @@ Scan_channel_selector::~Scan_channel_selector (void) {
 
 }
 
-#ifndef USE_VRPN_MICROSCOPE
-int	Scan_channel_selector::Update_microscope (Microscope * microscope)
-#else
 int     Scan_channel_selector::Update_microscope (nmm_Microscope_Remote * microscope)
-#endif
 {
 	// If we have changed since the last time we did this, send a
 	// message to the microscope requesting a new set of data
@@ -272,7 +242,7 @@ int     Scan_channel_selector::Update_microscope (nmm_Microscope_Remote * micros
 	    return 0;
 	} else {
 	  //if (microscope->GetNewScanDatasets(checklist) == -1)
-		return -1;
+            //return -1;
 	}
     }
     return 0;
@@ -296,7 +266,7 @@ int	Scan_channel_selector::Add_channel(char *name, char *units,
 	// See if we can lookup the plane for this checkbox.  If not, make one
 	if ( (planes[which] = mygrid->getPlaneByName(name)) == NULL) {
 	  if ((planes[which] = mygrid->addNewPlane(name,
-	       units, 0)) == NULL) {
+	       units, TIMED)) == NULL) {
 	    fprintf(stderr,"Scan_channel_selector::Add_channel(): Can't add %s plane\n",name);
 	    numchannels--;
 	    return -1;
@@ -314,33 +284,6 @@ int	Scan_channel_selector::Add_channel(char *name, char *units,
 	// (The add will fail if this entry is already there.  We
 	// ignore this.)
 	namelist->addEntry(name);
-
-	return 0;
-}
-
-//XXX Should remove this code and only have Handle_report.
-
-int     Scan_channel_selector::Handle_old_report(
-		int x, int y,
-		long sec, long usec,
-		float value, float std_dev)
-{
-	// Update the height and standard deviation planes.
-	// This assumes that they are the first two, which was the case
-	// in the old stream files which won't set this up
-//  	if (numchannels>0) {
-//  		planes[0]->setValue(x, y,
-//  			channels[0].offset + channels[0].scale*value);
-//  		planes[0]->setTime(x, y, sec, usec);
-//  	}
-//  	if (numchannels>1) {
-//  		planes[1]->setValue(x, y, 
-//  			channels[1].offset + channels[1].scale*std_dev);
-//  		planes[1]->setTime(x, y, sec, usec);
-//  	}
-
-//  	// Tell the display to update the subgrid.
-//  	d_dataset->range_of_change.AddPoint(x, y);
 
 	return 0;
 }
@@ -426,11 +369,7 @@ Point_channel_selector::~Point_channel_selector (void) {
 }
 
 
-#ifndef USE_VRPN_MICROSCOPE
-int	Point_channel_selector::Update_microscope (Microscope * microscope)
-#else
 int     Point_channel_selector::Update_microscope (nmm_Microscope_Remote * microscope)
-#endif
 {
 	// If we have changed since the last time we did this, send a
 	// message to the microscope requesting a new set of data
@@ -477,30 +416,6 @@ int	Point_channel_selector::Add_channel(char *name, char *units,
 	// (The add will fail if this entry is already there.  We
 	// ignore this.)
 	namelist->addEntry(name);
-
-	return 0;
-}
-
-int     Point_channel_selector::Handle_old_report( float x, float y,
-		long sec, long usec, float value, float std_dev)
-{
-	// Set location and time in the point results class
-//  	if (myresult) {
-//  		myresult->setPosition(x, y);
-//  		myresult->setTime(sec, usec);
-//  	}
-
-//  	// Update the height and standard deviation planes.
-//  	// This assumes that they are the first two, which was the case
-//  	// in the old stream files which won't set this up
-//  	if (numchannels>0) {
-//  		values[0]->setValue(
-//  			channels[0].offset + channels[0].scale*value);
-//  	}
-//  	if (numchannels>1) {
-//  		values[1]->setValue( 
-//  			channels[1].offset + channels[1].scale*std_dev);
-//  	}
 
 	return 0;
 }
@@ -567,11 +482,7 @@ ForceCurve_channel_selector::~ForceCurve_channel_selector (void) {
 
 }
 
-#ifndef USE_VRPN_MICROSCOPE
-int	ForceCurve_channel_selector::Update_microscope (Microscope * microscope)
-#else
 int     ForceCurve_channel_selector::Update_microscope (nmm_Microscope_Remote * microscope)
-#endif
 {
 	// If we have changed since the last time we did this, send a
         // message to the microscope requesting a new set of data

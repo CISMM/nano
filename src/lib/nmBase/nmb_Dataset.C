@@ -95,19 +95,19 @@ nmb_Dataset::nmb_Dataset
   for (i = 0; i < dataImages->numImages(); i++) {
       dataImages->getImage(i)->setHeightField(vrpn_FALSE);
   }
-  if (inputGrid->empty())
-    fprintf(stderr, "nmb_Dataset:  Cannot scan grid.\n");
+//    if (inputGrid->empty())
+//      fprintf(stderr, "nmb_Dataset:  Cannot scan grid.\n");
 
-  if (readMode == READ_FILE) {
-      if ((!useFileResolution) &&
-          ((inputGrid->numX() > xSize) || (inputGrid->numY() > ySize))) {
-              printf("Decimating input grid to %d x %d...\n", xSize, ySize);
-              inputGrid->decimate(xSize, ySize);
-      } else {
-          printf("Not decimating input grid, resolution is %d x %d\n",
-              inputGrid->numX(), inputGrid->numY());
-      }
-  }
+//    if (readMode == READ_FILE) {
+//        if ((!useFileResolution) &&
+//            ((inputGrid->numX() > xSize) || (inputGrid->numY() > ySize))) {
+//                printf("Decimating input grid to %d x %d...\n", xSize, ySize);
+//                inputGrid->decimate(xSize, ySize);
+//        } else {
+//            printf("Not decimating input grid, resolution is %d x %d\n",
+//                inputGrid->numX(), inputGrid->numY());
+//        }
+//    }
 
   ensureHeightPlane();
 
@@ -217,7 +217,7 @@ BCPlane * nmb_Dataset::ensureHeightPlane (void) {
   if (plane == NULL) {
     plane = inputGrid->getPlaneByName(EMPTY_PLANE_NAME);
     if (!plane) {
-      fprintf(stderr,"Warning! No height plane input, using zero plane\n");
+        //fprintf(stderr,"Warning! No height plane input, using zero plane\n");
       plane = inputGrid->addNewPlane(EMPTY_PLANE_NAME, "nm", NOT_TIMED);
       heightPlaneName->Set(plane->name()->Characters());
       dataImages->addImage(new nmb_ImageGrid(plane));

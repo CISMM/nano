@@ -32,7 +32,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void changeDataset( nmb_Dataset * data);
     virtual void resizeViewport(int width, int height);
-
+    virtual void getViewportSize(int *width, int * height);
 
     virtual void loadRulergridImage (const char *);
 

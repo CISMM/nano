@@ -37,7 +37,6 @@ const char * EMPTY_PLANE_NAME = "Empty-HeightPlane";
 
 const double STANDARD_DEVIATIONS = 3.0;
 
-int BCGrid::_read_mode = READ_FILE;
 int BCGrid::_times_invoked = 0;
 
 /**
@@ -96,9 +95,10 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
     // into the first grid, ensuring that all planes have unique names.
     //
     // i is initialized above, based on whether we read in the first file.
+    // Force mode to be READ_FILE, so we actually read the file data. 
     for (; i < num_files; i++) {
 	BCGrid grid(_num_x,_num_y, _min_x,_max_x,
-		    _min_y, _max_y, _read_mode, file_names[i], topoFile);
+		    _min_y, _max_y, READ_FILE, file_names[i], topoFile);
 
 	if (!(grid.empty())) {
 	    // 		if ( (grid._num_x != _num_x) ||
@@ -266,7 +266,9 @@ BCGrid::BCGrid(short num_x, short num_y,
     _z_sensitivity(1.0),
     _input_1_max(1.0),
     _input_2_max(1.0),
-    _modified(1)
+    _modified(1),
+    _read_mode(READ_FILE)
+
 {    
 
 }
@@ -294,7 +296,8 @@ BCGrid::BCGrid() :
     _z_sensitivity(1.0),
     _input_1_max(1.0),
     _input_2_max(1.0),
-    _modified(1)
+    _modified(1),
+    _read_mode(READ_FILE)
 {    
 }
 
@@ -322,8 +325,8 @@ BCGrid::BCGrid (const BCGrid * grid) :
   _z_sensitivity (grid->_z_sensitivity),
   _input_1_max (grid->_input_1_max),
   _input_2_max (grid->_input_2_max),
-  _modified (1)
-   
+  _modified (1),
+  _read_mode(grid->_read_mode)
 {
 
   BCPlane * pp;

@@ -230,6 +230,10 @@ phantom_init()
 		return -1;
 	}
         phantButton = new vrpn_Button_Remote(handTrackerName);
+        // This might give me toggle behavior for the phantom button
+        //phantButton->set_all_toggle(vrpn_BUTTON_TOGGLE_OFF);
+        // NOPE. vrpn_Phantom derives from vrpn_Button, and it seems to
+        // need vrpn_Button_Filter to handle toggle buttons. Maybe.
         if (phantButton->register_change_handler(&phantButtonState,
                 handle_phant_button_change)){
                 fprintf(stderr, "Error: can't register vrpn_Button handler\n");

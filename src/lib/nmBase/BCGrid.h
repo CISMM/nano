@@ -220,7 +220,7 @@ class BCGrid
    
     int _modified; ///< true if _min_x, _max_x, _min_y, or _max_y have been altered
 
-    static int _read_mode;
+    int _read_mode;
 
     static int _times_invoked;
 };

@@ -91,7 +91,7 @@ struct AFMModifyState {
   Tclvar_float frequency;
   Tclvar_int   input_gain;
   Tclvar_int   ampl_or_phase;
-  Tclvar_int   drive_attenutation;
+  Tclvar_int   drive_attenuation;
   Tclvar_float phase;
 
   Tclvar_float scan_rate_microns;
@@ -232,7 +232,7 @@ struct AFMImageState {
   Tclvar_float frequency;
   Tclvar_int   input_gain;
   Tclvar_int   ampl_or_phase;
-  Tclvar_int   drive_attenutation;
+  Tclvar_int   drive_attenuation;
   Tclvar_float phase;
   Tclvar_float scan_rate_microns;
 
@@ -298,7 +298,7 @@ struct AFMScanlineState {
   Tclvar_float frequency;
   Tclvar_int   input_gain;
   Tclvar_int   ampl_or_phase;
-  Tclvar_int   drive_attenutation;
+  Tclvar_int   drive_attenuation;
   Tclvar_float phase;
   Tclvar_float scan_rate_microns_per_sec;
   

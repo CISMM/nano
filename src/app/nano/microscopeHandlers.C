@@ -66,6 +66,16 @@ void setupStateCallbacks (Microscope * ms) {
     (handle_Mmode_p_change, ms);
   ms->state.modify.amplitude.addCallback
     (handle_Mmode_p_change, ms);
+  ms->state.modify.frequency.addCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.input_gain.addCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.ampl_or_phase.addCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.drive_attenuation.addCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.phase.addCallback
+    (handle_Mmode_p_change, ms);
   ms->state.modify.scan_rate_microns.addCallback
     (handle_Mmode_p_change, ms);
 
@@ -147,6 +157,16 @@ void setupStateCallbacks (Microscope * ms) {
     (handle_Imode_p_change, ms);
   ms->state.image.amplitude.addCallback
     (handle_Imode_p_change, ms);
+  ms->state.image.frequency.addCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.input_gain.addCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.ampl_or_phase.addCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.drive_attenuation.addCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.phase.addCallback
+    (handle_Imode_p_change, ms);
   ms->state.image.scan_rate_microns.addCallback
     (handle_Imode_p_change, ms);
 
@@ -177,6 +197,16 @@ void setupStateCallbacks (Microscope * ms) {
   ms->state.scanline.width.addCallback
     (handle_SLmode_p_change, ms);
   ms->state.scanline.amplitude.addCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.frequency.addCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.input_gain.addCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.ampl_or_phase.addCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.drive_attenuation.addCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.phase.addCallback
     (handle_SLmode_p_change, ms);
   ms->state.scanline.scan_rate_microns_per_sec.addCallback
     (handle_SLmode_p_change, ms);
@@ -236,6 +266,16 @@ void teardownStateCallbacks (Microscope * ms) {
   ms->state.modify.d_gain.removeCallback
     (handle_Mmode_p_change, ms);
   ms->state.modify.amplitude.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.frequency.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.input_gain.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.ampl_or_phase.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.drive_attenuation.removeCallback
+    (handle_Mmode_p_change, ms);
+  ms->state.modify.phase.removeCallback
     (handle_Mmode_p_change, ms);
   ms->state.modify.scan_rate_microns.removeCallback
     (handle_Mmode_p_change, ms);
@@ -318,6 +358,16 @@ void teardownStateCallbacks (Microscope * ms) {
     (handle_Imode_p_change, ms);
   ms->state.image.amplitude.removeCallback
     (handle_Imode_p_change, ms);
+  ms->state.image.frequency.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.input_gain.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.ampl_or_phase.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.drive_attenuation.removeCallback
+    (handle_Imode_p_change, ms);
+  ms->state.image.phase.removeCallback
+    (handle_Imode_p_change, ms);
   ms->state.image.scan_rate_microns.removeCallback
     (handle_Imode_p_change, ms);
 
@@ -348,6 +398,16 @@ void teardownStateCallbacks (Microscope * ms) {
   ms->state.scanline.width.removeCallback
     (handle_SLmode_p_change, ms);
   ms->state.scanline.amplitude.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.frequency.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.input_gain.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.ampl_or_phase.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.drive_attenuation.removeCallback
+    (handle_SLmode_p_change, ms);
+  ms->state.scanline.phase.removeCallback
     (handle_SLmode_p_change, ms);
   ms->state.scanline.scan_rate_microns_per_sec.removeCallback
     (handle_SLmode_p_change, ms);
@@ -419,6 +479,10 @@ void handle_Mmode_p_change (vrpn_float64, void * _mptr) {
   microscope->state.modify.mode_p_changed = VRPN_TRUE;
 }
 
+void handle_Mmode_p_change (vrpn_int32, void * _mptr) {
+  microscope->state.modify.mode_p_changed = VRPN_TRUE;
+}
+
 void handle_Mstyle_p_change (vrpn_float64, void * _mptr) {
   microscope->state.modify.style_p_changed = VRPN_TRUE;
 }
@@ -437,6 +501,9 @@ void handle_Istyle_change (vrpn_int32, void * _mptr) {
 }
 
 void handle_Imode_p_change (vrpn_float64, void * _mptr) {
+  microscope->state.image.mode_p_changed = VRPN_TRUE;
+}
+void handle_Imode_p_change (vrpn_int32, void * _mptr) {
   microscope->state.image.mode_p_changed = VRPN_TRUE;
 }
 
@@ -461,6 +528,10 @@ void handle_SLforcelimit_change (vrpn_int32, void * _mptr) {
 }
 
 void handle_SLmode_p_change (vrpn_float64, void * _mptr) {
+  //printf("handle_SLmode_p_change\n");
+  microscope->state.scanline.mode_p_changed = VRPN_TRUE;
+}
+void handle_SLmode_p_change (vrpn_int32, void * _mptr) {
   //printf("handle_SLmode_p_change\n");
   microscope->state.scanline.mode_p_changed = VRPN_TRUE;
 }
@@ -552,8 +623,9 @@ void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
   // the zscale, she could get a strong jerk from the phantom, so put her
   // into grab mode first
   if (plane) {
-    if ((user_mode[0] == USER_PLANE_MODE) || (user_mode[0] == USER_PLANEL_MODE))
-      handleCharacterCommand("G", &dataset->done, 1);
+      if ((user_mode[0] == USER_PLANE_MODE) || (user_mode[0] == USER_PLANEL_MODE)) {
+          handleCharacterCommand("G", &dataset->done, 1);
+      }
     plane->setScale(microscope->state.stm_z_scale);
     //cause_grid_redraw(_value, _mptr);
     graphics->causeGridRedraw();

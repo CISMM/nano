@@ -40,6 +40,11 @@
 
 //#include <microscape.h>  // for spm_verbosity
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+// bogus double to float conversion warning.
+#pragma warning(disable:4244)
+#endif
+
 #define CHECK(a) if ((a) == -1) return -1
 
 #ifdef MAX
@@ -625,7 +630,7 @@ long nmm_Microscope_Remote::ModifyMode (void) {
                                        state.modify.frequency,
                                        state.modify.input_gain,
                                        state.modify.ampl_or_phase,
-                                       state.modify.drive_attenutation,
+                                       state.modify.drive_attenuation,
                                        state.modify.phase);
 	case CONTACT:
 	   return EnterContactMode(state.modify.p_gain, state.modify.i_gain,
@@ -705,7 +710,7 @@ long nmm_Microscope_Remote::ImageMode (void) {
                                   state.image.frequency,
                                   state.image.input_gain,
                                   state.image.ampl_or_phase,
-                                  state.image.drive_attenutation,
+                                  state.image.drive_attenuation,
                                   state.image.phase);
     case CONTACT:
       return EnterContactMode(state.image.p_gain,
@@ -1175,16 +1180,15 @@ long nmm_Microscope_Remote::EnterOscillatingMode
   char * msgbuf;
   long len;
 
-  // XXX TODO make Thermo code aware of this new message type:
-//    msgbuf = encode_EnterOscillatingMode(&len, p, i, d, set, amp,
-//                                         frequency, input_gain, ampl_or_phase,
-// 
-  msgbuf = encode_EnterTappingMode(&len, p, i, d, set, amp);           
+  msgbuf = encode_EnterOscillatingMode(&len, p, i, d, set, amp,
+                                       frequency, input_gain, ampl_or_phase,
+                                       drive_attenuation, phase);
+  //  msgbuf = encode_EnterTappingMode(&len, p, i, d, set, amp);           
   if (!msgbuf)
     return -1;
 
-//  return dispatchMessage(len, msgbuf, d_EnterOscillatingMode_type);
-  return dispatchMessage(len, msgbuf, d_EnterTappingMode_type);
+  return dispatchMessage(len, msgbuf, d_EnterOscillatingMode_type);
+  //return dispatchMessage(len, msgbuf, d_EnterTappingMode_type);
 }
 
 long nmm_Microscope_Remote::EnterContactMode (float p, 
@@ -1406,7 +1410,7 @@ long nmm_Microscope_Remote::SetModForce () {
                                        state.modify.frequency,
                                        state.modify.input_gain,
                                        state.modify.ampl_or_phase,
-                                       state.modify.drive_attenutation,
+                                       state.modify.drive_attenuation,
                                        state.modify.phase);
 
       case CONTACT:
@@ -1438,7 +1442,7 @@ long nmm_Microscope_Remote::SetModForce () {
                                        state.modify.frequency,
                                        state.modify.input_gain,
                                        state.modify.ampl_or_phase,
-                                       state.modify.drive_attenutation,
+                                       state.modify.drive_attenuation,
                                        state.modify.phase)) {
             fprintf(stderr, "Error, can't enter oscillating mode\n");
             return -1;
@@ -1706,7 +1710,7 @@ long nmm_Microscope_Remote::SetScanlineModeParameters(){
                                        state.scanline.frequency,
                                        state.scanline.input_gain,
                                        state.scanline.ampl_or_phase,
-                                       state.scanline.drive_attenutation,
+                                       state.scanline.drive_attenuation,
                                        state.scanline.phase);
     case CONTACT:
 	return EnterContactMode(state.scanline.p_gain, state.scanline.i_gain,
@@ -2829,6 +2833,7 @@ int nmm_Microscope_Remote::handle_ClientHello (void * userdata,
   return 0;
 }
 
+/* Never sent by Topometrix
 //static
 int nmm_Microscope_Remote::handle_ClearScanChannels (void * userdata,
                                               vrpn_HANDLERPARAM) {
@@ -2838,7 +2843,7 @@ int nmm_Microscope_Remote::handle_ClearScanChannels (void * userdata,
 
   return 0;
 }
-
+*/
 //static
 int nmm_Microscope_Remote::handle_ScanDataset (void * userdata,
                            vrpn_HANDLERPARAM param) {
@@ -2851,10 +2856,7 @@ int nmm_Microscope_Remote::handle_ScanDataset (void * userdata,
   long i;
 
   ms->decode_ScanDatasetHeader(&param.buffer, &numDatasets);
-// NANO BEGIN 	Tiger
-  fprintf(stderr, "nmm_Microscope_Remote::handle_ScanDataset(): numDatasets = %d\n", numDatasets);
   ms->RcvClearScanChannels();
-// NANO END
   for (i = 0; i < numDatasets; i++) {
     ms->decode_ScanDataset(&param.buffer, name, units, &offset, &scale);
     ms->RcvScanDataset(name, units, offset, scale);
@@ -2863,6 +2865,7 @@ int nmm_Microscope_Remote::handle_ScanDataset (void * userdata,
   return 0;
 }
 
+/* Never sent by Topometrix
 //static
 int nmm_Microscope_Remote::handle_ClearPointChannels (void * userdata,
                                               vrpn_HANDLERPARAM) {
@@ -2872,6 +2875,7 @@ int nmm_Microscope_Remote::handle_ClearPointChannels (void * userdata,
 
   return 0;
 }
+*/
 
 //static
 int nmm_Microscope_Remote::handle_PointDataset (void * userdata,
@@ -2886,10 +2890,8 @@ int nmm_Microscope_Remote::handle_PointDataset (void * userdata,
   long i;
 
   ms->decode_PointDatasetHeader(&param.buffer, &numDatasets);
-// NANO BEGIN	Tiger
-  fprintf(stderr, "nmm_Microscope_Remote::handle_PointDataset(): numPointsets = %d\n", numDatasets);
+
   ms->RcvClearPointChannels();
-// NANO END
   for (i = 0; i < numDatasets; i++) {
     ms->decode_PointDataset(&param.buffer, name, units, &numSamples,
                                   &offset, &scale);
@@ -3089,7 +3091,8 @@ void nmm_Microscope_Remote::RcvInTappingMode (const float _p, const float _i,
                                    const float _amp) {
     // Call newer rcv function, with default values for the parameters 
     // not covered by this message. 
-    RcvInOscillatingMode ( _p, _i, _d, _setpoint, _amp, 1e5, 1, 0, 1, 0.0);
+    printf("WARNING: Old Tapping Mode message received, treating as Oscillating\n");
+    RcvInOscillatingMode ( _p, _i, _d, _setpoint, _amp, 100, 1, 1, 1, 0.0);
 }
 
 void nmm_Microscope_Remote::RcvInOscillatingMode (const float _p, 
@@ -3103,10 +3106,11 @@ void nmm_Microscope_Remote::RcvInOscillatingMode (const float _p,
                                    const float _phase
 ) {
   if (state.acquisitionMode == MODIFY) {
-    printf("Matching AFM modify parameters (Tapping).\n");
-    printf("   S=%g  P=%g, I=%g, D=%g, A=%g\n", _setpoint,_p, _i, _d, _amp);
-    if (state.modify.mode != TAPPING)
-      state.modify.mode = TAPPING;
+    printf("Matching AFM modify parameters (Oscillating).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, P=%g\n",
+           _setpoint,_p, _i, _d, _amp, _frequency, _input_gain,
+           _ampl_or_phase, _drive_attenuation, _phase);
+    if (state.modify.mode != TAPPING) state.modify.mode = TAPPING;
     state.modify.p_gain = _p;
     state.modify.i_gain = _i;
     state.modify.d_gain = _d;
@@ -3116,13 +3120,14 @@ void nmm_Microscope_Remote::RcvInOscillatingMode (const float _p,
     state.modify.frequency = _frequency;
     state.modify.input_gain = _input_gain;
     state.modify.ampl_or_phase = _ampl_or_phase;
-    state.modify.drive_attenutation = _drive_attenuation;
+    state.modify.drive_attenuation = _drive_attenuation;
     state.modify.phase = _phase;
   } else if (state.acquisitionMode == IMAGE){
-    printf("Matching AFM image parameters (Tapping).\n");
-    printf("   S=%g  P=%g, I=%g, D=%g, A=%g\n", _setpoint,_p, _i, _d, _amp);
-    if (state.image.mode != TAPPING)
-      state.image.mode = TAPPING;
+    printf("Matching AFM image parameters (Oscillating).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, P=%g\n",
+           _setpoint,_p, _i, _d, _amp, _frequency, _input_gain,
+           _ampl_or_phase, _drive_attenuation, _phase);
+    if (state.image.mode != TAPPING) state.image.mode = TAPPING;
     state.image.p_gain = _p;
     state.image.i_gain = _i;
     state.image.d_gain = _d;
@@ -3132,13 +3137,14 @@ void nmm_Microscope_Remote::RcvInOscillatingMode (const float _p,
     state.image.frequency = _frequency;
     state.image.input_gain = _input_gain;
     state.image.ampl_or_phase = _ampl_or_phase;
-    state.image.drive_attenutation = _drive_attenuation;
+    state.image.drive_attenuation = _drive_attenuation;
     state.image.phase = _phase;
   } else if (state.acquisitionMode == SCANLINE){
-    printf("Matching AFM scanline parameters (Tapping).\n");
-    printf("   S=%g  P=%g, I=%g, D=%g, A=%g\n", _setpoint,_p, _i, _d, _amp);
-    if (state.scanline.mode != TAPPING)
-      state.scanline.mode = TAPPING;
+    printf("Matching AFM scanline parameters (Oscillating).\n");
+    printf("   S=%g  P=%g, I=%g, D=%g, A=%g, F=%g, G=%d, P/A %d, Atten=%d, P=%g\n",
+           _setpoint,_p, _i, _d, _amp, _frequency, _input_gain,
+           _ampl_or_phase, _drive_attenuation, _phase);
+    if (state.scanline.mode != TAPPING) state.scanline.mode = TAPPING;
     state.scanline.p_gain = _p;
     state.scanline.i_gain = _i;
     state.scanline.d_gain = _d;
@@ -3148,11 +3154,11 @@ void nmm_Microscope_Remote::RcvInOscillatingMode (const float _p,
     state.scanline.frequency = _frequency;
     state.scanline.input_gain = _input_gain;
     state.scanline.ampl_or_phase = _ampl_or_phase;
-    state.scanline.drive_attenutation = _drive_attenuation;
+    state.scanline.drive_attenuation = _drive_attenuation;
     state.scanline.phase = _phase;
   }
   else {
-   fprintf(stderr, "RcvInTappingMode: Error, in unknown mode\n");
+   fprintf(stderr, "RcvInOscillatingMode: Error, in unknown mode\n");
   }
 }
 
@@ -4061,17 +4067,11 @@ void nmm_Microscope_Remote::RcvClearScanChannels (void) {
   // channels so these are temporarily reduced
   if (state.acquisitionMode == SCANLINE) {
       RcvClearScanlineChannels();
-      fprintf(stderr, "nmm_Microscope_Remote::RcvClearScanChannels:"
-         " Cleared _Scanline_ channels.\n");
   } else {
       if (state.data.scan_channels->Clear_channels()) {
           fprintf(stderr, "nmm_Microscope_Remote::RcvClearScanChannels:"
              " Can't clear scan datasets\n");
           d_dataset->done = VRPN_TRUE;
-      }
-      else {
-          fprintf(stderr, "nmm_Microscope_Remote::RcvClearScanChannels:"
-             " Cleared scan channels.\n");
       }
   }
 }
@@ -4085,10 +4085,9 @@ void nmm_Microscope_Remote::RcvScanDataset (const char * _name,
   if (state.acquisitionMode == SCANLINE) {
       RcvScanlineDataset(_name, _units, _offset, _scale);
   } else {
-      fprintf(stderr, "nmm_Microscope_Remote::RcvScanDataset():"
-         " adding another channel:\n");
-      fprintf(stderr, "  %s (%s), offset:  %g, scale:  %g\n",
-         _name, _units, _offset, _scale);
+      fprintf(stderr, "New Scan Dataset: "
+              "%s (%s), offset:  %g, scale:  %g\n",
+              _name, _units, _offset, _scale);
       // HACK HACK HACK
       if (state.data.scan_channels->Add_channel((char *) _name,
                                  (char *) _units,_offset, _scale)) {
@@ -4104,10 +4103,6 @@ void nmm_Microscope_Remote::RcvClearPointChannels (void) {
   if (state.data.point_channels->Clear_channels()) {
     fprintf(stderr, "nmm_Microscope_Remote::RcvClearPointChannels: Can't clear point datasets\n");
     d_dataset->done = VRPN_TRUE;
-  }
-  else {
-    fprintf(stderr, "nmm_Microscope_Remote::RcvClearPointChannels:"
-           " Cleared Point channels.\n");
   }
 }
 

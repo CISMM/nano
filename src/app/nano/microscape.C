@@ -617,8 +617,8 @@ TclNet_float rulergrid_angle ("rulergrid_angle", 0);
 TclNet_float ruler_width_x ("ruler_width_x", 1);
 TclNet_float ruler_width_y ("ruler_width_y", 1);
 
-///set default Rulergrid opacity to 128 (50%) instead of 255 (100%)
-TclNet_float ruler_opacity ("ruler_opacity", 128);
+///set default Rulergrid opacity to 50% instead of 100%
+TclNet_float ruler_opacity ("ruler_opacity", 50);
 
 
 //The quoted parameters are the variable names in tcl-space
@@ -671,7 +671,7 @@ Tclvar_string	newRealignPlaneName("realignplane_name","");
 TclNet_int shiny ("shiny", 55);
 TclNet_float diffuse ("diffuse", 0.5);	//What should default be?
 TclNet_float surface_alpha ("surface_alpha", 1.0);
-TclNet_float specular_color ("specular_color", 1.0);
+TclNet_float specular_color ("specular_color", 0.7);
 
 /// Tom Hudson's latency compensation techniques
 
@@ -835,7 +835,7 @@ Tclvar_int numMarkersShown ("number_of_markers_shown", 1000);
 Tclvar_int markerHeight ("marker_height", 100);
 
 
-Tclvar_float global_icon_scale ("global_icon_scale", 0.25);
+Tclvar_float global_icon_scale ("global_icon_scale", 1.0);
 
 /// Controls for the french Ohmmeter - creates many tcl widgets
 Ohmmeter *the_french_ohmmeter_ui = NULL;
@@ -1563,7 +1563,8 @@ static void handle_rulergrid_opacity_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
   // MOVED to nmg_Graphics
-  g->setRulergridOpacity(ruler_opacity);
+  // User interface is 0-100%, graphics expects 0-255
+  g->setRulergridOpacity(ruler_opacity*2.55);
 }
 
 static void handle_friction_slider_change (vrpn_float64, void * userdata) {
@@ -1682,7 +1683,7 @@ static void handle_collab_machine_name_change
                    (const char * new_value,
                     void * userdata)
 {
-  char hnbuf [256];
+    //char hnbuf [256];
 
   if (!new_value || !strlen(new_value)) {
     // transitory excitement during startup
@@ -3062,7 +3063,9 @@ static	void	handle_set_xform_change (vrpn_int32, void * userdata)
 static void handle_global_icon_scale_change (vrpn_float64 value, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
-  g->setIconScale(value);
+  // Turns out graphics need a value that's about 1/4 of what
+  // we want to display in the user interface (default of 1.0)
+  g->setIconScale(value*0.25);
 }
 
 void handle_contour_dataset_change (const char *, void * userdata)
@@ -3425,18 +3428,18 @@ void    handle_tracker2room_change(void *userdata,
     // userdata is VLIB transform index
     int xformIndex = *(int *)userdata;
 
-    if (xformIndex == V_ROOM_FROM_HAND_TRACKER) {
-        printf("Updating hand tracker from room xform\n");
-    } else if (xformIndex == V_ROOM_FROM_HEAD_TRACKER) {
-        printf("Updating head tracker from room xform\n");
-    }
+//      if (xformIndex == V_ROOM_FROM_HAND_TRACKER) {
+//          printf("Updating hand tracker from room xform\n");
+//      } else if (xformIndex == V_ROOM_FROM_HEAD_TRACKER) {
+//          printf("Updating head tracker from room xform\n");
+//      }
 
     if ((xformIndex == V_ROOM_FROM_HEAD_TRACKER) || 
 	(xformIndex == V_ROOM_FROM_HAND_TRACKER)) {
-        printf("(%g, %g, %g), (%g, %g, %g, %g)\n",
-               info.tracker2room[0], info.tracker2room[1], info.tracker2room[2],
-               info.tracker2room_quat[0], info.tracker2room_quat[1], 
-               info.tracker2room_quat[2], info.tracker2room_quat[3]);
+//          printf("(%g, %g, %g), (%g, %g, %g, %g)\n",
+//                 info.tracker2room[0], info.tracker2room[1], info.tracker2room[2],
+//                 info.tracker2room_quat[0], info.tracker2room_quat[1], 
+//                 info.tracker2room_quat[2], info.tracker2room_quat[3]);
 	
 	v_update_user_xform(0, xformIndex, UGLYCAST info.tracker2room, 
 			    UGLYCAST info.tracker2room_quat);
@@ -3516,18 +3519,18 @@ void    handle_unit2sensor_change(void *userdata,
     // userdata is VLIB transform index
     int xformIndex = *(int *)userdata;
 
-    if (xformIndex == V_SENSOR_FROM_HEAD_UNIT){
-         printf("Updating head unit to sensor xform\n");
-    } else if (xformIndex == V_SENSOR_FROM_HAND_UNIT) {
-         printf("Updating hand unit to sensor xform\n");
-    }
+//      if (xformIndex == V_SENSOR_FROM_HEAD_UNIT){
+//           printf("Updating head unit to sensor xform\n");
+//      } else if (xformIndex == V_SENSOR_FROM_HAND_UNIT) {
+//           printf("Updating hand unit to sensor xform\n");
+//      }
 
     if ((xformIndex == V_SENSOR_FROM_HEAD_UNIT) ||
         (xformIndex == V_SENSOR_FROM_HAND_UNIT)) {
-        printf("(%g, %g, %g), (%g, %g, %g, %g)\n",
-               info.unit2sensor[0], info.unit2sensor[1], info.unit2sensor[2],
-               info.unit2sensor_quat[0], info.unit2sensor_quat[1], 
-               info.unit2sensor_quat[2], info.unit2sensor_quat[3]);
+//          printf("(%g, %g, %g), (%g, %g, %g, %g)\n",
+//                 info.unit2sensor[0], info.unit2sensor[1], info.unit2sensor[2],
+//                 info.unit2sensor_quat[0], info.unit2sensor_quat[1], 
+//                 info.unit2sensor_quat[2], info.unit2sensor_quat[3]);
         v_update_user_xform(0, xformIndex, UGLYCAST info.unit2sensor,
                         UGLYCAST info.unit2sensor_quat);
     } else {
@@ -3572,7 +3575,7 @@ int register_vrpn_phantom_callbacks(void)
          handT->register_change_handler((void *)&V_TRACKER_FROM_HAND_SENSOR,
               handle_sensor2tracker_change, hand_sensor);
 
-            fprintf(stderr, "DEBUG: using remote vrpn config files for hand tracker\n");
+         //fprintf(stderr, "DEBUG: using remote vrpn config files for hand tracker\n");
 
             handT->register_change_handler((void *)&V_SENSOR_FROM_HAND_UNIT,
                                             handle_unit2sensor_change, hand_sensor);
@@ -3671,7 +3674,7 @@ int register_vrpn_callbacks(void){
 	    handle_sensor2tracker_change, head_sensor);
 
 
-            fprintf(stderr, "DEBUG:  using remote vrpn config files for head tracker\n");
+        //fprintf(stderr, "DEBUG:  using remote vrpn config files for head tracker\n");
             headT->register_change_handler((void *)&V_SENSOR_FROM_HEAD_UNIT,
 	                                    handle_unit2sensor_change, head_sensor);
             headT->register_change_handler((void *)&V_ROOM_FROM_HEAD_TRACKER,
@@ -3692,10 +3695,9 @@ loadColorMaps
 */
 int	loadColorMapNames(void)
 {
-    //#if !defined (_WIN32) || defined (__CYGWIN__)
 	DIR	*directory;
 	struct	dirent *entry;
-        //#endif
+
 	// Set the default entry to use the custom color controls
 	colorMapNames.addEntry("CUSTOM");
 
@@ -3704,7 +3706,6 @@ int	loadColorMapNames(void)
 		colorMapDir = defaultColormapDirectory;
 	}
 
-        //#if !defined (_WIN32) || defined (__CYGWIN__)
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
 	if ( (directory = opendir(colorMapDir)) == NULL) {
@@ -3718,7 +3719,7 @@ int	loadColorMapNames(void)
 	    }
 	}
 	closedir(directory);
-        //#endif
+
 	return 0;
 }
 
@@ -3730,10 +3731,9 @@ loadProcImage
 */
 int	loadProcProgNames(void)
 {
-#if !defined (_WIN32) || defined (__CYGWIN__)
 	DIR	*directory;
 	struct	dirent *entry;
-#endif
+
 	// Set the default entry to use the custom color controls
 	procProgNames.addEntry("none");
 
@@ -3742,7 +3742,6 @@ int	loadProcProgNames(void)
 		procImageDir = defaultFilterDir;
 	}
 
-#if !defined (_WIN32) || defined (__CYGWIN__)
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
 	if ( (directory = opendir(procImageDir)) == NULL) {
@@ -3756,7 +3755,6 @@ int	loadProcProgNames(void)
 	    }
 	}
 	closedir(directory);
-#endif
 	return 0;
 }
 
@@ -3768,10 +3766,9 @@ loadPPMTextures
 */
 int	loadPPMTextures(void)
 {
-#if !defined (_WIN32) || defined (__CYGWIN__)
 	DIR	*directory;
 	struct	dirent *entry;
-#endif
+
 	// Set the default entries
 	textureNames.addEntry("off");
 	textureNames.addEntry("uniform");
@@ -3788,7 +3785,6 @@ int	loadPPMTextures(void)
 	   }
 	}
 
-#if !defined (_WIN32) || defined (__CYGWIN__)
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
 	if ( (directory = opendir(textureDir)) == NULL) {
@@ -3802,7 +3798,7 @@ int	loadPPMTextures(void)
 	    }
 	}
 	closedir(directory);
-#endif
+
 	return 0;
 }
 
@@ -3982,8 +3978,10 @@ void setupCallbacks (Microscope * m) {
   procParams = "";
 
   newFilterPlaneName = "";
+#ifndef NO_FILTERS
   newFilterPlaneName.addCallback
             (handle_filterPlaneName_change, NULL);
+#endif
 
   newFlatPlaneName = "";
   newFlatPlaneName.addCallback
@@ -4059,8 +4057,10 @@ void teardownCallbacks (Microscope * m) {
   xPlaneName.removeCallback
             (handle_x_dataset_change, NULL);
 
+#ifndef NO_FILTERS
   newFilterPlaneName.removeCallback
             (handle_filterPlaneName_change, NULL);
+#endif
 
   newFlatPlaneName.removeCallback
             (handle_flatPlaneName_change, NULL);
@@ -5241,7 +5241,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
       break;
 
     case LOCAL_GRAPHICS:
-      fprintf(stderr, "Using local GL graphics implementation.\n");
+        //fprintf(stderr, "Using local GL graphics implementation.\n");
       graphics = new nmg_Graphics_Implementation(
           dataset, minC, maxC, rulerPPMName,
           NULL, wellKnownPorts->remote_gaEngine);
@@ -5545,8 +5545,8 @@ void initialize_rtt (void) {
                                        rtt_server_connection);
   rtt_server->setNumChannels(1);
 
-  fprintf(stderr, "Service named microscope_rtt is now listening "
-                  "on port %d.\n", wellKnownPorts->roundTripTime);
+//    fprintf(stderr, "Service named microscope_rtt is now listening "
+//                    "on port %d.\n", wellKnownPorts->roundTripTime);
 
 }
 
@@ -5788,8 +5788,8 @@ int main(int argc, char* argv[])
     headTrackerName = strtok(envir, " ");
     handTrackerName = strtok(NULL, " ");
 
-    printf("Head tracker is %s\n", headTrackerName);
-    printf("Hand tracker is %s\n", handTrackerName);
+    //printf("Head tracker is %s\n", headTrackerName);
+    //printf("Hand tracker is %s\n", handTrackerName);
 	
     /* We know at least the head tracker was specified, so check for a
     * null hand tracker.
@@ -5805,24 +5805,24 @@ int main(int argc, char* argv[])
 	envir = getenv("BDBOX");
 	if (envir == NULL)
 	{
-	  fprintf(stderr, "Microscape warning:  No sgi button/dial box set.\n");
+            //fprintf(stderr, "Microscape warning:  No sgi button/dial box set.\n");
 	  bdboxName = (char *)"null";
 	}
 	else
 	{
 	  bdboxName = strtok(envir, " ");
-	  printf("sgibdbox is %s\n", bdboxName);
+	  //printf("sgibdbox is %s\n", bdboxName);
 	  if (bdboxName == NULL)
 	    bdboxName = (char *)"null";
 	}
 	envir = getenv("HOST");
-	fprintf(stderr, "HOST: %s\n", envir);
+	//fprintf(stderr, "HOST: %s\n", envir);
 	sprintf(nM_coord_change_server_name, "ccs0@%s", envir);
-	fprintf(stderr, "nM_coord_change_server_name: %s\n",
-		nM_coord_change_server_name);
+//  	fprintf(stderr, "nM_coord_change_server_name: %s\n",
+//  		nM_coord_change_server_name);
 	sprintf(local_ModeName, "Cmode0@%s", envir);
-	fprintf(stderr, "local_ModeName: %s\n",
-		local_ModeName);
+//  	fprintf(stderr, "local_ModeName: %s\n",
+//  		local_ModeName);
 
     if ( (tcl_script_dir=getenv("NM_TCL_DIR")) == NULL) {
 	tcl_script_dir=tcl_default_dir;
@@ -5832,13 +5832,17 @@ int main(int argc, char* argv[])
     VERBOSE(1, "Loading color maps");
     loadColorMapNames();
 
+#ifndef NO_FILTERS
     // Load the names of the image processing programs available.
     VERBOSE(1, "Loading external program names");
     loadProcProgNames();
+#endif
 
+#ifndef NO_EXT_TEXTURES
     // Load the ppm textures available
     VERBOSE(1, "Loading PPM textures");
     loadPPMTextures();
+#endif
 
     istate.afm.mutexPort = wellKnownPorts->microscopeMutex;
 
@@ -6651,6 +6655,7 @@ VERBOSE(1, "Entering main loop");
   start = time1.tv_sec * 1000 + time1.tv_usec/1000;
   stop = time2.tv_sec * 1000 + time2.tv_usec/1000;
   interval = stop-start;          /* In milliseconds */
+  /*
   printf("Time for %ld loop iterations: %ld seconds\n",n,
         time2.tv_sec-time1.tv_sec);
   printf("Time for %ld display iterations: %ld seconds\n",n_displays,
@@ -6669,6 +6674,7 @@ VERBOSE(1, "Entering main loop");
   printf("---------------\n");
   printf("Graphics Timer:\n");
   graphicsTimer.report();
+  */
 
   if(glenable){
     /* shut down trackers and a/d devices    */
@@ -6753,11 +6759,6 @@ void handleTermInput(int ttyFD, vrpn_bool* donePtr)
 
     static int intervals=10;
  
-    /* buffer must be at least V_MAX_COMMAND_LENGTH bytes long	*/
-    char    	buffer[V_MAX_COMMAND_LENGTH];
-    int		nread;
-
-
     if(glenable)
       intervals=1;
     
@@ -6770,6 +6771,10 @@ void handleTermInput(int ttyFD, vrpn_bool* donePtr)
 	numTimesCalled = 0;
 
 #ifndef NO_RAW_TERM
+    /* buffer must be at least V_MAX_COMMAND_LENGTH bytes long	*/
+    char    	buffer[V_MAX_COMMAND_LENGTH];
+    int		nread;
+
     /* nonblocking read: is there anything to read at the keyboard?	*/
     if ( (nread = read_raw_term(ttyFD, buffer) ) < 1 )
 	/* no   */
@@ -7937,7 +7942,7 @@ void find_center_xforms ( q_vec_type * lock_userpos, q_type * lock_userrot,
       /* Determine the scale up factor */
       /* MODIFIED DANIEL ROHRER */
 //      if(ScreenWidthMetersY > ScreenWidthMetersX){
-                *lock_userscale = len_y / ScreenWidthMetersY * 0.7 / 1.0;
+                *lock_userscale = 0.55 * len_y / ScreenWidthMetersY ;
 //      }
 //      else{
 //              *lock_userscale = len_x / ScreenWidthMetersX * 0.7 / 1.0;

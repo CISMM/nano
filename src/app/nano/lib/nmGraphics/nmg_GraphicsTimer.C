@@ -52,6 +52,10 @@ void nmg_Graphics_Timer::resizeViewport (int width, int height) {
   d_imp->resizeViewport(width, height);
 }
 
+void nmg_Graphics_Timer::getViewportSize(int *width, int * height) {
+    d_imp->getViewportSize(width, height);
+}
+
 void nmg_Graphics_Timer::getDisplayPosition (q_vec_type &ll,
         q_vec_type &ul, q_vec_type &ur)
 {

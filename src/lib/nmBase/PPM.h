@@ -15,7 +15,7 @@ class	PPM {
 	int	Putppm(int x, int y,  int red, int green, int blue);
 
 	PPM (FILE *file = NULL);
-        PPM (const char *filename = NULL);
+        PPM (const char *filename);
 
 	int	Value_at_normalized(double nx, double ny, int *red,
 			int *green, int *blue);

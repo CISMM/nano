@@ -105,10 +105,10 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     amplitude ("modifyp_amplitude", i.amplitude ),
     amplitude_min (i.amplitude_min ),
     amplitude_max (i.amplitude_max ),
-    frequency("modifyp_frequency", 1.0e5),
+    frequency("modifyp_frequency", 100.0),
     input_gain("modifyp_input_gain", 1),
-    ampl_or_phase("modifyp_ampl_or_phase", 0),   // 0 for ampl, 1 for phase
-    drive_attenutation("modifyp_drive_attenuation", 1),
+    ampl_or_phase("modifyp_ampl_or_phase", 1),   // 1 for ampl, 0 for phase
+    drive_attenuation("modifyp_drive_attenuation", 1),
     phase("modifyp_phase", 0.0),
     scan_rate_microns ("modifyp_rate", 20.0),
 
@@ -217,10 +217,10 @@ AFMImageState::AFMImageState (const AFMImageInitializationState & i) :
     amplitude ("imagep_amplitude", i.amplitude ),
     amplitude_min (i.amplitude_min ),
     amplitude_max (i.amplitude_max ),
-    frequency("imagep_frequency", 1.0e5),
+    frequency("imagep_frequency", 100.0),
     input_gain("imagep_input_gain", 1),
-    ampl_or_phase("imagep_ampl_or_phase", 0),   // 0 for ampl, 1 for phase
-    drive_attenutation("imagep_drive_attenuation", 1),
+    ampl_or_phase("imagep_ampl_or_phase", 1),   // 1 for ampl, 0 for phase
+    drive_attenuation("imagep_drive_attenuation", 1),
     phase("imagep_phase", 0.0),
     scan_rate_microns ("imagep_rate", 1.0),
 
@@ -275,10 +275,10 @@ AFMScanlineState::AFMScanlineState(const AFMScanlineInitializationState &i) :
     amplitude ("scanlinep_amplitude", i.amplitude ),
     amplitude_min (i.amplitude_min ),
     amplitude_max (i.amplitude_max ),
-    frequency("scanlinep_frequency", 1.0e5),
+    frequency("scanlinep_frequency", 100.0),
     input_gain("scanlinep_input_gain", 1),
-    ampl_or_phase("scanlinep_ampl_or_phase", 0),   // 0 for ampl, 1 for phase
-    drive_attenutation("scanlinep_drive_attenuation", 1),
+    ampl_or_phase("scanlinep_ampl_or_phase", 1),   // 1 for ampl, 0 for phase
+    drive_attenuation("scanlinep_drive_attenuation", 1),
     phase("scanlinep_phase", 0.0),
     scan_rate_microns_per_sec ("scanlinep_rate", 20.0),
     forcelimit("scanlinep_forcelimit", 10),

@@ -56,6 +56,11 @@ void nmg_Graphics_Remote::resizeViewport (int width , int height ) {
     delete [] msgbuf;
 
 }
+void nmg_Graphics_Remote::getViewportSize(int *width, int * height) {
+    fprintf(stderr, "WARNING: nmg_Graphics_Remote::getViewportSize unimplemented!\n");
+    *width = 1024;
+    *height = 768;
+}
 
 void nmg_Graphics_Remote::getDisplayPosition (q_vec_type &  ll ,
                                               q_vec_type &  ul ,

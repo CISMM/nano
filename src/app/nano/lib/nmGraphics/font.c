@@ -149,6 +149,10 @@ static	GLubyte rasters[][13] = {
 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x8f, 0xf1, 0x60, 0x00, 0x00, 0x00} 
 };
 
+// Spacing between two successive letters in the font.
+// Default font is the only one supported, so we hard-code to 10 pixels. 
+// Actual font seems to be a 8x13 bitmap, encoded in the array above. 
+float getFontWidth() { return 10.0f; }
 
 /*	This routine will load a font from the file whose name is passed
  * to it as a parameter.  If the name is a NULL pointer, then the default
@@ -183,7 +187,7 @@ int loadFont (const char * filename)
 // XXX This causes a "Stray signal 15" message in the pxglnode logfile,
 //     while running with pbase.  Need to check with PxFl group if
 //     glBitmap() is currently supported.   (by C.Chang 3/20/96)
-			glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, rasters[i-32]);
+			glBitmap(8, 13, 0.0, 2.0, getFontWidth(), 0.0, rasters[i-32]);
 #endif
 		    glEndList();
 		}

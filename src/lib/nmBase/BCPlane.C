@@ -1556,9 +1556,8 @@ setTime
         @author Kimberly Passarella Jones
  @date modified 9-10-95 by Kimberly Passarella Jones
 */
-void CPlane::setTime(int x, int y, long sec, long usec)
+void CPlane::setTime(int /*x*/, int /*y*/, long /*sec*/, long /*usec*/)
 {
-    x = x; y = y; sec = sec; usec = usec;
     // Does nothing: this plane does not store time
 } // setTime
 
@@ -1668,7 +1667,7 @@ void CTimedPlane::computeMinMax (void) {
       // Original algorithm
       // if ((x == 0) && (y == 0)) {
       //   _min_value = value;
-      //   _min_value = value;
+      //   _max_value = value;
       // }
 
       if (_sec[x][y] && _usec[x][y]) {

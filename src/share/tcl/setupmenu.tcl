@@ -18,7 +18,7 @@ frame $nmInfo(data_sets).touch -relief sunken -bd 2
 label $nmInfo(data_sets).touch.label -text Touch
 label $nmInfo(data_sets).touch.instr -text "Hit Enter to change no. of samples"
 frame $nmInfo(data_sets).forcecurve -relief sunken -bd 2
-label $nmInfo(data_sets).forcecurve.label -text ForceCurve
+label $nmInfo(data_sets).forcecurve.label -text "Force Curve"
 #frame $nmInfo(data_sets).scanline -relief sunken -bd 2
 #label $nmInfo(data_sets).scanline.label -text "Line Scan"
 
@@ -29,7 +29,73 @@ pack $nmInfo(data_sets).touch -side left -anchor n
 pack $nmInfo(data_sets).forcecurve.label -side top
 pack $nmInfo(data_sets).forcecurve -side left -anchor n
 #pack $nmInfo(data_sets).scanline.label -side top
-#pack $nmInfo(data_sets).scanline -side left -anchor n
+#pack $nmInfo(data_sets).scanline -side left -anchor n 
+
+set scandatalist [list \
+        "Topography-Forward" \
+        "Topography-Reverse" \
+        "Internal Sensor-Forward" \
+        "Internal Sensor-Reverse" \
+        "Z Modulation-Forward" \
+        "Z Modulation-Reverse" \
+        "Lateral Force-Forward" \
+        "Lateral Force-Reverse" \
+        "IN 1-Forward" \
+        "IN 1-Reverse" \
+        "IN 2-Forward" \
+        "IN 2-Reverse" \
+        "FastTrack-Forward" \
+        "FastTrack-Reverse" \
+        "Z Piezo-Forward" \
+        "Z Piezo-Reverse" ]
+
+set i 0
+foreach name $scandatalist {
+    checkbutton $nmInfo(data_sets).scan.scanbutton$i -text "$name" \
+            -variable data_sets(scan$i)
+    pack $nmInfo(data_sets).scan.scanbutton$i -side top -anchor nw
+    incr i
+}
+#set num_scandata [expr $i -1]
+
+set touchdatalist [list \
+        "Topography" \
+        "Internal Sensor" \
+        "Z Modulation" \
+        "Lateral Force" \
+        "IN 1" \
+        "IN 2" \
+        "FastTrack" \
+        "Z Piezo" ]
+
+set i 0
+foreach name $touchdatalist {
+    frame $nmInfo(data_sets).touch.f$i
+    checkbutton $nmInfo(data_sets).touch.f$i.touchbutton$i -text "$name" \
+            -variable data_sets(touch$i)
+    generic_entry $nmInfo(data_sets).touch.f$i.touchentry$i \
+            data_sets(touch_samples$i) "" integer
+    pack $nmInfo(data_sets).touch.f$i -side top -fill x -expand yes
+    pack $nmInfo(data_sets).touch.f$i.touchbutton$i \
+            -side left -anchor nw
+    pack $nmInfo(data_sets).touch.f$i.touchentry$i \
+            -side right -anchor ne
+    incr i
+}
+#set num_touchdata [expr $i -1]
+
+# spmlab allows two out of three including the following and
+# the two auxiliary channels, but selection of other than the default
+# hasn't been implemented yet
+set forcecurvedatalist [list "Internal Sensor" ]
+set i 0
+foreach name $forcecurvedatalist {
+    checkbutton $nmInfo(data_sets).forcecurve.forcecurvebutton$i -text "$name"\
+            -variable data_sets(forcecurve$i)
+    pack $nmInfo(data_sets).forcecurve.forcecurvebutton$i -side top -anchor nw
+    incr i
+}
+#set num_forcecurvedata [expr $i -1]
 
 #
 ################################
@@ -50,13 +116,11 @@ pack $nmInfo(z_mapping).z_dataset -anchor nw -padx 3 -pady 3
 set z_scale 1
 generic_entry $nmInfo(z_mapping).scale z_scale "Z scale" real
 pack $nmInfo(z_mapping).scale -anchor nw -padx 3 -pady 3
+
 #
 #################################    
-#
-# This part of the script brings up sliders to control the
-# mapping of values into colors on the surface.
-source colormap.tcl
-
+# Controls for the colormap are in a separate file (colormap.tcl)
+# sourced from mainwin.tcl.
 
 ############################
 # Contour lines
@@ -639,9 +703,9 @@ set nmInfo(pref_icons) [$nmInfo(preferences).icons childsite]
 
 set sphere_scale 12.5
 generic_entry $nmInfo(pref_icons).icon_scale global_icon_scale \
-	"Icon scale (1,100)" real
+	"Icon scale (0.1,10)" real
 generic_entry $nmInfo(pref_icons).sphere_scale sphere_scale \
-	"Sphere scale (1,100)" real
+	"Sphere scale (1,100nm)" real
 
 pack $nmInfo(preferences).icons -fill both
 pack $nmInfo(pref_icons).icon_scale $nmInfo(pref_icons).sphere_scale \
@@ -658,9 +722,10 @@ set num_lines_to_jump_back 1000
 generic_entry $nmInfo(pref_acq).jump_back num_lines_to_jump_back \
 	"Post-modify jumpback" integer
 
+if { !$thirdtech_ui } {
 pack $nmInfo(preferences).acquisition -fill both
 pack $nmInfo(pref_acq).jump_back -side top -fill x
-
+}
 iwidgets::Labeledwidget::alignlabels \
 	$nmInfo(pref_surf_shading).shiny \
 	$nmInfo(pref_surf_shading).specular_color \
@@ -672,6 +737,7 @@ iwidgets::Labeledwidget::alignlabels \
 #
 # Coupling
 #
+if { !$thirdtech_ui } {
 iwidgets::Labeledframe $nmInfo(preferences).coupling \
         -labeltext "Coupling" \
         -labelpos nw
@@ -682,4 +748,4 @@ checkbutton $nmInfo(pref_coupling).finegrained_coupling \
 
 pack $nmInfo(preferences).coupling -fill both
 pack $nmInfo(pref_coupling).finegrained_coupling -side top -fill x
-
+}

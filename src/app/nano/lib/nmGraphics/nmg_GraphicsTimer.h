@@ -39,6 +39,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
 
     virtual void changeDataset( nmb_Dataset * data);
     virtual void resizeViewport(int width, int height);
+    virtual void getViewportSize(int *width, int * height);
     virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
                                                      q_vec_type &ur);
     virtual void loadRulergridImage (const char * name);

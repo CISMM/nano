@@ -178,7 +178,7 @@ generic_entry $nmInfo(rulergrid).left.linewidthy ruler_width_y \
 
 set ruler_opacity 255
 generic_entry $nmInfo(rulergrid).left.opacity ruler_opacity \
-	"Opacity (0,255)" numeric
+	"Opacity (0,100%)" numeric
 
 set_position_choice
 
