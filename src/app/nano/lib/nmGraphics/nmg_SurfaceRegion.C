@@ -240,7 +240,11 @@ setTexture(nmg_State * state, nmb_Dataset *data)
 #ifndef _WIN32
 		glDisable(GL_TEXTURE_3D_EXT);
 #endif
-        glBindTexture(GL_TEXTURE_1D, state->contourTextureID);
+		if (state->contourTextureID) {
+			glBindTexture(GL_TEXTURE_1D, state->contourTextureID);
+		} else {
+			buildContourTexture(state);
+		}
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
                   state->contourTextureBlendFunc);
         break;
@@ -249,7 +253,11 @@ setTexture(nmg_State * state, nmb_Dataset *data)
 		glDisable(GL_TEXTURE_1D);
 		glDisable(GL_TEXTURE_2D);
 		glEnable(GL_TEXTURE_3D_EXT);
-        glBindTexture(GL_TEXTURE_3D, state->alphaTextureID);
+		if (state->alphaTextureID) {
+			glBindTexture(GL_TEXTURE_3D, state->alphaTextureID);
+		} else {
+			buildAlphaTexture(state);
+		}
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
                   state->alphaTextureBlendFunc);
 #endif

@@ -1286,7 +1286,7 @@ void nmg_Graphics_Implementation::createColormapTexture( const char *name ) {
   // we don't have separate functions for building textures from ppm images
   // and AFM data (these changes allow this function to do what 
   // makeAndInstallRulerImage() was used for previously)
-  strcpy(state->colormap_texture_name, name);
+
   nmb_Image *im = d_dataset->dataImages->getImageByName(name);
   if (!im) {
     fprintf(stderr, 
@@ -1296,11 +1296,6 @@ void nmg_Graphics_Implementation::createColormapTexture( const char *name ) {
 
   v_gl_set_context_to_vlib_window();
   state->colormapTexture.setImage(im);
-  state->colormapTexture.setColorMap(state->colormap_texture_curColorMap);
-  state->colormapTexture.setColorMapMinMax(state->colormap_texture_data_min, 
-	                                       state->colormap_texture_data_max,
-	                                       state->colormap_texture_color_min, 
-	                                       state->colormap_texture_color_max);
   state->colormapTexture.setUpdateColorMap(true);
   state->colormapTexture.createTexture(false);
 
@@ -1314,30 +1309,26 @@ void nmg_Graphics_Implementation::createColormapTexture( const char *name ) {
 void nmg_Graphics_Implementation::
 setTextureColormapConversionMap( int which, const char *map, const char* /*mapdir*/ ) {
     if ( !strcmp( map, "none" ) ) {
-        if (which == nmg_Graphics::COLORMAP || which == nmg_Graphics::VIDEO) {
-            if (state->colormap_texture_curColorMap) {
-                delete state->colormap_texture_curColorMap;
-            }
-            state->colormap_texture_curColorMap = NULL;
-
-            if (which == nmg_Graphics::VIDEO) {
-                state->videoTexture.setColorMap(NULL);
-                state->videoTexture.setUpdateColorMap(true);
-            }
+        if (which == nmg_Graphics::COLORMAP) {
+			state->colormapTexture.setColorMap(NULL);
+			state->colormapTexture.setUpdateColorMap(true);
+		} else if (which == nmg_Graphics::VIDEO) {
+            state->videoTexture.setColorMap(NULL);
+            state->videoTexture.setUpdateColorMap(true);
         }
     }
     else {
-        if (which == nmg_Graphics::COLORMAP || which == nmg_Graphics::VIDEO) {
-            if ( !state->colormap_texture_curColorMap ) {
-                state->colormap_texture_curColorMap = new nmb_ColorMap;
-            }
-            state->colormap_texture_curColorMap->load_from_file( map, state->colorMapDir );
-
-            if (which == nmg_Graphics::VIDEO) {
-                state->videoTexture.setColorMap(state->colormap_texture_curColorMap);
-                state->videoTexture.setUpdateColorMap(true);
-            }
-        }
+        if (which == nmg_Graphics::COLORMAP) {
+			nmb_ColorMap colormap;
+			colormap.load_from_file(map, state->colorMapDir);
+			state->colormapTexture.setColorMap(&colormap);
+			state->colormapTexture.setUpdateColorMap(true);
+		} else if (which == nmg_Graphics::VIDEO) {
+			nmb_ColorMap colormap;
+			colormap.load_from_file(map, state->colorMapDir);
+			state->videoTexture.setColorMap(&colormap);
+			state->videoTexture.setUpdateColorMap(true);
+		}
     }
 }
 
@@ -1351,17 +1342,13 @@ void nmg_Graphics_Implementation::setTextureColormapSliderRange (
     float color_min,
     float color_max) {
 
-    if (which == nmg_Graphics::COLORMAP || which == nmg_Graphics::VIDEO) {
-        state->colormap_texture_data_min = data_min;
-        state->colormap_texture_data_max = data_max;
-        state->colormap_texture_color_min = color_min;
-        state->colormap_texture_color_max = color_max;
-
-        if (which == nmg_Graphics::VIDEO) {
-            state->videoTexture.setColorMapMinMax(data_min, data_max, color_min, color_max);
-            state->videoTexture.setUpdateColorMap(true);
-        }
-    }
+    if (which == nmg_Graphics::COLORMAP) {
+		state->colormapTexture.setColorMapMinMax(data_min, data_max, color_min, color_max);
+		state->colormapTexture.setUpdateColorMap(true);	
+	} else if (which == nmg_Graphics::VIDEO) {
+		state->videoTexture.setColorMapMinMax(data_min, data_max, color_min, color_max);
+		state->videoTexture.setUpdateColorMap(true);
+	}
 }
 
 //
@@ -1385,13 +1372,15 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
-  glGenTextures(1, &(state->contourTextureID));
-  buildContourTexture(state);
+  //glGenTextures(1, &(state->contourTextureID));
+  state->contourTextureID = 0;
+  //buildContourTexture(state);
 
   //fprintf(stderr, "Initializing checkerboard texture.\n");
-  glGenTextures(1, &(state->alphaTextureID));
+  //glGenTextures(1, &(state->alphaTextureID));
+  state->alphaTextureID = 0;
   makeCheckImage(state);
-  buildAlphaTexture(state);
+  //buildAlphaTexture(state);
 
   //fprintf(stderr, "Initializing ruler texture.");
   if (state->rulerPPM) {
@@ -1530,9 +1519,6 @@ void nmg_Graphics_Implementation::setRulergridOpacity (float alpha) {
   else {
     makeRulerImage(state);
     buildRulergridTexture(state);
-  }
-  if (state->colormap_texture_name[0]) {
-    createColormapTexture(state->colormap_texture_name);
   }
 }
 

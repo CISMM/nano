@@ -1,3 +1,24 @@
+2002-11-06  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_GraphicsImpl.C : took out references to state->colormap_texture*
+	variables because they were redundant and confusing - also, made several
+	changes which allow the colormap and video textures to have separate
+	colormaps
+	Removed the calls to glGenTextures used for the alpha texture and the
+	contour texture - instead these are created when they are needed without
+	creating texture objects for them. This
+	should make it easier to manage texture resources. Now all
+	texture objects are created through URProjectiveTexture
+ 	* nmg_ImageDisplayProjectiveTexture.Ch : removed some functions that 
+	weren't being used and added some comments
+	* nmg_State.Ch - commented out colormap_texture* variables and 
+	removed some obsolete #defines for textures
+	* nmg_SurfaceRegion.C: added checks of contourTextureID and
+	alphaTextureID before binding them and if they are 0 put a call to the
+	build the corresponding textures
+	* surface_util.c : replaced tex_ids[ALPHA_3D_TEX_ID] with alphaTextureID
+	
+
 2002-11-04  David Borland <borland@cs.unc.edu>
 
         * nmg_Graphics.[Ch] : added functions to be able to change the 

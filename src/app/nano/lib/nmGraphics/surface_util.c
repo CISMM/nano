@@ -392,7 +392,7 @@ void buildAlphaTexture (nmg_State * state) {
 
   /* GL_TEXTURE_3D_EXT is not available on other platforms... i.e. WIN32 */
 #if defined(sgi)
-  glBindTexture(GL_TEXTURE_3D, state->tex_ids[ALPHA_3D_TEX_ID]);
+  glBindTexture(GL_TEXTURE_3D, state->alphaTextureID);
 
   glTexParameterf(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_3D_EXT, GL_TEXTURE_WRAP_T, GL_REPEAT);

@@ -73,12 +73,14 @@ nmg_State::nmg_State ()
     surfaceColor[3] = 1.0f;
 
     // Colormap Textures:
+	/* redundant
     colormap_texture_curColorMap = NULL;
     colormap_texture_data_min = 0;
     colormap_texture_data_max = 1.0;
     colormap_texture_color_min = 0;
     colormap_texture_color_max = 1.0;
     colormap_texture_name[0] = '\0';
+	*/
 
     prerendered_grid = NULL;
     prerenderedChange = NULL;

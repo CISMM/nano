@@ -46,11 +46,6 @@ extern  int     spm_graphics_verbosity;
 #define PUSH_ATTRIB(x) glPushAttrib(x)
 #define POP_ATTRIB() glPopAttrib()
 
-// Texture handling defines
-#define N_TEX 2
-#define CONTOUR_1D_TEX_ID       0
-#define ALPHA_3D_TEX_ID         1
-
 // Visualization defines
 #define DISABLE_MASK 0
 #define ENABLE_MASK 1
@@ -145,12 +140,15 @@ public:
     vrpn_int32 collabMode;
 
 //  Textures:
+/*
+This is redundant - information is now stored in URProjectiveTexture objects
     nmb_ColorMap * colormap_texture_curColorMap;        // also using for video texture, might want to add a separate one
     float colormap_texture_data_min;
     float colormap_texture_data_max;
     float colormap_texture_color_min;
     float colormap_texture_color_max;
     char colormap_texture_name[128];
+	*/
 
 	URProjectiveTexture *currentProjectiveTexture;
 	URProjectiveTexture colormapTexture;
