@@ -134,9 +134,7 @@ actual feeling helps the students understand the surface.
 Tclvar_int_with_button	config_haptic_enable("Enable Haptic", ".sliders", 1);
 Tclvar_int_with_button	config_haptic_plane("Haptic from flat", ".sliders", 0);
 
-static nmui_HSCanned * canned_haptics = NULL;
-static nmui_PointFeatures * point_haptic_features = NULL;
-static nmui_GridFeatures * grid_haptic_features = NULL;
+static nmui_SurfaceFeatures haptic_features;
 
 /***************************
  * Mode of user operation
@@ -330,18 +328,15 @@ TclNet_float tcl_wfr_scale
 
 
 static void handle_friction_linear_change(vrpn_int32 val, void *) {
-  point_haptic_features->useLinearFriction(val);
-  grid_haptic_features->useLinearFriction(val);
+  haptic_features.useLinearFriction(val);
 }
 
 static void handle_bumpscale_linear_change(vrpn_int32 val, void *) {
-  point_haptic_features->useLinearBumps(val);
-  grid_haptic_features->useLinearBumps(val);
+  haptic_features.useLinearBumps(val);
 }
 
 static void handle_buzzscale_linear_change(vrpn_int32 val, void *) {
-  point_haptic_features->useLinearBuzzing(val);
-  grid_haptic_features->useLinearBuzzing(val);
+  haptic_features.useLinearBuzzing(val);
 }
 
 static void handle_handTracker_update_rate (vrpn_float64 v, void *) {
@@ -1354,6 +1349,8 @@ void specify_sound(int x, int y)
 
 double touch_canned_from_plane (int whichUser, q_vec_type handpos) {
 
+  static nmui_HSCanned haptics (dataset);
+  static nmui_GridFeatures strategy (&haptics, dataset);
   q_vec_type n;
   double d;
 
@@ -1363,23 +1360,27 @@ double touch_canned_from_plane (int whichUser, q_vec_type handpos) {
     return touch_flat_from_measurelines(whichUser, handpos);
   }
 
-  canned_haptics->setLocation(handpos);
-  canned_haptics->update();
+  // Passing a temp pointer to a persistent object!
+  // But it will ONLY be referenced while this function is live.
+  haptic_features.setSurfaceFeatureStrategy(&strategy);
+
+  haptics.setLocation(handpos);
+  haptics.update();
 
   if (forceDevice) {
-    canned_haptics->getOutputPlane(n, &d);
+    haptics.getOutputPlane(n, &d);
     forceDevice->set_plane(n[0], n[1], n[2], d);
   }
 
   // Set adhesion, compliance, bumps, buzzing, ...
-  // Must come after canned_haptics->setLocation(), and
+  // Must come after haptics.setLocation(), and
   // probably update() too.
 
-  grid_haptic_features->update();
+  haptic_features.update();
 
   // Return signed distance above plane (plane in world space).
 
-  return canned_haptics->distanceFromSurface();
+  return haptics.distanceFromSurface();
 }
 
 
@@ -1451,6 +1452,7 @@ double touch_flat_from_measurelines(int whichUser, q_vec_type handpos)
 double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
 {
   static nmui_HSLivePlane haptics (dataset, microscope);
+  static nmui_PointFeatures strategy (microscope);
   q_vec_type n;
   double d;
 
@@ -1459,6 +1461,8 @@ double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
   if (config_haptic_plane) {
 	return touch_flat_from_measurelines(whichUser, handpos);
   }
+
+  haptic_features.setSurfaceFeatureStrategy(&strategy);
 
   haptics.setLocation(handpos);
   haptics.update();
@@ -1471,7 +1475,7 @@ double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
     // Set friction, adhesion, compliance...
     // Must happen after haptics.setLocation(), and probably update().
 
-    point_haptic_features->update();
+    haptic_features.update();
 
     /* Send the plane to the haptic server */
     forceDevice->sendSurface();
@@ -2713,10 +2717,6 @@ void initializeInteraction (void) {
 //(vrpn_float64) tcl_wfr_rot_2, (vrpn_float64) tcl_wfr_rot_3);
 //fprintf(stderr, "Starting world scale is %.5f\n",
 //(vrpn_float64) tcl_wfr_scale);
-
-  canned_haptics = new nmui_HSCanned (dataset);
-  point_haptic_features = new nmui_PointFeatures (microscope);
-  grid_haptic_features = new nmui_GridFeatures (canned_haptics, dataset);
 
 }
 
