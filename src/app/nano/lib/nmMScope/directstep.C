@@ -198,13 +198,8 @@ void handle_step_go_to_pos(vrpn_int32, void * /*_mptr*/)
 	max_y = dataset->inputGrid->maxY();
 
 	//put into microscope coordinates
-	/*
-	x_pos = step_x_pos + plane->xInWorld(0);
-	y_pos = step_y_pos + plane->yInWorld(0);
-    */
-
-	x_pos = plane->xInWorld(microscope->state.modify.step_x_pos);
-	y_pos = plane->xInWorld(microscope->state.modify.step_y_pos);
+	x_pos = microscope->state.modify.step_x_pos + plane->xInWorld(0);
+	y_pos = microscope->state.modify.step_y_pos + plane->yInWorld(0);
 
 	//bounds check:
 	if (min_x > x_pos || max_x < x_pos || min_y > y_pos || max_y < y_pos) {
