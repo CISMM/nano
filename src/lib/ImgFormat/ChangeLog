@@ -1,3 +1,9 @@
+2001-06-23  Russell Taylor  <taylorr@cs.unc.edu>
+
+	* PNMImage.C (Read) : Changed call to image->Valid() into call to
+		Valid() to prevent seg-fault when attempting to read from
+		a PPM file that doesn't exist.
+
 2001-05-14  Adam Seeger  <seeger@cs.unc.edu>
 
 	* AbstractImage.h (Read/Write): added overloaded versions of these

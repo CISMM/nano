@@ -240,7 +240,7 @@ bool PNMImage::Read(const char *filename)
 
    pnm.close();
 
-   return image->Valid();
+   return Valid();
 }
 
 bool PNMImage::Read(FILE *file)
@@ -263,7 +263,7 @@ bool PNMImage::Read(FILE *file)
       Die();
    }
 
-   return image->Valid();
+   return Valid();
 }
 
 bool PNMImage::Write(const char *filename)
