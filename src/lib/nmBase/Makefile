@@ -1,4 +1,4 @@
-USES_LIBS := nmMP ImgFormat vrpn quat
+USES_LIBS := nmMP vrpn quat
 
 USES_EXTERNAL_LIBS := magick
 
