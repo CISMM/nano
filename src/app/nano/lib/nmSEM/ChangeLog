@@ -1,0 +1,17 @@
+2000-10-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM.Ch (encode_ScanlineData,
+                                 decode_ScanlineDataHeader,
+                                 decode_ScanlineDataLine) : 
+	made ScanlineData message more
+	general so it can contain different pixel types (byte, short, float)
+	got rid of WindowLineData message since ScanlineData should be 
+	sufficient for all our purposes now
+	* nmm_Microscope_SEM_Remote.C (getWindowLineData - removed, 
+                                     RcvWindowLineData - removed,
+                                     RcvScanlineData) :
+	changes to match those in nmm_Microscope_SEM.C
+	* nmui_SEM.C (handle_device_change) :
+	changes to match those in nmm_Microscope_SEM_Remote.C
+	handles ScanlineData messages that contain byte or short data but
+	not float (we don't want to send float data since its slower)

@@ -8,8 +8,9 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
     d_pixelIntegrationTime_nsec(0), 
     d_interpixelDelayTime_nsec(0),
     d_startX(0), d_startY(0), d_dX(0), d_dY(0),
-    d_lineLength(0), d_numFields(0), d_numLines(0),
-    d_data(NULL), d_uint8_data(NULL),
+    d_lineLength(0), d_numFields(0), d_numLines(0), d_pixelType(NMB_NONE),
+    d_dataBuffer(NULL),
+    d_dataBufferSize(0),
     d_messageHandlerList(NULL)
 {
   if (d_connection == NULL){
@@ -34,12 +35,6 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
            "nmm_Microscope_SEM_Remote: can't register delay handler\n");
     return;
   }
-  if (d_connection->register_handler(d_WindowLineData_type,
-                RcvWindowLineData, this)) {
-    fprintf(stderr,
-           "nmm_Microscope_SEM_Remote: can't register line data handler\n");
-    return;
-  }
   if (d_connection->register_handler(d_ScanlineData_type,
                 RcvScanlineData, this)) {
     fprintf(stderr,
@@ -59,11 +54,8 @@ nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
 
 nmm_Microscope_SEM_Remote::~nmm_Microscope_SEM_Remote()
 {
-  if (d_data) {
-    delete d_data;
-  }
-  if (d_uint8_data) {
-    delete d_uint8_data;
+  if (d_dataBuffer) {
+    delete d_dataBuffer;
   }
 }
 
@@ -197,28 +189,19 @@ void nmm_Microscope_SEM_Remote::getInterPixelDelayTime(vrpn_int32 &time_nsec)
   time_nsec = d_interpixelDelayTime_nsec;
 }
 
-void nmm_Microscope_SEM_Remote::getWindowLineData
-                      (vrpn_int32 &start_x, vrpn_int32 &start_y,
-                       vrpn_int32 &dx, vrpn_int32 &dy, vrpn_int32 &line_length,
-                       vrpn_int32 &num_fields, vrpn_float32 **data)
-{
-  start_x = d_startX; start_y = d_startY;
-  dx = d_dX; dy = d_dY; line_length = d_lineLength;
-  num_fields = d_numFields;
-  *data = d_data;
-}
-
 void nmm_Microscope_SEM_Remote::getScanlineData
                       (vrpn_int32 &start_x, vrpn_int32 &start_y,
                        vrpn_int32 &dx, vrpn_int32 &dy, vrpn_int32 &line_length,
                        vrpn_int32 &num_fields, vrpn_int32 &num_lines,
-                       vrpn_uint8 **data)
+                       nmb_PixelType &pix_type,
+                       void **data)
 {
   start_x = d_startX; start_y = d_startY;
   dx = d_dX; dy = d_dY; line_length = d_lineLength;
   num_fields = d_numFields;
   num_lines = d_numLines;
-  *data = d_uint8_data;
+  pix_type = d_pixelType;
+  *data = d_dataBuffer;
 }
 
 //static
@@ -276,90 +259,56 @@ int nmm_Microscope_SEM_Remote::RcvReportInterPixelDelayTime
 }
 
 //static
-int nmm_Microscope_SEM_Remote::RcvWindowLineData(void *_userdata, 
-    vrpn_HANDLERPARAM _p)
-{
-  int i, j;
-  vrpn_int32 start_x, start_y, dx, dy, line_length, num_fields;
-  vrpn_float32 *data, *pixel_data;
-  nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
-  const char * bufptr = _p.buffer;
-  vrpn_int32 sec, usec;
-
-  if (decode_WindowLineDataHeader(&bufptr, &start_x, &start_y,
-           &dx, &dy, &line_length, &num_fields, &sec, &usec) == -1) {
-    fprintf(stderr,
-        "nmm_Microscope_SEM_Remote::RcvWindowLineData: header decode failed\n");
-    return -1;
-  }
-  //printf("length = %d\n", num_fields*line_length);
-  data = new vrpn_float32[num_fields*line_length];
-  if (!data){
-	fprintf(stderr, "RcvWindowLineData: out of memory\n");
-	return -1;
-  }
-  pixel_data = new vrpn_float32[num_fields];
-  if (!pixel_data){
-        delete data;
-	fprintf(stderr, "RcvWindowLineData: out of memory\n");
-	return -1;
-  }
-  for (i = 0; i < line_length; i++){
-    if (decode_WindowLineDataField (&bufptr, num_fields, pixel_data) == -1) {
-      fprintf(stderr,
-         "nmm_Microscope_SEM_Remote::RcvWindowLineData: pixel decode failed\n");
-      return -1;
-    }
-    for (j = 0; j < num_fields; j++){
-      data[line_length*j + i] = pixel_data[j];
-    }
-  }
-  
-
-  delete [] pixel_data;
-  me->d_startX = start_x;
-  me->d_startY = start_y;
-  me->d_dX = dx;
-  me->d_dY = dy;
-  me->d_lineLength = line_length;
-  me->d_numFields = num_fields;
-  if (me->d_data) {
-    // delete old data before setting new data
-    delete [] (me->d_data);
-  }
-  me->d_data = data;
-  return me->notifyMessageHandlers(WINDOW_LINE_DATA, _p.msg_time);
-}
-
-//static
 int nmm_Microscope_SEM_Remote::RcvScanlineData(void *_userdata, 
     vrpn_HANDLERPARAM _p)
 {
   vrpn_int32 start_x, start_y, dx, dy, line_length, num_fields, num_lines;
-  vrpn_uint8 *data;
+  void *data;
   nmm_Microscope_SEM_Remote *me = (nmm_Microscope_SEM_Remote *)_userdata;
   const char * bufptr = _p.buffer;
   vrpn_int32 sec, usec;
+  vrpn_int32 pixelTypeInt32;
+  nmb_PixelType pixelType;
+  int pixelSize;
 
   if (decode_ScanlineDataHeader(&bufptr, &start_x, &start_y,
-           &dx, &dy, &line_length, &num_fields, &num_lines, &sec, &usec) 
+           &dx, &dy, &line_length, &num_fields, &num_lines, &sec, &usec,
+           &pixelTypeInt32) 
            == -1) {
     fprintf(stderr,
         "nmm_Microscope_SEM_Remote::RcvScanlineData: header decode failed\n");
     return -1;
   }
 
-  int oldbufsize = me->d_lineLength*me->d_numFields*me->d_numLines;
-  if (oldbufsize != line_length*num_fields*num_lines){
-      if (me->d_uint8_data){
-        delete [] (me->d_uint8_data);
-      }
-      me->d_uint8_data = new vrpn_uint8[num_fields*line_length*num_lines];
+  switch(pixelTypeInt32) {
+    case NMB_UINT8:
+      pixelType = NMB_UINT8;
+      pixelSize = sizeof(vrpn_uint8);
+      break;
+    case NMB_UINT16:
+      pixelType = NMB_UINT16;
+      pixelSize = sizeof(vrpn_uint16);
+      break;
+    case NMB_FLOAT32:
+      pixelType = NMB_FLOAT32;
+      pixelSize = sizeof(vrpn_float32);
+      break;
+    default:
+      fprintf(stderr, "SEM_remote::Scanline data: unknown pixel type\n");
+      return -1;
   }
-  data = me->d_uint8_data;
+
+  if (me->d_dataBufferSize != pixelSize*line_length*num_fields*num_lines){
+      if (me->d_dataBuffer){
+        delete [] (me->d_dataBuffer);
+      }
+      me->d_dataBufferSize = pixelSize*num_fields*line_length*num_lines;
+      me->d_dataBuffer = new char[me->d_dataBufferSize];
+  }
+  data = (void *)(me->d_dataBuffer);
 
   if (decode_ScanlineDataLine (&bufptr, line_length, num_fields,
-                               num_lines, data) == -1) {
+                               num_lines, pixelType, data) == -1) {
     fprintf(stderr,
       "nmm_Microscope_SEM_Remote::RcvScanlineData: decode failed\n");
     return -1;
@@ -372,6 +321,7 @@ int nmm_Microscope_SEM_Remote::RcvScanlineData(void *_userdata,
   me->d_lineLength = line_length;
   me->d_numFields = num_fields;
   me->d_numLines = num_lines;
+  me->d_pixelType = pixelType;
   return me->notifyMessageHandlers(SCANLINE_DATA, _p.msg_time);
 }
 

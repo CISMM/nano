@@ -72,7 +72,8 @@ nms_SEM_ui::nms_SEM_ui(Tcl_Interp *interp, const char * /*tcl_script_dir*/,
            this);
     int i;
     for (i = 0; i < EDAX_NUM_SCAN_MATRICES; i++){
-	image[i] = NULL;
+	image_uint8[i] = NULL;
+        image_uint16[i] = NULL;
     }
 }
 
@@ -219,8 +220,9 @@ void nms_SEM_ui::handle_device_change(void *ud,
 {
   vrpn_int32 res_x, res_y;
   vrpn_int32 time_nsec;
-  vrpn_uint8 *data_uint8;
+  void *scanlineData;
   vrpn_int32 start_x, start_y, dx,dy, line_length, num_fields, num_lines;
+  nmb_PixelType pix_type;
   int i,j;
 
   // timing stuff
@@ -270,7 +272,8 @@ void nms_SEM_ui::handle_device_change(void *ud,
       break;
     case nmm_Microscope_SEM::SCANLINE_DATA:
         info.sem->getScanlineData(start_x, start_y, dx, dy, line_length,
-                                  num_fields, num_lines, &data_uint8);
+                                  num_fields, num_lines, 
+                                  pix_type, &scanlineData);
 
         info.sem->getResolution(res_x, res_y);
         if (start_y + num_lines*dy > res_y || line_length*dx != res_x) {
@@ -284,15 +287,49 @@ void nms_SEM_ui::handle_device_change(void *ud,
           int x, y;
           x = start_x;
           y = start_y;
-          for (i = 0; i < num_lines; i++) {
-            x = start_x;
-            for (j = 0; j < line_length; j++) {
-                me->image_viewer->setValue(me->image_window_id,
-                     x, y, (double)(data_uint8[(i*line_length+j)*num_fields]));
-                x += dx;
-            }
-            y += dy;
+          vrpn_uint8 *uint8_data = (vrpn_uint8 *)scanlineData;
+          vrpn_uint16 *uint16_data = (vrpn_uint16 *)scanlineData;
+          vrpn_float32 *float32_data = (vrpn_float32 *)scanlineData;
+          switch(pix_type) {
+            case NMB_UINT8:
+              for (i = 0; i < num_lines; i++) {
+                x = start_x;
+                for (j = 0; j < line_length; j++) {
+                   me->image_viewer->setValue(me->image_window_id,
+                        x, y, 
+                        (double)(uint8_data[(i*line_length+j)*num_fields]));
+                   x += dx;
+                }
+                y += dy;
+              }
+              break;
+            case NMB_UINT16:
+              for (i = 0; i < num_lines; i++) {
+                x = start_x;
+                for (j = 0; j < line_length; j++) {
+                   me->image_viewer->setValue(me->image_window_id,
+                        x, y, 
+                        (double)(uint16_data[(i*line_length+j)*num_fields]));
+                   x += dx;
+                }
+                y += dy;
+              }
+              break;
+            case NMB_FLOAT32:
+              for (i = 0; i < num_lines; i++) {
+                x = start_x;
+                for (j = 0; j < line_length; j++) {
+                   me->image_viewer->setValue(me->image_window_id,
+                        x, y, 
+                        (double)(float32_data[(i*line_length+j)*num_fields]));
+                   x += dx;
+                }
+                y += dy;
+              }
+              break;
+
           }
+          
 
           // when we get the end of an image restart the scan
           // and redraw the window
@@ -302,7 +339,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
           // this function creates plane data so it would probably be more
           // appropriate in a callback belonging to the dataset object
           me->updateSurfaceTexture(start_x, start_y, dx, dy, line_length,
-               num_fields, num_lines, data_uint8);
+               num_fields, num_lines, pix_type, scanlineData);
 
         } // end if !no_graphics_update
         if (start_y+num_lines == res_y) {
@@ -334,7 +371,8 @@ int nms_SEM_ui::updateSurfaceTexture(
     int /*line_length*/,
     int /*num_fields*/,
     int num_lines,
-    vrpn_uint8 * data)
+    nmb_PixelType pix_type,
+    void * data)
 {
   // first look to see if we have already created an image for the current
   // resolution
@@ -345,54 +383,46 @@ int nms_SEM_ui::updateSurfaceTexture(
   if (res_index < 0) {
      fprintf(stderr, "Error, resolution not found (%d,%d)\n", res_x, res_y);
   }
-  nmb_Image8bit *im = image[res_index];
-  char plane_name[128];
-  sprintf(plane_name, "SEM_DATA%dx%d", res_x, res_y);
-  if (!im) {
-    printf("generating new plane: %s\n", plane_name);
-    im = new nmb_Image8bit(plane_name, "ADC", res_x, res_y);
-    if (!im) {
-        fprintf(stderr, "nms_SEM_ui::updateSurfaceTexture: Error, out of memory\n");
-        return -1;
-    }
-    dataset->dataImages->addImage((nmb_Image *)im);
-    image[res_index] = im;
-    if (!(im->rawDataUnsignedByte())) {
-	fprintf(stderr, "updateSurfaceTexture::Error, no data, "
-                        "may be out of memory\n");
-        return -1;
-    }
-  }
-  if (!(im->rawDataUnsignedByte())) {
-      fprintf(stderr, "Error, no raw data in image %s"
-                ", may be wrong type\n",
-		plane_name);
-      return -1;
-  }
-  int i, y, j;
+  char image_name[128];
+
+  int i,y;
   y = start_y;
-  // update our image buffer
-  for (i = 0; i < num_lines; i++) {
-      // XXX - hack to make texture clamp to the right color at edges
-      if (y != 0 && y != res_y-1) {
-        im->setLine(y, data);
-      } else {
-         for (j = 0; j < res_x; j++) {
-            im->setValue(j, y, 255.0);
-         }
-      }
-      // XXX - hack to make texture clamp to the right color at edges
-      im->setValue(0, y, 255.0);
-      im->setValue(res_x-1, y, 255.0);
+
+  if (pix_type == NMB_UINT8) {
+    sprintf(image_name, "SEM_DATA08_%dx%d", res_x, res_y);
+    if (!image_uint8[res_index]) {
+       image_uint8[res_index] = new nmb_ImageArray<vrpn_uint8>(image_name,
+                                "ADC", res_x, res_y);
+       dataset->dataImages->addImage((nmb_Image *)image_uint8[res_index]);
+    }
+    for (i = 0; i < num_lines; i++){
+      image_uint8[res_index]->setLine(y, data);
       y += dy;
+    }   
+  } else if (pix_type == NMB_UINT16) {
+    sprintf(image_name, "SEM_DATA16_%dx%d", res_x, res_y);
+    if (!image_uint16[res_index]) {
+       image_uint16[res_index] = new nmb_ImageArray<vrpn_uint16>(image_name,
+                                "ADC", res_x, res_y);
+       dataset->dataImages->addImage((nmb_Image *)image_uint16[res_index]);
+    }
+    for (i = 0; i < num_lines; i++){   
+      image_uint16[res_index]->setLine(y, data);
+      y += dy;
+    }
+  } else {
+    fprintf(stderr, "nms_SEM_ui::updateSurfaceTexture:"
+            " Error: can't handle pixel type\n");
+    return -1;
   }
+
   // if we've just got the last scanline in the image then tell graphics
   // to update the whole image, we probably want to do this update more
-  // frequently if possible to display the first few lines before all the 
+  // frequently if possible to display the first few lines before all the
   // scanlines have come in but once per data frame is reasonable for now
   if (y == res_y) {
-      graphics->updateTexture(nmg_Graphics::SEM_DATA, plane_name,
-	0, 0, res_x, res_y);
+      graphics->updateTexture(nmg_Graphics::SEM_DATA, image_name,
+        0, 0, res_x, res_y);
   }
   return 0;
 }

@@ -1,6 +1,7 @@
 #include <vrpn_Connection.h>
 #include <vrpn_Types.h>
 #include "nmm_Microscope_SEM.h"
+#include "nmb_Image.h"
 
 /* nmm_Microscope_SEM
 */
@@ -30,8 +31,6 @@ nmm_Microscope_SEM::nmm_Microscope_SEM (
                 ("nmmMicroscopeSEM ReportPixelIntegrationTime");
     d_ReportInterPixelDelayTime_type = c->register_message_type
                 ("nmmMicroscopeSEM ReportInterPixelDelayTime");
-    d_WindowLineData_type = c->register_message_type
-                ("nmmMicroscopeSEM WindowLineData");
     d_ScanlineData_type = c->register_message_type
 		("nmmMicroscopeSEM ScanlineData");
           
@@ -308,129 +307,29 @@ vrpn_int32 nmm_Microscope_SEM::decode_ReportInterPixelDelayTime (
   return 0;
 }
 
-char * nmm_Microscope_SEM::encode_WindowLineData (vrpn_int32 * len, 
-	vrpn_int32 start_x, vrpn_int32 start_y, vrpn_int32 dx, vrpn_int32 dy,
-	vrpn_int32 lineLength, vrpn_int32 numFields, vrpn_int32 *offset, 
-	vrpn_int32 sec, vrpn_int32 usec, vrpn_uint16 **data)
-{
-  char * msgbuf = NULL;
-  char * mptr;
-  vrpn_int32 mlen;
-  vrpn_int32 i, j;
-  vrpn_float32 val_hgt;
-
-  if (!len) return NULL;
-
-  *len = 8 * sizeof(vrpn_int32) + lineLength * numFields * sizeof(vrpn_float32);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmm_Microscope_SEM::encode_WindowLineData:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, start_x);
-    vrpn_buffer(&mptr, &mlen, start_y);
-    vrpn_buffer(&mptr, &mlen, dx);
-    vrpn_buffer(&mptr, &mlen, dy);
-    vrpn_buffer(&mptr, &mlen, lineLength);
-    vrpn_buffer(&mptr, &mlen, numFields);
-    vrpn_buffer(&mptr, &mlen, sec);
-    vrpn_buffer(&mptr, &mlen, usec);
-    for (i = 0; i < lineLength; i++)
-      for (j = 0; j < numFields; j++) {
-        val_hgt = (vrpn_float32)(data[j][offset[j]+i]);
-        vrpn_buffer(&mptr, &mlen, val_hgt);
-      }
-  }
-
-  return msgbuf;
-}
-
-char * nmm_Microscope_SEM::encode_WindowLineData (vrpn_int32 * len,
-        vrpn_int32 start_x, vrpn_int32 start_y, vrpn_int32 dx, vrpn_int32 dy,
-        vrpn_int32 lineLength, vrpn_int32 numFields, vrpn_int32 *offset,
-        vrpn_int32 sec, vrpn_int32 usec, vrpn_uint8 **data)
-{
-  char * msgbuf = NULL;
-  char * mptr;
-  vrpn_int32 mlen;
-  vrpn_int32 i, j;
-  vrpn_float32 val_hgt;
-
-  if (!len) return NULL;
-
-  *len = 8 * sizeof(vrpn_int32) + lineLength * numFields * sizeof(vrpn_float32);
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmm_Microscope_SEM::encode_WindowLineData:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, start_x);
-    vrpn_buffer(&mptr, &mlen, start_y);
-    vrpn_buffer(&mptr, &mlen, dx);
-    vrpn_buffer(&mptr, &mlen, dy);
-    vrpn_buffer(&mptr, &mlen, lineLength);
-    vrpn_buffer(&mptr, &mlen, numFields);
-    vrpn_buffer(&mptr, &mlen, sec);
-    vrpn_buffer(&mptr, &mlen, usec);
-    for (i = 0; i < lineLength; i++)
-      for (j = 0; j < numFields; j++) {
-        val_hgt = (vrpn_float32)(data[j][offset[j]+i]);
-        vrpn_buffer(&mptr, &mlen, val_hgt);
-      }
-  }
-
-  return msgbuf;
-}
-
-vrpn_int32 nmm_Microscope_SEM::decode_WindowLineDataHeader (const char ** buf, 
-	vrpn_int32 *start_x, vrpn_int32 *start_y, 
-	vrpn_int32 *dx, vrpn_int32 *dy, vrpn_int32 *lineLength, 
-	vrpn_int32 *numFields, vrpn_int32 *sec, vrpn_int32 *usec)
-{
-  if (vrpn_unbuffer(buf, start_x) == -1) return -1;
-  if (vrpn_unbuffer(buf, start_y) == -1) return -1;
-  if (vrpn_unbuffer(buf, dx) == -1) return -1;
-  if (vrpn_unbuffer(buf, dy) == -1) return -1;
-  if (vrpn_unbuffer(buf, lineLength) == -1) return -1;
-  if (vrpn_unbuffer(buf, numFields) == -1) return -1;
-  if (vrpn_unbuffer(buf, sec) == -1) return -1;
-  if (vrpn_unbuffer(buf, usec) == -1) return -1;
-
-  return 0;
-}
-
-vrpn_int32 nmm_Microscope_SEM::decode_WindowLineDataField (const char ** buf,
-        vrpn_int32 numFields, vrpn_float32 * data)
-{
-  vrpn_int32 i;
-
-  for (i = 0; i < numFields; i++) {
-    if (vrpn_unbuffer(buf, &data[i]) == -1) return -1;
-  }
-
-  return 0;
-}
-
 // static
 char *nmm_Microscope_SEM::encode_ScanlineData (vrpn_int32 * len,
         vrpn_int32 start_x, vrpn_int32 start_y, vrpn_int32 dx, vrpn_int32 dy,
         vrpn_int32 lineLength, vrpn_int32 numFields, vrpn_int32 numLines,
-        vrpn_int32 sec, vrpn_int32 usec, vrpn_uint8 **data)
+        vrpn_int32 sec, vrpn_int32 usec, vrpn_int32 pixelType, void **data)
 {
   char *msgbuf = NULL;
   char * mptr;
   vrpn_int32 mlen;
+  int i;
 
   if (!len) return NULL;
 
+  int pixelSize = 0;
+  if (pixelType == NMB_UINT8) {
+      pixelSize = sizeof(vrpn_uint8);
+  } else if (pixelType == NMB_UINT16) {
+      pixelSize = sizeof(vrpn_uint16);
+  } else if (pixelType == NMB_FLOAT32) {
+      pixelSize = sizeof(vrpn_float32);
+  }
   *len = 9 * sizeof(vrpn_int32) + 
-         lineLength * numFields * numLines * sizeof(vrpn_uint8);
+         lineLength * numFields * numLines * pixelSize;
   msgbuf = new char [*len];
   if (!(msgbuf)) {
     fprintf(stderr, "nmm_Microscope_SEM::encode_ScanlineData:  "
@@ -448,8 +347,25 @@ char *nmm_Microscope_SEM::encode_ScanlineData (vrpn_int32 * len,
     vrpn_buffer(&mptr, &mlen, numLines);
     vrpn_buffer(&mptr, &mlen, sec);
     vrpn_buffer(&mptr, &mlen, usec);
-    vrpn_buffer(&mptr, &mlen, (const char *)(*data), 
-         lineLength*numFields*numLines);
+    vrpn_buffer(&mptr, &mlen, (vrpn_int32)pixelType);
+    switch (pixelType) {
+      case NMB_UINT8:
+        vrpn_buffer(&mptr, &mlen, (const char *)(*data), 
+              lineLength*numFields*numLines);
+        break;
+      case NMB_UINT16:
+        for (i = 0; i < lineLength*numFields*numLines; i++){
+            vrpn_buffer(&mptr, &mlen, ((vrpn_uint16 *)(*data))[i]);
+        }
+        break;
+      case NMB_FLOAT32:
+        for (i = 0; i < lineLength*numFields*numLines; i++){
+            vrpn_buffer(&mptr, &mlen, ((vrpn_float32 *)(*data))[i]);
+        }
+        break;
+      default:
+        fprintf(stderr, "encode_ScanlineData - unknown pixel type\n");
+    }
   }
 
   return msgbuf;
@@ -459,7 +375,7 @@ vrpn_int32 nmm_Microscope_SEM::decode_ScanlineDataHeader (const char ** buf,
 	vrpn_int32 *start_x, vrpn_int32 *start_y, 
 	vrpn_int32 *dx, vrpn_int32 *dy, vrpn_int32 *lineLength, 
 	vrpn_int32 *numFields, vrpn_int32 *numLines,
-        vrpn_int32 *sec, vrpn_int32 *usec)
+        vrpn_int32 *sec, vrpn_int32 *usec, vrpn_int32 *pixelType)
 {
   if (vrpn_unbuffer(buf, start_x) == -1) return -1;
   if (vrpn_unbuffer(buf, start_y) == -1) return -1;
@@ -470,18 +386,35 @@ vrpn_int32 nmm_Microscope_SEM::decode_ScanlineDataHeader (const char ** buf,
   if (vrpn_unbuffer(buf, numLines) == -1) return -1;
   if (vrpn_unbuffer(buf, sec) == -1) return -1;
   if (vrpn_unbuffer(buf, usec) == -1) return -1;
-
+  if (vrpn_unbuffer(buf, pixelType) == -1) return -1;
 
   return 0;
 }
 
 vrpn_int32 nmm_Microscope_SEM::decode_ScanlineDataLine (const char ** buf,
         vrpn_int32 lineLength, vrpn_int32 numFields, vrpn_int32 numLines,
-        vrpn_uint8 * data)
+        vrpn_int32 pixelType, void * data)
 {
-
-  if (vrpn_unbuffer (buf, (char *)data, lineLength*numFields*numLines) == -1)
-	  return -1;
+    int i;
+    switch (pixelType) {
+      case NMB_UINT8:
+        if (vrpn_unbuffer (buf, (char *)data, 
+                          lineLength*numFields*numLines) == -1)
+          return -1;
+        break;
+      case NMB_UINT16:
+        for (i = 0; i < lineLength*numFields*numLines; i++){
+            if (vrpn_unbuffer(buf, &(((vrpn_uint16 *)data)[i])) == -1)
+                return -1;
+        }
+        break;
+      case NMB_FLOAT32:
+        for (i = 0; i < lineLength*numFields*numLines; i++){
+            if (vrpn_unbuffer(buf, &(((vrpn_float32 *)data)[i])) == -1)
+                return -1;
+        }
+        break;
+    }
 
   return 0;
 }

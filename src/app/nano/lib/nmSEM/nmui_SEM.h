@@ -44,7 +44,8 @@ class nms_SEM_ui {
     nmm_Microscope_SEM_Remote *sem;
 
     // image data buffers (one for each image size collected):
-    nmb_Image8bit *image[EDAX_NUM_SCAN_MATRICES];
+    nmb_ImageArray<vrpn_uint8> *image_uint8[EDAX_NUM_SCAN_MATRICES];
+    nmb_ImageArray<vrpn_uint16> *image_uint16[EDAX_NUM_SCAN_MATRICES];
 
     Tcl_Interp *tcl_interp;
 
@@ -66,7 +67,8 @@ class nms_SEM_ui {
         void *ud);
     int updateSurfaceTexture(int start_x, int start_y, 
      int dx, int dy,
-     int line_length, int num_fields, int num_lines, vrpn_uint8 *data);
+     int line_length, int num_fields, int num_lines, nmb_PixelType pix_type,
+     void *data);
 
     // EDAX-specific information
     static vrpn_int32 d_matrixSizeX[EDAX_NUM_SCAN_MATRICES];

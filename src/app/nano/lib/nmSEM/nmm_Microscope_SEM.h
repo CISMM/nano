@@ -108,15 +108,15 @@ class nmm_Microscope_SEM {
     static char * encode_ScanlineData (vrpn_int32 * len,
         vrpn_int32 start_x, vrpn_int32 start_y, vrpn_int32 dx, vrpn_int32 dy,
         vrpn_int32 lineLength, vrpn_int32 numFields, vrpn_int32 numLines,
-        vrpn_int32 sec, vrpn_int32 usec, vrpn_uint8 **data);
+        vrpn_int32 sec, vrpn_int32 usec, vrpn_int32 pixelType, void **data);
     static vrpn_int32 decode_ScanlineDataHeader (const char ** buf, 
         vrpn_int32 *start_x, vrpn_int32 *start_y, 
         vrpn_int32 *dx, vrpn_int32 *dy, vrpn_int32 *lineLength, 
         vrpn_int32 *numFields, vrpn_int32 *numLines, vrpn_int32 *sec, 
-        vrpn_int32 *usec);
+        vrpn_int32 *usec, vrpn_int32 *pixelType);
     static vrpn_int32 decode_ScanlineDataLine (const char ** buf,
         vrpn_int32 lineLength, vrpn_int32 numFields, vrpn_int32 numLines,
-        vrpn_uint8 *data);
+        vrpn_int32 pixelType, void *data);
 
     // packs the message reliably and then deletes [] buf
 //    int dispatchMessage (vrpn_int32 len, const char *buf, 

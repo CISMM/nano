@@ -4,6 +4,7 @@
 #include "vrpn_Connection.h"
 #include "nmb_Device.h"
 #include "nmm_Microscope_SEM.h"
+#include "nmb_Image.h"
 
 class nmm_Microscope_SEM_Remote;
 
@@ -43,14 +44,11 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     void getResolution(vrpn_int32 &res_x, vrpn_int32 &res_y);
     void getPixelIntegrationTime(vrpn_int32 &time_nsec);
     void getInterPixelDelayTime(vrpn_int32 &time_nsec);
-    void getWindowLineData(vrpn_int32 &start_x, vrpn_int32 &start_y,
-		vrpn_int32 &dx, vrpn_int32 &dy, vrpn_int32 &line_length,
-                vrpn_int32 &num_fields,
-                vrpn_float32 **data);
     void getScanlineData(vrpn_int32 &start_x, vrpn_int32 &start_y,
 		vrpn_int32 &dx, vrpn_int32 &dy, vrpn_int32 &line_length,
 		vrpn_int32 &num_fields, vrpn_int32 &num_lines, 
-                vrpn_uint8 **data);
+                nmb_PixelType &pix_type,
+                void **data);
     // other
     int connected() {return d_connection->connected();}
 
@@ -60,10 +58,8 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
                 (void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvReportInterPixelDelayTime
                 (void *_userdata, vrpn_HANDLERPARAM _p);
-    static int RcvWindowLineData
-                (void *_userdata, vrpn_HANDLERPARAM _p);
-	static int RcvScanlineData
-				(void *_userdata, vrpn_HANDLERPARAM _p);
+    static int RcvScanlineData
+		(void *_userdata, vrpn_HANDLERPARAM _p);
 
     int notifyMessageHandlers(nmm_Microscope_SEM::msg_t type,
         const struct timeval &msg_time);
@@ -80,8 +76,9 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     vrpn_int32 d_lineLength;
     vrpn_int32 d_numFields;
     vrpn_int32 d_numLines;
-    vrpn_float32 *d_data;
-	vrpn_uint8 *d_uint8_data;
+    nmb_PixelType d_pixelType;
+    char *d_dataBuffer;
+    int d_dataBufferSize;
 
     /* ---------------------------------------------------------------
        message callback management
