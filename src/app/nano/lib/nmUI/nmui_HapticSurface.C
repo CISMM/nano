@@ -56,34 +56,17 @@ double nmui_HapticSurface::distanceFromSurface (void) const {
 // virtual
 void nmui_HapticSurface::setLocation (q_vec_type x) {
 
-  //d_handPosMS[0] = x[0];
-  //d_handPosMS[1] = x[1];
-  //d_handPosMS[2] = x[2];
   q_vec_copy(d_handPosMS, x);
 
 //fprintf(stderr, "nmui_HapticSurface::setLocation() to <%.5f, %.5f, %.5f>\n",
 //x[0], x[1], x[2]);
 
-  if (d_graphics) {
-    q_vec_type currentPlaneNormalMS;
-    vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
-    d_graphics->setFeelPlane(d_handPosMS, currentPlaneNormalMS);
-  }
 }
 
 // virtual
 void nmui_HapticSurface::setLocation (double x, double y, double z) {
 
-  //d_handPosMS[0] = x;
-  //d_handPosMS[1] = y;
-  //d_handPosMS[2] = z;
   q_vec_set(d_handPosMS, x, y, z);
-
-  if (d_graphics) {
-    q_vec_type currentPlaneNormalMS;
-    vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
-    d_graphics->setFeelPlane(d_handPosMS, currentPlaneNormalMS);
-  }
 
 //fprintf(stderr, "nmui_HapticSurface::setLocation() to <%.5f, %.5f, %.5f>\n",
 //d_handPosMS[0], d_handPosMS[1], d_handPosMS[2]);
@@ -97,11 +80,8 @@ void nmui_HapticSurface::sendForceUpdate (vrpn_ForceDevice_Remote * device) {
                       d_currentPlaneNormal[2],
                       d_currentPlaneParameter);
   }
-  if (d_graphics) {
-    q_vec_type currentPlaneNormalMS;
-    vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
-    d_graphics->setFeelPlane(d_handPosMS, currentPlaneNormalMS);
-  }
+
+  //updateGraphicsDisplay();
 }
 
 // virtual
@@ -116,6 +96,17 @@ void nmui_HapticSurface::disable (void) {
 
 
 
+// virtual
+void nmui_HapticSurface::updateGraphicsDisplay (void) {
+  q_vec_type currentPlaneNormalMS;
+
+  if (d_graphics) {
+    vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
+
+    d_graphics->setFeelPlane(d_handPosMS, currentPlaneNormalMS);
+    //d_graphics->setFeelPlane(d_samplePosMS, currentPlaneNormalMS);
+  }
+}
 
 // static
 void nmui_HapticSurface::pointToTrackerFromWorld (q_vec_type out,
@@ -130,6 +121,19 @@ void nmui_HapticSurface::pointToTrackerFromWorld (q_vec_type out,
   v_x_invert(&TrackerFromWorld, &WorldFromTracker);
 
   v_x_xform_vector(out, &TrackerFromWorld, (double *) in);
+
+}
+// static
+void nmui_HapticSurface::pointToWorldFromTracker (q_vec_type out,
+                                                  const q_vec_type in) {
+  v_xform_type WorldFromTracker;
+
+  v_x_compose(&WorldFromTracker,
+          &v_world.users.xforms[0],
+          &v_users[0].xforms[V_ROOM_FROM_HAND_TRACKER]);
+
+
+  v_x_xform_vector(out, &WorldFromTracker, (double *) in);
 
 }
 
@@ -428,6 +432,18 @@ void nmui_HSLivePlane::update (nmm_Microscope_Remote * scope) {
   computeUpdate();
 }
 
+// virtual
+void nmui_HSLivePlane::updateGraphicsDisplay (void) {
+  q_vec_type currentPlaneNormalMS;
+
+  if (d_graphics) {
+    vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
+
+    //d_graphics->setFeelPlane(d_handPosMS, currentPlaneNormalMS);
+    d_graphics->setFeelPlane(d_samplePosMS, currentPlaneNormalMS);
+  }
+}
+
 void nmui_HSLivePlane::getSamplePosMS (nmm_Microscope_Remote * scope) {
 
   d_samplePosMS[0] = scope->state.data.inputPoint->x();
@@ -512,6 +528,7 @@ fprintf(stderr, "SamplePosPH is %.3f %.3f %.3f\n",
       d_samplePosPH[2]);
 */
   computeDistanceFromPlane();
+  updateGraphicsDisplay();  // TCH Dissn Feb 2002
 }
 
 
@@ -550,6 +567,11 @@ void nmui_HSWarpedPlane::update (nmm_Microscope_Remote * scope) {
   // position where the sample was requested.
 
   q_vec_subtract(phantomMovement, d_handPosMS, d_samplePosMS);
+  phantomMovement[2] = 0.0;
+/*
+fprintf(stderr, "phmov %.5f %.5f %.5f.\n",
+phantomMovement[0], phantomMovement[1], phantomMovement[2]);
+*/
 
   // Find the total time for this update.
   totalTime = vrpn_TimevalMsecs
@@ -560,8 +582,31 @@ void nmui_HSWarpedPlane::update (nmm_Microscope_Remote * scope) {
 
   // Scale the movement vector by the ratio of rtt to system time.
 
-  networkFraction = d_rttEstimate / totalTime;
-  q_vec_scale(d_currentWarpVector, networkFraction, phantomMovement);
+  if (totalTime > 0.0) {
+
+    networkFraction = d_rttEstimate * 1000.0 / totalTime;
+    if (networkFraction > 1.0) {
+       fprintf(stderr, "RTT %.5f, total time %.5f, clamping ratio to 1.\n",
+               d_rttEstimate, totalTime);
+       networkFraction = 1.0;
+    }
+    q_vec_scale(d_currentWarpVector, networkFraction, phantomMovement);
+
+  } else {
+
+    q_vec_set(d_currentWarpVector, 0.0, 0.0, 0.0);
+/*
+fprintf(stderr, "Warp 0, aye:  tt %.5f, rte %.5f.\n", totalTime,
+d_rttEstimate);
+*/
+
+  }
+
+/*
+fprintf(stderr, "Warped offset %.5f %.5f %.5f; base %.5f %.5f %.5f\n",
+d_currentWarpVector[0], d_currentWarpVector[1], d_currentWarpVector[2],
+d_samplePosMS[0], d_samplePosMS[1], d_samplePosMS[2]);
+*/
 
   // Add the scaled vector to the current (and last) point.
 
@@ -581,9 +626,30 @@ void nmui_HSWarpedPlane::update (nmm_Microscope_Remote * scope) {
 
 void nmui_HSWarpedPlane::setMicroscopeRTTEstimate (double t) {
   d_rttEstimate = t;
+fprintf(stderr, "Warped RTT Estimated %.5f\n", t);
 }
 
 
+/*
+// virtual
+void nmui_HSWarpedPlane::updateGraphicsDisplay (void) {
+  if (d_graphics) {
+    // Can'd use d_handPosMS because that isn't correct for warped plane.
+    // Really ought to compute these things in some default implementation
+    // that can be overriden by derived classes...
+    // However, this isn't giving correct answers either (?!)
+
+    q_vec_type currentPlaneNormalMS, currentPlanePosMS, currentPlanePos;
+    //q_vec_scale(currentPlanePos, -d_currentPlaneParameter,
+                                  d_currentPlaneNormal);
+    //pointToWorldFromTracker(currentPlanePosMS, currentPlanePos);
+    vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
+
+    //d_graphics->setFeelPlane(currentPlanePosMS, currentPlaneNormalMS);
+    d_graphics->setFeelPlane(d_samplePosMS, currentPlaneNormalMS);
+  }
+}
+*/
 
 
 

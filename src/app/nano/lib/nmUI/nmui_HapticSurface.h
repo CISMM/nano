@@ -74,10 +74,12 @@ class nmui_HapticSurface {
   protected:
 
     static void pointToTrackerFromWorld (q_vec_type out, const q_vec_type in);
+    static void pointToWorldFromTracker (q_vec_type out, const q_vec_type in);
     static void vectorToTrackerFromWorld (q_vec_type out, const q_vec_type in);
     static void vectorToWorldFromTracker (q_vec_type out, const q_vec_type in);
 
     virtual void computeDistanceFromPlane (void);
+    virtual void updateGraphicsDisplay (void);
 
     // Microscope-space coordinates
 
@@ -183,6 +185,8 @@ class nmui_HSLivePlane : public nmui_HapticSurface {
 
   protected:
 
+    virtual void updateGraphicsDisplay (void);
+
     void getSamplePosMS (nmm_Microscope_Remote *);
       ///< Sets d_samplePosMS.
     void computeUpdate (void);
@@ -230,6 +234,8 @@ class nmui_HSWarpedPlane : public nmui_HSLivePlane {
     void setMicroscopeRTTEstimate (double);
 
   protected:
+
+    //virtual void updateGraphicsDisplay (void);
 
     double d_rttEstimate;
       ///< Current estimate of the network round-trip time we're

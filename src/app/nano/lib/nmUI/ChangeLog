@@ -1,3 +1,13 @@
+2002-2-16  Tom Hudson  <hudsont@uncwil.edu>
+
+   * nmui_HapticSurface.C (setLocation) : Remove update to graphics FeelPlane.
+   (sendForceUpdate) : Factor out update to graphics FeelPlane.
+   (updateGraphicsDisplay) : New function.
+   (pointToWorldFromTracker) : Same.
+   (nmui_HSLivePlane::updateGraphicsDisplay) : New function.
+   (nmui_HSLivePlane::update) : Call updateGraphicsDisplay().
+   (nmui_HSWarpedPlane::update) : Fix computation of warp vector
+
 2002-2-15  Tom Hudson  <hudsont@uncwil.edu>
 
    * nmui_HapticSurface.C (vectorToWorldFromTracker) : New function.
