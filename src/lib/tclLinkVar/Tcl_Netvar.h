@@ -95,6 +95,12 @@ class Tcl_Netvar {
        * This is the ugliest function in the class, and should be redesigned.
        */
 
+    virtual void copyReplica (int whichReplica) = 0;
+    virtual void copyFromToReplica (int sourceReplica, int destReplica) = 0;
+    virtual void syncReplica (int whichReplica) = 0;
+
+    void setReplica (int whichReplica, vrpn_int32 value);
+      // Used only for particularly hackish work - sets the given
 
     void lock (void);
       /**<

@@ -1,3 +1,31 @@
+2000-09-27  Tom Hudson  <hudson@cs.unc.edu>
+
+	* Tcl_Linkvar.C : remove dead code
+	(Tclvar_int::updateTcl) : remove set of d_ignoreChange - moved to
+        TclNet_int::propagateReceivedUpdate
+	(Tclvar_float::updateTcl) : same
+	(Tclvar_string::updateTcl) : same
+	* Tcl_Netvar.C : add static globals quashSideEffects,
+        quashSideEffectsLater
+ 	(Tcl_Netvar::copyReplica) : new function
+	(Tcl_Netvar::copyFromToReplica) : same
+	(Tcl_Netvar::syncReplica) : same
+        (TclNet_int::operator =) : ignore if quashSideEffects &
+        d_numReplicas > 1
+        (TclNet_float::operator =) : same
+        (TclNet_string::operator =) : same
+        (TclNet_int::copyReplica) : set & clear quashSideEffectsLater
+        (TclNet_int::copyFromToReplica) : same
+        (TclNet_float::copyReplica) : same
+        (TclNet_float::copyFromToReplica) : same
+        (TclNet_string::copyReplica) : same
+        (TclNet_string::copyFromToReplica) : same
+        (TclNet_int::propagateReceivedUpdate) : set & clear quashSideEffects,
+        set d_ignoreChange - moved from Tclvar_int::updateTcl
+        (TclNet_float::propagateReceivedUpdate) : same
+        (TclNet_string::propagateReceivedUpdate) : same
+
+
 2000-09-26  Tom Hudson  <hudson@cs.unc.edu>
 
 	* Tcl_Linkvar.C : reorder & fix #includes, #include nmb_Debug.h

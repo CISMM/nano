@@ -55,6 +55,17 @@
  */
 
 
+static vrpn_bool quashSideEffectsLater = VRPN_FALSE;
+static vrpn_bool quashSideEffects = VRPN_FALSE;
+/**<
+ * When quashSideEffects is true, all calls to "operator =" or
+ * equivalent functions should return without effect, IFF this is
+ * a Netvar that is properly bound to a connection (NOT just bound
+ * to a logging connection)!  This can be determined by checking
+ * d_replicaSource[0], which is NULL when we're logging but valid
+ * if we're actually replicated.
+ */
+
 static Tcl_Interp * interpreter;
 static vrpn_int32 sharedObjectMode = VRPN_SO_DEFER_UPDATES;
 static vrpn_bool migrateSerializer = VRPN_FALSE;
@@ -123,6 +134,8 @@ Tcl_Netvar::Tcl_Netvar (void) :
     d_numReplicasAllocated (0),
     d_isLocked (VRPN_FALSE) {
 
+  int i;
+
   d_replica = new vrpn_SharedObject * [STARTING_NUM_REPLICAS];
   d_replicaSource = new vrpn_Connection * [STARTING_NUM_REPLICAS];
   if (!d_replica || !d_replicaSource) {
@@ -131,7 +144,7 @@ Tcl_Netvar::Tcl_Netvar (void) :
   }
 
   d_numReplicasAllocated = STARTING_NUM_REPLICAS;
-  for (int i = 0; i < d_numReplicasAllocated; i++) {
+  for (i = 0; i < d_numReplicasAllocated; i++) {
       d_replica[i] = NULL;
       d_replicaSource[i] = NULL;
   }
@@ -321,6 +334,11 @@ TclNet_int::~TclNet_int (void) {
 vrpn_int32 TclNet_int::operator = (vrpn_int32 newValue) {
   timeval now;
 
+  if (quashSideEffects && (d_numReplicas > 1)) {
+    collabVerbose(6, "Quashing set of %s.\n", d_myTclVarname);
+    return d_myint;
+  }
+
   activateTimer();
 
   if (!isLocked()) {
@@ -396,7 +414,7 @@ void TclNet_int::SetFromTcl (vrpn_int32 newValue) {
 //"   while we go over the network to find one.\n");
     //d_updateFromTcl = VRPN_FALSE;
   //}
-  /*Tclvar_int::*/operator = (newValue);
+  operator = (newValue);
 }
 
 
@@ -416,7 +434,9 @@ void TclNet_int::copyReplica (int whichReplica) {
     return;  // error
   }
 
+  quashSideEffectsLater = VRPN_TRUE;
   *this = ((vrpn_Shared_int32 *) d_replica[whichReplica])->value();
+  quashSideEffectsLater = VRPN_FALSE;
 
 }
 
@@ -439,6 +459,7 @@ void TclNet_int::copyFromToReplica (int sourceReplica, int destReplica)
     return;  // error
   }
 
+  quashSideEffectsLater = VRPN_TRUE;
   if ( d_activeReplica == destReplica) {
       *this = ((vrpn_Shared_int32 *) d_replica[sourceReplica])->value();
   } else {
@@ -447,6 +468,7 @@ void TclNet_int::copyFromToReplica (int sourceReplica, int destReplica)
 
       ((vrpn_Shared_int32 *) d_replica[destReplica])->set(((vrpn_Shared_int32 *) d_replica[sourceReplica])->value(), now);
   }
+  quashSideEffectsLater = VRPN_FALSE;
 }
 
 
@@ -468,14 +490,14 @@ void TclNet_int::syncReplica (int whichReplica) {
     return;  // noop
   }
 
-    ((vrpn_Shared_int32 *) d_replica[d_activeReplica])->unregister_handler
+  ((vrpn_Shared_int32 *) d_replica[d_activeReplica])->unregister_handler
              (propagateReceivedUpdate, this);
 
   d_activeReplica = whichReplica;
 
   d_writeReplica = whichReplica;
 
-    ((vrpn_Shared_int32 *) d_replica[whichReplica])->register_handler
+  ((vrpn_Shared_int32 *) d_replica[whichReplica])->register_handler
                  (propagateReceivedUpdate, this);
 
   copyReplica(whichReplica);
@@ -534,7 +556,7 @@ int TclNet_int::propagateReceivedUpdate (
   // (updateTcl() does not send idempotent changes.  Tcl ignores
   // changes generated in the middle of a Trace.)
 
-  collabVerbose(6, "In TclNet_int::pre with ignore %d and fromTcl %d.\n",
+  collabVerbose(6, "          with ignore %d and fromTcl %d.\n",
                 nti->d_ignoreChange, nti->d_updateFromTcl);
 
   // Need to do this check before calling operator = ();  otherwise
@@ -544,14 +566,30 @@ int TclNet_int::propagateReceivedUpdate (
 //      ignore = VRPN_TRUE;
 //    }
 
+  if (!nti->d_updateFromTcl) {
+
+    // Since we're not inside a Tcl callback, we're about to generate one,
+    // which we want to ignore to avoid endless loops or hitting the callback
+    // twice.
+
+    collabVerbose(8, "TclNet_int::updateTcl(%s):  setting d_ignoreChange.\n",
+                  nti->d_myTclVarname);
+    nti->d_ignoreChange = VRPN_TRUE;
+  }
+
   nti->Tclvar_int::operator = (newValue);
   nti->d_lastUpdate = when;
   if (interpreter) {
     // SetFromTcl() MUST come after operator = ().
 
+    // This is where side effects (&callbacks) happen
+    if (!isLocal || quashSideEffectsLater) {
+      quashSideEffects = VRPN_TRUE;
+    }
     if (!ignore) {
       nti->Tclvar_int::SetFromTcl(newValue);
     }
+    quashSideEffects = VRPN_FALSE;
   }
 
   collabVerbose(6, "Leaving TclNet_int::pre with ignore %d and fromTcl %d.\n",
@@ -602,6 +640,11 @@ TclNet_float::~TclNet_float (void) {
 // virtual
 vrpn_float64 TclNet_float::operator = (vrpn_float64 newValue) {
   timeval now;
+
+  if (quashSideEffects && (d_numReplicas > 1)) {
+    collabVerbose(6, "Quashing set of %s.\n", d_myTclVarname);
+    return d_myfloat;
+  }
 
   activateTimer();
 
@@ -689,7 +732,9 @@ void TclNet_float::copyReplica (int whichReplica) {
     return;  // error
   }
 
+  quashSideEffectsLater = VRPN_TRUE;
   *this = ((vrpn_Shared_float64 *) d_replica[whichReplica])->value();
+  quashSideEffectsLater = VRPN_FALSE;
 
 }
 
@@ -707,6 +752,7 @@ void TclNet_float::copyFromToReplica (int sourceReplica, int destReplica)
     return;  // error
   }
 
+  quashSideEffectsLater = VRPN_TRUE;
   if ( d_activeReplica == destReplica) {
       *this = ((vrpn_Shared_float64 *) d_replica[sourceReplica])->value();
   } else {
@@ -715,6 +761,7 @@ void TclNet_float::copyFromToReplica (int sourceReplica, int destReplica)
 
       ((vrpn_Shared_float64 *) d_replica[destReplica])->set(((vrpn_Shared_float64 *) d_replica[sourceReplica])->value(), now);
   }
+  quashSideEffectsLater = VRPN_FALSE;
 }
 
 // Copy the state of the which-th replica, and any changes to it.
@@ -775,7 +822,7 @@ int TclNet_float::propagateReceivedUpdate (
     void * userdata,
     vrpn_float64 newValue,
     timeval when,
-    vrpn_bool /*isLocal*/)
+    vrpn_bool isLocal)
 {
   TclNet_float * ntf;
 
@@ -803,14 +850,30 @@ int TclNet_float::propagateReceivedUpdate (
 //      ignore = VRPN_TRUE;
 //    }
 
+  if (!ntf->d_updateFromTcl) {
+
+    // Since we're not inside a Tcl callback, we're about to generate one,
+    // which we want to ignore to avoid endless loops or hitting the callback
+    // twice.
+
+    collabVerbose(8, "TclNet_float::updateTcl(%s):  setting d_ignoreChange.\n",
+                  ntf->d_myTclVarname);
+    ntf->d_ignoreChange = VRPN_TRUE;
+  }
+
   ntf->Tclvar_float::operator = (newValue);
   ntf->d_lastUpdate = when;
   if (interpreter) {
     // SetFromTcl() MUST come after operator = ().
 
+    // This is where side effects (&callbacks) happen
+    if (!isLocal || quashSideEffectsLater) {
+      quashSideEffects = VRPN_TRUE;
+    }
     if (!ignore) {
       ntf->Tclvar_float::SetFromTcl(newValue);
     }
+    quashSideEffects = VRPN_FALSE;
   }
   return 0;
 }
@@ -863,6 +926,11 @@ TclNet_string::~TclNet_string (void) {
 const char * TclNet_string::operator = (const char * newValue) {
   timeval now;
 
+  if (quashSideEffects && (d_numReplicas > 1)) {
+    collabVerbose(6, "Quashing set of %s.\n", d_myTclVarname);
+    return string();
+  }
+
   activateTimer();
 
   if (!isLocked()) {
@@ -884,6 +952,11 @@ const char * TclNet_string::operator = (const char * newValue) {
 const char * TclNet_string::operator = (char * newValue) {
   timeval now;
 
+  if (quashSideEffects && (d_numReplicas > 1)) {
+    collabVerbose(6, "Quashing set of %s.\n", d_myTclVarname);
+    return string();
+  }
+
   activateTimer();
 
   if (!isLocked()) {
@@ -904,6 +977,11 @@ const char * TclNet_string::operator = (char * newValue) {
 // virtual
 void TclNet_string::Set (const char * newValue) {
   timeval now;
+
+  if (quashSideEffects && (d_numReplicas > 1)) {
+    collabVerbose(6, "Quashing set of %s.\n", d_myTclVarname);
+    return;
+  }
 
   activateTimer();
 
@@ -999,7 +1077,9 @@ void TclNet_string::copyReplica (int whichReplica) {
     return;  // error
   }
 
+  quashSideEffectsLater = VRPN_TRUE;
   *this = ((vrpn_Shared_String *) d_replica[whichReplica])->value();
+  quashSideEffectsLater = VRPN_FALSE;
 
 }
 
@@ -1017,6 +1097,7 @@ void TclNet_string::copyFromToReplica (int sourceReplica, int destReplica)
     return;  // error
   }
 
+  quashSideEffectsLater = VRPN_TRUE;
   if ( d_activeReplica == destReplica) {
       *this = ((vrpn_Shared_String *) d_replica[sourceReplica])->value();
   } else {
@@ -1025,6 +1106,7 @@ void TclNet_string::copyFromToReplica (int sourceReplica, int destReplica)
 
       ((vrpn_Shared_String *) d_replica[destReplica])->set(((vrpn_Shared_String *) d_replica[sourceReplica])->value(), now);
   }
+  quashSideEffectsLater = VRPN_FALSE;
 }
 
 
@@ -1085,7 +1167,7 @@ int TclNet_string::propagateReceivedUpdate (
     void * userdata,
     const char * newValue,
     timeval when,
-    vrpn_bool /*isLocal*/)
+    vrpn_bool isLocal)
 {
   TclNet_string * nts;
 
@@ -1118,13 +1200,29 @@ int TclNet_string::propagateReceivedUpdate (
 //      ignore = VRPN_TRUE;
 //    }
 
+  if (!nts->d_updateFromTcl) {
+
+    // Since we're not inside a Tcl callback, we're about to generate one,
+    // which we want to ignore to avoid endless loops or hitting the callback
+    // twice.
+
+    collabVerbose(8, "TclNet_string::updateTcl(%s):  setting d_ignoreChange.\n",
+                  nts->d_myTclVarname);
+    nts->d_ignoreChange = VRPN_TRUE;
+  }
+
   nts->Tclvar_string::operator = (newValue);
   nts->d_lastUpdate = when;
   if (interpreter) {
     // SetFromTcl() MUST come after operator = ().
+    // This is where side effects (&callbacks) happen
+    if (!isLocal || quashSideEffectsLater) {
+      quashSideEffects = VRPN_TRUE;
+    }
     if (!ignore) {
       nts->Tclvar_string::SetFromTcl(newValue);
     }
+    quashSideEffects = VRPN_FALSE;
   }
 
 

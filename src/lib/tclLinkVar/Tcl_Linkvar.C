@@ -61,8 +61,9 @@ static	Tcl_Interp	*interpreter = NULL;	///< Tcl interpreter used
 // if we use Tcl_GetVar instead, we wil be able to link with array elements 
 // in TCL. 
 
-/**	Update the integer variable in the handler that is pointed to
- when the variables changes.
+/**
+   Update the integer variable in the handler that is pointed to
+   when the variables changes.
 */
 //static 
 char	*handle_int_value_change(ClientData clientData,
@@ -111,9 +112,11 @@ collabVerbose(8, "  .. set updateFromTcl.\n");
 	return NULL;
 }
 
-/**	Update the float variable in the handler that is pointed to
- when the variables changes.
+/**
+   Update the float variable in the handler that is pointed to
+   when the variables changes.
 */
+
 //static
 char	*handle_float_value_change(ClientData clientData,
 	Tcl_Interp *interp, char * /*name1*/, char * /*name2*/, int /*flags*/)
@@ -153,9 +156,10 @@ char	*handle_float_value_change(ClientData clientData,
 //	Update the string variable in the handler that is pointed to
 // when the variables changes.
 
-/**	Update the string variable in the handler that is pointed to
- when the variables changes.
-*/
+/**
+   Update the string variable in the handler that is pointed to
+   when the variables changes.
+ */
 char	*handle_string_value_change(ClientData clientData,
 	Tcl_Interp *interp, char * /*name1*/, char * /*name2*/, int /*flags*/)
 {
@@ -184,9 +188,11 @@ char	*handle_string_value_change(ClientData clientData,
 	return NULL;
 }
 
-/**	Update the list_of_strings variable in the handler that is pointed to
- when the variables changes.
-*/
+/**
+   Update the list_of_strings variable in the handler that is pointed to
+   when the variables changes.
+ */
+
 char	*handle_list_of_strings_value_change(ClientData clientData,
 	Tcl_Interp *interp, char * /*name1*/, char * /*name2*/, int /*flags*/)
 {
@@ -344,9 +350,9 @@ int	Tclvar_mainloop (void)
 }
 
 /**
- * Add an entry into the list of active integer Tcl variables, and
- * point it to this variable.
- * Add a Tcl callback, if an interpreter has been declared.
+   Add an entry into the list of active integer Tcl variables, and
+   point it to this variable.
+   Add a Tcl callback, if an interpreter has been declared.
  */
 
 Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
@@ -444,9 +450,9 @@ Tclvar_int::~Tclvar_int (void)
 
 
 /**
- * Add a callback
- * @param cb Callback function
- * @param userdata a pointer useful to the callback
+   Add a callback
+   @param cb Callback function
+   @param userdata a pointer useful to the callback
  */
 
 void Tclvar_int::addCallback (Linkvar_Intcall cb, void * userdata) {
@@ -475,10 +481,10 @@ void Tclvar_int::addCallback (Linkvar_Intcall cb, void * userdata) {
 }
 
 /**
- * remove a callback. Parameter must be identical to those
- * passed to the addCallback method previously.
- * @param cb Callback function
- * @param userdata a pointer useful to the callback
+   Remove a callback. Parameter must be identical to those
+   passed to the addCallback method previously.
+   @param cb Callback function
+   @param userdata a pointer useful to the callback
  */
 
 void Tclvar_int::removeCallback (Linkvar_Intcall cb, void * userdata) {
@@ -575,6 +581,7 @@ void Tclvar_int::updateTcl (void) {
     // operator = in the C code, and their new (empty) value needs to
     // be passed up to Tcl.
 
+/*
   if (!d_updateFromTcl) {
 
     // Since we're not inside a Tcl callback, we're about to generate one,
@@ -585,11 +592,8 @@ void Tclvar_int::updateTcl (void) {
                   d_myTclVarname);
     d_ignoreChange = VRPN_TRUE;
   }
+*/
 
-//    if ((d_myint == mylastint) || d_permitIdempotentChanges) {
-//      d_ignoreChange = VRPN_FALSE;
-//      return;
-//    }
   mylastint = d_myint;
   d_dirty = VRPN_FALSE;
   if (d_myTclVarname) {
@@ -810,6 +814,7 @@ void Tclvar_float::updateTcl (void) {
     // operator = in the C code, and their new (empty) value needs to
     // be passed up to Tcl.
 
+/*
   if (!d_updateFromTcl) {
 
     // Since we're not inside a Tcl callback, we're about to generate one,
@@ -818,11 +823,7 @@ void Tclvar_float::updateTcl (void) {
 
     d_ignoreChange = VRPN_TRUE;
   }
-
-//    if ((d_myfloat == mylastfloat) || d_permitIdempotentChanges) {
-//      d_ignoreChange = VRPN_FALSE;
-//      return;
-//    }
+*/
 
   mylastfloat = d_myfloat;
   d_dirty = VRPN_FALSE;
@@ -1722,6 +1723,8 @@ void Tclvar_string::updateTcl (void) {
   // some widgets accept input and then clear themselves by executing
   // operator = in the C code, and their new (empty) value needs to
   // be passed up to Tcl.
+
+/*
   if (!d_updateFromTcl) {
 
     // Since we're not inside a Tcl callback, we're about to generate one,
@@ -1730,11 +1733,7 @@ void Tclvar_string::updateTcl (void) {
 
     d_ignoreChange = VRPN_TRUE;
   }
-
-//    if (!compareStrings() || d_permitIdempotentChanges) {
-//      d_ignoreChange = VRPN_FALSE;
-//      return;
-//    }
+*/
 
   // Idempotent check.
   //fprintf(stderr, "Tclvar_int::updateTcl(%s) - was %s.\n",
