@@ -1,3 +1,7 @@
+2003-04-07  Adam Seeger  <seeger@cs.unc.edu>
+
+	* litho_main.tcl: added button to draw a focus test pattern
+
 2003-04-03  David Jack  <jackd@cs.unc.edu>
       * litho_main.tcl: added second line width box and radio buttons
       to indicate which is the current line width

@@ -404,6 +404,10 @@ button $drawing_parameters_win.tool.thinpolyline.add_test_grid \
     -text "Add Test Grid" -command { set add_test_grid 1 }
 pack $drawing_parameters_win.tool.thinpolyline.add_test_grid -side top
 
+button $drawing_parameters_win.tool.thinpolyline.add_focus_test \
+    -text "Add Focus Test" -command { set add_focus_test 1 }
+pack $drawing_parameters_win.tool.thinpolyline.add_focus_test -side top
+
 frame $drawing_parameters_win.tool.area_tools -bd 3 -relief groove
 pack $drawing_parameters_win.tool.area_tools -side top
 generic_entry $drawing_parameters_win.tool.area_tools.area_exposure \
@@ -441,8 +445,9 @@ pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width2.entry \
 
 radiobutton $drawing_parameters_win.tool.area_tools.polygon \
       -variable drawing_tool -value 3 -text "polygon" -justify left
-radiobutton $drawing_parameters_win.tool.dump_point -variable drawing_tool \
-      -value 4 -text "dump point" -justify left
+
+#radiobutton $drawing_parameters_win.tool.dump_point -variable drawing_tool \
+#      -value 4 -text "dump point" -justify left
 #radiobutton $drawing_parameters_win.tool.select -variable drawing_tool \
 #      -value 5 -text "select" -justify left
 
@@ -450,8 +455,7 @@ pack $drawing_parameters_win.tool -side left
 
 pack $drawing_parameters_win.tool.thinpolyline.button \
      $drawing_parameters_win.tool.area_tools.thickpolyline.button \
-     $drawing_parameters_win.tool.area_tools.polygon \
-     $drawing_parameters_win.tool.dump_point -side top
+     $drawing_parameters_win.tool.area_tools.polygon -side top
 
 #     $drawing_parameters_win.tool.select -side top
 
