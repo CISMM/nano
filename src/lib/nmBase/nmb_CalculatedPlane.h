@@ -153,6 +153,9 @@ protected:
   _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
     throw( nmb_CalculatedPlaneCreationException );
 
+  // calls any callbacks registered to listen for new 
+  // calculated plane creation.
+  static void addNewCalculatedPlane( nmb_CalculatedPlane* plane );
 
  private:
   // default constructor
@@ -163,10 +166,6 @@ protected:
 
   static NewCalculatedPlaneCallbackNode* calculatedPlaneCB_head; 
   static nmb_CalculatedPlaneNode* calculatedPlaneList_head;
-
-  // calls any callbacks registered to listen for new 
-  // calculated plane creation.
-  static void addNewCalculatedPlane( nmb_CalculatedPlane* plane );
 
 }; // end class nmb_CalculatedPlane
 
