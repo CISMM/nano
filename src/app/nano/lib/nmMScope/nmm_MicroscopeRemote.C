@@ -544,8 +544,8 @@ long nmm_Microscope_Remote::rotateScanCoords (double _x, double _y,
   // Rotate about the center of the scan region -- same as
   // the Thermo software rotates it's scan when we send it a 
   // particular scan angle. 
-    double sin_angle = sinf(Q_DEG_TO_RAD(-_scanAngle));
-    double cos_angle = cosf(Q_DEG_TO_RAD(-_scanAngle));
+    double sin_angle = sin(Q_DEG_TO_RAD(-_scanAngle));
+    double cos_angle = cos(Q_DEG_TO_RAD(-_scanAngle));
 
     double centerx = d_dataset->inputGrid->minX() +
     (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())/2.0 ;
@@ -1341,19 +1341,21 @@ long nmm_Microscope_Remote::SetModForce () {
 
   
 long nmm_Microscope_Remote::RecordResistance
-        (long meter, timeval t, float res,
-         float v, float r, float f) {
-  char * msgbuf;
-  vrpn_int32 len;
+          (long /*meter*/, timeval /*t*/, float res,
+           float /*v*/, float /*r*/, float /*f*/) {
+//    char * msgbuf;
+//    vrpn_int32 len;
 
-  msgbuf = encode_RecordResistance(&len, meter, t, res, v, r, f);
-  if (!msgbuf)
-    return -1;
+    // Message doesn't do anything, and is ignored by Topo, so don't send
+//    msgbuf = encode_RecordResistance(&len, meter, t, res, v, r, f);
+//    if (!msgbuf)
+//      return -1;
 
-  // HACK - this is a temporary fix to get resistance values into the modfile
+  // HACK - this is a fix to get resistance values into the modfile
   lastResistanceReceived = res;
 
-  return dispatchMessage(len, msgbuf, d_RecordResistance_type);
+  //  return dispatchMessage(len, msgbuf, d_RecordResistance_type);
+  return 0;
 }
 
 int nmm_Microscope_Remote::getTimeSinceConnected(void) {

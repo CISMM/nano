@@ -18,9 +18,6 @@ extern int make_green_line (nmg_State * state,
                             const float a [], const float b []);
 extern int make_blue_line (nmg_State * state, 
                            const float a [], const float b []);
-extern int make_selected_region_marker (float x_min, float y_min, float x_max,
-				        float y_max);
-extern int make_green_line(const float a[], const float b[]);
 
 //   Called in nmg_GraphicsImpl.c
 extern int make_aim (const float a [], const float b []);
@@ -34,6 +31,8 @@ extern int make_rubber_corner ( nmg_State * state,
                                 float, float, float, float, int);
 extern int make_region_box ( nmg_State * state, 
                              float, float, float, float, float, int);
+extern int move_cross_section ( nmg_State * state, int, int, 
+                             float, float, float, float, int);
 extern void position_sphere (nmg_State * state, float, float, float);
 extern int mysphere(void * data);
 extern void enableCollabHand (nmg_State * state, int);

@@ -18,26 +18,6 @@ set nmInfo(calc_planes) [create_closing_toplevel calc_planes \
         "Calculate Data Planes"]
 
 
-#Simulated Scan plane
-iwidgets::Labeledframe $nmInfo(calc_planes).simscan \
-	-labeltext "Create plane from simulated AFM scan" \
-	-labelpos nw
-set nmInfo(simscanplane) [$nmInfo(calc_planes).simscan childsite]
-
-pack $nmInfo(calc_planes).simscan -side top -fill x
-
-# Allow the user to create a sim. scan plane:
-label $nmInfo(simscanplane).simscanlabel -justify left -text \
-	"Enter a plane name and the name of the\ncomputer the simulator is running on:\n(e.g. radium-cs@cs.unc.edu)"
-generic_entry $nmInfo(simscanplane).simscanplane simscanplane_name \
-	"Simulated AFM Scan Plane" ""
-# Allow the user to specify the computer the simulator is running on:
-generic_entry $nmInfo(simscanplane).simIPaddress simscanIPaddress \
-	"IP Address" ""
-pack $nmInfo(simscanplane).simscanlabel $nmInfo(simscanplane).simscanplane \
-		$nmInfo(simscanplane).simIPaddress \
-	-side top -anchor nw
-
 
 #Flat plane
 iwidgets::Labeledframe $nmInfo(calc_planes).flat \
@@ -95,6 +75,26 @@ generic_entry $nmInfo(sumplane).sumplane sumplane_name \
 pack $nmInfo(sumplane).sumlabel $nmInfo(sumplane).sumplane1 \
         $nmInfo(sumplane).sum_scale $nmInfo(sumplane).sumplane2 \
         $nmInfo(sumplane).sumplane \
+	-side top -anchor nw
+
+#Simulated Scan plane
+iwidgets::Labeledframe $nmInfo(calc_planes).simscan \
+	-labeltext "Create plane from simulated AFM scan" \
+	-labelpos nw
+set nmInfo(simscanplane) [$nmInfo(calc_planes).simscan childsite]
+
+pack $nmInfo(calc_planes).simscan -side top -fill x
+
+# Allow the user to create a sim. scan plane:
+label $nmInfo(simscanplane).simscanlabel -justify left -text \
+	"Enter a plane name and the name of the\ncomputer the simulator is running on:\n(e.g. radium-cs@cs.unc.edu)"
+generic_entry $nmInfo(simscanplane).simscanplane simscanplane_name \
+	"Simulated AFM Scan Plane" ""
+# Allow the user to specify the computer the simulator is running on:
+generic_entry $nmInfo(simscanplane).simIPaddress simscanIPaddress \
+	"IP Address" ""
+pack $nmInfo(simscanplane).simscanlabel $nmInfo(simscanplane).simscanplane \
+		$nmInfo(simscanplane).simIPaddress \
 	-side top -anchor nw
 
 

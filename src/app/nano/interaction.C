@@ -55,6 +55,7 @@
 #include <nmui_Haptics.h>
 #include <nmui_HapticSurface.h>
 #include <nmui_SurfaceFeatures.h>
+#include <nmui_CrossSection.h>
 
 #include <optimize_now.h>
 #include <directstep.h>
@@ -203,6 +204,18 @@ static float region_height = 0;
 static float region_angle = 0;
 static float region_base_tracker_angle = 0;
 
+/// Cross Section mode state
+static RegMode prep_xs_drag_mode = REG_NULL;
+static RegMode xs_drag_mode = REG_NULL;
+static float xs_center_x = 0;
+static float xs_center_y = 0;
+static float xs_width = 1;
+//static float xs_height = 0;
+static float xs_angle = 0;
+static float xs_base_tracker_angle = 0;
+
+nmui_CrossSection xs_ui;
+
 /** parameter locking the tip in sharp tip mode */
 static void handle_xyLock (vrpn_int32, void *);
 TclNet_int xy_lock ("xy_lock_pressed", 0, handle_xyLock);
@@ -219,7 +232,7 @@ Tclvar_int  tcl_trigger_pressed("trigger_pressed",0, handle_trigger_change);
 
 /**
  * callback function for PHANToM reset button in tcl interface.
- **********/
+ */
 static void handle_phantom_reset( vrpn_int32 val, void *userdata);
 
 static void handle_handTracker_update_rate (vrpn_float64, void *);
@@ -290,6 +303,7 @@ double touch_surface (int, q_vec_type);
 int set_aim_line_color(float);
 int meas_cross( float, float, float, float, float);
 int doMeasure(int, int);
+int doCrossSection(int, int);
 
 int doLine(int, int);
 int doFeelFromGrid(int, int);
@@ -1162,6 +1176,9 @@ void dispatch_event(int mode, int event, nmb_TimerList * /*timer*/)
 		break;
 	case USER_MEASURE_MODE:
 		ret = doMeasure(user,event);
+		break;
+	case USER_CROSS_SECTION_MODE:
+		ret = doCrossSection(user,event);
 		break;
 	case USER_LINE_MODE:  // no longer directly called?
 		ret = doLine(user,event);
@@ -2202,7 +2219,155 @@ int doMeasure(int whichUser, int userEvent)
 #undef GREEN
 #undef BLUE
 
+static float xform_width(float x, float y, float angle) {
+    return fabs(cos(angle)*(x) + sin(angle)*(y));
+}
+static float xform_height(float x, float y, float angle) {
+    return fabs(cos(angle)*(y) - sin(angle)*(x));
+}
 
+/**
+*
+   doCrossSection - Move cross-section indicators across the surface.
+*
+*/
+int doCrossSection(int whichUser, int userEvent)
+{ 
+    v_xform_type	worldFromHand;
+    q_matrix_type	hand_mat;
+    q_vec_type          angles;
+    float	        handx,handy, hand_angle;
+
+    BCPlane* plane = dataset->inputGrid->getPlaneByName
+        (dataset->heightPlaneName->string());
+    if (plane == NULL)
+    {
+        fprintf(stderr, "Error in doxs: could not get plane!\n");
+        return -1;
+    }  
+
+    /* Move the tip to the hand x,y location */
+    /* Set its height based on data at this point */
+    v_get_world_from_hand(whichUser, &worldFromHand);
+
+    // Move the aiming line to the user's hand location
+    // We don't want to clip it to the heightplane, so pass NULL
+    decoration->aimLine.moveTo(worldFromHand.xlate[0],
+                               worldFromHand.xlate[1], NULL);
+    
+    q_to_col_matrix(hand_mat, worldFromHand.rotate);
+    q_col_matrix_to_euler( angles, hand_mat );
+    hand_angle = -angles[YAW];
+    handx = worldFromHand.xlate[0];
+    handy = worldFromHand.xlate[1];
+
+    // Is hand near center ?
+    if ((handx - xs_center_x)*(handx - xs_center_x)+
+        (handy - xs_center_y)*(handy - xs_center_y)
+        < 0.01*(xs_width*xs_width)) {
+        prep_xs_drag_mode = REG_PREP_TRANSLATE;
+    } else if ((xform_height(handx-xs_center_x,
+                             handy-xs_center_y, 
+                             xs_angle) < 0.1*(xs_width))&&
+               (xform_width(handx-xs_center_x,
+                             handy-xs_center_y, 
+                             xs_angle) > 0.9*(xs_width))&&
+                (xform_width(handx-xs_center_x,
+                             handy-xs_center_y, 
+                             xs_angle) < 1.1*(xs_width))
+               ) {
+        // near endpoint, so resize the width. 
+        prep_xs_drag_mode = REG_PREP_SIZE;
+
+    } else {
+        prep_xs_drag_mode = REG_NULL;
+    }
+    
+    // Carefull! Nested switch statements!
+    switch ( userEvent ) {
+
+    case PRESS_EVENT:	
+        switch(prep_xs_drag_mode) {
+        case REG_PREP_TRANSLATE:
+            xs_center_x = handx;
+            xs_center_y = handy;
+            xs_base_tracker_angle = xs_angle + hand_angle;
+            xs_drag_mode = REG_TRANSLATE;
+            break;
+        case REG_NULL:
+            // If we're not near a feature when we click, switch
+            // to creating and sizing a new xs. 
+            xs_drag_mode = REG_SIZE;
+            prep_xs_drag_mode = REG_PREP_SIZE;
+            // reset xs size for dragging. 
+            xs_center_x = handx;
+            xs_center_y = handy;
+            xs_width = 0;
+            xs_base_tracker_angle = hand_angle;
+            xs_angle = 0;
+             break;
+        case REG_PREP_SIZE:
+            xs_drag_mode = REG_SIZE;
+            break;
+        }
+        break;
+       
+    case RELEASE_EVENT:	
+        // Do same stuff for hold or release
+
+    case HOLD_EVENT:
+        switch(xs_drag_mode) {
+        case REG_TRANSLATE:
+            // Move the center of the xs
+            xs_center_x = handx ;
+            xs_center_y = handy ;
+            // Change the angle, too. 
+            xs_angle = xs_base_tracker_angle - hand_angle;
+            break;
+        case REG_SIZE:
+            // Resize the xs
+            //xs_angle = xs_base_tracker_angle - hand_angle;
+            xs_width = sqrt((handx - xs_center_x)*(handx - xs_center_x)+
+                            (handy - xs_center_y)*(handy - xs_center_y));
+            xs_angle = atan2(handy - xs_center_y, handx - xs_center_x);
+
+            // passed as param below, so we display highlight. 
+            prep_xs_drag_mode = REG_PREP_SIZE;
+            break;
+        default:
+            break;
+        }
+        if (userEvent == RELEASE_EVENT) {
+            // Helps display highlight correctly, below
+            xs_drag_mode = REG_NULL;
+            /*            if (xsOutsidePlane(plane, xs_center_x, xs_center_y, 
+                                   xs_width, xs_height, xs_angle)){
+                // Tell gfx to delete the xs
+                xs_drag_mode = REG_DEL;
+                // Reset xs size, position to zero. 
+                xs_center_x = xs_center_y = xs_width =
+                    xs_height = xs_angle = 0;
+                    }*/
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    // Display the scan xs extent as the user plans to change it. 
+    // Draw the new bounding box and center handle for the xs. 
+    graphics->positionCrossSection(0, 1,
+         xs_center_x, xs_center_y, 
+         xs_width, Q_RAD_TO_DEG(xs_angle), 
+         (xs_drag_mode==REG_NULL)?prep_xs_drag_mode:xs_drag_mode);
+
+    xs_ui.ShowCrossSection(dataset->inputGrid, dataset->inputPlaneNames, 
+                           0, 1,
+                           xs_center_x, xs_center_y, 
+                           xs_width, xs_angle);
+    return(0);
+}
 
 /**
  *
@@ -3120,12 +3285,6 @@ doSelect(int whichUser, int userEvent)
     return(0);
 }
 
-static float xform_width(float x, float y, float angle) {
-    return fabs(cos(angle)*(x) + sin(angle)*(y));
-}
-static float xform_height(float x, float y, float angle) {
-    return fabs(cos(angle)*(y) - sin(angle)*(x));
-}
 static int regionOutsidePlane(BCPlane* plane ,
                               float region_center_x,
                               float region_center_y,

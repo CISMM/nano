@@ -86,7 +86,8 @@ static GLint vx_quarter_up;
 static GLint vx_half_up;
 static GLint rubber_corner;
 static GLint region_box;
-static GLint region_marker;
+static GLint xs_struct;
+//static GLint region_marker;
 static GLint aim_struct;
 
 static GLint red_line_struct;
@@ -108,6 +109,7 @@ static int aim_struct_id;
 
 static int rubber_corner_id;
 static int region_box_id;
+static int xs_struct_id;
 static int sweep_struct_id;
 
 // ID for marker of user's hand position
@@ -149,6 +151,7 @@ static int vx_down_icon (void *);
 static int vx_up_icon (void *);
 static int draw_north_pointing_arrow (void *);
 
+static int make_line (const float a [], const float b []);
 int my_line_mark (void *);
 int my_rubber_line (void *);
 int my_scanline_indicator (void *);
@@ -160,6 +163,9 @@ int make_sweep (nmg_State * state, const float a [], const float b [],
 		const float c [], const float d [] );
 int make_rubber_corner (float, float, float, float, int);
 int make_region_box (float, float, float, float, float, int);
+
+static int draw_cross_section(void * data );
+
 
 static int selecthand (void *);
 static int mycube (void);
@@ -246,6 +252,11 @@ int clear_world_modechange(nmg_State * state,
   case USER_REGION_MODE:
     removeFunctionFromFunclist(&v_hand,hand_id);
     removeFunctionFromFunclist(&vir_world,region_box_id);
+    removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    break;    
+  case USER_CROSS_SECTION_MODE:
+    removeFunctionFromFunclist(&v_hand,hand_id);
+    removeFunctionFromFunclist(&vir_world,xs_struct_id );
     removeFunctionFromFunclist(&vir_world,aim_struct_id);
     break;    
   default:
@@ -349,6 +360,13 @@ int init_world_modechange(nmg_State * state,
     aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
                                           "draw_list(aim_struct)");
     break;
+  case USER_CROSS_SECTION_MODE:
+    hand_id = addFunctionToFunclist(&v_hand, selecthand, NULL, "selecthand");
+    xs_struct_id = addFunctionToFunclist(&vir_world, draw_cross_section, 
+                                         state, "draw_cross_section");
+    aim_struct_id = addFunctionToFunclist(&vir_world, draw_list, &aim_struct,
+                                          "draw_list(aim_struct)");
+    break;
   default:
     break;
   }
@@ -446,8 +464,8 @@ void myobjects(nmg_State * state)
   glEndList();
 
   /* region marker */
-  glNewList(region_marker,GL_COMPILE);
-  glEndList();
+//    glNewList(region_marker,GL_COMPILE);
+//    glEndList();
 
   //show lines where old selected areas were
   glNewList(marker_list->id, GL_COMPILE); /* empty list?*/
@@ -1053,6 +1071,130 @@ int make_region_box(nmg_State * state,
 
 	glEndList();
 	return(0);
+}
+
+int move_cross_section(nmg_State * state, int id, int enable,  
+                    float center_x,float center_y, float width, 
+                    float angle, int highlight_mask)
+{
+    if (id < 0 || id > 2) return 0;
+    state->xs_state[id].enabled = enable;
+    if(enable) {
+        state->xs_state[id].center_x = center_x;
+        state->xs_state[id].center_y = center_y;
+        state->xs_state[id].width = width;
+        state->xs_state[id].angle = angle;
+        state->xs_state[id].highlight_mask = highlight_mask;
+    }
+    return 0;
+}
+
+int draw_cross_section(void * data )
+{
+    nmg_State * state = (nmg_State *) data;
+    //float x_wide = state->inputGrid->maxX() - state->inputGrid->minX();
+
+
+
+    VertexType Points[6];
+    float z_min,z_max, z_range;
+    float normal_color[4] = {0.0,0.9,0.9,1};
+    float highlight_color[4] = {0.9,0.0,0.9,0.5};
+    BCPlane* plane = state->inputGrid->getPlaneByName
+        (state->heightPlaneName);
+    if (plane == NULL)
+    {
+        fprintf(stderr, "Error in make_region_box: could not get plane!\n");
+        return -1;
+    }
+    
+    // Init with reasonable value. 
+    z_min=z_max= plane->scaledValue(0,0);
+    // If min max equal, plane has no real data.
+    if (plane->maxNonZeroValue() > plane->minNonZeroValue()) {
+        z_min=plane->minNonZeroValue()*plane->scale();
+        z_max=plane->maxNonZeroValue()*plane->scale();
+    }
+    // Add 10 nm to edges to make sure it's visible. 
+    z_min=z_min-10*plane->scale();
+    z_max=z_max+10*plane->scale();
+    z_range = z_max-z_min;
+
+    glPushAttrib(GL_CURRENT_BIT);
+    for (int id=0; id < 3; id++) {
+        if (state->xs_state[id].enabled == 0) {
+            continue;
+        }
+        glPushMatrix();
+        glTranslatef(state->xs_state[id].center_x, 
+                     state->xs_state[id].center_y, 0);
+        glRotatef(state->xs_state[id].angle, 0.0,0.0,1.0);
+        
+  	Points[0][Z]= z_min;
+	Points[0][X]= -state->xs_state[id].width;
+	Points[0][Y]= 0;
+
+	Points[1][Z]= z_max;
+	Points[1][X]= -state->xs_state[id].width;
+	Points[1][Y]= 0;
+
+  	Points[2][Z]= z_min;
+	Points[2][X]= 0;
+	Points[2][Y]= 0;
+
+	Points[3][Z]= z_max;
+	Points[3][X]= 0;
+	Points[3][Y]= 0;
+
+  	Points[4][Z]= z_min;
+	Points[4][X]= state->xs_state[id].width;
+	Points[4][Y]= 0;
+
+	Points[5][Z]= z_max;
+	Points[5][X]= state->xs_state[id].width;
+	Points[5][Y]= 0;
+
+        glLineWidth(3.0);
+        if ((state->xs_state[id].highlight_mask & REG_SIZE)|
+            (state->xs_state[id].highlight_mask & REG_PREP_SIZE)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+        make_line(Points[0],Points[1]);
+        make_line(Points[4],Points[5]);
+        if ((state->xs_state[id].highlight_mask & REG_TRANSLATE)|
+            (state->xs_state[id].highlight_mask & REG_PREP_TRANSLATE)) {
+            glColor4fv(highlight_color);
+        } else {
+            glColor4fv(normal_color);
+        }
+        make_line(Points[2],Points[3]);
+
+        glColor4fv(normal_color);
+        glLineWidth(1.0);
+        make_line(Points[0],Points[4]);
+        Points[0][2] = z_min + 0.1667*z_range;
+        Points[4][2] = z_min + 0.1667*z_range;
+        make_line(Points[0],Points[4]);
+        Points[0][2] = z_min + 0.3333*z_range;
+        Points[4][2] = z_min + 0.3333*z_range;
+        make_line(Points[0],Points[4]);
+        Points[0][2] = z_min + 0.5*z_range;
+        Points[4][2] = z_min + 0.5*z_range;
+        make_line(Points[0],Points[4]);
+        Points[0][2] = z_min + 0.6667*z_range;
+        Points[4][2] = z_min + 0.6667*z_range;
+        make_line(Points[0],Points[4]);
+        Points[0][2] = z_min + 0.8333*z_range;
+        Points[4][2] = z_min + 0.8333*z_range;
+        make_line(Points[0],Points[4]);
+        make_line(Points[1],Points[5]);
+
+        glPopMatrix();
+    }
+    glPopAttrib();
+    return(0);
 }
 
 int make_line (const float a [], const float b [])
@@ -2165,8 +2307,8 @@ int my_rubber_line(void * data)
 
     // Make limits 10% bigger (+ const) so lines are visible above min and max. 
     double z_range = z_max - z_min;
-    z_min = (z_min-(z_range * 0.1 + 500));
-    z_max = (z_max+(z_range * 0.1 + 500));
+    z_min = (z_min-(z_range * 0.1 + 50));
+    z_max = (z_max+(z_range * 0.1 + 50));
     z_range = z_max - z_min;
 
     // Now we draw some lines - 7 horizontal lines.
@@ -2375,7 +2517,7 @@ int replaceDefaultObjects(nmg_State * state)
   vx_half_up = glGenLists(1);
   rubber_corner = glGenLists(1);
   region_box = glGenLists(1);
-  region_marker = glGenLists(1);
+//    region_marker = glGenLists(1);
   aim_struct = glGenLists(1);
   red_line_struct = glGenLists(1);
   green_line_struct = glGenLists(1);

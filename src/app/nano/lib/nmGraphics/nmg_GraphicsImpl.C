@@ -2587,6 +2587,15 @@ void nmg_Graphics_Implementation::positionRegionBox
     }
 }
 
+void nmg_Graphics_Implementation::positionCrossSection
+  (int id, int enable, float center_x,float center_y, float width,
+   float angle, int highlight_mask) {
+//fprintf(stderr, "nmg_Graphics_Implementation::positionRegionBox().\n");
+
+    // In globjects.c
+    move_cross_section(state, id, enable, center_x, center_y, width, 
+                    angle, highlight_mask);
+}
 
 void nmg_Graphics_Implementation::positionSphere (float x, float y, float z) {
 //fprintf(stderr, "nmg_Graphics_Implementation::positionSphere().\n");

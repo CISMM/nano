@@ -1,3 +1,9 @@
+2001-12-18  Aron Helser  <helser@cs.unc.edu>
+
+	* nmb_Types.h: Added USER_CROSS_SECTION_MODE
+	* nmb_Subgrid.C: compiler warning fix
+	* Point.C: minor modfile formatting change
+
 2001-12-18  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_TransformMatrix44.Ch (transform): new convenient form of

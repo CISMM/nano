@@ -1,3 +1,14 @@
+2001-12-18  Aron Helser  <helser@cs.unc.edu>
+
+	* globjects.c (clear_world_modechange): handle USER_CROSS_SECTION_MODE
+	(init_world_modechange): handle USER_CROSS_SECTION_MODE
+	(move_cross_section): new
+	(draw_cross_section): new
+	* nmg_Graphics.h (positionCrossSection): new
+	* nmg_GraphicsImpl.Ch (positionCrossSection): new, calls
+	move_cross_section 
+	* nmg_State.Ch: cross section enabled variables. 
+
 2001-12-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* globject.c: remove some compiler warnings on the SGI, remove

@@ -426,10 +426,10 @@ int Point_list::writeToTclWindow(Tcl_Interp *interpreter)
 
 	  // Put s, time, x,y, then the data sets from the values.
 	  if (is3D)
-	      sprintf(str,"\"%g\t%g\t%g\t%g\t%g\"", s, time, p->x(), p->y(),
+	      sprintf(str,"\"%.2f\t%.4f\t%.2f\t%.2f\t%.2f\"", s, time, p->x(), p->y(),
 							p->z());
 	  else
-	      sprintf(str,"\"%g\t%g\t%g\t%g\"", s, time, p->x(), p->y());
+	      sprintf(str,"\"%.2f\t%.4f\t%.2f\t%.2f\"", s, time, p->x(), p->y());
 	  sprintf(command2,".mod.text insert end %s",str);
 	  if (Tcl_Eval(interpreter, command2) != TCL_OK) {
                 fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command2,

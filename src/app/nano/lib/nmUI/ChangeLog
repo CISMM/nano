@@ -1,3 +1,10 @@
+2001-12-18  Aron Helser  <helser@cs.unc.edu>
+
+	* nmui_CrossSection.Ch: new, control UI for cross section
+	tool. First try, still lots wrong, but it does the basics with one
+	cross section.  
+	* GraphMod.C: compiler warning. 
+
 2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* ModFile.C : replaced get_the_interpreter() with 

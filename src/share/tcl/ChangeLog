@@ -1,4 +1,17 @@
-2001-12-12    <marshbur@cs.unc.edu>
+2001-12-18  Aron Helser  <helser@cs.unc.edu>
+
+	* cross_section.tcl: major revision, widgets and graph for new
+	cross section analysis tool. 
+
+	* mainwin.tcl: load cross-section and position windows.
+	font size tweak so it's always used. 
+
+	* analysismenu.tcl: move simulated-scan plane to bottom of
+	dialog. 
+
+	* modify.tcl: default value tweak. 
+
+2001-12-12  David Marshburn  <marshbur@cs.unc.edu>
 
 	* keithley2400.tcl: changes to label curves by time.  
 	display tweaks, too.

@@ -340,8 +340,8 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
 	    // and change it's limits
 	    printf("y axis is %f to %f\n", minval, maxval);
 	    if (minval == maxval){
-		minval -= 0.001;
-		maxval += 0.001;
+		minval -= 0.001f;
+		maxval += 0.001f;
 	    }
 	    sprintf(command, "add_stripchart_element \"%s\" %d %f %f %f", 
 		str, i,

@@ -178,6 +178,7 @@ VRPN_MESSAGE EnableUpdatableQueue {
   bool on
 }
 
+/* Unused
 VRPN_MESSAGE RecordResistance {
   int32 meter
   timeval time
@@ -186,6 +187,7 @@ VRPN_MESSAGE RecordResistance {
   float32 r
   float32 f
 }
+*/
 
 //VRPN_MESSAGE SetModForce
 //VRPN_MESSAGE SetMaxMove 

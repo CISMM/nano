@@ -503,7 +503,7 @@ proc init_full {} {
     generic_entry $nmInfo(modifyfull).styleparam.forcecurvedist newmodifyp_fcdist \
 	"F.C. Dist. (0,500 nm)" real 
     generic_entry $nmInfo(modifyfull).styleparam.num-layers newmodifyp_num_layers \
-	"# Samples (1,100)" real 
+	"# Samples (100,500)" real 
     generic_entry $nmInfo(modifyfull).styleparam.num-halfcycles newmodifyp_num_hcycles \
 	"# Half Cycles (1,4)" real 
     generic_entry $nmInfo(modifyfull).styleparam.sample-speed newmodifyp_sample_speed \

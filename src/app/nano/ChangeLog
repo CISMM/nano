@@ -1,3 +1,9 @@
+2001-12-18  Aron Helser  <helser@cs.unc.edu>
+
+	* interaction.c (doCrossSection): new phantom mode, place and move
+	the cross section, notify graphics and nmUI as it changes. 
+	(dispatch_event): handle doCrossSection
+
 2001-12-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* CollaborationManager.C:  removed compiler warnings on the SGI, 
@@ -9,7 +15,7 @@
 	* vrml.C: same
 	* vrpn_MousePhantom.C: same
 
-2001-12-12    <marshbur@cs.unc.edu>
+2001-12-12  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c (handle_rewind_stream_change): tell the keithley
 	ui to rewind as well.

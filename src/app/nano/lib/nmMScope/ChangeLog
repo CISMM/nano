@@ -1,3 +1,10 @@
+2001-12-18  Aron Helser  <helser@cs.unc.edu>
+
+	* nmm_MicroscopeRemote.C (rotateScanCoords): use doubles. 
+	(RecordResistance): remove unnecessary message send. 
+	* nmm_SPM_Control.vrpndef: remove unused RecordResistance
+	message. 
+
 2001-12-13  Nathan Conrad  <conrad@cs.unc.edu>
 
 	* Makefile: Makefile now auto-detects all *.??def files, and builds

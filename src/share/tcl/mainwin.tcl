@@ -51,8 +51,10 @@ if {$tcl_platform(platform) == "windows" } {
     option add *menu*disabledForeground grey55 startupFile
 }
 # This needs to be made dependent on how big the font is on the screen.
-catch { option add *font {helvetica -12 } startupFile}
-catch { option add *Font {helvetica -12 } startupFile}
+# Need to set a higher priority than startupFile so font gets used
+# with dynamically created controls. 
+catch { option add *font {helvetica -12 } userDefault}
+catch { option add *Font {helvetica -12 } userDefault}
 
 #
 # 3rdTech modifications:
@@ -290,6 +292,8 @@ $analysismenu add command -label  "Rulergrid..." -underline 0  \
     -command "show.rulergrid"
 $analysismenu add radiobutton -label "Measure Lines" -underline 0 \
     -variable user_0_mode -value 9 
+$analysismenu add radiobutton -label "Cross Section" -underline 6 \
+    -variable user_0_mode -value 18 -command "show.cross_section; show.cross_section_data" 
 $analysismenu add command -label "Data Registration..." -underline 0 \
     -command "show.registration"
 if { !$thirdtech_ui } {
@@ -508,6 +512,9 @@ source [file join ${tcl_script_dir} analysismenu.tcl]
 
 # The stripchart, for graphing the results of modifications
 source [file join ${tcl_script_dir} stripchart.tcl]
+# Cross section analysis tool. Shares options with stripchart.
+source [file join ${tcl_script_dir} cross_section.tcl]
+
 # Streamfile replay controls. Position depends on image window. 
 source [file join ${tcl_script_dir} streamfile.tcl]
 
@@ -936,6 +943,10 @@ if { !$thirdtech_ui } {
     # above the taskbar
     wm geometry $nmInfo(registration) +${main_xpos}-28
 
+    # Position cross section windows nicely
+    wm geometry .cross_section -0+0
+    wm geometry .cross_section_data +${main_xpos}+[expr [winfo reqheight \
+            .cross_section] + $winborder + $titleborder ]
 }
 
 

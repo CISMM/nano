@@ -65,6 +65,14 @@ extern  int     spm_graphics_verbosity;
 #define ENABLE_MASK 1
 #define INVERT_MASK -1
 
+typedef struct xs_state {
+    int enabled;
+    float center_x, center_y;
+    float width;
+    float angle;
+    int highlight_mask;
+} crossSectionState;
+
 /**
  Class contains anything that needs to be visible to every file in this module
  but not outside.
@@ -207,6 +215,8 @@ public:
      ///< specular color - always white/gray
     float surface_alpha;
     float diffuse;
+
+    crossSectionState xs_state[3];
 
     BCGrid * prerendered_grid;
     nmb_Subgrid * prerenderedChange;

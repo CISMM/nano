@@ -12,7 +12,7 @@ OUTPUT_FILENAME nmm_MicroscopeRemoteGen.C
 #include <stdio.h>
 #include <math.h>
 #if !defined(_WIN32)
-#include <sys/time.h> // for RecordResistance()
+#include <sys/time.h> 
 #include <unistd.h>  // for sleep()
 #endif
 
