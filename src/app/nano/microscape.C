@@ -7794,9 +7794,13 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
     if (bLaunched) {
         ShowWindow(hwnd, SW_SHOWMINIMIZED); // keeps window in front, minimized
     }
-    // Check to see if this run of nano is protected by Visual Protect.
-    char *vp_env = getenv("VPSTATUS");
-    if (vp_env) {
+    // 3rdTech: Check to see if this run of nano is protected by Visual
+    // Protect.  For no good reason I can see, getenv stopped working for VP
+    // env vars, but the MS version works. *sigh*. 1/15/03, Aron Helser
+    char vp_env[256] = "";
+    char vp_serial[256] = "No serial detected";
+    if (GetEnvironmentVariable("VPSTATUS", vp_env, 256)) {
+       //printf("Got VPstatus %s\n", vp_env);
         //See if we are registered, in trial period, or expired
         if (!strcmp(vp_env, "REGISTERED")) {
             // continue 
@@ -7808,6 +7812,7 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
             // "w" stands for write text - readable on PC platforms.
 
             file_ptr=fopen(fname,"w");
+            GetEnvironmentVariable("VPCURRENTSERIAL", vp_serial, 256);
             fprintf(file_ptr, 
              "Registration file for 3rdTech NanoManipulator DP-100\n\n"
              "This file is located in: %s\n"
@@ -7819,7 +7824,7 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
              "This will permanently register and unlock this program\n"
              "for use on this machine.\n\n"
              "Machine serial number = %s\n", 
-                    fname, nano_root, getenv("VPCURRENTSERIAL"));
+                    fname, nano_root, vp_serial);
 //               getenv("VPSTATUS"), getenv("VPREGISTERTO"), 
 //               getenv("VPCURRENTSERIAL"));
             fclose(file_ptr);
