@@ -55,6 +55,7 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
     d_testImageWinCreated(false),
 	d_testImageWinNeedsUpdate(false)
 {
+  d_textureProjectionDirectionRenderer.SetVisibility(false);
   d_tipPosition[0] = 0;
   d_tipPosition[1] = 0;
   d_tipPosition[2] = 0;
