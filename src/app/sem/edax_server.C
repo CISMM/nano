@@ -6,6 +6,8 @@ nmm_Microscope_SEM_EDAX *sem = NULL;
 
 int main(int argc, char **argv)
 {
+    int     port = vrpn_DEFAULT_LISTEN_PORT_NO;
+
 #ifdef _WIN32
     WSADATA wsaData; 
     int status;
@@ -16,7 +18,11 @@ int main(int argc, char **argv)
   
 //    atexit(handleQuit);
 
-    vrpn_Synchronized_Connection connection;
+    if (argc > 1) {
+		port = atoi(argv[1]);
+	}
+
+    vrpn_Synchronized_Connection connection(port);
 
 #ifdef VIRTUAL_SEM
     sem = new nmm_Microscope_SEM_EDAX("SEM", &connection, vrpn_TRUE);
