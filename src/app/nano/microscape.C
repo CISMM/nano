@@ -5125,7 +5125,7 @@ void Usage(char* s)
 {
   fprintf(stderr, "Usage: %s \n",s);
   fprintf(stderr, "       [-d device] [-do device] [-div device]\n");
-  fprintf(stderr, "       [-dsem device]\n");
+  fprintf(stderr, "       [-dsem device] [-daligner device]\n");
   fprintf(stderr, "       [-f infile] [-z scale] \n");
   fprintf(stderr, "       [-grid x y] [-perf]\n");
   fprintf(stderr, "       [-i streamfile rate][-o streamfile]\n");
@@ -6663,15 +6663,17 @@ int main (int argc, char* argv[])
 
   if (istate.colorplane[0]) {
     dataset->colorPlaneName->Set(istate.colorplane);
+    printf("Setting colorplane to %s\n", istate.colorplane);
   }
   if (istate.colormap[0]) {
     dataset->colorMapName->Set(istate.colormap);
+    printf("Setting colormap to %s\n", istate.colormap);
 
   }
   if (istate.heightplane[0]) {
     dataset->heightPlaneName->Set(istate.heightplane);
+    printf("Setting heightplane to %s\n", istate.heightplane);
   }
-
   /* Center the image first thing */
   center();
 
@@ -6943,6 +6945,7 @@ VERBOSE(1, "Entering main loop");
 
         VERBOSE(4, "  Calling microscope->mainloop()");
 	microscope->mainloop();
+
 
         if (monitor_forwarder_connection) {
           VERBOSE(4, "  Calling monitor_forwarder_connection->mainloop()");

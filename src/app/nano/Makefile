@@ -16,7 +16,7 @@ USES_EXTERNAL_LIBS := RhinoIO
 endif
 
 ifdef NANO_WITH_ROBOT
-   EXTRA_CFLAGS += -DNANO_WITH_ROBOT
+   EXTRA_CFLAGS += -DNANO_WITH_ROBOT 
 endif
 
 include ../Makefile.share

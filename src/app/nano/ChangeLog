@@ -1,3 +1,10 @@
+2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
+
+	* microscape.c (Usage) : added documentation of -daligner argument
+        (main) : added printouts of what colorplane, colormap and heightplane
+	were getting set to because there seems to be some problem with
+	them getting set to what the user says they should be
+
 2000-11-29  Tom Hudson  <hudson@cs.unc.edu>
 
 	* minit.h : new file
