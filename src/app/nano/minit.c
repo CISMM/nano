@@ -150,6 +150,8 @@ int handle_phantom_conn_dropped(void * /*userdata*/, vrpn_HANDLERPARAM /*p*/){
 }
 
 void handle_phantom_error(void * /*userdata*/, const vrpn_FORCEERRORCB ferr){
+    // On any phantom error, release the phantom button.
+    phantButtonState = 0;
    fprintf(stderr, "Error: phantom server has failed: ");
    switch(ferr.error_code){
       case FD_VALUE_OUT_OF_RANGE:

@@ -7302,7 +7302,7 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 		break;
 
 	    case 'G': 		/* Grab World mode */
-		printf("Grab world mode\n");
+		//printf("Grab world mode\n");
 		mode_change = 1;	/* Will make icon change */
 		user_mode[0] = USER_GRAB_MODE;
 		break;
