@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2000 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #ifndef	ACTIVE_SET_H
 #define	ACTIVE_SET_H
 
@@ -26,15 +33,11 @@ class nmb_Dataset;  // from nmb_Dataset.h
 
 #define	MAX_CHANNELS		(100)
 
-#ifndef USE_VRPN_MICROSCOPE
-class Microscope;
-#else
-class nmm_Microscope_Remote;	// Added by Tiger
-#endif
+class nmm_Microscope_Remote;
 
 class	Channel_selector
 {
-    friend void tcl_update_callback(const char *name, int val, void *udata);
+    friend void tcl_update_callback(int val, void *udata);
     public:
     Channel_selector (nmb_ListOfStrings *, nmb_Dataset *);
 	virtual ~Channel_selector (void);
@@ -43,15 +46,13 @@ class	Channel_selector
 	int	Set(const char *channel);
 	int	Unset(const char *channel);
 
-    int    Is_set(const char *channel) { return (checklist->Is_set(channel)); }
+        int    Is_set(const char *channel);
+
 	// If changes, request new list
 	// Changed to allow instantiation of this as a generic
         // channel selector that doesn't contain references to data; 
-#ifndef USE_VRPN_MICROSCOPE
-	virtual int Update_microscope (Microscope *);
-#else
-	virtual int Update_microscope (nmm_Microscope_Remote *);
-#endif
+	virtual int Update_microscope (nmm_Microscope_Remote *) = 0;
+
 	void	Changed(int c) { change_from_tcl = c; }
 	int	Changed (void) const { return change_from_tcl; }
 
@@ -71,7 +72,6 @@ class	Channel_selector
 	    {return (value - channels[channel].offset)/channels[channel].scale;}
 
 	int	Num_channels (void) const { return numchannels; }
-	const Tclvar_checklist_with_entry * Checklist (void) const;
 
     protected:
 	struct {
@@ -86,8 +86,15 @@ class	Channel_selector
         int     change_from_microscope;    //change made by microscope, 
                                         // so we can ignore changes from tcl. 
 
-	Tclvar_checklist_with_entry	*checklist;
+    // list of active channels. Duplicates info in the channels array above. 
 	nmb_ListOfStrings	* namelist;
+
+    // list of the possible channels to choose from
+        Tclvar_list_of_strings channel_list;
+    // list of bools which tell which are active
+        Tclvar_int * active_list[MAX_CHANNELS];
+    // list of ints which tell how many samples to use (if appropriate).
+        Tclvar_int * numsamples_list[MAX_CHANNELS];
 
         nmb_Dataset * d_dataset;
 };
@@ -102,18 +109,12 @@ class	Scan_channel_selector : public Channel_selector
 	virtual ~Scan_channel_selector (void);  // avoid compiler warnings
 
 	// User-interface side of things, response to changes by the user
-#ifndef USE_VRPN_MICROSCOPE
-	virtual	int Update_microscope (Microscope *);
-#else
-	virtual int Update_microscope (nmm_Microscope_Remote *);  // Tiger
-#endif
+	virtual int Update_microscope (nmm_Microscope_Remote *);
 
 	// Commands called in response to microscope reports
 	int Add_channel(char *name, char *units,
 		float offset, float scale);
 
-	int	Handle_old_report(int x, int y, long sec, long usec,
-			      float val, float std);
 	int	Handle_report(int x, int y, long sec, long usec, float *values,
 			int numvalues);
 
@@ -134,18 +135,12 @@ class	Point_channel_selector : public Channel_selector
 
 	// User-interface side of things, response to changes by the user
 
-#ifndef USE_VRPN_MICROSCOPE
-	virtual	int Update_microscope (Microscope *);
-#else
-	virtual int Update_microscope (nmm_Microscope_Remote *);  // Tiger
-#endif
+	virtual int Update_microscope (nmm_Microscope_Remote *);
 
 	// Commands called in response to microscope reports
 	int Add_channel(char *name, char *units,
 		float offset, float scale, int num_samples);
 
-	int	Handle_old_report(float x, float y, long sec, long usec,
-			      float val, float std);
 	int	Handle_report(float x, float y, long sec, long usec,
 			float *vals, int numvalues, vrpn_bool accumulatePoints);
           ///< If accumulatePoints is true, stashes a copy of myresult
@@ -167,12 +162,8 @@ class	ForceCurve_channel_selector : public Channel_selector
 				     nmb_ListOfStrings *, nmb_Dataset *);
 	virtual ~ForceCurve_channel_selector (void);  // avoid compiler warnings
 
-	// User-interface side of things, response to changes by the user
-#ifndef USE_VRPN_MICROSCOPE
-	virtual int Update_microscope (Microscope *);
-#else
-	virtual int Update_microscope (nmm_Microscope_Remote *);  // Tiger
-#endif
+	// User-interface side of things, sends changes by the user to SPM
+	virtual int Update_microscope (nmm_Microscope_Remote *);
 
 	// Commands called in response to microscope reports
 	int Add_channel(char *name, char *units,

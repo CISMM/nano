@@ -1,3 +1,9 @@
+2000-08-13  Jeffrey Juliano  <juliano@cs.unc.edu>
+
+	* active_set.C: Pull Kwan's merged source to the trunk.  He had
+	committed to a branch because of a sticky tag.
+	* active_set.h: Same.
+
 2000-08-11  Kwan Torrich Skinner  <skinner@cs.unc.edu>
 
 	* all: Merge thirdtech_branch code to trunk.
