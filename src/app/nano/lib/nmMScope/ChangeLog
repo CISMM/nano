@@ -1,3 +1,8 @@
+2002-06-05 Woojin Seok <seok@cs.unc.edu>
+        *AFMState.h : replace Tclvar_int doRelaxComp by 
+        TclNet_int doRelaxComp to share a state of button whose variable 
+        is doRelaxComp.
+
 2002-06-04 Jameson Miller <millerj@cs.unc.edu>
 	*AFMState.c (.h) : moved variables for direct step from
 	directstep to AFMState.c (.h). TCL vars now set up as modify
