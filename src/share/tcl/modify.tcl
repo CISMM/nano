@@ -131,6 +131,8 @@ proc show_tool {name path nm element op} {
     } elseif { $tool == 5 } {
 	# Slow line 3d tool
 	$path configure -text "Slow Line 3d"
+    } elseif { $tool == 6 } {
+        $path configure -text "Feelahead"
     }
 }
 
@@ -643,21 +645,29 @@ eval lappend device_only_controls \
 #setup Modify tool box
 label $nmInfo(modifyfull).tool.label -text "Tool" 
 pack $nmInfo(modifyfull).tool.label -side top -anchor nw
-radiobutton $nmInfo(modifyfull).tool.freehand -text "Freehand" -variable newmodifyp_tool \
+radiobutton $nmInfo(modifyfull).tool.freehand -text "Freehand" \
+	-variable newmodifyp_tool \
 	-value 0   -anchor nw
-radiobutton $nmInfo(modifyfull).tool.line -text "Line" -variable newmodifyp_tool \
+radiobutton $nmInfo(modifyfull).tool.line -text "Line" \
+	-variable newmodifyp_tool \
 	-value 1   -anchor nw
-radiobutton $nmInfo(modifyfull).tool.constrfree -text "Constr. Free" -variable newmodifyp_tool \
+radiobutton $nmInfo(modifyfull).tool.constrfree -text "Constr. Free" \
+	-variable newmodifyp_tool \
 	-value 2   -anchor nw
 radiobutton $nmInfo(modifyfull).tool.constrfree_xyz -text "Constr. Free XYZ" \
 	-variable newmodifyp_tool -value 3 -anchor nw 
-radiobutton $nmInfo(modifyfull).tool.slow_line -text "Slow Line" -variable newmodifyp_tool \
+radiobutton $nmInfo(modifyfull).tool.slow_line -text "Slow Line" \
+	-variable newmodifyp_tool \
 	-value 4   -anchor nw
 radiobutton $nmInfo(modifyfull).tool.slow_line_3d -text "Slow Line 3D"\
 	-variable newmodifyp_tool -value 5 -anchor nw
+radiobutton $nmInfo(modifyfull).tool.feelahead -text "FeelAhead" \
+         -variable newmodifyp_tool -value 6 -anchor nw
+
 pack $nmInfo(modifyfull).tool.freehand $nmInfo(modifyfull).tool.line \
         $nmInfo(modifyfull).tool.constrfree $nmInfo(modifyfull).tool.constrfree_xyz \
         $nmInfo(modifyfull).tool.slow_line $nmInfo(modifyfull).tool.slow_line_3d \
+        $nmInfo(modifyfull).tool.feelahead \
         -side top -fill x 
 
 lappend device_only_controls \
@@ -665,7 +675,8 @@ lappend device_only_controls \
         $nmInfo(modifyfull).tool.constrfree \
 	$nmInfo(modifyfull).tool.constrfree_xyz \
 	$nmInfo(modifyfull).tool.slow_line \
-	$nmInfo(modifyfull).tool.slow_line_3d 
+	$nmInfo(modifyfull).tool.slow_line_3d \
+	$nmInfo(modifyfull).tool.feelahead
 
 #setup Modify toolparam box
 label $nmInfo(modifyfull).toolparam.label -text "Tool parameters" 
@@ -902,6 +913,27 @@ proc flip_mod_tool {mod_tool element op} {
             # Can't do sweep or sewing, set to sharp
             set newmodifyp_style 0
         }
+        $nmInfo(modifyfull).style.sewing configure -state disabled
+        $nmInfo(modifyfull).style.forcecurve configure -state disabled
+    } elseif {$k==6} {
+
+        # selected feelahead
+        # HACK TCH - enable same things as freehand until we have a clue
+
+	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
+	foreach widg $plist {pack forget $widg} 
+        foreach widg $mod_control_list {pack forget $widg}
+        foreach widg $mod_control_list {pack $widg -side top -fill x}
+
+        # hide slow line tool
+        hide.modify_live
+
+        # set style to sharp, control to feedback
+        set newmodifyp_style 0
+	set newmodifyp_control 0
+
+        # disable other styles
+        $nmInfo(modifyfull).style.sweep configure -state disabled
         $nmInfo(modifyfull).style.sewing configure -state disabled
         $nmInfo(modifyfull).style.forcecurve configure -state disabled
     }
