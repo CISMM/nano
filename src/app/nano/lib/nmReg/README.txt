@@ -1,8 +1,34 @@
 Author: Adam Seeger
 
+=========================
+class/file relationships:
+=========================
+
+RegistrationUI (lets user select which images to align)
+    |
+Registration_Proxy
+  Registration_Client
+  Registration_Interface
+      |
+  (vrpn_Connection to the local machine or a remote machine) 
+      |
+  Registration_Interface
+  Registration_Server
+  Registration_Impl-------------------------transformSolve-linLeastSqr
+    |                                    \
+ (automatic alignment)              (manual alignment)
+  CoarseToFineSearch                 Registration_ImplUI
+  AlignerMI                          CorrespondenceEditor -- ImageViewer
+                                             \ 
+                                         correspondence
+
+=====================================================================
+notes on the CLAPACK code (used in linLeastSqr.Ch) in this directory:
+=====================================================================
+
 Since I'm only using two functions from CLAPACK, I thought it would be
 bad to have to compile and link with the whole CLAPACK, BLAS, and F2C libraries
-so I extracted the files we really need to minimize weight gain of microscape.
+so I extracted just the files we really need.
 I also added extern "C" declarations so we can compile with CC.
 I also edited the files to remove the tons of compiler warnings that are
 the result of the f2c conversion. 

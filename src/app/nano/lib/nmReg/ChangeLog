@@ -1,3 +1,40 @@
+2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
+
+	* README.txt: added a nice ASCII diagram to document how the different
+	registration objects fit together
+	* correspondenceEditor.hC (CorrespondenceWindowParameters): new 
+	class to contain parameters for each window which now include
+	a description of the axis-aligned rectangular image region displayed
+	in the window
+	(eventHandler): replaced a bunch of ImageViewer coordinate 
+	transformation functions with some more general ones (needed for
+	the zooming feature); added zooming feature
+	Modified drag-to-delete interface so you can drag a point a little bit
+	outside the window without it getting deleted and instead it gets
+	clamped to the edge of the window - I like to use this for debugging
+	because it lets me set up points that lie on a horizontal or vertical
+	line and that lets me test certain special cases
+	(scaleImageRegion): new function
+	(clampImageRegion): new function
+	(displayHandler): now draws the image with the scale/translation
+	set by the user
+	(setImageOrientation): now different applications can use this function
+	to set whether or not they want the image to appear flipped in x or y
+	* nmr_RegistrationUI.C : added specification of how image is to be
+	flipped when it is set (not flipped in either x or y relative to
+	the ImageViewer default which actually includes a flip in y but that
+	is pretty standard)
+	* nmr_Registration_Client.C: added stuff for flipping x and y
+	(sendFiducial): made this set two points (one per image) instead of one
+	since that didn't really make sense - this code isn't used yet
+	* nmr_Registration_Impl.C: added stuff for handling flipping of x and y
+	and change in fiducial message
+	* nmr_Registration_ImplUI.C: "
+	* nmr_Registration_Interface.C: "
+	* nmr_Registration_Proxy.C: "
+	* nmr_Registration_Server.C: "
+	* Makefile: added dependency on nmMP through nmb_Device
+
 2001-08-01  Aron Helser  <helser@cs.unc.edu>
 
 	* correspondenceEditor.C (eventHandler): Handle DEL keypress,

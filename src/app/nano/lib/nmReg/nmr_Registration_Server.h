@@ -30,15 +30,16 @@ class nmr_Registration_Server : public nmb_Device_Server,
 
     int setImageParameters(nmr_ImageType whichImage,
          vrpn_int32 res_x, vrpn_int32 res_y,
-         vrpn_float32 size_x, vrpn_float32 size_y);
+         vrpn_float32 size_x, vrpn_float32 size_y,
+         vrpn_bool flip_x, vrpn_bool flip_y);
     int setScanline(nmr_ImageType whichImage, vrpn_int32 row,
                            vrpn_int32 line_length, vrpn_float32 *data);
 
     int setTransformationOptions(nmr_TransformationType type);
     int setRegistrationEnable(vrpn_bool enable);
     int setGUIEnable(vrpn_bool enable);
-    int addFiducial(nmr_ImageType whichImage, 
-                    vrpn_float32 x, vrpn_float32 y, vrpn_float32 z);
+    int setFiducial(vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
+                    vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt);
 
     // message callback registration
     int registerChangeHandler (void *userdata,
@@ -52,15 +53,17 @@ class nmr_Registration_Server : public nmb_Device_Server,
     /// the last message received
     void getImageParameters(nmr_ImageType &whichImage,
           vrpn_int32 &res_x, vrpn_int32 &res_y,
-          vrpn_float32 &size_x, vrpn_float32 &size_y);
+          vrpn_float32 &size_x, vrpn_float32 &size_y,
+          vrpn_bool &flip_x, vrpn_bool &flip_y);
     void getRegistrationEnable(vrpn_bool &enabled);
     void getGUIEnable(vrpn_bool &enabled);
     void getTransformationOptions(nmr_TransformationType &type);
     void getScanline(nmr_ImageType &whichImage,
                            vrpn_int32 &row, vrpn_int32 &length,
                            vrpn_float32 **data);
-    void getFiducial(nmr_ImageType &whichImage,
-                     vrpn_float32 &x, vrpn_float32 &y, vrpn_float32 &z);
+    void getFiducial(vrpn_float32 &x_src, vrpn_float32 &y_src, 
+                     vrpn_float32 &z_src, vrpn_float32 &x_tgt,
+                     vrpn_float32 &y_tgt, vrpn_float32 &z_tgt);
 
     int sendRegistrationResult(double xform[16]);
 
@@ -79,8 +82,10 @@ class nmr_Registration_Server : public nmb_Device_Server,
     nmr_ImageType d_imageParamsLastReceived;
     vrpn_int32 d_srcResX, d_srcResY;
     vrpn_float32 d_srcSizeX, d_srcSizeY;
+    vrpn_bool d_srcFlipX, d_srcFlipY;
     vrpn_int32 d_targetResX, d_targetResY;
     vrpn_float32 d_targetSizeX, d_targetSizeY;
+    vrpn_bool d_targetFlipX, d_targetFlipY;
 
     nmr_ImageType d_imageScanlineLastReceived;
     vrpn_int32 d_row, d_length;
@@ -92,8 +97,9 @@ class nmr_Registration_Server : public nmb_Device_Server,
     vrpn_bool d_registrationEnabled;
     vrpn_bool d_GUIEnabled;
 
-    nmr_ImageType d_imageFiducialLastRecieved;
-    vrpn_float32 d_x, d_y, d_z;
+    // for fiducial message
+    vrpn_float32 d_x_src, d_y_src, d_z_src;
+    vrpn_float32 d_x_tgt, d_y_tgt, d_z_tgt;
 
     // message callback management
     typedef struct _msg_handler {

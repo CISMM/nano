@@ -28,15 +28,16 @@ class nmr_Registration_Impl {
 
     int setImageParameters(nmr_ImageType whichImage,
             vrpn_int32 res_x, vrpn_int32 res_y,
-            vrpn_float32 xSizeWorld, vrpn_float32 ySizeWorld);
+            vrpn_float32 xSizeWorld, vrpn_float32 ySizeWorld,
+            vrpn_bool flipX, vrpn_bool flipY);
     int setRegistrationEnable(vrpn_bool enable);
     int setGUIEnable(vrpn_bool enable);
     int setColorMap(nmr_ImageType whichImage, nmb_ColorMap * cmap);
     int setColorMinMax(nmr_ImageType whichImage, 
                               vrpn_float64 dmin, vrpn_float64 dmax,
                               vrpn_float64 cmin, vrpn_float64 cmax);
-    int setFiducial(nmr_ImageType whichImage,
-                vrpn_float32 x, vrpn_float32 y, vrpn_float32 z);
+    int setFiducial(vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
+                    vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt);
     int setScanline(nmr_ImageType whichImage,
          vrpn_int32 row, vrpn_int32 length, vrpn_float32 *data);
     int setTransformationOptions(nmr_TransformationType type);

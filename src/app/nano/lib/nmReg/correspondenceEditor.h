@@ -39,8 +39,11 @@ class CorrespondenceEditor {
                               Correspondence *corr, int *winIDs);
     void show();
     void hide();
-    void addFiducial(int spaceIndex, float x, float y, float z);
+    void addFiducial(float *x, float *y, float *z);
     int setImage(int image_index, nmb_Image *im);
+    int setImageOrientation(int image_index, vrpn_bool flipX, vrpn_bool flipY);
+    int getImageOrientation(int spaceIndex, 
+                            vrpn_bool &flipX, vrpn_bool &flipY);
 //    int setImageFromPlane(int image_index, BCPlane *p);
 //    int setImageFromPNM(int image_index, PNMImage &im);
 //    int setImageFromPNM(int image_index, PPM *im);
@@ -64,6 +67,9 @@ class CorrespondenceEditor {
     void drawCrosshair(float x, float y);
     void drawSelectionBox(int xp, int yp);
     int getSpaceIndex(int winID);
+    int scaleImageRegion(int winID,
+                          double x_win, double y_win, double scale);
+    int clampImageRegion(int index);
 
     ImageViewer *viewer;
     Correspondence *correspondence;

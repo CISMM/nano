@@ -42,7 +42,8 @@ class nmr_Registration_Proxy {
     vrpn_int32 setColorMinMax(nmr_ImageType whichImage, 
                               vrpn_float64 dmin, vrpn_float64 dmax,
                               vrpn_float64 cmin, vrpn_float64 cmax);
-    vrpn_int32 setImage(nmr_ImageType whichImage, nmb_Image *im);
+    vrpn_int32 setImage(nmr_ImageType whichImage, nmb_Image *im, 
+                        vrpn_bool flip_x, vrpn_bool flip_y);
     static void handle_registration_change(void *ud,
                         const nmr_ClientChangeHandlerData &info);
 
@@ -58,7 +59,8 @@ class nmr_Registration_Proxy {
     /// the last message received
     void getImageParameters(nmr_ImageType &whichImage,
        vrpn_int32 &res_x, vrpn_int32 &res_y,
-       vrpn_float32 &size_x, vrpn_float32 &size_y);
+       vrpn_float32 &size_x, vrpn_float32 &size_y,
+       vrpn_bool &flip_x, vrpn_bool &flip_y);
     void getTransformationOptions(nmr_TransformationType &type);
     void getRegistrationResult(vrpn_float64 *matrix44);
     void getRegistrationResult(nmb_TransformMatrix44 &xform);
@@ -74,6 +76,7 @@ class nmr_Registration_Proxy {
     nmr_ImageType d_imageParamsLastReceived;
     vrpn_int32 d_res_x, d_res_y;
     vrpn_float32 d_size_x, d_size_y, d_size_z;
+    vrpn_bool d_flip_x, d_flip_y;
 
     nmr_TransformationType d_transformType;
 

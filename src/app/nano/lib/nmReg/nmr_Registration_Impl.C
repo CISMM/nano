@@ -63,18 +63,19 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
   nmr_TransformationType xformtype;
   vrpn_int32 res_x, res_y;
   vrpn_float32 size_x, size_y;
+  vrpn_bool flip_x, flip_y;
   vrpn_int32 row, length;
   vrpn_float32 *data;
-  vrpn_float32 x, y, z;
+  vrpn_float32 x_src, y_src, z_src, x_tgt, y_tgt, z_tgt;
   vrpn_bool enabled;
 
   switch(info.msg_type) {
     case NMR_IMAGE_PARAM:
 //      printf("nmr_Registration_Impl: image params received\n");
       info.aligner->getImageParameters(whichImage, res_x, res_y, 
-                    size_x, size_y);
+                    size_x, size_y, flip_x, flip_y);
       me->setImageParameters(whichImage, res_x, res_y, 
-                             size_x, size_y);
+                             size_x, size_y, flip_x, flip_y);
       break;
     case NMR_TRANSFORM_OPTION:
       info.aligner->getTransformationOptions(xformtype);
@@ -86,8 +87,8 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
       me->setScanline(whichImage, row, length, data);
       break;
     case NMR_FIDUCIAL:
-      info.aligner->getFiducial(whichImage, x, y, z);
-      me->setFiducial(whichImage, x, y, z);
+      info.aligner->getFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
+      me->setFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
       break;
     case NMR_ENABLE_REGISTRATION:
       info.aligner->getRegistrationEnable(enabled);
@@ -154,8 +155,9 @@ int nmr_Registration_Impl::setGUIEnable(vrpn_bool enable)
 int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
                            vrpn_int32 res_x, vrpn_int32 res_y,
                            vrpn_float32 xSpan, 
-                           vrpn_float32 ySpan)
+                           vrpn_float32 ySpan, vrpn_bool flipX, vrpn_bool flipY)
 {
+    d_alignerUI->setImageOrientation(whichImage, flipX, flipY);
     if (whichImage == NMR_SOURCE) {
         if ((d_images[SOURCE_IMAGE_INDEX]->width() != res_x) ||
             (d_images[SOURCE_IMAGE_INDEX]->height() != res_y)) {
@@ -193,10 +195,11 @@ int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
     return 0;
 }
 
-int nmr_Registration_Impl::setFiducial(nmr_ImageType whichImage,
-		vrpn_float32 x, vrpn_float32 y, vrpn_float32 z)
+int nmr_Registration_Impl::setFiducial(
+		vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
+                vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
 {
-    d_alignerUI->setFiducial(whichImage, x, y, z);
+    d_alignerUI->setFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
     return 0;
 }
 
@@ -426,26 +429,18 @@ void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
   d_images[SOURCE_IMAGE_INDEX]->getAcquisitionDimensions(srcSizeX, srcSizeY);
   d_images[TARGET_IMAGE_INDEX]->getAcquisitionDimensions(tgtSizeX, tgtSizeY);
 
-  // XXX: this function is serving the additional purpose of ensuring that
-  // there are at least three points in the correspondence so that the
-  // transformation is sufficiently constrained - this addition was necessary
-  // when we switched from doing things in normalized image coordinates to
-  // scaled normalized image coordinates - previous to this, the transformSolver
-  // result was correct when given only 1 or 2 points since it would do a
-  // pure translation when given only one point but now a single point
-  // does not
   double srcMaxX, srcMaxY;
-  double tgtMaxX, tgtMaxY;
+  double tgtMaxX;//, tgtMaxY;
   if (normalized) {
     srcMaxX = 1.0;
     srcMaxY = 1.0;
     tgtMaxX = 1.0;
-    tgtMaxY = 1.0;
+//    tgtMaxY = 1.0;
   } else {
     srcMaxX = srcSizeX;
     srcMaxY = srcSizeY;
     tgtMaxX = tgtSizeX;
-    tgtMaxY = tgtSizeY;
+//    tgtMaxY = tgtSizeY;
   }
   corr_point_t p0, p1, p2;
   double xIndex, yIndex;

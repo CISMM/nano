@@ -10,7 +10,8 @@
 #include <nmb_ColorMap.h>
 
 CorrespondenceWindowParameters::CorrespondenceWindowParameters(): 
-        left(1.0), right(0.0), bottom(0.0), top(1.0), im(NULL), winID(-1)
+        left(0.0), right(1.0),
+        bottom(0.0), top(1.0), im(NULL), winID(-1)
 {}
 
 CorrespondenceEditor::CorrespondenceEditor(int num_im,
@@ -92,10 +93,10 @@ int CorrespondenceEditor::eventHandler(
 
     double max_x_grab_dist = 4*POINT_SIZE, max_y_grab_dist = 4*POINT_SIZE;
 
-    me->viewer->toImage(event.winID, &max_x_grab_dist, &max_y_grab_dist);
-    // Convert back to an absolute size. 
-    max_y_grab_dist = 1.0 -  max_y_grab_dist;
-    max_x_grab_dist = 1.0 -  max_x_grab_dist;
+    me->viewer->toImageVec(event.winID, &max_x_grab_dist, &max_y_grab_dist);
+    // convert to absolute distance
+    max_y_grab_dist = fabs(max_y_grab_dist);
+    max_x_grab_dist = fabs(max_x_grab_dist);
 
     switch(event.type) {
       case RESIZE_EVENT:
@@ -103,7 +104,7 @@ int CorrespondenceEditor::eventHandler(
       case BUTTON_PRESS_EVENT:
         if (event.button == IV_LEFT_BUTTON){
             double x_im = event.mouse_x, y_im = event.mouse_y;
-            me->viewer->toImage(event.winID, &x_im, &y_im);
+            me->viewer->toImagePnt(event.winID, &x_im, &y_im);
             // Inside or outside existing point?
             if (me->correspondence->findNearestPoint(spaceIndex, x_im, y_im,
                 max_x_grab_dist, max_y_grab_dist,
@@ -119,7 +120,7 @@ int CorrespondenceEditor::eventHandler(
                 //printf("CE: point %f %f %f %f\n", x_im, y_im, 
                 //       grabbed_pnt.x,grabbed_pnt.y); 
                 me->draggingPoint = VRPN_TRUE;
-                me->viewer->toPixels(event.winID, &(grabbed_pnt.x),
+                me->viewer->toPixelsPnt(event.winID, &(grabbed_pnt.x),
 			&(grabbed_pnt.y));
                 me->grab_offset_x = (int)(grabbed_pnt.x - event.mouse_x);
                 me->grab_offset_y = (int)(grabbed_pnt.y - event.mouse_y);
@@ -130,13 +131,13 @@ int CorrespondenceEditor::eventHandler(
             } else {
                 // We are outside, create a new point. 
                 double x_im = event.mouse_x, y_im = event.mouse_y;
-                me->viewer->toImage(event.winID, &x_im, &y_im);
+                me->viewer->toImagePnt(event.winID, &x_im, &y_im);
                 corr_point_t p(x_im, y_im);
                 int new_pntIdx = me->correspondence->addPoint(p);
                 me->selectedPointIndex = me->grabbedPointIndex = new_pntIdx;
                 // Also prepare to drag this new point. 
                 me->draggingPoint = VRPN_TRUE;
-                me->viewer->toPixels(event.winID, &(p.x),
+                me->viewer->toPixelsPnt(event.winID, &(p.x),
                                      &(p.y));
                 me->grab_offset_x = 0;
                 me->grab_offset_y = 0;
@@ -152,7 +153,10 @@ int CorrespondenceEditor::eventHandler(
         if (event.button == IV_LEFT_BUTTON && me->draggingPoint) {
             double x_im = event.mouse_x + me->grab_offset_x;
             double y_im = event.mouse_y + me->grab_offset_y;
-            if(me->viewer->clampToWindow(event.winID, &x_im, &y_im)) {
+            // allow a 10 pixel tolerance for dragging outside the window to
+            // make it easier for the user to set a point exactly on the 
+            // border of the image without deleting it by accident
+            if(me->viewer->clampToWindow(event.winID, &x_im, &y_im) > 10) {
                 // If we dragged outside the window, delete the point. 
                 me->correspondence->deletePoint(me->selectedPointIndex);
                 me->selectedPointIndex = me->correspondence->numPoints()-1;
@@ -162,9 +166,11 @@ int CorrespondenceEditor::eventHandler(
                     me->viewer->dirtyWindow((me->winParam)[i].winID);
                 }
             } else {
-                me->viewer->toImage(event.winID, &x_im, &y_im);
+                me->viewer->toImagePnt(event.winID, &x_im, &y_im);
                 corr_point_t p(x_im, y_im);
-                me->correspondence->setPoint(spaceIndex, me->grabbedPointIndex, p);
+                printf("added point %g,%g\n", x_im, y_im);
+                me->correspondence->setPoint(spaceIndex, 
+                                    me->grabbedPointIndex, p);
                 // moved point only affects active window. 
                 me->viewer->dirtyWindow(event.winID);
             }
@@ -176,7 +182,7 @@ int CorrespondenceEditor::eventHandler(
         if ((event.state & IV_LEFT_BUTTON_MASK) && me->draggingPoint) {
             double x_im = event.mouse_x + me->grab_offset_x;
             double y_im = event.mouse_y + me->grab_offset_y;
-            me->viewer->toImage(event.winID, &x_im, &y_im);
+            me->viewer->toImagePnt(event.winID, &x_im, &y_im);
 	    corr_point_t p(x_im, y_im);
             me->correspondence->setPoint(spaceIndex, me->grabbedPointIndex, p);
             me->viewer->dirtyWindow(event.winID);
@@ -198,6 +204,12 @@ int CorrespondenceEditor::eventHandler(
             }
             // Allow update of the registration automatically. 
             me->notifyCallbacks();
+        } else if (event.keycode == 'z') {
+          me->scaleImageRegion(event.winID, event.mouse_x, event.mouse_y, 0.5);
+          me->viewer->dirtyWindow(event.winID);
+        } else if (event.keycode == 'Z') {
+          me->scaleImageRegion(event.winID, event.mouse_x, event.mouse_y, 2.0);
+          me->viewer->dirtyWindow(event.winID);
         }
         break;
       default:
@@ -216,6 +228,89 @@ int CorrespondenceEditor::getSpaceIndex(int winID){
         return i;
 }
 
+int CorrespondenceEditor::scaleImageRegion(int winID, 
+                          double x_win, double y_win, double scale)
+{
+  int index = getSpaceIndex(winID);
+  if (index < 0) return -1;
+
+  double x_im = x_win, y_im = y_win;
+  if (viewer->toImagePnt(winID, winParam[index].left, winParam[index].right,
+                                winParam[index].bottom, winParam[index].top,
+                                &x_im, &y_im)) {
+    return -1;
+  }
+
+  winParam[index].left = x_im + scale*(winParam[index].left - x_im);
+  winParam[index].right = x_im + scale*(winParam[index].right - x_im);
+  winParam[index].bottom = y_im + scale*(winParam[index].bottom - y_im);
+  winParam[index].top = y_im + scale*(winParam[index].top - y_im);
+
+  // the following is to ensure that the region falls inside (0..1,0..1) 
+  // while preserving the scale if possible
+  clampImageRegion(index);
+  return 0;
+}
+
+int CorrespondenceEditor::clampImageRegion(int index)
+{
+  vrpn_bool xFlipped, yFlipped;
+  getImageOrientation(index, xFlipped, yFlipped);
+
+  if ((fabs(winParam[index].right - winParam[index].left) > 1.0) ||
+      (fabs(winParam[index].top - winParam[index].bottom) > 1.0)) {
+    if (xFlipped) {
+      winParam[index].left = 1.0;
+      winParam[index].right = 0.0;
+    } else {
+      winParam[index].left = 0.0;
+      winParam[index].right = 1.0;
+    }
+    if (yFlipped) {
+      winParam[index].bottom = 1.0;
+      winParam[index].top = 1.0;
+    } else {
+      winParam[index].bottom = 0;
+      winParam[index].top = 1.0;
+    }
+  }
+  if (xFlipped) {
+    if (winParam[index].right < 0) {
+      winParam[index].left -= winParam[index].right;
+      winParam[index].right = 0.0;
+    } else if (winParam[index].left > 1) {
+      winParam[index].right += 1.0 - winParam[index].left;
+      winParam[index].left = 1.0;
+    }
+  } else {
+    if (winParam[index].left < 0) {
+      winParam[index].right -= winParam[index].left;
+      winParam[index].left = 0.0;
+    } else if (winParam[index].right > 1) {
+      winParam[index].left += 1.0 - winParam[index].right;
+      winParam[index].right = 1.0;
+    }
+  }
+  if (yFlipped) {
+    if (winParam[index].top < 0) {
+      winParam[index].bottom -= winParam[index].top;
+      winParam[index].top = 0.0;
+    } else if (winParam[index].bottom > 1) {
+      winParam[index].top += 1.0 - winParam[index].bottom;
+      winParam[index].bottom = 1.0;
+    }
+  } else {
+    if (winParam[index].bottom < 0) {
+      winParam[index].top -= winParam[index].bottom;
+      winParam[index].bottom = 0.0;
+    } else if (winParam[index].top > 1) {
+      winParam[index].bottom += 1.0 - winParam[index].top;
+      winParam[index].top = 1.0;
+    }
+  }
+  return 0;
+}
+
 int CorrespondenceEditor::displayHandler(
                         const ImageViewerDisplayData &data, void *ud)
 {
@@ -228,15 +323,18 @@ int CorrespondenceEditor::displayHandler(
     int spaceIndex = me->getSpaceIndex(data.winID);
 
     glViewport(0,0,data.winWidth, data.winHeight);
-    nmb_TransformMatrix44 W2I;
+    nmb_TransformMatrix44 W2I; // assumed to be initialized as identity
     CorrespondenceWindowParameters *params = &(me->winParam[spaceIndex]);
-    if (me->winParam[spaceIndex].im) {
-      me->viewer->drawImage(data.winID, params->im,
+    double left, right, bottom, top;
+    left = params->left;
+    right = params->right;
+    bottom = params->bottom;
+    top = params->top;
+
+    me->viewer->drawImage(data.winID, params->im,
             1.0, 1.0, 1.0, 1.0, 
-            &(params->left), &(params->right),
-            &(params->bottom), &(params->top),
+            &left, &right, &bottom, &top, 
             &W2I);
-    } 
 
 //    me->viewer->drawImage(data.winID);   
 
@@ -259,7 +357,7 @@ int CorrespondenceEditor::displayHandler(
     for (i = 0; i < num_pnts; i++){
         me->correspondence->getPoint(spaceIndex, i, &image_pnt);
         // convert point to the right location in the window by scaling it
-        me->viewer->toPixels(data.winID, &(image_pnt.x), &(image_pnt.y));
+        me->viewer->toPixelsPnt(data.winID, &(image_pnt.x), &(image_pnt.y));
         // now draw the point
         me->drawCrosshair(data.winWidth-image_pnt.x, image_pnt.y);
         sprintf(num_str, "%d", i);
@@ -370,11 +468,17 @@ void CorrespondenceEditor::hide() {
 
 */
 
-void CorrespondenceEditor::addFiducial(int spaceIndex, 
-                                       float x, float y, float z)
+void CorrespondenceEditor::addFiducial(float *x, float *y, float *z)
 {
-    corr_point_t p(x, y, z);
-    correspondence->addPoint(p);
+    corr_point_t p(0, 0, 0);
+    int pntIndex = correspondence->addPoint(p);
+    int i;
+    if (pntIndex >= 0) {
+      for (i = 0; i < num_images; i++) {
+         p.x = x[i]; p.y = y[i]; p.z = z[i];
+         correspondence->setPoint(i, pntIndex, p);
+      }
+    }
 }
 
 int CorrespondenceEditor::setImage(int spaceIndex, nmb_Image *im) {
@@ -414,6 +518,36 @@ int CorrespondenceEditor::setImage(int spaceIndex, nmb_Image *im) {
 
     viewer->dirtyWindow(winParam[spaceIndex].winID);
     return 0;
+}
+
+int CorrespondenceEditor::setImageOrientation(int spaceIndex, 
+                          vrpn_bool flipX, vrpn_bool flipY)
+{
+    double temp;
+    if (( flipX && (winParam[spaceIndex].left < winParam[spaceIndex].right)) ||
+        (!flipX && (winParam[spaceIndex].left > winParam[spaceIndex].right))) {
+      temp = winParam[spaceIndex].left;
+      winParam[spaceIndex].left = winParam[spaceIndex].right;
+      winParam[spaceIndex].right = temp;
+    }
+
+    if (( flipY && (winParam[spaceIndex].bottom < winParam[spaceIndex].top)) ||
+        (!flipY && (winParam[spaceIndex].bottom > winParam[spaceIndex].top))) {
+      temp = winParam[spaceIndex].bottom;
+      winParam[spaceIndex].bottom = winParam[spaceIndex].top;
+      winParam[spaceIndex].top = temp;
+    }
+
+    viewer->dirtyWindow(winParam[spaceIndex].winID);
+    return 0;
+}
+
+int CorrespondenceEditor::getImageOrientation(int spaceIndex,
+                          vrpn_bool &flipX, vrpn_bool &flipY)
+{
+  flipX = (winParam[spaceIndex].left > winParam[spaceIndex].right);
+  flipY = (winParam[spaceIndex].bottom > winParam[spaceIndex].top);
+  return 0;
 }
 
 /* ************************************

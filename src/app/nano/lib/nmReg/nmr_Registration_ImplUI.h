@@ -32,12 +32,15 @@ class nmr_Registration_ImplUI {
     void newScanline(nmr_ImageType whichImage,
                                 vrpn_int32 row, nmb_Image *im);
 
-    void setFiducial(nmr_ImageType whichImage,
-          vrpn_float32 x_n, vrpn_float32 y_n, vrpn_float32 z);
+    void setFiducial(vrpn_float32 x_src, vrpn_float32 y_src,
+                     vrpn_float32 z_src, vrpn_float32 x_tgt, 
+                     vrpn_float32 y_tgt, vrpn_float32 z_tgt);
     void setColorMap(nmr_ImageType whichImage, nmb_ColorMap * cmap);
     void setColorMinMax(nmr_ImageType whichImage, 
                               vrpn_float64 dmin, vrpn_float64 dmax,
                               vrpn_float64 cmin, vrpn_float64 cmax);
+    void setImageOrientation(nmr_ImageType whichImage,
+                              vrpn_bool flipX, vrpn_bool flipY);
     void getCorrespondence(Correspondence &c, int &srcIndex, int &tgtIndex);
 
     static void handle_CorrespondenceChange(Correspondence &c, void *ud);
@@ -46,6 +49,8 @@ class nmr_Registration_ImplUI {
     static int s_numImages;
     static char *s_imageWinNames[];
     static int s_sourceImageIndex, s_targetImageIndex;
+    vrpn_bool d_sourceFlipX, d_sourceFlipY;
+    vrpn_bool d_targetFlipX, d_targetFlipY;
 
     static void handle_registration_start_change(vrpn_int32 val, 
                                                  void *userdata);

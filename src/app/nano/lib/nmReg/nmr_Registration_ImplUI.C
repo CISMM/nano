@@ -78,14 +78,19 @@ void nmr_Registration_ImplUI::newScanline(nmr_ImageType whichImage,
 }
 
 // x and y are in range 0..1, z is in nm
-void nmr_Registration_ImplUI::setFiducial(nmr_ImageType whichImage,
-          vrpn_float32 x_n, vrpn_float32 y_n, vrpn_float32 z)
+void nmr_Registration_ImplUI::setFiducial(
+          vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
+          vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
 {
-  if (whichImage == NMR_SOURCE) {
-     d_ce->addFiducial(s_sourceImageIndex, x_n, y_n, z);
-  } else if (whichImage == NMR_TARGET) {
-     d_ce->addFiducial(s_targetImageIndex, x_n, y_n, z);
-  }
+  float x[2], y[2], z[2];
+  x[s_sourceImageIndex] = x_src;
+  y[s_sourceImageIndex] = y_src;
+  z[s_sourceImageIndex] = z_src;
+  x[s_targetImageIndex] = x_tgt;
+  y[s_targetImageIndex] = y_tgt;
+  z[s_targetImageIndex] = z_tgt;
+
+  d_ce->addFiducial(x, y, z);
 }
 
 void nmr_Registration_ImplUI::getCorrespondence(Correspondence &c, 
@@ -115,5 +120,15 @@ void nmr_Registration_ImplUI::setColorMinMax(nmr_ImageType whichImage,
     d_ce->setColorMinMax(s_sourceImageIndex, dmin, dmax, cmin, cmax);
   } else if (whichImage == NMR_TARGET) {
     d_ce->setColorMinMax(s_targetImageIndex, dmin, dmax, cmin, cmax);
+  }
+}
+
+void nmr_Registration_ImplUI::setImageOrientation(nmr_ImageType whichImage,
+                              vrpn_bool flipX, vrpn_bool flipY)
+{
+  if (whichImage == NMR_SOURCE) {
+    d_ce->setImageOrientation(s_sourceImageIndex, flipX, flipY);
+  } else if (whichImage == NMR_TARGET) {
+    d_ce->setImageOrientation(s_targetImageIndex, flipX, flipY);
   }
 }

@@ -7,14 +7,16 @@ nmr_Registration_Server::nmr_Registration_Server(const char *name,
     d_imageParamsLastReceived(NMR_SOURCE),
     d_srcResX(0), d_srcResY(0), 
     d_srcSizeX(0), d_srcSizeY(0),
+    d_srcFlipX(vrpn_FALSE), d_srcFlipY(vrpn_FALSE),
     d_targetResX(0), d_targetResY(0), 
     d_targetSizeX(0), d_targetSizeY(0),
+    d_targetFlipX(vrpn_FALSE), d_targetFlipY(vrpn_FALSE),
     d_imageScanlineLastReceived(NMR_SOURCE),
     d_row(0), d_length(0), d_lengthAllocated(0), d_scanlineData(NULL),
     d_transformType(NMR_2D2D_AFFINE),
     d_registrationEnabled(vrpn_FALSE),
-    d_imageFiducialLastRecieved(NMR_SOURCE),
-    d_x(0), d_y(0), d_z(0), d_messageHandlerList(NULL)
+    d_x_src(0), d_y_src(0), d_z_src(0), 
+    d_x_tgt(0), d_y_tgt(0), d_z_tgt(0), d_messageHandlerList(NULL)
 {
 
   if (d_connection == NULL) {
@@ -89,7 +91,8 @@ nmr_Registration_Server::~nmr_Registration_Server()
 
 int nmr_Registration_Server::setImageParameters(nmr_ImageType whichImage,
             vrpn_int32 res_x, vrpn_int32 res_y,
-            vrpn_float32 size_x, vrpn_float32 size_y)
+            vrpn_float32 size_x, vrpn_float32 size_y, 
+            vrpn_bool flip_x, vrpn_bool flip_y)
 {
     if (whichImage == NMR_SOURCE) {
         d_imageParamsLastReceived = NMR_SOURCE;
@@ -97,12 +100,16 @@ int nmr_Registration_Server::setImageParameters(nmr_ImageType whichImage,
         d_srcResY = res_y;
         d_srcSizeX = size_x;
         d_srcSizeY = size_y;
+        d_srcFlipX = flip_x;
+        d_srcFlipY = flip_y;
     } else if (whichImage == NMR_TARGET) {
         d_imageParamsLastReceived = NMR_TARGET;
         d_targetResX = res_x;
         d_targetResY = res_y;
         d_targetSizeX = size_x;
         d_targetSizeY = size_y;
+        d_targetFlipX = flip_x;
+        d_targetFlipY = flip_y;
     } else {
         fprintf(stderr, "RegistrationImpl::setImageParameters:"
                         " Error, unknown image type\n");
@@ -152,11 +159,12 @@ int nmr_Registration_Server::setGUIEnable(vrpn_bool enable)
     return 0;
 }
 
-int nmr_Registration_Server::addFiducial(nmr_ImageType whichImage,
-                           vrpn_float32 x, vrpn_float32 y, vrpn_float32 z)
+int nmr_Registration_Server::setFiducial(
+                   vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
+                   vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
 {
-    d_imageFiducialLastRecieved = whichImage;
-    d_x = x; d_y = y; d_z = z;
+    d_x_src = x_src; d_y_src = y_src; d_z_src = z_src;
+    d_x_tgt = x_tgt; d_y_tgt = y_tgt; d_z_tgt = z_tgt;
     return 0;
 }
 
@@ -175,19 +183,20 @@ int nmr_Registration_Server::RcvSetImageParameters (void *_userdata,
   const char * bufptr = _p.buffer;
   vrpn_int32 which_image, res_x, res_y;
   vrpn_float32 size_x, size_y;
+  vrpn_bool flip_x, flip_y;
 
   if (decode_SetImageParameters(&bufptr, &which_image, &res_x, &res_y,
-               &size_x, &size_y) == -1) {
+               &size_x, &size_y, &flip_x, &flip_y) == -1) {
       fprintf(stderr,
          "nmr_Registration_Server::RcvSetImageParameters: decode failed\n");
       return -1;
   }
   if (which_image == NMR_SOURCE) {
      me->setImageParameters(NMR_SOURCE, res_x, res_y, 
-                            size_x, size_y);
+                            size_x, size_y, flip_x, flip_y);
   } else if (which_image == NMR_TARGET) {
      me->setImageParameters(NMR_TARGET, res_x, res_y, 
-                            size_x, size_y);
+                            size_x, size_y, flip_x, flip_y);
   } else {
     fprintf(stderr,
         "nmr_Registration_Server::RcvSetImageParameters: unknown image type\n");
@@ -333,27 +342,16 @@ int nmr_Registration_Server::RcvFiducial (void *_userdata,
 {
   nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
   const char * bufptr = _p.buffer;
-  vrpn_int32 which_image;
-  vrpn_float32 x, y, z;
+  vrpn_float32 x_src, y_src, z_src, x_tgt, y_tgt, z_tgt;
 
-  if (decode_Fiducial(&bufptr, &which_image, &x, &y, &z) == -1) {
+  if (decode_Fiducial(&bufptr, &x_src, &y_src, &z_src, 
+                               &x_tgt, &y_tgt, &z_tgt) == -1) {
     fprintf(stderr,
         "nmr_Registration_Server::RcvFiducial:"
         " decode failed\n");
     return -1;
   }
-  switch(which_image) {
-    case NMR_SOURCE:
-      me->addFiducial(NMR_SOURCE, x, y, z);
-      break;
-    case NMR_TARGET:
-      me->addFiducial(NMR_TARGET, x, y, z);
-      break;
-    default:
-      fprintf(stderr,
-       "nmr_Registration_Server::RcvFiducial: bad image type\n");
-      return -1;
-  }
+  me->setFiducial(x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
 
   return me->notifyMessageHandlers(NMR_FIDUCIAL, _p.msg_time);
 }
@@ -428,7 +426,8 @@ int nmr_Registration_Server::notifyMessageHandlers(nmr_MessageType type,
 
 void nmr_Registration_Server::getImageParameters(nmr_ImageType &whichImage,
          vrpn_int32 &res_x, vrpn_int32 &res_y,
-         vrpn_float32 &size_x, vrpn_float32 &size_y)
+         vrpn_float32 &size_x, vrpn_float32 &size_y,
+         vrpn_bool &flip_x, vrpn_bool &flip_y)
 {
     whichImage = d_imageParamsLastReceived;
     if (whichImage == NMR_SOURCE){
@@ -436,11 +435,15 @@ void nmr_Registration_Server::getImageParameters(nmr_ImageType &whichImage,
         res_y = d_srcResY;
         size_x = d_srcSizeX;
         size_y = d_srcSizeY;
+        flip_x = d_srcFlipX;
+        flip_y = d_srcFlipY;
     } else {
         res_x = d_targetResX;
         res_y = d_targetResY;
         size_x = d_targetSizeX;
         size_y = d_targetSizeY;
+        flip_x = d_targetFlipX;
+        flip_y = d_targetFlipY;
     }
 }
 
@@ -470,11 +473,12 @@ void nmr_Registration_Server::getScanline(nmr_ImageType &whichImage,
     *data = d_scanlineData;
 }
 
-void nmr_Registration_Server::getFiducial(nmr_ImageType &whichImage,
-                     vrpn_float32 &x, vrpn_float32 &y, vrpn_float32 &z)
+void nmr_Registration_Server::getFiducial(
+              vrpn_float32 &x_src, vrpn_float32 &y_src, vrpn_float32 &z_src,
+              vrpn_float32 &x_tgt, vrpn_float32 &y_tgt, vrpn_float32 &z_tgt)
 {
-    whichImage = d_imageFiducialLastRecieved;
-    x = d_x; y = d_y; z = d_z;
+    x_src = d_x_src; y_src = d_y_src; z_src = d_z_src;
+    x_tgt = d_x_tgt; y_tgt = d_y_tgt; z_tgt = d_z_tgt;
 }
 
 int nmr_Registration_Server::sendRegistrationResult(double xform[16])

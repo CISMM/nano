@@ -35,7 +35,8 @@ char * nmr_Registration_Interface::encode_SetImageParameters
           (vrpn_int32 *len,
            vrpn_int32 which_image,
            vrpn_int32 res_x, vrpn_int32 res_y,
-           vrpn_float32 xSizeWorld, vrpn_float32 ySizeWorld)
+           vrpn_float32 xSizeWorld, vrpn_float32 ySizeWorld,
+           vrpn_bool flipX, vrpn_bool flipY)
 {
   char * msgbuf = NULL;
   char * mptr;
@@ -43,7 +44,8 @@ char * nmr_Registration_Interface::encode_SetImageParameters
 
   if (!len) return NULL;
 
-  *len = 3 * sizeof(vrpn_int32) + 2 * sizeof(vrpn_float32);
+  *len = 3 * sizeof(vrpn_int32) + 2 * sizeof(vrpn_float32) + 
+         2 * sizeof(vrpn_bool);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmr_Registration_Interface::encode_SetImageParameters:  "
@@ -57,6 +59,8 @@ char * nmr_Registration_Interface::encode_SetImageParameters
     vrpn_buffer(&mptr, &mlen, res_y);
     vrpn_buffer(&mptr, &mlen, xSizeWorld);
     vrpn_buffer(&mptr, &mlen, ySizeWorld);
+    vrpn_buffer(&mptr, &mlen, flipX);
+    vrpn_buffer(&mptr, &mlen, flipY);
   }
 
   return msgbuf;
@@ -67,13 +71,16 @@ vrpn_int32 nmr_Registration_Interface::decode_SetImageParameters
           (const char **buf,
            vrpn_int32 *which_image,
            vrpn_int32 *res_x, vrpn_int32 *res_y,
-           vrpn_float32 *xSizeWorld, vrpn_float32 *ySizeWorld)
+           vrpn_float32 *xSizeWorld, vrpn_float32 *ySizeWorld,
+           vrpn_bool *flipX, vrpn_bool *flipY)
 {
   if (vrpn_unbuffer(buf, which_image) ||
       vrpn_unbuffer(buf, res_x) ||
       vrpn_unbuffer(buf, res_y) ||
       vrpn_unbuffer(buf, xSizeWorld) ||
-      vrpn_unbuffer(buf, ySizeWorld)) {
+      vrpn_unbuffer(buf, ySizeWorld) ||
+      vrpn_unbuffer(buf, flipX) ||
+      vrpn_unbuffer(buf, flipY)) {
     return -1;
   }
   return 0;
@@ -260,8 +267,8 @@ vrpn_int32 nmr_Registration_Interface::decode_EnableGUI
 
 //static
 char * nmr_Registration_Interface::encode_Fiducial (vrpn_int32 *len,
-           vrpn_int32 which_image,
-           vrpn_float32 x, vrpn_float32 y, vrpn_float32 z)
+           vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
+           vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
 {
   char * msgbuf = NULL;
   char * mptr;
@@ -269,7 +276,7 @@ char * nmr_Registration_Interface::encode_Fiducial (vrpn_int32 *len,
 
   if (!len) return NULL;
 
-  *len = 4 * sizeof(vrpn_int32);
+  *len = 6 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmr_Registration_Interface::encode_Fiducial:  "
@@ -278,10 +285,12 @@ char * nmr_Registration_Interface::encode_Fiducial (vrpn_int32 *len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    vrpn_buffer(&mptr, &mlen, which_image);
-    vrpn_buffer(&mptr, &mlen, x);
-    vrpn_buffer(&mptr, &mlen, y);
-    vrpn_buffer(&mptr, &mlen, z);
+    vrpn_buffer(&mptr, &mlen, x_src);
+    vrpn_buffer(&mptr, &mlen, y_src);
+    vrpn_buffer(&mptr, &mlen, z_src);
+    vrpn_buffer(&mptr, &mlen, x_tgt);
+    vrpn_buffer(&mptr, &mlen, y_tgt);
+    vrpn_buffer(&mptr, &mlen, z_tgt);
   }
 
   return msgbuf;
@@ -289,13 +298,15 @@ char * nmr_Registration_Interface::encode_Fiducial (vrpn_int32 *len,
 
 //static
 vrpn_int32 nmr_Registration_Interface::decode_Fiducial (const char **buf,
-           vrpn_int32 *which_image,
-           vrpn_float32 *x, vrpn_float32 *y, vrpn_float32 *z)
+           vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+           vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
 {
-  if (vrpn_unbuffer(buf, which_image) ||
-      vrpn_unbuffer(buf, x) ||
-      vrpn_unbuffer(buf, y) ||
-      vrpn_unbuffer(buf, z)) {
+  if (vrpn_unbuffer(buf, x_src) ||
+      vrpn_unbuffer(buf, y_src) ||
+      vrpn_unbuffer(buf, z_src) ||
+      vrpn_unbuffer(buf, x_tgt) ||
+      vrpn_unbuffer(buf, y_tgt) ||
+      vrpn_unbuffer(buf, z_tgt)) {
     return -1;
   }
   return 0;
@@ -306,7 +317,8 @@ vrpn_int32 nmr_Registration_Interface::decode_Fiducial (const char **buf,
 char * nmr_Registration_Interface::encode_ImageParameters (vrpn_int32 *len,
            vrpn_int32 which_image,
            vrpn_int32 res_x, vrpn_int32 res_y,
-           vrpn_float32 xSizeWorld, vrpn_float32 ySizeWorld)
+           vrpn_float32 xSizeWorld, vrpn_float32 ySizeWorld,
+           vrpn_bool flipX, vrpn_bool flipY)
 {
   char * msgbuf = NULL;
   char * mptr;
@@ -314,7 +326,8 @@ char * nmr_Registration_Interface::encode_ImageParameters (vrpn_int32 *len,
 
   if (!len) return NULL;
 
-  *len = 3 * sizeof(vrpn_int32) + 2 * sizeof(vrpn_float32);
+  *len = 3 * sizeof(vrpn_int32) + 2 * sizeof(vrpn_float32) +
+         2 * sizeof(vrpn_bool);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmr_Registration_Interface::encode_ImageParameters:  "
@@ -328,6 +341,8 @@ char * nmr_Registration_Interface::encode_ImageParameters (vrpn_int32 *len,
     vrpn_buffer(&mptr, &mlen, res_y);
     vrpn_buffer(&mptr, &mlen, xSizeWorld);
     vrpn_buffer(&mptr, &mlen, ySizeWorld);
+    vrpn_buffer(&mptr, &mlen, flipX);
+    vrpn_buffer(&mptr, &mlen, flipY);
   }
 
   return msgbuf;
@@ -337,13 +352,16 @@ char * nmr_Registration_Interface::encode_ImageParameters (vrpn_int32 *len,
 vrpn_int32 nmr_Registration_Interface::decode_ImageParameters (const char **buf,
            vrpn_int32 *which_image,
            vrpn_int32 *res_x, vrpn_int32 *res_y,
-           vrpn_float32 *xSizeWorld, vrpn_float32 *ySizeWorld)
+           vrpn_float32 *xSizeWorld, vrpn_float32 *ySizeWorld,
+           vrpn_bool *flipX, vrpn_bool *flipY)
 {
   if (vrpn_unbuffer(buf, which_image) ||
       vrpn_unbuffer(buf, res_x) ||
       vrpn_unbuffer(buf, res_y) ||
       vrpn_unbuffer(buf, xSizeWorld) ||
-      vrpn_unbuffer(buf, ySizeWorld)) {
+      vrpn_unbuffer(buf, ySizeWorld) ||
+      vrpn_unbuffer(buf, flipX) ||
+      vrpn_unbuffer(buf, flipY)) {
     return -1;
   }
   return 0;

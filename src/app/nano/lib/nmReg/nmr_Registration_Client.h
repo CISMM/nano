@@ -28,7 +28,8 @@ class nmr_Registration_Client : public nmb_Device_Client,
     int setImageParameters(nmr_ImageType whichImage,
                            vrpn_int32 res_x, vrpn_int32 res_y,
                            vrpn_float32 xSizeWorld, 
-                           vrpn_float32 ySizeWorld);
+                           vrpn_float32 ySizeWorld,
+                           vrpn_bool flipX, vrpn_bool flipY);
     /// this allows you to update either image
     int setScanline(nmr_ImageType whichImage, vrpn_int32 row,
                            vrpn_int32 line_length, vrpn_float32 *data);
@@ -39,8 +40,8 @@ class nmr_Registration_Client : public nmb_Device_Client,
     /// with the image of the tip in the other image
     /// (this is information associated with but not visible in an
     ///  AFM image)
-    int sendFiducial(nmr_ImageType whichImage,
-                           vrpn_float32 x, vrpn_float32 y, vrpn_float32 z);
+    int sendFiducial(vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
+                  vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt);
     int setRegistrationEnable(vrpn_bool enable);
     int setGUIEnable(vrpn_bool enable);
 
@@ -57,7 +58,8 @@ class nmr_Registration_Client : public nmb_Device_Client,
     void getImageParameters(nmr_ImageType &whichImage,
                            vrpn_int32 &res_x, vrpn_int32 &res_y,
                            vrpn_float32 &xSizeWorld,
-                           vrpn_float32 &ySizeWorld);
+                           vrpn_float32 &ySizeWorld,
+                           vrpn_bool &flipX, vrpn_bool &flipY);
     void getTransformationOptions(nmr_TransformationType &type);
     void getRegistrationResult(vrpn_float64 *matrix44);
 
@@ -73,8 +75,10 @@ class nmr_Registration_Client : public nmb_Device_Client,
     nmr_ImageType d_imageParamsLastReceived;
     vrpn_int32 d_srcResX, d_srcResY;
     vrpn_float32 d_srcSizeX, d_srcSizeY;
+    vrpn_bool d_srcFlipX, d_srcFlipY;
     vrpn_int32 d_targetResX, d_targetResY;
     vrpn_float32 d_targetSizeX, d_targetSizeY;
+    vrpn_bool d_targetFlipX, d_targetFlipY;
 
     nmr_TransformationType d_transformType;
 

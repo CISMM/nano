@@ -8,9 +8,11 @@ nmr_Registration_Client::nmr_Registration_Client (const char *name,
     d_srcResX(0),
     d_srcResY(0),
     d_srcSizeX(0), d_srcSizeY(0),
+    d_srcFlipX(0), d_srcFlipY(0),
     d_targetResX(0),
     d_targetResY(0),
     d_targetSizeX(0), d_targetSizeY(0),
+    d_targetFlipX(0), d_targetFlipY(0),
     d_transformType(NMR_2D2D_AFFINE),
     d_messageHandlerList(NULL)
 {
@@ -63,13 +65,14 @@ vrpn_int32 nmr_Registration_Client::mainloop(void)
 
 int nmr_Registration_Client::setImageParameters(nmr_ImageType whichImage,
               vrpn_int32 res_x, vrpn_int32 res_y,
-              vrpn_float32 sizeX, vrpn_float32 sizeY)
+              vrpn_float32 sizeX, vrpn_float32 sizeY,
+              vrpn_bool flipX, vrpn_bool flipY)
 {
   char *msgbuf;
   vrpn_int32 len;
 
   msgbuf = encode_SetImageParameters(&len, (vrpn_int32)whichImage, res_x, res_y,
-        sizeX, sizeY);
+        sizeX, sizeY, flipX, flipY);
   if (!msgbuf) {
     return -1;
   }
@@ -109,13 +112,14 @@ int nmr_Registration_Client::setTransformationOptions(
   return dispatchMessage(len, msgbuf, d_SetTransformationOptions_type);
 }
 
-int nmr_Registration_Client::sendFiducial(nmr_ImageType whichImage,
-                           vrpn_float32 x, vrpn_float32 y, vrpn_float32 z)
+int nmr_Registration_Client::sendFiducial(
+                   vrpn_float32 x_src, vrpn_float32 y_src, vrpn_float32 z_src,
+                   vrpn_float32 x_tgt, vrpn_float32 y_tgt, vrpn_float32 z_tgt)
 {
   char *msgbuf;
   vrpn_int32 len;
 
-  msgbuf = encode_Fiducial(&len, (vrpn_int32)whichImage, x, y, z);
+  msgbuf = encode_Fiducial(&len, x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
 
   if (!msgbuf) {
     return -1;
@@ -160,9 +164,10 @@ int nmr_Registration_Client::RcvImageParameters (
   const char * bufptr = _p.buffer;
   vrpn_int32 which_image, res_x, res_y;
   vrpn_float32 sizeX, sizeY;
+  vrpn_bool flipX, flipY;
 
   if (decode_ImageParameters(&bufptr, &which_image, &res_x, &res_y,
-            &sizeX, &sizeY) == -1) {
+            &sizeX, &sizeY, &flipX, &flipY) == -1) {
     fprintf(stderr,
         "nmr_Registration_Client::RcvImageParameters: decode failed\n");
     return -1;
@@ -173,12 +178,16 @@ int nmr_Registration_Client::RcvImageParameters (
      me->d_srcResY = res_y;
      me->d_srcSizeX = sizeX;
      me->d_srcSizeY = sizeY;
+     me->d_srcFlipX = flipX;
+     me->d_srcFlipY = flipY;
   } else if (which_image == NMR_TARGET) {
      me->d_imageParamsLastReceived = NMR_TARGET;
      me->d_targetResX = res_x;
      me->d_targetResY = res_y;
      me->d_targetSizeX = sizeX;
      me->d_targetSizeY = sizeY;
+     me->d_targetFlipX = flipX;
+     me->d_targetFlipY = flipY;
   } else {
     fprintf(stderr,
         "nmr_Registration_Client::RcvImageParameters: unknown image type\n");
@@ -307,7 +316,8 @@ int nmr_Registration_Client::notifyMessageHandlers(nmr_MessageType type,
 void nmr_Registration_Client::getImageParameters(nmr_ImageType &whichImage,
                            vrpn_int32 &res_x, vrpn_int32 &res_y,
                            vrpn_float32 &size_x, 
-                           vrpn_float32 &size_y)
+                           vrpn_float32 &size_y,
+                           vrpn_bool &flip_x, vrpn_bool &flip_y)
 { 
     whichImage = d_imageParamsLastReceived;
     if (whichImage == NMR_SOURCE){
@@ -315,11 +325,15 @@ void nmr_Registration_Client::getImageParameters(nmr_ImageType &whichImage,
         res_y = d_srcResY;
         size_x = d_srcSizeX;
         size_y = d_srcSizeY;
+        flip_x = d_srcFlipX;
+        flip_y = d_srcFlipY;
     } else {
         res_x = d_targetResX;
         res_y = d_targetResY;
         size_x = d_targetSizeX;
         size_y = d_targetSizeY;
+        flip_x = d_targetFlipX;
+        flip_y = d_targetFlipY;
     }
 }
 

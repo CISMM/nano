@@ -14,6 +14,7 @@ nmr_Registration_Proxy::nmr_Registration_Proxy(const char *name,
   d_imageParamsLastReceived(NMR_SOURCE),
   d_res_x(0), d_res_y(0),
   d_size_x(0.0), d_size_y(0.0),
+  d_flip_x(vrpn_FALSE), d_flip_y(vrpn_FALSE),
   d_messageHandlerList(NULL)
 {
     if (!name && !c) {
@@ -93,7 +94,7 @@ vrpn_int32 nmr_Registration_Proxy::setGUIEnable(vrpn_bool enable)
 }
 
 vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
-          nmb_Image *im)
+          nmb_Image *im, vrpn_bool flipX, vrpn_bool flipY)
 {
   int i,j;
   vrpn_float32 *data;
@@ -118,7 +119,7 @@ vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
 //             im->width(), im->height());
     im->getAcquisitionDimensions(xSize, ySize);
     d_remote_impl->setImageParameters(whichImage, im->width(), im->height(),
-                         xSize, ySize);
+                         xSize, ySize, flipX, flipY);
     d_remote_impl->mainloop();
 //      printf("nmr_Registration_Proxy::setImage: "
 //             "sending image data to remote\n");
@@ -174,7 +175,8 @@ void nmr_Registration_Proxy::handle_registration_change(void *ud,
     case NMR_IMAGE_PARAM:
       info.aligner->getImageParameters(me->d_imageParamsLastReceived, 
                me->d_res_x, me->d_res_y, 
-               me->d_size_x, me->d_size_y);
+               me->d_size_x, me->d_size_y,
+               me->d_flip_x, me->d_flip_y);
       break;
     case NMR_TRANSFORM_OPTION:
       //printf("nmr_Registration_Proxy::got transform option\n");
@@ -260,11 +262,13 @@ int nmr_Registration_Proxy::notifyMessageHandlers(nmr_MessageType type,
 
 void nmr_Registration_Proxy::getImageParameters(nmr_ImageType &whichImage,
        vrpn_int32 &res_x, vrpn_int32 &res_y,
-       vrpn_float32 &size_x, vrpn_float32 &size_y)
+       vrpn_float32 &size_x, vrpn_float32 &size_y,
+       vrpn_bool &flip_x, vrpn_bool &flip_y)
 {
     whichImage = d_imageParamsLastReceived;
     res_x = d_res_x; res_y = d_res_y;
     size_x = d_size_x; size_y = d_size_y;
+    flip_x = d_flip_x; flip_y = d_flip_y;
 }
 
 void nmr_Registration_Proxy::getTransformationOptions(

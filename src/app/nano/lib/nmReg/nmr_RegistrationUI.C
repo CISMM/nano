@@ -159,8 +159,9 @@ void nmr_RegistrationUI::handleRegistrationChange
       nmr_ImageType which_image;
       vrpn_int32 res_x, res_y;
       vrpn_float32 size_x, size_y;
+      vrpn_bool flip_x, flip_y;
       d_aligner->getImageParameters(which_image, res_x, res_y, 
-                                    size_x, size_y);
+                                    size_x, size_y, flip_x, flip_y);
       break;
     case NMR_TRANSFORM_OPTION:
       nmr_TransformationType xform_type;
@@ -301,7 +302,7 @@ void nmr_RegistrationUI::handle_registrationImage3D_change(const char *name,
         return;
     }
     // send image off to the proxy
-    me->d_aligner->setImage(NMR_SOURCE, im);
+    me->d_aligner->setImage(NMR_SOURCE, im, vrpn_FALSE, vrpn_FALSE);
     // We have a choice, and I'm not sure which is right. Either
     // Set the new image to use the existing colormap params:
     double dmin,dmax,cmin,cmax;
@@ -323,7 +324,7 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
         return;
     }
     // send image off to the proxy
-    me->d_aligner->setImage(NMR_TARGET, im);
+    me->d_aligner->setImage(NMR_TARGET, im, vrpn_FALSE, vrpn_FALSE);
 
     // We have a choice, and I'm not sure which is right. Either
     // Set the new image to use the existing colormap params:
