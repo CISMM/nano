@@ -28,13 +28,17 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_graphicsDisplay(g),
    d_imageList(im),
    d_aligner(aligner),
-   d_imageTransformWorldSpace(4,4),
-   d_imageTransformImageSpace(4,4),
-   d_imageTransformImageSpaceInv(4,4)
+   d_ProjWorldFromTopoWorldTransform(4,4),
+   d_ProjImageFromTopoImageTransform(4,4),
+   d_TopoImageFromProjImageTransform(4,4),
+   d_ProjImageFromTopoWorldTransform(4,4)
 {
     d_newResampleImageName = "";
     d_resampleResolutionX = 100;
     d_resampleResolutionY = 100;
+
+    d_registrationImageName3D = "none";
+    d_registrationImageName2D = "none";
 
     int i;
     vrpn_bool set3D = vrpn_FALSE, set2D = vrpn_FALSE; 
@@ -111,66 +115,66 @@ void nmr_RegistrationUI::changeDataset(nmb_ImageList *im)
 void nmr_RegistrationUI::handleRegistrationChange
           (const nmr_ProxyChangeHandlerData &info)
 {
-    switch(info.msg_type) {
-      case NMR_IMAGE_PARAM:
-        nmr_ImageType which_image;
-        vrpn_int32 res_x, res_y;
-        vrpn_bool height_field;
-        d_aligner->getImageParameters(which_image, res_x, res_y, height_field);
-        break;
-      case NMR_TRANSFORM_OPTION:
-        nmr_TransformationType xform_type;
-        d_aligner->getTransformationOptions(xform_type);
-        break;
-      case NMR_REG_RESULT:
-        d_imageTransformWorldSpace.print();
-        vrpn_float64 transform_matrix[16];
-        double worldToImage_matrix[16];
+  switch(info.msg_type) {
+    case NMR_IMAGE_PARAM:
+      nmr_ImageType which_image;
+      vrpn_int32 res_x, res_y;
+      vrpn_bool height_field;
+      d_aligner->getImageParameters(which_image, res_x, res_y, height_field);
+      break;
+    case NMR_TRANSFORM_OPTION:
+      nmr_TransformationType xform_type;
+      d_aligner->getTransformationOptions(xform_type);
+      break;
+    case NMR_REG_RESULT:
+      printf("got transformation\n");
 
-        printf("got transformation\n");
-        d_aligner->getRegistrationResult(transform_matrix);
-        d_imageTransformImageSpace.setMatrix(transform_matrix);
-        d_imageTransformImageSpaceInv.setMatrix(transform_matrix);
-        d_imageTransformImageSpaceInv.invert();
+      /* *******************************************************************
+         Store the raw result from the registration code and compute inverse
+       * *******************************************************************/
+      double projImFromTopoIm_matrix[16];
+      d_aligner->getRegistrationResult(projImFromTopoIm_matrix);
+      d_ProjImageFromTopoImageTransform.setMatrix(projImFromTopoIm_matrix);
+      d_TopoImageFromProjImageTransform.setMatrix(projImFromTopoIm_matrix);
+      d_TopoImageFromProjImageTransform.invert();
 
-        // convert it into the proper units
-        nmb_Image *im = d_imageList->getImageByName
+      nmb_Image *topographyImage = d_imageList->getImageByName
                           (d_registrationImageName3D.string());
-        if (!im) {
-             fprintf(stderr, "handleRegistrationChange: can't find image\n");
-             return;
-        }
-        im->getWorldToImageTransform(worldToImage_matrix);
+      nmb_Image *projectionImage = d_imageList->getImageByName
+                          (d_registrationImageName2D.string());
+      if (!topographyImage || !projectionImage) {
+           fprintf(stderr, "handleRegistrationChange: can't find image\n");
+           return;
+      }
+      double topoImFromTopoWorld_matrix[16];
+      double projImFromProjWorld_matrix[16];
 
-        // save it for future reference when resampling
+      /* ****************************************************************
+         ProjImFromTopoWorld = ProjImFromTopoImage * TopoImFromTopoWorld
+       * ****************************************************************/
+      topographyImage->getWorldToImageTransform(topoImFromTopoWorld_matrix);
+      d_ProjImageFromTopoWorldTransform.setMatrix(topoImFromTopoWorld_matrix);
+      d_ProjImageFromTopoWorldTransform.
+                           compose(d_ProjImageFromTopoImageTransform);
 
-        d_imageTransformWorldSpace.setMatrix(worldToImage_matrix);
-        d_imageTransformWorldSpace.print();
-        d_imageTransformWorldSpace.compose(d_imageTransformImageSpace);
-        d_imageTransformWorldSpace.print();
+      /* ****************************************************************
+         ProjWorldFromTopoWorld = ProjWorldFromProjIm * ProjImFromTopoWorld
+       * ****************************************************************/
+      //  first invert the transformation matrix that we get from the image
+      projectionImage->getWorldToImageTransform(projImFromProjWorld_matrix);
+      nmr_ImageTransformAffine projWorldFromProjImage(4,4);
+      projWorldFromProjImage.setMatrix(projImFromProjWorld_matrix);
+      projWorldFromProjImage.invert();
+      d_ProjWorldFromTopoWorldTransform = d_ProjImageFromTopoWorldTransform;
+      d_ProjWorldFromTopoWorldTransform.compose(projWorldFromProjImage);
 
-        // we need to do the following to make
-        // d_imageTransformWorldSpace correct in general
-        im = d_imageList->getImageByName(d_registrationImageName2D.string());
-        if (!im) {
-             fprintf(stderr, "handleRegistrationChange: can't find image\n");
-             return;
-        }
-        nmr_ImageTransformAffine imageToWorld(4,4);
-        im->getWorldToImageTransform(worldToImage_matrix);
-        imageToWorld.setMatrix(worldToImage_matrix);
-        imageToWorld.invert();
-        printf("this should be the identity for afm->sem\n");
-        imageToWorld.print();
-        d_imageTransformWorldSpace.compose(imageToWorld);
-
-
-        // and send it off to graphics
-        d_imageTransformWorldSpace.getMatrix(transform_matrix);
-        d_registrationValid = vrpn_TRUE;
-        d_graphicsDisplay->setTextureTransform(transform_matrix);
-        break;
-    }
+      double projImFromTopoWorld_matrix[16];
+      // send the right transformation to the graphics code
+      d_ProjImageFromTopoWorldTransform.getMatrix(projImFromTopoWorld_matrix);
+      d_graphicsDisplay->setTextureTransform(projImFromTopoWorld_matrix);
+      d_registrationValid = vrpn_TRUE;
+      break;
+  }
 }
 
 // static
@@ -292,9 +296,17 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
                 (const char *)(im_3D->unitsValue()),
                 d_resampleResolutionX, d_resampleResolutionY);
         d_newResampleImageName = (const char *) "";
+        nmb_ImageBounds im2D_bounds;
+        im_2D->getBounds(im2D_bounds);
+        new_image->setBounds(im2D_bounds);
         nmr_Util::createResampledImageWithImageSpaceTransformation((*im_3D), 
-                 d_imageTransformImageSpaceInv, (*new_image));
-        
+                 d_TopoImageFromProjImageTransform, (*new_image));
+
+        // an extra step: combine the two datasets in a somewhat arbitrary
+        // way so that you can see features from both in a single image
+        // it would be nice to create a color image from these two instead:
+        nmr_Util::addImage((*im_2D), (*new_image), (double)d_resampleRatio,
+                  1.0-(double)d_resampleRatio);
 
     } else {                      // warp the SEM image to the AFM image
       if (d_constrainToTopography){
@@ -315,7 +327,7 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         new_image->setTopoFileInfo(tf);
         d_newResampleImageName = (const char *) "";
         nmr_Util::createResampledImage((*im_2D), (*im_3D),
-                      d_imageTransformWorldSpace, (*new_image));
+                 d_ProjWorldFromTopoWorldTransform, (*new_image));
       } else {
      
         // here we figure out what resolution is required to preserve
@@ -323,7 +335,7 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         // height field constant
         int min_i, min_j, max_i, max_j;
         nmr_Util::computeResampleExtents((*im_3D), (*im_2D), 
-                                         d_imageTransformWorldSpace,
+                    d_ProjWorldFromTopoWorldTransform, 
                                          min_i, min_j, max_i, max_j);
         int res_x = max_i - min_i;
         int res_y = max_j - min_j;
@@ -340,7 +352,8 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         printf("%d, %d, %d, %d\n", min_i, min_j, max_i, max_j);
         nmr_Util::setRegionRelative((*im_3D), (*new_image),
                  min_i, min_j, max_i, max_j);
-        nmr_Util::createResampledImage((*im_2D), d_imageTransformWorldSpace,
+        nmr_Util::createResampledImage((*im_2D), 
+                 d_ProjWorldFromTopoWorldTransform,
                  (*new_image));
 
         // HACK:

@@ -126,7 +126,7 @@ void nmr_Util::setRegionRelative(const nmb_Image &srcImage,
 /** this function treats xform as a transformation from 2D to 2D
  */
 //static 
-void nmr_Util::createResampledImage(const nmb_Image &targetImage,
+void nmr_Util::createResampledImage(nmb_Image &targetImage,
                         const nmr_ImageTransform &xform,
                         nmb_Image &resampleImage)
 {
@@ -139,6 +139,10 @@ void nmr_Util::createResampledImage(const nmb_Image &targetImage,
   double i_target, j_target; // pixel coordinates
   double value_target;
 
+  fprintf(stderr, "(min, minNZ, max) = (%f,%f,%f)\n",
+        targetImage.minValue(), targetImage.minNonZeroValue(),
+        targetImage.maxValue());
+
   for (i = 0, i_center = 0.5; i < w; i++, i_center += 1.0){
     for (j = 0, j_center = 0.5; j < h; j++, j_center += 1.0){
       resampleImage.pixelToWorld(i_center, j_center, p_source[0], p_source[1]);
@@ -147,7 +151,12 @@ void nmr_Util::createResampledImage(const nmb_Image &targetImage,
       if (i_target >= 0 && j_target >= 0 &&
           i_target < targetImage.width() &&
           j_target < targetImage.height()) {
-          value_target = targetImage.getValueInterpolated(i_target, j_target);
+          value_target = targetImage.getValueInterpolatedNZ(i_target, j_target);
+          if ((value_target < targetImage.minNonZeroValue()) ||
+              (value_target > targetImage.maxValue())) {
+              fprintf(stderr, "Warning: resampleImage:"
+                      " not getting expected values from interpolation\n");
+          }
       } else {
           value_target = 0.0;
       }
@@ -158,13 +167,13 @@ void nmr_Util::createResampledImage(const nmb_Image &targetImage,
 
 // static
 void nmr_Util::createResampledImageWithImageSpaceTransformation(
-                        const nmb_Image &targetImage,
+                        nmb_Image &targetImage,
                         const nmr_ImageTransform &xform,
                         nmb_Image &resampleImage)
 {
   int i,j;
   int w,h;
-  double i_targ_min, i_targ_max, j_targ_min, j_targ_max;
+//  double i_targ_min, i_targ_max, j_targ_min, j_targ_max;
   w = resampleImage.width();
   h = resampleImage.height();
   double i_center, j_center;
@@ -177,6 +186,10 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
   x_incr = 1.0/(double)w;
   y_incr = 1.0/(double)h;
 
+  fprintf(stderr, "(min, minNZ, max) = (%f,%f,%f)\n", 
+	targetImage.minValue(), targetImage.minNonZeroValue(),
+	targetImage.maxValue());
+
   for (i = 0, i_center = 0.5*x_incr; i < w; i++, i_center += x_incr){
     for (j = 0, j_center = 0.5*y_incr; j < h; j++, j_center += y_incr){
       p_source_norm[0] = i_center;
@@ -184,6 +197,9 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
       xform.transform(p_source_norm, p_target_norm);
       i_target = p_target_norm[0]*targetImage.width();
       j_target = p_target_norm[1]*targetImage.height();
+
+/*
+      for debugging:
       if (i == 0 && j== 0) {
          i_targ_min = i_targ_max = i_target;
          j_targ_min = j_targ_max = j_target;
@@ -193,17 +209,23 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
          if (j_target > j_targ_max) j_targ_max = j_target;
          if (j_target < j_targ_min) j_targ_min = j_target;
       }
+*/
       if (i_target >= 0 && j_target >= 0 &&
           i_target < targetImage.width() &&
           j_target < targetImage.height()) {
-          value_target = targetImage.getValueInterpolated(i_target, j_target);
+          value_target = targetImage.getValueInterpolatedNZ(i_target, j_target);
+          if ((value_target < targetImage.minNonZeroValue()) ||
+	      (value_target > targetImage.maxValue())) {
+              fprintf(stderr, "Warning: resampleImageIST:"
+                      " not getting expected values from interpolation\n");
+          }
       } else {
           value_target = 0.0;
       }
       resampleImage.setValue(i,j, value_target);
     }
   }
-  printf("(%g,%g)-(%g,%g)\n", i_targ_min, j_targ_min, i_targ_max, j_targ_max);
+ // fprintf(stderr, "(%g,%g)-(%g,%g)\n", i_targ_min, j_targ_min, i_targ_max, j_targ_max);
 }
 
 
@@ -241,13 +263,13 @@ void nmr_Util::createResampledImage(const nmb_Image &targetImage,
       sourceImage.worldToPixel(p_source[0], p_source[1], i_source, j_source);
       if (i_source > 0 && i_source < sourceImage.width() &&
           j_source > 0 && j_source < sourceImage.height()) {
-        p_source[2] = sourceImage.getValueInterpolated(i_source, j_source);
+        p_source[2] = sourceImage.getValueInterpolatedNZ(i_source, j_source);
         xform.transform(p_source, p_target);
         targetImage.worldToPixel(p_target[0], p_target[1], i_target, j_target);
         if (i_target >= 0 && j_target >= 0 &&
             i_target < targetImage.width() &&
             j_target < targetImage.height()) {
-          value_target = targetImage.getValueInterpolated(i_target, j_target);
+          value_target = targetImage.getValueInterpolatedNZ(i_target, j_target);
         } else {
           value_target = 0.0;
         }
@@ -260,7 +282,7 @@ void nmr_Util::createResampledImage(const nmb_Image &targetImage,
 }
 
 //static 
-void nmr_Util::addImage(const nmb_Image &addend, nmb_Image &sum, float wa,
+void nmr_Util::addImage(nmb_Image &addend, nmb_Image &sum, float wa,
                   float ws)
 {
   int i,j;
@@ -268,18 +290,22 @@ void nmr_Util::addImage(const nmb_Image &addend, nmb_Image &sum, float wa,
   double x_world, y_world;
   double i_center, j_center, i_addend, j_addend;
 
-  double val_scale = (sum.maxValue()-sum.minValue())/
-                     (addend.maxValue()-sum.minValue());
-  double val_min = addend.minValue();
+  double rangeFactor = (sum.maxValue()-sum.minNonZeroValue())/
+                       (addend.maxValue()-addend.minNonZeroValue());
+  double offset = addend.minNonZeroValue();
+  double sumOffset = sum.minNonZeroValue();
   int w= sum.width(), h = sum.height();
-  double sum_avg = sum.getValue(w/2, h/2) + sum.getValue(w/4, h/2)+
-                   sum.getValue(w/2, h/4) + sum.getValue(w/4, h/4);
   w = addend.width();
   h = addend.height();
+
+/*
+  double sum_avg = sum.getValue(w/2, h/2) + sum.getValue(w/4, h/2)+
+                   sum.getValue(w/2, h/4) + sum.getValue(w/4, h/4);
   double val_avg = addend.getValue(w/2, h/2) + addend.getValue(w/4, h/2)+
                    addend.getValue(w/2, h/4) + addend.getValue(w/4, h/4);
   val_avg *= 0.25;
   sum_avg *= 0.25;
+*/
 
   for (i = 0, i_center = 0.5; i < sum.width(); i++, i_center += 1.0) {
     for (j = 0, j_center = 0.5; j < sum.height(); j++, j_center += 1.0) {
@@ -291,10 +317,15 @@ void nmr_Util::addImage(const nmb_Image &addend, nmb_Image &sum, float wa,
           i_addend < addend.width() && 
           j_addend < addend.height()) {
           val = ws*sum.getValue(i,j) + 
+                wa*(rangeFactor*
+                    (addend.getValueInterpolatedNZ(i_addend, j_addend)-offset)
+                    + sumOffset);
+/*
                 wa*(sum_avg + 
                     val_scale*
-                     (addend.getValueInterpolated(i_addend, j_addend)-val_avg)
+                     (addend.getValueInterpolatedNZ(i_addend, j_addend)-val_avg)
                    );
+*/
           sum.setValue(i,j, val);
       }
     }

@@ -139,6 +139,7 @@ int CorrespondenceEditor::eventHandler(
         }
         break;
       case KEY_PRESS_EVENT:
+        printf("CorrespondenceEditor: got a key: %d\n", event.keycode);
         if (event.keycode == 108 ||
 	    event.keycode == 8){ // X windows number for delete key
             if (me->correspondence->numPoints() > 0){

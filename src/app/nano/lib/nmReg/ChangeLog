@@ -1,4 +1,22 @@
+2000-10-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmr_RegistrationUI.Ch (handleRegistrationChange) : fixed problem
+	with the transformation sent to graphics for computing texture
+	coordinates (it didn't work for AFM to AFM registration because
+	of stuff for imageFromWorld transformation that was added in 
+	last commit). Also, cleaned up naming scheme for transformations to
+	make the code easier to understand. A comment at the top of
+	nmr_RegistrationUI.h explains the different coordinate systems.
+        * nmr_Util.C (createResampledImage,
+        createResampledImageWithImageSpaceTransformation) : replaced 
+	getValueInterpolated with getValueInterpolatedNZ to avoid mixing
+	of zero (unset) with nonzero (set) values - this messes up scaling
+        * nmr_Util.C (addImage) : made this function do something more
+        correct by using minNonZeroValue instead of trying to guess
+        some good values to use to preserve the intensity scale
+
 2000-09-23  Adam Seeger  <seeger@cs.unc.edu>
+
 	* nmr_ImageTransform.hC (invert): new function to invert the 
 	transformation matrix used in nmr_ImageTransformAffine
 	* nmr_RegistrationUI.Ch : new variables d_invertWarp,
@@ -24,6 +42,7 @@
 	3D-2D projection from world space to pixels in an image
 
 2000-08-17  Adam Seeger  <seeger@cs.unc.edu>
+
 	* correspondence.C (Correspondence): switched malloc to new
 	* correspondence.C (init): switched malloc to new
 	* correspondenceEditor.C (eventHandler): handles errors from getPoint

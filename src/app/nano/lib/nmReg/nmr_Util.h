@@ -40,7 +40,7 @@ class nmr_Util {
     /// locations in the target image in order to determine pixel values
     /// The nmr_ImageTransform argument is actually a transformation from
     /// world coordinates to world coordinates for the two images
-    static void createResampledImage(const nmb_Image &target,
+    static void createResampledImage(nmb_Image &target,
                         const nmr_ImageTransform &xform, 
                         nmb_Image &resampleImage);
     
@@ -55,7 +55,7 @@ class nmr_Util {
     /// for the two images (normalized image coordinates means that 
     /// pixel coordinates always span the unit square)
     static void createResampledImageWithImageSpaceTransformation(
-          const nmb_Image &target, const nmr_ImageTransform &xform,
+          nmb_Image &target, const nmr_ImageTransform &xform,
           nmb_Image &resampleImage);
 
     /// for 3D->2D transformations
@@ -97,7 +97,7 @@ class nmr_Util {
 */
 
     /// sum = wa*(interpolated addend or 0 if outside of addend) + ws*sum
-    static void addImage(const nmb_Image &addend, nmb_Image &sum, float wa,
+    static void addImage(nmb_Image &addend, nmb_Image &sum, float wa,
                   float ws);
 
 };

@@ -21,6 +21,34 @@
 /// a projective texture; The control panel also provides utilities for
 /// resampling an image using the registration result in order to align
 /// one image to another one.
+
+/***************************************************************
+     there are 4 coordinate systems we need to worry about 
+
+        We have two images: 
+           1) Topography/3D/Source 
+                (unless using a 2D->2D transform this is the source)
+           2) Projection/2D/Target 
+                (unless using a 2D->2D transform this is the target)
+
+        For each image there is a world space (x,y,z) and an image space (u,v)
+        The world space is unique for each device since different devices
+        have different world coordinates which are usually aligned 
+        with the u,v axes (this gives us information on things like the 
+        conversion from pixels to nm). (XXX - I'm not sure how drift
+        should fit into this organization)
+
+        Points in the image space are specified with two numbers (u,v)
+        which go from (0,0) at the corner for the first pixel to
+        (1.0, 1.0) at the corner for the last pixel. Note that these
+        coordinates are independent of resolution (this makes it easier
+        to change resolution without having to change a bunch of other
+        state)
+
+        The 4 coordinate systems are named something like this:
+          TopoWorld, TopoImage, ProjWorld, ProjImage
+ ****************************************************************/
+
 class nmr_RegistrationUI {
   public:
     nmr_RegistrationUI(nmg_Graphics *g, nmb_ImageList *im,
@@ -66,9 +94,10 @@ class nmr_RegistrationUI {
     nmb_ImageList *d_imageList;
     nmr_Registration_Proxy *d_aligner;
 
-    nmr_ImageTransformAffine d_imageTransformWorldSpace;
-    nmr_ImageTransformAffine d_imageTransformImageSpace;
-    nmr_ImageTransformAffine d_imageTransformImageSpaceInv;
+    nmr_ImageTransformAffine d_ProjWorldFromTopoWorldTransform;
+    nmr_ImageTransformAffine d_ProjImageFromTopoImageTransform;
+    nmr_ImageTransformAffine d_TopoImageFromProjImageTransform;
+    nmr_ImageTransformAffine d_ProjImageFromTopoWorldTransform;
 };
 
 #endif
