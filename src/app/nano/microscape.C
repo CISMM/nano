@@ -5452,7 +5452,7 @@ void teardownSynchronization( CollaborationManager *cm,
 
   }
 
-  // Analysis -> Registeration
+  // Analysis -> Registration
   nmui_Component * viewRegister = ui_Root->find("Register");
   viewRegister->remove(&(alignerUI->d_registrationImageName3D));
   viewRegister->remove(&(alignerUI->d_registrationImageName2D));
