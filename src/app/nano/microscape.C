@@ -6056,7 +6056,7 @@ int initialize_environment() {
 
     envir = getenv("HOST");
     //fprintf(stderr, "HOST: %s\n", envir);
-    sprintf(nM_coord_change_server_name, "handCoordinateServer00@%s",
+    sprintf(nM_coord_change_server_name, "handCoordinateServer0@%s",
 envir);
     //  	fprintf(stderr, "nM_coord_change_server_name: %s\n",
     //  		nM_coord_change_server_name);

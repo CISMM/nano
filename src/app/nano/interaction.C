@@ -1457,10 +1457,10 @@ doScale(int whichUser, int userEvent, double scale_factor)
      
         // now scale by scale amount	
         scaleXform.scale = scale_factor;
-    
+
         // scaled_w_f_ha = w_f_h * scale   
         v_x_compose(&scaledWorldFromHand, &worldFromHand, &scaleXform);
-    
+        
         //scaling's done, so get back into object space 
         v_x_invert(&handFromWorld, &worldFromHand);
     

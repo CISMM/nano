@@ -331,6 +331,7 @@ void CollaborationManager::initialize
                     "Couldn't create hand server for collaboration.\n");
     return;
   }
+  collabVerbose(2, "Created handServer named %s.\n", d_handServerName);
 
   d_modeServer = new vrpn_Analog_Server (d_modeServerName, d_peerServer);
   d_modeServer->setNumChannels(1);
@@ -446,6 +447,9 @@ void CollaborationManager::setPeerName
 
     if (d_handServer) {
       d_handServer->bindConnection(d_peerRemote);
+      collabVerbose(2, "Bound handServer to peer.\n", d_handServerName);
+    } else {
+      collabVerbose(2, "There was no handServer to bind.\n", d_handServerName);
     }
 
     // Plane sync object also needs to know the name of collaborator

@@ -1,3 +1,10 @@
+2000-10-02  Kwan Torrich Skinner  <skinner@cs.unc.edu>
+	
+	* CollaborationManager.C (CollaborationManager::initialize) :
+	Added two more collabVerbose statements for handServer binding.
+	* microscape.c (createNewMicroscope) : changed 
+	handCoordinateServer00 to handCoordinateServer0.
+
 2000-10-02  Jason Clark  <jclark@cs.unc.edu>
 
 	* minit.c: Added include <nmb_Debug.h> to get collabVerbose
