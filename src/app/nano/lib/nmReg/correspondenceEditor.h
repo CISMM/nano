@@ -6,6 +6,13 @@
 #include "PNMImage.h"
 #include "PPM.h"
 
+class CorrespondenceWindowParameters {
+ public:
+  CorrespondenceWindowParameters();
+  double left, right, bottom, top;
+  nmb_Image *im;
+  int winID;
+};
 
 typedef void (*CorrespondenceCallback)(Correspondence &c, void *ud);
 
@@ -23,9 +30,9 @@ class CorrespondenceEditor {
     void hide();
     void addFiducial(int spaceIndex, float x, float y, float z);
     int setImage(int image_index, nmb_Image *im);
-    int setImageFromPlane(int image_index, BCPlane *p);
-    int setImageFromPNM(int image_index, PNMImage &im);
-    int setImageFromPNM(int image_index, PPM *im);
+//    int setImageFromPlane(int image_index, BCPlane *p);
+//    int setImageFromPNM(int image_index, PNMImage &im);
+//    int setImageFromPNM(int image_index, PPM *im);
     void mainloop();
     void getCorrespondence(Correspondence &corr);
 	int numImages() {return num_images;}
@@ -46,11 +53,12 @@ class CorrespondenceEditor {
     ImageViewer *viewer;
     Correspondence *correspondence;
     int num_images;
-    int *win_ids;
+    CorrespondenceWindowParameters *winParam;
     int selectedPointIndex;
     int grabbedPointIndex;
     vrpn_bool draggingPoint;
     int grab_offset_x, grab_offset_y;
+
     GLuint point_marker_dlist;
     CorrespondenceCallback change_handler;
     void *userdata;

@@ -1,3 +1,13 @@
+2001-07-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* correspondenceEditor.Ch (CorrespondenceWindowParameters): new class
+	to group together window parameters
+	(displayHandler): changed to call the newer version of drawImage()
+	(setImage): took out stuff to set imageViewer's buffer and added
+	code to set the window shape to a reasonable default
+	(setImageFromPlane), (setImageFromPNM): commented-out these functions
+	because they aren't used
+
 2001-07-22  Adam Seeger  <seeger@cs.unc.edu>
 
 	* correspondenceEditor.C (displayHandler): flipped X

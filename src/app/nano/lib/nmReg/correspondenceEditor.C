@@ -1,5 +1,9 @@
 #include "correspondenceEditor.h"
 
+CorrespondenceWindowParameters::CorrespondenceWindowParameters(): 
+        left(1.0), right(0.0), bottom(0.0), top(1.0), im(NULL), winID(-1)
+{}
+
 CorrespondenceEditor::CorrespondenceEditor(int num_im,
                                                 ImageViewer *view,
                                                 Correspondence *corr,
@@ -10,13 +14,13 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im,
     // set up the mapping from image numbers in correspondence to windows in
     // viewer and set up callbacks for events and display
     num_images = num_im;
-    win_ids = new int[num_images];
+    winParam = new CorrespondenceWindowParameters[num_im];
     int i;
     for (i = 0; i < num_images; i++){
-        win_ids[i] = winIDs[i];
-        viewer->setWindowEventHandler(win_ids[i],
+        winParam[i].winID = winIDs[i];
+        viewer->setWindowEventHandler(winParam[i].winID,
                 CorrespondenceEditor::eventHandler, (void *)this);
-        viewer->setWindowDisplayHandler(win_ids[i],
+        viewer->setWindowDisplayHandler(winParam[i].winID,
                 CorrespondenceEditor::displayHandler, (void *)this);
     }
     selectedPointIndex = 0;
@@ -44,17 +48,18 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
     //printf("CorrespondenceEditor: opening display %s\n", display_name);
     viewer->init(display_name);
     num_images = num_im;
-    win_ids = new int[num_images];
+    winParam = new CorrespondenceWindowParameters[num_images];
     int i;
     for (i = 0; i < num_images; i++){
 	if (!win_names)
         	sprintf(win_name, "data_registration%d", i);
 	else
 		sprintf(win_name, "%s", win_names[i]);
-        win_ids[i] = viewer->createWindow(display_name,0,0,400,400,win_name);
-        viewer->setWindowEventHandler(win_ids[i],
+        winParam[i].winID = 
+             viewer->createWindow(display_name,0,0,400,400,win_name);
+        viewer->setWindowEventHandler(winParam[i].winID,
                 CorrespondenceEditor::eventHandler, (void *)this);
-        viewer->setWindowDisplayHandler(win_ids[i],
+        viewer->setWindowDisplayHandler(winParam[i].winID,
                 CorrespondenceEditor::displayHandler, (void *)this);
     }
     selectedPointIndex = 0;
@@ -104,7 +109,7 @@ int CorrespondenceEditor::eventHandler(
                 me->selectedPointIndex = me->grabbedPointIndex;
                 int i;
                 for (i = 0; i < me->num_images; i++)
-                    me->viewer->dirtyWindow((me->win_ids)[i]);
+                    me->viewer->dirtyWindow((me->winParam)[i].winID);
             }
         }
         break;
@@ -117,7 +122,7 @@ int CorrespondenceEditor::eventHandler(
             me->selectedPointIndex = new_pntIdx;
             int i;
             for (i = 0; i < me->num_images; i++)
-                me->viewer->dirtyWindow((me->win_ids)[i]);
+                me->viewer->dirtyWindow((me->winParam)[i].winID);
             me->notifyCallbacks();
         }
         else if (event.button == IV_LEFT_BUTTON && me->draggingPoint) {
@@ -153,7 +158,7 @@ int CorrespondenceEditor::eventHandler(
             me->selectedPointIndex = me->correspondence->numPoints()-1;
             int i;
             for (i = 0; i < me->num_images; i++)
-                me->viewer->dirtyWindow((me->win_ids)[i]);
+                me->viewer->dirtyWindow((me->winParam)[i].winID);
         }
         break;
       default:
@@ -165,7 +170,7 @@ int CorrespondenceEditor::eventHandler(
 int CorrespondenceEditor::getSpaceIndex(int winID){
     int i;
     for (i = 0; i < num_images; i++){
-        if (win_ids[i] == winID) break;
+        if (winParam[i].winID == winID) break;
     }
     if (i == num_images) return -1;
     else
@@ -180,10 +185,23 @@ int CorrespondenceEditor::displayHandler(
     glClearColor(0.0, 0.0, 0.0,0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // draw the image for this window:
-    me->viewer->drawImage(data.winID);
+    // but first figure out which image is displayed in this window
+    int spaceIndex = me->getSpaceIndex(data.winID);
+
+    glViewport(0,0,data.winWidth, data.winHeight);
+    nmb_TransformMatrix44 W2I;
+    CorrespondenceWindowParameters *params = &(me->winParam[spaceIndex]);
+    if (me->winParam[spaceIndex].im) {
+      me->viewer->drawImage(data.winID, params->im,
+            1.0, 1.0, 1.0, 1.0, 
+            &(params->left), &(params->right),
+            &(params->bottom), &(params->top),
+            &W2I);
+    } 
+
+//    me->viewer->drawImage(data.winID);   
 
     int i;
-    glViewport(0,0,data.winWidth, data.winHeight);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     // set up projection so we can draw on top of image such that
@@ -198,8 +216,6 @@ int CorrespondenceEditor::displayHandler(
 
     char num_str[16];
 
-    // figure out which image is displayed in this window
-    int spaceIndex = me->getSpaceIndex(data.winID);
     int num_pnts = me->correspondence->numPoints();
     for (i = 0; i < num_pnts; i++){
         me->correspondence->getPoint(spaceIndex, i, &image_pnt);
@@ -209,7 +225,8 @@ int CorrespondenceEditor::displayHandler(
         me->drawCrosshair(data.winWidth-image_pnt.x, image_pnt.y);
         sprintf(num_str, "%d", i);
         glColor3f(1.0, 1.0, 1.0);
-        me->viewer->drawString(data.winWidth-image_pnt.x-1, image_pnt.y - 3, num_str);
+        me->viewer->drawString(data.winWidth-image_pnt.x-1, 
+                               image_pnt.y - 3, num_str);
         if (i == me->selectedPointIndex)
             me->drawSelectionBox(data.winWidth-image_pnt.x, image_pnt.y);
     }
@@ -297,7 +314,7 @@ void CorrespondenceEditor::drawSelectionBox(int xp, int yp){
 void CorrespondenceEditor::show() {
     int i;
     for (i = 0; i < num_images; i++){
-        viewer->showWindow(win_ids[i]);
+        viewer->showWindow(winParam[i].winID);
     }
     //printf("CorrespondenceEditor: finished opening windows\n");
 }
@@ -305,7 +322,7 @@ void CorrespondenceEditor::show() {
 void CorrespondenceEditor::hide() {
     int i;
     for (i = 0; i < num_images; i++){
-        viewer->hideWindow(win_ids[i]);
+        viewer->hideWindow(winParam[i].winID);
     }
 }
 
@@ -322,26 +339,44 @@ void CorrespondenceEditor::addFiducial(int spaceIndex,
 }
 
 int CorrespondenceEditor::setImage(int spaceIndex, nmb_Image *im) {
-    int im_w, im_h;
+    int width, height;
     int i,j;
+    int im_w, im_h;
     double val;
+
+    if (winParam[spaceIndex].im) {
+      nmb_Image::deleteImage(winParam[spaceIndex].im);
+    }
+    winParam[spaceIndex].im = new nmb_ImageGrid(im);
+    winParam[spaceIndex].im->normalize();
+
+    width = 300;
+    height = (width*im->height())/(double)(im->width());
 
     im_w = im->width();
     im_h = im->height();
-    viewer->setWindowImageSize(win_ids[spaceIndex], im_w, im_h);
+
+    viewer->setWindowSize(winParam[spaceIndex].winID, width, height);
+/*
+    viewer->setWindowImageSize(winParam[spaceIndex].winID, im_w, im_h);
     // printf("CorrespondenceEditor::setImage: \n");
-    viewer->setValueRange(win_ids[spaceIndex], im->minNonZeroValue(), im->maxValue());
+    viewer->setValueRange(winParam[spaceIndex].winID, 
+                          im->minNonZeroValue(), im->maxValue());
     // printf(" min,max = %f, %f\n", im->minNonZeroValue(), im->maxValue());
+
     for (i = 0; i < im_w; i++){
         for (j = 0; j < im_h; j++){
             val = im->getValue(i,j);
-            viewer->setValue(win_ids[spaceIndex], i, j, val);
+            viewer->setValue(winParam[spaceIndex].winID, i, j, val);
         }
     }
-    viewer->dirtyWindow(win_ids[spaceIndex]);
+*/
+
+    viewer->dirtyWindow(winParam[spaceIndex].winID);
     return 0;
 }
 
+/* ************************************
 int CorrespondenceEditor::setImageFromPlane(int spaceIndex, BCPlane *p) {
     int im_w, im_h;
     int i,j;
@@ -349,12 +384,13 @@ int CorrespondenceEditor::setImageFromPlane(int spaceIndex, BCPlane *p) {
 
     im_w = p->numX();
     im_h = p->numY();
-    viewer->setWindowImageSize(win_ids[spaceIndex], im_w, im_h);
-    viewer->setValueRange(win_ids[spaceIndex], p->minValue(), p->maxValue());
+    viewer->setWindowImageSize(winParam[spaceIndex].winID, im_w, im_h);
+    viewer->setValueRange(winParam[spaceIndex].winID, 
+                          p->minValue(), p->maxValue());
     for (i = 0; i < im_w; i++){
         for (j = 0; j < im_h; j++){
             val = p->value(i,im_h -j -1);	// we need to flip y
-            viewer->setValue(win_ids[spaceIndex], i, j, val);
+            viewer->setValue(winParam[spaceIndex].winID, i, j, val);
         }
     }
     return 0;
@@ -379,12 +415,12 @@ int CorrespondenceEditor::setImageFromPNM(int spaceIndex, PNMImage &im)
                 im_min = im.Pixel(j, i, 0);
         }
     }
-    viewer->setWindowImageSize(win_ids[spaceIndex], im_w, im_h);
-    viewer->setValueRange(win_ids[spaceIndex], im_min, im_max);
+    viewer->setWindowImageSize(winParam[spaceIndex].winID, im_w, im_h);
+    viewer->setValueRange(winParam[spaceIndex].winID, im_min, im_max);
     for (i = 0; i < im_w; i++){
         for (j = 0; j < im_h; j++){
             val = im.Pixel(j, i, 0);
-            viewer->setValue(win_ids[spaceIndex], i, j, val);
+            viewer->setValue(winParam[spaceIndex].winID, i, j, val);
         }
     }
     return 0;
@@ -410,17 +446,18 @@ int CorrespondenceEditor::setImageFromPNM(int spaceIndex, PPM *im)
                 im_min = r;
         }
     }
-    viewer->setWindowImageSize(win_ids[spaceIndex], im_w, im_h);
-    viewer->setValueRange(win_ids[spaceIndex], im_min, im_max);
+    viewer->setWindowImageSize(winParam[spaceIndex].winID, im_w, im_h);
+    viewer->setValueRange(winParam[spaceIndex].winID, im_min, im_max);
     for (i = 0; i < im_w; i++){
         for (j = 0; j < im_h; j++){
             im->Tellppm(i, j, &r, &g, &b);  // flip y
             val = r;
-            viewer->setValue(win_ids[spaceIndex], i, j, val);
+            viewer->setValue(winParam[spaceIndex].winID, i, j, val);
         }
     }
     return 0;
 }
+************************************************ */
 
 void CorrespondenceEditor::mainloop() {
     if (viewer) viewer->mainloop();
@@ -446,8 +483,8 @@ void CorrespondenceEditor::registerCallback(CorrespondenceCallback handler,
     v->init(0);
 
     int window_ids[2];
-    window_ids[0] = v->createWindow(0, 0, 0, 400, 400, "win0");
-    window_ids[1] = v->createWindow(0, 140, 0, 400, 400, "win1");
+    window_ids[0] = v->createWindow(NULL, 0, 0, 400, 400, "win0");
+    window_ids[1] = v->createWindow(NULL, 140, 0, 400, 400, "win1");
 
     v->setWindowImageSize(window_ids[0], 100, 100);
     int i;
