@@ -1,3 +1,7 @@
+2002-07-10  David Marshburn  <marshbur@cs.unc.edu>
+
+	* vi_client.dsp, vi_server.dsp:  release configuration builds
+
 2002-04-30  David Marshburn  <marshbur@cs.unc.edu>
 
 	* GPIBKeithley2400.C:  cleaned up the initialization from
