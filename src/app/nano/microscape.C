@@ -5327,7 +5327,8 @@ void teardownMicroscopeSynchronization( CollaborationManager *cm,
     paramControls->remove(&(m->state.modify.new_fc_sample_delay));
     paramControls->remove(&(m->state.modify.new_fc_pullback_delay));
     paramControls->remove(&(m->state.modify.new_fc_feedback_delay));
-//  paramControls->remove(&(m->state.modify.new_step_size));
+    paramControls->remove(&(m->state.modify.new_step_size));
+	paramControls->remove(&(m->state.modify.step_size));
     paramControls->remove(&(m->state.modify.new_max_z_step));
     paramControls->remove(&(m->state.modify.new_max_xy_step));
     paramControls->remove(&(m->state.modify.new_min_z_setpoint));
@@ -5337,7 +5338,6 @@ void teardownMicroscopeSynchronization( CollaborationManager *cm,
 	paramControls->remove(&(m->state.modify.slow_line_playing));
     paramControls->remove(&(m->state.modify.slow_line_step));
     paramControls->remove(&(m->state.modify.slow_line_direction));
-	paramControls->remove(&(m->state.modify.step_size));
 	paramControls->remove(&(m->state.modify.slow_line_collect_data));
     
 	paramControls->remove(&(m->state.modify.new_blunt_size));
@@ -5734,7 +5734,8 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
   paramControls->add(&(m->state.modify.new_fc_sample_delay));
   paramControls->add(&(m->state.modify.new_fc_pullback_delay));
   paramControls->add(&(m->state.modify.new_fc_feedback_delay));
-//  paramControls->add(&(m->state.modify.new_step_size));
+  paramControls->add(&(m->state.modify.new_step_size));
+  paramControls->add(&(m->state.modify.step_size));
   paramControls->add(&(m->state.modify.new_max_z_step));
   paramControls->add(&(m->state.modify.new_max_xy_step));
   paramControls->add(&(m->state.modify.new_min_z_setpoint));
@@ -5745,7 +5746,6 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
   paramControls->add(&(m->state.modify.slow_line_step));
   paramControls->add(&(m->state.modify.slow_line_direction));
   paramControls->add(&(m->state.modify.slow_line_collect_data));
-  paramControls->add(&(m->state.modify.step_size));
 
   paramControls->add(&(m->state.modify.new_blunt_size));
   paramControls->add(&(m->state.modify.new_blunt_speed));

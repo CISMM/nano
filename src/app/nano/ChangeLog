@@ -1,3 +1,7 @@
+2002-05-22 Jameson Miller <millerj@cs.unc.edu>
+	*microscape.c: added in step_size to microscopesynchonization set up
+		and tear down list.
+
 2002-05-21 David Borland <borland@cs.unc.edu>
 
         * import.C : took out code for locking rotations from here
