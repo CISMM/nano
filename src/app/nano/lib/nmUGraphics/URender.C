@@ -3,6 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <Tcl_Linkvar.h>
+#include <Tcl_Netvar.h>
+
 #ifdef __CYGWIN__
 // XXX juliano 9/19/99
 //       this was implicitly declared.  Needed to add decl.
@@ -71,6 +74,202 @@ URender::~URender(){
 	name=NULL;
 }
 
+int URender::SetVisibilityAll(void* userdata) {
+	int setvisibility = *(int*) userdata;
+
+	this->SetVisibility(setvisibility);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URender::SetProjTextEnableAll(void* userdata) {
+	int enableProjTexture = *(int*) userdata;
+
+	this->SetProjTextEnable(enableProjTexture);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URender::SetLockObjectAll(void* userdata) {
+	bool setlockobject = (*(int*) userdata) != 0;
+
+	this->SetLockObject(setlockobject);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URender::SetLockTextureAll(void* userdata) {
+	int setlocktexture = *(int*) userdata;
+
+	this->SetLockTexture(setlocktexture);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URender::ChangeStaticFile(void* userdata) {
+    // modifies the scale and translation so appears in same place...
+	extern Tclvar_float	import_scale;
+	extern Tclvar_float import_transx;
+	extern Tclvar_float import_transy;
+	extern Tclvar_float import_transz;
+	extern Tclvar_string current_object;
+
+	change_static_file csf = *(change_static_file*) userdata;
+
+	this->GetLocalXform().SetXOffset(csf.xoffset);
+	this->GetLocalXform().SetYOffset(csf.yoffset);
+	this->GetLocalXform().SetZOffset(csf.zoffset);
+
+	this->GetLocalXform().SetScale(this->GetLocalXform().GetScale() * csf.scale);
+
+	// if current object, update the tcl stuff
+	if (strcmp(this->name, current_object.string()) == 0) {
+		import_scale = this->GetLocalXform().GetScale();
+	}
+
+
+	const q_vec_type &q1 = this->GetLocalXform().GetTrans();
+
+	q_vec_type q2, q3;
+
+	q_vec_copy(q2, q1);
+	q_vec_copy(q3, q1);
+
+	q_vec_scale(q2, csf.scale, q2);
+
+	this->GetLocalXform().SetTranslate(q2);
+
+	// if current object, update the tcl stuff
+	if (strcmp(this->name, current_object.string()) == 0) {
+		import_transx = q2[0];
+		import_transy = q2[1];
+		import_transz = q2[2];
+	}
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URender::ChangeHeightPlane(void* userdata) {
+	// modifies the scale and translation so appears in same place...
+
+	double z = *(double*) userdata;
+
+	const q_vec_type &q1 = this->GetLocalXform().GetTrans();
+	q_vec_type q2;
+
+	q_vec_copy(q2, q1);
+
+	this->GetLocalXform().SetZOffset(z);
+
+	this->GetLocalXform().SetTranslate(q2);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+
+int URender::ScaleAll(void* userdata) {
+	double scale = *(double*) userdata;
+
+	this->GetLocalXform().SetScale(scale);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+
+int URender::SetTransxAll(void* userdata) {	
+	double transx = *(double*) userdata;
+	const q_vec_type &trans = this->GetLocalXform().GetTrans();
+	this->GetLocalXform().SetTranslate(transx, trans[1], trans[2]);
+
+	if(recursion) return ITER_CONTINUE;	
+	else return ITER_STOP;
+}
+
+int URender::SetTransyAll(void* userdata) {	
+	double transy = *(double*) userdata;
+	const q_vec_type &trans = this->GetLocalXform().GetTrans();
+	this->GetLocalXform().SetTranslate(trans[0], transy, trans[2]);
+
+	if(recursion) return ITER_CONTINUE;	
+	else return ITER_STOP;
+}
+
+int URender::SetTranszAll(void* userdata) {	
+	double transz = *(double*) userdata;
+	const q_vec_type &trans = this->GetLocalXform().GetTrans();
+	this->GetLocalXform().SetTranslate(trans[0], trans[1], transz);
+
+	if(recursion) return ITER_CONTINUE;	
+	else return ITER_STOP;
+}
+
+int URender::SetRotAll(void* userdata) {
+	double* array = (double*)userdata;
+	double rotx = array[0];
+	double roty = array[1];
+	double rotz = array[2];
+
+	q_vec_type euler;
+
+	euler[2] = rotx;
+	euler[1] = roty;
+	euler[0] = rotz;
+
+	q_type rot;
+	q_from_euler(rot, euler[0], euler[1], euler[2]);
+
+    this->GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
+
+	if(recursion) return ITER_CONTINUE;	
+	else return ITER_STOP;
+}
+
+
+int URender::SetColorAll(void* userdata) {
+	RGB* color = (RGB*) userdata;
+
+	this->SetColor3(color->red, color->green, color->blue);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URender::SetAlphaAll(void* userdata) {
+	float alpha = *(double*) userdata;
+
+	this->SetAlpha(alpha);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URender::SetProjTextureAll(void *userdata) {
+	URProjectiveTexture *texture = (URProjectiveTexture *)userdata;
+
+	this->SetProjTexture(texture);
+
+	if (recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URender::SetTextureTransformAll(void* userdata) {
+	double *xform = (double*) userdata;
+
+	if (!this->GetLockTexture()) {
+		this->SetTextureTransform(xform);
+	}
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
 int URender::Render(void * /*userdata*/ ){
   //base class does nothing
   cerr << "Base class Rendering\n";
@@ -78,109 +277,6 @@ int URender::Render(void * /*userdata*/ ){
   else return ITER_STOP;
 }
 
-int URender::SetVisibilityAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class Changing Visibility\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetProjTextEnableAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class Setting Projective Texture Enable\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetLockObjectAll(void* /*userdata*/) {
-	//base class does nothing
-	cerr << "Base class Setting Lock Object\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetLockTextureAll(void* /*userdata*/) {
-	//base class does nothing
-	cerr << "Base class Setting Lock Texture\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::ScaleAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class Scaling\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetTransxAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class Translating\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetTransyAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class Translating\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetTranszAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class Translating\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetRotAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class SetRotAll\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetColorAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class SetColorAll\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetAlphaAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class SetAlphaAll\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetProjTextureAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class SetProjTextureAll\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetTextureTransformAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class SetTextureTransformAll\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::ChangeStaticFile(void* /*userdata*/) {
-	// base class does nothing
-	cerr << "Base class Changing Static File\n";
-	if(recursion) return  ITER_CONTINUE;
-	else return ITER_STOP;
-}
-int URender::ChangeHeightPlane(void* /*userdata*/) {
-	// base class does nothing
-	cerr << "Base class Changing Static File\n";
-	if(recursion) return  ITER_CONTINUE;
-	else return ITER_STOP;
-}
 int URender::ChangeDataset(void* userdata) {
 	nmb_Dataset *dataset = (nmb_Dataset *)userdata;
 	if (texture) {
@@ -189,6 +285,8 @@ int URender::ChangeDataset(void* userdata) {
 	if(recursion) return  ITER_CONTINUE;
 	else return ITER_STOP;
 }
+
+
 
 void URender::ReloadGeometry() {
         // base class does nothing

@@ -37,7 +37,7 @@ public:
 	int GetAxisStep() { return axis_step; }
 	int GetUpdateAFM() { return update_AFM; }
 
-	// overload the URPolygon versions, as we need to update the cylinders
+	// overload the URender versions, as we need to update the cylinders
 	int ChangeStaticFile(void* userdata=NULL);	
 	int ScaleAll(void* userdate=NULL);			
 	int SetTransxAll(void *userdata=NULL);

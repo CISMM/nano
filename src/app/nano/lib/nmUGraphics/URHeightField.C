@@ -4,6 +4,7 @@
 
 URHeightField::URHeightField():URender()
 {
+  obj_type = URHEIGHTFIELD;
   d_displayListID = 0;
   visible = false;
   d_textureEnabled = false;

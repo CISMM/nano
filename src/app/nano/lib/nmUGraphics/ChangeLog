@@ -1,3 +1,26 @@
+2002-10-02  David Borland <borland@cs.unc.edu>
+
+        * URAxis.[Ch] : removed functions Set*variable*All functions
+        from URAxis.  These are now found in URender, which performs the
+        default action for the functions.
+
+        * URHeightField.C : sets its type to URHEIGHTFIELD in the constructor.
+
+        * URPolygon.[Ch] : same as URAxis
+
+        * URTubeFile.[Ch] : same
+
+        * URender.[Ch] : added default functionality for Set*variable*All
+        functions.
+
+        * UTree.h : removed extrn UTree Textures
+
+        * UTree.C : cosmetic changes
+
+        * nmUGraphics.dsp : removed URTexture.  We aren't using this class,
+        and it doesn't make sense for textures to be objects in the scene
+        graph.
+
 2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* URProjectiveTexture.C (enable): added error message to catch a potential

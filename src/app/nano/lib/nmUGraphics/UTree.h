@@ -99,7 +99,6 @@ class UTree{
 
 //GLOBAL VARIABLES FOR NANO
 extern UTree World;
-extern UTree Textures;
 
 #endif
 

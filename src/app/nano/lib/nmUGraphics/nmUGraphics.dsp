@@ -141,10 +141,6 @@ SOURCE=.\URSpider.C
 # End Source File
 # Begin Source File
 
-SOURCE=.\URTexture.C
-# End Source File
-# Begin Source File
-
 SOURCE=.\URTubeFile.C
 # End Source File
 # Begin Source File
@@ -230,10 +226,6 @@ SOURCE=.\URProjectiveTexture.h
 # Begin Source File
 
 SOURCE=.\URSpider.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\URTexture.h
 # End Source File
 # Begin Source File
 
