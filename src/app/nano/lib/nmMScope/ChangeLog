@@ -1,8 +1,16 @@
+2001-07-09  Shayne O'Neill  <soneill@mindspring.com>
+
+	* nmm_MicroscopeRemote.hdef:  Added a Graphmod variable to
+	                              the nmm_Microscope_Remote class, so that
+				      microscape.c could have access to it.
+	* nmm_MicroscopeRemote.Cdef:  Initialized graphmod in the 
+	                              nmm_Microscope_Remote constructor.
+
 2001-07-06 Jameson Miller <millerj@cs.unc.edu>
 	*optimize_now.c, .h : new functions added to take care of optimize_now
 	mode.
 
-2001-06-25  Shayne O'Neill  <oneill@tbone.cs.unc.edu>
+2001-06-25  Shayne O'Neill  <soneill@mindspring.com>
 
 	* AFMState.h:  Changed some Tclvars to TclNets.
 

@@ -115,7 +115,8 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
     d_redundancy (new vrpn_RedundantTransmission (connection)),
     d_redReceiver (new vrpn_RedundantReceiver (connection)),
     d_monitor (NULL),
-    d_tsList (new nmm_TimestampList ())
+    d_tsList (new nmm_TimestampList ()),
+    graphmod (new GraphMod())
 {
   gettimeofday(&d_nowtime, &d_nowzone);
   d_next_time.tv_sec = 0L;
@@ -131,7 +132,6 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
   d_relax_comp.set_ignore_time_ms(state.stmRxTmin);
   d_relax_comp.set_separation_time_ms(state.stmRxTsep);
 */
-
   if (!d_connection) {
     return;
   }
@@ -199,6 +199,9 @@ nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
     delete d_tsList;
   }
 
+  if (graphmod) {
+    delete graphmod;
+  }
 
 }
 

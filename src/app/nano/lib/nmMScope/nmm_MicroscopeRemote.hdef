@@ -37,6 +37,7 @@ class BCPlane;  // from <BCPlane.h>
 #include "nmm_TimestampList.h"
 
 #include "nmm_GuardedscanClient.h"
+#include <GraphMod.h>
 
 struct nmm_Sample;  // from nmm_Sample.h
 
@@ -389,8 +390,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
       // Queries the current state of the pulse generator.
 
 
-
-
   private:
     // Utility fcn to rotate scan coords.
     long rotateScanCoords (double _x, double _y,
@@ -414,7 +413,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
          vrpn_bool ampl_or_phase, vrpn_int32 drive_attenuation,
          vrpn_float32 phase);
     long EnterContactMode (float p, float i, float d, float set);
-	long EnterGuardedScanMode (float a_fP, float a_fI, float a_fD, float a_fSetpoint, 
+    long EnterGuardedScanMode (float a_fP, float a_fI, float a_fD, float a_fSetpoint, 
 						  float a_fNormalX, float a_fNormalY, float a_fNormalZ,
 						  float a_fPlaneD, float a_fGuardDepth);
     long EnterDirectZControl (float _max_z_step, float _max_xy_step, 
@@ -439,7 +438,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     HANDLERS_DECL;
     RECEIVERS_DECL;
 
-    // Receive callbacks 
+    // Receive callbacks C
     int RcvGotConnection2 (void);
     RECEIVERS_DECL nmm_SPM_Report;
     HANDLERS_DECL ;
@@ -475,7 +474,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     // Has resistance channel been added to point results?
     vrpn_bool d_res_channel_added;
 
-    // replacing things in microscape
+    // replacing things in microscapeC
     timeval d_nowtime;
     struct timezone d_nowzone;
     timeval d_next_time;
@@ -546,6 +545,9 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
   public:
     // Guardedscan interface
     CGuardedScanClient	m_oGuardedScan;
+
+    // GraphMod variable (so that we can have access to the TclNet varaibles)
+    GraphMod * graphmod;   
 };
 
 #endif  // NMM_MICROSCOPE_REMOTE_H
