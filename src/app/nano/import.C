@@ -35,7 +35,8 @@ static  void handle_import_visibility (vrpn_int32, void *);
 static  void handle_import_color_change (vrpn_int32, void *);
 static  void handle_import_alpha (vrpn_float64, void *);
 static  void handle_import_proj_text (vrpn_int32, void *);
-static	void handle_import_clamp (vrpn_int32, void *);
+static	void handle_import_lock_object (vrpn_int32, void *);
+static	void handle_import_lock_texture (vrpn_int32, void *);
 static	void handle_import_CCW (vrpn_int32, void *);
 static	void handle_import_update_AFM (vrpn_int32, void *);
 static	void handle_import_grab_object (vrpn_int32, void *);
@@ -78,7 +79,8 @@ Tclvar_int		import_lock_roty("import_lock_roty",0, handle_import_lock_roty_chang
 Tclvar_int		import_lock_rotz("import_lock_rotz",0, handle_import_lock_rotz_change);
 Tclvar_int      import_visibility("import_visibility", 1, handle_import_visibility);
 Tclvar_int      import_proj_text("import_proj_text", 1, handle_import_proj_text);
-Tclvar_int		import_clamp("import_clamp", 0, handle_import_clamp);
+Tclvar_int		import_lock_object("import_lock_object", 0, handle_import_lock_object);
+Tclvar_int		import_lock_texture("import_lock_texture", 0, handle_import_lock_texture);
 Tclvar_int		import_CCW("import_CCW", 1, handle_import_CCW);
 Tclvar_int		import_update_AFM("import_update_AFM", 0, handle_import_update_AFM);
 Tclvar_int		import_grab_object("import_grab_object", 0, handle_import_grab_object);
@@ -170,7 +172,8 @@ static void handle_current_object(const char*, void*) {
 			import_visibility = obj.GetVisibility();
 
 			import_proj_text = obj.ShowProjText();
-			import_clamp = obj.GetClamp();
+			import_lock_object = obj.GetLockObject();
+			import_lock_texture = obj.GetLockTexture();
 
 			import_CCW = obj.GetCCW();
 
@@ -236,7 +239,8 @@ static void handle_import_file_change (const char *, void *) {
             obj->LoadGeometry(gen);
             obj->SetVisibility(import_visibility);
 			obj->SetProjText(import_proj_text);
-			obj->SetClamp(import_clamp);
+			obj->SetLockObject(import_lock_object);
+			obj->SetLockTexture(import_lock_texture);
 			// only allow update_AFM for .txt files
 			if (strstr(modelFile.string(), ".txt") != 0) {
 				obj->SetUpdateAFM(1);
@@ -343,18 +347,34 @@ static  void handle_import_proj_text (vrpn_int32, void *)
 	}
 }
 
-static  void handle_import_clamp (vrpn_int32, void *)
+static  void handle_import_lock_object (vrpn_int32, void *)
 {
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
-		int i = import_clamp;
-		World.Do(&URender::SetClampAll, &i);
+		int i = import_lock_object;
+		World.Do(&URender::SetLockObjectAll, &i);
 	}
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 			URender &obj = node->TGetContents();
-			obj.SetClamp(import_clamp);
+			obj.SetLockObject(import_lock_object);
+		}
+	}
+}
+
+static  void handle_import_lock_texture (vrpn_int32, void *)
+{
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		int i = import_lock_texture;
+		World.Do(&URender::SetLockTextureAll, &i);
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetLockTexture(import_lock_texture);
 		}
 	}
 }
