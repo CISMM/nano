@@ -271,10 +271,10 @@ int	main(unsigned argc, char *argv[])
 void handle_quit_button(vrpn_int32, void *){
 	if ((*tcl_quit_button_pressed) != 1) return;
 	fprintf(stderr, "Shutting down and saving log file\n");
-	if (connection)
-		delete connection; // needed to make stream file write out
 	if (keithley2400_ui)
 		delete keithley2400_ui;
+	if (connection)
+		delete connection; // needed to make stream file write out
 	exit(0);
 }
 

@@ -38,6 +38,7 @@ nma_Keithley2400::nma_Keithley2400(const char *name, vrpn_Connection *c) :
 	d_sweep_stop((float)1.0),
 	d_sweep_numpoints(21),
 	d_sweep_delay((float)0.01),
+	d_wire_type(2),
 
 	result_change_list(NULL),
 	error_change_list(NULL)
@@ -61,6 +62,10 @@ nma_Keithley2400::nma_Keithley2400(const char *name, vrpn_Connection *c) :
   d_connection->register_handler(d_Shutdown_type,
 				handle_Shutdown,
 				this);
+}
+
+nma_Keithley2400::~nma_Keithley2400() {
+  send_OutputOff();
 }
 
 int nma_Keithley2400::mainloop (const struct timeval * timeout ) {
@@ -103,10 +108,14 @@ int nma_Keithley2400::send_AllSettings() {
 	    printf("send_DataFormat() failed\n");
 	    return -1;
 	}
-	if (send_OutputOn()) {
-	    printf("send_OutputOn() failed\n");
+	if (send_WireType()) {
+	    printf("send_WireType() failed\n");
 	    return -1;
 	}
+ 	if (send_OutputOn()) {
+ 	    printf("send_OutputOn() failed\n");
+ 	    return -1;
+ 	}
 	return 0;
 }
 

@@ -27,7 +27,7 @@ public:
     nma_Keithley2400(const char *name, vrpn_Connection *c = NULL);
     virtual int mainloop(const struct timeval * timeout = NULL); 
         // Handle getting any reports
-    virtual ~nma_Keithley2400() {};
+    virtual ~nma_Keithley2400();
 
     // Registers functions to call when we receive data or errors.
 	int register_result_handler(void *userdata,
