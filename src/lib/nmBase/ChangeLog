@@ -1,3 +1,11 @@
+2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmb_Device.C : Uses new VRPN_CALLBACK definition.
+	* nmb_Device.h : Uses new VRPN_CALLBACK definition.
+	* nmb_DeviceSequencer.h : Uses new VRPN_CALLBACK definition.
+	* nmb_SharedDevice.C : Uses new VRPN_CALLBACK definition.
+	* nmb_SharedDevice.h : Uses new VRPN_CALLBACK definition.
+
 2004-06-11  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nmBase.dsp : Removed include of 16-bit version of ImageMagick,

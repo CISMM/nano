@@ -297,7 +297,7 @@ long nmb_Device_Client::requestSynchronization(
   return dispatchMessage(len, msgbuf, d_RequestSynchronization_type);
 }
 
-long nmb_Device_Client::registerSynchHandler (int (* handler) (void *,
+long nmb_Device_Client::registerSynchHandler (int (VRPN_CALLBACK * handler) (void *,
                                         const nmb_SynchMessage *),
                                   void *userdata)
 {
@@ -319,7 +319,7 @@ long nmb_Device_Client::registerSynchHandler (int (* handler) (void *,
   return 0;
 }
 
-long nmb_Device_Client::unregisterSynchHandler (int (* handler) (void *,
+long nmb_Device_Client::unregisterSynchHandler (int (VRPN_CALLBACK * handler) (void *,
                                         const nmb_SynchMessage *),
                                   void *userdata)
 {

@@ -113,10 +113,10 @@ class nmb_Device {
     // TCH network adaptations Nov 2000
     vrpn_RedundantTransmission * d_redundancy;
 
-    static int handle_GotFirstConnection(void *ud, vrpn_HANDLERPARAM p);
-    static int handle_GotConnection(void *ud, vrpn_HANDLERPARAM p);
-    static int handle_DroppedConnection(void *ud, vrpn_HANDLERPARAM p);
-    static int handle_DroppedLastConnection(void *ud, vrpn_HANDLERPARAM p);
+    static int VRPN_CALLBACK handle_GotFirstConnection(void *ud, vrpn_HANDLERPARAM p);
+    static int VRPN_CALLBACK handle_GotConnection(void *ud, vrpn_HANDLERPARAM p);
+    static int VRPN_CALLBACK handle_DroppedConnection(void *ud, vrpn_HANDLERPARAM p);
+    static int VRPN_CALLBACK handle_DroppedLastConnection(void *ud, vrpn_HANDLERPARAM p);
 
     virtual long dispatchMessageNoBuffer (long len, const char * buf, 
                                           vrpn_int32 type);
@@ -153,19 +153,19 @@ class nmb_Device_Client : public nmb_Device {
                                 vrpn_int32 synch_id,
                                 const char *comment);
 
-    long registerSynchHandler (int (* handler) (void *,
+    long registerSynchHandler (int (VRPN_CALLBACK * handler) (void *,
                                         const nmb_SynchMessage *),
                                   void *userdata);
-    long unregisterSynchHandler (int (* handler) (void *,
+    long unregisterSynchHandler (int (VRPN_CALLBACK * handler) (void *,
                                         const nmb_SynchMessage *),
                                   void *userdata);
 
   protected:
-    static int handle_Synchronization(void *ud, vrpn_HANDLERPARAM p);
+    static int VRPN_CALLBACK handle_Synchronization(void *ud, vrpn_HANDLERPARAM p);
 
     // callback structures
     struct synchHandlerEntry {
-      int (* handler) (void *, const nmb_SynchMessage *);
+      int (VRPN_CALLBACK * handler) (void *, const nmb_SynchMessage *);
       void *userdata;
       synchHandlerEntry * next;
     };
@@ -182,7 +182,7 @@ class nmb_Device_Server : public nmb_Device {
 
   protected:
     // callback to echo synch request messages
-    static int handle_RequestSynchronization(void *ud,
+    static int VRPN_CALLBACK handle_RequestSynchronization(void *ud,
                                                     vrpn_HANDLERPARAM p);
 };
 

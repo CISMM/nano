@@ -176,7 +176,7 @@ void nmb_SharedDevice_Remote::markTypeAsSafe (vrpn_int32 type) {
 
 void nmb_SharedDevice_Remote::registerGotMutexCallback
             (void * userdata,
-             void (* f) (void *, nmb_SharedDevice_Remote *)) {
+             void (VRPN_CALLBACK * f) (void *, nmb_SharedDevice_Remote *)) {
   sharedDeviceCallback * cb;
 
   cb = new sharedDeviceCallback;
@@ -195,7 +195,7 @@ void nmb_SharedDevice_Remote::registerGotMutexCallback
 
 void nmb_SharedDevice_Remote::unregisterGotMutexCallback
 	 (void * userdata,
-          void (* f) (void *, nmb_SharedDevice_Remote *))
+          void (VRPN_CALLBACK * f) (void *, nmb_SharedDevice_Remote *))
 {
   sharedDeviceCallback * victim, ** snitch;
 
@@ -222,7 +222,7 @@ void nmb_SharedDevice_Remote::unregisterGotMutexCallback
 // static
 void nmb_SharedDevice_Remote::registerDeniedMutexCallback
             (void * userdata,
-             void (* f) (void *, nmb_SharedDevice_Remote *)) {
+             void (VRPN_CALLBACK * f) (void *, nmb_SharedDevice_Remote *)) {
   sharedDeviceCallback * cb;
 
   cb = new sharedDeviceCallback;
@@ -241,7 +241,7 @@ void nmb_SharedDevice_Remote::registerDeniedMutexCallback
 
 void nmb_SharedDevice_Remote::unregisterDeniedMutexCallback
          (void * userdata,
-          void (* f) (void *, nmb_SharedDevice_Remote *))
+          void (VRPN_CALLBACK * f) (void *, nmb_SharedDevice_Remote *))
 {
   sharedDeviceCallback * victim, ** snitch;
 
@@ -269,7 +269,7 @@ void nmb_SharedDevice_Remote::unregisterDeniedMutexCallback
 // static
 void nmb_SharedDevice_Remote::registerMutexTakenCallback
             (void * userdata,
-             void (* f) (void *, nmb_SharedDevice_Remote *)) {
+             void (VRPN_CALLBACK * f) (void *, nmb_SharedDevice_Remote *)) {
   sharedDeviceCallback * cb;
 
   cb = new sharedDeviceCallback;
@@ -288,7 +288,7 @@ void nmb_SharedDevice_Remote::registerMutexTakenCallback
 
 void nmb_SharedDevice_Remote::unregisterMutexTakenCallback
          (void * userdata,
-          void (* f) (void *, nmb_SharedDevice_Remote *))
+          void (VRPN_CALLBACK * f) (void *, nmb_SharedDevice_Remote *))
 {
   sharedDeviceCallback * victim, ** snitch;
 
@@ -315,7 +315,7 @@ void nmb_SharedDevice_Remote::unregisterMutexTakenCallback
 // static
 void nmb_SharedDevice_Remote::registerMutexReleasedCallback
             (void * userdata,
-             void (* f) (void *, nmb_SharedDevice_Remote *)) {
+             void (VRPN_CALLBACK * f) (void *, nmb_SharedDevice_Remote *)) {
   sharedDeviceCallback * cb;
 
   cb = new sharedDeviceCallback;
@@ -334,7 +334,7 @@ void nmb_SharedDevice_Remote::registerMutexReleasedCallback
 
 void nmb_SharedDevice_Remote::unregisterMutexReleasedCallback
          (void * userdata,
-          void (* f) (void *, nmb_SharedDevice_Remote *))
+          void (VRPN_CALLBACK * f) (void *, nmb_SharedDevice_Remote *))
 {
   sharedDeviceCallback * victim, ** snitch;
 

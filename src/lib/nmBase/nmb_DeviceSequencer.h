@@ -157,8 +157,8 @@ class nmb_DeviceSequencer {
     void resetDataCounters(int deviceIndex);
     void doIterationCallbacks();
 
-    static int dataMessageHandler(void *ud, vrpn_HANDLERPARAM p);
-    static int deviceSynchHandler(void *ud, const nmb_SynchMessage *sm);
+    static int VRPN_CALLBACK dataMessageHandler(void *ud, vrpn_HANDLERPARAM p);
+    static int VRPN_CALLBACK deviceSynchHandler(void *ud, const nmb_SynchMessage *sm);
 
     struct iterationHandlerEntry {
         int (* handler) (void *);
