@@ -1,3 +1,12 @@
+2000-10-05  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmui_HapticSurface.C (nmui_HSFeelAhead) : add new data member
+        d_sampleAlgorithm
+        (nmui_HSFeelAhead constructor) : initialize d_sampleAlgorithm
+        (nmui_HSFeelAhead::update) : send d_sampleAlgorithm to microscope
+	(nmui_HSFeelAhead::updateModel) : get dimensions of grid safely
+        from AFMDataset::receivedAlgorithm
+
 2000-10-03  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmui_HapticSurface.C (nmui_HSFeelAhead::updateModel) : change

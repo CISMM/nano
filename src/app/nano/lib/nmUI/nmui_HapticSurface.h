@@ -11,6 +11,7 @@ class nmb_Decoration;  // from <nmb_Decoration.h>
 
 class Microscope;  // from <Microscope.h>
 class nmm_Microscope_Remote;  // from <nmm_MicroscopeRemote.h>
+#include <nmm_Sample.h>
 
 class nmui_HapticSurface {
 
@@ -224,6 +225,7 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
     nmm_Microscope_Remote * d_microscope;
 #endif
 
+    nmm_Sample d_sampleAlgorithm;
 
 };
 

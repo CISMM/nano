@@ -18,6 +18,7 @@
 #else
 #include <nmm_MicroscopeRemote.h>
 #endif
+#include <nmm_Sample.h>
 
 #include "microscape.h"  // for directz_force_scale
 
@@ -467,6 +468,12 @@ nmui_HSFeelAhead::nmui_HSFeelAhead (void) :
     d_device (NULL),
     d_microscope (NULL) {
 
+  // Set up default sampling algorithm
+  d_sampleAlgorithm.numx = 5;
+  d_sampleAlgorithm.numy = 5;
+  d_sampleAlgorithm.dx = 5.0;
+  d_sampleAlgorithm.dy = 5.0;
+  d_sampleAlgorithm.orientation = 0.0;
 }
 
 // virtual
@@ -497,6 +504,11 @@ double nmui_HSFeelAhead::distanceFromSurface (void) const {
 void nmui_HSFeelAhead::update (nmm_Microscope_Remote * m) {
 
   d_microscope = m;
+
+  // TODO:  update sample for current network conditions &
+  // current scan size
+
+  m->SetSampleMode(&d_sampleAlgorithm);
 }
 
 /** @function nmui_HSFeelAhead::sendForceUpdate
@@ -516,7 +528,7 @@ void nmui_HSFeelAhead::sendForceUpdate (vrpn_ForceDevice_Remote * d) {
 void nmui_HSFeelAhead::updateModel (void) {
   Point_list * l;
   const Point_results * p;
-  vrpn_int32 side, start;
+  vrpn_int32 xside, yside, start;
   vrpn_int32 i, j, k;
 
   if (!d_microscope || !d_device) {
@@ -540,9 +552,13 @@ void nmui_HSFeelAhead::updateModel (void) {
     d_device->setVertex(i, p->x(), p->y(), p->z());
   }
 
-  // Assume those vertices are in a square.  Find out the side length.
+  // Find out the dimensions of the grid sent.  Note that x and y are
+  // arbitrary axes, not necessarily aligned with x and y in world space
+  // or any other space.
 
-  side = sqrt(l->numEntries());
+  //side = sqrt(l->numEntries());
+  xside = d_microscope->state.data.receivedAlgorithm.numx;
+  yside = d_microscope->state.data.receivedAlgorithm.numy;
 
   // Triangulate.
   // 0 - 1 - 2 - 3 - 4
@@ -550,13 +566,19 @@ void nmui_HSFeelAhead::updateModel (void) {
   // 5 - 6 - 7 - 8 - 9
   // ...
 
+  // border conditions
+  if ((xside <= 1) || (yside <= 1)) {
+    fprintf(stderr, "nmui_HSFeelAhead::updateModel:  grid too small.\n");
+    return;
+  }
+
   k = 0;
-  for (i = 0; i < side - 1; i++) {
-    start = i * side;
-    for (j = 0; j < side - 1; j++) {
-      d_device->setTriangle(k++, start + j, start + j + 1, start + j + side);
-      d_device->setTriangle(k++, start + j + 1, start + j + side + 1,
-                            start + j + side);
+  for (i = 0; i < xside - 1; i++) {
+    start = i * xside;
+    for (j = 0; j < yside - 1; j++) {
+      d_device->setTriangle(k++, start + j, start + j + 1, start + j + xside);
+      d_device->setTriangle(k++, start + j + 1, start + j + xside + 1,
+                            start + j + xside);
     }
   }
 
