@@ -99,15 +99,9 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
 				   int cols, int rows, 
 				   int /*bpp*/, unsigned char * pixels)
 {
-    ExceptionInfo
-        exception;
-    
-    Image
-        *image,
-        *flip_image;
-
-    ImageInfo
-      *image_info;
+    ExceptionInfo exception;
+    Image *image, *flip_image;
+    ImageInfo *image_info;
 
     //Initialize the image with provided data. 
     GetExceptionInfo(&exception);
@@ -124,7 +118,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     DestroyImage(image);
     if (!flip_image) {
         fprintf(stderr, 
-            "writeFileMagick: Memory error, can't create image.\n");
+            "writeFileMagick: Memory error, can't create flipped image.\n");
         return -1;
     }
     image_info=CloneImageInfo((ImageInfo *) NULL);
@@ -141,7 +135,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     }
 
     if(!WriteImage(image_info, flip_image)) {
-		fprintf(stderr, "%s: %s\n", flip_image->exception.reason, flip_image->exception.description);
+	fprintf(stderr, "nmb_ImgMagick::writeFileMagick Can't write image because %s: %s\n", flip_image->exception.reason, flip_image->exception.description);
         return -1;
     }
     DestroyImageInfo(image_info);
@@ -152,19 +146,15 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
 int nmb_ImgMagick::writeFileMagick(const char * filename, 
                     const char * mgk_filetype, BCPlane * plane)
 {
-    ExceptionInfo
-        exception;
-    
-    Image
-          *image;
-
-    ImageInfo
-        *image_info;
+    ExceptionInfo exception;
+    Image *image;
+    ImageInfo *image_info;
 
     int w = plane->numX(), h =plane->numY();
     unsigned char * pixels = new unsigned char[3*w*h];
 
     if (!pixels) {
+        fprintf(stderr, "writeFileMagick: Out of memory.\n");
         return -1;
     }
     double scale = 254.0 / (plane->maxNonZeroValue() - 
@@ -219,7 +209,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     image_info->compression=NoCompression;
 
     if(!WriteImage(image_info, image)) {
-		fprintf(stderr, "%s: %s\n", image->exception.reason, image->exception.description);
+	fprintf(stderr, "nmb_ImgMagick::writeFileMagick Can't write image because %s: %s\n", image->exception.reason, image->exception.description);
         return -1;
     }
     DestroyImageInfo(image_info);
@@ -230,19 +220,15 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
 int nmb_ImgMagick::writeFileMagick(const char * filename,
                     const char * mgk_filetype, nmb_Image *data)
 {
-    ExceptionInfo
-        exception;
-
-    Image
-          *image;
-
-    ImageInfo
-        *image_info;
+    ExceptionInfo exception;
+    Image *image;
+    ImageInfo *image_info;
 
     int w = data->width(), h = data->height();
     unsigned char * pixels = new unsigned char[3*w*h];
 
     if (!pixels) {
+        fprintf(stderr, "writeFileMagick: Out of memory.\n");
         return -1;
     }
     double scale = 254.0 / (data->maxNonZeroValue() -
@@ -297,6 +283,7 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     image_info->compression=NoCompression;
 
     if(!WriteImage(image_info, image)) {
+	fprintf(stderr, "nmb_ImgMagick::writeFileMagick Can't write image because %s: %s\n", image->exception.reason, image->exception.description);
         return -1;
     }
     DestroyImageInfo(image_info);

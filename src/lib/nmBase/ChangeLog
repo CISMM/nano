@@ -1,3 +1,8 @@
+2004-10-01  Russell M. Taylor II  <taylorr@cs.unc.edu>
+
+	* nmb_ImgMagick.C : White-space removal.  Adding more (and more
+		descriptive) error messages.
+
 2004-09-16  Russell M. Taylor II  <taylorr@cs.unc.edu>
 
 	* nmb_Device.C : Uses new VRPN_CALLBACK definition.
