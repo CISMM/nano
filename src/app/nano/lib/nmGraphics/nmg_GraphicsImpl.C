@@ -2216,19 +2216,22 @@ void nmg_Graphics_Implementation::updateTexture(int which_texture,
 
 void nmg_Graphics_Implementation::setTextureTransform(double *xform){
     int i;
+/*
     printf("got TextureTransform\n");
     printf("was: ");
     for (i = 0; i < 16; i++)
         printf("%g ", g_texture_transform[i]);
     printf("\n");
+*/
 
     for (i = 0; i < 16; i++)
 	g_texture_transform[i] = xform[i];
-
+/*
     printf("new: ");
     for (i = 0; i < 16; i++)
         printf("%g ", g_texture_transform[i]);
     printf("\n");
+*/
 }
 
 
