@@ -1298,6 +1298,7 @@ struct MicroscapeInitializationState {
   char colormap [256];
   char heightplane [256];
 
+  int initTime;
   vrpn_bool index_mode;
 
   // TCH Dissertation May 2001
@@ -1365,6 +1366,8 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   colormap[0] = '\0';
   heightplane[0] = '\0';
   magellanName[0]= '\0';
+ 
+  initTime = 0;
 }
 
 /*********
@@ -5787,7 +5790,7 @@ void ParseArgs (int argc, char ** argv,
 			}
 			else{
 				//arg is a number, set stream time to jump to
-				set_stream_time = time_to_jump;
+				istate->initTime = time_to_jump;
 			}
 		}
 		}
@@ -7792,6 +7795,9 @@ microscope->ResetClock();
 			istate.afm.inputStreamName );
     }
 
+  if(istate.initTime !=0){
+    set_stream_time=istate.initTime;
+  }
 
 /* 
  * main interactive loop
