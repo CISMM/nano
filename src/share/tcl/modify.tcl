@@ -781,6 +781,9 @@ proc pack_quick {} {
 	7   {   # Optimize Now tool
 	        $nmInfo(modifystate).mod_tool configure -text "Tool: Optimize Now"
 	    }
+	8   {   #direct_Step tool
+	        $nmInfo(modifystate).mod_tool configure -text "Tool: Direct Step"
+	}
     }
 
     if { !$thirdtech_ui } {
