@@ -974,7 +974,6 @@ _______________________________********************/
  * speed up over calling causeGridRedraw. 
  */
 void nmg_Graphics_Implementation::causeGridReColor (void) {
-  state->just_color = 1;
     state->surface->recolorSurface();
   // Don't cause geometry to be re-calculated !!
   //causeGridRedraw();
@@ -1008,8 +1007,6 @@ void nmg_Graphics_Implementation::causeGridRedraw (void) {
  * called ReallocateGrid. 
  */
 void nmg_Graphics_Implementation::causeGridRebuild (void) {
-  state->just_color = 0;
-
   // Even though we may not be using the vertex array extension, we still
   // use the vertex array to cache calculated normals
   if (state->surface->init(d_dataset->inputGrid->numX(),
