@@ -58,6 +58,7 @@ static	int	read_int(FILE *infile, int *i)
 }
 
 PPM::PPM (const char *filename)
+  : valid(0), nx(0), ny(0), pixels(0)
 {
     FILE *infile = fopen(filename, "rb");
     if (!infile) {
@@ -65,13 +66,19 @@ PPM::PPM (const char *filename)
 	valid = 0;
 	return;
     }
-    PPM((FILE *)infile);
+    constructor_worker (infile);
 }
 
 /**	This routine will read a ppm file from the file whose descriptor
  * is passed to it into an internal structure. */
 
 PPM::PPM (FILE * infile)
+  : valid(0), nx(0), ny(0), pixels(0)
+{
+    constructor_worker (infile);
+}
+
+void PPM::constructor_worker (FILE * infile)
 {
 	char		magic[10];
 	int		maxc;		/* Maximum color value */

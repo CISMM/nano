@@ -24,6 +24,7 @@ class	PPM {
     protected:
 
     private:
+	void	constructor_worker(FILE * infile);
 	int	read_P6_body(FILE *infile);
 	int	read_P3_body(FILE *infile, int maxc);
 	int	read_P5_body(FILE *infile);
