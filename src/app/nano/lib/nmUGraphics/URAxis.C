@@ -48,7 +48,13 @@ int URAxis::SetProjTextAll(void* /*userdata*/) {
 	else return ITER_STOP;
 }
 
-int URAxis::SetClampAll(void* /*userdata*/) {
+int URAxis::SetLockObjectAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URAxis::SetLockTextureAll(void* /*userdata*/) {
 	// do nothing
 	if(recursion) return  ITER_CONTINUE;
 	else return ITER_STOP;

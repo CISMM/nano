@@ -51,10 +51,19 @@ int URPolygon::SetProjTextAll(void* userdata) {
 	else return ITER_STOP;
 }
 
-int URPolygon::SetClampAll(void* userdata) {
-	int setclamp = *(int*) userdata;
+int URPolygon::SetLockObjectAll(void* userdata) {
+	int setlockobject = *(int*) userdata;
 
-	this->SetClamp(setclamp);
+	this->SetLockObject(setlockobject);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URPolygon::SetLockTextureAll(void* userdata) {
+	int setlocktexture = *(int*) userdata;
+
+	this->SetLockTexture(setlocktexture);
 
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
@@ -311,6 +320,8 @@ int URPolygon::Render(void * userdata){
 
 	}
 */
+	Xform object_xform;
+
 	if(visible){		//if visible draw things
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
@@ -327,17 +338,36 @@ int URPolygon::Render(void * userdata){
 
 				glPushMatrix();
 
-				if (!this->GetClamp()) {
-					// don't clamp texture to object
-					this->GetLocalXform().Push_As_OGL();
+				if (!this->GetLockObject()) {
+					// don't lock object to projective texture
 
 					// save the current Xform
-					this->GetSavedXform() = this->GetLocalXform();
+					this->GetSavedObjectXform() = this->GetLocalXform();
+
+					// set up the xform to give to GL
+					object_xform = this->GetLocalXform();
 				}
 				else {
-					// clamp texture to object
-					this->GetSavedXform().Push_As_OGL();
+					// lock object to projective texture
+
+					// load the saved object transform
+					object_xform = this->GetSavedObjectXform();
 				}
+
+				if (!this->GetLockTexture()) {
+					// don't lock projective texture to object
+
+					// save the current Xform
+					glGetDoublev(GL_TEXTURE_MATRIX, this->GetSavedTextureMatrix());
+				}
+				else {
+					// lock projective texture to object
+
+					// load the saved texture transform
+					glLoadMatrixd(saved_texture_xform);
+				}
+				// give GL the transform for the object
+				object_xform.Push_As_OGL();
 			}
 			else {
 				glDisable(GL_TEXTURE_2D);

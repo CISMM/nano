@@ -77,7 +77,8 @@ protected:
 	int CCW;			// true if load as counter clockwise, false if load as clockwise
 	int tess;			// controls the number of faces along the nano-tube
 	int axis_step;		// controls the number of nano-tube sections 
-	int clamp;			// controls whether or not to clamp projected textures
+	int lock_object;	// controls whether or not to lock the object to the projective texture
+	int lock_texture;	// controls whether or not to lock the projective texture to the object
 	int update_AFM;		// controls whether position, orientation, and scale are sent to the
 						// AFM simulator, when a connection is present
 	int grab_object;	// when true, translations and rotations from using the mouse in the
@@ -133,9 +134,11 @@ protected:
 	//xform made public for access
 	Xform lxform;
 
-	//saved xform for clamping projective textures
-	Xform saved_xform;
+	//saved xform for locking the object to the projective texture
+	Xform saved_object_xform;
 
+	//saved matrix for locking the projective texture to the object
+	qogl_matrix_type saved_texture_xform;
 	
 public:
 
@@ -152,7 +155,8 @@ public:
 	void SetCCW(int b) { CCW = b; }
 	void SetTess(int t) { tess = t; }
 	void SetAxisStep(int s) { axis_step = s; }
-	void SetClamp(int c) { clamp = c; }
+	void SetLockObject(int l) { lock_object = l; }
+	void SetLockTexture(int l) { lock_texture = l; }
 	void SetUpdateAFM(int u) { update_AFM = u; }
 	void SetGrabObject(int g) { grab_object = g; }
 	void SetLockTransx(int l) { lock_transx = l; }
@@ -178,7 +182,8 @@ public:
 	int GetCCW() { return CCW; }
 	int GetTess() { return tess; }
 	int GetAxisStep() { return axis_step; }
-	int GetClamp() { return clamp; }
+	int GetLockObject() { return lock_object; }
+	int GetLockTexture() { return lock_texture; }
 	int GetUpdateAFM() { return update_AFM; }
 	int GetGrabObject() { return grab_object; }
 	int GetLockTransx() { return lock_transx; }
@@ -216,7 +221,8 @@ public:
 	//info functions
 	URender_Type GetType(){return obj_type;}
 	Xform &GetLocalXform(){return lxform;}
-	Xform &GetSavedXform(){return saved_xform;}
+	Xform &GetSavedObjectXform(){return saved_object_xform;}
+	qogl_matrix_type &GetSavedTextureMatrix(){return saved_texture_xform;}
 	double maxX(){ return bounds.xmax;}
 	double maxY(){ return bounds.ymax;}
 	double maxZ(){ return bounds.zmax;}
@@ -235,7 +241,8 @@ public:
 	// appropriate value -- called from tcl callbacks
 	virtual int SetVisibilityAll(void *userdata=NULL);
 	virtual int SetProjTextAll(void *userdata=NULL);
-	virtual int SetClampAll(void *userdata=NULL);
+	virtual int SetLockObjectAll(void *userdata=NULL);
+	virtual int SetLockTextureAll(void *userdata=NULL);
 	virtual int ScaleAll(void *userdata=NULL);
 	virtual int SetTransxAll(void *userdata=NULL);
 	virtual int SetTransyAll(void *userdata=NULL);

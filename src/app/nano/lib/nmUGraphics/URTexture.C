@@ -255,7 +255,13 @@ int URTexture::SetProjTextAll(void* /*userdata*/) {
 	else return ITER_STOP;
 }
 
-int URTexture::SetClampAll(void* /*userdata*/) {
+int URTexture::SetLockObjectAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URTexture::SetLockTextureAll(void* /*userdata*/) {
 	// do nothing
 	if(recursion) return  ITER_CONTINUE;
 	else return ITER_STOP;

@@ -96,9 +96,16 @@ int URender::SetProjTextAll(void * /*userdata*/) {
 	else return ITER_STOP;
 }
 
-int URender::SetClampAll(void * /*userdata*/) {	
+int URender::SetLockObjectAll(void* /*userdata*/) {
 	//base class does nothing
-	cerr << "Base class Setting Clamp\n";
+	cerr << "Base class Setting Lock Object\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+int URender::SetLockTextureAll(void* /*userdata*/) {
+	//base class does nothing
+	cerr << "Base class Setting Lock Texture\n";
 	if(recursion) return ITER_CONTINUE; 
 	else return ITER_STOP;
 }

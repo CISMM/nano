@@ -1,3 +1,22 @@
+2002-05-24  David Borland <borland@cs.unc.edu>
+
+        * URender.h : code for allowing the current projective texture's 
+	transform to be locked for an object.
+
+	* URender.C : same
+
+	* URTexture.h : same
+
+	* URTexture.C : same
+	
+	* URPolygon.h : same
+
+	* URPolygon.C : same
+
+	* URAxis.h : same
+
+	* URAxis.C : same
+
 2002-05-23  David Borland <borland@cs.unc.edu>
 
         * URPolygon.C : fixed code for displaying projective textures at an

@@ -63,7 +63,8 @@ public:
 
 	int SetVisibilityAll(void *userdata=NULL);
 	int SetProjTextAll(void *userdata=NULL);
-	int SetClampAll(void *userdata=NULL);
+	int SetLockObjectAll(void *userdata=NULL);
+	int SetLockTextureAll(void *userdata=NULL);
 	int ScaleAll(void *userdata=NULL);
 	int SetTransxAll(void *userdata=NULL);
 	int SetTransyAll(void *userdata=NULL);
