@@ -1,3 +1,8 @@
+2004-03-04  Russell Taylor  <taylorr@cs.unc.edu>
+
+	* nmm_Microscope_SEM.h : Whitespace changes.
+	* nmm_Microscope_SEM_Remote.h : Same.
+
 2003-04-11  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_EDAX.h : calibrated EDAX scan region to match Hitachi

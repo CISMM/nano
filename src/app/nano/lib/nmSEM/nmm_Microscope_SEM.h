@@ -38,7 +38,7 @@ class nmm_Microscope_SEM {
                 REPORT_PIXEL_INTEGRATION_TIME,
                 REPORT_INTERPIXEL_DELAY_TIME,
                 WINDOW_LINE_DATA,
-				SCANLINE_DATA,
+		SCANLINE_DATA,
                 POINT_DWELL_TIME,
                 BEAM_BLANK_ENABLE,
                 MAX_SCAN_SPAN,
@@ -58,10 +58,10 @@ class nmm_Microscope_SEM {
                 BEAM_CURRENT,
                 BEAM_WIDTH,
                 REPORT_EXPOSURE_STATUS,
-				REPORT_TIMING_STATUS,
-				POINT_REPORT_ENABLE,
-				DOT_SPACING,
-				LINE_SPACING
+		REPORT_TIMING_STATUS,
+		POINT_REPORT_ENABLE,
+		DOT_SPACING,
+		LINE_SPACING
                 } msg_t;
   protected:
 //    vrpn_Connection * d_connection;
