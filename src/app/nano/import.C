@@ -54,6 +54,9 @@ static	void handle_spider_thick_change(vrpn_float64, void*);
 static	void handle_spider_tess_change(vrpn_int32, void*);
 static	void handle_spider_beg_curve_change(vrpn_float64, void*);
 static  void handle_spider_end_curve_change(vrpn_float64, void*);
+static  void handle_spider_trans_leg_xy_change(vrpn_int32, void*);
+static  void handle_spider_trans_leg_change(vrpn_float64, void*);
+static  void handle_spider_rot_leg_change(vrpn_float64, void*);
 static	void handle_spider_legs_change(vrpn_int32, void*);
 static	void handle_spider_filename_change(const char*, void*);
 
@@ -113,6 +116,9 @@ Tclvar_float    spider_thick("spider_thick", 0.1, handle_spider_thick_change);
 Tclvar_int		spider_tess("spider_tess", 10, handle_spider_tess_change);
 Tclvar_float    spider_beg_curve("spider_beg_curve", 0, handle_spider_beg_curve_change);
 Tclvar_float    spider_end_curve("spider_end_curve", 0, handle_spider_end_curve_change);
+Tclvar_int      spider_trans_leg_xy("spider_trans_leg_xy", 1, handle_spider_trans_leg_xy_change);
+Tclvar_float    spider_trans_leg("spider_trans_leg", 0, handle_spider_trans_leg_change);
+Tclvar_float    spider_rot_leg("spider_rot_leg", 0, handle_spider_rot_leg_change);
 Tclvar_int		spider_legs("spider_legs", 8, handle_spider_legs_change);
 Tclvar_string	spider_filename("spider_filename", "", handle_spider_filename_change);
 
@@ -249,6 +255,13 @@ static void handle_current_object(const char*, void*) {
 					spider_tess = spi->GetSpiderTess(current_leg);
 					spider_beg_curve = Q_RAD_TO_DEG(spi->GetSpiderBegCurve(current_leg));
                     spider_end_curve = Q_RAD_TO_DEG(spi->GetSpiderEndCurve(current_leg));
+                    if (spider_trans_leg_xy == 1) {
+                        spider_trans_leg = spi->GetSpiderLegX(current_leg);
+                    }
+                    else {
+                        spider_trans_leg = spi->GetSpiderLegY(current_leg);
+                    }
+                    spider_rot_leg = spi->GetSpiderLegRot(current_leg);
 				}
 			}
 		}
@@ -304,6 +317,9 @@ static void handle_import_file_change (const char *, void *) {
 					spi->SetSpiderTess(i, spider_tess);
 					spi->SetSpiderBegCurve(i, Q_DEG_TO_RAD(spider_beg_curve));
                     spi->SetSpiderEndCurve(i, Q_DEG_TO_RAD(spider_end_curve));
+                    spi->SetSpiderLegX(i, spider_trans_leg);
+                    spi->SetSpiderLegY(i, spider_trans_leg);
+                    spi->SetSpiderLegRot(i, spider_rot_leg);
 				}
 				spi->SetSpiderLegs(spider_legs);
 			}
@@ -1073,6 +1089,55 @@ static  void handle_spider_end_curve_change (vrpn_float64, void *)
 		}
 		else {
 			obj.SetSpiderEndCurve(current_leg, Q_DEG_TO_RAD(spider_end_curve));
+		}
+		obj.ReloadGeometry();
+	}
+}
+
+static  void handle_spider_trans_leg_xy_change (vrpn_int32, void*)
+{
+    if (strcmp(*World.current_object, "spider.spi") == 0) {
+		UTree *node = World.TGetNodeByName("spider.spi");
+		URSpider &obj = (URSpider&)node->TGetContents();
+		
+		if (current_leg != -1) {
+            if (spider_trans_leg_xy == 1) {
+                spider_trans_leg = obj.GetSpiderLegX(current_leg);
+            }
+            else {
+                spider_trans_leg = obj.GetSpiderLegY(current_leg);
+            }
+		}
+		obj.ReloadGeometry();
+	}
+}
+
+static  void handle_spider_trans_leg_change (vrpn_float64, void*)
+{
+    if (strcmp(*World.current_object, "spider.spi") == 0) {
+		UTree *node = World.TGetNodeByName("spider.spi");
+		URSpider &obj = (URSpider&)node->TGetContents();
+		
+		if (current_leg != -1) {
+            if (spider_trans_leg_xy == 1) {
+			    obj.SetSpiderLegX(current_leg, spider_trans_leg);
+            }
+            else {
+                obj.SetSpiderLegY(current_leg, spider_trans_leg);
+            }
+		}
+		obj.ReloadGeometry();
+	}
+}
+
+static  void handle_spider_rot_leg_change (vrpn_float64, void*)
+{
+    if (strcmp(*World.current_object, "spider.spi") == 0) {
+		UTree *node = World.TGetNodeByName("spider.spi");
+		URSpider &obj = (URSpider&)node->TGetContents();
+		
+		if (current_leg != -1) {
+			    obj.SetSpiderLegRot(current_leg, spider_rot_leg);
 		}
 		obj.ReloadGeometry();
 	}
