@@ -1,5 +1,10 @@
 2002-06-04 David Borland <borland@cs.unc.edu>
 
+        * nmg_SurfaceRegion.C : got phantom control of projective textures
+	working correctly.
+
+2002-06-04 David Borland <borland@cs.unc.edu>
+
         * nmg_GraphicsImpl.C : removed a warning related to the new
         MODEL_REGISTRATION_COORD mode
 

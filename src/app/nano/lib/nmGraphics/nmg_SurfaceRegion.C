@@ -271,7 +271,6 @@ setTexture(nmg_State * state, nmb_Dataset *data)
         GLdouble texture_matrix[16];
         double x_scale_factor = 1.0, y_scale_factor = 1.0;
         double x_translate = 0.0, y_translate = 0.0;
-		double temp;
 
         switch (d_currentState.textureTransformMode) {
         case nmg_Graphics::RULERGRID_COORD:
@@ -449,17 +448,40 @@ setTexture(nmg_State * state, nmb_Dataset *data)
             }
 
 			// undo the scaling that fits to the surface
-			temp = x_scale_factor / y_scale_factor;
-			x_scale_factor *= temp;
+			x_scale_factor *= x_scale_factor / y_scale_factor;
 
-			glTranslated(x_translate, y_translate, 0.0);
-			glScaled(x_scale_factor, y_scale_factor, 1.0);
+			UTree *node;
+			node = World.TGetNodeByName("projtextobj.ptx");
+			if (node != NULL) {
+				URender &obj = node->TGetContents();
 
-			glMultMatrixd(state->texture_transform);
-		
-            break;
-            //case nmg_Graphics::REMOTE_COORD;
-            //glLoadIdentity();
+				// here, we use the associated object's transform.  However, we must invert everything
+				// for the texture's transform...
+				
+				q_vec_type v;
+				q_type q;
+				qogl_matrix_type mat;
+
+				q_vec_copy(v, obj.GetLocalXform().GetTrans());
+
+				q_vec_scale(v, -1.0, v);
+
+				q_copy(q, obj.GetLocalXform().GetRot());
+				q_invert(q, q);
+
+				glTranslated(state->tex_coord_center_x, state->tex_coord_center_y, 0.0);
+
+				glScaled(state->texture_transform[0], state->texture_transform[0], state->texture_transform[0]);
+				glScaled(x_scale_factor, y_scale_factor, 1.0);
+				
+				q_to_ogl_matrix(mat, q);
+				glMultMatrixd(mat);
+				
+				glTranslated(v[0], v[1], v[2]);
+				glTranslated(x_translate, y_translate, 0.0);
+			}
+
+			break;
 
         default:
             fprintf(stderr, "Error, unknown texture coordinate mode\n");
