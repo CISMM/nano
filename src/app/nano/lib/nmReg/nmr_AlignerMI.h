@@ -18,8 +18,9 @@ class nmr_AlignerMI {
 //    void optimizeVarianceParameters();
     void optimizeTransform();
     void takeGradientSteps(int resolutionIndex, int numSteps, float stepSize);
-    void patternSearch(int resolutionIndex, 
-                       int numPatternMoves, float stepSize);
+    void multiResPatternSearch(int maxIterations, float translationStepSize);
+    int patternSearch(int resolutionIndex, 
+                       int numPatternMoves, float stepSize, float minStepSize);
 
     // transform is assumed to be in pixel units
     void setTransform(nmb_Transform_TScShR &xform);

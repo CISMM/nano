@@ -299,10 +299,62 @@ void nmr_AlignerMI::getTransform(nmb_Transform_TScShR &xform)
   xform = d_transform;
 }
 
-void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
-                                  float translationStepSize)
+/* multiResPatternSearch:
+   maintain an array of flags that indicates at which levels we are
+   stuck in a local minimum; before calling the patternSearch() routine
+   at any one level, make sure that we are stuck at all coarser levels 
+*/
+void nmr_AlignerMI::multiResPatternSearch(
+         int maxIterations, float translationStepSize)
 {
+  int i;
+  int numLevels = d_objective->numLevels();
+  vrpn_bool *patternSearchMinimumReached = new vrpn_bool[numLevels];
+  float *std_dev = new float[numLevels];
+  d_objective->getBlurStdDev(std_dev);
+  vrpn_bool exhaustedAllLevels = vrpn_FALSE;
+  int currLevel = 0; //getLevelByScaleOrder(currLevel);
 
+  for (i = 0; i < numLevels; i++) {
+    patternSearchMinimumReached[i] = vrpn_FALSE;
+  }
+  
+  while (!exhaustedAllLevels) {
+    //currLevel = 0; starting over like this can get us into infinite loops
+    while (currLevel < numLevels &&
+           patternSearchMinimumReached[currLevel]) {
+      currLevel++;
+    }
+    if (currLevel == numLevels) {
+      exhaustedAllLevels = vrpn_TRUE;
+    } else {
+      int levelIndex = d_objective->getLevelByScaleOrder(currLevel);
+      int numIterations = patternSearch(
+                          levelIndex,
+                          maxIterations, translationStepSize,
+                          0.1*translationStepSize);
+      printf("performed %d iterations at scale %g\n",
+             numIterations, std_dev[levelIndex]);
+      if (numIterations == 0) {
+        patternSearchMinimumReached[currLevel] = vrpn_TRUE;
+      } else {
+        for (i = 0; i < numLevels; i++) {
+          patternSearchMinimumReached[i] = vrpn_FALSE;
+        }
+        if (numIterations < maxIterations) {
+           patternSearchMinimumReached[currLevel] = vrpn_TRUE;
+        }
+      }
+    }
+  }
+  delete [] patternSearchMinimumReached;
+  delete [] std_dev;
+}
+
+int nmr_AlignerMI::patternSearch(int resolutionIndex, int maxIterations,
+                                  float translationStepSize,
+                                  float minTranslationStepSize)
+{
   double imageSizeFactor = 0.5*(d_testWidth + d_testHeight);
   double translationStep = translationStepSize;
   // we set the other rates to be approximately commensurate with
@@ -314,6 +366,7 @@ void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
   double rotationStep = translationStep/imageSizeFactor;
   double scalingStep = translationStep/imageSizeFactor;
   double shearingStep = translationStep/imageSizeFactor;
+  double stepReductionFactor = 0.5;
 
   const int numParameters = 6;
   nmb_TransformParameter parameterTypes[numParameters] = 
@@ -335,7 +388,11 @@ void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
   int i, j, k;
   double paramVal;
   testTransform = d_transform;
-  for (i = 0; i < numPatternMoves; i++) {
+ 
+  int numIterations = 0; 
+
+  while (numIterations < maxIterations && 
+         translationStep > minTranslationStepSize) {
     for (j = 0; j < numParameters; j++) {
       paramVal = testTransform.getParameter(parameterTypes[j]);
       paramVal += stepSize[j];
@@ -377,35 +434,39 @@ void nmr_AlignerMI::patternSearch(int resolutionIndex, int numPatternMoves,
     if (zeroExploreVector) {
       printf("zero explore vector found, reducing step size\n");
       for (j = 0; j < numParameters; j++) {
-        stepSize[j] *= 0.25;
-      }
-    }
-
-    // pattern move
-    for (j = 0; j < numParameters; j++) {
-      paramVal = testTransform.getParameter(parameterTypes[j]);
-      paramVal += patternVector[j]*stepSize[j];
-      testTransform.setParameter(parameterTypes[j], paramVal);
-    }
-    testTransform.getMatrix(xform_matrix);
-    testObjective = d_objective->value(resolutionIndex, xform_matrix);
-    if (testObjective > maxObjective) {
-      printf("pattern move succeeded\n");
-      maxObjective = testObjective;
-      d_transform = testTransform;
-    } else {
-      printf("pattern move failed, resetting to 0\n");
-      for (j = 0; j < numParameters; j++) {
+        stepSize[j] *= stepReductionFactor;
         patternVector[j] = 0.0;
       }
+      translationStep *= stepReductionFactor;
+    } else {
+      // pattern move
+      for (j = 0; j < numParameters; j++) {
+        paramVal = testTransform.getParameter(parameterTypes[j]);
+        paramVal += patternVector[j]*stepSize[j];
+        testTransform.setParameter(parameterTypes[j], paramVal);
+      }
+      testTransform.getMatrix(xform_matrix);
+      testObjective = d_objective->value(resolutionIndex, xform_matrix);
+      if (testObjective > maxObjective) {
+        printf("pattern move succeeded\n");
+        maxObjective = testObjective;
+        d_transform = testTransform;
+      } else {
+        printf("pattern move failed, resetting to 0\n");
+        for (j = 0; j < numParameters; j++) {
+          patternVector[j] = 0.0;
+        }
+      }
+      printf("patternVector: (");
+      for (j = 0; j < numParameters; j++) {
+        printf("%g,", patternVector[j]);
+      }
+      printf(")\n");
+      numIterations++;
     }
-    printf("patternVector: (");
-    for (j = 0; j < numParameters; j++) {
-      printf("%g,", patternVector[j]);
-    }
-    printf(")\n");
-
   }
+
+  return numIterations;
 }
 
 void nmr_AlignerMI::plotObjective(FILE *outf)

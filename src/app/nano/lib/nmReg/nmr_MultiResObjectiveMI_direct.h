@@ -14,6 +14,7 @@ class nmr_MultiResObjectiveMI_direct {
 
     int numLevels() {return d_numResolutionLevels;}
     void getBlurStdDev(float *stddev);
+    int getLevelByScaleOrder(int order);
 
     /* **************
     functions that affect the number and meaning of parameters of the
@@ -64,6 +65,7 @@ class nmr_MultiResObjectiveMI_direct {
   protected:
     int d_numResolutionLevels;
     float *d_stddev;
+    int *d_sortOrder; // gives the order of the scales from largest to smallest
     nmr_ObjectiveMI_direct *d_objectiveMI;
     static int s_defaultNumResolutionLevels;
     static float s_defaultStdDev[];

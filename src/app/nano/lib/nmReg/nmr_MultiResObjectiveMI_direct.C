@@ -17,23 +17,58 @@ nmr_MultiResObjectiveMI_direct::nmr_MultiResObjectiveMI_direct()
 {
   d_numResolutionLevels = s_defaultNumResolutionLevels;
   d_stddev = new float[d_numResolutionLevels];
+  d_sortOrder = new int[d_numResolutionLevels];
   d_objectiveMI = new nmr_ObjectiveMI_direct[d_numResolutionLevels];
   int i;
   for (i = 0; i < d_numResolutionLevels; i++) {
     d_stddev[i] = s_defaultStdDev[i];
     d_objectiveMI[i].setDimensionMode(REF_2D);
+    d_sortOrder[i] = i;
+  }
+  // do a little selection sort:
+  int j;
+  int maxIndex = 0;
+  int temp;
+  for (i = 0; i < d_numResolutionLevels; i++) {
+    maxIndex = i;
+    for (j = i; j < d_numResolutionLevels; j++) {
+      if (d_stddev[d_sortOrder[j]] > d_stddev[d_sortOrder[maxIndex]]) {
+        maxIndex = j;
+      }
+    }
+    temp = d_sortOrder[i];
+    d_sortOrder[i] = d_sortOrder[maxIndex];
+    d_sortOrder[maxIndex] = temp;
   }
 }
 
-nmr_MultiResObjectiveMI_direct::nmr_MultiResObjectiveMI_direct(int numLevels, float *stddev):
+nmr_MultiResObjectiveMI_direct::nmr_MultiResObjectiveMI_direct(int numLevels, 
+  float *stddev):
   d_numResolutionLevels(numLevels)
 {
   d_stddev = new float[d_numResolutionLevels];
+  d_sortOrder = new int[d_numResolutionLevels];
   d_objectiveMI = new nmr_ObjectiveMI_direct[d_numResolutionLevels];
   int i;
   for (i = 0; i < d_numResolutionLevels; i++) {
     d_stddev[i] = stddev[i];
     d_objectiveMI[i].setDimensionMode(REF_2D);
+    d_sortOrder[i] = i;
+  }
+  // do a little selection sort:
+  int j;
+  int maxIndex = 0;
+  int temp;
+  for (i = 0; i < d_numResolutionLevels; i++) {
+    maxIndex = i;
+    for (j = i; j < d_numResolutionLevels; j++) {
+      if (d_stddev[d_sortOrder[j]] > d_stddev[d_sortOrder[maxIndex]]) {
+        maxIndex = j;
+      }
+    }
+    temp = d_sortOrder[i];
+    d_sortOrder[i] = d_sortOrder[maxIndex];
+    d_sortOrder[maxIndex] = temp;
   }
 }
 
@@ -49,6 +84,11 @@ void nmr_MultiResObjectiveMI_direct::getBlurStdDev(float *stddev)
   for (i = 0; i < d_numResolutionLevels; i++) {
     stddev[i] = d_stddev[i];
   }
+}
+
+int nmr_MultiResObjectiveMI_direct::getLevelByScaleOrder(int order) 
+{
+  return d_sortOrder[order];
 }
 
 void nmr_MultiResObjectiveMI_direct::setDimensionMode(nmr_DimensionMode mode)

@@ -58,7 +58,7 @@ nmr_RegistrationUI::nmr_RegistrationUI
 
    d_autoAlignRequested("auto_align_requested", 0),
    d_numIterations("auto_align_num_iterations", 100),
-   d_stepSize("auto_align_step_size", 0.1),
+   d_stepSize("auto_align_step_size", 1.0),
    d_resolutionLevel("auto_align_resolution", "0"),
    d_numResolutionLevels(0),
    d_resolutionLevelList("auto_align_resolution_list"),

@@ -1,3 +1,20 @@
+2001-12-06  Adam Seeger  <seeger@cs.unc.edu>
+
+	* This version has auto-alignment working pretty well on my test
+	images
+	* nmr_AlignerMI.hC (patternSearch): added a parameter to set the
+	minimum step size and made this function return the number of
+	iterations performed
+	(multiResPatternSearch): new function that implements a strategy for
+	searching for the optimal transformation at different image resolutions
+	using the patternSearch() function as a subroutine
+	* nmr_MultiResObjectiveMI_direct.hC (getLevelByScaleOrder): new
+	function that lets you lookup what the scales are in order from 
+	largest to smallest
+	* nmr_RegistrationUI.C : changed default step size in UI from 0.1 to 1.0
+	* nmr_Registration_Impl.C (registerImagesUsingMutualInformation):
+	changed this to use multiResPatternSearch() instead of patternSearch()
+
 2001-12-05  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmr_AlignerMI.Ch : made this use nmr_MultiResObjectiveMI_direct

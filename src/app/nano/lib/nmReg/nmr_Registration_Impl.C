@@ -451,8 +451,7 @@ int nmr_Registration_Impl::registerImagesUsingMutualInformation(
 
 //    d_mutInfoAligner.takeGradientSteps(d_resolutionIndex,
 //                                       d_maxIterations, d_stepSize);
-    d_mutInfoAligner.patternSearch(d_resolutionIndex, 
-                                   d_maxIterations, d_stepSize);
+    d_mutInfoAligner.multiResPatternSearch(d_maxIterations, d_stepSize);
     d_mutInfoAligner.getTransform(xform);
 
     return 0;
