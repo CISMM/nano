@@ -300,6 +300,8 @@ static void handle_center_pressed (vrpn_int32, void *);
 static void handle_mutex_request (vrpn_int32, void *);
 static void handle_mutex_release (vrpn_int32, void *);
 
+static vrpn_bool g_syncPending = VRPN_FALSE;
+
 // Error recovery
 static void openDefaultMicroscope();
 
@@ -2220,6 +2222,7 @@ static int handle_timed_sync_complete (void * userdata) {
 //fprintf(stderr, "++   ... copied.\n");
   }
 
+  g_syncPending = VRPN_FALSE;
   return 0;
 }
 

@@ -213,16 +213,16 @@ char * handle_term_input (ClientData, Tcl_Interp * interp,
 
 	/* Look up the new value of the variable */
 	cvalue = Tcl_GetVar(interp, name1, TCL_GLOBAL_ONLY);
-	if (cvalue == NULL) 
-	{
+
+	if (cvalue == NULL) {
 	  fprintf(stderr,"Warning!  Can't read %s from Tcl\n",name1);
-	}
-	else
+	} else {
+
 	  /* note:  pointer to done flag is usually second argument */
 	  /* but this is handled by setting user_mode[0] to -1  */
-	{
-	  if (command_handler)
+	  if (command_handler) {
 	    (*command_handler)(cvalue, &dataset->done, strlen(cvalue));
+          }
 	}
 
 	return NULL;

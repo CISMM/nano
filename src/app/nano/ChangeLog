@@ -1,3 +1,8 @@
+2000-11-20  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c : add vrpn_bool g_syncPending to reduce problems
+	with rapidly changing between private and shared states
+
 2000-11-20  Kwan Skinner  <skinner@cs.unc.edu>
 
 	* microscape.c (teardownSynchronization) : new function.
@@ -6,7 +11,7 @@
 
 2000-11-5  Tom Hudson  <hudson@cs.unc.edu>
 
-	* mf.h : moved file to attic
+	* mf.h : move file to attic
 	* butt_mode.c : remove #include of mf.h
 	* interaction.c : same
 	* normal.c : same, remove call of #defines (DOCUMENT) from mf.h
