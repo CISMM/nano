@@ -141,8 +141,11 @@ Index_mode::handle_new_datapoint( BCPlane *plane, int x, int y, void *userdata )
 #ifndef _WIN32
   if( !initialized ) return;
 
-  if( x == 0 && y == 0 )
-    Index_mode::snapshot( );
+  if( x == 0 && y == plane->numY() - 1 )
+    {
+      cout << "Index_mode:  point (" << x << ", " << y << ")" << endl;
+      Index_mode::snapshot( );
+    }
 #endif
 }
 
