@@ -6,7 +6,8 @@ Variables you may want set in your shell:
                       the nano source tree (if not the default:
                       /afs/cs.unc.edu/project/stm/src/<login>).
                       That's _one above_ the nano directory.
-                      A must for pc_cygwin!
+                      A must for pc_cygwin! Also, if your ./stm/src/<you>
+                      isn't your login, you need to do this.
                       On pc_*, a good way to do this is to cd to the
                       parent (where nano is checked-out) and set this
                       to `pwd -P`.
