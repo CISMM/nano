@@ -368,7 +368,7 @@ printf("%f\n", height->scaledMaxValue());
 		Pobject->cylinders[i].z2 -= zmid;
 	}
 
-/*
+
 	for (i = 0; i < Pobject->num_cylinders; i++) {
 		printf("x1 = %f\n", Pobject->cylinders[i].x1);
 		printf("y1 = %f\n", Pobject->cylinders[i].y1);
@@ -381,7 +381,7 @@ printf("%f\n", height->scaledMaxValue());
 		printf("azimuth = %f\n", Pobject->cylinders[i].az);
 		printf("altitude = %f\n\n", Pobject->cylinders[i].alt);
 	}
-*/
+
 
 
 

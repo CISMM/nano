@@ -82,6 +82,7 @@ int URPolygon::ChangeStaticFile(void* userdata) {
 		import_scale = this->GetLocalXform().GetScale();
 	}
 
+
 	const q_vec_type &q1 = this->GetLocalXform().GetTrans();
 
 	q_vec_type q2, q3;
@@ -124,7 +125,9 @@ int URPolygon::ChangeHeightPlane(void* userdata) {
 
 	q_vec_copy(q2, q1);
 
+
 	this->GetLocalXform().SetZOffset(z);
+
 
 	this->GetLocalXform().SetTranslate(q2);
 
@@ -213,10 +216,9 @@ int URPolygon::SetRotxAll(void* userdata) {
 	if ((strstr(this->name, ".txt") != 0) && 
 		(SimulatedMicroscope != NULL) &&
 		this->GetUpdateAFM()) {
-		SimulatedMicroscope->encode_and_sendRot(this->GetLocalXform().GetRot()[0],
-												this->GetLocalXform().GetRot()[1],
-												this->GetLocalXform().GetRot()[2],
-												this->GetLocalXform().GetRot()[3]);
+		q_vec_type q;
+		q_to_euler(q,this->GetLocalXform().GetRot());
+		SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
 	}
 
 	if(recursion) return ITER_CONTINUE;	
@@ -232,10 +234,9 @@ int URPolygon::SetRotyAll(void* userdata) {
 	if ((strstr(this->name, ".txt") != 0) && 
 		(SimulatedMicroscope != NULL) &&
 		this->GetUpdateAFM()) {
-		SimulatedMicroscope->encode_and_sendRot(this->GetLocalXform().GetRot()[0],
-												this->GetLocalXform().GetRot()[1],
-												this->GetLocalXform().GetRot()[2],
-												this->GetLocalXform().GetRot()[3]);
+		q_vec_type q;
+		q_to_euler(q,this->GetLocalXform().GetRot());
+		SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
 	}
 
 	if(recursion) return ITER_CONTINUE;	
@@ -251,10 +252,9 @@ int URPolygon::SetRotzAll(void* userdata) {
 	if ((strstr(this->name, ".txt") != 0) && 
 		(SimulatedMicroscope != NULL) &&
 		this->GetUpdateAFM()) {
-		SimulatedMicroscope->encode_and_sendRot(this->GetLocalXform().GetRot()[0],
-												this->GetLocalXform().GetRot()[1],
-												this->GetLocalXform().GetRot()[2],
-												this->GetLocalXform().GetRot()[3]);
+		q_vec_type q;
+		q_to_euler(q,this->GetLocalXform().GetRot());
+		SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
 	}
 
 	if(recursion) return ITER_CONTINUE;	
