@@ -1,3 +1,24 @@
+2002-06-06  David Borland <borland@cs.unc.edu>
+
+        * ProjTextObjGenerator.C : new file for the creation of the object
+	associated with the projective texture when in object coordiate
+	generation mode.  The object is basically a cone with a "sight" on
+	the end, and a center line through the middle.  Manipulating the
+	object with the phantom/imported objects user interface causes the
+	projective texture to be transformed accordingly.  The result is
+	similar to moving a flashlight accross the scene.
+
+	* ProjTextObjGenerator.h : new header file
+
+	* FileGenerator.C : added ProjTextObjGenerator capability
+
+	* SpiderGenerator.C : renamed a couple of functions for compatibility
+	with the above changes
+
+	* TubeFileGenerator.C : same
+
+	* WaveFrontFileGenerator.C : same
+
 2002-05-24  David Borland <borland@cs.unc.edu>
 
         * URender.h : code for allowing the current projective texture's 

@@ -34,7 +34,7 @@ SpiderGenerator::SpiderGenerator(const char *fname) : FileGenerator(fname, "spi"
 }
 
 
-void BuildList(URender *Pobject, GLuint dl);
+void BuildListSpider(URender *Pobject, GLuint dl);
 
 
 int SpiderGenerator::ReLoad(URender *Pobject, GLuint *&Dlist_array) {
@@ -50,7 +50,7 @@ int SpiderGenerator::ReLoad(URender *Pobject, GLuint *&Dlist_array) {
         return 0;
 	}
         
-	BuildList(Pobject, dl);
+	BuildListSpider(Pobject, dl);
 		
 	Dlist_array[0] = dl;
 
@@ -83,7 +83,7 @@ int SpiderGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
         return 0;
 	}
         
-	BuildList(Pobject, dl);
+	BuildListSpider(Pobject, dl);
 		
 	Dlist_array[0] = dl;
 
@@ -98,7 +98,7 @@ int SpiderGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 
 
-void BuildList(URender *Pobject, GLuint dl) {
+void BuildListSpider(URender *Pobject, GLuint dl) {
 	int i, j, k;
 	q_vec_type p[8];	// 8 points per section
 	q_vec_type n;

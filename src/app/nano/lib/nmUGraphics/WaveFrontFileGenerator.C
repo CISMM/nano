@@ -65,7 +65,7 @@ typedef struct {
 
 
 
-void BuildList(URender *Pobject, GLuint dl, 
+void BuildListWaveFrontFile(URender *Pobject, GLuint dl, 
 			   vector<vertex> verts, 
 			   vector<vertex> texts, 
 			   vector<vertex> norms, 
@@ -472,9 +472,9 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	}
 
 	for(i = 0; i < groups.size(); i++){
-		//BuildList actually builds the geometry from
+		//BuildListWaveFrontFile actually builds the geometry from
 		//the data structures previously built
-        BuildList(Pobject, dl + i, verts, texts, norms, faces, &groups[i]);
+        BuildListWaveFrontFile(Pobject, dl + i, verts, texts, norms, faces, &groups[i]);
 		Dlist_array[i] = dl + i;
 	}
 
@@ -492,7 +492,7 @@ int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
   
 
-void BuildList(URender *Pobject, GLuint dl, 
+void BuildListWaveFrontFile(URender *Pobject, GLuint dl, 
 				vector<vertex> verts, 
 				vector<vertex> texts, 
 				vector<vertex> norms,

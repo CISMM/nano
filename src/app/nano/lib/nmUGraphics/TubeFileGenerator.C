@@ -64,7 +64,7 @@ typedef vector<vertex> verts;
 typedef vector<cylinder> cylinders;
 
 
-void BuildList(URender *Pobject, GLuint dl, verts vs, int & count);
+void BuildListTube(URender *Pobject, GLuint dl, verts vs, int & count);
 
 
 
@@ -418,9 +418,9 @@ printf("%f\n", height->scaledMaxValue());
 
 	int count = 0;
 	for (i = 0; i < numtubes; i++){
-		//BuildList actually builds the geometry from
+		//BuildListTube actually builds the geometry from
 		//the data structures previously built
-        BuildList(Pobject, dl + i, t[i], count);
+        BuildListTube(Pobject, dl + i, t[i], count);
 		Dlist_array[i] = dl + i;
 	}
 
@@ -447,7 +447,7 @@ printf("%f\n", height->scaledMaxValue());
 
 
 
-void BuildList(URender *Pobject, GLuint dl, verts vs, int & count) {
+void BuildListTube(URender *Pobject, GLuint dl, verts vs, int & count) {
 	float v1[4];
 	float v2[4];
 	float v3[4];
