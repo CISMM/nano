@@ -2,7 +2,7 @@
 #define POINT_H
 
 #include <stdio.h>
-#include <tcl.h>
+//#include <tcl.h>
 #include <string>
 using namespace std;
 
@@ -144,8 +144,9 @@ class	Point_list
     int addEntry (const Point_results & p);
     void clear (void);
 
-    int writeToAsciiFile (FILE * f);
-    int writeToTclWindow (Tcl_Interp * interpreter);
+    //int writeToAsciiFile (FILE * f);
+    //int writeToTclWindow (Tcl_Interp * interpreter);
+    string * outputToText();
 
   protected:
 

@@ -322,142 +322,105 @@ void Point_list::clear(void)
 }
 
 
-int Point_list::writeToTclWindow(Tcl_Interp *interpreter)
+string * Point_list::outputToText()
 {
-	int	i, numValues;
-	double	last_x, last_y /*, last_z*/;
-	long	first_sec,first_usec;
-	double	s, time;
-	Point_value	*value;
-	int is3D;
+    int	i, numValues;
+    double	last_x, last_y /*, last_z*/;
+    long	first_sec,first_usec;
+    double	s, time;
+    Point_value	*value;
+    int is3D;
+    string * result = new string;
 
-	// Don't do anything if there aren't any points
-	if (_num_entries == 0) {
-		return 0;
-	}
+    // Don't do anything if there aren't any points
+    if (_num_entries == 0) {
+        return 0;
+    }
 
-	// Find out how many values are in the first point.  Used for
-	// comparison later.  Also find the starting location and time
-	// of the first point.
-	numValues = _entries[0]->_num_values;
-	last_x = _entries[0]->x();
-	last_y = _entries[0]->y();
-	//last_z = _entries[0]->z();
-	is3D = _entries[0]->is3D();
-	first_sec = _entries[0]->_sec;
-	first_usec = _entries[0]->_usec;
-	s = 0;	// No distance yet.
+    // Find out how many values are in the first point.  Used for
+    // comparison later.  Also find the starting location and time
+    // of the first point.
+    numValues = _entries[0]->_num_values;
+    last_x = _entries[0]->x();
+    last_y = _entries[0]->y();
+    //last_z = _entries[0]->z();
+    is3D = _entries[0]->is3D();
+    first_sec = _entries[0]->_sec;
+    first_usec = _entries[0]->_usec;
+    s = 0;	// No distance yet.
         
-	static  char    *command1;
-	char    command2[1000];
-	char    str[1000];
+    char    str[1000];
 
-	command1=(char *)".mod.text delete 1.0 end";
+    // Put a tab-separated header line into the window with the names of
+    // the data sets.  Put s, time, x,y, first.
+    if (is3D)
+        sprintf(str, "s(nm)\tT(sec)\tX(nm)\tY(nm)\tZ(nm) ");
+    else
+        sprintf(str, "s(nm)\tTime(sec)\tX(nm)\tY(nm) ");
+    *result += str;
 
-	if (Tcl_Eval(interpreter, command1) != TCL_OK) {
-                fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command1,
-                        interpreter->result);
-                return(-1);
-        }
+    for (value = _entries[0]->_head; value != NULL; value = value->next()) {
+        sprintf(str, "\t%s(%s)",
+                value->name()->c_str(),
+                value->units()->c_str() );
+        *result += str;
 
-	// Put a tab-separated header line into the window with the names of
-	// the data sets.  Put s, time, x,y, first.
-	if (is3D)
-	    sprintf(str, "\"s(nm)\tT(sec)\tX(nm)\tY(nm)\tZ(nm) \"");
-	else
-	    sprintf(str, "\"s(nm)\tTime(sec)\tX(nm)\tY(nm) \"");
-        sprintf(command2,".mod.text insert end %s",str);
-                 
-        if (Tcl_Eval(interpreter, command2) != TCL_OK) {
-                fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command2,
-                        interpreter->result);
-                return(-1);
-        }
-        
-
-       for (value = _entries[0]->_head; value != NULL; value = value->next()) {
-		sprintf(str, "\"\t%s(%s)\"",
-			value->name()->c_str(),
-			value->units()->c_str() );
-	        sprintf(command2,".mod.text insert end %s",str);
-	        if (Tcl_Eval(interpreter, command2) != TCL_OK) {
-                   fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command2,
-                           interpreter->result);
-                   return(-1);
-               }	
-       }
-
-        sprintf(command2,".mod.text insert end \"\n\"");
-	if (Tcl_Eval(interpreter, command2) != TCL_OK) {
-                fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command2,
-                        interpreter->result);
-                return(-1);
-        }
+    }
+    *result += "\n";
    
-	// Write the values to the Tcl window.Each value within each point will
-	// be tab-separated.  Compute s from x and y as difference from start.
-	// Compute time as floating-point difference in seconds from the
-	// time of the first point.  There is one point per line.
-	for (i = 0; i < _num_entries; i++) {
-	  Point_results	*p = _entries[i];
+    // Avoid repeated re-allocations and copying data - try to reserve
+    // enough space to hold the modfile in totality. Each line has
+    // s,time,x,y, optional z, plus data entries. Data entries formatted to
+    // 12 chars plus tab.
+    // S is up to 1000000.00 => 10, plus tab
+    // time 10 minutes, 4 dec places, 600.0000 => 8, plus tab
+    // XYZ less than 100 microns, 90000.00 => 8, plus tab
+    // plus newline, plus 2 characters extra, just in case. 
+    // This totals about 100, and so for 3000 entries, that's 30K
+    // we can afford to allocate up front. 
+    result->reserve(result->capacity() + _num_entries*(
+        11 + 9 + 9 + 9 + (is3D?9:0) + (13*numValues) + 1 + 2));
 
-	  // Verify that each Point has the same number of values.  If not,
-	  // put a warning into the file.
-	  if (p->_num_values != numValues) {
-		sprintf(str,"\"WARNING -- Different number of values!!!\n\"");
-	        sprintf(command2,".mod.text insert end %s",str);
-		if (Tcl_Eval(interpreter, command2) != TCL_OK) {
-                     fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command2,
-                            interpreter->result);
-                    return(-1);
-                }
-	  }	
+    // Write the values to the Tcl window.Each value within each point will
+    // be tab-separated.  Compute s from x and y as difference from start.
+    // Compute time as floating-point difference in seconds from the
+    // time of the first point.  There is one point per line.
+    for (i = 0; i < _num_entries; i++) {
+        Point_results	*p = _entries[i];
+
+        // Verify that each Point has the same number of values.  If not,
+        // put a warning into the file.
+        if (p->_num_values != numValues) {
+            sprintf(str,"WARNING -- Different number of values!!!\n");
+            *result += str;
+        }	
+
+        // Calculate s by accumulating from the start
+        s += sqrt( (p->x() - last_x) * (p->x() - last_x) +
+                   (p->y() - last_y) * (p->y() - last_y) );
+        last_x = p->x();
+        last_y = p->y();
+
+        // Calculate time by difference from the start.  Time is in
+        // seconds, but is stored in a double
+        time = (p->_sec - first_sec) + (p->_usec - first_usec)*0.000001;
+
+        // Put s, time, x,y, then the data sets from the values.
+        if (is3D)
+            sprintf(str,"%.2f\t%.4f\t%.2f\t%.2f\t%.2f", s, time, p->x(), p->y(),
+                    p->z());
+        else
+            sprintf(str,"%.2f\t%.4f\t%.2f\t%.2f", s, time, p->x(), p->y());
+        *result += str;
 	  
+        for (value = p->head(); value != NULL; value = value->next()) {
+            sprintf(str,"\t%12.9g", value->value());
+            *result += str;
+        }
 
-	  // Calculate s by accumulating from the start
-	  s += sqrt( (p->x() - last_x) * (p->x() - last_x) +
-		     (p->y() - last_y) * (p->y() - last_y) );
-	  last_x = p->x();
-	  last_y = p->y();
+        *result += "\n";
+    }
 
-	  // Calculate time by difference from the start.  Time is in
-	  // seconds, but is stored in a double
-	  time = (p->_sec - first_sec) + (p->_usec - first_usec)*0.000001;
-
-	  // Put s, time, x,y, then the data sets from the values.
-	  if (is3D)
-	      sprintf(str,"\"%.2f\t%.4f\t%.2f\t%.2f\t%.2f\"", s, time, p->x(), p->y(),
-							p->z());
-	  else
-	      sprintf(str,"\"%.2f\t%.4f\t%.2f\t%.2f\"", s, time, p->x(), p->y());
-	  sprintf(command2,".mod.text insert end %s",str);
-	  if (Tcl_Eval(interpreter, command2) != TCL_OK) {
-                fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command2,
-                        interpreter->result);
-                return(-1);
-          }	
-	  
-	  for (value = p->head(); value != NULL; value = value->next()) {
-		sprintf(str,"\"\t%12.9g\"", value->value());
-                sprintf(command2,".mod.text insert end %s",str);
-	        if (Tcl_Eval(interpreter, command2) != TCL_OK) {
-                     fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command2,
-                            interpreter->result);
-                return(-1);
-		}	
-          }
-
-		
-	  sprintf(command2,".mod.text insert end \"\n\"");
-	  if (Tcl_Eval(interpreter, command2) != TCL_OK) {
-                     fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command2,
-                            interpreter->result);
-                return(-1);
-          }
-	  
-	}
-
-
-	return 0;
+    return result;
 }
 
