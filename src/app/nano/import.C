@@ -7,6 +7,7 @@
 #include <URTexture.h>
 #include <FileGenerator.h>
 #include <MSIFileGenerator.h>
+#include <string.h>
 
 ///import_object handlers
 static  void handle_import_file_change (const char *, void *);
