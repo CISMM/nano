@@ -1,3 +1,10 @@
+2002-05-27 Jameson Miller <millerj@cs.unc.edu>
+	*interaction.c : new code for detecting and dealing with case when
+	the max set point is exceeded when feeling in directZ. new haptic mode
+	DIRECT_Z_PLANE_MODE is now used when the setpoint has been exceeded.
+	sets up plane force that is used.
+
+
 2002-05-24 David Borland <borland@cs.unc.edu>
 
         * import.C : added code for locking the current projective texture 

@@ -75,6 +75,9 @@
 /***************************
  * Local Defines
  ***************************/
+// maybe should be defined in nmb_Types.h
+
+#define DIRECT_Z_PLANE_MODE 100
 
 // M_PI not defined for VC++, for some reason. 
 #ifndef M_PI
@@ -324,6 +327,9 @@ int doServoConstRes(int, int);
 int doWorldGrab(int, int);
 int add_new_hand(int, int);
 int doPositionScanline(int, int);
+
+//variable for if the plane set for direct Z (when setpoint is exceeded) is valid
+static int directZ_plane_set = 0;
 
 //New stuff by Renee
 //These variables are watched by Tcl sliders in the adhesion and friction
@@ -1144,27 +1150,36 @@ static void handle_phantom_reset (vrpn_int32, void *)
 }
 
 void setupHaptics (int mode) {
-
-  if (config_haptic_plane) {
-    haptic_manager.setSurface(haptic_manager.d_measurePlane);
-    haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
-    return;
-  }
-
-  switch (mode) {
+	
+	if (config_haptic_plane) {
+		haptic_manager.setSurface(haptic_manager.d_measurePlane);
+		haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
+		return;
+	}
+	
+	switch (mode) {
+	
+	case DIRECT_Z_PLANE_MODE:
+		//Direct_Z_PLANE_MODE not enumerated with rest of *_*_MODE's...
+		//but up at top.
+		
+		haptic_manager.setSurface(haptic_manager.d_directZPlane);
+		haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
+		break;
+		
     case USER_PLANE_MODE:
-      haptic_manager.setSurface(haptic_manager.d_canned);
-      haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy
-               (haptic_manager.d_gridFeatures);
-      break;
-
+		haptic_manager.setSurface(haptic_manager.d_canned);
+		haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy
+			(haptic_manager.d_gridFeatures);
+		break;
+		
     case USER_PLANEL_MODE:
-      if (microscope && (microscope->state.image.tool == FEELAHEAD)) {
-        haptic_manager.setSurface(haptic_manager.d_feelAhead);
-        haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
-        // TODO:  invent a surface feature strategy!
-        return;
-      } 
+		if (microscope && (microscope->state.image.tool == FEELAHEAD)) {
+			haptic_manager.setSurface(haptic_manager.d_feelAhead);
+			haptic_manager.surfaceFeatures().setSurfaceFeatureStrategy(NULL);
+			// TODO:  invent a surface feature strategy!
+			return;
+		} 
 
       // fall through...
 
@@ -3246,64 +3261,105 @@ int doFeelLive (int whichUser, int userEvent)
   }
 
   switch ( userEvent ) {	    
-    case PRESS_EVENT:
-      /* Request a reading from the current location,
-       * and wait till tip gets there */
+  case PRESS_EVENT:
+  /* Request a reading from the current location,
+	  * and wait till tip gets there */
       microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
       break;
-    case HOLD_EVENT:
+  case HOLD_EVENT:
       if (microscope->state.modify.tool == FEELAHEAD) {
-        // Feelahead mode IGNORES the commit button;  it never
-        // leaves image mode.
-        adaptor.updateSampleAlgorithm(microscope);
-        microscope->TakeSampleSet(clipPos[0], clipPos[1]);
+		  // Feelahead mode IGNORES the commit button;  it never
+		  // leaves image mode.
+		  adaptor.updateSampleAlgorithm(microscope);
+		  microscope->TakeSampleSet(clipPos[0], clipPos[1]);
       } else if (!tcl_commit_pressed) { 
-        // Commit button is not pressed - we are feeling the surface
-        if (old_commit_pressed) { // We were modifying last time
-      	        // this means we should stop using modification force.
-          microscope->ImageMode();
-	  old_commit_pressed = tcl_commit_pressed;
-	}
-	/* Request a reading from the current location */
-	microscope->TakeFeelStep(clipPos[0], clipPos[1]);
+		  // Commit button is not pressed - we are feeling the surface
+		  if (old_commit_pressed) { // We were modifying last time
+			  // this means we should stop using modification force.
+			  microscope->ImageMode();
+			  old_commit_pressed = tcl_commit_pressed;
+		  }
+		  /* Request a reading from the current location */
+		  microscope->TakeFeelStep(clipPos[0], clipPos[1]);
       } else {
-        // Commit button is pressed - we are modifying the surface
-	if (!old_commit_pressed) { // We weren't commited last time
-		// this means we should start using modification force.
-	  microscope->ModifyMode();
-	  old_commit_pressed = tcl_commit_pressed;
-	}
-
-	/* Request a reading from the current location, 
-	 * using the current modification style */
-        if ( microscope->state.modify.control == DIRECTZ) {
+		  // Commit button is pressed - we are modifying the surface
+		  if (!old_commit_pressed) { // We weren't commited last time
+			  // this means we should start using modification force.
+			  microscope->ModifyMode();
+			  old_commit_pressed = tcl_commit_pressed;
+			  
+			  //just entered modify mode, we want to set a new plane for direct Z
+			  // if we need one.
+			  directZ_plane_set = 0;
+		  }
+	  
+	  /* Request a reading from the current location, 
+	  * using the current modification style */
+	  if ( microscope->state.modify.control == DIRECTZ) {
           if (nmOK) {
-            microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1], 
-					clipPosNM[2]);
+			  microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1], 
+				  clipPosNM[2]);
           }
-	} else {
+	  } else {
           microscope->TakeModStep(clipPos[0], clipPos[1]);
-	}
-      }
-      
-      if (( microscope->state.modify.control == DIRECTZ) &&
-          (tcl_commit_pressed)) {
-	// Stop using the plane to apply force
-	monitor.stopSurface();
-
-	// Start using the forcefield to apply a constant force.
-	// Apply force to the user based on current measured force 
-          specify_directZ_force(whichUser);
-          monitor.startForceField();
-      } else {
-        setupHaptics(USER_PLANEL_MODE);
-	// Apply force to the user based on current sample points
-	if (!microscope->d_relax_comp.is_ignoring_points() ) {
-          touch_surface(whichUser, clipPos);
-          monitor.startSurface();
-        }
-      }
-      break;
+	  }
+  }
+  
+  if (( microscope->state.modify.control == DIRECTZ) &&
+	  (tcl_commit_pressed)) {
+	  
+	  // test to see if we have exceeded the force setpoint.
+	  // if not, than use dirct Z forces. if we have exceeded the setpoint
+	  // than set up and use a plane force.
+	  
+	  double current_force;    //current force on microscope
+	  
+	  // Get the current value of the internal sensor, which tells us 
+	  // the force the tip is experiencing.
+	  Point_value *forcevalue =
+		  microscope->state.data.inputPoint->getValueByName("Internal Sensor");
+	  
+	  if (forcevalue == NULL) {
+		  fprintf(stderr, "Error in specify_directZ_force: "
+			  "could not get force value!\n");
+		  return -1;
+	  }
+	  
+	  current_force = forcevalue->value();
+	  
+	  if (current_force >= microscope->state.modify.max_z_setpoint) {
+		  //set point has been exceeded, introduce plane force
+		  monitor.stopForceField();
+		  setupHaptics(DIRECT_Z_PLANE_MODE);
+		  //has the directZplane been set?
+		  if(!directZ_plane_set) {
+			  haptic_manager.d_directZPlane->set_direct_z_plane(clipPos[0], clipPos[1], clipPos[2]);
+			  directZ_plane_set = 1; //plane has been set
+		  }
+		  touch_surface(whichUser, clipPos);
+		  monitor.startSurface();
+	  } else {
+		  //if we have exceeded the force limit, and now are not exceeding the force limit
+		  // the plane set up is no longer valid
+		  directZ_plane_set = 0;
+		  
+		  // Stop using the plane to apply force
+		  monitor.stopSurface();
+		  
+		  // Start using the forcefield to apply a constant force.
+		  // Apply force to the user based on current measured force 
+		  specify_directZ_force(whichUser);
+		  monitor.startForceField();
+	  }
+  } else {
+	  setupHaptics(USER_PLANEL_MODE);
+	  // Apply force to the user based on current sample points
+	  if (!microscope->d_relax_comp.is_ignoring_points() ) {
+		  touch_surface(whichUser, clipPos);
+		  monitor.startSurface();
+	  }
+  }
+  break;
 	
       /* Go back to scanning upon release */
     case RELEASE_EVENT:	
@@ -3995,7 +4051,7 @@ void initializeInteraction (void) {
   haptic_manager.d_gridFeatures = new nmui_GridFeatures
                                        (haptic_manager.d_canned);
   haptic_manager.d_pointFeatures = new nmui_PointFeatures;
-
+  haptic_manager.d_directZPlane = new nmui_HSDirectZPlane(dataset, decoration);
 }
 
 
