@@ -78,6 +78,12 @@ struct AFMModifyState {
   Tclvar_float amplitude;
   float        amplitude_min,    ///< control range of the "modify force" knob
                amplitude_max;
+  Tclvar_float frequency;
+  Tclvar_int   input_gain;
+  Tclvar_int   ampl_or_phase;
+  Tclvar_int   drive_attenutation;
+  Tclvar_float phase;
+
   Tclvar_float scan_rate_microns;
 
   // parameters for Sweep style
@@ -211,6 +217,11 @@ struct AFMImageState {
   Tclvar_float amplitude;
   float        amplitude_min,   ///< control range of the "image force" knob
                amplitude_max;
+  Tclvar_float frequency;
+  Tclvar_int   input_gain;
+  Tclvar_int   ampl_or_phase;
+  Tclvar_int   drive_attenutation;
+  Tclvar_float phase;
   Tclvar_float scan_rate_microns;
 
 
@@ -272,6 +283,11 @@ struct AFMScanlineState {
   Tclvar_float amplitude;
   float        amplitude_min,   ///< control range of the amplitude knob
                amplitude_max;
+  Tclvar_float frequency;
+  Tclvar_int   input_gain;
+  Tclvar_int   ampl_or_phase;
+  Tclvar_int   drive_attenutation;
+  Tclvar_float phase;
   Tclvar_float scan_rate_microns_per_sec;
   
   Tclvar_float forcelimit;

@@ -386,7 +386,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice,
     long SetRateNM (double rate);
     long MarkModifyMode (void);
     long MarkImageMode (void);
-    long EnterTappingMode (float p, float i, float d, float set, float amp);
+    long EnterOscillatingMode(float p, float i, float d, float set, float amp,
+         vrpn_float32 frequency, vrpn_int32 input_gain,
+         vrpn_bool ampl_or_phase, vrpn_int32 drive_attenuation,
+         vrpn_float32 phase);
     long EnterContactMode (float p, float i, float d, float set);
     long EnterDirectZControl (float _max_z_step, float _max_xy_step, 
 			      float _min_setpoint, float _max_setpoint, 
@@ -411,10 +414,19 @@ class nmm_Microscope_Remote : public nmb_SharedDevice,
 
 
 
-    // Receive callbacks from io
-    // Code is in MicroscopeRcv.C
+    // Receive callbacks 
+    int RcvGotConnection2 ();
     void RcvInTappingMode (const float, const float, const float,
                            const float, const float);
+    void RcvInOscillatingMode (const float _p, 
+                               const float _i,
+                               const float _d, const float _setpoint,
+                               const float _amp,
+                               const float _frequency,
+                               const vrpn_int32 _input_gain, 
+                               const vrpn_bool _ampl_or_phase,
+                               const vrpn_int32 _drive_attenuation, 
+                               const float _phase);
     void RcvInContactMode (const float, const float, const float,
                            const float);
     void RcvInDirectZControl (const float, const float, const float,
@@ -513,6 +525,7 @@ class nmm_Microscope_Remote : public nmb_SharedDevice,
 
     static int handle_GotConnection2 (void *, vrpn_HANDLERPARAM);
     static int handle_InTappingMode (void *, vrpn_HANDLERPARAM);
+    static int handle_InOscillatingMode (void *, vrpn_HANDLERPARAM);
     static int handle_InContactMode (void *, vrpn_HANDLERPARAM);
     static int handle_InDirectZControl (void *, vrpn_HANDLERPARAM);
     static int handle_InSewingStyle (void *, vrpn_HANDLERPARAM);

@@ -98,9 +98,11 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
   d_next_time.tv_usec = 0L;
 
   // Turn on relaxation compensation, with k/t decay model. 
-  if (i.doRelaxComp) {
+  if (state.doRelaxComp) {
       d_relax_comp.enable(nmm_RelaxComp::DECAY);
   }
+  d_relax_comp.set_ignore_time_ms(state.stmRxTmin);
+  d_relax_comp.set_separation_time_ms(state.stmRxTsep);
 
   if (!d_connection) {
     return;
@@ -223,6 +225,9 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
 
   d_connection->register_handler(d_InTappingMode_type,
                                  handle_InTappingMode,
+                                 this);
+  d_connection->register_handler(d_InOscillatingMode_type,
+                                 handle_InOscillatingMode,
                                  this);
   d_connection->register_handler(d_InContactMode_type,
                                  handle_InContactMode,
@@ -571,9 +576,14 @@ long nmm_Microscope_Remote::ModifyMode (void) {
      if (state.modify.control != DIRECTZ) {
 	switch (state.modify.mode) {
 	case TAPPING:
-	   return EnterTappingMode(state.modify.p_gain, state.modify.i_gain,
+	   return EnterOscillatingMode(state.modify.p_gain, state.modify.i_gain,
                                 state.modify.d_gain, state.modify.setpoint,
-                                state.modify.amplitude);
+                                       state.modify.amplitude,
+                                       state.modify.frequency,
+                                       state.modify.input_gain,
+                                       state.modify.ampl_or_phase,
+                                       state.modify.drive_attenutation,
+                                       state.modify.phase);
 	case CONTACT:
 	   return EnterContactMode(state.modify.p_gain, state.modify.i_gain,
                                 state.modify.d_gain, state.modify.setpoint);
@@ -590,7 +600,7 @@ long nmm_Microscope_Remote::ModifyMode (void) {
 
   } else if (state.modify.style == SEWING) {
     if (state.modify.mode == TAPPING) {
-      fprintf(stderr, "Tapping while sewing is an impossible setting.\n");
+      fprintf(stderr, "Oscillating while sewing is an impossible setting.\n");
       return 0;
     } else if (state.modify.control == DIRECTZ){
       fprintf(stderr, "DirectZ while sewing is an impossible setting.\n");
@@ -638,11 +648,16 @@ long nmm_Microscope_Remote::ImageMode (void) {
 
   switch (state.image.mode) {
     case TAPPING:
-      return EnterTappingMode(state.image.p_gain,
+      return EnterOscillatingMode(state.image.p_gain,
                               state.image.i_gain,
                               state.image.d_gain,
                               state.image.setpoint,
-                              state.image.amplitude);
+                                  state.image.amplitude,
+                                  state.image.frequency,
+                                  state.image.input_gain,
+                                  state.image.ampl_or_phase,
+                                  state.image.drive_attenutation,
+                                  state.image.phase);
     case CONTACT:
       return EnterContactMode(state.image.p_gain,
                               state.image.i_gain,
@@ -1054,16 +1069,21 @@ long nmm_Microscope_Remote::MarkImageMode (void) {
   return dispatchMessage(len, msgbuf, d_MarkImage_type);       // Tiger
 }
 
-long nmm_Microscope_Remote::EnterTappingMode
-        (float p, float i, float d, float set, float amp) {
+long nmm_Microscope_Remote::EnterOscillatingMode
+        (float p, float i, float d, float set, float amp,
+         vrpn_float32 frequency, vrpn_int32 input_gain,
+         vrpn_bool ampl_or_phase, vrpn_int32 drive_attenuation,
+         vrpn_float32 phase) {
   char * msgbuf;
   long len;
 
-  msgbuf = encode_EnterTappingMode(&len, p, i, d, set, amp);
+  msgbuf = encode_EnterOscillatingMode(&len, p, i, d, set, amp,
+                                       frequency, input_gain, ampl_or_phase,
+                                       drive_attenuation, phase);
   if (!msgbuf)
     return -1;
 
-  return dispatchMessage(len, msgbuf, d_EnterTappingMode_type);
+  return dispatchMessage(len, msgbuf, d_EnterOscillatingMode_type);
 }
 
 long nmm_Microscope_Remote::EnterContactMode (float p, 
@@ -1275,9 +1295,15 @@ long nmm_Microscope_Remote::SetModForce () {
   if ((state.modify.style != SEWING) && (state.modify.style != FORCECURVE))
     switch (state.modify.mode) {
       case TAPPING:
-	return EnterTappingMode(state.modify.p_gain, state.modify.i_gain,
+	return EnterOscillatingMode(state.modify.p_gain, state.modify.i_gain,
 				state.modify.d_gain, state.modify.setpoint,
-				state.modify.amplitude);
+                                    state.modify.amplitude,
+                                       state.modify.frequency,
+                                       state.modify.input_gain,
+                                       state.modify.ampl_or_phase,
+                                       state.modify.drive_attenutation,
+                                       state.modify.phase);
+
       case CONTACT:
         return EnterContactMode(state.modify.p_gain, state.modify.i_gain,
                                    state.modify.d_gain, state.modify.setpoint);
@@ -1286,7 +1312,7 @@ long nmm_Microscope_Remote::SetModForce () {
     }
   else if (state.modify.style == SEWING) {
     if (state.modify.mode == TAPPING) {
-      fprintf(stderr, "Tapping while sewing is an impossible setting.\n");
+      fprintf(stderr, "Oscillating while sewing is an impossible setting.\n");
       return 0;
     } else
       return EnterSewingStyle(state.modify.setpoint,
@@ -1538,9 +1564,14 @@ long nmm_Microscope_Remote::SetScanlineModeParameters(){
 
   switch(state.scanline.mode) {
     case TAPPING:
-	return EnterTappingMode(state.scanline.p_gain, state.scanline.i_gain,
+	return EnterOscillatingMode(state.scanline.p_gain, state.scanline.i_gain,
 			state.scanline.d_gain, state.scanline.setpoint,
-			state.scanline.amplitude);
+                                       state.scanline.amplitude,
+                                       state.scanline.frequency,
+                                       state.scanline.input_gain,
+                                       state.scanline.ampl_or_phase,
+                                       state.scanline.drive_attenutation,
+                                       state.scanline.phase);
     case CONTACT:
 	return EnterContactMode(state.scanline.p_gain, state.scanline.i_gain,
 			state.scanline.d_gain, state.scanline.setpoint);
@@ -1876,68 +1907,22 @@ long nmm_Microscope_Remote::InitDevice (const vrpn_bool _setRegion,
                             const char * _SPMhost,
                             const long /* _SPMport */,
                             const long /* _UDPport */) {
-  readMode = READ_DEVICE;	// Tiger added to differentiate Live and Replay
+  readMode = READ_DEVICE;	//  to differentiate Live and Replay
 
-  if (!_SPMhost)
-    /*CHECK(io->InitDevice(state.deviceName))*/;
-  if (_SPMhost)
-    /*CHECK(io->InitDevice(_socketType, _SPMhost, _SPMport, _UDPport))*/;
-
-
-  // This is a live scope, so now we put it in the state in which
-  // we want to start.
-
-
-  // Set the delay parameters for when we change things
-  // These are used on the DI code to control keyboard delay
-  //CHECK(SetStdDelay(state.StdDelay));
-  //CHECK(SetStPtDelay(state.StPtDelay));
-
-  // Set the microscope for imaging mode, if we're supposed to.
-  if (_setMode)
-    CHECK(ImageMode());
-
-  // Send off the relaxation parameters (if any)
-  if (d_relax_comp.is_enabled()) {
-      CHECK(SetRelax(state.stmRxTmin, state.stmRxTsep));
-  } else {
-      CHECK(SetRelax(0, 0));
-  }
-
-  // Set the safe speed limit (non-modification)
-  // This no longer does anything. Don't send it. 
-  //CHECK(SetMaxMove(state.MaxSafeMove));
-
-  // Ask it for the scan range in x, y, and z.
-  // When this is read back, Z will be used to set min_z and max_z.
-  CHECK(QueryScanRange());
-
-  // Tell it the size of the region to scan, if we should.
-  // The topometrix scanner will tell us where it is scanning when it
-  // starts up, so we don't have to set one for it.
-  if (_setRegion)
-    CHECK(SetRegionNM(d_dataset->inputGrid->minX(),
-                      d_dataset->inputGrid->minY(),
-                      d_dataset->inputGrid->maxX(),
-                      d_dataset->inputGrid->maxY()));
-
-  // Tell it where to scan.
-  // (Grid size == window size to begin with)
-  // We don't want to SET the grid size, we want to query it. 
-  // AFM should tell us what grid size its using. 
-//    CHECK(SetGridSize(d_dataset->inputGrid->numX(),
-//                      d_dataset->inputGrid->numY()));
-  CHECK(ResumeFullScan());
-
-  // Tell it how many samples to take at each point, at what rate
-  // Removed TCH 5 May 98 - obsolete (only make sense when we're
-  // taking multiple samples at each point)
-  //CHECK(SetStdDevParams(state.modify.std_dev_samples,
-  //                      state.modify.std_dev_frequency));
-  //CHECK(QueryStdDevParams());
-
-  CHECK(SetScanStyle());
-  state.SetDefaultScanlineForRegion(d_dataset);
+  // XXX Bug in VRPN. If we're already connected before we register the
+  // handle_GotConnection handlers, they never get executed. So we'll call
+  // them explicitly, if needed.
+  if (d_connection->connected()) {
+        vrpn_HANDLERPARAM p;
+      handle_GotConnection2(this, p);
+  } 
+  // Register this callback here because it segfaults if I execute the handler
+  // in the constructor, and I need to register at the same place it is
+  // conditionally executed.
+  d_connection->register_handler(d_GotConnection_type,
+                                 handle_GotConnection2,
+                                 this);
+  
   return 0;
 }
 
@@ -1946,8 +1931,7 @@ long nmm_Microscope_Remote::InitDevice (const vrpn_bool _setRegion,
 
 long nmm_Microscope_Remote::InitStream (const char * /* _inputStreamName */) {
 
-  //return io->InitStream(_inputStreamName);
-  readMode = READ_STREAM; 	// Tiger added to differentiate Live and Replay
+  readMode = READ_STREAM; 	// to differentiate Live and Replay
   if (!d_connection->get_File_Connection()) {
      fprintf(stderr,"nmm_Microscope_Remote::InitStream():  "
 		    "could not open input log file %c\n", 0x08);
@@ -1963,8 +1947,7 @@ long nmm_Microscope_Remote::InitStream (const char * /* _inputStreamName */) {
 // Initialization code common to both live and canned data
 
 long nmm_Microscope_Remote::Init (int (* /* f */) (stm_stream *)) {
-  d_relax_comp.set_ignore_time_ms(state.stmRxTmin);
-  d_relax_comp.set_separation_time_ms(state.stmRxTsep);
+
   // used for sweep mode
   state.modify.region_diag =
     sqrt(((d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX()) *
@@ -1972,8 +1955,6 @@ long nmm_Microscope_Remote::Init (int (* /* f */) (stm_stream *)) {
          ((d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY()) *
           (d_dataset->inputGrid->maxY() - d_dataset->inputGrid->minY())));
 
-  if (state.writingStreamFile)
-    /*return io->EnableOutputStream(f)*/;
 
   return 0;
 }
@@ -2050,7 +2031,12 @@ void nmm_Microscope_Remote::GetRasterPosition (const long _x, const long _y) {
 
 
 
-
+//static
+int nmm_Microscope_Remote::handle_GotConnection2 (void * userdata,
+                                      vrpn_HANDLERPARAM ) {
+  nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+  return (ms->RcvGotConnection2());
+}
 
 //static
 int nmm_Microscope_Remote::handle_InTappingMode (void * userdata,
@@ -2060,6 +2046,28 @@ int nmm_Microscope_Remote::handle_InTappingMode (void * userdata,
 
   ms->decode_InTappingMode(&param.buffer, &p, &i, &d, &setpoint, &amplitude);
   ms->RcvInTappingMode(p, i, d, setpoint, amplitude);
+
+  return 0;
+}
+
+//static
+int nmm_Microscope_Remote::handle_InOscillatingMode (void * userdata,
+                                      vrpn_HANDLERPARAM param) {
+  nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+  float p, i, d, setpoint, amplitude;
+  vrpn_float32 frequency; 
+  vrpn_int32 input_gain;
+  vrpn_bool ampl_or_phase; 
+  vrpn_int32 drive_attenuation;
+  vrpn_float32 phase;
+
+  ms->decode_InOscillatingMode(&param.buffer, &p, &i, &d, &setpoint, 
+                               &amplitude, &frequency, 
+                               &input_gain, &ampl_or_phase,
+                               &drive_attenuation, &phase);
+  ms->RcvInOscillatingMode(p, i, d, setpoint, amplitude, frequency, 
+                           input_gain, ampl_or_phase,
+                           drive_attenuation, phase);
 
   return 0;
 }
@@ -2954,13 +2962,57 @@ int nmm_Microscope_Remote::handle_UdpSeqNum (void * userdata,
 
 /////////////////////////////////////////////////////////////////////////
 
+/** 
+    Called when we first get a connection to the AFM. Send all initialization
+    messages needed.  
+*/
+int nmm_Microscope_Remote::RcvGotConnection2() 
+{
 
+    //printf("nmm_Microscope_Remote::RcvGotConnection2()\n");
+  // Send off the relaxation parameters (if any)
+  if (d_relax_comp.is_enabled()) {
+      CHECK(SetRelax(state.stmRxTmin, state.stmRxTsep));
+  } else {
+      CHECK(SetRelax(0, 0));
+  }
 
+  // Ask it for the scan range in x, y, and z.
+  // When this is read back, Z will be used to set min_z and max_z.
+  CHECK(QueryScanRange());
 
+  // Start scanning the surface
+  CHECK(ResumeFullScan());
 
+  // Tell AFM to scan forward and backward, or just forward.
+  CHECK(SetScanStyle());
+
+  // something for the scanline tool.
+  state.SetDefaultScanlineForRegion(d_dataset);
+
+  return 0;
+}
+
+// Obsolete, only occurs in old stream files, because it doesn't
+// include phase information.
 void nmm_Microscope_Remote::RcvInTappingMode (const float _p, const float _i,
                                    const float _d, const float _setpoint,
                                    const float _amp) {
+    // Call newer rcv function, with default values for the parameters 
+    // not covered by this message. 
+    RcvInOscillatingMode ( _p, _i, _d, _setpoint, _amp, 1e5, 1, 0, 1, 0.0);
+}
+
+void nmm_Microscope_Remote::RcvInOscillatingMode (const float _p, 
+                                   const float _i,
+                                   const float _d, const float _setpoint,
+                                   const float _amp,
+                                   const float _frequency,
+                                   const vrpn_int32 _input_gain, 
+                                   const vrpn_bool _ampl_or_phase,
+                                   const vrpn_int32 _drive_attenuation, 
+                                   const float _phase
+) {
   if (state.acquisitionMode == MODIFY) {
     printf("Matching AFM modify parameters (Tapping).\n");
     printf("   S=%g  P=%g, I=%g, D=%g, A=%g\n", _setpoint,_p, _i, _d, _amp);
@@ -2972,6 +3024,11 @@ void nmm_Microscope_Remote::RcvInTappingMode (const float _p, const float _i,
     state.modify.setpoint = _setpoint;
     d_decoration->modSetpoint = _setpoint;
     state.modify.amplitude = _amp;
+    state.modify.frequency = _frequency;
+    state.modify.input_gain = _input_gain;
+    state.modify.ampl_or_phase = _ampl_or_phase;
+    state.modify.drive_attenutation = _drive_attenuation;
+    state.modify.phase = _phase;
   } else if (state.acquisitionMode == IMAGE){
     printf("Matching AFM image parameters (Tapping).\n");
     printf("   S=%g  P=%g, I=%g, D=%g, A=%g\n", _setpoint,_p, _i, _d, _amp);
@@ -2983,6 +3040,11 @@ void nmm_Microscope_Remote::RcvInTappingMode (const float _p, const float _i,
     state.image.setpoint = _setpoint;
     d_decoration->imageSetpoint = _setpoint;
     state.image.amplitude = _amp;
+    state.image.frequency = _frequency;
+    state.image.input_gain = _input_gain;
+    state.image.ampl_or_phase = _ampl_or_phase;
+    state.image.drive_attenutation = _drive_attenuation;
+    state.image.phase = _phase;
   } else if (state.acquisitionMode == SCANLINE){
     printf("Matching AFM scanline parameters (Tapping).\n");
     printf("   S=%g  P=%g, I=%g, D=%g, A=%g\n", _setpoint,_p, _i, _d, _amp);
@@ -2994,6 +3056,11 @@ void nmm_Microscope_Remote::RcvInTappingMode (const float _p, const float _i,
     state.scanline.setpoint = _setpoint;
     d_decoration->scanlineSetpoint = _setpoint;
     state.scanline.amplitude = _amp;
+    state.scanline.frequency = _frequency;
+    state.scanline.input_gain = _input_gain;
+    state.scanline.ampl_or_phase = _ampl_or_phase;
+    state.scanline.drive_attenutation = _drive_attenuation;
+    state.scanline.phase = _phase;
   }
   else {
    fprintf(stderr, "RcvInTappingMode: Error, in unknown mode\n");

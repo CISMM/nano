@@ -521,10 +521,17 @@ class nmm_Microscope {
                                           float, float);
     long decode_EnterTappingMode (const char ** buf, float *, float *,
                                   float *, float *, float *);
-    char * encode_EnterOscillatingMode (long * len, float, float, float,
-                                          float, float, float);
-    long decode_EnterOscillatingMode (const char ** buf, float *, float *,
-                                  float *, float *, float *);
+    char * encode_EnterOscillatingMode (long * len, vrpn_float32, vrpn_float32,
+                                        vrpn_float32, vrpn_float32, 
+                                        vrpn_float32, vrpn_float32, 
+                                        vrpn_int32, vrpn_bool, vrpn_int32,
+                                        vrpn_float32);
+    long decode_EnterOscillatingMode (const char ** buf, vrpn_float32 *, 
+                                      vrpn_float32 *, vrpn_float32 *,
+                                      vrpn_float32 *, vrpn_float32 *, 
+                                      vrpn_float32 *, 
+                                      vrpn_int32 *, vrpn_bool *, vrpn_int32 *,
+                                      vrpn_float32 *);
     char * encode_EnterContactMode (long * len, float, float, float,
                                           float);
     long decode_EnterContactMode (const char ** buf, float *, float *,
@@ -552,10 +559,17 @@ class nmm_Microscope {
 		float, float);
     long decode_InTappingMode (const char ** buf, float *, float *, float *,
                 float *, float *);
-    char * encode_InOscillatingMode (long * len, float, float, float,
-		float, float);
-    long decode_InOscillatingMode (const char ** buf, float *, float *, float *,
-                float *, float *);
+    char * encode_InOscillatingMode (long * len, vrpn_float32, vrpn_float32, 
+                                     vrpn_float32, vrpn_float32, vrpn_float32, 
+                                     vrpn_float32, 
+                                     vrpn_int32, vrpn_bool, vrpn_int32,
+                                     vrpn_float32);
+    long decode_InOscillatingMode (const char ** buf, vrpn_float32 *, 
+                                   vrpn_float32 *, vrpn_float32 *,
+                                   vrpn_float32 *, vrpn_float32 *, 
+                                   vrpn_float32 *, 
+                                   vrpn_int32 *, vrpn_bool *, vrpn_int32 *,
+                                   vrpn_float32 *);
     char * encode_InContactMode (long * len, float, float, float,
 		float);
     long decode_InContactMode (const char ** buf, float *, float *, float *,

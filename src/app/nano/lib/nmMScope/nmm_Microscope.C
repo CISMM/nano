@@ -203,6 +203,8 @@ nmm_Microscope::nmm_Microscope (
 
     d_EnterTappingMode_type = connection->register_message_type
         ("nmm Microscope AFM EnterTappingMode");
+    d_EnterOscillatingMode_type = connection->register_message_type
+        ("nmm Microscope AFM EnterOscillatingMode");
     d_EnterContactMode_type = connection->register_message_type
         ("nmm Microscope AFM EnterContactMode");
     d_EnterDirectZControl_type = connection->register_message_type
@@ -218,6 +220,8 @@ nmm_Microscope::nmm_Microscope (
 
     d_InTappingMode_type = connection->register_message_type
         ("nmm Microscope AFM InTappingMode");
+    d_InOscillatingMode_type = connection->register_message_type
+        ("nmm Microscope AFM InOscillatingMode");
     d_InContactMode_type = connection->register_message_type
         ("nmm Microscope AFM InContactMode");
     d_InDirectZControl_type = connection->register_message_type
@@ -475,12 +479,14 @@ char * nmm_Microscope::d_inputMessageName [] = {
          "nmm Microscope Clark FakeSendTimestamp",
          "nmm Microscope Clark UdpSeqNum",
          "nmm Microscope AFM EnterTappingMode",
+         "nmm Microscope AFM EnterOscillatingMode",
          "nmm Microscope AFM EnterContactMode",
          "nmm Microscope AFM EnterSewingStyle",
          "nmm Microscope AFM EnterSpectroscopyMode",
          "nmm Microscope AFM SetContactForce",
          "nmm Microscope AFM QueryContactForce",
          "nmm Microscope AFM InTappingMode",
+         "nmm Microscope AFM InOscillatingMode",
          "nmm Microscope AFM InContactMode",
          "nmm Microscope AFM InSewingStyle",
          "nmm Microscope AFM InSpectroscopyMode",
@@ -2935,6 +2941,62 @@ long nmm_Microscope::decode_EnterTappingMode (const char ** buf,
   return 0;
 }
 
+char * nmm_Microscope::encode_EnterOscillatingMode (long * len,
+           vrpn_float32 p, vrpn_float32 i, vrpn_float32 d, 
+           vrpn_float32 setpoint, vrpn_float32 amplitude,
+           vrpn_float32 frequency, vrpn_int32 input_gain,
+           vrpn_bool ampl_or_phase, vrpn_int32 drive_attenuation,
+           vrpn_float32 phase) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 7 * sizeof(vrpn_float32) + 2*sizeof(vrpn_int32) + sizeof(vrpn_bool);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_EnterOscillatingMode:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, p);
+    vrpn_buffer(&mptr, &mlen, i);
+    vrpn_buffer(&mptr, &mlen, d);
+    vrpn_buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, amplitude);
+    vrpn_buffer(&mptr, &mlen, frequency);
+    vrpn_buffer(&mptr, &mlen, input_gain);
+    vrpn_buffer(&mptr, &mlen, ampl_or_phase);
+    vrpn_buffer(&mptr, &mlen, drive_attenuation);
+    vrpn_buffer(&mptr, &mlen, phase);
+  }
+
+  return msgbuf;
+}
+
+long nmm_Microscope::decode_EnterOscillatingMode (const char ** buf,
+           vrpn_float32 * p, vrpn_float32 * i, vrpn_float32 * d, 
+           vrpn_float32 * setpoint, vrpn_float32 * amplitude,
+           vrpn_float32 * frequency, vrpn_int32 * input_gain,
+           vrpn_bool * ampl_or_phase, vrpn_int32 * drive_attenuation,
+           vrpn_float32 * phase) {
+  CHECK(vrpn_unbuffer(buf, p));
+  CHECK(vrpn_unbuffer(buf, i));
+  CHECK(vrpn_unbuffer(buf, d));
+  CHECK(vrpn_unbuffer(buf, setpoint));
+  CHECK(vrpn_unbuffer(buf, amplitude));
+  CHECK(vrpn_unbuffer(buf, frequency));
+  CHECK(vrpn_unbuffer(buf, input_gain));
+  CHECK(vrpn_unbuffer(buf, ampl_or_phase));
+  CHECK(vrpn_unbuffer(buf, drive_attenuation));
+  CHECK(vrpn_unbuffer(buf, phase));
+
+  return 0;
+}
+
 
 
 char * nmm_Microscope::encode_EnterContactMode (long * len,
@@ -3176,6 +3238,63 @@ long nmm_Microscope::decode_InTappingMode (const char ** buf,
   CHECK(vrpn_unbuffer(buf, d));
   CHECK(vrpn_unbuffer(buf, setpoint));
   CHECK(vrpn_unbuffer(buf, amplitude));
+
+  return 0;
+}
+
+
+char * nmm_Microscope::encode_InOscillatingMode (long * len,
+           vrpn_float32 p, vrpn_float32 i, vrpn_float32 d, 
+           vrpn_float32 setpoint, vrpn_float32 amplitude,
+           vrpn_float32 frequency, vrpn_int32 input_gain,
+           vrpn_bool ampl_or_phase, vrpn_int32 drive_attenuation,
+           vrpn_float32 phase) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 7 * sizeof(vrpn_float32) + 2*sizeof(vrpn_int32) + sizeof(vrpn_bool);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_InOscillatingMode:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, p);
+    vrpn_buffer(&mptr, &mlen, i);
+    vrpn_buffer(&mptr, &mlen, d);
+    vrpn_buffer(&mptr, &mlen, setpoint);
+    vrpn_buffer(&mptr, &mlen, amplitude);
+    vrpn_buffer(&mptr, &mlen, frequency);
+    vrpn_buffer(&mptr, &mlen, input_gain);
+    vrpn_buffer(&mptr, &mlen, ampl_or_phase);
+    vrpn_buffer(&mptr, &mlen, drive_attenuation);
+    vrpn_buffer(&mptr, &mlen, phase);
+  }
+
+  return msgbuf;
+}
+
+long nmm_Microscope::decode_InOscillatingMode (const char ** buf,
+           vrpn_float32 * p, vrpn_float32 * i, vrpn_float32 * d, 
+           vrpn_float32 * setpoint, vrpn_float32 * amplitude,
+           vrpn_float32 * frequency, vrpn_int32 * input_gain,
+           vrpn_bool * ampl_or_phase, vrpn_int32 * drive_attenuation,
+           vrpn_float32 * phase) {
+  CHECK(vrpn_unbuffer(buf, p));
+  CHECK(vrpn_unbuffer(buf, i));
+  CHECK(vrpn_unbuffer(buf, d));
+  CHECK(vrpn_unbuffer(buf, setpoint));
+  CHECK(vrpn_unbuffer(buf, amplitude));
+  CHECK(vrpn_unbuffer(buf, frequency));
+  CHECK(vrpn_unbuffer(buf, input_gain));
+  CHECK(vrpn_unbuffer(buf, ampl_or_phase));
+  CHECK(vrpn_unbuffer(buf, drive_attenuation));
+  CHECK(vrpn_unbuffer(buf, phase));
 
   return 0;
 }
