@@ -1,4 +1,5 @@
 
+#include "nmb_Dataset.h"
 #include "nmb_CalculatedPlane.h"
 #include "nmb_FlattenedPlane.h"
 #include "nmb_LBLFlattenedPlane.h"
@@ -12,17 +13,130 @@
 
 
 /* static */ 
-const int nmb_CalculatedPlane::FLATTENED_PLANE_TYPE = 1;
+const int nmb_CalculatedPlane::
+FLATTENED_PLANE_TYPE = 1;
 
 /* static */
-const int nmb_CalculatedPlane::LBL_FLATTENED_PLANE_TYPE = 2;
+const int nmb_CalculatedPlane::
+LBL_FLATTENED_PLANE_TYPE = 2;
 
 /* static */
-const int nmb_CalculatedPlane::SUMMED_PLANE_TYPE = 3;
+const int nmb_CalculatedPlane::
+SUMMED_PLANE_TYPE = 3;
 
 /* static */
-NewCalculatedPlaneCallbackNode* 
-nmb_CalculatedPlane::calculatedPlaneCB_head = NULL;
+NewCalculatedPlaneCallbackNode* nmb_CalculatedPlane::
+calculatedPlaneCB_head = NULL;
+
+// Constructor
+nmb_CalculatedPlane::
+nmb_CalculatedPlane( const char* planeName, nmb_Dataset* dataset )
+  throw( nmb_CalculatedPlaneCreationException )
+  : calculatedPlane( NULL ),
+    calculatedPlaneName( NULL )
+{
+  ///////
+  // set calculatedPlaneName
+#ifndef thirdtech
+  if( strstr( planeName, " from " ) == NULL ) // not a plane from remote
+  {
+    // Add the host name to the plane name so we can distinguish
+    // where the plane came from
+    char hostname[256];
+    calculatedPlaneName = new char[ 257 + strlen( planeName ) ];
+    gethostname( hostname, 256 );
+    sprintf( calculatedPlaneName, "%s from %s", planeName, hostname );
+    // NB:  change the conditional above if you change the plane
+    //      naming scheme.
+  }
+  else  // plane already has " from " in it
+  {
+    calculatedPlaneName = new char[ strlen( planeName ) + 1 ];
+    sprintf( calculatedPlaneName, "%s", planeName );
+  }
+#else
+  // 3rdTech only - no weird plane names.
+  calculatedPlaneName = new char[ strlen( planeName ) + 1 ];
+  sprintf( calculatedPlaneName, "%s", planeName );
+  // YOUR CLOSE-MINDED PLANE-NAMING TECHINIQUES WILL BE YOUR
+  // DOWNFALL WHEN THE REVOLUTION COMES!!1!11!  ALL PLANE
+  // NAMES ARE BEAUTIFUL!!!!!
+#endif
+  // calculatedPlaneName is now set
+
+  
+  BCPlane* calculatedPlane 
+     = dataset->inputGrid->getPlaneByName( calculatedPlaneName );
+  
+  if( calculatedPlane != NULL )
+  {
+     // a plane already exists by this name, and we disallow that.
+     char s[] = "Cannot create flattened plane.  "
+        "A plane already exists of the name:  ";
+     char msg[1024];
+     sprintf( msg, "%s%s.", s, calculatedPlaneName );
+     throw nmb_CalculatedPlaneCreationException( msg );
+  }
+} // end nmb_CalculatedPlane( const char* )
+
+
+nmb_CalculatedPlane::
+~nmb_CalculatedPlane( )
+{
+	if( calculatedPlaneName != NULL )
+		delete calculatedPlaneName;
+}
+
+
+BCPlane* nmb_CalculatedPlane::
+getCalculatedPlane( )
+{ return calculatedPlane; }
+
+const BCString* nmb_CalculatedPlane:: 
+getName( )
+{
+   if( calculatedPlane != NULL )
+      return calculatedPlane->name( );
+   else
+      return NULL;
+}
+
+
+
+void nmb_CalculatedPlane:: 
+createCalculatedPlane( char* units, BCPlane* sourcePlane, nmb_Dataset* dataset )
+  throw( nmb_CalculatedPlaneCreationException )
+{
+  calculatedPlane 
+    = dataset->inputGrid->addNewPlane( calculatedPlaneName, units, NOT_TIMED);
+  if( calculatedPlane == NULL ) 
+    {
+      char s[] = "Could not create calculated plane.  Can't make plane:  ";
+      char msg[1024];
+      sprintf( msg, "%s%s.", s, calculatedPlaneName );
+      throw nmb_CalculatedPlaneCreationException( msg );
+    }
+  
+  TopoFile tf;
+  nmb_Image* im = dataset->dataImages->getImageByPlane( sourcePlane );
+  nmb_Image* output_im = new nmb_ImageGrid( calculatedPlane );
+  if( im != NULL ) 
+    {
+      im->getTopoFileInfo(tf);
+      output_im->setTopoFileInfo(tf);
+    } 
+  else 
+    {
+      fprintf(stderr, "nmb_FlattenedPlane: Warning, "
+	      "input image not in list\n");
+    }
+  dataset->dataImages->addImage(output_im);
+
+  // add new calculated plane to the dataset
+  dataset->addNewCalculatedPlane( this );
+  
+  addNewCalculatedPlane( this );  
+} // end createCalculatedPlane
 
 
 /* static */

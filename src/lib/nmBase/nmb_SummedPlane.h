@@ -32,12 +32,6 @@ public:
 		   )
     throw( nmb_CalculatedPlaneCreationException );
   
-  // Accessor.  Returns that calculated plane.
-  BCPlane* getCalculatedPlane( )  { return summedPlane; }
-
-  // returns the name of the calculated plane
-  const BCString* getName( )  { return summedPlane->name( ); }
-
   // Packs up and sends across the connection all the data
   // necessary for the other end to recreate this calculated 
   // plane.
@@ -49,7 +43,6 @@ protected:
   BCPlane* sourcePlane1;
   BCPlane* sourcePlane2;
   double scale;
-  BCPlane* summedPlane;
 
   // create a new plane according to the data from vrpn
   static nmb_CalculatedPlane*
@@ -64,16 +57,9 @@ protected:
   // non-static member function to handle changes in the source plane
   void _handleSourcePlaneChange( int x, int y );
 
-  // utility function used by the constructor 
-  BCPlane* createSummedPlane( nmb_Dataset* dataset,
-			      const char* outputPlaneName )
-    throw( nmb_CalculatedPlaneCreationException );
-
 private:
-  nmb_SummedPlane( ) 
-    : sourcePlane1( NULL ), sourcePlane2( NULL ),
-      summedPlane( NULL ), scale( 1 )
-  { };
+	nmb_SummedPlane( ) : nmb_CalculatedPlane( "", NULL )
+	{ }
 
 }; // end class nmb_SummedPlane
 

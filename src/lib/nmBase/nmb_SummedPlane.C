@@ -26,10 +26,10 @@ nmb_SummedPlane( const char* inputPlaneName1,
 		 // Dataset to which this plane will be added.
 		 )
   throw( nmb_CalculatedPlaneCreationException )
+  : nmb_CalculatedPlane( outputPlaneName, dataset )
 {
   // Are all the pointer arguments valid?
   if( inputPlaneName1 == NULL || inputPlaneName2 == NULL
-      || outputPlaneName == NULL
       || dataset == NULL || dataset->inputGrid == NULL )
     {
       char s[] = "Internal error in nmb_SummedPlane(...):  invalid argument.";
@@ -75,98 +75,32 @@ nmb_SummedPlane( const char* inputPlaneName1,
 	      sourcePlane2->units()->Characters());
     }
   
-  // Add the host name to the plane name so we can distinguish
-  // where the plane came from
-  char newOutputPlaneName[256];
-#if 1
-  char hostname[256];
-  gethostname( hostname, 256 );
-  sprintf( newOutputPlaneName, "%s from %s", outputPlaneName, hostname );
-#else
-  // XXX 3rdTech only - no weird plane names.
-  sprintf(newOutputPlaneName, "%s", outputPlaneName);
-#endif
-  
+  //////////////
   // create output plane 
-  this->summedPlane = createSummedPlane( dataset, newOutputPlaneName );
 
-  // add ourselves to the dataset
-  dataset->addNewCalculatedPlane( this );
-  
-  // register ourselves to receive plane updates
-  sourcePlane1->add_callback( sourcePlaneChangeCallback, this );
-  sourcePlane2->add_callback( sourcePlaneChangeCallback, this );
-
-  // let interested parties know a new plane has been created.
-  nmb_CalculatedPlane::addNewCalculatedPlane( this );
-
-} // end nmb_SummedPlane( ... )
-
-
-
-BCPlane* nmb_SummedPlane::
-createSummedPlane( nmb_Dataset* dataset,
-		   const char* outputPlaneName )
-  throw( nmb_CalculatedPlaneCreationException )
-{
-  // Precondition:  there does not exist a plane of name 
-  //  outputPlaneName in dataset.  Also, sourcePlane1 and 2
-  //  are set to valid planes.
-  BCPlane* outputPlane = dataset->inputGrid->getPlaneByName( outputPlaneName );
-
-  if( outputPlane != NULL )
-    {
-      // a plane already exists by this name, and we disallow that.
-      char s[] = "Cannot create summed plane.  "
-	"A plane already exists of the name:  ";
-      char msg[1024];
-      sprintf( msg, "%s%s.", s, outputPlaneName );
-      throw nmb_CalculatedPlaneCreationException( msg );
-    }
-
-  // plane of name "outputPlaneName" does not exist already.
   // Use the units for the first plane.  
   // It is assumed that the second will have been scaled appropriately.
   char newunits[1000];
   sprintf(newunits, "%s_flat", sourcePlane1->units()->Characters());
-  outputPlane 
-    = dataset->inputGrid->addNewPlane(outputPlaneName, newunits, NOT_TIMED);
-  if( outputPlane == NULL ) 
-    {
-      char s[] = "Could not create summed plane.  Can't make plane:  ";
-      char msg[1024];
-      sprintf( msg, "%s%s.", s, outputPlaneName );
-      throw nmb_CalculatedPlaneCreationException( msg );
-    }
-  
-  TopoFile tf;
-  nmb_Image *im = dataset->dataImages->getImageByPlane( sourcePlane1 );
-  nmb_Image *output_im = new nmb_ImageGrid( outputPlane );
-  if( im != NULL ) 
-    {
-      im->getTopoFileInfo(tf);
-      output_im->setTopoFileInfo(tf);
-    } 
-  else 
-    {
-      fprintf(stderr, "nmb_SummedPlane: Warning, input image not in list\n");
-    }
-  dataset->dataImages->addImage(output_im);
+  createCalculatedPlane( newunits, sourcePlane1, dataset );
   
   // fill in the new plane.
   for(int x = 0; x <= dataset->inputGrid->numX() - 1; x++) 
     {
       for( int y = 0; y <= dataset->inputGrid->numY() - 1; y++) 
 	{
-	  outputPlane->setValue( x, y,
+	  calculatedPlane->setValue( x, y,
 				 (float) ( sourcePlane1->value(x, y) 
 					   + scale 
 					   * sourcePlane2->value(x, y) ) );
 	}
     }
-  return outputPlane;
-} // end nmb_SummedPlane::createSummedPlane( ... )
 
+  // register ourselves to receive plane updates
+  sourcePlane1->add_callback( sourcePlaneChangeCallback, this );
+  sourcePlane2->add_callback( sourcePlaneChangeCallback, this );
+
+} // end nmb_SummedPlane( ... )
 
 
 /* static */
@@ -190,10 +124,9 @@ sourcePlaneChangeCallback( BCPlane* plane, int x, int y,
 void nmb_SummedPlane::
 _handleSourcePlaneChange( int x, int y )
 {
-  this->summedPlane->setValue( x, y, 
-			       (float) ( sourcePlane1->value(x, y) 
-					 + scale
-					 * sourcePlane2->value(x, y) ) );
+  calculatedPlane->setValue( x, y, 
+                             (float) ( sourcePlane1->value(x, y) 
+                                       + scale * sourcePlane2->value(x, y) ) );
 } // end _handleSourcePlaneChange
 
 
@@ -210,13 +143,13 @@ sendCalculatedPlane( vrpn_Connection* conn, vrpn_int32 senderID,
   vrpn_buffer( &bufptr, &msglen, scale );
   vrpn_buffer( &bufptr, &msglen, (vrpn_int32) sourcePlane1->name()->Length() );
   vrpn_buffer( &bufptr, &msglen, (vrpn_int32) sourcePlane2->name()->Length() );
-  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) summedPlane->name()->Length() );
+  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) calculatedPlane->name()->Length() );
   vrpn_buffer( &bufptr, &msglen, sourcePlane1->name()->Characters(),
 	       sourcePlane1->name()->Length() );
   vrpn_buffer( &bufptr, &msglen, sourcePlane2->name()->Characters(),
 	       sourcePlane2->name()->Length() );
-  vrpn_buffer( &bufptr, &msglen, summedPlane->name()->Characters(),
-	       summedPlane->name()->Length() );
+  vrpn_buffer( &bufptr, &msglen, calculatedPlane->name()->Characters(),
+	       calculatedPlane->name()->Length() );
   
   timeval now;
   gettimeofday(&now, NULL);
@@ -262,51 +195,10 @@ _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
   sourcePlaneName2[sourcePlaneNameLen2] = '\0';
   outputPlaneName[outputPlaneNameLen] = '\0';
 
-  nmb_SummedPlane* newSummedPlane = new nmb_SummedPlane;
-  newSummedPlane->scale = scale;
-  
-  // Is the destination plane name the same as the source plane name?
-  if( strcmp( outputPlaneName, sourcePlaneName2 ) == 0 
-      || strcmp( outputPlaneName, sourcePlaneName2 ) == 0  ) 
-    {
-      char s[] = "Cannot create summed plane.  "
-	"Plane cannot sum from itself.";
-      delete sourcePlaneName1;
-      delete sourcePlaneName2;
-      delete outputPlaneName;
-      throw nmb_CalculatedPlaneCreationException( s );
-    }
-  
-  // try to get the requested source planes...
-  newSummedPlane->sourcePlane1 
-    = dataset->inputGrid->getPlaneByName(sourcePlaneName1);
-  newSummedPlane->sourcePlane2 
-    = dataset->inputGrid->getPlaneByName(sourcePlaneName2);
-  if( newSummedPlane->sourcePlane1 == NULL 
-      || newSummedPlane->sourcePlane2 == NULL )
-    {
-      char s[] = "Cannot create flattened plane from remote. " \
-	" Could not get input plane:  ";
-      char msg[1024];
-      if( newSummedPlane->sourcePlane1 == NULL )
-	sprintf( msg, "%s%s.", s, sourcePlaneName1 );
-      else if( newSummedPlane->sourcePlane2 == NULL )
-	sprintf( msg, "%s%s.", s, sourcePlaneName2 );
-      else // how did this happen?
-	sprintf( msg, "%s.", s );
-      delete sourcePlaneName1;
-      delete sourcePlaneName2;
-      delete outputPlaneName;
-      throw nmb_CalculatedPlaneCreationException( msg );
-    }
+  nmb_SummedPlane* newSummedPlane 
+    = new nmb_SummedPlane( sourcePlaneName1, sourcePlaneName2, scale, 
+                           outputPlaneName, dataset );
 
-  // create output plane
-  newSummedPlane->summedPlane 
-    = newSummedPlane->createSummedPlane( dataset, outputPlaneName );
-
-  // add new flattened plane to the dataset
-  dataset->addNewCalculatedPlane( newSummedPlane );
-  
   // register new flattened plane to receive plane updates
   newSummedPlane->sourcePlane1->add_callback( sourcePlaneChangeCallback, 
 					     newSummedPlane );

@@ -46,6 +46,10 @@ public:
 
   
 protected:
+  nmb_FlattenedPlane( const char* inputPlaneName,
+                      const char* outputPlaneName,
+                      nmb_Dataset* dataset )
+    throw( nmb_CalculatedPlaneCreationException );
 
   BCPlane* sourcePlane;
   BCPlane* flatPlane;
@@ -71,16 +75,12 @@ protected:
 			    float redY, float greenY, float blueY )
     throw( nmb_CalculatedPlaneCreationException );
 
-  // utility function used by the constructor 
-  BCPlane* createFlattenedPlane( nmb_Dataset* dataset,
-				 const char* outputPlaneName )
-    throw( nmb_CalculatedPlaneCreationException );
-
 private:
   nmb_FlattenedPlane( ) 
     : sourcePlane( NULL ), flatPlane( NULL ),
-      dx( 0 ), dy( 0 ), offset( 0 )
-  { };
+      dx( 0 ), dy( 0 ), offset( 0 ),
+		nmb_CalculatedPlane( "", NULL )
+  {  };
 
 }; // end class nmb_FlattenedPlane
 

@@ -1,3 +1,13 @@
+2001-11-04    <marshbur@MUSHROOM-CS>
+
+	* nmb_CalculatedPlane.h, .C:  moved a lot of common functionality
+	up into this, the superclass, particularly that relating to plane
+	naming and adding planes to the dataset.  This was mis-implemented
+	when I first did it.
+	* nmb_FlattenedPlane.h, .C:  same
+	* nmb_LBLFlattenedPlane.h, .C:  same
+	* nmb_SummedPlane.h, .C:  same
+
 2001-10-23  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_Dataset.C (nmb_Dataset::nmb_Dataset): moved initialization of

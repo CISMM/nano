@@ -1,5 +1,12 @@
 
+///////////
 // A virtual base class for all calculated planes
+// nmb_CalculatedPlane serves to encapsulate all
+// the functionality common to those entities
+// reasonably called "calculated planes" and, in
+// addition, provides a platform for the communication
+// of calculated plane details across a network.
+
 
 #ifndef NMB_CALCULATEDPLANE_H
 #define NMB_CALCULATEDPLANE_H
@@ -74,10 +81,10 @@ class nmb_CalculatedPlane
 public:
 
   // Accessor.  Returns that calculated plane.
-  virtual BCPlane* getCalculatedPlane( ) = 0;
+  BCPlane* getCalculatedPlane( );
 
   // Accessor.  Returns the name of the calculated plane.
-  virtual const BCString* getName( ) = 0;
+  const BCString* getName( );
 
   // Packs up and sends across the connection all the data
   // necessary for the other end to recreate this calculated 
@@ -105,21 +112,56 @@ public:
   removeNewCalculatedPlaneCallback( void* userdata,
 				    NewCalculatedPlaneCallback* callback );
 
+  virtual ~nmb_CalculatedPlane( );
+
 protected:
+  //////////////
+  // the following are member variables of all calculated planes
+
+  // The name of the calculated plane
+  char* calculatedPlaneName;
+
+  // The calculated plane
+  BCPlane* calculatedPlane;
 
   // constants indicating types of CalculatedPlanes
   static const int FLATTENED_PLANE_TYPE;
   static const int LBL_FLATTENED_PLANE_TYPE;
   static const int SUMMED_PLANE_TYPE;
 
+
+  //////////////
+  // the following are methods to be used by subclasses
+  // implementing a calculated plane
+  
+  // constructor for nmb_CalculatedPlane
+  nmb_CalculatedPlane( const char* calculatedPlaneName, nmb_Dataset* dataset )
+    throw( nmb_CalculatedPlaneCreationException );
+  
+  // utility function to allocate the calculated plane
+  // and set it up in dataset.  'units' is the units of the plane.
+  // 'sourcePlane' is any plane from which this plane is calculated.
+  void createCalculatedPlane( char* units, BCPlane* sourcePlane, 
+                              nmb_Dataset* dataset )
+    throw( nmb_CalculatedPlaneCreationException );
+  
+  /////////////
   // function that will be called by nmb_CalculatePlane::
-  // handle_CalculatedPlane_synch() for the appropriate subclass
+  // handle_CalculatedPlane_synch() for the appropriate subclass.
+  // This is reasonably a virtual function.
   static nmb_CalculatedPlane*
   _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
     throw( nmb_CalculatedPlaneCreationException );
 
-  static NewCalculatedPlaneCallbackNode* calculatedPlaneCB_head;
-  
+
+ private:
+  // default constructor
+  nmb_CalculatedPlane( );
+
+  // copy constructor
+  nmb_CalculatedPlane( nmb_CalculatedPlane& );
+
+  static NewCalculatedPlaneCallbackNode* calculatedPlaneCB_head; 
   static nmb_CalculatedPlaneNode* calculatedPlaneList_head;
 
   // calls any callbacks registered to listen for new 
@@ -134,19 +176,16 @@ protected:
 //  To add a new type of Calculated Plane:
 //  1) Declare the plane type, which should inherit publicly from 
 //     nmb_CalculatedPlane.  Provide implementations for
-//     getCalculatedPlane(), getName(), sendCalculatedPlane(...)
-//     and _handle_PlaneSynch(...).  The method sendCalculatedPlane()
-//     should pack the plane type's constant (see (2)) as the first 
-//     element of a buffer for vrpn and then pack whatever plane-
-//     specific data is necessary.  The plane type's constructor
-//     should call nmb_CalculatedPlane::addNewCalculatedPlane.  The
-//     plane type's _handle_PlaneSynch(...) method should not.
+//     sendCalculatedPlane(...) and _handle_PlaneSynch(...).  
+//     The method sendCalculatedPlane() should pack the 
+//     plane type's constant (see (2)) as the first 
+//     element of a buffer for vrpn and then pack whatever 
+//     plane-specific data is necessary.
 //  2) Add a constant indicating the new plane type as a 
 //     protected data member of class nmb_CalculatedPlane.
 //     See, e.g., FLATTENED_PLANE_TYPE.
 //  3) Edit the static function nmb_CalculatedPlane::receiveCalculatedPlane
-//     to recognize planes of the new type and call the (static)
-//     _handle_PlaneSynch(...) method of that type.  This also means
+//     to recognize planes of the new type.  This also means
 //     that a header for the new plane type needs to be included in
 //     nmb_CalculatedPlane.C.
 

@@ -27,12 +27,6 @@ public:
 			 // Dataset to which this plane will be added.
 			 )
     throw( nmb_CalculatedPlaneCreationException );
-  
-  // Accessor.  Returns that calculated plane.
-  BCPlane* getCalculatedPlane( )  { return flatPlane; }
-
-  // returns the name of the calculated plane
-  const BCString* getName( )  { return flatPlane->name( ); }
 
   // Packs up and sends across the connection all the data
   // necessary for the other end to recreate this calculated 
@@ -41,9 +35,7 @@ public:
 			    vrpn_int32 synchCalculatedPlaneMessageType ) const;
   
 protected:
-
   BCPlane* sourcePlane;
-  BCPlane* flatPlane;
   float firstLineAvg;
 
   // create a new plane according to the data from vrpn
@@ -60,15 +52,11 @@ protected:
   void _handleSourcePlaneChange( int x, int y );
 
   // utility function used by the constructor 
-  BCPlane* createLBLFlattenedPlane( nmb_Dataset* dataset,
-				    const char* outputPlaneName )
-    throw( nmb_CalculatedPlaneCreationException );
+  void fillLBLFlattenedPlane( nmb_Dataset* dataset );
 
 private:
-  nmb_LBLFlattenedPlane( ) 
-    : sourcePlane( NULL ), flatPlane( NULL ),
-      firstLineAvg( 0 )
-  { };
+	nmb_LBLFlattenedPlane( ) : nmb_CalculatedPlane( "", NULL )
+		{ }
 
 }; // end class nmb_LBLFlattenedPlane
 

@@ -24,17 +24,18 @@ nmb_FlattenedPlane( const char* inputPlaneName,
 		    float redY, float greenY, float blueY,
 		    nmb_Dataset* dataset )
   throw( nmb_CalculatedPlaneCreationException )
+  : nmb_CalculatedPlane( outputPlaneName, dataset )
 {
   // Are all the pointer arguments valid?
-  if( inputPlaneName == NULL || outputPlaneName == NULL
-      || dataset == NULL || dataset->inputGrid == NULL )
+  if( inputPlaneName == NULL || dataset == NULL 
+      || dataset->inputGrid == NULL )
     {
       char s[] = "Internal error in nmb_FlattenPlane:  invalid argument.";
       throw nmb_CalculatedPlaneCreationException( s );
     }
 
   // Is the destination plane name the same as the source plane name?
-  if( strcmp( outputPlaneName, inputPlaneName ) == 0 ) 
+  if( strcmp( calculatedPlaneName, inputPlaneName ) == 0 ) 
     {
       char s[] = "Cannot create flattened plane.  "
 	"Plane cannot flatten from itself.";
@@ -55,20 +56,21 @@ nmb_FlattenedPlane( const char* inputPlaneName,
   // Calculate dx, dy and offset.
   calculateDxDyOffset( dataset, redX, greenX, blueX, redY, greenY, blueY );
     
-  // Add the host name to the plane name so we can distinguish
-  // where the plane came from
-  char newOutputPlaneName[512];
-#if 1
-  char hostname[256];
-  gethostname( hostname, 256 );
-  sprintf( newOutputPlaneName, "%s from %s", outputPlaneName, hostname );
-#else
-  // XXX 3rdTech only - no weird plane names.
-  sprintf(newOutputPlaneName, "%s", outputPlaneName);
-#endif
-  
   // create output plane
-  this->flatPlane = createFlattenedPlane( dataset, newOutputPlaneName );
+  char newunits[1000];
+  sprintf(newunits, "%s_flat", sourcePlane->units()->Characters());
+  createCalculatedPlane( newunits, sourcePlane, dataset );
+  
+  // fill in the new plane.
+  for(int x = 0; x <= dataset->inputGrid->numX() - 1; x++) 
+    {
+      for( int y = 0; y <= dataset->inputGrid->numY() - 1; y++) 
+	{
+	  calculatedPlane->setValue( x, y,
+				     (float) ( sourcePlane->value(x, y) 
+					       + offset - dx * x - dy * y ) );
+	}
+    }
 
   // add ourselves to the dataset
   dataset->addNewCalculatedPlane( this );
@@ -81,6 +83,44 @@ nmb_FlattenedPlane( const char* inputPlaneName,
 
 } // end nmb_FlattenedPlane( ... )
 
+
+
+nmb_FlattenedPlane::
+nmb_FlattenedPlane( const char* inputPlaneName,
+                    const char* outputPlaneName,
+                    nmb_Dataset* dataset )
+  throw( nmb_CalculatedPlaneCreationException )
+  : nmb_CalculatedPlane( outputPlaneName, dataset )
+{
+  // Are all the pointer arguments valid?
+  if( inputPlaneName == NULL || dataset == NULL 
+      || dataset->inputGrid == NULL )
+    {
+      char s[] = "Internal error in nmb_FlattenPlane:  invalid argument.";
+      throw nmb_CalculatedPlaneCreationException( s );
+    }
+
+  // Is the destination plane name the same as the source plane name?
+  if( strcmp( calculatedPlaneName, inputPlaneName ) == 0 ) 
+    {
+      char s[] = "Cannot create flattened plane.  "
+	"Plane cannot flatten from itself.";
+      throw nmb_CalculatedPlaneCreationException( s );
+    }
+  
+  // try to get the requested source plane...
+  this->sourcePlane = dataset->inputGrid->getPlaneByName(inputPlaneName);
+  if( this->sourcePlane == NULL )
+    {
+      char s[] = "Cannot create flattened plane.  "
+	"Could not get input plane:  ";
+      char msg[1024];
+      sprintf( msg, "%s%s.", s, inputPlaneName );
+      throw nmb_CalculatedPlaneCreationException( msg );
+    }
+
+
+} // end nmb_FlattenedPlane( ... )
 
 
 void nmb_FlattenedPlane::
@@ -138,71 +178,6 @@ calculateDxDyOffset( nmb_Dataset* dataset,
 } // end nmb_FlattenedPlane::calculateDxDyOffset( ... )
 
 
-
-BCPlane* nmb_FlattenedPlane::
-createFlattenedPlane( nmb_Dataset* dataset,
-		      const char* outputPlaneName )
-    throw( nmb_CalculatedPlaneCreationException )
-{
-  // Precondition:  there does not exist a plane of name 
-  //  outputPlaneName in dataset
-  BCPlane* outputPlane = dataset->inputGrid->getPlaneByName( outputPlaneName );
-
-  if( outputPlane != NULL )
-    {
-      // a plane already exists by this name, and we disallow that.
-      char s[] = "Cannot create flattened plane.  A plane already exists of the name:  ";
-      char msg[1024];
-      sprintf( msg, "%s%s.", s, outputPlaneName );
-      throw nmb_CalculatedPlaneCreationException( msg );
-    }
-
-  // plane of name "outputPlaneName" does not exist already
-  char newunits[1000];
-  sprintf(newunits, "%s_flat", sourcePlane->units()->Characters());
-
-  outputPlane 
-    = dataset->inputGrid->addNewPlane(outputPlaneName, newunits, NOT_TIMED);
-  if( outputPlane == NULL ) 
-    {
-      char s[] = "Could not create flattened plane.  Can't make plane:  ";
-      char msg[1024];
-      sprintf( msg, "%s%s.", s, outputPlaneName );
-      throw nmb_CalculatedPlaneCreationException( msg );
-    }
-  
-  TopoFile tf;
-  nmb_Image *im = dataset->dataImages->getImageByPlane( sourcePlane );
-  nmb_Image *output_im = new nmb_ImageGrid( outputPlane );
-  if( im != NULL ) 
-    {
-      im->getTopoFileInfo(tf);
-      output_im->setTopoFileInfo(tf);
-    } 
-  else 
-    {
-      fprintf(stderr, "nmb_FlattenedPlane: Warning, "
-	      "input image not in list\n");
-    }
-  dataset->dataImages->addImage(output_im);
-  
-  // fill in the new plane.
-  for(int x = 0; x <= dataset->inputGrid->numX() - 1; x++) 
-    {
-      for( int y = 0; y <= dataset->inputGrid->numY() - 1; y++) 
-	{
-	  outputPlane->setValue(x, y,
-				(float) ( sourcePlane->value(x, y) 
-					  + offset - dx * x - dy * y ) );
-	}
-    }
-
-  return outputPlane;
-} // end nmb_FlattenedPlane::createFlattenedPlane( ... )
-
-
-
-
 /* static */
 void nmb_FlattenedPlane::
 sourcePlaneChangeCallback( BCPlane* plane, int x, int y,
@@ -229,7 +204,6 @@ _handleSourcePlaneChange( int x, int y )
 				     this->offset - this->dx * x 
 				     - this->dy * y ) );
 } // end _handleSourcePlaneChange
-
 
 
 void nmb_FlattenedPlane::
@@ -295,42 +269,39 @@ _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
   outputPlaneName[outputPlaneNameLen] = '\0';
   sourcePlaneName[sourcePlaneNameLen] = '\0';
 
-  nmb_FlattenedPlane* newFlatPlane = new nmb_FlattenedPlane;
+  nmb_FlattenedPlane* newFlatPlane 
+     = new nmb_FlattenedPlane( sourcePlaneName, outputPlaneName, dataset );
   newFlatPlane->dx = dx;
   newFlatPlane->dy = dy;
   newFlatPlane->offset = offset;
   
-  // Is the destination plane name the same as the source plane name?
-  if( strcmp( outputPlaneName, sourcePlaneName ) == 0 ) 
-    {
-      char s[] = "Cannot create flattened plane.  "
-	"Plane cannot flatten from itself.";
-      delete outputPlaneName;
-      delete sourcePlaneName;
-      throw nmb_CalculatedPlaneCreationException( s );
-    }
-  
   // try to get the requested source plane...
-  newFlatPlane->sourcePlane 
-    = dataset->inputGrid->getPlaneByName(sourcePlaneName);
+  newFlatPlane->sourcePlane = dataset->inputGrid->getPlaneByName(sourcePlaneName);
   if( newFlatPlane->sourcePlane == NULL )
     {
-      char s[] = "Cannot create flattened plane from remote. " \
-	" Could not get input plane:  ";
+      char s[] = "Cannot create flattened plane from remote source.  "
+	"Could not get input plane:  ";
       char msg[1024];
       sprintf( msg, "%s%s.", s, sourcePlaneName );
-      delete outputPlaneName;
-      delete sourcePlaneName;
       throw nmb_CalculatedPlaneCreationException( msg );
     }
 
   // create output plane
-  newFlatPlane->flatPlane 
-    = newFlatPlane->createFlattenedPlane( dataset, outputPlaneName );
-
-  // add new flattened plane to the dataset
-  dataset->addNewCalculatedPlane( newFlatPlane );
+  char newunits[1000];
+  sprintf(newunits, "%s_flat", newFlatPlane->sourcePlane->units()->Characters());
+  newFlatPlane->createCalculatedPlane( newunits, newFlatPlane->sourcePlane, dataset );
   
+  // fill in the new plane.
+  for(int x = 0; x <= dataset->inputGrid->numX() - 1; x++) 
+    {
+      for( int y = 0; y <= dataset->inputGrid->numY() - 1; y++) 
+	{
+	  newFlatPlane->calculatedPlane->setValue( x, y,
+				                   (float) ( newFlatPlane->sourcePlane->value(x, y) 
+					                     + offset - dx * x - dy * y ) );
+	}
+    }
+
   // register new flattened plane to receive plane updates
   newFlatPlane->sourcePlane->add_callback( sourcePlaneChangeCallback, 
 					   newFlatPlane );
