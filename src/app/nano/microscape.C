@@ -583,10 +583,10 @@ static void handle_markers_height_change (vrpn_int32, void *);
 TclNet_int clearMarkers ("clear_markers", 0,
                          handle_clear_markers_change);
 /// Change the number of pulse or scrape markers to show
-Tclvar_int numMarkersShown ("number_of_markers_shown", 1000,
+TclNet_int numMarkersShown ("number_of_markers_shown", 1000,
                             handle_markers_shown_change);
 /// Offset above surface for markers, to make sure they are visible. 
-Tclvar_int markerHeight ("marker_height", 100,
+TclNet_int markerHeight ("marker_height", 100,
                          handle_markers_height_change);
 
 //-----------------------------------------------------------------------
@@ -1070,7 +1070,7 @@ nmui_ColorMap * colorMapUI = NULL;
 
 //---------------------------------------------------------------------------
 /// Scales how much normal force is felt when using Direct Z Control
-Tclvar_float directz_force_scale("directz_force_scale", 1.0);
+TclNet_float directz_force_scale("directz_force_scale", 1.0);
 
 
 //---------------------------------------------------------------------------
@@ -1484,6 +1484,7 @@ void shutdown_connections (void) {
   openStreamFilename.bindConnection(NULL);
   openSPMDeviceName.bindConnection(NULL);
 
+  directz_force_scale.bindConnection(NULL);
   stm_z_scale.bindConnection(NULL);
   if (microscope) {
     microscope->state.numLinesToJumpBack.bindConnection(NULL);
@@ -1528,6 +1529,8 @@ void shutdown_connections (void) {
   finegrained_coupling.bindConnection(NULL);
 
   clearMarkers.bindConnection(NULL);
+  numMarkersShown.bindConnection(NULL);
+  markerHeight.bindConnection(NULL);
 
   texture_scale.bindConnection(NULL);
   contour_width.bindConnection(NULL);
@@ -5324,7 +5327,7 @@ void teardownMicroscopeSynchronization( CollaborationManager *cm,
     paramControls->remove(&(m->state.modify.new_fc_sample_delay));
     paramControls->remove(&(m->state.modify.new_fc_pullback_delay));
     paramControls->remove(&(m->state.modify.new_fc_feedback_delay));
-    paramControls->remove(&(m->state.modify.new_step_size));
+//  paramControls->remove(&(m->state.modify.new_step_size));
     paramControls->remove(&(m->state.modify.new_max_z_step));
     paramControls->remove(&(m->state.modify.new_max_xy_step));
     paramControls->remove(&(m->state.modify.new_min_z_setpoint));
@@ -5334,6 +5337,7 @@ void teardownMicroscopeSynchronization( CollaborationManager *cm,
 	paramControls->remove(&(m->state.modify.slow_line_playing));
     paramControls->remove(&(m->state.modify.slow_line_step));
     paramControls->remove(&(m->state.modify.slow_line_direction));
+	paramControls->remove(&(m->state.modify.step_size));
 	paramControls->remove(&(m->state.modify.slow_line_collect_data));
     
 	paramControls->remove(&(m->state.modify.new_blunt_size));
@@ -5483,6 +5487,9 @@ void setupSynchronization( CollaborationManager * cm,
   //viewPlaneControls->add(&tcl_wfr_changed);
   viewPlaneControls->add(&tclstride);
   viewPlaneControls->add(&clearMarkers);
+  viewPlaneControls->add(&numMarkersShown);
+  viewPlaneControls->add(&markerHeight);
+  viewPlaneControls->add(&directz_force_scale);
 
   nmui_Component * viewColorControls;
   viewColorControls = new nmui_Component ("View Color");
@@ -5727,7 +5734,7 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
   paramControls->add(&(m->state.modify.new_fc_sample_delay));
   paramControls->add(&(m->state.modify.new_fc_pullback_delay));
   paramControls->add(&(m->state.modify.new_fc_feedback_delay));
-  paramControls->add(&(m->state.modify.new_step_size));
+//  paramControls->add(&(m->state.modify.new_step_size));
   paramControls->add(&(m->state.modify.new_max_z_step));
   paramControls->add(&(m->state.modify.new_max_xy_step));
   paramControls->add(&(m->state.modify.new_min_z_setpoint));
@@ -5738,7 +5745,8 @@ void setupMicroscopeSynchronization( CollaborationManager * cm,
   paramControls->add(&(m->state.modify.slow_line_step));
   paramControls->add(&(m->state.modify.slow_line_direction));
   paramControls->add(&(m->state.modify.slow_line_collect_data));
-  
+  paramControls->add(&(m->state.modify.step_size));
+
   paramControls->add(&(m->state.modify.new_blunt_size));
   paramControls->add(&(m->state.modify.new_blunt_speed));
   paramControls->add(&(m->state.numLinesToJumpBack));

@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "." /I "../ebeamWriter" /I "../../../../vrpn" /I "../../../../external/pc_win32/include" /I "../../../../external/pc_win32/include/stl" /I "../../../../../external/pc_win32/include" /I "../../../../../external/pc_win32/include/stl" /I "../../../../quat" /I "../../lib/nmBase" /I "../../lib/nmImageViewer" /I "../../lib/ImgFormat" /I "../../lib/tclLinkVar" /I "../nano/lib/nmReg" /I "../nano/lib/nmSEM" /I "../sem" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "V_GLUT" /YX /FD /TP /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "." /I "../ebeamWriter" /I "../../../../vrpn" /I "../../../../../external/pc_win32/include" /I "../../../../../external/pc_win32/include/stl" /I "../../../../quat" /I "../../lib/nmBase" /I "../../lib/nmImageViewer" /I "../../lib/ImgFormat" /I "../../lib/tclLinkVar" /I "../nano/lib/nmReg" /I "../nano/lib/nmSEM" /I "../sem" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "V_GLUT" /YX /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe

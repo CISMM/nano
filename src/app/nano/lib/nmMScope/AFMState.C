@@ -170,7 +170,7 @@ AFMModifyState::AFMModifyState (const AFMModifyInitializationState & i) :
     this_mod_fc(VRPN_FALSE),
 
     step_size ("modifyp_step_size", 1.0),
-    new_step_size ("newmodifyp_step_size", 1.0),
+ //   new_step_size ("newmodifyp_step_size", 1.0),
 
 	slow_line_collect_data("collect_data", 1),
 

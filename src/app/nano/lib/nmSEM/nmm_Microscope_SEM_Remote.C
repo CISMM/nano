@@ -154,7 +154,7 @@ int nmm_Microscope_SEM_Remote::setResolution(vrpn_int32 res_x, vrpn_int32 res_y)
 int nmm_Microscope_SEM_Remote::setPixelIntegrationTime(vrpn_int32 time_nsec)
 {
   char *msgbuf;
-  vrpn_int32 len;
+  vrpn_int32 len; 
 
   msgbuf = encode_SetPixelIntegrationTime(&len, time_nsec);
   if (!msgbuf){

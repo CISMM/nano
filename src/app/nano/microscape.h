@@ -248,7 +248,7 @@ extern  Tclvar_string xPlaneName;
 
 //---------------------------------------------------------------------------
 /// The scale factor for force applied in Direct Z Control
-extern  Tclvar_float directz_force_scale;
+extern  TclNet_float directz_force_scale;
 
 
 /// Guardedscan TCL/TK interface variables
