@@ -14,8 +14,7 @@
 
 #include "nmui_ColorMap.h"
 #include <tk.h>
-#include <tcl_tk.h> // for get_the_interpreter(). 
-
+#include <Tcl_Interpreter.h>
 #include "nmui_Component.h"
 
 #include <error_display.h>
@@ -66,13 +65,14 @@ void nmui_ColorMap::handle_surface_color_change (vrpn_int32, void * userdata) {
 /** The tclnet params can be null, as long as swapTclStrings is called 
     later */
 nmui_ColorMap::nmui_ColorMap (const char * tclname_prefix,
-                              TclNet_string * cimage_name,
-                              TclNet_string * cmap_name) :
+                              Tclvar_string * cimage_name,
+                              Tclvar_string * cmap_name, vrpn_bool collab) :
     d_tcl_array_name(NULL),
     d_curColorMap(NULL),
     d_defaultColorMap(NULL),
     color_image_name(cimage_name),
-    colormap_name(cmap_name)
+    colormap_name(cmap_name),
+    d_collab(collab)
 {
     char name [200];
     d_tcl_array_name = new char[strlen(tclname_prefix) + 1];
@@ -82,22 +82,55 @@ nmui_ColorMap::nmui_ColorMap (const char * tclname_prefix,
     sprintf(name, "%s(color_limit_max)", tclname_prefix);
     color_max_limit = new Tclvar_float(name,1);
     sprintf(name, "%s(color_min)", tclname_prefix);
-    color_min = new TclNet_float(name,0,handle_color_minmax_change,this);
+    if (collab) {
+      color_min = new TclNet_float(name,0,handle_color_minmax_change,this);
+    } else {
+      color_min = new Tclvar_float(name,0,handle_color_minmax_change,this);
+    }
     sprintf(name, "%s(color_max)", tclname_prefix);
-    color_max = new TclNet_float(name,1,handle_color_minmax_change,this);
+    if (collab) {
+      color_max = new TclNet_float(name,1,handle_color_minmax_change,this);
+    } else {
+      color_max = new Tclvar_float(name,1,handle_color_minmax_change,this);
+    }
     sprintf(name, "%s(data_min)", tclname_prefix);
-    data_min = new TclNet_float(name,0,handle_color_minmax_change,this);
+    if (collab) {
+      data_min = new TclNet_float(name,0,handle_color_minmax_change,this);
+    } else {
+      data_min = new Tclvar_float(name,0,handle_color_minmax_change,this);
+    }
     sprintf(name, "%s(data_max)", tclname_prefix);
-    data_max = new TclNet_float(name,1,handle_color_minmax_change,this);
+    if (collab) {
+      data_max = new TclNet_float(name,1,handle_color_minmax_change,this);
+    } else {
+      data_max = new Tclvar_float(name,1,handle_color_minmax_change,this);
+    }
     sprintf(name, "%s(surface_r)", tclname_prefix);
-    surface_r = new TclNet_int(name,192);
+    if (collab) {
+      surface_r = new TclNet_int(name,192);
+    } else {
+      surface_r = new Tclvar_int(name,192);
+    }
     sprintf(name, "%s(surface_g)", tclname_prefix);
-    surface_g = new TclNet_int(name,192);
+    if (collab) {
+      surface_g = new TclNet_int(name,192);
+    } else {
+      surface_g = new Tclvar_int(name,192);
+    }
     sprintf(name, "%s(surface_b)", tclname_prefix);
-    surface_b = new TclNet_int(name,192);
+    if (collab) {
+      surface_b = new TclNet_int(name,192);
+    } else {
+      surface_b = new Tclvar_int(name,192);
+    }
     sprintf(name, "%s(surface_color_changed)", tclname_prefix);
-    surface_color_changed = new TclNet_int (name, 0, 
+    if (collab) {
+      surface_color_changed = new TclNet_int (name, 0, 
                                             handle_surface_color_change,this);
+    } else {
+      surface_color_changed = new Tclvar_int (name, 0,
+                                            handle_surface_color_change,this);
+    }
     
     d_defaultColorMap = new nmb_ColorMap(0,0,0,255,int(*surface_r), 
                                      int(*surface_g), int(*surface_b),255);
@@ -113,8 +146,8 @@ nmui_ColorMap::nmui_ColorMap (const char * tclname_prefix,
 
 /** Allows the external tclvars to be changed, like when nmb_Dataset is
     re-created. */
-void nmui_ColorMap::swapTclStrings(TclNet_string * cimage_name,
-                                   TclNet_string * cmap_name) {
+void nmui_ColorMap::swapTclStrings(Tclvar_string * cimage_name,
+                                   Tclvar_string * cmap_name) {
     color_image_name = cimage_name;
     colormap_name = cmap_name;
     if (colormap_name) {
@@ -283,18 +316,22 @@ void nmui_ColorMap::removeSurfaceColorCallback (Linkvar_Intcall callback, void *
 
 /** Collaboration helper. */
 void nmui_ColorMap::setupSynchronization(nmui_Component * c) {
-  c->add(color_min);
-  c->add(color_max);
-  c->add(data_min);
-  c->add(data_max);
+  if (d_collab) {
+    c->add((TclNet_float *)color_min);
+    c->add((TclNet_float *)color_max);
+    c->add((TclNet_float *)data_min);
+    c->add((TclNet_float *)data_max);
+  }
 }
 
 /** Collaboration helper. */
 void nmui_ColorMap::shutdownConnections() {
-  color_min->bindConnection(NULL);
-  color_max->bindConnection(NULL);
-  data_min->bindConnection(NULL);
-  data_max->bindConnection(NULL);
+  if (d_collab) {
+    ((TclNet_float *)color_min)->bindConnection(NULL);
+    ((TclNet_float *)color_max)->bindConnection(NULL);
+    ((TclNet_float *)data_min)->bindConnection(NULL);
+    ((TclNet_float *)data_max)->bindConnection(NULL);
+  }
 }
 
 /** Take a colormap and makes an color-bar image in Tcl with specified name,
@@ -339,8 +376,8 @@ int nmui_ColorMap::makeColorMapImage(nmb_ColorMap * cmap, char * name, int width
     }
     // "image create" will replace any existing instance of the image. 
     sprintf (command, "image create photo %s", name);
-    TCLEVALCHECK( get_the_interpreter(), command);
-    image = Tk_FindPhoto( get_the_interpreter(), name );
+    TCLEVALCHECK( Tcl_Interpreter::getInterpreter(), command);
+    image = Tk_FindPhoto( Tcl_Interpreter::getInterpreter(), name );
     Tk_PhotoPutBlock( image, &colormap, 0, 0, width, height );
 
     return 0;

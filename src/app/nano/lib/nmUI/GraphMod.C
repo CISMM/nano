@@ -14,11 +14,11 @@
 
 #include "GraphMod.h"
 
+#include "Tcl_Interpreter.h"
+
 static const int IMAGEMODE = 0;
 static const int MODMODE = 1;
 static const int SCANLINEMODE = 2;
-
-extern Tcl_Interp * get_the_interpreter (void);
 
 // GraphMod
 //
@@ -67,7 +67,7 @@ int GraphMod::EnterModifyMode (void * userdata) {
     return 0;
   }
 
-  me->d_interp = get_the_interpreter();
+  me->d_interp = Tcl_Interpreter::getInterpreter();
   if (!graphmod_hasWindow) {
     me->ShowStripchart(NULL);
     graphmod_hasWindow = 1;
@@ -109,7 +109,7 @@ int GraphMod::EnterScanlineMode (void *userdata) {
     return -1;
   }
 
-  me->d_interp = get_the_interpreter();
+  me->d_interp = Tcl_Interpreter::getInterpreter();
   if (!graphmod_hasWindow) {
     me->ShowStripchart(NULL);
     graphmod_hasWindow = 1;
@@ -138,7 +138,7 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
       if (me->d_currentmode != SCANLINEMODE)
       	return 0;
 
-      me->d_interp = get_the_interpreter();
+      me->d_interp = Tcl_Interpreter::getInterpreter();
 
       int channels_changed = 0;
       if (me->d_numscanline_channels != sr->num_values())
@@ -374,7 +374,7 @@ static   long	first_sec,first_usec;
    if (me->d_currentmode != MODMODE)
      return 0;
 
-   me->d_interp = get_the_interpreter();
+   me->d_interp = Tcl_Interpreter::getInterpreter();
 
    if (me->d_total_num_points == 0) {
       // Find out how many values are in the first point.  Used for
@@ -626,7 +626,7 @@ static   long	first_sec,first_usec;
 
 void GraphMod::ShowStripchart (const char * ) {
    char command [100];
-   d_interp = get_the_interpreter();
+   d_interp = Tcl_Interpreter::getInterpreter();
    sprintf(command, "show.stripchart");
    if (Tcl_Eval(d_interp, command) != TCL_OK) {
       fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,

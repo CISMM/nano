@@ -5,6 +5,7 @@
   This file may not be distributed without the permission of 
   3rdTech, Inc. 
   ===3rdtech===*/
+#include <Tcl_Interpreter.h>
 #include <Tcl_Linkvar.h>
 #include <tcl.h>
 
@@ -18,8 +19,6 @@
 static const int IMAGEMODE = 0;
 static const int MODMODE = 1;
 
-
-extern Tcl_Interp * get_the_interpreter (void);
 
 // ModFile
 //
@@ -63,7 +62,7 @@ int ModFile::EnterImageMode (void * userdata) {
 
   if (me->d_lastmode == IMAGEMODE) return 0;
 
-  me->d_interp = get_the_interpreter();
+  me->d_interp = Tcl_Interpreter::getInterpreter();
   if (!modfile_hasWindow) {
     me->ShowModFile();
     modfile_hasWindow = 1;
@@ -101,7 +100,7 @@ void ModFile::ShowModFile (void) {
 
 void ModFile::RememberPointList (void) {
    char command [100];
-   d_interp = get_the_interpreter();
+   d_interp = Tcl_Interpreter::getInterpreter();
    // This command includes a timestamp so we know which mod it is. 
    sprintf(command, "remember_mod_data %ld", d_start_mod_time);
    TCLEVALCHECK2(d_interp, command);

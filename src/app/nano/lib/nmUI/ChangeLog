@@ -1,3 +1,14 @@
+2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
+
+	* ModFile.C : replaced get_the_interpreter() with 
+        Tcl_Interpreter::getInterpreter()
+	* GraphMod.C : same
+	* nmui_ColorMap.C : made it so this can use Tclvars just as
+	easily as it can use TclNet_vars - the default behavior is the
+	same as before but an additional argument can be given to make it
+	use only Tclvars - this relies on TclNet_vars being derived from
+	Tclvars
+
 2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmui_ColorMap.Ch: removed color_image_name_list data member because

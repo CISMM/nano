@@ -16,11 +16,12 @@ class nmui_Component;
 class nmui_ColorMap {
 public:
     nmui_ColorMap(const char * tclname_prefix,
-                  TclNet_string * cimage_name,
-                  TclNet_string * cmap_name);
+                  Tclvar_string * cimage_name,
+                  Tclvar_string * cmap_name, vrpn_bool collab = vrpn_TRUE);
+    
     ~nmui_ColorMap() { };
-    void swapTclStrings(TclNet_string * cimage_name,
-                  TclNet_string * cmap_name);
+    void swapTclStrings(Tclvar_string * cimage_name,
+                  Tclvar_string * cmap_name);
 
     /// Set limits on color slider. 
     void setColorMinMaxLimit(double min, double max);
@@ -77,23 +78,24 @@ private:
         colormap.h */
     static Tclvar_list_of_strings* s_colorMapNames;
 
-    TclNet_string * color_image_name;
-    TclNet_string * colormap_name;
+    Tclvar_string * color_image_name;
+    Tclvar_string * colormap_name;
 
     /// The limits on the Tk slider where min and max value are selected
     Tclvar_float *color_min_limit;
     Tclvar_float *color_max_limit;
 // NANOX
     /// The positions of the min and max values within the Tk slider
-    TclNet_float *color_min;
-    TclNet_float *color_max;
-    TclNet_float *data_min;
-    TclNet_float *data_max;
+    Tclvar_float *color_min;
+    Tclvar_float *color_max;
+    Tclvar_float *data_min;
+    Tclvar_float *data_max;
     // Surface color is displayed when the colormap is not applied. 
-    TclNet_int *surface_r;
-    TclNet_int *surface_g;
-    TclNet_int *surface_b;
-    TclNet_int *surface_color_changed;
+    Tclvar_int *surface_r;
+    Tclvar_int *surface_g;
+    Tclvar_int *surface_b;
+    Tclvar_int *surface_color_changed;
+    vrpn_bool d_collab;
 };
 
 
