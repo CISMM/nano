@@ -21,7 +21,7 @@
 #include <Tcl_Linkvar.h>
 
 #ifdef V_GLUT
-#include <GL/glut.h>
+#include <GL/glut_UNC.h>
 #endif
 
 //  #ifndef	_WIN32

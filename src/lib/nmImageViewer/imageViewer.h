@@ -20,7 +20,7 @@ into windows and to convert from window to image coordinates and vice versa.
 */
 
 #ifdef V_GLUT
-#	include <GL/glut.h>
+#	include <GL/glut_UNC.h>
 #else
 #	include <GL/glx.h>
 #	include <GL/gl.h>
