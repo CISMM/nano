@@ -131,9 +131,12 @@ proc show_tool {name path nm element op} {
 	#Constrained freehand tool
 	$path configure -text "Constr. Free"
     } elseif { $tool == 3 } {
+	#Constrained freehand tool
+	$path configure -text "Constr. F. XYZ"
+    } elseif { $tool == 4 } {
 	# Slow line tool
 	$path configure -text "Slow Line"
-    } elseif { $tool == 4 } {
+    } elseif { $tool == 5 } {
 	# Slow line 3d tool
 	$path configure -text "Slow Line 3D"
     } 

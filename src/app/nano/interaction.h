@@ -41,5 +41,7 @@ extern TclNet_float tcl_wfr_scale;
 
 extern Tclvar_float handTracker_update_rate;
 
+static q_vec_type xy_pos;  // used for constrained freehand xyz
+
 #endif  // INTERACTION_H
 

@@ -376,8 +376,6 @@ static void handle_trigger_change( vrpn_int32 val, void * )
 
 static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 {
-
-    printf("handle_commit_change called, commit: %d\n", (int)tcl_commit_pressed);
     // This handles double callbacks, when we set tcl_commit_pressed to
     // zero below.
     if (tcl_commit_pressed != 1) return;
@@ -733,8 +731,17 @@ void dispatch_event(int user, int mode, int event, nmb_TimerList * /*timer*/)
 	   // after it's constraint line is specified.
 	   if (microscope->state.modify.tool == LINE) {
 	       ret = doLine(user, event);
-	   } else if ((microscope->state.modify.tool == CONSTR_FREEHAND) && 
-		      (!microscope->state.modify.constr_line_specified)) {
+	       /*
+	   } else if (((microscope->state.modify.tool == CONSTR_FREEHAND) ||
+		       (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ))
+		       && (!microscope->state.modify.constr_line_specified)) {
+	       */
+	       ret = doLine(user, event);
+	   } else if ((microscope->state.modify.tool == CONSTR_FREEHAND)
+		       && (!microscope->state.modify.constr_line_specified)) {
+	       ret = doLine(user, event);
+	   } else if ((microscope->state.modify.tool == CONSTR_FREEHAND_XYZ)
+		       && (!microscope->state.modify.constr_line_specified)) {
 	       ret = doLine(user, event);
 	   } else if (microscope->state.modify.tool == SLOW_LINE || 
 		      microscope->state.modify.tool == SLOW_LINE_3D ) {
@@ -1010,6 +1017,12 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     /* code dealing with locking the tip in sharp tip mode */
     /* locks the tip in one place so you can take repeated measurements */
     if( PRESS_EVENT == eventList[XY_LOCK_BT] ) {
+      // save the position the user is currently at so we have
+      // the x and y coords of their hand in the world, only the z varies
+      // (CONSTR_FREEHAND_XYZ mode only)
+      if (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ) {
+	nmui_Util::getHandInWorld(user, xy_pos);
+      }
       xy_lock =1;
     }
     if( RELEASE_EVENT ==eventList[XY_LOCK_BT] ) {
@@ -1806,8 +1819,11 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		/* Request a reading from the current location,
 		 * and wait till tip gets there */
 
-	     	      
-	      if (microscope->state.modify.tool == SLOW_LINE_3D) {
+	      // for CONSTR_FREEHAND_XYZ: the line is specified in 3-space, not
+	      // 2-space, so you have to consider the z-coord as well.  Therefore
+	      // this mode should do the same thing slow_line_3d does
+	      if ( (microscope->state.modify.tool == SLOW_LINE_3D) ||
+		   (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ) ) {
 		if ( pos_list.empty() ) {
 		    microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
 		    microscope->ModifyMode();
@@ -1835,7 +1851,9 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	    /* Feel the surface, to help determine the next point. */
 	    /* Request a reading from the current location */
 	  
-	    if (microscope->state.modify.tool == SLOW_LINE_3D) {
+	  // same logic as noted above for the press event for constr_free_xyz
+	    if ((microscope->state.modify.tool == SLOW_LINE_3D) ||
+		(microscope->state.modify.tool == CONSTR_FREEHAND_XYZ)) {
 	      if(!tcl_commit_pressed) {
 		if (valid_Direct_Z_Point) {
 		  microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1], 
@@ -1845,7 +1863,6 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	    }
 	    else{
 	      if(!tcl_commit_pressed) {
-		// which one was here initially???
 	        microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
 	      }
 	    }
@@ -1853,7 +1870,8 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	    // update the position of the rubber-band line
 	    graphics->setRubberLineEnd(clipPos[0], clipPos[1]);
 	    graphics->setRubberSweepLineEnd(TopL, TopR);
-	    if ( (microscope->state.modify.tool == SLOW_LINE_3D) &&
+	    if ( ((microscope->state.modify.tool == SLOW_LINE_3D) ||
+		  (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ) ) &&
 		(tcl_commit_pressed) ) {
 	      // Stop using the plane to apply force (?)
 	      if( SurfaceGoing ) {
@@ -1944,13 +1962,14 @@ VERBOSE(8, "      doLine:  starting case statement.");
 				     clipPosNM[2], list_id);
 		     // add a visual marker to the decorations already present
 		     // on screen
-		     decoration->addSlowLine3dMarker( clipPos[0], clipPos[1],
-						      clipPos[2]);
+		     //decoration->addSlowLine3dMarker( clipPos[0], clipPos[1],
+		     //			      clipPos[2]);
 		   }
 		   else {
 		     pos_list.insert(clipPos[0], clipPos[1], list_id);
 		   }
-		} else if (microscope->state.modify.tool == CONSTR_FREEHAND) {
+		} else if ((microscope->state.modify.tool == CONSTR_FREEHAND) ||
+			   (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ)) {
 		   // If this is the second point, set a flag so we
 		   // switch to doFeelLive on next event.
 		   if (!pos_list.empty()) {
@@ -1962,7 +1981,11 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		      graphics->setRubberSweepLineStart(TopL, TopR);
 		   }
 		   //save this point as part of the poly-line
-		   pos_list.insert(clipPos[0], clipPos[1], list_id);
+		   if (microscope->state.modify.tool == CONSTR_FREEHAND) {
+		     pos_list.insert(clipPos[0], clipPos[1], list_id);
+		   } else {
+		     pos_list.insert(clipPos[0], clipPos[1], clipPos[2], list_id);
+		   }
 		   
 		   // Notice: we stay in "feel" mode and don't resume scanning.
 		} else {
@@ -2251,14 +2274,22 @@ int doFeelLive(int whichUser, int userEvent)
 	   if (microscope->state.modify.tool == CONSTR_FREEHAND) {
 	      // Constrained freehand only allows motion along a line
 	       nmui_Util::getHandInWorld(whichUser, clipPos);
-	       nmui_Util::clipPositionLineConstraint(
-                   (BCPlane *)plane, 
-                   clipPos, 
-                   (Position_list &)microscope->state.modify.stored_points);
+	       nmui_Util::clipPositionLineConstraint(plane, clipPos, 
+                   microscope->state.modify.stored_points);
+	   } else if (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ) {
+	       nmui_Util::getHandInWorld(whichUser, clipPos);
+	       nmui_Util::clipPositionLineConstraint(plane, clipPos, 
+                   microscope->state.modify.stored_points,
+		   microscope->state.modify.tool,
+		   microscope->state.modify.constr_xyz_param);
 	   } else {
 	       nmui_Util::getHandInWorld(whichUser, clipPos);
 	       nmui_Util::clipPosition(plane, clipPos);
 	   }
+	} else if (microscope->state.modify.tool = CONSTR_FREEHAND_XYZ) {
+	  nmui_Util::getHandInWorld(whichUser, clipPos);
+	  clipPos[0] = xy_pos[0];
+	  clipPos[1] = xy_pos[1];
 	}
 
         // Used only for direct Z control - we need to have the Z converted
@@ -2439,7 +2470,8 @@ int doFeelLive(int whichUser, int userEvent)
 	/* turn off the commit button if user releases the trigger. */
 	tcl_commit_pressed = 0;
 	old_commit_pressed = 0;
-	if (microscope->state.modify.tool == CONSTR_FREEHAND) {
+	if ((microscope->state.modify.tool == CONSTR_FREEHAND) ||
+	    (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ)) {
 	   // Turn off constraint line, if it was on.
 	   if (microscope->state.modify.constr_line_specified) {
 	      microscope->state.modify.constr_line_specified = VRPN_FALSE;

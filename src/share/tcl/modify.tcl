@@ -22,6 +22,7 @@ set modifyp_mode 1
 set modifyp_control 0
 set modifyp_style 0
 set modifyp_tool 0
+set modifyp_constr_xyz_mode 0
 
 set modifyp_setpoint 1.0
 set modifyp_p_gain 1.0
@@ -391,12 +392,15 @@ radiobutton $modify.tool.line -text "Line" -variable newmodifyp_tool \
 	-value 1   -anchor nw
 radiobutton $modify.tool.constrfree -text "Constr. Free" -variable newmodifyp_tool \
 	-value 2   -anchor nw
-radiobutton $modify.tool.slow_line -text "Slow Line" -variable newmodifyp_tool\
-	-value 3   -anchor nw
+radiobutton $modify.tool.constrfree_xyz -text "Constr. Free XYZ" \
+	-variable newmodifyp_tool -value 3 -anchor nw 
+radiobutton $modify.tool.slow_line -text "Slow Line" -variable newmodifyp_tool \
+	-value 4   -anchor nw
 radiobutton $modify.tool.slow_line_3d -text "Slow Line 3D"\
-	-variable newmodifyp_tool -value 4 -anchor nw
+	-variable newmodifyp_tool -value 5 -anchor nw
 pack $modify.tool.freehand $modify.tool.line $modify.tool.constrfree \
-	$modify.tool.slow_line $modify.tool.slow_line_3d -side top -fill x 
+	$modify.tool.constrfree_xyz $modify.tool.slow_line \
+	$modify.tool.slow_line_3d -side top -fill x 
 
 #setup Modify toolparam box
 label $modify.toolparam.label -text "Tool parameters" 
@@ -406,6 +410,13 @@ generic_entry $modify.toolparam.step-size newmodifyp_step_size \
 	"Step Size (0,5 nm)" real 
 set mod_line_list  "$modify.toolparam.step-size"
 set mod_slow_line_list "$modify.toolparam.step-size"
+
+#setup Constr. Freehand XYZ params box
+radiobutton $modify.toolparam.line -text "Line Mode" \
+	-variable modifyp_constr_xyz_mode -value 0 -anchor nw
+radiobutton $modify.toolparam.plane -text "Plane Mode" \
+	-variable modifyp_constr_xyz_mode -value 1 -anchor nw
+set constr_xyz_param_list "$modify.toolparam.line $modify.toolparam.plane"
 
 #setup Modify control box
 label $modify.control.label -text "Control" 
@@ -505,7 +516,8 @@ proc flip_mod_style {mod_style element op} {
 # flips $modify.toolparam widgets
 proc flip_mod_tool {mod_tool element op} {
     global modify
-    global mod_line_list mod_slow_line_list mod_control_list
+    global mod_line_list mod_slow_line_list mod_control_list \
+	    constr_xyz_param_list
     global fspady
     global newmodifyp_control
 
@@ -531,17 +543,25 @@ proc flip_mod_tool {mod_tool element op} {
 	foreach widg $mod_control_list {pack forget $widg}
 	foreach widg $mod_control_list {pack $widg -side top -fill x}
     } elseif {$k==3} {
+       # selected constrained freehand xyz
+	set plist [lrange [pack slaves $modify.toolparam] 1 end] 
+	foreach widg $plist {pack forget $widg}
+        foreach widg $mod_control_list {pack forget $widg}
+        foreach widg $constr_xyz_param_list {pack $widg -side top -fill x}
+        foreach widg $mod_control_list {pack $widg -side top -fill x}
+    } elseif {$k==4} {
 	# selected slow line
 	set plist [lrange [pack slaves $modify.toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_slow_line_list {pack $widg -side top -fill x -pady $fspady}
 	foreach widg $mod_control_list {pack forget $widg}
 	foreach widg $mod_control_list {pack $widg -side top -fill x}
-    } elseif {$k==4} {
+    } elseif {$k==5} {
 	# selected slow line 3d
 	# anyone want to make this more elegant?
 	foreach widg $mod_control_list {pack forget $widg}
 	foreach widg $mod_control_list {pack $widg -side top -fill x}
+	foreach widg $constr_xyz_param_list {pack forget $widg}
 	set plist [lrange [pack slaves $modify.control] 1 1]
 	foreach widg $plist {pack forget $widg}
 	set newmodifyp_control 1

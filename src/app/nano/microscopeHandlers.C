@@ -515,6 +515,7 @@ void handle_modify_accept (vrpn_int32, void * _mptr) {
 
         break;
       case CONSTR_FREEHAND:
+      case CONSTR_FREEHAND_XYZ:
 //      printf("  Constrained Freehand:\n");
         break;
       case SLOW_LINE:

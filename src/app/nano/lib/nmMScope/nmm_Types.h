@@ -22,6 +22,7 @@ enum Tool {
   FREEHAND,
   LINE,
   CONSTR_FREEHAND,
+  CONSTR_FREEHAND_XYZ,
   SLOW_LINE,
   SLOW_LINE_3D
 };  // tool
@@ -38,6 +39,12 @@ enum Direction {
   FORWARD,
   REVERSE
 }; //direction
+
+// Used by Constrained Freehand XYZ mode
+enum ConstrXYZMode {
+  CONSTR_XYZ_LINE,
+  CONSTR_XYZ_PLANE
+};
 
 // TODO:  rewrite NetworkedMicroscopeChannel so we don't expose these,
 // (or switch to VRPN first)

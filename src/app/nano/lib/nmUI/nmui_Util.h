@@ -19,8 +19,10 @@ struct nmui_Util {
     ///< is not near zero; returns vrpn_false (error) otherwise.
   static int clipPosition (BCPlane * plane, q_vec_type & clippedPosition);
   static int clipPositionLineConstraint (BCPlane * plane, 
-					   q_vec_type & position, 
-					 Position_list & p);
+					 q_vec_type & position, 
+					 Position_list & p,
+					 int user_mode = -1,
+					 int xyz_param = -1);
   static int moveAimLine (BCPlane * plane, q_vec_type position, 
 			    nmg_Graphics * graphics);  // OBSOLETE
   static int moveSphere (q_vec_type position, nmg_Graphics * graphics);

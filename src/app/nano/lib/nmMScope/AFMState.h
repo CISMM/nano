@@ -69,6 +69,7 @@ struct AFMModifyState {
   Tclvar_int control;
   Tclvar_int style;
   Tclvar_int tool;
+  Tclvar_int constr_xyz_param;
     ///< the current mode of the microscope
 
   // parameters for Tapping and Contact mode

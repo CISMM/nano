@@ -10,6 +10,7 @@
 #include <nmb_String.h>
 #include <nmg_Globals.h>  // for graphics
 #include <nmg_Graphics.h>
+#include <nmm_Types.h>   // for CONSTR_FREEHAND_XYZ and related params enums
 
 // static
 int nmui_Util::getHandInWorld (int user, q_vec_type & position) {
@@ -63,7 +64,9 @@ int nmui_Util::clipPosition (BCPlane * plane, q_vec_type & position) {
 // static
 int nmui_Util::clipPositionLineConstraint (BCPlane * plane, 
 					   q_vec_type & position, 
-					   Position_list & p) {
+					   Position_list & p,
+					   int mode,
+					   int xyz_param) {
   if (!plane) {
     fprintf(stderr, "Error in nmui_Util::clipPositionLineConstraint:  "
                     "No input plane.\n");
@@ -89,25 +92,46 @@ int nmui_Util::clipPositionLineConstraint (BCPlane * plane,
   // more.
   
   // vector v from p0 to p1
-  float v0, v1;
+  float v0, v1, v2;
   p.goToHead();
   v0 = (p.peekNext())->x() - p.currX();
   v1 = (p.peekNext())->y() - p.currY();
+  if (mode == CONSTR_FREEHAND_XYZ) {
+    v2 = (p.peekNext())->z() - p.currZ();
+  }
 
   // if v is zero this won't work - return hand position unchanged.  
-  if ((v0 == 0) && (v1 == 0)) return 0;
+  if (mode != CONSTR_FREEHAND_XYZ) {
+    if ((v0 == 0) && (v1 == 0)) return 0;
+  } else {
+    if ((v0 == 0) && (v1 == 0) && (v2 == 0)) return 0;
+  }
 
   // vector w from p0 to hand position.
-  float w0, w1;
+  float w0, w1, w2;
   w0 = position[0] - p.currX();
   w1 = position[1] - p.currY();
 
+  if (mode == CONSTR_FREEHAND_XYZ) {
+    w2 = position[2] - p.currZ();
+  }
+
   // parameter t of line from p0 to p1. Solve eqn for t: (w.v)/(v.v)
-  float t = (w0*v0 + w1*v1)/(v0*v0 + v1*v1);
+  float t;
+
+  if (mode != CONSTR_FREEHAND_XYZ) {
+    t = (w0*v0 + w1*v1)/(v0*v0 + v1*v1);
+  } else {
+    t = (w0*v0 + w1*v1 + w2*v2)/(v0*v0 + v1*v1 + v2*v2);    
+  }
 
   // Our new point is p0 + t*v
   position[0] = p.currX() + t * v0;
   position[1] = p.currY() + t * v1;
+  
+  if ( (mode == CONSTR_FREEHAND_XYZ) && (xyz_param == CONSTR_XYZ_LINE) ) {
+    position[2] = p.currZ() + t * v2;
+  } // else we're in CONSTR_XYZ_PLANE mode, so use the z that's already in position
 
   return 0;
 }
