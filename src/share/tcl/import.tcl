@@ -19,6 +19,12 @@ set import_tess 10
 set import_axis_step 10
 set import_clamp 0
 set import_update_AFM 0
+set import_grab_object 0
+set spider_length 5
+set spider_width 2
+set spider_thick 0.1
+set spider_tess 10
+set spider_curve 0
 
 set import_color gray
 set import_r 192
@@ -73,18 +79,21 @@ floatscale $nmInfo(basic_options).f1.import_transz_slide -1000.0 6000.0 100 1 1 
 
 checkbutton $nmInfo(basic_options).f1.import_update_AFM \
      -text "Update AFM" -variable import_update_AFM
+checkbutton $nmInfo(basic_options).f1.import_grab_object \
+     -text "Grab Object" -variable import_grab_object
+
 
 #generic_entry $nmInfo(basic_options).f2.import_rotx import_rotx \
 #     "X Rotation" real
-floatscale $nmInfo(basic_options).f2.import_rotx_slide -6.28 6.28 1000 1 1 \
+floatscale $nmInfo(basic_options).f2.import_rotx_slide -360 360 1000 1 1 \
 	import_rotx "X Rotation"
 #generic_entry $nmInfo(basic_options).f2.import_roty import_roty \
 #     "Y Rotation" real
-floatscale $nmInfo(basic_options).f2.import_roty_slide -6.28 6.28 1000 1 1 \
+floatscale $nmInfo(basic_options).f2.import_roty_slide -360 360 1000 1 1 \
 	import_roty "Y Rotation"
 #generic_entry $nmInfo(basic_options).f2.import_rotz import_rotz \
 #     "Z Rotation" real
-floatscale $nmInfo(basic_options).f2.import_rotz_slide -6.28 6.28 1000 1 1 \
+floatscale $nmInfo(basic_options).f2.import_rotz_slide -360 360 1000 1 1 \
 	import_rotz "Z Rotation"
 
 button $nmInfo(basic_options).f2.import_reset_object -text "Reset Object" -command reset_object
@@ -93,6 +102,27 @@ generic_entry $nmInfo(basic_options).f3.import_tess import_tess \
      "Tube Loading Tesselation" integer
 generic_entry $nmInfo(basic_options).f3.import_axis_step import_axis_step \
      "Tube Loading Axis Step" integer
+
+
+# Spider Stuff
+floatscale $nmInfo(basic_options).f3.spider_length_slide 0 20 1000 1 1 \
+	spider_length "Spider Length"
+
+floatscale $nmInfo(basic_options).f3.spider_width_slide 0 10 1000 1 1 \
+	spider_width "Spider Width"
+
+floatscale $nmInfo(basic_options).f3.spider_thick_slide 0 5 1000 1 1 \
+	spider_thick "Spider Thickness"
+
+intscale $nmInfo(basic_options).f3.spider_tess_slide 1 50 1000 1 1 \
+	spider_tess "Spider Tesselation"
+
+floatscale $nmInfo(basic_options).f3.spider_curve_slide 0 90 1000 1 1 \
+	spider_curve "Spider Curvature"
+
+button $nmInfo(basic_options).f3.spider_create_button -text "Create Spider" -command create_spider
+
+#
 
 button $nmInfo(basic_options).f3.visibility_button -text "Hide" -command change_visibility
 checkbutton $nmInfo(basic_options).f3.proj_text_button \
@@ -139,6 +169,7 @@ pack $nmInfo(basic_options).f1.import_transy_slide -anchor nw -padx 1m -pady 1m
 #pack $nmInfo(basic_options).f1.import_transz -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f1.import_transz_slide -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f1.import_update_AFM -anchor sw -padx 1m -pady 1m -fill x
+pack $nmInfo(basic_options).f1.import_grab_object -anchor sw -padx 1m -pady 1m -fill x
 
 #pack $nmInfo(basic_options).f2.import_rotx -anchor nw -padx 1m -pady 1m
 pack $nmInfo(basic_options).f2.import_rotx_slide -anchor nw -padx 1m -pady 1m
@@ -150,6 +181,16 @@ pack $nmInfo(basic_options).f2.import_reset_object -anchor sw -padx 1m -pady 1m 
 
 pack $nmInfo(basic_options).f3.import_tess -padx 1m -pady 1m -anchor nw
 pack $nmInfo(basic_options).f3.import_axis_step -padx 1m -pady 1m -anchor nw
+
+# Spider Stuff
+pack $nmInfo(basic_options).f3.spider_length_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(basic_options).f3.spider_width_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(basic_options).f3.spider_thick_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(basic_options).f3.spider_tess_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(basic_options).f3.spider_curve_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(basic_options).f3.spider_create_button -padx 1m -pady 1m -anchor nw
+#
+
 pack $nmInfo(basic_options).f3.visibility_button -anchor nw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f3.proj_text_button -anchor nw -padx 1m -pady 1m -fill x
 pack $nmInfo(basic_options).f3.clamp_button -anchor sw -padx 1m -pady 1m -fill x
@@ -193,6 +234,20 @@ proc open_import_file {} {
  	set current_object_new $import_file_label
 }
 
+
+# Create a spider
+proc create_spider {} {
+	global modelFile import_file_label current_object current_object_new
+
+	set filename "/spider.spi"
+
+      set modelFile $filename
+
+	set current_object_new "spider.spi"
+}
+
+
+
 proc close_import_file {} {
     global modelFile nmInfo import_file_label
 
@@ -233,6 +288,7 @@ proc set_import_color {} {
     scan $import_color #%02x%02x%02x import_r import_g import_b
     set import_color_changed 1
 }
+
 
 ##This procedure changes the visibility_mode from hide to show (set it up
 # so that the object will be drawn)

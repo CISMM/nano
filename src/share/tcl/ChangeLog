@@ -1,3 +1,8 @@
+2002-05-06  David Borland <borland@cs.unc.edu>
+
+        * import.tcl:  added UI for spider objects, added control for 
+        grabbing objects for controlling with mouse phantom
+
 2002-05-02    <marshbur@cs.unc.edu>
 
 	* image.tcl (chage_quick_mode_label):  new.  procedure to set the
