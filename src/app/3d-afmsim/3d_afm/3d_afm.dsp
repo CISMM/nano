@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "." /I "..\nano" /I "..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\..\vrpn" /I "..\..\nano\lib\nmMScope" /I "..\..\..\lib\nmBase" /I "..\..\..\lib\nmMP" /I "..\..\..\lib\tcllinkvar" /I "..\..\..\..\..\quat" /I "..\..\..\..\..\vogl" /I "..\..\nano\lib\nmUI" /I "..\..\nano\lib\nmGraphics" /I "..\..\..\lib\ImgFormat" /I "..\..\nano\lib\nmUGraphics" /I "..\..\..\..\..\vrpn\server_src" /I "..\..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\..\external\pc_win32\include\ghost-stl" /I "..\..\nano\lib\nmReg" /I "..\..\..\lib\nmImageViewer" /I "..\..\nano\lib\nmAux" /I "..\..\nano\lib\nmSEM" /I "..\..\nano\lib\nmAnalyze" /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "..\nano\lib\nmUI" /I "..\nano\lib\nmGraphics" /I "..\..\lib\ImgFormat" /I "..\nano\lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\external\pc_win32\include\ghost-stl" /I "..\nano\lib\nmMScope" /I "..\..\lib\nmMP" /I "..\nano\lib/nmReg" /I "..\..\lib\nmImageViewer" /I "..\nano\lib\nmAux" /I "..\nano\lib\nmSEM" /D "NDEBUG" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /FR /YX /FD /GZ /c /Tp
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "." /I "..\nano" /I "..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\..\vrpn" /I "..\..\nano\lib\nmMScope" /I "..\..\..\lib\nmBase" /I "..\..\..\lib\nmMP" /I "..\..\..\lib\tcllinkvar" /I "..\..\..\..\..\quat" /I "..\..\..\..\..\vogl" /I "..\..\nano\lib\nmUI" /I "..\..\nano\lib\nmGraphics" /I "..\..\..\lib\ImgFormat" /I "..\..\nano\lib\nmUGraphics" /I "..\..\..\..\..\vrpn\server_src" /I "..\..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\..\external\pc_win32\include\ghost-stl" /I "..\..\nano\lib\nmReg" /I "..\..\..\lib\nmImageViewer" /I "..\..\nano\lib\nmAux" /I "..\..\nano\lib\nmSEM" /I "..\..\nano\lib\nmAnalyze" /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "..\nano\lib\nmUI" /I "..\nano\lib\nmGraphics" /I "..\..\lib\ImgFormat" /I "..\nano\lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\external\pc_win32\include\ghost-stl" /I "..\nano\lib\nmMScope" /I "..\..\lib\nmMP" /I "..\nano\lib/nmReg" /I "..\..\lib\nmImageViewer" /I "..\nano\lib\nmAux" /I "..\nano\lib\nmSEM" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /FR /YX /FD /GZ /c /Tp
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -74,7 +74,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 oldnames.lib wsock32.lib gdi32.lib comdlg32.lib kernel32.lib kernel32.lib libcpmtd.lib libcimtd.lib libcmtd.lib user32.lib glu32.lib opengl32.lib /nologo /stack:0x1000 /subsystem:console /debug /machine:I386 /nodefaultlib /pdbtype:sept /libpath:"..\..\..\..\..\external\pc_win32\lib"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /stack:0x1000 /subsystem:console /debug /debugtype:coff /machine:I386 /nodefaultlib:"libcmtd" /pdbtype:sept
+# SUBTRACT LINK32 /nodefaultlib
 
 !ENDIF 
 
@@ -259,11 +260,7 @@ SOURCE=..\..\..\..\..\vogl\pc_win32_MTd\vogl.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\..\vrpn\pc_win32_MTd\vrpn.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\..\vrpn\server_src\pc_win32_MTd\vrpn_phantom.lib
+SOURCE=..\..\..\..\..\vrpn\pc_win32\Debug\vrpn.lib
 # End Source File
 # End Group
 # Begin Group "Libraries-Debug"
@@ -602,193 +599,5 @@ SOURCE=..\..\..\..\obj\pc_win32\release\lib\tclLinkVar\tclLinkVar.lib
 # End Source File
 # End Group
 # End Group
-# Begin Source File
-
-SOURCE=.\11nm_dimerWithDNA_try1.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\11nm_dimerWithDNA_try2.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\11nmtip_dimerNewest.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\11nmtip_protein1.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\11nmtip_protein1_x4.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\11nmtip_protein2.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\11nmtip_protein2_try2.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\4.4.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\5nmtip_protein2.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\actualMonomer.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dimerOneSphere.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dimers1.1.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dimers1.2.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dimers1.3.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dimers1.4.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dimers1.5.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dimers1.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dimers2.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dimers3.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dimers4.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dimers5.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\dna2.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\Hong.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\Hong2.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\Hong3.dat
-# End Source File
-# Begin Source File
-
-SOURCE="U:\.cs.unc.edu\proj\stm\src\hilchey\nano\src\app\3d-afmsim\lac-small.dat"
-# End Source File
-# Begin Source File
-
-SOURCE="U:\.cs.unc.edu\proj\stm\src\hilchey\nano\src\app\3d-afmsim\lac-smaller.dat"
-# End Source File
-# Begin Source File
-
-SOURCE=.\linear1.txt
-# End Source File
-# Begin Source File
-
-SOURCE=.\linear2x.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\linear3x.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\linear4x.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\linear5x.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\linear6x.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\linear88.5.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\monomer4nm.txt
-# End Source File
-# Begin Source File
-
-SOURCE=.\nmm_SimulatedMicroscope_Remote.Cdef
-# End Source File
-# Begin Source File
-
-SOURCE=.\nmm_SimulatedMicroscope_Remote.hdef
-# End Source File
-# Begin Source File
-
-SOURCE="U:\.cs.unc.edu\proj\stm\src\hilchey\nano\src\app\3d-afmsim\script.sh"
-# End Source File
-# Begin Source File
-
-SOURCE=.\sphere1.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\sphere2.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\sphere3.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\sphere4.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\sphere5.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\sphere6.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\sphere_output.txt
-# End Source File
-# Begin Source File
-
-SOURCE=.\test.dat
-# End Source File
-# Begin Source File
-
-SOURCE=.\testfile.dat
-# End Source File
 # End Target
 # End Project
