@@ -1,3 +1,8 @@
+2001-06-14  Andrea Hilchey  <hilchey@cs.unc.edu>
+
+	* BCPlane.h:  added "friend class nma_ShapeIdentified" so this class
+		could access _grid
+
 2001-06-05  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmb_Image.h:  

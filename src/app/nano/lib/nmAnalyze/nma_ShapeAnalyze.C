@@ -169,7 +169,7 @@ create_ShapeIdentifiedPlane()
 {
 
   //local variables for code simplification
-  BCGrid* sourcePlaneParentGrid = d_sourcePlane->_grid;
+  BCGrid* sourcePlaneParentGrid = d_sourcePlane->GetGrid();
 
   //check if other plane with name we want to give it is already in the grid
   //see if we can name the new plane with "d_imgMaskFile" as a name, will be NULL if we can
@@ -221,7 +221,7 @@ create_ShapeIdentifiedPlane()
     {
       for( int x = 0; x <= rowlength - 1; x++) 
   	{
-	  d_outputPlane->setValue(x, (columnheight - y),(float)d_cntMask[y*rowlength + x]);  
+	  d_outputPlane->setValue(x, (columnheight - y),(float)(d_cntMask[y*rowlength + x]/255));  
 	  //the array d_cntMask fills from the top down when you "chunk" the array
 	  //into pieces of length rowlength.  However, traditional y values used
 	  //in setValue treat lower valued y's as at the bottom of the image, and

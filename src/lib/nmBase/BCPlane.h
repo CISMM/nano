@@ -32,8 +32,8 @@ class BCPlane
   friend class BCGrid; // BCGrids want access to _next
   friend class TopoFile;
   friend class nmb_ImageGrid; // needs to access _grid
-  friend class nma_ShapeAnalyze;//needs _grid
-  friend class nma_ShapeIdentifiedPlane;//needs _grid
+  //  friend class nma_ShapeAnalyze;//needs _grid
+  //  friend class nma_ShapeIdentifiedPlane;//needs _grid
   public:
 
     inline BCString* name() { return &_dataset; }
@@ -52,6 +52,8 @@ class BCPlane
 		      (maxAttainableValue() - minAttainableValue()));
     }
       ///< Only valid for files, not streams or live devices
+
+    BCGrid * GetGrid(){return _grid;}
 
     double minValue();
     double maxValue();
