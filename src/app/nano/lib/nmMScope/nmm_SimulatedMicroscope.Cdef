@@ -191,7 +191,7 @@ FillDataArray(double*** ArrayToFill,int &xResolution,int &yResolution, float zsc
 
 	for(int y = last_filled_y + 1; y <= last_rcv_y; ++y){
 		for(int x=0; x < xsize; x++ ){
-			(*ArrayToFill)[y][x] = ( DataArray[y][x] - get_zoffset() )/* *zscale */;
+			(*ArrayToFill)[y][x] = ( DataArray[y][x] - get_zoffset() )* zscale;
 			//scale values so within the range used by ArrayToFill
 		}
 		delete [] DataArray[y];
@@ -247,6 +247,7 @@ RECEIVE_MSG OrigScanLineData{
 
 
 	last_rcv_y = y;
+	gettimeofday(&lastfilltime,NULL);//current time
 	scanRcv = true;
 
   	return;

@@ -83,7 +83,7 @@ public:
 	float rot_x,rot_y,rot_z;
 	vrpn_Connection * d_connection;
 	int last_filled_y;		//last row of data filled in from data received from nano
-
+	timeval lastfilltime;	//time last scan line received
 
 private:
 	RECEIVERS_DECL nmm_AFMSIMSERVER_Report ;

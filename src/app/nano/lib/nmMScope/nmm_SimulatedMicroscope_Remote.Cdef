@@ -256,7 +256,7 @@ RECEIVE_MSG WindowLineData {
 			//if(i==0)	cout << DataArray[y][i] << endl;
 		}
 		//
-		//cout << "receiving line " << y << endl;
+		cout << "receiving line " << y << endl;
 		if(DeviceViewPlane){
 			DeviceViewPlane->UpdateDataArray(DataArray[y], y, reports);//send line of data
 		}
