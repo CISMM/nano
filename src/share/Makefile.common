@@ -94,18 +94,10 @@ endif
 # Get my username
 #
 
-ifeq ($(HW_OS),pc_linux)
-   WHOAMI := $(shell /usr/bin/whoami)
+ifeq ($(HW_OS),pc_cygwin)     # This is set up in NT
+   WHOAMI := $(USERNAME)
 else
-   ifeq ($(HW_OS),sparc_solaris)
-      WHOAMI := $(shell /usr/ucb/whoami)
-   else
-      ifeq ($(HW_OS),pc_cygwin)     # This is set up in NT
-         WHOAMI := $(USERNAME)
-      else
-         WHOAMI := $(shell /bin/whoami)
-      endif
-   endif
+   WHOAMI := $(USER)
 endif
 
 ##########################
