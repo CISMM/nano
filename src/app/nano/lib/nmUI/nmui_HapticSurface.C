@@ -18,6 +18,9 @@
 
 #include "microscape.h"  // for directz_force_scale
 
+//JM 
+#include <nmg_haptic_graphics.h>
+
 
 nmui_HapticSurface::nmui_HapticSurface (void) :
     d_distanceFromPlane (0.0) {
@@ -75,6 +78,16 @@ void nmui_HapticSurface::setLocation (double x, double y, double z) {
 
 // virtual
 void nmui_HapticSurface::sendForceUpdate (vrpn_ForceDevice_Remote * device) {
+
+
+    //JM
+    q_vec_type currentPlaneNormalMS;
+    vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
+        
+    haptic_graphics->setFeelPlane(d_handPosMS, currentPlaneNormalMS);
+    
+
+
   if (device) {
     device->set_plane(d_currentPlaneNormal[0],
                       d_currentPlaneNormal[1],
@@ -126,6 +139,40 @@ void nmui_HapticSurface::vectorToTrackerFromWorld (q_vec_type out,
 
   q_xform(out, TrackerFromWorld.rotate, (double *) in);
 }
+
+
+
+//JM from TCH branch 11/02
+// static
+void nmui_HapticSurface::pointToWorldFromTracker (q_vec_type out,
+                                                  const q_vec_type in) {
+  v_xform_type WorldFromTracker;
+
+  v_x_compose(&WorldFromTracker,
+          &v_world.users.xforms[0],
+          &v_users[0].xforms[V_ROOM_FROM_HAND_TRACKER]);
+
+
+  v_x_xform_vector(out, &WorldFromTracker, (double *) in);
+
+}
+
+//JM from TCH branch 11/02
+// static
+void nmui_HapticSurface::vectorToWorldFromTracker (q_vec_type out,
+                                                   const q_vec_type in) {
+  v_xform_type WorldFromTracker;
+
+  v_x_compose(&WorldFromTracker,
+          &v_world.users.xforms[0],
+          &v_users[0].xforms[V_ROOM_FROM_HAND_TRACKER]);
+
+  q_xform(out, WorldFromTracker.rotate, (double *) in);
+}
+
+
+
+
 
 // virtual
 void nmui_HapticSurface::computeDistanceFromPlane (void) {
@@ -277,6 +324,12 @@ void nmui_HSCanned::update (nmb_Dataset * dataset, nmm_Microscope_Remote * scope
                                                 d_planePosPH);
 
   computeDistanceFromPlane();
+
+    //JM
+    q_vec_type currentPlaneNormalMS;
+    vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
+        
+    haptic_graphics->setFeelPlane(d_handPosMS, currentPlaneNormalMS);
 }
 
 

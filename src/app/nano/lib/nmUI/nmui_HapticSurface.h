@@ -73,6 +73,9 @@ class nmui_HapticSurface {
 
     static void pointToTrackerFromWorld (q_vec_type out, const q_vec_type in);
     static void vectorToTrackerFromWorld (q_vec_type out, const q_vec_type in);
+	//JM from TCH branch
+	static void pointToWorldFromTracker (q_vec_type out, const q_vec_type in);
+    static void vectorToWorldFromTracker (q_vec_type out, const q_vec_type in);
 
     virtual void computeDistanceFromPlane (void);
 
@@ -183,21 +186,26 @@ class nmui_HSLivePlane : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSLivePlane ();
-
-    virtual ~nmui_HSLivePlane (void);
-
-    // MANIPULATORS
-
-    virtual void update (nmb_Dataset *, nmm_Microscope_Remote *);
-
+      nmui_HSLivePlane ();
+      
+      virtual ~nmui_HSLivePlane (void);
+      
+      // MANIPULATORS
+      
+      virtual void update (nmb_Dataset *, nmm_Microscope_Remote *);
+      
   protected:
-
-    q_vec_type d_UP;  // would like to be const but can't initialize
-
-    vrpn_bool d_initialized;
-    q_vec_type d_lastPoint;
-    q_vec_type d_lastNormal;
+      
+      
+      //JM from TCH branch 11/02
+      q_vec_type d_lastNormalMS;
+      q_vec_type d_currentPlaneNormalMS;
+      
+      q_vec_type d_UP;  // would like to be const but can't initialize
+      
+      vrpn_bool d_initialized;
+      q_vec_type d_lastPoint;
+      q_vec_type d_lastNormal;
 
 };
 

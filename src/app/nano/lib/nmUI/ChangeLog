@@ -1,3 +1,7 @@
+2002-12-01 Jameson Miller <millerj@cs.unc.edu>
+	* haptic_surface.c - sends data of haptic plane to the graphics so it
+		knows what to draw when drawing haptic plane
+
 2002-10-09  Adam Seeger  <seeger@cs.unc.edu>
 
         * nmui_AFM_SEM_CalibrationUI.C (setTipRenderer): added check 
