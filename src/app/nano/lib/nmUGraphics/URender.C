@@ -131,21 +131,7 @@ int URender::SetTranszAll(void * /*userdata*/) {
 	else return ITER_STOP;
 }
 
-int URender::SetRotxAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class Translating\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetRotyAll(void * /*userdata*/) {	
-	//base class does nothing
-	cerr << "Base class Translating\n";
-	if(recursion) return ITER_CONTINUE; 
-	else return ITER_STOP;
-}
-
-int URender::SetRotzAll(void * /*userdata*/) {	
+int URender::SetRotAll(void * /*userdata*/) {	
 	//base class does nothing
 	cerr << "Base class Translating\n";
 	if(recursion) return ITER_CONTINUE; 

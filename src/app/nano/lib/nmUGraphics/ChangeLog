@@ -1,6 +1,11 @@
 2002-05-13  Andrea Hilchey <hilchey@cs.unc.edu>
 
-	* URPolygon.C : eliminated SetRotxAll, SetRotyAll, and
+	* URender.C,.h : eliminated SetRot*All (* is x y or z) for
+	SetRotAll function
+ 
+2002-05-13  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* URPolygon.C,.h : eliminated SetRotxAll, SetRotyAll, and
 	SetRotzAll functions for general SetRotAll function which
 	takes in all rotation values from tcl menu boxes instead of
 	just x, y, or z and resets all internal rotations from these

@@ -207,9 +207,7 @@ public:
 	virtual int SetTransxAll(void *userdata=NULL);
 	virtual int SetTransyAll(void *userdata=NULL);
 	virtual int SetTranszAll(void *userdata=NULL);
-	virtual int SetRotxAll(void *userdata=NULL);
-	virtual int SetRotyAll(void *userdata=NULL);
-	virtual int SetRotzAll(void *userdata=NULL);
+	virtual int SetRotAll(void *userdata=NULL);
 	virtual int SetColorAll(void *userdata=NULL);
 	virtual int SetAlphaAll(void *userdata=NULL);
 
