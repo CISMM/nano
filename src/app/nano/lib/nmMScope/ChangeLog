@@ -1,3 +1,6 @@
+2002-02-27 David Borland <borland@cs.unc.edu>
+        * Makefile : added nmUGraphics to the libraries
+
 2002 -02-26 Andrea Hilchey <hilchey@cs.unc.edu>
 
 	* nmm_SimulatedMicroscope_Remote.* : changed number of triangles
