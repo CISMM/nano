@@ -1,0 +1,5 @@
+2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
+
+	* warrencntsim.C : replaces redefined assert() with 
+	nmrc_assert() to avoid compile conflicts
+

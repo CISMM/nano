@@ -185,7 +185,7 @@ typedef struct {
 /**************************************************************************************/
 // FUNCTION PROTOYPES
 void   error( char* errMsg );
-void   assert( int condition, char* msg );
+void   nmrc_assert( int condition, char* msg );
 int      streq( char* str1, char* str2 );
 Vec2d   interpolateVecs( Vec2d v0, Vec2d v1, float fraction );
 float   interpolateScalars( float s0, float s1, float fraction );
@@ -2188,7 +2188,7 @@ void analizeScan3Path(void)
 Vec2d
 frontPathQ( void )
 {
-   assert( !emptyPathQ(), "access to empty pathQ" );
+   nmrc_assert( !emptyPathQ(), "access to empty pathQ" );
    return pathQ[0];   // element 0 is front of queue
 }
 
@@ -2207,7 +2207,7 @@ addPointToTipPath( Vec2d vPathPoint )
 void
 pushBackPathQ( Vec2d vPathPoint )
 {
-   assert( pathQSize < MAX_PATHQ, "pathQ overflow" );
+   nmrc_assert( pathQSize < MAX_PATHQ, "pathQ overflow" );
 
    pathQ[ pathQSize ] = vPathPoint;
    pathQSize++;
@@ -2219,7 +2219,7 @@ pushBackPathQ( Vec2d vPathPoint )
 void
 popFrontPathQ( void )
 {
-   assert( !emptyPathQ(), "attempt to pop empty pathQ" );
+   nmrc_assert( !emptyPathQ(), "attempt to pop empty pathQ" );
    for( int i=0; i<pathQSize-1; i++ ) {
       pathQ[i] = pathQ[i+1];
    }
@@ -2266,7 +2266,7 @@ towardVec( Vec2d vTarget, Vec2d vFrom, float speed )
 {
    Vec2d vDelta = vTarget - vFrom;
    float magnitude = sqrt( vDelta.x * vDelta.x  +  vDelta.y * vDelta.y );
-   assert( speed >= 0., "speed must be non-negative" );
+   nmrc_assert( speed >= 0., "speed must be non-negative" );
    speed = min( speed, magnitude );
    return (vDelta / magnitude) * speed;
 }
@@ -2909,9 +2909,9 @@ error( char* errMsg )
 
 /**************************************************************************************/
 // if the condition is not true, invoke error routine with the message msg.
-//   Sample call: assert( 0, "test" );
+//   Sample call: nmrc_assert( 0, "test" );
 void
-assert( int condition, char* msg )
+nmrc_assert( int condition, char* msg )
 {
    if( ! condition )   error( msg );
 }
@@ -3112,7 +3112,7 @@ collisionStuff( void )
       int numSteps;
       if( truncateJumps < 1 )   numSteps = 1;
       else                      numSteps = 1 + truncateJumps;
-      assert( numSteps >= 1, "numSteps: bad value" );
+      nmrc_assert( numSteps >= 1, "numSteps: bad value" );
 
 
       // Draw a line from old pos to new pos.  
@@ -3866,7 +3866,7 @@ slidingCollisionResponse( Vec2d /*vPushPt*/,
       // This ratio is positive, since the numerator and denominator are positive.
       float touchDist = touchDistance( sphereRadius, tubeRadius );
       float ratio = touchDist / distSphereToPivot;
-      assert( ratio >= 0., "slidingCollisionResponse: ratio negative" );
+      nmrc_assert( ratio >= 0., "slidingCollisionResponse: ratio negative" );
 
       if( ratio > 1. ) {
          // In this case, no rotation around S can get the tube out of contact
@@ -4402,7 +4402,7 @@ int
 newSegmentedTube( int numSegments, float bendAngle, 
               float segmentLength, float segmentWidth, Vec2d vEndpoint  )
 {
-   assert( numSegments >= 1, "numSegments must be >= 1" );
+   nmrc_assert( numSegments >= 1, "numSegments must be >= 1" );
    if( numObs + numSegments >= MAXOB ) {
       printf( "No obs left.\n" );
       return NULLOB;
@@ -4533,7 +4533,7 @@ showGrid( void )
    lighting();
    setColor( GREEN );
 #ifndef NMRC_LIB
-   assert( gridSize < MAX_GRID, "gridSize too big" );
+   nmrc_assert( gridSize < MAX_GRID, "gridSize too big" );
 #endif
 #ifndef NMRC_LIB
    for( int i=0; i<gridSize-1; i++ ) {
