@@ -1,6 +1,16 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <malloc.h>
+#include <math.h>
+#include <vector.h>					// ghost-stl vector
 #include "URender.h"
 #include "WaveFrontFileGenerator.h"
-#include <string.h>
+
+// Heavily updated by Borland 1/18/02
+// Should be much more robust now, and handle
+// objects with polygons of an abritrary degree--
+// not just triangles.
+
 
 #ifdef __CYGWIN__
 // XXX juliano 9/19/99
@@ -12,9 +22,50 @@ pid_t getpid();
 }
 #endif
 
-void BuildList(ifstream& in, URender *Pobject,GLuint dl, double *vx, double *vy, double *vz,
-					      double *vnx, double *vny, double *vnz,
-					      double *vt_u, double *vt_v);
+#define MAXLENGTH 512		// buffer size
+
+#define INVERT_NORMALS 1	// determines whether or not to 
+							// invert the normals (CW vs CCW)
+							// should be a user-controlled setting, 
+							// but works for now
+
+
+
+
+// auxilliary data structures
+typedef vector<float> vertex;
+
+typedef struct {
+	vector<int> index;
+	vector<int> vert_tex;
+	vector<int> vert_norm;
+
+	vertex norm;		// face normal
+} face;
+
+typedef struct {
+	char name[32];
+	vector<int> faces;	//face indeces
+} group;
+
+typedef struct {		
+	vector<int> faces;		// tells which faces each vertex is incident upon
+							// used for calculating normals
+} back_point;
+
+
+
+
+
+
+
+
+void BuildList(URender *Pobject, GLuint dl, 
+			   vector<vertex> verts, 
+			   vector<vertex> texts, 
+			   vector<vertex> norms, 
+			   vector<face> faces, 
+			   group* g);
 
 
 WaveFrontFileGenerator::WaveFrontFileGenerator(const char *fname)
@@ -28,245 +79,443 @@ int WaveFrontFileGenerator::ReLoad(URender *Pobject, GLuint *&Dlist_array)
 }
 
 
-//This function reads a wavefront object file  -- though a limited subset
-//it does only tri and quad face configurations 
-// the f,v,vn,vt tags and the g object tag
-// it will create an openGL display list for each logical object
-// as defined by the 'g' tag
-int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
-{
-        char buf[500];
-        ifstream readfile;  int i;
-
-	double *vx, *vy, *vz;		//vertex position      
-	double *vt_u, *vt_v;            //texture coords
-	double *vnx, *vny, *vnz;  	//vertex normals
-
-        long vc,vnc,vtc;
-        long facecount;
-	long objcount;
-        long vertcount;
-	char **objname;
-        GLuint dl;
-
-        //open Data file
-        readfile.open(filename);
-        assert(readfile);
-
-        if(readfile.bad()){
-                cerr << "Unable to open input file " << buf << "\n";
-                return 0;
-
-        }
-
-        //PHASE 1:    scan file to get vertex counts and facecounts
-	objcount=0;facecount=0;
-        vertcount=0;i=-1;
-        vc=vnc=vtc=0;
-        while(!readfile.eof()){
-                readfile.getline(buf,500);
-                if(buf[0]=='v' && buf[1]==' ') vertcount++;
-                else if(buf[0]=='g') objcount++;
-                else if(buf[0]=='v' && buf[1]=='t') vtc++;
-                else if(buf[0]=='v' && buf[1]=='n') vnc++;
-                else if(buf[0]=='f') facecount++;
-                buf[0]='\0';
-        }
-        if(vnc>vertcount) vertcount=vnc;
-        if(vtc>vertcount)vertcount=vtc;
-
-	//reset to beginning of file
-        readfile.seekg(0,ios::beg);
-        readfile.clear();
-
-        //allocate data structures
-        vx=new double[vertcount];
-        vy=new double[vertcount];
-        vz=new double[vertcount];
-        vt_u=new double[vertcount];
-        vt_v=new double[vertcount];
-        vnx=new double[vertcount];
-        vny=new double[vertcount];
-        vnz=new double[vertcount];
-	objname=new char*[objcount];
-        if(!(vx && vy && vz && vt_u && vt_v && vnx && vny && vnz && objcount)){
-                cerr << "Unable to allocate sufficient memory store for WAVEFRONT file\n";
-		//kill(getpid(),SIGINT);
-		return 0;
-        }
 
 
-	//PHASE 2: store the vertex positions normals and texture coordinates
-        i=-1;     
-	//count for which object I'm on -- expect g <objname> to be first thing in a file
-        vc=vnc=vtc=0;   //counters for how many vertexes,normals, and tex coord encountered
-        while(!readfile.eof()){
-                readfile.getline(buf,500);
-                if(buf[0]=='g'){
-                        i++;
-                        objname[i]=new char[strlen(buf)+1];
-                        if(objname[i]==NULL){
-                                cerr << "Error allocating objectname\n";
-                                //kill(getpid(),SIGINT);
-				return 0;
-                        }
-                        strcpy(objname[i],buf+2);
-                }
-                else if(buf[0]=='v' && buf[1]==' '){
-                        sscanf(buf,"v %lf %lf %lf",vx+vc,vy+vc,vz+vc);
-                        vc++;
-                }
-                else if(buf[0]=='v' && buf[1]=='t'){
-                        sscanf(buf,"vt %lf %lf",vt_u+vtc,vt_v+vtc);
-                        vtc++;
-                }
-                else if(buf[0]=='v' && buf[1]=='n'){
-                        sscanf(buf,"vn %lf %lf %lf",vnx+vnc,vny+vnc,vnz+vnc);
-                        vnc++;
-                }
-                else if(buf[0]=='f'){
-                        //skip f lines in your counting... get it on the next pass
-                }
 
-                else{
-                        cerr << "Unexpected token -- " << buf << "\n";
-                }
-        }
+void strip_line(char* string) {
+  char *c;
+  if (!isalnum(*string)) return;
+  c = string + strlen(string);
+  while (!isalnum(*c) && c > string) c--;
+  *++c = '\n';
+}
 
-	//reset file ptr
-        readfile.seekg(0,ios::beg);
-        readfile.clear();
+void calc_face_norm(vector<vertex> verts, face& f) {
+	float temp[4], v1[4], v2[4];
+	int i;
 
-	//set up display list id's
-	Dlist_array=new GLuint[objcount];
-        dl=glGenLists(objcount);
-        if(dl==0 || Dlist_array==NULL){ cerr << "Bad Display List generation\n"; 
-        //kill(getpid(),SIGINT); 
-                   return 0;
+	for (i = 0; i < 3; i++) {
+		temp[i] = verts[f.index[2] - 1][i] - verts[f.index[1] - 1][i];
 	}
 
-	//TO OPTIMIZE: could do some normal smoothing operations here, or 
-	//vertex removal
-	//perhaps try vertex array extension since the data is nominally in 
-	//that format anyway
+	for (i = 0; i < 3; i++) {
+		v1[i] = temp[i];
+	}
+  
+	for (i = 0; i < 3; i++) {
+		temp[i] = verts[f.index[0] - 1][i] - verts[f.index[2] - 1][i];
+	}
+  
+	for (i = 0; i < 3; i++) {
+		v2[i] = temp[i];
+	}
 
-        for(i=0; i < objcount;i++){
+	// take the cross-product of v1 and v2
+	temp[0] = v1[1] * v2[2] - v1[2] * v2[1];
+	temp[1] = v1[2] * v2[0] - v1[0] * v2[2];
+	temp[2] = v1[0] * v2[1] - v1[1] * v2[0];
+	
+	// normalize
+	float length;
+	length = sqrt(temp[0] * temp[0] + temp[1] * temp[1] + temp[2] * temp[2]);
+	// check for divide by zero
+	if (length == 0.000000) length = 0.000001;
+	for (i = 0; i < 3; i++) {
+		f.norm.push_back(temp[i] / length);
+	}
+	f.norm.push_back(1.0);
+}
+
+void calc_vertex_norms(vector<vertex> verts, 
+					   vector<back_point> back_points,
+					   vector<vertex>& norms,
+					   vector<face>& faces) {
+	int i, j, k;
+	float v[4];
+	vector<float> n;
+
+	for (i = 0; i < verts.size(); i++) {
+		n.clear();
+		v[0] = 0.0; v[1] = 0.0; v[2] = 0.0; v[3] = 1.0;
+		for (j = 0; j < back_points[i].faces.size(); j++) {
+			for (k = 0; k < 3; k++) {
+				v[k] += faces[back_points[i].faces[j] - 1].norm[k];
+			}
+		}
+		// normalize
+		float length;
+		length = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+
+		// check for divide by zero
+		if (length == 0.000000) length = 0.000001;
+		for (k = 0; k < 3; k++) {
+			v[k] /= length;
+			n.push_back(v[k]);
+		}
+		n.push_back(1.0);
+		norms.push_back(n);
+	}
+
+	for (i = 0; i < faces.size(); i++) {
+		for (j = 0; j < faces[i].index.size(); j++) {
+			faces[i].vert_norm.push_back(faces[i].index[j]);
+		}
+    }
+}
+
+
+
+
+//This function reads a wavefront object file
+// it will create an openGL display list for each logical object
+int WaveFrontFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
+{
+    char buffer[MAXLENGTH];
+	ifstream readfile;
+
+	vertex v;
+	back_point b;
+	face f;
+	group g;
+
+	vector<vertex> verts;				//vertex position   
+	vector<back_point> back_points;		//back pointers (one entry per vertex)
+	vector<vertex> texts;				//texture coords
+	vector<vertex> norms;				//vertex normals
+	vector<face> faces;					//faces
+	vector<group> groups;				//groups
+
+    char *buf, *val;
+	int i, j, flag;
+	int current_group = 0;
+	GLuint dl;
+
+	g.name[0] = '\0';
+
+
+	readfile.open(filename);
+    assert(readfile);
+
+    if(readfile.bad()) {
+		cerr << "Unable to open input file" << endl;
+        return 0;
+    }
+	while(!readfile.eof()) {
+		readfile.getline(buffer, MAXLENGTH);
+		strip_line(buffer);
+		v.clear();
+
+// comment
+
+		if (*buffer == '#') {
+			// do nothing
+		}
+
+// vertex command
+
+		else if (buffer[0] == 'v' && buffer[1] == ' ') {
+			buf = val = buffer;
+			flag = 1;
+
+
+
+			// find floating point values
+			for (i = 0; i < 4; i++) {
+				while (isspace(*++buf)) {}
+				val = buf;
+				while (!isspace(*++val)) {}
+				if (*val == '\n') flag = 0;
+				*val = '\0';
+				v.push_back(atof(buf));
+				buf = val;
+
+				if (!flag) break;
+			}
+
+			// if less than 4 floating point values given fill with zero
+			if (i < 3) {
+				for (j = i + 1; j < 3; j++) {
+					v.push_back(0.0);
+				}
+				v.push_back(1.0);
+			}
+			// add to the vertex list
+			verts.push_back(v);
+			// add to the backpointer list
+			back_points.push_back(b);
+		}
+
+// texture vertex command
+
+		else if (buffer[0] == 'v' && buffer[1] == 't') {
+			buf = val = buffer + 1;
+
+			flag = 1;
+
+			// find floating point values
+			for (i = 0; i < 3; i++) {
+				while (isspace(*++buf)) {}
+				val = buf;
+				while (!isspace(*++val)) {}
+				if (*val == '\n') flag = 0;
+				*val = '\0';
+				v.push_back(atof(buf));
+				buf = val;
+
+				if (!flag) break;
+			}
+
+			// fill missing parameters with zero if necessary 
+			if (i == 0 || i == 1) v.push_back(0.0);
+
+			v.push_back(1.0);
+			
+			// add to the texture vertex list
+			texts.push_back(v);
+		}
+
+// vertex normal command
+
+		else if (buffer[0] == 'v' && buffer[1] =='n') {
+			buf = val = buffer + 1;
+			flag = 1;
+
+			// find floating point values
+			for (i = 0; i < 3; i++) {
+				while (isspace(*++buf)) {}
+				val = buf;
+				while (!isspace(*++val)) {}
+				if (*val == '\n') flag = 0;
+				*val = '\0';
+				v.push_back(atof(buf));
+				buf = val;
+
+				if (!flag) break;
+			}
+
+			v.push_back(1.0);
+			norms.push_back(v);
+		}
+
+// new group command 
+
+		else if (buffer[0] == 'g' && buffer[1] == ' ') {
+			if (verts.size() != 0) {
+				buf = buffer;
+				while (isspace(*++buf)) {}
+				val = buf;
+				while (*++val != '\n') {}
+				*val = '\0';
+
+				// search for this name
+				flag = 0;
+				for (i = 0; i < groups.size(); i++) {
+					if (strcmp(buf, groups[i].name) == 0) {
+						// group already exists.  add to it
+						current_group = i;
+						flag = 1;
+					}
+				}
+
+				if (!flag) {
+					// new group
+					strcpy(g.name, buf);
+					groups.push_back(g);
+
+ 					current_group = groups.size() - 1;
+				}
+			}
+		}
+
+// face command
+
+		else if (buffer[0] == 'f') {
+			// add new face
+			faces.push_back(f);
+
+			buf = val = buffer;
+			flag = 1;
+
+			// find the integer values
+			while (1) {
+				while (isspace(*++buf)) {}
+				val = buf;
+				while (isdigit(*++val)) {}
+				if (*val == '\n') flag = 0;
+				else if (*val == '/') flag = 2;
+				*val = '\0';
+				
+				// convert string to integer
+				i = atoi(buf);
+
+				// add vertex to face's index list 
+				faces.back().index.push_back(i);
+
+	            // add vertex-face back pointer
+				back_points[i - 1].faces.push_back(faces.size());
+
+				if (flag == 2) {
+					// check for vt
+					buf = val + 1;
+					if (isdigit(*buf)) {
+						// has vt 
+						while (isdigit(*++val)) {}
+						if (*val == '\n') flag = 0;
+						else if (*val == '/') flag = 3;
+						*val = '\0';
+
+						// convert string to integer
+						i = atoi(buf);
+
+						// add vert_tex to face's vert_tex list 
+						faces.back().vert_tex.push_back(i);
+
+						// check for vn
+						if (flag == 3) {
+							// has vn 
+							buf = val + 1;
+							while (isdigit(*++val)) {}
+							if (*val == '\n') flag = 0;
+							*val = '\0';
+							
+							// convert string to integer
+							i = atoi(buf);
+
+							// add vert_norm to face's vert_norm list
+							faces.back().vert_norm.push_back(i);
+						}
+					}
+					else {
+						// no vt, only vn 
+						val = ++buf;
+						while (isdigit(*++val)) {}
+						if (*val == '\n') flag = 0;
+						*val = '\0';
+					
+						// convert string to integer
+						i = atoi(buf);
+
+						// add vert_norm to face's vert_norm list
+						faces.back().vert_norm.push_back(i);
+					}
+				}
+
+				buf = val;
+
+				if (!flag) break;
+			}
+
+			// calculate face normal
+			calc_face_norm(verts, faces.back());
+			
+			// if no group has been specified, create group 
+			if (groups.size() == 0) {
+				strcpy(g.name, "group_1");
+				current_group = 0;
+				groups.push_back(g);
+			}
+
+			// add face number to group face list
+			groups[current_group].faces.push_back(faces.size() - 1);
+ 		}
+
+// group command
+
+		else if (buffer[0] = 'g' && buffer[1] == 'r') {
+			buf = buffer + 4;
+			while (isspace(*++buf)) {}
+			val = buf;
+			while (*++val != '\n') {}
+			*val = '\0';
+			for (i = 0; i < groups.size(); i++) {
+				if (strcmp(groups[i].name, buf) == 0) current_group = i;
+			}
+		}
+	} 
+
+	// calculate vertex normals if not given explicitly in file
+	if (norms.size() == 0) {
+		calc_vertex_norms(verts, back_points, norms, faces);
+	}
+
+	// invert normals if wanted
+	if (INVERT_NORMALS) {
+		for (i = 0; i < norms.size(); i++) {
+			for (j = 0; j < 3; j++) {
+				norms[i][j] *= -1.0;
+			}
+		}
+	}
+
+
+	//set up display list id's
+	Dlist_array = new GLuint[groups.size()];
+    dl = glGenLists(groups.size());
+    if(dl == 0 || Dlist_array == NULL) { 
+		cerr << "Bad Display List generation\n"; 
+        //kill(getpid(),SIGINT); 
+        return 0;
+	}
+
+	for(i = 0; i < groups.size(); i++){
 		//BuildList actually builds the geometry from
 		//the data structures previously built
-                BuildList(readfile,Pobject,dl+i,vx,vy,vz,vnx,vny,vnz,vt_u,vt_v);
-		//it will modify the readfile file ptr location as a side effect
-		//which *should* leave it in an appropriate place for the next
-		//object to be built
-		Dlist_array[i]=dl+i;
-        }
+        BuildList(Pobject, dl + i, verts, texts, norms, faces, &groups[i]);
+		Dlist_array[i] = dl + i;
+	}
 
-	//clean up after myself
-        delete []vx, delete []vy; delete []vz;
-        delete []vnx; delete []vny; delete []vnz;
-        delete []vt_u; delete []vt_v;
-        readfile.close();
+	readfile.close();
 
-        return objcount;
+	return groups.size();
 }
 
-void BuildList(ifstream& in, URender *Pobject,GLuint dl, double *vx, double *vy, double *vz,
-					      double *vnx, double *vny, double *vnz,
-					      double *vt_u, double *vt_v)
-{
-        int mode=0;             //mode=0 uninitialized, 1=triangles, 2=quads
-        char buf[200];
-        char sbuf1[30],sbuf2[30],sbuf3[30],sbuf4[30];
-        int j;
-        long id1,id2,id3;
 
-	//mode bit is used to track if I am processing a quad or a triangle
-	//and to glBegin/End the appropriate type when necessary
+  
 
+void BuildList(URender *Pobject, GLuint dl, 
+				vector<vertex> verts, 
+				vector<vertex> texts, 
+				vector<vertex> norms,
+				vector<face> faces, 
+				group* g) {
+        
+	face* f;
+	float v[4];
 
-	//file structure should be  
-	// g <name>
-	// v <x> <y> <z>
-	//	.
-	//	.
-	// vt <u> <v>		(these can be any order)
-	//	.
-	//	.
-	// vn <nx> <ny> <nz>
-	//	.
-	// 	.
-	// f A/B/C D/E/F G/H/I	(A-I are indexes into the v,vt,vn arrays)
-	//      . 
-	//	.
-	//      .
-	// g <name>
-	//      . 
-	//	.
-	//      .
-
-        //seek to a face group marked with an 'f' tag
-        buf[0]='\0';
-        while(buf[0]!='f' && !in.eof()) in.getline(buf,100);
-
-        glNewList(dl,GL_COMPILE);	//init display list
-        while(buf[0]=='f' && !in.eof()){
-                j=sscanf(buf,"f %s %s %s %s",sbuf1,sbuf2,sbuf3,sbuf4);
-                if(j==3){
-                        if(mode==0){glBegin(GL_TRIANGLES); mode=1;}
-                        else if(mode==2){glEnd();glBegin(GL_TRIANGLES);mode=1;}
-                        sscanf(sbuf1,"%ld/%ld/%ld",&id1,&id2,&id3);                     //vertex 1
-                        glNormal3f(vnx[id3-1],vny[id3-1],vnz[id3-1]);
-                        glTexCoord2d(vt_u[id2-1],vt_v[id2-1]);
-                        glVertex3d(vx[id1-1],vy[id1-1],vz[id1-1]);
-                        Pobject->UpdateBoundsWithPoint(vx[id1-1],vy[id1-1],vz[id1-1]);
-                        sscanf(sbuf2,"%ld/%ld/%ld",&id1,&id2,&id3);                     //vertex 2
-                        glNormal3f(vnx[id3-1],vny[id3-1],vnz[id3-1]);
-                        glTexCoord2d(vt_u[id2-1],vt_v[id2-1]);
-                        glVertex3d(vx[id1-1],vy[id1-1],vz[id1-1]);
-                        Pobject->UpdateBoundsWithPoint(vx[id1-1],vy[id1-1],vz[id1-1]);
-                        sscanf(sbuf3,"%ld/%ld/%ld",&id1,&id2,&id3);                     //vertex 3
-                        glNormal3f(vnx[id3-1],vny[id3-1],vnz[id3-1]);
-                        glTexCoord2d(vt_u[id2-1],vt_v[id2-1]);
-                        glVertex3d(vx[id1-1],vy[id1-1],vz[id1-1]);
-                        Pobject->UpdateBoundsWithPoint(vx[id1-1],vy[id1-1],vz[id1-1]);
-                }
-                else if(j==4){
-                        if(mode==0){glBegin(GL_QUADS);mode=2;}
-                        if(mode==1){glEnd();glBegin(GL_QUADS);mode=2;}
-
-                        sscanf(sbuf1,"%ld/%ld/%ld",&id1,&id2,&id3);                     //vertex 1
-                        glNormal3f(vnx[id3-1],vny[id3-1],vnz[id3-1]);
-                        glTexCoord2d(vt_u[id2-1],vt_v[id2-1]);
-                        glVertex3d(vx[id1-1],vy[id1-1],vz[id1-1]);
-                        Pobject->UpdateBoundsWithPoint(vx[id1-1],vy[id1-1],vz[id1-1]);
-
-                        sscanf(sbuf2,"%ld/%ld/%ld",&id1,&id2,&id3);                     //vertex 2
-                        glNormal3f(vnx[id3-1],vny[id3-1],vnz[id3-1]);
-                        glTexCoord2d(vt_u[id2-1],vt_v[id2-1]);
-                        glVertex3d(vx[id1-1],vy[id1-1],vz[id1-1]);
-                        Pobject->UpdateBoundsWithPoint(vx[id1-1],vy[id1-1],vz[id1-1]);
-
-                        sscanf(sbuf3,"%ld/%ld/%ld",&id1,&id2,&id3);                     //vertex 3
-                        glNormal3f(vnx[id3-1],vny[id3-1],vnz[id3-1]);
-                        glTexCoord2d(vt_u[id2-1],vt_v[id2-1]);
-                        glVertex3d(vx[id1-1],vy[id1-1],vz[id1-1]);
-                        Pobject->UpdateBoundsWithPoint(vx[id1-1],vy[id1-1],vz[id1-1]);
-
-                        sscanf(sbuf4,"%ld/%ld/%ld",&id1,&id2,&id3);                     //vertex 4
-                        glNormal3f(vnx[id3-1],vny[id3-1],vnz[id3-1]);
-                        glTexCoord2d(vt_u[id2-1],vt_v[id2-1]);
-                        glVertex3d(vx[id1-1],vy[id1-1],vz[id1-1]);
-                        Pobject->UpdateBoundsWithPoint(vx[id1-1],vy[id1-1],vz[id1-1]);
-                }
-                else{
-                        cerr << "Unexpected number of points in face\n";
-                }
-                in.getline(buf,200);
-        }
-        glEnd();
-        glEndList();
-        return;
-
+    glNewList(dl, GL_COMPILE);	//init display list
+	for (int i = 0; i < g->faces.size(); i++) {
+		f = &faces[g->faces[i]];
+		glBegin(GL_POLYGON);
+		for (int j = 0; j < f->index.size(); j++) {
+			if (j < f->vert_norm.size()) {
+				// give GL the vertex normals
+				// GL needs an array, not a vector
+				for (int k = 0; k < 4; k++) {
+					v[k] = norms[f->vert_norm[j] - 1][k];
+				}
+				glNormal3fv(v);
+			}
+			if (j < f->vert_tex.size()) {
+				// give GL the texure coordinates
+				// GL needs an array, not a vector
+				for (int k = 0; k < 4; k++) {
+					v[k] = texts[f->vert_tex[j] - 1][k];
+				}
+				glTexCoord2fv(v);
+			}
+			// give GL the vertex
+			// GL needs an array, not a vector
+			for (int k = 0; k < 4; k++) {
+				v[k] = verts[f->index[j] - 1][k];
+			}
+            glVertex4fv(v);
+			Pobject->UpdateBoundsWithPoint(v[0], v[1], v[2]);
+		}						
+		glEnd();
+	}
+	glEndList();
 }
+
 
 
 
