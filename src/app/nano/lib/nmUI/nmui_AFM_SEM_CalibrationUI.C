@@ -1,5 +1,6 @@
 #include <GL/glut_UNC.h>
 #include "nmui_AFM_SEM_CalibrationUI.h"
+#include "error_display.h"
 
 nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
     nmr_Registration_Proxy *aligner,
@@ -38,12 +39,15 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
 	d_semImageAcquiredSinceLastAdd(vrpn_FALSE),
 	d_calibration(NULL),
 	d_surfaceModelRenderer(),
+	d_textureProjectionDirectionRenderer(),
 	d_world(world),
 	d_textureDisplay(textureDisplay),
 	d_surfaceStride(3),
 	d_heightField(NULL),
 	d_heightFieldNeedsUpdate(vrpn_TRUE),
-    d_tipRenderer(NULL)
+    d_tipRenderer(NULL),
+    d_testImageWinCreated(false),
+	d_testImageWinNeedsUpdate(false)
 {
   d_tipPosition[0] = 0;
   d_tipPosition[1] = 0;
@@ -93,6 +97,8 @@ nmui_AFM_SEM_CalibrationUI::nmui_AFM_SEM_CalibrationUI(
 
   if (d_world) {
 	d_world->TAddNode(&d_surfaceModelRenderer, "AFM-SEM Surface Model");
+	d_world->TAddNode(&d_textureProjectionDirectionRenderer, 
+                          "AFM-SEM Texture Projection Direction");
   }
   d_surfaceModelRenderer.SetProjTexture(&d_SEMTexture);
 }
@@ -134,7 +140,11 @@ void nmui_AFM_SEM_CalibrationUI::changeDataset(nmb_ImageManager *dataset)
 		d_modelToSEM_modelImage = 
 			d_dataset->dataImages()->getImageByName(
 							d_modelToSEM_modelImageName.string());
-		d_surfaceModelRenderer.setSurface(d_modelToSEM_modelImage, d_surfaceStride);
+		double xmin, ymin, xmax, ymax;
+		d_modelToSEM_modelImage->getWorldRectangle(xmin, ymin, xmax, ymax);
+		d_surfaceModelRenderer.setSurface(d_modelToSEM_modelImage, 
+			xmin, ymin, xmax, ymax,
+			d_surfaceStride);
 		d_modelToSEM_SEMImage = 
 			d_dataset->dataImages()->getImageByName(
                             d_modelToSEM_SEMImageName.string());
@@ -146,33 +156,25 @@ void nmui_AFM_SEM_CalibrationUI::changeDataset(nmb_ImageManager *dataset)
 	}
 }
 
-void nmui_AFM_SEM_CalibrationUI::createTestImages(double *SEM_from_AFM_matrix, double *AFM_from_model_matrix)
+int nmui_AFM_SEM_CalibrationUI::testImageWindowDisplayHandler
+		(const ImageViewerDisplayData &data, void *ud)
 {
-	clearFreePoints();
-	clearContactPoints();
-	/* 
-	Creates a separate graphics context be creating a new window
-	and draws everything into that so we don't need to worry about
-	GL state in windows being used for other stuff. 
-	The window is destroyed at the end after the pixels have been 
-	transferred to main memory.
-	*/
-	ImageViewer *imageViewer = ImageViewer::getImageViewer();
-    char *display_name;
-    display_name = (char *)getenv("V_X_DISPLAY");
-    if (!display_name) {
-       display_name = (char *)getenv("DISPLAY");
-       if (!display_name) {
-          display_name = "unix:0";
-       }
-    }
-	int renderWindowID = 
-		imageViewer->createWindow(display_name, 10, 10, 500, 500, "modelRender");
+    nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
+	int result = me->drawTestImages(data);
+	return result;
+}
 
-	imageViewer->setGraphicsContext(renderWindowID);
+int nmui_AFM_SEM_CalibrationUI::drawTestImages(const ImageViewerDisplayData &data)
+{
+	if (!d_testImageWinNeedsUpdate) {
+		return 0;
+	}
+	d_testImageWinNeedsUpdate = false;
+    ImageViewer *imageViewer = ImageViewer::getImageViewer();
+	imageViewer->setGraphicsContext(data.winID);
 
 	glDrawBuffer(GL_BACK);
-	glViewport(0, 0, 500, 500);
+	glViewport(0, 0, data.winWidth, data.winHeight);
 	glClearColor(0,0,0,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_PROJECTION);
@@ -189,8 +191,8 @@ void nmui_AFM_SEM_CalibrationUI::createTestImages(double *SEM_from_AFM_matrix, d
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
-	glLoadMatrixd(SEM_from_AFM_matrix);
-	glMultMatrixd(AFM_from_model_matrix);
+	glLoadMatrixd(d_SEMfromAFM_test);
+	glMultMatrixd(d_AFMfromModel_test);
 
 	double matrix[16];
 	glGetDoublev(GL_MODELVIEW_MATRIX, matrix);
@@ -199,16 +201,19 @@ void nmui_AFM_SEM_CalibrationUI::createTestImages(double *SEM_from_AFM_matrix, d
 	temp.setMatrix(matrix);
 	temp.print();
 
+	double minX, minY, maxX, maxY;
+	d_modelToSEM_modelImage->getWorldRectangle(minX, minY, maxX, maxY);
 	d_surfaceModelRenderer.renderWithoutDisplayList(
-		d_modelToSEM_modelImage, 2);
+		d_modelToSEM_modelImage, minX, minY, maxX, maxY, 2);
 	glPopMatrix();
 
 	glReadBuffer(GL_BACK);
 	nmb_Image *image = NULL;
 	char imageName[128];
 	sprintf(imageName, "simulated_SEM_for_%s", d_modelToSEM_modelImage->name()->c_str());
-	image = new nmb_ImageArray(imageName, "units", 500, 500,
+	image = new nmb_ImageArray(imageName, "units", data.winWidth, data.winHeight,
 			NMB_FLOAT32);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glPixelStorei(GL_PACK_SKIP_PIXELS, image->borderXMin());
 	glPixelStorei(GL_PACK_SKIP_ROWS, image->borderYMin());
 	glPixelStorei(GL_PACK_ROW_LENGTH, 
@@ -218,11 +223,13 @@ void nmui_AFM_SEM_CalibrationUI::createTestImages(double *SEM_from_AFM_matrix, d
 	d_dataset->dataImages()->addImage(image);
 
 	nmb_TransformMatrix44 SEM_from_AFM;
-	SEM_from_AFM.setMatrix(SEM_from_AFM_matrix);
+	SEM_from_AFM.setMatrix(d_SEMfromAFM_test);
 	nmb_TransformMatrix44 AFM_from_model;
-	AFM_from_model.setMatrix(AFM_from_model_matrix);
+	AFM_from_model.setMatrix(d_AFMfromModel_test);
 
 	double maxIntensity = image->maxValue();
+	double minIntensity = image->minValue();
+	double tipIntensity = 0.5*(maxIntensity + minIntensity);
 	//printf("createTestImage: min = %g, max = %g\n",
 	//	image->minValue(), image->maxValue());
 	
@@ -275,13 +282,13 @@ void nmui_AFM_SEM_CalibrationUI::createTestImages(double *SEM_from_AFM_matrix, d
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
-		glLoadMatrixd(SEM_from_AFM_matrix);
-		glMultMatrixd(AFM_from_model_matrix);
+		glLoadMatrixd(d_SEMfromAFM_test);
+		glMultMatrixd(d_AFMfromModel_test);
 		d_surfaceModelRenderer.renderWithoutDisplayList(
-			d_modelToSEM_modelImage, 2);
+			d_modelToSEM_modelImage, minX, minY, maxX, maxY, 2);
 		glPopMatrix();
 
-		glColor4f(maxIntensity, 1.0, 1.0, 1.0);
+		glColor4f(tipIntensity, 1.0, 1.0, 1.0);
 		glBegin(GL_TRIANGLES);
 		glVertex3d(sem_cont_pnt[pntIndex][0], sem_cont_pnt[pntIndex][1], sem_cont_pnt[pntIndex][2]);
 		glVertex3d(sem_cont_pnt[pntIndex][0]-0.3, sem_cont_pnt[pntIndex][1]+1.0, sem_cont_pnt[pntIndex][2]);
@@ -301,13 +308,13 @@ void nmui_AFM_SEM_CalibrationUI::createTestImages(double *SEM_from_AFM_matrix, d
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
-		glLoadMatrixd(SEM_from_AFM_matrix);
-		glMultMatrixd(AFM_from_model_matrix);
+		glLoadMatrixd(d_SEMfromAFM_test);
+		glMultMatrixd(d_AFMfromModel_test);
 		d_surfaceModelRenderer.renderWithoutDisplayList(
-			d_modelToSEM_modelImage, 2);
+			d_modelToSEM_modelImage, minX, minY, maxX, maxY, 2);
 		glPopMatrix();
 
-		glColor4f(maxIntensity, 1.0, 1.0, 1.0);
+		glColor4f(tipIntensity, 1.0, 1.0, 1.0);
 		glBegin(GL_TRIANGLES);
 		glVertex3d(sem_free_pnt[pntIndex][0], sem_free_pnt[pntIndex][1], sem_free_pnt[pntIndex][2]);
 		glVertex3d(sem_free_pnt[pntIndex][0]-0.3, sem_free_pnt[pntIndex][1]+1.0, sem_free_pnt[pntIndex][2]);
@@ -322,7 +329,45 @@ void nmui_AFM_SEM_CalibrationUI::createTestImages(double *SEM_from_AFM_matrix, d
 		addFreePoint(afm_free_pnt[pntIndex], sem_free_pnt[pntIndex], image);
 	}
 
-	imageViewer->destroyWindow(renderWindowID);
+	return 0;
+}
+
+void nmui_AFM_SEM_CalibrationUI::createTestImages()
+{
+	clearFreePoints();
+	clearContactPoints();
+
+	d_testImageWinNeedsUpdate = true;
+	ImageViewer *imageViewer = ImageViewer::getImageViewer();
+	if (d_testImageWinCreated) {
+		imageViewer->dirtyWindow(d_testImageWinID);
+		return;
+	}
+	/* 
+	Creates a separate graphics context be creating a new window
+	and draws everything into that so we don't need to worry about
+	GL state in windows being used for other stuff. 
+	The window is destroyed at the end after the pixels have been 
+	transferred to main memory.
+	*/
+    char *display_name;
+    display_name = (char *)getenv("V_X_DISPLAY");
+    if (!display_name) {
+       display_name = (char *)getenv("DISPLAY");
+       if (!display_name) {
+          display_name = "unix:0";
+       }
+    }
+	d_testImageWinID = 
+		imageViewer->createWindow(display_name, 10, 10, 500, 500, "modelRender");
+
+
+	imageViewer->setWindowDisplayHandler(d_testImageWinID, 
+		testImageWindowDisplayHandler, this);
+
+
+	imageViewer->showWindow(d_testImageWinID);
+	d_testImageWinCreated = true;
 }
 
 void nmui_AFM_SEM_CalibrationUI::addContactPoint(
@@ -627,8 +672,24 @@ void nmui_AFM_SEM_CalibrationUI::handle_modelToSEM_model_change(
 	if (me->d_dataset) {
 		me->d_modelToSEM_modelImage = 
 			me->d_dataset->dataImages()->getImageByName(name);
-		me->d_surfaceModelRenderer.setSurface(me->d_modelToSEM_modelImage, 
+		double modelMinX, modelMinY, modelMaxX, modelMaxY;
+		me->d_modelToSEM_modelImage->getWorldRectangle(
+			modelMinX, modelMinY, modelMaxX, modelMaxY);
+		me->d_surfaceModelRenderer.setSurface(me->d_modelToSEM_modelImage,
+			modelMinX, modelMinY, modelMaxX, modelMaxY,
 			me->d_surfaceStride);
+		// find out where the surface model renderer will put the surface
+		// and scale and translate this so it fits where the AFM thinks the
+		// scan range is and store this transformation in d_AFMfromModel
+		if (me->d_AFM && me->d_AFM->Data() && me->d_AFM->Data()->inputGrid) {
+			double minX, minY, maxX, maxY;
+			BCGrid *inputGrid = me->d_AFM->Data()->inputGrid;
+			minX = inputGrid->minX();
+			minY = inputGrid->minY();
+			maxX = inputGrid->maxX();
+			maxY = inputGrid->maxY();
+			me->d_surfaceModelRenderer.setSurfaceRegion(minX, minY, maxX, maxY);
+		}
 	}
 	
 	if ((vrpn_int32)(me->d_registrationMode) == 
@@ -855,6 +916,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_drawSurface_change(
 	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)ud;
 	bool enable = (value != 0);
 	me->d_surfaceModelRenderer.SetVisibility(enable);
+	me->d_textureProjectionDirectionRenderer.SetVisibility(enable);
 }
 
 void nmui_AFM_SEM_CalibrationUI::handle_drawSurfaceTexture_change(
@@ -907,26 +969,26 @@ void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 			SEM_from_AFM.setScale(NMB_Y, 1.0/widthWorld);
 			SEM_from_AFM.setScale(NMB_Z, 1.0/widthWorld);
 			SEM_from_AFM.setRotation(NMB_THETA, -angle);
-			double sem_afm_matrix[16];
-			SEM_from_AFM.getMatrix(sem_afm_matrix);
+
+			SEM_from_AFM.getMatrix(me->d_SEMfromAFM_test);
 
 			nmb_Transform_TScShR AFM_from_model;
 			AFM_from_model.setTranslation(NMB_Z, widthWorld*0.2);
 			AFM_from_model.setTranslation(NMB_X, -widthWorld*0.2);
-			double afm_model_matrix[16];
-			AFM_from_model.getMatrix(afm_model_matrix);
+
+			AFM_from_model.getMatrix(me->d_AFMfromModel_test);
 
 			nmb_TransformMatrix44 SEM_from_AFM44, AFM_from_model44;
-			SEM_from_AFM44.setMatrix(sem_afm_matrix);
+			SEM_from_AFM44.setMatrix(me->d_SEMfromAFM_test);
 			printf("SEM_from_AFM:\n");
 			SEM_from_AFM44.print();
-			AFM_from_model44.setMatrix(afm_model_matrix);
+			AFM_from_model44.setMatrix(me->d_AFMfromModel_test);
 			printf("AFM_from_model:\n");
 			AFM_from_model44.print();
 			SEM_from_AFM44.compose(AFM_from_model44);
 			printf("SEM_from_model:\n");
 			SEM_from_AFM44.print();
-			me->createTestImages(sem_afm_matrix, afm_model_matrix);
+			me->createTestImages();
 		} else {
 			printf("Error, can't make test data before selecting a model image\n");
 		}
@@ -936,9 +998,16 @@ void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 // non-static
 int nmui_AFM_SEM_CalibrationUI::pointDataHandler(const Point_results *pr)
 {
+  Point_value *heightData = pr->getValueByPlaneName(
+	  d_AFM->Data()->heightPlaneName->string());
+  if (!heightData) {
+	display_error_dialog("Missing height data in point channels");
+	return -1;
+  }
+
   d_tipPosition[0] = pr->x();
   d_tipPosition[1] = pr->y();
-  d_tipPosition[2] = pr->z();
+  d_tipPosition[2] = heightData->value();
   d_tipPositionAcquiredSinceLastAdd = vrpn_TRUE;
   return 0;
 }
@@ -1010,17 +1079,23 @@ void nmui_AFM_SEM_CalibrationUI::updateSolution()
 			d_calibration = NULL;
 		}
 		if (d_heightFieldNeedsUpdate) {
+			fprintf(stderr, "Recomputing the surface geometry...");
 			if (d_heightField) {
 				delete d_heightField;
 			}
+			double minX, minY, maxX, maxY;
+			d_modelToSEM_modelImage->getWorldRectangle(
+				minX, minY, maxX, maxY);
 			d_heightField = new nmr_SurfaceModelHeightField(
-				d_modelToSEM_modelImage);
+				d_modelToSEM_modelImage, minX, minY, maxX, maxY);
 			d_heightFieldNeedsUpdate = vrpn_FALSE;
 			if (!d_heightField) {
 				printf("Error, out of memory\n");
 				return;
 			}
+			fprintf(stderr, "Done\n");
 		}
+		fprintf(stderr, "Creating calibration object...");
 		d_calibration = new nmr_AFM_SEM_Calibration(d_heightField);
 		if (!d_calibration) {
 			printf("Error, out of memory\n");
@@ -1056,7 +1131,10 @@ void nmui_AFM_SEM_CalibrationUI::updateSolution()
 
 		d_calibration->setSurfaceFeatureCorrespondence(d_modelToSEM_modelPoints,
 			d_modelToSEM_SEMPoints, (int)d_numModelSEMPoints);
+		fprintf(stderr, "Done\n");
+		fprintf(stderr, "Computing calibration solution...");
 		d_calibration->updateSolution();
+		fprintf(stderr, "Done\n");
 		d_calibration->getSEMfromAFMMatrix(d_SEMfromAFM);
 		d_calibration->getSEMfromModel3DMatrix(d_SEMfromModel);
 		d_calibration->getAFMfromModel3DMatrix(d_AFMfromModel);
@@ -1078,6 +1156,16 @@ void nmui_AFM_SEM_CalibrationUI::updateSolution()
 
 void nmui_AFM_SEM_CalibrationUI::updateSolutionDisplay()
 {
+    int i; 
+	for (i = 0; i < 16; i++) {
+		if (!_finite(d_AFMfromModel[i]) ||
+			!_finite(d_SEMfromModel[i]) ||
+			!_finite(d_SEMfromAFM[i])) {
+			display_error_dialog(
+				"Error, undefined or infinite values in solution");
+			return;
+		}
+	}
 	// display plan:
 	//   display model surface as an uberGraphics object
 	//   set transform for model according to afm<-->model 
@@ -1086,6 +1174,29 @@ void nmui_AFM_SEM_CalibrationUI::updateSolutionDisplay()
 	//   appropriate texture projection matrix - either from the 
 	//   afm<-->sem or model<-->sem coordinate transformation
 	d_surfaceModelRenderer.setWorldFromObjectTransform(d_AFMfromModel);
+	double projDirX, projDirY, projDirZ;
+	d_calibration->getSEMProjectionDirectionInAFM(projDirX, projDirY, projDirZ);
+	double xScale = sqrt(d_AFMfromModel[0]*d_AFMfromModel[0] + 
+		d_AFMfromModel[1]*d_AFMfromModel[1]);
+	double scale = 0.1*d_modelToSEM_modelImage->widthWorld()*xScale;
+	if (scale < 0) {
+		scale = -scale;
+	}
+	projDirX *= scale; projDirY *= scale; projDirZ *= scale;
+	nmb_TransformMatrix44 worldFromObject;
+	worldFromObject.setMatrix(d_AFMfromModel);
+	double surfCenter[4] = {0,0,0,1};
+	double minX, minY, maxX, maxY;
+	d_modelToSEM_modelImage->getWorldRectangle(minX, minY, maxX, maxY);
+	surfCenter[0] = 0.5*(minX + maxX);
+	surfCenter[1] = 0.5*(minY + maxY);
+	int w = d_modelToSEM_modelImage->width();
+	int h = d_modelToSEM_modelImage->height();
+	surfCenter[2] = d_modelToSEM_modelImage->getValue(w/2, h/2);
+	worldFromObject.transform(surfCenter);
+	d_textureProjectionDirectionRenderer.set(
+		surfCenter[0], surfCenter[1], surfCenter[2],
+		projDirX, projDirY, projDirZ);
 	d_surfaceModelRenderer.SetTextureTransform(d_SEMfromModel);
 	d_surfaceModelRenderer.SetTextureCoordinatesInWorld(false);
 	d_tipRenderer->SetTextureTransform(d_SEMfromAFM);

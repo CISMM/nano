@@ -11,6 +11,7 @@
 #include "nmg_ImageDisplayProjectiveTexture.h"
 #include "UTree.h"
 #include "URHeightField.h"
+#include "URVector.h"
 
 class nmui_AFM_SEM_CalibrationUI {
   public:
@@ -27,13 +28,17 @@ class nmui_AFM_SEM_CalibrationUI {
 	void changeDataset(nmb_ImageManager *dataset);
 
 	// generate synthetic data based on the specified transformations
-	void createTestImages(double *SEM_from_AFM, double *AFM_from_model);
+	void createTestImages();
 	void addContactPoint(double *afm_pnt, double *sem_pnt, nmb_Image *semImage);
 	void addFreePoint(double *afm_pnt, double *sem_pnt, nmb_Image *semImage);
 
 	void clearContactPoints();
 	void clearFreePoints();
   private:
+	int drawTestImages(const ImageViewerDisplayData &data);
+    static int testImageWindowDisplayHandler
+		(const ImageViewerDisplayData &data, void *ud);
+
 	static void correspondenceEditorChangeHandler(void *ud,
                   const nmr_ProxyChangeHandlerData &info);
 
@@ -152,6 +157,7 @@ class nmui_AFM_SEM_CalibrationUI {
 
 	// data needed for display of solution
 	URHeightField d_surfaceModelRenderer;
+	URVector d_textureProjectionDirectionRenderer;
 	URProjectiveTexture d_SEMTexture;
 	int d_surfaceStride;
 	UTree *d_world;
@@ -164,6 +170,12 @@ class nmui_AFM_SEM_CalibrationUI {
 	double d_SEMfromModel[16];
 	double d_AFMfromModel[16];
 
+
+	double d_SEMfromAFM_test[16];
+	double d_AFMfromModel_test[16];
+	int d_testImageWinID;
+	bool d_testImageWinCreated;
+	bool d_testImageWinNeedsUpdate;
 };
 
 

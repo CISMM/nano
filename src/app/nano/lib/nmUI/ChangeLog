@@ -1,3 +1,12 @@
+2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmui_AFM_SEM_CalibrationUI.C :
+	added an arrow sticking out of the surface to display the SEM projection 
+    direction
+	Modified how simulated test images get generated to hopefully fix problems
+	with this when running on the dual display PCs in phillips
+    (pointDataHandler): fixed how this gets the z value for a point
+
 2002-09-04  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmui_AFM_SEM_CalibrationUI.[Ch]: added code to set the texture and
