@@ -450,10 +450,20 @@ void nmb_Image::getWorldToImageTransform(nmb_TransformMatrix44 &xform) const
   xform.setMatrix(matrix);
 }
 
-void nmb_Image::getImageToTextureTransform(double *matrix44) const
+void nmb_Image::getImageToTextureTransform(double *matrix44,
+	int textureNumX, int textureNumY) const
 {
-  int texwidth = width() + borderXMin() + borderXMax();
-  int texheight = height() + borderYMin() + borderYMax();
+  int texwidth, texheight;
+  if (textureNumX) {
+	  texwidth = textureNumX;
+  } else {
+	  texwidth = width() + borderXMin() + borderXMax();
+  }
+  if (textureNumY) {
+	  texheight = textureNumY;
+  } else {
+	  texheight = height() + borderYMin() + borderYMax();
+  }
   double scaleFactorX = (double)(width())/(double)texwidth;
   double scaleFactorY = (double)(height())/(double)texheight;
   double borderOffsetX = (double)borderXMin()/(double)texwidth;
@@ -481,10 +491,11 @@ void nmb_Image::getImageToTextureTransform(double *matrix44) const
   matrix44[15] = 1.0;
 }
 
-void nmb_Image::getImageToTextureTransform(nmb_TransformMatrix44 &xform) const
+void nmb_Image::getImageToTextureTransform(nmb_TransformMatrix44 &xform,
+	int textureNumX, int textureNumY) const
 {
   double matrix[16];
-  getImageToTextureTransform(matrix);
+  getImageToTextureTransform(matrix, textureNumX, textureNumY);
   xform.setMatrix(matrix);
 }
 

@@ -61,6 +61,27 @@ void nmb_TransformMatrix44::set(int i_dest, int i_src, double value) {
     }
 }
 
+double nmb_TransformMatrix44::get(int i_dest, int i_src) {
+   assert(i_dest >= 0 && i_dest < 4 && i_src >= 0 && i_src < 4);
+   return xform[i_dest][i_src];
+}
+
+void nmb_TransformMatrix44::translate(double tx, double ty, double tz) {
+	nmb_TransformMatrix44 trans;
+	trans.set(0, 3, tx);
+	trans.set(1, 3, ty);
+	trans.set(2, 3, tz);
+	compose(trans);
+}
+
+void nmb_TransformMatrix44::scale(double sx, double sy, double sz) {
+	nmb_TransformMatrix44 scale;
+	scale.set(0,0, sx);
+	scale.set(1,1, sy);
+	scale.set(2,2, sz);
+	compose(scale);
+}
+
 void nmb_TransformMatrix44::setMatrix(double *matrix)
 {
     int i,j,k = 0;
@@ -89,6 +110,13 @@ void nmb_TransformMatrix44::getMatrix(double *matrix)
             k++;
         }
     }
+}
+
+void nmb_TransformMatrix44::compose(double *matrix)
+{
+	nmb_TransformMatrix44 factor;
+	factor.setMatrix(matrix);
+	compose(factor);
 }
 
 void nmb_TransformMatrix44::compose(nmb_TransformMatrix44 &m)

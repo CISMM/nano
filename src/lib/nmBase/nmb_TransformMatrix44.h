@@ -10,8 +10,12 @@ class nmb_TransformMatrix44 {
     nmb_TransformMatrix44 & operator = (const nmb_TransformMatrix44 &);
 
     void set(int i_dest, int i_src, double value);
+	double get(int i_dest, int i_src);
+	void translate(double tx, double ty, double tz);
+	void scale(double sx, double sy, double sz);
     void setMatrix(double *matrix);
     void getMatrix(double *matrix);
+	void compose(double *matrix);
     void compose(nmb_TransformMatrix44 &m);
     virtual void transform(double *p_src, double *p_dest) const;
     virtual void transform(double *pnt) const;
