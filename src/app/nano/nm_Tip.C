@@ -121,6 +121,7 @@ nm_TipRenderer::nm_TipRenderer(nm_TipModel *tipModel):
   gluQuadricDrawStyle(d_quadric, GLU_FILL);
   gluQuadricNormals(d_quadric, GLU_FLAT);
   buildDisplayList();
+  visible = false;
 }
 
 nm_TipRenderer::~nm_TipRenderer()

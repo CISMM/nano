@@ -3,6 +3,7 @@
 	* microscape.C: added initialization of a new global variable called
 	tipDisplayUI of type nm_TipDisplayControls defined in nm_Tip.h
 	* nm_Tip.[hC]: new file to define stuff for visualizing the AFM tip
+	  display is now disabled by default. Tracking of tip location works
 
 2002-06-26  Andrea Hilchey <hilchey@cs.unc.edu>
 
