@@ -1,3 +1,7 @@
+2002-05-07  David Borland <borland@cs.unc.edu>
+        * import.tcl:  made the spider control stuff a new window--the import
+        objects window was getting pretty cluttered
+
 2002-05-06  David Borland <borland@cs.unc.edu>
 
         * import.tcl:  added UI for spider objects, added control for 

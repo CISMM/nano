@@ -105,23 +105,25 @@ generic_entry $nmInfo(basic_options).f3.import_axis_step import_axis_step \
 
 
 # Spider Stuff
-floatscale $nmInfo(basic_options).f3.spider_length_slide 0 20 1000 1 1 \
+button $nmInfo(basic_options).f3.spider_create_button -text "Create Spider" \
+	-command create_spider
+
+set nmInfo(spider_control) [create_closing_toplevel spider_control "Spider Control" ]
+
+floatscale $nmInfo(spider_control).spider_length_slide 0 20 1000 1 1 \
 	spider_length "Spider Length"
 
-floatscale $nmInfo(basic_options).f3.spider_width_slide 0 10 1000 1 1 \
+floatscale $nmInfo(spider_control).spider_width_slide 0 10 1000 1 1 \
 	spider_width "Spider Width"
 
-floatscale $nmInfo(basic_options).f3.spider_thick_slide 0 5 1000 1 1 \
+floatscale $nmInfo(spider_control).spider_thick_slide 0 5 1000 1 1 \
 	spider_thick "Spider Thickness"
 
-intscale $nmInfo(basic_options).f3.spider_tess_slide 1 50 1000 1 1 \
+intscale $nmInfo(spider_control).spider_tess_slide 1 50 1000 1 1 \
 	spider_tess "Spider Tesselation"
 
-floatscale $nmInfo(basic_options).f3.spider_curve_slide 0 90 1000 1 1 \
+floatscale $nmInfo(spider_control).spider_curve_slide 0 90 1000 1 1 \
 	spider_curve "Spider Curvature"
-
-button $nmInfo(basic_options).f3.spider_create_button -text "Create Spider" -command create_spider
-
 #
 
 button $nmInfo(basic_options).f3.visibility_button -text "Hide" -command change_visibility
@@ -183,12 +185,13 @@ pack $nmInfo(basic_options).f3.import_tess -padx 1m -pady 1m -anchor nw
 pack $nmInfo(basic_options).f3.import_axis_step -padx 1m -pady 1m -anchor nw
 
 # Spider Stuff
-pack $nmInfo(basic_options).f3.spider_length_slide -padx 1m -pady 1m -anchor nw
-pack $nmInfo(basic_options).f3.spider_width_slide -padx 1m -pady 1m -anchor nw
-pack $nmInfo(basic_options).f3.spider_thick_slide -padx 1m -pady 1m -anchor nw
-pack $nmInfo(basic_options).f3.spider_tess_slide -padx 1m -pady 1m -anchor nw
-pack $nmInfo(basic_options).f3.spider_curve_slide -padx 1m -pady 1m -anchor nw
-pack $nmInfo(basic_options).f3.spider_create_button -padx 1m -pady 1m -anchor nw
+pack $nmInfo(basic_options).f3.spider_create_button -padx 1m -pady 5m -anchor nw
+
+pack $nmInfo(spider_control).spider_length_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_width_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_thick_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_tess_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_curve_slide -padx 1m -pady 1m -anchor nw
 #
 
 pack $nmInfo(basic_options).f3.visibility_button -anchor nw -padx 1m -pady 1m -fill x
@@ -238,6 +241,8 @@ proc open_import_file {} {
 # Create a spider
 proc create_spider {} {
 	global modelFile import_file_label current_object current_object_new
+
+	"show.spider_control"
 
 	set filename "/spider.spi"
 
