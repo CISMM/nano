@@ -1,3 +1,15 @@
+2002-04-02  David Borland <borland@cs.unc.edu>
+        * FileGenerator.C:  any .txt file can be read as a tube--not just
+        mask.detail.txt
+
+        * TubeFileGenerator.C:  made some changes for loading actual tube
+        output files--not the sample file.  Changes are still underway
+
+        * URPolygon.C:  automatically send translation and rotation to the 
+        AFM simulator
+
+        * nmUGraphics.dsp:  added some include directories
+
 2002-03-27  David Borland <borland@cs.unc.edu>
 
         * TubeFileGenerator.C:  added code to allow the user to select

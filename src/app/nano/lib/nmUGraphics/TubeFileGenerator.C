@@ -84,6 +84,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	int i;
 	float radius, x, y, z, az, alt;
 	double theta;
+	double max_y = 0.0;
 
 //	tubes t;				// gives a bunch of warnings because the name is too big...
 	verts t[10];			// go with static number for now...  10 tubes allowed
@@ -117,9 +118,8 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	while(!readfile.eof()) {
 		readfile.getline(buffer, MAXLENGTH);
 
-		if (*buffer != '\0') {
-			token = strtok(buffer, " \t\n");
- 
+		token = strtok(buffer, " \t\n");
+		if (token != NULL) {
 			if (strcmp(token, "radius") == 0) {
 				// if not first tube, add to tubes
 				if (vs.size() != 0) {
@@ -142,9 +142,12 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 				if (cur_step++ % Pobject->GetAxisStep() == 0) {
 					cur_step = 1;
 
+					/* 
+					// THIS CODE IS FOR USING X3D, Y3D, Z3d
+
 					token = strtok(NULL, " \t\n");		// skip X and Y
+
 					token = strtok(NULL, " \t\n");
-	
 					x = atof(token);
 					token = strtok(NULL, " \t\n");
 					y = atof(token);
@@ -154,6 +157,32 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 					az = atof(token);
 					token = strtok(NULL, " \t\n");
 					alt = atof(token);
+
+					*/
+
+					// THIS CODE IS FOR USING X and Y (constant Z)
+
+					// skip first number until Yoni changes this
+
+
+					// x and y are switched for some reason.......
+					token = strtok(NULL, " \t\n");		
+					y = -atof(token) + 300;			// hack, change this
+					token = strtok(NULL, " \t\n");
+					x = atof(token);
+
+					z = 10.0;
+	
+					// skip X3D, Y3D, Z3D
+					token = strtok(NULL, " \t\n");
+					token = strtok(NULL, " \t\n");
+					token = strtok(NULL, " \t\n");
+
+					token = strtok(NULL, " \t\n");
+					az = atof(token);
+					token = strtok(NULL, " \t\n");
+					alt = atof(token);
+
 
 					// set up medial axis point
 					q_vec_set(p1, x, y, z);
@@ -238,9 +267,9 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 		printf("x1 = %f\n", Pobject->cylinders[i].x1);
 		printf("y1 = %f\n", Pobject->cylinders[i].y1);
 		printf("z1 = %f\n", Pobject->cylinders[i].z1);
-		printf("x1 = %f\n", Pobject->cylinders[i].x2);
-		printf("y1 = %f\n", Pobject->cylinders[i].y2);
-		printf("z1 = %f\n", Pobject->cylinders[i].z2);
+		printf("x2 = %f\n", Pobject->cylinders[i].x2);
+		printf("y2 = %f\n", Pobject->cylinders[i].y2);
+		printf("z2 = %f\n", Pobject->cylinders[i].z2);
 		printf("length = %f\n", Pobject->cylinders[i].length);
 		printf("radius = %f\n", Pobject->cylinders[i].radius);
 		printf("azimuth = %f\n", Pobject->cylinders[i].az);
@@ -289,7 +318,7 @@ void BuildList(URender *Pobject, GLuint dl, verts vs, int & count) {
 	glNewList(dl, GL_COMPILE);	// init display list
 
 	for (int i = 0; i < vs.size() - tess; i++) {
-		glBegin(GL_TRIANGLES);
+		glBegin(GL_POINTS);
 		int last_k = 0; // dtm
 		for (int k = 0; k < 3; k++) {
 			// special case for last two triangles per segment

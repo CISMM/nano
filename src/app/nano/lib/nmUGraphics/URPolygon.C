@@ -1,6 +1,11 @@
 #include "URPolygon.h"
 #include "URTexture.h"
+
+#include <nmm_SimulatedMicroscope_Remote.h>	// so we know if there is an open connection for
+											// scaling tubes when we change scale 
 #include <string.h>
+
+extern nmm_SimulatedMicroscope_Remote* SimulatedMicroscope;
 
 URPolygon::URPolygon():URender(){
 
@@ -77,6 +82,12 @@ int URPolygon::ScaleAll(void* userdata) {
 
 	this->GetLocalXform().SetScale(scale);
 
+	// if a tube file, send scale
+	if ((strstr(this->name, ".txt") != 0) && 
+		(SimulatedMicroscope != NULL)) {
+		SimulatedMicroscope->encode_and_sendScale(scale);
+	}
+
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
 }
@@ -87,6 +98,14 @@ int URPolygon::SetTransxAll(void* userdata) {
 	const q_vec_type &trans = this->GetLocalXform().GetTrans();
 	this->GetLocalXform().SetTranslate(transx, trans[1], trans[2]);
 
+	// if a tube file, send trans
+	if ((strstr(this->name, ".txt") != 0) && 
+		(SimulatedMicroscope != NULL)) {
+		SimulatedMicroscope->encode_and_sendTrans(this->GetLocalXform().GetTrans()[0],
+													this->GetLocalXform().GetTrans()[1],
+													this->GetLocalXform().GetTrans()[2]);
+	}
+
 	if(recursion) return ITER_CONTINUE;	
 	else return ITER_STOP;
 }
@@ -95,6 +114,14 @@ int URPolygon::SetTransyAll(void* userdata) {
 	double transy = *(double*) userdata;
 	const q_vec_type &trans = this->GetLocalXform().GetTrans();
 	this->GetLocalXform().SetTranslate(trans[0], transy, trans[2]);
+
+	// if a tube file, send trans
+	if ((strstr(this->name, ".txt") != 0) && 
+		(SimulatedMicroscope != NULL)) {
+		SimulatedMicroscope->encode_and_sendTrans(this->GetLocalXform().GetTrans()[0],
+													this->GetLocalXform().GetTrans()[1],
+													this->GetLocalXform().GetTrans()[2]);
+	}
 
 	if(recursion) return ITER_CONTINUE;	
 	else return ITER_STOP;
@@ -105,6 +132,14 @@ int URPolygon::SetTranszAll(void* userdata) {
 	const q_vec_type &trans = this->GetLocalXform().GetTrans();
 	this->GetLocalXform().SetTranslate(trans[0], trans[1], transz);
 
+	// if a tube file, send trans
+	if ((strstr(this->name, ".txt") != 0) && 
+		(SimulatedMicroscope != NULL)) {
+		SimulatedMicroscope->encode_and_sendTrans(this->GetLocalXform().GetTrans()[0],
+													this->GetLocalXform().GetTrans()[1],
+													this->GetLocalXform().GetTrans()[2]);
+	}
+
 	if(recursion) return ITER_CONTINUE;	
 	else return ITER_STOP;
 }
@@ -113,6 +148,15 @@ int URPolygon::SetRotxAll(void* userdata) {
 	double rotx = *(double*) userdata;
 	const q_type &rot = this->GetLocalXform().GetRot();
 	this->GetLocalXform().SetRotate(rotx, rot[1], rot[2], rot[3]);
+
+	// if a tube file, send rot
+	if ((strstr(this->name, ".txt") != 0) && 
+		(SimulatedMicroscope != NULL)) {
+		SimulatedMicroscope->encode_and_sendRot(this->GetLocalXform().GetRot()[0],
+												this->GetLocalXform().GetRot()[1],
+												this->GetLocalXform().GetRot()[2],
+												this->GetLocalXform().GetRot()[3]);
+	}
 
 	if(recursion) return ITER_CONTINUE;	
 	else return ITER_STOP;
@@ -123,6 +167,15 @@ int URPolygon::SetRotyAll(void* userdata) {
 	const q_type &rot = this->GetLocalXform().GetRot();
 	this->GetLocalXform().SetRotate(rot[0], roty, rot[2], rot[3]);
 
+	// if a tube file, send rot
+	if ((strstr(this->name, ".txt") != 0) && 
+		(SimulatedMicroscope != NULL)) {
+		SimulatedMicroscope->encode_and_sendRot(this->GetLocalXform().GetRot()[0],
+												this->GetLocalXform().GetRot()[1],
+												this->GetLocalXform().GetRot()[2],
+												this->GetLocalXform().GetRot()[3]);
+	}
+
 	if(recursion) return ITER_CONTINUE;	
 	else return ITER_STOP;
 }
@@ -131,6 +184,15 @@ int URPolygon::SetRotzAll(void* userdata) {
 	double rotz = *(double*) userdata;
 	const q_type &rot = this->GetLocalXform().GetRot();
 	this->GetLocalXform().SetRotate(rot[0], rot[1], rotz, rot[3]);
+
+	// if a tube file, send rot
+	if ((strstr(this->name, ".txt") != 0) && 
+		(SimulatedMicroscope != NULL)) {
+		SimulatedMicroscope->encode_and_sendRot(this->GetLocalXform().GetRot()[0],
+												this->GetLocalXform().GetRot()[1],
+												this->GetLocalXform().GetRot()[2],
+												this->GetLocalXform().GetRot()[3]);
+	}
 
 	if(recursion) return ITER_CONTINUE;	
 	else return ITER_STOP;

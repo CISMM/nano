@@ -38,14 +38,11 @@ FileGenerator* FileGenerator::CreateFileGenerator(const char *fname)
     for(i=index-1; i>=0; i--){
         if(fname[i]=='.') break;
     }
-	// adding hack for loading yoni's tube-finding files...should probably
-	// create a new class for them?  or load on the fly (not from a file)
     if(strncmp(fname+i+1,"obj",3)==0){
         return new WaveFrontFileGenerator(fname);
     }
 	// added by David Borland for loading Shape Analysis tubes
-	else if (strstr(fname, "mask.detail.txt") != 0 ||
-				strstr(fname, "mask.details.txt") != 0) {
+	else if (strncmp(fname + i + 1,"txt", 3) == 0) {
 		return new TubeFileGenerator(fname);
 	}
     //added by Leila Plummer for loading objects from tube_foundry
