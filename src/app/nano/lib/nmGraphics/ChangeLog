@@ -1,3 +1,11 @@
+2002-06-04 David Borland <borland@cs.unc.edu>
+
+        * nmg_GraphicsImpl.C : removed a warning related to the new
+        MODEL_REGISTRATION_COORD mode
+
+        * nmg_SurfaceRegion.C : fixed a little bug in the scaling of the
+        projective texture
+
 2002-06-03 David Borland <borland@cs.unc.edu>
 
         * nmg_SurfaceRegion.C : fixed a couple of minor bugs related to the 
