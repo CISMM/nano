@@ -2816,6 +2816,13 @@ static int forget_modification_data ()
  back to "". If there are any errors, report them and leave name alone.  */
 static	void	handle_openStaticFilename_change (const char *, void *)
 {
+    //if collaborative session don't allow
+    // changing staticfiles/streamfiles/SPM devices
+    if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
+	display_error_dialog("Error: Cannot change static file in collaborative session");
+	return;
+    }
+
 
     if (strlen(openStaticFilename) <= 0) return;
 
@@ -2859,6 +2866,13 @@ static	void	handle_openStaticFilename_change (const char *, void *)
 */
 static void handle_openStreamFilename_change (const char *, void * userdata)
 {
+    //if collaborative session don't allow
+    // changing staticfiles/streamfiles/SPM devices
+    if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
+	display_error_dialog("Error: Cannot change stream file in collaborative session");
+	return;
+    }
+
     MicroscapeInitializationState * istate = (MicroscapeInitializationState *)userdata;
 
     if (strlen(openStreamFilename) <= 0) return;
@@ -2958,6 +2972,14 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     display_fatal_error_dialog("Unable to open SPM connection in NanoManipulator Viewer. Exiting...");
     return;
 #endif
+
+    //if collaborative session don't allow
+    // changing staticfiles/streamfiles/SPM devices
+    if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
+	display_error_dialog("Error: Cannot change SPM Device in collaborative session");
+	return;
+    }
+
     MicroscapeInitializationState * istate = (MicroscapeInitializationState *)userdata;
     long logmode = vrpn_LOG_NONE;
 
