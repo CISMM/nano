@@ -96,8 +96,8 @@ pid_t getpid();
 #include "tcl_tk.h"
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
-#include "ohmmeter.h"	/* French ohmmeter */
 #include "nma_Keithley2400_ui.h"  // VI Curve generator - Keithley 2400
+#include "ohmmeter.h"   /* French ohmmeter */
 #include "nmui_SEM.h" // EDAX SEM
 #include <Topo.h>
 #include "Timer.h"
@@ -303,7 +303,7 @@ Microscope * microscope;
 nmg_Graphics * graphics;
 
 static int LOOP_NUM;
-TopoFile GTF;
+//TopoFile GTF; - replaced by microscope->d_topoFile
 
 // used in interaction.c
 int	using_mouse3button = 0;	///< Using Mouse3 button as trigger?
@@ -5470,6 +5470,8 @@ int main(int argc, char* argv[])
              istate.num_x, istate.num_y, read_mode);
     VERBOSE(2, wtl_buffer);
 
+    Tclvar_list_of_strings imageNameList("imageNames");
+
     dataset = new nmb_Dataset (istate.use_file_resolution,
                                istate.num_x, istate.num_y,
                                istate.x_min, istate.x_max,
@@ -5479,7 +5481,9 @@ int main(int argc, char* argv[])
                                (const char **) istate.image_file_names,
                                istate.num_image_files,
 			       (const char *)my_hostname,
-                               allocate_TclNet_string);
+                               allocate_TclNet_string,
+                               (nmb_ListOfStrings *)(&imageNameList),
+                               microscope->d_topoFile);
 
     VERBOSE(1, "Created dataset");
 
@@ -5810,6 +5814,7 @@ printf("nM_coord_change_server initialized\n");
       if (ohmmeter != NULL) {
 	the_french_ohmmeter_ui = new Ohmmeter (get_the_interpreter(),
                                              tcl_script_dir, ohmmeter);
+        the_french_ohmmeter_ui->setMicroscope(microscope);
       }
     }
 
@@ -5932,7 +5937,7 @@ printf("nM_coord_change_server initialized\n");
     // Registration - displays images with glX or GLUT depending on V_GLUT
     // flag
     aligner_ui = new AlignerUI(graphics, dataset->dataImages,
-      get_the_interpreter(), tcl_script_dir);
+      get_the_interpreter(), tcl_script_dir,allocate_TclNet_string);
 
   #ifdef NANO_WITH_ROBOT
     robotControl = new RobotControl(microscope, dataset);
@@ -6523,8 +6528,8 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 
         {   BCPlane* plane;
 	    plane = ((dataset->inputGrid)->getPlaneByName(dataset->heightPlaneName->string()));
-	    GTF.gridToTopoData(dataset->inputGrid,plane);
-	    GTF.writeTopoFile("sample.tfr");
+	    microscope->d_topoFile.gridToTopoData(dataset->inputGrid,plane);
+	    microscope->d_topoFile.writeTopoFile("sample.tfr");
 	}
 	    break;
 	

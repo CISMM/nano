@@ -20,7 +20,7 @@ microscope.
 #define DATA_SIZE 128
 #define MAXFILES 30
 #include <Topo.h>
-TopoFile GTF;
+//TopoFile GTF;
 
 // These variables are global because
 //   1)  they have to be global to use scope/ and graphics/

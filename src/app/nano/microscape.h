@@ -259,8 +259,8 @@ int stm_init (const vrpn_bool set_region,
               const vrpn_bool set_mode, const int, const char *,
               const int, const int);
 
-/** TopoFile class global declaration to store header information from stream/topo files */
-extern TopoFile GTF;
+/** TopoFile class global declaration to store header information from stream/topo files - moved to microscope library */
+//extern TopoFile GTF;
 
 // things defined in global.h:  spm_graphics_verbosity, timer_verbosity,
 // mytimer, frametimer, stm_new_frame, mode_change, tcl_offsets, user_mode,
