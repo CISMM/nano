@@ -69,6 +69,9 @@
 #include "interaction.h"
 #include "minit.h"  // for reset_phantom()
 
+#include "UTree.h"	// for Ubergraphics
+#include "Urender.h"
+
 /***************************
  * Local Defines
  ***************************/
@@ -3824,6 +3827,15 @@ doWorldGrab(int whichUser, int userEvent)
     v_xform_type    	    worldFromHand;
     v_xform_type            roomFromHand, roomFromSensor, handFromRoom;
     static v_xform_type     oldWorldFromHand;
+	static v_xform_type		oldObject;
+
+	// for updating the object's tcl variables when rotating and translating
+	extern Tclvar_float import_transx;
+	extern Tclvar_float import_transy;
+	extern Tclvar_float import_transz;
+	extern Tclvar_float import_rotx;
+	extern Tclvar_float import_roty;
+	extern Tclvar_float import_rotz;
 
     BCPlane* plane = dataset->inputGrid->getPlaneByName
                      (dataset->heightPlaneName->string());
@@ -3838,6 +3850,7 @@ doWorldGrab(int whichUser, int userEvent)
                             worldFromHand.xlate[1], plane);
 
   v_xform_type temp;
+  UTree *node;
 
   switch ( userEvent )
     {
@@ -3845,10 +3858,19 @@ doWorldGrab(int whichUser, int userEvent)
     case PRESS_EVENT:
 	/* get snapshot of hand in world space == w_from_h  */
 	v_get_world_from_hand(whichUser, &oldWorldFromHand);
+	node = World.TGetNodeByName(*World.current_object);
+	if (node != NULL) {
+		URender &obj = node->TGetContents();
+		if (obj.GetGrabObject() == 1) {
+			q_copy(oldObject.rotate, obj.GetLocalXform().GetRot());
+			q_vec_copy(oldObject.xlate, obj.GetLocalXform().GetTrans());
+		}
+	}
 	break;
 
     case HOLD_EVENT:
 	/* get hand from room       */
+
 	v_x_compose(&roomFromSensor,
 		&v_users[whichUser].xforms[V_ROOM_FROM_HAND_TRACKER],
 		&v_users[whichUser].xforms[V_TRACKER_FROM_HAND_SENSOR]);
@@ -3859,12 +3881,48 @@ doWorldGrab(int whichUser, int userEvent)
 	v_x_invert(&handFromRoom, &roomFromHand);
 
 	/* this gives new world_from_room   */
+
 	v_x_compose(&temp, &oldWorldFromHand, &handFromRoom);
+
+	// Change so that we can grab objects instead of the world...
+	node = World.TGetNodeByName(*World.current_object);
+	if (node != NULL) {
+		URender &obj = node->TGetContents();
+		if (obj.GetGrabObject() == 1) {
+			q_type q;
+			q_invert(q, oldWorldFromHand.rotate);
+			q_mult(q, q, worldFromHand.rotate);
+			q_mult(q, oldObject.rotate, q);
+
+			q_vec_type v;
+			q_vec_subtract(v, worldFromHand.xlate, oldWorldFromHand.xlate);
+			q_vec_add(v, oldObject.xlate, v);
+
+			node->TGetContents().GetLocalXform().SetRotate(q);
+			node->TGetContents().GetLocalXform().SetTranslate(v);
+
+			// update tcl variables
+			import_transx = v[0];
+			import_transy = v[1];
+			import_transz = v[2];
+
+			q_to_euler(v, q);
+
+			import_rotx = Q_RAD_TO_DEG(v[2]);
+			import_roty = Q_RAD_TO_DEG(v[1]);
+			import_rotz = Q_RAD_TO_DEG(v[0]);
+		}
+		else {
+			updateWorldFromRoom(&temp);
+		}
+	}
+	else {
+		updateWorldFromRoom(&temp);
+	}
 
         // NANOX
 collabVerbose(5, "doWorldGrab:  updateWorldFromRoom().\n");
-
-        updateWorldFromRoom(&temp);
+ 
 
 	break;
 

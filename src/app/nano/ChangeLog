@@ -1,3 +1,9 @@
+2002-05-06  David Borland  <borland@cs.unc.edu>
+        * import.C:  added callbacks for spider objects
+
+        * interaction.C:  added code to doWorldGrab so that objects can
+        be rotated and translated with the mouse phantom
+
 2002-05-02  David Marshburn  <marshbur@cs.unc.edu>
 
 	* microscape.c (main):  the vi curve initialization code now only

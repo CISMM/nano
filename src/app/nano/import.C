@@ -33,6 +33,13 @@ static  void handle_import_proj_text (vrpn_int32, void *);
 static	void handle_import_clamp (vrpn_int32, void *);
 static	void handle_import_CCW (vrpn_int32, void *);
 static	void handle_import_update_AFM (vrpn_int32, void *);
+static	void handle_import_grab_object (vrpn_int32, void *);
+
+static	void handle_spider_length_change(vrpn_float64, void*);
+static	void handle_spider_width_change(vrpn_float64, void*);
+static	void handle_spider_thick_change(vrpn_float64, void*);
+static	void handle_spider_tess_change(vrpn_int32, void*);
+static	void handle_spider_curve_change(vrpn_float64, void*);
 
 ///Import object handlers specifically for MSI files
 static  void handle_msi_bond_mode (vrpn_int32, void *);
@@ -59,6 +66,7 @@ Tclvar_int      import_proj_text("import_proj_text", 1, handle_import_proj_text)
 Tclvar_int		import_clamp("import_clamp", 0, handle_import_clamp);
 Tclvar_int		import_CCW("import_CCW", 1, handle_import_CCW);
 Tclvar_int		import_update_AFM("import_update_AFM", 0, handle_import_update_AFM);
+Tclvar_int		import_grab_object("import_grab_object", 0, handle_import_grab_object);
 Tclvar_int		import_tess("import_tess", 10, handle_import_tess_change);
 Tclvar_int		import_axis_step("import_axis_step", 10, handle_import_axis_step_change);
 Tclvar_int      import_color_changed("import_color_changed", 0, handle_import_color_change);
@@ -66,6 +74,11 @@ Tclvar_int      import_r("import_r", 192);
 Tclvar_int      import_g("import_g", 192);
 Tclvar_int      import_b("import_b", 192);
 Tclvar_float    import_alpha("import_alpha", 1, handle_import_alpha);
+Tclvar_float    spider_length("spider_length", 5, handle_spider_length_change);
+Tclvar_float    spider_width("spider_width", 2, handle_spider_width_change);
+Tclvar_float    spider_thick("spider_thick", 0.1, handle_spider_thick_change);
+Tclvar_int		spider_tess("spider_tess", 10, handle_spider_tess_change);
+Tclvar_float    spider_curve("spider_curve", 0, handle_spider_curve_change);
 
 //-----------------------------------------------------------------
 ///SimulatedMicroscope object
@@ -124,10 +137,11 @@ static void handle_current_object(const char*, void*) {
 			import_transy = v[1];
 			import_transz = v[2];
 
-			const q_type &q = obj.GetLocalXform().GetRot();
-			import_rotx = q[0];
-			import_roty = q[1];
-			import_rotz = q[2];
+			q_vec_type euler;
+			q_to_euler(euler, obj.GetLocalXform().GetRot());
+			import_rotx = Q_RAD_TO_DEG(euler[2]);
+			import_roty = Q_RAD_TO_DEG(euler[1]);
+			import_rotz = Q_RAD_TO_DEG(euler[0]);
 
 			import_visibility = obj.GetVisibility();
 
@@ -137,6 +151,14 @@ static void handle_current_object(const char*, void*) {
 			import_CCW = obj.GetCCW();
 
 			import_update_AFM = obj.GetUpdateAFM();
+
+			import_grab_object = obj.GetGrabObject();
+
+			spider_length = obj.GetSpiderLength();
+			spider_width = obj.GetSpiderWidth();
+			spider_thick = obj.GetSpiderThick();
+			spider_tess = obj.GetSpiderTess();
+			spider_curve = Q_RAD_TO_DEG(obj.GetSpiderCurve());
 		}
 	}
 	else {
@@ -157,6 +179,11 @@ static void handle_import_file_change (const char *, void *) {
 			obj->SetCCW(import_CCW);
 			obj->SetTess(import_tess);
 			obj->SetAxisStep(import_axis_step);
+			obj->SetSpiderLength(spider_length);
+			obj->SetSpiderWidth(spider_width);
+			obj->SetSpiderThick(spider_thick);
+			obj->SetSpiderTess(spider_tess);
+			obj->SetSpiderCurve(Q_DEG_TO_RAD(spider_curve));
             FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
             import_type = gen->GetExtension();
             obj->LoadGeometry(gen);
@@ -165,24 +192,29 @@ static void handle_import_file_change (const char *, void *) {
 			obj->SetClamp(import_clamp);
 			// only allow update_AFM for .txt files
 			if (strstr(modelFile.string(), ".txt") != 0) {
-
 				obj->SetUpdateAFM(1);
 			}
 			else {
 				obj->SetUpdateAFM(0);
 			}
+			obj->SetGrabObject(import_grab_object);
 	        obj->SetColor3(convert * import_r, convert * import_g, convert * import_b);
             obj->SetAlpha(import_alpha);
+/*
+Took this out because we now set the translation automatically to the heightplane's origin
+when loading
             obj->GetLocalXform().SetScale(import_scale);
             obj->GetLocalXform().SetTranslate(import_transx, import_transy, import_transz);
             obj->GetLocalXform().SetRotate(import_rotx, import_roty, import_rotz, 1);
+*/
 			// truncate name so it correlates to the option menu
 			// i.e. C:/Data/cube.obj -> cube.obj
+
 			name = new char[strlen(modelFile.string()) + 1];
 			strcpy(name, modelFile.string());
 			c = name + strlen(name);
 			while (*(--c) != '/');
-            World.TAddNode(obj, c + 1);
+			World.TAddNode(obj, c + 1);
 
 			// if a tube file, send to simulator
 			if ((strstr(name, ".txt") != 0) && (SimulatedMicroscope != NULL)) {
@@ -301,6 +333,25 @@ static  void handle_import_update_AFM (vrpn_int32, void *)
 	}
 	else {
 		import_update_AFM = 0;
+	}
+}
+
+static  void handle_import_grab_object (vrpn_int32, void *)
+{
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		int g = import_grab_object;
+
+// only do per object for now...
+
+//		World.Do(&URender::SetGrabObjectAll, &g);
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetGrabObject(import_grab_object);
+		}
 	}
 }
 
@@ -436,15 +487,23 @@ static  void handle_import_rotx_change (vrpn_float64, void *)
 {
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
-		double i = import_rotx;
+		double i = Q_DEG_TO_RAD(import_rotx);
 		World.Do(&URender::SetRotxAll, &i);
 	}
 	else {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 		    URender &obj = node->TGetContents();
-		    const q_type &rot = obj.GetLocalXform().GetRot();
-		    obj.GetLocalXform().SetRotate(import_rotx, rot[1], rot[2], rot[3]);
+
+			q_vec_type euler;
+			q_to_euler(euler, obj.GetLocalXform().GetRot());
+
+			euler[2] = Q_DEG_TO_RAD(import_rotx);
+
+			q_type rot;
+			q_from_euler(rot, euler[0], euler[1], euler[2]);
+
+		    obj.GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
 						
 			// if a tube file and update_AFM selected, send rot
 			if ((strstr(*World.current_object, ".txt") != 0) && 
@@ -452,7 +511,7 @@ static  void handle_import_rotx_change (vrpn_float64, void *)
 				obj.GetUpdateAFM()) {
 				q_vec_type q;
 				q_to_euler(q,obj.GetLocalXform().GetRot());
-				SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
+				SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
 			}
 		}
     }
@@ -462,52 +521,66 @@ static  void handle_import_roty_change (vrpn_float64, void *)
 {
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
-		double i = import_roty;
+		double i = Q_DEG_TO_RAD(import_roty);
 		World.Do(&URender::SetRotyAll, &i);
 	}
 	else {
-	    UTree *node = World.TGetNodeByName(*World.current_object);
-	    if (node != NULL) {
-	        URender &obj = node->TGetContents();
-	        const q_type &rot = obj.GetLocalXform().GetRot();
-	        obj.GetLocalXform().SetRotate(rot[0], import_roty, rot[2], rot[3]);
-									
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+		    URender &obj = node->TGetContents();
+
+			q_vec_type euler;
+			q_to_euler(euler, obj.GetLocalXform().GetRot());
+
+			euler[1] = Q_DEG_TO_RAD(import_roty);
+
+			q_type rot;
+			q_from_euler(rot, euler[0], euler[1], euler[2]);
+
+		    obj.GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
+						
 			// if a tube file and update_AFM selected, send rot
 			if ((strstr(*World.current_object, ".txt") != 0) && 
 				(SimulatedMicroscope != NULL) &&
 				obj.GetUpdateAFM()) {
-				q_vec_type q;
-				q_to_euler(q,obj.GetLocalXform().GetRot());
-				SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
+				SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
 			}
-	    }
-	}
+		}
+    }
+
 }
 
 static  void handle_import_rotz_change (vrpn_float64, void *)
 {
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
-		double i = import_rotz;
+		double i = Q_DEG_TO_RAD(import_rotz);
 		World.Do(&URender::SetRotzAll, &i);
 	}
 	else {
-	    UTree *node = World.TGetNodeByName(*World.current_object);
-	    if (node != NULL) {
-	        URender &obj = node->TGetContents();
-	        const q_type &rot = obj.GetLocalXform().GetRot();
-	        obj.GetLocalXform().SetRotate(rot[0], rot[1], import_rotz, rot[3]);
-									
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+		    URender &obj = node->TGetContents();
+
+			q_vec_type euler;
+			q_to_euler(euler, obj.GetLocalXform().GetRot());
+
+			euler[0] = Q_DEG_TO_RAD(import_rotz);
+
+			q_type rot;
+			q_from_euler(rot, euler[0], euler[1], euler[2]);
+
+		    obj.GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
+						
 			// if a tube file and update_AFM selected, send rot
 			if ((strstr(*World.current_object, ".txt") != 0) && 
 				(SimulatedMicroscope != NULL) &&
 				obj.GetUpdateAFM()) {
-				q_vec_type q;
-				q_to_euler(q,obj.GetLocalXform().GetRot());
-				SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
+				SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
 			}
-	   }
-	}
+		}
+    }
+
 }
 
 static  void handle_import_color_change (vrpn_int32, void *)
@@ -533,8 +606,6 @@ static  void handle_import_color_change (vrpn_int32, void *)
 
 static  void handle_import_alpha (vrpn_float64, void *)
 {
-printf("hello?\n");
-
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
 		float i = import_alpha;
@@ -546,6 +617,63 @@ printf("hello?\n");
 	        URender &obj = node->TGetContents();
 	        obj.SetAlpha(import_alpha);
 	    }
+	}
+}
+
+
+// Spider stuff
+static  void handle_spider_length_change (vrpn_float64, void *)
+{
+	if (strcmp(*World.current_object, "spider.spi") == 0) {
+		UTree *node = World.TGetNodeByName("spider.spi");
+		URender &obj = node->TGetContents();
+		
+		obj.SetSpiderLength(spider_length);
+		obj.ReloadGeometry();
+	}
+}
+
+static  void handle_spider_width_change (vrpn_float64, void *)
+{
+	if (strcmp(*World.current_object, "spider.spi") == 0) {
+		UTree *node = World.TGetNodeByName("spider.spi");
+		URender &obj = node->TGetContents();
+		
+		obj.SetSpiderWidth(spider_width);
+		obj.ReloadGeometry();
+	}
+}
+
+static  void handle_spider_thick_change (vrpn_float64, void *)
+{
+	if (strcmp(*World.current_object, "spider.spi") == 0) {
+		UTree *node = World.TGetNodeByName("spider.spi");
+		URender &obj = node->TGetContents();
+		
+		obj.SetSpiderThick(spider_thick);
+		obj.ReloadGeometry();
+	}
+}
+
+static  void handle_spider_tess_change (vrpn_int32, void *)
+{
+	if (strcmp(*World.current_object, "spider.spi") == 0) {
+		UTree *node = World.TGetNodeByName("spider.spi");
+		URender &obj = node->TGetContents();
+		
+		obj.SetSpiderTess(spider_tess);
+		obj.ReloadGeometry();
+	}
+}
+
+static  void handle_spider_curve_change (vrpn_float64, void *)
+{
+	if (strcmp(*World.current_object, "spider.spi") == 0) {
+		UTree *node = World.TGetNodeByName("spider.spi");
+		URender &obj = node->TGetContents();
+		
+		obj.SetSpiderCurve(Q_DEG_TO_RAD(spider_curve));
+		obj.ReloadGeometry();
 	}
 }
 
