@@ -1,3 +1,11 @@
+2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nma_Keithley2400.h : reorder #includes, fix brackets.
+	* nma_Keithley2400_ui.h : reorder #includes, fix brackets.
+	* ohmmeter.h : reorder #includes, fix brackets.
+	* vrpn_GPIBDevice.h : reorder #includes, fix brackets.
+	* vrpn_Ohmmeter.C : reorder #includes, fix brackets.
+
 2000-12-20  Aron Helser  <helser@cs.unc.edu>
 
 	* all: 3rdtech merge into main trunk. 

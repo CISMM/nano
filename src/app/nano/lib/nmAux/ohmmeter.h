@@ -2,10 +2,12 @@
 #define OHMMETER_H
 
 #include <tcl.h>
+
+#include <vrpn_Ohmmeter.h>
+
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
-#include "vrpn_Ohmmeter.h"
-#include "nmb_Types.h"	// for vrpn_bool
+#include <nmb_Types.h>	// for vrpn_bool
 
 #include <nmm_MicroscopeRemote.h>
 
