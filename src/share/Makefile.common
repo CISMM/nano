@@ -196,6 +196,7 @@ endif
 DEFAULT_PROJ_HOME    := /afs/cs.unc.edu/project/stm
 DEFAULT_PROJ_SRC_DIR := $(DEFAULT_PROJ_HOME)/src
 DEFAULT_PROJ_OBJ_DIR := $(DEFAULT_PROJ_SRC_DIR)/not_backed_up
+DEFAULT_PROJ_EXT_DIR := $(DEFAULT_PROJ_SRC_DIR)/external
 DEFAULT_NANO_SRC_DIR := $(DEFAULT_PROJ_SRC_DIR)/nano
 
 ifndef MY_NANO_SRC_DIR
@@ -238,6 +239,17 @@ TCL_LIB_DIR := /afs/unc/proj/stm/src/tcltk.$(HW_OS)$(OBJECT_DIR_SUFFIX)/lib \
                /afs/unc/proj/stm/src/tcltk.$(HW_OS)/lib \
                /net/nano/nano3/tcltk.$(HW_OS)/lib
 
+ifdef USES_EXTERNAL_LIBS
+   ifdef VC
+      Aron???
+   else
+      EXTERNAL_PRE := ${DEFAULT_PROJ_EXT_DIR}/$(HW_OS)$(OBJECT_DIR_SUFFIX)
+      EXTERNAL_INC_DIR := $(EXTERNAL_PRE)/include
+      EXTERNAL_LIB_DIR := $(EXTERNAL_PRE)/lib
+      EXTERNAL_LIBS := $(addprefix -l, $(USES_EXTERNAL_LIBS))
+   endif
+endif
+
 ###############################################################################
 #
 # Need to use a library?  Just say so ...
@@ -269,7 +281,7 @@ SYS_INCLUDE := $(TCL_INC_DIR) \
                /usr/local/contrib/include /usr/local/contrib/mod/include
 
 ifeq ($(HW_OS),pc_cygwin)
-   SYS_INCLUDE := /usr/local/include 
+   SYS_INCLUDE := 
 endif
 
 ifeq ($(HW_OS),pc_win32)
@@ -286,7 +298,7 @@ ifeq ($(HW_OS),sgi_irix)
    SYS_INCLUDE := $(TCL_INC_DIR) /usr/local/contrib/mod/include
 endif
 
-INCLUDE_FLAGS := $(addprefix -I, . $(SYS_INCLUDE))
+INCLUDE_FLAGS := $(addprefix -I, . $(EXTERNAL_INC_DIR) $(SYS_INCLUDE))
 
 ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
    INCLUDE_FLAGS := $(APDEBUG) $(APCCFLAGS) $(APIFLAGS) -Dhpux -DFLOW \
@@ -305,7 +317,9 @@ INCLUDE_FLAGS += $(LATE_INCLUDE_PATH)
 # {{{ Load flags
 #
 
-LOAD_FLAGS := $(addprefix -L, $(TCL_LIB_DIR) /usr/local/lib \
+LOAD_FLAGS := $(addprefix -L, $(EXTERNAL_LIB_DIR) \
+                              $(TCL_LIB_DIR) \
+                              /usr/local/lib \
                               /usr/local/contrib/unmod/lib \
                               /usr/local/contrib/mod/lib)
 
@@ -430,7 +444,8 @@ endif
 
 # Hacks by TCH 1 May 00 to get afmcntsim (and multiscope) to compile -
 # added glut to EVERYBODY
-LIBS := -lglut $(GRAPHICS_LIBS) $(TCL_LIBS) -lXmu -lXext -lX11 $(ARCH_LIBS) -lm
+LIBS := $(EXTERNAL_LIBS) -lglut $(GRAPHICS_LIBS) \
+        $(TCL_LIBS) -lXmu -lXext -lX11 $(ARCH_LIBS) -lm
 
 ifeq ($(HW_OS), hp700_hpux10)
    LIBS := -lPW $(GRAPHICS_LIBS) $(TCL_LIBS) -lXext -lX11 $(ARCH_LIBS) -lm
