@@ -22,6 +22,7 @@ CNT_IA::CNT_IA()
 	cnt_intensity = INTENS;	// intensity threshold
 	cnt_correlate = CORREL;	// correlation threshold
 
+	cnt_preflatten = 0;		// no pre-flattening
 	cnt_autoparam = 0;		// no automatic parameter adaption
 	cnt_tubes = NULL;		// pointer to CNTs ( array )
 }
@@ -101,13 +102,19 @@ void CNT_IA::cnt_image_setAspt(double aspect)
 
 void CNT_IA::cnt_image_setIntn(double intensity)
 {
-	cnt_intensity = intensity;
+	cnt_intensity = intensity * 255.0;
 }
 
 
 void CNT_IA::cnt_image_setCorr(double correlate)
 {
 	cnt_correlate = correlate;
+}
+
+
+void CNT_IA::cnt_image_setFlat(int preflatten)
+{
+	cnt_preflatten = preflatten;
 }
 
 
@@ -173,44 +180,47 @@ void CNT_IA::cnt_image_flat(void)
 	// Allocate image array;
 	cnt_image_Hgt = new double [N];
 
-	Sx = 0.0;
-	Sy = 0.0;
-	Sz = 0.0;
-	Sxx = 0.0;
-	Sxy = 0.0;
-	Syy = 0.0;
-	Sxz = 0.0;
-	Syz = 0.0;
+	if ( cnt_preflatten ) {
 
-	for ( y=0; y<cnt_image_y; y++ ) {
-		for ( x=0; x<cnt_image_x; x++ ) {
+		Sx = 0.0;
+		Sy = 0.0;
+		Sz = 0.0;
+		Sxx = 0.0;
+		Sxy = 0.0;
+		Syy = 0.0;
+		Sxz = 0.0;
+		Syz = 0.0;
 
-			Sx += x;
-			Sy += y;
-			Sz += cnt_image[y*cnt_image_x+x];
-			Sxx += x * x;
-			Sxy += x * y;
-			Syy += y * y;
-			Sxz += x * cnt_image[y*cnt_image_x+x];
-			Syz += y * cnt_image[y*cnt_image_x+x];
+		for ( y=0; y<cnt_image_y; y++ ) {
+			for ( x=0; x<cnt_image_x; x++ ) {
+
+				Sx += x;
+				Sy += y;
+				Sz += cnt_image[y*cnt_image_x+x];
+				Sxx += x * x;
+				Sxy += x * y;
+				Syy += y * y;
+				Sxz += x * cnt_image[y*cnt_image_x+x];
+				Syz += y * cnt_image[y*cnt_image_x+x];
+			}
 		}
+
+		Lxx = Sxx - Sx * Sx / N;
+		Lxy = Sxy - Sx * Sy / N;
+		Lyy = Syy - Sy * Sy / N;
+		Lxz = Sxz - Sx * Sz / N;
+		Lyz = Syz - Sy * Sz / N;
+
+		a = (Lyy * Lxz - Lxy * Lyz) / (Lxx * Lyy - Lxy * Lxy);
+		b = (Lxx * Lyz - Lxy * Lxz) / (Lxx * Lyy - Lxy * Lxy);
+		c = Sz / N - a * (cnt_image_x - 1) * 0.5 - b * (cnt_image_y - 1) * 0.5;
+//		printf("a = %8.3lf; b = %8.3f; c = %8.3f\n", a, b, c);
+
+		nm = sqrt(a*a + b*b + 1);	// mod of normal vector (a, b, -1)
+		nx = -a / nm;
+		ny = -b / nm;
+		nz = 1.0 / nm;
 	}
-
-	Lxx = Sxx - Sx * Sx / N;
-	Lxy = Sxy - Sx * Sy / N;
-	Lyy = Syy - Sy * Sy / N;
-	Lxz = Sxz - Sx * Sz / N;
-	Lyz = Syz - Sy * Sz / N;
-
-	a = (Lyy * Lxz - Lxy * Lyz) / (Lxx * Lyy - Lxy * Lxy);
-	b = (Lxx * Lyz - Lxy * Lxz) / (Lxx * Lyy - Lxy * Lxy);
-	c = Sz / N - a * (cnt_image_x - 1) * 0.5 - b * (cnt_image_y - 1) * 0.5;
-	printf("a = %8.3lf; b = %8.3f; c = %8.3f\n", a, b, c);
-
-	nm = sqrt(a*a + b*b + 1);	// mod of normal vector (a, b, -1)
-	nx = -a / nm;
-	ny = -b / nm;
-	nz = 1.0 / nm;
 
 // scale pixel value to ( 0.0, 255.0 )
 
@@ -221,7 +231,10 @@ void CNT_IA::cnt_image_flat(void)
 	for ( y=0; y<cnt_image_y; y++ ) {
 		for ( x=0; x<cnt_image_x; x++ ) {
 
-			pixel = nx * x + ny * y + nz * (cnt_image[y*cnt_image_x+x] - c);
+			pixel = cnt_image[y*cnt_image_x+x];
+			if ( cnt_preflatten ) {
+				pixel = nx * x + ny * y + nz * (pixel - c);
+			}
 			imgTmp[y*cnt_image_x+x] = pixel;
 
 			if ( pixel > maxI )
@@ -236,10 +249,10 @@ void CNT_IA::cnt_image_flat(void)
 		denom = 1.0E-6;
 
 	for ( y=0; y<cnt_image_y; y++ ) {
-	   for ( x=0; x<cnt_image_x; x++ ) {
-	      cnt_image_Hgt[y*cnt_image_x+x] = sqrt((imgTmp[y*cnt_image_x+x]-minI) / denom) * denom;
-	      cnt_image[y*cnt_image_x+x] = 255.0 * cnt_image_Hgt[y*cnt_image_x+x] / denom;
-	   }
+		for ( x=0; x<cnt_image_x; x++ ) {
+			cnt_image_Hgt[y*cnt_image_x+x] = sqrt((imgTmp[y*cnt_image_x+x]-minI) / denom) * denom;
+			cnt_image[y*cnt_image_x+x] = 255.0 * cnt_image_Hgt[y*cnt_image_x+x] / denom;
+		}
 	}
 
 // automatic parameter adaption
@@ -267,7 +280,7 @@ void CNT_IA::cnt_image_flat(void)
 
 		cnt_intensity = (binS * binN + 255.0) / 2.0;
 		printf("\n\n\n");
-		printf("Intensity threshold is set to %lf \n", cnt_intensity);
+		printf("Intensity threshold is set to %lf \n", cnt_intensity/255.0);
 		printf("\n\n\n");
 	}
 }
@@ -655,27 +668,33 @@ void CNT_IA::cnt_image_label(void)
 // for each pixel i where cnt_image_Med[i] is labeled as a medial
 //   axis point, set cnt_image_Ord[i] to the ordered index of that
 //   point along the current tube
-void CNT_IA::cnt_image_order(void)
+void CNT_IA::cnt_image_order(char *txtFile)
 {
 	// Find "most medial" point.
 	//cnt_image_Med[index] = 50.0 - 2*Xpr + 6*(10-fabs(atan(Ypr/Xpr))*180.0/3.14) + 2*(Zpr-190);
 	//if ( cnt_image_Med[index] < 220.0 ) cnt_image_Med[index] = 0.0;
 
 	int n = 0;  // Tube number.
-//	int p;		// Medial point number within tube n.
-//	double *cnt_image_Tmp = new double [cnt_image_x * cnt_image_y];
-//	for ( y=0; y<cnt_image_y; y++ ) {
-//		for ( x=0; x<cnt_image_x; x++ ) {
-//			id0 = y * cnt_image_x + x;
-//			cnt_image_Tmp[id0] = 0.0;
-//		}
-//	}
 
 	int x, y;
 	long id0, id1;
-
-	double max_intens = -10000.0;
 	long max_id;
+	double theta, dx, dy;
+	int i = 0;
+	int count;
+	int *Xs = new int [count];
+	int *Ys = new int [count];
+
+	for ( y=0; y<cnt_image_y; y++ ) {
+		for ( x=0; x<cnt_image_x; x++ ) {
+			id0 = y * cnt_image_x + x;
+			cnt_image_Ord[id0] = 0.0;  // Init cnt_image_Ord to 0.
+		}
+	}
+
+
+/*
+	double max_intens = -10000.0;
 	for ( y=0; y<cnt_image_y; y++ ) {
 		for ( x=0; x<cnt_image_x; x++ ) {
 			id0 = y * cnt_image_x + x;
@@ -690,7 +709,6 @@ void CNT_IA::cnt_image_order(void)
 	double id_hi = 0.0;
 	double id_lo = 0.0;
 	int found, dir, skip, end;
-	double theta, dx, dy;
 	for ( y=0; y<cnt_image_y; y++ ) {
 		for ( x=0; x<cnt_image_x; x++ ) {
 			id0 = y * cnt_image_x + x;
@@ -883,23 +901,7 @@ void CNT_IA::cnt_image_order(void)
 		}
 	}
 
-//	// Load auxiliary data.  // NEW (comment only)
-//	int imgX, imgY;
-//	unsigned char *img;
-//	double *aux;
-//	img = NULL;
-//	LoadPPM("good1.ppm", img, imgX, imgY);
-//	aux = new double[imgX * imgY];
-//	for ( y=0; y<imgY; y++ ) {
-//		for ( x=0; x<imgX; x++ ) {
-//			aux[y*imgX+x] = (double)img[3*(y*imgX+x)];
-//		}
-//	}
-
         // Compute (x,y) coords for all ordered medial points.  // NEW (comment only)
-	int i = 0;
-	int *Xs = new int [count];
-	int *Ys = new int [count];
 	for ( y=cnt_image_y-1; y>=0; y-- ) {
 		for ( x=0; x<cnt_image_x; x++ ) {
 			id0 = y * cnt_image_x + x;
@@ -910,11 +912,11 @@ void CNT_IA::cnt_image_order(void)
 			}
 		}
 	}
+*/
 
         // Compute height of nanotube.  // NEW (whole block)
         double heightSum = 0.0;
         double heightMax, heightAve;
-//      long idLeft, idRight;
         count = 0;
         for ( y=0; y<cnt_image_y; y++ ) {
                 for ( x=0; x<cnt_image_x; x++ ) {
@@ -927,8 +929,8 @@ void CNT_IA::cnt_image_order(void)
                                 heightMax = 0;
                                 for ( i=-TUBEWID/2; i<=TUBEWID/2; i++) {
                                         id1 = int(y+i*dx+0.5) * cnt_image_x + int(x-i*dy+0.5);
-					if ( cnt_image_Hgt[id1] > heightMax )
-						heightMax = cnt_image_Hgt[id1];
+					if ( cnt_image[id1] > heightMax )  // NEWEST -- used to be cnt_image_Hgt
+						heightMax = cnt_image[id1];  // NEWEST -- used to be cnt_image_Hgt
                                 }
 //                              idLeft = int(y+dx+0.5) * cnt_image_x + int(x-dy+0.5);
 //                              idRight = int(y-dx+0.5) * cnt_image_x + int(x+dy+0.5);
@@ -1020,7 +1022,11 @@ void CNT_IA::cnt_image_order(void)
 
 	double orient, height;
 	FILE *fp;
-	fp = fopen("medial.dat", "w");
+	char detailsTxtFile[255];
+
+	strcpy(detailsTxtFile, txtFile);
+	strcat(detailsTxtFile, ".details.txt");
+	fp = fopen(detailsTxtFile, "w");
         fprintf(fp, "  s    height   azimuth altitude  radius     x        y     newX     newY     newZ\n\n");  // NEW
 	for ( y=cnt_image_y-1; y>=0; y-- ) {
 		for ( x=0; x<cnt_image_x; x++ ) {
@@ -1045,16 +1051,55 @@ void CNT_IA::cnt_image_order(void)
 
 
 // select which "tubes" are actually tubes, and which are irrelevant blobs
-// for each tube, write position, orientation, and size to file param.dat
-void CNT_IA::cnt_image_select(void)
+// for each tube, write position, orientation, and size to file mask.summary.txt
+void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
 {
 	int x, y, i, j;
 	long id0, id1, index;
-	FILE *fp;
-	
-        int count = 0; // NEW
+	FILE *fSum, *fDet;
+	int tubeCount = 0;
 
-	fp = fopen("param.dat", "w");
+	int count;
+	double dx, dy, theta;
+	long *IDs = new long [cnt_image_x+cnt_image_y];
+	int *Xs = new int [cnt_image_x+cnt_image_y];
+	int *Ys = new int [cnt_image_x+cnt_image_y];
+	double *dist = new double [cnt_image_x+cnt_image_y];
+	int *ord = new int [cnt_image_x+cnt_image_y];
+	double tempDist;
+	double maxDist;
+	long maxID;
+
+	char summaryTxtFile[255];
+	strcpy(summaryTxtFile, txtFile);
+	strcat(summaryTxtFile, ".summary.txt");
+	fSum = fopen(summaryTxtFile, "w");
+
+	char detailsTxtFile[255];
+	strcpy(detailsTxtFile, txtFile);
+	strcat(detailsTxtFile, ".details.txt");
+	fDet = fopen(detailsTxtFile, "w");
+
+	fprintf(fSum, "INPUT IMAGE FILE:  %s\n\n", fileName);
+
+	fprintf(fSum, "===== PARAMETERS =====\n");
+	fprintf(fSum, "Image Blurring:  %3.1f\n", cnt_sigma);
+	fprintf(fSum, "Aspect Ratio:  %3.1f\n", cnt_aspect);
+	fprintf(fSum, "Intensity Threshold:  %4.2f\n", cnt_intensity/255.0);
+	fprintf(fSum, "Correlation Factor:  %4.2f\n", cnt_correlate);
+	fprintf(fSum, "Pre-Flattening:  %1d\n", cnt_preflatten);
+	fprintf(fSum, "Auto-Adaptation:  %1d\n\n", cnt_autoparam);
+
+        fprintf(fDet, "INDEX      X2D      Y2D      X3D      Y3D      Z3D  AZIMUTH ALTITUDE   RADIUS\n\n");
+        fprintf(fDet, "-----      ---      ---      ---      ---      ---  ------- --------   ------\n\n");
+
+	// reset cnt_image_Ord
+	for ( y=0; y<cnt_image_y; y++ ) {
+		for ( x=0; x<cnt_image_x; x++ ) {
+			id0 = y * cnt_image_x + x;
+			cnt_image_Ord[id0] = 0.0;
+		}
+	}
 
 	for ( y=0; y<cnt_image_y; y++ ) {
 		for ( x=0; x<cnt_image_x; x++ ) {
@@ -1119,26 +1164,179 @@ void CNT_IA::cnt_image_select(void)
 				// Valid tube
 				else {
 
-                                        // NEW -- Paint each tube a different color
-                                        count++;
-                                        for ( j=0; j<cnt_image_y; j++ ) {
-                                                for ( i=0; i<cnt_image_x; i++ ) {
-                                                        index = j * cnt_image_x + i;
-                                                        if ( cnt_image_Tid[index] == id0 ) {
-                                                                cnt_image_Ord[index] = 1.0;
-                                                        }
-                                                }
-                                        }
-  
-					fprintf(fp, "===== CNT ID = %d =====\n", id0);
-					fprintf(fp, "Position : X = %8.3lf Y = %8.3lf\n", COMx, COMy);
-					fprintf(fp, "Orientation : %8.3lf degree\n", yaw);
-					fprintf(fp, "Length = %8.3lf Width = %8.3lf\n\n", La, Lb);
+					fprintf(fSum, "===== CNT ID = %d =====\n", id0);
+					fprintf(fSum, "Position : X = %8.3lf Y = %8.3lf\n", COMx, COMy);
+					fprintf(fSum, "Orientation : %8.3lf degree\n", yaw);
+					fprintf(fSum, "Length = %8.3lf Width = %8.3lf\n\n", La, Lb);
+
+	count = 0;
+        for ( j=0; j<cnt_image_y; j++ ) {
+                for ( i=0; i<cnt_image_x; i++ ) {
+                        id1 = j * cnt_image_x + i;
+			if ( (cnt_image_Tid[id1] == id0) && (cnt_image_Med[id1] > 0.0) ) {
+				Xs[count] = j;
+				Ys[count] = i;
+				IDs[count++] = id1;
+			}
+		}
+	}
+	maxDist = -1.0;
+	maxID = 0;
+	for ( i=0; i<count; i++ ) {
+		tempDist = sqrt(double((Xs[i]-Xs[0])*(Xs[i]-Xs[0]) + (Ys[i]-Ys[0])*(Ys[i]-Ys[0])));
+		if ( tempDist > maxDist ) {
+			maxDist = tempDist;
+			maxID = i;
+		}
+	}
+	for ( i=0; i<count; i++ ) {
+		tempDist = sqrt(double((Xs[i]-Xs[maxID])*(Xs[i]-Xs[maxID]) + (Ys[i]-Ys[maxID])*(Ys[i]-Ys[maxID])));
+		dist[i] = tempDist;
+	}
+	for ( j=0; j<count; j++ ) {
+		maxDist = -1.0;
+		maxID = 0;
+		for ( i=0; i<count; i++ ) {
+			if ( dist[i] > maxDist ) {
+				maxDist = dist[i];
+				maxID = i;
+			}
+		}
+		ord[j] = maxID;
+		dist[maxID] = -1.0;
+	}
+
+/*
+        // Compute height of nanotube.  // NEW (whole block)
+        double heightSum = 0.0;
+        double heightMax, heightAve;
+        count = 0;
+        for ( y=0; y<cnt_image_y; y++ ) {
+                for ( x=0; x<cnt_image_x; x++ ) {
+                        id0 = y * cnt_image_x + x;
+                        if (cnt_image_Ord[id0] > 0.0) {
+                                theta = cnt_image_Vpp[id0] * 3.14159265359;
+                                theta = fabs(theta);
+                                dx = sin(theta);
+                                dy = cos(theta);
+                                heightMax = 0;
+                                for ( i=-TUBEWID/2; i<=TUBEWID/2; i++) {
+                                        id1 = int(y+i*dx+0.5) * cnt_image_x + int(x-i*dy+0.5);
+					if ( cnt_image[id1] > heightMax )  // NEWEST -- used to be cnt_image_Hgt
+						heightMax = cnt_image[id1];  // NEWEST -- used to be cnt_image_Hgt
+                                }
+//                              idLeft = int(y+dx+0.5) * cnt_image_x + int(x-dy+0.5);
+//                              idRight = int(y-dx+0.5) * cnt_image_x + int(x+dy+0.5);
+//                              heightMax = 0;//{replace w/ height[id0], from nano info}
+//                              if ( 1 )//{height[idLeft] > heightMax}
+//                                      heightMax = 1;//{height[idLeft]}
+//                              if ( 2 )//{height[idRight] > heightMax}
+//                                      heightMax = 2;//{height[idRight]}
+                                heightSum += heightMax;
+                                count++;
+                        }
+                }
+        }
+        heightAve = heightSum / count;
+*/
+
+        // Compute 3D info.  // NEW (whole block) 
+        int prevId, nextId;
+        int prevX, prevY, nextX, nextY;
+        double prevZ, nextZ, dz, norm_alt, mag;
+        double *az = new double [count];
+        double *alt = new double [count];
+        double *rad_of_curv = new double [count];
+        double *X3D = new double [count];
+        double *Y3D = new double [count];
+        double *Z3D = new double [count];
+
+        for ( i=0; i<count; i++ ) { 
+                id0 = Ys[i] * cnt_image_x + Xs[i];
+
+                // Find the azimuth and altitude of the axis direction at the current location.
+                if ( i==0 ) {
+                        prevX = Xs[i];
+                        prevY = Ys[i];
+                }
+                else {
+                        prevX = Xs[i-1];
+                        prevY = Ys[i-1];
+                }
+                if ( i==count-1 ) {
+                        nextX = Xs[i];
+                        nextY = Ys[i];
+                }
+                else {
+                        nextX = Xs[i+1];
+                        nextY = Ys[i+1];
+                }
+                prevId = prevY * cnt_image_x + prevX;
+                nextId = nextY * cnt_image_x + nextX;
+                prevZ = cnt_image[prevId];
+                nextZ = cnt_image[nextId];
+                dx = double (nextX - prevX);
+                dy = double (nextY - prevY);
+                dz = nextZ - prevZ;
+                theta = cnt_image_Vpp[id0] * 3.14159265359;
+                theta = fabs(theta);
+                az[i] = theta;
+                alt[i] = atan2(dz, sqrt(dx*dx+dy*dy));
+
+                // Find the radius of curvature of the tube at the current location.
+                if ( fabs(cnt_image_Hpp[id0]) > fabs(cnt_image_Hqq[id0]) )
+                        rad_of_curv[i] = fabs(cnt_image_Hpp[id0]);
+                else
+                        rad_of_curv[i] = fabs(cnt_image_Hqq[id0]);
+                rad_of_curv[i] *= cos(alt[i]);           
+
+                // Find the 3D medial axis location corresponding to the current image (tube top) point.
+                if ( alt > 0 ) {    
+                        norm_alt = alt[i] - 3.14159265359/2;
+                        dx = sin(theta);
+                        dy = cos(theta);  
+                        dz = tan(norm_alt);
+                }
+                else if ( alt < 0 ) {
+                        norm_alt = alt[i] + 3.14159265359/2;
+                        dx = -sin(theta);
+                        dy = -cos(theta);
+                        dz = -tan(theta);
+                }
+                mag = rad_of_curv[i] / sqrt(1 + dz*dz);
+                dx *= mag;
+                dy *= mag;
+                dz *= mag;
+                X3D[i] = double (Xs[i]) + dx;
+                Y3D[i] = double (Ys[i]) + dy;
+                Z3D[i] = cnt_image[id0] + dz;
+        }
+
+	fprintf(fDet, "TUBE #%1d\n", tubeCount++);
+	for ( j=0; j<count; j++ ) {
+		i = ord[j];
+		fprintf(fDet, "%5d %8d %8d %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf\n", i, Xs[i], Ys[i], X3D[i], Y3D[i], Z3D[i], az[i], alt[i], rad_of_curv[i]);
+	}
+	fprintf(fDet, "\n");
+
+//	double orient, height;
+//	for ( y=cnt_image_y-1; y>=0; y-- ) {
+//		for ( x=0; x<cnt_image_x; x++ ) {
+//			id0 = y * cnt_image_x + x;
+//			if ( cnt_image_Ord[id0] > 0.0 ) {
+//                              height = cnt_image[id0] * cnt_image_height / 255.0;
+//				id1 = int (cnt_image_Ord[id0]) - 1; // NEW
+//                                fprintf(fDet, "%3.0lf %8.2lf %8.2lf %8.2lf %8.2lf %8d %8d %8.2lf %8.2lf %8.2lf\n", cnt_image_Ord[id0], height, az[id1], alt[id1], rad_of_curv[id1], x, y, X3D[id1], Y3D[id1], Z3D[id1]);  // NEW
+//			}
+//		}
+//	}
+
 				}
 			}
 		}
 	}
 
-	fclose(fp);
+	fclose(fSum);
+	fclose(fDet);
 	
 }

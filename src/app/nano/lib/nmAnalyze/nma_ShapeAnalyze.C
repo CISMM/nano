@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include <BCPlane.h>
+#include <BCString.h>
 #include <nmb_PlaneSelection.h>
 #include "nma_ShapeAnalyze.h"
 #include "cnt_ia.h"
@@ -12,6 +13,7 @@ nma_ShapeAnalyze()
 {
 	strcpy(d_imgMaskFile, "mask.ppm");
 	strcpy(d_imgOrdFile, "order.ppm");
+	strcpy(d_txtFile, "mask");
 
 	d_cntRec = new CNT_IA();
 }
@@ -47,8 +49,15 @@ setAspectRatio(float aspect)
 void nma_ShapeAnalyze::
 setThresholdInten(float thresholdInten)
 {
-	// set INTENSITY threshold for CNT recognition -- default=160
+	// set INTENSITY threshold for CNT recognition -- default=0.6
 	d_cntRec->cnt_image_setIntn(thresholdInten);	
+}
+
+void nma_ShapeAnalyze::
+setPreFlatten(int preFlatten)
+{
+	// set PRE-FLATTENING flag -- default=1
+	d_cntRec->cnt_image_setFlat(preFlatten);		
 }
 
 void nma_ShapeAnalyze::
@@ -76,6 +85,7 @@ setMaskFile(const char *file)
 	int len = strlen(file);
 
 	strcpy(d_imgMaskFile, file);
+	strcpy(d_txtFile, file);
 #ifdef _WIN32
 	if (_stricmp(file + (len-4), ".ppm") != 0) {
 #else
@@ -115,8 +125,8 @@ imageAnalyze(nmb_PlaneSelection planeSelection) //*
 	d_cntRec->cnt_image_medial();
 	d_cntRec->cnt_image_fit();
 	d_cntRec->cnt_image_label();
-	d_cntRec->cnt_image_order();
-	d_cntRec->cnt_image_select();
+//	d_cntRec->cnt_image_order(d_txtFile);
+	d_cntRec->cnt_image_select(d_txtFile, imagePlane->name()->Characters());
 	
 	//		d_cntRec.cnt_image_write("blur.ppm", d_cntRec.cnt_image_Blr);
 	//		d_cntRec.cnt_image_write("medial.ppm", d_cntRec.cnt_image_Med);

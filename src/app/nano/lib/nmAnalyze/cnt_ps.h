@@ -3,7 +3,7 @@
 
 #define SIGMA	1.5
 #define	CORREL	0.6
-#define INTENS	150.0
+#define INTENS	0.6 * 255
 #define PQFLAG	1		// flag to swap vector components P and Q
 #define SAM_WID 0		// window size for eigen vector averaging
 #define TUBEWID 20		// max width of tube to detect

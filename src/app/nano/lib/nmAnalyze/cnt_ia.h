@@ -35,6 +35,7 @@ private :
 	double cnt_intensity;	// intensity threshold
 	double cnt_correlate;	// correlation threshold
 
+	int cnt_preflatten;		// flag for pre-flattening the image
 	int cnt_autoparam;		// flag for automatic parameter adaption
 	CNT_cnt *cnt_tubes;		// pointer to CNTs ( array )
 
@@ -72,6 +73,7 @@ public : // following are Image Analysis functions
 	void cnt_image_setAspt(double aspect);
 	void cnt_image_setIntn(double intensity);
 	void cnt_image_setCorr(double correlate);
+	void cnt_image_setFlat(int preflatten);
 	void cnt_image_setAuto(int autoparam);
 
 	void cnt_image_read(char *imgFile);// read in image array from ppm file
@@ -85,8 +87,8 @@ public : // following are Image Analysis functions
 									// pattern recognition function
 	void cnt_image_fit(void);	// picking tube from medial axes info
 	void cnt_image_label(void);	// labelling CNT id
-	void cnt_image_order(void);	// order medial axis points
-	void cnt_image_select(void);	// applying thresholds to pick out CNTs
+	void cnt_image_order(char *txtFile);	// order medial axis points
+	void cnt_image_select(char *txtFile, const char *fileName);	// applying thresholds to pick out CNTs
 
 protected:	// filter related variables
 

@@ -244,51 +244,55 @@ button $nmInfo(shape_analysis).shapeframe.analyze_now -text "Analyze Now" -comma
 	set analyze_shape 1    
 }
 
-set shape_xscale 0
-set shape_yscale 0
-set shape_zscale 0
 set blurring 4
 set aspect_ratio 2
+set intensity_thresh 0.6
 set correlation 0.6
-set intensity_thresh 160
+set pre_flatten 1
 set auto_adapt 1
 set shape_mask 1
 set shape_order 0
 set shape_mask_file ""
 set shape_order_file ""
 
+proc set_intensity_thresh {} {
+	global auto_adapt
+	global nmInfo
+	#if using auto-adaptation, disable the intensity threshold field
+	if {$auto_adapt == 1} {
+		$nmInfo(shape_analysis).intensity_thresh configure -state disabled
+	} elseif {$auto_adapt == 0} {
+		$nmInfo(shape_analysis).intensity_thresh configure -state normal
+	}
+}
 
-generic_entry $nmInfo(shape_analysis).shape_xscale shape_xscale \
-	"X scale (pixel to nm)" real
-
-generic_entry $nmInfo(shape_analysis).shape_yscale shape_yscale \
-	"Y scale (pixel to nm)" real
-
-generic_entry $nmInfo(shape_analysis).shape_zscale shape_zscale \
-	"Z scale (pixel to nm)" real
 
 generic_entry $nmInfo(shape_analysis).blurring blurring \
-	"Image Blurring" real
+	"Gaussian Blurring (pixels)" real
 
 generic_entry $nmInfo(shape_analysis).aspect_ratio aspect_ratio \
-	"Aspect ratio for CNT recognition" real
-
-generic_entry $nmInfo(shape_analysis).correlation correlation \
-	"Correlation factor for CNT fitting" real
+	"Aspect Ratio for Tube Recognition" real
 
 generic_entry $nmInfo(shape_analysis).intensity_thresh intensity_thresh \
-	"Intensity threshold for CNT recognition" real
+	"Intensity Threshold for Tube Recognition (0-1)" real
 
-checkbutton $nmInfo(shape_analysis).auto_adapt \
-	-text "Auto-Adaption" -variable auto_adapt \
+generic_entry $nmInfo(shape_analysis).correlation correlation \
+	"Tube Width Correlation (0-1)" real
+
+checkbutton $nmInfo(shape_analysis).pre_flatten \
+	-text "Pre-Flatten Image" -variable pre_flatten \
 	-anchor nw
 
+checkbutton $nmInfo(shape_analysis).auto_adapt \
+	-text "Auto-Set Intensity Threshold" -variable auto_adapt \
+	-command set_intensity_thresh -anchor nw
+
 checkbutton $nmInfo(shape_analysis).shape_mask \
-	-text "Output Mask File" -variable shape_mask \
+	-text "Output Image Mask File" -variable shape_mask \
 	-anchor nw
 
 checkbutton $nmInfo(shape_analysis).shape_order \
-	-text "Output Order File" -variable shape_order \
+	-text "Output Image Order File" -variable shape_order \
 	-anchor nw
 
 generic_entry $nmInfo(shape_analysis).shape_mask_file shape_mask_file \
@@ -297,38 +301,33 @@ generic_entry $nmInfo(shape_analysis).shape_mask_file shape_mask_file \
 generic_entry $nmInfo(shape_analysis).shape_order_file shape_order_file \
 	"Image Order File Name" ""
 
+set_intensity_thresh
 
 iwidgets::Labeledwidget::alignlabels \
-        $nmInfo(shape_analysis).shape_xscale \
-        $nmInfo(shape_analysis).shape_yscale \
-		$nmInfo(shape_analysis).shape_zscale \
 		$nmInfo(shape_analysis).blurring \
 		$nmInfo(shape_analysis).aspect_ratio \
-		$nmInfo(shape_analysis).correlation \
 		$nmInfo(shape_analysis).intensity_thresh \
+		$nmInfo(shape_analysis).correlation \
 		$nmInfo(shape_analysis).shape_mask_file \
 		$nmInfo(shape_analysis).shape_order_file 
 #pack $nmInfo(shape_analysis).label -side top -anchor nw
-
-#pack the x scale
-pack $nmInfo(shape_analysis).shape_xscale -side top -fill x -pady $fspady
-#pack the y scale
-pack $nmInfo(shape_analysis).shape_yscale -side top -fill x -pady $fspady
-#pack the z scale
-pack $nmInfo(shape_analysis).shape_zscale -side top -fill x -pady $fspady
 
 #pack blurring
 pack $nmInfo(shape_analysis).blurring -side top -fill x -pady $fspady
 #pack the aspect ratio
 pack $nmInfo(shape_analysis).aspect_ratio -side top -fill x -pady $fspady
-#pack correlation
-pack $nmInfo(shape_analysis).correlation -side top -fill x -pady $fspady
 #pack intensity threshold
 pack $nmInfo(shape_analysis).intensity_thresh -side top -fill x -pady $fspady
+#pack correlation
+pack $nmInfo(shape_analysis).correlation -side top -fill x -pady $fspady
 #pack mask file
 pack $nmInfo(shape_analysis).shape_mask_file -side top -fill x -pady $fspady
 #pack order file
 pack $nmInfo(shape_analysis).shape_order_file -side top -fill x -pady $fspady
+
+#pack the pre flatten checkbutton
+pack $nmInfo(shape_analysis).pre_flatten \
+	-anchor nw -side top -fill x -pady $fspady
 
 #pack the auto adaption checkbutton
 pack $nmInfo(shape_analysis).auto_adapt \

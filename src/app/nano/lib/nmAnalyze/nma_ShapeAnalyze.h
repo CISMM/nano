@@ -19,6 +19,7 @@ public:
 	void setAspectRatio(float);
 	void setThresholdInten(float);
 
+	void setPreFlatten(int);
 	void setAutoAdapt(int);
 	void setMaskWrite(int);
 	void setOrderWrite(int);
@@ -31,6 +32,7 @@ public:
 private:
 	char d_imgMaskFile[255];  //255 characters should be plenty for any file name
 	char d_imgOrdFile[255];
+	char d_txtFile[255];
 
 	int d_maskWrite;
 	int d_ordWrite;
