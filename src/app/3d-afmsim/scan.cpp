@@ -32,6 +32,7 @@ double zHeight        [MAX_GRID][MAX_GRID];
 double** zDistance;
 double** zDistanceScaled;
 
+
 // scan grid resolution
 int    scanResolution = DEPTHSIZE;	
 // scan grid pitch (sample-to-sample spacing)
@@ -71,14 +72,27 @@ void get_z_buffer_values() {
 
   glReadBuffer(GL_BACK);
 
-  zDistance = new double*[MAX_GRID];
-  zDistanceScaled = new double*[MAX_GRID];
+
+  if(zDistance == NULL){
+	  zDistance = new double*[MAX_GRID];
+	  for(int j=0; j<scanResolution; j++ ) {
+		  zDistance[j] = NULL;
+	  }
+  }
+  if(zDistanceScaled == NULL){
+	  zDistanceScaled = new double*[MAX_GRID];
+	  for(int j=0; j<scanResolution; j++ ) {
+		  zDistanceScaled[j] = NULL;
+	  }
+  }
+  
   
   glReadPixels( 0, 0, pixelGridSize, pixelGridSize, GL_DEPTH_COMPONENT, GL_FLOAT, zBufferPtr );
 
   for(int j=0; j<scanResolution; j++ ) {
-    zDistance[j] = new double[MAX_GRID];
-	zDistanceScaled[j] = new double[MAX_GRID];
+
+    if(zDistance[j] == NULL)		zDistance[j] = new double[MAX_GRID];
+	if(zDistanceScaled[j] == NULL)	zDistanceScaled[j] = new double[MAX_GRID];
 
     for(int i=0; i<scanResolution; i++ ) {
       float zNormalized = zBuffer[ j*pixelGridSize + i ];
@@ -158,6 +172,7 @@ double ** doImageScanApprox(int& row_col_length)
   get_color_buffer_values();
 
   row_col_length = scanResolution;
+
 
   return zDistanceScaled;
 
