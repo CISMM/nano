@@ -3235,9 +3235,6 @@ static void startSimulatedMicroscope(){
 		
 		SimulatedMicroscope = new nmm_SimulatedMicroscope_Remote(SimScanIPAddress, 
 			connection, SimScanStoredPlaneName, dataset);
-		SimulatedMicroscope->encode_and_sendGridandScanInfo(dataset->inputGrid->numX(), dataset->inputGrid->numY(),
-			dataset->inputGrid->minX(),dataset->inputGrid->minY(),0,
-			dataset->inputGrid->maxX(),dataset->inputGrid->maxY(),128);
 	}
 	else{
 		cout << "\nConnection is NULL\nTry setting up remote simulated microscope again.\n";
