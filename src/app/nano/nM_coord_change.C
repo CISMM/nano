@@ -134,10 +134,10 @@ void nM_coord_change::handle_tracker_pos_change(void *userdata,
   me->pos[0] = worldFromHandPtr.xlate[Q_X];
   me->pos[1] = worldFromHandPtr.xlate[Q_Y];
   me->pos[2] = worldFromHandPtr.xlate[Q_Z];
-  me->quat[0] = worldFromHandPtr.rotate[Q_X];
-  me->quat[1] = worldFromHandPtr.rotate[Q_Y];
-  me->quat[2] = worldFromHandPtr.rotate[Q_Z];
-  me->quat[3] = worldFromHandPtr.rotate[Q_W];
+  me->d_quat[0] = worldFromHandPtr.rotate[Q_X];
+  me->d_quat[1] = worldFromHandPtr.rotate[Q_Y];
+  me->d_quat[2] = worldFromHandPtr.rotate[Q_Z];
+  me->d_quat[3] = worldFromHandPtr.rotate[Q_W];
 
   gettimeofday(&me->timestamp, NULL);
 
