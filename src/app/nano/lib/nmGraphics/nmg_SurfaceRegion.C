@@ -659,6 +659,9 @@ SaveBuildState()
 {
     d_savedState.justColor = g_just_color;  //This one gets
                                      //automatically changed
+    if (spm_graphics_verbosity >= 5) {
+       fprintf(stderr, "Saved just_color %d.\n", g_just_color);
+    }
     d_savedState.stride = g_stride;
     d_savedState.alpha = g_surface_alpha;
 }
@@ -673,7 +676,10 @@ SaveBuildState()
 void nmg_SurfaceRegion::
 RestoreBuildState()
 {
-    g_just_color = d_savedState.justColor;
+    //g_just_color = d_savedState.justColor;
+    if (spm_graphics_verbosity >= 5) {
+       fprintf(stderr, "Restored just_color %d.\n", g_just_color);
+    }
     g_stride = d_savedState.stride;
     g_surface_alpha = d_savedState.alpha;
 }
@@ -761,27 +767,60 @@ rebuildInterval(nmb_Dataset *dataset, int low_row, int high_row, int strips_in_x
     nmb_PlaneSelection planes;
     planes.lookup(dataset);
     
+if (spm_graphics_verbosity >= 7) {
+   fprintf(stderr, "nmg_SurfaceRegion::rebuildInterval:  "
+           "saving build state.\n");
+}
+
     SaveBuildState();
+
+if (spm_graphics_verbosity >= 7) {
+   fprintf(stderr, "nmg_SurfaceRegion::rebuildInterval:  "
+           "saved build state.\n");
+}
 
     g_stride = d_currentState.stride;
     g_surface_alpha = d_currentState.alpha;
 
     if (!update.empty() || !todo.empty()) {
+if (spm_graphics_verbosity >= 6) {
+fprintf(stderr, "nmg_SurfaceRegion::rebuildInterval:  calling rederive.\n");
+}
         //Make sure we have a valid mask before we rebuild the display lists
         d_parent->rederive(d_regionID);
     }
     if (update.overlaps(todo) || update.adjacent(todo)) {
+if (spm_graphics_verbosity >= 6) {
+fprintf(stderr, "nmg_SurfaceRegion::rebuildInterval:  "
+                "update overlaps or adjacent todo.\n");
+}
         if (build_list_set(update + todo, planes, d_regionalMask, d_list_base, 
                            d_num_lists, strips_in_x, d_vertexPtr)) return 0;
     } 
     else {
+
+if (spm_graphics_verbosity >= 6) {
+fprintf(stderr, "  update %d - %d, list base %d, num lists %d, in %s.\n",
+update.low(), update.high(), d_list_base, d_num_lists,
+strips_in_x ? "x" : "y");
+}
         if (build_list_set(update, planes, d_regionalMask, d_list_base, 
                            d_num_lists, strips_in_x, d_vertexPtr)) return 0;
         if (build_list_set(todo, planes, d_regionalMask, d_list_base, 
                            d_num_lists, strips_in_x, d_vertexPtr)) return 0;
     }
     
+if (spm_graphics_verbosity >= 7) {
+   fprintf(stderr, "nmg_SurfaceRegion::rebuildInterval:  "
+           "restoring build state.\n");
+}
+
     RestoreBuildState();
+
+if (spm_graphics_verbosity >= 7) {
+   fprintf(stderr, "nmg_SurfaceRegion::rebuildInterval:  "
+           "restored build state.\n");
+}
 
     return 1;
 }

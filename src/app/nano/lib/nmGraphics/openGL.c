@@ -282,7 +282,7 @@ int build_list_set
 #endif // sgi or win32
     //#endif // sgi 
     
-    if (spm_graphics_verbosity >= 15) { 
+    if (spm_graphics_verbosity >= 8) {   // was 15 - TCH Jan 2002
         fprintf(stderr, "  updating %d - %d", subset.low(), subset.high());
     } 
     // Store g_just_color
@@ -297,7 +297,7 @@ int build_list_set
     g_just_color = 0;
     for (i = subset.low(); i <= subset.high(); i++) {
         
-        if (spm_graphics_verbosity >= 10) {
+        if (spm_graphics_verbosity >= 9) {  // was 10 - TCH Jan 2002
             fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
         }
         
@@ -317,7 +317,7 @@ int build_list_set
             return -1;
         }
         
-        if (spm_graphics_verbosity >= 10) {
+        if (spm_graphics_verbosity >= 9) {  // was 10 - TCH Jan 2002
             fprintf(stderr, "    updated %d.\n", i);
         }
         VERBOSECHECK(10);
@@ -331,7 +331,7 @@ int build_list_set
         // re-color the whole surface
         for (i = 0; i < num_lists; i++) {
             
-            if (spm_graphics_verbosity >= 10) {
+            if (spm_graphics_verbosity >= 9) {  // was 10
                 fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
             }
             
@@ -351,7 +351,7 @@ int build_list_set
                 return -1;
             }          
             
-            if (spm_graphics_verbosity >= 10) {
+            if (spm_graphics_verbosity >= 9) {  // was 10
                 fprintf(stderr, "    updated %d.\n", i);
             }
             VERBOSECHECK(10);
@@ -408,6 +408,11 @@ int build_list_set (const nmb_Interval &insubset,
     nmb_Interval subset (MAX(0, insubset.low()),
         MIN(num - 1, insubset.high()));
     
+if (spm_graphics_verbosity >= 8) {
+   fprintf(stderr, " build_list_set simple: num %d yielded subset %d - %d.\n",
+   num, subset.low(), subset.high());
+}
+
     if (!subset.empty()) {      
         if (spm_graphics_verbosity >= 8) {
             fprintf(stderr, "Deleting display lists from %d for %d.\n",
@@ -741,6 +746,11 @@ int draw_world (int) {
         
     }
     
+    if (spm_graphics_verbosity >= 5) {
+       fprintf(stderr, "      Changing from %d to %d in %s.\n",
+       low_row, high_row, display_lists_in_x ? "x" : "y");
+    }
+
     // Convert from rows to strips:  divide through by the tesselation stride
     
     

@@ -949,6 +949,10 @@ _______________________________********************/
 }
 
 void nmg_Graphics_Implementation::causeGridReColor (void) {
+  if (spm_graphics_verbosity >= 5) {
+    fprintf(stderr, "nmg_Graphics_Implementation::causeGridReColor()\n");
+  }
+
   g_just_color = 1;
   // Don't cause geometry to be re-calculated !!
   //causeGridRedraw();
@@ -969,6 +973,9 @@ void nmg_Graphics_Implementation::causeGridRedraw (void) {
 }
 
 void nmg_Graphics_Implementation::causeGridRebuild (void) {
+  if (spm_graphics_verbosity >= 5) {
+    fprintf(stderr, "nmg_Graphics_Implementation::causeGridRebuild()\n");
+  }
   g_just_color = 0;
 
   // Even though we may not be using the vertex array extension, we still

@@ -5,6 +5,8 @@
 #include <BCPlane.h>
 #include <stdlib.h>
 
+#include "graphics_globals.h"  // for spm_graphics_verbosity
+
 ////////////////////////////////////////////////////////////
 //    Function: nmg_Surface::Constructor
 //      Access: Public
@@ -320,6 +322,9 @@ int nmg_Surface::
 rebuildInterval(int low_row, int high_row, int strips_in_x)
 {
     if (d_dataset != (nmb_Dataset*)NULL) {
+if ((spm_graphics_verbosity >= 5) && (d_numSubRegions > 0)) {
+   fprintf(stderr, "        Updating %d subregions.\n", d_numSubRegions);
+}
         for(int i = 0; i < d_numSubRegions; i++) {
             if (!d_subRegions[i]->rebuildInterval(d_dataset, low_row, 
                                                   high_row, strips_in_x)) {

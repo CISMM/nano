@@ -12,6 +12,8 @@
 #include <math.h>
 #include <quat.h> // For Q_DEG_TO_RAD
 
+#include "graphics_globals.h"  // for spm_graphics_verbosity
+
 ////////////////////////////////////////////////////////////
 //    Function: nmg_SurfaceMask::Constructor
 //      Access: Public
@@ -217,6 +219,11 @@ add(nmg_SurfaceMask *other)
 void nmg_SurfaceMask::
 clear()
 {
+
+   if (spm_graphics_verbosity >= 5) {
+      fprintf(stderr, "nmg_SurfaceMask::clear.\n");
+   }
+
     for(int y = 0; y < d_height; y++) {
         for(int x = 0; x < d_width; x++) {
             addValue(x,y,-value(x,y));
@@ -233,6 +240,11 @@ clear()
 int nmg_SurfaceMask::
 deriveMask(float min_height, float max_height)
 {
+   if (spm_graphics_verbosity >= 5) {
+      fprintf(stderr, "nmg_SurfaceMask::deriveMask %.5f, %.5f.\n",
+      min_height, max_height);
+   }
+
     if (d_minHeight != min_height ||
         d_maxHeight != max_height) 
     {
@@ -357,6 +369,11 @@ deriveBox(nmb_Dataset *dataset)
 int nmg_SurfaceMask::
 rederive(nmb_Dataset *dataset)
 {
+
+   if (spm_graphics_verbosity >= 5) {
+      fprintf(stderr, "nmg_SurfaceMask::rederive.\n");
+   }
+
     int derived = 0;
     switch(d_derivationMode) {
     case HEIGHT:
