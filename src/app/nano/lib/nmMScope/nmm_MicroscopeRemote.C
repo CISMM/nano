@@ -3411,11 +3411,16 @@ void nmm_Microscope_Remote::RcvInSpectroscopyMode(const float _setpoint,
   if (state.acquisitionMode == MODIFY) {
     printf("Matching AFM modify parameters (Spectroscopy).\n");
     printf("stdel=%g, z_st=%g, z_end=%g, z_pull=%g, forcelim=%g, dist=%g\n",
-           _startDelay, _zStart, _zEnd, _zPullback, _forceLimit, _distBetweenFC);
-    printf("numpoints=%d, numhalfcycles=%d, samp_spd=%g, pull_spd=%g, start_spd=%g\n",
-           _sampleSpeed, _pullbackSpeed, _startSpeed, _numPoints, _numHalfcycles);
-    printf("fdback_spd=%g, avg_num=%d, samp_del=%g, pull_del=%g, fdback_del=%g\n",
-                _feedbackSpeed, _avgNum, _sampleDelay, _pullbackDelay, _feedbackDelay);
+           _startDelay, _zStart, _zEnd, 
+           _zPullback, _forceLimit, _distBetweenFC);
+    printf("numpoints=%d, numhalfcycles=%d, samp_spd=%g, "
+           "pull_spd=%g, start_spd=%g\n",
+           _numPoints, _numHalfcycles, _sampleSpeed, 
+           _pullbackSpeed, _startSpeed);
+    printf("fdback_spd=%g, avg_num=%d, samp_del=%g, "
+           "pull_del=%g, fdback_del=%g\n",
+           _feedbackSpeed, _avgNum, _sampleDelay, 
+           _pullbackDelay, _feedbackDelay);
     if (state.modify.style != FORCECURVE) {
       state.modify.style = FORCECURVE;
     }
