@@ -29,8 +29,8 @@ class nmr_Registration_Server : public nmb_Device_Server,
     //virtual vrpn_int32 mainloop(void);
 
     int setImageParameters(nmr_ImageType whichImage,
-                           vrpn_int32 res_x, vrpn_int32 res_y,
-                           vrpn_bool treat_as_height_field);
+         vrpn_int32 res_x, vrpn_int32 res_y,
+         vrpn_float32 size_x, vrpn_float32 size_y);
     int setScanline(nmr_ImageType whichImage, vrpn_int32 row,
                            vrpn_int32 line_length, vrpn_float32 *data);
 
@@ -51,8 +51,8 @@ class nmr_Registration_Server : public nmb_Device_Server,
     /// this returns the parameters and which image they are for from the
     /// the last message received
     void getImageParameters(nmr_ImageType &whichImage,
-                           vrpn_int32 &res_x, vrpn_int32 &res_y,
-                           vrpn_bool &treat_as_height_field);
+          vrpn_int32 &res_x, vrpn_int32 &res_y,
+          vrpn_float32 &size_x, vrpn_float32 &size_y);
     void getRegistrationEnable(vrpn_bool &enabled);
     void getGUIEnable(vrpn_bool &enabled);
     void getTransformationOptions(nmr_TransformationType &type);
@@ -78,9 +78,9 @@ class nmr_Registration_Server : public nmb_Device_Server,
 
     nmr_ImageType d_imageParamsLastReceived;
     vrpn_int32 d_srcResX, d_srcResY;
-    vrpn_bool d_srcHeightField;
+    vrpn_float32 d_srcSizeX, d_srcSizeY;
     vrpn_int32 d_targetResX, d_targetResY;
-    vrpn_bool d_targetHeightField;
+    vrpn_float32 d_targetSizeX, d_targetSizeY;
 
     nmr_ImageType d_imageScanlineLastReceived;
     vrpn_int32 d_row, d_length;

@@ -1,3 +1,50 @@
+2001-07-12  Adam Seeger  <seeger@cs.unc.edu>
+
+	* correspondence.hC (equals): new function to check equivalence
+	* correspondenceEditor.C (getCorrespondence): changed to use =
+	operator instead of some equivalent code
+	* nmr_AlignerMI.hC (buildSampleHelper): factored out stuff from
+	buildSampleA and buildSampleB as well as many other changes too
+	numerous to mention. The important thing is that I think the
+	mutual information gradient calculation is fixed now (there was
+	a swapping of array indices). This code has a lot of debugging
+	output which should be cleaned up.
+	* nmr_Gaussian.hC : increased the size of the array used to store
+	the gaussian and the number of standard deviations to the point that
+	you can reach the lower limit of a double, not that that is necessary
+	but it helps intensities that are very distant from each other in the
+	joint histogram to interact in the mutual information calculation
+	when the variance parameters are set lower than they should be
+        (makeFilter) : new function used to get filters for blurring an image 
+	of the joint histogram in nmr_AlignerMI.C
+	* nmr_RegistrationUI.C (handleRegistrationChange): case NMR_REG_RESULT:
+	removed code to compute TopoImageFromProjImage
+	(createResampleImage): added code to compute TopoImageFromProjImage
+	here so we only execute it when we need to
+	* nmr_Registration_Client.hC: added size parameters to describe the
+	size of an image in the world (in nanometers)
+	* nmr_Registration_Impl.C (ensureThreePoints): adds one or two points
+	to a correspondence to make sure that the linear solver code does the
+	right thing - takes into account the size of an image in the world to
+	sufficiently constrain the scale factors in the final transformation
+	result
+    	(convertTo3DSpace): scales x and y values for an image by the size
+	of the image and looks up the z values for the given x and y values
+	by reading them out of the image
+ 	(adjustTransformFromRotatedCorrespondence): finds the best
+	2D affine transformation given a correspondence and 
+	orthographic projection direction
+	(convertRyRxToViewingDirection): convert a rotation sequence to
+	the corresponding projection direction (for projection onto x-y plane)
+	(convertViewingDirectionToRyRx): inverse of the above function
+	* nmr_Registration_Interface.hC: added size parameters to describe the
+        size of an image in the world (in nanometers),removed height field flag
+	* nmr_Registration_Proxy.hC: "
+	* nmr_Registration_Server.hC: "
+	* nmr_Util.hC (resample): fixes a bug in this
+	(createGradientImages): new function 
+        * nmr_CoarseToFineSearch.hC : new file to help automatic alignment code
+
 2001-06-17  Tom Hudson  <hudson@cs.unc.edu>
 
 	* correspondence.C : reorder #includes, fix brackets.

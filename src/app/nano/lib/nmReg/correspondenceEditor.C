@@ -428,16 +428,7 @@ void CorrespondenceEditor::mainloop() {
 
 // this returns a copy of the current correspondence
 void CorrespondenceEditor::getCorrespondence(Correspondence &corr){
-    corr.init(correspondence->numSpaces(), correspondence->numPoints());
-    int i,j;
-    corr_point_t p;
-    for (j = 0; j < correspondence->numPoints(); j++){
-        corr.addPoint(p);
-        for (i = 0; i < correspondence->numSpaces(); i++){
-            correspondence->getPoint(i, j, &p);
-            corr.setPoint(i,j, p);
-        }
-    }
+    corr = (*correspondence);
 }
 
 void CorrespondenceEditor::registerCallback(CorrespondenceCallback handler,

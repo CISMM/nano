@@ -37,6 +37,7 @@ class Correspondence {
     int setValuesFromPlane(int spaceIdx, BCPlane *p);
 	int setValuesFromImage(int spaceIdx, nmb_Image *im);
     Correspondence &operator = (const Correspondence &c);
+    vrpn_bool equals(const Correspondence &c);
     void print();
 
   private:

@@ -9,6 +9,7 @@
 #include "nmr_Util.h"
 #include <nmb_Dataset.h>
 #include <microscape.h> // for disableOtherTextures
+#include "nmr_CoarseToFineSearch.h"
 
 nmr_RegistrationUI::nmr_RegistrationUI
   (nmg_Graphics *g, nmb_Dataset *d,
@@ -30,16 +31,11 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_graphicsDisplay(g),
    d_imageList(d->dataImages),
    d_dataset(d),
-   d_aligner(aligner),
-   d_ProjWorldFromTopoWorldTransform(4,4),
-   d_ProjImageFromTopoImageTransform(4,4),
-   d_TopoImageFromProjImageTransform(4,4),
-   d_ProjImageFromTopoWorldTransform(4,4)
+   d_aligner(aligner)
 {
 //      d_newResampleImageName = "";
 //      d_resampleResolutionX = 100;
 //      d_resampleResolutionY = 100;
-
 //      d_registrationImageName3D = "none";
 //      d_registrationImageName2D = "none";
 
@@ -48,14 +44,18 @@ nmr_RegistrationUI::nmr_RegistrationUI
     nmb_Image *dataim;
     for (i = 0; i < d_imageList->numImages(); i++) {
         dataim = d_imageList->getImage(i);
-        if (!set3D && dataim->isHeightField()) {
+        // By default we want to favor picking an image that actually 
+        // represents a height field as the 3D data
+        if ((set2D && !set3D) || (!set3D && 
+                                  !strcmp(dataim->unitsValue()->Characters(),
+                                          NMB_HEIGHT_UNITS_STR))) {
            d_registrationImageName3D = dataim->name()->Characters();
            set3D = vrpn_TRUE;
            // XXX - this isn't getting called and I don't know why not
            handle_registrationImage3D_change(d_registrationImageName3D, 
 				(void *)this);
         }
-        if (!set2D && !dataim->isHeightField()) {
+        else if (!set2D) {
            d_registrationImageName2D = dataim->name()->Characters();
            set2D = vrpn_TRUE;
            // XXX - this isn't getting called and I don't know why not
@@ -127,8 +127,9 @@ void nmr_RegistrationUI::handleRegistrationChange
     case NMR_IMAGE_PARAM:
       nmr_ImageType which_image;
       vrpn_int32 res_x, res_y;
-      vrpn_bool height_field;
-      d_aligner->getImageParameters(which_image, res_x, res_y, height_field);
+      vrpn_float32 size_x, size_y;
+      d_aligner->getImageParameters(which_image, res_x, res_y, 
+                                    size_x, size_y);
       break;
     case NMR_TRANSFORM_OPTION:
       nmr_TransformationType xform_type;
@@ -136,15 +137,13 @@ void nmr_RegistrationUI::handleRegistrationChange
       break;
     case NMR_REG_RESULT:
       //printf("got transformation\n");
-
       /* *******************************************************************
          Store the raw result from the registration code and compute inverse
        * *******************************************************************/
       double projImFromTopoIm_matrix[16];
       d_aligner->getRegistrationResult(projImFromTopoIm_matrix);
+
       d_ProjImageFromTopoImageTransform.setMatrix(projImFromTopoIm_matrix);
-      d_TopoImageFromProjImageTransform.setMatrix(projImFromTopoIm_matrix);
-      d_TopoImageFromProjImageTransform.invert();
 
       nmb_Image *topographyImage = d_imageList->getImageByName
                           (d_registrationImageName3D.string());
@@ -160,21 +159,66 @@ void nmr_RegistrationUI::handleRegistrationChange
       /* ****************************************************************
          ProjImFromTopoWorld = ProjImFromTopoImage * TopoImFromTopoWorld
        * ****************************************************************/
+
       topographyImage->getWorldToImageTransform(topoImFromTopoWorld_matrix);
-      d_ProjImageFromTopoWorldTransform.setMatrix(topoImFromTopoWorld_matrix);
+      nmb_TransformMatrix44 topoImFromTopoWorld;
+      topoImFromTopoWorld.setMatrix(topoImFromTopoWorld_matrix);
+  
+      d_ProjImageFromTopoWorldTransform.setMatrix(projImFromTopoIm_matrix);
+
+/*
+      If things don't look right, this may be useful for debugging:
+      double topoWorldCenter[4] = {0,0,0,1};
+      topoWorldCenter[2] = topographyImage->getValueInterpolated(
+                                            0.5*topographyImage->width(), 
+                                            0.5*topographyImage->height());
+      topoWorldCenter[0] = 0.25*(
+              topographyImage->boundX(nmb_ImageBounds::MIN_X_MIN_Y) +
+              topographyImage->boundX(nmb_ImageBounds::MAX_X_MIN_Y) +
+              topographyImage->boundX(nmb_ImageBounds::MIN_X_MAX_Y) +
+              topographyImage->boundX(nmb_ImageBounds::MAX_X_MAX_Y));
+      topoWorldCenter[1] = 0.25*(
+              topographyImage->boundY(nmb_ImageBounds::MIN_X_MIN_Y) +
+              topographyImage->boundY(nmb_ImageBounds::MAX_X_MIN_Y) +
+              topographyImage->boundY(nmb_ImageBounds::MIN_X_MAX_Y) +
+              topographyImage->boundY(nmb_ImageBounds::MAX_X_MAX_Y));
+      double topoImCenter[4];
+      topoImFromTopoWorld.transform(topoWorldCenter, topoImCenter);
+
+      printf("topoImFromTopoWorld: (%g,%g,%g,%g)->(%g,%g,%g,%g)\n",
+        topoWorldCenter[0], topoWorldCenter[1], topoWorldCenter[2], 
+        topoWorldCenter[3], topoImCenter[0], topoImCenter[1], topoImCenter[2],
+        topoImCenter[3]);
+
+      double projImPoint[4];
+      d_ProjImageFromTopoWorldTransform.transform(topoImCenter, projImPoint);
+
+      printf("projImFromTopoIm: (%g,%g,%g,%g)->(%g,%g,%g,%g)\n",
+        topoImCenter[0], topoImCenter[1], topoImCenter[2], topoImCenter[3],
+        projImPoint[0], projImPoint[1], projImPoint[2], projImPoint[3]);
+*/
+      // topoImFromTopoWorld: center of image in nm -> (0.5, 0.5, 0)
+
+
       d_ProjImageFromTopoWorldTransform.
-                           compose(d_ProjImageFromTopoImageTransform);
+                           compose(topoImFromTopoWorld);
 
       /* ****************************************************************
          ProjWorldFromTopoWorld = ProjWorldFromProjIm * ProjImFromTopoWorld
        * ****************************************************************/
       //  first invert the transformation matrix that we get from the image
+
       projectionImage->getWorldToImageTransform(projImFromProjWorld_matrix);
-      nmb_ImageTransformAffine projWorldFromProjImage(4,4);
+
+      nmb_TransformMatrix44 projWorldFromProjImage;
       projWorldFromProjImage.setMatrix(projImFromProjWorld_matrix);
+
       projWorldFromProjImage.invert();
-      d_ProjWorldFromTopoWorldTransform = d_ProjImageFromTopoWorldTransform;
-      d_ProjWorldFromTopoWorldTransform.compose(projWorldFromProjImage);
+
+
+      d_ProjWorldFromTopoWorldTransform = projWorldFromProjImage;
+      d_ProjWorldFromTopoWorldTransform.
+                     compose(d_ProjImageFromTopoWorldTransform);
 
       double projImFromTopoWorld_matrix[16];
       // send the right transformation to the graphics code
@@ -222,7 +266,7 @@ void nmr_RegistrationUI::handle_registrationImage3D_change(const char *name,
         return;
     }
     // send image off to the proxy
-    me->d_aligner->setImage(NMR_SOURCE, im, vrpn_FALSE);
+    me->d_aligner->setImage(NMR_SOURCE, im);
 }
 
 // static
@@ -236,7 +280,7 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
         return;
     }
     // send image off to the proxy
-    me->d_aligner->setImage(NMR_TARGET, im, vrpn_FALSE);
+    me->d_aligner->setImage(NMR_TARGET, im);
     // set up texture in graphics
     printf("creating realign texture for %s\n", name);
     me->d_graphicsDisplay->createRealignTextures(name);
@@ -266,7 +310,8 @@ void nmr_RegistrationUI::handle_registrationRequest_change(
 {
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
     if (value) {
-        me->d_aligner->registerImages();
+      me->d_registrationValid = vrpn_FALSE;
+      me->d_aligner->registerImages();
     }
 }
 
@@ -316,8 +361,11 @@ void nmr_RegistrationUI::createResampleImage(const char * /*imageName */)
         nmb_ImageBounds im2D_bounds;
         im_2D->getBounds(im2D_bounds);
         new_image->setBounds(im2D_bounds);
+        nmb_TransformMatrix44 topoImageFromProjImageTransform;
+        topoImageFromProjImageTransform = d_ProjImageFromTopoImageTransform;
+        topoImageFromProjImageTransform.invert();
         nmr_Util::createResampledImageWithImageSpaceTransformation((*im_3D), 
-                 d_TopoImageFromProjImageTransform, (*new_image));
+                 topoImageFromProjImageTransform, (*new_image));
 
         // an extra step: combine the two datasets in a somewhat arbitrary
         // way so that you can see features from both in a single image
@@ -433,6 +481,6 @@ void nmr_RegistrationUI::createResamplePlane(const char * /*imageName */)
     // now make it available elsewhere:
     d_dataset->addImageToGrid(new_image);
     //d_imageList->addImage(new_image);
-    delete new_image;
+    nmb_Image::deleteImage(new_image);
 }
 

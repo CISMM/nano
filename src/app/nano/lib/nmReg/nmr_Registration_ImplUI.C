@@ -41,15 +41,17 @@ void nmr_Registration_ImplUI::mainloop()
 void nmr_Registration_ImplUI::handle_CorrespondenceChange(Correspondence &c,
                                                           void *ud)
 {
+  double xform_matrix[16];
   nmr_Registration_ImplUI *me = (nmr_Registration_ImplUI *)ud;
-  me->d_impl->registerImages(c, s_sourceImageIndex, s_targetImageIndex);
+  me->d_impl->registerImagesFromPointCorrespondence(xform_matrix);
+  me->d_impl->sendResult(xform_matrix);
 }
 
 void nmr_Registration_ImplUI::registerImages()
 {
-  Correspondence c;
-  d_ce->getCorrespondence(c);
-  d_impl->registerImages(c, s_sourceImageIndex, s_targetImageIndex);
+  double xform_matrix[16];
+  d_impl->registerImagesFromPointCorrespondence(xform_matrix);
+  d_impl->sendResult(xform_matrix);
 }
 
 void nmr_Registration_ImplUI::newScanline(nmr_ImageType whichImage,
@@ -63,7 +65,7 @@ void nmr_Registration_ImplUI::newScanline(nmr_ImageType whichImage,
        } else if (whichImage == NMR_TARGET) {
            d_ce->setImage(s_targetImageIndex, (nmb_Image *)adjustedIm);
        }
-       delete adjustedIm;
+       nmb_Image::deleteImage(adjustedIm);
    }
 }
 

@@ -31,7 +31,7 @@
 //static 
 int nmr_Util::computeResampleExtents(const nmb_Image &src,
                         const nmb_Image &target,
-                        nmb_ImageTransform &xform, int &min_i, int &min_j,
+                        nmb_TransformMatrix44 &xform, int &min_i, int &min_j,
                         int &max_i, int &max_j)
 {
     /* approach: invert the transformation and find extrema by transforming
@@ -128,7 +128,7 @@ void nmr_Util::setRegionRelative(const nmb_Image &srcImage,
  */
 //static 
 void nmr_Util::createResampledImage(nmb_Image &targetImage,
-                        const nmb_ImageTransform &xform,
+                        const nmb_TransformMatrix44 &xform,
                         nmb_Image &resampleImage)
 {
   int i,j;
@@ -169,7 +169,7 @@ void nmr_Util::createResampledImage(nmb_Image &targetImage,
 // static
 void nmr_Util::createResampledImageWithImageSpaceTransformation(
                         nmb_Image &targetImage,
-                        const nmb_ImageTransform &xform,
+                        const nmb_TransformMatrix44 &xform,
                         nmb_Image &resampleImage)
 {
   int i,j;
@@ -249,7 +249,7 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
 //static 
 void nmr_Util::createResampledImage(const nmb_Image &targetImage,
                         const nmb_Image &sourceImage,
-                        const nmb_ImageTransform &xform,
+                        const nmb_TransformMatrix44 &xform,
                         nmb_Image &resampleImage)
 {
   int i,j;
@@ -298,11 +298,12 @@ void nmr_Util::addImage(nmb_Image &addend, nmb_Image &sum, float wa,
                        (addend.maxValue()-addend.minNonZeroValue());
   double offset = addend.minNonZeroValue();
   double sumOffset = sum.minNonZeroValue();
+
+/*
   int w= sum.width(), h = sum.height();
   w = addend.width();
   h = addend.height();
 
-/*
   double sum_avg = sum.getValue(w/2, h/2) + sum.getValue(w/4, h/2)+
                    sum.getValue(w/2, h/4) + sum.getValue(w/4, h/4);
   double val_avg = addend.getValue(w/2, h/2) + addend.getValue(w/4, h/2)+
@@ -343,150 +344,68 @@ void nmr_Util::addImage(nmb_Image &addend, nmb_Image &sum, float wa,
   pixel in dest (this integration mostly involves summing over pixels in
   src except at the edges of the dest pixel where only a fractional part of
   a pixel in dest falls in the dest pixel. 
-  Unless there are bugs in this (which is likely given the
-  complexity) this should calculate the correct result within floating point
-  error
 */
 
 // static
-void nmr_Util::resample(const nmb_Image &src, nmb_Image &dest)
+void nmr_Util::resample(nmb_Image &src, nmb_Image &dest)
 {
-    int i,j,k,l;
-    double stride_x, stride_y;  // dimensions of subsample regions
-    double dxmin, dxmax, dymin, dymax;  // real dimensions of subsample region
-    int ixmin, ixmax, iymin, iymax; // rectangle in src that contributes to
-                                    // subsample
-    double x_low_fract, x_high_fract, y_low_fract, y_high_fract; // amount
-                                // of pixels at edges in src rectangle to
-                                // include in subsample
-    double colsum;      // for summing a column in the subsample region
-    int destx, desty, srcx, srcy;       // image dimensions
-    srcx = src.width();
-    srcy = src.height();
-    destx = dest.width();
-    desty = dest.height();
-    stride_x = (double)srcx/(double)destx;
-    stride_y = (double)srcy/(double)desty;
-    
-    dxmin = 0.0;
-    dxmax = dxmin+stride_x;
-    ixmin = (int)floor(dxmin);
-    ixmax = (int)floor(dxmax);
-    if (ixmax >= srcx){
-        ixmax = srcx-1;
-        x_high_fract = 1.0;
-    }
-    else
-        x_high_fract = dxmax - ixmax;
-    x_low_fract = ixmin+1 - dxmin;
-    for (i = 0; i < destx; i++) {
-        dymin = 0.0;
-        dymax = dymin+stride_y;
-        iymin = (int)floor(dymin);
-        iymax = (int)floor(dymax);
-        if (iymax >= srcy){
-            iymax = srcy-1;
-            y_high_fract = 1.0;
-        }
-        else
-            y_high_fract = dymax - iymax;
-        y_low_fract = iymin+1 - dymin;
+  double x_lo_fract, x_hi_fract, y_lo_fract, y_hi_fract;
+  double k_min, k_max, l_min, l_max;
+  int i,j,k,l;
 
-        // this is somewhat inefficient because special cases of
-        // edge pixels are checked inside the loop rather than dealt
-        // with separately but its simpler to read/write this way
-        for (j = 0; j < desty; j++){
-            // (i,j) give pixel we want to write to in dest
-            // (k,l) are contributing pixels in src
-            double sum = 0.0;
-            double k_interp, l_interp;
-            for (k = ixmin; k <= ixmax; k++){
-                colsum = 0.0;
-                if (ixmin == ixmax) {
-                    // expansion case: do linear interpolation
-                    k_interp = k+1-x_low_fract;
-                } else if (k == ixmin) {
-                    // subsample case: get coordinate for computing
-                    // partial volume average
-                    k_interp = k+1-0.5*x_low_fract;
-                } else if (k == ixmax) {
-                    // subsample case: get coordinate for computing
-                    // partial volume average
-                    k_interp = k+0.5*x_high_fract;
-                } else {
-                    // subsample case: including the whole pixel
-                    k_interp = k;
-                }
-                for (l = iymin; l <= iymax; l++){
-                    if (iymin == iymax) {
-                        // expansion case: do linear interpolation
-                        l_interp = l+1-y_low_fract;
-                    } else if (l == iymin) {
-                        // subsample case: get coordinate for computing
-                        // partial volume average
-                        l_interp = l+1-0.5*y_low_fract;
-                    } else if (l == iymax) {
-                        // subsample case: get coordinate for computing
-                        // partial volume average
-                        l_interp = l+0.5*y_high_fract;
-                    } else {
-                        // subsample case: including the whole pixel
-                        l_interp = l;
-                    }
-                    if (iymin == iymax) {
-                        // don't multiply by anything (expansion case)
-                        colsum += src.getValueInterpolated(k_interp, l_interp);
-                    } else if (l != l_interp || k != k_interp) {
-                        if (l == iymin) {
-                          // multiply by partial volume factor (subsample case)
-                          colsum += y_low_fract*
-                              src.getValueInterpolated(k_interp, l_interp);
-                        } else if (l == iymax) {
-                          // multiply by partial volume factor (subsample case)
-                          colsum += y_high_fract*
-                              src.getValueInterpolated(k_interp, l_interp);
-                        }
-                    } else
-                        colsum += src.getValue(k,l);
-                }
-                if (ixmin == ixmax) {
-                    // don't multiply by anything (expansion case)
-                } else if (k == ixmin) {
-                    // multiply by partial volume factor (subsample case)   
-                    colsum *= x_low_fract;
-                } else if (k == ixmax) {
-                    // multiply by partial volume factor (subsample case)
-                    colsum *= x_high_fract;
-                }
-                sum += colsum;
-            }
-            dest.setValue(i,j, sum);
+  int destx, desty, srcx, srcy;       // image dimensions
+  srcx = src.width();
+  srcy = src.height();
+  destx = dest.width();
+  desty = dest.height();
+  double stride_x = (double)(srcx)/(double)(destx);
+  double stride_y = (double)(srcy)/(double)(desty);
+  double dxmin, dxmax, dymin, dymax;
+  
+  double inv_stride_area = 1.0/(stride_x*stride_y);
+  double sum;
 
-            dymin += stride_y;
-            dymax = dymin+stride_y;
-            iymin = (int)floor(dymin);
-            iymax = (int)floor(dymax);
-            if (iymax >= srcy){
-                iymax = srcy-1;
-                y_high_fract = 1.0;
-            }
-            else
-                y_high_fract = dymax - iymax;
-            y_low_fract = iymin+1 - dymin;
-        }
-        dxmin += stride_x;
-        dxmax = dxmin+stride_x;
-        ixmin = (int)floor(dxmin);
-        ixmax = (int)floor(dxmax);
-        if (ixmax >= srcx){
-            ixmax = srcx-1;
-            x_high_fract = 1.0;
-        }
-        else
-            x_high_fract = dxmax - ixmax;
-        x_low_fract = ixmin+1 - dxmin;
+  for (i = 0, dxmin = 0.0, dxmax = stride_x; 
+       i < destx; i++, dxmin += stride_x, dxmax += stride_x) {
+    k_min = (int)floor(dxmin);
+    k_max = (int)ceil(dxmax);
+    x_lo_fract = k_min + 1.0 - dxmin;
+    x_hi_fract = dxmax - k_max + 1.0;
+    if (k_max > srcx) {
+      k_max = srcx;
+      x_hi_fract = 1.0;
     }
+    for (j = 0, dymin = 0.0, dymax = stride_y; 
+         j < desty; j++, dymin += stride_y, dymax += stride_y) {
+      l_min = (int)floor(dymin);
+      l_max = (int)ceil(dymax);
+      y_lo_fract = l_min + 1.0 - dymin;
+      y_hi_fract = dymax - l_max + 1.0;
+      if (l_max > srcy) {
+        l_max = srcy;
+        y_hi_fract = 1.0;
+      }
+      sum = 0.0;
+      for (k = k_min; k < k_max; k++) {
+        double colsum = 0.0;
+        colsum += y_lo_fract*src.getValue(k, l_min);
+        for (l = l_min+1; l < l_max-1; l++) {
+          colsum += src.getValue(k, l);
+        }
+        colsum += y_hi_fract*src.getValue(k, l_max-1);
+        if (k == k_min) {
+          colsum *= x_lo_fract;
+        } else if (k == k_max-1) {
+          colsum *= x_hi_fract;
+        }
+        sum += colsum;
+      }
+      sum *= inv_stride_area;
+      dest.setValue(i, j, sum);
+    }
+  }
 }
+
 
 // select value randomly from a uniform distribution between min and max
 // call this twice to select a random point in an image
@@ -499,3 +418,16 @@ double nmr_Util::sampleUniformDistribution(double min, double max) {
 #endif
 }
 
+void nmr_Util::createGradientImages(nmb_Image &source,
+                                  nmb_Image &grad_xIm, nmb_Image &grad_yIm)
+{
+  int i,j;
+  double grad_x, grad_y;
+  for (i = 0; i < source.width(); i++) {
+    for (j = 0; j < source.height(); j++) {
+      source.getGradient(i, j, grad_x, grad_y);
+      grad_xIm.setValue(i,j, grad_x);
+      grad_yIm.setValue(i,j, grad_y); 
+    }
+  }
+}

@@ -27,7 +27,8 @@ class nmr_Registration_Client : public nmb_Device_Client,
     /// setScanline()
     int setImageParameters(nmr_ImageType whichImage,
                            vrpn_int32 res_x, vrpn_int32 res_y,
-                           vrpn_bool treat_as_height_field);
+                           vrpn_float32 xSizeWorld, 
+                           vrpn_float32 ySizeWorld);
     /// this allows you to update either image
     int setScanline(nmr_ImageType whichImage, vrpn_int32 row,
                            vrpn_int32 line_length, vrpn_float32 *data);
@@ -55,7 +56,8 @@ class nmr_Registration_Client : public nmb_Device_Client,
     /// the last message received
     void getImageParameters(nmr_ImageType &whichImage,
                            vrpn_int32 &res_x, vrpn_int32 &res_y,
-                           vrpn_bool &treat_as_height_field);
+                           vrpn_float32 &xSizeWorld,
+                           vrpn_float32 &ySizeWorld);
     void getTransformationOptions(nmr_TransformationType &type);
     void getRegistrationResult(vrpn_float64 *matrix44);
 
@@ -70,9 +72,9 @@ class nmr_Registration_Client : public nmb_Device_Client,
     // here is where we keep the latest information from server messages
     nmr_ImageType d_imageParamsLastReceived;
     vrpn_int32 d_srcResX, d_srcResY;
-    vrpn_bool d_srcHeightField;
+    vrpn_float32 d_srcSizeX, d_srcSizeY;
     vrpn_int32 d_targetResX, d_targetResY;
-    vrpn_bool d_targetHeightField;
+    vrpn_float32 d_targetSizeX, d_targetSizeY;
 
     nmr_TransformationType d_transformType;
 

@@ -54,11 +54,11 @@ class nmr_Registration_Interface {
     static char * encode_SetImageParameters (vrpn_int32 *len,
            vrpn_int32 which_image,
            vrpn_int32 res_x, vrpn_int32 res_y,
-           vrpn_int32 treat_as_height_field);
+           vrpn_float32 xSizeWorld, vrpn_float32 ySizeWorld);
     static vrpn_int32 decode_SetImageParameters (const char **buf,
            vrpn_int32 *which_image,
            vrpn_int32 *res_x, vrpn_int32 *res_y,
-           vrpn_int32 *treat_as_height_field);
+           vrpn_float32 *xSizeWorld, vrpn_float32 *ySizeWorld);
     static char * encode_SetImageScanlineData (vrpn_int32 *len,
            vrpn_int32 which_image,
            vrpn_int32 row, vrpn_int32 line_length,
@@ -90,11 +90,11 @@ class nmr_Registration_Interface {
     static char * encode_ImageParameters (vrpn_int32 *len,
            vrpn_int32 which_image,
            vrpn_int32 res_x, vrpn_int32 res_y,
-           vrpn_int32 treat_as_height_field);
+           vrpn_float32 xSizeWorld, vrpn_float32 ySizeWorld);
     static vrpn_int32 decode_ImageParameters (const char **buf,
            vrpn_int32 *which_image,
            vrpn_int32 *res_x, vrpn_int32 *res_y,
-           vrpn_int32 *treat_as_height_field);
+           vrpn_float32 *xSizeWorld, vrpn_float32 *ySizeWorld);
     static char * encode_TransformationOptions (vrpn_int32 *len,
            vrpn_int32 transformType);
     static vrpn_int32 decode_TransformationOptions (const char **buf,

@@ -7,10 +7,10 @@ nmr_Registration_Client::nmr_Registration_Client (const char *name,
     d_imageParamsLastReceived(NMR_SOURCE), // this is arbitrary
     d_srcResX(0),
     d_srcResY(0),
-    d_srcHeightField(vrpn_FALSE),
+    d_srcSizeX(0), d_srcSizeY(0),
     d_targetResX(0),
     d_targetResY(0),
-    d_targetHeightField(vrpn_FALSE),
+    d_targetSizeX(0), d_targetSizeY(0),
     d_transformType(NMR_2D2D_AFFINE),
     d_messageHandlerList(NULL)
 {
@@ -62,14 +62,14 @@ vrpn_int32 nmr_Registration_Client::mainloop(void)
 }
 
 int nmr_Registration_Client::setImageParameters(nmr_ImageType whichImage,
-                           vrpn_int32 res_x, vrpn_int32 res_y,
-                           vrpn_bool treat_as_height_field)
+              vrpn_int32 res_x, vrpn_int32 res_y,
+              vrpn_float32 sizeX, vrpn_float32 sizeY)
 {
   char *msgbuf;
   vrpn_int32 len;
 
   msgbuf = encode_SetImageParameters(&len, (vrpn_int32)whichImage, res_x, res_y,
-        (vrpn_int32)treat_as_height_field);
+        sizeX, sizeY);
   if (!msgbuf) {
     return -1;
   }
@@ -158,10 +158,11 @@ int nmr_Registration_Client::RcvImageParameters (
 {
   nmr_Registration_Client *me = (nmr_Registration_Client *)_userdata;
   const char * bufptr = _p.buffer;
-  vrpn_int32 which_image, res_x, res_y, treat_as_height_field;
+  vrpn_int32 which_image, res_x, res_y;
+  vrpn_float32 sizeX, sizeY;
 
   if (decode_ImageParameters(&bufptr, &which_image, &res_x, &res_y,
-            &treat_as_height_field) == -1) {
+            &sizeX, &sizeY) == -1) {
     fprintf(stderr,
         "nmr_Registration_Client::RcvImageParameters: decode failed\n");
     return -1;
@@ -170,12 +171,14 @@ int nmr_Registration_Client::RcvImageParameters (
      me->d_imageParamsLastReceived = NMR_SOURCE;
      me->d_srcResX = res_x;
      me->d_srcResY = res_y;
-     me->d_srcHeightField = (treat_as_height_field != 0);
+     me->d_srcSizeX = sizeX;
+     me->d_srcSizeY = sizeY;
   } else if (which_image == NMR_TARGET) {
      me->d_imageParamsLastReceived = NMR_TARGET;
      me->d_targetResX = res_x;
      me->d_targetResY = res_y;
-     me->d_targetHeightField = (treat_as_height_field != 0);
+     me->d_targetSizeX = sizeX;
+     me->d_targetSizeY = sizeY;
   } else {
     fprintf(stderr,
         "nmr_Registration_Client::RcvImageParameters: unknown image type\n");
@@ -303,17 +306,20 @@ int nmr_Registration_Client::notifyMessageHandlers(nmr_MessageType type,
 
 void nmr_Registration_Client::getImageParameters(nmr_ImageType &whichImage,
                            vrpn_int32 &res_x, vrpn_int32 &res_y,
-                           vrpn_bool &treat_as_height_field)
+                           vrpn_float32 &size_x, 
+                           vrpn_float32 &size_y)
 { 
     whichImage = d_imageParamsLastReceived;
     if (whichImage == NMR_SOURCE){
         res_x = d_srcResX;
         res_y = d_srcResY;
-        treat_as_height_field = d_srcHeightField;
+        size_x = d_srcSizeX;
+        size_y = d_srcSizeY;
     } else {
         res_x = d_targetResX;
         res_y = d_targetResY;
-        treat_as_height_field = d_targetHeightField;
+        size_x = d_targetSizeX;
+        size_y = d_targetSizeY;
     }
 }
 

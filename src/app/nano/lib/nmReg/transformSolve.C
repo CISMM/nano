@@ -99,7 +99,7 @@ We could determine this by some kind of calibration procedure
 #define M_PI        3.14159265358979323846
 #endif
 
-/* the transformation is returned in xform_matrix which given in this order:
+/* the transformation is returned in xform_matrix which is in this order:
  
    [ m0 m4 m8  m12 ] [srcX]   [destX]
    [ m1 m5 m9  m13 ] [srcY] = [destY]

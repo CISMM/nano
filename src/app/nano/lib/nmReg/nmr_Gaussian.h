@@ -7,6 +7,7 @@ class nmr_Gaussian {
  public:
   static double interpolatedStandardValue(double x);
   static double value(double x, double inv_sigma, double mu);
+  static void makeFilter(int numVal, double *val, double inv_sigma);
 
  protected:
   static void init();

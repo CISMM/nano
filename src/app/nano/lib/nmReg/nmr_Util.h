@@ -2,7 +2,7 @@
 #define NMR_UTIL_H
 
 #include "nmb_Image.h"
-#include "nmb_ImageTransform.h"
+#include "nmb_TransformMatrix44.h"
 
 /* note: src=AFM, target=SEM 
    (AFM coordinates are transformed into SEM coordinates)
@@ -21,7 +21,7 @@ class nmr_Util {
     /// same resolution as the source image
     static int computeResampleExtents(const nmb_Image &src, 
                         const nmb_Image &target,
-                        nmb_ImageTransform &xform, int &min_i, int &min_j,
+                        nmb_TransformMatrix44 &xform, int &min_i, int &min_j,
                         int &max_i, int &max_j);
 
     /// given srcImage and resampleImage and indices referring to points in 
@@ -38,10 +38,10 @@ class nmr_Util {
     /// according to the given transformation using bilinear interpolation
     /// xform is used to transform pixels in resampleImage into their
     /// locations in the target image in order to determine pixel values
-    /// The nmb_ImageTransform argument is actually a transformation from
+    /// The nmb_TransformMatrix44 argument is actually a transformation from
     /// world coordinates to world coordinates for the two images
     static void createResampledImage(nmb_Image &target,
-                        const nmb_ImageTransform &xform, 
+                        const nmb_TransformMatrix44 &xform, 
                         nmb_Image &resampleImage);
     
 
@@ -50,12 +50,12 @@ class nmr_Util {
     /// according to the given transformation using bilinear interpolation
     /// xform is used to transform pixels in resampleImage into their
     /// locations in the target image in order to determine pixel values
-    /// The nmb_ImageTransform argument is a transformation from
+    /// The nmb_TransformMatrix44 argument is a transformation from
     /// normalized image coordinates to normalized image coordinates
     /// for the two images (normalized image coordinates means that 
     /// pixel coordinates always span the unit square)
     static void createResampledImageWithImageSpaceTransformation(
-          nmb_Image &target, const nmb_ImageTransform &xform,
+          nmb_Image &target, const nmb_TransformMatrix44 &xform,
           nmb_Image &resampleImage);
 
     /// for 3D->2D transformations
@@ -71,7 +71,7 @@ class nmr_Util {
     /// smoothness since we use interpolation)
     static void createResampledImage(const nmb_Image &target, 
                         const nmb_Image &source,
-                        const nmb_ImageTransform &xform,
+                        const nmb_TransformMatrix44 &xform,
                         nmb_Image &resampleImage);
 
 
@@ -81,7 +81,7 @@ class nmr_Util {
     // rgba will be used to store the polygon ids
     // NOT YET IMPLEMENTED
     static computeOcclusionMap(const nmb_Image &heightField,
-                        const nmb_ImageTransform &xform,
+                        const nmb_TransformMatrix44 &xform,
                         const nmb_Image &occlusionMap,
                         vrpn_bool useOCO = vrpn_FALSE,
                         float cop_x = 0.0, float cop_y = 0.0);
@@ -92,7 +92,7 @@ class nmr_Util {
     static void createResampledImage(const nmb_Image &heightField,
                               const nmb_Image &occlusionMap,
                               const nmb_Image &projectionImage,
-                              const nmb_ImageTransform &xform,
+                              const nmb_TransformMatrix44 &xform,
                               nmb_Image &resampleImage);
 */
 
@@ -102,10 +102,13 @@ class nmr_Util {
 
     /// this will linearly interpolate source and then integrate the
     /// result into each pixel in resampledImage
-    static void resample(const nmb_Image &source, nmb_Image &resampledImage);
+    static void resample(nmb_Image &source, nmb_Image &resampledImage);
  
     static double sampleUniformDistribution(double min, double max);
-   
+ 
+    static void createGradientImages(nmb_Image &source,
+              nmb_Image &grad_x, nmb_Image &grad_y);
+  
 };
 
 #endif

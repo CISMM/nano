@@ -1,15 +1,16 @@
 #include <stdlib.h>
 #include "nmr_Gaussian.h"
 #include "math.h"
+#include "stdio.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
 vrpn_bool nmr_Gaussian::s_initialized = vrpn_FALSE;
-double nmr_Gaussian::s_xMin = -4.0;
-double nmr_Gaussian::s_xMax = 4.0;
-int nmr_Gaussian::s_numSamples = 161;
+double nmr_Gaussian::s_xMin = -38.0;
+double nmr_Gaussian::s_xMax = 38.0;
+int nmr_Gaussian::s_numSamples = 10239;
 double nmr_Gaussian::s_sampleInterval = 0.05;
 double nmr_Gaussian::s_invSampleInterval = 20;
 double *nmr_Gaussian::s_gaussianValues = NULL;
@@ -52,4 +53,22 @@ double nmr_Gaussian::value(double x, double inv_sigma, double mu)
   double result = interpolatedStandardValue(x_standard);
   result *= inv_sigma;
   return result;
+}
+
+void nmr_Gaussian::makeFilter(int numVal, double *val, double inv_sigma)
+{
+  double mu = 0.0;
+  int i;
+  double x;
+  double sum = 0.0, sum_inv;
+  for (i = 0, x = -0.5*(double)(numVal-1); i < numVal; i++, x += 1.0) {
+    val[i] = value(x, inv_sigma, mu);
+    sum += val[i];
+  }
+  sum_inv = 1.0/sum;
+
+  // normalization so integral is 1.0
+  for (i = 0; i < numVal; i++) {
+    val[i] *= sum_inv;
+  }
 }

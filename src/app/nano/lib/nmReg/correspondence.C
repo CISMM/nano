@@ -70,6 +70,24 @@ Correspondence &Correspondence::operator = (const Correspondence &c) {
 	return (*this);
 }
 
+vrpn_bool Correspondence::equals(const Correspondence &c)
+{
+  if (num_spaces != c.num_spaces)
+    return VRPN_FALSE;
+  if (num_points != c.num_points)
+    return VRPN_FALSE;
+  int i,j;
+  for (j = 0; j < num_points; j++){
+      for (i = 0; i < num_spaces; i++){
+          if (c.pnts[i][j].x != pnts[i][j].x ||
+              c.pnts[i][j].y != pnts[i][j].y ||
+              c.pnts[i][j].z != pnts[i][j].z)
+              return VRPN_FALSE;
+      }
+  }
+  return VRPN_TRUE;
+}
+
 void Correspondence::print()
 {
    int i, j;

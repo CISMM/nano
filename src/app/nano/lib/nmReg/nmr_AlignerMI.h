@@ -52,8 +52,29 @@ class nmr_AlignerMI {
     // returns  0 if successful and 
     //         -1 if ref_z value does not agree with dimension mode
     // [EXPENSIVE]
-    int buildSampleA(nmb_Image *ref, nmb_Image *test, nmb_Image *ref_z = NULL);
-    int buildSampleB(nmb_Image *ref, nmb_Image *test, nmb_Image *ref_z = NULL);
+    int buildSampleA(nmb_Image *ref, nmb_Image *test, 
+                     nmb_Image *grad_x_test, 
+                     nmb_Image *grad_y_test, 
+                     vrpn_bool randomize = vrpn_TRUE,
+                     double minSqrGradientMagnitude = 0.0,
+                     nmb_Image *ref_z = NULL);
+    int buildSampleB(nmb_Image *ref, nmb_Image *test, 
+                     nmb_Image *grad_x_test, 
+                     nmb_Image *grad_y_test,
+                     vrpn_bool randomize = vrpn_TRUE,
+                     double minSqrGradientMagnitude = 0.0,
+                     nmb_Image *ref_z = NULL);
+
+    // fills in the joint histogram and blurs it with the current
+    // covariance matrix - the resolution is determined by the
+    // resolution of the image passed in and min and max values are
+    // optional
+    int buildJointHistogram(nmb_Image *ref, nmb_Image *test,
+                            nmb_Image *histogram, vrpn_bool blur = vrpn_FALSE,
+                            vrpn_bool setRefScale = VRPN_FALSE,
+                            float min_ref = 0.0, float max_ref = 0.0,
+                            vrpn_bool setTestScale = VRPN_FALSE,
+                            float min_test = 0.0, float max_test = 0.0);
 
     // compute gradient of cross-entropy with respect to sigma
     // return values:
@@ -89,6 +110,14 @@ class nmr_AlignerMI {
     // [EXPENSIVE]
     int testEntropy(double &entropy);
 
+    // compute gradient of ref image entropy with respect to sigma
+    // return values:
+    //  0 = successful
+    // -1 = error, need to call buildSampleA and buildSampleB
+    //      after transformation is set
+    // [EXPENSIVE]
+    int computeRefEntropyGradient(double &dH_dsigma_ref);
+
     // compute entropy of reference image
     //  0 = successful
     // -1 = error, need to call buildSampleA and buildSampleB
@@ -115,6 +144,16 @@ class nmr_AlignerMI {
   protected:
     // helper for computeTransformationGradient()
     int computeTransformationGradient_HeightfieldRef(double *dIdT);
+
+    // helper for buildSampleA and buildSampleB
+    int buildSampleHelper(nmb_Image *ref, nmb_Image *test,
+                     nmb_Image *grad_x_test,
+                     nmb_Image *grad_y_test,
+                     vrpn_bool randomize,
+                     nmb_Image *ref_z,
+       int numPoints, double *x_ref, double *y_ref, double *z_ref,
+       double *x_test, double *y_test, double *val_ref, double *val_test,
+       double *dtest_dx, double *dtest_dy, double minSqrGradientMagnitude);
 
     // inline helper functions
     double transform_x(double x, double y) 
@@ -163,7 +202,7 @@ class nmr_AlignerMI {
     double d_sigmaRef;
 
     // does reference image correspond to a simple 2D projection or a 
-    // height field
+    // height field?
     nmr_DimensionMode d_dimensionMode;
 };
 

@@ -11,7 +11,7 @@
 #include "nmb_Image.h"
 #include "nmb_String.h"
 #include "nmr_Registration_Proxy.h"
-#include "nmb_ImageTransform.h"
+#include "nmb_TransformMatrix44.h"
 #include "Tcl_Linkvar.h"
 #include "Tcl_Netvar.h"
 
@@ -99,10 +99,9 @@ class nmr_RegistrationUI {
     nmb_Dataset *d_dataset;
     nmr_Registration_Proxy *d_aligner;
 
-    nmb_ImageTransformAffine d_ProjWorldFromTopoWorldTransform;
-    nmb_ImageTransformAffine d_ProjImageFromTopoImageTransform;
-    nmb_ImageTransformAffine d_TopoImageFromProjImageTransform;
-    nmb_ImageTransformAffine d_ProjImageFromTopoWorldTransform;
+    nmb_TransformMatrix44 d_ProjWorldFromTopoWorldTransform;
+    nmb_TransformMatrix44 d_ProjImageFromTopoImageTransform;
+    nmb_TransformMatrix44 d_ProjImageFromTopoWorldTransform;
 };
 
 #endif

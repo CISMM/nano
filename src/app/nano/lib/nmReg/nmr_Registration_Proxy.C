@@ -6,7 +6,7 @@ nmr_Registration_Proxy::nmr_Registration_Proxy(const char *name,
 
   d_imageParamsLastReceived(NMR_SOURCE),
   d_res_x(0), d_res_y(0),
-  d_heightField(vrpn_FALSE),
+  d_size_x(0.0), d_size_y(0.0),
   d_messageHandlerList(NULL)
 {
     if (!name && !c) {
@@ -62,7 +62,7 @@ vrpn_int32 nmr_Registration_Proxy::registerImages()
 /*
     if (d_local){
         struct timeval now;
-        d_local_impl->registerImages(d_matrix44);
+        d_local_impl->registerImagesFromPointCorrespondence(d_matrix44);
         gettimeofday(&now, NULL);
         notifyMessageHandlers(NMR_REG_RESULT, now);
     } else {
@@ -86,14 +86,14 @@ vrpn_int32 nmr_Registration_Proxy::setGUIEnable(vrpn_bool enable)
 }
 
 vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
-          nmb_Image *im, vrpn_bool treatAsHeightField)
+          nmb_Image *im)
 {
   int i,j;
   vrpn_float32 *data;
 /*
   if (d_local){
     d_local_impl->setImageParameters(whichImage, im->width(), im->height(),
-                        treatAsHeightField);
+                 im->widthWorld(), im->heightWorld(), 1.0);
     data = new vrpn_float32[im->width()];
     for (i = 0; i < im->height(); i++) {
         for (j = 0; j < im->width(); j++) {
@@ -108,7 +108,7 @@ vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
            "sending image parameters to remote: (%dx%d)\n",
            im->width(), im->height());
     d_remote_impl->setImageParameters(whichImage, im->width(), im->height(),
-                         treatAsHeightField);
+                         im->widthWorld(), im->heightWorld());
     d_remote_impl->mainloop();
     printf("nmr_Registration_Proxy::setImage: "
            "sending image data to remote\n");
@@ -137,7 +137,8 @@ void nmr_Registration_Proxy::handle_registration_change(void *ud,
   switch(info.msg_type) {
     case NMR_IMAGE_PARAM:
       info.aligner->getImageParameters(me->d_imageParamsLastReceived, 
-               me->d_res_x, me->d_res_y, me->d_heightField);
+               me->d_res_x, me->d_res_y, 
+               me->d_size_x, me->d_size_y);
       break;
     case NMR_TRANSFORM_OPTION:
       //printf("nmr_Registration_Proxy::got transform option\n");
@@ -222,12 +223,12 @@ int nmr_Registration_Proxy::notifyMessageHandlers(nmr_MessageType type,
 }
 
 void nmr_Registration_Proxy::getImageParameters(nmr_ImageType &whichImage,
-                           vrpn_int32 &res_x, vrpn_int32 &res_y,
-                           vrpn_bool &treat_as_height_field)
+       vrpn_int32 &res_x, vrpn_int32 &res_y,
+       vrpn_float32 &size_x, vrpn_float32 &size_y)
 {
     whichImage = d_imageParamsLastReceived;
     res_x = d_res_x; res_y = d_res_y;
-    treat_as_height_field = d_heightField;
+    size_x = d_size_x; size_y = d_size_y;
 }
 
 void nmr_Registration_Proxy::getTransformationOptions(
