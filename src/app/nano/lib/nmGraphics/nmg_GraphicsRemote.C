@@ -1975,9 +1975,4 @@ const double * nmg_Graphics_Remote::getMaxColor (void) const {
 }
 
 
-vrpn_bool nmg_Graphics_Remote::getDisplayIndexForUser (
-    v_index & /*out_index*/, int /*user_number*/ ) const
-{
-    // XXX [juliano 20000419] Should figure out what to do here.  Tom?
-    return vrpn_false;
-}
+

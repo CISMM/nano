@@ -377,11 +377,7 @@ class nmg_Graphics {
 
     TextureMode getTextureMode (void) const;
 
-    /** If user_number is a valid user number, sets out_index and returns
-     * true.  Otherwise, returns false and doesn't touch out_index. */
-    virtual vrpn_bool getDisplayIndexForUser (v_index & out_index,
-                                              int user_number) const = 0;
-    
+
   protected:
 
     TextureMode d_textureMode;

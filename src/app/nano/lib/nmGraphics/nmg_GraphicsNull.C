@@ -209,9 +209,3 @@ const double * nmg_Graphics_Null::getMinColor (void) const {
 const double * nmg_Graphics_Null::getMaxColor (void) const {
   return NULL;
 }
-
-vrpn_bool nmg_Graphics::getDisplayIndexForUser (v_index & /*out_index*/,
-                                                int /*user_number*/ ) const
-{
-    return vrpn_false;
-}

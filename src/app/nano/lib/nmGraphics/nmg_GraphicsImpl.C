@@ -2547,8 +2547,7 @@ void nmg_Graphics_Implementation::initDisplays (void) {
     if (d_displayIndexList[i] == V_NULL_DISPLAY) {
       exit(V_ERROR);
     }
-    printf("display (for user number %d) = '%s'\n",
-           i, v_display_name(d_displayIndexList[i]));
+    printf("display = '%s'\n", v_display_name(d_displayIndexList[i]));
   }
 }
 
@@ -3736,14 +3735,3 @@ int nmg_Graphics_Implementation::handle_createScreenImage
    return 0;
 }
 
-
-vrpn_bool nmg_Graphics_Implementation::getDisplayIndexForUser (
-    v_index & out_index, int user_number) const
-{
-    if (user_number >= NUM_USERS) {
-        return vrpn_false;
-    } else {
-        out_index = d_displayIndexList [user_number];
-        return vrpn_true;
-    }
-}

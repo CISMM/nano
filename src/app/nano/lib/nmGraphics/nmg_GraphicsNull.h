@@ -129,9 +129,6 @@ class nmg_Graphics_Null : public nmg_Graphics {
     virtual const double * getMinColor (void) const;
     virtual const double * getMaxColor (void) const;
 
-    virtual vrpn_bool getDisplayIndexForUser (v_index & out_index,
-                                              int user_number) const;
-
   private:
 
     v_index * d_displayIndexList;
