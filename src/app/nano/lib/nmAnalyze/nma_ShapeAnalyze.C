@@ -221,6 +221,8 @@ nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const cha
   else{
 	  remoteEroderConnObj = NULL;
   }
+
+  outfile = fopen("ShapeAnalyze.er","w");
 }
 
 //'default' constructor for when no data sent across initially
@@ -320,7 +322,7 @@ _handleSourcePlaneChange(int x, int y){
 			}
 			if(y == d_sourcePlane->numY()-1){
 				//cout << remoteEroderConnObj->server_name << endl;
-				//cout << d_sourcePlane;
+				cout << d_sourcePlane;
 			}
 		}
 	}
@@ -378,7 +380,7 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 
 	newdataline[0] = (*dataline)[0];
 	placeholder_x += stepsize;
-	int nano_x = 0;//tracks where we are in nano's x-space, range of [0,d_rowlength]
+	int nano_x = 1;//tracks where we are in nano's x-space, range of [0,d_rowlength]//ANDREA:  changed from 0
 	do{
 		if((placeholder_x >= l_sim_x) && (placeholder_x <= h_sim_x)){
 			percent_between = placeholder_x - l_sim_x;
@@ -431,12 +433,15 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 
 				d_dataArray[i] = newdataline[i];
 				val = d_dataArray[i];
+
+				fprintf(outfile,"%04.4lf ",val);	
 				
 				if(old_data != val){//data has changed, redraw
 					calculatedPlane->setValue(i,y,val);
 					d_dataset->range_of_change.AddPoint(i,y);
 				}
 			}
+			fprintf(outfile,"\n");
 			for(i = 0; i < d_rowlength; i++){
 				storeddataline[i] = newdataline[i];
 			}//now this is our old row			
@@ -459,12 +464,15 @@ blur_data_up(double** dataline, int& y, int& datain_rowlen){
 
 				d_dataArray[index] = placeholder_val;
 				y_flipped = d_columnheight - nano_y - 1;
+				fprintf(outfile,"%04.4lf ",placeholder_val);	
 							
 				if(old_data != placeholder_val){//data has changed, redraw
 					calculatedPlane->setValue(i,y_flipped,placeholder_val);
 					d_dataset->range_of_change.AddPoint(i,y_flipped);
 				}
 			}
+			fprintf(outfile,"\n");
+
 			placeholder_y = (placeholder_y + stepsize);
 			++nano_y;
 			//increment placeholder_y and nano_y for next insertion (whether on this function call or next)

@@ -1,3 +1,10 @@
+2002-07-02  Andrea Hilchey <hilchey@cs.unc.edu>
+
+	* nma_ShapeAnalyze.C : fixed a bug that was causing
+	nma_ShapeIdentified planes to not be displayed when
+	centering occurred (either automatically or when
+	'center' button pressed)
+
 2002-06-28  Adam Seeger  <seeger@cs.unc.edu>
 
 	* Makefile - added entries to USES_LIBS

@@ -161,6 +161,7 @@ private:
 	int nano_y;						//y value in the source plane array at which the new point is being inserted
 	nmm_SimulatedMicroscope_Remote* remoteEroderConnObj;	//pointer to simulated microscope object that created
 															//this shape identified plane object, if there is one
+	FILE * outfile;					//for reading out data array
 
 };
 
