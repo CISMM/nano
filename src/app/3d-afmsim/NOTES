@@ -1,3 +1,4 @@
+
 Gokul Varadhan
 
 Symbols
@@ -6,6 +7,28 @@ Symbols
 ### ... ### - start of a new session
 --- ... --- - start of a new issue
 ??? ... ??? - problem/doubt/bug etc
+
+
+April 17 2001
+-------------
+
+Fixed bugs described below. Uncertainty mode working.
+There is some popping effect when I switch from one mode to another. Fix that.
+
+
+April 16 2001
+-------------
+
+- if we begin in uncertainty_mode=0, crashes
+- edge color discontinuities at the sphere, frustum boundary. Fix this.
+
+
+April 14 2001
+-------------
+
+
+restructuring code - adding scan.cpp
+
 
 April 4 2001
 ------------

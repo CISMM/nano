@@ -43,7 +43,9 @@ public :
   virtual void print()=0;
   virtual void draw()=0;
   virtual void afm_sphere_tip(SphereTip)=0;
+  virtual void uncert_afm_sphere_tip(SphereTip sp)=0;
   virtual void afm_inv_cone_sphere_tip(InvConeSphereTip)=0;
+  virtual void uncert_afm_inv_cone_sphere_tip(InvConeSphereTip)=0;
   /* Each object manages its keyboard. This might seem funny, but it allows
    * lot of programming convenience. The reason for doing this is that I want
    * everything dealing with an object to be encapsulated in it. Otherwise, if
@@ -94,14 +96,20 @@ public:
   Vec3d getRightEndPt(); // the one in the direction of the axis
   void print();
   void draw();
+  void uncert_draw();
   void afm_sphere_tip(SphereTip);
+  void uncert_afm_sphere_tip(SphereTip sp);
   void afm_inv_cone_sphere_tip(InvConeSphereTip);
+  void uncert_afm_inv_cone_sphere_tip(InvConeSphereTip);
   void keyboardFunc(unsigned char key, int x, int y);
   double xy_distance(Vec3d vMouseWorld);
   double xz_distance(Vec3d vMouseWorld);
   void grabOb(Vec3d vMouseWorld, int xy_or_xz);
   void moveGrabbedOb(Vec3d vMouseWorld);
 };
+
+void addNtube(int type, Vec3d pos, double yaw, double roll, double pitch, double leng, double diam);
+
 
 // subclass of OB
 /* pos here is the location of the centroid  = (a+b+c)/3 */
@@ -127,13 +135,18 @@ public:
   void print();
   void draw();
   void afm_sphere_tip(SphereTip);
+  void uncert_afm_sphere_tip(SphereTip sp);
   void afm_inv_cone_sphere_tip(InvConeSphereTip);
+  void uncert_afm_inv_cone_sphere_tip(InvConeSphereTip);
   void keyboardFunc(unsigned char key, int x, int y);
   double xy_distance(Vec3d vMouseWorld);
   double xz_distance(Vec3d vMouseWorld);
   void grabOb(Vec3d vMouseWorld, int xy_or_xz);
   void moveGrabbedOb(Vec3d vMouseWorld);
 };
+
+void addTriangle(Vec3d a, Vec3d b, Vec3d c);
+
 
 /* DNA :
  *
@@ -241,7 +254,9 @@ public :
   void print();
   void printF();
   void afm_sphere_tip(SphereTip);
+  void uncert_afm_sphere_tip(SphereTip sp);
   void afm_inv_cone_sphere_tip(InvConeSphereTip);
+  void uncert_afm_inv_cone_sphere_tip(InvConeSphereTip);
   void keyboardFunc(unsigned char key, int x, int y) {};
   double xy_distance(Vec3d vMouseWorld);
   double xz_distance(Vec3d vMouseWorld);
@@ -249,6 +264,11 @@ public :
   void moveGrabbedOb(Vec3d vMouseWorld);
 };
 
+extern Dna *dna;
+
+Dna *addDna(Vec3d P1, Vec3d P2, Vec3d dP1, Vec3d dP2, double length, int numSegs);
+
+void init_dna(char *filename);
 
 
 /**************************************************************************************/

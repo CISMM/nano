@@ -8,6 +8,9 @@
 #include <GL/glut.h>
 #include "defns.h"
 #include "Tips.h"
+#include "sim.h"
+
+Dna *dna = NULL;
 
 int timeSteps=0;
 Dna :: Dna(void) {
@@ -459,9 +462,21 @@ void Dna :: afm_sphere_tip(SphereTip sp) {
   }
 }
 
+void Dna :: uncert_afm_sphere_tip(SphereTip sp) {
+  for (int i=0;i<numSegments;i++) {
+    segs[i]->uncert_afm_sphere_tip(sp);
+  }
+}
+
 void Dna :: afm_inv_cone_sphere_tip(InvConeSphereTip ics) {
   for (int i=0;i<numSegments;i++) {
     segs[i]->afm_inv_cone_sphere_tip(ics);
+  }
+}
+
+void Dna :: uncert_afm_inv_cone_sphere_tip(InvConeSphereTip ics) {
+  for (int i=0;i<numSegments;i++) {
+    segs[i]->uncert_afm_inv_cone_sphere_tip(ics);
   }
 }
 
@@ -558,6 +573,47 @@ void Dna :: moveGrabbedOb(Vec3d vMouseWorld) {
   
 }
   
+
+Dna *addDna(Vec3d P1, Vec3d P2, Vec3d dP1, Vec3d dP2, double length, int numSegs) {
+  Dna *d = new Dna(P1, P2, dP1, dP2, length, numSegs);
+  ob[numObs] = d;
+  ob[numObs]->type = DNA;
+  selectedOb = numObs;
+  numObs++;
+  return d;
+}
+
+
+void init_dna(char *filename) {
+  double dna_length;
+  int numSegments;
+  Vec3d P1, P2, dP1, dP2;
+
+  FILE *f = fopen(filename,"r");
+
+  fscanf(f,"%d",&numSegments);
+
+  fscanf(f,"%lf",&dna_length);
+
+  fscanf(f,"%lf",&P1.x);
+  fscanf(f,"%lf",&P1.y);
+  fscanf(f,"%lf",&P1.z);
+
+  fscanf(f,"%lf",&P2.x);
+  fscanf(f,"%lf",&P2.y);
+  fscanf(f,"%lf",&P2.z);
+
+  fscanf(f,"%lf",&dP1.x);
+  fscanf(f,"%lf",&dP1.y);
+  fscanf(f,"%lf",&dP1.z);
+
+  fscanf(f,"%lf",&dP2.x);
+  fscanf(f,"%lf",&dP2.y);
+  fscanf(f,"%lf",&dP2.z);
+
+  dna = addDna(P1, P2, dP1, dP2, dna_length, numSegments);
+}
+
 
 
 

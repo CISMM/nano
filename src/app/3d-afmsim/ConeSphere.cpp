@@ -10,6 +10,7 @@
 #include <math.h>		//math.h vs cmath
 #include <GL/glut.h>
 #include "ConeSphere.h"
+#include "uncert.h"
 #include "defns.h"
 
 extern double cone_sphere_list_radius;
@@ -116,6 +117,21 @@ void ConeSphere :: draw() {
   glCallList(CONE_SPHERE_LIST);
   glPopMatrix();
 #endif
+}
+
+void ConeSphere :: uncert_draw() {
+  static int firstTime = 1;
+  static myGLUquadricObj* qobj;
+  if( firstTime ) { 
+    qobj = mygluNewQuadric();
+    mygluQuadricDrawStyle( qobj, GLU_FILL);
+    mygluQuadricNormals( qobj, GLU_FLAT );
+    firstTime=0;
+  }
+  uncert_sphere( qobj, r, 30, 30);
+  glTranslatef(0, 0, -sphereHeight);
+  GLfloat gcol = get_sphere_color_rho(PI/2.-theta);
+  uncert_frustum( qobj, cr, topRadius, topHeight, 30, 30, 0, gcol);
 }
 
 

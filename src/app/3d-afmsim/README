@@ -10,7 +10,7 @@ To run the simulator run
 
 to get the AFM of a protein
 
-./run -p filename unit [-w]
+./sim -p filename unit [-w]
 
 unit is a number  = (Unit assumed in the file)/(1 nm) e.g 0.1 for Angstrom\n
 -w orients the protein at different XY rotations and outputs the AFMS to files.
@@ -24,13 +24,21 @@ Example : ./run -p lac.data 0.1
 
 to get AFM of a triangular model run
 
-./run -t filename scale
+./sim -t filename scale
 
 Example :
 
-./run -t teddy.obj 10
+./sim -t teddy.obj 10
 
 scale scales the values in the given input file
+
+to run DNA simulator
+
+./sim -d dna-filename
+
+Example :
+
+./sim -d 1.dat
 
 
 Information

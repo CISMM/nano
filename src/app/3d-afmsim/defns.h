@@ -35,12 +35,18 @@
 #define KEY_DELETE 0x7f
 
 // display list
+// display control defs
 #define DISP_LIST 1
 #define	TIP_DISP_LIST 1
+
+// display lists
 #define SPHERE_LIST 1
 #define CYLINDER_LIST 2
 #define CONE_SPHERE_LIST 3
 #define	TIP_CONE_SPHERE_LIST 4
+#define MY_SPHERE_LIST 5
+#define MY_CYLINDER_LIST 6
+#define MY_CONE_SPHERE_LIST 7
 
 
 // rotating protein
@@ -48,5 +54,9 @@
 #define YLEAST_COUNT 90
 #define XMAX 90
 #define YMAX 90
+
+
+#define MAX_GRID 128 // changed this to 128 from 64
+#define DEPTHSIZE MAX_GRID
 
 #endif

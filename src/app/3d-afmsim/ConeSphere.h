@@ -32,6 +32,7 @@ class ConeSphere {
   void set_r(double _r);
   void set_theta(double _theta);
   void draw();
+  void uncert_draw();
   void print();
 };
 
