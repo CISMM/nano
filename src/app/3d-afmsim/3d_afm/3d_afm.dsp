@@ -88,7 +88,15 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=..\3Dobject.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\ConeSphere.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\dna.cpp
 # End Source File
 # Begin Source File
 
@@ -105,6 +113,10 @@ SOURCE=..\lightcol.cpp
 # Begin Source File
 
 SOURCE=..\..\nano\lib\nmMScope\nmm_SimulatedMicroscope.C
+# End Source File
+# Begin Source File
+
+SOURCE=..\scan.cpp
 # End Source File
 # Begin Source File
 
@@ -136,6 +148,10 @@ SOURCE=..\Vec3d.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=..\3Dobject.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\ConeSphere.h
 # End Source File
 # Begin Source File
@@ -157,6 +173,10 @@ SOURCE=..\lightcol.h
 # Begin Source File
 
 SOURCE=..\..\nano\lib\nmMScope\nmm_SimulatedMicroscope.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\scan.h
 # End Source File
 # Begin Source File
 
