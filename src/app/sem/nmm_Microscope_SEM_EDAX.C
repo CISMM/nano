@@ -36,7 +36,11 @@ nmm_Microscope_SEM_EDAX::nmm_Microscope_SEM_EDAX
     d_scan_enabled(vrpn_FALSE), 
     d_lines_per_message(1), 
     d_scans_to_do(0),
+#ifdef VIRTUAL_SEM
+    d_virtualAcquisition(vrpn_TRUE),
+#else
     d_virtualAcquisition(virtualAcq),
+#endif
     d_exposureManager(new ExposureManager()),
     d_magCalibration(1e8), // (10 cm)*(nm/cm)
     d_beamCurrent_picoAmps(0.0),
@@ -396,7 +400,6 @@ if (!d_virtualAcquisition) {
     if (d_virtualAcquisition) {
 	printf("Warning: you are using the VIRTUAL SEM\n");
     } else {
-
 #ifdef USE_SCAN_TABLE
         printf("Warning: this server uses ScanTable instead of SpMove\n");
         printf("Dwell time is fixed at 3 msec for point-by-point scanning\n");

@@ -1,3 +1,12 @@
+2001-07-17  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM_EDAX.C (nmm_Microscope_SEM_EDAX): 
+	made it so the constructor automatically assigns 
+	vrpn_TRUE to d_virtualAcquisition if VIRTUAL_SEM is defined at compile 
+	time (you need the compile time flag for running on a machine without
+	the dlls installed and the runtime flag gives you the option to test
+	without the hardware using the same executable used with the hardware)
+
 2001-05-14  Adam Seeger  <seeger@cs.unc.edu>
 
 	* edax_server.C : replaced vrpn_SleepMsecs call with timeout parameter
