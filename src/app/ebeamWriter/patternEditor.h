@@ -74,6 +74,7 @@ class PatternEditor : public nmb_ImageDisplay {
    void setDrawingTool(PE_DrawTool tool);
    void undoPoint();
    void undoShape();
+   void undoSelectedShape();
    void clearPattern();
    void addShape(PatternShape *shape);
    void updateExposureLevels();

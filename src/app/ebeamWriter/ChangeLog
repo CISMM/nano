@@ -3,8 +3,10 @@
    * patternEditor.C (handleMainWinEvent): for delete key, deletes points
       in current shape and then shapes when the current shape has been
       completely deleted
+	(undoSelectedShape): new function
    * patternShape.C (PolylinePatternShape::drawToDisplay): changed how 
       color is calculated when shape is selected
+	(CompositePatternShape::removeSelectedShapes): new function
 
 2003-04-07  Adam Seeger  <seeger@cs.unc.edu>
 

@@ -1960,6 +1960,17 @@ void CompositePatternShape::handleWorldFromObjectChange()
   }
 }
 
+void CompositePatternShape::removeSelectedShapes()
+{
+  list<PatternShapeListElement>::iterator shape;
+  for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
+	  if ((*shape).d_shape->selected()) {
+		d_subShapes.remove((*shape).d_shape);
+		break;
+	  }
+  }
+}
+
 DumpPointPatternShape::DumpPointPatternShape(double x_nm, double y_nm):
   PatternShape(PS_DUMP),
   d_location(x_nm, y_nm),

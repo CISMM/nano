@@ -406,6 +406,13 @@ void PatternEditor::undoShape()
   return;
 }
 
+void PatternEditor::undoSelectedShape()
+{
+	d_pattern.removeSelectedShapes();
+	updateExposureLevels();
+	d_viewer->dirtyWindow(d_mainWinID);
+}
+
 void PatternEditor::clearPattern()
 {
   if (d_shapeInProgress){
@@ -930,7 +937,7 @@ int PatternEditor::handleMainWinEvent(
 			   if (d_shapeInProgress){
 				 undoPoint();
 			   } else {
-				 undoShape();
+				 undoSelectedShape();
 			   }
 			 break;
            default:

@@ -190,6 +190,8 @@ class PatternShape {
 		objFromWorld.getMatrix(transform);
 	}
 
+	virtual vrpn_bool selected() {return d_selected;}
+
 	virtual void handleWorldFromObjectChange() {}
 
 	inline static void transform(double *transform, double x_src, double y_src, 
@@ -555,6 +557,7 @@ class CompositePatternShape : public PatternShape {
        {shape->setParent(this); 
 		d_subShapes.push_back(PatternShapeListElement(shape));}
     void removeSubShape() {d_subShapes.pop_back();}
+	void removeSelectedShapes();
     list<PatternShapeListElement>::iterator shapeListBegin()
        {return d_subShapes.begin();}
     list<PatternShapeListElement>::iterator shapeListEnd()
