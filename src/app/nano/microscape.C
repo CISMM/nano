@@ -6238,9 +6238,7 @@ int main(int argc, char* argv[])
 	// Allow the user to open a stream file with "-d file:..." 
 	// Set the read_mode. 
 	istate.afm.readingStreamFile = 1;
-        // XXX - should get this file name from a member function of
-        // vrpn_FileConnection that is yet to be written
-        strcpy(istate.afm.inputStreamName, &(istate.afm.deviceName[5]));
+        strcpy(istate.afm.inputStreamName, vrpnLogFile->get_filename());
 	//decoration->rateOfTime = 3;	// use 3 for rate default
 	//fprintf(stderr, "   microscape.c:: in Replay mode\n");
       }
