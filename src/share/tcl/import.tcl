@@ -38,6 +38,9 @@ set spider_thick 0.1
 set spider_tess 10
 set spider_beg_curve 0
 set spider_end_curve 0
+set spider_trans_leg_xy 1
+set spider_trans_leg 0
+set spider_rot_leg 0
 set spider_legs 8
 set spider_filename ""
 
@@ -81,25 +84,37 @@ generic_optionmenu $nmInfo(spider_control).spider_which_leg_menu spider_current_
 	"Current Leg" spider_which_leg
 
 floatscale $nmInfo(spider_control).spider_length_slide 0 20 1000 1 1 \
-	spider_length "Spider Length"
+	spider_length "Leg Length"
 
 floatscale $nmInfo(spider_control).spider_width_slide 0 10 1000 1 1 \
-	spider_width "Spider Width"
+	spider_width "Leg Width"
 
 floatscale $nmInfo(spider_control).spider_thick_slide 0 5 1000 1 1 \
-	spider_thick "Spider Thickness"
+	spider_thick "Leg Thickness"
 
 intscale $nmInfo(spider_control).spider_tess_slide 1 50 1000 1 1 \
-	spider_tess "Spider Tesselation"
+	spider_tess "Leg Tesselation"
 
 floatscale $nmInfo(spider_control).spider_beg_curve_slide 0 120 1000 1 1 \
-	spider_beg_curve "Spider Curvature\nBegin"
+	spider_beg_curve "Leg Curvature\nBegin"
 
 floatscale $nmInfo(spider_control).spider_end_curve_slide 0 120 1000 1 1 \
-	spider_end_curve "Spider Curvature\nEnd"
+	spider_end_curve "Leg Curvature\nEnd"
+
+label $nmInfo(spider_control).spider_trans_xy_label \
+    -text "Translate Leg in X or Y"
+radiobutton $nmInfo(spider_control).spider_trans_xy_x \
+    -text "X" -variable spider_trans_leg_xy -value 1
+radiobutton $nmInfo(spider_control).spider_trans_xy_y \
+    -text "Y" -variable spider_trans_leg_xy -value 0
+floatscale $nmInfo(spider_control).spider_trans_leg_slide -1 1 1000 1 1 \
+	spider_trans_leg "Leg Translation"
+
+floatscale $nmInfo(spider_control).spider_rot_leg_slide -10 10 1000 1 1 \
+	spider_rot_leg "Leg Rotation"
 
 intscale $nmInfo(spider_control).spider_legs_slide 1 8 1000 1 1 \
-	spider_legs "Spider Legs"
+	spider_legs "Number of Legs"
 
 button $nmInfo(spider_control).spider_save_to_file -text "Save Spider" \
         -command save_spider
@@ -227,6 +242,11 @@ pack $nmInfo(spider_control).spider_thick_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_tess_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_beg_curve_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_end_curve_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_trans_xy_label -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_trans_xy_x -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_trans_xy_y -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_trans_leg_slide -padx 1m -pady 1m -anchor nw
+pack $nmInfo(spider_control).spider_rot_leg_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_legs_slide -padx 1m -pady 1m -anchor nw
 pack $nmInfo(spider_control).spider_save_to_file -padx 1m -pady 1m -anchor nw
 #

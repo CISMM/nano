@@ -1,3 +1,8 @@
+2002-01-31  David Borland <borland@cs.unc.edu>
+
+        * import.tcl: Added sliders to rotate and translate spider legs
+        individually.
+
 2002-01-20  David Borland <borland@cs.unc.edu>
 
         * import.tcl: Added sliders to the spider object gui to control
