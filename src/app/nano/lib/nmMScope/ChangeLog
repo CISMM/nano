@@ -1,3 +1,16 @@
+2001-07-19  David Marshburn  <marshbur@tungsten-cs.cs.unc.edu>
+
+	* nmm_AFM_Control.vrpndef:
+	([encode,decode]_EnterOscillatingMode)  re-ordered arguments to 
+	match all other encode/decode oscillating-mode messages in
+	nmm_AFM_Report and nmm_Microscope.
+	
+	* nmm_MicroscopeRemote.hdef,.Cdef:  
+	(EnterOscillatingMode) re-ordered the arguments to match those above.
+	Re-ordered arguments to all invocations of this.
+
+	* nmm_Microscope.C:  removed some spurious comments
+	
 2001-07-09  Shayne O'Neill  <soneill@mindspring.com>
 
 	* nmm_MicroscopeRemote.hdef:  Added a Graphmod variable to

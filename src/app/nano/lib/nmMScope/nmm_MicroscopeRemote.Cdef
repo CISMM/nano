@@ -464,9 +464,9 @@ long nmm_Microscope_Remote::ModifyMode (void) {
                                        state.modify.amplitude,
                                        state.modify.frequency,
                                        state.modify.input_gain,
-                                       state.modify.ampl_or_phase,
                                        state.modify.drive_attenuation,
-                                       state.modify.phase);
+                                       state.modify.phase,
+				       state.modify.ampl_or_phase );
 	case GUARDED_SCAN:
 		  return EnterGuardedScanMode(state.image.p_gain,
                               state.modify.i_gain,
@@ -554,9 +554,9 @@ long nmm_Microscope_Remote::ImageMode (void) {
                                   state.image.amplitude,
                                   state.image.frequency,
                                   state.image.input_gain,
-                                  state.image.ampl_or_phase,
                                   state.image.drive_attenuation,
-                                  state.image.phase);
+                                  state.image.phase,
+				  state.image.ampl_or_phase );
     case CONTACT:
       return EnterContactMode(state.image.p_gain,
                               state.image.i_gain,
@@ -1097,20 +1097,18 @@ long nmm_Microscope_Remote::MarkImageMode (void) {
 long nmm_Microscope_Remote::EnterOscillatingMode
         (float p, float i, float d, float set, float amp,
          vrpn_float32 frequency, vrpn_int32 input_gain,
-         vrpn_bool ampl_or_phase, vrpn_int32 drive_attenuation,
-         vrpn_float32 phase) {
+         vrpn_int32 drive_attenuation, vrpn_float32 phase, 
+	 vrpn_bool ampl_or_phase ) {
   char * msgbuf;
   vrpn_int32 len;
 
   msgbuf = encode_EnterOscillatingMode(&len, p, i, d, set, amp,
-                                       frequency, input_gain, ampl_or_phase,
-                                       drive_attenuation, phase);
-  //  msgbuf = encode_EnterTappingMode(&len, p, i, d, set, amp);           
+                                       frequency, input_gain, drive_attenuation, 
+					phase, ampl_or_phase );
   if (!msgbuf)
     return -1;
 
   return dispatchMessage(len, msgbuf, d_EnterOscillatingMode_type);
-  //return dispatchMessage(len, msgbuf, d_EnterTappingMode_type);
 }
 
 long nmm_Microscope_Remote::EnterContactMode (float p, 
@@ -1320,13 +1318,13 @@ long nmm_Microscope_Remote::SetModForce () {
     switch (state.modify.mode) {
       case TAPPING:
 	return EnterOscillatingMode(state.modify.p_gain, state.modify.i_gain,
-				state.modify.d_gain, state.modify.setpoint,
-                                    state.modify.amplitude,
-                                       state.modify.frequency,
-                                       state.modify.input_gain,
-                                       state.modify.ampl_or_phase,
-                                       state.modify.drive_attenuation,
-                                       state.modify.phase);
+					state.modify.d_gain, state.modify.setpoint,
+                                    	state.modify.amplitude,
+                                       	state.modify.frequency,
+                                       	state.modify.input_gain,
+                                       	state.modify.drive_attenuation,
+                                       	state.modify.phase,
+					state.modify.ampl_or_phase );
 
       case GUARDED_SCAN:
         return EnterGuardedScanMode(state.modify.p_gain,
@@ -1362,13 +1360,13 @@ long nmm_Microscope_Remote::SetModForce () {
     switch (state.modify.mode) {
       case TAPPING:
         if (EnterOscillatingMode(state.modify.p_gain, state.modify.i_gain,
-                                state.modify.d_gain, state.modify.setpoint,
-                                    state.modify.amplitude,
-                                       state.modify.frequency,
-                                       state.modify.input_gain,
-                                       state.modify.ampl_or_phase,
-                                       state.modify.drive_attenuation,
-                                       state.modify.phase)) {
+                                	state.modify.d_gain, state.modify.setpoint,
+                                    	state.modify.amplitude,
+                                       	state.modify.frequency,
+                                       	state.modify.input_gain,
+                                       	state.modify.drive_attenuation,
+                                       	state.modify.phase,
+					state.modify.ampl_or_phase )) {
             fprintf(stderr, "Error, can't enter oscillating mode\n");
             return -1;
 	}
@@ -1535,13 +1533,13 @@ long nmm_Microscope_Remote::SetScanlineModeParameters(){
   switch(state.scanline.mode) {
     case TAPPING:
 	return EnterOscillatingMode(state.scanline.p_gain, state.scanline.i_gain,
-			state.scanline.d_gain, state.scanline.setpoint,
-                                       state.scanline.amplitude,
-                                       state.scanline.frequency,
-                                       state.scanline.input_gain,
-                                       state.scanline.ampl_or_phase,
-                                       state.scanline.drive_attenuation,
-                                       state.scanline.phase);
+					state.scanline.d_gain, state.scanline.setpoint,
+                                       	state.scanline.amplitude,
+                                       	state.scanline.frequency,
+                                       	state.scanline.input_gain,
+                                       	state.scanline.drive_attenuation,
+                                       	state.scanline.phase,
+					state.scanline.ampl_or_phase );
     case CONTACT:
 	return EnterContactMode(state.scanline.p_gain, state.scanline.i_gain,
 			state.scanline.d_gain, state.scanline.setpoint);

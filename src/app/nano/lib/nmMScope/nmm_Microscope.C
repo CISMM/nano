@@ -2951,9 +2951,7 @@ char * nmm_Microscope::encode_EnterOscillatingMode (long * len,
                     "Out of memory.\n");
     *len = 0;
   } else {
-      // NOTE change in order. on SGI, 4 byte types must be aligned for
-      // unbuffer to work (i.e. not give a bus error). So the two byte
-      // vrpn_bool must come in pairs, or must come last!
+
     mptr = msgbuf;
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, p);
@@ -2977,9 +2975,7 @@ long nmm_Microscope::decode_EnterOscillatingMode (const char ** buf,
            vrpn_float32 * frequency, vrpn_int32 * input_gain,
            vrpn_bool * ampl_or_phase, vrpn_int32 * drive_attenuation,
            vrpn_float32 * phase) {
-      // NOTE change in order. on SGI, 4 byte types must be aligned for
-      // unbuffer to work (i.e. not give a bus error). So the two byte
-      // vrpn_bool must come in pairs, or must come last!
+
   CHECK(vrpn_unbuffer(buf, p));
   CHECK(vrpn_unbuffer(buf, i));
   CHECK(vrpn_unbuffer(buf, d));
@@ -3384,9 +3380,7 @@ char * nmm_Microscope::encode_InOscillatingMode (long * len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-      // NOTE change in order. on SGI, 4 byte types must be aligned for
-      // unbuffer to work (i.e. not give a bus error). So the two byte
-      // vrpn_bool must come in pairs, or must come last!
+
     vrpn_buffer(&mptr, &mlen, p);
     vrpn_buffer(&mptr, &mlen, i);
     vrpn_buffer(&mptr, &mlen, d);
@@ -3408,9 +3402,7 @@ long nmm_Microscope::decode_InOscillatingMode (const char ** buf,
            vrpn_float32 * frequency, vrpn_int32 * input_gain,
            vrpn_bool * ampl_or_phase, vrpn_int32 * drive_attenuation,
            vrpn_float32 * phase) {
-      // NOTE change in order. on SGI, 4 byte types must be aligned for
-      // unbuffer to work (i.e. not give a bus error). So the two byte
-      // vrpn_bool must come in pairs, or must come last!
+
   CHECK(vrpn_unbuffer(buf, p));
   CHECK(vrpn_unbuffer(buf, i));
   CHECK(vrpn_unbuffer(buf, d));

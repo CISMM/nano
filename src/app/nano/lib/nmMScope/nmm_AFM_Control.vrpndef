@@ -23,9 +23,9 @@ VRPN_MESSAGE EnterOscillatingMode {
   float32 amplitude
   float32 frequency
   int32 input_gain
-  bool ampl_or_phase
   int32 drive_attenuation
   float32 phase
+  bool ampl_or_phase
 }
 VRPN_MESSAGE EnterContactMode {
   float32 p

@@ -410,8 +410,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long MarkImageMode (void);
     long EnterOscillatingMode(float p, float i, float d, float set, float amp,
          vrpn_float32 frequency, vrpn_int32 input_gain,
-         vrpn_bool ampl_or_phase, vrpn_int32 drive_attenuation,
-         vrpn_float32 phase);
+         vrpn_int32 drive_attenuation, vrpn_float32 phase,
+	 vrpn_bool ampl_or_phase );
     long EnterContactMode (float p, float i, float d, float set);
     long EnterGuardedScanMode (float a_fP, float a_fI, float a_fD, float a_fSetpoint, 
 						  float a_fNormalX, float a_fNormalY, float a_fNormalZ,
