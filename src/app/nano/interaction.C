@@ -575,6 +575,11 @@ void handle_xyLock (vrpn_int32, void *)
   if (microscope->haveMutex() 
       && microscope->state.modify.tool == DIRECT_STEP) {
     z_pos = xyz_lock_pos[2];
+
+	//if we are exiting from xy_lock, put us in image mode
+	if(xy_lock == 0) {
+		microscope->ImageMode();
+	}
   }
 }
 
@@ -968,14 +973,33 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
 			   plane->valueInWorld(grid_x, grid_y) );
 
 	}
-	//if we aren't using line tool, don't change commit button's value,
+
+	//DIRECT STEP SECTION
+	/* If we are in direct step mode, and user hits commit, 
+	*  put the microscope into modify mode. 
+	*/
+	
+	if (microscope->state.modify.tool == DIRECT_STEP) {
+		if (!old_commit_pressed && xy_lock) { // We weren't commited last time
+			// and the xy_lock is on.
+			// this means we should start using modification force.
+			microscope->ModifyMode();
+			old_commit_pressed = tcl_commit_pressed;
+		} else {
+			//user is not in xy lock and hit commit.
+			//do not let microscope go into modify mode
+			tcl_commit_pressed = 0;
+			//old_commit_pressed = 0; //don't think this is necesarry
+		}
+	}
+	
+	//if we aren't using line tool(or DirectStep), don't change commit button's value,
 	// because it's handled below in doFeelLive()
 	// (allows user to switch between touch and modify, without
 	// scanning in between.)
-
 	break;
     case USER_SERVO_MODE: // user is in Select mode
-	// set the scan region based on the last one specified by the user. 
+		// set the scan region based on the last one specified by the user. 
         if ( (microscope->state.modify.tool == OPTIMIZE_NOW) && 
 	     (microscope->state.modify.optimize_now_param == 
 	      OPTIMIZE_NOW_AREA) ) {
@@ -1054,6 +1078,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
  * This button backs out of an operation, instead of commiting it.
  * In polyline mode - it clears any saved points. 
  * In select mode - it sets the region invalid, and clears its icon.
+ * In Direct_Step mode, it takes us out of modify mode.
  */
 void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 {
@@ -1103,6 +1128,13 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
 	      decoration->num_slow_line_3d_markers = 0;
 	    }
 
+	}
+      /* Start image mode (to make the relaxation compensation code work
+       * as it should, and to turn the background the right color in case
+       * we don't scan more, and to stop points from coming into the list
+       * of points) and resume previous scan pattern. */
+	if (microscope->state.modify.tool == DIRECT_STEP) {
+      microscope->ImageMode();
 	}
 	// I think we should always resume scan - if the user hits "cancel"
 	// that should mean "start over", so we always begin scanning again.
@@ -3274,7 +3306,6 @@ int doFeelLive (int whichUser, int userEvent)
     curr_y = microscope->state.data.inputPoint->y() - plane->yInWorld(0);
     curr_z = z_pos;
   } // end if direct step mode
-  
   // constrained freehand only allows motion along a line.
   if (microscope->state.modify.tool == CONSTR_FREEHAND) {
     if (microscope->state.modify.control == DIRECTZ ) {
@@ -3304,6 +3335,10 @@ int doFeelLive (int whichUser, int userEvent)
   decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
   nmui_Util::moveSphere(clipPos, graphics);
 
+  //thats all if we are in direct step mode and in xy lock.
+  if(microscope->state.modify.tool == DIRECT_STEP && xy_lock) {
+	  return 0;
+  }
   // if the style is sweep, set up additional icon for sweep width
   if (microscope->state.modify.style == SWEEP) {
     setupSweepIcon(whichUser, clipPos, plane);

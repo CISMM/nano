@@ -1,3 +1,14 @@
+2002-06-06 Jameson Miller <millerj@cs.unc.edu>
+	* interaction.c - added code to go into modify mode when in
+		direct step (and commit button is pressed).
+		modified functions :
+			handle_commit_change
+			handle_commit_cancel
+			dofeellive :
+			   restrictions on what the user can do with the phantom
+			   once in xy_lock and in Direct Step mode.
+
+
 2002-06-06 David Borland <borland@cs.unc.edu>
 
         * import.C : fixed a bug that was causing the wrong spider values to
