@@ -232,11 +232,19 @@ Tclvar_int	tcl_phantom_reset_pressed("reset_phantom", 0,
 				handle_phantom_reset);
 
 // turn linearization of haptics stimuli on/off
-Tclvar_int friction_linear("friction_linear", 0);
+static void handle_friction_linear_change(vrpn_int32 val, void *userdata);
+Tclvar_int friction_linear("friction_linear", 0, handle_friction_linear_change);
+int flinear = 0;
 Tclvar_int adhesion_linear("adhesion_linear", 0);
 Tclvar_int compliance_linear("compliance_linear", 0);
-Tclvar_int bumpscale_linear("bumpscale_linear", 0);
-Tclvar_int buzzscale_linear("buzzscale_linear", 0);
+static void handle_bumpscale_linear_change(vrpn_int32 val, void *userdata);
+Tclvar_int bumpscale_linear("bumpscale_linear", 0,
+			    handle_bumpscale_linear_change);
+int bumplinear = 0;
+static void handle_buzzscale_linear_change(vrpn_int32 val, void *userdata);
+Tclvar_int buzzscale_linear("buzzscale_linear", 0,
+			    handle_buzzscale_linear_change);
+int buzzlinear = 0;
 
 Tclvar_float handTracker_update_rate ("handTracker_update_rate", 60.0,
                                       handle_handTracker_update_rate);
@@ -332,6 +340,18 @@ TclNet_float tcl_wfr_rot_3
 TclNet_float tcl_wfr_scale
      ("tcl_wfr_scale", 1.0, handle_worldFromRoom_change, NULL);
 
+
+static void handle_friction_linear_change(vrpn_int32 val, void *) {
+  flinear = val;
+}
+
+static void handle_bumpscale_linear_change(vrpn_int32 val, void *) {
+  bumplinear = val;
+}
+
+static void handle_buzzscale_linear_change(vrpn_int32 val, void *) {
+  buzzlinear = val;
+}
 
 static void handle_handTracker_update_rate (vrpn_float64 v, void *) {
 
@@ -1445,7 +1465,7 @@ void specify_surface_friction(int x, int y)
     kS = (plane->value(x,y) - friction_slider_min) / 
       (friction_slider_max - friction_slider_min);
 
-    if (friction_linear == 1) {
+    if (flinear == 1) {
       kS = log_any_base(1.5, kS); /* 1.5 because perceived magnitude is
 				    proportional to x^1.5, but we want to get a
 				    linear scaling with perception. */
@@ -1500,7 +1520,7 @@ void specify_surface_bumpsize(int x, int y)
 	wavelength = (plane->value(x,y) - plane->minValue())/
 		(plane->maxValue() - plane->minValue());
 
-	if (bumpscale_linear == 1) {
+	if (bumplinear == 1) {
 	  wavelength = log_any_base(0.86, wavelength); /*0.86 because perceived
 							 magnitude is
 							 proportional to x^0.8
@@ -1562,7 +1582,7 @@ void specify_surface_buzzamplitude(int x, int y)
 
 	amp = (plane->value(x,y) - plane->minValue()) /
 		(plane->maxValue() - plane->minValue());
-	if (buzzscale_linear == 1) {
+	if (buzzlinear == 1) {
 	  amp = log_any_base(0.95, amp); //0.95 because perceived magnitude is
                                 //proportional to x^0.95, but we want to get a
                                 //linear scaling with perception.
@@ -1819,7 +1839,7 @@ void specify_point_friction(void)
  
         kS = ( value->value()  - friction_slider_min) /
                 (friction_slider_max - friction_slider_min);
-	if (friction_linear == 1) {
+	if (flinear == 1) {
 	  kS = log_any_base(1.5, kS); /*1.5 because perceived magnitude is
 					proportional to x^1.5, but we want to get a
 					linear scaling with perception. */
@@ -1875,7 +1895,7 @@ void specify_point_bumpsize(void)
 
         wavelength = ( value->value()  - bump_slider_min) /
                 (bump_slider_max - bump_slider_min);
-	if (bumpscale_linear == 1) {
+	if (bumplinear == 1) {
 	  wavelength = log_any_base(0.86, wavelength); /*0.86 because perceived
 							 magnitude is
 							 proportional to
@@ -1936,7 +1956,7 @@ void specify_point_buzzamplitude(void)
 
         amp = ( value->value()  - buzz_slider_min) /
                 (buzz_slider_max - buzz_slider_min);
-	if (buzzscale_linear == 1) {
+	if (buzzlinear == 1) {
 	  amp = log_any_base(0.95, amp); //0.95 because perceived magnitude is
                                 //proportional to x^0.95, but we want to get a
                                 //linear scaling with perception.
