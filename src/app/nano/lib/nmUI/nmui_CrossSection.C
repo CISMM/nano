@@ -20,32 +20,39 @@
 
 
 nmui_CrossSection::nmui_CrossSection (void) :
+    d_snap_to_45("xs_snap_to_45", 0),
+    d_vary_width("xs_vary_width", 0),
     d_max_points ("xs_max_num_points", 4000),
-    d_stride ("xs_stride", 3),
-    d_numDataVectors(0),
-    d_first_call(1)
+    d_clear_zero("xs_clear_0",0),
+    d_clear_one("xs_clear_1", 0),
+    d_data_update("xs_data_update", 0),
+    d_numDataVectors(0)
 {
- d_max_points.addCallback(handle_MaxPointsChange, this);
- d_stride.addCallback(handle_StrideChange, this);
+    d_hide[0] = 1;
+    d_hide[1] = 1;
+    d_first_call[0] = 1;
+    d_first_call[1] = 1;
 
-//fprintf(stderr, "GraphMod constructor\n");
+    d_max_points.addCallback(handle_MaxPointsChange, this);
+    d_clear_zero.addCallback(handle_ClearZero, this);
+    d_clear_one.addCallback(handle_ClearOne, this);
 }
 
 nmui_CrossSection::~nmui_CrossSection (void) {
   d_max_points.bindConnection(NULL);
-  d_stride.bindConnection(NULL);
 }
 
 
 // static
 int nmui_CrossSection::ShowCrossSection(BCGrid* grid, 
                                         nmb_ListOfStrings * plane_names, 
-                                        int id, int enable,  
-                    float center_x,float center_y, float width, 
-                    float angle)
+                                        int id, int /*hide*/,
+                                        float center_x,float center_y, 
+                                        float width1, float width2, 
+                                        float angle)
 {
 
-  //fprintf(stderr, "nmui_CrossSection::ReceiveNewPoint\n");
+  //fprintf(stderr, "nmui_CrossSection::ShowCrossSection\n");
 
    //int	numValues;
    char    command[300];
@@ -54,8 +61,15 @@ int nmui_CrossSection::ShowCrossSection(BCGrid* grid,
    Blt_Vector *pathVecPtr = NULL;
    int i,j;
 
+   if (id < 0 || id > 1) {
+       printf("ShowCrossSection: bogus id\n");
+       return -1;
+   }
+   // do nothing if cross section hidden. 
+   if (d_hide[id]) return 0;
+
       //set up the path vector first.
-      sprintf(str, "xs0_Path");
+      sprintf(str, "xs%d_Path", id);
       if (!Blt_VectorExists(Tcl_Interpreter::getInterpreter(), str))  {
 	 //create the vector
 	 if (Blt_CreateVector(Tcl_Interpreter::getInterpreter(), str,0,&pathVecPtr) != TCL_OK) {
@@ -70,23 +84,23 @@ int nmui_CrossSection::ShowCrossSection(BCGrid* grid,
               return -1;
           }
       }
-      double step = 2*width/300;
+      double step = (width1 + width2)/(300-1);
       for ( j=0; j<300; j++) {
-          path[j] = j*step;
+          path[id][j] = j*step;
       }
-      if (Blt_ResetVector(pathVecPtr, path, 300, 300,
+      if (Blt_ResetVector(pathVecPtr, path[id], 300, 300,
                           TCL_STATIC) != TCL_OK) {
           fprintf(stderr, "Tcl_Eval(BLT_ResetVector) failed: %s\n",
                   Tcl_Interpreter::getInterpreter()->result);
       }
-   
+
       // create a vector for each data plane
       // and attach it to a graph in the stripchart
       for ( i = 0; i < plane_names->numEntries() ; i++) {
           BCPlane * plane = grid->getPlaneByName(plane_names->entry(i));
           if (!plane) continue;
           // make sure we include name and units in the vector name. 
-          sprintf(str,"xs0_%s_%s", plane->name()->Characters(), 
+          sprintf(str,"xs%d_%s_%s", id, plane->name()->Characters(), 
 		 plane->units()->Characters());
 
 	 // remove spaces and "-", they are bad for vector names.
@@ -101,7 +115,7 @@ int nmui_CrossSection::ShowCrossSection(BCGrid* grid,
 		       Tcl_Interpreter::getInterpreter()->result);
 	       return -1;
 	    }
-            printf("created %s\n", str);
+            //printf("created %s\n", str);
 	 } else {
              if (Blt_GetVector(Tcl_Interpreter::getInterpreter(), str, &dataVecPtr) != TCL_OK) {
 	       fprintf(stderr, "Tcl_Eval(BLT_GetVector) failed: %s\n",
@@ -116,25 +130,29 @@ int nmui_CrossSection::ShowCrossSection(BCGrid* grid,
 //              fprintf(stderr, "Stripchart Error: out of space (>32 data vectors)\n");
 //  	    break;
 //           }
-         double stepx = (2*width*cos(angle))/300;
-         double stepy = (2*width*sin(angle))/300;
+         double stepx = ((width1 + width2)*cos(angle))/(300-1);
+         double stepy = ((width1 + width2)*sin(angle))/(300-1);
+         double startx = center_x - width1*cos(angle);
+         double starty = center_y - width1*sin(angle);
          // Read data values from along the cross section. 
          for (int j=0; j<300; j++) {
-             data[i][j] = plane->interpolatedValueAt((j-150)*stepx + center_x,
-                                                   (j-150)*stepy + center_y);
+             data[id][i][j] = plane->interpolatedValueAt(startx + j*stepx,
+                                                         starty + j*stepy);
          }
          // Send data to tcl to be displayed. 
-         if (Blt_ResetVector(dataVecPtr, &(data[i][0]), 300, 300,
+         if (Blt_ResetVector(dataVecPtr, &(data[id][i][0]), 300, 300,
                              TCL_STATIC) != TCL_OK) {
 	       fprintf(stderr, "Tcl_Eval(BLT_ResetVector) failed: %s\n",
 		       Tcl_Interpreter::getInterpreter()->result);
          }
       }
-      if (d_first_call) {
-          d_first_call = 0;
-          sprintf(command, "create_new_cross_section xs0 1");
+      if (d_first_call[id]) {
+          d_first_call[id] = 0;
+          sprintf(command, "create_new_cross_section %d", id);
           TCLEVALCHECK(Tcl_Interpreter::getInterpreter(), command);
       }
+      // Trigger data update in tcl interface. 
+      d_data_update = id;
    
    return 0;
 }
@@ -143,49 +161,38 @@ int nmui_CrossSection::ShowCrossSection(BCGrid* grid,
 // static
 void nmui_CrossSection::handle_MaxPointsChange(vrpn_int32 new_value, void * userdata)
 {
-    /*   int i;
-   nmui_CrossSection *me = (nmui_CrossSection *)userdata;
-   char command[100];
+    // Maximum points used in the cross section.
 
-   int num_extra_points = me->d_num_points_graphed - me->d_max_points;
-   if (num_extra_points > 0) {
-      sprintf(command, "gm_timevec delete 0:%d", num_extra_points-1);
-      TCLEVALCHECK2(Tcl_Interpreter::getInterpreter(), command);
-      sprintf(command, "gm_svec delete 0:%d", num_extra_points-1);
-      TCLEVALCHECK2(Tcl_Interpreter::getInterpreter(), command);
-      sprintf(command, "gm_Surface_X_Axis delete 0:%d", num_extra_points-1);
-      TCLEVALCHECK2(Tcl_Interpreter::getInterpreter(), command);
-      sprintf(command, "gm_Surface_Y_Axis delete 0:%d", num_extra_points-1);
-      TCLEVALCHECK2(Tcl_Interpreter::getInterpreter(), command);
-      if (me->d_is3D) {
-          sprintf(command, "gm_Surface_Z_Axis delete 0:%d", num_extra_points-1);
-          TCLEVALCHECK2(Tcl_Interpreter::getInterpreter(), command);
-      }
-      for (i = 0; i < me->d_numDataVectors; i++) {
-         sprintf(command, "%s delete 0:%d", me->d_dataVectorNames[i], num_extra_points-1);
-         TCLEVALCHECK2(Tcl_Interpreter::getInterpreter(), command);
-      }
-      me->d_num_points_graphed -= num_extra_points;
-   }
-    */
+    // Not in UI yet. 
 }
 
-// static
-void nmui_CrossSection::handle_StrideChange(vrpn_int32 new_value, void * userdata)
+void nmui_CrossSection::handle_ClearZero(vrpn_int32 new_value, void * userdata)
 {
    nmui_CrossSection *me = (nmui_CrossSection *)userdata;
-   
+   char command[100];
+   sprintf(command, "clear_cross_section 0");
+   TCLEVALCHECK2(Tcl_Interpreter::getInterpreter(), command);
+   me->d_hide[0] = 1;
+   me->d_first_call[0] = 1;
+}
+
+void nmui_CrossSection::handle_ClearOne(vrpn_int32 new_value, void * userdata)
+{
+   nmui_CrossSection *me = (nmui_CrossSection *)userdata;
+   char command[100];
+   sprintf(command, "clear_cross_section 1");
+   TCLEVALCHECK2(Tcl_Interpreter::getInterpreter(), command);
+   me->d_hide[1] = 1;
+   me->d_first_call[1] = 1;
 }
 
 void nmui_CrossSection::SetupSynchronization(nmui_Component * container)
 {
   container->add(&d_max_points);
-  container->add(&d_stride);
 }
 
 void nmui_CrossSection::TeardownSynchronization(nmui_Component * container)
 {
   container->remove(&d_max_points);
-  container->remove(&d_stride);
 }
 

@@ -1,4 +1,11 @@
-2001-12-20    <marshbur@cs.unc.edu>
+2002-01-04  Aron Helser  <helser@cs.unc.edu>
+
+	* interaction.c (xs_state): new structure, for two cross sections.  
+	(xs_find_full_width): new, calculates full width of surface. 
+	(doCrossSection): changed to handle full width, 2 cross sections,
+	reset, dynamic update. 
+
+2001-12-20  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nano.dsp:  removed references to ImgFormat
 

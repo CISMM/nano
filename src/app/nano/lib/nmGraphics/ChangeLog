@@ -1,4 +1,15 @@
-2001-12-20    <marshbur@cs.unc.edu>
+2002-01-04  Aron Helser  <helser@cs.unc.edu>
+
+	* globjects.ch (move_cross_section): changed to handle full width,
+	limit to two cross sections.
+	(draw_cross_section): same
+	* nmg_Graphics.h (move_cross_section): changed to handle full
+	width
+	* nmg_GraphicsImpl.C (positionCrossSection): same
+	(positionCrossSection): new
+	* nmg_State.Ch: limit to 2 cross sections
+	
+2001-12-20  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmGraphics.dsp:  removed references to ImgFormat
 

@@ -68,7 +68,8 @@ extern  int     spm_graphics_verbosity;
 typedef struct xs_state {
     int enabled;
     float center_x, center_y;
-    float width;
+    float widthL;
+    float widthR;
     float angle;
     int highlight_mask;
 } crossSectionState;
@@ -216,7 +217,7 @@ public:
     float surface_alpha;
     float diffuse;
 
-    crossSectionState xs_state[3];
+    crossSectionState xs_state[2];
 
     BCGrid * prerendered_grid;
     nmb_Subgrid * prerenderedChange;

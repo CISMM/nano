@@ -329,7 +329,8 @@ class nmg_Graphics {
                                        float x1, float y1, int) {};
     virtual void positionRegionBox (float, float, float, float, float, int) {};
     virtual void positionCrossSection (int, int, float, float, float, 
-				       float, int) {};
+                                       float, float, int) {};
+    virtual void hideCrossSection(int ) {};
     virtual void positionSweepLine (const PointType topL,
                                     const PointType bottomL,
 				    const PointType topR,

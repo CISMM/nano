@@ -207,13 +207,20 @@ static float region_base_tracker_angle = 0;
 /// Cross Section mode state
 static RegMode prep_xs_drag_mode = REG_NULL;
 static RegMode xs_drag_mode = REG_NULL;
-static float xs_center_x = 0;
-static float xs_center_y = 0;
-static float xs_width = 1;
-//static float xs_height = 0;
-static float xs_angle = 0;
 static float xs_base_tracker_angle = 0;
+static int xs_which_active = -1;
+///State for an individual cross section
+typedef struct xs_state_struct {
+    float center_x;
+    float center_y;
+    float widthL;
+    float widthR;
+    float angle;
+} xsState;
+/// 2 cross sections - Init with non-zero width to avoid divide-by-zero
+static xsState xs_state[2] = { { 0,0,1,1,0 }, { 0,0,1,1,0 } };
 
+/// Controls tcl interaction with cross sections
 nmui_CrossSection xs_ui;
 
 /** parameter locking the tip in sharp tip mode */
@@ -2226,6 +2233,107 @@ static float xform_height(float x, float y, float angle) {
     return fabs(cos(angle)*(y) - sin(angle)*(x));
 }
 
+/** Clamp the widths to the edges of the plane.
+ Center is clamped to inside the plane, too. 
+*/
+static void xs_find_full_width(
+    float * widthL,
+    float * widthR,
+    float * center_x,
+    float * center_y,
+    float angle,
+    BCPlane * plane) 
+{
+    double endxR, endyR, endxL, endyL;
+    // Make sure center is inside plane. 
+    if (*center_x < plane->minX()) *center_x = plane->minX();
+    if (*center_x > plane->maxX()) *center_x = plane->maxX();
+    if (*center_y < plane->minY()) *center_y = plane->minY();
+    if (*center_y > plane->maxY()) *center_y = plane->maxY();
+
+    // Shift angle into -45 to 315 deg. range.
+    while (angle > 1.75*M_PI) angle -= 2*M_PI;
+    while (angle < -0.25*M_PI) angle += 2*M_PI;
+
+    // Special case 0, 90, 180, 270 - to make sure whole line
+    // is displayed when xs is on an edge. 
+    if (fabs(angle - 0) < 0.001) {
+        *widthR = plane->maxX()- *center_x;
+        *widthL = *center_x - plane->minX(); 
+    } else if (fabs(angle - M_PI/2.0) < 0.001) {
+        *widthR = plane->maxY() - *center_y;
+        *widthL = *center_y - plane->minY();
+    } else if (fabs(angle - M_PI) < 0.001) {
+        *widthR = *center_x - plane->minX();
+        *widthL = plane->maxX()- *center_x;
+    } else if (fabs(angle - 3*M_PI/2.0) < 0.001) {
+        *widthR = *center_y - plane->minY();
+        *widthL = plane->maxY() - *center_y;
+    } else {
+        // Other angles need more general math. 
+        if (angle > 0.25*M_PI && angle < 0.75 * M_PI) {
+            // Clamp to y first, then x. 
+            endyR = plane->maxY();
+            endxR = *center_x + (endyR - *center_y)/tan(angle);
+            endyL = plane->minY();
+            endxL = *center_x + (endyL - *center_y)/tan(angle);
+        } else if (angle > 1.25*M_PI) {
+            // Clamp to y first, then x. 
+            endyR = plane->minY();
+            endxR = *center_x + (endyR - *center_y)/tan(angle);
+            endyL = plane->maxY();
+            endxL = *center_x + (endyL - *center_y)/tan(angle);
+        } else if ((angle > -0.25*M_PI) && (angle < 0.25*M_PI)) {
+            // Clamp to x first, then y. 
+            endxR = plane->maxX();
+            endyR = *center_y + (endxR - *center_x)*tan(angle);
+            endxL = plane->minX();
+            endyL = *center_y + (endxL - *center_x)*tan(angle);
+        } else {
+            // Clamp to x first, then y. 
+            endxR = plane->minX();
+            endyR = *center_y + (endxR - *center_x)*tan(angle);
+            endxL = plane->maxX();
+            endyL = *center_y + (endxL - *center_x)*tan(angle);
+        } 
+        // More bounds checking, right half
+        if (endxR > plane->maxX()) {
+            endxR = plane->maxX();
+            endyR = *center_y + (endxR - *center_x)*tan(angle);
+        } else if (endxR < plane->minX()) {
+            endxR = plane->minX();
+            endyR = *center_y + (endxR - *center_x)*tan(angle);
+        }            
+        if (endyR > plane->maxY()) {
+            endyR = plane->maxY();
+            endxR = *center_x + (endyR - *center_y)/tan(angle);
+        } else if (endyR < plane->minY()) {
+            endyR = plane->minY();
+            endxR = *center_x + (endyR - *center_y)/tan(angle);
+        }
+
+        // More bounds checking, left half
+        if (endxL > plane->maxX()) {
+            endxL = plane->maxX();
+            endyL = *center_y + (endxL - *center_x)*tan(angle);
+        } else if (endxL < plane->minX()) {
+            endxL = plane->minX();
+            endyL = *center_y + (endxL - *center_x)*tan(angle);
+        }            
+        if (endyL > plane->maxY()) {
+            endyL = plane->maxY();
+            endxL = *center_x + (endyL - *center_y)/tan(angle);
+        } else if (endyL < plane->minY()) {
+            endyL = plane->minY();
+            endxL = *center_x + (endyL - *center_y)/tan(angle);
+        }
+        *widthR = sqrt((*center_x - endxR)*(*center_x - endxR) +
+                       (*center_y - endyR)*(*center_y - endyR));
+        *widthL = sqrt((*center_x - endxL)*(*center_x - endxL) +
+                       (*center_y - endyL)*(*center_y - endyL));
+    }
+}
+
 /**
 *
    doCrossSection - Move cross-section indicators across the surface.
@@ -2261,53 +2369,111 @@ int doCrossSection(int whichUser, int userEvent)
     handx = worldFromHand.xlate[0];
     handy = worldFromHand.xlate[1];
 
-    // Is hand near center ?
-    if ((handx - xs_center_x)*(handx - xs_center_x)+
-        (handy - xs_center_y)*(handy - xs_center_y)
-        < 0.01*(xs_width*xs_width)) {
-        prep_xs_drag_mode = REG_PREP_TRANSLATE;
-    } else if ((xform_height(handx-xs_center_x,
-                             handy-xs_center_y, 
-                             xs_angle) < 0.1*(xs_width))&&
-               (xform_width(handx-xs_center_x,
-                             handy-xs_center_y, 
-                             xs_angle) > 0.9*(xs_width))&&
-                (xform_width(handx-xs_center_x,
-                             handy-xs_center_y, 
-                             xs_angle) < 1.1*(xs_width))
-               ) {
-        // near endpoint, so resize the width. 
-        prep_xs_drag_mode = REG_PREP_SIZE;
+    // Assume hand isn't near anything. 
+    //xs_which_active = -1;
+    prep_xs_drag_mode = REG_NULL;
 
-    } else {
-        prep_xs_drag_mode = REG_NULL;
+    // only check if we aren't currently dragging a cross section. 
+    if (xs_drag_mode == REG_NULL) {
+      //Check all cross sections:
+      for (int i = 0; i < 2; i++) {
+        // Don't examine if the xs is hidden. User can't interact with it. 
+        if (xs_ui.d_hide[i] ==1) {
+            graphics->hideCrossSection(i);
+            continue;
+        }
+        // Is hand near center ?
+        if ((handx - xs_state[i].center_x)*
+            (handx - xs_state[i].center_x)+
+            (handy - xs_state[i].center_y)*
+            (handy - xs_state[i].center_y)
+            < 0.01*(xs_state[i].widthL*xs_state[i].widthR)) {
+            xs_which_active = i;
+            prep_xs_drag_mode = REG_PREP_TRANSLATE;
+        } else {
+            //calculate endpoints of the cross section
+            double end_L_x = xs_state[i].center_x - 
+                cos(xs_state[i].angle)*xs_state[i].widthL;
+            double end_L_y = xs_state[i].center_y - 
+                sin(xs_state[i].angle)*xs_state[i].widthL;
+            double end_R_x = xs_state[i].center_x + 
+                cos(xs_state[i].angle)*xs_state[i].widthR;
+            double end_R_y = xs_state[i].center_y +
+                sin(xs_state[i].angle)*xs_state[i].widthR;
+            // See if hand is near an endpoint. 
+            if ((handx - end_L_x)*(handx - end_L_x) +
+                 (handy - end_L_y)*(handy - end_L_y)
+                < 0.01*(xs_state[i].widthL*xs_state[i].widthL)) {
+                xs_which_active = i;
+                // near endpoint, so resize the widthL. 
+                // use WIDTH state as a stand-in
+                prep_xs_drag_mode = REG_PREP_SIZE_WIDTH;
+            } else if ((handx - end_R_x)*(handx - end_R_x) +
+                 (handy - end_R_y)*(handy - end_R_y)
+                 < 0.01*(xs_state[i].widthR*xs_state[i].widthR)) {
+                xs_which_active = i;
+                // near endpoint, so resize the widthR. 
+                // use HEIGHT state as a stand-in
+                prep_xs_drag_mode = REG_PREP_SIZE_HEIGHT;
+            }
+        }
+      }
     }
-    
     // Carefull! Nested switch statements!
     switch ( userEvent ) {
 
     case PRESS_EVENT:	
         switch(prep_xs_drag_mode) {
         case REG_PREP_TRANSLATE:
-            xs_center_x = handx;
-            xs_center_y = handy;
-            xs_base_tracker_angle = xs_angle + hand_angle;
+            xs_state[xs_which_active].center_x = handx;
+            xs_state[xs_which_active].center_y = handy;
+            xs_base_tracker_angle = xs_state[xs_which_active].angle + hand_angle;
             xs_drag_mode = REG_TRANSLATE;
             break;
         case REG_NULL:
             // If we're not near a feature when we click, switch
             // to creating and sizing a new xs. 
-            xs_drag_mode = REG_SIZE;
-            prep_xs_drag_mode = REG_PREP_SIZE;
+            if (xs_ui.d_hide[0] ==1) {
+                xs_ui.d_hide[0] = 0;
+                xs_which_active = 0;
+            } else if (xs_ui.d_hide[1] ==1) {
+                xs_ui.d_hide[1] = 0;
+                xs_which_active = 1;
+            } else {
+                // Don't do anything if both are already active
+                break;
+            }
             // reset xs size for dragging. 
-            xs_center_x = handx;
-            xs_center_y = handy;
-            xs_width = 0;
+            xs_state[xs_which_active].center_x = handx;
+            xs_state[xs_which_active].center_y = handy;
             xs_base_tracker_angle = hand_angle;
-            xs_angle = 0;
+            xs_state[xs_which_active].angle = 0;
+            if (xs_ui.d_vary_width == 0) {
+                xs_drag_mode = REG_TRANSLATE;
+                prep_xs_drag_mode = REG_TRANSLATE;
+                // Clamp the widths to the edges of the plane.
+                // Center is clamped to inside the plane, too. 
+                xs_find_full_width(
+                    &xs_state[xs_which_active].widthL,
+                    &xs_state[xs_which_active].widthR,
+                    &xs_state[xs_which_active].center_x,
+                    &xs_state[xs_which_active].center_y,
+                    xs_state[xs_which_active].angle,
+                    plane);
+                    
+            } else {
+                // Drag the right end of the cross section. 
+                xs_drag_mode = REG_SIZE_HEIGHT;
+                prep_xs_drag_mode = REG_PREP_SIZE_HEIGHT;
+                xs_state[xs_which_active].widthL = 
+                xs_state[xs_which_active].widthR = 1;
+            }
              break;
-        case REG_PREP_SIZE:
-            xs_drag_mode = REG_SIZE;
+        case REG_PREP_SIZE_WIDTH:
+            xs_drag_mode = REG_SIZE_WIDTH;
+            break;
+        case REG_PREP_SIZE_HEIGHT:
+            xs_drag_mode = REG_SIZE_HEIGHT;
             break;
         }
         break;
@@ -2319,35 +2485,61 @@ int doCrossSection(int whichUser, int userEvent)
         switch(xs_drag_mode) {
         case REG_TRANSLATE:
             // Move the center of the xs
-            xs_center_x = handx ;
-            xs_center_y = handy ;
+            xs_state[xs_which_active].center_x = handx ;
+            xs_state[xs_which_active].center_y = handy ;
             // Change the angle, too. 
-            xs_angle = xs_base_tracker_angle - hand_angle;
+            if (xs_ui.d_snap_to_45) {
+                // Clamp to 45 deg intervals. 
+                xs_state[xs_which_active].angle = 
+                    (int((xs_base_tracker_angle - hand_angle)*4.0/M_PI))
+                    *M_PI/4.0 ;
+            } else {
+                xs_state[xs_which_active].angle = xs_base_tracker_angle - hand_angle;
+            }
+            if (xs_ui.d_vary_width == 0) {
+                // Make edges stay glued to edges of plane. 
+                xs_find_full_width(
+                    &xs_state[xs_which_active].widthL,
+                    &xs_state[xs_which_active].widthR,
+                    &xs_state[xs_which_active].center_x,
+                    &xs_state[xs_which_active].center_y,
+                    xs_state[xs_which_active].angle,
+                    plane);
+            }
             break;
-        case REG_SIZE:
+        case REG_SIZE_WIDTH:
+        case REG_SIZE_HEIGHT:
             // Resize the xs
-            //xs_angle = xs_base_tracker_angle - hand_angle;
-            xs_width = sqrt((handx - xs_center_x)*(handx - xs_center_x)+
-                            (handy - xs_center_y)*(handy - xs_center_y));
-            xs_angle = atan2(handy - xs_center_y, handx - xs_center_x);
-
+            //xs_state[xs_which_active].angle = xs_base_tracker_angle - hand_angle;
+            xs_state[xs_which_active].widthL = 
+            xs_state[xs_which_active].widthR = 
+                sqrt((handx - xs_state[xs_which_active].center_x)*
+                     (handx - xs_state[xs_which_active].center_x)+
+                     (handy - xs_state[xs_which_active].center_y)*
+                     (handy - xs_state[xs_which_active].center_y));
+            xs_state[xs_which_active].angle = 
+                atan2(handy - xs_state[xs_which_active].center_y, 
+                      handx - xs_state[xs_which_active].center_x);
+            if (xs_drag_mode == REG_SIZE_WIDTH) {
+                // We're at the other end, add 180 degrees. 
+                xs_state[xs_which_active].angle += M_PI;
+            }
+            if (xs_ui.d_snap_to_45) {
+                // Clamp to 45 deg intervals. 
+                xs_state[xs_which_active].angle = 
+                    (int((xs_state[xs_which_active].angle)*4.0/M_PI))
+                    *M_PI/4.0 ;
+            }
             // passed as param below, so we display highlight. 
-            prep_xs_drag_mode = REG_PREP_SIZE;
+            //prep_xs_drag_mode = REG_PREP_SIZE_WIDTH;
             break;
         default:
             break;
         }
         if (userEvent == RELEASE_EVENT) {
             // Helps display highlight correctly, below
+            xs_which_active = -1;
             xs_drag_mode = REG_NULL;
-            /*            if (xsOutsidePlane(plane, xs_center_x, xs_center_y, 
-                                   xs_width, xs_height, xs_angle)){
-                // Tell gfx to delete the xs
-                xs_drag_mode = REG_DEL;
-                // Reset xs size, position to zero. 
-                xs_center_x = xs_center_y = xs_width =
-                    xs_height = xs_angle = 0;
-                    }*/
         }
         break;
 
@@ -2355,17 +2547,29 @@ int doCrossSection(int whichUser, int userEvent)
         break;
     }
 
-    // Display the scan xs extent as the user plans to change it. 
-    // Draw the new bounding box and center handle for the xs. 
-    graphics->positionCrossSection(0, 1,
-         xs_center_x, xs_center_y, 
-         xs_width, Q_RAD_TO_DEG(xs_angle), 
-         (xs_drag_mode==REG_NULL)?prep_xs_drag_mode:xs_drag_mode);
-
-    xs_ui.ShowCrossSection(dataset->inputGrid, dataset->inputPlaneNames, 
-                           0, 1,
-                           xs_center_x, xs_center_y, 
-                           xs_width, xs_angle);
+    // Avoid some unnecessary calls, but might still call if
+    // cross section was created, then cleared. 
+    if (xs_which_active!= -1) {
+        // Display the scan xs extent as the user plans to change it. 
+        // Draw the new bounding box and center handle for the xs. 
+        graphics->positionCrossSection(
+            xs_which_active, !xs_ui.d_hide[xs_which_active],
+            xs_state[xs_which_active].center_x, 
+            xs_state[xs_which_active].center_y, 
+            xs_state[xs_which_active].widthL, 
+            xs_state[xs_which_active].widthR, 
+            Q_RAD_TO_DEG(xs_state[xs_which_active].angle), 
+            (xs_drag_mode==REG_NULL)?prep_xs_drag_mode:xs_drag_mode);
+        
+        xs_ui.ShowCrossSection(
+            dataset->inputGrid, dataset->inputPlaneNames, 
+            xs_which_active, xs_ui.d_hide[xs_which_active],
+            xs_state[xs_which_active].center_x, 
+            xs_state[xs_which_active].center_y, 
+            xs_state[xs_which_active].widthL, 
+            xs_state[xs_which_active].widthR, 
+            xs_state[xs_which_active].angle);
+    }
     return(0);
 }
 

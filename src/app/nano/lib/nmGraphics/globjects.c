@@ -1065,16 +1065,24 @@ int make_region_box(nmg_State * state,
 	return(0);
 }
 
+int hide_cross_section(nmg_State * state, int id ) 
+{
+    state->xs_state[id].enabled = 0;
+    return 0;
+}
+
 int move_cross_section(nmg_State * state, int id, int enable,  
-                    float center_x,float center_y, float width, 
-                    float angle, int highlight_mask)
+                       float center_x,float center_y, 
+                       float widthL, float widthR, 
+                       float angle, int highlight_mask)
 {
     if (id < 0 || id > 2) return 0;
     state->xs_state[id].enabled = enable;
     if(enable) {
         state->xs_state[id].center_x = center_x;
         state->xs_state[id].center_y = center_y;
-        state->xs_state[id].width = width;
+        state->xs_state[id].widthL = widthL;
+        state->xs_state[id].widthR = widthR;
         state->xs_state[id].angle = angle;
         state->xs_state[id].highlight_mask = highlight_mask;
     }
@@ -1087,7 +1095,7 @@ int draw_cross_section(void * data )
 
     VertexType Points[6];
     float z_min,z_max, z_range;
-    float normal_color[4] = {0.0,0.9,0.9,1};
+    float normal_color[4] = {0.9,0.0,0.0,1};
     float highlight_color[4] = {0.9,0.0,0.9,0.5};
     BCPlane* plane = state->inputGrid->getPlaneByName
         (state->heightPlaneName);
@@ -1110,21 +1118,19 @@ int draw_cross_section(void * data )
     z_range = z_max-z_min;
 
     glPushAttrib(GL_CURRENT_BIT);
-    for (int id=0; id < 3; id++) {
-        if (state->xs_state[id].enabled == 0) {
-            continue;
-        }
+    for (int id=0; id < 2; id++) {
+      if (state->xs_state[id].enabled != 0) {
         glPushMatrix();
         glTranslatef(state->xs_state[id].center_x, 
                      state->xs_state[id].center_y, 0);
         glRotatef(state->xs_state[id].angle, 0.0,0.0,1.0);
         
   	Points[0][Z]= z_min;
-	Points[0][X]= -state->xs_state[id].width;
+	Points[0][X]= -state->xs_state[id].widthL;
 	Points[0][Y]= 0;
 
 	Points[1][Z]= z_max;
-	Points[1][X]= -state->xs_state[id].width;
+	Points[1][X]= -state->xs_state[id].widthL;
 	Points[1][Y]= 0;
 
   	Points[2][Z]= z_min;
@@ -1136,16 +1142,18 @@ int draw_cross_section(void * data )
 	Points[3][Y]= 0;
 
   	Points[4][Z]= z_min;
-	Points[4][X]= state->xs_state[id].width;
+	Points[4][X]= state->xs_state[id].widthR;
 	Points[4][Y]= 0;
 
 	Points[5][Z]= z_max;
-	Points[5][X]= state->xs_state[id].width;
+	Points[5][X]= state->xs_state[id].widthR;
 	Points[5][Y]= 0;
 
         glLineWidth(3.0);
-        if ((state->xs_state[id].highlight_mask & REG_SIZE)|
-            (state->xs_state[id].highlight_mask & REG_PREP_SIZE)) {
+        if ((state->xs_state[id].highlight_mask & REG_SIZE_WIDTH)|
+            (state->xs_state[id].highlight_mask & REG_PREP_SIZE_WIDTH) |
+            (state->xs_state[id].highlight_mask & REG_SIZE_HEIGHT)|
+            (state->xs_state[id].highlight_mask & REG_PREP_SIZE_HEIGHT)) {
             glColor4fv(highlight_color);
         } else {
             glColor4fv(normal_color);
@@ -1181,6 +1189,15 @@ int draw_cross_section(void * data )
         make_line(Points[1],Points[5]);
 
         glPopMatrix();
+      }
+      // Hack - 2nd cross section is a different color
+      normal_color[0] = 0.0;
+      normal_color[1] = 0.8;
+      normal_color[2] = 0.8;
+//          highlight_color[0] = 
+//          highlight_color[1] =
+//          highlight_color[2] =
+
     }
     glPopAttrib();
     return(0);

@@ -1,4 +1,9 @@
-2001-12-20    <marshbur@cs.unc.edu>
+2002-01-04  Aron Helser  <helser@cs.unc.edu>
+
+	* nmui_CrossSection.Ch: changed to handle full width,
+	limit to two cross sections. Code cleanup. 
+
+2001-12-20 David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmUI.dsp:  removed references to ImgFormat
 

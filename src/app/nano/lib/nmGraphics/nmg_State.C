@@ -161,7 +161,6 @@ nmg_State::nmg_State ()
 
     xs_state[0].enabled = 0;
     xs_state[1].enabled = 0;
-    xs_state[2].enabled = 0;
 
     texture_displayed = nmg_Graphics::NO_TEXTURES;
     texture_transform_mode = nmg_Graphics::RULERGRID_COORD;

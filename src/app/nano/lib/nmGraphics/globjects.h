@@ -32,7 +32,8 @@ extern int make_rubber_corner ( nmg_State * state,
 extern int make_region_box ( nmg_State * state, 
                              float, float, float, float, float, int);
 extern int move_cross_section ( nmg_State * state, int, int, 
-                             float, float, float, float, int);
+                             float, float, float, float, float, int);
+extern int hide_cross_section(nmg_State * state, int id );
 extern void position_sphere (nmg_State * state, float, float, float);
 extern int mysphere(void * data);
 extern void enableCollabHand (nmg_State * state, int);

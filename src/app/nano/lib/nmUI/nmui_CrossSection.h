@@ -26,34 +26,40 @@ class nmui_CrossSection {
     ~nmui_CrossSection (void);
 
     int ShowCrossSection(BCGrid* grid, 
-                                nmb_ListOfStrings * plane_names,
-                                int id, int enable,  
-                                float center_x,float center_y, float width, 
-                                float angle);
+                         nmb_ListOfStrings * plane_names,
+                         int id, int hide,  
+                         float center_x, float center_y, 
+                         float width1, float width2,
+                         float angle);
     /**< Changes display of cross section, given by id */
 
     static void handle_MaxPointsChange(vrpn_int32, void *);
     /**< Should be called when user changes max points control */
-    static void handle_StrideChange(vrpn_int32, void *);
-    /**< Should be called when user changes stride control */
+    static void handle_ClearZero(vrpn_int32, void *);
+    static void handle_ClearOne(vrpn_int32, void *);
 
     void SetupSynchronization(nmui_Component * container);
     /**< Sets up synchronization on the TclNets */
     void TeardownSynchronization(nmui_Component * container);
     /**< Tears down synchronization on the TclNets */
 
+    TclNet_int d_snap_to_45; 
+    TclNet_int d_vary_width; 
+    int d_hide[2];
+    int d_first_call[2];
     private:
     TclNet_int d_max_points; 
       /**< maximum number of points to graph per channel. */
-    TclNet_int d_stride; 
-      /**< Only graph every d_stride points. */
+    TclNet_int d_clear_zero; ///< clear cross section graph 
+    TclNet_int d_clear_one; ///< clear cross section graph 
     
-    double data[nmb_ListOfStrings::NUM_ENTRIES][300];
-    double path[300];
+    Tclvar_int d_data_update; ///< trigger data update. 
+
+    double data[2][nmb_ListOfStrings::NUM_ENTRIES][300];
+    double path[2][300];
     // data vector names
     int d_numDataVectors;
     char d_dataVectorNames[MAX_DATA_VECTORS][128];
-    int d_first_call;
 
 };
 
