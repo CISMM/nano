@@ -10,6 +10,8 @@ nmm_MicroscopeRemoteGen.C
 nmm_MicroscopeRemote.h
 nmm_AFMSIM_Report.h
 nmm_AFMSIM_Report.C
+nmm_AFMSIMSERVER_Report.h
+nmm_AFMSIMSERVER_Report.C
 nmm_Monitor.C
 nmm_Monitor.h
 nmm_SimulatedMicroscope.C

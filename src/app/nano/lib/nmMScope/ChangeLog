@@ -1,3 +1,8 @@
+2002-03-12  Aron Helser  <helser@cs.unc.edu>
+
+	* .cvsignore: Added nmm_AFMSIMSERVER_Report.Ch, since they are
+	automatically generated. 
+
 2002-03-11  Aron Helser  <helser@cs.unc.edu>
 
 	* nmm_MicroscopeRemoteGen.Cdef (PidParameters): replaced static
