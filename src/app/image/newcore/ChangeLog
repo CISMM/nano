@@ -1,0 +1,4 @@
+2002-03-13  Aron Helser  <helser@cs.unc.edu>
+
+	* CoreViewImage.C: Change to standard iostream/STL headers. 
+
