@@ -1016,6 +1016,24 @@ int draw_world (int) {
 
   myworld();
 
+  // draw the microscope's current scanline
+  
+  float oldColor[4], sl_addition;
+  
+  sl_addition = (decoration->sl_right[0] - decoration->sl_left[0]) * 0.01;
+
+  glGetFloatv(GL_CURRENT_COLOR, oldColor);
+  glColor4f(0.1, 1.0, 0.1, 1.0);
+  glLineWidth(2.0);   // should save the old value before the new one is set
+  glBegin(GL_LINES);
+     glVertex3f(decoration->sl_left[0] - sl_addition, decoration->sl_left[1],
+	     decoration->sl_left[2] + 5.0);
+     glVertex3f(decoration->sl_right[0] + sl_addition, decoration->sl_right[1],
+	     decoration->sl_right[2] + 5.0);
+  glEnd();
+  glLineWidth(1.0);
+  glColor4fv(oldColor);
+
   /***************************/
   /* Check for any GL errors */
   /***************************/

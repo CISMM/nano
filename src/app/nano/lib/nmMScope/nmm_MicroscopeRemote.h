@@ -462,6 +462,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice,
     //void RcvStdDevParameters (const long, const float);
     long RcvWindowLineData (const long, const long, const long, const long,
                             const long, const float *);
+    long RcvWindowLineData (const long, const long, const long, const long,
+			    const long);
     long RcvWindowLineData (void);
     void RcvForceCurveData (float, float, long, long,
                             long, long, const float *, const float **);

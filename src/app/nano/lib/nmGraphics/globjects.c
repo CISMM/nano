@@ -78,6 +78,7 @@ static GLint aim_struct;
 static GLint red_line_struct;
 static GLint green_line_struct;
 static GLint blue_line_struct;
+static GLint scan_line_struct;
 
 static GLint collab_hand_struct;
 

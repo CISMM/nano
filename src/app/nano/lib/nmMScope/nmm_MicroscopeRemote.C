@@ -2419,6 +2419,7 @@ int nmm_Microscope_Remote::handle_WindowLineData (void * userdata,
                           fieldCount, fields);
   }
   ms->RcvWindowLineData();
+  ms->RcvWindowLineData(x, y, dx, dy, lineCount);
 
   return 0;
 }
@@ -3538,6 +3539,35 @@ long nmm_Microscope_Remote::RcvWindowLineData (const long _x, const long _y,
     d_dataset->done = VRPN_TRUE;
     return -1;
   }
+  return 0;
+}
+
+long nmm_Microscope_Remote::RcvWindowLineData(const long _x, const long _y,
+					      const long _dx, const long _dy,
+					      const long _lineCount) {
+  long xf, yf;
+  double xi_2, yi_2, xf_2, yf_2;
+  nmb_Image *image;
+  
+  // need to convert from a nmb_string to a BCString
+  BCString o = BCString( (char *)(d_dataset->heightPlaneName) );
+  image = d_dataset->dataImages->getImageByName( o );
+
+  xf = _x + (_lineCount - 1) * _dx;
+  yf = _y + (_lineCount - 1) * _dy;
+  
+  image->pixelToWorld( (double)_x, (double)_y, xi_2, yi_2);
+  image->pixelToWorld( (double)xf, (double)yf, xf_2, yf_2);
+
+  d_decoration->sl_left[0] = (float)xi_2;
+  d_decoration->sl_left[1] = (float)yi_2;
+  d_decoration->sl_left[2] = 
+    d_dataset->inputGrid->getPlaneByName( o )->scaledValue(_x,_y);
+  d_decoration->sl_right[0] = (float)xf_2;
+  d_decoration->sl_right[1] = (float)yf_2;
+  d_decoration->sl_right[2] = 
+    d_dataset->inputGrid->getPlaneByName( o )->scaledValue(xf,yf);
+
   return 0;
 }
 

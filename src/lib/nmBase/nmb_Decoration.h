@@ -49,6 +49,9 @@ class nmb_Decoration {
     nmb_Line green;
     nmb_Line blue;
 
+    // microscope current scanline (visual)
+    float  sl_right[3], sl_left[3];
+
     nmb_Line aimLine;
 
     /// mode of interaction
