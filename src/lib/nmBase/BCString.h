@@ -8,10 +8,21 @@ description:
 #ifndef STRING_H
 #define STRING_H
 
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
 using namespace std;
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
+
 
 class BCString 
 {

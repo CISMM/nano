@@ -102,7 +102,19 @@
 #include <unistd.h>
 #endif
 
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
 #include <iostream>
+//using namespace std;
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
+
 #include "myUtil.h"
 
 class Semaphore {
@@ -214,6 +226,13 @@ protected:
 
 /*****************************************************************************\
   $Log$
+  Revision 1.3  2002/03/15 17:41:01  helser
+  All files changed in this commit were updated to use the
+  standard iostream headers. This paves the way for using STL
+  in nano, since the standard iostream and STL are compatible.
+  Also includes a few changes to workspace/project files to help
+  with this change.
+
   Revision 1.2  2000/01/06 15:59:25  weigle
   Tom wants to work in the new tree, so I'm making sure we're up to date.
 

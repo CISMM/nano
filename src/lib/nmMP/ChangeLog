@@ -1,3 +1,9 @@
+2002-03-18  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* myUtil.h:  on the SGI, turn some compiler warnings off before
+	including stream headers, and turn the warnings on afterward.
+	* thread.h:  same
+
 2002-03-13  Aron Helser  <helser@cs.unc.edu>
 
 	* myUtil.h: Change to standard iostream/STL headers. 

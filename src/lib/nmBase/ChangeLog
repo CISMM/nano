@@ -1,5 +1,8 @@
 2002-03-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
+	* BCString.h:  on teh SGI, turn some compiler warnings off before
+	including stream headers, and turn the warnings on afterward.
+
 	* nmb_Image.C (~nmb_ImageArray): delete the pixel with the
 	type allocated (e.g., 32-bit, 8-bit. etc) (avoids a compiler warning)
 

@@ -75,10 +75,23 @@
 #ifndef _MYUTIL_H_
 #define _MYUTIL_H_
 
+// make the SGI compile without tons of warnings
+#ifdef sgi
+#pragma set woff 1110,1424,3201
+#endif
+
 #include <iostream>
 #include <iomanip>
 #include <fstream>
 using namespace std;
+
+// and reset the warnings
+#ifdef sgi
+#pragma reset woff 1110,1424,3201
+#endif
+
+
+
 #include <new.h>
 #include <stdlib.h>
 
