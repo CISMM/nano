@@ -1,9 +1,8 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#ifndef INCLUDED_V_H
-#include <v.h>  // for GLfloat
-#define INCLUDED_V_H
+#ifndef Q_INCLUDED
+#include <quat.h>
 #endif
 
 class PPM;  // from PPM.h
