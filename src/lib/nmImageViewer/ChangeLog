@@ -1,0 +1,6 @@
+2000-10-11  Adam Seeger  <seeger@cs.unc.edu>
+
+        * imageViewer.hC (destroyWindow) : new function for destroying a
+        window
+        * imageViewer.hC (setWindowSize) : new function for setting window
+        size

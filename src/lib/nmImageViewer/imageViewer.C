@@ -204,6 +204,8 @@ int ImageViewer::createWindow(char *display_name,
     glutHideWindow();
     window[num_windows].win_id = wid;
 
+    glutReshapeWindow(w, h);
+
     //glutIdleFunc(ImageViewer::idleCallbackForGLUT); 
     glutDisplayFunc(ImageViewer::displayCallbackForGLUT);
 
@@ -254,6 +256,51 @@ int ImageViewer::createWindow(char *display_name,
     num_windows++;
 //    showWindow(num_windows);
     return num_windows;
+}
+
+int ImageViewer::destroyWindow(int winID)
+{
+    assert(winID > 0 && winID <= num_windows);
+
+    int win_index = winID-1;
+
+#ifdef V_GLUT
+    glutSetWindow(window[win_index].win_id);
+    glFinish();
+    glutDestroyWindow(window[win_index].win_id);
+#else
+    glXMakeCurrent(dpy[window[win_index].display_index].x_dpy,
+          *(window[win_index].win), dpy[window[win_index].display_index].cx);
+    glFinish();
+    XDestroyWindow(dpy[window[win_index].display_index].x_dpy,
+              *(window[win_index].win));
+    delete window[win_index].win;
+#endif
+ 
+    if (window[win_index].image){
+      delete [] window[win_index].image;
+    }
+
+    window[win_index] = window[num_windows-1];
+
+    num_windows--;
+    return 0;
+}
+
+int ImageViewer::setWindowSize(int winID, int w, int h)
+{
+    assert(winID > 0 && winID <= num_windows);
+
+    int win_index = winID-1;
+
+#ifdef V_GLUT
+    glutSetWindow(window[win_index].win_id);
+    glutReshapeWindow(w, h);
+#else
+    XResizeWindow(dpy[window[win_index].display_index].x_dpy,
+             *(window[win_index].win), w, h);
+#endif
+    return 0;
 }
 
 #ifdef V_GLUT
@@ -325,10 +372,10 @@ int ImageViewer::showWindow(int winID){
 
 #ifdef V_GLUT
     // this caused problems in non-cygwin winNT
-#if (!defined(_WIN32) || defined(__CYGWIN__))
+//#if (!defined(_WIN32) || defined(__CYGWIN__))
     glutPositionWindow(x_loc,y_loc);
     glutReshapeWindow(window[win_index].im_width, window[win_index].im_height);
-#endif
+//#endif
 #else
     XMoveResizeWindow(dpy[window[win_index].display_index].x_dpy,
                 (*(window[win_index].win)), x_loc, y_loc,

@@ -136,6 +136,10 @@ class ImageViewer {
     int createWindow(char *display_name,
 		int x, int y, int w, int h, char *name, 
                 int pixelType = GL_FLOAT);
+    /// destroy a window
+    int destroyWindow(int winID);
+    /// resize a window
+    int setWindowSize(int winID, int w, int h); 
     /// resize the image associated with a window
     int setWindowImageSize(int winID, int im_w, int im_h);
     /// get width of image associated with a window
