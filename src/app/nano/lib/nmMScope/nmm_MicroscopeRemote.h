@@ -313,6 +313,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long unregisterScanlineDataHandler (int (* handler) (void *,
 					const Scanline_results *),
                                   void *userdata);
+    long registerFeeltoHandler (int (* handler) (void *),
+				  void *userdata);
+    long unregisterFeeltoHandler (int (* handler) (void *),
+                                  void *userdata);
 
     vrpn_int32 pointResultType (void) const;
       ///< Returns the vrpn type of a point result message;
@@ -644,18 +648,25 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
       void * userdata;
       scanlineDataHandlerEntry * next;
     };
+    struct feeltoHandlerEntry {
+      int (* handler) (void *);
+      void * userdata;
+      feeltoHandlerEntry * next;
+    };
 
     pointDataHandlerEntry * d_pointDataHandlers;
     modeHandlerEntry * d_modifyModeHandlers;
     modeHandlerEntry * d_imageModeHandlers;
     modeHandlerEntry * d_scanlineModeHandlers;
     scanlineDataHandlerEntry *d_scanlineDataHandlers;
+    feeltoHandlerEntry * d_feeltoHandlers;
 
     void doImageModeCallbacks (void);
     void doModifyModeCallbacks (void);
     void doPointDataCallbacks (const Point_results *);
     void doScanlineModeCallbacks (void);
     void doScanlineDataCallbacks (const Scanline_results *);
+    void doFeeltoCallbacks (void);
 
     nmm_Sample * d_sampleAlgorithm;  // OBSOLETE
     vrpn_bool d_accumulatePointResults;  // OBSOLETE

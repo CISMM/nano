@@ -24,7 +24,8 @@ enum Tool {
   CONSTR_FREEHAND,
   CONSTR_FREEHAND_XYZ,
   SLOW_LINE,
-  SLOW_LINE_3D
+  SLOW_LINE_3D,
+  FEELAHEAD
 };  // tool
 
 // style is defined in nmb_Types.h

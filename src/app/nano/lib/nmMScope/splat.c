@@ -45,6 +45,11 @@ float ** mkSplat (BCGrid * grid)
     dmy = dy/OVER;
   }
 
+  if (!dx || !dy || !dmx || !dmy) {
+    fprintf(stderr, "mkSplat:  fatal error!\n");
+    return;
+  }
+
   /* if we've already made one, deallocate and make up a fresh one 
      To free the memory correctly, we have to subtract an offset from 
      SplatFilter because it was added at allocation (see below)

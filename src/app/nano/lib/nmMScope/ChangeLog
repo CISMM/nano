@@ -2,34 +2,29 @@
 
         * nmm_Microscope.h:  added data members d_FeelTo_type,
         d_BeginFeelTo_type, d_EndFeelTo_type.
-        (encode_FeelTo):  new function.
-        (decode_FeelTo):  same.
-        (encode_BeginFeelTo):  same.
-        (decode_BeginFeelTo):  same.
-        (encode_EndFeelTo):  same.
-        (decode_EndFeelTo):  same.
-        * nmm_Microscope.C (constructor):  set value of new data members.
-        (encode_FeelTo):  new function.
-        (decode_FeelTo):  same.
-        (encode_BeginFeelTo):  same.
-        (decode_BeginFeelTo):  same.
-        (encode_EndFeelTo):  same.
-        (decode_EndFeelTo):  same.
-        * nmm_Microscope_Remote.h:  
-        (handle_BeginFeelTo):  new function.
-        (handle_EndFeelTo):  same.
-        (swapPointList):  same.
-        * nmm_Microscope_Remote.C (constructor):  register handle_BeginFeelTo,
+        * nmm_Microscope.C (constructor) :  set value of new data members.
+        (encode_FeelTo) :  new function.
+        (decode_FeelTo) :  same.
+        (encode_BeginFeelTo) :  same.
+        (decode_BeginFeelTo) :  same.
+        (encode_EndFeelTo) :  same.
+        (decode_EndFeelTo) :  same.
+        * nmm_Microscope_Remote.h :  added data member d_feeltoHandlers,
+        new nested type feeltoHandlerEntry.
+        * nmm_Microscope_Remote.C (constructor) :  register handle_BeginFeelTo,
         handle_EndFeelTo.
-        (handle_BeginFeelTo):  new function.  Turns on accumulatePointResults().
-        (handle_EndFeelTo):  new function.  Turns off accumulatePointResults(),
-        calls swapPointList.
-        (swapPointList):  new function.  Replaces state.data.receivedPointList
-        with incomingPointList, then empties the latter.
-        (TakeSampleSet):  tore out dependence on
+        (handle_BeginFeelTo) :  new function.
+        (handle_EndFeelTo) :  same.
+        (registerFeeltoHandler) :  same.
+        (unregisterFeeltoHandler) :  same.
+        (swapPointList) :  same.
+        (doFeeltoCallbacks) :  same.
+        (TakeSampleSet) :  tore out dependence on
         nmm_Sample/SetSampleAlgorithm();  the proper place for that function
         is in the topo software, much as we hate to put it there.  It now sends
         a FeelTo message.
+        * nmm_Types.h : new "tool" FEELAHEAD 
+        * splat.c (mkSplat) : added check for error
 
 2000-09-14  Adam Seeger  <seeger@cs.unc.edu>
 
@@ -91,23 +86,23 @@
 
 2000-08-30  Adam Seeger  <seeger@cs.unc.edu>
 
-        * nmm_MicroscopeRemote.C (RcvWindowLineData): replaced cast of 
+        * nmm_MicroscopeRemote.C (RcvWindowLineData) : replaced cast of 
         d_dataset->heightPlaneName to char * with 
         d_dataset->heightPlaneName->string()
 
 2000-08-16  Tom Hudson  <hudson@cs.unc.edu>
 
         * nmm_Microscope.h:  added data member d_EnableUpdatableQueue_type.
-        (encode_EnableUpdatableQueue):  new function.
-        (decode_EnableUpdatableQueue):  same.
-        * nmm_Microscope.C (constructor):  set value of
+        (encode_EnableUpdatableQueue) :  new function.
+        (decode_EnableUpdatableQueue) :  same.
+        * nmm_Microscope.C (constructor) :  set value of
         d_EnableUpdatableQueue_type.
-        (encode_EnableUpdatableQueue):  new function.
-        (decode_EnableUpdatableQueue):  same.
-        * nmm_MicroscopeRemote.h (EnableUpdatableQueue):  new function.
+        (encode_EnableUpdatableQueue) :  new function.
+        (decode_EnableUpdatableQueue) :  same.
+        * nmm_MicroscopeRemote.h (EnableUpdatableQueue) :  new function.
         * nmm_MicroscopeRemote.C :  deleted some obsolete functions that had
         long been commented-out.
-        (EnableUpdatableQueue):  new function.
+        (EnableUpdatableQueue) :  new function.
 
 2000-08-13  Jeffrey Juliano  <juliano@cs.unc.edu>
 

@@ -105,6 +105,7 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
     d_imageModeHandlers (NULL),
     d_scanlineModeHandlers (NULL),
     d_scanlineDataHandlers (NULL),
+    d_feeltoHandlers (NULL),
     d_sampleAlgorithm (NULL),
     d_accumulatePointResults (vrpn_FALSE)
 {
@@ -2336,6 +2337,53 @@ long nmm_Microscope_Remote::unregisterScanlineDataHandler
   return 0;
 }
 
+long nmm_Microscope_Remote::registerFeeltoHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  feeltoHandlerEntry * newEntry;
+
+  newEntry = new feeltoHandlerEntry;
+  if (!newEntry) {
+    fprintf(stderr, "nmm_Microscope_Remote::registerFeeltoHandler:  "
+                    "Out of memory.\n");
+    return -1;
+  }
+
+  newEntry->handler = handler;
+  newEntry->userdata = userdata;
+  newEntry->next = d_feeltoHandlers;
+
+  d_feeltoHandlers = newEntry;
+
+  return 0;
+}
+
+long nmm_Microscope_Remote::unregisterFeeltoHandler
+                          (int (* handler) (void *),
+                           void * userdata) {
+  feeltoHandlerEntry * victim, ** snitch;
+
+  snitch = &d_feeltoHandlers;
+  victim = *snitch;
+  while (victim &&
+         (victim->handler != handler) &&
+         (victim->userdata != userdata)) {
+    snitch = &((*snitch)->next);
+    victim = *snitch;
+  }
+
+  if (!victim) {
+    fprintf(stderr, "nmm_Microscope_Remote::unregisterFeeltoHandler:  "
+                    "No such handler.\n");
+    return -1;
+  }
+
+  *snitch = victim->next;
+  delete victim;
+
+  return 0;
+}
+
 vrpn_int32 nmm_Microscope_Remote::pointResultType (void) const {
   return d_PointResultData_type;
 }
@@ -2345,10 +2393,10 @@ void nmm_Microscope_Remote::accumulatePointResults (vrpn_bool on) {
 }
 
 
-long nmm_Microscope_Remote::InitDevice (const vrpn_bool _setRegion,
-                            const vrpn_bool _setMode,
+long nmm_Microscope_Remote::InitDevice (const vrpn_bool /* _setRegion */,
+                            const vrpn_bool /* _setMode */,
                             const long /* _socketType */,
-                            const char * _SPMhost,
+                            const char * /* _SPMhost */,
                             const long /* _SPMport */,
                             const long /* _UDPport */) {
   readMode = READ_DEVICE;	//  to differentiate Live and Replay
@@ -2689,7 +2737,7 @@ int nmm_Microscope_Remote::handle_AmpDisabled (void * userdata,
 
 //static
 int nmm_Microscope_Remote::handle_SuspendCommands (void * userdata,
-                                             vrpn_HANDLERPARAM param) {
+                                             vrpn_HANDLERPARAM) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
 
   ms->RcvSuspendCommands();
@@ -2698,7 +2746,7 @@ int nmm_Microscope_Remote::handle_SuspendCommands (void * userdata,
 }
 //static
 int nmm_Microscope_Remote::handle_ResumeCommands (void * userdata,
-                                             vrpn_HANDLERPARAM param) {
+                                             vrpn_HANDLERPARAM) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
 
   ms->RcvResumeCommands();
@@ -2733,7 +2781,7 @@ int nmm_Microscope_Remote::handle_InModModeT (void * userdata,
 //static
 int nmm_Microscope_Remote::handle_InModMode
                           (void * userdata,
-                           vrpn_HANDLERPARAM param) {
+                           vrpn_HANDLERPARAM) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   ms->RcvInModMode();
 
@@ -2755,7 +2803,7 @@ int nmm_Microscope_Remote::handle_InImgModeT (void * userdata,
 //static
 int nmm_Microscope_Remote::handle_InImgMode
                           (void * userdata,
-                           vrpn_HANDLERPARAM param) {
+                           vrpn_HANDLERPARAM) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
   ms->RcvInImgMode();
 
@@ -3372,7 +3420,7 @@ int nmm_Microscope_Remote::handle_TopoFileHeader (void * userdata,
 
 //static
 int nmm_Microscope_Remote::handle_BeginFeelTo (void * userdata,
-                                               vrpn_HANDLERPARAM p) {
+                                               vrpn_HANDLERPARAM) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
 
   ms->accumulatePointResults(VRPN_TRUE);
@@ -3382,11 +3430,12 @@ int nmm_Microscope_Remote::handle_BeginFeelTo (void * userdata,
 
 //static
 int nmm_Microscope_Remote::handle_EndFeelTo (void * userdata,
-                                               vrpn_HANDLERPARAM p) {
+                                               vrpn_HANDLERPARAM) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
 
   ms->accumulatePointResults(VRPN_FALSE);
   ms->swapPointList();
+  ms->doFeeltoCallbacks();
 
   return 0;
 }
@@ -4948,7 +4997,7 @@ void nmm_Microscope_Remote::doPointDataCallbacks (const Point_results * p) {
 
 }
 
-void nmm_Microscope_Remote::doScanlineModeCallbacks (){
+void nmm_Microscope_Remote::doScanlineModeCallbacks (void) {
   modeHandlerEntry * l;
 
   //fprintf(stderr, "Microscope::doScanlineModeCallbacks\n");
@@ -4978,6 +5027,25 @@ void nmm_Microscope_Remote::doScanlineDataCallbacks (const Scanline_results *s)
   while (l) {
     if ((l->handler)(l->userdata, s)) {
       fprintf(stderr, "Microscope::doScanlineDataCallbacks:  "
+                      "Nonzero return value.\n");
+      return;
+    }
+    l = l->next;
+  }
+}
+
+void nmm_Microscope_Remote::doFeeltoCallbacks (void) {
+  feeltoHandlerEntry * l;
+
+  //fprintf(stderr, "Microscope::doFeeltoCallbacks\n");
+
+  // Force decoration->elapsedTime to be updated, so callbacks
+  // can use it. 
+  getTimeSinceConnected();
+  l = d_feeltoHandlers;
+  while (l) {
+    if ((l->handler)(l->userdata)) {
+      fprintf(stderr, "Microscope::doFeeltoCallbacks:  "
                       "Nonzero return value.\n");
       return;
     }
