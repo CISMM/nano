@@ -1,3 +1,22 @@
+2000-09-25  Tom Hudson  <hudson@cs.unc.edu>
+
+	* Makefile : add default setting for surface  (maybe to no effect?)
+
+	* nmm_Microscope_Simluator.C : remove #include for warrencntsim.h,
+        made globals static, added extern declarations for moveTipToXYLoc()
+        and getImageHeightAtXYLoc()
+        * simulator_server.C (jakeMain) : added parameters, hacked latency
+
+	* surface.C (parse) : reenabled parsing of -latency
+        (getImageHeightAtXYLoc) : fixed
+        (moveTipToXYLoc) : got rid of compiler warnings
+
+        * warrencntsim.C (moveTipToXYLoc) : added parameter so it'd compile
+
+
+
+
+
 2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmm_Microscope_Simulator.C (constructor) : register RcvFeelTo

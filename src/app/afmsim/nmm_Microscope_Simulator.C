@@ -7,9 +7,9 @@
 #include <BCPlane.h>
 //#include "nmb_Util.h"		
 
-#ifndef WARRENCNTSIM_H
-#include "warrencntsim.h"
-#endif
+//#ifndef WARRENCNTSIM_H
+//#include "warrencntsim.h"
+//#endif
 
 #include <vrpn_Types.h>
 
@@ -17,11 +17,13 @@
 // Things that were declared in the header file by the 145 team
 // that should have been declared here.
 
-int mic_start;                     // true when connection is active
-float set_point;
-float last_point_x, last_point_y;  // last point modified
+static int mic_start;                     // true when connection is active
+static float set_point;
+static float last_point_x, last_point_y;  // last point modified
 static int num_x, num_y; // Declared for use by parser for variable grid size JakeK
 
+extern int moveTipToXYLoc (float, float, float = 1.0);
+extern int getImageHeightAtXYLoc (float, float, float *);
 
 typedef struct {
   long numsets;

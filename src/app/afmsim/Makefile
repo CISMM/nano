@@ -19,6 +19,9 @@ USES_EXTERNAL_LIBS := tcl
 include ../Makefile.share
 
 ifeq ($(MAKELEVEL),0)
+
+default: surface
+
 .PHONY: surface
 surface: $(OBJECT_DIR)/surface
 

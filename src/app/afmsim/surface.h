@@ -11,32 +11,9 @@
 *****************************************************************************************/
 
 
-#ifndef SIMULATOR_SERVER_H
-#include "simulator_server.h"
-#endif
-
-#include <stdio.h>
-#include <iostream.h>
-#include <stdlib.h>
-#include <math.h>
-
-#include <BCGrid.h>
-#include <BCPlane.h>
-#include <Topo.h>
-
-void usage( const char * );
-
-void open_image ( char * );
-
-void get_grid_info( int , int );
-
-int parse ( int , char ** );
-
-int moveTipToXYLoc( float, float, float );
+int moveTipToXYLoc( float, float, float = 1.0f);
 
 int getImageHeightAtXYLoc( float , float , float* );
-
-int main ( int , char ** );
 
 #endif
 

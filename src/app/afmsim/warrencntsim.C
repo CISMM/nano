@@ -1032,7 +1032,7 @@ toggleSim(void)
 /**************************************************************************************/
 // move tip to new position
 int
-moveTipToXYLoc( float x, float y )
+moveTipToXYLoc( float x, float y, float setpoint )
 {
 	// move tip
 	int tip = 0;

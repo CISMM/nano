@@ -10,6 +10,12 @@ int handle_any_print (void* , vrpn_HANDLERPARAM);
 
 int initJake (int num_x, int num_y, int port = 4500);
 
-int jakeMain();
+int jakeMain (float scan_time_diff = .1,
+              vrpn_bool isWaiting = vrpn_FALSE,
+              float waitTime = 0.25f);
+  ///< scan_time_diff : time to scan one scanline
+  ///< isWaiting : TRUE if we're simulating latency
+  ///< waitTime : amount of latency to simulate (in seconds)
+  ///<   BUG - "latency" is badly broken
 
 #endif

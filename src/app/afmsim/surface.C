@@ -1,11 +1,20 @@
-#include "surface.h"
-#include "vrpn_Connection.h"
+//#include "surface.h"
+
 #include <time.h>
 #include <sys/time.h>
 
-//#ifndef NMM_MICROSCOPE_SIMULATOR_H
-//#include "nmm_Microscope_Simulator.h"
-//#endif
+#include <stdio.h>
+#include <iostream.h>
+#include <stdlib.h>
+#include <math.h>
+
+#include <vrpn_Connection.h>
+
+#include <BCGrid.h>
+#include <BCPlane.h>
+#include <Topo.h>
+
+#include "simulator_server.h"
 
 static TopoFile GTF;
 
@@ -19,9 +28,11 @@ BCPlane * myZPlane;
 static short num_x, num_y;
 static int port = 4500;
 static char * image_name;
-int last_point_x = NULL;
-int last_point_y = NULL;
+static int last_point_x = 0;
+static int last_point_y = 0;
 
+vrpn_bool isWaiting = vrpn_FALSE;
+float waitTime = 0.0f;
 
 //        crib the text directly from there for familiarity's sake.
 
@@ -36,8 +47,8 @@ void usage (const char * argv0) {
     "    -latency:  Simulate t seconds of network latency.\n");
   fprintf(stderr,
     "    -port:  Port number for VRPN server to use (default 4500).\n");
-  fprintf(stderr,
-    "    -rude:  Don't sleep;  use 100% of the CPU.\n");
+  //fprintf(stderr,
+    //"    -rude:  Don't sleep;  use 100% of the CPU.\n");
 
   exit(0);
 }
@@ -78,15 +89,15 @@ int parse (int argc, char ** argv) {
       if (++i >= argc) usage(argv[0]);
       num_y = atoi(argv[i]);
       get_grid_info(num_x, num_y);
-    }// else if (!strcmp(argv[i], "-latency")) {
-     // if (++i >= argc) usage(argv[0]);
-     // g_isWaiting = 1;
-     // g_waitTime = atof(argv[i]);
+    } else if (!strcmp(argv[i], "-latency")) {
+      if (++i >= argc) usage(argv[0]);
+      isWaiting = vrpn_TRUE;
+      waitTime = atof(argv[i]);
   //  } else if (!strcmp(argv[i], "-rude")) {
   //    g_isRude = 1;
-  //  }
-    else
+    } else {
       ret = 1;
+    }
     i++;
   }
 
@@ -106,7 +117,9 @@ int parse (int argc, char ** argv) {
 
 
 int getImageHeightAtXYLoc (float x, float y, float * z) {
-  *z = myZPlane->valueAt(x, y);
+  double zz;
+  myZPlane->valueAt(&zz, x, y);
+  *z = zz;
   return 1;
 }
 
@@ -205,7 +218,7 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
   }
   else
   {
-    float point_value[numsets];
+    //float point_value[numsets];
     for(int i = 0; i < numsets; i++)
     if((myZPlane->value( j, k) - set_point) < 0)
       myZPlane->setValue( j, k, 0);
@@ -214,7 +227,7 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
   }
   
 
-  float point_value[numsets];
+  //float point_value[numsets];
 
 #if 0
 
@@ -299,7 +312,7 @@ int moveTipToXYLoc( float x , float y, float set_point ) {
 
 int main (int argc, char ** argv) {
 
-  FILE * outputfile;
+  //FILE * outputfile;
   float point;
   int readmode;
   int x, y;
@@ -339,7 +352,7 @@ int main (int argc, char ** argv) {
   }
   retval = initJake(num_x, num_y, port);
   while (!retval) {
-    jakeMain();
+    jakeMain(.1, isWaiting, waitTime);
   }
 }
 
