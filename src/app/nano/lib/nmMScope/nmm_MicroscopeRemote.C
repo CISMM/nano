@@ -799,8 +799,8 @@ long nmm_Microscope_Remote::rotateScanCoords (const double _x, const double _y,
   // Rotate about the center of the scan region -- same as
   // the Thermo software rotates it's scan when we send it a 
   // particular scan angle. 
-    double sin_angle = sinf( -_scanAngle );
-    double cos_angle = cosf( -_scanAngle );
+    double sin_angle = sinf(Q_DEG_TO_RAD(-_scanAngle));
+    double cos_angle = cosf(Q_DEG_TO_RAD(-_scanAngle));
 
     double centerx = d_dataset->inputGrid->minX() +
     (d_dataset->inputGrid->maxX() - d_dataset->inputGrid->minX())/2.0 ;
@@ -831,8 +831,8 @@ long nmm_Microscope_Remote::DrawLine (const double _startx, const double _starty
   rotateScanCoords(_startx, _starty, state.image.scan_angle, &startx, &starty);
   double endx, endy;
   rotateScanCoords(_endx, _endy, state.image.scan_angle, &endx, &endy);
-  double yaw = state.modify.yaw - state.image.scan_angle;
-
+  double yaw = state.modify.yaw - Q_DEG_TO_RAD(state.image.scan_angle);
+  /*
   printf( "DrawLine ::  angle = %f xMin = %f xMax = %f yMin = %f yMax = %f\n",
 	  state.image.scan_angle, 
 	  d_dataset->inputGrid->minX(), d_dataset->inputGrid->maxX(),
@@ -841,7 +841,7 @@ long nmm_Microscope_Remote::DrawLine (const double _startx, const double _starty
 	  _startx, _starty, startx, starty);
   printf( "             endx = %f endy = %f rotated x = %f rotated y = %f\n",
 	  _endx, _endy, endx, endy);
-
+  */
   switch (state.modify.style) {
     case SHARP:
     case SEWING:
@@ -908,9 +908,9 @@ long nmm_Microscope_Remote::DrawArc (const double _x, const double _y,
 
   double x,y;
   rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
-  // XXX Need to rotate start and end angle as well???
-  double startAngle = _startAngle - state.image.scan_angle;
-  double endAngle = _endAngle - state.image.scan_angle;
+  // Need to rotate start and end angle as well!
+  double startAngle = _startAngle - Q_DEG_TO_RAD(state.image.scan_angle);
+  double endAngle = _endAngle - Q_DEG_TO_RAD(state.image.scan_angle);
 
   switch (state.modify.style) {
     case SHARP:
@@ -1331,7 +1331,7 @@ long nmm_Microscope_Remote::ZagTo
   rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
 
   // Need to rotate yaw as well! Subtract the scan angle.
-  msgbuf = encode_ZagTo(&len, x, y, yaw-state.image.scan_angle, sweepWidth, regionDiag);
+  msgbuf = encode_ZagTo(&len, x, y, yaw-Q_DEG_TO_RAD(state.image.scan_angle), sweepWidth, regionDiag);
   if (!msgbuf)
     return -1;
 
@@ -1426,7 +1426,7 @@ long nmm_Microscope_Remote::SetScanAngle (const float _angle) {
   
   float ang_radians = Q_DEG_TO_RAD(angle);
 
-  printf("Setting scan angle %g\n", ang_radians);
+  printf("Setting scan angle %g\n", angle);
 
   msgbuf = encode_SetScanAngle(&len, ang_radians);
   if (!msgbuf)

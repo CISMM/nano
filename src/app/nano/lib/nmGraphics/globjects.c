@@ -260,7 +260,16 @@ int clear_world_modechange(int mode, int style)
   if (g_draw_collab_hand) {
     removeFunctionFromFunclist(&vir_world, collabHand_id);
   }
-  /* */
+
+  // We added them in init_world_modechange, so we should remove them here.
+  //if (g_config_measurelines) {
+  removeFunctionFromFunclist(&vir_world, red_line_struct_id);
+  removeFunctionFromFunclist(&vir_world, green_line_struct_id );
+  removeFunctionFromFunclist(&vir_world, blue_line_struct_id );
+  //}
+  //if (g_scanline_display_enabled) {
+  scanline_id = removeFunctionFromFunclist(&vir_world, scanline_id );
+  //}
 
   return(0);
 }

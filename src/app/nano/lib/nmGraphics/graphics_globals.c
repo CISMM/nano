@@ -190,7 +190,8 @@ float g_texture_scale = 10.0f;
 float g_trueTipLocation [3];
 float g_trueTipScale = 1.0f;
 
-int g_user_mode [NUM_USERS];
+// We are limited to one user, user zero in vlib
+int g_user_mode;
 int g_VERTEX_ARRAY = 0;
 
 int g_PRERENDERED_COLORS = 0;  // only used by remote rendering clients

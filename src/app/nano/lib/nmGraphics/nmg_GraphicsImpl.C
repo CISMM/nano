@@ -68,7 +68,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     //fprintf(stderr,
     //"In nmg_Graphics_Implementation::nmg_Graphics_Implementation()\n");
 
-    int i;
+    int i = 0;
 
     if (d_dataset == NULL) {
         g_inputGrid = NULL;
@@ -104,9 +104,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     /* Set up the viewing info */
   
     /* Set initial user mode */
-    for (i = 0; i < NUM_USERS; i++) {
-        g_user_mode[i] = USER_GRAB_MODE;
-    }
+    g_user_mode = USER_GRAB_MODE;
+
     /* set up user and object trees     */
     //printf("Creating the world...\n");
     v_create_world(NUM_USERS, d_displayIndexList);
@@ -804,11 +803,10 @@ void nmg_Graphics_Implementation::enableChartjunk (int on) {
     return;
   g_config_chartjunk = on;
   if ( on == 1 ) {
-    init_world_modechange( USER_GRAB_MODE, 0);
+    init_world_modechange( g_user_mode, 0);
   }
   else if ( on == 0 ) {
-    clear_world_modechange( USER_MEASURE_MODE, 0);
-    clear_world_modechange( USER_GRAB_MODE, 0);
+    clear_world_modechange( g_user_mode, 0);
   }
 }
 
@@ -2329,6 +2327,7 @@ void nmg_Graphics_Implementation::setUserMode (int oldMode, int oldStyle,
 //fprintf(stderr, "nmg_Graphics_Implementation::setUserMode().\n");
   clear_world_modechange(oldMode, oldStyle);
   init_world_modechange(newMode, style);
+  g_user_mode = newMode;
 }
 
 

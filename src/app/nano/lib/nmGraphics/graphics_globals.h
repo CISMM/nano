@@ -198,7 +198,7 @@ extern float g_texture_scale;
 extern float g_trueTipLocation [3];
 extern float g_trueTipScale;
 
-extern int g_user_mode [NUM_USERS];
+extern int g_user_mode;
 extern int g_VERTEX_ARRAY;
 
 extern int g_PRERENDERED_COLORS;

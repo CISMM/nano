@@ -1884,6 +1884,25 @@ static void handle_collab_measure_move (float x, float y,
   }
 }
 
+/// Resets the measure lines to their default positions in the three
+/// corners. 
+static void resetMeasureLines(nmb_Dataset * data, nmb_Decoration * decor) 
+{
+    if ((data == NULL) || (decor == NULL)) return;
+
+    BCPlane *height_plane = data->inputGrid->getPlaneByName(data->heightPlaneName->string());
+    if (height_plane == NULL) { 
+        return;
+    }
+
+    decor->red.moveTo(height_plane->minX(), height_plane->minY(),
+                           height_plane);
+    decor->green.moveTo(height_plane->maxX(), height_plane->minY(),
+                             height_plane);
+    decor->blue.moveTo(height_plane->maxX(), height_plane->maxY(),
+                            height_plane);
+    // DO NOT doCallbacks()
+}
 
 // NANOX
 /// Callback to button which rewinds the stream file to the beginning.
@@ -2685,6 +2704,8 @@ static	void	handle_openStaticFilename_change (const char *, void *)
             if ( strcmp(dataset->heightPlaneName->string(), EMPTY_PLANE_NAME) == 0) {
                 *(dataset->heightPlaneName) = *(p->name());
             }
+            // Measure lines sometimes collapse to one corner. Move to separate corners.
+            resetMeasureLines(dataset, decoration);
         }
     }
     
@@ -5782,16 +5803,9 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     if (height_plane == NULL) { 
        height_plane = new_dataset->ensureHeightPlane(); 
     }
-
-    decoration->red.moveTo(height_plane->minX(), height_plane->minY(),
-                           height_plane);
-    decoration->green.moveTo(height_plane->maxX(), height_plane->minY(),
-                             height_plane);
-    decoration->blue.moveTo(height_plane->maxX(), height_plane->maxY(),
-                            height_plane);
+    resetMeasureLines(new_dataset, decoration);
     decoration->aimLine.moveTo(height_plane->minX(), height_plane->maxY(),
                             height_plane);
-    // DO NOT doCallbacks()?
 
     VERBOSE(1, "Before SPM initialization");
     if (new_microscope->Initialize()) {
