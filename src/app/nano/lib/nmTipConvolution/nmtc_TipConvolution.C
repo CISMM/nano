@@ -33,32 +33,41 @@ void nmtc_TipConvolution::changeDataset(nmb_ImageList *im)
   return;
 }
 
-void nmtc_TipConvolution::handle_convolutionImageData_change(const char *name, void *ud)
+void nmtc_TipConvolution::
+handle_convolutionImageData_change(const char *name, void *ud)
 {
+  /*
   nmtc_TipConvolution *me = (nmtc_TipConvolution *)ud;
   nmb_Image *im = me->d_imageList->getImageByName(name);
   if(!im) 
     {
-      fprintf(stderr, "image not found: %s\n", name);
+      fprintf(stderr, "nmtc_TipConvolution::image not found: %s\n", name);
       return;
     }
+  */
 }
 
-void nmtc_TipConvolution::handle_convolutionTipName_change(const char *name, void *ud)
+void nmtc_TipConvolution::
+handle_convolutionTipName_change(const char *name, void *ud)
 {
+  /*
   nmtc_TipConvolution *me = (nmtc_TipConvolution *)ud;
   nmb_Image *im = me->d_imageList->getImageByName(name);
   if(!im)
     {
-      fprintf(stderr, "image not found: %s\n", name);
+      fprintf(stderr, "nmtc_TipConvolution::image not found: %s\n", name);
       return;
     }
+  */
 }
 
-void nmtc_TipConvolution::handle_resultImageName_change(const char *name, void *ud)
+void nmtc_TipConvolution::
+handle_resultImageName_change(const char *name, void *ud)
 {
+  /*
   nmtc_TipConvolution *me = (nmtc_TipConvolution *)ud;
   me->CreateConvolutionImage(name);
+  */
 }
 
 
@@ -66,8 +75,21 @@ void nmtc_TipConvolution::CreateConvolutionImage(const char *imageName)
 {   
    nmb_Image *Tip = d_imageList->getImageByName
               (d_convolutionTipName.string());
+   if( Tip == NULL )
+     {
+       fprintf( stderr, "nmtc_TipConvolution::Tip image not found: %s\n",
+               d_convolutionTipName.string());
+       return;
+     }
+       
    nmb_Image *Surface = d_imageList->getImageByName
               (d_convolutionImageData.string());
+   if( Surface == NULL ) 
+     {
+       fprintf(stderr, "nmtc_TipConvolution::Surface image not found: %s\n",
+               d_convolutionImageData.string());
+       return;
+     }   
    nmb_Image *Boundary;
    long i,j,k,l;
    int initx, inity;

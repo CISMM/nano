@@ -1,3 +1,11 @@
+2001-07-05  David Marshburn  <marshbur@tungsten-cs.cs.unc.edu>
+
+	* nmtc_TipConvolution.C:  commented out the bodies of 
+	handle_resultImageName_change, handle_convolutionImageData_change
+	and handle_convolutionTipName_change.  Also added a check in
+	CreateConvolutionImage to ensure both image and tip names are set.
+	These prevent the tip convolution algorithm from being called at all.
+
 2001-06-25  Shayne O'Neill  <oneill@tbone.cs.unc.edu>
 
 	* nmtc_TipConvolution.c:  Changed some Tclvars to TclNets.
