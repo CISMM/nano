@@ -165,6 +165,22 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 
           nma_ShapeIdentifiedPlane shapePlane(imagePlane, dataset, 
 			  d_desiredFilename, d_cntRec->cnt_image_Msk);
+		  /*this code tests the function UpdateDataArray
+		  //fill in array
+		  double * d_cntMask = new double[512.0*512.0];
+		  for(int y = 0; y <= 512 - 1; y++) {
+			  for( int x = 0; x <= 512 - 1; x++){
+						if(y%2 == 0){
+							d_cntMask[y*512 + x] =  256.0;
+						}
+						else{
+							d_cntMask[y*512 + x] =  0.0;
+						}
+			  }
+		  }
+		  //update shapePlane
+		  shapePlane.UpdateDataArray(d_cntMask, 512.0*512.0);
+		  */
 	}
 	if (d_ordWrite) {
 		d_cntRec->cnt_image_write(d_imgOrdFile, d_cntRec->cnt_image_Ord);
@@ -191,7 +207,7 @@ nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const cha
   : nmb_CalculatedPlane(outputPlaneName, dataset), d_sourcePlane(sourcePlane), 
   d_dataset(dataset), d_outputPlaneName(outputPlaneName), d_cntMask(NULL)
 {
-  cout << "In nma_ShapeIdentifiedPlane constructor" << endl;
+  //cout << "In nma_ShapeIdentifiedPlane constructor" << endl;
   array_size = 0;  
 }
 
@@ -205,7 +221,7 @@ nma_ShapeIdentifiedPlane::
 //updates d_cntMask when new information is received and fills in d_outputPlane with new values
 void nma_ShapeIdentifiedPlane::
 UpdateDataArray(double * cntMask, int size){
-  cout << "In nma_ShapeIdentifiedPlane::UpdateDataArray" << endl;
+  //cout << "In nma_ShapeIdentifiedPlane::UpdateDataArray" << endl;
 
   if(d_cntMask != NULL && array_size == size){//already filled once
     //give d_cntMask new values
@@ -244,12 +260,8 @@ UpdateDataArray(double * cntMask, int size){
 int nma_ShapeIdentifiedPlane::
 create_ShapeIdentifiedPlane()
 {
-  cout << "In nma_ShapeIdentifiedPlane::create_ShapeIdentifiedPlane()" << endl;
+  //cout << "In nma_ShapeIdentifiedPlane::create_ShapeIdentifiedPlane()" << endl;
 
-  //local variables for code simplification
-  //BCGrid* sourcePlaneParentGrid = d_sourcePlane->GetGrid();
-
-  
   char uniqueOutputPlaneName[50];
   nma_ShapeAnalyze::nma_ShapeAnalyzeCounter++;
   sprintf(uniqueOutputPlaneName, "file%d_%s", nma_ShapeAnalyze::nma_ShapeAnalyzeCounter, d_outputPlaneName);
@@ -259,9 +271,9 @@ create_ShapeIdentifiedPlane()
 
   //check if other plane with name we want to give it is already in the grid
   //see if we can name the new plane with "d_imgMaskFile" as a name, will be NULL if we can
-  calculatedPlane /*d_outputPlane*/ = 
-	  d_sourcePlane->GetGrid()/*sourcePlaneParentGrid*/->getPlaneByName(uniqueOutputPlaneName);  
-  if( calculatedPlane /*d_outputPlane*/ != NULL )
+  calculatedPlane = d_sourcePlane->GetGrid()->getPlaneByName(uniqueOutputPlaneName); 
+  
+  if( calculatedPlane != NULL )
     {
       // a plane already exists by this name, and we disallow that.
       char s[] = "Cannot create new height plane.  A plane already exists of the name:  ";
@@ -272,9 +284,9 @@ create_ShapeIdentifiedPlane()
   //adding new plane  
   char newunits[1000];
   sprintf(newunits, "");//fill in with correct units ANDREA
-  calculatedPlane /*d_outputPlane*/ 
-    = d_sourcePlane->GetGrid()/*sourcePlaneParentGrid*/->addNewPlane(uniqueOutputPlaneName, newunits, NOT_TIMED);
-  if( calculatedPlane /*d_outputPlane*/ == NULL ) 
+  calculatedPlane  
+    = d_sourcePlane->GetGrid()->addNewPlane(uniqueOutputPlaneName, newunits, NOT_TIMED);
+  if( calculatedPlane == NULL ) 
     {
       char s[] = "Could not create new height plane.  Can't make plane:  ";
       char msg[1024];
@@ -286,7 +298,7 @@ create_ShapeIdentifiedPlane()
   TopoFile tf;
   
   nmb_Image *im = d_dataset->dataImages->getImageByPlane(d_sourcePlane);
-  nmb_Image *output_im = new nmb_ImageGrid(calculatedPlane /*d_outputPlane*/);
+  nmb_Image *output_im = new nmb_ImageGrid(calculatedPlane);
   if( im != NULL ) 
     {
       im->getTopoFileInfo(tf);
@@ -300,8 +312,8 @@ create_ShapeIdentifiedPlane()
   
   d_dataset->dataImages->addImage(output_im);
 
-  short rowlength = d_sourcePlane->GetGrid()/*sourcePlaneParentGrid*/->numX();
-  short columnheight = d_sourcePlane->GetGrid()/*sourcePlaneParentGrid*/->numY();
+  short rowlength = d_sourcePlane->GetGrid()->numX();
+  short columnheight = d_sourcePlane->GetGrid()->numY();
 
   int size = columnheight*rowlength;//size of this array--used if first time filling
 
@@ -312,16 +324,16 @@ create_ShapeIdentifiedPlane()
 		  if(d_cntMask == NULL){//to test, since cnt_image_select does not seem to be
 								//working...
 			  if(y%2 == 0){
-				  /*d_outputPlane*/calculatedPlane->setValue(x, (columnheight - y),
+				  calculatedPlane->setValue(x, (columnheight - y),
 						(float)(256.0)); 
 			  }
 			  else{
-				  /*d_outputPlane*/calculatedPlane->setValue(x, (columnheight - y),
+				  calculatedPlane->setValue(x, (columnheight - y),
 						(float)(0.0)); 
 			  }
 		  }
 		  else{//normal operation
-			  /*d_outputPlane*/calculatedPlane->setValue(x, (columnheight - y),
+			  calculatedPlane->setValue(x, (columnheight - y),
 					(float)(d_cntMask[y*rowlength + x]));
 			  //the array d_cntMask fills from the top down when you "chunk" the array
 			  //into pieces of length rowlength.  However, traditional y values used
@@ -347,38 +359,3 @@ create_ShapeIdentifiedPlane()
  
 }
 
-/*void nmb_CalculatedPlane:: 
-createCalculatedPlane( char* units, BCPlane* sourcePlane, nmb_Dataset* dataset )
-  throw( nmb_CalculatedPlaneCreationException )
-{
-  calculatedPlane 
-    = dataset->inputGrid->addNewPlane( calculatedPlaneName, units, NOT_TIMED);
-  if( calculatedPlane == NULL ) 
-    {
-      char s[] = "Could not create calculated plane.  Can't make plane:  ";
-      char msg[1024];
-      sprintf( msg, "%s%s.", s, calculatedPlaneName );
-      throw nmb_CalculatedPlaneCreationException( msg );
-    }
-  
-  TopoFile tf;
-  nmb_Image* im = dataset->dataImages->getImageByPlane( sourcePlane );
-  nmb_Image* output_im = new nmb_ImageGrid( calculatedPlane );
-  if( im != NULL ) 
-    {
-      im->getTopoFileInfo(tf);
-      output_im->setTopoFileInfo(tf);
-    } 
-  else 
-    {
-      fprintf(stderr, "nmb_FlattenedPlane: Warning, "
-	      "input image not in list\n");
-    }
-  dataset->dataImages->addImage(output_im);
-
-  // add new calculated plane to the dataset
-  dataset->addNewCalculatedPlane( this );
-  
-  addNewCalculatedPlane( this );  
-} // end createCalculatedPlane
-*/
