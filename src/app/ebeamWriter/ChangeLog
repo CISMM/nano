@@ -1,3 +1,21 @@
+2001-07-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* Makefile - made this program compile on sgi
+	* controlPanels.C (ControlPanels): changed default size of SEM window
+	* main.C (main): added glutInitWindowSize, glutInitWindowPosition
+	* patternEditor.C (PatternEditor): changed default position of
+	windows and initial (assumed) window sizes
+	(setViewport): made this so it sets the window to have the same
+	aspect ratio as the requested region by adjusting the window width
+	(handleMainWinEvent): on resize event, forces the aspect ratio to
+	match that of the viewed region by readjusting the window width;
+	on a left button press, took out an extra call to ImageViewer::toImage()
+	(mainWinDisplayHandler): reorganized code that adjusts openGL matrix
+        stacks
+	(drawImageAsTexture): removed this function (in ImageViewer now)
+	(drawImageAsPixels): "
+	(navWinPositionToWorld): fixed this since it wasn't quite right before
+
 2001-07-22  Adam Seeger  <seeger@cs.unc.edu>
 
 	* main.C (main): set default scaling of an image loaded from a file

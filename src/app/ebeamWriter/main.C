@@ -146,6 +146,8 @@ int main(int argc, char **argv)
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+    glutInitWindowSize(100, 100);
+    glutInitWindowPosition(100, 100);
 #ifndef _WIN32
     glutCreateWindow("the program crashes without this window");
     glutDisplayFunc(nullDisplayFunc);

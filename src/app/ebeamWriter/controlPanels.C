@@ -83,8 +83,8 @@ ControlPanels::ControlPanels(PatternEditor *pe,
 
   setupCallbacks();
   ImageViewer *image_viewer = ImageViewer::getImageViewer();
-  d_semWinID = image_viewer->createWindow(NULL, 10, 10, 
-               100, 100, "SEM", GL_UNSIGNED_BYTE);
+  d_semWinID = image_viewer->createWindow(NULL, 200, 200, 
+               256, 200, "SEM", GL_UNSIGNED_BYTE);
   if (d_semWinID == 0) {
     fprintf(stderr, "Error creating sem window\n");
   }

@@ -14,14 +14,14 @@ PatternEditor::PatternEditor()
    }
    d_viewer->init(display_name);
    d_mainWinID = d_viewer->createWindow(display_name, 
-         0, 0, 300, 300, "Pattern Editor");
+         20, 100, 300, 300, "Pattern Editor");
    d_viewer->setWindowEventHandler(d_mainWinID, 
          PatternEditor::mainWinEventHandler, this);
    d_viewer->setWindowDisplayHandler(d_mainWinID, 
          PatternEditor::mainWinDisplayHandler, this);
 
    d_navWinID = d_viewer->createWindow(display_name,
-         300, 0, 100, 100, "Navigation");
+         330, 100, 100, 100, "Navigation");
    d_viewer->setWindowEventHandler(d_navWinID,
          PatternEditor::navWinEventHandler, this);
    d_viewer->setWindowDisplayHandler(d_navWinID,
@@ -44,10 +44,10 @@ PatternEditor::PatternEditor()
    d_mainWinMaxXadjust_nm = d_mainWinMaxX_nm;
    d_mainWinMaxYadjust_nm = d_mainWinMaxY_nm;
   
-   d_mainWinWidth = 0;
-   d_mainWinHeight = 0;
-   d_navWinWidth = 0;
-   d_navWinHeight = 0;
+   d_mainWinWidth = 300;
+   d_mainWinHeight = 300;
+   d_navWinWidth = 100;
+   d_navWinHeight = 100;
 
    d_nearDistX_pix = 10;
    d_nearDistY_pix = 10;
@@ -359,11 +359,16 @@ void PatternEditor::setViewport(double minX_nm, double minY_nm,
   d_mainWinMinY_nm = minY_nm;
   d_mainWinMaxX_nm = maxX_nm;
   d_mainWinMaxY_nm = maxY_nm;
+
   d_worldMinX_nm = min(d_worldMinX_nm, minX_nm);
   d_worldMinY_nm = min(d_worldMinY_nm, minY_nm);
   d_worldMaxX_nm = max(d_worldMaxX_nm, maxX_nm);
   d_worldMaxY_nm = max(d_worldMaxY_nm, maxY_nm);
 
+  int newWinWidth = d_mainWinWidth, newWinHeight = d_mainWinHeight;
+  double viewAspect = (maxX_nm - minX_nm)/(maxY_nm - minY_nm);
+  newWinWidth = d_mainWinHeight*viewAspect;
+  d_viewer->setWindowSize(d_mainWinID, newWinWidth, newWinHeight);
   d_viewer->dirtyWindow(d_mainWinID);
   d_viewer->dirtyWindow(d_navWinID);
 }
@@ -392,11 +397,17 @@ int PatternEditor::handleMainWinEvent(
     double x = 0, y = 0;
     double centerX_nm, centerY_nm;
     double x_world_nm, y_world_nm;
-
+    int desired_width;
     switch(event.type) {
       case RESIZE_EVENT:
          d_mainWinWidth = event.width;
          d_mainWinHeight = event.height;
+         desired_width = d_mainWinHeight*
+                         (d_mainWinMaxX_nm - d_mainWinMinX_nm)/
+                         (d_mainWinMaxY_nm - d_mainWinMinY_nm);
+         if (desired_width != d_mainWinWidth) {
+           d_viewer->setWindowSize(event.winID, desired_width, d_mainWinHeight);
+         }
          break;
       case MOTION_EVENT:
          x = event.mouse_x; y = event.mouse_y;
@@ -429,7 +440,6 @@ int PatternEditor::handleMainWinEvent(
                } else if (d_drawingTool == PE_POLYGON) {
                  startShape(PS_POLYGON);
                }
-               d_viewer->toImage(event.winID, &x, &y);
                setUserMode(PE_DRAWMODE);
              }
              d_viewer->toImage(event.winID, &x, &y);
@@ -607,12 +617,6 @@ int PatternEditor::mainWinDisplayHandler(
   PatternEditor *me = (PatternEditor *)ud;
 
   glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_VIEWPORT_BIT);
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glMatrixMode(GL_TEXTURE);
-  glPushMatrix();
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -660,24 +664,6 @@ int PatternEditor::mainWinDisplayHandler(
 
   // setup viewing/model projection
   glViewport(0, 0, data.winWidth, data.winHeight);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  PE_UserMode currMode = me->getUserMode();
-  if (currMode == PE_SET_REGION || currMode == PE_SET_TRANSLATE) {
-    glOrtho(me->d_mainWinMaxXadjust_nm, me->d_mainWinMinXadjust_nm,
-            me->d_mainWinMinYadjust_nm, me->d_mainWinMaxYadjust_nm, -1, 1);
-  } else {
-    glOrtho(me->d_mainWinMaxX_nm, me->d_mainWinMinX_nm, 
-            me->d_mainWinMinY_nm, me->d_mainWinMaxY_nm, -1, 1);
-  }
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  // setup texture transformation
-  glMatrixMode(GL_TEXTURE);
-  glLoadIdentity();
 
   double minXSave, maxXSave, minYSave, maxYSave;
   minXSave = me->d_mainWinMinX_nm;
@@ -685,6 +671,7 @@ int PatternEditor::mainWinDisplayHandler(
   minYSave = me->d_mainWinMinY_nm;
   maxYSave = me->d_mainWinMaxY_nm;
 
+  PE_UserMode currMode = me->getUserMode();
   if (currMode == PE_SET_REGION || currMode == PE_SET_TRANSLATE) {
     me->d_mainWinMinX_nm = me->d_mainWinMinXadjust_nm;
     me->d_mainWinMaxX_nm = me->d_mainWinMaxXadjust_nm;
@@ -710,6 +697,15 @@ int PatternEditor::mainWinDisplayHandler(
      i++;
   }
 
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  glOrtho(me->d_mainWinMaxX_nm, me->d_mainWinMinX_nm, 
+          me->d_mainWinMinY_nm, me->d_mainWinMaxY_nm, -1, 1);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+
   me->drawPattern();
 
   me->drawScale();
@@ -721,13 +717,11 @@ int PatternEditor::mainWinDisplayHandler(
     me->d_mainWinMaxY_nm = maxYSave;
   }
 
-  glPopAttrib();
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
   glMatrixMode(GL_MODELVIEW);
   glPopMatrix();
-  glMatrixMode(GL_TEXTURE);
-  glPopMatrix();
+  glPopAttrib();
 
   return 0;
 }
@@ -735,278 +729,24 @@ int PatternEditor::mainWinDisplayHandler(
 
 void PatternEditor::drawImage(const ImageElement &ie)
 {
-  double worldToImage[16];
-  ie.d_image->getWorldToImageTransform(worldToImage);
-  nmb_TransformMatrix44 worldToImageTransform;
-  worldToImageTransform.setMatrix(worldToImage);
-  double scx, scy, shz, phi, tx, ty;
-  worldToImageTransform.getTScShR_2DParameters(0.0, 0.0, 
-                                               tx, ty, phi, shz, scx, scy);
-
-  double shMag = fabs(shz);
-  double phiMag = fmod(phi, 2.0*M_PI);
-  if (phiMag > M_PI) {
-    phiMag = fabs(2.0*M_PI - phiMag);
-  } else {
-    phiMag = fabs(phiMag);
-  }
-  if (shMag > 0.0001 || phiMag > 0.0001) {
-    drawImageAsTexture(ie);
-  } else { // try using glDrawPixels instead of texture-mapping
-    drawImageAsPixels(ie);
-  }
-}
-
-void PatternEditor::drawImageAsTexture(const ImageElement &ie)
-{
-  void *texture;
-  int texwidth, texheight;
-  vrpn_bool textureOkay = VRPN_TRUE;
-  texture = ie.d_image->pixelData();
-  int pixType;
-  switch (ie.d_image->pixelType()) {
-    case NMB_UINT8:
-      pixType = GL_UNSIGNED_BYTE;
-      break;
-    case NMB_UINT16:
-      pixType = GL_UNSIGNED_SHORT;
-      break;
-    case NMB_FLOAT32:
-      pixType = GL_FLOAT;
-      break;
-    default:
-      textureOkay = VRPN_FALSE;
-      fprintf(stderr, "mainWinDisplayHandler::"
-                      "Error, unrecognized pixel type\n");
-      break;
-  }
-  if (!texture) {
-    textureOkay = VRPN_FALSE;
-  }
-
-  if (textureOkay) {
-    texwidth = ie.d_image->width() +
-               ie.d_image->borderXMin()+ie.d_image->borderXMax();
-    texheight = ie.d_image->height() +
-               ie.d_image->borderYMin()+ie.d_image->borderYMax();
-    double worldToImage[16];
-    ie.d_image->getWorldToImageTransform(worldToImage);
-    float scaleFactorX = (float)(ie.d_image->width())/(float)texwidth;
-    float scaleFactorY = (float)(ie.d_image->height())/(float)texheight;
-
-    int bordSizeXPixels = ie.d_image->borderXMin();
-    int bordSizeYPixels = ie.d_image->borderYMin();
-    // in texture coordinates
-    float bordSizeX = (float)bordSizeXPixels/(float)texwidth;
-    float bordSizeY = (float)bordSizeYPixels/(float)texheight;
-
-    printf("begin draw texture for %s\n", ie.d_image->name()->Characters());
-
-/*    printf("Loading texture %s with type %d\n",
-           ie.d_image->name()->Characters(), ie.d_image->pixelType());
-    printf("width=%d,height=%d,border = (%d,%d)(%d,%d)\n",
-      texwidth, texheight, ie.d_image->borderXMin(),
-      ie.d_image->borderXMax(), ie.d_image->borderYMin(),
-      ie.d_image->borderYMax());
-*/
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_TEXTURE_GEN_S);
-    glEnable(GL_TEXTURE_GEN_T);
-    glEnable(GL_TEXTURE_GEN_R);
-    glEnable(GL_TEXTURE_GEN_Q);
-
-    glPixelTransferf(GL_RED_SCALE, (float)ie.d_red);
-                                    // *(float)ie.d_opacity);
-    glPixelTransferf(GL_GREEN_SCALE, (float)ie.d_green);
-                                    // *(float)ie.d_opacity);
-    glPixelTransferf(GL_BLUE_SCALE, (float)ie.d_blue);
-                                    // *(float)ie.d_opacity);
-    glPixelTransferf(GL_ALPHA_SCALE, (float)ie.d_opacity);
-
+  nmb_TransformMatrix44 W2I;
+  double l, r, b, t;
 /*
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-              GL_LINEAR_MIPMAP_LINEAR);
-
-    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, texwidth, texheight,
-           GL_LUMINANCE,
-           pixType, texture);
-*/
-    //glTexImage2D(GL_PROXY_TEXTURE_2D, ...
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, texwidth);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-             texwidth, texheight, 0, GL_LUMINANCE,
-             pixType, texture);
-
-
-    nmb_ImageBounds ib;
-    ie.d_image->getBounds(ib);
-/*
-    for (int j = 0; j < 4; j++){
-        printf("%g %g %g %g\n", worldToImage[j*4], worldToImage[j*4+1],
-                                worldToImage[j*4+2], worldToImage[j*4+3]);
-    }
-*/
-/*
-    printf("bounds : (%g,%g),(%g,%g),(%g,%g),(%g,%g)\n",
-         ib.getX(nmb_ImageBounds::MIN_X_MIN_Y),
-         ib.getY(nmb_ImageBounds::MIN_X_MIN_Y),
-         ib.getX(nmb_ImageBounds::MAX_X_MIN_Y),
-         ib.getY(nmb_ImageBounds::MAX_X_MIN_Y),
-         ib.getX(nmb_ImageBounds::MAX_X_MAX_Y),
-         ib.getY(nmb_ImageBounds::MAX_X_MAX_Y),
-         ib.getX(nmb_ImageBounds::MIN_X_MAX_Y),
-         ib.getY(nmb_ImageBounds::MIN_X_MAX_Y));
+  some debugging test code
+  W2I.set(0, 0, -1.0); // flip X
+  W2I.set(0, 3, 1.5);  // and translate
+  l = 0; r = 1; b = 0; t = 1;
+  d_viewer->drawImage(d_mainWinID, ie.d_image,
+      ie.d_red, ie.d_green, ie.d_blue, ie.d_opacity, &l, &r, &b, &t, &W2I);
 */
 
-    glPushMatrix();
-    glLoadIdentity();
-    // compensation for the border:
-    glTranslatef(bordSizeX, bordSizeY, 0.0);
-    glScalef(scaleFactorX, scaleFactorY, 1.0);
 
-    // now we can use the xform defined for the actual image part of the
-    // texture
-    glMultMatrixd(worldToImage);
+  ie.d_image->getWorldToImageTransform(W2I);
+  l = d_mainWinMaxX_nm; r = d_mainWinMinX_nm;
+  b = d_mainWinMinY_nm; t = d_mainWinMaxY_nm;
+  d_viewer->drawImage(d_mainWinID, ie.d_image,
+      ie.d_red, ie.d_green, ie.d_blue, ie.d_opacity, &l, &r, &b, &t, &W2I);
 
-    glBegin(GL_POLYGON);
-    glNormal3f(0.0, 0.0, 1.0);
-    glColor4f(1.0, 1.0, 1.0, (float)ie.d_opacity);
-    // draw a parallelogram fit to the image
-    glVertex2f(ib.getX(nmb_ImageBounds::MIN_X_MIN_Y),
-               ib.getY(nmb_ImageBounds::MIN_X_MIN_Y));
-    glVertex2f(ib.getX(nmb_ImageBounds::MAX_X_MIN_Y),
-               ib.getY(nmb_ImageBounds::MAX_X_MIN_Y));
-    glVertex2f(ib.getX(nmb_ImageBounds::MAX_X_MAX_Y),
-               ib.getY(nmb_ImageBounds::MAX_X_MAX_Y));
-    glVertex2f(ib.getX(nmb_ImageBounds::MIN_X_MAX_Y),
-               ib.getY(nmb_ImageBounds::MIN_X_MAX_Y));
-
-
-    glEnd();
-
-    glPixelTransferf(GL_RED_SCALE, 1.0);
-    glPixelTransferf(GL_GREEN_SCALE, 1.0);
-    glPixelTransferf(GL_BLUE_SCALE, 1.0);
-    glPixelTransferf(GL_ALPHA_SCALE, 1.0);
-    glPopMatrix();
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_TEXTURE_GEN_S);
-    glDisable(GL_TEXTURE_GEN_T);
-    glDisable(GL_TEXTURE_GEN_R);
-    glDisable(GL_TEXTURE_GEN_Q);
-
-    glFinish();
-    printf("end draw texture\n");
-  }
-}
-
-void PatternEditor::drawImageAsPixels(const ImageElement &ie)
-{
-  void *texture;
-  int texwidth, texheight;
-  vrpn_bool textureOkay = VRPN_TRUE;
-  texture = ie.d_image->pixelData();
-  int pixType;
-  switch (ie.d_image->pixelType()) {
-    case NMB_UINT8:
-      pixType = GL_UNSIGNED_BYTE;
-      break;
-    case NMB_UINT16:
-      pixType = GL_UNSIGNED_SHORT;
-      break;
-    case NMB_FLOAT32:
-      pixType = GL_FLOAT;
-      break;
-    default:
-      textureOkay = VRPN_FALSE;
-      fprintf(stderr, "mainWinDisplayHandler::"
-                      "Error, unrecognized pixel type\n");
-      break;
-  }
-  if (!texture) {
-    textureOkay = VRPN_FALSE;
-  }
-
-  if (textureOkay) {
-    texwidth = ie.d_image->width() +
-               ie.d_image->borderXMin()+ie.d_image->borderXMax();
-    texheight = ie.d_image->height() +
-               ie.d_image->borderYMin()+ie.d_image->borderYMax();
-    double worldToImage[16];
-    ie.d_image->getWorldToImageTransform(worldToImage);
-    float scaleFactorX = (float)(ie.d_image->width())/(float)texwidth;
-    float scaleFactorY = (float)(ie.d_image->height())/(float)texheight;
-
-    int bordSizeXPixels = ie.d_image->borderXMin();
-    int bordSizeYPixels = ie.d_image->borderYMin();
-    // in texture coordinates
-    float bordSizeX = (float)bordSizeXPixels/(float)texwidth;
-    float bordSizeY = (float)bordSizeYPixels/(float)texheight;
-
-//    printf("begin drawPixels for %s\n", ie.d_image->name()->Characters());
-
-    int imageWidth = ie.d_image->width();
-    int imageHeight = ie.d_image->height();
-
-    nmb_TransformMatrix44 worldToImageTransform;
-    worldToImageTransform.setMatrix(worldToImage);
-    double scx, scy, shz, phi, tx, ty;
-    worldToImageTransform.getTScShR_2DParameters(0.0, 0.0,
-                                               tx, ty, phi, shz, scx, scy);
-    double nmPerWindowPixelX = (d_mainWinMaxX_nm - d_mainWinMinX_nm)/
-                               (double)d_mainWinWidth;
-    double nmPerWindowPixelY = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/
-                               (double)d_mainWinHeight;
-    double nmPerImagePixelX = 1.0/(scx*imageWidth);
-    double nmPerImagePixelY = 1.0/(scy*imageHeight);
-
-    double windowPixelPerImagePixelX = nmPerImagePixelX/nmPerWindowPixelX;
-    double windowPixelPerImagePixelY = nmPerImagePixelY/nmPerWindowPixelY;
-
-    int skipRows = bordSizeYPixels;
-    int skipPixels = bordSizeXPixels;
-    GLfloat transX_nm = -tx/scx; // convert from image units to world units
-    GLfloat transY_nm = -ty/scy;
-    int skipIncX, skipIncY;
-    if (transX_nm < d_mainWinMinX_nm) {
-      skipIncX = (int)ceil((d_mainWinMinX_nm - transX_nm)/nmPerImagePixelX);
-      skipPixels += skipIncX;
-      // add a little extra to make sure that roundoff error doesn't lead to
-      // a negative and invalid raster position
-      transX_nm += skipIncX*nmPerImagePixelX + 0.01;
-    }
-    if (transY_nm < d_mainWinMinY_nm) {
-      skipIncY = (int)ceil((d_mainWinMinY_nm - transY_nm)/nmPerImagePixelY);
-      skipRows += skipIncY;
-      // add a little extra to make sure that roundoff error doesn't lead to
-      // a negative and invalid raster position
-      transY_nm += skipIncY*nmPerImagePixelY + 0.01;
-    }
-
-    int totalRowBorder = ie.d_image->borderXMax() + skipPixels;
-    int rowWidth = texwidth - totalRowBorder;
-    int totalColBorder = ie.d_image->borderYMax() + skipRows;
-    int colHeight = texheight - totalColBorder;
-
-    glRasterPos2f(transX_nm, transY_nm);
-    GLfloat pos[4];
-    glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-    GLboolean valid[1];
-    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, valid);
-    if (valid[0] != GL_TRUE) {
-      printf("raster pos not valid\n");
-    }
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, skipRows);
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, skipPixels);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, texwidth);
-    glPixelZoom(-windowPixelPerImagePixelX, windowPixelPerImagePixelY);
-    glDrawPixels(rowWidth, colHeight, GL_LUMINANCE, pixType, texture);
-    glFinish();
-    //printf("end draw pixels\n");
-  }
 }
 
 void PatternEditor::drawPattern()
@@ -1084,6 +824,7 @@ int PatternEditor::navWinEventHandler(
 {
     PatternEditor *me = (PatternEditor *)ud;
     double x = 0, y = 0;
+    double xmin = 0, ymin = 0, xmax = 0, ymax = 0;
 
     switch(event.type) {
       case RESIZE_EVENT:
@@ -1166,6 +907,14 @@ int PatternEditor::navWinEventHandler(
                me->d_viewer->toImage(event.winID, &x, &y);
                me->navWinPositionToWorld(x, y, 
                  me->d_navDragEndX_nm, me->d_navDragEndY_nm);
+               xmin = min(me->d_navDragStartX_nm, me->d_navDragEndX_nm);
+               ymin = min(me->d_navDragStartY_nm, me->d_navDragEndY_nm);
+               xmax = max(me->d_navDragStartX_nm, me->d_navDragEndX_nm);
+               ymax = max(me->d_navDragStartY_nm, me->d_navDragEndY_nm);
+               ymax = ymin + (xmax - xmin)*(me->d_mainWinHeight)/
+                             (double)(me->d_mainWinWidth);
+               me->setViewport(xmin, ymin, xmax, ymax);
+/*
                me->d_mainWinMaxX_nm = max(me->d_navDragStartX_nm,
                                     me->d_navDragEndX_nm);
                me->d_mainWinMinX_nm = min(me->d_navDragStartX_nm,
@@ -1174,6 +923,7 @@ int PatternEditor::navWinEventHandler(
                                     me->d_navDragEndY_nm);
                me->d_mainWinMinY_nm = min(me->d_navDragStartY_nm,
                                     me->d_navDragEndY_nm);
+*/
                me->d_viewer->dirtyWindow(event.winID);
                me->d_viewer->dirtyWindow(me->d_mainWinID);
              }
@@ -1294,8 +1044,8 @@ int PatternEditor::navWinDisplayHandler(
 void PatternEditor::navWinPositionToWorld(double x, double y,
                                        double &x_nm, double &y_nm)
 {
-  x_nm = x*(d_worldMaxX_nm - d_worldMinX_nm);
-  y_nm = y*(d_worldMaxY_nm - d_worldMinY_nm);
+  x_nm = d_worldMinX_nm + x*(d_worldMaxX_nm - d_worldMinX_nm);
+  y_nm = d_worldMinY_nm + y*(d_worldMaxY_nm - d_worldMinY_nm);
 }
 
 void PatternEditor::mainWinPositionToWorld(double x, double y,
