@@ -1,3 +1,10 @@
+2001-07-24  David Marshburn  <marshbur@tungsten-cs.cs.unc.edu>
+
+	* nmg_SurfaceRegion.C 
+	(RestoreBuildState): removed restoration of g_just_color
+	(SaveBuildState): removed save of g_just_color.  These fix the slowness
+	of nano when a colormap is applied.
+
 2001-07-13  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* nmg_SurfaceRegion.C: initialized d_list_base and d_num_lists.  This

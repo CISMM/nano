@@ -1,4 +1,5 @@
 #include "nmui_PlaneSync.h"
+#include <microscape.h>
 
 // static class members
 const char nmui_PlaneSync::
@@ -8,11 +9,9 @@ const char nmui_PlaneSync::
 vrpnMessageType[] = "Plane Synch Calculated Plane";
 
 
-nmui_PlaneSync::nmui_PlaneSync( nmb_Dataset * dataset, 
-				 vrpn_Connection * conn ) :
+nmui_PlaneSync::nmui_PlaneSync( vrpn_Connection * conn ) :
     d_server (conn),
     d_peer (NULL),
-    d_dataset (dataset),
     d_accepting (VRPN_FALSE),
     incomingCalcdPlaneList (NULL),
     outgoingCalcdPlaneList (NULL)
@@ -82,13 +81,20 @@ handleCalculatedPlaneSync( void * userdata, vrpn_HANDLERPARAM p )
 {
   nmui_PlaneSync * it = (nmui_PlaneSync *) userdata;
 
+  if( it == NULL || dataset == NULL )
+    {
+      fprintf( stderr, "ERROR:  handleCalculatedPlaneSync called with "
+	       "invalid arguments.  I can't do anything.\n" );
+      return -1;
+    }
+
   if (it->d_accepting) 
     {
       nmb_CalculatedPlane* newPlane = NULL;
       try
 	{
 	  newPlane = 
-	    nmb_CalculatedPlane::receiveCalculatedPlane( p, it->d_dataset );
+	    nmb_CalculatedPlane::receiveCalculatedPlane( p, dataset );
 	}
       catch( nmb_CalculatedPlaneCreationException e )
 	{

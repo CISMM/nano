@@ -668,7 +668,7 @@ getRegionData()
 void nmg_SurfaceRegion::
 SaveBuildState()
 {
-    d_savedState.justColor = g_just_color;  //This one gets
+  // d_savedState.justColor = g_just_color;  //This one gets
                                      //automatically changed
     d_savedState.stride = g_stride;
     d_savedState.alpha = g_surface_alpha;
@@ -684,7 +684,7 @@ SaveBuildState()
 void nmg_SurfaceRegion::
 RestoreBuildState()
 {
-    g_just_color = d_savedState.justColor;
+  // g_just_color = d_savedState.justColor;
     g_stride = d_savedState.stride;
     g_surface_alpha = d_savedState.alpha;
 }

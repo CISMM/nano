@@ -5415,7 +5415,7 @@ void setupSynchronization (CollaborationManager * cm,
 
   nmui_PlaneSync * ps;
 
-  ps = new nmui_PlaneSync (dset, serverConnection);
+  ps = new nmui_PlaneSync( serverConnection );
 
   // Since streamfileControls are timed, the toplevel MUST use
   // the timed callbacks.  Oops.  Took an hour or more to find,
@@ -5429,10 +5429,6 @@ void setupSynchronization (CollaborationManager * cm,
   copy_to_shared_state.addCallback
     (handle_copy_to_shared, cm);
 
-  // OBSOLETE COMMENT
-  // need to pass rootUIControl to handle_timed_sync_complete
-  // so that it sees d_maintain as TRUE!
- 
   streamfileControls->registerSyncRequestHandler
           (handle_timed_sync_request, streamfileControls);
   streamfileControls->registerSyncCompleteHandler
@@ -5445,6 +5441,7 @@ void setupSynchronization (CollaborationManager * cm,
 	(handle_collab_machine_name_change, cm);
 
 }
+
 
 void ParseArgs (int argc, char ** argv,
                 MicroscapeInitializationState * istate) {

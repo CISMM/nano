@@ -11,7 +11,7 @@
 class nmui_PlaneSync {
 public:
   
-  nmui_PlaneSync( nmb_Dataset *, vrpn_Connection * );
+  nmui_PlaneSync( vrpn_Connection * );
   ~nmui_PlaneSync( void );
   
   /// Start collaborating with someone, and sharing plane creations.
@@ -35,8 +35,6 @@ protected:
   
   vrpn_int32 d_senderID;
   vrpn_int32 d_synchCalculatedPlaneMessageType;
-  
-  nmb_Dataset * d_dataset;
   
   /// Are we accepting new updates right now?
   vrpn_bool d_accepting;

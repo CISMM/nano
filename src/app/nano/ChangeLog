@@ -1,3 +1,8 @@
+2001-07-24  David Marshburn  <marshbur@tungsten-cs.cs.unc.edu>
+
+	* microscape.c: (setupSynchronization) changed the call to the
+	PlaneSync constuctor to match its new interface.
+
 2001-07-09  Shayne O'Neill  <soneill@mindspring.com>
 
 	* microscape.c:  Added calls to Graphmod's setup and teardown

@@ -1,3 +1,13 @@
+2001-07-24  David Marshburn  <marshbur@tungsten-cs.cs.unc.edu>
+
+	* nmui_PlaneSync.h: removed d_dataset member
+
+	* nmui_PlaneSync.C 
+	(nmui_PlaneSync): removed d_dataset member
+	(handleCalculatedPlaneSync): removed d_dataset reference,
+		added some error checking for null pointers.  This just
+		uses the global dataset variable from microscape, now.
+
 2001-07-09  Shayne O'Neill <soneill@mindspring.com>
 
 	* GraphMod.h:   Changed d_stride and d_max_points to TclNets.
