@@ -85,7 +85,7 @@ radiobutton $nmInfo(viewb2).r1.measure -text "Measure" \
     -variable user_0_mode -value 9  -padx 0 -pady 0
 radiobutton $nmInfo(viewb6).demotouch -text "Touch Stored" \
 	-variable user_0_mode -value 11  -padx 0 -pady 0
-radiobutton $nmInfo(viewb6).region -text "Region" -variable user_0_mode \
+radiobutton $nmInfo(viewb6).region -text "Magic Lens" -variable user_0_mode \
 	-value 17  -padx 0 -pady 0
 
 radiobutton $nmInfo(viewb2).r2.scaleup -text "Scale"   -variable user_0_mode \
@@ -97,7 +97,7 @@ if { !$viewer_only } {
 radiobutton $nmInfo(viewb3).live -text "Touch" \
 	-variable user_0_mode -value 12  -padx 0 -pady 0
 
-radiobutton $nmInfo(viewb3).select -text "Select" \
+radiobutton $nmInfo(viewb3).select -text "Scan Area" \
 	-variable user_0_mode -value 4  -padx 0 -pady 0
 
 checkbutton $nmInfo(viewb7).xy_lock -text "XY Lock" \

@@ -428,12 +428,12 @@ int mode_display (void *data) {
     message = (char *)"Touch & Prepare to Modify Mode"; break;
   case USER_SCALE_UP_MODE:    message = (char *)"Scale Mode";       break;
   case USER_SCALE_DOWN_MODE:  message = (char *)"Scale Mode";     break;
-  case USER_SERVO_MODE:       message = (char *)"Select Mode";         break;
+  case USER_SERVO_MODE:       message = (char *)"Scan Area Mode";      break;
   case USER_GRAB_MODE:        message = (char *)"Grab Mode";     break;
   case USER_CENTER_TEXTURE_MODE:
 			      message = (char *)"Center Texture Mode"; break;
   case USER_SCANLINE_MODE:    message = (char *)"LineScan Mode"; break;
-  case USER_REGION_MODE:      message = (char *)"Region Select Mode"; break;
+  case USER_REGION_MODE:      message = (char *)"Magic Lens Mode"; break;
   case USER_CROSS_SECTION_MODE:
                               message = (char *)"Cross Section Mode"; break;
   default:                    message = (char *)"Unknown Mode"; break;

@@ -1,3 +1,10 @@
+2002-03-13  David Marshburn  <marshbur@cs.unc.edu>
+
+	* chartjunk.c (mode_display):  changed user mode strings:
+	"Select Mode" to "Scan Area Mode" and "Region Select Mode"
+	to "Magic Lens Mode".
+	* nmGraphics.dsp:  added nmg_State.h to the list of header files.
+
 2002-03-11  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_Surface.Ch: Huge rewrite, surface display list generation

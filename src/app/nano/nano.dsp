@@ -641,19 +641,19 @@ SOURCE=..\..\..\..\external\pc_win32\lib\GHOST31.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\quat\pc_win32_MDd\quat.lib
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\vogl\pc_win32_MDd\vogl.lib
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\vrpn\pc_win32\Debug\vrpn.lib
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\..\vrpn\server_src\Debug\vrpn_phantom.lib
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\quat\Debug\quat.lib
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\vogl\Debug\vogl.lib
 # End Source File
 # End Group
 # End Target

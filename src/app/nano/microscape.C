@@ -57,6 +57,12 @@ pid_t getpid();
 }
 
 
+// this can be used to create specific installations of nano.
+// if this symbol is defined, nano will expect to find its
+// tcl scripts in the directory "tcl<APP_SUFFIX>"
+// #define APP_SUFFIX "11.1"
+
+
 // there is also a different getpid defined in Process.h in the VC-6.0 include
 // directory.  I think it has a different return type.
 

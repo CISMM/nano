@@ -245,6 +245,10 @@ SOURCE=.\nmg_RenderServerStrategies.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\nmg_State.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmg_Surface.h
 # End Source File
 # Begin Source File
