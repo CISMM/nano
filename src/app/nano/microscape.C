@@ -589,7 +589,6 @@ TclNet_int replay_rate("stream_replay_rate", 1,
 TclNet_int	rewind_stream("rewind_stream",0,
 			handle_rewind_stream_change, NULL);
 
-//checkthis
 /// This is the time value to jump to in the stream file. 
 TclNet_float set_stream_time ("set_stream_time", 0);
 /// This is a flag (0/1) to say " jump to new time now!"
@@ -2181,7 +2180,15 @@ static void handle_set_stream_time_change (vrpn_int32 /*value*/, void *) {
     ohmmeterLogFile->play_to_time(newStreamTime);
   }
   if (vicurveLogFile) {
-    vicurveLogFile->play_to_time(newStreamTime);
+    printf( "handle_set_stream_time_change vicurveLogfile time:  %d\n", newStreamTime.tv_sec );
+    // tell the keithley UI to reset if we just to an earlier
+    // time because vrpn will replay from the beginning
+    struct timeval currentTime;
+    vicurveLogFile->time_since_connection_open( &currentTime );
+    if( newStreamTime.tv_sec < currentTime.tv_sec )
+      keithley2400_ui->reset( );
+
+    vicurveLogFile->play_to_time(newStreamTime);   
   }
   if (semLogFile) {
     semLogFile->play_to_time(newStreamTime);
