@@ -1,3 +1,12 @@
+2001-07-27  Tom Hudson <hudson@cs.unc.edu>
+
+        * nmm_Microscope_Simulator.C (ConnectServer) : Add safety check.
+        (nmm_Microscope_Simulator constructor) : Use vrpn_ANY_INCOMING_TYPE
+        callback instead of vrpn_ANY_TYPE.
+        (afmFeelToPoint) : Improve algorithm.
+
+        * surface.C (main) : Fix initialization of vrpn_DelayedConnection.
+
 2001-07-26  Tom Hudson <hudson@cs.unc.edu>
 
 	* surface.C (usage) : Document -latency.

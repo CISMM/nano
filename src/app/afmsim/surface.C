@@ -451,11 +451,13 @@ int main (int argc, char ** argv) {
     // so it's a DelayedConnection instead
     // of just a plain SynchronizedConnection.
 
-fprintf(stderr, "Initializing simulated network latency to %.5f sec.\n",
+fprintf(stderr, "Initializing simulated network latency to %.5f ms.\n",
 g_waitTime);
     struct timeval delay;
     delay = vrpn_MsecsTimeval(g_waitTime);
-    connection = new vrpn_DelayedConnection (delay, g_port);
+    connection = new vrpn_DelayedConnection (delay, g_port,
+                    NULL, NULL, g_ipString);
+    ((vrpn_DelayedConnection *) connection)->delayAllTypes(VRPN_TRUE);
   }
 
   retval = initJake(g_numX, g_numY, g_port, g_ipString);

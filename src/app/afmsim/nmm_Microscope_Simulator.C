@@ -129,8 +129,10 @@ void ConnectServer (int port, const char * ipname)
   ServerOutputAdd(2, "Opening server on port %d (ip address %s).",
                   port, ipname);
 
-  connection = new vrpn_Synchronized_Connection
-                      (port, NULL, NULL, ipname);
+  if (!connection) {
+    connection = new vrpn_Synchronized_Connection
+                        (port, NULL, NULL, ipname);
+  }
 
   if (!connection || !connection->doing_okay()) {
      ServerOutputAdd(2, "Connection could not be created.");
@@ -183,8 +185,10 @@ nmm_Microscope_Simulator (const char * _name,
   }
 
 
+  // Can't register for ANY_TYPE, because it also triggers on
+  // *outgoing* messages!  Aargh!
   // ANY_TYPE should come first!
-  d_connection->register_handler(vrpn_ANY_TYPE, RcvAnyMessage, this);
+  d_connection->register_handler(vrpn_ANY_INCOMING_TYPE, RcvAnyMessage, this);
 
   d_connection->register_handler(d_SetScanStyle_type,
 				RcvSetScanStyle,
@@ -199,17 +203,28 @@ nmm_Microscope_Simulator (const char * _name,
 				this);
 
   // TCH Dissertation July 2001
+  // Don't use this for now because there are spurious rejects (?)
+  //
   d_rReceiver->register_handler(d_ScanTo_type,
                                 RcvScanPointNM,
 				this);
+  //d_connection->register_handler(d_ScanTo_type,
+                                 //RcvScanPointNM,
+				 //this);
 
-  d_connection->register_handler(d_ZagTo_type,
+  d_rReceiver->register_handler(d_ZagTo_type,
 				RcvZagPointNM,
 				this);
+  //d_connection->register_handler(d_ZagTo_type,
+				//RcvZagPointNM,
+				//this);
 
-  d_connection->register_handler(d_FeelTo_type,
+  d_rReceiver->register_handler(d_FeelTo_type,
 				RcvFeelTo,
 				this);
+  //d_connection->register_handler(d_FeelTo_type,
+				//RcvFeelTo,
+				//this);
 
   d_connection->register_handler(d_SetStdDelay_type,
 				RcvSetStdDelay,
@@ -1169,6 +1184,7 @@ int nmm_Microscope_Simulator::RcvFeelTo (void * userdata,
   int retval;
 
   if (tmn->d_doLatestScanTo) {
+//fprintf(stderr, "Buffering FeelTo\n");
     return tmn->bufferScanMessage(p);
   }
 
@@ -1942,9 +1958,10 @@ int nmm_Microscope_Simulator::afmFeelToPoint (const char * bufptr) {
 
   vrpn_float32 x, y;
   vrpn_int32 nx, ny;
-  vrpn_int32 tx, ty;
+  vrpn_float32 tx, ty;
   vrpn_float32 dx, dy;
   vrpn_float32 orientation;
+  vrpn_float32 startx, starty;
   int retval;
   int i, j;
   double incx = 5, incy = 5;
@@ -1956,19 +1973,31 @@ int nmm_Microscope_Simulator::afmFeelToPoint (const char * bufptr) {
     return -1;
   }
 
-  //ServerOutputAdd(1, "afmFeelToPoint %.2f, %.2f (%d x %d)", x, y, nx, ny);
+  ServerOutputAdd(1, "afmFeelToPoint %.2f, %.2f (%d x %d)", x, y, nx, ny);
+
+  // If the number of samples is odd,
+  // we'll end up centered on the point they want;
+  // if even, centered "around" it.
+  if (nx % 2) {
+    startx = x - (nx / 2) * dx;
+  } else {
+    startx = x - ((nx - 1.0f) / 2.0f) * dx;
+  }
+  if (ny % 2) {
+    starty = y - (ny / 2) * dy;
+  } else {
+    starty = y - ((ny - 1.0f) / 2.0f) * dy;
+  }
 
   sendBeginFeelTo(x, y);
-  for (i = 0, tx = x - (nx / 2) * dx; i < nx; i++, tx += dx) {
-    spm_goto_xynm(tx, y - (ny / 2) * dy);
-    for (j = 0, ty = y - (ny / 2) * dy; j < ny; j++, ty += dy) {
+  for (i = 0, tx = startx; i < nx; i++, tx += dx) {
+    spm_goto_xynm(tx, starty);
+    for (j = 0, ty = starty; j < ny; j++, ty += dy) {
       retval = goto_point_and_report_it(tx, ty);
       if (retval) {
         ServerOutputAdd(1, "***ERROR***:  afmFeelToPoint");
       }
     }
-    // Hackish "backscan"
-    spm_goto_xynm(tx, y - (ny / 2) * incy);
   }
   sendEndFeelTo(x, y, nx, ny, dx, dy, orientation);
 
@@ -3344,7 +3373,7 @@ report_point_set( float x, float y, timeval * reqTime )
   
   spm_report_point_datasets(d_PointResultData_type, x, y, point_value, numsets,
                             reqTime);
-//fprintf(stderr, "Reported h %.5f at %.5f, %.5f\n", z, x, y);
+//ServerOutputAdd(3, "Reported h %.5f at %.5f, %.5f", z, x, y);
   return 0;
 }
 
@@ -3500,6 +3529,8 @@ goto_point_and_report_it (float the_desired_x, float the_desired_y,
 {
    //  unsigned int  state;
 
+//ServerOutputAdd(3, "goto_and_report (%.2f %.2f)",
+//the_desired_x, the_desired_y);
 
   //  stm_current_mode = STM_SEEK_MODE;
 	// Go to the point
@@ -3660,6 +3691,7 @@ void nmm_Microscope_Simulator::sendBeginFeelTo (vrpn_float32 x,
 
   msgbuf = encode_BeginFeelTo(&len, x, y);
   Send(len, d_BeginFeelTo_type, msgbuf);
+//ServerOutputAdd(2, "Begin feelto");
 
 }
 
@@ -3673,6 +3705,7 @@ void nmm_Microscope_Simulator::sendEndFeelTo (vrpn_float32 x,
 
   msgbuf = encode_EndFeelTo(&len, x, y, nx, ny, dx, dy, orientation);
   Send(len, d_EndFeelTo_type, msgbuf);
+//ServerOutputAdd(2, "End feelto");
 
 }
 
@@ -3948,10 +3981,14 @@ int nmm_Microscope_Simulator::executeBufferedScanMessage (void) {
   vrpn_HANDLERPARAM & p = d_saved_scan_to_point_msg;
   int retval = 0;
 
+
+//fprintf(stderr, " ... clearing buffer.\n");
+
   // Note to self:  this ought to be on a base class!
 
   // invalid stored message, return immediately
   if (p.type == -1) {
+//fprintf(stderr, "Stored message invalid.\n");
     return 0;
   }
 
@@ -3980,6 +4017,7 @@ int nmm_Microscope_Simulator::executeBufferedScanMessage (void) {
       ServerError("stm_sweep_point_nm failed");
     }
   } else if (p.type == d_FeelTo_type) {
+//fprintf(stderr, "Unbuffering FeelTo\n");
     p.type = -1;
     retval = afmFeelToPoint(p.buffer);
     if (retval) {
@@ -4038,6 +4076,8 @@ void ServerError( char * txt )
 int nmm_Microscope_Simulator::RcvAnyMessage (void * userdata,
                                              vrpn_HANDLERPARAM p) {
   nmm_Microscope_Simulator * m = (nmm_Microscope_Simulator *) userdata;
+
+//fprintf(stderr, "In RcvAnyMessage.\n");
 
   if ((p.type == m->d_ScanTo_type) ||
       (p.type == m->d_ZagTo_type) ||
