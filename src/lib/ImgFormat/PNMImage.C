@@ -232,7 +232,7 @@ bool PNMImage::Read(const char *filename)
       return false;
    }
 
-   if (readPNM(pnm))
+   if (!readPNM(pnm))
    {
       cerr << "Could not open file '" << filename << "' for reading." << endl;
       Die();

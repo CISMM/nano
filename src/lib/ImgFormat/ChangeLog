@@ -1,5 +1,10 @@
 2001-06-23  Russell Taylor  <taylorr@cs.unc.edu>
 
+	* PNMImage.C (Read) : Changed polarity of test so that it prints an error
+		when it cannot read the file, rather than when it can.
+
+2001-06-23  Russell Taylor  <taylorr@cs.unc.edu>
+
 	* PNMImage.C (Read) : Changed call to image->Valid() into call to
 		Valid() to prevent seg-fault when attempting to read from
 		a PPM file that doesn't exist.
