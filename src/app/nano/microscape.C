@@ -6115,6 +6115,56 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
             colorMapDir = new char [strlen(env_string) + 1];
             strcpy(colorMapDir, env_string);
 	}
+#if defined (_WIN32) && !defined (__CYGWIN__)
+        //HANDLE hinst;
+        HWND hwnd;
+        // From "console sample (with GUI IO)" in MSDN library. 
+        //hinst = GetModuleHandle (NULL);
+        hwnd = GetForegroundWindow();  // GetFocus or GetForegroundWindow 
+
+        // Prettiness tweak - minimize console window,
+        // without minimizing visual protect window.
+        ShowWindow(hwnd, SW_SHOWMINIMIZED); // keeps window in front, minimized
+
+    // Check to see if this run of nano is protected by Visual Protect.
+    char *vp_env = getenv("VPSTATUS");
+    if (vp_env) {
+        //See if we are registered, in trial period, or expired
+        if (!strcmp(vp_env, "REGISTERED")) {
+            // continue 
+        } else {
+            // any other value of env var, show register info. 
+            char * fname = new char[strlen(nano_root) + 50];
+            sprintf(fname, "%s\\share\\register.txt", nano_root );
+            FILE *file_ptr;
+            // "w" stands for write text - readable on PC platforms.
+
+            file_ptr=fopen(fname,"w");
+            fprintf(file_ptr, 
+             "Registration file for 3rdTech NanoManipulator DP-100\n\n"
+             "This file is located in: %s\n"
+             "Please use the 'E-mail registration' button on the intro screen\n"
+             "or e-mail this file or its contents to \n"
+             "      nano@3rdtech.com\n\n"
+             "When we receive it, we will e-mail you the file nano.vplr\n"
+             "to be copied into the %s\\bin directory.\n\n"
+             "This will permanently register and unlock this program\n"
+             "for use on this machine.\n\n"
+             "Machine serial number = %s\n", 
+                    fname, nano_root, getenv("VPCURRENTSERIAL"));
+//               getenv("VPSTATUS"), getenv("VPREGISTERTO"), 
+//               getenv("VPCURRENTSERIAL"));
+            fclose(file_ptr);
+            ShellExecute(hwnd, "open", "notepad.exe", fname, NULL, 
+                         SW_SHOWNORMAL);
+            delete [] fname;
+            // If we aren't in trial period, exit nano. 
+            if (strcmp(vp_env, "TRIAL")) {
+                exit(0);
+            }
+        }
+    }
+#endif
         delete [] env_string;
     }
 

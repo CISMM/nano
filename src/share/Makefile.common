@@ -273,7 +273,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-   SYS_INCLUDE := /nsrc/external/include
+   SYS_INCLUDE := $(MY_NANO_SRC_DIR)/external/include
 endif
 
 ifeq ($(HW_OS),pc_linux)
@@ -314,7 +314,7 @@ ifeq ($(HW_OS),pc_cygwin)
 endif
 
 ifeq ($(HW_OS),pc_win32)
-  LOAD_FLAGS = -L/nsrc/external/lib/pc_win32 -L$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32_MTd
+  LOAD_FLAGS = -L$(MY_NANO_SRC_DIR)/external/lib/pc_win32 -L$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32_MTd
 endif
 
 ifeq ($(HW_OS),sgi_irix)
@@ -393,7 +393,7 @@ endif
 
 ifeq ($(HW_OS),pc_win32)
    ARCH_LIBS := $(addprefix -l,glut32 wsock32 user32 gdi32 comdlg32 glu32 \
-                               opengl32 ghost31)
+                               opengl32 ghost31 shell32)
 endif
 
 ##########################
