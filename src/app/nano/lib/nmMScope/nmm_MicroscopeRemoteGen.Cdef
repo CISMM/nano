@@ -1192,18 +1192,14 @@ RECEIVE_MSG_BODY ScanDataset {
       nmb_Image *new_image = d_dataset->dataImages->getImageByName(name);
       new_image->setTopoFileInfo(*d_dataset->d_topoFile);
 
-if(d_dataset->doInitHeight == true){
-	d_dataset->heightPlaneName -> Set(d_dataset->initHeight);
-	if(!strcmp(d_dataset->initHeight,d_dataset->heightPlaneName->string())){
-		d_dataset->doInitHeight = false;
-		}
-	}
-if(d_dataset->doInitColorPlane == true){
-		d_dataset->colorPlaneName -> Set(d_dataset->initColorPlane);
-		if(!strcmp(d_dataset->initColorPlane,d_dataset->colorPlaneName->string())){
-			d_dataset->doInitColorPlane = false;
-		}
-	}
+      if(d_dataset->doInitHeight == true)
+      {
+          d_dataset->heightPlaneName -> Set(d_dataset->initHeight);
+          if(!strcmp(d_dataset->initHeight,d_dataset->heightPlaneName->string()))
+          {
+              d_dataset->doInitHeight = false;
+          }
+      }
   }
 }
 
