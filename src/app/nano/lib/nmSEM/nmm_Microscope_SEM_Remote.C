@@ -142,6 +142,15 @@ nmm_Microscope_SEM_Remote::~nmm_Microscope_SEM_Remote()
   }
 }
 
+void nmm_Microscope_SEM_Remote::clearImageBuffers()
+{
+	int i;
+	for (i = 0; i < EDAX_NUM_SCAN_MATRICES; i++){
+		d_image_uint8[i] = NULL;
+		d_image_uint16[i] = NULL;
+	}
+}
+
 vrpn_int32 nmm_Microscope_SEM_Remote::mainloop(const struct timeval * timeout)
 {
   if (d_connection){

@@ -1,3 +1,8 @@
+2003-03-31  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM_Remote.C (clearImageBuffers): new function
+    * nmui_SEM.h (clearImageBuffers): "
+
 2003-02-11  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_EDAX.h : changed default resolution from 256x200 to 1024x800

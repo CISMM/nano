@@ -145,6 +145,7 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
 
     // other
     int connected() {return d_connection->connected();}
+	void clearImageBuffers();
 
   protected:
     static int RcvReportResolution (void *_userdata, vrpn_HANDLERPARAM _p);

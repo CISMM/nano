@@ -48,6 +48,7 @@ class nms_SEM_ui {
 
 	nmm_Microscope_SEM_Remote *semClient() {return sem;}
 
+	void clearImageBuffers() {sem->clearImageBuffers();}
   protected:
     nmm_Microscope_SEM_Remote *sem;
 
