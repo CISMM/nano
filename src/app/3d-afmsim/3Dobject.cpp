@@ -328,7 +328,7 @@ void Ntube :: afm_sphere_tip(SphereTip sp) {
   glPushMatrix();
   if (type == SPHERE) {
     glTranslatef(pos.x,pos.y,pos.z);
-    drawSphere(diam+2*sp.r);
+    drawSphere(diam +2*sp.r);
   }
   else {
     Ntube bigtube = *this;

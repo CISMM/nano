@@ -65,6 +65,7 @@ void get_z_buffer_values() {
   // width and height the same for now
 
   glReadBuffer(GL_BACK);
+  
   glReadPixels( 0, 0, pixelGridSize, pixelGridSize, GL_DEPTH_COMPONENT, GL_FLOAT, zBufferPtr );
   for(int j=0; j<scanResolution; j++ ) {
     for(int i=0; i<scanResolution; i++ ) {
@@ -75,17 +76,22 @@ void get_z_buffer_values() {
       double zDepth = -scanFar + (1-(double)zNormalized)*(-scanNear + scanFar);
       // Open GL convention
       zHeight[j][i] = zDepth;
-      zDistance[j][i] = (1-zNormalized)*(-scanNear + scanFar);//I *think* it should be '+ scanFar'
+      zDistance[j][i] = (1-zNormalized)*(-scanNear + scanFar);
+      //I *think* it should be '+ scanFar'
+
+      
+
     }
   }
+
 }
 
 //returns the volume total for all the objects in the plane, in the units of the objects entered
 double find_volume(){
+
   Volume = 0;
   double onePixelArea = pow(((double)numberUnits_onedim/(double)numberPixels_onedim),2);
 
-  //get_z_buffer_values();
   for(int j= 0; j<scanResolution; j++){
     for(int i=0; i<scanResolution; i++){
       Volume += (zDistance[j][i] * onePixelArea);
@@ -94,7 +100,6 @@ double find_volume(){
 	  //= avg. volume/pixel * number pixels = total volume
     }
   }
-  
   return Volume;
 }
 
@@ -197,7 +202,7 @@ void  imageScanDepthRender()  {
       glPopMatrix();
       break;
     }
-  }
+    }
 
   glFinish();
 
