@@ -1,5 +1,11 @@
 2002-06-06  David Borland <borland@cs.unc.edu>
 
+        * ProjTextObjGenerator.C : removed an erroneous error message
+
+	* FileGenerator.C : same
+
+2002-06-06  David Borland <borland@cs.unc.edu>
+
         * ProjTextObjGenerator.C : new file for the creation of the object
 	associated with the projective texture when in object coordiate
 	generation mode.  The object is basically a cone with a "sight" on

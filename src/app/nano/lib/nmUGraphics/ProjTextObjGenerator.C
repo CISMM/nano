@@ -32,7 +32,7 @@ extern nmb_Dataset * dataset;
 
 
 
-ProjTextObjGenerator::ProjTextObjGenerator(const char *fname) : FileGenerator(fname, "spi")
+ProjTextObjGenerator::ProjTextObjGenerator(const char *fname) : FileGenerator(fname, "ptx")
 {
 }
 
