@@ -703,6 +703,11 @@ int CollaborationManager::fullyConnected (void) {
       "Internal: Tcl_Eval failed in fullyConnected: %s.\n",
       tk_control_interp->result);
   }
+
+  // no return statement breaks build on PC (but not SGI?). - DTM 03-14-01
+  return 0; 
+  // WARNING:  ADDITION WITHOUT REGARD FOR DESIRED FUNCTION.
+
 }
 
 
