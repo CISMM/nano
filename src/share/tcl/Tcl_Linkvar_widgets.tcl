@@ -502,14 +502,14 @@ proc updateOptionmenuEntries {menu entry_list_name var name element op} {
 # "var" is a global representing the currently selected item
 # "entry_list_name" is a global list representing all the items to
 # choose from in the menu.
-proc generic_optionmenu { name var label entry_list_name} {
+proc generic_optionmenu { name var label entry_list_name } {
     upvar #0 $var varval
     upvar #0 $entry_list_name entry_list
 
     iwidgets::optionmenu $name \
 	    -labeltext "$label" -labelpos w \
 	    -command "if {!\$optionmenu_selecting_default} {
-	set $var \[ $name get \]
+	set $var \[ $name get \];
     }" 
 
     if { $entry_list != "" } {
@@ -534,6 +534,59 @@ proc generic_optionmenu { name var label entry_list_name} {
     return $name
 }
 
+# called when the C code sets the global value variable
+proc updateOptionmenuWithIndex {menu var name element op} {
+    upvar #0 $var varval
+    global optionmenu_setting_list
+
+    if { $optionmenu_setting_list } { return; }
+
+    set optionmenu_setting_list 1
+
+    $menu select $varval
+
+    set optionmenu_setting_list 0
+}
+
+
+# Create an option menu for choosing from a list of strings.
+# Two global variable are associated with it.
+# "var" is a global representing the currently selected item
+# "entry_list_name" is a global list representing all the items to
+# choose from in the menu.
+proc generic_optionmenu_with_index { name var label entry_list_name } {
+    upvar #0 $var varval
+    upvar #0 $entry_list_name entry_list
+
+    iwidgets::optionmenu $name \
+            -labeltext "$label" -labelpos w \
+            -command "if {!\$optionmenu_selecting_default} {
+        set $var \[ $name index select \];
+    }"
+
+    if { $entry_list != "" } {
+        # Use "eval" so the list members are treated as individual args.
+        eval $name insert end $entry_list
+    } else {
+        $name insert end "none"
+    }
+
+    # Force the global variable to be set to the initial menu entry.
+    set varval "[ $name index select ]"
+
+    # Find out when the global variable connected with the entry
+    # gets set by someone else.
+    trace variable varval w "updateOptionmenuWithIndex $name $var "
+
+    # Find out when the global variable connected with the menu entries
+    # gets set by someone else.
+    trace variable entry_list w \
+            "updateOptionmenuEntries $name $entry_list_name $var "
+
+    return $name
+}
+
+
 # Create a window with a "close" button at the top, 
 # and a procedure to open it again. 
 proc create_closing_toplevel { win_name {title "" } } {
@@ -557,6 +610,37 @@ proc create_closing_toplevel { win_name {title "" } } {
     "
     return .$win_name
 }
+
+
+# Create a window with a "close" button at the top,
+# and a procedure to open it again. The global variable passed in is
+# set to 1 while the window is visible and 0 while it is hidden
+proc create_closing_toplevel_with_notify { win_name signal_var_name {title "" } } {
+
+    toplevel .$win_name
+    wm withdraw .$win_name
+
+    if { "$title" != "" } {
+        wm title .$win_name "$title"
+    }
+
+    button .$win_name.close -text "Close" -command "
+        wm withdraw .$win_name
+        upvar #0 $signal_var_name signal_var
+        set signal_var 0
+    "
+    wm protocol .$win_name WM_DELETE_WINDOW ".$win_name.close invoke"
+    #pack .$win_name.close -anchor nw
+
+    proc show.${win_name} {} "
+        wm deiconify .$win_name
+        raise .$win_name
+        upvar #0 $signal_var_name signal_var
+        set signal_var 1
+    "
+    return .$win_name
+}
+
 
 # Creates a standard dialog for choosing a color, and sets the
 # value of a global variable based on the user's choice. If the
@@ -605,8 +689,8 @@ proc generic_radiobox { name var label entry_list} {
     
     # Set default value for radiobox, if it doesn't exist already
     if { 0==[info exists varval] } { set varval 0 }
-    iwidgets::radiobox $name -labeltext "$label" -labelpos nw -command \
-	    [list radiobox_command $name $var] 
+    iwidgets::radiobox $name -labeltext "$label" -labelpos nw \
+            -command [list radiobox_command $name $var]
 
     # add each of the elements in the list passed in. Use a numerical tag.
     set i 0

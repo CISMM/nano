@@ -1,41 +1,62 @@
-global registration_enabled registration_needed 
-global resample_resolution_x resample_resolution_y
+global reg_window_open registration_needed reg_constrain_to_topography
+global resample_resolution_x resample_resolution_y reg_resample_ratio
 
-set registrationmod(sf) [create_closing_toplevel registration]
-
-frame $registrationmod(sf).selection3D
-pack $registrationmod(sf).selection3D
-frame $registrationmod(sf).selection2D
-pack $registrationmod(sf).selection2D
-
-frame $registrationmod(sf).rotate3D_enable
-pack $registrationmod(sf).rotate3D_enable
+set nmInfo(registration) [create_closing_toplevel_with_notify \
+                                      registration reg_window_open]
 
 
-button $registrationmod(sf).register -text "Register" -command {
-    set registration_needed 1 }
-pack $registrationmod(sf).register
+generic_optionmenu $nmInfo(registration).selection3D reg_surface_comes_from \
+        "Topography image" imageNames
+pack $nmInfo(registration).selection3D -anchor nw -padx 3 -pady 3
+
+generic_optionmenu $nmInfo(registration).selection2D reg_projection_comes_from \
+        "Projection image" imageNames
+pack $nmInfo(registration).selection2D -anchor nw -padx 3 -pady 3
+
+# make radio button group for transform options (2D-2D only, 3D-2D, etc)
+
+# radio button group for resample options (surface region only), preserve
+# entire texture, 
+
+# checkbox option for resampling: blend using transparency and colormap 
+# displayed in graphics window
+
+checkbutton $nmInfo(registration).constrain_to_topography \
+       -text "Topography Region Only" -variable reg_constrain_to_topography \
+       -anchor nw
+pack $nmInfo(registration).constrain_to_topography
+
+floatscale $nmInfo(registration).resample_ratio 0 1 101 1 1 \
+       reg_resample_ratio "Resample Mixing Ratio"
+pack $nmInfo(registration).resample_ratio
+
+button $nmInfo(registration).register -text "Register" -command \
+    { set registration_needed 1 }
+pack $nmInfo(registration).register
+
+checkbutton $nmInfo(registration).display_texture \
+       -text "Display Texture" -variable reg_display_texture -anchor nw
+pack $nmInfo(registration).display_texture
 
 # stuff for creating resampled data:
 set resample_plane_name ""
 #set resample_from ""
-frame $registrationmod(sf).resample_plane -relief raised -bd 4
-frame $registrationmod(sf).resample_plane.choice
-frame $registrationmod(sf).resample_plane.name
-pack $registrationmod(sf).resample_plane.choice -side left
-pack $registrationmod(sf).resample_plane.name
-label $registrationmod(sf).resample_plane.name.label -text "Resample plane name"
-pack $registrationmod(sf).resample_plane.name.label
-newlabel_dialogue resample_plane_name $registrationmod(sf).resample_plane.name
-pack $registrationmod(sf).resample_plane -fill both
+frame $nmInfo(registration).resample_plane -relief raised -bd 4
+frame $nmInfo(registration).resample_plane.choice
+frame $nmInfo(registration).resample_plane.name
+pack $nmInfo(registration).resample_plane.choice -side left
+pack $nmInfo(registration).resample_plane.name
+label $nmInfo(registration).resample_plane.name.label \
+      -text "Resample plane name"
+pack $nmInfo(registration).resample_plane.name.label
+newlabel_dialogue resample_plane_name $nmInfo(registration).resample_plane.name
+pack $nmInfo(registration).resample_plane -fill both
 
-intscale $registrationmod(sf).resolution_x 10 10000 9991 1 1 \
+intscale $nmInfo(registration).resolution_x 10 10000 9991 1 1 \
 		resample_resolution_x "x resolution"
 
-intscale $registrationmod(sf).resolution_y 10 10000 9991 1 1 \
+intscale $nmInfo(registration).resolution_y 10 10000 9991 1 1 \
 		resample_resolution_y "y resolution"
 
-pack $registrationmod(sf).resolution_x $registrationmod(sf).resolution_y \
+pack $nmInfo(registration).resolution_x $nmInfo(registration).resolution_y \
 	-fill both
-
-

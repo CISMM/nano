@@ -1,10 +1,3 @@
-# Create a toplevel window for the french ohmmeter controls.
-# It is initially hidden, but can be shown by calling
-# the "show" procedure.
-# ----------------------------------------------------------------------
-set french_ohmmeter [create_closing_toplevel french_ohmmeter "French Ohmmeter"]
-
-
 # Create a toplevel window for the Keithley VI Curve generator controls.
 # It is initially hidden, but can be shown by calling
 # the "show" procedure.

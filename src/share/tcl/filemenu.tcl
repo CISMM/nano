@@ -32,7 +32,7 @@ iwidgets::dialog .save_plane_dialog -title "Save plane data" -modality applicati
 
 set win [.save_plane_dialog childsite]
 generic_optionmenu $win.export_plane export_plane \
-	"Plane to extract data from:" inputPlaneNames
+	"Plane to extract data from:" imageNames
 pack $win.export_plane -anchor nw
 
 set export_formats {none}
