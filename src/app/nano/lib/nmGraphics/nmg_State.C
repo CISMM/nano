@@ -12,6 +12,9 @@
 class BCGrid;  // from BCGrid.h
 class nmb_Subgrid;  // from nmb_Subgrid.h
 
+// Attention:
+// NO Tclvars in this file!  Nothing that needs to be shared outside!
+
 
 nmg_State::nmg_State ()
 {
@@ -67,13 +70,7 @@ nmg_State::nmg_State ()
     surfaceColor[2] = 0.04f;
     surfaceColor[3] = 1.0f;
 
-    minChangedX;
-    maxChangedX;
-    minChangedY;
-    maxChangedY;
-
-
-// Realigning Textures:
+    // Realigning Textures:
     realign_textures_curColorMap = NULL;
     realign_textures_data_min = 0;
     realign_textures_data_max = 1.0;
@@ -110,7 +107,7 @@ nmg_State::nmg_State ()
     shear_tex_dy = 0;
     rotate_tex_theta = 0;
 
-// Registration
+    // Registration
     texture_transform[0] = 0.001;
     texture_transform[1] = 0;
     texture_transform[2] = 0;
@@ -143,18 +140,15 @@ nmg_State::nmg_State ()
     ruler_g = 255;
     ruler_b = 55;
 
-//set default rulergrid opacity to 178 (70%) instead of 255 (100%)
+    //set default rulergrid opacity to 178 (70%) instead of 255 (100%)
     ruler_opacity = 178.0f;
-//    ruler_opacity = 255.0f;
     ruler_width_x = 1.0f;
     ruler_width_y = 1.0f;
     rulergrid_sin = 0.0f;
     rulergrid_cos = 1.0f;
     rulerPPM = NULL;
 
-// Material properties of the surface
-// NO Tclvars in this file!  Nothing that needs to be shared outside!
-//Tclvar_    shiny("shiny", 55);  
+    // Material properties of the surface
     shiny = 55;
     local_viewer = vrpn_TRUE;
     diffuse = .50;
@@ -168,11 +162,7 @@ nmg_State::nmg_State ()
     texture_displayed = nmg_Graphics::NO_TEXTURES;
     texture_transform_mode = nmg_Graphics::RULERGRID_COORD;
 
-//GLenum g_texture_mode = GL_TEXTURE_2D;
     texture_mode = GL_FALSE;
-//GLubyte * sem_data = NULL;
-//float *realign_data = NULL;
-    //remote_data = NULL;
 
     texture_scale = 10.0f;
     trueTipScale = 1.0f;
@@ -189,16 +179,16 @@ nmg_State::nmg_State ()
 
     vizPPM = NULL;
 
-//////////////////////////////////////////////////////////////////
-// Variables that define what GL can and can't do on the machine
-// we are running on.
-//////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
+    // Variables that define what GL can and can't do on the machine
+    // we are running on.
+    //////////////////////////////////////////////////////////////////
 
     VERTEX_ARRAY = 0;
 
-//////////////////////////////////////////////////////////////////
-// End GL capabilities
-//////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
+    // End GL capabilities
+    //////////////////////////////////////////////////////////////////
 }
 
 // Local Variables:

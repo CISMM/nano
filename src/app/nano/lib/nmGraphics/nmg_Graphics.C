@@ -2620,13 +2620,11 @@ int nmg_Graphics::decode_setRegionControlPlaneName (const char * buf, char ** na
   return 0;
 }
 
-char * nmg_Graphics::encode_createRegion
-                     (int * len) {
+char * nmg_Graphics::encode_createRegion( int* /*len*/ ) {
   return NULL;
 }
 
-int nmg_Graphics::decode_createRegion
-                   (const char * buf) {
+int nmg_Graphics::decode_createRegion( const char* /*buf*/ ) {
   return 0;
 }
 

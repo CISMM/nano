@@ -54,7 +54,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     const char * rulergridName,
     const char * vizName,
     vrpn_Connection * connection,
-    unsigned int portNum)
+    unsigned int /*portNum*/ )
 
   : nmg_Graphics (connection, "nmg Graphics Implementation GL"),
     d_dataset (data),
@@ -1358,7 +1358,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
 // color values when realigning textures.
 //
 void nmg_Graphics_Implementation::
-setRealignTexturesConversionMap( const char *map, const char *mapdir ) {
+setRealignTexturesConversionMap( const char *map, const char* /*mapdir*/ ) {
   if ( !strcmp( map, "none" ) ) {
     if (state->realign_textures_curColorMap) {
       delete state->realign_textures_curColorMap;
@@ -2608,18 +2608,14 @@ void nmg_Graphics_Implementation::setViewTransform (v_xform_type xform) {
 
 }
 
-void nmg_Graphics_Implementation::createScreenImage
-(
-   const char      *filename,
-   const ImageType  type
-)
+void nmg_Graphics_Implementation::
+createScreenImage( const char *filename,
+		   const ImageType /*type*/ )
 {
-//   fprintf(stderr, "DEBUG nmg_Graphics_Impl::createScreenImage '%s' '%s'\n", filename, ImageType_names[type]);
   int w, h;
   unsigned char * pixels = NULL;
 
   screenCapture(&w, &h, &pixels, vrpn_FALSE);
-
   if (!pixels) {
     return;
   }
@@ -2627,23 +2623,11 @@ void nmg_Graphics_Implementation::createScreenImage
   if(nmb_ImgMagick::writeFileMagick(filename, NULL, w, h, 3, pixels)) {
       fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
   }
-//    AbstractImage *ai = ImageMaker(type, h, w, 3, pixels, true);
-
   delete [] pixels;
-
-//    if (ai)
-//    {
-//       if (!ai->Write(filename))
-//          fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
-
-//       delete ai;
-//    }
 }
 
 void nmg_Graphics_Implementation::setViztexScale (float s) {
-  //fprintf(stderr, "nmg_Graphics_Implementation::setViztexScale().\n");
   state->viztex_scale = s;
-  //causeGridRedraw();
 }
 
 void nmg_Graphics_Implementation::setRegionMaskHeight (float min_height,
@@ -3689,8 +3673,8 @@ int nmg_Graphics_Implementation::handle_updateTexture (void *userdata,
 }
 
 // static
-int nmg_Graphics_Implementation::handle_setTextureTransform (void *userdata,
-						vrpn_HANDLERPARAM p) {
+int nmg_Graphics_Implementation::
+handle_setTextureTransform (void *userdata, vrpn_HANDLERPARAM p) {
   double xform[16];
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
   it->decode_textureTransform( p.buffer, xform);
@@ -3713,11 +3697,8 @@ int nmg_Graphics_Implementation::handle_setViewTransform
 //
 // Save the screen as an image
 //
-int nmg_Graphics_Implementation::handle_createScreenImage
-(
-   void              *userdata,
-   vrpn_HANDLERPARAM  p
-)
+int nmg_Graphics_Implementation::
+handle_createScreenImage( void *userdata, vrpn_HANDLERPARAM  p )
 {
    char *filename = new char[512];
 
@@ -3735,11 +3716,8 @@ int nmg_Graphics_Implementation::handle_createScreenImage
 }
 
 // static
-int nmg_Graphics_Implementation::handle_setViztexScale
-(
-    void * userdata, 
-    vrpn_HANDLERPARAM p
-) 
+int nmg_Graphics_Implementation::
+handle_setViztexScale( void * userdata, vrpn_HANDLERPARAM p ) 
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float scale;
@@ -3750,11 +3728,8 @@ int nmg_Graphics_Implementation::handle_setViztexScale
 }
 
 
-int nmg_Graphics_Implementation::handle_setRegionMaskHeight
-(
-    void * userdata, 
-    vrpn_HANDLERPARAM p
-) 
+int nmg_Graphics_Implementation::
+handle_setRegionMaskHeight( void * userdata, vrpn_HANDLERPARAM p ) 
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   float min_height, max_height;
@@ -3766,11 +3741,8 @@ int nmg_Graphics_Implementation::handle_setRegionMaskHeight
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_createRegion
-(
-    void * userdata, 
-    vrpn_HANDLERPARAM p
-) 
+int nmg_Graphics_Implementation::
+handle_createRegion( void * userdata, vrpn_HANDLERPARAM /*p*/ ) 
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
 
@@ -3778,11 +3750,8 @@ int nmg_Graphics_Implementation::handle_createRegion
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_destroyRegion
-(
-    void * userdata, 
-    vrpn_HANDLERPARAM p
-) 
+int nmg_Graphics_Implementation::
+handle_destroyRegion( void * userdata, vrpn_HANDLERPARAM p ) 
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   int region;
@@ -3793,7 +3762,8 @@ int nmg_Graphics_Implementation::handle_destroyRegion
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_associateAlpha(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::
+handle_associateAlpha(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   vrpn_bool associate;
@@ -3805,7 +3775,8 @@ int nmg_Graphics_Implementation::handle_associateAlpha(void *userdata, vrpn_HAND
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_associateFilledPolygons(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::
+handle_associateFilledPolygons(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   vrpn_bool associate;
@@ -3817,7 +3788,8 @@ int nmg_Graphics_Implementation::handle_associateFilledPolygons(void *userdata, 
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_associateStride(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::
+handle_associateStride(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   vrpn_bool associate;
@@ -3829,7 +3801,8 @@ int nmg_Graphics_Implementation::handle_associateStride(void *userdata, vrpn_HAN
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_associateTextureDisplayed(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::
+handle_associateTextureDisplayed(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   vrpn_bool associate;
@@ -3841,7 +3814,8 @@ int nmg_Graphics_Implementation::handle_associateTextureDisplayed(void *userdata
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_associateTextureMode(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::
+handle_associateTextureMode(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   vrpn_bool associate;
@@ -3853,7 +3827,8 @@ int nmg_Graphics_Implementation::handle_associateTextureMode(void *userdata, vrp
   return 0;
 }
 
-int nmg_Graphics_Implementation::handle_associateTextureTransformMode(void *userdata, vrpn_HANDLERPARAM p)
+int nmg_Graphics_Implementation::
+handle_associateTextureTransformMode(void *userdata, vrpn_HANDLERPARAM p)
 {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   vrpn_bool associate;

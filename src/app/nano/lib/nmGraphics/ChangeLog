@@ -1,3 +1,13 @@
+2001-12-18  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* globject.c: remove some compiler warnings on the SGI, remove
+	commented out code, some code clean-up
+	* nmg_Graphics.C: same
+	* nmg_GraphicsImpl.C: same
+	* nmg_GraphicsRemote.C: same
+	* nmg_ImageDisplayProjectiveTexture.C: same
+	* nmg_State.C: same
+
 2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
 	
 	* nmg_ImageDisplayProjectiveTexture.Ch: new files to provide a more
