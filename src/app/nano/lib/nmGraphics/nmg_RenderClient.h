@@ -35,9 +35,33 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
 
     virtual ~nmg_Graphics_RenderClient (void);
 
-    virtual void mainloop (void);
+
+    // ACCESSORS
+
+
+    virtual void setGraphicsTiming (vrpn_bool);
+      ///< Only if VRPN_TRUE is passed into this function will graphics
+      ///< timing be done.  (Graphics timing doubles network traffic on
+      ///< one particular link, although it isn't significant traffic in
+      ///< an absolute sense.)
+
+    virtual void getViewportSize(int *width, int * height);
+    virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
+                                     q_vec_type &ur);
+    virtual void getLightDirection (q_vec_type *) const;
+    virtual int getHandColor (void) const;
+    virtual int getSpecularity (void) const;
+    virtual const double * getMinColor (void) const;
+    virtual const double * getMaxColor (void) const;
 
     nmb_Subgrid & rangeOfChange (void);
+
+
+    // MANIPULATORS
+
+
+    virtual void mainloop (void);
+
 
     // For timing, we need to override any function that issues
     // a causeGridRedraw() so that it also suspends d_timer and
@@ -76,15 +100,6 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
 
     virtual void setViewTransform (v_xform_type);
 
-    //Accessors
-    virtual void getViewportSize(int *width, int * height);
-    virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
-                                     q_vec_type &ur);
-    virtual void getLightDirection (q_vec_type *) const;
-    virtual int getHandColor (void) const;
-    virtual int getSpecularity (void) const;
-    virtual const double * getMinColor (void) const;
-    virtual const double * getMaxColor (void) const;
 
   protected:
 
@@ -92,6 +107,8 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
 
     void blockTimer (void);
     nmb_TimerList * d_timer;
+
+    vrpn_bool d_timeGraphics;
 
     vrpn_int32 d_timerSN_type;
 };

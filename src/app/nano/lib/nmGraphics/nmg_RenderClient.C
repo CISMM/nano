@@ -25,7 +25,8 @@ nmg_Graphics_RenderClient::nmg_Graphics_RenderClient
     nmg_Graphics_Remote (controlConnection),
     d_implementation (data, minColor, maxColor, inputConnection,
                       cMode, dMode, pMode, timer, xsize, ysize),
-    d_timer (timer) {
+    d_timer (timer),
+    d_timeGraphics (VRPN_FALSE) {
 
   // HACK
   // Need to call *some* of the initiaization functions -
@@ -53,6 +54,11 @@ nmg_Graphics_RenderClient::~nmg_Graphics_RenderClient (void) {
 
 }
 
+
+void nmg_Graphics_RenderClient::setGraphicsTiming (vrpn_bool on) {
+  d_timeGraphics = on;
+}
+
 void nmg_Graphics_RenderClient::mainloop (void) {
 
   nmg_Graphics_Remote::mainloop();
@@ -75,7 +81,7 @@ void nmg_Graphics_RenderClient::blockTimer (void) {
   vrpn_int32 sn;
   vrpn_int32 msglen;
 
-  if (!d_timer) {
+  if (!d_timer || !d_timeGraphics) {
     fprintf(stderr, "nmg_Graphics_RenderClient::blockTimer:  no timer!\n");
     return;
   }
