@@ -183,12 +183,14 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
                                PatternShapeColorMap &map)
 {
   if (d_numPoints == 0) return;
-  double color[3];
+  double color[3] = {1.0, 1.0, 1.0};
+  /*
   if (d_lineWidth_nm == 0) {
 	map.linearExposureColor(d_exposure_pCoulombs_per_cm, color);
   } else {
 	map.areaExposureColor(d_exposure_uCoulombs_per_square_cm, color);
   }
+  */
   drawToDisplay(units_per_pixel_x, units_per_pixel_y,
 	  color[0], color[1], color[2]);
 
@@ -221,6 +223,11 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
 	glPushMatrix();
 	glMultMatrixd(d_parentFromObject);
 
+
+	double textOffsetX = 0;
+	double textOffsetY = 0;
+
+
     if (d_numPoints == 1) {
       double worldFromObjM[16];
       getWorldFromObject(worldFromObjM);
@@ -232,6 +239,7 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
 
       list<PatternPoint>::iterator pntIter;
       pntIter = d_points.begin();
+
       glBegin(GL_LINE_LOOP);
 	  float x_world, y_world, x_obj, y_obj;
 	  float x_center_world, y_center_world;
@@ -250,17 +258,37 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
 		angle += angleIncr;
 	  }
       glEnd();
+	  textOffsetX = x_obj;
+	  textOffsetY = y_obj+0.01;
     } else {
       glBegin(GL_LINE_LOOP);
       int i;
+	  textOffsetX = d_leftSidePoints[0].d_x;
+	  textOffsetY = d_leftSidePoints[0].d_y;
       for (i = 0; i < d_numPoints; i++) {
         glVertex2d(d_leftSidePoints[i].d_x, d_leftSidePoints[i].d_y);
+		if (d_leftSidePoints[i].d_x > textOffsetX) {
+			textOffsetX = d_leftSidePoints[i].d_x;
+			textOffsetY = d_leftSidePoints[i].d_y;
+		}
       }
       for (i = d_numPoints-1; i >= 0; i--) {
         glVertex2d(d_rightSidePoints[i].d_x, d_rightSidePoints[i].d_y);
+		if (d_rightSidePoints[i].d_x > textOffsetX) {
+			textOffsetX = d_rightSidePoints[i].d_x;
+			textOffsetY = d_rightSidePoints[i].d_y;
+		}
       }
       glEnd();
     }
+
+	glRasterPos2d(textOffsetX+0.01, textOffsetY);
+	char str[128];
+	sprintf(str, "%g uCoul/cm2", d_exposure_uCoulombs_per_square_cm);
+	int i;
+	for (i = 0; i < strlen(str); i++) {
+		glutBitmapCharacter(GLUT_BITMAP_8_BY_13, str[i]);
+	}
 
 	glPopMatrix();
 	glPopAttrib();
@@ -877,7 +905,7 @@ void PolylinePatternShape::drawToDisplayZeroWidth(double units_per_pixel_x,
   if (d_points.empty()) return;
 
   double x, y;
-  double x_max, y_min;
+  double x_xMax, y_xMax;
   glLineWidth(1);
   glColor4f(r,g,b, 1.0);
 
@@ -890,8 +918,9 @@ void PolylinePatternShape::drawToDisplayZeroWidth(double units_per_pixel_x,
 
   x = (*pntIter).d_x;
   y = (*pntIter).d_y;
-  x_max = x;
-  y_min = y;
+
+  x_xMax = x;
+  y_xMax = y;
   pntIter++;
   if (pntIter == d_points.end()) {
     glBegin(GL_POINTS);
@@ -903,14 +932,25 @@ void PolylinePatternShape::drawToDisplayZeroWidth(double units_per_pixel_x,
     while (pntIter != d_points.end()) {
       x = (*pntIter).d_x;
       y = (*pntIter).d_y;
-      if (x > x_max) {
-        x_max = x;
-        y_min = y;
+      if (x > x_xMax) {
+        x_xMax = x;
+        y_xMax = y;
       }
       glVertex3f(x,y,0.0);
       pntIter++;
     }
     glEnd();
+  }
+  
+  double textOffsetX = x_xMax+0.01;
+  double textOffsetY = y_xMax;
+
+  glRasterPos2d(textOffsetX, textOffsetY);
+  char str[128];
+  sprintf(str, "%g pCoul/cm", d_exposure_pCoulombs_per_cm);
+  int i;
+  for (i = 0; i < strlen(str); i++) {
+    glutBitmapCharacter(GLUT_BITMAP_8_BY_13, str[i]);
   }
 
   glPopMatrix();
@@ -1119,8 +1159,8 @@ void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
   if (d_points.empty()) return;
 
 
-  double color[3];
-  map.areaExposureColor(d_exposure_uCoulombs_per_square_cm, color);
+  double color[3] = {1.0, 1.0, 1.0};
+  //map.areaExposureColor(d_exposure_uCoulombs_per_square_cm, color);
 
   drawToDisplay(units_per_pixel_x, units_per_pixel_y,
 	  color[0], color[1], color[2]);
@@ -1145,6 +1185,11 @@ void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
 
   x = (*pntIter).d_x;
   y = (*pntIter).d_y;
+
+
+  double textOffsetX = x;
+  double textOffsetY = y;
+
   pntIter++;
   if (pntIter == d_points.end()) {
     glBegin(GL_POINTS);
@@ -1158,8 +1203,20 @@ void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
       y = (*pntIter).d_y;
       glVertex3f(x,y,0.0);
       pntIter++;
+	  if (x > textOffsetX) {
+		textOffsetX = x;
+		textOffsetY = y;
+	  }
     }
     glEnd();
+  }
+
+  glRasterPos2d(textOffsetX+0.01, textOffsetY);
+  char str[128];
+  sprintf(str, "%g uCoul/cm2", d_exposure_uCoulombs_per_square_cm);
+  int i;
+  for (i = 0; i < strlen(str); i++) {
+    glutBitmapCharacter(GLUT_BITMAP_8_BY_13, str[i]);
   }
 
   glPopMatrix();

@@ -1,3 +1,24 @@
+2003-02-15  Adam Seeger  <seeger@cs.unc.edu>
+
+	* patternShape.C : commented out old code for setting color based on
+	exposure and added exposure display as number next to each shape
+	* patternEditor.[Ch] (updatePatternTransform): new function
+	(zoomAndReCenter): new function
+	replaced calls to zoomBy by zoomAndReCenter to make zooming more intuitive
+	Added several calls to updatePatternTransform to fix the bug where
+	the pattern transform becomes inconsistent with the canvas image transform
+	Flipped the viewport in X so that loaded images don't appear flipped in X.
+	Commented out call to display exposure level legend
+	* main.C : flipped reference image in X
+	* controlPanels.[Ch]: added member pointer to alignment UI
+	changed default loaded image scale to match scan region
+	(handle_canvasImage_change): automatically sets adjustable image for
+	alignment to the canvas image
+	(handleSEMChange): automatically sets acquired image to be partially
+	transparent and sets reference image for alignment to the acquired
+	image
+	
+
 2003-02-11  Adam Seeger  <seeger@cs.unc.edu>
 
 	* controlPanels.C : changed default line, area exposures, and dot and 

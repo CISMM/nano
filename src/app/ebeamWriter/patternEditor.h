@@ -93,6 +93,7 @@ class PatternEditor : public nmb_ImageDisplay {
    void clearExposurePoints();
 
    void setCanvasImage(nmb_Image *image);
+   void updatePatternTransform();
 
    // more general ImageDisplay interface used by nmr_RegistrationUI:
 
@@ -140,6 +141,8 @@ class PatternEditor : public nmb_ImageDisplay {
                           double &x_pixels, double &y_pixels);
    void mainWinNMToPixels(const double dist_nm,double &dist_pixels);
    void zoomBy(double centerX_nm, double centerY_nm,
+                           double magFactor);
+   void zoomAndReCenter(double centerX_nm, double centerY_nm,
                            double magFactor);
 
    void clampMainWinRectangle(double &xmin, double &ymin,

@@ -13,7 +13,8 @@ char *ControlPanels::s_imageFileFormatNames[] =
 {"TIFF", "JPG", "BMP", "PGM", "PPM"};
 
 ControlPanels::ControlPanels(PatternEditor *pe,
-                             nmm_Microscope_SEM_Remote *sem):
+                             nmm_Microscope_SEM_Remote *sem,
+							 nmr_RegistrationUI *aligner):
    d_imageNames(new Tclvar_list_of_strings()),
    d_bufferImageFormatList(new Tclvar_list_of_strings()),
    d_openImageFileName("open_image_filename", ""),
@@ -84,8 +85,9 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_semMinAreaExposure_uCoul_per_sq_cm(0),
    d_patternEditor(pe),
    d_SEM(sem),
+   d_aligner(aligner),
    d_imageList(NULL),
-   d_autoEnabledImageName(NULL),
+   d_currentLiveSEMImageName(NULL),
    d_disableCommandsToSEM(false),
    d_disableDisplaySettingCallbacks(false),
    d_minAllowedDotSpacing(1.0),
@@ -262,8 +264,8 @@ void ControlPanels::handle_openImageFileName_change(const char * /*new_value*/,
   double imageRegionWidth, imageRegionHeight;
   me->d_SEM->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
   if (imageRegionWidth != 0 && imageRegionHeight != 0) {
-	defaultWorldToImage.scale(2.0/imageRegionWidth, 
-		2.0/imageRegionHeight, 1.0);
+	defaultWorldToImage.scale(1.0/imageRegionWidth, 
+		1.0/imageRegionHeight, 1.0);
   } else {
 	defaultWorldToImage.scale(0.001, 0.001, 1.0);
   }
@@ -498,6 +500,7 @@ void ControlPanels::handle_clearPattern_change(int new_value,
 											   void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
+
   me->d_patternEditor->clearPattern();
 }
 
@@ -506,6 +509,7 @@ void ControlPanels::handle_addTestGrid_change(int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
   //printf("add test grid: %d\n", (int)(me->d_addTestGrid));
+
   double minX_nm, minY_nm;
   double maxX_nm, maxY_nm;
   double xSpan_nm, ySpan_nm;
@@ -532,6 +536,7 @@ void ControlPanels::handle_addTestGrid_change(int /*new_value*/, void *ud)
 
   me->d_patternEditor->addTestGrid(minX_nm, minY_nm, maxX_nm, maxY_nm,
              numHorizontal, numVertical);
+
 }
 
 // static
@@ -542,6 +547,7 @@ void ControlPanels::handle_canvasImage_change(const char * /*new_value*/,
   nmb_Image *im = me->d_imageList->getImageByName(
               string((const char *)(me->d_canvasImage)));
 
+  me->d_aligner->setProjectionImage((const char *)(me->d_canvasImage));
   me->d_patternEditor->setCanvasImage(im);
 }
 
@@ -642,11 +648,11 @@ void ControlPanels::handle_enableImageDisplay_change(int /*new_value*/,
 
   // tell the pattern editor to enable this image
   if ((int)me->d_enableImageDisplay == 0){
-    if (me->d_autoEnabledImageName &&
-        strcmp(me->d_autoEnabledImageName, 
+    if (me->d_currentLiveSEMImageName &&
+        strcmp(me->d_currentLiveSEMImageName, 
                (const char *)(me->d_currentImage)) == 0) {
-       delete [] me->d_autoEnabledImageName;
-       me->d_autoEnabledImageName = NULL;
+       delete [] me->d_currentLiveSEMImageName;
+       me->d_currentLiveSEMImageName = NULL;
     }
     me->d_patternEditor->setImageEnable(currImage, vrpn_FALSE);
   } else {
@@ -788,17 +794,19 @@ void ControlPanels::handleSEMChange(
                   (short)res_x, (short)res_y, pix_type);
             d_imageList->addImage(currentImage);
             d_patternEditor->addImage(currentImage);
-            d_semBufferImageNames->addEntry(currentImageName);
-        }
-
-		if (info.sem->lastScanMessageCompletesImage()) {
+			d_patternEditor->setImageOpacity(currentImage, 0.1);
 			info.sem->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
 			currentImage->setAcquisitionDimensions(imageRegionWidth, 
 												   imageRegionHeight);
 
 			worldToImage.scale(1.0/imageRegionWidth, 1.0/imageRegionHeight, 1.0);
 			currentImage->setWorldToImageTransform(worldToImage);
+            d_semBufferImageNames->addEntry(currentImageName);
+        }
+
+		if (info.sem->lastScanMessageCompletesImage()) {
 			d_patternEditor->updateDisplayTransform(currentImage, NULL, false);
+			d_aligner->setTopographyImage(currentImage->name()->c_str());
 		}
 		d_semDataBuffer.Set(currentImageName);
         if (start_y + num_lines*dy > res_y || line_length*dx != res_x) {
@@ -810,19 +818,19 @@ void ControlPanels::handleSEMChange(
         }
 		// make sure the image is visible in the pattern editor window
         if (!(d_patternEditor->getImageEnable(currentImage))) {
-          if (d_autoEnabledImageName) {
-			  nmb_Image *prevAEImage = 
-				   d_imageList->getImageByName(d_autoEnabledImageName);
-			  if (prevAEImage) {
-				d_patternEditor->setImageEnable(prevAEImage, vrpn_FALSE);
+          if (d_currentLiveSEMImageName) {
+			  nmb_Image *prevLiveSEMImage = 
+				   d_imageList->getImageByName(d_currentLiveSEMImageName);
+			  if (prevLiveSEMImage) {
+				d_patternEditor->setImageEnable(prevLiveSEMImage, vrpn_FALSE);
 			  } else {
-				fprintf(stderr, "autoenable image not found\n");
+				fprintf(stderr, "live SEM image not found\n");
 			  }
-			  delete [] d_autoEnabledImageName;
-			  d_autoEnabledImageName = NULL;
+			  delete [] d_currentLiveSEMImageName;
+			  d_currentLiveSEMImageName = NULL;
 		  }
-          d_autoEnabledImageName = new char[strlen(currentImageName)+1];
-          strcpy(d_autoEnabledImageName, currentImageName);
+          d_currentLiveSEMImageName = new char[strlen(currentImageName)+1];
+          strcpy(d_currentLiveSEMImageName, currentImageName);
           d_patternEditor->setImageEnable(currentImage, vrpn_TRUE);
 		  d_currentImage.Set(currentImageName);
         }
@@ -1263,6 +1271,7 @@ void ControlPanels::handle_semBeamExposePushed_change(int /*new_value*/,
   ControlPanels *me = (ControlPanels *)ud;
 //  printf("sem beam expose: %d\n",(int)me->d_semBeamExposePushed);
 
+  me->d_patternEditor->updatePatternTransform();
   if (me->d_patternEditor->getPattern().empty()) {
 	display_warning_dialog("No pattern specified");
 	return;
@@ -1317,6 +1326,7 @@ void ControlPanels::handle_semBeamExposePushed_change(int /*new_value*/,
 void ControlPanels::handle_semDoTimingTest_change(int /*new_value*/, void *ud)
 {
   ControlPanels *me = (ControlPanels *)ud;
+  me->d_patternEditor->updatePatternTransform();
 //  printf("sem timing test: %d\n", (int)me->d_semDoTimingTest);
   if (me->d_patternEditor->getPattern().empty()) {
 	display_warning_dialog("No pattern specified");

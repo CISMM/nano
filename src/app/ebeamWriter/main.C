@@ -214,12 +214,13 @@ int main(int argc, char **argv)
 
     // Now we can hook up the Tcl/Tk control panels 
     // to the parts that do the work
-    controls = new ControlPanels(patternEditor, sem);
 
     alignerUI = new nmr_RegistrationUI(aligner, patternEditor);
     alignerUI->setupCallbacks();
-	alignerUI->d_flipXreference = 1;
+	alignerUI->d_flipXreference = 0;
 	alignerUI->d_flipProjectionImageInX = 0;
+
+	controls = new ControlPanels(patternEditor, sem, alignerUI);
 
     // load the images specified on the command line
     TopoFile defaultTopoFileSettings;

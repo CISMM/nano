@@ -372,6 +372,7 @@ void PatternEditor::addShape(PatternShape *shape)
 {
   d_pattern.addSubShape(shape);
   updateExposureLevels();
+  updatePatternTransform();
   d_viewer->dirtyWindow(d_mainWinID);
 }
 
@@ -440,6 +441,7 @@ void PatternEditor::addTestGrid(double minX_nm, double minY_nm,
 	d_canvasImage->getWorldToImageTransform(canvasFromWorld);
   }
   grid->setParentFromObject(canvasFromWorld);
+
   addShape(grid);
 }
 
@@ -589,21 +591,14 @@ void PatternEditor::setScanRange(double minX_nm, double minY_nm,
 			d_worldMaxX_nm, d_worldMaxY_nm);
 	}
   }
+  updatePatternTransform();
   d_viewer->dirtyWindow(d_mainWinID);
 }
 
 void PatternEditor::setPattern(ExposurePattern &pattern)
 {
   d_pattern = pattern;
-  double worldFromPattern[16] = {100000.0,0,0,0,0,78125.,0,0,0,0,1,0,0,0,0,1};
-  if (d_canvasImage) {
-	nmb_TransformMatrix44 worldFromPattern44;
-	d_canvasImage->getWorldToImageTransform(worldFromPattern44);
-	worldFromPattern44.invert();
-	worldFromPattern44.getMatrix(worldFromPattern);
-  }
-  d_pattern.setParentFromObject(worldFromPattern);
-  d_pattern.handleWorldFromObjectChange();
+  updatePatternTransform();
   updateExposureLevels();
   d_viewer->dirtyWindow(d_mainWinID);
 }
@@ -643,6 +638,7 @@ void PatternEditor::setCanvasImage(nmb_Image *image)
 	}
 	d_canvasImage = image;
 	setImageEnable(image, vrpn_TRUE);
+	updatePatternTransform();
 	d_viewer->dirtyWindow(d_mainWinID);
 }
 
@@ -689,6 +685,7 @@ void PatternEditor::updateDisplayTransform(nmb_Image *image, double *transform,
     }
   }
   if (image == d_canvasImage) {
+	updatePatternTransform();
     // need to redraw the pattern 
     d_viewer->dirtyWindow(d_mainWinID);
   }
@@ -845,13 +842,13 @@ int PatternEditor::handleMainWinEvent(
          switch(event.keycode) {
            case 'z':
              mainWinPositionToWorld(x, y, centerX_nm, centerY_nm);
-             zoomBy(centerX_nm, centerY_nm, 2.0);
+             zoomAndReCenter(centerX_nm, centerY_nm, 2.0);
              d_viewer->dirtyWindow(d_navWinID);
              d_viewer->dirtyWindow(event.winID);
              break;
            case 'Z':
              mainWinPositionToWorld(x, y, centerX_nm, centerY_nm);
-             zoomBy(centerX_nm, centerY_nm, 0.5);
+             zoomAndReCenter(centerX_nm, centerY_nm, 0.5);
              d_viewer->dirtyWindow(d_navWinID);
              d_viewer->dirtyWindow(event.winID);
              break;
@@ -874,6 +871,20 @@ void PatternEditor::zoomBy(double centerX_nm, double centerY_nm,
 	xmax = centerX_nm + (d_mainWinMaxX_nm - centerX_nm)/magFactor;
 	ymin = centerY_nm + (d_mainWinMinY_nm - centerY_nm)/magFactor;
 	ymax = centerY_nm + (d_mainWinMaxY_nm - centerY_nm)/magFactor;
+	clampMainWinRectangle(xmin, ymin, xmax, ymax);
+	setViewport(xmin, ymin, xmax, ymax);
+}
+
+void PatternEditor::zoomAndReCenter(double centerX_nm, double centerY_nm,
+                           double magFactor)
+{
+	double xmin,xmax,ymin,ymax;
+	double newWidth = (d_mainWinMaxX_nm - d_mainWinMinX_nm)/magFactor;
+	double newHeight = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/magFactor;
+	xmin = centerX_nm - 0.5*newWidth;
+	xmax = centerX_nm + 0.5*newWidth;
+	ymin = centerY_nm - 0.5*newHeight;
+	ymax = centerY_nm + 0.5*newHeight;
 	clampMainWinRectangle(xmin, ymin, xmax, ymax);
 	setViewport(xmin, ymin, xmax, ymax);
 }
@@ -980,7 +991,7 @@ int PatternEditor::mainWinDisplayHandler(
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
-  glOrtho(me->d_mainWinMaxX_nm, me->d_mainWinMinX_nm, 
+  glOrtho(me->d_mainWinMinX_nm, me->d_mainWinMaxX_nm, 
           me->d_mainWinMinY_nm, me->d_mainWinMaxY_nm, -1, 1);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
@@ -1001,7 +1012,7 @@ int PatternEditor::mainWinDisplayHandler(
 //  printf("%g,%g\n", matrix[0], matrix[5]);
   me->drawScale();
 
-  me->drawExposureLevels();
+//  me->drawExposureLevels();
 
   if (me->d_exposurePointsDisplayed) {
     me->drawExposurePoints();
@@ -1039,11 +1050,41 @@ void PatternEditor::drawImage(const ImageElement &ie)
 
 
   ie.d_image->getWorldToImageTransform(W2I);
-  l = d_mainWinMaxX_nm; r = d_mainWinMinX_nm;
+  l = d_mainWinMinX_nm; r = d_mainWinMaxX_nm;
   b = d_mainWinMinY_nm; t = d_mainWinMaxY_nm;
   d_viewer->drawImage(d_mainWinID, ie.d_image,
       ie.d_red, ie.d_green, ie.d_blue, ie.d_opacity, &l, &r, &b, &t, &W2I);
 
+}
+
+void PatternEditor::updatePatternTransform()
+{
+  double scanWidthX_nm = d_scanMaxX_nm - d_scanMinX_nm;
+  double scanWidthY_nm = d_scanMaxY_nm - d_scanMinY_nm;
+  double worldFromPattern[16] = {scanWidthX_nm,0,0,0,
+	                             0,scanWidthY_nm,0,0,
+								 0,0,1,0,
+								 0,0,0,1};
+  if (d_canvasImage) {
+	nmb_TransformMatrix44 worldFromPattern44;
+	d_canvasImage->getWorldToImageTransform(worldFromPattern44);
+	worldFromPattern44.invert();
+	worldFromPattern44.getMatrix(worldFromPattern);
+  }
+  /*
+  printf("updatePatternTransform: ");
+  int i;
+  for (i = 0; i < 16; i++) {
+	printf("%g ", worldFromPattern[i]);
+  }
+  printf("\n");
+  */
+  d_pattern.setParentFromObject(worldFromPattern);
+  d_pattern.handleWorldFromObjectChange();
+  if (d_currShape) {
+	d_currShape->setParentFromObject(worldFromPattern);
+	d_currShape->handleWorldFromObjectChange();
+  }
 }
 
 void PatternEditor::drawPattern()
@@ -1054,21 +1095,12 @@ void PatternEditor::drawPattern()
                       (double)d_mainWinWidth;
   units_per_pixel_y = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/
                       (double)d_mainWinHeight;
-  double worldFromPattern[16] = {100000.0,0,0,0,0,78125.,0,0,0,0,1,0,0,0,0,1};
-  if (d_canvasImage) {
-	nmb_TransformMatrix44 worldFromPattern44;
-	d_canvasImage->getWorldToImageTransform(worldFromPattern44);
-	worldFromPattern44.invert();
-	worldFromPattern44.getMatrix(worldFromPattern);
-  }
 
   if (d_currShape) {
-	  double currColor[3] = {1.0, 1.0, 1.0};
-	d_currShape->setParentFromObject(worldFromPattern);
+	  double currColor[3] = {1.0, 1.0, 0.0};
     d_currShape->drawToDisplay(units_per_pixel_x, units_per_pixel_y,
                            currColor[0], currColor[1], currColor[2]);
   }
-  d_pattern.setParentFromObject(worldFromPattern);
   d_pattern.drawToDisplay(units_per_pixel_x, units_per_pixel_y, 
                            d_patternColorMap);
 }
@@ -1095,8 +1127,8 @@ void PatternEditor::drawScale()
   }
 
   // draw a line from d_mainWinMaxX_nm to d_mainWin
-  float x_end = 0.9*d_mainWinMaxX_nm + 0.1*d_mainWinMinX_nm;
-  float x_start = x_end - scale_length;
+  float x_start = 0.8*d_mainWinMinX_nm + 0.2*d_mainWinMaxX_nm;
+  float x_end = x_start + scale_length;
   float y_start = 0.9*d_mainWinMaxY_nm + 0.1*d_mainWinMinY_nm;
   float y_end = y_start;
   glColor4f(1.0, 1.0, 1.0, 1.0);
@@ -1113,7 +1145,7 @@ void PatternEditor::drawScale()
      sprintf(str, "%d um", length);
   }
   glRasterPos2d(0.8*x_start + 0.2*x_end, y_start - 0.05*ySpan);
-  int i;
+  unsigned int i;
   for (i = 0; i < strlen(str); i++) {
     glutBitmapCharacter(GLUT_BITMAP_8_BY_13, str[i]);
   }
@@ -1121,10 +1153,9 @@ void PatternEditor::drawScale()
 
 void PatternEditor::drawExposureLevels()
 {
-  char str[64];
   double x, y;
   // XXX - should do this without so much magic
-  x = 0.3*d_mainWinMaxX_nm + 0.7*d_mainWinMinX_nm;
+  x = 0.7*d_mainWinMaxX_nm + 0.3*d_mainWinMinX_nm;
   y = 0.9*d_mainWinMaxY_nm + 0.1*d_mainWinMinY_nm;
 
   double units_per_pixel_x, units_per_pixel_y;
@@ -1397,7 +1428,7 @@ void PatternEditor::mainWinPositionToWorld(double x, double y,
                                        double &x_nm, double &y_nm)
 {
   x_nm = x; y_nm = y;
-  d_viewer->toImagePnt(d_mainWinID, d_mainWinMaxX_nm, d_mainWinMinX_nm,
+  d_viewer->toImagePnt(d_mainWinID, d_mainWinMinX_nm, d_mainWinMaxX_nm,
                     d_mainWinMinY_nm, d_mainWinMaxY_nm, &x_nm, &y_nm);
 /*
   x_nm = d_mainWinMinX_nm + x*(d_mainWinMaxX_nm - d_mainWinMinX_nm);
@@ -1431,7 +1462,7 @@ void PatternEditor::mainWinNMToPixels(const double x_nm, const double y_nm,
   //worldToMainWinPosition(x_nm, y_nm, x_pixels, y_pixels);
   //d_viewer->toPixels(d_mainWinID, &x_pixels, &y_pixels);
   x_pixels = x_nm; y_pixels = y_nm;
-  d_viewer->toPixelsPnt(d_mainWinID, d_mainWinMaxX_nm, d_mainWinMinX_nm,
+  d_viewer->toPixelsPnt(d_mainWinID, d_mainWinMinX_nm, d_mainWinMaxX_nm,
                      d_mainWinMinY_nm, d_mainWinMaxY_nm, &x_pixels, &y_pixels);
 }
 
@@ -1543,6 +1574,7 @@ int PatternEditor::startShape(ShapeType type)
       break;
   }
   d_currShape = newShape;
+  updatePatternTransform();
   return 0;
 }
 

@@ -4,6 +4,7 @@
 #include <Tcl_Linkvar.h>
 #include "patternEditor.h"
 #include "nmm_Microscope_SEM_Remote.h"
+#include "nmr_RegistrationUI.h"
 #include "nmb_Image.h"
 #include "nmm_EDAX.h"
 #include "patternFile.h"
@@ -13,7 +14,8 @@
 class ControlPanels {
  public:
    ControlPanels(PatternEditor *pe,
-                 nmm_Microscope_SEM_Remote *sem);
+                 nmm_Microscope_SEM_Remote *sem,
+				 nmr_RegistrationUI *aligner);
    ~ControlPanels();
 
    void setImageList(nmb_ImageList *data);
@@ -173,12 +175,14 @@ class ControlPanels {
    nmb_ImageList *d_imageList;
    int imageCount[EDAX_NUM_SCAN_MATRICES]; // a count of the number 
                     // of images being stored at each resolution
-   char *d_autoEnabledImageName;
+   char *d_currentLiveSEMImageName;
 
    static int s_numImageFileFormats;
    static char *s_imageFileFormatNames[];
    bool d_disableCommandsToSEM;
    bool d_disableDisplaySettingCallbacks;
+
+   nmr_RegistrationUI *d_aligner;
 };
 
 #endif
