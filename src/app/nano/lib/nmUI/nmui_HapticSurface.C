@@ -463,7 +463,9 @@ void nmui_HSLivePlane::update (nmm_Microscope_Remote * scope) {
 
 
 
-nmui_HSFeelAhead::nmui_HSFeelAhead (void) {
+nmui_HSFeelAhead::nmui_HSFeelAhead (void) :
+    d_device (NULL),
+    d_microscope (NULL) {
 
 }
 
