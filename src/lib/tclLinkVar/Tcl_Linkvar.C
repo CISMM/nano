@@ -141,8 +141,10 @@ char	*handle_float_value_change(ClientData clientData,
 			floatvar->d_myTclVarname);
 		floatvar->d_dirty = VRPN_TRUE;
 	} else if (Tcl_GetDouble(interp, cvalue, &value) != TCL_OK) {
+           /*
 		fprintf(stderr,"Warning!  %s not double from Tcl\n",
 			floatvar->d_myTclVarname);
+                        */
 		floatvar->d_dirty = VRPN_TRUE;
         } else if (floatvar->d_ignoreChange) {
           floatvar->d_ignoreChange = VRPN_FALSE;
