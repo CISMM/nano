@@ -353,6 +353,13 @@ TclNet_float tcl_wfr_rot_3
 TclNet_float tcl_wfr_scale
      ("tcl_wfr_scale", 1.0, handle_worldFromRoom_change, NULL);
 
+/** Variables for direct step so that the position reported to the microscope
+window is current
+*/
+Tclvar_float curr_x("cur_x",0.0);
+Tclvar_float curr_y("cur_y",0.0);
+Tclvar_float curr_z("cur_z",0.0);
+
 
 /** @struct FDOnOffMonitor
  * This code was repeated half-a-dozen-times, but needs three distinct
@@ -2804,6 +2811,9 @@ int doFeelLive (int whichUser, int userEvent)
 	clipPos[2] = z_pos;
       }
     }
+    curr_x = clipPos[0] - plane->xInWorld(0);
+    curr_y = clipPos[1] - plane->yInWorld(0);
+    curr_z = clipPos[2];
   } // end if direct step mode
   
   // constrained freehand only allows motion along a line.
