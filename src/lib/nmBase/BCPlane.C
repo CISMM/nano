@@ -1035,15 +1035,15 @@ readPPMorPGMFile
 int 
 BCPlane::readPPMorPGMFile(FILE *file, double scale)
 {
-   unsigned char *value = (unsigned char *)calloc(numY(), 3 * sizeof(unsigned char));
+   unsigned char *value = (unsigned char *)calloc(numX(), 3 * sizeof(unsigned char));
 
    int x,y;
 
-   for (x = 0; x < numX(); x++) 
+   for (y = 0; y < numY(); y++) 
    {
-       fread(value, 3*sizeof(char), numY(), file );
-       for (y = 0; y < numY(); y++ )
-	   setValue(x,y, value[3*y] * scale);
+       fread(value, 3*sizeof(char), numX(), file );
+       for (x = 0; x < numX(); x++ )
+	   setValue(x,y, value[3*x] * scale);
    }
   
    free(value);
