@@ -361,7 +361,7 @@ double ** doErosion(int& row_length,double zrange,nmm_SimulatedMicroscope* nano_
   }
 
 
-  return zDistance;
+  return zDistanceScaled;
 }
 
 void invert_zHeight_values(double xworldratio){
@@ -475,9 +475,9 @@ void invert_zHeight_values(double xworldratio){
 			zDistance[j][i] = zNormalized*(-Near + Far);
 			zDistanceScaled[j][i] = zDistance[j][i]/xworldratio;
 
-			if(matlab && (i != (xResolution-1)))		print_to_file(outstream,zDistanceScaled[rownumber][i],",");
-			else if(matlab && (i == (xResolution-1)))	print_to_file(outstream,zDistanceScaled[rownumber][i],"");	
-			//else										print_to_file(outstream,zDistanceScaled[rownumber][i]," ");			
+			if(matlab && (i != (xResolution-1)))		print_to_file(outstream,zDistanceScaled[j][i],",");
+			else if(matlab && (i == (xResolution-1)))	print_to_file(outstream,zDistanceScaled[j][i],"");	
+			//else										print_to_file(outstream,zDistanceScaled[j][i]," ");			
 		}
 		if(matlab && (j != (yResolution-1)))			outstream << ";" << endl;
 		else if(matlab && (j == (yResolution-1)))		outstream << "]" << endl;
