@@ -50,6 +50,9 @@ static float g_waitTime = 0.0f;
 static char * g_ipString = NULL;
 
 static int g_speed = 1;
+static int g_ptime = 0;
+  ///< ms to delay every ScanTo request, every point in a FeelTo request,
+  ///< ? ...
 
 static int g_verbosity = 0;
 
@@ -57,7 +60,7 @@ void usage (const char * argv0) {
   fprintf(stderr,
     "Usage:  %s [-image <picture>] [-grid <x> <y>] [-port <port>]\n"
     "        [-surface <n>] [-if <ip>] [-latency <msecs>]\n"
-    "        [-v <verbosity>]\n", argv0);
+    "        [-v <verbosity>] [-ptime <n>]\n", argv0);
   fprintf(stderr,
     "    -image:  Use picture specified (otherwise use function).\n"
     "    -grid:  Take x by y samples for the grid (default 300 x 300).\n"
@@ -71,7 +74,8 @@ void usage (const char * argv0) {
   fprintf(stderr,
     "    -speed:  Scanlines per 100 ms (integer).\n"
     "    -latency:  Delay all incoming network traffic by the\n"
-    "      given number of ms.\n");
+    "      given number of ms.\n"
+    "    -ptime:  Spend <n> ms on each point data sample (integer).\n");
   
 
   exit(0);
@@ -87,6 +91,7 @@ int parse (int argc, char ** argv) {
   int ret = 0;
   int i;
   i = 1;
+
   
   while (i < argc) {
     fprintf(stderr, "parse:  arg %d %s\n", i, argv[i]);
@@ -110,6 +115,9 @@ int parse (int argc, char ** argv) {
     } else if (!strcmp(argv[i], "-speed")) {
       if (++i >= argc) usage(argv[0]);
       g_speed = atoi(argv[i]);
+    } else if (!strcmp(argv[i], "-ptime")) {
+      if (++i >= argc) usage(argv[0]);
+      g_ptime = atoi(argv[i]);
     } else if (!strcmp(argv[i], "-latency")) {
       if (++i >= argc) usage(argv[0]);
       g_isWaiting = vrpn_TRUE;
@@ -153,10 +161,17 @@ int getImageHeightAtXYLoc (float x, float y, float * z) {
 
   g_myZPlane->valueAt(&zz, x, y);
   *z = zz;
-  //if (!fmod(x, 40) && !fmod(y, 40)) {
-    //fprintf(stderr, "%f %f: %.5f (zp %d) vs %f\n", x, y, *z, g_myZPlane,
-                //g_myZPlane->value(x, y));
-  //}
+
+  // select() doesn't seem to work right on Win2k, so we rely on
+  // VRPN's thirst for portability.
+  
+  //timeval now, later;
+  //gettimeofday(&now, NULL);
+  vrpn_SleepMsecs(g_ptime);
+  //gettimeofday(&later, NULL);
+  //fprintf(stderr, "Point took %06d us.\n", later.tv_usec - now.tv_usec);
+
+
   return 1;
 }
 
