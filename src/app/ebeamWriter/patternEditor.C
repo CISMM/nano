@@ -8,6 +8,8 @@
 
 PatternEditor::PatternEditor(int startX, int startY)
 {
+   d_canvasImage = NULL;
+
    d_patternColorMap.setMinLineExposureColor(0.0, 1.0, 1.0);
    d_patternColorMap.setMaxLineExposureColor(1.0, 1.0, 0.0);
    d_patternColorMap.setMinAreaExposureColor(0.0, 1.0, 1.0);
@@ -314,9 +316,9 @@ void PatternEditor::addTestGrid(double minX_nm, double minY_nm,
                                 int numHorizontal, int numVertical)
 {
   double xIncrement_nm = 
-                         (maxX_nm - minX_nm)/(double)(numVertical-1);
+         (maxX_nm - minX_nm)/(double)(numVertical-1);
   double yIncrement_nm = 
-                         (maxY_nm - minY_nm)/(double)(numHorizontal-1);
+         (maxY_nm - minY_nm)/(double)(numHorizontal-1);
   if (d_shapeInProgress) {
     endShape();
   }
@@ -356,6 +358,11 @@ void PatternEditor::addTestGrid(double minX_nm, double minY_nm,
     x_end += xIncrement_nm;
   }
 
+  double canvasFromWorld[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+  if (d_canvasImage) {
+	d_canvasImage->getWorldToImageTransform(canvasFromWorld);
+  }
+  grid->setParentFromObject(canvasFromWorld);
   addShape(grid);
 }
 
@@ -514,6 +521,12 @@ void PatternEditor::clearExposurePoints()
   d_exposurePoints.clear();
   d_viewer->dirtyWindow(d_mainWinID);
   d_numExposurePointsRecorded = 0;
+}
+
+void PatternEditor::setCanvasImage(nmb_Image *image)
+{
+	d_canvasImage = image;
+	d_viewer->dirtyWindow(d_mainWinID);
 }
 
 void PatternEditor::addImageToDisplay(nmb_Image *im)
@@ -908,6 +921,9 @@ int PatternEditor::mainWinDisplayHandler(
 
   me->drawPattern();
 
+  double matrix[16];
+  glGetDoublev(GL_MODELVIEW_MATRIX, matrix);
+  printf("%g,%g\n", matrix[0], matrix[5]);
   me->drawScale();
 
   me->drawExposureLevels();
@@ -963,13 +979,22 @@ void PatternEditor::drawPattern()
                       (double)d_mainWinWidth;
   units_per_pixel_y = (d_mainWinMaxY_nm - d_mainWinMinY_nm)/
                       (double)d_mainWinHeight;
+  double worldFromPattern[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+  if (d_canvasImage) {
+	nmb_TransformMatrix44 worldFromPattern44;
+	d_canvasImage->getWorldToImageTransform(worldFromPattern44);
+	worldFromPattern44.invert();
+	worldFromPattern44.getMatrix(worldFromPattern);
+  }
+
   if (d_currShape) {
+	d_currShape->setParentFromObject(worldFromPattern);
     d_currShape->drawToDisplay(units_per_pixel_x, units_per_pixel_y,
                            d_patternColorMap);
   }
+  d_pattern.setParentFromObject(worldFromPattern);
   d_pattern.drawToDisplay(units_per_pixel_x, units_per_pixel_y, 
                            d_patternColorMap);
-
 }
 
 void PatternEditor::drawScale()
@@ -1400,6 +1425,7 @@ void PatternEditor::clearDrawingState()
   }
   d_shapeInProgress = vrpn_FALSE;
   d_pointInProgress = vrpn_FALSE;
+  setUserMode(PE_IDLE);
 }
 
 int PatternEditor::startShape(ShapeType type)
@@ -1540,7 +1566,10 @@ int PatternEditor::endShape()
 {
   //printf("ending shape\n");
   // put the shape into the pattern and clear drawing state
-  addShape(d_currShape->duplicate());
+	double identity[16]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+  PatternShape *shapeCopy = d_currShape->duplicate();
+  shapeCopy->setParentFromObject(identity);
+  addShape(shapeCopy);
   clearDrawingState();
   return 0;
 }

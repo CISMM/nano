@@ -41,6 +41,7 @@ class ControlPanels {
    static void handle_drawingTool_change(int new_value, void *ud);
    static void handle_clearDrawing_change(int new_value, void *ud);
    static void handle_addTestGrid_change(int new_value, void *ud);
+   static void handle_canvasImage_change(const char *new_value, void *ud);
 
    static void handle_imageColorChanged_change(int new_value, void *ud);
    static void handle_imageOpacity_change(double new_value, void *ud);
@@ -102,6 +103,7 @@ class ControlPanels {
    Tclvar_int d_drawingTool;
    Tclvar_int d_clearDrawing;
    Tclvar_int d_addTestGrid;
+   Tclvar_string d_canvasImage;
 
    // display parameters:
    Tclvar_int d_imageColorChanged;

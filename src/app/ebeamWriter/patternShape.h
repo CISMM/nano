@@ -1,6 +1,7 @@
 #ifndef PATTERNSHAPE_H
 #define PATTERNSHAPE_H
 
+#include "nmb_TransformMatrix44.h"
 #include <list>
 #include "vrpn_Types.h"
 
@@ -147,13 +148,80 @@ class PatternShape {
     virtual void getExposureLevels(list<double> &/*linearLevels*/,
                                    list<double> &/*areaLevels*/) {}
 
+	/// set parent (for shapes composing composite shapes)
+	virtual void setParent(PatternShape *parent) {d_parent = parent;}
+
+	/// set world from object transform
+	virtual void setParentFromObject(double *transform)
+	{int i; for (i = 0; i < 16; i++)
+		d_parentFromObject[i] = transform[i];
+	}
+	virtual void getParentFromObject(double *transform)
+	{int i; for (i = 0; i < 16; i++) 
+		transform[i] = d_parentFromObject[i];
+	}
+	virtual void getWorldFromObject(double *transform)
+	{
+		if (!d_parent) {
+			getParentFromObject(transform);
+		} else {
+			double worldFromParent[16];
+			d_parent->getWorldFromObject(worldFromParent);
+			nmb_TransformMatrix44 worldFromObject44;
+			worldFromObject44.setMatrix(worldFromParent);
+			worldFromObject44.compose(d_parentFromObject);
+			worldFromObject44.getMatrix(transform);
+		}
+	}
 
   protected:
+	inline void transform(double *transform, double x_src, double y_src, 
+		double &x_dest, double &y_dest);
+	inline void transform(double *transform, float x_src, float y_src, 
+		float &x_dest, float &y_dest);
+	inline void transformVect(double *transform, double x_src, double y_src, 
+		double &x_dest, double &y_dest);
+	inline void transformVect(double *transform, float x_src, float y_src, 
+		float &x_dest, float &y_dest);
+	PatternShape *d_parent;
+	double d_parentFromObject[16];
     int d_ID;
     ShapeType d_shapeType;
     static int s_nextID;
     int d_numReferences;
 };
+
+void PatternShape::transform(double *transform, double x_src, double y_src, 
+		double &x_dest, double &y_dest)
+{
+	x_dest = transform[0]*x_src +
+		transform[4]*y_src + transform[12];
+	y_dest = transform[1]*x_src +
+		transform[5]*y_src + transform[13];
+}
+
+void PatternShape::transform(double *transform, float x_src, float y_src, 
+		float &x_dest, float &y_dest)
+{
+	x_dest = transform[0]*x_src +
+		transform[4]*y_src + transform[12];
+	y_dest = transform[1]*x_src +
+		transform[5]*y_src + transform[13];
+}
+
+void PatternShape::transformVect(double *transform, double x_src, double y_src, 
+		double &x_dest, double &y_dest)
+{
+	x_dest = transform[0]*x_src + transform[4]*y_src;
+	y_dest = transform[1]*x_src + transform[5]*y_src;
+}
+
+void PatternShape::transformVect(double *transform, float x_src, float y_src, 
+		float &x_dest, float &y_dest)
+{
+	x_dest = transform[0]*x_src + transform[4]*y_src;
+	y_dest = transform[1]*x_src + transform[5]*y_src;
+}
 
 /* this is basically a wrapper for a PatternShape pointer */
 class PatternShapeListElement {
@@ -416,7 +484,8 @@ class CompositePatternShape : public PatternShape {
     list<PatternShapeListElement> &getSubShapes() {return d_subShapes;}
 
     void addSubShape(PatternShape *shape)
-       { d_subShapes.push_back(PatternShapeListElement(shape));}
+       {shape->setParent(this); 
+		d_subShapes.push_back(PatternShapeListElement(shape));}
     void removeSubShape() {d_subShapes.pop_back();}
     list<PatternShapeListElement>::iterator shapeListBegin()
        {return d_subShapes.begin();}
@@ -484,8 +553,7 @@ class DumpPointPatternShape : public PatternShape {
     virtual void getExposureLevels(list<double> &linearLevels,
                                    list<double> &areaLevels) 
             { linearLevels.clear(); areaLevels.clear(); }
-    void setLocation(double x_nm, double y_nm) 
-       { d_location = PatternPoint(x_nm, y_nm);}
+    void setLocation(double x_nm, double y_nm);
 
   protected:
     PatternPoint d_location;

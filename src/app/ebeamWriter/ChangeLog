@@ -1,3 +1,27 @@
+2002-09-07  Adam Seeger  <seeger@cs.unc.edu>
+
+    This version has a new feature that lets patterns be linked to a 
+    particular image and warped in the same way that image gets warped.
+	This allows a pattern to be drawn before the alignment step so the
+    delay between alignment and exposure is much less. 
+
+	* controlPanels.C (handle_canvasImage_change) : new function to go
+	with new selector in the control panel for selecting a canvas image
+	* main.C (main): added call to Tclnet_init so the Tclnet variables in
+	registration work properly
+	* patternEditor.C (setCanvasImage): new function
+	numerous changes involved in changing the pattern coordinate system to
+	be linked to a particular image
+	* patternShape.C: added parentFromObject transform so that
+	shapes can be transformed easily. CompositePatternShape now lets you
+	create a transformation hierarchy
+	(PolylinePatternShape::computeSidePoints): fixed this so it first
+	transforms the points into world coordinates before computing the
+	sides of the fat line and then transforms the side points back into
+	local coordinates
+	(addPoint, setLocation): now assume points are given in world coordinates
+	and transform points into local coordinates before storing them
+
 2002-05-13  Adam Seeger  <seeger@cs.unc.edu>
 
 	* patternEditor.C (show): disabled display of navigation window 

@@ -33,6 +33,7 @@ ControlPanels::ControlPanels(PatternEditor *pe,
    d_drawingTool("drawing_tool", 1),
    d_clearDrawing("clear_drawing", 0),
    d_addTestGrid("add_test_grid", 0),
+   d_canvasImage("canvas_image", "none"),
 
    d_imageColorChanged("image_color_changed", 0),
    d_imageRed("image_r", 255),
@@ -187,6 +188,7 @@ void ControlPanels::setupCallbacks()
   d_drawingTool.addCallback(handle_drawingTool_change, this);
   d_clearDrawing.addCallback(handle_clearDrawing_change, this);
   d_addTestGrid.addCallback(handle_addTestGrid_change, this);
+  d_canvasImage.addCallback(handle_canvasImage_change, this);
 
   d_imageColorChanged.addCallback(handle_imageColorChanged_change, this);
   d_imageOpacity.addCallback(handle_imageOpacity_change, this);
@@ -499,6 +501,17 @@ void ControlPanels::handle_addTestGrid_change(int /*new_value*/, void *ud)
 
   me->d_patternEditor->addTestGrid(minX_nm, minY_nm, maxX_nm, maxY_nm,
              numHorizontal, numVertical);
+}
+
+// static
+void ControlPanels::handle_canvasImage_change(const char * /*new_value*/, 
+                                               void *ud)
+{
+  ControlPanels *me = (ControlPanels *)ud;
+  nmb_Image *im = me->d_imageList->getImageByName(
+              string((const char *)(me->d_canvasImage)));
+
+  me->d_patternEditor->setCanvasImage(im);
 }
 
 // static

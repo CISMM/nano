@@ -100,11 +100,20 @@ void PatternShapeColorMap::draw(double x, double y,
 int PatternShape::s_nextID = 1;
 
 PatternShape::PatternShape(ShapeType type):
+  d_parent(NULL),
   d_ID(s_nextID),
   d_shapeType(type),
   d_numReferences(1)
 {
   s_nextID++;
+  int i;
+  for (i = 0; i < 16; i++)
+	d_parentFromObject[i] = 0.0;
+  d_parentFromObject[0] = 1;
+  d_parentFromObject[5] = 1;
+  d_parentFromObject[10] = 1;
+  d_parentFromObject[15] = 1;
+
 }
 
 PatternShapeListElement::PatternShapeListElement(PatternShape *ps): 
@@ -163,6 +172,10 @@ PolylinePatternShape::PolylinePatternShape(const PolylinePatternShape &pps):
   d_exposure_pCoulombs_per_cm(pps.d_exposure_pCoulombs_per_cm)
 {
   d_points = pps.d_points;
+  int i;
+  for (i = 0; i < 16; i++) {
+	d_parentFromObject[i] = pps.d_parentFromObject[i];
+  }
 }
 
 void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
@@ -177,9 +190,12 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
                                             map);
   } else {
 
-    if (d_sidePointsNeedUpdate) {
+	  // we ignore this flag and update every display update because
+	  // the worldFromObject transform may have changed and the side points
+	  // depend on that transformation
+//    if (d_sidePointsNeedUpdate) {
       computeSidePoints();
-    }
+//    }
 
     double color[3];
     map.areaExposureColor(d_exposure_uCoulombs_per_square_cm, color);
@@ -187,13 +203,17 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
     glLineWidth(1);
     glColor4f(color[0], color[1], color[2], 1.0);
 
+	glPushAttrib(GL_TRANSFORM_BIT);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glMultMatrixd(d_parentFromObject);
+
     if (d_numPoints == 1) {
       list<PatternPoint>::iterator pntIter;
       pntIter = d_points.begin();
       glBegin(GL_POINTS);
       glVertex3f((*pntIter).d_x, (*pntIter).d_y, 0.0);
       glEnd();
-      return;
     } else {
       glBegin(GL_LINE_LOOP);
       int i;
@@ -205,12 +225,20 @@ void PolylinePatternShape::drawToDisplay(double units_per_pixel_x,
       }
       glEnd();
     }
+
+	glPopMatrix();
+	glPopAttrib();
+
   }
 }
 
+// client-side exposure routine
 void PolylinePatternShape::drawToSEM(nmm_Microscope_SEM_Remote *sem)
 {
   if (d_numPoints <= 1) return;
+
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
 
   vrpn_float32 *x_nm, *y_nm;
   x_nm = new vrpn_float32[d_numPoints];
@@ -219,9 +247,9 @@ void PolylinePatternShape::drawToSEM(nmm_Microscope_SEM_Remote *sem)
   list<PatternPoint>::iterator point;
   int i = 0;
   for (point = d_points.begin(); point != d_points.end(); point++) {
-    x_nm[i] = (*point).d_x;
-    y_nm[i] = (*point).d_y;
-    i++;
+	transform(worldFromObject, 
+		(*point).d_x, (*point).d_y, x_nm[i], y_nm[i]);
+	i++;
   }
 
   sem->addPolyline(d_exposure_pCoulombs_per_cm,
@@ -229,6 +257,7 @@ void PolylinePatternShape::drawToSEM(nmm_Microscope_SEM_Remote *sem)
                    d_lineWidth_nm, d_numPoints, x_nm, y_nm);
 }
 
+// server-side exposure routine
 void PolylinePatternShape::drawToSEM(nmm_Microscope_SEM_EDAX *sem,
             double current, double dotSpacing, double lineSpacing,
             int &numPoints, double &expTime)
@@ -357,6 +386,10 @@ void PolylinePatternShape::generateExposurePoints(nmm_Microscope_SEM_EDAX *sem,
 
 double PolylinePatternShape::minX()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_numPoints == 0) return 0.0;
 
   if (d_lineWidth_nm == 0) {
@@ -364,7 +397,9 @@ double PolylinePatternShape::minX()
   }
 
   list<PatternPoint>::iterator point = d_points.begin();
-  double result = (*point).d_x;
+  transform(worldFromObject,
+	  (*point).d_x, (*point).d_y, x_world, y_world);
+  double result = x_world;
 
   if (d_numPoints == 1) {
     return result;
@@ -376,11 +411,17 @@ double PolylinePatternShape::minX()
 
   int i;
   for (i = 0; i < d_numPoints; i++) {
-    if (d_leftSidePoints[i].d_x < result) {
-      result = d_leftSidePoints[i].d_x;
+	transform(worldFromObject,
+		d_leftSidePoints[i].d_x, d_leftSidePoints[i].d_y,
+		x_world, y_world);
+    if (x_world < result) {
+      result = x_world;
     }
-    if (d_rightSidePoints[i].d_x < result) {
-      result = d_rightSidePoints[i].d_x;
+	transform(worldFromObject,
+		d_rightSidePoints[i].d_x, d_rightSidePoints[i].d_y,
+		x_world, y_world);
+    if (x_world < result) {
+      result = x_world;
     }
   }
   return result;
@@ -388,6 +429,10 @@ double PolylinePatternShape::minX()
 
 double PolylinePatternShape::minY()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_numPoints == 0) return 0.0;
 
   if (d_lineWidth_nm == 0) {
@@ -395,7 +440,9 @@ double PolylinePatternShape::minY()
   }
 
   list<PatternPoint>::iterator point = d_points.begin();
-  double result = (*point).d_y;
+  transform(worldFromObject,
+	  (*point).d_x, (*point).d_y, x_world, y_world);
+  double result = y_world;
 
   if (d_numPoints == 1) {
     return result;
@@ -407,11 +454,17 @@ double PolylinePatternShape::minY()
 
   int i;
   for (i = 0; i < d_numPoints; i++) {
-    if (d_leftSidePoints[i].d_y < result) {
-      result = d_leftSidePoints[i].d_y;
+	transform(worldFromObject,
+		d_leftSidePoints[i].d_x, d_leftSidePoints[i].d_y,
+		x_world, y_world);
+    if (y_world < result) {
+      result = y_world;
     }
-    if (d_rightSidePoints[i].d_y < result) {
-      result = d_rightSidePoints[i].d_y;
+	transform(worldFromObject,
+		d_rightSidePoints[i].d_x, d_rightSidePoints[i].d_y,
+		x_world, y_world);
+    if (y_world < result) {
+      result = y_world;
     }
   }
   return result;
@@ -419,6 +472,10 @@ double PolylinePatternShape::minY()
 
 double PolylinePatternShape::maxX()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_numPoints == 0) return 0.0;
 
   if (d_lineWidth_nm == 0) {
@@ -426,7 +483,8 @@ double PolylinePatternShape::maxX()
   }
 
   list<PatternPoint>::iterator point = d_points.begin();
-  double result = (*point).d_x;
+  transform(worldFromObject, (*point).d_x, (*point).d_y, x_world, y_world);
+  double result = x_world;
 
   if (d_numPoints == 1) {
     return result;
@@ -438,11 +496,15 @@ double PolylinePatternShape::maxX()
 
   int i;
   for (i = 0; i < d_numPoints; i++) {
-    if (d_leftSidePoints[i].d_x > result) {
-      result = d_leftSidePoints[i].d_x;
+	transform(worldFromObject, d_leftSidePoints[i].d_x, d_leftSidePoints[i].d_y,
+		x_world, y_world);
+    if (x_world > result) {
+      result = x_world;
     }
-    if (d_rightSidePoints[i].d_x > result) {
-      result = d_rightSidePoints[i].d_x;
+	transform(worldFromObject, d_rightSidePoints[i].d_x, d_rightSidePoints[i].d_y,
+		x_world, y_world);
+    if (x_world > result) {
+      result = x_world;
     }
   }
   return result;
@@ -450,6 +512,10 @@ double PolylinePatternShape::maxX()
 
 double PolylinePatternShape::maxY()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_numPoints == 0) return 0.0;
 
   if (d_lineWidth_nm == 0) {
@@ -457,7 +523,9 @@ double PolylinePatternShape::maxY()
   }
 
   list<PatternPoint>::iterator point = d_points.begin();
-  double result = (*point).d_y;
+  transform(worldFromObject, 
+	  (*point).d_x, (*point).d_y, x_world, y_world);
+  double result = y_world;
 
   if (d_numPoints == 1) {
     return result;
@@ -469,11 +537,17 @@ double PolylinePatternShape::maxY()
 
   int i;
   for (i = 0; i < d_numPoints; i++) {
-    if (d_leftSidePoints[i].d_y > result) {
-      result = d_leftSidePoints[i].d_y;
+	transform(worldFromObject, 
+		d_leftSidePoints[i].d_x, d_leftSidePoints[i].d_y,
+		x_world, y_world);
+    if (y_world > result) {
+      result = y_world;
     }
-    if (d_rightSidePoints[i].d_y > result) {
-      result = d_rightSidePoints[i].d_y;
+	transform(worldFromObject, 
+		d_rightSidePoints[i].d_x, d_rightSidePoints[i].d_y,
+		x_world, y_world);
+    if (y_world > result) {
+      result = y_world;
     }
   }
   return result;
@@ -560,7 +634,17 @@ void PolylinePatternShape::setPoint(int index, double x, double y)
 
 void PolylinePatternShape::addPoint(double x, double y)
 {
-  d_points.push_back(PatternPoint(x,y));
+  double x_obj = x, y_obj = y;
+
+  double objectFromWorldM[16];
+  getWorldFromObject(objectFromWorldM);
+  nmb_TransformMatrix44 objectFromWorld;
+  objectFromWorld.setMatrix(objectFromWorldM);
+  objectFromWorld.invert();
+  objectFromWorld.getMatrix(objectFromWorldM);
+  transform(objectFromWorldM, x, y, x_obj, y_obj);
+  
+  d_points.push_back(PatternPoint(x_obj, y_obj));
   d_numPoints++;
   d_sidePointsNeedUpdate = vrpn_TRUE;
 }
@@ -581,9 +665,12 @@ void PolylinePatternShape::clearPoints()
 
 void PolylinePatternShape::computeSidePoints()
 {
-  if (!d_sidePointsNeedUpdate) {
-    return;
-  }
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double xStartWorld, yStartWorld, xEndWorld, yEndWorld;
+  double xNextEndWorld, yNextEndWorld;
+
   if (d_leftSidePoints) {
     delete [] d_leftSidePoints;
     d_leftSidePoints = NULL;
@@ -620,8 +707,13 @@ void PolylinePatternShape::computeSidePoints()
   int i;
 
   double cent_x, cent_y;
-  currSegment_dx = (*segmentEnd).d_x - (*segmentStart).d_x;
-  currSegment_dy = (*segmentEnd).d_y - (*segmentStart).d_y;
+  transform(worldFromObject, (*segmentEnd).d_x, (*segmentEnd).d_y,
+			xEndWorld, yEndWorld);
+  transform(worldFromObject, (*segmentStart).d_x, (*segmentStart).d_y,
+			xStartWorld, yStartWorld);
+  currSegment_dx = xEndWorld - xStartWorld;
+  currSegment_dy = yEndWorld - yStartWorld;
+
   segmentLength = sqrt(currSegment_dx*currSegment_dx + 
                        currSegment_dy*currSegment_dy);
   currSegment_dx /= segmentLength;
@@ -629,8 +721,8 @@ void PolylinePatternShape::computeSidePoints()
 
   sideVec_x = -halfWidth*currSegment_dy;
   sideVec_y = halfWidth*currSegment_dx;
-  cent_x = (*segmentStart).d_x;
-  cent_y = (*segmentStart).d_y;
+  cent_x = xStartWorld;
+  cent_y = yStartWorld;
 
   d_leftSidePoints[0] = PatternPoint(cent_x + sideVec_x, cent_y + sideVec_y);
   d_rightSidePoints[0] = PatternPoint(cent_x - sideVec_x, cent_y - sideVec_y);
@@ -644,8 +736,10 @@ void PolylinePatternShape::computeSidePoints()
     } else { // do what happens in the middle parts (something complicated)
       lastSegment_dx = currSegment_dx;
       lastSegment_dy = currSegment_dy;
-      currSegment_dx = (*nextSegmentEnd).d_x - (*segmentEnd).d_x;
-      currSegment_dy = (*nextSegmentEnd).d_y - (*segmentEnd).d_y;
+	  transform(worldFromObject, (*nextSegmentEnd).d_x, (*nextSegmentEnd).d_y,
+		  xNextEndWorld, yNextEndWorld);
+      currSegment_dx = xNextEndWorld - xEndWorld;
+      currSegment_dy = yNextEndWorld - yEndWorld;
       segmentLength = sqrt(currSegment_dx*currSegment_dx + 
                            currSegment_dy*currSegment_dy);
       currSegment_dx /= segmentLength;
@@ -664,8 +758,8 @@ void PolylinePatternShape::computeSidePoints()
       sideVec_y *= widthCorrection;
 
     }
-    cent_x = (*segmentEnd).d_x;
-    cent_y = (*segmentEnd).d_y;
+    cent_x = xEndWorld;
+    cent_y = yEndWorld;
     
     d_leftSidePoints[numSidePointsComputed] = 
             PatternPoint(cent_x + sideVec_x, cent_y + sideVec_y);
@@ -676,7 +770,28 @@ void PolylinePatternShape::computeSidePoints()
     segmentStart = segmentEnd;
     segmentEnd = nextSegmentEnd;
     nextSegmentEnd++;
+	xStartWorld = xEndWorld;
+	yStartWorld = yEndWorld;
+	xEndWorld = xNextEndWorld;
+	yEndWorld = yNextEndWorld;
   }
+
+  double x_obj, y_obj;
+  double objFromWorldM[16];
+  nmb_TransformMatrix44 objFromWorld;
+  objFromWorld.setMatrix(worldFromObject);
+  objFromWorld.invert();
+  objFromWorld.getMatrix(objFromWorldM);
+
+  for (i = 0; i < d_numPoints; i++) {
+	transform(objFromWorldM, d_leftSidePoints[i].d_x, d_leftSidePoints[i].d_y,
+		x_obj, y_obj);
+	d_leftSidePoints[i] = PatternPoint(x_obj, y_obj);
+	transform(objFromWorldM, d_rightSidePoints[i].d_x, d_rightSidePoints[i].d_y,
+		x_obj, y_obj);
+	d_rightSidePoints[i] = PatternPoint(x_obj, y_obj);
+  }
+
   d_sidePointsNeedUpdate = vrpn_FALSE;
 }
 
@@ -693,6 +808,11 @@ void PolylinePatternShape::drawToDisplayZeroWidth(double units_per_pixel_x,
   double x_max, y_min;
   glLineWidth(1);
   glColor4f(color[0], color[1], color[2], 1.0);
+
+  glPushAttrib(GL_TRANSFORM_BIT);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glMultMatrixd(d_parentFromObject);
 
   list<PatternPoint>::iterator pntIter = d_points.begin();
 
@@ -720,6 +840,9 @@ void PolylinePatternShape::drawToDisplayZeroWidth(double units_per_pixel_x,
     }
     glEnd();
   }
+
+  glPopMatrix();
+  glPopAttrib();
 }
 
 void PolylinePatternShape::generateExposurePointsZeroWidth(
@@ -788,15 +911,23 @@ void PolylinePatternShape::generateExposurePointsZeroWidth(
 
 double PolylinePatternShape::minXZeroWidth()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_points.empty()) return 0.0;
 
   double result;
   list<PatternPoint>::iterator point;
   point = d_points.begin();
-  result = (*point).d_x;
+  transform(worldFromObject, 
+	  (*point).d_x, (*point).d_y, x_world, y_world);
+  result = x_world;
   while (point != d_points.end()) {
-    if ((*point).d_x < result) {
-      result = (*point).d_x;
+    transform(worldFromObject, 
+		(*point).d_x, (*point).d_y, x_world, y_world);
+    if (x_world < result) {
+      result = x_world;
     }
     point++;
   }
@@ -805,15 +936,23 @@ double PolylinePatternShape::minXZeroWidth()
 
 double PolylinePatternShape::minYZeroWidth()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_points.empty()) return 0.0;
 
   double result;
   list<PatternPoint>::iterator point;
   point = d_points.begin();
-  result = (*point).d_y;
+  transform(worldFromObject, 
+	  (*point).d_x, (*point).d_y, x_world, y_world);
+  result = y_world;
   while (point != d_points.end()) {
-    if ((*point).d_y < result) {
-      result = (*point).d_y;
+	transform(worldFromObject, 
+		(*point).d_x, (*point).d_y, x_world, y_world);
+    if (y_world < result) {
+      result = y_world;
     }
     point++;
   }
@@ -822,15 +961,23 @@ double PolylinePatternShape::minYZeroWidth()
 
 double PolylinePatternShape::maxXZeroWidth()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_points.empty()) return 0.0;
 
   double result;
   list<PatternPoint>::iterator point;
   point = d_points.begin();
-  result = (*point).d_x;
+  transform(worldFromObject, 
+	  (*point).d_x, (*point).d_y, x_world, y_world);
+  result = x_world;
   while (point != d_points.end()) {
-    if ((*point).d_x > result) {
-      result = (*point).d_x;
+	transform(worldFromObject, 
+		(*point).d_x, (*point).d_y, x_world, y_world);
+    if (x_world > result) {
+      result = x_world;
     }
     point++;
   }
@@ -839,15 +986,23 @@ double PolylinePatternShape::maxXZeroWidth()
 
 double PolylinePatternShape::maxYZeroWidth()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_points.empty()) return 0.0;
 
   double result;
   list<PatternPoint>::iterator point;
   point = d_points.begin();
-  result = (*point).d_y;
+  transform(worldFromObject, 
+	  (*point).d_x, (*point).d_y, x_world, y_world);
+  result = y_world;
   while (point != d_points.end()) {
-    if ((*point).d_y > result) {
-      result = (*point).d_y;
+	transform(worldFromObject, 
+		(*point).d_x, (*point).d_y, x_world, y_world);
+    if (y_world > result) {
+      result = y_world;
     }
     point++;
   }
@@ -867,7 +1022,10 @@ PolygonPatternShape::PolygonPatternShape(const PolygonPatternShape &pps):
   d_exposure_uCoulombs_per_square_cm(pps.d_exposure_uCoulombs_per_square_cm),
   d_points(pps.d_points)
 {
-
+  int i;
+  for (i = 0; i < 16; i++) {
+	d_parentFromObject[i] = pps.d_parentFromObject[i];
+  }
 }
 
 void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
@@ -882,6 +1040,11 @@ void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
   float x, y;
   glLineWidth(1);
   glColor4f(color[0], color[1], color[2], 1.0);
+
+  glPushAttrib(GL_TRANSFORM_BIT);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glMultMatrixd(d_parentFromObject);
 
   list<PatternPoint>::iterator pntIter = d_points.begin();
 
@@ -903,10 +1066,16 @@ void PolygonPatternShape::drawToDisplay(double units_per_pixel_x,
     }
     glEnd();
   }
+
+  glPopMatrix();
+  glPopAttrib();
 }
 
 void PolygonPatternShape::drawToSEM(nmm_Microscope_SEM_Remote *sem)
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
   if (d_numPoints == 0) return;
 
   vrpn_float32 *x_nm, *y_nm;
@@ -916,8 +1085,8 @@ void PolygonPatternShape::drawToSEM(nmm_Microscope_SEM_Remote *sem)
   list<PatternPoint>::iterator point;
   int i = 0;
   for (point = d_points.begin(); point != d_points.end(); point++) {
-    x_nm[i] = (*point).d_x;
-    y_nm[i] = (*point).d_y;
+	transform(worldFromObject, 
+		(*point).d_x, (*point).d_y, x_nm[i], y_nm[i]);
     i++;
   }
 
@@ -1105,15 +1274,23 @@ void PolygonPatternShape::generateExposurePoints(nmm_Microscope_SEM_EDAX *sem,
 
 double PolygonPatternShape::minX()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_points.empty()) return 0.0;
 
   double result;
   list<PatternPoint>::iterator point;
   point = d_points.begin();
-  result = (*point).d_x;
+  transform(worldFromObject, 
+	  (*point).d_x, (*point).d_y, x_world, y_world);
+  result = x_world;
   while (point != d_points.end()) {
-    if ((*point).d_x < result) {
-      result = (*point).d_x;
+	transform(worldFromObject, 
+		(*point).d_x, (*point).d_y, x_world, y_world);
+    if (x_world < result) {
+      result = x_world;
     }
     point++;
   }
@@ -1122,15 +1299,23 @@ double PolygonPatternShape::minX()
 
 double PolygonPatternShape::minY()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_points.empty()) return 0.0;
 
   double result;
   list<PatternPoint>::iterator point;
   point = d_points.begin();
-  result = (*point).d_y;
+  transform(worldFromObject, 
+	  (*point).d_x, (*point).d_y, x_world, y_world);
+  result = y_world;
   while (point != d_points.end()) {
-    if ((*point).d_y < result) {
-      result = (*point).d_y;
+	transform(worldFromObject, 
+		(*point).d_x, (*point).d_y, x_world, y_world);
+    if (y_world < result) {
+      result = y_world;
     }
     point++;
   }
@@ -1139,15 +1324,23 @@ double PolygonPatternShape::minY()
 
 double PolygonPatternShape::maxX()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_points.empty()) return 0.0;
 
   double result;
   list<PatternPoint>::iterator point;
   point = d_points.begin();
-  result = (*point).d_x;
+  transform(worldFromObject, 
+	  (*point).d_x, (*point).d_y, x_world, y_world);
+  result = x_world;
   while (point != d_points.end()) {
-    if ((*point).d_x > result) {
-      result = (*point).d_x;
+	transform(worldFromObject, 
+		(*point).d_x, (*point).d_y, x_world, y_world);
+    if (x_world > result) {
+      result = x_world;
     }
     point++;
   }
@@ -1156,15 +1349,23 @@ double PolygonPatternShape::maxX()
 
 double PolygonPatternShape::maxY()
 {
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
   if (d_points.empty()) return 0.0;
 
   double result;
   list<PatternPoint>::iterator point;
   point = d_points.begin();
-  result = (*point).d_y;
+  transform(worldFromObject, 
+	  (*point).d_x, (*point).d_y, x_world, y_world);
+  result = y_world;
   while (point != d_points.end()) {
-    if ((*point).d_y > result) {
-      result = (*point).d_y;
+	transform(worldFromObject, 
+		(*point).d_x, (*point).d_y, x_world, y_world);
+    if (y_world > result) {
+      result = y_world;
     }
     point++;
   }
@@ -1222,7 +1423,17 @@ void PolygonPatternShape::setPoint(int index, double x, double y)
 
 void PolygonPatternShape::addPoint(double x, double y)
 {
-  d_points.push_back(PatternPoint(x,y));
+  double x_obj = x, y_obj = y;
+
+  double objectFromWorldM[16];
+  getWorldFromObject(objectFromWorldM);
+  nmb_TransformMatrix44 objectFromWorld;
+  objectFromWorld.setMatrix(objectFromWorldM);
+  objectFromWorld.invert();
+  objectFromWorld.getMatrix(objectFromWorldM);
+  transform(objectFromWorldM, x, y, x_obj, y_obj);
+
+  d_points.push_back(PatternPoint(x_obj, y_obj));
   d_numPoints++;
 }
 
@@ -1245,6 +1456,10 @@ CompositePatternShape::CompositePatternShape(const CompositePatternShape &cps):
   PatternShape(PS_COMPOSITE),
   d_subShapes(cps.d_subShapes)
 {
+  int i;
+  for (i = 0; i < 16; i++) {
+	d_parentFromObject[i] = cps.d_parentFromObject[i];
+  }
 }
 
 void CompositePatternShape::drawToDisplay(double units_per_pixel_x,
@@ -1252,9 +1467,16 @@ void CompositePatternShape::drawToDisplay(double units_per_pixel_x,
                                PatternShapeColorMap &color)
 {
   list<PatternShapeListElement>::iterator shape;
+
+  glPushAttrib(GL_TRANSFORM_BIT);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glMultMatrixd(d_parentFromObject);
   for (shape = d_subShapes.begin(); shape != d_subShapes.end(); shape++) {
     (*shape).drawToDisplay(units_per_pixel_x, units_per_pixel_y, color);
   }
+  glPopMatrix();
+  glPopAttrib();
 }
 
 void CompositePatternShape::drawToSEM(nmm_Microscope_SEM_Remote *sem)
@@ -1458,6 +1680,10 @@ DumpPointPatternShape::DumpPointPatternShape(const DumpPointPatternShape &dpps):
   d_location(dpps.d_location),
   d_dwellTime_sec(dpps.d_dwellTime_sec)
 {
+  int i;
+  for (i = 0; i < 16; i++) {
+	d_parentFromObject[i] = dpps.d_parentFromObject[i];
+  }
 }
 
 /* we ignore the color map parameter here since the exposure (which we
@@ -1478,17 +1704,31 @@ void DumpPointPatternShape::drawToDisplay(double units_per_pixel_x,
   ymax = d_location.d_y + size*units_per_pixel_y;
   float x[4] = {xmin, xmin, xmax, xmax};
   float y[4] = {ymin, ymax, ymax, ymin};
+  glPushAttrib(GL_TRANSFORM_BIT);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glMultMatrixd(d_parentFromObject);
+
   glBegin(GL_LINE_LOOP);
     glVertex3f(x[0], y[0], 0.0);
     glVertex3f(x[1], y[1], 0.0);
     glVertex3f(x[2], y[2], 0.0);
     glVertex3f(x[3], y[3], 0.0);
   glEnd();
+
+  glPopMatrix();
+  glPopAttrib();
 }
 
 void DumpPointPatternShape::drawToSEM(nmm_Microscope_SEM_Remote *sem)
 {
-  sem->addDumpPoint(d_location.d_x, d_location.d_y);
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
+  transform(worldFromObject, 
+	  d_location.d_x, d_location.d_y, x_world, y_world);
+  sem->addDumpPoint(x_world, y_world);
 }
 
 void DumpPointPatternShape::drawToSEM(nmm_Microscope_SEM_EDAX *sem,
@@ -1514,21 +1754,60 @@ void DumpPointPatternShape::computeExposureStatistics(int &numPoints,
 
 double DumpPointPatternShape::minX()
 {
-  return d_location.d_x;
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
+  transform(worldFromObject,
+	  d_location.d_x, d_location.d_y, x_world, y_world);
+  return x_world;
 }
 
 double DumpPointPatternShape::minY()
 {
-  return d_location.d_y;
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
+  transform(worldFromObject,
+	  d_location.d_x, d_location.d_y, x_world, y_world);
+  return y_world;
 }
 
 double DumpPointPatternShape::maxX()
 {
-  return d_location.d_x;
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
+  transform(worldFromObject,
+	  d_location.d_x, d_location.d_y, x_world, y_world);
+  return x_world;
 }
 
 double DumpPointPatternShape::maxY()
 {
-  return d_location.d_y;
+  double worldFromObject[16];
+  getWorldFromObject(worldFromObject);
+
+  double x_world, y_world;
+  transform(worldFromObject,
+	  d_location.d_x, d_location.d_y, x_world, y_world);
+  return y_world;
 }
 
+void DumpPointPatternShape::setLocation(double x_nm, double y_nm)
+{
+
+  double x_obj = x_nm, y_obj = y_nm;
+
+  double objectFromWorldM[16];
+  getWorldFromObject(objectFromWorldM);
+  nmb_TransformMatrix44 objectFromWorld;
+  objectFromWorld.setMatrix(objectFromWorldM);
+  objectFromWorld.invert();
+  objectFromWorld.getMatrix(objectFromWorldM);
+  transform(objectFromWorldM, x_nm, y_nm, x_obj, y_obj);
+
+  d_location = PatternPoint(x_obj, y_obj);
+}

@@ -100,10 +100,8 @@ void serverThreadStart(void *ud);
 Thread *serverThread;
 /************************************************************/
 
-
 int main(int argc, char **argv)
 {
-
 	nmb_ImgMagick::initMagick(argv[0]);
 
     // Initialize TCL/TK so that TclLinkvar variables link up properly
@@ -117,6 +115,7 @@ int main(int argc, char **argv)
     }
     Tcl_Interp *tk_control_interp = Tcl_Interpreter::getInterpreter();
     Tclvar_init(tk_control_interp);
+    Tclnet_init(tk_control_interp);
 
     // Hide the main window.
     sprintf(command, "wm withdraw .");

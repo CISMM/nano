@@ -1,6 +1,17 @@
 #ifndef PATTERNEDITOR_H
 #define PATTERNEDITOR_H
 
+/* important note:
+
+PatternShape objects on the client store points in image coordinates
+for the current canvas image 
+
+PatternShape objects on the server (SEM computer) store points in world
+coordinates (basically a function of the SEM magnification)
+
+*/
+
+
 #include "imageViewer.h"
 #include "nmb_Image.h"
 #include <list>
@@ -80,6 +91,8 @@ class PatternEditor : public nmb_ImageDisplay {
    void setExposurePointDisplayEnable(vrpn_int32 enable);
    void addExposurePoint(double x_nm, double y_nm);
    void clearExposurePoints();
+
+   void setCanvasImage(nmb_Image *image);
 
    // more general ImageDisplay interface used by nmr_RegistrationUI:
 
@@ -224,6 +237,8 @@ class PatternEditor : public nmb_ImageDisplay {
    vrpn_bool d_exposurePointsDisplayed;
 
    PatternShapeColorMap d_patternColorMap;
+
+   nmb_Image *d_canvasImage;
 
 };
 
