@@ -75,73 +75,125 @@ struct AFMModifyState {
     // flags to tell the user interface that something changed.
     // these ought to be moved somewhere else if we make an interface module.
 
+  // All variables are in pairs of the form (foo, new_foo) corresponding to
+  // modifyp_foo and newmodifyp_foo in Tcl. foo is sent to the microscope
+  // and new_foo is used to synchronize the user interface between collaborators
+
   Tclvar_int mode;
+  TclNet_int new_mode;
   Tclvar_int control;
+  TclNet_int new_control;
   Tclvar_int style;
+  TclNet_int new_style;
   Tclvar_int tool;
+  TclNet_int new_tool;
   Tclvar_int constr_xyz_param;
+  TclNet_int new_constr_xyz_param;
   Tclvar_int optimize_now_param;
+  TclNet_int new_optimize_now_param;
     ///< the current mode of the microscope
 
   // parameters for Tapping and Contact mode
   Tclvar_float setpoint;
+  TclNet_float new_setpoint;
   float        setpoint_min,     ///< control range of the "modify force" knob
                setpoint_max;
   Tclvar_float p_gain;
+  TclNet_float new_p_gain;
   Tclvar_float i_gain;
+  TclNet_float new_i_gain;
   Tclvar_float d_gain;
+  TclNet_float new_d_gain;
   Tclvar_float amplitude;
+  TclNet_float new_amplitude;
   float        amplitude_min,    ///< control range of the "modify force" knob
                amplitude_max;
   Tclvar_float frequency;
+  TclNet_float new_frequency;
   Tclvar_int   input_gain;
+  TclNet_int   new_input_gain;
   Tclvar_int   ampl_or_phase;
+  TclNet_int   new_ampl_or_phase;
   Tclvar_int   drive_attenuation;
+  TclNet_int   new_drive_attenuation;
   Tclvar_float phase;
+  TclNet_float new_phase;
 
   Tclvar_float scan_rate_microns;
+  TclNet_float new_scan_rate_microns;
 
   // parameters for Sweep style
   Tclvar_float sweep_width;
+  TclNet_float new_sweep_width;
   float        region_diag;
   float        yaw;
 
   // parameters for Sew style
   Tclvar_float bot_delay;
+  TclNet_float new_bot_delay;
   Tclvar_float top_delay;
+  TclNet_float new_top_delay;
   Tclvar_float z_pull;
+  TclNet_float new_z_pull;
   Tclvar_float punch_dist;
+  TclNet_float new_punch_dist;
   Tclvar_float speed;
+  TclNet_float new_speed;
   Tclvar_float watchdog;
+  TclNet_float new_watchdog;
 
   // parameters for Force Curve style
   Tclvar_float fc_start_delay;	///< usec
+  TclNet_float new_fc_start_delay;///< usec
   Tclvar_float fc_z_start;	///< nm
+  TclNet_float new_fc_z_start;	///< nm
   Tclvar_float fc_z_end;	///< nm
+  TclNet_float new_fc_z_end;	///< nm
   Tclvar_float fc_z_pullback;	///< nm
+  TclNet_float new_fc_z_pullback;///< nm
   Tclvar_float fc_force_limit;	///< nA
+  TclNet_float new_fc_force_limit;///< nA
   Tclvar_float fc_movedist;	///< nm
+  TclNet_float new_fc_movedist;	///< nm
   Tclvar_float fc_num_points;	///< how many values of z to use between start
 				///< and end
+  TclNet_float new_fc_num_points;///< how many values of z to use between start
+				///< and end
   Tclvar_float fc_num_halfcycles;///< # 'down' curves + # 'up' curves
+  TclNet_float new_fc_num_halfcycles;///< # 'down' curves + # 'up' curves
   Tclvar_float fc_sample_speed; ///< um (speed while sampling)
+  TclNet_float new_fc_sample_speed; ///< um (speed while sampling)
   Tclvar_float fc_pullback_speed; ///< um (speed while going to pullback height)
+  TclNet_float new_fc_pullback_speed;///< um (speed while going to pullback
+				 ///< height)
   Tclvar_float fc_start_speed; ///< um (speed in going to start height)
+  TclNet_float new_fc_start_speed; ///< um (speed in going to start height)
   Tclvar_float fc_feedback_speed; ///< um (speed in going to feedback point)
+  TclNet_float new_fc_feedback_speed; ///< um (speed in going to feedback point)
   Tclvar_float fc_avg_num;	///< # of samples per point
+  TclNet_float new_fc_avg_num;	///< # of samples per point
   Tclvar_float fc_sample_delay; 	///< us
+  TclNet_float new_fc_sample_delay; 	///< us
   Tclvar_float fc_pullback_delay; 	///< us
+  TclNet_float new_fc_pullback_delay; 	///< us
   Tclvar_float fc_feedback_delay;	///< us
+  TclNet_float new_fc_feedback_delay;	///< us
 
   // parameter for Poly-line tool
   Tclvar_float step_size;
+  TclNet_float new_step_size;
 
    // parameters for Direct Z control
   Tclvar_float max_z_step;
+  TclNet_float new_max_z_step;
   Tclvar_float max_xy_step;
+  TclNet_float new_max_xy_step;
   Tclvar_float min_z_setpoint;
+  TclNet_float new_min_z_setpoint;
   Tclvar_float max_z_setpoint;
+  TclNet_float new_max_z_setpoint;
   Tclvar_float max_lat_setpoint;
+  TclNet_float new_max_lat_setpoint;
 
     /// information returned by the Topo AFM used during directZ control
   float freespace_normal_force;
@@ -189,7 +241,9 @@ struct AFMModifyState {
 
   // parameters for Blunt style
   Tclvar_float blunt_size;
+  TclNet_float new_blunt_size;
   Tclvar_float blunt_speed;
+  TclNet_float new_blunt_speed;
 };
 
 struct AFMImageInitializationState {
