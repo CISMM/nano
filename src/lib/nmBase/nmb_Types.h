@@ -1,23 +1,16 @@
 #ifndef NMB_TYPES_H
 #define NMB_TYPES_H
 
-// MOVED from microscape.h
+//------------------------------------------------------------------
+//   This header contains definitions for architecture-dependent
+// types, to make sure size of data type is consistent over a 
+// network connection.
+
+#include <vrpn_Types.h>
+
 
 typedef float PointType [3];
 
-/*
-class PointType {
-  float data[3];
- public:
-  float& operator [] (int i) { return data[i]; }
-  float operator [] (int i) const { return data[i]; }
-  //  const float operator [] (int i) const { return data[i]; }
-  operator const float * () const {
-    float a[3] = {data[0], data[1], data[2]};
-    return a;
-  }
-};
-*/
 
 enum UserMode {
   USER_FLY_MODE = (0),
@@ -50,11 +43,5 @@ enum AFMStyle {
   FORCECURVE
 };  // style
 
-
-//------------------------------------------------------------------
-//   This header contains definitions for architecture-dependent
-// types, to make sure size of data type is consistent over a 
-// network connection.
-#include <vrpn_Types.h>
 
 #endif  // NMB_TYPES_H
