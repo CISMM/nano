@@ -863,8 +863,8 @@ int nmm_Microscope_Remote::TakeSampleSet (float _x, float _y) {
     ori = d_sampleAlgorithm->orientation;
   }
   rotateScanCoords(_x, _y, (double)(state.image.scan_angle), &x, &y);
-fprintf(stderr, "Sending Feelto %.5f, %.5f;  %d x %d for %.2f x %.2f\n",
-x, y, nx, ny, dx, dy);
+//fprintf(stderr, "Sending Feelto %.5f, %.5f;  %d x %d for %.2f x %.2f\n",
+//x, y, nx, ny, dx, dy);
   msgbuf = encode_FeelTo(&len, x, y, nx, ny, dx, dy, ori);
   if (!msgbuf) {
     return -1;
@@ -3582,8 +3582,8 @@ void nmm_Microscope_Remote::RcvEndFeelTo (
 //    float32 dx
 //    float32 dy
 //    float32 orientation
-fprintf(stderr, "Completed feel to %.2f, %.2f;  %d x %d.\n",
-x, y, numx, numy);
+//fprintf(stderr, "Completed feel to %.2f, %.2f;  %d x %d.\n",
+//x, y, numx, numy);
   state.data.receivedAlgorithm.numx = numx;
   state.data.receivedAlgorithm.numy = numy;
   state.data.receivedAlgorithm.dx = dx;
