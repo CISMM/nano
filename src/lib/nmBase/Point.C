@@ -273,52 +273,43 @@ void Point_results::print (const char *prelim) const
 
 Point_list::~Point_list()
 {
-	int i;
-
-	for (i = 0; i < _num_entries; i++) {
-		delete _entries[i];
-	}
+	this->clear();
 }
 
 
-int Point_list::numEntries (void) const {
-  return _num_entries;
+int Point_list::numEntries (void) const 
+{
+  return _entries.size();
 }
 
-const Point_results * Point_list::entry (int which) const {
-  if ((which < 0) || (which >= _num_entries)) {
+
+const Point_results * Point_list::entry (int which) const
+{
+  if( ( which < 0 ) || ( which >= _entries.size() - 1 ) )
+  {
     return NULL;
   }
   return _entries[which];
 }
 
 
-
 int Point_list::addEntry(const Point_results &p)
 {
-	// Make sure there is enough room
-	if (_num_entries >= MAX_POINT_LIST) {
-		return -1;
-	}
-
-	// Add a new point, copying from the one passed in
-	if ( (_entries[_num_entries] = new Point_results(p)) == NULL) {
-		return -1;
-	};
-	_num_entries++;
+	Point_results* newPoint = new Point_results( p );
+	if( newPoint == NULL ) return -1;
+	_entries.push_back( newPoint );
 
 	return 0;
 }
 
+
 void Point_list::clear(void)
 {
-	int i;
-	for (i = 0; i < _num_entries; i++) {
-          if (_entries[i]) {
+	for( int i = 0; i <= _entries.size() - 1; i++ )
+	{
 		delete _entries[i];
-          }
 	}
-	_num_entries = 0;
+	_entries.clear( );
 }
 
 
@@ -333,8 +324,9 @@ string * Point_list::outputToText()
     string * result = new string;
 
     // Don't do anything if there aren't any points
-    if (_num_entries == 0) {
-        return 0;
+    if( _entries.empty() ) 
+	{
+        return NULL;
     }
 
     // Find out how many values are in the first point.  Used for
@@ -378,14 +370,14 @@ string * Point_list::outputToText()
     // plus newline, plus 2 characters extra, just in case. 
     // This totals about 100, and so for 3000 entries, that's 30K
     // we can afford to allocate up front. 
-    result->reserve(result->capacity() + _num_entries*(
-        11 + 9 + 9 + 9 + (is3D?9:0) + (13*numValues) + 1 + 2));
+    result->reserve(result->capacity() + _entries.size() *
+		(11 + 9 + 9 + 9 + (is3D?9:0) + (13*numValues) + 1 + 2));
 
     // Write the values to the Tcl window.Each value within each point will
     // be tab-separated.  Compute s from x and y as difference from start.
     // Compute time as floating-point difference in seconds from the
     // time of the first point.  There is one point per line.
-    for (i = 0; i < _num_entries; i++) {
+    for (i = 0; i < _entries.size(); i++) {
         Point_results	*p = _entries[i];
 
         // Verify that each Point has the same number of values.  If not,

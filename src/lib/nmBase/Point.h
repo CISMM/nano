@@ -9,6 +9,15 @@
 #include <stdio.h>
 #include <string>
 #include <assert.h>
+
+#ifdef WIN32
+#pragma warning( push )
+#pragma warning( disable: 4786 )
+#endif
+#include <vector>
+#ifdef	WIN32
+#pragma warning( pop )
+#endif
 using namespace std;
 
 // and reset the warnings
@@ -23,6 +32,7 @@ class	Point_list;
 
 const	int	MAX_POINT_CALLBACKS = 32;
 typedef	void	(*Point_Valuecall)(Point_value *newval, void *userdata);
+
 
 class	Point_value
 {
@@ -77,6 +87,7 @@ class	Point_value
     float _value;
 };
 
+
 class	Point_results
 {
   public:
@@ -129,7 +140,7 @@ class	Point_results
     long _usec;
 };
 
-const	int	MAX_POINT_LIST = 10000;
+
 /** This class is a list of Point_results, each of which should have the
  same number and type of Point_values.  This list was created for use
  in writing xgraph-readible output from the modification results.
@@ -137,32 +148,23 @@ const	int	MAX_POINT_LIST = 10000;
 class	Point_list
 {
   public:
-
-    Point_list (void) { _num_entries = 0; };
+    Point_list (void) { };
     ~Point_list (void);
 
 
     // ACCESSORS
-
-
     int numEntries (void) const;
     const Point_results * entry (int) const;
 
 
     // MANIPULATORS
-
-
     int addEntry (const Point_results & p);
     void clear (void);
 
-    //int writeToAsciiFile (FILE * f);
-    //int writeToTclWindow (Tcl_Interp * interpreter);
     string * outputToText();
 
   protected:
-
-    int _num_entries;
-    Point_results * _entries [MAX_POINT_LIST];
+    vector<Point_results*> _entries;
 };
 
 

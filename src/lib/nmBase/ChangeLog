@@ -1,3 +1,9 @@
+2004-01-14  David Marshburn  <marshbur@cs.unc.edu>
+
+	* Point.h,C:  removed MAX_POINT_LIST and _num_entries members. 
+	_entries (the list of points) is now an STL vector, so its length
+	is not explicitly bounded.
+
 2003-08-07  Aron Helser  <helser@cs.unc.edu>
 
 	* readNanotecFile.Ch: new, allows reading of WSxM format files. 
@@ -7,7 +13,8 @@
 
 2003-03-31  Adam Seeger  <seeger@cs.unc.edu>
 
-	* nmb_Image.C : changed file format names to match those used by ImgMagick
+	* nmb_Image.C : changed file format names to match those used by 
+	ImgMagick
 
 2003-02-27  Adam Seeger  <seeger@cs.unc.edu>
 
