@@ -4961,6 +4961,15 @@ void teardownSynchronization(CollaborationManager *cm,
       viewHapticControls->remove(&compliance_slider_max);
       viewHapticControls->remove(&default_spring_k);
     }
+
+    if (m->graphmod != NULL) {
+      nmui_Component * viewStripchartControls = viewControls->find("Stripchart");
+      if(viewStripchartControls) {
+	VERBOSE(1,"Tearing down GraphMod sync");
+	(m->graphmod)->gm_TeardownSynchronization(viewStripchartControls);
+      }
+    }
+
   }
 
   nmui_Component * paramControls = ui_Root->find("Params");
@@ -5269,6 +5278,14 @@ void setupSynchronization (CollaborationManager * cm,
   viewHapticControls->add(&default_spring_k);
 
 /* */
+  nmui_Component * viewStripchartControls;
+  viewStripchartControls = new nmui_Component("Stripchart");
+
+  /* */
+  if(m->graphmod != NULL)
+      (m->graphmod)->gm_SetupSynchronization(viewStripchartControls);
+
+/* */
   viewControls->add(viewPlaneControls);
   viewControls->add(viewColorControls);
   viewControls->add(viewMeasureControls);
@@ -5276,10 +5293,10 @@ void setupSynchronization (CollaborationManager * cm,
   viewControls->add(viewContourControls);
   viewControls->add(viewGridControls);
   viewControls->add(viewHapticControls);
+  viewControls->add(viewStripchartControls);
 
   //adding viewControls to rootUIControl
   rootUIControl->add(viewControls);
-
   //nmui_Component * derivedPlaneControls;
   //derivedPlaneControls = new nmui_Component ("DerivedPlanes");
 
@@ -5344,7 +5361,6 @@ void setupSynchronization (CollaborationManager * cm,
   paramControls->add(&(m->state.numLinesToJumpBack));
 
   rootUIControl->add(paramControls);
-
   /* */
   // Tcl UI Controls - All other TCL UI controls
   nmui_Component * tclUIControls;
@@ -5363,7 +5379,6 @@ void setupSynchronization (CollaborationManager * cm,
   if(ConvTip) {
     ConvTip->nmtc_SetupSync(tclUIControls);
   }
-
   rootUIControl->add(tclUIControls);
   /* */
 
@@ -5378,9 +5393,7 @@ void setupSynchronization (CollaborationManager * cm,
     rootUIControl->add(frenchOhmmeterControls);
   }
   /* */
-
   rootUIControl->bindConnection(serverConnection);
-
 
   if (logConnection) {
     rootUIControl->bindLogConnection(logConnection);
@@ -6695,16 +6708,13 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
 
     // display modifications on a strip chart
 
-    // XXX ATH memory leak
-    GraphMod * graphmod = new GraphMod;
-
-    new_microscope->registerPointDataHandler(GraphMod::ReceiveNewPoint, graphmod);
-    new_microscope->registerModifyModeHandler(GraphMod::EnterModifyMode, graphmod);
-    new_microscope->registerImageModeHandler(GraphMod::EnterImageMode, graphmod);
+    new_microscope->registerPointDataHandler(GraphMod::ReceiveNewPoint, new_microscope->graphmod);
+    new_microscope->registerModifyModeHandler(GraphMod::EnterModifyMode, new_microscope->graphmod);
+    new_microscope->registerImageModeHandler(GraphMod::EnterImageMode, new_microscope->graphmod);
     new_microscope->registerScanlineModeHandler(GraphMod::EnterScanlineMode,
-						graphmod);
+						new_microscope->graphmod);
     new_microscope->registerScanlineDataHandler(GraphMod::ReceiveNewScanline,
-						graphmod);
+						new_microscope->graphmod);
 
     VERBOSE(1, "Created new GraphMod");
 
@@ -7191,7 +7201,7 @@ int main (int argc, char* argv[])
     // to the microscope.
     initialize_rtt();
 
-    VERBOSE(1, "About to init microscope\n");
+    VERBOSE(1, "About to init microscope");
 
     //fprintf(stderr, "About to init microscope\n");
 
@@ -7237,6 +7247,7 @@ int main (int argc, char* argv[])
             handle_openSPMDeviceName_change(NULL, (void *)&istate);
         }
     } else {
+
         // Handle other command line arguments which might have 
         // been passed to the microscope, like -f or -fi
         createNewMicroscope(istate, NULL);

@@ -1,3 +1,11 @@
+2001-07-09  Shayne O'Neill  <soneill@mindspring.com>
+
+	* microscape.c:  Added calls to Graphmod's setup and teardown
+	                 synchronization in SetupSynchronization()
+			 and TeardownSynchronization().  Also changed
+			 the creatioin of a graphmod in CreateNewMicroscope()
+			 to accurately reflect the change to MicroscopeRemote.
+	
 2001-07-06 Jameson Miller <millerj@cs.unc.edu>
 	* microscape.c - registered a new pointdatahandler so dataset will be u
 	updated when in optimize now mode and new points are recieved
@@ -23,7 +31,7 @@
 	* microscape.c:  removed collaborative functions and variables
 	over to collaboration.C
 
-2001-06-25  Shayne O'Neill  <oneill@tbone.cs.unc.edu>
+2001-06-25  Shayne O'Neill  <oneill@mindspring.com>
 
 	* microscape.c:  Changed a bunch of Tclvars to TclNets.
 	                 Changed variables related to:
