@@ -18,6 +18,7 @@ int main( int argc, char* argv[] )
 
     vrpn_Synchronized_Connection connection(port);
 
+    // nmm_Microscope_SEM_diaginc m( "SEM", &connection, vrpn_FALSE );
     nmm_Microscope_SEM_diaginc m( "SEM", &connection, vrpn_TRUE );
 
     iface->setMicroscope( &m );

@@ -104,7 +104,7 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 	// bytes per pixel (red, green, blue)
 	maxBufferSize = (maxExtents[0] + 3) * maxExtents[1] * 3;
 	myImageBuffer = new vrpn_uint8[ maxBufferSize ];
-	cameraImageBuffer = new vrpn_uint16[ maxBufferSize ];
+	cameraImageBuffer = new vrpn_uint8[ maxBufferSize ];
 
 }
 
@@ -162,8 +162,8 @@ setupCamera( )
 		return success;
 	}
 	
-	// ask for 12 bits per pixel
-	int bitdepth = 12;
+	// ask for 8 bits per pixel
+	int bitdepth = 8;
 	success = SpotSetValue(SPOT_BITDEPTH, &bitdepth);
 	if( success != SPOT_SUCCESS )
 	{
@@ -184,9 +184,9 @@ setupCamera( )
 	
 	// set an exposure time
 	SPOT_EXPOSURE_STRUCT exposure;
-	exposure.lExpMSec = 2000;
-	exposure.lGreenExpMSec = 2000;
-	exposure.lBlueExpMSec = 2000;
+	exposure.lExpMSec = 250;
+	exposure.lGreenExpMSec = 0;
+	exposure.lBlueExpMSec = 0;
 	exposure.nGain = 2;
 	success = SpotSetValue( SPOT_EXPOSURE, &exposure );
 	if( success != SPOT_SUCCESS )
@@ -553,7 +553,7 @@ requestScan(vrpn_int32 nscans)
         d_scans_to_do = 0;
     } else {
         d_scan_enabled = vrpn_TRUE;
-        d_scans_to_do += nscans;
+        d_scans_to_do = 1;
 		//acquireImage();
 		//d_scans_to_do--;
     }
@@ -638,16 +638,18 @@ acquireImage()
 				"failed on the SPOT camera.  Code:  %d\n", retVal);
 			return -1;
 		}
-
-		//memcpy( myImageBuffer, cameraImageBuffer, this->maxBufferSize );
+		
+		vrpn_uint8 max = 0xFF >> currentContrast;
 		for( int row = 0; row < resY; row++ )
 		{
-			vrpn_uint16 mask = 0x00FF << currentContrast;
 			int line = row * resX;
 			for( int col = 0; col < resX; col++ )
 			{
-				myImageBuffer[line+col] 
-					= (vrpn_uint8) ( ( cameraImageBuffer[line+col] & mask ) >> currentContrast );
+				if( cameraImageBuffer[line+col] > max )
+					myImageBuffer[line+col] = 0xFF;
+				else
+					myImageBuffer[line+col] 
+					= (vrpn_uint8) ( cameraImageBuffer[line+col] << currentContrast );
 			}
 		}
 		if( d_scans_to_do > 0 ) 
@@ -796,7 +798,6 @@ void WINAPI nmm_Microscope_SEM_diaginc_spotCallback( int iStatus, long lInfo, DW
 	if( iStatus == SPOT_STATUSLIVEIMAGEREADY )
 	{
 		printf( "nmm_Microscope_SEM_diaginc_spotCallback:  status  %d\n", iStatus );
-		memcpy( me->myImageBuffer, me->cameraImageBuffer, me->maxBufferSize );
 
 		/* do this in acquireImage
 		if( me->d_scans_to_do > 0 )

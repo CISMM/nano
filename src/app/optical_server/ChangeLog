@@ -1,3 +1,9 @@
+2003-12-09  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmm_Microscope_SEM_diaginc.h/cpp:  returns to 8 bit images.  12-bit
+	image capture was way too slow.  also, clips the contrast at max.
+	* opticalServer.cpp:  returns to having the camera class make up data.
+
 2003-11-22  David Marshburn  <marshbur@cs.unc.edu>
 
 	* OpticalServerInterface.h/cpp:  adds double buffering and controls

@@ -106,7 +106,7 @@ private:
 	int currentBinning;
 	int currentContrast;
 	vrpn_uint8* myImageBuffer;
-	vrpn_uint16* cameraImageBuffer;
+	vrpn_uint8* cameraImageBuffer;
 
 
 	friend void WINAPI nmm_Microscope_SEM_diaginc_spotCallback( int iStatus, long lInfo, DWORD dwUserData );
