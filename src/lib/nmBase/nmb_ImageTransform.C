@@ -92,7 +92,7 @@ void nmb_ImageTransformAffine::compose(nmb_ImageTransformAffine &m)
     inverse_needs_to_be_computed = vrpn_TRUE;
 }
 
-void nmr_ImageTransformAffine::transform(double *p_src, double *p_dest) const {
+void nmb_ImageTransformAffine::transform(double *p_src, double *p_dest) const {
     assert(dim_src > 0 && dim_src < 5 && dim_dest > 0 && dim_dest < 5);
 
     for (int i = 0; i < dim_dest; i++){
@@ -103,10 +103,10 @@ void nmr_ImageTransformAffine::transform(double *p_src, double *p_dest) const {
     }
 }
 
-void nmr_ImageTransformAffine::invTransform(double *p_src, double *p_dest) {
+void nmb_ImageTransformAffine::invTransform(double *p_src, double *p_dest) {
     assert(dim_src > 0 && dim_src < 5 && dim_dest > 0 && dim_dest < 5);
     if (!hasInverse()) {
-        fprintf(stderr, "nmr_ImageTransformAffine::invTransform: Warning,"
+        fprintf(stderr, "nmb_ImageTransformAffine::invTransform: Warning,"
                " failed use of inverse (non-invertible transform)\n");
         return;
     }
@@ -125,10 +125,10 @@ void nmr_ImageTransformAffine::invTransform(double *p_src, double *p_dest) {
     }
 }
 
-void nmr_ImageTransformAffine::invert() {
+void nmb_ImageTransformAffine::invert() {
     assert(dim_src > 0 && dim_src < 5 && dim_dest > 0 && dim_dest < 5);
     if (!hasInverse()) {
-        fprintf(stderr, "nmr_ImageTransformAffine::invert: Warning,"
+        fprintf(stderr, "nmb_ImageTransformAffine::invert: Warning,"
                " failed use of invert (non-invertible transform)\n");
         return;
     }
@@ -144,17 +144,17 @@ void nmr_ImageTransformAffine::invert() {
 
 }
 
-nmr_ImageTransform *nmr_ImageTransformAffine::duplicate() const {
-    nmr_ImageTransformAffine *ita = new nmr_ImageTransformAffine(dim_src, dim_dest);
+nmb_ImageTransform *nmb_ImageTransformAffine::duplicate() const {
+    nmb_ImageTransformAffine *ita = new nmb_ImageTransformAffine(dim_src, dim_dest);
     for (int i = 0; i < 4; i++){
         for (int j = 0; j < 4; j++){
             ita->xform[i][j] = xform[i][j];
         }
     }
-    return (nmr_ImageTransform *)ita;
+    return (nmb_ImageTransform *)ita;
 }
 
-void nmr_ImageTransformAffine::buildIdentity(double m[4][4])
+void nmb_ImageTransformAffine::buildIdentity(double m[4][4])
 {
     int i,j;
     for (i = 0; i < 4; i++)
@@ -164,7 +164,7 @@ void nmr_ImageTransformAffine::buildIdentity(double m[4][4])
 
 
 /* computeInverse() - adapted from code in Matrix44.cpp by Dave McAllister */
-vrpn_bool nmr_ImageTransformAffine::computeInverse() {
+vrpn_bool nmb_ImageTransformAffine::computeInverse() {
 //    printf("before computeInverse\n");
 //    print();
     inverse_needs_to_be_computed = vrpn_FALSE;
@@ -257,7 +257,7 @@ vrpn_bool nmr_ImageTransformAffine::computeInverse() {
     return vrpn_TRUE;
 }
 
-vrpn_bool nmr_ImageTransformAffine::hasInverse() {
+vrpn_bool nmb_ImageTransformAffine::hasInverse() {
     if (inverse_needs_to_be_computed) {
 //        printf("computing inverse\n");
         inverse_valid = computeInverse();
