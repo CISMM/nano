@@ -4,6 +4,7 @@
 URProjectiveTexture::URProjectiveTexture():
   d_textureCreated(false),
   d_imageChangedSinceTextureInstalled(false),
+  d_imageDataChanged(false),
   d_enabled(false),
   d_doingFastUpdates(false),
   d_textureID(0),
@@ -11,7 +12,9 @@ URProjectiveTexture::URProjectiveTexture():
   d_colorImage(NULL),
   d_textureMatrixNumX(0),
   d_textureMatrixNumY(0),
-  d_textureBlendFunction(GL_DECAL)
+  d_textureBlendFunction(GL_DECAL),
+  d_opacity(1),
+  d_updateOpacity(true)
 {
 
 }
@@ -38,8 +41,19 @@ int URProjectiveTexture::setOpacity(double opacity)
 int URProjectiveTexture::setImage(nmb_Image *image)
 {
 	d_colorImage = NULL;
-	d_greyscaleImage = image;
-	d_imageChangedSinceTextureInstalled = true;
+    if (d_greyscaleImage) {
+        if (d_greyscaleImage->width() != image->width() || 
+            d_greyscaleImage->height() != image->height()/* ||
+            d_greyscaleImage != image*/) {
+            d_imageChangedSinceTextureInstalled = true;
+        }
+    }
+    else {
+        d_imageChangedSinceTextureInstalled = true;
+    }
+    d_greyscaleImage = image;
+    d_imageDataChanged = true;
+
 	return 0;
 }
 
@@ -127,7 +141,8 @@ int URProjectiveTexture::createTexture(bool doFastUpdates,
 
 		if (doFastUpdates) {
 			initTextureMatrixNoMipmap();
-			updateTextureNoMipmap();
+			updateTextureNoMipmap(colormap, data_min, data_max, 
+                color_min, color_max);
 		} else {
 			updateTextureMipmap(colormap, data_min, data_max, 
 				color_min, color_max);
@@ -167,6 +182,9 @@ int URProjectiveTexture::enable(double *textureTransform,
 		if (d_imageChangedSinceTextureInstalled) {
 			createTexture(d_doingFastUpdates);
 		}
+        else if (d_imageDataChanged && d_doingFastUpdates) {
+            updateTextureNoMipmap();
+        }
 		if (d_greyscaleImage) {
 			d_greyscaleImage->getImageToTextureTransform(imageToTexture,
 				d_textureMatrixNumX, d_textureMatrixNumY);
@@ -282,25 +300,61 @@ void URProjectiveTexture::changeDataset(nmb_Dataset *data)
 	d_greyscaleImage = NULL;
 }
 
-int URProjectiveTexture::updateTextureNoMipmap()
+int URProjectiveTexture::width() {
+    if (d_greyscaleImage) {
+        return d_greyscaleImage->width();
+    }
+    else if (d_colorImage) {
+        return d_colorImage->nx;
+    }
+    return 0;
+}
+
+int URProjectiveTexture::height() {
+    if (d_greyscaleImage) {
+        return d_greyscaleImage->height();
+    }
+    else if (d_colorImage) {
+        return d_colorImage->ny;
+    }
+    return 0;
+}
+
+int URProjectiveTexture::updateTextureNoMipmap(nmb_ColorMap *colormap,
+			float data_min, float data_max, 
+			float color_min, float color_max)
 {
 	if (!d_greyscaleImage) {
 		return -1;
 	}
 
+    int XMin = d_greyscaleImage->borderXMin();
+    int XMax = d_greyscaleImage->borderXMax();
+    int YMin = d_greyscaleImage->borderYMin();
+    int YMax = d_greyscaleImage->borderYMax();
+    int width = d_greyscaleImage->width();
+    int height = d_greyscaleImage->height();
+    int imageBufferNumX = width + XMin + XMax;
+	int imageBufferNumY = height + YMin + YMax;
+	void *imageData = d_greyscaleImage->pixelData();
+
     int pixelType;
     if (d_greyscaleImage->pixelType() == NMB_UINT8){
         pixelType = GL_UNSIGNED_BYTE;
-    } else if (d_greyscaleImage->pixelType() == NMB_UINT16){
+    } 
+    else if (d_greyscaleImage->pixelType() == NMB_UINT16){
         pixelType = GL_UNSIGNED_SHORT;
-    } else if (d_greyscaleImage->pixelType() == NMB_FLOAT32){
+    } 
+    else if (d_greyscaleImage->pixelType() == NMB_FLOAT32){
         pixelType = GL_FLOAT;
-    } else {
+    } 
+    else {
         fprintf(stderr, "URProjectiveTexture::updateTexture:"
              "can't handle pixel type\n"); 
         return -1;      
     }
 
+	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, d_textureID);
 
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
@@ -308,17 +362,105 @@ int URProjectiveTexture::updateTextureNoMipmap()
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
-	int imageBufferNumX = d_greyscaleImage->width() + 
-		d_greyscaleImage->borderXMin() + d_greyscaleImage->borderXMax();
-	int imageBufferNumY = d_greyscaleImage->height() +
-		d_greyscaleImage->borderYMin() + d_greyscaleImage->borderYMax();
-	void *imageData = d_greyscaleImage->pixelData();
+    if (colormap) {
+		const int CMAP_SIZE_GL = 512;
+		float dummy;
+		float rmap[CMAP_SIZE_GL], gmap[CMAP_SIZE_GL],bmap[CMAP_SIZE_GL],amap[CMAP_SIZE_GL];
+		for (int i = 0; i < CMAP_SIZE_GL; i++) {
+			colormap->lookup(i, 0, CMAP_SIZE_GL,
+                data_min, data_max, color_min, color_max,
+                &rmap[i], &gmap[i], &bmap[i], &dummy);
+            amap[i] = (i + 1) * (1.0 / CMAP_SIZE_GL);
+		}
+        amap[0] = 0;
+		// gl first converts the luminance pixels to RGBA, then
+		// applies the maps we specify. These are created from our
+		// color maps above. We're letting GL do the work for us. 
+		glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
+		glPixelMapfv(GL_PIXEL_MAP_R_TO_R, CMAP_SIZE_GL, &rmap[0]);
+		glPixelMapfv(GL_PIXEL_MAP_G_TO_G, CMAP_SIZE_GL, &gmap[0]);
+		glPixelMapfv(GL_PIXEL_MAP_B_TO_B, CMAP_SIZE_GL, &bmap[0]);
+        glPixelMapfv(GL_PIXEL_MAP_A_TO_A, CMAP_SIZE_GL, &amap[0]);
+	}
 
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-           imageBufferNumX, imageBufferNumY,
-           GL_LUMINANCE, pixelType, imageData);
+    if (d_updateOpacity) {
+        void *imageDataAlpha;
+        int i, j, k = 0;
+        if (pixelType == GL_UNSIGNED_BYTE) {
+            imageDataAlpha= new GLubyte[2 * imageBufferNumX * imageBufferNumY];
+            for (j = 0; j < imageBufferNumY; j++) {
+                for (i = 0; i < imageBufferNumX; i++) {
+                    ((GLubyte*)imageDataAlpha)[2 * k] = ((GLubyte*)imageData)[k];
+                    if (j < YMin || j >= height + YMax || i < XMin || i >= width + XMax) {
+                        ((GLubyte*)imageDataAlpha)[2 * k + 1] = 0;    // zero alpha for border
+                    }
+                    else {
+                        ((GLubyte*)imageDataAlpha)[2 * k + 1] = d_opacity * 255;
+                    }
+                    k++;
+                }
+            }
+        } 
+        else if (pixelType == GL_UNSIGNED_SHORT) {
+            imageDataAlpha= new GLushort[2 * imageBufferNumX * imageBufferNumY];
+            for (j = 0; j < imageBufferNumY; j++) {
+                for (i = 0; i < imageBufferNumX; i++) {
+                    ((GLushort*)imageDataAlpha)[2 * k] = ((GLushort*)imageData)[k];
+                    if (j < YMin || j >= height + YMax || i < XMin || i >= width + XMax) {
+                        ((GLushort*)imageDataAlpha)[2 * k + 1] = 0;    // zero alpha for border
+                    }
+                    else {
+                        ((GLushort*)imageDataAlpha)[2 * k + 1] = d_opacity * 65535;
+                    }
+                    k++;
+                }
+            }
+        } 
+        else if (pixelType == GL_FLOAT) {
+            imageDataAlpha= new GLfloat[2 * imageBufferNumX * imageBufferNumY];
+            for (j = 0; j < imageBufferNumY; j++) {
+                for (i = 0; i < imageBufferNumX; i++) {
+                    ((GLfloat*)imageDataAlpha)[2 * k] = ((GLfloat*)imageData)[k];
+                    if (j < YMin || j >= height + YMax || i < XMin || i >= width + XMax) {
+                        ((GLfloat*)imageDataAlpha)[2 * k + 1] = 0;    // zero alpha for border
+                    }
+                    else {
+                        ((GLfloat*)imageDataAlpha)[2 * k + 1] = d_opacity;
+                    }
+                    k++;
+                }
+            }
+        } 
 
-  return 0;
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                        imageBufferNumX, imageBufferNumY,
+                        GL_LUMINANCE_ALPHA, pixelType, imageDataAlpha);
+
+        delete [] imageDataAlpha;
+
+        d_updateOpacity = false;
+    }
+    else {
+        glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glPixelStorei(GL_UNPACK_SKIP_ROWS, YMin);
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS, XMin);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, imageBufferNumX);
+
+        glPixelTransferf(GL_ALPHA_SCALE, d_opacity);
+
+        glTexSubImage2D(GL_TEXTURE_2D, 0, XMin, YMin,
+                        width, height,
+                        GL_LUMINANCE, pixelType, imageData);
+
+        
+        glPopAttrib();
+    }
+
+    d_imageDataChanged = false;
+
+    return 0;
 }
 
 int URProjectiveTexture::initTextureMatrixNoMipmap()
@@ -385,6 +527,18 @@ int URProjectiveTexture::updateTextureMipmap(nmb_ColorMap *colormap,
 		return -1;
 	}
 
+printf("updateTextureMipmap\n");
+    
+    int XMin = d_greyscaleImage->borderXMin();
+    int XMax = d_greyscaleImage->borderXMax();
+    int YMin = d_greyscaleImage->borderYMin();
+    int YMax = d_greyscaleImage->borderYMax();
+    int width = d_greyscaleImage->width();
+    int height = d_greyscaleImage->height();
+    int imageBufferNumX = width + XMin + XMax;
+	int imageBufferNumY = height + YMin + YMax;
+	void *imageData = d_greyscaleImage->pixelData();
+
     int pixelType;
     if (d_greyscaleImage->pixelType() == NMB_UINT8){
         pixelType = GL_UNSIGNED_BYTE;
@@ -403,29 +557,25 @@ int URProjectiveTexture::updateTextureMipmap(nmb_ColorMap *colormap,
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, d_textureID);
 
-	int imageBufferNumX = d_greyscaleImage->width() + 
-		d_greyscaleImage->borderXMin() + d_greyscaleImage->borderXMax();
-	int imageBufferNumY = d_greyscaleImage->height() +
-		d_greyscaleImage->borderYMin() + d_greyscaleImage->borderYMax();
-	void *imageData = d_greyscaleImage->pixelData();
-
 	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 	glTexParameteri( GL_TEXTURE_2D, 
 		GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri( GL_TEXTURE_2D, 
 		GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 
-	GLint internalFormat = GL_RGB;
+	GLint internalFormat = GL_RGBA;
 
 	if (colormap) {
 		const int CMAP_SIZE_GL = 512;
 		float dummy;
-		float rmap[CMAP_SIZE_GL], gmap[CMAP_SIZE_GL],bmap[CMAP_SIZE_GL];
+		float rmap[CMAP_SIZE_GL], gmap[CMAP_SIZE_GL],bmap[CMAP_SIZE_GL],amap[CMAP_SIZE_GL];
 		for (int i = 0; i < CMAP_SIZE_GL; i++) {
 			colormap->lookup(i, 0, CMAP_SIZE_GL,
               data_min, data_max, color_min, color_max,
               &rmap[i], &gmap[i], &bmap[i], &dummy);
+            amap[i] = d_opacity;
 		}
+        amap[0] = 0;
 		// gl first converts the luminance pixels to RGBA, then
 		// applies the maps we specify. These are created from our
 		// color maps above. We're letting GL do the work for us. 
@@ -433,19 +583,67 @@ int URProjectiveTexture::updateTextureMipmap(nmb_ColorMap *colormap,
 		glPixelMapfv(GL_PIXEL_MAP_R_TO_R, CMAP_SIZE_GL, &rmap[0]);
 		glPixelMapfv(GL_PIXEL_MAP_G_TO_G, CMAP_SIZE_GL, &gmap[0]);
 		glPixelMapfv(GL_PIXEL_MAP_B_TO_B, CMAP_SIZE_GL, &bmap[0]);
+        glPixelMapfv(GL_PIXEL_MAP_A_TO_A, CMAP_SIZE_GL, &amap[0]);
+
+        d_updateOpacity = false;
 	}
-	if (pixelType == GL_FLOAT) {
+
+	void* imageDataAlpha;
+    int i, j, k = 0;
+    if (pixelType == GL_UNSIGNED_BYTE) {
+        imageDataAlpha= new GLubyte[2 * imageBufferNumX * imageBufferNumY];
+        for (j = 0; j < imageBufferNumY; j++) {
+            for (i = 0; i < imageBufferNumX; i++) {
+                ((GLubyte*)imageDataAlpha)[2 * k] = ((GLubyte*)imageData)[k];
+                if (j < YMin || j >= height + YMax || i < XMin || i >= width + XMax) {
+                    ((GLubyte*)imageDataAlpha)[2 * k + 1] = 0;    // zero alpha for border
+                }
+                else {
+                    ((GLubyte*)imageDataAlpha)[2 * k + 1] = d_opacity;
+                }
+                k++;
+            }
+        }
+	}
+    else if (pixelType == GL_UNSIGNED_SHORT) {
+        imageDataAlpha= new GLushort[2 * imageBufferNumX * imageBufferNumY];
+        for (j = 0; j < imageBufferNumY; j++) {
+            for (i = 0; i < imageBufferNumX; i++) {
+                ((GLushort*)imageDataAlpha)[2 * k] = ((GLushort*)imageData)[k];
+                if (j < YMin || j >= height + YMax || i < XMin || i >= width + XMax) {
+                    ((GLushort*)imageDataAlpha)[2 * k + 1] = 0;    // zero alpha for border
+                }
+                else {
+                    ((GLushort*)imageDataAlpha)[2 * k + 1] = d_opacity;
+                }
+                k++;
+            }
+        }
+    }
+    else if (pixelType == GL_FLOAT) {
 		nmb_Image *im_copy = new nmb_ImageGrid(d_greyscaleImage);
 		im_copy->normalize();
-		gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
-			imageBufferNumX, imageBufferNumY,
-			GL_LUMINANCE, pixelType, im_copy->pixelData());
-	  nmb_Image::deleteImage(im_copy);
-	} else {
-		gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
-			imageBufferNumX, imageBufferNumY,
-			GL_LUMINANCE, pixelType, d_greyscaleImage->pixelData());
-	}
+        imageData = im_copy->pixelData();
+
+        imageDataAlpha= new GLfloat[2 * imageBufferNumX * imageBufferNumY];
+        for (j = 0; j < imageBufferNumY; j++) {
+            for (i = 0; i < imageBufferNumX; i++) {
+                ((GLfloat*)imageDataAlpha)[2 * k] = ((GLfloat*)imageData)[k];
+                if (j < YMin || j >= height + YMax || i < XMin || i >= width + XMax) {
+                    ((GLfloat*)imageDataAlpha)[2 * k + 1] = 0;    // zero alpha for border
+                }
+                else {
+                    ((GLfloat*)imageDataAlpha)[2 * k + 1] = d_opacity;
+                }
+                k++;
+            }
+        }
+	    nmb_Image::deleteImage(im_copy);
+	} 
+   
+    gluBuild2DMipmaps(GL_TEXTURE_2D, internalFormat,
+	    imageBufferNumX, imageBufferNumY,
+	    GL_LUMINANCE_ALPHA, pixelType, imageDataAlpha);
 
 	GLenum err = glGetError();
     if (err!=GL_NO_ERROR) {

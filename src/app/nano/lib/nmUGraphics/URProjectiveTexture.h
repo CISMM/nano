@@ -49,9 +49,14 @@ class URProjectiveTexture {
 			 bool textureInWorldCoordinates = false);
   int disable();
   void changeDataset(nmb_Dataset *data);
+  
+  int width();      // width of the Image
+  int height();     // height of the Image
 
  private:
-  int updateTextureNoMipmap();
+  int updateTextureNoMipmap(nmb_ColorMap *colormap = NULL,
+			float data_min = 0, float data_max = 0, 
+			float color_min = 0, float color_max = 0);
   int initTextureMatrixNoMipmap();
   int updateTextureMipmap(nmb_ColorMap *colormap,
 			float data_min, float data_max, 
@@ -59,6 +64,7 @@ class URProjectiveTexture {
   void loadColorImageMipmap();
   bool d_textureCreated;
   bool d_imageChangedSinceTextureInstalled;
+  bool d_imageDataChanged;
   bool d_enabled;
   bool d_doingFastUpdates;
 
@@ -75,6 +81,8 @@ class URProjectiveTexture {
   // texture blending attributes
   GLuint d_textureBlendFunction;
   double d_opacity;
+
+  bool d_updateOpacity;       // true if we need to update the opacity for the texture
 };
 
 #endif
