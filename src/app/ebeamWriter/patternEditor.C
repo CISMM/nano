@@ -26,11 +26,74 @@ void PatternShape::addPoint(double x, double y)
   d_points.push_back(PatternPoint(x, y));
 }
 
-// This is highly cryptic but I also have very high confidence in its 
-// correctness because it was tested incrementally - should split this
-// up into 3 routines for clarity- 0 width polyline, finite width polyline,
-// and polygon
-void PatternShape::draw()
+void PatternShape::removePoint()
+{
+  if (!d_points.empty())
+    d_points.pop_back();
+  return;
+}
+
+void PatternShape::drawThinPolyline()
+{
+  if (d_points.empty()) return;
+
+  double x, y;
+  glLineWidth(1);
+  glColor4f(1.0, 0.0, 0.0, 1.0);
+
+  list<PatternPoint>::iterator pntIter = d_points.begin();
+  
+  x = (*pntIter).d_x;
+  y = (*pntIter).d_y;
+  pntIter++;
+  if (pntIter == d_points.end()) {
+    glBegin(GL_POINTS);
+    glVertex3f(x,y,0.0);
+    glEnd();
+  } else {
+    glBegin(GL_LINE_STRIP);
+    glVertex3f(x,y,0.0);
+    while (pntIter != d_points.end()) {
+      x = (*pntIter).d_x;
+      y = (*pntIter).d_y;
+      glVertex3f(x,y,0.0);
+      pntIter++;
+    }
+    glEnd();
+  }
+}
+
+void PatternShape::drawPolygon()
+{
+  if (d_points.empty()) return;
+
+  double x, y;
+  glLineWidth(1);
+  glColor4f(1.0, 0.0, 0.0, 1.0);
+
+  list<PatternPoint>::iterator pntIter = d_points.begin();
+
+  x = (*pntIter).d_x;
+  y = (*pntIter).d_y;
+  pntIter++;
+  if (pntIter == d_points.end()) {
+    glBegin(GL_POINTS);
+    glVertex3f(x,y,0.0);
+    glEnd();
+  } else {
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(x,y,0.0);
+    while (pntIter != d_points.end()) {
+      x = (*pntIter).d_x;
+      y = (*pntIter).d_y;
+      glVertex3f(x,y,0.0);
+      pntIter++;
+    }
+    glEnd();
+  }
+}
+
+void PatternShape::drawThickPolyline()
 {
   double x_start, y_start;
   double x0, y0, x1, y1, x2, y2;
@@ -149,6 +212,16 @@ void PatternShape::draw()
   }
 }
 
+void PatternShape::draw() {
+  if (d_type == PS_POLYGON) {
+    drawPolygon();
+  } else if (d_lineWidth_nm > 0){
+    drawThickPolyline();
+  } else {
+    drawThinPolyline();
+  }
+}
+
 PatternEditor::PatternEditor()
 {
    d_viewer = ImageViewer::getImageViewer();
@@ -218,6 +291,7 @@ PatternEditor::PatternEditor()
    d_grabY_nm = 0.0;
 
    d_shapeInProgress = vrpn_FALSE;
+   d_pointInProgress = vrpn_FALSE;
    d_currShape = NULL;
 
    d_grabShape = NULL;
@@ -400,6 +474,12 @@ int PatternEditor::handleMainWinEvent(
       case MOTION_EVENT:
          if (event.state & IV_LEFT_BUTTON_MASK) {
              // adjust current line being drawn
+             if (getUserMode() == PE_DRAWMODE) {
+               d_viewer->toImage(event.winID, &x, &y);
+               mainWinPositionToWorld(x,y,x_world_nm, y_world_nm);
+               updatePoint(x_world_nm, y_world_nm);
+               d_viewer->dirtyWindow(event.winID);
+             }
          } else if (event.state & IV_RIGHT_BUTTON_MASK) {
              // move the currently grabbed object if there is one
              if (getUserMode() == PE_GRABMODE) {
@@ -419,8 +499,13 @@ int PatternEditor::handleMainWinEvent(
                } else if (d_drawingTool == PE_POLYGON) {
                  startShape(PS_POLYGON);
                }
+               d_viewer->toImage(event.winID, &x, &y);
                setUserMode(PE_DRAWMODE);
              }
+             d_viewer->toImage(event.winID, &x, &y);
+             mainWinPositionToWorld(x, y, x_world_nm, y_world_nm);
+             startPoint(x_world_nm, y_world_nm);
+             d_viewer->dirtyWindow(event.winID);
              break;
            case IV_RIGHT_BUTTON:
              // if drawing, terminate the drawing
@@ -449,7 +534,7 @@ int PatternEditor::handleMainWinEvent(
              mainWinPositionToWorld(x, y,
                      x_world_nm, y_world_nm);
              // set the point
-             addPoint(x_world_nm, y_world_nm);
+             finishPoint(x_world_nm, y_world_nm);
              d_viewer->dirtyWindow(event.winID);
              break;
            case IV_RIGHT_BUTTON:
@@ -1027,6 +1112,7 @@ void PatternEditor::clearDrawingState()
     d_currShape = NULL;
   }
   d_shapeInProgress = vrpn_FALSE;
+  d_pointInProgress = vrpn_FALSE;
 }
 
 int PatternEditor::startShape(ShapeType type)
@@ -1044,16 +1130,37 @@ int PatternEditor::startShape(ShapeType type)
   return 0;
 }
 
-int PatternEditor::addPoint(const double x_nm, const double y_nm)
+int PatternEditor::startPoint(const double x_nm, const double y_nm)
 {
   if (d_shapeInProgress) {
     printf("adding point to current shape\n");
+    d_pointInProgress = vrpn_TRUE;
     d_currShape->addPoint(x_nm, y_nm);
     return 0;
   } else {
-    printf("Error, addPoint called when not drawing shape\n");
+    printf("Error, startPoint called when not drawing shape\n");
     return -1;
   }
+}
+
+int PatternEditor::updatePoint(const double x_nm, const double y_nm)
+{
+  if (d_shapeInProgress && d_pointInProgress) {
+    d_currShape->removePoint();
+    d_currShape->addPoint(x_nm, y_nm);
+    return 0;
+  } else {
+    printf("Error, updatePoint called when not setting point\n");
+    return -1;
+  }
+}
+
+int PatternEditor::finishPoint(const double x_nm, const double y_nm)
+{
+  int result = updatePoint(x_nm, y_nm);
+  printf("finishPoint\n");
+  d_pointInProgress = vrpn_FALSE;
+  return result;
 }
 
 int PatternEditor::endShape()

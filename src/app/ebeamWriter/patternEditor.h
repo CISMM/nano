@@ -25,9 +25,13 @@ class PatternShape {
     PatternShape(const PatternShape &sh);
     operator== (const PatternShape &sh) {return (d_ID == sh.d_ID);}
     void addPoint(double x, double y);
+    void removePoint();
     void translate(double x, double y)
     { d_trans_x += x; d_trans_y += y; }
     void draw();
+    void drawThinPolyline();
+    void drawThickPolyline();
+    void drawPolygon();
 
     int d_ID;
     static int s_nextID;
@@ -104,7 +108,9 @@ class PatternEditor {
 
    // stuff for creating a pattern
    int startShape(ShapeType type);
-   int addPoint(const double x_nm, const double y_nm);
+   int startPoint(const double x_nm, const double y_nm);
+   int updatePoint(const double x_nm, const double y_nm);
+   int finishPoint(const double x_nm, const double y_nm);
    int endShape();
    void clearDrawingState();
 
@@ -165,6 +171,7 @@ class PatternEditor {
    double d_grabY_nm;
 
    vrpn_bool d_shapeInProgress;
+   vrpn_bool d_pointInProgress;
    PatternShape *d_currShape;
 
    PatternShape *d_grabShape;
