@@ -28,7 +28,6 @@ Tclvar_int graphmod_hasWindow ("graphmod_hasWindow", 0);
                                 // it won't work the other way unless
 				// we correctly link the Tcl variable with
 				// the C variable - AAS
-//static int graphmod_hasWindow = 0;
 
 GraphMod::GraphMod (void) :
     d_currentmode (IMAGEMODE),
@@ -47,7 +46,6 @@ GraphMod::GraphMod (void) :
  d_max_points.addCallback(handle_MaxPointsChange, this);
  d_stride.addCallback(handle_StrideChange, this);
 
-//fprintf(stderr, "GraphMod constructor\n");
 }
 
 GraphMod::~GraphMod (void) {
@@ -62,8 +60,6 @@ int GraphMod::EnterModifyMode (void * userdata) {
 
   if (me->d_currentmode == MODMODE) {
       // This is OK, sometimes happens when collaborating. 
-//      fprintf(stderr, "GraphMod::EnterModifyMode:  "
-//                      "Error switching from MODMODE to MODMODE.\n");
     return 0;
   }
 
@@ -267,7 +263,6 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
 
       stride = ((me->d_scanlength)/MAX_SCANLINE_GRAPH_PTS + 1);
 
-//      printf("adding %d points\n", sr->length());
       for (i = stride; i < me->d_scanlength; i+= stride){
 	t += stride;
 	s += stride;
@@ -313,9 +308,6 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
 		if (str[m] == ' ' || str[m] == '-')
 		    str[m] = '_';
 	    }
-
-
-//	    printf("adding vector %s\n", str);
 
 	    if (!Blt_VectorExists(me->d_interp, str))  {
 	    	if (Blt_CreateVector(me->d_interp, str, 0, &vecPtr) != TCL_OK) {
@@ -635,7 +627,8 @@ void GraphMod::ShowStripchart (const char * ) {
 }
 
 // static
-void GraphMod::handle_MaxPointsChange(vrpn_int32 new_value, void * userdata)
+void GraphMod::
+handle_MaxPointsChange(vrpn_int32 /*new_value*/, void * userdata)
 {
    int i;
    GraphMod *me = (GraphMod *)userdata;
@@ -664,9 +657,9 @@ void GraphMod::handle_MaxPointsChange(vrpn_int32 new_value, void * userdata)
 }
 
 // static
-void GraphMod::handle_StrideChange(vrpn_int32 new_value, void * userdata)
+void GraphMod::
+handle_StrideChange( vrpn_int32 /*new_value*/, void * /*userdata*/ )
 {
-   GraphMod *me = (GraphMod *)userdata;
    
 }
 

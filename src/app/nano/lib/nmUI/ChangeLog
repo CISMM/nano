@@ -1,3 +1,8 @@
+2001-12-18  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* nmui_PlaneSync.C: remove compiler warnings
+	* GraphMod.C:  same
+
 2001-12-18  Aron Helser  <helser@cs.unc.edu>
 
 	* nmui_CrossSection.Ch: new, control UI for cross section

@@ -96,7 +96,7 @@ handleCalculatedPlaneSync( void * userdata, vrpn_HANDLERPARAM p )
 	  newPlane = 
 	    nmb_CalculatedPlane::receiveCalculatedPlane( p, dataset );
 	}
-      catch( nmb_CalculatedPlaneCreationException e )
+      catch( nmb_CalculatedPlaneCreationException /*e*/ )
 	{
 
 	}
