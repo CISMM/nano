@@ -2173,6 +2173,8 @@ static int local_time_sync (void *) {
 
 //fprintf(stderr, "++ In local_time_sync() at %ld seconds;  "
 //"wrote data into replica.\n", decoration->elapsedTime);
+
+  return 0;
 }
 
 

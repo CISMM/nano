@@ -1,5 +1,9 @@
 2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
 
+        * microscape.c (local_time_sync) : must return a value
+
+2000-09-21  Tom Hudson  <hudson@cs.unc.edu>
+
         * tcl_tk.c (init_Tk_control_panels) : take collaborationTimer as
         argument and pass to Tclnet_init()
 
