@@ -13,18 +13,6 @@
     Overview:
     	- handles all button presses for grabbing & flying
     
-    Revision History:
-
-    Author	    	Date	  Comments
-    ------	    	--------  ----------------------------
-    Aron Helser         02/97     Re-wrote doFeelLive, eliminated others
-    Mark Finch		03/29/94  Adding Uzi Mode
-    Rich Holloway	06/18/91  Changed to work w/ adlib
-    Rich Holloway	06/10/91  Simplified more for vlib v3.0
-    Rich Holloway	04/18/91  Ported to pxpl5 & simplified
-    Rich Holloway	01/16/91  Initial version
-
-
    Developed at the University of North Carolina at Chapel Hill, supported
    by the following grants/contracts:
    
@@ -155,7 +143,7 @@ Tclvar_int	config_haptic_plane("haptic_from_flat", 0);
 //static nmui_SurfaceFeatures haptic_features;
 static nmui_HapticsManager haptic_manager;
 
-static q_vec_type xy_pos;  // used for constrained freehand xyz
+static q_vec_type xyz_lock_pos;  // used for constrained freehand xyz
 
 /***************************
  * Mode of user operation
@@ -218,6 +206,9 @@ static float region_base_tracker_angle = 0;
 /** parameter locking the tip in sharp tip mode */
 static void handle_xyLock (vrpn_int32, void *);
 TclNet_int xy_lock ("xy_lock_pressed", 0, handle_xyLock);
+
+static void handle_zLock( vrpn_int32, void* );
+TclNet_int z_lock( "z_lock_pressed", 0, handle_zLock );
 
 /// Trigger button from the virtual button box in Tcl
 static int  tcl_trigger_just_forced_on = 0;
@@ -534,15 +525,42 @@ void handle_xyLock (vrpn_int32, void *)
   }
 
   // save the position the user is currently at so we have
-  // the x and y coords of their hand in the world, only the z varies
-  nmui_Util::getHandInWorld(0, xy_pos);
-  
+  // the coords of their hand in the world
+  q_vec_type temp;
+  if( z_lock ) // save the locked z position
+    { temp[2] = xyz_lock_pos[2]; }
+  nmui_Util::getHandInWorld(0, xyz_lock_pos);
+  if( z_lock ) // restore the locked z position
+    { xyz_lock_pos[2] = temp[2]; }
+
   //get Z position of when xy_lock was set for direct step
   if (microscope->haveMutex() 
       && microscope->state.modify.tool == DIRECT_STEP) {
-    z_pos = xy_pos[2];
+    z_pos = xyz_lock_pos[2];
   }
 }
+
+void handle_zLock( vrpn_int32, void* )
+{
+  if( !microscope->haveMutex() )
+    { z_lock = 0; }
+  cout << "z_lock pressed" << endl;
+
+  // save the position the user is currently at so we have
+  // the coords of their hand in the world
+  q_vec_type temp;
+  if( xy_lock ) // keep the locked xy positions
+    {
+      temp[0] = xyz_lock_pos[0];
+      temp[1] = xyz_lock_pos[1];
+    }
+  nmui_Util::getHandInWorld(0, xyz_lock_pos);
+  if( xy_lock ) // restore the locked xy positions
+    {
+      xyz_lock_pos[0] = temp[0];
+      xyz_lock_pos[1] = temp[1];
+    }
+}  
 
 
 static void handle_friction_linear_change(vrpn_int32 val, void *) {
@@ -1436,16 +1454,16 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
 
     /* code dealing with locking the tip in sharp tip mode */
     /* locks the tip in one place so you can take repeated measurements */
-    if ((PRESS_EVENT == eventList[XY_LOCK_BT]) && microscope->haveMutex()) {
-      // save the position the user is currently at so we have
-      // the x and y coords of their hand in the world, only the z varies
-      nmui_Util::getHandInWorld(0, xy_pos);
+    if ((PRESS_EVENT == eventList[XY_LOCK_BT]) && microscope->haveMutex()) 
+      { xy_lock = 1; }
+    if (RELEASE_EVENT == eventList[XY_LOCK_BT]) 
+      { xy_lock = 0; }
 
-      xy_lock = 1;
-    }
-    if (RELEASE_EVENT == eventList[XY_LOCK_BT]) {
-      xy_lock = 0;
-    }
+    if( (PRESS_EVENT == eventList[Z_LOCK_BT]) && microscope->haveMutex() )
+      { z_lock = 1; }
+    if( RELEASE_EVENT == eventList[Z_LOCK_BT] )
+      { z_lock = 0; }
+	
 
     /* Handle a "commit" or "cancel" button press/release on
 	 * the real button box by causing a callback to
@@ -2742,15 +2760,23 @@ int doFeelLive (int whichUser, int userEvent)
   if( xy_lock )
     {
       if (microscope->state.modify.control == DIRECTZ ) {
-	clipPos[0] = xy_pos[0];
-	clipPos[1] = xy_pos[1];
+	clipPos[0] = xyz_lock_pos[0];
+	clipPos[1] = xyz_lock_pos[1];
       }
       else { // not directZ; in feedback
-	clipPos[0] = xy_pos[0];
-	clipPos[1] = xy_pos[1];
-	clipPos[2] = xy_pos[2];
+	clipPos[0] = xyz_lock_pos[0];
+	clipPos[1] = xyz_lock_pos[1];
+	clipPos[2] = xyz_lock_pos[2];
       }
     } // end if xy_lock
+
+  // restrict based on z_lock
+  if( z_lock )
+    {
+      if( microscope->state.modify.control == DIRECTZ )
+	{ clipPos[2] = xyz_lock_pos[2]; }
+      // else in feedback, and the tip stays on the surface.
+    } // end if z_lock
 
   // restrict based on direct step
   if (microscope->state.modify.tool == DIRECT_STEP) {    

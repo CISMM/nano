@@ -26,7 +26,8 @@
 #include <sys/socket.h>
 #include <netdb.h>              // gethostbyname() 
 #include <arpa/inet.h> // inet_addr()
-/*#include "/usr/include/arpa/inet.h" // inet_addr() */ /* NEVER EVER use absolute paths in #include! */
+/*#include "/usr/include/arpa/inet.h" // inet_addr() */ 
+/* NEVER EVER use absolute paths in #include! */
 #include <unistd.h>             // gethostname() 
 #include <errno.h>
 #endif
@@ -285,10 +286,22 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        }
 
        break;
-   case 7: 		/* XY lock */
+   case 7: 		/* XY & Z lock */
        if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
        if ((microscope) && (microscope->state.commands_suspended)) return;
+#if 1
+       if( !xy_lock && !z_lock )
+	 { xy_lock = 1; }
+       else if( xy_lock && !z_lock )
+	 { xy_lock = 0;  z_lock = 1; }
+       else if( !xy_lock && z_lock )
+	 { xy_lock = 1; }
+       else // xy_lock && z_lock
+	 { xy_lock = 0;  z_lock = 0; }
+#else
+       // XXX 3rdTech only
        xy_lock = !xy_lock;
+#endif
        break;
    case 8:              /* Cancel button */
        if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
@@ -334,7 +347,7 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
    case USER_PLANE_MODE:
        if (puck_active) {
            if (!old_puck_active) {
-              // This "activates" the puck, sets up later interaction.  Save
+	       // This "activates" the puck, sets up later interaction.  Save
                // the current puck transforms, so we can do diffs with them.
                q_vec_scale( old_puck_transform.xyz, trans_scale, 
                             (double *)tr.pos);
@@ -344,14 +357,11 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
            } else {
                // Save the center of the plane, basis for rotations. 
                get_Plane_Centers(&offsetx,&offsety,&offsetz);
-//                 printf("offsets %g %g %g\n", offsetx, offsety, offsetz);
 
                // Save the old world_from_room transform as a basis for puck
                // action. Move to activate section above if we aren't doing
                // incremental xforms.
                v_get_world_from_head(0, &old_world_from_room);
-//                 printf("old wfr ");
-//                 v_x_print( &old_world_from_room);
 
                // We are active, and changing the surface position
                v_init_xform(&new_world_from_room);
@@ -380,10 +390,8 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
                v_x_invert(&curr_room_from_world, &curr_world_from_room);
                
                // xform plane_center vector into room coords. 
-               v_x_xform_vector(plane_center, &curr_room_from_world, plane_center);
-
-//                 v_x_print(&curr_world_from_room);
-//                 q_vec_print(plane_center);
+               v_x_xform_vector(plane_center, &curr_room_from_world, 
+				plane_center);
 
                // translate plane center to zero, rotate
                v_x_set(&puck_rotate_xform, plane_center,
@@ -394,27 +402,19 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
                v_x_compose(&puck_rotate_xform, &puck_rotate_xform, 
                            &vxtemp);
 
-//                 v_x_print(&puck_rotate_xform);
-               
                v_x_compose(&new_world_from_room, 
                            &old_world_from_room, &puck_rotate_xform);
-
                
                // TRANSLATE the surface based on puck translation. 
                // Inversion necessary for natural movement. Don't know why. 
                q_vec_invert(puck_diff_transform.xyz, puck_diff_transform.xyz);
                v_x_set(&vxtemp, puck_diff_transform.xyz, q_ident, 1.0);
-               v_x_compose(&new_world_from_room, &new_world_from_room, &vxtemp);
-//                 v_x_print(&new_world_from_room);
-               
-               // May be necessary because of instability for large 
-               // rotations
-//                 q_normalize(new_world_from_room.rotate, 
-//                             new_world_from_room.rotate);
+               v_x_compose(&new_world_from_room, &new_world_from_room, 
+			   &vxtemp);
 
-collabVerbose(5, "handle_magellan_puck_change:  updateWorldFromRoom().\n");
+	       collabVerbose(5, "handle_magellan_puck_change:  "
+			     "updateWorldFromRoom().\n");
                updateWorldFromRoom(&new_world_from_room);
-//                 printf ("\n");
 
                // INCREMENTAL transform. If we do this, transforms are
                // updated frame-to-frame. If we don't, they are update
@@ -488,13 +488,15 @@ int connect_Magellan() {
         // Open the Magellan puck and button box.
         if ((magellanButtonBoxServer = new vrpn_Magellan(MAGELLAN_NAME, 
                                                     magellan_connection, 
-                                                    "COM1", 9600)) == NULL) return -1;
+                                                    "COM1", 9600)) == NULL) 
+	  { return -1; }
         // This server listens to the analog output of the Magellan puck
         // and makes it seem like a tracker. 
         // First set up parameters
         // Defaults for the axes, threshold = 0, power=1 are OK. 
         double scale = 2.0;
-        if ((magellan_param = new vrpn_Tracker_AnalogFlyParam) == NULL) return -1;
+        if ((magellan_param = new vrpn_Tracker_AnalogFlyParam) 
+	    == NULL) return -1;
         magellan_param->x.name = AF_MAGELLAN_NAME;
         magellan_param->x.channel = 0;
         magellan_param->x.scale = scale;
@@ -536,8 +538,6 @@ int connect_Magellan() {
         }
         // Analog won't be used for anything, unless we need to get
         // direct analog output from the puck. 
-//          if ((magellanPuckAnalog = new vrpn_Analog_Remote(MAGELLAN_NAME,
-//                                         magellan_connection)) == NULL) return -1;
         if ((magellanPuckTracker = new vrpn_Tracker_Remote(MAGELLAN_NAME,
                                        magellan_connection)) == NULL) return -1;
         // Special handling. If it's been created, don't re-create.
@@ -552,14 +552,16 @@ int connect_Magellan() {
         // There is no local magellan server, so create the clients for
         // a remote server. 
         // Client for the buttons
-        if ((magellanButtonBox = new vrpn_Button_Remote(magellan_name)) == NULL) return -1;
+        if ((magellanButtonBox = new vrpn_Button_Remote(magellan_name)) 
+	    == NULL) return -1;
         // Analog won't be used for anything, unless we need to get
         // direct analog output from the puck. 
-//          if ((magellanPuckAnalog = new vrpn_Analog_Remote(magellan_name)) == NULL) return -1;
-        if ((magellanPuckTracker = new vrpn_Tracker_Remote(magellan_name)) == NULL) return -1;
+        if ((magellanPuckTracker = new vrpn_Tracker_Remote(magellan_name)) 
+	    == NULL) return -1;
         // Special handling. If it's been created, don't re-create.
         if (magellanTextRcvr == NULL) {
-            if ((magellanTextRcvr = new vrpn_Text_Receiver(magellan_name)) == NULL) return -1;
+            if ((magellanTextRcvr = new vrpn_Text_Receiver(magellan_name)) 
+		== NULL) return -1;
             if (magellanTextRcvr->register_message_handler(NULL, handle_magellan_text_message)) {
                 fprintf(stderr, "Error: can't register magellan error message handler\n");
             }
@@ -570,10 +572,6 @@ int connect_Magellan() {
                                 handle_magellan_button_change)) {
         fprintf(stderr, "Error: can't register magellan vrpn_Button handler\n");
     }
-//    if ( magellanPuckAnalog->register_change_handler(&magellanPuckActive,
-//                             handle_magellan_puck_change)) {
-//    fprintf(stderr, "Error: can't register magellan vrpn_Analog handler\n");
-//    }
     if ( magellanPuckTracker->register_change_handler(&magellanPuckActive,
                                 handle_magellan_puck_change)) {
         fprintf(stderr, "Error: can't register magellan vrpn_Tracker handler\n");
@@ -584,18 +582,10 @@ int connect_Magellan() {
 void shutdown_Magellan() {
     // This fcn sometimes called within method of magellanTextRcvr
     // If we delete magellanTextRcvr, we get a segfault. 
-//          if (magellanTextRcvr) {
-//              delete magellanTextRcvr;
-//              magellanTextRcvr = NULL;
-//          }
         if (magellanPuckTracker) {
             delete magellanPuckTracker;
             magellanPuckTracker = NULL;
         }
-//          if (magellanPuckAnalog) {
-//              delete magellanPuckAnalog;
-//              magellanPuckAnalog = NULL;
-//          }
         if (magellanButtonBox) {
             delete magellanButtonBox;
             magellanButtonBox = NULL;
@@ -852,8 +842,6 @@ peripheral_init
     } else {
 	vrpnHeadTracker = NULL;
     }
-//      printf("Head Tracker = '%s', Hand Tracker = '%s'\n",headTrackerName,
-//  	handTrackerName);
 
     for (i = 0; i < BDBOX_NUMBUTTONS; i++) {
 	bdboxButtonState[i] = 0;

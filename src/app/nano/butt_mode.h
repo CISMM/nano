@@ -23,6 +23,6 @@ extern const int NULL16_BT;
 extern const int TOUCH_STORED_BT;
 extern const int NULL18_BT;
 extern const int XY_LOCK_BT;
-extern const int NULL20_BT;
+extern const int Z_LOCK_BT;
 
 extern int butt_mode(int *eventList, int *user_mode);

@@ -32,7 +32,7 @@ extern const int NULL16_BT    = 16;
 extern const int TOUCH_STORED_BT    = 17;
 extern const int NULL18_BT    = 18;
 extern const int XY_LOCK_BT = 19;
-extern const int NULL20_BT    = 20;
+extern const int Z_LOCK_BT    = 20;
 
 /** allow the user to select a mode with a button press.
  * mode <-> button defined above.

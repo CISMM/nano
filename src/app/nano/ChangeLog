@@ -1,3 +1,19 @@
+2001-09-30  David Marshburn  <marshbur@cs.unc.edu>
+
+	* minit.c: (handle_magellan_button_change) handle both
+	xy_lock and z_lock with the same Magellan button.  Toggles
+	among x'y'z'-lock, xyz'-lock, x'y'z-lock and xyz-lock.
+
+	* butt_mode.h, .c: added Z_LOCK_BT
+
+	* interaction.c: added TclNet_int z_lock
+	(handle_zLock): new, handles z_lock toggle
+	(handle_xyLock): changed to accomodate z_lock
+	(interaction): handle Z_LOCK_BT
+	(doFeelLive):  restrict tip motion for z_lock
+
+	* interaction.h: added extern TclNet_int z_lock
+
 2001-09-25 Jameson Miller <millerj@cs.unc.edu>
 	* interaction.c - the z positon gets updated when in xy-lock and
 	taking steps in direct_step using feedback. this is so that when 
