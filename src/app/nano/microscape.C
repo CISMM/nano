@@ -303,6 +303,11 @@ static void handle_mutex_release (vrpn_int32, void *);
 // Error recovery
 static void openDefaultMicroscope();
 
+// colaboration initialization
+void setupSynchronization (CollaborationManager * cm,
+                           nmb_Dataset * dset,
+                           nmm_Microscope_Remote * m);
+
 /*******************
  * Global variables
  *******************/
@@ -2702,6 +2707,7 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
         microscopeRedundancyController = NULL;
       }
     }
+
     microscope_connection = new_microscope_connection;
     vrpnLogFile = new_vrpnLogFile;
 
@@ -2720,7 +2726,7 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
                            istate->afm.inputStreamName);
         openDefaultMicroscope();
     }
-    
+
     openStreamFilename = "";
 }
 
@@ -4354,6 +4360,36 @@ void setupCallbacks (nmb_Decoration * d) {
     d->blue.registerMoveCallback(handle_collab_measure_move, (void *)2);
 }
 
+void teardownSynchronization(CollaborationManager *cm, 
+			     nmb_Dataset *dset,
+			     nmm_Microscope_Remote *m) {  
+  nmui_Component * ui_Root = cm->uiRoot();
+  nmui_Component * streamfileControls = ui_Root->find("Stream");
+  if (streamfileControls) {
+    streamfileControls->remove(&replay_rate);
+    streamfileControls->remove(&rewind_stream);
+    streamfileControls->remove(&set_stream_time);
+  }
+  nmui_Component * viewControls = ui_Root->find("View");
+  if (viewControls) {
+    nmui_Component * viewColorControls = viewControls->find("View Color");
+    if (viewColorControls) {
+      viewColorControls->remove((TclNet_string *) dset->colorPlaneName);
+      viewColorControls->remove((TclNet_string *) dset->colorMapName);
+    }
+    nmui_Component * viewPlaneControls = viewControls->find("View Plane");
+    if (viewPlaneControls) {
+      viewPlaneControls->remove(&m->state.stm_z_scale);
+      viewPlaneControls->remove((TclNet_string *) dset->heightPlaneName);
+    }
+  }
+  nmui_PlaneSync * ps = cm->planeSync();
+  if (ps) {
+    delete ps;
+    cm->setPlaneSync(NULL);
+  }
+}
+
 // NANOX
 // Tom Hudson, September 1999
 // Sets up synchronization callbacks and nmui_Component/ComponentSync
@@ -4592,9 +4628,6 @@ void setupSynchronization (CollaborationManager * cm,
           (handle_timed_sync_request, streamfileControls);
   streamfileControls->registerSyncCompleteHandler
           (handle_timed_sync_complete, cm);
-
-
-
 
   // which machine collaborator is using
   cm->setUI(rootUIControl);
@@ -5826,6 +5859,11 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
     alignerUI->teardownCallbacks();
   }
 
+  if (collaborationManager && microscope && dataset) {
+    //    printf("entering teardownSynchronization\n");
+    teardownSynchronization(collaborationManager, dataset, 
+			    microscope);
+  }
 
   nmm_Microscope_Remote *
     new_microscope = new nmm_Microscope_Remote (istate.afm, c);
@@ -5887,6 +5925,9 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
       // after graphics is constructed
       new_microscope->registerImageModeHandler(clear_polyline, graphics);
       setupCallbacks(new_dataset, graphics);
+    }
+    if (collaborationManager) {
+      setupSynchronization(collaborationManager, new_dataset, new_microscope);
     }
 
     // XXX ATH memory leak
@@ -6374,7 +6415,6 @@ int main (int argc, char* argv[])
   collaborationManager->initialize(vrpnHandTracker[0], NULL,
                                    handle_peer_sync_change);
 
-  // XXX ATH redo when new stream file opened. 
   setupSynchronization(collaborationManager, dataset, microscope);
 
   setupCallbacks(forceDevice);

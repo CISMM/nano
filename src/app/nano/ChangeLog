@@ -1,3 +1,9 @@
+2000-11-20  Kwan Skinner  <skinner@cs.unc.edu>
+
+	* microscape.c (teardownSynchronization) : new function.
+	(createNewMicroscope) : do the right thing when a new streamfile is
+	opened in collaboration.
+
 2000-11-5  Tom Hudson  <hudson@cs.unc.edu>
 
 	* mf.h : moved file to attic
