@@ -15,6 +15,7 @@ static	void handle_current_object_new(const char*, void*);
 static	void handle_current_object(const char*, void*);
 static  void handle_import_scale_change (vrpn_float64, void *);
 static  void handle_import_tess_change (vrpn_int32, void *);
+static  void handle_import_axis_step_change (vrpn_int32, void *);
 static  void handle_import_transx_change (vrpn_float64, void *);
 static  void handle_import_transy_change (vrpn_float64, void *);
 static  void handle_import_transz_change (vrpn_float64, void *);
@@ -25,6 +26,7 @@ static  void handle_import_visibility (vrpn_int32, void *);
 static  void handle_import_color_change (vrpn_int32, void *);
 static  void handle_import_alpha (vrpn_float64, void *);
 static  void handle_import_proj_text (vrpn_int32, void *);
+static	void handle_import_clamp (vrpn_int32, void *);
 static	void handle_import_CCW (vrpn_int32, void *);
 
 ///Import object handlers specifically for MSI files
@@ -49,8 +51,10 @@ Tclvar_float	import_roty("import_roty",0, handle_import_roty_change);
 Tclvar_float	import_rotz("import_rotz",0, handle_import_rotz_change);
 Tclvar_int      import_visibility("import_visibility", 1, handle_import_visibility);
 Tclvar_int      import_proj_text("import_proj_text", 1, handle_import_proj_text);
+Tclvar_int		import_clamp("import_clamp", 0, handle_import_clamp);
 Tclvar_int		import_CCW("import_CCW", 1, handle_import_CCW);
 Tclvar_int		import_tess("import_tess", 10, handle_import_tess_change);
+Tclvar_int		import_axis_step("import_axis_step", 1, handle_import_axis_step_change);
 Tclvar_int      import_color_changed("import_color_changed", 0, handle_import_color_change);
 Tclvar_int      import_r("import_r", 192);
 Tclvar_int      import_g("import_g", 192);
@@ -115,11 +119,13 @@ static void handle_import_file_change (const char *, void *) {
             URPolygon *obj = new URPolygon;
 			obj->SetCCW(import_CCW);
 			obj->SetTess(import_tess);
+			obj->SetAxisStep(import_axis_step);
             FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
             import_type = gen->GetExtension();
             obj->LoadGeometry(gen);
             obj->SetVisibility(import_visibility);
 			obj->SetProjText(import_proj_text);
+			obj->SetClamp(import_clamp);
 	        obj->SetColor3(convert * import_r, convert * import_g, convert * import_b);
             obj->SetAlpha(import_alpha);
             obj->GetLocalXform().SetScale(import_scale);
@@ -185,6 +191,22 @@ static  void handle_import_proj_text (vrpn_int32, void *)
 	}
 }
 
+static  void handle_import_clamp (vrpn_int32, void *)
+{
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		int i = import_clamp;
+		World.Do(&URender::SetClampAll, &i);
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetClamp(import_clamp);
+		}
+	}
+}
+
 static  void handle_import_CCW (vrpn_int32, void *)
 {
     UTree *node = World.TGetNodeByName(*World.current_object);
@@ -196,12 +218,19 @@ static  void handle_import_CCW (vrpn_int32, void *)
 
 static  void handle_import_tess_change (vrpn_int32, void *)
 {
-printf("import_tess = %d\n", import_tess);
     UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
-printf("import_tess = %d\n", import_tess);
         obj.SetTess(import_tess);
+    }
+}
+
+static  void handle_import_axis_step_change (vrpn_int32, void *)
+{
+    UTree *node = World.TGetNodeByName(*World.current_object);
+    if (node != NULL) {
+        URender &obj = node->TGetContents();
+        obj.SetAxisStep(import_axis_step);
     }
 }
 
@@ -346,6 +375,8 @@ static  void handle_import_color_change (vrpn_int32, void *)
 
 static  void handle_import_alpha (vrpn_float64, void *)
 {
+printf("hello?\n");
+
 	// if all selected, do for all loaded objects
 	if (strcmp(*World.current_object, "all") == 0) {
 		float i = import_alpha;

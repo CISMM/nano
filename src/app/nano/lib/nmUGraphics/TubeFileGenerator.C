@@ -43,6 +43,12 @@ const double PI = 3.1415926535;
 
 
 
+int step = 20;  // only do every "step"th point along axis
+int cur_step = 0;
+
+
+
+
 
 TubeFileGenerator::TubeFileGenerator(const char* fname) 
 	: FileGenerator(fname, "txt")
@@ -133,73 +139,77 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 				radius = atof(token);
 			}
 			else {			// should contain numerical data
-				token = strtok(NULL, " \t\n");		// skip X and Y
-				token = strtok(NULL, " \t\n");
+				if (cur_step++ % Pobject->GetAxisStep() == 0) {
+					cur_step = 1;
 
-				x = atof(token);
-				token = strtok(NULL, " \t\n");
-				y = atof(token);
-				token = strtok(NULL, " \t\n");
-				z = atof(token);
-				token = strtok(NULL, " \t\n");
-				az = atof(token);
-				token = strtok(NULL, " \t\n");
-				alt = atof(token);
+					token = strtok(NULL, " \t\n");		// skip X and Y
+					token = strtok(NULL, " \t\n");
+	
+					x = atof(token);
+					token = strtok(NULL, " \t\n");
+					y = atof(token);
+					token = strtok(NULL, " \t\n");
+					z = atof(token);
+					token = strtok(NULL, " \t\n");
+					az = atof(token);
+					token = strtok(NULL, " \t\n");
+					alt = atof(token);
 
-				// set up medial axis point
-				q_vec_set(p1, x, y, z);
+					// set up medial axis point
+					q_vec_set(p1, x, y, z);
 
-				// set up rotation quat
-				q_from_euler(q, az + PI / 2, 0, alt);
+					// set up rotation quat
+					q_from_euler(q, az + PI / 2, 0, alt);
 
-				// get vertices
-				theta = 0.0;
-				for (i = 0; i < tess; i++) {
-					v.clear();
+					// get vertices
+					theta = 0.0;
+					for (i = 0; i < tess; i++) {
+						v.clear();
 
-					// set point
-					q_vec_set(p2,	x + radius * cos(theta),
-									y,
-									z + radius * sin(theta));
-
-					// translate point to origin
-					q_vec_subtract(p2, p2, p1);
+						// set point
+						q_vec_set(p2,	x + radius * cos(theta),
+										y,
+										z + radius * sin(theta));
+	
+						// translate point to origin
+						q_vec_subtract(p2, p2, p1);
 					
-					// rotate
-					q_xform(p2, q, p2);
+						// rotate
+						q_xform(p2, q, p2);
 
-					// translate back
-					q_vec_add(p2, p2, p1);
+						// translate back
+						q_vec_add(p2, p2, p1);
+	
+						v.push_back(p2[0]);
+						v.push_back(p2[1]);
+						v.push_back(p2[2]);
 
-					v.push_back(p2[0]);
-					v.push_back(p2[1]);
-					v.push_back(p2[2]);
+						vs.push_back(v);
+						theta += 2 * PI / tess;
 
-					vs.push_back(v);
-					theta += 2 * PI / tess;
-
-					Pobject->num_triangles += 2;	// two triangles per vertex
-				}
-				// do cylinder stuff
-				c.x1 = x;
-				c.y1 = y;
-				c.z1 = z;
-				if (!newtube) {	
-					// fill in last guys second point
-					cs.back().x2 = x;
-					cs.back().y2 = y;
-					cs.back().z2 = z;
-					// fill in length
-					cs.back().length = sqrt((cs.back().x2 - cs.back().x1) * (cs.back().x2 - cs.back().x1) +
-											(cs.back().y2 - cs.back().y1) * (cs.back().y2 - cs.back().y1) +
-											(cs.back().z2 - cs.back().z1) * (cs.back().z2 - cs.back().z1));
+						Pobject->num_triangles += 2;	// two triangles per vertex
+					}
+					// do cylinder stuff
+					c.x1 = x;
+					c.y1 = y;
+					c.z1 = z;
+					if (!newtube) {	
+						// fill in last guys second point
+						cs.back().x2 = x;
+						cs.back().y2 = y;
+						cs.back().z2 = z;
+						// fill in length
+						cs.back().length = sqrt((cs.back().x2 - cs.back().x1) * (cs.back().x2 - cs.back().x1) +
+												(cs.back().y2 - cs.back().y1) * (cs.back().y2 - cs.back().y1) +
+												(cs.back().z2 - cs.back().z1) * (cs.back().z2 - cs.back().z1));
 																					
+					}
+					c.radius = radius;
+					c.az = az;
+					c.alt = alt;
+					cs.push_back(c);
+					newtube = false;
 				}
-				c.radius = radius;
-				c.az = az;
-				c.alt = alt;
-				cs.push_back(c);
-				newtube = false;
 			}
 		}
 	}
@@ -223,6 +233,21 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	for (i = 0; i < Pobject->num_cylinders; i++) {
 		memcpy(&Pobject->cylinders[i], &cs[i], sizeof(c));
 	}
+
+	for (i = 0; i < Pobject->num_cylinders; i++) {
+		printf("x1 = %f\n", Pobject->cylinders[i].x1);
+		printf("y1 = %f\n", Pobject->cylinders[i].y1);
+		printf("z1 = %f\n", Pobject->cylinders[i].z1);
+		printf("x1 = %f\n", Pobject->cylinders[i].x2);
+		printf("y1 = %f\n", Pobject->cylinders[i].y2);
+		printf("z1 = %f\n", Pobject->cylinders[i].z2);
+		printf("length = %f\n", Pobject->cylinders[i].length);
+		printf("radius = %f\n", Pobject->cylinders[i].radius);
+		printf("azimuth = %f\n", Pobject->cylinders[i].az);
+		printf("altitude = %f\n\n", Pobject->cylinders[i].alt);
+	}
+
+
 
 	// create geometry from list of vertices
 

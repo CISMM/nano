@@ -1,5 +1,13 @@
 2002-03-27  David Borland <borland@cs.unc.edu>
 
+        * TubeFileGenerator.C:  added code to allow the user to select
+        every nth point along the axis line when loading a tube--should
+        make for better performance on the AFM simulator side
+
+        * URender.h:  added data member and access funtions for axis step
+
+2002-03-27  David Borland <borland@cs.unc.edu>
+
         * TubeFileGenerator.C:  code to fill in data for cylinders sent to 
                                 AFM simulator
         * URender.h:  added data members for cylinders

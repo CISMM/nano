@@ -76,6 +76,7 @@ protected:
 	int disp_proj_text;
 	int CCW;			// true if load as counter clockwise, false if load as clockwise
 	int tess;			// controls the number of faces along the nano-tube
+	int axis_step;		// controls the number of nano-tube sections 
 	int clamp;			// controls whether or not to clamp projected textures
 
 	//bounding box
@@ -124,6 +125,7 @@ public:
 	void SetProjText(int b) { disp_proj_text = b; }
 	void SetCCW(int b) { CCW = b; }
 	void SetTess(int t) { tess = t; }
+	void SetAxisStep(int s) { axis_step = s; }
 	void SetClamp(int c) { clamp = c; }
 
 	int GetVisibility(){return visible;}
@@ -132,6 +134,7 @@ public:
 	int ShowProjText() { return disp_proj_text; }
 	int GetCCW() { return CCW; }
 	int GetTess() { return tess; }
+	int GetAxisStep() { return axis_step; }
 	int GetClamp() { return clamp; }
 
 	void SetTexture(URender *t);
