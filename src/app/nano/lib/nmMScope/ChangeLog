@@ -1,3 +1,9 @@
+2001-10-23  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* Makefile (clean-gen): added a new rule "clean-gen" to
+	remove the automatically generated files created by 
+	"make generate"
+
 2001-10-22  Aron Helser  <helser@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.C: new - all functions which aren't
