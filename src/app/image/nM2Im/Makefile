@@ -24,8 +24,7 @@ SRC	= micro2Im.c
 MSSRC   = BCGrid.C \
           BCPlane.C \
           readTopometrixFile.C \
-          BCDebug.C \
-          BCString.C
+          BCDebug.C 
 # header files
 HDRS	= $(SRC:.c=.h)
 MSHDRS  = $(MSSRC:.C=.h)
@@ -47,9 +46,6 @@ all:	$(B_FILE)
 
 BCDebug.C:
 	ln -s $(MSDIR)/BCDebug.C BCDebug.C
-
-BCString.C:
-	ln -s $(MSDIR)/BCString.C BCString.C
 
 readTopometrixFile.C:
 	ln -s $(MSDIR)/readTopometrixFile.C readTopometrixFile.C

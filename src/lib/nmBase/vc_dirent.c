@@ -40,7 +40,7 @@
  * searching a directory.
  */
 DIR*
-opendir(const char* szPath)
+vc_opendir(const char* szPath)
 {
 	DIR* nd;
 	struct _stat statDir;
@@ -125,7 +125,7 @@ opendir(const char* szPath)
  * next entry in the directory.
  */
 struct dirent *
-readdir( DIR *dirp )
+vc_readdir( DIR *dirp )
 {
 	errno = 0;
 
@@ -313,7 +313,7 @@ seekdir (DIR* dirp, long lPos)
 		/* Rewind and read forward to the appropriate index. */
 		rewinddir (dirp);
 
-		while ((dirp->dd_stat < lPos) && readdir(dirp))
+		while ((dirp->dd_stat < lPos) && vc_readdir(dirp))
 			;
 	}
 }

@@ -1,0 +1,4 @@
+2002-03-21  Aron Helser  <helser@cs.unc.edu>
+
+	* Makefile: Removed BCString.
+

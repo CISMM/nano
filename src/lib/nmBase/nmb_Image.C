@@ -743,14 +743,14 @@ nmb_ImageGrid::nmb_ImageGrid(const char *name, const char *units,
             units_x("nm"), units_y("nm"),
             d_imagePositionSet(vrpn_FALSE)
 {
-    BCString name_str(name), units_str(units);
+    string name_str(name), units_str(units);
     grid = new BCGrid(x, y, 0.0, 1.0, 0.0, 1.0, READ_FILE);
     plane = grid->addNewPlane(name_str, units_str, 0);
     min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
     max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
     for (int i = 0; i < numExportFormats(); i++){
-        BCString name = exportFormatType(i);
-        formatNames.addEntry(name);
+        string type_name = exportFormatType(i);
+        formatNames.addEntry(type_name.c_str());
     }
     d_acquisitionDistX = x;
     d_acquisitionDistY = y;
@@ -781,8 +781,8 @@ nmb_ImageGrid::nmb_ImageGrid(BCPlane *p):nmb_Image(),
         }
     }
     for (i = 0; i < numExportFormats(); i++){
-        BCString name = exportFormatType(i);
-        formatNames.addEntry(name);
+        string name = exportFormatType(i);
+        formatNames.addEntry(name.c_str());
     }
 
     d_imagePosition.setX(nmb_ImageBounds::MIN_X_MIN_Y, plane->minX());
@@ -824,8 +824,8 @@ nmb_ImageGrid::nmb_ImageGrid(BCGrid *g):nmb_Image(),
         }
     }
     for (i = 0; i < numExportFormats(); i++){
-        BCString name = exportFormatType(i);
-        formatNames.addEntry(name);
+        string name = exportFormatType(i);
+        formatNames.addEntry(name.c_str());
     }
 
     d_imagePosition.setX(nmb_ImageBounds::MIN_X_MIN_Y, plane->minX());
@@ -853,8 +853,8 @@ nmb_ImageGrid::nmb_ImageGrid(nmb_Image *im):
   min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
   max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
   for (i = 0; i < numExportFormats(); i++){
-      BCString name = exportFormatType(i);
-      formatNames.addEntry(name);
+      string name = exportFormatType(i);
+      formatNames.addEntry(name.c_str());
   }
 
   units_x = *(im->unitsX());
@@ -1113,10 +1113,10 @@ void nmb_ImageGrid::setBounds(const nmb_ImageBounds &ib)
     d_dimensionUnknown = vrpn_FALSE;
 }
 
-BCString *nmb_ImageGrid::name() {return plane->name();}
-BCString *nmb_ImageGrid::unitsValue() {return plane->units();}
-BCString *nmb_ImageGrid::unitsX() {return &units_x;}
-BCString *nmb_ImageGrid::unitsY() {return &units_y;}
+string *nmb_ImageGrid::name() {return plane->name();}
+string *nmb_ImageGrid::unitsValue() {return plane->units();}
+string *nmb_ImageGrid::unitsX() {return &units_x;}
+string *nmb_ImageGrid::unitsY() {return &units_y;}
 
 void nmb_ImageGrid::setTopoFileInfo(TopoFile &tf)
 {
@@ -1369,15 +1369,15 @@ nmb_ImageArray::nmb_ImageArray(const char *name,
     }
 
     for (int i = 0; i < numExportFormats(); i++){
-        BCString name = exportFormatType(i);
-        formatNames.addEntry(name);
+        string name = exportFormatType(i);
+        formatNames.addEntry(name.c_str());
     }
 }
 
 nmb_ImageArray::nmb_ImageArray(nmb_Image *im)
 {
-  nmb_ImageArray(im->name()->Characters(),
-                  im->unitsValue()->Characters(),
+  nmb_ImageArray(im->name()->c_str(),
+                  im->unitsValue()->c_str(),
                   im->width(), im->height(), im->pixelType());
   units_x = *(im->unitsX());
   units_y = *(im->unitsY());
@@ -1760,10 +1760,10 @@ void nmb_ImageArray::getBounds(nmb_ImageBounds &ib)  const
     ib = d_imagePosition;
 }
 
-BCString *nmb_ImageArray::name() {return &my_name;}
-BCString *nmb_ImageArray::unitsValue() {return &units;}
-BCString *nmb_ImageArray::unitsX() {return &units_x;}
-BCString *nmb_ImageArray::unitsY() {return &units_y;}
+string *nmb_ImageArray::name() {return &my_name;}
+string *nmb_ImageArray::unitsValue() {return &units;}
+string *nmb_ImageArray::unitsX() {return &units_x;}
+string *nmb_ImageArray::unitsY() {return &units_y;}
 
 int nmb_ImageArray::numExportFormats() 
 {
@@ -1857,7 +1857,7 @@ int nmb_ImageList::addImage(nmb_Image *im)
     if (getImageByName(*(im->name())))
 	return -2;
     // don't add if list is full
-    BCString name = (*(im->name()));
+    string name = (*(im->name()));
     if (num_images == NMB_MAX_IMAGELIST_LENGTH){
       return -1;
     }
@@ -1870,26 +1870,26 @@ int nmb_ImageList::addImage(nmb_Image *im)
     // in tcl that trigger C-callbacks to get called that expect the image
     // to actually be in the image list when its name is in the corresponding
     // string list
-    if (imageNames->addEntry(name)) {
+    if (imageNames->addEntry(name.c_str())) {
       return -1;
     }
 
     return 0;
 }
 
-nmb_Image *nmb_ImageList::removeImageByName(BCString name) {
+nmb_Image *nmb_ImageList::removeImageByName(string name) {
     int i;
     nmb_Image *im = getImageByName(name, i);
     if (im == NULL) return NULL;
     // getImageByName() succeeds ==> num_images >= 1
     images[i] = images[num_images-1];
-    imageNames->deleteEntry((const char *)(*(im->name())));
+    imageNames->deleteEntry(im->name()->c_str());
     num_images--;
     im->num_referencing_lists--;
     return im;
 }
 
-nmb_Image *nmb_ImageList::getImageByName(BCString name, int &index) {
+nmb_Image *nmb_ImageList::getImageByName(string name, int &index) {
     for (int i = 0; i < num_images; i++) {
         if (*(images[i]->name()) == name){
              index = i;

@@ -118,16 +118,13 @@ endif
 #
 
 ifeq ($(HW_OS),pc_win32)
-   ifndef VC_LIB_TYPE
-      VC_LIB_TYPE := D
-   endif
    ifndef VC_RELEASE
-      VC_DBG_FLG := d
+      VC_BUILD_DIR := Debug
    else 
-      VC_DBG_FLG := 
+      VC_BUILD_DIR := Release
    endif
    # MDd DLL debug, MTD static debug
-   OBJECT_DIR_SUFFIX := _M$(VC_LIB_TYPE)$(VC_DBG_FLG)
+   OBJECT_DIR_SUFFIX := /$(VC_BUILD_DIR)
 endif
 
 ##########################
@@ -315,8 +312,8 @@ endif
 
 ifeq ($(HW_OS),pc_win32)
    SYS_INCLUDE := $(MY_NANO_SRC_DIR)/external/pc_win32/include $(MY_NANO_SRC_DIR)/vrpn/server_src 
-endif
 # $(MY_NANO_SRC_DIR)/external/pc_win32/include/ghost3.1 $(MY_NANO_SRC_DIR)/external/pc_win32/include/ghost-stl 
+endif
 ifeq ($(HW_OS),sgi_irix)
    SYS_INCLUDE := /usr/local/contrib/mod/include
 endif
@@ -483,7 +480,7 @@ ifeq ($(THIRDTECH),1)
 CFLAGS += -DTHIRDTECH
 endif
 ifeq ($(HW_OS),pc_win32)
-  CFLAGS = /nologo /MDd /W3 /GX /Gm /Zi /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /TP 
+  CFLAGS = /nologo /MDd /W3 /GR /GX /Gm /Zi /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /TP 
 # /MTd multi-threaded, debug lib - not DLL.
 # /MDd multi-threaded, DLL debug lib.
 # /W3 warning level 3

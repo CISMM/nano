@@ -598,7 +598,7 @@ int AFMDataset::Initialize (nmb_Dataset * dataset) {
   // to map to outputs
   p = dataset->inputGrid->head();
   while (p) {
-    inputPointNames.addEntry(p->name()->Characters());
+    inputPointNames.addEntry(p->name()->c_str());
     p = p->next();
   }
 

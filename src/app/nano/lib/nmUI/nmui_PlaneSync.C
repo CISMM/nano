@@ -110,7 +110,7 @@ handleCalculatedPlaneSync( void * userdata, vrpn_HANDLERPARAM p )
       else
       {
         collabVerbose( 1, "nmui_PlaneSync::handleCalculatedPlaneSync:  received "
-          "new plane of name:  %s\n", newPlane->getName( )->Characters( ) );
+          "new plane of name:  %s\n", newPlane->getName( )->c_str( ) );
       }
     } 
   else // not accepting updates

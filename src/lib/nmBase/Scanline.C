@@ -1,6 +1,6 @@
 #include "Scanline.h"
 
-Scanline_data::Scanline_data (BCString name, BCString units, int length)
+Scanline_data::Scanline_data (string name, string units, int length)
 {
     d_dataset = name;
     d_units = units;
@@ -58,7 +58,7 @@ Scanline_results::~Scanline_results()
     }
 }
 
-Scanline_data *Scanline_results::addChannel(BCString dataset, BCString units)
+Scanline_data *Scanline_results::addChannel(string dataset, string units)
 {
     if (d_num_values == MAX_SCANLINE_CHANNELS-1) return NULL;
     d_data[d_num_values] = new Scanline_data(dataset, units, d_length);

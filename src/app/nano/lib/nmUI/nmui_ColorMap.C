@@ -245,13 +245,13 @@ int nmui_ColorMap::loadColorMapNames(char * colorMapDir)
 
     // Get the list of files that are in that directory
     // Put the name of each file in that directory into the list
-    if ( (directory = opendir(colorMapDir)) == NULL) {
+    if ( (directory = vc_opendir(colorMapDir)) == NULL) {
         display_error_dialog("Couldn't load colormaps from\n"
                              "directory named: %s\nDirectory not available.",colorMapDir);
         return -1;
     }
     int k;
-    while ( (entry = readdir(directory)) != NULL) {
+    while ( (entry = vc_readdir(directory)) != NULL) {
         if (entry->d_name[0] != '.') {
             k = temp_dir_list.numEntries();
             if (k==(nmb_ListOfStrings::NUM_ENTRIES)) {

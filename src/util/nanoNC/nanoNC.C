@@ -108,7 +108,7 @@ int	main(int argc, char **argv)
 	while (plane) {
 		if (!strcmp(*plane->units(),"nm")) {
 			printf("Using plane %s\n",
-				plane->name()->Characters());
+				plane->name()->c_str());
 			break;  // Found one!
 		}
 		plane = plane->next();

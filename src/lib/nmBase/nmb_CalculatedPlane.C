@@ -143,7 +143,7 @@ nmb_CalculatedPlane::
   dataset->removeCalculatedPlane( this );
 
   // keep a copy of the name of the plane we're removing
-  BCString planeName( *(calculatedPlane->name()) );
+  string planeName( *(calculatedPlane->name()) );
   
   // remove this plane from the list of images in dataset
   if( dataset != NULL )
@@ -176,7 +176,7 @@ getCalculatedPlane( )
 { return calculatedPlane; }
 
 
-const BCString* nmb_CalculatedPlane:: 
+const string* nmb_CalculatedPlane:: 
 getName( )
 {
    if( calculatedPlane != NULL )
@@ -334,7 +334,7 @@ getCalculatedPlane( char* calculatedPlaneName )
 
   nmb_CalculatedPlaneNode* node = calculatedPlaneList_head;
   while( node != NULL && 
-         strcmp( node->data->getName()->Characters(), calculatedPlaneName ) != 0 )
+         node->data->getName()->compare(calculatedPlaneName ) != 0 )
   {
     node = node->next;
   }

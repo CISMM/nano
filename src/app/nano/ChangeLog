@@ -1,3 +1,11 @@
+2002-03-20  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.C (handle_show_help_flag): new, show user_manual
+	index.html when help menu is activated. 
+	Handle replacement BCString -> string
+	* microscopeHandlers.C: Handle replacement BCString -> string
+	* nano.dsp: Changes to vrpn, vlib, Release config now builds. 
+
 2002-03-20  David Marshburn  <marshbur@cs.unc.edu>
 
 	* CollaborationManager.C:  loop variable change

@@ -1,3 +1,7 @@
+2002-03-21  Aron Helser  <helser@cs.unc.edu>
+
+	* nmUGraphics.dsp: Release config now builds.
+
 2002-03-20  David Marshburn  <marshbur@cs.unc.edu>
 
 	* TubeFileGenerator.C (BuildList): loop variable structure

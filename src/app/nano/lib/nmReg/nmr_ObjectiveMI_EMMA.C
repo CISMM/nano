@@ -219,20 +219,20 @@ void nmr_ObjectiveMI_EMMA::setTestValueImage(nmb_Image *test)
     d_sigmaTest = sigma;
     d_sigmaTestTest = sigma;
 
-    const char *testImageName, *testUnitsName;
-    testImageName = *(d_testValue->name());
-    testUnitsName = *(d_testValue->unitsValue());
+    string testImageName, testUnitsName;
+    testImageName = *d_testValue->name();
+    testUnitsName = *d_testValue->unitsValue();
     int test_width = d_testValue->width();
     int test_height = d_testValue->height();
-    char gradXTestImageName[256], gradXTestUnitsName[256];
-    char gradYTestImageName[256], gradYTestUnitsName[256];
-    sprintf(gradXTestImageName, "%s_gradx", testImageName);
-    sprintf(gradYTestImageName, "%s_grady", testImageName);
-    sprintf(gradXTestUnitsName, "d%s_dx", testUnitsName);
-    sprintf(gradYTestUnitsName, "d%s_dy", testUnitsName);
-    d_gradX_test = new nmb_ImageGrid(gradXTestImageName, gradXTestUnitsName,
+    string gradXTestImageName, gradXTestUnitsName;
+    string gradYTestImageName, gradYTestUnitsName;
+    gradXTestImageName = testImageName + "_gradx";
+    gradYTestImageName = testImageName + "_grady";
+    gradXTestUnitsName = "d" + testUnitsName + "_dx";
+    gradYTestUnitsName = "d" + testUnitsName + "_dy";
+    d_gradX_test = new nmb_ImageGrid(gradXTestImageName.c_str(), gradXTestUnitsName.c_str(),
                                      test_width, test_height);
-    d_gradY_test = new nmb_ImageGrid(gradYTestImageName, gradYTestUnitsName,
+    d_gradY_test = new nmb_ImageGrid(gradYTestImageName.c_str(), gradYTestUnitsName.c_str(),
                                      test_width, test_height);
     nmr_Util::createGradientImages(*d_testValue, *d_gradX_test, *d_gradY_test);
     int i,j;

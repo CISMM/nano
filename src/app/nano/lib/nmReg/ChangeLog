@@ -1,3 +1,12 @@
+2002-03-21  Aron Helser  <helser@cs.unc.edu>
+
+	* nmr_ObjectiveMI_EMMA.C (setTestValueImage): Handle replacement
+	BCString -> string
+	* nmr_ObjectiveMI_direct.C: same
+	* nmr_RegistrationUI.C: same
+	* nmr_Util.C: same
+	* nmReg.dsp: Release config now builds.
+
 2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* nmr_ObjectiveMI_EMMA.C (buildSampleHelper):  added an explicit 

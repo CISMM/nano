@@ -9,7 +9,7 @@
 #define NMB_IMAGE_H
 
 #include <vrpn_Shared.h>
-#include "BCString.h"
+#include <string>
 #include "BCPlane.h"
 #include "BCGrid.h"
 #include "nmb_String.h"
@@ -206,10 +206,10 @@ class nmb_Image {
         virtual void setTopoFileInfo(TopoFile &tf) = 0;
         virtual void getTopoFileInfo(TopoFile &tf) = 0;
 
-	virtual BCString *name() = 0;
-	virtual BCString *unitsX() = 0;
-	virtual BCString *unitsY() = 0;
-	virtual BCString *unitsValue() = 0;
+	virtual string *name() = 0;
+	virtual string *unitsX() = 0;
+	virtual string *unitsY() = 0;
+	virtual string *unitsValue() = 0;
 
         /// tells you how to convert values returned by getValue() into
         /// the units returned by unitsValue()
@@ -319,10 +319,10 @@ class nmb_ImageGrid : public nmb_Image{
 	virtual void setBoundY(nmb_ImageBounds::ImageBoundPoint ibp, double y);
 	virtual void getBounds(nmb_ImageBounds &ib)  const;
 	virtual void setBounds(const nmb_ImageBounds &ib);
-	virtual BCString *name();
-	virtual BCString *unitsValue();
-	virtual BCString *unitsX();
-	virtual BCString *unitsY();
+	virtual string *name();
+	virtual string *unitsValue();
+	virtual string *unitsX();
+	virtual string *unitsY();
         /// Updates correctly if plane receives new thermo header
         /// during live or streamfile replay. 
         virtual double valueOffsetDAC() {return plane->tm_offset;}
@@ -370,8 +370,8 @@ class nmb_ImageGrid : public nmb_Image{
 	BCPlane *plane;
 	BCGrid *grid;  ///< this is NULL if we are not the allocator of
 			///< the grid (important for destructor)
-	BCString units_x;
-	BCString units_y;
+	string units_x;
+	string units_y;
         short min_x_set, min_y_set, max_x_set, max_y_set;
 
         /// the topo file information for this particular image
@@ -431,10 +431,10 @@ class nmb_ImageArray : public nmb_Image {
           "Warning: nmb_ImageArray::getTopoFileInfo not implemented\n");
     }
 
-    virtual BCString *name();
-    virtual BCString *unitsX();
-    virtual BCString *unitsY();
-    virtual BCString *unitsValue();
+    virtual string *name();
+    virtual string *unitsX();
+    virtual string *unitsY();
+    virtual string *unitsValue();
 
     /// gives address of an array of pixels in the order
     /// row0, row1, row2, ... row<height-1>
@@ -491,7 +491,7 @@ class nmb_ImageArray : public nmb_Image {
     void *data;
     short num_x, num_y;
     short d_borderXMin, d_borderXMax, d_borderYMin, d_borderYMax;
-    BCString units_x, units_y, units, my_name;
+    string units_x, units_y, units, my_name;
     short min_x_set, min_y_set, max_x_set, max_y_set;
 
     static const int     num_export_formats;
@@ -523,7 +523,7 @@ class nmb_ImageList {
                              TopoFile &topoFile);
 	int addImage(nmb_Image *im);
 	nmb_ListOfStrings *imageNameList() {return imageNames;}
-	nmb_Image *getImageByName(BCString name) {
+	nmb_Image *getImageByName(string name) {
 		int i;
 		return getImageByName(name, i);
 	}
@@ -531,7 +531,7 @@ class nmb_ImageList {
         {
           return getImageByName( *(plane->name( )) ); 
         }
-	nmb_Image *removeImageByName(BCString name);
+	nmb_Image *removeImageByName(string name);
         int numImages() {
             return num_images;
         }
@@ -540,7 +540,7 @@ class nmb_ImageList {
         }
 
   private:
-	nmb_Image *getImageByName(BCString name, int &index);
+	nmb_Image *getImageByName(string name, int &index);
 
 	int num_images;
         nmb_Image *images[NMB_MAX_IMAGELIST_LENGTH];

@@ -77,8 +77,8 @@ typedef struct
 } DIR;
 
 
-DIR*		opendir (const char* szPath);
-struct dirent*	readdir (DIR* dir);
+DIR*		vc_opendir (const char* szPath);
+struct dirent*	vc_readdir (DIR* dir);
 int		closedir (DIR* dir);
 void		rewinddir (DIR* dir);
 long		telldir (DIR* dir);

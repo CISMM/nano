@@ -1447,7 +1447,7 @@ void nmg_Graphics_Implementation::computeRealignPlane( const char *name,
     return;
   
   char newunits [1000];
-  sprintf(newunits, "%s_realign", plane->units()->Characters());
+  sprintf(newunits, "%s_realign", plane->units()->c_str());
 
   BCPlane *newplane = state->inputGrid->getPlaneByName(newname);
   if (!newplane) {

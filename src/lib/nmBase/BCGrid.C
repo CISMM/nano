@@ -25,6 +25,7 @@ int write( int fildes, const void *buf, size_t nbyte );
 int close( int filedes );
 }
 #endif
+#include <iostream>
 
 #include "BCGrid.h"
 #include "BCPlane.h"
@@ -198,7 +199,7 @@ BCGrid::loadFile(const char* file_name, TopoFile &topoFile)
 
     // Check to see if our grid has any meaningful data. 
     if ((head() == NULL) ||
-        (( strcmp(head()->name()->Characters(), EMPTY_PLANE_NAME) == 0) && 
+        (( strcmp(head()->name()->c_str(), EMPTY_PLANE_NAME) == 0) && 
          ( head()->next() == NULL)) ) {
 	// if not, read in the file.
         // "rb" is nessesary on _WIN32 and doesn't hurt elsewhere. 
@@ -248,7 +249,7 @@ BCGrid::loadFile(const char* file_name, TopoFile &topoFile)
                 return grid;
 	    } else {
 		BCPlane *newplane;
-		BCString name;
+		string name;
                 findUniquePlaneName(grid->head()->_dataset,&name);
                 newplane = addPlaneCopy(grid->head());
                 newplane->rename(name);
@@ -272,8 +273,8 @@ findUniquePlaneName
 */
 void
 BCGrid::findUniquePlaneName(
-	  BCString base_name, ///< Desired name
-	  BCString *result_name ///< Uniqueified name
+	  string base_name, ///< Desired name
+	  string *result_name ///< Uniqueified name
 )
 {
 	int	next_number_to_try = 2;
@@ -296,7 +297,7 @@ addNewPlane
  @date modified 9-10-95 by Kimberly Passarella Jones
 */
 BCPlane*
-BCGrid::addNewPlane(BCString dataset, BCString units, int timed)
+BCGrid::addNewPlane(string dataset, string units, int timed)
 {
 
     if (timed)
@@ -348,7 +349,7 @@ Removes the plane of the given name from the Grid.
   @date 1-7-02
   */
 void BCGrid::
-removePlane( BCString name )
+removePlane( string name )
 {
   BCPlane* plane = getPlaneByName( name );
   if( plane == NULL )
@@ -456,7 +457,7 @@ getPlaneByName
  @date modified 9-10-95 by Kimberly Passarella Jones
 */
 BCPlane* 
-BCGrid::getPlaneByName(BCString name)
+BCGrid::getPlaneByName(string name)
 {
     BCPlane* current = _head;
 

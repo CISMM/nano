@@ -3,7 +3,8 @@
 
 #include <stdio.h>
 #include <tcl.h>
-#include "BCString.h"
+#include <string>
+using namespace std;
 
 class	Point_value;
 class	Point_results;
@@ -19,9 +20,9 @@ class	Point_value
   public:
 
     // Name and units of the data set that this value stores.    
-    inline BCString*	name (void) { return &_dataset; }
-    inline BCString*	units (void) { return &_units; }
-    inline void		rename (BCString new_name) { _dataset = new_name; }
+    inline string*	name (void) { return &_dataset; }
+    inline string*	units (void) { return &_units; }
+    inline void		rename (string new_name) { _dataset = new_name; }
 
     /// Next value in the list associated with the same Point_results
     inline Point_value*   next (void) const { return _next; }
@@ -43,7 +44,7 @@ class	Point_value
 
   protected: // accessible by subclasses of Point_value and their friends
 
-    Point_value (BCString name, BCString units);
+    Point_value (string name, string units);
     Point_value (Point_value * value);
     ///< Yes, these ARE nonconst
 
@@ -52,8 +53,8 @@ class	Point_value
     int lookup_callback (const Point_Valuecall cb, const void * userdata);
 
     Point_results* _results; 	///< The Point_results to which this belongs
-    BCString _dataset;		///< a name for the values stored in _value
-    BCString _units;		///< units of the values stores in _value
+    string _dataset;		///< a name for the values stored in _value
+    string _units;		///< units of the values stores in _value
     Point_value* _next;		///< the next Point_value _results' list
 
     struct {
@@ -77,8 +78,8 @@ class	Point_results
     Point_results (const Point_results & p);
     ~Point_results (void);
 
-    void findUniqueValueName (BCString base_name, BCString * result_name);
-    Point_value * addNewValue (BCString dataset, BCString units);
+    void findUniqueValueName (string base_name, string * result_name);
+    Point_value * addNewValue (string dataset, string units);
     Point_value * addValueCopy (Point_value * value);
 
     inline void setTime(long sec, long usec) { _sec = sec; _usec = usec; }
@@ -96,8 +97,8 @@ class	Point_results
     int deleteHead (void);
     int empty (void) const;
     Point_value * head (void) const { return _head; };
-    Point_value * getValueByName (const BCString name) const;
-    Point_value * getValueByPlaneName (const BCString name) const;
+    Point_value * getValueByName (const string name) const;
+    Point_value * getValueByPlaneName (const string name) const;
 
     void print (const char * prelim = "") const;
 

@@ -370,11 +370,13 @@ lappend stream_only_controls [list $toolmenu entryconfigure "Replay Control"]
 
 
 #### HELP menu #############################
-#set helpmenu .menu.help
-#menu $helpmenu -tearoff 0
-#.menu add cascade -label "Help" -menu $helpmenu -underline 0
-#        $helpmenu add command -label "Help..." -command \
-#		{.message_dialog activate}
+if {$tcl_platform(platform) == "windows" } {
+    set helpmenu .menu.help
+    menu $helpmenu -tearoff 0
+    .menu add cascade -label "Help" -menu $helpmenu -underline 0
+    $helpmenu add command -label "Browse Manual..." -command \
+            {set show_help_flag 1}
+}
 
 # Frame rate display, as a menu so it stays out of the way.
 set frame_rate 0

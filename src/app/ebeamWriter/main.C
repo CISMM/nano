@@ -254,12 +254,12 @@ int main(int argc, char **argv)
         currImage->setWorldToImageTransform(default_matrix);
         // search for this image in the list of transformations we loaded
         if (transformFile.lookupImageTransformByName(
-                          currImage->name()->Characters(),
+                          currImage->name()->c_str(),
                           matrix, acqDistX, acqDistY)) {
             currImage->setWorldToImageTransform(matrix);
             currImage->setAcquisitionDimensions(acqDistX, acqDistY);
             printf("setting world to image transform for %s\n",
-                   currImage->name()->Characters());
+                   currImage->name()->c_str());
         }
         patternEditor->addImage(currImage);
     }

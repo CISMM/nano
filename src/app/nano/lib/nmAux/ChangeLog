@@ -1,3 +1,9 @@
+2002-03-21  Aron Helser  <helser@cs.unc.edu>
+
+	* vrpn_Ohmmeter.C: Handle replacement BCString ->
+	string
+	* nmAux.dsp: Release config now builds.
+
 2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* vrpn_Ohmmeter.C (get_measurement_report):  explicit cast to

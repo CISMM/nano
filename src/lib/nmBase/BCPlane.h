@@ -36,8 +36,8 @@ class BCPlane
   //  friend class nma_ShapeIdentifiedPlane;//needs _grid
   public:
 
-    inline BCString* name() { return &_dataset; }
-    inline BCString* units() { return &_units; }
+    inline string* name() { return &_dataset; }
+    inline string* units() { return &_units; }
     inline BCPlane* next() { return _next; }
 
     inline short numX() const { return _grid->numX(); }
@@ -99,7 +99,7 @@ class BCPlane
 
     void level();
 
-    void rename(BCString new_name) { _dataset = new_name; }
+    void rename(string new_name) { _dataset = new_name; }
 
     virtual	void setTime(int x, int y, long sec, long usec) = 0;
 
@@ -152,7 +152,7 @@ class BCPlane
     BCPlane(BCPlane* plane, int newX, int newY);
     /**< NOT a copy constructor!  Creates a new, smaller plane,
        but does not fill in data values.*/
-    BCPlane(BCString name, BCString units, int nx, int ny);
+    BCPlane(string name, string units, int nx, int ny);
     virtual ~BCPlane (void);
 	
 
@@ -214,8 +214,8 @@ class BCPlane
 
     BCGrid * _grid; 	///< the instance of BCGrid to which this belongs
     int _timed;		///< true if space for secs and usecs has been allocated
-    BCString _dataset;	///< a name for the values stored in _value
-    BCString _units;	///< units of the values stores in _value
+    string _dataset;	///< a name for the values stored in _value
+    string _units;	///< units of the values stores in _value
     double _min_value, _max_value;	
     double _min_nonzero_value, _max_nonzero_value;	
     double _min_attainable_value;
@@ -261,7 +261,7 @@ class CTimedPlane : public BCPlane
 
   private:
 
-    CTimedPlane(BCString name, BCString units, int nx, int ny);
+    CTimedPlane(string name, string units, int nx, int ny);
     CTimedPlane(CTimedPlane* grid);
     CTimedPlane(CTimedPlane* grid, int newX, int newY);
 
@@ -279,7 +279,7 @@ class CPlane : public BCPlane
 
   private:
 
-    CPlane(BCString name, BCString units, int nx, int ny);
+    CPlane(string name, string units, int nx, int ny);
     CPlane(CPlane* grid);
     CPlane(CPlane* grid, int newX, int newY);
 

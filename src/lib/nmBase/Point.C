@@ -7,7 +7,7 @@
 // Point_value methods
 //----------------------------------------------------------------------
 
-Point_value::Point_value (BCString name, BCString units)
+Point_value::Point_value (string name, string units)
 {
     _dataset = name;
     _units = units;
@@ -121,8 +121,8 @@ Point_results::~Point_results (void)
     } 
 }
 
-void Point_results::findUniqueValueName(BCString base_name,
-	BCString *result_name)
+void Point_results::findUniqueValueName(string base_name,
+	string *result_name)
 {
 	int	next_number_to_try = 2;
 	char	appendix[10];
@@ -136,7 +136,7 @@ void Point_results::findUniqueValueName(BCString base_name,
 	}
 }
 
-Point_value* Point_results::addNewValue(BCString dataset, BCString units)
+Point_value* Point_results::addNewValue(string dataset, string units)
 {
 	Point_value* value = new Point_value(dataset, units);
         addValue(value);
@@ -176,7 +176,7 @@ int Point_results::empty (void) const
 }
 
 
-Point_value* Point_results::getValueByName (const BCString name) const
+Point_value* Point_results::getValueByName (const string name) const
 {
     Point_value * current = _head;
 
@@ -190,16 +190,16 @@ Point_value* Point_results::getValueByName (const BCString name) const
 }
 
 
-Point_value* Point_results::getValueByPlaneName (const BCString planeName) const
+Point_value* Point_results::getValueByPlaneName (const string planeName) const
 {
     char	fullname[100];
-    BCString	name;
+    string	name;
     Point_value* current = _head;
 
     // Find the part of the name that comes before -Forward or -Backward and
     // use that to form the name we're searching for.
     fullname[sizeof(fullname)-1] = '\0';
-    strncpy(fullname, planeName.Characters(), sizeof(fullname)-1);
+    strncpy(fullname, planeName.c_str(), sizeof(fullname)-1);
     if (strrchr(fullname,'-') == NULL) {
 	return NULL;
     }
@@ -256,9 +256,9 @@ void Point_results::print (const char *prelim) const
 	next = _head;
 	while (next != NULL) {
 		printf(" %s:%g(%s)",
-			next->name()->Characters(),
+			next->name()->c_str(),
 			next->value(),
-			next->units()->Characters() );
+			next->units()->c_str() );
 		next = next->_next;
 	}
 
@@ -377,8 +377,8 @@ int Point_list::writeToTclWindow(Tcl_Interp *interpreter)
 
        for (value = _entries[0]->_head; value != NULL; value = value->next()) {
 		sprintf(str, "\"\t%s(%s)\"",
-			value->name()->Characters(),
-			value->units()->Characters() );
+			value->name()->c_str(),
+			value->units()->c_str() );
 	        sprintf(command2,".mod.text insert end %s",str);
 	        if (Tcl_Eval(interpreter, command2) != TCL_OK) {
                    fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command2,

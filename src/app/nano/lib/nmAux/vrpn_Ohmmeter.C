@@ -13,8 +13,6 @@
 
 #include "vrpn_Ohmmeter.h"
 
-#define ASSERT(x)	assert(x)
-
 vrpn_Ohmmeter::vrpn_Ohmmeter(char * /*name*/, vrpn_Connection *c)
 {
     // Set our connection to the one passed in 
@@ -63,7 +61,7 @@ vrpn_int32 vrpn_Ohmmeter::encode_setchannel_to(char *buf)
     int index = 0;
 
     // XXX WARNING -- This assumes a certain byte-order!!!! Only works on PC!
-    ASSERT(sizeof(vrpn_int32)==(sizeof(vrpn_float64)/2));
+    ASSERT(sizeof(vrpn_int32)==(sizeof(vrpn_float64)/2), "Type size mismatch");
     ((vrpn_int32 *)dBuf)[0] = htonl(channel);
     ((vrpn_int32 *)dBuf)[1] = htonl(enabled[channel]);
     index++;
@@ -71,7 +69,7 @@ vrpn_int32 vrpn_Ohmmeter::encode_setchannel_to(char *buf)
     dBuf[index++] = htond(voltage[channel]);
     dBuf[index++] = htond(range_min[channel]);
     dBuf[index++] = htond(filter[channel]);
-    ASSERT(SETOHM_MESSAGE_SIZE == index*sizeof(vrpn_float64));
+    ASSERT(SETOHM_MESSAGE_SIZE == index*sizeof(vrpn_float64), "message size mismatch");
     return (index*sizeof(vrpn_float64));
 }
 
@@ -86,14 +84,14 @@ vrpn_int32 vrpn_Ohmmeter::encode_measure_to(char *buf)
     int index = 0;
 
     // XXX WARNING -- This assumes a certain byte-order!!!! Only works on PC!
-    ASSERT(sizeof(vrpn_int32)==(sizeof(vrpn_float64)/2));
+    ASSERT(sizeof(vrpn_int32)==(sizeof(vrpn_float64)/2), "type size mismatch");
     ((vrpn_int32 *)dBuf)[0] = htonl(channel);
     ((vrpn_int32 *)dBuf)[1] = htonl(status[channel]);
     index++;
 
     dBuf[index++] = htond(resistance[channel]);
     dBuf[index++] = htond(error[channel]);
-    ASSERT(MEASURE_MESSAGE_SIZE == (index*sizeof(vrpn_float64)));
+    ASSERT(MEASURE_MESSAGE_SIZE == (index*sizeof(vrpn_float64)), "message size mismatch");
     return (index*sizeof(vrpn_float64));
 }
 
@@ -109,7 +107,7 @@ vrpn_int32 vrpn_Ohmmeter::encode_channelset_to(char *buf)
     int index = 0;
 
     // XXX WARNING -- This assumes a certain byte-order!!!! Only works on PC!
-    ASSERT(sizeof(vrpn_int32)==(sizeof(vrpn_float64)/2));
+    ASSERT(sizeof(vrpn_int32)==(sizeof(vrpn_float64)/2), "type size mismatch");
     ((vrpn_int32 *)dBuf)[0] = htonl(channel);
     ((vrpn_int32 *)dBuf)[1] = htonl(enabled[channel]);
     index++;
@@ -117,7 +115,7 @@ vrpn_int32 vrpn_Ohmmeter::encode_channelset_to(char *buf)
     dBuf[index++] = htond(voltage[channel]);
     dBuf[index++] = htond(range_min[channel]);
     dBuf[index++] = htond(filter[channel]);
-    ASSERT(OHMSET_MESSAGE_SIZE == index*sizeof(vrpn_float64));
+    ASSERT(OHMSET_MESSAGE_SIZE == index*sizeof(vrpn_float64), "message size mismatch");
     return (index*sizeof(vrpn_float64));
 }
 

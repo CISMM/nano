@@ -1166,7 +1166,7 @@ int TopoFile::topoDataToGrid(BCGrid* G, const char* filename){
         double  min_z, max_z;
         int     data_type;
         BCPlane* plane;         // A new plane of data to be filled
-        BCString name;          // Name assigned to the new plane
+        string name;          // Name assigned to the new plane
 
 	if(valid_grid == 0 || valid_header == 0) return -1;
 

@@ -2,7 +2,8 @@
 #define SCANLINE_H
 
 #include <stdio.h>
-#include "BCString.h"
+#include <string>
+using namespace std;
 
 class   Scanline_data;
 class   Scanline_results;
@@ -16,10 +17,10 @@ class Scanline_data
   public:
 
     /// Name and units of the data set that this value stores.
-    inline BCString*    name (void) { return &d_dataset; }
-    inline BCString*    units (void) { return &d_units; }
-    inline void         rename (BCString new_name) { d_dataset = new_name; }
-    inline void		setunits (BCString units) {d_units = units;}
+    inline string*    name (void) { return &d_dataset; }
+    inline string*    units (void) { return &d_units; }
+    inline void         rename (string new_name) { d_dataset = new_name; }
+    inline void		setunits (string units) {d_units = units;}
 
     inline int length() const {return d_length;}
     inline float value(int i) const {return d_value[i];}
@@ -28,15 +29,15 @@ class Scanline_data
     }
 
   protected: // accessible by subclasses of Scanline_value and their friends
-    Scanline_data (BCString name, BCString units, int length);
+    Scanline_data (string name, string units, int length);
     Scanline_data (Scanline_data *value);
     ~Scanline_data (void) {};
     int resize(int newlength);
 
 
     short d_length;
-    BCString d_dataset;
-    BCString d_units;
+    string d_dataset;
+    string d_units;
     Scanline_data *d_next;
     float *d_value;
 };
@@ -51,7 +52,7 @@ class Scanline_results
     Scanline_results(const Scanline_results &scr);
     ~Scanline_results();
 
-    Scanline_data *addChannel(BCString dataset, BCString units);
+    Scanline_data *addChannel(string dataset, string units);
 
     inline void setTime(long sec, long usec) { d_sec = sec; d_usec = usec; }
     inline void setEndpoints(double x0, double y0, double z0,
@@ -77,9 +78,9 @@ class Scanline_results
 	{return d_x0 + (double)i/(double)d_length*(d_x1 - d_x0);}
     inline double y(int i)
 	{return d_y0 + (double)i/(double)d_length*(d_y1 - d_y0);}
-    inline BCString *name(int dataset_index) const
+    inline string *name(int dataset_index) const
 	{return d_data[dataset_index]->name();};
-    inline BCString *units(int dataset_index) const
+    inline string *units(int dataset_index) const
 	{return d_data[dataset_index]->units();};
 
   private:

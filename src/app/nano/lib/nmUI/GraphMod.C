@@ -129,7 +129,7 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
       int i,j,k;
       int stride = 2;
       float t=0, s=0, x=0, y = 0;
-      BCString *name, *units;
+      string *name, *units;
 
       if (me->d_currentmode != SCANLINEMODE)
       	return 0;
@@ -156,8 +156,8 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
 		for (j = 0; j < me->d_numscanline_channels; j++){
 		    name = me->d_scanlines[i]->name(j);
 		    units = me->d_scanlines[i]->units(j);
-		    sprintf(str,"gm_%s_%s%d", (const char *)(*name),
-                	(const char *)(*units), i);
+		    sprintf(str,"gm_%s_%s%d", (*name),
+                	(*units), i);
 	           // remove spaces - they are bad for vector names.
 		    for (unsigned int m = 0; m < strlen(str); m++){
                 	if (str[m] == ' ' || str[m] == '-')
@@ -300,8 +300,8 @@ int GraphMod::ReceiveNewScanline(void *userdata, const Scanline_results *sr) {
 	    // and attach it to a graph in the stripchart
 	    name = me->d_scanlines[j]->name(i); 
 	    units = me->d_scanlines[j]->units(i);
-	    sprintf(str,"gm_%s_%s%d", (const char *)(*name), 
-		(const char *)(*units), j);
+	    sprintf(str,"gm_%s_%s%d", (*name), 
+		(*units), j);
 
             // remove spaces - they are bad for vector names.
 	    for (unsigned int m = 0; m < strlen(str); m++){
@@ -477,8 +477,8 @@ static   long	first_sec,first_usec;
       for (value = p->head(); 
 	   value != NULL; 
 	   value = value->next(), j++) {
-	 sprintf(str,"gm_%s_%s", value->name()->Characters(), 
-		 value->units()->Characters());
+	 sprintf(str,"gm_%s_%s", value->name()->c_str(), 
+		 value->units()->c_str());
 
 	 // remove spaces - they are bad for vector names.
 	 for (unsigned int i = 0; i < strlen(str); i++){
@@ -576,8 +576,8 @@ static   long	first_sec,first_usec;
       me->d_numDataVectors = 0;
       for (value = p->head(); value != NULL; value = value->next()) {
 	 // make sure we have a vector to put the value in.
-	 sprintf(str,"gm_%s_%s", value->name()->Characters(), 
-		 value->units()->Characters());
+	 sprintf(str,"gm_%s_%s", value->name()->c_str(), 
+		 value->units()->c_str());
 
 	 // remove spaces - they are bad for vector names.
 	 for (unsigned int i = 0; i < strlen(str); i++) {

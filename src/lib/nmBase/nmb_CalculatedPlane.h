@@ -73,7 +73,7 @@ public:
   BCPlane* getCalculatedPlane( );
 
   // Accessor.  Returns the name of the calculated plane.
-  const BCString* getName( );
+  const string* getName( );
 
   // Accessor.  Returns true if this calc'd plane depend on
   // (is calculated from) the specified plane.

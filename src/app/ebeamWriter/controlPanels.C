@@ -500,7 +500,7 @@ void ControlPanels::handle_imageColorChanged_change(int /*new_value*/, void *ud)
          (int)me->d_imageRed, (int)me->d_imageGreen, (int)me->d_imageBlue);
 
   nmb_Image *im = me->d_imageList->getImageByName(
-              BCString((const char *)(me->d_currentImage)));
+              string((const char *)(me->d_currentImage)));
   if (!im) {
     fprintf(stderr, "handle_imageColor: Error, could not find image\n");
     return;
@@ -518,7 +518,7 @@ void ControlPanels::handle_imageOpacity_change(double new_value, void *ud)
   ControlPanels *me = (ControlPanels *)ud;
   printf("opacity: %g\n", (double)me->d_imageOpacity);
   nmb_Image *im = me->d_imageList->getImageByName(
-                BCString((const char *)(me->d_currentImage)));
+                string((const char *)(me->d_currentImage)));
   if (!im) {
     fprintf(stderr, "handle_imageOpacity: Error, could not find image\n");
     return;
@@ -533,7 +533,7 @@ void ControlPanels::handle_hideOtherImages_change(int new_value, void *ud)
   printf("hide others: %d\n", (int)me->d_hideOtherImages);
   if (new_value) {
     nmb_Image *im = me->d_imageList->getImageByName(
-                BCString((const char *)(me->d_currentImage)));
+                string((const char *)(me->d_currentImage)));
     if (!im) {
       fprintf(stderr, "handle_hideOtherImages: Error, could not find image\n");
       return;
@@ -557,7 +557,7 @@ void ControlPanels::handle_enableImageDisplay_change(int /*new_value*/,
      return;
   } 
   nmb_Image *currImage = me->d_imageList->getImageByName(
-                         BCString((const char *)(me->d_currentImage)));
+                         string((const char *)(me->d_currentImage)));
   if (!currImage) {
      fprintf(stderr, "handle_enableImageDisplay_change: image not found\n");
      return;
@@ -591,7 +591,7 @@ void ControlPanels::updateCurrentImageControls()
 
   printf("current image: %s\n", (const char *)d_currentImage);
   nmb_Image *im = d_imageList->getImageByName(
-                  BCString((const char *)(d_currentImage)));
+                  string((const char *)(d_currentImage)));
   if (!im) {
     fprintf(stderr, "handle_currentImage_change: Error, couldn't find image\n");
   }

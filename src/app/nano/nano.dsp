@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /GX /Zi /Od /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib\nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /D "_DEBUG" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /D "NDEBUG" /D "_MBCS" /D "VRPN_NO_STREAMS" /FR /YX /FD /GZ /TP /c
+# ADD CPP /nologo /MDd /Ze /W3 /Gm /GX /Zi /Od /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib\nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /D "_LIB" /D "_DEBUG" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /D "_MBCS" /D "VRPN_NO_STREAMS" /FR /YX /FD /GZ /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -67,7 +67,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\external\pc_win32\include\ghost-stl" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib/nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /FD /GZ /TP
-# ADD CPP /nologo /MT /W3 /GX /O2 /Ob2 /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "..\..\..\..\external\pc_win32\include\ghost3.1" /I "..\..\..\..\external\pc_win32\include\ghost-stl" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib/nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /Zl /FD /TP /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /Ob2 /I "." /I "..\..\..\..\vrpn" /I "..\..\lib\nmBase" /I "..\..\lib\tcllinkvar" /I "..\..\..\..\external\pc_win32\include" /I "..\..\..\..\quat" /I "..\..\..\..\vogl" /I "lib\nmUI" /I "lib\nmGraphics" /I "lib\nmUGraphics" /I "..\..\..\..\vrpn\server_src" /I "lib\nmMScope" /I "..\..\lib\nmMP" /I "lib/nmReg" /I "..\..\lib\nmImageViewer" /I "lib\nmAux" /I "lib\nmSEM" /I "lib\nmAnalyze" /D "_LIB" /D "NDEBUG" /D "_MBCS" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /D "VRPN_NO_STREAMS" /YX /Zl /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409
 BSC32=bscmake.exe
@@ -76,7 +76,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 oldnames.lib wsock32.lib gdi32.lib comdlg32.lib kernel32.lib kernel32.lib libcpmtd.lib libcimtd.lib libcmtd.lib nmAux.lib nmUGraphics.lib nmSEM.lib nmUI.lib nmGraphics.lib nmMScope.lib nmReg.lib nmImageViewer.lib nmMP.lib tclLinkVar.lib nmBase.lib nmAnalyze.lib vrpn.lib vogl.lib quat.lib vrpn_phantom.lib ghost31.lib BLT24.lib tk83.lib tcl83.lib glut32_UNC.lib user32.lib glu32.lib opengl32.lib CORE_RL_lcms_.lib CORE_RL_magick_.lib CORE_RL_ttf_.lib CORE_RL_xlib_.lib CORE_RL_libxml_.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib /pdbtype:sept /libpath:"..\..\..\..\external\pc_win32\lib" /libpath:"..\..\..\..\vrpn\pc_win32_MTd" /libpath:"..\..\..\..\quat\pc_win32_MTd" /libpath:"..\..\..\..\vogl\pc_win32_MTd\\" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmAnalyze" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmAux" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmGraphics" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmMScope" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmReg" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmSEM" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmUGraphics" /libpath:"..\..\..\obj\pc_win32\app\nano\lib\nmUI" /libpath:"..\..\..\obj\pc_win32\lib\nmImageViewer" /libpath:"..\..\..\obj\pc_win32\lib\nmMP" /libpath:"..\..\..\obj\pc_win32\lib\nmBase" /libpath:"..\..\..\obj\pc_win32\lib\tcllinkvar" /libpath:"../../../../vrpn/server_src/pc_win32_MTd"
 # SUBTRACT BASE LINK32 /verbose /pdb:none
-# ADD LINK32 oldnames.lib wsock32.lib gdi32.lib comdlg32.lib kernel32.lib libcpmt.lib libcimt.lib libcmt.lib user32.lib glu32.lib opengl32.lib /nologo /subsystem:console /pdb:none /machine:I386 /nodefaultlib /out:"../../../obj/pc_win32/release/app/nano/nanoRelease.exe"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /subsystem:console /pdb:none /machine:I386 /nodefaultlib:"msvcrtd" /out:"../../../obj/pc_win32/release/app/nano/nanoRelease.exe"
 
 !ENDIF 
 
@@ -645,7 +645,7 @@ SOURCE=..\..\..\..\vrpn\pc_win32\Debug\vrpn.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\vrpn\server_src\Debug\vrpn_phantom.lib
+SOURCE=..\..\..\..\vrpn\pc_win32\server_src\Debug\vrpn_phantom.lib
 # End Source File
 # Begin Source File
 
@@ -653,7 +653,7 @@ SOURCE=..\..\..\..\quat\pc_win32\Debug\quat.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\vogl\pc_win32\vlib\Debug\vogl.lib
+SOURCE=..\..\..\..\vogl\pc_win32\Debug\vogl.lib
 # End Source File
 # End Group
 # End Target

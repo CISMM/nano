@@ -147,7 +147,7 @@ RECEIVE_MSG_BODY ScanDataset {
 
 //
 	//only deal with datasets[0]
-	if(strcmp(units, RealAFMPlane->units()->Characters()) != 0){
+	if(strcmp(units, RealAFMPlane->units()->c_str()) != 0){
 //
 		cerr << "Units do not match:  sim scan and real scan must be in same units" << endl;
 		UnitsOK = false;

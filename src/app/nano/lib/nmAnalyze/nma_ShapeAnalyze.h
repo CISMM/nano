@@ -98,7 +98,7 @@ public:
 	BCPlane* getCalculatedPlane(){return NULL;}//fill these in later
 
 	// returns the name of the calculated plane
-	const BCString* getName(){return NULL;}//fill in later
+	const string* getName(){return NULL;}//fill in later
 
 	// Packs up and sends across the connection all the data
 	// necessary for the other end to recreate this calculated 

@@ -59,5 +59,5 @@ setDisplayColorMapRange( nmb_Image * /*image*/,
 
 void nmg_ImageDisplayProjectiveTexture::updateImage(nmb_Image *image) 
 {
-  d_graphicsDisplay->createRealignTextures(image->name()->Characters());
+  d_graphicsDisplay->createRealignTextures(image->name()->c_str());
 }

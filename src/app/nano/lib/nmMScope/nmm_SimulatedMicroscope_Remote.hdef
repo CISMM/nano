@@ -53,7 +53,7 @@ private:
 	static int handle_gotConnection(void * userdata, vrpn_HANDLERPARAM grpc_p);
 
 	nmb_Dataset * d_dataset;	//dataset that real di data is in
-	BCString RealAFMPlaneName;	//name of plane with real di data
+	string RealAFMPlaneName;	//name of plane with real di data
 	BCPlane * RealAFMPlane;		//plane with real di data
 	int Xdim;			        //number of elements in the x dimention in the current
 					            //grid, and therefore of RealAFMPlane

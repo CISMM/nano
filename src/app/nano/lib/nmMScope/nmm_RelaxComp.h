@@ -44,8 +44,8 @@ class nmm_RelaxComp
 {
 public:
     enum RelaxType {DECAY, CONST_OFFSET};
-    nmm_RelaxComp(nmm_Microscope_Remote*);
-    void updateMicroscope();
+    nmm_RelaxComp();
+    void updateMicroscope(nmm_Microscope_Remote*);
     void enable(RelaxType relax_type);
     void disable();
     int	set_ignore_time_ms (int);
@@ -57,7 +57,7 @@ public:
     vrpn_bool is_enabled();
 
 private:
-    nmm_Microscope_Remote* microscope;
+    nmm_Microscope_Remote* d_microscope;
     
     enum RelaxState {DISABLED, IDLE, CALC_MODEL_POINT1, CALC_MODEL_POINT2,
 		      DECAY_COMP, CONST_COMP};

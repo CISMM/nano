@@ -53,8 +53,8 @@ BCGrid.C: ../BCGrid.C
 BCPlane.C: ../BCPlane.C
 	ln -sf ../BCPlane.C .
 
-BCString.C: ../BCString.C
-	ln -sf ../BCString.C .
+string.C: ../string.C
+	ln -sf ../string.C .
 
 BCDebug.C: ../BCDebug.C
 	ln -sf ../BCDebug.C .
@@ -76,7 +76,7 @@ stm_file.c: ../stm_file.c
 # microscape
 #
 MICROSCAPE_FILES = layered_to_mathcad.c stm_file.c
-MICROSCAPE_CC_FILES = BCGrid.C BCPlane.C BCDebug.C BCString.C readTopometrixFile.C 
+MICROSCAPE_CC_FILES = BCGrid.C BCPlane.C BCDebug.C string.C readTopometrixFile.C 
 MICROSCAPE_OBJECTS = $(MICROSCAPE_CC_FILES:.C=.o) $(MICROSCAPE_FILES:.c=.o)
 MICROSCAPE_INCLUDES = ../stm.h ../BCGrid.h ../BCPlane.h Makefile
 

@@ -1,3 +1,10 @@
+2002-03-21  Aron Helser  <helser@cs.unc.edu>
+
+	* Makefile.app_common: Added suffixes to compile .cpp files
+	* Makefile.common: Changed build directory for pc_win32 to Debug
+	and Release, to match .dsp convention. Added /GR flag to avoid
+	warnings. 
+
 2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* Makefile.common:  removed linker verbosity

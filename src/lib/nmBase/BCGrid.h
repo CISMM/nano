@@ -21,7 +21,10 @@ extern const char * EMPTY_PLANE_NAME;
 
 #include <ctype.h> 
 #include <stdio.h> // for FILE
-#include "BCString.h"
+//#include "string"
+#include <string>
+#include <iostream>
+using namespace std;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 // bogus double to float conversion warning.
@@ -54,15 +57,15 @@ class BCGrid
 
     /// Makes a name unique.
     void     findUniquePlaneName (
-	  BCString base_name, ///< Desired name
-	  BCString *result_name ///< Uniqueified name
+	  string base_name, ///< Desired name
+	  string *result_name ///< Uniqueified name
 	  );
-    BCPlane* addNewPlane(BCString name, BCString units, int timed);
+    BCPlane* addNewPlane(string name, string units, int timed);
     BCPlane* addPlaneCopy(BCPlane*);
 
     /// Removes a plane from the grid.  
     /// ***Note that this deletes the plane specified (since BCGrid allocated it)
-    void removePlane( BCString name );
+    void removePlane( string name );
 
     BCGrid* loadFile(const char* file_name, TopoFile &topoFile);
       ///< Load file with the same grid size/region into this grid,
@@ -79,7 +82,7 @@ class BCGrid
     int empty();
     int empty_list();
     BCPlane* head() {return _head; };
-    BCPlane* getPlaneByName(BCString name);
+    BCPlane* getPlaneByName(string name);
     inline int numPlanes() {return _num_planes;};
 
     void decimate(short num_x, short num_y);

@@ -53,8 +53,8 @@
 
 #define REAL_SMALL	(1.0e-3)
 
-nmm_RelaxComp::nmm_RelaxComp(nmm_Microscope_Remote* m):
-               microscope(m),
+nmm_RelaxComp::nmm_RelaxComp():
+               d_microscope(NULL),
 	       current_state(DISABLED),
 	       type_of_compensation(nmm_RelaxComp::DECAY),
 	       relax_sec0( 0),
@@ -70,14 +70,15 @@ nmm_RelaxComp::nmm_RelaxComp(nmm_Microscope_Remote* m):
 
 }
 
-void nmm_RelaxComp::updateMicroscope()
+void nmm_RelaxComp::updateMicroscope(nmm_Microscope_Remote* microscope)
 {
-    if (microscope) {
+    d_microscope = microscope;
+    if (d_microscope) {
         if (current_state == DISABLED) {
-	    microscope->SetRelax((long)0, (long)0);
-	} else {
-	    microscope->SetRelax((long)TIgnore, (long)TSep);
-	}
+	        d_microscope->SetRelax((long)0, (long)0);
+    	} else {
+    	    d_microscope->SetRelax((long)TIgnore, (long)TSep);
+    	}
     }
 }
 

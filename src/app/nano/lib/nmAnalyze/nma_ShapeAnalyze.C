@@ -4,7 +4,6 @@
 
 
 #include <BCPlane.h>
-#include <BCString.h>
 #include <nmb_PlaneSelection.h>
 #include "nma_ShapeAnalyze.h"
 #include "cnt_ia.h"
@@ -154,7 +153,7 @@ imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
         //dataset->inputGrid, but can change it later to get planes in other 
         //related BCGrids as well
 
-	d_cntRec->cnt_image_select(d_txtFile, imagePlane->name()->Characters());
+	d_cntRec->cnt_image_select(d_txtFile, imagePlane->name()->c_str());
 		
 	//d_cntRec->cnt_image_Msk = NULL;
 	//set to NULL for testing without calling cnt_image_select
@@ -262,7 +261,7 @@ bool nma_ShapeIdentifiedPlane::
 dependsOnPlane( const char* planeName )
 {
   if( planeName == NULL ) return false;
-  if( strcmp( planeName, this->d_sourcePlane->name()->Characters() ) )
+  if( this->d_sourcePlane->name()->compare(planeName) )
     return true;
   else
     return false;

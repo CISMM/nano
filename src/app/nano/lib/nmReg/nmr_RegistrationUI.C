@@ -687,16 +687,16 @@ void nmr_RegistrationUI::handle_registrationEnabled_change(
         } else 
         if (me->d_dataset->dataImages()->numImages() > 0){
           dataim = me->d_dataset->dataImages()->getImage(0);
-          me->d_registrationImageName3D = dataim->name()->Characters();
+          me->d_registrationImageName3D = dataim->name()->c_str();
         }
         // Also guess at the 2D image name
         int i;
         for (i = 1; i < me->d_dataset->dataImages()->numImages(); i++) {
             dataim = me->d_dataset->dataImages()->getImage(i);
-            //printf("Considering %s\n", dataim->name()->Characters());
-            if (strcmp(dataim->name()->Characters(),
+            //printf("Considering %s\n", dataim->name()->c_str());
+            if (strcmp(dataim->name()->c_str(),
                        me->d_dataset->heightPlaneName->string())) {
-                me->d_registrationImageName2D = dataim->name()->Characters();
+                me->d_registrationImageName2D = dataim->name()->c_str();
                 break;
             }
         }

@@ -66,13 +66,12 @@ nmb_SummedPlane( const char* inputPlaneName1,
 
   // Ensure that the units match on the input planes.
   // Actually, only warn if they are not the same
-  if ( strcmp(sourcePlane1->units()->Characters(),
-	      sourcePlane2->units()->Characters()) != 0) 
+  if ( sourcePlane1->units()->compare(*sourcePlane2->units()) != 0) 
     {
       fprintf(stderr, "nmb_SummedPlane(...): Unit mismatch\n");
       fprintf(stderr, "    (%s vs. %s)\n",
-	      sourcePlane1->units()->Characters(),
-	      sourcePlane2->units()->Characters());
+	      sourcePlane1->units()->c_str(),
+	      sourcePlane2->units()->c_str());
     }
   
   //////////////
@@ -81,7 +80,7 @@ nmb_SummedPlane( const char* inputPlaneName1,
   // Use the units for the first plane.  
   // It is assumed that the second will have been scaled appropriately.
   char newunits[1000];
-  sprintf(newunits, "%s_flat", sourcePlane1->units()->Characters());
+  sprintf(newunits, "%s_flat", sourcePlane1->units()->c_str());
   createCalculatedPlane( newunits, sourcePlane1, dataset );
   
   // fill in the new plane.
@@ -131,9 +130,9 @@ bool nmb_SummedPlane::
 dependsOnPlane( const char* planeName )
 {
   if( planeName == NULL ) return false;
-  if( strcmp( planeName, this->sourcePlane1->name()->Characters() ) )
+  if( this->sourcePlane1->name()->compare(planeName) )
     return true;
-  else if( strcmp( planeName, this->sourcePlane2->name()->Characters() ) )
+  else if( this->sourcePlane2->name()->compare(planeName) )
     return true;
   else
     return false;
@@ -178,15 +177,15 @@ sendCalculatedPlane( vrpn_Connection* conn, vrpn_int32 senderID,
 
   vrpn_buffer( &bufptr, &msglen, SUMMED_PLANE_TYPE );
   vrpn_buffer( &bufptr, &msglen, scale );
-  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) sourcePlane1->name()->Length() );
-  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) sourcePlane2->name()->Length() );
-  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) calculatedPlane->name()->Length() );
-  vrpn_buffer( &bufptr, &msglen, sourcePlane1->name()->Characters(),
-	       sourcePlane1->name()->Length() );
-  vrpn_buffer( &bufptr, &msglen, sourcePlane2->name()->Characters(),
-	       sourcePlane2->name()->Length() );
-  vrpn_buffer( &bufptr, &msglen, calculatedPlane->name()->Characters(),
-	       calculatedPlane->name()->Length() );
+  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) sourcePlane1->name()->length() );
+  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) sourcePlane2->name()->length() );
+  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) calculatedPlane->name()->length() );
+  vrpn_buffer( &bufptr, &msglen, sourcePlane1->name()->c_str(),
+	       sourcePlane1->name()->length() );
+  vrpn_buffer( &bufptr, &msglen, sourcePlane2->name()->c_str(),
+	       sourcePlane2->name()->length() );
+  vrpn_buffer( &bufptr, &msglen, calculatedPlane->name()->c_str(),
+	       calculatedPlane->name()->length() );
   
   timeval now;
   gettimeofday(&now, NULL);
@@ -241,8 +240,8 @@ _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
   if( samePlane != NULL )
   { // see if we got a message to recreate the same plane
     if( scale == samePlane->scale
-        && strcmp( sourcePlaneName1, samePlane->sourcePlane1->name()->Characters() ) == 0 
-        && strcmp( sourcePlaneName2, samePlane->sourcePlane2->name()->Characters() ) == 0 )
+        && samePlane->sourcePlane1->name()->compare(sourcePlaneName1) == 0 
+        && samePlane->sourcePlane2->name()->compare(sourcePlaneName2) == 0 )
     {
       // the requested plane is exactly the same as one that already exists,
       // so don't change anything

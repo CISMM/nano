@@ -55,7 +55,7 @@ nmb_LBLFlattenedPlane( const char* inputPlaneName,
   
   // create the lbl-flattened plane
   char newunits[1000];
-  sprintf(newunits, "%s_lbl_flat", sourcePlane->units()->Characters());
+  sprintf(newunits, "%s_lbl_flat", sourcePlane->units()->c_str());
 
   createCalculatedPlane( newunits, sourcePlane, dataset );
   fillLBLFlattenedPlane( dataset );
@@ -92,7 +92,7 @@ bool nmb_LBLFlattenedPlane::
 dependsOnPlane( const char* planeName )
 {
   if( planeName == NULL ) return false;
-  if( strcmp( planeName, this->sourcePlane->name()->Characters() ) )
+  if( this->sourcePlane->name()->compare(planeName) )
     return true;
   else
     return false;
@@ -202,12 +202,12 @@ sendCalculatedPlane( vrpn_Connection* conn, vrpn_int32 senderID,
   vrpn_int32 msglen = 1024;
 
   vrpn_buffer( &bufptr, &msglen, LBL_FLATTENED_PLANE_TYPE );
-  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) sourcePlane->name()->Length() );
-  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) calculatedPlane->name()->Length() );
-  vrpn_buffer( &bufptr, &msglen, sourcePlane->name()->Characters(),
-	      sourcePlane->name()->Length() );
-  vrpn_buffer( &bufptr, &msglen, calculatedPlane->name()->Characters(),
-	      calculatedPlane->name()->Length() );
+  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) sourcePlane->name()->length() );
+  vrpn_buffer( &bufptr, &msglen, (vrpn_int32) calculatedPlane->name()->length() );
+  vrpn_buffer( &bufptr, &msglen, sourcePlane->name()->c_str(),
+	      sourcePlane->name()->length() );
+  vrpn_buffer( &bufptr, &msglen, calculatedPlane->name()->c_str(),
+	      calculatedPlane->name()->length() );
   
   timeval now;
   gettimeofday(&now, NULL);
@@ -254,7 +254,7 @@ _handle_PlaneSynch( vrpn_HANDLERPARAM p, nmb_Dataset* dataset )
   //   - if the run-time identified type of the plane with the given name is not nmb_LBLFlattenedPlane
   if( samePlane != NULL )
   { // see if this is a message to recreate the same plane
-    if( strcmp( sourcePlaneName, samePlane->sourcePlane->name()->Characters() ) == 0 )
+    if( samePlane->sourcePlane->name()->compare(sourcePlaneName) == 0 )
     {
       // the requested plane is exactly the same as one that already exists,
       // so don't change anything

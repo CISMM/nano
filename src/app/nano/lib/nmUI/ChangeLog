@@ -1,3 +1,11 @@
+2002-03-21  Aron Helser  <helser@cs.unc.edu>
+
+	* GraphMod.C: Handle replacement BCString -> string
+	* nmui_ColorMap.C: same
+	* nmui_CrossSection.C: same
+	* nmui_PlaneSync.C: same
+	* nmUI.dsp: Release config now builds.
+
 2002-03-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* nmui_PlaneSync.C (~nmui_PlaneSync):  delete a memory block using

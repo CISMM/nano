@@ -295,7 +295,7 @@ main (int argc, char **argv)
 		READ_FILE, (const char **)filenames, 1);
 	BCPlane *plane = grid->head();
 
-	printf("Using plane %s\n",plane->name()->Characters());
+	printf("Using plane %s\n",plane->name()->c_str());
 	CREALTYPE *pixels = new float[grid->numX() * grid->numY()];
 	for (y = 0; y < grid->numY(); y++) {
 	  for (x = 0; x < grid->numX(); x++) {

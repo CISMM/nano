@@ -608,9 +608,9 @@ void nmr_Util::buildGaussianPyramid(nmb_Image &src,
   double stddev;
   for (i = 0; i < numLevels; i++) {
     stddev = stddevs[i];
-    sprintf(new_name, "%s_%d", src.name()->Characters(), i);
+    sprintf(new_name, "%s_%d", src.name()->c_str(), i);
     pyramid[i] = new nmb_ImageGrid(&src);
-    *(((nmb_ImageGrid *)pyramid[i])->name()) = BCString(new_name);
+    *(((nmb_ImageGrid *)pyramid[i])->name()) = string(new_name);
     if (stddev > 0.0) {
       blur(*(pyramid[i]), stddev, stddev);
     }

@@ -133,8 +133,8 @@ int nmui_CrossSection::ShowCrossSection(BCGrid* grid,
           BCPlane * plane = grid->getPlaneByName(plane_names->entry(i));
           if (!plane) continue;
           // make sure we include name and units in the vector name. 
-          sprintf(str,"xs%d_%s_%s", id, plane->name()->Characters(), 
-		 plane->units()->Characters());
+          sprintf(str,"xs%d_%s_%s", id, plane->name()->c_str(), 
+		 plane->units()->c_str());
 
 	 // remove spaces and "-", they are bad for vector names.
 	 for (unsigned int k = 0; k < strlen(str); k++){

@@ -147,13 +147,13 @@ int scale_display (void * data) {
       scale = plane->scale();
       // get a reasonable estimate of the maximum size string we'll need
       // and allocate the buffer
-      int mess_len = strlen(plane->units()->Characters()) + 
+      int mess_len = strlen(plane->units()->c_str()) + 
 		strlen(state->heightPlaneName) + 100;
       message = new char[mess_len];
       if (message != NULL) {
           sprintf(message,"Displaying %s (%s), scale x%g",
                   state->heightPlaneName,
-                  plane->units()->Characters(), scale);
+                  plane->units()->c_str(), scale);
       } else {
           fprintf(stderr, "Error: scale_display: out of memory\n");
       }
@@ -211,14 +211,14 @@ int height_at_hand_display (void * data) {
 		sprintf(message,"No point data sets");
 	} else {
 		sprintf(message,"Point: %s = %5.2f %s",
-			value->name()->Characters(),
-			value->value(), value->units()->Characters());
+			value->name()->c_str(),
+			value->value(), value->units()->c_str());
 		value = value->next();
 	}
 
 	while ( value ) {
-		sprintf(msgpart, ", %s = %5.2f %s",value->name()->Characters(),
-			value->value(), value->units()->Characters());
+		sprintf(msgpart, ", %s = %5.2f %s",value->name()->c_str(),
+			value->value(), value->units()->c_str());
 		strcat(message, msgpart);
 		value = value->next();
 	}

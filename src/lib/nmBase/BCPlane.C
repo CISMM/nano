@@ -484,7 +484,7 @@ int     BCPlane::remove_callback(Plane_Valuecall cb, void *userdata)
      10% of XY range. But only if units are not nm.
 */
 void BCPlane::tweakScale() {
-    if (strcmp(_units.Characters(), "nm")!=0) {
+    if (strcmp(_units.c_str(), "nm")!=0) {
         _scale = 0.1*(maxX()-minX())/(_max_value-_min_value);
     }
 }
@@ -502,7 +502,7 @@ BCPlane --> constructor
         @author Kimberly Passarella Jones
  @date modified 9-10-95 by Kimberly Passarella Jones
 */
-BCPlane::BCPlane(BCString name, BCString units, int nx, int ny):
+BCPlane::BCPlane(string name, string units, int nx, int ny):
          tm_scale(1),
          tm_offset(0)
 {
@@ -1755,7 +1755,7 @@ CPlane --> constructor
         @author Kimberly Passarella Jones
  @date modified 9-10-95 by Kimberly Passarella Jones
 */
-CPlane::CPlane(BCString name, BCString units, int nx, int ny) :
+CPlane::CPlane(string name, string units, int nx, int ny) :
 	BCPlane(name, units, nx, ny)
 {
     _timed = NOT_TIMED;
@@ -1908,7 +1908,7 @@ CTimedPlane --> constructor
         @author Kimberly Passarella Jones
  @date modified 9-10-95 by Kimberly Passarella Jones
 */
-CTimedPlane::CTimedPlane(BCString name, BCString units, int nx, int ny) :
+CTimedPlane::CTimedPlane(string name, string units, int nx, int ny) :
 	BCPlane(name, units, nx, ny)
 {
     _timed = TIMED;

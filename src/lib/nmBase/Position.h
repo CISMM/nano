@@ -3,7 +3,7 @@
 
 #include <math.h>  // for sqrt()
 #include <stdio.h>
-//#include "BCString.h"
+//#include "string"
 
 class Position;
 class Position_list;

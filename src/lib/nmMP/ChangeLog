@@ -1,3 +1,7 @@
+2002-03-21  Aron Helser  <helser@cs.unc.edu>
+
+	* NMmp.dsp: Release config now builds.
+
 2002-03-19  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* util.C:  added an explicit cast to disambiguate set_new_handler

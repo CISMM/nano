@@ -447,11 +447,11 @@ void teardownStateCallbacks (nmm_Microscope_Remote * ms) {
 void handle_doRelaxComp_change (vrpn_int32 val, void * _mptr) {
     if (val == VRPN_TRUE) {
 	microscope->d_relax_comp.enable(nmm_RelaxComp::DECAY);
-        microscope->d_relax_comp.updateMicroscope();
+        microscope->d_relax_comp.updateMicroscope(microscope);
 
     } else if (val == VRPN_FALSE) {
 	microscope->d_relax_comp.disable();
-        microscope->d_relax_comp.updateMicroscope();
+        microscope->d_relax_comp.updateMicroscope(microscope);
     } else {
 	fprintf(stderr, "Unexpected value for doRelaxComp, %d,"
 		" should be 1 or 0", val);

@@ -1,3 +1,12 @@
+2002-03-21  Aron Helser  <helser@cs.unc.edu>
+
+	* AFMState.C: Handle replacement BCString ->
+	string
+	* nmm_MicroscopeRemoteGen.Cdef: same
+	* nmm_RelaxComp.Ch: same
+	* nmm_SimulatedMicroscope_Remote.Cdef,hdef: same
+	* nmMScope.dsp: Release config now builds.
+
 2002-03-20  David Marshburn  <marshbur@cs.unc.edu>
 
 	* nmm_SimulatedMicroscope.Cdef (encode_and_sendData):  

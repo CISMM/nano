@@ -11,13 +11,13 @@ int nmb_ImageManager::addImageToGrid(nmb_ImageGrid * new_image)
 {
   if (d_inputGrid) {
     BCPlane *newplane;
-    BCString name;
+    string name;
     d_inputGrid->findUniquePlaneName(*(new_image->name()),&name);
     newplane = d_inputGrid->addPlaneCopy(new_image->getPlane());
     newplane->rename(name);
 
     if (d_inputPlaneNames) {
-      d_inputPlaneNames->addEntry(name);
+      d_inputPlaneNames->addEntry(name.c_str());
     }
     d_images->addImage(new nmb_ImageGrid(newplane));
 

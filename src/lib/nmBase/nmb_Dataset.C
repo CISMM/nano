@@ -123,7 +123,7 @@ nmb_Dataset( vrpn_bool /*useFileResolution*/, int xSize, int ySize,
   BCPlane * p;
   p = inputGrid->head();
   while (p) {
-    inputPlaneNames->addEntry(p->name()->Characters());
+    inputPlaneNames->addEntry(p->name()->c_str());
     p = p->next();
   }
   
@@ -214,7 +214,7 @@ nmb_Dataset::loadFile(const char* file_name)
   if ((im = dataImages->removeImageByName(EMPTY_PLANE_NAME)) != NULL) {
       //XXXX What's the right way? delete im;
       // The empty plane should be at the head of BCGrid's list. 
-      if( strcmp(inputGrid->head()->name()->Characters(), EMPTY_PLANE_NAME) == 0) {
+      if( inputGrid->head()->name()->compare(EMPTY_PLANE_NAME) == 0) {
           inputGrid->deleteHead();
       }
       
@@ -227,11 +227,11 @@ int
 nmb_Dataset::addImageToGrid(nmb_ImageGrid * new_image) 
 {
     BCPlane *newplane;
-    BCString name;
+    string name;
     inputGrid->findUniquePlaneName(*(new_image->name()),&name);
     newplane = inputGrid->addPlaneCopy(new_image->plane);
     newplane->rename(name);
-    inputPlaneNames->addEntry(name);
+    inputPlaneNames->addEntry(name.c_str());
     dataImages->addImage(new nmb_ImageGrid(newplane));
 
     return 0;
@@ -250,8 +250,8 @@ BCPlane * nmb_Dataset::ensureHeightPlane (void) {
   // add to the grid a height plane, if there isn't one.
   plane = inputGrid->head();
   while (plane) {
-    if (!strcmp(*plane->units(),"nm")) {
-      heightPlaneName->Set(plane->name()->Characters());
+    if (!plane->units()->compare("nm")) {
+      heightPlaneName->Set(plane->name()->c_str());
       break;  // Found one!
     }
     plane = plane->next();
@@ -260,14 +260,14 @@ BCPlane * nmb_Dataset::ensureHeightPlane (void) {
     if ((plane = inputGrid->head()) != NULL) {
         // Set heightplane using one whose units aren't "nm"
         // (This should handle heightPlaneName set to "none")
-        heightPlaneName->Set(plane->name()->Characters());
+        heightPlaneName->Set(plane->name()->c_str());
     } else {
       // Last resort - create a heightplane. 
       plane = inputGrid->getPlaneByName(EMPTY_PLANE_NAME);
       if (!plane) {
         //fprintf(stderr,"Warning! No height plane input, using zero plane\n");
         plane = inputGrid->addNewPlane(EMPTY_PLANE_NAME, "nm", NOT_TIMED);
-        heightPlaneName->Set(plane->name()->Characters());
+        heightPlaneName->Set(plane->name()->c_str());
         dataImages->addImage(new nmb_ImageGrid(plane));
       }
     }
@@ -316,7 +316,7 @@ int nmb_Dataset::computeAdhesionFromDeflection
   int     first_def, last_def, num_def;   // Numbers of deflection list
   int     i;
   char    num[10];
-  BCString newname;
+  string newname;
   int     x,y, plane;
   char    *ffl_in_first, *ffl_in_last;
   char    basename[1000];
@@ -376,7 +376,7 @@ int nmb_Dataset::computeAdhesionFromDeflection
     def[i-first_def] = inputGrid->getPlaneByName(newname);
     if (def[i-first_def] == NULL) {
             fprintf(stderr, "computeAdhesionFromDeflection:  "
-                            "No %s.\n", newname.Characters());
+                            "No %s.\n", newname.c_str());
             return -1;
     }
   };
@@ -433,7 +433,7 @@ addNewCalculatedPlane( nmb_CalculatedPlane* plane )
   if( plane == NULL )
       return;
 
-  inputPlaneNames->addEntry( plane->getName()->Characters() );
+  inputPlaneNames->addEntry( plane->getName()->c_str() );
 } // end addNewCalculatedPlane( ... )
 
 
@@ -443,7 +443,7 @@ removeCalculatedPlane( nmb_CalculatedPlane* plane )
   if( plane == NULL )
     return;
 
-  inputPlaneNames->deleteEntry( plane->getName()->Characters() );
+  inputPlaneNames->deleteEntry( plane->getName()->c_str() );
 }
 
 

@@ -850,6 +850,13 @@ static int phantomReplayRepeat = 0;
 #endif
 
 //-----------------------------------------------------------------------
+// Help functions
+static void handle_show_help_flag(vrpn_int32, void *);
+Tclvar_int show_help_flag ("show_help_flag", 0, 
+                           handle_show_help_flag);
+static char * help_index_path = NULL;
+
+//-----------------------------------------------------------------------
 /// Error recovery
 static void openDefaultMicroscope();
 
@@ -1778,12 +1785,12 @@ void handle_z_dataset_change(const char *, void * ds)
   // For some reason, heightPlaneName gets set in ensureHeightPlane above, but
   // is not recognized yet. Use the plane's name explicitly instead.
   //graphics->setHeightPlaneName(dataset->heightPlaneName->string());
-  graphics->setHeightPlaneName(plane->name()->Characters());
+  graphics->setHeightPlaneName(plane->name()->c_str());
   
   if ( Index_mode::isInitialized() ) {
     // update index mode's idea of what the plane is
     Index_mode::newPlane( dataset->inputGrid->getPlaneByName
-                          (plane->name()->Characters() ) );
+                          (plane->name()->c_str() ) );
   }
 }
 
@@ -2756,16 +2763,16 @@ static void handle_openStaticFilename_change (const char *, void *)
     }
     //fprintf(stderr,"HANDLE_OPENSTATIC_FILE done loading\n");
     for (BCPlane *p = dataset->inputGrid->head(); p != NULL; p = p->next()) {
-        //printf("Found plane %s\n", (p->name())->Characters());
+        //printf("Found plane %s\n", (p->name())->c_str());
         // Add it to the list if it's not there already.
-        if (dataset->inputPlaneNames->getIndex(*(p->name())) == -1) {
+        if (dataset->inputPlaneNames->getIndex(p->name()->c_str()) == -1) {
 	    BasePlane = p;
             //printf("Add entry\n");
-            dataset->inputPlaneNames->addEntry(*(p->name()));
+            dataset->inputPlaneNames->addEntry(p->name()->c_str());
             // This is the new plane we just added, so switch the heightplane
             // to display it, if we are displaying nothing...
             if ( strcmp(dataset->heightPlaneName->string(), EMPTY_PLANE_NAME) == 0) {
-                *(dataset->heightPlaneName) = *(p->name());
+                *(dataset->heightPlaneName) = p->name()->c_str();
                 // Remove the name from the UI - it's not useful to our users
                 dataset->inputPlaneNames->deleteEntry(EMPTY_PLANE_NAME);
             }
@@ -4292,6 +4299,27 @@ void handle_guardedscan_planeacquire(vrpn_int32 a_nVal, void* a_pObject)
   printf(" guard depth is now=%lf\n", pMe->state.guardedscan.fGuardDepth);
 }
 
+/// Handle a user request to show help. 
+static void handle_show_help_flag(vrpn_int32, void *)
+{
+#if defined (_WIN32) && !defined (__CYGWIN__)
+    FILE * file;
+    // Check that we've found a help file. 
+    if (help_index_path && (file = fopen(help_index_path, "r")) != NULL) {
+        fclose(file);
+        HWND hwnd;
+        hwnd = GetForegroundWindow();  // GetFocus or GetForegroundWindow 
+        ShellExecute(hwnd, "open", help_index_path, NULL, NULL, 
+                     SW_SHOWNORMAL);
+    } else {
+        display_warning_dialog( "Unable to find or open the help index"
+                                " file. \nPlease re-install the user manual"
+                                " at %s", help_index_path);
+    }    
+  
+#endif
+}
+
 
 // This is an ImageMode handler. Makes sure the next time we enter
 // directZ mode we don't get surprised by wierd forces.
@@ -4354,12 +4382,12 @@ int	loadProcProgNames(void)
 
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
-	if ( (directory = opendir(procImageDir)) == NULL) {
+	if ( (directory = vc_opendir(procImageDir)) == NULL) {
 		display_error_dialog("Couldn't load external filter programs\n"
                                 "from directory named: %s)\n",procImageDir);
 		return -1;
 	}
-	while ( (entry = readdir(directory)) != NULL) {
+	while ( (entry = vc_readdir(directory)) != NULL) {
 	    if (entry->d_name[0] != '.') {
 		procProgNames.addEntry(entry->d_name);
 	    }
@@ -4397,12 +4425,12 @@ int	loadPPMTextures(void)
 
 	// Get the list of files that are in that directory
 	// Put the name of each file in that directory into the list
-	if ( (directory = opendir(textureDir)) == NULL) {
+	if ( (directory = vc_opendir(textureDir)) == NULL) {
 		display_error_dialog("Could load static textures from\n"
                                      "directory named %s)\n",procImageDir);
 		return -1;
 	}
-	while ( (entry = readdir(directory)) != NULL) {
+	while ( (entry = vc_readdir(directory)) != NULL) {
 	    if (entry->d_name[0] != '.') {
 		textureNames.addEntry(entry->d_name);
 	    }
@@ -7198,6 +7226,9 @@ static int initialize_environment(MicroscapeInitializationState * istate) {
             colorMapDir = new char [strlen(env_string) + 1];
             strcpy(colorMapDir, env_string);
 	}
+        // Set up where the user manual lives. 
+        help_index_path = new char [strlen(nano_root) + strlen("/user_manual/index.htm") + 1];
+        sprintf(help_index_path, "%s/user_manual/index.htm", nano_root);
 #if defined (_WIN32) && !defined (__CYGWIN__)
     HANDLE hConsoleOutput;
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -9116,11 +9147,11 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 	Point_value *val = microscope->state.data.inputPoint->head();
 	while (val) {
 	  printf("%s at (%g, %g) is %g (%s)\n",
-		 val->name()->Characters(),
+		 val->name()->c_str(),
 		 microscope->state.data.inputPoint->x(),
 		 microscope->state.data.inputPoint->y(),
 		 val->value(),
-		 val->units()->Characters());
+		 val->units()->c_str());
 	  val = val->next();
 	}
 	printf("\n");
@@ -9157,9 +9188,9 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 		BCPlane* plane = dataset->inputGrid->head();
 		while (plane != NULL) {
 		  printf("%s at (%g, %g) is %g (%s)\n",
-			 plane->name()->Characters(), rx,ry,
+			 plane->name()->c_str(), rx,ry,
 			 plane->value(index_x, index_y),
-			 plane->units()->Characters());
+			 plane->units()->c_str());
 		  plane = plane->next();
 		}
 		printf("\n");
@@ -9641,7 +9672,7 @@ void guessAdhesionNames (nmb_Dataset * dset) {
                 char    testname[1000];
                 int     baselen;
 
-                strncpy(testname, p->name()->Characters(), sizeof(testname));
+                strncpy(testname, p->name()->c_str(), sizeof(testname));
                 ffl_loc = MAX(strstr(testname,".ffl"), strstr(testname,".FFL"));
                 baselen = (ffl_loc - testname) + 4;
                 if (ffl_loc != NULL) {

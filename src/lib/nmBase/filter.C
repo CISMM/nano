@@ -75,7 +75,7 @@ static	int	filter_write(const char *newset_name, BCPlane *plane, int fd)
 	// Form the header and write it to the file
 	sprintf(header,"%s\n%s\n%d\n%d\n%f\n%f\n",
 		newset_name,
-		plane->units()->Characters(),
+		plane->units()->c_str(),
 		plane->numX(), plane->numY(), //number of grid points in x and y
 		plane->maxX() - plane->minX(), //actual size (in nm) in x
 		plane->maxY() - plane->minY()); //actual size in y

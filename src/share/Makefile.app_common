@@ -39,7 +39,7 @@ endif
 #
 
 ifndef SRC_SUFFIXES
-   SRC_SUFFIXES := .C .c .cc
+   SRC_SUFFIXES := .C .c .cc .cpp
 endif
 
 ifdef VC
@@ -172,7 +172,7 @@ endif
 # implicit rule for all .c files
 #
 
-.SUFFIXES: .c .C .cc .o .a .obj .rc
+.SUFFIXES: .c .C .cc .cpp .o .a .obj .rc
 
 
 $(OBJECT_DIR)/%.o: %.c
@@ -186,6 +186,16 @@ else
 endif
 
 $(OBJECT_DIR)/%.o: %.cc
+ifdef NM_VERBOSE_MAKEFILE
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
+	      -o $@ -c $<
+else
+	@echo $(CC) ... $(<F)
+	@$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
+	       -o $@ -c $<
+endif
+
+$(OBJECT_DIR)/%.o: %.cpp
 ifdef NM_VERBOSE_MAKEFILE
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
 	      -o $@ -c $<
@@ -226,6 +236,16 @@ else
 endif
 
 $(OBJECT_DIR)/%.obj: %.cc
+ifdef NM_VERBOSE_MAKEFILE
+	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
+	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
+else
+	@echo $(CC) ... $(<F)
+	@$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
+	       /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<
+endif
+
+$(OBJECT_DIR)/%.obj: %.cpp
 ifdef NM_VERBOSE_MAKEFILE
 	$(CC) $(CFLAGS) $(DEFINES) $(DEP_LIBS_INC) $(INCLUDE_FLAGS) \
 	      /Fd"$(OBJECT_DIR)/" /Fp"$(OBJECT_DIR)/" /Fo"$@" /c $<

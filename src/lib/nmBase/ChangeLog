@@ -1,3 +1,32 @@
+2002-03-21  Aron Helser  <helser@cs.unc.edu>
+
+	* BCString.Ch: Removed. Replace with <string> std header.
+	* BCGrid.Ch: Handle replacement BCString -> string
+		
+	* BCPlane.Ch: same
+	* Point.Ch: same
+	* Position.h: same
+	* Scanline.Ch: same
+	* Topo.C: same
+	* filter.C: same
+	* nmb_CalculatedPlane.Ch: same
+	* nmb_Dataset.C: same
+	* nmb_FlattenedPlane.C: same
+	* nmb_Image.Ch: same
+	* nmb_ImageManager.C: same
+	* nmb_LBLFlattenedPlane.C: same
+	* nmb_SummedPlane.C: same
+
+	* vc_dirent.ch: Changed opendir and readdir to vc_opendir and
+	vc_readdir because of very weird memory/build error in VC++ which
+	prevented debugging these functions, plus caused them to return
+	garbage, or write garbage over other data structures. Only
+	manifested in pseudoStream application. Name change seems to have
+	fixed...  
+
+	* nmBase.dsp: Release config now builds.
+
+
 2002-03-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* BCString.h:  on teh SGI, turn some compiler warnings off before

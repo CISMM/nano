@@ -40,7 +40,7 @@ RealImage ReadNanoFile(char *image_file_name)
    BCGrid *grid = new BCGrid(512,512, 0,0, 1,1, 1, READ_FILE, filenames,1);
    BCPlane *plane = grid->head();
 
-   printf("Using plane %s\n",plane->name()->Characters());
+   printf("Using plane %s\n",plane->name()->c_str());
    RealImage tempim (grid->numX(), grid->numY());
 
    for (i = 0; i < grid->numX(); i++)
