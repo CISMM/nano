@@ -1,3 +1,7 @@
+2001-09-30  David Marshburn  <marshbur@cs.unc.edu>
+
+	* view.tcl: added z_lock and z_lock pressed variable.
+
 2001-09-25 Jameson Miller <millerj@cs.unc.edu>
 	* modify.tcl - changed so that the correct tool gets displayed in the
 	quickparams window when in direct_step tool.
