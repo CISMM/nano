@@ -759,7 +759,7 @@ SOURCE=..\..\..\..\external\pc_win32\lib\glut32_UNC.lib
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\external\pc_win32\lib\GHOST31.lib
+SOURCE=..\..\..\..\external\pc_win32\lib\GHOST40.lib
 # End Source File
 # End Group
 # End Target
