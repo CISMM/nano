@@ -488,7 +488,7 @@ void imported_obj::handle_bond_width_change (vrpn_float64 new_value, void *userd
 void imported_obj::handle_bond_colorR_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI bond R color coordinate
-  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetBondColorR(new_value);
+  //((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetBondColorR(new_value);
   me->bond_colorR_value = new_value;
   //Rebuild display lists
   me->GetURPoly()->ReloadGeometry();
@@ -498,7 +498,7 @@ void imported_obj::handle_bond_colorR_change (vrpn_float64 new_value, void *user
 void imported_obj::handle_bond_colorG_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI bond G color coordinate
-  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetBondColorG(new_value);
+  //((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetBondColorG(new_value);
   me->bond_colorG_value = new_value;
   //Rebuild display list
   me->GetURPoly()->ReloadGeometry();
@@ -508,7 +508,7 @@ void imported_obj::handle_bond_colorG_change (vrpn_float64 new_value, void *user
 void imported_obj::handle_bond_colorB_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI bond B color coordinate
-  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetBondColorB(new_value);
+  //((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetBondColorB(new_value);
   me->bond_colorB_value = new_value;
   //Rebuild display list
   me->GetURPoly()->ReloadGeometry();
@@ -538,7 +538,7 @@ void imported_obj::handle_sphere_tesselation_change (vrpn_int32 new_value, void 
 void imported_obj::handle_sphere_colorR_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
   //Change MSI sphere color R coordinate
-  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetSphereColorR(new_value);
+  //((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetSphereColorR(new_value);
   me->sphere_colorR_value = new_value;
   //Rebuild display list
   me->GetURPoly()->ReloadGeometry();
@@ -547,7 +547,7 @@ void imported_obj::handle_sphere_colorR_change (vrpn_float64 new_value, void *us
 /** PURPOSE: Handle a change of the sphere_color's G coordinate*/
 void imported_obj::handle_sphere_colorG_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
-  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetSphereColorG(new_value);
+  //((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetSphereColorG(new_value);
   me->sphere_colorG_value = new_value;
   //Rebuild the display list
   me->GetURPoly()->ReloadGeometry();
@@ -556,7 +556,7 @@ void imported_obj::handle_sphere_colorG_change (vrpn_float64 new_value, void *us
 /** PURPOSE: Handle a change of the sphere_color's B coordinate*/
 void imported_obj::handle_sphere_colorB_change (vrpn_float64 new_value, void *userdata) {
   imported_obj *me = (imported_obj *)userdata;
-  ((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetSphereColorB(new_value);
+  //((MSIFileGenerator*)me->GetURPoly()->GetGenerator())->SetSphereColorB(new_value);
   me->sphere_colorB_value = new_value;
   //Rebuild display list
   me->GetURPoly()->ReloadGeometry();

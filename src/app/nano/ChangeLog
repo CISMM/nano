@@ -1,5 +1,11 @@
 2001-03-13  Jason Clark  <jclark@cs.unc.edu>
 
+	* import.C: See below
+
+	* import.h: Color selection is now a standard option
+
+	* imported_obj.C: Made it compile with changes to MSIFileGenerator
+
 	* microscape.c: New callback function for viz texture scaling.
 
 2001-03-12  Jason Clark  <jclark@cs.unc.edu>

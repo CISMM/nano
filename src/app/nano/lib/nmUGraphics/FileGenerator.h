@@ -10,7 +10,7 @@ public:
 
     void StoreFilename(const char* fname);
     static FileGenerator* CreateFileGenerator(const char *fname);
-    const char* const GetExtension() {return extension;}
+    const char* GetExtension() {return extension;}
 
 protected:
     char *filename;

@@ -120,14 +120,6 @@ MSIFileGenerator::MSIFileGenerator(const char* fname)
 
   bond_width = 1.0;
   sphere_radius = 1.0;
-  //bonds start out blue
-  bond_colorR = 0.0;
-  bond_colorG = 0.0;
-  bond_colorB = 1.0;
-  //spheres start out red
-  sphere_colorR = 0.0;
-  sphere_colorG = 0.0;
-  sphere_colorB = 1.0;
   import_mode = 0; //assume we start out in bond mode
   visibility_mode = 1; //assume we start out in show mode
 }/*MSIFileGenerator::MSIFileGenerator*/
@@ -138,7 +130,6 @@ void MSIFileGenerator::BuildListMSI(GLuint dl){
   int i, j, atom_i;
   if (import_mode == 0) { //if we are in bond mode
     glNewList(dl,GL_COMPILE); //init display list
-    glColor3f(bond_colorR,bond_colorG,bond_colorB);
     glLineWidth(bond_width);
     for(i=0;i<bond_count;i++){
       glBegin(GL_LINES);
@@ -157,7 +148,6 @@ void MSIFileGenerator::BuildListMSI(GLuint dl){
     GLuint atom_dl;
     atom_dl = atom_ptr->DisplayList(); //make a new sphere display list
     glNewList(dl,GL_COMPILE);
-    glColor3f(sphere_colorR,sphere_colorG,sphere_colorB);
     for (j=0;j<atom_count;j++){
       glPushMatrix();
       glPushAttrib(GL_CURRENT_BIT);
@@ -183,18 +173,6 @@ void MSIFileGenerator::SetBondWidth(float new_bond_width){
   bond_width = new_bond_width;
 }/*MSIFileGenerator::SetBondWidth*/
 
-void MSIFileGenerator::SetBondColorR(float new_color){
-  bond_colorR = new_color;
-}/*MSIFileGenerator::SetBondColorR*/
-
-void MSIFileGenerator::SetBondColorG(float new_color){
-  bond_colorG = new_color;
-}/*MSIFileGenerator::SetBondColorG*/
-
-void MSIFileGenerator::SetBondColorB(float new_color){
-  bond_colorB = new_color;
-}/*MSIFileGenerator::SetBondColorB*/
-
 void MSIFileGenerator::SetSphereRadius(float new_sphere_radius){
   sphere_radius = new_sphere_radius;
 }/*MSIFileGenerator::SetSphereRadius*/
@@ -202,18 +180,6 @@ void MSIFileGenerator::SetSphereRadius(float new_sphere_radius){
 void MSIFileGenerator::SetSphereDepth(int new_sphere_depth){
   sphere_depth = new_sphere_depth;
 }/*MSIFileGenerator::SetSphereDepth*/
-
-void MSIFileGenerator::SetSphereColorR(float new_color){
-  sphere_colorR = new_color;
-}/*MSIFileGenerator::SetSphereColorR*/
-
-void MSIFileGenerator::SetSphereColorG(float new_color){
-  sphere_colorG = new_color;
-}/*MSIFileGenerator::SetSphereColorG*/
-
-void MSIFileGenerator::SetSphereColorB(float new_color){
-  sphere_colorB = new_color;
-}/*MSIFileGenerator::SetSphereColorB*/
 
 int MSIFileGenerator::Load(URender *, GLuint *&Dlist_array){
 /*PURPOSE: Loads the geometry contained in a .msi file*/

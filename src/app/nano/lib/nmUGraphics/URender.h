@@ -89,8 +89,9 @@ public:
 
 	void SetTexture(URender *t);
 	void SetColor(GLfloat nc[4]){c[0]=nc[0];c[1]=nc[1];c[2]=nc[2];c[3]=nc[3];}
-	void SetAlpha(GLfloat nc){c[3]=nc;}
-
+    void SetColor3(GLfloat r, GLfloat g, GLfloat b){c[0]=r;c[1]=g;c[2]=b;}
+    void SetAlpha(GLfloat a){c[3] = a;}
+	
 	//picking operations and basic bounding box operations
 	void UpdateBoundsWithPoint(double,double,double);
 	void UpdateBoundsWithPoint(double c[3]);

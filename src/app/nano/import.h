@@ -14,10 +14,11 @@ static  void handle_import_rotx_change (vrpn_float64, void *);
 static  void handle_import_roty_change (vrpn_float64, void *);
 static  void handle_import_rotz_change (vrpn_float64, void *);
 static  void handle_import_visibility (vrpn_int32, void *);
+static  void handle_import_color_change (vrpn_int32, void *);
+static  void handle_import_alpha (vrpn_float64, void *);
 
 ///Import object handlers specifically for MSI files
 static  void handle_msi_bond_mode (vrpn_int32, void *);
-static  void handle_msi_color_change (vrpn_int32, void *);
 static  void handle_msi_atom_radius(vrpn_float64, void *);
 
 //-----------------------------------------------------------------
@@ -32,14 +33,14 @@ Tclvar_float	import_rotx("import_rotx",0, handle_import_rotx_change);
 Tclvar_float	import_roty("import_roty",0, handle_import_roty_change);
 Tclvar_float	import_rotz("import_rotz",0, handle_import_rotz_change);
 Tclvar_int      import_visibility("import_visibility", 1, handle_import_visibility);
+Tclvar_int      import_color_changed("import_color_changed", 0, handle_import_color_change);
+Tclvar_int      import_r("import_r", 192);
+Tclvar_int      import_g("import_g", 192);
+Tclvar_int      import_b("import_b", 192);
+Tclvar_float    import_alpha("import_alpha", 1, handle_import_alpha);
 
 //-----------------------------------------------------------------
 ///MSI File specific variables
 Tclvar_int      msi_bond_mode("msi_bond_mode", 0, handle_msi_bond_mode);
-Tclvar_int      msi_color_changed("msi_color_changed", 0, handle_msi_color_change);
-Tclvar_int      msi_r("msi_r", 0);
-Tclvar_int      msi_g("msi_g", 0);
-Tclvar_int      msi_b("msi_b", 255);
 Tclvar_float    msi_atom_radius("msi_atom_radius", 1, handle_msi_atom_radius);
-
 #endif

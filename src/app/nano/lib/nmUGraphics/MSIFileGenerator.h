@@ -38,7 +38,6 @@ class MSIFileGenerator : public FileGenerator {
     int *bond2;   //an array of the atoms to which bonds are drawn
     int bond_count,model_count,atom_count;
     float bond_width,sphere_radius,sphere_depth;
-    float bond_colorR, bond_colorG, bond_colorB, sphere_colorR,sphere_colorG,sphere_colorB;
     int import_mode; //import_mode is 0 for bond mode, 1 for sphere mode
     int visibility_mode; //visibility_mode is 0 for hide mode, 1 for show mode
   public:
@@ -51,14 +50,8 @@ class MSIFileGenerator : public FileGenerator {
     void SetImportMode(int);
     void SetVisibilityMode(int);
     void SetBondWidth(float);
-    void SetBondColorR(float);
-    void SetBondColorG(float);
-    void SetBondColorB(float);
     void SetSphereRadius(float);
     void SetSphereDepth(int);
-    void SetSphereColorR(float);
-    void SetSphereColorG(float);
-    void SetSphereColorB(float);
     ~MSIFileGenerator();
 };
 

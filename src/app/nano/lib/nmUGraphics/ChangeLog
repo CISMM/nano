@@ -1,3 +1,14 @@
+2001-03-13  Jason Clark  <jclark@cs.unc.edu>
+
+	* URender.h: New color setting function
+
+	* MSIFileGenerator.C: See below
+
+	* MSIFileGenerator.h: Removed color setting in this generator.
+	Color setting is done in the containing URender object.
+
+	* FileGenerator.h (class FileGenerator): Removed spurious const
+
 2001-03-12  Jason Clark  <jclark@cs.unc.edu>
 
 	* Xform.C: Bug fix and removed spurious print out

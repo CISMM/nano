@@ -10,6 +10,7 @@
 //Functions necessary for all imported objects
 static void handle_import_file_change (const char * , void *) {
     static char * old_name = NULL;
+    static const float convert = 1.0f/255;
     
     if (modelFile.string()) {        
         URPolygon *obj = new URPolygon;
@@ -17,6 +18,8 @@ static void handle_import_file_change (const char * , void *) {
         import_type = gen->GetExtension();
         obj->LoadGeometry(gen);
         obj->SetVisibility(import_visibility);
+        obj->SetColor3(convert * import_r, convert * import_g, convert * import_b);
+        obj->SetAlpha(import_alpha);
         obj->GetLocalXform().SetScale(import_scale);
         obj->GetLocalXform().SetTranslate(import_transx, import_transy, import_transz);
         obj->GetLocalXform().SetRotate(import_rotx, import_roty, import_rotz, 1);
@@ -115,6 +118,25 @@ static  void handle_import_rotz_change (vrpn_float64, void *)
     }
 }
 
+static  void handle_import_color_change (vrpn_int32, void *)
+{
+    static const float convert = 1.0f/255;
+    UTree *node = World.TGetNodeByName(modelFile.string());
+    if (node != NULL) {
+        URender &obj = node->TGetContents();
+        obj.SetColor3(convert * import_r, convert * import_g, convert * import_b);
+    }
+}
+
+static  void handle_import_alpha (vrpn_float64, void *)
+{
+    UTree *node = World.TGetNodeByName(modelFile.string());
+    if (node != NULL) {
+        URender &obj = node->TGetContents();
+        obj.SetAlpha(import_alpha);
+    }
+}
+
 //------------------------------------------------------------------------
 //MSI File Specific functions
 static  void handle_msi_bond_mode (vrpn_int32, void *)
@@ -123,22 +145,6 @@ static  void handle_msi_bond_mode (vrpn_int32, void *)
     if (node != NULL) {
         URPolygon &obj = (URPolygon&)node->TGetContents();
         ((MSIFileGenerator*)obj.GetGenerator())->SetImportMode(msi_bond_mode);
-        obj.ReloadGeometry();
-    }
-}
-
-static  void handle_msi_color_change (vrpn_int32, void *)
-{
-    static const float convert = 1.0f/255;
-    UTree *node = World.TGetNodeByName(modelFile.string());
-    if (node != NULL) {
-        URPolygon &obj = (URPolygon&)node->TGetContents();
-        ((MSIFileGenerator*)obj.GetGenerator())->SetBondColorR(convert * msi_r);
-        ((MSIFileGenerator*)obj.GetGenerator())->SetBondColorG(convert * msi_g);
-        ((MSIFileGenerator*)obj.GetGenerator())->SetBondColorB(convert * msi_b);
-        ((MSIFileGenerator*)obj.GetGenerator())->SetSphereColorR(convert * msi_r);
-        ((MSIFileGenerator*)obj.GetGenerator())->SetSphereColorG(convert * msi_g);
-        ((MSIFileGenerator*)obj.GetGenerator())->SetSphereColorB(convert * msi_b);
         obj.ReloadGeometry();
     }
 }
