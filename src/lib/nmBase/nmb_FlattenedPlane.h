@@ -62,7 +62,7 @@ protected:
 					 void* userdata );
 
   // non-static member function to handle changes in the source plane
-  void _handleSourcePlaneChange( int x, int y);
+  void _handleSourcePlaneChange( int x, int y );
 
   // utility function used by the constructor to 
   // calculate and set dx, dy and offset for this flattened plane.
