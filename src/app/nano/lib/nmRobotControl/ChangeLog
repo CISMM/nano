@@ -1,3 +1,7 @@
+2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* Makefile : added glut as external lib
+
 2000-11-29  Adam Seeger  <seeger@cs.unc.edu>
 
 	* warrencntsim.C : replaces redefined assert() with 
