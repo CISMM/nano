@@ -1,26 +1,36 @@
 2001-06-25  Andrea Hilchey  <hilchey@cs.unc.edu>
 
-	* cnt_ia.C:  changed method of filling in ListofNames[] and ListofUnits[] in cnt_image_select 
-		so that used the const char * Characters() function in BCString instead of nonconst
-		function that had created (safer)
+	* cnt_ia.C:  fixed 2 minor errors with strcpy function, no
+	overall functional changes
+
+2001-06-25  Andrea Hilchey  <hilchey@cs.unc.edu>
+
+	* cnt_ia.C:  changed method of filling in ListofNames[] 
+	and ListofUnits[] in cnt_image_select so that used the 
+	const char * Characters() function in BCString instead of nonconst
+	function that had created (safer)
 	
 2001-06-25  Andrea Hilchey  <hilchey@cs.unc.edu>
 
-	* cnt_ia.C:  added capability to cnt_image_select() so that it prints out data for 
-		all BCPlanes in the inputGrid, not just the plane associated with this (the
-		current cnt_ia object).  right now, the maximum number of additional planes is
-		set to 10, as grid->numPlanes() was not a compile-time constant, but this number
-		may need to be increased
+	* cnt_ia.C:  added capability to cnt_image_select() so that 
+	it prints out data for all BCPlanes in the inputGrid, not just 
+	the plane associated with this (the current cnt_ia object).  
+	right now, the maximum number of additional planes is
+	set to 10, as grid->numPlanes() was not a compile-time constant, 
+	but this number may need to be increased
 
-	* nma_ShapeAnalyze.C:  added new parameters to call to cnt_image_select to do above 
+	* nma_ShapeAnalyze.C:  added new parameters to call to 
+	cnt_image_select to do above 
 	
 2001-06-14  Andrea Hilchey  <hilchey@cs.unc.edu>
 
-	* nma_ShapeAnalyze.C:  took out setDataset() which was just a temp. fix function
-		anyways.  added parameter 'dataset' to imageAnalyze().
+	* nma_ShapeAnalyze.C:  took out setDataset() which was just a 
+	temp. fix function anyways.  added parameter 'dataset' to 
+	imageAnalyze().
 
-	* nma_ShapeAnalyze.h:  took out above functions as well as data member d_dataset, 
-		since the only time that value is needed is in imageAnalyze
+	* nma_ShapeAnalyze.h:  took out above functions as well as 
+	data member d_dataset, since the only time that value is needed 
+	is in imageAnalyze
 
 2001-06-14  Andrea Hilchey  <hilchey@cs.unc.edu>
 

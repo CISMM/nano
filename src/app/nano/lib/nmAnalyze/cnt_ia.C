@@ -1108,10 +1108,10 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName, BCGrid * grid
 
 	    
 	    ListofNames[t] = new char[ strlen(currentPlane->name()->Characters()) + 1 ];
-	    strcpy(currentPlane->name()->Characters, ListofNames[t]);
+	    strcpy( ListofNames[t], currentPlane->name()->Characters() );
 
 	    ListofUnits[t] = new char[ strlen(currentPlane->units()->Characters()) + 1 ];
-	    strcpy(currentPlane->name()->Characters, ListofNames[t]);
+	    strcpy( ListofUnits[t], currentPlane->name()->Characters() );
 
 	    //ListofPlanes[t] = currentPlane;//deal with list of planes
 	    CNT_List[t] = new CNT_IA();
