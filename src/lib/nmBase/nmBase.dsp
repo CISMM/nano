@@ -141,6 +141,10 @@ SOURCE=.\nmb_Image.C
 # End Source File
 # Begin Source File
 
+SOURCE=.\nmb_ImageManager.C
+# End Source File
+# Begin Source File
+
 SOURCE=.\nmb_ImgMagick.C
 # End Source File
 # Begin Source File
@@ -286,6 +290,10 @@ SOURCE=.\nmb_Image.h
 # Begin Source File
 
 SOURCE=.\nmb_ImageDisplay.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\nmb_ImageManager.h
 # End Source File
 # Begin Source File
 

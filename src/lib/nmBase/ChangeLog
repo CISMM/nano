@@ -1,3 +1,9 @@
+2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_ImageManager.hC : new file - along the same lines as 
+        nmb_ImageDisplay, this is used to reduce the complexity of the 
+	interface between nmr_RegistrationUI and the rest of the nano code
+
 2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmb_Dataset.C (nmb_Dataset::loadFile): changed a variable's scope
