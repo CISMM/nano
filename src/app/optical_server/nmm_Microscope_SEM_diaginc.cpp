@@ -12,6 +12,37 @@
 #define VIRTUAL_ACQ_RES_X (128)
 #define VIRTUAL_ACQ_RES_Y (100)
 
+
+int EDAX_SCAN_MATRIX_X[EDAX_NUM_SCAN_MATRICES] ={64, 128, 256, 512, 1024, 2048, 4096};
+int EDAX_SCAN_MATRIX_Y[EDAX_NUM_SCAN_MATRICES] ={50, 100, 200, 400, 800,  1600, 3200};
+
+//static 
+int nmm_Microscope_SEM_diaginc::
+resolutionToIndex(const int res_x, const int res_y)
+{
+    int i;
+    for (i = 0; i < EDAX_NUM_SCAN_MATRICES; i++){
+        if (EDAX_SCAN_MATRIX_X[i] == res_x &&
+            EDAX_SCAN_MATRIX_Y[i] == res_y) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+//static 
+int nmm_Microscope_SEM_diaginc::
+indexToResolution(const int id, int &res_x, int &res_y)
+{
+  if (id < 0 || id >= EDAX_NUM_SCAN_MATRICES)
+     return -1;
+  res_x = EDAX_SCAN_MATRIX_X[id];
+  res_y = EDAX_SCAN_MATRIX_Y[id];
+  return 0;
+}
+
+
 nmm_Microscope_SEM_diaginc::
 nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool virtualAcq ) 
 	: nmb_Device_Server(name, c),
@@ -19,7 +50,8 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 	  d_scan_enabled(vrpn_FALSE), 
 	  d_lines_per_message(1), 
 	  d_scans_to_do(0),
-	  d_virtualAcquisition(virtualAcq)
+	  d_virtualAcquisition(virtualAcq),
+	  currentResolutionIndex( EDAX_DEFAULT_SCAN_MATRIX )
 {
 	// VRPN initialization
 	if (!d_connection) {
@@ -51,6 +83,7 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 	{
 		maxExtents[0] = VIRTUAL_ACQ_RES_X;
 		maxExtents[1] = VIRTUAL_ACQ_RES_Y;
+		currentResolutionIndex = 1;
 	}
 	else
 	{
@@ -62,6 +95,7 @@ nmm_Microscope_SEM_diaginc( const char * name, vrpn_Connection * c, vrpn_bool vi
 			return;
 		}
 	}
+
 	// the maximum number of bytes is (width + 3) * height * 3
 	// each line can have up to 3 extra bytes to make its length a
 	// multiple of 4.  in addition, each image can have up to 3
@@ -192,6 +226,16 @@ getResolution( vrpn_int32 &res_x, vrpn_int32 &res_y )
 		res_x = rect.right - rect.left;
 		res_y = rect.bottom - rect.top;
 	}
+
+	int resInd = this->resolutionToIndex( res_x, res_y );
+	if( resInd == 0 )
+	{  currentResolutionIndex = resInd;  }
+	else 
+	{  
+		// how did it go so very, very wrong??
+		printf( "Internal error in nmm_Microscope_SEM_diaginc::getResolution:  "
+				"camera and internal resolution don't match.\n" );
+	}
 	return 0;
 }
 
@@ -224,16 +268,57 @@ getMaxResolution( vrpn_int32& x, vrpn_int32& y )
 vrpn_int32 nmm_Microscope_SEM_diaginc::
 setResolution( vrpn_int32 res_x, vrpn_int32 res_y )
 {
-	/*
+	if( d_virtualAcquisition )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolution:  "
+			"virtual acquisition on.  We're making up data and not changing the resolution.\n" );
+		return reportResolution( );
+	}
+
+	// get the index for this resolution
+	int resInd = this->resolutionToIndex( res_x, res_y );
+	if( resInd != 0 )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolution:  "
+			"invalid resolution requested:  %d x %d\n", res_x, res_y );
+		return reportResolution( );
+	}
+
+	// get the max resolution
+	int maxX = 0, maxY = 0;
+	int retVal = this->getMaxResolution( maxX, maxY );
+	if( retVal != 0 )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolution:  "
+			"internal error.\n" );
+		return reportResolution( );
+	}
+
+	// check that the requested resolution isn't too big
+	if( res_x > maxX || res_y > maxY )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolution:  "
+			"resolution (%d x %d) greater than max (%d x %d).\n",
+			res_x, res_y, maxX, maxY );
+		return reportResolution( );
+	}
+
+	// request the new resolution.  the requested area is centered in 
+	// the camera's capture area.
 	RECT rect;
-	int ret = SpotGetValue( SPOT_IMAGERECT, &rect );
-	*/
-	fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolution:  "
-		"this function is unimplemented.\n" );
+	rect.left = ( (int) floor( maxX / 2.0f ) ) - ( (int) floor( res_x / 2.0f ) );
+	rect.right = ( (int) floor( maxX / 2.0f ) ) +  ( (int) ceil( res_x / 2.0f ) );
+	rect.top = ( (int) floor( maxY / 2.0f ) ) - ( (int) floor( res_y / 2.0f ) );
+	rect.bottom = ( (int) floor( maxY / 2.0f ) ) +  ( (int) ceil( res_y / 2.0f ) );
+	retVal = SpotSetValue( SPOT_IMAGERECT, &rect );
+	if( retVal != SPOT_SUCCESS )
+	{
+		fprintf( stderr, "nmm_Microscope_SEM_diaginc::setResolution:  "
+			"failed on the SPOT camera.  Code:  %d\n", retVal);
+	}
 	
 	return reportResolution();
-}
-
+} // end setResolution(...)
 
 
 vrpn_int32 nmm_Microscope_SEM_diaginc::
@@ -294,7 +379,7 @@ getScanRegion_nm( double &x_span_nm, double &y_span_nm )
 x_span_nm = SEM_STANDARD_DISPLAY_WIDTH_NM/(double)d_magnification;
 y_span_nm = x_span_nm*(double)d_resolution_y/(double)d_resolution_x;
 	*/
-	return 0;
+	return -1;
 }
 
 vrpn_int32 nmm_Microscope_SEM_diaginc::
@@ -304,7 +389,7 @@ getMaxScan(int &x_span_DAC, int &y_span_DAC)
 x_span_DAC = d_xScanSpan;
 y_span_DAC = d_yScanSpan;
 	*/
-	return 0;
+	return -1;
 }
 
 
@@ -325,58 +410,43 @@ acquireImage()
 	int resX = 0, resY = 0;
 	this->getResolution( resX, resY );
 	
-	if (!d_virtualAcquisition) {
-		// variables used for timing
-		double t_CollectSgLine, t_reportScanlineData;
-		//int result;
-		struct timeval t0, t1, t2;
-		
-		// collect the image
-		t_CollectSgLine = 0.0;
-		t_reportScanlineData = 0.0;
-		for (i = 0; i < resY; i++){
-			gettimeofday(&t0, NULL);
-			//result = CollectSgLine(&(d_scanBuffer[2*i*d_resolution_x]));
-			if (result != SPOT_SUCCESS) {
-			fprintf(stderr, "Error collecting scan line for row %d\n", i);
-			}
-			gettimeofday(&t1, NULL);
-			reportScanlineData(i);
-			gettimeofday(&t2, NULL);
-			t0 = vrpn_TimevalDiff(t1, t0);
-			t1 = vrpn_TimevalDiff(t2, t1);
-			t_CollectSgLine += vrpn_TimevalMsecs(t0);
-			t_reportScanlineData += vrpn_TimevalMsecs(t1);
-		}
-	} 
-	else 
-	{ // assert(d_virtualAcquisition == true)
-		// make some fake data:
+	if( d_virtualAcquisition )
+	{ 
 		static int count = 0;
-		
-		//int dx, dy;
-		for (i = 0; i < resY; i++){
-			for (j = 0; j < resX; j++){
+		for (i = 0; i < resY; i++)
+		{
+			for (j = 0; j < resX; j++)
+			{
 				((vrpn_uint8 *)myImageBuffer)[i*(resX + resX%4) + j] = 
 					((i+(int)count)%resY)*250/resY;
 			}
-			
 			reportScanlineData(i);
 		}
-		
 		count++;
-		
 	}
+	else // the real thing
+	{
+		// collect the image
+		int retVal = SpotGetImage( 0, // bits per plane ( 0 = use set value )
+								   false, // quick image capture
+								   0, // lines to skip
+								   cameraImageBuffer, // image buffer
+								   NULL, // ptr to red histogram
+								   NULL, // ptr to green histogram
+								   NULL  // ptr to blue histogram
+								   );
+		if( retVal != SPOT_SUCCESS )
+		{
+			fprintf( stderr, "nmm_Microscope_SEM_diaginc::acquireImage:  "
+				"failed on the SPOT camera.  Code:  %d\n", retVal);
+			return -1;
+		}
+		for (i = 0; i < resY; i++)
+		{
+			reportScanlineData(i);
+		}
+	} 
 	
-	
-	//printf("acquireImage - measured times for acquisition operations:\n");
-	//printf("  SetSgScan x 1 : %g msec\n", t_SetSgScan);
-	//printf("  SetupSgColl x 1 : %g msec\n", t_SetupSgColl);
-	//printf("  CollectSgLine x %d : %g msec\n", d_resolution_y,
-	//          t_CollectSgLine);
-	//printf("  reportScanlineData x %d : %g msec\n", d_resolution_y,
-	//          t_reportScanlineData);
-
 	return 0;
 }
 

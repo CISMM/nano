@@ -1,3 +1,8 @@
+2003-09-17  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmm_Microscope_SEM_diaginc.*:  further development.  the resolutions
+	available are limited as the SEM code of nano expects.
+
 2003-09-14  David Marshburn  <marshbur@cs.unc.edu>
 
 	* OpticalServerInterface.*:  new; beginnings of an interface
