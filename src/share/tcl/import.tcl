@@ -297,7 +297,7 @@ proc open_import_file {} {
 #    $nmInfo(basic_options).file.import_file_label configure -text \
 #	"Current Imported file: $import_file_label"
 
-    if { [string first $filename ".spi"] != 0 } {
+    if { [string first ".spi" $filename] != -1 } {
         "show.spider_control"
     }
 

@@ -1,3 +1,8 @@
+2002-07-01  David Borland <borland@cs.unc.edu>
+
+        * import.tcl : fixed a bug that was causing the spider control to 
+        pop-up for all objects, not just spider objects.
+
 2003-06-30  Woojin Seok  <seok@cs.unc.edu>
         * mainwin.tcl <proc nano_warning>: replaced tk_messageBox by combination
         of button and lable not to stall program to get user's click.
