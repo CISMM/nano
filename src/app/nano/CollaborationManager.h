@@ -74,9 +74,10 @@ class CollaborationManager {
       ///< by a TclNet_int for user_mode.
 
 
-    void setLogging (char * path, int timestamp);
-      ///< Specifies the directory in which to write the logs and
-      ///< the timestamp with which to label them;  several logs
+    void setLogging (char * path, int timestamp, int loggingPort);
+      ///< Specifies the directory in which to write the logs,
+      ///< the timestamp with which to label them, and the port to
+      ///< use for the private log;  several logs
       ///< will be created for the different I/O flows (incoming
       ///< collaborative, outgoing collaborative, private interface).
 
@@ -175,6 +176,7 @@ class CollaborationManager {
 
     int d_peerPort;
     int d_serverPort;
+    int d_interfaceLogPort;
     char * d_logPath;
     int d_logTime;
     vrpn_bool d_log;

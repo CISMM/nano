@@ -1,3 +1,21 @@
+2001-12-10    <marshbur@cs.unc.edu>
+
+
+2001-12-10  David Marshburn  <marshbur@cs.unc.edu>
+
+	* CollaborationManager.h
+	(setLogging): additional argument for interface port number
+	(d_interfaceLogPort):  additional parameter for interface logging
+
+	* CollaborationManager.C
+	(setLogging):  additional argument
+	(initialize):  correctly name and open private log file
+	
+	* microscape.c (main):  pass additional arg to setLogging
+
+	* nano.dsp:  changed the default output executable to be nano.exe
+	instead of nanoDebug.exe, for ease of use.
+
 2001-12-06 Jameson Miller <millerj@cs.unc.edu>
 	*interaction.c : backed out of previous changes. setGridSize is 
 	no longer called after setting the region size.

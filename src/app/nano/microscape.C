@@ -7413,14 +7413,13 @@ int main (int argc, char* argv[])
   // Initialize collaboration.
 
   collaborationManager = new CollaborationManager (istate.replayInterface);
-
+  WellKnownPorts peerPorts(istate.peerBasePort);
   collaborationManager->setNIC(istate.NIC_IP);
-
   collaborationManager->setHandServerName(nM_coord_change_server_name);
   collaborationManager->setModeServerName(local_ModeName);
-  collaborationManager->setLogging(istate.logPath, istate.logTimestamp.tv_sec);
+  collaborationManager->setLogging(istate.logPath, istate.logTimestamp.tv_sec,
+                                   wellKnownPorts->interfaceLog);
   collaborationManager->enableLogging(istate.logInterface);
-  WellKnownPorts peerPorts(istate.peerBasePort);
   collaborationManager->setPeerPort(peerPorts.collaboratingPeerServer);
   collaborationManager->setServerPort(wellKnownPorts->collaboratingPeerServer);
   collaborationManager->setTimer(&collaborationTimer);

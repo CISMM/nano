@@ -283,11 +283,14 @@ void CollaborationManager::setServerPort (int port) {
   d_serverPort = port;
 }
 
-void CollaborationManager::setLogging (char * path, int timestamp) {
+void CollaborationManager::
+setLogging (char * path, int timestamp, int loggingPort) {
   setString(&d_logPath, path);
   collabVerbose(1, "Collaboration Manager:  "
                 "Logging to path \"%s\".\n", d_logPath);
   d_logTime = timestamp;
+  d_interfaceLogPort = loggingPort;
+  d_log = vrpn_TRUE;
 }
 
 void CollaborationManager::enableLogging (vrpn_bool on) {
@@ -309,25 +312,24 @@ void CollaborationManager::initialize
   vrpn_int32 firstC_type;
 
   if (d_replay) {
-
-    sprintf(sfbuf, "file://%s/PrivateIFLog-%ld.stream", d_logPath, d_logTime);
-
     d_peerServer = getServerReplay (d_logPath, d_logTime);
 
-  } else {
-
+    // use the logTime as set elsewhere
+    sprintf(sfbuf, "%s/PrivateIFLog-%ld.stream", d_logPath, d_logTime);
+    d_interfaceLog = vrpn_get_connection_by_name (sfbuf);
+  } 
+  else {
+    // use the current time for the filename
     gettimeofday(&now, NULL);
     d_logTime = now.tv_sec;
-
     sprintf(sfbuf, "%s/PrivateIFLog-%ld.stream", d_logPath, d_logTime);
-
     d_peerServer = getServer (d_serverPort, d_logPath, d_logTime, d_log,
                               d_NIC_IP);
-
-  }
-
-  if (d_log || d_replay) {
-    d_interfaceLog = vrpn_get_connection_by_name (sfbuf);
+    if( d_log )
+      d_interfaceLog 
+        = new vrpn_Synchronized_Connection( d_interfaceLogPort, NULL,
+                                            isLoggingInterface ? sfbuf : NULL, 
+                                            d_NIC_IP );
   }
 
   if (!d_peerServer) {
@@ -337,8 +339,6 @@ void CollaborationManager::initialize
   }
 
   if (d_peerServer->connected()) {
-
-//fprintf(stderr, "CM Quickie server\n");
     d_gotPeerServer = VRPN_TRUE;
     if (d_gotPeerRemote) {
       fullyConnected();
