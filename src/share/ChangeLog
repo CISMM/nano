@@ -1,3 +1,7 @@
+2002-04-19  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* Makefile.common:  updated link location (-L) of glut_UNC
+
 2002-03-21  Aron Helser  <helser@cs.unc.edu>
 
 	* Makefile.app_common: Added suffixes to compile .cpp files

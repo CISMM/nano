@@ -343,7 +343,7 @@ LOAD_FLAGS := $(addprefix -L, $(EXTERNAL_LIB_DIR) \
 				/usr/local/lib \
 	                       	/usr/local/contrib/unmod/lib \
 	                      	/usr/local/contrib/mod/lib \
-				/afs/cs.unc.edu/proj/stm/src/external/glut/glut_UNC )
+				/afs/cs.unc.edu/proj/stm/src/external/src/glut/glut_UNC )
 
 ifeq ($(HW_OS),pc_win32)
   LOAD_FLAGS = -L$(MY_NANO_SRC_DIR)/external/pc_win32/lib -L$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32$(OBJECT_DIR_SUFFIX) /nodefaultlib:"glut32.lib"
