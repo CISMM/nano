@@ -1,3 +1,8 @@
+2001-07-27  Aron Helser  <helser@cs.unc.edu>
+
+	* Makefile.common (LOAD_FLAGS): Change ImageMagick libs from debug
+	_DB_ to release _RL_
+
 2001-07-26  Aron Helser  <helser@cs.unc.edu>
 
 	* Makefile.common (LOAD_FLAGS): Additions for ImageMagick
