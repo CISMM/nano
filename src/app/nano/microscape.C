@@ -91,6 +91,7 @@ pid_t getpid();
 #include <nmg_RenderServer.h>
 #include <nmg_RenderClient.h>
 #include <nmg_GraphicsTimer.h>
+#include <nmg_Visualization.h>
 
 // ui
 #include <ModFile.h>
@@ -149,6 +150,9 @@ pid_t getpid();
 // shared memory threading libraries
 //  [juliano 12/99] this *must* be included after v.h, or gcc craps out
 #include <thread.h>
+
+/*********** Shape Analysis **************/
+#include <nma_ShapeAnalyze.h>
 
 // M_PI not defined for VC++, for some reason. 
 #ifndef M_PI
@@ -738,10 +742,28 @@ Tclvar_string newScreenImageFileName("screenImage_filename", "");
 
 
 //-----------------------------------------------------------------
+/// These variables are for controlling shape analysis
+Tclvar_int	analyze_shape("analyze_shape",0);
+Tclvar_int	shape_mask("shape_mask",1);
+Tclvar_int	shape_order("shape_order",0);
+Tclvar_int	auto_adapt("auto_adapt",1);
+Tclvar_float	shape_xscale("shape_xscale",0);
+Tclvar_float	shape_yscale("shape_yscale",0);
+Tclvar_float	shape_zscale("shape_zscale",0);
+Tclvar_float	blurring("blurring",4);
+Tclvar_float	aspect_ratio("aspect_ratio",2);
+Tclvar_float	correlation("correlation",0.6);
+Tclvar_float	intensity_thresh("intensity_thresh",160);
+Tclvar_string	shape_mask_file("shape_mask_file", "mask");
+Tclvar_string	shape_order_file("shape_order_file", "order");
+
+nma_ShapeAnalyze shape_analysis;
+//-----------------------------------------------------------------
 
 
 //PPM	*rulerPPM = NULL;	///< Image to use for the ruler
 static char * rulerPPMName = NULL;   ///< Name of image to use for the ruler
+static char * vizPPMName = NULL;   ///< Name of image to use for the ruler
 static PPM * alphaPPM = NULL;	///< Image to use for the alpha blending
 static PPM * bumpPPM = NULL;	///< Image to use for the bump mapping
 static PPM * noisePPM = NULL;   ///< Uniform noise image for spot noise shader 
@@ -1137,6 +1159,7 @@ struct MicroscapeInitializationState {
 //    int num_x;  replaced by AFMImageState::grid_resolution.
 //    int num_y;
   int graphics_mode;
+  int viz_mode;
   char graphicsHost [256];
 
   int num_stm_files;
@@ -1197,6 +1220,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
 //    num_x (DATA_SIZE),
 //    num_y (DATA_SIZE),
   graphics_mode (LOCAL_GRAPHICS),  // changed from NO_GRAPHICS
+  viz_mode (0),
   num_stm_files (0),
   num_image_files(0),
   SPMhostptr (NULL),
@@ -5053,18 +5077,21 @@ void ParseArgs (int argc, char ** argv,
         LOOP_NUM = atoi(argv[++i]);
       } else if (!strcmp(argv[i], "-marshalltest")) {
         istate->graphics_mode = TEST_GRAPHICS_MARSHALLING;
+      } else if (!strcmp(argv[i], "-visualization")) {
+          if (++i >= argc) Usage(argv[0]);
+          istate->viz_mode = atoi(argv[i]);
       } else if (!strcmp(argv[i], "-renderserver")) {
-        istate->graphics_mode = RENDER_SERVER;
+          istate->graphics_mode = RENDER_SERVER;
       } else if (!strcmp(argv[i], "-renderclient")) {
-	if (++i >= argc) Usage(argv[0]);
-        istate->graphics_mode = RENDER_CLIENT;
+          if (++i >= argc) Usage(argv[0]);
+          istate->graphics_mode = RENDER_CLIENT;
       } else if (!strcmp(argv[i], "-trenderserver")) {
-        istate->graphics_mode = TEXTURE_SERVER;
+          istate->graphics_mode = TEXTURE_SERVER;
       } else if (!strcmp(argv[i], "-crenderserver")) {
-        istate->graphics_mode = CLOUD_SERVER;
+          istate->graphics_mode = CLOUD_SERVER;
       } else if (!strcmp(argv[i], "-trenderclient")) {
-	if (++i >= argc) Usage(argv[0]);
-        istate->graphics_mode = TEXTURE_CLIENT;
+          if (++i >= argc) Usage(argv[0]);
+          istate->graphics_mode = TEXTURE_CLIENT;
         strncpy(istate->graphicsHost, argv[i], 256);
       } else if (!strcmp(argv[i], "-vrenderserver")) {
         istate->graphics_mode = VIDEO_SERVER;
@@ -5270,8 +5297,16 @@ void ParseArgs (int argc, char ** argv,
           exit(-1);
         }
         strcpy(rulerPPMName, argv[i]);
+      } else if (strcmp(argv[i], "-vizimage") == 0) {
+          if (++i >= argc) Usage(argv[0]);
+          vizPPMName = new char [1 + strlen(argv[i])];
+          if (!vizPPMName) {
+              fprintf(stderr, "Out of memory\n");
+              exit(-1);
+          }
+          strcpy(vizPPMName, argv[i]);
       } else if (strcmp(argv[i], "-sub") == 0) {
-        fprintf(stderr, "Warning: -sub obsolete.\n");
+          fprintf(stderr, "Warning: -sub obsolete.\n");
         if (++i >= argc) Usage(argv[0]);
         //istate->afm.ModSubWinSz = atoi(argv[i])/2;
       } else if (strcmp(argv[i], "-xc") == 0) {
@@ -5450,6 +5485,11 @@ void Usage(char* s)
                          "receive times\n");
   fprintf(stderr, "       -alphacolor: Set color for alpha texture "
                          "(default 0.0 1.0 0.0)\n");
+  fprintf(stderr, "       -visualization: Use alternate visualization method\n");
+  fprintf(stderr, "       \t0 for normal\n");
+  fprintf(stderr, "       \t1 for transparent\n");
+  fprintf(stderr, "       \t2 for wire frame\n");
+  fprintf(stderr, "       -vizimage: PPM file to use for the visualization image\n");
   fprintf(stderr, "       -marshalltest: Test remote/server graphics pair "
                          "in single process\n");
   fprintf(stderr, "       -multithread: Spawn a second thread for the graphics"
@@ -5613,7 +5653,7 @@ void sharedGraphicsServer (void * data) {
   // start a graphics implementation
 //fprintf(stderr, "g>Graphics thread starting graphics implementation\n");
   g = new nmg_Graphics_Implementation (
-      dataset, minC, maxC, rulerPPMName, c, wellKnownPorts->remote_gaEngine);
+      dataset, minC, maxC, rulerPPMName, vizPPMName, c, wellKnownPorts->remote_gaEngine);
 
   // release the main process to run
 
@@ -5704,7 +5744,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
     case LOCAL_GRAPHICS:
         //fprintf(stderr, "Using local GL graphics implementation.\n");
       graphics = new nmg_Graphics_Implementation(
-          dataset, minC, maxC, rulerPPMName,
+          dataset, minC, maxC, rulerPPMName, vizPPMName,
           NULL, wellKnownPorts->remote_gaEngine);
       if (istate.timeGraphics) {
         graphics = new nmg_Graphics_Timer(graphics, &graphicsTimer);
@@ -5743,7 +5783,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
       shmem_connection = new vrpn_Synchronized_Connection
                             (wellKnownPorts->graphicsControl);
       gi = new nmg_Graphics_Implementation (
-          dataset, minC, maxC, rulerPPMName,
+          dataset, minC, maxC, rulerPPMName, vizPPMName,
           shmem_connection, wellKnownPorts->remote_gaEngine);
       graphics = new nmg_Graphics_Remote (shmem_connection);
       break;
@@ -5767,7 +5807,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                   nmg_Graphics::VERTEX_COLORS,
                   nmg_Graphics::VERTEX_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
-                  100, 100, rulerPPMName, renderServerControlConnection);
+                  100, 100, rulerPPMName, vizPPMName, renderServerControlConnection);
 
       break;
 
@@ -5790,7 +5830,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                   nmg_Graphics::SUPERSAMPLED_COLORS,
                   nmg_Graphics::NO_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
-                  512, 512, rulerPPMName, renderServerControlConnection);
+                  512, 512, rulerPPMName, vizPPMName, renderServerControlConnection);
 
       break;
 
@@ -5813,7 +5853,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                   nmg_Graphics::CLOUDMODEL_COLORS,
                   nmg_Graphics::NO_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
-                  512, 512, rulerPPMName, renderServerControlConnection);
+                  512, 512, rulerPPMName, vizPPMName, renderServerControlConnection);
 
       break;
 
@@ -5836,7 +5876,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                 nmg_Graphics::SUPERSAMPLED_COLORS,
                 nmg_Graphics::NO_DEPTH,
                 nmg_Graphics::PERSPECTIVE_PROJECTION,
-                512, 512, rulerPPMName, renderServerControlConnection);
+                512, 512, rulerPPMName, vizPPMName, renderServerControlConnection);
 
       break;
 
@@ -6251,6 +6291,11 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     dataset = new_dataset;
 
 
+    // Some other stuff
+
+    // clear the modify markers
+    handleCharacterCommand("C", &dataset->done, 1);
+
     // Connection switch cleanup!
     // All methods for switching stream/live/default call this
     // function, so cleaning up goobers in the interface should
@@ -6581,6 +6626,8 @@ int main (int argc, char* argv[])
     microscope->EnableUpdatableQueue(VRPN_TRUE);
 
     createGraphics(istate);
+    //Temporary hack until a Tcl interface is created
+    graphics->chooseVisualization(istate.viz_mode);
 
     setupCallbacks(decoration);
 
@@ -6594,6 +6641,9 @@ int main (int argc, char* argv[])
       graphics->loadRulergridImage(rulerPPMName);
     }
 
+    if (vizPPMName) {        
+        graphics->loadVizImage(vizPPMName);
+    }
 
     // These call is duplicated in createNewMicroscope, 
     // but we do it here too because createNewMicroscope is called above
@@ -6995,7 +7045,6 @@ microscope->ResetClock();
 VERBOSE(1, "Entering main loop");
 
   while( n<LOOP_NUM || !dataset->done ) {
-
 #ifdef TIMING_TEST
 #define	TIM_LN	(7)
     /* draw new image for each eye  */
@@ -7186,12 +7235,32 @@ VERBOSE(1, "Entering main loop");
       } /* end if updt */
 
     // REMOTERENDER
-
-    graphicsTimer.newTimestep();
-
-    // NANOX
-
-    collaborationTimer.newTimestep();
+      if (analyze_shape == 1) {
+          nmb_PlaneSelection planes;
+          planes.lookup(dataset);
+          
+          shape_analysis.setScale(shape_xscale, shape_yscale, shape_zscale);
+          shape_analysis.setBlur(blurring);
+          shape_analysis.setCorrelation(correlation);
+          shape_analysis.setAspectRatio(aspect_ratio);
+          shape_analysis.setThresholdInten(intensity_thresh);
+          shape_analysis.setAutoAdapt(auto_adapt);
+          
+          shape_analysis.setMaskWrite(shape_mask);
+          shape_analysis.setOrderWrite(shape_order);
+          
+          shape_analysis.setMaskFile(shape_mask_file.string());
+          shape_analysis.setOrderFile(shape_order_file.string());
+          
+          shape_analysis.imageAnalyze(planes);
+          analyze_shape = 0;
+      }
+      
+      graphicsTimer.newTimestep();
+      
+      // NANOX
+      
+      collaborationTimer.newTimestep();
 
       /* routine for handling all user interaction, including:
        * sdi button box, knob box, phantom button, 

@@ -296,6 +296,8 @@ $analysismenu add command -label  "Rulergrid..." -underline 0  \
     -command "show.rulergrid"
 $analysismenu add radiobutton -label "Measure Lines" -underline 0 \
     -variable user_0_mode -value 9 
+$analysismenu add command -label "Shape Analysis..." -underline 0 \
+    -command "show.shape_analysis"
 if { !$thirdtech_ui } {
 $analysismenu add command -label "Data Registration..." -underline 0 \
     -command "show.registration"
@@ -324,17 +326,17 @@ $toolmenu add checkbutton -label "Show Mode Buttons" -underline 10 \
 
 #Only use the Mouse Phantom if the hand-tracker is null
 if {(![info exist env(TRACKER)]) \
-        || ([string compare -nocase [lindex $env(TRACKER) 1] "null"] == 0) \
+        || ([string compare [lindex $env(TRACKER) 1] "null"] == 0) \
         || ($viewer_only)} {
     $toolmenu add command -label "Mouse Phantom" -underline 6 \
             -command "show.mouse_phantom_win"
 } else {
     # Use a real phantom.
     # must be left-justified so strip_unc program can remove it.
-if { !$viewer_only } {
-    $toolmenu add command -label "Phantom" -underline 0 \
-            -command "show.phantom_win"
-}
+    if { !$viewer_only } {
+        $toolmenu add command -label "Phantom" -underline 0 \
+                -command "show.phantom_win"
+    }
 }
 $toolmenu add command -label "Magellan" -underline 0 \
     -command "show.magellan_win"

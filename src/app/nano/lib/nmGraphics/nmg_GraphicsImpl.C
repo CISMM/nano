@@ -22,12 +22,13 @@
 
 #include <nmb_Dataset.h>
 #include <nmb_Globals.h>
+#include "nmg_Visualization.h"
 
 #include "graphics.h"
 #include "openGL.h"  // for check_extension(), display_lists_in_x
 #include "globjects.h"  // for replaceDefaultObjects()
 #include "graphics_globals.h"
-#include "spm_gl.h"  // for init_vertexArray()
+#include "spm_gl.h"  
 
 #include "Timer.h"
 
@@ -45,11 +46,18 @@
 #define CHECK(a) if (a == -1) return -1
 #define CHECKF(a,b) if (a == -1) { fprintf(stderr, "Error: %s\n", b); return -1; }
 
+//New visualization class. In order to avoid the necessity of creating
+//and deleting the object every time the user switches which viz to use,
+//create an array of all possible visualization methods and merely point
+//the global visualization object at the right one
+nmg_Visualization *(viz_set[NUMBER_OF_VISUALIZATIONS]);
+
 nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     nmb_Dataset * data,
     const int minColor [3],
     const int maxColor [3],
     const char * rulergridName,
+    const char * vizName,
     vrpn_Connection * connection,
     unsigned int portNum)
 
@@ -72,7 +80,6 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     int i = 0;
 
     g_inputGrid = data->inputGrid;
-    strcpy(g_opacityPlaneName, data->opacityPlaneName->string());
 
     if (d_dataset == NULL) {
         g_inputGrid = NULL;
@@ -80,14 +87,28 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
         strcpy(g_colorPlaneName, "none");
         strcpy(g_contourPlaneName, "none");
         strcpy(g_heightPlaneName, "none");
+        strcpy(g_opacityPlaneName, "none");
+        strcpy(g_maskPlaneName, "none");
+        strcpy(g_transparentPlaneName, "none");
     } else {
         g_inputGrid = data->inputGrid;
         strcpy(g_alphaPlaneName, data->alphaPlaneName->string());
         strcpy(g_colorPlaneName, data->colorPlaneName->string());
         strcpy(g_contourPlaneName, data->contourPlaneName->string());
         strcpy(g_heightPlaneName, data->heightPlaneName->string());
+        strcpy(g_opacityPlaneName, data->opacityPlaneName->string());
+        strcpy(g_maskPlaneName, data->maskPlaneName->string());
+        strcpy(g_transparentPlaneName, data->transparentPlaneName->string());
     }
 
+#ifdef FLOW
+    g_data_tex_size = max(grid_size_x, grid_size_y);
+    g_data_tex_size = (int) pow(2, ceil(log2(g_data_tex_size)));
+#endif
+    
+    //Figure out what capabilities we have.
+    determine_GL_capabilities();
+    
     /* initialize graphics  */
     //printf("Initializing graphics...\n");
 
@@ -123,9 +144,23 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     v_replace_drawfunc(i, V_WORLD, draw_world);
     v_replace_lightingfunc(i, setup_lighting);
     
-    /********************************************************************/
-    /* Build the display lists we'll need to draw the data, etc */
-    /********************************************************************/
+    //////////////////////////////////////////////////////////////////////
+    // Initialize the various visualizations, then point the global at  //
+    // the default							//
+    //////////////////////////////////////////////////////////////////////
+    viz_set[0] = new nmg_Viz_Opaque(dataset);
+    viz_set[1] = new nmg_Viz_Transparent(dataset);
+    viz_set[2] = new nmg_Viz_WireFrame(dataset);
+    viz_set[3] = new nmg_Viz_OpaqueTexture(dataset);
+    
+    visualization = viz_set[0];
+    
+    //////////////////////////////////////////////////////////////////////
+    // Build the display lists we'll need to draw the data, etc		//
+    //									//
+    // Note:  This code removed as all grid building needs to happen	//
+    //        through nmg_Visualization classes				//
+    //////////////////////////////////////////////////////////////////////
     
     //fprintf(stderr,"Building display lists...\n");
     
@@ -153,11 +188,33 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
     }
   }
 
+  if (vizName) {
+    FILE *infile = fopen(vizName, "rb");
+    if (!infile) {
+      fprintf(stderr, "nmg_GraphicsImplementation:  no such file: %s\n",
+		rulergridName);
+      return;
+    }
+    g_vizPPM = new PPM (infile);
+    if (!g_vizPPM) {
+      fprintf(stderr, "nmg_GraphicsImplementation:  Out of memory.\n");
+      return;
+    }
+    if (!g_vizPPM->valid) {
+      fprintf(stderr, "Cannot read visualization PPM %s.\n", vizName);
+
+      delete g_vizPPM;  // plug memory leak?
+      g_vizPPM = NULL;
+    }
+  }
+
   initializeTextures();
   setupMaterials(); // this needs to come after initializeTextures because
 		// shader initialization depends on texture ids
 
 
+///Moved by Jason on 12/8/00 to openGL.c
+/*
   const GLubyte * exten;
   exten = glGetString(GL_EXTENSIONS);
 
@@ -169,6 +226,8 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 #else
   g_VERTEX_ARRAY = check_extension(exten); //"EXT_vertex_array"
 #endif
+  g_VERTEX_ARRAY = 1;
+*/
 
 //    if (g_VERTEX_ARRAY) {
 //      fprintf(stderr,"Vertex Array extension used.\n");
@@ -178,24 +237,28 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
 
     // Even though we may not be using the vertex array extension, we still
     // use the vertex array to cache calculated normals
-    if (!init_vertexArray(grid_size_x,
-			  grid_size_y) ) {
-      fprintf(stderr," init_vertexArray: out of memory.\n");
+  if (!visualization->initVertexArrays(grid_size_x, grid_size_y) ) {
+      fprintf(stderr," initVertexArrays: out of memory.\n");
       exit(0);
-    }
+  }
 
   /* Build display lists for surface scanning in X fastest, since
    * that is the way the SPM will start scanning.
    * There is one list for each row of data points except for
    * the last.  Since these are for rows scanning in X fastest,
    * we have one per Y index. */
-  nmb_PlaneSelection planes; planes.lookup(data);
-  if (build_grid_display_lists(planes, 1, &grid_list_base,
+  
+
+  //This code is now commented out, as it is done in the constructor
+  //of the visualization class
+  /*
+   nmb_PlaneSelection planes; planes.lookup(data);
+   if (build_grid_display_lists(planes, 1, &grid_list_base,
                                 &num_grid_lists, g_minColor, g_maxColor)) {
      fprintf(stderr,"ERROR: Could not build grid display lists\n");
      d_dataset->done = 1;
    }
-
+  */
   g_positionList = new Position_list;
   g_positionListL = new Position_list;
   g_positionListR = new Position_list;
@@ -215,6 +278,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_loadRulergridImage_type,
                                handle_loadRulergridImage,
+                               this, vrpn_ANY_SENDER);
+  connection->register_handler(d_loadVizImage_type,
+                               handle_loadVizImage,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_causeGridRedraw_type,
                                handle_causeGridRedraw,
@@ -295,11 +361,17 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
                                handle_setContourPlaneName,
                                this, vrpn_ANY_SENDER);
   connection->register_handler(d_setOpacityPlaneName_type,
-			       handle_setOpacityPlaneName,
-			       this, vrpn_ANY_SENDER);
+							   handle_setOpacityPlaneName,
+							   this, vrpn_ANY_SENDER);
   connection->register_handler(d_setHeightPlaneName_type,
                                handle_setHeightPlaneName,
                                this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setMaskPlaneName_type,
+							   handle_setMaskPlaneName,
+							   this, vrpn_ANY_SENDER);
+  connection->register_handler(d_setTransparentPlaneName_type,
+							   handle_setTransparentPlaneName,
+							   this, vrpn_ANY_SENDER);
   connection->register_handler(d_setMinColor_type,
                                handle_setMinColor,
                                this, vrpn_ANY_SENDER);
@@ -474,6 +546,9 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   connection->register_handler( d_createScreenImage_type,
 				handle_createScreenImage,
 				this, vrpn_ANY_SENDER);
+  connection->register_handler( d_chooseVisualization_type,
+				handle_chooseVisualization,
+				this, vrpn_ANY_SENDER);
 
 }
 
@@ -619,6 +694,23 @@ void nmg_Graphics_Implementation::loadRulergridImage (const char * name) {
   }
 }
 
+void nmg_Graphics_Implementation::loadVizImage (const char * name) {
+//fprintf(stderr, "nmg_Graphics_Implementation::loadRulergridImage().\n");
+  if (!name) {
+    return;
+  }
+  FILE *infile = fopen(name, "rb");
+  if (!infile) {
+    fprintf(stderr, "nmg_Graphics_Implementation: can't find file: %s\n",
+	name);
+  }
+  g_vizPPM = new PPM (infile);
+  if (!g_vizPPM->valid) {
+    fprintf(stderr, "Cannot read visualization PPM %s.\n", name);
+  } else {
+    makeAndInstallVizImage(g_vizPPM);
+  }
+}
 
 // Tell how to index a given element.  Parameters are y,x,color
 #define texel(j,i,c) ( (c) + 4 * ( (i) + (j) * texture_size))
@@ -743,8 +835,130 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
   g_tex_installed_height[RULERGRID_TEX_ID] = texture_size;
   g_tex_image_width[RULERGRID_TEX_ID] = myPPM->nx;
   g_tex_image_height[RULERGRID_TEX_ID] = myPPM->ny;
-  g_tex_image_offsetx[RULERGRID_TEX_ID] = 0;
-  g_tex_image_offsety[RULERGRID_TEX_ID] = 0;
+
+  delete [] texture;
+}
+
+void nmg_Graphics_Implementation::makeAndInstallVizImage(PPM *myPPM)
+{
+  // code taken from graphics.c::makeAndInstallRulerImage():
+  int x,y;
+  int r,g,b;
+
+  // make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
+
+  // texture_size is the length of one side of the square texture.
+  // Find out the smallest power-of-2 texture region we can use.
+  // Remember that float->int conversion truncates, so add 0.5 for rounding
+  // Make sure it is not too big.
+  int ts_orig_ = max(myPPM->nx, myPPM->ny);
+  const int texture_size = int (0.5 + pow (2, ceil(log(ts_orig_)/log(2))));
+  
+  if (texture_size > 512) {
+      fprintf (stderr,
+               "Using viz texture of size %dx%d, "
+               "which is larger than previously allowed\n",
+               texture_size, texture_size);
+  }
+  
+#if 0 // old error message for static-sized array
+  if (texture_size > 512) {
+      fprintf(stderr,"Not enough space for %dx%d viz texture\n",
+                texture_size, texture_size);
+      return;
+  }
+#endif
+  
+  // multiply by 4 so we can store 4 values at each texel
+  GLubyte * texture = new GLubyte [4 * texture_size * texture_size];
+  
+  // Fill the whole texture with black.  This will make a border around
+  // any area not filled by the PPM file.
+  for (x = 0; x < texture_size; x++) {
+      for (y = 0; y < texture_size; y++) {
+          if (g_tex_blend_func[VISUALIZATION_TEX_ID] == GL_MODULATE) {
+              texture[ texel( y, x, 0) ] = 255;
+              texture[ texel( y, x, 1) ] = 255;
+              texture[ texel( y, x, 2) ] = 255;
+              texture[ texel( y, x, 3) ] = 0;
+          } else if (g_tex_blend_func[VISUALIZATION_TEX_ID] == GL_BLEND) {
+              texture[ texel( y, x, 0) ] = 0;
+              texture[ texel( y, x, 1) ] = 0;
+              texture[ texel( y, x, 2) ] = 0;
+              texture[ texel( y, x, 3) ] = 0;
+          } else if (g_tex_blend_func[VISUALIZATION_TEX_ID] == GL_DECAL){
+              texture[ texel( y, x, 3) ] = 0;
+          } else {
+              texture[ texel( y, x, 0) ] = 255;
+              texture[ texel( y, x, 1) ] = 255;
+              texture[ texel( y, x, 2) ] = 255;
+              texture[ texel( y, x, 3) ] = 0;
+          }
+      }
+  }
+  
+  // Fill in the part of the texture that the PPM file covers
+  // Invert Y because the coordinate system in the PPM file starts
+  // in the upper left corner, and our coordinate system in the lower
+  // left.
+  for (x = 0; x < myPPM->nx; x++) {
+      for (y = 0; y < myPPM->ny; y++) {
+          myPPM->Tellppm(x,y, &r, &g, &b);
+          
+          //Assuming the file is just a gray scale image.  And that
+          //the intensity denotes the "opacity".
+          
+          //Since it is assumed to be gray scale, r,g, and b should
+          //be equal
+          int alpha = r;
+          
+          texture[ texel( (myPPM->ny-1)-y, x, 0) ] = 255;
+          texture[ texel( (myPPM->ny-1)-y, x, 1) ] = 255;
+          texture[ texel( (myPPM->ny-1)-y, x, 2) ] = 255;
+          texture[ texel( (myPPM->ny-1)-y, x, 3) ] = (GLubyte) alpha;
+      }
+  }
+  
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  
+  glBindTexture(GL_TEXTURE_2D, tex_ids[VISUALIZATION_TEX_ID]);
+  
+  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+
+#ifdef  FLOW
+/**********************-_________________________
+    glTexImage2D(GL_TEXTURE_2D, 0, 4,
+                 texture_size, texture_size,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                 (const GLvoid*)texture);
+    if (glGetError()!=GL_NO_ERROR) {
+      printf(" Error making ruler texture.\n");
+    }
+_______________________________********************/
+#endif
+
+#if defined(sgi) || defined(_WIN32)
+  // Build the texture map and set the mode for 2D textures
+  if (gluBuild2DMipmaps(GL_TEXTURE_2D,4, texture_size, texture_size,
+                        GL_RGBA, GL_UNSIGNED_BYTE, texture) != 0) {
+      printf(" Error making mipmaps, using texture instead.\n");
+      glTexImage2D(GL_TEXTURE_2D, 0, 4,
+                   texture_size, texture_size,
+                   0, GL_RGBA, GL_UNSIGNED_BYTE,
+                   texture);
+      if (glGetError()!=GL_NO_ERROR) {
+          printf(" Error making viz texture.\n");
+      }
+  }
+#endif
+  g_tex_installed_width[VISUALIZATION_TEX_ID] = texture_size;
+  g_tex_installed_height[VISUALIZATION_TEX_ID] = texture_size;
+  g_tex_image_width[VISUALIZATION_TEX_ID] = myPPM->nx;
+  g_tex_image_height[VISUALIZATION_TEX_ID] = myPPM->ny;
 
   delete [] texture;
 }
@@ -770,30 +984,25 @@ void nmg_Graphics_Implementation::causeGridRedraw (void) {
 }
 
 void nmg_Graphics_Implementation::causeGridRebuild (void) {
-//fprintf(stderr, "nmg_Graphics_Implementation::causeGridRebuild().\n");
-
   g_just_color = 0;
-  // Rebuilds the texture coordinate array:
-  nmb_PlaneSelection planes;  planes.lookup(d_dataset);
 
   // Even though we may not be using the vertex array extension, we still
   // use the vertex array to cache calculated normals
-  if (!init_vertexArray(d_dataset->inputGrid->numX(),
-                          d_dataset->inputGrid->numY()) ) {
-          fprintf(stderr," init_vertexArray: out of memory.\n");
-          exit(0);
-   }
+  if (!visualization->initVertexArrays(d_dataset->inputGrid->numX(),
+                                       d_dataset->inputGrid->numY()) )
+  {
+      fprintf(stderr," initVertexArrays: out of memory.\n");
+      exit(0);
+  }
 
   grid_size_x = d_dataset->inputGrid->numX();
   grid_size_y = d_dataset->inputGrid->numY();
 
-  if (build_grid_display_lists(planes,
-                             display_lists_in_x, &grid_list_base,
-                             &num_grid_lists, g_minColor, g_maxColor)) {
+  if (!visualization->rebuildGrid()) {
     fprintf(stderr,
-          "nmg_Graphics_Implementation::causeGridRebuild():  "
-          "Couldn't build grid display lists\n");
-    d_dataset->done = V_TRUE;
+            "nmg_Graphics_Implementation::causeGridRebuild():  "
+            "Couldn't build grid display lists\n");
+    dataset->done = V_TRUE;
   }
 }
 
@@ -849,8 +1058,6 @@ void nmg_Graphics_Implementation::setAlphaSliderRange (float low, float high) {
 void nmg_Graphics_Implementation::setBumpMapName (const char * /*name*/)
 {
 //fprintf(stderr, "nmg_Graphics_Implementation::setBumpMapName().\n");
-
-
 }
 
 void nmg_Graphics_Implementation::setColorMapDirectory (const char * dir) {
@@ -1040,6 +1247,14 @@ void nmg_Graphics_Implementation::setOpacityPlaneName (const char * n) {
   strcpy(g_opacityPlaneName, n);
 }
 
+// virtual
+void nmg_Graphics_Implementation::setTransparentPlaneName (const char * n) {
+  strcpy(g_transparentPlaneName, n);
+}
+
+void nmg_Graphics_Implementation::setMaskPlaneName (const char * n) {
+  strcpy(g_maskPlaneName, n);
+}
 
 void nmg_Graphics_Implementation::setContourWidth (float x) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setContourWidth().\n");
@@ -1742,7 +1957,8 @@ void nmg_Graphics_Implementation::initializeTextures(void)
      g_tex_blend_func[i] = GL_DECAL;
 #endif
   }
-  g_tex_blend_func[SEM_DATA_TEX_ID] = GL_BLEND;
+  g_tex_blend_func[SEM_DATA_TEX_ID] = GL_MODULATE;
+  g_tex_blend_func[VISUALIZATION_TEX_ID] = GL_MODULATE;
 
   g_tex_env_color[SEM_DATA_TEX_ID][0] = 1.0;
   g_tex_env_color[SEM_DATA_TEX_ID][1] = 1.0;
@@ -1780,12 +1996,15 @@ void nmg_Graphics_Implementation::initializeTextures(void)
       printf(" Error making ruler texture.\n");
   }
 
+  if (g_vizPPM) {
+      makeAndInstallVizImage(g_vizPPM);
+  }
 
   g_tex_installed_width[SEM_DATA_TEX_ID] = 1024;
   g_tex_installed_height[SEM_DATA_TEX_ID] = 1024;
 
   int sem_tex_size = 4*g_tex_installed_width[SEM_DATA_TEX_ID] *
-                          g_tex_installed_height[SEM_DATA_TEX_ID];
+      g_tex_installed_height[SEM_DATA_TEX_ID];
   GLubyte *sem_data = new GLubyte [sem_tex_size]; 
   k = 0;
   
@@ -2471,6 +2690,11 @@ void nmg_Graphics_Implementation::createScreenImage
   }
 }
 
+void nmg_Graphics_Implementation::chooseVisualization(int viz_type) 
+{
+	visualization = viz_set[viz_type];
+}
+
 void nmg_Graphics_Implementation::getLightDirection (q_vec_type * v) const {
 //fprintf(stderr, "nmg_Graphics_Implementation::getLightDirection().\n");
   ::getLightDirection(v);
@@ -2651,6 +2875,15 @@ int nmg_Graphics_Implementation::handle_loadRulergridImage
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
 
   it->loadRulergridImage(p.buffer);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_loadVizImage
+                                 (void * userdata, vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+
+  it->loadVizImage(p.buffer);
   return 0;
 }
 
@@ -2975,6 +3208,21 @@ int nmg_Graphics_Implementation::handle_setOpacityPlaneName (void * userdata,
 							     vrpn_HANDLERPARAM p) {
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
   it->setOpacityPlaneName(p.buffer);
+  return 0;
+}
+
+// static
+int nmg_Graphics_Implementation::handle_setTransparentPlaneName (void * userdata,
+							     vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  it->setTransparentPlaneName(p.buffer);
+  return 0;
+}
+
+int nmg_Graphics_Implementation::handle_setMaskPlaneName (void * userdata,
+							     vrpn_HANDLERPARAM p) {
+  nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation *) userdata;
+  it->setMaskPlaneName(p.buffer);
   return 0;
 }
 
@@ -3721,9 +3969,6 @@ int nmg_Graphics_Implementation::handle_setViewTransform
 //
 // Save the screen as an image
 //
-
-
-
 int nmg_Graphics_Implementation::handle_createScreenImage
 (
    void              *userdata,
@@ -3745,4 +3990,18 @@ int nmg_Graphics_Implementation::handle_createScreenImage
    return 0;
 }
 
+//Switch visualizations
+int nmg_Graphics_Implementation::handle_chooseVisualization
+(
+   void              *userdata,
+   vrpn_HANDLERPARAM  p
+)
+{
+   int viz_type;
 
+   nmg_Graphics_Implementation *it = (nmg_Graphics_Implementation *)userdata;
+   it->decode_chooseVisualization(p.buffer, &viz_type);
+   it->chooseVisualization(viz_type);
+
+   return 0;
+}

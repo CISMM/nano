@@ -1,3 +1,60 @@
+2001-01-15  Jason Clark  <jclark@cs.unc.edu>
+
+	* spm_gl.c (specify_vertexArray): Vertex arrays are now standard
+	in GL1.1, so modified this method to use the standard calls
+	instead of the extensions.  This works on PC's too now.
+	(spm_x_strip): Heavy modifications to allow a mask plane to be set
+	that specifies whether to draw or not to draw vertices.  The mask
+	plane can be "inverted" to allow multi-pass methods to fill in the
+	undrawn areas, and care is taken to make sure that drawing in two
+	passes at the SAME STRIDE does not result in cracks or overlaps.
+
+	* openGL.c: Modifications to most of the functions controlling the
+	display lists to remove dependencies on global variables.
+	Necessary to allow multi-pass methods, or multiple surfaces. 
+	(determine_GL_capabilities): New function to
+	encapsulate all requests to determine what GL can do on the
+	machine currently being run on.  Should be called only once, and
+	set all the variables indicating what is available and what is not.
+	(draw_world): Makes calls to control display of the surface
+	through the visualization class
+
+	* nmg_Visualization.h: New visualization class that is designed to
+	be a wrapper around all calls into openGL.c or spm_gl.c that
+	control the grids.  A better name may have been surface, as that
+	is what the class is controlling, the display of the surface.
+	Allows for multi-pass build up of the surface, or could allow for
+	multiple surfaces to be viewed at once.
+	
+	* nmg_Visualization.C: See above
+
+	* nmg_GraphicsImpl.h: New functions for supporting visualizations
+
+	* nmg_GraphicsImpl.C 
+	(nmg_Graphics_Implementation): Calls new
+	determine_GL_capabilities method.  Initialize visualization variables.
+	(makeAndInstallVizImage): New function for visualization texture
+	(causeGridRebuild): Changed to call visualization object for
+	rebuilding the grids, instead of calling those functions directly.
+	(setTransparentPlaneName): New function
+	(setMaskPlaneName): New function
+
+	* nmg_Graphics.h: New functions and message types for supporting
+	visualizations and new planes, transparent and mask.
+
+	* nmg_Graphics.C (nmg_Graphics): New messages types for
+	visualizations
+
+	* graphics_globals.h: See below
+
+	* graphics_globals.c: Two new planes, transparent and mask, and
+	the globals needed for the new visualization code
+
+	* graphics.h: New function header for buildVisuzalizationTexture
+
+	* graphics.c (buildVisualizationTexture): New function for
+	visualization textures.
+
 2001-01-03  Aron Helser  <helser@cs.unc.edu>
 
 	* nmg_GraphicsImpl.C (setOpacitySliderRange): Switch to

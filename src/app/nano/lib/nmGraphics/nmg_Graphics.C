@@ -38,6 +38,8 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics resizeViewport");
   d_loadRulergridImage_type =
     c->register_message_type("nmg Graphics loadRulergridImage");
+  d_loadVizImage_type =
+    c->register_message_type("nmg Graphics loadVizImage");
   d_causeGridRedraw_type =
     c->register_message_type("nmg Graphics causeGridRedraw");
   d_causeGridRebuild_type =
@@ -102,8 +104,12 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
     c->register_message_type("nmg Graphics setContourPlaneName");
   d_setOpacityPlaneName_type =
     c->register_message_type("nmg Graphics setOpacityPlaneName");
+  d_setMaskPlaneName_type =
+    c->register_message_type("nmg Graphics setMaskPlaneName");
   d_setHeightPlaneName_type =
     c->register_message_type("nmg Graphics setHeightPlaneName");
+  d_setTransparentPlaneName_type =
+    c->register_message_type("nmg Graphics setTransparentPlaneName");
   d_setMinColor_type =
     c->register_message_type("nmg Graphics setMinColor");
   d_setMaxColor_type =
@@ -219,6 +225,10 @@ nmg_Graphics::nmg_Graphics (vrpn_Connection * c, const char * id) :
 
   d_updateTexture_type =
     c->register_message_type("nmg Graphics updateTexture");
+
+  //For visualization
+  d_chooseVisualization_type =
+    c->register_message_type("nmg Graphics chooseVisualization");
 }
 
 nmg_Graphics::~nmg_Graphics (void) {
@@ -834,6 +844,22 @@ int nmg_Graphics::decode_setContourPlaneName (const char * buf,
   CHECK(vrpn_unbuffer(&buf, n, 128));
   return 0;
 
+}
+
+char * nmg_Graphics::encode_setMaskPlaneName (int * len, const char * n) {
+
+}
+
+int nmg_Graphics::decode_setMaskPlaneName (const char *buf,
+					      const char *n) {
+}
+
+char * nmg_Graphics::encode_setTransparentPlaneName (int * len, const char * n) {
+
+}
+
+int nmg_Graphics::decode_setTransparentPlaneName (const char *buf,
+					      const char *n) {
 }
 
 char * nmg_Graphics::encode_setOpacityPlaneName (int * len, const char * n) {
@@ -2689,5 +2715,45 @@ int nmg_Graphics::decode_createScreenImage
    *type = (ImageType)(temp);
    return 0;
 }
+
+char *nmg_Graphics::encode_chooseVisualization(int *len, int viz_type)
+{
+   char *msgbuf = NULL;
+   char *mptr;
+   int mlen;
+
+   if (!len) return NULL;
+
+   *len = sizeof(int);
+   msgbuf = new char[*len];
+   if (!msgbuf)
+   {
+      fprintf(stderr,"nmg_Graphics::encode_createScreenImage: Out of memory!\n");
+      *len = 0;
+   }
+   else
+   {
+      mptr = msgbuf;
+      mlen = *len;
+      vrpn_buffer(&mptr, &mlen, viz_type);
+   }
+
+   return msgbuf;
+}
+
+int nmg_Graphics::decode_chooseVisualization(const char  *buf, int *viz_type
+)
+{
+   const char *bptr = buf;
+   int temp;
+   
+   if (!buf || !viz_type) return -1;
+
+   CHECK(vrpn_unbuffer(&bptr, &temp));
+
+   *viz_type = (int)(temp);
+   return 0;
+}
+
 
 // End screen capture network code

@@ -31,7 +31,8 @@ class nmb_PlaneSelection {
     void lookup (BCGrid *,
                  const char * heightName, const char * colorName,
                  const char * contourName, const char * opacityName,
-		 const char * alphaName);
+				 const char * alphaName, const char * maskName,
+				 const char * transparentName);
 
     void lookupPrerenderedColors (BCGrid *);
     void lookupPrerenderedDepth (BCGrid *);
@@ -41,6 +42,8 @@ class nmb_PlaneSelection {
     BCPlane * contour;
     BCPlane * opacity;
     BCPlane * alpha;
+	BCPlane * mask;
+	BCPlane * transparent;
 
     /// Support for prerendered surfaces
     BCPlane * red;

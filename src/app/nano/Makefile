@@ -1,6 +1,6 @@
 USES_LIBS := nmAux nmUGraphics nmSEM nmUI nmGraphics nmMScope \
              nmRobotControl nmReg nmImageViewer nmTipConvolution \
-             nmMP tclLinkVar nmBase ImgFormat \
+             nmMP tclLinkVar nmBase ImgFormat nmAnalyze \
              vrpn vogl quat
 
 EXCLUDE_SRC = renderer.C server_talk.c test_speech.c \

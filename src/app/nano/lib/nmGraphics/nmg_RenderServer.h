@@ -52,6 +52,7 @@ class nmg_Graphics_RenderServer : public nmg_Graphics_Implementation {
                        RemoteProjectionMode pMode,
                        int xsize = 32, int ysize = 32,
                        const char * rulergridName = NULL,
+					   const char * vizName = NULL,
                        vrpn_Connection * commandsFromUser = NULL);
 
     virtual ~nmg_Graphics_RenderServer (void);

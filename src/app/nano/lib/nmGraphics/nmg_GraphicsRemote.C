@@ -98,6 +98,24 @@ void nmg_Graphics_Remote::loadRulergridImage (const char * name) {
   }
 }
 
+void nmg_Graphics_Remote::loadVizImage (const char * name) {
+  struct timeval now;
+  int len = 0;
+  int retval;
+
+  if (name)
+    len = 1 + strlen(name);
+  gettimeofday(&now, NULL);
+  if (d_connection) {
+    retval = d_connection->pack_message(len, now, d_loadVizImage_type,
+                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::loadVizImage:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+}
+
 void nmg_Graphics_Remote::causeGridReColor (void) {
 }
 
@@ -675,6 +693,44 @@ void nmg_Graphics_Remote::setOpacityPlaneName (const char * name) {
                            d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
     if (retval) {
       fprintf(stderr, "nmg_Graphics_Remote::setOpacityPlaneName:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+}
+
+// virtual
+void nmg_Graphics_Remote::setTransparentPlaneName (const char * name) {
+  int len = 0;
+  struct timeval now;
+  int retval;
+
+  if (name)
+    len = 1 + strlen(name);
+  gettimeofday(&now, NULL);
+  if (d_connection) {
+    retval = d_connection->pack_message(len, now, d_setTransparentPlaneName_type,
+                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setTransparentPlaneName:  "
+                      "Couldn't pack message to send to server.\n");
+    }
+  }
+}
+
+// virtual
+void nmg_Graphics_Remote::setMaskPlaneName (const char * name) {
+  int len = 0;
+  struct timeval now;
+  int retval;
+
+  if (name)
+    len = 1 + strlen(name);
+  gettimeofday(&now, NULL);
+  if (d_connection) {
+    retval = d_connection->pack_message(len, now, d_setMaskPlaneName_type,
+                           d_myId, (char *) name, vrpn_CONNECTION_RELIABLE);
+    if (retval) {
+      fprintf(stderr, "nmg_Graphics_Remote::setMaskPlaneName:  "
                       "Couldn't pack message to send to server.\n");
     }
   }
@@ -1970,6 +2026,29 @@ void nmg_Graphics_Remote::createScreenImage
                                           vrpn_CONNECTION_RELIABLE);
       if (retval)
          fprintf(stderr, "nmg_Graphics_Remote::createScreenImage:  "
+                         "Couldn't pack message to send to server.\n");
+   }
+
+   if (msgbuf)
+      delete [] msgbuf;
+}
+
+void nmg_Graphics_Remote::chooseVisualization(int viz_type)
+{
+   struct timeval now;
+   char *msgbuf;
+   int len;
+   int retval;
+
+   msgbuf = encode_chooseVisualization(&len, viz_type);
+   gettimeofday(&now, NULL);
+   if (d_connection && msgbuf)
+   {
+      retval = d_connection->pack_message(len, now, d_createScreenImage_type,
+                                          d_myId, msgbuf,
+                                          vrpn_CONNECTION_RELIABLE);
+      if (retval)
+         fprintf(stderr, "nmg_Graphics_Remote::chooseVisualization:  "
                          "Couldn't pack message to send to server.\n");
    }
 

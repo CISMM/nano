@@ -50,8 +50,6 @@
 #define max(a,b) ((a)<(b)?(b):(a))
 #endif
 
-Vertex_Struct ** vertexptr = NULL;
-
 //---------------------------------------------------------------------------
 // Vector utility routines.
 
@@ -257,66 +255,44 @@ int init_vertexArray(int x, int y)
    return 1;
 }
 
-void specify_vertexArray(nmb_PlaneSelection /*planes*/, int i, int count)
+void specify_vertexArray(int strip, int *vert_counts, int num)
 {
-#if defined(sgi)  // These functions aren't available in wGL:
-  if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
-    glNormalPointerEXT(GL_SHORT, sizeof(Vertex_Struct),
-	                        count, vertexptr[i][0].Normal );
-  }
-    glColorPointerEXT(4,GL_UNSIGNED_BYTE,sizeof(Vertex_Struct),
-	                        count, vertexptr[i][0].Color);
-    glVertexPointerEXT(3,GL_FLOAT,sizeof(Vertex_Struct),
-				count,vertexptr[i][0].Vertex);
-
+    if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
+        glNormalPointer(GL_SHORT, sizeof(Vertex_Struct),
+                        vertexptr[strip][0].Normal );
+    }
+    glColorPointer(4,GL_UNSIGNED_BYTE,sizeof(Vertex_Struct),
+                   vertexptr[strip][0].Color);
+    glVertexPointer(3,GL_FLOAT,sizeof(Vertex_Struct),
+                    vertexptr[strip][0].Vertex);
+    
     if (g_texture_mode == GL_TEXTURE_1D) // (planes.contour)
- 	glTexCoordPointerEXT(1,GL_FLOAT,sizeof(Vertex_Struct),
-	                   count,&(vertexptr[i][0].Texcoord[2]));
+        glTexCoordPointer(1,GL_FLOAT,sizeof(Vertex_Struct),
+                          &(vertexptr[strip][0].Texcoord[2]));
+#if defined(sgi)
     else if (g_texture_mode == GL_TEXTURE_3D) // (planes.alpha)
-        glTexCoordPointerEXT(3,GL_FLOAT,sizeof(Vertex_Struct),
-                                   count,vertexptr[i][0].Texcoord);
-
-// if using projective texture then we still do 1D and 3D textures as above
-// but 2D texture coordinates should not be specified here
+        glTexCoordPointer(3,GL_FLOAT,sizeof(Vertex_Struct),
+                          vertexptr[strip][0].Texcoord);
+#endif
+    
+    // if using projective texture then we still do 1D and 3D textures as above
+    // but 2D texture coordinates should not be specified here
 #ifndef PROJECTIVE_TEXTURE
     else if (g_texture_mode == GL_TEXTURE_2D)
-        glTexCoordPointerEXT(2,GL_FLOAT,sizeof(Vertex_Struct),
-                                  count,&(vertexptr[i][0].Texcoord[1]));
-
+        glTexCoordPointer(2,GL_FLOAT,sizeof(Vertex_Struct),
+                          &(vertexptr[strip][0].Texcoord[1]));
+    
     else if ( g_realign_textures_enabled )
-      glTexCoordPointerEXT( 2, GL_FLOAT, sizeof(Vertex_Struct), count,
-			    &(vertexptr[i][0].Texcoord[1]));
+        glTexCoordPointer( 2, GL_FLOAT, sizeof(Vertex_Struct), 
+                           &(vertexptr[strip][0].Texcoord[1]));
 #endif  // PROJECTIVE_TEXTURE
-
-    glDrawArraysEXT( GL_TRIANGLE_STRIP,0,count);
-#else
-
-    int vert;
-    glBegin(GL_TRIANGLE_STRIP);
-    for (vert = 0; vert < count; vert++) {
-        if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
-	    glNormal3s(	vertexptr[i][vert].Normal[0],
-			vertexptr[i][vert].Normal[1],
-                        vertexptr[i][vert].Normal[2]);
-        }
-        glColor4b( 	vertexptr[i][vert].Color[0],
-			vertexptr[i][vert].Color[1],
-			vertexptr[i][vert].Color[2],
-			vertexptr[i][vert].Color[3]);
-	if (g_texture_mode == GL_TEXTURE_1D) {// (planes.contour)
-	    glTexCoord1f(vertexptr[i][vert].Texcoord[2]);
-        }
-        glVertex3f(vertexptr[i][vert].Vertex[0],
-		   vertexptr[i][vert].Vertex[1],
-		   vertexptr[i][vert].Vertex[2]);
+    
+    int start = 0;
+    for(int i = 0; i < num; i++) {
+        glDrawArrays( GL_TRIANGLE_STRIP,start,vert_counts[i]);
+        start += vert_counts[i];
     }
-    glEnd();
-
-#endif
-
 }
-
-
 
 
 /*      This routine will describe the vertex from the grid specified
@@ -333,6 +309,7 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 
   // dereference once
   BCPlane & height_plane = *(planes.height);
+  BCPlane * transparent_plane = planes.transparent;
   Vertex_Struct & vertexArray = *vertexArrayPtr;
   
   double  min_x = height_plane.minX(), max_x = height_plane.maxX();
@@ -361,97 +338,95 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 
 
   // Phase 1: Color the vertex 
-    if (g_PRERENDERED_TEXTURE) {
+  if (g_PRERENDERED_TEXTURE) {
       // Do we need a flat white background to modulate the texture?
       Color[0] = 1.0f;
       Color[1] = 1.0f;
       Color[2] = 1.0f;
-
-    }
-    else if (g_PRERENDERED_COLORS) {
+  }
+  else if (g_PRERENDERED_COLORS) {
       Color[0] = planes.red->value(x, y);
       Color[1] = planes.green->value(x, y);
       Color[2] = planes.blue->value(x, y);
-
-    }
-    else if (planes.color) {
-          // Get the data value
-          float data_value = planes.color->value(x, y);
-          // Drift-compensate the data value, based on 
-          // the stored average of the first scan line.
-          if ((decoration->first_line_avg !=0) && 
-              (decoration->first_line_avg_prev !=0)) {
-              data_value += decoration->first_line_avg_prev 
-                  - decoration->first_line_avg;
-          }
-          // stretch/shrink data based on data_min/max colors:
-          // normalize the data to a zero to one scale - but data doesn't
-          // have to fall in this range.
-          data_value = (data_value - g_data_min)/(g_data_max - g_data_min);
-    
-          // Scale data again based on color map widget controls
-          data_value = data_value * (g_data_max_norm - g_data_min_norm) 
-              + g_data_min_norm;
+  }
+  else if (planes.color) {
+      // Get the data value
+      float data_value = planes.color->value(x, y);
+      // Drift-compensate the data value, based on 
+      // the stored average of the first scan line.
+      if ((decoration->first_line_avg !=0) && 
+          (decoration->first_line_avg_prev !=0)) {
+          data_value += decoration->first_line_avg_prev 
+              - decoration->first_line_avg;
+      }
+      // stretch/shrink data based on data_min/max colors:
+      // normalize the data to a zero to one scale - but data doesn't
+      // have to fall in this range.
+      data_value = (data_value - g_data_min)/(g_data_max - g_data_min);
       
-          // clamp data based on the stretched/shrunk colormap:
-          if ( data_value <  g_color_min ) data_value = 0;
-          else if ( data_value > g_color_max ) data_value = 1.0;
-          else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
+      // Scale data again based on color map widget controls
+      data_value = data_value * (g_data_max_norm - g_data_min_norm) 
+          + g_data_min_norm;
       
-          if (g_curColorMap) {    // Use the color map loaded from file
-              // a = alpha is ignored. 
-              float r, g, b, a;
-              g_curColorMap->lookup(data_value, &r, &g, &b, &a);
-              Color[0] = r;
-              Color[1] = g;
-              Color[2] = b;
-          } else {      // Use the "none" color mapping tool
-              for (i = 0; i < 3; i++) {
-                  Color[i] = minColor[i] * data_value;
-              }
+      // clamp data based on the stretched/shrunk colormap:
+      if ( data_value <  g_color_min ) data_value = 0;
+      else if ( data_value > g_color_max ) data_value = 1.0;
+      else data_value = (data_value - g_color_min)/(g_color_max - g_color_min);
+      
+      if (g_curColorMap) {    // Use the color map loaded from file
+          // a = alpha is ignored. 
+          float r, g, b, a;
+          g_curColorMap->lookup(data_value, &r, &g, &b, &a);
+          Color[0] = r;
+          Color[1] = g;
+          Color[2] = b;
+      } else {      // Use the "none" color mapping tool
+          for (i = 0; i < 3; i++) {
+              Color[i] = minColor[i] * data_value;
           }
-    }
-    else {
-        // No special color cases exists, so set the surface to a solid color.
-        Color[0] = g_minColor[0];
-        Color[1] = g_minColor[1];
-        Color[2] = g_minColor[2];
-    }
+      }
+  }
+  else {
+      // No special color cases exists, so set the surface to a solid color.
+      Color[0] = g_minColor[0];
+      Color[1] = g_minColor[1];
+      Color[2] = g_minColor[2];
+  }
 
-    // Set the alpha value for this vertex. 
-    if (planes.opacity) {
-        // A data plane determines the opacity value.
-        float opacity_value = (planes.opacity->value(x, y) 
-                               - g_opacity_slider_min) /
-            (g_opacity_slider_max - g_opacity_slider_min);
-        Color[3] = (GLubyte) min(255.0, opacity_value);
-    } else if (g_null_data_alpha_toggle) {
-        // Show zero (not filled in) height values as completely transparent. 
-        if (Vertex[2] == 0.0)  {
-            Color[3] =  0;
-        } else {
-            // Alpha of all vertices are determined by a widget, defaults
-            // to opaque. 
-            Color[3] = g_surface_alpha;
-        }
-    } else {
-        // Alpha of all vertices are determined by a widget, defaults
-        // to opaque. 
-        Color[3] = g_surface_alpha;
-    }
+  // Set the alpha value for this vertex. 
+  if (planes.opacity) {
+      // A data plane determines the opacity value.
+      float opacity_value = (planes.opacity->value(x, y) 
+                             - g_opacity_slider_min) /
+          (g_opacity_slider_max - g_opacity_slider_min);
+      Color[3] = (GLubyte) min(255.0, opacity_value);
+  } else {
+      // Alpha of all vertices are determined by a widget, defaults
+      // to opaque. 
+      Color[3] = g_surface_alpha;
+  }
 
-    // Always specify a vertex color (right?!?)
-//      if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color ||
-//          g_null_data_alpha_toggle) {
-        vertexArray.Color[0] = (GLubyte) (Color[0] * 255);
-        vertexArray.Color[1] = (GLubyte) (Color[1] * 255);
-        vertexArray.Color[2] = (GLubyte) (Color[2] * 255);
-        vertexArray.Color[3] = (GLubyte) (Color[3] * 255);
-        if (!g_VERTEX_ARRAY) {
-            glColor4fv(Color);
-        }
+  if (g_transparent) {
+      Color[3] = transparent_plane->value(x, y);
+  }
 
+  // Always specify a vertex color (right?!?)
+  //    if (g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE || planes.color ||
+  //        g_null_data_alpha_toggle || g_transparent) {
+  vertexArray.Color[0] = (GLubyte) (Color[0] * 255);
+  vertexArray.Color[1] = (GLubyte) (Color[1] * 255);
+  vertexArray.Color[2] = (GLubyte) (Color[2] * 255);
 
+  if ( (g_null_data_alpha_toggle) && (Vertex[2] == 0.0) ) {
+      vertexArray.Color[3] = 0;
+  } 
+  else {
+      vertexArray.Color[3] = (GLubyte) (Color[3] * 255);
+  }
+  
+  if (!g_VERTEX_ARRAY) {
+      glColor4fv(Color);
+  }
 
     // Phase 2: Find the texture coordinates for the vertex. 
 
@@ -625,6 +600,18 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
       glTexCoord2fv(man_realign_coord);
     }		
   }
+  else if (g_texture_transform_mode == PER_QUAD_COORD) {
+	  if(g_VERTEX_ARRAY) {
+      vertexArrayPtr->Texcoord[1] =  x;
+      vertexArrayPtr->Texcoord[2] =  y;
+    }
+    else {
+	  GLfloat texcoord[2];
+	  texcoord[0] = x;
+	  texcoord[1] = y;
+      glTexCoord2fv(texcoord);
+    }
+  }
 #endif
 
 
@@ -729,118 +716,197 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
 int spm_y_strip( nmb_PlaneSelection planes,
                  GLdouble minColor[4], GLdouble maxColor[4], int which,
                  Vertex_Struct * vertexArray)
-{       int     x,y;
-        int    i=0;
-
-        // Make sure we found a height plane
-        if (planes.height == NULL) {
-            fprintf(stderr, "spm_y_strip: could not get grid!\n");
-            return -1;
-        }
-
-        // Make sure they asked for a legal strip (in range and on stride)
-        if ((which < 0) || (which >= planes.height->numX())) {
-          fprintf(stderr, "Strip %d is outside the plane.\n", which);
-                return(-1);
-        }
-        if (which % g_stride) {
-          fprintf(stderr, "Strip %d is off stride.\n", which);
-          return -1;
-        }
-
-        /* Fill in the vertices for the triangle strip */
-        glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
-
-      if (g_VERTEX_ARRAY){
-        for (y = 0; y < planes.height->numY(); y += g_stride) {
-         for (x = which+g_stride; x >= which; x -= g_stride) { 
-            if (describe_gl_vertex(planes, minColor,maxColor,x,y,
-                                   &(vertexArray[i]))) {
-              fprintf(stderr, "spm_y_strip:  describe_gl_vertex() failed.\n");
+{
+    int     x,y;
+    int    i=0;
+    
+    // Make sure we found a height plane
+    if (planes.height == NULL) {
+        fprintf(stderr, "spm_y_strip: could not get grid!\n");
+        return -1;
+    }
+    
+    // Make sure they asked for a legal strip (in range and on stride)
+    if ((which < 0) || (which >= planes.height->numX())) {
+        fprintf(stderr, "Strip %d is outside the plane.\n", which);
+        return(-1);
+    }
+    if (which % g_stride) {
+        fprintf(stderr, "Strip %d is off stride.\n", which);
+        return -1;
+    }
+    
+    /* Fill in the vertices for the triangle strip */
+    glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
+    
+    if (!g_VERTEX_ARRAY) {
+        glBegin(GL_TRIANGLE_STRIP);
+        VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
+    }
+    
+    for (y = 0; y < planes.height->numY(); y += g_stride) {   
+        for (x = which+g_stride; x >= which; x -= g_stride) { 
+            if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[i]))) {
+                fprintf(stderr, "spm_y_strip:  describe_gl_vertex() failed.\n");
                 return(-1);
             }
             i++;
-          }
-         }
-
-         return(i);  // i is the total number of points in the strip
-
-      } else {
-	glBegin(GL_TRIANGLE_STRIP);
-  VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
-	for (y = 0; y < planes.height->numY(); y += g_stride) {
-	  for (x = which+g_stride; x >= which; x -= g_stride) {
-	    if (describe_gl_vertex(planes, minColor,maxColor, x,y, &(vertexArray[i]))) {
-		return(-1);
-	    }
-	  }
-	}
-  VERBOSE(20, "          glEnd()");
-	glEnd();
-
-	return(0);
-     }
+        }
+    }
+    
+    if (g_VERTEX_ARRAY) {
+        return i;
+    }
+    else {
+        glEnd();
+        VERBOSE(20, "          glEnd()");
+    }
+    return 0;
 }
 
 
 int spm_x_strip( nmb_PlaneSelection planes,
-                 GLdouble minColor[4], GLdouble maxColor[4], int which,
+                 GLdouble minColor[4], GLdouble maxColor[4], int strip,
                  Vertex_Struct * vertexArray)
-{       int     x,y;
-        int    i=0;	
-
-        // Make sure we found a height plane
-        if (planes.height == NULL) {
-            fprintf(stderr, "spm_x_strip: could not get grid!\n");
-            return -1;
+{      
+    int     x,y;
+    int    i;	
+    
+    // Make sure we found a height plane
+    if (planes.height == NULL) {
+        fprintf(stderr, "spm_x_strip: could not get grid!\n");
+        return -1;
+    }
+    
+    // Make sure they asked for a legal strip (in range and on stride)
+    int which = strip * g_stride;
+    if ((which < 0) || (which >= planes.height->numY() - 1)) {
+        fprintf(stderr, "Strip %d is outside plane.\n", which);
+        return(-1);
+    }
+    /*
+      if (which % g_stride) {
+      fprintf(stderr, "Strip %d is off stride.\n", which);
+      return(-1);
+      }
+    */
+    
+    /* Fill in the vertices for the triangle strip */
+    glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
+    
+    if (!g_VERTEX_ARRAY) {
+        glBegin(GL_TRIANGLE_STRIP);
+        VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
+    }
+    
+    int number_of_strips = 0;
+    bool skipping = false;
+    int *x_array = new int[planes.height->numX() * 2];
+    int *y_array = new int[planes.height->numX() * 2];
+    i = 0;
+    
+    x = 0;
+    y = which + g_stride;
+    bool quad_totally_opaque = (planes.mask->value(x,y) <= 0 ||
+                                planes.mask->value(x,y - g_stride) <= 0 ||
+                                planes.mask->value(x+g_stride,y) <= 0 ||
+                                planes.mask->value(x+g_stride,y - g_stride) <= 0);
+    if ((g_mask == ENABLE_MASK && quad_totally_opaque) ||
+        (g_mask == INVERT_MASK && !quad_totally_opaque))
+    {
+        skipping = true;
+    }
+    else {
+        x_array[i] = x; x_array[i+1] = x;
+        y_array[i] = y; y_array[i+1] = y - g_stride;
+        i+=2;
+    }
+    for (x = g_stride; x < planes.height->numX() - g_stride; x += g_stride) {   // Left->right
+        quad_totally_opaque = (planes.mask->value(x,y) <= 0 ||
+                               planes.mask->value(x,y - g_stride) <= 0 ||
+                               planes.mask->value(x+g_stride,y) <= 0 ||
+                               planes.mask->value(x+g_stride,y - g_stride) <= 0);
+        if (!skipping) {
+            x_array[i] = x; x_array[i+1] = x;
+            y_array[i] = y; y_array[i+1] = y - g_stride;
+            i+=2;
+            if ((g_mask == ENABLE_MASK && quad_totally_opaque) ||
+                (g_mask == INVERT_MASK && !quad_totally_opaque))
+            {
+                skipping = true;
+                x_array[i] = -1;
+                y_array[i] = -1;
+                i++;
+                number_of_strips++;
+            }
         }
-
-        // Make sure they asked for a legal strip (in range and on stride)
-        if ((which < 0) || (which >= planes.height->numY() - 1)) {
-          fprintf(stderr, "Strip %d is outside plane.\n", which);
-                return(-1);
+        else if (skipping) {
+            if ((g_mask == INVERT_MASK && quad_totally_opaque) ||
+                (g_mask == ENABLE_MASK && !quad_totally_opaque))
+            {
+                skipping = false;
+                x_array[i] = x; x_array[i+1] = x;
+                y_array[i] = y; y_array[i+1] = y - g_stride;
+                i+=2;
+            }
         }
-        if (which % g_stride) {
-          fprintf(stderr, "Strip %d is off stride.\n", which);
-                return(-1);
+    }
+    
+    if (!skipping) {
+        x_array[i] = x; x_array[i+1] = x;
+        y_array[i] = y; y_array[i+1] = y - g_stride;
+        i+=2;
+        number_of_strips++;
+    }
+    else {
+        i--;
+    }
+    
+    int max = i;
+    int count = 0;
+    int *vert_counts = new int[number_of_strips];
+    number_of_strips = 0;
+    int vert = 0;
+    for (i = 0; i < max; i++) {
+        x = x_array[i];
+        y = y_array[i];
+        if (x == -1 && y == -1) {
+            if (g_VERTEX_ARRAY) {
+                vert_counts[number_of_strips] = count;
+                count = 0;
+                number_of_strips++;
+            }
+            else {
+                glEnd();
+                glBegin(GL_TRIANGLE_STRIP);
+            }
         }
-
-        /* Fill in the vertices for the triangle strip */
-        glFrontFace(GL_CCW);            /* Counter-clockwise is forward */
-
-	if(g_VERTEX_ARRAY) {
-	  for (x = 0; x < planes.height->numX(); x += g_stride) {   // Left->right
-	    for (y = which+g_stride; y >= which; y -= g_stride) {     // top->bottom
-	      if (describe_gl_vertex(planes, minColor,maxColor,x,y,
-				     &(vertexArray[i]))) {
-		fprintf(stderr, "spm_x_strip:  describe_gl_vertex() failed.\n");
+        else {
+            if (describe_gl_vertex(planes, minColor,maxColor,x,y,&(vertexArray[vert]))) {
+                fprintf(stderr, "spm_x_strip:  describe_gl_vertex() failed.\n");
                 return(-1);
-	      }
-	      i++;
-	    }
-	  }
-	  return(i);  // i is the total number of points in the strip
-	} else {
-	  glBegin(GL_TRIANGLE_STRIP);
-	  VERBOSE(20, "          glBegin(GL_TRIANGLE_STRIP)");
-	  for (x = 0; x < planes.height->numX(); x += g_stride) {   // Left->right
-	    for (y = which+g_stride; y >= which; y -= g_stride) {     // top->bottom
-	      //           if(describe_gl_vertex(planes, minColor,maxColor, x,y, NULL)) {
-	      if(describe_gl_vertex(planes, minColor,maxColor, x,y, &(vertexArray[i]) )) {
-		fprintf(stderr, "spm_x_strip:  describe_gl_vertex() failed.\n");
-		return(-1);
-	      }
-	      i++;
-	    }
-	  }
-	  VERBOSE(20, "          glEnd()");
-	  glEnd();
-	  
-	  return(0);
-	}
+            }
+            vert++;
+            count++;
+        }
+    }
+    
+    if (g_VERTEX_ARRAY) {
+        vert_counts[number_of_strips] = count;
+        specify_vertexArray(strip, vert_counts, number_of_strips+1);
+    }
+    else {
+        glEnd();
+        VERBOSE(20, "          glEnd()");
+    }
+    
+    delete [] x_array;
+    delete [] y_array;
+    
+    return 0;
 }
 
-	
+
 
 
 /*	This routine will set up the material properties so that the

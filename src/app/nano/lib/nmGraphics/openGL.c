@@ -36,6 +36,7 @@
 #include <nmb_Line.h>
 
 #include	"nmg_Graphics.h" // for enums
+#include    "nmg_Visualization.h"
 #include	"openGL.h"
 #include	"globjects.h"  // for myworld()
 #include	"graphics_globals.h"
@@ -43,11 +44,6 @@
 #include	"spm_gl.h"
 
 #include	"Timer.h"
-
-// M_PI not defined for VC++, for some reason. 
-#ifndef M_PI
-#define M_PI		3.14159265358979323846
-#endif
 
 /*Globals*/
 extern int	do_y_fastest;		/* Tells which direction to scan in */
@@ -107,32 +103,49 @@ int report_gl_errors(void)
   }
   return n_errors;
 }
-
-
-int check_extension (const GLubyte * exten_str) {
+int check_extension (const char *exten) {
+  static const GLubyte * extensions = glGetString(GL_EXTENSIONS);
   char *work_str;
   char *token;
 
-  if (!exten_str)
+  if (!extensions)
     return 0;
-  work_str = new char [strlen((const char *)exten_str) + 1];
-  strcpy(work_str,(const char *) exten_str);
+
+  work_str = new char [strlen((const char *)extensions) + 1];
+  strcpy(work_str,(const char *) extensions);
   token = strtok(work_str, " ");
   
-  if (strcmp(token, "GL_EXT_vertex_array") == 0) {
-    delete [] work_str;
-     return 1;
+  if (strcmp(token, exten) == 0) {
+      delete [] work_str;
+      return 1;
   } 
   while( (token=strtok(NULL, " ")) != NULL) {
-       if (strcmp(token, "GL_EXT_vertex_array") == 0) {
-	 delete [] work_str;
-           return 1;
-       }
+      if (strcmp(token, exten) == 0) {
+          delete [] work_str;
+          return 1;
+      }
   }
   delete [] work_str;
   return 0;
 }
 
+void determine_GL_capabilities() {
+
+    int gl_1_1 = 0;
+    
+#ifdef GL_VERSION_1_1
+    gl_1_1 = 1;
+#endif
+    
+#if ( defined(linux) || defined(hpux) )
+    // RMT The accelerated X server seems to be telling us that we have
+    // vertex arrays, but then they are not drawn; ditto for MesaGL on
+    // HPUX
+    g_VERTEX_ARRAY = 0;
+#else
+    g_VERTEX_ARRAY = gl_1_1; //Vertex arrays are standard as of GL 1.1
+#endif
+}
 
 //ADDED BY DANIEL ROHRER
 #define MAXFONTS 2
@@ -140,9 +153,12 @@ int	font_array[MAXFONTS];
 
 //GLdouble minColor[3];		/* Color areas of lowest colorparams */
 //GLdouble maxColor[3];		/* Color areas of highest colorparams */
-GLuint	grid_list_base;		/* Base for grid display lists */
-GLsizei	num_grid_lists;		/* Number of display lists for grid */
+//GLuint	grid_list_base;		/* Base for grid display lists */
+//GLsizei	num_grid_lists;		/* Number of display lists for grid */
 char	message[1000];		/* Message to display on screen */
+
+//int (* stripfn)
+//    (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
 
 #ifdef RENDERMAN
 GLfloat cur_projection_matrix[16];
@@ -162,35 +178,37 @@ int build_list_set
     (nmb_Interval subset,
      nmb_PlaneSelection planes,
      GLuint base,
+     GLsizei num_lists,
      GLdouble * minColor,
      GLdouble * maxColor,
      int (* stripfn)
-       (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *))
+         (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *),
+     Vertex_Struct **surface)
 {
 
   v_gl_set_context_to_vlib_window(); 
   // globals:
-  // vertexptr
+  // surface
   // min/maxColor
 
   int i;
-  int count;
 
   if (!g_just_color && subset.empty()) return 0;
 
 #if defined(sgi) || defined(_WIN32)
 //#if defined(sgi)
   if (g_VERTEX_ARRAY) { // same extension is for COLOR_ARRAY
-      // Always enable surface colors (right?!?)
-//      if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE ||
-//          g_null_data_alpha_toggle) {
-      glEnable(GL_COLOR_ARRAY_EXT);
-//      } else {
-//        glDisable(GL_COLOR_ARRAY_EXT);
-//      }
-    if (glGetError()!=GL_NO_ERROR) {
-      printf(" Error setting GL_COLOR_ARRAY_EXT.\n");
-    }
+      if (planes.color || g_PRERENDERED_COLORS || g_PRERENDERED_TEXTURE ||
+          g_null_data_alpha_toggle || g_transparent) {
+          //glEnable(GL_COLOR_ARRAY_EXT);
+          glEnableClientState(GL_COLOR_ARRAY);
+      } else {
+          //glDisable(GL_COLOR_ARRAY_EXT);
+          glDisableClientState(GL_COLOR_ARRAY);
+      }
+      if (glGetError()!=GL_NO_ERROR) {
+          printf(" Error setting GL_COLOR_ARRAY_EXT.\n");
+      }
   }
 
 #ifdef PROJECTIVE_TEXTURE
@@ -223,18 +241,22 @@ int build_list_set
   if (g_VERTEX_ARRAY){// same extension is for TEXTURE_COORD_ARRAY
 #ifndef PROJECTIVE_TEXTURE
     if (g_texture_displayed != nmg_Graphics::NO_TEXTURES) {
-      glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
+      //glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     } else {
-      glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
+      //glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     }
     if (glGetError() != GL_NO_ERROR) {
       printf(" Error setting GL_TEXTURE_COORD_ARRAY_EXT.\n");
     } 
 #else
     if ( planes.contour || planes.alpha) {
-      glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
+      //glEnable(GL_TEXTURE_COORD_ARRAY_EXT);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     } else {
-      glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
+      //glDisable(GL_TEXTURE_COORD_ARRAY_EXT);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     }
     if (glGetError() != GL_NO_ERROR) {
        printf(" Error setting GL_TEXTURE_COORD_ARRAY_EXT.\n");
@@ -252,7 +274,7 @@ int build_list_set
   vrpn_bool g_just_color_was_on = g_just_color;
   // If we are re-doing the whole surface, we don't need to then
   // re-do the color, so turn flag off.
-  if ( (subset.low() == 0) && (subset.high() == num_grid_lists -1) ) {
+  if ( (subset.low() == 0) && (subset.high() == num_lists -1) ) {
       g_just_color_was_on = 0;
   }
 
@@ -261,30 +283,23 @@ int build_list_set
   for (i = subset.low(); i <= subset.high(); i++) {
 
     if (spm_graphics_verbosity >= 10) {
-      fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
+        fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
     }
 
     glNewList(base + i, GL_COMPILE);
-
+    
     VERBOSECHECK(10);
-
-    if (g_VERTEX_ARRAY) {
-      count = (*stripfn)(planes, minColor, maxColor, i * g_stride,
-                         vertexptr[i]);
-      if (count == -1) {
-        fprintf(stderr, "build_list_set():  "
-                        "Internal error (with arrays) - bad strip\n");
+    
+    if ((*stripfn)(planes, minColor, maxColor, i, surface[i])) {
+        if (g_VERTEX_ARRAY) {
+            fprintf(stderr, "build_list_set():  "
+                    "Internal error - bad strip(vertex array)\n");
+        }
+        else {
+            fprintf(stderr, "build_list_set():  "
+                    "Internal error - bad strip\n");
+        }
         return -1;
-      }
-
-      specify_vertexArray(planes, i, count);
-    } else {
-      //      if ((*stripfn)(planes, minColor, maxColor, i * g_stride, NULL)) {
-      if ((*stripfn)(planes, minColor, maxColor, i * g_stride, vertexptr[i])) {
-        fprintf(stderr, "build_list_set():  "
-                        "Internal error - bad strip\n");
-        return -1;
-      }
     }
 
     if (spm_graphics_verbosity >= 10) {
@@ -299,7 +314,7 @@ int build_list_set
       // and vertices. 
       g_just_color = 1;
       // re-color the whole surface
-      for (i = 0; i < num_grid_lists; i++) {
+      for (i = 0; i < num_lists; i++) {
           
           if (spm_graphics_verbosity >= 10) {
               fprintf(stderr, "    newing list %d for strip %d.\n", base + i, i);
@@ -308,25 +323,18 @@ int build_list_set
           glNewList(base + i, GL_COMPILE);
           
           VERBOSECHECK(10);
-          
-          if (g_VERTEX_ARRAY) {
-              count = (*stripfn)(planes, minColor, maxColor, i * g_stride,
-                                 vertexptr[i]);
-              if (count == -1) {
+
+          if ((*stripfn)(planes, minColor, maxColor, i, surface[i])) {
+              if (g_VERTEX_ARRAY) {
                   fprintf(stderr, "build_list_set():  "
-                          "Internal error (with arrays) - bad strip\n");
-                  return -1;
+                          "Internal error - bad strip(vertex array)\n");
               }
-              
-              specify_vertexArray(planes, i, count);
-          } else {
-              //      if ((*stripfn)(planes, minColor, maxColor, i * g_stride, NULL)) {
-              if ((*stripfn)(planes, minColor, maxColor, i * g_stride, vertexptr[i])) {
+              else {
                   fprintf(stderr, "build_list_set():  "
                           "Internal error - bad strip\n");
-                  return -1;
               }
-          }
+              return -1;
+          }          
           
           if (spm_graphics_verbosity >= 10) {
               fprintf(stderr, "    updated %d.\n", i);
@@ -340,12 +348,18 @@ int build_list_set
   return 0;
 }
 
+/**********************************************************************
+ * Modified by Jason 11/19/00
+ *
+ * It's useful to not have to pass in the strip function to this
+ * procedure.  It makes the Visualization classes simpler
+ *
+ *********************************************************************/
 int build_list_set (
     nmb_Interval insubset,
     nmb_PlaneSelection planes,
-    int (* stripfn) (nmb_PlaneSelection, GLdouble [3],
-                     GLdouble [3], int, Vertex_Struct *),
-    int /*strips_in_x*/)
+    GLuint base, GLsizei num,
+    int strips_in_x, Vertex_Struct **surface)
 {
 
   v_gl_set_context_to_vlib_window(); 
@@ -362,22 +376,29 @@ int build_list_set (
   //nmb_Interval subset (MAX(0, insubset.low()),
                        //MIN(maxStrip - 1, insubset.high()));
 
-  nmb_Interval subset (MAX(0, insubset.low()),
-                       MIN(num_grid_lists - 1, insubset.high()));
+  int (* stripfn)
+    (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
 
-  if (!subset.empty()) {
-
-    if (spm_graphics_verbosity >= 8)
-      fprintf(stderr, "Deleting display lists from %d for %d.\n",
-              grid_list_base + subset.low(), subset.high() - subset.low() + 1);
-    glDeleteLists(grid_list_base + subset.low(),
-                  subset.high() - subset.low() + 1);
-    VERBOSECHECK(8);
+  if (strips_in_x) {
+    stripfn = spm_x_strip;
+  } else {
+    stripfn = spm_y_strip;
   }
-  // Always call build_list_set even if subset is empty
-  // in case color needs to be re-done. 
-  return build_list_set(subset, planes, grid_list_base,
-                        g_minColor, g_maxColor, stripfn);
+
+  nmb_Interval subset (MAX(0, insubset.low()),
+                       MIN(num - 1, insubset.high()));
+
+  if (!subset.empty()) {      
+      if (spm_graphics_verbosity >= 8)
+          fprintf(stderr, "Deleting display lists from %d for %d.\n",
+              base + subset.low(), subset.high() - subset.low() + 1);
+      glDeleteLists(base + subset.low(),
+                    subset.high() - subset.low() + 1);
+      VERBOSECHECK(8);
+  } 
+
+  return build_list_set(subset, planes, base, num,
+                        g_minColor, g_maxColor, stripfn, surface);
 }
 
 
@@ -388,32 +409,34 @@ int build_list_set (
  * 	It returns the base name of the display lists (which are
  * contiguous) and the number of lists that it generates.
  *	This routine returns -1 on failure and 0 on success.
+ *
+ *  Modified by JMC on 11/19/00
+ *  build_grid_display_lists now assumes that old_num specifies the old
+ *  number of lists allocated for the current base.  If old_num is less than
+ *  1, then it assumes that it is being called for the first time for
+ *  a particular base. 
  *************************************************************************/
 
 int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
-				 GLuint *base, GLsizei *num,
-				 GLdouble *minColor, GLdouble *maxColor)
+				 GLuint *base, GLsizei *num, GLsizei old_num,
+				 GLdouble *minColor, GLdouble *maxColor,
+				 Vertex_Struct **surface)
 {
        
   int (* stripfn)
     (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
-  
-  static	int	first_call = 1;	/* First time we were called? */
-  static	int	last_num_lists = 0;	// Number of lists before
-  
+ 
   VERBOSE(4,"     build_grid_display_lists in openGL.c");
   VERBOSECHECK(4);
   
   v_gl_set_context_to_vlib_window(); 
   
   /* If this is not the first time around, free the old display lists */
-  if (first_call) {
-    first_call = 0;		/* Won't be next time */
-  } else {
-    glDeleteLists(*base, last_num_lists);
-    if (spm_graphics_verbosity >= 6)
-      fprintf(stderr, "      deleted display lists "
-	      "from %d for %d.\n", *base, last_num_lists);
+  if (old_num > 0) {
+	  glDeleteLists(*base, old_num);
+	  if (spm_graphics_verbosity >= 6)
+	    	fprintf(stderr, "      deleted display lists "
+				"from %d for %d.\n", *base, old_num);
   }
   
   VERBOSE(4,"     build_grid_display_lists in openGL.c");
@@ -456,20 +479,20 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
 //#if defined(sgi)
   // use vertex array extension
   if (g_VERTEX_ARRAY) {
-    glEnable(GL_VERTEX_ARRAY_EXT);
-    // Color arrays are enabled/disabled dynamically depending
-    // on whether or not planes.color or g_PRERENDERED_COLORS are
-    // valid.
-    if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
-      glEnable(GL_NORMAL_ARRAY_EXT);
-    }
+      //glEnable(GL_VERTEX_ARRAY_EXT);
+      glEnableClientState(GL_VERTEX_ARRAY);
+      // Color arrays are enabled/disabled dynamically depending
+      // on whether or not planes.color or g_PRERENDERED_COLORS are
+      // valid.
+      if (!g_PRERENDERED_COLORS && !g_PRERENDERED_TEXTURE) {
+          //glEnable(GL_NORMAL_ARRAY_EXT);
+          glEnableClientState(GL_NORMAL_ARRAY);
+      }
   }
 #endif
   
-  build_list_set(nmb_Interval (0, *num - 1), planes, *base,
-		 minColor, maxColor, stripfn);
-  
-  last_num_lists = *num;	// Remember how many done this time
+  build_list_set(nmb_Interval (0, *num - 1), planes, *base, *num,
+		 minColor, maxColor, stripfn, surface);
   
   VERBOSE(4,"     done build_grid_display_lists in openGL.c");
   VERBOSECHECK(4);
@@ -484,8 +507,6 @@ int	build_grid_display_lists(nmb_PlaneSelection planes, int strips_in_x,
 #include "URender.h"
 extern UTree World;
 int draw_world (int) {
-
-  int i;
 
   v_gl_set_context_to_vlib_window(); 
   /********************************************************************/
@@ -515,7 +536,8 @@ int draw_world (int) {
   */
   
   planes.lookup(g_inputGrid, g_heightPlaneName, g_colorPlaneName,
-                g_contourPlaneName, g_opacityPlaneName, g_alphaPlaneName);
+                g_contourPlaneName, g_opacityPlaneName,
+				g_alphaPlaneName, g_maskPlaneName, g_transparentPlaneName);
 
   if (g_PRERENDERED_COLORS) {
     planes.lookupPrerenderedColors(g_prerendered_grid);
@@ -558,9 +580,7 @@ int draw_world (int) {
     
     VERBOSECHECK(4);
     VERBOSE(4,"    Rebuilding display lists (for new selected region)");
-    if (build_grid_display_lists(planes,
-				 display_lists_in_x, &grid_list_base,
-				 &num_grid_lists, g_minColor,g_maxColor)) {
+    if (!visualization->rebuildGrid()) {
       fprintf(stderr,
 	      "ERROR: Could not build grid display lists\n");
       dataset->done = V_TRUE;
@@ -590,9 +610,7 @@ int draw_world (int) {
 	
 	display_lists_in_x = 0;
 	VERBOSE(4,"    Rebuilding display lists (in y).");
-	if (build_grid_display_lists(planes,
-				     display_lists_in_x, &grid_list_base,
-				     &num_grid_lists, g_minColor,g_maxColor)) {
+	if (!visualization->rebuildGrid()) {
 	  fprintf(stderr,
 		  "ERROR: Could not build grid display lists\n");
 	  dataset->done = V_TRUE;
@@ -606,9 +624,7 @@ int draw_world (int) {
 	
 	display_lists_in_x = 1;
 	VERBOSE(4,"    Rebuilding display lists (in x).");
-	if (build_grid_display_lists(planes,
-				     display_lists_in_x, &grid_list_base,
-				     &num_grid_lists, g_minColor,g_maxColor)) {
+	if (!visualization->rebuildGrid()) {
 	  fprintf(stderr,
 		  "ERROR: Could not build grid display lists\n");
 	  dataset->done = V_TRUE;
@@ -658,19 +674,19 @@ int draw_world (int) {
   // rescans the same line of the sample more often than the graphics
   // process runs, that new data will never be drawn.
 
-  int (* stripfn)
-    (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
+//  int (* stripfn)
+//    (nmb_PlaneSelection, GLdouble [3], GLdouble [3], int, Vertex_Struct *);
 
-  static nmb_Interval last_marked;
-  nmb_Interval mark;
-  nmb_Interval update;
+//  static nmb_Interval last_marked;
+//  nmb_Interval mark;
+//  nmb_Interval update;
 
-  int direction;
+//  int direction;
 
   int low_row;
   int high_row;
-  int low_strip;
-  int high_strip;
+//  int low_strip;
+//  int high_strip;
 
   // Get the data (low and high X, Y vales changed) atomically
   // so we have bulletproof synchronization.
@@ -687,7 +703,7 @@ int draw_world (int) {
 
     low_row = g_minChangedY;
     high_row = g_maxChangedY;
-    stripfn = spm_x_strip;
+    //stripfn = spm_x_strip;
 
 //fprintf(stderr, "X row from %d to %d.\n", low_row, high_row);
 
@@ -695,7 +711,7 @@ int draw_world (int) {
 
     low_row = g_minChangedX;
     high_row = g_maxChangedX;
-    stripfn = spm_y_strip;
+    //stripfn = spm_y_strip;
 
 //fprintf(stderr, "Y row from %d to %d.\n", low_row, high_row);
 
@@ -703,101 +719,25 @@ int draw_world (int) {
 
   // Convert from rows to strips:  divide through by the tesselation stride
 
-  low_strip = MAX(0, low_row / g_stride);
-  high_strip = MIN(num_grid_lists, high_row / g_stride);
 
-//fprintf(stderr, "Strips from %d to %d.\n", low_strip, high_strip);
-
-  // Figure out what direction the scan has apparently progressed
-  // since the last time.  Heuristic, error-prone, but safe.  XXX
-
-  direction = 0;
-  if (low_strip >= last_marked.low()) direction++;
-  if (high_strip <= last_marked.high()) direction--;
-
-  if (spm_graphics_verbosity >= 6)
-    fprintf(stderr, "  Drawing in direction %d (from %d to %d).\n",
-            direction, low_strip, high_strip);
-  VERBOSECHECK(6)
-
-#ifdef EXPENSIVE_DISPLAY_LISTS
-
-  // Recompute as few display lists as necessary.  The rest will
-  // be recomputed on the next screen refresh, unless more data
-  // comes in from the scope.  Some vertical "tears" will be left
-  // in the rendered image.
-
-  switch (direction) {
-
-    case 1:
-      update = nmb_Interval (low_strip - 2, high_strip - 1);
-      mark = nmb_Interval (high_strip, high_strip + 2);
-      break;
-
-    case 0:
-
-      // leave update empty!
-      // XXX safer (but more work for the graphics pipe,
-      //     and probably unnecessary) might be
-      //     update = nmb_Interval (low_strip, high_strip);
-
-      mark = nmb_Interval (low_strip - 2, high_strip + 2);
-      break;
-
-    case -1:
-      //update = nmb_Interval (low_strip + 1, high_strip + 2);
-      //mark = nmb_Interval (low_strip - 2, low_strip);
-      update = nmb_Interval (low_strip - 1, high_strip + 2);
-      mark = nmb_Interval (low_strip - 2, low_strip - 2);
-      break;
+  if (!visualization->rebuildInterval(low_row, high_row, display_lists_in_x)) {
+	  return -1;
   }
-
-#else
-
-  // Recompute every display list that needs to be modified
-  // to reflect this change.  If we're in the middle of the
-  // scan many of these may have to be recomputed after the
-  // next set of data is received.
-
-  update = nmb_Interval (low_strip - 2, high_strip + 2);
-  // leave mark empty!
-
-#endif
-
-  if (spm_graphics_verbosity >= 6)
-    fprintf(stderr, "   Update set is %d - %d, last_marked is %d - %d, "
-                    "mark is %d - %d.\n",
-            update.low(), update.high(), last_marked.low(),
-            last_marked.high(), mark.low(), mark.high());
-  VERBOSECHECK(6)
-
-  // Draw this time what we have to update due to the most recent
-  // changes, plus what we delayed updating last time expecting them
-  // to overlap with the most recent changes, minus what we're delaying
-  // another frame expecting it to overlap with the next set of changes.
-  // NOTE:  this is not a correct implementation of interval subtraction.
-
-  nmb_Interval todo = last_marked - mark;
-
-  // If update and todo are contiguous, combine them and do them
-  // as a single interval;  otherwise, call build_list_set() twice
-
-  if (spm_graphics_verbosity >= 15)
-    fprintf(stderr, "  ");
-
-  if (update.overlaps(todo) ||
-      update.adjacent(todo)) {
+  /*
+  if (update.overlaps(todo) || update.adjacent(todo)) {
     if (build_list_set(update + todo, planes, stripfn, display_lists_in_x)) return -1;
-  } else {
+  } 
+  else {
     if (build_list_set(update, planes, stripfn, display_lists_in_x)) return -1;
     if (build_list_set(todo, planes, stripfn, display_lists_in_x)) return -1;
   }
+  */
 
   if (spm_graphics_verbosity >= 15)
     fprintf(stderr, "\n");
   VERBOSECHECK(15)
 
-  last_marked = mark;
+  //last_marked = mark;
 
 
   /* Draw grid using current viewing/modeling matrix */
@@ -805,209 +745,13 @@ int draw_world (int) {
   VERBOSE(4,"    Drawing the grid");
   TIMERVERBOSE(5, mytimer, "draw_world:Drawing the grid");
 
-  switch (g_texture_displayed) {
-    case nmg_Graphics::NO_TEXTURES:
-      // nothing to do here
-      break;
-    case nmg_Graphics::CONTOUR:
-      glBindTexture(GL_TEXTURE_1D, tex_ids[CONTOUR_1D_TEX_ID]);
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                         g_tex_blend_func[CONTOUR_1D_TEX_ID]);
-      break;
-    case nmg_Graphics::ALPHA:
-#if !(defined(__CYGWIN__) || defined(hpux) || defined(_WIN32))
-      glBindTexture(GL_TEXTURE_3D, tex_ids[ALPHA_3D_TEX_ID]);
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                         g_tex_blend_func[ALPHA_3D_TEX_ID]);
-#endif
-    case nmg_Graphics::RULERGRID:
-      glBindTexture(GL_TEXTURE_2D, tex_ids[RULERGRID_TEX_ID]);
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                         g_tex_blend_func[RULERGRID_TEX_ID]);
-      break;
-    case nmg_Graphics::COLORMAP:
-      glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                         g_tex_blend_func[COLORMAP_TEX_ID]);
-      glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR,
-                         g_tex_env_color[COLORMAP_TEX_ID]);
-      break;
-    case nmg_Graphics::SEM_DATA:
-      glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                         g_tex_blend_func[SEM_DATA_TEX_ID]);
-      glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR,
-                         g_tex_env_color[SEM_DATA_TEX_ID]);
-      break;
-    case nmg_Graphics::REMOTE_DATA:
-      glBindTexture(GL_TEXTURE_2D, tex_ids[REMOTE_DATA_TEX_ID]);
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, 
-                         g_tex_blend_func[REMOTE_DATA_TEX_ID]);
-      break;
-    default:
-      fprintf(stderr, "Error, unknown texture set for display\n");
-      break;
-  }
-
-#if !(defined(__CYGWIN__) || defined(_WIN32))
-  //#ifndef __CYGWIN__
-  if ((g_texture_mode == GL_TEXTURE_1D) ||
-      (g_texture_mode == GL_TEXTURE_3D_EXT)) {
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-  }
-#endif
-
-
-#ifdef PROJECTIVE_TEXTURE
-
-  if (g_texture_mode == GL_TEXTURE_2D) {
-    glPushAttrib(GL_TRANSFORM_BIT | GL_TEXTURE_BIT);
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_TEXTURE_GEN_S);
-    glEnable(GL_TEXTURE_GEN_T);
-    glEnable(GL_TEXTURE_GEN_R);
-    glEnable(GL_TEXTURE_GEN_Q);
-
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
-    glLoadIdentity();
-
-    double theta = 0.0;
-    GLdouble texture_matrix[16];
-    double x_scale_factor = 1.0, y_scale_factor = 1.0;
-    double x_offset = 0.0, y_offset = 0.0;
-
-    switch (g_texture_transform_mode) {
-      case nmg_Graphics::RULERGRID_COORD:
-        // use values from the older rulergrid adjustment interface
-        glScalef(1.0/g_rulergrid_scale,1.0/g_rulergrid_scale,1.0); // 1.0/SCALE
-        theta = asin(g_rulergrid_sin);
-        if (g_rulergrid_cos < 0)
-          theta = M_PI - theta;
-        glRotated(theta*180.0/M_PI, 0.0, 0.0, 1.0);              // -ROTATION
-        glTranslatef(-g_rulergrid_xoffset, -g_rulergrid_yoffset, 0.0);// -TRANS.
-        break;
-      case nmg_Graphics::MANUAL_REALIGN_COORD:
-        compute_texture_matrix(g_translate_tex_x, g_translate_tex_y,
-		g_tex_theta_cumulative, g_scale_tex_x,
-		g_scale_tex_y, g_shear_tex_x, g_shear_tex_y,
-		g_tex_coord_center_x, g_tex_coord_center_y,
-		texture_matrix);
-        glLoadMatrixd(texture_matrix);
-        break;
-      case nmg_Graphics::REGISTRATION_COORD:
-        glLoadIdentity();
-        // scale by actual texture image given divided by texture image used
-        // (i.e. the one actually in texture memory is a power of 2 but the
-        // one we were given had some smaller size)
-        switch (g_texture_displayed) {
-          case nmg_Graphics::NO_TEXTURES:
-          case nmg_Graphics::BUMPMAP:
-          case nmg_Graphics::HATCHMAP:
-          case nmg_Graphics::PATTERNMAP:
-          // nothing to do here
-            break;
-          case nmg_Graphics::RULERGRID:
-            x_scale_factor = (double)g_tex_image_width[RULERGRID_TEX_ID]/
-                             (double)g_tex_installed_width[RULERGRID_TEX_ID];
-            y_scale_factor = (double)g_tex_image_height[RULERGRID_TEX_ID]/
-                             (double)g_tex_installed_height[RULERGRID_TEX_ID];
-            x_offset = (double)g_tex_image_offsetx[RULERGRID_TEX_ID]/
-                       (double)g_tex_installed_width[RULERGRID_TEX_ID];
-            y_offset = (double)g_tex_image_offsety[RULERGRID_TEX_ID]/
-                       (double)g_tex_installed_height[RULERGRID_TEX_ID];
-            break;
-	    /*
-          case nmg_Graphics::GENETIC:
-            x_scale_factor = (double)g_tex_image_width[GENETIC_TEX_ID]/
-                             (double)g_tex_installed_width[GENETIC_TEX_ID];
-            y_scale_factor = (double)g_tex_image_height[GENETIC_TEX_ID]/
-                             (double)g_tex_installed_height[GENETIC_TEX_ID];
-            break;
-	    */
-          case nmg_Graphics::COLORMAP:
-            x_scale_factor = (double)g_tex_image_width[COLORMAP_TEX_ID]/
-                             (double)g_tex_installed_width[COLORMAP_TEX_ID];
-            y_scale_factor = (double)g_tex_image_height[COLORMAP_TEX_ID]/
-                             (double)g_tex_installed_height[COLORMAP_TEX_ID];
-            x_offset = (double)g_tex_image_offsetx[COLORMAP_TEX_ID]/
-                       (double)g_tex_installed_width[COLORMAP_TEX_ID];
-            y_offset = (double)g_tex_image_offsety[COLORMAP_TEX_ID]/
-                       (double)g_tex_installed_height[COLORMAP_TEX_ID];
-            break;
-          case nmg_Graphics::SEM_DATA:
-            x_scale_factor = (double)g_tex_image_width[SEM_DATA_TEX_ID]/
-                             (double)g_tex_installed_width[SEM_DATA_TEX_ID];
-            y_scale_factor = (double)g_tex_image_height[SEM_DATA_TEX_ID]/
-                             (double)g_tex_installed_height[SEM_DATA_TEX_ID];
-            x_offset = (double)g_tex_image_offsetx[SEM_DATA_TEX_ID]/
-                       (double)g_tex_installed_width[SEM_DATA_TEX_ID];
-            y_offset = (double)g_tex_image_offsety[SEM_DATA_TEX_ID]/
-                       (double)g_tex_installed_height[SEM_DATA_TEX_ID];
-            break;
-          case nmg_Graphics::REMOTE_DATA:
-            x_scale_factor = (double)g_tex_image_width[REMOTE_DATA_TEX_ID]/
-                             (double)g_tex_installed_width[REMOTE_DATA_TEX_ID];
-            y_scale_factor = (double)g_tex_image_height[REMOTE_DATA_TEX_ID]/
-                             (double)g_tex_installed_height[REMOTE_DATA_TEX_ID];
-            x_offset = (double)g_tex_image_offsetx[REMOTE_DATA_TEX_ID]/
-                       (double)g_tex_installed_width[REMOTE_DATA_TEX_ID];
-            y_offset = (double)g_tex_image_offsety[REMOTE_DATA_TEX_ID]/
-                       (double)g_tex_installed_height[REMOTE_DATA_TEX_ID];
-            break;
-          default:
-            fprintf(stderr, "Error, unknown texture set for display\n");
-            break;
-        }
-        // first we translate in texture coordinates
-        glTranslated(x_offset, y_offset, 0.0);
-        // then we scale from image coordinates to texture coordinates
-        glScaled(x_scale_factor, y_scale_factor, 1.0);
-        glMultMatrixd(g_texture_transform);
-	break;
-      //case nmg_Graphics::REMOTE_COORD;
-        //glLoadIdentity();
-      default:
-        fprintf(stderr, "Error, unknown texture coordinate mode\n");
-        break;
-    }
-  }
-#endif
-  
-  if (g_texture_mode == GL_TEXTURE_1D) {
-     glEnable(GL_TEXTURE_1D);
-  }
-
+  visualization->renderSurface();
+  /*
   for (i = 0; i < num_grid_lists; i++) {
     glCallList(grid_list_base + i);
   }
+  */
 
-  if (g_texture_mode == GL_TEXTURE_1D) {
-     glDisable(GL_TEXTURE_1D);
-  }
-
-
-#ifdef PROJECTIVE_TEXTURE
-
-  if (g_texture_mode == GL_TEXTURE_2D){
-    glMatrixMode(GL_TEXTURE);
-    glPopMatrix();
-
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_TEXTURE_GEN_S);
-    glDisable(GL_TEXTURE_GEN_T);
-    glDisable(GL_TEXTURE_GEN_R);
-    glDisable(GL_TEXTURE_GEN_Q);
-    glPopAttrib();
-  }
-
-#endif
-
-#ifdef RENDERMAN
-  // Save the viewing/modeling matrix to be used in RenderMan.c
-  glGetFloatv(GL_PROJECTION_MATRIX, cur_projection_matrix);
-  glGetFloatv(GL_MODELVIEW_MATRIX,  cur_modelview_matrix);
-#endif
 
   /*******************************************************/
   // Draw the parts of the scene other than the surface.

@@ -91,11 +91,11 @@ class nmg_Graphics {
 			 COLORMAP,
 			SEM_DATA, 
 			BUMPMAP, HATCHMAP, PATTERNMAP,
-                        REMOTE_DATA };
+                        REMOTE_DATA, VISUALIZATION };
 
     // how texture coordinates are computed:
     enum TextureTransformMode {RULERGRID_COORD, REGISTRATION_COORD, 
-		MANUAL_REALIGN_COORD, REMOTE_COORD};
+		MANUAL_REALIGN_COORD, REMOTE_COORD, PER_QUAD_COORD};
 
     // enums for Remote Rendering
     enum RemoteColorMode { NO_COLORS, VERTEX_COLORS, 
@@ -104,7 +104,6 @@ class nmg_Graphics {
     enum RemoteDepthMode { NO_DEPTH, VERTEX_DEPTH };
 
     enum RemoteProjectionMode { ORTHO_PROJECTION, PERSPECTIVE_PROJECTION };
-
 
     nmg_Graphics (vrpn_Connection *, const char * name);
 
@@ -132,6 +131,8 @@ class nmg_Graphics {
 
     virtual void loadRulergridImage (const char * name) = 0;
       // Specifies the name of a PPM file to display as the rulergrid.
+
+	virtual void loadVizImage (const char * name) = 0;
 
     virtual void causeGridReColor (void) = 0;
     virtual void causeGridRedraw (void) = 0;
@@ -218,6 +219,8 @@ class nmg_Graphics {
     virtual void setContourPlaneName (const char *) = 0;
     virtual void setOpacityPlaneName (const char *) = 0;
     virtual void setHeightPlaneName (const char *) = 0;
+    virtual void setMaskPlaneName (const char *) = 0;
+    virtual void setTransparentPlaneName (const char *) = 0;
 
     virtual void setIconScale (float) = 0;
       // Scale the 3D icons.
@@ -373,6 +376,9 @@ class nmg_Graphics {
        const ImageType  type
     ) = 0;
 
+	/*New visualization method.  Chooses which visualizaton to use */
+	virtual void chooseVisualization(int) = 0;
+
     // ACCESSORS
 
 
@@ -399,6 +405,7 @@ class nmg_Graphics {
 
     vrpn_int32 d_resizeViewport_type;
     vrpn_int32 d_loadRulergridImage_type;
+	vrpn_int32 d_loadVizImage_type;
     vrpn_int32 d_causeGridRedraw_type;
     vrpn_int32 d_causeGridRebuild_type;
     vrpn_int32 d_enableChartjunk_type;
@@ -427,7 +434,9 @@ class nmg_Graphics {
     vrpn_int32 d_setColorPlaneName_type;
     vrpn_int32 d_setContourPlaneName_type;
     vrpn_int32 d_setOpacityPlaneName_type;
+	vrpn_int32 d_setMaskPlaneName_type;
     vrpn_int32 d_setHeightPlaneName_type;
+	vrpn_int32 d_setTransparentPlaneName_type;
     vrpn_int32 d_setIconScale_type;
     vrpn_int32 d_setMinColor_type;
     vrpn_int32 d_setMaxColor_type;
@@ -491,6 +500,9 @@ class nmg_Graphics {
 
     //Screen capture
     vrpn_int32 d_createScreenImage_type;
+
+	//Visualization
+	vrpn_int32 d_chooseVisualization_type;
 
 
     // Each encode_ routine will allocate a new char [] to hold
@@ -710,6 +722,9 @@ class nmg_Graphics {
        char       **filename,
        ImageType   *type
     );
+
+	char *encode_chooseVisualization(int *len, int);
+	int decode_chooseVisualization(const char *buf, int *);
 };
 
 #endif  // NMG_GRAPHICS_H

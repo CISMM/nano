@@ -418,7 +418,41 @@ void buildContourTexture (void) {
 #endif
 }
 
+void buildVisualizationTexture(int width, int height, unsigned char *texture) {
+// make sure gl calls are directed to the right context
+  v_gl_set_context_to_vlib_window();
 
+  //printf("building rulergrid texture\n");
+  glBindTexture(GL_TEXTURE_2D, tex_ids[VISUALIZATION_TEX_ID]);
+
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+#ifdef _WIN32
+  float tex_color[4] = {1.0, 1.0, 1.0, 1.0};
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, CYGWIN_TEXTURE_FUNCTION);
+  glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, tex_color);
+#else
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+#endif
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+#if defined(sgi) || defined(_WIN32)
+  if (gluBuild2DMipmaps(GL_TEXTURE_2D, 4, width,
+                       height, GL_RGB,
+                       GL_UNSIGNED_BYTE, texture)!=0) { 
+      //fprintf(stderr, " Didn't make mipmaps, using texture instead.\n");
+    glTexImage2D(GL_TEXTURE_2D, 0, 4,
+                 width, height,
+                 0, GL_RGB, GL_UNSIGNED_BYTE,
+                 texture);
+    if (glGetError() != GL_NO_ERROR)
+      fprintf(stderr, " Error making ruler texture.\n");
+  }
+#endif 
+}
 
 void buildRulergridTexture (void) {
   // make sure gl calls are directed to the right context
@@ -491,8 +525,6 @@ void buildAlphaTexture (void) {
 
 
 void setupMaterials (void) {
-    // Obsolete function used for Pxfl setup
-
 }
 
 // rotation is in degrees

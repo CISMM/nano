@@ -7,6 +7,7 @@
   ===3rdtech===*/
 #include "graphics_globals.h"
 #include "nmg_Graphics.h" // for enums
+#include "nmg_Visualization.h"
 
 class BCGrid;  // from BCGrid.h
 class nmb_Subgrid;  // from nmb_Subgrid.h
@@ -198,9 +199,7 @@ float g_texture_scale = 10.0f;
 float g_trueTipLocation [3];
 float g_trueTipScale = 1.0f;
 
-// We are limited to one user, user zero in vlib
 int g_user_mode;
-int g_VERTEX_ARRAY = 0;
 
 int g_PRERENDERED_COLORS = 0;  // only used by remote rendering clients
 int g_PRERENDERED_TEXTURE = 0;  // only used by remote rendering clients
@@ -217,6 +216,26 @@ char g_colorPlaneName [128];
 char g_contourPlaneName [128];
 char g_heightPlaneName [128];
 char g_opacityPlaneName [128];
+char g_maskPlaneName [128];
+char g_transparentPlaneName [128];
+
+int g_mask = DISABLE_MASK;
+int g_transparent = 0;
+
+nmg_Visualization *visualization;
+
+PPM * g_vizPPM = NULL;
+
+//////////////////////////////////////////////////////////////////
+// Variables that define what GL can and can't do on the machine
+// we are running on.
+//////////////////////////////////////////////////////////////////
+
+int g_VERTEX_ARRAY = 0;
+
+//////////////////////////////////////////////////////////////////
+// End GL capabilities
+//////////////////////////////////////////////////////////////////
 
 // Local Variables:
 // mode:c++

@@ -5,6 +5,7 @@
 #include <BCGrid.h>
 #include <BCPlane.h>
 #include <nmb_TimerList.h>
+#include <nmg_Visualization.h>
 
 #include <GL/glu.h>  // for gluErrorString
 //#include <GL/glut.h>
@@ -575,13 +576,15 @@ nmg_Graphics_RenderClient_Implementation
 
   // vertex array is initialized by nmg_Graphics_Implementation, but
   // it gets the wrong size
+  // Remove the conditional on g_VERTEX_ARRAY on 12/8/00 by Jason
+  // Removed because the vertex arrays are used to store normals so
+  // they are always needed, and this conforms with nmg_Graphics_Implementation
 
-  if (g_VERTEX_ARRAY) {
-    if (!init_vertexArray(xsize, ysize)) {
-          fprintf(stderr," init_vertexArray: out of memory.\n");
-          exit(0);
-     }
+  if (!visualization->initVertexArrays(xsize, ysize)) {
+	  fprintf(stderr," initVertexArrays: out of memory.\n");
+      exit(0);
   }
+  
 
   d_dataset->inputGrid->registerMinMaxCallback(getNewBounds, this);
 

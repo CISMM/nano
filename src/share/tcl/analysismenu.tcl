@@ -218,3 +218,123 @@ pack $nmInfo(rulergrid).rulergrid_yoffset -side top -fill x -pady $fspady
 
 ## End rulergrid 
 
+#
+################################
+# Shape Analysis
+# This part of the script describes the framework for a control panel
+# for controlling the shape analysis code
+
+set nmInfo(shape_analysis) [create_closing_toplevel shape_analysis "Shape Analysis"]
+
+set framepady 0
+
+label $nmInfo(shape_analysis).label -text "Shape Analysis Parameters" 
+
+frame $nmInfo(shape_analysis).shapeframe
+button $nmInfo(shape_analysis).shapeframe.analyze_now -text "Analyze Now" -command {
+	set analyze_shape 1    
+}
+
+set shape_xscale 0
+set shape_yscale 0
+set shape_zscale 0
+set blurring 4
+set aspect_ratio 2
+set correlation 0.6
+set intensity_thresh 160
+set auto_adapt 1
+set shape_mask 1
+set shape_order 0
+set shape_mask_file ""
+set shape_order_file ""
+
+
+generic_entry $nmInfo(shape_analysis).shape_xscale shape_xscale \
+	"X scale (pixel to nm)" real
+
+generic_entry $nmInfo(shape_analysis).shape_yscale shape_yscale \
+	"Y scale (pixel to nm)" real
+
+generic_entry $nmInfo(shape_analysis).shape_zscale shape_zscale \
+	"Z scale (pixel to nm)" real
+
+generic_entry $nmInfo(shape_analysis).blurring blurring \
+	"Image Blurring" real
+
+generic_entry $nmInfo(shape_analysis).aspect_ratio aspect_ratio \
+	"Aspect ratio for CNT recognition" real
+
+generic_entry $nmInfo(shape_analysis).correlation correlation \
+	"Correlation factor for CNT fitting" real
+
+generic_entry $nmInfo(shape_analysis).intensity_thresh intensity_thresh \
+	"Intensity threshold for CNT recognition" real
+
+checkbutton $nmInfo(shape_analysis).auto_adapt \
+	-text "Auto-Adaption" -variable auto_adapt \
+	-anchor nw
+
+checkbutton $nmInfo(shape_analysis).shape_mask \
+	-text "Output Mask File" -variable shape_mask \
+	-anchor nw
+
+checkbutton $nmInfo(shape_analysis).shape_order \
+	-text "Output Order File" -variable shape_order \
+	-anchor nw
+
+generic_entry $nmInfo(shape_analysis).shape_mask_file shape_mask_file \
+	"Image Mask File Name" ""
+
+generic_entry $nmInfo(shape_analysis).shape_order_file shape_order_file \
+	"Image Order File Name" ""
+
+
+iwidgets::Labeledwidget::alignlabels \
+        $nmInfo(shape_analysis).shape_xscale \
+        $nmInfo(shape_analysis).shape_yscale \
+		$nmInfo(shape_analysis).shape_zscale \
+		$nmInfo(shape_analysis).blurring \
+		$nmInfo(shape_analysis).aspect_ratio \
+		$nmInfo(shape_analysis).correlation \
+		$nmInfo(shape_analysis).intensity_thresh \
+		$nmInfo(shape_analysis).shape_mask_file \
+		$nmInfo(shape_analysis).shape_order_file 
+#pack $nmInfo(shape_analysis).label -side top -anchor nw
+
+#pack the x scale
+pack $nmInfo(shape_analysis).shape_xscale -side top -fill x -pady $fspady
+#pack the y scale
+pack $nmInfo(shape_analysis).shape_yscale -side top -fill x -pady $fspady
+#pack the z scale
+pack $nmInfo(shape_analysis).shape_zscale -side top -fill x -pady $fspady
+
+#pack blurring
+pack $nmInfo(shape_analysis).blurring -side top -fill x -pady $fspady
+#pack the aspect ratio
+pack $nmInfo(shape_analysis).aspect_ratio -side top -fill x -pady $fspady
+#pack correlation
+pack $nmInfo(shape_analysis).correlation -side top -fill x -pady $fspady
+#pack intensity threshold
+pack $nmInfo(shape_analysis).intensity_thresh -side top -fill x -pady $fspady
+#pack mask file
+pack $nmInfo(shape_analysis).shape_mask_file -side top -fill x -pady $fspady
+#pack order file
+pack $nmInfo(shape_analysis).shape_order_file -side top -fill x -pady $fspady
+
+#pack the auto adaption checkbutton
+pack $nmInfo(shape_analysis).auto_adapt \
+	-anchor nw -side top -fill x -pady $fspady
+
+#pack the mask checkbutton
+pack $nmInfo(shape_analysis).shape_mask \
+	-anchor nw -side top -fill x -pady $fspady
+
+#pack the order checkbutton
+pack $nmInfo(shape_analysis).shape_order \
+	-anchor ne -side top -fill x -pady $fspady
+
+#pack the analyze now button
+pack $nmInfo(shape_analysis).shapeframe -side top -fill x
+pack $nmInfo(shape_analysis).shapeframe.analyze_now -side left -fill x
+
+## End shape_analysis

@@ -9,6 +9,7 @@ class PPM;  // from PPM.h
 
 void setupMaterials (void);  // for initialization
 
+void buildVisualizationTexture(int width, int height, unsigned char *texture);
 void buildContourTexture (void);  // for update
 void buildRemoteRenderedTexture (int width, int height, void *);
 void makeCheckImage (void);

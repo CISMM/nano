@@ -1,3 +1,15 @@
+2001-01-14  Jason Clark  <jclark@cs.unc.edu>
+
+	* nmb_PlaneSelection.h: Added two new planes, mask and transparency.
+
+	* nmb_PlaneSelection.C: Added two new planes, mask and transparency.
+
+	* nmb_Dataset.h: Added two new planes, mask and transparency.
+
+	* nmb_Dataset.C: Added two new planes, mask and transparency.
+	Mask is used to control multi-pass drawing of the surface, and
+	transparency is just for controlling the alpha value at each vertex.
+
 2001-01-08  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmb_SharedDevice.h:  tweak comments

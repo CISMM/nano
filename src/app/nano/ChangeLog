@@ -1,3 +1,10 @@
+2001-01-14  Jason Clark  <jclark@cs.unc.edu>
+
+	* microscape.c: Modified to use new Shape Analysis code and to
+	use new "Visualization" code.
+
+	* Makefile (USES_LIBS): Added new lib nmAnalyze
+
 2001-01-14  Tom Hudson  <hudson@cs.unc.edu>
 
         * microscape.c (MicroscapeInitializationState) : add members

@@ -43,6 +43,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
                                                      q_vec_type &ur);
     virtual void loadRulergridImage (const char * name);
+	virtual void loadVizImage (const char * name);
     virtual void causeGridReColor (void);
     virtual void causeGridRedraw (void);
     virtual void causeGridRebuild (void);
@@ -72,6 +73,8 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void setColorPlaneName (const char *);
     virtual void setContourPlaneName (const char *);
     virtual void setOpacityPlaneName (const char *);
+	virtual void setTransparentPlaneName (const char *);
+	virtual void setMaskPlaneName (const char *);
     virtual void setHeightPlaneName (const char *);
     virtual void setIconScale (float);
     virtual void enableCollabHand (vrpn_bool);
@@ -143,6 +146,7 @@ class nmg_Graphics_Timer : public nmg_Graphics {
     virtual void createScreenImage (const char * filename,
                                     const ImageType type);
     virtual void setViewTransform (v_xform_type);
+	virtual void chooseVisualization(int);
 
 
     virtual void getLightDirection (q_vec_type *) const;

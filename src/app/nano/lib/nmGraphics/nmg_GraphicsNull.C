@@ -115,6 +115,7 @@ void nmg_Graphics_Null::getDisplayPosition (q_vec_type & /* ll */,
                                             q_vec_type & /* ur */) {}
 
 void nmg_Graphics_Null::loadRulergridImage (const char * ) {}
+void nmg_Graphics_Null::loadVizImage (const char * ) {}
 void nmg_Graphics_Null::enableChartjunk (int ) {}
 void nmg_Graphics_Null::enableFilledPolygons (int ) {}
 void nmg_Graphics_Null::enableSmoothShading (int ) {}
@@ -205,6 +206,10 @@ void nmg_Graphics_Null::createScreenImage
    const char      *filename,
    const ImageType  type
 ) {}
+
+void nmg_Graphics_Null::chooseVisualization(int viz_type)
+{
+}
 
 void nmg_Graphics_Null::getLightDirection (q_vec_type *) const {}
 

@@ -68,6 +68,10 @@ void nmg_Graphics_Timer::loadRulergridImage (const char * name) {
   d_imp->loadRulergridImage(name);
 }
 
+void nmg_Graphics_Timer::loadVizImage (const char * name) {
+  activateTimer();
+  d_imp->loadVizImage(name);
+}
 
 void nmg_Graphics_Timer::causeGridReColor (void) {
   activateTimer();
@@ -231,9 +235,19 @@ void nmg_Graphics_Timer::setContourPlaneName (const char * n) {
   d_imp->setContourPlaneName(n);
 }
 
+void nmg_Graphics_Timer::setTransparentPlaneName (const char * n) {
+  activateTimer();
+  d_imp->setTransparentPlaneName(n);
+}
+
 void nmg_Graphics_Timer::setOpacityPlaneName (const char * n) {
   activateTimer();
   d_imp->setOpacityPlaneName(n);
+}
+
+void nmg_Graphics_Timer::setMaskPlaneName (const char * n) {
+  activateTimer();
+  d_imp->setMaskPlaneName(n);
 }
 
 void nmg_Graphics_Timer::setHeightPlaneName (const char * n) {
@@ -546,6 +560,12 @@ void nmg_Graphics_Timer::createScreenImage
 {
   activateTimer();
   d_imp->createScreenImage(filename, type);
+}
+
+void nmg_Graphics_Timer::chooseVisualization(int viz_type)
+{
+  activateTimer();
+  d_imp->chooseVisualization(viz_type);
 }
 
 void nmg_Graphics_Timer::setViewTransform (v_xform_type x) {

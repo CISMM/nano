@@ -21,9 +21,10 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
                                  const int minColor [3],
                                  const int maxColor [3],
                                  const char * rulergridName = NULL,
+                                 const char * vizName = NULL,
                                  vrpn_Connection * = NULL,
                                  unsigned int portNum = 4503);
-
+    
     virtual ~nmg_Graphics_Implementation (void);
 
     virtual void mainloop (void);
@@ -33,7 +34,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void getViewportSize(int *width, int * height);
 
     virtual void loadRulergridImage (const char *);
-
+    virtual void loadVizImage (const char *);
+    
     virtual void causeGridReColor (void);
     virtual void causeGridRedraw (void);
     virtual void causeGridRebuild (void);
@@ -76,6 +78,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setContourPlaneName (const char *);
     virtual void setOpacityPlaneName (const char *);
     virtual void setHeightPlaneName (const char *);
+    virtual void setMaskPlaneName (const char *);
+    virtual void setTransparentPlaneName (const char *);
 
     virtual void setIconScale (float);
 
@@ -171,6 +175,9 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual void setViewTransform (v_xform_type);
     virtual void createScreenImage(const char *filename, const ImageType type);
 
+	/*New visualization method.  Chooses which visualizaton to use */
+	virtual void chooseVisualization(int);
+
     // ACCESSORS
 
     virtual void getDisplayPosition (q_vec_type &ll, q_vec_type &ul,
@@ -195,6 +202,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     virtual void initializeTextures (void);
     virtual void makeAndInstallRulerImage(PPM *myPPM);
+	void makeAndInstallVizImage(PPM *myPPM);
 
     // initializes all texture objects
 
@@ -222,6 +230,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     static int handle_resizeViewport (void *, vrpn_HANDLERPARAM);
     static int handle_loadRulergridImage (void *, vrpn_HANDLERPARAM);
+	static int handle_loadVizImage (void *, vrpn_HANDLERPARAM);
     static int handle_causeGridRedraw (void *, vrpn_HANDLERPARAM);
     static int handle_causeGridRebuild (void *, vrpn_HANDLERPARAM);
     static int handle_enableChartjunk (void *, vrpn_HANDLERPARAM);
@@ -251,6 +260,8 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     static int handle_setContourPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setOpacityPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setHeightPlaneName (void *, vrpn_HANDLERPARAM);
+	static int handle_setMaskPlaneName (void *, vrpn_HANDLERPARAM);
+	static int handle_setTransparentPlaneName (void *, vrpn_HANDLERPARAM);
     static int handle_setMinColor (void *, vrpn_HANDLERPARAM);
     static int handle_setMaxColor (void *, vrpn_HANDLERPARAM);
     static int handle_setPatternMapName (void *, vrpn_HANDLERPARAM);
@@ -309,6 +320,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
   static int handle_setViewTransform (void *, vrpn_HANDLERPARAM);
   static int handle_createScreenImage(void *, vrpn_HANDLERPARAM);
+  static int handle_chooseVisualization(void *, vrpn_HANDLERPARAM);
 };
 
 #endif  // NMG_GRAPHICS_IMPL_H

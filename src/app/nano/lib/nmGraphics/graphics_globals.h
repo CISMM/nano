@@ -199,7 +199,6 @@ extern float g_trueTipLocation [3];
 extern float g_trueTipScale;
 
 extern int g_user_mode;
-extern int g_VERTEX_ARRAY;
 
 extern int g_PRERENDERED_COLORS;
 extern int g_PRERENDERED_TEXTURE;
@@ -209,7 +208,7 @@ extern Position_list * g_positionList;
 extern Position_list * g_positionListL;  // for the left side of the sweep marker
 extern Position_list * g_positionListR;  // for the right side of the sweep marker
 
-#define N_TEX 7
+#define N_TEX 8
 #define CONTOUR_1D_TEX_ID       0
 #define ALPHA_3D_TEX_ID         1
 #define RULERGRID_TEX_ID        2
@@ -217,7 +216,7 @@ extern Position_list * g_positionListR;  // for the right side of the sweep mark
 #define COLORMAP_TEX_ID         4  // used for realign
 #define SEM_DATA_TEX_ID         5
 #define REMOTE_DATA_TEX_ID      6
-
+#define VISUALIZATION_TEX_ID	7
 
 #define NMG_DEFAULT_IMAGE_WIDTH (512)
 #define NMG_DEFAULT_IMAGE_HEIGHT (512)
@@ -250,8 +249,43 @@ extern char g_colorPlaneName [128];
 extern char g_contourPlaneName [128];
 extern char g_heightPlaneName [128];
 extern char g_opacityPlaneName [128];
+extern char g_maskPlaneName [128];
+extern char g_transparentPlaneName [128];
 
 extern BCGrid * g_inputGrid;
+struct Vertex_Struct;
+extern Vertex_Struct **vertexptr;
+
+//////////////////////////////////////////////////////////////////
+// Visualization Section
+//////////////////////////////////////////////////////////////////
+
+#define DISABLE_MASK 0
+#define ENABLE_MASK 1
+#define INVERT_MASK -1
+
+extern int g_mask;
+extern int g_transparent;
+
+class nmg_Visualization;
+extern nmg_Visualization * visualization;
+
+extern PPM * g_vizPPM;
+
+//////////////////////////////////////////////////////////////////
+// End Visualization Section
+//////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////
+// Variables that define what GL can and can't do on the machine
+// we are running on.
+//////////////////////////////////////////////////////////////////
+
+extern int g_VERTEX_ARRAY;
+
+//////////////////////////////////////////////////////////////////
+// End GL capabilities
+//////////////////////////////////////////////////////////////////
 
 #endif  // GRAPHICS_GLOBALS_H
 

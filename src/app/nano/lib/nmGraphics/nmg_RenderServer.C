@@ -24,9 +24,10 @@ nmg_Graphics_RenderServer::nmg_Graphics_RenderServer
                                  RemoteProjectionMode pMode,
                                  int xsize, int ysize,
                                  const char * rulergridName,
+								 const char * vizName,
                                  vrpn_Connection * controlConnection) :
-    nmg_Graphics_Implementation (data, minColor, maxColor, rulergridName,
-                                 controlConnection),
+    nmg_Graphics_Implementation (data, minColor, maxColor, rulergridName, 
+								 vizName, controlConnection),
     //d_colorMode (cMode),
     //d_depthMode (dMode),
     d_pixelBuffer (NULL),

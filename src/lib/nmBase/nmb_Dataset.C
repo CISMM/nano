@@ -73,6 +73,8 @@ nmb_Dataset::nmb_Dataset
                                 topoFile)),
   range_of_change (inputGrid),   // reference to pointer!
 
+  transparentPlaneName (string_allocator("none")),
+  maskPlaneName (string_allocator("none")),
   alphaPlaneName (string_allocator("none")),
   colorPlaneName (string_allocator("none")),
   colorMapName (string_allocator("none")),

@@ -1,0 +1,20 @@
+2001-01-14  Jason Clark  <jclark@cs.unc.edu>
+
+	* ppm.h: Initial Creation
+
+	* ppm.C: Initial Creation
+
+	* nma_ShapeAnalyze.h: Initial Creation
+
+	* nma_ShapeAnalyze.C: Initial Creation
+
+	* cnt_ps.h: Initial Creation
+
+	* cnt_ia.h: Initial Creation
+
+	* cnt_ia.C: Initial Creation
+
+	* cnt_filter.C: Initial Creation
+
+	* Makefile (USES_LIBS): Initial Creation
+

@@ -28,6 +28,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
                                                 q_vec_type &ur);
 
     virtual void loadRulergridImage (const char *);
+	virtual void loadVizImage (const char *);
 
     virtual void causeGridReColor (void);
     virtual void causeGridRedraw (void);
@@ -71,7 +72,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
     virtual void setContourPlaneName (const char *);
     virtual void setOpacityPlaneName (const char *);
     virtual void setHeightPlaneName (const char *);
-
+	virtual void setMaskPlaneName (const char *);
+	virtual void setTransparentPlaneName (const char *);
 
     virtual void setIconScale (float);
 
@@ -163,6 +165,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     virtual void createScreenImage(const char *filename, const ImageType type);
 
+	virtual void chooseVisualization(int);
     // ACCESSORS
 
 

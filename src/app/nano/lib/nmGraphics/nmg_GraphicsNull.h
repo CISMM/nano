@@ -31,6 +31,7 @@ class nmg_Graphics_Null : public nmg_Graphics {
 					q_vec_type &ur);
 
     virtual void loadRulergridImage (const char *);
+	virtual void loadVizImage (const char *);
 
     virtual void enableChartjunk (int);
     virtual void enableFilledPolygons (int);
@@ -130,6 +131,7 @@ class nmg_Graphics_Null : public nmg_Graphics {
 
     virtual void createScreenImage(const char *filename, const ImageType type);
 
+	virtual void chooseVisualization(int);
     // ACCESSORS
 
 
