@@ -78,6 +78,8 @@ pid_t getpid();
 #ifdef	PROJECTIVE_TEXTURE
 // Registration
 #include "alignerUI.h"
+// 
+#include "RobotControl.h"
 #endif
 
 #include "x_util.h" /* qliu */
@@ -806,6 +808,10 @@ nms_SEM_ui * sem_ui = NULL;
 
 // Controls for registration
 AlignerUI * aligner_ui = NULL;
+
+#ifdef NANO_WITH_ROBOT
+RobotControl * robotControl = NULL;
+#endif
 
 // Scales how much normal force is felt when using Direct Z Control
 Tclvar_float_with_scale	directz_force_scale("directz_force_scale",".sliders", 0,1, 0.1);
@@ -5466,7 +5472,12 @@ printf("nM_coord_change_server initialized\n");
     // Registration - displays images with glX or GLUT depending on V_GLUT
     // flag
     aligner_ui = new AlignerUI(graphics, dataset->dataImages,
-        get_the_interpreter(), tcl_script_dir);
+      get_the_interpreter(), tcl_script_dir);
+
+  #ifdef NANO_WITH_ROBOT
+    robotControl = new RobotControl(microscope, dataset);
+    robotControl->show();
+  #endif
 #endif
 
 
@@ -5783,8 +5794,13 @@ VERBOSE(1, "Entering main loop");
 
 #ifdef	PROJECTIVE_TEXTURE
     if (aligner_ui) {
-      aligner_ui->mainloop();
+       aligner_ui->mainloop();
     }
+
+  #ifdef NANO_WITH_ROBOT
+    if (robotControl)
+       robotControl->mainloop();
+  #endif
 #endif
 
     /* Run the Tk control panel checker if we are using them */
