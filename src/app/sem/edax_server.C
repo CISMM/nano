@@ -20,6 +20,7 @@ int main(int argc, char **argv)
     sem = new nmm_Microscope_SEM_EDAX("SEM", &connection);
 
     while (1){
+        vrpn_SleepMsecs(10.0);
         sem->mainloop();
         connection.mainloop();
     }
