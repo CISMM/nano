@@ -139,6 +139,10 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
       ///< state.modify (P/I/D gain, setpoint, amplitude, top & bottom
       ///< delay, z_pull, punch distance, speed, watchdog)
 
+	long FinishFreehand (void);
+	  ///<   Signals finish of a freehand positioning of the tip using either
+	  ///<   imaging parameters or modify parameters 
+
     long GetNewPointDatasets (const Tclvar_list_of_strings *, 
                                        Tclvar_int*[],Tclvar_int*[]);
     long GetNewScanDatasets (const Tclvar_list_of_strings *, 

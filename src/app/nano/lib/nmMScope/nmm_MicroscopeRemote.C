@@ -485,6 +485,11 @@ long nmm_Microscope_Remote::ImageMode (void) {
   return 0;
 }
 
+long nmm_Microscope_Remote::FinishFreehand (void) {
+    fprintf(stderr, "nmm_Microscope_Remote::FinishFreehand: needs to be implemented\n");
+	
+	return 0;
+}
 
 long nmm_Microscope_Remote::GetNewPointDatasets
                            (const Tclvar_list_of_strings * channel_list,
@@ -1899,17 +1904,16 @@ void nmm_Microscope_Remote::DisplayModResult (float _x, float _y,
   if (state.acquisitionMode == MODIFY) {
     if (((unsigned) x < (unsigned) d_dataset->inputGrid->numX()) &&
         ((unsigned) y < (unsigned) d_dataset->inputGrid->numY())) {
-      top[2] = heightPlane->value(x, y);
       if (_checkZ) {
         if (_z) {
-          // what if scale changes?
-          top[2] = _z->value();// * heightPlane->scale();
+          // what if scale changes? - scaling is taken care of in display code
+          top[2] = _z->value();
         } else {
-          top[2] = top[2];
-        }
+          top[2] = heightPlane->value(x, y);
+		}
       } else {
-        // what if scale changes?
-        top[2] = _height;// * heightPlane->scale();
+        // what if scale changes? - scaling is taken care of in display code
+        top[2] = _height;
       }
       bottom[2] = top[2];
       //if (glenable)

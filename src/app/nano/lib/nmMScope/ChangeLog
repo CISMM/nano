@@ -1,3 +1,8 @@
+2002-10-08  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_MicroscopeRemote.[C/hdef] (FinishFreehand): new function
+    (DisplayModResult): removed some redundant code and updated comments
+
 2002-07-02 Jameson Miller <millerj@cs.unc.edu>
 	* DirectStep.C (h) - changed handle functions so that you can step along
 	 user defined axis.

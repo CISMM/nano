@@ -894,8 +894,7 @@ RECEIVE_MSG PointResultData nmm_Monitor {
                      0.0f, z_value, VRPN_TRUE);
   }
   if (state.modify.this_mod_fc == VRPN_FALSE)	{
-//      if (ohmmeter !=NULL) {
-        if (lastResistanceReceived >= 0) {
+      if (lastResistanceReceived >= 0) {
           // HACK - to get ohmmeter data in point results
           char *res_channel_name = "Resistance";
           char *res_channel_unit = "Ohms";
@@ -912,7 +911,7 @@ RECEIVE_MSG PointResultData nmm_Monitor {
               pv->setValue(lastResistanceReceived);
           }
           // END HACK
-        }
+       }
      
         // We need point results to feel what we are doing but we
         // don't want to store them in a modfile because its being used to
