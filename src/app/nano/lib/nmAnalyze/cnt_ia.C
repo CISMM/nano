@@ -941,38 +941,6 @@ void CNT_IA::cnt_image_order(char *txtFile)
 	}
 
 
-        // Compute height of nanotube.  // NEW (whole block)
-        double heightSum = 0.0;
-        double heightMax, heightAve;
-        count = 0;
-        for ( y=0; y<cnt_image_y; y++ ) {
-                for ( x=0; x<cnt_image_x; x++ ) {
-                        id0 = y * cnt_image_x + x;
-                        if (cnt_image_Ord[id0] > 0.0) {
-                                theta = cnt_image_Vpp[id0] * 3.14159265359;
-                                theta = fabs(theta);
-                                dx = sin(theta);
-                                dy = cos(theta);
-                                heightMax = 0;
-                                for ( i=-TUBEWID/2; i<=TUBEWID/2; i++) {
-                                        id1 = int(y+i*dx+0.5) * cnt_image_x + int(x-i*dy+0.5);
-					if ( cnt_image[id1] > heightMax )  // NEWEST -- used to be cnt_image_Hgt
-						heightMax = cnt_image[id1];  // NEWEST -- used to be cnt_image_Hgt
-                                }
-//                              idLeft = int(y+dx+0.5) * cnt_image_x + int(x-dy+0.5);
-//                              idRight = int(y-dx+0.5) * cnt_image_x + int(x+dy+0.5);
-//                              heightMax = 0;//{replace w/ height[id0], from nano info}
-//                              if ( 1 )//{height[idLeft] > heightMax}
-//                                      heightMax = 1;//{height[idLeft]}
-//                              if ( 2 )//{height[idRight] > heightMax}
-//                                      heightMax = 2;//{height[idRight]}
-                                heightSum += heightMax;
-                                count++;
-                        }
-                }
-        }
-        heightAve = heightSum / count;
-                
         // Compute 3D info.  // NEW (whole block) 
         int prevId, nextId;
         int prevX, prevY, nextX, nextY;
@@ -1242,10 +1210,9 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
 						dist[maxID] = -1.0;
 					}
 
-/////////////////
-/* 3D STUFF TEMPORARILY REMOVED -- BUGGY */
-/////////////////
-				        // Compute 3D info.
+
+				        // COMPUTE 3D INFO.
+
 				        int prevId, nextId;
 				        int prevX, prevY, nextX, nextY;
 					double dx, dy, theta;
@@ -1257,38 +1224,88 @@ void CNT_IA::cnt_image_select(char *txtFile, const char *fileName)
         				double *Y3D = new double [count];
         				double *Z3D = new double [count];
 
+        				int *valid = new int [count];
+					double *tempXs 	= new double [count];
+					double *tempYs  = new double [count];
+					double *tempX3D = new double [count];
+					double *tempY3D = new double [count];
+					double *tempZ3D = new double [count];
+					double *tempaz  = new double [count];
+					double *tempalt = new double [count];
+
+					// Order medial axis points.
+					for ( j=0; j<count; j++ ) {
+						i = ord[j];
+						tempXs[i]  = Xs[j];
+						tempYs[i]  = Ys[j];
+						tempX3D[i] = X3D[j];
+						tempY3D[i] = Y3D[j];
+						tempZ3D[i] = Z3D[j];
+						tempaz[i]  = az[j];
+						tempalt[i] = alt[j];
+					}
+					for ( i=0; i<count-1; i++ ) {
+						Xs[i]  = tempXs[i];
+						Ys[i]  = tempYs[i];
+						X3D[i] = tempX3D[i];
+						Y3D[i] = tempY3D[i];
+						Z3D[i] = tempZ3D[i];
+						az[i]  = tempaz[i];
+						alt[i] = tempalt[i];
+					}
+
+					// Consider outliers (i.e., points with no neighbors) invalid.
+					for ( i=0; i<count-1; i++ ) {
+						valid[i] = 1;
+					}
+					for ( i=1; i<count-1; i++ ) {
+						tempDist = sqrt(double((Xs[i+1]-Xs[i])*(Xs[i+1]-Xs[i]) + (Ys[i+1]-Ys[i])*(Ys[i+1]-Ys[i])));
+						if (tempDist > 1.5) {  // Significantly bigger than sqrt(2).
+							valid[i-1] = 0;
+							valid[i] = 0;
+							valid[i+1] = 0;
+						}
+					}
+
+					// Compute azimuth, altitude, and (X3D,Y3D,Z3D) coordinates.
 				        for ( i=0; i<count; i++ ) { 
         				        id0 = Ys[i] * cnt_image_x + Xs[i];
 
 				                // Find the azimuth and altitude of the axis direction at the current location.
-                				if ( i==0 ) {
+                				if ( i<=1 ) {
                 				        prevX = Xs[i];
                         				prevY = Ys[i];
 				                }
-				                else {
-                				        prevX = Xs[i-1];
-				                        prevY = Ys[i-1];
+				                else if ( i<=3 ) {
+                				        prevX = Xs[i-2];
+				                        prevY = Ys[i-2];
 				                }
-        				        if ( i==count-1 ) {
+						else {
+                				        prevX = Xs[i-4];
+				                        prevY = Ys[i-4];
+				                }
+        				        if ( i>=count-2 ) {
 				                        nextX = Xs[i];
                 				        nextY = Ys[i];
 				                }
+        				        else if ( i>=count-4 ) {
+				                        nextX = Xs[i+2];
+                				        nextY = Ys[i+2];
+				                }
 				                else {
-                				        nextX = Xs[i+1];
-				                        nextY = Ys[i+1];
+                				        nextX = Xs[i+4];
+				                        nextY = Ys[i+4];
 				                }
                 				prevId = prevY * cnt_image_x + prevX;
                 				nextId = nextY * cnt_image_x + nextX;
-if ((prevId > 1000) && (nextId > 1000) && (prevId < 1000000) && (nextId < 1000000)) {
-				                prevZ = cnt_image[prevId];
-                				nextZ = cnt_image[nextId];
-}
+			                	prevZ = cnt_image[prevId];
+               					nextZ = cnt_image[nextId];
 				                dx = double (nextX - prevX);
                 				dy = double (nextY - prevY);
 				                dz = nextZ - prevZ;
-                				theta = cnt_image_Vpp[id0] * 3.14159265359;
-				                theta = fabs(theta);
-				                az[i] = theta;
+//                				theta = cnt_image_Vpp[id0] * 3.14159265359;
+//				                theta = fabs(theta);
+				                az[i] = atan2(dy, dx);
                 				alt[i] = atan2(dz, sqrt(dx*dx+dy*dy));
 
 				                // Find the radius of curvature of the tube at the current location.
@@ -1300,17 +1317,17 @@ if ((prevId > 1000) && (nextId > 1000) && (prevId < 1000000) && (nextId < 100000
 						rad_of_curv[i] *= cos(alt[i]);
 
 				                // Find the 3D medial axis location corresponding to the current image (tube top) point.
-				                if ( alt > 0 ) {    
+				                if ( alt[i] > 0 ) {    
                         				norm_alt = alt[i] - 3.14159265359/2;
-				                        dx = sin(theta);
-                				        dy = cos(theta);  
+				                        dx = sin(az[i]);
+                				        dy = cos(az[i]);  
 				                        dz = tan(norm_alt);
 				                }
-                				else if ( alt < 0 ) {
+                				else if ( alt[i] < 0 ) {
                         				norm_alt = alt[i] + 3.14159265359/2;
-				                        dx = -sin(theta);
-                				        dy = -cos(theta);
-				                        dz = -tan(theta);
+				                        dx = -sin(az[i]);
+                				        dy = -cos(az[i]);
+				                        dz = -tan(norm_alt);
 				                }
                 				mag = rad_of_curv[i] / sqrt(1 + dz*dz);
 				                dx *= mag;
@@ -1321,14 +1338,83 @@ if ((prevId > 1000) && (nextId > 1000) && (prevId < 1000000) && (nextId < 100000
                 				Z3D[i] = cnt_image[id0] + dz;
 				        }
 
-					fprintf(fDet, "TUBE #%1d\n", tubeCount++);
-					fprintf(fDet, "    i\tXs[i]\tYs[i]\tX3D[i]\tY3D[i]\tZ3D[i]\taz[i]\talt[i]\trad_of_curv[i]\n\n");
-					for ( j=0; j<count; j++ ) {
-						i = ord[j];
-						fprintf(fDet, "%5d %8d %8d %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf\n", i, Xs[i], Ys[i], X3D[i], Y3D[i], Z3D[i], az[i], alt[i], rad_of_curv[i]);
-//						fprintf(fDet, "%5d %8d %8d\n", i, Xs[i], Ys[i]);
+				        // Compute height (width) of nanotube.
+//				        double heightSum = 0.0;
+//					double widthSum = 0.0;
+					double widthMax = 0.0;
+//				        double heightMax, heightAve, widthAve;
+					double width;
+//					int widthCount = 0;
+//				        int heightCount = 0;
+				        for ( i=0; i<count; i++ ) { 
+						if ( valid[i] ) {
+                                			dx = sin(az[i]);
+                                			dy = cos(az[i]);
+                                			width = 0;
+                                			for ( j=-TUBEWID*2; j<=TUBEWID*2; j++) {
+                                        			id1 = int(Ys[i]+j*dx+0.5) * cnt_image_x + int(Xs[i]-j*dy+0.5);
+								if ( cnt_image_Msk[id1] > 250.0 )
+									width++;
+                                			}
+							width /= 2;
+							if ( width > widthMax ) {
+								widthMax = width;
+							}
+//                                			widthSum += width;
+//                                			widthCount++;
+						}
+        				}
+					width = widthMax;
+//        				widthAve = widthSum / widthCount;
+/*				        // Compute height (width) of nanotube.
+				        heightCount = 0;
+				        for ( i=0; i<count; i++ ) { 
+						if ( valid[i] ) {
+        				        	id0 = Ys[i] * cnt_image_x + Xs[i];
+                                			dx = sin(az[i]);
+                                			dy = cos(az[i]);
+                                			heightMax = 0;
+                                			for ( j=-TUBEWID/2; j<=TUBEWID/2; j++) {
+                                        			id1 = int(Ys[i]+j*dx+0.5) * cnt_image_x + int(Xs[i]-j*dy+0.5);
+								if ( cnt_image[id1] > heightMax )
+									heightMax = cnt_image[id1];
+                                			}
+                                			heightSum += heightMax;
+                                			heightCount++;
+						}
+        				}
+        				heightAve = heightSum / heightCount;
+*/
+                
+//					fprintf(fDet, "TUBE #%1d\n", tubeCount++);
+//					fprintf(fDet, "    i\tXs[i]\tYs[i]\tX3D[i]\tY3D[i]\tZ3D[i]\taz[i]\talt[i]\trad_of_curv[i]\n\n");
+					fprintf(fDet, "image dimensions (rows x cols):  %1d x %1d\n", cnt_image_y, cnt_image_x);
+					fprintf(fDet, "X\tY\tX3D\tY3D\tZ3D\tazimuth\taltitude\n");
+					fprintf(fDet, "radius = %4.1lf\n", widthMax);
+					for ( i=0; i<count; i++ ) {
+//						i = ord[j];
+						if ( valid[i] ) {
+//							fprintf(fDet, "%5d %8d %8d %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf\n", i, Xs[i], Ys[i], X3D[i], Y3D[i], Z3D[i], az[i], alt[i], rad_of_curv[i]);
+							fprintf(fDet, "%3d %8d %8.2lf %8.2lf %8.2lf %8.2lf %8.2lf\n", Xs[i], Ys[i], X3D[i], Y3D[i], Z3D[i], az[i], alt[i]);
+//							fprintf(fDet, "%5d %8d %8d\n", i, Xs[i], Ys[i]);
+						}
 					}
 					fprintf(fDet, "\n");
+
+					delete az;
+        				delete alt;
+        				delete rad_of_curv;
+        				delete X3D;
+        				delete Y3D;
+        				delete Z3D;
+        				delete valid;
+					delete tempXs;
+					delete tempYs;
+					delete tempX3D;
+					delete tempY3D;
+					delete tempZ3D;
+					delete tempaz;
+					delete tempalt;
 
 				}
 			}
