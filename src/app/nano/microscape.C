@@ -1296,6 +1296,8 @@ struct MicroscapeInitializationState {
   vrpn_bool logSurface;
   char surfaceLog [256];
   int runtimeLimit;
+  vrpn_bool logRTT;
+  char rttLog [256];
   timeval logTimestamp;
   vrpn_bool replayInterface;
 
@@ -1357,6 +1359,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   replayPhantom (VRPN_FALSE),
   logSurface (VRPN_FALSE),
   runtimeLimit (0),
+  logRTT (VRPN_FALSE),
   replayInterface (VRPN_FALSE),
   collabMode (2),
   phantomRate (60.0),  // standard default
@@ -1381,6 +1384,7 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   phantomLogPath[0] = '\0';
   phantomLog[0] = '\0';
   surfaceLog[0] = '\0';
+  rttLog[0] = '\0';
   logTimestamp.tv_sec = 0;
   logTimestamp.tv_usec = 0;
   colorplane[0] = '\0';
@@ -5598,6 +5602,10 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         istate->runtimeLimit = atoi(argv[i]);
         fprintf(stderr, "Running for %d seconds.\n", istate->runtimeLimit);
+      } else if (!strcmp(argv[i], "-logrtt")) {
+        istate->logRTT = VRPN_TRUE;
+        if (++i >= argc) Usage(argv[0]);
+        strcpy(istate->rttLog, argv[i]);
       } else if (!strcmp(argv[i], "-packetlimit")) {
         if (++i >= argc) Usage(argv[0]);
         istate->packetlimit = atoi(argv[i]);
@@ -6454,10 +6462,17 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
 }
 
-void initialize_rtt (void) {
+void initialize_rtt (MicroscapeInitializationState * istate) {
+
+  // TCH Dissertation July 2001
+  // Keep track of this so we can
+  //  * verify the network is doing what we expect it to
+  //  * go mining later
 
   rtt_server_connection = new vrpn_Synchronized_Connection
-           (wellKnownPorts->roundTripTime);
+           (wellKnownPorts->roundTripTime, NULL,
+            istate->logRTT ? istate->rttLog : NULL);
+
   rtt_server = new vrpn_Analog_Server ("microscope_rtt",
                                        rtt_server_connection);
   rtt_server->setNumChannels(1);
@@ -7037,8 +7052,15 @@ int main (int argc, char* argv[])
     fprintf(stderr, "Opening connection to replay phantom from path %s.\n",
            istate.phantomLog);
 
+    // TCH Dissertation July 2001
+    // To get properly synched timestamps, even though we're replaying
+    // one log the straightforward thing to do would seem to be to re-log,
+    // guaranteeing the same time basis.
+
     internal_device_connection =
-      new vrpn_File_Connection (istate.phantomLog, NULL, NULL);
+      new vrpn_File_Connection (istate.phantomLog, // NULL, // NULL);
+                      istate.logPhantom ? istate.phantomLogPath : NULL,
+                      NULL);
                       //istate.logSurface ? istate.surfaceLog : NULL);
 
     // The elegant way to do this would be to use
@@ -7163,7 +7185,7 @@ int main (int argc, char* argv[])
 
     // Open a port (4581) that will report unfiltered observed RTT
     // to the microscope.
-    initialize_rtt();
+    initialize_rtt(&istate);
 
     VERBOSE(1, "About to init microscope\n");
 
@@ -7542,10 +7564,10 @@ fprintf(stderr, "Using Queue Monitoring for tip control.\n");
   if (istate.laUseFA) {
     // TODO
     microscope->state.modify.tool = FEELAHEAD;
-    feelahead_num_x = istate.laFaN;
-    feelahead_num_y = istate.laFaN;
-    feelahead_dist_x = istate.laFaD;
-    feelahead_dist_y = istate.laFaD;
+    microscope->state.modify.feelahead_numX = istate.laFaN;
+    microscope->state.modify.feelahead_numY = istate.laFaN;
+    microscope->state.modify.feelahead_distX = istate.laFaD;
+    microscope->state.modify.feelahead_distY = istate.laFaD;
 
   }
 

@@ -1,6 +1,20 @@
+2001-07-26  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c (MicroscapeInitializationState::logRTT) : New
+	data member.
+	(MicroscapeInitializationState::rttLog) : Same.
+	(MicroscapeInitializationState constructor) : Initialize new
+	data members.
+	(initialize_rtt) : Set up log if we've been asked to.
+
+	* microscape.c (main) : Set up internal device connection to
+	be able to log the phantom even while it's replaying.
+
+	* microscape.c (main) : Fix syntax error in handling -fa.
+
 2001-07-23  Tom Hudson  <hudson@cs.unc.edu>
 
-	* microscape.c (main) : Handle -fa, -wp command line arguments.
+	* microscape.c (main) : Handle -fa, -wpa command line arguments.
 
 2001-07-20  Tom Hudson  <hudson@cs.unc.edu>
 
