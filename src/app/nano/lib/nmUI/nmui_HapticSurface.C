@@ -19,6 +19,7 @@
 #include <nmm_MicroscopeRemote.h>
 #endif
 
+#include "microscape.h"  // for directz_force_scale
 
 
 nmui_HapticSurface::nmui_HapticSurface (void) :
@@ -525,7 +526,8 @@ nmui_HSDirectZ::nmui_HSDirectZ (nmb_Dataset * dataset,
 #endif
     d_dataset (dataset),
     d_microscope (scope),
-    d_force (0.0) {
+    d_force (0.0),
+    d_validRadius (0.02) {
 
   d_UP[0] = 0.0;
   d_UP[1] = 0.0;
@@ -559,7 +561,7 @@ void nmui_HSDirectZ::update (void) {
   }
 
   d_planePosPH[0] = d_handPosMS[0];
-  d_planePosPH[1] = d_handPosMS[0];
+  d_planePosPH[1] = d_handPosMS[1];
   d_planePosPH[2] = value->value() * plane->scale();
 
   // Get the current value of the internal sensor, which tells us
@@ -588,16 +590,20 @@ void nmui_HSDirectZ::update (void) {
 }
 
 // virtual
-void nmui_HSDirectZ::sendForceUpdate (vrpn_ForceDevice * /*device*/) {
+void nmui_HSDirectZ::sendForceUpdate (vrpn_ForceDevice * device) {
 
-#if 0
+// The force should be a force-field, proportional to the difference between
+// the free-space internal sensor and the current internal-sensor, scaled by
+// the direct_z_force_scale, a tclvar float whose widget should be in the live
+// modify controls dialog.
 
   double scale = directz_force_scale;
 
   if (device) {
 
     // This should be where the user is currently located.
-    device->setFF_Origin(point[Q_X], point[Q_Y], point[Q_Z]);
+    device->setFF_Origin(d_handPosMS[Q_X], d_handPosMS[Q_Y],
+                         d_handPosMS[Q_Z]);
 
     // This is the force measured by the microscope, * scale factor,
     // * the direction (up = positive z).
@@ -607,11 +613,9 @@ void nmui_HSDirectZ::sendForceUpdate (vrpn_ForceDevice * /*device*/) {
 
     // Force field does not change as we move around.
     device->setFF_Jacobian(0,0,0,  0,0,0,  0,0,0);
-    device->setFF_Radius(0.02); // 2cm radius of validity
+    device->setFF_Radius(d_validRadius);
 
   }
-
-#endif
 
 }
 

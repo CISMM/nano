@@ -266,6 +266,8 @@ class nmui_HSDirectZ : public nmui_HapticSurface {
     q_vec_type d_UP;
 
     double d_force;
+    float d_validRadius;
+      ///< Radius over which the force field is valid, in m.
 
 };
 

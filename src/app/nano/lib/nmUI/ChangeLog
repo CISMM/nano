@@ -1,3 +1,13 @@
+2000-08-10  Tom Hudson  <hudson@cs.unc.edu>
+
+        * nmui_HapticSurface.h (nmui_HSDirectZ):  new data member.
+          nmui_HapticSurface.C:  #include <microscape.h> to get
+        directz_force_scale.
+          (nmui_HSDirectZ::nmui_HSDirectZ):  initializer for new data member.
+          (nmui_HSDirectZ::update):  bugfix.
+          (nmui_HSDirectZ::sendForceUpdate):  bugfix, remove #if 0,
+        add comments, uncomment parameter.
+                               
 2000-08-10  Jeffrey Juliano  <juliano@cs.unc.edu>
 
 	* ChangeLog: New file.
