@@ -7965,3 +7965,7 @@ int disableOtherTextures (TextureMode m) {
   return 0;
 }
 
+
+// Local Variables:
+// mode:c++
+// End:
