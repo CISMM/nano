@@ -1,3 +1,10 @@
+2001-03-15  Tom Hudson  <hudson@cs.unc.edu>
+
+	* splat.c (ptSplat(BCGrid *, Point_value *) : new function for
+	Chris Dweyer to generalize splatting.
+	(ptSplat(int *, BCGrid *, Point_result *)) : rewrote to use new
+	function;  cleaned up code.
+
 2001-03-02  Aron Helser  <helser@cs.unc.edu>
 
 	* nmm_AFM_Report.vrpndef: VRPN rpc message definition file. In
