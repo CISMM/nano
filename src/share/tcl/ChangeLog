@@ -1,6 +1,8 @@
 2002-06-14  Aron Helser  <helser@cs.unc.edu>
 
 	* mainwin.tcl: Command order changes. 
+	Enable 'save image sequence' command.
+
 	* movie.tcl: Allow fractional seconds for jump-time. Smoother movies.
 	* streamfile.tcl: same
 

@@ -228,8 +228,8 @@ $filemenu add command -label "Save Modification Data..." -underline 5 \
          -command "save_mod_dialog"
 
 # Experimental interface to save series of screenshots for a movie. 
-#$filemenu add command -label "Save Image Sequence..." -underline 5 -command \
-#	"save_sequenceImage"
+$filemenu add command -label "Save Image Sequence..." -underline 5 -command \
+	"save_sequenceImage"
 $filemenu add separator
 $filemenu add command -label "Exit" -underline 1 -command {
     if {[string match "*wish*" [info nameofexecutable]] } {
