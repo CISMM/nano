@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-//#if !defined(_WIN32) || defined(__CYGWIN__)
 #if !defined(_WIN32)
 #include <sys/time.h> // for RecordResistance()
 #include <unistd.h>  // for sleep()
@@ -26,22 +25,17 @@
 #include <stm_file.h>	// not sure if we need it.
 #include <nmb_Time.h>
 #include <nmb_Debug.h>
-//#include <nmb_Globals.h>  // get rid of this if we're going to be modular
 #include <nmb_Types.h>
 #include <nmb_Line.h>
 
 #include "drift.h"
 #include "splat.h"
-//#include "relax.h"  // relax_set_min, relax_set_max
-                    // encode and decode functions here ?
 #include "nmm_RelaxComp.h"
 #include "nmm_Sample.h"
 
 #include "vrpn_FileConnection.h"	// for vrpn_File_Connection class
 
 #include "error_display.h"
-
-//#include <microscape.h>  // for spm_verbosity
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 // bogus double to float conversion warning.
@@ -261,6 +255,14 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
   d_connection->register_handler(d_UdpSeqNum_type,
                                  handle_UdpSeqNum,
                                  this);
+
+  d_connection->register_handler(d_BeginFeelTo_type,
+                                 handle_BeginFeelTo,
+                                 this);
+  d_connection->register_handler(d_EndFeelTo_type,
+                                 handle_EndFeelTo,
+                                 this);
+
 
   // AFM-ish
 
@@ -1223,16 +1225,18 @@ long nmm_Microscope_Remote::ScanTo (const float _x, const float _y, const float 
 }
 
 int nmm_Microscope_Remote::TakeSampleSet (float _x, float _y) {
+  char * msgbuf;
+  long len;
+  double x, y;
 
-  double x,y;
   rotateScanCoords(_x, _y, state.image.scan_angle, &x, &y);
 
-  if (!d_sampleAlgorithm) {
+  msgbuf = encode_FeelTo(&len, x, y);
+  if (!msgbuf) {
     return -1;
   }
 
-  d_sampleAlgorithm->sampleAt(x, y);
-  return 0;
+  return dispatchMessage(len, msgbuf, d_FeelTo_type);
 }
 
 
@@ -1936,6 +1940,9 @@ int nmm_Microscope_Remote::getTimeSinceConnected(void) {
       d_decoration->elapsedTime = elapsedTime.tv_sec;
       break;
   }
+
+//fprintf(stderr, "nmm_Microscope_Remote::getTimeSinceConnected:  %d sec.\n",
+//d_decoration->elapsedTime);
 
   return 0;
 }
@@ -3359,6 +3366,27 @@ int nmm_Microscope_Remote::handle_TopoFileHeader (void * userdata,
 
   ms->decode_TopoFileHeader(&param.buffer, &length, &buffer);
   ms->RcvTopoFileHeader(length, buffer);
+
+  return 0;
+}
+
+//static
+int nmm_Microscope_Remote::handle_BeginFeelTo (void * userdata,
+                                               vrpn_HANDLERPARAM p) {
+  nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+
+  ms->accumulatePointResults(VRPN_TRUE);
+
+  return 0;
+}
+
+//static
+int nmm_Microscope_Remote::handle_EndFeelTo (void * userdata,
+                                               vrpn_HANDLERPARAM p) {
+  nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+
+  ms->accumulatePointResults(VRPN_FALSE);
+  ms->swapPointList();
 
   return 0;
 }
@@ -4956,6 +4984,22 @@ void nmm_Microscope_Remote::doScanlineDataCallbacks (const Scanline_results *s)
     l = l->next;
   }
 }
+
+void nmm_Microscope_Remote::swapPointList (void) {
+
+  int i;
+
+  // Awkward, but it's the interface that's there today.
+
+  state.data.receivedPointList->clear();
+  for (i = 0; i < state.data.incomingPointList->numEntries(); i++) {
+    state.data.receivedPointList->addEntry
+           (*state.data.incomingPointList->entry(i));
+  }
+  state.data.incomingPointList->clear();
+
+}
+
 
 // static 
 int nmm_Microscope_Remote::handle_barrierSynch (void *ud, 

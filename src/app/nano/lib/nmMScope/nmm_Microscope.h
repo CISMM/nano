@@ -196,6 +196,7 @@ class nmm_Microscope {
     long d_SetContactForce_type;
     long d_QueryContactForce_type;
     long d_EnterSpectroscopyMode_type;
+    long d_FeelTo_type;
 
     long d_ForceSet_type;  // from server
     long d_ForceSetFailure_type;
@@ -216,6 +217,9 @@ class nmm_Microscope {
     long d_InDirectZControl_type;
     long d_InSewingStyle_type;
     long d_InSpectroscopyMode_type;
+
+    long d_BeginFeelTo_type;
+    long d_EndFeelTo_type;
 
     long d_BaseModParameters_type;  // from client to itself
     long d_ForceSettings_type;
@@ -582,6 +586,10 @@ class nmm_Microscope {
 		float *, float *, float *, float *,
 		vrpn_int32 *, float *, float *, float *);
 
+    char * encode_FeelTo (long * len, float, float);
+    long decode_FeelTo (const char ** buf, float *, float *);
+
+
     char * encode_InTappingMode (long * len, float, float, float,
 		float, float);
     long decode_InTappingMode (const char ** buf, float *, float *, float *,
@@ -618,6 +626,13 @@ class nmm_Microscope {
 		float *, float *, float *, vrpn_int32 *, vrpn_int32 *,
 		float *, float *, float *, float *,
 		vrpn_int32 *, float *, float *, float *);
+
+    char * encode_BeginFeelTo (long * len, vrpn_float32, vrpn_float32);
+    long decode_BeginFeelTo (const char ** buf, vrpn_float32 *, vrpn_float32 *);
+    char * encode_EndFeelTo (long * len, vrpn_float32, vrpn_float32);
+    long decode_EndFeelTo (const char ** buf, vrpn_float32 *, vrpn_float32 *);
+
+
     char * encode_ForceParameters (long * len, vrpn_int32, float);
     long decode_ForceParameters (const char ** buf, vrpn_int32 *, float *);
     char * encode_BaseModParameters (long * len, float, float);

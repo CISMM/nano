@@ -9,37 +9,32 @@
 #define NMM_MICROSCOPE_REMOTE_H
 
 #include "nmm_Microscope.h"
+
 #include <nmb_SharedDevice.h>
+#include <Scanline.h>
+#include <Topo.h>
 
 #include "AFMState.h"
+#include "nmm_Types.h"
+#include "nmm_RelaxComp.h"   // for nmm_RelaxComp
 
-//#ifndef _WIN32
-//#include <sys/time.h> // for timeval?
-//#endif
 #include <vrpn_Shared.h>  // for timeval/timezone
+#ifndef VRPN_CONNECTION_H
+#include <vrpn_Connection.h>  // for vrpn_HANDLERPARAM
+#endif
 
 class Tclvar_checklist;  // from <Tcl_Linkvar.h>
-struct stm_stream;  // from <stm_file.h>
-
 class nmb_Dataset;  // from <nmb_Dataset.h>
 class nmb_Decoration;  // from <nmb_Decoration.h>
 class Point_value;  // from <Point.h>
 class BCPlane;  // from <BCPlane.h>
 
-#include "nmm_Types.h"
-#include "nmm_RelaxComp.h"   // for nmm_RelaxComp
-
 class nmm_Sample;  // from nmm_Sample.h
 
-#ifndef VRPN_CONNECTION_H
-#include <vrpn_Connection.h>  // for vrpn_HANDLERPARAM
-#endif
+struct stm_stream;  // from <stm_file.h> - OBSOLETE?
 
-#include <Scanline.h>
 
-#include <Topo.h>
-
-// Microscope
+// nmm_Microscope
 //
 // Tom Hudson, September 1997
 // Code mostly from microscape.c and animate.c
@@ -50,10 +45,6 @@ class nmm_Sample;  // from nmm_Sample.h
 // Uses references to its private members (io and modfile) rather than
 // containing them so that we (or users of our library) don't have to
 // include the relevant header files.
-
-// Source code for this class is split between two files:
-//   MicroscopeRcv.C  --  callbacks
-//   Microscope.C     --  all other code
 
 // Flaws:
 //   Currently contains InitializeDataset() call that'll be moved elsewhere
@@ -96,90 +87,70 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     nmb_Decoration * Decor (void)
       { return d_decoration; }
 
-    char * encode_GetNewPointDatasets (vrpn_int32 * len, const Tclvar_list_of_strings *,
-                                        Tclvar_int*[], Tclvar_int*[]);
-   char * encode_GetNewScanDatasets (vrpn_int32 * len, const Tclvar_list_of_strings *, 
-                                       Tclvar_int*[]);
+    char * encode_GetNewPointDatasets (vrpn_int32 * len,
+                                       const Tclvar_list_of_strings *,
+                                       Tclvar_int*[], Tclvar_int*[]);
+   char * encode_GetNewScanDatasets (vrpn_int32 * len,
+                                     const Tclvar_list_of_strings *, 
+                                     Tclvar_int*[]);
 
    long Initialize () ;
-      /**< Set up to read from a stream file or a live scope, 
-       * depending on d_dataset->inputgrid->readMode()
-       */
-
-   /*
-   long Initialize (const vrpn_bool _setRegion,
-					   const vrpn_bool _setMode,
-					   int (* f) (stm_stream *),
-					   const long _socketType,
-					   const char * _SPMhost,
-					   const long _SPMport,
-					   const long _UDPport);
-
-
-
-   long Initialize (int (* f) (stm_stream *));
-   */
+      ///< Set up to read from a stream file or a live scope, 
+      ///< depending on d_dataset->inputgrid->readMode()
 
     long NewEpoch (void);
-      /**< Forces refresh of grid (?) */
+      ///< Forces refresh of grid (?)
 
     void SetSampleMode (nmm_Sample *);
-      /**< Passes in a pointer to the nmm_Sample subclass to be used by
-       * TakeSampleSet().
-       */
+      ///< Passes in a pointer to the nmm_Sample subclass to be used by
+      ///< TakeSampleSet().
 
 
     // SENDS
 
     long ImageMode (void);
-      /**<   Enter imaging mode.  Sets parameters to values given in
-       * state.image (P/I/D gain, setpoint, amplitude).
-       */
+      ///<   Enter imaging mode.  Sets parameters to values given in
+      ///< state.image (P/I/D gain, setpoint, amplitude).
 
     long ModifyMode (void);
-      /**<   Enter modify mode.  Sets parameters to values given in
-       * state.modify (P/I/D gain, setpoint, amplitude, top & bottom
-       * delay, z_pull, punch distance, speed, watchdog)
-       */
+      ///<   Enter modify mode.  Sets parameters to values given in
+      ///< state.modify (P/I/D gain, setpoint, amplitude, top & bottom
+      ///< delay, z_pull, punch distance, speed, watchdog)
 
     long GetNewPointDatasets (const Tclvar_list_of_strings *, 
                                        Tclvar_int*[],Tclvar_int*[]);
     long GetNewScanDatasets (const Tclvar_list_of_strings *, 
                                        Tclvar_int*[]);
-      /**<   Sets the list of datasets to be scanned by the microscope.
-       * Microscope will respond with the list that it is actually scanning,
-       * which may not match.
-       *   every active (marked) dataset in the checklist will be requested
-       */
+      ///<   Sets the list of datasets to be scanned by the microscope.
+      ///< Microscope will respond with the list that it is actually scanning,
+      ///< which may not match.
+      ///<   every active (marked) dataset in the checklist will be requested
 
 
     long ResumeScan (Point_value * = NULL,
                     BCPlane * = NULL);
-      /**<   Return to image mode *and start scanning*
-       *   Non-NULL parameters tell the microscope to check a small region
-       * of the surface before rescanning the entire surface, and only make
-       * sense with the old AFM.
-       */
+      ///<   Return to image mode *and start scanning*
+      ///<   Non-NULL parameters tell the microscope to check a small region
+      ///< of the surface before rescanning the entire surface, and only make
+      ///< sense with the old AFM.
 
     long ResumeFullScan (void);
-      /**<   Causes the microscope to scan over the entire grid.
-       * SetScanWindow() may be called to limit scanning to a smaller
-       * portion of the grid;  this function undoes that operation.
-       */
+      ///<   Causes the microscope to scan over the entire grid.
+      ///< SetScanWindow() may be called to limit scanning to a smaller
+      ///< portion of the grid;  this function undoes that operation.
 
     long ResumeWindowScan (void);
 
     long PauseScan(void);
-    /**< Pauses the scan. */
+      ///< Pauses the scan.
 
     long WithdrawTip(void);
-    /**< Withdraws the tip from the surface. */
+      ///< Withdraws the tip from the surface.
 
     long SetScanStyle (void);
-      /**<   Sets the microscope to scan in X or Y first, and in a raster or
-       * in boustrophedonic order.  Controlled by (state.do_raster,
-       * state.do_y_fastest)
-       */
+      ///<   Sets the microscope to scan in X or Y first, and in a raster or
+      ///< in boustrophedonic order.  Controlled by (state.do_raster,
+      ///< state.do_y_fastest)
 
     long SetRegionNM (const float minx, const float miny,
                      const float maxx, const float maxy);
@@ -221,40 +192,39 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
                      const vrpn_bool awaitResult = VRPN_FALSE);
 
     long ScanTo (const float x, const float y);
-      // Sends the microscope to (x, y).
+      ///< Sends the microscope to (x, y).
 
     long ScanTo (const float x, const float y, const float z);
-      // Sends the microscope to (x, y, z).
+      ///< Sends the microscope to (x, y, z).
 
     int TakeSampleSet (float x, float y);
-      /**< Uses the algorithm specified by SetSampleAlgorithm()
-       * to take one or more samples in a carefully-controlled
-       * pattern.  The results are made available to the user
-       * by a yet-to-be-determined mechanism, probably some combination
-       * of exposure on AFMState and a callback with an augmented Point_list.
-       * Returns negative values on failure.
-       */
+      ///< Tells the microscope to take one or more samples in the
+      ///< pattern specified by SetSampleAlgorithm().  The results are
+      ///< made available to the user by a yet-to-be-determined mechanism,
+      ///< including exposure as state.data.receivedPointList.
+      ///< Returns negative values on failure.
+
 
 
 
     // Ohmmeter control
 
     long SetOhmmeterSampleRate (const long rate);
-      //   Sets the sample rate on the #0 ohmmeter.
+      ///<   Sets the sample rate on the #0 ohmmeter.
 
     long EnableAmp (long which, float offset,
                    float uncalOffset, long gain);
-      //   Enables one of the amplifier channels with specified offsets
-      // and gain.
+      ///<   Enables one of the amplifier channels with specified offsets
+      ///< and gain.
 
     long DisableAmp (long which);
-      // Disables one of the amplifier channels.
+      ///< Disables one of the amplifier channels.
 
     long EnableVoltsource (long which, float voltage);
-      // Enables one of the voltage sources at a specified voltage.
+      ///< Enables one of the voltage sources at a specified voltage.
 
     long DisableVoltsource (long which);
-      // Enables one of the voltage sources.
+      ///< Enables one of the voltage sources.
 
     long InitDevice (const vrpn_bool _setRegion,
                             const vrpn_bool _setMode,
@@ -269,25 +239,26 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 
     long RecordResistance(long channel, struct timeval t, float r,
 			float voltage, float range, float filter); 
-			// XXX - this function was used for the French Ohmmeter
-			// because we wanted to put data into the microscope
- 			// stream file but this should be replaced now that
-			// we are using vrpn for logging - e.g. either
-			// set both connections to log to the same file or
-			// create two separate files
+	///< XXX - this function was used for the French Ohmmeter
+	///< because we wanted to put data into the microscope
+ 	///< stream file but this should be replaced now that
+	///< we are using vrpn for logging - e.g. either
+	///< set both connections to log to the same file or
+	///< create two separate files
 
     int getTimeSinceConnected(void);
 
     // Scanline mode - parameters sent by these functions reside in
     // state.scanline and are typically set in the user interface
+
     long EnterScanlineMode(void);
     long ExitScanlineMode(void);
     long AcquireScanline(void);
     long SetScanlineModeParameters(void);
     long SetFeedbackForScanline(void);
  
-    // set which line to start scanning in image mode
     long JumpToScanLine(long line);
+      ///< set which line to start scanning in image mode
 
     long SetGridSize (const long _x, const long _y);
       ///< Set the size of the grid:  # data points to collect in each dimension.
@@ -304,9 +275,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     int ReadMode();
     void ReadMode(int);
     
-//      Blunt_result * getBluntResult (void)
-//        { return &d_bluntResult; }
-
     long EnableUpdatableQueue (vrpn_bool);
       ///< If TRUE, only the most recent ScanTo/ScanToZ/ZagTo request
       ///< is obeyed at the microscope;  older requests are thrown away.
@@ -406,15 +374,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
 			   double * out_x, double * out_y);
 
     // Commands only sent by member functions
-/* OBSOLETE
-    long SetStdDevParams (void);
-
-    long SetStdDevParams (const long, const float);
-      // Sets the number of samples to be taken at each point in the grid
-      // and the rate in Hz at which to sample.
-
-    long QueryStdDevParams (void);
-*/
     long QueryScanRange (void);
 
     long SetScanWindow (const long _minx, const long _miny,
@@ -501,7 +460,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     void RcvForceSet (const float);
     void RcvForceSetFailure (const float);
     void RcvPulseParameters (const long, const float, const float, const float);
-    //void RcvStdDevParameters (const long, const float);
     long RcvWindowLineData (const long, const long, const long, const long,
                             const long, const float *);
     long RcvWindowLineData (const long, const long, const long, const long,
@@ -598,7 +556,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     static int handle_ForceSet (void *, vrpn_HANDLERPARAM);
     static int handle_ForceSetFailure (void *, vrpn_HANDLERPARAM);
     static int handle_PulseParameters (void *, vrpn_HANDLERPARAM);
-    //static int handle_StdDevParameters (void *, vrpn_HANDLERPARAM);
     static int handle_WindowLineData (void *, vrpn_HANDLERPARAM);
     static int handle_WindowScanNM (void *, vrpn_HANDLERPARAM);
     static int handle_WindowBackscanNM (void *, vrpn_HANDLERPARAM);
@@ -631,6 +588,9 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     static int handle_ReportGridSize (void *, vrpn_HANDLERPARAM);
     static int handle_ServerPacketTimestamp (void *, vrpn_HANDLERPARAM);
     static int handle_TopoFileHeader (void *, vrpn_HANDLERPARAM);
+    static int handle_BeginFeelTo (void *, vrpn_HANDLERPARAM);
+    static int handle_EndFeelTo (void *, vrpn_HANDLERPARAM);
+
 
     static int handle_MaxSetpointExceeded (void *, vrpn_HANDLERPARAM);
 
@@ -642,12 +602,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     static int handle_RecvTimestamp (void *, vrpn_HANDLERPARAM);
     static int handle_FakeSendTimestamp (void *, vrpn_HANDLERPARAM);
     static int handle_UdpSeqNum (void *, vrpn_HANDLERPARAM);
-
-    // OBSOLETE
-    //void RcvSnapShotBegin (const long, const long);
-    //void RcvSnapShotEnd (void);
-    //void RcvInSpectroscopyMode (float, float, float, float, float,
-                                //float, float, long, long);
 
 
 // TODO:  Document and explain these better!
@@ -703,12 +657,17 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     void doScanlineModeCallbacks (void);
     void doScanlineDataCallbacks (const Scanline_results *);
 
-    nmm_Sample * d_sampleAlgorithm;
-    vrpn_bool d_accumulatePointResults;
+    nmm_Sample * d_sampleAlgorithm;  // OBSOLETE
+    vrpn_bool d_accumulatePointResults;  // OBSOLETE
 
-    static int handle_barrierSynch (void *ud, const nmb_SynchMessage *msg);
-    static void handle_GotMicroscopeControl (void *ud, 
-                                             nmb_SharedDevice_Remote *dev);
+    void swapPointList (void);
+      ///< Replaces state.data.receivedPointList with
+      ///< state.data.incomingPointList, then empties the latter.
+
+
+    static int handle_barrierSynch (void * ud, const nmb_SynchMessage * msg);
+    static void handle_GotMicroscopeControl (void * ud, 
+                                             nmb_SharedDevice_Remote * dev);
 };
 
 #endif  // NMM_MICROSCOPE_REMOTE_H

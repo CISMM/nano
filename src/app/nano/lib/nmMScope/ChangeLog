@@ -1,3 +1,36 @@
+2000-09-20  Tom Hudson  <hudson@cs.unc.edu>
+
+        * nmm_Microscope.h:  added data members d_FeelTo_type,
+        d_BeginFeelTo_type, d_EndFeelTo_type.
+        (encode_FeelTo):  new function.
+        (decode_FeelTo):  same.
+        (encode_BeginFeelTo):  same.
+        (decode_BeginFeelTo):  same.
+        (encode_EndFeelTo):  same.
+        (decode_EndFeelTo):  same.
+        * nmm_Microscope.C (constructor):  set value of new data members.
+        (encode_FeelTo):  new function.
+        (decode_FeelTo):  same.
+        (encode_BeginFeelTo):  same.
+        (decode_BeginFeelTo):  same.
+        (encode_EndFeelTo):  same.
+        (decode_EndFeelTo):  same.
+        * nmm_Microscope_Remote.h:  
+        (handle_BeginFeelTo):  new function.
+        (handle_EndFeelTo):  same.
+        (swapPointList):  same.
+        * nmm_Microscope_Remote.C (constructor):  register handle_BeginFeelTo,
+        handle_EndFeelTo.
+        (handle_BeginFeelTo):  new function.  Turns on accumulatePointResults().
+        (handle_EndFeelTo):  new function.  Turns off accumulatePointResults(),
+        calls swapPointList.
+        (swapPointList):  new function.  Replaces state.data.receivedPointList
+        with incomingPointList, then empties the latter.
+        (TakeSampleSet):  tore out dependence on
+        nmm_Sample/SetSampleAlgorithm();  the proper place for that function
+        is in the topo software, much as we hate to put it there.  It now sends
+        a FeelTo message.
+
 2000-09-14  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmm_MicroscopeRemote.C : took out extern reference to 

@@ -5,28 +5,13 @@
   This file may not be distributed without the permission of 
   3rdTech, Inc. 
   ===3rdtech===*/
-// If you wanna see what changes made by Tiger, just search for 'Tiger'
 #include "nmm_Microscope.h"
 
 #include <vrpn_FileController.h>
 #include <vrpn_Forwarder.h>
 #include <vrpn_Shared.h>
 
-#include <stm_cmd.h>	// Added by Tiger	for STM_NAME_LENGTH
-
-/* Tiger	don't need them be in nmm_Microscope base class, move to remote
-#include <Point.h>
-#include <BCPlane.h>
-#include <nmb_Dataset.h>
-#include <nmb_Decoration.h>
-#include <Tcl_Linkvar.h>
-#include <stm_file.h>
-*/
-
-/* Tiger	seems I don't need these two header files either
-#include "MicroscopeIO.h"
-#include "ModFile.h"
-*/
+#include <stm_cmd.h>	// for STM_NAME_LENGTH
 
 #define CHECK(a) if ((a) == -1) return -1
 
@@ -37,11 +22,7 @@ nmm_Microscope::nmm_Microscope (
 //  d_fileController (new vrpn_File_Controller (connection)),moved to nmb_Device
   {
 
-//  char * servicename;           // Tiger HACK probably need to do that
-//  servicename = vrpn_copy_service_name(name);   // to get the right name.
-
   if (connection) {
-//    d_myId = connection->register_sender(servicename); moved to nmb_Device
 
 /* ****************************************************************
    Can't do echo, because if you sent a message containing a message
@@ -64,6 +45,10 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope ZagTo");
     d_ZagToCenter_type = connection->register_message_type
          ("nmm Microscope ZagToCenter");
+
+    d_FeelTo_type = connection->register_message_type
+        ("nmm Microscope Feel To");
+
     d_SetScanStyle_type = connection->register_message_type
          ("nmm Microscope SetScanStyle");
     d_SetSlowScan_type = connection->register_message_type
@@ -164,6 +149,12 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope PointResultNM");
     d_PointResultData_type = connection->register_message_type
          ("nmm Microscope PointResultData");
+
+    d_BeginFeelTo_type = connection->register_message_type
+         ("nmm Microscope Begin Feel To");
+    d_EndFeelTo_type = connection->register_message_type
+         ("nmm Microscope End Feel To");
+
     d_BottomPunchResultData_type = connection->register_message_type
          ("nmm Microscope BottomPunchResultData");
     d_TopPunchResultData_type = connection->register_message_type
@@ -719,6 +710,8 @@ long nmm_Microscope::decode_ZagTo (const char ** buf,
 
   return 0;
 }
+
+
 
 
 
@@ -1320,10 +1313,6 @@ char * nmm_Microscope::encode_SetModForce (int * len,
 }
 int nmm_Microscope::decode_SetModForce (const char ** buf,
          vrpn_float32 * newforce, vrpn_float32 * min, vrpn_float32 * max) {
-/*	Tiger changed it
-   vrpn_float32 * enable;
-  CHECK(vrpn_unbuffer(buf, enable));
-*/
   vrpn_int32 enable;
   CHECK(vrpn_unbuffer(buf, &enable));
   CHECK(vrpn_unbuffer(buf,min));
@@ -1472,48 +1461,6 @@ long nmm_Microscope::decode_DrawSweepArc (const char ** buf,
 
 
 
-/* Tiger	moved it to nmm_MicroscopeRemote
-char * nmm_Microscope::encode_GetNewPointDatasets
-                            (long * len,
-                             const Tclvar_checklist * list) {
-  char * msgbuf = NULL;
-  char * mptr;
-  vrpn_int32 mlen;
-  long numSets = 0;
-  long i;
-
-  if (!len) return NULL;
-
-  for (i = 0; i < list->Num_checkboxes(); i++)
-    if (list->Is_set(i)) numSets++;
-
-  *len = sizeof(vrpn_int32) + (STM_NAME_LENGTH + sizeof(vrpn_int32)) * numSets;
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmm_Microscope::encode_GetNewPointDatasets:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, numSets);
-    for (i = 0; i < list->Num_checkboxes(); i++)
-      if (list->Is_set(i)) {
-        vrpn_buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
-
-        // Ask for 10 samples of each except Topography;
-        // of that we want 90
-        if (!strcmp("Topography", list->Checkbox_name(i)))
-          vrpn_buffer(&mptr, &mlen, (vrpn_int32)90);
-        else
-          vrpn_buffer(&mptr, &mlen, (vrpn_int32)10);
-      }
-  }
-
-  return msgbuf;
-}
-*/
-
 long nmm_Microscope::decode_GetNewPointDatasetHeader (const char ** buf,
          vrpn_int32 * numSets) {
   CHECK(vrpn_unbuffer(buf, numSets));
@@ -1530,40 +1477,6 @@ long nmm_Microscope::decode_GetNewPointDataset (const char ** buf,
 }
 
 
-
-/* Tiger	moved it to nmm_MicroscopeRemote
-char * nmm_Microscope::encode_GetNewScanDatasets
-                            (long * len,
-                             const Tclvar_checklist * list) {
-  char * msgbuf = NULL;
-  char * mptr;
-  vrpn_int32 mlen;
-  long numSets = 0;
-  long i;
-
-  if (!len) return NULL;
-
-  for (i = 0; i < list->Num_checkboxes(); i++)
-    if (list->Is_set(i)) numSets++;
-
-  *len = sizeof(vrpn_int32) + STM_NAME_LENGTH * numSets;
-  msgbuf = new char [*len];
-  if (!msgbuf) {
-    fprintf(stderr, "nmm_Microscope::encode_GetNewScanDatasets:  "
-                    "Out of memory.\n");
-    *len = 0;
-  } else {
-    mptr = msgbuf;
-    mlen = *len;
-    vrpn_buffer(&mptr, &mlen, numSets);
-    for (i = 0; i < list->Num_checkboxes(); i++)
-      if (list->Is_set(i))
-        vrpn_buffer(&mptr, &mlen, list->Checkbox_name(i), STM_NAME_LENGTH);
-  }
-
-  return msgbuf;
-}
-*/
 
 long nmm_Microscope::decode_GetNewScanDatasetHeader (const char ** buf,
          vrpn_int32 * numSets) {
@@ -2064,9 +1977,6 @@ char * nmm_Microscope::encode_ResultData (long * len,
 
   if (!len) return NULL;
 
-/* Changed by Tiger	x and y are vrpn_float32s
-  *len = 5 * sizeof(vrpn_int32) + fieldCount * sizeof(vrpn_float32);
-*/
   *len = 3*sizeof(vrpn_int32) + 2*sizeof(vrpn_float32) + fieldCount * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
@@ -2266,9 +2176,6 @@ char * nmm_Microscope::encode_SetRegionC (long * len,
 
   if (!len) return NULL;
 
-/* Changed by Tiger	there is not long buffered
-  *len = sizeof(vrpn_int32) + 4 * sizeof(vrpn_float32);
-*/
   *len = 4 * sizeof(vrpn_float32);
   msgbuf = new char [*len];
   if (!msgbuf) {
@@ -2777,7 +2684,6 @@ long nmm_Microscope::decode_ServerPacketTimestamp (const char ** buf,
   return 0;
 }
 
-// Tiger implemented it
 char * nmm_Microscope::encode_TopoFileHeader (long * len,
            char * buf, vrpn_int32 size ) {
   char * msgbuf = NULL;
@@ -2801,7 +2707,6 @@ char * nmm_Microscope::encode_TopoFileHeader (long * len,
 
   return msgbuf;
 }
-// Tiger
 
 long nmm_Microscope::decode_TopoFileHeader (const char ** buf,
          vrpn_int32 * length, char ** header) {
@@ -3256,6 +3161,41 @@ char * nmm_Microscope::encode_EnterSpectroscopyMode (long * len, vrpn_float32 se
   return msgbuf;
 }
 
+char * nmm_Microscope::encode_FeelTo (long * len,
+                                      vrpn_float32 x, vrpn_float32 y) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 2 * sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_FeelTo:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+  }
+
+  return msgbuf;
+}
+  
+long nmm_Microscope::decode_FeelTo (const char ** buf,
+                                    vrpn_float32 * x, vrpn_float32 * y) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+
+  return 0;
+}
+
+
+
+
 long nmm_Microscope::decode_EnterSpectroscopyMode (const char ** buf,
          vrpn_float32 * setpoint, vrpn_float32 * startDelay, vrpn_float32 * zStart, vrpn_float32 * zEnd,
          vrpn_float32 * zPullback, vrpn_float32 * forceLimit,
@@ -3652,6 +3592,72 @@ long nmm_Microscope::decode_BaseModParameters (const char ** buf,
 
   return 0;
 }
+
+char * nmm_Microscope::encode_BeginFeelTo (long * len,
+                                           vrpn_float32 x, vrpn_float32 y) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 2 * sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_BeginFeelTo:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+  }
+
+  return msgbuf;
+}
+
+long nmm_Microscope::decode_BeginFeelTo (const char ** buf,
+                                         vrpn_float32 * x, vrpn_float32 * y) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+
+  return 0;
+}
+
+char * nmm_Microscope::encode_EndFeelTo (long * len,
+                                         vrpn_float32 x, vrpn_float32 y) {
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 2 * sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope::encode_EndFeelTo:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, x);
+    vrpn_buffer(&mptr, &mlen, y);
+  }
+
+  return msgbuf;
+}
+
+long nmm_Microscope::decode_EndFeelTo (const char ** buf,
+                                       vrpn_float32 * x, vrpn_float32 * y) {
+  CHECK(vrpn_unbuffer(buf, x));
+  CHECK(vrpn_unbuffer(buf, y));
+
+  return 0;
+}
+
+
 
 char * nmm_Microscope::encode_ForceSettings (long * len,
            vrpn_float32 min, vrpn_float32 max, vrpn_float32 setpoint) {
