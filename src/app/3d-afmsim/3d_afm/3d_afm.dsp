@@ -65,7 +65,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "E:\taylorr\Personal\Work\consulting\DisneyQuest\glut" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c /Tp
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\..\..\..\external\pc_win32\include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c /Tp
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -73,7 +73,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib glut32.lib glu32.lib opengl32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept /libpath:"E:\taylorr\Personal\Work\consulting\DisneyQuest\glut"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib glut32_UNC.lib glu32.lib opengl32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept /libpath:"..\..\..\..\..\external\pc_win32\lib"
 
 !ENDIF 
 
@@ -94,7 +94,27 @@ SOURCE=..\ConeSphere.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\main.cpp
+SOURCE=..\dna.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\draw.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\input.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\lightcol.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\scan.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\sim.cpp
 # End Source File
 # Begin Source File
 
@@ -106,11 +126,15 @@ SOURCE=..\Unca.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\vec2d.cpp
+SOURCE=..\uncert.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\vec3d.cpp
+SOURCE=..\Uncertw.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\Vec3d.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -130,6 +154,26 @@ SOURCE=..\defns.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\draw.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\input.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\lightcol.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\scan.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\sim.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\Tips.h
 # End Source File
 # Begin Source File
@@ -138,7 +182,11 @@ SOURCE=..\Unca.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\vec2d.h
+SOURCE=..\uncert.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Uncertw.h
 # End Source File
 # Begin Source File
 

@@ -34,10 +34,10 @@ include depend
 
 OBJS = Vec3d.o ConeSphere.o 3Dobject.o Tips.o Unca.o Uncertw.o dna.o scan.o input.o draw.o lightcol.o uncert.o sim.o 
 FILES= Vec3d.cpp ConeSphere.cpp 3Dobject.cpp Tips.cpp Unca.cpp Uncertw.cpp dna.cpp scan.cpp input.cpp draw.cpp lightcol.cpp uncert.cpp sim.cpp
-sim : $(OBJS) defns.h
+sim : $(OBJS) defns.h depend
 	$(CXX) -o sim $(OBJS) $(LDFLAGS) $(GLUT_LIBS) $(GL_LIBS) $(SYS_LIBS)
 
-dep :
+dep : depend
 	$(CXX) $(FILES) $(CXXFLAGS) $(LDFLAGS) $(GLUT_LIBS) $(GL_LIBS) $(SYS_LIBS) -M > depend
 
 
@@ -48,7 +48,6 @@ clean:
 	-rm -f *.o
 	-rm sim$(EXT)
 
-
-
-
+depend:
+	touch depend
 
