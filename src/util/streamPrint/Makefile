@@ -6,6 +6,12 @@ vrpn_headerPrint:
                 EXCLUDE_SRC= \
                 MAKECMDGOALS=""
 
+vrpn_uiHeaderPrint:
+	$(MAKE) APP_NAME=vrpn_uiHeaderPrint \
+                GENERATED_SRC= \
+                EXCLUDE_SRC= \
+                MAKECMDGOALS=""
+
 vrpn_streamTimeFix:
 	$(MAKE) APP_NAME=vrpn_streamTimeFix \
                 GENERATED_SRC= \
