@@ -2,11 +2,11 @@
 
 nmr_SurfaceModelHeightField::nmr_SurfaceModelHeightField(
 	nmb_Image *heightValues,
-	double minX, double minY, double maxX, double maxY)
+	double minX, double minY, double maxX, double maxY, double zScale)
 {
 	if (heightValues) {
 		d_heightField = new nmg_HeightField(heightValues, 
-		minX, minY, maxX, maxY, 1.0);
+		minX, minY, maxX, maxY, zScale);
 	} else {
 		d_heightField = NULL;
 	}

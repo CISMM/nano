@@ -204,7 +204,8 @@ void nmr_AFM_SEM_Calibration::updateAFMfromModel_2D()
   double error;
   transformSolver(d_AFMfromModel2DMatrix, &error, d_contactTipPoints,
        s_contactTip_modelIndex, s_contactTip_AFMIndex, 
-       NMR_2D2D_AFFINE_Z_UNIFORMSCALING_Z_TRANSLATE);
+	   NMR_2D2D_AFFINE_Z_TRANSLATE);
+       //NMR_2D2D_AFFINE_Z_UNIFORMSCALING_Z_TRANSLATE);
 }
 
 // step 5
@@ -322,7 +323,8 @@ void nmr_AFM_SEM_Calibration::updateAFMfromModel_3D()
   double error;
   transformSolver(d_AFMfromModel3DMatrix, &error, d_contactTipPoints,
        s_contactTip_modelIndex, s_contactTip_AFMIndex, 
-       NMR_2D2D_AFFINE_Z_UNIFORMSCALING_Z_TRANSLATE);
+       NMR_2D2D_AFFINE_Z_TRANSLATE);
+  //NMR_2D2D_AFFINE_Z_UNIFORMSCALING_Z_TRANSLATE);
 }
 
 void nmr_AFM_SEM_Calibration::updateSolution()
