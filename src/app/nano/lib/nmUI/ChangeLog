@@ -1,3 +1,10 @@
+2002-2-15  Tom Hudson  <hudsont@uncwil.edu>
+
+   * nmui_HapticSurface.C (vectorToWorldFromTracker) : New function.
+   (setLocation) : Send plane normal in microscope space rather than
+   in phantom space.
+   (sendForceUpdate) : Same.
+
 2002-2-14  Tom Hudson  <hudsont@uncwil.edu>
 
 	* nmui_HapticSurface.C : Move d_graphics to base class.

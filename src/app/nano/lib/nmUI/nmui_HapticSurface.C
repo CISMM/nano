@@ -65,7 +65,9 @@ void nmui_HapticSurface::setLocation (q_vec_type x) {
 //x[0], x[1], x[2]);
 
   if (d_graphics) {
-    d_graphics->setFeelPlane(d_handPosMS, d_currentPlaneNormal);
+    q_vec_type currentPlaneNormalMS;
+    vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
+    d_graphics->setFeelPlane(d_handPosMS, currentPlaneNormalMS);
   }
 }
 
@@ -78,7 +80,9 @@ void nmui_HapticSurface::setLocation (double x, double y, double z) {
   q_vec_set(d_handPosMS, x, y, z);
 
   if (d_graphics) {
-    d_graphics->setFeelPlane(d_handPosMS, d_currentPlaneNormal);
+    q_vec_type currentPlaneNormalMS;
+    vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
+    d_graphics->setFeelPlane(d_handPosMS, currentPlaneNormalMS);
   }
 
 //fprintf(stderr, "nmui_HapticSurface::setLocation() to <%.5f, %.5f, %.5f>\n",
@@ -94,7 +98,9 @@ void nmui_HapticSurface::sendForceUpdate (vrpn_ForceDevice_Remote * device) {
                       d_currentPlaneParameter);
   }
   if (d_graphics) {
-    d_graphics->setFeelPlane(d_handPosMS, d_currentPlaneNormal);
+    q_vec_type currentPlaneNormalMS;
+    vectorToWorldFromTracker(currentPlaneNormalMS, d_currentPlaneNormal);
+    d_graphics->setFeelPlane(d_handPosMS, currentPlaneNormalMS);
   }
 }
 
@@ -140,6 +146,18 @@ void nmui_HapticSurface::vectorToTrackerFromWorld (q_vec_type out,
   v_x_invert(&TrackerFromWorld, &WorldFromTracker);
 
   q_xform(out, TrackerFromWorld.rotate, (double *) in);
+}
+
+// static
+void nmui_HapticSurface::vectorToWorldFromTracker (q_vec_type out,
+                                                   const q_vec_type in) {
+  v_xform_type WorldFromTracker;
+
+  v_x_compose(&WorldFromTracker,
+          &v_world.users.xforms[0],
+          &v_users[0].xforms[V_ROOM_FROM_HAND_TRACKER]);
+
+  q_xform(out, WorldFromTracker.rotate, (double *) in);
 }
 
 // virtual

@@ -75,6 +75,7 @@ class nmui_HapticSurface {
 
     static void pointToTrackerFromWorld (q_vec_type out, const q_vec_type in);
     static void vectorToTrackerFromWorld (q_vec_type out, const q_vec_type in);
+    static void vectorToWorldFromTracker (q_vec_type out, const q_vec_type in);
 
     virtual void computeDistanceFromPlane (void);
 
@@ -92,6 +93,7 @@ class nmui_HapticSurface {
     q_vec_type d_currentPlaneNormal;
     double d_currentPlaneParameter;
       ///< Plane equation for approximating plane to surface.
+      ///< IN PHANTOM SPACE.
 
     double d_distanceFromPlane;
       ///< Distance from d_handPosMS to the current approximating plane
