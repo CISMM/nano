@@ -92,7 +92,7 @@ thisclean:
 
 $(OBJECT_DIR):
 	-mkdir -p $(FULL_OBJECT_DIR)
-	-ln -sf $(FULL_OBJECT_DIR) $(TOP_LEVEL_OBJ_DIR)
+	$(LINK) $(FULL_OBJECT_DIR) $(TOP_LEVEL_OBJ_DIR)
 	-mkdir -p $(OBJECT_DIR)
 
 $(OBJECT_DIR)/%.o: %.c

@@ -89,7 +89,7 @@ endif
 
 $(OBJECT_DIR):
 	-mkdir -p $(FULL_OBJECT_DIR)
-	-ln -s $(FULL_OBJECT_DIR)/ $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)
+	$(LINK) $(FULL_OBJECT_DIR)/ $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)
 	-mkdir -p $(OBJECT_DIR)
 
 $(OBJECT_DIR)/%.o: %.c

@@ -83,11 +83,9 @@ endif
 # How do I link?
 #
 
-ifeq ($(HW_OS),pc_cygwin)           # Cygwin doesn't do links right yet
-   LINK = cp
-else
-   LINK = ln -sf
-endif
+# This works on cygwin as long as MY_NANO_OBJ_DIR is a local drive.
+# You do compile that way don't you?
+LINK = -ln -nfs
 
 ##########################
 #
@@ -107,7 +105,7 @@ endif
 
 PWD_COMMAND := pwd
 ifeq ($(findstring pc_,$(HW_OS)),pc_)
-   PWD_COMMAND := pwd -P
+   PWD_COMMAND := pwd
 endif
 
 ##########################
@@ -162,8 +160,17 @@ DEFAULT_PROJ_OBJ_DIR := $(DEFAULT_PROJ_SRC_DIR)/not_backed_up
 DEFAULT_NANO_SRC_DIR := $(DEFAULT_PROJ_SRC_DIR)/nano
 
 ifndef MY_NANO_SRC_DIR
-   MY_NANO_SRC_DIR := $(shell echo $(shell $(PWD_COMMAND)) | perl -pe "s|/nano/src(?\!.*/nano/src/).+||;")
-   #MY_NANO_SRC_DIR := $(DEFAULT_PROJ_SRC_DIR)/$(WHOAMI)
+   # The following calls perl to do the substitution because make's patsubst
+   # can't handle it. It reads like this:
+   # "s|/nano/src(?\!.*/nano/src/).*||;"
+   # s| -- find the pattern
+   #   /nano/src -- the string /nano/src
+   #            (?! -- not followed by the group
+   #               .* -- 0 or more characters
+   #                 /nano/src/) -- followed by /nano/src/, end group
+   #                            .* -- followed by 0 or more characters
+   #                              || replace the pattern with nothing
+   MY_NANO_SRC_DIR := $(shell echo $(shell $(PWD_COMMAND)) | perl -pe "s|/nano/src(?!.*/nano/src/).*||;")
 endif
 
 TOP_LEVEL_DIR     := $(MY_NANO_SRC_DIR)/nano
@@ -243,9 +250,9 @@ endif
 # {{{ Load flags
 #
 
-LOAD_FLAGS := -g $(addprefix -L, $(TCL_LIB_DIR) /usr/local/lib \
-                                 /usr/local/contrib/unmod/lib \
-                                 /usr/local/contrib/mod/lib)
+LOAD_FLAGS := $(addprefix -L, $(TCL_LIB_DIR) /usr/local/lib \
+                              /usr/local/contrib/unmod/lib \
+                              /usr/local/contrib/mod/lib)
 
 ifeq ($(HW_OS),pc_cygwin)
   LOAD_FLAGS += -L/usr/X11R6.4/lib
