@@ -7,8 +7,6 @@
 
 #include "vrpn_Types.h"
 
-#define USING_REG_WINDOWS
-
 #ifdef V_GLUT
 #	include <GL/glut.h>
 #else
@@ -193,7 +191,6 @@ int ImageViewer::createWindow(char *display_name,
     XDefineCursor(dpy[dpy_index].x_dpy, *win, window[num_windows].cursor);
     window[num_windows].win = win;
 #else
-#ifdef USING_REG_WINDOWS
     //glutInitWindowSize(w,h); - this should be done by user
     //glutInitWindowPosition(x,y);
     //glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
@@ -216,7 +213,6 @@ int ImageViewer::createWindow(char *display_name,
     glutMouseFunc(ImageViewer::mouseCallbackForGLUT);
     glutKeyboardFunc(ImageViewer::keyboardCallbackForGLUT);
     //glutSetWindow(win_save);
-#endif
 #endif
 
     window[num_windows].d_pixelMode = pixelType;
@@ -289,11 +285,9 @@ int ImageViewer::showWindow(int winID){
     }
 
 #ifdef V_GLUT
-#ifdef USING_REG_WINDOWS
     int curr_win = glutGetWindow();
     glutSetWindow(window[win_index].win_id); // the GLUT window ID
     glutShowWindow();
-#endif
 #else
     XMapWindow(dpy[window[win_index].display_index].x_dpy, 
 		(*(window[win_index].win)));
@@ -330,13 +324,10 @@ int ImageViewer::showWindow(int winID){
                                (float)window[win_index].win_height;
 
 #ifdef V_GLUT
-#ifdef USING_REG_WINDOWS
     // this caused problems in non-cygwin winNT
 #if (!defined(_WIN32) || defined(__CYGWIN__))
     glutPositionWindow(x_loc,y_loc);
     glutReshapeWindow(window[win_index].im_width, window[win_index].im_height);
-#endif
-    glutSetWindow(curr_win);
 #endif
 #else
     XMoveResizeWindow(dpy[window[win_index].display_index].x_dpy,
@@ -346,6 +337,18 @@ int ImageViewer::showWindow(int winID){
 #endif
 
     window[win_index].visible = VRPN_TRUE;
+
+#ifdef V_GLUT
+    glutSetWindow(window[win_index].win_id);
+    glutPopWindow();
+    glutSetWindow(curr_win);
+#else
+    XRaiseWindow(dpy[window[win_index].display_index].x_dpy,
+                 (*(window[win_index].win)));
+#endif
+
+
+
     dirtyWindow(winID);
     return 0;
 }
@@ -359,12 +362,10 @@ int ImageViewer::hideWindow(int winID){
 	return 0;
     }
 #ifdef V_GLUT
-#ifdef USING_REG_WINDOWS
     int curr_win = glutGetWindow();
     glutSetWindow(window[win_index].win_id); // the GLUT window ID
     glutHideWindow();
     glutSetWindow(curr_win);
-#endif
 #else
     XUnmapWindow(dpy[window[win_index].display_index].x_dpy, 
 	(*(window[win_index].win)));
@@ -382,12 +383,10 @@ int ImageViewer::dirtyWindow(int winID) {
     window[win_index].needs_redisplay = VRPN_TRUE;
 
 #ifdef V_GLUT
-#ifdef USING_REG_WINDOWS
     int curr_win = glutGetWindow();
     glutSetWindow(window[win_index].win_id);
     glutPostRedisplay();
     glutSetWindow(curr_win);
-#endif
 #endif
 
     return 0;
@@ -800,13 +799,11 @@ int ImageViewer::setWindowImageSize(int winID, int im_w, int im_h) {
     window[win_index].im_y_per_pixel = (float)window[win_index].im_height /
                                        (float)window[win_index].win_height;
 #ifdef V_GLUT
-#ifdef USING_REG_WINDOWS
       // this caused problems in winNT
     //int curr_win = glutGetWindow();
     //glutSetWindow(window[win_index].win_id);
     //glutReshapeWindow(window[win_index].im_width, window[win_index].im_height); 
     //glutSetWindow(curr_win);
-#endif
 #else
     XResizeWindow(dpy[window[win_index].display_index].x_dpy,
        	*(window[win_index].win), window[win_index].im_width, 

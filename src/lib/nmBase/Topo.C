@@ -990,7 +990,10 @@ int TopoFile::writeData(int handle){
         int     i,size;
 	
 
-	if(!valid_grid) return -1;
+	if (!valid_grid) {
+           fprintf(stderr, "TopoFile::writeData: Grid not valid\n");
+           return -1;
+        }
         size = iCols * iRows * iLayers ;
 
 	// Fix the byte ordering of the data, if necessary.
@@ -1314,6 +1317,8 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
         int     data_type;
 
         if(valid_header == 0) {
+            fprintf(stderr, "TopoFile::imageToTopoData:"
+             " Error: header not valid\n");
             return -1;
         }
         if(griddata != NULL) {
@@ -1714,6 +1719,8 @@ int TopoFile::initForConversionToTopo(double z_scale_nm, double z_offset_nm) {
     */
     sInfo->fDACtoWorld = z_scale_nm;
     sInfo->fDACtoWorldZero = z_offset_nm;
+    fDACtoWorld = z_scale_nm;
+    fDACtoWorldZero = z_offset_nm;
 
     sprintf(sInfo->szWorldUnit, "nm");
     sprintf(sInfo->szXYUnit, "nm");
@@ -1721,9 +1728,12 @@ int TopoFile::initForConversionToTopo(double z_scale_nm, double z_offset_nm) {
     sInfo->iXYUnitType = 2;	// indicates nm
     sInfo->iRelease = iRelease;
     sInfo->iOffset = iOffset;
+    iWorldUnitType = 1;
+    iXYUnitType = 2;
     sprintf(sInfo->szRelease, "#R4.00# 2112");
     sprintf(sInfo->szRateUnit, "\265m/s");
     sInfo->iLayers = 1;
+    iLayers = 1;
     valid_header = 1;
     return 0;
 }
@@ -1960,6 +1970,7 @@ TopoFile::TopoFile(const TopoFile &t)
           return;
        }
        memcpy(header, t.header, iHeaderLength*sizeof(char));
+       valid_header = t.valid_header;
     }
 }
 
@@ -1997,6 +2008,7 @@ TopoFile &TopoFile::operator = (const TopoFile &t)
           return *this;
        }
        memcpy(header, t.header, iHeaderLength*sizeof(char));
+       valid_header = t.valid_header;
     }
     return *this;
 }

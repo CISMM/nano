@@ -456,7 +456,9 @@ AFMState::AFMState (const AFMInitializationState & i) :
     subscan_count (0),
 
     lastZ (0.0f),
-    numLinesToJumpBack("num_lines_to_jump_back", 10)
+    // this will effectively set the default to disable the jump back 
+    // feature which doesn't quite work as advertised yet
+    numLinesToJumpBack("num_lines_to_jump_back", 1000)
 
 {
   strcpy(deviceName, i.deviceName);

@@ -3024,13 +3024,13 @@ Can't do this until we have the mutex
   } else {
       CHECK(SetRelax(0, 0));
   }
-*/
+
 
   // Ask it for the scan range in x, y, and z.
   // When this is read back, Z will be used to set min_z and max_z.
   CHECK(QueryScanRange());
 
-/*
+
   Can't do this until we have the mutex
   // Start scanning the surface
   CHECK(ResumeFullScan());
@@ -4466,6 +4466,8 @@ void nmm_Microscope_Remote::handle_GotMicroscopeControl(void *ud,
   } else {
       me->SetRelax(0, 0);
   }
+
+  me->QueryScanRange();
 
   // Tell AFM to scan forward and backward, or just forward.
   me->SetScanStyle();

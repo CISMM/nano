@@ -49,8 +49,8 @@ class nmb_Decoration;
 class Microscope;
 class Xform;		//added from ugraphics
 
-#define	MICROSCAPE_MAJOR_VERSION	(8)
-#define	MICROSCAPE_MINOR_VERSION	(1)
+#define	MICROSCAPE_MAJOR_VERSION	(9)
+#define	MICROSCAPE_MINOR_VERSION	(0)
 
 
 #define HEAD	0

@@ -926,7 +926,7 @@ iwidgets::Labeledframe $nmInfo(preferences).acquisition \
 	-labelpos nw
 set nmInfo(pref_acq) [$nmInfo(preferences).acquisition childsite]
 
-set num_lines_to_jump_back 10
+set num_lines_to_jump_back 1000
 generic_entry $nmInfo(pref_acq).jump_back num_lines_to_jump_back \
 	"Post-modify jumpback" integer
 

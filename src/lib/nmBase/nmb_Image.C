@@ -289,6 +289,12 @@ void nmb_ImageGrid::setValue(int i, int j, float val)
 
 int nmb_ImageGrid::validDataRange(short* o_top, short* o_left,
                                    short* o_bottom, short*o_right){
+     // if we are not the allocator then assume someone else is setting
+     // values directly in the plane object without going through us and
+     // so take the valid region from what the plane says
+     if (!grid) {
+         return plane->findValidDataRange(o_top, o_left, o_bottom, o_right);
+     }
      // if no valid data:
      if (min_y_set > max_y_set || min_x_set > max_x_set)
         return -1;

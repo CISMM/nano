@@ -1000,9 +1000,13 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
 	 * the real button box by causing a callback to
 	 * the tcl routines */
     if( PRESS_EVENT == eventList[COMMIT_BT] ) {
-      //printf("Commit from button box.\n");
       // causes "handle_commit_change" to be called
       tcl_commit_pressed  = !tcl_commit_pressed; 
+      if (tcl_commit_pressed) {
+         printf("Commit from button box, now ON\n");
+      } else {
+         printf("Commit from button box, now OFF\n");
+      }
     }
     if( PRESS_EVENT == eventList[CANCEL_BT] ) {
       //printf("Cancel from button box.\n");
