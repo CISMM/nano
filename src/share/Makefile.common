@@ -196,7 +196,6 @@ endif
 DEFAULT_PROJ_HOME    := /afs/cs.unc.edu/project/stm
 DEFAULT_PROJ_SRC_DIR := $(DEFAULT_PROJ_HOME)/src
 DEFAULT_PROJ_OBJ_DIR := $(DEFAULT_PROJ_SRC_DIR)/not_backed_up
-DEFAULT_PROJ_EXT_DIR := $(DEFAULT_PROJ_SRC_DIR)/external
 DEFAULT_NANO_SRC_DIR := $(DEFAULT_PROJ_SRC_DIR)/nano
 
 ifndef MY_NANO_SRC_DIR
@@ -239,15 +238,32 @@ TCL_LIB_DIR := /afs/unc/proj/stm/src/tcltk.$(HW_OS)$(OBJECT_DIR_SUFFIX)/lib \
                /afs/unc/proj/stm/src/tcltk.$(HW_OS)/lib \
                /net/nano/nano3/tcltk.$(HW_OS)/lib
 
-ifdef USES_EXTERNAL_LIBS
+### now find the external directory.
+###  If it exists, we'll use "$(MY_NANO_SRC_DIR)/external",
+###  otherwise we use "$(DEFAULT_PROJ_SRC_DIR)/external"
+
+ifneq ($(USES_EXTERNAL_LIBS),)
+
+   ### is there a subdir of $(MY_NANO_SRC_DIR) called external?
+   EXTERNAL_IN_MY_NANO_SRC_DIR := \
+     $(shell perl -e 'print "TRUE" if -d "$(MY_NANO_SRC_DIR)/external/";')
+
+   ifneq ($(EXTERNAL_IN_MY_NANO_SRC_DIR),)
+      EXTERNAL_PRE_1 := $(MY_NANO_SRC_DIR)/external
+   else
+      EXTERNAL_PRE_1 := $(DEFAULT_PROJ_SRC_DIR)/external
+   endif
+
+   EXTERNAL_PRE := ${EXTERNAL_PRE_1}/$(HW_OS)$(OBJECT_DIR_SUFFIX)
+   EXTERNAL_INC_DIR := $(EXTERNAL_PRE)/include
+   EXTERNAL_LIB_DIR := $(EXTERNAL_PRE)/lib
+
    ifdef VC
       Aron???
    else
-      EXTERNAL_PRE := ${DEFAULT_PROJ_EXT_DIR}/$(HW_OS)$(OBJECT_DIR_SUFFIX)
-      EXTERNAL_INC_DIR := $(EXTERNAL_PRE)/include
-      EXTERNAL_LIB_DIR := $(EXTERNAL_PRE)/lib
       EXTERNAL_LIBS := $(addprefix -l, $(USES_EXTERNAL_LIBS))
    endif
+
 endif
 
 ###############################################################################
@@ -448,15 +464,17 @@ LIBS := $(EXTERNAL_LIBS) -lglut $(GRAPHICS_LIBS) \
         $(TCL_LIBS) -lXmu -lXext -lX11 $(ARCH_LIBS) -lm
 
 ifeq ($(HW_OS), hp700_hpux10)
-   LIBS := -lPW $(GRAPHICS_LIBS) $(TCL_LIBS) -lXext -lX11 $(ARCH_LIBS) -lm
+   LIBS := -lPW $(EXTERNAL_LIBS) $(GRAPHICS_LIBS) $(TCL_LIBS) \
+           -lXext -lX11 $(ARCH_LIBS) -lm
 endif
 
 ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
-   LIBS := -lPW $(GRAPHICS_LIBS) $(TCL_LIBS) -lXext -lX11 $(ARCH_LIBS) -lm
+   LIBS := -lPW $(EXTERNAL_LIBS) $(GRAPHICS_LIBS) $(TCL_LIBS) \
+           -lXext -lX11 $(ARCH_LIBS) -lm
 endif
 
 ifdef VC
-   LIBS := $(GRAPHICS_LIBS) $(TCL_LIBS) $(ARCH_LIBS) -lm
+   LIBS := $(EXTERNAL_LIBS) $(GRAPHICS_LIBS) $(TCL_LIBS) $(ARCH_LIBS) -lm
 endif
 
 LIBS += $(LATE_LIBRARIES)
