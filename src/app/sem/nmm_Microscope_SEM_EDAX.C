@@ -325,7 +325,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::setResolution
   if (res_valid){
     d_resolution_x = res_x;
     d_resolution_y = res_y;
-    delete d_scanBuffer;
+    delete [] d_scanBuffer;
 #ifdef _WIN32
     d_scanBuffer = new UCHAR[d_resolution_x*d_resolution_y];
 #else
@@ -507,6 +507,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
   }
   for (i = 0; i < d_resolution_y; i++){
     reportScanlineData(i);
+    d_connection->mainloop();
   }
 */
 
@@ -529,6 +530,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
     gettimeofday(&t1, NULL);
     //reportWindowLineData(i);
     reportScanlineData(i);
+    d_connection->mainloop();
     gettimeofday(&t2, NULL);
     t0 = vrpn_TimevalDiff(t1, t0);
     t1 = vrpn_TimevalDiff(t2, t1);
@@ -546,6 +548,7 @@ vrpn_int32 nmm_Microscope_SEM_EDAX::acquireImage()
 	((i+((int)(count)))%d_resolution_y)*255/d_resolution_y, d_resolution_x);
     //reportWindowLineData(i);
     reportScanlineData(i);
+    d_connection->mainloop();
   }
 
   count++;
