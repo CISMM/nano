@@ -199,16 +199,35 @@ class nmui_HSFeelAhead : public nmui_HapticSurface {
 
   public:
 
-    nmui_HSFeelAhead (nmb_Dataset *);
+#ifndef USE_VRPN_MICROSCOPE
+    nmui_HSFeelAhead (nmb_Dataset *, Microscope *);
+#else
+    nmui_HSFeelAhead (nmb_Dataset *, nmm_Microscope_Remote *);
+#endif
+      ///< Set of point results used is
+      ///< microscope->state.data.receivedPointList.
+
     virtual ~nmui_HSFeelAhead (void);
 
     // MANIPULATORS
 
     virtual void update (void);
 
+
+
   protected:
 
+    void updateModel (void);
+    static void newPointListReceivedCallback (void *);
+    ///< Registered on the microscope.
+
     nmb_Dataset * d_dataset;
+#ifndef USE_VRPN_MICROSCOPE
+    Microscope * d_microscope;
+#else
+    nmm_Microscope_Remote * d_microscope;
+#endif
+
 };
 
 

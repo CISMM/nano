@@ -453,3 +453,49 @@ void nmui_HSLivePlane::update (void) {
 }
 
 
+
+
+nmui_HSFeelAhead::nmui_HSFeelAhead (nmb_Dataset * dataset,
+#ifndef USE_VRPN_MICROSCOPE
+                                    Microscope * scope) :
+#else
+                                    nmm_Microscope_Remote * scope) :
+#endif
+    d_dataset (dataset),
+    d_microscope (scope) {
+
+}
+
+// virtual
+nmui_HSFeelAhead::~nmui_HSFeelAhead (void) {
+
+}
+
+// virtual
+void nmui_HSFeelAhead::update (void) {
+
+  // TODO
+
+}
+
+
+void nmui_HSFeelAhead::updateModel (void) {
+
+  // TODO
+  // Send a trimesh up to the microscope
+  // For now hackishly assumes we've got a sample grid.
+  // Probably the nmm_Sample subclass should be responsible for
+  // converting the Point_list into some sort of mesh, but we
+  // probably don't want to use a BCGrid to hold it...
+
+}
+
+// static
+void nmui_HSFeelAhead::newPointListReceivedCallback (void * userdata) {
+
+  nmui_HSFeelAhead * it = (nmui_HSFeelAhead *) userdata;
+
+  it->updateModel();
+
+}
+

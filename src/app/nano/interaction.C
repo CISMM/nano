@@ -1364,6 +1364,8 @@ double touch_canned_from_plane (int whichUser, q_vec_type handpos) {
   // But it will ONLY be referenced while this function is live.
   haptic_features.setSurfaceFeatureStrategy(&strategy);
 
+//fprintf(stderr, "touch_canned_from_plane():  \n");
+
   haptics.setLocation(handpos);
   haptics.update();
 

@@ -125,18 +125,31 @@ const	int	MAX_POINT_LIST = 10000;
 class	Point_list
 {
   public:
-	Point_list() { _num_entries = 0; };
-	~Point_list();
 
-	int addEntry(const Point_results &p);
-	void clear(void);
+    Point_list (void) { _num_entries = 0; };
+    ~Point_list (void);
 
-	int writeToAsciiFile(FILE *f);
-        int writeToTclWindow(Tcl_Interp *interpreter);
+
+    // ACCESSORS
+
+
+    int numEntries (void) const;
+    const Point_results * entry (int) const;
+
+
+    // MANIPULATORS
+
+
+    int addEntry (const Point_results & p);
+    void clear (void);
+
+    int writeToAsciiFile (FILE * f);
+    int writeToTclWindow (Tcl_Interp * interpreter);
 
   protected:
-	int	_num_entries;
-	Point_results	*_entries[MAX_POINT_LIST];
+
+    int _num_entries;
+    Point_results * _entries [MAX_POINT_LIST];
 };
 
 

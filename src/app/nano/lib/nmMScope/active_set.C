@@ -372,9 +372,12 @@ int     Scan_channel_selector::Handle_report( int x, int y,
 }
 
 Point_channel_selector::Point_channel_selector
-  (Point_results *point,
-   nmb_ListOfStrings * namelist, nmb_Dataset * dataset) :
-		Channel_selector (namelist, dataset)
+             (Point_results * point,
+              nmb_ListOfStrings * namelist, nmb_Dataset * dataset,
+              Point_list * pointList) :
+    Channel_selector (namelist, dataset),
+    myresult (point),
+    d_pointList (pointList)
 {
 	change_from_tcl = 1;		// Report to the microscope what we want
 	numchannels = 0;	// No channels mapped yet
@@ -496,7 +499,8 @@ int     Point_channel_selector::Handle_old_report( float x, float y,
 }
 
 int     Point_channel_selector::Handle_report( float x, float y,
-		long sec, long usec, float *vals, int numvalues)
+		long sec, long usec, float *vals, int numvalues,
+                vrpn_bool accumulatePoints)
 {
 	int	i;
 
@@ -518,6 +522,11 @@ int     Point_channel_selector::Handle_report( float x, float y,
 		values[i]->setValue(
 			channels[i].offset + channels[i].scale*vals[i]);
 	}
+
+        // Are we stashing a copy of this data in a point list?
+        if (accumulatePoints) {
+          d_pointList->addEntry(*myresult);
+        }
 
 	return 0;
 }

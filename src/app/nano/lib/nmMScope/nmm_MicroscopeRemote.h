@@ -296,6 +296,14 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
 					const Scanline_results *),
                                   void *userdata);
 
+    vrpn_int32 pointResultType (void) const;
+      ///< Returns the vrpn type of a point result message;
+      ///< used with nmb_DeviceSequencer/nmm_Sample.
+
+    void accumulatePointResults (vrpn_bool);
+      ///< If true, in addition to exposing point results on
+      ///< state.data.inputPoint we put them on state.data.pointList.
+
   protected:
 
     nmb_Dataset * d_dataset;
@@ -622,6 +630,7 @@ class nmm_Microscope_Remote : public nmb_Device_Client, public nmm_Microscope {
     void doScanlineDataCallbacks (const Scanline_results *);
 
     nmm_Sample * d_sampleAlgorithm;
+    vrpn_bool d_accumulatePointResults;
 };
 
 #endif  // NMM_MICROSCOPE_REMOTE_H

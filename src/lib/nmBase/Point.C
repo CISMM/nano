@@ -280,6 +280,20 @@ Point_list::~Point_list()
 	}
 }
 
+
+int Point_list::numEntries (void) const {
+  return _num_entries;
+}
+
+const Point_results * Point_list::entry (int which) const {
+  if ((which < 0) || (which >= _num_entries)) {
+    return NULL;
+  }
+  return _entries[which];
+}
+
+
+
 int Point_list::addEntry(const Point_results &p)
 {
 	// Make sure there is enough room

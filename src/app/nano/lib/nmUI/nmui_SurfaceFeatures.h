@@ -11,6 +11,10 @@ class nmui_HSCanned;  // from "nmui_HapticSurface.h"
 //   Put Point, Grid onto strategy classes & run them behind the scenes.
 //   Make nmui_SurfaceFeatures concrete and instantiate it.
 // * Still need a better way to instantiate & select strategy classes.
+// * We need buzzingEnabled(), bumpsEnabled() because the "magic numbers"
+//   that get thrown at them may include an offset as well as a scale,
+//   so passing 0 back from scaledPointBuzzAmplitude() *doesn't* guarantee
+//   that buzzing will be off if magicBuzzAmplitude() is obnoxious enough.
 
 
 class nmui_SurfaceFeatureStrategy {
@@ -19,6 +23,17 @@ class nmui_SurfaceFeatureStrategy {
 
     nmui_SurfaceFeatureStrategy (void);
     virtual ~nmui_SurfaceFeatureStrategy (void) = 0;
+
+    // ACCESSORS
+
+    virtual vrpn_bool buzzingEnabled (void) const;
+      ///< Default implementation returns vrpn_false;
+    virtual vrpn_bool bumpsEnabled (void) const;
+      ///< Default implementation returns vrpn_false;
+
+    // MANIPULATORS
+    // These could be declared const, but I don't want to constrain
+    // future implementations.
 
     virtual double pointAdhesionValue (void);
       ///< Default implementation returns 0.
@@ -128,9 +143,10 @@ class nmui_PointFeatures : public nmui_SurfaceFeatureStrategy {
 
     // ACCESSORS
 
-    // MANIPULATORS
+    virtual vrpn_bool buzzingEnabled (void) const;
+    virtual vrpn_bool bumpsEnabled (void) const;
 
-  protected:
+    // MANIPULATORS
 
     virtual double pointAdhesionValue (void);
       ///< Looks up the adhesion in microscope->state.data.inputPoint.
@@ -175,9 +191,10 @@ class nmui_GridFeatures : public nmui_SurfaceFeatureStrategy {
 
     // ACCESSORS
 
-    // MANIPULATORS
+    virtual vrpn_bool buzzingEnabled (void) const;
+    virtual vrpn_bool bumpsEnabled (void) const;
 
-  protected:
+    // MANIPULATORS
 
     virtual double pointAdhesionValue (void);
       ///< Looks up plane->value(x, y).

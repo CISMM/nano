@@ -7,6 +7,7 @@ class BCGrid;  // from BCGrid.h
 class BCPlane;  // from BCPlane.h
 class Point_results;  // from Point.h
 class Point_value;
+class Point_list;
 class nmb_Dataset;  // from nmb_Dataset.h
 
 //#include <nmm_Globals.h>  // was for USE_VRPN_MICROSCOPE
@@ -127,7 +128,8 @@ class	Point_channel_selector : public Channel_selector
 {
     public:
 	Point_channel_selector (Point_results * point,
-                                nmb_ListOfStrings *, nmb_Dataset *);
+                                nmb_ListOfStrings *, nmb_Dataset *,
+                                Point_list * pointList = NULL);
 	~Point_channel_selector (void);  // avoid compiler warnings
 
 	// User-interface side of things, response to changes by the user
@@ -145,11 +147,14 @@ class	Point_channel_selector : public Channel_selector
 	int	Handle_old_report(float x, float y, long sec, long usec,
 			      float val, float std);
 	int	Handle_report(float x, float y, long sec, long usec,
-			float *vals, int numvalues);
+			float *vals, int numvalues, vrpn_bool accumulatePoints);
+          ///< If accumulatePoints is true, stashes a copy of myresult
+          ///< in d_pointList.
 
     protected:
 	Point_results	*myresult;
 	Point_value	*values[MAX_CHANNELS];	// Where to store the values
+        Point_list * d_pointList;
 };
 
 // "Forcecurve" means the AFM goes to a specific spot, and then does
@@ -177,8 +182,8 @@ class	ForceCurve_channel_selector : public Channel_selector
 			float *vals, int numvalues);
 
     protected:
-	Point_results	  *myresult;
-	Point_value	  *values[MAX_CHANNELS];
+	Point_results * myresult;
+	Point_value * values [MAX_CHANNELS];
 };
 
 #endif

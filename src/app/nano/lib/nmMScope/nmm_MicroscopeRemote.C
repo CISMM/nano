@@ -91,7 +91,8 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
     d_imageModeHandlers (NULL),
     d_scanlineModeHandlers (NULL),
     d_scanlineDataHandlers (NULL),
-    d_sampleAlgorithm (NULL)
+    d_sampleAlgorithm (NULL),
+    d_accumulatePointResults (vrpn_false)
 {
   gettimeofday(&d_nowtime, &d_nowzone);
   d_next_time.tv_sec = 0L;
@@ -1862,6 +1863,15 @@ long nmm_Microscope_Remote::unregisterScanlineDataHandler
   return 0;
 }
 
+vrpn_int32 nmm_Microscope_Remote::pointResultType (void) const {
+  return d_PointResultData_type;
+}
+
+void nmm_Microscope_Remote::accumulatePointResults (vrpn_bool on) {
+  d_accumulatePointResults = on;
+}
+
+
 long nmm_Microscope_Remote::InitDevice (const vrpn_bool _setRegion,
                             const vrpn_bool _setMode,
                             const long /* _socketType */,
@@ -3533,10 +3543,12 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
     return;
 
   // Make the report.  This has the side effect of updating
-  // the inputPoint values.
+  // the inputPoint values and, if d_accumulatePointResults,
+  // the incomingPointList.
   // HACK HACK HACK
   if (state.data.point_channels->Handle_report(_x, _y, _sec, _usec,
-                                          (float *) _fields, _fieldCount)) {
+                                          (float *) _fields, _fieldCount,
+                                          d_accumulatePointResults)) {
     fprintf(stderr, "Error handling SPM point result data\n");
     d_dataset->done = VRPN_TRUE;
     return;

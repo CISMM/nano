@@ -651,7 +651,8 @@ void Microscope::RcvResultData (const int _type,
   // the inputPoint values.
   // HACK HACK HACK
   if (state.data.point_channels->Handle_report(_x, _y, _sec, _usec,
-                                          (float *) _fields, _fieldCount)) {
+                                          (float *) _fields, _fieldCount,
+                                           vrpn_false)) {
     fprintf(stderr, "Error handling SPM point result data\n");
     d_dataset->done = VRPN_TRUE;
     return;

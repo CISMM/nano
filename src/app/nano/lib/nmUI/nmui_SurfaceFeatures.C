@@ -33,6 +33,16 @@ nmui_SurfaceFeatureStrategy::~nmui_SurfaceFeatureStrategy (void) {
 
 }
 
+//virtual
+vrpn_bool nmui_SurfaceFeatureStrategy::buzzingEnabled (void) const {
+  return vrpn_false;
+}
+
+//virtual
+vrpn_bool nmui_SurfaceFeatureStrategy::bumpsEnabled (void) const {
+  return vrpn_false;
+}
+
 // virtual
 double nmui_SurfaceFeatureStrategy::pointAdhesionValue (void) {
   return 0.0;
@@ -101,6 +111,8 @@ void nmui_SurfaceFeatures::setSurfaceFeatureStrategy
   d_strategy = fs;
 }
 
+
+
 void nmui_SurfaceFeatures::useLinearBuzzing (vrpn_bool on) {
   d_useLinearBuzzing = on;
 }
@@ -151,6 +163,11 @@ void nmui_SurfaceFeatures::specifyAdhesion (void) {
 void nmui_SurfaceFeatures::specifyBuzzAmplitude (void) {
   double amp;
 
+  if (!d_strategy->buzzingEnabled()) {
+    setBuzzing(0.0);
+    return;
+  }
+
   amp = d_strategy->scaledPointBuzzAmplitude();
 
   // Percieved magnitude of buzzing is proportional to x^0.95
@@ -170,6 +187,11 @@ void nmui_SurfaceFeatures::specifyBuzzAmplitude (void) {
 
 void nmui_SurfaceFeatures::specifyBumpSize (void) {
   double wavelength;
+
+  if (!d_strategy->bumpsEnabled()) {
+    setSurfaceTexture(0.0);
+    return;
+  }
 
   wavelength = d_strategy->scaledPointBumpSizeValue();
 
@@ -193,7 +215,7 @@ void nmui_SurfaceFeatures::specifyCompliance (void) {
   double compliance_range;
   double kS;
 
-  kS = d_strategy->scaledPointBumpSizeValue();
+  kS = d_strategy->pointComplianceValue();
 
   if (compliance_slider_max != compliance_slider_min) {
     compliance_range = compliance_slider_max - compliance_slider_min;
@@ -210,6 +232,8 @@ void nmui_SurfaceFeatures::specifyCompliance (void) {
     kS *= d_complianceGain;
     kS = kS * (MAX_K - MIN_K) + MIN_K;
   }
+
+//fprintf(stderr, "Compliance is %.5f\n", kS);
 
   setCompliance(kS);
 }
@@ -298,6 +322,33 @@ nmui_PointFeatures::~nmui_PointFeatures (void) {
 
 
 // virtual
+vrpn_bool nmui_PointFeatures::buzzingEnabled (void) const {
+  Point_value * value =
+    d_microscope->state.data.inputPoint->getValueByPlaneName
+         (buzzPlaneName.string());
+  double buzz_range = buzz_slider_max - buzz_slider_min;
+
+  if (!buzz_range || !value) {
+    return vrpn_false;
+  }
+  return vrpn_true;
+}
+
+// virtual
+vrpn_bool nmui_PointFeatures::bumpsEnabled (void) const {
+  Point_value * value =
+    d_microscope->state.data.inputPoint->getValueByPlaneName
+         (bumpPlaneName.string());
+  if ((bump_slider_max == bump_slider_min) || !value) {
+    return vrpn_false;
+  }
+
+  return vrpn_true;
+}
+
+
+
+// virtual
 double nmui_PointFeatures::pointAdhesionValue (void) {
   Point_value * value =
     d_microscope->state.data.inputPoint->getValueByPlaneName
@@ -317,11 +368,7 @@ double nmui_PointFeatures::scaledPointBuzzAmplitude (void) {
          (buzzPlaneName.string());
   double buzz_range = buzz_slider_max - buzz_slider_min;
 
-  if (buzz_range && value) {
-    return (value->value() - buzz_slider_min) / buzz_range;
-  } else {
-    return 0.0;
-  }
+  return (value->value() - buzz_slider_min) / buzz_range;
 }
 
 // virtual
@@ -388,6 +435,31 @@ nmui_GridFeatures::~nmui_GridFeatures (void) {
 }
 
 
+
+// virtual
+vrpn_bool nmui_GridFeatures::buzzingEnabled (void) const {
+  BCPlane * plane =
+    d_dataset->inputGrid->getPlaneByName(buzzPlaneName.string());
+
+  if (!plane || (buzz_slider_max == buzz_slider_min)) {
+    return vrpn_false;
+  }
+
+  return vrpn_true;
+}
+
+// virtual
+vrpn_bool nmui_GridFeatures::bumpsEnabled (void) const {
+  BCPlane * plane =
+    d_dataset->inputGrid->getPlaneByName(bumpPlaneName.string());
+
+  if ((bump_slider_max == bump_slider_min) || !plane) {
+    return vrpn_false;
+  }
+
+  return vrpn_true;
+}
+
 // virtual
 double nmui_GridFeatures::pointAdhesionValue (void) {
   BCPlane * plane =
@@ -407,14 +479,10 @@ double nmui_GridFeatures::scaledPointBuzzAmplitude (void) {
     d_dataset->inputGrid->getPlaneByName(buzzPlaneName.string());
   double val;
 
-  if ((buzz_slider_max != buzz_slider_min) && plane) {
-    val = plane->value(d_hapticSurface->getGridX(),
-                      d_hapticSurface->getGridY());
-    return (val - plane->minValue()) /
-              (plane->maxValue() - plane->minValue());
-  } else {
-    return 0.0;
-  }
+  val = plane->value(d_hapticSurface->getGridX(),
+                    d_hapticSurface->getGridY());
+  return (val - plane->minValue()) /
+            (plane->maxValue() - plane->minValue());
 }
 
 // virtual
@@ -449,14 +517,10 @@ double nmui_GridFeatures::scaledPointBumpSizeValue (void) {
     d_dataset->inputGrid->getPlaneByName(bumpPlaneName.string());
   double val;
 
-  if ((bump_slider_max != bump_slider_min) && plane) {
-    val = plane->value(d_hapticSurface->getGridX(),
-                       d_hapticSurface->getGridY());
-    return (val - plane->minValue()) /
-              (plane->maxValue() - plane->minValue());
-  } else {
-    return 0.0;
-  }
+  val = plane->value(d_hapticSurface->getGridX(),
+                     d_hapticSurface->getGridY());
+  return (val - plane->minValue()) /
+            (plane->maxValue() - plane->minValue());
 }
 
 
