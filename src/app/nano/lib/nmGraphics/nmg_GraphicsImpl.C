@@ -2146,7 +2146,7 @@ void nmg_Graphics_Implementation::createScreenImage
   int w, h;
   unsigned char * pixels = NULL;
 
-  screenCapture(&w, &h, &pixels);
+  screenCapture(&w, &h, &pixels, vrpn_FALSE);
 
   if (!pixels) {
     return;

@@ -1,3 +1,4 @@
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -2816,10 +2817,20 @@ void    handle_tracker2room_change(void *userdata,
 {
     // userdata is VLIB transform index
     int xformIndex = *(int *)userdata;
+
+    if (xformIndex == V_ROOM_FROM_HAND_TRACKER) {
+        printf("Updating hand tracker from room xform\n");
+    } else if (xformIndex == V_ROOM_FROM_HEAD_TRACKER) {
+        printf("Updating head tracker from room xform\n");
+    }
+
     if ((xformIndex == V_ROOM_FROM_HEAD_TRACKER) || 
 	(xformIndex == V_ROOM_FROM_HAND_TRACKER)) {
-
-	printf("Updating tracker from room xform\n");
+        printf("(%g, %g, %g), (%g, %g, %g, %g)\n",
+               info.tracker2room[0], info.tracker2room[1], info.tracker2room[2],
+               info.tracker2room_quat[0], info.tracker2room_quat[1], 
+               info.tracker2room_quat[2], info.tracker2room_quat[3]);
+	
 	v_update_user_xform(0, xformIndex, UGLYCAST info.tracker2room, 
 			    UGLYCAST info.tracker2room_quat);
 
@@ -2833,9 +2844,16 @@ void    handle_sensor2tracker_change(void *userdata, const vrpn_TRACKERCB info)
 {
     // userdata is VLIB transform index
     int xformIndex = *(int *)userdata;
+    if (xformIndex == V_TRACKER_FROM_HEAD_SENSOR) {
+       //printf("tracker from head: ");
+    } else if (xformIndex == V_TRACKER_FROM_HAND_SENSOR){
+       //printf("tracker from hand: ");
+    }
     if ((xformIndex == V_TRACKER_FROM_HEAD_SENSOR) ||
 	(xformIndex == V_TRACKER_FROM_HAND_SENSOR)) {
-
+        //printf("(%g, %g, %g), (%g, %g, %g, %g)\n",
+        //       info.pos[0], info.pos[1], info.pos[2],
+        //       info.quat[0], info.quat[1], info.quat[2], info.quat[3]);
 	v_update_user_xform(0, xformIndex, UGLYCAST info.pos,
                             UGLYCAST info.quat);
     } else {
@@ -2890,10 +2908,19 @@ void    handle_unit2sensor_change(void *userdata,
 {
     // userdata is VLIB transform index
     int xformIndex = *(int *)userdata;
+
+    if (xformIndex == V_SENSOR_FROM_HEAD_UNIT){
+         printf("Updating head unit to sensor xform\n");
+    } else if (xformIndex == V_SENSOR_FROM_HAND_UNIT) {
+         printf("Updating hand unit to sensor xform\n");
+    }
+
     if ((xformIndex == V_SENSOR_FROM_HEAD_UNIT) ||
         (xformIndex == V_SENSOR_FROM_HAND_UNIT)) {
-
-	printf("Updating unit to sensor xform\n");
+        printf("(%g, %g, %g), (%g, %g, %g, %g)\n",
+               info.unit2sensor[0], info.unit2sensor[1], info.unit2sensor[2],
+               info.unit2sensor_quat[0], info.unit2sensor_quat[1], 
+               info.unit2sensor_quat[2], info.unit2sensor_quat[3]);
         v_update_user_xform(0, xformIndex, UGLYCAST info.unit2sensor,
                         UGLYCAST info.unit2sensor_quat);
     } else {
@@ -2963,12 +2990,34 @@ static	void	handle_screenImageFileName_change (const char *, void *userdata)
          if (!strcmp(screenImageFileType.string(), ImageType_names[i]))
             break;
 
-      if (ImageType_count == i)
+      if (ImageType_count == i) {
          fprintf(stderr, "handle_screenFileName_change:: "
                          "Error: unknown image type '%s'\n",
                          screenImageFileType.string());
-      else
-         g->createScreenImage(newScreenImageFileName.string(), (ImageType)i);
+      } else {
+#ifdef __CYGWIN__
+          v_gl_set_context_to_vlib_window();
+	  glutPopWindow();
+          glutProcessEvents_UNC(); // make the window come to the front
+#else 
+	  XRaiseWindow(VLIB_dpy, VLIB_win);
+	  XEvent event;
+	  long event_mask = 0xFFFFFFFF;//StructureNotifyMask|ExposureMask;
+	  while (XCheckWindowEvent(VLIB_dpy, VLIB_win,
+		event_mask, &event)) {
+		if (event.type == StructureNotifyMask) {
+			printf("structurenotify\n");
+		} else if (event.type == ExposureMask) {
+			printf("exposure\n");
+		} else {
+			printf("other\n");
+		}
+	  }
+#endif
+	  graphics->mainloop();
+
+          g->createScreenImage(newScreenImageFileName.string(), (ImageType)i);
+      }
    }
 
    newScreenImageFileName = (const char *) "";
@@ -5378,6 +5427,18 @@ printf("nM_coord_change_server initialized\n");
         }
     }
 
+#ifdef USE_NMB_CHANNELS
+    dataset->initDeviceChannelHandlers(m);
+    if (keithley2400_ui && keithley2400_ui->keithley2400) {
+        dataset->initDeviceChannelHandlers(
+				keithley2400_ui->keithley2400);
+    }
+    if (ohmmeter) {         // French ohmmeter
+        dataset->initDeviceChannelHandlers(ohmmeter);
+    }
+#endif
+
+
 #ifdef  PROJECTIVE_TEXTURE
     // Registration - displays images with glX or GLUT depending on V_GLUT
     // flag
@@ -5480,7 +5541,6 @@ VERBOSE(1, "Entering main loop");
 
       /* update head from tracker xform	*/
       ttest0(t_avg_head_x, "head_x");
-
       if (ohmmeter) {
 	ohmmeter->mainloop();
       }

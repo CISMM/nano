@@ -189,8 +189,11 @@ void handle_bdbox_dial_change(void *userdata, const vrpn_ANALOGCB info){
 int
 reset_phantom()
 {
-  if(vrpnHandTracker[0]!=NULL) 
-    vrpnHandTracker[0]->reset_origin();
+  if(vrpnHandTracker[0]!=NULL) {
+      vrpnHandTracker[0]->reset_origin();
+      vrpnHandTracker[0]->request_t2r_xform();
+      vrpnHandTracker[0]->request_u2s_xform();
+  }
   return 0;
 }
 

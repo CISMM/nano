@@ -240,7 +240,8 @@ int ImageViewer::showWindow(int winID){
 
     if (window[win_index].visible) {
 #ifdef V_GLUT
-	// I don't think there is a corresponding function in glut
+	glutSetWindow(window[win_index].win_id);
+	glutPopWindow();
 #else
 	XRaiseWindow(dpy[window[win_index].display_index].x_dpy,
 		(*(window[win_index].win)));	
