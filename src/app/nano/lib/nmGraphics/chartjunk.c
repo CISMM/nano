@@ -270,14 +270,17 @@ int rate_display (void *data) {
       break;
     case READ_STREAM:
       if (decoration->rateOfTime > 1)
-        sprintf(message, "Play %dx (%5ld sec)",
-                decoration->rateOfTime, decoration->elapsedTime);
+        sprintf(message, "Play %dx (%5ld of %ld sec)",
+                decoration->rateOfTime, decoration->elapsedTime,
+                decoration->totalStreamTime);
       else if (decoration->rateOfTime == 1)
-        sprintf(message, "Play (%5ld sec)",
-			decoration->elapsedTime);
+        sprintf(message, "Play (%5ld of %ld sec)",
+                decoration->elapsedTime,
+                decoration->totalStreamTime);
       else
-        sprintf(message, "Pause (%5ld sec)",
-			decoration->elapsedTime);
+        sprintf(message, "Pause (%5ld of %ld sec)",
+                decoration->elapsedTime,
+                decoration->totalStreamTime);
       break;
     case READ_FILE: 
       sprintf(message, "Static Image");

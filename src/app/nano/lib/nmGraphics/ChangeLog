@@ -1,3 +1,8 @@
+2002-07-01  Aron Helser  <helser@cs.unc.edu>
+
+	* chartjunk.c (rate_display): Display total length of stream in
+	seconds. 
+
 2002-06-25  Adam Seeger  <seeger@cs.unc.edu>
 
 	* chartjunk.c : Some minor changes to the use of variables to 
