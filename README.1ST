@@ -16,9 +16,13 @@ Variables you may want set in your shell:
                       /afs/cs.unc.edu/project/stm/src/not_backed_up).
                       A must for pc_cygwin!
 
-   NM_TLC_DIR      -- this checks-out to ./nano/src/share/tcl/ but
-                      there were no changes to content so only change
-                      this if you need to.
+   NM_TLC_DIR      -- this checks-out to ./nano/src/share/tcl/. The new
+                      user interface has been committed (03/07/00) so you
+                      must update your old variable to point to these new
+                      tcl scripts. Under cygwin 1.0, the path must be kind
+                      of preverse, so set it as:
+                         `cygtclpath <full path to ./nano/src/share/tcl/>`.
+                      You must include the trailing /.
 
 
 How to compile nano (most archs):
