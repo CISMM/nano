@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# Find the right ./XXX executable to run.
+# Depends on environment ($MY_NANO_???_DIR) and system ($HW_OS).
+
+APP_DIR=app/viCurve;
+APP_EXE=viCurve;
+
+if [ -z "$HW_OS" ]; then
+   uname=`uname`;
+   if [ "${uname#CYGWIN}" != "$uname" ]; then
+      HW_OS="pc_cygwin";
+   fi
+fi
+
+if [ "$HW_OS" != "pc_cygwin" ]; then
+   if [[ -n $MY_NANO_OBJ_DIR ]] ; then
+      FULL_EXE=$MY_NANO_OBJ_DIR/$HW_OS/$APP_DIR/$APP_EXE;
+   elif [[ -n $MY_NANO_SRC_DIR ]] ; then
+      FULL_EXE=$MY_NANO_SRC_DIR/nano/obj/$HW_OS/$APP_DIR/$APP_EXE;
+   else
+      FULL_EXE=../../../obj/$HW_OS/$APP_DIR/$APP_EXE;
+   fi
+else # /bin/sh is really bash here, and doesn't do [[ ]]
+   if test -n $MY_NANO_OBJ_DIR ; then
+      FULL_EXE=$MY_NANO_OBJ_DIR/$HW_OS/$APP_DIR/$APP_EXE;
+   elif test -n $MY_NANO_SRC_DIR ; then
+      FULL_EXE=$MY_NANO_SRC_DIR/nano/obj/$HW_OS/$APP_DIR/$APP_EXE;
+   else
+      FULL_EXE=../../../obj/$HW_OS/$APP_DIR/$APP_EXE;
+   fi
+fi
+
+$FULL_EXE $*
