@@ -195,6 +195,7 @@ FillDataArray(double*** ArrayToFill,int &xResolution,int &yResolution, float zsc
 			//scale values so within the range used by ArrayToFill
 		}
 		delete [] DataArray[y];
+		DataArray[y] = NULL;
 		//cleanup for next go-round
 	}
 
@@ -219,7 +220,7 @@ RECEIVE_MSG OrigScanLineData{
 //  int32 usec 
 //  float32 data [reports][fields]
 
-	//cout << "receiving window line data for line " << y << endl;
+	cout << "receiving window line data for line " << y << endl;
 	//check to see that the data is not greater than the number of samples the input grid contains/can hold
 	//check is whether initial (x), which is counted as zero, + (reports - 1), the number
 	//of data points following the Oth data point sent, is greater than the number of 
@@ -232,7 +233,7 @@ RECEIVE_MSG OrigScanLineData{
 		return;
 	}
 
-	if(DataArray[y] == NULL){
+	if(DataArray[y] == NULL || reports != d_xscanResolution){
 		DataArray[y] = new double[reports];//DataArray[y] is a double*
 		//for each new y that is sent, create a new array to be filled in
 	}
@@ -258,13 +259,16 @@ RECEIVE_MSG ReportGridSize {
 //  int32 y
 	xsize = x;
 	ysize = y;
-	if(x != d_xscanResolution){
-		d_xscanResolution = x;
+
+	if(d_name=="Eroder"){
+		if(x != d_xscanResolution){
+			d_xscanResolution = x;
+		}
+		if(y != d_yscanResolution){
+			d_yscanResolution = y;
+		}
 	}
-	if(y != d_yscanResolution){
-		d_yscanResolution = y;
-	}
-	
+
 	Sim_to_World_x = return_Simpixels_to_realworld_ratio_x();
 	Sim_to_World_y = return_Simpixels_to_realworld_ratio_y();
 	cout << "Ratio simulator pixels to real world distance:\t" << Sim_to_World_x << ", " << Sim_to_World_y << endl;

@@ -210,17 +210,17 @@ RECEIVE_MSG DeviceName {
 // char name[64];
 	strcpy(server_name,name);
 	deviceNameRcv = true;
-	//cout << "received device name" << endl;
+	cout << "received device name" << endl;
 
-	//cout << "before sending init. data" << endl;
-	//cout << "server name = " << server_name << endl;
+	cout << "before sending init. data" << endl;
+	cout << "server name = " << server_name << endl;
 	if(strcmp(server_name,"Eroder") == 0){
 		for(int y = 0; y < Ydim;y++){
 			DeviceViewPlane->_handleSourcePlaneChange(0, y);//send initial data across to eroder
 			mainloop();//call mainloop for each message packed so no overflow problems
 		}
 	}
-	//cout << "after sending init. data" << endl;
+	cout << "after sending init. data" << endl;
 }
 //
 
@@ -253,6 +253,7 @@ RECEIVE_MSG WindowLineData {
 			int new_y = y + i*dy;
 //
 			DataArray[y][i] = (double)(data[new_x][0]);//fill in
+			//if(i==0)	cout << DataArray[y][i] << endl;
 		}
 		//
 		//cout << "receiving line " << y << endl;
@@ -380,7 +381,7 @@ encode_and_sendCylinder(
 //send one line of data
 void nmm_SimulatedMicroscope_Remote::
 encode_and_sendScanData(float * Data, int y, const int num_cols){
-  //cout << y << " ";
+  cout << y << " ";
 
   int dummy;
   if(y==212){
