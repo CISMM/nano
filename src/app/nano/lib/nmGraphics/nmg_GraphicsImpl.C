@@ -1696,6 +1696,7 @@ void nmg_Graphics_Implementation::setTextureCenter( float dx, float dy ) {
 void nmg_Graphics_Implementation::initializeTextures(void)
 {
   int l;
+  int i,j;
   fprintf(stderr, "initializing textures\n");
 
   for (l = 0; l < N_TEX; l++) {
@@ -1791,24 +1792,34 @@ void nmg_Graphics_Implementation::initializeTextures(void)
   int sem_tex_size = g_tex_installed_width[SEM_DATA_TEX_ID] *
                           g_tex_installed_height[SEM_DATA_TEX_ID];
   sem_data = new GLubyte [sem_tex_size]; 
-  for (l = 0; l < sem_tex_size; l++){
-    sem_data[l] = 255;
+  l = 0;
+  
+  for (i = 0; i < g_tex_installed_width[SEM_DATA_TEX_ID]; i++){
+    for (j = 0; j < g_tex_installed_height[SEM_DATA_TEX_ID]; j++){
+      sem_data[l] = 255*((i/10+j/10)%2);
+      l++;
+    }
   }
   glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
+
   glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 
                 g_tex_installed_width[SEM_DATA_TEX_ID],
-		g_tex_installed_height[SEM_DATA_TEX_ID], 0, GL_LUMINANCE, 
-	GL_BYTE, (const GLvoid *)sem_data);
+		g_tex_installed_height[SEM_DATA_TEX_ID], 
+                0, GL_LUMINANCE, GL_UNSIGNED_BYTE, sem_data);
 
   if (report_gl_errors()) {
      fprintf(stderr, "Error initializing sem texture\n");
   }
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
   int realign_tex_size = 3*g_tex_installed_width[COLORMAP_TEX_ID] *
                              g_tex_installed_height[COLORMAP_TEX_ID];
   realign_data = new float [realign_tex_size];
   for (l = 0; l < realign_tex_size; l++){
-    realign_data[l] = 1.0;
+    realign_data[l] = l < realign_tex_size/2;
   }
   glBindTexture(GL_TEXTURE_2D, tex_ids[COLORMAP_TEX_ID]);
   
@@ -1821,11 +1832,11 @@ void nmg_Graphics_Implementation::initializeTextures(void)
      fprintf(stderr, "Error initializing realign texture\n");
   }
 
-
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+
 #endif
 
 }
