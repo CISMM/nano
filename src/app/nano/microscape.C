@@ -519,7 +519,8 @@ TclNet_string openStaticFilename("open_static_filename", "",
 TclNet_string openStreamFilename("open_stream_filename", "");
 
 /// SPM Device name. Setting this variable triggers open device process
-Tclvar_string openSPMDeviceName("open_spm_device_name", "");
+TclNet_string openSPMDeviceName("open_spm_device_name", "");
+
 /// Log file name. If it's something other than "none" when the device
 /// is opened, try to log to the filename specified. 
 Tclvar_string openSPMLogName("open_spm_log_name", "");
@@ -696,11 +697,12 @@ TclNet_float ruler_opacity ("ruler_opacity", 70);
 
 
 //The quoted parameters are the variable names in tcl-space
-TclNet_int ruler_r ("ruler_r", 255);
-TclNet_int ruler_g ("ruler_g", 255);
-TclNet_int ruler_b ("ruler_b", 55);
-TclNet_int rulergrid_changed ("rulergrid_changed", 0);
-TclNet_int rulergrid_enabled ("rulergrid_enabled",0);
+//TclNet_int ruler_r ("ruler_r", 255);
+//TclNet_int ruler_g ("ruler_g", 255);
+//TclNet_int ruler_b ("ruler_b", 55);
+TclNet_string ruler_color ("ruler_color","#ffff64");
+TclNet_int   rulergrid_changed ("rulergrid_changed", 0);
+TclNet_int	rulergrid_enabled ("rulergrid_enabled",0);
 
 //-----------------------------------------------------------------
 /// Enables the realigning textues... (toggle button on main tcl window)
@@ -1132,9 +1134,9 @@ vrpn_Ohmmeter_Remote *ohmmeter = NULL;
 
 /// These variables signal when someone has clicked "accept" in the 
 /// image/modify tk window.
-Tclvar_int changed_image_params ("accepted_image_params", 0);
-Tclvar_int changed_modify_params ("accepted_modify_params", 0);
-Tclvar_int changed_scanline_params ("accepted_scanline_params", 0);
+TclNet_int changed_image_params ("accepted_image_params", 0);
+TclNet_int changed_modify_params ("accepted_modify_params", 0);
+TclNet_int changed_scanline_params ("accepted_scanline_params", 0);
 
 enum { NO_GRAPHICS, LOCAL_GRAPHICS, SHMEM_GRAPHICS,
        DISTRIBUTED_GRAPHICS, TEST_GRAPHICS_MARSHALLING,
@@ -1357,6 +1359,7 @@ void shutdown_connections (void) {
   set_stream_time_now.bindConnection(NULL);
   openStaticFilename.bindConnection(NULL);
   openStreamFilename.bindConnection(NULL);
+  openSPMDeviceName.bindConnection(NULL);
 
   if (microscope) microscope->state.stm_z_scale.bindConnection(NULL);
   if (dataset) ((TclNet_string *) dataset->heightPlaneName)->bindConnection(NULL);
@@ -1413,9 +1416,10 @@ void shutdown_connections (void) {
   ruler_width_x.bindConnection(NULL);
   ruler_width_y.bindConnection(NULL);
   ruler_opacity.bindConnection(NULL);
-  ruler_r.bindConnection(NULL);
-  ruler_g.bindConnection(NULL);
-  ruler_b.bindConnection(NULL);
+  //ruler_r.bindConnection(NULL);
+  //ruler_g.bindConnection(NULL);
+  //ruler_b.bindConnection(NULL);
+  ruler_color.bindConnection(NULL);
   rulergrid_changed.bindConnection(NULL);
   rulergrid_enabled.bindConnection(NULL);
 
@@ -1430,6 +1434,10 @@ void shutdown_connections (void) {
       copy_to_private_state.bindConnection(NULL);
       copy_to_shared_state.bindConnection(NULL);
     collab_machine_name.bindConnection(NULL);
+
+  changed_modify_params.bindConnection(NULL);
+  changed_image_params.bindConnection(NULL);
+  changed_scanline_params.bindConnection(NULL);
 
   // output stream should be closed by microscope destructor,
   // WHICH WE MUST EXPLICITLY DELETE!
@@ -1785,6 +1793,21 @@ void handle_mutexReleased (void *, nmb_SharedDevice_Remote *) {
 /// Handle the color change of the rulergrid
 static void handle_rulergrid_color_change (vrpn_int32, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
+
+  int ruler_r, ruler_g, ruler_b;
+  const char *str = ruler_color.string();
+  char tmp[3];
+  tmp[2] = '\0';
+
+  tmp[0] = str[1];
+  tmp[1] = str[2];
+  sscanf(tmp,"%x",&ruler_r);
+  tmp[0] = str[3];
+  tmp[1] = str[4];
+  sscanf(tmp,"%x",&ruler_g);
+  tmp[0] = str[5];
+  tmp[1] = str[6];
+  sscanf(tmp,"%x",&ruler_b);
 
   // MOVED to nmg_Graphics
   g->setRulergridColor((int)ruler_r, (int)ruler_g, (int)ruler_b);
@@ -3034,6 +3057,8 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
 	//display_error_dialog("Error: Cannot change SPM Device in collaborative session");
 	//return;
     //}
+    fprintf(stderr,"HANDLE_OPENSPMDEVICE\n");
+    fprintf(stderr,"namelength: %d\n",strlen(openSPMDeviceName));
 
     istate = (MicroscapeInitializationState *)userdata;
     logmode = vrpn_LOG_NONE;
@@ -3155,6 +3180,7 @@ static void openDefaultMicroscope()
 	display_fatal_error_dialog("Failed to create default microscope");
         return ;
     }
+
 
     // Get rid of any old microscope connection
     // Get rid of all callbacks registered on a previous connection. 
@@ -4954,9 +4980,10 @@ void teardownSynchronization(CollaborationManager *cm,
     streamfileControls->remove(&replay_rate);
     streamfileControls->remove(&rewind_stream);
     streamfileControls->remove(&set_stream_time);
-    //openStreamFilename is now TclNet_string
+    //open[Static,Stream]Filename are now TclNet_string
     streamfileControls->remove(&openStaticFilename);
     streamfileControls->remove(&openStreamFilename);
+    streamfileControls->remove(&openSPMDeviceName);
   }
   nmui_Component * viewControls = ui_Root->find("View");
   if (viewControls) {
@@ -4971,6 +4998,61 @@ void teardownSynchronization(CollaborationManager *cm,
       viewPlaneControls->remove((TclNet_string *) dset->heightPlaneName);
     }
   }
+
+  nmui_Component * paramControls = ui_Root->find("Params");
+  if(paramControls) {
+    paramControls->remove(&(m->state.modify.new_mode));
+    paramControls->remove(&(m->state.modify.new_control));
+    paramControls->remove(&(m->state.modify.new_style));
+    paramControls->remove(&m->state.modify.new_constr_xyz_param);
+    paramControls->remove(&m->state.modify.new_optimize_now_param);
+    paramControls->remove(&(m->state.modify.new_setpoint));
+    paramControls->remove(&(m->state.modify.new_p_gain));
+    paramControls->remove(&(m->state.modify.new_i_gain));
+    paramControls->remove(&(m->state.modify.new_d_gain));
+    paramControls->remove(&(m->state.modify.new_amplitude));
+    paramControls->remove(&(m->state.modify.new_frequency));
+    paramControls->remove(&(m->state.modify.new_input_gain));
+    paramControls->remove(&(m->state.modify.new_ampl_or_phase));
+    paramControls->remove(&(m->state.modify.new_drive_attenuation));
+    paramControls->remove(&(m->state.modify.new_phase));
+    paramControls->remove(&(m->state.modify.new_scan_rate_microns));
+    paramControls->remove(&(m->state.modify.new_sweep_width));
+    paramControls->remove(&(m->state.modify.new_bot_delay));
+    paramControls->remove(&(m->state.modify.new_top_delay));
+    paramControls->remove(&(m->state.modify.new_z_pull));
+    paramControls->remove(&(m->state.modify.new_punch_dist));
+    paramControls->remove(&(m->state.modify.new_speed));
+    paramControls->remove(&(m->state.modify.new_watchdog));
+    paramControls->remove(&(m->state.modify.new_fc_start_delay));
+    paramControls->remove(&(m->state.modify.new_fc_z_start));
+    paramControls->remove(&(m->state.modify.new_fc_z_end));
+    paramControls->remove(&(m->state.modify.new_fc_z_pullback));
+    paramControls->remove(&(m->state.modify.new_fc_force_limit));
+    paramControls->remove(&(m->state.modify.new_fc_movedist));
+    paramControls->remove(&(m->state.modify.new_fc_num_points));
+    paramControls->remove(&(m->state.modify.new_fc_num_halfcycles));
+    paramControls->remove(&(m->state.modify.new_fc_sample_speed));
+    paramControls->remove(&(m->state.modify.new_fc_pullback_speed));
+    paramControls->remove(&(m->state.modify.new_fc_start_speed));
+    paramControls->remove(&(m->state.modify.new_fc_feedback_speed));
+    paramControls->remove(&(m->state.modify.new_fc_avg_num));
+    paramControls->remove(&(m->state.modify.new_fc_sample_delay));
+    paramControls->remove(&(m->state.modify.new_fc_pullback_delay));
+    paramControls->remove(&(m->state.modify.new_fc_feedback_delay));
+    paramControls->remove(&(m->state.modify.new_step_size));
+    paramControls->remove(&(m->state.modify.new_max_z_step));
+    paramControls->remove(&(m->state.modify.new_max_xy_step));
+    paramControls->remove(&(m->state.modify.new_min_z_setpoint));
+    paramControls->remove(&(m->state.modify.new_max_z_setpoint));
+    paramControls->remove(&(m->state.modify.new_max_lat_setpoint));
+    //paramControls->remove(&(m->state.modify.slow_line_playing));
+    //paramControls->remove(&(m->state.modify.slow_line_step));
+    //paramControls->remove(&(m->state.modify.slow_line_direction));
+    paramControls->remove(&(m->state.modify.new_blunt_size));
+    paramControls->remove(&(m->state.modify.new_blunt_speed));
+  }
+  
   nmui_PlaneSync * ps = cm->planeSync();
   if (ps) {
     delete ps;
@@ -5020,6 +5102,7 @@ void setupSynchronization (CollaborationManager * cm,
   // open{Static,Stream}Filename are now TclNet_string
   streamfileControls->add(&openStaticFilename);
   streamfileControls->add(&openStreamFilename);
+  streamfileControls->add(&openSPMDeviceName);
   // Don't want to synchronize this;  TCL sets it when set_stream_time
   // sync occurs.
   //streamfileControls->add(&set_stream_time_now);
@@ -5156,9 +5239,10 @@ void setupSynchronization (CollaborationManager * cm,
   viewGridControls->add(&ruler_width_x);
   viewGridControls->add(&ruler_width_y);
   viewGridControls->add(&ruler_opacity);
-  viewGridControls->add(&ruler_r);
-  viewGridControls->add(&ruler_g);
-  viewGridControls->add(&ruler_b);
+  //viewGridControls->add(&ruler_r);
+  //viewGridControls->add(&ruler_g);
+  //viewGridControls->add(&ruler_b);
+  viewGridControls->add(&ruler_color);
   viewGridControls->add(&rulergrid_changed);
   viewGridControls->add(&rulergrid_enabled);
 /* */
@@ -5176,14 +5260,66 @@ void setupSynchronization (CollaborationManager * cm,
   //nmui_Component * derivedPlaneControls;
   //derivedPlaneControls = new nmui_Component ("DerivedPlanes");
 
-  // Christmas sync
+  //new nmui_Component for synchronizing image,modify and scanline parameters
+  //between collaborators
+  nmui_Component * paramControls;
+  paramControls = new nmui_Component ("Params");
+  paramControls->add(&changed_modify_params);
+  paramControls->add(&changed_image_params);
+  paramControls->add(&changed_scanline_params);
 
-  //nmui_Component * rootUIControl;
-  //rootUIControl = new nmui_Component ("ROOT");
+  paramControls->add(&m->state.modify.new_mode);
+  paramControls->add(&m->state.modify.new_control);
+  paramControls->add(&m->state.modify.new_style);
+  paramControls->add(&m->state.modify.new_constr_xyz_param);
+  paramControls->add(&m->state.modify.new_optimize_now_param);
+  paramControls->add(&m->state.modify.new_setpoint);
+  paramControls->add(&m->state.modify.new_p_gain);
+  paramControls->add(&m->state.modify.new_i_gain);
+  paramControls->add(&m->state.modify.new_d_gain);
+  paramControls->add(&(m->state.modify.new_amplitude));
+  paramControls->add(&(m->state.modify.new_frequency));
+  paramControls->add(&(m->state.modify.new_input_gain));
+  paramControls->add(&(m->state.modify.new_ampl_or_phase));
+  paramControls->add(&(m->state.modify.new_drive_attenuation));
+  paramControls->add(&(m->state.modify.new_phase));
+  paramControls->add(&m->state.modify.new_scan_rate_microns);
+  paramControls->add(&(m->state.modify.new_sweep_width));
+  paramControls->add(&(m->state.modify.new_bot_delay));
+  paramControls->add(&(m->state.modify.new_top_delay));
+  paramControls->add(&(m->state.modify.new_z_pull));
+  paramControls->add(&(m->state.modify.new_punch_dist));
+  paramControls->add(&(m->state.modify.new_speed));
+  paramControls->add(&(m->state.modify.new_watchdog));
+  paramControls->add(&(m->state.modify.new_fc_start_delay));
+  paramControls->add(&(m->state.modify.new_fc_z_start));
+  paramControls->add(&(m->state.modify.new_fc_z_end));
+  paramControls->add(&(m->state.modify.new_fc_z_pullback));
+  paramControls->add(&(m->state.modify.new_fc_force_limit));
+  paramControls->add(&(m->state.modify.new_fc_movedist));
+  paramControls->add(&(m->state.modify.new_fc_num_points));
+  paramControls->add(&(m->state.modify.new_fc_num_halfcycles));
+  paramControls->add(&(m->state.modify.new_fc_sample_speed));
+  paramControls->add(&(m->state.modify.new_fc_pullback_speed));
+  paramControls->add(&(m->state.modify.new_fc_start_speed));
+  paramControls->add(&(m->state.modify.new_fc_feedback_speed));
+  paramControls->add(&(m->state.modify.new_fc_avg_num));
+  paramControls->add(&(m->state.modify.new_fc_sample_delay));
+  paramControls->add(&(m->state.modify.new_fc_pullback_delay));
+  paramControls->add(&(m->state.modify.new_fc_feedback_delay));
+  paramControls->add(&(m->state.modify.new_step_size));
+  paramControls->add(&(m->state.modify.new_max_z_step));
+  paramControls->add(&(m->state.modify.new_max_xy_step));
+  paramControls->add(&(m->state.modify.new_min_z_setpoint));
+  paramControls->add(&(m->state.modify.new_max_z_setpoint));
+  paramControls->add(&(m->state.modify.new_max_lat_setpoint));
+  //paramControls->add(&(m->state.modify.slow_line_playing));
+  //paramControls->add(&(m->state.modify.slow_line_step));
+  //paramControls->add(&(m->state.modify.slow_line_direction));
+  paramControls->add(&(m->state.modify.new_blunt_size));
+  paramControls->add(&(m->state.modify.new_blunt_speed));
 
-  //rootUIControl->add(derivedPlaneControls);
-  //rootUIControl->add(streamfileControls);
-  //rootUIControl->add(viewControls);
+  rootUIControl->add(paramControls);
 
   rootUIControl->bindConnection(serverConnection);
 
@@ -5650,11 +5786,15 @@ void ParseArgs (int argc, char ** argv,
         }
       } else if (strcmp(argv[i], "-rulercolor") == 0) {
         if (++i >= argc) Usage(argv[0]);
-        ruler_r = (GLubyte)atoi(argv[i]);
+        int ruler_r = (GLubyte)atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
-        ruler_g = (GLubyte)atoi(argv[i]);
+        int ruler_g = (GLubyte)atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
-        ruler_b = (GLubyte)atoi(argv[i]);
+        int ruler_b = (GLubyte)atoi(argv[i]);
+	char *tmp = new char[7];
+  	sprintf(tmp,"#%02x%02x%02x",(int)ruler_r, (int)ruler_g, (int)ruler_b);
+	tmp[6] = '\0';
+  	ruler_color = tmp;
       } else if (strcmp (argv[i], "-SPMhost") == 0) {
         // Added by Michele Clark 6/2/97
         // Next arguments are the hostname and port # of SPM server
