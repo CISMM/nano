@@ -656,6 +656,17 @@ void nmg_Graphics_Implementation::getDisplayPosition (q_vec_type &ll,
         v_display_table[d_displayIndexList[0]].viewports[0].screenUpperLeft);
     q_vec_copy(ur,
         v_display_table[d_displayIndexList[0]].viewports[0].screenUpperRight);
+#ifdef V_GLUT
+	float meters_per_pixel_x = (ur[0] - ul[0])/((float)glutGet( GLUT_SCREEN_WIDTH ));
+	float meters_per_pixel_y = (ul[1] - ll[1])/((float)glutGet( GLUT_SCREEN_HEIGHT ));
+	ul[0] += meters_per_pixel_x * (float)glutGet( GLUT_WINDOW_X );
+	ul[1] -= meters_per_pixel_y * (float)glutGet( GLUT_WINDOW_Y );
+	ur[0] = ul[0] + meters_per_pixel_x * (float)glutGet( GLUT_WINDOW_WIDTH );
+	ur[1] = ul[1];
+	ll[0] = ul[0];
+	ll[1] = ul[1] - meters_per_pixel_y * (float)glutGet( GLUT_WINDOW_HEIGHT );
+#endif
+
 // DEBUG
 //   fprintf(stderr, "g>DEBUG nmg_Graphics_Impl::getDisplayPosition "
 //   "ll %f %f %f ul %f %f %f ur %f %f %f\n",
