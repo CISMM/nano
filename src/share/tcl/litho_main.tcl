@@ -441,6 +441,10 @@ generic_optionmenu $drawing_parameters_win.canvas_image canvas_image \
 pack $drawing_parameters_win.canvas_image -anchor nw \
        -padx 3 -pady 3 -side top
 
+checkbutton $drawing_parameters_win.clear_pattern_confirm \
+   -text "Sure?" -variable clear_pattern_confirm
+pack $drawing_parameters_win.clear_pattern_confirm -anchor n -side right
+
 button $drawing_parameters_win.clear_pattern -text "Clear Pattern" -command \
     { set clear_pattern 1 }
 pack $drawing_parameters_win.clear_pattern -anchor nw -side top 
