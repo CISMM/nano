@@ -1,3 +1,8 @@
+2001-02-01  Aron Helser  <helser@cs.unc.edu>
+
+	* minit.c (handle_phantom_error): On any phantom error, release
+	the phantom button.  
+
 2001-01-19  Jason Clark  <jclark@cs.unc.edu>
 
 	* microscape.c (handle_analyze_shape): Fixed analyze shape code to
