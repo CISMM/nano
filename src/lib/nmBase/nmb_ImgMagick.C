@@ -90,7 +90,7 @@ int nmb_ImgMagick::readFileMagick(const char * filename, const char * name, BCGr
 }
 
 int nmb_ImgMagick::writeFileMagick(const char * filename, 
-				   const char * /*mgk_filetype*/, 
+				   const char * mgk_filetype, 
 				   int cols, int rows, 
 				   int /*bpp*/, unsigned char * pixels)
 {
@@ -128,7 +128,13 @@ int nmb_ImgMagick::writeFileMagick(const char * filename,
     // LZW is not even available. 
     image_info->compression=NoCompression;
     //SetImageInfo(image_info,true,&exception);
-    strcpy(flip_image->filename,filename);
+
+    if ((mgk_filetype == NULL) || (mgk_filetype[0] == '\0')){
+        strcpy(flip_image->filename,filename);
+    } else {
+        sprintf(flip_image->filename, "%s:%s", mgk_filetype, filename);
+    }
+
     if(!WriteImage(image_info, flip_image)) {
 		fprintf(stderr, "%s: %s\n", flip_image->exception.reason, flip_image->exception.description);
         return -1;

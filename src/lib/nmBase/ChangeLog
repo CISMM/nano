@@ -1,3 +1,9 @@
+2003-02-27  Adam Seeger  <seeger@cs.unc.edu>
+
+   * nmb_ImageMagick.C (writeFileMagick): there are three versions of this
+	function. This change makes the one used for screen captures use the
+	type argument in the same way as the other 2 do
+
 2003-02-26  Adam Seeger  <seeger@cs.unc.edu>
 
    * nmb_ImgMagick.C (writeFileMagick): adds more informative printout
