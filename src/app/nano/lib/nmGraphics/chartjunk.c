@@ -627,7 +627,6 @@ int addChartjunk (nmg_Funclist ** v_screen, float * screen_scale) {
   // measure_id =
   addFunctionToFunclist(v_screen, measure_display, NULL, "measure_display");
   addFunctionToFunclist(v_screen, scale_display, screen_scale, "scale_display");
-  printf("adding scale_display to v_screen: address=%d\n", scale_display);
   addFunctionToFunclist(v_screen, x_y_width_display, NULL, "x_y_width_display");
   // scale_id =
   addFunctionToFunclist(v_screen, height_at_hand_display, NULL,
