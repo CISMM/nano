@@ -715,7 +715,7 @@ long nmm_Microscope_Remote::DrawLine (const double _startx, const double _starty
                   _endx, _endy,
                   state.modify.yaw, state.modify.sweep_width,
                   state.modify.step_size);
-      type = d_DrawSweepLine_type;
+      type = d_DrawSweepLineCenter_type;
       break;
     default:
       return 0;
@@ -778,7 +778,7 @@ long nmm_Microscope_Remote::DrawArc (const double _x, const double _y,
       if (!msgbuf)
         return -1;
 
-      retval = dispatchMessage(len, msgbuf, d_DrawSweepArc_type);
+      retval = dispatchMessage(len, msgbuf, d_DrawSweepArcCenter_type);
 
       break;
     default:
@@ -1160,7 +1160,7 @@ long nmm_Microscope_Remote::ZagTo
   if (!msgbuf)
     return -1;
 
-  return dispatchMessage(len, msgbuf, d_ZagTo_type);
+  return dispatchMessage(len, msgbuf, d_ZagToCenter_type);
 }
 
 long nmm_Microscope_Remote::Shutdown (void) {

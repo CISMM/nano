@@ -84,6 +84,7 @@ class nmm_Microscope {
     long d_ScanTo_type;
     long d_ScanToZ_type;
     long d_ZagTo_type;
+    long d_ZagToCenter_type;
     long d_SetScanStyle_type;
     long d_SetSlowScan_type;
     long d_SetStdDelay_type;
@@ -105,6 +106,8 @@ class nmm_Microscope {
     long d_DrawSharpLine_type;
     long d_DrawSweepLine_type;
     long d_DrawSweepArc_type;
+    long d_DrawSweepLineCenter_type;
+    long d_DrawSweepArcCenter_type;
     long d_GetNewPointDatasets_type;
     long d_GetNewScanDatasets_type;
     long d_Echo_type;
@@ -173,7 +176,8 @@ class nmm_Microscope {
 
     // AFM-ish
 
-    long d_EnterTappingMode_type;  // from client
+    long d_EnterTappingMode_type;  // Obsolete, doesn't include phase
+    long d_EnterOscillatingMode_type;  // from client
     long d_EnterContactMode_type;
     long d_EnterDirectZControl_type;
     long d_EnterSewingStyle_type;
@@ -194,7 +198,8 @@ class nmm_Microscope {
     long d_InImgMode_type;
     long d_InModModeT_type;
     long d_InImgModeT_type;
-    long d_InTappingMode_type;
+    long d_InTappingMode_type; 
+    long d_InOscillatingMode_type;
     long d_InContactMode_type;
     long d_InDirectZControl_type;
     long d_InSewingStyle_type;
@@ -520,6 +525,10 @@ class nmm_Microscope {
                                           float, float);
     long decode_EnterTappingMode (const char ** buf, float *, float *,
                                   float *, float *, float *);
+    char * encode_EnterOscillatingMode (long * len, float, float, float,
+                                          float, float, float);
+    long decode_EnterOscillatingMode (const char ** buf, float *, float *,
+                                  float *, float *, float *);
     char * encode_EnterContactMode (long * len, float, float, float,
                                           float);
     long decode_EnterContactMode (const char ** buf, float *, float *,
@@ -546,6 +555,10 @@ class nmm_Microscope {
     char * encode_InTappingMode (long * len, float, float, float,
 		float, float);
     long decode_InTappingMode (const char ** buf, float *, float *, float *,
+                float *, float *);
+    char * encode_InOscillatingMode (long * len, float, float, float,
+		float, float);
+    long decode_InOscillatingMode (const char ** buf, float *, float *, float *,
                 float *, float *);
     char * encode_InContactMode (long * len, float, float, float,
 		float);

@@ -53,6 +53,8 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope ScanToZ");
     d_ZagTo_type = connection->register_message_type
          ("nmm Microscope ZagTo");
+    d_ZagToCenter_type = connection->register_message_type
+         ("nmm Microscope ZagToCenter");
     d_SetScanStyle_type = connection->register_message_type
          ("nmm Microscope SetScanStyle");
     d_SetSlowScan_type = connection->register_message_type
@@ -97,6 +99,10 @@ nmm_Microscope::nmm_Microscope (
          ("nmm Microscope DrawSweepLine");
     d_DrawSweepArc_type = connection->register_message_type
          ("nmm Microscope DrawSweepArc");
+    d_DrawSweepLineCenter_type = connection->register_message_type
+         ("nmm Microscope DrawSweepLineCenter");
+    d_DrawSweepArcCenter_type = connection->register_message_type
+         ("nmm Microscope DrawSweepArcCenter");
     d_GetNewPointDatasets_type = connection->register_message_type
          ("nmm Microscope GetNewPointDatasets");
     d_GetNewScanDatasets_type = connection->register_message_type
