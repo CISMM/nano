@@ -69,6 +69,11 @@ class PatternEditor {
                                     void *ud);
    // helper for mainWinDisplayHandler:
    void drawImage(const ImageElement &ie);
+   // helper for drawImage (uses projective textures)
+   void drawImageAsTexture(const ImageElement &ie);
+   // helper for drawImage (only for images that aren't rotated or sheared)
+   // (uses pixel-rendering so it doesn't require texture memory)
+   void drawImageAsPixels(const ImageElement &ie);
    void drawPattern();
    void drawScale();
 

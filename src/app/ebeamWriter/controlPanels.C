@@ -230,6 +230,12 @@ void ControlPanels::handle_openImageFileName_change(const char * /*new_value*/,
                                0.0, 0.0, 1.0, 0.0,
                                0.0, 0.0, 0.0, 1.0};
   ControlPanels *me = (ControlPanels *)ud;
+  double imageRegionWidth, imageRegionHeight;
+  me->d_SEM->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
+  if (imageRegionWidth != 0 && imageRegionHeight != 0) {
+    default_matrix[0] = 2.0/imageRegionWidth;
+    default_matrix[5] = 2.0/imageRegionHeight;
+  }
   printf("open file %s\n", (const char *)me->d_openImageFileName);
   if (strlen((const char *)me->d_openImageFileName) <= 0) return;
 
@@ -707,6 +713,7 @@ void ControlPanels::handleSEMChange(
                                                imageRegionHeight);
         ib = nmb_ImageBounds(0.0, 0.0, imageRegionWidth, imageRegionHeight);
         currentImage->setBounds(ib);
+        d_patternEditor->newPosition(currentImage);
         d_semDataBuffer.Set(currentImageName);
         if (start_y + num_lines*dy > res_y || line_length*dx != res_x) {
            fprintf(stderr, "SCANLINE_DATA, dimensions unexpected\n");

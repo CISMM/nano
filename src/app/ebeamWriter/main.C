@@ -192,6 +192,13 @@ int main(int argc, char **argv)
                                  0.0, 0.001, 0.0, 0.0,
                                  0.0, 0.0, 1.0, 0.0,
                                  0.0, 0.0, 0.0, 1.0};
+    double imageRegionWidth, imageRegionHeight;
+    sem->getScanRegion_nm(imageRegionWidth, imageRegionHeight);
+    if (imageRegionWidth != 0 && imageRegionHeight != 0) {
+      default_matrix[0] = 2.0/imageRegionWidth;
+      default_matrix[5] = 2.0/imageRegionHeight;
+    }
+
     double acqDistX, acqDistY;
     nmb_Image *currImage;
 

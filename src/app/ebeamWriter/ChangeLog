@@ -1,3 +1,30 @@
+2001-07-22  Adam Seeger  <seeger@cs.unc.edu>
+
+	* main.C (main): set default scaling of an image loaded from a file
+        to be half the size of the live image so that it can be seen when 
+        it is displayed - the user is supposed to set this through the
+        alignment controls
+	* controlPanels.C (handle_openImageFileName_change): "
+	(handleSEMChange): when an SEM image is created as a result of 
+	receiving data it is added to the patternEditor before its
+	region is set, added a patternEditor::newPosition() call to notify
+	it of the region change
+        * patternEditor.C (mainWinDisplayHandler): took out 2D texture enable
+	and disable calls and put them into the drawImageAsTexture function;
+	added swap of temporary region information during adjustments into the
+	region information used for drawing so that things are consistent
+        (drawImage): split this into two functions, one for drawing images as
+	a textured polygon and another for drawing images using glDrawPixels
+	when that is possible (no rotation or shear)
+	(drawImageAsTexture): new function containing old code from drawImage
+	(drawImageAsPixels): new function to translate scaling and translation
+	information for an image into the appropriate openGL commands to scale
+	and translate the image when drawn using glDrawPixels
+	(navWinDisplayHandler): flipped transformation in X
+	(navWinPositionToWorld): flipped X and Y
+	(mainWinPositionToWorld): flipped X and Y
+	(worldToMainWinPosition): flipped X and Y
+
 2001-07-17  Adam Seeger  <seeger@cs.unc.edu>
 
 	Most changes here are to get this code to work with the latest 
