@@ -3166,6 +3166,7 @@ static void openDefaultMicroscope()
     microscope_connection = NULL;
     vrpnLogFile = NULL;
 
+
     // reset objects  --  doesn't work correctly yet, but better than nothing.
     //	if (state->config_enableUber) {
     
@@ -3181,6 +3182,7 @@ static void openDefaultMicroscope()
     
     // Reset title bar.
     displayStreamFilename = "";
+
     // Make sure "working" dialog is gone. 
     doneWorkingMsg();
 }
@@ -9896,7 +9898,7 @@ static void find_center_xforms (q_vec_type * lock_userpos,
          }
          mid_z = avg;
      }
-     //printf("center mid_z avg %f  min %f\n", mid_z, minz);
+     //intf("center mid_z avg %f  min %f\n", mid_z, minz);
 #endif
 
     float mid_x, mid_y, mid_z;
@@ -10001,7 +10003,13 @@ void get_Plane_Centers (float * offsetx,
     } else { 
       *offsetz=plane->scale()*
 	   (plane->minNonZeroValue()+plane->maxNonZeroValue())/2;
-    }
+	  
+	  cout << "min,max,scale: " << plane->minNonZeroValue() << "," << plane->maxNonZeroValue() 
+		   << "," << plane->scale() << endl;
+	  
+    }  
+	cout << "offsetz = " << *offsetz << endl;
+	
 }
 
 /** Look for planes named ".ffl" or ".FFL".  If there are any, find the last
