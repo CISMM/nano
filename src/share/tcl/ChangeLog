@@ -1,3 +1,8 @@
+2001-08-10  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* modify.tcl:  removed a puts statement from
+	do_enabling_change
+
 2001-08-08  Shayne O'Neill  <soneill@mindspring.com>
 
 	* modify.tcl: Added function do_enabling_change

@@ -276,29 +276,43 @@ struct AFMImageState {
     // these ought to be moved somewhere else if we make an interface module.
 
   Tclvar_int mode;
+  TclNet_int new_mode;
   Tclvar_int style;
+  TclNet_int new_style;
   Tclvar_int tool;
-    ///< the current mode of the microscope
+  TclNet_int new_tool;
 
   Tclvar_int grid_resolution;
-  Tclvar_float scan_angle; ///< the angle for the scan region. 
-    ///< Rotated about the center, in degrees. 
+  TclNet_int new_grid_resolution;
+  Tclvar_float scan_angle; 
+  TclNet_float new_scan_angle;
 
   Tclvar_float setpoint;
-  float        setpoint_min,   ///< control range of the "image force" knob
+  TclNet_float new_setpoint;
+  float        setpoint_min,
                setpoint_max;
   Tclvar_float p_gain;
+  TclNet_float new_p_gain;
   Tclvar_float i_gain;
+  TclNet_float new_i_gain;
   Tclvar_float d_gain;
+  TclNet_float new_d_gain;
   Tclvar_float amplitude;
-  float        amplitude_min,   ///< control range of the "image force" knob
+  TclNet_float new_amplitude;
+  float        amplitude_min,
                amplitude_max;
   Tclvar_float frequency;
+  TclNet_float new_frequency;
   Tclvar_int   input_gain;
+  TclNet_int   new_input_gain;
   Tclvar_int   ampl_or_phase;
+  TclNet_int   new_ampl_or_phase;
   Tclvar_int   drive_attenuation;
+  TclNet_int   new_drive_attenuation;
   Tclvar_float phase;
+  TclNet_float new_phase;
   Tclvar_float scan_rate_microns;
+  TclNet_float new_scan_rate_microns;
 
 
   // Obsolete?

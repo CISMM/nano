@@ -4946,6 +4946,29 @@ void teardownSynchronization(CollaborationManager *cm,
     paramControls->remove(&(m->state.numLinesToJumpBack));
   }
 
+  // Image parameter controls
+  nmui_Component* imageParamControls = ui_Root->find( "Image params" );
+  if( imageParamControls )
+    {
+      imageParamControls->remove( &m->state.image.new_mode );
+      imageParamControls->remove( &m->state.image.new_style );
+      imageParamControls->remove( &m->state.image.new_tool );
+      imageParamControls->remove( &m->state.image.new_grid_resolution );
+      imageParamControls->remove( &m->state.image.new_scan_angle );
+      imageParamControls->remove( &m->state.image.new_setpoint );
+      imageParamControls->remove( &m->state.image.new_p_gain );
+      imageParamControls->remove( &m->state.image.new_i_gain );
+      imageParamControls->remove( &m->state.image.new_d_gain );
+      imageParamControls->remove( &m->state.image.new_amplitude );
+      imageParamControls->remove( &m->state.image.new_frequency );
+      imageParamControls->remove( &m->state.image.new_input_gain );
+      imageParamControls->remove( &m->state.image.new_ampl_or_phase );
+      imageParamControls->remove( &m->state.image.new_drive_attenuation );
+      imageParamControls->remove( &m->state.image.new_phase );
+      imageParamControls->remove( &m->state.image.new_scan_rate_microns );
+    } // end image controls
+  
+
   /* */
   nmui_Component * tclUIControls = ui_Root->find("TclUI");
   if(tclUIControls) {
@@ -5272,7 +5295,31 @@ void setupSynchronization (CollaborationManager * cm,
   paramControls->add(&(m->state.modify.new_blunt_speed));
   paramControls->add(&(m->state.numLinesToJumpBack));
 
+
+  // Image parameter controls
+  nmui_Component* imageParamControls;
+  imageParamControls = new nmui_Component( "Image params" );
+  imageParamControls->add( &m->state.image.new_mode );
+  imageParamControls->add( &m->state.image.new_style );
+  imageParamControls->add( &m->state.image.new_tool );
+  imageParamControls->add( &m->state.image.new_grid_resolution );
+  imageParamControls->add( &m->state.image.new_scan_angle );
+  imageParamControls->add( &m->state.image.new_setpoint );
+  imageParamControls->add( &m->state.image.new_p_gain );
+  imageParamControls->add( &m->state.image.new_i_gain );
+  imageParamControls->add( &m->state.image.new_d_gain );
+  imageParamControls->add( &m->state.image.new_amplitude );
+  imageParamControls->add( &m->state.image.new_frequency );
+  imageParamControls->add( &m->state.image.new_input_gain );
+  imageParamControls->add( &m->state.image.new_ampl_or_phase );
+  imageParamControls->add( &m->state.image.new_drive_attenuation );
+  imageParamControls->add( &m->state.image.new_phase );
+  imageParamControls->add( &m->state.image.new_scan_rate_microns );
+  
+  
+
   rootUIControl->add(paramControls);
+  rootUIControl->add(imageParamControls);
   /* */
   // Tcl UI Controls - All other TCL UI controls
   nmui_Component * tclUIControls;

@@ -731,8 +731,6 @@ trace variable modifyp_ampl_or_phase w "change_setpoint_label \
 proc do_enabling_change {} {
     global nmInfo changing_widgets
 
-    puts "Start do_enabling_change"
-
     upvar #0 newmodifyp_mode mode
     upvar #0 newmodifyp_style style
     upvar #0 newmodifyp_tool tool

@@ -20,26 +20,6 @@
 #define DATA_SIZE 12
 
 
-// Some defaults (from active_set.C)
-/*
-static const int NUM_DEFAULT_SCAN_CHANNELS = 14;
-static char *DEFAULT_SCAN_CHANNEL_NAMES[NUM_DEFAULT_SCAN_CHANNELS] =
-        {"Topography-Forward","Topography-Reverse",
-	 "Internal Sensor-Forward","Internal Sensor-Reverse",
-	 "Z Modulation-Forward","Z Modulation-Reverse",
-	 "Lateral Force-Forward","Lateral Force-Reverse",
-	 "IN 1-Forward","IN 1-Reverse",
-	 "IN 2-Forward","IN 2-Reverse",
-	 "Z Piezo-Forward","Z Piezo-Reverse"};
-static char *DEFAULT_SCAN_CHANNEL_UNITS[NUM_DEFAULT_SCAN_CHANNELS] =
-	{"nm","nm",
-	 "nA","nA",
-	 "nA","nA",
-	 "nA","nA",
-	 "V","V",
-	 "V","V",
-	 "V","V"};
-*/
 
 /** \file AFMState.C
 
@@ -257,39 +237,55 @@ the user changes back and forth between the two she does not have to
 completely reset setpoint, amplitude, and things like that.
 */
 AFMImageState::AFMImageState (const AFMImageInitializationState & i) :
-    mode_changed    (VRPN_FALSE),
-    style_changed   (VRPN_FALSE),
-    mode_p_changed  (VRPN_FALSE),
-    style_p_changed (VRPN_FALSE),
-
-    mode ("imagep_mode", i.mode ),
-    style ("imagep_style", SHARP),
-    tool ("imagep_tool", FREEHAND),
-
-    grid_resolution("imagep_grid_resolution", i.grid_resolution),
-    scan_angle("imagep_scan_angle", 0),
-
-    setpoint ("imagep_setpoint", i.setpoint ),
-    setpoint_min (i.setpoint_min ),
-    setpoint_max (i.setpoint_max ),
-    p_gain ("imagep_p_gain", 1.0),
-    i_gain ("imagep_i_gain", 0.30),
-    d_gain ("imagep_d_gain", 0.0),
-    amplitude ("imagep_amplitude", i.amplitude ),
-    amplitude_min (i.amplitude_min ),
-    amplitude_max (i.amplitude_max ),
-    frequency("imagep_frequency", 100.0),
-    input_gain("imagep_input_gain", 1),
-    ampl_or_phase("imagep_ampl_or_phase", 1),   // 1 for ampl, 0 for phase
-    drive_attenuation("imagep_drive_attenuation", 1),
-    phase("imagep_phase", 0.0),
-    scan_rate_microns ("imagep_rate", 1.0),
-
-    blunt_size ("imagep_tri_size", 1.0),
-    blunt_speed ("imagep_tri_speed", 5000.0)
-
+  mode_changed    (VRPN_FALSE),
+  style_changed   (VRPN_FALSE),
+  mode_p_changed  (VRPN_FALSE),
+  style_p_changed (VRPN_FALSE),
+  
+  mode ("imagep_mode", i.mode ),
+  new_mode( "newimagep_mode", i.mode ),
+  style ("imagep_style", SHARP),
+  new_style( "newimagep_style", SHARP ),
+  tool ("imagep_tool", FREEHAND),
+  new_tool( "newimagep_tool", FREEHAND ),
+     
+  grid_resolution("imagep_grid_resolution", i.grid_resolution),
+  new_grid_resolution( "newimagep_grid_resolution", i.grid_resolution ),
+  scan_angle("imagep_scan_angle", 0),
+  new_scan_angle( "newimagep_scan_angle", 0 ),
+     
+  setpoint ("imagep_setpoint", i.setpoint ),
+  new_setpoint( "newimagep_setpoint", i.setpoint ),
+  setpoint_min (i.setpoint_min ),
+  setpoint_max (i.setpoint_max ),
+  p_gain ("imagep_p_gain", 1.0),
+  new_p_gain( "newimagep_p_gain", 1.0 ),
+  i_gain ("imagep_i_gain", 0.30),
+  new_i_gain( "newimagep_i_gain", 0.30 ),
+  d_gain ("imagep_d_gain", 0.0),
+  new_d_gain( "newimagep_d_gain", 0.0 ),
+  amplitude ("imagep_amplitude", i.amplitude ),
+  new_amplitude( "newimagep_amplitude", i.amplitude ),
+  amplitude_min (i.amplitude_min ),
+  amplitude_max (i.amplitude_max ),
+  frequency("imagep_frequency", 100.0),
+  new_frequency( "newimagep_frequency", 100.0 ),
+  input_gain("imagep_input_gain", 1),
+  new_input_gain( "newimagep_input_gain", 1 ),
+  ampl_or_phase("imagep_ampl_or_phase", 1),   // 1 for ampl, 0 for phase
+  new_ampl_or_phase( "newimagep_ampl_or_phase", 1 ),
+  drive_attenuation("imagep_drive_attenuation", 1),
+  new_drive_attenuation( "newimagep_drive_attenuation", 1 ),
+  phase("imagep_phase", 0.0),
+  new_phase( "newimagep_phase", 0.0 ),
+  scan_rate_microns ("imagep_rate", 1.0),
+  new_scan_rate_microns( "newimagep_rate", 1.0 ),
+  
+  blunt_size ("imagep_tri_size", 1.0),
+  blunt_speed ("imagep_tri_speed", 5000.0)
+  
 {
-
+  
 
 //fprintf(stderr, "AFMImageState constructor\n");
 }

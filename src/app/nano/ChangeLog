@@ -1,3 +1,8 @@
+2001-08-10  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* microscape.c: (setupSynchronization, teardownSynchronization)
+	added image param tcl_net_vars
+
 2001-08-06  Brian Boyd  <boydb@cs.unc.edu>
 
 	* microscape.c (main): changed initialization of index mode so that 

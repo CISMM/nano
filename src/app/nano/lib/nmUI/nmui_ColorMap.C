@@ -28,7 +28,8 @@
 
 Tclvar_list_of_strings* nmui_ColorMap::s_colorMapNames = NULL;
 
-const int nmui_ColorMap::s_menu_cmap_width = 24, nmui_ColorMap::s_menu_cmap_height = 128;
+const int nmui_ColorMap::s_menu_cmap_width = 24, 
+  nmui_ColorMap::s_menu_cmap_height = 128;
 
 /** Update our own state if the colormap name changes */
 void nmui_ColorMap::handle_colormap_change (const char *, void * userdata) {
@@ -37,9 +38,6 @@ void nmui_ColorMap::handle_colormap_change (const char *, void * userdata) {
     me->tcl_colormapRedraw();
 }
 
-//  void handle_color_dataset_change(const char *, void * userdata)
-//  {
-//  }
 
 /** Update our own state if the color/data min/max changes */
 void nmui_ColorMap::handle_color_minmax_change (vrpn_float64, void * userdata) {
@@ -134,15 +132,29 @@ void nmui_ColorMap::setColorMinMaxLimit(double min, double max) {
     *color_max_limit = max;
 }
 
-nmb_ColorMap * nmui_ColorMap::currentColorMap() { 
-    if (strcmp(getColorMapName(), "none") == 0) {
+nmb_ColorMap * nmui_ColorMap::currentColorMap() 
+{ 
+    if (strcmp(getColorMapName(), "none") == 0) 
+      {
         d_curColorMap = d_defaultColorMap;
-    } else {
-        d_curColorMap = colorMaps[s_colorMapNames->
-                                 getIndex(getColorMapName())];
-    }
+      } 
+    else 
+      {
+	int index = s_colorMapNames->getIndex( getColorMapName() );
+	if( index < 0 )
+	  {
+	    char msg[1024];
+	    sprintf( msg, "There is no colormap with the name \n%s", 
+		     getColorMapName() );
+	    display_error_dialog( msg );
+	    d_curColorMap = d_defaultColorMap;
+	    *colormap_name = "none";
+	  }
+	else
+	  d_curColorMap = colorMaps[ index ]; 
+      }
     return d_curColorMap; 
-}
+} // end currentColorMap
 
 const char * nmui_ColorMap::getColorImageName() { 
     return color_image_name->string(); 

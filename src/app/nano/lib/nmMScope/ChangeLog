@@ -1,3 +1,10 @@
+2001-08-10  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* AFMState.h: (AFMImageState)  added new_foo TclNet_vars
+	for all imaging parameters.
+	* AFMState.C: (AFMImageState)  added new_foo vars to
+	initialization.
+
 2001-07-19  David Marshburn  <marshbur@tungsten-cs.cs.unc.edu>
 
 	* nmm_AFM_Control.vrpndef:
