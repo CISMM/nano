@@ -43,6 +43,10 @@ class nmg_RCIStrategy {
                                   const vrpn_float32 * buffer);
       /**< Default implementation does nothing. */
 
+    virtual nmb_PlaneSelection planesForGrid (void);
+      /**< Default implementation returns the standard response, a
+           plane selection from d_imp->dataset() */
+
   protected:
 
     nmg_Graphics_RenderClient_Implementation * d_imp;
@@ -80,6 +84,8 @@ class nmg_RCIS_Mesh : public nmg_RCIStrategy {
                                   vrpn_int32 pixelCount,
                                   const vrpn_float32 * buffer);
 
+    virtual nmb_PlaneSelection planesForGrid (void);
+      /**< Pulls some planes out of d_imp->renderingGrid() */
 
 };
 
@@ -209,8 +215,12 @@ void nmg_RCIStrategy::handleDepthData (
       // Default implementation does nothing.
 }
 
-
-
+// virtual
+nmb_PlaneSelection nmg_RCIStrategy::planesForGrid (void) {
+  nmb_PlaneSelection p;
+  p.lookup(d_imp->dataset());
+  return p;
+}
 
 
 
@@ -287,6 +297,14 @@ void nmg_RCIS_Mesh::handleDepthData (vrpn_int32 nx, vrpn_int32 ny,
 //if (!(ny%20)) {
 //fprintf(stderr, "\n");
 //}
+}
+
+// virtual
+nmb_PlaneSelection nmg_RCIS_Mesh::planesForGrid (void) {
+  nmb_PlaneSelection p;
+  p.lookupPrerenderedColors(d_imp->renderingGrid());
+  p.lookupPrerenderedDepth(d_imp->renderingGrid());
+  return p;
 }
 
 
@@ -475,6 +493,10 @@ void nmg_RCIS_Video::mainloop (void) {
   // in the right window
   v_gl_set_context_to_vlib_window();
 
+  // July 01 - make sure that things work with GLUT
+  //v_update_displays(d_imp->displayIndices());
+
+
   // let glRasterPos() work in screen coordinates
   glViewport(0, 0, d_screenSizeX, d_screenSizeY);
   glMatrixMode(GL_PROJECTION);
@@ -649,6 +671,8 @@ void nmg_Graphics_RenderClient_Implementation::causeGridRebuild (void) {
   // vertex array.  Somebody smart could refactor this into a
   // smaller virtual function & cut down the code duplication.
 
+  nmb_PlaneSelection planes;
+
   int xsize, ysize;
   int retval;
 
@@ -656,8 +680,14 @@ void nmg_Graphics_RenderClient_Implementation::causeGridRebuild (void) {
   ysize = max(d_dataset->inputGrid->numY(), d_renderingGrid->numY());
 
   g_just_color = 0;
+
+  if (d_strategy) {
+    planes = d_strategy->planesForGrid();
+  } else {
+    planes.lookup(d_dataset);
+  }
+
   // Rebuilds the texture coordinate array:
-  nmb_PlaneSelection planes;  planes.lookup(d_dataset);
 
   // Even though we may not be using the vertex array extension, we still
   // use the vertex array to cache calculated normals

@@ -302,8 +302,17 @@ void nmg_Graphics_RenderClient::setSpecularColor (float a) {
 
 // virtual
 void nmg_Graphics_RenderClient::setTesselationStride (int a) {
-  blockTimer();
-  nmg_Graphics_Remote::setTesselationStride (a);
+
+  // TCH Dissertation July 2001
+  // Don't transmit this across the network, just pass it down
+  // to our implementation.
+  // Makes sense for textures.  Ignored (?) by depth meshes.
+  // Wrong for video - thus, ought to be a bool on the strategy,
+  // but for hacking (for now, for results) I'll hardwire it.
+
+  //blockTimer();
+  //nmg_Graphics_Remote::setTesselationStride (a);
+  d_implementation.setTesselationStride(a);
 }
 
 // virtual
@@ -367,6 +376,10 @@ void nmg_Graphics_RenderClient::setHeightPlaneName (const char * n) {
 
 
 
+// virtual
+void nmg_Graphics_RenderClient::setColorMapDirectory (const char * n) {
+  d_implementation.setColorMapDirectory(n);
+}
 
 
 

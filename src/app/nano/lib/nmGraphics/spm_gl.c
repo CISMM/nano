@@ -258,7 +258,7 @@ fprintf(stderr,
 
      if (!vertexptr[i]) {
        for (j = 0; j < i; j++) {
-         free(vertexptr[i]);
+         free(vertexptr[j]);
        }
        free(vertexptr);
        vertexptr = NULL;

@@ -181,6 +181,11 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
     virtual const double * getMinColor (void) const;
     virtual const double * getMaxColor (void) const;
 
+
+    // HACK
+
+    v_index * displayIndices (void) { return d_displayIndexList; }
+
   protected:
 
     virtual void initDisplays (void);

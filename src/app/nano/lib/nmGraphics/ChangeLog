@@ -1,3 +1,21 @@
+2001-07-07  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmg_Graphics_Implementation (displayIndices) : New function.
+
+	* nmg_Graphics_RenderClient (setTesselationStride) : Doesn't
+	pass message to server, but to implementation instead.
+	(setColorMapDirectory) : Same.
+
+	* nmg_Graphics_RenderClient_Implementation
+	(nmg_RCIStrategy::planesForGrid) : New function.
+	(nmg_RCIS_Mesh::planesForGrid) : Same.
+	(nmg_RCIS_Video::mainloop) : Hacking around to get it to work on
+	PCs.  Not stable yet.
+	(nmg_Graphics_RenderClient_Implementation::causeGridRebuild) :
+	Delegate to d_strategy->planesForGrid().
+
+	* spm_gl.c (init_vertexArray) : Bugfix in memory leak cleanup.
+
 2001-07-03  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmg_RenderClientImpl.C (causeGridRebuild) : New function -

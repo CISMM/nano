@@ -116,6 +116,11 @@ class nmg_Graphics_RenderClient : public nmg_Graphics_Remote {
     virtual void setHeightPlaneName (const char *);
 
 
+    // These things pass through to d_implementation
+    // but NOT to the remote
+
+    virtual void setColorMapDirectory (const char *);
+
 
   protected:
 
