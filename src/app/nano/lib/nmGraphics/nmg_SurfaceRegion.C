@@ -381,9 +381,12 @@ setTexture(nmg_State * state, nmb_Dataset *data)
 			glScaled(1.0, 1.0, 1.0/surface_z_scale);
 
             break;
+
+
+
             //case nmg_Graphics::REMOTE_COORD;
             //glLoadIdentity();
-		case nmg_Graphics::MODEL_REGISTRATION_COORD:
+        case nmg_Graphics::MODEL_REGISTRATION_COORD:
             glLoadIdentity();
 			switch (state->texture_displayed) {
             case nmg_Graphics::NO_TEXTURES:
