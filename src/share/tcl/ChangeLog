@@ -1,3 +1,8 @@
+2001-09-25 Jameson Miller <millerj@cs.unc.edu>
+	* modify.tcl - changed so that the correct tool gets displayed in the
+	quickparams window when in direct_step tool.
+
+
 2001-09-21  Aron Helser  <helser@cs.unc.edu>
 
 	* modify.tcl (init_live_controls): Added "eval", fixes bug/error
