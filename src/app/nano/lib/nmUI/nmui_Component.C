@@ -14,15 +14,15 @@
 // d_peer (collaboratingPeerRemoteConnection in microscape.c).
 
 
-nmui_Component::nmui_Component
-                   (char name [30],
-                    TclNet_int ** ilist, int numI,
-                    TclNet_float ** flist, int numF,
-                    TclNet_string ** stringlist, int numstring) :
+nmui_Component::nmui_Component (char name [30]) :
+                    //TclNet_int ** ilist, int numI,
+                    //TclNet_float ** flist, int numF,
+                    //TclNet_string ** stringlist, int numstring) :
     d_maintain (VRPN_FALSE),
-    d_numInts (numI),
-    d_numFloats (numF),
-    d_numStrings (numstring),
+    //d_numInts (numI),
+    //d_numFloats (numF),
+    //d_numStrings (numstring),
+    d_numVars (0),
     d_numComponents (0),
     d_synchronizedTo (0),
     d_numPeers (0),
@@ -43,15 +43,15 @@ nmui_Component::nmui_Component
 
   strncpy(d_name, name, 30);
 
-  for (i = 0; i < numI; i++) {
-    add(ilist[i]);
-  }
-  for (i = 0; i < numF; i++) {
-    add(flist[i]);
-  }
-  for (i = 0; i < numstring; i++) {
-    add(stringlist[i]);
-  }
+  //for (i = 0; i < numI; i++) {
+    //add(ilist[i]);
+  //}
+  //for (i = 0; i < numF; i++) {
+    //add(flist[i]);
+  //}
+  //for (i = 0; i < numstring; i++) {
+    //add(stringlist[i]);
+  //}
 
 }
 
@@ -71,7 +71,7 @@ const char * nmui_Component::name (void) const {
 
 int nmui_Component::numPeers (void) const {
   return d_numPeers;
- }
+}
 
 int nmui_Component::synchronizedTo (void) const {
   return d_synchronizedTo;
@@ -86,6 +86,8 @@ vrpn_bool nmui_Component::holdsRemoteLocks (void) const {
 }
 
 
+
+#if 0
 
 void nmui_Component::add (TclNet_int * newLinkvar) {
   if (d_numInts >= NMUI_COMPONENT_MAX_SIZE) {
@@ -121,6 +123,18 @@ void nmui_Component::add (TclNet_string * newLinkvar) {
   d_numStrings++;
 }
 
+#endif
+
+void nmui_Component::add (Tcl_Netvar * newLinkvar) {
+  if (d_numVars >= 3 * NMUI_COMPONENT_MAX_SIZE) {
+    fprintf(stderr, "nmui_Component::add:  "
+                    "Too many linkvars in component.\n");
+    return;
+  }
+
+  d_vars[d_numVars] = newLinkvar;
+  d_numVars++;
+}
 
 void nmui_Component::add (nmui_Component * newComponent) {
   if (d_numComponents >= NMUI_COMPONENT_MAX_SIZE) {
@@ -140,14 +154,17 @@ void nmui_Component::bindConnection (vrpn_Connection * c) {
 
   d_connection = c;
 
-  for (i = 0; i < d_numInts; i++) {
-    d_ints[i]->bindConnection(c);
-  }
-  for (i = 0; i < d_numFloats; i++) {
-    d_floats[i]->bindConnection(c);
-  }
-  for (i = 0; i < d_numStrings; i++) {
-    d_strings[i]->bindConnection(c);
+  //for (i = 0; i < d_numInts; i++) {
+    //d_ints[i]->bindConnection(c);
+  //}
+  //for (i = 0; i < d_numFloats; i++) {
+    //d_floats[i]->bindConnection(c);
+  //}
+  //for (i = 0; i < d_numStrings; i++) {
+    //d_strings[i]->bindConnection(c);
+  //}
+  for (i = 0; i < d_numVars; i++) {
+    d_vars[i]->bindConnection(c);
   }
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->bindConnection(c);
@@ -168,14 +185,17 @@ void nmui_Component::bindLogConnection (vrpn_Connection * c) {
     //char namebuf [60];
   int i;
 
-  for (i = 0; i < d_numInts; i++) {
-    d_ints[i]->bindLogConnection(c);
-  }
-  for (i = 0; i < d_numFloats; i++) {
-    d_floats[i]->bindLogConnection(c);
-  }
-  for (i = 0; i < d_numStrings; i++) {
-    d_strings[i]->bindLogConnection(c);
+  //for (i = 0; i < d_numInts; i++) {
+    //d_ints[i]->bindLogConnection(c);
+  //}
+  //for (i = 0; i < d_numFloats; i++) {
+    //d_floats[i]->bindLogConnection(c);
+  //}
+  //for (i = 0; i < d_numStrings; i++) {
+    //d_strings[i]->bindLogConnection(c);
+  //}
+  for (i = 0; i < d_numVars; i++) {
+    d_vars[i]->bindLogConnection(c);
   }
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->bindLogConnection(c);
@@ -186,14 +206,17 @@ void nmui_Component::bindLogConnection (vrpn_Connection * c) {
 void nmui_Component::addPeer (vrpn_Connection * c, vrpn_bool serialize) {
   int i;
 
-  for (i = 0; i < d_numInts; i++) {
-    d_ints[i]->addPeer(c, serialize);
-  }
-  for (i = 0; i < d_numFloats; i++) {
-    d_floats[i]->addPeer(c, serialize);
-  }
-  for (i = 0; i < d_numStrings; i++) {
-    d_strings[i]->addPeer(c, serialize);
+  //for (i = 0; i < d_numInts; i++) {
+    //d_ints[i]->addPeer(c, serialize);
+  //}
+  //for (i = 0; i < d_numFloats; i++) {
+    //d_floats[i]->addPeer(c, serialize);
+  //}
+  //for (i = 0; i < d_numStrings; i++) {
+    //d_strings[i]->addPeer(c, serialize);
+  //}
+  for (i = 0; i < d_numVars; i++) {
+    d_vars[i]->addPeer(c, serialize);
   }
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->addPeer(c, serialize);
@@ -209,14 +232,17 @@ void nmui_Component::addPeer (vrpn_Connection * c, vrpn_bool serialize) {
 void nmui_Component::copyReplica (int whichReplica) {
   int i;
 
-  for (i = 0; i < d_numInts; i++) {
-    d_ints[i]->copyReplica(whichReplica);
-  }
-  for (i = 0; i < d_numFloats; i++) {
-    d_floats[i]->copyReplica(whichReplica);
-  }
-  for (i = 0; i < d_numStrings; i++) {
-    d_strings[i]->copyReplica(whichReplica);
+  //for (i = 0; i < d_numInts; i++) {
+    //d_ints[i]->copyReplica(whichReplica);
+  //}
+  //for (i = 0; i < d_numFloats; i++) {
+    //d_floats[i]->copyReplica(whichReplica);
+  //}
+  //for (i = 0; i < d_numStrings; i++) {
+    //d_strings[i]->copyReplica(whichReplica);
+  //}
+  for (i = 0; i < d_numVars; i++) {
+    d_vars[i]->copyReplica(whichReplica);
   }
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->copyReplica(whichReplica);
@@ -227,14 +253,17 @@ void nmui_Component::copyFromToReplica (int sourceReplica, int destReplica) {
 /* */
   int i;
 
-  for (i = 0; i < d_numInts; i++) {
-    d_ints[i]->copyFromToReplica(sourceReplica, destReplica);
-  }
-  for (i = 0; i < d_numFloats; i++) {
-    d_floats[i]->copyFromToReplica(sourceReplica, destReplica);
-  }
-  for (i = 0; i < d_numStrings; i++) {
-    d_strings[i]->copyFromToReplica(sourceReplica, destReplica);
+  //for (i = 0; i < d_numInts; i++) {
+    //d_ints[i]->copyFromToReplica(sourceReplica, destReplica);
+  //}
+  //for (i = 0; i < d_numFloats; i++) {
+    //d_floats[i]->copyFromToReplica(sourceReplica, destReplica);
+  //}
+  //for (i = 0; i < d_numStrings; i++) {
+    //d_strings[i]->copyFromToReplica(sourceReplica, destReplica);
+  //}
+  for (i = 0; i < d_numVars; i++) {
+    d_vars[i]->copyFromToReplica(sourceReplica, destReplica);
   }
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->copyFromToReplica(sourceReplica, destReplica);
@@ -245,14 +274,17 @@ void nmui_Component::copyFromToReplica (int sourceReplica, int destReplica) {
 void nmui_Component::syncReplica (int whichReplica) {
   int i;
 
-  for (i = 0; i < d_numInts; i++) {
-    d_ints[i]->syncReplica(whichReplica);
-  }
-  for (i = 0; i < d_numFloats; i++) {
-    d_floats[i]->syncReplica(whichReplica);
-  }
-  for (i = 0; i < d_numStrings; i++) {
-    d_strings[i]->syncReplica(whichReplica);
+  //for (i = 0; i < d_numInts; i++) {
+    //d_ints[i]->syncReplica(whichReplica);
+  //}
+  //for (i = 0; i < d_numFloats; i++) {
+    //d_floats[i]->syncReplica(whichReplica);
+  //}
+  //for (i = 0; i < d_numStrings; i++) {
+    //d_strings[i]->syncReplica(whichReplica);
+  //}
+  for (i = 0; i < d_numVars; i++) {
+    d_vars[i]->syncReplica(whichReplica);
   }
   for (i = 0; i < d_numComponents; i++) {
     d_components[i]->syncReplica(whichReplica);

@@ -1,3 +1,19 @@
+2000-09-27  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmui_Component.C : add d_numVars, d_vars data members
+        remove d_numInts, d_numFloats, d_numStrings, d_ints, d_floats,
+        d_strings data members
+        (add (TclNet_int *)) : remove
+        (add (TclNet_float *)) : same
+        (add (TclNet_string *)) : same
+        (add (Tcl_Netvar *)) : new function
+        (bindConnection) : rewrite to use Netvar base class
+        (bindLogConnection) : same
+        (addPeer) : same
+        (copyReplica) : same
+        (copyFromToReplica) : same
+        (syncReplica) : same
+
 2000-09-26  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmui_HapticSurface.C (nmui_HSFeelAhead constructor) :

@@ -12,9 +12,10 @@
 // name is limited to 30 characters so that we can fit in a VRPN
 // sender ID
 
-class TclNet_int;  // from <Tcl_Netvar.h>
-class TclNet_float;
-class TclNet_string;
+class Tcl_Netvar;
+//class TclNet_int;  // from <Tcl_Netvar.h>
+//class TclNet_float;
+//class TclNet_string;
 
 class vrpn_Connection;  // from <vrpn_Connection.h>
 
@@ -68,10 +69,10 @@ class nmui_Component {
 
     // CONSTRUCTORS
 
-    nmui_Component (char name [30],
-                    TclNet_int ** = NULL, int = 0,
-                    TclNet_float ** = NULL, int = 0,
-                    TclNet_string ** = NULL, int = 0);
+    nmui_Component (char name [30]);
+                    //TclNet_int ** = NULL, int = 0,
+                    //TclNet_float ** = NULL, int = 0,
+                    //TclNet_string ** = NULL, int = 0);
 
     virtual ~nmui_Component (void);
 
@@ -110,12 +111,16 @@ class nmui_Component {
 
     // MANIPULATORS
 
-    void add (TclNet_int *);
+    //void add (TclNet_int *);
       /**< Adds a netvar to the hierarchy under this component. */
-    void add (TclNet_float *);
+    //void add (TclNet_float *);
       /**< Adds a netvar to the hierarchy under this component. */
-    void add (TclNet_string *);
+    //void add (TclNet_string *);
       /**< Adds a netvar to the hierarchy under this component. */
+
+    void add (Tcl_Netvar *);
+      /**< Adds a netvar to the hierarchy under this component. */
+
     void add (nmui_Component *);
       /**< Adds a component to the hierarchy under this component.  */
 
@@ -197,12 +202,14 @@ class nmui_Component {
 
     char d_name [31];
 
-    int d_numInts;
-    TclNet_int * d_ints [NMUI_COMPONENT_MAX_SIZE];
-    int d_numFloats;
-    TclNet_float * d_floats [NMUI_COMPONENT_MAX_SIZE];
-    int d_numStrings;
-    TclNet_string * d_strings [NMUI_COMPONENT_MAX_SIZE];
+    //int d_numInts;
+    //TclNet_int * d_ints [NMUI_COMPONENT_MAX_SIZE];
+    //int d_numFloats;
+    //TclNet_float * d_floats [NMUI_COMPONENT_MAX_SIZE];
+    //int d_numStrings;
+    //TclNet_string * d_strings [NMUI_COMPONENT_MAX_SIZE];
+    int d_numVars;
+    Tcl_Netvar * d_vars [3 * NMUI_COMPONENT_MAX_SIZE];
     int d_numComponents;
     nmui_Component * d_components [NMUI_COMPONENT_MAX_SIZE];
 
