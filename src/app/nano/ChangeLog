@@ -1,3 +1,10 @@
+2000-10-15  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c :  add colorplane, colormap, heightplane to istate
+	(ParseArgs) : handle new arguments
+	(Usage) : document new arguments
+	(main) : use new arguments
+
 2000-10-12  Adam Seeger  <seeger@cs.unc.edu>
 
         * microscape.c (handle_openStreamFilename_change) : The log file was

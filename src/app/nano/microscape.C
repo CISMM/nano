@@ -31,6 +31,7 @@
 #include <vrpn_Forwarder.h>
 #include <vrpn_Analog.h>
 #include <vrpn_Clock.h>  // for round-trip-time routines (foo_rtt())
+#include <vrpn_RedundantTransmission.h>
 #ifndef NO_MAGELLAN
 #include <vrpn_Magellan.h>
 #include <vrpn_Tracker_AnalogFly.h>
@@ -39,6 +40,7 @@
 #ifndef NO_PHANTOM_SERVER
 #include <vrpn_Phantom.h>
 #endif
+
 
 // ############ getpid hack
 #if defined (__CYGWIN__) && defined (VRPN_USE_WINSOCK_SOCKETS)
@@ -1065,6 +1067,8 @@ static Thread * graphicsServerThread = NULL;
 static vrpn_Connection * shmem_connection = NULL;
 static vrpn_Connection * microscope_connection = NULL;
 
+vrpn_RedundantRemote * microscopeRedundancyController = NULL;
+
 // remote rendering things
 // TCH 29 December 99
 static vrpn_Connection * renderServerOutputConnection = NULL;
@@ -1156,6 +1160,10 @@ struct MicroscapeInitializationState {
 
   vrpn_bool timeGraphics;
   vrpn_bool do_magellan;
+
+  char colorplane [256];
+  char colormap [256];
+  char heightplane [256];
 };
 
 MicroscapeInitializationState::MicroscapeInitializationState (void) :
@@ -1189,13 +1197,16 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   timeGraphics (vrpn_FALSE),
   do_magellan(1)
 {
-    graphicsHost[0] = '\0';
-    SPMhost[0] = '\0';
-    remoteOutputStreamName[0] = '\0';
-    peerName[0] = '\0';
-    logPath[0] = '\0';
-    logTimestamp.tv_sec = 0;
-    logTimestamp.tv_usec = 0;
+  graphicsHost[0] = '\0';
+  SPMhost[0] = '\0';
+  remoteOutputStreamName[0] = '\0';
+  peerName[0] = '\0';
+  logPath[0] = '\0';
+  logTimestamp.tv_sec = 0;
+  logTimestamp.tv_usec = 0;
+  colorplane[0] = '\0';
+  colormap[0] = '\0';
+  heightplane[0] = '\0';
 }
 
 
@@ -2727,8 +2738,13 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
 
     // new and old microscope_connection can be equal if we open
     // the same stream file twice!!
-    if (microscope_connection && (microscope_connection!=new_microscope_connection)) {
+    if (microscope_connection &&
+        (microscope_connection != new_microscope_connection)) {
       delete microscope_connection;
+      if (microscopeRedundancyController) {
+        delete microscopeRedundancyController;
+        microscopeRedundancyController = NULL;
+      }
     }
     microscope_connection = new_microscope_connection;
     vrpnLogFile = new_vrpnLogFile;
@@ -2811,11 +2827,21 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
 
     // new and old microscope_connection can be equal if we open
     // the same stream file twice!!
-    if (microscope_connection && (microscope_connection!=new_microscope_connection)) {
+    if (microscope_connection &&
+        (microscope_connection != new_microscope_connection)) {
       delete microscope_connection;
+      if (microscopeRedundancyController) {
+        delete microscopeRedundancyController;
+        microscopeRedundancyController = NULL;
+      }
     }
     microscope_connection = new_microscope_connection;
     vrpnLogFile = NULL;
+
+    if (!microscopeRedundancyController) {
+      microscopeRedundancyController =
+        new vrpn_RedundancyRemote (microscope_connection);
+    }
 
     openSPMDeviceName = "";
     openSPMLogName = "";
@@ -5076,6 +5102,15 @@ void ParseArgs (int argc, char ** argv,
         time_frame = atoi(argv[i]);
 	framelog = 1;
 	frametimer.startlog(time_frame);
+      } else if (strcmp(argv[i], "-colormap") == 0) {
+        if (++i >= argc) Usage(argv[0]);
+        strcpy(istate->colormap, argv[i]);
+      } else if (strcmp(argv[i], "-colorplane") == 0) {
+        if (++i >= argc) Usage(argv[0]);
+        strcpy(istate->colorplane, argv[i]);
+      } else if (strcmp(argv[i], "-heightplane") == 0) {
+        if (++i >= argc) Usage(argv[0]);
+        strcpy(istate->heightplane, argv[i]);
       } else if (strcmp(argv[i], "-timerverbosity") == 0) {
         if (++i >= argc) Usage(argv[0]);
         timer_verbosity = atoi(argv[i]);
@@ -5160,6 +5195,7 @@ void Usage(char* s)
   fprintf(stderr, "       [-optimistic] [-pessimistic] [-phantomrate rate]\n");
   fprintf(stderr, "       [-tesselation stride] [-NIC IPaddress]\n");
   fprintf(stderr, "       [-gverbosity n] [-cverbosity n]\n");
+  fprintf(stderr, "       [-colorplane name] [-colormap name] [-heightplane name]\n");
   fprintf(stderr, "       \n");
 
   fprintf(stderr, "       -d: Use given spm device (default sdi_stm0)\n");
@@ -5251,6 +5287,9 @@ void Usage(char* s)
   fprintf(stderr, "       -packetlimit n:  while replaying stream files "
                           "play no more than n packets\n"
                   "       before refreshing graphics (0 to disable).\n");
+  fprintf(stderr, "       -colormap name:  set default colormap.\n");
+  fprintf(stderr, "       -colorplane name:  set default color plane.\n");
+  fprintf(stderr, "       -heightplane name:  set default height plane.\n");
   fprintf(stderr, "       -optimistic:  optimistic concurrency control.\n");
   fprintf(stderr, "       -pessimistic:  centralized concurrency control.\n");
   fprintf(stderr, "       -NIC IPaddress:  use network interface with given\n"
@@ -5815,6 +5854,7 @@ void update_rtt (void) {
   struct timeval now;
   struct timeval rtt;
   struct timezone tz;
+  double val = 0.0;
   if ((!microscope_connection)||(microscope->ReadMode() == READ_STREAM)) return;
 
   /* gettimeofday takes two arguments */
@@ -5828,15 +5868,18 @@ void update_rtt (void) {
     //   vrpn_Synchronized_Connection
 
     scp = (vrpn_Synchronized_Connection *) microscope_connection;
-	if ( (scp == NULL) || (scp->pClockRemote == NULL) ) {
-		fprintf(stderr,"Warning: Calling update_rtt when pClockRemote == NULL\n");
-	} else {
-		rtt = scp->pClockRemote->currentRTT();
-		rtt_server->channels()[0] = (double) rtt.tv_sec +
-                                (double) rtt.tv_usec / 1000000.0;
-		rtt_server->report_changes();
-		rtt_server_connection->mainloop();
-	}
+
+    if ((!scp) || (!scp->pClockRemote)) {
+      fprintf(stderr,"Warning: Calling update_rtt when pClockRemote == NULL\n");
+    } else {
+      rtt = scp->pClockRemote->currentRTT();
+      val = (double) rtt.tv_sec + (double) rtt.tv_usec / 1000000.0;
+      rtt_server->channels()[0] = val;
+      rtt_server->report_changes();
+      rtt_server_connection->mainloop();
+    }
+
+    updateMicroscopeRTTEstimate(val);
   }
 
   lasttime = now;
@@ -6121,7 +6164,11 @@ envir);
     
 }
 
-int main(int argc, char* argv[])
+void mainloop (void) {
+
+}
+
+int main (int argc, char* argv[])
 {
     ios::sync_with_stdio();
 
@@ -6246,6 +6293,9 @@ int main(int argc, char* argv[])
 	//decoration->rateOfTime = 3;	// use 3 for rate default
 	//fprintf(stderr, "   microscape.c:: in Replay mode\n");
       }
+
+      microscopeRedundancyController = new vrpn_RedundancyRemote
+        (microscope_connection);
 
       // BEFORE we call mainloop on our connection to the microscope,
       // open up a forwarder and spin until it is connected to.
@@ -6654,6 +6704,17 @@ int main(int argc, char* argv[])
   // seem to be?
   tclstride = istate.tesselation;
 
+  if (istate.colorplane[0]) {
+    dataset->colorPlaneName->Set(istate.colorplane);
+  }
+  if (istate.colormap[0]) {
+    dataset->colorMapName->Set(istate.colormap);
+
+  }
+  if (istate.heightplane[0]) {
+    dataset->heightPlaneName->Set(istate.heightplane);
+  }
+
   /* Center the image first thing */
   center();
 
@@ -6915,13 +6976,19 @@ VERBOSE(1, "Entering main loop");
         old_value_of_rate_knob = new_value_of_rate_knob;
       }
 
-      if ( (microscope->ReadMode() == READ_DEVICE) || (microscope->ReadMode() == READ_STREAM) ) {
+      if ((microscope->ReadMode() == READ_DEVICE) ||
+          (microscope->ReadMode() == READ_STREAM)) {
+
 #ifndef NO_XWINDOWS
 	if (xenable)
 	  synchronize_xwin(False);
 #endif
 
 #ifdef USE_VRPN_MICROSCOPE
+
+        if (microscopeRedundancyController) {
+          microscopeRedundancyController->mainloop();
+        }
 
         VERBOSE(4, "  Calling microscope->mainloop()");
 	microscope->mainloop();
