@@ -1,3 +1,18 @@
+2001-08-20  Adam Seeger  <seeger@cs.unc.edu>
+	
+	* imageViewer.C (ImageWindow): added image coordinate rectangle
+	to keep track of which part of the image was drawn in the window
+	the last time an image was drawn into the window
+	(drawImageAsPixels): fixes a bug in this function
+	(toPixels): removed
+	(toImage): removed
+	(toPixelsNoZoom): renamed toPixels
+	(toImageNoZoom): renamed toImage
+	(toPixelsPnt): new function compatible with scaled/translated images
+	(toImagePnt): "
+	(toPixelsVec): "
+	(toImageVec): "
+
 2001-07-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* imageViewer.C (drawImageAsPixels): made this a bit cleaner, more

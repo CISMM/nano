@@ -52,7 +52,8 @@ ImageWindow::ImageWindow():
     event_handler(NULL), event_handler_ud(NULL),
     display_handler(NULL), display_handler_ud(NULL),
     d_colormap(NULL), 
-    d_data_min(0), d_data_max(1), d_color_min(0), d_color_max(1)
+    d_data_min(0), d_data_max(1), d_color_min(0), d_color_max(1),
+    d_left(0.0), d_right(1.0), d_bottom(0.0), d_top(1.0)
 {}
 
 ImageDisplay::ImageDisplay():
@@ -1026,6 +1027,9 @@ int ImageViewer::drawImage(int winID) {
 }
 
 // draw any image into a window
+// this function may be used even if image is NULL in order to specify a
+// viewport for the window which will affect the behavior of future calls to 
+// the toImage/toPixels conversion routines for that window
 int ImageViewer::drawImage(int winID, nmb_Image *image, 
               double red, double green, double blue, double alpha,
               double *left, double *right, double *bottom, double *top, 
@@ -1061,6 +1065,11 @@ int ImageViewer::drawImage(int winID, nmb_Image *image,
     }
     // done with setting values for optional parameters
 
+    window[win_index].d_left = l;
+    window[win_index].d_right = r;
+    window[win_index].d_bottom = b;
+    window[win_index].d_top = t;
+
     double scx, scy, shz, phi, tx, ty;
     W2I.getTScShR_2DParameters(0.0, 0.0, tx, ty, phi, shz, scx, scy);
 
@@ -1075,12 +1084,14 @@ int ImageViewer::drawImage(int winID, nmb_Image *image,
     glViewport(0,0,window[win_index].win_width,
                    window[win_index].win_height);
 
-    if (shMag > 0.0001 || phiMag > 0.0001) {
-      drawImageAsTexture(winID, image, red, green, blue, alpha, 
-                         l, r, b, t, W2I);
-    } else { // try using glDrawPixels instead of texture-mapping
-      drawImageAsPixels(winID, image, red, green, blue, alpha, 
-             l, r, b, t, tx, ty, scx, scy);
+    if (image) {
+      if (shMag > 0.0001 || phiMag > 0.0001) {
+        drawImageAsTexture(winID, image, red, green, blue, alpha, 
+                           l, r, b, t, W2I);
+      } else { // try using glDrawPixels instead of texture-mapping
+        drawImageAsPixels(winID, image, red, green, blue, alpha, 
+               l, r, b, t, tx, ty, scx, scy);
+      }
     }
 
 #ifdef V_GLUT
@@ -1126,14 +1137,6 @@ int ImageViewer::drawImageAsTexture(int winID, nmb_Image *image,
                image->borderXMin()+image->borderXMax();
     texheight = image->height() +
                 image->borderYMin()+image->borderYMax();
-    float scaleFactorX = (float)(image->width())/(float)texwidth;
-    float scaleFactorY = (float)(image->height())/(float)texheight;
-
-    int bordSizeXPixels = image->borderXMin();
-    int bordSizeYPixels = image->borderYMin();
-    // in texture coordinates
-    float bordSizeX = (float)bordSizeXPixels/(float)texwidth;
-    float bordSizeY = (float)bordSizeYPixels/(float)texheight;
 
 //    printf("begin draw texture for %s\n", image->name()->Characters());
 
@@ -1192,6 +1195,7 @@ int ImageViewer::drawImageAsTexture(int winID, nmb_Image *image,
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
+    // set what axis-aligned world rectangle is displayed in the window
     glOrtho(l, r, b, t, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1203,24 +1207,33 @@ int ImageViewer::drawImageAsTexture(int winID, nmb_Image *image,
     double regionVertex[4][4] = 
              {{0, 0, 0, 1}, {1, 0, 0, 1}, {1, 1, 0, 1},{0, 1, 0, 1}};
 
+    // transform the unit square (the extent of texture coordinates) from
+    // the image coordinate system into the world coordinate system 
+    // (note the use of invTransform()) so we get the extent of the texture
+    // in the world
     W2I.invTransform(regionVertex[0]);
     W2I.invTransform(regionVertex[1]);
     W2I.invTransform(regionVertex[2]);
     W2I.invTransform(regionVertex[3]);
 
     // compensation for the border:
-    glTranslatef(bordSizeX, bordSizeY, 0.0);
-    glScalef(scaleFactorX, scaleFactorY, 1.0);
-    // now we can use the xform defined for the actual image part of the
+    double imageToTexture[16];
+    nmb_TransformMatrix44 I2T;
+    image->getImageToTextureTransform(I2T);
+    I2T.getMatrix(imageToTexture);
+    glMultMatrixd(imageToTexture);
+    
+    // now we can use the transform defined for the actual image part of the
     // texture
     double worldToImage[16];
     W2I.getMatrix(worldToImage);
     glMultMatrixd(worldToImage);
 
+    // draw the quadrilateral computed above that describes the region in the
+    // world where the texture is supposed to show up
     glBegin(GL_POLYGON);
       glNormal3f(0.0, 0.0, 1.0);
       glColor4f(1.0, 1.0, 1.0, (float)alpha);
-      // draw a parallelogram fit to the image
       glVertex2f(regionVertex[0][0], regionVertex[0][1]);
       glVertex2f(regionVertex[1][0], regionVertex[1][1]);
       glVertex2f(regionVertex[2][0], regionVertex[2][1]);
@@ -1352,7 +1365,12 @@ int ImageViewer::drawImageAsPixels(int winID, nmb_Image *image,
     if (scx*(rasterPos_wu[0] - boundX) <= 0) {
       skipIncX = (int)ceil(fabs(rasterPos_wu[0] - boundX)/wuPerImagePixelX);
       skipPixels += skipIncX;
-      rasterPos_wu[0] += (scx > 0)*skipIncX*wuPerImagePixelX;
+//      rasterPos_wu[0] += (scx > 0)*skipIncX*wuPerImagePixelX;
+      if (scx > 0) {
+        rasterPos_wu[0] += skipIncX*wuPerImagePixelX;
+      } else {
+        rasterPos_wu[0] -= skipIncX*wuPerImagePixelX;
+      }
     }
 
     // figure out whether the image should be drawn starting at the top or
@@ -1370,7 +1388,12 @@ int ImageViewer::drawImageAsPixels(int winID, nmb_Image *image,
     if (scy*(rasterPos_wu[1] - boundY) <= 0) {
       skipIncY = (int)ceil(fabs(rasterPos_wu[1] - boundY)/wuPerImagePixelY);
       skipRows += skipIncY;
-      rasterPos_wu[1] += (scy > 0)*skipIncY*wuPerImagePixelY;
+//      rasterPos_wu[1] += (scy > 0)*skipIncY*wuPerImagePixelY;
+      if (scy > 0) {
+        rasterPos_wu[1] += skipIncY*wuPerImagePixelY;
+      } else {
+        rasterPos_wu[1] -= skipIncY*wuPerImagePixelY;
+      }
     }
 
     // check to see if the raster position is outside the viewport by
@@ -1387,12 +1410,12 @@ int ImageViewer::drawImageAsPixels(int winID, nmb_Image *image,
 
     // we will get clipping of the raster position if the it is outside of
     // the rectangle [-1,1]x[-1,1] so
-    // figure out what increment to add to the raster position in world units
-    // to ensure that the transformed raster position isn't clipped due to
-    // roundoff error
+    // figure out what small fudge increment to add to the raster position 
+    // in world units to ensure that the transformed raster position isn't
+    // clipped due to roundoff error
     GLdouble rasterPos_wu_incr[2] = {0.0, 0.0};
     if (rasterPos_sc[0] <= -0.9999) {
-      rasterPos_wu_incr[0] = +0.9999/projScaleX;
+      rasterPos_wu_incr[0] = +0.001/projScaleX;
     } else if (rasterPos_sc[0] >= 0.9999) {
       rasterPos_wu_incr[0] = -0.001/projScaleX;
     }
@@ -1541,7 +1564,8 @@ int ImageViewer::drawString(int x, int y, char *str) {
     return 0;
 }
 
-int ImageViewer::toImage(int winID, double *x, double *y){
+int ImageViewer::toImageNoZoom(int winID, double *x, double *y)
+{
     if (!validWinID(winID)) return -1;
     int win_index = get_window_index_from_winID(winID);
 
@@ -1553,7 +1577,8 @@ int ImageViewer::toImage(int winID, double *x, double *y){
     return 0;
 }
 
-int ImageViewer::toPixels(int winID, double *x, double *y){
+int ImageViewer::toPixelsNoZoom(int winID, double *x, double *y)
+{
     if (!validWinID(winID)) return -1;
     int win_index = get_window_index_from_winID(winID);
 
@@ -1564,29 +1589,139 @@ int ImageViewer::toPixels(int winID, double *x, double *y){
     return 0;
 }
 
+int ImageViewer::toImagePnt(int winID, double left, double right,
+                            double bottom, double top,
+                            double *x, double *y)
+{
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+    double winHeight = (double)window[win_index].win_height;
+
+    double x_im, y_im;
+    x_im = left + (right-left)*(*x)/(double)window[win_index].win_width;
+    y_im = bottom + 
+           (top-bottom)*(winHeight - *y)/(double)window[win_index].win_height;
+    *x = x_im;
+    *y = y_im;
+    return 0;
+}
+
+int ImageViewer::toImagePnt(int winID, double *x, double *y)
+{
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
+    return toImagePnt(winID, 
+               window[win_index].d_left, window[win_index].d_right,
+               window[win_index].d_bottom, window[win_index].d_top, x, y);
+}
+
+int ImageViewer::toPixelsPnt(int winID, double left, double right,
+                            double bottom, double top,
+                            double *x, double *y)
+{
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+    double winHeight = (double)window[win_index].win_height;   
+
+    double x_winPix, y_winPix;
+    x_winPix = ((*x) - left)*
+               ((double)window[win_index].win_width)/(right-left);
+    y_winPix = winHeight - ((*y) - bottom)*
+               ((double)window[win_index].win_height)/(top-bottom);
+    *x = x_winPix;
+    *y = y_winPix;
+    return 0;
+}
+
+int ImageViewer::toPixelsPnt(int winID, double *x, double *y)
+{
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
+    return toPixelsPnt(winID,
+               window[win_index].d_left, window[win_index].d_right,
+               window[win_index].d_bottom, window[win_index].d_top, x, y);
+}
+
+int ImageViewer::toImageVec(int winID, double left, double right,
+                            double bottom, double top,
+                            double *x, double *y)
+{
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
+    double x_im, y_im;
+    x_im = (right-left)*(*x)/(double)window[win_index].win_width;
+    y_im = (top-bottom)*(-*y)/(double)window[win_index].win_height;
+    *x = x_im;
+    *y = y_im;
+    return 0;
+}
+
+int ImageViewer::toImageVec(int winID, double *x, double *y)
+{
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
+    return toImageVec(winID,
+               window[win_index].d_left, window[win_index].d_right,
+               window[win_index].d_bottom, window[win_index].d_top, x, y);
+}
+
+int ImageViewer::toPixelsVec(int winID, double left, double right,
+                            double bottom, double top,
+                            double *x, double *y)
+{
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
+    double x_winPix, y_winPix;
+    x_winPix = (*x)*((double)window[win_index].win_width)/(right-left);
+    y_winPix = -(*y)*((double)window[win_index].win_height)/(top-bottom);
+    *x = x_winPix;
+    *y = y_winPix;
+    return 0;
+}
+
+int ImageViewer::toPixelsVec(int winID, double *x, double *y)
+{
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+
+    return toPixelsVec(winID,
+               window[win_index].d_left, window[win_index].d_right,
+               window[win_index].d_bottom, window[win_index].d_top, x, y);
+}
+
 /** Clamp coords to window size.
-    @return true if clamping performed, false otherwise. 
+    @returns maximum absolute change made to either of the clipped coordinates
  */ 
 int ImageViewer::clampToWindow(int winID, double *x, double *y) {
-    int clamped = 0;
+    int xChange = 0, yChange = 0, maxChange = 0;
     if (!validWinID(winID)) return -1;
     int win_index = get_window_index_from_winID(winID);
 
     if (*x > window[win_index].win_width) {
+        xChange = *x - window[win_index].win_width;
 	*x = window[win_index].win_width;
-        clamped = 1;
     } else if (*x < 0) {
+        xChange = -*x;
 	*x = 0;
-        clamped = 1;
     }
     if (*y > window[win_index].win_height) {
+        yChange = *y - window[win_index].win_height;
 	*y = window[win_index].win_height;
-        clamped = 1;
     } else if (*y < 0) {
+        yChange = -*y;
 	*y = 0;
-        clamped = 1;
     }
-    return clamped;
+    if (xChange > yChange) {
+      maxChange = xChange;
+    } else {
+      maxChange = yChange;
+    }
+    return maxChange;
 }
 
 /** Set a colormap to use to display pixels. Pass in NULL to disable. 

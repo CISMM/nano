@@ -125,6 +125,8 @@ class ImageWindow {
     float rmap[CMAP_SIZE_GL];
     float gmap[CMAP_SIZE_GL];
     float bmap[CMAP_SIZE_GL];
+    // these are the parameters last passed to drawImage
+    double d_left, d_right, d_bottom, d_top;
 };
 
 /// This class is used internally by ImageViewer to represent the state
@@ -197,6 +199,9 @@ class ImageViewer {
     /// utility function that draws the specified part of an image into a window
     /// (left, right, bottom, top) specifies what rectangle in world 
     /// coordinates should be displayed in the window
+    /// left, right, bottom, and top refer to the sides of the window as they
+    /// appear on the screen (e.g. bottom refers to the part of the window
+    /// that is closest to the bottom of the screen)
     /// worldToImage specifies
     int drawImage(int winID, nmb_Image *image, 
               double red = 1.0, double green = 1.0, 
@@ -208,9 +213,49 @@ class ImageViewer {
     /// location in the image
     int drawString(int x, int y, char *str);
     /// converts from the range (0..1) to window pixels
-    int toPixels(int winID, double *x, double *y);
+    int toPixelsNoZoom(int winID, double *x, double *y);
     /// converts from window pixels to the range (0..1)
-    int toImage(int winID, double *x, double *y);
+    int toImageNoZoom(int winID, double *x, double *y);
+
+    /// the following conversion routines assume that the window pixel coords
+    /// have the origin in the upper left corner of the window (like the
+    /// mouse coordinate system) whereas the coordinate system for image
+    /// points is described by the (left, right, bottom, top) rectangle
+    /// so inside all of these routines there is a (possibly non-uniform)
+    /// scaling plus translation
+
+    /// converts from normalized image coordinates to window pixels for 
+    /// an image drawn using the more complex version of drawImage
+    int toPixelsPnt(int winID, double left, double right, 
+                            double bottom, double top, 
+                            double *x, double *y);
+    /// same as above but uses whatever zoom was last passed to drawImage
+    int toPixelsPnt(int winID, double *x, double *y);
+
+    /// converts from window pixels to normalized image coordinates for 
+    /// an image drawn using the more complex version of drawImage
+    int toImagePnt(int winID, double left, double right,
+                            double bottom, double top,
+                            double *x, double *y);
+    /// same as above but uses whatever zoom was last passed to drawImage
+    int toImagePnt(int winID, double *x, double *y);
+
+    /// converts from normalized image coordinates to window pixels for
+    /// an image drawn using the more complex version of drawImage
+    int toPixelsVec(int winID, double left, double right,
+                            double bottom, double top,
+                            double *x, double *y);
+    /// same as above but uses whatever zoom was last passed to drawImage
+    int toPixelsVec(int winID, double *x, double *y);
+
+    /// converts from window pixels to normalized image coordinates for
+    /// an image drawn using the more complex version of drawImage
+    int toImageVec(int winID, double left, double right,
+                            double bottom, double top,
+                            double *x, double *y);
+    /// same as above but uses whatever zoom was last passed to drawImage
+    int toImageVec(int winID, double *x, double *y);
+
     /// clamps to the range of image pixel positions
     int clampToWindow(int winID, double *x, double *y);
     /// get the display for a given window
