@@ -3,7 +3,8 @@ USES_LIBS := nmAux nmUGraphics nmSEM nmUI nmGraphics nmGenTex nmMScope \
              nmMP tclLinkVar nmBase ImgFormat \
              vrpn vogl quat sdi
 
-EXCLUDE_SRC = renderer.C server_talk.c test_speech.c
+EXCLUDE_SRC = renderer.C server_talk.c test_speech.c \
+  collaboration.C
 
 ifdef VC
 EXCLUDE_SRC += termio.c x_util.c

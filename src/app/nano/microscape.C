@@ -107,7 +107,7 @@ pid_t getpid();
 #include <Topo.h>
 #include "Timer.h"
 #include "microscopeHandlers.h"
-#include "collaboration.h"
+#include "CollaborationManager.h"
 #include "microscape.h"
 
 /*********** Import Objects **************/
@@ -1318,6 +1318,32 @@ static void handle_x_value_change (vrpn_float64, void *) {
 
 // NANOX
 
+void handle_finegrained_changed (vrpn_int32 value, void *) {
+  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  char command [1000];
+  int retval;
+
+fprintf(stderr, "handle_finegrained_changed\n");
+
+  if (value) {
+    sprintf(command, "pack_finegrained_coupling");
+  } else {
+    sprintf(command, "unpack_finegrained_coupling");
+  }
+
+  retval = Tcl_Eval(tk_control_interp, command);
+  if (retval != TCL_OK) {
+    fprintf(stderr, "Tcl_Eval failed in handle_mutexTaken:  %s.\n",
+            tk_control_interp->result);
+  }
+}
+
+
+Tclvar_int finegrained_coupling ("finegrained_coupling", 0,
+                                 handle_finegrained_changed, NULL);
+
+// NANOX
+
 void handle_mutex_request (vrpn_int32 value, void * userdata) {
   nmm_Microscope_Remote * microscope = (nmm_Microscope_Remote *) userdata;
 
@@ -1341,7 +1367,7 @@ fprintf(stderr, "handle_mutex_release (%d)\n", value);
 }
 
 // We asked for the mutex and got it.
-void handle_mutexRequestGranted (void *, nmb_SharedDevice *) {
+void handle_mutexRequestGranted (void *, nmb_SharedDevice_Remote *) {
   Tcl_Interp * tk_control_interp = get_the_interpreter();
   char command [1000];
   int retval;
@@ -1357,7 +1383,7 @@ fprintf(stderr, "handle_mutexRequestGranted\n");
 }
 
 // We asked for the mutex, but somebody said "no".
-void handle_mutexRequestDenied (void *, nmb_SharedDevice *) {
+void handle_mutexRequestDenied (void *, nmb_SharedDevice_Remote *) {
   Tcl_Interp * tk_control_interp = get_the_interpreter();
   char command [1000];
   int retval;
@@ -1373,7 +1399,7 @@ fprintf(stderr, "handle_mutexRequestDenied\n");
 }
 
 // Somebody else (NOT US?!) got the mutex.
-void handle_mutexTaken (void *, nmb_SharedDevice *) {
+void handle_mutexTaken (void *, nmb_SharedDevice_Remote *) {
   Tcl_Interp * tk_control_interp = get_the_interpreter();
   char command [1000];
   int retval;
@@ -1389,7 +1415,7 @@ fprintf(stderr, "handle_mutexTaken\n");
 }
 
 // Anybody released the mutex.
-void handle_mutexReleased (void *, nmb_SharedDevice *) {
+void handle_mutexReleased (void *, nmb_SharedDevice_Remote *) {
   Tcl_Interp * tk_control_interp = get_the_interpreter();
   char command [1000];
   int retval;
@@ -1562,9 +1588,9 @@ static void handle_collab_machine_name_change
             NULL, handle_collab_mode_change);
   }
 
-  sprintf(hnbuf, "%s:%d", new_value, wellKnownPorts->microscopeMutex);
-  fprintf(stderr, "Adding a peer named %s to the mutex.\n", hnbuf);
-  microscope->addPeer(hnbuf);
+  //sprintf(hnbuf, "%s:%d", new_value, wellKnownPorts->microscopeMutex);
+  //fprintf(stderr, "Adding a peer named %s to the mutex.\n", hnbuf);
+  //microscope->addPeer(hnbuf);
 }
 
 
@@ -5255,6 +5281,82 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
 }
 
+void createForwarders (MicroscapeInitializationState & istate) {
+
+  if (istate.monitorPort != -1) {
+
+    vrpn_StreamForwarder * monitor;
+    char * sname = NULL;
+
+    sname = vrpn_copy_service_name(istate.afm.deviceName);
+
+    fprintf(stderr, "Opening monitor connection on port %d;  "
+                    "service name is %s.\n", istate.monitorPort, sname);
+
+    monitor_forwarder_connection =
+       new vrpn_Synchronized_Connection (istate.monitorPort);
+
+    monitor = new vrpn_StreamForwarder
+                        (microscope_connection, sname,
+                         monitor_forwarder_connection, sname);
+
+    nmm_Microscope::registerMicroscopeInputMessagesForForwarding(monitor);
+
+    fprintf(stderr, "Blocking until monitor interface connects.\n");
+
+    while (!monitor_forwarder_connection->connected())
+      monitor_forwarder_connection->mainloop();
+
+    if (sname) {
+      delete [] sname;
+      sname = NULL;
+    }
+  }
+  if (istate.collabPort != -1) {
+
+    vrpn_StreamForwarder * collaborator;
+    vrpn_StreamForwarder * collaboratorReverse;
+    char * sname = NULL;
+
+    sname = vrpn_copy_service_name(istate.afm.deviceName);
+
+    fprintf(stderr, "Opening collaborator connection on port %d;  "
+                    "service name is %s.\n", istate.collabPort, sname);
+
+    collab_forwarder_connection =
+        new vrpn_Synchronized_Connection (istate.collabPort);
+
+    // Hook up forwarders BOTH WAYS:
+    //   collaborator sends data to a collaborator (just like monitor).
+    //   collaboratorReverse sends commands from the collaborator to
+    //   the microscope controller.
+
+    collaborator = new vrpn_StreamForwarder
+                        (microscope_connection, sname,
+                         collab_forwarder_connection, sname);
+    collaboratorReverse = new vrpn_StreamForwarder
+                        (collab_forwarder_connection, sname,
+                         microscope_connection, sname);
+
+    nmm_Microscope::registerMicroscopeInputMessagesForForwarding
+                        (collaborator);
+    nmm_Microscope::registerMicroscopeOutputMessagesForForwarding
+                        (collaboratorReverse);
+
+    fprintf(stderr, "Blocking until collaborator interface connects.\n");
+
+    while (!collab_forwarder_connection->connected()) {
+      collab_forwarder_connection->mainloop();
+    }
+
+    if (sname) {
+      delete [] sname;
+      sname = NULL;
+    }
+  }
+}
+
+
 void initialize_rtt (void) {
 
   rtt_server_connection = new vrpn_Synchronized_Connection
@@ -5440,11 +5542,7 @@ int main(int argc, char* argv[])
     // Check for no microscope connection - i.e. we are opening Topo
     // or PPM files.
 
-    if (strcmp(istate.afm.deviceName, "null")==0) {
-
-      microscope_connection = NULL;
-
-    } else {
+    if (strcmp(istate.afm.deviceName, "null")) {
 
       // otherwise, open the device specified. 
       fprintf(stderr, "   The connection name is %s\n", istate.afm.deviceName);
@@ -5475,84 +5573,11 @@ int main(int argc, char* argv[])
 	//decoration->rateOfTime = 3;	// use 3 for rate default
 	fprintf(stderr, "   microscape.c:: in Replay mode\n");
       }
+
       // BEFORE we call mainloop on our connection to the microscope,
       // open up a forwarder and spin until it is connected to.
+      createForwarders(istate);
 
-      if (istate.monitorPort != -1) {
-
-        vrpn_StreamForwarder * monitor;
-        char * sname = NULL;
-
-        sname = vrpn_copy_service_name(istate.afm.deviceName);
-
-        fprintf(stderr, "Opening monitor connection on port %d;  "
-                        "service name is %s.\n",
-                istate.monitorPort,
-                sname);
-
-        monitor_forwarder_connection =
-           new vrpn_Synchronized_Connection (istate.monitorPort);
-
-        monitor = new vrpn_StreamForwarder
-                            (microscope_connection, sname,
-                             monitor_forwarder_connection, sname);
-
-        nmm_Microscope::registerMicroscopeInputMessagesForForwarding(monitor);
-
-        fprintf(stderr, "Blocking until monitor interface connects.\n");
-
-        while (!monitor_forwarder_connection->connected())
-          monitor_forwarder_connection->mainloop();
-
-        if (sname) {
-          delete [] sname;
-          sname = NULL;
-        }
-      }
-      if (istate.collabPort != -1) {
-
-        vrpn_StreamForwarder * collaborator;
-        vrpn_StreamForwarder * collaboratorReverse;
-        char * sname = NULL;
-
-        sname = vrpn_copy_service_name(istate.afm.deviceName);
-
-        fprintf(stderr, "Opening collaborator connection on port %d;  "
-                        "service name is %s.\n",
-                istate.collabPort,
-                sname);
-
-        collab_forwarder_connection =
-            new vrpn_Synchronized_Connection (istate.collabPort);
-
-        // Hook up forwarders BOTH WAYS:
-        //   collaborator sends data to a collaborator (just like monitor).
-        //   collaboratorReverse sends commands from the collaborator to
-        //   the microscope controller.
-
-        collaborator = new vrpn_StreamForwarder
-                            (microscope_connection, sname,
-                             collab_forwarder_connection, sname);
-        collaboratorReverse = new vrpn_StreamForwarder
-                            (collab_forwarder_connection, sname,
-                             microscope_connection, sname);
-
-        nmm_Microscope::registerMicroscopeInputMessagesForForwarding
-                            (collaborator);
-        nmm_Microscope::registerMicroscopeOutputMessagesForForwarding
-                            (collaboratorReverse);
-
-        fprintf(stderr, "Blocking until collaborator interface connects.\n");
-
-        while (!collab_forwarder_connection->connected()) {
-          collab_forwarder_connection->mainloop();
-        }
-
-        if (sname) {
-          delete [] sname;
-          sname = NULL;
-        }
-      }
     }
 
     microscope = new nmm_Microscope_Remote (istate.afm, microscope_connection);
@@ -5628,18 +5653,12 @@ int main(int argc, char* argv[])
       fprintf(stderr, "Cannot initialize dataset.\n");
       return -1;
     }
-    if (read_mode == READ_FILE)
+    if (read_mode == READ_FILE) {
       guessAdhesionNames();
+    }
 
     VERBOSE(2, "Guessed adhesion names.");
 
-
-//    decoration = new nmb_Decoration;
-//    if (!decoration) {
-//      fprintf(stderr, "Cannot initialize decorations.\n");
-//      return -1;
-//    }
-//    decoration->rateOfTime = instream_rate;
 
     microscope->InitializeDataset(dataset);
     VERBOSE(1, "Initialized dataset");
