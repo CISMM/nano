@@ -195,6 +195,11 @@ void handle_take_z_step(vrpn_float64, void * _mptr)
 //sends microscope to a point when user presses "G0 To Position" button from Tcl
 void handle_step_go_to_pos(vrpn_int32, void *mptr)
 {
+	//make sure we are in xy_lock. return if not
+	if(!xy_lock) 
+	{
+		return;
+	}
 
   //the microscope coordinates are different than input coordinates.
   double min_x, max_x, min_y, max_y;
@@ -204,20 +209,15 @@ void handle_step_go_to_pos(vrpn_int32, void *mptr)
 		(dataset->heightPlaneName->string());
 
 
-
 	//find the size of the sample being scanned
 	min_x = dataset->inputGrid->minX();
 	min_y = dataset->inputGrid->minY();
 	max_x = dataset->inputGrid->maxX();
 	max_y = dataset->inputGrid->maxY();
 
-	//find correct scale to translate into the BCgrid coord's
-	x_scale = ((double) (plane->numX()-1))/ (max_x - min_x);
-	y_scale = ((double) (plane->numX()-1))/ (max_y - min_y);
-
-	//find coord's in grid, from which we can find position in world
-	x_pos = plane->xInWorld((x_scale * step_x_pos));
-	y_pos = plane->yInWorld((y_scale * step_y_pos));
+	//put into microscope coordinates
+	x_pos = step_x_pos + plane->xInWorld(0);
+	y_pos = step_y_pos + plane->yInWorld(0);
 
 	//bounds check:
 	if (min_x > x_pos || max_x < x_pos || min_y > y_pos || max_y < y_pos) {
