@@ -1,3 +1,17 @@
+2000-10-04  Adam Seeger  <seeger@cs.unc.edu>
+
+        * nmb_Image.C (pixelToWorld) : changed to use width, height instead
+        of width-1, height-1 since the latter just looked wrong or at least
+        it was inconsistent with worldToPixel
+        * nmb_Image.C (setWorldToImageTransform) : new function, this
+        not only sets a transformation matrix stored in the nmb_Image
+        base class but also sets the locations of the corners of the
+        image in the world to be consistent with this transformation
+        * nmb_Image.C (getWorldToImageTransform) : this now returns
+        the same thing as before as long as you don't call
+        setWorldToImageTransform but otherwise it returns the thing
+        you passed to setWorldToImageTransform
+
 2000-10-03  Tom Hudson  <hudson@cs.unc.edu>
 
 	* Point.C (Point_list::clear) : add check for non-NULL before

@@ -1,5 +1,7 @@
 #include "Topo.h" // for TopoFile
 #include "nmb_Image.h"
+#include "nmb_ImageTransform.h"
+
 
 #ifndef _WIN32
 #include <limits.h> // for FLT_MAX
@@ -128,8 +130,8 @@ double nmb_Image::heightWorld() const {
 void nmb_Image::pixelToWorld(const double i, const double j,
                   double &x, double &y) const {
         // just bilinear interpolation:
-        double y_frac = j/((double)height() - 1);
-        double x_frac = i/((double)width() - 1);
+        double y_frac = j/((double)height());
+        double x_frac = i/((double)width());
         double x_min = boundX(nmb_ImageBounds::MIN_X_MIN_Y)*(1.0-y_frac) +
              boundX(nmb_ImageBounds::MIN_X_MAX_Y)*(y_frac);
         double x_max = boundX(nmb_ImageBounds::MAX_X_MIN_Y)*(1.0-y_frac) +
@@ -175,11 +177,17 @@ void nmb_Image::worldToPixel(const double x, const double y,
  returns transformation matrix that takes points in world to points in
  normalized image coordinates with x and y in range 0..1
 
+ The matrix is in column major order so one may use this for the texture matrix
+ in openGL
 */
 
 void nmb_Image::getWorldToImageTransform(double *matrix44)
 {
-    /* What this function is doing:
+  /* What this function is doing:
+      If the worldToImage matrix has been set then we just return that but
+      otherwise we construct an orthographic projection matrix from our 
+      knowledge of the positions of three of the corners in the world.
+
       Start with the system:
         (0,0) = M*(x00, y00, 1)
         (1,0) = M*(x10, y10, 1)
@@ -195,7 +203,14 @@ void nmb_Image::getWorldToImageTransform(double *matrix44)
         Given x00, y00, x10, y10, x01, y01, 
         solve for a,b,c,d,e,f and stuff these into a 4x4 matrix in the 
         order col0row0-3, col1row0-3, col2row0-3, col3row0-3
-    */
+  */
+
+  if (d_worldToImageMatrixSet) {
+    int i; 
+    for (i = 0; i < 16; i++){
+      matrix44[i] = d_worldToImageMatrix[i];
+    }
+  } else {
 
     double a, b, c, d, e, f;
     double x00, y00, x10, y10, x01, y01;
@@ -237,6 +252,49 @@ void nmb_Image::getWorldToImageTransform(double *matrix44)
     matrix44[7] = 0.0;
     matrix44[11] = 0.0;
     matrix44[15] = 1.0;
+  }
+}
+
+void nmb_Image::setWorldToImageTransform(double *matrix44)
+{
+    d_worldToImageMatrixSet = VRPN_TRUE;
+    int i;
+    for (i = 0; i < 16; i++){
+        d_worldToImageMatrix[i] = matrix44[i];
+    }
+
+    // now we need to set the boundary of the image to keep any
+    // boundary state consistent with the worldToImage transformation
+
+    nmb_ImageTransformAffine worldToImage(4,4);
+    worldToImage.setMatrix(matrix44);
+
+    if (worldToImage.hasInverse()) {
+      double imagePnt[4] = {0.0, 0.0, 0.0, 0.0}, worldPnt[4];
+      // (0,0) -> ?
+      worldToImage.invTransform(imagePnt, worldPnt);
+      setBoundX(nmb_ImageBounds::MIN_X_MIN_Y, worldPnt[0]);
+      setBoundY(nmb_ImageBounds::MIN_X_MIN_Y, worldPnt[1]);
+      imagePnt[0] = 1.0;
+      // (1,0) -> ?
+      worldToImage.invTransform(imagePnt, worldPnt);
+      setBoundX(nmb_ImageBounds::MAX_X_MIN_Y, worldPnt[0]);
+      setBoundY(nmb_ImageBounds::MAX_X_MIN_Y, worldPnt[1]);
+      imagePnt[0] = 0.0;
+      imagePnt[1] = 1.0;
+      // (0,1) -> ?
+      worldToImage.invTransform(imagePnt, worldPnt);
+      setBoundX(nmb_ImageBounds::MIN_X_MAX_Y, worldPnt[0]);
+      setBoundY(nmb_ImageBounds::MIN_X_MAX_Y, worldPnt[1]);
+      imagePnt[0] = 1.0;
+      // (1,1) -> ?
+      worldToImage.invTransform(imagePnt, worldPnt);
+      setBoundX(nmb_ImageBounds::MAX_X_MAX_Y, worldPnt[0]);
+      setBoundY(nmb_ImageBounds::MAX_X_MAX_Y, worldPnt[1]);
+    } else {
+      fprintf(stderr, "nmb_Image::setWorldToImageTransform:"
+            " Error: non-invertible transformation\n");
+    }
 }
 
 const int nmb_ImageGrid::num_export_formats = 5;
@@ -836,7 +894,6 @@ float nmb_ImageArray<vrpn_float32>::minAttainableValue() const {return -FLT_MAX;
 template <class PixelType>
 float nmb_ImageArray<PixelType>::maxValue()
 {
-    int i;
     if (!d_maxValueComputed) {
         d_maxValue = (float)data[0];
         for (int i = 1; i < num_x*num_y; i++){

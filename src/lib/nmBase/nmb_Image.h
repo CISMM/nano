@@ -120,6 +120,7 @@ class nmb_Image {
 			double &i, double &j) const;
 
         void getWorldToImageTransform(double *matrix44);
+        void setWorldToImageTransform(double *matrix44);
 
         virtual void setTopoFileInfo(TopoFile &tf) = 0;
         virtual void getTopoFileInfo(TopoFile &tf) = 0;
@@ -146,6 +147,12 @@ class nmb_Image {
   protected:
 	vrpn_bool is_height_field;
         int num_referencing_lists;
+
+        /// has d_worldToImageMatrix been set?
+        vrpn_bool d_worldToImageMatrixSet;
+        /// the transformation matrix returned by getWorldToImageTransform
+        /// if its been set through setWorldToImageTransform
+        double d_worldToImageMatrix[16];
 };
 
 /// container class for BCGrid/BCPlane-based images
