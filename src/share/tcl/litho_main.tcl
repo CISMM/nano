@@ -59,14 +59,23 @@ wm iconbitmap . error
 # Tcl_Linkvar library.
 source [file join ${tcl_script_dir} Tcl_Linkvar_widgets.tcl]
 
+# frames - overall layout of the screen
+frame .menubar -relief raised -bd 4
+
 # for overall appearance of user interface
 frame .main
 
-# frames - overall layout of the screen
-frame .menubar -relief raised -bd 4 
+# controls is for stuff that stay on the screen all the time
+frame .main.controls -relief raised -bd 2
 
 #set up window
-pack .main .menubar -side top -fill x 
+pack .menubar .main -side top -fill x
+
+pack .main.controls -side top -fill x
+
+#initialize frame names
+set controls .main.controls
+
 
 # menu bar
 menu .menu -tearoff 0
@@ -309,11 +318,11 @@ set setupmenu .menu.setup
 menu $setupmenu -tearoff 0
 .menu add cascade -label "Setup" -menu $setupmenu -underline 0 -columnbreak 0
 
-$setupmenu add command -label "Drawing" -underline 0 \
-	-command "show.drawing_parameters"
+#$setupmenu add command -label "Drawing" -underline 0 \
+#	-command "show.drawing_parameters"
 
-$setupmenu add command -label "Display" -underline 0 \
-        -command "show.display_parameters"
+#$setupmenu add command -label "Display" -underline 0 \
+#        -command "show.display_parameters"
 
 $setupmenu add command -label "Alignment" -underline 0 \
         -command "show.alignment_parameters"
@@ -326,8 +335,8 @@ menu $SEM_menu -tearoff 0
 $SEM_menu add command -label "Image Acquisition" -underline 0 \
         -command "show.sem_image_acquisition"
 
-$SEM_menu add command -label "Expose Pattern" -underline 0 \
-        -command "show.sem_beam_expose_control"
+#$SEM_menu add command -label "Expose Pattern" -underline 0 \
+#        -command "show.sem_beam_expose_control"
 
 
 # This command attaches the menu to the main window
@@ -345,47 +354,74 @@ set numProtectedControls 0
 
 
 ######### Drawing Parameters Control Panel ###########################
-set drawing_parameters_win \
-         [create_closing_toplevel drawing_parameters "Drawing Parameters"]
+#set drawing_parameters_win \
+#         [create_closing_toplevel drawing_parameters "Drawing Parameters"]
 
-set line_width_nm 0
-set exposure_uCoulombs_per_square_cm 300
+frame .main.controls.drawing_parameters -bd 3 -relief groove
+pack .main.controls.drawing_parameters -side top -fill x
+set drawing_parameters_win .main.controls.drawing_parameters
+label $drawing_parameters_win.main_label -text "Drawing Parameters"
+pack $drawing_parameters_win.main_label -side top
+
+set line_width_nm 100
+set area_exposure_uCoulombs_per_square_cm 300
+set line_exposure_pCoulombs_per_cm 150
 set drawing_tool 1
 set clear_drawing 0
-
-generic_entry $drawing_parameters_win.line_width line_width_nm \
-    "line width (nm)" real
-pack $drawing_parameters_win.line_width -anchor ne -padx 3 -pady 3
-generic_entry $drawing_parameters_win.exposure \
-    exposure_uCoulombs_per_square_cm "exposure (uCoul/cm^2)" real
-pack $drawing_parameters_win.exposure -anchor ne -padx 3 -pady 3
 
 frame $drawing_parameters_win.tool -bd 3 -relief groove
 label $drawing_parameters_win.tool.tool_label -text "Tool:"
 pack $drawing_parameters_win.tool.tool_label -side top
-radiobutton $drawing_parameters_win.tool.polyline -variable drawing_tool \
-      -value 1 -text "polyline" -justify left
-radiobutton $drawing_parameters_win.tool.polygon -variable drawing_tool \
-      -value 2 -text "polygon" -justify left
+
+frame $drawing_parameters_win.tool.thinpolyline -bd 3 -relief groove
+pack $drawing_parameters_win.tool.thinpolyline -side top
+radiobutton $drawing_parameters_win.tool.thinpolyline.button \
+      -variable drawing_tool \
+      -value 1 -text "one-pass polyline" -justify left
+generic_entry $drawing_parameters_win.tool.thinpolyline.line_exposure \
+    line_exposure_pCoulombs_per_cm "linear exposure (pCoul/cm)" real
+pack $drawing_parameters_win.tool.thinpolyline.line_exposure \
+        -anchor ne -padx 3 -pady 3
+button $drawing_parameters_win.tool.thinpolyline.add_test_grid \
+    -text "Add Test Grid" -command { set add_test_grid 1 }
+pack $drawing_parameters_win.tool.thinpolyline.add_test_grid -side top
+
+frame $drawing_parameters_win.tool.area_tools -bd 3 -relief groove
+pack $drawing_parameters_win.tool.area_tools -side top
+generic_entry $drawing_parameters_win.tool.area_tools.area_exposure \
+    area_exposure_uCoulombs_per_square_cm "area exposure (uCoul/cm^2)" real
+pack $drawing_parameters_win.tool.area_tools.area_exposure -anchor ne \
+    -padx 3 -pady 3
+
+frame $drawing_parameters_win.tool.area_tools.thickpolyline -bd 3 -relief groove
+pack $drawing_parameters_win.tool.area_tools.thickpolyline -side right
+radiobutton $drawing_parameters_win.tool.area_tools.thickpolyline.button \
+      -variable drawing_tool \
+      -value 2 -text "thick polyline" -justify left
+generic_entry $drawing_parameters_win.tool.area_tools.thickpolyline.line_width \
+    line_width_nm "line width (nm)" real
+pack $drawing_parameters_win.tool.area_tools.thickpolyline.line_width \
+    -anchor ne -padx 3 -pady 3
+
+radiobutton $drawing_parameters_win.tool.area_tools.polygon \
+      -variable drawing_tool -value 3 -text "polygon" -justify left
 radiobutton $drawing_parameters_win.tool.dump_point -variable drawing_tool \
-      -value 3 -text "dump point" -justify left
-radiobutton $drawing_parameters_win.tool.select -variable drawing_tool \
-      -value 4 -text "select" -justify left
+      -value 4 -text "dump point" -justify left
+#radiobutton $drawing_parameters_win.tool.select -variable drawing_tool \
+#      -value 5 -text "select" -justify left
 
 pack $drawing_parameters_win.tool -side left
 
-pack $drawing_parameters_win.tool.polyline \
-     $drawing_parameters_win.tool.polygon \
-     $drawing_parameters_win.tool.dump_point \
-     $drawing_parameters_win.tool.select -side top
+pack $drawing_parameters_win.tool.thinpolyline.button \
+     $drawing_parameters_win.tool.area_tools.thickpolyline.button \
+     $drawing_parameters_win.tool.area_tools.polygon \
+     $drawing_parameters_win.tool.dump_point -side top
 
-button $drawing_parameters_win.clear_drawing -text "Clear" -command \
+#     $drawing_parameters_win.tool.select -side top
+
+button $drawing_parameters_win.clear_drawing -text "Delete Last" -command \
     { set clear_drawing 1 }
-pack $drawing_parameters_win.clear_drawing -side top
-
-button $drawing_parameters_win.add_test_grid -text "Add Test Grid" -command \
-    { set add_test_grid 1 }
-pack $drawing_parameters_win.add_test_grid -side top
+pack $drawing_parameters_win.clear_drawing -side right
 
 #generic_optionmenu $drawing_parameters_win.coordinate_system \
 #     drawing_coordinate_system "Coordinate System" imageNames
@@ -408,11 +444,17 @@ set hide_other_images 0
 set enable_image_display 0
 set current_image "none"
 
-set display_parameters_win \
-        [create_closing_toplevel display_parameters "Display Parameters"]
+#set display_parameters_win \
+#        [create_closing_toplevel display_parameters "Display Parameters"]
+frame .main.controls.display_parameters -bd 3 -relief groove
+pack .main.controls.display_parameters -side top -fill x
+set display_parameters_win .main.controls.display_parameters
+label $display_parameters_win.main_label -text "Image Display Parameters"
+pack $display_parameters_win.main_label -side top
+
 generic_optionmenu $display_parameters_win.current_image current_image \
         "Image" imageNames
-pack $display_parameters_win.current_image -anchor nw -padx 3 -pady 3
+pack $display_parameters_win.current_image -anchor nw -padx 3 -pady 3 -side left
 
 set image_color [format #%02x%02x%02x $image_r $image_g $image_b]
 
@@ -450,7 +492,6 @@ pack $display_parameters_win.image_color.set_color -side left -fill x
 pack $display_parameters_win.image_color.colorsample -side left -fill x \
      -expand yes
 
-
 generic_entry $display_parameters_win.image_opacity image_opacity \
      "Image opacity" real
 
@@ -459,7 +500,7 @@ pack $display_parameters_win.image_opacity -side top -fill x -padx 3 -pady 3
 checkbutton $display_parameters_win.hide_others_check \
    -text "Hide Others" -variable hide_other_images
    
-pack $display_parameters_win.hide_others_check -anchor nw -padx 3 -pady 3
+pack $display_parameters_win.hide_others_check -anchor nw -padx 3 -pady 3 -side right
 
 checkbutton $display_parameters_win.enable_display_check \
    -text "Enabled" -variable enable_image_display
@@ -539,6 +580,7 @@ set sem_external_scan_control_enable 0
 set sem_win  \
    [create_closing_toplevel_with_notify sem_image_acquisition sem_window_open \
               "SEM Image Acquisition"]
+
 
 # controls whether we have any scan control at all
 checkbutton $sem_win.external_scan_control \
@@ -659,17 +701,25 @@ incr numProtectedControls
 
 ######### Beam Control Panel ##############################
 global sem_exposure_magnification sem_beam_width_nm sem_beam_current_picoAmps \
-       sem_beam_expose_now
+       sem_beam_expose_now sem_dot_spacing_nm sem_line_spacing_nm \
+       sem_beam_expose_enabled sem_do_timing_test
 
 set sem_exposure_magnification 10000
-set sem_beam_width_nm 200
-set sem_beam_current_picoAmps 1
+set sem_dot_spacing_nm 0
+set sem_line_spacing_nm 0
+set sem_beam_current_picoAmps 0
 set sem_beam_expose_enabled 0
 set sem_beam_expose_now 0
 set sem_do_timing_test 0
 
-set sem_beam_win \
-   [create_closing_toplevel sem_beam_expose_control "SEM Control"]
+#set sem_beam_win \
+#   [create_closing_toplevel sem_beam_expose_control "SEM Control"]
+
+frame .main.controls.sem_beam_expose_control -bd 3 -relief groove
+pack .main.controls.sem_beam_expose_control -side top -fill x
+set sem_beam_win .main.controls.sem_beam_expose_control
+label $sem_beam_win.main_label -text "SEM Beam Control"
+pack $sem_beam_win.main_label -side top
 
 frame $sem_beam_win.calibration -relief raised -bd 3
 
@@ -684,28 +734,58 @@ generic_entry $sem_beam_win.calibration.magnification \
     "Magnification (for 12.8 cm wide display)" integer
 pack $sem_beam_win.calibration.magnification -anchor w -padx 3 -pady 3
 
-generic_entry $sem_beam_win.calibration.beam_width \
-    sem_beam_width_nm \
-    "Beam Width (nm)" real
-pack $sem_beam_win.calibration.beam_width -anchor w -padx 3 -pady 3
+frame $sem_beam_win.calibration.spacing
+pack $sem_beam_win.calibration.spacing -anchor w
+generic_entry $sem_beam_win.calibration.spacing.dot_spacing \
+    sem_dot_spacing_nm \
+    "Dot Spacing (nm)" real
+pack $sem_beam_win.calibration.spacing.dot_spacing -anchor w -padx 3 -pady 3 -side left
+
+generic_entry $sem_beam_win.calibration.spacing.line_spacing \
+    sem_line_spacing_nm \
+    "Line Spacing (nm)" real
+pack $sem_beam_win.calibration.spacing.line_spacing -anchor w -padx 3 -pady 3 -side right
 
 generic_entry $sem_beam_win.calibration.beam_current \
     sem_beam_current_picoAmps \
     "Beam Current (picoAmps)" real
 pack $sem_beam_win.calibration.beam_current -anchor w -padx 3 -pady 3
 
+set sem_min_lin_exposure "0"
+set sem_min_area_exposure "0"
+
+frame $sem_beam_win.calibration.min_lin_exposure -relief solid -borderwidth 2
+pack $sem_beam_win.calibration.min_lin_exposure -padx 3 -pady 3 -side right
+label $sem_beam_win.calibration.min_lin_exposure.label -text "min. lin. exp.:"
+label $sem_beam_win.calibration.min_lin_exposure.value \
+     -textvariable sem_min_lin_exposure
+pack $sem_beam_win.calibration.min_lin_exposure.label -side left
+pack $sem_beam_win.calibration.min_lin_exposure.value -side left
+
+frame $sem_beam_win.calibration.min_area_exposure -relief solid -borderwidth 2
+pack $sem_beam_win.calibration.min_area_exposure -padx 3 -pady 3
+label $sem_beam_win.calibration.min_area_exposure.label -text "min. area exp.:"
+label $sem_beam_win.calibration.min_area_exposure.value \
+     -textvariable sem_min_area_exposure
+pack $sem_beam_win.calibration.min_area_exposure.label -side left
+pack $sem_beam_win.calibration.min_area_exposure.value -side left
+
 button $sem_beam_win.do_timing_test -text "Timing Test" \
     -command "set sem_do_timing_test 1" 
-pack $sem_beam_win.do_timing_test -padx 3 -pady 3
+pack $sem_beam_win.do_timing_test -padx 3 -pady 3 -side left
 
 set protectedControls($numProtectedControls) $sem_beam_win.do_timing_test
 incr numProtectedControls
 
 button $sem_beam_win.expose_now -text "EXPOSE" \
     -command { set sem_beam_expose_now 1 }
-pack $sem_beam_win.expose_now -padx 3 -pady 3
+pack $sem_beam_win.expose_now -padx 3 -pady 3 -side right
 
 $sem_beam_win.expose_now configure -state disabled
+
+checkbutton $sem_beam_win.enable_point_reporting \
+   -text "Display Beam Dwell Points" -variable sem_point_report_enable
+pack $sem_beam_win.enable_point_reporting -padx 3 -pady 3
 
 set sem_exposure_status "N/A"
 
@@ -740,7 +820,6 @@ proc handle_sem_controls_enable { nm el op } {
   global sem_beam_win
   global numProtectedControls
   global protectedControls
-  puts "sem_controls_enabled"
   if { $sem_controls_enabled == 0 } {
     # do this one specially
     $sem_beam_win.expose_now configure -state disabled
@@ -761,40 +840,27 @@ proc handle_sem_controls_enable { nm el op } {
 
 trace variable sem_controls_enabled w handle_sem_controls_enable
 
-##----------------
+#----------------
 # Setup window positions and geometries to be convenient and pleasant!
 # We do this at the end so we can find out the requested size of
 # all the widgets we created.
+
 after idle {
-    # Find out about the main window geometry.
-    update idletasks
-    # the root window, ".", seems to need special handling.
-    #set width [winfo reqwidth .] Doesn't include borders.
-    #set height [winfo reqheight .] Doesn't include the menu bar and title bar!
+  update idletasks
+  # Find out about the main window geometry.
+  scan [wm geometry .] %dx%d+%d+%d width height main_xpos main_ypos
+  puts "$width, $height, $main_xpos, $main_ypos"
+  # wm rootx seems to tell us how big the border of the window is.
+  set winborder [expr [winfo rootx .] - $main_xpos]
+  set main_width [expr $width + 2* $winborder ]
+  set main_height [expr $height + ([winfo rooty .] - $main_ypos) + $winborder ]
 
-    scan [wm geometry .] %dx%d+%d+%d width height main_xpos main_ypos
-    # wm rootx seems to tell us how big the border of the window is.
-    set winborder [expr [winfo rootx .] - $main_xpos]
-    set main_width [expr $width + 2* $winborder ]
-    set main_height [expr $height + ([winfo rooty .] - $main_ypos) + \
-           $winborder ]
-#    puts " mainwin $main_width $main_height $width $height $main_xpos $main_ypos [wm geometry .]"
-
-    # The display parameters window
-    # Make the window appear on the left edge below the main window
-
-    # Make the left strip all the same width - same as the image windows.
-    set left_strip_width  [winfo reqwidth .display_parameters]
-
-    # Keep track of where the next window should appear
-    set next_left_pos [expr $main_ypos +$main_height]
-
-    wm geometry .display_parameters +${main_xpos}+$next_left_pos
-
-    wm geometry . 640x2
-
+  # Keep track of where the next window should appear
+  set next_left_pos [expr $main_xpos +$main_width]
 }
 
 # puts the focus on the main window, instead of any other windows
 # which have been created.
-wm deiconify .
+after idle {
+  wm deiconify .
+}

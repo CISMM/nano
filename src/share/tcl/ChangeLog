@@ -1,3 +1,9 @@
+2001-09-01  Adam Seeger  <seeger@cs.unc.edu>
+
+	* litho_main.tcl: added a bunch of new controls and changed layout
+	to put all but alignment and sem image collection controls in a 
+	single window
+
 2001-08-21  Aron Helser  <helser@cs.unc.edu>
 
 	* stripchart.tcl: Add controls for Z coordinate for force-curve
