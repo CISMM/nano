@@ -26,7 +26,7 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     nmm_Microscope_SEM_Remote(const char *name, vrpn_Connection *c = NULL);
     ~nmm_Microscope_SEM_Remote(void);
 
-    virtual vrpn_int32 mainloop(void);
+    virtual vrpn_int32 mainloop(const struct timeval * timeout = NULL);
 
     // message-sending functions
 
@@ -57,6 +57,25 @@ class nmm_Microscope_SEM_Remote : public nmb_Device_Client,
     // enable/disable our control of the beam location - should disable
     // when not in use so other scan hardware can be used if needed
     int setExternalScanControlEnable(vrpn_int32 enable);
+
+    // clear the exposure pattern
+    int clearExposePattern();
+    // add a polygon shape to the pattern
+    int addPolygon(vrpn_float32 exposure_uCoul_per_cm2, vrpn_int32 numPoints,
+                   vrpn_float32 *x_nm, vrpn_float32 *y_nm);
+    // add a polyline shape to the pattern
+    int addPolyline(vrpn_float32 exposure_uCoul_per_cm2,
+                    vrpn_float32 lineWidth_nm, vrpn_int32 numPoints,
+                    vrpn_float32 *x_nm, vrpn_float32 *y_nm);
+    // set a point to which the beam can go when the program must pause
+    // exposure (as when it needs to do some calculations)
+    int addDumpPoint(vrpn_float32 x_nm, vrpn_float32 y_nm);
+    // draw the pattern with the electron beam
+    int exposePattern();
+    // set the beam current
+    int setBeamCurrent(vrpn_float32 current_picoAmps);
+    // set the beam width
+    int setBeamWidth(vrpn_float32 width_nm);
 
     // message callback registration
     int registerChangeHandler(void *userdata,

@@ -21,7 +21,7 @@ class nmm_Microscope_SEM {
 
     virtual ~nmm_Microscope_SEM (void);
     
-    virtual vrpn_int32 mainloop(void) = 0;
+    virtual vrpn_int32 mainloop(const struct timeval *timeout) = 0;
 
   typedef enum {SET_RESOLUTION,
                 SET_PIXEL_INTEGRATION_TIME,
@@ -39,7 +39,14 @@ class nmm_Microscope_SEM {
                 RETRACE_DELAYS,
                 DAC_PARAMS,
                 EXTERNAL_SCAN_CONTROL_ENABLE,
-                REPORT_MAGNIFICATION} msg_t;
+                REPORT_MAGNIFICATION,
+                CLEAR_EXPOSE_PATTERN,
+                ADD_POLYLINE,
+                ADD_POLYGON,
+                ADD_DUMP_POINT,
+                EXPOSE_PATTERN,
+                BEAM_CURRENT,
+                BEAM_WIDTH} msg_t;
   protected:
 //    vrpn_Connection * d_connection;
 //    vrpn_File_Controller * d_fileController;
@@ -57,6 +64,13 @@ class nmm_Microscope_SEM {
     vrpn_int32 d_SetRetraceDelays_type;
     vrpn_int32 d_SetDACParams_type;
     vrpn_int32 d_SetExternalScanControlEnable_type;
+    vrpn_int32 d_ClearExposePattern_type;
+    vrpn_int32 d_AddPolygon_type;
+    vrpn_int32 d_AddPolyline_type;
+    vrpn_int32 d_AddDumpPoint_type;
+    vrpn_int32 d_ExposePattern_type;
+    vrpn_int32 d_SetBeamCurrent_type;
+    vrpn_int32 d_SetBeamWidth_type;
 
     // (server-->client) messages
 
@@ -73,6 +87,8 @@ class nmm_Microscope_SEM {
     vrpn_int32 d_ReportDACParams_type;
     vrpn_int32 d_ReportExternalScanControlEnable_type;
     vrpn_int32 d_ReportMagnification_type;
+    vrpn_int32 d_ReportBeamCurrent_type;
+    vrpn_int32 d_ReportBeamWidth_type;
 
     // message encode, decode functions
     // (client-->server)
@@ -128,6 +144,51 @@ class nmm_Microscope_SEM {
                                              vrpn_int32 enable);
     static vrpn_int32 decode_SetExternalScanControlEnable (const char **buf,
                                             vrpn_int32 *enable);
+
+    // messages for pattern exposure
+
+    static char * encode_AddPolygon (vrpn_int32 *len,
+         vrpn_float32 exposure_uCoul_per_cm2, 
+         vrpn_int32 numPoints,
+         vrpn_float32 *x_nm, vrpn_float32 *y_nm);
+
+    static vrpn_int32 decode_AddPolygonHeader (const char **buf,
+         vrpn_float32 *exposure_uCoul_per_cm2,
+         vrpn_int32 *numPoints);
+    static vrpn_int32 decode_AddPolygonData (const char **buf,
+         vrpn_int32 numPoints, 
+         vrpn_float32 *x_nm, vrpn_float32 *y_nm);
+     
+    static char * encode_AddPolyline (vrpn_int32 *len,
+         vrpn_float32 exposure_uCoul_per_cm2,
+         vrpn_float32 lineWidth_nm,
+         vrpn_int32 numPoints,
+         vrpn_float32 *x_nm, vrpn_float32 *y_nm);
+
+    static vrpn_int32 decode_AddPolylineHeader (const char **buf,
+         vrpn_float32 *exposure_uCoul_per_cm2,
+         vrpn_float32 *lineWidth_nm,
+         vrpn_int32 *numPoints);
+    static vrpn_int32 decode_AddPolylineData (const char **buf,
+         vrpn_int32 numPoints,
+         vrpn_float32 *x_nm, vrpn_float32 *y_nm);
+
+    static char * encode_AddDumpPoint (vrpn_int32 *len,
+         vrpn_float32 x_nm, vrpn_float32 y_nm);
+
+    static vrpn_int32 decode_AddDumpPoint (const char **buf,
+         vrpn_float32 *x_nm, vrpn_float32 *y_nm);
+
+
+    static char * encode_SetBeamCurrent (vrpn_int32 *len,
+                                            vrpn_float32 current_picoAmps);
+    static vrpn_int32 decode_SetBeamCurrent (const char **buf,
+                                            vrpn_float32 *current_picoAmps);
+
+    static char * encode_SetBeamWidth (vrpn_int32 *len,
+                                            vrpn_float32 beamWidth_nm);
+    static vrpn_int32 decode_SetBeamWidth (const char **buf,
+                                            vrpn_float32 *beamWidth_nm);
 
     // (server-->client)
     static char * encode_ReportResolution (vrpn_int32 *len, 

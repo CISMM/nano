@@ -38,6 +38,22 @@ nmm_Microscope_SEM::nmm_Microscope_SEM (
     d_SetExternalScanControlEnable_type = c->register_message_type
                 ("nmmMicroscopeSEM SetExternalScanControlEnable");
 
+    d_ClearExposePattern_type = c->register_message_type
+                ("nmmMicroscopeSEM ClearExposePattern");
+    d_AddPolygon_type = c->register_message_type
+                ("nmmMicroscopeSEM AddPolygon");
+    d_AddPolyline_type = c->register_message_type
+                ("nmmMicroscopeSEM AddPolyline");
+    d_AddDumpPoint_type = c->register_message_type
+                ("nmmMicroscopeSEM AddDumpPoint");
+    d_ExposePattern_type = c->register_message_type
+                ("nmmMicroscopeSEM ExposePattern");
+
+    d_SetBeamCurrent_type = c->register_message_type
+                ("nmmMicroscopeSEM SetBeamCurrent");
+    d_SetBeamWidth_type = c->register_message_type
+                ("nmmMicroscopeSEM SetBeamWidth");
+
     d_ReportResolution_type = c->register_message_type
 		("nmmMicroscopeSEM ReportResolution");
     d_ReportPixelIntegrationTime_type = c->register_message_type
@@ -460,6 +476,238 @@ vrpn_int32 nmm_Microscope_SEM::decode_SetExternalScanControlEnable (
                                             vrpn_int32 *enable)
 {
   if ((vrpn_unbuffer(buf, enable)) == -1) {
+    return -1;
+  }
+
+  return 0;
+}
+
+
+char * nmm_Microscope_SEM::encode_AddPolygon (vrpn_int32 *len,
+         vrpn_float32 exposure_uCoul_per_cm2,
+         vrpn_int32 numPoints,
+         vrpn_float32 *x_nm, vrpn_float32 *y_nm)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = (2*numPoints + 1)*sizeof(vrpn_float32)+sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope_SEM::encode_AddPolygon:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, exposure_uCoul_per_cm2);
+    vrpn_buffer(&mptr, &mlen, numPoints);
+    int i;
+    for (i = 0; i < numPoints; i++) {
+      vrpn_buffer(&mptr, &mlen, x_nm[i]);
+      vrpn_buffer(&mptr, &mlen, y_nm[i]);
+    }
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_AddPolygonHeader (
+                                            const char **buf,
+         vrpn_float32 *exposure_uCoul_per_cm2,
+         vrpn_int32 *numPoints)
+{
+  if ((vrpn_unbuffer(buf, exposure_uCoul_per_cm2) == -1) ||
+      (vrpn_unbuffer(buf, numPoints) == -1)) {
+    return -1;
+  }
+
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_AddPolygonData (
+                                            const char **buf,
+         vrpn_int32 numPoints,
+         vrpn_float32 *x_nm, vrpn_float32 *y_nm)
+{
+  int i;
+  for (i = 0; i < numPoints; i++) {
+    if ((vrpn_unbuffer(buf, &(x_nm[i])) == -1) ||
+        (vrpn_unbuffer(buf, &(y_nm[i])) == -1)) {
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+char * nmm_Microscope_SEM::encode_AddPolyline (vrpn_int32 *len,
+         vrpn_float32 exposure_uCoul_per_cm2,
+         vrpn_float32 lineWidth_nm, 
+         vrpn_int32 numPoints,
+         vrpn_float32 *x_nm, vrpn_float32 *y_nm)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = (2*numPoints + 2)*sizeof(vrpn_float32)+sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope_SEM::encode_AddPolyline:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, exposure_uCoul_per_cm2);
+    vrpn_buffer(&mptr, &mlen, lineWidth_nm);
+    vrpn_buffer(&mptr, &mlen, numPoints);
+    int i;
+    for (i = 0; i < numPoints; i++) {
+      vrpn_buffer(&mptr, &mlen, x_nm[i]);
+      vrpn_buffer(&mptr, &mlen, y_nm[i]);
+    }
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_AddPolylineHeader (
+                                            const char **buf,
+         vrpn_float32 *exposure_uCoul_per_cm2,
+         vrpn_float32 *lineWidth_nm,
+         vrpn_int32 *numPoints)
+{
+  if ((vrpn_unbuffer(buf, exposure_uCoul_per_cm2) == -1) ||
+      (vrpn_unbuffer(buf, lineWidth_nm) == -1) ||
+      (vrpn_unbuffer(buf, numPoints) == -1)) {
+    return -1;
+  }
+
+  return 0;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_AddPolylineData (
+                                            const char **buf,
+         vrpn_int32 numPoints,
+         vrpn_float32 *x_nm, vrpn_float32 *y_nm)
+{
+  int i;
+  for (i = 0; i < numPoints; i++) {
+    if ((vrpn_unbuffer(buf, &(x_nm[i])) == -1) ||
+        (vrpn_unbuffer(buf, &(y_nm[i])) == -1)) {
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+char * nmm_Microscope_SEM::encode_AddDumpPoint (vrpn_int32 *len,
+                           vrpn_float32 x_nm, vrpn_float32 y_nm)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 2 * sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope_SEM::encode_AddDumpPoint:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, x_nm);
+    vrpn_buffer(&mptr, &mlen, y_nm);
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_AddDumpPoint (
+                                            const char **buf,
+        vrpn_float32 *x_nm, vrpn_float32 *y_nm)
+{
+  if ((vrpn_unbuffer(buf, x_nm) == -1) ||
+      (vrpn_unbuffer(buf, y_nm) == -1)) {
+    return -1;
+  }
+
+  return 0;
+}
+
+char * nmm_Microscope_SEM::encode_SetBeamCurrent (vrpn_int32 *len,
+                                            vrpn_float32 current_picoAmps)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope_SEM::encode_SetBeamCurrent:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, current_picoAmps);
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_SetBeamCurrent (const char **buf,
+                                            vrpn_float32 *current_picoAmps)
+{
+  if ((vrpn_unbuffer(buf, current_picoAmps) == -1)) {
+    return -1;
+  }
+
+  return 0;
+}
+
+char * nmm_Microscope_SEM::encode_SetBeamWidth (vrpn_int32 *len,
+                                            vrpn_float32 beamWidth_nm)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = sizeof(vrpn_float32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmm_Microscope_SEM::encode_SetBeamWidth:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, beamWidth_nm);
+  }
+
+  return msgbuf;
+}
+
+vrpn_int32 nmm_Microscope_SEM::decode_SetBeamWidth (const char **buf,
+                                            vrpn_float32 *beamWidth_nm)
+{
+  if ((vrpn_unbuffer(buf, beamWidth_nm) == -1)) {
     return -1;
   }
 

@@ -118,10 +118,10 @@ nmm_Microscope_SEM_Remote::~nmm_Microscope_SEM_Remote()
   }
 }
 
-vrpn_int32 nmm_Microscope_SEM_Remote::mainloop(void)
+vrpn_int32 nmm_Microscope_SEM_Remote::mainloop(const struct timeval * timeout)
 {
   if (d_connection){
-    if ((d_connection->mainloop()) == -1)
+    if ((d_connection->mainloop(timeout)) == -1)
        return -1;
   }
   return 0;
@@ -260,6 +260,96 @@ int nmm_Microscope_SEM_Remote::setExternalScanControlEnable(vrpn_int32 enable)
   }
 
   return dispatchMessage(len, msgbuf, d_SetExternalScanControlEnable_type);
+}
+
+int nmm_Microscope_SEM_Remote::clearExposePattern()
+{
+  char *msgbuf = NULL;
+  vrpn_int32 len = 0;
+
+  return dispatchMessage(len, msgbuf, d_ClearExposePattern_type);
+}
+
+int nmm_Microscope_SEM_Remote::addPolygon(
+               vrpn_float32 exposure_uCoul_per_cm2, vrpn_int32 numPoints,
+               vrpn_float32 *x_nm, vrpn_float32 *y_nm)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_AddPolygon(&len, exposure_uCoul_per_cm2, numPoints,
+                             x_nm, y_nm);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_AddPolygon_type);
+}
+
+int nmm_Microscope_SEM_Remote::addPolyline(
+                    vrpn_float32 exposure_uCoul_per_cm2,
+                    vrpn_float32 lineWidth_nm, vrpn_int32 numPoints,
+                    vrpn_float32 *x_nm, vrpn_float32 *y_nm)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_AddPolyline(&len, exposure_uCoul_per_cm2, lineWidth_nm,
+                             numPoints,
+                             x_nm, y_nm);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_AddPolyline_type);
+}
+
+int nmm_Microscope_SEM_Remote::addDumpPoint(
+                    vrpn_float32 x_nm, vrpn_float32 y_nm)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_AddDumpPoint(&len, x_nm, y_nm);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_AddDumpPoint_type);
+}
+
+int nmm_Microscope_SEM_Remote::exposePattern()
+{
+  char *msgbuf = NULL;
+  vrpn_int32 len = 0;
+
+  return dispatchMessage(len, msgbuf, d_ExposePattern_type);
+}
+
+int nmm_Microscope_SEM_Remote::setBeamCurrent(vrpn_float32 current_picoAmps)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetBeamCurrent(&len, current_picoAmps);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetBeamCurrent_type);
+}
+
+int nmm_Microscope_SEM_Remote::setBeamWidth(vrpn_float32 beamWidth_nm)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_SetBeamWidth(&len, beamWidth_nm);
+  if (!msgbuf){
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_SetBeamWidth_type);
 }
 
 int nmm_Microscope_SEM_Remote::registerChangeHandler(void *userdata,

@@ -1,3 +1,25 @@
+2001-05-14  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmm_Microscope_SEM.Ch : added encode and decode functions related
+		to exposing a pattern with the electron beam; the new messages
+		are: ClearExposePattern, AddPolygon, AddDumpPoint,
+		ExposePattern, SetBeamCurrent, SetBeamWidth
+	* nmm_Microscope_SEM_Remote.Ch (clearExposePattern): new function
+	(addPolygon) : new function to send a polygon
+	(addPolyline) : new function to send a polyline
+	(addDumpPoint) : new function to send a rest point
+	(clearExposePattern) : new function to clear the pattern
+	(exposePattern) : new function to draw the pattern as defined
+	(setBeamCurrent) : new function - even if we don't have control over
+		this value, in order for the exposure to be calculated 
+		correctly, the client needs to tell the server what the 
+		picoAmmeter has measured
+	(setBeamWidth) : new function - a similar situation to that for 
+		setBeamCurrent - this is not so much controlling the value as
+		informing the server about what its operating conditions are
+	* nmm_EDAX.h : changed defaults for horizontal and vertical scan
+	retrace delays to 0 instead of 750 usec
+
 2001-04-18  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmui_SEM.C : added calls in handle_device_change and 
