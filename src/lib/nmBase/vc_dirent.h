@@ -76,7 +76,7 @@ typedef struct
 	char			dd_name[1];
 } DIR;
 
-#ifdef WIN32
+#ifdef _WIN32
   #define opendir vc_opendir
   #define readdir vc_readdir
 #endif

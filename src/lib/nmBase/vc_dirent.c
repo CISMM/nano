@@ -313,7 +313,7 @@ seekdir (DIR* dirp, long lPos)
 		/* Rewind and read forward to the appropriate index. */
 		rewinddir (dirp);
 
-		while ((dirp->dd_stat < lPos) && vc_readdir(dirp))
+		while ((dirp->dd_stat < lPos) && readdir(dirp))
 			;
 	}
 }
