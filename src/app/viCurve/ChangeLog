@@ -1,3 +1,7 @@
+2002-03-01  David Marshburn  <marshbur@cs.unc.edu>
+
+	* vrpn_GPIBDeviceServer.C (rcv_Device): set up device with no timeout
+
 2002-02-05  David Marshburn  <marshbur@cs.unc.edu>
 
 	* GPIBKeithley2400.C:  Added TclLinkVars and callbacks for
