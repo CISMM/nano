@@ -1,5 +1,11 @@
 2001-04-17  Adam Seeger  <seeger@cs.unc.edu>
 
+        * microscape.c: changed usage of vrpn_get_connection_by_name so it
+        is by default compatible with vrpn 6 and if VRPN_5 is #defined then
+        it should be compatible with vrpn 5 
+
+2001-04-17  Adam Seeger  <seeger@cs.unc.edu>
+
 	* microscape.c (shutdown_connections) : added delete of sem_connection
         made logFile manipulations (reset, set time...) mostly uniform among
         afm, ohmmeter, vicurve, and sem
