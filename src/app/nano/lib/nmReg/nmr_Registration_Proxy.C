@@ -70,12 +70,12 @@ vrpn_int32 nmr_Registration_Proxy::setTransformationParameters(
   return d_remote_impl->setTransformationParameters(parameters);
 }
 
-vrpn_int32 nmr_Registration_Proxy::sendFiducial(vrpn_int32 replace,
+vrpn_int32 nmr_Registration_Proxy::setFiducial(vrpn_int32 replace,
                 vrpn_int32 num,
                 vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
                 vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
 {
-  return d_remote_impl->sendFiducial(replace, num,
+  return d_remote_impl->setFiducial(replace, num,
                         x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
 }
 
@@ -123,9 +123,9 @@ vrpn_int32 nmr_Registration_Proxy::enableAutoUpdate(vrpn_bool enable)
   return 0;
 }
 
-vrpn_int32 nmr_Registration_Proxy::setGUIEnable(vrpn_bool enable)
+vrpn_int32 nmr_Registration_Proxy::setGUIEnable(vrpn_bool enable, vrpn_int32 window)
 {
-    d_remote_impl->setGUIEnable(enable);
+    d_remote_impl->setGUIEnable(enable, window);
 /*
     if (d_local){
         d_local_impl->setGUIEnable(enable);
@@ -136,49 +136,41 @@ vrpn_int32 nmr_Registration_Proxy::setGUIEnable(vrpn_bool enable)
     return 0;
 }
 
+vrpn_int32 nmr_Registration_Proxy::setEditEnable(
+						vrpn_bool changeNumber, vrpn_bool changePosition)
+{
+	d_remote_impl->setEditEnable(changeNumber, changePosition);
+	return 0;
+}
+
+
 vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
           nmb_Image *im, vrpn_bool flipX, vrpn_bool flipY)
 {
-  int i,j;
-  vrpn_float32 *data;
-  double xSize = 0, ySize = 0;
-/*
-  if (d_local){
-    im->getAcquisitionDimensions(xSize, ySize);
-    d_local_impl->setImageParameters(whichImage, im->width(), im->height(),
-                 xSize, ySize, 1.0);
-    data = new vrpn_float32[im->width()];
-    for (i = 0; i < im->height(); i++) {
-        for (j = 0; j < im->width(); j++) {
-            data[j] = im->getValue(j, i);
-        }
-        d_local_impl->setScanline(whichImage, i, im->width(), data);
-    }
-    delete [] data;
-  } else {
-*/
-//      printf("nmr_Registration_Proxy::setImage: "
-//             "sending image parameters to remote: (%dx%d)\n",
-//             im->width(), im->height());
-    im->getAcquisitionDimensions(xSize, ySize);
-    d_remote_impl->setImageParameters(whichImage, im->width(), im->height(),
-                         xSize, ySize, flipX, flipY);
-    d_remote_impl->mainloop();
-//      printf("nmr_Registration_Proxy::setImage: "
-//             "sending image data to remote\n");
-    data = new vrpn_float32[im->width()];
-    for (i = 0; i < im->height(); i++) {
-        for (j = 0; j < im->width(); j++) {
-            data[j] = im->getValue(j, i);
-        }
-        d_remote_impl->setScanline(whichImage, i, im->width(), data);
-        d_remote_impl->mainloop();
-    }
-//      printf("nmr_Registration_Proxy::setImage: "
-//             "finished sending image data to remote\n");
-    delete [] data;
-//  }
-  return 0;
+	int i,j;
+	vrpn_float32 *data;
+	double xSize = 1, ySize = 1;
+
+	if (im) {
+		im->getAcquisitionDimensions(xSize, ySize);
+		d_remote_impl->setImageParameters(whichImage, im->width(), im->height(),
+							 xSize, ySize, flipX, flipY);
+		d_remote_impl->mainloop();
+		data = new vrpn_float32[im->width()];
+		for (i = 0; i < im->height(); i++) {
+			for (j = 0; j < im->width(); j++) {
+				data[j] = im->getValue(j, i);
+			}
+			d_remote_impl->setScanline(whichImage, i, im->width(), data);
+			d_remote_impl->mainloop();
+		}
+		delete [] data;
+	} else {
+		d_remote_impl->setImageParameters(whichImage, 0, 0,
+							 xSize, ySize, flipX, flipY);
+	}
+
+	return 0;
 }
 
 vrpn_int32 nmr_Registration_Proxy::setColorMap(nmr_ImageType whichImage,

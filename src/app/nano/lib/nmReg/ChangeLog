@@ -1,3 +1,18 @@
+2002-08-13  Adam Seeger  <seeger@cs.unc.edu>
+
+	* correspondenceEditor.C: added flags to control whether or not
+	user can move points or change the number of points
+	* nmr_AFM_SEM_Calibration.C: fixed bug in finding modelToAFM transformation
+	but now the transformation isn't as general
+	* nmr_Registration_Client.C: added messages for sending landmark points
+	and controlling user modes for the glut windows
+	* nmr_Registration_Impl.C: "
+	* nmr_Registration_ImplUI.C: "
+	* nmr_Registration_Interface.C: "
+	* nmr_Registration_Proxy.C: "
+	* nmr_Registration_Server.C: "
+	* nmr_SurfaceModel.[Ch] (nmr_SurfaceModelHeightField): new class
+
 2002-08-07  Woojin Seok <seok@cs.unc.edu>
         * nmr_RegistrationUI.C (handle_registrationColorMap2D_change)
         (handle_registrationMixMax2D_change) : added if-clause before

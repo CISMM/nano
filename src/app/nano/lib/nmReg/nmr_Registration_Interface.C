@@ -26,10 +26,14 @@ nmr_Registration_Interface::nmr_Registration_Interface (const char * /*name*/,
                        ("nmr_Registration AutoAlign");
     d_EnableGUI_type = c->register_message_type
                        ("nmr_Registration EnableGUI");
+	d_EnableEdit_type = c->register_message_type
+                       ("nmr_Registration EnableEdit");
     d_EnableAutoUpdate_type = c->register_message_type
                        ("nmr_Registration EnableAutoUpdate");
-    d_Fiducial_type = c->register_message_type
-                       ("nmr_Registration Fiducial");
+    d_SetFiducial_type = c->register_message_type
+                       ("nmr_Registration SetFiducial");
+	d_ReportFiducial_type = c->register_message_type
+                       ("nmr_Registration ReportFiducial");
 
     d_ImageParameters_type = c->register_message_type
                        ("nmr_Registration ImageParameters");
@@ -441,7 +445,7 @@ vrpn_int32 nmr_Registration_Interface::decode_AutoAlign
 
 //static
 char * nmr_Registration_Interface::encode_EnableGUI (vrpn_int32 *len,
-           vrpn_int32 enable)
+           vrpn_int32 enable, vrpn_int32 window)
 {
   char * msgbuf = NULL;
   char * mptr;
@@ -449,7 +453,7 @@ char * nmr_Registration_Interface::encode_EnableGUI (vrpn_int32 *len,
 
   if (!len) return NULL;
 
-  *len = 1 * sizeof(vrpn_int32);
+  *len = 2 * sizeof(vrpn_int32);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmr_Registration_Interface::encode_EnableGUI:  "
@@ -459,6 +463,7 @@ char * nmr_Registration_Interface::encode_EnableGUI (vrpn_int32 *len,
     mptr = msgbuf;
     mlen = *len;
     vrpn_buffer(&mptr, &mlen, enable);
+	vrpn_buffer(&mptr, &mlen, window);
   }
 
   return msgbuf;
@@ -467,9 +472,48 @@ char * nmr_Registration_Interface::encode_EnableGUI (vrpn_int32 *len,
 //static
 vrpn_int32 nmr_Registration_Interface::decode_EnableGUI
           (const char **buf,
-           vrpn_int32 *enable)
+           vrpn_int32 *enable, vrpn_int32 *window)
 {
-  if (vrpn_unbuffer(buf, enable)) {
+  if (vrpn_unbuffer(buf, enable) ||
+	  vrpn_unbuffer(buf, window)) {
+    return -1;
+  }
+  return 0;
+}
+
+//static
+char * nmr_Registration_Interface::encode_EnableEdit (vrpn_int32 *len,
+           vrpn_int32 addAndDelete, vrpn_int32 move)
+{
+  char * msgbuf = NULL;
+  char * mptr;
+  vrpn_int32 mlen;
+
+  if (!len) return NULL;
+
+  *len = 2 * sizeof(vrpn_int32);
+  msgbuf = new char [*len];
+  if (!msgbuf) {
+    fprintf(stderr, "nmr_Registration_Interface::encode_EnableEdit:  "
+                    "Out of memory.\n");
+    *len = 0;
+  } else {
+    mptr = msgbuf;
+    mlen = *len;
+    vrpn_buffer(&mptr, &mlen, addAndDelete);
+	vrpn_buffer(&mptr, &mlen, move);
+  }
+
+  return msgbuf;
+}
+
+//static
+vrpn_int32 nmr_Registration_Interface::decode_EnableEdit
+          (const char **buf,
+           vrpn_int32 *addAndDelete, vrpn_int32 *move)
+{
+  if (vrpn_unbuffer(buf, addAndDelete) ||
+	  vrpn_unbuffer(buf, move)) {
     return -1;
   }
   return 0;

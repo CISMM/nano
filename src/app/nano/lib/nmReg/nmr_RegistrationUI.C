@@ -13,9 +13,6 @@
 #include <nmr_AlignerMI.h>
 #include <nmb_Transform_TScShR.h>
 
-#include <nmg_Graphics.h>
-#include <UTree.h>
-
 #ifndef M_PI
 static double M_PI = 3.14159265358979323846;
 #endif
@@ -699,7 +696,7 @@ void nmr_RegistrationUI::handle_registrationEnabled_change(
 {
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
     if (value) {
-        me->d_aligner->setGUIEnable(vrpn_TRUE);
+        me->d_aligner->setGUIEnable(vrpn_TRUE, NMR_ALLWINDOWS);
         //Init images
         handle_registrationImage3D_change(
             me->d_registrationImageName3D.string(), me);
@@ -733,7 +730,7 @@ void nmr_RegistrationUI::handle_registrationEnabled_change(
         }
 */
     } else {
-        me->d_aligner->setGUIEnable(vrpn_FALSE);
+        me->d_aligner->setGUIEnable(vrpn_FALSE, NMR_ALLWINDOWS);
     }
 }
 

@@ -48,7 +48,10 @@ int nmr_AFM_SEM_Calibration::setFreeTipCorrespondence(
                              nmr_CalibrationPoint *AFM,
                              nmr_CalibrationPoint *SEM, int numPoints)
 {
-  if (numPoints < 4 || numPoints > s_maxCorrespondencePoints) return -1;
+  if (numPoints < 4 || numPoints > s_maxCorrespondencePoints) {
+	  printf("Error, invalid number of points\n");
+	  return -1;
+  }
   corr_point_t point[2];
   d_freeTipPoints.clear();
   int i;
@@ -97,7 +100,10 @@ int nmr_AFM_SEM_Calibration::setSurfaceFeatureCorrespondence(
                              nmr_CalibrationPoint *model, 
                              nmr_CalibrationPoint *SEM, int numPoints)
 {
-  if (numPoints < 3 || numPoints > s_maxCorrespondencePoints) return -1;
+  if (numPoints < 3 || numPoints > s_maxCorrespondencePoints){
+	  printf("Error, invalid number of points\n");
+	  return -1;
+  }
   corr_point_t point[2];
   d_surfaceFeaturePoints.clear();
   int i;
@@ -119,7 +125,10 @@ int nmr_AFM_SEM_Calibration::setContactTipCorrespondence(
                              nmr_CalibrationPoint *AFM,
                              nmr_CalibrationPoint *SEM, int numPoints)
 {
-  if (numPoints < 3 || numPoints > s_maxCorrespondencePoints) return -1;
+  if (numPoints < 3 || numPoints > s_maxCorrespondencePoints){
+	  printf("Error, invalid number of points\n");
+	  return -1;
+  }
   corr_point_t point[3];
   d_contactTipPoints.clear();
   int i;
@@ -160,8 +169,9 @@ void nmr_AFM_SEM_Calibration::updateSEMfromModel_2D()
 void nmr_AFM_SEM_Calibration::updateModelPointsAssumingOverheadProjection()
 {
   corr_point_t temp;
-  nmr_CalibrationPoint semPoint = {0,0,0,1};
-  nmr_CalibrationPoint modelPoint = {0,0,0,1};
+  double semPoint[4] = {0,0,0,1};
+  double modelPoint[4] = {0,0,0,1};
+  double afmPoint[4] = {0,0,0,1};
   nmb_TransformMatrix44 semFromModel;
   semFromModel.setMatrix(d_SEMfromModel2DMatrix);
   int i;
@@ -176,6 +186,14 @@ void nmr_AFM_SEM_Calibration::updateModelPointsAssumingOverheadProjection()
     temp.y = modelPoint[1];
     temp.z = modelPoint[2];
     d_contactTipPoints.setPoint(s_contactTip_modelIndex, i, temp);
+	d_contactTipPoints.getPoint(s_contactTip_AFMIndex, i, &temp);
+	afmPoint[0] = temp.x;
+	afmPoint[1] = temp.y;
+	afmPoint[2] = temp.z;
+
+	//printf("afm<-->model: (%g,%g,%g)<-->(%g,%g,%g)\n",
+	//	afmPoint[0], afmPoint[1], afmPoint[2],
+	//	modelPoint[0], modelPoint[1], modelPoint[2]);
   }
 }
 
@@ -226,7 +244,7 @@ void nmr_AFM_SEM_Calibration::updateSEMfromModel_3D()
   // the model we can use that to better estimate the transformation that
   // takes model points to corresponding SEM points
   Correspondence rotatedSurfaceFeaturePoints = d_surfaceFeaturePoints;
-  nmr_CalibrationPoint modelPoint = {0,0,0,1};
+  double modelPoint[4] = {0,0,0,1};
   corr_point_t temp;
   
   nmb_Transform_TScShR preRotation;
@@ -244,6 +262,7 @@ void nmr_AFM_SEM_Calibration::updateSEMfromModel_3D()
     temp.z = modelPoint[2];
     rotatedSurfaceFeaturePoints.setPoint(s_surfaceFeature_modelIndex, i, temp);
   }
+
   double SEMfromRotatedModel2DMatrix[16];
   double error;
   /* note: we might want to add some constraints here by assuming for
@@ -252,7 +271,7 @@ void nmr_AFM_SEM_Calibration::updateSEMfromModel_3D()
   transformSolver(SEMfromRotatedModel2DMatrix, &error, 
             rotatedSurfaceFeaturePoints, s_surfaceFeature_modelIndex,
             s_surfaceFeature_SEMIndex, 
-            NMR_2D2D_AFFINE_Z_UNIFORMSCALING_Z_TRANSLATE);
+            NMR_2D2D_AFFINE);//_Z_UNIFORMSCALING_Z_TRANSLATE);
   // compose the 2D affine part with the pre-rotation part
   double tempMatrix[16];
   nmb_TransformMatrix44 preRotation44;
@@ -265,18 +284,16 @@ void nmr_AFM_SEM_Calibration::updateSEMfromModel_3D()
 
 }
 
-/*
-I'm not really sure if this will tell us anything especially useful given the
-assumption of a nearly flat sample
+// step 8 
 void nmr_AFM_SEM_Calibration::updateModelPointsFromRotatedProjection()
 {
   // now that we have an SEMfromModel transformation that includes an
   // estimated rotation component, we can better estimate the
   // contact points on the model corresponding to points in the SEM image
   corr_point_t temp;
-  nmr_CalibrationPoint semPoint = {0,0,0,1};
-  nmr_CalibrationPoint rayStart = {0,0,0,1};
-  nmr_CalibrationPoint modelPoint = {0,0,0,1};
+  double semPoint[4] = {0,0,0,1};
+  double rayStart[4] = {0,0,0,1};
+  double modelPoint[4] = {0,0,0,1};
   nmb_TransformMatrix44 semFromModel;
   semFromModel.setMatrix(d_SEMfromModel3DMatrix);
   int i;
@@ -296,45 +313,16 @@ void nmr_AFM_SEM_Calibration::updateModelPointsFromRotatedProjection()
     d_contactTipPoints.setPoint(s_contactTip_modelIndex, i, temp);
   }
 }
-*/
 
-// step 8
-// update d_AFMfromModel3DMatrix using d_SEMfromModel3DMatrix and
-// d_SEMfromAFMMatrix
-// We are basically solving for d_AFMfromModel3DMatrix in the following
-// equation. Note that even though d_SEMfromAFMMatrix and 
-// d_SEMfromModel3DMatrix do not really need to transform z (since the
-// SEM image is independent of z they include the z transformation
-// information because of how they were constructed.
-// d_SEMfromAFMMatrix*d_AFMfromModel3DMatrix = d_SEMfromModel3DMatrix
+// step 9 - pretty much doing the same thing as step 4 but using updated
+// contact model points
+// update d_AFMfromModel3DMatrix
 void nmr_AFM_SEM_Calibration::updateAFMfromModel_3D()
 {
-  double A[9];
-  double B[3];
-
-  int i;
-  for (i = 0; i < 4; i++) {
-    A[0] = d_SEMfromAFMMatrix[0];
-    A[1] = d_SEMfromAFMMatrix[1];
-    A[2] = d_SEMfromAFMMatrix[2];
-    A[3] = d_SEMfromAFMMatrix[4];
-    A[4] = d_SEMfromAFMMatrix[5];
-    A[5] = d_SEMfromAFMMatrix[6];
-    A[6] = d_SEMfromAFMMatrix[8];
-    A[7] = d_SEMfromAFMMatrix[9];
-    A[8] = d_SEMfromAFMMatrix[10];
-    B[0] = d_SEMfromModel3DMatrix[i*4+0];
-    B[1] = d_SEMfromModel3DMatrix[i*4+1];
-    B[2] = d_SEMfromModel3DMatrix[i*4+2];
-    linearLeastSquaresSolve(3, 3, A, B); // use as linear solver
-    d_AFMfromModel3DMatrix[i*4+0] = B[0];
-    d_AFMfromModel3DMatrix[i*4+1] = B[1];
-    d_AFMfromModel3DMatrix[i*4+2] = B[2];
-  }
-  d_AFMfromModel3DMatrix[3] = 0;
-  d_AFMfromModel3DMatrix[7] = 0;
-  d_AFMfromModel3DMatrix[11] = 0;
-  d_AFMfromModel3DMatrix[15] = 1;
+  double error;
+  transformSolver(d_AFMfromModel3DMatrix, &error, d_contactTipPoints,
+       s_contactTip_modelIndex, s_contactTip_AFMIndex, 
+       NMR_2D2D_AFFINE_Z_UNIFORMSCALING_Z_TRANSLATE);
 }
 
 void nmr_AFM_SEM_Calibration::updateSolution()
@@ -346,6 +334,7 @@ void nmr_AFM_SEM_Calibration::updateSolution()
   updateProjDirInAFM();
   updateProjDirInModel();
   updateSEMfromModel_3D();
+  updateModelPointsFromRotatedProjection();
   updateAFMfromModel_3D();
 
   d_freeTipPointsChangedSinceSolution = 0;
@@ -515,4 +504,16 @@ double nmr_AFM_SEM_Calibration::getSurfaceHeight(double x, double y)
   d_model->surfaceRayIntersection(x, y, 0, 0, 0, -1, t);
   double height = -t;
   return height;
+}
+
+void nmr_AFM_SEM_Calibration::findSurfaceIntersection(
+	double *rayStart, double *dir, double *point)
+{
+  double t;
+  d_model->surfaceRayIntersection(rayStart[0], rayStart[1], rayStart[2],
+	  dir[0], dir[1], dir[2], t);
+  int i;
+  for (i = 0; i < 3; i++) {
+	point[i] = rayStart[i] + t*dir[i];
+  }
 }

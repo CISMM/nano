@@ -38,7 +38,8 @@ class nmr_Registration_Server : public nmb_Device_Server,
 
     int setTransformationOptions(nmr_TransformationType type);
     int setTransformationParameters(vrpn_float32 *parameters);
-    int setGUIEnable(vrpn_bool enable);
+    int setGUIEnable(vrpn_bool enable, vrpn_int32 window);
+	int setEditEnable(vrpn_bool enableAddAndDelete, vrpn_bool enableMove);
     int setFiducial(vrpn_int32 replace, vrpn_int32 num,
                vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
                vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
@@ -66,7 +67,8 @@ class nmr_Registration_Server : public nmb_Device_Server,
           vrpn_float32 &size_x, vrpn_float32 &size_y,
           vrpn_bool &flip_x, vrpn_bool &flip_y);
     void getAutoAlign(vrpn_int32 &mode);
-    void getGUIEnable(vrpn_bool &enabled);
+    void getGUIEnable(vrpn_bool &enabled, vrpn_int32 &window);
+	void getEditEnable(vrpn_bool &addAndDelete, vrpn_bool &move);
     void getTransformationOptions(nmr_TransformationType &type);
     void getTransformationParameters(vrpn_float32 *parameters);
     void getScanline(nmr_ImageType &whichImage,
@@ -85,6 +87,9 @@ class nmr_Registration_Server : public nmb_Device_Server,
     void getCurrentResolution(vrpn_int32 &resolutionIndex);
 
     int sendRegistrationResult(int whichTransform, double xform[16]);
+	int reportFiducial(vrpn_int32 replace, vrpn_int32 num,
+					vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+					vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
 
   protected:
     static int RcvSetImageParameters (void *_userdata, vrpn_HANDLERPARAM _p);
@@ -95,6 +100,7 @@ class nmr_Registration_Server : public nmb_Device_Server,
                                      (void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvEnableRegistration(void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvEnableGUI(void *_userdata, vrpn_HANDLERPARAM _p);
+	static int RcvEnableEdit(void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvFiducial (void *_userdata, vrpn_HANDLERPARAM _p);
     static int RcvEnableAutoUpdate (void *_userdata, vrpn_HANDLERPARAM _p);
 
@@ -123,6 +129,9 @@ class nmr_Registration_Server : public nmb_Device_Server,
     nmr_TransformationType d_transformType;
 
     vrpn_bool d_GUIEnabled;
+	vrpn_int32 d_window;
+	vrpn_bool d_AddAndDeleteEnabled;
+	vrpn_bool d_MoveEnabled;
     vrpn_bool d_autoUpdateAlignment;
 
     vrpn_int32 d_numLevels;

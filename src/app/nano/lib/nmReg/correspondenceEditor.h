@@ -35,8 +35,10 @@ class CorrespondenceEditor {
     CorrespondenceEditor(int num_im, char **win_names = NULL);
     CorrespondenceEditor(int num_im, ImageViewer *view,
                               Correspondence *corr, int *winIDs);
-    void show();
-    void hide();
+    void showAll();
+	void show(int image_index);
+    void hideAll();
+	void hide(int image_index);
     void clearFiducials();
     void addFiducial(float *x, float *y, float *z);
     int setImage(int image_index, nmb_Image *im);
@@ -54,6 +56,8 @@ class CorrespondenceEditor {
     void getCorrespondence(Correspondence &corr);
 	int numImages() {return num_images;}
     void registerCallback(CorrespondenceCallback handler, void *ud);
+	void enableEdit(vrpn_bool enableAddAndDelete, 
+										 vrpn_bool enableMove);
 
   private:
     // eventHandler is responsible for handling user interaction with image
@@ -82,6 +86,9 @@ class CorrespondenceEditor {
     GLuint point_marker_dlist;
     CorrespondenceCallback change_handler;
     void *userdata;
+
+	vrpn_bool enableMovingPoints;
+	vrpn_bool enableAddDeletePoints;
 };
 
 #endif

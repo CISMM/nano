@@ -41,7 +41,8 @@ class nmr_Registration_Impl {
 
     int enableAutoUpdate(vrpn_bool enable);
     int autoAlign(vrpn_int32 mode);
-    int setGUIEnable(vrpn_bool enable);
+    int setGUIEnable(vrpn_bool enable, vrpn_int32 window);
+	int setEditEnable(vrpn_bool enableAddAndDelete, vrpn_bool enableMove);
     int setColorMap(nmr_ImageType whichImage, nmb_ColorMap * cmap);
     int setColorMinMax(nmr_ImageType whichImage, 
                               vrpn_float64 dmin, vrpn_float64 dmax,
@@ -56,6 +57,7 @@ class nmr_Registration_Impl {
     int registerImagesFromPointCorrespondenceAssumingDefaultRotation();
     int registerImagesUsingMutualInformation(nmb_Transform_TScShR &xform);
     void sendResult(int type, double *xform);
+	void reportFiducial();
 
     // functions not in the network interface:
     //   these are a generalization of 

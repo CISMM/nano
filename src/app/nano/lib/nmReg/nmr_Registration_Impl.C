@@ -24,23 +24,23 @@ nmr_Registration_Impl::nmr_Registration_Impl(nmr_Registration_Server *server):
   if (d_server) {
       d_server->registerChangeHandler((void *)this, serverMessageHandler);
   }
-  d_images[SOURCE_IMAGE_INDEX] = new nmb_ImageGrid("sourceImage",
-                                       "unknown_units",
-                                       100, 100);
-  d_images[TARGET_IMAGE_INDEX] = new nmb_ImageGrid("targetImage",
-                                       "unknown_units",
-                                       100, 100);
+  d_images[SOURCE_IMAGE_INDEX] = NULL;
+  d_images[TARGET_IMAGE_INDEX] = NULL;
 
   d_alignerUI = new nmr_Registration_ImplUI();
   d_alignerUI->registerCorrespondenceHandler(handle_CorrespondenceChange,
                                              (void *) this);
-  d_autoUpdateAlignment = vrpn_FALSE;
+  d_autoUpdateAlignment = vrpn_TRUE;
 }
 
 nmr_Registration_Impl::~nmr_Registration_Impl()
 {
-  nmb_Image::deleteImage(d_images[SOURCE_IMAGE_INDEX]);
-  nmb_Image::deleteImage(d_images[TARGET_IMAGE_INDEX]);
+  if (d_images[SOURCE_IMAGE_INDEX]) {
+	nmb_Image::deleteImage(d_images[SOURCE_IMAGE_INDEX]);
+  }
+  if (d_images[TARGET_IMAGE_INDEX]) {
+	nmb_Image::deleteImage(d_images[TARGET_IMAGE_INDEX]);
+  }
   delete d_alignerUI;
   if (d_server) {
     // this causes seg fault on cygwin
@@ -72,6 +72,8 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
          y_tgt[NMR_MAX_FIDUCIAL], z_tgt[NMR_MAX_FIDUCIAL];
   vrpn_int32 mode;
   vrpn_bool enabled;
+  vrpn_int32 window;
+  vrpn_bool addAndDelete, move;
 
   vrpn_int32 numLevels;
   vrpn_float32 resLevels[NMR_MAX_RESOLUTION_LEVELS];
@@ -108,6 +110,7 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
       // x and y are in range 0..1, z is in nm
       me->setFiducial(replace, numFiducial,
                       x_src, y_src, z_src, x_tgt, y_tgt, z_tgt);
+	  me->reportFiducial();
       break;
     case NMR_ENABLE_AUTOUPDATE:
       info.aligner->getAutoUpdateEnable(enabled);
@@ -118,9 +121,13 @@ void nmr_Registration_Impl::serverMessageHandler(void *ud,
       me->autoAlign(mode);
       break;
     case NMR_ENABLE_GUI:
-      info.aligner->getGUIEnable(enabled);
-      me->setGUIEnable(enabled);
+      info.aligner->getGUIEnable(enabled, window);
+      me->setGUIEnable(enabled, window);
       break;
+	case NMR_ENABLE_EDIT:
+	  info.aligner->getEditEnable(addAndDelete, move);
+	  me->setEditEnable(addAndDelete, move);
+	  break;
     case NMR_SET_RESOLUTIONS:
       info.aligner->getResolutions(numLevels, resLevels);
       me->setResolutions(numLevels, resLevels);
@@ -269,10 +276,17 @@ int nmr_Registration_Impl::autoAlign(vrpn_int32 mode)
 }
 */
 
-int nmr_Registration_Impl::setGUIEnable(vrpn_bool enable)
+int nmr_Registration_Impl::setGUIEnable(vrpn_bool enable, vrpn_int32 window)
 {
-    d_alignerUI->enable(enable);
+    d_alignerUI->enable(enable, window);
     return 0;
+}
+
+int nmr_Registration_Impl::setEditEnable(vrpn_bool enableAddAndDelete, 
+										 vrpn_bool enableMove)
+{
+	d_alignerUI->enableEdit(enableAddAndDelete, enableMove);
+	return 0;
 }
 
 int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
@@ -282,30 +296,51 @@ int nmr_Registration_Impl::setImageParameters(nmr_ImageType whichImage,
 {
     d_alignerUI->setImageOrientation(whichImage, flipX, flipY);
     if (whichImage == NMR_SOURCE) {
-        if ((d_images[SOURCE_IMAGE_INDEX]->width() != res_x) ||
+        if (!d_images[SOURCE_IMAGE_INDEX] ||
+			(d_images[SOURCE_IMAGE_INDEX]->width() != res_x) ||
             (d_images[SOURCE_IMAGE_INDEX]->height() != res_y)) {
 //              printf("changing source resolution: (%d, %d) --> (%d, %d)\n",
 //                      d_images[SOURCE_IMAGE_INDEX]->width(),
 //                      d_images[SOURCE_IMAGE_INDEX]->height(),
 //                      res_x, res_y);
+			if (d_images[SOURCE_IMAGE_INDEX]) {
                  nmb_Image::deleteImage(d_images[SOURCE_IMAGE_INDEX]);
-                 d_images[SOURCE_IMAGE_INDEX] =
-                      new nmb_ImageGrid("sourceImage",
-                                        "unknown_units",
-                                        res_x, res_y);
+				 d_images[SOURCE_IMAGE_INDEX] = NULL;
+			}
+			if (res_x != 0 && res_y != 0) {
+				d_images[SOURCE_IMAGE_INDEX] =
+				  new nmb_ImageGrid("sourceImage",
+									"unknown_units",
+									res_x, res_y);
+			} else {
+				// the image has become NULL so we shouldn't expect any
+				// data and we should update the display now
+				d_alignerUI->clearImage(NMR_SOURCE);
+			}
         }
         setSourceImageDimensions(xSpan, ySpan);
     } else if (whichImage == NMR_TARGET) {
-        if ((d_images[TARGET_IMAGE_INDEX]->width() != res_x) ||
+        if (!d_images[TARGET_IMAGE_INDEX] ||
+			(d_images[TARGET_IMAGE_INDEX]->width() != res_x) ||
             (d_images[TARGET_IMAGE_INDEX]->height() != res_y)) {
 //              printf("changing target resolution: (%d, %d) --> (%d, %d)\n",
 //                      d_images[TARGET_IMAGE_INDEX]->width(),
 //                      d_images[TARGET_IMAGE_INDEX]->height(),
 //                      res_x, res_y);
-                 nmb_Image::deleteImage(d_images[TARGET_IMAGE_INDEX]);
-                 d_images[TARGET_IMAGE_INDEX] = new nmb_ImageGrid("targetImage",
-                                        "unknown_units",
-                                        res_x, res_y);
+			if (d_images[TARGET_IMAGE_INDEX]) {
+				nmb_Image::deleteImage(d_images[TARGET_IMAGE_INDEX]);
+				d_images[TARGET_IMAGE_INDEX] = NULL;
+			}
+			if (res_x != 0 && res_y != 0) {
+				d_images[TARGET_IMAGE_INDEX] = 
+					 new nmb_ImageGrid("targetImage",
+										"unknown_units",
+										res_x, res_y);
+			} else {
+				// the image has become NULL so we shouldn't expect any
+				// data and we should update the display now
+				d_alignerUI->clearImage(NMR_TARGET);
+			}
         }
         setTargetImageDimensions(xSpan, ySpan);
     } else {
@@ -383,29 +418,32 @@ int nmr_Registration_Impl::setTransformationParameters(vrpn_float32 *parameters)
 int nmr_Registration_Impl::
             registerImagesFromPointCorrespondenceAssumingDefaultRotation()
 {
-   Correspondence c(2, 3);
-   int corrSourceIndex, corrTargetIndex;
-   d_alignerUI->getCorrespondence(c, corrSourceIndex, corrTargetIndex);
-   double srcSizeX, srcSizeY, tgtSizeX, tgtSizeY;
-   d_images[SOURCE_IMAGE_INDEX]->
-                   getAcquisitionDimensions(srcSizeX, srcSizeY);
-   d_images[TARGET_IMAGE_INDEX]->
-                   getAcquisitionDimensions(tgtSizeX, tgtSizeY);
-   c.scalePoints(corrSourceIndex, srcSizeX, srcSizeY, 1.0);
-   c.scalePoints(corrTargetIndex, tgtSizeX, tgtSizeY, 1.0);
+	if (!d_images[SOURCE_IMAGE_INDEX] || !d_images[TARGET_IMAGE_INDEX]) {
+		return 0;
+	}
+	Correspondence c(2, 3);
+	int corrSourceIndex, corrTargetIndex;
+	d_alignerUI->getCorrespondence(c, corrSourceIndex, corrTargetIndex);
+	double srcSizeX, srcSizeY, tgtSizeX, tgtSizeY;
+	d_images[SOURCE_IMAGE_INDEX]->
+				   getAcquisitionDimensions(srcSizeX, srcSizeY);
+	d_images[TARGET_IMAGE_INDEX]->
+				   getAcquisitionDimensions(tgtSizeX, tgtSizeY);
+	c.scalePoints(corrSourceIndex, srcSizeX, srcSizeY, 1.0);
+	c.scalePoints(corrTargetIndex, tgtSizeX, tgtSizeY, 1.0);
 
-   convertTo3DSpace(c, corrSourceIndex);
-   ensureThreePoints(c, corrSourceIndex, vrpn_FALSE, vrpn_TRUE);
+	convertTo3DSpace(c, corrSourceIndex);
+	ensureThreePoints(c, corrSourceIndex, vrpn_FALSE, vrpn_TRUE);
 
-   nmb_Transform_TScShR solution = d_defaultTransformation;
-   int errorIndicator = adjustTransformFromRotatedCorrespondence(
-                   c, corrSourceIndex, corrTargetIndex, 
-                   solution);
-   // make sure this worked before replacing the last computed transformation
-   if (!errorIndicator) {
-     d_manualAlignmentResult = solution;
-   }
-   return errorIndicator;
+	nmb_Transform_TScShR solution = d_defaultTransformation;
+	int errorIndicator = adjustTransformFromRotatedCorrespondence(
+				   c, corrSourceIndex, corrTargetIndex, 
+				   solution);
+	// make sure this worked before replacing the last computed transformation
+	if (!errorIndicator) {
+		d_manualAlignmentResult = solution;
+	}
+	return errorIndicator;
 }
 
 int nmr_Registration_Impl::registerImagesFromPointCorrespondence(
@@ -446,6 +484,9 @@ int nmr_Registration_Impl::registerImagesFromPointCorrespondence(
 int nmr_Registration_Impl::registerImagesUsingMutualInformation(
                                            nmb_Transform_TScShR &xform)
 {
+	if (!d_images[SOURCE_IMAGE_INDEX] || !d_images[TARGET_IMAGE_INDEX]) {
+		return 0;
+	}
     if (d_imageChangeSinceLastRegistration) {
         double centerX, centerY, centerZ;
         xform.getCenter(centerX, centerY, centerZ);
@@ -478,28 +519,32 @@ int nmr_Registration_Impl::registerImagesUsingMutualInformation(
 void nmr_Registration_Impl::setSourceImageDimensions(vrpn_float32 srcSizeX,
                                                      vrpn_float32 srcSizeY)
 {
-    d_images[SOURCE_IMAGE_INDEX]->
-                  setAcquisitionDimensions(srcSizeX, srcSizeY);
+	if (d_images[SOURCE_IMAGE_INDEX]) {
+		d_images[SOURCE_IMAGE_INDEX]->
+					  setAcquisitionDimensions(srcSizeX, srcSizeY);
 
-    double resX, resY;
-    resX = (double)d_images[SOURCE_IMAGE_INDEX]->width();
-    resY = (double)d_images[SOURCE_IMAGE_INDEX]->height();
-    double center[3];
-    center[0] = 0.5*srcSizeX;
-    center[1] = 0.5*srcSizeY;
-    center[2] = d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(
-                         0.5*resX,
-                         0.5*resY);
-    d_defaultTransformation.setCenter(center[0], center[1], center[2]);
-    d_manualAlignmentResult.setCenter(center[0], center[1], center[2]);
-    d_autoAlignmentResult.setCenter(center[0], center[1], center[2]);
+		double resX, resY;
+		resX = (double)d_images[SOURCE_IMAGE_INDEX]->width();
+		resY = (double)d_images[SOURCE_IMAGE_INDEX]->height();
+		double center[3];
+		center[0] = 0.5*srcSizeX;
+		center[1] = 0.5*srcSizeY;
+		center[2] = d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(
+							 0.5*resX,
+							 0.5*resY);
+		d_defaultTransformation.setCenter(center[0], center[1], center[2]);
+		d_manualAlignmentResult.setCenter(center[0], center[1], center[2]);
+		d_autoAlignmentResult.setCenter(center[0], center[1], center[2]);
+	}
 }
 
 void nmr_Registration_Impl::setTargetImageDimensions(vrpn_float32 tgtSizeX,
                                                      vrpn_float32 tgtSizeY)
 {
-  d_images[TARGET_IMAGE_INDEX]->
-                  setAcquisitionDimensions(tgtSizeX, tgtSizeY);
+	if (d_images[TARGET_IMAGE_INDEX]) {
+		d_images[TARGET_IMAGE_INDEX]->
+			setAcquisitionDimensions(tgtSizeX, tgtSizeY);
+	}
 }
 
 void nmr_Registration_Impl::sendResult(int whichTransform, 
@@ -510,12 +555,16 @@ void nmr_Registration_Impl::sendResult(int whichTransform,
   }
 
 
+  // the following is a potentially useful calculation but isn't used 
+  // at the moment.
     nmb_TransformMatrix44 transform;
     transform.setMatrix(xform_matrix);
     double centerX, centerY, tx, ty, phi, shz, scx, scy;
-    double srcSizeX, srcSizeY;
-    d_images[SOURCE_IMAGE_INDEX]->
-                       getAcquisitionDimensions(srcSizeX, srcSizeY);
+    double srcSizeX = 0, srcSizeY = 0;
+	if (d_images[SOURCE_IMAGE_INDEX]) {
+		d_images[SOURCE_IMAGE_INDEX]->
+						   getAcquisitionDimensions(srcSizeX, srcSizeY);
+	}
     centerX = 0.5*srcSizeX;
     centerY = 0.5*srcSizeY;
     transform.getTScShR_2DParameters(centerX,centerY,tx,ty,phi,shz,scx,scy);
@@ -534,6 +583,22 @@ void nmr_Registration_Impl::sendResult(int whichTransform,
 
 }
 
+void nmr_Registration_Impl::reportFiducial()
+{
+	vrpn_int32 num, replace = 1;
+    vrpn_float32 x_src[NMR_MAX_FIDUCIAL], y_src[NMR_MAX_FIDUCIAL],
+                 z_src[NMR_MAX_FIDUCIAL];
+    vrpn_float32 x_tgt[NMR_MAX_FIDUCIAL], y_tgt[NMR_MAX_FIDUCIAL],
+                 z_tgt[NMR_MAX_FIDUCIAL];
+
+	d_alignerUI->getFiducial(num, x_src, y_src, z_src, 
+		x_tgt, y_tgt, z_tgt);
+	if (d_server) {
+		d_server->reportFiducial(replace, num, x_src, y_src, z_src, 
+			x_tgt, y_tgt, z_tgt);
+	}
+}
+
 //static
 void nmr_Registration_Impl::handle_CorrespondenceChange(Correspondence &c,
                                                           void *ud)
@@ -547,6 +612,7 @@ void nmr_Registration_Impl::handle_CorrespondenceChange(Correspondence &c,
       me->sendResult(NMR_MANUAL, xform_matrix);
     }
   }
+  me->reportFiducial();
 }
 
 int nmr_Registration_Impl::getManualAlignmentResult(nmb_Transform_TScShR
@@ -594,9 +660,13 @@ vrpn_int32 nmr_Registration_Impl::setImage(
 void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
       int corrSourceIndex, vrpn_bool normalized, vrpn_bool lookupZ)
 {
-  double srcSizeX, srcSizeY, tgtSizeX, tgtSizeY;
-  d_images[SOURCE_IMAGE_INDEX]->getAcquisitionDimensions(srcSizeX, srcSizeY);
-  d_images[TARGET_IMAGE_INDEX]->getAcquisitionDimensions(tgtSizeX, tgtSizeY);
+  double srcSizeX=1, srcSizeY=1, tgtSizeX=1, tgtSizeY=1;
+  if (d_images[SOURCE_IMAGE_INDEX]) {
+	d_images[SOURCE_IMAGE_INDEX]->getAcquisitionDimensions(srcSizeX, srcSizeY);
+  }
+  if (d_images[TARGET_IMAGE_INDEX]) {
+	d_images[TARGET_IMAGE_INDEX]->getAcquisitionDimensions(tgtSizeX, tgtSizeY);
+  }
 
   double srcMaxX, srcMaxY;
   double tgtMaxX;//, tgtMaxY;
@@ -624,7 +694,8 @@ void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
     }
     p1.x = p0.x + offset*srcMaxX;
     p1.y = p0.y;
-    if (lookupZ) {
+	p1.z = 0;
+    if (lookupZ && d_images[SOURCE_IMAGE_INDEX]) {
       xIndex = (double)d_images[SOURCE_IMAGE_INDEX]->width()*p1.x/srcMaxX;
       yIndex = (double)d_images[SOURCE_IMAGE_INDEX]->height()*p1.y/srcMaxY;
       p1.z = d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(xIndex, yIndex);
@@ -654,7 +725,8 @@ void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
       p2.x = 0.5*(p0.x + p1.x) + offsetFactor*(p1.y - p0.y);//*srcMaxX/srcMaxY;
       p2.y = 0.5*(p0.y + p1.y) - offsetFactor*(p1.x - p0.x);//*srcMaxY/srcMaxX;
     }
-    if (lookupZ) {
+	p2.z = 0;
+    if (lookupZ && d_images[SOURCE_IMAGE_INDEX]) {
       xIndex = (double)d_images[SOURCE_IMAGE_INDEX]->width()*p2.x/srcMaxX;
       yIndex = (double)d_images[SOURCE_IMAGE_INDEX]->height()*p2.y/srcMaxY;
       p2.z = d_images[SOURCE_IMAGE_INDEX]->getValueInterpolated(xIndex, yIndex);
@@ -680,8 +752,14 @@ void nmr_Registration_Impl::ensureThreePoints(Correspondence &c,
 void nmr_Registration_Impl::convertTo3DSpace(Correspondence &c,
                  int corrSourceIndex)
 {
+
+  if (!d_images[SOURCE_IMAGE_INDEX]) {
+	  return;
+  }
+
   double invSrcSizeX, invSrcSizeY;
-  double srcSizeX, srcSizeY;
+  double srcSizeX = 1, srcSizeY = 1;
+
   d_images[SOURCE_IMAGE_INDEX]->getAcquisitionDimensions(srcSizeX, srcSizeY);
   invSrcSizeX = 1.0/srcSizeX;
   invSrcSizeY = 1.0/srcSizeY;

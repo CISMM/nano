@@ -51,7 +51,9 @@ class nmr_Registration_Interface {
     vrpn_int32 d_EnableAutoUpdate_type;
     vrpn_int32 d_AutoAlign_type;
     vrpn_int32 d_EnableGUI_type;
-    vrpn_int32 d_Fiducial_type;
+	vrpn_int32 d_EnableEdit_type;
+    vrpn_int32 d_SetFiducial_type;
+	vrpn_int32 d_ReportFiducial_type;
 
     // server-->client messages
     vrpn_int32 d_ImageParameters_type;
@@ -111,9 +113,13 @@ class nmr_Registration_Interface {
     static vrpn_int32 decode_AutoAlign (const char **buf,
            vrpn_int32 *mode);
     static char * encode_EnableGUI (vrpn_int32 *len,
-           vrpn_int32 enable);
+           vrpn_int32 enable, vrpn_int32 window);
     static vrpn_int32 decode_EnableGUI (const char **buf,
-           vrpn_int32 *enable);
+           vrpn_int32 *enable, vrpn_int32 *window);
+	static char * encode_EnableEdit (vrpn_int32 *len,
+		vrpn_int32 addAndDelete, vrpn_int32 move);
+	static vrpn_int32 decode_EnableEdit (const char **buf,
+		vrpn_int32 *addAndDelete, vrpn_int32 *move);
 
     // server-->client
     static char * encode_ImageParameters (vrpn_int32 *len,
@@ -157,6 +163,9 @@ class nmr_Registration_Interface {
 /// One of these values is sent as part of the SetImageParameters and 
 /// SetImageScanlineData messages
 enum nmr_ImageType {NMR_SOURCE, NMR_TARGET, NMR_SOURCE_HEIGHTFIELD};
+
+/// values sent in the ENABLE_GUI message
+enum nmr_WindowType {NMR_SOURCEWINDOW, NMR_TARGETWINDOW, NMR_ALLWINDOWS};
 
 /// represents method by which the transformation was computed
 /// MANUAL is generated as a result of a manual alignment
@@ -206,6 +215,7 @@ enum nmr_MessageType {
      NMR_ENABLE_AUTOUPDATE,
      NMR_AUTOALIGN,
      NMR_ENABLE_GUI,
+	 NMR_ENABLE_EDIT,
      NMR_TRANSFORM_PARAM
 };
 

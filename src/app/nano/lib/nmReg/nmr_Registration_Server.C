@@ -15,6 +15,7 @@ nmr_Registration_Server::nmr_Registration_Server(const char *name,
     d_row(0), d_length(0), d_lengthAllocated(0), d_scanlineData(NULL),
     d_transformType(NMR_2D2D_AFFINE),
     d_GUIEnabled(vrpn_FALSE),
+	d_window(NMR_ALLWINDOWS),
     d_autoUpdateAlignment(vrpn_FALSE),
     d_numLevels(0),
     d_resolutionIndex(0),
@@ -63,12 +64,17 @@ nmr_Registration_Server::nmr_Registration_Server(const char *name,
     fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
     return;
   }
+  if (d_connection->register_handler(d_EnableEdit_type,
+	  RcvEnableEdit, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
+    return;
+  }
   if (d_connection->register_handler(d_EnableAutoUpdate_type,
        RcvEnableAutoUpdate, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
     return;
   }
-  if (d_connection->register_handler(d_Fiducial_type,
+  if (d_connection->register_handler(d_SetFiducial_type,
        RcvFiducial, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't register handler\n");
     return;
@@ -127,11 +133,15 @@ nmr_Registration_Server::~nmr_Registration_Server()
        RcvEnableGUI, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
   }
+  if (d_connection->unregister_handler(d_EnableEdit_type,
+       RcvEnableEdit, this)) {
+    fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
+  }
   if (d_connection->unregister_handler(d_EnableAutoUpdate_type,
        RcvEnableAutoUpdate, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
   }
-  if (d_connection->unregister_handler(d_Fiducial_type,
+  if (d_connection->unregister_handler(d_SetFiducial_type,
        RcvFiducial, this)) {
     fprintf(stderr, "nmr_Registration_Server: can't unregister handler\n");
   }
@@ -226,10 +236,19 @@ int nmr_Registration_Server::setTransformationParameters(
   return 0;
 }
 
-int nmr_Registration_Server::setGUIEnable(vrpn_bool enable)
+int nmr_Registration_Server::setGUIEnable(vrpn_bool enable, vrpn_int32 window)
 {
     d_GUIEnabled = enable;
+	d_window = window;
     return 0;
+}
+
+int nmr_Registration_Server::setEditEnable(vrpn_bool enableAddAndDelete, 
+										   vrpn_bool enableMove)
+{
+	d_AddAndDeleteEnabled = enableAddAndDelete;
+	d_MoveEnabled = enableMove;
+	return 0;
 }
 
 int nmr_Registration_Server::setFiducial(vrpn_int32 replace, vrpn_int32 num,
@@ -445,17 +464,39 @@ int nmr_Registration_Server::RcvEnableGUI (void *_userdata,
   nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
   const char * bufptr = _p.buffer;
   vrpn_int32 enable;
+  vrpn_int32 window;
 
-  if (decode_EnableGUI(&bufptr, &enable) == -1) {
+  if (decode_EnableGUI(&bufptr, &enable, &window) == -1) {
     fprintf(stderr,
-        "nmr_Registration_Server::RcvEnableRegistration:"
+        "nmr_Registration_Server::RcvEnableGUI:"
         " decode failed\n");
     return -1;
   }
 
-  me->setGUIEnable(enable);
+  me->setGUIEnable(enable, window);
 
   return me->notifyMessageHandlers(NMR_ENABLE_GUI, _p.msg_time);
+}
+
+//static
+int nmr_Registration_Server::RcvEnableEdit (void *_userdata,
+                                          vrpn_HANDLERPARAM _p)
+{
+  nmr_Registration_Server *me = (nmr_Registration_Server *)_userdata;
+  const char * bufptr = _p.buffer;
+  vrpn_int32 addAndDelete;
+  vrpn_int32 move;
+
+  if (decode_EnableEdit(&bufptr, &addAndDelete, &move) == -1) {
+    fprintf(stderr,
+        "nmr_Registration_Server::RcvEnableEdit:"
+        " decode failed\n");
+    return -1;
+  }
+
+  me->setEditEnable(addAndDelete, move);
+
+  return me->notifyMessageHandlers(NMR_ENABLE_EDIT, _p.msg_time);
 }
 
 //static 
@@ -700,9 +741,16 @@ void nmr_Registration_Server::getAutoAlign(vrpn_int32 &mode)
     mode = d_autoAlignEnableMode;
 }
 
-void nmr_Registration_Server::getGUIEnable(vrpn_bool &enabled)
+void nmr_Registration_Server::getGUIEnable(vrpn_bool &enabled, vrpn_int32 &window)
 {
     enabled = d_GUIEnabled;
+	window = d_window;
+}
+
+void nmr_Registration_Server::getEditEnable(vrpn_bool &addAndDelete, vrpn_bool &move)
+{
+	addAndDelete = d_AddAndDeleteEnabled;
+	move = d_MoveEnabled;
 }
 
 void nmr_Registration_Server::getTransformationOptions(
@@ -786,4 +834,19 @@ int nmr_Registration_Server::sendRegistrationResult(int which, double xform[16])
   }
 
   return dispatchMessage(len, msgbuf, d_RegistrationResult_type);
+}
+
+int nmr_Registration_Server::reportFiducial(vrpn_int32 replace, vrpn_int32 num,
+			vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
+			vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+  msgbuf = encode_Fiducial(&len, replace, num, x_src, y_src, z_src,
+	  x_tgt, y_tgt, z_tgt);
+
+  if (!msgbuf) {
+	  return -1;
+  }
+  return dispatchMessage(len, msgbuf, d_ReportFiducial_type);
 }

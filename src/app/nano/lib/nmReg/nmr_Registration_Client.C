@@ -40,7 +40,7 @@ nmr_Registration_Client::nmr_Registration_Client (const char *name,
     fprintf(stderr, "nmr_Registration_Client: can't register handler\n");
     return; 
   }
-  if (d_connection->register_handler(d_Fiducial_type, RcvFiducial, this)) {
+  if (d_connection->register_handler(d_ReportFiducial_type, RcvFiducial, this)) {
     fprintf(stderr, "nmr_Registration_Client: can't register handler\n");
     return;
   }
@@ -56,7 +56,7 @@ nmr_Registration_Client::~nmr_Registration_Client()
        RcvTransformationOptions, this);
     d_connection->unregister_handler(d_RegistrationResult_type,
        RcvRegistrationResult, this);
-    d_connection->unregister_handler(d_Fiducial_type, RcvFiducial, this);
+    d_connection->unregister_handler(d_ReportFiducial_type, RcvFiducial, this);
   }
 }
 
@@ -132,7 +132,7 @@ int nmr_Registration_Client::setTransformationParameters(
   return dispatchMessage(len, msgbuf, d_SetTransformationParameters_type);
 }
 
-int nmr_Registration_Client::sendFiducial(vrpn_int32 replace, vrpn_int32 num,
+int nmr_Registration_Client::setFiducial(vrpn_int32 replace, vrpn_int32 num,
                 vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
                 vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt)
 {
@@ -146,21 +146,35 @@ int nmr_Registration_Client::sendFiducial(vrpn_int32 replace, vrpn_int32 num,
     return -1;
   }
 
-  return dispatchMessage(len, msgbuf, d_Fiducial_type);
+  return dispatchMessage(len, msgbuf, d_SetFiducial_type);
 }
 
-int nmr_Registration_Client::setGUIEnable(vrpn_bool enable)
+int nmr_Registration_Client::setGUIEnable(vrpn_bool enable, vrpn_int32 window)
 {
   char *msgbuf;
   vrpn_int32 len;
 
-  msgbuf = encode_EnableGUI(&len, (vrpn_int32)enable);
+  msgbuf = encode_EnableGUI(&len, (vrpn_int32)enable, window);
 
   if (!msgbuf) {
     return -1;
   }
 
   return dispatchMessage(len, msgbuf, d_EnableGUI_type);
+}
+
+int nmr_Registration_Client::setEditEnable(vrpn_bool addAndDelete, vrpn_bool move)
+{
+  char *msgbuf;
+  vrpn_int32 len;
+
+  msgbuf = encode_EnableEdit(&len, (vrpn_int32)addAndDelete, (vrpn_int32)move);
+
+  if (!msgbuf) {
+    return -1;
+  }
+
+  return dispatchMessage(len, msgbuf, d_EnableEdit_type);
 }
 
 int nmr_Registration_Client::enableAutoUpdate(vrpn_bool enable)

@@ -4,7 +4,7 @@
  This class implements a calibration algorithm for aligning three different
  coordinate systems. The coordinate systems are:
 
- AFM: defined by the concept of tip position for the AFM (depends on
+ AFM: defined by the tip position for the AFM (depends on
       any piezo non-linearity compensations and resulting piezo response to
       applied voltage when a position command is given) - this is usually
       a function of time but we will assume that the time dependence is
@@ -19,7 +19,7 @@
 #include "correspondence.h"
 
 // homogenous coordinates (4th element is typically 1.0)
-typedef double nmr_CalibrationPoint[4];
+typedef vrpn_float32 nmr_CalibrationPoint[4];
 
 class nmr_AFM_SEM_Calibration 
 {
@@ -102,9 +102,10 @@ class nmr_AFM_SEM_Calibration
   void updateSEMfromModel_3D();
 
   // step 8
-  // update d_AFMfromModel3DMatrix using d_SEMfromModel3DMatrix and
-  // d_SEMfromAFMMatrix
-  // d_SEMfromAFMMatrix*d_AFMfromModel3DMatrix = d_SEMfromModel3DMatrix
+  void updateModelPointsFromRotatedProjection();
+
+  // step 9
+  // update d_AFMfromModel3DMatrix
   void updateAFMfromModel_3D();
 
   // helper functions
@@ -115,6 +116,7 @@ class nmr_AFM_SEM_Calibration
   void computeProjectionDirection(double *matrix,
                                   double &vx, double &vy, double &vz);
   double getSurfaceHeight(double x, double y);
+  void findSurfaceIntersection(double *rayStart, double *dir, double *point);
 
   double d_projDirInAFM[4];
   double d_projDirInAFM_Rx, d_projDirInAFM_Rz;
@@ -169,6 +171,7 @@ class nmr_AFM_SEM_Calibration
   double d_AFMfromModel3DMatrix[16];
 
   nmr_SurfaceModel *d_model;
+
 };
 
 #endif

@@ -24,14 +24,20 @@ class nmr_Registration_ImplUI {
     nmr_Registration_ImplUI();
 
     ~nmr_Registration_ImplUI();
-    void enable(vrpn_bool enable);
+    void enable(vrpn_bool enable, vrpn_int32 window);
+	void enableEdit(vrpn_bool enableAddAndDelete, vrpn_bool enableMove);
     void registerImages();
     void mainloop();
 
     void newScanline(nmr_ImageType whichImage,
                                 vrpn_int32 row, nmb_Image *im);
+	void clearImage(nmr_ImageType whichImage);
 
     void setFiducial(vrpn_int32 replace, vrpn_int32 num,
+                     vrpn_float32 *x_src, vrpn_float32 *y_src,
+                     vrpn_float32 *z_src, vrpn_float32 *x_tgt, 
+                     vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
+	void getFiducial(vrpn_int32 &num,
                      vrpn_float32 *x_src, vrpn_float32 *y_src,
                      vrpn_float32 *z_src, vrpn_float32 *x_tgt, 
                      vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);

@@ -37,7 +37,7 @@ class nmr_Registration_Proxy {
     vrpn_int32 mainloop(void);
 
     vrpn_int32 setTransformationParameters(vrpn_float32 *parameters);
-    vrpn_int32 sendFiducial(vrpn_int32 replace, vrpn_int32 num,
+    vrpn_int32 setFiducial(vrpn_int32 replace, vrpn_int32 num,
                 vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
                 vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
     vrpn_int32 setResolutions(vrpn_int32 numLevels, vrpn_float32 *stddev);
@@ -46,7 +46,8 @@ class nmr_Registration_Proxy {
     vrpn_int32 setCurrentResolution(vrpn_int32 resolutionIndex);
     vrpn_int32 autoAlignImages(vrpn_int32 mode);
     
-    vrpn_int32 setGUIEnable(vrpn_bool enable);
+    vrpn_int32 setGUIEnable(vrpn_bool enable, vrpn_int32 window);
+	vrpn_int32 setEditEnable(vrpn_bool changeNumber, vrpn_bool changePosition);
     vrpn_int32 enableAutoUpdate(vrpn_bool enable);
     vrpn_int32 setColorMap(nmr_ImageType whichImage, nmb_ColorMap * cmap);
     vrpn_int32 setColorMinMax(nmr_ImageType whichImage, 

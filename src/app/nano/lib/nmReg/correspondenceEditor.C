@@ -40,6 +40,8 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im,
     grab_offset_y = 0;
     point_marker_dlist = 0;
     change_handler = NULL;
+	enableMovingPoints = vrpn_TRUE;
+	enableAddDeletePoints = vrpn_TRUE;
 }
 
 CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
@@ -61,10 +63,11 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
     winParam = new CorrespondenceWindowParameters[num_images];
     int i;
     for (i = 0; i < num_images; i++){
-	if (!win_names)
+		if (!win_names) {
         	sprintf(win_name, "data_registration%d", i);
-	else
-		sprintf(win_name, "%s", win_names[i]);
+		} else {
+			sprintf(win_name, "%s", win_names[i]);
+		}
         winParam[i].winID = 
              viewer->createWindow(display_name,i*110 + 200,200,
                                   100,100,win_name);
@@ -80,6 +83,8 @@ CorrespondenceEditor::CorrespondenceEditor(int num_im, char **win_names) {
     grab_offset_y = 0;
     point_marker_dlist = 0;
     change_handler = NULL;
+	enableMovingPoints = vrpn_TRUE;
+	enableAddDeletePoints = vrpn_TRUE;
 }
 
 // here is where user interaction is defined:
@@ -121,14 +126,14 @@ int CorrespondenceEditor::eventHandler(
                 //       grabbed_pnt.x,grabbed_pnt.y); 
                 me->draggingPoint = VRPN_TRUE;
                 me->viewer->toPixelsPnt(event.winID, &(grabbed_pnt.x),
-			&(grabbed_pnt.y));
+			          &(grabbed_pnt.y));
                 me->grab_offset_x = (int)(grabbed_pnt.x - event.mouse_x);
                 me->grab_offset_y = (int)(grabbed_pnt.y - event.mouse_y);
                 me->selectedPointIndex = me->grabbedPointIndex;
                 int i;
                 for (i = 0; i < me->num_images; i++)
                     me->viewer->dirtyWindow((me->winParam)[i].winID);
-            } else {
+            } else if (me->enableAddDeletePoints) {
                 // We are outside, create a new point. 
                 double x_im = event.mouse_x, y_im = event.mouse_y;
                 me->viewer->toImagePnt(event.winID, &x_im, &y_im);
@@ -156,7 +161,8 @@ int CorrespondenceEditor::eventHandler(
             // allow a 10 pixel tolerance for dragging outside the window to
             // make it easier for the user to set a point exactly on the 
             // border of the image without deleting it by accident
-            if(me->viewer->clampToWindow(event.winID, &x_im, &y_im) > 10) {
+            if(me->viewer->clampToWindow(event.winID, &x_im, &y_im) > 10 &&
+				me->enableAddDeletePoints) {
                 // If we dragged outside the window, delete the point. 
                 me->correspondence->deletePoint(me->selectedPointIndex);
                 me->selectedPointIndex = me->correspondence->numPoints()-1;
@@ -165,7 +171,9 @@ int CorrespondenceEditor::eventHandler(
                 for (i = 0; i < me->num_images; i++) {
                     me->viewer->dirtyWindow((me->winParam)[i].winID);
                 }
-            } else {
+			    me->draggingPoint = VRPN_FALSE;
+				me->notifyCallbacks();
+            } else if (me->enableMovingPoints) {
                 me->viewer->toImagePnt(event.winID, &x_im, &y_im);
                 corr_point_t p(x_im, y_im);
                 //printf("added point %g,%g\n", x_im, y_im);
@@ -173,37 +181,41 @@ int CorrespondenceEditor::eventHandler(
                                     me->grabbedPointIndex, p);
                 // moved point only affects active window. 
                 me->viewer->dirtyWindow(event.winID);
+			    me->draggingPoint = VRPN_FALSE;
+				me->notifyCallbacks();
             }
-            me->draggingPoint = VRPN_FALSE;
-            me->notifyCallbacks();
         } 
         break;
       case MOTION_EVENT:
-        if ((event.state & IV_LEFT_BUTTON_MASK) && me->draggingPoint) {
-            double x_im = event.mouse_x + me->grab_offset_x;
-            double y_im = event.mouse_y + me->grab_offset_y;
-            me->viewer->toImagePnt(event.winID, &x_im, &y_im);
-	    corr_point_t p(x_im, y_im);
-            me->correspondence->setPoint(spaceIndex, me->grabbedPointIndex, p);
-            me->viewer->dirtyWindow(event.winID);
-            me->notifyCallbacks();
-        }
+		  if (me->enableMovingPoints) {
+			if ((event.state & IV_LEFT_BUTTON_MASK) && me->draggingPoint) {
+				double x_im = event.mouse_x + me->grab_offset_x;
+				double y_im = event.mouse_y + me->grab_offset_y;
+				me->viewer->toImagePnt(event.winID, &x_im, &y_im);
+				corr_point_t p(x_im, y_im);
+				me->correspondence->setPoint(spaceIndex, me->grabbedPointIndex, p);
+				me->viewer->dirtyWindow(event.winID);
+				me->notifyCallbacks();
+			}
+		  }
         break;
       case KEY_PRESS_EVENT:
         //printf("CorrespondenceEditor: got a key: %d\n", event.keycode);
         if (event.keycode == 127 ||
 	    event.keycode == 8){ // 8 is for backspace, ^H. 
             // 127 for delete key. Delete key needs glut 3.7 or greater. 
-            if (me->correspondence->numPoints() > 0){
-                me->correspondence->deletePoint(me->selectedPointIndex);
-            }
-            me->selectedPointIndex = me->correspondence->numPoints()-1;
-            int i;
-            for (i = 0; i < me->num_images; i++) {
-                me->viewer->dirtyWindow((me->winParam)[i].winID);
-            }
-            // Allow update of the registration automatically. 
-            me->notifyCallbacks();
+			if (me->enableAddDeletePoints) {
+				if (me->correspondence->numPoints() > 0){
+					me->correspondence->deletePoint(me->selectedPointIndex);
+				}
+				me->selectedPointIndex = me->correspondence->numPoints()-1;
+				int i;
+				for (i = 0; i < me->num_images; i++) {
+					me->viewer->dirtyWindow((me->winParam)[i].winID);
+				}
+				// Allow update of the registration automatically. 
+				me->notifyCallbacks();
+			}
         } else if (event.keycode == 'z') {
           me->scaleImageRegion(event.winID, event.mouse_x, event.mouse_y, 0.5);
           me->viewer->dirtyWindow(event.winID);
@@ -316,7 +328,7 @@ int CorrespondenceEditor::displayHandler(
 {
     CorrespondenceEditor *me = (CorrespondenceEditor *)ud;
 
-    glClearColor(0.0, 0.0, 0.0,0.0);
+    glClearColor(0.0, 0.0, 0.9,0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // draw the image for this window:
     // but first figure out which image is displayed in this window
@@ -448,7 +460,7 @@ void CorrespondenceEditor::drawSelectionBox(int xp, int yp){
     glPopAttrib();
 }
 
-void CorrespondenceEditor::show() {
+void CorrespondenceEditor::showAll() {
     int i;
     for (i = 0; i < num_images; i++){
         viewer->showWindow(winParam[i].winID);
@@ -456,11 +468,20 @@ void CorrespondenceEditor::show() {
     //printf("CorrespondenceEditor: finished opening windows\n");
 }
 
-void CorrespondenceEditor::hide() {
+void CorrespondenceEditor::show(int spaceIndex) {
+	viewer->showWindow(winParam[spaceIndex].winID);
+    //printf("CorrespondenceEditor: finished opening windows\n");
+}
+
+void CorrespondenceEditor::hideAll() {
     int i;
     for (i = 0; i < num_images; i++){
         viewer->hideWindow(winParam[i].winID);
     }
+}
+
+void CorrespondenceEditor::hide(int spaceIndex) {
+	viewer->hideWindow(winParam[spaceIndex].winID);
 }
 
 void CorrespondenceEditor::clearFiducials()
@@ -500,24 +521,24 @@ void CorrespondenceEditor::addFiducial(float *x, float *y, float *z)
 }
 
 int CorrespondenceEditor::setImage(int spaceIndex, nmb_Image *im) {
-    int width, height;
+    int width = 100, height = 100;
     //int i,j;
-    int im_w, im_h;
+    int im_w = 100, im_h = 100;
     //double val;
 
     if (winParam[spaceIndex].im) {
       nmb_Image::deleteImage(winParam[spaceIndex].im);
+	  winParam[spaceIndex].im = NULL;
     }
-    winParam[spaceIndex].im = new nmb_ImageGrid(im);
-    winParam[spaceIndex].im->normalize();
+	if (im) {
+		winParam[spaceIndex].im = new nmb_ImageGrid(im);
+		winParam[spaceIndex].im->normalize();
+		height = (width*im->height())/(double)(im->width());
+		im_w = im->width();
+		im_h = im->height();
+	}
 
-    width = 300;
-    height = (width*im->height())/(double)(im->width());
-
-    im_w = im->width();
-    im_h = im->height();
-
-    viewer->setWindowSize(winParam[spaceIndex].winID, width, height);
+//    viewer->setWindowSize(winParam[spaceIndex].winID, width, height);
 /*
     viewer->setWindowImageSize(winParam[spaceIndex].winID, im_w, im_h);
     // printf("CorrespondenceEditor::setImage: \n");
@@ -686,6 +707,15 @@ int CorrespondenceEditor::setColorMinMax(int spaceIndex,
     viewer->dirtyWindow(winParam[spaceIndex].winID);
     return 0;
 }
+
+
+void CorrespondenceEditor::enableEdit(vrpn_bool addAndDelete, 
+										 vrpn_bool move)
+{
+	enableAddDeletePoints = addAndDelete;
+	enableMovingPoints = move;
+}
+
 
 // This is some driver code I used to test this stuff:
 /*main ()

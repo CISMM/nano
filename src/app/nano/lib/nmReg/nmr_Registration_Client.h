@@ -41,12 +41,13 @@ class nmr_Registration_Client : public nmb_Device_Client,
     /// with the image of the tip in the other image
     /// (this is information associated with but not visible in an
     ///  AFM image)
-    int sendFiducial(vrpn_int32 replace, vrpn_int32 num,
+    int setFiducial(vrpn_int32 replace, vrpn_int32 num,
                 vrpn_float32 *x_src, vrpn_float32 *y_src, vrpn_float32 *z_src,
                 vrpn_float32 *x_tgt, vrpn_float32 *y_tgt, vrpn_float32 *z_tgt);
 
     // make the windows visible on the remote display
-    int setGUIEnable(vrpn_bool enable);
+    int setGUIEnable(vrpn_bool enable, vrpn_int32 window);
+	int setEditEnable(vrpn_bool enableAddAndDelete, vrpn_bool enableMove);
     int enableAutoUpdate(vrpn_bool enable);
 
     // for auto-alignment
