@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <unistd.h>
 
 // HACK for select()
 #ifndef	__CYGWIN__
@@ -489,11 +490,14 @@ void main (int argc, char ** argv) {
     // allocate_nmb_String keeps us from trying to construct Tcl
     //   controllers.
 
+    char	myhostname[1000];
+    gethostname(myhostname, sizeof(myhostname));
     g_datasets[g_numMicroscopes] =
         new nmb_Dataset (vrpn_FALSE, 300, 300,
                          istate.xMin, istate.xMax, istate.yMin, istate.yMax,
                          istate.readingStreamFile ? READ_STREAM : READ_DEVICE,
-                         NULL, 0, allocate_nmb_String);
+                         NULL, 0, NULL, 0, myhostname, allocate_nmb_String,
+			 allocate_nmb_ListOfStrings, GTF);
 
     g_decorations[g_numMicroscopes] = new nmb_Decoration;
 
