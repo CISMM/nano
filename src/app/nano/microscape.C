@@ -405,8 +405,9 @@ Tclvar_int closeMicroscope("close_microscope", 0,
 
 // Deals with an image type for a screen capture
 /// Callback for screen capture
-static void handle_screenImageFileName_change(const char *new_value, void *userdata);
-const char *screenImage_formats_list[] = { "TIFF", "JPG", "BMP", "PPM", "PGM" };
+static void handle_screenImageFileName_change(const char *new_value, 
+					      void *userdata);
+const char* screenImage_formats_list[] = {"TIFF", "JPG", "BMP", "PPM", "PGM"};
 const int num_screenImage_formats = 5; 
 Tclvar_list_of_strings screenImage_formats("screenImage_format_list");
 
@@ -3888,64 +3889,57 @@ int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM)
 /// captures into. At this point, the type of file is known as well.
 static void handle_screenImageFileName_change (const char *, void *userdata)
 {
-   // See if the user has given a name other than ""
-   if (strlen(newScreenImageFileName.string()) > 0)
-   {
+  // See if the user has given a name other than ""
+  if (strlen(newScreenImageFileName.string()) > 0)
+    {
       nmg_Graphics *g = (nmg_Graphics *)(userdata);
-      
-
       int i;
       timeval start, end;
-//        fprintf(stderr, "handle_screenFileName_change:: "
-//                        "Saving screen to %s image '%s'\n",
-//                        screenImageFileType.string(),
-//                        newScreenImageFileName.string());
-
+      
       for (i = 0; i < num_screenImage_formats; i++)
-         if (!strcmp(screenImageFileType.string(), screenImage_formats_list[i]))
-            break;
-
+	if (!strcmp(screenImageFileType.string(), screenImage_formats_list[i]))
+	  break;
+      
       if (num_screenImage_formats == i) {
-         display_error_dialog( "Internal: Unknown image type '%s' chosen",
-                         screenImageFileType.string());
+	display_error_dialog( "Internal: Unknown image type '%s' chosen",
+			      screenImageFileType.string());
       } else {
-          gettimeofday(&start, NULL);
-
-	  // Pop the window to the front.
-	  // Use different methods for GLUT and for
-	  // GLX windows. 
+	gettimeofday(&start, NULL);
+	
+	// Pop the window to the front.
+	// Use different methods for GLUT and for
+	// GLX windows. 
 #ifdef V_GLUT
-          v_gl_set_context_to_vlib_window();
-	  glutPopWindow();
-          glutProcessEvents_UNC(); // make the window come to the front
+	v_gl_set_context_to_vlib_window();
+	glutPopWindow();
+	glutProcessEvents_UNC(); // make the window come to the front
 #else 
-	  XRaiseWindow(VLIB_dpy, VLIB_win);
-	  XEvent event;
-	  long event_mask = 0xFFFFFFFF;//StructureNotifyMask|ExposureMask;
-	  // Seems like the body of this loop never gets executed...
-	  while (XCheckWindowEvent(VLIB_dpy, VLIB_win,
-		event_mask, &event)) {
-		if (event.type == StructureNotifyMask) {
-			printf("structurenotify\n");
-		} else if (event.type == ExposureMask) {
-			printf("exposure\n");
-		} else {
-			printf("other\n");
-		}
+	XRaiseWindow(VLIB_dpy, VLIB_win);
+	XEvent event;
+	long event_mask = 0xFFFFFFFF;//StructureNotifyMask|ExposureMask;
+	// Seems like the body of this loop never gets executed...
+	while (XCheckWindowEvent(VLIB_dpy, VLIB_win,
+				 event_mask, &event)) {
+	  if (event.type == StructureNotifyMask) {
+	    printf("structurenotify\n");
+	  } else if (event.type == ExposureMask) {
+	    printf("exposure\n");
+	  } else {
+	    printf("other\n");
 	  }
+	}
 #endif
-	  decoration->drawScanLine = 0;
-	  graphics->mainloop();
-	  decoration->drawScanLine = 1;
-
-          g->createScreenImage(newScreenImageFileName.string(), (ImageType)i);
-          gettimeofday(&end, NULL);
-//            printf("Screen save time %f\n", (end.tv_usec - start.tv_usec)/1000000.0 +
-//  	        (end.tv_sec - start.tv_sec));
+	decoration->drawScanLine = 0;
+	graphics->mainloop();
+	decoration->drawScanLine = 1;
+	
+	g->createScreenImage(newScreenImageFileName.string(), 
+			     screenImageFileType.string() );
+	gettimeofday(&end, NULL);
       }
-   }
-
-   newScreenImageFileName = (const char *) "";
+    }
+  
+  newScreenImageFileName = (const char *) "";
 }
 
 static void handle_analyze_shape(vrpn_int32, void *)
@@ -4750,9 +4744,8 @@ void setupCallbacks (nmg_Graphics * g) {
   // make list of image types for screen captures
   for (int i = 0; i < num_screenImage_formats; i++)
      screenImage_formats.addEntry(screenImage_formats_list[i]);
-  //screenImageFileType.bindList(&screenImage_formats);
   screenImageFileType = (const char *)(screenImage_formats_list[0]);
-  // do call back when name chnages
+  // do call back when name changes
   newScreenImageFileName = (const char *) "";
   newScreenImageFileName.addCallback(handle_screenImageFileName_change, g);
 }
