@@ -1,12 +1,17 @@
+2003-02-15  Adam Seeger  <seeger@cs.unc.edu>
+
+	* imageViewer.C (drawImage): added new optional arguments to use
+	an openGL texture object ID
+
 2002-08-13  Adam Seeger  <seeger@cs.unc.edu>
 
-	* nmImageViewer.C (setGraphicsContext): new function
+	* ImageViewer.C (setGraphicsContext): new function
 	changed default clear color for opengl to something less likely to
 	be confused with 0 data
 
 2002-06-21  Adam Seeger  <seeger@cs.unc.edu>
 
-	* nmImageViewer.C: replaced GL_BACK_LEFT with GL_BACK so this
+	* ImageViewer.C: replaced GL_BACK_LEFT with GL_BACK so this
 	code works when stereo is enabled on the pc
 
 2002-03-21  Aron Helser  <helser@cs.unc.edu>

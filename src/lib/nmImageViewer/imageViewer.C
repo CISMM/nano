@@ -1041,7 +1041,8 @@ int ImageViewer::drawImage(int winID) {
 int ImageViewer::drawImage(int winID, nmb_Image *image, 
               double red, double green, double blue, double alpha,
               double *left, double *right, double *bottom, double *top, 
-              nmb_TransformMatrix44 *worldToImage)
+              nmb_TransformMatrix44 *worldToImage,
+			  unsigned int *textureID, vrpn_bool reload)
 {
     if (!validWinID(winID)) return -1;
     int win_index = get_window_index_from_winID(winID);
@@ -1093,7 +1094,10 @@ int ImageViewer::drawImage(int winID, nmb_Image *image,
                    window[win_index].win_height);
 
     if (image) {
-      if (shMag > 0.0001 || phiMag > 0.0001) {
+	  if (textureID) {
+		drawImageAsTexture(winID, image, red, green, blue, alpha, 
+                           l, r, b, t, W2I, textureID, reload);
+	  } else if (shMag > 0.0001 || phiMag > 0.0001) {
         drawImageAsTexture(winID, image, red, green, blue, alpha, 
                            l, r, b, t, W2I);
       } else { // try using glDrawPixels instead of texture-mapping
@@ -1113,7 +1117,8 @@ int ImageViewer::drawImage(int winID, nmb_Image *image,
 
 int ImageViewer::drawImageAsTexture(int winID, nmb_Image *image, 
       double red, double green, double blue, double alpha, 
-      double l, double r, double b, double t, nmb_TransformMatrix44 &W2I)
+      double l, double r, double b, double t, nmb_TransformMatrix44 &W2I,
+	  unsigned int *textureID, vrpn_bool reload)
 {
     int win_index = get_window_index_from_winID(winID);
   void *texture;
@@ -1158,31 +1163,36 @@ int ImageViewer::drawImageAsTexture(int winID, nmb_Image *image,
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, texwidth);
 
-    if (!colormap) {
+	if (textureID) {
+		glBindTexture(GL_TEXTURE_2D, *textureID);
+	}
+	if (!textureID || reload) {
+		if (!colormap) {
 
-        glPixelTransferf(GL_RED_SCALE, (float)red);
-        glPixelTransferf(GL_GREEN_SCALE, (float)green);
-        glPixelTransferf(GL_BLUE_SCALE, (float)blue);
-        glPixelTransferf(GL_ALPHA_SCALE, (float)alpha);
+			glPixelTransferf(GL_RED_SCALE, (float)red);
+			glPixelTransferf(GL_GREEN_SCALE, (float)green);
+			glPixelTransferf(GL_BLUE_SCALE, (float)blue);
+			glPixelTransferf(GL_ALPHA_SCALE, (float)alpha);
         
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-             texwidth, texheight, 0, GL_LUMINANCE,
-             pixType, texture);
-        glPixelTransferf(GL_RED_SCALE, 1.0);
-        glPixelTransferf(GL_GREEN_SCALE, 1.0);
-        glPixelTransferf(GL_BLUE_SCALE, 1.0);
-        glPixelTransferf(GL_ALPHA_SCALE, 1.0);
-    } else {
-        glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
-        glPixelMapfv(GL_PIXEL_MAP_R_TO_R, CMAP_SIZE_GL, window[win_index].rmap);
-        glPixelMapfv(GL_PIXEL_MAP_G_TO_G, CMAP_SIZE_GL, window[win_index].gmap);
-        glPixelMapfv(GL_PIXEL_MAP_B_TO_B, CMAP_SIZE_GL, window[win_index].bmap);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-             texwidth, texheight, 0, GL_LUMINANCE,
-             pixType, texture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+				 texwidth, texheight, 0, GL_LUMINANCE,
+				 pixType, texture);
+			glPixelTransferf(GL_RED_SCALE, 1.0);
+			glPixelTransferf(GL_GREEN_SCALE, 1.0);
+			glPixelTransferf(GL_BLUE_SCALE, 1.0);
+			glPixelTransferf(GL_ALPHA_SCALE, 1.0);
+		} else {
+			glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
+			glPixelMapfv(GL_PIXEL_MAP_R_TO_R, CMAP_SIZE_GL, window[win_index].rmap);
+			glPixelMapfv(GL_PIXEL_MAP_G_TO_G, CMAP_SIZE_GL, window[win_index].gmap);
+			glPixelMapfv(GL_PIXEL_MAP_B_TO_B, CMAP_SIZE_GL, window[win_index].bmap);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+				 texwidth, texheight, 0, GL_LUMINANCE,
+				 pixType, texture);
         
-        glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
-    }
+			glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
+		}
+	}
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

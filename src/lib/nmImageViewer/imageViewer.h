@@ -212,7 +212,8 @@ class ImageViewer {
               double blue = 1.0, double alpha = 1.0,
               double *left = NULL, double *right = NULL, 
               double *bottom = NULL, double *top = NULL,
-              nmb_TransformMatrix44 *worldToImage = NULL);
+              nmb_TransformMatrix44 *worldToImage = NULL,
+			  unsigned int *textureID = NULL, vrpn_bool reload = vrpn_TRUE);
     /// utility function that draws a string in some default font at a given
     /// location in the image
     int drawString(int x, int y, char *str);
@@ -297,7 +298,8 @@ class ImageViewer {
 
     int drawImageAsTexture(int winID, nmb_Image *image,
       double red, double green, double blue, double alpha,
-      double l, double r, double b, double t, nmb_TransformMatrix44 &W2I);
+      double l, double r, double b, double t, nmb_TransformMatrix44 &W2I,
+	  unsigned int *textureID = NULL, vrpn_bool reload = vrpn_TRUE);
     int drawImageAsPixels(int winID, nmb_Image *image,
       double red, double green, double blue, double alpha,
       double l, double r, double b, double t,
