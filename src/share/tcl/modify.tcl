@@ -808,12 +808,16 @@ proc flip_mod_tool {mod_tool element op} {
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_line_list {pack $widg -side top -fill x -pady $fspady}
+	foreach widg $mod_control_list {pack forget $widg}
+	foreach widg $mod_control_list {pack $widg -side top -fill x}
         # Hide the controls for slow_line tool
         hide.modify_live
     } elseif {$k==2} {
 	# selected constrained freehand
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
+	foreach widg $mod_control_list {pack forget $widg}
+	foreach widg $mod_control_list {pack $widg -side top -fill x}
         # Hide the controls for slow_line tool
         hide.modify_live
     } elseif {$k==3} {
@@ -829,14 +833,14 @@ proc flip_mod_tool {mod_tool element op} {
 	set plist [lrange [pack slaves $nmInfo(modifyfull).toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_slow_line_list {pack $widg -side top -fill x -pady $fspady}
-#	foreach widg $mod_control_list {pack forget $widg}
-#	foreach widg $mod_control_list {pack $widg -side top -fill x}
+	foreach widg $mod_control_list {pack forget $widg}
+	foreach widg $mod_control_list {pack $widg -side top -fill x}
         show.modify_live
     } elseif {$k==5} {
 	# selected slow line 3d
 	# anyone want to make this more elegant?
-#	foreach widg $mod_control_list {pack forget $widg}
-#	foreach widg $mod_control_list {pack $widg -side top -fill x}
+	foreach widg $mod_control_list {pack forget $widg}
+	foreach widg $mod_control_list {pack $widg -side top -fill x}
 	foreach widg $constr_xyz_param_list {pack forget $widg}
 	set plist [lrange [pack slaves $nmInfo(modifyfull).control] 1 1]
 	foreach widg $plist {pack forget $widg}

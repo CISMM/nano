@@ -582,8 +582,17 @@ describe_gl_vertex(const nmb_PlaneSelection & planes,
   }
 
   if (planes.opacity) {
+
     float opacity_value = (planes.opacity->value(x, y) - g_opacity_slider_min) /
 	(g_opacity_slider_max - g_opacity_slider_min);      
+    /*
+    float data_value = planes.opacity->value(x,y);
+    data_value = (data_value - planes.opacity->minNonZeroValue()) / 
+      (planes.opacity->maxNonZeroValue() - planes.opacity->minNonZeroValue());
+    data_value = data_value * (g_opacity_slider_max - g_opacity_slider_min) + 
+      g_opacity_slider_min;
+    float opacity_value = data_value;
+    */
     if (g_VERTEX_ARRAY) {
       vertexArray.Color[3] = (GLubyte) min(255.0, opacity_value);
     } else {

@@ -1,3 +1,7 @@
+2000-08-17  Kwan Torrich Skinner  <skinner@cs.unc.edu>
+
+	* nmtc_TipConvolution.C (CreateConvolutionImage): Killed some compiler warnings.
+
 2000-08-14  Jeffrey Juliano  <juliano@cs.unc.edu>
 
 	* nmtc_TipConvolution.C (nmtc_TipConvolution): Add newline to
