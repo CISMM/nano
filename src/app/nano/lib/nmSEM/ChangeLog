@@ -1,3 +1,7 @@
+2001-12-20  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* Makefile:  remove ImgFormat from USES_LIBS
+
 2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* nmui_SEM.C (handle_texture_display_change) : 

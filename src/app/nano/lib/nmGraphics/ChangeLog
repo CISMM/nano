@@ -1,3 +1,7 @@
+2001-12-20  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* Makefile:  remove ImgFormat from USES_LIBS
+
 2001-12-19  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* nmg_Graphics.Ch: (createScreenImage) changed the signature

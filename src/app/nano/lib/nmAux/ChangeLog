@@ -1,3 +1,7 @@
+2001-12-20  David Marshburn  <marshbur@evans.cs.unc.edu>
+
+	* Makefile:  remove ImgFormat from USES_LIBS
+
 2001-12-12    <marshbur@cs.unc.edu>
 
 	* nma_Keithley2400.C (getTimeSinceConnected): changed the return
