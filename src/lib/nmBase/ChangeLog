@@ -1,3 +1,7 @@
+2003-03-31  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_Image.C : changed file format names to match those used by ImgMagick
+
 2003-02-27  Adam Seeger  <seeger@cs.unc.edu>
 
    * nmb_ImageMagick.C (writeFileMagick): there are three versions of this

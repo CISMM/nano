@@ -697,12 +697,12 @@ void nmb_Image::triggerChangeHandlers()
 
 const int nmb_ImageGrid::num_export_formats = 7;
 const char *nmb_ImageGrid::export_formats_list[] = {	"ThermoMicroscopes",
-                                 		"TIFF Image",
-                                 		"PPM Image",
-                                 		"Other Image",
+                                 		"TIFF",
+                                 		"PPM",
+                                 		"Other",
                                  		"Text(MathCAD)",
                                  		"SPIP",
-                                 		"UNCA Image" };
+                                 		"UNCA" };
 const nmb_ImageGrid::FileExportingFunction 
 	nmb_ImageGrid::file_exporting_function[] = 
 				{nmb_ImageGrid::writeTopoFile,
