@@ -438,6 +438,7 @@ void nmui_AFM_SEM_CalibrationUI::addContactPoint(
 		d_contactPointList.clearList();
 	}
 	d_contactPointList.addEntry(selectorEntry);
+	d_currentContactPoint.Set(selectorEntry);
 	updateInputStatus();
 }
 
@@ -466,6 +467,7 @@ void nmui_AFM_SEM_CalibrationUI::addFreePoint(
 		d_freePointList.clearList();
 	}
 	d_freePointList.addEntry(selectorEntry);
+	d_currentFreePoint.Set(selectorEntry);
 	updateInputStatus();
 }
 
@@ -1209,6 +1211,7 @@ void nmui_AFM_SEM_CalibrationUI::handle_generateTestData_change(
 
 int nmui_AFM_SEM_CalibrationUI::finishedFreehandHandler()
 {
+	fprintf(stderr, "nmui_AFM_SEM_CalibrationUI::finishedFreehandHandler()\n");
 	if (d_windowOpen) {
 	  fprintf(stderr, "nmui_AFM_SEM_CalibrationUI: auto-acquiring calibration point\n");
 	  if (d_SEM) {
@@ -1273,6 +1276,7 @@ void nmui_AFM_SEM_CalibrationUI::semDataHandler(void *userdata,
 int nmui_AFM_SEM_CalibrationUI::semSynchHandler (void *userdata,
                                         const nmb_SynchMessage *data)
 {
+	fprintf(stderr, "nmui_AFM_SEM_CalibrationUI::semSynchHandler\n");
 	nmui_AFM_SEM_CalibrationUI *me = (nmui_AFM_SEM_CalibrationUI *)userdata;
 	if (strcmp(data->comment, SCAN_COMPLETION_MESSAGE) == 0) {
 		if (me->d_registrationMode == me->d_registrationMode_AFM_SEM_contact) {
