@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "../../../../../obj/pc_win32/debug/app/nano/lib/nmReg"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /GX /Zi /Od /I "." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\nmImageViewer" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\..\..\quat" /I "..\..\..\..\lib\nmMP" /I "..\nmGraphics" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\lib\ImgFormat" /I "..\..\..\..\..\..\vogl" /I "..\..\..\..\lib\tcllinkvar" /I "..\.." /I "..\nmUI" /D "NDEBUG" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /FD /GZ /TP /c
+# ADD CPP /nologo /MTd /W3 /GX /Zi /Od /I "." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\nmImageViewer" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\..\..\quat" /I "..\..\..\..\lib\nmMP" /I "..\nmGraphics" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\lib\ImgFormat" /I "..\..\..\..\..\..\vogl" /I "..\..\..\..\lib\tcllinkvar" /I "..\.." /I "..\nmUI" /D "NDEBUG" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /FR /YX /FD /GZ /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
