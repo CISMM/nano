@@ -1,7 +1,9 @@
 #include "correspondence.h"
-#include "stdlib.h"
-#include "nmb_Types.h"	// for vrpn_bool
-#include "math.h"	// for fabs()
+
+#include <stdlib.h>
+#include <math.h>	// for fabs()
+
+#include <nmb_Types.h>	// for vrpn_bool
 
 Correspondence::Correspondence()
 {

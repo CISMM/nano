@@ -1,8 +1,8 @@
 #ifndef NMR_REGISTRATION_INTERFACE_H
 #define NMR_REGISTRATION_INTERFACE_H
 
-#include "vrpn_Connection.h"
-#include "vrpn_Types.h"
+#include <vrpn_Connection.h>
+#include <vrpn_Types.h>
 
 /**
    design:

@@ -1,5 +1,7 @@
 #include "correspondence.h"
-#include "nmb_Types.h"       // for vrpn_bool
+
+#include <nmb_Types.h>       // for vrpn_bool
+
 #include "nmr_Registration_Interface.h"
 
 // this tells you how many points you need in the Correspondence which

@@ -1,7 +1,7 @@
 #ifndef NMR_GAUSSIAN
 #define NMR_GAUSSIAN
 
-#include "vrpn_Types.h"
+#include <vrpn_Types.h>
 
 class nmr_Gaussian {
  public:

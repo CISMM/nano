@@ -1,9 +1,9 @@
 #ifndef CORRESPONDENCE_H
 #define CORRESPONDENCE_H
 
-#include "nmb_Types.h"  // for vrpn_bool
-#include "BCPlane.h"
-#include "nmb_Image.h"
+#include <nmb_Types.h>  // for vrpn_bool
+#include <BCPlane.h>
+#include <nmb_Image.h>
 
 class corr_point_t {
   public:
