@@ -5,6 +5,8 @@
 #include <UTree.h>
 #include <URPolygon.h>
 #include <URTexture.h>
+#include <URSpider.h>
+#include <URWaveFront.h>
 #include <FileGenerator.h>
 #include <MSIFileGenerator.h>
 
@@ -157,7 +159,7 @@ static void handle_current_object(const char*, void*) {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
 			URender &obj = node->TGetContents();
-			
+
 			import_scale = obj.GetLocalXform().GetScale();
 
 			const q_vec_type &v = obj.GetLocalXform().GetTrans();
@@ -185,20 +187,27 @@ static void handle_current_object(const char*, void*) {
 			import_lock_object = obj.GetLockObject();
 			import_lock_texture = obj.GetLockTexture();
 
-			import_CCW = obj.GetCCW();
-
-			import_update_AFM = obj.GetUpdateAFM();
-
-			import_grab_object = obj.GetGrabObject();
-
 			import_tune_trans = obj.GetTuneTrans();
 			import_tune_rot = obj.GetTuneRot();
 
-			// if spider...
-			if (strcmp(*World.current_object, "spider.spi") == 0) {
+			import_grab_object = obj.GetGrabObject();
+
+			// if wavefront
+			if (obj.GetType() == URWAVEFRONT) {
+				URWaveFront* wave = (URWaveFront*)&obj;
+				import_CCW = wave->GetCCW();
+			}
+			// if tube file
+			else if (obj.GetType() == URTUBEFILE) {
+				URTubeFile* tube = (URTubeFile*)&obj;
+				import_update_AFM = tube->GetUpdateAFM();
+			}
+			// if spider
+			else if (obj.GetType() == URSPIDER) {
+				URSpider* spi = (URSpider*)&obj;
 				char buf[2];
 				spider_which_leg.addEntry("all");
-				for (int i = 0; i < obj.GetSpiderLegs(); i++) {
+				for (int i = 0; i < spi->GetSpiderLegs(); i++) {
 					sprintf(buf, "%d", i + 1);
 					spider_which_leg.addEntry(buf);
 				}
@@ -207,19 +216,19 @@ static void handle_current_object(const char*, void*) {
 
 					// don't do anything--we don't want all legs set to the same value inadvertently
 					/*
-					spider_length = obj.GetSpiderLength(0);
-					spider_width = obj.GetSpiderWidth(0);
-					spider_thick = obj.GetSpiderThick(0);
-					spider_tess = obj.GetSpiderTess(0);
-					spider_curve = Q_RAD_TO_DEG(obj.GetSpiderCurve(0));
+					spider_length = spi->GetSpiderLength(0);
+					spider_width = spi->GetSpiderWidth(0);
+					spider_thick = spi->GetSpiderThick(0);
+					spider_tess = spi->GetSpiderTess(0);
+					spider_curve = Q_RAD_TO_DEG(spi->GetSpiderCurve(0));
 					*/
 				}
 				else {
-					spider_length = obj.GetSpiderLength(current_leg);
-					spider_width = obj.GetSpiderWidth(current_leg);
-					spider_thick = obj.GetSpiderThick(current_leg);
-					spider_tess = obj.GetSpiderTess(current_leg);
-					spider_curve = Q_RAD_TO_DEG(obj.GetSpiderCurve(current_leg));
+					spider_length = spi->GetSpiderLength(current_leg);
+					spider_width = spi->GetSpiderWidth(current_leg);
+					spider_thick = spi->GetSpiderThick(current_leg);
+					spider_tess = spi->GetSpiderTess(current_leg);
+					spider_curve = Q_RAD_TO_DEG(spi->GetSpiderCurve(current_leg));
 				}
 			}
 		}
@@ -234,39 +243,77 @@ static void handle_import_file_change (const char *, void *) {
 	char* name;
 	char* c;
 
+	URPolygon* obj;
     if (modelFile.string()) {  
         if (strcmp(modelFile.string(),"") != 0) {	// open the file
             //Only try to create the object if there is a file specified.
-            URPolygon *obj = new URPolygon;
-			obj->SetCCW(import_CCW);
-			obj->SetTess(import_tess);
-			obj->SetAxisStep(import_axis_step);
-			for (int i = 0; i < spider_legs; i++) {
-				obj->SetSpiderLength(i, spider_length);
-				obj->SetSpiderWidth(i, spider_width);
-				obj->SetSpiderThick(i, spider_thick);
-				obj->SetSpiderTess(i, spider_tess);
-				obj->SetSpiderCurve(i, Q_DEG_TO_RAD(spider_curve));
-			}
-			obj->SetSpiderLegs(spider_legs);
+
 			FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
             import_type = gen->GetExtension();
+
+			if (strcmp(import_type, "obj") == 0) {
+				// create as a wavefront object
+				obj = new URWaveFront;
+			}
+			else if (import_type == "spi") {
+				// create as a spider object
+			printf("spi\n");
+				obj = new URSpider;
+			}
+			else if (strstr(modelFile.string(), "txt") != 0) {
+				// create as a tube file object
+				obj = new URTubeFile;
+			}
+			else {
+				// default to polygon object
+				obj = new URPolygon;
+			}
+
+			// set up variables dependent on the object type
+			if (obj->GetType() == URWAVEFRONT) {
+				// set up wavefront stuff
+				URWaveFront* wave = (URWaveFront*)obj;
+				wave->SetCCW(import_CCW);
+			}
+			else if (obj->GetType() == URSPIDER) {
+				// set up spider stuff
+				URSpider* spi = (URSpider*)obj;
+				for (int i = 0; i < spider_legs; i++) {
+					spi->SetSpiderLength(i, spider_length);
+					spi->SetSpiderWidth(i, spider_width);
+					spi->SetSpiderThick(i, spider_thick);
+					spi->SetSpiderTess(i, spider_tess);
+					spi->SetSpiderCurve(i, Q_DEG_TO_RAD(spider_curve));
+				}
+				spi->SetSpiderLegs(spider_legs);
+			}
+			else if (obj->GetType() == URTUBEFILE) {
+				// set up tube file stuff
+				URTubeFile* tube = (URTubeFile*)obj;
+				tube->SetTess(import_tess);
+				tube->SetAxisStep(import_axis_step);
+			}
+
+			// load the geometry for the object
 			obj->LoadGeometry(gen);
-			if (strstr(modelFile.string(), ".spi") != 0 && strcmp(modelFile.string(), "/spider.spi") != 0) {
+
+			if (obj->GetType() == URSPIDER && strcmp(modelFile.string(), "/spider.spi") != 0) {
 				// this is a spider loaded from a file.  change the name and set the number of spider legs
 				modelFile = "/spider.spi";
 				spider_legs = current_leg + 1;
 			}
+
+
+			// set up various variables
             obj->SetVisibility(import_visibility);
 			obj->SetProjText(import_proj_text);
 			obj->SetLockObject(import_lock_object);
 			obj->SetLockTexture(import_lock_texture);
+
 			// only allow update_AFM for .txt files
-			if (strstr(modelFile.string(), ".txt") != 0) {
-				obj->SetUpdateAFM(1);
-			}
-			else {
-				obj->SetUpdateAFM(0);
+			if (obj->GetType() == URTUBEFILE) {
+				URTubeFile* tube = (URTubeFile*)obj;
+				tube->SetUpdateAFM(1);
 			}
 			obj->SetGrabObject(import_grab_object);
 	        obj->SetColor3(convert * import_r, convert * import_g, convert * import_b);
@@ -296,14 +343,18 @@ when loading
 			World.TAddNode(obj, c + 1);
 
 			// if a tube file, send to simulator
-			if ((strstr(name, ".txt") != 0) && (SimulatedMicroscope != NULL)) {
-				SimulatedMicroscope->sendCylinders(obj);
+			if ((obj->GetType() == URTUBEFILE) && (SimulatedMicroscope != NULL)) {
+				URTubeFile* tube = (URTubeFile*)obj;
+				SimulatedMicroscope->sendCylinders(tube);
 			}
 			
 			*World.current_object = name;
 
 			// had to put this here so that the correct current_object is used
-			import_update_AFM = obj->GetUpdateAFM();
+			if (obj->GetType() == URTUBEFILE) {
+				URTubeFile* tube = (URTubeFile*)obj;
+				import_update_AFM = tube->GetUpdateAFM();
+			}
 
 			delete name;
         }
@@ -317,12 +368,10 @@ when loading
 
 			    node->TGetParent()->TRemoveTreeNode(node);
 	
-
 				imported_objects.deleteEntry(*World.current_object);
 				// put "all" back at the end
 				imported_objects.deleteEntry("all");
 				imported_objects.addEntry("all");
-
 
 				if (imported_objects.numEntries() == 1) {
 					imported_objects.deleteEntry("all");
@@ -401,35 +450,40 @@ static  void handle_import_lock_texture (vrpn_int32, void *)
 
 static  void handle_import_update_AFM (vrpn_int32, void *)
 {
-	// only do on a per object basis...only allow for .txt files
+
+// ONLY NEED FOR TUBE OBJECTS...FOR NOW
+
+
+
+	// only do on a per object basis...
 
 	// if all selected, do nothing
-	if (strcmp(*World.current_object, "all") != 0 &&
-		strstr(*World.current_object, ".txt") != 0) {
-
+	if (strcmp(*World.current_object, "all") != 0) {
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
-			URender &obj = node->TGetContents();
-			obj.SetUpdateAFM(import_update_AFM);
+			if (node->TGetContents().GetType() == URTUBEFILE) {
+				URTubeFile &tube = (URTubeFile&)node->TGetContents();
+				tube.SetUpdateAFM(import_update_AFM);
 
-			// do update
-			if (SimulatedMicroscope != NULL &&
-				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendScale(obj.GetLocalXform().GetScale());
-				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
-															obj.GetLocalXform().GetTrans()[1],
-															obj.GetLocalXform().GetTrans()[2]);
-				q_vec_type q;
-				q_to_euler(q,obj.GetLocalXform().GetRot());
-				SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
-				cout << "rot Sent: " << "x: " << q[2] << "\ty: " << q[1] << "\tz: " << q[0] << endl;
-				
+				// do update
+				if (SimulatedMicroscope != NULL &&
+					tube.GetUpdateAFM()) {
+					SimulatedMicroscope->encode_and_sendScale(tube.GetLocalXform().GetScale());
+					SimulatedMicroscope->encode_and_sendTrans(tube.GetLocalXform().GetTrans()[0],
+																tube.GetLocalXform().GetTrans()[1],
+																tube.GetLocalXform().GetTrans()[2]);
+					q_vec_type q;
+					q_to_euler(q, tube.GetLocalXform().GetRot());
+					SimulatedMicroscope->encode_and_sendRot(q[0],q[1],q[2]);
+					cout << "rot Sent: " << "x: " << q[2] << "\ty: " << q[1] << "\tz: " << q[0] << endl;
+					
+				}
+				return;
 			}
 		}
 	}
-	else {
-		import_update_AFM = 0;
-	}
+	// if we get here, it is not a tube file, so set to 0
+	import_update_AFM = 0;
 }
 
 static  void handle_import_grab_object (vrpn_int32, void *)
@@ -455,25 +509,27 @@ static  void handle_import_CCW (vrpn_int32, void *)
 {
     UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
-        URender &obj = node->TGetContents();
+        URWaveFront &obj = (URWaveFront&)node->TGetContents();
         obj.SetCCW(import_CCW);
     }
 }
 
+// For Tube Files
 static  void handle_import_tess_change (vrpn_int32, void *)
 {
     UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
-        URender &obj = node->TGetContents();
+        URTubeFile &obj = (URTubeFile&)node->TGetContents();
         obj.SetTess(import_tess);
     }
 }
 
+// For Tube Files
 static  void handle_import_axis_step_change (vrpn_int32, void *)
 {
     UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
-        URender &obj = node->TGetContents();
+        URTubeFile &obj = (URTubeFile&)node->TGetContents();
         obj.SetAxisStep(import_axis_step);
     }
 }
@@ -492,10 +548,12 @@ static  void handle_import_scale_change (vrpn_float64, void *)
 			obj.GetLocalXform().SetScale(import_scale);
 
 			// if a tube file and update_AFM selected, send scale
-			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL) &&
-				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendScale(import_scale);
+			if (obj.GetType() == URTUBEFILE && 
+				SimulatedMicroscope != NULL) {
+				URTubeFile* tube = (URTubeFile*)&obj;
+				if (tube->GetUpdateAFM()) {
+					SimulatedMicroscope->encode_and_sendScale(import_scale);
+				}
 			}
 		}
 	}
@@ -518,12 +576,14 @@ static  void handle_import_transx_change (vrpn_float64, void *)
 			obj.GetLocalXform().SetTranslate(import_transx, trans[1], trans[2]);
 			
 			// if a tube file and update_AFM selected, send trans
-			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL) &&
-				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+			if (obj.GetType() == URTUBEFILE && 
+				SimulatedMicroscope != NULL) {
+				URTubeFile* tube = (URTubeFile*)&obj;
+				if (tube->GetUpdateAFM()) {
+					SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
 															obj.GetLocalXform().GetTrans()[1],
 															obj.GetLocalXform().GetTrans()[2]);
+				}
 			}
 		}
     }
@@ -546,12 +606,14 @@ static  void handle_import_transy_change (vrpn_float64, void *)
 			obj.GetLocalXform().SetTranslate(trans[0], import_transy, trans[2]);
 			
 			// if a tube file and update_AFM selected, send trans
-			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL) &&
-				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+			if (obj.GetType() == URTUBEFILE && 
+				SimulatedMicroscope != NULL) {
+				URTubeFile* tube = (URTubeFile*)&obj;
+				if (tube->GetUpdateAFM()) {
+					SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
 															obj.GetLocalXform().GetTrans()[1],
 															obj.GetLocalXform().GetTrans()[2]);
+				}
 			}
 		}
     }
@@ -574,12 +636,14 @@ static  void handle_import_transz_change (vrpn_float64, void *)
 			obj.GetLocalXform().SetTranslate(trans[0], trans[1], import_transz);
 						
 			// if a tube file and update_AFM selected, send trans
-			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL) &&
-				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
+			if (obj.GetType() == URTUBEFILE && 
+				SimulatedMicroscope != NULL) {
+				URTubeFile* tube = (URTubeFile*)&obj;
+				if (tube->GetUpdateAFM()) {
+					SimulatedMicroscope->encode_and_sendTrans(obj.GetLocalXform().GetTrans()[0],
 															obj.GetLocalXform().GetTrans()[1],
 															obj.GetLocalXform().GetTrans()[2]);
+				}
 			}
 		}
     }
@@ -617,11 +681,13 @@ static  void handle_import_rot_change (vrpn_float64, void *)
 			obj.GetLocalXform().SetRotate(rot[0], rot[1], rot[2], rot[3]);
 						
 			// if a tube file and update_AFM selected, send rot
-			if ((strstr(*World.current_object, ".txt") != 0) && 
-				(SimulatedMicroscope != NULL) &&
-				obj.GetUpdateAFM()) {
-				SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
-				cout << "rot Sent: " << "x: " << euler[2] << "\ty: " << euler[1] << "\tz: " << euler[0] << endl;
+			if (obj.GetType() == URTUBEFILE && 
+				SimulatedMicroscope != NULL) {
+				URTubeFile* tube = (URTubeFile*)&obj;
+				if (tube->GetUpdateAFM()) {
+					SimulatedMicroscope->encode_and_sendRot(euler[0], euler[1], euler[2]);
+					cout << "rot Sent: " << "x: " << euler[2] << "\ty: " << euler[1] << "\tz: " << euler[0] << endl;
+				}
 			}
 		}
     }
@@ -831,7 +897,7 @@ static void handle_spider_current_leg(const char*, void*)
 
 		UTree *node = World.TGetNodeByName(*World.current_object);
 		if (node != NULL) {
-			URender &obj = node->TGetContents();
+			URSpider &obj = (URSpider&)node->TGetContents();
 			spider_length = obj.GetSpiderLength(current_leg);
 			spider_width = obj.GetSpiderWidth(current_leg);
 			spider_thick = obj.GetSpiderThick(current_leg);
@@ -845,7 +911,7 @@ static  void handle_spider_length_change (vrpn_float64, void *)
 {
 	if (strcmp(*World.current_object, "spider.spi") == 0) {
 		UTree *node = World.TGetNodeByName("spider.spi");
-		URender &obj = node->TGetContents();
+		URSpider &obj = (URSpider&)node->TGetContents();
 	
 		if (current_leg == -1) {
 			// do for all
@@ -864,7 +930,7 @@ static  void handle_spider_width_change (vrpn_float64, void *)
 {
 	if (strcmp(*World.current_object, "spider.spi") == 0) {
 		UTree *node = World.TGetNodeByName("spider.spi");
-		URender &obj = node->TGetContents();
+		URSpider &obj = (URSpider&)node->TGetContents();
 		
 		if (current_leg == -1) {
 			// do for all
@@ -883,7 +949,7 @@ static  void handle_spider_thick_change (vrpn_float64, void *)
 {
 	if (strcmp(*World.current_object, "spider.spi") == 0) {
 		UTree *node = World.TGetNodeByName("spider.spi");
-		URender &obj = node->TGetContents();
+		URSpider &obj = (URSpider&)node->TGetContents();
 		
 		if (current_leg == -1) {
 			// do for all
@@ -902,7 +968,7 @@ static  void handle_spider_tess_change (vrpn_int32, void *)
 {
 	if (strcmp(*World.current_object, "spider.spi") == 0) {
 		UTree *node = World.TGetNodeByName("spider.spi");
-		URender &obj = node->TGetContents();
+		URSpider &obj = (URSpider&)node->TGetContents();
 		
 		if (current_leg == -1) {
 			// do for all
@@ -921,7 +987,7 @@ static  void handle_spider_curve_change (vrpn_float64, void *)
 {
 	if (strcmp(*World.current_object, "spider.spi") == 0) {
 		UTree *node = World.TGetNodeByName("spider.spi");
-		URender &obj = node->TGetContents();
+		URSpider &obj = (URSpider&)node->TGetContents();
 		
 		if (current_leg == -1) {
 			// do for all
@@ -940,7 +1006,7 @@ static  void handle_spider_legs_change (vrpn_int32, void *)
 {
 	if (strcmp(*World.current_object, "spider.spi") == 0) {
 		UTree *node = World.TGetNodeByName("spider.spi");
-		URender &obj = node->TGetContents();
+		URSpider &obj = (URSpider&)node->TGetContents();
 
 		// update the list of strings
 		int i;
@@ -970,7 +1036,7 @@ static void handle_spider_filename_change (const char*, void*)
 		UTree *node = World.TGetNodeByName("spider.spi");
 
 		if (node != NULL) {
-			URender &obj = node->TGetContents();
+			URSpider &obj = (URSpider&)node->TGetContents();
 
 			if (strstr(spider_filename, "spider.spi") != 0) {
 				printf("Can't use filename \"spider.spi\".  Save under a different name\n");

@@ -159,6 +159,7 @@ pid_t getpid();
 #include "UTree.h"
 #include "URAxis.h"
 #include "URTexture.h"
+//#include "URTubeFile.h"
 
 // UGraphics made us depend explicitly on vlib again in this file (?)
 #include <v.h>
@@ -3340,8 +3341,16 @@ static void startSimulatedMicroscope(){
 				connection, SimScanStoredPlaneName, dataset);
 		}
 		else{
-			SimulatedMicroscope = new nmm_SimulatedMicroscope_Remote(SimScanIPAddress, 
-				connection, SimScanStoredPlaneName, dataset, &object->TGetContents());
+			if (object->TGetContents().GetType() == URTUBEFILE) {
+				// send tube
+				URTubeFile& tube = (URTubeFile&)object->TGetContents();
+				SimulatedMicroscope = new nmm_SimulatedMicroscope_Remote(SimScanIPAddress, 
+					connection, SimScanStoredPlaneName, dataset, &tube);
+			}
+			else {
+				SimulatedMicroscope = new nmm_SimulatedMicroscope_Remote(SimScanIPAddress, 
+					connection, SimScanStoredPlaneName, dataset);
+			}
 		}
 	}
 	else{
