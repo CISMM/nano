@@ -1303,7 +1303,9 @@ static char     *MODE_NAMES[] = {
                         "comb",
                         "center texture",
                         "line scan",
-			"region select" };
+			"region select",
+			"cross section"
+ };
 
 int make_collab_hand_icon (double pos[], double rotate[], int mode) {
   v_xform_type headxform;
@@ -1318,8 +1320,9 @@ int make_collab_hand_icon (double pos[], double rotate[], int mode) {
   glNewList(collab_hand_struct, GL_COMPILE);
     glColor4f(1.0, 1.0, 1.0, 1.0);
     glRasterPos3d(pos[0], pos[1], pos[2]);
-    drawStringInFont(myfont, MODE_NAMES[mode]);
-    glTranslated(pos[0], pos[1], pos[2]);
+    drawStringInFont(myfont, MODE_NAMES[mode]);//seok
+	printf("----- ---- MODE_NAME is %s mode is %d \n", MODE_NAMES[mode], mode);
+    glTranslated(pos[0], pos[1], pos[2]); 
     glMultMatrixd(rot_mat);
     glColor3f(1.0, 0.2, 0.2);
 
