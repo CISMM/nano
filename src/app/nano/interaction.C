@@ -1506,6 +1506,8 @@ double touch_live_to_plane_fit_to_line(int whichUser, q_vec_type handpos)
 
 /**
  *
+ * OBSOLETE, or I assume so, because it's based on blunt_result, and
+no one fills that in anymore. 
    plane_norm - Apply force to user based on difference in Z value
 	      - Handle differences in scale between user and world
 	      - Handle differences in orientation between user and world
