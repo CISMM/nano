@@ -1,7 +1,7 @@
 #ifndef NMM_EDAX_H
 #define NMM_EDAX_H
 
-#include "vrpn_Types.h"
+#include <vrpn_Types.h>
 
 class nmm_EDAX {
  public:

@@ -1,10 +1,12 @@
 #ifndef NMM_MICROSCOPE_SEM_REMOTE_H
 #define NMM_MICROSCOPE_SEM_REMOTE_H
 
-#include "vrpn_Connection.h"
-#include "nmb_Device.h"
+#include <vrpn_Connection.h>
+
+#include <nmb_Device.h>
+#include <nmb_Image.h>
+
 #include "nmm_Microscope_SEM.h"
-#include "nmb_Image.h"
 
 class nmm_Microscope_SEM_Remote;
 

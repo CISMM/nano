@@ -1,14 +1,18 @@
 #ifndef SEM_H
 #define SEM_H
 
-#include "vrpn_Types.h"
-#include "vrpn_Connection.h"
-#include "imageViewer.h"
+#include <vrpn_Types.h>
+#include <vrpn_Connection.h>
+
+#include <nmb_Image.h>
+
+#include <Tcl_Linkvar.h>
+
+#include <imageViewer.h>
+
 #include "nmm_Microscope_SEM_Remote.h"
-#include "Tcl_Linkvar.h"
 #include "nmm_EDAX.h"  // some constants peculiar to the EDAX SEM interface
 
-#include "nmb_Image.h"
 
 #define SEM_TCL_FILE "sem.tcl"
 #define SEM_FILE_SUFFIX ".sem"
