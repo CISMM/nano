@@ -15,7 +15,8 @@
 #include <unistd.h>  // for sleep()
 #endif
 
-#include "vrpn_FileConnection.h"	// for vrpn_File_Connection class
+#include <vrpn_FileConnection.h>	// for vrpn_File_Connection class
+#include <vrpn_RedundantTransmission.h>
 
 #include <Topo.h>
 #include <Point.h>
@@ -70,12 +71,6 @@
 // from nmm_Microscope.h
 #define FC_MAX_HALFCYCLES (100)
 
-// I feel bad, but we need to know if there is an ohmmeter
-//class vrpn_Ohmmeter_Remote;
-//extern vrpn_Ohmmeter_Remote *ohmmeter;
-// This made things difficult to compile so I did something equally ugly
-// but it should work.
-
 // Microscope
 //
 // Tom Hudson, September 1997
@@ -107,7 +102,11 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
     d_scanlineDataHandlers (NULL),
     d_feeltoHandlers (NULL),
     d_sampleAlgorithm (NULL),
-    d_accumulatePointResults (vrpn_FALSE)
+    d_accumulatePointResults (vrpn_FALSE),
+    d_redundancy (new vrpn_RedundantTransmission (c)),
+    d_redReceiver (new vrpn_RedundantReceiver (c)),
+    d_monitor (new nmm_QueueMonitor (this, d_redReceiver)),
+    d_tsList (new nmm_TimestampList ())
 {
   gettimeofday(&d_nowtime, &d_nowzone);
   d_next_time.tv_sec = 0L;
@@ -168,9 +167,15 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
   d_connection->register_handler(d_PointResultNM_type,
                                  handle_PointResultNM,
                                  this);
-  d_connection->register_handler(d_PointResultData_type,
-                                 handle_PointResultData,
-                                 this);
+
+  // TCH network adaptations Nov 2000
+  // If we're doing queue monitoring, d_monitor catches it.
+  // Underneath that, if we're doing redudnant transmission,
+  // d_redReceiver catches it.
+  d_monitor->registerResultDataHandler
+                      (handle_PointResultData,
+                       this);
+
   d_connection->register_handler(d_BottomPunchResultData_type,
                                  handle_BottomPunchResultData,
                                  this);
@@ -350,6 +355,10 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
                                    this);
   registerSynchHandler(handle_barrierSynch, this);
   registerGotMutexCallback(this, handle_GotMicroscopeControl);
+
+  // TCH network adaptations Nov 2000
+  // Set up the redundant transmission at the lowest level.
+  nmb_Device::d_redundancy = d_redundancy;
 }
 
 
@@ -579,6 +588,20 @@ nmm_Microscope_Remote::~nmm_Microscope_Remote (void) {
   d_connection->unregister_handler(d_DroppedConnection_type,
                                  handle_DroppedConnection2,
                                    this);
+  if (d_redundancy) {
+    delete d_redundancy;
+  }
+  if (d_redReceiver) {
+    delete d_redReceiver;
+  }
+  if (d_monitor) {
+    delete d_monitor;
+  }
+  if (d_tsList) {
+    delete d_tsList;
+  }
+
+
 }
 
 
@@ -603,8 +626,20 @@ int nmm_Microscope_Remote::mainloop (void) {
   time_multiply(skiptime, d_decoration->rateOfTime, &skiptime);
   time_add(d_next_time, skiptime, &d_next_time);
 
+  if (d_redundancy) {
+    // Best to call this *before* connection::mainloop
+    // Wish we didn't have to worry about that...  How to rearchitect?
+    d_redundancy->mainloop();
+  }
+
   if (d_connection) {
     d_connection->mainloop();
+  }
+
+  if (d_monitor) {
+    // Best to call this *after* connection::mainloop
+    // Wish we didn't have to worry about that...  How to rearchitect?
+    d_monitor->mainloop();
   }
 
   if (d_connection && !d_connection->doing_okay()) {
@@ -1154,7 +1189,17 @@ long nmm_Microscope_Remote::ScanTo (float _x, float _y) {
   if (!msgbuf)
     return -1;
 
-  return dispatchMessage(len, msgbuf, d_ScanTo_type);
+  // TCH network adaptations Nov 2000
+
+  // Note a message send for application-level loss tracking.
+  // Send the message off, UDP/redundantly if that's enabled,
+  // TCP otherwise.
+
+  if (d_tsList) {
+    d_tsList->markSend();
+  }
+
+  return dispatchRedundantMessage(len, msgbuf, d_ScanTo_type);
 }
 
 long nmm_Microscope_Remote::ScanTo (float _x, float _y, float _z) {
@@ -2964,6 +3009,7 @@ int nmm_Microscope_Remote::handle_PointResultNM (void * userdata,
 
   ms->decode_PointResultNM(&param.buffer, &x, &y, &sec, &usec,
                            &height, &deviation);
+
   ms->RcvPointResultNM(x, y, sec, usec, height, deviation);
 
   return 0;
@@ -2973,11 +3019,26 @@ int nmm_Microscope_Remote::handle_PointResultNM (void * userdata,
 int nmm_Microscope_Remote::handle_PointResultData (void * userdata,
                                         vrpn_HANDLERPARAM param) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+  timeval now, then, diff;
   vrpn_int32 sec, usec, fieldCount;
   float x, y, fields [MAX_CHANNELS];
 
   ms->decode_ResultData(&param.buffer, &x, &y, &sec, &usec,
                         &fieldCount, fields);
+  if (ms->d_tsList) {
+
+    // TCH network adaptations Nov 2000
+    // Add this to the application-level round-trip-timing record.
+
+    // Timestamp in <sec, usec> should be the same timestamp we sent it with.
+
+    gettimeofday(&now, NULL);
+    then.tv_sec = sec;
+    then.tv_usec = usec;
+    diff = vrpn_TimevalDiff(now, then);
+    ms->d_tsList->add(now, diff);
+  }
+
   ms->RcvResultData(SPM_POINT_RESULT_DATA, x, y, sec, usec,
                     fieldCount, fields);
 

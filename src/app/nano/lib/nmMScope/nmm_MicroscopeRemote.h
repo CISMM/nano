@@ -10,18 +10,15 @@
 
 #include "nmm_Microscope.h"
 
-#include <nmb_SharedDevice.h>
-#include <Scanline.h>
-#include <Topo.h>
-
-#include "AFMState.h"
-#include "nmm_Types.h"
-#include "nmm_RelaxComp.h"   // for nmm_RelaxComp
-
 #include <vrpn_Shared.h>  // for timeval/timezone
 #ifndef VRPN_CONNECTION_H
 #include <vrpn_Connection.h>  // for vrpn_HANDLERPARAM
 #endif
+#include <vrpn_RedundantTransmission.h>
+
+#include <nmb_SharedDevice.h>
+#include <Scanline.h>
+#include <Topo.h>
 
 class Tclvar_checklist;  // from <Tcl_Linkvar.h>
 class nmb_Dataset;  // from <nmb_Dataset.h>
@@ -29,7 +26,13 @@ class nmb_Decoration;  // from <nmb_Decoration.h>
 class Point_value;  // from <Point.h>
 class BCPlane;  // from <BCPlane.h>
 
-class nmm_Sample;  // from nmm_Sample.h
+#include "AFMState.h"
+#include "nmm_Types.h"
+#include "nmm_RelaxComp.h"   // for nmm_RelaxComp
+#include "nmm_QueueMonitor.h"
+#include "nmm_TimestampList.h"
+
+struct nmm_Sample;  // from nmm_Sample.h
 
 
 // nmm_Microscope
@@ -326,6 +329,11 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     long unregisterFeeltoHandler (int (* handler) (void *),
                                   void *userdata);
 
+    vrpn_int32 pointResultType (void) const;
+      ///< Returns the vrpn type of a point result message;
+      ///< used with nmb_DeviceSequencer/nmm_Sample and with
+      ///< nmm_QueueMonitor.
+
   protected:
 
     nmb_Dataset * d_dataset;
@@ -347,10 +355,6 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     vrpn_int32 d_mod_window_max_x;
     vrpn_int32 d_mod_window_max_y;
     vrpn_int32 d_mod_window_pad; // some padding on the boundary
-
-    vrpn_int32 pointResultType (void) const;
-      ///< Returns the vrpn type of a point result message;
-      ///< used with nmb_DeviceSequencer/nmm_Sample.
 
     void accumulatePointResults (vrpn_bool on);
       ///< If true, in addition to exposing point results on
@@ -684,6 +688,15 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     static int handle_barrierSynch (void * ud, const nmb_SynchMessage * msg);
     static void handle_GotMicroscopeControl (void * ud, 
                                              nmb_SharedDevice_Remote * dev);
+
+  public:
+
+    // TCH network adaptations Nov 2000
+
+    vrpn_RedundantTransmission * d_redundancy;
+    vrpn_RedundantReceiver * d_redReceiver;
+    nmm_QueueMonitor * d_monitor;
+    nmm_TimestampList * d_tsList;
 };
 
 #endif  // NMM_MICROSCOPE_REMOTE_H
