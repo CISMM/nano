@@ -1887,21 +1887,18 @@ static void handle_rulergrid_opacity_change (vrpn_float64, void * userdata) {
 static void handle_friction_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
-  g->setFrictionSliderRange(friction_slider_min, friction_slider_max);
   //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 static void handle_bump_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
-  g->setBumpSliderRange(bump_slider_min, bump_slider_max);
   //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 static void handle_buzz_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
-  g->setBuzzSliderRange(buzz_slider_min, buzz_slider_max);
   //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
@@ -1909,8 +1906,6 @@ static void handle_buzz_slider_change (vrpn_float64, void * userdata) {
 static void handle_compliance_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
-  g->setComplianceSliderRange(compliance_slider_min,
-                                     compliance_slider_max);
   //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
@@ -2407,7 +2402,6 @@ static void handle_alpha_dataset_change (const char *, void * userdata)
 			  nmg_Graphics::RULERGRID_COORD);
 //fprintf(stderr, "Setting pattern map name to %s\n",
 //dataset->alphaPlaneName->string());
-                g->setPatternMapName(dataset->alphaPlaneName->string());
                 g->setAlphaPlaneName(dataset->alphaPlaneName->string());
 
         } else {
@@ -3311,7 +3305,6 @@ void    handle_adhesion_dataset_change(const char *, void * userdata)
       }
       adhesion_slider_min = plane->minNonZeroValue();
       adhesion_slider_max = plane->maxNonZeroValue();
-      g->setAdhesionSliderRange(adhesion_slider_min, adhesion_slider_max);
   }
   else {
       adhesion_slider_min_limit = 0;
@@ -3319,8 +3312,6 @@ void    handle_adhesion_dataset_change(const char *, void * userdata)
       adhesion_slider_min = 0;
       adhesion_slider_max = 1;
   }
-  // On PxFl, map adhesion plane to hatch map
-  g->setHatchMapName(adhesionPlaneName.string());
 }
 
 void    handle_friction_dataset_change(const char *, void * userdata)
@@ -3345,8 +3336,6 @@ void    handle_friction_dataset_change(const char *, void * userdata)
       }
       friction_slider_min = plane->minNonZeroValue();
       friction_slider_max = plane->maxNonZeroValue();
-      g->setFrictionSliderRange(friction_slider_min,
-                                friction_slider_max);
   }
   else {
       friction_slider_min_limit = 0;
@@ -3355,8 +3344,6 @@ void    handle_friction_dataset_change(const char *, void * userdata)
       friction_slider_max = 1;
   }
   
-  // On PxFl, map friction plane to bump map
-  g->setBumpMapName(frictionPlaneName.string());
 }
 
 void    handle_bump_dataset_change(const char *, void * userdata)
@@ -3383,7 +3370,6 @@ void    handle_bump_dataset_change(const char *, void * userdata)
       }
       bump_slider_min = plane->minNonZeroValue();
       bump_slider_max = plane->maxNonZeroValue();
-      g->setBumpSliderRange(bump_slider_min, bump_slider_max);
   }
   else {
       bump_slider_min_limit = 0;
@@ -3417,7 +3403,6 @@ void    handle_buzz_dataset_change(const char *, void * userdata)
       }
       buzz_slider_min = plane->minNonZeroValue();
       buzz_slider_max = plane->maxNonZeroValue();
-      g->setBuzzSliderRange(buzz_slider_min, buzz_slider_max);
   }
   else {
       buzz_slider_min_limit = 0;
@@ -3450,8 +3435,6 @@ void    handle_compliance_dataset_change(const char *, void * userdata)
       }
       compliance_slider_min = plane->minNonZeroValue();
       compliance_slider_max = plane->maxNonZeroValue();
-      g->setComplianceSliderRange(compliance_slider_min,
-                                  compliance_slider_max);
   }
   else {
       compliance_slider_min_limit = 0;

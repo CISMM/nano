@@ -1,3 +1,17 @@
+2001-10-15  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.c (handle_friction_slider_change): remove call to
+	obsolete graphics method.
+	(handle_bump_slider_change): same
+	(handle_buzz_slider_change):same
+	(handle_compliance_slider_change):same
+	(handle_alpha_dataset_change):same
+	(handle_adhesion_dataset_change):same
+	(handle_friction_dataset_change):same
+	(handle_bump_dataset_change):same
+	(handle_buzz_dataset_change):same
+	(handle_compliance_dataset_change):same
+
 2001-10-12  Nathan Conrad  <conrad@cs.unc.edu>
 
 	* nano.rc: Added an #ifdef statement to determine which icon should
