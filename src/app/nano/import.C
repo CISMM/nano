@@ -87,7 +87,7 @@ static void handle_current_object_new(const char*, void*) {
 }
 
 static void handle_current_object(const char*, void*) {
-	*(World.current_object) = current_object.string();
+	*World.current_object = current_object.string();
 
 	if (strcmp(*(World.current_object), "all") != 0) {
 		UTree *node = World.TGetNodeByName(*World.current_object);
@@ -119,10 +119,12 @@ static void handle_current_object(const char*, void*) {
 static void handle_import_file_change (const char *, void *) {
     static char * old_name = "";
     static const float convert = 1.0f/255;
+	char* name;
+	char* c;
 
 
     if (modelFile.string()) {  
-        if (strcmp(modelFile.string(),"") != 0) {          
+        if (strcmp(modelFile.string(),"") != 0) {	// open the file
             //Only try to create the object if there is a file specified.
             URPolygon *obj = new URPolygon;
 			obj->SetCCW(import_CCW);
@@ -141,35 +143,37 @@ static void handle_import_file_change (const char *, void *) {
             obj->GetLocalXform().SetRotate(import_rotx, import_roty, import_rotz, 1);
 			// truncate name so it correlates to the option menu
 			// i.e. C:/Data/cube.obj -> cube.obj
-			char* name;
 			name = new char[strlen(modelFile.string()) + 1];
 			strcpy(name, modelFile.string());
-			char* c = name + strlen(name);
+			c = name + strlen(name);
 			while (*(--c) != '/');
             World.TAddNode(obj, c + 1);
+
+			delete name;
 
 			// if a tube file, send to simulator
 			if ((strstr(name, ".txt") != 0) && (SimulatedMicroscope != NULL)) {
 				SimulatedMicroscope->sendCylinders(obj);
 			}
-
-			delete name;
         }
-// Took this out because we want more than one object loaded at a time...
-// can't close files now...should change this...
-/*        if (strcmp(old_name, "") != 0) {
-            UTree *node = World.TGetNodeByName(old_name);
+		else {	// close the current object
+			if (strcmp(*World.current_object, "") != 0) {
+				if (strcmp(*World.current_object, "all") == 0) {
+					printf ("Can't close object.\n");
+					return;
+				}
 
-            node->TGetParent()->TRemoveTreeNode(node);
+				UTree *node = World.TGetNodeByName(*World.current_object);
+
+			    node->TGetParent()->TRemoveTreeNode(node);
+	
+				imported_objects.deleteEntry(*World.current_object);
+
+				*World.current_object = "all";
             
-            delete node;
-            delete [] old_name;
-            old_name = NULL;
+				delete node;
+			}
         }
-*/
-
-//        old_name = new char[strlen(modelFile.string())+1];
-//        strcpy(old_name, modelFile.string());
     }
 }
 
