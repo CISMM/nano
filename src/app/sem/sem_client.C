@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     glutIdleFunc(idlefunc);
 #endif
   }
-  sem = new nmm_Microscope_SEM_Remote("SEM@cobalt-cs.cs.unc.edu");
+  sem = new nmm_Microscope_SEM_Remote("SEM@lead-cs.cs.unc.edu");
 
   if (!(sem->connected())) {
     fprintf(stderr, "Error, can't connect to microscope, exiting\n");

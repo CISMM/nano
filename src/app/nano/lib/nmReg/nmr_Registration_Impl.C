@@ -187,6 +187,12 @@ int nmr_Registration_Impl::registerImages(double *xform)
    d_alignerUI->getCorrespondence(c, corrSourceIndex, corrTargetIndex);
    c.print();
    registerImages(c, corrSourceIndex, corrTargetIndex, xform);
+   printf("nmr_Registration_Impl: registration result:\n");
+   int i;
+   for (i = 0; i < 16; i++) {
+       printf("%g, ", xform[i]);
+   }
+   printf("\n");
    return 0;
 }
 

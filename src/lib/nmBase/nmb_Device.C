@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <string.h>
-#ifndef _WIN32
+#if (!defined(_WIN32) || defined(__CYGWIN__))
 #include <strings.h>
 #endif
 

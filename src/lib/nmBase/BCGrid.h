@@ -99,6 +99,20 @@ class BCGrid
 	    _derange_y = (_num_y-1) / (_max_y-_min_y);
 	return _derange_y;
     }
+
+    inline void gridToWorld(const double i, const double j,
+                  double &x, double &y)
+    {
+        x = i/derangeX() + minX();
+        y = j/derangeY() + minY();
+    }
+
+    inline void worldToGrid(const double x, const double y,
+                  double &i, double &j)
+    {
+        i = (x-minX())*derangeX();
+        j = (y-minY())*derangeY();
+    }
     
     void setMinX (double min_x);
     void setMaxX (double max_x);

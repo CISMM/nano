@@ -7,6 +7,7 @@ APP_EXE=nano;
 APP_DIR=app/$APP_EXE;
 
 FULL_EXE=`../app_exec $APP_DIR $APP_EXE`;
+FULL_APP_DIR=`../app_dir $APP_DIR`;
 
 echo $FULL_EXE $*
-exec purify $FULL_EXE $*
+exec purify -cache-dir=$FULL_APP_DIR $FULL_EXE $*

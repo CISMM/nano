@@ -163,7 +163,7 @@ nmm_Microscope_Simulator( const char * _name,
   UpdateFeedbackParamsNow = 1;
   RegisterAmpEnabled = 1;
 
-  if ( !connection ) {
+  if ( !d_connection ) {
     ServerOutputAdd(2, "Could not connect to \"%S\".\n", _name );
     exit( 0 );
   }

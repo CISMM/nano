@@ -1913,7 +1913,7 @@ long nmm_Microscope_Remote::InitDevice (const vrpn_bool _setRegion,
   // handle_GotConnection handlers, they never get executed. So we'll call
   // them explicitly, if needed.
   if (d_connection->connected()) {
-        vrpn_HANDLERPARAM p;
+      vrpn_HANDLERPARAM p;
       handle_GotConnection2(this, p);
   } 
   // Register this callback here because it segfaults if I execute the handler
@@ -1972,6 +1972,7 @@ void nmm_Microscope_Remote::DisplayModResult (const float _x, const float _y,
                                    const vrpn_bool _checkZ) {
   PointType top, bottom;
   //double frac_x, frac_y;
+  double fx, fy;
   long x, y;
   BCPlane * heightPlane;
 
@@ -1981,10 +1982,9 @@ void nmm_Microscope_Remote::DisplayModResult (const float _x, const float _y,
   top[0] = bottom[0] = _x;
   top[1] = bottom[1] = _y;
 
-  x = (int) ((_x - d_dataset->inputGrid->minX()) *
-                   d_dataset->inputGrid->derangeX());
-  y = (int) ((_y - d_dataset->inputGrid->minY()) *
-                   d_dataset->inputGrid->derangeY());
+  d_dataset->inputGrid->worldToGrid((double)_x, (double)_y, fx, fy);
+  x = (long)fx;
+  y = (long)fy;
 
   // drives X output
   state.rasterX = x;
@@ -3407,7 +3407,12 @@ void nmm_Microscope_Remote::RcvInImgMode (void) {
     //              d_mod_window_max_x, d_mod_window_max_y);
 
     // instead we do this:
-    JumpToScanLine(d_mod_window_min_y);
+    // XXX - this should depend on the direction of the scanning
+    // (whether its up or down in the Y direction)
+    // this is hard-coded for what works with typical Thermomicroscope setup
+    int lineNumber = d_dataset->inputGrid->numY()-1 - d_mod_window_max_y;
+    printf("jumping to line %d after modify\n", lineNumber);
+    JumpToScanLine(lineNumber);
 
   }
 }
@@ -3700,18 +3705,26 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
   d_decoration->trueTipLocation_changed = 1;
 
   if (state.acquisitionMode == MODIFY) {
+     double grid_x, grid_y;
+     d_dataset->inputGrid->worldToGrid((double)_x, (double)_y, grid_x, grid_y);
      if (!d_mod_window_initialized){
-        d_mod_window_min_x = _x;
-        d_mod_window_min_y = _y;
-        d_mod_window_max_x = _x;
-        d_mod_window_max_y = _y;
+        d_mod_window_min_x = (vrpn_int32)grid_x;
+        d_mod_window_min_y = (vrpn_int32)grid_y;
+        d_mod_window_max_x = (vrpn_int32)grid_x;
+        d_mod_window_max_y = (vrpn_int32)grid_y;
         d_mod_window_initialized = vrpn_TRUE;
      } else {
-        if (_x < d_mod_window_min_x) d_mod_window_min_x = _x;
-        else if (_x > d_mod_window_max_x) d_mod_window_max_x = _x;
-        if (_y < d_mod_window_min_y) d_mod_window_min_y = _y;
-        else if (_y > d_mod_window_max_y) d_mod_window_max_y = _y;
+        if (grid_x < d_mod_window_min_x) 
+            d_mod_window_min_x = (vrpn_int32)grid_x;
+        else if (grid_x > d_mod_window_max_x) 
+            d_mod_window_max_x = (vrpn_int32)grid_x;
+        if (grid_y < d_mod_window_min_y) 
+            d_mod_window_min_y = (vrpn_int32)grid_y;
+        else if (grid_y > d_mod_window_max_y) 
+            d_mod_window_max_y = (vrpn_int32)grid_y;
      }
+     printf("mod window updated: %d,%d,%d,%d\n", d_mod_window_min_x,
+		d_mod_window_min_y, d_mod_window_max_x, d_mod_window_max_y);
   }
 }
 

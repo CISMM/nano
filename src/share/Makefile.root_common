@@ -7,7 +7,7 @@ CWD := $(shell $(PWD_COMMAND))
 
 THIS_DIR := $(subst $(TOP_LEVEL_SRC_DIR),,$(CWD))
 
-OBJECT_DIR := $(join $(TOP_LEVEL_OBJ_DIR)/$(HW_OS),$(THIS_DIR))
+OBJECT_DIR := $(join $(TOP_LEVEL_OBJ_DIR)/$(HW_OS)$(OBJ_DIR_SUFFIX),$(THIS_DIR))
 
 CHILD_DIRS := $(filter-out CVS,$(subst /,,$(wildcard */)))
 

@@ -1,9 +1,9 @@
 #ifndef NMB_DEVICE_H
 #define NMB_DEVICE_H
 
-#include <vrpn_Shared.h>
-#include <vrpn_Connection.h>
 #include <vrpn_FileController.h>
+#include <vrpn_Connection.h>
+#include <vrpn_Shared.h>
 
 // auxiliary class for callback info
 class nmb_SynchMessage {

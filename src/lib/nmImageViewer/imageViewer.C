@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(__CYGWIN__) || !defined(_WIN32)
 #include <strings.h>
+#endif
 
 #include "vrpn_Types.h"
 

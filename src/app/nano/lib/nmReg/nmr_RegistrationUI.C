@@ -100,6 +100,7 @@ void nmr_RegistrationUI::handleRegistrationChange
         im->getWorldToImageTransform(worldToImage_matrix);
         nmr_ImageTransformAffine worldToImage(4,4);
         worldToImage.setMatrix(transform_matrix);
+        printf("worldToImage transform:\n");
         worldToImage.print();
         // save it for future reference when resampling
         d_imageTransform.setMatrix(worldToImage_matrix);
@@ -175,7 +176,7 @@ void nmr_RegistrationUI::handle_textureDisplayEnabled_change(
     } else {
       if (me->d_graphicsDisplay->getTextureMode() == nmg_Graphics::COLORMAP) {
           me->d_graphicsDisplay->setTextureMode(nmg_Graphics::NO_TEXTURES,
-                                                nmg_Graphics::RULERGRID_COORD);
+                                             nmg_Graphics::RULERGRID_COORD);
       }
     }
 }
