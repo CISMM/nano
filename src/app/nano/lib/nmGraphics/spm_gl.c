@@ -424,18 +424,12 @@ int describe_gl_vertex(nmb_PlaneSelection planes, GLdouble minColor[4],
         Color[0] = g_minColor[0];
 	Color[1] = g_minColor[1];
 	Color[2] = g_minColor[2];
-	if (Vertex[2] == 0.0)    
-	  {
+	if (Vertex[2] == 0.0)  {
 	    Color[3] =  0;
-	    
-	    //  puts ("ARGHHHHHHHHHHHHHHHHHHHHHH");
-	    // printf("Color is %f", Color[3]);
-	  }
-	else
-	  {
+	   }
+	else {
 	    Color[3] = g_surface_alpha * 255;
-	    // puts ("YEAAAAAAAAHHHHHHHHHHHHHHHH");
-	    }
+	   }
 	
   }
 
