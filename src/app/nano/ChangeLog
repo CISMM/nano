@@ -1,3 +1,16 @@
+2001-07-03  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c : Add new file-global bools rrServer, rrTimeNow;
+        make time1, time2, and interval from main() file-global.
+	(handle_timingGotFirst) : New function.
+	(handle_timingDroppedLast) : Same.
+	(createGraphics) : Set rrServer, rrTimeNow, and register
+	two new handlers if necessary.  Correct grid size arguments
+	to depth mesh render server constructor.
+	(main) : Remove unused variables zone1, zone2.  Only do timing
+	stuff if rrTimeNow is true.  Print bandwidth used if graphics
+	server.
+
 2001-06-20  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c (ParseArgs) : fix function, reorder strcmps to

@@ -1097,6 +1097,56 @@ static vrpn_Connection * collab_forwarder_connection = NULL;
 static vrpn_Connection * rtt_server_connection = NULL;
 static vrpn_Analog_Server * rtt_server = NULL;
 
+
+// TCH Dissertation July 2001
+/// Track wheter we're serving as any sort of server for remote rendering.
+static vrpn_bool rrServer = VRPN_FALSE;
+/// If this is a remote rendering server, only do timing while 
+/// a client is connected so that we can get more accurate timing data
+/// (Including true transmitted FPS???)
+static vrpn_bool rrTimeNow = VRPN_TRUE;
+/// HACK - make these file-global so that I don't have to pass them
+/// to the callbacks that need them.
+static timeval time1, time2;
+static long interval = 0L;
+
+static int handle_timingGotFirst (void *, vrpn_HANDLERPARAM p) {
+
+fprintf(stderr,
+"handle_timingGotFirst:  talking to a rendering client, so timing.\n");
+
+  gettimeofday(&time1, NULL);
+
+  // Compute time if we shutdown now;  accumulate counters.
+  rrTimeNow = VRPN_TRUE;
+
+  // Reset clocks on subsystem-specific frame-rate timers
+  graphicsTimer.start();
+  collaborationTimer.start();
+
+  return 0;
+}
+static int handle_timingDroppedLast (void *, vrpn_HANDLERPARAM p) {
+  long start, stop;
+
+fprintf(stderr,
+"handle_timingDroppedLast:  no longer talking to a rendering client.\n");
+
+  gettimeofday(&time2, NULL);
+
+  // Accumulate connected time with millisecond accuracy.
+  start = time1.tv_sec * 1000 + time1.tv_usec / 1000;
+  stop = time2.tv_sec * 1000 + time2.tv_usec / 1000;
+  interval += stop - start;
+
+  // Don't bother computing a time if we shutdown now;
+  // don't accumulate counters.
+  rrTimeNow = VRPN_FALSE;
+
+  return 0;
+}
+
+
 struct MicroscapeInitializationState {
 
   MicroscapeInitializationState (void);
@@ -5444,6 +5494,8 @@ void spawnSharedGraphics (void) {
 // some day.
 void createGraphics (MicroscapeInitializationState & istate) {
 
+  vrpn_int32 gotFirst;
+  vrpn_int32 droppedLast;
   char name [50], qualifiedName [50];
   int retval;
 
@@ -5528,7 +5580,12 @@ void createGraphics (MicroscapeInitializationState & istate) {
                   nmg_Graphics::VERTEX_COLORS,
                   nmg_Graphics::VERTEX_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
-                  100, 100, rulerPPMName, renderServerControlConnection);
+                  istate.afm.image.grid_resolution,
+                  istate.afm.image.grid_resolution,
+                  rulerPPMName, renderServerControlConnection);
+
+      rrServer = VRPN_TRUE;
+      rrTimeNow = VRPN_FALSE;
 
       break;
 
@@ -5553,6 +5610,9 @@ void createGraphics (MicroscapeInitializationState & istate) {
                   nmg_Graphics::ORTHO_PROJECTION,
                   512, 512, rulerPPMName, renderServerControlConnection);
 
+      rrServer = VRPN_TRUE;
+      rrTimeNow = VRPN_FALSE;
+
       break;
 
   case CLOUD_SERVER:
@@ -5576,6 +5636,9 @@ void createGraphics (MicroscapeInitializationState & istate) {
                   nmg_Graphics::ORTHO_PROJECTION,
                   512, 512, rulerPPMName, renderServerControlConnection);
 
+      rrServer = VRPN_TRUE;
+      rrTimeNow = VRPN_FALSE;
+
       break;
 
     case VIDEO_SERVER:
@@ -5598,6 +5661,9 @@ void createGraphics (MicroscapeInitializationState & istate) {
                 nmg_Graphics::NO_DEPTH,
                 nmg_Graphics::PERSPECTIVE_PROJECTION,
                 512, 512, rulerPPMName, renderServerControlConnection);
+
+      rrServer = VRPN_TRUE;
+      rrTimeNow = VRPN_FALSE;
 
       break;
 
@@ -5628,7 +5694,8 @@ void createGraphics (MicroscapeInitializationState & istate) {
            (dataset, minC, maxC, renderClientInputConnection,
             nmg_Graphics::VERTEX_COLORS, nmg_Graphics::VERTEX_DEPTH,
             nmg_Graphics::ORTHO_PROJECTION,
-            100, 100,
+            istate.afm.image.grid_resolution,
+            istate.afm.image.grid_resolution,
             renderServerControlConnection, &graphicsTimer);
 
       ((nmg_Graphics_RenderClient *) graphics)->setGraphicsTiming
@@ -5722,6 +5789,24 @@ void createGraphics (MicroscapeInitializationState & istate) {
       display_error_dialog( "Internal: Unimplemented graphics mode!");
       exit(0);
   }// end switch (istate.graphics_mode)
+
+
+  // TCH Dissertation July 2001
+  // Handle timing "correctly" for render servers - only run the
+  // clock and counters while we have a client connected.
+  if (rrServer) {
+
+    gotFirst = renderServerControlConnection->register_message_type
+                     (vrpn_got_first_connection);
+    droppedLast = renderServerControlConnection->register_message_type
+                     (vrpn_dropped_last_connection);
+
+    renderServerControlConnection->register_handler
+                     (gotFirst, handle_timingGotFirst, NULL);
+    renderServerControlConnection->register_handler
+                     (droppedLast, handle_timingDroppedLast, NULL);
+
+  }
 
 }
 
@@ -6133,13 +6218,11 @@ int main(int argc, char* argv[])
 
     /* Things needed for the timing information */
     MicroscapeInitializationState istate;
-    struct          timeval d_time;
-    struct          timeval time1,time2;
-    struct          timezone zone1,zone2;
-    long            start,stop;
-    long            interval;
-    long            n = 0L;
-    long	    n_displays = 0L;
+    timeval d_time;
+    long n = 0L;
+    long start = 0L;
+    long stop = 0L;
+    long n_displays = 0L;
 
     int		i;
 
@@ -6331,8 +6414,9 @@ int main(int argc, char* argv[])
     graphics->setTextureDirectory(textureDir);
     graphics->setAlphaColor(alpha_red, alpha_green, alpha_blue);
 
-    if (rulerPPMName)
+    if (rulerPPMName) {
       graphics->loadRulergridImage(rulerPPMName);
+    }
 
 
     // These call is duplicated in createNewMicroscope, 
@@ -6679,14 +6763,19 @@ int main(int argc, char* argv[])
   }
 
 
-/* Start timing */
-VERBOSE(1, "Starting timing");
-gettimeofday(&time1,&zone1);
-gettimeofday(&d_time,&zone1);
-microscope->ResetClock();
+  /* Start timing */
+  VERBOSE(1, "Starting timing");
+  if (rrTimeNow) {
+    gettimeofday(&time1, NULL);
+  }
+  gettimeofday(&d_time, NULL);
+  microscope->ResetClock();
 
-  graphicsTimer.start();
-  collaborationTimer.start();
+  // TCH Dissertation July 2001
+  if (rrTimeNow) {
+    graphicsTimer.start();
+    collaborationTimer.start();
+  }
 
 /* 
  * main interactive loop
@@ -6875,18 +6964,24 @@ VERBOSE(1, "Entering main loop");
       TIMERVERBOSE(1, mytimer, "microscape.c:end gi->mainloop()");
 
       if (updt_display(displayPeriod, d_time, stm_new_frame)) {
-        n_displays++;
+        if (rrTimeNow) {
+          n_displays++;
+        }
 
         ttest0(t_avg_d, "display");
       } /* end if updt */
 
     // REMOTERENDER
 
-    graphicsTimer.newTimestep();
+    if (rrTimeNow) {
+      graphicsTimer.newTimestep();
+    }
 
     // NANOX
 
-    collaborationTimer.newTimestep();
+    if (rrTimeNow) {
+      collaborationTimer.newTimestep();
+    }
 
       /* routine for handling all user interaction, including:
        * sdi button box, knob box, phantom button, 
@@ -7044,7 +7139,7 @@ VERBOSE(1, "Entering main loop");
   dataset->done = VRPN_TRUE; //XXXX
 
   /* Stop timing */
-  gettimeofday(&time2,&zone2);
+  gettimeofday(&time2, NULL);
 
   VERBOSE(1, "Finished main loop");
 
@@ -7052,11 +7147,17 @@ VERBOSE(1, "Entering main loop");
 
   if (perf_mode) {
 
-    /* Print timing info */
-    start = time1.tv_sec * 1000 + time1.tv_usec/1000;
-    stop = time2.tv_sec * 1000 + time2.tv_usec/1000;
-    interval = stop-start;          /* In milliseconds */
+    if (rrTimeNow) {
+      start = time1.tv_sec * 1000 + time1.tv_usec/1000;
+      stop = time2.tv_sec * 1000 + time2.tv_usec/1000;
+      // TCH Dissertation July 2001
+      // Change from = to += so we can accumulate across multiple
+      // connections and disconnections if we're a rendering server
+      // (wow, sounds like unnecessary generality...)
+      interval += stop-start;          /* In milliseconds */
+    }
 
+    /* Print timing info */
     float looplen;
     float timing;
     printf("Time for %ld loop iterations: %ld seconds\n",n,
@@ -7077,6 +7178,14 @@ VERBOSE(1, "Entering main loop");
     printf("---------------\n");
     printf("Graphics Timer:\n");
     graphicsTimer.report();
+
+    if (rrServer) {
+      nmg_Graphics_RenderServer * rs = (nmg_Graphics_RenderServer *) graphics;
+      printf("---------------\n");
+      printf("Graphics Bandwidth:\n");
+      printf("    %d messages, %d bytes sent.\n",
+             rs->messagesSent(), rs->bytesSent());
+    }
 
     printf("---------------\n");
     printf("Collaboration Timer:\n");
