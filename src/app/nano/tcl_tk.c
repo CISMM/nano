@@ -13,6 +13,7 @@
 #include <tk.h>
 
 #include <BCPlane.h>
+#include <Tcl_Interpreter.h>
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
 #include <nmb_Dataset.h>
@@ -24,23 +25,9 @@
 #include <nmg_Graphics.h>
 #include <nmg_Globals.h>
 
-#include <blt.h>
-
-#ifndef NO_ITCL
-#include <itcl.h>
-#include <itk.h>
-#endif
-
-// for some reason blt.h doesn't declare this procedure.
-// I copied this prototype from bltUnixMain.c, but I had to add
-// the "C" so it would link with the library. 
-extern "C" int Blt_Init (Tcl_Interp *interp);
-extern "C" int Blt_SafeInit(Tcl_Interp *interp);
-
 #include "microscape.h"  // for user_mode, mode_change, tcl_offsets
 #include "globals.h"
 #include "tcl_tk.h"
-
 
 #define TCL_MODE_FILE "mainwin.tcl"
 #ifdef TRUE
@@ -53,18 +40,7 @@ extern "C" int Blt_SafeInit(Tcl_Interp *interp);
 #define FALSE (0)
 
 
-static	Tcl_Interp *tk_control_interp = NULL;
 static	int	controls_on = 0;
-
-
-/***********************************************************
- * here's a little function that will let outsiders accesss
- * the interpreter once it gets created in init_Tk_control_panels
- ***********************************************************/
-Tcl_Interp *get_the_interpreter(void)
-{
-  return tk_control_interp;
-}
 
 /** Initialize the Tk control panels */
 int	init_Tk_control_panels (const char * tcl_script_dir,
@@ -72,66 +48,9 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
                                 nmb_TimerList * timer)
 {
 	char    command[256];
-	Tk_Window       tk_control_window;
 	
 	VERBOSE(4, "  Initializing Tcl");
-	Tcl_Interp * my_tk_control_interp = Tcl_CreateInterp();
-
-	VERBOSE(1,"init_Tk_control_panels(): just created the tcl/tk interpreter\n");
-
-#if defined (_WIN32) && !defined (__CYGWIN__)
-        if (Tcl_InitStubs(my_tk_control_interp, TCL_VERSION, 1) == NULL) {
-            fprintf(stderr, "Non matching version of tcl and tk\n");
-            return -1;
-        }
-#endif
-	/* Start a Tcl interpreter */
-	VERBOSE(4, "  Starting Tcl interpreter");
-	if (Tcl_Init(my_tk_control_interp) == TCL_ERROR) {
-		fprintf(stderr,
-			"Tcl_Init failed: %s\n",Tcl_GetStringResult(my_tk_control_interp));
-		return(-1);
-	}
-
-	/* Initialize Tk using the Tcl interpreter */
-	VERBOSE(4, "  Initializing Tk");
-	if (Tk_Init(my_tk_control_interp) == TCL_ERROR) {
-		fprintf(stderr,
-			"Tk_Init failed: %s\n",Tcl_GetStringResult(my_tk_control_interp));
-		return(-1);
-	}
-	Tcl_StaticPackage(my_tk_control_interp, "Tk", Tk_Init, Tk_SafeInit);
-
-	/* Initialize Tcl packages */
-	if (Blt_Init(my_tk_control_interp) == TCL_ERROR) {
-		fprintf(stderr,
-			"Package_Init failed: %s\n",Tcl_GetStringResult(my_tk_control_interp));
-		return(-1);
-	}
-	Tcl_StaticPackage(my_tk_control_interp, "Blt", Blt_Init, Blt_SafeInit);
-
-#ifndef NO_ITCL
-	if (Itcl_Init(my_tk_control_interp) == TCL_ERROR) {
-		fprintf(stderr,
-			"Package_Init failed: %s\n",Tcl_GetStringResult(my_tk_control_interp));
-		return(-1);
-	}
-	if (Itk_Init(my_tk_control_interp) == TCL_ERROR) {
-		fprintf(stderr,
-			"Package_Init failed: %s\n",Tcl_GetStringResult(my_tk_control_interp));
-		return(-1);
-	}
-	Tcl_StaticPackage(my_tk_control_interp, "Itcl", Itcl_Init, Itcl_SafeInit);
-	Tcl_StaticPackage(my_tk_control_interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
-#endif	
-        // Check to see if we have a Tk main window.
-	VERBOSE(4, "  Checking Tk mainwindow");
-	tk_control_window = Tk_MainWindow(my_tk_control_interp);
-	if (tk_control_window == NULL) {
-		fprintf(stderr,"Tk can't get main window: %s\n",
-			Tcl_GetStringResult(my_tk_control_interp));
-		return(-1);
-	}
+	Tcl_Interp * my_tk_control_interp = Tcl_Interpreter::getInterpreter();
 
 #ifdef NO_MSCOPE_CONNECTION
         // Set variable to indicate that this is a Viewer only
@@ -172,11 +91,6 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
                 fprintf(stderr,"Tclvar_init failed.\n");
                 return(-1);
         }
-
-        // Initialize the global tcl interpreter
-        // Waiting til here makes sure the error_display functions get to use a
-        // fully-initialized interpreter, and don't cause a seg-fault.
-        tk_control_interp = my_tk_control_interp;
 
         return 0;
 }

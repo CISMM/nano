@@ -24,7 +24,7 @@
 #include "error_display.h"
 #include "tcl.h"
 #include "tk.h"
-#include "tcl_tk.h"
+#include "Tcl_Interpreter.h"
    // HACK - evil coupling to UI; ought to trigger a callback here
    // and have it handled by some routine in the UI space.
 
@@ -705,7 +705,7 @@ int CollaborationManager::handle_gotPeerRemoteConnection
 
 int CollaborationManager::fullyConnected (void) {
 
-  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  Tcl_Interp * tk_control_interp = Tcl_Interpreter::getInterpreter();
   char command [1000];
   int retval;
 

@@ -5,7 +5,7 @@
 
 #include <Tcl_Linkvar.h>
 
-#include "tcl_tk.h"
+#include "Tcl_Interpreter.h"
 #include "error_display.h"
 
 /* Bug note. I started with const char *__format as the argument, 
@@ -22,11 +22,11 @@ void display_warning_dialog (const char *format, ...)
   vsprintf (txtptr, format, argptr);
   va_end(argptr);
 
-  if (get_the_interpreter() == NULL) {
+  if (Tcl_Interpreter::getInterpreter() == NULL) {
       fprintf(stderr, "Warning: %s\n", txtptr);
   } else {
       sprintf(msgptr, "nano_warning {%s}", txtptr);
-      TCLEVALCHECK2(get_the_interpreter(), msgptr);
+      TCLEVALCHECK2(Tcl_Interpreter::getInterpreter(), msgptr);
   }
 }
 
@@ -40,11 +40,11 @@ void display_error_dialog (const char *format, ...)
   vsprintf (txtptr, format, argptr);
   va_end(argptr);
 
-  if (get_the_interpreter() == NULL) {
+  if (Tcl_Interpreter::getInterpreter() == NULL) {
       fprintf(stderr, "ERROR: %s\n", txtptr);
   } else {
       sprintf(msgptr, "nano_error {%s}", txtptr);
-      TCLEVALCHECK2(get_the_interpreter(), msgptr);
+      TCLEVALCHECK2(Tcl_Interpreter::getInterpreter(), msgptr);
   }
 }
 
@@ -58,12 +58,12 @@ void display_fatal_error_dialog (const char *format, ...)
   vsprintf (txtptr, format, argptr);
   va_end(argptr);
 
-  if (get_the_interpreter() == NULL) {
+  if (Tcl_Interpreter::getInterpreter() == NULL) {
       fprintf(stderr, "FATAL ERROR: %s\n", txtptr);
       // XXX Is this the right thing? Will it attempt to save stream?
       exit(-1);
   } else {
       sprintf(msgptr, "nano_fatal_error {%s}", txtptr);
-      TCLEVALCHECK2(get_the_interpreter(), msgptr);
+      TCLEVALCHECK2(Tcl_Interpreter::getInterpreter(), msgptr);
   }
 }

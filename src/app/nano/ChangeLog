@@ -1,3 +1,11 @@
+2001-11-29  Adam Seeger  <seeger@cs.unc.edu>
+
+	* CollaborationManager.C : replaced get_the_interpreter() with
+                                   Tcl_Interpreter::getInterpreter()
+	* error_display.c : same
+	* microscape.c : same
+        * tcl_tk.c : moved generic code out of this into Tcl_Interpreter.C
+
 2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
 
 	* microscape.c (main): took out parameter in call to 

@@ -69,6 +69,7 @@ pid_t getpid();
 #include <PPM.h>
 #include <nmb_PlaneSelection.h>
 #include <nmb_Dataset.h>
+#include <nmb_ImageManager.h>
 #include <nmb_Decoration.h>
 #include <nmb_CalculatedPlane.h>
 #include <nmb_FlattenedPlane.h>
@@ -81,6 +82,7 @@ pid_t getpid();
 #include <Topo.h>
 #include <nmb_ImgMagick.h>
 
+#include <Tcl_Interpreter.h>
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
 
@@ -853,6 +855,7 @@ static vrpn_bool    head_tracked = VRPN_FALSE;
     ///< Flag set when head tracking is active
 
 nmb_Dataset * dataset = NULL;
+nmb_ImageManager * imageManager = NULL;
 nmb_Decoration * decoration = NULL;
 
 nmm_Microscope_Remote * microscope = NULL;
@@ -1775,7 +1778,7 @@ static void handle_x_value_change (vrpn_float64, void *) {
 // NANOX
 
 void handle_finegrained_changed (vrpn_int32 value, void *) {
-  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  Tcl_Interp * tk_control_interp = Tcl_Interpreter::getInterpreter();
   char command [100];
   int retval;
 
@@ -1816,7 +1819,7 @@ void handle_mutex_release (vrpn_int32 value, void * userdata) {
 
 // We asked for the mutex and got it.
 void handle_mutexRequestGranted (void *, nmb_SharedDevice_Remote *) {
-  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  Tcl_Interp * tk_control_interp = Tcl_Interpreter::getInterpreter();
   char command [1000];
   int retval;
 
@@ -1831,7 +1834,7 @@ void handle_mutexRequestGranted (void *, nmb_SharedDevice_Remote *) {
 
 // We asked for the mutex, but somebody said "no".
 void handle_mutexRequestDenied (void *, nmb_SharedDevice_Remote *) {
-  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  Tcl_Interp * tk_control_interp = Tcl_Interpreter::getInterpreter();
   char command [1000];
   int retval;
 
@@ -1846,7 +1849,7 @@ void handle_mutexRequestDenied (void *, nmb_SharedDevice_Remote *) {
 
 // Somebody else (NOT US?!) got the mutex.
 void handle_mutexTaken (void *, nmb_SharedDevice_Remote *) {
-  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  Tcl_Interp * tk_control_interp = Tcl_Interpreter::getInterpreter();
   char command [1000];
   int retval;
 
@@ -1861,7 +1864,7 @@ void handle_mutexTaken (void *, nmb_SharedDevice_Remote *) {
 
 // Anybody released the mutex.
 void handle_mutexReleased (void *, nmb_SharedDevice_Remote *) {
-  Tcl_Interp * tk_control_interp = get_the_interpreter();
+  Tcl_Interp * tk_control_interp = Tcl_Interpreter::getInterpreter();
   char command [1000];
   int retval;
 
@@ -2017,7 +2020,7 @@ static void handle_load_import_file_change (vrpn_int32 , void *) {
 */
 static void handle_load_button_press_change (vrpn_int32 /*new_value*/, void * /*userdata*/ ) {
   char command[256];
-  Tcl_Interp *tk_control_interp = get_the_interpreter();
+  Tcl_Interp *tk_control_interp = Tcl_Interpreter::getInterpreter();
 
   sprintf(command, "set tab_label %s", import_filename_string);
   if (Tcl_Eval(tk_control_interp, command) != TCL_OK) {
@@ -2580,7 +2583,7 @@ stream file or connection is changed.
 */
 static int forget_modification_data ()
 {
-    Tcl_Interp * interp = get_the_interpreter();
+    Tcl_Interp * interp = Tcl_Interpreter::getInterpreter();
     if (interp == NULL) return 0;
 
     char command[200];
@@ -6741,7 +6744,12 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     linkMicroscopeToInterface(new_microscope);
 
     if(alignerUI) {
-      alignerUI->changeDataset(new_dataset);
+      if (imageManager) {
+        delete imageManager;
+      }
+      imageManager = new nmb_ImageManager(new_dataset->dataImages,
+           new_dataset->inputGrid, new_dataset->inputPlaneNames);
+      alignerUI->changeDataset(imageManager);
       alignerUI->setupCallbacks();
     }
 
@@ -7392,7 +7400,7 @@ int main (int argc, char* argv[])
       ohmmeter = NULL;
     }
     if (ohmmeter != NULL) {
-      the_french_ohmmeter_ui = new Ohmmeter (get_the_interpreter(),
+      the_french_ohmmeter_ui = new Ohmmeter (Tcl_Interpreter::getInterpreter(),
                                              tcl_script_dir, ohmmeter);
       the_french_ohmmeter_ui->setMicroscope(microscope);
     }
@@ -7446,7 +7454,7 @@ int main (int argc, char* argv[])
 	if (vicurve_connection != NULL) {
 	  // If we got to here, we have a connection to vi_curve -
 	  // create the beast.
-	  keithley2400_ui = new nma_Keithley2400_ui( get_the_interpreter(), 
+	  keithley2400_ui = new nma_Keithley2400_ui( Tcl_Interpreter::getInterpreter(), 
 						     tcl_script_dir, 
 						     "vi_curve@dummyname.com", 
 						     vicurve_connection);
@@ -7507,7 +7515,7 @@ int main (int argc, char* argv[])
 	}
 	// If we got to here, we have a connection to sem -
 	// create the beast.
-	sem_ui = new nms_SEM_ui(get_the_interpreter(),
+	sem_ui = new nms_SEM_ui(Tcl_Interpreter::getInterpreter(),
 				tcl_script_dir,
 				"SEM@dummyname.com",
 				sem_connection);
@@ -7544,7 +7552,7 @@ int main (int argc, char* argv[])
   /* Center the image first thing */
   center();
 
-  Tcl_Interp * interp = get_the_interpreter();
+  Tcl_Interp * interp = Tcl_Interpreter::getInterpreter();
 
   // NANOX - TCH 14 Oct 99
   // Allow command-line specification of machine to synchronize with.
