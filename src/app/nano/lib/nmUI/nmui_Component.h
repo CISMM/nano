@@ -124,6 +124,12 @@ class nmui_Component {
     void add (nmui_Component *);
       /**< Adds a component to the hierarchy under this component.  */
 
+    void remove(Tcl_Netvar *);
+      /**< Removes a netvar from the heirarchy under this component.  */
+
+    nmui_Component * find(char *);
+      /**< Finds a component by the name specified under this component. */
+
     void bindConnection (vrpn_Connection *);
       /**<
        * Specifies the vrpn_Connection which is our SERVER

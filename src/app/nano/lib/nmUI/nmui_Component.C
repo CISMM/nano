@@ -39,7 +39,7 @@ nmui_Component::nmui_Component (char name [30]) :
     d_lockHandlers (NULL),
     d_peer (NULL)
 {
-  int i;
+  //  int i;
 
   strncpy(d_name, name, 30);
 
@@ -136,6 +136,19 @@ void nmui_Component::add (Tcl_Netvar * newLinkvar) {
   d_numVars++;
 }
 
+void nmui_Component::remove (Tcl_Netvar * link_var) {
+  for (int i=0; i < d_numVars; i++) {
+    if (d_vars[i] == link_var) {
+      // delete d_vars[i];
+      for (int j = i; j < d_numVars; j++) {
+	d_vars[j] = d_vars[j+1];
+      }
+      d_numVars--;
+      return;
+    }
+  }
+}
+
 void nmui_Component::add (nmui_Component * newComponent) {
   if (d_numComponents >= NMUI_COMPONENT_MAX_SIZE) {
     fprintf(stderr, "nmui_Component::add:  "
@@ -147,7 +160,16 @@ void nmui_Component::add (nmui_Component * newComponent) {
   d_numComponents++;
 }
 
-
+nmui_Component * nmui_Component::find (char c_name[30]) {
+  for (int i=0; i < d_numComponents; i++) {
+    nmui_Component * t = d_components[i];
+    if (strcmp(t->name(), c_name) == 0) {
+      return d_components[i];
+    }
+  }
+  return NULL;
+}
+ 
 void nmui_Component::bindConnection (vrpn_Connection * c) {
   char namebuf [60];
   int i;

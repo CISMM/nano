@@ -1,3 +1,8 @@
+2000-11-20  Kwan Skinner  <skinner@cs.unc.edu>
+
+	* nmui_Component.[Ch] (nmui_Component::remove) : new function.
+	* nmui_Component.[Ch] (nmui_Component::find) : new function.
+
 2000-11-01  Tom Hudson  <hudson@cs.unc.edu>
 
 	* nmui_HapticSurface.C : removed refernces to USE_VRPN_MICROSCOPE
