@@ -17,11 +17,9 @@ class nmui_ColorMap {
 public:
     nmui_ColorMap(const char * tclname_prefix,
                   TclNet_string * cimage_name,
-                  Tclvar_list_of_strings * cimage_name_list,
                   TclNet_string * cmap_name);
     ~nmui_ColorMap() { };
     void swapTclStrings(TclNet_string * cimage_name,
-                  Tclvar_list_of_strings * cimage_name_list,
                   TclNet_string * cmap_name);
 
     /// Set limits on color slider. 
@@ -80,7 +78,6 @@ private:
     static Tclvar_list_of_strings* s_colorMapNames;
 
     TclNet_string * color_image_name;
-    Tclvar_list_of_strings * color_image_name_list;
     TclNet_string * colormap_name;
 
     /// The limits on the Tk slider where min and max value are selected

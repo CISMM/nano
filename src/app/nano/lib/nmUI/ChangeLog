@@ -1,3 +1,9 @@
+2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmui_ColorMap.Ch: removed color_image_name_list data member because
+	it didn't seem to be used anywhere and seemed to create an 
+	unnecessary dependency that complicated other code
+
 2001-09-21  Aron Helser  <helser@cs.unc.edu>
 
 	* GraphMod.C (ReceiveNewPoint): Always init Z axis, even if it

@@ -67,13 +67,11 @@ void nmui_ColorMap::handle_surface_color_change (vrpn_int32, void * userdata) {
     later */
 nmui_ColorMap::nmui_ColorMap (const char * tclname_prefix,
                               TclNet_string * cimage_name,
-                              Tclvar_list_of_strings * cimage_name_list,
                               TclNet_string * cmap_name) :
     d_tcl_array_name(NULL),
     d_curColorMap(NULL),
     d_defaultColorMap(NULL),
     color_image_name(cimage_name),
-    color_image_name_list(cimage_name_list),
     colormap_name(cmap_name)
 {
     char name [200];
@@ -116,10 +114,8 @@ nmui_ColorMap::nmui_ColorMap (const char * tclname_prefix,
 /** Allows the external tclvars to be changed, like when nmb_Dataset is
     re-created. */
 void nmui_ColorMap::swapTclStrings(TclNet_string * cimage_name,
-                                   Tclvar_list_of_strings * cimage_name_list,
                                    TclNet_string * cmap_name) {
     color_image_name = cimage_name;
-    color_image_name_list = cimage_name_list;
     colormap_name = cmap_name;
     if (colormap_name) {
         colormap_name->addCallback(handle_colormap_change, this);
