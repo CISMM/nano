@@ -1,10 +1,15 @@
+2002-06-05 Jameson Miller <millerj@cs.unc.edu>
+	*directStep.tcl - add direct step controls into the device only list.
+
+	*mainwin.tcl - withdraw tip button greys out when scanning.
+
 2002-6-04 Jameson Miller <millerj@cs.unc.edu>
 	*modify.tcl - modify window resizes to fit all parameters
 	in the window when changing tools.
 
 	*directStep.tcl - changed variable names around to better reflect
 	connection with C variables and collaboration.
-
+	
 2002--6-03 David Borland <borland@cs.unc.edu>
 
         * registration.tcl : user control for grabbing the projective 

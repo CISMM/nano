@@ -3,6 +3,7 @@
 
 # generic_entry .base -width 6 -relief sunken -
 
+global device_only_controls
 
 
 set step_x_size 1.0
@@ -123,7 +124,6 @@ generic_entry $takestep(stepSize).step_y_size step_y_size \
 generic_entry $takestep(stepSize).step_z_size step_z_size \
 	"            Z Step" real
 
-
 # position inputs
 generic_entry $takestep(pos).x_pos step_x_pos \
 	"X Position" real
@@ -133,6 +133,23 @@ generic_entry $takestep(pos).y_pos step_y_pos \
 
 generic_entry $takestep(pos).z_pos step_z_pos \
 	"             Z Pos" real
+ 
+# put these controls in the device only list.
+# so you can only use them if you have control of the device.
+
+eval lappend device_only_controls "$takestep(buttons2).minus_x \
+    $takestep(buttons2).plus_x \
+    $takestep(buttons2).minus_x \
+    $takestep(buttons3).minus_y \
+    $takestep(buttons).plus_y \
+    $takestep(buttons_z3).minus_z \
+    $takestep(buttons_z).plus_z \
+    $takestep(stepSize).step_x_size \
+    $takestep(stepSize).step_y_size \
+    $takestep(stepSize).step_z_size \
+    $takestep(pos).x_pos \
+    $takestep(pos).y_pos \
+    $takestep(pos).z_pos "
 
 #current position
 label $takestep(current_pos).cur_x -text "  Current x: "

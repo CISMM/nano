@@ -483,7 +483,8 @@ button $w2.toolbar.pause_scan -text "Stop\nScan" \
 	-command { set spm_scanning [expr !$spm_scanning] } -pady 1
 
 # keep button label consistent with value of global variable.
-# After all, it may be set from C code. 
+# After all, it may be set from C code.
+ 
 proc scan_button_label { name el op } {
     global spm_scanning w2
     if {$spm_scanning} {
@@ -493,6 +494,7 @@ proc scan_button_label { name el op } {
     }
 }
 trace variable spm_scanning w scan_button_label
+trace variable spm_scanning w withdraw_tip_state
 
 checkbutton $w2.toolbar.autoscan -text "Auto\nRescan" \
 	-variable autoscan -padx 0 -pady 0
@@ -501,6 +503,17 @@ set autoscan 1
 button $w2.toolbar.withdraw_tip -text "Withdraw\nTip" \
         -command "set withdraw_tip 1" -pady 1
 pack $w2.toolbar.pause_scan $w2.toolbar.autoscan $w2.toolbar.withdraw_tip -side left -padx 5
+
+#if we are scanning, grey out withdraw tip button.
+# traced to spm_scanning
+proc withdraw_tip_state {name el op} {
+    global spm_scanning w2
+    if {$spm_scanning} {
+	$w2.toolbar.withdraw_tip configure -state disabled
+    } else {
+	$w2.toolbar.withdraw_tip configure -state normal
+    }
+}
 
 # These two button should only be available when reading a DEVICE
 lappend device_only_controls $w2.toolbar.pause_scan $w2.toolbar.autoscan $w2.toolbar.withdraw_tip
