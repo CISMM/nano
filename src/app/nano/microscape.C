@@ -2609,8 +2609,9 @@ static	void	handle_alpha_dataset_change (const char *, void * userdata)
 	BCPlane	* plane = dataset->inputGrid->getPlaneByName
                              (dataset->alphaPlaneName->string());
 
-        printf("handle_alpha_dataset_change\n");
+        //printf("handle_alpha_dataset_change\n");
 	if (plane != NULL) {
+            disableOtherTextures(ALPHA);
 		alpha_slider_min_limit = plane->minAttainableValue();
 		alpha_slider_min = plane->minValue();
 		alpha_slider_max_limit = plane->maxAttainableValue();
@@ -2622,14 +2623,15 @@ static	void	handle_alpha_dataset_change (const char *, void * userdata)
 			  nmg_Graphics::RULERGRID_COORD);
 //fprintf(stderr, "Setting pattern map name to %s\n",
 //dataset->alphaPlaneName->string());
-  // XXX REDUNDANT
                 g->setPatternMapName(dataset->alphaPlaneName->string());
                 g->setAlphaPlaneName(dataset->alphaPlaneName->string());
 
         } else {
-	  display_warning_dialog( "Couldn't find alpha plane: %s\n"
-                                "  turning alpha texture off",
-		dataset->alphaPlaneName->string());
+          if (strcmp(dataset->alphaPlaneName->string(), "none") != 0) {
+              display_warning_dialog( "Couldn't find alpha plane: %s\n"
+                                      "  turning alpha texture off",
+                                      dataset->alphaPlaneName->string());
+          }
           if (g->getTextureMode() == nmg_Graphics::ALPHA) {
             g->setTextureMode(nmg_Graphics::NO_TEXTURES,
                               nmg_Graphics::RULERGRID_COORD);
@@ -3285,11 +3287,14 @@ void handle_contour_dataset_change (const char *, void * userdata)
         (dataset->contourPlaneName->string());
 
     if (plane != NULL) {
+        disableOtherTextures(CONTOUR);
         texture_scale = (plane->maxNonZeroValue() -
                          plane->minNonZeroValue()) / 10;
         g->setTextureScale(texture_scale);
         g->setTextureMode(nmg_Graphics::CONTOUR,
                           nmg_Graphics::RULERGRID_COORD);
+        g->setContourPlaneName(dataset->contourPlaneName->string());
+        g->causeGridRedraw();
     } else {        // No plane
         if (strcmp(dataset->contourPlaneName->string(), "none") != 0) {
             display_error_dialog( "Couldn't find plane for contours; \n"
@@ -3300,9 +3305,6 @@ void handle_contour_dataset_change (const char *, void * userdata)
                               nmg_Graphics::RULERGRID_COORD);
         }
     }
-
-    g->setContourPlaneName(dataset->contourPlaneName->string());
-    g->causeGridRedraw();
 }
 
 //callbacks for when the datasets for the haptic stimuli change
@@ -8515,6 +8517,12 @@ int disableOtherTextures (TextureMode m) {
   }
   if (m != MANUAL_REALIGN){
     display_realign_textures = 0;
+  }
+  if (m != CONTOUR) {
+      if (dataset) *(dataset->contourPlaneName) = "none";
+  }
+  if (m != ALPHA) {
+      if (dataset) *(dataset->alphaPlaneName) = "none";
   }
 //#endif
 

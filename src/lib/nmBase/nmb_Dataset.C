@@ -1006,7 +1006,7 @@ float nmb_Dataset::getFirstLineAvg(BCPlane * plane)
 	avgVal += plane->value(i, plane->numY()-1);
     }
     avgVal /= plane->numX();
-    printf("Found line average %g\n", avgVal);
+    //printf("Found line average %g\n", avgVal);
     return avgVal;
 
 }

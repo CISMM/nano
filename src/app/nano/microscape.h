@@ -282,7 +282,7 @@ extern int register_vrpn_phantom_callbacks(void);
 
 // XXX - this has to do with the user interface but there isn't
 // a global user interface object so I put it here temporarily (AAS)
-enum TextureMode {RULERGRID, SEM, REGISTRATION, MANUAL_REALIGN, GENETIC};
+enum TextureMode {RULERGRID, CONTOUR, ALPHA, SEM, REGISTRATION, MANUAL_REALIGN};
 extern int disableOtherTextures (TextureMode m);
 
 /* defined in minit.c */
