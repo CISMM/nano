@@ -7,8 +7,8 @@ NAUGHTY := 1
 
 EXCLUDE_SRC := nmg_GraphicsNull.C
 
-#ifdef VC
+ifdef VC
 EXCLUDE_SRC += export_scene.C
-#endif
+endif
 
 include ../Makefile.share
