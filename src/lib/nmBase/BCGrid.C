@@ -1737,7 +1737,7 @@ BCGrid::readPPMorPGMFile(FILE *file, const char *name)
         return -1;
     }
 
-    BCPlane* plane = addNewPlane(name, "nm", TIMED);
+    BCPlane* plane = addNewPlane(name, "nm", NOT_TIMED);
 
     plane->_max_value = max_value;
     plane->_min_value = min_value;
@@ -1768,7 +1768,7 @@ BCGrid::readPPMorPGMFileNew(FILE *file, const char *filename)
 	// We know the file size, set our own grid size.
 	setGridSize(_num_x, _num_y);
 	
-	BCPlane* plane = addNewPlane(filename, "nm", TIMED);
+	BCPlane* plane = addNewPlane(filename, "nm", NOT_TIMED);
 
 	float min, max;
 	int r,g,b;
@@ -1785,22 +1785,9 @@ BCGrid::readPPMorPGMFileNew(FILE *file, const char *filename)
 		}
 	}
 
-	// Artificially re-scale the values in the PPM so 
-	// they no longer run 0-255.
-	plane->_max_value = 400.0;
-	plane->_min_value = 0.0;
-	float scale = 400.0/max;
-	float val;
-	for (i = 0; i < _num_x; i++) {
-		for (j = 0; j < _num_y; j++) {
-			val = plane->value(i,j);
-			plane->setValue(i,j,val*scale);
-		}
-	}
-	plane->_max_value = 400.0;
-	plane->_min_value = 0.0;
-	plane->_modified = VRPN_FALSE;
-	printf("plane min, max = %f,%f\n", plane->minValue(), plane->maxValue());
+        plane->_max_value = max;
+        plane->_min_value = min;
+
 	return 0;
 }
 

@@ -54,6 +54,22 @@ class nmb_ImageBounds {
 	void setY(ImageBoundPoint ibp, double yb) {y[ibp] = yb;}
 	double getX(ImageBoundPoint ibp) const { return x[ibp]; }
 	double getY(ImageBoundPoint ibp) const { return y[ibp]; }
+        double minX() const {return min(min(x[0], x[1]), min(x[2], x[3]));}
+        double minY() const {return min(min(y[0], y[1]), min(y[2], y[3]));}
+        double maxX() const {return max(max(x[0], x[1]), max(x[2], x[3]));}
+        double maxY() const {return max(max(y[0], y[1]), max(y[2], y[3]));}
+        double area() const {
+           double a1 = (x[MAX_X_MIN_Y] - x[MIN_X_MIN_Y])*
+                       (y[MIN_X_MAX_Y] - y[MIN_X_MIN_Y]) -
+                       (x[MIN_X_MAX_Y] - x[MIN_X_MIN_Y])*
+                       (y[MAX_X_MIN_Y] - y[MIN_X_MIN_Y]);
+           double a2 = (x[MAX_X_MIN_Y] - x[MAX_X_MAX_Y])*
+                       (y[MIN_X_MAX_Y] - y[MAX_X_MAX_Y]) -
+                       (x[MIN_X_MAX_Y] - x[MAX_X_MAX_Y])*
+                       (y[MAX_X_MIN_Y] - y[MAX_X_MAX_Y]);
+           return 0.5*(fabs(a1) + fabs(a2));
+
+        }
 
   private:
     double x[4], y[4];
@@ -70,7 +86,9 @@ class nmb_Image {
         friend class nmb_ImageList;
   public:
 	nmb_Image():is_height_field(VRPN_FALSE), num_referencing_lists(0),
-                d_worldToImageMatrixSet(VRPN_FALSE)
+                d_worldToImageMatrixSet(VRPN_FALSE),
+                d_imagePosition(0.0, 0.0, 1.0, 1.0),
+                d_units_scale(1.0), d_units_offset(0.0)
         {
            for (int i = 0; i < 4; i++){
               for (int j = 0; j < 4; j++) {
@@ -131,6 +149,8 @@ class nmb_Image {
         void getWorldToImageTransform(double *matrix44);
         void setWorldToImageTransform(double *matrix44);
 
+        double areaInWorld();
+
         virtual void setTopoFileInfo(TopoFile &tf) = 0;
         virtual void getTopoFileInfo(TopoFile &tf) = 0;
 
@@ -138,6 +158,8 @@ class nmb_Image {
 	virtual BCString *unitsX() = 0;
 	virtual BCString *unitsY() = 0;
 	virtual BCString *unitsValue() = 0;
+        virtual double valueOffset() {return d_units_offset;}
+        virtual double valueScale() {return d_units_scale;}
 	vrpn_bool isHeightField() const {return is_height_field;}
 	void setHeightField(vrpn_bool flag) {is_height_field = flag;}
 
@@ -168,12 +190,23 @@ class nmb_Image {
         /// the transformation matrix returned by getWorldToImageTransform
         /// if its been set through setWorldToImageTransform
         double d_worldToImageMatrix[16];
+        /// position of the corners of the image in the world
+        nmb_ImageBounds d_imagePosition;
+        /// (value in specified units) = 
+        ///               (array value)*d_units_scale+d_units_offset
+        double d_units_scale;
+        double d_units_offset;
 };
 
 /// container class for BCGrid/BCPlane-based images
 class nmb_ImageGrid : public nmb_Image{
   public:
 	nmb_ImageGrid(const char *name, const char *units, short x, short y);
+        // makes a wrapper object which is responsible for deallocating 
+        // the grid and plane
+        nmb_ImageGrid(BCGrid *g);
+        // makes a wrapper object which doesn't do any deallocation of the
+        // plane or grid
 	nmb_ImageGrid(BCPlane *p);
         nmb_ImageGrid(nmb_Image *);
 	virtual ~nmb_ImageGrid();
@@ -214,6 +247,13 @@ class nmb_ImageGrid : public nmb_Image{
         virtual int exportToFile(FILE *f, const char *export_type);
 
 	typedef int (*FileExportingFunction) (FILE *file, nmb_ImageGrid *im);
+
+        /// functions for reading one or more images out of a file
+        /// these are in this class so we can leverage the code in BCGrid
+        /// for reading topometrix files
+        static int openFile(const char *filename);
+        static nmb_ImageGrid *getNextImage();
+
   protected:
 	static const int     num_export_formats;
         static const char    *export_formats_list[];
@@ -231,8 +271,14 @@ class nmb_ImageGrid : public nmb_Image{
 	BCString units_x;
 	BCString units_y;
         short min_x_set, min_y_set, max_x_set, max_y_set;
+
+        /// the topo file information for this particular image
         TopoFile d_topoFileDefaults;
-        static TopoFile s_topoFileDefaults;
+
+        /// the topo file information for the last opened file
+        static TopoFile s_openFileTopoHeader;
+        static BCPlane *s_openFilePlane;
+        static BCGrid *s_openFileGrid;
 };
 
 /* This was originally written as a template with variable type for the pixel
@@ -354,7 +400,6 @@ class nmb_ImageArray : public nmb_Image {
     vrpn_bool d_minValidValueComputed;
     float d_minValidValue;
 
-    nmb_ImageBounds d_imagePosition; // position in the world
     nmb_PixelType d_pixelType;
 };
 

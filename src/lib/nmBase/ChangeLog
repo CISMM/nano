@@ -1,3 +1,30 @@
+2001-03-02  Adam Seeger  <seeger@cs.unc.edu>
+
+	* BCGrid.C (readPPMorPGMFile): creates a NOT_TIMED plane instead
+	of a TIMED plane and uses the min and max values in the file instead
+	of scaling and shifting everything to 0..400
+	* nmb_Image.C (areaInWorld): new function that calculates the area
+	covered by this image in the world
+	(nmb_ImageGrid::openFile, nmb_ImageGrid::getNextImage): these new
+	static functions provide an interface to the file reading capabilities
+	of the BCGrid class and returns each plane in the file with its
+	own copy of the grid so they can be handled independently
+	(nmb_ImageGrid::boundX, boundY, setBoundX, setBoundY): fixed these
+	so they use the boundary information in the base class which gets
+	initialized to the original min/max x and y in the grid in the 
+	constructor - this fixes a problem with the boundary rectangle not
+	being right if the image has been rotated or sheared)
+	(nmb_ImageArray::nmb_ImageArray): fixed a problem with image width
+	not being an even number of words - fixed by using the border to 
+	pad the lines out depending on the pixel type (this caused problems
+	when using the image as a texture in openGL)
+	(nmb_ImageList::addImage): fixed bug here when you exceed the maximum
+	number of images for the list
+	also, changed this so that it adds the image name to the tcl list
+	last so that if this then sets some other variables through tcl which
+	trigger callbacks in c we will the corresponding image actually in 
+	the list
+
 2001-02-09  Jason Clark  <jclark@cs.unc.edu>
 
 	* nmb_Dataset.h: New viz plane
