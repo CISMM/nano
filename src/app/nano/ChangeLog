@@ -1,3 +1,16 @@
+2001-07-07  Tom Hudson  <hudson@cs.unc.edu>
+
+	* microscape.c : Make n, n_displays, start, stop from main()
+	file-global.  Uncomment num_y from MicroscapeInitializationState.
+	(doPerfModeOutput) : New function.
+	(handle_cntl_c) : Call doPerfModeOutput().
+	(ParseArgs) : Comment out non-square-grid warning.
+	(CreateGraphics) : Allow creation of non-square render
+	servers/clients using MicroscopeInitializationState::num_y.
+	(createNewMicroscope) : Same.
+	(main) : Move code to doPerfModeOutput(), call that function
+	if necessary.
+
 2001-07-03  Tom Hudson  <hudson@cs.unc.edu>
 
 	* microscape.c (createGraphics) : Generalize grid size arguments

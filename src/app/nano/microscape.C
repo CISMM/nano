@@ -1109,6 +1109,10 @@ static vrpn_bool rrTimeNow = VRPN_TRUE;
 /// to the callbacks that need them.
 static timeval time1, time2;
 static long interval = 0L;
+static long n = 0L;
+static long n_displays = 0L;
+static long start = 0L;
+static long stop = 0L;
 
 static int handle_timingGotFirst (void *, vrpn_HANDLERPARAM p) {
 
@@ -1159,7 +1163,7 @@ struct MicroscapeInitializationState {
 
   vrpn_bool use_file_resolution;
 //    int num_x;  replaced by AFMImageState::grid_resolution.
-//    int num_y;
+    int num_y;
   int graphics_mode;
   char graphicsHost [256];
 
@@ -1213,7 +1217,13 @@ MicroscapeInitializationState::MicroscapeInitializationState (void) :
   alignerName(NULL),
   use_file_resolution(vrpn_TRUE),
 //    num_x (DATA_SIZE),
-//    num_y (DATA_SIZE),
+  // This hack is SO UGLY - but I'm not sure I like storing the data
+  // in afm.image.grid_resolution, either, although it'd be nice to
+  // be consistent somewhere (although why do both modify and image
+  // have a grid_resolution member?)
+  // Anyhow, this needs to be consistent with the default value of
+  // afm.image.grid_resolution in lib/nmMScope/AFMState.C
+    num_y (12 /* DATA_SIZE */),
   graphics_mode (LOCAL_GRAPHICS),  // changed from NO_GRAPHICS
   num_stm_files (0),
   num_image_files(0),
@@ -1448,30 +1458,80 @@ void shutdown_connections (void) {
   }
 }
 
+void doPerfModeOutput (void) {
+  float looplen;
+  float timing;
+
+  if (rrTimeNow) {
+    start = time1.tv_sec * 1000 + time1.tv_usec/1000;
+    stop = time2.tv_sec * 1000 + time2.tv_usec/1000;
+    // TCH Dissertation July 2001
+    // Change from = to += so we can accumulate across multiple
+    // connections and disconnections if we're a rendering server
+    // (wow, sounds like unnecessary generality...)
+    interval += stop-start;          /* In milliseconds */
+  }
+
+  /* Print timing info */
+  printf("Time for %ld loop iterations: %ld seconds\n",n,
+        time2.tv_sec-time1.tv_sec);
+  printf("Time for %ld display iterations: %ld seconds\n",n_displays,
+        time2.tv_sec-time1.tv_sec);
+  if (interval != 0) {
+    timing = ((float)(n) / (float)(interval) * 1.0e+3);
+    printf("    (%.5f loop iterations per second)\n", timing);
+    looplen = ((interval / 1.0e+3) / (float) (n));
+    printf("    (%.5f seconds per loop iteration)\n", looplen);
+    timing = ((float)(n_displays) / (float)(interval) * 1.0e+3);
+    printf("    (%.5f display iterations per second)\n", timing);
+    looplen = ((interval / 1.0e+3) / (float) (n_displays));
+    printf("    (%.5f seconds per display iteration)\n", looplen);
+  }
+
+  printf("---------------\n");
+  printf("Graphics Timer:\n");
+  graphicsTimer.report();
+
+  if (rrServer) {
+    nmg_Graphics_RenderServer * rs = (nmg_Graphics_RenderServer *) graphics;
+    printf("---------------\n");
+    printf("Graphics Bandwidth:\n");
+    printf("    %d messages, %d bytes sent.\n",
+           rs->messagesSent(), rs->bytesSent());
+  }
+
+  printf("---------------\n");
+  printf("Collaboration Timer:\n");
+  collaborationTimer.report();
+}
+
 /*********
  * Handle exiting cleanly when we get ^C
  *********/
 
-void	handle_cntl_c(int which_signal)
-{
-	which_signal = which_signal;	// Keep the compiler happy
+void handle_cntl_c (int /* which_signal */) {
 
-	/* Holler about it */
-	fprintf(stderr,"Received ^C signal, shutting down and saving stream\n");
-	if (do_keybd == 1)
-	  {
+  /* Holler about it */
+  fprintf(stderr,"Received ^C signal, shutting down and saving stream\n");
+
+  if (do_keybd == 1) {
 	    /* Reset the raw terminal input to standard */
 #ifndef NO_RAW_TERM
-	    reset_raw_term(ttyFD);
+    reset_raw_term(ttyFD);
 #endif
-	  }
+  }
 
-	shutdown_connections();
+  if (perf_mode) {
+    doPerfModeOutput();
+  }
 
-	if (graphicsServerThread)
-	  graphicsServerThread->kill();  // NOT PORTABLE TO NT!
+  shutdown_connections();
 
-	exit(0);
+  if (graphicsServerThread) {
+    graphicsServerThread->kill();  // NOT PORTABLE TO NT!
+}
+
+  exit(0);
 }
 //---------------------------------------------------------------------------
 /// Deal with changes in the stride between rows on the grid for tesselation.
@@ -4822,8 +4882,9 @@ void ParseArgs (int argc, char ** argv,
         istate->afm.image.grid_resolution = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
         if(atoi(argv[i]) != istate->afm.image.grid_resolution) {
-            display_error_dialog( "Warning: non-square grid specified, ignoring 2nd size\n");
+            //display_error_dialog( "Warning: non-square grid specified, ignoring 2nd size\n");
         }
+        istate->num_y = atoi(argv[i]);
         istate->use_file_resolution = vrpn_FALSE;
       } else if (strcmp(argv[i], "-fi") == 0) {
 	if (++i >= argc) Usage(argv[0]);
@@ -5581,7 +5642,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                   nmg_Graphics::VERTEX_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
                   istate.afm.image.grid_resolution,
-                  istate.afm.image.grid_resolution,
+                  istate.num_y,
                   rulerPPMName, renderServerControlConnection);
 
       rrServer = VRPN_TRUE;
@@ -5609,7 +5670,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                   nmg_Graphics::NO_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
                   istate.afm.image.grid_resolution,
-                  istate.afm.image.grid_resolution,
+                  istate.num_y,
                   rulerPPMName, renderServerControlConnection);
 
       rrServer = VRPN_TRUE;
@@ -5637,7 +5698,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                   nmg_Graphics::NO_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
                   istate.afm.image.grid_resolution,
-                  istate.afm.image.grid_resolution,
+                  istate.num_y,
                   rulerPPMName, renderServerControlConnection);
 
       rrServer = VRPN_TRUE;
@@ -5665,7 +5726,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                 nmg_Graphics::NO_DEPTH,
                 nmg_Graphics::PERSPECTIVE_PROJECTION,
                   istate.afm.image.grid_resolution,
-                  istate.afm.image.grid_resolution,
+                  istate.num_y,
                 rulerPPMName, renderServerControlConnection);
 
       rrServer = VRPN_TRUE;
@@ -5701,7 +5762,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
             nmg_Graphics::VERTEX_COLORS, nmg_Graphics::VERTEX_DEPTH,
             nmg_Graphics::ORTHO_PROJECTION,
             istate.afm.image.grid_resolution,
-            istate.afm.image.grid_resolution,
+            istate.num_y,
             renderServerControlConnection, &graphicsTimer);
 
       ((nmg_Graphics_RenderClient *) graphics)->setGraphicsTiming
@@ -5741,7 +5802,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
             nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
             nmg_Graphics::ORTHO_PROJECTION,
             istate.afm.image.grid_resolution,
-            istate.afm.image.grid_resolution,
+            istate.num_y,
             renderServerControlConnection, &graphicsTimer);
 
       ((nmg_Graphics_RenderClient *) graphics)->setGraphicsTiming
@@ -5781,7 +5842,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
             nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
             nmg_Graphics::PERSPECTIVE_PROJECTION,
             istate.afm.image.grid_resolution,
-            istate.afm.image.grid_resolution,
+            istate.num_y,
             renderServerControlConnection, &graphicsTimer);
 
       ((nmg_Graphics_RenderClient *) graphics)->setGraphicsTiming
@@ -5975,7 +6036,7 @@ int createNewMicroscope( MicroscapeInitializationState &istate,
     nmb_Dataset *
     new_dataset = new nmb_Dataset (istate.use_file_resolution,
                                istate.afm.image.grid_resolution, 
-                               istate.afm.image.grid_resolution,
+                               istate.num_y,
                                istate.x_min, istate.x_max,
                                istate.y_min, istate.y_max, new_microscope->ReadMode(),
                                (const char **) istate.stm_file_names,
@@ -6229,10 +6290,6 @@ int main(int argc, char* argv[])
     /* Things needed for the timing information */
     MicroscapeInitializationState istate;
     timeval d_time;
-    long n = 0L;
-    long start = 0L;
-    long stop = 0L;
-    long n_displays = 0L;
 
     int		i;
 
@@ -7157,49 +7214,8 @@ VERBOSE(1, "Entering main loop");
 
   if (perf_mode) {
 
-    if (rrTimeNow) {
-      start = time1.tv_sec * 1000 + time1.tv_usec/1000;
-      stop = time2.tv_sec * 1000 + time2.tv_usec/1000;
-      // TCH Dissertation July 2001
-      // Change from = to += so we can accumulate across multiple
-      // connections and disconnections if we're a rendering server
-      // (wow, sounds like unnecessary generality...)
-      interval += stop-start;          /* In milliseconds */
-    }
+    doPerfModeOutput();
 
-    /* Print timing info */
-    float looplen;
-    float timing;
-    printf("Time for %ld loop iterations: %ld seconds\n",n,
-          time2.tv_sec-time1.tv_sec);
-    printf("Time for %ld display iterations: %ld seconds\n",n_displays,
-          time2.tv_sec-time1.tv_sec);
-    if (interval != 0) {
-	  timing = ((float)(n) / (float)(interval) * 1.0e+3);
-	  printf("    (%.5f loop iterations per second)\n", timing);
-          looplen = ((interval / 1.0e+3) / (float) (n));
-	  printf("    (%.5f seconds per loop iteration)\n", looplen);
-	  timing = ((float)(n_displays) / (float)(interval) * 1.0e+3);
-	  printf("    (%.5f display iterations per second)\n", timing);
-          looplen = ((interval / 1.0e+3) / (float) (n_displays));
-	  printf("    (%.5f seconds per display iteration)\n", looplen);
-    }
-
-    printf("---------------\n");
-    printf("Graphics Timer:\n");
-    graphicsTimer.report();
-
-    if (rrServer) {
-      nmg_Graphics_RenderServer * rs = (nmg_Graphics_RenderServer *) graphics;
-      printf("---------------\n");
-      printf("Graphics Bandwidth:\n");
-      printf("    %d messages, %d bytes sent.\n",
-             rs->messagesSent(), rs->bytesSent());
-    }
-
-    printf("---------------\n");
-    printf("Collaboration Timer:\n");
-    collaborationTimer.report();
   }
 
   if(glenable){
