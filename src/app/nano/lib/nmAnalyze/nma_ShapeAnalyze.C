@@ -10,6 +10,8 @@
 #include "cnt_ia.h"
 #include <nmb_Dataset.h>
 
+int nma_ShapeAnalyze::nma_ShapeAnalyzeCounter = 0;
+
 nma_ShapeAnalyze::
 nma_ShapeAnalyze()
   :	d_maskWrite(1), d_ordWrite(0)
@@ -201,8 +203,8 @@ create_ShapeIdentifiedPlane()
 
   
   char uniqueOutputPlaneName[50];
-  nma_ShapeAnalyzeCounter++;
-  sprintf(uniqueOutputPlaneName, "file%d_%s", nma_ShapeAnalyzeCounter, d_outputPlaneName);
+  nma_ShapeAnalyze::nma_ShapeAnalyzeCounter++;
+  sprintf(uniqueOutputPlaneName, "file%d_%s", nma_ShapeAnalyze::nma_ShapeAnalyzeCounter, d_outputPlaneName);
   //allows files to be named different things so you can make more than one shape-identified file
   //per run of nano
   

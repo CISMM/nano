@@ -8,8 +8,6 @@ class CNT_IA;
 #include <vrpn_Connection.h>
 
 
-int nma_ShapeAnalyzeCounter;
-
 /////////////////////////////////////////////////////////////////
 // Class:       nma_ShapeAnalyze
 // Description: Interface class to the shape analysis code to
@@ -38,7 +36,7 @@ public:
 	void imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset);
 	//pass in dataset so that it is current when image analysis is done
 
-
+        static int nma_ShapeAnalyzeCounter;
 private:
 	char d_imgMaskFile[255];  //255 characters should be plenty for any file name
 	char d_desiredFilename[255];

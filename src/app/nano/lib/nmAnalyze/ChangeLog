@@ -1,3 +1,9 @@
+2001-07-17  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nma_ShapeAnalyze.hC: changed nma_ShapeAnalyzeCounter variable to
+	be a static member of nma_ShapeAnalyze instead of a separate global 
+	in the header file to get rid of a multiply defined symbols error
+
 2001-06-25  Andrea Hilchey  <hilchey@cs.unc.edu>
 
 	* cnt_ia.C:  fixed 2 minor errors with strcpy function, no
