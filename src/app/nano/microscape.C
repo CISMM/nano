@@ -2966,18 +2966,33 @@ void    handle_adhesion_dataset_change(const char *, void * userdata)
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   BCPlane * plane = dataset->inputGrid->getPlaneByName
                      (adhesionPlaneName.string());
+  float range;
 
-        if (plane != NULL)
-          {
-                adhesion_slider_min_limit = plane->minAttainableValue();
-                adhesion_slider_min = plane->minValue();
-                adhesion_slider_max_limit = plane->maxAttainableValue();
-                adhesion_slider_max = plane->maxValue();
-                g->setAdhesionSliderRange(adhesion_slider_min,
-                                                 adhesion_slider_max);
-        }
-        // On PxFl, map adhesion plane to hatch map
-        g->setHatchMapName(adhesionPlaneName.string());
+  if (plane != NULL) {
+      range = plane->maxValue() - plane->minValue();
+      if (plane->minAttainableValue() > (plane->maxValue() - range)) {
+          adhesion_slider_min_limit = plane->minAttainableValue();
+      }
+      else {
+          adhesion_slider_min_limit = (plane->maxValue() - range);
+      }
+      if ( plane->maxAttainableValue() < (plane->minValue() + range)) {
+          adhesion_slider_max_limit = plane->maxAttainableValue();
+      } else {
+          adhesion_slider_max_limit = (plane->minValue() + range);
+      }
+      adhesion_slider_min = plane->minValue();
+      adhesion_slider_max = plane->maxValue();
+      g->setAdhesionSliderRange(adhesion_slider_min, adhesion_slider_max);
+  }
+  else {
+      adhesion_slider_min_limit = 0;
+      adhesion_slider_max_limit = 1;
+      adhesion_slider_min = 0;
+      adhesion_slider_max = 1;
+  }
+  // On PxFl, map adhesion plane to hatch map
+  g->setHatchMapName(adhesionPlaneName.string());
 }
 
 void    handle_friction_dataset_change(const char *, void * userdata)
@@ -2985,17 +3000,35 @@ void    handle_friction_dataset_change(const char *, void * userdata)
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   BCPlane * plane = dataset->inputGrid->getPlaneByName
                (frictionPlaneName.string());
+  float range;
 
-        if (plane != NULL) {
-                friction_slider_min_limit = plane->minAttainableValue();
-                friction_slider_min = plane->minValue();
-                friction_slider_max_limit = plane->maxAttainableValue();
-                friction_slider_max = plane->maxValue();
-                g->setFrictionSliderRange(friction_slider_min,
-                                                 friction_slider_max);
-        }
-        // On PxFl, map friction plane to bump map
-        g->setBumpMapName(frictionPlaneName.string());
+  if (plane != NULL) {
+      range = plane->maxValue() - plane->minValue();
+
+      if ( plane->minAttainableValue() > (plane->maxValue() - range)) {
+          friction_slider_min_limit = plane->minAttainableValue();
+      } else {
+          friction_slider_min_limit = (plane->maxValue() - range);
+      }
+      if ( plane->maxAttainableValue() < (plane->minValue() + range)) {
+          friction_slider_max_limit = plane->maxAttainableValue();
+      } else {
+          friction_slider_max_limit = (plane->minValue() + range);
+      }
+      friction_slider_min = plane->minValue();
+      friction_slider_max = plane->maxValue();
+      g->setFrictionSliderRange(friction_slider_min,
+                                friction_slider_max);
+  }
+  else {
+      friction_slider_min_limit = 0;
+      friction_slider_max_limit = 1;
+      friction_slider_min = 0;
+      friction_slider_max = 1;
+  }
+  
+  // On PxFl, map friction plane to bump map
+  g->setBumpMapName(frictionPlaneName.string());
 }
 
 void    handle_bump_dataset_change(const char *, void * userdata)
@@ -3003,51 +3036,103 @@ void    handle_bump_dataset_change(const char *, void * userdata)
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   BCPlane * plane = dataset->inputGrid->getPlaneByName
     (bumpPlaneName.string());
+  float range;
 
-        if (plane != NULL) {
-                bump_slider_min_limit = plane->minAttainableValue();
-                bump_slider_min = plane->minValue();
-                bump_slider_max_limit = plane->maxAttainableValue();
-                bump_slider_max = plane->maxValue();
-                g->setBumpSliderRange(bump_slider_min,
-                                                 bump_slider_max);
-        }
+  if (plane != NULL) {
+      range = plane->maxValue() - plane->minValue();
+      if ( plane->minAttainableValue() > 
+           (plane->maxValue() - range)) {
+          bump_slider_min_limit = plane->minAttainableValue();
+      }
+      else {
+          bump_slider_min_limit = (plane->maxValue() - range);
+      }
+      if ( plane->maxAttainableValue() < (plane->minValue() + range)) {
+          bump_slider_max_limit = plane->maxAttainableValue();
+      }
+      else {
+          bump_slider_max_limit = (plane->minValue() + range);
+      }
+      bump_slider_min = plane->minValue();
+      bump_slider_max = plane->maxValue();
+      g->setBumpSliderRange(bump_slider_min,
+                            bump_slider_max);
+  }
+  else {
+      bump_slider_min_limit = 0;
+      bump_slider_max_limit = 1;
+      bump_slider_min = 0;
+      bump_slider_max = 1;
+  }
+  
 }
 
 void    handle_buzz_dataset_change(const char *, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   BCPlane * plane = dataset->inputGrid->getPlaneByName
-               (buzzPlaneName.string());
+      (buzzPlaneName.string());
+  float range;
 
-        if (plane != NULL) {
-                buzz_slider_min_limit = plane->minAttainableValue();
-                buzz_slider_min = plane->minValue();
-                buzz_slider_max_limit = plane->maxAttainableValue();
-                buzz_slider_max = plane->maxValue();
-                g->setBuzzSliderRange(buzz_slider_min,
-                                                 buzz_slider_max);
-        }
+  if (plane != NULL) {
+      range = plane->maxValue() - plane->minValue();
+      if ( plane->minAttainableValue() > (plane->maxValue() - range)) {
+          buzz_slider_min_limit = plane->minAttainableValue();
+      }
+      else {
+          buzz_slider_min_limit = (plane->maxValue() - range);
+      }
+      if (plane->maxAttainableValue() < (plane->minValue() + range)) {
+          buzz_slider_max_limit = plane->maxAttainableValue();
+      }
+      else {
+          buzz_slider_max_limit = (plane->minValue() + range);
+      }
+      buzz_slider_min = plane->minValue();
+      buzz_slider_max = plane->maxValue();
+      g->setBuzzSliderRange(buzz_slider_min, buzz_slider_max);
+  }
+  else {
+      buzz_slider_min_limit = 0;
+      buzz_slider_max_limit = 1;
+      buzz_slider_min = 0;
+      buzz_slider_max = 1;
+  }  
 }
 
-
-void    handle_compliance_dataset_change(const char *, void * userdata) {
+void    handle_compliance_dataset_change(const char *, void * userdata)
+{
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   BCPlane * plane = dataset->inputGrid->getPlaneByName
-           (compliancePlaneName.string());
+      (compliancePlaneName.string());
+  float range;
 
-        if (plane != NULL) {
-                compliance_slider_min_limit = plane->minAttainableValue();
-                compliance_slider_min = plane->minValue();
-                compliance_slider_max_limit = plane->maxAttainableValue();
-                compliance_slider_max = plane->maxValue();
-                g->setComplianceSliderRange(compliance_slider_min,
-                                                   compliance_slider_max);
-        }
-
+  if (plane != NULL) {
+      range = plane->maxValue() - plane->minValue();
+      if ( plane->minAttainableValue() > (plane->maxValue() - range)) {
+          compliance_slider_min_limit = plane->minAttainableValue();
+      }
+      else {
+          compliance_slider_min_limit = (plane->maxValue() - range);
+      }
+      if ( plane->maxAttainableValue() < (plane->minValue() + range)) {
+          compliance_slider_max_limit = plane->maxAttainableValue();
+      }
+      else {
+          compliance_slider_max_limit = (plane->minValue() + range);
+      }
+      compliance_slider_min = plane->minValue();
+      compliance_slider_max = plane->maxValue();
+      g->setComplianceSliderRange(compliance_slider_min,
+                                  compliance_slider_max);
+  }
+  else {
+      compliance_slider_min_limit = 0;
+      compliance_slider_max_limit = 1;
+      compliance_slider_min = 0;
+      compliance_slider_max = 1;
+  }
 }
-
-
 
 // Callbacks for latency compensation techniques.
 

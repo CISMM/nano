@@ -673,6 +673,9 @@ void    handle_z_dataset_change(const char *, void * _mptr)
 
 void    handle_color_dataset_change(const char *, void * /*_mptr*/)
 {
+  //changed from using *NonZeroValue to *Value to match settings for
+  //haptics parameters
+
     BCPlane * plane = dataset->inputGrid->getPlaneByName
                           (dataset->colorPlaneName->string());
 
@@ -684,30 +687,43 @@ void    handle_color_dataset_change(const char *, void * /*_mptr*/)
 	//color_slider_max_limit = plane->maxAttainableValue();
 	// So, only use these if they are within a reasonable distance
 	// of the data range.
-	float range = plane->maxNonZeroValue() - plane->minNonZeroValue();
-	printf("Colormap Min %f max %f range %f\n", plane->minNonZeroValue(),
-	       plane->maxNonZeroValue(), range);
-	if ( plane->minAttainableValue() > (plane->minNonZeroValue() -range)){ 
+      //float range = plane->maxNonZeroValue() - plane->minNonZeroValue();
+      float range = plane->maxValue() - plane->minValue();
+      printf("Colormap Min %f max %f range %f\n", plane->minNonZeroValue(),
+	     plane->maxNonZeroValue(), range);
+        // I think what we want is min = max_value - range and
+        // max = min_value + range.
+      //if ( plane->minAttainableValue() > (plane->minNonZeroValue() - range)){
+      if ( plane->minAttainableValue() > (plane->maxValue() - range)){ 
 	    color_slider_min_limit = plane->minAttainableValue();
-	} else {
-	    color_slider_min_limit = (plane->minNonZeroValue() -range);
-	}
-	if ( plane->maxAttainableValue() < (plane->maxNonZeroValue() +range)){
-	    color_slider_max_limit = plane->maxAttainableValue();
-	} else {
-	    color_slider_max_limit = (plane->maxNonZeroValue() +range);
-	}
+      } else {
+	//color_slider_min_limit = (plane->minNonZeroValue() -range);
+	color_slider_min_limit = (plane->maxValue() - range);
+      }
+      //if ( plane->maxAttainableValue() < (plane->maxNonZeroValue() + range)){
+      if (plane->maxAttainableValue() < (plane->minValue() + range)){
+	color_slider_max_limit = plane->maxAttainableValue();
+      } else {
+	//color_slider_max_limit = (plane->maxNonZeroValue() +range);
+	color_slider_max_limit = (plane->minValue()+ range);
+      }
 	
-	color_slider_min = plane->minNonZeroValue();
-	color_slider_max = plane->maxNonZeroValue();
+      //color_slider_min = plane->minNonZeroValue();
+      //color_slider_max = plane->maxNonZeroValue();
+      color_slider_min = plane->minValue();
+      color_slider_max = plane->maxValue();
+    }
+    else {
+      color_slider_min_limit = 0;
+      color_slider_max_limit = 1;
+      color_slider_min = 0;
+      color_slider_max = 1;
     }
     
     //cause_grid_redraw(0.0, _mptr);
-  graphics->setColorPlaneName(dataset->colorPlaneName->string());
-  graphics->causeGridRedraw();
+    graphics->setColorPlaneName(dataset->colorPlaneName->string());
+    graphics->causeGridRedraw();
 }
-
-
 
 void     handle_sound_dataset_change(const char *, void * )
 {

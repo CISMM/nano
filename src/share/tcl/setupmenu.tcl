@@ -155,10 +155,10 @@ proc color_scale_newscale {name element op} {
     
     # Change titles to reflect new range
     # format statements keep the labels from getting really long. 
-    set newtext [format "%.0f %.0f" $color_slider_min_limit $color_slider_max_limit]
+    set newtext [format "%.3f %.3f" $color_slider_min_limit $color_slider_max_limit]
     $nmInfo(colorscale).scales.center config -labeltext \
 	"Center ($newtext)"
-    set newtext [format "%.0f" [expr $color_slider_max_limit -$color_slider_min_limit ]]
+    set newtext [format "%.3f" [expr $color_slider_max_limit -$color_slider_min_limit ]]
     $nmInfo(colorscale).scales.range config -labeltext \
 	"Width (0 $newtext)"
 
@@ -464,6 +464,8 @@ proc alpha_scale_newscale {name element op} {
 ##############
 # Haptic controls, friction, bump, buzz, adhesion, compliance.
 
+# adhesion part of UI commented out because adhesion not fully implemented
+
 set friction_slider_min_limit 0 
 set friction_slider_max_limit 1
 
@@ -473,47 +475,45 @@ set bump_slider_max_limit 1
 set buzz_slider_min_limit 0
 set buzz_slider_max_limit 1
 
-set adhesion_slider_min_limit 0 
-set adhesion_slider_max_limit 1
+#set adhesion_slider_min_limit 0 
+#set adhesion_slider_max_limit 1
 
 set compliance_slider_min_limit 0 
 set compliance_slider_max_limit 1
 
 
-proc adjust_adhesion {} {
-    global bc
-    global fspady
+#proc adjust_adhesion {} {
+#    global bc
+#    global fspady
     
-    toplevel .a
+#    toplevel .a
     
-    frame .a.menubar -relief raised -bd 4
-    pack .a.menubar -side top -fill both
+#    frame .a.menubar -relief raised -bd 4
+#    pack .a.menubar -side top -fill both
     
-    button .a.menubar.exitwin -bg red -text "Close Adhesion Panel" -command "destroy .a"
-    pack .a.menubar.exitwin -side top -anchor e -ipadx 3m
+#    button .a.menubar.exitwin -bg red -text "Close Adhesion Panel" -command "destroy .a"
+#    pack .a.menubar.exitwin -side top -anchor e -ipadx 3m
     
-    frame .a.label
-    label .a.label.a -text "Adhesion Model Parameters"
-    pack .a.label.a -side left
-    pack .a.label -side top -anchor n
-    frame .a.sliders
-    pack .a.sliders -side top -anchor w -fill x -pady 1m -padx 3m
+#    frame .a.label
+#    label .a.label.a -text "Adhesion Model Parameters"
+#    pack .a.label.a -side left
+#    pack .a.label -side top -anchor n
+#    frame .a.sliders
+#    pack .a.sliders -side top -anchor w -fill x -pady 1m -padx 3m
     
-    floatscale .a.sliders.adh_const 6000 12000 12001 1 1 adhesion_constant "Adhesion_Constant" 
-    floatscale .a.sliders.adhesion_peak 0 100 101 1 1 adhesion_peak "Adhesion_Peak"
-    floatscale .a.sliders.adhesion_min 0 100 101 1 1 adhesion_min "Adhesion_Min"
-    floatscale .a.sliders.adhesion_decrease_per 0 10 1001 1 1 adhesion_decrease_per "Adhesion_Decrease_Per"
+#    floatscale .a.sliders.adh_const 6000 12000 12001 1 1 adhesion_constant "Adhesion_Constant" 
+#    floatscale .a.sliders.adhesion_peak 0 100 101 1 1 adhesion_peak "Adhesion_Peak"
+#    floatscale .a.sliders.adhesion_min 0 100 101 1 1 adhesion_min "Adhesion_Min"
+#    floatscale .a.sliders.adhesion_decrease_per 0 10 1001 1 1 adhesion_decrease_per "Adhesion_Decrease_Per"
 
     #adhesion_peak and adhesion_min sliders should be
     #ganged together by minmaxscale
     #the scaling for minmax here is fixed, so no need to destroy and
     #recreate the sliders, because endpoints don't change
-    minmaxscale .a.sliders.adh_min_peak 0 100 101 adhesion_min adhesion_peak "Adhesion_Min" "Adhesion_Peak" 0 10 11
+#    minmaxscale .a.sliders.adh_min_peak 0 100 101 adhesion_min adhesion_peak "Adhesion_Min" "Adhesion_Peak" 0 10 11
 
-#    pack .a.sliders.adh_const .a.sliders.adhesion_peak .a.sliders.adhesion_min .a.sliders.adhesion_decrease_per -side top -fill x -pady $fspady
-
-    pack .a.sliders.adh_const .a.sliders.adhesion_decrease_per .a.sliders.adh_min_peak -side top -fill x -pady $fspady
-}
+#    pack .a.sliders.adh_const .a.sliders.adhesion_decrease_per .a.sliders.adh_min_peak -side top -fill x -pady $fspady
+#}
 
 proc adjust_friction {} {
     global bc
@@ -736,44 +736,46 @@ proc buzz_scale_newscale {name element op} {
 # Then, we pack a min/max slider into the control panel
 #
 
-set nmInfo(adhesionscale) [frame $nmInfo(haptic).adhesionscale -relief raised -bd 4]
-pack $nmInfo(adhesionscale) -fill both
+# commented out because adhesion not fully implemented
 
-generic_entry $nmInfo(adhesionscale).num_to_avg adhesion_average \
-	"Num samples to avg: (3,100???)" real
-checkbutton $nmInfo(adhesionscale).linear -text "linearize adhesion" \
-	-variable adhesion_linear
+#set nmInfo(adhesionscale) [frame $nmInfo(haptic).adhesionscale -relief raised -bd 4]
+#pack $nmInfo(adhesionscale) -fill both
 
-if {$adhesion_slider_min_limit != $adhesion_slider_max_limit} {
-    minmaxscale $nmInfo(adhesionscale).scale $adhesion_slider_min_limit \
-	    $adhesion_slider_max_limit 50 adhesion_slider_min adhesion_slider_max
-    generic_optionmenu $nmInfo(adhesionscale).adhesion_dataset \
-            adhesion_comes_from "Adhesion plane" inputPlaneNames
+#generic_entry $nmInfo(adhesionscale).num_to_avg adhesion_average \
+#	"Num samples to avg: (3,100???)" real
+#checkbutton $nmInfo(adhesionscale).linear -text "linearize adhesion" \
+#	-variable adhesion_linear
+
+#if {$adhesion_slider_min_limit != $adhesion_slider_max_limit} {
+#    minmaxscale $nmInfo(adhesionscale).scale $adhesion_slider_min_limit \
+#	    $adhesion_slider_max_limit 50 adhesion_slider_min adhesion_slider_max
+#    generic_optionmenu $nmInfo(adhesionscale).adhesion_dataset \
+#            adhesion_comes_from "Adhesion plane" inputPlaneNames
     # Make a frame to hold the pull-down menu that selects from the list
-    frame $nmInfo(adhesionscale).pickframe
-    pack $nmInfo(adhesionscale).pickframe -side left -fill y
-    pack $nmInfo(adhesionscale).adhesion_dataset
-    pack $nmInfo(adhesionscale).scale -fill x -side left
-    trace variable adhesion_slider_min_limit w adhesion_scale_newscale
-    trace variable adhesion_slider_max_limit w adhesion_scale_newscale
-}
+#    frame $nmInfo(adhesionscale).pickframe
+#    pack $nmInfo(adhesionscale).pickframe -side left -fill y
+#    pack $nmInfo(adhesionscale).adhesion_dataset
+#    pack $nmInfo(adhesionscale).scale -fill x -side left
+#    trace variable adhesion_slider_min_limit w adhesion_scale_newscale
+#    trace variable adhesion_slider_max_limit w adhesion_scale_newscale
+#}
 
-button $nmInfo(adhesionscale).pickframe.setadhesion -text "Set Adhesion Parameters" -command adjust_adhesion
-pack $nmInfo(adhesionscale).pickframe.setadhesion
-pack $nmInfo(adhesionscale).num_to_avg
-pack $nmInfo(adhesionscale).linear
+#button $nmInfo(adhesionscale).pickframe.setadhesion -text "Set Adhesion Parameters" -command adjust_adhesion
+#pack $nmInfo(adhesionscale).pickframe.setadhesion
+#pack $nmInfo(adhesionscale).num_to_avg
+#pack $nmInfo(adhesionscale).linear
 #
 # Helper routine for the color scale that destroys and then recreates the
 # slider with new values if the endpoints change.
 #
-proc adhesion_scale_newscale {name element op} {
-        global  adhesion_slider_min_limit adhesion_slider_max_limit
-    global nmInfo
-        destroy $nmInfo(adhesionscale).scale
-        minmaxscale $nmInfo(adhesionscale).scale $adhesion_slider_min_limit \
-                $adhesion_slider_max_limit 50 adhesion_slider_min adhesion_slider_max
-        pack $nmInfo(adhesionscale).scale -fill x -side top
-}
+#proc adhesion_scale_newscale {name element op} {
+#        global  adhesion_slider_min_limit adhesion_slider_max_limit
+#    global nmInfo
+#        destroy $nmInfo(adhesionscale).scale
+#        minmaxscale $nmInfo(adhesionscale).scale $adhesion_slider_min_limit \
+#                $adhesion_slider_max_limit 50 adhesion_slider_min adhesion_slider_max
+#        pack $nmInfo(adhesionscale).scale -fill x -side top
+#}
 
 
 
