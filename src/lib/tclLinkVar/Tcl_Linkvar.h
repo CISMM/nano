@@ -11,9 +11,6 @@
 // link them with Tcl variables.
 //	They provide two-way links, with change in either Tcl or C changing
 // the other.
-//	The Tclvar_init() routine must be called to link all of them.  Each
-// time through the main loop, Tclvar_mainloop() must be called to make any
-// changes.
 /////////////////////////////////////////////////////////////////////////////
 
 #ifndef	TCL_LINKVAR_H
@@ -26,11 +23,11 @@
 #include <nmb_String.h>
 #include <nmb_Types.h>  // for vrpn_bool
 
-//struct Tcl_Interp;  // from tcl.h
 #include <tcl.h>  // for Client_Data, Tcl_Interp
 
 extern	int	Tclvar_init(Tcl_Interp *tcl_interp);
 extern	int	Tclvar_mainloop(void);
+  ///< Obsolete.
 
 class	Tclvar_int_with_button;
 class	Tclvar_int_with_entry;
@@ -45,11 +42,13 @@ typedef	void (* Linkvar_Checkcall) (const char * checkbox,
                                     int new_value, void * userdata);
 
 // Very useful for sending tcl commands from c to tcl. 
-#define TCLEVALCHECK(interp, command) if (Tcl_Eval(interp, command)!= TCL_OK) \
-                       {fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command, \
+#define TCLEVALCHECK(interp, command) \
+  if (Tcl_Eval(interp, command)!= TCL_OK) \
+                 {fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command, \
                                 Tcl_GetStringResult(interp)); return(-1);}
-#define TCLEVALCHECK2(interp, command) if (Tcl_Eval(interp, command)!= TCL_OK) \
-                       {fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command, \
+#define TCLEVALCHECK2(interp, command) \
+  if (Tcl_Eval(interp, command)!= TCL_OK) \
+                 {fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command, \
                                 Tcl_GetStringResult(interp)); return;}
 
 // TCH 1 Oct 97
@@ -114,7 +113,6 @@ class	Tclvar_int {
           // 0 otherwise
 
         vrpn_bool d_ignoreChange;
-        vrpn_bool d_permitIdempotentChanges;
 
         // These two functions are NOT defined;  they should
         // generate compile-time errors.
@@ -163,7 +161,6 @@ class	Tclvar_float {
           // 0 otherwise
 
         vrpn_bool d_ignoreChange;
-        vrpn_bool d_permitIdempotentChanges;
 
         // These two functions are NOT defined;  they should
         // generate compile-time errors.
@@ -222,7 +219,6 @@ class	Tclvar_string : public nmb_String {
           // 0 otherwise
 
     vrpn_bool d_ignoreChange;
-    vrpn_bool d_permitIdempotentChanges;
 
         // These two functions are NOT defined;  they should
         // generate compile-time errors.
@@ -289,7 +285,6 @@ class	Tclvar_list_of_strings : public nmb_ListOfStrings {
           // 0 otherwise
 
     vrpn_bool d_ignoreChange;
-    vrpn_bool d_permitIdempotentChanges;
 
     virtual int clearList ();
     virtual int addEntry (const char *);
@@ -327,16 +322,19 @@ private:
 nmb_ListOfStrings * allocate_Tclvar_list_of_strings ();
 
 
-//	This class maintains a checklist of items, each of which has a
-// string name and a state.  The state is either on or off (0 or 1).  It
-// instantiates checkboxes to display the states.  It uses a array
-// as its items to choose from.
 
 typedef	struct {
-	char			name[60];	// Name of the checkbox
-	Tclvar_int_with_button	*button;	// Button for the checkbox
-        Tclvar_int_with_entry *entry;           // Entry for checkbox -see checklist_with_entry
+	char			name[60];	///< Name of the checkbox
+	Tclvar_int_with_button	*button;	///< Button for the checkbox
+        Tclvar_int_with_entry *entry;
+            ///< Entry for checkbox -see checklist_with_entry
 } Tclvar_Checkbox;
+
+/// \class Tclvar_checklist
+///	This class maintains a checklist of items, each of which has a
+/// string name and a state.  The state is either on or off (0 or 1).  It
+/// instantiates checkboxes to display the states.  It uses a array
+/// as its items to choose from.
 
 class	Tclvar_checklist {
     public:

@@ -24,30 +24,36 @@
 // file because we had to change it to virtual and that generated
 // warnings on the HP compiler.  - T. Hudson, Sept 99
 
-static	const int MAX_INTS =	1000;	///< Max number of int variables
-static	const int MAX_IB =	1000;	///< Max number of int/buttons
-static	const int MAX_FLOATS =	1000;	///< Max number of float variables
-//static	const int MAX_FS =	1000;	// Max number of floatscale vars
-//static	const int MAX_IS =	1000;	// Max number of intscale vars
-static	const int MAX_INTENTRY= 1000;	///< Max number of intentry vars
-static	const int MAX_CHECKENTRY= 1000;	///< Max number of intentry vars
-static	const int MAX_STRINGS =	1000;	///< Max number of strings
-static	const int MAX_LIST_OF_STRINGS =	1000;	///< Max number of lists of strings
+static const int MAX_INTS =	1000;	///< Max number of int variables
+static const int MAX_IB =	1000;	///< Max number of int/buttons
+static const int MAX_FLOATS =	1000;	///< Max number of float variables
+//static const int MAX_FS =	1000;	// Max number of floatscale vars
+//static const int MAX_IS =	1000;	// Max number of intscale vars
+static const int MAX_INTENTRY= 1000;	///< Max number of intentry vars
+static const int MAX_CHECKENTRY= 1000;	///< Max number of intentry vars
+static const int MAX_STRINGS =	1000;	///< Max number of strings
+static const int MAX_LIST_OF_STRINGS =	1000;
+  ///< Max number of lists of strings
 
 static	int	num_ints = 0;			///< Number of int variables
 static	Tclvar_int	*int_list[MAX_INTS];	///< Int variables
 
-static	int	num_ib = 0;			///< Number of ints with buttons
+static	int	num_ib = 0;
+  ///< Number of ints with buttons
 static	Tclvar_int_with_button	*ib_list[MAX_IB];///< IB variables
 
 static	int	num_floats = 0;			///< Number of float variables
 static	Tclvar_float	*float_list[MAX_FLOATS];///< Float variables
 
-static	int	num_intentry = 0;		///< Number of ints with scales
-static	Tclvar_int_with_entry	*intentry_list[MAX_INTENTRY];///< Intscale variables
+static	int	num_intentry = 0;
+  ///< Number of ints with scales
+static	Tclvar_int_with_entry	*intentry_list[MAX_INTENTRY];
+  ///< Intscale variables
 
-static	int	num_checkentry = 0;		///< Number of ints with scales
-static	Tclvar_checklist_with_entry	*checkentry_list[MAX_CHECKENTRY];///< Intscale variab
+static	int	num_checkentry = 0;
+  ///< Number of ints with scales
+static	Tclvar_checklist_with_entry	*checkentry_list[MAX_CHECKENTRY];
+  ///< Intscale variab
 
 static	int	num_strings = 0;		///< Number of stringss
 static	Tclvar_string		*string_list[MAX_STRINGS];
@@ -125,7 +131,8 @@ char	*handle_float_value_change(ClientData clientData,
 	vrpn_float64	value;
 	Tclvar_float	*floatvar = (Tclvar_float*)(clientData);
 
-// 	printf("floatvalchange: %s %s %s\n", name1, name2, floatvar->d_myTclVarname);
+//fprintf(stderr, "floatvalchange: %s %s %s\n", name1, name2,
+//floatvar->d_myTclVarname);
 	// Look up the new value of the variable
 	cvalue = Tcl_GetVar(interp, floatvar->d_myTclVarname, 
 		 TCL_GLOBAL_ONLY);
@@ -140,8 +147,8 @@ char	*handle_float_value_change(ClientData clientData,
         } else if (floatvar->d_ignoreChange) {
           floatvar->d_ignoreChange = VRPN_FALSE;
 	} else { // no errors: update the variable
-//  fprintf(stderr, "handle_float_value_change: %s %s old %f new %f\n", 
-//         floatvar->d_myTclVarname, cvalue, floatvar->mylastfloat, value);
+//fprintf(stderr, "handle_float_value_change: %s %s old %f new %f\n", 
+//floatvar->d_myTclVarname, cvalue, floatvar->mylastfloat, value);
            // Need to invoke operator = since it might be redefined
            // by derived class.  (?)
 	   //*floatvar = value;
@@ -174,7 +181,8 @@ char	*handle_string_value_change(ClientData clientData,
 			stringvar->d_myTclVarname);
 		stringvar->d_dirty = VRPN_TRUE;
 	} else if (stringvar->d_ignoreChange) {
-//fprintf(stderr, "handle_string_value_change:  (%s to %s) Ignoring change.\n",
+//fprintf(stderr,
+//"handle_string_value_change:  (%s to %s) Ignoring change.\n",
 //stringvar->d_myTclVarname, cvalue);
           stringvar->d_ignoreChange = VRPN_FALSE;
         } else { // no errors: update the variable
@@ -197,7 +205,8 @@ char	*handle_list_of_strings_value_change(ClientData clientData,
 	Tcl_Interp *interp, char * /*name1*/, char * /*name2*/, int /*flags*/)
 {
         char    *cvalue;
-	Tclvar_list_of_strings	*list_of_stringsvar = (Tclvar_list_of_strings*)(clientData);
+	Tclvar_list_of_strings	*list_of_stringsvar =
+            (Tclvar_list_of_strings*)(clientData);
 
 	// Look up the new value of the variable
 	cvalue = Tcl_GetVar(interp, list_of_stringsvar->d_myTclVarname, 
@@ -210,7 +219,8 @@ char	*handle_list_of_strings_value_change(ClientData clientData,
 //fprintf(stderr, "handle_list_of_strings_value_change:  ignoring.\n");
           list_of_stringsvar->d_ignoreChange = VRPN_FALSE;
         } else { // no errors: update the variable
-//fprintf(stderr, "handle_list_of_strings_value_change:  changing %s to %s.\n",
+//fprintf(stderr,
+//"handle_list_of_strings_value_change:  changing %s to %s.\n",
 //list_of_stringsvar->d_myTclVarname, cvalue);
 	    // TEMPORARY - Cannot set the variable in Tcl
 	    // Changes will be ignored!
@@ -305,10 +315,12 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
 	      // of the list, then sends it to tcl.
 	      list_of_strings_list[i]->updateTcl();
 //fprintf(stderr, "Tracing list_of_strings %d.\n", i);
-            if (Tcl_TraceVar(interpreter, list_of_strings_list[i]->d_myTclVarname,
-                             TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
-                             handle_list_of_strings_value_change,
-                             (ClientData)((void*)(list_of_strings_list[i]))) != TCL_OK) {
+            if (Tcl_TraceVar(interpreter,
+                    list_of_strings_list[i]->d_myTclVarname,
+                    TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
+                    handle_list_of_strings_value_change,
+                    (ClientData)((void*)(list_of_strings_list[i])))
+                 != TCL_OK) {
               fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n",
                       list_of_strings_list[i]->d_myTclVarname,
                       Tcl_GetStringResult(interpreter));
@@ -329,7 +341,8 @@ int	Tclvar_init(Tcl_Interp *tcl_interp)
             if (Tcl_TraceVar(interpreter, string_list[i]->d_myTclVarname,
                              TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
                              handle_string_value_change,
-                             (ClientData)((void*)(string_list[i]))) != TCL_OK) {
+                             (ClientData)((void*)(string_list[i])))
+                  != TCL_OK) {
               fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n",
                       string_list[i]->d_myTclVarname,
                       Tcl_GetStringResult(interpreter));
@@ -361,7 +374,6 @@ Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
   mylastint (default_value),
   d_dirty (VRPN_FALSE),
   d_ignoreChange (VRPN_FALSE),
-  d_permitIdempotentChanges (VRPN_FALSE),
   d_myint (default_value),
   d_callbacks (NULL),
   d_inCallback (VRPN_FALSE),
@@ -372,12 +384,13 @@ Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
 	if (num_ints >= (MAX_INTS-1)) {
 		fprintf(stderr,"Tclvar_int::Tclvar_int(): Can't link to %s\n",
 			tcl_varname);
-		fprintf(stderr,"                          (Out of storage)\n");
+		fprintf(stderr,"                       (Out of storage)\n");
 	} else {
 		int_list[num_ints] = this;
 		d_myTclVarname = new char [strlen(tcl_varname) + 1];
 		if (d_myTclVarname == NULL) {
-			fprintf(stderr,"Tclvar_int::Tclvar_int(): Out of memory\n");
+			fprintf(stderr,"Tclvar_int::Tclvar_int():"
+                                "  Out of memory\n");
 		} else {
 			strcpy(d_myTclVarname, tcl_varname);
 			num_ints++;
@@ -396,7 +409,8 @@ Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
 			     TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
 			     handle_int_value_change,
 			     (ClientData)((void*)(this))) != TCL_OK) {
-		fprintf(stderr, "Tclvar_int::Tclvar_int(): Tcl_TraceVar(%s) failed: %s\n",
+		fprintf(stderr, "Tclvar_int::Tclvar_int(): Tcl_TraceVar(%s)"
+                                " failed: %s\n",
 			d_myTclVarname, Tcl_GetStringResult(interpreter));
 	    }
 	}
@@ -581,19 +595,6 @@ void Tclvar_int::updateTcl (void) {
     // operator = in the C code, and their new (empty) value needs to
     // be passed up to Tcl.
 
-/*
-  if (!d_updateFromTcl) {
-
-    // Since we're not inside a Tcl callback, we're about to generate one,
-    // which we want to ignore to avoid endless loops or hitting the callback
-    // twice.
-
-    collabVerbose(8, "Tclvar_int::updateTcl(%s):  setting d_ignoreChange.\n",
-                  d_myTclVarname);
-    d_ignoreChange = VRPN_TRUE;
-  }
-*/
-
   mylastint = d_myint;
   d_dirty = VRPN_FALSE;
   if (d_myTclVarname) {
@@ -610,13 +611,13 @@ void Tclvar_int::updateTcl (void) {
 // point it to this variable.
 //	Add a trace callback if there is an interpreter.
 
-Tclvar_float::Tclvar_float(const char * tcl_varname, vrpn_float64 default_value,
-	Linkvar_Floatcall c, void * ud) :
+Tclvar_float::Tclvar_float(const char * tcl_varname,
+                           vrpn_float64 default_value,
+	                   Linkvar_Floatcall c, void * ud) :
   d_myTclVarname (NULL),
   mylastfloat (default_value),
   d_dirty (VRPN_FALSE),
   d_ignoreChange (VRPN_FALSE),
-  d_permitIdempotentChanges (VRPN_FALSE),
   d_myfloat (default_value),
   d_callbacks (NULL),
   d_inCallback (VRPN_FALSE),
@@ -625,15 +626,17 @@ Tclvar_float::Tclvar_float(const char * tcl_varname, vrpn_float64 default_value,
 //fprintf(stderr, "Tclvar_float constructor\n");
 
 	if (num_floats >= (MAX_FLOATS-1)) {
-		fprintf(stderr,"Tclvar_float::Tclvar_float(): Can't link to %s\n",
+		fprintf(stderr,"Tclvar_float::Tclvar_float():  "
+                        "Can't link to %s\n",
 			tcl_varname);
-		fprintf(stderr,"                          (Out of storage)\n");
+		fprintf(stderr,"                        (Out of storage)\n");
 	} else {
 		float_list[num_floats] = this;
 		d_myTclVarname = new char[strlen(tcl_varname)+1];
 //fprintf(stderr, "  Allocated for tcl_varname %s.\n", tcl_varname);
 		if (d_myTclVarname == NULL) {
-			fprintf(stderr,"Tclvar_float::Tclvar_float(): Out of memory\n");
+			fprintf(stderr,"Tclvar_float::Tclvar_float():  "
+                        "Out of memory\n");
 		} else {
 			strcpy(d_myTclVarname, tcl_varname);
 			num_floats++;
@@ -652,8 +655,10 @@ Tclvar_float::Tclvar_float(const char * tcl_varname, vrpn_float64 default_value,
                         TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
                         handle_float_value_change,
 			(ClientData)((void*)this)) != TCL_OK) {
-                        fprintf(stderr, "Tclvar_float::Tclvar_float(): Tcl_TraceVar(%s) failed: %s\n",
-                                d_myTclVarname, Tcl_GetStringResult(interpreter));
+                        fprintf(stderr, "Tclvar_float::Tclvar_float():  "
+                                "Tcl_TraceVar(%s) failed: %s\n",
+                                d_myTclVarname,
+                                Tcl_GetStringResult(interpreter));
                 }
         }
   addCallback(c, ud);
@@ -693,7 +698,8 @@ Tclvar_float::~Tclvar_float (void)
 	// Find this entry in the list of variables
 	while ( (i < num_floats) && (float_list[i] != this) ) { i++; };
 	if (i >= num_floats) {
-		fprintf(stderr,"Tclvar_float::~Tclvar_float(): Internal error -- not in list\n");
+		fprintf(stderr,"Tclvar_float::~Tclvar_float():  "
+                        "Internal error -- not in list\n");
 		return;
 	}
 //fprintf(stderr, " %d of %d.\n", i, num_floats);
@@ -814,17 +820,6 @@ void Tclvar_float::updateTcl (void) {
     // operator = in the C code, and their new (empty) value needs to
     // be passed up to Tcl.
 
-/*
-  if (!d_updateFromTcl) {
-
-    // Since we're not inside a Tcl callback, we're about to generate one,
-    // which we want to ignore to avoid endless loops or hitting the callback
-    // twice.
-
-    d_ignoreChange = VRPN_TRUE;
-  }
-*/
-
   mylastfloat = d_myfloat;
   d_dirty = VRPN_FALSE;
   if (d_myTclVarname) {
@@ -850,19 +845,22 @@ Tclvar_int_with_button::Tclvar_int_with_button
 
 	// Add this to the list of integers with buttons
 	if (num_ib >= (MAX_IB-1)) {
-		fprintf(stderr,"Tclvar_int_with_button::Tclvar_int_with_button(): Can't link to %s\n",
-			tcl_varname);
-		fprintf(stderr,"                          (Out of storage)\n");
+	  fprintf(stderr,
+          "Tclvar_int_with_button::Tclvar_int_with_button():  "
+          "Can't link to %s\n",
+	  tcl_varname);
+	  fprintf(stderr,"                          (Out of storage)\n");
 	} else {
-		ib_list[num_ib] = this;
-		d_myTclVarname = new char[strlen(tcl_varname)+1];
-		if (d_myTclVarname == NULL) {
-			fprintf(stderr,"Tclvar_int_with_button::Tclvar_int_with_button(): Out of memory\n");
-		} else {
-			strcpy(d_myTclVarname, tcl_varname);
-			d_myint = mylastint = default_value;
-			num_ib++;
-		}
+	  ib_list[num_ib] = this;
+	  d_myTclVarname = new char[strlen(tcl_varname)+1];
+	  if (d_myTclVarname == NULL) {
+	    fprintf(stderr,"Tclvar_int_with_button::Tclvar_int_with_button():"
+                    " Out of memory\n");
+	  } else {
+		  strcpy(d_myTclVarname, tcl_varname);
+		  d_myint = mylastint = default_value;
+		  num_ib++;
+	  }
 	}
 
 	// Set the widget name, if there is a parent specified
@@ -881,7 +879,8 @@ Tclvar_int_with_button::Tclvar_int_with_button
 		tcl_widget_name =
 			new char[strlen(parent_name) + strlen(last_part) + 2];
 		if (tcl_widget_name == NULL) {
-			fprintf(stderr,"Tclvar_int_with_button::Tclvar_int_with_button(): Out of memory\n");
+		  fprintf(stderr,"Tclvar_int_with_button::"
+                          "Tclvar_int_with_button(): Out of memory\n");
 		}
 		sprintf(tcl_widget_name,"%s.%s",parent_name,last_part);
 
@@ -922,7 +921,9 @@ Tclvar_int_with_button::~Tclvar_int_with_button (void)
 	// Find this entry in the list of variables
 	while ( (i < num_ib) && (ib_list[i] != this) ) { i++; };
 	if (i >= num_ib) {
-		fprintf(stderr,"Tclvar_int_with_button::~Tclvar_int_with_button(): Internal error -- not in list\n");
+		fprintf(stderr,"Tclvar_int_with_button::"
+                        "~Tclvar_int_with_button():  "
+                        "Internal error -- not in list\n");
 		return;
 	}
 
@@ -960,7 +961,8 @@ int	Tclvar_int_with_button::initialize(Tcl_Interp *interpreter)
 	} else {
 		last_part++;	// Skip the .
 	}
-	sprintf(command,"checkbutton {%s} -text {%s} -variable {%s} -anchor w",
+	sprintf(command,
+                "checkbutton {%s} -text {%s} -variable {%s} -anchor w",
 		tcl_widget_name, last_part, d_myTclVarname);
 	if (Tcl_Eval(interpreter, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
@@ -1012,14 +1014,16 @@ Tclvar_float_with_scale::Tclvar_float_with_scale
 	maxvalue = maxval;
 
 	if (num_fs >= (MAX_FS-1)) {
-		fprintf(stderr,"Tclvar_float_with_scale::Tclvar_float_with_scale(): Can't link to %s\n",
+		fprintf(stderr,"Tclvar_float_with_scale::"
+                        "Tclvar_float_with_scale(): Can't link to %s\n",
 			tcl_varname);
-		fprintf(stderr,"                          (Out of storage)\n");
+		fprintf(stderr,"                        (Out of storage)\n");
 	} else {
 		fs_list[num_fs] = this;
 		d_myTclVarname = new char[strlen(tcl_varname)+1];
 		if (d_myTclVarname == NULL) {
-			fprintf(stderr,"Tclvar_float_with_scale::Tclvar_float_with_scale(): Out of memory\n");
+			fprintf(stderr,"Tclvar_float_with_scale::"
+                                "Tclvar_float_with_scale(): Out of memory\n");
 		} else {
 			strcpy(d_myTclVarname, tcl_varname);
 			d_myfloat = mylastfloat = default_value;
@@ -1030,16 +1034,18 @@ Tclvar_float_with_scale::Tclvar_float_with_scale
 	// Set the widget and label names, if there is a parent specified
 	if (parent_name != NULL) {
 		tcl_widget_name =
-			new char[strlen(parent_name) + strlen(tcl_varname) + 2];
+		  new char [strlen(parent_name) + strlen(tcl_varname) + 2];
 		if (tcl_widget_name == NULL) {
-			fprintf(stderr,"Tclvar_float_with_scale::Tclvar_float_with_scale(): Out of memory\n");
+		  fprintf(stderr,"Tclvar_float_with_scale::"
+                      "Tclvar_float_with_scale(): Out of memory\n");
 		}
 		sprintf(tcl_widget_name,"%s.%s",parent_name,tcl_varname);
 
 		tcl_label_name =
-			new char[strlen(parent_name) + strlen(tcl_varname) +12];
+		  new char [strlen(parent_name) + strlen(tcl_varname) + 12];
 		if (tcl_label_name == NULL) {
-			fprintf(stderr,"Tclvar_float_with_scale::Tclvar_float_with_scale(): Out of memory\n");
+			fprintf(stderr,"Tclvar_float_with_scale::" 
+                            "Tclvar_float_with_scale(): Out of memory\n");
 		}
 		sprintf(tcl_label_name,"%s.%slabel",parent_name,tcl_varname);
 	} else {
@@ -1084,7 +1090,9 @@ Tclvar_float_with_scale::~Tclvar_float_with_scale (void)
 	// Find this entry in the list of variables
 	while ( (i < num_fs) && (fs_list[i] != this) ) { i++; };
 	if (i >= num_fs) {
-		fprintf(stderr,"Tclvar_float_with_scale::~Tclvar_float_with_scale(): Internal error -- not in list\n");
+		fprintf(stderr,"Tclvar_float_with_scale::"
+                    "~Tclvar_float_with_scale():  "
+                    "Internal error -- not in list\n");
 		return;
 	}
 
@@ -1164,7 +1172,7 @@ Tclvar_int_with_scale::Tclvar_int_with_scale
 		fprintf(stderr,"Tclvar_int_with_scale::"
                              "Tclvar_int_with_scale(): Can't link to %s\n",
 			tcl_varname);
-		fprintf(stderr,"                          (Out of storage)\n");
+		fprintf(stderr,"                        (Out of storage)\n");
 	} else {
 		is_list[num_is] = this;
 		d_myTclVarname = new char[strlen(tcl_varname)+1];
@@ -1181,7 +1189,7 @@ Tclvar_int_with_scale::Tclvar_int_with_scale
 	// Set the widget and label names, if there is a parent specified
 	if (parent_name != NULL) {
 		tcl_widget_name =
-			new char[strlen(parent_name) + strlen(tcl_varname) + 2];
+		  new char [strlen(parent_name) + strlen(tcl_varname) + 2];
 		if (tcl_widget_name == NULL) {
 			fprintf(stderr,"Tclvar_int_with_scale::"
                              "Tclvar_int_with_scale():  Out of memory\n");
@@ -1189,7 +1197,7 @@ Tclvar_int_with_scale::Tclvar_int_with_scale
 		sprintf(tcl_widget_name,"%s.%s",parent_name,tcl_varname);
 
 		tcl_label_name =
-			new char[strlen(parent_name) + strlen(tcl_varname) +12];
+		  new char[strlen(parent_name) + strlen(tcl_varname) + 12];
 		if (tcl_label_name == NULL) {
 			fprintf(stderr, "Tclvar_int_with_scale::"
                              "Tclvar_int_with_scale():  Out of memory\n");
@@ -1237,7 +1245,8 @@ Tclvar_int_with_scale::~Tclvar_int_with_scale (void)
 	// Find this entry in the list of variables
 	while ( (i < num_is) && (is_list[i] != this) ) { i++; };
 	if (i >= num_is) {
-		fprintf(stderr,"Tclvar_int_with_scale::~Tclvar_int_with_scale(): Internal error -- not in list\n");
+		fprintf(stderr,"Tclvar_int_with_scale::"
+                 "~Tclvar_int_with_scale(): Internal error -- not in list\n");
 		return;
 	}
 
@@ -1348,7 +1357,8 @@ Tclvar_int_with_entry::Tclvar_int_with_entry(const char *tcl_varname,
 		tcl_widget_name =
 			new char[strlen(parent_name) + strlen(last_part) + 2];
 		if (tcl_widget_name == NULL) {
-			fprintf(stderr,"Tclvar_int_with_entry::Tclvar_int_with_entry(): Out of memory\n");
+			fprintf(stderr,"Tclvar_int_with_entry::"
+                 "Tclvar_int_with_entry(): Out of memory\n");
 		}
 		sprintf(tcl_widget_name,"%s.%s",parent_name,last_part);
 		// Make sure widget name starts with a lower-case character.
@@ -1363,7 +1373,8 @@ Tclvar_int_with_entry::Tclvar_int_with_entry(const char *tcl_varname,
 		tcl_label_name =
 			new char[strlen(parent_name) + strlen(last_part) +8];
 		if (tcl_label_name == NULL) {
-			fprintf(stderr,"Tclvar_int_with_entry::Tclvar_int_with_entry(): Out of memory\n");
+			fprintf(stderr,"Tclvar_int_with_entry::"
+                 "Tclvar_int_with_entry(): Out of memory\n");
 		}
 		sprintf(tcl_label_name,"%s.%slabel",parent_name,last_part);
 
@@ -1379,7 +1390,8 @@ Tclvar_int_with_entry::Tclvar_int_with_entry(const char *tcl_varname,
 		tcl_widget_name = NULL;
 	}
 	
-	//printf("int_w_entry contsr: %s %s %s\n", d_myTclVarname, parent_name,tcl_widget_name); 
+//fprintf(stderr, "int_w_entry contsr: %s %s %s\n",
+//d_myTclVarname, parent_name,tcl_widget_name); 
 	
 	// Add and pack a intentry if there is an interpreter and a widget
 	if ( (interpreter != NULL) && (tcl_widget_name != NULL) ) {
@@ -1423,7 +1435,8 @@ Tclvar_int_with_entry::~Tclvar_int_with_entry (void)
 	// Find this entry in the list of variables
 	while ( (i < num_intentry) && (intentry_list[i] != this) ) { i++; };
 	if (i >= num_intentry) {
-		fprintf(stderr,"Tclvar_int_with_entry::~Tclvar_int_with_entry(): Internal error -- not in list\n");
+		fprintf(stderr,"Tclvar_int_with_entry::"
+             "~Tclvar_int_with_entry(): Internal error -- not in list\n");
 		return;
 	}
 
@@ -1481,7 +1494,6 @@ Tclvar_string::Tclvar_string (const char * initial_value) :
   d_myTclVarname (NULL),
   d_dirty (VRPN_FALSE),
   d_ignoreChange (VRPN_FALSE),
-  d_permitIdempotentChanges (VRPN_FALSE),
   d_callbacks (NULL),
   d_inCallback (VRPN_FALSE),
   d_updateFromTcl (VRPN_FALSE),
@@ -1511,7 +1523,6 @@ Tclvar_string::Tclvar_string
   d_myTclVarname (NULL),
   d_dirty (VRPN_FALSE),
   d_ignoreChange (VRPN_FALSE),
-  d_permitIdempotentChanges (VRPN_FALSE),
   d_callbacks (NULL),
   d_inCallback (VRPN_FALSE),
   d_updateFromTcl (VRPN_FALSE),
@@ -1724,24 +1735,14 @@ void Tclvar_string::updateTcl (void) {
   // operator = in the C code, and their new (empty) value needs to
   // be passed up to Tcl.
 
-/*
-  if (!d_updateFromTcl) {
-
-    // Since we're not inside a Tcl callback, we're about to generate one,
-    // which we want to ignore to avoid endless loops or hitting the callback
-    // twice.
-
-    d_ignoreChange = VRPN_TRUE;
-  }
-*/
-
   // Idempotent check.
   //fprintf(stderr, "Tclvar_int::updateTcl(%s) - was %s.\n",
   //string(), d_myLastString);
   resetString();
   d_dirty = VRPN_FALSE;
   if (d_myTclVarname) {
-    Tcl_SetVar(interpreter, d_myTclVarname, (char *) string(), TCL_GLOBAL_ONLY);
+    Tcl_SetVar(interpreter, d_myTclVarname, (char *) string(),
+               TCL_GLOBAL_ONLY);
   }
   d_ignoreChange = VRPN_FALSE;
 }
@@ -1770,7 +1771,6 @@ Tclvar_list_of_strings::Tclvar_list_of_strings () :
   d_myTclVarname (NULL),
   d_dirty (VRPN_FALSE),
   d_ignoreChange (VRPN_FALSE),
-  d_permitIdempotentChanges (VRPN_FALSE),
   d_callbacks (NULL),
   d_myString(NULL)
 {
@@ -1783,8 +1783,8 @@ Tclvar_list_of_strings::Tclvar_list_of_strings () :
   list_of_strings_list[num_list_of_strings] = this;
   num_list_of_strings++;
 
-//fprintf(stderr, "Constructed Tclvar_list_of_strings # %d ( = %s).\n", num_list_of_strings,
-//initial_value);
+//fprintf(stderr, "Constructed Tclvar_list_of_strings # %d ( = %s).\n",
+//num_list_of_strings, initial_value);
 }
 
 
@@ -1797,7 +1797,6 @@ Tclvar_list_of_strings::Tclvar_list_of_strings
   d_myTclVarname (NULL),
   d_dirty (VRPN_FALSE),
   d_ignoreChange (VRPN_FALSE),
-  d_permitIdempotentChanges (VRPN_FALSE),
   d_callbacks (NULL),
   d_myString(NULL)
 {
@@ -1818,7 +1817,7 @@ Tclvar_list_of_strings::Tclvar_list_of_strings
 //num_list_of_strings, tcl_varname, initial_value);
 }
 
-//virtual
+// virtual
 Tclvar_list_of_strings::~Tclvar_list_of_strings (void) {
   int i;
 
@@ -1843,7 +1842,9 @@ Tclvar_list_of_strings::~Tclvar_list_of_strings (void) {
     d_callbacks = entry;
   }
 
-  for (i = 0; (i < num_list_of_strings) && (list_of_strings_list[i] != this); i++) ;
+  for (i = 0;
+       (i < num_list_of_strings) && (list_of_strings_list[i] != this);
+       i++) ;
   if (i >= num_list_of_strings) {
     fprintf(stderr, "~Tclvar_list_of_strings:  Internal error.\n");
     return;
@@ -1854,11 +1855,13 @@ Tclvar_list_of_strings::~Tclvar_list_of_strings (void) {
 
 }
 
-void Tclvar_list_of_strings::addCallback (Linkvar_ListOfStringscall cb, void * userdata) {
+void Tclvar_list_of_strings::addCallback (Linkvar_ListOfStringscall cb,
+                                          void * userdata) {
   tclListOfStringsCallbackEntry * newEntry;
 
   if (!cb) {
-    //fprintf(stderr, "Tclvar_list_of_strings::addCallback:  NULL handler.\n");
+    //fprintf(stderr, "Tclvar_list_of_strings::addCallback:  "
+    //"NULL handler.\n");
     return;
   }
 
@@ -1885,7 +1888,8 @@ void Tclvar_list_of_strings::addCallback (Linkvar_ListOfStringscall cb, void * u
    @param cb Callback function
    @param userdata a pointer useful to the callback
 */
-void Tclvar_list_of_strings::removeCallback (Linkvar_ListOfStringscall cb, void * userdata) {
+void Tclvar_list_of_strings::removeCallback (Linkvar_ListOfStringscall cb,
+                                             void * userdata) {
   tclListOfStringsCallbackEntry * entry, * prev_entry;
 
    if ((!cb)|| (!d_callbacks)) {
@@ -1933,7 +1937,8 @@ void Tclvar_list_of_strings::initializeTcl (const char * tcl_varname) {
 
   d_myTclVarname = new char [strlen(tcl_varname) + 1];
   if (!d_myTclVarname) {
-    fprintf(stderr, "Tclvar_list_of_strings::initializeTcl:  Out of memory.\n");
+    fprintf(stderr, "Tclvar_list_of_strings::initializeTcl:  "
+            "Out of memory.\n");
     return;
   }
   strcpy(d_myTclVarname, tcl_varname);
@@ -2043,7 +2048,8 @@ typedef	struct {
 // This function activates the callback for the whole checklist,
 // passing the name of the checkbox which caused the callback.
 // static
-void Tclvar_checklist::checklist_callback(vrpn_int32 /*value*/, void *userdata)
+void Tclvar_checklist::checklist_callback (vrpn_int32 /*value*/,
+                                           void * userdata)
 {
   Check_Parm * parm = (Check_Parm *) (userdata);
 
@@ -2173,34 +2179,36 @@ int	Tclvar_checklist::Add_checkbox (const char * checkbox_name, int value)
 	char		button_name[1000];
 
 	if (parm == NULL) {
-	    fprintf(stderr,"Tclvar_checklist::Add_checkbox(): Can't do parm\n");
-	    return -1;
+	  fprintf(stderr,"Tclvar_checklist::Add_checkbox(): Can't do parm\n");
+	  return -1;
 	}
 
 	if ( (checkbox_name == NULL) || (strlen(checkbox_name) == 0) ) {
-	    fprintf(stderr,"Tclvar_checklist::Add_checkbox(): Empty name\n");
-	    return -1;
+	  fprintf(stderr,"Tclvar_checklist::Add_checkbox(): Empty name\n");
+	  return -1;
 	}
 
 	// Make sure it's not already in the list
 	if (Lookup_checkbox(checkbox_name) != -1) {
-	    fprintf(stderr,"Tclvar_checklist::Add_checkbox(): Already there\n");
-	    return -1;
+	  fprintf(stderr,"Tclvar_checklist::Add_checkbox(): Already there\n");
+	  return -1;
 	}
 
 	// Make sure there is enough room for the new checkbox
 	if (num_checkboxes >= NUM_CHECKBOXES) {
-		fprintf(stderr,"Tclvar_checklist::Add_checkbox(): Too many\n");
-		return -1;
+	  fprintf(stderr,"Tclvar_checklist::Add_checkbox(): Too many\n");
+	  return -1;
 	}
 
-	// Create the new checkbox.
-	// The name is that given as a parameter (truncated to fit within the
-	// name length).  The name of the button has the parent name prepended,
-	// to distinguish the checkboxes of different checklists.
-	strncpy(checkboxes[num_checkboxes].name, checkbox_name,
-		sizeof(checkboxes[num_checkboxes].name) - 1);
-	checkboxes[num_checkboxes].name[sizeof(checkboxes[num_checkboxes].name) - 1] = '\0';
+  // Create the new checkbox.
+  // The name is that given as a parameter (truncated to fit within the
+  // name length).  The name of the button has the parent name prepended,
+  // to distinguish the checkboxes of different checklists.
+
+  strncpy(checkboxes[num_checkboxes].name, checkbox_name,
+  	sizeof(checkboxes[num_checkboxes].name) - 1);
+  checkboxes[num_checkboxes].name[sizeof(checkboxes[num_checkboxes].name) - 1]
+        = '\0';
 
 	if (tcl_parent_name) {
 		strncpy(button_name, tcl_parent_name, sizeof(button_name));
@@ -2213,10 +2221,10 @@ int	Tclvar_checklist::Add_checkbox (const char * checkbox_name, int value)
 	strncat(button_name, checkbox_name,
 		sizeof(button_name)-strlen(button_name) - 2);
 	checkboxes[num_checkboxes].button =
-		new Tclvar_int_with_button(button_name,tcl_parent_name, value);
+	  new Tclvar_int_with_button(button_name,tcl_parent_name, value);
 	if (checkboxes[num_checkboxes].button == NULL) {
-		fprintf(stderr,"Tclvar_checklist::Add_checkbox(): Out of mem\n");
-		return -1;
+	  fprintf(stderr,"Tclvar_checklist::Add_checkbox(): Out of mem\n");
+	  return -1;
 	}
 	num_checkboxes++;
 
@@ -2309,7 +2317,8 @@ Tclvar_checklist_with_entry::Tclvar_checklist_with_entry
 //fprintf(stderr, "Tclvar_checklist_with_entry constructor\n");
 
 	if (num_checkentry >= (MAX_CHECKENTRY-1)) {
-		fprintf(stderr,"Tclvar_checklist_with_entry::Tclvar_checklist_with_entry: (Out of storage)\n");
+		fprintf(stderr,"Tclvar_checklist_with_entry::"
+                   "Tclvar_checklist_with_entry: (Out of storage)\n");
 	} else {
 		checkentry_list[num_checkentry] = this;
 		num_checkentry++;
@@ -2393,7 +2402,8 @@ int	Tclvar_checklist_with_entry::initialize(Tcl_Interp *interpreter)
 
 // Adds one checkbox/entry combo to the list. Sets default values for both
 // depends on the static variable "interpreter" to pack frames
-int	Tclvar_checklist_with_entry::Add_checkbox_entry (const char * checkbox_name, int checkval, int entryval)
+int Tclvar_checklist_with_entry::Add_checkbox_entry
+     (const char * checkbox_name, int checkval, int entryval)
 {
 	Check_Parm	*parm = new Check_Parm;
 	char		button_name[1000];
@@ -2401,119 +2411,126 @@ int	Tclvar_checklist_with_entry::Add_checkbox_entry (const char * checkbox_name,
 	char            command[500];
 	char * my_checkbox_name;
 
-	if (parm == NULL) {
-	    fprintf(stderr,"Tclvar_checklist::add_checkbox_entry(): Can't do parm\n");
-	    return -1;
-	}
+  if (parm == NULL) {
+      fprintf(stderr,"Tclvar_checklist::add_checkbox_entry():  "
+                "Can't do parm\n");
+      return -1;
+  }
 
-	if ( (checkbox_name == NULL) || (strlen(checkbox_name) == 0) ) {
-	    fprintf(stderr,"Tclvar_checklist::add_checkbox_entry(): Empty name\n");
-	    return -1;
-	}
+  if ( (checkbox_name == NULL) || (strlen(checkbox_name) == 0) ) {
+      fprintf(stderr,"Tclvar_checklist::add_checkbox_entry():  "
+                "Empty name\n");
+      return -1;
+  }
 
-	// Make sure it's not already in the list
-	if (Lookup_checkbox(checkbox_name) != -1) {
-	    fprintf(stderr,"Tclvar_checklist::add_checkbox_entry(): Already there\n");
-	    return -1;
-	}
+  // Make sure it's not already in the list
+  if (Lookup_checkbox(checkbox_name) != -1) {
+      fprintf(stderr,"Tclvar_checklist::add_checkbox_entry():  "
+                "Already there\n");
+      return -1;
+  }
 
-	// Make sure there is enough room for the new checkbox
-	if (num_checkboxes >= NUM_CHECKBOXES) {
-		fprintf(stderr,"Tclvar_checklist::add_checkbox_entry(): Too many\n");
-		return -1;
-	}
+  // Make sure there is enough room for the new checkbox
+  if (num_checkboxes >= NUM_CHECKBOXES) {
+  	fprintf(stderr,"Tclvar_checklist::add_checkbox_entry(): Too many\n");
+  	return -1;
+  }
 
-	// Create the new checkbox.  The name is that given as a
-	// parameter (truncated to fit within the name length).  The
-	// name of the button has the parent name prepended, to
-	// distinguish the checkboxes of different checklists. It has
-	// "button" postpended to distinguish it from the entry
-	strncpy(checkboxes[num_checkboxes].name, checkbox_name,
-		sizeof(checkboxes[num_checkboxes].name) - 1);
-	checkboxes[num_checkboxes].name[sizeof(checkboxes[num_checkboxes].name) - 1] = '\0';
+  // Create the new checkbox.  The name is that given as a
+  // parameter (truncated to fit within the name length).  The
+  // name of the button has the parent name prepended, to
+  // distinguish the checkboxes of different checklists. It has
+  // "button" postpended to distinguish it from the entry
+  strncpy(checkboxes[num_checkboxes].name, checkbox_name,
+  	sizeof(checkboxes[num_checkboxes].name) - 1);
+  checkboxes[num_checkboxes].name[sizeof(checkboxes[num_checkboxes].name) - 1]
+        = '\0';
 
-	my_checkbox_name = new char[strlen(checkboxes[num_checkboxes].name) + 1];
-	strcpy(my_checkbox_name, checkboxes[num_checkboxes].name);	
-	// make a suitable widget name
-	fix_checkbox_name(my_checkbox_name);
+  my_checkbox_name = new char[strlen(checkboxes[num_checkboxes].name) + 1];
+  strcpy(my_checkbox_name, checkboxes[num_checkboxes].name);	
+  // make a suitable widget name
+  fix_checkbox_name(my_checkbox_name);
 	
-	// create spots for the new checkbutton and entry
-	// only if the interpreter exists. Otherwise, this will
-	// be done when the interpreter is created. 
-	if (tcl_parent_name && interpreter ) {
-	   
-	   sprintf(command, "pack [frame %s.%sf] -expand yes -fill x", 
-		   tcl_parent_name, my_checkbox_name);
-	   TCLEVALCHECK(interpreter, command);
-	   sprintf(command, "pack [frame %s.%sf.b] -side left", 
-		   tcl_parent_name, my_checkbox_name);
-	   TCLEVALCHECK(interpreter, command);
-	   sprintf(command, "pack [frame %s.%sf.e] -side right", 
-		   tcl_parent_name, my_checkbox_name);
-	   TCLEVALCHECK(interpreter, command);
-	}
+  // create spots for the new checkbutton and entry
+  // only if the interpreter exists. Otherwise, this will
+  // be done when the interpreter is created. 
+  if (tcl_parent_name && interpreter ) {
+     
+     sprintf(command, "pack [frame %s.%sf] -expand yes -fill x", 
+  	   tcl_parent_name, my_checkbox_name);
+     TCLEVALCHECK(interpreter, command);
+     sprintf(command, "pack [frame %s.%sf.b] -side left", 
+  	   tcl_parent_name, my_checkbox_name);
+     TCLEVALCHECK(interpreter, command);
+     sprintf(command, "pack [frame %s.%sf.e] -side right", 
+  	   tcl_parent_name, my_checkbox_name);
+     TCLEVALCHECK(interpreter, command);
+  }
 
-	if (tcl_parent_name) {
-		strncpy(button_name, tcl_parent_name, sizeof(button_name));
-		strncpy(entry_name, tcl_parent_name, sizeof(entry_name));
-	} else {
-		button_name[0] = '\0';
-		entry_name[0] = '\0';
-	}
-	strncat(button_name, ".",
-		sizeof(button_name)-strlen(button_name) - 2);
-	strncat(button_name, my_checkbox_name,
-		sizeof(button_name)-strlen(button_name) - 2);
-	strncat(button_name, "f.b.",
-		sizeof(button_name)-strlen(button_name) - 2);
-	strncat(button_name, my_checkbox_name,
-		sizeof(button_name)-strlen(button_name) - 2);
-	// no, I'm not using it as a command, just a convenient string
-	sprintf(command, "%s.%sf.b", tcl_parent_name, my_checkbox_name);
-	checkboxes[num_checkboxes].button =
-		new Tclvar_int_with_button(button_name,command, checkval);
-	if (checkboxes[num_checkboxes].button == NULL) {
-		fprintf(stderr,"Tclvar_checklist::add_checkbox_entry(): Out of mem\n");
-		return -1;
-	}
+  if (tcl_parent_name) {
+  	strncpy(button_name, tcl_parent_name, sizeof(button_name));
+  	strncpy(entry_name, tcl_parent_name, sizeof(entry_name));
+  } else {
+  	button_name[0] = '\0';
+  	entry_name[0] = '\0';
+  }
+  strncat(button_name, ".",
+  	sizeof(button_name)-strlen(button_name) - 2);
+  strncat(button_name, my_checkbox_name,
+  	sizeof(button_name)-strlen(button_name) - 2);
+  strncat(button_name, "f.b.",
+  	sizeof(button_name)-strlen(button_name) - 2);
+  strncat(button_name, my_checkbox_name,
+  	sizeof(button_name)-strlen(button_name) - 2);
+  // no, I'm not using it as a command, just a convenient string
+  sprintf(command, "%s.%sf.b", tcl_parent_name, my_checkbox_name);
+  checkboxes[num_checkboxes].button =
+  	new Tclvar_int_with_button(button_name,command, checkval);
+  if (checkboxes[num_checkboxes].button == NULL) {
+  	fprintf(stderr,"Tclvar_checklist::add_checkbox_entry():  "
+                "Out of mem\n");
+  	return -1;
+  }
 
-	// make the entry field, similarly. It has "entry" postpended
-	// to distinguish it from the button.
-	strncat(entry_name, ".",
-		sizeof(entry_name)-strlen(entry_name) - 2);
-	strncat(entry_name, my_checkbox_name,
-		sizeof(entry_name)-strlen(entry_name) - 2);
-	strncat(entry_name, "f.e.",
-		sizeof(entry_name)-strlen(entry_name) - 2);
-	strncat(entry_name, my_checkbox_name,
-		sizeof(entry_name)-strlen(entry_name) - 2);
-	// no, I'm not using it as a command, just a convenient string
-	sprintf(command, "%s.%sf.e", tcl_parent_name, my_checkbox_name);
-	checkboxes[num_checkboxes].entry =
-		new Tclvar_int_with_entry(entry_name,command, entryval);
-	if (checkboxes[num_checkboxes].entry == NULL) {
-		fprintf(stderr,"Tclvar_checklist::add_checkbox_entry(): Out of mem\n");
-		return -1;
-	}
+  // make the entry field, similarly. It has "entry" postpended
+  // to distinguish it from the button.
+  strncat(entry_name, ".",
+  	sizeof(entry_name)-strlen(entry_name) - 2);
+  strncat(entry_name, my_checkbox_name,
+  	sizeof(entry_name)-strlen(entry_name) - 2);
+  strncat(entry_name, "f.e.",
+  	sizeof(entry_name)-strlen(entry_name) - 2);
+  strncat(entry_name, my_checkbox_name,
+  	sizeof(entry_name)-strlen(entry_name) - 2);
+  // no, I'm not using it as a command, just a convenient string
+  sprintf(command, "%s.%sf.e", tcl_parent_name, my_checkbox_name);
+  checkboxes[num_checkboxes].entry =
+  	new Tclvar_int_with_entry(entry_name,command, entryval);
+  if (checkboxes[num_checkboxes].entry == NULL) {
+  	fprintf(stderr,"Tclvar_checklist::add_checkbox_entry():  "
+                "Out of mem\n");
+  	return -1;
+  }
 
 
 
-	num_checkboxes++;
+  num_checkboxes++;
 
-	// Set up the callback for this variable.  This tells which checklist
-	// set the callback and for which checkbox it was set.  This lets the
-	// callback route the result correctly.
-	parm->whos = this;
-	parm->which = &checkboxes[num_checkboxes - 1];
-	checkboxes[num_checkboxes - 1].button->
-                        addCallback(checklist_callback, parm);
-	checkboxes[num_checkboxes - 1].entry->
-                        addCallback(checklist_callback, parm);
-	delete [] my_checkbox_name;
-	return 0;
+  // Set up the callback for this variable.  This tells which checklist
+  // set the callback and for which checkbox it was set.  This lets the
+  // callback route the result correctly.
+  parm->whos = this;
+  parm->which = &checkboxes[num_checkboxes - 1];
+  checkboxes[num_checkboxes - 1].button->
+                         addCallback(checklist_callback, parm);
+  checkboxes[num_checkboxes - 1].entry->
+                         addCallback(checklist_callback, parm);
+  delete [] my_checkbox_name;
+  return 0;
 }
 
-int	Tclvar_checklist_with_entry::Remove_checkbox (const char * checkbox_name)
+int	Tclvar_checklist_with_entry::Remove_checkbox
+          (const char * checkbox_name)
 {
 	int	i = Lookup_checkbox(checkbox_name);
 
@@ -2530,7 +2547,8 @@ int	Tclvar_checklist_with_entry::Remove_checkbox (const char * checkbox_name)
 	return 0;
 }
 
-int	Tclvar_checklist_with_entry::Set_checkbox_entry (const char * checkbox_name, int entryval)
+int	Tclvar_checklist_with_entry::Set_checkbox_entry
+          (const char * checkbox_name, int entryval)
 {
 	int i = Lookup_checkbox(checkbox_name);
 
@@ -2542,7 +2560,8 @@ int	Tclvar_checklist_with_entry::Set_checkbox_entry (const char * checkbox_name,
 }
 
 
-int	Tclvar_checklist_with_entry::Get_entry_val (const char *checkbox_name) const
+int	Tclvar_checklist_with_entry::Get_entry_val
+          (const char *checkbox_name) const
 {
 	int i = Lookup_checkbox(checkbox_name);
 

@@ -244,7 +244,8 @@ void Tcl_Netvar::addPeer (vrpn_Connection * c, vrpn_bool serialize) {
       d_replicaSource[newReplicaIndex] = c;
       break;
   }
-  d_replica[newReplicaIndex]->bindConnection(d_replicaSource[newReplicaIndex]);
+  d_replica[newReplicaIndex]->bindConnection
+            (d_replicaSource[newReplicaIndex]);
 }
 
 
@@ -269,7 +270,8 @@ void Tcl_Netvar::reallocateReplicaArrays (void) {
     newReplica = new vrpn_SharedObject * [newNumReplicas];
     newReplicaSource = new vrpn_Connection * [newNumReplicas];
     if (!newReplica || !newReplicaSource) {
-      fprintf(stderr, "TclNet_int::reallocateReplicaArrays:  Out of memory.\n");
+      fprintf(stderr,
+              "TclNet_int::reallocateReplicaArrays:  Out of memory.\n");
       return;
     }
     for (i = 0; i < d_numReplicas; i++) {
@@ -409,11 +411,6 @@ int TclNet_int::addRemoteReplica (void) {
 
 // virtual
 void TclNet_int::SetFromTcl (vrpn_int32 newValue) {
-  //if (!isSerializer()) {
-//fprintf(stderr, "Not serializer, so clearing d_updateFromTcl()\n"
-//"   while we go over the network to find one.\n");
-    //d_updateFromTcl = VRPN_FALSE;
-  //}
   operator = (newValue);
 }
 
@@ -466,7 +463,8 @@ void TclNet_int::copyFromToReplica (int sourceReplica, int destReplica)
       timeval now;
       gettimeofday(&now, NULL);
 
-      ((vrpn_Shared_int32 *) d_replica[destReplica])->set(((vrpn_Shared_int32 *) d_replica[sourceReplica])->value(), now);
+      ((vrpn_Shared_int32 *) d_replica[destReplica])->set
+         (((vrpn_Shared_int32 *) d_replica[sourceReplica])->value(), now);
   }
   quashSideEffectsLater = VRPN_FALSE;
 }
@@ -559,12 +557,6 @@ int TclNet_int::propagateReceivedUpdate (
   collabVerbose(6, "          with ignore %d and fromTcl %d.\n",
                 nti->d_ignoreChange, nti->d_updateFromTcl);
 
-  // Need to do this check before calling operator = ();  otherwise
-  // mylastint will always equal newValue!
-  vrpn_bool ignore = VRPN_FALSE;
-//    if ((newValue == nti->mylastint) && !nti->d_permitIdempotentChanges) {
-//      ignore = VRPN_TRUE;
-//    }
 
   if (!nti->d_updateFromTcl) {
 
@@ -586,9 +578,7 @@ int TclNet_int::propagateReceivedUpdate (
     if (!isLocal || quashSideEffectsLater) {
       quashSideEffects = VRPN_TRUE;
     }
-    if (!ignore) {
-      nti->Tclvar_int::SetFromTcl(newValue);
-    }
+    nti->Tclvar_int::SetFromTcl(newValue);
     quashSideEffects = VRPN_FALSE;
   }
 
@@ -713,10 +703,7 @@ int TclNet_float::addRemoteReplica (void) {
 
 // virtual
 void TclNet_float::SetFromTcl (vrpn_float64 newValue) {
-  //if (!isSerializer()) {
-    //d_updateFromTcl = VRPN_FALSE;
-  //}
-  /*Tclvar_float::*/operator = (newValue);
+  operator = (newValue);
 }
 
 
@@ -764,7 +751,8 @@ void TclNet_float::copyFromToReplica (int sourceReplica, int destReplica)
       timeval now;
       gettimeofday(&now, NULL);
 
-      ((vrpn_Shared_float64 *) d_replica[destReplica])->set(((vrpn_Shared_float64 *) d_replica[sourceReplica])->value(), now);
+      ((vrpn_Shared_float64 *) d_replica[destReplica])->set
+         (((vrpn_Shared_float64 *) d_replica[sourceReplica])->value(), now);
   }
   quashSideEffectsLater = VRPN_FALSE;
 }
@@ -850,20 +838,14 @@ int TclNet_float::propagateReceivedUpdate (
   // (updateTcl() does not send idempotent changes.  Tcl ignores
   // changes generated in the middle of a Trace.)
 
-  // Need to do this check before calling operator = ();  otherwise
-  // mylastfloat will always equal newValue!
-  vrpn_bool ignore = VRPN_FALSE;
-//    if ((newValue == ntf->mylastfloat) && !ntf->d_permitIdempotentChanges) {
-//      ignore = VRPN_TRUE;
-//    }
-
   if (!ntf->d_updateFromTcl) {
 
     // Since we're not inside a Tcl callback, we're about to generate one,
     // which we want to ignore to avoid endless loops or hitting the callback
     // twice.
 
-    collabVerbose(8, "TclNet_float::updateTcl(%s):  setting d_ignoreChange.\n",
+    collabVerbose(8,
+                  "TclNet_float::updateTcl(%s):  setting d_ignoreChange.\n",
                   ntf->d_myTclVarname);
     ntf->d_ignoreChange = VRPN_TRUE;
   }
@@ -877,9 +859,7 @@ int TclNet_float::propagateReceivedUpdate (
     if (!isLocal || quashSideEffectsLater) {
       quashSideEffects = VRPN_TRUE;
     }
-    if (!ignore) {
-      ntf->Tclvar_float::SetFromTcl(newValue);
-    }
+    ntf->Tclvar_float::SetFromTcl(newValue);
     quashSideEffects = VRPN_FALSE;
   }
   return 0;
@@ -941,15 +921,15 @@ const char * TclNet_string::operator = (const char * newValue) {
   activateTimer();
 
   if (!isLocked()) {
-      gettimeofday(&now, NULL);
-      if (d_replica[d_writeReplica]) {
-	  ((vrpn_Shared_String *) d_replica[d_writeReplica])->set(newValue, now);
+    gettimeofday(&now, NULL);
+    if (d_replica[d_writeReplica]) {
+      ((vrpn_Shared_String *) d_replica[d_writeReplica])->set(newValue, now);
       if (migrateSerializer) {
         d_replica[d_writeReplica]->becomeSerializer();
       }
-      } else {
-	  Tclvar_string::operator = (newValue);
-      }
+    } else {
+      Tclvar_string::operator = (newValue);
+    }
   }
 
   return string();
@@ -967,15 +947,15 @@ const char * TclNet_string::operator = (char * newValue) {
   activateTimer();
 
   if (!isLocked()) {
-      gettimeofday(&now, NULL);
-      if (d_replica[d_writeReplica]) {
-	  ((vrpn_Shared_String *) d_replica[d_writeReplica])->set(newValue, now);
+    gettimeofday(&now, NULL);
+    if (d_replica[d_writeReplica]) {
+      ((vrpn_Shared_String *) d_replica[d_writeReplica])->set(newValue, now);
       if (migrateSerializer) {
         d_replica[d_writeReplica]->becomeSerializer();
       }
-      } else {
-	  Tclvar_string::operator = (newValue);
-      }
+    } else {
+      Tclvar_string::operator = (newValue);
+    }
   }
 
   return string();
@@ -993,15 +973,15 @@ void TclNet_string::Set (const char * newValue) {
   activateTimer();
 
   if (!isLocked()) {
-      gettimeofday(&now, NULL);
-      if (d_replica[d_writeReplica]) {
-	  ((vrpn_Shared_String *) d_replica[d_writeReplica])->set(newValue, now);
+    gettimeofday(&now, NULL);
+    if (d_replica[d_writeReplica]) {
+      ((vrpn_Shared_String *) d_replica[d_writeReplica])->set(newValue, now);
       if (migrateSerializer) {
         d_replica[d_writeReplica]->becomeSerializer();
       }
-      } else {
-	  Tclvar_string::Set(newValue);
-      }
+    } else {
+      Tclvar_string::Set(newValue);
+    }
   }
 }
 
@@ -1047,10 +1027,7 @@ int TclNet_string::addRemoteReplica (void) {
 
 // virtual
 void TclNet_string::SetFromTcl (const char * newValue) {
-  //if (!isSerializer()) {
-    //d_updateFromTcl = VRPN_FALSE;
-  //}
-  /*Tclvar_string::*/operator = (newValue);
+  operator = (newValue);
 }
 
 
@@ -1111,7 +1088,8 @@ void TclNet_string::copyFromToReplica (int sourceReplica, int destReplica)
       timeval now;
       gettimeofday(&now, NULL);
 
-      ((vrpn_Shared_String *) d_replica[destReplica])->set(((vrpn_Shared_String *) d_replica[sourceReplica])->value(), now);
+      ((vrpn_Shared_String *) d_replica[destReplica])->set
+      (((vrpn_Shared_String *) d_replica[sourceReplica])->value(), now);
   }
   quashSideEffectsLater = VRPN_FALSE;
 }
@@ -1135,14 +1113,14 @@ void TclNet_string::syncReplica (int whichReplica) {
     return;  // noop
   }
 
-    ((vrpn_Shared_String *) d_replica[d_activeReplica])->unregister_handler
+  ((vrpn_Shared_String *) d_replica[d_activeReplica])->unregister_handler
              (propagateReceivedUpdate, this);
 
   d_activeReplica = whichReplica;
 
   d_writeReplica = whichReplica;
 
-    ((vrpn_Shared_String *) d_replica[whichReplica])->register_handler
+  ((vrpn_Shared_String *) d_replica[whichReplica])->register_handler
                  (propagateReceivedUpdate, this);
 
   copyReplica(whichReplica);
@@ -1200,13 +1178,6 @@ int TclNet_string::propagateReceivedUpdate (
   // (updateTcl() does not send idempotent changes.  Tcl ignores
   // changes generated in the middle of a Trace.)
 
-  // Need to do this check before calling operator = ();  otherwise
-  // lastString() will always equal newValue!
-  vrpn_bool ignore = VRPN_FALSE;
-//    if (!strcmp(newValue, nts->lastString()) && !nts->d_permitIdempotentChanges) {
-//      ignore = VRPN_TRUE;
-//    }
-
   if (!nts->d_updateFromTcl) {
 
     // Since we're not inside a Tcl callback, we're about to generate one,
@@ -1226,9 +1197,7 @@ int TclNet_string::propagateReceivedUpdate (
     if (!isLocal || quashSideEffectsLater) {
       quashSideEffects = VRPN_TRUE;
     }
-    if (!ignore) {
-      nts->Tclvar_string::SetFromTcl(newValue);
-    }
+    nts->Tclvar_string::SetFromTcl(newValue);
     quashSideEffects = VRPN_FALSE;
   }
 

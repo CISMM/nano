@@ -1,3 +1,12 @@
+2001-7-7  Tom Hudson  <hudson@cs.unc.edu>
+
+	* all : Remove dead/commented-out code, incorrect comments.
+	Fix formatting, add (a very few) autodoc comments, and other
+	general cleanup before I leave.
+
+	(Tcl_Linkvar) : Remove d_permitIdempotentChanges.
+	(::propagateReceivedUpdate) : remove ignore.
+
 2000-12-20  Aron Helser  <helser@cs.unc.edu>
 
 	* all: 3rdtech merge into main trunk. 
