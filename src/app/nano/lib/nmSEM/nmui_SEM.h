@@ -60,9 +60,9 @@ class nms_SEM_ui {
     // greyscale image window (might be useful for debugging)
     ImageViewer *image_viewer;
     int image_window_id;
-    static int nms_SEM_ui::drawGreyscaleWindow(
-      const ImageViewerDisplayData &data, 
-      void *ud);
+    static int drawGreyscaleWindow(
+        const ImageViewerDisplayData &data, 
+        void *ud);
     int updateSurfaceTexture(int start_x, int start_y, 
      int dx, int dy,
      int line_length, int num_fields, int num_lines, vrpn_uint8 *data);
