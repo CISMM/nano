@@ -28,6 +28,16 @@ default: all
 .PHONY: all
 all: $(join $(addprefix $(OBJECT_DIR)/,$(CHILD_DIRS)), \
             $(addprefix /,$(CHILD_LIBS)))
+#
+# Generate steps
+#
+
+.PHONY: generate generate_hook generate_real
+
+generate: generate_hook generate_real
+
+generate_real: $(addprefix generate.,$(CHILD_DIRS))
+
 
 .PHONY: depend
 depend: all
@@ -36,15 +46,15 @@ depend: all
 clean: 
 	-rm -rf $(OBJECT_DIR) 
 
-.PHONY: thisclean
-thisclean:
-	#You probably wanted to do a "make clean" here.
-
 #############################################################################
 #
 # implicit rule for all subdirs
 #
 
-.PHONY: %
+.PHONY: % generate.%
+
 %:
 	$(MAKE) -wC .$(subst $(OBJECT_DIR),,$(@D) $(DEPEND_FLAG))
+
+generate.%: %
+	$(MAKE) -wC $< generate

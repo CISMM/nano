@@ -88,11 +88,7 @@ else
          HW_OS := pc_cygwin
       endif
    else
-      ifeq ($(UNAME),Linux)         # Linux may not have HW_OS
-         HW_OS := pc_linux
-      else                          # everybody else has hw_os
-         HW_OS := $(shell hw_os)
-      endif
+      HW_OS := $(shell hw_os)
    endif
 endif
 
@@ -121,24 +117,14 @@ endif
 # How do I link?
 #
 
-# This works on cygwin as long as MY_NANO_OBJ_DIR is a local drive.
-# You do compile that way don't you?
-ifeq ($(HW_OS),pc_cygwin)
-   LINK = ln -n -s
-else
-   LINK = ln -s
-endif
+LINK = ln -s
 
 ##########################
 #
 # Get my username
 #
 
-ifeq ($(HW_OS),pc_cygwin)
-   WHOAMI := $(USERNAME)
-else
-   WHOAMI := $(USER)
-endif
+WHOAMI := $(USER)
 
 ##########################
 #
@@ -146,9 +132,6 @@ endif
 #
 
 PWD_COMMAND := pwd
-ifeq ($(findstring pc_,$(HW_OS)),pc_)
-   PWD_COMMAND := pwd
-endif
 
 ##########################
 #
@@ -156,28 +139,12 @@ endif
 # depends on which arch
 #
 
-ifdef PBASE_ROOT                    # Must be flow
-   ifeq ($(PXFL_COMPILER),aCC)      # We commonly use multiple compilers here
-      HW_OS := hp_flow_aCC
-      CC    := /opt/aCC/bin/aCC -G
-   else
-      HW_OS := hp_flow
-      CC    := g++
-   endif
-else
-   ifeq ($(HW_OS),sgi_irix)
-      CC := CC -$(SGI_ABI) -$(SGI_ARCH) -fullwarn
-   else
-      ifeq ($(HW_OS),hp700_hpux10)  # another odd case, hpux is "different"
-         CC := CC +w
-      else
-	ifeq ($(HW_OS),pc_win32)
-            CC := cl
-         else                          # default case
-            CC := g++ -Wall
-         endif
-      endif
-   endif
+CC := cc
+ifeq ($(HW_OS),sgi_irix)
+	CC := CC -$(SGI_ABI) -$(SGI_ARCH) -fullwarn
+endif	
+ifdef VC
+	CC := cl
 endif
 
 ##########################
@@ -185,9 +152,7 @@ endif
 # Setup for using MS VC++ compiler in the cygwin environment
 #   All values copied from VCVARS32.BAT
 
-# I don't know how to do this yet. Probably should be set up in the
-# cygwin environment before calling make.
-
+# Values found in vcsetup which is called during login to bash
 
 ##########################
 #
@@ -334,12 +299,6 @@ ifeq ($(HW_OS),pc_win32)
    SYS_INCLUDE := $(MY_NANO_SRC_DIR)/external/pc_win32/include $(MY_NANO_SRC_DIR)/external/pc_win32/include/ghost3.1 $(MY_NANO_SRC_DIR)/external/pc_win32/include/ghost-stl $(MY_NANO_SRC_DIR)/vrpn/server_src 
 endif
 
-ifeq ($(HW_OS),pc_linux)
-   SYS_INCLUDE := /usr/X11R6/include /usr/include /usr/local/contrib/include \
-                  /usr/local/contrib/mod/include /usr/include/bsd \
-                  /usr/local/contrib/unmod/include/Mesa
-endif
-
 ifeq ($(HW_OS),sgi_irix)
    SYS_INCLUDE := /usr/local/contrib/mod/include
 endif
@@ -371,14 +330,8 @@ LOAD_FLAGS := $(addprefix -L, $(EXTERNAL_LIB_DIR) \
 	                      	/usr/local/contrib/mod/lib \
 				/afs/cs.unc.edu/proj/stm/src/external/glut/glut_UNC )
 
-ifeq ($(HW_OS),pc_cygwin)
-  LOAD_FLAGS += -L/usr/X11R6.4/lib
-endif
-
 ifeq ($(HW_OS),pc_win32)
   LOAD_FLAGS = -L$(MY_NANO_SRC_DIR)/external/pc_win32/lib -L$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32_MTd /nodefaultlib:"glut32.lib"
-
-#/LIBPATH:$(MY_NANO_SRC_DIR)/vrpn/server_src/pc_win32_MTd /LIBPATH:$(MY_NANO_SRC_DIR)/vrpn/pc_win32_MTd /LIBPATH:$(MY_NANO_SRC_DIR)/quat/pc_win32_MTd /LIBPATH:$(MY_NANO_SRC_DIR)/vogl/pc_win32_MTd
 
 endif
 
@@ -392,26 +345,6 @@ ifeq ($(HW_OS),sgi_irix)
    endif
 
    LOAD_FLAGS += $(TEMP_LOAD_FLAG)
-endif
-
-ifeq ($(HW_OS),pc_linux)
-  LOAD_FLAGS += -L/usr/X11R6/lib
-endif
-
-ifeq ($(HW_OS),hp700_hpux10)
-  LOAD_FLAGS += -L/usr/lib/X11R5
-endif
-
-ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
-   APLFLAGS   := $(filter-out -static,$(APLFLAGS))
-   LOAD_FLAGS := $(filter-out -L./$(HW_OS)$(OBJECT_DIR_SUFFIX),$(LOAD_FLAGS))
-
-   ifeq ($(HW_OS),hp_flow)
-      LOAD_FLAGS := $(filter-out $(V_OPENGL_LIB_DIRS),$(LOAD_FLAGS))
-   endif
-
-   LOAD_FLAGS := $(LOAD_FLAGS) $(APDEBUG) $(APCCFLAGS) $(APCFLAGS) \
-                 $(APLFLAGS) $(V_OPENGL_LIB_DIRS) -L/usr/lib/X11R5
 endif
 
 LOAD_FLAGS += $(LATE_LOAD_PATH)
@@ -430,31 +363,10 @@ ifeq ($(HW_OS),sgi_irix)
    GRAPHICS_LIBS := -lGLU -lGL
 endif
 
-ifeq ($(HW_OS), hp700_hpux10)
-   GRAPHICS_LIBS := -lMesaGL
-endif
-
-ifeq ($(HW_OS), pc_linux)
-   GRAPHICS_LIBS := -lglut_UNC -lGLU -lGL
-endif
-
-ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
-   GRAPHICS_LIBS := $(APLINKLIBS) -lpvm3
-endif
-
 ##########################
 #
 # Intel architecture
 #
-
-ifeq ($(HW_OS),pc_linux)
-   ARCH_LIBS := $(addprefix -l,bsd dl pthread)
-endif
-
-ifeq ($(HW_OS),pc_cygwin)
-   ARCH_LIBS := $(addprefix -l,glut wsock32 user32 gdi32 comdlg32 glu32 \
-                               opengl32)
-endif
 
 ifeq ($(HW_OS),pc_win32)
    ARCH_LIBS := $(addprefix -l,glut32_UNC wsock32 user32 gdi32 comdlg32 glu32 \
@@ -475,24 +387,12 @@ endif
 
 TCL_LIBS := $(addprefix -l,itk3.2 itcl3.2 BLT2.4 tk8.3 tcl8.3)
 
-ifeq ($(HW_OS),pc_cygwin)
-   TCL_LIBS := $(addprefix -l,BLT24 tk80 tcl80 itk30 itcl30)
-endif
-
 ifeq ($(HW_OS),pc_win32)
    TCL_LIBS := $(addprefix -l,BLT24 tk83 tcl83)
 endif
 
 ifeq ($(HW_OS),sgi_irix)            # Tcl must load statically on Irix
    TCL_LIBS := -B static $(TCL_LIBS) -B dynamic
-endif
-
-ifeq ($(HW_OS),pc_linux)            # Tcl must load statically on Linux
-   TCL_LIBS := -B static $(TCL_LIBS) -B dynamic
-endif
-
-ifeq ($(HW_OS), hp700_hpux10)       # Tcl must load statically on HPUX
-   TCL_LIBS := $(subst -l,-l:lib,$(addsuffix .a,$(TCL_LIBS)))
 endif
 
 ##########################
@@ -504,16 +404,6 @@ endif
 # added glut to EVERYBODY
 LIBS := $(EXTERNAL_LIBS) -lglui -lglut_UNC $(GRAPHICS_LIBS) \
         $(TCL_LIBS) -lXmu -lXext -lX11 $(ARCH_LIBS) -lm
-
-ifeq ($(HW_OS), hp700_hpux10)
-   LIBS := -lPW $(EXTERNAL_LIBS) $(GRAPHICS_LIBS) $(TCL_LIBS) \
-           -lXext -lX11 $(ARCH_LIBS) -lm
-endif
-
-ifeq ($(findstring hp_flow,$(HW_OS)),hp_flow)
-   LIBS := -lPW $(EXTERNAL_LIBS) $(GRAPHICS_LIBS) $(TCL_LIBS) \
-           -lXext -lX11 $(ARCH_LIBS) -lm
-endif
 
 ifdef VC
    LIBS := $(EXTERNAL_LIBS) $(GRAPHICS_LIBS) $(TCL_LIBS) $(ARCH_LIBS)
@@ -537,18 +427,9 @@ ifeq ($(HW_OS),sgi_irix)
   BAREDEFINES += V_GLUT NO_MAGELLAN NO_PHANTOM_SERVER
 endif
 
-ifeq ($(HW_OS),pc_cygwin)
-  BAREDEFINES += V_GLUT NO_XWINDOWS NO_EXT_TEXTURES NO_MAGELLAN \
-  NO_PHANTOM_SERVER
-endif
-
 ifeq ($(HW_OS),pc_win32)
   BAREDEFINES += V_GLUT NO_RAW_TERM NO_XWINDOWS NO_ITCL NO_FILTERS \
   NO_EXT_TEXTURES
-endif
-
-ifeq ($(HW_OS),pc_linux)
-  BAREDEFINES += V_GLUT NO_EXT_TEXTURES NO_MAGELLAN NO_PHANTOM_SERVER
 endif
 
 # Allows compilation of viewer-only version of Nano on all platforms. 
@@ -561,6 +442,7 @@ endif
 ifdef NO_PHANTOM
       BAREDEFINES += NO_PHANTOM 
 endif
+
 # Selective disable of microscope connections
 ifdef NO_MSCOPE_CONNECTION
       BAREDEFINES += NO_MSCOPE_CONNECTION 
@@ -595,10 +477,6 @@ ifeq ($(THIRDTECH),1)
 CFLAGS += /D "THIRDTECH"
 endif
 endif
-
-#ifeq ($(HW_OS),pc_cygwin)
-#  CFLAGS += -fhuge-objects
-#endif
 
 ###########################
 #

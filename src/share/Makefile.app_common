@@ -126,16 +126,34 @@ default: $(OBJECT_DIR) $(APP_EXEC)
 .PHONY: all
 all: $(OBJECT_DIR) $(APP_OBJ) $(APP_EXEC)
 
-.PHONY: clean
-clean: 
+
+#
+# Generate steps
+#
+
+.PHONY: generate generate_hook generate_real
+
+generate: generate_hook generate_real
+
+generate_real: $(addprefix generate.,$(CHILD_DIRS))
+
+
+# To add a custom pre-clean step, add a clean_hook target to your makefile.
+# To see an example, look at src/app/nano/lib/nmMScope/Makefile:
+#
+#  .PHONEY: clean_hook
+#  clean_hook: clean_gen
+
+
+.PHONY: clean clean_hook clean_real
+
+clean: clean_hook clean_real
+
+clean_real: 
 	-rm -rf $(OBJECT_DIR) 
 
-.PHONY: thisclean
-thisclean:
-	-rm -f $(OBJECT_DIR)/*
-
 .PHONY: clobber
-clobber: thisclean
+clobber: 
 	-rm -f $(OBJECT_DIR)/.depend*
 
 #############################################################################
@@ -240,3 +258,4 @@ ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
       include $(TOP_LEVEL_MAKE_DIR)/Makefile.depend
    endif
 endif
+

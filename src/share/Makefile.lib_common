@@ -83,16 +83,32 @@ default: $(OBJECT_DIR) $(LIBRARY_ARCHIVE)
 .PHONY: all
 all: $(OBJECT_DIR) $(LIBRARY_OBJ) $(LIBRARY_ARCHIVE)
 
-.PHONY: clean
-clean: 
+#
+# Generate steps
+#
+
+.PHONY: generate generate_hook generate_real
+
+generate: generate_hook generate_real
+
+generate_real: $(addprefix generate.,$(CHILD_DIRS))
+
+
+# To add a custom pre-clean step, add a clean_hook target to your makefile.
+# To see an example, look at src/app/nano/lib/nmMScope/Makefile
+#
+#  .PHONEY: clean_hook
+#  clean_hook: clean_gen
+
+.PHONY: clean clean_hook clean_real
+
+clean: clean_hook clean_real
+
+clean_real: 
 	-rm -rf $(OBJECT_DIR) 
 
-.PHONY: thisclean
-thisclean:
-	-rm -f $(OBJECT_DIR)/*
-
 .PHONY: clobber
-clobber: thisclean
+clobber:
 	-rm -f $(OBJECT_DIR)/.depend*
 
 #############################################################################
@@ -170,9 +186,6 @@ else
 	@$(AR) ruv $(LIBRARY_ARCHIVE) $(LIBRARY_OBJ)
 endif
 
-# $(OBJECT_DIR)/*.o $(OBJECT_DIR)/*.obj
-	-ranlib $(LIBRARY_ARCHIVE)
-
 ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
    ifneq ($(findstring clobber,$(MAKECMDGOALS)),clobber)
       ifneq ($(findstring generate,$(MAKECMDGOALS)),generate)
@@ -180,3 +193,4 @@ ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
       endif
    endif
 endif
+

@@ -84,8 +84,13 @@ DEPEND_BUILD_RULE := ( \
                      )
 endif
 
-.PHONY: depend
-depend: $(OBJECT_DIR) $(MAKEFILE_DEPEND)
+# To add a custom pre-depend step, add a depend_hook target to your makefile.
+# To see an example, look at src/app/nano/lib/nmMScope/Makefile
+
+.PHONY: depend depend_hook depend_real
+depend: depend_hook depend_real
+
+depend_real: $(OBJECT_DIR) $(MAKEFILE_DEPEND)
 
 $(MAKEFILE_DEPEND):
 	@echo ---------------------------------------------------------------- 

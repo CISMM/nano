@@ -1,3 +1,16 @@
+2001-12-05  Nathan Conrad  <conrad@cs.unc.edu>
+
+	* Makefile.*_common (clean): Add a 'clean_hook' target and
+	necessary infrastructure to add a pre-clean step. This is usefull
+	for removing generated files during a clean.
+
+	* Makefile.depend (depend): Add a 'depend_hook' target
+	and necessary infrastructure to add a pre-depend step. This is 
+	useful for generating files before a depend. (lexical analysis, etc...)
+
+	* Makefile*: Removed all references to archatectures other than 
+	VC/Cygwin and SGI.
+
 2001-11-25  Aron Helser  <helser@cs.unc.edu>
 
 	* Makefile.app_common (LINK_FLAGS): Added a few NODEFAULTLIB args
