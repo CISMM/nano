@@ -51,7 +51,7 @@ class nms_SEM_ui {
     Tclvar_int sem_acquire_image;
     Tclvar_int sem_acquire_continuous;
     Tclvar_int display_texture;
-    Tclvar_int network_test;
+    Tclvar_int no_graphics_update;
     Tclvar_int sem_resolution; // an index into a set of image sizes
     Tclvar_int pixel_integration_time_nsec;
     Tclvar_int inter_pixel_delay_time_nsec;

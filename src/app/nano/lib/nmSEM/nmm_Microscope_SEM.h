@@ -21,7 +21,7 @@ class nmm_Microscope_SEM {
 
     virtual ~nmm_Microscope_SEM (void);
     
-    virtual vrpn_int32 mainloop(void);
+    virtual vrpn_int32 mainloop(void) = 0;
 
   typedef enum {SET_RESOLUTION,
                 SET_PIXEL_INTEGRATION_TIME,
@@ -33,10 +33,10 @@ class nmm_Microscope_SEM {
                 WINDOW_LINE_DATA,
 				SCANLINE_DATA} msg_t;
   protected:
-    vrpn_Connection * d_connection;
-    vrpn_File_Controller * d_fileController;
+//    vrpn_Connection * d_connection;
+//    vrpn_File_Controller * d_fileController;
 
-    vrpn_int32 d_myId;
+//    vrpn_int32 d_myId;
 
     // (client-->server) messages
     vrpn_int32 d_SetResolution_type;
@@ -119,8 +119,8 @@ class nmm_Microscope_SEM {
         vrpn_uint8 *data);
 
     // packs the message reliably and then deletes [] buf
-    int dispatchMessage (vrpn_int32 len, const char *buf, 
-                     vrpn_int32 type);
+//    int dispatchMessage (vrpn_int32 len, const char *buf, 
+//                     vrpn_int32 type);
 };
 
 #endif

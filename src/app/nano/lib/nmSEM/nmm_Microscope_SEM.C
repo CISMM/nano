@@ -6,32 +6,32 @@
 */
 
 nmm_Microscope_SEM::nmm_Microscope_SEM (const char * name,
-			vrpn_Connection *c):
-  d_connection (c),
-  d_fileController (new vrpn_File_Controller (c))
+			vrpn_Connection *c)
+//  d_connection (c),
+//  d_fileController (new vrpn_File_Controller (c))
 {
-  char * servicename;
-  servicename = vrpn_copy_service_name(name);
+//  char * servicename;
+//  servicename = vrpn_copy_service_name(name);
 
-  if (d_connection) {
-    d_myId = d_connection->register_sender(servicename);
-    d_SetResolution_type = d_connection->register_message_type
+  if (c) {
+//    d_myId = d_connection->register_sender(servicename);
+    d_SetResolution_type = c->register_message_type
 		("nmmMicroscopeSEM SetResolution");
-    d_SetPixelIntegrationTime_type = d_connection->register_message_type
+    d_SetPixelIntegrationTime_type = c->register_message_type
 		("nmmMicroscopeSEM SetPixelIntegrationTime");
-    d_SetInterPixelDelayTime_type = d_connection->register_message_type
+    d_SetInterPixelDelayTime_type = c->register_message_type
                 ("nmmMicroscopeSEM SetInterPixelDelayTime");
-    d_RequestScan_type = d_connection->register_message_type
+    d_RequestScan_type = c->register_message_type
                 ("nmmMicroscopeSEM RequestScan");
-    d_ReportResolution_type = d_connection->register_message_type
+    d_ReportResolution_type = c->register_message_type
 		("nmmMicroscopeSEM ReportResolution");
-    d_ReportPixelIntegrationTime_type = d_connection->register_message_type
+    d_ReportPixelIntegrationTime_type = c->register_message_type
                 ("nmmMicroscopeSEM ReportPixelIntegrationTime");
-    d_ReportInterPixelDelayTime_type = d_connection->register_message_type
+    d_ReportInterPixelDelayTime_type = c->register_message_type
                 ("nmmMicroscopeSEM ReportInterPixelDelayTime");
-    d_WindowLineData_type = d_connection->register_message_type
+    d_WindowLineData_type = c->register_message_type
                 ("nmmMicroscopeSEM WindowLineData");
-    d_ScanlineData_type = d_connection->register_message_type
+    d_ScanlineData_type = c->register_message_type
 		("nmmMicroscopeSEM ScanlineData");
           
   }
@@ -40,9 +40,9 @@ nmm_Microscope_SEM::nmm_Microscope_SEM (const char * name,
 
 nmm_Microscope_SEM::~nmm_Microscope_SEM (void)
 {
-  delete d_fileController; // not done in nmm_Microscope.C
 }
-    
+
+/*   
 vrpn_int32 nmm_Microscope_SEM::mainloop(void)
 {
   if (d_connection){
@@ -51,6 +51,7 @@ vrpn_int32 nmm_Microscope_SEM::mainloop(void)
   }
   return 0;
 }
+*/
 
 // message encode, decode functions
 // (client-->server)
@@ -484,6 +485,7 @@ vrpn_int32 nmm_Microscope_SEM::decode_ScanlineDataLine (const char ** buf,
   return 0;
 }
 
+/*
 int nmm_Microscope_SEM::dispatchMessage (vrpn_int32 len, const char * buf, 
                                             vrpn_int32 type) {
   struct timeval now;
@@ -501,3 +503,4 @@ int nmm_Microscope_SEM::dispatchMessage (vrpn_int32 len, const char * buf,
 
   return retval;
 }
+*/

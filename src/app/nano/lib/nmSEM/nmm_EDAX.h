@@ -8,8 +8,8 @@
 #define EDAX_WRITE (2)
 
 // for SgSetRetrace:
-#define EDAX_DEFAULT_HORZ_RETRACE (10)
-#define EDAX_DEFAULT_VERT_RETRACE (10)
+#define EDAX_DEFAULT_HORZ_RETRACE (750)
+#define EDAX_DEFAULT_VERT_RETRACE (750)
 
 // for SgSetScanDir:
 #define EDAX_DIR_NORMAL (0)

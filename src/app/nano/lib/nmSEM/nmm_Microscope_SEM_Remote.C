@@ -2,7 +2,8 @@
 
 nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
     (const char * name, vrpn_Connection *cn):
-    nmm_Microscope_SEM (name, cn?cn:vrpn_get_connection_by_name(name)),
+    nmb_Device_Client(name, cn?cn:vrpn_get_connection_by_name(name)),
+    nmm_Microscope_SEM (name, d_connection),
     d_resolutionX(0), d_resolutionY(0),
     d_pixelIntegrationTime_nsec(0), 
     d_interpixelDelayTime_nsec(0),
@@ -64,6 +65,15 @@ nmm_Microscope_SEM_Remote::~nmm_Microscope_SEM_Remote()
   if (d_uint8_data) {
     delete d_uint8_data;
   }
+}
+
+vrpn_int32 nmm_Microscope_SEM_Remote::mainloop(void)
+{
+  if (d_connection){
+    if ((d_connection->mainloop()) == -1)
+       return -1;
+  }
+  return 0;
 }
 
 int nmm_Microscope_SEM_Remote::setResolution(vrpn_int32 res_x, vrpn_int32 res_y)

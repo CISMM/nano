@@ -2,6 +2,7 @@
 #define NMM_MICROSCOPE_SEM_REMOTE_H
 
 #include "vrpn_Connection.h"
+#include "nmb_Device.h"
 #include "nmm_Microscope_SEM.h"
 
 class nmm_Microscope_SEM_Remote;
@@ -17,11 +18,14 @@ typedef struct {
 typedef void (*nmm_Microscope_SEM_Remote_ChangeHandler_t)(void *userdata,
                           const nmm_Microscope_SEM_ChangeHandlerData &info);
 
-class nmm_Microscope_SEM_Remote : public nmm_Microscope_SEM {
+class nmm_Microscope_SEM_Remote : public nmb_Device_Client, 
+                                  public nmm_Microscope_SEM {
 
   public:
     nmm_Microscope_SEM_Remote(const char *name, vrpn_Connection *c = NULL);
     ~nmm_Microscope_SEM_Remote(void);
+
+    virtual vrpn_int32 mainloop(void);
 
     // message-sending functions
     int setResolution (vrpn_int32 res_x, vrpn_int32 res_y);

@@ -23,13 +23,13 @@ nms_SEM_ui::nms_SEM_ui(Tcl_Interp *interp, const char *tcl_script_dir,
                const char *name,
                vrpn_Connection *c):
     tcl_interp(interp),
-    sem_acquire_image("sem(acquire_image)", 0),
-    sem_acquire_continuous("sem(acquire_continuous)", 1),
-    display_texture("sem(display_texture)", 0),
-    network_test("sem(network_test)", 0),
-    sem_resolution("sem(resolution)", 0),
-    pixel_integration_time_nsec("sem(pixel_integration_time_nsec)", 0),
-    inter_pixel_delay_time_nsec("sem(inter_pixel_delay_time_nsec)", 0),
+    sem_acquire_image("sem_acquire_image", 0),
+    sem_acquire_continuous("sem_acquire_continuous", 1),
+    display_texture("sem_display_texture", 0),
+    no_graphics_update("sem_no_graphics_update", 0),
+    sem_resolution("sem_resolution", 0),
+    pixel_integration_time_nsec("sem_pixel_integration_time_nsec", 0),
+    inter_pixel_delay_time_nsec("sem_inter_pixel_delay_time_nsec", 0),
     sem_window_open("sem_window_open", 0)
 {
     char command[256];
@@ -40,10 +40,12 @@ nms_SEM_ui::nms_SEM_ui(Tcl_Interp *interp, const char *tcl_script_dir,
     char *display_name;
 
     /* Load the Tcl script that handles main interface window */
+/*
     sprintf(command, "source %s/%s",tcl_script_dir, SEM_TCL_FILE);
     printf("evaluating %s\n", command);
     TCLEVALCHECK2(tcl_interp, command);
     fprintf(stderr, "done evaluating\n");
+*/
     set_tcl_callbacks();
 /*
     initializeTcl
@@ -273,7 +275,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
 				res_x, res_y);
 	   break;
         }
-        if (!(me->network_test)) {
+        if (!(me->no_graphics_update)) {
           int x, y;
           x = start_x;
           y = start_y;
@@ -297,7 +299,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
           me->updateSurfaceTexture(start_x, start_y, dx, dy, line_length,
                num_fields, num_lines, data_uint8);
 
-        } // end if not network_test
+        } // end if !no_graphics_update
         if (start_y+num_lines == res_y) {
             if (me->sem_acquire_continuous){
                 info.sem->requestScan(1);
