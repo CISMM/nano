@@ -57,12 +57,16 @@ proc open_stream_file {} {
 ################################
 #
 # Open a device - SPM.
-
+if { $thirdtech_ui } {
+    set deviceNames {}
+    set deviceConnections {} 
+} else {
+# Maintain list of all UNC SPMs available here. Don't add UNC SPMs to spm_list_def.tcl
 set deviceNames       { "Local SPM" "Nano Demo" "Black Box"}
 set deviceConnections { "nmm_Microscope@127.0.0.1" \
         "nmm_Microscope@172.18.2.241" \
         "nmm_Microscope@172.18.2.251" }
-
+}
 # Dialog which allows user to choose which device
 # and which log file. 
 iwidgets::dialog .open_device_dialog -title "Open SPM Connection" -modality application
@@ -96,6 +100,7 @@ proc choose_logfile { } {
     # otherwise do nothing - user pressed cancel or didn't enter file name
 }
 
+set open_spm_log_name ""
 generic_entry $win.open_logfile open_spm_log_name \
 	"Auto lab notebook:" ""
 $win.open_logfile configure -width 20
@@ -164,10 +169,11 @@ pack $win.export_filetype -anchor nw
 
 # Allow the user to save 
 proc save_plane_data {} {
-    global export_plane export_filetype export_filename fileinfo imageNames
+    global export_plane export_filetype export_filename fileinfo imageNames z_comes_from
     # Trigger the export_filetype widget to display formats for
     # the default selected export_plane.
-    set export_plane [lindex $imageNames 0]
+    #set export_plane [lindex $imageNames 0]
+    set export_plane $z_comes_from
     if { [.save_plane_dialog activate] } {
 	set types { {"All files" *} 
         { "ThermoMicroscopes" ".tfr" }
@@ -178,9 +184,9 @@ proc save_plane_data {} {
 
         # Set the file extension correctly
         set def_file_exten ".tfr"
-        puts $export_filetype
+        #puts $export_filetype
         foreach item $types {
-            puts "[lindex $item 0] [lindex $item 1]"
+            #puts "[lindex $item 0] [lindex $item 1]"
             if { [string compare $export_filetype [lindex $item 0]] == 0} {
                 set def_file_exten [lindex $item 1]
             }
@@ -312,9 +318,14 @@ proc remember_mod_data { time_stamp} {
 
 }
 
+# Allows the C code, microscape.c, to clear saved modifications from
+# the list when streamfiles or connections change. 
+
 proc forget_mod_data { } {
     global mod_data
-    unset mod_data
+    if { [info exists mod_data] } {
+        unset mod_data
+    }
 }
 
 # Allow the user to save 

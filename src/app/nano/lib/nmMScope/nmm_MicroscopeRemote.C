@@ -2205,7 +2205,9 @@ int nmm_Microscope_Remote::handle_GotConnection2 (void * userdata,
 int nmm_Microscope_Remote::handle_DroppedConnection2 (void * userdata,
                                       vrpn_HANDLERPARAM ) {
     nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
-    if (!ms->d_dataset->done) {
+    // Only display warning if we aren't quitting the program, and
+    // if we are connected to a live AFM - no streamfiles!
+    if ((!ms->d_dataset->done) && (ms->ReadMode() == READ_DEVICE)) {
       display_warning_dialog("Communication with ThermoMicroscopes AFM has stopped.\n"
                              "No more data will be collected until ThermoMicroscopes\n"
                              "software is re-started and communication is re-established.");

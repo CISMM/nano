@@ -197,7 +197,8 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
 
 
 
-/*	This routine will create the openGL commands needed to display a
+/* I don't know what routine this comment is for, but it's not init_vertex_array!
+ *	This routine will create the openGL commands needed to display a
  * triangle strip for one of the strips needed to show a grid.  This routine
  * displays a strip along the X axis;  the "which" parameter selects from the
  * strips to be drawn.  The first strip is 0 and the last is grid->num_y - 1,
@@ -220,10 +221,12 @@ int	stm_compute_plane_normal(BCPlane *plane, int x,int y,
  *    Y    1     3     5     7     9 
  *     X-------->                           
  *                                                                         
- *	This routine returns 0 on success and -1 on failure. */
+ *	This routine returns 1 on success and 0 on failure. */
 
 int init_vertexArray(int x, int y)
-{  int dim;
+{
+    static int old_grid_dim = 0;
+  int dim, i;
 
   if(x<=y) {
      dim=y;
@@ -232,17 +235,21 @@ int init_vertexArray(int x, int y)
      dim=x;
   }       
 
-  // with RenderClient may be called more than once;  why waste memory?
+  // Called every time grid is resized - reclaim memory.
   if (vertexptr) {
-    free(vertexptr);
+      for(i=0;i< old_grid_dim;i++) {
+          if ( vertexptr[i] ) free (vertexptr[i]);
+      }
+      free(vertexptr);
   }
+  old_grid_dim = dim;
 
    vertexptr= (Vertex_Struct **)malloc(
                                sizeof(Vertex_Struct *) * dim);
 
    if (vertexptr == NULL)
       return 0;
-   for(int i=0;i< dim;i++) {
+   for(i=0;i< dim;i++) {
      vertexptr[i]= (Vertex_Struct *)malloc(sizeof(Vertex_Struct)* dim * 2);
 
      if(vertexptr[i] == NULL )

@@ -43,7 +43,7 @@ int BCGrid::_times_invoked = 0;
    Loads a list of files. If the only plane in the grid is EMPTY_PLANE_NAME,
    fill the grid. If there is data already in the grid, add planes of data 
    only if the grid size matches.
-   @return -1 on error, 0 on success
+   @return -1 on invalid data, -2 on conflict with existing grid data, 0 on success
    @author Aron Helser
    @date modified 7-14-00 Aron Helser
 */
@@ -73,7 +73,8 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
 
     // Check to see if our grid has any meaningful data. 
     if ((head() == NULL) ||
-        ( *(head()->name()) == BCString(EMPTY_PLANE_NAME))) {
+        (( strcmp(head()->name()->Characters(), EMPTY_PLANE_NAME) == 0) && 
+         ( head()->next() == NULL)) ) {
 	// if not, read in the first file.
 	if (readFile(infile,file_names[0], topoFile) == -1) {
 	    fprintf(stderr,
@@ -98,9 +99,15 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
     // i is initialized above, based on whether we read in the first file.
     // Force mode to be READ_FILE, so we actually read the file data. 
     for (; i < num_files; i++) {
+        // Create an empty grid.
 	BCGrid grid(_num_x,_num_y, _min_x,_max_x,
-		    _min_y, _max_y, READ_FILE, file_names[i], topoFile);
-
+		    _min_y, _max_y, READ_FILE, NULL, topoFile);
+        // call this separately so we can detect errors. 
+        int ret = grid.loadFiles(&file_names[i], 1, topoFile);
+        // If return is non-zero , we had an error - abort. 
+        if (ret) {
+            return ret;
+        }
 	if (!(grid.empty())) {
             if ( (grid._num_x != _num_x) ||
                  (grid._num_y != _num_y) ||
@@ -113,9 +120,9 @@ BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
                 //  	    if ( (grid._num_x != _num_x) ||
                 //  		 (grid._num_y != _num_y) ) {
 		fprintf(stderr,"Error! BCGrid::BCGrid: Grid size or region mismatch"
-			" in file \"%s\", ignoring the file\n",
+			" in file \"%s\", ignoring any remaining files\n",
 			file_names[i]);
-                return -1;
+                return -2;
 	    } else {
 		BCPlane *nextplane, *newplane;
 		BCString name;

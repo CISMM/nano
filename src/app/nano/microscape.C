@@ -1895,6 +1895,10 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
 
     printf("Restarting stream from the beginning\n");
 
+    // Clear mod markers
+    decoration->clearPulses();
+    decoration->clearScrapes();
+
 ///*
 #ifdef USE_VRPN_MICROSCOPE
     if (vrpnLogFile)
@@ -2632,10 +2636,24 @@ static	void	handle_colormap_change (const char *, void * userdata) {
   tcl_colormapRedraw();
 }
 
+/** Erases any modification data which has been saved. Should be called when
+stream file or connection is changed. 
+*/
+static int forget_modification_data ()
+{
+    Tcl_Interp * interp = get_the_interpreter();
+    if (interp == NULL) return 0;
+
+    char command[200];
+    // This command defined in filemenu.tcl
+    sprintf(command, "forget_mod_data");
+    TCLEVALCHECK(interp, command);
+    return 0;
+}
+
 /** See if the user has given a name to the open filename other
  than "".  If so, we should open a file and set the value
- back to "". If there are any errors, report them and leave name alone. 
-*/
+ back to "". If there are any errors, report them and leave name alone.  */
 static	void	handle_openStaticFilename_change (const char *, void *)
 {
 
@@ -2643,11 +2661,16 @@ static	void	handle_openStaticFilename_change (const char *, void *)
 
     const char	*files[1];
     files[0] = (const char *)openStaticFilename;
-    
-    if (dataset->loadFiles(files, 1,microscope->d_topoFile)) {
+    int ret = dataset->loadFiles(files, 1,microscope->d_topoFile);
+    if (ret == -1) {
 	display_error_dialog("Couldn't open %s as a data file.\n"
-                             "It may conflict with a stream or SPM connection already open.\n"
-                             "Choose File .. Close and try opening the file again.",
+                             "It is not a valid static data file.",
+		files[0]);
+        return;
+    } else if (ret == -2) {
+	display_error_dialog("Couldn't open %s as a data file.\n"
+                      "It conflicts with a data file, stream or SPM connection already open.\n"
+                             "Choose File .. Close and open the file again.",
 		files[0]);
         return;
     }
@@ -2698,6 +2721,14 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
 		istate->afm.inputStreamName);
         openDefaultMicroscope();
         return ;
+    } else if (!new_microscope_connection->doing_okay()) {
+    // Run mainloop of the microscope once to make sure this is a valid vrpn
+    // log file- it will check the cookie and fail if it is not. 
+	display_error_dialog( "File: %s \n"
+                           "is not a valid NanoManipulator stream file.",
+                           istate->afm.inputStreamName);
+        openDefaultMicroscope();
+        return;
     }
     if (new_microscope_connection == microscope_connection) {
         // The user asked to connect to the same file they have
@@ -2734,19 +2765,7 @@ static void handle_openStreamFilename_change (const char *, void * userdata)
     // Change a few things for consistency with old interface
     vrpnLogFile->set_replay_rate(decoration->rateOfTime);
 
-    // Run mainloop of the microscope once to make sure this is a valid vrpn
-    // log file- it will check the cookie and fail if it is not. 
-    if (microscope->mainloop()) {
-	display_error_dialog( "File: %s \n"
-                           "is not a valid NanoManipulator stream file.",
-                           istate->afm.inputStreamName);
-        openDefaultMicroscope();
-    }
     
-    // Clear mod markers
-    decoration->clearPulses();
-    decoration->clearScrapes();
-
     openStreamFilename = "";
 }
 
@@ -2780,7 +2799,8 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     //AFMState.c limits length of device names to 260
     strncpy(istate->afm.deviceName, openSPMDeviceName, 260);
 
-    vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name        (istate->afm.deviceName,
+    vrpn_Connection * new_microscope_connection = vrpn_get_connection_by_name(
+          istate->afm.deviceName,
           istate->afm.writingStreamFile ? istate->afm.outputStreamName
                                         : (char *) NULL,
 	  logmode,
@@ -2819,10 +2839,6 @@ static void handle_openSPMDeviceName_change (const char *, void * userdata)
     microscope_connection = new_microscope_connection;
     vrpnLogFile = NULL;
 
-    // Clear mod markers
-    decoration->clearPulses();
-    decoration->clearScrapes();
-
     openSPMDeviceName = "";
     openSPMLogName = "";
 }
@@ -2856,9 +2872,6 @@ static void openDefaultMicroscope()
     microscope_connection = NULL;
     vrpnLogFile = NULL;
 
-    // Clear mod markers
-    decoration->clearPulses();
-    decoration->clearScrapes();
 }
 
 /** See if the user has given a name to the export plane other
@@ -5805,10 +5818,17 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     dataset = new_dataset;
 
 
-    // Some other stuff
+    // Connection switch cleanup!
+    // All methods for switching stream/live/default call this
+    // function, so cleaning up goobers in the interface should
+    // go here. 
 
-    // clear the modify markers
-    handleCharacterCommand("C", &dataset->done, 1);
+    // Clear mod markers
+    decoration->clearPulses();
+    decoration->clearScrapes();
+
+    // Clear any remembered modifications
+    forget_modification_data();
 
     return 0;
 }
@@ -6039,7 +6059,7 @@ int main(int argc, char* argv[])
 	   logmode,
 	   istate.writingRemoteStream ? istate.remoteOutputStreamName
                                       : (char *) NULL);
-      if (!microscope_connection) {
+      if (!microscope_connection || !(microscope_connection->doing_okay())) {
 	display_fatal_error_dialog( "   Couldn't open connection to %s.\n",
 		istate.afm.deviceName);
 	exit(0);

@@ -171,7 +171,7 @@ nmb_Dataset::~nmb_Dataset (void) {
 /**
    Loads a list of files, by calling BCGrid::loadFiles, then
    adding any new planes to our dataImages list. 
-   @return -1 on error, 0 on success
+   @return -1 on invalid data, -2 on conflict with existing grid data, 0 on success
    @author Aron Helser
    @date modified 3-22-00 Aron Helser
 */
@@ -180,9 +180,9 @@ nmb_Dataset::loadFiles(const char** file_names, int num_files,
 		       TopoFile &topoFile)
 {
   // Load the files
-
-    if (inputGrid->loadFiles(file_names, num_files, topoFile)) {
-        return -1;
+    int ret;
+    if (ret = inputGrid->loadFiles(file_names, num_files, topoFile)) {
+        return ret;
     }
   
   // Add any new planes to our lists. 
