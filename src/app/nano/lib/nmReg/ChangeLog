@@ -1,3 +1,7 @@
+2002-06-06  David Borland <borland@cs.unc.edu>
+
+        * Makefile : added nmUGraphics 
+
 2002-06-06  David Borland <borland@cs.un.edu>
 
         * nmReg.dsp : last commit didn't seem to work correctly.  Hopefully
