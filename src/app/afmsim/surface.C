@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include <vrpn_Connection.h>
+#include <vrpn_DelayedConnection.h>
 
 #include <BCGrid.h>
 #include <BCPlane.h>
@@ -53,7 +54,7 @@ static int g_speed = 1;
 void usage (const char * argv0) {
   fprintf(stderr,
     "Usage:  %s [-image <picture>] [-grid <x> <y>] [-port <port>]\n"
-    "        [-surface <n>] [-if <ip>]\n", argv0);
+    "        [-surface <n>] [-if <ip>] [-latency <msecs>]\n", argv0);
   fprintf(stderr,
     "    -image:  Use picture specified (otherwise use function).\n"
     "    -grid:  Take x by y samples for the grid (default 300 x 300).\n"
@@ -65,7 +66,9 @@ void usage (const char * argv0) {
   fprintf(stderr,
     "    -if:  IP address of network interface to use.\n");
   fprintf(stderr,
-    "    -speed:  scanlines per 100 ms (integer).\n");
+    "    -speed:  Scanlines per 100 ms (integer).\n"
+    "    -latency:  Delay all incoming network traffic by the\n"
+    "      given number of ms.\n");
   
 
   exit(0);
@@ -104,11 +107,11 @@ int parse (int argc, char ** argv) {
     } else if (!strcmp(argv[i], "-speed")) {
       if (++i >= argc) usage(argv[0]);
       g_speed = atoi(argv[i]);
-#if 0
     } else if (!strcmp(argv[i], "-latency")) {
       if (++i >= argc) usage(argv[0]);
       g_isWaiting = vrpn_TRUE;
       g_waitTime = atof(argv[i]);
+#if 0
     } else if (!strcmp(argv[i], "-rude")) {
       g_isRude = 1;
 #endif
@@ -391,7 +394,7 @@ void initializePlane (BCPlane * zPlane, int planeShape) {
 int main (int argc, char ** argv) {
 
   BCGrid * mygrid;
-
+  timeval delay;
   int readmode;
   int retval;
   double z;
@@ -441,6 +444,18 @@ int main (int argc, char ** argv) {
     g_myZPlane = mygrid->getPlaneByName("Topography-Forward");
 
     initializePlane(g_myZPlane, g_planeShape);
+  }
+
+  if (g_isWaiting) {
+    // Create the connection here before initJake()
+    // so it's a DelayedConnection instead
+    // of just a plain SynchronizedConnection.
+
+fprintf(stderr, "Initializing simulated network latency to %.5f sec.\n",
+g_waitTime);
+    struct timeval delay;
+    delay = vrpn_MsecsTimeval(g_waitTime);
+    connection = new vrpn_DelayedConnection (delay, g_port);
   }
 
   retval = initJake(g_numX, g_numY, g_port, g_ipString);

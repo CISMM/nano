@@ -1,3 +1,9 @@
+2001-07-26  Tom Hudson <hudson@cs.unc.edu>
+
+	* surface.C (usage) : Document -latency.
+	(parse) : Reenable parsing of -latency.
+	(main) : Create vrpn_DelayedConnection when -latency specified.
+
 2001-07-25  Tom Hudson <hudson@cs.unc.edu>
 
         * nmm_Microscope_Simulator.C : #include "surface.h" instead of
