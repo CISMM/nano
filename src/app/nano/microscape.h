@@ -125,6 +125,7 @@ extern  vrpn_Phantom * phantServer;
 #ifndef	NO_JOYSTICK_SERVER
 extern	vrpn_DirectXFFJoystick *joyServer;
 extern	vrpn_Tracker_AnalogFly	*joyflyServer;
+extern	vrpn_bool usingJoystick;
 #endif
 extern  nm_MouseInteractor * mousePhantomServer;
 extern  vrpn_ForceDevice_Remote *forceDevice;

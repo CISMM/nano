@@ -1,3 +1,13 @@
+2003-10-23  David Marshburn  <marshbur@cs.unc.edu>
+
+	* microscape.h:  added a new global boolean variable 'usingJoystick'.
+	* microscape.C:  test 'usingJoystick' instead of joyServer.  This lets
+	us use a remote joystick in addition to a local one.  
+	Also, removed some commented-out code.
+	* minit.c (phantom_init):  set 'usingJoystick' if that's the case.
+	(note that you need to remove NO_JOYSTICK_SERVER from the preprocessor
+	definitions in nano.dsp for this to work)
+
 2003-07-03  David Jack  <jackd@cs.unc.edu>
 	* microscape.C (handle_screenImageFileName_change): Now checks to
 	see if we're in workbench mode; if so, saves two images instead of

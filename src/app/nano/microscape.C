@@ -1488,6 +1488,7 @@ vrpn_Phantom * phantServer = NULL;
 /// doesn't contain a machine name of IP address for the Joystick.
 vrpn_DirectXFFJoystick	*joyServer = NULL;
 vrpn_Tracker_AnalogFly	*joyflyServer = NULL;
+vrpn_bool usingJoystick = false;
 #endif
 nm_MouseInteractor * mousePhantomServer = NULL;
 
@@ -5471,137 +5472,6 @@ fprintf(stderr, "Saving report of queue to %s.\n", nbuf);
 
   msTimestampsName = "";
 }
-
-
-#if 0
-// TCH Dissertation
-// May 2001
-// Set up and tear down Phantom connections dynamically so we can record
-// and replay streamfiles
-
-// This doesn't work;  after tearing down the connection the Phantom
-// doesn't come back correctly when we set the new internal_device_connection
-// up, and then the Tcl stack gets corrupted somehow.
-
-void doSetupPhantomConnection
-                    (vrpn_bool logPhantom,
-                     const char * handTrackerName,
-                     const char * phantomLogPath = NULL,
-                     timeval * logTimestamp = NULL);
-void doTeardownPhantomConnection (void);
-
-
-// static
-void handle_toggle_phantom_recording (vrpn_int32 on, void *) {
-  vrpn_bool logPhantom;
-  timeval now;
-
-  // Tear down the phantom connection, then set it up again in the correct
-  // recording mode.
-
-  doTeardownPhantomConnection();
-  if (on) {
-    logPhantom = strlen(phantom_record_name);
-    gettimeofday(&now, NULL);
-    doSetupPhantomConnection(logPhantom, handTrackerName,
-                             phantom_record_name, &now);
-  } else {
-    doSetupPhantomConnection(vrpn_FALSE, handTrackerName);
-  }
-}
-
-// static
-void handle_phantom_playback_once (vrpn_int32, void *) {
-  doTeardownPhantomConnection();
-  doSetupPhantomConnection(vrpn_FALSE, phantom_replay_name);
-  phantomReplayRepeat = 1;
-}
-
-// static
-void end_phantom_playback_once (void) {
-  doTeardownPhantomConnection();
-  doSetupPhantomConnection(vrpn_FALSE, handTrackerName);
-  phantomReplayRepeat = 0;
-}
-
-// static
-void handle_toggle_phantom_playback (vrpn_int32 on, void *) {
-  doTeardownPhantomConnection();
-  if (on) {
-    doSetupPhantomConnection(vrpn_FALSE, phantom_replay_name);
-    phantomReplayRepeat = 2;
-  } else {
-    doSetupPhantomConnection(vrpn_FALSE, handTrackerName);
-    phantomReplayRepeat = 0;
-  }
-}
-
-void doSetupPhantomConnection
-                    (vrpn_bool logPhantom,
-                     const char * handTrackerName,
-                     const char * phantomLogPath,
-                     timeval * logTimestamp) {
-  vrpn_Connection * c;
-  char phantomlog [256];
-  char * bp;
-
-  // Set up an internal device connection
-  sprintf(phantomlog, "%s/phantom-%d.log", phantomLogPath,
-          logTimestamp ? logTimestamp->tv_sec : 0L);
-
-  // See if it wasn't an internal device;  if so, open that connection
-  // explicitly in case we need to log.
-  bp = strchr(handTrackerName, '@');
-  if (bp) {
-    c = vrpn_get_connection_by_name (handTrackerName,
-                                     logPhantom ? phantomlog : NULL);
-  }
-
-  // If we're logging, and we didn't open it on the remote device, 
-  // we must intend to open it on the internal device connection.
-  internal_device_connection = new vrpn_Synchronized_Connection 
-           (wellKnownPorts->localDevice,
-            logPhantom && !bp ? phantomlog : NULL);
-
-  // BUG nmr_Registration_Proxy cached an internal_device_connection
-  // pointer and will crash if used after this point.
-
-  phantom_init(internal_device_connection, handTrackerName);
-
-  // nmui_HSFeelAhead caches force devices but will pick this change
-  // up on the next loop.
-  // As of May 2001 no other structure appears to cache
-  // a forceDevice pointer.
-}
-
-void doTeardownPhantomConnection (void) {
-  vrpn_Connection * c;
-  char * bp;
-
-  // Tear down the objects
-  teardown_phantom(&mousePhantomServer, &forceDevice, &phantButton,
-                   &vrpnHandTracker);
-
-  // Now tear down the connection
-
-  if (internal_device_connection) {
-    delete internal_device_connection;
-    internal_device_connection = NULL;
-  }
-
-  // BUG nmr_Registration_Proxy cached an internal_device_connection
-  // pointer and will crash if used after this point.
-
-  // See if it wasn't an internal device;  if so, delete that connection.
-  bp = strchr(handTrackerName, '@');
-  if (bp) {
-    c = vrpn_get_connection_by_name(handTrackerName);
-    if (c) {
-      delete c;
-    }
-  }
-}
-#endif
 
 
 void teardownSynchronization( CollaborationManager *cm, 
@@ -10166,12 +10036,12 @@ static void find_center_xforms (q_vec_type * lock_userpos,
 	* away from the user). If we are using the joystick, then line
 	* the surface up parallel to the screen by using the Y axis. */
 #ifndef	NO_JOYSTICK_SERVER
-       if (joyServer != NULL) {
-	 q_set_vec(pos_y, 0.0, 1.0, 0.0);
+       if (usingJoystick) {
+		   q_set_vec(pos_y, 0.0, 1.0, 0.0);
        } else
 #endif
        {
-	 q_set_vec(pos_y, 0.0, 1.0, 1.0);
+		   q_set_vec(pos_y, 0.0, 1.0, 1.0);
        }
        q_xform(left_side_vec, screenz_to_worldz, left_side_vec);
        q_from_two_vecs(screeny_to_worldy, left_side_vec, pos_y);
@@ -10195,12 +10065,12 @@ static void find_center_xforms (q_vec_type * lock_userpos,
       // to the screen.  We also want to translate the surface
       // so that it ends up in the middle of the screen
 #ifndef	NO_JOYSTICK_SERVER
-      if (joyServer != NULL) {
-	screen_mid[0] = 0.0;
-	screen_mid[1] = 0.0;
-	screen_mid[2] = -1.8;
-	q_make(*lock_userrot, 0.0, 0.0, 0.0, 1.0);
-      } else
+		if (usingJoystick) {
+			screen_mid[0] = 0.0;
+			screen_mid[1] = 0.0;
+			screen_mid[2] = -1.8;
+			q_make(*lock_userrot, 0.0, 0.0, 0.0, 1.0);
+		} else
 #endif
       {
 	// What do these numbers mean??
@@ -10318,7 +10188,7 @@ void center (void) {
   // If we are using the joystick, we want to have the light coming from 45
   // degrees (halfway between the Y and Z axes).
 #ifndef	NO_JOYSTICK_SERVER
-  if (joyServer != NULL) {
+  if (usingJoystick) {
     q_vec_type  lightdir = {0.0, 1.0, 1.0};
     graphics->setLightDirection(lightdir);
   }
