@@ -1,3 +1,13 @@
+2001-04-24  Adam Seeger  <seeger@cs.unc.edu>
+
+	* mainwin.tcl: the last commit (merged stuff from thirdtech_branch
+	with this one) worked fine with the pc version of tcl but crashed
+	the one on sgi; this puts back those differences 
+	(things that are different from whats in the thirdtech_branch) 
+	that are necessary for this to work on sgi
+	although I have no idea why these things work in one implementation and
+	not the other
+
 2001-04-23  Adam Seeger  <seeger@cs.unc.edu>
 
 	* mainwin.tcl: changed name of 
