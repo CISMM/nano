@@ -73,6 +73,7 @@ void build_mesh (
     // The gridpoints are regularly spaced, so we have now fully-defined the
     // location of all the gridpoints.  The width is the distance between
     // gridpoints.  NOTE: Adam may implement non-regularly spaced grids.
+    //
     const double min_X = grid->minX();
     const double min_Y = grid->minY();
     const double width_X = (grid->maxX() - min_X) / num_X;
@@ -150,14 +151,37 @@ void build_mesh (
     
 
     // Set the vertices
+    //
+    // Since we're going to scale the grid to unit size then scale back up,
+    // let's just ignore min_X and max_X for now.  Will have to deal with this
+    // only if we later add non-uniform grid spacing, or if the units on the X
+    // and the Y axes differ.
+    //
+    if (0.001 < (width_X - width_Y)) {
+        cerr << "X and Y grid axes have different scales."
+             << "  Using scale from X-axis" << endl;
+    }
+    double scale_Z_by_this = 1.0 / width_X;
+
     for (int vy=0, vertex_number=0;  (vy < num_Y);  ++vy)
     {
         for (int vx=0;  (vx < num_X);  ++vx)
         {
             double vert[3];
-            vert[0] = xf_scale * (min_X + (vx * width_X));
-            vert[1] = xf_scale * (min_Y + (vy * width_Y));
+
+            // don't use these any more
+            //
+            //vert[0] = xf_scale * (min_X + (vx * width_X));
+            //vert[1] = xf_scale * (min_Y + (vy * width_Y));
+            //vert[2] = xf_scale * (height_scalar_field->scaledValue (vx, vy));
+
+            vert[0] = xf_scale * vx;
+            vert[1] = xf_scale * vy;
             vert[2] = xf_scale * (height_scalar_field->scaledValue (vx, vy));
+            
+            // ajust Z value by inverse of what we are no longer multiplying X
+            // and Y by
+            vert[2] *= scale_Z_by_this;
             
             q_xform (vert, xf_rot, vert);
             q_vec_add (vert, xf_xlate, vert);
@@ -651,10 +675,25 @@ static void compute_view_xform (
                     model_in_rhino_frame.top_left,
                     model_in_rhino_frame.bottom_left);
 
+    double len_X = q_vec_magnitude (model_X);
+    double len_Y = q_vec_magnitude (model_Y);
+
+    // check if len_X == len_Y
+    if (1.01 < (len_X - len_Y)) {
+        cerr << "model X and Y axes are different lengths.\n"
+             << " Scaling mesh by the smaller one." << endl;
+    }
+
+    out_scale *= ( (len_X <= len_Y) ? len_X : len_Y );
+
+    // these must be normalized so we can construct a UNIT rot matrix
+    q_vec_normalize (model_X, model_X);
+    q_vec_normalize (model_Y, model_Y);
+
     q_vec_type model_Z;
     q_vec_cross_product (model_Z, model_X, model_Y);
     q_vec_normalize     (model_Z, model_Z);
-    q_vec_scale         (model_Z, double (*which_num), model_Z);
+    //XXX wrong! q_vec_scale         (model_Z, double (*which_num), model_Z);
     //< NB: this may stretch in Z direction if X and Y are different lengths.
     
     q_matrix_type changeBasisMatrix_model_from_dataset;
@@ -677,7 +716,7 @@ static void compute_view_xform (
                model_in_rhino_frame.bottom_left [2]);
     q_from_row_matrix (out_quat,
                        changeBasisMatrix_model_from_dataset);
-    //q_normalize (out_quat, out_quat);
+    q_invert (out_quat, out_quat);
 
     // DEBUG
     q_vec_type vs;
@@ -796,23 +835,6 @@ void export_scene_to_openNURBS (
     q_set_vec (xf_xlate, 0, 0, 0);
 
     get_view_xform (xf_scale, xf_quat, xf_xlate, "nanodesk-2.3dm", *grid);
-
-#if 0
-    // DEBUG: zero the rot and xlate
-    
-    q_type rot_about_z;
-    q_make (rot_about_z, 0, 0, 1, -3.14/2.0);
-    
-    q_type rot_about_x;
-    q_make (rot_about_x, 1, 0, 0, -3.14/2.0);
-
-    q_mult (xf_quat, rot_about_z, rot_about_x);
-    q_normalize (xf_quat, xf_quat);
-
-    q_make (xf_quat, 0, 0, 1, 0);
-#endif
-
-    q_set_vec (xf_xlate, 0, 0, 0);
 
     // We use a CRhinoMesh object to store the height field
     CRhinoMesh my_mesh;

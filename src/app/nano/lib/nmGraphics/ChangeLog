@@ -1,5 +1,13 @@
 2000-08-11  Jeffrey Juliano  <juliano@cs.unc.edu>
 
+	* export_scene.C (build_mesh): Fix scaling.
+	(compute_view_xform): Factor scale out of rot matrix before
+	convering to quat, then handle scale separately.  Handle both grid
+	scale factor and model scale factor.  May not do the right thing
+	with real datasets, but works with ppm file datasets.
+
+2000-08-11  Jeffrey Juliano  <juliano@cs.unc.edu>
+
 	* export_scene.C (compute_view_xform): Debug messages proving that
 	quat lib doesn't do what I thought it was advertising.
 
