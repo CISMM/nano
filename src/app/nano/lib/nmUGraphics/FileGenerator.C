@@ -3,6 +3,7 @@
 #include "MSIFileGenerator.h"
 #include "TubeFileGenerator.h"
 #include "SpiderGenerator.h"
+#include "DsAxisGenerator.h"
 #include "ProjTextObjGenerator.h"
 #include <stdio.h>
 #include <string.h>
@@ -54,6 +55,10 @@ FileGenerator* FileGenerator::CreateFileGenerator(const char *fname)
 	// added by David Borland for creating projective texture object
 	else if (strncmp(fname + i + 1,"ptx", 3) == 0) {
 		return new ProjTextObjGenerator(fname);
+	}
+    //added by Jameson Miller for loading axis object for direct tep
+	else if(strncmp(fname + i + 1,"dsa", 3) == 0) {
+		return new DsAxisGenerator(fname);
 	}
     //added by Leila Plummer for loading objects from tube_foundry
     else if (strncmp(fname+i+1,"msi",3)==0){

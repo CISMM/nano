@@ -1,3 +1,8 @@
+2002-07-03 Jameson Miller <millerj@cs.unc.edu>
+	* new files : DsAxisGenerator.Ch - creates an axis object.
+	Modified Files - GileGenerator.C - now creat axis when loading a .dsa file
+	nmuGraphics.dsp - added new files into project workspace
+	
 2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
 
 	* URPolygon.C (Render): added glPushAttrib() and glPopAttrib for
