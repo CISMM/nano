@@ -36,9 +36,79 @@ int URAxis::Render(void * /*userdata*/ )
   
 }
 
-int URAxis::Scale(void * /*userdata*/) 
-{
-	// Do nothing
+int URAxis::SetVisibilityAll(void* /*userdata*/) {
+	// do nothing
 	if(recursion) return  ITER_CONTINUE;
 	else return ITER_STOP;
 }
+
+int URAxis::SetProjTextAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URAxis::ScaleAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URAxis::SetTransxAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URAxis::SetTransyAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URAxis::SetTranszAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URAxis::SetRotxAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URAxis::SetRotyAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URAxis::SetRotzAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URAxis::SetColorAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URAxis::SetAlphaAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+
+
+
+
+int URAxis::ChangeStaticFile(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+

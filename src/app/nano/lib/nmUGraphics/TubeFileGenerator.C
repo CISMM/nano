@@ -39,7 +39,7 @@ pid_t getpid();
 #define MAXLENGTH	512		// buffer size
 
 const double PI = 3.1415926535;
-const int TESS = 6;		// number of points around the axis--should be user-controlled?
+
 
 
 
@@ -60,7 +60,7 @@ typedef vector<vertex> verts;
 //typedef vector<verts> tubes;
 
 
-void BuildList(URender *Pobject, GLuint dl, verts vs);
+void BuildList(URender *Pobject, GLuint dl, verts vs, int & count);
 
 
 
@@ -83,6 +83,8 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 	q_vec_type p1;
 	q_vec_type p2;
 	q_type q;
+
+	int tess = Pobject->GetTess();
 
 	int numtubes = 0;
 
@@ -136,7 +138,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 				// get vertices
 				theta = 0.0;
-				for (int i = 0; i < TESS; i++) {
+				for (int i = 0; i < tess; i++) {
 					v.clear();
 
 					// set point
@@ -158,7 +160,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 					v.push_back(p2[2]);
 
 					vs.push_back(v);
-					theta += 2 * PI / TESS;
+					theta += 2 * PI / tess;
 
 					Pobject->num_triangles += 2;	// two triangles per vertex
 				}
@@ -170,7 +172,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 
 	// create space for triangles in Pobject
-	Pobject->num_triangles -= numtubes * TESS * 2;
+	Pobject->num_triangles -= numtubes * tess * 2;
 	Pobject->triangles = new float* [Pobject->num_triangles * 3];
 	for (int i = 0; i < Pobject->num_triangles * 3; i++) {
 		Pobject->triangles[i] = new float[4];
@@ -191,22 +193,14 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
         return 0;
 	}
 
+	int count = 0;
 	for (i = 0; i < numtubes; i++){
 		//BuildList actually builds the geometry from
 		//the data structures previously built
-        BuildList(Pobject, dl + i, t[i]);
+        BuildList(Pobject, dl + i, t[i], count);
 		Dlist_array[i] = dl + i;
 	}
 
-
-
-
-	for (i = 0; i < Pobject->num_triangles * 3; i++) {
-		for (int j = 0; j < 3; j++) {
-			printf("%f\t", Pobject->triangles[i][j]);
-		}
-		printf("\n");
-	}
 
 	readfile.close();
 
@@ -215,7 +209,7 @@ int TubeFileGenerator::Load(URender *Pobject, GLuint *&Dlist_array)
 
 
 
-void BuildList(URender *Pobject, GLuint dl, verts vs) {
+void BuildList(URender *Pobject, GLuint dl, verts vs, int & count) {
 	float v1[4];
 	float v2[4];
 	float v3[4];
@@ -224,24 +218,26 @@ void BuildList(URender *Pobject, GLuint dl, verts vs) {
 	q_vec_type n1;
 	q_vec_type n2;
 
-	static int count = 0;
+	int tess = Pobject->GetTess();
+
+printf("tess = %d\n", tess);
 
 	glNewList(dl, GL_COMPILE);	// init display list
 
-	for (int i = 0; i < vs.size() - TESS; i++) {
+	for (int i = 0; i < vs.size() - tess; i++) {
 		glBegin(GL_TRIANGLES);
 		for (int k = 0; k < 3; k++) {
 			// special case for last two triangles per segment
-			if ((i + 1) >= TESS && (i + 1) % TESS == 0) {
+			if ((i + 1) >= tess && (i + 1) % tess == 0) {
 				v1[k] = vs[i][k];
-				v2[k] = vs[i + TESS][k];
+				v2[k] = vs[i + tess][k];
 				v3[k] = vs[i + 1][k];
-				v4[k] = vs[i - TESS + 1][k];
+				v4[k] = vs[i - tess + 1][k];
 			}
 			else {
 				v1[k] = vs[i][k];
-				v2[k] = vs[i + TESS][k];
-				v3[k] = vs[i + TESS + 1][k];
+				v2[k] = vs[i + tess][k];
+				v3[k] = vs[i + tess + 1][k];
 				v4[k] = vs[i + 1][k];
 			}
 		}
@@ -263,6 +259,7 @@ void BuildList(URender *Pobject, GLuint dl, verts vs) {
 		q_vec_normalize(n1, n1);
 	
 		glNormal3f(n1[0], n1[1], n1[2]);
+//glNormal3f((float) sin(count), (float) cos(count), (float) sin(count));
 		glVertex4fv(v1);
 		glVertex4fv(v2);
 		glVertex4fv(v4);
@@ -298,6 +295,8 @@ void BuildList(URender *Pobject, GLuint dl, verts vs) {
 		q_vec_normalize(n1, n1);
 	
 		glNormal3f(n1[0], n1[1], n1[2]);
+
+//glNormal3f((float) sin(count), (float) cos(count), (float) sin(count));
 		glVertex4fv(v2);
 		glVertex4fv(v3);
 		glVertex4fv(v4);

@@ -38,6 +38,14 @@ extern UTree World;
 //RUN TIME TYPE INFORMATION THAT I'M KEEPING FOR EACH OBJECT
 enum URender_Type {URENDER, URAXIS, URTEXTURE, URPOLYGON};
 
+
+typedef struct {
+	float red;
+	float green;
+	float blue;
+} RGB;
+
+
 class URender{
 friend class UTree;
 protected:
@@ -52,6 +60,7 @@ protected:
 	int wireframe;		//not used yet
 	int disp_proj_text;
 	int CCW;			// true if load as counter clockwise, false if load as clockwise
+	int tess;			// controls the number of faces along the nano-tube
 
 	//bounding box
 	BBOX bounds;	
@@ -95,6 +104,7 @@ public:
 	void SetSelect(int s){ if(s>0) selected=1; else selected=0;}
 	void SetProjText(int b) { disp_proj_text = b; }
 	void SetCCW(int b) { CCW = b; }
+	void SetTess(int t) { tess = t; }
 
 
 	int GetVisibility(){return visible;}
@@ -102,6 +112,7 @@ public:
 	int GetSelect(){ return selected;}
 	int ShowProjText() { return disp_proj_text; }
 	int GetCCW() { return CCW; }
+	int GetTess() { return tess; }
 
 	void SetTexture(URender *t);
 	void SetColor(GLfloat nc[4]){c[0]=nc[0];c[1]=nc[1];c[2]=nc[2];c[3]=nc[3];}
@@ -135,7 +146,23 @@ public:
 	//UTree::Do iterative functions
 
 	virtual int Render(void *userdata=NULL);
-	virtual int Scale(void *userdata=NULL);
+
+	// these functions are used to change the properties of all objects to the 
+	// appropriate value -- called from tcl callbacks
+	virtual int SetVisibilityAll(void *userdata=NULL);
+	virtual int SetProjTextAll(void *userdata=NULL);
+	virtual int ScaleAll(void *userdata=NULL);
+	virtual int SetTransxAll(void *userdata=NULL);
+	virtual int SetTransyAll(void *userdata=NULL);
+	virtual int SetTranszAll(void *userdata=NULL);
+	virtual int SetRotxAll(void *userdata=NULL);
+	virtual int SetRotyAll(void *userdata=NULL);
+	virtual int SetRotzAll(void *userdata=NULL);
+	virtual int SetColorAll(void *userdata=NULL);
+	virtual int SetAlphaAll(void *userdata=NULL);
+
+	virtual int ChangeStaticFile(void *userdata=NULL);
+
 	int IntersectLine(void *userdata=NULL);
 
 	//SelectionSet* IntersectPoint(double p[3]);
@@ -152,6 +179,7 @@ public:
 	// holds geometry for sending to afm simulator
 	float** triangles;
 	long num_triangles;
+	float scale_triangles;
 
 
 };

@@ -107,6 +107,8 @@ void calc_face_norm(vector<vertex> verts, face& f) {
 	for (i = 0; i < 3; i++) {
 		temp[i] = verts[f.index[0] - 1][i] - verts[f.index[2] - 1][i];
 	}
+
+
   
 	for (i = 0; i < 3; i++) {
 		v2[i] = temp[i];

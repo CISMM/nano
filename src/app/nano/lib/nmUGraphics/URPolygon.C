@@ -24,22 +24,134 @@ GeometryGenerator* URPolygon::GetGenerator()
     return d_generator;
 }
 
+int URPolygon::SetVisibilityAll(void* userdata) {
+	int setvisibility = *(int*) userdata;
 
-int URPolygon::Scale(void* userdata) {
+	this->SetVisibility(setvisibility);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+};
+
+int URPolygon::SetProjTextAll(void* userdata) {
+	int setprojtext = *(int*) userdata;
+
+	this->SetProjText(setprojtext);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+};
+
+int URPolygon::ChangeStaticFile(void* userdata) {
+	// modifies the scale and translation so appears in same place...
+
 	double scale = *(double*) userdata;
 
 	this->GetLocalXform().SetScale(this->GetLocalXform().GetScale() * scale);
- 
-	const q_vec_type & q1 = this->GetLocalXform().GetTrans();
+
+	const q_vec_type &q1 = this->GetLocalXform().GetTrans();
 	q_vec_type q2;
+	
 	q2[0] = q1[0]; q2[1] = q1[1]; q2[2] = q1[2];
 
 	q_vec_scale(q2, scale, q2);
+
 	this->GetLocalXform().SetTranslate(q2);
+
+	this->scale_triangles = scale;	// in case this object is a ShapeAnalyze nanotube
+									// file that we want to send to the AFM simulator
 
 	if(recursion) return ITER_CONTINUE;
 	else return ITER_STOP;
 }
+
+
+int URPolygon::ScaleAll(void* userdata) {
+	double scale = *(double*) userdata;
+
+	this->GetLocalXform().SetScale(scale);
+
+	this->scale_triangles = scale;	// in case this object is a ShapeAnalyze nanotube
+									// file that we want to send to the AFM simulator
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+
+int URPolygon::SetTransxAll(void* userdata) {	
+	double transx = *(double*) userdata;
+	const q_vec_type &trans = this->GetLocalXform().GetTrans();
+	this->GetLocalXform().SetTranslate(transx, trans[1], trans[2]);
+
+	if(recursion) return ITER_CONTINUE;	
+	else return ITER_STOP;
+}
+
+int URPolygon::SetTransyAll(void* userdata) {	
+	double transy = *(double*) userdata;
+	const q_vec_type &trans = this->GetLocalXform().GetTrans();
+	this->GetLocalXform().SetTranslate(trans[0], transy, trans[2]);
+
+	if(recursion) return ITER_CONTINUE;	
+	else return ITER_STOP;
+}
+
+int URPolygon::SetTranszAll(void* userdata) {	
+	double transz = *(double*) userdata;
+	const q_vec_type &trans = this->GetLocalXform().GetTrans();
+	this->GetLocalXform().SetTranslate(trans[0], trans[1], transz);
+
+	if(recursion) return ITER_CONTINUE;	
+	else return ITER_STOP;
+}
+
+int URPolygon::SetRotxAll(void* userdata) {	
+	double rotx = *(double*) userdata;
+	const q_type &rot = this->GetLocalXform().GetRot();
+	this->GetLocalXform().SetRotate(rotx, rot[1], rot[2], rot[3]);
+
+	if(recursion) return ITER_CONTINUE;	
+	else return ITER_STOP;
+}
+
+int URPolygon::SetRotyAll(void* userdata) {	
+	double roty = *(double*) userdata;
+	const q_type &rot = this->GetLocalXform().GetRot();
+	this->GetLocalXform().SetRotate(rot[0], roty, rot[2], rot[3]);
+
+	if(recursion) return ITER_CONTINUE;	
+	else return ITER_STOP;
+}
+
+int URPolygon::SetRotzAll(void* userdata) {	
+	double rotz = *(double*) userdata;
+	const q_type &rot = this->GetLocalXform().GetRot();
+	this->GetLocalXform().SetRotate(rot[0], rot[1], rotz, rot[3]);
+
+	if(recursion) return ITER_CONTINUE;	
+	else return ITER_STOP;
+}
+
+int URPolygon::SetColorAll(void* userdata) {
+	RGB* color = (RGB*) userdata;
+
+	this->SetColor3(color->red, color->green, color->blue);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URPolygon::SetAlphaAll(void* userdata) {
+	float alpha = *(double*) userdata;
+
+	this->SetAlpha(alpha);
+
+	if(recursion) return ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+	
 
 int URPolygon::Render(void * userdata){
 

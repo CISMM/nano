@@ -315,7 +315,7 @@ int UTree::Do(IteratorFunction ifunc, void *data){
     //based on that
 
 	if(contents){
-		// calls the appropriate function (URPolygon::Render() for imported .obj files)
+		// calls the appropriate function
         err = (contents->*ifunc)(data);
     }
     else {cerr << "Unexpected empty contents\n"; err=ITER_ERROR; }

@@ -198,10 +198,7 @@ void URTexture::Compile2DTexture()
 	
 }
 
-int URTexture::Scale(void* /*userdata*/) {
-	// do nothing
-	return 1;
-}
+
 
 int URTexture::Render(void * /*userdata*/ )
 {  
@@ -243,3 +240,84 @@ void URTexture::PostRender()
 	glMatrixMode(GL_MODELVIEW);
 //	glPopAttrib();
 }
+
+
+
+int URTexture::SetVisibilityAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URTexture::SetProjTextAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URTexture::ScaleAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URTexture::SetTransxAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URTexture::SetTransyAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URTexture::SetTranszAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URTexture::SetRotxAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URTexture::SetRotyAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URTexture::SetRotzAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URTexture::SetColorAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+int URTexture::SetAlphaAll(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+
+
+
+int URTexture::ChangeStaticFile(void* /*userdata*/) {
+	// do nothing
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+
+
+

@@ -43,6 +43,9 @@ URender::URender(){
 	obj_type=URENDER;
 	texture=NULL;
 	name=NULL;
+	disp_proj_text = 1;
+	CCW = 0;
+	tess = 10;
 	num_triangles = 0;
 }
 
@@ -79,12 +82,93 @@ int URender::Render(void * /*userdata*/ ){
   else return ITER_STOP;
 }
 
-int URender::Scale(void * userdata) {	
+int URender::SetVisibilityAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class Changing Visibility\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+int URender::SetProjTextAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class Setting Projective Texture\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+int URender::ScaleAll(void * /*userdata*/) {	
 	//base class does nothing
 	cerr << "Base class Scaling\n";
 	if(recursion) return ITER_CONTINUE; 
 	else return ITER_STOP;
 }
+
+int URender::SetTransxAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class Translating\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+int URender::SetTransyAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class Translating\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+int URender::SetTranszAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class Translating\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+int URender::SetRotxAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class Translating\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+int URender::SetRotyAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class Translating\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+int URender::SetRotzAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class Translating\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+int URender::SetColorAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class Translating\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+int URender::SetAlphaAll(void * /*userdata*/) {	
+	//base class does nothing
+	cerr << "Base class Translating\n";
+	if(recursion) return ITER_CONTINUE; 
+	else return ITER_STOP;
+}
+
+
+
+int URender::ChangeStaticFile(void* /*userdata*/) {
+	// bas class does nothing
+	cerr << "Base class Changing Static File\n";
+	if(recursion) return  ITER_CONTINUE;
+	else return ITER_STOP;
+}
+
+
 
 void URender::DrawBounds(){
 

@@ -1,3 +1,29 @@
+2002-03-06 David Borland <borland@cs.unc.edu>
+        * TubeFileGenerator.C : Added code to allow for user-control of
+        the tesselation of the nanotube
+
+        * URender.C : Added functions so that object selection "all" will
+        apply changes in the UI stuff to all objects.
+
+        * URender.h : See above
+
+        * URAxis.C : See above
+        
+        * URAxis.h : See above
+
+        * URPolygon.C : See above
+
+        * URPolygon.h : See above
+
+        * URTexture.C : See above
+        
+        * URTexture.h : See above
+         
+        * UTree.C : See above
+         
+        * WaveFrontFileGenerator.C : See above
+
+
 2002-02-26 David Borland <borland@cs.unc.edu>
 
 	* FileGenerator.C : Added "mask.details.txt" to possible names
