@@ -85,6 +85,8 @@ class BCPlane
 
     double scale() const { return _scale; }
     void setScale(double scale) { _scale = scale; }
+    void tweakScale(); ///< Set scale to reasonable value based
+    ///< on scan size and data range. 
 
     int findValidDataRange(short* o_top, short* o_left, short* o_bottom, short* o_right);
 
@@ -189,8 +191,8 @@ class BCPlane
     int writeRawByteFile(int file_descriptor, double min, double max);
 
     int readNanoscopeFileWithoutHeader(FILE* file);
-    int readAsciiNanoscopeFile(FILE* file);
-    int readBinaryNanoscopeFile(FILE* file);
+    int readAsciiNanoscopeFile(FILE* file, nmb_diImageInfo * file_info);
+    int readBinaryNanoscopeFile(FILE* file, nmb_diImageInfo * file_info);
 
     int readAsciiRHKFile(FILE* file, double z_offset_nm, double z_scale_pm);
 

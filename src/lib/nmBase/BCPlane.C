@@ -495,8 +495,16 @@ int     BCPlane::remove_callback(Plane_Valuecall cb, void *userdata)
         return 0;
 }
 
+/** Try setting the scale so the values in this plane are easily visible. 
+     10% of XY range. But only if units are not nm.
+*/
+void BCPlane::tweakScale() {
+    if (strcmp(_units.Characters(), "nm")!=0) {
+        _scale = 0.1*(maxX()-minX())/(_max_value-_min_value);
+    }
+}
 
-/******************************************************************************\
+/*=====================================================================
   
   The following methods of BCPlane are protected!
   
@@ -1471,8 +1479,9 @@ readAsciiNanoscopeFile
     
         @author ?
  @date modified 9-10-95 by Kimberly Passarella Jones
+ XXX Untested - we have no sample files. 
 */
-int BCPlane::readAsciiNanoscopeFile(FILE* file)
+int BCPlane::readAsciiNanoscopeFile(FILE* file, nmb_diImageInfo * file_info)
 {
     int	first_value_read = 1;
     int x, y;
@@ -1492,8 +1501,7 @@ int BCPlane::readAsciiNanoscopeFile(FILE* file)
 		}
 	    } 
 
-	    setValue(x,y, _grid->transform(&value, _image_mode, _scale) );
-
+	    setValue(x,y, _grid->transform(&value, file_info, 0));
 	    if (first_value_read) {
 		_min_value = this->value(x, y);
 		_max_value = this->value(x, y);
@@ -1513,6 +1521,8 @@ int BCPlane::readAsciiNanoscopeFile(FILE* file)
     setMinAttainableValue(_min_value);
     setMaxAttainableValue(_max_value);
 
+    // Set scale to reasonable value. 
+    tweakScale();
     return 0;
     
 } // readAsciiNanoscopeFile
@@ -1525,14 +1535,19 @@ readBinaryNanoscopeFile
  @date modified 9-10-95 by Kimberly Passarella Jones
 */
 int
-BCPlane::readBinaryNanoscopeFile(FILE* file)
+BCPlane::readBinaryNanoscopeFile(FILE* file, nmb_diImageInfo * file_info)
 {
     int	first_value_read = 1;
     int x, y;
-	int ret;
+    int ret;
     
+    // if Endian_tst is false, you will need swap bytes
+    int	Endian_int = 1;
+    char *Endian_tst = ( char * )(&Endian_int);
+    
+
+    short* value = (short*) calloc(numX(), sizeof(short));
     for (y = 0; y < numY(); y++) {
-	short* value = (short*) calloc(numX(), sizeof(short));
 
 	ret = fread(value, sizeof(short), numX(), file);
 	if (numX() != ret) {
@@ -1542,7 +1557,7 @@ BCPlane::readBinaryNanoscopeFile(FILE* file)
 	}
 
 	for (x = 0; x < numX(); x++) {
-	    setValue(x,y, _grid->transform(value + x, _image_mode, _scale) );
+	    setValue(x,y, _grid->transform(&value[x], file_info, !*Endian_tst) );
 
 	    if (first_value_read) {
 		_min_value = this->value(x, y);
@@ -1559,11 +1574,13 @@ BCPlane::readBinaryNanoscopeFile(FILE* file)
 	    }
 	}
 
-	free (value);
     }
+    free (value);
     setMinAttainableValue(_min_value);
     setMaxAttainableValue(_max_value);
 
+    // Set scale to reasonable value. 
+    tweakScale();
     return 0;
     
 } // readBinaryNanoscopeFile

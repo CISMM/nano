@@ -30,6 +30,7 @@ extern const char * EMPTY_PLANE_NAME;
 #endif
 
 class BCPlane;
+class nmb_diImageInfo;
 
 typedef void (* BCGrid_MinMaxCallback) (void * userdata,
                                         double minX, double maxX,
@@ -133,7 +134,8 @@ class BCGrid
 
     void registerMinMaxCallback (BCGrid_MinMaxCallback cb, void * userdata);
 
-    double transform(short* datum, int image_mode, double scale); // defined in readNanoscopeFile.C
+    double transform(short* datum, nmb_diImageInfo * file_info, int do_swap);
+    ///< defined in readNanoscopeFile.C, called in BCPlane
 
     int writeTextFile(FILE* file, BCPlane* grid);
     int writeBinaryFile(FILE* file, BCPlane* grid);
@@ -192,11 +194,13 @@ class BCGrid
 
     int readNanoscopeFileWithoutHeader(FILE* file, const char *name);
     ///< readNanoscopeFile.C
-    int readBinaryNanoscopeFile(FILE* file, const char *name);
+    int readNanoscopeFile(FILE* file, const char *name, int ascii_flag);
       ///< readNanoscopeFile.C 
-    int readAsciiNanoscopeFile(FILE *file, const char *name);
-      ///< readNanoscopeFile.C
-    int parseNanoscopeFileHeader(FILE* file);
+    int parseNanoscopeFileHeader(FILE* file, nmb_diImageInfo * file_info);
+      ///< defined in readNanoscopeFile.C
+    int parseNSv4_1(nmb_diImageInfo * file_info);
+      ///< defined in readNanoscopeFile.C
+    int parseNSv4_4(nmb_diImageInfo * file_info);
       ///< defined in readNanoscopeFile.C
 
     int readTopometrixFile(TopoFile& TF, FILE* file, const char *name);

@@ -28,11 +28,10 @@ int close( int filedes );
 #include "BCGrid.h"
 #include "BCPlane.h"
 #include "Topo.h"
-#include "PPM.h"	// used in readPPMorPGMFileNew()
 #include "nmb_ImgMagick.h"
-//#include <ImageMaker.h> // used in writeTIFFile
 
-#include "readNanoscopeFile.C" // <------------ reading a .C file!
+//#include "readNanoscopeFile.h"
+//#include "readNanoscopeFile.C" // Include BCGrid functions to read DI files
 
 const char * EMPTY_PLANE_NAME = "Empty-HeightPlane";
 
@@ -1230,7 +1229,7 @@ readFile
 		are kind of a "magic number" for the file.  Then it reads the
  		file contents.
         @author ?
- @date modified 9-10-95 by Kimberly Passarella Jones
+ @date modified often
 */
 int
 BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
@@ -1296,11 +1295,13 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
     } 
     else if (strncmp(magic,"\\*Fi",4) == 0) 
     {
-	return readBinaryNanoscopeFile(file, name); 
+        // 0 means binary
+	return readNanoscopeFile(file, name, 0); 
     } 
     else if (strncmp(magic,"?*Fi",4) == 0) 
     {
-        return readAsciiNanoscopeFile(file, name);
+        // 1 means ascii
+        return readNanoscopeFile(file, name, 1);
     } 
     else if (strncmp(magic,"#R3.0",4) == 0)   // Topo file, v 3.0x
     {
@@ -1598,169 +1599,6 @@ BCGrid::readUNCBFile(FILE* file, const char *name)
 
 } // readUNCBfile
 
-
-
-/**
-readComment
-    
-        @author ?
- @date modified 9-10-95 by Kimberly Passarella Jones
-*/
-int     
-BCGrid::readComment(FILE *file, char *buffer, double* max_value) 
-{
-    double max_x, max_y, max_z;
-    int	 values_read;
-
-    // get the next line of the file 
-    fgets(buffer, 70, file);
-
-    // if it doesn't start with a '#', it's not a comment so return 0
-    if ('#' != *buffer) 
-	return 0;
-
-    // it is a comment - see if it's our comment
-    if ((values_read = sscanf(buffer, "# nM Scale: %lf %lf %lf", &max_x, &max_y, &max_z)) == 3)
-    {
-	_max_x = max_x;
-	_max_y = max_y;
-        *max_value = max_z;
-    }
-    else if (values_read == 1) 
-    {
-        *max_value = max_z;
-    }
-
-    return 1;
-
-} // readComment
-
-/**
-readPPMorPGMFile
-    This method (in conjunction with BCPlane::readPPMorPGMFile and
-                readComment) reads files with the format given below:
-
-		P2 or P6	<-- 2 character ascii
-		_num_x _num_y	<-- integers
-                max_color       <-- integer
-
-                value           <-- unsigned char
-
-                (It ignores lines beginning with '#', and only uses the first
-                channel (red).)
-
-		It also creates a plane (an instance of the BCPlane class) and adds
-		it to the lists of planes which begins with _head.
-        @author ?
- @date modified 9-10-95 by Kimberly Passarella Jones
-*/
-int 
-BCGrid::readPPMorPGMFile(FILE *file, const char *name)
-{
-    // initialize the scaling parameters.
-
-//      _min_x = _min_y = 0.0;
-//      _max_x = _max_y = 4000.0;
-
-    //  rewind the file pointer (we went too far when getting the
-    //  magic number in readFile (4B for a 2B magic #))
-    rewind(file);
-
-    char buffer[80];
-    double max_value = 400.0;
-    double min_value = 0.0;
-
-    // get magic number
-    while (readComment(file, buffer, &max_value));
-
-    // make sure it is "P6"
-    char magic[80];
-    if (!sscanf(buffer, "%s", magic) || strncmp( magic, "P6", 2 ))
-    {
-         fprintf(stderr,
-		"BCGrid::readPPMorPGMFile: bad magic number(%s)!",buffer);
-	 return -1;
-    }
-
-    // get grid dimensions (and make certain they are positive)
-    while (readComment(file, buffer, &max_value));
-
-    if (!sscanf(buffer, "%hd %hd", &(_num_y), &(_num_x)) || !_num_x || !_num_y)
-    {
-	fprintf(stderr, "Error! BCGrid::readPPMorPGMFile: bad dimensions %dx%d!\n",
-		_num_x, _num_y);
-	return -1;
-    }
-    // We know the file size, set our own grid size.
-    setGridSize(_num_x, _num_y);
-
-    // get maximum color value.(and make certain it is in the range (0..255] - it
-    // will be used to normalize plane values
-    while (readComment(file, buffer, &max_value));
-
-    double max_color;
-    if (!sscanf(buffer, "%lf", &max_color) || (0.0 >= max_color))
-    {
-        fprintf(stderr, "Error! BCGrid::readPPMorPGMFile: bad color %f!\n",
-                max_color);
-        return -1;
-    }
-
-    BCPlane* plane = addNewPlane(name, "nm", NOT_TIMED);
-
-    plane->_max_value = max_value;
-    plane->_min_value = min_value;
-
-    double scale = max_value/max_color;
-
-    if (plane->readPPMorPGMFile(file, scale) == -1)
-	return -1;
-
-    return 0;
-    
-}  // readPPMorPGMFile
-
-
-int
-BCGrid::readPPMorPGMFileNew(FILE *file, const char *filename)
-{
-	//fclose(file);
-	PPM ppm_file(file);
-	
-	if (!(ppm_file.valid)) {
-		fprintf(stderr, "Error! BCGrid::readPPMorPGMFileNew"
-                  ", file is not a valid PPM or PGM\n");
-		return -1;
-	}
-	_num_x = ppm_file.nx;
-	_num_y = ppm_file.ny;
-	// We know the file size, set our own grid size.
-	setGridSize(_num_x, _num_y);
-	
-	BCPlane* plane = addNewPlane(filename, "unknown_units", NOT_TIMED);
-
-	float min, max;
-	int r,g,b;
-	ppm_file.Tellppm(0,0,&r,&g,&b);
-	min = r; max = r;
-
-	int i,j;
-	for (i = 0; i < _num_x; i++) {
-		for (j = 0; j < _num_y; j++) {
-			ppm_file.Tellppm(i,j,&r,&g,&b);
-                        // data is oriented correctly without flipping y values
-			//plane->setValue(i,(_num_y -1) -j,(float)r);
-			plane->setValue(i,j,(float)r);
-			if (r < min) min = r;
-			if (r > max) max = r;
-		}
-	}
-
-        plane->_max_value = max;
-        plane->_min_value = min;
-
-	return 0;
-}
 
 
 ostream& operator << (ostream& os, BCGrid* grid)

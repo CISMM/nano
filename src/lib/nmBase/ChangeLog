@@ -1,3 +1,21 @@
+2002-01-29  Aron Helser  <helser@cs.unc.edu>
+
+	* readNanoscopeFile.C (parseNanoscopeFileHeader): New additions to
+	correctly read and display DI/NanoScope III files, versions 4.1, 4.2
+	and 4.4. We can probably read NanoScope II, version 2.5 files as
+	well. Data scaling for 4.4 may be wrong. 
+	* readNanoscopeFile.h: new, so we can compile readNanoscopeFile.C
+	separately. 
+
+	* BCPlane.hC (tweakScale): new, sets reasonable scale for viewing
+	planes with non-nm units. Called in file read fcns.  
+
+	* BCGrid.C: removed include of readNanoscopeFile.C, and remove
+	obsolete fcns to read PPMs - handled by ImageMagick. 
+
+	* nmb_Dataset.C (loadFile): Read multi-layer files, like DI files,
+	into image list. 
+
 2002-01-21  Aron Helser  <helser@cs.unc.edu>
 
 	* readNanoscopeFile.C (parseNanoscopeFileHeader): Add some

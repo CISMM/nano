@@ -177,7 +177,7 @@ nmb_Dataset::~nmb_Dataset (void) {
    @return -1 on invalid data, 1 on conflict with existing grid data, 0 on
    load into current grid
    @author Aron Helser
-   @date modified 3-22-00 Aron Helser */
+   @date modified 1-25-02 Aron Helser */
 int
 nmb_Dataset::loadFile(const char* file_name, TopoFile &topoFile)
 {
@@ -187,10 +187,13 @@ nmb_Dataset::loadFile(const char* file_name, TopoFile &topoFile)
     if ((tmpgrid = inputGrid->loadFile(file_name, topoFile)) == NULL) {
         return -1;
     } else if (tmpgrid != inputGrid) {
-        //Add file to image list only. 
-        im = new nmb_ImageGrid(tmpgrid->head());
-        im->setTopoFileInfo(topoFile);
-        dataImages->addImage(im);
+        //Add file to image list only, doesn't match current region/gridsize.
+        // Need to handle multi-layer files, like DI files. 
+        for (BCPlane *p = tmpgrid->head(); p != NULL; p = p->next()) {
+            im = new nmb_ImageGrid(p);
+            im->setTopoFileInfo(topoFile);
+            dataImages->addImage(im);
+        }
         //??XX delete tmpgrid;
         return 1;
     }

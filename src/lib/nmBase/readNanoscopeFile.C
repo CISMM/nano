@@ -1,12 +1,17 @@
 /*===3rdtech===
-  Copyright (c) 2000 by 3rdTech, Inc.
+  Copyright (c) 2000-2002 by 3rdTech, Inc.
   All Rights Reserved.
 
   This file may not be distributed without the permission of 
   3rdTech, Inc. 
   ===3rdtech===*/
-#include	<stdlib.h>
-#include	<stdio.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "BCGrid.h"
+#include "BCPlane.h"
+#include "readNanoscopeFile.h"
 
 /* local defines
 **/
@@ -15,28 +20,7 @@
 #define RET	(15)
 #define NL	'\n'
 
-#define	NS_HEIGHT			(0)
-#define NS_CURRENT			(1)
-#define NS_DEFLECTION			(2)
-#define NS_AUXC				(3)
-#define NS_DO_SWAP			(10)
-
 #define SWAP(a,b)       {((a)^=(b));((b)^=(a));((a)^=(b));}
-
-static const int NANOSCOPE_GRID_X = 256;
-static const int NANOSCOPE_GRID_Y = 256;
-
-static double scan_size = -1;
-static int image_mode = NS_HEIGHT;
-
-static int header_size = 8192;
-static int auxiliary_grids = 0;
-
-// globals used for multi-layer files (added by qliu on 6/27/95)
-static int auxiliary_grid_offset[100];
-static int auxiliary_grid_image_mode[100];
-static double auxiliary_grid_scale[100];
-
 
 #ifdef	_WIN32
 // Windows doesn't have the strncasecmp function.
@@ -61,7 +45,7 @@ int	strncasecmp(const char *s1, const char *s2, size_t n)
 }
 #endif
 
-
+/** Reads Version 2 of a DI NanoScope file */
 int 
 BCGrid::readNanoscopeFileWithoutHeader(FILE* file, const char *filename)
 {
@@ -69,6 +53,7 @@ BCGrid::readNanoscopeFileWithoutHeader(FILE* file, const char *filename)
     char s_scrap[255];
 
     // the first line in the file should contain "_File_Type 7" 
+    // or "Data_File_Type 7"
     if (fscanf(file, "%s %d", s_scrap, &i_scrap) != 2)
     {
 	perror("BCGrid::readNanoscopeFileWithoutHeader: could not read file type!");
@@ -110,11 +95,13 @@ BCGrid::readNanoscopeFileWithoutHeader(FILE* file, const char *filename)
     setGridSize(_num_x, _num_y);
 
     // guess min/max x, and y
+    // XXX bug, can get from "scan_sz =" line. 
     _min_x = -10;
     _max_x = 10;
     _min_y = -10;
     _max_y = 10;
 
+    // Weird. Isn't header fixed size, 2048 bytes?
     if (fseek(file, (long)(-_num_x * _num_y * 2), 2) != 0)
     {
 	perror("BCGrid::readNanoscopeFileWithoutHeader: could not move file pointer!");
@@ -123,6 +110,7 @@ BCGrid::readNanoscopeFileWithoutHeader(FILE* file, const char *filename)
 
     BCPlane* plane = addNewPlane(filename, "nm", TIMED);
 
+    // XXX. Probably need "z_scale = " parameter, to interpret data correctly.
     if (plane->readNanoscopeFileWithoutHeader(file) == -1)
 	return -1;
     
@@ -137,32 +125,55 @@ BCGrid::readNanoscopeFileWithoutHeader(FILE* file, const char *filename)
     return 0;
 } // readNanoscopeFileWithoutHeader
 
-
+/** Read DI NanoScope file, version 4. There are at least two flavors, this
+    handles them all. 
+*/
 int 
-BCGrid::readBinaryNanoscopeFile(FILE* file, const char *filename)
+BCGrid::readNanoscopeFile(FILE* file, const char *filename, int ascii_flag)
 {
     char *units_name;
-
-    _num_x = NANOSCOPE_GRID_X;
-    _num_y = NANOSCOPE_GRID_Y;
-
-    if (parseNanoscopeFileHeader(file))
+    nmb_diImageInfo file_info;
+    if (parseNanoscopeFileHeader(file, &file_info))
     {
 	fprintf(stderr, "BCGrid::readBinaryNanoscopeFile: could not parse header!\n");
 	return -1;
     }
 
     // move file pointer to first position at end of header
-    if (fseek(file, header_size, SEEK_SET ))
+    if (fseek(file, file_info.data_offset, SEEK_SET ))
     {
 	perror("BCGrid::readBinaryNanoscopeFile: could not move file pointer!");
 	return -1;
     }
 
     _min_x = _min_y = 0.0;
-    _max_x = _max_y = scan_size;
+    if (file_info.image_mode == NS_HEIGHT_V44) {
+        if (strcmp(file_info.scan_units, "~m") == 0) {
+            // microns, translate to nm
+            _max_x = file_info.scan_size * 1000.0;
+            _max_y = file_info.scan_size_y * 1000.0;
+        } else {
+            // nanometers. Maybe other units?
+            _max_x = file_info.scan_size;
+            _max_y = file_info.scan_size_y;
+        }            
+    } else {
+        _max_x = _max_y = file_info.scan_size;
+    }
 
-    switch (image_mode) {
+    switch (file_info.image_mode) {
+        case NS_HEIGHT_V44:
+            if (strcmp(file_info.image_data_type, "Zscan") ==0) {
+		units_name = (char *)"nm";
+            } else if (strcmp(file_info.image_data_type, "Amplitude") ==0) {
+		units_name = (char *)"V?";
+            } else {
+		units_name = (char *)"unknown";
+            }
+            break;
+        case NS_HEIGHT_V41:
+            units_name = file_info.z_units;
+		break;
 	case NS_HEIGHT:
 	case NS_DEFLECTION:
 		units_name = (char *)"nm";
@@ -178,52 +189,53 @@ BCGrid::readBinaryNanoscopeFile(FILE* file, const char *filename)
     }
     BCPlane* plane = addNewPlane(filename, units_name, TIMED);
     
-    // if Endian_tst is false, you will need swap bytes
-    int	Endian_int = 1;
-    char *Endian_tst = ( char * )(&Endian_int);
-
-    plane->_image_mode = image_mode;
-    if (!*Endian_tst)
-	plane->_image_mode += NS_DO_SWAP;
-
-    plane->readBinaryNanoscopeFile(file);
-    
-    // load auxiliary grids
-    if (auxiliary_grids > 0)
-    {
-	printf("There ");
-	if (auxiliary_grids > 1)
-	    printf("are ");
-	else
-	    printf("is ");
-	printf("%d auxiliary data grid", auxiliary_grids);
-	if (auxiliary_grids > 1)
-	    printf("s.\n");
-	else
-	    printf(".\n");
-
-	for (int  i = 0; i < auxiliary_grids; i++)
-	{
-	    char name[255];
-	    sprintf(name, "auxiliary%d", i);
-	    
-	    plane = addNewPlane(name, "", NOT_TIMED);
-	    
-	    plane->_scale =  auxiliary_grid_scale[i];
-	    plane->_image_mode = auxiliary_grid_image_mode[i];
-
-	    if (!*Endian_tst)
-		plane->_image_mode += NS_DO_SWAP;
-
-	    // move file pointer to beginning of this auxiliary grid
-	    if (fseek(file, auxiliary_grid_offset[i], 0))
-	    {
-		perror("BCGrid::readBinaryNanoscopeFile: could not move file pointer!");
-		return -1;
-	    }
-
-	    plane->readBinaryNanoscopeFile(file);
-	}
+    if (ascii_flag) {
+        plane->readAsciiNanoscopeFile(file, &file_info );
+    } else {
+        plane->readBinaryNanoscopeFile(file, &file_info);
+    }
+    int  i = 2; // Start with 2 for easy user readability. 
+    nmb_diImageInfo * aux_info = file_info.next;
+    while (aux_info) {
+        char name[255];
+        sprintf(name, "%s layer %d", filename, i);
+        
+        switch (aux_info->image_mode) {
+        case NS_HEIGHT_V44:
+            if (strcmp(aux_info->image_data_type, "Zscan") ==0) {
+		units_name = (char *)"nm";
+            } else if (strcmp(aux_info->image_data_type, "Amplitude") ==0) {
+		units_name = (char *)"V?";
+            } else {
+		units_name = (char *)"unknown";
+            }
+            break;
+        case NS_HEIGHT_V41:
+            units_name = aux_info->z_units;
+		break;
+	case NS_HEIGHT:
+	case NS_DEFLECTION:
+		units_name = (char *)"nm";
+		break;
+	case NS_AUXC:
+		units_name = (char *)"V";
+		break;
+	case NS_CURRENT:
+		units_name = (char *)"nA";
+		break;
+	default:
+		units_name = (char *)"unknown";
+        }
+        plane = addNewPlane(name, units_name, NOT_TIMED);
+        
+        if (ascii_flag) {
+            plane->readAsciiNanoscopeFile(file, aux_info);
+        } else {
+            plane->readBinaryNanoscopeFile(file, aux_info);
+        }
+        aux_info = aux_info->next;
+        i++;
+	
     }
     
     char scrap;
@@ -233,80 +245,19 @@ BCGrid::readBinaryNanoscopeFile(FILE* file, const char *filename)
         
     fclose(file);
 
+    //No memory leaks!
+    nmb_diImageInfo * next_info;
+    aux_info = file_info.next;
+    while (aux_info) {
+        next_info = aux_info->next;
+        delete aux_info;
+        aux_info = next_info;
+    }
     return 0;
     
-} // readBinaryNanoscopeFile
+} // readNanoscopeFile
 
 
-int 
-BCGrid::readAsciiNanoscopeFile(FILE *file, const char *filename)
-{   
-    _num_x = NANOSCOPE_GRID_X;
-    _num_y = NANOSCOPE_GRID_Y;
-
-    if (parseNanoscopeFileHeader(file))
-    {
-	fprintf(stderr, "BCGrid::readAsciiNanoscopeFile: could not parse header!\n");
-	return -1;
-    }
-    
-    // move file pointer to first position at end of header
-    if (fseek(file, header_size, 0))
-    {
-	perror("BCGrid::readAsciiNanoscopeFile: could not move file pointer!");
-	return -1;
-    }
-
-    _min_x = _min_y = 0.0;
-    _max_x = _max_y = scan_size;
-
-    BCPlane* plane = addNewPlane(filename, "nm", TIMED);
-    
-    plane->_image_mode = image_mode;
-
-    plane->readAsciiNanoscopeFile(file);
-    
-    if (auxiliary_grids > 0)
-    {
-	printf("There ");
-	if (auxiliary_grids > 1)
-	    printf("are ");
-	else
-	    printf("is ");
-	printf("%d auxiliary data grid", auxiliary_grids);
-	if (auxiliary_grids > 1)
-	    printf("s.\n");
-	else
-	    printf(".\n");
-	
-	for (int i = 0; i < auxiliary_grids; i++)
-	{
-	    char name[255];
-	    sprintf(name, "auxiliary %d", i);
-	    
-	    plane = addNewPlane(name, "", NOT_TIMED);
-	    plane->_image_mode = auxiliary_grid_image_mode[i];
-	    
-	    if (fseek( file,  auxiliary_grid_offset[i], 0) )
-	    {
-		perror("BCGrid::readAsciiNanoscopeFile: could not move file pointer!");
-		return -1;
-	    }
-
-	    plane->readAsciiNanoscopeFile(file);
-	}
-
-    }
-
-    short scrap;
-    if (fscanf(file, "%hd", &scrap) != 0)
-	perror("BCGrid::readBinaryNanoscopeFile: WARNING: Not at file end upon completion!");
-
-    fclose(file);
-
-    return 0;
-    
-} // readAsciiNanoscopeFile
 
 	
 /**
@@ -318,7 +269,253 @@ parseNanoscopeFileHeader
  last modified: 1-21-02 Aron Helser
 */
 int
-BCGrid::parseNanoscopeFileHeader(FILE* file)
+BCGrid::parseNanoscopeFileHeader(FILE* file, nmb_diImageInfo * file_info)
+{
+    //char image_type[BUFSIZ];
+    //int	pastline;
+	
+    // counters
+    int scale_count = 0;	// How many "Z scale height" entries found?
+    int scale_count_2 = 0;	// How many "Z scale" entries found?
+    int image_count = 0;	// How many image sets in this file?
+
+    char token[BUFSIZ];
+    char *ptoken;
+    
+    // Get a line from the file. May be a first, partial line. 
+    if (fgets(token, BUFSIZ, file)== NULL) return -1;
+    // Scan the file until we get to the end or find length of header
+    while ( (CTL_Z != *token ) &&
+	    (strncasecmp(token, "\\Data length", strlen("\\Data length")) )) {
+        if (fgets(token, BUFSIZ, file)== NULL) return -1;
+    }
+
+    // Make sure we found a backslash; if not, no header
+    if (CTL_Z == *token) {
+	fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: Can't read header!\n");
+	return -1;
+    }
+    // Find header length
+    if (sscanf(token+12, ": %d", &file_info->data_offset) != 1) {
+	fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: Can't read header size!\n");
+	return -1;
+    }
+    // read rest of header
+    char * header_text = new char[file_info->data_offset +1];
+    int hpos = ftell(file);
+    if (hpos < 0) {
+	fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: File I/O error!\n");
+	return -1;
+    }
+
+    if (fread(header_text, sizeof(char), file_info->data_offset - hpos, file) 
+        != (unsigned)(file_info->data_offset - hpos)) {
+	fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: Can't read header body\n");
+	return -1;
+    }
+
+    // Scan forward to next divider to determine which version we are reading
+    ptoken = strtok(header_text, "\n");
+    // Scan the file until we get to the end or find "\*"
+    while ( (NULL != ptoken ) && (CTL_Z != *ptoken) &&
+	    (strncasecmp(ptoken, "\\*", strlen("\\*")) )) {
+        ptoken = strtok(NULL, "\n");
+    }
+    if ((NULL == ptoken) || (CTL_Z == *ptoken)) {
+	fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: Can't read header!");
+	return -1;
+    }
+    printf("*DI Interpreting file header, ");
+    if (!strncasecmp(ptoken, "\\*Stm list", strlen("\\*Stm list")) ||
+        !strncasecmp(ptoken, "\\*Afm list", strlen("\\*Afm list")) ) {
+        printf("Version 2.5 - can't read, call 3rdTech!!!\n");
+        return -1;
+    } else if (!strncasecmp(ptoken, "\\*NC Afm list", strlen("\\*NC Afm list"))) {
+        printf("Version 4.1\n");
+        return (parseNSv4_1(file_info));
+
+    } else if (!strncasecmp(ptoken, "\\*Equipment list", strlen("\\*Equipment list"))) {
+        printf("Version 4.4\n");
+        return (parseNSv4_4(file_info));
+        
+    } else {
+	fprintf(stderr, "Unrecognized separator in header, %s!", ptoken);
+	return -1;
+    }
+    // We know the file size, set our own grid size.
+    // Unnecessary -> planes added later adopt new size 
+    //setGridSize(_num_x, _num_y);
+
+    // Shouldn't be reached, unhandled version. 
+    return -1;        
+    
+}
+
+/**
+   Parse a 4.1 Nanoscope header, probably also a 4.2
+ Depends on strtok context from parseNanoscopeFileHeader!!!
+*/
+int
+BCGrid::parseNSv4_1 (nmb_diImageInfo * file_info)
+{
+    int	ngot = 1;
+    char * ptoken;
+    ptoken = strtok(NULL, "\n");
+    // Scan the file until we get to the end or find "\*NCAFM image list"
+    // We also have one file where separator is \*Image list, 
+    // otherwise the same. 
+    while ( (NULL != ptoken ) && (CTL_Z != *ptoken) &&
+	    strncasecmp(ptoken, "\\*NCAFM image list", 
+                         strlen("\\*NCAFM image list")) && 
+             strncasecmp(ptoken, "\\*Image list", 
+                         strlen("\\*Image list")) ) {
+        ptoken = strtok(NULL, "\n");
+    }
+    if ((NULL == ptoken) || (CTL_Z == *ptoken)) {
+	fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: Can't find image sub-header!\n");
+	return -1;
+    }
+    file_info->image_mode = NS_HEIGHT_V41;
+    nmb_diImageInfo * curr_info = file_info;
+
+    ptoken = strtok(NULL, "\n");
+    while ( (NULL != ptoken ) && (CTL_Z != *ptoken) ) {
+        // Here's the list of params we recognize, and they should all be
+        // present for each image layer, we think. 
+        if (!strncasecmp(ptoken, "\\Data offset:", 
+                         strlen("\\Data offset:"))) {
+            ngot = sscanf(ptoken + strlen("\\Data offset: "),"%d", 
+                   &curr_info->data_offset);
+        } else if (!strncasecmp(ptoken, "\\Samps/line:", 
+                                strlen("\\Samps/line:"))) {
+            ngot = sscanf(ptoken + strlen("\\Samps/line: "),"%d", 
+                   &_num_x);
+        } else if (!strncasecmp(ptoken, "\\Number of lines:", 
+                                strlen("\\Number of lines:"))) {
+            ngot = sscanf(ptoken + strlen("\\Number of lines: "),"%d", 
+                   &_num_y);
+        } else if (!strncasecmp(ptoken, "\\Scan size:", 
+                                strlen("\\Scan size:"))) {
+            ngot = sscanf(ptoken + strlen("\\Scan size: "),"%lg %s", 
+                   &curr_info->scan_size, curr_info->scan_units);
+        } else if (!strncasecmp(ptoken, "\\Z scale:", strlen("\\Z scale:"))) {
+            ngot = sscanf(ptoken + strlen("\\Z scale: "),"%lg %2s", 
+                   &curr_info->z_scale, curr_info->z_units);
+        } else if (!strncasecmp(ptoken, "\\*NCAFM image list", 
+                                strlen("\\*NCAFM image list")) ||
+                   !strncasecmp(ptoken, "\\*Image list", 
+                                strlen("\\*Image list"))) {
+            if (curr_info->z_scale == -1) {
+                fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: "
+                        "Required Z scale param not read.\n");
+                return -1;
+            }
+            // We found second image information. Allocate and use
+            // new image object.
+            printf("DI Second image layer found. Reading header info.\n");
+            curr_info->next = new nmb_diImageInfo();
+            curr_info = curr_info->next;
+            curr_info->image_mode = NS_HEIGHT_V41;
+        }
+        if (ngot <= 0) { 
+            fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: "
+                    "Error reading header parameter!\n");
+            return -1;
+        }
+        ptoken = strtok(NULL, "\n");
+    }
+    if (curr_info->z_scale == -1) {
+        fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: "
+                "Required Z scale param not read.\n");
+        return -1;
+    }
+    return 0;
+
+}
+/**
+   Parse a 4.4 Nanoscope header, probably also later formats, if they exist.
+ Depends on strtok context from parseNanoscopeFileHeader!!!
+*/
+int
+BCGrid::parseNSv4_4 (nmb_diImageInfo * file_info)
+{
+    int	ngot = 1;
+    char * ptoken;
+    ptoken = strtok(NULL, "\n");
+    // Scan the file until we get to the end or find "\*Ciao image list"
+    while ( (NULL != ptoken ) && (CTL_Z != *ptoken) &&
+	    (strncasecmp(ptoken, "\\*Ciao image list", 
+                         strlen("\\*Ciao image list")) )) {
+        ptoken = strtok(NULL, "\n");
+    }
+    if ((NULL == ptoken) || (CTL_Z == *ptoken)) {
+	fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: Can't find image sub-header!\n");
+	return -1;
+    }
+    file_info->image_mode = NS_HEIGHT_V44;
+    nmb_diImageInfo * curr_info = file_info;
+
+    ptoken = strtok(NULL, "\n");
+    while ( (NULL != ptoken ) && (CTL_Z != *ptoken) ) {
+        // Here's the list of params we recognize, and they should all be
+        // present for each image layer, we think. 
+        if (!strncasecmp(ptoken, "\\Data offset:", 
+                         strlen("\\Data offset:"))) {
+            ngot = sscanf(ptoken + strlen("\\Data offset: "),"%d", 
+                   &curr_info->data_offset);
+        } else if (!strncasecmp(ptoken, "\\Samps/line:", 
+                                strlen("\\Samps/line:"))) {
+            ngot = sscanf(ptoken + strlen("\\Samps/line: "),"%d", 
+                   &_num_x);
+        } else if (!strncasecmp(ptoken, "\\Number of lines:", 
+                                strlen("\\Number of lines:"))) {
+            ngot = sscanf(ptoken + strlen("\\Number of lines: "),"%d", 
+                   &_num_y);
+        } else if (!strncasecmp(ptoken, "\\Scan size:", 
+                                strlen("\\Scan size:"))) {
+            ngot = sscanf(ptoken + strlen("\\Scan size: "),"%lg %lg %s", 
+                   &curr_info->scan_size, &curr_info->scan_size_y, 
+                          curr_info->scan_units);
+        } else if (!strncasecmp(ptoken, "\\@2:Z scale:", 
+                                strlen("\\@2:Z scale:"))) {
+            ngot = sscanf(ptoken + strlen("\\@2:Z scale: "),
+                          "V [Sens. %[^]]] (%*g V/LSB) %lg V", 
+                   curr_info->image_data_type, &curr_info->z_scale);
+        } else if (!strncasecmp(ptoken, "\\*Ciao image list", 
+                                strlen("\\*Ciao image list"))) {
+            if (curr_info->z_scale == -1) {
+                fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: "
+                        "Required Z scale param not read.\n");
+                return -1;
+            }
+            // We found second image information. Allocate and use
+            // new image object.
+            printf("DI Second image layer found. Reading header info.\n");
+            curr_info->next = new nmb_diImageInfo();
+            curr_info = curr_info->next;
+            curr_info->image_mode = NS_HEIGHT_V44;
+        }
+        if (ngot <= 0) { 
+            fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: "
+                    "Error reading header parameter!\n");
+            return -1;
+        }
+        ptoken = strtok(NULL, "\n");
+    }
+    if (curr_info->z_scale == -1) {
+        fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: "
+                "Required Z scale param not read.\n");
+        return -1;
+    }
+    return 0;
+
+}
+/*
+Not yet obsolete, may be useful in interpreting version 3 file, as 
+I only have docs for version 2.5 and 4.1,
+Aron Helser 1/25/02
+int
+BCGrid::parseNSv3maybe ()
 {
     char image_type[BUFSIZ];
     int	ngot = 1;
@@ -332,29 +529,6 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
     auxiliary_grids = -1;
 	
     char token[BUFSIZ];
-
-    // Set some reasonable defaults, in case file doesn't have them. 
-    // XXX This is a hack - if header doesn't have them, we should
-    // probably be reading/doing something else to interpret the data. 
-    _attenuation_in_z = 65536;
-    _z_scale = 100;
-    _detection_sensitivity = 0.04;
-    _z_sensitivity = 8.1;
-    _input_sensitivity = 0.125;
-    _z_max = 220;
-    _input_1_max = 10;
-    _input_2_max = 10;
-    
-    // Scan the file until we get to the end or find a backslash
-    while ( (CTL_Z != (*token = fgetc(file))) &&
-	    (BSLASH != *token) ) {};
-
-    // Make sure we found a backslash; if not, no header
-    if (BSLASH != *token) {
-	fprintf(stderr, "BCGrid::parseNanoscopeFileHeader: Can't read header!");
-	return -1;
-    }
-    printf("*DI Interpreting file header.\n");
     do {
 	// For ASCII file parsing, this is used to watch for a completely
 	// blank line.  This indicates we didn't just pass one.
@@ -538,19 +712,17 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
     return 0;
     
 } // parseNanoscopeFileHeader
-
+*/
 
 double
-BCGrid::transform(short* datum, int image_mode, double transform_scale)
+BCGrid::transform(short* datum, nmb_diImageInfo * file_info, int do_swap)
 {
     char  *b1 = (char *) datum;
     char  *b0 = b1 + 1;
 
-    // Swap the bytes in the datum if we need to.  Once swapped, clear the
-    // NS_DO_SWAP bit to allow us to select which method to use to convert
-    if (image_mode & NS_DO_SWAP) {
+    // Swap the bytes in the datum if we need to. 
+    if (do_swap) {
 	SWAP(*b1, *b0);
-	image_mode -= NS_DO_SWAP;
     }
 
 
@@ -566,14 +738,22 @@ BCGrid::transform(short* datum, int image_mode, double transform_scale)
     // Microscope Control System User's Manual (orange cover).  This
     // describes how to convert from raw values to units.
 
-    switch (image_mode)
+    switch (file_info->image_mode)
     {
+      case NS_HEIGHT_V44: 
+      case NS_HEIGHT_V41: 
+          {
+          //Very simple, from DI Nanoscope v 4.1 manual, appendix B
+          double val = (*datum)*file_info->z_scale/65536.0;
+          return val;
+
+      }
       case NS_HEIGHT: {
 	double normalized = (*datum)/65536.0;
-	double volts = normalized * (2*_z_max);
-	double nm = volts * _z_sensitivity;
-	double attenuated_nm = nm * (_attenuation_in_z / 65536.0);
-	double scaled = attenuated_nm * (_z_scale / 65536.0);
+	double volts = normalized * (2*file_info->z_max);
+	double nm = volts * file_info->z_sensitivity;
+	double attenuated_nm = nm * (file_info->attenuation_in_z / 65536.0);
+	double scaled = attenuated_nm * (file_info->z_scale / 65536.0);
 
 /*XXX
 { static float min = 0;
@@ -583,14 +763,14 @@ BCGrid::transform(short* datum, int image_mode, double transform_scale)
   if (value > max) { max = value; printf("minh %f, maxh %f\n",min,max); }
 }*/
 
-	return scaled * transform_scale;
+	return scaled;
       }
 
       case NS_DEFLECTION: {
 	double normalized = (*datum)/65536.0;
-	double scaled = normalized * (_z_scale / 65536.0);
-	double nm = scaled * (2*_input_1_max) * _input_sensitivity /
-		    _detection_sensitivity;
+	double scaled = normalized * (file_info->z_scale / 65536.0);
+	double nm = scaled * (2*file_info->input_1_max) * file_info->input_sensitivity /
+		    file_info->detection_sensitivity;
 
 /*XXX
 { static float min = 0;
@@ -600,17 +780,17 @@ BCGrid::transform(short* datum, int image_mode, double transform_scale)
   if (value > max) { max = value; printf("mind %f, maxf %d\n",min,max); }
 }*/
 
-	return nm * transform_scale;
+	return nm ;
       }
 
       case NS_AUXC: {
 	double normalized = (*datum)/65536.0;
-	double scaled = normalized * (_z_scale_auxc / 65536.0);
+	double scaled = normalized * (file_info->z_scale_auxc / 65536.0);
 //XXX The DI seems to be off by about a factor of 8 from our equation.
 // Dave thinks that the input sensitivity is really always 1, so I'll tak
 // that out.
-//	double volts = scaled * (2*_input_2_max) * _input_sensitivity;
-	double volts = scaled * (2*_input_2_max);
+//	double volts = scaled * (2*file_info->input_2_max) * file_info->input_sensitivity;
+	double volts = scaled * (2*file_info->input_2_max);
 
 /*XXX
 { static float min = 0;
@@ -620,7 +800,7 @@ BCGrid::transform(short* datum, int image_mode, double transform_scale)
   if (value > max) { max = value; printf("minv %f, maxv %f\n",min,max); }
 }*/
 
-	return volts * transform_scale;
+	return volts ;
       }
 
       default :
