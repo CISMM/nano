@@ -332,7 +332,7 @@ proc init_full {} {
     eval lappend changing_widgets "$nmInfo(modifyfull).mode.contact \
                              $nmInfo(modifyfull).mode.oscillating"
 
-    checkbutton $nmInfo(modifyfull).mode.relaxcomp -text "//seok//Offset Comp on" \
+    checkbutton $nmInfo(modifyfull).mode.relaxcomp -text "Offset Comp on" \
 	        -variable doRelaxComp -state normal
 
     button $nmInfo(modifyfull).mode.accept -text "Accept"  \

@@ -528,8 +528,6 @@ source [file join ${tcl_script_dir} modify.tcl]
 # Analysis menu commands.
 source [file join ${tcl_script_dir} analysismenu.tcl]
 
-
-
 #
 ###############
 #Tools menu commands - split among several files:
