@@ -48,8 +48,6 @@ private:
 	int d_ordWrite;
 
 	CNT_IA *d_cntRec;
-       
-	ofstream fout;
 
 };
 

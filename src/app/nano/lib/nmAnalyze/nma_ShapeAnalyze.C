@@ -24,15 +24,12 @@ nma_ShapeAnalyze()
 
 	d_cntRec = new CNT_IA();
 
-	fout.open("settings.txt");//save settings for plane (analysis) whether
-	                          //or not plane is saved
-	fout << "Settings:" << endl << endl;
+	
 }
 
 nma_ShapeAnalyze::
 ~nma_ShapeAnalyze(){
         delete d_cntRec;
-        fout.close();
 }
 
 
@@ -41,9 +38,7 @@ setScale(float xscale, float yscale, float zscale)
 {
 	// set PIXEL <-> nm conversion scale factor (x, y, z)
 	d_cntRec->cnt_image_setScal(xscale, yscale, zscale);	
-        fout << "x scale: " << xscale << endl;
-        fout << "y scale: " << yscale << endl;
-        fout << "z scale: " << zscale << endl;
+       
 }
 
 void nma_ShapeAnalyze::
@@ -51,7 +46,7 @@ setBlur(float sigma)
 {
 	// set SIGMA for image blurring -- default=1.5
         d_cntRec->cnt_image_setSigm(sigma);
-        fout << "Gaussian Blurring: " << sigma << endl;
+        
 }
 
 void nma_ShapeAnalyze::
@@ -59,7 +54,7 @@ setCorrelation(float correlation)
 {
 	// set CORRELATION  factor for CNT fitting -- default=0.6
 	d_cntRec->cnt_image_setCorr(correlation);	
-        fout << "Tube Width Correlation (0 - 1): " << correlation << endl;
+       
 }
 
 void nma_ShapeAnalyze::
@@ -67,7 +62,7 @@ setAspectRatio(float aspect)
 {
 	// set ASPECT ratio for CNT recognition -- default=2.0
 	d_cntRec->cnt_image_setAspt(aspect);			
-        fout << "Aspect Ratio for Tube Recognition: " << aspect << endl;
+        
 }
 
 void nma_ShapeAnalyze::
@@ -82,7 +77,7 @@ setPreFlatten(int preFlatten)
 {
 	// set PRE-FLATTENING flag -- default=1
 	d_cntRec->cnt_image_setFlat(preFlatten);
-        fout << "Pre-Flatten" << preFlatten << endl;		
+        		
 }
 
 void nma_ShapeAnalyze::
@@ -90,7 +85,7 @@ setAutoAdapt(int autoAdapt)
 {
 	// set AUTO-ADAPTION flag -- default=1
 	d_cntRec->cnt_image_setAuto(autoAdapt);		
-        fout << "Auto-Set Intensity Threshold: " << autoAdapt << endl;
+        
 }
 
 void nma_ShapeAnalyze::
