@@ -1,3 +1,8 @@
+2002-04-01  Aron Helser  <helser@cs.unc.edu>
+
+	* filemenu.tcl (remember_mod_data): Use new global set by
+	ModFile.C 
+
 2002-03-29  Aron Helser  <helser@cs.unc.edu>
 
 	* mainwin.tcl (handle_texture_mode_change): Make it work when

@@ -439,20 +439,23 @@ generic_optionmenu $nmInfo(save_mod_dialog).which_mod_to_save \
 	"Choose which modification to save:" mod_data_time_list 
 pack $nmInfo(save_mod_dialog).which_mod_to_save -anchor nw
 
-# XXX Hack to allow the current code to write the mod data where we
+# Hack to allow the current code to write the mod data where we
 # can see it
 # This frame is NOT packed - users don't want to see mod data, they just
 # want to save it. 
-frame .mod
-text .mod.text 
+#frame .mod
+#text .mod.text 
+
+# Global updated by nmUI/ModFile.C
+set modfile_text ""
 
 # Whenever we get done with a mod, the C code should call this function
 # after it has filled in the .mod.text widget. 
 # The timestamp should be time the modify started, in seconds
 # (our standard time measure).
 proc remember_mod_data { time_stamp} {
-    global mod_data
-    set mod_data(mod-$time_stamp) [.mod.text get 1.0 end] 
+    global mod_data modfile_text
+    set mod_data(mod-$time_stamp) $modfile_text
 
 }
 
