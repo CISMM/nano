@@ -1,3 +1,8 @@
+2002-07-03  Adam Seeger  <seeger@cs.unc.edu>
+
+	* URPolygon.C (Render): added glPushAttrib() and glPopAttrib for
+	texture state
+
 2002-07-01  David Borland <borland@cs.unc.edu>
 
         * ProjTextObjGenerator.C : no real change.

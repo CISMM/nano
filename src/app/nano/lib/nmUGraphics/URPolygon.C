@@ -272,6 +272,7 @@ int URPolygon::Render(void * userdata){
 
 		if (* (int*)userdata == 1 /* displaying projective textures */ ) {
 			glMatrixMode(GL_TEXTURE);
+                        glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
 			if (this->ShowProjText()) { 
 				glEnable(GL_TEXTURE_2D);
 				glEnable(GL_TEXTURE_GEN_S);
@@ -319,6 +320,7 @@ int URPolygon::Render(void * userdata){
 				glDisable(GL_TEXTURE_GEN_R);
 				glDisable(GL_TEXTURE_GEN_Q);
 			}
+                        glPopAttrib();
 		}
 
 		glColor4fv(c);
