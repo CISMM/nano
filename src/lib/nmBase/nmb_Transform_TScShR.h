@@ -153,6 +153,8 @@ class nmb_Transform_TScShR {
 
     void transform(double *p_src, double *p_dest);
     void transform(double *pnt);
+    void transformVector(double *p_src, double *p_dest);
+    void transformVector(double *pnt);
 
     // matrices are in column-major order
     void getMatrix(double *matrix);

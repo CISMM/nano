@@ -153,6 +153,51 @@ void nmb_TransformMatrix44::invTransform(double *pnt) {
    invTransform(temp, pnt);
 }
 
+void nmb_TransformMatrix44::transformVector(double *p_src, double *p_dest) const
+{
+    assert(p_src != p_dest);
+    for (int i = 0; i < 4; i++){
+        p_dest[i] = 0;
+        for (int j = 0; j < 3; j++){
+            p_dest[i] += xform[i][j]*p_src[j];
+        }
+    }
+}
+
+void nmb_TransformMatrix44::transformVector(double *pnt) const {
+   double temp[4] = {pnt[0], pnt[1], pnt[2], pnt[3]};
+   transformVector(temp, pnt);
+}
+
+void nmb_TransformMatrix44::transformVector(double x1, double y1,
+                                      double &x2, double &y2) const
+{
+  x2 = xform[0][0]*x1 + xform[0][1]*y1;
+  y2 = xform[1][0]*x1 + xform[1][1]*y1;
+}
+
+void nmb_TransformMatrix44::invTransformVector(double *p_src, double *p_dest) {
+    assert(p_src != p_dest);
+    if (!hasInverse()) {
+        fprintf(stderr, "nmb_TransformMatrix44::invTransformVector: Warning,"
+               " failed use of inverse (non-invertible transform)\n");
+        return;
+    }
+
+    int i,j;
+    for (i = 0; i < 4; i++){
+        p_dest[i] = 0.0;
+        for (j = 0; j < 3; j++){
+            p_dest[i] += inverse_xform[i][j]*p_src[j];
+        }
+    }
+}
+
+void nmb_TransformMatrix44::invTransformVector(double *pnt) {
+   double temp[4] = {pnt[0], pnt[1], pnt[2], pnt[3]};
+   invTransform(temp, pnt);
+}
+
 void nmb_TransformMatrix44::invert() {
     if (!hasInverse()) {
         fprintf(stderr, "nmb_TransformMatrix44::invert: Warning,"

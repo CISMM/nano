@@ -449,6 +449,42 @@ void nmb_Transform_TScShR::transform(double *pnt)
   pnt[3] = temp[3];
 }
 
+void nmb_Transform_TScShR::transformVector(double *p_src, double *p_dest)
+{
+  assert(p_src != p_dest);
+  if (d_matrixNeedsUpdate) {
+    updateMatrix();
+  }
+  p_dest[0] = d_matrix[0]*p_src[0] + d_matrix[4]*p_src[1] +
+              d_matrix[8]*p_src[2];
+  p_dest[1] = d_matrix[1]*p_src[0] + d_matrix[5]*p_src[1] +
+              d_matrix[9]*p_src[2];
+  p_dest[2] = d_matrix[2]*p_src[0] + d_matrix[6]*p_src[1] +
+              d_matrix[10]*p_src[2];
+  p_dest[3] = d_matrix[3]*p_src[0] + d_matrix[7]*p_src[1] +
+              d_matrix[11]*p_src[2];
+}
+
+void nmb_Transform_TScShR::transformVector(double *pnt)
+{
+  double temp[4];
+  if (d_matrixNeedsUpdate) {
+    updateMatrix();
+  }
+  temp[0] = d_matrix[0]*pnt[0] + d_matrix[4]*pnt[1] +
+              d_matrix[8]*pnt[2];
+  temp[1] = d_matrix[1]*pnt[0] + d_matrix[5]*pnt[1] +
+              d_matrix[9]*pnt[2];
+  temp[2] = d_matrix[2]*pnt[0] + d_matrix[6]*pnt[1] +
+              d_matrix[10]*pnt[2];
+  temp[3] = d_matrix[3]*pnt[0] + d_matrix[7]*pnt[1] +
+              d_matrix[11]*pnt[2];
+  pnt[0] = temp[0];
+  pnt[1] = temp[1];
+  pnt[2] = temp[2];
+  pnt[3] = temp[3];
+}
+
 void nmb_Transform_TScShR::getMatrix(double *m)
 {
   if (d_matrixNeedsUpdate) {

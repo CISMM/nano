@@ -1,3 +1,10 @@
+2002-08-01  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmb_TransformMatrix44.[Ch] (transformVector): new function
+                                     (invTransformVector): new function
+	* nmb_Transform_TScShR.[Ch] (transformVector): new function
+                                    (invTransformVector): new function
+
 2002-07-24 David Borland <borland@cs.unc.edu>
 
         * nmb_Image.C (nmb_ImageArray() : changed default values for the

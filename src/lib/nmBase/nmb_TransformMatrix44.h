@@ -14,8 +14,12 @@ class nmb_TransformMatrix44 {
     void compose(nmb_TransformMatrix44 &m);
     virtual void transform(double *p_src, double *p_dest) const;
     virtual void transform(double *pnt) const;
+    virtual void transformVector(double *p_src, double *p_dest) const;
+    virtual void transformVector(double *pnt) const;
     virtual void invTransform(double *p_src, double *p_dest);
     virtual void invTransform(double *pnt);
+    virtual void invTransformVector(double *p_src, double *p_dest);
+    virtual void invTransformVector(double *pnt);
     virtual void invert();
     virtual nmb_TransformMatrix44 *duplicate() const;
     virtual vrpn_bool hasInverse();
@@ -32,6 +36,7 @@ class nmb_TransformMatrix44 {
     virtual void print();
 
     void transform(double x1, double y1, double &x2, double &y2) const;
+    void transformVector(double x1, double y1, double &x2, double &y2) const;
 
   protected:
     void buildIdentity(double m[4][4]);
