@@ -1278,6 +1278,7 @@ nmb_ImageArray::nmb_ImageArray(const char *name,
         d_maxValidValue(0),
         d_pixelType(pixType)
 {
+    setAcquisitionDimensions( x, y );
     min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
     max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
     int array_size = 0;

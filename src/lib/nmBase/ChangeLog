@@ -1,3 +1,8 @@
+2002-05-10  David Marshburn  <marshbur@cs.unc.edu>
+
+	* nmb_Image.C (nmb_ImageArray::nmb_ImageArray(...)): initialize
+	acquisition dimensions.
+
 2002-04-19  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* BCGrid.[C,h]:  compiler pragmas to prevent warnings from system 
