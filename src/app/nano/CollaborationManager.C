@@ -127,7 +127,7 @@ CollaborationManager::CollaborationManager (vrpn_bool replay) :
     d_log (VRPN_FALSE),
     d_NIC_IP (NULL),
     d_replay (replay),
-    d_userMode (0),
+    d_userMode (1),
     d_handServerName (NULL),
     d_modeServerName (NULL),
     d_uiController (NULL),

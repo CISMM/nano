@@ -22,8 +22,6 @@ extern int init_Tk_variables ();
 
 extern int poll_Tk_control_panels (void);
 
-extern void set_Tk_command_handler (void (*) (char *, vrpn_bool *, int));
-
 extern Tcl_Interp * get_the_interpreter (void);
 
 int makeColorMapImage(ColorMap * cmap, char * name, int width, int height, 

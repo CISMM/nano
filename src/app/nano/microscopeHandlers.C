@@ -22,6 +22,7 @@
 #include <nmg_Graphics.h>
 #include <nmg_Globals.h>
 
+#include <interaction.h>
 #include <microscape.h>
 
 #include "microscopeHandlers.h"
@@ -664,8 +665,8 @@ void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
   // the zscale, she could get a strong jerk from the phantom, so put her
   // into grab mode first
   if (plane) {
-      if ((user_mode[0] == USER_PLANE_MODE) || (user_mode[0] == USER_PLANEL_MODE)) {
-          handleCharacterCommand("G", &dataset->done, 1);
+      if ((user_0_mode == USER_PLANE_MODE) || (user_0_mode == USER_PLANEL_MODE)) {
+          user_0_mode = USER_GRAB_MODE;
       }
     plane->setScale(microscope->state.stm_z_scale);
     decoration->setScrapeHeightScale(microscope->state.stm_z_scale);
@@ -919,9 +920,9 @@ void    handle_z_dataset_change(const char *, void * _mptr)
   /* if user is feeling from data at the same time she is changing the
      grid dataset, could get a strong jerk from the phantom, so put her
      into grab mode first */
-  if ((user_mode[0] == USER_PLANE_MODE) || (user_mode[0] == USER_PLANEL_MODE))
+  if ((user_0_mode == USER_PLANE_MODE) || (user_0_mode == USER_PLANEL_MODE))
     {
-      handleCharacterCommand("G", &dataset->done, 1);
+      user_0_mode = USER_GRAB_MODE;
     }
   
   // If the plane cannot be found, look for another one instead.

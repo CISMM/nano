@@ -1,3 +1,31 @@
+2000-12-28  Aron Helser  <helser@cs.unc.edu>
+
+	* globals.[Ch]: removed tcl_offsets for knobs, mode_change, and
+	user_mode.  
+
+	* interaction.[ch] (dispatch_event): Removed user parameter - always
+	user 0. 
+	(all): Changed to single head/hand tracker.
+	Changed to user_0_mode. 
+
+	* microscape.c (handleCharacterCommand): Obsolete, removed all
+	commands accessible somewhere else.
+	(handle_tcl_quit): new
+	(handle_clear_markers_change): new 
+	(all): Changed to single head/hand tracker.
+	Changed to user_0_mode. 
+
+	* microscopeHandlers.C (handle_z_dataset_change): removed
+	handleCharacterCommand call, set user_0_mode instead
+	(handle_z_scale_change): same
+
+	* minit.c: Changed to user_0_mode, changed to single head/hand
+	tracker. 
+
+	* tcl_tk.[hc] (init_Tk_variables): Simplified user_mode to single
+	tclvar_int, removed tcl knob handling. 
+	(set_Tk_command_handler): removed.
+
 2000-12-20  Aron Helser  <helser@cs.unc.edu>
 
 	* all: 3rdtech merge into main trunk. 

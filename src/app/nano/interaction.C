@@ -149,16 +149,16 @@ static nmui_HapticsManager haptic_manager;
 
 static q_vec_type xy_pos;  // used for constrained freehand xyz
 
-extern Tcl_Interp * get_the_interpreter (void);
-
 /***************************
  * Mode of user operation
  ***************************/
 
-// moved user_mode to globals.c
+static void handle_user_mode_change(vrpn_int32, void *);
+Tclvar_int     user_0_mode("user_0_mode", USER_GRAB_MODE, handle_user_mode_change);
+static int     mode_change = 0;                ///< Flag set when mode changes
 
-int	last_mode[NUM_USERS];		/**< Previous mode of operation */
-int	last_style[NUM_USERS];		/**< Previous style of operation */
+static int	last_mode = user_0_mode; /**< Previous mode of operation */
+static int	last_style = 0;		/**< Previous style of operation */
 
 char    *user_hand_icons[] = {  (char *)"v_arrow",
 				(char *)"myRoboHand",
@@ -267,7 +267,7 @@ Tclvar_float handTracker_update_rate ("handTracker_update_rate", 60.0,
 /*********
  * Functions defined in this file (added by KPJ to satisfy g++)...
  *********/
-void dispatch_event(int, int, int, nmb_TimerList *);
+void dispatch_event( int, int, nmb_TimerList *);
 int qmf_lookat(q_type ,  q_vec_type,  q_vec_type,  q_vec_type);
 int doLight(int, int);
 int doFly(int, int);
@@ -499,6 +499,13 @@ void updateMicroscopeRTTEstimate (double time) {
 }
 
 
+/** Trace routine that handles updates to user_0_mode variable from Tcl */
+void handle_user_mode_change(vrpn_int32, void *) 
+{
+    // There was some stuff here, but it is all handled in 
+    // interaction(), below. 
+}
+
 void handle_xyLock (vrpn_int32, void *) {
   if (!microscope->haveMutex()) {
     xy_lock = 0;
@@ -520,8 +527,8 @@ static void handle_buzzscale_linear_change(vrpn_int32 val, void *) {
 
 static void handle_handTracker_update_rate (vrpn_float64 v, void *) {
 
-  if (vrpnHandTracker[0]) {
-    vrpnHandTracker[0]->set_update_rate(v);
+  if (vrpnHandTracker) {
+    vrpnHandTracker->set_update_rate(v);
 //fprintf(stderr, "Set force device update rate to %.5f\n", v);
   } else {
 //fprintf(stderr, "No force device, "
@@ -817,7 +824,7 @@ void handle_commit_change( vrpn_int32 , void *) // don't use val, userdata.
       (dataset->heightPlaneName->string());
 	  
     // only allow commit to be activated in selected modes.
-    switch (user_mode[0]) {
+    switch (user_0_mode) {
 
     //if we are feeling before
     // a modify, (can be either freehand or line tool)
@@ -956,7 +963,7 @@ void handle_commit_cancel( vrpn_int32, void *) // don't use val, userdata.
     if (tcl_commit_canceled != 1) return;
 
     // only allow cancel to be activated in selected modes.
-    switch (user_mode[0]) {
+    switch (user_0_mode) {
 
     //if we are feeling before
     // a modify, (can be any tool: freehand, line, constrained freehand, ...)
@@ -1085,12 +1092,12 @@ void setupHaptics (int mode) {
  * dispatch_event - dispatch the given event based on the current mode and user
  *
  */
-void dispatch_event(int user, int mode, int event, nmb_TimerList * /*timer*/)
+void dispatch_event(int mode, int event, nmb_TimerList * /*timer*/)
 {
     int ret = 0;
-
+    int user = 0;
     // If no hand tracker this function shouldn't do anything
-    if ( vrpnHandTracker[user] == NULL )
+    if ( vrpnHandTracker == NULL )
         return;
 
     switch(mode) {
@@ -1161,7 +1168,7 @@ void dispatch_event(int user, int mode, int event, nmb_TimerList * /*timer*/)
 	case USER_CENTER_TEXTURE_MODE:  // mouse control only!
 		break;
 	default:
-	    fprintf(stderr,"dispatch_event(): Event not implemented\n");
+	    fprintf(stderr,"dispatch_event(): Event %d not implemented\n", mode);
 	    break;
     }
 
@@ -1185,7 +1192,6 @@ void dispatch_event(int user, int mode, int event, nmb_TimerList * /*timer*/)
 int interaction(int bdbox_buttons[], double bdbox_dials[], 
 		int phantButtonPressed, nmb_TimerList * timer)
 {
-  int		user;
   int i;
   /* eventList is static so unsupported buttons/dials will be init-ed and
   ** stay 0 (no event) */
@@ -1226,12 +1232,11 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     }
   }
   
-  VERBOSE(4, "  Entering interaction() loop.");
+  VERBOSE(4, "  Entering interaction().");
   /*
    * handle button events for each user-  do each handler independent of
    *  of the other so that grabbing and flying can be done together
    */
-  for ( user = 0; user < NUM_USERS; user++ ) {
     int		triggerButtonPressed = 0; 
     
     // get value for trigger button event
@@ -1272,7 +1277,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       // a HOLD_EVENT correctly if it is not preceded by
       // a PRESS event (AAS)
       if (eventList[0] != HOLD_EVENT) {
-	dispatch_event(user, user_mode[user], eventList[0], timer);
+	dispatch_event(user_0_mode, eventList[0], timer);
       }
       eventList[0] = HOLD_EVENT;
     }
@@ -1325,8 +1330,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
 	// a default value of 0, or tcl_offsets to contain this shift,
 	// so there!  Or at least it would be if we weren't constraining
 	// values to [0,1] but to [-.5,.5] instead.
-	Arm_knobs[i] = bdbox_dials[i] + tcl_offsets[i] + 0.5;
-	//Arm_knobs[i] = bdbox_dials[i] + tcl_offsets[i];
+	Arm_knobs[i] = bdbox_dials[i] + 0.5;
 	if (Arm_knobs[i] > 1.0) {
 	  Arm_knobs[i] -= 1.0;
 	} else if (Arm_knobs[i] < 0.0) {
@@ -1404,7 +1408,7 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       // the x and y coords of their hand in the world, only the z varies
       // (CONSTR_FREEHAND_XYZ mode only)
       if (microscope->state.modify.tool == CONSTR_FREEHAND_XYZ) {
-	nmui_Util::getHandInWorld(user, xy_pos);
+	nmui_Util::getHandInWorld(0, xy_pos);
       }
       xy_lock = 1;
     }
@@ -1433,13 +1437,20 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       // because tclvars are set to ignore changes from C.
       handle_commit_cancel(tcl_commit_canceled, NULL);
     }
-
+    mode_change = 0;
+    // Set the user mode, and indicate a mode change, if it's different
+    if (last_mode != user_0_mode) {
+        mode_change = 1;
+    }
     // see if the user changed modes using a button
-    mode_change |= butt_mode(eventList, user_mode+user);
-
+    int temp = user_0_mode;
+    if( butt_mode(eventList, &temp) ) {
+        mode_change = 1;
+        user_0_mode = temp;
+    }
     // also check to see if the modify style has changed -
     // can affect hand icon as well.
-    if (user_mode[user] == USER_PLANEL_MODE) {
+    if (user_0_mode == USER_PLANEL_MODE) {
       mode_change |= microscope->state.modify.style_changed;
     }
 
@@ -1450,13 +1461,13 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
       // If the user was going to go into a disabled mode, change them
       // into GRAB mode instead.  Some modes are currently not
       // implemented or not used.
-      if ((user_mode[user] == USER_COMB_MODE)||
-	  (user_mode[user] == USER_SWEEP_MODE)||
-	  (user_mode[user] == USER_BLUNT_TIP_MODE)||
-	  (user_mode[user] == USER_PULSE_MODE))
+      if ((user_0_mode == USER_COMB_MODE)||
+	  (user_0_mode == USER_SWEEP_MODE)||
+	  (user_0_mode == USER_BLUNT_TIP_MODE)||
+	  (user_0_mode == USER_PULSE_MODE))
 	{
 	  fprintf(stderr,"Warning -- mode disabled (entering grab mode instead)\n");
-	  user_mode[user] = USER_GRAB_MODE;
+	  user_0_mode = USER_GRAB_MODE;
 	}
 
       /* If the user is in HOLD_EVENT at the time of the
@@ -1464,20 +1475,20 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
        * previous mode and an PRESS_EVENT to the new mode
        * so that all setup/cleanup code is executed. */
       if (eventList[TRIGGER_BT] == HOLD_EVENT) {
-	dispatch_event(user, last_mode[user], RELEASE_EVENT, timer);
-	dispatch_event(user, user_mode[user], PRESS_EVENT, timer);
+	dispatch_event( last_mode, RELEASE_EVENT, timer);
+	dispatch_event( user_0_mode, PRESS_EVENT, timer);
       }		    
 
       VERBOSE(6, "    Calling graphics->setUserMode().");
 
       // Change icons to ones for this new mode.
-      graphics->setUserMode(last_mode[user], last_style[user],
-			    user_mode[user], microscope->state.modify.style,
+      graphics->setUserMode(last_mode, last_style,
+			    user_0_mode, microscope->state.modify.style,
 			    microscope->state.modify.optimize_now_param);
 
       /* Last mode next time around is the current mode this time around */
-      last_style[user] = microscope->state.modify.style;
-      last_mode[user] = user_mode[user];
+      last_style = microscope->state.modify.style;
+      last_mode = user_0_mode;
 
       /* Make the associated sound */
       // Taken out for now
@@ -1488,8 +1499,8 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     }
     else if ( first_mode == 1 ) {
       first_mode = 0;
-      last_style[user] = microscope->state.modify.style;
-      last_mode[user] = user_mode[user];
+      last_style = microscope->state.modify.style;
+      last_mode = user_0_mode;
     }
 
     // quick approximation
@@ -1509,13 +1520,11 @@ int interaction(int bdbox_buttons[], double bdbox_dials[],
     VERBOSE(6, "    Calling dispatch_event().");
 
 	/* Handle the current event, based on the user mode and user */
-    dispatch_event(user, user_mode[user], eventList[0], timer);
+    dispatch_event(user_0_mode, eventList[0], timer);
     lastTriggerEvent = eventList[0];
 
-
-  }
   // TCH - HACK but it works
-  decoration->user_mode = user_mode[0];
+  decoration->user_mode = user_0_mode;
 
   VERBOSE(4, "  Done with interaction().");
 
@@ -2143,7 +2152,7 @@ VERBOSE(8, "      In doLine().");
 	   to do this, so put the user into grab mode -- Renee */
 	if (dataset->inputGrid->readMode() != READ_DEVICE)
 	  {
-	    handleCharacterCommand("G", &dataset->done, 1);
+	    user_0_mode = USER_GRAB_MODE;
 	    printf("Line mode available only on live data!!!\n");
 	    return 0;
 	  }
@@ -2618,7 +2627,7 @@ int doFeelLive (int whichUser, int userEvent)  {
   /* if we are not running live, you should not be able
      to do this, so put the user into grab mode */
   if (dataset->inputGrid->readMode() != READ_DEVICE) {
-    handleCharacterCommand("G", &dataset->done, 1);
+    user_0_mode = USER_GRAB_MODE;
     printf("SharpTip mode available only on live data!!!\n");
     return 0;
   }
@@ -2627,7 +2636,7 @@ int doFeelLive (int whichUser, int userEvent)  {
   // microscope, we can't do this, so put the user into grab mode.
 
   if (!microscope->haveMutex()) {
-    handleCharacterCommand("G", &dataset->done, 1);
+    user_0_mode = USER_GRAB_MODE;
     //printf("Can't touch when we don't have access to the microscope.\n");
     return 0;
   }
@@ -2916,13 +2925,13 @@ doSelect(int whichUser, int userEvent)
 	   to do this, so put the user into grab mode */
 	if (dataset->inputGrid->readMode() != READ_DEVICE)
 	  {
-	    handleCharacterCommand("G", &dataset->done, 1);
+	    user_0_mode = USER_GRAB_MODE;
 	    printf("Select mode available only on live data!!!\n");
 	    return 0;
 	  }
 
   if (!microscope->haveMutex()) {
-    handleCharacterCommand("G", &dataset->done, 1);
+    user_0_mode = USER_GRAB_MODE;
     //printf("Can't touch when we don't have access to the microscope.\n");
     return 0;
   }

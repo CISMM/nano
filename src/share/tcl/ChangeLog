@@ -1,3 +1,9 @@
+2000-12-28  Aron Helser  <helser@cs.unc.edu>
+
+	* modify.tcl: Removed references to term_input. Disabled trace
+	routine for optimize now until Kwan fixes it. 
+	* mainwin.tcl: same.
+
 2000-12-20  Aron Helser  <helser@cs.unc.edu>
 
 	* all: 3rdtech merge into main trunk. 

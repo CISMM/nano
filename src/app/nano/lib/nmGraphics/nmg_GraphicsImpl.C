@@ -210,7 +210,7 @@ nmg_Graphics_Implementation::nmg_Graphics_Implementation(
   BCPlane* plane = dataset->inputGrid->getPlaneByName
     (dataset->heightPlaneName->string());
   decoration->aimLine.moveTo(plane->minX(), plane->maxY(), plane);
-  init_world_modechange( USER_GRAB_MODE, 0, 0 );
+  init_world_modechange( g_user_mode, 0, 0 );
 
 
   if (!connection) return;
@@ -2521,7 +2521,7 @@ void nmg_Graphics_Implementation::setTrueTipScale (float f) {
 void nmg_Graphics_Implementation::setUserMode (int oldMode, int oldStyle,
 					       int newMode, int style,
 					       int tool) {
-//fprintf(stderr, "nmg_Graphics_Implementation::setUserMode().\n");
+//fprintf(stderr, "nmg_Graphics_Implementation::setUserMode() old %d %d new %d %d.\n", oldMode, oldStyle, newMode, style);
   clear_world_modechange(oldMode, oldStyle, tool);
   init_world_modechange(newMode, style, tool);
   g_user_mode = newMode;

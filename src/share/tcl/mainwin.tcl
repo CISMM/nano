@@ -55,7 +55,7 @@ catch { option add *Font {helvetica -15 } startupFile}
 #global knobs
 #global  user_0_mode
 #global  maxR maxG maxB minR minG minB ruler_r ruler_g ruler_b
-#global  color_flag polish region_changed term_input surface_changed
+#global  color_flag polish region_changed surface_changed
 
 #
 # 3rdTech modifications:
@@ -104,9 +104,6 @@ set filter_names {none }
 # List of available images including those not in the input grid
 set imageNames {none }
 
-#intialize stuff
-#set color_flag "Maximum"
-set term_input ""
 
 # Hide until set up.
 wm withdraw .
@@ -131,6 +128,7 @@ source [file join ${tcl_script_dir} panel_tools.tcl]
 # The iwidgets message box had a problem when reporting Phantom errors,
 # for some reason - Tcl_Eval failed in that situation.
 # Switched to tk_messageBox procedure, and things work fine. 
+
 #iwidgets::messagedialog .error_dialog -title "NanoManipulator Error" \
 #    -bitmap error -text "Error" -modality application
 
@@ -138,17 +136,16 @@ source [file join ${tcl_script_dir} panel_tools.tcl]
 #.message_dialog buttonconfigure OK -text "Yes"
 #.error_dialog hide Cancel 
 proc nano_fatal_error {msg } {
-    global term_input
+    global quit_program_now
     tk_messageBox -message "$msg" -title "NanoManipulator Fatal Error" \
             -type ok -icon error 
-    set term_input q 
+    set quit_program_now 1 
 #    .error_dialog config -text "$msg" -title "NanoManipulator Fatal Error" \
 #            -bitmap error 
-#    .error_dialog buttonconfigure OK -command "set term_input q ; .error_dialog deactivate 1"
+#    .error_dialog buttonconfigure OK -command " set quit_program_now 1; .error_dialog deactivate 1"
 #    .error_dialog activate
 }
 proc nano_error {msg } {
-    global term_input
     tk_messageBox -message "$msg" -title "NanoManipulator Error" \
             -type ok -icon error 
 #    .error_dialog config -text "$msg" -title "NanoManipulator Error" \
@@ -157,7 +154,6 @@ proc nano_error {msg } {
 #    .error_dialog activate
 }
 proc nano_warning {msg } {
-    global term_input
     tk_messageBox -message "$msg" -title "NanoManipulator Warning" \
             -type ok -icon warning 
 #    .error_dialog config -text "$msg" -title "NanoManipulator Warning" \
@@ -238,7 +234,7 @@ $filemenu add command -label "Exit" -underline 1 -command {
         exit 0
     } else {
         # we ran using NanoManipulator. Tell main app to exit. 
-        set term_input q
+        set quit_program_now 1
     }
 }
 

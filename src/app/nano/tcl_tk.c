@@ -37,8 +37,7 @@
 extern "C" int Blt_Init (Tcl_Interp *interp);
 extern "C" int Blt_SafeInit(Tcl_Interp *interp);
 
-#include "microscape.h"  // for user_mode, mode_change, tcl_offsets,
-                         // Arm_knobs, ...
+#include "microscape.h"  // for user_mode, mode_change, tcl_offsets
 #include "globals.h"
 #include "tcl_tk.h"
 
@@ -55,14 +54,8 @@ extern "C" int Blt_SafeInit(Tcl_Interp *interp);
 
 
 static	Tcl_Interp *tk_control_interp = NULL;
-static	int	old_user_mode;
-//static	double	old_x_min_scale, old_x_max_scale;
 static	int	controls_on = 0;
-static  int  old_knobs[8];
-static  int  knobs_set_from_c;
 
-
-static void (* command_handler) (char *, vrpn_bool *, int);
 
 /***********************************************************
  * here's a little function that will let outsiders accesss
@@ -73,117 +66,13 @@ Tcl_Interp *get_the_interpreter(void)
   return tk_control_interp;
 }
 
-void set_Tk_command_handler (void (* f) (char *, vrpn_bool *, int)) {
-  command_handler = f;
-}
-
-/** Trace routine that handles updates to user_0_mode variable from Tcl */
-char *handle_Tk_mode_change(ClientData /*clientData*/,
-			    Tcl_Interp *interp, char *name1, char *name2, 
-			    int /*flags*/)
-{
-	char	*cvalue;
-	int	value;
-
-	/* Look up the new value of the variable */
-	cvalue = Tcl_GetVar2(interp, name1, name2, TCL_GLOBAL_ONLY);
-	if (cvalue == NULL) {
-		fprintf(stderr,"Warning!  Can't read %s from Tcl\n",name1);
-	} else if (Tcl_GetInt(interp, cvalue, &value) != TCL_OK) {
-		fprintf(stderr,"Warning!  %s not integer from Tcl\n",name1);
-	}
-
-	/* Set the user mode, and indicate a mode change, if it's different */
-	if (old_user_mode != value) {
-		user_mode[0] = value;
-		old_user_mode = value;
-		mode_change = 1;
-	}
-
-	// TCH - HACK, but it works
-	decoration->user_mode = user_mode[0];
-
-	return NULL;
-}
-
-char *handle_knob_change(ClientData /*clientData*/,
-			 Tcl_Interp *interp, char *name1, char *name2, int /*flags*/)
-{
-	char	*cvalue;
-	int value;
-	int index;
-	
-	// this doesn't work - only shields knob[0]
-	if (knobs_set_from_c) 
-	{
-	  knobs_set_from_c =0;
-	  return NULL;
-	  
-	}
-	
-	/* Look up the new value of the variable */
-	cvalue = Tcl_GetVar2(interp, name1, name2, TCL_GLOBAL_ONLY);
-	if (cvalue == NULL)
-	  fprintf(stderr,"Warning!  Can't read %s from Tcl\n",name1);
-	else 
-	{
-	  if (Tcl_GetInt(interp, cvalue, &value) != TCL_OK)
-		fprintf(stderr,"Warning!  Error reading %s(%s)\n",name1,name2);
-	  else
-	  {
-	    Tcl_GetInt(interp, name2, &index);
-	    if (index <=7 && index >=0)
-	    {
-	      tcl_offsets[index] += (float)(value - old_knobs[index])/100.0;
-	      if (tcl_offsets[index] > 1.0)
-		tcl_offsets[index] -= 1.0;
-	      else if (tcl_offsets[index] < -1.0)
-		tcl_offsets[index] += 1.0;
-	      Arm_knobs[index] = ((float)value)/100.0;
-// 	      printf("knob(%d) from %d to %d in tcl, offset: %g\n",index,
-// 		     old_knobs[index], value,tcl_offsets[index]);
-	      old_knobs[index] = value;
-	    }
-	  }
-	}
-
-
-	
-	return NULL;
-}
-
-char * handle_term_input (ClientData, Tcl_Interp * interp,
-                          char * name1, char *, int)
-{
-	char	*cvalue;
-
-	/* Look up the new value of the variable */
-	cvalue = Tcl_GetVar(interp, name1, TCL_GLOBAL_ONLY);
-	if (cvalue == NULL) 
-	{
-	  fprintf(stderr,"Warning!  Can't read %s from Tcl\n",name1);
-	}
-	else
-	  /* note:  pointer to done flag is usually second argument */
-	  /* but this is handled by setting user_mode[0] to -1  */
-	{
-	  if (command_handler)
-	    (*command_handler)(cvalue, &dataset->done, strlen(cvalue));
-	}
-
-	return NULL;
-}
-
 /** Initialize the Tk control panels */
 int	init_Tk_control_panels (const char * tcl_script_dir,
                                 int collabMode,
                                 nmb_TimerList * timer)
 {
 	char    command[256];
-	//char	cvalue[100];
-	//char    index[2];
 	Tk_Window       tk_control_window;
-	//int i, new_val;
 	
 	VERBOSE(4, "  Initializing Tcl");
 	Tcl_Interp * my_tk_control_interp = Tcl_CreateInterp();
@@ -255,7 +144,11 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 	/* Load the Tcl script that handles main interface window
 	 * and mode changes */
 	VERBOSE(4, "  Loading Tcl script");
-	sprintf(command, "%s%s",tcl_script_dir,TCL_MODE_FILE);
+        if ((tcl_script_dir[strlen(tcl_script_dir)]) == '/') {
+            sprintf(command, "%s%s",tcl_script_dir,TCL_MODE_FILE);
+        } else {
+            sprintf(command, "%s/%s",tcl_script_dir,TCL_MODE_FILE);
+        }            
 	if (Tcl_EvalFile(my_tk_control_interp, command) != TCL_OK) {
 		fprintf(stderr, "Tcl_Eval(%s) failed: %s\n", command,
 			my_tk_control_interp->result);
@@ -282,64 +175,8 @@ int	init_Tk_control_panels (const char * tcl_script_dir,
 /** connect some C variables to tk variables */
 int     init_Tk_variables ()
 {
-        char    command[256];
-        char    cvalue[100];
-        char    index[2];
-        int i, new_val;
-
-        const double * minColor;
-        const double * maxColor;
-
-
-	/* Link the variables that need linking and the callback routines
-	 * to handle updates to the mode from either end. */
-	VERBOSE(4, "  Tracing more Tcl variables");
-	if (Tcl_TraceVar(tk_control_interp, "user_0_mode",
-		TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
-		handle_Tk_mode_change, (ClientData) NULL) != TCL_OK) {
-		fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n", "user_0_mode",
-			tk_control_interp->result);
-		return(-1);
-	}
-	old_user_mode = user_mode[0];
-	sprintf(cvalue,"%d",user_mode[0]);
-	Tcl_SetVar(tk_control_interp, "user_0_mode", cvalue, TCL_GLOBAL_ONLY);
-
-	/* setup callback for changes to tcl terminal input variable to */
-	/* simulate an option entered by the keyboard */
-	if (Tcl_TraceVar(tk_control_interp, "term_input",
-		TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
-		handle_term_input, (ClientData) NULL) != TCL_OK) {
-		fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n", "term_input",
-			tk_control_interp->result);
-		return(-1);
-	}
-
-	
-	/* Initialize the values of the knobs in tcl, before we
-	 * setup callbacks. */
-	for (i=0;i<8;i++) {
-	  new_val = (int) (100 * Arm_knobs[i]);
-	  old_knobs[i] = new_val;
-	  sprintf(index,"%d",i);
-	  sprintf(cvalue,"%d",new_val);
-	  Tcl_SetVar2(tk_control_interp,"knobs",index,cvalue,TCL_GLOBAL_ONLY);
-	}
-
-	/* setup callback for changes to tcl knob variable */
-	if (Tcl_TraceVar2(tk_control_interp, "knobs",NULL,
-		TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
-		handle_knob_change, (ClientData) NULL) != TCL_OK) {
-		fprintf(stderr, "Tcl_TraceVar(%s) failed: %s\n", "knobs",
-			tk_control_interp->result);
-		return(-1);
-	}
-
-	minColor = graphics->getMinColor();
-	maxColor = graphics->getMaxColor();
-
+        // We have been initialized.
 	controls_on = 1;
-
 
         // Initialize the color bar display. Needs inited interpreter. 
         tcl_colormapRedraw();
@@ -352,39 +189,10 @@ int     init_Tk_variables ()
  * variables have changed, set the Tcl variables as a result. */
 int	poll_Tk_control_panels(void)
 {
-	char	cvalue[100];
-	char    index[2];
-	
-	int  i,new_val;
-	
+        // Check for initialization.
 	if (!controls_on) {
           return -1;
         }
-
-	/* Check user mode and see if it has changed.  If so, set in Tcl */
-	if (user_mode[0] != old_user_mode) {
-		sprintf(cvalue,"%d",user_mode[0]);
-		old_user_mode = user_mode[0];
-		Tcl_SetVar(tk_control_interp, "user_0_mode", cvalue,
-			TCL_GLOBAL_ONLY);
-	}
-
-	/* see if knobs have changed*/
-	for (i=0;i<8;i++)
-	{
-	  new_val = (int) (100 * Arm_knobs[i]);
-	  if (new_val != old_knobs[i]) 
-	  {
-// 	    printf("knob(%d) from %d to %d in C, offset: %g\n",
-// 		   i,old_knobs[i],new_val,tcl_offsets[i]);
-	    old_knobs[i] = new_val;
-	    sprintf(index,"%d",i);
-	    sprintf(cvalue,"%d",new_val);
-	    Tcl_SetVar2(tk_control_interp,"knobs",index,cvalue,TCL_GLOBAL_ONLY);
-	    // this doesn't work - only shields knob[0]
-	    knobs_set_from_c = 1;
-	  }
-	}
 
 	/* Call the Tclvar's main loop to allow them to send new values to
 	 * the Tcl variables if they need to. */

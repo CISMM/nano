@@ -200,7 +200,7 @@ iwidgets::Labeledwidget::alignlabels \
 	
 
 button $nmInfo(modifydisplay).modmarkclr -text "Clear Markers" \
-	-command "set term_input C"
+	-command "set clear_markers 1"
 
 pack $nmInfo(modifydisplay).num_mod_markers \
 	$nmInfo(modifydisplay).mod_marker_height \
@@ -239,8 +239,6 @@ set modifyp_style 0
 set modifyp_tool 0
 set modifyp_constr_xyz_mode 0
 set modifyp_optimize_now 3
-
-trace variable modifyp_optimize_now w flip_optimize_selection_mode
 
 set modifyp_setpoint 1.0
 set modifyp_p_gain 1.0
@@ -628,14 +626,19 @@ proc flip_optimize_selection_mode {optimize_mode_param element op} {
     upvar $optimize_mode_param k
     global user_0_mode
 
+    # This doesn't work! User can switch back to touch after clicking
+    # Optimize Now tool.
+    # AND it sets user_0_mode to touch incorrectly on startup. 
     if { $k==0 } {
 	# use the touch tool for line selection
-	set user_0_mode 12
+	#set user_0_mode 12
     } elseif { $k==1 } {
 	# use the select tool for area selection
-	set user_0_mode 4
+	#set user_0_mode 4
     }
 }
+
+trace variable modifyp_optimize_now w flip_optimize_selection_mode
 
 # eval command expands the lists so we get one list of single elements. 
 eval lappend device_only_controls $mod_line_list

@@ -240,32 +240,29 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        magellanPuckActive = !magellanPuckActive;
        break;
    case 1: 		/* Grab World mode */
-       mode_change = 1;	/* Will make icon change */
-       user_mode[0] = USER_GRAB_MODE;
+       user_0_mode = USER_GRAB_MODE;
        break;
    case 2:
-       mode_change = 1;	/* Will make icon change */
        // Cycling button - cycles through Light, Measure, Scale up, Scale down.
-       if (user_mode[0] == USER_LIGHT_MODE) {
-           user_mode[0] = USER_MEASURE_MODE;
-       } else if (user_mode[0] == USER_MEASURE_MODE) {
-           user_mode[0] = USER_SCALE_UP_MODE;
-       } else if (user_mode[0] == USER_SCALE_UP_MODE) {
-           user_mode[0] = USER_SCALE_DOWN_MODE;
+       if (user_0_mode == USER_LIGHT_MODE) {
+           user_0_mode = USER_MEASURE_MODE;
+       } else if (user_0_mode == USER_MEASURE_MODE) {
+           user_0_mode = USER_SCALE_UP_MODE;
+       } else if (user_0_mode == USER_SCALE_UP_MODE) {
+           user_0_mode = USER_SCALE_DOWN_MODE;
        } else {
-           user_mode[0] = USER_LIGHT_MODE;
+           user_0_mode = USER_LIGHT_MODE;
        }
        break;
        
    case 3:
        if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
        if ((microscope) && (microscope->state.commands_suspended)) return;
-       mode_change = 1;	
        // Cycling button -cycles through Touch Live and Select
-       if (user_mode[0] == USER_PLANEL_MODE) {
-           user_mode[0] = USER_SERVO_MODE;
+       if (user_0_mode == USER_PLANEL_MODE) {
+           user_0_mode = USER_SERVO_MODE;
        } else {
-           user_mode[0] = USER_PLANEL_MODE;
+           user_0_mode = USER_PLANEL_MODE;
        }
        break;
    case 4:              /* Commit button */
@@ -280,8 +277,7 @@ void handle_magellan_button_change(void *userdata, const vrpn_BUTTONCB b){
        center();
        break;
    case 6: 		/* Touch Stored mode */
-       mode_change = 1;	
-       user_mode[0] = USER_PLANE_MODE;
+       user_0_mode = USER_PLANE_MODE;
        break;
    case 7: 		/* XY lock */
        if ((microscope) && (microscope->ReadMode() != READ_DEVICE)) return;
@@ -320,7 +316,7 @@ void handle_magellan_puck_change(void *userdata, const vrpn_TRACKERCB tr)
 
    if (userdata) puck_active = *((vrpn_bool *)userdata);
 
-   switch (user_mode[0]) {
+   switch (user_0_mode) {
    case USER_GRAB_MODE:
    case USER_LIGHT_MODE:
    case USER_MEASURE_MODE:
@@ -651,10 +647,10 @@ void handle_tcl_magellan_button (vrpn_int32, void * userdata)
 int
 reset_phantom()
 {
-  if(vrpnHandTracker[0]!=NULL) {
-      vrpnHandTracker[0]->reset_origin();
-      vrpnHandTracker[0]->request_t2r_xform();
-      vrpnHandTracker[0]->request_u2s_xform();
+  if(vrpnHandTracker!=NULL) {
+      vrpnHandTracker->reset_origin();
+      vrpnHandTracker->request_t2r_xform();
+      vrpnHandTracker->request_u2s_xform();
   }
   return 0;
 }
@@ -729,13 +725,13 @@ phantom_init(vrpn_Connection * local_device_connection)
         // Get the right initial setting.
         handle_phantom_button_mode_change(phantom_button_mode, 
                                           &phantButtonState);
-        vrpnHandTracker[0] = new vrpn_Tracker_Remote(handTrackerName, 
+        vrpnHandTracker = new vrpn_Tracker_Remote(handTrackerName, 
                                                      local_device_connection);
-        handSensor[0] = 0;
+        handSensor = 0;
 
         vrpn_Connection * c = NULL;
-        if (vrpnHandTracker[0])
-          c = vrpnHandTracker[0]->connectionPtr();
+        if (vrpnHandTracker)
+          c = vrpnHandTracker->connectionPtr();
 	if (c == NULL) return -1;
 
 //          vrpn_int32 dropped_conn_id =
@@ -764,16 +760,16 @@ peripheral_init(vrpn_Connection * local_device_connection,
     /* initialize force device (single user) */
     if (phantom_init(local_device_connection)){
 	fprintf(stderr, "Error: could not initialize force device.\n");
-        vrpnHandTracker[0] = NULL;
+        vrpnHandTracker = NULL;
 	phantButton = NULL;
 	forceDevice = NULL;
     }
 
     if (strcmp(headTrackerName, "null") != 0) {
-	vrpnHeadTracker[0] = new vrpn_Tracker_Remote(headTrackerName);
-	headSensor[0] = 0;
+	vrpnHeadTracker = new vrpn_Tracker_Remote(headTrackerName);
+	headSensor = 0;
     } else {
-	vrpnHeadTracker[0] = NULL;
+	vrpnHeadTracker = NULL;
     }
 //      printf("Head Tracker = '%s', Hand Tracker = '%s'\n",headTrackerName,
 //  	handTrackerName);

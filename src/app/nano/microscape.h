@@ -107,10 +107,10 @@ extern	float		MAX_K;  /* for each device		  */
 extern  vrpn_Phantom * phantServer;
 extern  vrpn_MousePhantom * mousePhantomServer;
 extern  vrpn_ForceDevice_Remote *forceDevice;
-extern  vrpn_Tracker_Remote *vrpnHeadTracker[NUM_USERS];
-extern  vrpn_Tracker_Remote *vrpnHandTracker[NUM_USERS];
-extern  int             headSensor[NUM_USERS];
-extern  int             handSensor[NUM_USERS];
+extern  vrpn_Tracker_Remote *vrpnHeadTracker;
+extern  vrpn_Tracker_Remote *vrpnHandTracker;
+extern  int             headSensor;
+extern  int             handSensor;
 extern  vrpn_Button_Remote *phantButton;
 extern  int phantButtonState;
 extern  vrpn_Button_Remote *buttonBox;
@@ -136,8 +136,6 @@ void shutdown_Magellan();
 extern  char * headTrackerName;
 extern  char * handTrackerName;
 extern  char * bdboxName;
-
-extern	int user_mode [];
 
 // used in interaction.c
 extern int mouse3button;

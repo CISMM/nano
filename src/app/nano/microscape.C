@@ -189,6 +189,7 @@ static imported_obj_list* object_list = NULL;
 //-------------------------------------------------------------------------
 // Callback functions used by the Tcl variables.
 
+static void handle_tcl_quit(vrpn_int32 new_value, void *userdata);
 static  void    handle_contour_color_change(vrpn_int32 new_value, void *userdata);
 //need this separate from color because of float new_value
 /*static  void    handle_contour_opacity_change(float new_value, void *userdata);*/
@@ -235,6 +236,7 @@ static  void    handle_set_stream_time_change(vrpn_int32 new_value, void *);
 static  void    handle_joymove (vrpn_float64, void *);
 static  void    handle_recovery_time_change (vrpn_float64, void *);
 static	void	handle_texture_scale_change (vrpn_float64, void *);
+static	void	handle_clear_markers_change (vrpn_int32, void *);
 static	void	handle_markers_shown_change (vrpn_int32, void *);
 static	void	handle_markers_height_change (vrpn_int32, void *);
 
@@ -376,10 +378,10 @@ static	void	update_xdisp_on_plane_change (BCPlane * p,
 #endif
 
 
-vrpn_Tracker_Remote * vrpnHeadTracker [NUM_USERS];
-vrpn_Tracker_Remote * vrpnHandTracker [NUM_USERS];
-int headSensor [NUM_USERS];
-int handSensor [NUM_USERS];
+vrpn_Tracker_Remote * vrpnHeadTracker;
+vrpn_Tracker_Remote * vrpnHandTracker;
+int headSensor;
+int handSensor;
 
 // NANOX
 
@@ -394,11 +396,11 @@ CollaborationManager * collaborationManager = NULL;
 
 
 ///These are used in tracking a remote user's hand position.
-vrpn_Tracker_Remote *vrpnHandTracker_collab[NUM_USERS];
+vrpn_Tracker_Remote *vrpnHandTracker_collab;
 nM_coord_change *nM_coord_change_server = NULL;
 
 /// These are used to track a remote user's mode.
-vrpn_Analog_Remote *vrpnMode_collab[NUM_USERS];
+vrpn_Analog_Remote *vrpnMode_collab;
 vrpn_Analog_Server *vrpnMode_Local = NULL;
 
 /// These are used for synchronizing with a remote user's streamfile playback.
@@ -461,6 +463,9 @@ static Tclvar_string msTimestampsName
 //-----------------------------------------------------------------------
 // TCL initialization section.
 //-----------------------------------------------------------------------
+
+/// Signal from Tcl to quit the program
+Tclvar_int tcl_quit("quit_program_now", 0, handle_tcl_quit);
 
 /// Host where the user interface of microscape is running.
 static Tclvar_string my_hostname("my_hostname", "localhost");
@@ -872,9 +877,12 @@ Tclvar_float	joy1b("joy1(b)",0.0, NULL, NULL);
 
 // Change the number of pulse or scrape markers to show
 
-Tclvar_int numMarkersShown ("number_of_markers_shown", 1000);
-
-Tclvar_int markerHeight ("marker_height", 100);
+Tclvar_int clearMarkers ("clear_markers", 0,
+                         handle_clear_markers_change);
+Tclvar_int numMarkersShown ("number_of_markers_shown", 1000,
+                            handle_markers_shown_change);
+Tclvar_int markerHeight ("marker_height", 100,
+                         handle_markers_height_change);
 
 
 Tclvar_int withdraw_tip ("withdraw_tip", 0, handle_withdraw_tip_change, NULL);
@@ -1499,6 +1507,17 @@ void	handle_cntl_c(int which_signal)
      shutdown_connections();
  }
 
+/** Quit the program, as directed by the user from the Tcl controls */
+void handle_tcl_quit(vrpn_int32 , void *)
+{
+    if (tcl_quit == 0) return;
+    if (dataset) {
+        dataset->done = 1;
+    } else {
+        exit(0);
+    }
+}
+
 //---------------------------------------------------------------------------
 /// Deal with changes in the stride between rows on the grid for tesselation.
 void    handle_stride_change (vrpn_int32 newval, void * userdata) {
@@ -1789,6 +1808,15 @@ static void handle_ruler_widthy_change (vrpn_float64, void * userdata) {
   //cause_grid_redraw(0.0, NULL);
 }
 
+
+static void handle_clear_markers_change (vrpn_int32, void * ) 
+{
+    if (clearMarkers) {
+        decoration->clearPulses();
+        decoration->clearScrapes();
+        clearMarkers = 0;
+    }
+}
 
 /// Change the number of pulse or scrape markers displayed
 // Tom Hudson, 5 May 98
@@ -2350,8 +2378,8 @@ static void handle_center_pressed (vrpn_int32 newValue, void * /*userdata*/) {
   if (!newValue) {
     return;
   }
-
-  handleCharacterCommand("^", &dataset->done, 0);
+  justCentered = 1;
+  center();
   tcl_center_pressed = 0;
 }
 
@@ -2456,8 +2484,7 @@ static void handle_realign_textures_selected_change(vrpn_int32 value, void *)
   else
 	return;
   if ( (value == 0) && set_realign_center ) {
-    mode_change = 1;
-    user_mode[0] = USER_GRAB_MODE;
+    user_0_mode = USER_GRAB_MODE;
     set_realign_center = 0;
   }
 }
@@ -2472,15 +2499,14 @@ static void handle_set_realign_center_change (vrpn_int32 value, void * userdata)
     return;
   }
   
-  mode_change = 1;	/* Will make icon change */
   if ( value == 1 ) {
-    user_mode[0] = USER_CENTER_TEXTURE_MODE;
+    user_0_mode = USER_CENTER_TEXTURE_MODE;
     g->setSphereScale( ( dataset->inputGrid->maxX() -
 				dataset->inputGrid->minX()    ) / 100.0 );
     g->setTextureCenter( 0, 0 );
   }
   else {
-    user_mode[0] = USER_GRAB_MODE;
+    user_0_mode = USER_GRAB_MODE;
   }
 }
 
@@ -3864,8 +3890,8 @@ void handle_phantom_connect (vrpn_Tracker_Remote * handT) {
 
 int register_vrpn_phantom_callbacks(void)
 {
-    vrpn_Tracker_Remote *handT = vrpnHandTracker[0];
-    int hand_sensor = handSensor[0];
+    vrpn_Tracker_Remote *handT = vrpnHandTracker;
+    int hand_sensor = handSensor;
 
     if (handT != NULL) {
 	handT->register_change_handler((void *)&V_TRACKER_FROM_HAND_SENSOR,
@@ -3899,7 +3925,7 @@ int register_vrpn_phantom_callbacks(void)
 
 int handle_phantom_reconnect (void *, vrpn_HANDLERPARAM)
 {
-  handle_phantom_connect(vrpnHandTracker[0]);
+  handle_phantom_connect(vrpnHandTracker);
   return 0;
 }
 
@@ -3973,18 +3999,17 @@ int invalidate_directz_forces(void * userdata) {
 }
 
 int register_vrpn_callbacks(void){
-    vrpn_Tracker_Remote *headT = vrpnHeadTracker[0];
-    int head_sensor = headSensor[0];
+    vrpn_Tracker_Remote *headT = vrpnHeadTracker;
 
     if (headT != NULL){
 
         headT->register_change_handler((void *)&V_TRACKER_FROM_HEAD_SENSOR,
-	    handle_sensor2tracker_change, head_sensor);
+	    handle_sensor2tracker_change, headSensor);
 
 
         //fprintf(stderr, "DEBUG:  using remote vrpn config files for head tracker\n");
             headT->register_change_handler((void *)&V_SENSOR_FROM_HEAD_UNIT,
-	                                    handle_unit2sensor_change, head_sensor);
+	                                    handle_unit2sensor_change, headSensor);
             headT->register_change_handler((void *)&V_ROOM_FROM_HEAD_TRACKER,
                                             handle_tracker2room_change);
 
@@ -4332,11 +4357,6 @@ void setupCallbacks (nmm_Microscope_Remote * m) {
   adhNumToAvg.addCallback
             (handle_adhesion_average_change, m);
 
-  numMarkersShown.addCallback
-            (handle_markers_shown_change, m);
-  markerHeight.addCallback
-            (handle_markers_height_change, m);
-
   changed_image_params.addCallback
             (handle_image_accept, m);
   changed_modify_params.addCallback
@@ -4386,11 +4406,6 @@ void teardownCallbacks (nmm_Microscope_Remote * m) {
 
   adhNumToAvg.removeCallback
             (handle_adhesion_average_change, m);
-
-  numMarkersShown.removeCallback
-            (handle_markers_shown_change, m);
-  markerHeight.removeCallback
-            (handle_markers_height_change, m);
 
   changed_image_params.removeCallback
             (handle_image_accept, m);
@@ -6436,8 +6451,6 @@ int main (int argc, char* argv[])
     long            n = 0L;
     long	    n_displays = 0L;
 
-    int		i;
-
     //    int	real_params = 0;		/* Non-flag parameters */
 
     int new_value_of_rate_knob;
@@ -6633,8 +6646,7 @@ int main (int argc, char* argv[])
 #endif
 
 	/* Set initial user mode */
-	for (i = 0; i < NUM_USERS; i++)
-	   user_mode[i] = USER_GRAB_MODE;
+        user_0_mode = USER_GRAB_MODE;
 
 	// Disable the screen saver if we are on the Onyx and using
 	// openGL.  This keeps it from blanking out in the middle of an
@@ -6699,7 +6711,7 @@ int main (int argc, char* argv[])
   collaborationManager->setPeerPort(wellKnownPorts->collaboratingPeerServer);
   collaborationManager->setServerPort(wellKnownPorts->collaboratingPeerServer);
   collaborationManager->setTimer(&collaborationTimer);
-  collaborationManager->initialize(vrpnHandTracker[0], NULL,
+  collaborationManager->initialize(vrpnHandTracker, NULL,
                                    handle_peer_sync_change);
 
   setupSynchronization(collaborationManager, dataset, microscope);
@@ -6713,7 +6725,6 @@ int main (int argc, char* argv[])
     // the Tk widgits
     init_Tk_control_panels(tcl_script_dir, istate.collabMode,
                            &collaborationTimer);
-    set_Tk_command_handler(handleCharacterCommand);
     VERBOSE(1, "done initialising the control panels\n");
     init_Tk_variables ();
   }
@@ -7044,8 +7055,7 @@ VERBOSE(1, "Entering main loop");
     }
 #endif /* TIMING_TEST */
 
-    /* get and process input for each user  */
-    for ( i = 0; i < NUM_USERS; i++ ){
+    /* get and process input for the user  */
 #ifdef TIMING_TEST
       gettimeofday(&t_b4,&t_zone);
 #endif /* TIMING_TEST */
@@ -7097,12 +7107,12 @@ VERBOSE(1, "Entering main loop");
       if (phantButton) {
 	phantButton->mainloop();
       }
-      if (vrpnHeadTracker[0]) {
-	vrpnHeadTracker[0]->mainloop();
+      if (vrpnHeadTracker) {
+	vrpnHeadTracker->mainloop();
       }
-      if (vrpnHandTracker[0]) {
+      if (vrpnHandTracker) {
 	// XXX crashing here on tantalum-cs (bus error); why??
-	vrpnHandTracker[0]->mainloop();
+	vrpnHandTracker->mainloop();
       }
 
       if(internal_device_connection) {
@@ -7110,16 +7120,16 @@ VERBOSE(1, "Entering main loop");
       }
 
 //nM_coord_change_server sends hand coordinates in world space from one copy
-//of microscape to another; vrpnHandTracker_collab[0] takes these messages
+//of microscape to another; vrpnHandTracker_collab takes these messages
 //and uses the coordinates/orientation it is sent to draw the icon for the
 //collaborator's hand position.
 //The mode is used to determine the text string that follows the user's
 //hand around.
       if (nM_coord_change_server) nM_coord_change_server->mainloop();
-      if (vrpnHandTracker_collab[0]) vrpnHandTracker_collab[0]->mainloop();
+      if (vrpnHandTracker_collab) vrpnHandTracker_collab->mainloop();
       if (vrpnMode_Local) {
 	// Set the mode to the current one and send if changed
-	vrpnMode_Local->channels()[0] = user_mode[0];
+	vrpnMode_Local->channels()[0] = user_0_mode;
 	vrpnMode_Local->report_changes(vrpn_CONNECTION_RELIABLE);
 
 	// Send every couple seconds even if it hasn't changed, so that when
@@ -7137,8 +7147,8 @@ VERBOSE(1, "Entering main loop");
 	}
 	vrpnMode_Local->mainloop();
       }
-      if (vrpnMode_collab[0]) {
-        vrpnMode_collab[0]->mainloop();
+      if (vrpnMode_collab) {
+        vrpnMode_collab->mainloop();
       }
       if (buttonBox) {
         buttonBox->mainloop();
@@ -7148,7 +7158,7 @@ VERBOSE(1, "Entering main loop");
       }
 
       if (collaborationManager) {
-        collaborationManager->setUserMode(user_mode[0]);
+        collaborationManager->setUserMode(user_0_mode);
         collaborationManager->mainloop();
       }
 
@@ -7265,7 +7275,6 @@ VERBOSE(1, "Entering main loop");
       }
    
       ttest0(t_avg_r, "reports");
-    } /* end for-loop (NUM_USERS) */
 
 
 #ifdef TIMING_TEST
@@ -7386,14 +7395,13 @@ VERBOSE(1, "Entering main loop");
 
   if(glenable){
     /* shut down trackers and a/d devices    */
-    for ( i = 0; i < NUM_USERS; i++ ) {
-      if (vrpnHandTracker[i]) {
-	  delete vrpnHandTracker[i];
-	  vrpnHandTracker[i] = NULL;
+      if (vrpnHandTracker) {
+	  delete vrpnHandTracker;
+	  vrpnHandTracker = NULL;
       }
-      if (vrpnHeadTracker[i]) {
-	  delete vrpnHeadTracker[i];
-	  vrpnHeadTracker[i] = NULL;
+      if (vrpnHeadTracker) {
+	  delete vrpnHeadTracker;
+	  vrpnHeadTracker = NULL;
       }
     }
 
@@ -7433,7 +7441,7 @@ VERBOSE(1, "Entering main loop");
 	delete dialBox;
 	dialBox = NULL;
     }
-  }
+  
 
 // Turn the screen saver back on if we're using the SGI and openGL.
 
@@ -7522,7 +7530,11 @@ static void handleTermInput(int ttyFD, vrpn_bool* donePtr)
 /*****************************************************************************
  *
    handleCharacterCommand - handle all character commands for menus/keyboard
- 
+   OBSOLETE - only commands that can be issued no other way remain. Add
+   commands only if it is temporary for testing. This keyboard handler
+   is horrible for the tcl/tk interface, because the console window must
+   be active. 
+
     input:
     	- character to act upon
 	- pointer to 'done' flag
@@ -7537,32 +7549,8 @@ static void handleTermInput(int ttyFD, vrpn_bool* donePtr)
 void handleCharacterCommand (char * character, vrpn_bool * donePtr,
                              int /* nchars */)
 {
-    //static	int	which_pic = 0;
-
     /* handle the given command. */
     switch ( *character ) {
-
-      case 'Q':	/* quit even if there are unsaved buffers */
-	*donePtr = VRPN_TRUE;
-	microscope->state.saveStream = VRPN_TRUE;
-	fprintf(stderr, "\nShutting down WITHOUT saving...\n");
-	break;
-
-      case '\03':	/* ^C: quit even if there are unsaved buffers */
-	*donePtr = VRPN_TRUE;
-	microscope->state.saveStream = VRPN_TRUE;
-	fprintf(stderr, "\nShutting down WITHOUT saving...\n");
-	break;
-
-      case 'q':
-	/*if (!microscope->state.snap.snapshotGrid->empty_list()) {
-	    fprintf(stderr,
-		    "\nThere are unsaved snapshots (use Q to exit anyway)\n");
-	} else { */
-	    *donePtr = VRPN_TRUE;
-	    fprintf(stderr, "\nShutting down...\n");
-	//}
-	break;
 
 //XXX Temporary way to write VRML file.  Make a control panel for it.
       case 'o': // Output a VRML file
@@ -7572,25 +7560,6 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
                                    (GLdouble *) graphics->getMinColor(),
                                    (GLdouble *) graphics->getMaxColor());
 	}
-		break;
-
-
-      case 't':
-
-        {   BCPlane* plane;
-	    plane = ((dataset->inputGrid)->getPlaneByName(dataset->heightPlaneName->string()));
-	    microscope->d_topoFile.gridToTopoData(dataset->inputGrid,plane);
-	    microscope->d_topoFile.writeTopoFile("sample.tfr");
-	}
-	    break;
-	
-      case ':':	
-	{
-	}
-	break;
-	    case '$': 
-		{		/* Draw frame save */
-		}
 		break;
 
 	    case 'I': {         /* Info dump */
@@ -7612,165 +7581,14 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 		}
 		break;
 
-	    case '.': printf( "Refreshing display from grid\n" );
-			microscope->NewEpoch();
-		break;
-
-            case '^': 
-	       //printf( "Fixing lock\n" );
-			justCentered = 1;
-			center();
-		break;
-
-	    case '*':
-			printf( "Adjusting light position\n" );
-			mode_change = 1;	/* Will make icon change */
-			user_mode[0] = USER_LIGHT_MODE;
-		break;
-
-	    case 'A': {		/* Select All */
-
-			/* Tell it where to scan */
-                        microscope->SetRegionNM(microscope->state.xMin,
-                                                microscope->state.yMin,
-                                                microscope->state.yMax,
-                                                microscope->state.yMax);
-
-			/* Tell the user about it */
-			printf("Selected All (entire scan range)\n");
-		}
-		break;
-
-	    case 'G': 		/* Grab World mode */
-		printf("Grab world mode\n");
-		mode_change = 1;	/* Will make icon change */
-		user_mode[0] = USER_GRAB_MODE;
-		break;
-
-	    case '%': 		/* Measure mode */
-		printf("Measure mode\n");
-		mode_change = 1;	/* Will make icon change */
-		user_mode[0] = USER_MEASURE_MODE;
-		break;
-
-	    case 'U': 		/* Scale Up mode */
-		printf("Scale Up mode\n");
-		mode_change = 1;	/* Will make icon change */
-		user_mode[0] = USER_SCALE_UP_MODE;
-		break;
-
-	    case 'D': 		/* Scale Down mode */
-		printf("Scale Down mode\n");
-		mode_change = 1;	/* Will make icon change */
-		user_mode[0] = USER_SCALE_DOWN_MODE;
-		break;
-
-	    case 024: 		/* ^T Touch grid plane mode (Canned)*/
-		printf("Touch grid mode (Canned)\n");
-		mode_change = 1;	/* Will make icon change */
-		user_mode[0] = USER_PLANE_MODE;
-		break;
-
-	    case 'T': 		/* T Touch Live mode */
-		if( READ_DEVICE == microscope->ReadMode() ) {
-		   printf("Touch sample mode (Live)\n");
-		   mode_change = 1;	/* Will make icon change */
-		   user_mode[0] = USER_PLANEL_MODE;
-		   }
-		else printf("Touch mode available only on live data!!!!");
-		break;
-
 	    case 'F': 		/* Fly mode */
 		printf("Fly mode\n");
-		mode_change = 1;	/* Will make icon change */
-		user_mode[0] = USER_FLY_MODE;
-		break;
-
-	    case 'S': 		/* Select mode */
-		printf("Select mode\n");
-		mode_change = 1;	/* Will make icon change */
-		user_mode[0] = USER_SERVO_MODE;
-		break;
-
-	    case 'H': 		/* Height of measure grid mode */
-		printf("Height of measure grid mode\n");
-		mode_change = 1;	/* Will make icon change */
-		user_mode[0] = USER_MEAS_MOVE_MODE;
-		break;
-
-	    case 'V': 		/* Make pulses visible */
-		break;
-
-	    case 'v': 		/* Make pulses invisible */
-		break;
-
-	    case 'C': 		/* Clear existing pulses */
-		if(glenable)
-		  {
-		    decoration->clearPulses();
-		    decoration->clearScrapes();
-		  }
-		break;
-
-	    case 'X': 		/* Close and reopen ARM */
-		printf("_NOT_ closing and reopening ARM...\n");
+		user_0_mode = USER_FLY_MODE;
 		break;
 
 	    case 'i': 		// Adjust information verbosity
 		spm_verbosity = (spm_verbosity + 1) % 2;
 		printf("Verbosity set to %d.\n", spm_verbosity);
-		break;
-
-	    case '0':	/* Adjust the playback rate */
-	    case '1':
-	    case '2':
-	    case '3':
-	    case '4':
-	    case '5':
-	    case '6':
-	    case '7':
-	    case '8':
-	    case '9':
-		decoration->rateOfTime = *character - '0';
-	  	if (vrpnLogFile) {
-		   vrpnLogFile->set_replay_rate(decoration->rateOfTime);
-		}
-	  	if (ohmmeterLogFile) {
-		   ohmmeterLogFile->set_replay_rate(decoration->rateOfTime);
-		}
-	  	if (vicurveLogFile) {
-		   vicurveLogFile->set_replay_rate(decoration->rateOfTime);
-		}
-		printf("Read rate: %d times original\n", decoration->rateOfTime);
-		break;
-
-
-	    case 'x': {		/* Scan in x fastest */
-
-			/* Tell it scan style */
-			microscope->state.do_y_fastest = VRPN_FALSE;
-			if (microscope->SetScanStyle() == -1) {
-				perror("Could not write to server");
-				dataset->done = VRPN_TRUE;
-			}
-
-			/* Tell the user about it */
-			printf("Scan in x fastest\n");
-		}
-		break;
-
-	    case 'y': {		/* Scan in y fastest */
-
-			/* Tell it scan style */
-			microscope->state.do_y_fastest = VRPN_TRUE;
-			if (microscope->SetScanStyle() == -1) {
-				perror("Could not write to server");
-				dataset->done = VRPN_TRUE;
-			}
-
-			/* Tell the user about it */
-			printf("Scan in y fastest\n");
-		}
 		break;
 
 	    case 'B': {		/* Boustrophedonic scan */
@@ -7818,71 +7636,12 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 			(microscope->state.doSplat ? "Splatting" : "Not splatting" ) );
 		break;
 
-	    case '=':		/* Calibrate piezo relaxation */
-		microscope->state.doRelaxComp = (!microscope->state.doRelaxComp);
-		if( !microscope->state.doRelaxComp ) {
-			microscope->d_relax_comp.disable();
-			}
-		else if( !(microscope->state.stmRxTmin +
-                           microscope->state.stmRxTsep ) ) {
-			printf( "RELAX: " );
-			printf( "Must set min (^Mnnn^M) and sep (^Nnnn^N)\n" );
-			microscope->state.doRelaxComp = VRPN_FALSE;
-			microscope->d_relax_comp.disable();
-			}
-		printf("Relaxation compensation %s\n", 
-			(microscope->state.doRelaxComp ? "on" : "off" ) );
-		printf("Relaxation compensation %s in image mode\n", 
-			(microscope->state.doRelaxUp ? "happens" : "does not happen" ) );
-		break;
-
 	    case '~':		/* Drift compensation */
 		microscope->state.doDriftComp = (!microscope->state.doDriftComp);
 		printf("Drift compensation %s\n", 
 			(microscope->state.doDriftComp ? "on" : "off" ) );
 		break;
 
-	    case 'O': {		/* Toggle Ohmmeter on and off */
-		 int	rate;
-
-		 ohmmeter_enabled = (!ohmmeter_enabled);
-		 printf("Ohmmeter %s\n", (ohmmeter_enabled ? "on" : "off" ) );
-
-		 if (ohmmeter_enabled) {
-		    rate = 4;
-		 } 
-		 else {
-		    rate = 0;
-		 }
-		 if (microscope->SetOhmmeterSampleRate(rate) == -1) {
-		    perror("Could not write to the microscope server");
-		    dataset->done = VRPN_TRUE;
-		 }
-		}
-		break;
-
-	    case 'w':
-		/*change the mode to draw graph*/
-		if((xmode==0)&&xenable) {
-		    xmode=1;
-		    xg_start=0;
-		    // TCH 6 May 98 - moved to where xg_start is set to 1
-		    //teststrip=(TwoDLineStrip *)malloc(sizeof(TwoDLineStrip));
-		    //init_linestrip(teststrip);
-		    printf("now in draw graph mode\n");
-		}
-		break;
-
-
-	    case 'W':
-		/*switch back*/
-		if((xmode==1)&&xenable)
-		  {
-			printf("Leaving draw mode\n");
-			xmode=0;
-		  }
-		break;
-		
 		// scanline nudge controls:
 		case 'f':
 			printf("nudging scanline left\n");
@@ -7907,8 +7666,6 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 		break;
 	}
 
-  // TCH - HACK, but it works
-  decoration->user_mode = user_mode[0];
 }	/* handleCharacterCommand */
 
 
@@ -8069,14 +7826,14 @@ static float testarray [1000];
 	  if(mode==M_ROTATE) mode=M_ZOOM;
 	}
 
-	if (user_mode[0] == USER_GRAB_MODE){
+	if (user_0_mode == USER_GRAB_MODE){
 	  startx = event.xbutton.x;
 	  starty = event.xbutton.y;
 	  T[0] = T[1] = T[2] = 0; 
 	  get_Plane_Centers(&offsetx, &offsety, &offsetz);
 	  v_x_invert(&shadowxform, &v_world.users.xforms[0]);
 	  v_x_copy(&modxform, &shadowxform);
-	} else if (user_mode[0] == USER_LIGHT_MODE){
+	} else if (user_0_mode == USER_LIGHT_MODE){
 	  startx = event.xbutton.x;
 	  starty = event.xbutton.y;
 	  graphics->getLightDirection(&T);
@@ -8098,8 +7855,8 @@ static float testarray [1000];
 
       case MotionNotify:
 
-	if( user_mode[0] == USER_GRAB_MODE ||
-	    user_mode[0] == USER_CENTER_TEXTURE_MODE ) {
+	if( user_0_mode == USER_GRAB_MODE ||
+	    user_0_mode == USER_CENTER_TEXTURE_MODE ) {
 
 	  // deltax/y are used to calculate surface transformations:
 	  deltax = event.xmotion.x - startx;
@@ -8257,7 +8014,7 @@ collabVerbose(5, "handleMouseEvents:  updateWorldFromRoom().\n");
 				    PointerMotionMask,&event));
 	  }	
 	}
-	else if ( user_mode[0] == USER_LIGHT_MODE ) {
+	else if ( user_0_mode == USER_LIGHT_MODE ) {
 	  if ( mode == M_TRANSLATE ){
 
 //fprintf(stderr, "handleMouseEvent() got ACTIVE MotionNotify.\n");
