@@ -135,12 +135,12 @@ setOrderFile(const char *file)
 
 
 void nma_ShapeAnalyze::
-imageAnalyze(nmb_PlaneSelection planeSelection)
+imageAnalyze(nmb_PlaneSelection planeSelection, nmb_Dataset * dataset) //*
 {
 	BCPlane *imagePlane;
 	imagePlane = planeSelection.height;
 
-	d_cntRec->cnt_image_read(imagePlane);			// read image from BCPlane
+	d_cntRec->cnt_image_read(imagePlane);			// read image from BCPlane //*
 	
 	d_cntRec->cnt_image_flat();
 	d_cntRec->cnt_image_filter();
@@ -149,17 +149,22 @@ imageAnalyze(nmb_PlaneSelection planeSelection)
 	d_cntRec->cnt_image_label();
 //	d_cntRec->cnt_image_order(d_txtFile);
 
-//	BCGrid * currentGrid = dataset->inputGrid;//for right now just keep as 
+	BCGrid * currentGrid = dataset->inputGrid;//for right now just keep as 
         //dataset->inputGrid, but can change it later to get planes in other 
         //related BCGrids as well
-	d_cntRec->cnt_image_select(d_txtFile, imagePlane->name()->Characters());
+
+	//d_cntRec->cnt_image_select(d_txtFile, imagePlane->name()->Characters());
+	//above line commented out because causes system to crash
+	d_cntRec->cnt_image_Msk = NULL;
+	//set to NULL for testing without calling cnt_image_select
 	
 	//		d_cntRec.cnt_image_write("blur.ppm", d_cntRec.cnt_image_Blr);
 	//		d_cntRec.cnt_image_write("medial.ppm", d_cntRec.cnt_image_Med);
 	if (d_maskWrite) {
-	  d_cntRec->cnt_image_write(d_imgMaskFile, d_cntRec->cnt_image_Msk);
+	  //d_cntRec->cnt_image_write(d_imgMaskFile/*image file (name)*/, d_cntRec->cnt_image_Msk/*data array*/);
 
-          //nma_ShapeIdentifiedPlane shapePlane(imagePlane, dataset, d_desiredFilename, d_cntRec->cnt_image_Msk);
+          nma_ShapeIdentifiedPlane shapePlane(imagePlane, dataset, 
+			  d_desiredFilename, d_cntRec->cnt_image_Msk);
 	}
 	if (d_ordWrite) {
 		d_cntRec->cnt_image_write(d_imgOrdFile, d_cntRec->cnt_image_Ord);
@@ -171,29 +176,78 @@ imageAnalyze(nmb_PlaneSelection planeSelection)
 
 
 
-/*
+//constructor for when data is sent across initially
 nma_ShapeIdentifiedPlane::
-	  nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, char* outputPlaneName, 
-				   double * cntMask)
-	    : d_sourcePlane(sourcePlane), d_dataset(dataset), d_outputPlaneName(outputPlaneName),
-              d_cntMask(cntMask)
+nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const char* outputPlaneName, double * cntMask)
+  : nmb_CalculatedPlane(outputPlaneName, dataset), d_sourcePlane(sourcePlane), 
+  d_dataset(dataset), d_outputPlaneName(outputPlaneName), d_cntMask(cntMask)
 {
-    create_ShapeIdentifiedPlane();
+    array_size = create_ShapeIdentifiedPlane();
+}
+
+//'default' constructor for when no data sent across initially
+nma_ShapeIdentifiedPlane::
+nma_ShapeIdentifiedPlane(BCPlane * sourcePlane, nmb_Dataset * dataset, const char* outputPlaneName)
+  : nmb_CalculatedPlane(outputPlaneName, dataset), d_sourcePlane(sourcePlane), 
+  d_dataset(dataset), d_outputPlaneName(outputPlaneName), d_cntMask(NULL)
+{
+  cout << "In nma_ShapeIdentifiedPlane constructor" << endl;
+  array_size = 0;  
 }
 
 nma_ShapeIdentifiedPlane::
 ~nma_ShapeIdentifiedPlane(){
-  delete d_sourcePlane;
+  /*delete d_sourcePlane;
   delete d_outputPlane;
-  delete d_dataset;
+  delete d_dataset;*/
 }
 
+//updates d_cntMask when new information is received and fills in d_outputPlane with new values
 void nma_ShapeIdentifiedPlane::
+UpdateDataArray(double * cntMask, int size){
+  cout << "In nma_ShapeIdentifiedPlane::UpdateDataArray" << endl;
+
+  if(d_cntMask != NULL && array_size == size){//already filled once
+    //give d_cntMask new values
+    for(int i = 0; i < size; ++i){
+      d_cntMask[i] = cntMask[i];
+    }//don't know if above loop is necessary--already pointer to array?
+
+    short rowlength = d_sourcePlane->GetGrid()->numX();
+    short columnheight = d_sourcePlane->GetGrid()->numY();
+
+    //fill in d_outputPlane with the new values
+    for(int y = 0; y <= columnheight - 1; y++) 
+    {
+      for( int x = 0; x <= rowlength - 1; x++) 
+  	{
+	  d_outputPlane->setValue(x, (columnheight - y),(float)(d_cntMask[y*rowlength + x]));  
+	  //the array d_cntMask fills from the top down when you "chunk" the array
+	  //into pieces of length rowlength.  However, traditional y values used
+	  //in setValue treat lower valued y's as at the bottom of the image, and
+	  //larger values at the top.  the above line accounts for this.
+	}
+    }
+
+  }
+  else if(d_cntMask == NULL){//first time filling it up
+    d_cntMask = cntMask;
+	cout << "Calling nma_ShapeIdentifiedPlane::create_ShapeIdentifiedPlane()" << endl;
+    array_size = create_ShapeIdentifiedPlane();//need to initialize array_size if first time
+  }
+  else{//d_cntMask != NULL && array_size != size
+    cerr << "Sizes do not match" << endl << "Cannot update with current scan" << endl;
+    return;
+  }  
+}
+
+int nma_ShapeIdentifiedPlane::
 create_ShapeIdentifiedPlane()
 {
+  cout << "In nma_ShapeIdentifiedPlane::create_ShapeIdentifiedPlane()" << endl;
 
   //local variables for code simplification
-  BCGrid* sourcePlaneParentGrid = d_sourcePlane->GetGrid();
+  //BCGrid* sourcePlaneParentGrid = d_sourcePlane->GetGrid();
 
   
   char uniqueOutputPlaneName[50];
@@ -205,8 +259,9 @@ create_ShapeIdentifiedPlane()
 
   //check if other plane with name we want to give it is already in the grid
   //see if we can name the new plane with "d_imgMaskFile" as a name, will be NULL if we can
-  d_outputPlane = sourcePlaneParentGrid->getPlaneByName(uniqueOutputPlaneName);  
-  if( d_outputPlane != NULL )
+  calculatedPlane /*d_outputPlane*/ = 
+	  d_sourcePlane->GetGrid()/*sourcePlaneParentGrid*/->getPlaneByName(uniqueOutputPlaneName);  
+  if( calculatedPlane /*d_outputPlane*/ != NULL )
     {
       // a plane already exists by this name, and we disallow that.
       char s[] = "Cannot create new height plane.  A plane already exists of the name:  ";
@@ -216,10 +271,10 @@ create_ShapeIdentifiedPlane()
 
   //adding new plane  
   char newunits[1000];
-  sprintf(newunits, "boolean");
-  d_outputPlane 
-    = sourcePlaneParentGrid->addNewPlane(uniqueOutputPlaneName, newunits, NOT_TIMED);
-  if( d_outputPlane == NULL ) 
+  sprintf(newunits, "");//fill in with correct units ANDREA
+  calculatedPlane /*d_outputPlane*/ 
+    = d_sourcePlane->GetGrid()/*sourcePlaneParentGrid*/->addNewPlane(uniqueOutputPlaneName, newunits, NOT_TIMED);
+  if( calculatedPlane /*d_outputPlane*/ == NULL ) 
     {
       char s[] = "Could not create new height plane.  Can't make plane:  ";
       char msg[1024];
@@ -231,7 +286,7 @@ create_ShapeIdentifiedPlane()
   TopoFile tf;
   
   nmb_Image *im = d_dataset->dataImages->getImageByPlane(d_sourcePlane);
-  nmb_Image *output_im = new nmb_ImageGrid(d_outputPlane);
+  nmb_Image *output_im = new nmb_ImageGrid(calculatedPlane /*d_outputPlane*/);
   if( im != NULL ) 
     {
       im->getTopoFileInfo(tf);
@@ -245,21 +300,36 @@ create_ShapeIdentifiedPlane()
   
   d_dataset->dataImages->addImage(output_im);
 
-  short rowlength = sourcePlaneParentGrid->numX();
-  short columnheight = sourcePlaneParentGrid->numY();
+  short rowlength = d_sourcePlane->GetGrid()/*sourcePlaneParentGrid*/->numX();
+  short columnheight = d_sourcePlane->GetGrid()/*sourcePlaneParentGrid*/->numY();
+
+  int size = columnheight*rowlength;//size of this array--used if first time filling
 
   // fill in the new plane.
-  for(int y = 0; y <= columnheight - 1; y++) 
-    {
-      for( int x = 0; x <= rowlength - 1; x++) 
-  	{
-	  d_outputPlane->setValue(x, (columnheight - y),(float)(d_cntMask[y*rowlength + x]));  
-	  //the array d_cntMask fills from the top down when you "chunk" the array
-	  //into pieces of length rowlength.  However, traditional y values used
-	  //in setValue treat lower valued y's as at the bottom of the image, and
-	  //larger values at the top.  the above line accounts for this.
-	}
-    }
+  for(int y = 0; y <= columnheight - 1; y++) {
+
+      for( int x = 0; x <= rowlength - 1; x++){
+		  if(d_cntMask == NULL){//to test, since cnt_image_select does not seem to be
+								//working...
+			  if(y%2 == 0){
+				  /*d_outputPlane*/calculatedPlane->setValue(x, (columnheight - y),
+						(float)(256.0)); 
+			  }
+			  else{
+				  /*d_outputPlane*/calculatedPlane->setValue(x, (columnheight - y),
+						(float)(0.0)); 
+			  }
+		  }
+		  else{//normal operation
+			  /*d_outputPlane*/calculatedPlane->setValue(x, (columnheight - y),
+					(float)(d_cntMask[y*rowlength + x]));
+			  //the array d_cntMask fills from the top down when you "chunk" the array
+			  //into pieces of length rowlength.  However, traditional y values used
+			  //in setValue treat lower valued y's as at the bottom of the image, and
+			  //larger values at the top.  the above line accounts for this.
+		  }
+	  }
+   }
 
   // add ourselves to the dataset
   d_dataset->addNewCalculatedPlane( this );
@@ -272,7 +342,43 @@ create_ShapeIdentifiedPlane()
 
   // let interested parties know a new plane has been created.
   nmb_CalculatedPlane::addNewCalculatedPlane(this);
+
+  return size;
  
 }
 
+/*void nmb_CalculatedPlane:: 
+createCalculatedPlane( char* units, BCPlane* sourcePlane, nmb_Dataset* dataset )
+  throw( nmb_CalculatedPlaneCreationException )
+{
+  calculatedPlane 
+    = dataset->inputGrid->addNewPlane( calculatedPlaneName, units, NOT_TIMED);
+  if( calculatedPlane == NULL ) 
+    {
+      char s[] = "Could not create calculated plane.  Can't make plane:  ";
+      char msg[1024];
+      sprintf( msg, "%s%s.", s, calculatedPlaneName );
+      throw nmb_CalculatedPlaneCreationException( msg );
+    }
+  
+  TopoFile tf;
+  nmb_Image* im = dataset->dataImages->getImageByPlane( sourcePlane );
+  nmb_Image* output_im = new nmb_ImageGrid( calculatedPlane );
+  if( im != NULL ) 
+    {
+      im->getTopoFileInfo(tf);
+      output_im->setTopoFileInfo(tf);
+    } 
+  else 
+    {
+      fprintf(stderr, "nmb_FlattenedPlane: Warning, "
+	      "input image not in list\n");
+    }
+  dataset->dataImages->addImage(output_im);
+
+  // add new calculated plane to the dataset
+  dataset->addNewCalculatedPlane( this );
+  
+  addNewCalculatedPlane( this );  
+} // end createCalculatedPlane
 */
