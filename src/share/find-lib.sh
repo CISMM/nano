@@ -9,6 +9,8 @@ TARGET=$1
 shift
 OBJECTS=$1
 shift
+SOURCES=$1
+shift
 
 LIB1=lib/$TARGET
 LIB2=app/nano/lib/$TARGET
@@ -23,13 +25,13 @@ OBJ2=obj/$HW_OS/$LIB2
 
 if test -e "$OBJECTS/$LIB1/lib$TARGET.a"; then
    echo 1>&2 "Found lib$TARGET.a in $OBJECTS/$LIB1";
-   echo "-I$1/$SRC1 -L$OBJECTS/$LIB1"
+   echo "-I$SOURCES/$SRC1 -L$OBJECTS/$LIB1"
    exit 0;
 fi
 
 if test -e "$OBJECTS/$LIB2/lib$TARGET.a"; then
    echo 1>&2 "Found lib$TARGET.a in $OBJECTS/$LIB2";
-   echo "-I$1/$SRC2 -L$OBJECTS/$LIB2"
+   echo "-I$SOURCES/$SRC2 -L$OBJECTS/$LIB2"
    exit 0;
 fi
 
@@ -56,6 +58,18 @@ done
 #echo 1>&2 "Failed to locate lib$TARGET.a ... perhaps it has not been compiled?"
 
 #echo 1>&2 "Looking for $TARGET directory ..."
+
+if test -d "$SOURCES/$SRC1/"; then
+   echo 1>&2 "Found $TARGET in $SOURCES/$SRC1";
+   echo "-I$SOURCES/$SRC1 -L$OBJECTS/$LIB1"
+   exit 0;
+fi
+
+if test -d "$SOURCES/$SRC2/"; then
+   echo 1>&2 "Found $TARGET in $SOURCES/$SRC2";
+   echo "-I$SOURCES/$SRC2 -L$OBJECTS/$LIB2"
+   exit 0;
+fi
 
 for path in $* ; do
    if test -d "$path/$TARGET/" ; then

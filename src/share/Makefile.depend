@@ -6,8 +6,6 @@ else
    -include $(MAKEFILE_DEPEND)
 endif
 
-SRC_LIST := $(APP_SRC) $(LIBRARY_SRC)
-
 ##############################################################################
 #
 # Expand the uses libs stuff
@@ -27,6 +25,17 @@ ifneq ($(DEPEND),true)
    endif
 endif
 
+##############################################################################
+#
+# Compile list of files for dependencies
+#
+
+SRC_LIST := $(APP_SRC) $(LIBRARY_SRC)
+
+ifdef APP_EXEC
+   APP_LIST := "$(APP_EXEC): $(join $(patsubst -L%,%,$(USES_LIBS_LD)),$(addprefix /lib,$(addsuffix .a,$(USES_LIBS))))"
+endif
+
 .PHONY: depend
 depend: $(OBJECT_DIR) $(MAKEFILE_DEPEND)
 
@@ -37,6 +46,7 @@ $(MAKEFILE_DEPEND):
 	@echo -- remake the dependency file by typing \"$(MAKE) depend\"
 	@echo ----------------------------------------------------------------
 	$(shell $(CC) -M $(CFLAGS) $(DEFINES) $(USES_LIBS_INC) $(INCLUDE_FLAGS) $(SRC_LIST) | perl -pe "s|(.*\\.o\\w*:)|$(OBJECT_DIR)/\\1|g;" > $(MAKEFILE_DEPEND))
+	$(shell echo $(APP_LIST) >> $(MAKEFILE_DEPEND))
 	$(shell echo DEP_LIBS_INC := $(USES_LIBS_INC) >> $(MAKEFILE_DEPEND))
 	$(shell echo DEP_LIBS_LD := $(USES_LIBS_LD) >> $(MAKEFILE_DEPEND))
 	$(shell echo DEP_LIBS_LIB := $(USES_LIBS_LIB) >> $(MAKEFILE_DEPEND))
