@@ -393,9 +393,11 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 	// modificaton force. The Slow Line tool goes to the first
 	// point and waits.
 	if ((microscope->state.modify.tool == LINE)||
-	    (microscope->state.modify.tool == SLOW_LINE)) {
+	    (microscope->state.modify.tool == SLOW_LINE)||
+	    (microscope->state.modify.tool == SLOW_LINE_3D)) {
 	    // set up a reference for convenience
-	    Position_list & p = microscope->state.modify.stored_points;
+	    Position_list & p = 
+	      microscope->state.modify.stored_points;
 	    // Find out if the list of points has at least two points in it
 	    p.start();
 	    if (p.curr() == NULL) {
@@ -415,17 +417,21 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 	    }
 	    /* Do a poly-line modification!!! */
 	    // Wait for tip to get to starting position
-	    Point_value *value =
+            if ( (microscope->state.modify.tool == LINE) ||
+		 (microscope->state.modify.tool == SLOW_LINE) ) {
+	      Point_value *value =
 		microscope->state.data.inputPoint->getValueByPlaneName
-                            (dataset->heightPlaneName->string());
-	    if (value == NULL) {
+		(dataset->heightPlaneName->string());
+	      if (value == NULL) {
 		fprintf(stderr, "handle_commit_change():  "
-                                "could not get input point!\n");
+			"could not get input point!\n");
 		return;
+	      }
+	      printf("handle_commit_change: points in list, doing modify.\n");
+	      microscope->TakeFeelStep(p.currX(), p.currY(), value, 1);
+            } else if (microscope->state.modify.tool == SLOW_LINE_3D) {
+	      microscope->TakeDirectZStep(p.currX(), p.currY(), p.currZ());
 	    }
-	    printf("handle_commit_change: points in list, doing modify.\n");
-	    microscope->TakeFeelStep(p.currX(), p.currY(), value, 1);
-
 	    double x, y;
 	    Position * currPt;
 	    Position * prevPt;
@@ -436,13 +442,17 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
             // XXX - might want to move everything below up to init_slow_line
             // into init_slow_line
          
-            if (microscope->state.modify.tool == SLOW_LINE) {
+            if ((microscope->state.modify.tool == SLOW_LINE)||
+		(microscope->state.modify.tool == SLOW_LINE_3D)) {
                 microscope->state.modify.slow_line_relax_done = VRPN_FALSE;
             }
 
 	    //printf("handle_commit_change: peizo relax done\n");
 	    // start modification force!
-	    microscope->ModifyMode();
+	    // We're already in modifcation mode using slow_line_3d
+	    if (microscope->state.modify.tool != SLOW_LINE_3D) {
+	      microscope->ModifyMode();
+	    }
            
 	    // Wait for the mode to finish (XXX should wait for response)
 	    sleep(1);
@@ -450,7 +460,8 @@ static void handle_commit_change( vrpn_int32 , void *) // don't use val, userdat
 
 	    // Slow line tool doesn't do the modification now, it
 	    // waits for the user to press Play or Step controls.
-	    if (microscope->state.modify.tool == SLOW_LINE) {
+	    if ((microscope->state.modify.tool == SLOW_LINE)||
+		(microscope->state.modify.tool == SLOW_LINE_3D)) {
 	      microscope->state.modify.slow_line_committed = VRPN_TRUE;
 	      // Call this function to initialize the slow_line tool
 	      init_slow_line(microscope);
@@ -717,7 +728,8 @@ void dispatch_event(int user, int mode, int event, nmb_TimerList * /*timer*/)
 	   } else if ((microscope->state.modify.tool == CONSTR_FREEHAND) && 
 		      (!microscope->state.modify.constr_line_specified)) {
 	       ret = doLine(user, event);
-	   } else if (microscope->state.modify.tool == SLOW_LINE) {
+	   } else if (microscope->state.modify.tool == SLOW_LINE || 
+		      microscope->state.modify.tool == SLOW_LINE_3D ) {
 	       if (microscope->state.modify.slow_line_committed == VRPN_TRUE) {
 		   ret = doWorldGrab(user,event);
 		   // Do something useful, like move the surface view. We
@@ -1665,11 +1677,13 @@ int doMeasure(int whichUser, int userEvent)
 int doLine(int whichUser, int userEvent)
 {
 	v_xform_type	worldFromHand;
-        q_vec_type clipPos;
+        q_vec_type      clipPos, clipPosNM;
  	static int	SurfaceGoing = 0;
+	static int      ForceFieldGoing = 0;
         q_matrix_type	hand_mat;
 	q_vec_type	angles;
 	PointType 	TopL, BottomL, TopR, BottomR; // sweepline markers
+	vrpn_bool       valid_Direct_Z_Point;
 
 VERBOSE(8, "      In doLine().");
 
@@ -1701,6 +1715,13 @@ VERBOSE(8, "      In doLine().");
 	/* Find the x,y location of hand in grid space */
 	nmui_Util::getHandInWorld(whichUser, clipPos);
         nmui_Util::clipPosition(plane, clipPos);
+
+	// If this is 3d slowline, we need to have the Z converted into
+	// NM (divide by the plane scale).  As noted in doFeelLive(), if
+	// the plane scale approaches zero, then nmOK becomes false;
+	
+	q_vec_copy(clipPosNM, clipPos);
+	valid_Direct_Z_Point = nmui_Util::convertPositionToNM(plane, clipPosNM);
 
         /* Move the aiming line to the user's hand location */
 	// re-draw the aim line and the red sphere representing the tip.
@@ -1760,7 +1781,7 @@ VERBOSE(8, "      In doLine().");
 
         setupHaptics(USER_LINE_MODE);
 
-VERBOSE(8, "      doLine:  starting case statement.");
+VERBOSE(8, "      doLine:  starting case statement.");    
 
 	switch ( userEvent ) 
 	    {
@@ -1768,7 +1789,23 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	    case PRESS_EVENT:
 		/* Request a reading from the current location,
 		 * and wait till tip gets there */
+
+	     	      
+	      if (microscope->state.modify.tool == SLOW_LINE_3D) {
+		if ( pos_list.empty() ) {
+		    microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
+		    microscope->ModifyMode();
+		}
+		else{
+		  microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1],
+					    clipPosNM[2], value, 0);
+		}
+		//microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
+	      }
+	      else{    
 		microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
+      	      }
+
 		
 		// need this so we can use touch_live_to_plane_fit_to_line
 		// to feel surface later.
@@ -1782,11 +1819,46 @@ VERBOSE(8, "      doLine:  starting case statement.");
 	case HOLD_EVENT:
 	    /* Feel the surface, to help determine the next point. */
 	    /* Request a reading from the current location */
-	    microscope->TakeFeelStep(clipPos[0], clipPos[1]);
-	    
+	  
+	    if (microscope->state.modify.tool == SLOW_LINE_3D) {
+	      //		microscope->TakeDirectZStep(clipPos[0], clipPos[1],
+	      //					    clipPos[2]);
+	      
+	      if(!tcl_commit_pressed) {
+		if (valid_Direct_Z_Point) {
+		  microscope->TakeDirectZStep(clipPosNM[0], clipPosNM[1], 
+					  clipPosNM[2]);
+		}
+	      }
+	    }
+	    else{
+	      if(!tcl_commit_pressed) {
+		// which one was here initially???
+		//   microscope->TakeFeelStep(clipPos[0], clipPos[1], value, 1);
+		microscope->TakeFeelStep(clipPos[0], clipPos[1]);
+	      }
+	    }
+
 	    // update the position of the rubber-band line
 	    graphics->setRubberLineEnd(clipPos[0], clipPos[1]);
 	    graphics->setRubberSweepLineEnd(TopL, TopR);
+	    
+	    if ( (microscope->state.modify.tool == SLOW_LINE_3D) &&
+		(tcl_commit_pressed) ) {
+	      // Stop using the plane to apply force (?)
+	      if( SurfaceGoing ) {
+		if (forceDevice) {
+		  forceDevice->stopSurface();
+		  SurfaceGoing = 0;
+		}
+	      }
+	      specify_directZ_force(whichUser);
+	      if(forceDevice && config_haptic_enable) {
+		forceDevice->sendForceField();
+		ForceFieldGoing = 1;
+	      }
+	    }
+	    else {
 	    
 	    /* Apply force to the user based on current sample points */
 	    // XXX needs new test with new nmm_relaxComp object
@@ -1801,7 +1873,7 @@ VERBOSE(8, "      doLine:  starting case statement.");
                 }
               }
 	      //}
-	    
+	    }
 	    break;
 
 	    case RELEASE_EVENT:
@@ -1818,6 +1890,13 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		    	forceDevice->stopSurface();
 			SurfaceGoing = 0;
 		    }
+		}
+		// added 6/30
+		if( ForceFieldGoing ) {
+		  if (forceDevice) {
+		    forceDevice->stopForceField();
+		    ForceFieldGoing = 0;
+		  }
 		}
 
 		int list_id;
@@ -1843,11 +1922,22 @@ VERBOSE(8, "      doLine:  starting case statement.");
 		// PRESS event will be handled by doFeelLive -
 		// modification freehand when we hit "commit".
 		if ((microscope->state.modify.tool == LINE)||
-		    (microscope->state.modify.tool == SLOW_LINE)){
+		    (microscope->state.modify.tool == SLOW_LINE)||
+		    (microscope->state.modify.tool == SLOW_LINE_3D)) {
 		   graphics->setRubberLineStart(clipPos[0], clipPos[1]);
 		   graphics->setRubberSweepLineStart(TopL, TopR);
 		   //save this point as part of the poly-line
-		   pos_list.insert(clipPos[0], clipPos[1], list_id);
+		   if (microscope->state.modify.tool == SLOW_LINE_3D) {
+		     // Insert points in reverse order so we start
+		     // modifying from the last point we add. 
+		     pos_list.insertPrev(clipPos[0], clipPos[1], 
+				     clipPos[2], list_id);
+		     // microscope->ImageMode();
+		     //microscope->ResumeScan(); //???
+		   }
+		   else {
+		     pos_list.insert(clipPos[0], clipPos[1], list_id);
+		   }
 		} else if (microscope->state.modify.tool == CONSTR_FREEHAND) {
 		   // If this is the second point, set a flag so we
 		   // switch to doFeelLive on next event.

@@ -363,6 +363,7 @@ generic_entry $modify.styleparam.avg-num newmodifyp_avg_num "averaging (1,10)" r
 
 #set mod_blunt_list "$modify.styleparam.tri-size $modify.styleparam.tri-speed"
 set mod_sweep_list "$modify.styleparam.sweepwidth"
+
 set mod_sewing_list "$modify.styleparam.bot-delay \
 	$modify.styleparam.top-delay $modify.styleparam.z-pull \
         $modify.styleparam.punchdist $modify.styleparam.speed \
@@ -392,8 +393,10 @@ radiobutton $modify.tool.constrfree -text "Constr. Free" -variable newmodifyp_to
 	-value 2   -anchor nw
 radiobutton $modify.tool.slow_line -text "Slow Line" -variable newmodifyp_tool\
 	-value 3   -anchor nw
+radiobutton $modify.tool.slow_line_3d -text "Slow Line 3D"\
+	-variable newmodifyp_tool -value 4 -anchor nw
 pack $modify.tool.freehand $modify.tool.line $modify.tool.constrfree \
-	$modify.tool.slow_line -side top -fill x 
+	$modify.tool.slow_line $modify.tool.slow_line_3d -side top -fill x 
 
 #setup Modify toolparam box
 label $modify.toolparam.label -text "Tool parameters" 
@@ -412,6 +415,7 @@ radiobutton $modify.control.feedback -text "Feedback" \
 radiobutton $modify.control.directz -text "Direct Z" \
     -variable newmodifyp_control -value 1   -anchor nw
 pack $modify.control.feedback $modify.control.directz -side top -fill x 
+set mod_control_list "$modify.control.feedback $modify.control.directz"
 
 #setup Modify controlparam box
 label $modify.controlparam.label -text "Control parameters" 
@@ -501,8 +505,9 @@ proc flip_mod_style {mod_style element op} {
 # flips $modify.toolparam widgets
 proc flip_mod_tool {mod_tool element op} {
     global modify
-    global mod_line_list mod_slow_line_list
+    global mod_line_list mod_slow_line_list mod_control_list
     global fspady
+    global newmodifyp_control
 
     upvar $mod_tool k
 
@@ -510,20 +515,36 @@ proc flip_mod_tool {mod_tool element op} {
         # selected freehand
 	set plist [lrange [pack slaves $modify.toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg} 
+	foreach widg $mod_control_list {pack forget $widg}
+	foreach widg $mod_control_list {pack $widg -side top -fill x}
     } elseif {$k==1} {
 	# selected line
 	set plist [lrange [pack slaves $modify.toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_line_list {pack $widg -side top -fill x -pady $fspady}
+	foreach widg $mod_control_list {pack forget $widg}
+	foreach widg $mod_control_list {pack $widg -side top -fill x}
     } elseif {$k==2} {
 	# selected constrained freehand
 	set plist [lrange [pack slaves $modify.toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
+	foreach widg $mod_control_list {pack forget $widg}
+	foreach widg $mod_control_list {pack $widg -side top -fill x}
     } elseif {$k==3} {
 	# selected slow line
 	set plist [lrange [pack slaves $modify.toolparam] 1 end] 
 	foreach widg $plist {pack forget $widg}
 	foreach widg $mod_slow_line_list {pack $widg -side top -fill x -pady $fspady}
+	foreach widg $mod_control_list {pack forget $widg}
+	foreach widg $mod_control_list {pack $widg -side top -fill x}
+    } elseif {$k==4} {
+	# selected slow line 3d
+	# anyone want to make this more elegant?
+	foreach widg $mod_control_list {pack forget $widg}
+	foreach widg $mod_control_list {pack $widg -side top -fill x}
+	set plist [lrange [pack slaves $modify.control] 1 1]
+	foreach widg $plist {pack forget $widg}
+	set newmodifyp_control 1
     }
 }
 

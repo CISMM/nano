@@ -942,6 +942,25 @@ int draw_world (int) {
   // Draw the parts of the scene other than the surface.
   /*******************************************************/
 
+  // draw the microscope's current scanline as a visual indicator to the user
+  
+  if (decoration->drawScanLine) {
+    float oldColor[4];
+    float oldLineWidth[1];
+    glGetFloatv(GL_CURRENT_COLOR, oldColor);
+    glGetFloatv(GL_LINE_WIDTH, oldLineWidth);
+    glColor4f(0.1, 1.0, 0.1, 1.0);
+    glLineWidth(1.0);  // should probably keep the old value around too
+    glBegin(GL_LINE_STRIP);
+      for (int p = 0; p < decoration->scanLineCount; p++) {
+        glVertex3f(decoration->scan_line[p][0], decoration->scan_line[p][1],
+		   decoration->scan_line[p][2] + 0.8);
+    }
+    glEnd();
+    glLineWidth(oldLineWidth[0]);
+    glColor4fv(oldColor);
+  }
+
   // TCH 8 April 98 don't know where these go best
   if (decoration->red.changed()) {
     //fprintf(stderr, "Making red line.\n");
@@ -1016,24 +1035,6 @@ int draw_world (int) {
   TIMERVERBOSE(5, mytimer, "draw_world:Drawing the world");
 
   myworld();
-
-  // draw the microscope's current scanline
-  
-  float oldColor[4], sl_addition;
-  
-  sl_addition = (decoration->sl_right[0] - decoration->sl_left[0]) * 0.01;
-
-  glGetFloatv(GL_CURRENT_COLOR, oldColor);
-  glColor4f(0.1, 1.0, 0.1, 1.0);
-  glLineWidth(2.0);   // should save the old value before the new one is set
-  glBegin(GL_LINES);
-     glVertex3f(decoration->sl_left[0] - sl_addition, decoration->sl_left[1],
-	     decoration->sl_left[2] + 5.0);
-     glVertex3f(decoration->sl_right[0] + sl_addition, decoration->sl_right[1],
-	     decoration->sl_right[2] + 5.0);
-  glEnd();
-  glLineWidth(1.0);
-  glColor4fv(oldColor);
 
   /***************************/
   /* Check for any GL errors */

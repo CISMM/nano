@@ -140,7 +140,7 @@ struct AFMModifyState {
   Position_list stored_points;
     ///< list of points used to actually carry out a modification
     ///< after COMMIT is pressed
-
+  
    vrpn_bool constr_line_specified; 
        ///< CONSTR_FREEHAND tool starts contraining feeling and modification
        ///< when this is changed to VRPN_TRUE

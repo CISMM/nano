@@ -80,8 +80,8 @@ double nmb_Image::heightWorld() const {
 void nmb_Image::pixelToWorld(const double i, const double j,
                   double &x, double &y) const {
         // just bilinear interpolation:
-        double y_frac = j/(double)height();
-        double x_frac = i/(double)width();
+        double y_frac = j/((double)height() - 1);
+        double x_frac = i/((double)width() - 1);
         double x_min = boundX(nmb_ImageBounds::MIN_X_MIN_Y)*(1.0-y_frac) +
              boundX(nmb_ImageBounds::MIN_X_MAX_Y)*(y_frac);
         double x_max = boundX(nmb_ImageBounds::MAX_X_MIN_Y)*(1.0-y_frac) +

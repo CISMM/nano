@@ -19,6 +19,8 @@ extern GLsizei num_grid_lists;
 
 extern int report_gl_errors(void);
 
+extern void post_handle_exportFileName_change(void);
+
 #if defined(FLOW) || defined (sgi) || defined(linux)
 	extern int draw_world (int);
 #else

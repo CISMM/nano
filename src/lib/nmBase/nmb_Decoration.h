@@ -50,7 +50,11 @@ class nmb_Decoration {
     nmb_Line blue;
 
     // microscope current scanline (visual)
-    float  sl_right[3], sl_left[3];
+
+    void initScanline(long);
+    PointType *scan_line;
+    long scanLineCount;
+    int drawScanLine;
 
     nmb_Line aimLine;
 

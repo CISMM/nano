@@ -46,7 +46,7 @@
 
 #include <vrpn_Connection.h>
 
-#if (!defined(X) || !defined(Y) || !defined(Z))
+#if (!defined(X) || !defined(Y) || !defined(Z1))
 #define	X	(0)
 #define	Y	(1)
 #define	Z	(2)
@@ -3603,28 +3603,40 @@ long nmm_Microscope_Remote::RcvWindowLineData (const long _x, const long _y,
 long nmm_Microscope_Remote::RcvWindowLineData(const long _x, const long _y,
 					      const long _dx, const long _dy,
 					      const long _lineCount) {
-  long xf, yf;
-  double xi_2, yi_2, xf_2, yf_2;
+
+  double curr_x, curr_y, xf, yf;
   nmb_Image *image;
   
   // need to convert from a nmb_string to a BCString
   BCString o = BCString( (char *)(d_dataset->heightPlaneName) );
   image = d_dataset->dataImages->getImageByName( o );
 
-  xf = _x + (_lineCount - 1) * _dx;
-  yf = _y + (_lineCount - 1) * _dy;
-  
-  image->pixelToWorld( (double)_x, (double)_y, xi_2, yi_2);
-  image->pixelToWorld( (double)xf, (double)yf, xf_2, yf_2);
+  // we want to stick the x,y and z values of every pixel along the
+  // last received line to an array into the nmb_Decoration class so
+  // that we can grab it later and draw the microscope's "scanline"
 
-  d_decoration->sl_left[0] = (float)xi_2;
-  d_decoration->sl_left[1] = (float)yi_2;
-  d_decoration->sl_left[2] = 
-    d_dataset->inputGrid->getPlaneByName( o )->scaledValue(_x,_y);
-  d_decoration->sl_right[0] = (float)xf_2;
-  d_decoration->sl_right[1] = (float)yf_2;
-  d_decoration->sl_right[2] = 
-    d_dataset->inputGrid->getPlaneByName( o )->scaledValue(xf,yf);
+  if (d_decoration->scan_line) {
+    // if the decoration's lineCount isn't the same as the current linecount
+    // the microscope's surface size changed, so update the decoration's
+    // linecount field
+    if (d_decoration->scanLineCount != _lineCount) {
+      delete [] d_decoration->scan_line;
+      d_decoration->initScanline(_lineCount);
+    }
+  }
+  else {
+    d_decoration->initScanline(_lineCount);
+  }
+
+  for (int i=0; i < _lineCount; i++) {
+    curr_x = _x + i * _dx;
+    curr_y = _y + i * _dy;
+    image->pixelToWorld( (double)curr_x, (double)curr_y, xf, yf);
+    d_decoration->scan_line[i][0] = xf;
+    d_decoration->scan_line[i][1] = yf;
+    d_decoration->scan_line[i][2] = d_dataset->inputGrid->getPlaneByName( o )->
+        scaledValue( curr_x, curr_y );
+  }
 
   return 0;
 }
@@ -4436,7 +4448,8 @@ int nmm_Microscope_Remote::handle_barrierSynch (void *ud,
    nmm_Microscope_Remote *me = (nmm_Microscope_Remote *)ud;
 //   printf("got barrier synch message for slow line(?)\n");
    if (strcmp(msg->comment, RELAX_MSG) == 0) {
-      if (me->state.modify.tool != SLOW_LINE) {
+      if ((me->state.modify.tool != SLOW_LINE)&&
+	  (me->state.modify.tool != SLOW_LINE_3D)) {
          fprintf(stderr, "nmm_Microscope::handle_barrierSynch: Error, not in"
                          " slow line mode\n");
          return 0;
@@ -4445,14 +4458,28 @@ int nmm_Microscope_Remote::handle_barrierSynch (void *ud,
       float y1 =  me->state.modify.slow_line_prevPt->y();
       float x2 =  me->state.modify.slow_line_currPt->x();
       float y2 =  me->state.modify.slow_line_currPt->y();
+      float z1;
+      float z2;
 
       float x = x2*(me->state.modify.slow_line_position_param) +
               x1*(1.0-me->state.modify.slow_line_position_param);
       float y = y2*(me->state.modify.slow_line_position_param) +
               y1*(1.0-me->state.modify.slow_line_position_param);
+      float z = 0;
+      if (me->state.modify.tool == SLOW_LINE_3D) {
+	z1 =  me->state.modify.slow_line_prevPt->z();
+	z2 =  me->state.modify.slow_line_currPt->z();
+	z = z2*(me->state.modify.slow_line_position_param) +
+              z1*(1.0-me->state.modify.slow_line_position_param);	
+      }
 //      printf("sending first point request of slow line mode\n");
       me->state.modify.slow_line_relax_done = VRPN_TRUE;
-      me->TakeModStep(x,y);
+      if (me->state.modify.tool == SLOW_LINE_3D) {
+	me->TakeDirectZStep(x,y,z);
+      }
+      else {
+	me->TakeModStep(x,y);
+      }
    }
    return 0;
 }

@@ -3498,7 +3498,9 @@ static	void	handle_screenImageFileName_change (const char *, void *userdata)
 		}
 	  }
 #endif
+	  decoration->drawScanLine = 0;
 	  graphics->mainloop();
+	  decoration->drawScanLine = 1;
 
           g->createScreenImage(newScreenImageFileName.string(), (ImageType)i);
       }

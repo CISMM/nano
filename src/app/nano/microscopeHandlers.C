@@ -518,6 +518,7 @@ void handle_modify_accept (vrpn_int32, void * _mptr) {
 //      printf("  Constrained Freehand:\n");
         break;
       case SLOW_LINE:
+      case SLOW_LINE_3D:
 	break;
       default:
         printf("  Unknown modify tool!!!\n");
@@ -773,7 +774,8 @@ void init_slow_line (void * _mptr)
  specified in interaction.c in the doLine function. */
 void	handle_slow_line_playing_change (vrpn_int32, void * _mptr)
 {
-  if (microscope->state.modify.tool != SLOW_LINE) return;
+  if ((microscope->state.modify.tool != SLOW_LINE)&&
+      (microscope->state.modify.tool != SLOW_LINE_3D)) return;
   if (microscope->state.modify.slow_line_committed != VRPN_TRUE) return;
 
   // Instead of replicating code, we will just call the function that
@@ -792,7 +794,8 @@ off. Always take a step, so the slow_line_ReceiveNewPoint fcn has a
 chance to request another point. */
 void	handle_slow_line_step_change (vrpn_int32, void * _mptr)
 {
-  if (microscope->state.modify.tool != SLOW_LINE) return;
+  if ((microscope->state.modify.tool != SLOW_LINE)&&
+      (microscope->state.modify.tool != SLOW_LINE_3D)) return;
   if (microscope->state.modify.slow_line_committed != VRPN_TRUE) return;
   
   // XXX maybe take this out, so function can be used for "play"
@@ -807,11 +810,21 @@ void	handle_slow_line_step_change (vrpn_int32, void * _mptr)
   float y1 =  microscope->state.modify.slow_line_prevPt->y();
   float x2 =  microscope->state.modify.slow_line_currPt->x();
   float y2 =  microscope->state.modify.slow_line_currPt->y();
-  float line_length = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+  float z1, z2;
+  float line_length;
+  if (microscope->state.modify.tool == SLOW_LINE) {
+    line_length = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+  }
+  else {
+    z1 = microscope->state.modify.slow_line_prevPt->z();
+    z2 = microscope->state.modify.slow_line_currPt->z();
+    line_length = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
+  }
+
   float param_step = microscope->state.modify.step_size / line_length;
   
   if (microscope->state.modify.slow_line_direction == FORWARD) {
-    if ( microscope->state.modify.slow_line_position_param == 1.0) {
+    if ( microscope->state.modify.slow_line_position_param >= 1.0) {
       // don't step off the end of the segment
       // Turn off "play" if it was on. 
       microscope->state.modify.slow_line_playing = VRPN_FALSE;
@@ -820,7 +833,7 @@ void	handle_slow_line_step_change (vrpn_int32, void * _mptr)
       microscope->state.modify.slow_line_position_param += param_step;
     }
   } else if (microscope->state.modify.slow_line_direction == REVERSE) {
-    if ( microscope->state.modify.slow_line_position_param == 0.0){
+    if ( microscope->state.modify.slow_line_position_param <= 0.0){
       // don't step off the end of the segment
       // Turn off "play" if it was on. 
        microscope->state.modify.slow_line_playing = VRPN_FALSE;
@@ -863,7 +876,8 @@ void	handle_slow_line_step_change (vrpn_int32, void * _mptr)
     "play" we will go in the other direction. */
 void	handle_slow_line_direction_change (vrpn_int32, void * _mptr)
 {
-  if (microscope->state.modify.tool != SLOW_LINE) return;
+  if ((microscope->state.modify.tool != SLOW_LINE)&&
+      (microscope->state.modify.tool != SLOW_LINE_3D)) return;
   if (microscope->state.modify.slow_line_committed != VRPN_TRUE) return;
   if (microscope->state.modify.slow_line_playing == VRPN_TRUE)
     microscope->state.modify.slow_line_playing = VRPN_FALSE;
@@ -882,7 +896,8 @@ Either take a step along the line segment, if "play" has been
 pressed, or take another measurment at the same point. */
 int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
 {
-  if (microscope->state.modify.tool != SLOW_LINE) return 0;
+  if ( (microscope->state.modify.tool != SLOW_LINE)&&
+       (microscope->state.modify.tool != SLOW_LINE_3D)) return 0;
   if (microscope->state.modify.slow_line_committed != VRPN_TRUE) return 0;
   if (microscope->state.modify.slow_line_relax_done != VRPN_TRUE) return 0;
   // We don't want to send out new requests if the AFM is relaxing. 
@@ -910,13 +925,26 @@ int slow_line_ReceiveNewPoint (void * _mptr, const Point_results *)
     float y1 =  microscope->state.modify.slow_line_prevPt->y();
     float x2 =  microscope->state.modify.slow_line_currPt->x();
     float y2 =  microscope->state.modify.slow_line_currPt->y();
-    
+    float z1, z2;
     float x = x2*(microscope->state.modify.slow_line_position_param) +
               x1*(1.0-microscope->state.modify.slow_line_position_param);
     float y = y2*(microscope->state.modify.slow_line_position_param) +
               y1*(1.0-microscope->state.modify.slow_line_position_param);
- 
-    microscope->TakeModStep(x,y);
+    float z;
+
+    if (microscope->state.modify.tool == SLOW_LINE_3D) {
+      z1 =  microscope->state.modify.slow_line_prevPt->z();
+      z2 =  microscope->state.modify.slow_line_currPt->z();
+      z = z2*(microscope->state.modify.slow_line_position_param) +
+              z1*(1.0-microscope->state.modify.slow_line_position_param);
+    }
+    
+    if (microscope->state.modify.tool == SLOW_LINE) {
+      microscope->TakeModStep(x,y);
+    }
+    else if (microscope->state.modify.tool == SLOW_LINE_3D) {
+      microscope->TakeDirectZStep(x,y,z);
+    }
  // }
   return 0;
 }

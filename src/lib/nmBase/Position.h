@@ -24,6 +24,7 @@ private:
 protected:
     double _x;
     double _y;
+    double _z;
     
     long _sec;
     long _usec;
@@ -39,7 +40,13 @@ protected:
 public:
     Position (const double x, const double y) :
       _next (NULL), _prev (NULL),
-      _x (x), _y (y), 
+      _x (x), _y (y), _z (0),
+      _sec (0), _usec (0)
+    { }
+
+    Position (const double x, const double y, const double z) :
+      _next (NULL), _prev (NULL),
+      _x (x), _y (y), _z (z),
       _sec (0), _usec (0)
     { }
 
@@ -49,24 +56,39 @@ public:
       _sec (sec), _usec (usec)
     { }
 
+    Position (const double x, const double y, const double z,
+	      const long sec, const long usec) :
+      _next (NULL), _prev (NULL),
+      _x (x), _y (y), _z (z),
+      _sec (sec), _usec (usec)
+    { }
+
     /// copy constructor. Default probably would have been ok.
     Position (const Position& p) :
       _next (p._next), _prev (p._prev),
-      _x (p._x), _y (p._y), 
+      _x (p._x), _y (p._y), _z (p._z),
       _sec (p._sec), _usec (p._usec)
     { }
 
     inline void setTime(long sec, long usec) { _sec = sec; _usec = usec; }
     inline void set(double x, double y) { _x = x; _y = y; }
+    inline void set(double x, double y, double z) 
+      { _x = x; _y = y; _z = z; }
     inline double x() const { return _x; }
     inline double y() const { return _y; }
+    inline double z() const { return _z; }
     inline void setIconID(int id) { _icon_id = id; }
     inline int iconID() { return _icon_id; }
 
-    inline double dist(const Position * p) 
+    inline double dist2d(const Position * p) 
     { return(sqrt((_x - p->x())*(_x - p->x()) + (_y - p->y())*(_y - p->y())));}
 
+    inline double dist3d(const Position * p) 
+    { return(sqrt((_x - p->x())*(_x - p->x()) + 
+		  (_y - p->y())*(_y - p->y()) +
+		  (_z - p->z())*(_z - p->z())));}
 };
+
 
 /**
  * class Position_list
@@ -105,6 +127,7 @@ public:
     inline Position * curr() { return _curr; }
     inline double currX() { return _curr->x(); }
     inline double currY() { return _curr->y(); }
+    inline double currZ() { return _curr->z(); }
 
     inline Position * peekNext() {
 	if (_curr == NULL) {
@@ -135,6 +158,11 @@ public:
     int insert(double x, double y);
     int insert(double x, double y, int id);
     int insert(double x, double y, long sec, long usec);
+
+    int insert(double x, double y, double z);
+    int insert(double x, double y, double z, int id);
+    int insert(double x, double y, double z, long sec, long usec);
+
     /** insert into list - add a new item before the current one, and the
      * new item becomes current.
      *   good for inserting at head of the list. 
@@ -143,13 +171,15 @@ public:
     int insertPrev(double x, double y);
     int insertPrev(double x, double y, int id);
     int insertPrev(double x, double y, long sec, long usec);
+
+    int insertPrev(double x, double y, double z);
+    int insertPrev(double x, double y, double z, int id);
+    int insertPrev(double x, double y, double z, long sec, long usec);
     /** deletes the current item.
      * returns 0 if successful, -1 if fails */
     int del();
 
-// currTime
-
-    
+// currTime    
 };
 
 #endif

@@ -29,7 +29,10 @@ nmb_Decoration::nmb_Decoration (void) :
   max_num_scrapes (10),
   scrapes (new nmb_LocationInfo [max_num_scrapes]),
   scrapeCallbacks (NULL),
-  pulseCallbacks (NULL)
+  pulseCallbacks (NULL),
+  scan_line (NULL),
+  scanLineCount (0),
+  drawScanLine (1)
 {
   if (!pulses)
     max_num_pulses = 0;
@@ -59,7 +62,10 @@ nmb_Decoration::nmb_Decoration (int markerHeight, int numMarkers) :
   max_num_scrapes (10),
   scrapes (new nmb_LocationInfo [max_num_scrapes]),
   scrapeCallbacks (NULL),
-  pulseCallbacks (NULL)
+  pulseCallbacks (NULL),
+  scan_line (NULL),
+  scanLineCount (0),
+  drawScanLine (1)
 {
   marker_height = markerHeight;
   num_markers_shown = numMarkers;
@@ -78,6 +84,10 @@ nmb_Decoration::~nmb_Decoration (void) {
     delete [] pulses;
   if (scrapes)
     delete [] scrapes;
+  if (scan_line) {
+    delete [] scan_line;
+    scan_line = NULL;
+  }
 
   t0 = scrapeCallbacks;
   while (t0) {
@@ -94,6 +104,10 @@ nmb_Decoration::~nmb_Decoration (void) {
   }
 }
 
+void nmb_Decoration::initScanline(long _lineCount) {
+  scanLineCount = _lineCount;
+  scan_line = new PointType[scanLineCount];
+}
 
 void nmb_Decoration::addScrapeMark (PointType Top, PointType Bottom) {
   nmb_LocationInfo * temp;

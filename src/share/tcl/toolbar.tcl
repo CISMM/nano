@@ -133,6 +133,9 @@ proc show_tool {name path nm element op} {
     } elseif { $tool == 3 } {
 	# Slow line tool
 	$path configure -text "Slow Line"
+    } elseif { $tool == 4 } {
+	# Slow line 3d tool
+	$path configure -text "Slow Line 3D"
     } 
 }
 

@@ -146,3 +146,74 @@ int Position_list::del()
     }
     return 0;
 }
+
+int Position_list::insert(double x, double y, double z) {
+    Position * p = new Position(x,y,z);
+    if (p==NULL) return (-1);
+    else
+    return ((insert(p)));  
+}
+
+int Position_list::insert(double x, double y, double z, int id)
+{
+    Position * p = new Position(x,y,z);
+    if (p==NULL) return (-1);
+    else {
+	p->setIconID(id);
+	return ((insert(p)));
+    }
+}
+
+int Position_list::insert(double x, double y, double z, long sec, long usec)
+{
+    Position * p = new Position(x,y,z,sec,usec);
+    if (p==NULL) return (-1);
+    else
+    return ((insert(p)));
+}
+/*
+int Position_list::insertPrev(Position * p)
+{
+    // special case - empty list
+    if (_head==NULL) {
+	_head = _tail = _curr = p;
+    // special case - curr is head of list
+    } else if (_curr==_head) {
+      	_curr->prev(p);
+	p->next(_curr);
+	_curr = _head = p;
+    // default case - insert in middle (can't insert at tail)
+    } else {
+	_curr = _curr->prev();
+	return ((insert(p))); // trick :-) -> less code to debug.
+    }
+
+    return 0;
+}
+*/
+int Position_list::insertPrev(double x, double y, double z)
+{
+    Position * p = new Position(x,y,z);
+    if (p==NULL) return (-1);
+    else
+    return ((insertPrev(p)));
+}
+
+int Position_list::insertPrev(double x, double y, double z, int id)
+{
+    Position * p = new Position(x,y,z);
+    if (p==NULL) return (-1);
+    else {
+	p->setIconID(id);
+	return ((insertPrev(p)));
+    }
+}
+
+int Position_list::insertPrev(double x, double y, double z, long sec, long usec)
+{
+    Position *p = new Position(x,y,z,sec,usec);
+    if (p==NULL) return (-1);
+    else
+    return ((insertPrev(p)));
+}
+
