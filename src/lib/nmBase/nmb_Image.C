@@ -1,8 +1,15 @@
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "Topo.h" // for TopoFile
 #include "nmb_Image.h"
 #include "nmb_TransformMatrix44.h"
 #include "AbstractImage.h"
-#include "ImageMaker.h"
+#include "nmb_ImgMagick.h"
 
 #include <limits.h>
 #ifdef _WIN32
@@ -363,7 +370,6 @@ void nmb_Image::getWorldToImageTransform(double *matrix44)
     
     double det_inv;
     det_inv = 1.0/((x10-x00)*(y01-y00) - (y10-y00)*(x01-x00));
-
     a = (y01-y00)*det_inv;
     b = (x00-x01)*det_inv;
     c = -a*x00 - b*y00;
@@ -482,16 +488,18 @@ vrpn_bool nmb_Image::dimensionUnknown()
 
 const int nmb_ImageGrid::num_export_formats = 5;
 const char *nmb_ImageGrid::export_formats_list[] = {	"ThermoMicroscopes",
-                                 		"PPM Image",
                                  		"TIFF Image",
+                                 		"PPM Image",
+                                 		"Other Image",
                                  		"Text(MathCAD)",
                                  		"SPIP",
                                  		"UNCA Image" };
 const nmb_ImageGrid::FileExportingFunction 
 	nmb_ImageGrid::file_exporting_function[] = 
 				{nmb_ImageGrid::writeTopoFile,
-                                 nmb_ImageGrid::writePPMFile,
                                  nmb_ImageGrid::writeTIFFile,
+                                 nmb_ImageGrid::writePPMFile,
+                                 nmb_ImageGrid::writeOtherImageFile,
                                  nmb_ImageGrid::writeTextFile,
                                  nmb_ImageGrid::writeSPIPFile,
                                  nmb_ImageGrid::writeUNCAFile};
@@ -508,9 +516,7 @@ TopoFile nmb_ImageGrid::s_openFileTopoHeader;
 int nmb_ImageGrid::openFile(const char *filename)
 {
   s_openFileGrid = new BCGrid();
-  const char *file_names[1];
-  file_names[0] = filename;
-  if (s_openFileGrid->loadFiles(file_names, 1, s_openFileTopoHeader) != 0) {
+  if (s_openFileGrid->loadFile(filename, s_openFileTopoHeader) != 0) {
     delete s_openFileGrid;
     s_openFileGrid = NULL;
     return -1;
@@ -530,7 +536,8 @@ nmb_ImageGrid *nmb_ImageGrid::getNextImage()
   if (s_openFilePlane == NULL) return NULL;
   BCGrid *g = new BCGrid(s_openFileGrid->numX(), s_openFileGrid->numY(),
                        s_openFileGrid->minX(), s_openFileGrid->maxX(),
-                       s_openFileGrid->minY(), s_openFileGrid->maxY());
+                       s_openFileGrid->minY(), s_openFileGrid->maxY(), 
+                         READ_FILE);
   g->setMinX(s_openFileGrid->minX());
   g->setMaxX(s_openFileGrid->maxX());
   g->setMinY(s_openFileGrid->minY());
@@ -566,7 +573,7 @@ nmb_ImageGrid::nmb_ImageGrid(const char *name, const char *units,
             d_imagePositionSet(vrpn_FALSE)
 {
     BCString name_str(name), units_str(units);
-    grid = new BCGrid(x, y, 0.0, 1.0, 0.0, 1.0);
+    grid = new BCGrid(x, y, 0.0, 1.0, 0.0, 1.0, READ_FILE);
     plane = grid->addNewPlane(name_str, units_str, 0);
     min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
     max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
@@ -670,7 +677,7 @@ nmb_ImageGrid::nmb_ImageGrid(nmb_Image *im):
     d_imagePositionSet(vrpn_FALSE)
 {
   int i,j;
-  grid = new BCGrid(im->width(), im->height(), 0.0, 1.0, 0.0, 1.0);
+  grid = new BCGrid(im->width(), im->height(), 0.0, 1.0, 0.0, 1.0, READ_FILE);
   plane = grid->addNewPlane(*(im->name()), *(im->unitsValue()), 0);
   min_x_set = SHRT_MAX; min_y_set = SHRT_MAX;
   max_x_set = -SHRT_MAX; max_y_set = -SHRT_MAX;
@@ -1022,9 +1029,9 @@ int nmb_ImageGrid::writeTextFile(FILE *file, nmb_ImageGrid *im, const char * )
 }
 
 //static 
-int nmb_ImageGrid::writePPMFile(FILE *file, nmb_ImageGrid *im, const char * )
+int nmb_ImageGrid::writePPMFile(FILE *file, nmb_ImageGrid *im, const char * filename)
 {
-    if (im->plane->_grid->writePPMFile(file, im->plane)) {
+    if (im->plane->_grid->writeImageFile(file, im->plane, filename, "PPM")) {
 	return -1;
     }
     return 0;
@@ -1033,7 +1040,17 @@ int nmb_ImageGrid::writePPMFile(FILE *file, nmb_ImageGrid *im, const char * )
 //static 
 int nmb_ImageGrid::writeTIFFile(FILE *file, nmb_ImageGrid *im, const char * filename)
 {
-    if (im->plane->_grid->writeTIFFile(file, im->plane, filename)) {
+    if (im->plane->_grid->writeImageFile(file, im->plane, filename, "TIF")) {
+	return -1;
+    }
+    return 0;
+}
+
+//static 
+int nmb_ImageGrid::writeOtherImageFile(FILE *file, nmb_ImageGrid *im, const char * filename)
+{
+    // User specifies the image type using filename's extention (.jpg, .bmp)
+    if (im->plane->_grid->writeImageFile(file, im->plane, filename, NULL)) {
 	return -1;
     }
     return 0;
@@ -1588,7 +1605,7 @@ int nmb_ImageArray::exportToFile(FILE *f, const char *export_type,
 }
 
 // static
-int nmb_ImageArray::exportToTIFF(FILE *file, nmb_ImageArray *im, const char *)
+int nmb_ImageArray::exportToTIFF(FILE *file, nmb_ImageArray *im, const char * filename)
 {
   if (im->pixelType() != NMB_UINT8) {
     printf("error, can't write images that aren't 8 bits per pixel\n");
@@ -1610,13 +1627,10 @@ int nmb_ImageArray::exportToTIFF(FILE *file, nmb_ImageArray *im, const char *)
     }
   }
 
-  AbstractImage *ai = ImageMaker(TIFFImageType, h, w, 3, pixels, true);
-  delete [] pixels;
-  if (ai) {
-    if (!ai->Write(file))
-       fprintf(stderr, "Failed to write image to file\n");
-    delete ai;
+  if(nmb_ImgMagick::writeFileMagick(filename, NULL, w, h, 3, pixels)) {
+      fprintf(stderr, "Failed to write image to file\n");
   }
+  delete [] pixels;
   return 0;
 }
 
@@ -1639,7 +1653,8 @@ nmb_ImageList::nmb_ImageList(nmb_ListOfStrings *namelist,
 //          printf("nmb_ImageList::nmb_ImageList - creating grid for file %s\n",
 //  		file_names[i]);
 	BCGrid *g = new BCGrid(0, 0, 0, 1, 0, 1,
-			READ_FILE, file_names[i], topoFile);
+                               READ_FILE);
+        g->loadFile( file_names[i], topoFile);
 	nmb_Image *im;
 	BCPlane *p;
 //          printf("file contained: \n");

@@ -1,3 +1,20 @@
+2001-07-26  Aron Helser  <helser@cs.unc.edu>
+
+	* BCGrid.Ch (BCGrid): Remove constructors which load files, so
+	nmb_Dataset can do error handling. 
+	(loadFiles): If grid conflict, pass loaded data out to caller. 
+	(readFile): use nmb_ImgMagick for image files, TIF, PPM, etc. 
+	(writeFile): same. 
+
+	* nmb_Dataset.Ch (nmb_Dataset): handle grid/region conflicts when
+	loading files by adding conflicting image to dataImages list. 
+	(loadFiles): same
+
+	* nmb_Image.C: file loading/writing changes using nmb_ImgMagick
+	(writeOtherImageFile): new
+
+	* nmb_String.Ch: copyright. 
+	
 2001-07-25    <marshbur@GOLD-CS>
 
 	* nmb_LBLFlattenedPlane.C (nmb_LBLFlattenedPlane): removed call

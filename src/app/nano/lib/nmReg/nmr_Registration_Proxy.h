@@ -1,5 +1,12 @@
 #ifndef NMR_REGISTRATION_PROXY_H
 #define NMR_REGISTRATION_PROXY_H
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 
 #include "nmr_Registration_Interface.h"
 #include "nmr_Registration_Client.h"
@@ -31,6 +38,10 @@ class nmr_Registration_Proxy {
 
     vrpn_int32 registerImages();
     vrpn_int32 setGUIEnable(vrpn_bool enable);
+    vrpn_int32 setColorMap(nmr_ImageType whichImage, nmb_ColorMap * cmap);
+    vrpn_int32 setColorMinMax(nmr_ImageType whichImage, 
+                              vrpn_float64 dmin, vrpn_float64 dmax,
+                              vrpn_float64 cmin, vrpn_float64 cmax);
     vrpn_int32 setImage(nmr_ImageType whichImage, nmb_Image *im);
     static void handle_registration_change(void *ud,
                         const nmr_ClientChangeHandlerData &info);

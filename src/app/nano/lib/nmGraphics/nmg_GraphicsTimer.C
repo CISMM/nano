@@ -351,10 +351,12 @@ setRealignTexturesConversionMap( const char *map, const char *mapdir ) {
   d_imp->setRealignTexturesConversionMap(map, mapdir);
 }
 
-void nmg_Graphics_Timer::setRealignTextureSliderRange (float low,
-								float high) {
+void nmg_Graphics_Timer::setRealignTextureSliderRange ( float data_min,
+    float data_max,
+    float color_min,
+    float color_max) {
   activateTimer();
-  d_imp->setRealignTextureSliderRange(low, high);
+  d_imp->setRealignTextureSliderRange(data_min,data_max,color_min, color_max);
 }
 
 

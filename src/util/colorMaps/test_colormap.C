@@ -2,16 +2,16 @@
 #include	<stdio.h>
 #include	<string.h>
 #include	<math.h>
-#include	"colormap.h"
+#include <nmb_ColorMap.h>
 
-void	flookup(ColorMap *m, char *name, float value)
+void	flookup(nmb_ColorMap *m, char *name, float value)
 {
 	float		fr,fg,fb,fa;
 	m->lookup(value, &fr, &fg, &fb, &fa);
 	printf("%s at %g is (%g,%g,%g, %g)\n",name,value,fr,fg,fb,fa);
 }
 
-void	ilookup(ColorMap *m, char *name, float value)
+void	ilookup(nmb_ColorMap *m, char *name, float value)
 {
 	int		ir,ig,ib,ia;
 	m->lookup(value, &ir, &ig, &ib, &ia);
@@ -20,8 +20,8 @@ void	ilookup(ColorMap *m, char *name, float value)
 
 void	main(unsigned argc, char *argv[])
 {
-	ColorMap	red;
-	ColorMap	blue("blue");
+	nmb_ColorMap	red;
+	nmb_ColorMap	blue("blue");
 
 	red.load_from_file("red");
 

@@ -18,7 +18,8 @@
 #include <BCPlane.h>
 #include <BCGrid.h>
 #include <nmb_Image.h>
-#include <colormap.h>  // for ColorMap::lookup()
+#include <nmb_ColorMap.h>  // for ColorMap::lookup()
+#include <nmb_ImgMagick.h>
 
 #include <nmb_Dataset.h>
 #include <nmb_Globals.h>
@@ -1312,7 +1313,7 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
   nmb_Image *im = d_dataset->dataImages->getImageByName(name);
   if (!im) {
     fprintf(stderr, 
-	"nmg_Graphics_Impl::createRealignTextures: image not found\n");
+	"nmg_Graphics_Impl::createRealignTextures: image %s not found\n", name);
     return;
   }
   
@@ -1354,25 +1355,56 @@ void nmg_Graphics_Implementation::createRealignTextures( const char *name ) {
                 im->height() + im->borderYMin() + im->borderYMax(),
                 0, GL_LUMINANCE, pixelType, im->pixelData());
 */
-  if (pixelType == GL_FLOAT) {
-    nmb_Image *im_copy = new nmb_ImageGrid(im);
-    im_copy->normalize();
-    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
+  if (g_realign_textures_curColorMap == NULL) {
+    if (pixelType == GL_FLOAT) {
+        nmb_Image *im_copy = new nmb_ImageGrid(im);
+        im_copy->normalize();
+        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
               im_copy->width() + im_copy->borderXMin()+im_copy->borderXMax(),
               im_copy->height() + im_copy->borderYMin()+im_copy->borderYMax(),
               GL_LUMINANCE, pixelType, im_copy->pixelData());
-    nmb_Image::deleteImage(im_copy);
-  } else {
-    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
+        nmb_Image::deleteImage(im_copy);
+    } else {
+        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE,
                    im->width() + im->borderXMin()+im->borderXMax(),
                    im->height() + im->borderYMin()+im->borderYMax(),
                    GL_LUMINANCE, pixelType, im->pixelData());
-  }
-  GLenum err = glGetError();
-  if (err!=GL_NO_ERROR) {
-    printf(" Error making realign texture: %s.\n", gluErrorString(err));
-  }
-//  }
+    }
+  } else {
+    GLubyte *colord = new GLubyte[3*im->arrayLength()];
+    for(int i =0; i < im->arrayLength(); i++) {
+        // TODO: It might be better to do this using glPixelMap
+        // as is done in ImageViewer.C
+        double value = 0;
+        if (pixelType == GL_FLOAT) {
+            value = ((float *)im->pixelData())[i]; 
+        } else if (pixelType== GL_UNSIGNED_BYTE) {
+            value = ((unsigned char *)im->pixelData())[i]; 
+        } else if (pixelType== GL_UNSIGNED_SHORT) {
+            value = ((unsigned short *)im->pixelData())[i]; 
+        }
+        int r,g,b,dummy;
+        g_realign_textures_curColorMap->lookup(value,
+                                               im->minValue(), im->maxValue(),
+                                               g_realign_textures_data_min,
+                                               g_realign_textures_data_max,
+                                               g_realign_textures_color_min,
+                                               g_realign_textures_color_max,
+                                               &r,&g,&b,&dummy);
+        colord[3*i] = r;
+        colord[3*i+1] = g;
+        colord[3*i+2] = b;
+    }       
+    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB,
+              im->width() + im->borderXMin()+im->borderXMax(),
+              im->height() + im->borderYMin()+im->borderYMax(),
+              GL_RGB, GL_UNSIGNED_BYTE, colord);
+    delete [] colord;
+  }    
+    GLenum err = glGetError();
+    if (err!=GL_NO_ERROR) {
+      printf(" Error making realign texture: %s.\n", gluErrorString(err));
+    }
   g_tex_image_width[COLORMAP_TEX_ID] = im->width();
   g_tex_image_height[COLORMAP_TEX_ID] = im->height();
   g_tex_installed_width[COLORMAP_TEX_ID] = im->width()+
@@ -1588,19 +1620,25 @@ setRealignTexturesConversionMap( const char *map, const char *mapdir ) {
     g_realign_textures_curColorMap = NULL;
   }
   else {
-    if ( !g_realign_textures_curColorMap )
-      g_realign_textures_curColorMap = new ColorMap;
-    g_realign_textures_curColorMap->load_from_file( map, mapdir );
+    if ( !g_realign_textures_curColorMap ) {
+      g_realign_textures_curColorMap = new nmb_ColorMap;
+    }
+    g_realign_textures_curColorMap->load_from_file( map, g_colorMapDir );
   }
 }
 
 //
 // Sets the realign texture colormap slider range:
 //
-void nmg_Graphics_Implementation::setRealignTextureSliderRange (float low,
-								float high) {
-  g_realign_textures_slider_min = low;
-  g_realign_textures_slider_max = high;
+void nmg_Graphics_Implementation::setRealignTextureSliderRange (
+    float data_min,
+    float data_max,
+    float color_min,
+    float color_max) {
+  g_realign_textures_data_min = data_min;
+  g_realign_textures_data_max = data_max;
+  g_realign_textures_color_min = color_min;
+  g_realign_textures_color_max = color_max;
 }
 
 
@@ -2738,17 +2776,20 @@ void nmg_Graphics_Implementation::createScreenImage
     return;
   }
 
-  AbstractImage *ai = ImageMaker(type, h, w, 3, pixels, true);
+  if(nmb_ImgMagick::writeFileMagick(filename, NULL, w, h, 3, pixels)) {
+      fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
+  }
+//    AbstractImage *ai = ImageMaker(type, h, w, 3, pixels, true);
 
   delete [] pixels;
 
-  if (ai)
-  {
-     if (!ai->Write(filename))
-        fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
+//    if (ai)
+//    {
+//       if (!ai->Write(filename))
+//          fprintf(stderr, "Failed to write screen to '%s'!\n", filename);
 
-     delete ai;
-  }
+//       delete ai;
+//    }
 }
 
 void nmg_Graphics_Implementation::setViztexScale (float s) {
@@ -3952,11 +3993,11 @@ int nmg_Graphics_Implementation::handle_createRealignTextures (void *userdata,
 // static
 int nmg_Graphics_Implementation::handle_setRealignTextureSliderRange
 ( void *userdata, vrpn_HANDLERPARAM p) {
-  float low, hi;
+  float data_min,data_max,color_min, color_max;
   
   nmg_Graphics_Implementation * it = (nmg_Graphics_Implementation * )userdata;
-  CHECKF(it->decode_setRealignTextureSliderRange(p.buffer, &low, &hi), "handle_setRealignTextureSliderRange");
-  it->setRealignTextureSliderRange( low, hi );
+  CHECKF(it->decode_setRealignTextureSliderRange(p.buffer, &data_min,&data_max,&color_min, &color_max), "handle_setRealignTextureSliderRange");
+  it->setRealignTextureSliderRange( data_min,data_max,color_min, color_max );
   return 0;
 }
 

@@ -9,6 +9,7 @@
 #define NMG_GRAPHICS_REMOTE
 
 #include "nmg_Graphics.h"
+#include <nmb_ColorMap.h>
 
 class nmg_Graphics_Remote : public nmg_Graphics {
 
@@ -91,7 +92,7 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     // Realigning Textures:
     virtual void createRealignTextures( const char * );
-    virtual void setRealignTextureSliderRange (float, float);
+    virtual void setRealignTextureSliderRange (float, float, float, float);
     virtual void setRealignTexturesConversionMap( const char *, const char * );
     virtual void computeRealignPlane( const char *, const char * );
 //    virtual void enableRealignTextures (int on);
@@ -209,8 +210,8 @@ class nmg_Graphics_Remote : public nmg_Graphics {
 
     char * d_colorMapDir;
     char * d_textureDir;
-    ColorMap d_colorMap;
-    ColorMap * d_curColorMap;
+    nmb_ColorMap d_colorMap;
+    nmb_ColorMap * d_curColorMap;
 
     double d_minAlpha;
     double d_maxAlpha;

@@ -1,5 +1,12 @@
 #ifndef IMAGEVIEWER_H
 #define IMAGEVIEWER_H
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 
 /*
 ImageViewer -
@@ -33,8 +40,10 @@ into windows and to convert from window to image coordinates and vice versa.
 //#include "BCPlane.h"
 //#include "PNMImage.h"
 //#include "PPM.h"
-#include "vrpn_Types.h"
-#include "nmb_Image.h"
+#include <vrpn_Types.h>
+#include <nmb_Image.h>
+
+class nmb_ColorMap;
 
 #define MAX_WIN (10)
 #define MAX_DISPLAYS (4)
@@ -73,6 +82,9 @@ typedef struct _ImageViewerDisplayData {
 typedef int (*ImageViewerDisplayHandler)
 		(const ImageViewerDisplayData &data, void *ud);
 
+/// Open GL reports the maximum pixel map table size is 65536, via 
+/// glGetIntegerv(GL_MAX_PIXEL_MAP_TABLE, &i);
+const int CMAP_SIZE_GL = 512;
 
 /// This class is used internally by ImageViewer to represent the state
 /// for each window.
@@ -105,6 +117,14 @@ class ImageWindow {
     void *event_handler_ud;
     ImageViewerDisplayHandler display_handler;
     void *display_handler_ud;
+    nmb_ColorMap * d_colormap;
+    double d_data_min;
+    double d_data_max;
+    double d_color_min;
+    double d_color_max;
+    float rmap[CMAP_SIZE_GL];
+    float gmap[CMAP_SIZE_GL];
+    float bmap[CMAP_SIZE_GL];
 };
 
 /// This class is used internally by ImageViewer to represent the state
@@ -196,6 +216,10 @@ class ImageViewer {
     /// get the display for a given window
     ImageDisplay getDisplay(int winID) {return 
 	dpy[window[winID-1].display_index];}
+    int setColorMap(int winID, nmb_ColorMap * cmap);
+    int setColorMinMax(int winID,
+                       vrpn_float64 dmin, vrpn_float64 dmax,
+                       vrpn_float64 cmin, vrpn_float64 cmax);
 
 #ifdef V_GLUT
     static void displayCallbackForGLUT(void);
@@ -205,12 +229,16 @@ class ImageViewer {
     static void motionCallbackForGLUT(int x, int y);
     static void mouseCallbackForGLUT(int button, int state, int x, int y);
     static void keyboardCallbackForGLUT(unsigned char key, int x, int y);
+    static void specialCallbackForGLUT(int key, int x, int y);
+   
 #endif
 
   protected:
     ImageViewer();
     static ImageViewer *theViewer; // singleton pointer
 
+    //? private:
+    int calcColorMap(int winID);
 #ifdef V_GLUT
     int get_window_index_from_glut_id(int glut_id);
 #endif
@@ -218,15 +246,13 @@ class ImageViewer {
     int get_window_index_from_winID(int winID);
     int get_winID_from_window_index(int win_index);
 
-    int drawImageAsTexture(nmb_Image *image,
+    int drawImageAsTexture(int winID, nmb_Image *image,
       double red, double green, double blue, double alpha,
       double l, double r, double b, double t, nmb_TransformMatrix44 &W2I);
-    int drawImageAsPixels(nmb_Image *image,
+    int drawImageAsPixels(int winID, nmb_Image *image,
       double red, double green, double blue, double alpha,
       double l, double r, double b, double t,
-      double tx, double ty, double scx, double scy, 
-      int winWidth, int winHeight);
-
+      double tx, double ty, double scx, double scy);
     int num_displays;
     long event_mask;
     ImageDisplay dpy[MAX_DISPLAYS];

@@ -189,7 +189,7 @@ int     init_Tk_variables ()
 	controls_on = 1;
 
         // Initialize the color bar display. Needs inited interpreter. 
-        tcl_colormapRedraw();
+        //tcl_colormapRedraw();
 
 	return(0);
 }
@@ -211,74 +211,3 @@ int	poll_Tk_control_panels(void)
 	return 0;
 }
 
-/** Take a colormap and makes an color-bar image in Tcl with specified name,
-    width, height.  c_min and c_max are values between 0 and 1 which can
-    squash the colormap range, making the whole colormap appear in a small
-    window in the larger image. Defaults perform no squashing. 
- */
-int makeColorMapImage(ColorMap * cmap, char * name, int width, int height, 
-                      float c_min , float c_max ) 
-{
-    Tk_PhotoImageBlock colormap;
-    unsigned char *colormap_pixels = new unsigned char[ height * width * 3];
-    Tk_PhotoHandle image;
-
-    char command[200];
-    // This code sets up the colormap bars displayed in the colormap
-    // choice menu in tcl.
-    colormap.pixelPtr = colormap_pixels;
-    colormap.width = width;
-    colormap.height = height;
-    colormap.pixelSize = 3;
-    colormap.pitch = width * 3;
-    colormap.offset[0] = 0; colormap.offset[1] = 1; colormap.offset[2] = 2;
-
-    // Make an image in Tcl based on the colormap.
-    float ci;
-    int r, g, b, a;
-    for ( int i= 0; i < height; i++) {
-        for ( int j = 0; j < width; j++ ) {
-            ci = 1.0 - float(i)/height;
-            if ( ci <  c_min ) ci = 0;
-            else if ( ci > c_max ) ci = 1.0;
-            else ci = (ci - c_min)/(c_max - c_min);
-            
-            cmap->lookup( ci, &r, &g, &b, &a);
-            
-            colormap_pixels[ i*width*3 + j*3 + 0] = (unsigned char)( r );
-            colormap_pixels[ i*width*3 + j*3 + 1] = (unsigned char)( g );
-            colormap_pixels[ i*width*3 + j*3 + 2] = (unsigned char)( b );
-        }
-    }
-    // "image create" will replace any existing instance of the image. 
-    sprintf (command, "image create photo %s", name);
-    TCLEVALCHECK( get_the_interpreter(), command);
-    image = Tk_FindPhoto( get_the_interpreter(), name );
-    Tk_PhotoPutBlock( image, &colormap, 0, 0, width, height );
-
-    return 0;
-}
-
-void tcl_colormapRedraw() {
-    
-    // Must match the colormap widget:
-    const int colormap_width = 32, colormap_height = 256;
-
-    // Draw a colormap bar if either colorPlaneName or colorMapName 
-    // aren't "none"
-    if (curColorMap &&
-        ( ( strcmp( dataset->colorPlaneName->string(), "none") != 0 ) ||
-          ( strcmp( dataset->colorMapName->string(), "none") != 0) ) ) {
-        // color_max and color_min "squash" the color map image based
-        // on tcl controls. 
-        makeColorMapImage(curColorMap, "colormap_image", 
-                          colormap_width, colormap_height, 
-                          color_min, color_max);
-    }
-    else {
-        ColorMap constmap;
-        constmap.setConst(surface_r , surface_g, surface_b, 255);
-        makeColorMapImage(&constmap, "colormap_image", 
-                          colormap_width, colormap_height);
-    }  
-}

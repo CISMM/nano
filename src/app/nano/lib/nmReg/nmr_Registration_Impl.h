@@ -11,6 +11,7 @@
 enum {SOURCE_IMAGE_INDEX = 0, TARGET_IMAGE_INDEX = 1};
 
 class nmr_Registration_ImplUI;
+class nmb_ColorMap;
 
 class nmr_Registration_Impl {
   public:
@@ -30,6 +31,10 @@ class nmr_Registration_Impl {
             vrpn_float32 xSizeWorld, vrpn_float32 ySizeWorld);
     int setRegistrationEnable(vrpn_bool enable);
     int setGUIEnable(vrpn_bool enable);
+    int setColorMap(nmr_ImageType whichImage, nmb_ColorMap * cmap);
+    int setColorMinMax(nmr_ImageType whichImage, 
+                              vrpn_float64 dmin, vrpn_float64 dmax,
+                              vrpn_float64 cmin, vrpn_float64 cmax);
     int setFiducial(nmr_ImageType whichImage,
                 vrpn_float32 x, vrpn_float32 y, vrpn_float32 z);
     int setScanline(nmr_ImageType whichImage,

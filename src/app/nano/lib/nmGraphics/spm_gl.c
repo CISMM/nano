@@ -27,7 +27,7 @@ All Rights Reserved.
 #include	<math.h>
 #include <assert.h>
 
-#include <colormap.h>
+#include <nmb_ColorMap.h>
 #include <nmb_PlaneSelection.h>
 #include <nmb_Decoration.h>
 #include <nmb_Globals.h>

@@ -533,7 +533,7 @@ nmg_Graphics_RenderClient_Implementation
     d_renderingGrid (new BCGrid (xsize, ysize, data->inputGrid->minX(),
                                    data->inputGrid->maxX(),
                                    data->inputGrid->minY(),
-                                   data->inputGrid->maxY())),
+                                   data->inputGrid->maxY(), READ_FILE)),
     d_inputConnection (inputConnection),
     d_timer (timer),
     d_strategy (NULL) {

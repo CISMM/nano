@@ -950,14 +950,18 @@ void handle_z_dataset_change(const char *, void * _mptr)
                 plane->scale());
   microscope->state.stm_z_scale = plane->scale();
   
-  graphics->setHeightPlaneName(dataset->heightPlaneName->string());
+  // For some reason, heightPlaneName gets set in ensureHeightPlane above, but
+  // is not recognized yet. Use the plane's name explicitly instead.
+  //graphics->setHeightPlaneName(dataset->heightPlaneName->string());
+  graphics->setHeightPlaneName(plane->name()->Characters());
   graphics->causeGridRebuild();
+  // XXX we probably don't need both
   graphics->causeGridRedraw();
   
   if ( Index_mode::isInitialized() ) {
     // update index mode's idea of what the plane is
     Index_mode::newPlane( dataset->inputGrid->getPlaneByName
-                          (dataset->heightPlaneName->string() ) );
+                          (plane->name()->Characters() ) );
   }
 }
 

@@ -9,14 +9,15 @@
 #include "nmr_Util.h"
 #include <nmb_Dataset.h>
 #include <microscape.h> // for disableOtherTextures
+#include <nmui_ColorMap.h>
 #include "nmr_CoarseToFineSearch.h"
 
 nmr_RegistrationUI::nmr_RegistrationUI
   (nmg_Graphics *g, nmb_Dataset *d,
    nmr_Registration_Proxy *aligner):
 
-   d_registrationImageName3D("reg_surface_comes_from", "none"),
-   d_registrationImageName2D("reg_projection_comes_from", "none"),
+   d_registrationImageName3D("reg_surface_cm(color_comes_from)", "none"),
+   d_registrationImageName2D("reg_projection_cm(color_comes_from)", "none"),
    d_newResampleImageName("resample_image_name", ""),
    d_newResamplePlaneName("resample_plane_name", ""),
    d_registrationEnabled("reg_window_open", 0),
@@ -27,11 +28,15 @@ nmr_RegistrationUI::nmr_RegistrationUI
    d_resampleResolutionX("resample_resolution_x", 100),
    d_resampleResolutionY("resample_resolution_y", 100),
    d_resampleRatio("reg_resample_ratio", 0),
+   d_registrationColorMap3D("reg_surface_cm(color_map)", "none"),
+   d_registrationColorMap2D("reg_projection_cm(color_map)", "none"),
    d_registrationValid(vrpn_FALSE),
    d_graphicsDisplay(g),
    d_imageList(d->dataImages),
    d_dataset(d),
-   d_aligner(aligner)
+   d_aligner(aligner),
+   d_3DImageCMap(NULL),
+   d_2DImageCMap(NULL)
 {
 //      d_newResampleImageName = "";
 //      d_resampleResolutionX = 100;
@@ -39,6 +44,7 @@ nmr_RegistrationUI::nmr_RegistrationUI
 //      d_registrationImageName3D = "none";
 //      d_registrationImageName2D = "none";
 
+    /*
     int i;
     vrpn_bool set3D = vrpn_FALSE, set2D = vrpn_FALSE; 
     nmb_Image *dataim;
@@ -66,8 +72,18 @@ nmr_RegistrationUI::nmr_RegistrationUI
            break;
         }
     }
-
+    */
     d_aligner->registerChangeHandler((void *)this, handle_registrationChange);
+    d_3DImageCMap = new nmui_ColorMap("reg_surface_cm", 
+                                      &d_registrationImageName3D,
+                                      (Tclvar_list_of_strings *)d_imageList->imageNameList(),
+                                      &d_registrationColorMap3D);
+    d_3DImageCMap->setSurfaceColor(255,255,255);
+    d_2DImageCMap = new nmui_ColorMap("reg_projection_cm", 
+                                      &d_registrationImageName2D,
+                                      (Tclvar_list_of_strings *)d_imageList->imageNameList(),
+                                      &d_registrationColorMap2D);
+    d_2DImageCMap->setSurfaceColor(255,255,255);
 }
 
 nmr_RegistrationUI::~nmr_RegistrationUI()
@@ -92,6 +108,14 @@ void nmr_RegistrationUI::setupCallbacks()
     d_registrationImageName2D.addCallback
        (handle_registrationImage2D_change, (void *)this);
 
+    d_registrationColorMap3D.addCallback
+       (handle_registrationColorMap3D_change, (void *)this);
+    d_registrationColorMap2D.addCallback
+       (handle_registrationColorMap2D_change, (void *)this);
+
+    d_3DImageCMap->addMinMaxCallback(handle_registrationMinMax3D_change, this);
+    d_2DImageCMap->addMinMaxCallback(handle_registrationMinMax2D_change, this);
+
 }
 
 void nmr_RegistrationUI::teardownCallbacks() 
@@ -112,6 +136,13 @@ void nmr_RegistrationUI::teardownCallbacks()
     d_registrationImageName2D.removeCallback
        (handle_registrationImage2D_change, (void *)this);
 
+    d_registrationColorMap3D.removeCallback
+       (handle_registrationColorMap3D_change, (void *)this);
+    d_registrationColorMap2D.removeCallback
+       (handle_registrationColorMap2D_change, (void *)this);
+
+    d_3DImageCMap->removeMinMaxCallback(handle_registrationMinMax3D_change, this);
+    d_2DImageCMap->removeMinMaxCallback(handle_registrationMinMax2D_change, this);
 }
 
 void nmr_RegistrationUI::changeDataset(nmb_Dataset *d)
@@ -266,11 +297,19 @@ void nmr_RegistrationUI::handle_registrationImage3D_change(const char *name,
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
     nmb_Image *im = me->d_imageList->getImageByName(name);
     if (!im) {
-        fprintf(stderr, "image not found: %s\n", name);
+        fprintf(stderr, "nmr_RegistrationUI::image not found: %s\n", name);
         return;
     }
     // send image off to the proxy
     me->d_aligner->setImage(NMR_SOURCE, im);
+    // We have a choice, and I'm not sure which is right. Either
+    // Set the new image to use the existing colormap params:
+    double dmin,dmax,cmin,cmax;
+    me->d_3DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
+    me->d_3DImageCMap->setColorMinMaxLimit(0,1);
+    me->d_aligner->setColorMinMax(NMR_SOURCE, dmin, dmax, cmin, cmax);
+    // Or reset the colormap params to their default:
+    //me->d_3DImageCMap->setColorMinMaxLimit(0,1);
 }
 
 // static
@@ -280,14 +319,85 @@ void nmr_RegistrationUI::handle_registrationImage2D_change(const char *name,
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
     nmb_Image *im = me->d_imageList->getImageByName(name);
     if (!im) {
-        fprintf(stderr, "image not found: %s\n", name);
+        fprintf(stderr, "nmr_RegistrationUI::image not found: %s\n", name);
         return;
     }
     // send image off to the proxy
     me->d_aligner->setImage(NMR_TARGET, im);
+
+    // We have a choice, and I'm not sure which is right. Either
+    // Set the new image to use the existing colormap params:
+    double dmin,dmax,cmin,cmax;
+    me->d_2DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
+    me->d_2DImageCMap->setColorMinMaxLimit(0,1);
+    me->d_aligner->setColorMinMax(NMR_TARGET, dmin, dmax, cmin, cmax);
+    // Or reset the colormap params to their default:
+    //me->d_2DImageCMap->setColorMinMaxLimit(0,1);
+
     // set up texture in graphics
-    printf("creating realign texture for %s\n", name);
+    me->d_graphicsDisplay->setRealignTexturesConversionMap(
+        me->d_2DImageCMap->getColorMapName(), "");
+    me->d_graphicsDisplay->setRealignTextureSliderRange(dmin, dmax, cmin,cmax);
+    //printf("creating realign texture for %s\n", name);
     me->d_graphicsDisplay->createRealignTextures(name);
+}
+
+// static
+void nmr_RegistrationUI::handle_registrationColorMap3D_change(const char *name,
+                                                           void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    nmb_ColorMap * cmap =  me->d_3DImageCMap->currentColorMap();
+    if (!cmap) {
+        fprintf(stderr, "nmr_RegistrationUI::colormap not found: %s\n", name);
+        return;
+    }
+    // send changes off to the proxy
+    me->d_aligner->setColorMap(NMR_SOURCE, cmap);
+}
+
+// static
+void nmr_RegistrationUI::handle_registrationColorMap2D_change(const char *name,
+                                                           void *ud)
+{
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    nmb_ColorMap * cmap =  me->d_2DImageCMap->currentColorMap();
+    if (!cmap) {
+        fprintf(stderr, "nmr_RegistrationUI::colormap not found: %s\n", name);
+        return;
+    }
+    // send changes off to the proxy
+    me->d_aligner->setColorMap(NMR_TARGET, cmap);
+
+    // set up texture in graphics
+    me->d_graphicsDisplay->setRealignTexturesConversionMap(
+        me->d_2DImageCMap->getColorMapName(), "");
+    //printf("creating realign texture for %s\n", name);
+    me->d_graphicsDisplay->createRealignTextures(me->d_registrationImageName2D.string());
+}
+
+//static 
+void nmr_RegistrationUI::handle_registrationMinMax3D_change(vrpn_float64, void *ud) {
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    double dmin,dmax,cmin,cmax;
+    me->d_3DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
+    // send changes off to the proxy
+    me->d_aligner->setColorMinMax(NMR_SOURCE, dmin, dmax, cmin, cmax);
+}
+
+//static 
+void nmr_RegistrationUI::handle_registrationMinMax2D_change(vrpn_float64, void *ud) {
+    nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
+    double dmin,dmax,cmin,cmax;
+     me->d_2DImageCMap->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
+    // send changes off to the proxy
+    me->d_aligner->setColorMinMax(NMR_TARGET, dmin, dmax, cmin, cmax);
+    // set up texture in graphics
+//      me->d_graphicsDisplay->setRealignTexturesConversionMap(
+//          me->d_2DImageCMap->getColorMapName(), "");
+    me->d_graphicsDisplay->setRealignTextureSliderRange(dmin, dmax, cmin,cmax);
+    //printf("creating realign texture for %s\n", name);
+    me->d_graphicsDisplay->createRealignTextures(me->d_registrationImageName2D.string());
 }
 
 // static
@@ -326,6 +436,21 @@ void nmr_RegistrationUI::handle_registrationEnabled_change(
     nmr_RegistrationUI *me = (nmr_RegistrationUI *)ud;
     if (value) {
         me->d_aligner->setGUIEnable(vrpn_TRUE);
+        // We're popping up our window. Set the 3D image to 
+        // height plane. 
+        me->d_registrationImageName3D = me->d_dataset->heightPlaneName->string();
+        // Also guess at the 2D image name
+        int i;
+        nmb_Image *dataim;
+        for (i = 0; i < me->d_imageList->numImages(); i++) {
+            dataim = me->d_imageList->getImage(i);
+            //printf("Considering %s\n", dataim->name()->Characters());
+            if (strcmp(dataim->name()->Characters(),
+                       me->d_dataset->heightPlaneName->string())) {
+                me->d_registrationImageName2D = dataim->name()->Characters();
+                break;
+            }
+        }
     } else {
         me->d_aligner->setGUIEnable(vrpn_FALSE);
     }

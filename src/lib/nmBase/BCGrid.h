@@ -45,20 +45,7 @@ class BCGrid
     BCGrid(short num_x, short num_y, 
 	   double min_x, double max_x, 
 	   double min_y, double max_y,
-	   int read_mode,
-	   const char* file_name,
-           TopoFile &topoFile);
-
-    BCGrid(short num_x, short num_y, 
-	   double min_x, double max_x, 
-	   double min_y, double max_y,
-	   int read_mode,
-	   const char** file_names, int num_files,
-           TopoFile &topoFile);
-
-    BCGrid(short num_x, short num_y, 
-	   double min_x, double max_x, 
-	   double min_y, double max_y);
+	   int read_mode);
 
     BCGrid (const BCGrid *);  // copy constructor
 
@@ -69,13 +56,14 @@ class BCGrid
 	  BCString base_name, ///< Desired name
 	  BCString *result_name ///< Uniqueified name
 	  );
-    BCPlane* addNewPlane(BCString dataset, BCString units, int timed);
-    BCPlane* addPlaneCopy(BCPlane* grid);
+    BCPlane* addNewPlane(BCString name, BCString units, int timed);
+    BCPlane* addPlaneCopy(BCPlane*);
 
-    int loadFiles(const char** file_names, int num_files, TopoFile &topoFile);
-      ///< Load files with the same grid size into this grid.
-      ///< Load files with any grid size if no meaningful data has 
+    BCGrid* loadFile(const char* file_name, TopoFile &topoFile);
+      ///< Load file with the same grid size/region into this grid,
+      ///< Load file with any grid size/region if no meaningful data has 
       ///< yet been loaded.
+
     int setGridSize(int x, int y);
       ///< Changes the grid size, erases all data.
 
@@ -148,7 +136,8 @@ class BCGrid
     int writeUNCAFile(FILE* file, BCPlane* grid);
     int writeSPIPFile(FILE* file, BCPlane* grid);
     int writePPMFile(FILE* file, BCPlane* grid);
-    int writeTIFFile(FILE* file, BCPlane* grid, const char * filename);
+    int writeImageFile(FILE* file, BCPlane* grid, const char * filename, 
+                       const char * mgk_filetype);
     int writeRawVolFile(const char* file_name);
     int writeNCFile(FILE* file, BCPlane* grid,
 	double sizex = 1, double sizey = 1, double sizez = 1,

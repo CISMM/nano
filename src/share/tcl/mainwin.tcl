@@ -295,15 +295,14 @@ $analysismenu add command -label  "Rulergrid..." -underline 0  \
     -command "show.rulergrid"
 $analysismenu add radiobutton -label "Measure Lines" -underline 0 \
     -variable user_0_mode -value 9 
-$analysismenu add command -label "Shape Analysis..." -underline 0 \
-    -command "show.shape_analysis"
-if { !$thirdtech_ui } {
 $analysismenu add command -label "Data Registration..." -underline 0 \
     -command "show.registration"
+if { !$thirdtech_ui } {
+$analysismenu add command -label "Shape Analysis..." -underline 0 \
+    -command "show.shape_analysis"
 # $analysismenu add command -label "Tip Convolution..." \
 #     -command "show.tip_conv"
 }
-
 
 #### TOOLS menu #############################
 set toolmenu .menu.tool
@@ -494,11 +493,10 @@ if { [file exists "$spm_list_filename"] } {
     source "$spm_list_filename"
 }
 
+# Colormap widget and window. Used in setupmenu.tcl
+source [file join ${tcl_script_dir} colormap.tcl]
 #Setup menu commands
 source [file join ${tcl_script_dir} setupmenu.tcl]
-
-# Colormap widget and window.
-source [file join ${tcl_script_dir} colormap.tcl]
 
 # tipcontrol menu commands
 source [file join ${tcl_script_dir} image.tcl]
@@ -521,9 +519,9 @@ source [file join ${tcl_script_dir} streamfile.tcl]
 # Always sourced so mutex messages handled without error. 
 source [file join ${tcl_script_dir} shared_ptr.tcl]
 
-if { !$thirdtech_ui } {
 #Registration tool. Align two data sets with each other
 source [file join ${tcl_script_dir} registration.tcl]
+if { !$thirdtech_ui } {
 source [file join ${tcl_script_dir} tip_conv.tcl]
 source [file join ${tcl_script_dir} import.tcl]
 }
@@ -869,6 +867,10 @@ if { !$thirdtech_ui } {
 
     # Make the modify live window appear at the same position as the image
     wm geometry .modify_live +${main_xpos}+[expr $main_ypos +$main_height + 20]
+
+    # Make the registration window appear at the bottom left corner,
+    # above the taskbar
+    wm geometry $nmInfo(registration) +${main_xpos}-28
 
 }
 

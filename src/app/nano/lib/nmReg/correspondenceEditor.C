@@ -1,4 +1,13 @@
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "correspondenceEditor.h"
+#include <PPM.h>
+#include <nmb_ColorMap.h>
 
 CorrespondenceWindowParameters::CorrespondenceWindowParameters(): 
         left(1.0), right(0.0), bottom(0.0), top(1.0), im(NULL), winID(-1)
@@ -83,6 +92,9 @@ int CorrespondenceEditor::eventHandler(
     double max_x_grab_dist = 4*POINT_SIZE, max_y_grab_dist = 4*POINT_SIZE;
 
     me->viewer->toImage(event.winID, &max_x_grab_dist, &max_y_grab_dist);
+    // Convert back to an absolute size. 
+    max_y_grab_dist = 1.0 -  max_y_grab_dist;
+    max_x_grab_dist = 1.0 -  max_x_grab_dist;
 
     switch(event.type) {
       case RESIZE_EVENT:
@@ -91,9 +103,11 @@ int CorrespondenceEditor::eventHandler(
         if (event.button == IV_LEFT_BUTTON){
             double x_im = event.mouse_x, y_im = event.mouse_y;
             me->viewer->toImage(event.winID, &x_im, &y_im);
+            // Inside or outside existing point?
             if (me->correspondence->findNearestPoint(spaceIndex, x_im, y_im,
                 max_x_grab_dist, max_y_grab_dist,
                 &(me->grabbedPointIndex))){
+                // We are inside- prepare to drag this point
                 corr_point_t grabbed_pnt;
                 if (me->correspondence->getPoint(spaceIndex, 
                     me->grabbedPointIndex, &grabbed_pnt)) {
@@ -101,6 +115,8 @@ int CorrespondenceEditor::eventHandler(
                                     "getPoint failed\n");
                     return -1;
                 }
+                //printf("CE: point %f %f %f %f\n", x_im, y_im, 
+                //       grabbed_pnt.x,grabbed_pnt.y); 
                 me->draggingPoint = VRPN_TRUE;
                 me->viewer->toPixels(event.winID, &(grabbed_pnt.x),
 			&(grabbed_pnt.y));
@@ -110,32 +126,50 @@ int CorrespondenceEditor::eventHandler(
                 int i;
                 for (i = 0; i < me->num_images; i++)
                     me->viewer->dirtyWindow((me->winParam)[i].winID);
+            } else {
+                // We are outside, create a new point. 
+                double x_im = event.mouse_x, y_im = event.mouse_y;
+                me->viewer->toImage(event.winID, &x_im, &y_im);
+                corr_point_t p(x_im, y_im);
+                int new_pntIdx = me->correspondence->addPoint(p);
+                me->selectedPointIndex = me->grabbedPointIndex = new_pntIdx;
+                // Also prepare to drag this new point. 
+                me->draggingPoint = VRPN_TRUE;
+                me->viewer->toPixels(event.winID, &(p.x),
+                                     &(p.y));
+                me->grab_offset_x = 0;
+                me->grab_offset_y = 0;
+                int i;
+                for (i = 0; i < me->num_images; i++) {
+                    me->viewer->dirtyWindow((me->winParam)[i].winID);
+                }
+                me->notifyCallbacks();
             }
         }
         break;
       case BUTTON_RELEASE_EVENT:
-        if (event.button == IV_RIGHT_BUTTON){
-            double x_im = event.mouse_x, y_im = event.mouse_y;
-            me->viewer->toImage(event.winID, &x_im, &y_im);
-	    corr_point_t p(x_im, y_im);
-            int new_pntIdx = me->correspondence->addPoint(p);
-            me->selectedPointIndex = new_pntIdx;
-            int i;
-            for (i = 0; i < me->num_images; i++)
-                me->viewer->dirtyWindow((me->winParam)[i].winID);
-            me->notifyCallbacks();
-        }
-        else if (event.button == IV_LEFT_BUTTON && me->draggingPoint) {
+        if (event.button == IV_LEFT_BUTTON && me->draggingPoint) {
             double x_im = event.mouse_x + me->grab_offset_x;
             double y_im = event.mouse_y + me->grab_offset_y;
-            me->viewer->clampToWindow(event.winID, &x_im, &y_im);
-            me->viewer->toImage(event.winID, &x_im, &y_im);
-	    corr_point_t p(x_im, y_im);
-            me->correspondence->setPoint(spaceIndex, me->grabbedPointIndex, p);
+            if(me->viewer->clampToWindow(event.winID, &x_im, &y_im)) {
+                // If we dragged outside the window, delete the point. 
+                me->correspondence->deletePoint(me->selectedPointIndex);
+                me->selectedPointIndex = me->correspondence->numPoints()-1;
+                // deleted point affects all windows. 
+                int i;
+                for (i = 0; i < me->num_images; i++) {
+                    me->viewer->dirtyWindow((me->winParam)[i].winID);
+                }
+            } else {
+                me->viewer->toImage(event.winID, &x_im, &y_im);
+                corr_point_t p(x_im, y_im);
+                me->correspondence->setPoint(spaceIndex, me->grabbedPointIndex, p);
+                // moved point only affects active window. 
+                me->viewer->dirtyWindow(event.winID);
+            }
             me->draggingPoint = VRPN_FALSE;
-            me->viewer->dirtyWindow(event.winID);
             me->notifyCallbacks();
-        }
+        } 
         break;
       case MOTION_EVENT:
         if ((event.state & IV_LEFT_BUTTON_MASK) && me->draggingPoint) {
@@ -151,14 +185,18 @@ int CorrespondenceEditor::eventHandler(
       case KEY_PRESS_EVENT:
         printf("CorrespondenceEditor: got a key: %d\n", event.keycode);
         if (event.keycode == 108 ||
-	    event.keycode == 8){ // X windows number for delete key
+	    event.keycode == 8){ // 8 is for backspace, ^H. 
+            // 108 for delete key? Doesn't work with glut 3.6, only 3.7+
             if (me->correspondence->numPoints() > 0){
                 me->correspondence->deletePoint(me->selectedPointIndex);
             }
             me->selectedPointIndex = me->correspondence->numPoints()-1;
             int i;
-            for (i = 0; i < me->num_images; i++)
+            for (i = 0; i < me->num_images; i++) {
                 me->viewer->dirtyWindow((me->winParam)[i].winID);
+            }
+            // Allow update of the registration automatically. 
+            me->notifyCallbacks();
         }
         break;
       default:
@@ -340,9 +378,9 @@ void CorrespondenceEditor::addFiducial(int spaceIndex,
 
 int CorrespondenceEditor::setImage(int spaceIndex, nmb_Image *im) {
     int width, height;
-    int i,j;
+    //int i,j;
     int im_w, im_h;
-    double val;
+    //double val;
 
     if (winParam[spaceIndex].im) {
       nmb_Image::deleteImage(winParam[spaceIndex].im);
@@ -366,6 +404,7 @@ int CorrespondenceEditor::setImage(int spaceIndex, nmb_Image *im) {
 
     for (i = 0; i < im_w; i++){
         for (j = 0; j < im_h; j++){
+            //val = im->getValue(i,im_h -j -1);   // we need to flip y
             val = im->getValue(i,j);
             viewer->setValue(winParam[spaceIndex].winID, i, j, val);
         }
@@ -389,10 +428,12 @@ int CorrespondenceEditor::setImageFromPlane(int spaceIndex, BCPlane *p) {
                           p->minValue(), p->maxValue());
     for (i = 0; i < im_w; i++){
         for (j = 0; j < im_h; j++){
-            val = p->value(i,im_h -j -1);	// we need to flip y
+            //val = p->value(i,im_h -j -1);	// we need to flip y
+            val = p->value(i,j);
             viewer->setValue(winParam[spaceIndex].winID, i, j, val);
         }
     }
+    viewer->setWindowSize(win_ids[spaceIndex], im_w, im_h);
     return 0;
 }
 
@@ -423,6 +464,7 @@ int CorrespondenceEditor::setImageFromPNM(int spaceIndex, PNMImage &im)
             viewer->setValue(winParam[spaceIndex].winID, i, j, val);
         }
     }
+    viewer->setWindowSize(win_ids[spaceIndex], im_w, im_h);
     return 0;
 }
 
@@ -450,11 +492,12 @@ int CorrespondenceEditor::setImageFromPNM(int spaceIndex, PPM *im)
     viewer->setValueRange(winParam[spaceIndex].winID, im_min, im_max);
     for (i = 0; i < im_w; i++){
         for (j = 0; j < im_h; j++){
-            im->Tellppm(i, j, &r, &g, &b);  // flip y
+            im->Tellppm(i, j, &r, &g, &b);  // flip y??
             val = r;
             viewer->setValue(winParam[spaceIndex].winID, i, j, val);
         }
     }
+    viewer->setWindowSize(win_ids[spaceIndex], im_w, im_h);
     return 0;
 }
 ************************************************ */
@@ -473,6 +516,22 @@ void CorrespondenceEditor::registerCallback(CorrespondenceCallback handler,
 {
     change_handler = handler;
     userdata = ud;
+}
+
+int CorrespondenceEditor::setColorMap(int spaceIndex, nmb_ColorMap * cmap)
+{
+    viewer->setColorMap(winParam[spaceIndex].winID, cmap);
+    viewer->dirtyWindow(winParam[spaceIndex].winID);
+    return 0;
+}
+
+int CorrespondenceEditor::setColorMinMax(int spaceIndex, 
+                       vrpn_float64 dmin, vrpn_float64 dmax,
+                       vrpn_float64 cmin, vrpn_float64 cmax)
+{
+    viewer->setColorMinMax(winParam[spaceIndex].winID, dmin, dmax, cmin, cmax);
+    viewer->dirtyWindow(winParam[spaceIndex].winID);
+    return 0;
 }
 
 // This is some driver code I used to test this stuff:

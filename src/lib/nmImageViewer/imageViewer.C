@@ -1,11 +1,16 @@
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #if defined(__CYGWIN__) || !defined(_WIN32)
 #include <strings.h>
 #endif
-
-#include "vrpn_Types.h"
 
 #ifdef V_GLUT
 #	include <GL/glut_UNC.h>
@@ -22,6 +27,9 @@
 #include <assert.h>
 #include <math.h>
 
+#include <vrpn_Types.h>
+#include <nmb_ColorMap.h>
+
 #include "imageViewer.h"
 
 #ifndef M_PI
@@ -33,16 +41,18 @@ ImageViewer *ImageViewer::theViewer = NULL;	// pointer to singleton
 ImageWindow::ImageWindow():
     id(0),
 #ifdef V_GLUT
-    win_id(0),left_button_down(VRPN_FALSE),
-	middle_button_down(VRPN_FALSE), right_button_down(VRPN_FALSE),
+    win_id(0), left_button_down(VRPN_FALSE),
+    middle_button_down(VRPN_FALSE), right_button_down(VRPN_FALSE),
 #else
     win(NULL),
 #endif
-    win_width(0),win_height(0), im_width(0), im_height(0),
-    display_index(0),visible(VRPN_FALSE),needs_redisplay(VRPN_FALSE),
-    image(NULL),min_value(0), max_value(1.0),
+    win_width(0), win_height(0), im_width(0), im_height(0),
+    display_index(0), visible(VRPN_FALSE), needs_redisplay(VRPN_FALSE),
+    image(NULL), min_value(0), max_value(1.0),
     event_handler(NULL), event_handler_ud(NULL),
-    display_handler(NULL), display_handler_ud(NULL)
+    display_handler(NULL), display_handler_ud(NULL),
+    d_colormap(NULL), 
+    d_data_min(0), d_data_max(1), d_color_min(0), d_color_max(1)
 {}
 
 ImageDisplay::ImageDisplay():
@@ -218,6 +228,7 @@ int ImageViewer::createWindow(char *display_name,
     glutMotionFunc(ImageViewer::motionCallbackForGLUT);
     glutMouseFunc(ImageViewer::mouseCallbackForGLUT);
     glutKeyboardFunc(ImageViewer::keyboardCallbackForGLUT);
+    glutSpecialFunc(ImageViewer::specialCallbackForGLUT);
     //glutSetWindow(win_save);
 #endif
 
@@ -259,7 +270,6 @@ int ImageViewer::createWindow(char *display_name,
         return 0;
       }
     }
-
     num_windows++;
 //    showWindow(num_windows);
     return num_windows;
@@ -802,6 +812,7 @@ void ImageViewer::keyboardCallbackForGLUT(unsigned char key, int x, int y) {
                 "Error, ImageViewer::keyboardCallback, window not found\n");
         return;
     }
+    //printf("Ascii key '%c' 0x%02x\n", key, key);
     ImageViewerWindowEvent ivw_event;
     ivw_event.winID = v->get_winID_from_window_index(i);
     ivw_event.mouse_x = x;
@@ -814,6 +825,13 @@ void ImageViewer::keyboardCallbackForGLUT(unsigned char key, int x, int y) {
 		v->window[i].event_handler_ud);
 
 }
+
+// static
+void ImageViewer::specialCallbackForGLUT(int key, int x, int y) {
+    //printf("special key %d\n", key);
+
+}
+
 #endif
 
 int ImageViewer::setWindowEventHandler(int winID,
@@ -976,18 +994,34 @@ int ImageViewer::drawImage(int winID) {
     glLoadIdentity();
     glOrtho(1, -1, -1, 1, -1, 1);
     glRasterPos2f(-1.0, -1.0);
+    // XXXX Adam's image flip. 
     glPixelZoom(-pix_per_im_x, pix_per_im_y);
-    if (window[win_index].d_pixelMode == GL_FLOAT) {
+    //glPixelZoom(pix_per_im_x, pix_per_im_y);
+    glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+    if (window[win_index].d_colormap) {
+        // gl first converts the luminance pixels to RGBA, then
+        // applies the maps we specify. These are created from our
+        // color maps above. We're letting GL do the work for us. 
+        glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
+        glPixelMapfv(GL_PIXEL_MAP_R_TO_R, CMAP_SIZE_GL, window[win_index].rmap);
+        glPixelMapfv(GL_PIXEL_MAP_G_TO_G, CMAP_SIZE_GL, window[win_index].gmap);
+        glPixelMapfv(GL_PIXEL_MAP_B_TO_B, CMAP_SIZE_GL, window[win_index].bmap);
+
+    }
+      if (window[win_index].d_pixelMode == GL_FLOAT) {
         glDrawPixels(window[win_index].im_width, window[win_index].im_height,
             GL_LUMINANCE, GL_FLOAT, (float *)(window[win_index].image));
-    } else if (window[win_index].d_pixelMode == GL_UNSIGNED_BYTE){
+      } else if (window[win_index].d_pixelMode == GL_UNSIGNED_BYTE){
 	vrpn_uint8 *im = (vrpn_uint8 *)(window[win_index].image);
 	glDrawPixels(window[win_index].im_width, window[win_index].im_height,
             GL_LUMINANCE, GL_UNSIGNED_BYTE, im);
-    } else {
-		fprintf(stderr, "drawImage: Error, unknown pixel type\n");
-		return -1;
-    }
+      } else {
+          fprintf(stderr, "drawImage: Error, unknown pixel type\n");
+          return -1;
+      }
+      if (window[win_index].d_colormap) {
+          glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
+      }
     return 0;
 }
 
@@ -1042,11 +1076,11 @@ int ImageViewer::drawImage(int winID, nmb_Image *image,
                    window[win_index].win_height);
 
     if (shMag > 0.0001 || phiMag > 0.0001) {
-      drawImageAsTexture(image, red, green, blue, alpha, l, r, b, t, W2I);
+      drawImageAsTexture(winID, image, red, green, blue, alpha, 
+                         l, r, b, t, W2I);
     } else { // try using glDrawPixels instead of texture-mapping
-      drawImageAsPixels(image, red, green, blue, alpha, 
-             l, r, b, t, tx, ty, scx, scy, 
-             window[win_index].win_width, window[win_index].win_height);
+      drawImageAsPixels(winID, image, red, green, blue, alpha, 
+             l, r, b, t, tx, ty, scx, scy);
     }
 
 #ifdef V_GLUT
@@ -1056,14 +1090,16 @@ int ImageViewer::drawImage(int winID, nmb_Image *image,
     return 0;
 }
 
-int ImageViewer::drawImageAsTexture(nmb_Image *image, 
+int ImageViewer::drawImageAsTexture(int winID, nmb_Image *image, 
       double red, double green, double blue, double alpha, 
       double l, double r, double b, double t, nmb_TransformMatrix44 &W2I)
 {
+    int win_index = get_window_index_from_winID(winID);
   void *texture;
   int texwidth, texheight;
   vrpn_bool textureOkay = VRPN_TRUE;
   texture = image->pixelData();
+  nmb_ColorMap * colormap = window[win_index].d_colormap;
   int pixType;
   switch (image->pixelType()) {
     case NMB_UINT8:
@@ -1114,11 +1150,6 @@ int ImageViewer::drawImageAsTexture(nmb_Image *image,
     glEnable(GL_TEXTURE_GEN_R);
     glEnable(GL_TEXTURE_GEN_Q);
 
-    glPixelTransferf(GL_RED_SCALE, (float)red);
-    glPixelTransferf(GL_GREEN_SCALE, (float)green);
-    glPixelTransferf(GL_BLUE_SCALE, (float)blue);
-    glPixelTransferf(GL_ALPHA_SCALE, (float)alpha);
-
 /*
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
               GL_LINEAR_MIPMAP_LINEAR);
@@ -1132,10 +1163,31 @@ int ImageViewer::drawImageAsTexture(nmb_Image *image,
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, texwidth);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+    if (!colormap) {
+
+        glPixelTransferf(GL_RED_SCALE, (float)red);
+        glPixelTransferf(GL_GREEN_SCALE, (float)green);
+        glPixelTransferf(GL_BLUE_SCALE, (float)blue);
+        glPixelTransferf(GL_ALPHA_SCALE, (float)alpha);
+        
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
              texwidth, texheight, 0, GL_LUMINANCE,
              pixType, texture);
-
+        glPixelTransferf(GL_RED_SCALE, 1.0);
+        glPixelTransferf(GL_GREEN_SCALE, 1.0);
+        glPixelTransferf(GL_BLUE_SCALE, 1.0);
+        glPixelTransferf(GL_ALPHA_SCALE, 1.0);
+    } else {
+        glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
+        glPixelMapfv(GL_PIXEL_MAP_R_TO_R, CMAP_SIZE_GL, window[win_index].rmap);
+        glPixelMapfv(GL_PIXEL_MAP_G_TO_G, CMAP_SIZE_GL, window[win_index].gmap);
+        glPixelMapfv(GL_PIXEL_MAP_B_TO_B, CMAP_SIZE_GL, window[win_index].bmap);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+             texwidth, texheight, 0, GL_LUMINANCE,
+             pixType, texture);
+        
+        glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
+    }
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -1175,10 +1227,6 @@ int ImageViewer::drawImageAsTexture(nmb_Image *image,
       glVertex2f(regionVertex[3][0], regionVertex[3][1]);
     glEnd();
 
-    glPixelTransferf(GL_RED_SCALE, 1.0);
-    glPixelTransferf(GL_GREEN_SCALE, 1.0);
-    glPixelTransferf(GL_BLUE_SCALE, 1.0);
-    glPixelTransferf(GL_ALPHA_SCALE, 1.0);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_TEXTURE_GEN_S);
     glDisable(GL_TEXTURE_GEN_T);
@@ -1198,17 +1246,21 @@ int ImageViewer::drawImageAsTexture(nmb_Image *image,
   return 0;
 }
 
-int ImageViewer::drawImageAsPixels(nmb_Image *image,
+int ImageViewer::drawImageAsPixels(int winID, nmb_Image *image,
       double red, double green, double blue, double alpha,
       double l, double r, double b, double t, 
-      double tx, double ty, double scx, double scy, 
-      int winWidth, int winHeight)
+      double tx, double ty, double scx, double scy)
 {
+    int win_index = get_window_index_from_winID(winID);
   void *texture;
   int texwidth, texheight;
   vrpn_bool textureOkay = VRPN_TRUE;
   texture = image->pixelData();
   int pixType;
+  int winWidth = window[win_index].win_width;
+  int winHeight = window[win_index].win_height; 
+  nmb_ColorMap * colormap = window[win_index].d_colormap;
+
   switch (image->pixelType()) {
     case NMB_UINT8:
       pixType = GL_UNSIGNED_BYTE;
@@ -1353,18 +1405,30 @@ int ImageViewer::drawImageAsPixels(nmb_Image *image,
     }
     glPixelZoom(windowPixelPerImagePixelX, windowPixelPerImagePixelY);
 
-    glPixelTransferf(GL_RED_SCALE, (float)red);
-    glPixelTransferf(GL_GREEN_SCALE, (float)green);
-    glPixelTransferf(GL_BLUE_SCALE, (float)blue);
-    glPixelTransferf(GL_ALPHA_SCALE, (float)alpha);
-
-    glDrawPixels(rowWidth, colHeight, GL_LUMINANCE, pixType, texture);
-
-    glPixelTransferf(GL_RED_SCALE, 1.0);
-    glPixelTransferf(GL_GREEN_SCALE, 1.0);
-    glPixelTransferf(GL_BLUE_SCALE, 1.0);
-    glPixelTransferf(GL_ALPHA_SCALE, 1.0);
-
+    if (!colormap) {
+        glPixelTransferf(GL_RED_SCALE, (float)red);
+        glPixelTransferf(GL_GREEN_SCALE, (float)green);
+        glPixelTransferf(GL_BLUE_SCALE, (float)blue);
+        glPixelTransferf(GL_ALPHA_SCALE, (float)alpha);
+        
+        glDrawPixels(rowWidth, colHeight, GL_LUMINANCE, pixType, texture);
+        
+        glPixelTransferf(GL_RED_SCALE, 1.0);
+        glPixelTransferf(GL_GREEN_SCALE, 1.0);
+        glPixelTransferf(GL_BLUE_SCALE, 1.0);
+        glPixelTransferf(GL_ALPHA_SCALE, 1.0);
+    } else {
+        // gl first converts the luminance pixels to RGBA, then
+        // applies the maps we specify. These are created from our
+        // color maps above. We're letting GL do the work for us. 
+        glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
+        glPixelMapfv(GL_PIXEL_MAP_R_TO_R, CMAP_SIZE_GL, window[win_index].rmap);
+        glPixelMapfv(GL_PIXEL_MAP_G_TO_G, CMAP_SIZE_GL, window[win_index].gmap);
+        glPixelMapfv(GL_PIXEL_MAP_B_TO_B, CMAP_SIZE_GL, window[win_index].bmap);
+        glDrawPixels(rowWidth, colHeight, GL_LUMINANCE, pixType, texture);
+        
+        glPixelTransferi(GL_MAP_COLOR, GL_FALSE);
+    }
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
@@ -1435,6 +1499,7 @@ int ImageViewer::toImage(int winID, double *x, double *y){
     if (!validWinID(winID)) return -1;
     int win_index = get_window_index_from_winID(winID);
 
+    // XXXX Adam flips X too, why?
     *x /= (double)window[win_index].win_width;
     *x = 1.0-*x;
     *y /= (double)window[win_index].win_height;
@@ -1453,17 +1518,75 @@ int ImageViewer::toPixels(int winID, double *x, double *y){
     return 0;
 }
 
+/** Clamp coords to window size.
+    @return true if clamping performed, false otherwise. 
+ */ 
 int ImageViewer::clampToWindow(int winID, double *x, double *y) {
+    int clamped = 0;
     if (!validWinID(winID)) return -1;
     int win_index = get_window_index_from_winID(winID);
 
-    if (*x > window[win_index].win_width)
+    if (*x > window[win_index].win_width) {
 	*x = window[win_index].win_width;
-    else if (*x < 0)
+        clamped = 1;
+    } else if (*x < 0) {
 	*x = 0;
-    if (*y > window[win_index].win_height)
+        clamped = 1;
+    }
+    if (*y > window[win_index].win_height) {
 	*y = window[win_index].win_height;
-    else if (*y < 0)
+        clamped = 1;
+    } else if (*y < 0) {
 	*y = 0;
+        clamped = 1;
+    }
+    return clamped;
+}
+
+/** Set a colormap to use to display pixels. Pass in NULL to disable. 
+ */
+int ImageViewer::setColorMap(int winID, nmb_ColorMap * cmap) {
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+    window[win_index].d_colormap = cmap;
+    return (calcColorMap(winID));
+}
+
+/** Scale the colormap using values from the colormap control widget
+ */
+int ImageViewer::setColorMinMax(int winID,
+                                vrpn_float64 dmin, vrpn_float64 dmax,
+                                vrpn_float64 cmin, vrpn_float64 cmax)
+{
+    //printf("Got %f %f %f %f\n", dmin, dmax, cmin, cmax);
+    if (!validWinID(winID)) return -1;
+    int win_index = get_window_index_from_winID(winID);
+    window[win_index].d_data_min = dmin;
+    window[win_index].d_data_max = dmax;
+    window[win_index].d_color_min = cmin;
+    window[win_index].d_color_max = cmax;
+    return (calcColorMap(winID));
+}
+
+/** Perform the work of calculating a new color-mapped image
+ */
+int ImageViewer::calcColorMap(int winID) 
+{
+    int win_index = get_window_index_from_winID(winID);
+    double scaled_value = 0.0;
+    if (window[win_index].d_colormap) {
+        float dummy;
+        for (int i = 0; i < CMAP_SIZE_GL; i++) {
+          window[win_index].d_colormap->lookup(
+              i, 
+              0, CMAP_SIZE_GL,
+              window[win_index].d_data_min, window[win_index].d_data_max, 
+              window[win_index].d_color_min, window[win_index].d_color_max, 
+              &window[win_index].rmap[i], 
+              &window[win_index].gmap[i], 
+              &window[win_index].bmap[i], &dummy);
+        }
+    }
     return 0;
 }
+

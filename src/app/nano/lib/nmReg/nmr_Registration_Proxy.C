@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmr_Registration_Proxy.h"
 
 nmr_Registration_Proxy::nmr_Registration_Proxy(const char *name,
@@ -106,15 +113,15 @@ vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
     delete [] data;
   } else {
 */
-    printf("nmr_Registration_Proxy::setImage: "
-           "sending image parameters to remote: (%dx%d)\n",
-           im->width(), im->height());
+//      printf("nmr_Registration_Proxy::setImage: "
+//             "sending image parameters to remote: (%dx%d)\n",
+//             im->width(), im->height());
     im->getAcquisitionDimensions(xSize, ySize);
     d_remote_impl->setImageParameters(whichImage, im->width(), im->height(),
                          xSize, ySize);
     d_remote_impl->mainloop();
-    printf("nmr_Registration_Proxy::setImage: "
-           "sending image data to remote\n");
+//      printf("nmr_Registration_Proxy::setImage: "
+//             "sending image data to remote\n");
     data = new vrpn_float32[im->width()];
     for (i = 0; i < im->height(); i++) {
         for (j = 0; j < im->width(); j++) {
@@ -123,11 +130,37 @@ vrpn_int32 nmr_Registration_Proxy::setImage(nmr_ImageType whichImage,
         d_remote_impl->setScanline(whichImage, i, im->width(), data);
         d_remote_impl->mainloop();
     }
-    printf("nmr_Registration_Proxy::setImage: "
-           "finished sending image data to remote\n");
+//      printf("nmr_Registration_Proxy::setImage: "
+//             "finished sending image data to remote\n");
     delete [] data;
 //  }
   return 0;
+}
+
+vrpn_int32 nmr_Registration_Proxy::setColorMap(nmr_ImageType whichImage,
+                                            nmb_ColorMap * cmap)
+{
+    if (!d_local) {
+        fprintf(stderr, "nmr_Registration_Proxy::setColorMap: "
+                "only available with local server!\n");
+        return -1;
+    }
+    d_local_impl->setColorMap(whichImage, cmap);
+    return 0;
+}
+
+vrpn_int32 nmr_Registration_Proxy::setColorMinMax(nmr_ImageType whichImage, 
+                              vrpn_float64 dmin, vrpn_float64 dmax,
+                              vrpn_float64 cmin, vrpn_float64 cmax)
+{
+    if (!d_local) {
+        fprintf(stderr, "nmr_Registration_Proxy::setColorMinMax: "
+                "only available with local server!\n");
+        return -1;
+    }
+    d_local_impl->setColorMinMax(whichImage, dmin, dmax, cmin, cmax);
+    return 0;
+
 }
 
 // static

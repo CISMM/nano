@@ -65,7 +65,7 @@ pid_t getpid();
 
 // base
 #include <BCPlane.h>
-#include <colormap.h>
+#include <nmb_ColorMap.h>
 #include <PPM.h>
 #include <nmb_PlaneSelection.h>
 #include <nmb_Dataset.h>
@@ -79,6 +79,8 @@ pid_t getpid();
 #include <nmb_Line.h>
 #include <nmb_TimerList.h>
 #include <Topo.h>
+#include <nmb_ImgMagick.h>
+
 #include <Tcl_Linkvar.h>
 #include <Tcl_Netvar.h>
 
@@ -100,6 +102,7 @@ pid_t getpid();
 #include <GraphMod.h>
 #include <nmui_Component.h>
 #include <nmui_PlaneSync.h>
+#include <nmui_ColorMap.h>
 
 #ifdef	PROJECTIVE_TEXTURE
 // Registration
@@ -240,49 +243,26 @@ Tclvar_float	alpha_slider_min ("alpha_slider_min", 0);
 Tclvar_float	alpha_slider_max ("alpha_slider_max", 1);
 
 //-----------------------------------------------------------------------
-/// Colormap/surface color controls
+// Colormap/surface color controls
+// This section deals with selecting the color to apply to the surface.
 static void handle_color_minmax_change (vrpn_float64, void *);
 static void handle_surface_color_change(vrpn_int32 new_value, void *userdata);
 static void handle_colormap_change(const char *new_value, void *userdata);
 static void handle_color_dataset_change (const char *, void * _mptr);
-
-/// This is the list of color map files from which mappings can be made.  It
-/// should be loaded with the files in the colormap directory, and "none".
-static Tclvar_list_of_strings	colorMapNames("colorMapNames");
 
 /// Default location for colormaps, if NANO_ROOT is not set. 
 static	char	defaultColormapDirectory[] = "/afs/unc/proj/stm/etc/colormaps";
 /// This is a string that lets the user choose a color map to use.
 static	char	*colorMapDir = NULL;
 
-static ColorMap	* colorMaps[100] = { NULL };		
-  ///< Color maps currently loaded
-  // limit to 100 because that's the limit of nmb_ListOfStrings
-ColorMap	*curColorMap = NULL;	///< Pointer to the current color map
-/// width and height of colormap image used in the colormap choice popup menu
-static const int colormap_width = 24, colormap_height = 128;
+//nmb_ColorMap	*curColorMap = NULL;	///< Pointer to the current color map
 
-// This section deals with selecting the color to apply to the surface.
-// It includes both a string to allow choosing the field to map color
-// from, the min and max colors, and the min and max values that are
-// mapped to the min and max colors.
+// Two other essential tclnets are colorMapName and colorPlaneName,
+// contained in the nmb_Dataset object. 
 
-static int	minC[3] = {150,50,150};
-static int	maxC[3] = {250,50,50};
-
-/// The limits on the Tk slider where min and max value are selected
-Tclvar_float	color_min_limit("color_min_limit",0);
-Tclvar_float	color_max_limit("color_max_limit",1);
-TclNet_int surface_r ("surface_r", 192);
-TclNet_int surface_g ("surface_g", 192);
-TclNet_int surface_b ("surface_b", 192);
-TclNet_int surface_color_changed ("surface_color_changed", 1);
-// NANOX
-/// The positions of the min and max values within the Tk slider
-TclNet_float	color_min("color_min",0);
-TclNet_float	color_max("color_max",1);
-TclNet_float	data_min("data_min",0);
-TclNet_float	data_max("data_max",1);
+/// Relic - use to be used for a "Custom" colormap, now 
+/// set to be equal to surface color. 
+static int	surfC[3] = {150,50,150};
 
 //-----------------------------------------------------------------------
 /// ?? Doesn't appear in user interface, 6/01
@@ -426,7 +406,8 @@ Tclvar_int closeMicroscope("close_microscope", 0,
 // Deals with an image type for a screen capture
 /// Callback for screen capture
 static void handle_screenImageFileName_change(const char *new_value, void *userdata);
-const char **screenImage_formats_list = ImageType_names;
+const char *screenImage_formats_list[] = { "TIFF", "JPG", "BMP", "PPM", "PGM" };
+const int num_screenImage_formats = 5; 
 Tclvar_list_of_strings screenImage_formats("screenImage_format_list");
 
 Tclvar_string    screenImageFileType("screenImage_format", "");
@@ -1030,9 +1011,6 @@ static  char    defaultTextureDir[] = "/afs/unc/proj/stm/etc/textures";
 static	char	*textureDir;
 
 //----------------------------------------------------------------------
-Tclvar_string newResamplePlaneName("resample_plane_name", "");
-
-
 /// Controls for the french Ohmmeter. Uses ohmmeter.tcl for widgets. 
 Ohmmeter *the_french_ohmmeter_ui = NULL;
 
@@ -1053,6 +1031,9 @@ nmtc_TipConvolution *ConvTip = NULL;
 #ifdef NANO_WITH_ROBOT
 RobotControl * robotControl = NULL;
 #endif
+
+/// User controls for the colormap applied to the heightfield/surface
+nmui_ColorMap * colorMapUI = NULL;
 
 //---------------------------------------------------------------------------
 /// Scales how much normal force is felt when using Direct Z Control
@@ -1457,10 +1438,7 @@ void shutdown_connections (void) {
 
   if (dataset) ((TclNet_string *) dataset->colorPlaneName)->bindConnection(NULL);
   if (dataset) ((TclNet_string *) dataset->colorMapName)->bindConnection(NULL);
-  color_min.bindConnection(NULL);
-  color_max.bindConnection(NULL);
-  data_min.bindConnection(NULL);
-  data_max.bindConnection(NULL);
+  colorMapUI->shutdownConnections();
 
   measureRedX.bindConnection(NULL);
   measureRedY.bindConnection(NULL);
@@ -1736,13 +1714,6 @@ static void handle_alpha_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setAlphaSliderRange(alpha_slider_min, alpha_slider_max);
   //DONT cause_grid_redraw(0.0, NULL); It slows things down!
-}
-
-static void handle_color_minmax_change (vrpn_float64, void * userdata) {
-  nmg_Graphics * g = (nmg_Graphics *) userdata;
-  g->setColorMinMax(color_min, color_max);
-  g->setDataColorMinMax(data_min, data_max);
-  tcl_colormapRedraw();
 }
 
 static void handle_opacity_slider_change (vrpn_float64, void * userdata) {
@@ -2053,7 +2024,6 @@ static void handle_load_button_press_change (vrpn_int32 /*new_value*/, void * /*
 }
 
 
-
 void updateRulergridOffset (void) {
  if (rulergrid_position_line && rulergrid_enabled) {
    rulergrid_xoffset = (vrpn_float64) measureRedX;
@@ -2091,7 +2061,6 @@ static void handle_rulergridPositionLine_change (vrpn_int32, void *) {
 static void handle_rulergridOrientLine_change (vrpn_int32, void *) {
   updateRulergridAngle();
 }
-
 
 
 /// Resets the measure lines to their default positions in the three
@@ -2149,8 +2118,6 @@ static void handle_rewind_stream_change (vrpn_int32 /*new_value*/,
     set_stream_time = 0;
     set_stream_time_now = 1;
 } // end handle_rewind_stream_change
-
-
 
 
 // NANOX
@@ -2320,10 +2287,10 @@ static void handle_texture_dataset_change (const char *, void * userdata)
     
     realign_textures_slider_min = im->minNonZeroValue();
     realign_textures_slider_max = im->maxValue();
-  }
 
-  g->setRealignTextureSliderRange( realign_textures_slider_min,
+    g->setRealignTextureSliderRange( 0,1, realign_textures_slider_min,
 					  realign_textures_slider_max );
+
   /* XXXXXXX - NASTY HACK:
     this hack is related to a problem with how we link C variables with
     user interface variables:
@@ -2332,26 +2299,34 @@ static void handle_texture_dataset_change (const char *, void * userdata)
         we want to change a bunch of variables in the user interface as
         an initialization before taking some action such as generating
         a texture
+??? What nasty hack? I don't see it!
   */
-
-  printf("creating texture: %s\n", texturePlaneName.string());
-  g->createRealignTextures( texturePlaneName.string() );
+    // If im != NULL, this name won't be "none"
+      printf("creating texture: %s\n", texturePlaneName.string());
+      g->createRealignTextures( texturePlaneName.string() );
+  }
 }
 
 static void handle_texture_conversion_map_change(const char *, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-  g->setRealignTexturesConversionMap(textureConversionMapName.string(),
+  if (strcmp(textureConversionMapName.string(), "none")) {
+      g->setRealignTexturesConversionMap(textureConversionMapName.string(),
 					     colorMapDir );
-  g->createRealignTextures( texturePlaneName.string() );
+  }
+  if (strcmp(texturePlaneName.string(), "none")) {
+      g->createRealignTextures( texturePlaneName.string() );
+  }
 }
 
 static void handle_realign_textures_slider_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
-  g->setRealignTextureSliderRange( realign_textures_slider_min,
+  g->setRealignTextureSliderRange( 0,1,realign_textures_slider_min,
 					  realign_textures_slider_max );
-  g->createRealignTextures( texturePlaneName.string() );
+  if (strcmp(texturePlaneName.string(), "none")) {
+      g->createRealignTextures( texturePlaneName.string() );
+  }
 }
 
 static void handle_realign_plane_name_change (const char *, void * userdata) {
@@ -2526,61 +2501,53 @@ else fprintf(stderr, "Added X plane update callback\n");
 	}
 }
 
+//-----------------------------------------------------------------------
+// Colormap/surface tcl callbacks. 
 static void handle_surface_color_change (vrpn_int32, void * userdata) {
-  if ( surface_color_changed == 1 ) {
-    surface_color_changed = 0;
     nmg_Graphics * g = (nmg_Graphics *) userdata;
-    int color[3];
-    color[0] = int(surface_r);
-    color[1] = int(surface_g);
-    color[2] = int(surface_b);
-    g->setMinColor( color );
-    g->setMaxColor( color );
+    colorMapUI->getSurfaceColor(&surfC[0], &surfC[1], &surfC[2]); 
+    g->setMinColor( surfC );
+    g->setMaxColor( surfC );
 
-    // Re-do the "none" colormap based on new surface color.
-    colorMaps[0]->setGradient(0,0,0,255,int(surface_r), 
-                              int(surface_g), int(surface_b), 255);
-    
-    makeColorMapImage(colorMaps[0], "cm_image_none", 
-                      colormap_width, colormap_height);
+    //g->causeGridReColor();
+}
 
-    g->causeGridReColor();
-    tcl_colormapRedraw();
-  }
+static void handle_color_minmax_change (vrpn_float64, void * userdata) {
+  nmg_Graphics * g = (nmg_Graphics *) userdata;
+  double dmin,dmax,cmin,cmax;
+  colorMapUI->getDataColorMinMax(&dmin, &dmax, &cmin, &cmax);
+  g->setColorMinMax(cmin, cmax);
+  g->setDataColorMinMax(dmin, dmax);
+//    tcl_colormapRedraw();
 }
 
 static void handle_colormap_change (const char *, void * userdata) {
 
   nmg_Graphics * g = (nmg_Graphics *) userdata;
-  g->setColorMapName(dataset->colorMapName->string());
+  g->setColorMapName(colorMapUI->getColorMapName());
 
-  // This works for the "none" colormap, too, since it's specially
-  // added as colorMaps[0] 
-  curColorMap = colorMaps[colorMapNames.getIndex(dataset->colorMapName->string())];
-  tcl_colormapRedraw();
 }
 
-void handle_color_dataset_change(const char *, void * userdata)
+static void handle_color_dataset_change(const char *, void * userdata)
 {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
 
     BCPlane * plane = dataset->inputGrid->getPlaneByName
-                          (dataset->colorPlaneName->string());
+                          (colorMapUI->getColorImageName());
 
     if (plane != NULL) {
 	// Try to set this to a useful value for a stream file
-
-      color_min_limit = plane->minNonZeroValue();
-      color_max_limit = plane->maxNonZeroValue();
+        colorMapUI->setColorMinMaxLimit(plane->minNonZeroValue(),
+                                        plane->maxNonZeroValue());
     }
     else {  // so selected data set is "none"
-        color_min_limit = 0;
-        color_max_limit = 1;
+        colorMapUI->setColorMinMaxLimit(0, 1);
     }
 
-    g->setColorPlaneName(dataset->colorPlaneName->string());
+    g->setColorPlaneName(colorMapUI->getColorImageName());
     g->causeGridReColor();
 }
+//-----------------------------------------------------------------------
 
 void     handle_sound_dataset_change(const char *, void * )
 {
@@ -2627,7 +2594,7 @@ static int forget_modification_data ()
 static void handle_openStaticFilename_change (const char *, void *)
 {
     fprintf(stderr,"HANDLE_OPENSTATIC_FILE\n");
-    fprintf(stderr,"Filename length: %d\n",strlen(openStaticFilename));
+    fprintf(stderr,"FILE: %s\n", (const char*)openStaticFilename);
     //if collaborative session don't allow
     // changing staticfiles/streamfiles/SPM devices
     //if((collaborationManager) && (collaborationManager->isCollaborationOn())) {
@@ -2638,21 +2605,18 @@ static void handle_openStaticFilename_change (const char *, void *)
 
     if (strlen(openStaticFilename) <= 0) return;
 
-    const char	*files[1];
-    files[0] = (const char *)openStaticFilename;
-    fprintf(stderr,"FILE: %s\n", (const char*)openStaticFilename);
-    int ret = dataset->loadFiles(files, 1, microscope->d_topoFile);
+    int ret = dataset->loadFile((const char *)openStaticFilename, 
+                                microscope->d_topoFile);
     if (ret == -1) {
 	display_error_dialog("Couldn't open %s as a data file.\n"
                              "It is not a valid static data file.",
-		files[0]);
+		(const char *)openStaticFilename);
         return;
-    } else if (ret == -2) {
-	display_error_dialog("Couldn't open %s as a data file.\n"
-                      "It conflicts with a data file, stream or SPM connection already open.\n"
-                             "Choose File .. Close and open the file again.",
-		files[0]);
-        return;
+    } else if (ret == 1) {
+	display_warning_dialog("%s: Region or resolution is different than a\n"
+                         "data file, stream or SPM connection already open.\n"
+                         "Choose Analysis .. Data Registration to align.",
+                         (const char *)openStaticFilename);
     }
     for (BCPlane *p = dataset->inputGrid->head(); p != NULL; p = p->next()) {
         //printf("Found plane %s\n", (p->name())->Characters());
@@ -2664,6 +2628,8 @@ static void handle_openStaticFilename_change (const char *, void *)
             // to display it, if we are displaying nothing...
             if ( strcmp(dataset->heightPlaneName->string(), EMPTY_PLANE_NAME) == 0) {
                 *(dataset->heightPlaneName) = *(p->name());
+                // Remove the name from the UI - it's not useful to our users
+                dataset->inputPlaneNames->deleteEntry(EMPTY_PLANE_NAME);
             }
             // Measure lines sometimes collapse to one corner. Move to separate corners.
             resetMeasureLines(dataset, decoration);
@@ -3041,11 +3007,10 @@ static void handle_exportScene_Filename_change (
     const char * filename,
     void * userdata)
 {
+    if (strlen(filename) > 0) {
 #if defined(_WIN32) && !defined(__CYGWIN__)
     fprintf(stderr, "handle_exportScene_Filename_change: Not implemented on PC\n");
 #else
-
-    if (strlen(filename) > 0) {
         nmb_Dataset * dataset = (nmb_Dataset*) userdata;
         nmb_PlaneSelection planes;
         planes.lookup (dataset);
@@ -3057,8 +3022,8 @@ static void handle_exportScene_Filename_change (
         // what is the correct way to change the name back?
         // the answer depends on who owns the storage for the current name.
         filename = "";
-    }
 #endif
+    }
 }
 
 
@@ -3847,11 +3812,11 @@ static void handle_screenImageFileName_change (const char *, void *userdata)
 //                        screenImageFileType.string(),
 //                        newScreenImageFileName.string());
 
-      for (i = 0; i < ImageType_count; i++)
-         if (!strcmp(screenImageFileType.string(), ImageType_names[i]))
+      for (i = 0; i < num_screenImage_formats; i++)
+         if (!strcmp(screenImageFileType.string(), screenImage_formats_list[i]))
             break;
 
-      if (ImageType_count == i) {
+      if (num_screenImage_formats == i) {
          display_error_dialog( "Internal: Unknown image type '%s' chosen",
                          screenImageFileType.string());
       } else {
@@ -3886,8 +3851,8 @@ static void handle_screenImageFileName_change (const char *, void *userdata)
 
           g->createScreenImage(newScreenImageFileName.string(), (ImageType)i);
           gettimeofday(&end, NULL);
-          printf("Screen save time %f\n", (end.tv_usec - start.tv_usec)/1000000.0 +
-	        (end.tv_sec - start.tv_sec));
+//            printf("Screen save time %f\n", (end.tv_usec - start.tv_usec)/1000000.0 +
+//  	        (end.tv_sec - start.tv_sec));
       }
    }
 
@@ -4136,55 +4101,6 @@ int register_vrpn_callbacks(void){
     return 0;
 }
 
-/**
-loadColorMaps
-	This routine looks the color maps out of the specified directory, 
-        loads them, and creates images in Tcl so they can be displayed. 
-        The tcl images have the same name as the colormap with "cm_image_" 
-        on the front. 
-*/
-int	loadColorMapNames(char * colorMapDir)
-{
-    char cm_name[100];
-
-    DIR	*directory;
-    struct	dirent *entry;
-    nmb_ListOfStrings temp_dir_list;
-    
-    colorMaps[0] = new ColorMap(0,0,0,255,int(surface_r), int(surface_g), int(surface_b),255);
-    makeColorMapImage(colorMaps[0], "cm_image_none", colormap_width, colormap_height);
-    curColorMap = colorMaps[0];
-    // Set the default entry to use the custom color controls
-    temp_dir_list.addEntry("none");
-
-    // Get the list of files that are in that directory
-    // Put the name of each file in that directory into the list
-    if ( (directory = opendir(colorMapDir)) == NULL) {
-        display_error_dialog("Couldn't load colormaps from\n"
-                             "directory named: %s\nDirectory not available.",colorMapDir);
-        return -1;
-    }
-    int k;
-    while ( (entry = readdir(directory)) != NULL) {
-        if (entry->d_name[0] != '.') {
-            k = temp_dir_list.numEntries();
-            // Load the colormap
-            colorMaps[k] = new ColorMap(entry->d_name, colorMapDir);
-
-            sprintf (cm_name, "cm_image_%s", entry->d_name); 
-            makeColorMapImage(colorMaps[k], cm_name, colormap_width, colormap_height);
-
-            // Remember the name
-            temp_dir_list.addEntry(entry->d_name);
-        }
-    }
-    // Don't set the real list of names until after the images have
-    // been created. 
-    colorMapNames.copyList(&temp_dir_list);
-    closedir(directory);
-    
-    return 0;
-}
 
 /**
 loadProcImage
@@ -4266,10 +4182,17 @@ int	loadPPMTextures(void)
 }
 
 
-
+/// Internal order dependence, must be called before setupCallbacks(d,g)
 void setupCallbacks (nmb_Dataset * d, nmm_Microscope_Remote * m) {
 
   if (!d || !m) return;
+
+  // Must be called before any tclvars that use this list to choose
+  // from, like heightPlaneName, colorPlaneName, etc. 
+  ((Tclvar_list_of_strings *) d->imageNames)->
+        initializeTcl("imageNames");
+  ((Tclvar_list_of_strings *) d->inputPlaneNames)->
+        initializeTcl("inputPlaneNames");
 
   ((Tclvar_string *) d->heightPlaneName)->
         initializeTcl("z_comes_from");
@@ -4290,22 +4213,9 @@ void setupCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
 
   if (!d || !g) return;
 
-  ((Tclvar_list_of_strings *) d->imageNames)->
-        initializeTcl("imageNames");
-  ((Tclvar_list_of_strings *) d->inputPlaneNames)->
-        initializeTcl("inputPlaneNames");
-
   ((Tclvar_string *) d->alphaPlaneName)->
         initializeTcl("alpha_comes_from");
   
-  ((Tclvar_string *) d->colorMapName)->
-        initializeTcl("color_map");
-  //d->colorMapName->bindList(&colorMapNames);
-
-  ((Tclvar_string *) d->colorPlaneName)->
-        initializeTcl("color_comes_from");
-  ((Tclvar_string *) d->colorPlaneName)->addCallback
-            (handle_color_dataset_change, g);
 
   ((Tclvar_string *) d->contourPlaneName)->
         initializeTcl("contour_comes_from");
@@ -4314,8 +4224,6 @@ void setupCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
         initializeTcl("opacity_comes_from");
   ((Tclvar_string *) d->alphaPlaneName)->addCallback
             (handle_alpha_dataset_change, g);
-  ((Tclvar_string *) d->colorMapName)->addCallback
-            (handle_colormap_change, g);
   ((Tclvar_string *) d->contourPlaneName)->addCallback
             (handle_contour_dataset_change, g);
   ((Tclvar_string *) d->opacityPlaneName)->addCallback
@@ -4326,16 +4234,43 @@ void teardownCallbacks (nmb_Dataset * d, nmg_Graphics * g) {
 
   if (!d || !g) return;
 
-  ((Tclvar_string *) d->colorPlaneName)->removeCallback
-            (handle_color_dataset_change, g);
   ((Tclvar_string *) d->alphaPlaneName)->removeCallback
             (handle_alpha_dataset_change, g);
-  ((Tclvar_string *) d->colorMapName)->removeCallback
-            (handle_colormap_change, g);
   ((Tclvar_string *) d->contourPlaneName)->removeCallback
             (handle_contour_dataset_change, g);
   ((Tclvar_string *) d->opacityPlaneName)->removeCallback
             (handle_opacitymap_dataset_change, g);
+}
+
+void setupCallbacks (nmui_ColorMap *cm, nmb_Dataset * d, nmg_Graphics * g) {
+
+  if (!cm || !d || !g) return;
+    // Heightfield colormap controls.
+    cm->swapTclStrings((TclNet_string *) d->colorPlaneName, 
+                       (Tclvar_list_of_strings *) d->inputPlaneNames,
+                       (TclNet_string *) d->colorMapName);
+  ((TclNet_string *) d->colorMapName)->
+        initializeTcl("cm_heightfield(color_map)");
+
+  ((TclNet_string *) d->colorPlaneName)->
+        initializeTcl("cm_heightfield(color_comes_from)");
+  cm->addColorImageNameCallback
+            (handle_color_dataset_change, g);
+  cm->addColorMapNameCallback
+            (handle_colormap_change, g);
+  cm->addMinMaxCallback(handle_color_minmax_change, g);
+  cm->addSurfaceColorCallback(handle_surface_color_change, g);
+}
+
+void teardownCallbacks (nmui_ColorMap *cm, nmb_Dataset * d, nmg_Graphics * g) {
+
+  if (!cm || !d || !g) return;
+  cm->removeColorImageNameCallback
+            (handle_color_dataset_change, g);
+  cm->removeColorMapNameCallback
+            (handle_colormap_change, g);
+  cm->removeMinMaxCallback(handle_color_minmax_change, g);
+  cm->removeSurfaceColorCallback(handle_surface_color_change, g);
 }
 
 void setupCallbacks (nmb_Dataset *d) {
@@ -4573,11 +4508,6 @@ void setupCallbacks (nmg_Graphics * g) {
             (handle_alpha_slider_change, g);
   alpha_slider_max.addCallback
             (handle_alpha_slider_change, g);
-  color_min.addCallback(handle_color_minmax_change, g);
-  color_max.addCallback(handle_color_minmax_change, g);
-  data_min.addCallback(handle_color_minmax_change, g);
-  surface_color_changed.addCallback(handle_surface_color_change, g);
-  data_max.addCallback(handle_color_minmax_change, g);
   opacity_slider_min.addCallback
             (handle_opacity_slider_change, g);
   opacity_slider_max.addCallback
@@ -4692,7 +4622,7 @@ void setupCallbacks (nmg_Graphics * g) {
   // Screen capture callback
   
   // make list of image types for screen captures
-  for (int i = 0; i < ImageType_count; i++)
+  for (int i = 0; i < num_screenImage_formats; i++)
      screenImage_formats.addEntry(screenImage_formats_list[i]);
   //screenImageFileType.bindList(&screenImage_formats);
   screenImageFileType = (const char *)(screenImage_formats_list[0]);
@@ -5181,10 +5111,7 @@ void setupSynchronization (CollaborationManager * cm,
 /* */
   viewColorControls->add((TclNet_string *) dset->colorPlaneName);
   viewColorControls->add((TclNet_string *) dset->colorMapName);
-  viewColorControls->add(&color_min);
-  viewColorControls->add(&color_max);
-  viewColorControls->add(&data_min);
-  viewColorControls->add(&data_max);
+  colorMapUI->setupSynchronization(viewColorControls);
 /* */
 
   nmui_Component * viewMeasureControls;
@@ -5499,18 +5426,19 @@ void ParseArgs (int argc, char ** argv,
         if (++i >= argc) Usage(argv[0]);
         istate->NIC_IP = argv[i];
       } else if (strcmp(argv[i], "-color") == 0) {
+        fprintf(stderr, "Warning: -color obsolete, sets only surface color.\n");
         if (++i >= argc) Usage(argv[0]);
-        maxC[0] = atoi(argv[i]);
+        surfC[0] = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
-        maxC[1] = atoi(argv[i]);
+        surfC[1] = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
-        maxC[2] = atoi(argv[i]);
+        surfC[2] = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
-        minC[0] = atoi(argv[i]);
+        surfC[0] = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
-        minC[1] = atoi(argv[i]);
+        surfC[1] = atoi(argv[i]);
         if (++i >= argc) Usage(argv[0]);
-        minC[2] = atoi(argv[i]);
+        surfC[2] = atoi(argv[i]);
       } else if (strcmp(argv[i], "-con") == 0) {
 	  //istate->afm.image.mode = CONTACT;
 	  //istate->afm.modify.mode = CONTACT;
@@ -6177,7 +6105,7 @@ VERBOSE(1, "g>Graphics thread starting vrpn server\n");
   // start a graphics implementation
 VERBOSE(1, "g>Graphics thread starting graphics implementation\n");
   g = new nmg_Graphics_Implementation
-        (dataset, minC, maxC, rulerPPMName, vizPPMName, c,
+        (dataset, surfC, surfC, rulerPPMName, vizPPMName, c,
          wellKnownPorts->remote_gaEngine);
 
   // Turn off UberGraphics until we figure out how to get it
@@ -6270,13 +6198,13 @@ void createGraphics (MicroscapeInitializationState & istate) {
       exit(0);
 
       //fprintf(stderr, "Using NO GRAPHICS.\n");
-      //graphics = new nmg_Graphics_Null(dataset, minC, maxC);
+      //graphics = new nmg_Graphics_Null(dataset, surfC, surfC);
       break;
 
     case LOCAL_GRAPHICS:
         //fprintf(stderr, "Using local GL graphics implementation.\n");
       graphics = new nmg_Graphics_Implementation(
-          dataset, minC, maxC, rulerPPMName, vizPPMName,
+          dataset, surfC, surfC, rulerPPMName, vizPPMName,
           NULL, wellKnownPorts->remote_gaEngine);
       if (istate.timeGraphics) {
         graphics = new nmg_Graphics_Timer(graphics, &graphicsTimer);
@@ -6322,7 +6250,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
       shmem_connection = new vrpn_Synchronized_Connection
                             (wellKnownPorts->graphicsControl);
       gi = new nmg_Graphics_Implementation (
-          dataset, minC, maxC, rulerPPMName, vizPPMName,
+          dataset, surfC, surfC, rulerPPMName, vizPPMName,
           shmem_connection, wellKnownPorts->remote_gaEngine);
       graphics = new nmg_Graphics_Remote (shmem_connection);
       break;
@@ -6342,7 +6270,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
-                 (dataset, minC, maxC, renderServerOutputConnection,
+                 (dataset, surfC, surfC, renderServerOutputConnection,
                   nmg_Graphics::VERTEX_COLORS,
                   nmg_Graphics::VERTEX_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
@@ -6365,7 +6293,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
-                 (dataset, minC, maxC, renderServerOutputConnection,
+                 (dataset, surfC, surfC, renderServerOutputConnection,
                   nmg_Graphics::SUPERSAMPLED_COLORS,
                   nmg_Graphics::NO_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
@@ -6388,7 +6316,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
-                 (dataset, minC, maxC, renderServerOutputConnection,
+                 (dataset, surfC, surfC, renderServerOutputConnection,
                   nmg_Graphics::CLOUDMODEL_COLORS,
                   nmg_Graphics::NO_DEPTH,
                   nmg_Graphics::ORTHO_PROJECTION,
@@ -6411,7 +6339,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
                           (wellKnownPorts->graphicsControl);
 
       graphics = new nmg_Graphics_RenderServer
-               (dataset, minC, maxC, renderServerOutputConnection,
+               (dataset, surfC, surfC, renderServerOutputConnection,
                 nmg_Graphics::SUPERSAMPLED_COLORS,
                 nmg_Graphics::NO_DEPTH,
                 nmg_Graphics::PERSPECTIVE_PROJECTION,
@@ -6443,7 +6371,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       //graphics = new nmg_Graphics_Remote (renderServerControlConnection);
       graphics = new nmg_Graphics_RenderClient
-           (dataset, minC, maxC, renderClientInputConnection,
+           (dataset, surfC, surfC, renderClientInputConnection,
             nmg_Graphics::VERTEX_COLORS, nmg_Graphics::VERTEX_DEPTH,
             nmg_Graphics::ORTHO_PROJECTION,
             100, 100,
@@ -6482,7 +6410,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       //graphics = new nmg_Graphics_Remote (renderServerControlConnection);
       graphics = new nmg_Graphics_RenderClient
-           (dataset, minC, maxC, renderClientInputConnection,
+           (dataset, surfC, surfC, renderClientInputConnection,
             nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
             nmg_Graphics::ORTHO_PROJECTION,
             512, 512, renderServerControlConnection, &graphicsTimer);
@@ -6520,7 +6448,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
       // TODO
       graphics = new nmg_Graphics_RenderClient
-           (dataset, minC, maxC, renderClientInputConnection,
+           (dataset, surfC, surfC, renderClientInputConnection,
             nmg_Graphics::SUPERSAMPLED_COLORS, nmg_Graphics::NO_DEPTH,
             nmg_Graphics::PERSPECTIVE_PROJECTION,
             512, 512, renderServerControlConnection, &graphicsTimer);
@@ -6610,6 +6538,7 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
   }
   if (graphics && dataset) {
     teardownCallbacks(dataset, graphics);
+    teardownCallbacks(colorMapUI, dataset, graphics);
   }
   if (alignerUI) {
     alignerUI->teardownCallbacks();
@@ -6677,6 +6606,7 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     setupStateCallbacks(new_microscope);
     VERBOSE(1, "Setup state callbacks");
 
+    // Internal order dependence, must be called before setupCallbacks(d,g)
     setupCallbacks(new_dataset, new_microscope);
     VERBOSE(1, "Setup dataset+microscope callbacks");
     setupCallbacks(new_dataset);
@@ -6690,7 +6620,9 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
       // after graphics is constructed
       new_microscope->registerImageModeHandler(clear_polyline, graphics);
       setupCallbacks(new_dataset, graphics);
+      setupCallbacks(colorMapUI, new_dataset, graphics);
     }
+
     if (collaborationManager) {
       setupSynchronization(collaborationManager, new_dataset, new_microscope);
     }
@@ -6704,6 +6636,9 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     VERBOSE(1, "Created new mod file");
 
     // display modifications on a strip chart
+
+    // XXX ATH memory leak
+    GraphMod * graphmod = new GraphMod;
 
     new_microscope->registerPointDataHandler(GraphMod::ReceiveNewPoint, new_microscope->graphmod);
     new_microscope->registerModifyModeHandler(GraphMod::EnterModifyMode, new_microscope->graphmod);
@@ -6770,6 +6705,12 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     // Clear mod markers
     decoration->clearPulses();
     decoration->clearScrapes();
+
+    // Initialize the display of the size of the grid.
+    decoration->selectedRegionMinX = dataset->inputGrid->minX();
+    decoration->selectedRegionMinY = dataset->inputGrid->minY();
+    decoration->selectedRegionMaxX = dataset->inputGrid->maxX();
+    decoration->selectedRegionMaxY = dataset->inputGrid->maxY();
 
     // Clear any remembered modifications
     forget_modification_data();
@@ -6971,16 +6912,13 @@ int main (int argc, char* argv[])
     // DEBUG pause program to attach debugger. 
     //cin.get();
 
+    initMagick(*argv);
+
     decoration = new nmb_Decoration( markerHeight, numMarkersShown );
     if (!decoration) {
 	display_fatal_error_dialog( "Cannot initialize decorations.\n");
 	return -1;
     }	
-
-    // Match Color w/default in TCL
-    minC[0] = maxC[0] = surface_r;
-    minC[1] = maxC[1] = surface_g;
-    minC[2] = maxC[2] = surface_b;
 
     // get stuff and set stuff from environment
     // Before parseArgs so command line can over-ride.
@@ -7149,8 +7087,17 @@ int main (int argc, char* argv[])
   
   // Load the names of usable color maps
   VERBOSE(1, "Loading color maps");
-  loadColorMapNames(colorMapDir);
-  
+  colorMapUI = new nmui_ColorMap("cm_heightfield", 
+                          (TclNet_string *) dataset->colorPlaneName, 
+                          (Tclvar_list_of_strings *) dataset->inputPlaneNames,
+                          (TclNet_string *) dataset->colorMapName);
+  colorMapUI->loadColorMapNames(colorMapDir);
+  // Match Color w/default in TCL
+  colorMapUI->getSurfaceColor(&surfC[0], &surfC[1], &surfC[2]); 
+  colorMapUI->setSurfaceColor(surfC[0], surfC[1], surfC[2]); 
+  // Send default surface color to graphics. 
+  handle_surface_color_change(1, graphics);
+
 #ifndef NO_RAW_TERM
   /* open raw terminal with echo if keyboard isn't off  */
   if (do_keybd == 1){
@@ -7248,6 +7195,7 @@ int main (int argc, char* argv[])
         // Handle other command line arguments which might have 
         // been passed to the microscope, like -f or -fi
         createNewMicroscope(istate, NULL);
+
     }
 
 

@@ -54,7 +54,6 @@ typedef	void (* Linkvar_Checkcall) (const char * checkbox,
 // TCH 1 Oct 97
 #define TCLVAR_STRING_LENGTH 128
 
-#define NUM_ENTRIES 100
 #define NUM_CHECKBOXES 100
 
 struct tclIntCallbackEntry {

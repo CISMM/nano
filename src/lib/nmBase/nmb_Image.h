@@ -315,6 +315,7 @@ class nmb_ImageGrid : public nmb_Image{
 	static int writeTextFile(FILE *file, nmb_ImageGrid *im, const char * filename);
         static int writePPMFile(FILE *file, nmb_ImageGrid *im, const char * filename);
         static int writeTIFFile(FILE *file, nmb_ImageGrid *im, const char * filename);
+        static int writeOtherImageFile(FILE *file, nmb_ImageGrid *im, const char * filename);
         static int writeSPIPFile(FILE *file, nmb_ImageGrid *im, const char * filename);
 	static int writeUNCAFile(FILE *file, nmb_ImageGrid *im, const char * filename);
 

@@ -9,7 +9,7 @@ ifdef VC
 EXCLUDE_SRC += termio.c x_util.c
 # vrpn_phantom isn't really external but we specify the path explicitly
 # as being in vrpn/server_src/pc_win32_MTd unlike we do for other internal libs
-USES_EXTERNAL_LIBS := vrpn_phantom ghost30
+USES_EXTERNAL_LIBS := vrpn_phantom ghost31
 else
 USES_EXTERNAL_LIBS := RhinoIO
 endif

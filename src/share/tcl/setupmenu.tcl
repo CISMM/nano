@@ -5,10 +5,11 @@
 #  This file may not be distributed without the permission of 
 #  3rdTech, Inc. 
 #  ===3rdtech===*/
+
 # Provide a toplevel widget to allow
 # control over which data sets are enabled in scan and touch
 # mode.  
-# Put in one sub-area for scan and one for touch. */
+# Put in one sub-area for scan and one for touch.
 # ----------------------------------------------------------------------
 set nmInfo(data_sets) [create_closing_toplevel data_sets "Datasets Setup" ]
 
@@ -99,40 +100,14 @@ foreach name $forcecurvedatalist {
 }
 #set num_forcecurvedata [expr $i -1]
 
-#
-################################
-# This part of the script describes the framework for a control panel
-# for the external filter programs.
-#
-set nmInfo(external_filters) [create_closing_toplevel external_filters \
-	"External Filter Programs"]
-
-generic_optionmenu $nmInfo(external_filters).pick_program_name pick_program \
-	"External Filter Program" filter_names
-pack $nmInfo(external_filters).pick_program_name
-
-generic_optionmenu $nmInfo(external_filters).pick_plane pick_plane \
-	"Plane to Filter" inputPlaneNames
-pack $nmInfo(external_filters).pick_plane
-
-label $nmInfo(external_filters).plabel -text "Program Parameters"
-set proc_params ""
-entry $nmInfo(external_filters).entry -relief sunken -bd 2 \
-	-textvariable proc_params
-label $nmInfo(external_filters).dlabel -text "Filtered Plane Name"
-pack $nmInfo(external_filters).plabel $nmInfo(external_filters).entry \
-	$nmInfo(external_filters).dlabel -side top
-newlabel_dialogue filterplane_name $nmInfo(external_filters)
-
 
 #
 ################################
 #
-# This part of the script describes the framework for a control panel
+# This part of the script describes the control panel
 # for the Z data.  This allows both the selection of the plane to use
-# for mapping to Z and the scale to apply to that mapping.  Both of the
-# tools for selecting these are created using Tcl_Linkvar variables in
-# the code.
+# for mapping to Z and the scale to apply to that mapping. These widgets
+# are attached to Tcl_linkvars in the code.
 #
 set nmInfo(z_mapping) [create_closing_toplevel z_mapping "Height Plane Setup"]
 #show.z_mapping
@@ -144,6 +119,64 @@ pack $nmInfo(z_mapping).z_dataset -anchor nw -padx 3 -pady 3
 set z_scale 1
 generic_entry $nmInfo(z_mapping).scale z_scale "Z scale" real
 pack $nmInfo(z_mapping).scale -anchor nw -padx 3 -pady 3
+
+
+#
+################################
+#
+# Colormap controls, using routines from colormap.tcl
+set nmInfo(colorscale) [create_closing_toplevel colorscale "Color Map Setup" ]
+
+# create the colormap controls. 
+colormap_controls $nmInfo(colorscale) cm_heightfield \
+        cm_heightfield(color_comes_from) "Colormap plane" inputPlaneNames
+
+###################################
+# Childsite is created for us to put additional controls in. 
+set nmInfo(colorscale_childsite) $nmInfo(colorscale).childsite
+set surface_color gray
+frame $nmInfo(colorscale_childsite).c
+# Set the basic surface color:
+button $nmInfo(colorscale_childsite).c.set_color \
+        -text "Set surface color" -command {
+    if {[choose_color surface_color "Choose surface color" $nmInfo(colorscale)] } {
+        $nmInfo(colorscale_childsite).c.colorsample configure -bg $surface_color 
+        set_surface_color
+        # Turn off the color map, if it is on. 
+        set cm_heightfield(color_map) "none"
+    }
+}
+button $nmInfo(colorscale_childsite).c.colorsample \
+        -relief groove -bd 2 -bg $surface_color \
+        -command { $nmInfo(colorscale_childsite).c.set_color invoke}
+pack $nmInfo(colorscale_childsite).c -side top -anchor nw -fill x
+pack $nmInfo(colorscale_childsite).c.set_color -side left 
+pack $nmInfo(colorscale_childsite).c.colorsample -side left -fill x -expand yes
+
+# Make it easy to create a flat plane to use for a color map.
+button $nmInfo(colorscale_childsite).calc_planes -text "Calculate Data Planes..."  \
+    -command "show.calc_planes"
+pack $nmInfo(colorscale_childsite).calc_planes -side top -anchor nw -fill x
+
+set cm_heightfield(surface_r) 192
+set cm_heightfield(surface_g) 192
+set cm_heightfield(surface_b) 192
+set cm_heightfield(surface_color_changed) 0
+
+# this sets the color of the sample frame to the color of the scales
+set surface_color [format #%02x%02x%02x $cm_heightfield(surface_r) $cm_heightfield(surface_g) $cm_heightfield(surface_b)]
+
+proc set_surface_color {} {
+    global cm_heightfield surface_color
+
+    # Extract three component colors of contour_color 
+    # and save into surface_r g b
+    scan $surface_color #%02x%02x%02x cm_heightfield(surface_r) cm_heightfield(surface_g) cm_heightfield(surface_b)
+    set cm_heightfield(surface_color_changed) 1
+}
+
+###################################
+
 
 #
 #################################    
@@ -771,6 +804,32 @@ if {$spring_slider_min_limit != $spring_slider_max_limit} {
 }
 
 
+#
+################################
+# This part of the script describes the framework for a control panel
+# for the external filter programs.
+#
+set nmInfo(external_filters) [create_closing_toplevel external_filters \
+	"External Filter Programs"]
+
+generic_optionmenu $nmInfo(external_filters).pick_program_name pick_program \
+	"External Filter Program" filter_names
+pack $nmInfo(external_filters).pick_program_name
+
+generic_optionmenu $nmInfo(external_filters).pick_plane pick_plane \
+	"Plane to Filter" inputPlaneNames
+pack $nmInfo(external_filters).pick_plane
+
+label $nmInfo(external_filters).plabel -text "Program Parameters"
+set proc_params ""
+entry $nmInfo(external_filters).entry -relief sunken -bd 2 \
+	-textvariable proc_params
+label $nmInfo(external_filters).dlabel -text "Filtered Plane Name"
+pack $nmInfo(external_filters).plabel $nmInfo(external_filters).entry \
+	$nmInfo(external_filters).dlabel -side top
+newlabel_dialogue filterplane_name $nmInfo(external_filters)
+
+#
 ############################
 # display_settings
 

@@ -2409,17 +2409,19 @@ int nmg_Graphics::decode_positionSphere
 // as none do anything unexpected.
 
 
-// Encodes two floats for network transmission
+// Encodes four floats for network transmission
 char *nmg_Graphics::encode_setRealignTextureSliderRange ( int *len,
-							  float low,
-							  float hi ) {
+    float data_min,
+    float data_max,
+    float color_min,
+    float color_max) {
   char * msgbuf = NULL;
   char * mptr;
   int mlen;
 
   if (!len) return NULL;
 
-  *len = 2 * sizeof(float);
+  *len = 4 * sizeof(float);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmg_Graphics::encode_setRealignTextureSliderRange:  "
@@ -2428,19 +2430,26 @@ char *nmg_Graphics::encode_setRealignTextureSliderRange ( int *len,
   } else {
     mptr = msgbuf;
     mlen = *len;
-    vrpn_buffer(&mptr, &mlen, low);
-    vrpn_buffer(&mptr, &mlen, hi);
+    vrpn_buffer(&mptr, &mlen, data_min);
+    vrpn_buffer(&mptr, &mlen, data_max);
+    vrpn_buffer(&mptr, &mlen, color_min);
+    vrpn_buffer(&mptr, &mlen, color_max);
   }
 
   return msgbuf;
 }
 
-// Decodes two floats after network transmission
+// Decodes four floats after network transmission
 int nmg_Graphics::decode_setRealignTextureSliderRange ( const char *buf,
-							float *low,float *hi) {
-  if (!buf || !low || !hi) return -1;
-  CHECK(vrpn_unbuffer(&buf, low));
-  CHECK(vrpn_unbuffer(&buf, hi));
+    float *data_min,
+    float *data_max,
+    float *color_min,
+    float *color_max) {
+  if (!buf || !data_min || !data_max || !color_min || !color_max) return -1;
+  CHECK(vrpn_unbuffer(&buf, data_min));
+  CHECK(vrpn_unbuffer(&buf, data_max));
+  CHECK(vrpn_unbuffer(&buf, color_min));
+  CHECK(vrpn_unbuffer(&buf, color_max));
   return 0;
 }
 

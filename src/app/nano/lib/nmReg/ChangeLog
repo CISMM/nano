@@ -1,3 +1,25 @@
+2001-07-26  Aron Helser  <helser@cs.unc.edu>
+
+	* correspondenceEditor.Ch (eventHandler): Points added by
+	left-click, setup for drag. Points deleted by drag outside window.
+	(setColorMap): new
+	(setColorMinMax): new
+	
+	* correspondence.C: doxygen comments
+
+	* nmr_RegistrationUI.Ch: ColorMaps are new.
+	(handle_registrationColorMap3D_change): new
+	(handle_registrationColorMap2D_change): new
+	(handle_registrationMinMax3D_change): new
+	(handle_registrationMinMax2D_change): new
+
+	* nmr_Registration_Impl.Ch (setColorMap): new
+	(setColorMinMax): new
+	* nmr_Registration_ImplUI.Ch (setColorMap): new
+	(setColorMinMax): new
+	* nmr_Registration_Proxy.Ch (setColorMap): new
+	(setColorMinMax): new
+	
 2001-07-24  Adam Seeger  <seeger@cs.unc.edu>
 
 	* correspondenceEditor.Ch (CorrespondenceWindowParameters): new class

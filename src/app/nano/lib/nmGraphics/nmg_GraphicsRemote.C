@@ -960,13 +960,17 @@ void nmg_Graphics_Remote::createRealignTextures( const char *name ) {
   }
 }
 
-void nmg_Graphics_Remote::setRealignTextureSliderRange (float low, float high){
+void nmg_Graphics_Remote::setRealignTextureSliderRange (
+    float data_min,
+    float data_max,
+    float color_min,
+    float color_max) {
   struct timeval now;
   char * msgbuf;
   int len;
   int retval;
 
-  msgbuf = encode_setRealignTextureSliderRange(&len, low, high);
+  msgbuf = encode_setRealignTextureSliderRange(&len, data_min,data_max,color_min, color_max);
   gettimeofday(&now, NULL);
   if (d_connection && msgbuf) {
     retval = d_connection->pack_message(len, now,

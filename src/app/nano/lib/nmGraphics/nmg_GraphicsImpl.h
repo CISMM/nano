@@ -98,7 +98,7 @@ class nmg_Graphics_Implementation : public nmg_Graphics {
 
     // Realigning Textures:
     virtual void createRealignTextures( const char * );
-    virtual void setRealignTextureSliderRange (float, float);
+    virtual void setRealignTextureSliderRange (float, float, float, float);
     virtual void setRealignTexturesConversionMap( const char *, const char * );
     virtual void computeRealignPlane( const char *, const char * );
 

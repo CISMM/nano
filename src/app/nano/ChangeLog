@@ -1,6 +1,34 @@
+2001-07-26  Aron Helser  <helser@cs.unc.edu>
+
+	* microscape.c: Moved many tclvars related to colormaps into
+	nmui_Colormap, changed comments.
+	(handle_color_minmax_change): callback into nmui_ColorMap now
+	(handle_surface_color_change): callback into nmui_ColorMap now
+	(handle_texture_conversion_map_change): used for registration
+	tool's colormap.
+	(handle_openStaticFilename_change): reflects nmb_Dataset changes
+	to put mismatch images into ImageList, instead of throw out.
+	(handle_screenImageFileName_change): handle new formats from
+	ImageMagick.
+	(loadColorMapNames): moved to nmui_ColorMap
+	(main): initMagick, new nmui_ColorMap 
+
+	* microscape.h: removed curColorMap, tcl globals - use
+	nmui_ColorMap instead.
+
+	* microscopeHandlers.C (handle_z_dataset_change): Fix of screw-up with
+	initialization of the height plane widget. 
+
+	* tcl_tk.ch (makeColorMapImage): moved to nmui_ColorMap
+	(tcl_colormapRedraw): same
+
+	* vrml.C: fixed warning
+
+	* Makefile: Ghost 3.1
+	
 2001-07-24  David Marshburn  <marshbur@tungsten-cs.cs.unc.edu>
 
-	* microscape.c: (setupSynchronization) changed the call to the
+	* microscape.c (setupSynchronization): changed the call to the
 	PlaneSync constuctor to match its new interface.
 
 2001-07-09  Shayne O'Neill  <soneill@mindspring.com>

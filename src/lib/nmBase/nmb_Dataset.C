@@ -40,8 +40,7 @@ nmb_Dataset::nmb_Dataset
                TopoFile &topoFile):
 
   inputGrid (new BCGrid (xSize, ySize, xMin, xMax, yMin, yMax,
-                         readMode, gridFileNames, numGridFiles,
-                         topoFile)),
+                         readMode)),
   inputPlaneNames (list_of_strings_allocator()),
   imageNames(list_of_strings_allocator()),
   dataImages (new nmb_ImageList(imageNames,
@@ -64,15 +63,55 @@ nmb_Dataset::nmb_Dataset
   calculatedPlane_head( NULL ),
   d_hostname(hostname)
 {
+    //variables to save the command line args for heightplane and colorplane
+    initHeight[0] = '\0';
+    initColorPlane[0] = '\0';
+    
+    int i;
 
-	//variables to save the command line args for heightplane and colorplane
-	initHeight[0] = '\0';
-	initColorPlane[0] = '\0';
-
-
-
-  ensureHeightPlane();
-
+  // Load any static images from our args. 
+  switch (readMode) 
+  {
+  case READ_STREAM:
+  case READ_DEVICE:
+      {	
+  	  inputGrid->addNewPlane("Topography-Forward", "nm", TIMED);
+      }
+      break;
+  case READ_FILE: 
+      {	  
+        for (i = 0; i < numGridFiles; i++) {
+          BCGrid* tmpgrid = 
+              inputGrid->loadFile(gridFileNames[i], topoFile);
+          if (tmpgrid == NULL) {
+              // Error loading the file, BCGrid prints error
+          } else if (tmpgrid == inputGrid) {
+              // file successfully loaded into primary grid
+          } else {
+              // File successfully load, conflict with primary grid
+              printf("Warning: %s is not the same size or region\n"
+                     "as previous files. Use Analysis .. Data Registration\n"
+                     "to align for use.\n", gridFileNames[i] );
+              // Add to the list of images. 
+              nmb_Image *im = new nmb_ImageGrid(tmpgrid->head());
+              im->setTopoFileInfo(topoFile);
+              dataImages->addImage(im);
+          }
+        }
+      }
+      break;
+  default:
+      {
+  	  perror("nmb_Dataset::nmb_Dataset: Unknown read mode!");
+  	  return;
+      }
+  }
+  
+  // If all else fails, add empty plane. 
+  if (inputGrid->head() == NULL) {
+      inputGrid->addNewPlane(EMPTY_PLANE_NAME, "nm", NOT_TIMED);
+  }
+      
   // Make a friction grid from deflection data (if it exists),
   // or from an auxiliary grid
   if (inputGrid->getPlaneByName("deflection")) {
@@ -92,6 +131,10 @@ nmb_Dataset::nmb_Dataset
     inputPlaneNames->addEntry(p->name()->Characters());
     p = p->next();
   }
+  
+  // After name list is initialized, so we set heightplane widget
+  // to a useful name. 
+  ensureHeightPlane();
 
   // in addition to static images, 
   // dataImages should include data from all microscopes so here we
@@ -133,21 +176,27 @@ nmb_Dataset::~nmb_Dataset (void) {
 /**
    Loads a list of files, by calling BCGrid::loadFiles, then
    adding any new planes to our dataImages list. 
-   @return -1 on invalid data, -2 on conflict with existing grid data, 0 on success
+   @return -1 on invalid data, 1 on conflict with existing grid data, 0 on
+   load into current grid
    @author Aron Helser
-   @date modified 3-22-00 Aron Helser
-*/
+   @date modified 3-22-00 Aron Helser */
 int
-nmb_Dataset::loadFiles(const char** file_names, int num_files, 
-		       TopoFile &topoFile)
+nmb_Dataset::loadFile(const char* file_name, TopoFile &topoFile)
 {
   // Load the files
-    int ret;
-    if ((ret = inputGrid->loadFiles(file_names, num_files, topoFile)) != 0) {
-        return ret;
+    BCGrid * tmpgrid;
+    nmb_Image *im ;
+    if ((tmpgrid = inputGrid->loadFile(file_name, topoFile)) == NULL) {
+        return -1;
+    } else if (tmpgrid != inputGrid) {
+        //Add file to image list only. 
+        nmb_Image *im = new nmb_ImageGrid(tmpgrid->head());
+        im->setTopoFileInfo(topoFile);
+        dataImages->addImage(im);
+        //??XX delete tmpgrid;
+        return 1;
     }
-  
-  // Add any new planes to our lists. 
+    // Add new plane to our list. 
   for (BCPlane *p = inputGrid->head(); p != NULL; p = p->next()) {
     if (dataImages->getImageByName(*(p->name())) == NULL){
       nmb_Image *im = new nmb_ImageGrid(p);
@@ -155,6 +204,17 @@ nmb_Dataset::loadFiles(const char** file_names, int num_files,
       dataImages->addImage(im);
     }
   }
+  // Remove EMPTY_HEIGHT_PLANE from our image list - 
+  // it has been deleted from grid already
+  if ((im = dataImages->removeImageByName(EMPTY_PLANE_NAME)) != NULL) {
+      //XXXX What's the right way? delete im;
+      // The empty plane should be at the head of BCGrid's list. 
+      if( strcmp(inputGrid->head()->name()->Characters(), EMPTY_PLANE_NAME) == 0) {
+          inputGrid->deleteHead();
+      }
+      
+  }
+
   return 0;
 }
 
@@ -187,21 +247,27 @@ BCPlane * nmb_Dataset::ensureHeightPlane (void) {
   while (plane) {
     if (!strcmp(*plane->units(),"nm")) {
       heightPlaneName->Set(plane->name()->Characters());
-      // This line is EVIL - TCH 14 Jan 00
-      //*heightPlaneName = nmb_Selector(NULL, (plane->name()->Characters()));
       break;  // Found one!
     }
     plane = plane->next();
   }
   if (plane == NULL) {
-    plane = inputGrid->getPlaneByName(EMPTY_PLANE_NAME);
-    if (!plane) {
+    if ((plane = inputGrid->head()) != NULL) {
+        // Set heightplane using one whose units aren't "nm"
+        // (This should handle heightPlaneName set to "none")
+        heightPlaneName->Set(plane->name()->Characters());
+    } else {
+      // Last resort - create a heightplane. 
+      plane = inputGrid->getPlaneByName(EMPTY_PLANE_NAME);
+      if (!plane) {
         //fprintf(stderr,"Warning! No height plane input, using zero plane\n");
-      plane = inputGrid->addNewPlane(EMPTY_PLANE_NAME, "nm", NOT_TIMED);
-      heightPlaneName->Set(plane->name()->Characters());
-      dataImages->addImage(new nmb_ImageGrid(plane));
+        plane = inputGrid->addNewPlane(EMPTY_PLANE_NAME, "nm", NOT_TIMED);
+        heightPlaneName->Set(plane->name()->Characters());
+        dataImages->addImage(new nmb_ImageGrid(plane));
+      }
     }
   }
+
   return plane;
 }
 

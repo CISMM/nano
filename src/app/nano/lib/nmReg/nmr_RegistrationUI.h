@@ -16,13 +16,15 @@
 #include "Tcl_Netvar.h"
 
 class nmb_Dataset;
-/// This class is in charge of the client-side user interface which 
-/// lets the user manipulate and view data from an nmr_Registration_Client 
-/// The display of the registration results is done using nmg_Graphics and
-/// a projective texture; The control panel also provides utilities for
-/// resampling an image using the registration result in order to align
-/// one image to another one.
+class nmui_ColorMap;
 
+/** This class is in charge of the client-side user interface which 
+ lets the user manipulate and view data from an nmr_Registration_Client 
+ The display of the registration results is done using nmg_Graphics and
+ a projective texture; The control panel also provides utilities for
+ resampling an image using the registration result in order to align
+ one image to another one.
+*/
 /***************************************************************
      there are 4 coordinate systems we need to worry about 
 
@@ -67,6 +69,10 @@ class nmr_RegistrationUI {
     static void handle_resamplePlaneName_change(const char *name, void *ud);
     static void handle_registrationImage3D_change(const char *name, void *ud);
     static void handle_registrationImage2D_change(const char *name, void *ud);
+    static void handle_registrationColorMap3D_change(const char *name, void *ud);
+    static void handle_registrationColorMap2D_change(const char *name, void *ud);
+    static void handle_registrationMinMax3D_change(vrpn_float64, void *ud);
+    static void handle_registrationMinMax2D_change(vrpn_float64, void *ud);
     static void handle_textureDisplayEnabled_change(vrpn_int32 value, void *ud);
     static void handle_registrationRequest_change(vrpn_int32 value, void *ud);
     static void handle_registrationEnabled_change(vrpn_int32 value, void *ud);
@@ -80,24 +86,28 @@ class nmr_RegistrationUI {
 
   protected:
  
-    Tclvar_string d_registrationImageName3D;
-    Tclvar_string d_registrationImageName2D;
-    Tclvar_string d_newResampleImageName;
-    Tclvar_string d_newResamplePlaneName;
-    Tclvar_int d_registrationEnabled;
-    Tclvar_int d_registrationRequested;
-    Tclvar_int d_constrainToTopography;
-    Tclvar_int d_invertWarp;
-    Tclvar_int d_textureDisplayEnabled;
-    Tclvar_int d_resampleResolutionX;
-    Tclvar_int d_resampleResolutionY;
-    Tclvar_float d_resampleRatio;
+    TclNet_string d_registrationImageName3D;
+    TclNet_string d_registrationImageName2D;
+    TclNet_string d_newResampleImageName;
+    TclNet_string d_newResamplePlaneName;
+    TclNet_int d_registrationEnabled;
+    TclNet_int d_registrationRequested;
+    TclNet_int d_constrainToTopography;
+    TclNet_int d_invertWarp;
+    TclNet_int d_textureDisplayEnabled;
+    TclNet_int d_resampleResolutionX;
+    TclNet_int d_resampleResolutionY;
+    TclNet_float d_resampleRatio;
+    TclNet_string d_registrationColorMap3D;
+    TclNet_string d_registrationColorMap2D;
 
     vrpn_bool d_registrationValid;
     nmg_Graphics *d_graphicsDisplay;
     nmb_ImageList *d_imageList;
     nmb_Dataset *d_dataset;
     nmr_Registration_Proxy *d_aligner;
+    nmui_ColorMap * d_3DImageCMap;
+    nmui_ColorMap * d_2DImageCMap;
 
     nmb_TransformMatrix44 d_ProjWorldFromTopoWorldTransform;
     nmb_TransformMatrix44 d_ProjImageFromTopoImageTransform;

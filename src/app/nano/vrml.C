@@ -30,13 +30,13 @@
 #endif
 #include	<GL/gl.h>
 
-#include <colormap.h>
-#include "BCPlane.h"
+#include <nmb_ColorMap.h>
+#include <BCPlane.h>
 #include <nmb_PlaneSelection.h>
 
 //#include	"spm_gl.h"
 #include        "microscape.h"
-#include	"Tcl_Linkvar.h"
+#include	<Tcl_Linkvar.h>
 
 #if (!defined(X) || !defined(Y) || !defined(Z))
 #define	X	(0)
@@ -253,7 +253,7 @@ static int	fout_vrml_color(nmb_PlaneSelection planes,
 
     for (x = 0; x < planes.height->numX(); x += stride) {// right->left
       for (y = 0; y < planes.height->numY(); y += stride) {	// bottom->top
-        GLfloat	Color[3];
+        GLfloat	Color[3] = {0.5,0.5,0.5};
 	/*
 	// stretch/shrink data based on data_min/max colors:
 	float data_value = planes.color->value(x, y);
@@ -264,7 +264,7 @@ static int	fout_vrml_color(nmb_PlaneSelection planes,
 	else if ( data_value > color_max ) data_value = 1.0;
 	else data_value = (data_value - color_min)/(color_max - color_min);
 	
-	if (curColorMap) {    // Use the color map loaded from file
+	if (g_curColorMap) {    // Use the color map loaded from file
 	  float r, g, b, a;
 	  g_curColorMap->lookup(data_value, &r, &g, &b, &a);
 	  Color[0] = r;

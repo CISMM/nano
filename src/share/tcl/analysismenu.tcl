@@ -1,5 +1,14 @@
+#/*===3rdtech===
+#  Copyright (c) 2001 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
 
+#
 # Analysis menu
+#
 
 #
 ##############

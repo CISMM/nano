@@ -1,3 +1,13 @@
+2001-07-26  Aron Helser  <helser@cs.unc.edu>
+
+	* imageViewer.Ch (setColorMinMax): new
+	(setColorMap): new
+	(calcColorMap): utility. new. 
+	(drawImage): changes to handle using a color map to draw images. 
+	(drawImageAsTexture): same
+	(drawImageAsPixels): same
+	(clampToWindow): returns flag whether clamping occurred. 
+
 2001-07-24  Adam Seeger  <seeger@cs.unc.edu>
 
 	* imageViewer.C (createWindow): set image buffer size to 0 to save

@@ -16,7 +16,7 @@
 
 #include <vrpn_Shared.h>
 #include <nmb_Types.h>  // for PointType
-#include <colormap.h>
+//#include <nmb_ColorMap.h>
 
 #include "ImageMaker.h" // Image formats for screen capture
 
@@ -248,7 +248,7 @@ class nmg_Graphics {
 
     // Realigning Textures:
     virtual void createRealignTextures( const char * ) = 0;
-    virtual void setRealignTextureSliderRange (float, float) = 0;
+    virtual void setRealignTextureSliderRange (float, float, float, float) = 0;
     virtual void setRealignTexturesConversionMap
                     (const char *, const char *) = 0;
     virtual void computeRealignPlane( const char *, const char * ) = 0;
@@ -705,8 +705,8 @@ class nmg_Graphics {
     int decode_setCollabMode (const char *buf, int *);
 
     // Realign Textures Network Transmission Functions:
-    char *encode_setRealignTextureSliderRange ( int *len, float, float );
-    int decode_setRealignTextureSliderRange( const char *buf,float *, float *);
+    char *encode_setRealignTextureSliderRange ( int *len, float, float, float, float );
+    int decode_setRealignTextureSliderRange( const char *buf,float *, float *,float *, float *);
     
     char *encode_two_char_arrays ( int *len, const char *, const char * );
     int decode_two_char_arrays ( const char *buf, char **, char **);

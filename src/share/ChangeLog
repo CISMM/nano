@@ -1,3 +1,8 @@
+2001-07-26  Aron Helser  <helser@cs.unc.edu>
+
+	* Makefile.common (LOAD_FLAGS): Additions for ImageMagick
+	library. Ghost 3.1
+
 2001-05-12  Aron Helser  <helser@cs.unc.edu>
 
 	* Makefile.common : VIEWER changed to NO_MSCOPE_CONNECTION or

@@ -1,5 +1,12 @@
 #ifndef NMB_STRING_H
 #define NMB_STRING_H
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 
 #include <stdlib.h>  // for NULL
 

@@ -495,7 +495,7 @@ proc updateOptionmenu {menu entry_list_name var name element op} {
     # If this callback results from the entry_list being changed
     # ignore it.
     if { $optionmenu_setting_list } { return; }
-    #puts "TCL: updateOptionmenu $var $varval"
+    #if {$var == "z_comes_from"} { puts "TCL: updateOptionmenu $var $varval" }
 
     set old_menu_val "[$menu get]"
     # If the new variable value is not one of the menu choices,
@@ -518,6 +518,7 @@ proc updateOptionmenu {menu entry_list_name var name element op} {
 	    $menu select $menu_item
 	}
     }
+    #if {$var == "z_comes_from"} { puts "TCLEND: updateOptionmenu $var $varval" }
 }
 
 # called when the C code changes the list of menu entries.
@@ -525,7 +526,7 @@ proc updateOptionmenuEntries {menu entry_list_name var name_or_index name elemen
     global optionmenu_setting_list optionmenu_selecting_default
     upvar #0 $entry_list_name entry_list
     upvar #0 $var varval 
-    #puts "TCL: updateOptionmenuEntries $var $varval "
+    #if {$var == "z_comes_from"} { puts "TCL: updateOptionmenuEntries $entry_list_name $var $varval " }
 
     set old_menu_val [$menu get]
     if { $entry_list == "" } {
@@ -574,6 +575,7 @@ proc updateOptionmenuEntries {menu entry_list_name var name_or_index name elemen
 	$menu select $menu_item
 	set optionmenu_selecting_default 0
     }
+    #if {$var == "z_comes_from"} { puts "TCLEND: updateOptionmenuEntries $entry_list_name $var $varval " }
 }
 
 # Create an option menu for choosing from a list of strings.

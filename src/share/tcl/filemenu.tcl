@@ -275,6 +275,7 @@ proc save_plane_data {} {
         { "ThermoMicroscopes" ".tfr" }
         { "TIFF Image" ".tif" }
         { "PPM Image" ".ppm" }
+        { "Other Image" ".jpg" }
         { "Text(MathCAD)" ".txt" }
         { "SPIP" ".spip" }
         { "UNCA Image" ".ima" } }
@@ -328,9 +329,11 @@ iwidgets::dialog .save_screen_dialog -title "Save screen image"
     global fileinfo screenImage_format
     .save_screen_dialog deactivate 1
     set types { {"All files" *} 
-    {"TIFF" ".tif" }
-    {"PPM/PGM" ".pgm" } 
-    {"PPM/PGM" ".ppm" } }
+    {"TIF" ".tif" }
+    {"JPG" ".jpg" }
+    {"BMP" ".bmp" }
+    {"PGM" ".pgm" } 
+    {"PPM" ".ppm" } }
 
         # Set the file extension correctly
         set def_file_exten ".tif"

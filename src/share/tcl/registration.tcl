@@ -1,8 +1,17 @@
-global reg_window_open registration_needed reg_constrain_to_topography
-global reg_invert_warp
-global resample_resolution_x resample_resolution_y reg_resample_ratio
-global reg_surface_comes_from reg_projection_comes_from
-global resample_image_name
+#/*===3rdtech===
+#  Copyright (c) 2001 by 3rdTech, Inc.
+#  All Rights Reserved.
+#
+#  This file may not be distributed without the permission of 
+#  3rdTech, Inc. 
+#  ===3rdtech===*/
+
+# Not needed.
+#global reg_window_open registration_needed reg_constrain_to_topography
+#global reg_invert_warp
+#global resample_resolution_x resample_resolution_y reg_resample_ratio
+#global reg_surface_comes_from reg_projection_comes_from
+#global resample_image_name
 
 set reg_surface_comes_from "none"
 set reg_projection_comes_from "none"
@@ -11,14 +20,58 @@ set reg_projection_comes_from "none"
 set nmInfo(registration) [create_closing_toplevel_with_notify \
                                       registration reg_window_open]
 
-generic_optionmenu $nmInfo(registration).selection3D reg_surface_comes_from \
+generic_optionmenu $nmInfo(registration).selection3D \
+        reg_surface_cm(color_comes_from) \
         "Topography image" imageNames
-pack $nmInfo(registration).selection3D -anchor nw -pady 3
+button $nmInfo(registration).colormap3D -text "Colormap..."  \
+    -command "show.reg_surf_colorscale"
+#generic_optionmenu $nmInfo(registration).colormap3D \
+#	reg_surface_colormap_from \
+#	"Colormap" colorMapNames
+pack $nmInfo(registration).selection3D $nmInfo(registration).colormap3D -anchor nw -pady 3
 
-generic_optionmenu $nmInfo(registration).selection2D reg_projection_comes_from \
+# Colormap controls, using routines from colormap.tcl
+set nmInfo(reg_surf_colorscale) [create_closing_toplevel reg_surf_colorscale "Registration Topography Color Map" ]
+
+# create the colormap controls. 
+colormap_controls $nmInfo(reg_surf_colorscale) reg_surface_cm \
+        reg_surface_cm(color_comes_from) "Topography image" imageNames
+
+generic_optionmenu $nmInfo(registration).selection2D \
+        reg_projection_cm(color_comes_from) \
         "Projection image" imageNames
-pack $nmInfo(registration).selection2D -anchor nw -pady 3
+button $nmInfo(registration).colormap2D -text "Colormap..."  \
+    -command "show.reg_proj_colorscale"
+#generic_optionmenu $nmInfo(registration).colormap2D \
+#	reg_projection_colormap_from \
+#	"Colormap" colorMapNames
+pack $nmInfo(registration).selection2D $nmInfo(registration).colormap2D -anchor nw -pady 3
 
+#proc printvar {fooa element op} {
+#    global reg_projection_cm
+#    puts "XXXX new  $reg_projection_cm(color_comes_from)"
+#}
+#trace variable reg_projection_cm(color_comes_from) w printvar
+
+# Colormap controls, using routines from colormap.tcl
+set nmInfo(reg_proj_colorscale) [create_closing_toplevel reg_proj_colorscale "Registration Projection Color Map" ]
+
+# create the colormap controls. 
+colormap_controls $nmInfo(reg_proj_colorscale) reg_projection_cm \
+        reg_projection_cm(color_comes_from) "Projection image" imageNames
+
+#make sure colormap windows close along with the rest of the interface. 
+proc reg_close_cmap_windows {name el op} {
+    global reg_window_open
+    if {$reg_window_open == 0 } {
+        hide.reg_surf_colorscale
+        hide.reg_proj_colorscale
+    }
+}
+trace variable reg_window_open w reg_close_cmap_windows
+
+
+# Mostly obsolete, since we now auto-register when points are added or moved. 
 button $nmInfo(registration).register -text "Register" -command \
     { set registration_needed 1 }
 pack $nmInfo(registration).register -anchor nw

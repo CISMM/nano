@@ -29,7 +29,8 @@ int close( int filedes );
 #include "BCPlane.h"
 #include "Topo.h"
 #include "PPM.h"	// used in readPPMorPGMFileNew()
-#include <ImageMaker.h> // used in writeTIFFile
+#include "nmb_ImgMagick.h"
+//#include <ImageMaker.h> // used in writeTIFFile
 
 #include "readNanoscopeFile.C" // <------------ reading a .C file!
 
@@ -39,209 +40,7 @@ const double STANDARD_DEVIATIONS = 3.0;
 
 int BCGrid::_times_invoked = 0;
 
-/**
-   Loads a list of files. If the only plane in the grid is EMPTY_PLANE_NAME,
-   fill the grid. If there is data already in the grid, add planes of data 
-   only if the grid size matches.
-   @return -1 on invalid data, -2 on conflict with existing grid data, 0 on success
-   @author Aron Helser
-   @date modified 7-14-00 Aron Helser
-*/
-int
-BCGrid::loadFiles(const char** file_names, int num_files, TopoFile &topoFile)
-{
-    int i;
-    FILE *infile;
 
-    //
-    // Read the first file from the list into a grid structure
-    // if there is at least one file to open
-    // This is a success if no files are specified. 
-    if ((num_files <= 0)||(file_names == NULL) || (file_names[0] == NULL)) {
-	return 0;
-    }
-    // "rb" is nessesary on _WIN32 and doesn't hurt elsewhere. 
-    infile = fopen(file_names[0],"rb");
-
-    if (infile == NULL) {
-	fprintf(stderr,
-		"Error! BCGrid::BCGrid: Could not open input file \"%s\"!\n",
-		file_names[0]);
-	return -1;
-    }
-
-
-    // Check to see if our grid has any meaningful data. 
-    if ((head() == NULL) ||
-        (( strcmp(head()->name()->Characters(), EMPTY_PLANE_NAME) == 0) && 
-         ( head()->next() == NULL)) ) {
-	// if not, read in the first file.
-	if (readFile(infile,file_names[0], topoFile) == -1) {
-	    fprintf(stderr,
-		    "Error! BCGrid::BCGrid: Could not read grid"
-                    " from \"%s\"!\n",
-                    file_names[0]);
-	    return -1;
-	}
-	// start comparison of data with second file
-	i=1;
-    } else {
-	// start comparison of data with first file
-	i=0;
-    }
-
-    //
-    // For each of the later grids, read them one at a time into their
-    // own grid structure, then compare the size of the new grid with the
-    // size of the existing grid.  If they match, copy all of the planes
-    // into the first grid, ensuring that all planes have unique names.
-    //
-    // i is initialized above, based on whether we read in the first file.
-    // Force mode to be READ_FILE, so we actually read the file data. 
-    for (; i < num_files; i++) {
-        // Create an empty grid.
-	BCGrid grid(_num_x,_num_y, _min_x,_max_x,
-		    _min_y, _max_y, READ_FILE, NULL, topoFile);
-        // call this separately so we can detect errors. 
-        int ret = grid.loadFiles(&file_names[i], 1, topoFile);
-        // If return is non-zero , we had an error - abort. 
-        if (ret) {
-            return ret;
-        }
-	if (!(grid.empty())) {
-            if ( (grid._num_x != _num_x) ||
-                 (grid._num_y != _num_y) ||
-                 (grid._min_x != _min_x) ||
-                 (grid._max_x != _max_x) ||
-                 (grid._min_y != _min_y) ||
-                 (grid._max_y != _max_y) ) {
-                // Only compare the grid sizes, so that we can load
-                // datasets of different scan areas, and re-align them!
-                //  	    if ( (grid._num_x != _num_x) ||
-                //  		 (grid._num_y != _num_y) ) {
-		fprintf(stderr,"Error! BCGrid::BCGrid: Grid size or region mismatch"
-			" in file \"%s\", ignoring any remaining files\n",
-			file_names[i]);
-                return -2;
-	    } else {
-		BCPlane *nextplane, *newplane;
-		BCString name;
-		for (nextplane = grid.head();
-		     nextplane != NULL;
-		     nextplane = nextplane->_next) {
-		    findUniquePlaneName(nextplane->_dataset,&name);
-		    newplane = addPlaneCopy(nextplane);
-		    newplane->rename(name);
-		}
-	    }
-	}
-    }
-
-    _modified = 1;
-    return 0;
-}
-
-/**
-BCGridFill --> Called by constructors
-    
-@author Kimberly Passarella Jones
-@date modified 3-18-00 Aron Helser
-*/
-void
-BCGrid::BCGridFill(short num_x, short num_y, 
-		       double min_x, double max_x, 
-		       double min_y, double max_y,
-		       int read_mode, const char** file_names, int num_files,
-                       TopoFile &topoFile)
-{
-    d_minMaxCB = NULL;
-
-    _num_x = num_x;
-    _num_y = num_y;
-    _min_x = min_x;
-    _max_x = max_x;
-    _min_y = min_y;
-    _max_y = max_y;
-    _derange_x = 1.0; 
-    _derange_y = 1.0; 
-    _num_planes = 0;
-
-    _head = NULL;
-
-    _detection_sensitivity = 1.0;
-    _attenuation_in_z = 1.0;
-    _z_max = -1.0e33;; 
-    _input_sensitivity = 1.0;
-    _z_sensitivity = 1.0;
-    _input_1_max = 1.0;
-    _input_2_max = 1.0;
-
-    _modified = 1;
-    _read_mode = read_mode;
-
-    switch (_read_mode) 
-    {
-      case READ_STREAM:
-      case READ_DEVICE:
-      {	
-	  addNewPlane("Topography-Forward", "nm", TIMED);
-      }
-      break;
-      case READ_FILE: 
-      {	  
-	  loadFiles(file_names, num_files, topoFile);
-      }
-      break;
-      default:
-      {
-	  perror("BCGrid::BCGrid: Unknown read mode!");
-	  return;
-      }
-  }
-
-  _next=NULL;
-
-  return;
-} // ~BCGridFill;
-
-/**
-BCGrid --> constructor
-    
-        @author Kimberly Passarella Jones
- @date modified 9-10-95 by Kimberly Passarella Jones
-*/
-BCGrid::BCGrid(short num_x, short num_y, 
-		       double min_x, double max_x, 
-		       double min_y, double max_y,
-		       int read_mode, const char** file_names, int num_files,
-                       TopoFile &topoFile)
-{
-	BCGridFill(num_x,num_y, min_x,max_x, min_y,max_y, read_mode,
-		file_names,num_files, topoFile);
-}
-
-/**
-BCGrid --> constructor
-    Calls the more general read routine after modifying the
-		file_name parameter into a list format.  This is done for
-		backwards compatibility with code that passed only one file
-		name in.
-        @author Russ Taylor
- @date modified 11-2-95 by Russ Taylor
-*/
-BCGrid::BCGrid(short num_x, short num_y, 
-		       double min_x, double max_x, 
-		       double min_y, double max_y,
-		       int read_mode, const char* file_name,
-                       TopoFile &topoFile)
-{    
-	const char	*files[1];
-
-	files[0] = file_name;
-	BCGridFill(num_x,num_y, min_x,max_x, min_y,max_y, read_mode,
-		files, 1, topoFile);
-
-} // BCGrid;
 
 
 /**
@@ -252,7 +51,8 @@ BCGrid --> constructor
 */
 BCGrid::BCGrid(short num_x, short num_y, 
 	       double min_x, double max_x, 
-	       double min_y, double max_y) :
+	       double min_y, double max_y,
+		       int read_mode) :
     _next(NULL),
     d_minMaxCB(NULL),
 
@@ -276,7 +76,7 @@ BCGrid::BCGrid(short num_x, short num_y,
     _input_1_max(1.0),
     _input_2_max(1.0),
     _modified(1),
-    _read_mode(READ_FILE)
+    _read_mode(read_mode)
 
 {    
 
@@ -309,7 +109,6 @@ BCGrid::BCGrid() :
     _read_mode(READ_FILE)
 {    
 }
-
 
 // Copy constructor
 BCGrid::BCGrid (const BCGrid * grid) :
@@ -374,6 +173,91 @@ BCGrid::~BCGrid()
       delete cbp;
     }
 } // ~BCGrid
+
+/**
+   Loads a file. If the only plane in the grid is EMPTY_PLANE_NAME,
+   fill the grid. If there is data already in the grid, add plane of data 
+   only if the grid size matches.
+   @param full path and filename to load. 
+   @param topoFile topo file information so we can write out in topo format. 
+   @return NULL on invalid data, new grid pointer on conflict with existing grid data, point to "this" on success
+   @author Aron Helser
+   @date modified 6-27-01 Aron Helser
+*/
+BCGrid *
+BCGrid::loadFile(const char* file_name, TopoFile &topoFile)
+{
+    FILE *infile;
+
+    // Read the file into our grid structure
+
+    // This is a success if no files are specified. 
+    if (file_name == NULL) {
+	return this;
+    }
+
+    // Check to see if our grid has any meaningful data. 
+    if ((head() == NULL) ||
+        (( strcmp(head()->name()->Characters(), EMPTY_PLANE_NAME) == 0) && 
+         ( head()->next() == NULL)) ) {
+	// if not, read in the file.
+        // "rb" is nessesary on _WIN32 and doesn't hurt elsewhere. 
+        infile = fopen(file_name,"rb");
+        
+        if (infile == NULL) {
+            fprintf(stderr,
+                    "Error! BCGrid::loadFile: Could not open input "
+                    "file \"%s\"!\n", file_name);
+            return NULL;
+        }
+        
+	if (readFile(infile,file_name, topoFile) == -1) {
+	    fprintf(stderr,
+		    "Error! BCGrid::loadFile: Could not read data"
+                    " from \"%s\"!\n", file_name);
+	    return NULL;
+	}
+    } else {
+        // If we already have valid data, read file into its own grid
+        // structure, then compare the size of the new grid with the size of
+        // the existing grid.  If they match, copy the plane into this
+        // grid, ensuring that the plane has a unique name.
+        //
+        // Force mode to be READ_FILE, so we actually read the file data. 
+
+        // Create an empty grid.
+	BCGrid *grid = new BCGrid(_num_x,_num_y, _min_x,_max_x,
+		    _min_y, _max_y, READ_FILE);
+        // call this separately so we can detect errors. 
+        if(NULL ==grid->loadFile(file_name, topoFile)) {
+            // If return is NULL, we had an error - abort. 
+            return NULL;
+        }
+	if (!(grid->empty())) {
+            if ( (grid->_num_x != _num_x) ||
+                 (grid->_num_y != _num_y) ||
+                 (grid->_min_x != _min_x) ||
+                 (grid->_max_x != _max_x) ||
+                 (grid->_min_y != _min_y) ||
+                 (grid->_max_y != _max_y) ) {
+                // Not an error any more - expected, return this grid.  
+//  		fprintf(stderr,"Error! BCGrid::BCGrid: Grid size or region mismatch"
+//  			" in file \"%s\", ignoring any remaining files\n",
+//  			file_names[i]);
+                return grid;
+	    } else {
+		BCPlane *newplane;
+		BCString name;
+                findUniquePlaneName(grid->head()->_dataset,&name);
+                newplane = addPlaneCopy(grid->head());
+                newplane->rename(name);
+	    }
+        }
+    }
+
+    _modified = 1;
+    return this;
+}
 
 /*
 findUniquePlaneName
@@ -1053,7 +937,7 @@ BCGrid::writePPMFile(FILE* file, BCPlane* plane)
 } // writePPMFile
 
 int 
-BCGrid::writeTIFFile(FILE* file, BCPlane* plane, const char * filename)
+BCGrid::writeImageFile(FILE* file, BCPlane* plane, const char * filename, const char * mgk_filetype)
 {
     int file_descriptor;
     if ( (file_descriptor = fileno(file)) == -1) {
@@ -1063,46 +947,11 @@ BCGrid::writeTIFFile(FILE* file, BCPlane* plane, const char * filename)
     // We are going to re-open using iostreams below. 
     fclose(file);
 
-  int w = plane->numX(), h =plane->numY();
-  unsigned char * pixels = new unsigned char[3*w*h];
-
-  if (!pixels) {
-    return -1;
-  }
-    double scale = 254.0 / (plane->maxNonZeroValue() - plane->minNonZeroValue());
-
-    unsigned int val;
-    int x, y;
-
-    //printf("%f %f %f\n", minValue(), maxValue(), scale);
-    // Reverse Y traversal so image is not flipped vertically.
-    for(y = h -1; y >=0; y-- ) {
-	for(x = 0; x < w; x++ ) {
-            if (plane->value(x,y) < plane->minNonZeroValue()) {
-               val = 0;
-            } else {
-               val = 1 + 
-                     (unsigned)((plane->value(x, y) - plane->minNonZeroValue()) * scale);
-            }
-            pixels[3*y*w + 3*x] = 
-            pixels[3*y*w + 3*x + 1] = 
-            pixels[3*y*w + 3*x + 2] = val;
-        }
-    }
-  AbstractImage *ai = ImageMaker(TIFFImageType, h, w, 3, pixels, true);
-
-  delete [] pixels;
-
-  if (ai)
-  {
-      if (!ai->Write(filename)) {
+    if(nmb_ImgMagick::writeFileMagick(filename, mgk_filetype, plane)) {
         fprintf(stderr, "Failed to write data to '%s'!\n", filename);
-        delete ai;
         return -1;
-      }
-     delete ai;
-  }
-  return 0;
+    }
+    return 0;
     
 } // writeTIFFile
 
@@ -1421,23 +1270,28 @@ BCGrid::readFile(FILE* file, const char *filename, TopoFile &topoFile)
     {
         return readTopometrixFile(topoFile, file, name);
     } 
-    else if (strncmp(magic,"P6",2) == 0) 
-    {
-	return readPPMorPGMFile(file, name);
-    } 
-    else if ((strncmp(magic,"P2",2) == 0) || 
-	     (strncmp(magic,"P3",2) == 0) ||
-	     (strncmp(magic,"P5",2) == 0))
-    {
-        rewind(file);
-	return readPPMorPGMFileNew(file, name);
-    } 
+//      else if (strncmp(magic,"P6",2) == 0) 
+//      {
+//  	return readPPMorPGMFile(file, name);
+//      } 
+//      else if ((strncmp(magic,"P2",2) == 0) || 
+//  	     (strncmp(magic,"P3",2) == 0) ||
+//  	     (strncmp(magic,"P5",2) == 0))
+//      {
+//          rewind(file);
+//  	return readPPMorPGMFileNew(file, name);
+//      } 
     else 
     {
-	magic[4] = '\0';
-	fprintf(stderr,"Error! BCGrid::readFile: Bad magic number (%s)!\n",
-		magic);
-	return -1;
+        fclose(file);
+        if(nmb_ImgMagick::readFileMagick(filename, name, this)) {
+            magic[4] = '\0';
+            fprintf(stderr,"Error! BCGrid::readFile: Unable to load file \n"
+                    "    Bad magic number (%s)!\n",
+                    magic);
+            return -1;
+        } 
+        return 0;
     }
 
 } // readFile

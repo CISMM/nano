@@ -1,3 +1,10 @@
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmr_Registration_Impl.h"
 #include "transformSolve.h"
 #include "nmr_AlignerMI.h"
@@ -193,6 +200,22 @@ int nmr_Registration_Impl::setFiducial(nmr_ImageType whichImage,
     return 0;
 }
 
+int nmr_Registration_Impl::setColorMap(nmr_ImageType whichImage,
+                                            nmb_ColorMap * cmap)
+{
+    d_alignerUI->setColorMap(whichImage, cmap);
+    return 0;
+}
+
+int nmr_Registration_Impl::setColorMinMax(nmr_ImageType whichImage, 
+                              vrpn_float64 dmin, vrpn_float64 dmax,
+                              vrpn_float64 cmin, vrpn_float64 cmax)
+{
+    d_alignerUI->setColorMinMax(whichImage, dmin, dmax, cmin, cmax);
+    return 0;
+
+}
+
 int nmr_Registration_Impl::setScanline(nmr_ImageType whichImage,
          vrpn_int32 row, vrpn_int32 length, vrpn_float32 *data)
 {
@@ -280,7 +303,7 @@ int nmr_Registration_Impl::registerImagesFromPointCorrespondence(
     if (mi->setSampleSizes(100, 100)) {
       printf("setSampleSizes error\n");
     } else {
-      printf("setSampleSizes succeeded\n");
+        //printf("setSampleSizes succeeded\n");
     }
     // compute a quick and dirty estimate of what the 
     // Parzen window variance should be
@@ -317,7 +340,7 @@ int nmr_Registration_Impl::registerImagesFromPointCorrespondence(
     if (mi->setTransformation2D(T)) {
       printf("setTransformation2D error\n");
     } else {
-      printf("setTransformation2D succeeded\n");
+        //printf("setTransformation2D succeeded\n");
     }
     if (mi->buildSampleA(d_images[SOURCE_IMAGE_INDEX],
                          d_images[TARGET_IMAGE_INDEX]) ||
@@ -325,13 +348,13 @@ int nmr_Registration_Impl::registerImagesFromPointCorrespondence(
                          d_images[TARGET_IMAGE_INDEX])) {
       printf("buildSample error\n");
     } else {
-      printf("buildSample suceeded\n");
+        //printf("buildSample suceeded\n");
     }
     double mutual_info;
     if (mi->computeMutualInformation(mutual_info)){
       printf("computeMutualInformation error\n");
     } else {
-      printf("computeMutualInformation succeeded; value = %g\n", mutual_info);
+        //printf("computeMutualInformation succeeded; value = %g\n", mutual_info);
     }
 */
     return 0;

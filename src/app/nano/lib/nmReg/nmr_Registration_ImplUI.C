@@ -1,4 +1,12 @@
+/*===3rdtech===
+  Copyright (c) 2001 by 3rdTech, Inc.
+  All Rights Reserved.
+
+  This file may not be distributed without the permission of 
+  3rdTech, Inc. 
+  ===3rdtech===*/
 #include "nmr_Registration_ImplUI.h"
+#include <nmb_ColorMap.h>
 
 int nmr_Registration_ImplUI::s_numImages = 2;
 char *nmr_Registration_ImplUI::s_imageWinNames[] = 
@@ -87,4 +95,25 @@ void nmr_Registration_ImplUI::getCorrespondence(Correspondence &c,
    srcIndex = s_sourceImageIndex;
    tgtIndex = s_targetImageIndex;
    return;
+}
+
+void nmr_Registration_ImplUI::setColorMap(nmr_ImageType whichImage,
+                                          nmb_ColorMap * cmap)
+{
+  if (whichImage == NMR_SOURCE) {
+      d_ce->setColorMap(s_sourceImageIndex, cmap);
+  } else if (whichImage == NMR_TARGET) {
+      d_ce->setColorMap(s_targetImageIndex, cmap);
+  }
+}
+
+void nmr_Registration_ImplUI::setColorMinMax(nmr_ImageType whichImage, 
+                              vrpn_float64 dmin, vrpn_float64 dmax,
+                              vrpn_float64 cmin, vrpn_float64 cmax)
+{
+  if (whichImage == NMR_SOURCE) {
+    d_ce->setColorMinMax(s_sourceImageIndex, dmin, dmax, cmin, cmax);
+  } else if (whichImage == NMR_TARGET) {
+    d_ce->setColorMinMax(s_targetImageIndex, dmin, dmax, cmin, cmax);
+  }
 }

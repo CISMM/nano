@@ -103,10 +103,9 @@ class nmb_Dataset {
 
 
     // MANIPULATORS
-    int loadFiles(const char** file_names, int num_files, TopoFile &topoFile);
-      ///< Load files with the same grid size into this grid.
-      ///< Load files with any grid size if no meaningful data has 
-      ///< yet been loaded.
+    int loadFile(const char* file_name, TopoFile &topoFile);
+      ///< Load file with the same grid size/region into this grid.
+      ///< Load file with any grid size/region into image list. 
     int addImageToGrid(nmb_ImageGrid * new_image) ;
     ///< Add an nmb_Image to existing grid, if it fits. 
 

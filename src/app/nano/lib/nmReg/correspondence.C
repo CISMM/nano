@@ -25,7 +25,7 @@ Correspondence::Correspondence(int num_im, int max_pnts)
         pnts[i] = new corr_point_t[max_pnts];
 }
 
-/* This function will always change the number of images
+/** This function will always change the number of images
    that the correspondence but will only change the maximum
    number of points if the specified value max_pnts is greater
    than the current value for the maximum number
@@ -128,6 +128,11 @@ int Correspondence::deletePoint(int pntIdx)
     return 0;
 }
 
+/** 
+    Check a point, to see if it lies within specified distance (x_max, y_max)
+    of any of the correspondence points. If it doesn't, return false. If it
+    does, return true, and fill in the point index of the closest point.
+  */
 vrpn_bool Correspondence::findNearestPoint(int spaceIdx, double x, double y,
                 double x_max, double y_max, int *pntIdx)
 {
@@ -163,8 +168,8 @@ int Correspondence::getPoint(int spaceIdx, int pntIndex,
     return 0;
 }
 
-// this converts points from grid units and sets the z values to
-// x,y,z in nano-meters or whatever units the world is measured in
+/// this converts points from grid units and sets the z values to
+/// x,y,z in nano-meters or whatever units the world is measured in
 int Correspondence::setValuesFromImage(int spaceIdx, nmb_Image *im)
 {
     // note: points are assumed to be normalized image units with

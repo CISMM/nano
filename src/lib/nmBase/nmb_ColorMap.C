@@ -10,7 +10,8 @@
 #include	<fcntl.h>
 #include	<string.h>
 #include	<math.h>
-#include	"colormap.h"
+#include	"nmb_ColorMap.h"
+#include        "nmb_String.h"
 
 /* Plans, 10/25/00 Aron Helser 
 
@@ -22,7 +23,13 @@ to the right Tcl interface, and use the store_to_file method, and we have a
 complete color map editor!!!
 */
 
-ColorMap::ColorMap (int r1, int g1, int b1, int a1, 
+nmb_ListOfStrings* baseColorMapNames = NULL;
+
+nmb_ColorMap * colorMaps[nmb_ListOfStrings::NUM_ENTRIES] = { NULL };		
+  ///< Color maps currently loaded
+  // limit to 100 because that's the limit of nmb_ListOfStrings
+
+nmb_ColorMap::nmb_ColorMap (int r1, int g1, int b1, int a1, 
                     int r2, int g2, int b2, int a2) :
     table (NULL),
     num_entries (0),
@@ -33,7 +40,7 @@ ColorMap::ColorMap (int r1, int g1, int b1, int a1,
 
     table = new Colormap_Table_Entry[2];
     if (table == NULL) {
-        fprintf(stderr,"ColorMap::Colormap(): new() failed!\n");
+        fprintf(stderr,"nmb_ColorMap::Colormap(): new() failed!\n");
         return;
     } else {
         num_allocated = 2;
@@ -52,7 +59,7 @@ ColorMap::ColorMap (int r1, int g1, int b1, int a1,
     table[1].a = a2/255.0f;
 }
  
-ColorMap::ColorMap (const char * filename, const char * dir) :
+nmb_ColorMap::nmb_ColorMap (const char * filename, const char * dir) :
     table (NULL),
     num_entries (0),
     num_allocated (0),
@@ -63,7 +70,7 @@ ColorMap::ColorMap (const char * filename, const char * dir) :
 	// Load the file into the table if not
 	if (filename) {
 	    if (load_from_file(filename, dir)) {
-		fprintf(stderr,"ColorMap::ColorMap(): Can't read file\n");
+		fprintf(stderr,"nmb_ColorMap::nmb_ColorMap(): Can't read file\n");
 		return;
 	    }
 	} else {
@@ -71,21 +78,21 @@ ColorMap::ColorMap (const char * filename, const char * dir) :
 	}
 }
 
-ColorMap::~ColorMap()
+nmb_ColorMap::~nmb_ColorMap()
 {
 	if (table) {
 		delete [] table;
 	}
 }
 
-int	ColorMap::setGradient(int r1, int g1, int b1, int a1,
+int	nmb_ColorMap::setGradient(int r1, int g1, int b1, int a1,
                               int r2, int g2, int b2, int a2)
 {
     // Two color map, with color 1 at 0.0 and color 2 at 1.0
     if (table) delete [] table;
     table = new Colormap_Table_Entry[2];
     if (table == NULL) {
-        fprintf(stderr,"ColorMap::setGradient(): new() failed!\n");
+        fprintf(stderr,"nmb_ColorMap::setGradient(): new() failed!\n");
         return -1;
     } else {
         num_allocated = 2;
@@ -105,13 +112,13 @@ int	ColorMap::setGradient(int r1, int g1, int b1, int a1,
     return 0;
 }
 
-int	ColorMap::setConst(int r1, int g1, int b1, int a1)
+int	nmb_ColorMap::setConst(int r1, int g1, int b1, int a1)
 {
     // One color map, constant color.
     if (table) delete [] table;
     table = new Colormap_Table_Entry[1];
     if (table == NULL) {
-        fprintf(stderr,"ColorMap::setConst(): new() failed!\n");
+        fprintf(stderr,"nmb_ColorMap::setConst(): new() failed!\n");
         return -1;
     } else {
         num_allocated = 1;
@@ -125,7 +132,7 @@ int	ColorMap::setConst(int r1, int g1, int b1, int a1)
     return 0;
 }
 
-int	ColorMap::get_full_name (const char * filename, const char * dir,
+int	nmb_ColorMap::get_full_name (const char * filename, const char * dir,
 	char *full_name, int maxlen)
 {
 	// If the directory is NULL, we use ".".  Otherwise, fill in
@@ -137,7 +144,7 @@ int	ColorMap::get_full_name (const char * filename, const char * dir,
 
 	// Form the complete file name
 	if ( (strlen(full_name) + strlen(filename) + 2) > (unsigned) maxlen) {
-		fprintf(stderr,"ColorMap::get_full_name(): Path too long\n");
+		fprintf(stderr,"nmb_ColorMap::get_full_name(): Path too long\n");
 		return -1;
 	}
 	strcat(full_name, "/");
@@ -146,7 +153,7 @@ int	ColorMap::get_full_name (const char * filename, const char * dir,
 	return 0;
 }
 
-int	ColorMap::load_from_file (const char * filename, const char * dir)
+int	nmb_ColorMap::load_from_file (const char * filename, const char * dir)
 {
 	char	full_name[1000];
 	FILE	*infile;
@@ -154,13 +161,13 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
 
 	// Get the full file name
 	if (get_full_name(filename, dir, full_name, sizeof(full_name))) {
-		fprintf(stderr,"ColorMap::load_from_file(): Can't make name\n");
+		fprintf(stderr,"nmb_ColorMap::load_from_file(): Can't make name\n");
 		return -1;
 	}
 
 	// Open the file for reading
 	if ( (infile = fopen(full_name, "r")) == NULL) {
-		perror("ColorMap::load_from_file(): Can't open file");
+		perror("nmb_ColorMap::load_from_file(): Can't open file");
 		fprintf(stderr,"   (File %s)\n",full_name);
 		return -1;
 	}
@@ -176,7 +183,7 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
 	// Allocate some space for a new table (may need more later)
 	table = new Colormap_Table_Entry[255];
 	if (table == NULL) {
-		fprintf(stderr,"ColorMap::load_from_file(): new() failed!\n");
+		fprintf(stderr,"nmb_ColorMap::load_from_file(): new() failed!\n");
 		return -1;
 	} else {
 		num_allocated = 255;
@@ -188,7 +195,7 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
             // Attempt to read a Thermo PAL file instead. 
             if (read_PAL_from_file(line, sizeof(line), infile )) {
 		fprintf(stderr,
-		  "ColorMap::load_from_file(): Expected 'Colormap' in file\n");
+		  "nmb_ColorMap::load_from_file(): Expected 'Colormap' in file\n");
 		fprintf(stderr,
 		  "   (got %s)\n",line);
 		fprintf(stderr,"   (File %s)\n",full_name);
@@ -201,7 +208,7 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
 	// Look for the line of -----------'s separating header from body
 	while (strncmp(line,"--------",8)) {
 	    if (fgets(line, sizeof(line),infile) == NULL) {
-		fprintf(stderr,"ColorMap::load_from_file(): Didn't find ---------- separator line\n");
+		fprintf(stderr,"nmb_ColorMap::load_from_file(): Didn't find ---------- separator line\n");
 		fprintf(stderr,"   (File %s)\n",full_name);
 	    }
 	}
@@ -218,13 +225,13 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
 
 		// Make sure it has a larger value than the last one
 		if ((num_entries > 0) && (value <= table[num_entries-1].value)){
-			fprintf(stderr,"ColorMap::load_from_file(): Conscutive values must always increase\n");
+			fprintf(stderr,"nmb_ColorMap::load_from_file(): Conscutive values must always increase\n");
 			return -1;
 		}
 
 		// XXX Ensure we have enough room for the entry
 		if (num_entries >= num_allocated) {
-			fprintf(stderr,"ColorMap::load_from_file(): Too many entries (ignoring the rest)\n");
+			fprintf(stderr,"nmb_ColorMap::load_from_file(): Too many entries (ignoring the rest)\n");
 			continue;
 		}
 
@@ -239,7 +246,7 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
 
 	// Close the file
 	if (fclose(infile)) {
-		perror("ColorMap::load_from_file(): Error closing file");
+		perror("nmb_ColorMap::load_from_file(): Error closing file");
 		return -1;
 	}
 	return 0;
@@ -250,7 +257,7 @@ int	ColorMap::load_from_file (const char * filename, const char * dir)
  is an arbitrary number of lines, each with three ints, for R G and B. Seems
  like thermo only uses files of length 192 and 230, for some reason.
   */
-int ColorMap::read_PAL_from_file(char * line, int line_len, FILE * infile )
+int nmb_ColorMap::read_PAL_from_file(char * line, int line_len, FILE * infile )
 {
     int ret;
     int	r,g,b;
@@ -278,7 +285,7 @@ int ColorMap::read_PAL_from_file(char * line, int line_len, FILE * infile )
         
         // XXX Ensure we have enough room for the entry
         if (num_entries >= num_allocated) {
-            fprintf(stderr,"ColorMap::load_from_file(): Too many entries (ignoring the rest)\n");
+            fprintf(stderr,"nmb_ColorMap::load_from_file(): Too many entries (ignoring the rest)\n");
             continue;
         }
         
@@ -298,13 +305,13 @@ int ColorMap::read_PAL_from_file(char * line, int line_len, FILE * infile )
     }
     // Close the file
     if (fclose(infile)) {
-        perror("ColorMap::load_from_file(): Error closing file");
+        perror("nmb_ColorMap::load_from_file(): Error closing file");
         return -1;
     }
     return 0;
 }
 
-int	ColorMap::store_to_file (const char * filename, const char * dir)
+int	nmb_ColorMap::store_to_file (const char * filename, const char * dir)
 {
 	int	i;
 	char	full_name[5000];
@@ -312,13 +319,13 @@ int	ColorMap::store_to_file (const char * filename, const char * dir)
 
 	// Get the full file name
 	if (get_full_name(filename, dir, full_name, sizeof(full_name))) {
-		fprintf(stderr,"ColorMap::store_to_file(): Can't write file\n");
+		fprintf(stderr,"nmb_ColorMap::store_to_file(): Can't write file\n");
 		return -1;
 	}
 
 	// Open the file for writing
 	if ( (outfile = fopen(full_name, "w")) == NULL) {
-		perror("ColorMap::store_to_file(): Can't write file");
+		perror("nmb_ColorMap::store_to_file(): Can't write file");
 		fprintf(stderr,"   (File %s)\n",full_name);
 		return -1;
 	}
@@ -336,25 +343,25 @@ int	ColorMap::store_to_file (const char * filename, const char * dir)
 			(int)(table[i].g*255),
 			(int)(table[i].b*255),
 			(int)(table[i].a*255)) != 5) {
-		    perror("ColorMap::store_to_file(): Can't write line");
+		    perror("nmb_ColorMap::store_to_file(): Can't write line");
 		    return -1;
 		}
 	}
 
 	// Close the file
 	if (fclose(outfile)) {
-		perror("ColorMap::store_to_file(): Error closing file");
+		perror("nmb_ColorMap::store_to_file(): Error closing file");
 		return -1;
 	}
 	return 0;
 }
 
-void	ColorMap::set_interpolation(Colormap_Interpolation interpolation)
+void	nmb_ColorMap::set_interpolation(Colormap_Interpolation interpolation)
 {
 	interp = interpolation;
 }
 
-void	ColorMap::lookup (float value,
+void	nmb_ColorMap::lookup (float value,
                           float * r, float * g, float * b, float * a) const
 {
 	int	i;
@@ -395,7 +402,7 @@ void	ColorMap::lookup (float value,
 	*a = table[i-1].a * (1 - scale) + table[i].a * scale;
 }
 
-void	ColorMap::lookup (float value,
+void	nmb_ColorMap::lookup (float value,
                           int * r, int * g, int * b, int * a) const
 {
 	float	fr, fg, fb, fa;
@@ -410,3 +417,62 @@ void	ColorMap::lookup (float value,
 	*a = (int) (fa * 255);
 }
 
+/** Do some scaling based on the colormap widget before looking up the
+ colormap value.
+ */
+void	nmb_ColorMap::lookup (float value,
+                          float min_data_value, float max_data_value,
+                          float data_min, float data_max,
+                          float color_min, float color_max,
+                          int * r, int * g, int * b, int * a) const
+{
+    // stretch/shrink data based on data_min/max :
+    // normalize the data to a zero to one scale - but data doesn't
+    // have to fall in this range.
+    value = (value - min_data_value)/(max_data_value - min_data_value);
+        
+    // Scale data again based on color map widget controls
+    value = value * (data_max - data_min) + data_min;
+        
+    // clamp data based on the stretched/shrunk colormap:
+    if ( value <  color_min ) value = 0;
+    else if ( value > color_max ) value = 1.0;
+    else value = (value - color_min)/(color_max - color_min);
+
+    float	fr, fg, fb, fa;
+    
+    // Find the float values
+    lookup(value, &fr, &fg, &fb, &fa);
+    
+    // Scale to 0..255
+    *r = (int) (fr * 255);
+    *g = (int) (fg * 255);
+    *b = (int) (fb * 255);
+    *a = (int) (fa * 255);
+}
+/** Do some scaling based on the colormap widget before looking up the
+ colormap value.
+ */
+void	nmb_ColorMap::lookup (float value,
+                          float min_data_value, float max_data_value,
+                          float data_min, float data_max,
+                          float color_min, float color_max,
+                          float * r, float * g, float * b, float * a) const
+{
+    // stretch/shrink data based on data_min/max :
+    // normalize the data to a zero to one scale - but data doesn't
+    // have to fall in this range.
+    value = (value - min_data_value)/(max_data_value - min_data_value);
+        
+    // Scale data again based on color map widget controls
+    value = value * (data_max - data_min) + data_min;
+        
+    // clamp data based on the stretched/shrunk colormap:
+    if ( value <  color_min ) value = 0;
+    else if ( value > color_max ) value = 1.0;
+    else value = (value - color_min)/(color_max - color_min);
+
+    // Find the float values
+    lookup(value, r, g, b, a);
+    
+}

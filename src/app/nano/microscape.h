@@ -39,7 +39,7 @@
 #include <Tcl_Netvar.h>
 #endif
 
-class ColorMap;
+//  class nmb_ColorMap;
 class PPM;
 class nmb_Dataset;
 class nmb_Decoration;
@@ -78,7 +78,7 @@ inline	int NM_NEAR(double x0,double x1) { return (fabs(x0-x1) < 0.01); }
 
 
 // used by vrpn.c
-extern	ColorMap	*curColorMap;	// microscape.c
+//  extern	nmb_ColorMap	*curColorMap;	// microscape.c
 
 
 /************************
@@ -171,17 +171,6 @@ extern TclNet_float measureGreenX;
 extern TclNet_float measureGreenY;
 extern TclNet_float measureBlueX;
 extern TclNet_float measureBlueY;
-
-
-//---------------------------------------------------------------------------
-/// These select the plane to map color from and the scale of the mapping. 
-extern Tclvar_float color_min_limit;
-extern Tclvar_float color_max_limit;
-extern TclNet_float color_min, color_max;
-extern TclNet_float data_min, data_max;
-extern TclNet_int   surface_r;
-extern TclNet_int   surface_g;
-extern TclNet_int   surface_b;
 
 
 //--------------------------------------------------------------------------

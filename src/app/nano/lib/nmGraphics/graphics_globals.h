@@ -23,7 +23,7 @@
 
 #include <vrpn_Types.h>
 
-#include "colormap.h"
+#include <nmb_ColorMap.h>
 #include "nmg_Funclist.h"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -59,15 +59,15 @@ extern float g_alpha_b;
 extern float g_alpha_slider_min;
 extern float g_alpha_slider_max;
 
-extern ColorMap g_colorMap;
+extern nmb_ColorMap g_colorMap;
 extern char * g_colorMapDir;
-extern ColorMap * g_curColorMap;
+extern nmb_ColorMap * g_curColorMap;
 
 extern int g_just_color;
-extern float g_color_min; // ColorMap lower and upper bounds for color
+extern float g_color_min; // nmb_ColorMap lower and upper bounds for color
 extern float g_color_max;
 
-extern float g_data_min_norm; // ColorMap lower and upper bounds for data
+extern float g_data_min_norm; // nmb_ColorMap lower and upper bounds for data
 extern float g_data_max_norm; // normalized zero to one, set by user
 
 extern float g_opacity_slider_min;
@@ -127,9 +127,11 @@ extern int make_collab_hand_icon(double pos[], double quat[], vrpn_int32 mode);
 extern vrpn_int32 g_collabMode;
 
 // Realigning Textures:
-extern ColorMap *g_realign_textures_curColorMap;
-extern float g_realign_textures_slider_min;
-extern float g_realign_textures_slider_max;
+extern nmb_ColorMap *g_realign_textures_curColorMap;
+extern float g_realign_textures_data_min;
+extern float g_realign_textures_data_max;
+extern float g_realign_textures_color_min;
+extern float g_realign_textures_color_max;
 extern char g_realign_texture_name[128];
 
 extern int g_translate_textures;

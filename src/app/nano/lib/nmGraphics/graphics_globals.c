@@ -21,18 +21,18 @@ float g_alpha_b = 0.0f;
 float g_alpha_slider_min = 0.0f;
 float g_alpha_slider_max = 1.0f;
 
-ColorMap g_colorMap;
+nmb_ColorMap g_colorMap;
 char * g_colorMapDir = NULL;
-ColorMap * g_curColorMap = NULL;
+nmb_ColorMap * g_curColorMap = NULL;
 
 int g_just_color = 0;
 
-float g_color_min = 0; // ColorMap lower and upper bounds for color
+float g_color_min = 0; // nmb_ColorMap lower and upper bounds for color
 float g_color_max = 1.0;
 
 v_index * g_displayIndexList = NULL;
 
-float g_data_min_norm = 0; // ColorMap lower and upper bounds for data, normalized
+float g_data_min_norm = 0; // nmb_ColorMap lower and upper bounds for data, normalized
 float g_data_max_norm = 1.0;
 float g_data_min = 0; // data min/max, real units.
 float g_data_max = 1.0;
@@ -93,9 +93,11 @@ int g_maxChangedY;
 
 
 // Realigning Textures:
-ColorMap *g_realign_textures_curColorMap = NULL;
-float g_realign_textures_slider_min = 0;
-float g_realign_textures_slider_max = 1.0;
+nmb_ColorMap *g_realign_textures_curColorMap = NULL;
+float g_realign_textures_data_min = 0;
+float g_realign_textures_data_max = 1.0;
+float g_realign_textures_color_min = 0;
+float g_realign_textures_color_max = 1.0;
 char g_realign_texture_name[128] = {0};
 
 BCGrid * g_prerendered_grid = NULL;
