@@ -13,10 +13,11 @@
 /// at any one time.  Calls to dispatchMessage() at an instance which
 /// doesn't have the mutex are ignored.
 
-// This version assumes vrpn_Mutex 1.3 and has a couple of workarounds in
+// This version assumes vrpn_Mutex 1.4 and has a couple of workarounds in
 // place:
 //   We start up with a mutex and request() it immediately.  Since there
 // are no peers, we have it, so it doesn't interfere with standalone work.
+// This means we have to call mainloop() on the mutex.
 //   Before we call vrpn_Mutex::addPeer(), we release() the mutex.
 
 // At some future time we'll want to extend (or further subclass) to

@@ -4,7 +4,7 @@
 #include "BCString.h"
 #include "BCPlane.h"
 #include "BCGrid.h"
-#include "vrpn_Types.h"
+#include <vrpn_Types.h>
 #include "nmb_String.h"
 #include <math.h>
 

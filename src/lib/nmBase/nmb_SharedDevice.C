@@ -13,6 +13,16 @@ fprintf(stderr, "nmb_SharedDevice:  requesting the lock on %s.\n", d_myName);
   // We're currently running standalone;  grab the mutex.
   d_mutex.request();
 
+  // XXX HACK
+  // Call mainloop now to make sure we have the mutex before we return;
+  // some of the code we're driving tries to send initialization commands/
+  // queries before it ever calls mainloop, and we need to not quash those
+  // when running standalone - they're being changed from commands to
+  // queries by Aron/Alexandra so that they don't hurt when we get a
+  // late joiner while running multiuser.  We could instead attach those
+  // commands to a gotMutex callback...
+  d_mutex.mainloop();
+
 }
 
 // virtual
