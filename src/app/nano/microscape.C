@@ -4958,7 +4958,6 @@ void teardownSynchronization(CollaborationManager *cm,
     tclUIControls->remove(&procParams);
     tclUIControls->remove(&newFilterPlaneName);
 
-    }
   }
   /* */
 
