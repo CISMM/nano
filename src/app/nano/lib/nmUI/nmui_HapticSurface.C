@@ -716,7 +716,9 @@ qm[0], qm[1], qm[2], qph[0], qph[1], qph[2]);
 
   // Make the Phantom pay attention to what we've just done.
 
-  d_device->updateTrimeshChanges();
+  // HACK
+  // TCH Dissn Jan 2002
+  //d_device->updateTrimeshChanges();
 
   // Dec 2001
   // Draw a grid on-screen so we can see if this is where it ought
