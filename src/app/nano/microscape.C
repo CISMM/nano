@@ -7659,7 +7659,8 @@ static int handleMouseEvents (nmb_TimerList * timer)
    * Probably should be added there.
    */
 
-static int vec_cmp (const q_vec_type a, const q_vec_type b) {
+static int vec_cmp (const q_vec_type a, const q_vec_type b)
+{
   return ((a[0] == b[0]) && (a[1] == b[1]) && (a[2] == b[2]));
 }
 
@@ -7676,21 +7677,20 @@ static void find_center_xforms (q_vec_type * lock_userpos,
   if (!glenable) return;
 
 
-    BCPlane * plane = dataset->inputGrid->getPlaneByName
-                          (dataset->heightPlaneName->string());
+    const BCPlane * plane = (dataset
+                             ->inputGrid
+                             ->getPlaneByName
+                             (dataset->heightPlaneName->string()));
     if (plane == NULL) {
         fprintf(stderr, "Error in center: could not get plane!\n");
         return;
     }
 
-    float mid_x, mid_y, mid_z;
-
 /*MODIFIED DANIEL ROHRER*/
-    //double len_x = fabs(plane->maxX()- plane->minX());
     double len_y = fabs(plane->maxY() - plane->minY());
 
-//     printf("max_x:  %lf\tmin_x:  %lf\nmax_y:  %lf\tmin_y:  %lf\n", 
-// 	   plane->maxX(), plane->minX(), plane->maxY(), plane->minY());
+    //printf("max_x:  %lf\tmin_x:  %lf\nmax_y:  %lf\tmin_y:  %lf\n", 
+    //       plane->maxX(), plane->minX(), plane->maxY(), plane->minY());
 
     q_vec_type screenLL,
                screenUL,
@@ -7705,26 +7705,27 @@ static void find_center_xforms (q_vec_type * lock_userpos,
     q_type     screenz_to_worldz,
                screeny_to_worldy;
     q_vec_type screen_mid;
-    q_vec_type screenLL_v, screenUL_v, screenUR_v;
-
-    int null_head_tracker = 0;
 
     // get position of display in the room from vlib(?)
+    q_vec_type screenLL_v, screenUL_v, screenUR_v;
     graphics->getDisplayPosition(screenLL_v, screenUL_v, screenUR_v);
-// DEBUG
-//   fprintf(stderr, "DEBUG nmg_Graphics_Impl::getDisplayPosition, "
-//   "ll %f %f %f "
-//   "ul %f %f %f "
-//   "ur %f %f %f\n",
-// 	  screenLL_v[0], screenLL_v[1], screenLL_v[2], 
-// 	  screenUL_v[0], screenUL_v[1], screenUL_v[2], 
-// 	  screenUR_v[0], screenUR_v[1], screenUR_v[2]);
+
+    // DEBUG
+    //fprintf(stderr, "DEBUG nmg_Graphics_Impl::getDisplayPosition, "
+    //        "ll %f %f %f "
+    //        "ul %f %f %f "
+    //        "ur %f %f %f\n",
+    //        screenLL_v[0], screenLL_v[1], screenLL_v[2], 
+    //        screenUL_v[0], screenUL_v[1], screenUL_v[2], 
+    //        screenUR_v[0], screenUR_v[1], screenUR_v[2]);
+
     /* Check to see if vlib has the screen defined in room space, i.e, we're in
      * head-tracked mode.
      */
-    if (vec_cmp(screenLL_v, NULL_SCREEN_LOWER_LEFT) &&
-        vec_cmp(screenUL_v, NULL_SCREEN_UPPER_LEFT) &&
-        vec_cmp(screenUR_v, NULL_SCREEN_UPPER_RIGHT) )
+    int null_head_tracker = 0;
+    if (   vec_cmp(screenLL_v, NULL_SCREEN_LOWER_LEFT)
+        && vec_cmp(screenUL_v, NULL_SCREEN_UPPER_LEFT)
+        && vec_cmp(screenUR_v, NULL_SCREEN_UPPER_RIGHT))
     {
        printf("Center: screen has 0 extent, which means null head tracker\n");
        null_head_tracker = 1;
@@ -7737,7 +7738,7 @@ static void find_center_xforms (q_vec_type * lock_userpos,
 
     /* Find the center of the lower left hand corner.  This will serve as *
      * a translation for the center of the image.                         */
-    if (!null_head_tracker)
+    if ( ! null_head_tracker)
     {
        screen_mid[0] = (screenLL[0] + screenUR[0]) / 2.0;
        screen_mid[1] = (screenLL[1] + screenUR[1]) / 2.0;
@@ -7787,22 +7788,20 @@ static void find_center_xforms (q_vec_type * lock_userpos,
        *lock_userscale *= 0.75;
 
        q_xform(screen_mid, *lock_userrot, screen_mid);
-    } else {
+    }
+    else {
       //null_head_tracker is true
 
       // What do these numbers mean??
-
       screen_mid[0] = 0.0;
       screen_mid[1] = 1.0;
       screen_mid[2] = -1.0;
 
       // 45 degree rotation about a point outside the plane.
-
       q_make(*lock_userrot, 1.0, 0.0, 0.0, M_PI/4.0);
 
       // Determine the scale up factor.
       // Apparently makes the plane fill 70% of the width of the screen?
-
       *lock_userscale = len_y / ScreenWidthMetersY * 0.7 / 1.0;
 
     } // end if (!null_head_tracker)
@@ -7838,6 +7837,7 @@ static void find_center_xforms (q_vec_type * lock_userpos,
      //printf("center mid_z avg %f  min %f\n", mid_z, minz);
 #endif
 
+    float mid_x, mid_y, mid_z;
     get_Plane_Centers(&mid_x, &mid_y, &mid_z);
     //printf("center mid_z mm %f\n", mid_z);
 
