@@ -102,7 +102,7 @@ Microscope::~Microscope (void) {
 
 // Added by Tiger       moved from nmm_Microscope.C
 char * Microscope::encode_GetNewPointDatasets
-                            (long * len,
+                            (long * len,  // XXX should be vrpn_int32 ???
                              const Tclvar_checklist * list) {
   char * msgbuf = NULL;
   char * mptr;
@@ -145,7 +145,7 @@ char * Microscope::encode_GetNewPointDatasets
 
 // Added by Tiger       moved from nmm_Microscope.C
 char * Microscope::encode_GetNewScanDatasets
-                            (long * len,
+                            (long * len,  // XXX should be vrpn_int32 ???
                              const Tclvar_checklist * list) {
   char * msgbuf = NULL;
   char * mptr;
