@@ -1150,10 +1150,10 @@ doLight(int whichUser, int userEvent)
   q_vec_type            lightdir;
   q_vec_type		q_tmp;
   v_xform_type	worldFromPart, worldFromHand;
-  v_xform_type	PartFromWorld;
+  //v_xform_type	PartFromWorld;
   q_type		q_room;
   static v_xform_type	oldWorldFromHand;
-  static q_vec_type	oldLightDir;
+  //static q_vec_type	oldLightDir;
 
   q_matrix_type lightDirection;
   q_xyz_quat_type xyzQuat;
@@ -1184,9 +1184,11 @@ doLight(int whichUser, int userEvent)
 	// get snapshot of hand in world space == w_from_h 
 	v_get_world_from_hand(whichUser, &oldWorldFromHand);
 	// Save the old light direction
-        oldLightDir[X] = tcl_lightDirX;
-        oldLightDir[Y] = tcl_lightDirY;
-        oldLightDir[Z] = tcl_lightDirZ;
+        //  [juliano 20000406] oldLightDir is currently unused, so I'm
+        //  commenting it out.  Uncomment it if you need it again.
+        //oldLightDir[X] = tcl_lightDirX;
+        //oldLightDir[Y] = tcl_lightDirY;
+        //oldLightDir[Z] = tcl_lightDirZ;
 	break;
 
     case HOLD_EVENT:
