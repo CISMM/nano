@@ -1,3 +1,7 @@
+2004-03-17  David Borland  <borland@cs.unc.edu>
+
+        * analysismenu.tcl: added UI for new mathematical morphology code.
+
 2004-01-16  David Marshburn  <marshbur@cs.unc.edu>
 
 	* mainwin.tcl:  a bunch of changes for the NanoEd experiments of

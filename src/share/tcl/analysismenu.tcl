@@ -98,24 +98,36 @@ pack $nmInfo(simscanplane).simscanlabel $nmInfo(simscanplane).simscanplane \
 		$nmInfo(simscanplane).simIPaddress \
 	-side top -anchor nw
 
-#Eroder plane
-iwidgets::Labeledframe $nmInfo(calc_planes).eroder \
-	-labeltext "Create plane showing eroded scan" \
+#Morphology plane
+iwidgets::Labeledframe $nmInfo(calc_planes).morphology \
+	-labeltext "Create mathematical morhphology scan" \
 	-labelpos nw
-set nmInfo(eroderplane) [$nmInfo(calc_planes).eroder childsite]
+set nmInfo(morphologyplane) [$nmInfo(calc_planes).morphology childsite]
 
-pack $nmInfo(calc_planes).eroder -side top -fill x
+pack $nmInfo(calc_planes).morphology -side top -fill x
 
-# Allow the user to create a eroded plane:
-label $nmInfo(eroderplane).eroderlabel -justify left -text \
-	"Enter a plane name and the name of the\ncomputer the eroder is running on:"
-generic_entry $nmInfo(eroderplane).eroderplane eroderplane_name \
-	"Eroded Scan Plane" ""
-# Allow the user to specify the computer the eroder is running on:
-generic_entry $nmInfo(eroderplane).eroderIPaddress eroderIPaddress \
-	"IP Address" ""
-pack $nmInfo(eroderplane).eroderlabel $nmInfo(eroderplane).eroderplane \
-		$nmInfo(eroderplane).eroderIPaddress \
+# Allow the user to create an morphology plane:
+label $nmInfo(morphologyplane).morphologylabel -justify left -text \
+	"Choose the operation, a plane to morph, a tip image to morph with,\n and enter a name for the new plane:"
+radiobutton $nmInfo(morphologyplane).dilate\
+    -text "Dilate" -variable morphology_select -value 0
+radiobutton $nmInfo(morphologyplane).erode\
+    -text "Erode" -variable morphology_select -value 1 
+radiobutton $nmInfo(morphologyplane).open\
+    -text "Open" -variable morphology_select -value 2 
+radiobutton $nmInfo(morphologyplane).close\
+    -text "Close" -variable morphology_select -value 3 
+generic_optionmenu $nmInfo(morphologyplane).originalplane orig_morphologyplane_name \
+	"Original Plane" inputPlaneNames
+generic_optionmenu $nmInfo(morphologyplane).tipplane tip_morphologyplane_name \
+	"Tip Plane" imageNames
+generic_entry $nmInfo(morphologyplane).morphologyplane new_morphologyplane_name \
+	"New Plane" ""
+
+pack $nmInfo(morphologyplane).morphologylabel $nmInfo(morphologyplane).dilate $nmInfo(morphologyplane).erode \
+		$nmInfo(morphologyplane).open $nmInfo(morphologyplane).close \
+		$nmInfo(morphologyplane).originalplane $nmInfo(morphologyplane).tipplane \
+		$nmInfo(morphologyplane).morphologyplane \
 	-side top -anchor nw
 
 }
