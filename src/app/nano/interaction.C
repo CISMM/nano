@@ -548,11 +548,11 @@ void handle_user_mode_change(vrpn_int32, void *)
     // There was some stuff here, but it is all handled in 
     // interaction(), below. 
     //
-    if ((user_0_mode == FEELAHEAD) || (user_0_mode == PSEUDO_FEELAHEAD)) {
-      microscope->EnableUpdatableQueue(VRPN_FALSE);
-    } else {
-      microscope->EnableUpdatableQueue(VRPN_TRUE);
-    }
+
+    // Do not turn off UpdatableQueue at MICROSCOPE for feelahead/pfa;
+    //   we just wanted to make sure those messages weren't getting
+    //   tossed out here.
+    // Oops.  TCH Jan 2002
 }
 
 void handle_xyLock (vrpn_int32, void *) {
