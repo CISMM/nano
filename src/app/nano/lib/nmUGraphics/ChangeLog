@@ -1,3 +1,9 @@
+2002-01-18  David Borland <borland@cs.unc.edu>
+
+        * WaveFrontFileGenerator.C : Edited the file so that .obj file 
+        loading is more robust.
+        Also handles arbitrary geometry--not just triangles.
+
 2001-12-18  David Marshburn  <marshbur@evans.cs.unc.edu>
 
 	* TubeGenerator.C: remove compiler warning
