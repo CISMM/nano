@@ -46,7 +46,7 @@ namespace import -force blt::tile::*
 #option add *highlightBackground blanchedAlmond startupFile
 option add *background LemonChiffon1 startupFile
 option add *highlightBackground LemonChiffon1 startupFile
-option add *menu*background grey75 startupFile
+option add *menu*background SystemMenu startupFile
 
 # This needs to be made dependent on how big the font is on the screen.
 catch { option add *font {helvetica -15 } startupFile}
@@ -103,7 +103,6 @@ set filter_names {none }
 
 # List of available images including those not in the input grid
 set imageNames {none }
-
 
 # Hide until set up.
 wm withdraw .
@@ -330,7 +329,7 @@ $toolmenu add checkbutton -label "Show Mode Buttons" -underline 10 \
 
 #Only use the Mouse Phantom if the hand-tracker is null
 if {(![info exist env(TRACKER)]) \
-        || ([string compare [lindex $env(TRACKER) 1] "null"] == 0) \
+        || ([string compare -nocase [lindex $env(TRACKER) 1] "null"] == 0) \
         || ($viewer_only)} {
     $toolmenu add command -label "Mouse Phantom" -underline 6 \
             -command "show.mouse_phantom_win"
@@ -513,8 +512,8 @@ source [file join ${tcl_script_dir} french_ohmmeter.tcl]
 
 #----------------
 # Try and make widgets active based on what we are doing.
-# We only want to be able to operate widgets if they are appropriate 
-# for the current activity. 
+# We only want to be able to operate widgets if they are appropriate
+# for the current activity.
 # First version based totally on whether we are reading files, a stream,
 # or a device.  Ran into race conditions with
 # disable_device_widgets_for_commands_suspended when we tried to generalize that
@@ -528,7 +527,6 @@ if {![info exists spm_read_mode] } { set spm_read_mode $READ_FILE }
 proc disable_widgets_for_readmode { name el op } {
     global device_only_controls stream_only_controls stream_and_device_only_controls 
     global spm_read_mode toolmenu
-    global readmode_device_commands_suspended
 
     # Note: $ substitution for the patterns won't work because
     # the switch body is in brackets. 
@@ -539,9 +537,16 @@ proc disable_widgets_for_readmode { name el op } {
             show.image
             show.modify
             #show.modify_live
-
-            set readmode_device_commands_suspended 0
-
+            foreach widget $device_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state normal
+                } else {
+                    $widget configure -state normal
+                }
+            }
             foreach widget $stream_only_controls {
                 if {([llength $widget] > 1) } {
                     # some widget have a special "configure" command 
@@ -569,9 +574,16 @@ proc disable_widgets_for_readmode { name el op } {
             #hide.image
             #hide.modify
             #hide.modify_live
-
-            set readmode_device_commands_suspended 1
-
+            foreach widget $device_only_controls {
+                if {([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state disabled
+                } else {
+                    $widget configure -state disabled
+                }
+            }
             foreach widget $stream_only_controls {
                 if {([llength $widget] > 1) } {
                     # some widget have a special "configure" command 
@@ -599,9 +611,16 @@ proc disable_widgets_for_readmode { name el op } {
             show.image
             show.modify
             hide.modify_live
-
-            set readmode_device_commands_suspended 1
-
+            foreach widget $device_only_controls {
+                if { ([llength $widget] > 1) } {
+                    # some widget have a special "configure" command 
+                    # saved in the list with the widget name, like 
+                    # ".a.rb buttonconfigure 0 -state normal"
+                    eval $widget -state disabled
+                } else {
+                    $widget configure -state disabled
+                }
+            }
             foreach widget $stream_only_controls {
                 if {([llength $widget] > 1) } {
                     # some widget have a special "configure" command 
@@ -630,7 +649,15 @@ proc disable_widgets_for_readmode { name el op } {
 }
 trace variable spm_read_mode w disable_widgets_for_readmode
 
-proc disable_device_widgets_for_commands_suspended { name el op } {
+# Helps with Thermo Image Analysis mode. When in this mode, most of 
+# the widgets/dialogs that Nano needs to control the SPM aren't available
+# So we avoid issuing any commands to Thermo, by disabling all device 
+# controls. 
+if {![info exists spm_commands_suspended] } { set spm_commands_suspended 0 }
+if {![info exists readmode_device_commands_suspended] } \
+                    { set readmode_device_commands_suspended 0 }
+
+proc disable_widgets_for_commands_suspended { name el op } {
     global device_only_controls  
     global spm_commands_suspended
     global collab_commands_suspended
@@ -638,24 +665,19 @@ proc disable_device_widgets_for_commands_suspended { name el op } {
     global spm_read_mode READ_DEVICE
 
     # Don't do anything if we aren't talking to a device
-    # if { $spm_read_mode != $READ_DEVICE } { return; }
+    if { $spm_read_mode != $READ_DEVICE } { return; }
 
     set commands_suspended 0
     if $spm_commands_suspended {set commands_suspended 1}
     if $collab_commands_suspended {set commands_suspended 1}
     if $readmode_device_commands_suspended {set commands_suspended 1}
 
-#puts "spm $spm_commands_suspended collab $collab_commands_suspended readmode $readmode_device_commands_suspended"
-#puts "commands_suspended $commands_suspended"
-
     # Note: $ substitution for the patterns won't work because
     # the switch body is in brackets. 
-    switch $commands_suspended {
+    switch $spm_commands_suspended {
         0 {
-#puts "Enabling controls $device_only_controls"
             # Commands aren't suspended, enable controls
             foreach widget $device_only_controls {
-#puts "$widget"
                 if {([llength $widget] > 1) } {
                     # some widget have a special "configure" command 
                     # saved in the list with the widget name, like 
@@ -665,13 +687,10 @@ proc disable_device_widgets_for_commands_suspended { name el op } {
                     $widget configure -state normal
                 }
             }
-#puts "Done enabling"
         }
         1 {
-#puts "Disabling controls $device_only_controls"
             # Commands are suspended, disable controls
             foreach widget $device_only_controls {
-#puts "$widget"
                 if { ([llength $widget] > 1) } {
                     # some widget have a special "configure" command 
                     # saved in the list with the widget name, like 
@@ -681,23 +700,13 @@ proc disable_device_widgets_for_commands_suspended { name el op } {
                     $widget configure -state disabled
                 }
             }
-#puts "Done disabling"
         }
     }
-#puts "Done with disable_device_widgets_for_commands_suspended"
 }
+trace variable spm_commands_suspended w disable_widgets_for_commands_suspended
 
-# Helps with Thermo Image Analysis mode. When in this mode, most of 
-# the widgets/dialogs that Nano needs to control the SPM aren't available
-# So we avoid issuing any commands to Thermo, by disabling all device 
-# controls. 
-if {![info exists spm_commands_suspended] } { set spm_commands_suspended 0 }
-trace variable spm_commands_suspended w disable_device_widgets_for_commands_suspended
-
-if {![info exists readmode_device_commands_suspended] } \
-                    { set readmode_device_commands_suspended 0 }
 trace variable readmode_device_commands_suspended w \
-                    disable_device_widgets_for_commands_suspended
+                    disable_widgets_for_commands_suspended
 
 #----------------
 # Setup window positions and geometries to be convenient and pleasant!
@@ -838,7 +847,7 @@ after idle {
 
 if {![info exists collab_commands_suspended] } \
                  { set collab_commands_suspended 1; \
-                   disable_device_widgets_for_commands_suspended 0 0 0 }
+                   disable_widgets_for_commands_suspended 0 0 0 }
 
-trace variable collab_commands_suspended w disable_device_widgets_for_commands_suspended
+trace variable collab_commands_suspended w disable_widgets_for_commands_suspended
 

@@ -1,3 +1,12 @@
+2001-04-23  Adam Seeger  <seeger@cs.unc.edu>
+
+	* mainwin.tcl: changed name of 
+	disable_device_widgets_for_commands_suspended to 
+	disable_widgets_for_commands_suspended and various other changes to
+	bring this file closer to the thirdtech_branch version - this fixes
+	a problem with buttons like xy_lock not getting enabled when 
+	connecting to a microscope
+
 2001-03-22  Jason Clark  <jclark@cs.unc.edu>
 
 	* import.tcl: Can now load imported objects through OS specific
