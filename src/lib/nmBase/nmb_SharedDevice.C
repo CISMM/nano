@@ -1,10 +1,30 @@
 #include "nmb_SharedDevice.h"
 
-nmb_SharedDevice::nmb_SharedDevice (const char * name, int portForMutexServer,
-                      vrpn_Connection * connectionToDeviceServer,
-                      const char * NICaddress) :
+
+
+
+nmb_SharedDevice_Server::nmb_SharedDevice_Server (const char * name,
+                             vrpn_Connection * c) :
+    nmb_Device_Server (name, c),
+    d_mutex (name, c) {
+
+}
+
+// virtual
+nmb_SharedDevice_Server::~nmb_SharedDevice_Server (void) {
+
+}
+
+
+
+
+
+
+
+nmb_SharedDevice_Remote::nmb_SharedDevice_Remote (const char * name,
+                      vrpn_Connection * connectionToDeviceServer) :
     nmb_Device_Client (name, connectionToDeviceServer),
-    d_mutex (name, portForMutexServer, NICaddress),
+    d_mutex (name, connectionToDeviceServer),
     d_gotMutexCallbacks (NULL),
     d_deniedMutexCallbacks (NULL),
     d_mutexTakenCallbacks (NULL),
@@ -21,9 +41,10 @@ nmb_SharedDevice::nmb_SharedDevice (const char * name, int portForMutexServer,
   d_mutex.addTakeCallback(this, handle_mutexTaken);
   d_mutex.addReleaseCallback(this, handle_mutexReleased);
 
-fprintf(stderr, "nmb_SharedDevice:  requesting the lock on %s.\n", d_myName);
+fprintf(stderr, "nmb_SharedDevice_Remote:  requesting the lock on %s.\n",
+d_myName);
 
-  // We're currently running standalone;  grab the mutex.
+  // If we're currently running standalone grab the mutex.
   d_mutex.request();
 
   // XXX HACK
@@ -42,7 +63,7 @@ fprintf(stderr, "nmb_SharedDevice:  requesting the lock on %s.\n", d_myName);
 
 
 // virtual
-nmb_SharedDevice::~nmb_SharedDevice (void) {
+nmb_SharedDevice_Remote::~nmb_SharedDevice_Remote (void) {
 
 
 }
@@ -50,11 +71,11 @@ nmb_SharedDevice::~nmb_SharedDevice (void) {
 
 
 
-vrpn_bool nmb_SharedDevice::haveMutex (void) const {
+vrpn_bool nmb_SharedDevice_Remote::haveMutex (void) const {
   return d_mutex.isHeldLocally();
 }
 
-vrpn_bool nmb_SharedDevice::typeIsSafe (vrpn_int32 type) const {
+vrpn_bool nmb_SharedDevice_Remote::typeIsSafe (vrpn_int32 type) const {
   if ((type < 0) || (type >= vrpn_CONNECTION_MAX_TYPES)) {
     return VRPN_FALSE;
   }
@@ -66,7 +87,7 @@ vrpn_bool nmb_SharedDevice::typeIsSafe (vrpn_int32 type) const {
 
 
 
-int nmb_SharedDevice::mainloop (void) {
+int nmb_SharedDevice_Remote::mainloop (void) {
   d_mutex.mainloop();
   return 0;
 }
@@ -74,48 +95,39 @@ int nmb_SharedDevice::mainloop (void) {
 
 
 
-void nmb_SharedDevice::requestMutex (void) {
+void nmb_SharedDevice_Remote::requestMutex (void) {
 
-fprintf(stderr, "nmb_SharedDevice:  requesting the lock on %s.\n", d_myName);
+fprintf(stderr, "nmb_SharedDevice_Remote:  requesting the lock on %s.\n",
+d_myName);
 
   d_mutex.request();
 
 }
 
-void nmb_SharedDevice::releaseMutex (void) {
+void nmb_SharedDevice_Remote::releaseMutex (void) {
 
-fprintf(stderr, "nmb_SharedDevice:  releasing the lock on %s.\n", d_myName);
+fprintf(stderr, "nmb_SharedDevice_Remote:  releasing the lock on %s.\n",
+d_myName);
 
   d_mutex.release();
 
 }
 
 
-
-
-void nmb_SharedDevice::addPeer (const char * stationName) {
-
-fprintf(stderr, "nmb_SharedDevice:  releasing the lock on %s "
-"to add a peer named %s.\n", d_myName, stationName);
-
-  d_mutex.release();
-  d_mutex.addPeer(stationName);
-
-}
 
 
 
 
 
 // virtual
-long nmb_SharedDevice::dispatchMessage (long len, const char * buf,
+long nmb_SharedDevice_Remote::dispatchMessage (long len, const char * buf,
                                         vrpn_int32 type) {
 
   if (d_mutex.isHeldLocally() || typeIsSafe(type)) {
     return nmb_Device_Client::dispatchMessage(len, buf, type);
   }
 
-fprintf(stderr, "nmb_SharedDevice:  throwing out a message\n"
+fprintf(stderr, "nmb_SharedDevice_Remote:  throwing out a message\n"
 "  (type %d, to %s) since we don't have the lock.\n", type, d_myName);
 
   return 0;
@@ -125,10 +137,10 @@ fprintf(stderr, "nmb_SharedDevice:  throwing out a message\n"
 
 
 
-void nmb_SharedDevice::markTypeAsSafe (vrpn_int32 type) {
+void nmb_SharedDevice_Remote::markTypeAsSafe (vrpn_int32 type) {
   if ((type < 0) || (type >= vrpn_CONNECTION_MAX_TYPES)) {
-    fprintf(stderr, "nmb_SharedDevice::markTypeAsSafe:  illegal type %d.\n",
-            type);
+    fprintf(stderr, "nmb_SharedDevice_Remote::markTypeAsSafe:  "
+            "illegal type %d.\n", type);
     return;
   }
   d_typeSafe[type] = VRPN_TRUE;
@@ -137,14 +149,14 @@ void nmb_SharedDevice::markTypeAsSafe (vrpn_int32 type) {
 
 
 
-void nmb_SharedDevice::registerGotMutexCallback
+void nmb_SharedDevice_Remote::registerGotMutexCallback
             (void * userdata,
-             void (* f) (void *, nmb_SharedDevice *)) {
+             void (* f) (void *, nmb_SharedDevice_Remote *)) {
   sharedDeviceCallback * cb;
 
   cb = new sharedDeviceCallback;
   if (!cb) {
-    fprintf(stderr, "nmb_SharedDevice::registerGotMutexCallback:  "
+    fprintf(stderr, "nmb_SharedDevice_Remote::registerGotMutexCallback:  "
                     "Out of memory.\n");
     return;
   }
@@ -157,14 +169,14 @@ void nmb_SharedDevice::registerGotMutexCallback
 }
 
 // static
-void nmb_SharedDevice::registerDeniedMutexCallback
+void nmb_SharedDevice_Remote::registerDeniedMutexCallback
             (void * userdata,
-             void (* f) (void *, nmb_SharedDevice *)) {
+             void (* f) (void *, nmb_SharedDevice_Remote *)) {
   sharedDeviceCallback * cb;
 
   cb = new sharedDeviceCallback;
   if (!cb) {
-    fprintf(stderr, "nmb_SharedDevice::registerDeniedMutexCallback:  "
+    fprintf(stderr, "nmb_SharedDevice_Remote::registerDeniedMutexCallback:  "
                     "Out of memory.\n");
     return;
   }
@@ -177,14 +189,14 @@ void nmb_SharedDevice::registerDeniedMutexCallback
 }
 
 // static
-void nmb_SharedDevice::registerMutexTakenCallback
+void nmb_SharedDevice_Remote::registerMutexTakenCallback
             (void * userdata,
-             void (* f) (void *, nmb_SharedDevice *)) {
+             void (* f) (void *, nmb_SharedDevice_Remote *)) {
   sharedDeviceCallback * cb;
 
   cb = new sharedDeviceCallback;
   if (!cb) {
-    fprintf(stderr, "nmb_SharedDevice::registerMutexTakenCallback:  "
+    fprintf(stderr, "nmb_SharedDevice_Remote::registerMutexTakenCallback:  "
                     "Out of memory.\n");
     return;
   }
@@ -197,14 +209,14 @@ void nmb_SharedDevice::registerMutexTakenCallback
 }
 
 // static
-void nmb_SharedDevice::registerMutexReleasedCallback
+void nmb_SharedDevice_Remote::registerMutexReleasedCallback
             (void * userdata,
-             void (* f) (void *, nmb_SharedDevice *)) {
+             void (* f) (void *, nmb_SharedDevice_Remote *)) {
   sharedDeviceCallback * cb;
 
   cb = new sharedDeviceCallback;
   if (!cb) {
-    fprintf(stderr, "nmb_SharedDevice::registerMutexReleasedCallback:  "
+    fprintf(stderr, "nmb_SharedDevice_Remote::registerMutexReleasedCallback:  "
                     "Out of memory.\n");
     return;
   }
@@ -217,11 +229,12 @@ void nmb_SharedDevice::registerMutexReleasedCallback
 }
 
 // static
-int nmb_SharedDevice::handle_gotMutex (void * userdata) {
-  nmb_SharedDevice * me = (nmb_SharedDevice *) userdata;
+int nmb_SharedDevice_Remote::handle_gotMutex (void * userdata) {
+  nmb_SharedDevice_Remote * me = (nmb_SharedDevice_Remote *) userdata;
   sharedDeviceCallback * cb;
 
-fprintf(stderr, "nmb_SharedDevice:  got the lock on %s.\n", me->d_myName);
+fprintf(stderr, "nmb_SharedDevice_Remote:  got the lock on %s.\n",
+me->d_myName);
 
   for (cb = me->d_gotMutexCallbacks;  cb;  cb = cb->next) {
     (cb->f)(cb->userdata, me);
@@ -232,11 +245,12 @@ fprintf(stderr, "nmb_SharedDevice:  got the lock on %s.\n", me->d_myName);
 
 
 // static
-int nmb_SharedDevice::handle_deniedMutex (void * userdata) {
-  nmb_SharedDevice * me = (nmb_SharedDevice *) userdata;
+int nmb_SharedDevice_Remote::handle_deniedMutex (void * userdata) {
+  nmb_SharedDevice_Remote * me = (nmb_SharedDevice_Remote *) userdata;
   sharedDeviceCallback * cb;
 
-fprintf(stderr, "nmb_SharedDevice:  denied the lock on %s.\n", me->d_myName);
+fprintf(stderr, "nmb_SharedDevice_Remote:  denied the lock on %s.\n",
+me->d_myName);
 
   for (cb = me->d_deniedMutexCallbacks;  cb;  cb = cb->next) {
     (cb->f)(cb->userdata, me);
@@ -247,11 +261,11 @@ fprintf(stderr, "nmb_SharedDevice:  denied the lock on %s.\n", me->d_myName);
 
 
 // static
-int nmb_SharedDevice::handle_mutexTaken (void * userdata) {
-  nmb_SharedDevice * me = (nmb_SharedDevice *) userdata;
+int nmb_SharedDevice_Remote::handle_mutexTaken (void * userdata) {
+  nmb_SharedDevice_Remote * me = (nmb_SharedDevice_Remote *) userdata;
   sharedDeviceCallback * cb;
 
-fprintf(stderr, "nmb_SharedDevice:  somebody got %s.\n", me->d_myName);
+fprintf(stderr, "nmb_SharedDevice_Remote:  somebody got %s.\n", me->d_myName);
 
   for (cb = me->d_mutexTakenCallbacks;  cb;  cb = cb->next) {
     (cb->f)(cb->userdata, me);
@@ -262,11 +276,12 @@ fprintf(stderr, "nmb_SharedDevice:  somebody got %s.\n", me->d_myName);
 
 
 // static
-int nmb_SharedDevice::handle_mutexReleased (void * userdata) {
-  nmb_SharedDevice * me = (nmb_SharedDevice *) userdata;
+int nmb_SharedDevice_Remote::handle_mutexReleased (void * userdata) {
+  nmb_SharedDevice_Remote * me = (nmb_SharedDevice_Remote *) userdata;
   sharedDeviceCallback * cb;
 
-fprintf(stderr, "nmb_SharedDevice:  somebody released %s.\n", me->d_myName);
+fprintf(stderr, "nmb_SharedDevice_Remote:  somebody released %s.\n",
+me->d_myName);
 
   for (cb = me->d_mutexReleasedCallbacks;  cb;  cb = cb->next) {
     (cb->f)(cb->userdata, me);

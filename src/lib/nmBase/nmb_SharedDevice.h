@@ -23,14 +23,27 @@
 // At some future time we'll want to extend (or further subclass) to
 // make the mutex only restrict a subset of message types sent.
 
-class nmb_SharedDevice : public nmb_Device_Client {
+class nmb_SharedDevice_Server : public nmb_Device_Server {
 
   public:
 
-    nmb_SharedDevice (const char * name, int portForMutexServer,
-                      vrpn_Connection * connectionToDeviceServer = NULL,
-                      const char * mutexNICaddress = NULL);
-    virtual ~nmb_SharedDevice (void);
+    nmb_SharedDevice_Server (const char * name, vrpn_Connection *);
+    virtual ~nmb_SharedDevice_Server (void);
+
+    // Doesn't have a mainloop;  just be sure to call connection->mainloop()
+
+  protected:
+
+    vrpn_Mutex_Server d_mutex;
+};
+
+class nmb_SharedDevice_Remote : public nmb_Device_Client {
+
+  public:
+
+    nmb_SharedDevice_Remote (const char * name,
+                      vrpn_Connection * connectionToDeviceServer = NULL);
+    virtual ~nmb_SharedDevice_Remote (void);
 
 
     //  ACCESSORS
@@ -59,9 +72,6 @@ class nmb_SharedDevice : public nmb_Device_Client {
       ///< Release our exclusive access to the shared device.
 
 
-    void addPeer (const char * stationName);
-      ///< Takes a vrpn station name, of the form "<host>:<port>".
-
 
     virtual long dispatchMessage (long len, const char * buf, vrpn_int32 type);
       ///< If we don't have the mutex, returns 0;  otherwise, passes the
@@ -74,32 +84,32 @@ class nmb_SharedDevice : public nmb_Device_Client {
       ///< have the mutex.  They must be queries without side-effects.
 
     void registerGotMutexCallback (void * userdata,
-                                   void (*) (void *, nmb_SharedDevice *));
+                    void (*) (void *, nmb_SharedDevice_Remote *));
       ///< Lets the using process take some action to notify the user
       ///< when the device is secured.
     void registerDeniedMutexCallback (void * userdata,
-                                   void (*) (void *, nmb_SharedDevice *));
+                    void (*) (void *, nmb_SharedDevice_Remote *));
       ///< Lets the using process take some action to notify the user
       ///< when a request for the device has been denied.
     void registerMutexTakenCallback (void * userdata,
-                                   void (*) (void *, nmb_SharedDevice *));
+                    void (*) (void *, nmb_SharedDevice_Remote *));
       ///< Lets the using process take some action to notify the user
       ///< when any user obtains access to the device.
     void registerMutexReleasedCallback (void * userdata,
-                                   void (*) (void *, nmb_SharedDevice *));
+                    void (*) (void *, nmb_SharedDevice_Remote *));
       ///< Lets the using process take some action to notify the user
       ///< when any user releases the device.
 
   private:
 
-    vrpn_Mutex d_mutex;
+    vrpn_Mutex_Remote d_mutex;
 
     // HACK - we use a constant-sized array here and assume the implementation
     // in vrpn_Connection is still a constant-sized array.
     vrpn_bool d_typeSafe [vrpn_CONNECTION_MAX_TYPES];
 
     struct sharedDeviceCallback {
-      void (* f) (void *, nmb_SharedDevice *);
+      void (* f) (void *, nmb_SharedDevice_Remote *);
       void * userdata;
       sharedDeviceCallback * next;
     };
