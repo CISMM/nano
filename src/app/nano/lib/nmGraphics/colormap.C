@@ -41,7 +41,7 @@ int	ColorMap::get_full_name (const char * filename, const char * dir,
 	}
 
 	// Form the complete file name
-	if ( (strlen(full_name) + strlen(filename) + 2) > maxlen) {
+	if ( (strlen(full_name) + strlen(filename) + 2) > (unsigned) maxlen) {
 		fprintf(stderr,"ColorMap::get_full_name(): Path too long\n");
 		return -1;
 	}

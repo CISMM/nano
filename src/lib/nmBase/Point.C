@@ -29,9 +29,9 @@ Point_value::Point_value (Point_value * value)
     _numcallbacks = 0;
 }
 
-// Look up the callback with the given values and return its index in the
-// list.  If there is no such callback, return -1.
-
+/** Look up the callback with the given values and return its index in the
+ list.  If there is no such callback, return -1.
+*/
 int	Point_value::lookup_callback (const Point_Valuecall cb,
                                       const void * userdata)
 {
@@ -84,8 +84,9 @@ int	Point_value::remove_callback(Point_Valuecall cb, void *userdata)
 // Point_results methods
 //----------------------------------------------------------------------
 
-// Create a new point that is a copy of another point, including all of
-// its value sets.
+/** Create a new point that is a copy of another point, including all of
+ its value sets.
+*/
 Point_results::Point_results (const Point_results &p)
 {
 	Point_value	*value;

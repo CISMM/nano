@@ -109,7 +109,7 @@ int nms_SEM_ui::mainloop(const struct timeval * timeout)
 // static
 void nms_SEM_ui::handle_acquire_image(vrpn_int32 _newval, void *_userdata)
 {
-    printf("acquire image changed to %ld\n", _newval);
+    printf("acquire image changed to %d\n", _newval);
     if (!_newval) return;
     nms_SEM_ui *me = (nms_SEM_ui *)_userdata;
     printf("requesting scan\n");
@@ -123,7 +123,7 @@ void nms_SEM_ui::handle_acquire_image(vrpn_int32 _newval, void *_userdata)
 // static
 void nms_SEM_ui::handle_resolution_change(vrpn_int32 _newval, void *_ud)
 {
-    printf("res changed to %ld\n", _newval);
+    printf("res changed to %d\n", _newval);
     nms_SEM_ui *me = (nms_SEM_ui *)_ud;
     if (_newval < 0 || _newval >= EDAX_NUM_SCAN_MATRICES){
        fprintf(stderr, "nms_SEM_ui: Error, resolution index out of range\n");
@@ -133,7 +133,7 @@ void nms_SEM_ui::handle_resolution_change(vrpn_int32 _newval, void *_ud)
     // only send a message if the last message we received indicated
     // a different value
     me->sem->getResolution(res_x, res_y);
-    printf("resolution was (%ld, %ld), changed to (%ld, %ld)\n",
+    printf("resolution was (%d, %d), changed to (%d, %d)\n",
 	res_x, res_y, 
 	me->d_matrixSizeX[_newval], me->d_matrixSizeY[_newval]);
     if (res_x != me->d_matrixSizeX[_newval] ||
@@ -145,9 +145,10 @@ void nms_SEM_ui::handle_resolution_change(vrpn_int32 _newval, void *_ud)
 }
 
 // static
-void nms_SEM_ui::handle_texture_display_change(vrpn_int32 _newval, void *_ud)
+void nms_SEM_ui::handle_texture_display_change(vrpn_int32 _newval, 
+					       void * /*_ud*/)
 {   
-    nms_SEM_ui *me = (nms_SEM_ui *)_ud;
+    //nms_SEM_ui *me = (nms_SEM_ui *)_ud;
     if (_newval) {
         disableOtherTextures(SEM);
         graphics->setTextureMode(nmg_Graphics::SEM_DATA,
@@ -164,7 +165,7 @@ void nms_SEM_ui::handle_texture_display_change(vrpn_int32 _newval, void *_ud)
 // static 
 void nms_SEM_ui::handle_integration_change(vrpn_int32 _newval, void *_ud)
 {
-    printf("integr. changed to %ld\n", _newval);
+    printf("integr. changed to %d\n", _newval);
     nms_SEM_ui *me = (nms_SEM_ui *)_ud;
     vrpn_int32 time_nsec;
     me->sem->getPixelIntegrationTime(time_nsec);
@@ -241,7 +242,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
   switch(info.msg_type) {
     case nmm_Microscope_SEM::REPORT_RESOLUTION:
         info.sem->getResolution(res_x, res_y);
-        fprintf(stderr, "SEM Resolution change: %ld, %ld\n", res_x, res_y);
+        fprintf(stderr, "SEM Resolution change: %d, %d\n", res_x, res_y);
         me->image_viewer->setWindowImageSize(me->image_window_id, res_x, res_y);
         i = me->computeResolutionIndex(res_x, res_y);
         if (i < 0) {
@@ -252,12 +253,12 @@ void nms_SEM_ui::handle_device_change(void *ud,
       break;
     case nmm_Microscope_SEM::REPORT_PIXEL_INTEGRATION_TIME:
         info.sem->getPixelIntegrationTime(time_nsec); 
-        printf("REPORT_PIXEL_INTEGRATION_TIME: %ld\n",time_nsec);      
+        printf("REPORT_PIXEL_INTEGRATION_TIME: %d\n",time_nsec);      
         me->pixel_integration_time_nsec = time_nsec;
       break;
     case nmm_Microscope_SEM::REPORT_INTERPIXEL_DELAY_TIME:
         info.sem->getInterPixelDelayTime(time_nsec);
-        printf("REPORT_INTERPIXEL_DELAY_TIME: %ld\n", time_nsec);
+        printf("REPORT_INTERPIXEL_DELAY_TIME: %d\n", time_nsec);
         me->inter_pixel_delay_time_nsec = time_nsec;
       break;
     case nmm_Microscope_SEM::SCANLINE_DATA:
@@ -267,7 +268,7 @@ void nms_SEM_ui::handle_device_change(void *ud,
         info.sem->getResolution(res_x, res_y);
         if (start_y + num_lines*dy > res_y || line_length*dx != res_x) {
 	   fprintf(stderr, "SCANLINE_DATA, dimensions unexpected\n");
-	   fprintf(stderr, "  got (%ld,[%ld-%ld]), expected (%ld,%ld)\n",
+	   fprintf(stderr, "  got (%d,[%d-%d]), expected (%d,%d)\n",
                               line_length*dx, start_y, start_y + dy*(num_lines),
 				res_x, res_y);
 	   break;
@@ -330,11 +331,11 @@ int nms_SEM_ui::updateSurfaceTexture(int start_x, int start_y, int dx, int dy,
   sem->getResolution(res_x, res_y);
   res_index = computeResolutionIndex(res_x, res_y);
   if (res_index < 0) {
-     fprintf(stderr, "Error, resolution not found (%ld,%ld)\n", res_x, res_y);
+     fprintf(stderr, "Error, resolution not found (%d,%d)\n", res_x, res_y);
   }
   nmb_Image8bit *im = image[res_index];
   char plane_name[128];
-  sprintf(plane_name, "SEM_DATA%ldx%ld", res_x, res_y);
+  sprintf(plane_name, "SEM_DATA%dx%d", res_x, res_y);
   if (!im) {
     printf("generating new plane: %s\n", plane_name);
     im = new nmb_Image8bit(plane_name, "ADC", res_x, res_y);

@@ -7,14 +7,10 @@
 
 class BCPlane;  // from BCPlane.h
 
-
-// Encapsulate Measure Lines and anything else that needs a similar
-// implementation.
-
-class nmb_Line;
-
 typedef void (* nmb_LINE_MOVE_CALLBACK) (float x, float y, void * userdata);
 
+/// Encapsulate Measure Lines and anything else that needs a similar
+/// implementation.
 class nmb_Line {
 
   public:
@@ -47,9 +43,9 @@ class nmb_Line {
     // MANIPULATORS
 
     void moveTo (float x, float y, BCPlane * plane);
-      // Move to (x, y) and normalize.
+      ///< Move to (x, y) and normalize.
     void normalize (BCPlane * plane);
-      // Make sure that Z extents are from the top to the bottom of plane.
+      ///< Make sure that Z extents are from the top to the bottom of plane.
 
     void clearChanged (void);
 

@@ -1457,7 +1457,7 @@ static void handle_collab_machine_name_change
                    (const char * new_value,
                     void * /*userdata*/ )
 {
-  char buf [256];
+    //char buf [256];
   char sfbuf [1024];
 
   if (!new_value || !strlen(new_value)) {
@@ -4322,7 +4322,7 @@ void ParseArgs (int argc, char ** argv,
         istate->phantomRate = atof(argv[i]);
       } else if (!strcmp(argv[i], "-tesselation")) {
         if (++i >= argc) Usage(argv[0]);
-        istate->tesselation = atof(argv[i]);
+        istate->tesselation = atoi(argv[i]);
       } else if (strcmp(argv[i], "-minsep") == 0) {
         if (++i >= argc) Usage(argv[0]);
         istate->afm.stmRxTmin = atoi(argv[i]);
@@ -5029,7 +5029,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
     case RENDER_CLIENT:
       fprintf(stderr, "Starting up as a rendering client "
-              "(expecting peer rendering server %d to supply images).\n",
+              "(expecting peer rendering server %p to supply images).\n",
               istate.graphicsHost);
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
@@ -5063,7 +5063,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
     case TEXTURE_CLIENT:
       fprintf(stderr, "Starting up as a texture rendering client "
-              "(expecting peer rendering server %d to supply images).\n",
+              "(expecting peer rendering server %p to supply images).\n",
               istate.graphicsHost);
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
@@ -5096,7 +5096,7 @@ void createGraphics (MicroscapeInitializationState & istate) {
 
     case VIDEO_CLIENT:
       fprintf(stderr, "Starting up as a video rendering client "
-              "(expecting peer rendering server %d to supply images).\n",
+              "(expecting peer rendering server %p to supply images).\n",
               istate.graphicsHost);
 
       sprintf(qualifiedName, "nmg Graphics Renderer@%s:%d",
@@ -6577,7 +6577,7 @@ void handleCharacterCommand (char * character, vrpn_bool * donePtr,
 				v_world.users.xforms[0].rotate );
 			q_print_matrix( temp_mat );
 			printf("  scale: ");
-			printf("%lg\n",v_world.users.xforms[0].scale);
+			printf("%g\n",v_world.users.xforms[0].scale);
 		}
 		break;
 

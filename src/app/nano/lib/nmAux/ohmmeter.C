@@ -371,7 +371,7 @@ Ohmmeter::Ohmmeter (Tcl_Interp * the_tcl_interp,
                     vrpn_Ohmmeter_Remote * device)
 {
     char command[128];
-    char command2[64];
+    //char command2[64];
     int i;
 
     ohmmeterDevice = device;

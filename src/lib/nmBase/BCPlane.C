@@ -23,14 +23,12 @@ int write( int fildes, const void *buf, size_t nbyte );
 #define max(x,y) ( (x) > (y) ? (x) : (y) )
 #endif
 
-
-/******************************************************************************\
-@setValue
---------------------------------------------------------------------------------
+/**
+setValue
    description: 
         author: Kimberly Passarella Jones
  last modified: 7/2/96 by Russ Taylor
-\******************************************************************************/
+*/
 void
 BCPlane::setValue(int x, int y, float value)
 {
@@ -42,14 +40,13 @@ BCPlane::setValue(int x, int y, float value)
 	_callbacks[i].callback(this, x,y, _callbacks[i].userdata);
 }
 
-/******************************************************************************\
-@setTime
---------------------------------------------------------------------------------
+/**
+setTime
    description: Does nothing.  Allows this routine to be called for all
 		planes, even untimed ones.
         author: Russ Taylor
  last modified: 5/3/96 by Russ Taylor
-\******************************************************************************/
+*/
 //void
 //BCPlane::setTime(int x, int y, long sec, long usec)
  //{ x = x; y = y; sec = sec; usec = usec; }
@@ -80,13 +77,12 @@ void BCPlane::computeMinMax (void) {
 }
 	
 
-/******************************************************************************\
-@minValue
---------------------------------------------------------------------------------
+/**
+minValue
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 double
 BCPlane::minValue()
 {
@@ -101,13 +97,12 @@ BCPlane::minValue()
 } // minValue
 
 
-/******************************************************************************\
-@maxValue
---------------------------------------------------------------------------------
+/**
+maxValue
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 double
 BCPlane::maxValue()
 {
@@ -121,14 +116,13 @@ BCPlane::maxValue()
     }
 } // maxValue
 
-/******************************************************************************\
-@minNonZeroValue
---------------------------------------------------------------------------------
+/**
+minNonZeroValue
    description: Minimum nonzero value in plane. Useful if not all data 
                 has been filled in yet. 
         author: Aron Helser
  last modified: 8-19-98 Aron Helser
-\******************************************************************************/
+*/
 double
 BCPlane::minNonZeroValue()
 {
@@ -169,14 +163,13 @@ BCPlane::minNonZeroValue()
 } // minNonZeroValue
 
 
-/******************************************************************************\
-@maxNonZeroValue
---------------------------------------------------------------------------------
+/**
+maxNonZeroValue
    description: Maximum nonzero value in plane. Useful if not all data 
                 has been filled in yet. 
         author: Aron Helser
  last modified: 8-19-98 Aron Helser
-\******************************************************************************/
+*/
 double
 BCPlane::maxNonZeroValue()
 {
@@ -226,9 +219,8 @@ double BCPlane::maxAttainableValue (void) const {
 }
 
 
-/******************************************************************************\
-@ findValidDataRange
---------------------------------------------------------------------------------
+/**
+ findValidDataRange
    description: Assuming the initial plane was filled with all zeros, finds
    		the rectangle of data which is no longer zero. Used to write 
 		Topo files, versions 4 and 5. If you tell Topo that the whole
@@ -239,7 +231,7 @@ double BCPlane::maxAttainableValue (void) const {
 		the region it found. 
         author: Aron Helser
  last modified: 10-4-99 Aron Helser
-\******************************************************************************/
+*/
 int
 BCPlane::findValidDataRange(short* o_top, short* o_left, short* o_bottom, short* o_right)
 {
@@ -329,14 +321,13 @@ float BCPlane::interpolatedValueAt(double x, double y) {
 }
 
 
-/******************************************************************************\
-@level
---------------------------------------------------------------------------------
+/**
+level
    description: This method "levels out" the grid by subtracting from each
                 of its values the average plane.
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 void
 BCPlane::level()
 {	
@@ -437,16 +428,15 @@ int     BCPlane::remove_callback(Plane_Valuecall cb, void *userdata)
   
   The following methods of BCPlane are protected!
   
-\******************************************************************************/
+*/
 
 
-/******************************************************************************\
-@BCPlane --> constructor
---------------------------------------------------------------------------------
+/**
+BCPlane --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCPlane::BCPlane(BCString name, BCString units, int nx, int ny)
 {
     //int x;
@@ -489,13 +479,12 @@ BCPlane::BCPlane(BCString name, BCString units, int nx, int ny)
 }
 
 
-/******************************************************************************\
-@BCPlane --> constructor
---------------------------------------------------------------------------------
+/**
+BCPlane --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCPlane::BCPlane(BCPlane* plane)
 {
     //int x;
@@ -555,13 +544,12 @@ BCPlane::BCPlane(BCPlane* plane, int newX, int newY)
 }
    
 
-/******************************************************************************\
-@~BCPlane --> destructor
---------------------------------------------------------------------------------
+/**
+~BCPlane --> destructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCPlane::~BCPlane()
 {
 //    //int x;
@@ -575,13 +563,12 @@ BCPlane::~BCPlane()
 }
 
 
-/******************************************************************************\
-@readTextFile
---------------------------------------------------------------------------------
+/**
+readTextFile
    description: 
         author: ?
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int BCPlane::readTextFile(FILE* file)
 {
     if (fscanf(file,"%lf %lf", &_min_value, &_max_value) != 2) 
@@ -625,13 +612,12 @@ int BCPlane::readTextFile(FILE* file)
 } // readTextFile
 
 
-/******************************************************************************\
-@writeTextFile
---------------------------------------------------------------------------------
+/**
+writeTextFile
    description: 
         author: ?
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int
 BCPlane::writeTextFile(FILE* file)
 { 
@@ -664,13 +650,12 @@ BCPlane::writeTextFile(FILE* file)
 } // writeTextFile
 
 
-/******************************************************************************\
-@readBinaryFile
---------------------------------------------------------------------------------
+/**
+readBinaryFile
    description: 
         author: ?
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int
 BCPlane::readBinaryFile(FILE* file)
 {    
@@ -726,13 +711,12 @@ BCPlane::readBinaryFile(FILE* file)
 }  // readBinaryFile
 
 
-/******************************************************************************\
-@writeBinaryFile
---------------------------------------------------------------------------------
+/**
+writeBinaryFile
    description: 
         author: ?
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int
 BCPlane::writeBinaryFile(FILE* file)
 { 
@@ -770,13 +754,12 @@ BCPlane::writeBinaryFile(FILE* file)
 } // writeBinaryFile
 
 
-/******************************************************************************\
-@readUNCAFile
---------------------------------------------------------------------------------
+/**
+readUNCAFile
    description: 
         author: ?
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int
 BCPlane::readUNCAFile(FILE* file)
 {
@@ -827,13 +810,12 @@ BCPlane::readUNCAFile(FILE* file)
 } // readUNCAFile
 
 
-/******************************************************************************\
-@writeUNCAFile
---------------------------------------------------------------------------------
+/**
+writeUNCAFile
    description: 
         author: ?
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int
 BCPlane::writeUNCAFile(FILE* file)
 { 
@@ -874,13 +856,12 @@ BCPlane::writeUNCAFile(FILE* file)
 } // writeUNCAFile
 
 
-/******************************************************************************\
-@readUNCBFile
---------------------------------------------------------------------------------
+/**
+readUNCBFile
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int     
 BCPlane::readUNCBFile(FILE* file)
 {
@@ -966,14 +947,13 @@ BCPlane::readUNCBFile(FILE* file)
 } // readUNCBFile
 
 
-/******************************************************************************\
-@readPPMorPGMFile
---------------------------------------------------------------------------------
+/**
+readPPMorPGMFile
    description: XXX This sure doesn't look like it will read a PGM file,
 		but it should read a PPM file.
         author: ?
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int 
 BCPlane::readPPMorPGMFile(FILE *file, double scale)
 {
@@ -995,14 +975,13 @@ BCPlane::readPPMorPGMFile(FILE *file, double scale)
 }  // readPPMorPGMFile
 
 
-/******************************************************************************\
-@writePPMFile
---------------------------------------------------------------------------------
+/**
+writePPMFile
    description: Writes a greyscale ppm file (just data, no header). Data is 
                 scaled from range minValue() - maxValue() to range 0 - 255
         author: ?
  last modified: 8/13/98 Aron Helser
-\******************************************************************************/
+*/
 int 
 BCPlane::writePPMFile(int file_descriptor)
 {  
@@ -1037,14 +1016,13 @@ BCPlane::writePPMFile(int file_descriptor)
 
 }  // writePPMFile
 
-/******************************************************************************\
-@writeRawByteFile
---------------------------------------------------------------------------------
+/**
+writeRawByteFile
    description: Writes out raw bytes, where the range giving by minval and maxval 
                 is scaled to the range 0 to 255
         author: Aron Helser
  last modified: 8/13/98 Aron helser
-\******************************************************************************/
+*/
 int 
 BCPlane::writeRawByteFile(int file_descriptor, double minval, double maxval)
 {  
@@ -1131,13 +1109,12 @@ int BCPlane::readSPIPFile(FILE *file, double max_value)
    return 0;
 }
 
-/******************************************************************************\
-@readNanoscopeFileWithoutHeader
---------------------------------------------------------------------------------
+/**
+readNanoscopeFileWithoutHeader
    description: 
         author: ?
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int BCPlane::readNanoscopeFileWithoutHeader(FILE* file)
 {
     int	first_value_read = 1;
@@ -1185,13 +1162,12 @@ int BCPlane::readNanoscopeFileWithoutHeader(FILE* file)
     return 0;
 }
 
-/******************************************************************************\
-@readAsciiRHKFile
---------------------------------------------------------------------------------
+/**
+readAsciiRHKFile
    description:
         author: seeger
  last modified: 6/18/99 by seeger
-\******************************************************************************/
+*/
 int BCPlane::readAsciiRHKFile(FILE* file, double z_offset_nm, double z_scale_pm)
 {
     int first_value_read = 1;
@@ -1243,13 +1219,12 @@ int BCPlane::readAsciiRHKFile(FILE* file, double z_offset_nm, double z_scale_pm)
 } // readAsciiRHKFile
 
 
-/******************************************************************************\
-@readAsciiNanoscopeFile
---------------------------------------------------------------------------------
+/**
+readAsciiNanoscopeFile
    description: 
         author: ?
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int BCPlane::readAsciiNanoscopeFile(FILE* file)
 {
     int	first_value_read = 1;
@@ -1296,13 +1271,12 @@ int BCPlane::readAsciiNanoscopeFile(FILE* file)
 } // readAsciiNanoscopeFile
 
 
-/******************************************************************************\
-@readBinaryNanoscopeFile
---------------------------------------------------------------------------------
+/**
+readBinaryNanoscopeFile
    description: 
         author: ?
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int
 BCPlane::readBinaryNanoscopeFile(FILE* file)
 {
@@ -1350,9 +1324,8 @@ BCPlane::readBinaryNanoscopeFile(FILE* file)
 } // readBinaryNanoscopeFile
 
 
-/******************************************************************************\
-@writeNCFile
---------------------------------------------------------------------------------
+/**
+writeNCFile
    description: Writes a Numerically-controlled machine tool file that will
 	mill out the surface.  It assumes that the grid has the header
 	and footer to place the tool above the surface, start and stop
@@ -1373,7 +1346,7 @@ BCPlane::readBinaryNanoscopeFile(FILE* file)
 			of the milled area.
 	    It is possible that some sort of spline interpolation will be
 			preferable to piecewise linear for future versions.
-\******************************************************************************/
+*/
 
 int 
 BCPlane::writeNCFile(FILE* file, double sizex, double sizey, double sizez,
@@ -1414,9 +1387,8 @@ BCPlane::writeNCFile(FILE* file, double sizex, double sizey, double sizez,
 }  // writeNCFile
 
 
-/******************************************************************************\
-@writeNCPass
---------------------------------------------------------------------------------
+/**
+writeNCPass
 	Writes one pass of an NC miling program into the file.  It is told
 	the current depth.  It skips 'increment' lines from the plane each
 	time back and forth; this allows rough cutting of higher levels.
@@ -1428,7 +1400,7 @@ BCPlane::writeNCFile(FILE* file, double sizex, double sizey, double sizez,
  last modified: 1/3/98 Russell Taylor
 	    *** Some provision should be made for tool clearance at the edges
 			of the milled area.
-\******************************************************************************/
+*/
 int
 BCPlane::writeNCPass(FILE *file, double bestscale,
 	double centerx, double centery,
@@ -1502,13 +1474,12 @@ BCPlane::writeNCPass(FILE *file, double bestscale,
 }
 
 
-/******************************************************************************\
-@setTime
---------------------------------------------------------------------------------
+/**
+setTime
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 void CPlane::setTime(int x, int y, long sec, long usec)
 {
     x = x; y = y; sec = sec; usec = usec;
@@ -1516,13 +1487,12 @@ void CPlane::setTime(int x, int y, long sec, long usec)
 } // setTime
 
 
-/******************************************************************************\
-@CPlane --> constructor
---------------------------------------------------------------------------------
+/**
+CPlane --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 CPlane::CPlane(BCString name, BCString units, int nx, int ny) :
 	BCPlane(name, units, nx, ny)
 {
@@ -1541,13 +1511,12 @@ CPlane::CPlane(BCString name, BCString units, int nx, int ny) :
 }
 
 
-/******************************************************************************\
-@CPlane --> constructor
---------------------------------------------------------------------------------
+/**
+CPlane --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 CPlane::CPlane(CPlane* plane) : BCPlane(plane)
 {
    //BCDebug debug("CPlane::CPlane", PLANE_CODE);
@@ -1588,26 +1557,24 @@ CPlane::CPlane (CPlane * plane, int newX, int newY) :
 }
 
 
-/******************************************************************************\
-@~CPlane --> destructor
---------------------------------------------------------------------------------
+/**
+~CPlane --> destructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 CPlane::~CPlane() 
 {
    //BCDebug debug("CPlane::~CPlane", PLANE_CODE);
 }
 
 
-/******************************************************************************\
-@setTime
---------------------------------------------------------------------------------
+/**
+setTime
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 void
 CTimedPlane::setTime(int x, int y, long sec, long usec)
 {
@@ -1643,13 +1610,12 @@ void CTimedPlane::computeMinMax (void) {
 }
 
 
-/******************************************************************************\
-@CTimedPlane --> constructor
---------------------------------------------------------------------------------
+/**
+CTimedPlane --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 CTimedPlane::CTimedPlane(BCString name, BCString units, int nx, int ny) :
 	BCPlane(name, units, nx, ny)
 {
@@ -1677,13 +1643,12 @@ CTimedPlane::CTimedPlane(BCString name, BCString units, int nx, int ny) :
 }
 
 
-/******************************************************************************\
-@CTimedPlane --> constructor
---------------------------------------------------------------------------------
+/**
+CTimedPlane --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 CTimedPlane::CTimedPlane(CTimedPlane* plane) : BCPlane(plane)
 {
    //BCDebug debug("CTimedPlane::CTimedPlane", PLANE_CODE);
@@ -1757,13 +1722,12 @@ CTimedPlane::CTimedPlane(CTimedPlane* plane, int newX, int newY) :
 }
 
 
-/******************************************************************************\
-@~CTimedPlane --> destructor
---------------------------------------------------------------------------------
+/**
+~CTimedPlane --> destructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 CTimedPlane::~CTimedPlane()
 {
    //BCDebug debug("CTimedPlane::~CTimedPlane", PLANE_CODE);

@@ -680,9 +680,6 @@ void
 drawObjects( void )
 {
    int i;
-   char str[256];
-
-
 
    // draw the objects
    for( i=0; i<numObs; i++ ) {
@@ -797,7 +794,7 @@ adjustOrthoProjectionToWindow( void )
 #endif
 
    // set nominal size of window before taking aspect ratio into account
-   float orthoFrustumLeftEdgeNominal   = orthoFrustumCenterX - orthoFrustumWidthNominal/2.;
+   //float orthoFrustumLeftEdgeNominal   = orthoFrustumCenterX - orthoFrustumWidthNominal/2.;
    float orthoFrustumBottomEdgeNominal = orthoFrustumCenterY - orthoFrustumHeightNominal/2.;
 
    // calculate aspect ratio of current window
@@ -1792,7 +1789,7 @@ moveTipToTranslateTube( void )
    Vec2d vPush = normalizeVec(vWidth) * pushLength;
 
    Vec2d vRight  = vRightTouch  * 1.2;
-   Vec2d vLeft   = - vRight;
+   //Vec2d vLeft   = - vRight;
    Vec2d vTop    = vRight;   vTop.rotate(M_PI/2.);
    Vec2d vBottom = - vTop;
 
@@ -2263,7 +2260,6 @@ towardVec( Vec2d vTarget, Vec2d vFrom, float speed )
    Vec2d vDelta = vTarget - vFrom;
    float magnitude = sqrt( vDelta.x * vDelta.x  +  vDelta.y * vDelta.y );
    assert( speed >= 0., "speed must be non-negative" );
-#define min(a,b)   ( (a) < (b) ? (a) : (b) )
    speed = min( speed, magnitude );
    return (vDelta / magnitude) * speed;
 }
@@ -3354,7 +3350,7 @@ Vec2d
 xformDEtoYaxis( Vec2d vIn, Vec2d vD, Vec2d vE )
 {
    // calc parameters for xforms derived from positions of D and E.
-   float lengthDE = norm( vD - vE );
+   //float lengthDE = norm( vD - vE );
    float angleE = atan2( (vE-vD).y, (vE-vD).x );   // angle wrt +X axis
    
    // start with input point
@@ -3379,7 +3375,7 @@ Vec2d
 inverseXformDEtoYaxis( Vec2d vIn, Vec2d vD, Vec2d vE )
 {
    // calc parameters for xforms derived from positions of D and E.
-   float lengthDE = norm( vD - vE );
+   //float lengthDE = norm( vD - vE );
    float angleE = atan2( (vE-vD).y, (vE-vD).x );   // angle wrt +X axis
    
    // start with input point
@@ -3731,7 +3727,7 @@ void
 calcTubeEndpoints( int tube, Vec2d* pvEndA, Vec2d* pvEndB )
 {
    // calculate tube endpoints A and B.
-   float radiusTube  = ob[tube].diam / 2.;
+    //float radiusTube  = ob[tube].diam / 2.;
    Vec2d vCenterTube = ob[tube].pos;
    float lengthTube  = ob[tube].leng;
    float angleTube   = ob[tube].angle;
@@ -4555,7 +4551,7 @@ showGrid( void )
 #endif
          Vec2d v1 = Vec2d( x1, y1 );
          Vec2d v2 = Vec2d( x2, y2 );
-         Vec2d v3 = Vec2d( x3, y3 );
+         //Vec2d v3 = Vec2d( x3, y3 );
          Vec2d v4 = Vec2d( x4, y4 );
 
          // display grid, according to current grid display mode (gridStyle)

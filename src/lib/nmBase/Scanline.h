@@ -15,7 +15,7 @@ class Scanline_data
 
   public:
 
-    // Name and units of the data set that this value stores.
+    /// Name and units of the data set that this value stores.
     inline BCString*    name (void) { return &d_dataset; }
     inline BCString*    units (void) { return &d_units; }
     inline void         rename (BCString new_name) { d_dataset = new_name; }

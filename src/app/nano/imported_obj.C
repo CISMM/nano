@@ -94,7 +94,7 @@ imported_obj::imported_obj(){
 
   bond_width_value = 1.0;
   sphere_radius_value = 1.0;
-  sphere_tesselation_value = 2.0;
+  sphere_tesselation_value = 2;
   bond_colorR_value = 0.0;
   bond_colorG_value = 0.0;
   bond_colorB_value = 1.0;

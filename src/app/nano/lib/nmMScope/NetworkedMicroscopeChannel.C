@@ -518,7 +518,7 @@ int NetworkedMicroscopeChannel::RecvTCPBuffer
   // Is that correct?
 
   blockLen -= sizeof(blockLen);
-  if (blockLen > _bufSize) {
+  if (blockLen > (int)_bufSize) {
     fprintf(stderr, "NetworkedMicroscopeChannel::RecvBuffer():  "
                     "buffer too small for incoming block.\n");
     return -1;
@@ -763,7 +763,7 @@ int NetworkedMicroscopeChannel::SendUDPBuffer (void) {
        * bufptr;
   long netSeqNum;
   int netBufUsed;
-  int newSize;
+  unsigned int newSize;
   int cmd;
 
   ptr = newBuf;
@@ -796,7 +796,7 @@ int NetworkedMicroscopeChannel::SendUDPBuffer (void) {
   //outbufUsed -= sizeof(int);
   memcpy(ptr, bufptr, outbufUsed - sizeof(int));
 
-  if (sdi_noint_block_write(microscope_udp_fd, newBuf, newSize) != newSize) {
+  if (sdi_noint_block_write(microscope_udp_fd, newBuf, newSize) != (signed)newSize) {
     fprintf(stderr, "NetworkedMicroscopeChannel::SendBuffer():  "
                     "UDP write failed.\n");
     return -1;
@@ -823,7 +823,7 @@ int NetworkedMicroscopeChannel::SendTCPBuffer (void) {
 
   // Try to send
   if (sdi_noint_block_write(microscope_fd, outbuf, outbufUsed)
-                           != outbufUsed) {
+                           != (signed)outbufUsed) {
     fprintf(stderr, "NetworkedMicroscopeChannel::SendBuffer():  "
                     "TCP write failed.\n");
     return -1;

@@ -70,26 +70,12 @@ class BCString
 // inline functions
 //----------------------------------------------------------------------
 
-/******************************************************************************\
-@~BCString() --> destructor
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline BCString::~BCString()
 {
     delete [] _str;
 }
 
 
-/******************************************************************************\
-@Length
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline int 
 BCString::Length() const
 {
@@ -97,13 +83,6 @@ BCString::Length() const
 }
 
 
-/******************************************************************************\
-@BytesAllocated
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline int 
 BCString::BytesAllocated() const
 {
@@ -111,13 +90,6 @@ BCString::BytesAllocated() const
 }
 
 
-/******************************************************************************\
-@Empty
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline int 
 BCString::Empty() const
 {
@@ -125,26 +97,12 @@ BCString::Empty() const
 }
 
 
-/******************************************************************************\
-@operator <
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline int BCString::operator < (const BCString &s) const
 {
     return (strcmp(_str, s._str) < 0);
 }
 
 
-/******************************************************************************\
-@operator >
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline int 
 BCString::operator > (const BCString &s) const
 {
@@ -152,13 +110,6 @@ BCString::operator > (const BCString &s) const
 }
 
 
-/******************************************************************************\
-@operator ==
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline int 
 BCString::operator == (const BCString &s) const
 {
@@ -166,13 +117,6 @@ BCString::operator == (const BCString &s) const
 }
 
 
-/******************************************************************************\
-@operator <=
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline int
 BCString::operator <= (const BCString &s) const
 {
@@ -180,13 +124,6 @@ BCString::operator <= (const BCString &s) const
 }
 
 
-/******************************************************************************\
-@operator >=
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline int 
 BCString::operator >= (const BCString &s) const
 {
@@ -194,13 +131,6 @@ BCString::operator >= (const BCString &s) const
 }
 
 
-/******************************************************************************\
-@operator !=
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline int 
 BCString::operator != (const BCString &s) const
 {
@@ -208,13 +138,6 @@ BCString::operator != (const BCString &s) const
 }
 
 
-/******************************************************************************\
-@Characters
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline const char* 
 BCString::Characters() const 
 { 
@@ -222,13 +145,6 @@ BCString::Characters() const
 }
 
 
-/******************************************************************************\
-@operator const char*
---------------------------------------------------------------------------------
-   description: 
-        author: Kimberly Passarella Jones
- last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
 inline BCString::operator const char*() const
 {
     return &(_str[0]);

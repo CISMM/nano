@@ -15,12 +15,12 @@
 #endif
 
 
-
-// Stores data needed to compute a new plane from two others.  The
-// formula used is:  output_plane = first_plane + (second_plane * scale);
-// To do the subtraction of two planes (make this the default), the scale
-// should be set to -1.
-
+/**
+Stores data needed to compute a new plane from two others.  The
+formula used is:  output_plane = first_plane + (second_plane * scale);
+To do the subtraction of two planes (make this the default), the scale
+should be set to -1.
+*/
 struct sum_data {
     BCPlane * sum_plane;
     BCPlane * first_plane;
@@ -439,15 +439,14 @@ int nmb_Dataset::computeSumPlane (const char * outputPlane,
 }
 
 
-//---------------------------------------------------------------------------
-// Compute a new plane that is a flattening of an height plane according to
-// the positions of three measure lines.
-// After the flattening, the intersections of three measure lines to the
-// surface have the same z value.
-// XXX When we implement dynamic updates based on scan data, we need
-//     hook up callbacks for the two planes feeding into this.
-
-
+/**---------------------------------------------------------------------------
+Compute a new plane that is a flattening of an height plane according to
+the positions of three measure lines.
+After the flattening, the intersections of three measure lines to the
+surface have the same z value.
+XXX When we implement dynamic updates based on scan data, we need
+    hook up callbacks for the two planes feeding into this.
+*/
 BCPlane* nmb_Dataset::computeFlattenedPlane
                         (const char * outputPlane,
                          const char * inputPlane,
@@ -771,11 +770,10 @@ int nmb_Dataset::computeLBLFlattenedPlane (const char * outputPlane,
 } //end computeLBLFlattenedPlane
 
 
-/* Map a plane in the input grid into a plane in the output grid, normalizing
+/** Map a plane in the input grid into a plane in the output grid, normalizing
  * the values in the output plane.  Ensure that the output plane does not
  * already exist.  This is used to map adhesion or auxilliary planes into
  * color parameter or friction. */
-
 int     nmb_Dataset::mapInputToInputNormalized (const char * in_name,
                                                 const char * out_name)
 {

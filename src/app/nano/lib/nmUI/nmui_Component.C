@@ -165,7 +165,7 @@ void nmui_Component::bindConnection (vrpn_Connection * c) {
 }
 
 void nmui_Component::bindLogConnection (vrpn_Connection * c) {
-  char namebuf [60];
+    //char namebuf [60];
   int i;
 
   for (i = 0; i < d_numInts; i++) {
@@ -311,8 +311,8 @@ void nmui_Component::registerSyncCompleteHandler
 
 // static
 int nmui_Component::handle_reconnect (void * userdata, vrpn_HANDLERPARAM) {
-  nmui_Component * c;
-  c = (nmui_Component *) userdata;
+    //nmui_Component * c;
+    //c = (nmui_Component *) userdata;
   // XXX  Which connection is that, again?  HACK
   //c->initializeConnection(c->d_peer);
   return 0;
@@ -323,8 +323,8 @@ void nmui_Component::initializeConnection (vrpn_Connection * c) {
   vrpn_int32 myId;
   vrpn_int32 syncRequest_type;
   vrpn_int32 syncComplete_type;
-  vrpn_int32 lock_type;
-  vrpn_int32 unlock_type;
+  //vrpn_int32 lock_type;
+  //vrpn_int32 unlock_type;
 
   if (!c) {
     fprintf(stderr, "nmui_Component::initializeConnection:  is NULL!\n");
@@ -356,7 +356,7 @@ void nmui_Component::initializeConnection (vrpn_Connection * c) {
 // message is sent
 
 void nmui_Component::do_handle_syncRequest (void) {
-  nmui_Component * c;
+    //nmui_Component * c;
   reqHandlerEntry * he;
   int i;
 
@@ -397,7 +397,7 @@ int nmui_Component::handle_syncRequest (void * userdata, vrpn_HANDLERPARAM p) {
 // static
 int nmui_Component::handle_syncComplete (void * userdata, vrpn_HANDLERPARAM p) {
   nmui_Component * c;
-  nmui_Component * cc;
+  //nmui_Component * cc;
   completeHandlerEntry * he;
   int i;
 

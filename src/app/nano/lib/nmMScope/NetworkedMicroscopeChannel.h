@@ -91,7 +91,7 @@ class NetworkedMicroscopeChannel {
 
     char outbuf [MAXBUF];
     char * outbufPtr;
-    int outbufUsed;
+    unsigned int outbufUsed;
 
     int microscope_fd;
     int microscope_udp_fd;

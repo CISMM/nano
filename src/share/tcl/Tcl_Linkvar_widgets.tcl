@@ -405,12 +405,18 @@ proc generic_entry { name var label validation} {
     return $name
 }
 
+# Changes the label of a generic_entry.
+proc generic_entry_change_label { name label } {
+    $name configure -labeltext "$label" 
+}
+
 # Create an integer entry field.
 proc intentry { name var } {
     generic_entry $name $var "" integer
 
     pack $name
 }
+
 
 # Help prevent nested callbacks.
 set optionmenu_setting_list 0

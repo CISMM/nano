@@ -14,7 +14,7 @@
  ***********************************************************/
 
 
-/* insert into list - add a new item after the current one, and the
+/** insert into list - add a new item after the current one, and the
  * new item becomes current.
  *   good for inserting at end of list. 
  * returns 0 if successful, -1 if fails */
@@ -65,7 +65,7 @@ int Position_list::insert(double x, double y, long sec, long usec)
     return ((insert(p)));
 }
 
-/* insert into list - add a new item before the current one, and the
+/** insert into list - add a new item before the current one, and the
  * new item becomes current.
  *   good for inserting at head of the list. 
  * returns 0 if successful, -1 if fails */
@@ -114,7 +114,7 @@ int Position_list::insertPrev(double x, double y, long sec, long usec)
     return ((insertPrev(p)));
 }
 
-/* deletes the current item.
+/** deletes the current item.
  * curr is changed to point to the next item, except at the tail,
  *     where it points to the new tail.
  * returns 0 if successful, -1 if fails */

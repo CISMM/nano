@@ -14,13 +14,12 @@ int BCDebug::_unfinishedSubsetArray[LAST_SUBSET];
 BCDebug::Function BCDebug::_functionStack[MAX_NUM_FUNCTIONS];
 
 
-/******************************************************************************\
-@BCDebug() --> constructor
---------------------------------------------------------------------------------
+/**
+BCDebug() --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCDebug::BCDebug(const BCString& function, const CodeSubset subset)
 {
     if (_timesInvoked == 0)
@@ -41,13 +40,12 @@ BCDebug::BCDebug(const BCString& function, const CodeSubset subset)
 }
 
 
-/******************************************************************************\
-@~BCDebug() --> destructor
---------------------------------------------------------------------------------
+/**
+~BCDebug() --> destructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCDebug::~BCDebug()
 {    
     _level--;
@@ -61,13 +59,12 @@ BCDebug::~BCDebug()
 }
 
 
-/******************************************************************************\
-@warn()
---------------------------------------------------------------------------------
+/**
+warn()
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 void
 BCDebug::warn(const BCString& label)
 {
@@ -80,13 +77,12 @@ BCDebug::warn(const BCString& label)
 }
 
 
-/******************************************************************************\
-@watch()
---------------------------------------------------------------------------------
+/**
+watch()
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 void
 BCDebug::watch(const BCString& label, const int value)
 {
@@ -99,13 +95,12 @@ BCDebug::watch(const BCString& label, const int value)
 }
 
 
-/******************************************************************************\
-@watch()
---------------------------------------------------------------------------------
+/**
+watch()
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 void
 BCDebug::watch(const BCString& label, const float value)
 {
@@ -118,13 +113,12 @@ BCDebug::watch(const BCString& label, const float value)
 }
 
 
-/******************************************************************************\
-@watch()
---------------------------------------------------------------------------------
+/**
+watch()
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 void
 BCDebug::watch(const BCString& label, const double value)
 {
@@ -137,13 +131,12 @@ BCDebug::watch(const BCString& label, const double value)
 }
 
 
-/******************************************************************************\
-@watch()
---------------------------------------------------------------------------------
+/**
+watch()
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 void
 BCDebug::watch(const BCString& label, const BCString& value)
 {
@@ -156,13 +149,12 @@ BCDebug::watch(const BCString& label, const BCString& value)
 }
 
 
-/******************************************************************************\
-@delay()
---------------------------------------------------------------------------------
+/**
+delay()
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 void
 BCDebug::delay(const long seconds)
 {
@@ -180,13 +172,12 @@ BCDebug::delay(const long seconds)
 }
 
 
-/******************************************************************************\
-@yes()
---------------------------------------------------------------------------------
+/**
+yes()
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int
 BCDebug::yes()
 {        
@@ -194,13 +185,12 @@ BCDebug::yes()
 }
 
 
-/******************************************************************************\
-@on()
---------------------------------------------------------------------------------
+/**
+on()
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int
 BCDebug::on()
 {
@@ -208,13 +198,12 @@ BCDebug::on()
 }
 
 
-/******************************************************************************\
-@indent()
---------------------------------------------------------------------------------
+/**
+indent()
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 int
 BCDebug::indent()
 {
@@ -230,13 +219,12 @@ BCDebug::indent()
 }
 
 
-/******************************************************************************\
-@drawSeparator()
---------------------------------------------------------------------------------
+/**
+drawSeparator()
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 void
 BCDebug::drawSeparator()
 {
@@ -249,13 +237,12 @@ BCDebug::drawSeparator()
 }
 
 
-/******************************************************************************\
-@initializeStaticVariables()
---------------------------------------------------------------------------------
+/**
+initializeStaticVariables()
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 void
 BCDebug::initializeStaticVariables()
 {

@@ -13,13 +13,14 @@ nmb_Dataset * dataset;
 nmg_Graphics * graphics;
 
 // tnv.t.C
-// Test code for Tcl_Netvar.
-//
-// Current version instantiates a TclNet_int and increments it,
-// verifying that the increments are received properly.  Preincrement,
-// postincrement, and assignment *should* all be satisfied by the
-// same test case.
+/**
+Test code for Tcl_Netvar.
 
+Current version instantiates a TclNet_int and increments it,
+verifying that the increments are received properly.  Preincrement,
+postincrement, and assignment *should* all be satisfied by the
+same test case.
+*/
 void Usage (char * argv0) {
   printf("%s <port> <peer-address> <mode>\n"
          "    <port> is the port to use as a server.\n"

@@ -2271,11 +2271,6 @@ int doMeasure(int whichUser, int userEvent)
 	static          int              hold_color;
 	static          int              ishold = 0;
 
-	/* Move the tip to the hand x,y location */
-	/* Set its height based on data at this point */
-        nmui_Util::clipPosition(whichUser, clipPos);
-
-//fprintf(stderr, "doMeasure:  hpn %s.\n", dataset->heightPlaneName->string());
         BCPlane* plane = dataset->inputGrid->getPlaneByName
                      (dataset->heightPlaneName->string());
         if (plane == NULL)
@@ -2283,6 +2278,12 @@ int doMeasure(int whichUser, int userEvent)
             fprintf(stderr, "Error in doMeasure: could not get plane!\n");
             return -1;
         }
+//fprintf(stderr, "doMeasure:  hpn %s.\n", dataset->heightPlaneName->string());
+
+	// Move the tip to the hand x,y location 
+	// Set its height based on data at this point
+	nmui_Util::getHandInWorld(whichUser, clipPos);
+        nmui_Util::clipPosition(plane, clipPos);
 
         decoration->red.normalize(plane);
         decoration->green.normalize(plane);
@@ -2398,13 +2399,14 @@ VERBOSE(8, "      In doLine().");
 	}
 
 	/* Find the x,y location of hand in grid space */
-        nmui_Util::clipPosition(whichUser, clipPos);
+	nmui_Util::getHandInWorld(whichUser, clipPos);
+        nmui_Util::clipPosition(plane, clipPos);
 
         /* Move the aiming line to the user's hand location */
 	// re-draw the aim line and the red sphere representing the tip.
         //nmui_Util::moveAimLine(clipPos);
         decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
-        nmui_Util::moveSphere(clipPos);
+        nmui_Util::moveSphere(clipPos, graphics);
 
 
 	// These are the points we have specified so far in the polyline
@@ -2673,12 +2675,13 @@ int doFeelFromGrid(int whichUser, int userEvent)
 	}     
 
 	/* Find the x,y location of hand in grid space */
-        nmui_Util::clipPosition(whichUser, clipPos);
+	nmui_Util::getHandInWorld(whichUser, clipPos);
+        nmui_Util::clipPosition(plane, clipPos);
 
 	/* Move the aiming line to the user's hand location */
         //nmui_Util::moveAimLine(clipPos);
         decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
-        nmui_Util::moveSphere(clipPos);
+        nmui_Util::moveSphere(clipPos, graphics);
 
 	switch ( userEvent ) 
 	  {
@@ -2812,16 +2815,18 @@ int doFeelLive(int whichUser, int userEvent)
 	if (!xy_lock) {
 	   if (microscope->state.modify.tool == CONSTR_FREEHAND) {
 	      // Constrained freehand only allows motion along a line
-	      nmui_Util::clipPositionLineConstraint(whichUser, 
+	       nmui_Util::getHandInWorld(whichUser, clipPos);
+	       nmui_Util::clipPositionLineConstraint(plane, 
                        clipPos, microscope->state.modify.stored_points);
 	   } else {
-	      nmui_Util::clipPosition(whichUser, clipPos);
+	       nmui_Util::getHandInWorld(whichUser, clipPos);
+	       nmui_Util::clipPosition(plane, clipPos);
 	   }
 	}
 	/* Move the aiming line to the user's hand location */
         //nmui_Util::moveAimLine(clipPos);
         decoration->aimLine.moveTo(clipPos[0], clipPos[1], plane);
-        nmui_Util::moveSphere(clipPos);
+        nmui_Util::moveSphere(clipPos, graphics);
 
 
 	// if the style is sweep, set up additional icon for sweep width

@@ -3,21 +3,21 @@
 
 #include <stdlib.h>  // for NULL
 
-// Originally from Tcl_Linkvar
-//
-// Abstracted here so we could remove Base's dependance
-// on Tcl.
-//   nmb_String and nmb_ListOfStrings objects contain information
-// which will be changed in the user interface. By putting them
-// in an object with virtual accesssor functions, we can write
-// classes which inherit, which change the user interface and 
-// respond to changes in the user interface.
-// Look at Tcl_Linkvar.[Ch] to see how this is done.
-
 typedef void (nmb_STRING_CALLBACK) (const char * newValue, void * userdata);
 
 #define nmb_STRING_LENGTH 128
 
+/**
+Originally from Tcl_Linkvar
+Abstracted here so we could remove Base's dependance
+on Tcl.
+  nmb_String and nmb_ListOfStrings objects contain information
+which will be changed in the user interface. By putting them
+in an object with virtual accesssor functions, we can write
+classes which inherit, which change the user interface and 
+respond to changes in the user interface.
+Look at Tcl_Linkvar.[Ch] to see how this is done.
+*/
 class nmb_ListOfStrings {
 
   friend class nmb_String;

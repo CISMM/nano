@@ -162,8 +162,8 @@ int PNMImage::readHeader(ifstream &pnm)
 
 bool PNMImage::readASCII(ifstream &pnm)
 {
-   for (int y = 0; y < image->Rows(); y++)
-      for (int x = 0; x < image->Columns(); x++)
+   for (unsigned int y = 0; y < image->Rows(); y++)
+      for (unsigned int x = 0; x < image->Columns(); x++)
          for (int c = 0; c < image->Colors(); c++)
          {
             readUChar(pnm, (image->Pixel(y, x, c)));
@@ -174,7 +174,7 @@ bool PNMImage::readASCII(ifstream &pnm)
 
 bool PNMImage::readRAW(ifstream &pnm)
 {
-   for (int y = 0; y < image->Rows(); y++)
+   for (unsigned int y = 0; y < image->Rows(); y++)
       pnm.read(&(image->Pixel(y)),
                image->Columns()*image->Colors()*sizeof(char));
 
@@ -203,7 +203,7 @@ bool PNMImage::writeRAW(ofstream &pnm)
    pnm << (1 == image->Colors() ? "P5" : "P6") << endl << image->Columns()
        << " " << image->Rows() << endl << 255 << endl;
 
-   for (int y = 0; y < image->Rows(); y++)
+   for (unsigned int y = 0; y < image->Rows(); y++)
       pnm.write(&(image->Pixel(y)),
                 image->Columns()*image->Colors()*sizeof(char));
 

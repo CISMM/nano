@@ -8,12 +8,12 @@
 class Position;
 class Position_list;
 
-/*******************************************************************
+/**
  * class Position
  *    Stores an x-y result and the time the result was taken.
  *    also has next and prev pointers for use in 
  *    Position_list - a linked list of Positions.
- *******************************************************************/
+ */
 class Position
 {
     friend class Position_list;
@@ -28,8 +28,8 @@ protected:
     long _sec;
     long _usec;
 
-    int _icon_id;   //the id of an icon to represent this
-			    // position in the world.
+    int _icon_id;   ///<the id of an icon to represent this
+			    ///< position in the world.
 
     inline Position *next() { return _next; }
     inline Position *prev() { return _prev; }
@@ -49,7 +49,7 @@ public:
       _sec (sec), _usec (usec)
     { }
 
-    // copy constructor. Default probably would have been ok.
+    /// copy constructor. Default probably would have been ok.
     Position (const Position& p) :
       _next (p._next), _prev (p._prev),
       _x (p._x), _y (p._y), 
@@ -68,7 +68,7 @@ public:
 
 };
 
-/*******************************************************************
+/**
  * class Position_list
  *    A list of Positions, which allows addition and deletion at the
  *    current spot, and has start(), next(), done() functions
@@ -78,8 +78,7 @@ public:
  *    for(pos.start(); pos.notDone(); pos.next()) {
  *       // do stuff with pos.currX(), pos.currY() and pos.currTime()
  *    }
- *******************************************************************/
-
+ */
 class Position_list 
 {
 protected:
@@ -125,10 +124,10 @@ public:
 
     inline int empty() { return (_head== NULL); }
     
-    /* change the current item to head or tail */
+    /** change the current item to head or tail */
     inline void goToHead() { _curr = _head; }
     inline void goToTail() { _curr = _tail; }
-    /* insert into list - add a new item after the current one, and the
+    /** insert into list - add a new item after the current one, and the
      * new item becomes current.
      *   good for inserting at end of list. 
      * returns 0 if successful, -1 if fails */
@@ -136,7 +135,7 @@ public:
     int insert(double x, double y);
     int insert(double x, double y, int id);
     int insert(double x, double y, long sec, long usec);
-    /* insert into list - add a new item before the current one, and the
+    /** insert into list - add a new item before the current one, and the
      * new item becomes current.
      *   good for inserting at head of the list. 
      * returns 0 if successful, -1 if fails */
@@ -144,7 +143,7 @@ public:
     int insertPrev(double x, double y);
     int insertPrev(double x, double y, int id);
     int insertPrev(double x, double y, long sec, long usec);
-    /* deletes the current item.
+    /** deletes the current item.
      * returns 0 if successful, -1 if fails */
     int del();
 

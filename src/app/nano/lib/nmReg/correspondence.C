@@ -58,7 +58,7 @@ Correspondence &Correspondence::operator = (const Correspondence &c) {
 int Correspondence::addPoint(corr_point_t &p)
 {
     if (num_points == max_points) return -1;
-    int i;
+    unsigned int i;
     for (i = 0; i < num_spaces; i++){
         pnts[i][num_points] = p;
     }
@@ -68,15 +68,15 @@ int Correspondence::addPoint(corr_point_t &p)
 
 int Correspondence::setPoint(int spaceIdx, int pntIdx, corr_point_t &p)
 {
-    if (pntIdx < 0 || pntIdx >= num_points) return -1;
-    if (spaceIdx < 0 || spaceIdx >= num_spaces) return -1;
+    if (pntIdx < 0 || (unsigned)pntIdx >= num_points) return -1;
+    if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return -1;
     pnts[spaceIdx][pntIdx] = p;
     return 0;
 }
 
 int Correspondence::deletePoint(int pntIdx)
 {
-    int i;
+    unsigned int i;
     num_points--;
     for (i = 0; i < num_spaces; i++)
         pnts[i][pntIdx] = pnts[i][num_points];
@@ -86,8 +86,8 @@ int Correspondence::deletePoint(int pntIdx)
 vrpn_bool Correspondence::findNearestPoint(int spaceIdx, double x, double y,
                 double x_max, double y_max, int *pntIdx)
 {
-    if (spaceIdx < 0 || spaceIdx >= num_spaces) return VRPN_FALSE;
-    int i;
+    if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return VRPN_FALSE;
+    unsigned int i;
     vrpn_bool found_point = VRPN_FALSE;
     float dx, dy, min_distance;
 
@@ -112,8 +112,8 @@ vrpn_bool Correspondence::findNearestPoint(int spaceIdx, double x, double y,
 int Correspondence::getPoint(int spaceIdx, int pntIndex,
         corr_point_t *pnt) const
 {
-    if (pntIndex < 0 || pntIndex >= num_points) return -1;
-    if (spaceIdx < 0 || spaceIdx >= num_spaces) return -1;
+    if (pntIndex < 0 || (unsigned)pntIndex >= num_points) return -1;
+    if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return -1;
     *pnt = pnts[spaceIdx][pntIndex];
     return 0;
 }
@@ -124,12 +124,12 @@ int Correspondence::setValuesFromImage(int spaceIdx, nmb_Image *im)
 {
     // note: points are assumed to be normalized image units with
     // x,y from 0..1
-    if (spaceIdx < 0 || spaceIdx >= num_spaces) return -1;
+    if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return -1;
 
     double x_normalized, y_normalized;
 	double x_pixels, y_pixels;
 	double x_world, y_world;
-    int i;
+    unsigned int i;
     for (i = 0; i < num_points; i++) {
     	x_normalized = pnts[spaceIdx][i].x;	// x is 0..1
     	y_normalized = pnts[spaceIdx][i].y;	// y is 0..1
@@ -150,10 +150,10 @@ int Correspondence::setValuesFromPlane(int spaceIdx, BCPlane *p)
 {
     // note: points are assumed to be normalized image units with 
     // x,y from 0..1
-    if (spaceIdx < 0 || spaceIdx >= num_spaces) return -1;
+    if (spaceIdx < 0 || (unsigned)spaceIdx >= num_spaces) return -1;
 
     double x, y, z;
-    int i;
+    unsigned int i;
     for (i = 0; i < num_points; i++) {
 	x = pnts[spaceIdx][i].x;
 	y = pnts[spaceIdx][i].y;

@@ -36,7 +36,7 @@ static	unsigned long myforeground, mybackground;
 static	double	min_value = 0;			/* Value mapped to black */
 static	double	value_scale = (double)(LEVELS-1)/1.0;	/* Scales input */
 
-#define      NEAR(x0,x1)     (fabs(x0-x1) < 0.001)
+//#define      NEAR(x0,x1)     (fabs(x0-x1) < 0.001)
 /*******************
  * Global variables
  *******************/

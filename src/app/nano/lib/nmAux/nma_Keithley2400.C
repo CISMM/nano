@@ -24,9 +24,10 @@ nma_Keithley2400::nma_Keithley2400(const char *name, vrpn_Connection *c) :
 	d_board_index(0),
 	d_primary_address(24),
 	d_secondary_address(0),
-	d_initialized(0),
 	d_output_on(0),
+	d_initialized(0),
 	d_repeat_curve_active(0),
+	d_display_enable(1), 
 		// Set default values for a normal voltage sweep.
 	d_source(VOLTAGE), 
 	d_compliance(CURRENT),
@@ -37,7 +38,6 @@ nma_Keithley2400::nma_Keithley2400(const char *name, vrpn_Connection *c) :
 	d_sweep_stop((float)1.0),
 	d_sweep_numpoints(21),
 	d_sweep_delay((float)0.01),
-	d_display_enable(1), 
 
 	result_change_list(NULL),
 	error_change_list(NULL)

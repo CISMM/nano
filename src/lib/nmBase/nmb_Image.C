@@ -73,7 +73,7 @@ double nmb_Image::heightWorld() const {
     return sqrt(dx*dx + dy*dy);
 }
 
-/* This function assumes that (i,j) are coordinates for the basis vectors (u,v)
+/** This function assumes that (i,j) are coordinates for the basis vectors (u,v)
    where u = pnt_max_i_min_j - pnt_min_i_min_j
          v = pnt_min_i_max_j - pnt_min_i_min_j
    pnt_max_i_min_j, pnt_min_i_min_j, pnt_min_i_max_j are the world positions of
@@ -96,7 +96,7 @@ void nmb_Image::pixelToWorld(const double i, const double j,
         y = y_min*(1.0-x_frac) + y_max*(x_frac);
 }
 
-/* This function assumes that (i,j) are coordinates for the basis vectors (u,v)
+/** This function assumes that (i,j) are coordinates for the basis vectors (u,v)
    where u = pnt_max_i_min_j - pnt_min_i_min_j
          v = pnt_min_i_max_j - pnt_min_i_min_j
    pnt_max_i_min_j, pnt_min_i_min_j, pnt_min_i_max_j are the world positions of

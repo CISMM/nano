@@ -1231,7 +1231,7 @@ void Microscope::RcvScanlineDataHeader(const float _x, const float _y,
 
     if (state.data.currentScanlineData.num_values() != _num_channels) {
 	fprintf(stderr, "Error: scanline header has wrong number of channels:");
-	fprintf(stderr, "  got %d, expected %d\n", 
+	fprintf(stderr, "  got %ld, expected %d\n", 
 		_num_channels, state.data.currentScanlineData.num_values());
 	return;
     }
@@ -1255,7 +1255,7 @@ void Microscope::RcvScanlineData(const long _point, const long _num_channels,
         const float * _value) {
     if (state.data.currentScanlineData.num_values() != _num_channels) {
         fprintf(stderr, "Error: scanline data has wrong number of channels:");
-        fprintf(stderr, "  got %d, expected %d\n", 
+        fprintf(stderr, "  got %ld, expected %d\n", 
                 _num_channels, state.data.currentScanlineData.num_values());
         return;
     }

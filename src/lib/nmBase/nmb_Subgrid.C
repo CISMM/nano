@@ -35,9 +35,9 @@ nmb_Subgrid::nmb_Subgrid (BCGrid * & _grid) :
 
 
 
-// Determine whether anything in the subgrid has changed
-// (since the last Clear())
-
+/** Determine whether anything in the subgrid has changed
+ (since the last Clear())
+*/
 vrpn_bool nmb_Subgrid::Changed (void) const {
   return ((min_x <= max_x) && (min_y <= max_y));
 }
@@ -55,8 +55,7 @@ float nmb_Subgrid::RatioOfChange (void) const {
 
 
 
-// Mark a single point of the subgrid as changed
-
+/// Mark a single point of the subgrid as changed
 void nmb_Subgrid::AddPoint (const int x, const int y) {
 
   int retval;

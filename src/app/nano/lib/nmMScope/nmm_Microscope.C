@@ -773,9 +773,9 @@ char * nmm_Microscope::encode_SetStdDelay (long * len,
   }
 
   // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): msg type = %d\n", d_SetStdDelay_type);
-  fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): delay = %d\n", delay);
-  fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): Leaving\n");
+//    fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): msg type = %ld\n", d_SetStdDelay_type);
+//    fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): delay = %d\n", delay);
+//    fprintf(stderr, "nmm_Microscope::encode_SetStdDelay(): Leaving\n");
   // NANO END
 
   return msgbuf;
@@ -814,9 +814,9 @@ char * nmm_Microscope::encode_SetStPtDelay (long * len,
   }
 
   // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): msg type = %d\n", d_SetStPtDelay_type);
-  fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): delay = %d\n", delay);
-  fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): Leaving\n");
+//    fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): msg type = %ld\n", d_SetStPtDelay_type);
+//    fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): delay = %d\n", delay);
+//    fprintf(stderr, "nmm_Microscope::encode_SetStPtDelay(): Leaving\n");
   // NANO END
 
   return msgbuf;
@@ -856,9 +856,9 @@ char * nmm_Microscope::encode_SetRelax (long * len,
   }
 
   // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope::encode_SetRelax(): msg type = %d\n", d_SetRelax_type);
-  fprintf(stderr, "nmm_Microscope::encode_SetRelax(): min = %d\t sep = %d\n", min, sep);
-  fprintf(stderr, "nmm_Microscope::encode_SetRelax(): Leaving\n");
+//    fprintf(stderr, "nmm_Microscope::encode_SetRelax(): msg type = %ld\n", d_SetRelax_type);
+//    fprintf(stderr, "nmm_Microscope::encode_SetRelax(): min = %d\t sep = %d\n", min, sep);
+//    fprintf(stderr, "nmm_Microscope::encode_SetRelax(): Leaving\n");
   // NANO END
 
   return msgbuf;
@@ -1243,9 +1243,9 @@ char * nmm_Microscope::encode_SetMaxMove (long * len,
   }
 
   // NANO BEGIN
-  fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): msg type = %d\n", d_SetMaxMove_type);
-  fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): distance = %f\n", distance);
-  fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): Leaving!\n");
+//    fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): msg type = %ld\n", d_SetMaxMove_type);
+//    fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): distance = %f\n", distance);
+//    fprintf(stderr, "nmm_Microscope::encode_SetMaxMove(): Leaving!\n");
   // NANO END
   return msgbuf;
 }

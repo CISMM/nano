@@ -544,8 +544,7 @@ vrpn_int32 Tclvar_int::operator ++ (int) {
 
 // virtual
 void Tclvar_int::SetFromTcl (vrpn_int32 v) {
-  vrpn_int32 retval;
-  retval = (d_myint = v);
+  d_myint = v;
   doCallbacks();
 
 
@@ -737,9 +736,7 @@ vrpn_float64 Tclvar_float::operator = (vrpn_float64 v) {
 
 // virtual
 void Tclvar_float::SetFromTcl (vrpn_float64 v) {
-  vrpn_float64 retval;
-
-  retval = (d_myfloat = v);
+  d_myfloat = v;
 
   doCallbacks();
 }
@@ -1301,7 +1298,7 @@ Tclvar_int_with_entry::Tclvar_int_with_entry(const char *tcl_varname,
 		tcl_widget_name[strlen(parent_name)+1] =
 		  tolower(tcl_widget_name[strlen(parent_name)+1]);
 		// remove spaces - they are bad for widget names.
-		int i;
+		unsigned int i;
 		for (i = 0; i < strlen(tcl_widget_name); i++)
 		   if (tcl_widget_name[i] == ' ')
 		      tcl_widget_name[i] = '_';
@@ -2202,7 +2199,7 @@ Tclvar_checklist_with_entry::~Tclvar_checklist_with_entry (void)
 // and replace all ' ' with '_'
 static void fix_checkbox_name (char * my_checkbox_name) {
 	my_checkbox_name[0] = tolower(my_checkbox_name[0]);
-	for (int i = 0; i < strlen(my_checkbox_name); i++)
+	for (unsigned int i = 0; i < strlen(my_checkbox_name); i++)
 	   if (my_checkbox_name[i] == ' ')
 	      my_checkbox_name[i] = '_';
 }

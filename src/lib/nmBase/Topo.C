@@ -18,8 +18,7 @@ int write( int fildes, const void *buf, size_t nbyte );
 #endif
 #include "Topo.h"
 
-int TopoFile::parseReleaseString( const char *release, vrpn_int32 * verNumber, vrpn_int32 *nOffset)
-/*****************************************************************
+/**
 * Assumes the .release is filled in.  Looks for #Rn.n# OFFSET
 * Fills in .verNumber with n.nn (2.30 = 230, 3.00 = 300, etc)
 * OFFSET is always parsed. This is the fixed offset
@@ -28,7 +27,8 @@ int TopoFile::parseReleaseString( const char *release, vrpn_int32 * verNumber, v
 * v3.01:        offset = 1536 bytes
 * v4.0:         offset = 2112 bytes
 * v5.0:         offset = 3144 bytes
-*****************************************************************/
+*/
+int TopoFile::parseReleaseString( const char *release, vrpn_int32 * verNumber, vrpn_int32 *nOffset)
 {       
     char    rel1[N_RELEASE+1];
     int    ver = 0, ver1 = 0, offset= 0;
@@ -103,8 +103,9 @@ int TopoFile::parseHeader(int in_descriptor){
 	return 1;
 }
 
-// called by ParseHeader(int) and by nmm_MicroscopeRemote when
-// getting header over the network.
+/** called by ParseHeader(int) and by nmm_MicroscopeRemote when
+ getting header over the network.
+*/
 int TopoFile::parseHeader(const char *buf, vrpn_int32 length){
 	const char * temp;
 	vrpn_int32 verNumber, nOffset;
@@ -401,16 +402,17 @@ static double dSwapAdvance (const char * & i) {
 }
 #endif  // 0
 
-// Try to do the minimum of work possible to get the information we
-// need from a Topometrix file header. We read in the header in a
-// chunk, then extract only the info we need. In version 5.00, we do
-// this by casting a structure which matches the structure used by
-// Topo to write out the file. In version 4.0 and previous, we use the
-// byte counts to go to the right spot in the header to get the
-// info. In all cases we need to do a byte swap of the info we
-// retrieve, because SGI/HP/other UNIX boxes have their byte order
-// swapped from that of the PC. (*Swap procedures don't do anything on
-// a PC).
+/** Try to do the minimum of work possible to get the information we
+need from a Topometrix file header. We read in the header in a
+chunk, then extract only the info we need. In version 5.00, we do
+this by casting a structure which matches the structure used by
+Topo to write out the file. In version 4.0 and previous, we use the
+byte counts to go to the right spot in the header to get the
+info. In all cases we need to do a byte swap of the info we
+retrieve, because SGI/HP/other UNIX boxes have their byte order
+swapped from that of the PC. (*Swap procedures don't do anything on
+a PC).
+*/
 int TopoFile::getGridInfoFromHeader (const char * temp) {
     unsigned int i;
 
@@ -560,17 +562,19 @@ int TopoFile::printGridInfoFromHeader()
     return 0;
 }
 
-// gridToTopoData must be called before this function so member
-// variables are set correctly!
-// Put info which may have changed into the Topo file header before we
-// write it out. To find the right spot to put the info, we do two
-// things. In version 5.00, we do this by casting a structure which
-// matches the structure used by Topo to write out the file. In
-// version 4.0 and previous, we use the byte counts to go to the right
-// spot in the header to write the info. In all cases we need to do a
-// byte swap of the info we write, because SGI/HP/other UNIX boxes
-// have their byte order swapped from that of the PC. (*Swap
-// procedures don't do anything on a PC).
+/**
+gridToTopoData must be called before this function so member
+variables are set correctly!
+Put info which may have changed into the Topo file header before we
+write it out. To find the right spot to put the info, we do two
+things. In version 5.00, we do this by casting a structure which
+matches the structure used by Topo to write out the file. In
+version 4.0 and previous, we use the byte counts to go to the right
+spot in the header to write the info. In all cases we need to do a
+byte swap of the info we write, because SGI/HP/other UNIX boxes
+have their byte order swapped from that of the PC. (*Swap
+procedures don't do anything on a PC).
+*/
 int TopoFile::putGridInfoIntoHeader (char * temp) {
     //    unsigned int i;
 
@@ -948,13 +952,13 @@ static int send (int handle, vrpn_float64 d) {
 }
 */
 
-
-// Header is written out in a lump binary object by
-// code in topo/topofile.c.
-// The format is defined as struct DOCUMENTINFO in topo/document.h,
-// so this code must parse the exact physical layout of that struct.
-// August 99, TCH.
-
+/**
+Header is written out in a lump binary object by
+code in topo/topofile.c.
+The format is defined as struct DOCUMENTINFO in topo/document.h,
+so this code must parse the exact physical layout of that struct.
+August 99, TCH.
+*/
 int TopoFile::writeHeader(int handle){
 
   // Write a topo file of the same version as we read in, 
@@ -1358,7 +1362,9 @@ int TopoFile::imageToTopoData(nmb_Image *I) {
                         (long)iWorldUnitType, szWorldUnit);
                 return(-1);
         }
-
+        // Satisfy compiler
+        data_type = data_type;
+        
         /*
          * Fill in the parameters we can before seeing the data
          */
@@ -1483,6 +1489,8 @@ int TopoFile::gridToTopoData(BCGrid* G, BCPlane *P){
                         (long)iWorldUnitType, szWorldUnit);
                 return(-1);
         }
+        // Satisfy compiler
+        data_type = data_type;
 
         /*
          * Fill in the parameters we can before seeing the data
@@ -1609,6 +1617,8 @@ int TopoFile::gridToTopoData(BCGrid* G){
                         (long)iWorldUnitType, szWorldUnit);
                 return(-1);
         }
+        // Satisfy compiler
+        data_type = data_type;
 
         /*
          * Fill in the parameters we can before seeing the data
@@ -1664,11 +1674,13 @@ int TopoFile::gridToTopoData(BCGrid* G){
 	return(0);
 }
 
-// suppose we read in some other file format and we want to output the grid
-// as a topo file but since we didn't read in a topo file we don't have a
-// TopoFile initialized correctly to allow us to fill it in with the data
-// and write it out - this function does the necessary initialization so that
-// you can load any data loaded into BCGrid into spmlab
+/**
+suppose we read in some other file format and we want to output the grid
+as a topo file but since we didn't read in a topo file we don't have a
+TopoFile initialized correctly to allow us to fill it in with the data
+and write it out - this function does the necessary initialization so that
+you can load any data loaded into BCGrid into spmlab
+*/
 int TopoFile::initForConversionToTopo(double z_scale_nm, double z_offset_nm) {
     if (header) {
 	fprintf(stderr, "Error: TopoFile::initForConversionToTopo "

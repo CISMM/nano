@@ -12,24 +12,30 @@
 #include <nmg_Graphics.h>
 
 // static
-int nmui_Util::clipPosition (int user, q_vec_type & position) {
-  BCPlane * plane = dataset->inputGrid->getPlaneByName
-                           (dataset->heightPlaneName->string());
+int nmui_Util::getHandInWorld (int user, q_vec_type & position) {
   v_xform_type worldFromHand;
-
-  if (!plane) {
-    fprintf(stderr, "Error in nmui_Util::clipPosition:  "
-                    "Couldn't get height plane.\n");
-    return -1;
-  }
-
   v_get_world_from_hand(user, &worldFromHand);
   q_vec_copy(position, worldFromHand.xlate);
+  return 0;
+}
+
+// static
+int nmui_Util::clipPosition (BCPlane * plane, q_vec_type & position) {
+  if (!plane) {
+    fprintf(stderr, "Error in nmui_Util::clipPosition:  "
+                    "No input plane.\n");
+    return -1;
+  }
 
   if (position[0] < plane->minX()) position[0] = plane->minX();
   if (position[0] > plane->maxX()) position[0] = plane->maxX();
   if (position[1] < plane->minY()) position[1] = plane->minY();
   if (position[1] > plane->maxY()) position[1] = plane->maxY();
+
+  //We want the position we return to be in real-world units (nanometers),
+  // not the world coords of vlib. So we must take into account
+  // the arbitrary scale applied to the Z coord by the plane.
+  position[2] = position[2]/plane->scale();
 
   return 0;
 }
@@ -38,24 +44,24 @@ int nmui_Util::clipPosition (int user, q_vec_type & position) {
 // position_list.
 
 // static
-int nmui_Util::clipPositionLineConstraint (int user, q_vec_type & position, Position_list & p) {
-  BCPlane * plane = dataset->inputGrid->getPlaneByName
-                           (dataset->heightPlaneName->string());
-  v_xform_type worldFromHand;
-
+int nmui_Util::clipPositionLineConstraint (BCPlane * plane, 
+					   q_vec_type & position, 
+					   Position_list & p) {
   if (!plane) {
-    fprintf(stderr, "Error in nmui_Util::clipPosition:  "
-                    "Couldn't get height plane.\n");
+    fprintf(stderr, "Error in nmui_Util::clipPositionLineConstraint:  "
+                    "No input plane.\n");
     return -1;
   }
-
-  v_get_world_from_hand(user, &worldFromHand);
-  q_vec_copy(position, worldFromHand.xlate);
 
   if (position[0] < plane->minX()) position[0] = plane->minX();
   if (position[0] > plane->maxX()) position[0] = plane->maxX();
   if (position[1] < plane->minY()) position[1] = plane->minY();
   if (position[1] > plane->maxY()) position[1] = plane->maxY();
+
+  //We want the position we return to be in real-world units (nanometers),
+  // not the world coords of vlib. So we must take into account
+  // the arbitrary scale applied to the Z coord by the plane.
+  position[2] = position[2]/plane->scale();
 
   // position now holds the user's real hand position. We want to
   // constrain it to a line defined by the two points stored in the
@@ -90,9 +96,8 @@ int nmui_Util::clipPositionLineConstraint (int user, q_vec_type & position, Posi
 }
 
 // static
-int nmui_Util::moveAimLine (q_vec_type position) {
-  BCPlane * plane = dataset->inputGrid->getPlaneByName
-                           (dataset->heightPlaneName->string());
+int nmui_Util::moveAimLine (BCPlane * plane, q_vec_type position, 
+			    nmg_Graphics * graphics) {
   PointType Top, Bot;
 
   Top[0] = Bot[0] = position[0];
@@ -106,7 +111,7 @@ int nmui_Util::moveAimLine (q_vec_type position) {
 }
 
 // static
-int nmui_Util::moveSphere (q_vec_type position) {
+int nmui_Util::moveSphere (q_vec_type position, nmg_Graphics * graphics) {
 
   graphics->positionSphere(position[0], position[1], position[2]);
 

@@ -4,7 +4,7 @@
 # for widgets that change behavior of image mode
 #
  
-set image [create_closing_toplevel image]
+set image [create_closing_toplevel image "Image Parameters"]
 
 frame $image.mode 
 frame $image.modeparam 
@@ -99,7 +99,7 @@ trace variable newimagep_rate    w imBackgChReal
 #setup Image box
 #
 pack $image.mode $image.modeparam $image.style $image.styleparam $image.tool \
-	$image.toolparam -side left -padx 3m -fill both
+	$image.toolparam -side left -padx 4 -fill both
 
 #setup Image mode box
 label $image.mode.label -text "Image Mode" 
@@ -115,20 +115,25 @@ pack $image.mode.cancel $image.mode.accept -side bottom -fill x
 label $image.modeparam.label -text "Mode parameters" 
 pack $image.modeparam.label -side top -anchor nw 
 
-floatscale $image.modeparam.setpoint 0 100 101 1 1 newimagep_setpoint \
-	"Set Point" 
-floatscale $image.modeparam.p-gain 0 5 51 1 1 newimagep_p_gain "P-Gain" 
-floatscale $image.modeparam.i-gain 0 2 21 1 1 newimagep_i_gain "I-Gain" 
-floatscale $image.modeparam.d-gain 0 5 51 1 1 newimagep_d_gain "D-Gain" 
-floatscale $image.modeparam.amplitude 0 1 101 1 1 newimagep_amplitude \
-	"Amplitude" 
-floatscale $image.modeparam.rate 0.1 50.0 100 1 1 newimagep_rate "Rate (uM/sec)" 
+generic_entry $image.modeparam.setpoint newimagep_setpoint \
+	"Set Point (0,100)" real 
+generic_entry $image.modeparam.p-gain newimagep_p_gain "P-Gain (0,5)" real 
+generic_entry $image.modeparam.i-gain newimagep_i_gain "I-Gain (0,5)" real 
+generic_entry $image.modeparam.d-gain newimagep_d_gain "D-Gain (0,5)" real 
+generic_entry $image.modeparam.amplitude newimagep_amplitude \
+	"Amplitude (0,2)" real 
+generic_entry $image.modeparam.rate newimagep_rate "Rate (1,50 uM/sec)" real 
 
 pack    $image.modeparam.setpoint  $image.modeparam.p-gain \
 	$image.modeparam.i-gain $image.modeparam.d-gain \
         $image.modeparam.rate \
 	-side top -fill x -pady $fspady
 
+iwidgets::Labeledwidget::alignlabels \
+    $image.modeparam.setpoint  $image.modeparam.p-gain \
+	$image.modeparam.i-gain $image.modeparam.d-gain \
+	$image.modeparam.amplitude $image.modeparam.rate 
+	
 if {$newimagep_mode==0} {
   pack $image.modeparam.amplitude  -side top -fill x -pady $fspady
 }
@@ -178,7 +183,7 @@ proc flip_im_mode {im_mode element op} {
 
     if {$k==0} {
         # selected oscillating
-	# 6 is magic number - number of floatscales to leave alone + 1
+	# 6 is magic number - number of widgets to leave alone + 1
 	set plist [lrange [pack slaves $image.modeparam] 6 end] 
 	foreach widg $plist {pack forget $widg} 
 	foreach widg $im_oscillating_list {pack $widg -side top -fill x -pady $fspady}

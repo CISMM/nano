@@ -113,9 +113,9 @@ class BCGrid
                    BCPlane * source, BCPlane * dest,
                    int destNumX, int destNumY,
                    int maskNumX, int maskNumY, double ** mask);
-      // decimates a subset of <source> into the region [minx, maxx] x
-      // [miny, maxy] of <dest>, which is <destNumX> x <destNumY> in size,
-      // using <mask>
+    /**< decimates a subset of <source> into the region [minx, maxx] x
+       [miny, maxy] of <dest>, which is <destNumX> x <destNumY> in size,
+       using <mask> */
 
     void doMinMaxCallbacks (void);
 
@@ -145,16 +145,16 @@ class BCGrid
     int readAsciiRHKFile(TopoFile &TGF, FILE* file, const char *name);
 
     int readNanoscopeFileWithoutHeader(FILE* file, const char *name);
-      // readNanoscopeFile.C
+    ///< readNanoscopeFile.C
     int readBinaryNanoscopeFile(FILE* file, const char *name);
-      // readNanoscopeFile.C 
+      ///< readNanoscopeFile.C 
     int readAsciiNanoscopeFile(FILE *file, const char *name);
-      // readNanoscopeFile.C
+      ///< readNanoscopeFile.C
     int parseNanoscopeFileHeader(FILE* file);
-      // defined in readNanoscopeFile.C
+      ///< defined in readNanoscopeFile.C
 
     int readTopometrixFile(TopoFile& TF, const char *name);
-      // in Topo.C
+      ///< in Topo.C
 
     int readComment(FILE *file, char *buffer, double* max_value);
     int readPPMorPGMFile(FILE* file, const char *name);
@@ -179,7 +179,7 @@ class BCGrid
     double _input_1_max;
     double _input_2_max;
    
-    int _modified; // true if _min_x, _max_x, _min_y, or _max_y have been altered
+    int _modified; ///< true if _min_x, _max_x, _min_y, or _max_y have been altered
 
     static int _read_mode;
 

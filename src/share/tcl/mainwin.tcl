@@ -1,7 +1,6 @@
 #!/bin/sh
 # the next line restarts using wishx (see man wish) \
-	exec wish "$0" "$@"
-#	exec ${PXFL_TOOLS_HOME:?}/bin/wishx "$0" "$@"
+	exec wish "$0" ${1+"$@"}
 # This is a tcl/tk script to create the user interface to the
 # Nanomanipulator system.  
 # It sets up:
@@ -43,8 +42,8 @@ option add *highlightBackground LemonChiffon1 startupFile
 option add *menu*background grey startupFile
 
 # This needs to be made dependent on how big the font is on the screen.
-catch { option add *font {helvetica -15 }}
-catch { option add *Font {helvetica -15 }}
+catch { option add *font {helvetica -15 } startupFile}
+catch { option add *Font {helvetica -15 } startupFile}
 
 #global knobs
 #global  user_0_mode
@@ -61,7 +60,7 @@ if {[catch {set tcl_script_dir $env(NM_TCL_DIR) }] } {
 
 #appearance variables
     # vertical padding between floatscales - image and modify windows
-set fspady 5
+set fspady 3
 
 # List of the available planes of data. Should be set from C.
 set inputPlaneNames {none }
@@ -166,6 +165,8 @@ $tipcontrolmenu add command -label "Image Params..." \
 	-command "show.image"
 $tipcontrolmenu add command -label "Modify Params..." \
 	-command "show.modify"
+$tipcontrolmenu add command -label "Modify Live Controls..." \
+	-command "show.modify_live"
 
 
 #### ANALYSIS menu #############################
@@ -191,7 +192,7 @@ $analysismenu add command -label "Data Registration..." \
 #### TOOLS menu #############################
 set toolmenu .menu.tool
 menu $toolmenu -tearoff 0
-.menu add cascade -label "Tools" -menu $toolmenu -underline 0
+.menu add cascade -label "Tools" -menu $toolmenu -underline 1
         
 $toolmenu add command -label "Navigate" \
     -command "show.nav_win"
@@ -218,11 +219,11 @@ $toolmenu add command -label "Latency Adaptation" \
 
 
 #### HELP menu #############################
-set helpmenu .menu.help
-menu $helpmenu -tearoff 0
-.menu add cascade -label "Help" -menu $helpmenu -underline 0
-        $helpmenu add command -label "Help..." -command \
-		{.message_dialog activate}
+#set helpmenu .menu.help
+#menu $helpmenu -tearoff 0
+#.menu add cascade -label "Help" -menu $helpmenu -underline 0
+#        $helpmenu add command -label "Help..." -command \
+#		{.message_dialog activate}
 
 # This command attaches the menu to the main window
 # and allows you to use "alt-KEY" to access the menus. 
@@ -275,7 +276,7 @@ pack $w2.toolbar.detail $w2.toolbar.speed_detail1 $w2.toolbar.speed_detail2 \
 button $w2.toolbar.phantom_reset -text "Reset Phantom" -command "set reset_phantom 1"
 radiobutton $w2.toolbar.demotouch -text "Touch Surface" \
 	-variable user_0_mode -value 11 
-pack $w2.toolbar.phantom_reset $w2.toolbar.demotouch -side left -padx 10
+pack $w2.toolbar.phantom_reset $w2.toolbar.demotouch -side left -padx 5
 
 #File menu commands
 source [file join ${tcl_script_dir} filemenu.tcl]
@@ -339,15 +340,15 @@ after idle {
 
     scan [wm geometry .] %dx%d+%d+%d width height main_xpos main_ypos
     # wm rootx seems to tell us how big the border of the window is.
-    set width [expr $width + 2* ([winfo rootx .] - $main_xpos) ]
-    set height [expr $height + ([winfo rooty .] - $main_ypos) + \
+    set main_width [expr $width + 2* ([winfo rootx .] - $main_xpos) ]
+    set main_height [expr $height + ([winfo rooty .] - $main_ypos) + \
 	   ([winfo rootx .] - $main_xpos) ]
     puts " mainwin $width $height $main_xpos $main_ypos [wm geometry .]"
 
     set toolbar_req_width  [winfo reqwidth .toolbar] 
     set toolbar_req_height [winfo reqheight .toolbar] 
 
-    wm geometry .toolbar +${main_xpos}+[expr $main_ypos +$height]
+    wm geometry .toolbar +${main_xpos}+[expr $main_ypos +$main_height]
 
     # The stripchart window.
     #Make the window appear on the top next to the main window
@@ -391,6 +392,10 @@ after idle {
     }
 
     wm geometry .sharedptr ${toolbar_req_width}x${req_height}+${main_xpos}+$my_ypos
+
+    # Make the modify live window appear at the same position as the toolbar
+    wm geometry .modify_live +${main_xpos}+[expr $main_ypos +$main_height + 20]
+
 }
 
 

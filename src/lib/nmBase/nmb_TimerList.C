@@ -177,17 +177,17 @@ void nmb_TimerList::report (void) {
 
   timeval meantime;
 
-  printf("Total elapsed time:  %d sec %d usec.\n",
+  printf("Total elapsed time:  %ld sec %ld usec.\n",
           d_totalTimeComplete.tv_sec, d_totalTimeComplete.tv_usec);
   printf("Total timestamps taken:  %d.\n",
           d_totalTimestampsComplete);
 
   meantime = vrpn_TimevalScale (d_totalTimeComplete,
                                 1.0 / d_totalTimestampsComplete);
-  printf("Mean elapsed time per timestamp:  %d sec %d usec.\n",
+  printf("Mean elapsed time per timestamp:  %ld sec %ld usec.\n",
           meantime.tv_sec, meantime.tv_usec);
 
-  printf("Total elapsed active time:  %d sec %d usec.\n",
+  printf("Total elapsed active time:  %ld sec %ld usec.\n",
           d_totalActiveTimeComplete.tv_sec, d_totalActiveTimeComplete.tv_usec);
   printf("Total active timestamps taken:  %d.\n",
           d_totalActiveTimestampsComplete);
@@ -195,11 +195,11 @@ void nmb_TimerList::report (void) {
   if (d_totalActiveTimestampsComplete > 0) {
     meantime = vrpn_TimevalScale (d_totalActiveTimeComplete,
                                   1.0 / d_totalActiveTimestampsComplete);
-    printf("Mean elapsed time per active timestamp:  %d sec %d usec.\n",
+    printf("Mean elapsed time per active timestamp:  %ld sec %ld usec.\n",
            meantime.tv_sec, meantime.tv_usec);
   }
 
-  printf("Total elapsed blocked time:  %d sec %d usec.\n",
+  printf("Total elapsed blocked time:  %ld sec %ld usec.\n",
           d_totalBlockedTimeComplete.tv_sec,
           d_totalBlockedTimeComplete.tv_usec);
   printf("Total blocked timestamps taken:  %d.\n",
@@ -208,7 +208,7 @@ void nmb_TimerList::report (void) {
   if (d_totalBlockedTimestampsComplete > 0) {
     meantime = vrpn_TimevalScale (d_totalBlockedTimeComplete,
                                   1.0 / d_totalBlockedTimestampsComplete);
-    printf("Mean elapsed time per blocked timestamp:  %d sec %d usec.\n",
+    printf("Mean elapsed time per blocked timestamp:  %ld sec %ld usec.\n",
            meantime.tv_sec, meantime.tv_usec);
   }
 }

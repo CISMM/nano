@@ -2712,7 +2712,7 @@ int nmm_Microscope_Remote::handle_ScanDataset (void * userdata,
 
   ms->decode_ScanDatasetHeader(&param.buffer, &numDatasets);
 // NANO BEGIN 	Tiger
-  fprintf(stderr, "nmm_Microscope_Remote::handle_ScanDataset(): numDatasets = %ld\n", numDatasets);
+  fprintf(stderr, "nmm_Microscope_Remote::handle_ScanDataset(): numDatasets = %d\n", numDatasets);
   ms->RcvClearScanChannels();
 // NANO END
   for (i = 0; i < numDatasets; i++) {
@@ -2747,7 +2747,7 @@ int nmm_Microscope_Remote::handle_PointDataset (void * userdata,
 
   ms->decode_PointDatasetHeader(&param.buffer, &numDatasets);
 // NANO BEGIN	Tiger
-  fprintf(stderr, "nmm_Microscope_Remote::handle_PointDataset(): numPointsets = %ld\n", numDatasets);
+  fprintf(stderr, "nmm_Microscope_Remote::handle_PointDataset(): numPointsets = %d\n", numDatasets);
   ms->RcvClearPointChannels();
 // NANO END
   for (i = 0; i < numDatasets; i++) {
@@ -3169,27 +3169,27 @@ void nmm_Microscope_Remote::RcvForceSettings (const float _min, const float _max
 void nmm_Microscope_Remote::RcvVoltsourceEnabled (const long _voltNum,
                                        const float _voltage) {
   // DO NOTHING
-  printf("Volt source %d has been enabled with %g voltage\n",
+  printf("Volt source %ld has been enabled with %g voltage\n",
          _voltNum, _voltage);
 }
 
 void nmm_Microscope_Remote::RcvVoltsourceDisabled (const long _voltNum) {
   // DO NOTHING
-  printf("Volt source %d has been disabled\n", _voltNum);
+  printf("Volt source %ld has been disabled\n", _voltNum);
 }
 
 void nmm_Microscope_Remote::RcvAmpEnabled (const long _ampNum, const float _offset,
                                 const float _percentOffset,
                                 const long _gainMode) {
   // DO NOTHING
-  printf("Amplifier %d has been enabled with offset %g, percent "
-         "offset %g, and gain mode %d\n", _ampNum, _offset, _percentOffset,
+  printf("Amplifier %ld has been enabled with offset %g, percent "
+         "offset %g, and gain mode %ld\n", _ampNum, _offset, _percentOffset,
          _gainMode);
 }
 
 void nmm_Microscope_Remote::RcvAmpDisabled (const long _ampNum) {
   // DO NOTHING
-  printf("Amplifier %d has been disabled\n", _ampNum);
+  printf("Amplifier %ld has been disabled\n", _ampNum);
 }
 
  
@@ -3197,7 +3197,7 @@ void nmm_Microscope_Remote::RcvStartingToRelax (const long _sec, const long _use
   state.relaxComp = state.doRelaxComp;
   if (state.doRelaxComp) {
     d_relax_comp.start_fix(_sec, _usec, state.lastZ);
-    printf("Beginning relaxation compensation at %d:%d\n", _sec, _usec);
+    printf("Beginning relaxation compensation at %ld:%ld\n", _sec, _usec);
   }
 
   if (state.doDriftComp)
@@ -3343,10 +3343,10 @@ void nmm_Microscope_Remote::RcvImgSet (const long _modifyEnable, const float _ma
 void nmm_Microscope_Remote::RcvRelaxSet (const long _min, const long _sep) {
   state.stmRxTmin = _min;
   d_relax_comp.set_ignore_time_ms(_min);
-  printf("Relax ignore time set at %d\n", _min);
+  printf("Relax ignore time set at %ld\n", _min);
   state.stmRxTsep = _min;
   d_relax_comp.set_separation_time_ms(_sep);
-  printf("Relax separation time set at %d\n", _sep);
+  printf("Relax separation time set at %ld\n", _sep);
 }
 
 void nmm_Microscope_Remote::RcvForceSet (const float _force) {
@@ -3381,7 +3381,7 @@ void nmm_Microscope_Remote::RcvPulseParameters (const long _pulseEnabled,
 void nmm_Microscope_Remote::RcvStdDevParameters (const long _samples, const float _freq) {
   state.modify.std_dev_samples = _samples;
   state.modify.std_dev_frequency = _freq;
-  printf("Num samples/point = %d, Frequency = %g\n", _samples, _freq);
+  printf("Num samples/point = %ld, Frequency = %g\n", _samples, _freq);
 }
 
 
@@ -3457,7 +3457,8 @@ void nmm_Microscope_Remote::RcvResultData (const long _type,
   d_bluntResult.normal[Z] = 1.0;  // invalidate it (?)
 
   if (spm_verbosity >= 1) {
-    printf("nmm_Microscope_Remote::RcvResultData: Point result, type %d at (%g, %g), time %d:%d\n",
+    printf("nmm_Microscope_Remote::RcvResultData: Point result,"
+	   " type %ld at (%g, %g), time %ld:%ld\n",
            _type, _x, _y, _sec, _usec);
     printf("  Raw values:");
     for (i = 0; i < _fieldCount; i++)
@@ -3694,14 +3695,14 @@ void nmm_Microscope_Remote::RcvSetRegionC (const long /* _type */,
 
 void nmm_Microscope_Remote::RcvResistanceFailure (const long _meter) {
   // DO NOTHING
-  fprintf(stderr, "Error reading resistance on meter %d\n", _meter);
+  fprintf(stderr, "Error reading resistance on meter %ld\n", _meter);
 }
 
 void nmm_Microscope_Remote::RcvResistance (const long _meter, const long /* _sec */,
                                 const long /* _usec */,
                                 const float _resistance) {
   // DO NOTHING
-  printf("Resistance on meter %d is %f\n", _meter, _resistance);
+  printf("Resistance on meter %ld is %f\n", _meter, _resistance);
 
 }
 
@@ -3709,7 +3710,7 @@ void nmm_Microscope_Remote::RcvResistance2(const long _chan, const long /* _sec 
 				const long /* _usec */, const float _res,
 				const float _volt, const float _range,
 				const float _filt) {
-  printf("Ohmmeter: ch %d, %f mV, range: >%f ohms, filt: %f sec\n",
+  printf("Ohmmeter: ch %ld, %f mV, range: >%f ohms, filt: %f sec\n",
 	_chan, _volt, _range,_filt);
   printf("   measurement: %f ohms\n", _res);
 }
@@ -3737,7 +3738,7 @@ void nmm_Microscope_Remote::RcvHelloMessage (const char * _magic, const char * _
     d_dataset->done = VRPN_TRUE;
     return;
   }
-  printf("Hello from microscope %s, version %d.%d\n", _name, _majorVersion,
+  printf("Hello from microscope %s, version %ld.%ld\n", _name, _majorVersion,
          _minorVersion);
 }
 
@@ -3750,7 +3751,7 @@ void nmm_Microscope_Remote::RcvClientHello (const char * _magic, const char * _n
     d_dataset->done = VRPN_TRUE;
     return;
   }
-  printf("Streamfile written by %s, version %d.%d\n", _name, _majorVersion,
+  printf("Streamfile written by %s, version %ld.%ld\n", _name, _majorVersion,
          _minorVersion);
 
 }
@@ -3812,7 +3813,7 @@ void nmm_Microscope_Remote::RcvClearPointChannels (void) {
 void nmm_Microscope_Remote::RcvPointDataset (const char * _name, const char * _units,
                                   const long _numSamples,
                                   const float _offset, const float _scale) {
-  printf("  %s (%s), count:  %d, offset:  %g, scale:  %g\n",
+  printf("  %s (%s), count:  %ld, offset:  %g, scale:  %g\n",
          _name, _units, _numSamples, _offset, _scale);
   // HACK HACK HACK
   if (state.data.point_channels->Add_channel((char *) _name, (char *) _units,
@@ -3859,7 +3860,7 @@ void nmm_Microscope_Remote::RcvScanrateParameter (const float _rate) {
 }
 
 int nmm_Microscope_Remote::RcvReportGridSize (const long _x, const long _y) {
-  printf("Grid size from scanner:  %dx%d\n", _x, _y);
+  printf("Grid size from scanner:  %ldx%ld\n", _x, _y);
   if ((_x != d_dataset->inputGrid->numX()) ||
       (_y != d_dataset->inputGrid->numY())) {
     fprintf(stderr, "Does not match command line grid size!\n");
@@ -3881,10 +3882,10 @@ void nmm_Microscope_Remote::RcvTopoFileHeader (const long _length, const char *h
   printf("********** RCV'D TOPO FILE HEADER **********\n");
   // DO NOTHING
   if(_length < 1536){
-	printf("Unexpected Header length %d need 1536\n",_length);
+	printf("Unexpected Header length %ld need 1536\n",_length);
   }else{
 	GTF.parseHeader(header,_length);
-  	printf("********** Got Topometrix file header, length %d\n", _length);
+  	printf("********** Got Topometrix file header, length %ld\n", _length);
 /*	handle=fopen("temp.tfr","w");
 	if(handle == NULL){printf("ERROR WRITING TEMP.TFR");}
 	fHdl=fileno(handle);
@@ -3901,7 +3902,7 @@ void nmm_Microscope_Remote::RcvForceCurveData(float _x, float _y,
   long i,j;
   Point_results pnt;
   if (spm_verbosity >= 1) {
-    printf("Force Curve result, at (%g, %g), time %d:%d\n", _x,_y,_sec,_usec);
+    printf("Force Curve result, at (%g, %g), time %ld:%ld\n", _x,_y,_sec,_usec);
     printf("  values:");
     for (i = 0; i < _num_points; i++){
       printf("z=%f:\t", _z_values[i]);
@@ -4006,7 +4007,7 @@ void nmm_Microscope_Remote::RcvScanlineDataHeader(const float _x,
 
     if (state.data.currentScanlineData.num_values() != _num_channels) {
         fprintf(stderr, "Error: scanline header has wrong number of channels:");
-        fprintf(stderr, "  got %d, expected %d\n",
+        fprintf(stderr, "  got %ld, expected %d\n",
                 _num_channels, state.data.currentScanlineData.num_values());
         return;
     }
@@ -4042,7 +4043,7 @@ void nmm_Microscope_Remote::RcvScanlineData(const long _point,
 	const long _num_channels, const float * _value) {
     if (state.data.currentScanlineData.num_values() != _num_channels) {
         fprintf(stderr, "Error: scanline data has wrong number of channels:");
-        fprintf(stderr, "  got %d, expected %d\n",
+        fprintf(stderr, "  got %ld, expected %d\n",
                 _num_channels, state.data.currentScanlineData.num_values());
         return;
     }

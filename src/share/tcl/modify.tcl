@@ -1,7 +1,7 @@
 #
 # for widgets that change behavior of modify mode
 #
-set modify [create_closing_toplevel modify]
+set modify [create_closing_toplevel modify "Modify parameters"]
 
 frame $modify.mode 
 frame $modify.modeparam 
@@ -247,7 +247,7 @@ trace variable newmodifyp_max_lat_setpoint w modBackgChReal
 #
 pack $modify.mode $modify.modeparam $modify.style $modify.styleparam \
     $modify.tool $modify.toolparam $modify.control $modify.controlparam \
-    -side left -padx 2m -fill both
+    -side left -padx 4 -fill both
 
 #setup Modify mode box
 label $modify.mode.label -text "Modify Mode" 
@@ -272,15 +272,20 @@ pack $modify.mode.cancel $modify.mode.accept -side bottom -fill x
 label $modify.modeparam.label -text "Mode parameters" 
 pack $modify.modeparam.label -side top -anchor nw
 
-floatscale $modify.modeparam.setpoint -70 70 141 1 1 newmodifyp_setpoint \
-	"Setpoint" 
-floatscale $modify.modeparam.p-gain 0 5 51 1 1 newmodifyp_p_gain "P-Gain" 
-floatscale $modify.modeparam.i-gain 0 2 21 1 1 newmodifyp_i_gain "I-Gain" 
-floatscale $modify.modeparam.d-gain 0 5 51 1 1 newmodifyp_d_gain "D-Gain" 
-floatscale $modify.modeparam.rate 0.1 50.0 101 1 1 newmodifyp_rate "Rate (uM/sec)" 
-floatscale $modify.modeparam.amplitude 0 1 101 1 1 newmodifyp_amplitude \
-	"Amplitude" 
+generic_entry $modify.modeparam.setpoint newmodifyp_setpoint \
+	"Setpoint(-70 70)" real
+generic_entry $modify.modeparam.p-gain newmodifyp_p_gain "P-Gain (0,5)" real 
+generic_entry $modify.modeparam.i-gain newmodifyp_i_gain "I-Gain (0,2)" real 
+generic_entry $modify.modeparam.d-gain newmodifyp_d_gain "D-Gain (0,5)" real 
+generic_entry $modify.modeparam.rate newmodifyp_rate "Rate (0.1,50.0 uM/sec)" real 
+generic_entry $modify.modeparam.amplitude newmodifyp_amplitude \
+	"Amplitude (0,1)" real 
 
+iwidgets::Labeledwidget::alignlabels \
+    $modify.modeparam.setpoint $modify.modeparam.p-gain \
+    $modify.modeparam.i-gain $modify.modeparam.d-gain \
+    $modify.modeparam.rate \
+    $modify.modeparam.amplitude 
 
 pack    $modify.modeparam.setpoint $modify.modeparam.p-gain \
 	$modify.modeparam.i-gain $modify.modeparam.d-gain \
@@ -312,61 +317,51 @@ pack $modify.style.sharp $modify.style.sweep $modify.style.sewing \
 label $modify.styleparam.label -text "Style parameters" 
 pack $modify.styleparam.label -side top -anchor nw
 
-#floatscale $modify.styleparam.tri-size 0.5 5 101 1 1 \
-#	newmodifyp_tri_size "Tri Size" 
-#floatscale $modify.styleparam.tri-speed 1000 10000 101 1 1 \
-#	newmodifyp_tri_speed "Tri Speed" 
+#generic_entry $modify.styleparam.tri-size newmodifyp_tri_size "Tri Size" real 
+#generic_entry $modify.styleparam.tri-speed newmodifyp_tri_speed "Tri Speed" real 
 
-floatscale $modify.styleparam.sweepwidth 0 1000 101 1 1 newmodifyp_sweep_width\
-	"Sweep Width (nm)" 
+generic_entry $modify.styleparam.sweepwidth newmodifyp_sweep_width\
+	"Sweep Width (0,1000 nm)" real 
 checkbutton $modify.styleparam.sweeplock -text "Sweep Lock" \
 	-variable sweep_lock_pressed 
 
-floatscale $modify.styleparam.bot-delay 0 10 101 1 1 newmodifyp_bot_delay \
-	"Bottom Delay" 
-floatscale $modify.styleparam.top-delay 0 10 101 1 1 newmodifyp_top_delay \
-	"Top Delay" 
-floatscale $modify.styleparam.z-pull 10 1000 491 1 1 newmodifyp_z_pull \
-	"Pullout Height" 
-floatscale $modify.styleparam.punchdist 0 100 50 1 1 newmodifyp_punchdist \
-	"Punch Dist." 
-floatscale $modify.styleparam.speed 0 1000 491 1 1 newmodifyp_speed \
-	"Speed" 
-floatscale $modify.styleparam.watchdog 50 500 101 1 1 newmodifyp_watchdog \
-	"Watchdog Dist." 
+generic_entry $modify.styleparam.bot-delay newmodifyp_bot_delay \
+	"Bottom Delay (0,10)" real 
+generic_entry $modify.styleparam.top-delay newmodifyp_top_delay \
+	"Top Delay (0,10)" real 
+generic_entry $modify.styleparam.z-pull newmodifyp_z_pull \
+	"Pullout Height (10,1000 nm)" real 
+generic_entry $modify.styleparam.punchdist newmodifyp_punchdist \
+	"Punch Dist. (0,100 nm)" real 
+generic_entry $modify.styleparam.speed newmodifyp_speed \
+	"Speed (0,1000)" real 
+generic_entry $modify.styleparam.watchdog newmodifyp_watchdog \
+	"Watchdog Dist. (50,500 nm)" real 
 
-#floatscale $modify.styleparam.start-delay 0 200 201 1 1 newmodifyp_start_delay \
-#	"Start Delay (us)" 
-floatscale $modify.styleparam.z-start -1000 1000 1002 1 1 newmodifyp_z_start \
-	"Start Height (nm)" 
-floatscale $modify.styleparam.z-end -1000 1000 1002 1 1 newmodifyp_z_end \
-	"End Height (nm)" 
-floatscale $modify.styleparam.z-pullback -1000 0 500 1 1 newmodifyp_z_pullback \
-	"Pullout Height (nm)" 
-floatscale $modify.styleparam.force-limit 0 1000 491 1 1 newmodifyp_force_limit\
-	 "Force limit (nA)" 
-floatscale $modify.styleparam.forcecurvedist 0 500 100 1 1 newmodifyp_fcdist \
-	"F.C. Dist. (nm)" 
-floatscale $modify.styleparam.num-layers 1 100 100 1 1 newmodifyp_num_layers \
-	"# samples" 
-floatscale $modify.styleparam.num-halfcycles 1 4 4 1 1 newmodifyp_num_hcycles \
-	"# half cycles" 
-floatscale $modify.styleparam.sample-speed 0 10 1000 1 1 \
-	newmodifyp_sample_speed "sample speed (um/s)" 
-floatscale $modify.styleparam.pullback-speed 0 100 1000 1 1 \
-	newmodifyp_pullback_speed "pullback speed (um/s)" 
-floatscale $modify.styleparam.start-speed 0 10 1000 1 1 \
-	newmodifyp_start_speed "start speed (um/s)" 
-floatscale $modify.styleparam.fdback-speed 0 100 1000 1 1 \
-	newmodifyp_feedback_speed "feedback speed (um/s)" 
-floatscale $modify.styleparam.avg-num 1 10 10 1 1 \
-	newmodifyp_avg_num "averaging" 
-#floatscale $modify.styleparam.sample-delay 0 1000 1000 1 1 \
-#	newmodifyp_sample_delay "sample delay (us)" 
-#floatscale $modify.styleparam.pullback-delay 0 1000 1000 1 1 \
-#	newmodifyp_pullback_delay "pullback delay (us)" 
-#floatscale $modify.styleparam.feedback-delay 0 1000 1000 1 1 \
-#	newmodifyp_feedback_delay "feedback delay (us)" 
+#generic_entry $modify.styleparam.start-delay newmodifyp_start_delay \
+#	"Start Delay (0,200 us)" real 
+generic_entry $modify.styleparam.z-start newmodifyp_z_start \
+	"Start Height (-1000,1000 nm)" real 
+generic_entry $modify.styleparam.z-end newmodifyp_z_end \
+	"End Height (-1000,1000 nm)" real 
+generic_entry $modify.styleparam.z-pullback newmodifyp_z_pullback \
+	"Pullout Height (-1000,0 nm)" real 
+generic_entry $modify.styleparam.force-limit newmodifyp_force_limit\
+	 "Force limit (0,1000 nA)" real 
+generic_entry $modify.styleparam.forcecurvedist newmodifyp_fcdist \
+	"F.C. Dist. (0,500 nm)" real 
+generic_entry $modify.styleparam.num-layers newmodifyp_num_layers \
+	"# samples (1,100)" real 
+generic_entry $modify.styleparam.num-halfcycles newmodifyp_num_hcycles \
+	"# half cycles (1,4)" real 
+generic_entry $modify.styleparam.sample-speed newmodifyp_sample_speed "sample speed (0,10 um/s)" real 
+generic_entry $modify.styleparam.pullback-speed	newmodifyp_pullback_speed "pullback speed (0,100 um/s)" real 
+generic_entry $modify.styleparam.start-speed newmodifyp_start_speed "start speed (0,10 um/s)" real 
+generic_entry $modify.styleparam.fdback-speed newmodifyp_feedback_speed "feedback speed (0,100 um/s)" real 
+generic_entry $modify.styleparam.avg-num newmodifyp_avg_num "averaging (1,10)" real 
+#generic_entry $modify.styleparam.sample-delay newmodifyp_sample_delay "sample delay (0,1000 us)" real 
+#generic_entry $modify.styleparam.pullback-delay newmodifyp_pullback_delay "pullback delay (0,1000 us)" real 
+#generic_entry $modify.styleparam.feedback-delay newmodifyp_feedback_delay "feedback delay (0,1000 us)" real 
 
 #set mod_blunt_list "$modify.styleparam.tri-size $modify.styleparam.tri-speed"
 set mod_sweep_list "$modify.styleparam.sweepwidth $modify.styleparam.sweeplock"
@@ -374,6 +369,7 @@ set mod_sewing_list "$modify.styleparam.bot-delay \
 	$modify.styleparam.top-delay $modify.styleparam.z-pull \
         $modify.styleparam.punchdist $modify.styleparam.speed \
 	$modify.styleparam.watchdog"
+eval [concat iwidgets::Labeledwidget::alignlabels $mod_sewing_list]
 set mod_forcecurve_list " \
 	$modify.styleparam.z-start $modify.styleparam.z-end \
 	$modify.styleparam.z-pullback $modify.styleparam.force-limit \
@@ -385,6 +381,7 @@ set mod_forcecurve_list " \
 #	$modify.styleparam.start-delay \
 #	$modify.styleparam.sample-delay \
 #	$modify.styleparam.pullback-delay $modify.styleparam.feedback-delay"
+eval [concat iwidgets::Labeledwidget::alignlabels $mod_forcecurve_list]
 
 #setup Modify tool box
 label $modify.tool.label -text "Tool" 
@@ -404,46 +401,10 @@ pack $modify.tool.freehand $modify.tool.line $modify.tool.constrfree \
 label $modify.toolparam.label -text "Tool parameters" 
 pack $modify.toolparam.label -side top -anchor nw
 
-floatscale $modify.toolparam.step-size 0 5 51 1 1 newmodifyp_step_size \
-	"Step Size" 
-set slow_line_playing 0
-button $modify.toolparam.slow_line_play -text "Play" -command {
-    if {$slow_line_playing} {
-	set slow_line_playing 0
-    } else {
-	set slow_line_playing 1
-    }
-}
-
-# Trace the variable and change the name of the button. Why a trace?
-#Because this way the C code can set the variable and the button will
-#display the right name.
-proc config_play_name {name elem op} {
-    global slow_line_playing modify
-    if {$slow_line_playing} {
-	$modify.toolparam.slow_line_play configure -text "Pause"
-    } else {
-	$modify.toolparam.slow_line_play configure -text "Play"
-    }
-}
-trace variable slow_line_playing w config_play_name
-
-button $modify.toolparam.slow_line_step -text "Step" -command {
-    set slow_line_step 1
-  }
-
-set slow_line_direction 0
-radiobutton $modify.toolparam.slow_line_forward -text "Forward" \
-	-variable slow_line_direction -value 0 
-radiobutton $modify.toolparam.slow_line_reverse -text "Reverse" \
-	-variable slow_line_direction -value 1 
-
+generic_entry $modify.toolparam.step-size newmodifyp_step_size \
+	"Step Size (0,5 nm)" real 
 set mod_line_list  "$modify.toolparam.step-size"
-set mod_slow_line_list "$modify.toolparam.step-size \
-	$modify.toolparam.slow_line_play \
-	$modify.toolparam.slow_line_step \
-	$modify.toolparam.slow_line_forward \
-	$modify.toolparam.slow_line_reverse"
+set mod_slow_line_list "$modify.toolparam.step-size"
 
 #setup Modify control box
 label $modify.control.label -text "Control" 
@@ -458,19 +419,19 @@ pack $modify.control.feedback $modify.control.directz -side top -fill x
 label $modify.controlparam.label -text "Control parameters" 
 pack $modify.controlparam.label -side top -anchor nw
 
-floatscale $modify.controlparam.max_z_step 0 5 51 1 1 newmodifyp_max_z_step \
-	"max_z_step" 
-floatscale $modify.controlparam.max_xy_step 0 5 51 1 1 newmodifyp_max_xy_step \
-	"max_xy_step" 
-floatscale $modify.controlparam.min_z_setpoint -70 70 101 1 1 newmodifyp_min_z_setpoint \
-	"min_z_setpoint" 
-floatscale $modify.controlparam.max_z_setpoint 0 70 51 1 1 newmodifyp_max_z_setpoint \
-	"max_z_setpoint" 
-floatscale $modify.controlparam.max_lat_setpoint 0 70 51 1 1 newmodifyp_max_lat_setpoint \
-	"max_lat_setpoint" 
+generic_entry $modify.controlparam.max_z_step newmodifyp_max_z_step \
+	"max_z_step (0,5 nm)" real 
+generic_entry $modify.controlparam.max_xy_step newmodifyp_max_xy_step \
+	"max_xy_step (0,5 nm)" real 
+generic_entry $modify.controlparam.min_z_setpoint newmodifyp_min_z_setpoint \
+	"min_z_setpoint (-70,70 nA)" real 
+generic_entry $modify.controlparam.max_z_setpoint newmodifyp_max_z_setpoint \
+	"max_z_setpoint (0,70 nA)" real 
+generic_entry $modify.controlparam.max_lat_setpoint newmodifyp_max_lat_setpoint \
+	"max_lat_setpoint (0,70 nA)" real 
 
 set mod_directz_list  "$modify.controlparam.max_z_step $modify.controlparam.max_xy_step $modify.controlparam.min_z_setpoint $modify.controlparam.max_z_setpoint $modify.controlparam.max_lat_setpoint"
-
+eval [concat iwidgets::Labeledwidget::alignlabels $mod_directz_list]
 
 #
 #
@@ -490,7 +451,7 @@ proc flip_mod_mode {mod_mode element op} {
 
     if {$k==0} {
         # selected oscillating
-	# Magic number 6 = number of floatscales to leave alone + 1
+	# Magic number 6 = number of widgets to leave alone + 1
 	set plist [lrange [pack slaves $modify.modeparam] 6 end] 
 	foreach widg $plist {pack forget $widg} 
 	foreach widg $mod_oscillating_list {pack $widg -side top -fill x -pady $fspady}
@@ -641,4 +602,74 @@ proc cancelModifyVars {varlist} {
     $modify.mode.accept configure -background $fc
     $modify.mode.cancel configure -background $fc
 }
+
+
+
+#
+#
+######################
+# LIVE Modify controls
+# Controls you need access to _during_ a modification.
+# The most important - slow line controls
+#
+set modify_live [create_closing_toplevel modify_live "Live modify controls"]
+iwidgets::Labeledframe $modify_live.slow_line -labeltext "Slow Line" \
+	-labelpos nw
+set nmInfo(ml_slow_line) [$modify_live.slow_line childsite]
+pack $modify_live.slow_line -fill both -expand yes
+
+set slow_line_playing 0
+button $nmInfo(ml_slow_line).slow_line_play -text "Play" -command {
+    if {$slow_line_playing} {
+	set slow_line_playing 0
+    } else {
+	set slow_line_playing 1
+    }
+}
+
+# Trace the variable and change the name of the button. Why a trace?
+#Because this way the C code can set the variable and the button will
+#display the right name.
+proc config_play_name {name elem op} {
+    global slow_line_playing nmInfo
+    if {$slow_line_playing} {
+	$nmInfo(ml_slow_line).slow_line_play configure -text "Pause"
+    } else {
+	$nmInfo(ml_slow_line).slow_line_play configure -text "Play"
+    }
+}
+trace variable slow_line_playing w config_play_name
+
+button $nmInfo(ml_slow_line).slow_line_step -text "Step" -command {
+    set slow_line_step 1
+  }
+
+set slow_line_direction 0
+radiobutton $nmInfo(ml_slow_line).slow_line_forward -text "Forward" \
+	-variable slow_line_direction -value 0 
+radiobutton $nmInfo(ml_slow_line).slow_line_reverse -text "Reverse" \
+	-variable slow_line_direction -value 1 
+
+generic_entry $nmInfo(ml_slow_line).step-size newmodifyp_step_size \
+	"Step Size (0,5 nm)" real 
+
+pack $nmInfo(ml_slow_line).slow_line_play \
+	$nmInfo(ml_slow_line).slow_line_step \
+	$nmInfo(ml_slow_line).slow_line_forward \
+	$nmInfo(ml_slow_line).slow_line_reverse \
+	$nmInfo(ml_slow_line).step-size \
+	-side top -pady 2 -anchor nw
+
+iwidgets::Labeledframe $modify_live.directz -labeltext "Direct Z" \
+	-labelpos nw
+set nmInfo(ml_directz) [$modify_live.directz childsite]
+pack $modify_live.directz -fill both -expand yes
+
+generic_entry $nmInfo(ml_directz).directz_force_scale directz_force_scale\
+	"Force scale (0,3)" real
+
+pack $nmInfo(ml_directz).directz_force_scale -side top -pady 2 -anchor nw
+
+
+
 

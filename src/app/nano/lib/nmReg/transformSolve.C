@@ -291,8 +291,8 @@ int transformSolver(double *xform_matrix, double *error,
 			0.0,     0.0, 0.0, 1.0};
     double pre_xform_matrix[16];
     double xform_matrix_sol[16];
-    double sinA = sin(angle);
-    double cosA = cos(angle);
+//      double sinA = sin(angle);
+//      double cosA = cos(angle);
     q_type quat;
 
     if (scale_ratio_x_to_y == 0){

@@ -1,5 +1,4 @@
-/***************************************************************************
-                                filter.C
+/** /file filter.C
 
         This file describes the functions that are needed to derive
  a new data set from an old one by passing it through one of the unix filter
@@ -11,7 +10,7 @@
  data set later.  This will allow another processor on the SGI to go off and
  do the filtering while the program goes on.  It would also allow multiple
  filters to run at once.
- ***************************************************************************/
+*/
 
 #include <math.h>
 #include <stdlib.h>
@@ -51,11 +50,12 @@ int sdi_noint_block_write( SOCKET, char[], int );
 
 // eliminate "unused function" warning in cygwin.
 #if (!defined(_WIN32) || defined(__CYGWIN))
-// Write the data set name, units, size and X and Y dimension, and width and
-// length for the 
-// plane that is passed in, into the file descriptor that is passed in.
-// Return 0 on success, -1 on failure.
 
+/** Write the data set name, units, size and X and Y dimension, and width and
+ length for the 
+ plane that is passed in, into the file descriptor that is passed in.
+ @return 0 on success, -1 on failure.
+*/
 static	int	filter_write(const char *newset_name, BCPlane *plane, int fd)
 {
 	char	header[500];
@@ -116,11 +116,11 @@ static	int	filter_write(const char *newset_name, BCPlane *plane, int fd)
 	return 0;
 }
 
-// Read the data set name, units, size and values for the plane whose name is
-// read in from the file descriptor that is passed in.
-// Make a plane with the new values in inputGrid if all goes well.
-// Return 0 on success, -1 on failure.
-
+/** Read the data set name, units, size and values for the plane whose name is
+read in from the file descriptor that is passed in.
+Make a plane with the new values in inputGrid if all goes well.
+@return 0 on success, -1 on failure.
+*/
 static	int	filter_read (int fd, BCGrid * grid)
 {
 	FILE	*infile;		// stream to attach to descriptor
@@ -214,18 +214,18 @@ fprintf(stderr,"filter_read(): read %s, %s, numX=%d, numY=%d\n", planeName, plan
 }
 #endif // cygwin unused function fix.
 
-
-// Run the given plane through the given filter with the given arguments.
-// If all goes well, put the dataset into a plane with the given name.
-// Return 0 on success and -1 on failure.
-
-int     filter_plane(const char * filtername,	// Full path name
-                     BCPlane * oldset,		// Plane to filter
-                     const char * newset_name,	// Where to put it
-                     double scale,		// Scale of the filter
-                     double angle,		// Angle of filter
-                     const char * otherargs,	// Other arguments (or "")
-                     BCGrid * grid)		// Grid to put it in
+/**
+ Run the given plane through the given filter with the given arguments.
+ If all goes well, put the dataset into a plane with the given name.
+ @return 0 on success and -1 on failure.
+*/
+int     filter_plane(const char * filtername,	///< Full path name
+                     BCPlane * oldset,		///< Plane to filter
+                     const char * newset_name,	///< Where to put it
+                     double scale,		///< Scale of the filter
+                     double angle,		///< Angle of filter
+                     const char * otherargs,	///< Other arguments (or "")
+                     BCGrid * grid)		///< Grid to put it in
 {
 
 #if (!defined(_WIN32) || defined(__CYGWIN))

@@ -12,10 +12,11 @@ const double DEFAULT_MAX_ATTAINABLE_VALUE = 10;
 #include "BCGrid.h"
 
 
-// Callback to say that one or more of the values in the plane have changed.
-// If x and y are >=0, then it is a single point.  If they are both -1, then
-// all points may have changed (or the scale changed or something).
 const	int	MAX_PLANE_CALLBACKS = 32;
+/** Callback to say that one or more of the values in the plane have changed.
+ If x and y are >=0, then it is a single point.  If they are both -1, then
+ all points may have changed (or the scale changed or something).
+*/
 typedef	void	(*Plane_Valuecall)(BCPlane *plane, int x,int y, void *userdata);
 
 class BCPlane
@@ -40,7 +41,7 @@ class BCPlane
 	return (int) (254 * (_value[x * _num_y + y] - minAttainableValue()) /
 		      (maxAttainableValue() - minAttainableValue()));
     }
-      // Only valid for files, not streams or live devices
+      ///< Only valid for files, not streams or live devices
 
     double minValue();
     double maxValue();
@@ -56,7 +57,7 @@ class BCPlane
 
     double minAttainableValue (void) const;
     double maxAttainableValue (void) const;
-      // Only valid for files, not streams or live devices
+      ///< Only valid for files, not streams or live devices
 
     inline void setMinAttainableValue(double v) { _min_attainable_value = v; }
     inline void setMaxAttainableValue(double v) { _max_attainable_value = v; }
@@ -111,34 +112,34 @@ class BCPlane
 	return scale * scaledValue(x,y);
     }
 
-    // Register and remove callbacks to be called when a value in the Plane
-    // changes.  Return 0 on success and -1 on failure.
+    /** Register and remove callbacks to be called when a value in the Plane
+	changes.  Return 0 on success and -1 on failure. */
     int add_callback(Plane_Valuecall cb, void *userdata);
     int remove_callback(Plane_Valuecall cb, void *userdata);
 
     friend ostream& operator << (ostream& os, BCPlane* plane);
     friend ostream& operator << (ostream& os, BCGrid* grid); // in BCGrid.C
     BCPlane(BCPlane* plane);
-      // NOT a copy constructor!  Creates a new plane of the same size,
-      // but does not fill in data values.
+    /**< NOT a copy constructor!  Creates a new plane of the same size,
+       but does not fill in data values. */
     BCPlane(BCPlane* plane, int newX, int newY);
-      // NOT a copy constructor!  Creates a new, smaller plane,
-      // but does not fill in data values.
+    /**< NOT a copy constructor!  Creates a new, smaller plane,
+       but does not fill in data values.*/
     BCPlane(BCString name, BCString units, int nx, int ny);
     virtual ~BCPlane (void);
 	
 
-    // We need to expose this to an IBR object.  Shouldn't be needed for
-    // any dissimilar purpose.
+    /// We need to expose this to an IBR object.  Shouldn't be needed for
+    /// any dissimilar purpose.
     const float * flatValueArray (void) const
       { return _value; }
 
-  protected: // accessible by subclasses of BCPlane and their friends
+  protected: 
 
     virtual void computeMinMax (void);
-      // Puts the identical portions of minValue() and maxValue()
-      // in one place where they can be overridden by smarter subclasses
-      // (like CTimedPlane)
+    /** Puts the identical portions of minValue() and maxValue()
+       in one place where they can be overridden by smarter subclasses
+       (like CTimedPlane) */
 
     int readTextFile(FILE* file);
     int writeTextFile(FILE* file);
@@ -175,16 +176,16 @@ class BCPlane
 		double Depth, double zoff, double maxCut, int increment,
 		int checkskip);
 
-    BCGrid * _grid; 	// the instance of BCGrid to which this belongs
-    int _timed;		// true if space for secs and usecs has been allocated
-    BCString _dataset;	// a name for the values stored in _value
-    BCString _units;	// units of the values stores in _value
+    BCGrid * _grid; 	///< the instance of BCGrid to which this belongs
+    int _timed;		///< true if space for secs and usecs has been allocated
+    BCString _dataset;	///< a name for the values stored in _value
+    BCString _units;	///< units of the values stores in _value
     double _min_value, _max_value;	
     double _min_nonzero_value, _max_nonzero_value;	
     double _min_attainable_value;
     double _max_attainable_value;
     double _scale;		
-    BCPlane * _next;	// the next BCPlane in the list maintained by _grid
+    BCPlane * _next;	///< the next BCPlane in the list maintained by _grid
 
     float * _value;
     int _num_x, _num_y;
@@ -192,15 +193,15 @@ class BCPlane
     long** _sec;
     long** _usec;
 
-    int _modified;	// true if _value has been changed
-    int _modified_nz;	// true if _value has been changed
+    int _modified;	///< true if _value has been changed
+    int _modified_nz;	///< true if _value has been changed
     int _image_mode;
 
     struct {
-	Plane_Valuecall callback;	// Callback function to call
-	void		*userdata;	// Value to pass as userdata
+	Plane_Valuecall callback;	///< Callback function to call
+	void		*userdata;	///< Value to pass as userdata
     } _callbacks[MAX_PLANE_CALLBACKS];
-    int _numcallbacks;          // How many callbacks are registered?
+    int _numcallbacks;          ///< How many callbacks are registered?
     int lookup_callback(Plane_Valuecall cb, void *userdata);
 };
 

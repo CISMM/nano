@@ -501,7 +501,9 @@ nmg_Graphics_RenderClient_Implementation
   if (cMode == SUPERSAMPLED_COLORS) {
     g_PRERENDERED_TEXTURE = 1;
   }
-  if (cMode == VERTEX_DEPTH) {
+  // This used to be cMode, but it caused a warning, and I think
+  // it should be dMode
+  if (dMode == VERTEX_DEPTH) {
     g_PRERENDERED_DEPTH = 1;
   }
   g_prerendered_grid = d_renderingGrid;

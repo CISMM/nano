@@ -3,13 +3,13 @@
 nmm_Microscope_SEM_Remote::nmm_Microscope_SEM_Remote
     (const char * name, vrpn_Connection *cn):
     nmm_Microscope_SEM (name, cn?cn:vrpn_get_connection_by_name(name)),
-    d_messageHandlerList(NULL),
     d_resolutionX(0), d_resolutionY(0),
     d_pixelIntegrationTime_nsec(0), 
     d_interpixelDelayTime_nsec(0),
     d_startX(0), d_startY(0), d_dX(0), d_dY(0),
     d_lineLength(0), d_numFields(0), d_numLines(0),
-    d_data(NULL), d_uint8_data(NULL)
+    d_data(NULL), d_uint8_data(NULL),
+    d_messageHandlerList(NULL)
 {
   if (d_connection == NULL){
     fprintf(stderr, "nmm_Microscope_SEM_Remote: No connection\n");

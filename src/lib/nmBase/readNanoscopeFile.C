@@ -55,13 +55,6 @@ int	strncasecmp(const char *s1, const char *s2, size_t n)
 #endif
 
 
-/******************************************************************************\
-@readNanoscopeFileWithoutHeader
---------------------------------------------------------------------------------
-   description: 
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
 int 
 BCGrid::readNanoscopeFileWithoutHeader(FILE* file, const char *filename)
 {
@@ -136,13 +129,6 @@ BCGrid::readNanoscopeFileWithoutHeader(FILE* file, const char *filename)
 } // readNanoscopeFileWithoutHeader
 
 
-/******************************************************************************\
-@readBinaryNanoscopeFile
---------------------------------------------------------------------------------
-   description: 
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
 int 
 BCGrid::readBinaryNanoscopeFile(FILE* file, const char *filename)
 {
@@ -244,13 +230,6 @@ BCGrid::readBinaryNanoscopeFile(FILE* file, const char *filename)
 } // readBinaryNanoscopeFile
 
 
-/******************************************************************************\
-@readAsciiNanoscopeFile
---------------------------------------------------------------------------------
-   description: 
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
 int 
 BCGrid::readAsciiNanoscopeFile(FILE *file, const char *filename)
 {   
@@ -322,15 +301,14 @@ BCGrid::readAsciiNanoscopeFile(FILE *file, const char *filename)
 } // readAsciiNanoscopeFile
 
 	
-/******************************************************************************\
-@parseNanoscopeFileHeader
---------------------------------------------------------------------------------
+/**
+parseNanoscopeFileHeader
    description: This method parses the headers of binary or ascii Nanoscope
                 files. In the process, it ignores information that is not
 		needed (or understood).
         author: Mark Finch
  last modified: 9-9-96 by Russ Taylor
-\******************************************************************************/
+*/
 int
 BCGrid::parseNanoscopeFileHeader(FILE* file)
 {
@@ -525,13 +503,6 @@ BCGrid::parseNanoscopeFileHeader(FILE* file)
 } // parseNanoscopeFileHeader
 
 
-/******************************************************************************\
-@transform
---------------------------------------------------------------------------------
-   description: 
-        author: ?
- last modified: 9-10-95 by Kimberly Passarella Jones
-\******************************************************************************/
 double
 BCGrid::transform(short* datum, int image_mode, double transform_scale)
 {

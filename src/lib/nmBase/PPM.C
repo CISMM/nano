@@ -13,7 +13,7 @@
 #include	<ctype.h>
 #include	"PPM.h"
 
-/*	This routine will read an integer from the file whose descriptor
+/**	This routine will read an integer from the file whose descriptor
  * that is passed to it.  White space before the integer will be skipped.
  * One character past the integer will be read, so it will hopefully be
  * white space that is not needed.
@@ -68,7 +68,7 @@ PPM::PPM (const char *filename)
     PPM((FILE *)infile);
 }
 
-/*	This routine will read a ppm file from the file whose descriptor
+/**	This routine will read a ppm file from the file whose descriptor
  * is passed to it into an internal structure. */
 
 PPM::PPM (FILE * infile)
@@ -229,7 +229,7 @@ int	PPM::read_P6_body(FILE *infile)
 
 	  /* Read one row of values from the file */
 	  if (fread((char*)ppmrow, 1, nx*sizeof(P_COLOR), infile) !=
-	      (signed)(nx*sizeof(P_COLOR))) {
+	      (unsigned)(nx*sizeof(P_COLOR))) {
 		perror("Cannot read line of pixels from ppm file");
 		return -1;
 	  }
@@ -330,7 +330,7 @@ int	PPM::read_P3_body(FILE *infile, int maxc)
 } // End of PPM::read_P3_body()
 
 
-/*	This routine will return the given element from the ppm info
+/**	This routine will return the given element from the ppm info
  * structure.  The red, green, and blue values are filled in.
  *	0 is returned on success and -1 on failure. */
 
@@ -347,7 +347,7 @@ int	PPM::Tellppm(int x,int y, int *red,int *green,int *blue)
 }
 
 
-/*	This routine will set the given element in the ppm info
+/**	This routine will set the given element in the ppm info
  * structure.  The red, green, and blue values are filled in.
  *	0 is returned on success and -1 on failure. */
 
@@ -364,7 +364,7 @@ int	PPM::Putppm(int x,int y, int red,int green,int blue)
 }
 
 
-/*	This routine will return the given element from the ppm info
+/**	This routine will return the given element from the ppm info
  * structure.  The red, green, and blue values are filled in.
  *	This routine takes a float from -1 to 1 in x and y and maps this into
  * the whole range of x and y for the ppm file.

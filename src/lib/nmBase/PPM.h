@@ -1,15 +1,15 @@
 #ifndef	PPM_H
 #define PPM_H
 
-typedef	unsigned char	P_COLOR[3];	/* Red, Green, Blue */
+typedef	unsigned char	P_COLOR[3];	/**< Red, Green, Blue */
 typedef	P_COLOR		*PPMROW;
 
 class	PPM {
     public:
-	int	valid;		// Is this a valid one?
+	int	valid;		///< Is this a valid one?
 
-	int	nx,ny;		// Number of pixels in X and Y
-	PPMROW	*pixels;	// The rows of pixel values
+	int	nx,ny;		///< Number of pixels in X and Y
+	PPMROW	*pixels;	///< The rows of pixel values
 
 	int	Tellppm(int x, int y, int *red, int *green, int *blue);
 	int	Putppm(int x, int y,  int red, int green, int blue);

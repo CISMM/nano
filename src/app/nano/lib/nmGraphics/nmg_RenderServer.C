@@ -330,8 +330,8 @@ nmg_Graphics_RenderServer::nmg_Graphics_RenderServer
     d_pixelBuffer (NULL),
     d_depthBuffer (NULL),
     d_pixelOutputBuffer (NULL),
-    d_pixelOutputBufferSize (-1),
     d_depthOutputBuffer (NULL),
+    d_pixelOutputBufferSize (-1),
     d_depthOutputBufferSize (-1),
     d_screenSizeX (xsize),
     d_screenSizeY (ysize),
@@ -625,10 +625,10 @@ void nmg_Graphics_RenderServer::computeScreenChange
 //gridToScreenX, gridToScreenY);
 //fprintf(stderr, "Original range of change is X [%d - %d] by Y [%d - %d].\n",
 //minx, maxx, miny, maxy);
-  *minx = MAX(0, *minx * gridToScreenX);
-  *maxx = MIN(d_screenSizeX - 1, *maxx * gridToScreenX + 1);
-  *miny = MAX(0, *miny * gridToScreenY);
-  *maxy = MIN(d_screenSizeY - 1, *maxy * gridToScreenY + 1);
+  *minx = (int)(MAX(0, *minx * gridToScreenX));
+  *maxx = (int)(MIN(d_screenSizeX - 1, *maxx * gridToScreenX + 1));
+  *miny = (int)(MAX(0, *miny * gridToScreenY));
+  *maxy = (int)(MIN(d_screenSizeY - 1, *maxy * gridToScreenY + 1));
 }
 
 

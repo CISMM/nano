@@ -352,10 +352,10 @@ int ImageViewer::dirtyWindow(int winID) {
 }
 
 void ImageViewer::mainloop() {
-    int i;
-    ImageViewerWindowEvent ivw_event;
 #ifdef V_GLUT // event processing will be done in glut callbacks
 #else
+    int i;
+    ImageViewerWindowEvent ivw_event;
     for (i = 0; i < num_windows; i++){
 
 	    glXMakeCurrent(dpy[window[i].display_index].x_dpy,

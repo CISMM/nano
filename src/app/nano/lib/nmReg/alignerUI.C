@@ -26,7 +26,7 @@ AlignerUI::AlignerUI(nmg_Graphics *g, nmb_ImageList *im,
 	graphics_display(g)
 {
 
-    char command[256];
+    //char command[256];
     printf("creating the aligner\n");
 
     /* Load the Tcl script that handles main interface window */

@@ -119,8 +119,8 @@ x);
   // rough approximation - use a square (even though we know the
   // mask isn't)
 
-  minx = (x - it->d_gaussianNumX) * ((double) outputPlane->numX() /
-                                     it->numX());
+  minx = (short)((x - it->d_gaussianNumX) * ((double) outputPlane->numX() /
+                                     it->numX()));
   if (minx < 0) {
     minx = 0;
   }
@@ -132,8 +132,8 @@ x);
   if (x != it->numX() - 1) {
     maxx = minx;
   } else {
-    maxx = (x + it->d_gaussianNumX) * ((double) outputPlane->numX() /
-                                       it->numX());
+    maxx = (short) ((x + it->d_gaussianNumX) * ((double) outputPlane->numX() /
+                                       it->numX()));
     if (maxx >= outputPlane->numX()) {
       maxx = outputPlane->numX();
     }

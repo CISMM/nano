@@ -1,12 +1,11 @@
 #include "BCString.h"
 
-/******************************************************************************\
-@BCString() --> constructor
---------------------------------------------------------------------------------
+/**
+BCString() --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString::BCString()
 {
     // cout << "ENTERING BCString()" << endl;
@@ -19,13 +18,12 @@ BCString::BCString()
 }
 
 
-/******************************************************************************\
-@BCString() --> constructor
---------------------------------------------------------------------------------
+/**
+BCString() --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString::BCString(int i)
 {
     // cout << "ENTERING BCString(" << i << ")" << endl;
@@ -42,13 +40,12 @@ BCString::BCString(int i)
 }
 
 
-/******************************************************************************\
-@BCString() --> constructor
---------------------------------------------------------------------------------
+/**
+BCString() --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString::BCString(const char *s)
 {   
     // cout << "ENTERING BCString(" << s << ")" << endl;
@@ -62,13 +59,12 @@ BCString::BCString(const char *s)
 }
 
 
-/******************************************************************************\
-@BCString() --> constructor
---------------------------------------------------------------------------------
+/**
+BCString() --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString::BCString(char c)
 {   
     _length = 1;
@@ -79,13 +75,12 @@ BCString::BCString(char c)
 }
 
 
-/******************************************************************************\
-@BCString() --> constructor
---------------------------------------------------------------------------------
+/**
+BCString() --> constructor
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString::BCString(const BCString& s)
 {   
     // cout << "ENTERING BCString(const BCString& s)" << endl;
@@ -105,13 +100,12 @@ BCString::BCString(const BCString& s)
 }
 
 
-/******************************************************************************\
-@operator =
---------------------------------------------------------------------------------
+/**
+operator =
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString&
 BCString::operator = (const char* s)
 { 
@@ -128,13 +122,12 @@ BCString::operator = (const char* s)
 }
 
 
-/******************************************************************************\
-@operator =
---------------------------------------------------------------------------------
+/**
+operator =
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString&
 BCString::operator = (char c)
 { 
@@ -148,13 +141,12 @@ BCString::operator = (char c)
 }
 
 
-/******************************************************************************\
-@operator =
---------------------------------------------------------------------------------
+/**
+operator =
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString&
 BCString::operator = (const BCString& s)
 {  
@@ -174,13 +166,12 @@ BCString::operator = (const BCString& s)
 }
 
 
-/******************************************************************************\
-@operator +=
---------------------------------------------------------------------------------
+/**
+operator +=
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString&
 BCString::operator += (const char* s)
 { 
@@ -196,13 +187,12 @@ BCString::operator += (const char* s)
 }
 
 
-/******************************************************************************\
-@operator +=
---------------------------------------------------------------------------------
+/**
+operator +=
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString&
 BCString::operator += (char c)
 { 
@@ -218,13 +208,12 @@ BCString::operator += (char c)
 }
 
 
-/******************************************************************************\
-@operator +=
---------------------------------------------------------------------------------
+/**
+operator +=
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString&
 BCString::operator += (const BCString& s)
 {  
@@ -240,13 +229,12 @@ BCString::operator += (const BCString& s)
 }
 
 
-/******************************************************************************\
-@operator +
---------------------------------------------------------------------------------
+/**
+operator +
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 BCString
 operator + (const BCString& s1, const BCString& s2)
 {
@@ -262,13 +250,12 @@ operator + (const BCString& s1, const BCString& s2)
 }
 
 
-/******************************************************************************\
-@operator[]
---------------------------------------------------------------------------------
+/**
+operator[]
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 char&
 BCString::operator[](int index)
 {
@@ -279,13 +266,12 @@ BCString::operator[](int index)
 }
     
 
-/******************************************************************************\
-@operator <<
---------------------------------------------------------------------------------
+/**
+operator <<
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 ostream&
 operator << (ostream& os, const BCString& s)
 {
@@ -296,13 +282,12 @@ operator << (ostream& os, const BCString& s)
 }
 
 
-/******************************************************************************\
-@operator >>
---------------------------------------------------------------------------------
+/**
+operator >>
    description: 
         author: Kimberly Passarella Jones
  last modified: 2-5-95 by Kimberly Passarella Jones
-\******************************************************************************/
+*/
 istream&
 operator >> (istream& is, BCString& s)
 { 

@@ -25,7 +25,7 @@
 #include "Timer.h"
 
 #define min(a,b) ((a)<(b)?(a):(b))
-#define max(a,b) ((a)<(b)?(b):(a))
+#define max(a,b) ((a)>(b)?(a):(b))
 
 #define CHECK(a) if (a == -1) return -1
 
@@ -739,9 +739,9 @@ void nmg_Graphics_Implementation::setAlphaSliderRange (float low, float high) {
 void nmg_Graphics_Implementation::setBumpMapName (const char * name) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setBumpMapName().\n");
 
+#ifdef FLOW
   BCPlane * plane = g_inputGrid->getPlaneByName(name);
 
-#ifdef FLOW
   double value;
   GLubyte c;
   int x, y;
@@ -923,9 +923,8 @@ void nmg_Graphics_Implementation::setCollabMode(int mode)
 void nmg_Graphics_Implementation::setHatchMapName (const char * name) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setHatchMapName().\n");
 
-  BCPlane * plane = g_inputGrid->getPlaneByName(name);
-
 #ifdef FLOW
+  BCPlane * plane = g_inputGrid->getPlaneByName(name);
 
   double value;
   GLubyte c;
@@ -1040,9 +1039,8 @@ void nmg_Graphics_Implementation::setMaxColor (const int c [4]) {
 void nmg_Graphics_Implementation::setPatternMapName (const char * name) {
 //fprintf(stderr, "nmg_Graphics_Implementation::setPatternMapName().\n");
 
-  BCPlane * plane = g_inputGrid->getPlaneByName(name);
-
 #ifdef FLOW
+  BCPlane * plane = g_inputGrid->getPlaneByName(name);
 
   GLubyte c;
   double value;
@@ -1730,8 +1728,10 @@ void nmg_Graphics_Implementation::initializeTextures(void)
 
   sem_data = new GLubyte [g_tex_sem_installed_width * 
 			  g_tex_sem_installed_height];
-  for (l = 0; l < g_tex_sem_installed_width * g_tex_sem_installed_height; l++)
-    sem_data[l] = 1.0;
+  for (l = 0; l < g_tex_sem_installed_width * g_tex_sem_installed_height; l++){
+      // This was sem_data[l] = 1.0, but that caused a warning.
+    sem_data[l] = 255;
+  }
   glBindTexture(GL_TEXTURE_2D, tex_ids[SEM_DATA_TEX_ID]);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, g_tex_sem_installed_width,
 		g_tex_sem_installed_height, 0, GL_LUMINANCE, 

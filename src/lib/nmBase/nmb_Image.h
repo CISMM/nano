@@ -33,10 +33,10 @@ class nmb_ImageBounds {
   public:
 	nmb_ImageBounds();
 	nmb_ImageBounds(double x0,double y0,double x1,double y1);
-	// the MIN/MAX distinction is based on how the pixels in the image
-	// are indexed (e.g.,the corner at the pixel with index (0,0) is
-	// referenced by MIN_X_MIN_Y; particular values are assigned so that
-	// the enum values can be used as indexes for the x,y arrays
+    /// the MIN/MAX distinction is based on how the pixels in the image
+    /// are indexed (e.g.,the corner at the pixel with index (0,0) is
+    /// referenced by MIN_X_MIN_Y; particular values are assigned so that
+    /// the enum values can be used as indexes for the x,y arrays
 	enum ImageBoundPoint {MIN_X_MIN_Y = 0, MIN_X_MAX_Y = 1, 
 				MAX_X_MIN_Y = 2, MAX_X_MAX_Y = 3};
 
@@ -49,14 +49,12 @@ class nmb_ImageBounds {
     double x[4], y[4];
 };
 
-/*
+/**
 	nmb_ImageList provides a way to unite images from different BCGrids
 	into a single list. An nmb_Image base class and container class for
 	BCPlane were added to allow code to work with data structures other
 	than BCPlane more easily
 */
-
-// base class for image
 class nmb_Image {
   public:
 	nmb_Image():is_height_field(VRPN_FALSE)
@@ -66,10 +64,10 @@ class nmb_Image {
 	virtual int height() const = 0;
 	virtual float getValue(int i, int j) const = 0;
 	virtual void setValue(int i, int j, float val) = 0;
-        // min and max of values actually in the image:
+        /// min and max of values actually in the image:
 	virtual float maxValue() const = 0;
 	virtual float minValue() const = 0;
-        // min and max representable values:
+        /// min and max representable values:
 	virtual float minAttainableValue() const = 0;
         virtual float maxAttainableValue() const = 0;
 	virtual int validDataRange(short* o_top, short* o_left, 
@@ -77,11 +75,11 @@ class nmb_Image {
 
 	float getValueInterpolated(double i, double j) const;
 
-	// bounds of image in whatever units the image is in 
-	// (note: this is more general than the current BCGrid interface since
-	//  it allows for rotation of the image coordinate system (in which we
-	//  have image positions in terms of pixel (i,j) coordinates) relative
-	//  to the world coordinate system)
+	/// bounds of image in whatever units the image is in 
+	/// (note: this is more general than the current BCGrid interface since
+	///  it allows for rotation of the image coordinate system (in which we
+	///  have image positions in terms of pixel (i,j) coordinates) relative
+	///  to the world coordinate system)
 	virtual double boundX(nmb_ImageBounds::ImageBoundPoint ibp) const = 0;
 	virtual double boundY(nmb_ImageBounds::ImageBoundPoint ibp) const = 0;
 	virtual void setBoundX(nmb_ImageBounds::ImageBoundPoint ibp, double x) 
@@ -94,12 +92,12 @@ class nmb_Image {
 	double widthWorld() const;
 	double heightWorld() const;
 
-	// convert a position in an image given as a pixel location into a
-	// position in the world coordinate system for the image
+	/// convert a position in an image given as a pixel location into a
+	/// position in the world coordinate system for the image
 	void pixelToWorld(const double i, const double j, 
  		  double &x, double &y) const;
 
-	// WARNING: assumes image axes are orthogonal in the world
+	/// WARNING: assumes image axes are orthogonal in the world
 	void worldToPixel(const double x, const double y,
 			double &i, double &j) const;
 
@@ -110,7 +108,7 @@ class nmb_Image {
 	vrpn_bool isHeightField() const {return is_height_field;}
 	void setHeightField(vrpn_bool flag) {is_height_field = flag;}
 
-	// gives address of an array of unsigned chars
+	/// gives address of an array of unsigned chars
 	virtual vrpn_uint8 *rawDataUnsignedByte() = 0;
 
 	virtual int numExportFormats() = 0;
@@ -122,7 +120,7 @@ class nmb_Image {
 	vrpn_bool is_height_field;
 };
 
-// container class for BCGrid/BCPlane-based images
+/// container class for BCGrid/BCPlane-based images
 class nmb_ImageGrid : public nmb_Image{
   public:
 	nmb_ImageGrid(const char *name, const char *units, short x, short y);
@@ -169,8 +167,8 @@ class nmb_ImageGrid : public nmb_Image{
 	static int writeUNCAFile(FILE *file, nmb_ImageGrid *im);
 
 	BCPlane *plane;
-	BCGrid *grid;  // this is NULL if we are not the allocator of
-			// the grid (important for destructor)
+	BCGrid *grid;  ///< this is NULL if we are not the allocator of
+			///< the grid (important for destructor)
 	BCString units_x;
 	BCString units_y;
         short min_x_set, min_y_set, max_x_set, max_y_set;

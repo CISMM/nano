@@ -8,9 +8,8 @@
 //
 // Tom Hudson, April 1998
 
-//   Tracks status of any indicators (that a microscope sets) that might
-// be displayed directly in the graphics window.
-
+///   Tracks status of any indicators (that a microscope sets) that might
+/// be displayed directly in the graphics window.
 struct nmb_LocationInfo {
   float x, y;
   float bottom, top;
@@ -38,7 +37,7 @@ class nmb_Decoration {
            selectedRegionMaxX, selectedRegionMaxY;
     int selectedRegion_changed;
 
-    // measure lines
+    /// measure lines
     //PointType red_top, red_bot,
               //green_top, green_bot,
               //blue_top, blue_bot;
@@ -51,17 +50,17 @@ class nmb_Decoration {
 
     nmb_Line aimLine;
 
-    // mode of interaction
+    /// mode of interaction
     tipMode mode;
 
-    long elapsedTime;  // seconds
-    int rateOfTime;  // seconds/second, instream_rate or 1 if live
-    int user_mode;  // user_mode[0] from interaction.c
+    long elapsedTime;  ///< seconds
+    int rateOfTime;  ///< seconds/second, instream_rate or 1 if live
+    int user_mode;  ///< user_mode[0] from interaction.c
 
-    // surface modification markers
+    /// surface modification markers
     int num_markers_shown;
 
-    // latency compensation features
+    /// latency compensation features
     float trueTipLocation [3];
     int trueTipLocation_changed;
 
@@ -79,33 +78,29 @@ class nmb_Decoration {
 
     void addScrapeMark (PointType Top, PointType Bottom);
     void addPulseMark (PointType Top, PointType Bottom);
-
-      // Appends a marker to the end of the appropriate list.
-      // Invokes all registered callbacks in undefined order.
-      // If one callback returns nonzero, no further callbacks
-      // will be invoked.
+      ///< Appends a marker to the end of the appropriate list.
+      ///< Invokes all registered callbacks in undefined order.
+      ///< If one callback returns nonzero, no further callbacks
+      ///< will be invoked.
 
     void clearScrapes (void);
     void clearPulses (void);
-
-      // Throws away all scrapes/pulses.
+      ///< Throws away all scrapes/pulses.
 
     void registerNewScrapeCallback (nmb_SURFACE_MARKER_CALLBACK f,
                                     void * userdata);
     void registerNewPulseCallback (nmb_SURFACE_MARKER_CALLBACK f,
                                    void * userdata);
-
-      // Registers callbacks to be invoked by addScrape/PulseMark.
+      ///< Registers callbacks to be invoked by addScrape/PulseMark.
 
     void traverseVisibleScrapes (int (* f) (const nmb_LocationInfo &, void *),
                                  void * userdata);
     void traverseVisiblePulses (int (* f) (const nmb_LocationInfo &, void *),
                                 void * userdata);
-
-      // For each of the <num_markers_shown> most recent scrapes/pulses
-      // <f> will be called with <userdata> as its second argument.
-      // The order in which markers are traversed is undefined.
-      // If <f> returns nonzero, the traversal will terminate.
+      ///< For each of the <num_markers_shown> most recent scrapes/pulses
+      ///< <f> will be called with <userdata> as its second argument.
+      ///< The order in which markers are traversed is undefined.
+      ///< If <f> returns nonzero, the traversal will terminate.
 
   private:
 

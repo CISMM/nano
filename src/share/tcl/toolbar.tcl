@@ -12,7 +12,7 @@ iwidgets::Labeledframe $nmInfo(toolbar).imagestate -labeltext "Image state" \
 	-labelpos nw
 set nmInfo(imagepage) [frame $nmInfo(toolbar).imagepage]
 pack $nmInfo(toolbar).imagestate $nmInfo(toolbar).imagepage -side top \
-	-fill both -expand yes
+	-fill x
 
 
 set nmInfo(imagestate) [$nmInfo(toolbar).imagestate childsite]
@@ -41,7 +41,7 @@ $nmInfo(toolbar).taskchoice insert end "Setup" "Modify" "Analysis"
 $nmInfo(toolbar).taskchoice select "Modify"
 
 set nmInfo(taskbook) [iwidgets::notebook $nmInfo(toolbar).taskbook \
-	-width 180 -height 300]
+	-width 180 -height 350]
 
 ### Setup page
 set nmInfo(setuppage) [$nmInfo(taskbook) add -label "Setup"]
@@ -183,10 +183,6 @@ pack $nmInfo(modifypage).left.num_mod_markers \
 	$nmInfo(modifypage).modmarkclr \
 	-side top -anchor nw
 
-generic_entry $nmInfo(modifypage).left.directz_force_scale directz_force_scale\
-	"Direct Z force scale:" real
-
-pack $nmInfo(modifypage).left.directz_force_scale 
 
 pack $nmInfo(taskbook) -side top -expand yes -fill both
 $nmInfo(taskbook) view Modify
