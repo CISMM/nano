@@ -10220,9 +10220,12 @@ static void find_center_xforms (q_vec_type * lock_userpos,
 	* halfway between the y-axis and the z-axis (to tilt the surface
 	* away from the user). If we are using the joystick, then line
 	* the surface up parallel to the screen by using the Y axis. */
+#ifndef	NO_JOYSTICK_SERVER
        if (joyServer != NULL) {
 	 q_set_vec(pos_y, 0.0, 1.0, 0.0);
-       } else {
+       } else
+#endif
+       {
 	 q_set_vec(pos_y, 0.0, 1.0, 1.0);
        }
        q_xform(left_side_vec, screenz_to_worldz, left_side_vec);
@@ -10246,12 +10249,15 @@ static void find_center_xforms (q_vec_type * lock_userpos,
       // using the joystick, we want the surface to be parallel
       // to the screen.  We also want to translate the surface
       // so that it ends up in the middle of the screen
+#ifndef	NO_JOYSTICK_SERVER
       if (joyServer != NULL) {
 	screen_mid[0] = 0.0;
 	screen_mid[1] = 0.0;
 	screen_mid[2] = -1.8;
 	q_make(*lock_userrot, 0.0, 0.0, 0.0, 1.0);
-      } else {
+      } else
+#endif
+      {
 	// What do these numbers mean??
 	screen_mid[0] = 0.0;
 	screen_mid[1] = 1.0;
@@ -10300,10 +10306,12 @@ void center (void) {
   
   // If we are using the joystick, we want to have the light coming from 45
   // degrees (halfway between the Y and Z axes).
+#ifndef	NO_JOYSTICK_SERVER
   if (joyServer != NULL) {
     q_vec_type  lightdir = {0.0, 1.0, 1.0};
     graphics->setLightDirection(lightdir);
   }
+#endif
 
   v_xform_type lock;
   

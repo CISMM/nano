@@ -1,5 +1,11 @@
 2002-08-15  Russ Taylor  <taylorr@cs.unc.edu>
 
+	* microscape.c : Guarding Joystick stuff with #ifdef.  This is the
+		last of it!
+	* microscape.h : same.
+
+2002-08-15  Russ Taylor  <taylorr@cs.unc.edu>
+
 	* nano.dsp : Defined NO_JOYSTICK_SERVER in Debug code as well.
 
 2002-08-15  Russ Taylor  <taylorr@cs.unc.edu>
