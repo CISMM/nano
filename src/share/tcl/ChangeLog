@@ -1,5 +1,13 @@
+2002-04-04  Aron Helser  <helser@cs.unc.edu>
+
+	* mainwin.tcl: Add a "working" dialog to indicate when nano is
+	performing an operation which may take a while. Used for stream
+	file loading and >20 second jumps in stream files. 
+	* view.tcl: Compressed some spacing in widgets. Prep for possible
+	new controls. 
+
 2002-04-03  David Borland <borland@cs.unc.edu>
-        * import.tcl:  Added ability to close loaded object files
+	* import.tcl:  Added ability to close loaded object files
 
 2002-04-01  Aron Helser  <helser@cs.unc.edu>
 

@@ -138,7 +138,6 @@ proc nano_warning {msg } {
     tk_messageBox -message "$msg" -title "NanoManipulator Warning" \
             -type ok -icon warning 
 }
-
 # bgerror is a special name, provided by tcl/tk, called if there
 # is a background error in the script. Don't necessarily want
 # these to be fatal. 
@@ -147,6 +146,27 @@ proc bgerror {msg} {
 }
 ######################
 
+proc nano_working {} {
+    #tk_dialog .working_dialog "Working" "Working..." info -1
+    if { ![winfo exists .working_dialog] } {
+        # A dialog for nano to display when it is busy. 
+        iwidgets::shell .working_dialog -title "Working" -modality none \
+                -width 100 -height 60 -master .
+        pack [label [.working_dialog childsite].bmp -bitmap hourglass] \
+                [label [.working_dialog childsite].label -text "Working..."] \
+                -side left -fill both -expand yes
+    }
+    .working_dialog center
+    .working_dialog activate
+    #update seems to get window to redraw, rather than update idletasks
+    update
+}
+proc nano_done_working {} {
+    if { [winfo exists .working_dialog] } {
+        .working_dialog deactivate 1
+    }
+     #destroy .working_dialog
+}
 
 # frames - overall layout of the screen
 frame .menubar -relief raised -bd 4 
@@ -460,7 +480,7 @@ if { !$viewer_only } {
 set spm_scanning 1
 # toggle scanning flag. 
 button $w2.toolbar.pause_scan -text "Stop\nScan" \
-	-command { set spm_scanning [expr !$spm_scanning] }
+	-command { set spm_scanning [expr !$spm_scanning] } -pady 1
 
 # keep button label consistent with value of global variable.
 # After all, it may be set from C code. 
@@ -479,7 +499,7 @@ checkbutton $w2.toolbar.autoscan -text "Auto\nRescan" \
 set autoscan 1
 
 button $w2.toolbar.withdraw_tip -text "Withdraw\nTip" \
-        -command "set withdraw_tip 1"
+        -command "set withdraw_tip 1" -pady 1
 pack $w2.toolbar.pause_scan $w2.toolbar.autoscan $w2.toolbar.withdraw_tip -side left -padx 5
 
 # These two button should only be available when reading a DEVICE

@@ -39,15 +39,15 @@ foreach i $magellan_buttons {
     # source file from the iwidgets package - particularly 
     # the use of "place" to display the image.
 
-    set v_image_hwidth [expr [image width view_b$i]/2.0]
+    set v_image_hwidth [expr [image width view_b$i]/2.0 + 0.5]
     # container frame.
     frame $view.b$i 
     # spacer frame.
     frame $view.b$i.s1 -width $v_image_hwidth
     # The frame with a nice border
     frame $view.b$i.bord -relief groove -borderwidth 2
-    # spacer frame
-    frame $view.b$i.bord.s2 -width $v_image_hwidth
+    # spacer frame, more space on interior
+    frame $view.b$i.bord.s2 -width [expr $v_image_hwidth + 2]
     # The content frame 
     set nmInfo(viewb$i) [frame $view.b$i.bord.cont]
 
@@ -75,14 +75,15 @@ foreach i $magellan_buttons {
 
 radiobutton $nmInfo(viewb1).grab -text "Grab/Scale"  -variable user_0_mode \
 	-value 1 -padx 0 -pady 0
-button $nmInfo(viewb5).center -text "Center" -command "set center_pressed 1"
+button $nmInfo(viewb5).center -text "Center" -command "set center_pressed 1" \
+        -padx 5 -pady 2 -highlightthickness 2
 
 frame $nmInfo(viewb2).r1
 frame $nmInfo(viewb2).r2
 radiobutton $nmInfo(viewb2).r1.changelight -text "Position Light" \
-        -variable user_0_mode -value 10  -padx 0 -pady 0
+        -variable user_0_mode -value 10  -padx 1 -pady 0 -highlightthickness 0
 radiobutton $nmInfo(viewb2).r1.measure -text "Measure" \
-    -variable user_0_mode -value 9  -padx 0 -pady 0
+    -variable user_0_mode -value 9  -padx 1 -pady 0 -highlightthickness 0
 radiobutton $nmInfo(viewb6).demotouch -text "Touch Stored" \
 	-variable user_0_mode -value 11  -padx 0 -pady 0
 radiobutton $nmInfo(viewb6).region -text "Magic Lens" -variable user_0_mode \
@@ -95,10 +96,10 @@ radiobutton $nmInfo(viewb2).r2.scaleup -text "Scale"   -variable user_0_mode \
 
 if { !$viewer_only } {
 radiobutton $nmInfo(viewb3).live -text "Touch" \
-	-variable user_0_mode -value 12  -padx 0 -pady 0
+	-variable user_0_mode -value 12  -padx 1 -pady 0 -highlightthickness 0
 
 radiobutton $nmInfo(viewb3).select -text "Scan Area" \
-	-variable user_0_mode -value 4  -padx 0 -pady 0
+	-variable user_0_mode -value 4  -padx 1 -pady 0 -highlightthickness 0
 
 checkbutton $nmInfo(viewb7).xy_lock -text "XY Lock" \
 	-variable xy_lock_pressed -padx 0 -pady 0
@@ -110,11 +111,12 @@ checkbutton $nmInfo(viewb7).z_lock -text "Z Lock" \
 # Commit to an operation, like starting to use modification force, or
 # accepting the new scan region
 button $nmInfo(viewb4).commit -text "Commit!" \
-	-command "set commit_pressed 1"
+	-command "set commit_pressed 1" -padx 5 -pady 2 -highlightthickness 2
 
 # this is for cancelling an operation, instead of committing. (Line tool)
 button $nmInfo(viewb8).cancel -text "Cancel" \
-	-command "set cancel_commit 1"
+	-command "set cancel_commit 1" -padx 5 -pady 2 -highlightthickness 2
+
 }
 grid $view.b1 $view.b2 \
     -sticky nsew -padx 1 -pady 1
@@ -128,15 +130,15 @@ grid $view.b8 -sticky nsew -padx 1 -pady 1 -row 1 -column 3
 
 }
 pack $nmInfo(viewb1).grab -side left
-pack $nmInfo(viewb2).r1 $nmInfo(viewb2).r2 -side left -fill x
+pack $nmInfo(viewb2).r1 $nmInfo(viewb2).r2 -side left -fill x -expand yes
 pack $nmInfo(viewb2).r1.changelight $nmInfo(viewb2).r1.measure -anchor nw
 pack $nmInfo(viewb2).r2.scaleup -anchor nw
 #$nmInfo(viewb2).r2.scaledown 
 if { !$viewer_only } {
 pack $nmInfo(viewb3).live $nmInfo(viewb3).select -anchor nw
-pack $nmInfo(viewb4).commit -side left
+pack $nmInfo(viewb4).commit -side left -fill x -expand yes
 }
-pack $nmInfo(viewb5).center -side left
+pack $nmInfo(viewb5).center -side left -fill x -expand yes
 pack $nmInfo(viewb6).demotouch -side left
 pack $nmInfo(viewb6).region -side left 
 if { !$viewer_only } {
@@ -144,7 +146,7 @@ pack $nmInfo(viewb7).xy_lock -side left
 if { !$thirdtech_ui } {    
 pack $nmInfo(viewb7).z_lock -side left
 }
-pack $nmInfo(viewb8).cancel -side left
+pack $nmInfo(viewb8).cancel -side left -fill x -expand yes
 }
 # Some of these controls are only relevant to live devices
 # They are enabled or disabled in mainwin.tcl based on this list. 
