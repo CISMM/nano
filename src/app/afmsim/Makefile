@@ -5,8 +5,8 @@ ifeq ($(MAKECMDGOALS),afmcntsim)
 endif
 
 #ifeq ($(HW_OS),sgi_irix)
-LATE_INCLUDE_PATH := -I/afs/unc/proj/stm/src/external/glut-3.5/include 
-LATE_LOAD_PATH := -L/afs/unc/proj/stm/src/external/glut-3.5/lib/glut.n32 
+LATE_INCLUDE_PATH := -I/afs/unc/proj/stm/src/external/glut/glut-3.5/include 
+LATE_LOAD_PATH := -L/afs/unc/proj/stm/src/external/glut/glut-3.5/lib/glut.n32 
 #endif
 
 # We're not going to get glui there, but we need to specify SOMETHING

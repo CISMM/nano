@@ -1,4 +1,4 @@
-//#include "surface.h"
+#include "surface.h"
 
 #include <time.h>
 #include <sys/time.h>
@@ -9,7 +9,6 @@
 #include <math.h>
 
 #include <vrpn_Connection.h>
-#include <vrpn_DelayedConnection.h>
 
 #include <BCGrid.h>
 #include <BCPlane.h>
@@ -41,13 +40,11 @@ float waitTime = 0.0f;
 
 void usage (const char * argv0) {
   fprintf(stderr,
-    "Usage:  %s [-image <picture>] [-grid <x> <y>] [-port port] [-latency <t>]\n", argv0);
+    "Usage:  %s [-image <picture>] [-grid <x> <y>] [-port port]\n", argv0);
   fprintf(stderr,
     "    -image:  Use picture specified (otherwise use function).\n");
   fprintf(stderr,
     "    -grid:  Take x by y samples for the grid.\n");
-  fprintf(stderr,
-    "    -latency:  Simulate t seconds of network latency.\n");
   fprintf(stderr,
     "    -port:  Port number for VRPN server to use (default 4500).\n");
   //fprintf(stderr,
@@ -92,12 +89,13 @@ int parse (int argc, char ** argv) {
       if (++i >= argc) usage(argv[0]);
       num_y = atoi(argv[i]);
       get_grid_info(num_x, num_y);
-    } else if (!strcmp(argv[i], "-latency")) {
+      /*    } else if (!strcmp(argv[i], "-latency")) {
       if (++i >= argc) usage(argv[0]);
       isWaiting = vrpn_TRUE;
       waitTime = atof(argv[i]);
   //  } else if (!strcmp(argv[i], "-rude")) {
   //    g_isRude = 1;
+     */
     } else {
       ret = 1;
     }
@@ -353,7 +351,7 @@ int main (int argc, char ** argv) {
           }
       } 
   }
-
+  /*
   if (isWaiting) {
     // Create the connection here before initJake()
     // so it's a DelayedConnection instead
@@ -365,7 +363,7 @@ waitTime);
     delay = vrpn_MsecsTimeval(waitTime);
     connection = new vrpn_DelayedConnection(delay, port);
   }
-
+  */
   retval = initJake(num_x, num_y, port);
   while (!retval) {
     jakeMain(.1, isWaiting, waitTime);

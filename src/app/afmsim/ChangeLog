@@ -1,3 +1,10 @@
+2000-02-15  Kwan Torrich Skinner <skinner@cs.unc.edu>
+	* Makefile : updated LATE_INCLUDE_PATH and LATE_LOAD_PATH vars to
+	reflect glut's new location.
+	* surface.C (main) : removed vrpn_DelayedConnection code.
+	* surface.C (usage) : removed -latency switch usage information.
+	* surface.C (parse) : same.
+
 2000-10-05  Kwan Torrich Skinner <skinner@cs.unc.edu>
 	* nmm_Microscope_Simulator.h (afmFeelToPoint) : updated
 	declaration.
