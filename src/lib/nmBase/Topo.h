@@ -55,7 +55,7 @@ class nmb_Image;
 #define ZDATA_IN3			27		/* IN3 and IN4 are for future expension */
 #define ZDATA_IN4			28
 #define ZDATA_IN5			29
-#define ZDATA_ADC			30		/* ADC channel, can be IN1 or IN2
+#define ZDATA_ADC			30		/* ADC channel, can be IN1 or IN2 */
 
 /* for iDataMode member of _tScanParams (also used by DSP) */
 #define D2_IMAGE                    0
