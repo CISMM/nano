@@ -1,3 +1,17 @@
+2001-03-23  Jason Clark  <jclark@cs.unc.edu>
+
+	* microscopeHandlers.C (handle_z_scale_change): Don't call
+	causeGridRebuild, call causeGridRedraw.  I had changed it to that
+	before, but I fixed the visualization code so that it is back to
+	not being necessary anymore.  So go with the faster causeGridRedraw.
+
+	* microscape.c (handle_viz_change): chooseVisualization doesn't
+	automatically rebuild the grid, so do it manually.
+
+	Bug fixes for colormap plane weirdness that visualization code had
+	introduced and crashing when closing a file after a visualization
+	has been applied to it.
+
 2001-03-22  Jason Clark  <jclark@cs.unc.edu>
 
 	* microscape.c: Changes to support dynamic loading of textures and

@@ -2710,7 +2710,6 @@ void nmg_Graphics_Implementation::chooseVisualization(int viz_type)
 	visualization->setMinHeight(min);
 	visualization->setMaxHeight(max);
 	visualization->setAlpha(alpha);
-	causeGridRebuild();
 }
 
 void nmg_Graphics_Implementation::setVisualizationMinHeight(float viz_min) 

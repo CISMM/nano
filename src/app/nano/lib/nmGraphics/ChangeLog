@@ -1,3 +1,15 @@
+2001-03-23  Jason Clark  <jclark@cs.unc.edu>
+
+	* openGL.c: Fix colormap weirdness
+
+	* nmg_Visualization.h: setUpdateAndTodo modification to fix
+	z-scale change having to cause grid rebuild to affect second pass.
+
+	* nmg_Visualization.C: Bug fixes for colomap weirdness and to not
+	need to do a grid rebuild when changing the z-scale.
+
+	* nmg_GraphicsImpl.C (chooseVisualization): Remove call to causeGridRebuild.
+
 2001-03-14  Jason Clark  <jclark@cs.unc.edu>
 
 	* spm_gl.c (spm_x_strip_masked): Fixed memory stomping bug in rare cases.

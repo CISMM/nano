@@ -4077,6 +4077,7 @@ static void handle_analyze_shape(vrpn_int32, void *)
 static void handle_viz_change(vrpn_int32, void *)
 {
 	graphics->chooseVisualization(viz_choice);
+    graphics->causeGridRebuild();
 }
 
 static void handle_viz_min_change(vrpn_float64, void *)
@@ -4128,7 +4129,6 @@ static void handle_viz_tex(const char *, void *) {
 static void handle_viztex_scale_change (vrpn_float64, void * userdata) {
   nmg_Graphics * g = (nmg_Graphics *) userdata;
   g->setViztexScale(viztex_scale);
-  //DONT cause_grid_redraw(0.0, NULL); It slows things down!
 }
 
 // This is an ImageMode handler. Makes sure the next time we enter
@@ -6328,10 +6328,6 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
       return -1;
     }
 
-    if (graphics) {
-      // First time through graphics will be NULL. 
-      graphics->changeDataset(new_dataset);
-    }
 
     if (new_microscope->ReadMode() == READ_FILE)
       guessAdhesionNames(new_dataset);
@@ -6404,6 +6400,30 @@ static int createNewMicroscope( MicroscapeInitializationState &istate,
     resetMeasureLines(new_dataset, decoration);
     decoration->aimLine.moveTo(height_plane->minX(), height_plane->maxY(),
                             height_plane);
+
+    if (graphics) {
+      //Make sure the current visualization choice is 
+      //0, which corresponds to normal opaque mode
+      //I wanted to be able to set the value here and
+      //have it be reflected in TCL but not trigger
+      //a callback, and this seems to be the only
+      //way to do that...
+      viz_choice.d_ignoreChange = VRPN_TRUE;
+      viz_min.d_ignoreChange = VRPN_TRUE;
+      viz_max.d_ignoreChange = VRPN_TRUE;
+      viz_min_limit.d_ignoreChange = VRPN_TRUE;
+      viz_max_limit.d_ignoreChange = VRPN_TRUE;
+
+      viz_choice = 0;
+      viz_min = 0;
+      viz_max = 1;
+      viz_min_limit = 0;
+      viz_max_limit = 1;
+      graphics->chooseVisualization(viz_choice);
+
+      // First time through graphics will be NULL. 
+      graphics->changeDataset(new_dataset);
+    }
 
     VERBOSE(1, "Before SPM initialization");
     if (new_microscope->Initialize()) {

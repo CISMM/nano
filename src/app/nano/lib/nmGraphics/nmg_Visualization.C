@@ -205,7 +205,7 @@ getAlpha() {
 
 ////////////////////////////////////////////////////////////
 //    Function: nmg_Visualization::determineVertexDim
-//      Access: Protected, Virtual
+//      Access: Protected
 // Description: 
 ////////////////////////////////////////////////////////////
 int nmg_Visualization::
@@ -231,6 +231,29 @@ determineVertexDim(int x, int y)
 }
 
 ////////////////////////////////////////////////////////////
+//    Function: nmg_Visualization::SaveState
+//      Access: Protected
+// Description: Saves the state of global variables that are
+//              automatically changed
+////////////////////////////////////////////////////////////
+void nmg_Visualization::
+SaveState()
+{
+    d_just_color = g_just_color;
+}
+
+////////////////////////////////////////////////////////////
+//    Function: nmg_Visualization::RestoreState
+//      Access: Protected
+// Description: 
+////////////////////////////////////////////////////////////
+void nmg_Visualization::
+RestoreState()
+{
+    g_just_color = d_just_color;
+}
+
+////////////////////////////////////////////////////////////
 //    Function: nmg_Visualization::setUpdateAndMark
 //      Access: Protected, Virtual
 // Description: 
@@ -238,7 +261,7 @@ determineVertexDim(int x, int y)
 void nmg_Visualization::
 setUpdateAndTodo(int low_row, int high_row, int stride, 
                  int num, nmb_Interval &last_marked,
-                 nmb_Interval &update, nmb_Interval &todo) 
+                 nmb_Interval &update, nmb_Interval &todo, bool save_mark) 
 {
     int low_strip = MAX(0, low_row / stride);
     int high_strip = MIN(num, high_row / stride);
@@ -308,7 +331,9 @@ setUpdateAndTodo(int low_row, int high_row, int stride,
     if (spm_graphics_verbosity >= 15)
         fprintf(stderr, "  ");
     
-    last_marked = mark;
+    if (save_mark) {
+        last_marked = mark;
+    }
 }
 
 ////////////////////////////////////////////////////////////
@@ -717,7 +742,7 @@ int nmg_Viz_Opaque::
 rebuildInterval(int low_row, int high_row, int strips_in_x)
 {
     setUpdateAndTodo(low_row, high_row, g_stride, d_num_lists[0], 
-                     last_marked[0], update[0], todo[0]);
+                     last_marked[0], update[0], todo[0], true);
     
     nmb_PlaneSelection planes;
     planes.lookup(d_dataset);
@@ -830,6 +855,7 @@ rebuildGrid()
     buildMaskPlane(planes);  
     buildTransparentPlane(planes);
     g_mask = ENABLE_MASK;
+    SaveState();
         
     VERBOSE(6, "nmg_Viz_Transparent::rebuildGrid()");
 
@@ -841,7 +867,8 @@ rebuildGrid()
     
     g_mask = INVERT_MASK;
     g_transparent = 1;
-    
+    RestoreState();
+
     if (build_grid_display_lists(planes, display_lists_in_x, &d_list_base[1],
                                  &d_num_lists[1], d_num_lists[1], g_minColor,
                                  g_maxColor, d_vertexPtr[1])) {
@@ -879,11 +906,12 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
 
     //Pass 1
     setUpdateAndTodo(low_row, high_row, g_stride, d_num_lists[0], 
-                     last_marked[0], update[0], todo[0]);
+                     last_marked[0], update[0], todo[0], false);
     
 	buildMaskPlane(planes);  
     buildTransparentPlane(planes);
     g_mask = ENABLE_MASK;
+    SaveState();
 
     if (update[0].overlaps(todo[0]) || update[0].adjacent(todo[0])) {
         if (build_list_set(update[0] + todo[0], planes, d_list_base[0], 
@@ -897,11 +925,12 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
     }
     
     //Pass 2
-    setUpdateAndTodo(low_row, high_row, 5, d_num_lists[1], 
-                     last_marked[1], update[1], todo[1]);
+    setUpdateAndTodo(low_row, high_row, g_stride, d_num_lists[1], 
+                     last_marked[1], update[1], todo[1], true);
 
     g_mask = INVERT_MASK;
     g_transparent = 1;
+    RestoreState();
 
     if (update[1].overlaps(todo[1]) || update[1].adjacent(todo[1])) {
         if (build_list_set(update[1] + todo[1], planes, d_list_base[1],
@@ -1008,6 +1037,7 @@ rebuildGrid()
     
     buildMaskPlane(planes);   
     g_mask = ENABLE_MASK;
+    SaveState();
     
     VERBOSE(6, "nmg_Viz_WireFrame::rebuildGrid()");
 
@@ -1022,6 +1052,7 @@ rebuildGrid()
     
     int stride = g_stride;
     g_stride = 5;
+    RestoreState();
     
     if (build_grid_display_lists(planes, display_lists_in_x, &d_list_base[1],
                                  &d_num_lists[1], d_num_lists[1], g_minColor,
@@ -1069,10 +1100,11 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
     
     //Pass 1
     setUpdateAndTodo(low_row, high_row, g_stride, d_num_lists[0], 
-                     last_marked[0], update[0], todo[0]);
+                     last_marked[0], update[0], todo[0], false);
     
 	buildMaskPlane(planes);   
     g_mask = ENABLE_MASK;
+    SaveState();
 
     if (update[0].overlaps(todo[0]) || update[0].adjacent(todo[0])) {
         if (build_list_set(update[0] + todo[0], planes, d_list_base[0], 
@@ -1086,13 +1118,13 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
     }
     
     //Pass 2
-    setUpdateAndTodo(low_row, high_row, 5, d_num_lists[1], 
-                     last_marked[1], update[1], todo[1]);
-    
-	g_mask = INVERT_MASK;
-    
     int stride = g_stride;
-    g_stride = 5;
+    g_stride = 5;  
+	g_mask = INVERT_MASK;
+    RestoreState();
+
+    setUpdateAndTodo(low_row, high_row, 5, d_num_lists[1], 
+                     last_marked[1], update[1], todo[1], true);
 
     if (update[1].overlaps(todo[1]) || update[1].adjacent(todo[1])) {
         if (build_list_set(update[1] + todo[1], planes, d_list_base[1],
@@ -1235,6 +1267,7 @@ rebuildGrid()
 
     buildMaskPlane(planes);   
     g_mask = ENABLE_MASK;
+    SaveState();
     
     VERBOSE(6, "nmg_Viz_OpaqueTexture::rebuildGrid()");
 
@@ -1246,6 +1279,7 @@ rebuildGrid()
     }
     
 	g_mask = INVERT_MASK;
+    RestoreState();
     
     if (build_grid_display_lists(planes, display_lists_in_x, &d_list_base[1],
                                  &d_num_lists[1], d_num_lists[1], g_minColor,
@@ -1297,10 +1331,11 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
     
     //Pass 1
     setUpdateAndTodo(low_row, high_row, g_stride, d_num_lists[0], 
-                     last_marked[0], update[0], todo[0]);
+                     last_marked[0], update[0], todo[0], false);
 
 	buildMaskPlane(planes);   
     g_mask = ENABLE_MASK;
+    SaveState();
     
     if (update[0].overlaps(todo[0]) || update[0].adjacent(todo[0])) {
         if (build_list_set(update[0] + todo[0], planes, d_list_base[0], 
@@ -1315,9 +1350,10 @@ rebuildInterval(int low_row, int high_row, int strips_in_x)
     
     //Pass 2
     setUpdateAndTodo(low_row, high_row, 5, d_num_lists[1], 
-                     last_marked[1], update[1], todo[1]);
+                     last_marked[1], update[1], todo[1], true);
 
 	g_mask = INVERT_MASK;
+    RestoreState();
     
     if (update[1].overlaps(todo[1]) || update[1].adjacent(todo[1])) {
         if (build_list_set(update[1] + todo[1], planes, d_list_base[1],

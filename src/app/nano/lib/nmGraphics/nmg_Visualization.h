@@ -62,14 +62,25 @@ protected:
 	nmb_Interval *todo;
 	Vertex_Struct *** d_vertexPtr;
 
+
+    //State variables that get automatically changed that we need to
+    //be able to restore for multi-pass to work right
+    vrpn_bool d_just_color;
+
 	void setUpdateAndTodo(int low_row, int high_row, int stride, 
-						  int num, nmb_Interval &last_marked,
-						  nmb_Interval &update, nmb_Interval &todo);
+                              int num, nmb_Interval &last_marked,
+                              nmb_Interval &update, nmb_Interval &todo,
+                              bool save_mark);
 
 	void ensureMaskPlane(nmb_PlaneSelection &planes);
 	void ensureTransparentPlane(nmb_PlaneSelection &planes);
 	void buildMaskPlane(nmb_PlaneSelection &planes);
 	void buildTransparentPlane(nmb_PlaneSelection &planes);
+    
+    void SaveState(); //Since we are doing multi-pass, and some variables
+                      //are automatically turned off after being used, we need
+                      //to be able to save them beforehand
+    void RestoreState();
 
 	int determineVertexDim(int x, int y);
 	void setTexture();

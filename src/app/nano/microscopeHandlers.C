@@ -671,8 +671,8 @@ void handle_z_scale_change (vrpn_float64 /*_value*/, void * _mptr) {
     plane->setScale(microscope->state.stm_z_scale);
     decoration->setScrapeHeightScale(microscope->state.stm_z_scale);
     //cause_grid_redraw(_value, _mptr);
-    //graphics->causeGridRedraw();
-    graphics->causeGridRebuild();
+    graphics->causeGridRedraw();
+    //graphics->causeGridRebuild();
   }
   // update display of scanline to show true relative (yet scaled) height of
   // scanline with respect to the surface
