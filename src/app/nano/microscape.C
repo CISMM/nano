@@ -85,6 +85,7 @@ pid_t getpid();
 #include <nmb_FlattenedPlane.h>
 #include <nmb_LBLFlattenedPlane.h>
 #include <nmb_SummedPlane.h>
+#include <nmb_MorphologyPlane.h>
 #include <nmb_Types.h>
 #include <nmb_Debug.h>
 #include <nmb_Line.h>
@@ -482,14 +483,17 @@ static void handle_sumPlaneName_change(const char *new_value, void *userdata);
 static void handle_adhPlaneName_change(const char *new_value, void *userdata);
 static void handle_SimScanPlaneName_change(const char *new_value, void *userdata);
 static void handle_SimScanComputerName_change(const char *new_value, void *userdata);
-static void handle_EroderPlaneName_change(const char *new_value, void *userdata);
-static void handle_EroderComputerName_change(const char *new_value, void *userdata);
+static void handle_morphologyPlaneName_change(const char *new_value, void *userdata);
 static void handle_flatPlaneName_change(const char *new_value, void *userdata);
 static void handle_lblflatPlaneName_change(const char *new_value, void *userdata);
 Tclvar_string	newSimScanPlaneName("simscanplane_name","");
 Tclvar_string	SimScanComputerName("simscanIPaddress","");
-Tclvar_string	newEroderPlaneName("eroderplane_name","");
-Tclvar_string	EroderComputerName("eroderIPaddress","");
+
+Tclvar_string   origMorphologyPlaneName("orig_morphologyplane_name","");
+Tclvar_string   tipMorphologyPlaneName("tip_morphologyplane_name","");
+Tclvar_string	newMorphologyPlaneName("new_morphologyplane_name","");
+Tclvar_int      morphologySelect("morphology_select", 0);
+
 Tclvar_string	newFlatPlaneName("flatplane_name","");
 
 //added 1-9-99 by Amy Henderson
@@ -1170,7 +1174,7 @@ vrpn_int32 GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) {       // chang
         else if (pixel_size == sizeof(vrpn_uint16)) {
             if (!image_uint16) {
                 printf("Creating new uint16 image\n");
-                image_uint16 = new nmb_ImageArray("SEM_DATA16_128x128", "ADC", x, y, NMB_UINT16);
+                image_uint16 = new nmb_ImageArray("TEM uint16 image", "ADC", x, y, NMB_UINT16);
                 dataset->dataImages->addImage(image_uint16);
             }
 //            image_uint16->setImage((vrpn_uint16*)image);
@@ -1180,7 +1184,7 @@ vrpn_int32 GotFrontImage(void *_userdata, vrpn_HANDLERPARAM _p) {       // chang
                 ((vrpn_uint16*)image2)[x * y - i - 1] = ((vrpn_uint16*)image)[i];
             }
             image_uint16->setImage((vrpn_uint16*)image2);
-            graphics->updateTexture(nmg_Graphics::VIDEO, "TEM_DATA16_128x128", 0, 0, x, y);
+            graphics->updateTexture(nmg_Graphics::VIDEO, "TEM uint16 image", 0, 0, x, y);
         }
         else if (pixel_size == sizeof(vrpn_float32)) {
             if (!image_float32) {
@@ -1603,7 +1607,6 @@ char* EroderIPAddress;
 char*EroderStoredPlaneName;
 nmm_SimulatedMicroscope_Remote * Eroder = NULL;
 vrpn_Connection * eroder_connection;
-static void startEroder();
 //end Eroder stuff
 
 /// Are we reading device, stream, or files?
@@ -3621,74 +3624,6 @@ static void handle_SimScanComputerName_change(const char *, void *)
 	SimScanComputerName = (const char *) "";  
 } 
 
-/** See if the user has given a name to the eroder plane other
- than "".  If so, we should create a new plane and set the value
- back to "". */
-static void handle_EroderPlaneName_change(const char *, void *)
-{
-	if( strlen(newEroderPlaneName.string() ) <= 0 )
-		return;
-  
-	try{
-		EroderStoredPlaneName = new char[100];
-		strcpy(EroderStoredPlaneName,newEroderPlaneName.string()); // XXX Make operator =
-		//stored one is EroderStoredPlaneName
-		EroderPlaneNameGiven = true;
-		if(EroderComputerNameGiven){
-			startEroder();
-		}
-		//only start up simulated microscope connection if both plane name and
-		//IP address for the simulator have been filled in by the user
-	}
-	catch( nmb_CalculatedPlaneCreationException e ){
-		display_error_dialog( e.getMsgString() );
-		newEroderPlaneName = (const char *) "";
-		return;
-	}
-
-	newEroderPlaneName = (const char *) "";
-} 
-
-
-static void startEroder(){
-	//form cname from hostname:port (I think)
-	eroder_connection = vrpn_get_connection_by_name(EroderIPAddress);
-	if(eroder_connection != NULL){
-		if(Eroder != NULL)	delete Eroder;		
-		Eroder = new nmm_SimulatedMicroscope_Remote(EroderIPAddress, 
-			eroder_connection, EroderStoredPlaneName, dataset);		
-	}
-	else{
-		cout << "\nConnection is NULL\nTry setting up remote device (eroder) again.\n";
-	}
-}
-
-
-static void handle_EroderComputerName_change(const char *, void *)
-{
-	if( strlen(EroderComputerName.string() ) <= 0 )
-		return;
-  
-	try{
-		EroderIPAddress = new char[100];
-		strcpy(EroderIPAddress,EroderComputerName.string());
-		//stored one is EroderIPAddress
-		EroderComputerNameGiven = true;
-		if(EroderPlaneNameGiven){
-			startEroder();		
-		}
-		//only start up simulated microscope connection if both plane name and
-		//IP address for the simulator have been filled in by the user
-	}
-	catch( nmb_CalculatedPlaneCreationException e ){
-		display_error_dialog( e.getMsgString() );
-		EroderComputerName = (const char *) "";
-		return;
-	}
-
-	EroderComputerName = (const char *) "";  
-} 
-
 /** See if the user has given a name to the flattened plane other
  than "".  If so, we should create a new plane and set the value
  back to "". */
@@ -3780,6 +3715,31 @@ static void handle_sumPlaneName_change(const char *, void *)
     
   newSumPlaneName = (const char*) "";
 } // end handle_sumPlaneName_change
+
+
+
+/** See if the user has given a name to the morphology plane other
+ than "".  If so, we should create a new plane and set the value
+ back to "". */
+static void handle_morphologyPlaneName_change(const char *, void *)
+{
+	if( strlen(newMorphologyPlaneName.string() ) <= 0 )
+		return;
+	try{
+        new nmb_MorphologyPlane( origMorphologyPlaneName.string(),
+               tipMorphologyPlaneName.string(),
+               morphologySelect,
+			   newMorphologyPlaneName.string(),
+			   dataset );
+	}
+	catch( nmb_CalculatedPlaneCreationException e ){
+		display_error_dialog( e.getMsgString() );
+		newMorphologyPlaneName = (const char *) "";
+		return;
+	}
+
+	newMorphologyPlaneName = (const char *) "";
+} // end handle_MorphologyPlaneName_change
 
 
 /** See if the user has given a name to the adhesion plane other
@@ -5133,13 +5093,11 @@ void setupCallbacks (nmb_Dataset *d) {
   SimScanComputerName.addCallback
             (handle_SimScanComputerName_change, NULL);
 
-  newEroderPlaneName = "";
-  newEroderPlaneName.addCallback
-            (handle_EroderPlaneName_change, NULL);
-
-  EroderComputerName = "";
-  EroderComputerName.addCallback
-            (handle_EroderComputerName_change, NULL);
+  origMorphologyPlaneName = "none";
+  tipMorphologyPlaneName = "none";
+  newMorphologyPlaneName = "";
+  newMorphologyPlaneName.addCallback
+            (handle_morphologyPlaneName_change, NULL);
 
   newFlatPlaneName = "";
   newFlatPlaneName.addCallback
