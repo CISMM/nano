@@ -69,7 +69,7 @@ clean:
 
 .PHONY: thisclean
 thisclean:
-	-rm -f $(addprefix $(OBJECT_DIR)/,*.o $(APP_NAME))
+	-rm -f $(OBJECT_DIR)/*
 
 .PHONY: clobber
 clobber: thisclean
