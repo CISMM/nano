@@ -2,6 +2,8 @@
 #include "stdlib.h"
 #include "nmr_Gaussian.h"
 
+static const int numProgressDots = 75;
+
 /* it is dangerous to use this because it assumes that the
    worldToScaledImageTransform is independent of the transform that gets
    passed in (scaledImA_from_scaledImB)
@@ -183,11 +185,16 @@ void nmr_Util::createResampledImage(nmb_Image &targetImage,
   double p_source[4] = {0,0,0,1}, p_target[4]; // world coordinates
   double i_target, j_target; // pixel coordinates
   double value_target;
+  double minExpectedNonZeroValue = targetImage.minNonZeroValue() - 0.0001;
+  double maxExpectedValue = targetImage.maxValue() + 0.0001;
 
+  printf("resampling in progress:\n");
+  int progressStride = w/numProgressDots;
+/*
   fprintf(stderr, "(min, minNZ, max) = (%f,%f,%f)\n",
         targetImage.minValue(), targetImage.minNonZeroValue(),
         targetImage.maxValue());
-
+*/
   for (i = 0, i_center = 0.5; i < w; i++, i_center += 1.0){
     for (j = 0, j_center = 0.5; j < h; j++, j_center += 1.0){
       resampleImage.pixelToWorld(i_center, j_center, p_source[0], p_source[1]);
@@ -197,8 +204,9 @@ void nmr_Util::createResampledImage(nmb_Image &targetImage,
           i_target < targetImage.width() &&
           j_target < targetImage.height()) {
           value_target = targetImage.getValueInterpolatedNZ(i_target, j_target);
-          if ((value_target < targetImage.minNonZeroValue()) ||
-              (value_target > targetImage.maxValue())) {
+          if (((value_target < minExpectedNonZeroValue) ||
+              (value_target > maxExpectedValue)) &&
+              value_target != 0.0) {
               fprintf(stderr, "Warning: resampleImage:"
                       " not getting expected values from interpolation\n");
           }
@@ -207,7 +215,11 @@ void nmr_Util::createResampledImage(nmb_Image &targetImage,
       }
       resampleImage.setValue(i,j, value_target);
     }
+    if (i%progressStride == 0) {
+      printf(".");
+    }
   }
+  printf("\n");
 }
 
 // static
@@ -224,16 +236,23 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
   double i_center, j_center;
   double i_target, j_target; // pixel coordinates
   double value_target;
+  double minExpectedNonZeroValue, maxExpectedValue;
   double p_source_norm[4] = {0,0,0,1}; // normalized pixel coordinates
   double p_target_norm[4] = {0,0,0,1};
   double x_incr, y_incr;
 
   x_incr = 1.0/(double)w;
   y_incr = 1.0/(double)h;
-
+/*
   fprintf(stderr, "(min, minNZ, max) = (%f,%f,%f)\n", 
 	targetImage.minValue(), targetImage.minNonZeroValue(),
 	targetImage.maxValue());
+*/
+  printf("resampling in progress:\n");
+  int progressStride = w/numProgressDots;
+
+  minExpectedNonZeroValue = targetImage.minNonZeroValue() - 0.0001;
+  maxExpectedValue = targetImage.maxValue() + 0.0001;
 
   for (i = 0, i_center = 0.5*x_incr; i < w; i++, i_center += x_incr){
     for (j = 0, j_center = 0.5*y_incr; j < h; j++, j_center += y_incr){
@@ -260,8 +279,9 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
           i_target < targetImage.width() &&
           j_target < targetImage.height()) {
           value_target = targetImage.getValueInterpolatedNZ(i_target, j_target);
-          if ((value_target < targetImage.minNonZeroValue()) ||
-	      (value_target > targetImage.maxValue())) {
+          if (((value_target < minExpectedNonZeroValue) ||
+	      (value_target > maxExpectedValue)) &&
+              value_target != 0) {
               fprintf(stderr, "Warning: resampleImageIST:"
                       " not getting expected values from interpolation\n");
           }
@@ -272,7 +292,11 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
 
       resampleImage.setValue(i,j, value_target);
     }
+    if (i%progressStride == 0) {
+      printf(".");
+    }
   }
+  printf("\n");
  // fprintf(stderr, "(%g,%g)-(%g,%g)\n", i_targ_min, j_targ_min, i_targ_max, j_targ_max);
 }
 
@@ -309,9 +333,17 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
   resampleImageToWorld.invert();
   sourceImage.getWorldToImageTransform(sourceWorldToImage);
 
+/*
   fprintf(stderr, "(min, minNZ, max) = (%f,%f,%f)\n",
         targetImage.minValue(), targetImage.minNonZeroValue(),
         targetImage.maxValue());
+*/
+
+  double minExpectedNonZeroValue = targetImage.minNonZeroValue() - 0.0001;
+  double maxExpectedValue = targetImage.maxValue() + 0.0001;
+
+  printf("resampling in progress:\n");
+  int progressStride = w/numProgressDots;
 
   for (i = 0, i_center = 0.5*x_incr; i < w; i++, i_center += x_incr){
     for (j = 0, j_center = 0.5*y_incr; j < h; j++, j_center += y_incr){
@@ -343,8 +375,9 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
           i_target < targetImage.width() &&
           j_target < targetImage.height()) {
           value_target = targetImage.getValueInterpolatedNZ(i_target, j_target);
-          if ((value_target < targetImage.minNonZeroValue()) ||
-              (value_target > targetImage.maxValue())) {
+          if (((value_target < minExpectedNonZeroValue) ||
+              (value_target > maxExpectedValue)) &&
+              value_target != 0) {
               fprintf(stderr, "Warning: resampleImageIST:"
                       " not getting expected values from interpolation\n");
           }
@@ -355,7 +388,11 @@ void nmr_Util::createResampledImageWithImageSpaceTransformation(
 
       resampleImage.setValue(i,j, value_target);
     }
+    if (i%progressStride == 0) {
+      printf(".");
+    }
   }
+  printf("\n");
  // fprintf(stderr, "(%g,%g)-(%g,%g)\n", i_targ_min, j_targ_min, i_targ_max, j_targ_max);
 }
 
@@ -388,6 +425,9 @@ void nmr_Util::createResampledImage(const nmb_Image &targetImage,
   double i_target, j_target; // pixel coordinates
   double value_target;
 
+  printf("resampling in progress:\n");
+  int progressStride = w/numProgressDots;
+
   for (i = 0, i_center = 0.5; i < w; i++, i_center += 1.0){
     for (j = 0, j_center = 0.5; j < h; j++, j_center += 1.0){
       resampleImage.pixelToWorld(i_center, j_center, p_source[0], p_source[1]);
@@ -409,7 +449,11 @@ void nmr_Util::createResampledImage(const nmb_Image &targetImage,
       }
       resampleImage.setValue(i,j, value_target);
     }
+    if (i%progressStride == 0) {
+      printf(".");
+    }
   }
+  printf("\n");
 }
 
 //static 
@@ -439,12 +483,27 @@ void nmr_Util::addImage(nmb_Image &addend, nmb_Image &sum, float wa,
   sum_avg *= 0.25;
 */
 
-  for (i = 0, i_center = 0.5; i < sum.width(); i++, i_center += 1.0) {
-    for (j = 0, j_center = 0.5; j < sum.height(); j++, j_center += 1.0) {
+  printf("image blending in progress:\n");
+  int progressStride = sum.width()/numProgressDots;
+
+  nmb_TransformMatrix44 sumImageToWorld, addendWorldToImage;
+  sum.getWorldToImageTransform(sumImageToWorld);
+  sumImageToWorld.invert(); 
+  addend.getWorldToImageTransform(addendWorldToImage);
+  double x_incr = 1.0/(double)sum.width();
+  double y_incr = 1.0/(double)sum.height();
+
+
+  for (i = 0,i_center = 0.5*x_incr;i < sum.width(); i++,i_center += x_incr) {
+    for (j = 0,j_center = 0.5*y_incr;j < sum.height(); j++,j_center += y_incr) {
       val = ws*sum.getValue(i,j);
       // get world coordinates for this point in sum image
-      sum.pixelToWorld(i_center, j_center, x_world, y_world);
-      addend.worldToPixel(x_world, y_world, i_addend, j_addend);
+      sumImageToWorld.transform(i_center, j_center, x_world, y_world);
+      //sum.pixelToWorld(i_center, j_center, x_world, y_world);
+      addendWorldToImage.transform(x_world, y_world, i_addend, j_addend);
+      i_addend *= addend.width();
+      j_addend *= addend.height();
+      //addend.worldToPixel(x_world, y_world, i_addend, j_addend);
       if (i_addend >= 0 && j_addend >= 0 &&
           i_addend < addend.width() && 
           j_addend < addend.height()) {
@@ -461,7 +520,11 @@ void nmr_Util::addImage(nmb_Image &addend, nmb_Image &sum, float wa,
           sum.setValue(i,j, val);
       }
     }
+    if (i%progressStride == 0) {
+      printf(".");
+    }
   }
+  printf("\n");
 }
 
 /* resample:

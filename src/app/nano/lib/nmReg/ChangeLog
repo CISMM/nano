@@ -1,5 +1,14 @@
 2001-12-18  Adam Seeger  <seeger@cs.unc.edu>
 
+	* nmr_Util.C (createResample*): fixed these functions so they don't
+	incorrectly print warning messages about getting unexpected values
+	from the interpolation code
+	also, added printout of '.' to indicate progress
+	(addImage): made this much more efficient by using transformation
+	code instead of pixelToWorld, worldToPixel functions
+
+2001-12-18  Adam Seeger  <seeger@cs.unc.edu>
+
 	* nmr_RegistrationUI.C (handle_registrationImage2D_change): instead
 	of updating the image all the time, does so only if the texture is
 	enabled
