@@ -11,10 +11,10 @@
 
 ///import_object handlers
 static  void handle_import_file_change (const char *, void *);
-static	void handle_imported_object_change(const char*, void*);
 static	void handle_current_object_new(const char*, void*);
 static	void handle_current_object(const char*, void*);
 static  void handle_import_scale_change (vrpn_float64, void *);
+static  void handle_import_tess_change (vrpn_int32, void *);
 static  void handle_import_transx_change (vrpn_float64, void *);
 static  void handle_import_transy_change (vrpn_float64, void *);
 static  void handle_import_transz_change (vrpn_float64, void *);
@@ -50,6 +50,7 @@ Tclvar_float	import_rotz("import_rotz",0, handle_import_rotz_change);
 Tclvar_int      import_visibility("import_visibility", 1, handle_import_visibility);
 Tclvar_int      import_proj_text("import_proj_text", 1, handle_import_proj_text);
 Tclvar_int		import_CCW("import_CCW", 1, handle_import_CCW);
+Tclvar_int		import_tess("import_tess", 10, handle_import_tess_change);
 Tclvar_int      import_color_changed("import_color_changed", 0, handle_import_color_change);
 Tclvar_int      import_r("import_r", 192);
 Tclvar_int      import_g("import_g", 192);
@@ -75,6 +76,31 @@ static void handle_current_object_new(const char*, void*) {
 
 static void handle_current_object(const char*, void*) {
 	*(World.current_object) = current_object.string();
+
+	if (strcmp(*(World.current_object), "all") != 0) {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			
+			import_scale = obj.GetLocalXform().GetScale();
+
+			const q_vec_type &v = obj.GetLocalXform().GetTrans();
+			import_transx = v[0];
+			import_transy = v[1];
+			import_transz = v[2];
+
+			const q_type &q = obj.GetLocalXform().GetRot();
+			import_rotx = q[0];
+			import_roty = q[1];
+			import_rotz = q[2];
+
+			import_visibility = obj.GetVisibility();
+
+			import_proj_text = obj.ShowProjText();
+
+			import_CCW = obj.GetCCW();
+		}
+	}
 }
 
 
@@ -87,9 +113,10 @@ static void handle_import_file_change (const char *, void *) {
             //Only try to create the object if there is a file specified.
 
             URPolygon *obj = new URPolygon;
+			obj->SetCCW(import_CCW);
+			obj->SetTess(import_tess);
             FileGenerator *gen = FileGenerator::CreateFileGenerator(modelFile.string());
             import_type = gen->GetExtension();
-			obj->SetCCW(import_CCW);
             obj->LoadGeometry(gen);
             obj->SetVisibility(import_visibility);
 			obj->SetProjText(import_proj_text);
@@ -126,27 +153,36 @@ static void handle_import_file_change (const char *, void *) {
     }
 }
 
-static void handle_imported_object_change(const char*, void*) {
-// code to switch between objects should go here
-	cout << "hello" << endl;
-}
-
 static  void handle_import_visibility (vrpn_int32, void *)
 {
-    UTree *node = World.TGetNodeByName(*World.current_object);
-    if (node != NULL) {
-        URender &obj = node->TGetContents();
-        obj.SetVisibility(import_visibility);
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		int i = import_visibility;
+		World.Do(&URender::SetVisibilityAll, &i);
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetVisibility(import_visibility);
+		}
     }
 }
 
 static  void handle_import_proj_text (vrpn_int32, void *)
 {
-	UTree *node = World.TGetNodeByName(*World.current_object);
-    if (node != NULL) {
-        URender &obj = node->TGetContents();
-        obj.SetProjText(import_proj_text);
-    }
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		int i = import_proj_text;
+		World.Do(&URender::SetProjTextAll, &i);
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.SetProjText(import_proj_text);
+		}
+	}
 }
 
 static  void handle_import_CCW (vrpn_int32, void *)
@@ -158,92 +194,170 @@ static  void handle_import_CCW (vrpn_int32, void *)
     }
 }
 
-static  void handle_import_scale_change (vrpn_float64, void *)
+static  void handle_import_tess_change (vrpn_int32, void *)
 {
+printf("import_tess = %d\n", import_tess);
     UTree *node = World.TGetNodeByName(*World.current_object);
     if (node != NULL) {
         URender &obj = node->TGetContents();
-        obj.GetLocalXform().SetScale(import_scale);
+printf("import_tess = %d\n", import_tess);
+        obj.SetTess(import_tess);
     }
+}
+
+static  void handle_import_scale_change (vrpn_float64, void *)
+{
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		double i = import_scale;
+		World.Do(&URender::ScaleAll, &i);
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			obj.GetLocalXform().SetScale(import_scale);
+		}
+	}
 }
 
 static  void handle_import_transx_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(*World.current_object);
-    if (node != NULL) {
-        URender &obj = node->TGetContents();
-        const q_vec_type &trans = obj.GetLocalXform().GetTrans();
-        obj.GetLocalXform().SetTranslate(import_transx, trans[1], trans[2]);
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		double i = import_transx;
+		World.Do(&URender::SetTransxAll, &i);
+	}
+	else {
+	    UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
+			obj.GetLocalXform().SetTranslate(import_transx, trans[1], trans[2]);
+		}
     }
 }
 
 static  void handle_import_transy_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(*World.current_object);
-    if (node != NULL) {
-        URender &obj = node->TGetContents();
-        const q_vec_type &trans = obj.GetLocalXform().GetTrans();
-        obj.GetLocalXform().SetTranslate(trans[0], import_transy, trans[2]);
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		double i = import_transy;
+		World.Do(&URender::SetTransyAll, &i);
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
+			obj.GetLocalXform().SetTranslate(trans[0], import_transy, trans[2]);
+		}
     }
 }
 
 static  void handle_import_transz_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(*World.current_object);
-    if (node != NULL) {
-        URender &obj = node->TGetContents();
-        const q_vec_type &trans = obj.GetLocalXform().GetTrans();
-        obj.GetLocalXform().SetTranslate(trans[0], trans[1], import_transz);
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		double i = import_transz;
+		World.Do(&URender::SetTranszAll, &i);
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+			URender &obj = node->TGetContents();
+			const q_vec_type &trans = obj.GetLocalXform().GetTrans();
+			obj.GetLocalXform().SetTranslate(trans[0], trans[1], import_transz);
+		}
     }
 }
 
 static  void handle_import_rotx_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(*World.current_object);
-    if (node != NULL) {
-        URender &obj = node->TGetContents();
-        const q_type &rot = obj.GetLocalXform().GetRot();
-        obj.GetLocalXform().SetRotate(import_rotx, rot[1], rot[2], rot[3]);
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		double i = import_rotx;
+		World.Do(&URender::SetRotxAll, &i);
+	}
+	else {
+		UTree *node = World.TGetNodeByName(*World.current_object);
+		if (node != NULL) {
+		    URender &obj = node->TGetContents();
+		    const q_type &rot = obj.GetLocalXform().GetRot();
+		    obj.GetLocalXform().SetRotate(import_rotx, rot[1], rot[2], rot[3]);
+		}
     }
 }
 
 static  void handle_import_roty_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(*World.current_object);
-    if (node != NULL) {
-        URender &obj = node->TGetContents();
-        const q_type &rot = obj.GetLocalXform().GetRot();
-        obj.GetLocalXform().SetRotate(rot[0], import_roty, rot[2], rot[3]);
-    }
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		double i = import_roty;
+		World.Do(&URender::SetRotyAll, &i);
+	}
+	else {
+	    UTree *node = World.TGetNodeByName(*World.current_object);
+	    if (node != NULL) {
+	        URender &obj = node->TGetContents();
+	        const q_type &rot = obj.GetLocalXform().GetRot();
+	        obj.GetLocalXform().SetRotate(rot[0], import_roty, rot[2], rot[3]);
+	    }
+	}
 }
 
 static  void handle_import_rotz_change (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(*World.current_object);
-    if (node != NULL) {
-        URender &obj = node->TGetContents();
-        const q_type &rot = obj.GetLocalXform().GetRot();
-        obj.GetLocalXform().SetRotate(rot[0], rot[1], import_rotz, rot[3]);
-    }
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		double i = import_rotz;
+		World.Do(&URender::SetRotzAll, &i);
+	}
+	else {
+	    UTree *node = World.TGetNodeByName(*World.current_object);
+	    if (node != NULL) {
+	        URender &obj = node->TGetContents();
+	        const q_type &rot = obj.GetLocalXform().GetRot();
+	        obj.GetLocalXform().SetRotate(rot[0], rot[1], import_rotz, rot[3]);
+	   }
+	}
 }
 
 static  void handle_import_color_change (vrpn_int32, void *)
 {
-    static const float convert = 1.0f/255;
-    UTree *node = World.TGetNodeByName(*World.current_object);
-    if (node != NULL) {
-        URender &obj = node->TGetContents();
-        obj.SetColor3(convert * import_r, convert * import_g, convert * import_b);
-    }
+	static const float convert = 1.0f/255;
+
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		RGB i;
+		i.red = convert * import_r;
+		i.green = convert * import_g;
+		i.blue = convert * import_b;
+		World.Do(&URender::SetColorAll, &i);
+	}
+	else {
+	   UTree *node = World.TGetNodeByName(*World.current_object);
+	   if (node != NULL) {
+	       URender &obj = node->TGetContents();
+	       obj.SetColor3(convert * import_r, convert * import_g, convert * import_b);
+		}
+	}
 }
 
 static  void handle_import_alpha (vrpn_float64, void *)
 {
-    UTree *node = World.TGetNodeByName(*World.current_object);
-    if (node != NULL) {
-        URender &obj = node->TGetContents();
-        obj.SetAlpha(import_alpha);
-    }
+	// if all selected, do for all loaded objects
+	if (strcmp(*World.current_object, "all") == 0) {
+		float i = import_alpha;
+		World.Do(&URender::SetAlphaAll, &i);
+	}
+	else {
+	    UTree *node = World.TGetNodeByName(*World.current_object);
+	    if (node != NULL) {
+	        URender &obj = node->TGetContents();
+	        obj.SetAlpha(import_alpha);
+	    }
+	}
 }
 
 //------------------------------------------------------------------------
