@@ -10004,11 +10004,11 @@ void get_Plane_Centers (float * offsetx,
       *offsetz=plane->scale()*
 	   (plane->minNonZeroValue()+plane->maxNonZeroValue())/2;
 	  
-	  cout << "min,max,scale: " << plane->minNonZeroValue() << "," << plane->maxNonZeroValue() 
-		   << "," << plane->scale() << endl;
+	  //cout << "min,max,scale: " << plane->minNonZeroValue() << "," << plane->maxNonZeroValue() 
+	  //	   << "," << plane->scale() << endl;
 	  
     }  
-	cout << "offsetz = " << *offsetz << endl;
+	//cout << "offsetz = " << *offsetz << endl;
 	
 }
 
