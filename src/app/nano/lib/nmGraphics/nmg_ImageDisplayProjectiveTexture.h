@@ -9,7 +9,8 @@ class nmg_ImageDisplayProjectiveTexture: public nmb_ImageDisplay {
   nmg_ImageDisplayProjectiveTexture(nmg_Graphics *g);
   virtual void addImageToDisplay(nmb_Image *image);
   virtual void removeImageFromDisplay(nmb_Image *image);
-  virtual void updateDisplayTransform(nmb_Image *image, double *transform);
+  virtual void updateDisplayTransform(nmb_Image *image, double *transform,
+	  bool transformIsSelfReferential);
   virtual void setDisplayColorMap(nmb_Image *image,
                        const char *map, const char *mapdir);
   virtual void setDisplayColorMapRange(nmb_Image *image,

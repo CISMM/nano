@@ -1,3 +1,11 @@
+2002-09-30  Adam Seeger  <seeger@cs.unc.edu>
+
+	* nmg_ImageDisplayProjectiveTexture.C (updateDisplayTransform): Added
+	parameter for this function to indicate whether or not the transform
+	represents a registration of an image to itself - not something we
+	would normally want to do but the user is allowed to do this in nano
+	see the comment in nmb_ImageDisplay.h
+
 2002-09-27  Adam Seeger  <seeger@cs.unc.edu>
 	
 	* nmg_Funclist.h : function parameter "list" renamed to "flist" to avoid

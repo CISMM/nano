@@ -33,7 +33,8 @@ removeImageFromDisplay( nmb_Image* /*image*/ )
 }
 
 void nmg_ImageDisplayProjectiveTexture::
-updateDisplayTransform( nmb_Image * /*image*/, double *transform )
+updateDisplayTransform( nmb_Image * /*image*/, double *transform,
+					   bool /*transformIsSelfReferential*/)
 {
   if (!d_graphicsDisplay) return;
 
