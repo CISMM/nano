@@ -369,7 +369,7 @@ int	Tclvar_mainloop (void)
  */
 
 Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
-	Linkvar_Intcall c, void * ud) :
+	Linkvar_Intcall c, void * ud, vrpn_bool readDefaultFromTcl) :
   d_myTclVarname (NULL),
   mylastint (default_value),
   d_dirty (VRPN_FALSE),
@@ -403,8 +403,30 @@ Tclvar_int::Tclvar_int(const char *tcl_varname, vrpn_int32 default_value,
 		// C variable
 	    char cvalue[100];
 	    sprintf(cvalue, "%d", d_myint);
-	    Tcl_SetVar(interpreter, d_myTclVarname,
-		       cvalue, TCL_GLOBAL_ONLY);
+            if (!readDefaultFromTcl) {
+	      Tcl_SetVar(interpreter, d_myTclVarname,
+	  	         cvalue, TCL_GLOBAL_ONLY);
+            } else {
+              char *value_from_tcl = 
+                    Tcl_GetVar(interpreter, d_myTclVarname, TCL_GLOBAL_ONLY);
+              if (value_from_tcl) {
+                char *endptr;
+                long lvalue = strtol(value_from_tcl, &endptr, 0);
+                if (endptr == value_from_tcl) {
+                  fprintf(stderr, "Tclvar_int::Tclvar_int: Error, "
+                     "variable '%s' exists and does not have integer type\n",
+                      d_myTclVarname);
+                  Tcl_SetVar(interpreter, d_myTclVarname,
+                           cvalue, TCL_GLOBAL_ONLY);
+                } else {
+                  mylastint = lvalue;
+                  d_myint = lvalue;
+                }
+              } else {
+                Tcl_SetVar(interpreter, d_myTclVarname,
+                           cvalue, TCL_GLOBAL_ONLY);
+              }
+            }
 	    if (Tcl_TraceVar(interpreter, d_myTclVarname,
 			     TCL_TRACE_WRITES | TCL_GLOBAL_ONLY,
 			     handle_int_value_change,

@@ -90,7 +90,8 @@ class	Tclvar_int {
 
     public:
 	Tclvar_int(const char * tcl_varname, vrpn_int32 default_value = 0,
-		   Linkvar_Intcall c = NULL, void * ud = NULL);
+		   Linkvar_Intcall c = NULL, void * ud = NULL,
+                   vrpn_bool readDefaultFromTcl = vrpn_FALSE);
 	virtual	~Tclvar_int (void);
 
         void addCallback (Linkvar_Intcall callback, void * userdata);

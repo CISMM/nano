@@ -298,8 +298,9 @@ void Tcl_Netvar::setupReplica (vrpn_SharedObject * r) {
 
 
 TclNet_int::TclNet_int (const char * tcl_varname, vrpn_int32 default_value,
-                Linkvar_Intcall c, void * userdata) :
-  Tclvar_int (tcl_varname, default_value, c, userdata),
+                Linkvar_Intcall c, void * userdata,
+                vrpn_bool readDefaultFromTcl) :
+  Tclvar_int (tcl_varname, default_value, c, userdata, readDefaultFromTcl),
   Tcl_Netvar ()
 {
 

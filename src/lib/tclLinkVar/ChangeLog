@@ -1,3 +1,11 @@
+2001-11-27  Adam Seeger  <seeger@cs.unc.edu>
+
+	* Tcl_Linkvar.C (Tclvar_int::Tclvar_int): added an extra optional
+	parameter to let you initialize the value from the value of the
+	corresponding variable in tcl if it has been set (default behavior is
+	the same as before)
+	* Tcl_Netvar.C (TclNet_int::TclNet_int): same
+
 2001-11-25  Aron Helser  <helser@cs.unc.edu>
 
 	* Tcl_Netvar.C (propagateReceivedUpdate): Check for existence of

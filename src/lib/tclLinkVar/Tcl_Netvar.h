@@ -172,7 +172,8 @@ class TclNet_int : public Tclvar_int, public Tcl_Netvar {
   public:
 
     TclNet_int (const char * tcl_varname, vrpn_int32 default_value = 0,
-                Linkvar_Intcall c = NULL, void * userdata = NULL);
+                Linkvar_Intcall c = NULL, void * userdata = NULL,
+                vrpn_bool readDefaultFromTcl = vrpn_FALSE);
     virtual ~TclNet_int (void);
 
     // ACCESSORS
