@@ -37,11 +37,11 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "../../../../../obj/pc_win32/app/nano/lib/nmSEM"
-# PROP Intermediate_Dir "../../../../../obj/pc_win32/app/nano/lib/nmSEM"
+# PROP Output_Dir "../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM"
+# PROP Intermediate_Dir "../../../../../obj/pc_win32/debug/app/nano/lib/nmSEM"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /GX /Zi /Od /I "..\.." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\..\..\vogl" /I "..\..\..\..\lib\tcllinkvar" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\lib\nmImageViewer" /I "..\nmGraphics" /I "..\..\..\..\..\..\quat" /I "..\..\..\..\lib\ImgFormat" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /FD /GZ /TP /c
+# ADD CPP /nologo /MTd /W3 /GX /Zi /Od /I "..\.." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\..\..\vogl" /I "..\..\..\..\lib\tcllinkvar" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\lib\nmImageViewer" /I "..\nmGraphics" /I "..\..\..\..\..\..\quat" /I "..\..\..\..\lib\ImgFormat" /D "NDEBUG" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /FD /GZ /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -60,11 +60,11 @@ LIB32=link.exe -lib
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "../../../../../objRel/pc_win32/app/nano/lib/nmSEM"
-# PROP Intermediate_Dir "../../../../../objRel/pc_win32/app/nano/lib/nmSEM"
+# PROP Output_Dir "../../../../../obj/pc_win32/release/app/nano/lib/nmSEM"
+# PROP Intermediate_Dir "../../../../../obj/pc_win32/release/app/nano/lib/nmSEM"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /GX /Zi /Od /I "..\.." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\..\..\vogl" /I "..\..\..\..\lib\tcllinkvar" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\lib\nmImageViewer" /I "..\nmGraphics" /I "..\..\..\..\..\..\quat" /I "..\..\..\..\lib\ImgFormat" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /FD /GZ /TP /c
-# ADD CPP /nologo /MT /W3 /GX /Zi /O2 /I "..\.." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\..\..\vogl" /I "..\..\..\..\lib\tcllinkvar" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\lib\nmImageViewer" /I "..\nmGraphics" /I "..\..\..\..\..\..\quat" /I "..\..\..\..\lib\ImgFormat" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /FD /TP /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /Ob2 /I "..\.." /I "..\..\..\..\..\..\vrpn" /I "..\..\..\..\lib\nmBase" /I "..\..\..\..\lib\nmMP" /I "..\..\..\..\..\..\vogl" /I "..\..\..\..\lib\tcllinkvar" /I "..\..\..\..\..\..\external\pc_win32\include" /I "..\..\..\..\lib\nmImageViewer" /I "..\nmGraphics" /I "..\..\..\..\..\..\quat" /I "..\..\..\..\lib\ImgFormat" /D "_MBCS" /D "_LIB" /D "USE_VRPN_MICROSCOPE" /D "V_GLUT" /D "NO_RAW_TERM" /D "NO_XWINDOWS" /D "NO_ITCL" /D "NO_FILTERS" /D "NO_EXT_TEXTURES" /D "PROJECTIVE_TEXTURE" /YX /Zl /FD /TP /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe

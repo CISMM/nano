@@ -36,8 +36,8 @@ MTL=midl.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "nmMScopeGenerate___Win32_Debug"
-# PROP Intermediate_Dir "nmMScopeGenerate___Win32_Debug"
+# PROP Output_Dir "../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope"
+# PROP Intermediate_Dir "../../../../../obj/pc_win32/debug/app/nano/lib/nmMScope"
 # PROP Target_Dir ""
 
 !ELSEIF  "$(CFG)" == "nmMScopeGenerate - Win32 Release"
@@ -49,8 +49,8 @@ MTL=midl.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "nmMScopeGenerate___Win32_Release"
-# PROP Intermediate_Dir "nmMScopeGenerate___Win32_Release"
+# PROP Output_Dir "../../../../../obj/pc_win32/release/app/nano/lib/nmMScope"
+# PROP Intermediate_Dir "../../../../../obj/pc_win32/release/app/nano/lib/nmMScope"
 # PROP Target_Dir ""
 
 !ENDIF 
