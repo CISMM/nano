@@ -5664,7 +5664,7 @@ void teardownSynchronization( CollaborationManager *cm,
   viewRegister->remove(&(alignerUI->d_resampleResolutionY));
   viewRegister->remove(&(alignerUI->d_resampleRatio));
   viewRegister->remove(&(alignerUI->d_registrationColorMap3D));
-  //viewRegister->remove(&(alignerUI->d_registrationColorMap2D));//
+  viewRegister->remove(&(alignerUI->d_registrationColorMap2D));
   viewRegister->remove(&(alignerUI->d_autoAlignRequested));
   viewRegister->remove(&(alignerUI->d_numIterations));
   viewRegister->remove(&(alignerUI->d_stepSize));
@@ -6083,7 +6083,7 @@ void setupSynchronization( CollaborationManager * cm,
   viewRegister->add(&(alignerUI->d_resampleResolutionY));
   viewRegister->add(&(alignerUI->d_resampleRatio));
   viewRegister->add(&(alignerUI->d_registrationColorMap3D));
-  //viewRegister->add(&(alignerUI->d_registrationColorMap2D));//
+  viewRegister->add(&(alignerUI->d_registrationColorMap2D));
   viewRegister->add(&(alignerUI->d_autoAlignRequested));
   viewRegister->add(&(alignerUI->d_numIterations));
   viewRegister->add(&(alignerUI->d_stepSize));
