@@ -658,6 +658,8 @@ class nmm_Microscope_Remote : public nmb_SharedDevice_Remote,
     vrpn_bool d_accumulatePointResults;
 
     static int handle_barrierSynch (void *ud, const nmb_SynchMessage *msg);
+    static void handle_GotMicroscopeControl (void *ud, 
+                                             nmb_SharedDevice_Remote *dev);
 };
 
 #endif  // NMM_MICROSCOPE_REMOTE_H

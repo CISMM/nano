@@ -171,11 +171,13 @@ int clear_world_modechange(int mode)
   case USER_LIGHT_MODE:
     break;
   case USER_FLY_MODE:
+    removeFunctionFromFunclist(&vir_world,sphere_id);
     break;
   case USER_MEASURE_MODE:
     break;
   case USER_PULSE_MODE:
     removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    removeFunctionFromFunclist(&vir_world,sphere_id);
     break;
   case USER_LINE_MODE:
     removeFunctionFromFunclist(&vir_world, aim_struct_id);
@@ -186,6 +188,7 @@ int clear_world_modechange(int mode)
     removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[2]);
     removeFunctionFromFunclist(&vir_world, poly_sweep_rubber_line_id[3]);
     removeFunctionFromFunclist(&vir_world, trueTip_id);
+    removeFunctionFromFunclist(&vir_world,sphere_id);
     break;
   case USER_SWEEP_MODE:
     removeFunctionFromFunclist(&vir_world,aim_struct_id);
@@ -200,11 +203,13 @@ int clear_world_modechange(int mode)
     break;
   case USER_PLANE_MODE:
     removeFunctionFromFunclist(&vir_world,aim_struct_id);
+    removeFunctionFromFunclist(&vir_world,sphere_id);
     break;
   case USER_PLANEL_MODE:
     removeFunctionFromFunclist(&vir_world, aim_struct_id);
     removeFunctionFromFunclist(&vir_world, sweep_struct_id);
     removeFunctionFromFunclist(&vir_world, trueTip_id);
+    removeFunctionFromFunclist(&vir_world,sphere_id);
     break;
   case USER_SCALE_UP_MODE:
     break;
@@ -220,12 +225,14 @@ int clear_world_modechange(int mode)
     break;
   case USER_MEAS_MOVE_MODE:
     break;
+  case USER_CENTER_TEXTURE_MODE:
+    removeFunctionFromFunclist(&vir_world,sphere_id);
+    break;
   default:
     break;
   }
   /* some icons get removed from every mode */
   removeFunctionFromFunclist(&v_hand,hand_id);
-  removeFunctionFromFunclist(&vir_world,sphere_id); 
 
   /* The other user's hand doesn't depend on what your hand is doing,
      but we seem to need this anyway... */

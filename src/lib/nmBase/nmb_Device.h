@@ -99,13 +99,13 @@ class nmb_Device_Client : public nmb_Device {
     // (this allows us to control precisely when
     // the client side can send messages) - this depends on the device
     // using dispatchMessage() for all messages for which control is desired
-    long sendBuffer(); // send all messages accumulated since the last call to
-                        // sendBuffer() if buffer is enabled
-    void setBufferEnable(vrpn_bool useBuffer); // if set to false then
+    virtual long sendBuffer(); // send all messages accumulated since the
+                        // last call to sendBuffer() if buffer is enabled
+    virtual void setBufferEnable(vrpn_bool useBuffer); // if set to false then
                               // dispatchMessage() will send immediately
                               // otherwise messages will be buffered until
                               // sendBuffer() is called
-    vrpn_bool getBufferEnable();
+    virtual vrpn_bool getBufferEnable();
 
     virtual long dispatchMessage (long len, const char * buf, vrpn_int32 type);
 

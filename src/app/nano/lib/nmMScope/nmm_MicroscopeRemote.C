@@ -70,8 +70,8 @@
 nmm_Microscope_Remote::nmm_Microscope_Remote
   (const AFMInitializationState & i,
    vrpn_Connection * c) :
-    nmb_SharedDevice_Remote ("nmm_Microscope@lysine", c),
-    nmm_Microscope ("nmm_Microscope@lysine", c),
+    nmb_SharedDevice_Remote (i.deviceName, c),
+    nmm_Microscope (i.deviceName, c),
     state(i),
     d_relax_comp(this),
     d_dataset (NULL),
@@ -96,11 +96,15 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
   d_next_time.tv_usec = 0L;
 
   // Turn on relaxation compensation, with k/t decay model. 
+/*
+  This is done when in RcvGotConnection2 so we shouldn't do it here
   if (state.doRelaxComp) {
       d_relax_comp.enable(nmm_RelaxComp::DECAY);
   }
+
   d_relax_comp.set_ignore_time_ms(state.stmRxTmin);
   d_relax_comp.set_separation_time_ms(state.stmRxTsep);
+*/
 
   if (!d_connection) {
     return;
@@ -303,6 +307,7 @@ nmm_Microscope_Remote::nmm_Microscope_Remote
 				 this);
 
   registerSynchHandler(handle_barrierSynch, this);
+  registerGotMutexCallback(this, handle_GotMicroscopeControl);
 }
 
 
@@ -388,7 +393,7 @@ char * nmm_Microscope_Remote::encode_GetNewPointDatasets
   for (i = 0; i < list->Num_checkboxes(); i++)
     if (1 == list->Is_set(i)) numSets++;
 
-  *len = sizeof(long) + (STM_NAME_LENGTH + sizeof(long)) * numSets;
+  *len = (long)(sizeof(long) + (STM_NAME_LENGTH + sizeof(long)) * numSets);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewPointDatasets:  "
@@ -434,7 +439,7 @@ char * nmm_Microscope_Remote::encode_GetNewScanDatasets
 // NANO BEGIN
   fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets: numSets = %d\n", numSets);
 // NANO END
-  *len = sizeof(long) + STM_NAME_LENGTH * numSets;
+  *len = (long)(sizeof(long) + STM_NAME_LENGTH * numSets);
   msgbuf = new char [*len];
   if (!msgbuf) {
     fprintf(stderr, "nmm_Microscope_Remote::encode_GetNewScanDatasets:  "
@@ -605,7 +610,7 @@ long nmm_Microscope_Remote::ModifyMode (void) {
     } else if (state.modify.control == DIRECTZ){
       fprintf(stderr, "DirectZ while sewing is an impossible setting.\n");
       return 0;
-    } else
+    } else {
       return EnterSewingStyle(state.modify.setpoint,
                               0.001 * state.modify.bot_delay,
                               0.001 * state.modify.top_delay,
@@ -613,12 +618,16 @@ long nmm_Microscope_Remote::ModifyMode (void) {
                               state.modify.punch_dist,
                               1000.0 * state.modify.speed,
                               state.modify.watchdog);
+    }
   }
-  else if (state.modify.style == FORCECURVE)
+  else if (state.modify.style == FORCECURVE) {
     if (state.modify.control == DIRECTZ){
       fprintf(stderr, "DirectZ during forcecurve is an impossible setting.\n");
       return 0;
-    } else
+    } else {
+       long numpnts = (long)(state.modify.fc_num_points);
+       long numcycles = (long)(state.modify.fc_num_halfcycles);
+       long avgnum = (long)(state.modify.fc_avg_num);
        return EnterForceCurveStyle(state.modify.setpoint,
                                 state.modify.fc_start_delay,
                                 state.modify.fc_z_start,
@@ -626,16 +635,18 @@ long nmm_Microscope_Remote::ModifyMode (void) {
                                 state.modify.fc_z_pullback,
                                 state.modify.fc_force_limit,
                                 state.modify.fc_movedist,
-                                state.modify.fc_num_points,
-                                state.modify.fc_num_halfcycles,
+                                numpnts,
+                                numcycles,
                                 state.modify.fc_sample_speed,
                                 state.modify.fc_pullback_speed,
                                 state.modify.fc_start_speed,
                                 state.modify.fc_feedback_speed,
-				state.modify.fc_avg_num,
+				avgnum,
 				state.modify.fc_sample_delay,
 				state.modify.fc_pullback_delay,
 				state.modify.fc_feedback_delay);
+    }
+  }
   
   return 0;	// HACK HACK HACK
 }
@@ -1296,7 +1307,7 @@ long nmm_Microscope_Remote::SetSlowScan (const long _value) {
 
 long nmm_Microscope_Remote::SetModForce () {
 
-  if ((state.modify.style != SEWING) && (state.modify.style != FORCECURVE))
+  if ((state.modify.style != SEWING) && (state.modify.style != FORCECURVE)) {
     switch (state.modify.mode) {
       case TAPPING:
 	return EnterOscillatingMode(state.modify.p_gain, state.modify.i_gain,
@@ -1314,11 +1325,11 @@ long nmm_Microscope_Remote::SetModForce () {
       default:
         return 0;  // HACK HACK HACK
     }
-  else if (state.modify.style == SEWING) {
+  } else if (state.modify.style == SEWING) {
     if (state.modify.mode == TAPPING) {
       fprintf(stderr, "Oscillating while sewing is an impossible setting.\n");
       return 0;
-    } else
+    } else {
       return EnterSewingStyle(state.modify.setpoint,
                               0.001 * state.modify.bot_delay,
                               0.001 * state.modify.top_delay,
@@ -1326,6 +1337,7 @@ long nmm_Microscope_Remote::SetModForce () {
                               state.modify.punch_dist,
                               1000.0 * state.modify.speed,
                               state.modify.watchdog);
+    }
   }
   else if (state.modify.style == FORCECURVE) {
     switch (state.modify.mode) {
@@ -1355,6 +1367,9 @@ long nmm_Microscope_Remote::SetModForce () {
                            " (not contact or tapping)\n");
         return 0;
     }
+    long numpnts = (long)(state.modify.fc_num_points);
+    long numcycles = (long)(state.modify.fc_num_halfcycles);
+    long avgnum = (long)(state.modify.fc_avg_num);
     return EnterForceCurveStyle(state.modify.setpoint,
                                 state.modify.fc_start_delay,
                                 state.modify.fc_z_start,
@@ -1362,13 +1377,13 @@ long nmm_Microscope_Remote::SetModForce () {
                                 state.modify.fc_z_pullback,
                                 state.modify.fc_force_limit,
                                 state.modify.fc_movedist,
-                                state.modify.fc_num_points,
-                                state.modify.fc_num_halfcycles,
+                                numpnts,
+                                numcycles,
                                 state.modify.fc_sample_speed,
                                 state.modify.fc_pullback_speed,
                                 state.modify.fc_start_speed,
                                 state.modify.fc_feedback_speed,
-                                state.modify.fc_avg_num,
+                                avgnum,
                                 state.modify.fc_sample_delay,
                                 state.modify.fc_pullback_delay,
                                 state.modify.fc_feedback_delay);
@@ -1943,17 +1958,21 @@ long nmm_Microscope_Remote::InitDevice (const vrpn_bool _setRegion,
   // XXX Bug in VRPN. If we're already connected before we register the
   // handle_GotConnection handlers, they never get executed. So we'll call
   // them explicitly, if needed.
+
   if (d_connection->connected()) {
       vrpn_HANDLERPARAM p;
       handle_GotConnection2(this, p);
   } 
+
   // Register this callback here because it segfaults if I execute the handler
   // in the constructor, and I need to register at the same place it is
   // conditionally executed.
+
   d_connection->register_handler(d_GotConnection_type,
                                  handle_GotConnection2,
                                  this);
   
+
   return 0;
 }
 
@@ -2996,6 +3015,8 @@ int nmm_Microscope_Remote::handle_UdpSeqNum (void * userdata,
 int nmm_Microscope_Remote::RcvGotConnection2() 
 {
 
+/*
+Can't do this until we have the mutex
     //printf("nmm_Microscope_Remote::RcvGotConnection2()\n");
   // Send off the relaxation parameters (if any)
   if (d_relax_comp.is_enabled()) {
@@ -3003,19 +3024,20 @@ int nmm_Microscope_Remote::RcvGotConnection2()
   } else {
       CHECK(SetRelax(0, 0));
   }
+*/
 
   // Ask it for the scan range in x, y, and z.
   // When this is read back, Z will be used to set min_z and max_z.
   CHECK(QueryScanRange());
 
+/*
+  Can't do this until we have the mutex
   // Start scanning the surface
   CHECK(ResumeFullScan());
 
   // Tell AFM to scan forward and backward, or just forward.
   CHECK(SetScanStyle());
-
-  // something for the scanline tool.
-  state.SetDefaultScanlineForRegion(d_dataset);
+*/
 
   return 0;
 }
@@ -4429,4 +4451,27 @@ int nmm_Microscope_Remote::handle_barrierSynch (void *ud,
       me->TakeModStep(x,y);
    }
    return 0;
+}
+
+// static
+void nmm_Microscope_Remote::handle_GotMicroscopeControl(void *ud,
+    nmb_SharedDevice_Remote * /*dev*/)
+{
+  nmm_Microscope_Remote *me = (nmm_Microscope_Remote *)ud;
+  
+  printf("nmm_Microscope_Remote::Got control, sending initialization\n");
+  // Send off the relaxation parameters (if any)
+  if (me->d_relax_comp.is_enabled()) {
+      me->SetRelax(me->state.stmRxTmin, me->state.stmRxTsep);
+  } else {
+      me->SetRelax(0, 0);
+  }
+
+  // Tell AFM to scan forward and backward, or just forward.
+  me->SetScanStyle();
+
+  // Start scanning the surface
+  me->ResumeFullScan();
+
+  return;
 }

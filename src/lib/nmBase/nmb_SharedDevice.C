@@ -41,7 +41,7 @@ nmb_SharedDevice_Remote::nmb_SharedDevice_Remote (const char * name,
   d_mutex.addTakeCallback(this, handle_mutexTaken);
   d_mutex.addReleaseCallback(this, handle_mutexReleased);
 
-fprintf(stderr, "nmb_SharedDevice_Remote:  requesting the lock on %s.\n",
+fprintf(stderr, "nmb_SharedDevice_Remote::nmb_SharedDevice_Remote:  requesting the lock on %s.\n",
 d_myName);
 
   // If we're currently running standalone grab the mutex.
@@ -97,7 +97,7 @@ int nmb_SharedDevice_Remote::mainloop (void) {
 
 void nmb_SharedDevice_Remote::requestMutex (void) {
 
-fprintf(stderr, "nmb_SharedDevice_Remote:  requesting the lock on %s.\n",
+fprintf(stderr, "nmb_SharedDevice_Remote::requestMutex:  requesting the lock on %s.\n",
 d_myName);
 
   d_mutex.request();
@@ -114,16 +114,41 @@ d_myName);
 }
 
 
+// virtual
+long nmb_SharedDevice_Remote::sendBuffer(void) {
+  long retval = 0;
+  vrpn_bool use_buffer_save = getBufferEnable();
+  setBufferEnable(vrpn_FALSE);
 
+  messageBufferEntry *m = d_messageBufferHead;
+  while (m) {
+    if (!retval) {
+      retval = dispatchMessage(m->len, m->buf, m->type);
+    }
+    else {
+      fprintf(stderr, 
+            "nmb_SharedDevice_Remote::sendBuffer failure:"
+            " throwing away messages\n");
+    }
+    d_messageBufferHead = m->next;
+    delete m;
+    m = d_messageBufferHead;
+  }
+  // we've deleted the whole buffer now so tail should be NULL
+  d_messageBufferTail = NULL;
 
+  setBufferEnable(use_buffer_save);
 
+  return retval;
+}
 
 
 // virtual
 long nmb_SharedDevice_Remote::dispatchMessage (long len, const char * buf,
                                         vrpn_int32 type) {
 
-  if (d_mutex.isHeldLocally() || typeIsSafe(type)) {
+  vrpn_bool bufferingOn = getBufferEnable();
+  if (d_mutex.isHeldLocally() || typeIsSafe(type) || bufferingOn) {
     return nmb_Device_Client::dispatchMessage(len, buf, type);
   }
 

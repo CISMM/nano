@@ -37,6 +37,11 @@ class nmb_SharedDevice_Server : public nmb_Device_Server {
     vrpn_Mutex_Server d_mutex;
 };
 
+/* this needs to override nmb_Device_Client::sendBuffer() since this
+   may have the effect of sending messages and we don't want to
+   let this happen if we don't have the mutex
+*/
+
 class nmb_SharedDevice_Remote : public nmb_Device_Client {
 
   public:
@@ -71,10 +76,13 @@ class nmb_SharedDevice_Remote : public nmb_Device_Client {
     void releaseMutex (void);
       ///< Release our exclusive access to the shared device.
 
-
+    virtual long sendBuffer(void);
+      ///< disables buffering and sends buffered messages using
+      ///< nmb_SharedDevice_Remote::dispatchMessage()
 
     virtual long dispatchMessage (long len, const char * buf, vrpn_int32 type);
-      ///< If we don't have the mutex, returns 0;  otherwise, passes the
+      ///< If we don't have the mutex and !nmb_Device_Client::getBufferEnable()
+      ///< then this returns 0;  otherwise, passes the
       ///< message on to nmb_Device_Client::dispatchMessage() to be buffered
       ///< or sent as appropriate.
 

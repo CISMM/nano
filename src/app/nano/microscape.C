@@ -6377,33 +6377,15 @@ VERBOSE(1, "Entering main loop");
 
 #endif
 
-
     // Have the active sets update the microscape data sets
     VERBOSE(4, "  Updating scan and point sets");
-
-// There is no difference in code here so I took out this ifdef (AAS)
-    /*
-    if (microscope->state.data.scan_channels->Changed()){
-      microscope->GetNewScanDatasets
-                     (microscope->state.data.scan_channels->Checklist());
-      microscope->state.data.scan_channels->Changed(0);
-      fprintf(stderr, "microscape.c:: microscope->state.data."
-		"scan_channels changed!!!\n");
+    if (microscope->haveMutex()) {
+      microscope->state.data.scan_channels->Update_microscope(microscope);
+      microscope->state.data.point_channels->Update_microscope(microscope);
+      // XXX What? No forcecurve channels ? - no, they are
+      // limited to only 2 channels by the Topometrix dsp code and I
+      // haven't written the code to add the second channel
     }
-    if (microscope->state.data.point_channels->Changed()) {
-      microscope->GetNewPointDatasets
-                      (microscope->state.data.point_channels->Checklist());
-      microscope->state.data.point_channels->Changed(0);
-      fprintf(stderr, "microscope.c:: micrscope->state.data."
-		"point_channel changed!!!\n");
-    }
-    */
-
-    microscope->state.data.scan_channels->Update_microscope(microscope);
-    microscope->state.data.point_channels->Update_microscope(microscope);
-    // XXX What? No forcecurve channels ? - no, they are
-    // limited to only 2 channels by the Topometrix dsp code and I 
-    // haven't written the code to add the second channel
 
     /* Run the Tk event handler if we are using Tk in any of the code */
     if( tkenable || (interp != NULL) ) {
@@ -6411,24 +6393,6 @@ VERBOSE(1, "Entering main loop");
 	while (Tk_DoOneEvent(TK_DONT_WAIT)) {};
     }
 
-    /* XXXXXXXXX MAJOR WARNING: This function is doing something bad
-       but I haven't figured out what is wrong with it because it doesn't
-       do anything that looks bad - basically it checks for x events and 
-       sets glx context a few times 
-       When it was located right after the call to handleMouseEvents() above
-       we had the following symptom:
-
-       on sgi (not cygwin) the rulergrid and colormap (used for registration)
-       texture images would not update even though all the
-       necessary openGL functions were being called with no errors returned
-       interestingly, the sem texture image would update correctly
-       Using some exploratory code rewriting, it was verified that once the
-       function is called (after the first time it is called), the texture
-       image will not update but just before the first time it is called
-       the texture image does update correctly.
-
-       This problem goes away with the function call at this location 
-    */
     if (aligner) {
        aligner->mainloop();
     }
