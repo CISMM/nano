@@ -1,3 +1,7 @@
+2000-09-26  Tom Hudson  <hudson@cs.unc.edu>
+
+	* nmm_Microscope_Remote.C (handle_EndFeelTo) : added fprintf()
+
 2000-09-22  Adam Seeger  <seeger@cs.unc.edu>
 
         * nmm_MicroscopeTranslator.C (translate_packet) : 

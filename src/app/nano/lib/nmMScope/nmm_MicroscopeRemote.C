@@ -2933,6 +2933,7 @@ int nmm_Microscope_Remote::handle_WindowLineData (void * userdata,
   vrpn_int32 x, y, dx, dy, sec, usec, lineCount, fieldCount;
   long i;
 
+//fprintf(stderr, "Got data for line %d.\n", y);
   ms->decode_WindowLineDataHeader(&param.buffer, &x, &y, &dx, &dy,
                                   &lineCount, &fieldCount, &sec, &usec);
 
@@ -3430,8 +3431,14 @@ int nmm_Microscope_Remote::handle_BeginFeelTo (void * userdata,
 
 //static
 int nmm_Microscope_Remote::handle_EndFeelTo (void * userdata,
-                                               vrpn_HANDLERPARAM) {
+                                               vrpn_HANDLERPARAM p) {
   nmm_Microscope_Remote * ms = (nmm_Microscope_Remote *) userdata;
+  const char * bufptr = p.buffer;
+  vrpn_float32 x, y;
+
+  ms->decode_FeelTo(&bufptr, &x, &y);
+
+fprintf(stderr, "Completed feel to %.2f, %.2f.\n", x, y);
 
   ms->accumulatePointResults(VRPN_FALSE);
   ms->swapPointList();
