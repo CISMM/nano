@@ -617,6 +617,7 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
   // make sure gl calls are directed to the right context
   v_gl_set_context_to_vlib_window();
 
+  // texture_size is the length of one side of the square texture.
   // Find out the smallest power-of-2 texture region we can use.
   // Remember that float->int conversion truncates, so add 0.5 for rounding
   // Make sure it is not too big.
@@ -639,7 +640,7 @@ void nmg_Graphics_Implementation::makeAndInstallRulerImage(PPM *myPPM)
 #endif
 
   // multiply by 4 so we can store 4 values at each texel
-  GLubyte * texture = new GLubyte [4 * texture_size];
+  GLubyte * texture = new GLubyte [4 * texture_size * texture_size];
 
   // Fill the whole texture with black.  This will make a border around
   // any area not filled by the PPM file.
